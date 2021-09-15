@@ -149,7 +149,7 @@ export class SetupRenderModule {
     const emailAliases = Value.arr.withoutVal(this.view.submitKeyForAddrs, this.view.acctEmail);
     for (const e of emailAliases) {
       // eslint-disable-next-line max-len
-      $('.addresses').append(`<label><input type="checkbox" class="input_email_alias" data-test="input-email-alias-${e.replace(/[^a-z0-9]+/g, '')}" /><span>${Xss.escape(e)}</span></label><br/>`); // xss-escaped
+      $('.addresses').append(`<label><input type="checkbox" class="input_email_alias" data-email="${Xss.escape(e)}" data-test="input-email-alias-${e.replace(/[^a-z0-9]+/g, '')}" /><span>${Xss.escape(e)}</span></label><br/>`); // xss-escaped
     }
     $('.input_email_alias').click((event) => {
       const dom = event.target.nextElementSibling as HTMLElement;

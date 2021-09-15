@@ -85,6 +85,18 @@ export class KeyImportUi {
     }));
     $('.input_private_key').change(Ui.event.handle(async target => {
       const { keys: [prv] } = await opgp.key.readArmored(String($(target).val()));
+      if (view !== undefined && view.submitKeyForAddrs.length > 0 && prv !== undefined) {
+        const users = prv.users;
+        for (const user of users) {
+          const userId = (user.userId as any);
+          if (view.submitKeyForAddrs.includes(userId.email)) {
+            const targetDom = $('.input_email_alias');
+            if (String($(targetDom).data('email')).trim() === String(userId.email).trim()) {
+              $(targetDom).siblings().siblings().prop('checked', true);
+            }
+          }
+        }
+      }
       $('.input_passphrase').val('');
       if (!prv || !prv.isPrivate()) {
         $('.line.unprotected_key_create_pass_phrase').hide();
