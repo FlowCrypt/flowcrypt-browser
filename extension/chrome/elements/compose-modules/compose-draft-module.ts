@@ -56,7 +56,7 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
     }
     try {
       let draftGetRes = await this.localDraftGet();
-      if (!draftGetRes) { // local draft not found, try to load from cloud
+      if (!draftGetRes && !this.isLocalDraftId(this.view.draftId)) { // local draft not found, try to load from cloud
         draftGetRes = await this.view.emailProvider.draftGet(this.view.draftId, 'raw');
       }
       if (!draftGetRes) {
