@@ -83,7 +83,8 @@ export class KeyImportUi {
       $('.input_passphrase').attr('type', 'text');
       $('#e_rememberPassphrase').prop('checked', true);
     }));
-    $('.input_private_key').change(Ui.event.handle(async target => {
+    $('.input_private_key').on('keyup paste change', Ui.event.handle(async target => {
+      $('.input_email_alias').prop('checked', false);
       const { keys: [prv] } = await opgp.key.readArmored(String($(target).val()));
       if (view !== undefined && view.submitKeyForAddrs.length > 0 && prv !== undefined) {
         const users = prv.users;
@@ -97,7 +98,9 @@ export class KeyImportUi {
           }
         }
       }
-      $('.input_passphrase').val('');
+    }));
+    $('.input_private_key').change(Ui.event.handle(async target => {
+      const { keys: [prv] } = await opgp.key.readArmored(String($(target).val()));
       if (!prv || !prv.isPrivate()) {
         $('.line.unprotected_key_create_pass_phrase').hide();
         return;
