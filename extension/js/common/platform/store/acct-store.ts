@@ -13,7 +13,6 @@ import { AbstractStore } from './abstract-store.js';
 import { RawStore } from './abstract-store.js';
 import { FcUuidAuth } from '../../api/account-servers/flowcrypt-com-api.js';
 
-export type StoredReplyDraftMeta = string; // draftId, TODO: remove in #3329
 export type EmailProvider = 'gmail';
 type GoogleAuthScopesNames = [keyof typeof GoogleAuth.OAUTH.scopes, keyof typeof GoogleAuth.OAUTH.legacy_scopes][number];
 
@@ -29,7 +28,7 @@ export type Scopes = {
 };
 
 export type AccountIndex = 'keys' | 'notification_setup_needed_dismissed' | 'email_provider' | 'google_token_access' | 'google_token_expires' | 'google_token_scopes' |
-  'google_token_refresh' | 'hide_message_password' | 'sendAs' | 'drafts_reply' |
+  'google_token_refresh' | 'hide_message_password' | 'sendAs' |
   'pubkey_sent_to' | 'full_name' | 'cryptup_enabled' | 'setup_done' |
   'successfully_received_at_leat_one_message' | 'notification_setup_done_seen' | 'picture' |
   'outgoing_language' | 'setup_date' | 'openid' | 'tmp_submit_main' | 'tmp_submit_all' | 'uuid' | 'use_rich_text' | 'rules' |
@@ -53,7 +52,6 @@ export type AcctStoreDict = {
   hide_message_password?: boolean; // is global?
   sendAs?: Dict<SendAsAlias>;
   addresses?: string[],
-  drafts_reply?: Dict<StoredReplyDraftMeta>; // legacy, TODO: remove in #3329
   pubkey_sent_to?: string[];
   full_name?: string;
   cryptup_enabled?: boolean;

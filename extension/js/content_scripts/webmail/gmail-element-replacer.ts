@@ -257,30 +257,23 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     const allContenteditableEls = $("div[contenteditable='true']").not('.evaluated').addClass('evaluated');
     for (const contenteditableEl of allContenteditableEls) {
       const contenteditable = $(contenteditableEl);
-      const draftLinkMatch = contenteditable.html().substr(0, 1000).match(/\[(flowcrypt|cryptup):link:(draft_compose|draft_reply):([0-9a-fr\-]+)]/);
+      const draftLinkMatch = contenteditable.html().substr(0, 1000).match(/\[flowcrypt:link:draft_compose:([0-9a-fr\-]+)]/);
       if (draftLinkMatch) {
-        let button: string | undefined;
-        const [, , name, buttonHrefId] = draftLinkMatch;
-        if (name === 'draft_compose') {
-          button = `<a href="#" class="open_draft_${Xss.escape(buttonHrefId)}">Open draft</a>`;
-        } else if (name === 'draft_reply' && contenteditable.closest(this.sel.standardComposeWin).length === 1) { // reply draft opened in compose window, TODO: remove in #3329
-          button = `<a href="#inbox/${Xss.escape(buttonHrefId)}" class="close_gmail_compose_window">Open draft</a>`;
-        }
-        if (button) {
-          Xss.sanitizeReplace(contenteditable, button);
-          $(`a.open_draft_${buttonHrefId}`).click(Ui.event.handle((target) => {
-            if (this.injector.openComposeWin(buttonHrefId)) {
-              closeGmailComposeWindow(target);
-            }
-          }));
-          // close original draft window
-          const closeGmailComposeWindow = (target: HTMLElement) => {
-            const mouseUpEvent = document.createEvent('Event');
-            mouseUpEvent.initEvent('mouseup', true, true); // Gmail listens for the mouseup event, not click
-            $(target).closest('.dw').find('.Ha')[0].dispatchEvent(mouseUpEvent); // jquery's trigger('mouseup') doesn't work for some reason
-          };
-          $('.close_gmail_compose_window').click(Ui.event.handle(closeGmailComposeWindow));
-        }
+        const [, buttonHrefId] = draftLinkMatch;
+        const button = `<a href="#" class="open_draft_${Xss.escape(buttonHrefId)}">Open draft</a>`;
+        Xss.sanitizeReplace(contenteditable, button);
+        $(`a.open_draft_${buttonHrefId}`).click(Ui.event.handle((target) => {
+          if (this.injector.openComposeWin(buttonHrefId)) {
+            closeGmailComposeWindow(target);
+          }
+        }));
+        // close original draft window
+        const closeGmailComposeWindow = (target: HTMLElement) => {
+          const mouseUpEvent = document.createEvent('Event');
+          mouseUpEvent.initEvent('mouseup', true, true); // Gmail listens for the mouseup event, not click
+          $(target).closest('.dw').find('.Ha')[0].dispatchEvent(mouseUpEvent); // jquery's trigger('mouseup') doesn't work for some reason
+        };
+        $('.close_gmail_compose_window').click(Ui.event.handle(closeGmailComposeWindow));
       }
     }
   }

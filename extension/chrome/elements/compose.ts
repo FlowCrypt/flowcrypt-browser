@@ -144,7 +144,7 @@ export class ComposeView extends View {
   }
 
   public render = async () => {
-    const storage = await AcctStore.get(this.acctEmail, ['sendAs', 'hide_message_password', 'drafts_reply']);
+    const storage = await AcctStore.get(this.acctEmail, ['sendAs', 'hide_message_password']);
     this.orgRules = await OrgRules.newInstance(this.acctEmail);
     if (this.orgRules.shouldHideArmorMeta()) {
       opgp.config.show_comment = false;
@@ -176,11 +176,7 @@ export class ComposeView extends View {
     if (this.replyMsgId) {
       await this.renderModule.fetchReplyMeta(Object.keys(storage.sendAs!));
     }
-    if (this.isReplyBox) { // reply, legacy, TODO: remove in #3329
-      if (this.threadId && !this.draftId && !this.ignoreDraft && storage.drafts_reply && storage.drafts_reply[this.threadId]) {
-        this.draftId = storage.drafts_reply[this.threadId]; // there may be a legacy draft we want to load
-      }
-    } else { // compose
+    if (!this.isReplyBox) { // compose
       if (!this.draftId) {
         this.draftId = this.draftModule.localDraftId;
       }

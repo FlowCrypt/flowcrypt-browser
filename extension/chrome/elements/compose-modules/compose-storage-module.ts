@@ -45,14 +45,6 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
     return result!;
   }
 
-  // TODO: remove in #3329
-  public draftMetaDelete = async (threadId: string) => {
-    const draftStorage = await AcctStore.get(this.view.acctEmail, ['drafts_reply']);
-    const drafts = draftStorage.drafts_reply || {};
-    delete drafts[threadId];
-    await AcctStore.set(this.view.acctEmail, { drafts_reply: drafts });
-  }
-
   public collectAllAvailablePublicKeys = async (senderEmail: string, senderKi: KeyInfo, recipients: string[]): Promise<CollectPubkeysResult> => {
     const contacts = await ContactStore.getEncryptionKeys(undefined, recipients);
     const pubkeys = [{ pubkey: await KeyUtil.parse(senderKi.public), email: senderEmail, isMine: true }];
