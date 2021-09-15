@@ -94,7 +94,7 @@ export class BackupStatusModule extends ViewModule<BackupView> {
       <div class="mb-20">
         <div class="details">
           <label>
-            <input class="input_prvkey_backup_checkbox" type="checkbox" />
+            <input class="input_prvkey_backup_checkbox" type="checkbox" data-emails="${primaryKi.emails}" data-fingerprint="${primaryKi.fingerprints}" />
             <div class="display_inline_block">
               <p class="m-0">Email: <span class="prv_email">${primaryKi.emails}</span> with fingerprint <span class="prv_fingerprint green">${primaryKi.fingerprints}</span></p>
             </div>
@@ -102,11 +102,11 @@ export class BackupStatusModule extends ViewModule<BackupView> {
         </div>
       </div>
       `.trim();
-      $('.key_backup_selection').append(dom);
+      $('.key_backup_selection').append(Xss.escape(dom)); // xss-escaped
     }
     $('.input_prvkey_backup_checkbox').click((event) => {
-      const email = String($($($(event.target).siblings()[0]).children()[0]).children()[0].innerText);
-      const fingerprint = String($($($(event.target).siblings()[0]).children()[0]).children()[1].innerText).split(',');
+      const email = $(event.target).data('emails');
+      const fingerprint = $(event.target).data('fingerprints');
       if ($(event.target).prop('checked')) {
         this.view.prvKeysToManuallyBackup.push({ 'email': email, 'fingerprints': fingerprint });
       } else {
