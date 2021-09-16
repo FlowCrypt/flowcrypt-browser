@@ -22,8 +22,8 @@ blocks:
           value: /home/semaphore/git/flowcrypt-browser
       prologue:
         commands:
-          - nvm use 12
-          - nvm alias default 12
+          - nvm use 14
+          - nvm alias default 14
           - npm install -g npm@6.14.6 && mkdir ~/git && checkout && mv ~/test-secrets.json ~/git/flowcrypt-browser/test/test-secrets.json
           - cd ~/git/flowcrypt-browser
           - npm install
@@ -39,8 +39,6 @@ blocks:
 
         - name: code quality
           commands:
-            - nvm install 10.19.0
-            - nvm alias default 10.19.0
             - npm run-script test_tslint
             - npm run-script test_eslint
             - npm run-script test_stylelint
