@@ -750,7 +750,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       expect((await KeyUtil.parse(testConstants.keyMultiAliasedUser)).emails.length).to.equals(2);
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'multi.aliased.user@example.com');
       await SetupPageRecipe.manualEnter(settingsPage, '', {
-        usedPgpBefore: false, submitPubkey: true, naked: true, checkEmailAliasIfPresent: true, key: {
+        usedPgpBefore: false, submitPubkey: true, naked: true, fillOnly: true, key: {
           title: 'multi.aliased.user@example.com',
           passphrase: 'long enough to suit requirements',
           armored: testConstants.keyMultiAliasedUser,
