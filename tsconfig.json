@@ -4,6 +4,7 @@
     "forceConsistentCasingInFileNames": true,
     "noImplicitReturns": true,
     "noUnusedLocals": true,
+    "moduleResolution": "node",
     "alwaysStrict": true,
     "noImplicitAny": true,
     "strictNullChecks": true,
@@ -46,7 +47,7 @@
         "COMMENT"
       ],
       "iso-8859-2": [
-        "lib/iso-8859-2.js",
+        "types/iso-8859-2.d.ts",
         "COMMENT"
       ],
       "zxcvbn": [

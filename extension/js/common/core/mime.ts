@@ -2,8 +2,9 @@
 
 'use strict';
 
+import * as iso88592 from 'iso-8859-2';
 import { Dict, Str } from './common.js';
-import { requireIso88592, requireMimeBuilder, requireMimeParser } from '../platform/require.js';
+import { requireMimeBuilder, requireMimeParser } from '../platform/require.js';
 
 import { Attachment } from './attachment.js';
 import { Buf } from './buf.js';
@@ -16,7 +17,6 @@ import { iso2022jpToUtf } from '../platform/util.js';
 
 const MimeParser = requireMimeParser();  // tslint:disable-line:variable-name
 const MimeBuilder = requireMimeBuilder();  // tslint:disable-line:variable-name
-const Iso88592 = requireIso88592();  // tslint:disable-line:variable-name
 
 type AddressHeader = { address: string; name: string; };
 type MimeContentHeader = string | AddressHeader[];
@@ -377,8 +377,8 @@ export class Mime {
   }
 
   private static getNodeContentAsUtfStr = (node: MimeParserNode): string => {
-    if (node.charset && Iso88592.labels.includes(node.charset)) {
-      return Iso88592.decode(node.rawContent!); // tslint:disable-line:no-unsafe-any
+    if (node.charset && iso88592.labels.includes(node.charset)) {
+      return iso88592.decode(node.rawContent!);
     }
     let resultBuf: Buf;
     if (node.charset === 'utf-8' && node.contentTransferEncoding.value === 'base64') {

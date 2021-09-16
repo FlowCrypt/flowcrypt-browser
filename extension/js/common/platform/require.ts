@@ -25,8 +25,6 @@
 
 import { MimeParser } from '../core/types/emailjs.js';
 
-type Codec = { encode: (text: string, mode: 'fatal' | 'html') => string, decode: (text: string) => string, labels: string[], version: string };
-
 export const requireOpenpgp = (): typeof OpenPGP => {
   const openpgpLocal = (window as any).openpgp as typeof OpenPGP;
   if (!openpgpLocal) {
@@ -44,8 +42,4 @@ export const requireMimeParser = (): typeof MimeParser => {
 
 export const requireMimeBuilder = (): any => {
   return (window as any)['emailjs-mime-builder'];
-};
-
-export const requireIso88592 = (): Codec => {
-  return (window as any).iso88592 as Codec;
 };

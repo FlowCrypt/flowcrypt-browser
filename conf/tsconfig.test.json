@@ -14,6 +14,7 @@
   },
   "files": [
     "../extension/types/node-forge.d.ts",
+    "../extension/types/iso-8859-2.d.ts",
     "../test/source/test.ts",
     "../test/source/patterns.ts",
     "../test/source/async-stack.ts",
