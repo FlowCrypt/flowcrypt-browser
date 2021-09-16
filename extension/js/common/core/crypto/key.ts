@@ -301,7 +301,8 @@ export class KeyUtil {
       } else if (pgpPubs.every(pub => pub.isMine)) {
         pgpPubs = [];
       } else {
-        let err = `Cannot use mixed OpenPGP (${pgpPubs.map(p => p.email).join(', ')}) and S/MIME (${smimePubs.map(p => p.email).join(', ')}) public keys yet.`;
+        let err = `Cannot use mixed OpenPGP (${pgpPubs.filter(p => !p.isMine).map(p => p.email).join(', ')}) and `
+          + `S/MIME (${smimePubs.filter(p => !p.isMine).map(p => p.email).join(', ')}) public keys yet.`;
         err += 'If you need to email S/MIME recipient, do not add any OpenPGP recipient at the same time.';
         throw new UnreportableError(err);
       }
