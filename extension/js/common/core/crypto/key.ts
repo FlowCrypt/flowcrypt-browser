@@ -291,21 +291,14 @@ export class KeyUtil {
   }
 
   public static choosePubsBasedOnKeyTypeCombinationForPartialSmimeSupport = (pubs: PubkeyResult[]): Key[] => {
-    const myPubs = pubs.filter(pub => pub.isMine); // currently this must be openpgp pub
-    const otherPgpPubs = pubs.filter(pub => !pub.isMine && pub.pubkey.type === 'openpgp');
-    const otherSmimePubs = pubs.filter(pub => !pub.isMine && pub.pubkey.type === 'x509');
-    if (otherPgpPubs.length && otherSmimePubs.length) {
-      let err = `Cannot use mixed OpenPGP (${otherPgpPubs.map(p => p.email).join(', ')}) and S/MIME (${otherSmimePubs.map(p => p.email).join(', ')}) public keys yet.`;
+    const pgpPubs = pubs.filter(pub => pub.pubkey.type === 'openpgp');
+    const smimePubs = pubs.filter(pub => pub.pubkey.type === 'x509');
+    if (pgpPubs.length && smimePubs.length) {
+      let err = `Cannot use mixed OpenPGP (${pgpPubs.map(p => p.email).join(', ')}) and S/MIME (${smimePubs.map(p => p.email).join(', ')}) public keys yet.`;
       err += 'If you need to email S/MIME recipient, do not add any OpenPGP recipient at the same time.';
       throw new UnreportableError(err);
     }
-    if (otherPgpPubs.length) {
-      return myPubs.concat(...otherPgpPubs).map(p => p.pubkey);
-    }
-    if (otherSmimePubs.length) { // todo - currently skipping my own pgp keys when encrypting message for S/MIME
-      return otherSmimePubs.map(pub => pub.pubkey);
-    }
-    return myPubs.map(p => p.pubkey);
+    return pgpPubs.concat(smimePubs).map(p => p.pubkey);
   }
 
   public static decrypt = async (key: Key, passphrase: string, optionalKeyid?: OpenPGP.Keyid, optionalBehaviorFlag?: 'OK-IF-ALREADY-DECRYPTED'): Promise<boolean> => {

@@ -33,7 +33,7 @@ export class SignedMsgMailFormatter extends BaseMailFormatter {
       const signedData = await MsgUtil.sign(signingPrv, newMsg.plaintext);
       const allContacts = [...newMsg.recipients.to || [], ...newMsg.recipients.cc || [], ...newMsg.recipients.bcc || []];
       ContactStore.update(undefined, allContacts, { lastUse: Date.now() }).catch(Catch.reportErr);
-      return await SendableMsg.createPgpInline(this.acctEmail, this.headers(newMsg), signedData, attachments);
+      return await SendableMsg.createInlineArmored(this.acctEmail, this.headers(newMsg), signedData, attachments);
     }
     // pgp/mime detached signature - it must be signed later, while being mime-encoded
     // prepare a sign function first, which will be used by Mime.encodePgpMimeSigned later

@@ -707,6 +707,7 @@ declare module "node-forge" {
 
         function createEnvelopedData(): PkcsEnvelopedData;
         function messageFromPem(pem: pki.PEM): PkcsEnvelopedData | PkcsSignedData | PkcsEncryptedData;
+        function messageToPem(msg: PkcsEnvelopedData | PkcsSignedData | PkcsEncryptedData, maxline?: number): string;
     }
 
     namespace pkcs5 {

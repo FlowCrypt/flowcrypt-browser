@@ -70,7 +70,7 @@ export class SmimeKey {
   /**
    * @param data: an already encoded plain mime message
    */
-  public static encryptMessage = async ({ pubkeys, data }: { pubkeys: Key[], data: Uint8Array }): Promise<{ data: Uint8Array, type: 'smime' }> => {
+  public static encryptMessage = async ({ pubkeys, data, armor }: { pubkeys: Key[], data: Uint8Array, armor: boolean }): Promise<{ data: Uint8Array, type: 'smime' }> => {
     const p7 = forge.pkcs7.createEnvelopedData();
     for (const pubkey of pubkeys) {
       const certificate = SmimeKey.getCertificate(pubkey);
@@ -81,10 +81,16 @@ export class SmimeKey {
     }
     p7.content = forge.util.createBuffer(data);
     p7.encrypt();
-    const derBuffer = forge.asn1.toDer(p7.toAsn1()).getBytes();
+    let rawString: string;
+    if (armor) {
+      rawString = forge.pkcs7.messageToPem(p7);
+    } else {
+      rawString = forge.asn1.toDer(p7.toAsn1()).getBytes();
+    }
+    // todo: fromRawString
     const arr = [];
-    for (let i = 0, j = derBuffer.length; i < j; ++i) {
-      arr.push(derBuffer.charCodeAt(i));
+    for (let i = 0, j = rawString.length; i < j; ++i) {
+      arr.push(rawString.charCodeAt(i));
     }
     return { data: new Uint8Array(arr), type: 'smime' };
   }
