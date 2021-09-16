@@ -19,6 +19,7 @@ type ManualEnterOpts = {
   enforceAttesterSubmitOrgRule?: boolean,
   noPubSubmitRule?: boolean,
   fillOnly?: boolean,
+  checkEmailAliasIfPresent?: boolean,
   key?: { title: string, passphrase: string, armored: string | null, longid: string | null, filePath?: string }
 };
 
@@ -99,6 +100,7 @@ export class SetupPageRecipe extends PageRecipe {
       noPrvCreateOrgRule = false,
       enforceAttesterSubmitOrgRule = false,
       fillOnly = false,
+      checkEmailAliasIfPresent = false,
       noPubSubmitRule = false,
       key,
     }: ManualEnterOpts = {},
@@ -172,9 +174,11 @@ export class SetupPageRecipe extends PageRecipe {
     }
     await settingsPage.waitAll('@input-step2bmanualenter-save');
     if (fillOnly) {
-      expect(await settingsPage.isElementPresent('@container-for-import-key-email-alias')).to.equal(fillOnly);
-      expect(await settingsPage.isElementPresent('@input-email-alias-alias1examplecom')).to.equal(fillOnly);
-      expect(await settingsPage.isElementPresent('@input-email-alias-alias2examplecom')).to.equal(fillOnly);
+      if (checkEmailAliasIfPresent) {
+        expect(await settingsPage.isElementPresent('@container-for-import-key-email-alias')).to.equal(true);
+        expect(await settingsPage.isElementPresent('@input-email-alias-alias1examplecom')).to.equal(true);
+        expect(await settingsPage.isElementPresent('@input-email-alias-alias2examplecom')).to.equal(true);
+      }
       return;
     }
     try {
