@@ -9,6 +9,7 @@
     "noImplicitAny": true,
     "strictNullChecks": true,
     "module": "commonjs",
+    "esModuleInterop": true,
     "sourceMap": false,
     "outDir": "../build/tooling"
   },

@@ -9,6 +9,8 @@
     "noImplicitAny": true,
     "strictNullChecks": true,
     "noImplicitThis": true,
+    "moduleResolution": "node",
+    "allowSyntheticDefaultImports": true,
     "strictPropertyInitialization": false,
     "strictFunctionTypes": false,
     "sourceMap": false,
