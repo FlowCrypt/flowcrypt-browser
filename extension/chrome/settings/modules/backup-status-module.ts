@@ -81,6 +81,7 @@ export class BackupStatusModule extends ViewModule<BackupView> {
 
   private actionShowManualBackupHandler = async () => {
     const primaryKeys = await KeyStore.getAllWithOptionalPassPhrase(this.view.acctEmail);
+    console.log(primaryKeys.length);
     if (primaryKeys.length > 1) {
       this.renderPrvKeysBackupSelection(primaryKeys);
     }
@@ -96,7 +97,7 @@ export class BackupStatusModule extends ViewModule<BackupView> {
       <div class="mb-20">
         <div class="details">
           <label>
-            <input class="input_prvkey_backup_checkbox" type="checkbox" data-emails="${email}" data-fingerprint="${fingerprints}" />
+            <input class="input_prvkey_backup_checkbox" type="checkbox" data-emails="${email}" data-fingerprints="${fingerprints}" />
             <p class="m-0 display_inline_block">Email: <span class="prv_email">${email}</span> with fingerprint :</p>
             <p class="m-0"><span class="prv_fingerprint green">${fingerprints}</span></p>
           </label>
