@@ -643,7 +643,7 @@ ${testConstants.smimeCert}`), { instanceOf: Error, message: `Invalid PEM formatt
     ava.default('[unit][KeyUtil.parse] issuerAndSerialNumber of S/MIME certificate is constructed according to PKCS#7', async t => {
       const key = await KeyUtil.parse(testConstants.smimeCert);
       const buf = Buf.with((await MsgUtil.encryptMessage(
-        { pubkeys: [key], data: Buf.fromUtfStr('anything'), armor: true }) as PgpMsgMethod.EncryptX509Result).data);
+        { pubkeys: [key], data: Buf.fromUtfStr('anything'), armor: false }) as PgpMsgMethod.EncryptX509Result).data);
       const raw = buf.toRawBytesStr();
       expect(raw).to.include(key.issuerAndSerialNumber);
       t.pass();

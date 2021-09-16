@@ -291,12 +291,20 @@ export class KeyUtil {
   }
 
   public static choosePubsBasedOnKeyTypeCombinationForPartialSmimeSupport = (pubs: PubkeyResult[]): Key[] => {
-    const pgpPubs = pubs.filter(pub => pub.pubkey.type === 'openpgp');
-    const smimePubs = pubs.filter(pub => pub.pubkey.type === 'x509');
+    let pgpPubs = pubs.filter(pub => pub.pubkey.type === 'openpgp');
+    let smimePubs = pubs.filter(pub => pub.pubkey.type === 'x509');
     if (pgpPubs.length && smimePubs.length) {
-      let err = `Cannot use mixed OpenPGP (${pgpPubs.map(p => p.email).join(', ')}) and S/MIME (${smimePubs.map(p => p.email).join(', ')}) public keys yet.`;
-      err += 'If you need to email S/MIME recipient, do not add any OpenPGP recipient at the same time.';
-      throw new UnreportableError(err);
+      // get rid of some of my keys to resolve the conflict
+      // todo: how would it work with drafts?
+      if (smimePubs.every(pub => pub.isMine)) {
+        smimePubs = [];
+      } else if (pgpPubs.every(pub => pub.isMine)) {
+        pgpPubs = [];
+      } else {
+        let err = `Cannot use mixed OpenPGP (${pgpPubs.map(p => p.email).join(', ')}) and S/MIME (${smimePubs.map(p => p.email).join(', ')}) public keys yet.`;
+        err += 'If you need to email S/MIME recipient, do not add any OpenPGP recipient at the same time.';
+        throw new UnreportableError(err);
+      }
     }
     return pgpPubs.concat(smimePubs).map(p => p.pubkey);
   }

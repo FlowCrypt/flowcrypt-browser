@@ -37,7 +37,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
     } else if (this.richtext) { // rich text: PGP/MIME - https://tools.ietf.org/html/rfc3156#section-4
       // or S/MIME
       return await this.sendableRichTextMsg(newMsg, pubkeys, signingPrv);
-    } else { // simple text: PGP/Inline with attachments in separate files
+    } else { // simple text: PGP or S/MIME Inline with attachments in separate files // todo: check attachments for S/MIME
       return await this.sendableSimpleTextMsg(newMsg, pubkeys, signingPrv);
     }
   }
