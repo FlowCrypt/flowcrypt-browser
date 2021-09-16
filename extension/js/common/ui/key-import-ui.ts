@@ -74,7 +74,7 @@ export class KeyImportUi {
       } else if ((this as HTMLInputElement).value === 'backup') {
         window.location.href = Url.create('/chrome/settings/setup.htm', { acctEmail, parentTabId, action: 'add_key' });
       }
-      if (view !== undefined && view.submitKeyForAddrs.length > 0) {
+      if (view !== undefined && view.submitKeyForAddrs.length > 1) {
         $('.container_for_import_key_email_alias').css('visibility', 'visible');
       }
     });
@@ -84,16 +84,20 @@ export class KeyImportUi {
       $('#e_rememberPassphrase').prop('checked', true);
     }));
     $('.input_private_key').on('keyup paste change', Ui.event.handle(async target => {
+      $('.action_add_private_key').addClass('gray').attr('disabled');
       $('.input_email_alias').prop('checked', false);
       const { keys: [prv] } = await opgp.key.readArmored(String($(target).val()));
-      if (view !== undefined && view.submitKeyForAddrs.length > 0 && prv !== undefined) {
-        const users = prv.users;
-        for (const user of users) {
-          const userId = user.userId;
-          if (view.submitKeyForAddrs.includes(userId!.email)) {
-            const targetDom = $('.input_email_alias');
-            if (String($(targetDom).data('email')).trim() === String(userId!.email).trim()) {
-              $(targetDom).siblings().siblings().prop('checked', true);
+      if (prv !== undefined) {
+        $('.action_add_private_key').removeClass('gray').removeAttr('disabled');
+        if (view !== undefined && view.submitKeyForAddrs.length > 0) {
+          const users = prv.users;
+          for (const user of users) {
+            const userId = user.userId;
+            if (view.submitKeyForAddrs.includes(userId!.email)) {
+              const targetDom = $('.input_email_alias');
+              if (String($(targetDom).data('email')).trim() === String(userId!.email).trim()) {
+                $(targetDom).siblings().siblings().prop('checked', true);
+              }
             }
           }
         }
