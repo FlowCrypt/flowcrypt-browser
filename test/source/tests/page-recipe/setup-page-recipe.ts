@@ -172,9 +172,9 @@ export class SetupPageRecipe extends PageRecipe {
     }
     await settingsPage.waitAll('@input-step2bmanualenter-save');
     if (fillOnly) {
-      expect(await settingsPage.isElementPresent('@container-for-import-key-email-alias')).to.equal(true);
-      expect(await settingsPage.isElementPresent('@input-email-alias-alias1examplecom')).to.equal(true);
-      expect(await settingsPage.isElementPresent('@input-email-alias-alias2examplecom')).to.equal(true);
+      expect(await settingsPage.isElementPresent('@container-for-import-key-email-alias')).to.equal(fillOnly);
+      expect(await settingsPage.isElementPresent('@input-email-alias-alias1examplecom')).to.equal(fillOnly);
+      expect(await settingsPage.isElementPresent('@input-email-alias-alias2examplecom')).to.equal(fillOnly);
       return;
     }
     try {
