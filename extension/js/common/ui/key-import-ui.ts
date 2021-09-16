@@ -84,11 +84,11 @@ export class KeyImportUi {
       $('#e_rememberPassphrase').prop('checked', true);
     }));
     $('.input_private_key').on('keyup paste change', Ui.event.handle(async target => {
-      $('.action_add_private_key').addClass('gray').attr('disabled');
+      $('.action_add_private_key').addClass('btn_disabled').attr('disabled');
       $('.input_email_alias').prop('checked', false);
       const { keys: [prv] } = await opgp.key.readArmored(String($(target).val()));
       if (prv !== undefined) {
-        $('.action_add_private_key').removeClass('gray').removeAttr('disabled');
+        $('.action_add_private_key').removeClass('btn_disabled').removeAttr('disabled');
         if (view !== undefined && view.submitKeyForAddrs.length > 0) {
           const users = prv.users;
           for (const user of users) {
