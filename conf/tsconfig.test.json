@@ -8,6 +8,8 @@
     "alwaysStrict": true,
     "noImplicitAny": true,
     "strictNullChecks": true,
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
     "module": "commonjs",
     "sourceMap": true,
     "outDir": "../build/test"

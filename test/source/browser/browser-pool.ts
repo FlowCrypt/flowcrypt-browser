@@ -4,7 +4,7 @@ import { Util } from "../util";
 import { BrowserHandle } from './browser-handle';
 import { Consts } from '../test';
 import { TIMEOUT_DESTROY_UNEXPECTED_ALERT } from '.';
-import { launch } from "puppeteer";
+import puppeteer from "puppeteer";
 import { addDebugHtml, AvaContext, newWithTimeoutsFunc } from '../tests/tooling';
 
 class TimeoutError extends Error { }
@@ -43,7 +43,7 @@ export class BrowserPool {
       args.push('--allow-insecure-localhost');
     }
     const slowMo = this.isMock ? 60 : 60;
-    const browser = await launch({ args, ignoreHTTPSErrors: this.isMock, headless: false, devtools: false, slowMo });
+    const browser = await puppeteer.launch({ args, ignoreHTTPSErrors: this.isMock, headless: false, devtools: false, slowMo });
     const handle = new BrowserHandle(browser, this.semaphore, this.height, this.width);
     if (closeInitialPage) {
       try {
