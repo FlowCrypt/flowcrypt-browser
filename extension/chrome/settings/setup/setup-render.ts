@@ -152,7 +152,7 @@ export class SetupRenderModule {
       $('.addresses').append(`<label data-test="input-email-alias-${e.replace(/[^a-z0-9]+/g, '')}"><input type="checkbox" class="input_email_alias" data-email="${Xss.escape(e)}" />${Xss.escape(e)}</label><br/>`); // xss-escaped
     }
     $('.input_email_alias').click((event) => {
-      const email = $(event.target).data('email');
+      const email = String($(event.target).data('email'));
       if ($(event.target).prop('checked')) {
         if (!this.view.submitKeyForAddrs.includes(email)) {
           this.view.submitKeyForAddrs.push(email);
