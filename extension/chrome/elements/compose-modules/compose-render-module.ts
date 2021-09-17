@@ -29,10 +29,14 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
   public initComposeBox = async () => {
     if (this.view.isReplyBox) {
       this.responseMethod = 'reply';
+    } else { // compose
+      if (!this.view.draftId) {
+        this.view.draftId = this.view.draftModule.getLocalDraftId();
+      }
     }
     this.initComposeBoxStyles();
     if (this.view.draftId) {
-      const draftLoaded = await this.view.draftModule.initialDraftLoad(this.view.draftId);
+      const draftLoaded = await this.view.draftModule.initialDraftLoad();
       if (draftLoaded) {
         this.view.S.cached('triple_dot').remove(); // if it's draft, footer and quote should already be included in the draft
       }
