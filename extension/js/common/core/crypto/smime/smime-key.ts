@@ -95,6 +95,34 @@ export class SmimeKey {
     return { data: new Uint8Array(arr), type: 'smime' };
   }
 
+  // todo: move to a different file and merge with PgpArmor.cryptoMsgPrepareForDecrypt
+  // todo: | PkcsEncryptedData | PkcsSignedData ?
+  public static cryptoMsgPrepareForDecrypt = (encrypted: Uint8Array): forge.pkcs7.PkcsEnvelopedData => {
+    if (!encrypted.length) {
+      throw new Error('Encrypted message could not be parsed because no data was provided');
+    }
+    const utfChunk = new Buf(encrypted.slice(0, 100)).toUtfStr('ignore'); // ignore errors - this may not be utf string, just testing
+    if (!utfChunk.includes(PgpArmor.headers('pkcs7').begin)) {
+      throw new Error('Not implemented'); // todo: not armored? read from DER
+    }
+    const p7 = forge.pkcs7.messageFromPem(new Buf(encrypted).toUtfStr());
+    if (p7.type !== '1.2.840.113549.1.7.3') {
+      throw new Error('Not implemented');
+    }
+    return p7;
+  }
+
+  public static decryptMessage = (p7: forge.pkcs7.PkcsEnvelopedData, key: Key): Uint8Array => {
+    // todo: make sure private, decrypted ? and x509
+    const armoredPrivateKey = SmimeKey.getArmoredPrivateKey(key);
+    const decryptedPrivateKey = forge.pki.privateKeyFromPem(armoredPrivateKey);
+    // find a recipient by the issuer of a certificate
+    const recipient = p7.findRecipient(SmimeKey.getCertificate(key));
+    // decrypt
+    p7.decrypt(recipient, decryptedPrivateKey); // todo: exception handling
+    return p7.content ? Buf.fromRawBytesStr(p7.content.getBytes()) : new Buf();
+  }
+
   public static decryptKey = async (key: Key, passphrase: string, optionalBehaviorFlag?: 'OK-IF-ALREADY-DECRYPTED'): Promise<boolean> => {
     if (!key.isPrivate) {
       throw new Error("Nothing to decrypt in a public key");

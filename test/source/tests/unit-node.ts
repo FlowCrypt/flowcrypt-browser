@@ -1753,6 +1753,22 @@ jA==
       t.pass();
     });
 
+    ava.default('[unit][SmimeKey.decryptMessage] decrypts an armored S/MIME PKCS#7 message', async t => {
+      const p8 = readFileSync("test/samples/smime/human-unprotected-pem.txt", 'utf8');
+      const privateSmimeKey = await KeyUtil.parse(p8);
+      const publicSmimeKey = await KeyUtil.asPublicKey(privateSmimeKey);
+      const text = 'this is a text to be encrypted';
+      const buf = Buf.with((await MsgUtil.encryptMessage(
+        { pubkeys: [publicSmimeKey], data: Buf.fromUtfStr(text), armor: true }) as PgpMsgMethod.EncryptX509Result).data);
+      const encryptedMessage = buf.toRawBytesStr();
+      expect(encryptedMessage).to.include(PgpArmor.headers('pkcs7').begin);
+      const p7 = SmimeKey.cryptoMsgPrepareForDecrypt(buf);
+      const decrypted = SmimeKey.decryptMessage(p7, privateSmimeKey);
+      const decryptedMessage = Buf.with(decrypted).toRawBytesStr();
+      expect(decryptedMessage).to.equal(text);
+      t.pass();
+    });
+
     ava.default(`[unit][OpenPGPKey.parse] sets usableForEncryption and usableForSigning to false for RSA key less than 2048`, async t => {
       const rsa1024secret = `-----BEGIN PGP PRIVATE KEY BLOCK-----
 

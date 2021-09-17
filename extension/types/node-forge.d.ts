@@ -670,10 +670,14 @@ declare module "node-forge" {
     }
 
     namespace pkcs7 {
-        interface PkcsSignedData {
+        interface Pkcs7Data {
+            content?: util.ByteBuffer;
+            toAsn1(): asn1.Asn1;
+        }
+
+        interface PkcsSignedData extends Pkcs7Data {
             type: '1.2.840.113549.1.7.2';
-            content?: string | util.ByteBuffer;
-            contentInfo?: { value: any[] };
+            // contentInfo?: { value: any[] };
 
             addCertificate(certificate: pki.Certificate | string): void;
             addSigner(options: {
@@ -685,17 +689,16 @@ declare module "node-forge" {
             sign(options?: {
                 detached?: boolean
             }): void;
-            toAsn1(): asn1.Asn1;
         }
 
         function createSignedData(): PkcsSignedData;
 
-        interface PkcsEnvelopedData {
+        interface PkcsEnvelopedData extends Pkcs7Data {
             type: '1.2.840.113549.1.7.3';
-            content?: string | util.ByteBuffer;
             addRecipient(certificate: pki.Certificate): void;
+            findRecipient(cert: pki.Certificate): Recipient;
             encrypt(): void;
-            toAsn1(): asn1.Asn1;
+            decrypt(recipient: Recipient, privKey: pki.PrivateKey): void;
         }
 
         interface PkcsEncryptedData {
@@ -705,9 +708,20 @@ declare module "node-forge" {
             // todo: fromAsn1(obj);
         }
 
+        interface Recipient {
+            version: number,
+            issuer: any[],
+            serialNumber: string,
+            encryptedContent: {
+                algorithm: string,
+                parameter: string,
+                content: util.ByteBuffer
+            }
+        }
+
         function createEnvelopedData(): PkcsEnvelopedData;
         function messageFromPem(pem: pki.PEM): PkcsEnvelopedData | PkcsSignedData | PkcsEncryptedData;
-        function messageToPem(msg: PkcsEnvelopedData | PkcsSignedData | PkcsEncryptedData, maxline?: number): string;
+        function messageToPem(msg: PkcsEnvelopedData | PkcsSignedData | PkcsEncryptedData, maxline?: number): pki.PEM;
     }
 
     namespace pkcs5 {
