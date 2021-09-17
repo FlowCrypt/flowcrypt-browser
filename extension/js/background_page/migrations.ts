@@ -2,6 +2,8 @@
 
 'use strict';
 
+import { GmailRes } from '../common/api/email-provider/gmail/gmail-parser.js';
+import { storageLocalGetAll, storageLocalRemove } from '../common/browser/chrome.js';
 import { KeyInfo, KeyUtil } from '../common/core/crypto/key.js';
 import { SmimeKey } from '../common/core/crypto/smime/smime-key.js';
 import { ContactStore, ContactUpdate, Email, Pubkey } from '../common/platform/store/contact-store.js';
@@ -38,13 +40,27 @@ const addKeyInfoFingerprints = async () => {
 };
 
 export const migrateGlobal = async () => {
-  const globalStore = await GlobalStore.get(['key_info_store_fingerprints_added']);
+  const globalStore = await GlobalStore.get(['key_info_store_fingerprints_added', 'local_drafts']);
   if (!globalStore.key_info_store_fingerprints_added) {
     console.info('migrating KeyStorage to add fingerprints and emails of each key...');
     await addKeyInfoFingerprints();
     await GlobalStore.set({ key_info_store_fingerprints_added: true });
     console.info('done migrating');
   }
+  // migrate local drafts (#3337)
+  const storageLocal = await storageLocalGetAll();
+  if (typeof globalStore.local_drafts === 'undefined') {
+    globalStore.local_drafts = {};
+  }
+  for (const key of Object.keys(storageLocal)) {
+    if (key.startsWith('local-draft-')) {
+      console.log(key);
+      console.info(`migrating local draft ${key}`);
+      globalStore.local_drafts[key] = storageLocal[key] as GmailRes.GmailDraftGet;
+      await storageLocalRemove([key]);
+    }
+  }
+  await GlobalStore.set({ local_drafts: globalStore.local_drafts });
 };
 
 const processSmimeKey = (pubkey: Pubkey, tx: IDBTransaction, data: PubkeyMigrationData, next: () => void) => {

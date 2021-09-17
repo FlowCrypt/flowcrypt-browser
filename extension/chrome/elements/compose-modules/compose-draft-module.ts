@@ -90,7 +90,6 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
   public draftDelete = async () => {
     clearInterval(this.saveDraftInterval);
     await Ui.time.wait(() => !this.currentlySavingDraft ? true : undefined);
-    console.log(this.view.draftId);
     if (this.view.draftId) {
       try {
         if (this.isLocalDraftId(this.view.draftId)) {
