@@ -175,6 +175,19 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
     return `${this.localDraftPrefix}${this.view.threadId}`;
   }
 
+  public localDraftGet = async (): Promise<GmailRes.GmailDraftGet | undefined> => {
+    const draftId = this.getLocalDraftId();
+    const storage = await GlobalStore.get(['local_drafts']);
+    if (typeof storage.local_drafts === 'undefined') {
+      return undefined;
+    }
+    const localDraft = storage.local_drafts[draftId];
+    if (this.isValidLocalDraft(localDraft)) {
+      return localDraft;
+    }
+    return undefined;
+  }
+
   private draftSetPrefixIntoBody = (sendable: SendableMsg) => {
     let prefix: string;
     if (this.view.threadId) { // reply draft
@@ -222,19 +235,6 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
     storage.local_drafts[draftId] = { id: '', message: { id: '', historyId: '', raw: Buf.fromUtfStr(mimeMsg).toBase64UrlStr(), threadId } };
     await GlobalStore.set(storage);
     return draftId;
-  }
-
-  private localDraftGet = async (): Promise<GmailRes.GmailDraftGet | undefined> => {
-    const draftId = this.getLocalDraftId();
-    const storage = await GlobalStore.get(['local_drafts']);
-    if (typeof storage.local_drafts === 'undefined') {
-      return undefined;
-    }
-    const localDraft = storage.local_drafts[draftId];
-    if (this.isValidLocalDraft(localDraft)) {
-      return localDraft;
-    }
-    return undefined;
   }
 
   private localDraftRemove = async () => {
