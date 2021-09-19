@@ -52,15 +52,18 @@ export const migrateGlobal = async () => {
   if (typeof globalStore.local_drafts === 'undefined') {
     globalStore.local_drafts = {};
   }
+  const oldDrafts = [];
   for (const key of Object.keys(storageLocal)) {
     if (key.startsWith('local-draft-')) {
-      console.log(key);
       console.info(`migrating local draft ${key}`);
       globalStore.local_drafts[key] = storageLocal[key] as GmailRes.GmailDraftGet;
-      await storageLocalRemove([key]);
+      oldDrafts.push(key);
     }
   }
-  await GlobalStore.set({ local_drafts: globalStore.local_drafts });
+  if (oldDrafts.length) {
+    await GlobalStore.set({ local_drafts: globalStore.local_drafts });
+    await storageLocalRemove(oldDrafts);
+  }
 };
 
 const processSmimeKey = (pubkey: Pubkey, tx: IDBTransaction, data: PubkeyMigrationData, next: () => void) => {
