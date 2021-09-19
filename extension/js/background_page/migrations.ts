@@ -48,21 +48,22 @@ export const migrateGlobal = async () => {
     console.info('done migrating');
   }
   // migrate local drafts (#3337)
-  const storageLocal = await storageLocalGetAll();
   if (typeof globalStore.local_drafts === 'undefined') {
+    console.info('migrating local drafts in old format...');
     globalStore.local_drafts = {};
-  }
-  const oldDrafts = [];
-  for (const key of Object.keys(storageLocal)) {
-    if (key.startsWith('local-draft-')) {
-      console.info(`migrating local draft ${key}`);
-      globalStore.local_drafts[key] = storageLocal[key] as GmailRes.GmailDraftGet;
-      oldDrafts.push(key);
+    const storageLocal = await storageLocalGetAll();
+    const oldDrafts = [];
+    for (const key of Object.keys(storageLocal)) {
+      if (key.startsWith('local-draft-')) {
+        console.info(`migrating local draft ${key}`);
+        globalStore.local_drafts[key] = storageLocal[key] as GmailRes.GmailDraftGet;
+        oldDrafts.push(key);
+      }
     }
-  }
-  if (oldDrafts.length) {
-    await GlobalStore.set({ local_drafts: globalStore.local_drafts });
-    await storageLocalRemove(oldDrafts);
+    if (oldDrafts.length) {
+      await GlobalStore.set({ local_drafts: globalStore.local_drafts });
+      await storageLocalRemove(oldDrafts);
+    }
   }
 };
 
