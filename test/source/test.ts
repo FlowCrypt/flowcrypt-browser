@@ -156,14 +156,18 @@ ava.after.always('send debug info if any', async t => {
   if (debugHtmlAttachments.length) {
     console.info(`FAIL ID ${testId}`);
     standaloneTestTimeout(t, consts.TIMEOUT_SHORT, t.title);
+    console.info(`There are ${debugHtmlAttachments.length} debug files.`);
     const debugArtifactDir = realpathSync(`${__dirname}/..`) + "/debugArtifacts";
     mkdirSync(debugArtifactDir);
     for (let i = 0; i < debugHtmlAttachments.length; i++) {
       // const subject = `${testId} ${i + 1}/${debugHtmlAttachments.length}`;
       // await FlowCryptApi.hookCiDebugEmail(subject, debugHtmlAttachments[i]);
-      const filePath = `${debugArtifactDir}/debugHtmlAttachment-${i}.html}`;
+      const fileName = `debugHtmlAttachment-${i}.html`;
+      const filePath = `${debugArtifactDir}/${fileName}`;
+      console.info(`Writing debug file ${fileName}`);
       writeFileSync(filePath, debugHtmlAttachments[i]);
     }
+    console.info('All debug files written.');
   } else {
     console.info(`no fails to debug`);
   }
