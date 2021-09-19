@@ -20,7 +20,7 @@ import { defineUnitBrowserTests } from './tests/unit-browser';
 import { mock } from './mock';
 import { mockBackendData } from './mock/backend/backend-endpoints';
 import { TestUrls } from './browser/test-urls';
-import { realpathSync, writeFileSync } from 'fs';
+import { mkdirSync, realpathSync, writeFileSync } from 'fs';
 // import fileSize from 'filesize';
 
 export const { testVariant, testGroup, oneIfNotPooled, buildDir, isMock } = getParsedCliParams();
@@ -156,7 +156,8 @@ ava.after.always('send debug info if any', async t => {
   if (debugHtmlAttachments.length) {
     console.info(`FAIL ID ${testId}`);
     standaloneTestTimeout(t, consts.TIMEOUT_SHORT, t.title);
-    const debugArtifactDir = realpathSync(`${__dirname}/..`) + "/tmp";
+    const debugArtifactDir = realpathSync(`${__dirname}/..`) + "/debugArtifacts";
+    mkdirSync(debugArtifactDir);
     for (let i = 0; i < debugHtmlAttachments.length; i++) {
       // const subject = `${testId} ${i + 1}/${debugHtmlAttachments.length}`;
       // await FlowCryptApi.hookCiDebugEmail(subject, debugHtmlAttachments[i]);

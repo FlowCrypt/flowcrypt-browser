@@ -83,6 +83,6 @@ blocks:
         on_fail:
           commands:
             - |
-              if [ -f test/tmp/debugHtmlAttachment-0.html ]; then
-                artifact push job test/tmp/debugHtmlAttachment-*.html
+              if [ -f build/test/test/debugArtifacts/debugHtmlAttachment-0.html ]; then
+                artifact push job build/test/test/debugArtifacts/debugHtmlAttachment-*.html
               fi
