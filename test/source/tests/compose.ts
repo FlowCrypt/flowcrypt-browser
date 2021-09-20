@@ -1045,6 +1045,23 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
 
     ava.todo('compose - reply - skip click prompt');
 
+    ava.default('send with signed S/MIME message', testWithBrowser(undefined, async (t, browser) => {
+      const acctEmail = 'flowcrypt.test.key.imported@gmail.com';
+      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
+      await SetupPageRecipe.setupSmimeAccount(settingsPage, {
+        title: 's/mime pkcs12 unprotected key',
+        filePath: 'test/samples/smime/human-unprotected-PKCS12.p12',
+        armored: null, // tslint:disable-line:no-null-keyword
+        passphrase: 'test pp to encrypt unprotected key',
+        longid: null // tslint:disable-line:no-null-keyword
+      });
+      await settingsPage.close();
+      const composePage = await ComposePageRecipe.openStandalone(t, browser, acctEmail);
+      await ComposePageRecipe.fillMsg(composePage, { to: 'smime@recipient.com' }, 'send signed S/MIME without attachment', { encrypt: false, sign: true });
+      // await pastePublicKeyManually(composeFrame, inboxPage, 'smime@recipient.com', testConstants.smimeCert);
+      await composePage.waitAndClick('@action-send', { delay: 2 });
+    }));
+
     ava.default('send with single S/MIME cert', testWithBrowser('ci.tests.gmail', async (t, browser) => {
       const inboxPage = await browser.newPage(t, TestUrls.extensionInbox('ci.tests.gmail@flowcrypt.test'));
       const composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);

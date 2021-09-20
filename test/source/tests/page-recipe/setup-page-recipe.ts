@@ -1,6 +1,6 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
-import { Config, Util } from '../../util';
+import { Config, TestKeyInfoWithFilepath, Util } from '../../util';
 
 import { ControllablePage } from '../../browser';
 import { PageRecipe } from './abstract-page-recipe';
@@ -19,7 +19,7 @@ type ManualEnterOpts = {
   enforceAttesterSubmitOrgRule?: boolean,
   noPubSubmitRule?: boolean,
   fillOnly?: boolean,
-  key?: { title: string, passphrase: string, armored: string | null, longid: string | null, filePath?: string }
+  key?: TestKeyInfoWithFilepath
 };
 
 type CreateKeyOpts = {
@@ -261,6 +261,15 @@ export class SetupPageRecipe extends PageRecipe {
       await SettingsPageRecipe.ready(settingsPage);
     }
   }
+
+  public static setupSmimeAccount = async (settingsPage: ControllablePage, key: TestKeyInfoWithFilepath) => {
+    await SetupPageRecipe.manualEnter(settingsPage, key.title, { fillOnly: true, submitPubkey: false, usedPgpBefore: false, key });
+    await settingsPage.waitAndClick('@input-step2bmanualenter-save', { delay: 1 });
+    await Util.sleep(1);
+    await settingsPage.waitAndRespondToModal('confirm', 'confirm', 'Using S/MIME as the only key on account is experimental.');
+    await settingsPage.waitAndClick('@action-step4done-account-settings', { delay: 1 });
+    await SettingsPageRecipe.ready(settingsPage);
+  };
 
   private static createBegin = async (settingsPage: ControllablePage, keyTitle: string, { key, usedPgpBefore = false }: { key?: { passphrase: string }, usedPgpBefore?: boolean } = {}) => {
     const k = key || Config.key(keyTitle);

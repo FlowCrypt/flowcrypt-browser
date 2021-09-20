@@ -683,8 +683,8 @@ declare module "node-forge" {
             addSigner(options: {
                 key: string;
                 certificate: pki.Certificate | string;
-                digestAlgorithm: string;
-                authenticatedAttributes: { type: string; value?: string }[];
+                digestAlgorithm?: string;
+                authenticatedAttributes?: { type: string; value?: string }[];
             }): void;
             sign(options?: {
                 detached?: boolean

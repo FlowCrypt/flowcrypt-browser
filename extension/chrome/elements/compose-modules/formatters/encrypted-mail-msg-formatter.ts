@@ -110,7 +110,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
       const mimeEncodedPlainMessage = await Mime.encode(msgBody, { Subject: newMsg.subject }, attachments);
       const encryptedMessage = await SmimeKey.encryptMessage({ pubkeys: x509certs, data: Buf.fromUtfStr(mimeEncodedPlainMessage), armor: false });
       const data = encryptedMessage.data;
-      return await SendableMsg.createSMime(this.acctEmail, this.headers(newMsg), data, { isDraft: this.isDraft });
+      return await SendableMsg.createSMimeEncrypted(this.acctEmail, this.headers(newMsg), data, { isDraft: this.isDraft });
     } else { // openpgp
       const attachments: Attachment[] = this.isDraft ? [] : await this.view.attachmentsModule.attachment.collectEncryptAttachments(pubs);
       const encrypted = await this.encryptDataArmor(Buf.fromUtfStr(newMsg.plaintext), undefined, pubs, signingPrv);
@@ -119,6 +119,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
   }
 
   private sendableRichTextMsg = async (newMsg: NewMsgData, pubs: PubkeyResult[], signingPrv?: Key) => {
+    // todo: pubs.type === 'x509'
     const plainAttachments = this.isDraft ? [] : await this.view.attachmentsModule.attachment.collectAttachments();
     if (this.isDraft) { // this patch is needed as gmail makes it hard (or impossible) to render messages saved as https://tools.ietf.org/html/rfc3156
       const pgpMimeToEncrypt = await Mime.encode({ 'text/plain': newMsg.plaintext, 'text/html': newMsg.plainhtml }, { Subject: newMsg.subject }, plainAttachments);

@@ -155,6 +155,21 @@ class SmimeEncryptedMessageStrategy implements ITestMsgStrategy {
   }
 }
 
+class SmimeSignedMessageStrategy implements ITestMsgStrategy {
+  public test = async (mimeMsg: ParsedMail) => {
+    expect((mimeMsg.headers.get('content-type') as StructuredHeader).value).to.equal('application/pkcs7-mime');
+    expect((mimeMsg.headers.get('content-type') as StructuredHeader).params.name).to.equal('smime.p7m');
+    expect((mimeMsg.headers.get('content-type') as StructuredHeader).params['smime-type']).to.equal('signed-data');
+    expect(mimeMsg.headers.get('content-transfer-encoding')).to.equal('base64');
+    expect((mimeMsg.headers.get('content-disposition') as StructuredHeader).value).to.equal('attachment');
+    expect((mimeMsg.headers.get('content-disposition') as StructuredHeader).params.filename).to.equal('smime.p7m');
+    expect(mimeMsg.headers.get('content-description')).to.equal('S/MIME Signed Message');
+    expect(mimeMsg.attachments!.length).to.equal(1);
+    expect(mimeMsg.attachments![0].contentType).to.equal('application/pkcs7-mime');
+    expect(mimeMsg.attachments![0].filename).to.equal('smime.p7m');
+    expect(mimeMsg.attachments![0].size).to.be.greaterThan(300);
+  }
+}
 export class TestBySubjectStrategyContext {
   private strategy: ITestMsgStrategy;
 
@@ -183,6 +198,8 @@ export class TestBySubjectStrategyContext {
       this.strategy = new SmimeEncryptedMessageStrategy();
     } else if (subject.includes('send with S/MIME attachment')) {
       this.strategy = new SmimeEncryptedMessageStrategy();
+    } else if (subject.includes('send signed S/MIME without attachment')) {
+      this.strategy = new SmimeSignedMessageStrategy();
     } else {
       throw new UnsuportableStrategyError(`There isn't any strategy for this subject: ${subject}`);
     }

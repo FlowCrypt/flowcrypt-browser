@@ -87,12 +87,7 @@ export class SmimeKey {
     } else {
       rawString = forge.asn1.toDer(p7.toAsn1()).getBytes();
     }
-    // todo: fromRawString
-    const arr = [];
-    for (let i = 0, j = rawString.length; i < j; ++i) {
-      arr.push(rawString.charCodeAt(i));
-    }
-    return { data: new Uint8Array(arr), type: 'smime' };
+    return { data: Buf.fromRawBytesStr(rawString), type: 'smime' };
   }
 
   // todo: move to a different file and merge with PgpArmor.cryptoMsgPrepareForDecrypt
@@ -121,6 +116,28 @@ export class SmimeKey {
     // decrypt
     p7.decrypt(recipient, decryptedPrivateKey); // todo: exception handling
     return p7.content ? Buf.fromRawBytesStr(p7.content.getBytes()) : new Buf();
+  }
+
+  // signs binary data and returns DER-encoded PKCS#7 message
+  public static sign = async (signingPrivate: Key, data: Uint8Array): Promise<Uint8Array> => {
+    // todo: !isFullyDecrypted
+    const p7 = forge.pkcs7.createSignedData();
+    p7.addSigner({
+      certificate: SmimeKey.getCertificate(signingPrivate),
+      key: SmimeKey.getArmoredPrivateKey(signingPrivate),
+      // digestAlgorithm: forge.pki.oids.sha1,
+      /*
+      authenticatedAttributes: [{
+        type: forge.pki.oids.contentType,
+        value: forge.pki.oids.data
+      }, {
+        type: forge.pki.oids.messageDigest
+      }] */
+    });
+    p7.content = forge.util.createBuffer(data);
+    p7.sign();
+    const derBuffer = forge.asn1.toDer(p7.toAsn1()).getBytes();
+    return Buf.fromRawBytesStr(derBuffer);
   }
 
   public static decryptKey = async (key: Key, passphrase: string, optionalBehaviorFlag?: 'OK-IF-ALREADY-DECRYPTED'): Promise<boolean> => {

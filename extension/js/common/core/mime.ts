@@ -34,13 +34,13 @@ export type MimeContent = {
   bcc: string[];
 };
 
-export type MimeEncodeType = 'pgpMimeEncrypted' | 'pgpMimeSigned' | 'smimeEncrypted' | undefined;
+export type MimeEncodeType = 'pgpMimeEncrypted' | 'pgpMimeSigned' | 'smimeEncrypted' | 'smimeSigned' | undefined;
 export type RichHeaders = Dict<string | string[]>;
 export type SendableMsgBody = {
   [key: string]: string | Buf | undefined;
   'text/plain'?: string;
   'text/html'?: string;
-  'encrypted/buf'?: Buf;
+  'pkcs7/buf'?: Buf; // DER-encoded PKCS#7 message
 };
 export type MimeProccesedMsg = {
   rawSignedContent: string | undefined,
@@ -220,8 +220,8 @@ export class Mime {
     return rootNode.build(); // tslint:disable-line:no-unsafe-any
   }
 
-  public static encodeSmime = async (body: Uint8Array, headers: RichHeaders): Promise<string> => {
-    const rootContentType = 'application/pkcs7-mime; name="smime.p7m"; smime-type=enveloped-data';
+  public static encodeSmime = async (body: Uint8Array, headers: RichHeaders, type: 'enveloped-data' | 'signed-data'): Promise<string> => {
+    const rootContentType = `application/pkcs7-mime; name="smime.p7m"; smime-type=${type}`;
     const rootNode = new MimeBuilder(rootContentType, { includeBccInHeader: true }); // tslint:disable-line:no-unsafe-any
     for (const key of Object.keys(headers)) {
       rootNode.addHeader(key, headers[key]); // tslint:disable-line:no-unsafe-any
@@ -229,7 +229,11 @@ export class Mime {
     rootNode.setContent(body); // tslint:disable-line:no-unsafe-any
     rootNode.addHeader('Content-Transfer-Encoding', 'base64'); // tslint:disable-line:no-unsafe-any
     rootNode.addHeader('Content-Disposition', 'attachment; filename="smime.p7m"'); // tslint:disable-line:no-unsafe-any
-    rootNode.addHeader('Content-Description', 'S/MIME Encrypted Message'); // tslint:disable-line:no-unsafe-any
+    let contentDescription = 'S/MIME Encrypted Message'; // todo: check
+    if (type === 'signed-data') {
+      contentDescription = 'S/MIME Signed Message'; // todo: check
+    }
+    rootNode.addHeader('Content-Description', contentDescription); // tslint:disable-line:no-unsafe-any
     return rootNode.build(); // tslint:disable-line:no-unsafe-any
   }
 

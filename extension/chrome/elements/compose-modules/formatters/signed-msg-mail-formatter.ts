@@ -9,14 +9,24 @@ import { NewMsgData } from '../compose-types.js';
 import { Key } from '../../../../js/common/core/crypto/key.js';
 import { MsgUtil } from '../../../../js/common/core/crypto/pgp/msg-util.js';
 import { SendableMsg } from '../../../../js/common/api/email-provider/sendable-msg.js';
-import { SendableMsgBody } from '../../../../js/common/core/mime.js';
+import { Mime, SendableMsgBody } from '../../../../js/common/core/mime.js';
 import { ContactStore } from '../../../../js/common/platform/store/contact-store.js';
+import { SmimeKey } from '../../../../js/common/core/crypto/smime/smime-key.js';
+import { Buf } from '../../../../js/common/core/buf.js';
 
 export class SignedMsgMailFormatter extends BaseMailFormatter {
 
   public sendableMsg = async (newMsg: NewMsgData, signingPrv: Key): Promise<SendableMsg> => {
     this.view.errModule.debug(`SignedMsgMailFormatter.sendableMsg signing with key: ${signingPrv.id}`);
     const attachments = this.isDraft ? [] : await this.view.attachmentsModule.attachment.collectAttachments();
+    if (signingPrv.type === 'x509') {
+      // todo: attachments, richtext
+      const msgBody = this.richtext ? { 'text/plain': newMsg.plaintext, 'text/html': newMsg.plainhtml } : { 'text/plain': newMsg.plaintext };
+      const mimeEncodedPlainMessage = await Mime.encode(msgBody, { Subject: newMsg.subject }, attachments);
+      const data = await SmimeKey.sign(signingPrv, Buf.fromUtfStr(mimeEncodedPlainMessage));
+      // todo: isDraft?
+      return await SendableMsg.createSMimeSigned(this.acctEmail, this.headers(newMsg), data);
+    }
     if (!this.richtext) {
       // Folding the lines or GMAIL WILL RAPE THE TEXT, regardless of what encoding is used
       // https://mathiasbynens.be/notes/gmail-plain-text applies to API as well
