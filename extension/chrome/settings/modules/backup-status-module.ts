@@ -10,9 +10,9 @@ import { ApiErr } from '../../../js/common/api/shared/api-error.js';
 import { Browser } from '../../../js/common/browser/browser.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Backups } from '../../../js/common/api/email-provider/email-provider-api.js';
-import { KeyInfo } from '../../../js/common/core/crypto/key.js';
+import { ExtendedKeyInfo, KeyInfo } from '../../../js/common/core/crypto/key.js';
 import { Str } from '../../../js/common/core/common.js';
-
+import { KeyStore } from '../../../js/common/platform/store/key-store.js';
 export class BackupStatusModule extends ViewModule<BackupView> {
 
   public setHandlers = () => { // is run after checkAndRenderBackupStatus, which renders (some of) these fields first
@@ -47,8 +47,7 @@ export class BackupStatusModule extends ViewModule<BackupView> {
       Xss.sanitizeRender('#module_status .container', '<button class="button long green action_go_manual">BACK UP MY KEY</button>');
     } else if (backups.longids.importedNotBackedUp.length) {
       $('.status_summary').text('Some of your keys have not been backed up.');
-      // todo - this would not yet work because currently only backing up first key
-      // Xss.sanitizeRender('#module_status .container', '<button class="button long green action_go_manual">BACK UP MY KEY</button>');
+      Xss.sanitizeRender('#module_status .container', '<button class="button long green action_go_manual">BACKUP ALL KEYS</button>');
     } else if (backups.longids.backupsNotImported.length) {
       $('.status_summary').text('Some of your backups have not been loaded. This may cause incoming encrypted email to not be readable.');
       Xss.sanitizeRender('#module_status .container', '<button class="button long green action_go_add_key">IMPORT MISSING BACKUPS</button>');
@@ -81,8 +80,42 @@ export class BackupStatusModule extends ViewModule<BackupView> {
   }
 
   private actionShowManualBackupHandler = async () => {
+    const primaryKeys = await KeyStore.getAllWithOptionalPassPhrase(this.view.acctEmail);
+    console.log(primaryKeys.length);
+    if (primaryKeys.length > 1) {
+      this.renderPrvKeysBackupSelection(primaryKeys);
+    }
     this.view.displayBlock('module_manual');
     $('h1').text('Back up your private key');
+  }
+
+  private renderPrvKeysBackupSelection = (primaryKeys: ExtendedKeyInfo[]) => {
+    for (const primaryKi of primaryKeys) {
+      const email = Xss.escape(String(primaryKi.emails));
+      const fingerprints = Xss.escape(String(primaryKi.fingerprints));
+      const dom = `
+      <div class="mb-20">
+        <div class="details">
+          <label>
+            <input class="input_prvkey_backup_checkbox" type="checkbox" data-emails="${email}" data-fingerprints="${fingerprints}" />
+            <p class="m-0 display_inline_block">Email: <span class="prv_email">${email}</span> with fingerprint :</p>
+            <p class="m-0"><span class="prv_fingerprint green">${fingerprints}</span></p>
+          </label>
+        </div>
+      </div>
+      `.trim();
+      $('.key_backup_selection').append(dom); // xss-escaped
+    }
+    $('.input_prvkey_backup_checkbox').click((event) => {
+      const email = String($(event.target).data('emails')).trim();
+      const fingerprint = String($(event.target).data('fingerprints')).split(',');
+      if ($(event.target).prop('checked')) {
+        this.view.prvKeysToManuallyBackup.push({ 'email': email, 'fingerprints': fingerprint });
+      } else {
+        this.view.prvKeysToManuallyBackup.splice(this.view.prvKeysToManuallyBackup.findIndex(prvIdentity => prvIdentity.fingerprints === fingerprint), 1);
+      }
+    });
+    $('#key_backup_selection_container').show();
   }
 
   private goTo = async (page: string) => {

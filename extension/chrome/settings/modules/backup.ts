@@ -15,7 +15,10 @@ import { BackupManualActionModule as BackupManualModule } from './backup-manual-
 import { BackupAutomaticModule } from './backup-automatic-module.js';
 import { Lang } from '../../../js/common/lang.js';
 import { AcctStore, EmailProvider } from '../../../js/common/platform/store/acct-store.js';
-
+interface PrvKeyIdentity {
+  email: string,
+  fingerprints: string[]
+}
 export class BackupView extends View {
 
   public readonly acctEmail: string;
@@ -31,6 +34,7 @@ export class BackupView extends View {
   public emailProvider: EmailProvider = 'gmail';
   public orgRules!: OrgRules;
   public tabId!: string;
+  public prvKeysToManuallyBackup: PrvKeyIdentity[];
 
   private readonly blocks = ['loading', 'module_status', 'module_manual'];
 
@@ -48,6 +52,7 @@ export class BackupView extends View {
     this.statusModule = new BackupStatusModule(this);
     this.manualModule = new BackupManualModule(this);
     this.automaticModule = new BackupAutomaticModule(this);
+    this.prvKeysToManuallyBackup = [];
   }
 
   public render = async () => {

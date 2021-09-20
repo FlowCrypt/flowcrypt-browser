@@ -8,7 +8,7 @@ import { BackupView } from './backup.js';
 import { Attachment } from '../../../js/common/core/attachment.js';
 import { SendableMsg } from '../../../js/common/api/email-provider/sendable-msg.js';
 import { GMAIL_RECOVERY_EMAIL_SUBJECTS } from '../../../js/common/core/const.js';
-import { KeyInfo, KeyUtil } from '../../../js/common/core/crypto/key.js';
+import { KeyInfo, KeyUtil, ExtendedKeyInfo } from '../../../js/common/core/crypto/key.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { ApiErr } from '../../../js/common/api/shared/api-error.js';
 import { BrowserMsg, Bm } from '../../../js/common/browser/browser-msg.js';
@@ -54,16 +54,24 @@ export class BackupManualActionModule extends ViewModule<BackupView> {
   }
 
   private actionManualBackupHandler = async () => {
+    const primaryKeyToBackup = Array();
+    if (this.view.prvKeysToManuallyBackup.length <= 0) {
+      primaryKeyToBackup.push(await KeyStore.getFirstRequired(this.view.acctEmail));
+    }
     const selected = $('input[type=radio][name=input_backup_choice]:checked').val();
-    const primaryKi = await KeyStore.getFirstRequired(this.view.acctEmail);
-    if (! await this.isPrivateKeyEncrypted(primaryKi)) {
-      await Ui.modal.error('Sorry, cannot back up private key because it\'s not protected with a pass phrase.');
-      return;
+    for (const key of this.view.prvKeysToManuallyBackup) {
+      primaryKeyToBackup.push((await KeyStore.get(key.email, key.fingerprints))[0]);
+    }
+    for (const primaryKi of primaryKeyToBackup) {
+      if (! await this.isPrivateKeyEncrypted((primaryKi as KeyInfo))) {
+        await Ui.modal.error('Sorry, cannot back up private key because it\'s not protected with a pass phrase.');
+        return;
+      }
     }
     if (selected === 'inbox') {
-      await this.backupOnEmailProviderAndUpdateUi(primaryKi);
+      await this.backupOnEmailProviderAndUpdateUi((primaryKeyToBackup as ExtendedKeyInfo[]));
     } else if (selected === 'file') {
-      await this.backupAsFile(primaryKi);
+      await this.backupAsFile((primaryKeyToBackup as ExtendedKeyInfo[]));
     } else if (selected === 'print') {
       await this.backupByBrint();
     } else {
@@ -75,29 +83,34 @@ export class BackupManualActionModule extends ViewModule<BackupView> {
     return new Attachment({ name: `flowcrypt-backup-${this.view.acctEmail.replace(/[^A-Za-z0-9]+/g, '')}.asc`, type: 'application/pgp-keys', data: Buf.fromUtfStr(armoredKey) });
   }
 
-  private backupOnEmailProviderAndUpdateUi = async (primaryKi: KeyInfo) => {
-    const pp = await PassphraseStore.get(this.view.acctEmail, primaryKi.fingerprints[0]);
+  private backupOnEmailProviderAndUpdateUi = async (primaryKeys: ExtendedKeyInfo[]) => {
+    // todo - identify currently use primary and its fingerprint to encrypt the backup using it.
+    const pp = await PassphraseStore.get(this.view.acctEmail, primaryKeys[0].fingerprints[0]);
     if (!this.view.parentTabId) {
       await Ui.modal.error(`Missing parentTabId. Please restart your browser and try again.`);
       return;
     }
-    if (!pp) {
-      BrowserMsg.send.passphraseDialog(this.view.parentTabId, { type: 'backup', longids: [primaryKi.longid] });
-      if (! await PassphraseStore.waitUntilPassphraseChanged(this.view.acctEmail, [primaryKi.longid], 1000, this.ppChangedPromiseCancellation)) {
+    const prvKeysToBackup = [];
+    for (const primaryKi of primaryKeys) {
+      if (!pp) {
+        BrowserMsg.send.passphraseDialog(this.view.parentTabId, { type: 'backup', longids: [primaryKi.longid] });
+        if (! await PassphraseStore.waitUntilPassphraseChanged(this.view.acctEmail, [primaryKi.longid], 1000, this.ppChangedPromiseCancellation)) {
+          return;
+        }
+        await this.backupOnEmailProviderAndUpdateUi(primaryKeys);
         return;
       }
-      await this.backupOnEmailProviderAndUpdateUi(primaryKi);
-      return;
-    }
-    if (!this.isPassPhraseStrongEnough(primaryKi, pp)) {
-      await Ui.modal.warning('Your key is not protected with strong pass phrase.\n\nYou should change your pass phrase.');
-      window.location.href = Url.create('/chrome/settings/modules/change_passphrase.htm', { acctEmail: this.view.acctEmail, parentTabId: this.view.parentTabId });
-      return;
+      if (!this.isPassPhraseStrongEnough(primaryKi, pp)) {
+        await Ui.modal.warning('Your key is not protected with strong pass phrase.\n\nYou should change your pass phrase.');
+        window.location.href = Url.create('/chrome/settings/modules/change_passphrase.htm', { acctEmail: this.view.acctEmail, parentTabId: this.view.parentTabId });
+        return;
+      }
+      prvKeysToBackup.push(primaryKi.private);
     }
     const origBtnText = this.proceedBtn.text();
     Xss.sanitizeRender(this.proceedBtn, Ui.spinner('white'));
     try {
-      await this.doBackupOnEmailProvider(primaryKi.private);
+      await this.doBackupOnEmailProvider(prvKeysToBackup.join('\n'));
     } catch (e) {
       if (ApiErr.isNetErr(e)) {
         return await Ui.modal.warning('Need internet connection to finish. Please click the button again to retry.');
@@ -114,8 +127,12 @@ export class BackupManualActionModule extends ViewModule<BackupView> {
     await this.view.renderBackupDone();
   }
 
-  private backupAsFile = async (primaryKi: KeyInfo) => { // todo - add a non-encrypted download option
-    const attachment = this.asBackupFile(primaryKi.private);
+  private backupAsFile = async (primaryKeys: ExtendedKeyInfo[]) => { // todo - add a non-encrypted download option
+    const prvKeysToBackup = [];
+    for (const primaryKi of primaryKeys) {
+      prvKeysToBackup.push(primaryKi.private);
+    }
+    const attachment = this.asBackupFile(prvKeysToBackup.join('\n'));
     Browser.saveToDownloads(attachment);
     await Ui.modal.info('Downloading private key backup file..');
     await this.view.renderBackupDone();
