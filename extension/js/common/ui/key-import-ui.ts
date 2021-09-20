@@ -89,14 +89,14 @@ export class KeyImportUi {
       const { keys: [prv] } = await opgp.key.readArmored(String($(target).val()));
       if (prv !== undefined) {
         $('.action_add_private_key').removeClass('btn_disabled').removeAttr('disabled');
-        if (view !== undefined && view.submitKeyForAddrs.length > 0) {
+        if (view !== undefined && view.submitKeyForAddrs.length > 1) {
           const users = prv.users;
           for (const user of users) {
             const userId = user.userId;
             if (view.submitKeyForAddrs.includes(userId!.email)) {
               const targetDom = $('.input_email_alias');
               if (String($(targetDom).data('email')).trim() === String(userId!.email).trim()) {
-                $(targetDom).siblings().siblings().prop('checked', true);
+                $(targetDom).prop('checked', true);
               }
             }
           }
