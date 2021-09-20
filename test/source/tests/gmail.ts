@@ -1,6 +1,7 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
 import * as ava from 'ava';
+import { Page } from 'puppeteer';
 
 import { BrowserHandle, ControllablePage } from './../browser';
 import { TestVariant, Util } from './../util';
@@ -40,13 +41,21 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       }
     };
 
-    const createSecureDraft = async (t: AvaContext, browser: BrowserHandle, gmailPage: ControllablePage, content: string) => {
+    const createSecureDraft = async (t: AvaContext, browser: BrowserHandle, gmailPage: ControllablePage, content: string, offline = false) => {
       const urls = await gmailPage.getFramesUrls(['/chrome/elements/compose.htm']);
       expect(urls.length).to.equal(1);
       const composeBox = await browser.newPage(t, urls[0]);
+      if (offline) {
+        await (composeBox.target as Page).setOfflineMode(true); // go offline mode
+      }
       await Util.sleep(3); // the draft isn't being saved if start typing without this delay
       await composeBox.type('@input-body', content);
-      await composeBox.verifyContentIsPresentContinuously('@send-btn-note', 'Saved');
+      if (offline) {
+        await ComposePageRecipe.waitWhenDraftIsSavedLocally(composeBox);
+        await (composeBox.target as Page).setOfflineMode(true); // go offline mode
+      } else {
+        await ComposePageRecipe.waitWhenDraftIsSaved(composeBox);
+      }
       await composeBox.close();
     };
 
@@ -261,7 +270,11 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       await gmailPage.waitAll('.reply_message');
       const urls = await gmailPage.getFramesUrls(['/chrome/elements/compose.htm']);
       expect(urls.length).to.equal(1);
-      const replyBox = await pageHasSecureDraft(t, browser, urls[0], 'reply draft');
+      let replyBox = await pageHasSecureDraft(t, browser, urls[0], 'reply draft');
+      await replyBox.close();
+      await createSecureDraft(t, browser, gmailPage, 'offline reply draft', true);
+      await gmailPage.page.reload();
+      replyBox = await pageHasSecureDraft(t, browser, urls[0], 'offline reply draft');
       await replyBox.waitAndClick('@action-send');
       await replyBox.waitTillGone('@action-send');
       await replyBox.close();
