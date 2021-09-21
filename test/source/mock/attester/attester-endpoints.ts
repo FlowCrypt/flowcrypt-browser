@@ -76,6 +76,9 @@ export const mockAttesterEndpoints: HandlersDefinition = {
       if (emailOrLongid === '8EC78F043CEB022498AFD4771E62ED6D15A25921'.toLowerCase()) {
         return testConstants.oldHasOlderKeyOnAttester;
       }
+      if (['multi.aliased.user@example.com', 'alias1@example.com', 'alias2@example.com'].includes(emailOrLongid)) {
+        return pubKeyForMultiAliasUser;
+      }
       throw new HttpClientErr('Pubkey not found', 404);
     } else if (isPost(req)) {
       oauth.checkAuthorizationHeaderWithIdToken(req.headers.authorization);
@@ -107,6 +110,38 @@ export const mockAttesterEndpoints: HandlersDefinition = {
     return { sent: true };
   },
 };
+
+// Primary User: multi.aliased.user@example.com
+// Additional UID: alias1@example.com
+// Additional UID: alias2@example.com
+export const pubKeyForMultiAliasUser = `
+-----BEGIN PGP PUBLIC KEY BLOCK-----
+Version: FlowCrypt Email Encryption 8.1.4
+Comment: Seamlessly send and receive encrypted email
+
+xjMEYUQXshYJKwYBBAHaRw8BAQdA/G92pV0XGodw/FpNPQFZ2KhKroAgnEyF
+AKkEVFWAlRTNMU11bHRpQWxpYXNlZFVzZXIgPG11bHRpLmFsaWFzZWQudXNl
+ckBleGFtcGxlLmNvbT7CsQQTFgoAQhYhBL3rIGHre1iz2KtokTV7kI9iSY34
+BQJhRBeyAhsDBQkDwmcABQsJCAcCAyICAQYVCgkICwIEFgIDAQIeBwIXgAAh
+CRA1e5CPYkmN+BYhBL3rIGHre1iz2KtokTV7kI9iSY34WckA/0hrsxdOCeNa
+yceyf/wZo2DGJhCA4Ml6GVp/E2vrTsSEAQDXj/QlHRskEMK/iRG66OYFzKyV
+CuNx+Q9sL/L4wfOYCs0bQWxpYXMxIDxhbGlhczFAZXhhbXBsZS5jb20+wrEE
+ExYKAEIWIQS96yBh63tYs9iraJE1e5CPYkmN+AUCYUQYKAIbAwUJA8JnAAUL
+CQgHAgMiAgEGFQoJCAsCBBYCAwECHgcCF4AAIQkQNXuQj2JJjfgWIQS96yBh
+63tYs9iraJE1e5CPYkmN+FH8AQCClxeTLyQQ7oCRPxbmHdpjpvffwB8YyMhK
+YesXmZ3yTQD/QCu5pvZjnSJvto5qnrOfLWDrAWi08IQ1A06V2BYZ4gXNG0Fs
+aWFzMiA8YWxpYXMyQGV4YW1wbGUuY29tPsKxBBMWCgBCFiEEvesgYet7WLPY
+q2iRNXuQj2JJjfgFAmFEGD8CGwMFCQPCZwAFCwkIBwIDIgIBBhUKCQgLAgQW
+AgMBAh4HAheAACEJEDV7kI9iSY34FiEEvesgYet7WLPYq2iRNXuQj2JJjfjl
+dAD+JE5egv+Klcsk1WmgXSMWnZxLa43XnppM35GIHdB5Yj8A/jVB+OzU2oXs
+bW8lvVPxKh1LoNhO2k+fpHddKISYpOEBzjgEYUQXshIKKwYBBAGXVQEFAQEH
+QK98+icQQufZkDZ1qKBCii33AZVLcJIXfWpwRPrJRokMAwEIB8KVBBgWCgAm
+FiEEvesgYet7WLPYq2iRNXuQj2JJjfgFAmFEF7ICGwwFCQPCZwAAIQkQNXuQ
+j2JJjfgWIQS96yBh63tYs9iraJE1e5CPYkmN+FAKAQD7AG2zY0na2yGs/rS2
+JbAK0HH80AccEDab2ji1CY6cmwD+PPl+WTksMPdQR/Ug+0Kcu0EdBQ9CNPqj
+HimWV578DwQ=
+=Iihs
+-----END PGP PUBLIC KEY BLOCK-----`;
 
 export const somePubkey = `-----BEGIN PGP PUBLIC KEY BLOCK-----
 Version: CryptUP 3.2.0 Easy Gmail Encryption https://cryptup.org
