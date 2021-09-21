@@ -759,6 +759,23 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       }, { isSavePassphraseChecked: false, isSavePassphraseHidden: false });
       await settingsPage.close();
     }));
+
+    ava.default('setup - imported key from a file with multiple alias', testWithBrowser(undefined, async (t, browser) => {
+      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'multi.aliased.user@example.com');
+      const key = {
+        title: 'unarmored OpenPGP key',
+        filePath: 'test/samples/openpgp/multialiaseduserexamplecom-0x357B908F62498DF8.key',
+        armored: null, // tslint:disable-line:no-null-keyword
+        passphrase: '1basic passphrase to use',
+        longid: null // tslint:disable-line:no-null-keyword
+      };
+      await SetupPageRecipe.manualEnter(settingsPage, key.title, { submitPubkey: true, usedPgpBefore: true, fillOnly: true, checkEmailAliasIfPresent: true, key });
+      await settingsPage.waitAndClick('@input-step2bmanualenter-save', { delay: 1 });
+      await settingsPage.waitAndClick('@action-step4done-account-settings');
+      await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
+      await settingsPage.waitAndClick('@action-open-attester-page');
+      await settingsPage.close();
+    }));
   }
 
 };
