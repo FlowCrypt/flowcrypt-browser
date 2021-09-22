@@ -176,11 +176,6 @@ export class ComposeView extends View {
     if (this.replyMsgId) {
       await this.renderModule.fetchReplyMeta(Object.keys(storage.sendAs!));
     }
-    if (!this.isReplyBox) { // compose
-      if (!this.draftId) {
-        this.draftId = this.draftModule.localDraftId;
-      }
-    }
     BrowserMsg.listen(this.tabId!);
     await this.renderModule.initComposeBox();
     this.senderModule.checkEmailAliases().catch(Catch.reportErr);

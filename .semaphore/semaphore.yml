@@ -78,3 +78,12 @@ blocks:
             - npm run-script test_ci_chrome_enterprise
             - cd ./build && zip -r ~/chrome-enterprise.zip ./chrome-enterprise/* && cd ~
 #            - if [ "$SEMAPHORE_GIT_BRANCH" = master ]; artifact push project chrome-enterprise.zip --force; fi
+
+      epilogue:
+        on_fail:
+          commands:
+            - |
+              if [ -f build/test/test/debugArtifacts/debugHtmlAttachment-0.html ]; then
+                echo "Uploading debug files as job artifacts..."
+                artifact push job build/test/test/debugArtifacts/debugHtmlAttachment-*.html
+              fi
