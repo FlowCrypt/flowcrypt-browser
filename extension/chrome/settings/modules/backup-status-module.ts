@@ -81,7 +81,6 @@ export class BackupStatusModule extends ViewModule<BackupView> {
 
   private actionShowManualBackupHandler = async () => {
     const primaryKeys = await KeyStore.getAllWithOptionalPassPhrase(this.view.acctEmail);
-    console.log(primaryKeys.length);
     if (primaryKeys.length > 1) {
       this.renderPrvKeysBackupSelection(primaryKeys);
     }
