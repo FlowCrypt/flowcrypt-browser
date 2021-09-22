@@ -291,6 +291,31 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
       await InboxPageRecipe.checkFinishingSession(t, browser, acctEmail, threadId);
     }));
 
+    ava.default('decrypt - entering pass phrase should unlock all keys that match the pass phrase', testWithBrowser('compatibility', async (t, browser) => {
+      const acctEmail = 'flowcrypt.compatibility@gmail.com';
+      const passphrase = 'pa$$w0rd';
+      await SettingsPageRecipe.addKeyTest(t, browser, acctEmail, testConstants.testkey17AD7D07, passphrase, {}, false);
+      await SettingsPageRecipe.addKeyTest(t, browser, acctEmail, testConstants.testkey0389D3A7, passphrase, {}, false);
+      const inboxPage = await browser.newPage(t, TestUrls.extensionInbox(acctEmail));
+      await InboxPageRecipe.finishSessionOnInboxPage(inboxPage);
+      await InboxPageRecipe.checkDecryptMsg(t, browser, {
+        acctEmail,
+        threadId: '17c0e50966d7877c',
+        expectedContent: '1st key of of 2 keys with the same passphrase',
+        enterPp: {
+          passphrase,
+          isForgetPpChecked: true,
+          isForgetPpHidden: false
+        }
+      });
+      await InboxPageRecipe.checkDecryptMsg(t, browser, {
+        acctEmail,
+        threadId: '17c0e55caaa4abb3',
+        expectedContent: '2nd key of of 2 keys with the same passphrase',
+        // passphrase for the 2nd key should not be needed because it's the same as for the 1st key
+      });
+    }));
+
     ava.default('decrypt - thunderbird - signedHtml verifyDetached doesn\'t duplicate PGP key section', testWithBrowser('compatibility', async (t, browser) => {
       const threadId = '1754cfd1b2f1d6e5';
       const acctEmail = 'flowcrypt.compatibility@gmail.com';
