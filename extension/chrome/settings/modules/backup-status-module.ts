@@ -47,7 +47,7 @@ export class BackupStatusModule extends ViewModule<BackupView> {
       Xss.sanitizeRender('#module_status .container', '<button class="button long green action_go_manual">BACK UP MY KEY</button>');
     } else if (backups.longids.importedNotBackedUp.length) {
       $('.status_summary').text('Some of your keys have not been backed up.');
-      Xss.sanitizeRender('#module_status .container', '<button class="button long green action_go_manual">BACKUP ALL KEYS</button>');
+      Xss.sanitizeRender('#module_status .container', `<button class="button long green action_go_manual">BACK UP MY ${backups.longids.backups.length > 1 ? "KEYS" : "KEY"}</button>`);
     } else if (backups.longids.backupsNotImported.length) {
       $('.status_summary').text('Some of your backups have not been loaded. This may cause incoming encrypted email to not be readable.');
       Xss.sanitizeRender('#module_status .container', '<button class="button long green action_go_add_key">IMPORT MISSING BACKUPS</button>');
@@ -83,6 +83,8 @@ export class BackupStatusModule extends ViewModule<BackupView> {
     const primaryKeys = await KeyStore.getAllWithOptionalPassPhrase(this.view.acctEmail);
     if (primaryKeys.length > 1) {
       this.renderPrvKeysBackupSelection(primaryKeys);
+    } else {
+      this.view.prvKeysToManuallyBackup.push({ 'email': String(primaryKeys[0].emails), 'fingerprints': primaryKeys[0].fingerprints });
     }
     this.view.displayBlock('module_manual');
     $('h1').text('Back up your private key');
