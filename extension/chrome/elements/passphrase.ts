@@ -153,7 +153,9 @@ View.run(class PassphraseView extends View {
       try {
         if (await KeyUtil.decrypt(prv, pass) === true) {
           await PassphraseStore.set(storageType, this.acctEmail, keyinfo.fingerprints[0], pass);
-          atLeastOneMatched = true;
+          if (this.longids.includes(keyinfo.longid)) {
+            atLeastOneMatched = true;
+          }
           if (storageType === 'session') {
             // TODO: change to 'broadcast' when issue with 'broadcast' is fixed
             BrowserMsg.send.addEndSessionBtn(this.parentTabId);
