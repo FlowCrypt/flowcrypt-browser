@@ -769,11 +769,9 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         passphrase: '1basic passphrase to use',
         longid: null // tslint:disable-line:no-null-keyword
       };
-      await SetupPageRecipe.manualEnter(settingsPage, key.title, { submitPubkey: true, usedPgpBefore: true, fillOnly: true, checkEmailAliasIfPresent: true, key });
+      await SetupPageRecipe.manualEnter(settingsPage, key.title, { submitPubkey: true, usedPgpBefore: false, fillOnly: true, checkEmailAliasIfPresent: true, key });
       await settingsPage.waitAndClick('@input-step2bmanualenter-save', { delay: 1 });
       await settingsPage.waitAndClick('@action-step4done-account-settings');
-      await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
-      await settingsPage.waitAndClick('@action-open-attester-page');
       await settingsPage.close();
     }));
   }
