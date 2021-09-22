@@ -129,7 +129,7 @@ export class BackupManualActionModule extends ViewModule<BackupView> {
   }
 
   private backupAsFile = async (primaryKeys: ExtendedKeyInfo[]) => { // todo - add a non-encrypted download option
-    const prvKeysToBackup: Array<String> = [];
+    const prvKeysToBackup: Array<string> = [];
     for (const primaryKi of primaryKeys) {
       prvKeysToBackup.push(primaryKi.private);
     }
