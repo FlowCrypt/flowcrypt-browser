@@ -100,7 +100,6 @@ export class SetupPageRecipe extends PageRecipe {
       noPrvCreateOrgRule = false,
       enforceAttesterSubmitOrgRule = false,
       fillOnly = false,
-      checkEmailAliasIfPresent = false,
       noPubSubmitRule = false,
       key,
     }: ManualEnterOpts = {},
@@ -174,17 +173,6 @@ export class SetupPageRecipe extends PageRecipe {
     }
     await settingsPage.waitAll('@input-step2bmanualenter-save');
     if (fillOnly) {
-      if (checkEmailAliasIfPresent) {
-        expect(await settingsPage.isElementPresent('@container-for-import-key-email-alias')).to.equal(true);
-        expect(await settingsPage.isElementPresent('@input-email-alias-alias1examplecom')).to.equal(true);
-        expect(await settingsPage.isElementPresent('@input-email-alias-alias2examplecom')).to.equal(true);
-        /* simulate several clicks then exclude alias2@example.com from submitting key from the attester */
-        await settingsPage.waitAndClick('.container_for_import_key_email_alias [data-test=input-email-alias-alias1examplecom]'); // uncheck
-        await settingsPage.waitAndClick('.container_for_import_key_email_alias [data-test=input-email-alias-alias1examplecom]'); // check
-        await settingsPage.waitAndClick('.container_for_import_key_email_alias [data-test=input-email-alias-alias2examplecom]'); // uncheck
-        await settingsPage.waitAndClick('.container_for_import_key_email_alias [data-test=input-email-alias-alias2examplecom]'); // check
-        await settingsPage.waitAndClick('.container_for_import_key_email_alias [data-test=input-email-alias-alias2examplecom]'); // finally uncheck
-      }
       return;
     }
     try {

@@ -10,6 +10,7 @@ import { SettingsPageRecipe } from './page-recipe/settings-page-recipe';
 import { ComposePageRecipe } from './page-recipe/compose-page-recipe';
 import { Str } from './../core/common';
 import { MOCK_KM_LAST_INSERTED_KEY } from './../mock/key-manager/key-manager-endpoints';
+import { MOCK_ATTESTER_LAST_INSERTED_PUB } from './../mock/attester/attester-endpoints';
 import { BrowserRecipe } from './tooling/browser-recipe';
 import { KeyInfo, KeyUtil } from '../core/crypto/key';
 import { TestUrls } from '../browser/test-urls';
@@ -769,9 +770,21 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         passphrase: '1basic passphrase to use',
         longid: null // tslint:disable-line:no-null-keyword
       };
-      await SetupPageRecipe.manualEnter(settingsPage, key.title, { submitPubkey: true, usedPgpBefore: false, fillOnly: true, checkEmailAliasIfPresent: true, key });
+      await SetupPageRecipe.manualEnter(settingsPage, key.title, { submitPubkey: true, usedPgpBefore: false, fillOnly: true, key });
+      expect(await settingsPage.isElementPresent('@container-for-import-key-email-alias')).to.equal(true);
+      expect(await settingsPage.isElementPresent('@input-email-alias-alias1examplecom')).to.equal(true);
+      expect(await settingsPage.isElementPresent('@input-email-alias-alias2examplecom')).to.equal(true);
+      /* simulate several clicks then exclude alias2@example.com from submitting key from the attester */
+      await settingsPage.waitAndClick('.container_for_import_key_email_alias [data-test=input-email-alias-alias1examplecom]'); // uncheck
+      await settingsPage.waitAndClick('.container_for_import_key_email_alias [data-test=input-email-alias-alias1examplecom]'); // check
+      await settingsPage.waitAndClick('.container_for_import_key_email_alias [data-test=input-email-alias-alias2examplecom]'); // uncheck
+      await settingsPage.waitAndClick('.container_for_import_key_email_alias [data-test=input-email-alias-alias2examplecom]'); // check
+      await settingsPage.waitAndClick('.container_for_import_key_email_alias [data-test=input-email-alias-alias2examplecom]'); // finally uncheck
       await settingsPage.waitAndClick('@input-step2bmanualenter-save', { delay: 1 });
       await settingsPage.waitAndClick('@action-step4done-account-settings');
+      expect(MOCK_ATTESTER_LAST_INSERTED_PUB['multi.aliased.user@example.com']).not.to.be.an('undefined');
+      expect(MOCK_ATTESTER_LAST_INSERTED_PUB['alias1@example.com']).not.to.be.an('undefined');
+      expect(MOCK_ATTESTER_LAST_INSERTED_PUB['alias2@example.com']).to.be.an('undefined');
       await settingsPage.close();
     }));
   }
