@@ -54,13 +54,14 @@ export class BackupManualActionModule extends ViewModule<BackupView> {
   }
 
   private actionManualBackupHandler = async () => {
-    const primaryKeyToBackup = Array();
+    const primaryKeyToBackup: KeyInfo[] = Array<KeyInfo>();
     if (this.view.prvKeysToManuallyBackup.length <= 0) {
-      primaryKeyToBackup.push(await KeyStore.getFirstRequired(this.view.acctEmail));
+      await Ui.modal.error('No keys selected to backup! Please select a key to continue.');
+      return;
     }
     const selected = $('input[type=radio][name=input_backup_choice]:checked').val();
     for (const key of this.view.prvKeysToManuallyBackup) {
-      primaryKeyToBackup.push((await KeyStore.get(key.email, key.fingerprints))[0]);
+      primaryKeyToBackup.push((await KeyStore.get(this.view.acctEmail, key.fingerprints))[0]);
     }
     for (const primaryKi of primaryKeyToBackup) {
       if (! await this.isPrivateKeyEncrypted((primaryKi as KeyInfo))) {
@@ -69,9 +70,9 @@ export class BackupManualActionModule extends ViewModule<BackupView> {
       }
     }
     if (selected === 'inbox') {
-      await this.backupOnEmailProviderAndUpdateUi((primaryKeyToBackup as ExtendedKeyInfo[]));
+      await this.backupOnEmailProviderAndUpdateUi(primaryKeyToBackup as ExtendedKeyInfo[]);
     } else if (selected === 'file') {
-      await this.backupAsFile((primaryKeyToBackup as ExtendedKeyInfo[]));
+      await this.backupAsFile(primaryKeyToBackup as ExtendedKeyInfo[]);
     } else if (selected === 'print') {
       await this.backupByBrint();
     } else {
@@ -128,7 +129,7 @@ export class BackupManualActionModule extends ViewModule<BackupView> {
   }
 
   private backupAsFile = async (primaryKeys: ExtendedKeyInfo[]) => { // todo - add a non-encrypted download option
-    const prvKeysToBackup = [];
+    const prvKeysToBackup: Array<string> = [];
     for (const primaryKi of primaryKeys) {
       prvKeysToBackup.push(primaryKi.private);
     }
