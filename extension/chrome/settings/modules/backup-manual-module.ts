@@ -34,7 +34,7 @@ export class BackupManualActionModule extends ViewModule<BackupView> {
       }
     });
     BrowserMsg.listen(this.view.tabId);
-    this.preparePrvKeysBackupSelection();
+    await this.preparePrvKeysBackupSelection();
   }
 
   public setHandlers = () => {
@@ -57,7 +57,7 @@ export class BackupManualActionModule extends ViewModule<BackupView> {
   private preparePrvKeysBackupSelection = async () => {
     const primaryKeys = await KeyStore.getAllWithOptionalPassPhrase(this.view.acctEmail);
     if (primaryKeys.length > 1) {
-      this.renderPrvKeysBackupSelection(primaryKeys);
+      await this.renderPrvKeysBackupSelection(primaryKeys);
     } else {
       this.view.prvKeysToManuallyBackup.push({ 'email': String(primaryKeys[0].emails), 'fingerprints': primaryKeys[0].fingerprints });
     }
