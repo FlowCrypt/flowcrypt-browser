@@ -583,6 +583,25 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         }
       }));
 
+    ava.default('compose - loading drafts - PKCS#7 encrypted draft', testWithBrowser(undefined, async (t, browser) => {
+      const acctEmail = 'flowcrypt.test.key.imported@gmail.com';
+      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
+      await SetupPageRecipe.setupSmimeAccount(settingsPage, {
+        title: 's/mime pkcs12 unprotected key',
+        filePath: 'test/samples/smime/human-unprotected-PKCS12.p12',
+        armored: null, // tslint:disable-line:no-null-keyword
+        passphrase: 'test pp to encrypt unprotected key',
+        longid: null // tslint:disable-line:no-null-keyword
+      });
+      await settingsPage.close();
+      const appendUrl = 'draftId=17c041fd27858466';
+      const composePage = await ComposePageRecipe.openStandalone(t, browser, acctEmail, { appendUrl });
+      await expectRecipientElements(composePage, { to: ['smime@recipient.com'] });
+      const subjectElem = await composePage.waitAny('@input-subject');
+      expect(await PageRecipe.getElementPropertyJson(subjectElem, 'value')).to.equal('Test S/MIME Encrypted Draft');
+      expect((await composePage.read('@input-body')).trim()).to.equal('test text');
+    }));
+
     ava.default('compose - loading drafts - reply', testWithBrowser('compatibility', async (t, browser) => {
       const appendUrl = 'threadId=16cfa9001baaac0a&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___&replyMsgId=16cfa9001baaac0a&draftId=draft-3';
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl, hasReplyPrompt: true, skipClickPropt: true });

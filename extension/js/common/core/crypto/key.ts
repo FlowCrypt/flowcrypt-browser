@@ -371,11 +371,7 @@ export class KeyUtil {
     if (pubkey.type !== 'x509') {
       return OpenPGPKey.fingerprintToLongid(pubkey.id);
     }
-    const encodedIssuerAndSerialNumber = 'X509-' + Buf.fromRawBytesStr(pubkey.issuerAndSerialNumber!).toBase64Str();
-    if (!encodedIssuerAndSerialNumber) {
-      throw new Error(`Cannot extract IssuerAndSerialNumber from the certificate for: ${pubkey.id}`);
-    }
-    return encodedIssuerAndSerialNumber;
+    return SmimeKey.getKeyLongid(pubkey);
   }
 
   public static getKeyInfoLongids = (ki: ExtendedKeyInfo): string[] => {

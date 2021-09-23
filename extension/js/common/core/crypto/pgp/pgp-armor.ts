@@ -2,14 +2,19 @@
 
 'use strict';
 
+// todo: move this file level up as it handles both S/MIME and OpenPGP?
+import * as forge from 'node-forge';
 import { Buf } from '../../buf.js';
 import { ReplaceableMsgBlockType } from '../../msg-block.js';
 import { Str } from '../../common.js';
 import { opgp } from './openpgpjs-custom.js';
 import { Stream } from '../../stream.js';
+import { SmimeKey } from '../smime/smime-key.js';
 
-export type PreparedForDecrypt = { isArmored: boolean, isCleartext: true, message: OpenPGP.cleartext.CleartextMessage | OpenPGP.message.Message }
-  | { isArmored: boolean, isCleartext: false, message: OpenPGP.message.Message };
+export type PreparedForDecrypt = { isArmored: boolean, isCleartext: true, isPkcs7: false, message: OpenPGP.cleartext.CleartextMessage | OpenPGP.message.Message }
+  | { isArmored: boolean, isCleartext: false, isPkcs7: false, message: OpenPGP.message.Message }
+  | { isArmored: boolean, isCleartext: false, isPkcs7: true, message: forge.pkcs7.PkcsEnvelopedData }
+  ;
 
 type CryptoArmorHeaderDefinitions = { readonly [type in ReplaceableMsgBlockType | 'null' | 'signature']: CryptoArmorHeaderDefinition; };
 type CryptoArmorHeaderDefinition = { begin: string, middle?: string, end: string | RegExp, replace: boolean };
@@ -85,17 +90,21 @@ export class PgpArmor {
       throw new Error('Encrypted message could not be parsed because no data was provided');
     }
     const utfChunk = new Buf(encrypted.slice(0, 100)).toUtfStr('ignore'); // ignore errors - this may not be utf string, just testing
+    if (utfChunk.includes(PgpArmor.headers('pkcs7').begin)) {
+      const p7 = SmimeKey.cryptoMsgPrepareForDecrypt(encrypted); // todo: remove header check from SmimeKey's function?
+      return { isArmored: true, isCleartext: false, isPkcs7: true, message: p7 };
+    }
     const isArmoredEncrypted = utfChunk.includes(PgpArmor.headers('encryptedMsg').begin);
     const isArmoredSignedOnly = utfChunk.includes(PgpArmor.headers('signedMsg').begin);
     const isArmored = isArmoredEncrypted || isArmoredSignedOnly;
     if (isArmoredSignedOnly) {
-      return { isArmored, isCleartext: true, message: await opgp.cleartext.readArmored(new Buf(encrypted).toUtfStr()) };
+      return { isArmored, isCleartext: true, isPkcs7: false, message: await opgp.cleartext.readArmored(new Buf(encrypted).toUtfStr()) };
     } else if (isArmoredEncrypted) {
       const message = await opgp.message.readArmored(new Buf(encrypted).toUtfStr());
       const isCleartext = !!message.getLiteralData() && !!message.getSigningKeyIds().length && !message.getEncryptionKeyIds().length;
-      return { isArmored: true, isCleartext, message };
+      return { isArmored: true, isCleartext, isPkcs7: false, message };
     } else if (encrypted instanceof Uint8Array) {
-      return { isArmored, isCleartext: false, message: await opgp.message.read(encrypted) };
+      return { isArmored, isCleartext: false, isPkcs7: false, message: await opgp.message.read(encrypted) };
     }
     throw new Error('Message does not have armor headers');
   }

@@ -695,6 +695,7 @@ declare module "node-forge" {
 
         interface PkcsEnvelopedData extends Pkcs7Data {
             type: '1.2.840.113549.1.7.3';
+            recipients: { issuer: pki.Attribute[], serialNumber: string }[];
             addRecipient(certificate: pki.Certificate): void;
             findRecipient(cert: pki.Certificate): Recipient;
             encrypt(): void;

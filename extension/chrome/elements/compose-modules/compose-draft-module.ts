@@ -253,7 +253,7 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
   }
 
   private decryptAndRenderDraft = async (encrypted: MimeProccesedMsg): Promise<void> => {
-    const rawBlock = encrypted.blocks.find(b => b.type === 'encryptedMsg' || b.type === 'signedMsg');
+    const rawBlock = encrypted.blocks.find(b => ['encryptedMsg', 'signedMsg', 'pkcs7'].includes(b.type));
     if (!rawBlock) {
       return await this.abortAndRenderReplyMsgComposeTableIfIsReplyBox('!rawBlock');
     }

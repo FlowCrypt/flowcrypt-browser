@@ -8,6 +8,7 @@ import { Attachment } from '../../core/attachment.js';
 import { Buf } from '../../core/buf.js';
 import { RecipientType } from '../shared/api.js';
 import { KeyStore } from '../../platform/store/key-store.js';
+import { KeyUtil } from '../../core/crypto/key.js';
 
 type Recipients = { to?: string[], cc?: string[], bcc?: string[] };
 
@@ -95,7 +96,10 @@ export class SendableMsg {
 
   private static create = async (acctEmail: string, { from, recipients, subject, thread, body, attachments, type, isDraft }: SendableMsgDefinition): Promise<SendableMsg> => {
     const primaryKi = await KeyStore.getFirstRequired(acctEmail);
-    const headers: Dict<string> = primaryKi ? { OpenPGP: `id=${primaryKi.longid}` } : {}; // todo - use autocrypt format
+    const headers: Dict<string> = {};
+    if (primaryKi && KeyUtil.getKeyType(primaryKi.private) === 'openpgp') {
+      headers.Openpgp = `id=${primaryKi.longid}`; // todo - use autocrypt format
+    }
     return new SendableMsg(
       acctEmail,
       headers,

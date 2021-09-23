@@ -8,6 +8,7 @@ import { Buf } from '../../buf.js';
 import { MsgBlockParser } from '../../msg-block-parser.js';
 import { MsgBlock } from '../../msg-block.js';
 
+export type SmimeMsg = forge.pkcs7.PkcsEnvelopedData;
 export class SmimeKey {
 
   public static parse = (text: string): Key => {
@@ -190,6 +191,36 @@ export class SmimeKey {
     return key;
   }
 
+  public static getKeyLongid = (key: Key): string => {
+    if (key.issuerAndSerialNumber !== undefined) {
+      const encodedIssuerAndSerialNumber = SmimeKey.getLongIdFromDer(key.issuerAndSerialNumber);
+      if (encodedIssuerAndSerialNumber) {
+        return encodedIssuerAndSerialNumber;
+      }
+    }
+    throw new Error(`Cannot extract IssuerAndSerialNumber from the certificate for: ${key.id}`);
+  }
+
+  public static getMessageLongids = (msg: SmimeMsg): string[] => {
+    return msg.recipients.map(recipient => {
+      const asn1 = forge.asn1.create(
+        forge.asn1.Class.UNIVERSAL, forge.asn1.Type.SEQUENCE, true,
+        [
+          SmimeKey.attributesToDistinguishedNameAsn1(recipient.issuer),
+          // Serial
+          forge.asn1.create(forge.asn1.Class.UNIVERSAL, forge.asn1.Type.INTEGER, false,
+            forge.util.hexToBytes(recipient.serialNumber))
+        ]);
+      const der = forge.asn1.toDer(asn1).getBytes();
+      return SmimeKey.getLongIdFromDer(der);
+    });
+  }
+
+  // convert from binary string as provided by Forge to a 'X509-' prefixed base64 longid
+  private static getLongIdFromDer = (der: string): string => {
+    return 'X509-' + Buf.fromRawBytesStr(der).toBase64Str();
+  }
+
   private static getLeafCertificates = (msgBlocks: MsgBlock[]): { pem: string, certificate: forge.pki.Certificate }[] => {
     const parsed = msgBlocks.map(cert => { return { pem: cert.content as string, certificate: forge.pki.certificateFromPem(cert.content as string) }; });
     // Note: no signature check is performed.
@@ -268,6 +299,20 @@ export class SmimeKey {
     return key;
   }
 
+  private static attributesToDistinguishedNameAsn1 = (attributes: forge.pki.Attribute[]): forge.asn1.Asn1 => {
+    return forge.asn1.create(forge.asn1.Class.UNIVERSAL, forge.asn1.Type.SEQUENCE, true, attributes.map(attr => {
+      const valueTagClass = attr.valueTagClass || forge.asn1.Type.PRINTABLESTRING;
+      return forge.asn1.create(forge.asn1.Class.UNIVERSAL, forge.asn1.Type.SET, true, [
+        forge.asn1.create(forge.asn1.Class.UNIVERSAL, forge.asn1.Type.SEQUENCE, true, [
+          // AttributeType
+          forge.asn1.create(forge.asn1.Class.UNIVERSAL, forge.asn1.Type.OID, false,
+            forge.asn1.oidToDer(attr.type).getBytes()),
+          // AttributeValue
+          forge.asn1.create(forge.asn1.Class.UNIVERSAL, attr.valueTagClass, false,
+            (valueTagClass === forge.asn1.Type.UTF8) ? forge.util.encodeUtf8(attr.value) : attr.value)]) // tslint:disable-line:no-unsafe-any
+      ]);
+    }));
+  }
   private static getArmoredPrivateKey = (key: Key) => {
     return (key as unknown as { privateKeyArmored: string }).privateKeyArmored;
   }
