@@ -34,6 +34,7 @@ export class BackupManualActionModule extends ViewModule<BackupView> {
       }
     });
     BrowserMsg.listen(this.view.tabId);
+    this.preparePrvKeysBackupSelection();
   }
 
   public setHandlers = () => {
@@ -51,6 +52,44 @@ export class BackupManualActionModule extends ViewModule<BackupView> {
     } else {
       throw Error(`Backup method not implemented for ${this.view.emailProvider}`);
     }
+  }
+
+  private preparePrvKeysBackupSelection = async () => {
+    const primaryKeys = await KeyStore.getAllWithOptionalPassPhrase(this.view.acctEmail);
+    if (primaryKeys.length > 1) {
+      this.renderPrvKeysBackupSelection(primaryKeys);
+    } else {
+      this.view.prvKeysToManuallyBackup.push({ 'email': String(primaryKeys[0].emails), 'fingerprints': primaryKeys[0].fingerprints });
+    }
+  }
+
+  private renderPrvKeysBackupSelection = async (primaryKeys: ExtendedKeyInfo[]) => {
+    for (const primaryKi of primaryKeys) {
+      const email = Xss.escape(String(primaryKi.emails));
+      const fingerprints = Xss.escape(String(primaryKi.fingerprints));
+      const dom = `
+      <div class="mb-20">
+        <div class="details">
+          <label>
+            <input class="input_prvkey_backup_checkbox" type="checkbox" data-emails="${email}" data-fingerprints="${fingerprints}" />
+            <p class="m-0 display_inline_block">Email: <span class="prv_email">${email}</span> with fingerprint :</p>
+            <p class="m-0"><span class="prv_fingerprint green">${fingerprints}</span></p>
+          </label>
+        </div>
+      </div>
+      `.trim();
+      $('.key_backup_selection').append(dom); // xss-escaped
+    }
+    $('.input_prvkey_backup_checkbox').click((event) => {
+      const email = String($(event.target).data('emails')).trim();
+      const fingerprint = String($(event.target).data('fingerprints')).split(',');
+      if ($(event.target).prop('checked')) {
+        this.view.prvKeysToManuallyBackup.push({ 'email': email, 'fingerprints': fingerprint });
+      } else {
+        this.view.prvKeysToManuallyBackup.splice(this.view.prvKeysToManuallyBackup.findIndex(prvIdentity => prvIdentity.fingerprints === fingerprint), 1);
+      }
+    });
+    $('#key_backup_selection_container').show();
   }
 
   private actionManualBackupHandler = async () => {
