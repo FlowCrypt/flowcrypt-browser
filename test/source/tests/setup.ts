@@ -748,16 +748,18 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
 
   if (testVariant === 'CONSUMER-MOCK') {
     ava.default('setup - imported key with multiple alias should show checkbox per alias', testWithBrowser(undefined, async (t, browser) => {
-      expect((await KeyUtil.parse(testConstants.keyMultiAliasedUser)).emails.length).to.equals(2);
+      expect((await KeyUtil.parse(testConstants.keyMultiAliasedUser)).emails.length).to.equals(3);
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'multi.aliased.user@example.com');
       await SetupPageRecipe.manualEnter(settingsPage, '', {
-        usedPgpBefore: false, submitPubkey: true, naked: true, fillOnly: true, checkEmailAliasIfPresent: true, key: {
+        submitPubkey: true, fillOnly: true, checkEmailAliasIfPresent: true, key: {
           title: 'multi.aliased.user@example.com',
-          passphrase: 'long enough to suit requirements',
+          passphrase: '1basic passphrase to use',
           armored: testConstants.keyMultiAliasedUser,
           longid: null // tslint:disable-line:no-null-keyword
         }
       }, { isSavePassphraseChecked: false, isSavePassphraseHidden: false });
+      expect(await settingsPage.isChecked('.container_for_import_key_email_alias @input-email-alias-alias1examplecom')).to.equal(true);
+      expect(await settingsPage.isChecked('.container_for_import_key_email_alias @input-email-alias-alias2examplecom')).to.equal(true);
       await settingsPage.close();
     }));
 
@@ -770,16 +772,15 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         passphrase: '1basic passphrase to use',
         longid: null // tslint:disable-line:no-null-keyword
       };
-      await SetupPageRecipe.manualEnter(settingsPage, key.title, { submitPubkey: true, usedPgpBefore: false, fillOnly: true, key });
-      expect(await settingsPage.isElementPresent('@container-for-import-key-email-alias')).to.equal(true);
-      expect(await settingsPage.isElementPresent('@input-email-alias-alias1examplecom')).to.equal(true);
-      expect(await settingsPage.isElementPresent('@input-email-alias-alias2examplecom')).to.equal(true);
+      await SetupPageRecipe.manualEnter(settingsPage, key.title, { submitPubkey: true, fillOnly: true, key });
+      expect(await settingsPage.isChecked('.container_for_import_key_email_alias @input-email-alias-alias1examplecom')).to.equal(true);
+      expect(await settingsPage.isChecked('.container_for_import_key_email_alias @input-email-alias-alias2examplecom')).to.equal(true);
       /* simulate several clicks then exclude alias2@example.com from submitting key from the attester */
-      await settingsPage.waitAndClick('.container_for_import_key_email_alias [data-test=input-email-alias-alias1examplecom]'); // uncheck
-      await settingsPage.waitAndClick('.container_for_import_key_email_alias [data-test=input-email-alias-alias1examplecom]'); // check
-      await settingsPage.waitAndClick('.container_for_import_key_email_alias [data-test=input-email-alias-alias2examplecom]'); // uncheck
-      await settingsPage.waitAndClick('.container_for_import_key_email_alias [data-test=input-email-alias-alias2examplecom]'); // check
-      await settingsPage.waitAndClick('.container_for_import_key_email_alias [data-test=input-email-alias-alias2examplecom]'); // finally uncheck
+      await settingsPage.waitAndClick('.container_for_import_key_email_alias @input-email-alias-alias1examplecom'); // uncheck
+      await settingsPage.waitAndClick('.container_for_import_key_email_alias @input-email-alias-alias1examplecom'); // check
+      await settingsPage.waitAndClick('.container_for_import_key_email_alias @input-email-alias-alias2examplecom'); // uncheck
+      await settingsPage.waitAndClick('.container_for_import_key_email_alias @input-email-alias-alias2examplecom'); // check
+      await settingsPage.waitAndClick('.container_for_import_key_email_alias @input-email-alias-alias2examplecom'); // finally uncheck
       await settingsPage.waitAndClick('@input-step2bmanualenter-save', { delay: 1 });
       await settingsPage.waitAndClick('@action-step4done-account-settings');
       expect(MOCK_ATTESTER_LAST_INSERTED_PUB['multi.aliased.user@example.com']).not.to.be.an('undefined');
