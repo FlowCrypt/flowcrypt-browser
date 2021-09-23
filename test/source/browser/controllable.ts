@@ -147,6 +147,7 @@ abstract class ControllableBase {
     } catch (e) {
       if (e instanceof Error) {
         e.stack += ` SELECTOR: ${selector}`;
+        console.log(await (this.target as Page).screenshot({ encoding: "base64" }));
         await Util.sleep(60);
       }
       throw e;
