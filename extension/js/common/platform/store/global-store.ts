@@ -2,8 +2,9 @@
 
 import { BrowserMsg } from '../../browser/browser-msg.js';
 import { Env } from '../../browser/env.js';
+import { GmailRes } from '../../../common/api/email-provider/gmail/gmail-parser.js';
 import { RawStore, AbstractStore } from './abstract-store.js';
-import { Value } from '../../core/common.js';
+import { Dict, Value } from '../../core/common.js';
 import { storageLocalSet, storageLocalGet, storageLocalRemove } from '../../browser/chrome.js';
 import { Catch } from '../catch.js';
 
@@ -19,11 +20,13 @@ export type GlobalStoreDict = {
   key_info_store_fingerprints_added?: boolean;
   contact_store_x509_fingerprints_and_longids_updated?: boolean;
   contact_store_opgp_revoked_flags_updated?: boolean;
+  local_drafts?: Dict<GmailRes.GmailDraftGet>;
 };
 
 export type GlobalIndex = 'version' | 'account_emails' | 'settings_seen' | 'hide_pass_phrases' |
   'dev_outlook_allow' | 'install_mobile_app_notification_dismissed' | 'key_info_store_fingerprints_added' |
-  'contact_store_x509_fingerprints_and_longids_updated' | 'contact_store_opgp_revoked_flags_updated';
+  'contact_store_x509_fingerprints_and_longids_updated' | 'contact_store_opgp_revoked_flags_updated' |
+  'local_drafts';
 
 /**
  * Locally stored data that is not associated with any email account
