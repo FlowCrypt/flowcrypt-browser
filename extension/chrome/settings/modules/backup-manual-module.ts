@@ -34,7 +34,7 @@ export class BackupManualActionModule extends ViewModule<BackupView> {
       }
     });
     BrowserMsg.listen(this.view.tabId);
-    await this.preparePrvKeysBackupSelection();
+    this.preparePrvKeysBackupSelection();
   }
 
   public setHandlers = () => {
