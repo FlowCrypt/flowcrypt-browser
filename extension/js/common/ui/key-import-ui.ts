@@ -93,10 +93,9 @@ export class KeyImportUi {
           const users = prv.users;
           for (const user of users) {
             const userId = user.userId;
-            if (view.submitKeyForAddrs.includes(userId!.email)) {
-              const targetDom = $('.input_email_alias');
-              if (String($(targetDom).data('email')).trim() === String(userId!.email).trim()) {
-                $(targetDom).prop('checked', true);
+            for (const inputCheckboxElement of $('.input_email_alias')) {
+              if (String($(inputCheckboxElement).data('email')) === userId!.email) {
+                $(inputCheckboxElement).prop('checked', true);
               }
             }
           }
