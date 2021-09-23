@@ -29,12 +29,11 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
   public initComposeBox = async () => {
     if (this.view.isReplyBox) {
       this.responseMethod = 'reply';
-    } else { // compose
-      if (!this.view.draftId) {
-        this.view.draftId = this.view.draftModule.getLocalDraftId();
-      }
     }
     this.initComposeBoxStyles();
+    if (!this.view.draftId && await this.view.draftModule.localDraftGet()) {
+      this.view.draftId = this.view.draftModule.getLocalDraftId();
+    }
     if (this.view.draftId) {
       const draftLoaded = await this.view.draftModule.initialDraftLoad();
       if (draftLoaded) {
