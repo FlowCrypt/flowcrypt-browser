@@ -55,6 +55,7 @@ abstract class ControllableBase {
       } else {
         this.log(`wait_all:5:${selector}`);
         await this.target.waitForSelector(selector, { timeout: timeout * 1000, visible });
+        await this.target.waitForFunction(`document.querySelector('${selector}') && document.querySelector('${selector}').clientHeight != 0`);
         this.log(`wait_all:6:${selector}`);
       }
     }
