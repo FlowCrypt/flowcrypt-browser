@@ -105,7 +105,6 @@ export class KeyImportUi {
             const userId = user.userId;
             for (const inputCheckboxElement of $('.input_email_alias')) {
               if (String($(inputCheckboxElement).data('email')) === userId!.email) {
-                // event handler in 'renderEmailAddresses' will automatically push/pop keys from setup-render once checked
                 KeyImportUi.addAliasForSubmission(userId!.email, submitKeyForAddrs!);
                 $(inputCheckboxElement).prop('checked', true);
               }
