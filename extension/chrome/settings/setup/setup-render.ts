@@ -11,6 +11,7 @@ import { KeyStore } from '../../../js/common/platform/store/key-store.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { PgpPwd } from '../../../js/common/core/crypto/pgp/pgp-password.js';
 import { Xss } from '../../../js/common/platform/xss.js';
+import { KeyImportUi } from '../../../js/common/ui/key-import-ui.js';
 
 export class SetupRenderModule {
 
@@ -138,15 +139,12 @@ export class SetupRenderModule {
   }
 
   private saveAndFillSubmitPubkeysOption = (addresses: string[]) => {
-    this.view.submitKeyForAddrs = this.filterAddressesForSubmittingKeys(addresses);
-    if (this.view.submitKeyForAddrs.length > 1) {
-      this.renderEmailAddresses();
-    }
+    this.renderEmailAddresses(this.filterAddressesForSubmittingKeys(addresses));
   }
 
-  private renderEmailAddresses = () => {
+  private renderEmailAddresses = (addresses: string[]) => {
     $('.input_submit_all').hide();
-    const emailAliases = Value.arr.withoutVal(this.view.submitKeyForAddrs, this.view.acctEmail);
+    const emailAliases = Value.arr.withoutVal(addresses, this.view.acctEmail);
     for (const e of emailAliases) {
       // eslint-disable-next-line max-len
       $('.addresses').append(`<label><input type="checkbox" class="input_email_alias" data-email="${Xss.escape(e)}" data-test="input-email-alias-${e.replace(/[^a-z0-9]+/g, '')}" />${Xss.escape(e)}</label><br/>`); // xss-escaped
@@ -155,10 +153,10 @@ export class SetupRenderModule {
       const email = String($(event.target).data('email'));
       if ($(event.target).prop('checked')) {
         if (!this.view.submitKeyForAddrs.includes(email)) {
-          this.view.submitKeyForAddrs.push(email);
+          KeyImportUi.addAliasForSubmission(email, this.view.submitKeyForAddrs);
         }
       } else {
-        this.view.submitKeyForAddrs.splice(this.view.submitKeyForAddrs.indexOf(email), 1);
+        KeyImportUi.removeAliasFromSubmission(email, this.view.submitKeyForAddrs);
       }
     });
     $('.manual .input_submit_all').prop({ checked: true, disabled: false }).closest('div.line').css('display', 'block');

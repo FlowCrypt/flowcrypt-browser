@@ -53,7 +53,7 @@ View.run(class AddKeyView extends View {
         $('.input_passphrase_save').prop('checked', true).prop('disabled', false);
       }
       await initPassphraseToggle(['input_passphrase']);
-      this.keyImportUi.initPrvImportSrcForm(this.acctEmail, this.parentTabId);
+      await this.keyImportUi.initPrvImportSrcForm(this.acctEmail, this.parentTabId);
       Xss.sanitizeRender('#spinner_container', Ui.spinner('green') + ' loading..');
       await this.loadAndRenderKeyBackupsOrRenderError();
       $('.source_selector').css('display', 'block');

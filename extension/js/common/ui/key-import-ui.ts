@@ -15,7 +15,7 @@ import { Ui } from '../browser/ui.js';
 import { Url, Str } from '../core/common.js';
 import { opgp } from '../core/crypto/pgp/openpgpjs-custom.js';
 import { KeyStore } from '../platform/store/key-store.js';
-import { SetupView } from '../../../chrome/settings/setup.js';
+import { AcctStore } from '../platform/store/acct-store.js';
 
 type KeyImportUiCheckResult = { normalized: string; passphrase: string; fingerprint: string; decrypted: Key; encrypted: Key; };
 
@@ -53,6 +53,14 @@ export class KeyImportUi {
     return;
   }
 
+  public static addAliasForSubmission = (email: string, submitKeyForAddrs: string[]) => {
+    submitKeyForAddrs.push(email);
+  }
+
+  public static removeAliasFromSubmission = (email: string, submitKeyForAddrs: string[]) => {
+    submitKeyForAddrs.splice(submitKeyForAddrs.indexOf(email), 1);
+  }
+
   constructor(o: { rejectKnown?: boolean, checkEncryption?: boolean, checkSigning?: boolean }) {
     this.rejectKnown = o.rejectKnown === true;
     this.checkEncryption = o.checkEncryption === true;
@@ -60,7 +68,9 @@ export class KeyImportUi {
   }
   public onBadPassphrase: VoidCallback = () => undefined;
 
-  public initPrvImportSrcForm = (acctEmail: string, parentTabId: string | undefined, view?: SetupView) => {
+  public initPrvImportSrcForm = async (acctEmail: string, parentTabId: string | undefined, submitKeyForAddrs?: string[]) => {
+    const { sendAs } = await AcctStore.get(acctEmail, ['sendAs']);
+    const addresses = Object.keys(sendAs!);
     $('input[type=radio][name=source]').off().change(function () {
       if ((this as HTMLInputElement).value === 'file') {
         $('.input_private_key').val('').change().prop('disabled', true);
@@ -74,7 +84,7 @@ export class KeyImportUi {
       } else if ((this as HTMLInputElement).value === 'backup') {
         window.location.href = Url.create('/chrome/settings/setup.htm', { acctEmail, parentTabId, action: 'add_key' });
       }
-      if (view !== undefined && view.submitKeyForAddrs.length > 1) {
+      if (addresses !== undefined) {
         $('.container_for_import_key_email_alias').css('visibility', 'visible');
       }
     });
@@ -89,12 +99,14 @@ export class KeyImportUi {
       const { keys: [prv] } = await opgp.key.readArmored(String($(target).val()));
       if (prv !== undefined) {
         $('.action_add_private_key').removeClass('btn_disabled').removeAttr('disabled');
-        if (view !== undefined && view.submitKeyForAddrs.length > 1) {
+        if (addresses !== undefined) {
           const users = prv.users;
           for (const user of users) {
             const userId = user.userId;
             for (const inputCheckboxElement of $('.input_email_alias')) {
               if (String($(inputCheckboxElement).data('email')) === userId!.email) {
+                // event handler in 'renderEmailAddresses' will automatically push/pop keys from setup-render once checked
+                KeyImportUi.addAliasForSubmission(userId!.email, submitKeyForAddrs!);
                 $(inputCheckboxElement).prop('checked', true);
               }
             }
