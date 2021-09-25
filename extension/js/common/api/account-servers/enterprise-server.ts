@@ -13,6 +13,7 @@ import { ErrorReport, UnreportableError } from '../../platform/catch.js';
 import { ApiErr } from '../shared/api-error.js';
 import { FLAVOR } from '../../core/const.js';
 import { Attachment } from '../../core/attachment.js';
+import { Recipients } from '../email-provider/email-provider-api.js';
 
 // todo - decide which tags to use
 type EventTag = 'compose' | 'decrypt' | 'setup' | 'settings' | 'import-pub' | 'import-prv';
@@ -103,11 +104,25 @@ export class EnterpriseServer extends Api {
     return await this.request<FesRes.ReplyToken>('POST', `/api/${this.apiVersion}/message/new-reply-token`, await this.authHdr(), {});
   }
 
-  public webPortalMessageUpload = async (encrypted: Uint8Array, replyToken: string, progressCb: ProgressCb): Promise<FesRes.MessageUpload> => {
-    const content = new Attachment({ name: 'cryptup_encrypted_message.asc', type: 'text/plain', data: encrypted });
+  public webPortalMessageUpload = async (
+    encrypted: Uint8Array,
+    associateReplyToken: string,
+    from: string,
+    recipients: Recipients,
+    progressCb: ProgressCb
+  ): Promise<FesRes.MessageUpload> => {
+    const content = new Attachment({ name: 'encrypted.asc', type: 'text/plain', data: encrypted });
+    const details = {
+      associateReplyToken,
+      from,
+      to: recipients.to || [],
+      cc: recipients.cc || [],
+      bcc: recipients.bcc || []
+    };
+    const multipartBody = { content, details };
     return await EnterpriseServer.apiCall<FesRes.MessageUpload>(
-      this.url, `/api/${this.apiVersion}/message?associate-reply-token=${replyToken}`,
-      { content }, 'FORM', { upload: progressCb }, await this.authHdr(), 'json', 'POST'
+      this.url, `/api/${this.apiVersion}/message`, multipartBody, 'FORM',
+      { upload: progressCb }, await this.authHdr(), 'json', 'POST'
     );
   }
 
