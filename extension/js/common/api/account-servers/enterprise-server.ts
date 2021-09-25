@@ -14,6 +14,7 @@ import { ApiErr } from '../shared/api-error.js';
 import { FLAVOR } from '../../core/const.js';
 import { Attachment } from '../../core/attachment.js';
 import { Recipients } from '../email-provider/email-provider-api.js';
+import { Buf } from '../../core/buf.js';
 
 // todo - decide which tags to use
 type EventTag = 'compose' | 'decrypt' | 'setup' | 'settings' | 'import-pub' | 'import-prv';
@@ -111,14 +112,22 @@ export class EnterpriseServer extends Api {
     recipients: Recipients,
     progressCb: ProgressCb
   ): Promise<FesRes.MessageUpload> => {
-    const content = new Attachment({ name: 'encrypted.asc', type: 'text/plain', data: encrypted });
-    const details = {
-      associateReplyToken,
-      from,
-      to: recipients.to || [],
-      cc: recipients.cc || [],
-      bcc: recipients.bcc || []
-    };
+    const content = new Attachment({
+      name: 'encrypted.asc',
+      type: 'text/plain',
+      data: encrypted
+    });
+    const details = new Attachment({
+      name: 'details.json',
+      type: 'application/json',
+      data: Buf.fromUtfStr(JSON.stringify({
+        associateReplyToken,
+        from,
+        to: recipients.to || [],
+        cc: recipients.cc || [],
+        bcc: recipients.bcc || []
+      }))
+    });
     const multipartBody = { content, details };
     return await EnterpriseServer.apiCall<FesRes.MessageUpload>(
       this.url, `/api/${this.apiVersion}/message`, multipartBody, 'FORM',
