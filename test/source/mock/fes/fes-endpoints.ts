@@ -1,5 +1,6 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
+import { expect } from 'chai';
 import { IncomingMessage } from 'http';
 import { HandlersDefinition } from '../all-apis-mock';
 import { HttpClientErr } from '../lib/api';
@@ -62,9 +63,15 @@ export const mockFesEndpoints: HandlersDefinition = {
     }
     throw new HttpClientErr('Not Found', 404);
   },
-  '/api/v1/message?associate-reply-token=mock-fes-reply-token': async ({ }, req) => {
+  '/api/v1/message': async ({ body }, req) => {
     if (req.headers.host === standardFesUrl && req.method === 'POST') {
       authenticate(req, 'fes');
+      // test: `compose - user@standardsubdomainfes.test:8001 - PWD encrypted message with FES web portal`
+      expect((body as any).associateReplyToken).to.equal('mock-fes-reply-token');
+      expect((body as any).from).to.equal('user@standardsubdomainfes.test:8001');
+      expect((body as any).to).to.deep.equal(['to@example.com']);
+      expect((body as any).cc).to.deep.equal([]);
+      expect((body as any).bcc).to.deep.equal(['bcc@example.com']);
       return { 'url': `http://${standardFesUrl}/message/FES-MOCK-MESSAGE-ID` };
     }
     throw new HttpClientErr('Not Found', 404);
