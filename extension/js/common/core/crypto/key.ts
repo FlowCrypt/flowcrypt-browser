@@ -61,6 +61,15 @@ export type Contact = {
   revoked: boolean;
 };
 
+export class ContactUtil {
+
+public static isExpired = (contact: Contact) => {
+  return contact.pubkey && ((contact.expiresOn || Infinity) <= Date.now()
+    || contact.pubkey.usableForEncryptionButExpired);
+}
+
+}
+
 export interface KeyInfo {
   private: string;
   public: string; // this cannot be Pubkey has it's being passed to localstorage

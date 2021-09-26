@@ -75,28 +75,36 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
 
   public lookupPubkeyFromKeyserversThenOptionallyFetchExpiredByFingerprintAndUpsertDb = async (
     email: string, name: string | undefined
-  ): Promise<Contact | "fail"> => {
+  ): Promise<Contact[] | "fail"> => {
     // note by Tom 2021-08-10: We are only getting one public key from storage, but should
     //    work with arrays instead, like with `ContactStore.getOneWithAllPubkeys`.
     //    However, this whole fingerprint-base section seems unnecessary, we could likely
     //    remove it and the keys will be updated below using
     //    `lookupPubkeyFromKeyserversAndUpsertDb` anyway.
     //    discussion: https://github.com/FlowCrypt/flowcrypt-browser/pull/3898#discussion_r686229818
-    const [storedContact] = await ContactStore.get(undefined, [email]);
-    if (storedContact && storedContact.hasPgp && storedContact.pubkey && !storedContact.revoked) {
-      // checks if pubkey was updated, asynchronously. By the time user finishes composing,
-      //    newer version would have been updated in db.
-      // This implementation is imperfect in that, if sender didn't pull a particular pubkey
-      //    for a long time and the local pubkey has since expired, and there actually is a
-      //    newer version available on external key server, this may unnecessarily show "bad pubkey",
-      //    until next time user tries to enter recipient in the field again, which will at that point
-      //    get the updated key from db. This could be fixed by:
-      //      - either life fixing the UI after this call finishes, or
-      //      - making this call below synchronous and using the result directly
-      this.checkKeyserverForNewerVersionOfKnownPubkeyIfNeeded(storedContact).catch(Catch.reportErr);
-      return storedContact;
+    const storedContacts = await ContactStore.get(undefined, [email]);
+    if (storedContacts && storedContacts.length) {
+      const result = [];
+      for (const storedContact of storedContacts) {
+        if (storedContact && storedContact.hasPgp && storedContact.pubkey && !storedContact.revoked) {
+          // checks if pubkey was updated, asynchronously. By the time user finishes composing,
+          //    newer version would have been updated in db.
+          // This implementation is imperfect in that, if sender didn't pull a particular pubkey
+          //    for a long time and the local pubkey has since expired, and there actually is a
+          //    newer version available on external key server, this may unnecessarily show "bad pubkey",
+          //    until next time user tries to enter recipient in the field again, which will at that point
+          //    get the updated key from db. This could be fixed by:
+          //      - either life fixing the UI after this call finishes, or
+          //      - making this call below synchronous and using the result directly
+          this.checkKeyserverForNewerVersionOfKnownPubkeyIfNeeded(storedContact).catch(Catch.reportErr);
+          result.push(storedContact);
+        }
+      }
+      return result;
     }
-    return await this.lookupPubkeyFromKeyserversAndUpsertDb(email, name, storedContact);
+    const res = await this.lookupPubkeyFromKeyserversAndUpsertDb(email, name, undefined);
+    if (res === 'fail') return res;
+    return [res];
   }
 
   /**

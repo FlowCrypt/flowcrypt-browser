@@ -3,7 +3,7 @@
 'use strict';
 
 import { ChunkedCb, EmailProviderContact, RecipientType } from '../../../js/common/api/shared/api.js';
-import { Contact } from '../../../js/common/core/crypto/key.js';
+import { Contact, ContactUtil } from '../../../js/common/core/crypto/key.js';
 import { PUBKEY_LOOKUP_RESULT_FAIL, PUBKEY_LOOKUP_RESULT_WRONG } from './compose-err-module.js';
 import { ProviderContactsQuery, Recipients } from '../../../js/common/api/email-provider/email-provider-api.js';
 import { RecipientElement, RecipientStatus } from './compose-types.js';
@@ -196,13 +196,16 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       this.view.S.now('send_btn_text').text(this.BTN_LOADING);
       this.view.sizeModule.setInputTextHeightManuallyIfNeeded();
       recipient.evaluating = (async () => {
-        let pubkeyLookupRes: Contact | 'fail' | 'wrong';
+        let pubkeyLookupRes: Contact[] | 'fail' | 'wrong';
         if (recipient.status !== RecipientStatus.WRONG) {
           pubkeyLookupRes = await this.view.storageModule.lookupPubkeyFromKeyserversThenOptionallyFetchExpiredByFingerprintAndUpsertDb(recipient.email, undefined);
         } else {
           pubkeyLookupRes = 'wrong';
         }
-        await this.renderPubkeyResult(recipient, pubkeyLookupRes);
+        if (pubkeyLookupRes === 'fail' || pubkeyLookupRes === 'wrong')
+          await this.renderPubkeyResult(recipient, pubkeyLookupRes);
+        else
+          await this.renderPubkeyResult(recipient, pubkeyLookupRes as Contact[]);
         recipient.evaluating = undefined; // Clear promise when it finished
       })();
     }
@@ -339,7 +342,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
   public reRenderRecipientFor = async (contact: Contact): Promise<void> => {
     for (const recipient of this.addedRecipients.filter(r => r.email === contact.email)) {
       this.view.errModule.debug(`re-rendering recipient: ${contact.email}`);
-      await this.renderPubkeyResult(recipient, contact);
+      await this.renderPubkeyResult(recipient, [contact]);
       this.view.recipientsModule.showHideCcAndBccInputsIfNeeded();
       await this.view.recipientsModule.setEmailsPreview(this.getRecipients());
     }
@@ -798,21 +801,27 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
   }
 
   private checkReciepientsKeys = async () => {
-    for (const recipientEl of this.addedRecipients.filter(r => r.element.className.includes('no_pgp'))) {
+    for (const recipientEl of this.addedRecipients.filter(
+      r => r.element.className.includes('no_pgp'))) {
       const email = $(recipientEl).text().trim();
-      const [dbContact] = await ContactStore.get(undefined, [email]);
-      if (dbContact) {
-        recipientEl.element.classList.remove('no_pgp');
-        await this.renderPubkeyResult(recipientEl, dbContact);
+      const dbContacts = await ContactStore.get(undefined, [email]);
+      if (dbContacts) {
+        const realDbContacts = dbContacts.filter(contact => contact !== undefined);
+        if (realDbContacts && realDbContacts.length) {
+          recipientEl.element.classList.remove('no_pgp');
+          await this.renderPubkeyResult(recipientEl, realDbContacts as Contact[]);
+        }
       }
     }
   }
 
-  private renderPubkeyResult = async (recipient: RecipientElement, contact: Contact | 'fail' | 'wrong') => {
+  private renderPubkeyResult = async (
+    recipient: RecipientElement, contacts: Contact[] | 'fail' | 'wrong'
+  ) => {
     const el = recipient.element;
     this.view.errModule.debug(`renderPubkeyResult.emailEl(${String(recipient.email)})`);
     this.view.errModule.debug(`renderPubkeyResult.email(${recipient.email})`);
-    this.view.errModule.debug(`renderPubkeyResult.contact(${JSON.stringify(contact)})`);
+    this.view.errModule.debug(`renderPubkeyResult.contact(${JSON.stringify(contacts)})`);
     $(el).children('img, i').remove();
     const contentHtml = '<img src="/img/svgs/close-icon.svg" alt="close" class="close-icon svg" />' +
       '<img src="/img/svgs/close-icon-black.svg" alt="close" class="close-icon svg display_when_sign" />';
@@ -820,7 +829,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       .find('img.close-icon')
       .click(this.view.setHandler(target => this.removeRecipient(target.parentElement!), this.view.errModule.handle('remove recipient')));
     $(el).removeClass(['failed', 'wrong', 'has_pgp', 'no_pgp', 'expired']);
-    if (contact === PUBKEY_LOOKUP_RESULT_FAIL) {
+    if (contacts === PUBKEY_LOOKUP_RESULT_FAIL) {
       recipient.status = RecipientStatus.FAILED;
       $(el).attr('title', 'Failed to load, click to retry');
       $(el).addClass("failed");
@@ -828,36 +837,73 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
         '<img src="/img/svgs/close-icon-black.svg" class="close-icon-black svg remove-reciepient">');
       $(el).find('.action_retry_pubkey_fetch').click(this.view.setHandler(async () => await this.refreshRecipients(), this.view.errModule.handle('refresh recipient')));
       $(el).find('.remove-reciepient').click(this.view.setHandler(element => this.removeRecipient(element.parentElement!), this.view.errModule.handle('remove recipient')));
-    } else if (contact === PUBKEY_LOOKUP_RESULT_WRONG) {
+    } else if (contacts === PUBKEY_LOOKUP_RESULT_WRONG) {
       recipient.status = RecipientStatus.WRONG;
       this.view.errModule.debug(`renderPubkeyResult: Setting email to wrong / misspelled in harsh mode: ${recipient.email}`);
       $(el).attr('title', 'This email address looks misspelled. Please try again.');
       $(el).addClass("wrong");
-    } else if (contact.pubkey && ((contact.expiresOn || Infinity) <= Date.now() || contact.pubkey.usableForEncryptionButExpired)) {
-      recipient.status = RecipientStatus.EXPIRED;
-      $(el).addClass("expired");
-      Xss.sanitizePrepend(el, '<img src="/img/svgs/expired-timer.svg" class="revoked-or-expired">');
-      $(el).attr('title', 'Does use encryption but their public key is expired. You should ask them to send ' +
-        'you an updated public key.' + this.recipientKeyIdText(contact));
-    } else if (contact.revoked) {
-      recipient.status = RecipientStatus.REVOKED;
-      $(el).addClass("revoked");
-      Xss.sanitizePrepend(el, '<img src="/img/svgs/revoked.svg" class="revoked-or-expired">');
-      $(el).attr('title', 'Does use encryption but their public key is revoked. You should ask them to send ' +
-        'you an updated public key.' + this.recipientKeyIdText(contact));
-    } else if (contact.pubkey) {
-      recipient.status = RecipientStatus.HAS_PGP;
-      $(el).addClass('has_pgp');
-      Xss.sanitizePrepend(el, '<img class="lock-icon" src="/img/svgs/locked-icon.svg" />');
-      $(el).attr('title', 'Does use encryption' + this.recipientKeyIdText(contact));
     } else {
-      recipient.status = RecipientStatus.NO_PGP;
-      $(el).addClass("no_pgp");
-      Xss.sanitizePrepend(el, '<img class="lock-icon" src="/img/svgs/locked-icon.svg" />');
-      $(el).attr('title', 'Could not verify their encryption setup. You can encrypt the message with a password below. Alternatively, add their pubkey.');
+      // New logic
+      // - if there is at least one valid (non-expired, non-revoked) public key, then it's HAS_PGP
+      // - else if there is at least one expired public key, then it's EXPIRED
+      // - else if there is at least one revoked key, then REVOKED
+      // - else it's NO_PGP
+      if (contacts.filter(contact => !contact.revoked && !ContactUtil.isExpired(contact)).length) {
+        recipient.status = RecipientStatus.HAS_PGP;
+        $(el).addClass('has_pgp');
+        Xss.sanitizePrepend(el, '<img class="lock-icon" src="/img/svgs/locked-icon.svg" />');
+        $(el).attr('title', 'Does use encryption\n' + this.publicKeysToRenderedText(contacts));
+      } else if (contacts.filter(contact => ContactUtil.isExpired(contact)).length) {
+        recipient.status = RecipientStatus.EXPIRED;
+        $(el).addClass("expired");
+        Xss.sanitizePrepend(el, '<img src="/img/svgs/expired-timer.svg" class="revoked-or-expired">');
+        $(el).attr('title', 'Does use encryption but their public key is expired. ' +
+          'You should ask them to send you an updated public key.\n' +
+          this.publicKeysToRenderedText(contacts));
+      } else if (contacts.filter(contact => contact.revoked).length) {
+        recipient.status = RecipientStatus.REVOKED;
+        $(el).addClass("revoked");
+        Xss.sanitizePrepend(el, '<img src="/img/svgs/revoked.svg" class="revoked-or-expired">');
+        $(el).attr('title', 'Does use encryption but their public key is revoked. ' +
+          'You should ask them to send you an updated public key.\n' +
+          this.publicKeysToRenderedText(contacts));
+      } else {
+        recipient.status = RecipientStatus.NO_PGP;
+        $(el).addClass("no_pgp");
+        Xss.sanitizePrepend(el, '<img class="lock-icon" src="/img/svgs/locked-icon.svg" />');
+        $(el).attr('title', 'Could not verify their encryption setup. You can encrypt the message with a password below. Alternatively, add their pubkey.');
+      }
     }
     this.view.pwdOrPubkeyContainerModule.showHideContainerAndColorSendBtn(); // tslint:disable-line:no-floating-promises
     this.view.myPubkeyModule.reevaluateShouldAttachOrNot();
+  }
+
+  private publicKeysToRenderedText = (contacts: Contact[]): string => {
+    let res = '';
+    const valid = contacts.filter(contact => !contact.revoked && !ContactUtil.isExpired(contact));
+    if (valid.length) {
+      res += 'Valid public key fingerprints:';
+      for (const c of valid) {
+        res += '\n' + this.recipientKeyIdText(c);
+      }
+    }
+    const expired = contacts.filter(contact => ContactUtil.isExpired(contact));
+    if (expired.length) {
+      if (res.length) res += '\n\n';
+      res += 'Expired public key fingerprints:';
+      for (const c of valid) {
+        res += '\n' + this.recipientKeyIdText(c);
+      }
+    }
+    const revoked = contacts.filter(contact => contact.revoked);
+    if (revoked.length) {
+      if (res.length) res += '\n\n';
+      res += 'Revoked public key fingerprints:';
+      for (const c of revoked) {
+        res += '\n' + this.recipientKeyIdText(c);
+      }
+    }
+    return res;
   }
 
   private removeRecipient = (element: HTMLElement) => {
