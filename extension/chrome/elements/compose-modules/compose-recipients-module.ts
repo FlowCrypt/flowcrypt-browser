@@ -855,8 +855,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
         $(el).addClass('has_pgp');
         Xss.sanitizePrepend(el, '<img class="lock-icon" src="/img/svgs/locked-icon.svg" />');
         $(el).attr('title', 'Does use encryption\n' + this.publicKeysToRenderedText(contacts));
-      } else if (contacts.filter(
-        contact => contact.hasPgp && ContactUtil.isExpired(contact)).length) {
+      } else if (contacts.filter(contact => ContactUtil.isExpired(contact)).length) {
         recipient.status = RecipientStatus.EXPIRED;
         $(el).addClass("expired");
         Xss.sanitizePrepend(el, '<img src="/img/svgs/expired-timer.svg" class="revoked-or-expired">');
