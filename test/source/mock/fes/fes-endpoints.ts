@@ -65,13 +65,15 @@ export const mockFesEndpoints: HandlersDefinition = {
   },
   '/api/v1/message': async ({ body }, req) => {
     if (req.headers.host === standardFesUrl && req.method === 'POST') {
-      authenticate(req, 'fes');
       // test: `compose - user@standardsubdomainfes.test:8001 - PWD encrypted message with FES web portal`
-      expect((body as any).associateReplyToken).to.equal('mock-fes-reply-token');
-      expect((body as any).from).to.equal('user@standardsubdomainfes.test:8001');
-      expect((body as any).to).to.deep.equal(['to@example.com']);
-      expect((body as any).cc).to.deep.equal([]);
-      expect((body as any).bcc).to.deep.equal(['bcc@example.com']);
+      authenticate(req, 'fes');
+      // body is a mime-multipart string, we're doing a few smoke checks here without parsing it
+      expect(body).to.contain('-----BEGIN PGP MESSAGE-----');
+      expect(body).to.contain('"associateReplyToken":"mock-fes-reply-token"');
+      expect(body).to.contain('"from":"user@standardsubdomainfes.test:8001"');
+      expect(body).to.contain('"to":["to@example.com"]');
+      expect(body).to.contain('"cc":[]');
+      expect(body).to.contain('"bcc":["bcc@example.com"]');
       return { 'url': `http://${standardFesUrl}/message/FES-MOCK-MESSAGE-ID` };
     }
     throw new HttpClientErr('Not Found', 404);
