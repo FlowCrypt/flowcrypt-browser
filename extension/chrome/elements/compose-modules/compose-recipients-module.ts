@@ -805,7 +805,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       r => r.element.className.includes('no_pgp'))) {
       const email = $(recipientEl).text().trim();
       const dbContacts = await ContactStore.get(undefined, [email]);
-      if (dbContacts) {
+      if (dbContacts && dbContacts.length) {
         const realDbContacts = dbContacts.filter(contact => contact !== undefined);
         if (realDbContacts && realDbContacts.length) {
           recipientEl.element.classList.remove('no_pgp');
