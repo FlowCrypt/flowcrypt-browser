@@ -851,7 +851,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       // - else it's NO_PGP
       const validContacts = contacts.filter(
         contact => !contact.revoked && !ContactUtil.isExpired(contact));
-      console.log(`validContacts: length=${validContacts.length}: ${validContacts}`);
+      console.log(`validContacts: length=${validContacts.length}: ${JSON.stringify(validContacts)}`);
       if (validContacts.length) {
         recipient.status = RecipientStatus.HAS_PGP;
         $(el).addClass('has_pgp');
