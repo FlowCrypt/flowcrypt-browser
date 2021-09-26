@@ -849,7 +849,10 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       // - else if there is at least one expired public key, then it's EXPIRED
       // - else if there is at least one revoked key, then REVOKED
       // - else it's NO_PGP
-      if (contacts.filter(contact => !contact.revoked && !ContactUtil.isExpired(contact)).length) {
+      const validContacts = contacts.filter(
+        contact => !contact.revoked && !ContactUtil.isExpired(contact));
+      console.log(`validContacts: length=${validContacts.length}: ${validContacts}`);
+      if (validContacts.length) {
         recipient.status = RecipientStatus.HAS_PGP;
         $(el).addClass('has_pgp');
         Xss.sanitizePrepend(el, '<img class="lock-icon" src="/img/svgs/locked-icon.svg" />');
