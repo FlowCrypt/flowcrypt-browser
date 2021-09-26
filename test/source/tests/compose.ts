@@ -1285,7 +1285,6 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
 
 const pastePublicKeyManuallyNoClose = async (composeFrame: ControllableFrame, inboxPage: ControllablePage, recipient: string, pub: string) => {
   await Util.sleep(1); // todo: should wait until recipient actually loaded
-  await Util.sleep(1000); // TODO(Ivan) Remove this when debug finished
   await composeFrame.waitForContent('.email_address.no_pgp', recipient);
   await composeFrame.waitAndClick('@action-open-add-pubkey-dialog', { delay: 1 });
   await inboxPage.waitAll('@dialog-add-pubkey');

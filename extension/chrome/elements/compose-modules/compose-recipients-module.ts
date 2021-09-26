@@ -849,22 +849,21 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       // - else if there is at least one expired public key, then it's EXPIRED
       // - else if there is at least one revoked key, then REVOKED
       // - else it's NO_PGP
-      const validContacts = contacts.filter(
-        contact => !contact.revoked && !ContactUtil.isExpired(contact));
-      console.log(`validContacts: length=${validContacts.length}: ${JSON.stringify(validContacts)}`);
-      if (validContacts.length) {
+      if (contacts.filter(
+        contact => contact.hasPgp && !contact.revoked && !ContactUtil.isExpired(contact)).length) {
         recipient.status = RecipientStatus.HAS_PGP;
         $(el).addClass('has_pgp');
         Xss.sanitizePrepend(el, '<img class="lock-icon" src="/img/svgs/locked-icon.svg" />');
         $(el).attr('title', 'Does use encryption\n' + this.publicKeysToRenderedText(contacts));
-      } else if (contacts.filter(contact => ContactUtil.isExpired(contact)).length) {
+      } else if (contacts.filter(
+        contact => contact.hasPgp && ContactUtil.isExpired(contact)).length) {
         recipient.status = RecipientStatus.EXPIRED;
         $(el).addClass("expired");
         Xss.sanitizePrepend(el, '<img src="/img/svgs/expired-timer.svg" class="revoked-or-expired">');
         $(el).attr('title', 'Does use encryption but their public key is expired. ' +
           'You should ask them to send you an updated public key.\n' +
           this.publicKeysToRenderedText(contacts));
-      } else if (contacts.filter(contact => contact.revoked).length) {
+      } else if (contacts.filter(contact => contact.hasPgp && contact.revoked).length) {
         recipient.status = RecipientStatus.REVOKED;
         $(el).addClass("revoked");
         Xss.sanitizePrepend(el, '<img src="/img/svgs/revoked.svg" class="revoked-or-expired">');
