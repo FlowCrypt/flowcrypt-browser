@@ -519,6 +519,31 @@ export let defineSettingsTests = (testVariant: TestVariant, testWithBrowser: Tes
       await settingsPage.close();
     }));
 
+    ava.default('settings - manual backup several keys', testWithBrowser(undefined, async (t, browser) => {
+      const acctEmail = 'flowcrypt.test.key.multiple@gmail.com';
+      const settingsPage1 = await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
+      await SetupPageRecipe.manualEnter(settingsPage1, 'unused', {
+        submitPubkey: false,
+        usedPgpBefore: false,
+        key: {
+          title: '?',
+          armored: testConstants.testKeyMultiple1b383d0334e38b28,
+          passphrase: '1234',
+          longid: '1b383d0334e38b28',
+        }
+      }, { isSavePassphraseChecked: false, isSavePassphraseHidden: false });
+      await settingsPage1.close();
+      await SettingsPageRecipe.addKeyTest(t, browser, acctEmail, testConstants.testKeyMultiple98acfa1eadab5b92, '1234',
+        { isSavePassphraseChecked: true, isSavePassphraseHidden: false });
+      await SettingsPageRecipe.addKeyTest(t, browser, acctEmail, testConstants.testKeyMultipleSmimeCEA2D53BB9D24871, '1234',
+        { isSavePassphraseChecked: true, isSavePassphraseHidden: false });
+      await SettingsPageRecipe.addKeyTest(t, browser, acctEmail, testConstants.testKeyMultipleSmimeA35068FD4E037879, '1234',
+        { isSavePassphraseChecked: true, isSavePassphraseHidden: false });
+      const backupPage = await browser.newPage(t, TestUrls.extension(`/chrome/settings/modules/backup.htm?acctEmail=${acctEmail}&action=backup_manual&parentTabId=0`));
+      // play with backup controls here
+      await backupPage.close();
+    }));
+
     ava.default('settings - manual enter and key update honor FORBID_STORING_PASS_PHRASE OrgRule', testWithBrowser(undefined, async (t, browser) => {
       const { settingsPage, passphrase } = await BrowserRecipe.setUpFcForbidPpStoringAcct(t, browser);
       const { cryptup_userforbidstoringpassphraseorgruleflowcrypttest_passphrase_B8F687BCDE14435A: savedPassphrase1,
