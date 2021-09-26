@@ -863,7 +863,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
         $(el).attr('title', 'Does use encryption but their public key is expired. ' +
           'You should ask them to send you an updated public key.\n' +
           this.publicKeysToRenderedText(contacts));
-      } else if (contacts.filter(contact => contact.hasPgp && contact.revoked).length) {
+      } else if (contacts.filter(contact => contact.revoked).length) {
         recipient.status = RecipientStatus.REVOKED;
         $(el).addClass("revoked");
         Xss.sanitizePrepend(el, '<img src="/img/svgs/revoked.svg" class="revoked-or-expired">');
