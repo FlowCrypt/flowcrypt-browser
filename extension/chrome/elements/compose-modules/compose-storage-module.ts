@@ -84,7 +84,7 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
     //    discussion: https://github.com/FlowCrypt/flowcrypt-browser/pull/3898#discussion_r686229818
     const storedContacts = await ContactStore.get(undefined, [email]);
     if (storedContacts && storedContacts.length) {
-      const result = [];
+      const results: Contact[] = [];
       for (const storedContact of storedContacts) {
         if (storedContact && storedContact.hasPgp && storedContact.pubkey && !storedContact.revoked) {
           // checks if pubkey was updated, asynchronously. By the time user finishes composing,
@@ -96,15 +96,18 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
           //    get the updated key from db. This could be fixed by:
           //      - either life fixing the UI after this call finishes, or
           //      - making this call below synchronous and using the result directly
-          this.checkKeyserverForNewerVersionOfKnownPubkeyIfNeeded(storedContact).catch(Catch.reportErr);
-          result.push(storedContact);
+          this.checkKeyserverForNewerVersionOfKnownPubkeyIfNeeded(storedContact)
+            .catch(Catch.reportErr);
+          results.push(storedContact);
+        } else {
+          const res = await this.lookupPubkeyFromKeyserversAndUpsertDb(email, name, storedContact);
+          if (res === 'fail') return res;
+          results.push(res);
         }
       }
-      return result;
+      return results;
     }
-    const res = await this.lookupPubkeyFromKeyserversAndUpsertDb(email, name, undefined);
-    if (res === 'fail') return res;
-    return [res];
+    return 'fail';
   }
 
   /**

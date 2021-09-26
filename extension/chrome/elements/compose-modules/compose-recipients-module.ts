@@ -202,10 +202,11 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
         } else {
           pubkeyLookupRes = 'wrong';
         }
-        if (pubkeyLookupRes === 'fail' || pubkeyLookupRes === 'wrong')
+        if (pubkeyLookupRes === 'fail' || pubkeyLookupRes === 'wrong') {
           await this.renderPubkeyResult(recipient, pubkeyLookupRes);
-        else
+        } else {
           await this.renderPubkeyResult(recipient, pubkeyLookupRes as Contact[]);
+        }
         recipient.evaluating = undefined; // Clear promise when it finished
       })();
     }
