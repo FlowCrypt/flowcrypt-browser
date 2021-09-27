@@ -13,7 +13,7 @@ import { ViewModule } from '../../../js/common/view-module.js';
 import { ComposeView } from '../compose.js';
 import { KeyStore } from '../../../js/common/platform/store/key-store.js';
 import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
-import { ContactStore, ContactUpdate, PubKeyInfo } from '../../../js/common/platform/store/contact-store.js';
+import { ContactStore, ContactUpdate, EmailWithSortedPubKeys, PubKeyInfo } from '../../../js/common/platform/store/contact-store.js';
 import { PassphraseStore } from '../../../js/common/platform/store/passphrase-store.js';
 import { Settings } from '../../../js/common/settings.js';
 import { Ui } from '../../../js/common/browser/ui.js';
@@ -75,7 +75,7 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
 
   public lookupPubkeyFromKeyserversThenOptionallyFetchExpiredByFingerprintAndUpsertDb = async (
     email: string, name: string | undefined
-  ): Promise<Contact[] | "fail"> => {
+  ): Promise<EmailWithSortedPubKeys[] | "fail"> => {
     // note by Tom 2021-08-10: We are only getting one public key from storage, but should
     //    work with arrays instead, like with `ContactStore.getOneWithAllPubkeys`.
     //    However, this whole fingerprint-base section seems unnecessary, we could likely
@@ -105,7 +105,19 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
           results.push(res);
         }
       }
-      return results;
+
+      // TODO
+      const pubkeys = results.map(keyInfo => {
+        fingerprint: string;
+        armoredKey: string;
+        longids: string[];
+        lastCheck: number | null,
+          expiresOn: number | null;
+      });
+
+      return {
+
+      };
     }
     return 'fail';
   }
