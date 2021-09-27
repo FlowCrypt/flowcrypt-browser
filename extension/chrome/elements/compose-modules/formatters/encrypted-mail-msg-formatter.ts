@@ -43,7 +43,6 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
 
   private prepareAndUploadPwdEncryptedMsg = async (newMsg: NewMsgData): Promise<string> => {
     // PGP/MIME + included attachments (encrypted for password only)
-    const authInfo = await AcctStore.authInfo(this.acctEmail);
     if (!newMsg.pwd) {
       throw new Error('password unexpectedly missing');
     }
@@ -72,6 +71,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
     if (! await this.view.acctServer.isFesUsed()) { // if flowcrypt.com/api is used
       newMsg.pwd = await PgpHash.challengeAnswer(newMsg.pwd); // then hash the password to preserve compatibility
     }
+    const authInfo = await AcctStore.authInfo(this.acctEmail);
     const { bodyWithReplyToken, replyToken } = await this.getPwdMsgSendableBodyWithOnlineReplyMsgToken(authInfo, newMsg);
     const pgpMimeWithAttachments = await Mime.encode(bodyWithReplyToken, { Subject: newMsg.subject }, await this.view.attachmentsModule.attachment.collectAttachments());
     const { data: pwdEncryptedWithAttachments } = await this.encryptDataArmor(Buf.fromUtfStr(pgpMimeWithAttachments), newMsg.pwd, []); // encrypted only for pwd, not signed
@@ -79,6 +79,8 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
       authInfo.uuid ? authInfo : undefined,
       pwdEncryptedWithAttachments,
       replyToken,
+      newMsg.from,
+      newMsg.recipients,
       (p) => this.view.sendBtnModule.renderUploadProgress(p, 'FIRST-HALF'), // still need to upload to Gmail later, this request represents first half of progress
     );
     return url;
