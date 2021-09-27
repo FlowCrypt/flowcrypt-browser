@@ -100,9 +100,9 @@ export class BackupView extends View {
     $(`#${showBlockName}`).css('display', 'block');
   }
 
-  public setHandlers = () => {
+  public setHandlers = async () => {
     this.statusModule.setHandlers();
-    this.manualModule.setHandlers();
+    await this.manualModule.setHandlers();
   }
 
 }

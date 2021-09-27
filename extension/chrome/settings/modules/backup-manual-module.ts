@@ -36,10 +36,10 @@ export class BackupManualActionModule extends ViewModule<BackupView> {
     BrowserMsg.listen(this.view.tabId);
   }
 
-  public setHandlers = () => {
+  public setHandlers = async () => {
     $('#module_manual input[name=input_backup_choice]').click(this.view.setHandler(el => this.actionSelectBackupMethodHandler(el)));
     this.proceedBtn.click(this.view.setHandlerPrevent('double', () => this.actionManualBackupHandler()));
-    this.preparePrvKeysBackupSelection();
+    await this.preparePrvKeysBackupSelection();
   }
 
   public doBackupOnEmailProvider = async (armoredKey: string) => {
