@@ -13,7 +13,7 @@ import { ViewModule } from '../../../js/common/view-module.js';
 import { ComposeView } from '../compose.js';
 import { KeyStore } from '../../../js/common/platform/store/key-store.js';
 import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
-import { ContactStore, ContactUpdate } from '../../../js/common/platform/store/contact-store.js';
+import { ContactStore, ContactUpdate, PubKeyInfo } from '../../../js/common/platform/store/contact-store.js';
 import { PassphraseStore } from '../../../js/common/platform/store/passphrase-store.js';
 import { Settings } from '../../../js/common/settings.js';
 import { Ui } from '../../../js/common/browser/ui.js';
@@ -82,11 +82,11 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
     //    remove it and the keys will be updated below using
     //    `lookupPubkeyFromKeyserversAndUpsertDb` anyway.
     //    discussion: https://github.com/FlowCrypt/flowcrypt-browser/pull/3898#discussion_r686229818
-    const storedContacts = await ContactStore.get(undefined, [email]);
-    if (storedContacts && storedContacts.length) {
-      const results: Contact[] = [];
-      for (const storedContact of storedContacts) {
-        if (storedContact && storedContact.hasPgp && storedContact.pubkey && !storedContact.revoked) {
+    const storedContact = await ContactStore.getOneWithAllPubkeys(undefined, email);
+    if (storedContact && storedContact.sortedPubkeys.length) {
+      const results: PubKeyInfo[] = [];
+      for (const pubkey of storedContact.sortedPubkeys) {
+        if (!pubkey.revoked) {
           // checks if pubkey was updated, asynchronously. By the time user finishes composing,
           //    newer version would have been updated in db.
           // This implementation is imperfect in that, if sender didn't pull a particular pubkey
@@ -96,9 +96,9 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
           //    get the updated key from db. This could be fixed by:
           //      - either life fixing the UI after this call finishes, or
           //      - making this call below synchronous and using the result directly
-          this.checkKeyserverForNewerVersionOfKnownPubkeyIfNeeded(storedContact)
+          this.checkKeyserverForNewerVersionOfKnownPubkeyIfNeeded(storedContact.info.email, pubkey)
             .catch(Catch.reportErr);
-          results.push(storedContact);
+          results.push(pubkey);
         } else {
           const res = await this.lookupPubkeyFromKeyserversAndUpsertDb(email, name, storedContact);
           if (res === 'fail') return res;
@@ -171,23 +171,20 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
     }
   }
 
-  public checkKeyserverForNewerVersionOfKnownPubkeyIfNeeded = async (contact: Contact) => {
+  public checkKeyserverForNewerVersionOfKnownPubkeyIfNeeded = async (email: string, pkinfo: PubKeyInfo) => {
     try {
-      if (!contact.pubkey || !contact.fingerprint) {
-        return;
-      }
-      const lastCheckOverWeekAgoOrNever = !contact.pubkeyLastCheck || new Date(contact.pubkeyLastCheck).getTime() < Date.now() - (1000 * 60 * 60 * 24 * 7);
-      const isExpired = contact.expiresOn && contact.expiresOn < Date.now();
+      const lastCheckOverWeekAgoOrNever = !pkinfo.lastCheck || new Date(pkinfo.lastCheck).getTime() < Date.now() - (1000 * 60 * 60 * 24 * 7);
+      const isExpired = pkinfo.pubkey.expiration && (new Date(pkinfo.pubkey.expiration)).getTime() < Date.now();
       if (lastCheckOverWeekAgoOrNever || isExpired) {
-        const { pubkey: fetchedPubkeyArmored } = await this.view.pubLookup.lookupFingerprint(contact.fingerprint);
+        const { pubkey: fetchedPubkeyArmored } = await this.view.pubLookup.lookupFingerprint(pkinfo.pubkey.id);
         if (fetchedPubkeyArmored) {
           const fetchedPubkey = await KeyUtil.parse(fetchedPubkeyArmored);
-          if (fetchedPubkey.lastModified && (!contact.pubkey.lastModified || fetchedPubkey.lastModified >= contact.pubkey.lastModified)) {
+          if (fetchedPubkey.lastModified && (!pkinfo.pubkey.lastModified || fetchedPubkey.lastModified >= pkinfo.pubkey.lastModified)) {
             // the fetched pubkey has at least the same or newer signature
             // the "same or newer" was due to a bug we encountered earlier where keys were badly recorded in db
             // sometime in Oct 2020 we could turn the ">=" back to ">" above
-            await ContactStore.update(undefined, contact.email, { pubkey: fetchedPubkey, lastUse: Date.now(), pubkeyLastCheck: Date.now() });
-            const [updatedPubkey] = await ContactStore.get(undefined, [contact.email]);
+            await ContactStore.update(undefined, email, { pubkey: fetchedPubkey, lastUse: Date.now(), pubkeyLastCheck: Date.now() });
+            const [updatedPubkey] = await ContactStore.get(undefined, [email]);
             if (!updatedPubkey) {
               throw new Error("Cannot retrieve Contact right after updating it");
             }
@@ -196,7 +193,7 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
           }
         }
       }
-      await ContactStore.update(undefined, contact.email, { pubkey: contact.pubkey, pubkeyLastCheck: Date.now() });
+      await ContactStore.update(undefined, email, { pubkey: pkinfo.pubkey, pubkeyLastCheck: Date.now() });
       // we checked for newer key and it did not result in updating the key, don't check again for another week
     } catch (e) {
       ApiErr.reportIfSignificant(e);
