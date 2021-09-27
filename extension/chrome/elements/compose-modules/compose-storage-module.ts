@@ -3,7 +3,7 @@
 'use strict';
 
 import { Bm, BrowserMsg } from '../../../js/common/browser/browser-msg.js';
-import { Contact, KeyInfo, KeyUtil, Key } from '../../../js/common/core/crypto/key.js';
+import { Contact, KeyInfo, KeyUtil, Key, ContactUtil } from '../../../js/common/core/crypto/key.js';
 import { ApiErr } from '../../../js/common/api/shared/api-error.js';
 import { Assert } from '../../../js/common/assert.js';
 import { Catch } from '../../../js/common/platform/catch.js';
@@ -160,16 +160,14 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
           await Promise.all(updates.map(async (update) => await ContactStore.update(undefined, email, update)));
         }
         const [preferred] = await ContactStore.get(undefined, [email]);
-        return preferred ?? PUBKEY_LOOKUP_RESULT_FAIL;
-      } else {
-        return PUBKEY_LOOKUP_RESULT_FAIL;
+        if (preferred) return ContactUtil.toPubKeyInfo(preferred);
       }
     } catch (e) {
       if (!ApiErr.isNetErr(e) && !ApiErr.isServerErr(e)) {
         Catch.reportErr(e);
       }
-      return PUBKEY_LOOKUP_RESULT_FAIL;
     }
+    return PUBKEY_LOOKUP_RESULT_FAIL;
   }
 
   public checkKeyserverForNewerVersionOfKnownPubkeyIfNeeded = async (email: string, pkinfo: PubKeyInfo) => {
