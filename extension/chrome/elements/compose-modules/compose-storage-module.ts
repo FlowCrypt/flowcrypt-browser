@@ -100,7 +100,7 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
             .catch(Catch.reportErr);
           results.push(pubkey);
         } else {
-          const res = await this.lookupPubkeyFromKeyserversAndUpsertDb(email, name, storedContact);
+          const res = await this.lookupPubkeyFromKeyserversAndUpsertDb(email, name, pubkey);
           if (res === 'fail') return res;
           results.push(res);
         }
@@ -125,8 +125,8 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
    *    discussion: https://github.com/FlowCrypt/flowcrypt-browser/pull/3898#discussion_r686244628
    */
   public lookupPubkeyFromKeyserversAndUpsertDb = async (
-    email: string, name: string | undefined, existingContact: Contact | undefined
-  ): Promise<Contact | "fail"> => {
+    email: string, name: string | undefined, existingPubKey: PubKeyInfo | undefined
+  ): Promise<PubKeyInfo | "fail"> => {
     try {
       const lookupResult = await this.view.pubLookup.lookupEmail(email);
       if (lookupResult && email) {
@@ -149,7 +149,8 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
             updates.push({ name } as ContactUpdate);
           } else {
             // No public key found. Returning early, nothing to update in local store below.
-            return existingContact ?? await ContactStore.obj({ email });
+            if (existingPubKey) return existingPubKey;
+            await ContactStore.obj({ email });
           }
         }
         for (const pubkey of pubkeys) {
