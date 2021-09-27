@@ -64,6 +64,17 @@ export type ContactUpdate = {
 
 type DbContactFilter = { hasPgp?: boolean, substring?: string, limit?: number };
 
+export type PubKeyInfo = {
+  pubkey: Key,
+  revoked: boolean,
+  lastCheck: number | null
+};
+
+export type EmailWithSortedPubKeys = {
+  info: Email,
+  sortedPubkeys: PubKeyInfo[]
+};
+
 const x509postfix = "-X509";
 
 /**
@@ -262,7 +273,7 @@ export class ContactStore extends AbstractStore {
   }
 
   public static getOneWithAllPubkeys = async (db: IDBDatabase | undefined, email: string):
-    Promise<{ info: Email, sortedPubkeys: { pubkey: Key, revoked: boolean, lastCheck: number | null }[] } | undefined> => {
+    Promise<EmailWithSortedPubKeys | undefined> => {
     if (!db) { // relay op through background process
       // tslint:disable-next-line:no-unsafe-any
       return await BrowserMsg.send.bg.await.db({ f: 'getOneWithAllPubkeys', args: [email] });
