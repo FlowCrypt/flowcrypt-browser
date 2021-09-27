@@ -15,7 +15,6 @@ import { Ui } from '../browser/ui.js';
 import { Url, Str } from '../core/common.js';
 import { opgp } from '../core/crypto/pgp/openpgpjs-custom.js';
 import { KeyStore } from '../platform/store/key-store.js';
-import { AcctStore } from '../platform/store/acct-store.js';
 
 type KeyImportUiCheckResult = { normalized: string; passphrase: string; fingerprint: string; decrypted: Key; encrypted: Key; };
 
@@ -68,9 +67,7 @@ export class KeyImportUi {
   }
   public onBadPassphrase: VoidCallback = () => undefined;
 
-  public initPrvImportSrcForm = async (acctEmail: string, parentTabId: string | undefined, submitKeyForAddrs?: string[]) => {
-    const { sendAs } = await AcctStore.get(acctEmail, ['sendAs']);
-    const addresses = Object.keys(sendAs!);
+  public initPrvImportSrcForm = (acctEmail: string, parentTabId: string | undefined, submitKeyForAddrs?: string[] | undefined) => {
     $('input[type=radio][name=source]').off().change(function () {
       if ((this as HTMLInputElement).value === 'file') {
         $('.input_private_key').val('').change().prop('disabled', true);
@@ -84,9 +81,6 @@ export class KeyImportUi {
       } else if ((this as HTMLInputElement).value === 'backup') {
         window.location.href = Url.create('/chrome/settings/setup.htm', { acctEmail, parentTabId, action: 'add_key' });
       }
-      if (addresses !== undefined) {
-        $('.container_for_import_key_email_alias').css('visibility', 'visible');
-      }
     });
     $('.line.unprotected_key_create_pass_phrase .action_use_random_pass_phrase').click(Ui.event.handle(() => {
       $('.source_paste_container .input_passphrase').val(PgpPwd.random()).keyup();
@@ -99,14 +93,14 @@ export class KeyImportUi {
       const { keys: [prv] } = await opgp.key.readArmored(String($(target).val()));
       if (prv !== undefined) {
         $('.action_add_private_key').removeClass('btn_disabled').removeAttr('disabled');
-        if (addresses !== undefined) {
+        if (submitKeyForAddrs !== undefined) {
           const users = prv.users;
           for (const user of users) {
             const userId = user.userId;
-            for (const inputCheckboxElement of $('.input_email_alias')) {
-              if (String($(inputCheckboxElement).data('email')) === userId!.email) {
+            for (const inputCheckboxesWithEmail of $('.input_email_alias')) {
+              if (String($(inputCheckboxesWithEmail).data('email')) === userId!.email) {
                 KeyImportUi.addAliasForSubmission(userId!.email, submitKeyForAddrs!);
-                $(inputCheckboxElement).prop('checked', true);
+                $(inputCheckboxesWithEmail).prop('checked', true);
               }
             }
           }

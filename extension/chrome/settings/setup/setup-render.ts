@@ -159,6 +159,9 @@ export class SetupRenderModule {
         KeyImportUi.removeAliasFromSubmission(email, this.view.submitKeyForAddrs);
       }
     });
+    if (emailAliases.length > 0) {
+      $('.container_for_import_key_email_alias').css('visibility', 'visible');
+    }
     $('.manual .input_submit_all').prop({ checked: true, disabled: false }).closest('div.line').css('display', 'block');
   }
 
