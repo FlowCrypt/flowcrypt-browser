@@ -44,6 +44,7 @@ button.swal2-styled:focus,
   text-decoration: none;
 }
 
+.prv_fingerprint span,
 a { color: #337ab7; }
 
 .line.red,
@@ -1091,6 +1092,7 @@ body#settings > div#content.storage .pre {
 body#settings > div#content .list_table { display: none; }
 body#settings > div#content .list_table table img { width: 15px; }
 
+.prv_fingerprint span,
 body#settings > div#content .list_table table {
   width: 100%;
   font-size: 14px;

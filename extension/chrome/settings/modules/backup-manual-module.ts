@@ -14,7 +14,7 @@ import { ApiErr } from '../../../js/common/api/shared/api-error.js';
 import { BrowserMsg, Bm } from '../../../js/common/browser/browser-msg.js';
 import { Catch } from '../../../js/common/platform/catch.js';
 import { Browser } from '../../../js/common/browser/browser.js';
-import { Url, PromiseCancellation } from '../../../js/common/core/common.js';
+import { Url, PromiseCancellation, Str } from '../../../js/common/core/common.js';
 import { Settings } from '../../../js/common/settings.js';
 import { Buf } from '../../../js/common/core/buf.js';
 import { PassphraseStore } from '../../../js/common/platform/store/passphrase-store.js';
@@ -34,12 +34,12 @@ export class BackupManualActionModule extends ViewModule<BackupView> {
       }
     });
     BrowserMsg.listen(this.view.tabId);
-    this.preparePrvKeysBackupSelection();
   }
 
   public setHandlers = () => {
     $('#module_manual input[name=input_backup_choice]').click(this.view.setHandler(el => this.actionSelectBackupMethodHandler(el)));
     this.proceedBtn.click(this.view.setHandlerPrevent('double', () => this.actionManualBackupHandler()));
+    this.preparePrvKeysBackupSelection();
   }
 
   public doBackupOnEmailProvider = async (armoredKey: string) => {
@@ -66,14 +66,17 @@ export class BackupManualActionModule extends ViewModule<BackupView> {
   private renderPrvKeysBackupSelection = async (primaryKeys: ExtendedKeyInfo[]) => {
     for (const primaryKi of primaryKeys) {
       const email = Xss.escape(String(primaryKi.emails));
-      const fingerprints = Xss.escape(String(primaryKi.fingerprints));
+      const fingerprints = Xss.escape(String(primaryKi.fingerprints[0]));
+      const keyType = await (await KeyUtil.parse(primaryKi.private)).type;
       const dom = `
       <div class="mb-20">
         <div class="details">
           <label>
-            <input class="input_prvkey_backup_checkbox" type="checkbox" data-emails="${email}" data-fingerprints="${fingerprints}" />
-            <p class="m-0 display_inline_block">Email: <span class="prv_email">${email}</span> with fingerprint :</p>
-            <p class="m-0"><span class="prv_fingerprint green">${fingerprints}</span></p>
+            <p class="m-0">
+            <input class="input_prvkey_backup_checkbox" type="checkbox" checked data-emails="${email}" data-fingerprints="${fingerprints}" ${keyType === 'x509' ? 'disabled' : ''} />
+            Email: <span class="prv_email">${email}</span> with fingerprint :
+            </p>
+            <p class="m-0 prv_fingerprint"><span>${keyType} - ${Str.spaced(fingerprints)}</span></p>
           </label>
         </div>
       </div>
