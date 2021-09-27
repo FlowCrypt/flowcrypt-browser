@@ -5,6 +5,7 @@
 import { AcctStore } from '../platform/store/acct-store.js';
 import { EnterpriseServer } from './account-servers/enterprise-server.js';
 import { BackendRes, FcUuidAuth, FlowCryptComApi, ProfileUpdate } from './account-servers/flowcrypt-com-api.js';
+import { Recipients } from './email-provider/email-provider-api.js';
 import { Api, ProgressCb } from './shared/api.js';
 
 /**
@@ -44,10 +45,20 @@ export class AccountServer extends Api {
     }
   }
 
-  public messageUpload = async (fcAuth: FcUuidAuth | undefined, encrypted: Uint8Array, replyToken: string, progressCb: ProgressCb): Promise<{ url: string }> => {
+  public messageUpload = async (
+    fcAuth: FcUuidAuth | undefined,
+    encrypted: Uint8Array,
+    replyToken: string,
+    from: string,
+    recipients: Recipients,
+    progressCb: ProgressCb
+  ): Promise<{ url: string }> => {
     if (await this.isFesUsed()) {
       const fes = new EnterpriseServer(this.acctEmail);
-      return await fes.webPortalMessageUpload(encrypted, replyToken, progressCb);
+      // Recipients are used to later cross-check replies from the web
+      //   The message is not actually sent to them now.
+      //   Message is uploaded and a link is retrieved which is sent through Gmail.
+      return await fes.webPortalMessageUpload(encrypted, replyToken, from, recipients, progressCb);
     } else {
       return await FlowCryptComApi.messageUpload(fcAuth, encrypted, progressCb);
     }

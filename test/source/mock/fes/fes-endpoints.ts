@@ -1,5 +1,6 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
+import { expect } from 'chai';
 import { IncomingMessage } from 'http';
 import { HandlersDefinition } from '../all-apis-mock';
 import { HttpClientErr } from '../lib/api';
@@ -62,9 +63,17 @@ export const mockFesEndpoints: HandlersDefinition = {
     }
     throw new HttpClientErr('Not Found', 404);
   },
-  '/api/v1/message?associate-reply-token=mock-fes-reply-token': async ({ }, req) => {
+  '/api/v1/message': async ({ body }, req) => {
     if (req.headers.host === standardFesUrl && req.method === 'POST') {
+      // test: `compose - user@standardsubdomainfes.test:8001 - PWD encrypted message with FES web portal`
       authenticate(req, 'fes');
+      // body is a mime-multipart string, we're doing a few smoke checks here without parsing it
+      expect(body).to.contain('-----BEGIN PGP MESSAGE-----');
+      expect(body).to.contain('"associateReplyToken":"mock-fes-reply-token"');
+      expect(body).to.contain('"from":"user@standardsubdomainfes.test:8001"');
+      expect(body).to.contain('"to":["to@example.com"]');
+      expect(body).to.contain('"cc":[]');
+      expect(body).to.contain('"bcc":["bcc@example.com"]');
       return { 'url': `http://${standardFesUrl}/message/FES-MOCK-MESSAGE-ID` };
     }
     throw new HttpClientErr('Not Found', 404);
