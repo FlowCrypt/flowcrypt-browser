@@ -10,12 +10,12 @@ import { AcctStore } from '../../platform/store/acct-store.js';
 import { BackendRes, ProfileUpdate } from './flowcrypt-com-api.js';
 import { Dict } from '../../core/common.js';
 import { ErrorReport, UnreportableError } from '../../platform/catch.js';
-import { ApiErr } from '../shared/api-error.js';
+import { ApiErr, BackendAuthErr } from '../shared/api-error.js';
 import { FLAVOR } from '../../core/const.js';
 import { Attachment } from '../../core/attachment.js';
 import { Recipients } from '../email-provider/email-provider-api.js';
 import { Buf } from '../../core/buf.js';
-import { DomainRulesJson } from '../../org-rules.js';
+import { DomainRulesJson, OrgRules } from '../../org-rules.js';
 
 // todo - decide which tags to use
 type EventTag = 'compose' | 'decrypt' | 'setup' | 'settings' | 'import-pub' | 'import-prv';
@@ -96,15 +96,27 @@ export class EnterpriseServer extends Api {
   }
 
   public reportException = async (errorReport: ErrorReport): Promise<void> => {
-    await this.request<void>('POST', `/api/${this.apiVersion}/log-collector/exception`, await this.authHdr(), errorReport);
+    if ((await OrgRules.newInstance(this.acctEmail)).disableFesAccessToken()) {
+      console.info('Reporting exceptions to FES is disabled when DISABLE_FES_ACCESS_TOKEN OrgRule is used');
+      return;
+    }
+    await this.request<void>('POST', `/api/${this.apiVersion}/log-collector/exception`,
+      await this.authHdr('accessToken'), errorReport);
   }
 
   public reportEvent = async (tags: EventTag[], message: string, details?: string): Promise<void> => {
-    await this.request<void>('POST', `/api/${this.apiVersion}/log-collector/exception`, await this.authHdr(), { tags, message, details });
+    if ((await OrgRules.newInstance(this.acctEmail)).disableFesAccessToken()) {
+      console.info('Reporting events to FES is disabled when DISABLE_FES_ACCESS_TOKEN OrgRule is used');
+      return;
+    }
+    await this.request<void>('POST', `/api/${this.apiVersion}/log-collector/exception`,
+      await this.authHdr('accessToken'), { tags, message, details });
   }
 
   public webPortalMessageNewReplyToken = async (): Promise<FesRes.ReplyToken> => {
-    return await this.request<FesRes.ReplyToken>('POST', `/api/${this.apiVersion}/message/new-reply-token`, await this.authHdr(), {});
+    const disableAccessToken = (await OrgRules.newInstance(this.acctEmail)).disableFesAccessToken();
+    const authHdr = await this.authHdr(disableAccessToken ? 'OIDC' : 'accessToken');
+    return await this.request<FesRes.ReplyToken>('POST', `/api/${this.apiVersion}/message/new-reply-token`, authHdr, {});
   }
 
   public webPortalMessageUpload = async (
@@ -131,9 +143,11 @@ export class EnterpriseServer extends Api {
       }))
     });
     const multipartBody = { content, details };
+    const disableAccessToken = (await OrgRules.newInstance(this.acctEmail)).disableFesAccessToken();
+    const authHdr = await this.authHdr(disableAccessToken ? 'OIDC' : 'accessToken');
     return await EnterpriseServer.apiCall<FesRes.MessageUpload>(
       this.url, `/api/${this.apiVersion}/message`, multipartBody, 'FORM',
-      { upload: progressCb }, await this.authHdr(), 'json', 'POST'
+      { upload: progressCb }, authHdr, 'json', 'POST'
     );
   }
 
@@ -142,9 +156,13 @@ export class EnterpriseServer extends Api {
     throw new UnreportableError('Account update not implemented when using FlowCrypt Enterprise Server');
   }
 
-  private authHdr = async (): Promise<Dict<string>> => {
-    const { fesAccessToken } = await AcctStore.get(this.acctEmail, ['fesAccessToken']);
-    return { Authorization: `Bearer ${fesAccessToken}` };
+  private authHdr = async (type: 'accessToken' | 'OIDC'): Promise<Dict<string>> => {
+    if (type === 'accessToken') {
+      const { fesAccessToken } = await AcctStore.get(this.acctEmail, ['fesAccessToken']);
+      return { Authorization: `Bearer ${fesAccessToken}` };
+    } else {
+      throw new BackendAuthErr('OIDC auth not implemented yet'); // WIP - cause a dialog to show?
+    }
   }
 
   private request = async <RT>(method: ReqMethod, path: string, headers: Dict<string> = {}, vals?: Dict<any>): Promise<RT> => {
