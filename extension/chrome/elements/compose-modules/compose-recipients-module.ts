@@ -84,7 +84,12 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     this.view.S.cached('compose_table').click(this.view.setHandler(() => this.hideContacts(), this.view.errModule.handle(`hide contact box`)));
     this.view.S.cached('add_their_pubkey').click(this.view.setHandler(() => this.addTheirPubkeyClickHandler(), this.view.errModule.handle('add pubkey')));
     BrowserMsg.addListener('addToContacts', this.checkReciepientsKeys);
-    BrowserMsg.addListener('reRenderRecipient', async ({ contact }: Bm.ReRenderRecipient) => await this.reRenderRecipientFor(contact));
+    BrowserMsg.addListener('reRenderRecipient', async ({ contact }: Bm.ReRenderRecipient) => {
+      const emailWithKeys = await ContactStore.getOneWithAllPubkeys(undefined, contact.email);
+      if (emailWithKeys) {
+        await this.reRenderRecipientFor(contact.email, emailWithKeys.sortedPubkeys);
+      }
+    });
     BrowserMsg.listen(this.view.parentTabId);
   }
 
