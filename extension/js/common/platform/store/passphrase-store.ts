@@ -5,7 +5,7 @@ import { AccountIndex, AcctStore, AcctStoreDict } from './acct-store.js';
 import { PromiseCancellation, Dict } from '../../core/common.js';
 import { Ui } from '../../browser/ui.js';
 import { OpenPGPKey } from '../../core/crypto/pgp/openpgp-key.js';
-import { BrowserMsg } from '../../browser/browser-msg.js';
+import { InMemoryStore } from './in-memory-store.js';
 
 /**
  * Local or session store of pass phrases
@@ -19,7 +19,7 @@ export class PassphraseStore extends AbstractStore {
     const longid = fingerprintOrLongid.length === 40 ? OpenPGPKey.fingerprintToLongid(fingerprintOrLongid) : fingerprintOrLongid;
     const storageIndex = PassphraseStore.getIndex(longid);
     if (storageType === 'session') {
-      return await BrowserMsg.send.bg.await.storeSessionPassphraseSet({ acctEmail, key: longid, value: passphrase });
+      return await InMemoryStore.set(acctEmail, longid, passphrase);
     } else {
       if (typeof passphrase === 'undefined') {
         await AcctStore.remove(acctEmail, [storageIndex]);
@@ -45,7 +45,7 @@ export class PassphraseStore extends AbstractStore {
     if (ignoreSession) {
       return undefined;
     }
-    return await BrowserMsg.send.bg.await.storeSessionPassphraseGet({ acctEmail, key: longid }) ?? undefined;
+    return await InMemoryStore.get(acctEmail, longid) ?? undefined;
   }
 
   /**
