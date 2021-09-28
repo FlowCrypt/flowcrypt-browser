@@ -45,6 +45,9 @@ export const mockFesEndpoints: HandlersDefinition = {
       issuedAccessTokens.push(fesToken);
       return { 'accessToken': fesToken };
     }
+    if (req.headers.host === disableAccessTokenFesUrl && req.method === 'GET') {
+      throw new HttpClientErr('Users on domain disablefesaccesstoken.test must not fetch access token from FES');
+    }
     throw new HttpClientErr('Not Found', 404);
   },
   '/api/v1/client-configuration': async ({ }, req) => {
