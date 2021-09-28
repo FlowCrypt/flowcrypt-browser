@@ -3,7 +3,7 @@
 'use strict';
 
 import { ChunkedCb, EmailProviderContact, RecipientType } from '../../../js/common/api/shared/api.js';
-import { Contact, ContactUtil } from '../../../js/common/core/crypto/key.js';
+import { Contact } from '../../../js/common/core/crypto/key.js';
 import { PUBKEY_LOOKUP_RESULT_FAIL, PUBKEY_LOOKUP_RESULT_WRONG } from './compose-err-module.js';
 import { ProviderContactsQuery, Recipients } from '../../../js/common/api/email-provider/email-provider-api.js';
 import { RecipientElement, RecipientStatus } from './compose-types.js';
@@ -20,7 +20,7 @@ import { moveElementInArray } from '../../../js/common/platform/util.js';
 import { ViewModule } from '../../../js/common/view-module.js';
 import { ComposeView } from '../compose.js';
 import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
-import { ContactPreview, ContactStore, ContactUpdate } from '../../../js/common/platform/store/contact-store.js';
+import { ContactPreview, ContactStore, ContactUpdate, PubKeyInfo, PubKeyInfoUtil } from '../../../js/common/platform/store/contact-store.js';
 
 /**
  * todo - this class is getting too big
@@ -196,16 +196,16 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       this.view.S.now('send_btn_text').text(this.BTN_LOADING);
       this.view.sizeModule.setInputTextHeightManuallyIfNeeded();
       recipient.evaluating = (async () => {
-        let pubkeyLookupRes: Contact[] | 'fail' | 'wrong';
+        let pubkeyLookupRes: PubKeyInfo[] | 'fail' | 'wrong' = 'wrong';
         if (recipient.status !== RecipientStatus.WRONG) {
-          pubkeyLookupRes = await this.view.storageModule.lookupPubkeyFromKeyserversThenOptionallyFetchExpiredByFingerprintAndUpsertDb(recipient.email, undefined);
-        } else {
-          pubkeyLookupRes = 'wrong';
+          pubkeyLookupRes = await this.view.storageModule.
+            lookupPubkeyFromKeyserversThenOptionallyFetchExpiredByFingerprintAndUpsertDb(
+              recipient.email, undefined);
         }
         if (pubkeyLookupRes === 'fail' || pubkeyLookupRes === 'wrong') {
           await this.renderPubkeyResult(recipient, pubkeyLookupRes);
         } else {
-          await this.renderPubkeyResult(recipient, pubkeyLookupRes as Contact[]);
+          await this.renderPubkeyResult(recipient, pubkeyLookupRes as PubKeyInfo[]);
         }
         recipient.evaluating = undefined; // Clear promise when it finished
       })();
@@ -805,24 +805,21 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     for (const recipientEl of this.addedRecipients.filter(
       r => r.element.className.includes('no_pgp'))) {
       const email = $(recipientEl).text().trim();
-      const dbContacts = await ContactStore.get(undefined, [email]);
-      if (dbContacts && dbContacts.length) {
-        const realDbContacts = dbContacts.filter(contact => contact !== undefined);
-        if (realDbContacts && realDbContacts.length) {
-          recipientEl.element.classList.remove('no_pgp');
-          await this.renderPubkeyResult(recipientEl, realDbContacts as Contact[]);
-        }
+      const dbContacts = await ContactStore.getOneWithAllPubkeys(undefined, email);
+      if (dbContacts && dbContacts.sortedPubkeys && dbContacts.sortedPubkeys.length) {
+        recipientEl.element.classList.remove('no_pgp');
+        await this.renderPubkeyResult(recipientEl, dbContacts.sortedPubkeys);
       }
     }
   }
 
   private renderPubkeyResult = async (
-    recipient: RecipientElement, contacts: Contact[] | 'fail' | 'wrong'
+    recipient: RecipientElement, sortedPubKeyInfos: PubKeyInfo[] | 'fail' | 'wrong'
   ) => {
     const el = recipient.element;
     this.view.errModule.debug(`renderPubkeyResult.emailEl(${String(recipient.email)})`);
     this.view.errModule.debug(`renderPubkeyResult.email(${recipient.email})`);
-    this.view.errModule.debug(`renderPubkeyResult.contact(${JSON.stringify(contacts)})`);
+    this.view.errModule.debug(`renderPubkeyResult.contact(${JSON.stringify(sortedPubKeyInfos)})`);
     $(el).children('img, i').remove();
     const contentHtml = '<img src="/img/svgs/close-icon.svg" alt="close" class="close-icon svg" />' +
       '<img src="/img/svgs/close-icon-black.svg" alt="close" class="close-icon svg display_when_sign" />';
@@ -830,7 +827,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       .find('img.close-icon')
       .click(this.view.setHandler(target => this.removeRecipient(target.parentElement!), this.view.errModule.handle('remove recipient')));
     $(el).removeClass(['failed', 'wrong', 'has_pgp', 'no_pgp', 'expired']);
-    if (contacts === PUBKEY_LOOKUP_RESULT_FAIL) {
+    if (sortedPubKeyInfos === PUBKEY_LOOKUP_RESULT_FAIL) {
       recipient.status = RecipientStatus.FAILED;
       $(el).attr('title', 'Failed to load, click to retry');
       $(el).addClass("failed");
@@ -838,58 +835,59 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
         '<img src="/img/svgs/close-icon-black.svg" class="close-icon-black svg remove-reciepient">');
       $(el).find('.action_retry_pubkey_fetch').click(this.view.setHandler(async () => await this.refreshRecipients(), this.view.errModule.handle('refresh recipient')));
       $(el).find('.remove-reciepient').click(this.view.setHandler(element => this.removeRecipient(element.parentElement!), this.view.errModule.handle('remove recipient')));
-    } else if (contacts === PUBKEY_LOOKUP_RESULT_WRONG) {
+    } else if (sortedPubKeyInfos === PUBKEY_LOOKUP_RESULT_WRONG) {
       recipient.status = RecipientStatus.WRONG;
       this.view.errModule.debug(`renderPubkeyResult: Setting email to wrong / misspelled in harsh mode: ${recipient.email}`);
       $(el).attr('title', 'This email address looks misspelled. Please try again.');
       $(el).addClass("wrong");
-    } else {
+    } else if (sortedPubKeyInfos.length) {
       // New logic
       // - if there is at least one valid (non-expired, non-revoked) public key, then it's HAS_PGP
       // - else if there is at least one expired public key, then it's EXPIRED
       // - else if there is at least one revoked key, then REVOKED
       // - else it's NO_PGP
-      if (contacts.filter(
-        contact => contact.hasPgp && !contact.revoked && !ContactUtil.isExpired(contact)).length) {
+      const firstKeyInfo = sortedPubKeyInfos[0];
+      if (!firstKeyInfo.revoked && !PubKeyInfoUtil.isExpired(firstKeyInfo)) {
         recipient.status = RecipientStatus.HAS_PGP;
         $(el).addClass('has_pgp');
         Xss.sanitizePrepend(el, '<img class="lock-icon" src="/img/svgs/locked-icon.svg" />');
-        $(el).attr('title', 'Does use encryption\n' + this.publicKeysToRenderedText(contacts));
-      } else if (contacts.filter(contact => ContactUtil.isExpired(contact)).length) {
+        $(el).attr('title', 'Does use encryption\n' + this.publicKeysToRenderedText(sortedPubKeyInfos));
+      } else if (PubKeyInfoUtil.isExpired(firstKeyInfo)) {
         recipient.status = RecipientStatus.EXPIRED;
         $(el).addClass("expired");
         Xss.sanitizePrepend(el, '<img src="/img/svgs/expired-timer.svg" class="revoked-or-expired">');
         $(el).attr('title', 'Does use encryption but their public key is expired. ' +
           'You should ask them to send you an updated public key.\n' +
-          this.publicKeysToRenderedText(contacts));
-      } else if (contacts.filter(contact => contact.revoked).length) {
+          this.publicKeysToRenderedText(sortedPubKeyInfos));
+      } else {
         recipient.status = RecipientStatus.REVOKED;
         $(el).addClass("revoked");
         Xss.sanitizePrepend(el, '<img src="/img/svgs/revoked.svg" class="revoked-or-expired">');
         $(el).attr('title', 'Does use encryption but their public key is revoked. ' +
           'You should ask them to send you an updated public key.\n' +
-          this.publicKeysToRenderedText(contacts));
-      } else {
-        recipient.status = RecipientStatus.NO_PGP;
-        $(el).addClass("no_pgp");
-        Xss.sanitizePrepend(el, '<img class="lock-icon" src="/img/svgs/locked-icon.svg" />');
-        $(el).attr('title', 'Could not verify their encryption setup. You can encrypt the message with a password below. Alternatively, add their pubkey.');
+          this.publicKeysToRenderedText(sortedPubKeyInfos));
       }
+    } else {
+      recipient.status = RecipientStatus.NO_PGP;
+      $(el).addClass("no_pgp");
+      Xss.sanitizePrepend(el, '<img class="lock-icon" src="/img/svgs/locked-icon.svg" />');
+      $(el).attr('title', 'Could not verify their encryption setup. You can encrypt the message with a password below. Alternatively, add their pubkey.');
     }
     this.view.pwdOrPubkeyContainerModule.showHideContainerAndColorSendBtn(); // tslint:disable-line:no-floating-promises
     this.view.myPubkeyModule.reevaluateShouldAttachOrNot();
   }
 
-  private publicKeysToRenderedText = (contacts: Contact[]): string => {
+  // sortedPubKeyInfos: PubKeyInfo[]
+  private publicKeysToRenderedText = (pubKeyInfos: PubKeyInfo[]): string => {
     let res = '';
-    const valid = contacts.filter(contact => !contact.revoked && !ContactUtil.isExpired(contact));
+    const valid = pubKeyInfos.filter(contact => !contact.revoked && !PubKeyInfoUtil.isExpired(contact));
     if (valid.length) {
       res += 'Valid public key fingerprints:';
       for (const c of valid) {
         res += '\n' + this.recipientKeyIdText(c);
       }
     }
-    const expired = contacts.filter(contact => ContactUtil.isExpired(contact));
+    const expired = pubKeyInfos.filter(contact => PubKeyInfoUtil.isExpired(contact));
     if (expired.length) {
       if (res.length) res += '\n\n';
       res += 'Expired public key fingerprints:';
@@ -897,7 +895,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
         res += '\n' + this.recipientKeyIdText(c);
       }
     }
-    const revoked = contacts.filter(contact => contact.revoked);
+    const revoked = pubKeyInfos.filter(contact => contact.revoked);
     if (revoked.length) {
       if (res.length) res += '\n\n';
       res += 'Revoked public key fingerprints:';

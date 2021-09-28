@@ -75,6 +75,14 @@ export type EmailWithSortedPubKeys = {
   sortedPubkeys: PubKeyInfo[]
 };
 
+export class PubKeyInfoUtil {
+  public static isExpired = (pubKeyInfo: PubKeyInfo) => {
+    return pubKeyInfo.pubkey && ((pubKeyInfo.pubkey.expiration || Infinity) <= Date.now()
+      || pubKeyInfo.pubkey.usableForEncryptionButExpired);
+  }
+}
+
+
 const x509postfix = "-X509";
 
 /**

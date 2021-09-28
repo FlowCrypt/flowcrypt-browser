@@ -76,7 +76,7 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
 
   public lookupPubkeyFromKeyserversThenOptionallyFetchExpiredByFingerprintAndUpsertDb = async (
     email: string, name: string | undefined
-  ): Promise<EmailWithSortedPubKeys[] | "fail"> => {
+  ): Promise<PubKeyInfo[] | "fail"> => {
     // note by Tom 2021-08-10: We are only getting one public key from storage, but should
     //    work with arrays instead, like with `ContactStore.getOneWithAllPubkeys`.
     //    However, this whole fingerprint-base section seems unnecessary, we could likely
@@ -106,7 +106,7 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
           results.push(res);
         }
       }
-      // TODO: Do something with result.
+      return ContactStore.sortPubInfos(results);
     }
     return 'fail';
   }
