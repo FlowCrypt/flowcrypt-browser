@@ -86,7 +86,7 @@
     "type": "git",
     "url": "git+https://github.com/FlowCrypt/flowcrypt-browser.git"
   },
-  "author": "FlowCrypt Limited",
+  "author": "FlowCrypt a.s.",
   "license": "SEE LICENSE IN <LICENSE>",
   "bugs": {
     "url": "https://github.com/FlowCrypt/flowcrypt-browser/issues"
