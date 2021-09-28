@@ -67,7 +67,7 @@ type DbContactFilter = { hasPgp?: boolean, substring?: string, limit?: number };
 export type PubKeyInfo = {
   pubkey: Key,
   revoked: boolean,
-  lastCheck: number | null
+  lastCheck?: number | undefined
 };
 
 export type EmailWithSortedPubKeys = {
@@ -441,21 +441,24 @@ export class ContactStore extends AbstractStore {
     });
   }
 
-  private static sortKeys = async (pubkeys: Pubkey[], revocations: Revocation[]) => {
+  public static sortPubInfos = (pubinfos: PubKeyInfo[]): PubKeyInfo[] => {
+    return pubinfos.sort((a, b) => ContactStore.getSortValue(b) - ContactStore.getSortValue(a));
+  }
+
+  public static getSortValue = (pubinfo: PubKeyInfo): number => {
+    const expirationSortValue = (typeof pubinfo.pubkey.expiration === 'undefined') ? Infinity : pubinfo.pubkey.expiration!;
+    // sort non-revoked first, then non-expired
+    return (pubinfo.revoked || pubinfo.pubkey.revoked) ? -Infinity : expirationSortValue;
+  }
+
+  private static sortKeys = async (pubkeys: Pubkey[], revocations: Revocation[]): Promise<PubKeyInfo[]> => {
     // parse the keys
-    const parsed = await Promise.all(pubkeys.map(async (pubkey) => {
+    const pubinfos = await Promise.all(pubkeys.map(async (pubkey) => {
       const pk = await KeyUtil.parse(pubkey.armoredKey);
       const revoked = pk.revoked || revocations.some(r => ContactStore.equalFingerprints(pk.id, r.fingerprint));
-      const expirationSortValue = (typeof pk.expiration === 'undefined') ? Infinity : pk.expiration!;
-      return {
-        lastCheck: pubkey.lastCheck,
-        pubkey: pk,
-        revoked,
-        // sort non-revoked first, then non-expired
-        sortValue: revoked ? -Infinity : expirationSortValue
-      };
+      return { lastCheck: pubkey.lastCheck || undefined, pubkey: pk, revoked };
     }));
-    return parsed.sort((a, b) => b.sortValue - a.sortValue);
+    return ContactStore.sortPubInfos(pubinfos);
   }
 
   private static getPubkeyId = ({ id, type }: { id: string, type: string }): string => {
