@@ -19,7 +19,7 @@ export class PassphraseStore extends AbstractStore {
     const longid = fingerprintOrLongid.length === 40 ? OpenPGPKey.fingerprintToLongid(fingerprintOrLongid) : fingerprintOrLongid;
     const storageIndex = PassphraseStore.getIndex(longid);
     if (storageType === 'session') {
-      return await InMemoryStore.set(acctEmail, longid, passphrase);
+      return await InMemoryStore.set(acctEmail, storageIndex, passphrase);
     } else {
       if (typeof passphrase === 'undefined') {
         await AcctStore.remove(acctEmail, [storageIndex]);
@@ -45,7 +45,7 @@ export class PassphraseStore extends AbstractStore {
     if (ignoreSession) {
       return undefined;
     }
-    return await InMemoryStore.get(acctEmail, longid) ?? undefined;
+    return await InMemoryStore.get(acctEmail, storageIndex) ?? undefined;
   }
 
   /**
