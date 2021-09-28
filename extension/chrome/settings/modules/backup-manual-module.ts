@@ -67,7 +67,7 @@ export class BackupManualActionModule extends ViewModule<BackupView> {
     if (primaryKeys.length > 1) {
       await this.renderPrvKeysBackupSelection(primaryKeys);
     } else {
-      this.view.prvKeysToManuallyBackup.push({ 'email': String(primaryKeys[0].emails), 'fingerprints': primaryKeys[0].fingerprints });
+      this.addKeyToBackup({ 'email': String(primaryKeys[0].emails), 'fingerprints': primaryKeys[0].fingerprints });
     }
   }
 
