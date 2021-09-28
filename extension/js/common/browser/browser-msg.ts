@@ -133,8 +133,6 @@ export class BrowserMsg {
       await: {
         reconnectAcctAuthPopup: (bm: Bm.ReconnectAcctAuthPopup) => BrowserMsg.sendAwait(undefined, 'reconnect_acct_auth_popup', bm, true) as Promise<Bm.Res.ReconnectAcctAuthPopup>,
         getActiveTabInfo: () => BrowserMsg.sendAwait(undefined, 'get_active_tab_info', undefined, true) as Promise<Bm.Res.GetActiveTabInfo>,
-        storeSessionGet: (bm: Bm.StoreSessionGet) => BrowserMsg.sendAwait(undefined, 'session_get', bm, true) as Promise<Bm.Res.StoreSessionGet>,
-        storeSessionSet: (bm: Bm.StoreSessionSet) => BrowserMsg.sendAwait(undefined, 'session_set', bm, true) as Promise<Bm.Res.StoreSessionSet>,
         storeSessionPassphraseGet: (bm: Bm.StoreSessionGet) => BrowserMsg.sendAwait(undefined, 'session_passphrase_get', bm, true) as Promise<Bm.Res.StoreSessionGet>,
         storeSessionPassphraseSet: (bm: Bm.StoreSessionSet) => BrowserMsg.sendAwait(undefined, 'session_passphrase_set', bm, true) as Promise<Bm.Res.StoreSessionSet>,
         storeGlobalGet: (bm: Bm.StoreGlobalGet) => BrowserMsg.sendAwait(undefined, 'storeGlobalGet', bm, true) as Promise<Bm.Res.StoreGlobalGet>,
