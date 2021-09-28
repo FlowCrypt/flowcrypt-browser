@@ -8,7 +8,8 @@ import { KeyAlgo } from './core/crypto/key.js';
 
 type DomainRules$flag = 'NO_PRV_CREATE' | 'NO_PRV_BACKUP' | 'PRV_AUTOIMPORT_OR_AUTOGEN' | 'PASS_PHRASE_QUIET_AUTOGEN' |
   'ENFORCE_ATTESTER_SUBMIT' | 'NO_ATTESTER_SUBMIT' | 'USE_LEGACY_ATTESTER_SUBMIT' |
-  'DEFAULT_REMEMBER_PASS_PHRASE' | 'HIDE_ARMOR_META' | 'FORBID_STORING_PASS_PHRASE';
+  'DEFAULT_REMEMBER_PASS_PHRASE' | 'HIDE_ARMOR_META' | 'FORBID_STORING_PASS_PHRASE' |
+  'DISABLE_FES_ACCESS_TOKEN';
 
 export type DomainRulesJson = {
   flags?: DomainRules$flag[],
@@ -194,6 +195,13 @@ export class OrgRules {
    */
   public shouldHideArmorMeta = (): boolean => {
     return (this.domainRules.flags || []).includes('HIDE_ARMOR_META');
+  }
+
+  /**
+   * With this option, sent messages won't have any comment/version in armor, imported keys get imported without armor
+   */
+  public disableFesAccessToken = (): boolean => {
+    return (this.domainRules.flags || []).includes('DISABLE_FES_ACCESS_TOKEN');
   }
 
 }
