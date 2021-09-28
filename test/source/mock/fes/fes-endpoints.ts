@@ -48,7 +48,7 @@ export const mockFesEndpoints: HandlersDefinition = {
     throw new HttpClientErr('Not Found', 404);
   },
   '/api/v1/client-configuration': async ({ }, req) => {
-    // individual OrgRules are tested using FlowCrypt backend mock, see BackendData.getOrgRules 
+    // individual OrgRules are tested using FlowCrypt backend mock, see BackendData.getOrgRules
     //   (except for DISABLE_FES_ACCESS_TOKEN which is FES specific and returned below)
     if (req.method !== 'GET') {
       throw new HttpClientErr('Unsupported method');
