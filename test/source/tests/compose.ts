@@ -1271,11 +1271,12 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       const msgPwd = 'super hard password for the message';
       const subject = 'PWD encrypted message with FES';
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'user@standardsubdomainfes.test:8001');
-      await ComposePageRecipe.fillMsg(composePage, { to: 'test@email.com' }, subject);
+      await ComposePageRecipe.fillMsg(composePage, { to: 'to@example.com', bcc: 'bcc@example.com' }, subject);
       const fileInput = await composePage.target.$('input[type=file]');
       await fileInput!.uploadFile('test/samples/small.txt');
       await ComposePageRecipe.sendAndClose(composePage, { password: msgPwd });
       // this test is using PwdEncryptedMessageWithFesTestStrategy to check sent result based on subject "PWD encrypted message with flowcrypt.com/api"
+      // also see '/api/v1/message' in fes-endpoints.ts mock
     }));
 
   }
