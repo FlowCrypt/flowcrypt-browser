@@ -17,6 +17,7 @@ import { ContactStore, ContactUpdate, EmailWithSortedPubKeys, PubKeyInfo } from 
 import { PassphraseStore } from '../../../js/common/platform/store/passphrase-store.js';
 import { Settings } from '../../../js/common/settings.js';
 import { Ui } from '../../../js/common/browser/ui.js';
+import { PgpArmor } from '../../../js/common/core/crypto/pgp/pgp-armor.js';
 
 export class ComposeStorageModule extends ViewModule<ComposeView> {
 
@@ -105,19 +106,7 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
           results.push(res);
         }
       }
-
-      // TODO
-      const pubkeys = results.map(keyInfo => {
-        fingerprint: string;
-        armoredKey: string;
-        longids: string[];
-        lastCheck: number | null,
-          expiresOn: number | null;
-      });
-
-      return {
-
-      };
+      // TODO: Do something with result.
     }
     return 'fail';
   }
