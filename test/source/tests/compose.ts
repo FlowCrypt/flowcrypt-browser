@@ -1283,7 +1283,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
      * You need the following line in /etc/hosts:
      * 127.0.0.1    fes.disablefesaccesstoken.test
      */
-    ava.default.only('user@disablefesaccesstoken.test:8001 - DISABLE_FES_ACCESS_TOKEN - PWD encrypted message with FES web portal', testWithBrowser(undefined, async (t, browser) => {
+    ava.default('user@disablefesaccesstoken.test:8001 - DISABLE_FES_ACCESS_TOKEN - PWD encrypted message with FES web portal', testWithBrowser(undefined, async (t, browser) => {
       const acct = 'user@disablefesaccesstoken.test:8001'; // added port to trick extension into calling the mock
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
       await SetupPageRecipe.manualEnter(settingsPage, 'flowcrypt.test.key.used.pgp', { submitPubkey: false, usedPgpBefore: false },

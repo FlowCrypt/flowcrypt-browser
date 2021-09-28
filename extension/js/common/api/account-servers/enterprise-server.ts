@@ -89,11 +89,12 @@ export class EnterpriseServer extends Api {
 
   public authenticateAndUpdateLocalStore = async (idToken: string): Promise<void> => {
     if ((await OrgRules.newInstance(this.acctEmail)).disableFesAccessToken()) {
+      // the OIDC ID Token itself is used for auth, typically expires in 1 hour
       await InMemoryStore.set(this.acctEmail, this.IN_MEMORY_ID_TOKEN_STORAGE_KEY, idToken);
-      return; // the OIDC ID Token itself is used for auth, typically expires in 1 hour
+    } else {
+      const r = await this.request<FesRes.AccessToken>('GET', `/api/${this.apiVersion}/account/access-token`, { Authorization: `Bearer ${idToken}` });
+      await AcctStore.set(this.acctEmail, { fesAccessToken: r.accessToken });
     }
-    const response = await this.request<FesRes.AccessToken>('GET', `/api/${this.apiVersion}/account/access-token`, { Authorization: `Bearer ${idToken}` });
-    await AcctStore.set(this.acctEmail, { fesAccessToken: response.accessToken });
   }
 
   public fetchAndSaveOrgRules = async (): Promise<DomainRulesJson> => {

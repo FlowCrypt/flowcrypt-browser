@@ -13,7 +13,7 @@ const issuedAccessTokens: string[] = [];
 export const mockFesEndpoints: HandlersDefinition = {
   // standard fes location at https://fes.domain.com
   '/api/': async ({ }, req) => {
-    if (req.headers.host === standardFesUrl && req.method === 'GET') {
+    if ([standardFesUrl, disableAccessTokenFesUrl].includes(req.headers.host || '') && req.method === 'GET') {
       return {
         "vendor": "Mock",
         "service": "enterprise-server",
@@ -53,53 +53,52 @@ export const mockFesEndpoints: HandlersDefinition = {
     if (req.method !== 'GET') {
       throw new HttpClientErr('Unsupported method');
     }
-    if (req.headers.host === standardFesUrl && req.url === `/api/v1/client-configuration?domain=${standardFesUrl}`) {
+    if (req.headers.host === standardFesUrl && req.url === `/api/v1/client-configuration?domain=standardsubdomainfes.test:8001`) {
       return {
         clientConfiguration: { disallow_attester_search_for_domains: ['got.this@fromstandardfes.com'] },
       };
     }
-    if (req.headers.host === disableAccessTokenFesUrl && req.url === `/api/v1/client-configuration?domain=${disableAccessTokenFesUrl}`) {
+    if (req.headers.host === disableAccessTokenFesUrl && req.url === `/api/v1/client-configuration?domain=disablefesaccesstoken.test:8001`) {
       return {
         clientConfiguration: { flags: ['DISABLE_FES_ACCESS_TOKEN'] },
       };
     }
-    throw new HttpClientErr('Unexpected FES domain');
+    throw new HttpClientErr(`Unexpected FES domain "${req.headers.host}" and url "${req.url}"`);
   },
   '/api/v1/message/new-reply-token': async ({ }, req) => {
     if (req.headers.host === standardFesUrl && req.method === 'POST') {
-      const email = MockJwt.parseEmail(extractJwt(req));
-      if (email.includes(standardFesUrl)) {
-        authenticate(req, 'fes');
-      } else if (email.includes(disableAccessTokenFesUrl)) {
-        authenticate(req, 'oidc');
-      } else {
-        throw new HttpClientErr('Dont know how to authenticate on mock FES - unknown domain');
-      }
+      authenticate(req, 'fes');
+      return { 'replyToken': 'mock-fes-reply-token' };
+    }
+    if (req.headers.host === disableAccessTokenFesUrl && req.method === 'POST') {
+      authenticate(req, 'oidc');
       return { 'replyToken': 'mock-fes-reply-token' };
     }
     throw new HttpClientErr('Not Found', 404);
   },
   '/api/v1/message': async ({ body }, req) => {
+    // body is a mime-multipart string, we're doing a few smoke checks here without parsing it
     if (req.headers.host === standardFesUrl && req.method === 'POST') {
       // test: `compose - user@standardsubdomainfes.test:8001 - PWD encrypted message with FES web portal`
-      // body is a mime-multipart string, we're doing a few smoke checks here without parsing it
+      authenticate(req, 'fes');
       expect(body).to.contain('-----BEGIN PGP MESSAGE-----');
       expect(body).to.contain('"associateReplyToken":"mock-fes-reply-token"');
       expect(body).to.contain('"to":["to@example.com"]');
       expect(body).to.contain('"cc":[]');
       expect(body).to.contain('"bcc":["bcc@example.com"]');
-      const email = MockJwt.parseEmail(extractJwt(req));
-      if (email.includes(standardFesUrl)) {
-        authenticate(req, 'fes');
-        expect(body).to.contain('"from":"user@disablefesaccesstoken.test:8001"');
-        return { 'url': `http://${standardFesUrl}/message/FES-MOCK-MESSAGE-ID` };
-      } else if (email.includes(disableAccessTokenFesUrl)) {
-        authenticate(req, 'fes');
-        expect(body).to.contain('"from":"user@standardsubdomainfes.test:8001"');
-        return { 'url': `http://${disableAccessTokenFesUrl}/message/FES-MOCK-MESSAGE-ID` };
-      } else {
-        throw new HttpClientErr('Dont know how to authenticate on mock FES - unknown domain');
-      }
+      expect(body).to.contain('"from":"user@standardsubdomainfes.test:8001"');
+      return { 'url': `http://${standardFesUrl}/message/FES-MOCK-MESSAGE-ID` };
+    }
+    if (req.headers.host === disableAccessTokenFesUrl && req.method === 'POST') {
+      // test: `user@disablefesaccesstoken.test:8001 - DISABLE_FES_ACCESS_TOKEN - PWD encrypted message with FES web portal`
+      expect(body).to.contain('-----BEGIN PGP MESSAGE-----');
+      expect(body).to.contain('"associateReplyToken":"mock-fes-reply-token"');
+      expect(body).to.contain('"to":["to@example.com"]');
+      expect(body).to.contain('"cc":[]');
+      expect(body).to.contain('"bcc":["bcc@example.com"]');
+      authenticate(req, 'oidc'); // important - due to DISABLE_FES_ACCESS_TOKEN
+      expect(body).to.contain('"from":"user@disablefesaccesstoken.test:8001"');
+      return { 'url': `http://${disableAccessTokenFesUrl}/message/FES-MOCK-MESSAGE-ID` };
     }
     throw new HttpClientErr('Not Found', 404);
   },
