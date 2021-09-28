@@ -1064,7 +1064,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
 
     ava.todo('compose - reply - skip click prompt');
 
-    ava.default('send with signed S/MIME message', testWithBrowser(undefined, async (t, browser) => {
+    ava.default('send signed S/MIME message', testWithBrowser(undefined, async (t, browser) => {
       const acctEmail = 'flowcrypt.test.key.imported@gmail.com';
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
       await SetupPageRecipe.setupSmimeAccount(settingsPage, {

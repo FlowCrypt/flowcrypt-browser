@@ -677,7 +677,7 @@ declare module "node-forge" {
 
         interface PkcsSignedData extends Pkcs7Data {
             type: '1.2.840.113549.1.7.2';
-            // contentInfo?: { value: any[] };
+            contentInfo?: { value: any[] };
 
             addCertificate(certificate: pki.Certificate | string): void;
             addSigner(options: {
