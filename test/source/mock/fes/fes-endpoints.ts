@@ -43,15 +43,13 @@ export const mockFesEndpoints: HandlersDefinition = {
     }
     throw new HttpClientErr('Not Found', 404);
   },
-  '/api/v1/account/': async ({ }, req) => {
+  '/api/v1/client-configuration': async ({ }, req) => {
+    // ?domain=fes.localhost:8001
+    // ?domain=fes.standardsubdomainfes.test:8001
+    // ?domain=fes.google.mock.flowcryptlocal.test:8001
     if (req.headers.host === standardFesUrl && req.method === 'GET') {
-      authenticate(req, 'fes');
       return {
-        account: {
-          default_message_expire: 30
-        },
-        subscription: { level: 'pro', expire: null, method: 'group', expired: 'false' }, // tslint:disable-line:no-null-keyword
-        domain_org_rules: { disallow_attester_search_for_domains: ['got.this@fromstandardfes.com'] },
+        clientConfiguration: { disallow_attester_search_for_domains: ['got.this@fromstandardfes.com'] },
       };
     }
     throw new HttpClientErr('Not Found', 404);

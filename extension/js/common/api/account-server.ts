@@ -30,7 +30,18 @@ export class AccountServer extends Api {
   public accountGetAndUpdateLocalStore = async (fcAuth: FcUuidAuth): Promise<BackendRes.FcAccountGet> => {
     if (await this.isFesUsed()) {
       const fes = new EnterpriseServer(this.acctEmail);
-      return await fes.getAccountAndUpdateLocalStore();
+      const fetchedOrgRules = await fes.fetchAndSaveOrgRules();
+      return {
+        domain_org_rules: fetchedOrgRules,
+        // the subscription and default_message_expire below is a refactor relic
+        //  (used to come from a deprecated FES API that was authenticated)
+        // todo - remove this - issue #4012
+        subscription: { level: 'pro', expired: false },
+        // todo - rethink this. On FES, expiration is handled with S3 bucket policy regardless of this number
+        //  which is set to 180 days on buckets we manage. This number below may still be rendered somewhere
+        //  when composing, which should be evaluated.
+        account: { default_message_expire: 180 }
+      };
     } else {
       return await FlowCryptComApi.accountGetAndUpdateLocalStore(fcAuth);
     }
