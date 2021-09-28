@@ -173,6 +173,11 @@ export class EnterpriseServer extends Api {
       if (idToken) {
         return { Authorization: `Bearer ${idToken}` };
       }
+      // some customers may choose to disable authentication on FES
+      // in such cases, omitting the authentication header will not produce an error
+      // because client app doesn't know how is the server configured, it will try the request anyway
+      // worst case a 401 comes back which triggers a re-authentication prompt in this app
+      // the FES property responsible for this is api.portal.upload.authenticate=true|false
       return {};
     }
   }
