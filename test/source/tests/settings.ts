@@ -18,7 +18,8 @@ import { testConstants } from './tooling/consts';
 import { PageRecipe } from './page-recipe/abstract-page-recipe';
 import { OauthPageRecipe } from './page-recipe/oauth-page-recipe';
 import { Pubkey } from '../platform/store/contact-store';
-import { KeyInfo } from '../core/crypto/key';
+import { KeyInfo, KeyUtil } from '../core/crypto/key';
+import { Buf } from '../core/buf';
 
 // tslint:disable:no-blank-lines-func
 
@@ -541,6 +542,21 @@ export let defineSettingsTests = (testVariant: TestVariant, testWithBrowser: Tes
         { isSavePassphraseChecked: true, isSavePassphraseHidden: false });
       const backupPage = await browser.newPage(t, TestUrls.extension(`/chrome/settings/modules/backup.htm?acctEmail=${acctEmail}&action=backup_manual&parentTabId=0`));
       // play with backup controls here
+      expect(await backupPage.isDisabled('@47FB03183E03A8ED44E3BBFCCEA2D53BB9D24871')).to.equal(true);
+      expect(await backupPage.isDisabled('@5A08466253C956E9C76C2E95A35068FD4E037879')).to.equal(true);
+      await backupPage.waitAndClick('[data-fingerprints="CB0485FE44FC22FF09AF0DB31B383D0334E38B28,B38FC17737BB1D66C69CB25975796017BA7823CF"]'); // uncheck
+      await backupPage.waitAndClick('[data-fingerprints="515431151DDD3EA232B37A4C98ACFA1EADAB5B92,E558FBDB34DF3A98BA6C4EED8936BB8D2B7EC207"]'); // uncheck
+      await backupPage.waitAndClick('[data-fingerprints="515431151DDD3EA232B37A4C98ACFA1EADAB5B92,E558FBDB34DF3A98BA6C4EED8936BB8D2B7EC207"]'); // finally, check
+      await backupPage.waitAndClick('@input-backup-step3manual-file');
+      const backupFileRawData = await backupPage.awaitDownloadTriggeredByClicking('@action-backup-step3manual-continue');
+      const { keys } = await KeyUtil.readMany(Buf.fromUtfStr(backupFileRawData.toString()));
+      expect(keys.length).to.equal(1); 
+      expect(keys[0].allIds.some(fingerprint => ['515431151DDD3EA232B37A4C98ACFA1EADAB5B92', 'E558FBDB34DF3A98BA6C4EED8936BB8D2B7EC207'].includes(fingerprint))).to.equal(true);
+      expect(!keys[0].allIds.some(fingerprint => ['47FB03183E03A8ED44E3BBFCCEA2D53BB9D24871'].includes(fingerprint))).to.equal(true);
+      expect(!keys[0].allIds.some(fingerprint => ['5A08466253C956E9C76C2E95A35068FD4E037879'].includes(fingerprint))).to.equal(true);
+      expect(!keys[0].allIds.some(fingerprint => ['CB0485FE44FC22FF09AF0DB31B383D0334E38B28', 'B38FC17737BB1D66C69CB25975796017BA7823CF'].includes(fingerprint))).to.equal(true);
+      await backupPage.waitAndRespondToModal('info','confirm','Downloading private key backup file');
+      await backupPage.waitAndRespondToModal('info','confirm','Your private key has been successfully backed up');
       await backupPage.close();
     }));
 
