@@ -54,11 +54,11 @@ export class BackupManualActionModule extends ViewModule<BackupView> {
     }
   }
 
-  private addKeyToBackup(prvKeyIdentity: PrvKeyIdentity) {
+  private addKeyToBackup = (prvKeyIdentity: PrvKeyIdentity) => {
     this.view.prvKeysToManuallyBackup.push(prvKeyIdentity);
   }
 
-  private removeKeyToBackup(fingerprints: string[]) {
+  private removeKeyToBackup = (fingerprints: string[]) => {
     this.view.prvKeysToManuallyBackup.splice(this.view.prvKeysToManuallyBackup.findIndex(prvIdentity => prvIdentity.fingerprints === fingerprints), 1);
   }
 
