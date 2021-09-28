@@ -10,12 +10,13 @@ import { AcctStore } from '../../platform/store/acct-store.js';
 import { BackendRes, ProfileUpdate } from './flowcrypt-com-api.js';
 import { Dict } from '../../core/common.js';
 import { ErrorReport, UnreportableError } from '../../platform/catch.js';
-import { ApiErr, BackendAuthErr } from '../shared/api-error.js';
+import { ApiErr } from '../shared/api-error.js';
 import { FLAVOR } from '../../core/const.js';
 import { Attachment } from '../../core/attachment.js';
 import { Recipients } from '../email-provider/email-provider-api.js';
 import { Buf } from '../../core/buf.js';
 import { DomainRulesJson, OrgRules } from '../../org-rules.js';
+import { InMemoryStore } from '../../platform/store/in-memory-store.js';
 
 // todo - decide which tags to use
 type EventTag = 'compose' | 'decrypt' | 'setup' | 'settings' | 'import-pub' | 'import-prv';
@@ -41,6 +42,8 @@ export class EnterpriseServer extends Api {
   private domain: string
   private apiVersion = 'v1';
   private domainsThatUseLaxFesCheckEvenOnEnterprise = ['dmFsZW8uY29t'];
+
+  private IN_MEMORY_ID_TOKEN_STORAGE_KEY = 'idTokenForOnPremAuth';
 
   constructor(private acctEmail: string) {
     super();
@@ -86,7 +89,7 @@ export class EnterpriseServer extends Api {
 
   public authenticateAndUpdateLocalStore = async (idToken: string): Promise<void> => {
     if ((await OrgRules.newInstance(this.acctEmail)).disableFesAccessToken()) {
-      // todo - save to in-memory store similar to pass phrases
+      await InMemoryStore.set(this.acctEmail, this.IN_MEMORY_ID_TOKEN_STORAGE_KEY, idToken);
       return; // the OIDC ID Token itself is used for auth, typically expires in 1 hour
     }
     const response = await this.request<FesRes.AccessToken>('GET', `/api/${this.apiVersion}/account/access-token`, { Authorization: `Bearer ${idToken}` });
@@ -165,7 +168,12 @@ export class EnterpriseServer extends Api {
       const { fesAccessToken } = await AcctStore.get(this.acctEmail, ['fesAccessToken']);
       return { Authorization: `Bearer ${fesAccessToken}` };
     } else {
-      throw new BackendAuthErr('OIDC auth not implemented yet'); // WIP - cause a dialog to show?
+      // return {}; // use if you want to debug re-auth dialog
+      const idToken = await InMemoryStore.get(this.acctEmail, this.IN_MEMORY_ID_TOKEN_STORAGE_KEY);
+      if (idToken) {
+        return { Authorization: `Bearer ${idToken}` };
+      }
+      return {};
     }
   }
 
