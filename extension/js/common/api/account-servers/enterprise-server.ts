@@ -15,6 +15,7 @@ import { FLAVOR } from '../../core/const.js';
 import { Attachment } from '../../core/attachment.js';
 import { Recipients } from '../email-provider/email-provider-api.js';
 import { Buf } from '../../core/buf.js';
+import { DomainRulesJson } from '../../org-rules.js';
 
 // todo - decide which tags to use
 type EventTag = 'compose' | 'decrypt' | 'setup' | 'settings' | 'import-pub' | 'import-prv';
@@ -24,6 +25,7 @@ export namespace FesRes {
   export type ReplyToken = { replyToken: string };
   export type MessageUpload = { url: string };
   export type ServiceInfo = { vendor: string, service: string, orgId: string, version: string, apiVersion: string }
+  export type ClientConfiguration = { clientConfiguration: DomainRulesJson };
 }
 
 /**
@@ -87,10 +89,10 @@ export class EnterpriseServer extends Api {
     await AcctStore.set(this.acctEmail, { fesAccessToken: response.accessToken });
   }
 
-  public getAccountAndUpdateLocalStore = async (): Promise<BackendRes.FcAccountGet> => {
-    const r = await this.request<BackendRes.FcAccountGet>('GET', `/api/${this.apiVersion}/account/`, await this.authHdr());
-    await AcctStore.set(this.acctEmail, { rules: r.domain_org_rules });
-    return r;
+  public fetchAndSaveOrgRules = async (): Promise<DomainRulesJson> => {
+    const r = await this.request<FesRes.ClientConfiguration>('GET', `/api/${this.apiVersion}/client-configuration?domain=${this.domain}`);
+    await AcctStore.set(this.acctEmail, { rules: r.clientConfiguration });
+    return r.clientConfiguration;
   }
 
   public reportException = async (errorReport: ErrorReport): Promise<void> => {
