@@ -7,6 +7,7 @@ import { HttpClientErr } from '../lib/api';
 import { MockJwt } from '../lib/oauth';
 
 const standardFesUrl = 'fes.standardsubdomainfes.test:8001';
+const disableAccessTokenFesUrl = 'fes.disablefesaccesstoken.test:8001';
 const issuedAccessTokens: string[] = [];
 
 export const mockFesEndpoints: HandlersDefinition = {
@@ -32,33 +33,48 @@ export const mockFesEndpoints: HandlersDefinition = {
       throw new HttpClientErr(`Not found`, 404);
     }
     console.log('host', req.headers.host);
-    throw new HttpClientErr(`Not running any FES here: ${req.headers.host}`, 400);
+    throw new HttpClientErr(`Not running any FES here: ${req.headers.host}`);
   },
   '/api/v1/account/access-token': async ({ }, req) => {
     if (req.headers.host === standardFesUrl && req.method === 'GET') {
       const email = authenticate(req, 'oidc'); // 3rd party token
       const fesToken = MockJwt.new(email); // fes-issued token
+      if (email.includes(disableAccessTokenFesUrl)) {
+        throw new HttpClientErr('Users on domain disablefesaccesstoken.test must not fetch access token from FES');
+      }
       issuedAccessTokens.push(fesToken);
       return { 'accessToken': fesToken };
     }
     throw new HttpClientErr('Not Found', 404);
   },
   '/api/v1/client-configuration': async ({ }, req) => {
-    // actual individual OrgRules are tested using FlowCrypt backend mock instead,
-    //   see BackendData.getOrgRules
-    if (req.url !== '/api/v1/client-configuration?domain=standardsubdomainfes.test:8001') {
-      throw new HttpClientErr('Unexpected domain, expecting standardsubdomainfes.test:8001', 400);
+    // individual OrgRules are tested using FlowCrypt backend mock, see BackendData.getOrgRules 
+    //   (except for DISABLE_FES_ACCESS_TOKEN which is FES specific and returned below)
+    if (req.method !== 'GET') {
+      throw new HttpClientErr('Unsupported method');
     }
-    if (req.headers.host === standardFesUrl && req.method === 'GET') {
+    if (req.headers.host === standardFesUrl && req.url === `/api/v1/client-configuration?domain=${standardFesUrl}`) {
       return {
         clientConfiguration: { disallow_attester_search_for_domains: ['got.this@fromstandardfes.com'] },
       };
     }
-    throw new HttpClientErr('Not Found', 404);
+    if (req.headers.host === disableAccessTokenFesUrl && req.url === `/api/v1/client-configuration?domain=${disableAccessTokenFesUrl}`) {
+      return {
+        clientConfiguration: { flags: ['DISABLE_FES_ACCESS_TOKEN'] },
+      };
+    }
+    throw new HttpClientErr('Unexpected FES domain');
   },
   '/api/v1/message/new-reply-token': async ({ }, req) => {
     if (req.headers.host === standardFesUrl && req.method === 'POST') {
-      authenticate(req, 'fes');
+      const email = MockJwt.parseEmail(extractJwt(req));
+      if (email.includes(standardFesUrl)) {
+        authenticate(req, 'fes');
+      } else if (email.includes(disableAccessTokenFesUrl)) {
+        authenticate(req, 'oidc');
+      } else {
+        throw new HttpClientErr('Dont know how to authenticate on mock FES - unknown domain');
+      }
       return { 'replyToken': 'mock-fes-reply-token' };
     }
     throw new HttpClientErr('Not Found', 404);
@@ -66,22 +82,31 @@ export const mockFesEndpoints: HandlersDefinition = {
   '/api/v1/message': async ({ body }, req) => {
     if (req.headers.host === standardFesUrl && req.method === 'POST') {
       // test: `compose - user@standardsubdomainfes.test:8001 - PWD encrypted message with FES web portal`
-      authenticate(req, 'fes');
       // body is a mime-multipart string, we're doing a few smoke checks here without parsing it
       expect(body).to.contain('-----BEGIN PGP MESSAGE-----');
       expect(body).to.contain('"associateReplyToken":"mock-fes-reply-token"');
-      expect(body).to.contain('"from":"user@standardsubdomainfes.test:8001"');
       expect(body).to.contain('"to":["to@example.com"]');
       expect(body).to.contain('"cc":[]');
       expect(body).to.contain('"bcc":["bcc@example.com"]');
-      return { 'url': `http://${standardFesUrl}/message/FES-MOCK-MESSAGE-ID` };
+      const email = MockJwt.parseEmail(extractJwt(req));
+      if (email.includes(standardFesUrl)) {
+        authenticate(req, 'fes');
+        expect(body).to.contain('"from":"user@disablefesaccesstoken.test:8001"');
+        return { 'url': `http://${standardFesUrl}/message/FES-MOCK-MESSAGE-ID` };
+      } else if (email.includes(disableAccessTokenFesUrl)) {
+        authenticate(req, 'fes');
+        expect(body).to.contain('"from":"user@standardsubdomainfes.test:8001"');
+        return { 'url': `http://${disableAccessTokenFesUrl}/message/FES-MOCK-MESSAGE-ID` };
+      } else {
+        throw new HttpClientErr('Dont know how to authenticate on mock FES - unknown domain');
+      }
     }
     throw new HttpClientErr('Not Found', 404);
   },
 };
 
 const authenticate = (req: IncomingMessage, type: 'oidc' | 'fes'): string => {
-  const jwt = (req.headers.authorization || '').replace('Bearer ', '');
+  const jwt = extractJwt(req);
   if (!jwt) {
     throw new Error('Mock FES missing authorization header');
   }
@@ -95,4 +120,8 @@ const authenticate = (req: IncomingMessage, type: 'oidc' | 'fes'): string => {
     }
   }
   return MockJwt.parseEmail(jwt);
+};
+
+const extractJwt = (req: IncomingMessage): string => {
+  return (req.headers.authorization || '').replace('Bearer ', '');
 };

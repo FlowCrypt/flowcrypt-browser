@@ -168,7 +168,6 @@ export class EnterpriseServer extends Api {
       const { fesAccessToken } = await AcctStore.get(this.acctEmail, ['fesAccessToken']);
       return { Authorization: `Bearer ${fesAccessToken}` };
     } else {
-      // return {}; // use if you want to debug re-auth dialog
       const idToken = await InMemoryStore.get(this.acctEmail, this.IN_MEMORY_ID_TOKEN_STORAGE_KEY);
       if (idToken) {
         return { Authorization: `Bearer ${idToken}` };
