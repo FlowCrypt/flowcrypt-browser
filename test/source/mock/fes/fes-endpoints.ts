@@ -44,9 +44,11 @@ export const mockFesEndpoints: HandlersDefinition = {
     throw new HttpClientErr('Not Found', 404);
   },
   '/api/v1/client-configuration': async ({ }, req) => {
-    // ?domain=fes.localhost:8001
-    // ?domain=fes.standardsubdomainfes.test:8001
-    // ?domain=fes.google.mock.flowcryptlocal.test:8001
+    // actual individual OrgRules are tested using FlowCrypt backend mock instead,
+    //   see BackendData.getOrgRules
+    if (req.url !== '/api/v1/client-configuration?domain=standardsubdomainfes.test:8001') {
+      throw new HttpClientErr('Unexpected domain, expecting standardsubdomainfes.test:8001', 400);
+    }
     if (req.headers.host === standardFesUrl && req.method === 'GET') {
       return {
         clientConfiguration: { disallow_attester_search_for_domains: ['got.this@fromstandardfes.com'] },
