@@ -108,7 +108,7 @@ export const mockFesEndpoints: HandlersDefinition = {
 };
 
 const authenticate = (req: IncomingMessage, type: 'oidc' | 'fes'): string => {
-  const jwt = extractJwt(req);
+  const jwt = (req.headers.authorization || '').replace('Bearer ', '');
   if (!jwt) {
     throw new Error('Mock FES missing authorization header');
   }
@@ -122,8 +122,4 @@ const authenticate = (req: IncomingMessage, type: 'oidc' | 'fes'): string => {
     }
   }
   return MockJwt.parseEmail(jwt);
-};
-
-const extractJwt = (req: IncomingMessage): string => {
-  return (req.headers.authorization || '').replace('Bearer ', '');
 };
