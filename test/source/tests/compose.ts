@@ -659,7 +659,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       expect(await composePage.isDisabled('#toggle_send_options')).to.be.false;
     }));
 
-    ava.default('compose - load contacts through API', testWithBrowser('ci.tests.gmail', async (t, browser) => {
+    ava.default.skip('compose - load contacts through API', testWithBrowser('ci.tests.gmail', async (t, browser) => {
       let composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
       await composePage.waitAndClick('@action-show-container-cc-bcc-buttons');
       await composePage.type('@input-to', 'contact');
