@@ -15,7 +15,7 @@ import { BackupManualActionModule as BackupManualModule } from './backup-manual-
 import { BackupAutomaticModule } from './backup-automatic-module.js';
 import { Lang } from '../../../js/common/lang.js';
 import { AcctStore, EmailProvider } from '../../../js/common/platform/store/acct-store.js';
-interface PrvKeyIdentity {
+export interface PrvKeyIdentity {
   email: string,
   fingerprints: string[]
 }
@@ -40,6 +40,7 @@ export class BackupView extends View {
 
   constructor() {
     super();
+    this.prvKeysToManuallyBackup = [];
     const uncheckedUrlParams = Url.parse(['acctEmail', 'parentTabId', 'action', 'idToken']);
     this.acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
     this.action = Assert.urlParamRequire.oneof(uncheckedUrlParams, 'action', ['setup_automatic', 'setup_manual', 'backup_manual', undefined]);

@@ -4,7 +4,7 @@
 
 import { ViewModule } from '../../../js/common/view-module.js';
 import { Xss } from '../../../js/common/platform/xss.js';
-import { BackupView } from './backup.js';
+import { BackupView, PrvKeyIdentity } from './backup.js';
 import { Attachment } from '../../../js/common/core/attachment.js';
 import { SendableMsg } from '../../../js/common/api/email-provider/sendable-msg.js';
 import { GMAIL_RECOVERY_EMAIL_SUBJECTS } from '../../../js/common/core/const.js';
@@ -54,6 +54,14 @@ export class BackupManualActionModule extends ViewModule<BackupView> {
     }
   }
 
+  private addKeyToBackup(prvKeyIdentity: PrvKeyIdentity) {
+    this.view.prvKeysToManuallyBackup.push(prvKeyIdentity);
+  }
+
+  private removeKeyToBackup(fingerprints: string[]) {
+    this.view.prvKeysToManuallyBackup.splice(this.view.prvKeysToManuallyBackup.findIndex(prvIdentity => prvIdentity.fingerprints === fingerprints), 1);
+  }
+
   private preparePrvKeysBackupSelection = async () => {
     const primaryKeys = await KeyStore.getAllWithOptionalPassPhrase(this.view.acctEmail);
     if (primaryKeys.length > 1) {
@@ -83,16 +91,16 @@ export class BackupManualActionModule extends ViewModule<BackupView> {
       `.trim();
       $('.key_backup_selection').append(dom); // xss-escaped
       if (keyType !== 'x509') {
-        this.view.prvKeysToManuallyBackup.push({ 'email': email, 'fingerprints': fingerprints });
+        this.addKeyToBackup({ 'email': email, 'fingerprints': fingerprints });
       }
     }
     $('.input_prvkey_backup_checkbox').click((event) => {
       const email = String($(event.target).data('emails')).trim();
-      const fingerprint = String($(event.target).data('fingerprints')).split(',');
-      if ($(event.target).prop('checked') && !this.view.prvKeysToManuallyBackup.includes({ 'email': email, 'fingerprints': fingerprint })) {
-        this.view.prvKeysToManuallyBackup.push({ 'email': email, 'fingerprints': fingerprint });
+      const fingerprints = String($(event.target).data('fingerprints')).split(',');
+      if ($(event.target).prop('checked') && !this.view.prvKeysToManuallyBackup.includes({ 'email': email, 'fingerprints': fingerprints })) {
+        this.addKeyToBackup({ 'email': email, 'fingerprints': fingerprints });
       } else {
-        this.view.prvKeysToManuallyBackup.splice(this.view.prvKeysToManuallyBackup.findIndex(prvIdentity => prvIdentity.fingerprints === fingerprint), 1);
+        this.removeKeyToBackup(fingerprints);
       }
     });
     $('#key_backup_selection_container').show();
