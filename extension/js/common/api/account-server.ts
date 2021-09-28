@@ -2,7 +2,6 @@
 
 'use strict';
 
-import { OrgRules } from '../org-rules.js';
 import { AcctStore } from '../platform/store/acct-store.js';
 import { EnterpriseServer } from './account-servers/enterprise-server.js';
 import { BackendRes, FcUuidAuth, FlowCryptComApi, ProfileUpdate } from './account-servers/flowcrypt-com-api.js';
@@ -21,11 +20,8 @@ export class AccountServer extends Api {
 
   public loginWithOpenid = async (acctEmail: string, uuid: string, idToken: string): Promise<void> => {
     if (await this.isFesUsed()) {
-      if ((await OrgRules.newInstance(acctEmail)).disableFesAccessToken()) {
-        return; // https://github.com/FlowCrypt/flowcrypt-browser/issues/4002
-      }
       const fes = new EnterpriseServer(this.acctEmail);
-      await fes.getAccessTokenAndUpdateLocalStore(idToken);
+      await fes.authenticateAndUpdateLocalStore(idToken);
     } else {
       await FlowCryptComApi.loginWithOpenid(acctEmail, uuid, idToken);
     }

@@ -84,7 +84,11 @@ export class EnterpriseServer extends Api {
     return await this.request<FesRes.ServiceInfo>('GET', `/api/`);
   }
 
-  public getAccessTokenAndUpdateLocalStore = async (idToken: string): Promise<void> => {
+  public authenticateAndUpdateLocalStore = async (idToken: string): Promise<void> => {
+    if ((await OrgRules.newInstance(this.acctEmail)).disableFesAccessToken()) {
+      // todo - save to in-memory store similar to pass phrases
+      return; // the OIDC ID Token itself is used for auth, typically expires in 1 hour
+    }
     const response = await this.request<FesRes.AccessToken>('GET', `/api/${this.apiVersion}/account/access-token`, { Authorization: `Bearer ${idToken}` });
     await AcctStore.set(this.acctEmail, { fesAccessToken: response.accessToken });
   }
