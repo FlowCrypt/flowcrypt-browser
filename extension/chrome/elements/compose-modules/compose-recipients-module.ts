@@ -880,27 +880,28 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
   // sortedPubKeyInfos: PubKeyInfo[]
   private publicKeysToRenderedText = (pubKeyInfos: PubKeyInfo[]): string => {
     let res = '';
-    const valid = pubKeyInfos.filter(contact => !contact.revoked && !PubKeyInfoUtil.isExpired(contact));
+    const valid = pubKeyInfos.filter(
+      pubKeyInfo => !pubKeyInfo.revoked && !PubKeyInfoUtil.isExpired(pubKeyInfo));
     if (valid.length) {
       res += 'Valid public key fingerprints:';
-      for (const c of valid) {
-        res += '\n' + this.recipientKeyIdText(c);
+      for (const pubKeyInfo of valid) {
+        res += '\n' + this.recipientKeyIdText(pubKeyInfo);
       }
     }
-    const expired = pubKeyInfos.filter(contact => PubKeyInfoUtil.isExpired(contact));
+    const expired = pubKeyInfos.filter(pubKeyInfo => PubKeyInfoUtil.isExpired(pubKeyInfo));
     if (expired.length) {
       if (res.length) res += '\n\n';
       res += 'Expired public key fingerprints:';
-      for (const c of valid) {
-        res += '\n' + this.recipientKeyIdText(c);
+      for (const pubKeyInfo of valid) {
+        res += '\n' + this.recipientKeyIdText(pubKeyInfo);
       }
     }
-    const revoked = pubKeyInfos.filter(contact => contact.revoked);
+    const revoked = pubKeyInfos.filter(pubKeyInfo => pubKeyInfo.revoked);
     if (revoked.length) {
       if (res.length) res += '\n\n';
       res += 'Revoked public key fingerprints:';
-      for (const c of revoked) {
-        res += '\n' + this.recipientKeyIdText(c);
+      for (const pubKeyInfo of revoked) {
+        res += '\n' + this.recipientKeyIdText(pubKeyInfo);
       }
     }
     return res;
