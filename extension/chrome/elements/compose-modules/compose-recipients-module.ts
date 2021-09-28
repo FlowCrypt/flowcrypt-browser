@@ -925,12 +925,11 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     await this.reEvaluateRecipients(failedRecipients);
   }
 
-  private recipientKeyIdText = (contact: Contact) => {
-    if (contact.fingerprint) {
-      return `\n\nRecipient public key fingerprint:\n${Str.spaced(contact.fingerprint)}`;
-    } else {
-      return '';
+  private recipientKeyIdText = (pubKeyInfo: PubKeyInfo): string => {
+    if (pubKeyInfo.pubkey.id) {
+      return `\n\nRecipient public key fingerprint:\n${Str.spaced(pubKeyInfo.pubkey.id)}`;
     }
+    return '';
   }
 
   private generateRecipientId = (): string => {
