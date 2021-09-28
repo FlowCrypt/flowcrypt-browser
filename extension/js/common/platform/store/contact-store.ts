@@ -82,7 +82,6 @@ export class PubKeyInfoUtil {
   }
 }
 
-
 const x509postfix = "-X509";
 
 /**

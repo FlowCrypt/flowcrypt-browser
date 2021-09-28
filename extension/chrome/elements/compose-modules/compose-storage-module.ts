@@ -3,7 +3,7 @@
 'use strict';
 
 import { Bm, BrowserMsg } from '../../../js/common/browser/browser-msg.js';
-import { Contact, KeyInfo, KeyUtil, Key, ContactUtil } from '../../../js/common/core/crypto/key.js';
+import { KeyInfo, KeyUtil, Key } from '../../../js/common/core/crypto/key.js';
 import { ApiErr } from '../../../js/common/api/shared/api-error.js';
 import { Assert } from '../../../js/common/assert.js';
 import { Catch } from '../../../js/common/platform/catch.js';
@@ -13,11 +13,10 @@ import { ViewModule } from '../../../js/common/view-module.js';
 import { ComposeView } from '../compose.js';
 import { KeyStore } from '../../../js/common/platform/store/key-store.js';
 import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
-import { ContactStore, ContactUpdate, EmailWithSortedPubKeys, PubKeyInfo } from '../../../js/common/platform/store/contact-store.js';
+import { ContactStore, ContactUpdate, PubKeyInfo } from '../../../js/common/platform/store/contact-store.js';
 import { PassphraseStore } from '../../../js/common/platform/store/passphrase-store.js';
 import { Settings } from '../../../js/common/settings.js';
 import { Ui } from '../../../js/common/browser/ui.js';
-import { PgpArmor } from '../../../js/common/core/crypto/pgp/pgp-armor.js';
 
 export class ComposeStorageModule extends ViewModule<ComposeView> {
 
@@ -160,8 +159,10 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
         if (updates.length) {
           await Promise.all(updates.map(async (update) => await ContactStore.update(undefined, email, update)));
         }
-        const [preferred] = await ContactStore.get(undefined, [email]);
-        if (preferred) return ContactUtil.toPubKeyInfo(preferred);
+        const emailWithKeys = await ContactStore.getOneWithAllPubkeys(undefined, email);
+        if (emailWithKeys && emailWithKeys.sortedPubkeys.length) {
+          return emailWithKeys.sortedPubkeys[0];
+        }
       }
     } catch (e) {
       if (!ApiErr.isNetErr(e) && !ApiErr.isServerErr(e)) {
