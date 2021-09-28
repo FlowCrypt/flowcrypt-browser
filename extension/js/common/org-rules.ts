@@ -198,7 +198,10 @@ export class OrgRules {
   }
 
   /**
-   * With this option, sent messages won't have any comment/version in armor, imported keys get imported without armor
+   * Ask the client app to not fetch access token from FES, and
+   *   instead OIDC ID Token directly for each authenticated call.
+   *   The ID Token is kept in-memory, and typically expires in 1 hour depending on IdP settings
+   *   This is more secure, but user may need to re-authenticate frequently.
    */
   public disableFesAccessToken = (): boolean => {
     return (this.domainRules.flags || []).includes('DISABLE_FES_ACCESS_TOKEN');
