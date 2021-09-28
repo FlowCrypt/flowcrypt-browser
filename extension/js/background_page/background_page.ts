@@ -13,7 +13,6 @@ import { migrateGlobal, moveContactsToEmailsAndPubkeys, updateOpgpRevocations, u
 import { opgp } from '../common/core/crypto/pgp/openpgpjs-custom.js';
 import { GlobalStoreDict, GlobalStore } from '../common/platform/store/global-store.js';
 import { ContactStore } from '../common/platform/store/contact-store.js';
-import { SessionStore } from '../common/platform/store/session-store.js';
 import { AcctStore } from '../common/platform/store/acct-store.js';
 import { ExpirationCache } from '../common/core/expiration-cache.js';
 import { emailKeyIndex } from '../common/core/common.js';
@@ -57,8 +56,6 @@ opgp.initWorker({ path: '/lib/openpgp.worker.js' });
   BrowserMsg.bgAddListener('db', (r: Bm.Db) => BgHandlers.dbOperationHandler(db, r));
   BrowserMsg.bgAddListener('session_passphrase_set', async (r: Bm.StoreSessionSet) => inMemoryPassPhrases.set(emailKeyIndex(r.acctEmail, r.key), r.value));
   BrowserMsg.bgAddListener('session_passphrase_get', async (r: Bm.StoreSessionGet) => inMemoryPassPhrases.get(emailKeyIndex(r.acctEmail, r.key)));
-  BrowserMsg.bgAddListener('session_set', (r: Bm.StoreSessionSet) => SessionStore.set(r.acctEmail, r.key, r.value));
-  BrowserMsg.bgAddListener('session_get', (r: Bm.StoreSessionGet) => SessionStore.get(r.acctEmail, r.key));
   BrowserMsg.bgAddListener('storeGlobalGet', (r: Bm.StoreGlobalGet) => GlobalStore.get(r.keys));
   BrowserMsg.bgAddListener('storeGlobalSet', (r: Bm.StoreGlobalSet) => GlobalStore.set(r.values));
   BrowserMsg.bgAddListener('storeAcctGet', (r: Bm.StoreAcctGet) => AcctStore.get(r.acctEmail, r.keys));
