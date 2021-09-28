@@ -340,10 +340,10 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     }
   }
 
-  public reRenderRecipientFor = async (contact: Contact): Promise<void> => {
-    for (const recipient of this.addedRecipients.filter(r => r.email === contact.email)) {
-      this.view.errModule.debug(`re-rendering recipient: ${contact.email}`);
-      await this.renderPubkeyResult(recipient, [contact]);
+  public reRenderRecipientFor = async (email: string, pubKeyInfos: PubKeyInfo[]): Promise<void> => {
+    for (const recipient of this.addedRecipients.filter(r => r.email === email)) {
+      this.view.errModule.debug(`re-rendering recipient: ${email}`);
+      await this.renderPubkeyResult(recipient, ContactStore.sortPubInfos(pubKeyInfos));
       this.view.recipientsModule.showHideCcAndBccInputsIfNeeded();
       await this.view.recipientsModule.setEmailsPreview(this.getRecipients());
     }
