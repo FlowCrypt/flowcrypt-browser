@@ -13,7 +13,7 @@ import { ViewModule } from '../../../js/common/view-module.js';
 import { ComposeView } from '../compose.js';
 import { KeyStore } from '../../../js/common/platform/store/key-store.js';
 import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
-import { ContactStore, ContactUpdate, PubKeyInfo } from '../../../js/common/platform/store/contact-store.js';
+import { ContactStore, ContactUpdate, PubKeyInfo, PubKeyInfoUtil } from '../../../js/common/platform/store/contact-store.js';
 import { PassphraseStore } from '../../../js/common/platform/store/passphrase-store.js';
 import { Settings } from '../../../js/common/settings.js';
 import { Ui } from '../../../js/common/browser/ui.js';
@@ -174,9 +174,9 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
 
   public checkKeyserverForNewerVersionOfKnownPubkeyIfNeeded = async (email: string, pkinfo: PubKeyInfo) => {
     try {
-      const lastCheckOverWeekAgoOrNever = !pkinfo.lastCheck || new Date(pkinfo.lastCheck).getTime() < Date.now() - (1000 * 60 * 60 * 24 * 7);
-      const isExpired = pkinfo.pubkey.expiration && (new Date(pkinfo.pubkey.expiration)).getTime() < Date.now();
-      if (lastCheckOverWeekAgoOrNever || isExpired) {
+      const lastCheckOverWeekAgoOrNever = !pkinfo.lastCheck ||
+        new Date(pkinfo.lastCheck).getTime() < Date.now() - (1000 * 60 * 60 * 24 * 7);
+      if (lastCheckOverWeekAgoOrNever || PubKeyInfoUtil.isExpired(pkinfo)) {
         const { pubkey: fetchedPubkeyArmored } = await this.view.pubLookup.lookupFingerprint(pkinfo.pubkey.id);
         if (fetchedPubkeyArmored) {
           const fetchedPubkey = await KeyUtil.parse(fetchedPubkeyArmored);
