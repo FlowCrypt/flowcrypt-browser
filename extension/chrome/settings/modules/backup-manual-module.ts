@@ -66,7 +66,7 @@ export class BackupManualActionModule extends ViewModule<BackupView> {
   private renderPrvKeysBackupSelection = async (primaryKeys: ExtendedKeyInfo[]) => {
     for (const primaryKi of primaryKeys) {
       const email = Xss.escape(String(primaryKi.emails));
-      const fingerprints = Xss.escape(String(primaryKi.fingerprints[0]));
+      const fingerprints = primaryKi.fingerprints;
       const keyType =  (await KeyUtil.parse(primaryKi.private)).type;
       const dom = `
       <div class="mb-20">
@@ -76,17 +76,19 @@ export class BackupManualActionModule extends ViewModule<BackupView> {
             <input class="input_prvkey_backup_checkbox" type="checkbox" checked data-emails="${email}" data-fingerprints="${fingerprints}" ${keyType === 'x509' ? 'disabled' : ''} />
             Email: <span class="prv_email">${email}</span> with fingerprint :
             </p>
-            <p class="m-0 prv_fingerprint"><span>${keyType} - ${Str.spaced(fingerprints)}</span></p>
+            <p class="m-0 prv_fingerprint"><span>${keyType} - ${Str.spaced(fingerprints[0])}</span></p>
           </label>
         </div>
       </div>
       `.trim();
       $('.key_backup_selection').append(dom); // xss-escaped
+      this.view.prvKeysToManuallyBackup.push({ 'email': email, 'fingerprints': fingerprints });
+
     }
     $('.input_prvkey_backup_checkbox').click((event) => {
       const email = String($(event.target).data('emails')).trim();
       const fingerprint = String($(event.target).data('fingerprints')).split(',');
-      if ($(event.target).prop('checked')) {
+      if ($(event.target).prop('checked') && !this.view.prvKeysToManuallyBackup.includes({ 'email': email, 'fingerprints': fingerprint })) {
         this.view.prvKeysToManuallyBackup.push({ 'email': email, 'fingerprints': fingerprint });
       } else {
         this.view.prvKeysToManuallyBackup.splice(this.view.prvKeysToManuallyBackup.findIndex(prvIdentity => prvIdentity.fingerprints === fingerprint), 1);
