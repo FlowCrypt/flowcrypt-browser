@@ -185,11 +185,11 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
             // the "same or newer" was due to a bug we encountered earlier where keys were badly recorded in db
             // sometime in Oct 2020 we could turn the ">=" back to ">" above
             await ContactStore.update(undefined, email, { pubkey: fetchedPubkey, lastUse: Date.now(), pubkeyLastCheck: Date.now() });
-            const [updatedPubkey] = await ContactStore.get(undefined, [email]);
-            if (!updatedPubkey) {
+            const updatedPubkeys = await ContactStore.getOneWithAllPubkeys(undefined, email);
+            if (!updatedPubkeys) {
               throw new Error("Cannot retrieve Contact right after updating it");
             }
-            await this.view.recipientsModule.reRenderRecipientFor(updatedPubkey);
+            await this.view.recipientsModule.reRenderRecipientFor(email, updatedPubkeys.sortedPubkeys);
             return;
           }
         }
