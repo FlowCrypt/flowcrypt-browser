@@ -1,5 +1,6 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
+import { expect } from 'chai';
 import { IncomingMessage } from 'http';
 import { HandlersDefinition } from '../all-apis-mock';
 import { HttpClientErr } from '../lib/api';
@@ -42,15 +43,15 @@ export const mockFesEndpoints: HandlersDefinition = {
     }
     throw new HttpClientErr('Not Found', 404);
   },
-  '/api/v1/account/': async ({ }, req) => {
+  '/api/v1/client-configuration': async ({ }, req) => {
+    // actual individual OrgRules are tested using FlowCrypt backend mock instead,
+    //   see BackendData.getOrgRules
+    if (req.url !== '/api/v1/client-configuration?domain=standardsubdomainfes.test:8001') {
+      throw new HttpClientErr('Unexpected domain, expecting standardsubdomainfes.test:8001', 400);
+    }
     if (req.headers.host === standardFesUrl && req.method === 'GET') {
-      authenticate(req, 'fes');
       return {
-        account: {
-          default_message_expire: 30
-        },
-        subscription: { level: 'pro', expire: null, method: 'group', expired: 'false' }, // tslint:disable-line:no-null-keyword
-        domain_org_rules: { disallow_attester_search_for_domains: ['got.this@fromstandardfes.com'] },
+        clientConfiguration: { disallow_attester_search_for_domains: ['got.this@fromstandardfes.com'] },
       };
     }
     throw new HttpClientErr('Not Found', 404);
@@ -62,9 +63,17 @@ export const mockFesEndpoints: HandlersDefinition = {
     }
     throw new HttpClientErr('Not Found', 404);
   },
-  '/api/v1/message?associate-reply-token=mock-fes-reply-token': async ({ }, req) => {
+  '/api/v1/message': async ({ body }, req) => {
     if (req.headers.host === standardFesUrl && req.method === 'POST') {
+      // test: `compose - user@standardsubdomainfes.test:8001 - PWD encrypted message with FES web portal`
       authenticate(req, 'fes');
+      // body is a mime-multipart string, we're doing a few smoke checks here without parsing it
+      expect(body).to.contain('-----BEGIN PGP MESSAGE-----');
+      expect(body).to.contain('"associateReplyToken":"mock-fes-reply-token"');
+      expect(body).to.contain('"from":"user@standardsubdomainfes.test:8001"');
+      expect(body).to.contain('"to":["to@example.com"]');
+      expect(body).to.contain('"cc":[]');
+      expect(body).to.contain('"bcc":["bcc@example.com"]');
       return { 'url': `http://${standardFesUrl}/message/FES-MOCK-MESSAGE-ID` };
     }
     throw new HttpClientErr('Not Found', 404);
