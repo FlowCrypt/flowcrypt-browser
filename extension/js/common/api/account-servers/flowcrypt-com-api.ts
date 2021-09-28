@@ -20,7 +20,7 @@ export type SubscriptionInfo = { level?: SubscriptionLevel; expired?: boolean };
 
 export namespace BackendRes {
   export type FcAccountLogin = { registered: boolean, verified: boolean };
-  export type FcAccount$info = { alias: string, email: string, intro: string, name: string, photo: string, default_message_expire: number };
+  export type FcAccount$info = { alias?: string | null, default_message_expire: number };
   export type FcAccountGet = { account: FcAccount$info, subscription: SubscriptionInfo, domain_org_rules: DomainRulesJson };
   export type FcAccountUpdate = { result: FcAccount$info, updated: boolean };
   export type FcAccountSubscribe = { subscription: SubscriptionInfo };

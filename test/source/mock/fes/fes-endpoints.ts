@@ -43,15 +43,15 @@ export const mockFesEndpoints: HandlersDefinition = {
     }
     throw new HttpClientErr('Not Found', 404);
   },
-  '/api/v1/account/': async ({ }, req) => {
+  '/api/v1/client-configuration': async ({ }, req) => {
+    // actual individual OrgRules are tested using FlowCrypt backend mock instead,
+    //   see BackendData.getOrgRules
+    if (req.url !== '/api/v1/client-configuration?domain=standardsubdomainfes.test:8001') {
+      throw new HttpClientErr('Unexpected domain, expecting standardsubdomainfes.test:8001', 400);
+    }
     if (req.headers.host === standardFesUrl && req.method === 'GET') {
-      authenticate(req, 'fes');
       return {
-        account: {
-          default_message_expire: 30
-        },
-        subscription: { level: 'pro', expire: null, method: 'group', expired: 'false' }, // tslint:disable-line:no-null-keyword
-        domain_org_rules: { disallow_attester_search_for_domains: ['got.this@fromstandardfes.com'] },
+        clientConfiguration: { disallow_attester_search_for_domains: ['got.this@fromstandardfes.com'] },
       };
     }
     throw new HttpClientErr('Not Found', 404);
