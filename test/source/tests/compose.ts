@@ -1027,7 +1027,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       await decryptErrorDetails.waitForContent('@error-details', '"type": "key_mismatch"'); // DecryptError
     }));
 
-    ava.default.only('can lookup public key from WKD directly', testWithBrowser('ci.tests.gmail', async (t, browser) => {
+    ava.default('can lookup public key from WKD directly', testWithBrowser('ci.tests.gmail', async (t, browser) => {
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
       await ComposePageRecipe.fillMsg(composePage, { to: 'test-wkd@metacode.biz' }, 'should find pubkey from WKD directly');
       await composePage.waitForContent('.email_address.has_pgp', 'test-wkd@metacode.biz');
