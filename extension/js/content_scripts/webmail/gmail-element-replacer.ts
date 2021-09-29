@@ -11,6 +11,7 @@ import { ApiErr } from '../../common/api/shared/api-error.js';
 import { Attachment } from '../../common/core/attachment.js';
 import { BrowserMsg } from '../../common/browser/browser-msg.js';
 import { Catch } from '../../common/platform/catch.js';
+import { GlobalStore } from '../../common/platform/store/global-store.js';
 import { Gmail } from '../../common/api/email-provider/gmail/gmail.js';
 import { Injector } from '../../common/inject.js';
 import { PubLookup } from '../../common/api/pub-lookup.js';
@@ -65,7 +66,8 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     settingsBtnContainer: 'div.aeH > div > .fY',
     standardComposeRecipient: 'div.az9 span[email][data-hovercard-id]',
     numberOfAttachments: '.aVW',
-    numberOfAttachmentsDigit: '.aVW span'
+    numberOfAttachmentsDigit: '.aVW span',
+    draftsList: '.ae4',
   };
 
   constructor(factory: XssSafeFactory, orgRules: OrgRules, acctEmail: string, sendAs: Dict<SendAsAlias>,
@@ -149,6 +151,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     this.replaceStandardReplyBox().catch(Catch.reportErr);
     this.evaluateStandardComposeRecipients().catch(Catch.reportErr);
     this.addSettingsBtn();
+    this.renderLocalDrafts().catch(Catch.reportErr);
   }
 
   private replaceArmoredBlocks = () => {
@@ -742,6 +745,49 @@ export class GmailElementReplacer implements WebmailElementReplacer {
       if (settingsBtnContainer.length && !settingsBtnContainer.find('#fc_settings_btn').length) {
         settingsBtnContainer.children().last().before(this.factory.btnSettings('gmail')); // xss-safe-factory
         settingsBtnContainer.find('#fc_settings_btn').click(Ui.event.handle(() => BrowserMsg.send.bg.settings({ acctEmail: this.acctEmail })));
+      }
+    }
+  }
+
+  private renderLocalDrafts = async () => {
+    if (window.location.hash === '#drafts') {
+      const storage = await GlobalStore.get(['local_drafts']);
+      if (!storage.local_drafts) {
+        return;
+      }
+      const offlineComposeDrafts: Dict<number> = {};
+      for (const draftId in storage.local_drafts) {
+        if (draftId.startsWith('local-draft-compose-')) {
+          offlineComposeDrafts[draftId] = parseInt(storage.local_drafts[draftId].id);
+        }
+      }
+      let offlineDraftsContainer = $(this.sel.draftsList).find('#fc_offline_drafts');
+      if (!offlineDraftsContainer.length) {
+        offlineDraftsContainer = $('<div id="fc_offline_drafts"></div>');
+        $(this.sel.draftsList).append(offlineDraftsContainer); // xss-safe-value
+      }
+      if (Object.keys(offlineComposeDrafts).length) {
+        const draftsToRender: JQueryEl[] = [];
+        for (const [draftId, timestamp] of Object.entries(offlineComposeDrafts)) {
+          const draftLink = $(`<a href data-test="offline-draft-link">${new Date(timestamp).toLocaleString()}</a>`);
+          draftLink.on('click', (event) => {
+            event.preventDefault();
+            this.injector.openComposeWin(draftId);
+          });
+          draftsToRender[timestamp] = draftLink;
+        }
+        const orderedTimestamps = Object.keys(draftsToRender).map(i => parseInt(i)).sort().reverse();
+        if (offlineDraftsContainer.data('rendered-drafts') === orderedTimestamps.join(',')) {
+          // already rendered
+          return;
+        }
+        offlineDraftsContainer.data('rendered-drafts', orderedTimestamps.join(','));
+        offlineDraftsContainer.html(`<h4>FlowCrypt offline drafts:</h4>`); // xss-safe-value
+        for (const timestamp of orderedTimestamps) {
+          offlineDraftsContainer.append(draftsToRender[timestamp]); // xss-safe-value
+        }
+      } else {
+        offlineDraftsContainer.empty();
       }
     }
   }

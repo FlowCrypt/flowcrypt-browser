@@ -15,7 +15,7 @@ import { GmailRes } from '../../../js/common/api/email-provider/gmail/gmail-pars
 import { MsgBlockParser } from '../../../js/common/core/msg-block-parser.js';
 import { MsgUtil } from '../../../js/common/core/crypto/pgp/msg-util.js';
 import { Ui } from '../../../js/common/browser/ui.js';
-import { Url } from '../../../js/common/core/common.js';
+import { Str, Url } from '../../../js/common/core/common.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { ViewModule } from '../../../js/common/view-module.js';
 import { ComposeView } from '../compose.js';
@@ -33,6 +33,8 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
   private lastDraftSubject = '';
   private SAVE_DRAFT_FREQUENCY = 3000;
   private localDraftPrefix = 'local-draft-';
+  private localComposeDraftPrefix = 'compose-';
+  private localComposeDraftId = Str.sloppyRandom(10);
 
   constructor(composer: ComposeView) {
     super(composer);
@@ -172,7 +174,13 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
   }
 
   public getLocalDraftId = () => {
-    return `${this.localDraftPrefix}${this.view.threadId}`;
+    if (this.view.draftId.startsWith(this.localDraftPrefix)) {
+      return this.view.draftId;
+    }
+    if (this.view.threadId) {
+      return `${this.localDraftPrefix}${this.view.threadId}`;
+    }
+    return `${this.localDraftPrefix}${this.localComposeDraftPrefix}${this.localComposeDraftId}`;
   }
 
   public localDraftGet = async (): Promise<GmailRes.GmailDraftGet | undefined> => {
@@ -232,7 +240,7 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
       storage.local_drafts = {};
     }
     const draftId = this.getLocalDraftId();
-    storage.local_drafts[draftId] = { id: '', message: { id: '', historyId: '', raw: Buf.fromUtfStr(mimeMsg).toBase64UrlStr(), threadId } };
+    storage.local_drafts[draftId] = { id: new Date().getTime().toString(), message: { id: '', historyId: '', raw: Buf.fromUtfStr(mimeMsg).toBase64UrlStr(), threadId } };
     await GlobalStore.set(storage);
     return draftId;
   }
