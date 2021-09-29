@@ -108,7 +108,9 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
       }
       return ContactStore.sortPubInfos(results);
     }
-    return 'fail';
+    const res = await this.lookupPubkeyFromKeyserversAndUpsertDb(email, name, undefined);
+    if (res === 'fail') return res;
+    return [res];
   }
 
   /**
