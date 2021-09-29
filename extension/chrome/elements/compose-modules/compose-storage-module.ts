@@ -119,7 +119,7 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
       return [res];
     } else {
       console.log(`>>>> Looking up on keyserver: ${email}: result: NOT_KEYS`);
-      return [];
+      return []; // no PGP keys
     }
   }
 
