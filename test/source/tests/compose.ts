@@ -1055,7 +1055,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       await inboxPage.waitTillGone('@container-new-message');
     }));
 
-    ava.default('send with several S/MIME certs', testWithBrowser('ci.tests.gmail', async (t, browser) => {
+    ava.default.only('send with several S/MIME certs', testWithBrowser('ci.tests.gmail', async (t, browser) => {
       const inboxPage = await browser.newPage(t, TestUrls.extensionInbox('ci.tests.gmail@flowcrypt.test'));
       const composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
       await ComposePageRecipe.fillMsg(composeFrame, { to: 'smime1@recipient.com', cc: 'smime2@recipient.com' }, t.title);
