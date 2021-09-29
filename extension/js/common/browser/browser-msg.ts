@@ -49,8 +49,8 @@ export namespace Bm {
   export type StripeResult = { token: string };
   export type PassphraseEntry = { entered: boolean, initiatorFrameId?: string };
   export type Db = { f: string, args: any[] };
-  export type StoreSessionSet = { acctEmail: string, key: string, value: string | undefined };
-  export type StoreSessionGet = { acctEmail: string, key: string };
+  export type InMemoryStoreSet = { acctEmail: string, key: string, value: string | undefined };
+  export type InMemoryStoreGet = { acctEmail: string, key: string };
   export type StoreGlobalGet = { keys: GlobalIndex[]; };
   export type StoreGlobalSet = { values: GlobalStoreDict; };
   export type StoreAcctGet = { acctEmail: string, keys: AccountIndex[]; };
@@ -70,8 +70,8 @@ export namespace Bm {
 
   export namespace Res {
     export type GetActiveTabInfo = { provider: 'gmail' | undefined, acctEmail: string | undefined, sameWorld: boolean | undefined };
-    export type StoreSessionGet = string | null;
-    export type StoreSessionSet = void;
+    export type InMemoryStoreGet = string | null;
+    export type InMemoryStoreSet = void;
     export type StoreGlobalGet = GlobalStoreDict;
     export type StoreGlobalSet = void;
     export type StoreAcctGet = AcctStoreDict;
@@ -91,7 +91,7 @@ export namespace Bm {
 
     export type Any = GetActiveTabInfo | _tab_ | ReconnectAcctAuthPopup
       | PgpMsgDecrypt | PgpMsgDiagnoseMsgPubkeys | PgpMsgVerify | PgpHashChallengeAnswer | PgpMsgType | KeyParse
-      | StoreSessionGet | StoreSessionSet | StoreAcctGet | StoreAcctSet | StoreGlobalGet | StoreGlobalSet
+      | InMemoryStoreGet | InMemoryStoreSet | StoreAcctGet | StoreAcctSet | StoreGlobalGet | StoreGlobalSet
       | AjaxGmailAttachmentGetChunk | KeyMatch;
   }
 
@@ -99,7 +99,7 @@ export namespace Bm {
     AddPubkeyDialog | ReinsertReplyBox | ComposeWindow | ScrollToReplyBox | ScrollToCursorInReplyBox | SubscribeDialog |
     RenderPublicKeys | NotificationShowAuthPopupNeeded |
     NotificationShow | PassphraseDialog | PassphraseDialog | Settings | SetCss | AddOrRemoveClass | ReconnectAcctAuthPopup |
-    Db | StoreSessionSet | StoreSessionGet | StoreGlobalGet | StoreGlobalSet | StoreAcctGet | StoreAcctSet | KeyParse |
+    Db | InMemoryStoreSet | InMemoryStoreGet | StoreGlobalGet | StoreGlobalSet | StoreAcctGet | StoreAcctSet | KeyParse |
     PgpMsgDecrypt | PgpMsgDiagnoseMsgPubkeys | PgpMsgVerifyDetached | PgpHashChallengeAnswer | PgpMsgType | Ajax |
     ShowAttachmentPreview | ReRenderRecipient | KeyMatch;
 
@@ -133,10 +133,8 @@ export class BrowserMsg {
       await: {
         reconnectAcctAuthPopup: (bm: Bm.ReconnectAcctAuthPopup) => BrowserMsg.sendAwait(undefined, 'reconnect_acct_auth_popup', bm, true) as Promise<Bm.Res.ReconnectAcctAuthPopup>,
         getActiveTabInfo: () => BrowserMsg.sendAwait(undefined, 'get_active_tab_info', undefined, true) as Promise<Bm.Res.GetActiveTabInfo>,
-        storeSessionGet: (bm: Bm.StoreSessionGet) => BrowserMsg.sendAwait(undefined, 'session_get', bm, true) as Promise<Bm.Res.StoreSessionGet>,
-        storeSessionSet: (bm: Bm.StoreSessionSet) => BrowserMsg.sendAwait(undefined, 'session_set', bm, true) as Promise<Bm.Res.StoreSessionSet>,
-        storeSessionPassphraseGet: (bm: Bm.StoreSessionGet) => BrowserMsg.sendAwait(undefined, 'session_passphrase_get', bm, true) as Promise<Bm.Res.StoreSessionGet>,
-        storeSessionPassphraseSet: (bm: Bm.StoreSessionSet) => BrowserMsg.sendAwait(undefined, 'session_passphrase_set', bm, true) as Promise<Bm.Res.StoreSessionSet>,
+        inMemoryStoreGet: (bm: Bm.InMemoryStoreGet) => BrowserMsg.sendAwait(undefined, 'inMemoryStoreGet', bm, true) as Promise<Bm.Res.InMemoryStoreGet>,
+        inMemoryStoreSet: (bm: Bm.InMemoryStoreSet) => BrowserMsg.sendAwait(undefined, 'inMemoryStoreSet', bm, true) as Promise<Bm.Res.InMemoryStoreSet>,
         storeGlobalGet: (bm: Bm.StoreGlobalGet) => BrowserMsg.sendAwait(undefined, 'storeGlobalGet', bm, true) as Promise<Bm.Res.StoreGlobalGet>,
         storeGlobalSet: (bm: Bm.StoreGlobalSet) => BrowserMsg.sendAwait(undefined, 'storeGlobalSet', bm, true) as Promise<Bm.Res.StoreGlobalSet>,
         storeAcctGet: (bm: Bm.StoreAcctGet) => BrowserMsg.sendAwait(undefined, 'storeAcctGet', bm, true) as Promise<Bm.Res.StoreAcctGet>,

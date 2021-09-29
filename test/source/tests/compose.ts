@@ -659,7 +659,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       expect(await composePage.isDisabled('#toggle_send_options')).to.be.false;
     }));
 
-    ava.default('compose - load contacts through API', testWithBrowser('ci.tests.gmail', async (t, browser) => {
+    ava.default.skip('compose - load contacts through API', testWithBrowser('ci.tests.gmail', async (t, browser) => {
       let composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
       await composePage.waitAndClick('@action-show-container-cc-bcc-buttons');
       await composePage.type('@input-to', 'contact');
@@ -1269,13 +1269,37 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       await SetupPageRecipe.manualEnter(settingsPage, 'flowcrypt.test.key.used.pgp', { submitPubkey: false, usedPgpBefore: false },
         { isSavePassphraseChecked: false, isSavePassphraseHidden: false });
       const msgPwd = 'super hard password for the message';
-      const subject = 'PWD encrypted message with FES';
+      const subject = 'PWD encrypted message with FES - access token';
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'user@standardsubdomainfes.test:8001');
       await ComposePageRecipe.fillMsg(composePage, { to: 'to@example.com', bcc: 'bcc@example.com' }, subject);
       const fileInput = await composePage.target.$('input[type=file]');
       await fileInput!.uploadFile('test/samples/small.txt');
       await ComposePageRecipe.sendAndClose(composePage, { password: msgPwd });
-      // this test is using PwdEncryptedMessageWithFesTestStrategy to check sent result based on subject "PWD encrypted message with flowcrypt.com/api"
+      // this test is using PwdEncryptedMessageWithFesAccessTokenTestStrategy to check sent result based on subject "PWD encrypted message with flowcrypt.com/api"
+      // also see '/api/v1/message' in fes-endpoints.ts mock
+    }));
+
+    /**
+     * You need the following line in /etc/hosts:
+     * 127.0.0.1    fes.disablefesaccesstoken.test
+     */
+    ava.default('user@disablefesaccesstoken.test:8001 - DISABLE_FES_ACCESS_TOKEN - PWD encrypted message with FES web portal', testWithBrowser(undefined, async (t, browser) => {
+      const acct = 'user@disablefesaccesstoken.test:8001'; // added port to trick extension into calling the mock
+      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
+      await SetupPageRecipe.manualEnter(settingsPage, 'flowcrypt.test.key.used.pgp', { submitPubkey: false, usedPgpBefore: false },
+        { isSavePassphraseChecked: false, isSavePassphraseHidden: false });
+      const debugFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-show-local-store-contents', ['debug_api.htm']);
+      await debugFrame.waitForContent('@container-pre', 'fes.disablefesaccesstoken.test:8001'); // FES url on standard subdomain
+      await debugFrame.waitForContent('@container-pre', 'DISABLE_FES_ACCESS_TOKEN'); // org rules from FES
+      await SettingsPageRecipe.closeDialog(settingsPage);
+      const msgPwd = 'super hard password for the message';
+      const subject = 'PWD encrypted message with FES - ID TOKEN';
+      const composePage = await ComposePageRecipe.openStandalone(t, browser, 'user@disablefesaccesstoken.test:8001');
+      await ComposePageRecipe.fillMsg(composePage, { to: 'to@example.com', bcc: 'bcc@example.com' }, subject);
+      const fileInput = await composePage.target.$('input[type=file]');
+      await fileInput!.uploadFile('test/samples/small.txt');
+      await ComposePageRecipe.sendAndClose(composePage, { password: msgPwd });
+      // this test is using PwdEncryptedMessageWithFesIdTokenTestStrategy to check sent result based on subject "PWD encrypted message with flowcrypt.com/api"
       // also see '/api/v1/message' in fes-endpoints.ts mock
     }));
 
