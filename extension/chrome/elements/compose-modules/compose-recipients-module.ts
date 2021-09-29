@@ -202,7 +202,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       this.view.sizeModule.setInputTextHeightManuallyIfNeeded();
       recipient.evaluating = (async () => {
         let pubkeyLookupRes: PubKeyInfo[] | 'fail' | 'wrong' = 'wrong';
-        console.log(`>>> evaluateRecipients: ${JSON.stringify(recipient)}`);
+        // console.log(`>>>> evaluateRecipients: ${JSON.stringify(recipient)}`);
         if (recipient.status !== RecipientStatus.WRONG) {
           pubkeyLookupRes = await this.view.storageModule.
             lookupPubkeyFromKeyserversThenOptionallyFetchExpiredByFingerprintAndUpsertDb(
@@ -822,7 +822,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
   private renderPubkeyResult = async (callSite: number,
     recipient: RecipientElement, sortedPubKeyInfos: PubKeyInfo[] | 'fail' | 'wrong'
   ) => {
-    console.log(`>>> renderPubkeyResult(${callSite}): ${JSON.stringify(sortedPubKeyInfos)}`);
+    // console.log(`>>>> renderPubkeyResult(${callSite}): ${JSON.stringify(sortedPubKeyInfos)}`);
     const el = recipient.element;
     this.view.errModule.debug(`renderPubkeyResult.emailEl(${String(recipient.email)})`);
     this.view.errModule.debug(`renderPubkeyResult.email(${recipient.email})`);
