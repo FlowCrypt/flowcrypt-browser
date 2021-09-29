@@ -63,7 +63,7 @@ export type Contact = {
 };
 
 export class ContactUtil {
-  public static toPubKeyInfo(contact: Contact): (PubKeyInfo | undefined) {
+  public static toPubKeyInfo = (contact: Contact): (PubKeyInfo | undefined) => {
     if (contact.pubkey) {
       return { pubkey: contact.pubkey, revoked: contact.pubkey.revoked, lastCheck: contact.pubkey.lastModified };
     } else {
