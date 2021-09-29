@@ -111,6 +111,7 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
     }
     console.log(`>>>> Looking up on keyserver: ${email}`);
     const res = await this.lookupPubkeyFromKeyserversAndUpsertDb(email, name, undefined);
+    console.log(`>>>> Looking up on keyserver: ${email}: result: ${JSON.stringify(res)}`);
     if (res === 'fail') return res;
     return [res];
   }
