@@ -526,7 +526,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       await composePage.close();
     }));
 
-    ava.default('compose - nogpg and non-revoked recipients trigger nopgp warning only', testWithBrowser('ci.tests.gmail', async (t, browser) => {
+    ava.default.only('compose - nogpg and non-revoked recipients trigger nopgp warning only', testWithBrowser('ci.tests.gmail', async (t, browser) => {
       const dbPage = await browser.newPage(t, TestUrls.extension('chrome/dev/ci_unit_test.htm'));
       await dbPage.page.evaluate(async (pubkey: string) => {
         const db = await (window as any).ContactStore.dbOpen();
@@ -1034,7 +1034,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       expect(await composePage.attr('.email_address.has_pgp', 'title')).to.contain('5B7A BE66 0D5C 62A6 07FE 2448 716B 1776 4E3F CACA');
     }));
 
-    ava.default.only('timeouts when searching WKD - used to never time out', testWithBrowser('ci.tests.gmail', async (t, browser) => {
+    ava.default('timeouts when searching WKD - used to never time out', testWithBrowser('ci.tests.gmail', async (t, browser) => {
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
       await ComposePageRecipe.fillMsg(composePage, { to: 'somewhere@mac.com' }, 'should show no pubkey within a few seconds');
       await composePage.waitForContent('.email_address.no_pgp', 'somewhere@mac.com');
