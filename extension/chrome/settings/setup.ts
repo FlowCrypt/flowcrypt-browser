@@ -242,9 +242,11 @@ export class SetupView extends View {
       await PassphraseStore.set((options.passphrase_save && !this.orgRules.forbidStoringPassPhrase()) ? 'local' : 'session',
         this.acctEmail, fingerprint, options.passphrase);
     }
+    const { sendAs } = await AcctStore.get(this.acctEmail, ['sendAs']);
+    const myOwnEmailsAddrs: string[] = [this.acctEmail].concat(Object.keys(sendAs!));
     const myOwnEmailAddrsAsContacts: Contact[] = [];
     const { full_name: name } = await AcctStore.get(this.acctEmail, ['full_name']);
-    for (const email of this.submitKeyForAddrs) {
+    for (const email of myOwnEmailsAddrs) {
       myOwnEmailAddrsAsContacts.push(await ContactStore.obj({ email, name, pubkey: KeyUtil.armor(await KeyUtil.asPublicKey(prvs[0])) }));
     }
     await ContactStore.save(undefined, myOwnEmailAddrsAsContacts);
