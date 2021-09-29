@@ -103,7 +103,8 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
           results.push(pubkey);
         } else {
           const res = await this.lookupPubkeyFromKeyserversAndUpsertDb(email, name, pubkey);
-          if (res !== 'fail') results.push(res);
+          if (res === 'fail') return res;
+          results.push(res);
         }
       }
       return ContactStore.sortPubInfos(results);
