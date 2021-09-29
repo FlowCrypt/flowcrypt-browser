@@ -3,7 +3,7 @@
 'use strict';
 
 import { Bm, BrowserMsg } from '../../../js/common/browser/browser-msg.js';
-import { KeyInfo, KeyUtil, Key } from '../../../js/common/core/crypto/key.js';
+import { KeyInfo, KeyUtil, Key, ContactUtil } from '../../../js/common/core/crypto/key.js';
 import { ApiErr } from '../../../js/common/api/shared/api-error.js';
 import { Assert } from '../../../js/common/assert.js';
 import { Catch } from '../../../js/common/platform/catch.js';
@@ -132,7 +132,7 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
    */
   public lookupPubkeyFromKeyserversAndUpsertDb = async (
     email: string, name: string | undefined, existingPubKey: PubKeyInfo | undefined
-  ): Promise<PubKeyInfo | "fail"> => {
+  ): Promise<PubKeyInfo | "fail" | undefined> => {
     try {
       const lookupResult = await this.view.pubLookup.lookupEmail(email);
       if (lookupResult && email) {
@@ -157,7 +157,7 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
             // No public key found. Returning early, nothing to update in local store below.
             if (existingPubKey) return existingPubKey;
             const contact = await ContactStore.obj({ email });
-            return ...; // TODO: Convert Contact to PubKeyInfo
+            return ContactUtil.toPubKeyInfo(contact);
           }
         }
         for (const pubkey of pubkeys) {
