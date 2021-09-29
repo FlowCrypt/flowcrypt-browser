@@ -33,7 +33,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
 
   if (testVariant !== 'CONSUMER-LIVE-GMAIL') {
 
-    ava.default('compose - check for sender [flowcrypt.compatibility@gmail.com] from a password-protected email', testWithBrowser('compatibility', async (t, browser) => {
+    ava.default.only('compose - check for sender [flowcrypt.compatibility@gmail.com] from a password-protected email', testWithBrowser('compatibility', async (t, browser) => {
       const senderEmail = 'flowcrypt.compatibility@gmail.com';
       const msgPwd = 'super hard password for the message';
       const subject = 'PWD encrypted message with flowcrypt.com/api';
@@ -1094,7 +1094,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       });
     }));
 
-    ava.default.only('send with broken S/MIME cert - err', testWithBrowser('ci.tests.gmail', async (t, browser) => {
+    ava.default('send with broken S/MIME cert - err', testWithBrowser('ci.tests.gmail', async (t, browser) => {
       const inboxPage = await browser.newPage(t, TestUrls.extensionInbox('ci.tests.gmail@flowcrypt.test'));
       const composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
       await ComposePageRecipe.fillMsg(composeFrame, { to: 'smime@recipient.com' }, t.title);
