@@ -821,6 +821,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
   private renderPubkeyResult = async (
     recipient: RecipientElement, sortedPubKeyInfos: PubKeyInfo[] | 'fail' | 'wrong'
   ) => {
+    console.log('*** renderPubkeyResult: ' + JSON.stringify(sortedPubKeyInfos));
     const el = recipient.element;
     this.view.errModule.debug(`renderPubkeyResult.emailEl(${String(recipient.email)})`);
     this.view.errModule.debug(`renderPubkeyResult.email(${recipient.email})`);
