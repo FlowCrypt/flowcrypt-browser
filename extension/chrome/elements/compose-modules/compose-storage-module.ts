@@ -13,7 +13,7 @@ import { ViewModule } from '../../../js/common/view-module.js';
 import { ComposeView } from '../compose.js';
 import { KeyStore } from '../../../js/common/platform/store/key-store.js';
 import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
-import { ContactStore, ContactUpdate, PubKeyInfo, PubKeyInfoUtil } from '../../../js/common/platform/store/contact-store.js';
+import { ContactStore, ContactUpdate, PubKeyInfo } from '../../../js/common/platform/store/contact-store.js';
 import { PassphraseStore } from '../../../js/common/platform/store/passphrase-store.js';
 import { Settings } from '../../../js/common/settings.js';
 import { Ui } from '../../../js/common/browser/ui.js';
@@ -172,15 +172,16 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
     return PUBKEY_LOOKUP_RESULT_FAIL;
   }
 
-  public checkKeyserverForNewerVersionOfKnownPubkeyIfNeeded = async (email: string, pkinfo: PubKeyInfo) => {
+  public checkKeyserverForNewerVersionOfKnownPubkeyIfNeeded = async (
+    email: string, pubKeyInfo: PubKeyInfo) => {
     try {
-      const lastCheckOverWeekAgoOrNever = !pkinfo.lastCheck ||
-        new Date(pkinfo.lastCheck).getTime() < Date.now() - (1000 * 60 * 60 * 24 * 7);
-      if (lastCheckOverWeekAgoOrNever || PubKeyInfoUtil.isExpired(pkinfo)) {
-        const { pubkey: fetchedPubkeyArmored } = await this.view.pubLookup.lookupFingerprint(pkinfo.pubkey.id);
+      const lastCheckOverWeekAgoOrNever = !pubKeyInfo.lastCheck ||
+        new Date(pubKeyInfo.lastCheck).getTime() < Date.now() - (1000 * 60 * 60 * 24 * 7);
+      if (lastCheckOverWeekAgoOrNever || KeyUtil.expired(pubKeyInfo.pubkey)) {
+        const { pubkey: fetchedPubkeyArmored } = await this.view.pubLookup.lookupFingerprint(pubKeyInfo.pubkey.id);
         if (fetchedPubkeyArmored) {
           const fetchedPubkey = await KeyUtil.parse(fetchedPubkeyArmored);
-          if (fetchedPubkey.lastModified && (!pkinfo.pubkey.lastModified || fetchedPubkey.lastModified >= pkinfo.pubkey.lastModified)) {
+          if (fetchedPubkey.lastModified && (!pubKeyInfo.pubkey.lastModified || fetchedPubkey.lastModified >= pubKeyInfo.pubkey.lastModified)) {
             // the fetched pubkey has at least the same or newer signature
             // the "same or newer" was due to a bug we encountered earlier where keys were badly recorded in db
             // sometime in Oct 2020 we could turn the ">=" back to ">" above
@@ -194,7 +195,7 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
           }
         }
       }
-      await ContactStore.update(undefined, email, { pubkey: pkinfo.pubkey, pubkeyLastCheck: Date.now() });
+      await ContactStore.update(undefined, email, { pubkey: pubKeyInfo.pubkey, pubkeyLastCheck: Date.now() });
       // we checked for newer key and it did not result in updating the key, don't check again for another week
     } catch (e) {
       ApiErr.reportIfSignificant(e);

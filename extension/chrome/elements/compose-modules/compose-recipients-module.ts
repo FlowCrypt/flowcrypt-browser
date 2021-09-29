@@ -3,7 +3,7 @@
 'use strict';
 
 import { ChunkedCb, EmailProviderContact, RecipientType } from '../../../js/common/api/shared/api.js';
-import { Contact } from '../../../js/common/core/crypto/key.js';
+import { Contact, KeyUtil } from '../../../js/common/core/crypto/key.js';
 import { PUBKEY_LOOKUP_RESULT_FAIL, PUBKEY_LOOKUP_RESULT_WRONG } from './compose-err-module.js';
 import { ProviderContactsQuery, Recipients } from '../../../js/common/api/email-provider/email-provider-api.js';
 import { RecipientElement, RecipientStatus } from './compose-types.js';
@@ -20,7 +20,7 @@ import { moveElementInArray } from '../../../js/common/platform/util.js';
 import { ViewModule } from '../../../js/common/view-module.js';
 import { ComposeView } from '../compose.js';
 import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
-import { ContactPreview, ContactStore, ContactUpdate, PubKeyInfo, PubKeyInfoUtil } from '../../../js/common/platform/store/contact-store.js';
+import { ContactPreview, ContactStore, ContactUpdate, PubKeyInfo } from '../../../js/common/platform/store/contact-store.js';
 
 /**
  * todo - this class is getting too big
@@ -846,29 +846,31 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       $(el).attr('title', 'This email address looks misspelled. Please try again.');
       $(el).addClass("wrong");
     } else if (sortedPubKeyInfos.length) {
-      // New logic
-      // - if there is at least one valid (non-expired, non-revoked) public key, then it's HAS_PGP
-      // - else if there is at least one expired public key, then it's EXPIRED
-      // - else if there is at least one revoked key, then REVOKED
-      // - else it's NO_PGP
+      // New logic:
+      // 1. Keys are sorted in a special way.
+      // 2. If there is at least one key:
+      //    - if first key is valid (non-expired, non-revoked) public key, then it's HAS_PGP.
+      //    - else if first key is revoked, then REVOKED.
+      //    - else EXPIRED.
+      // 3. Otherwise NO_PGP.
       const firstKeyInfo = sortedPubKeyInfos[0];
-      if (!firstKeyInfo.revoked && !PubKeyInfoUtil.isExpired(firstKeyInfo)) {
+      if (!firstKeyInfo.revoked && !KeyUtil.expired(firstKeyInfo.pubkey)) {
         recipient.status = RecipientStatus.HAS_PGP;
         $(el).addClass('has_pgp');
         Xss.sanitizePrepend(el, '<img class="lock-icon" src="/img/svgs/locked-icon.svg" />');
         $(el).attr('title', 'Does use encryption\n' + this.publicKeysToRenderedText(sortedPubKeyInfos));
-      } else if (PubKeyInfoUtil.isExpired(firstKeyInfo)) {
-        recipient.status = RecipientStatus.EXPIRED;
-        $(el).addClass("expired");
-        Xss.sanitizePrepend(el, '<img src="/img/svgs/expired-timer.svg" class="revoked-or-expired">');
-        $(el).attr('title', 'Does use encryption but their public key is expired. ' +
-          'You should ask them to send you an updated public key.\n' +
-          this.publicKeysToRenderedText(sortedPubKeyInfos));
-      } else {
+      } else if (firstKeyInfo.revoked) {
         recipient.status = RecipientStatus.REVOKED;
         $(el).addClass("revoked");
         Xss.sanitizePrepend(el, '<img src="/img/svgs/revoked.svg" class="revoked-or-expired">');
         $(el).attr('title', 'Does use encryption but their public key is revoked. ' +
+          'You should ask them to send you an updated public key.\n' +
+          this.publicKeysToRenderedText(sortedPubKeyInfos));
+      } else {
+        recipient.status = RecipientStatus.EXPIRED;
+        $(el).addClass("expired");
+        Xss.sanitizePrepend(el, '<img src="/img/svgs/expired-timer.svg" class="revoked-or-expired">');
+        $(el).attr('title', 'Does use encryption but their public key is expired. ' +
           'You should ask them to send you an updated public key.\n' +
           this.publicKeysToRenderedText(sortedPubKeyInfos));
       }
@@ -886,14 +888,14 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
   private publicKeysToRenderedText = (pubKeyInfos: PubKeyInfo[]): string => {
     let res = '';
     const valid = pubKeyInfos.filter(
-      pubKeyInfo => !pubKeyInfo.revoked && !PubKeyInfoUtil.isExpired(pubKeyInfo));
+      pubKeyInfo => !pubKeyInfo.revoked && !KeyUtil.expired(pubKeyInfo.pubkey));
     if (valid.length) {
       res += 'Valid public key fingerprints:';
       for (const pubKeyInfo of valid) {
         res += '\n' + this.recipientKeyIdText(pubKeyInfo);
       }
     }
-    const expired = pubKeyInfos.filter(pubKeyInfo => PubKeyInfoUtil.isExpired(pubKeyInfo));
+    const expired = pubKeyInfos.filter(pubKeyInfo => KeyUtil.expired(pubKeyInfo.pubkey));
     if (expired.length) {
       if (res.length) res += '\n\n';
       res += 'Expired public key fingerprints:';
