@@ -103,17 +103,24 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
           results.push(pubkey);
         } else {
           const res = await this.lookupPubkeyFromKeyserversAndUpsertDb(email, name, pubkey);
-          if (res === 'fail') return res;
-          results.push(res);
+          if (res) {
+            if (res === 'fail') return res;
+            results.push(res);
+          }
         }
       }
       return ContactStore.sortPubInfos(results);
     }
     console.log(`>>>> Looking up on keyserver: ${email}`);
     const res = await this.lookupPubkeyFromKeyserversAndUpsertDb(email, name, undefined);
-    console.log(`>>>> Looking up on keyserver: ${email}: result: ${JSON.stringify(res)}`);
-    if (res === 'fail') return res;
-    return [res];
+    if (res) {
+      console.log(`>>>> Looking up on keyserver: ${email}: result: ${JSON.stringify(res)}`);
+      if (res === 'fail') return res;
+      return [res];
+    } else {
+      console.log(`>>>> Looking up on keyserver: ${email}: result: NOT_KEYS`);
+      return [];
+    }
   }
 
   /**
