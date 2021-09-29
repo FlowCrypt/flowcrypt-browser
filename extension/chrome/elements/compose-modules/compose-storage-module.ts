@@ -82,9 +82,9 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
     //    remove it and the keys will be updated below using
     //    `lookupPubkeyFromKeyserversAndUpsertDb` anyway.
     //    discussion: https://github.com/FlowCrypt/flowcrypt-browser/pull/3898#discussion_r686229818
+    console.log(`>>>> Looking up in DB: ${email}`);
     const storedContact = await ContactStore.getOneWithAllPubkeys(undefined, email);
-    // console.log(">>>> LPKFKSTOFEBFAUDB: "
-    //   + storedContact ? JSON.stringify(storedContact) : 'NOT_FOUND');
+    console.log(">>>> " + (storedContact ? JSON.stringify(storedContact) : 'NOT_FOUND'));
     if (storedContact && storedContact.sortedPubkeys.length) {
       const results: PubKeyInfo[] = [];
       for (const pubkey of storedContact.sortedPubkeys) {
@@ -103,12 +103,12 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
           results.push(pubkey);
         } else {
           const res = await this.lookupPubkeyFromKeyserversAndUpsertDb(email, name, pubkey);
-          if (res === 'fail') return res;
-          results.push(res);
+          if (res !== 'fail') results.push(res);
         }
       }
       return ContactStore.sortPubInfos(results);
     }
+    console.log(`>>>> Looking up on keyserver: ${email}`);
     const res = await this.lookupPubkeyFromKeyserversAndUpsertDb(email, name, undefined);
     if (res === 'fail') return res;
     return [res];
