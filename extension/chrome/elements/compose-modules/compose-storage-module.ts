@@ -156,7 +156,8 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
           } else {
             // No public key found. Returning early, nothing to update in local store below.
             if (existingPubKey) return existingPubKey;
-            await ContactStore.obj({ email });
+            const contact = await ContactStore.obj({ email });
+            return ...; // TODO: Convert Contact to PubKeyInfo
           }
         }
         for (const pubkey of pubkeys) {
