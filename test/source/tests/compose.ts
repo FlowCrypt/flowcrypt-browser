@@ -1030,7 +1030,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
     ava.default.only('can lookup public key from WKD directly', testWithBrowser('ci.tests.gmail', async (t, browser) => {
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
       await ComposePageRecipe.fillMsg(composePage, { to: 'test-wkd@metacode.biz' }, 'should find pubkey from WKD directly');
-      await Util.sleep(6000);
+      // await Util.sleep(6000);
       await composePage.waitForContent('.email_address.has_pgp', 'test-wkd@metacode.biz');
       expect(await composePage.attr('.email_address.has_pgp', 'title')).to.contain('5B7A BE66 0D5C 62A6 07FE 2448 716B 1776 4E3F CACA');
     }));
