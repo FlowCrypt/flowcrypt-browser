@@ -209,9 +209,9 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
               recipient.email, undefined);
         }
         if (pubkeyLookupRes === 'fail' || pubkeyLookupRes === 'wrong') {
-          await this.renderPubkeyResult(0, recipient, pubkeyLookupRes);
+          await this.renderPubkeyResult(recipient, pubkeyLookupRes);
         } else {
-          await this.renderPubkeyResult(1, recipient, pubkeyLookupRes as PubKeyInfo[]);
+          await this.renderPubkeyResult(recipient, pubkeyLookupRes as PubKeyInfo[]);
         }
         recipient.evaluating = undefined; // Clear promise when it finished
       })();
@@ -349,7 +349,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
   public reRenderRecipientFor = async (email: string, pubKeyInfos: PubKeyInfo[]): Promise<void> => {
     for (const recipient of this.addedRecipients.filter(r => r.email === email)) {
       this.view.errModule.debug(`re-rendering recipient: ${email}`);
-      await this.renderPubkeyResult(2, recipient, ContactStore.sortPubInfos(pubKeyInfos));
+      await this.renderPubkeyResult(recipient, ContactStore.sortPubInfos(pubKeyInfos));
       this.view.recipientsModule.showHideCcAndBccInputsIfNeeded();
       await this.view.recipientsModule.setEmailsPreview(this.getRecipients());
     }
@@ -814,12 +814,12 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       const dbContacts = await ContactStore.getOneWithAllPubkeys(undefined, email);
       if (dbContacts && dbContacts.sortedPubkeys && dbContacts.sortedPubkeys.length) {
         recipientEl.element.classList.remove('no_pgp');
-        await this.renderPubkeyResult(3, recipientEl, dbContacts.sortedPubkeys);
+        await this.renderPubkeyResult(recipientEl, dbContacts.sortedPubkeys);
       }
     }
   }
 
-  private renderPubkeyResult = async (callSite: number,
+  private renderPubkeyResult = async (
     recipient: RecipientElement, sortedPubKeyInfos: PubKeyInfo[] | 'fail' | 'wrong'
   ) => {
     // console.log(`>>>> renderPubkeyResult(${callSite}): ${JSON.stringify(sortedPubKeyInfos)}`);
