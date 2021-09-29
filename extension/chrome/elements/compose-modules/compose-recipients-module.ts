@@ -202,15 +202,16 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       this.view.sizeModule.setInputTextHeightManuallyIfNeeded();
       recipient.evaluating = (async () => {
         let pubkeyLookupRes: PubKeyInfo[] | 'fail' | 'wrong' = 'wrong';
+        console.log(`>>> evaluateRecipients: ${JSON.stringify(recipient)}`);
         if (recipient.status !== RecipientStatus.WRONG) {
           pubkeyLookupRes = await this.view.storageModule.
             lookupPubkeyFromKeyserversThenOptionallyFetchExpiredByFingerprintAndUpsertDb(
               recipient.email, undefined);
         }
         if (pubkeyLookupRes === 'fail' || pubkeyLookupRes === 'wrong') {
-          await this.renderPubkeyResult(recipient, pubkeyLookupRes);
+          await this.renderPubkeyResult(0, recipient, pubkeyLookupRes);
         } else {
-          await this.renderPubkeyResult(recipient, pubkeyLookupRes as PubKeyInfo[]);
+          await this.renderPubkeyResult(1, recipient, pubkeyLookupRes as PubKeyInfo[]);
         }
         recipient.evaluating = undefined; // Clear promise when it finished
       })();
@@ -348,7 +349,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
   public reRenderRecipientFor = async (email: string, pubKeyInfos: PubKeyInfo[]): Promise<void> => {
     for (const recipient of this.addedRecipients.filter(r => r.email === email)) {
       this.view.errModule.debug(`re-rendering recipient: ${email}`);
-      await this.renderPubkeyResult(recipient, ContactStore.sortPubInfos(pubKeyInfos));
+      await this.renderPubkeyResult(2, recipient, ContactStore.sortPubInfos(pubKeyInfos));
       this.view.recipientsModule.showHideCcAndBccInputsIfNeeded();
       await this.view.recipientsModule.setEmailsPreview(this.getRecipients());
     }
@@ -813,15 +814,15 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       const dbContacts = await ContactStore.getOneWithAllPubkeys(undefined, email);
       if (dbContacts && dbContacts.sortedPubkeys && dbContacts.sortedPubkeys.length) {
         recipientEl.element.classList.remove('no_pgp');
-        await this.renderPubkeyResult(recipientEl, dbContacts.sortedPubkeys);
+        await this.renderPubkeyResult(3, recipientEl, dbContacts.sortedPubkeys);
       }
     }
   }
 
-  private renderPubkeyResult = async (
+  private renderPubkeyResult = async (callSite: number,
     recipient: RecipientElement, sortedPubKeyInfos: PubKeyInfo[] | 'fail' | 'wrong'
   ) => {
-    console.log('*** renderPubkeyResult: ' + JSON.stringify(sortedPubKeyInfos));
+    console.log(`>>> renderPubkeyResult(${callSite}): ${JSON.stringify(sortedPubKeyInfos)}`);
     const el = recipient.element;
     this.view.errModule.debug(`renderPubkeyResult.emailEl(${String(recipient.email)})`);
     this.view.errModule.debug(`renderPubkeyResult.email(${recipient.email})`);

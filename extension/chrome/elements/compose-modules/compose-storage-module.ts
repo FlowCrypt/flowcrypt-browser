@@ -83,6 +83,7 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
     //    `lookupPubkeyFromKeyserversAndUpsertDb` anyway.
     //    discussion: https://github.com/FlowCrypt/flowcrypt-browser/pull/3898#discussion_r686229818
     const storedContact = await ContactStore.getOneWithAllPubkeys(undefined, email);
+    console.log(">>> LPKFKSTOFEBFAUDB: " + storedContact ? JSON.stringify(storedContact) : 'NOT_FOUND');
     if (storedContact && storedContact.sortedPubkeys.length) {
       const results: PubKeyInfo[] = [];
       for (const pubkey of storedContact.sortedPubkeys) {
