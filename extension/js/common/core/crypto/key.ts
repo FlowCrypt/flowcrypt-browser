@@ -10,6 +10,7 @@ import { opgp } from './pgp/openpgpjs-custom.js';
 import { OpenPGPKey } from './pgp/openpgp-key.js';
 import { SmimeKey } from './smime/smime-key.js';
 import { MsgBlock } from '../msg-block.js';
+import { PubKeyInfo } from '../../platform/store/contact-store.js';
 
 /**
  * This is a common Key interface for both OpenPGP and X.509 keys.
@@ -60,6 +61,20 @@ export type Contact = {
   expiresOn: number | null;
   revoked: boolean;
 };
+
+export class ContactUtil {
+  public static toPubKeyInfo(contact: Contact): (PubKeyInfo | undefined) {
+    if (contact.pubkey) {
+      return {
+        pubkey: contact.pubkey,
+        revoked: contact.pubkey.revoked,
+        lastCheck: contact.pubkey.lastModified
+      };
+    } else {
+      return undefined;
+    }
+  }
+}
 
 export interface KeyInfo {
   private: string;
