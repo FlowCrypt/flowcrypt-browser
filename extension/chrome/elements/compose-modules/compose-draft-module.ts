@@ -174,12 +174,15 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
   }
 
   public getLocalDraftId = () => {
+    // local draft id passed from openComposeWin()
     if (this.view.draftId.startsWith(this.localDraftPrefix)) {
       return this.view.draftId;
     }
+    // reply local draft
     if (this.view.threadId) {
       return `${this.localDraftPrefix}${this.view.threadId}`;
     }
+    // compose local draft
     return `${this.localDraftPrefix}${this.localComposeDraftPrefix}${this.localComposeDraftId}`;
   }
 
@@ -240,7 +243,10 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
       storage.local_drafts = {};
     }
     const draftId = this.getLocalDraftId();
-    storage.local_drafts[draftId] = { id: new Date().getTime().toString(), message: { id: '', historyId: '', raw: Buf.fromUtfStr(mimeMsg).toBase64UrlStr(), threadId } };
+    storage.local_drafts[draftId] = {
+      id: new Date().getTime().toString(), // use timestamp as id for local drafts
+      message: { id: '', historyId: '', raw: Buf.fromUtfStr(mimeMsg).toBase64UrlStr(), threadId }
+    };
     await GlobalStore.set(storage);
     return draftId;
   }
