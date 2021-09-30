@@ -386,14 +386,23 @@ div.reply_message_iframe_container.inserted {
 }
 
 /* offline drafts */
+#fc_offline_drafts {
+  margin-top: 3em;
+}
+
 #fc_offline_drafts a {
   display: block;
   cursor: pointer;
   background: rgba(242, 245, 245, 0.8);
   color: #202124;
-  box-shadow: inset 1px 0 0 #dadce0, inset -1px 0 0 #dadce0, 0 1px 2px 0 rgb(60 64 67 / 30%), 0 1px 3px 1px rgb(60 64 67 / 15%);
+  outline: 1px solid rgb(100 121 143 / 12%);
   padding: 10px 20px;
   text-decoration: none;
+  margin-bottom: 1px;
+}
+
+#fc_offline_drafts a:hover {
+  outline: 2px solid rgb(218, 220, 224);
 }
 
 /* augmented */
