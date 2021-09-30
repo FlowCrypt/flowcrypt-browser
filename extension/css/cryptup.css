@@ -2128,6 +2128,7 @@ div#contacts div.allow-google-contact-search img {
   top: 1px;
 }
 
+span.action_passphrase_hint img,
 div#contacts ul li:not(.loading) {
   height: 20px;
   cursor: pointer;
