@@ -57,15 +57,15 @@ View.run(class PassphraseView extends View {
       $('body#settings > div#content.dialog').css({ width: 'inherit', background: '#fafafa', });
       $('.line.which_key').css({ display: 'none', position: 'absolute', visibility: 'hidden', left: '5000px', });
     } else if (this.type === 'sign') {
-      $('h1').text('Enter your pass phrase to sign email');
+      $('h1').text('Enter FlowCrypt pass phrase to sign email');
     } else if (this.type === 'draft') {
-      $('h1').text('Enter your pass phrase to load a draft');
+      $('h1').text('Enter FlowCrypt pass phrase to load a draft');
     } else if (this.type === 'attachment') {
-      $('h1').text('Enter your pass phrase to decrypt a file');
+      $('h1').text('Enter FlowCrypt pass phrase to decrypt a file');
     } else if (this.type === 'quote') {
-      $('h1').text('Enter your pass phrase to load quoted content');
+      $('h1').text('Enter FlowCrypt pass phrase to load quoted content');
     } else if (this.type === 'backup') {
-      $('h1').text('Enter your pass phrase to back up');
+      $('h1').text('Enter FlowCrypt pass phrase to back up');
     }
     $('#passphrase').focus();
     if (allPrivateKeys.length > 1) {
@@ -81,6 +81,7 @@ View.run(class PassphraseView extends View {
       Xss.sanitizeRender('.which_key', html);
       $('.which_key').css('display', 'block');
     }
+    $('.passphrase_hint').hover(this.setHandler((el) => this.showPassphraseHintDialog(el)));
   }
 
   public setHandlers = () => {
@@ -173,6 +174,27 @@ View.run(class PassphraseView extends View {
     } else {
       this.renderFailedEntryPpPrompt();
       Catch.setHandledTimeout(() => this.renderNormalPpPrompt(), 1500);
+    }
+  }
+
+  private showPassphraseHintDialog = async (el: HTMLElement) => {
+    let passphraseDialogMessage: string;
+    const allPrivateKeys = await KeyStore.get(this.acctEmail);
+    this.keysWeNeedPassPhraseFor = allPrivateKeys.filter(ki => this.longids.includes(ki.longid));
+    if (allPrivateKeys.length > 1) {
+      if (this.keysWeNeedPassPhraseFor.length === 1) {
+        const keyType = (await KeyUtil.parse(this.keysWeNeedPassPhraseFor[0].private)).type;
+        const fingerprint = this.keysWeNeedPassPhraseFor[0].fingerprints[0];
+        passphraseDialogMessage = `Pass phrase for a key with fingerprint ${Str.spaced(fingerprint)} and with the type of ${keyType} is required to proceed.`;
+      } else {
+        passphraseDialogMessage = `Pass phrases for keys with the following fingerprints are required to proceed: \n`;
+        for (const i of this.keysWeNeedPassPhraseFor.keys()) {
+          passphraseDialogMessage += `Fingerprint ${String(i + 1)}: ${Str.spaced(this.keysWeNeedPassPhraseFor[i].fingerprints[0]) || ''}\n`;
+        }
+      }
+      passphraseDialogMessage += `\n\nPass phrases are used to authenticate that the current user of the action is the sole owner.
+      \rThese pass phrases are intact within key property.`;
+      el.setAttribute('title', Xss.escape(passphraseDialogMessage));
     }
   }
 });
