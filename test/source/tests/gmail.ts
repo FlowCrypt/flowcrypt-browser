@@ -41,16 +41,16 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       }
     };
 
-    const createSecureDraft = async (t: AvaContext, browser: BrowserHandle, gmailPage: ControllablePage, content: string, offline = false) => {
+    const createSecureDraft = async (t: AvaContext, browser: BrowserHandle, gmailPage: ControllablePage, content: string, params: { offline: boolean } = { offline: false }) => {
       const urls = await gmailPage.getFramesUrls(['/chrome/elements/compose.htm']);
       expect(urls.length).to.equal(1);
       const composeBox = await browser.newPage(t, urls[0]);
-      if (offline) {
+      if (params.offline) {
         await (composeBox.target as Page).setOfflineMode(true); // go offline mode
       }
       await Util.sleep(3); // the draft isn't being saved if start typing without this delay
       await composeBox.type('@input-body', content);
-      if (offline) {
+      if (params.offline) {
         await ComposePageRecipe.waitWhenDraftIsSavedLocally(composeBox);
         await (composeBox.target as Page).setOfflineMode(true); // go offline mode
       } else {
@@ -257,7 +257,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       const gmailPage = await openGmailPage(t, browser, '/');
       // create compose draft
       await gmailPage.waitAndClick('@action-secure-compose', { delay: 1 });
-      await createSecureDraft(t, browser, gmailPage, 'compose draft', true);
+      await createSecureDraft(t, browser, gmailPage, 'compose draft', { offline: true });
       await gmailPage.page.reload();
       await gmailPage.waitAndClick('[data-tooltip="Drafts"]');
       await gmailPage.waitAndClick('@offline-draft-link');
@@ -285,7 +285,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       expect(urls.length).to.equal(1);
       let replyBox = await pageHasSecureDraft(t, browser, urls[0], 'reply draft');
       await replyBox.close();
-      await createSecureDraft(t, browser, gmailPage, 'offline reply draft', true);
+      await createSecureDraft(t, browser, gmailPage, 'offline reply draft', { offline: true });
       await gmailPage.page.reload();
       replyBox = await pageHasSecureDraft(t, browser, urls[0], 'offline reply draft');
       await replyBox.waitAndClick('@action-send');
