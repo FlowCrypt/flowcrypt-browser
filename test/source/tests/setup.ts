@@ -444,7 +444,6 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       const acctEmail = 'user@no-submit-org-rule.flowcrypt.test';
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
       await SetupPageRecipe.createKey(settingsPage, 'unused', "none", { selectKeyAlgo: 'rsa3072', key: { passphrase: 'long enough to suit requirements'}});
-      // const myKeyPage = await browser.newPage(t, 'chrome/settings/modules/my_key.htm?placement=settings&acctEmail=user%40no-submit-org-rule.flowcrypt.test&fingerprint=DC78892D521F3213F9CFAFA0F2B89C62FDBF7075');
       await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
       const fingerprint = (await settingsPage.read('.good', true)).split(' ').join('');
       const myKeyFrame = await browser.newPage(t, `chrome/settings/modules/my_key.htm?placement=settings&parentTabId=60%3A0&acctEmail=${acctEmail}&fingerprint=${fingerprint}`);
