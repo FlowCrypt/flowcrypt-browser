@@ -15,7 +15,8 @@ import { Stream } from '../core/stream';
 import { InboxPageRecipe } from './page-recipe/inbox-page-recipe';
 import { TestUrls } from '../browser/test-urls';
 import { OauthPageRecipe } from './page-recipe/oauth-page-recipe';
-import { expectContactsResultEqual } from './util';
+import { expectContactsResultEqual, pastePublicKeyManually } from './util';
+import { testConstants } from './tooling/consts';
 
 // tslint:disable:no-blank-lines-func
 

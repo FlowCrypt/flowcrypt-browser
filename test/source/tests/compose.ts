@@ -3,7 +3,7 @@
 import * as ava from 'ava';
 import { Page } from 'puppeteer';
 
-import { BrowserHandle, Controllable, ControllablePage, ControllableFrame } from './../browser';
+import { BrowserHandle, Controllable, ControllablePage } from './../browser';
 import { Config, Util } from './../util';
 import { writeFileSync } from 'fs';
 import { AvaContext } from './tooling';
@@ -24,7 +24,7 @@ import { SetupPageRecipe } from './page-recipe/setup-page-recipe';
 import { testConstants } from './tooling/consts';
 import { MsgUtil } from '../core/crypto/pgp/msg-util';
 import { Buf } from '../core/buf';
-import { expectContactsResultEqual } from './util';
+import { expectContactsResultEqual, pastePublicKeyManually, pastePublicKeyManuallyNoClose } from './util';
 
 // tslint:disable:no-blank-lines-func
 // tslint:disable:no-unused-expression
@@ -1249,24 +1249,6 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
 
   }
 
-};
-
-const pastePublicKeyManuallyNoClose = async (composeFrame: ControllableFrame, inboxPage: ControllablePage, recipient: string, pub: string) => {
-  await Util.sleep(1); // todo: should wait until recipient actually loaded
-  // await Util.sleep(6000); // >>>> debug
-  await composeFrame.waitForContent('.email_address.no_pgp', recipient);
-  await composeFrame.waitAndClick('@action-open-add-pubkey-dialog', { delay: 1 });
-  await inboxPage.waitAll('@dialog-add-pubkey');
-  const addPubkeyDialog = await inboxPage.getFrame(['add_pubkey.htm']);
-  await addPubkeyDialog.waitAndType('@input-pubkey', pub);
-  await Util.sleep(1);
-  await addPubkeyDialog.waitAndClick('@action-add-pubkey');
-  return addPubkeyDialog;
-};
-
-const pastePublicKeyManually = async (composeFrame: ControllableFrame, inboxPage: ControllablePage, recipient: string, pub: string) => {
-  await pastePublicKeyManuallyNoClose(composeFrame, inboxPage, recipient, pub);
-  await inboxPage.waitTillGone('@dialog-add-pubkey');
 };
 
 const sendImgAndVerifyPresentInSentMsg = async (t: AvaContext, browser: BrowserHandle, sendingType: 'encrypt' | 'sign' | 'plain') => {
