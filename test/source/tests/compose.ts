@@ -24,6 +24,7 @@ import { SetupPageRecipe } from './page-recipe/setup-page-recipe';
 import { testConstants } from './tooling/consts';
 import { MsgUtil } from '../core/crypto/pgp/msg-util';
 import { Buf } from '../core/buf';
+import { expectContactsResultEqual } from './util';
 
 // tslint:disable:no-blank-lines-func
 // tslint:disable:no-unused-expression
@@ -678,64 +679,6 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       await composePage.type('@input-to', 'contact');
       await expectContactsResultEqual(composePage, ['contact.test@flowcrypt.com']);
       await composePage.notPresent('@action-auth-with-contacts-scope');
-    }));
-
-    ava.default('compose - load contacts - contacts should be properly ordered', testWithBrowser('ci.tests.gmail', async (t, browser) => {
-      const inboxPage = await browser.newPage(t, TestUrls.extensionInbox('ci.tests.gmail@flowcrypt.test'));
-      let composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
-      await composeFrame.type('@input-to', 'testsearchorder');
-      if (testVariant === 'CONSUMER-MOCK') {
-        // allow contacts scope, and expect that it will find contacts
-        const oauthPopup = await browser.newPageTriggeredBy(t, () => composeFrame.waitAndClick('@action-auth-with-contacts-scope'));
-        await OauthPageRecipe.google(t, oauthPopup, 'ci.tests.gmail@flowcrypt.test', 'approve');
-      }
-      await expectContactsResultEqual(composeFrame, [
-        'testsearchorder1@flowcrypt.com',
-        'testsearchorder2@flowcrypt.com',
-        'testsearchorder3@flowcrypt.com',
-        'testsearchorder4@flowcrypt.com',
-        'testsearchorder5@flowcrypt.com',
-        'testsearchorder6@flowcrypt.com',
-        'testsearchorder7@flowcrypt.com',
-        'testsearchorder8@flowcrypt.com',
-      ]);
-      await composeFrame.waitAndClick('@action-close-new-message');
-      await inboxPage.waitTillGone('@container-new-message');
-      // add key + send
-      composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
-      await ComposePageRecipe.fillMsg(composeFrame, { to: 'testsearchorder3@flowcrypt.com' }, t.title);
-      await pastePublicKeyManually(composeFrame, inboxPage, 'testsearchorder3@flowcrypt.com', testConstants.smimeCert);
-      await composeFrame.waitAndClick('@action-send', { delay: 1 });
-      await composeFrame.waitAndClick('.swal2-cancel');
-      await composeFrame.waitAndClick('@action-close-new-message');
-      await inboxPage.waitTillGone('@container-new-message');
-      // add key
-      composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
-      await ComposePageRecipe.fillMsg(composeFrame, { to: 'testsearchorder9@flowcrypt.com' }, t.title);
-      await pastePublicKeyManually(composeFrame, inboxPage, 'testsearchorder9@flowcrypt.com', testConstants.smimeCert);
-      await composeFrame.waitAndClick('@action-close-new-message');
-      await inboxPage.waitTillGone('@container-new-message');
-      // send
-      composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
-      await ComposePageRecipe.fillMsg(composeFrame, { to: 'testsearchorder5@flowcrypt.com' }, t.title);
-      await composeFrame.waitAndType('@input-password', 'test-pass');
-      await composeFrame.waitAndClick('@action-send', { delay: 1 });
-      await composeFrame.waitAndClick('.swal2-cancel');
-      await composeFrame.waitAndClick('@action-close-new-message');
-      await inboxPage.waitTillGone('@container-new-message');
-      // check that contacts are ordered according to hasPgp and lastUse
-      composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
-      await composeFrame.type('@input-to', 'testsearchorder');
-      await expectContactsResultEqual(composeFrame, [
-        'testsearchorder3@flowcrypt.com', // hasPgp + lastUse
-        'testsearchorder9@flowcrypt.com', // hasPgp
-        'testsearchorder5@flowcrypt.com', // lastUse
-        'testsearchorder1@flowcrypt.com',
-        'testsearchorder2@flowcrypt.com',
-        'testsearchorder4@flowcrypt.com',
-        'testsearchorder6@flowcrypt.com',
-        'testsearchorder7@flowcrypt.com',
-      ]);
     }));
 
     ava.default('compose - delete recipients with keyboard', testWithBrowser('compatibility', async (t, browser) => {
@@ -1415,14 +1358,6 @@ export const expectRecipientElements = async (controllable: ControllablePage, ex
         expect(expectedEmails).to.include(textContent.trim());
       }
     }
-  }
-};
-
-const expectContactsResultEqual = async (composePage: ControllablePage | ControllableFrame, emails: string[]) => {
-  const contacts = await composePage.waitAny('@container-contacts');
-  const contactsList = await contacts.$$('li');
-  for (const index in contactsList) { // tslint:disable-line:forin
-    expect(await PageRecipe.getElementPropertyJson(contactsList[index], 'textContent')).to.equal(emails[index]);
   }
 };
 
