@@ -2,13 +2,12 @@
 
 'use strict';
 
-import { GmailRes } from '../common/api/email-provider/gmail/gmail-parser.js';
 import { storageLocalGetAll, storageLocalRemove } from '../common/browser/chrome.js';
 import { KeyInfo, KeyUtil } from '../common/core/crypto/key.js';
 import { SmimeKey } from '../common/core/crypto/smime/smime-key.js';
 import { Str } from '../common/core/common.js';
 import { ContactStore, ContactUpdate, Email, Pubkey } from '../common/platform/store/contact-store.js';
-import { GlobalStore } from '../common/platform/store/global-store.js';
+import { GlobalStore, LocalDraft } from '../common/platform/store/global-store.js';
 import { KeyStore } from '../common/platform/store/key-store.js';
 
 // contact entity prior to version 4
@@ -57,7 +56,7 @@ export const migrateGlobal = async () => {
     for (const key of Object.keys(storageLocal)) {
       if (key.startsWith('local-draft-')) {
         console.info(`migrating local draft ${key}`);
-        globalStore.local_drafts[key] = storageLocal[key] as GmailRes.GmailDraftGet;
+        globalStore.local_drafts[key] = storageLocal[key] as LocalDraft;
         oldDrafts.push(key);
       }
     }
@@ -72,7 +71,7 @@ export const migrateGlobal = async () => {
     const newComposeDraftId = `local-draft-compose-${Str.sloppyRandom(10)}`;
     console.info(`new local compose draft id: ${newComposeDraftId}`);
     globalStore.local_drafts[newComposeDraftId] = globalStore.local_drafts['local-draft-'];
-    globalStore.local_drafts[newComposeDraftId].id = new Date().getTime().toString();
+    globalStore.local_drafts[newComposeDraftId].timestamp = new Date().getTime();
     delete globalStore.local_drafts['local-draft-'];
     await GlobalStore.set({ local_drafts: globalStore.local_drafts });
   }

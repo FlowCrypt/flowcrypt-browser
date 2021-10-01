@@ -11,7 +11,7 @@ import { ApiErr } from '../../common/api/shared/api-error.js';
 import { Attachment } from '../../common/core/attachment.js';
 import { BrowserMsg } from '../../common/browser/browser-msg.js';
 import { Catch } from '../../common/platform/catch.js';
-import { GlobalStore } from '../../common/platform/store/global-store.js';
+import { GlobalStore, LocalDraft } from '../../common/platform/store/global-store.js';
 import { Gmail } from '../../common/api/email-provider/gmail/gmail.js';
 import { Injector } from '../../common/inject.js';
 import { PubLookup } from '../../common/api/pub-lookup.js';
@@ -755,10 +755,10 @@ export class GmailElementReplacer implements WebmailElementReplacer {
       if (!storage.local_drafts) {
         return;
       }
-      const offlineComposeDrafts: Dict<number> = {};
+      const offlineComposeDrafts: Dict<LocalDraft> = {};
       for (const draftId in storage.local_drafts) {
         if (draftId.startsWith('local-draft-compose-')) {
-          offlineComposeDrafts[draftId] = parseInt(storage.local_drafts[draftId].id);
+          offlineComposeDrafts[draftId] = storage.local_drafts[draftId];
         }
       }
       let offlineDraftsContainer = $(this.sel.draftsList).find('#fc_offline_drafts');
@@ -767,24 +767,24 @@ export class GmailElementReplacer implements WebmailElementReplacer {
         $(this.sel.draftsList).append(offlineDraftsContainer); // xss-safe-value
       }
       if (Object.keys(offlineComposeDrafts).length) {
-        const draftsToRender: JQueryEl[] = [];
-        for (const [draftId, timestamp] of Object.entries(offlineComposeDrafts)) {
-          const draftLink = $(`<a href data-test="offline-draft-link">${new Date(timestamp).toLocaleString()}</a>`);
+        const offlineComposeDraftIds = Object.keys(offlineComposeDrafts);
+        const draftIdsSortedByTimestamp = offlineComposeDraftIds.sort((a, b) => {
+          return offlineComposeDrafts[a].timestamp - offlineComposeDrafts[b].timestamp;
+        });
+        if (offlineDraftsContainer.data('rendered-drafts') === draftIdsSortedByTimestamp.join(',')) {
+          // already rendered
+          return;
+        }
+        offlineDraftsContainer.data('rendered-drafts', draftIdsSortedByTimestamp.join(','));
+        offlineDraftsContainer.html(`<h4>FlowCrypt offline drafts:</h4>`); // xss-safe-value
+        for (const draftId of draftIdsSortedByTimestamp) {
+          const draft = offlineComposeDrafts[draftId];
+          const draftLink = $(`<a href data-test="offline-draft-link">${new Date(draft.timestamp).toLocaleString()}</a>`);
           draftLink.on('click', (event) => {
             event.preventDefault();
             this.injector.openComposeWin(draftId);
           });
-          draftsToRender[timestamp] = draftLink;
-        }
-        const orderedTimestamps = Object.keys(draftsToRender).map(i => parseInt(i)).sort().reverse();
-        if (offlineDraftsContainer.data('rendered-drafts') === orderedTimestamps.join(',')) {
-          // already rendered
-          return;
-        }
-        offlineDraftsContainer.data('rendered-drafts', orderedTimestamps.join(','));
-        offlineDraftsContainer.html(`<h4>FlowCrypt offline drafts:</h4>`); // xss-safe-value
-        for (const timestamp of orderedTimestamps) {
-          offlineDraftsContainer.append(draftsToRender[timestamp]); // xss-safe-value
+          offlineDraftsContainer.append(draftLink ); // xss-safe-value
         }
       } else {
         offlineDraftsContainer.empty();

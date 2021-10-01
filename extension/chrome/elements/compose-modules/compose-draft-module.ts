@@ -244,7 +244,8 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
     }
     const draftId = this.getLocalDraftId();
     storage.local_drafts[draftId] = {
-      id: new Date().getTime().toString(), // use timestamp as id for local drafts
+      id: '',
+      timestamp: new Date().getTime(),
       message: { id: '', historyId: '', raw: Buf.fromUtfStr(mimeMsg).toBase64UrlStr(), threadId }
     };
     await GlobalStore.set(storage);
