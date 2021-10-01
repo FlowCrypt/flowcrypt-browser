@@ -34,6 +34,7 @@ blocks:
           - sudo sh -c "echo '127.0.0.1 google.mock.flowcryptlocal.test' >> /etc/hosts"
           - sudo sh -c "echo '127.0.0.1 fes.standardsubdomainfes.test' >> /etc/hosts"
           - sudo sh -c "echo '127.0.0.1 standardsubdomainfes.test' >> /etc/hosts"
+          - sudo sh -c "echo '127.0.0.1 fes.disablefesaccesstoken.test' >> /etc/hosts"
 
       jobs:
 
