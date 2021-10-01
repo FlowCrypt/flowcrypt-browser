@@ -762,24 +762,22 @@ export class GmailElementReplacer implements WebmailElementReplacer {
         }
       }
       let offlineDraftsContainer = $(this.sel.draftsList).find('#fc_offline_drafts');
-      if (!offlineDraftsContainer.length) {
-        offlineDraftsContainer = $('<div id="fc_offline_drafts"></div>');
-        $(this.sel.draftsList).append(offlineDraftsContainer); // xss-safe-value
-      }
       if (Object.keys(offlineComposeDrafts).length) {
         const offlineComposeDraftIds = Object.keys(offlineComposeDrafts);
         const draftIdsSortedByTimestamp = offlineComposeDraftIds.sort((a, b) => {
-          return offlineComposeDrafts[a].timestamp - offlineComposeDrafts[b].timestamp;
+          return offlineComposeDrafts[b].timestamp - offlineComposeDrafts[a].timestamp;
         });
         if (offlineDraftsContainer.data('rendered-drafts') === draftIdsSortedByTimestamp.join(',')) {
           // already rendered
           return;
         }
+        offlineDraftsContainer = $('<div id="fc_offline_drafts"><h4>FlowCrypt offline drafts:</h4></div>'); // xss-safe-value
         offlineDraftsContainer.data('rendered-drafts', draftIdsSortedByTimestamp.join(','));
-        offlineDraftsContainer.html(`<h4>FlowCrypt offline drafts:</h4>`); // xss-safe-value
+        $(this.sel.draftsList).find('#fc_offline_drafts').remove();
+        $(this.sel.draftsList).append(offlineDraftsContainer); // xss-safe-factory
         for (const draftId of draftIdsSortedByTimestamp) {
           const draft = offlineComposeDrafts[draftId];
-          const draftLink = $(`<a href data-test="offline-draft-link">${new Date(draft.timestamp).toLocaleString()}</a>`);
+          const draftLink = $(`<a href>${new Date(draft.timestamp).toLocaleString()}</a>`);
           draftLink.on('click', (event) => {
             event.preventDefault();
             this.injector.openComposeWin(draftId);
@@ -787,7 +785,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
           offlineDraftsContainer.append(draftLink ); // xss-safe-value
         }
       } else {
-        offlineDraftsContainer.empty();
+        offlineDraftsContainer.remove();
       }
     }
   }

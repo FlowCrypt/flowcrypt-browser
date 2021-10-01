@@ -43,7 +43,6 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
 
     const createSecureDraft = async (t: AvaContext, browser: BrowserHandle, gmailPage: ControllablePage, content: string, params: { offline: boolean } = { offline: false }) => {
       const urls = await gmailPage.getFramesUrls(['/chrome/elements/compose.htm']);
-      expect(urls.length).to.equal(1);
       const composeBox = await browser.newPage(t, urls[0]);
       if (params.offline) {
         await (composeBox.target as Page).setOfflineMode(true); // go offline mode
@@ -253,17 +252,27 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       await pubkeyPage.waitForContent('@container-pgp-pubkey', 'Fingerprint: 50B7 A032 B5E1 FBAB 24BA B205 B362 45FD AC2F BF3D');
     }));
 
-    ava.default('mail.google.com - saving and rendering a compose draft when offline', testWithBrowser('ci.tests.gmail', async (t, browser) => {
+    ava.default.only('mail.google.com - saving and rendering compose drafts when offline', testWithBrowser('ci.tests.gmail', async (t, browser) => {
       const gmailPage = await openGmailPage(t, browser, '/');
       // create compose draft
       await gmailPage.waitAndClick('@action-secure-compose', { delay: 1 });
-      await createSecureDraft(t, browser, gmailPage, 'compose draft', { offline: true });
+      await createSecureDraft(t, browser, gmailPage, 'compose draft 1', { offline: true });
+      await gmailPage.waitAndClick('@action-secure-compose', { delay: 1 });
+      await createSecureDraft(t, browser, gmailPage, 'compose draft 2', { offline: true });
       await gmailPage.page.reload();
       await gmailPage.waitAndClick('[data-tooltip="Drafts"]');
-      await gmailPage.waitAndClick('@offline-draft-link');
-      const urls = await gmailPage.getFramesUrls(['/chrome/elements/compose.htm']);
-      expect(urls.length).to.equal(1);
-      await pageHasSecureDraft(t, browser, urls[0], 'compose draft');
+      await gmailPage.waitForContent('#fc_offline_drafts', 'FlowCrypt offline drafts:');
+      await gmailPage.ensureElementsCount('#fc_offline_drafts a', 2);
+      // click on compose draft 2, should be first in list as drafts are sorted by date descending
+      await gmailPage.waitAndClick('#fc_offline_drafts a');
+      let urls = await gmailPage.getFramesUrls(['/chrome/elements/compose.htm']);
+      await pageHasSecureDraft(t, browser, urls[0], 'compose draft 2');
+      // after checking offline draft 2, it should be saved to the cloud and removed from offline drafts
+      await gmailPage.ensureElementsCount('#fc_offline_drafts a', 1);
+      // click on compose draft 1
+      await gmailPage.waitAndClick('#fc_offline_drafts a');
+      urls = await gmailPage.getFramesUrls(['/chrome/elements/compose.htm']);
+      await pageHasSecureDraft(t, browser, urls[1], 'compose draft 1');
     }));
 
     ava.default.skip('mail.google.com - secure reply btn, reply draft', testWithBrowser('ci.tests.gmail', async (t, browser) => {
