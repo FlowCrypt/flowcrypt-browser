@@ -24,7 +24,6 @@ import { testConstants } from './tooling/consts';
 export const defineSetupTests = (testVariant: TestVariant, testWithBrowser: TestWithBrowser) => {
 
   if (testVariant !== 'CONSUMER-LIVE-GMAIL') {
-
     // note - `SetupPageRecipe.createKey` tests are in `defineFlakyTests` - running serially
     // because the keygen CPU spike can cause trouble to other concurrent tests
 
@@ -438,6 +437,19 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       await SetupPageRecipe.createKey(settingsPage, 'unused', 'none', { key: { passphrase: 'long enough to suit requirements' }, usedPgpBefore: false },
         { isSavePassphraseChecked: false, isSavePassphraseHidden: false });
       await settingsPage.notPresent('.swal2-container');
+      await settingsPage.close();
+    }));
+
+    ava.default('settings - generate rsa3072 key', testWithBrowser(undefined, async (t, browser) => {
+      const acctEmail = 'user@no-submit-org-rule.flowcrypt.test';
+      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
+      await SetupPageRecipe.createKey(settingsPage, 'unused', "none", { selectKeyAlgo: 'rsa3072', key: { passphrase: 'long enough to suit requirements'}});
+      // const myKeyPage = await browser.newPage(t, 'chrome/settings/modules/my_key.htm?placement=settings&acctEmail=user%40no-submit-org-rule.flowcrypt.test&fingerprint=DC78892D521F3213F9CFAFA0F2B89C62FDBF7075');
+      await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
+      const fingerprint = (await settingsPage.read('.good', true)).split(' ').join('');
+      const myKeyFrame = await browser.newPage(t, `chrome/settings/modules/my_key.htm?placement=settings&parentTabId=60%3A0&acctEmail=${acctEmail}&fingerprint=${fingerprint}`);
+      const key = await myKeyFrame.awaitDownloadTriggeredByClicking('@action_download_prv');
+      expect((await KeyUtil.parse(key.toString())).algo.bits).to.equal(3072);
       await settingsPage.close();
     }));
 
