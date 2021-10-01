@@ -542,6 +542,8 @@ export let defineSettingsTests = (testVariant: TestVariant, testWithBrowser: Tes
         { isSavePassphraseChecked: true, isSavePassphraseHidden: false });
       const backupPage = await browser.newPage(t, TestUrls.extension(`/chrome/settings/modules/backup.htm?acctEmail=${acctEmail}&action=backup_manual&parentTabId=0`));
       // play with backup controls here
+      expect(await backupPage.isChecked('[data-fingerprints="47FB03183E03A8ED44E3BBFCCEA2D53BB9D24871"]')).to.equal(false);
+      expect(await backupPage.isChecked('[data-fingerprints="5A08466253C956E9C76C2E95A35068FD4E037879"]')).to.equal(false);
       expect(await backupPage.isDisabled('[data-fingerprints="47FB03183E03A8ED44E3BBFCCEA2D53BB9D24871"]')).to.equal(true);
       expect(await backupPage.isDisabled('[data-fingerprints="5A08466253C956E9C76C2E95A35068FD4E037879"]')).to.equal(true);
       await backupPage.waitAndClick('[data-fingerprints="CB0485FE44FC22FF09AF0DB31B383D0334E38B28,B38FC17737BB1D66C69CB25975796017BA7823CF"]'); // uncheck
