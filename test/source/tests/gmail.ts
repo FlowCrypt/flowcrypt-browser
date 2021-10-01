@@ -263,18 +263,19 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       await gmailPage.waitForContent('#fc_offline_drafts', 'FlowCrypt offline drafts:');
       await gmailPage.ensureElementsCount('#fc_offline_drafts a', 2);
       await gmailPage.waitAndClick('#fc_offline_drafts a');
-      let urls = await gmailPage.getFramesUrls(['/chrome/elements/compose.htm']);
+      let urls = await gmailPage.getFramesUrls(['/chrome/elements/compose.htm'], { sleep: 1 });
       // compose draft 2 should be first in list as drafts are sorted by date descending
       const draft = await pageHasSecureDraft(t, browser, urls[0], 'compose draft 2');
       await Util.sleep(3); // the draft isn't being saved if start typing without this delay
-      await draft.type('@input-body', 'trigger saving to the clound');
+      await draft.type('@input-body', 'trigger saving to the clound', true);
       await ComposePageRecipe.waitWhenDraftIsSaved(draft);
+      await draft.close();
       // after draft 2 is saved to the cloud, it should be removed from offline drafts
       await gmailPage.page.reload();
       await gmailPage.ensureElementsCount('#fc_offline_drafts a', 1);
       await gmailPage.waitForContent('#fc_offline_drafts', 'FlowCrypt offline drafts:');
       await gmailPage.waitAndClick('#fc_offline_drafts a');
-      urls = await gmailPage.getFramesUrls(['/chrome/elements/compose.htm']);
+      urls = await gmailPage.getFramesUrls(['/chrome/elements/compose.htm'], { sleep: 1 });
       await pageHasSecureDraft(t, browser, urls[0], 'compose draft 1');
     }));
 
