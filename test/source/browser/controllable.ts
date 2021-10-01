@@ -399,7 +399,7 @@ abstract class ControllableBase {
   }
 
   public ensureElementsCount = async (selector: string, count: number) => {
-    let elements = await this.target.$$(selector);
+    const elements = await this.target.$$(selector);
     expect(elements.length).to.equal(count);
   }
 

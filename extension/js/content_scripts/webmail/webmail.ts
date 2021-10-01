@@ -23,7 +23,6 @@ Catch.try(async () => {
   const gmailWebmailStartup = async () => {
     let replacePgpElsInterval: number;
     let replacer: GmailElementReplacer;
-    let hostPageInfo: WebmailVariantObject;
 
     const getUserAccountEmail = (): undefined | string => {
       if (window.location.search.indexOf('&view=btop&') === -1) {  // when view=btop present, FlowCrypt should not be activated
@@ -122,7 +121,7 @@ Catch.try(async () => {
       });
     };
 
-    hostPageInfo = getInsightsFromHostVariables();
+    const hostPageInfo = getInsightsFromHostVariables();
     await contentScriptSetupIfVacant({
       name: 'gmail',
       variant: hostPageInfo.gmailVariant,
