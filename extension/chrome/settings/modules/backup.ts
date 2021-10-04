@@ -72,7 +72,7 @@ export class BackupView extends View {
       this.displayBlock('module_manual');
       $('h1').text('Back up your private key');
     } else if (this.action === 'backup_manual') {
-      this.preparePrvKeysBackupSelection();
+      await this.preparePrvKeysBackupSelection();
       this.displayBlock('module_manual');
       $('h1').text('Back up your private key');
     } else { // action = view status
