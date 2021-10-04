@@ -85,10 +85,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     this.view.S.cached('add_their_pubkey').click(this.view.setHandler(() => this.addTheirPubkeyClickHandler(), this.view.errModule.handle('add pubkey')));
     BrowserMsg.addListener('addToContacts', this.checkReciepientsKeys);
     BrowserMsg.addListener('reRenderRecipient', async ({ contact }: Bm.ReRenderRecipient) => {
-      const emailWithKeys = await ContactStore.getOneWithAllPubkeys(undefined, contact.email);
-      if (emailWithKeys) {
-        await this.reRenderRecipientFor(contact.email, emailWithKeys.sortedPubkeys);
-      }
+      await this.reRenderRecipientFor(contact.email);
     });
     BrowserMsg.listen(this.view.parentTabId);
   }
@@ -346,10 +343,14 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     }
   }
 
-  public reRenderRecipientFor = async (email: string, pubKeyInfos: PubKeyInfo[]): Promise<void> => {
+  public reRenderRecipientFor = async (email: string): Promise<void> => {
+    if (this.addedRecipients.every(r => r.email !== email)) {
+      return;
+    }
+    const emailAndPubkeys = await ContactStore.getOneWithAllPubkeys(undefined, email);
     for (const recipient of this.addedRecipients.filter(r => r.email === email)) {
       this.view.errModule.debug(`re-rendering recipient: ${email}`);
-      await this.renderPubkeyResult(recipient, ContactStore.sortPubInfos(pubKeyInfos));
+      await this.renderPubkeyResult(recipient, emailAndPubkeys ? emailAndPubkeys.sortedPubkeys : []);
       this.view.recipientsModule.showHideCcAndBccInputsIfNeeded();
       await this.view.recipientsModule.setEmailsPreview(this.getRecipients());
     }
