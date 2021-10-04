@@ -897,7 +897,8 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
         res += '\n' + this.recipientKeyIdText(pubKeyInfo);
       }
     }
-    const expired = pubKeyInfos.filter(pubKeyInfo => KeyUtil.expired(pubKeyInfo.pubkey));
+    const expired = pubKeyInfos.filter(
+      pubKeyInfo => !pubKeyInfo.revoked && KeyUtil.expired(pubKeyInfo.pubkey));
     if (expired.length) {
       if (res.length) res += '\n\n';
       res += 'Expired public key fingerprints:';
