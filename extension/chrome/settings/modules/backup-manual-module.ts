@@ -73,9 +73,9 @@ export class BackupManualActionModule extends ViewModule<BackupView> {
 
   private renderPrvKeysBackupSelection = async (primaryKeys: ExtendedKeyInfo[]) => {
     for (const primaryKi of primaryKeys) {
-      const email = Xss.escape(String(primaryKi.emails));
+      const email = Xss.escape(String(primaryKi.emails![0]));
       const fingerprints = primaryKi.fingerprints;
-      const keyType =  (await KeyUtil.parse(primaryKi.private)).type;
+      const keyType = (await KeyUtil.parse(primaryKi.private)).type;
       const dom = `
       <div class="mb-20">
         <div class="details">
