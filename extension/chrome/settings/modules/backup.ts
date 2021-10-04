@@ -3,7 +3,7 @@
 'use strict';
 
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
-import { Url } from '../../../js/common/core/common.js';
+import { Str, Url } from '../../../js/common/core/common.js';
 import { Assert } from '../../../js/common/assert.js';
 import { Gmail } from '../../../js/common/api/email-provider/gmail/gmail.js';
 import { OrgRules } from '../../../js/common/org-rules.js';
@@ -15,7 +15,9 @@ import { BackupManualActionModule as BackupManualModule } from './backup-manual-
 import { BackupAutomaticModule } from './backup-automatic-module.js';
 import { Lang } from '../../../js/common/lang.js';
 import { AcctStore, EmailProvider } from '../../../js/common/platform/store/acct-store.js';
-export interface PrvKeyIdentity {
+import { KeyStore } from '../../../js/common/platform/store/key-store.js';
+import { ExtendedKeyInfo, KeyUtil } from '../../../js/common/core/crypto/key.js';
+interface PrvKeyIdentity {
   email: string,
   fingerprints: string[]
 }
@@ -73,6 +75,7 @@ export class BackupView extends View {
       this.displayBlock('module_manual');
       $('h1').text('Back up your private key');
     } else if (this.action === 'backup_manual') {
+      this.preparePrvKeysBackupSelection();
       this.displayBlock('module_manual');
       $('h1').text('Back up your private key');
     } else { // action = view status
@@ -103,9 +106,59 @@ export class BackupView extends View {
 
   public setHandlers = async () => {
     this.statusModule.setHandlers();
-    await this.manualModule.setHandlers();
+    this.manualModule.setHandlers();
   }
 
+  private addKeyToBackup = (prvKeyIdentity: PrvKeyIdentity) => {
+    this.prvKeysToManuallyBackup.push(prvKeyIdentity);
+  }
+
+  private removeKeyToBackup = (fingerprints: string[]) => {
+    this.prvKeysToManuallyBackup.splice(this.prvKeysToManuallyBackup.findIndex(prvIdentity => prvIdentity.fingerprints === fingerprints), 1);
+  }
+  private preparePrvKeysBackupSelection = async () => {
+    const primaryKeys = await KeyStore.getAllWithOptionalPassPhrase(this.acctEmail);
+    if (primaryKeys.length > 1) {
+      await this.renderPrvKeysBackupSelection(primaryKeys);
+    } else {
+      this.addKeyToBackup({ 'email': String(primaryKeys[0].emails), 'fingerprints': primaryKeys[0].fingerprints });
+    }
+  }
+
+  private renderPrvKeysBackupSelection = async (primaryKeys: ExtendedKeyInfo[]) => {
+    for (const primaryKi of primaryKeys) {
+      const email = Xss.escape(String(primaryKi.emails![0]));
+      const fingerprints = primaryKi.fingerprints;
+      const keyType = (await KeyUtil.parse(primaryKi.private)).type;
+      const dom = `
+      <div class="mb-20">
+        <div class="details">
+          <label>
+            <p class="m-0">
+            <input class="input_prvkey_backup_checkbox" type="checkbox" data-emails="${email}" data-fingerprints="${fingerprints}" ${keyType === 'x509' ? 'disabled' : 'checked'} />
+            ${email}
+            </p>
+            <p class="m-0 prv_fingerprint"><span>${keyType} - ${Str.spaced(fingerprints[0])}</span></p>
+          </label>
+        </div>
+      </div>
+      `.trim();
+      $('.key_backup_selection').append(dom); // xss-escaped
+      if (keyType !== 'x509') {
+        this.addKeyToBackup({ email, fingerprints });
+      }
+    }
+    $('.input_prvkey_backup_checkbox').click((event) => {
+      const email = String($(event.target).data('emails')).trim();
+      const fingerprints = String($(event.target).data('fingerprints')).split(',');
+      if ($(event.target).prop('checked') && !this.prvKeysToManuallyBackup.includes({ email, fingerprints })) {
+        this.addKeyToBackup({ email, fingerprints });
+      } else {
+        this.removeKeyToBackup(fingerprints);
+      }
+    });
+    $('#key_backup_selection_container').show();
+  }
 }
 
 View.run(BackupView);
