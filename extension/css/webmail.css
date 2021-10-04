@@ -422,8 +422,7 @@ body.cryptup_gmail div.recipients_use_encryption a {
 }
 
 .swal2-container.ui-modal-attachment .swal2-close {
-  margin-top: 6px;
-  margin-bottom: -54px;
+  margin: 6px 6px -54px;
 }
 
 .swal2-container.ui-modal-attachment .swal2-popup {
