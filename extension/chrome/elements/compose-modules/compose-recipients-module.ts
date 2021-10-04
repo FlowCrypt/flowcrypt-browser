@@ -887,17 +887,28 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
   }
 
   private publicKeysToRenderedText = (pubKeyInfos: PubKeyInfo[]): string => {
+    const valid: PubKeyInfo[] = [];
+    const expired: PubKeyInfo[] = [];
+    const revoked: PubKeyInfo[] = [];
+    for (const pubKeyInfo of pubKeyInfos) {
+      if (pubKeyInfo.revoked) {
+        revoked.push(pubKeyInfo);
+      } else if (KeyUtil.expired(pubKeyInfo.pubkey)) {
+        expired.push(pubKeyInfo);
+      } else {
+        valid.push(pubKeyInfo);
+      }
+    }
+
     let res = '';
-    const valid = pubKeyInfos.filter(
-      pubKeyInfo => !pubKeyInfo.revoked && !KeyUtil.expired(pubKeyInfo.pubkey));
+
     if (valid.length) {
       res += 'Valid public key fingerprints:';
       for (const pubKeyInfo of valid) {
         res += '\n' + this.recipientKeyIdText(pubKeyInfo);
       }
     }
-    const expired = pubKeyInfos.filter(
-      pubKeyInfo => !pubKeyInfo.revoked && KeyUtil.expired(pubKeyInfo.pubkey));
+
     if (expired.length) {
       if (res.length) res += '\n\n';
       res += 'Expired public key fingerprints:';
@@ -905,7 +916,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
         res += '\n' + this.recipientKeyIdText(pubKeyInfo);
       }
     }
-    const revoked = pubKeyInfos.filter(pubKeyInfo => pubKeyInfo.revoked);
+
     if (revoked.length) {
       if (res.length) res += '\n\n';
       res += 'Revoked public key fingerprints:';
@@ -913,6 +924,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
         res += '\n' + this.recipientKeyIdText(pubKeyInfo);
       }
     }
+
     return res;
   }
 
