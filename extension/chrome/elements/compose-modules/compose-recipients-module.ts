@@ -886,7 +886,6 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     this.view.myPubkeyModule.reevaluateShouldAttachOrNot();
   }
 
-  // sortedPubKeyInfos: PubKeyInfo[]
   private publicKeysToRenderedText = (pubKeyInfos: PubKeyInfo[]): string => {
     let res = '';
     const valid = pubKeyInfos.filter(
