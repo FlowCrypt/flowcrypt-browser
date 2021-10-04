@@ -81,7 +81,6 @@ View.run(class PassphraseView extends View {
       Xss.sanitizeRender('.which_key', html);
       $('.which_key').css('display', 'block');
     }
-    $('.passphrase_hint').hover(this.setHandler((el) => this.showPassphraseHintDialog(el)));
   }
 
   public setHandlers = () => {
@@ -174,27 +173,6 @@ View.run(class PassphraseView extends View {
     } else {
       this.renderFailedEntryPpPrompt();
       Catch.setHandledTimeout(() => this.renderNormalPpPrompt(), 1500);
-    }
-  }
-
-  private showPassphraseHintDialog = async (el: HTMLElement) => {
-    let passphraseDialogMessage: string;
-    const allPrivateKeys = await KeyStore.get(this.acctEmail);
-    this.keysWeNeedPassPhraseFor = allPrivateKeys.filter(ki => this.longids.includes(ki.longid));
-    if (allPrivateKeys.length > 1) {
-      if (this.keysWeNeedPassPhraseFor.length === 1) {
-        const keyType = (await KeyUtil.parse(this.keysWeNeedPassPhraseFor[0].private)).type;
-        const fingerprint = this.keysWeNeedPassPhraseFor[0].fingerprints[0];
-        passphraseDialogMessage = `Pass phrase for a key with fingerprint ${Str.spaced(fingerprint)} and with the type of ${keyType} is required to proceed.`;
-      } else {
-        passphraseDialogMessage = `Pass phrases for keys with the following fingerprints are required to proceed: \n`;
-        for (const i of this.keysWeNeedPassPhraseFor.keys()) {
-          passphraseDialogMessage += `Fingerprint ${String(i + 1)}: ${Str.spaced(this.keysWeNeedPassPhraseFor[i].fingerprints[0]) || ''}\n`;
-        }
-      }
-      passphraseDialogMessage += `\n\nPass phrases are used to authenticate that the current user of the action is the sole owner.
-      \rThese pass phrases are intact within key property.`;
-      el.setAttribute('title', Xss.escape(passphraseDialogMessage));
     }
   }
 });
