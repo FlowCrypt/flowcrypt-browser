@@ -434,6 +434,7 @@ body.cryptup_gmail div.recipients_use_encryption a {
   height: 100vh;
   margin: 0;
   padding: 0;
+  overflow: hidden;
 }
 
 .swal2-container.ui-modal-attachment iframe {
