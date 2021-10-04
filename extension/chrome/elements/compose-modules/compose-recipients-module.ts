@@ -899,16 +899,13 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
         valid.push(pubKeyInfo);
       }
     }
-
     let res = '';
-
     if (valid.length) {
       res += 'Valid public key fingerprints:';
       for (const pubKeyInfo of valid) {
         res += '\n' + this.recipientKeyIdText(pubKeyInfo);
       }
     }
-
     if (expired.length) {
       if (res.length) res += '\n\n';
       res += 'Expired public key fingerprints:';
@@ -916,7 +913,6 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
         res += '\n' + this.recipientKeyIdText(pubKeyInfo);
       }
     }
-
     if (revoked.length) {
       if (res.length) res += '\n\n';
       res += 'Revoked public key fingerprints:';
@@ -924,7 +920,6 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
         res += '\n' + this.recipientKeyIdText(pubKeyInfo);
       }
     }
-
     return res;
   }
 
