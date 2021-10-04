@@ -82,9 +82,9 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
     //    remove it and the keys will be updated below using
     //    `lookupPubkeyFromKeyserversAndUpsertDb` anyway.
     //    discussion: https://github.com/FlowCrypt/flowcrypt-browser/pull/3898#discussion_r686229818
-    console.log(`>>>> Looking up in DB: ${email}`);
+    // console.log(`>>>> Looking up in DB: ${email}`);
     const storedContact = await ContactStore.getOneWithAllPubkeys(undefined, email);
-    console.log(">>>> " + (storedContact ? JSON.stringify(storedContact) : 'NOT_FOUND'));
+    // console.log(">>>> " + (storedContact ? JSON.stringify(storedContact) : 'NOT_FOUND'));
     if (storedContact && storedContact.sortedPubkeys.length) {
       const results: PubKeyInfo[] = [];
       for (const pubkey of storedContact.sortedPubkeys) {
@@ -111,14 +111,14 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
       }
       return ContactStore.sortPubInfos(results);
     }
-    console.log(`>>>> Looking up on keyserver: ${email}`);
+    // console.log(`>>>> Looking up on keyserver: ${email}`);
     const res = await this.lookupPubkeyFromKeyserversAndUpsertDb(email, name, undefined);
     if (res) {
-      console.log(`>>>> Looking up on keyserver: ${email}: result: ${JSON.stringify(res)}`);
+      // console.log(`>>>> Looking up on keyserver: ${email}: result: ${JSON.stringify(res)}`);
       if (res === 'fail') return res;
       return [res];
     } else {
-      console.log(`>>>> Looking up on keyserver: ${email}: result: NOT_KEYS`);
+      // console.log(`>>>> Looking up on keyserver: ${email}: result: NOT_KEYS`);
       return []; // no PGP keys
     }
   }
