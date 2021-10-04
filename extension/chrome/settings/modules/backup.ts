@@ -16,11 +16,8 @@ import { BackupAutomaticModule } from './backup-automatic-module.js';
 import { Lang } from '../../../js/common/lang.js';
 import { AcctStore, EmailProvider } from '../../../js/common/platform/store/acct-store.js';
 import { KeyStore } from '../../../js/common/platform/store/key-store.js';
-import { ExtendedKeyInfo, KeyUtil } from '../../../js/common/core/crypto/key.js';
-interface PrvKeyIdentity {
-  email: string,
-  fingerprints: string[]
-}
+import { ExtendedKeyInfo, KeyIdentity, KeyUtil } from '../../../js/common/core/crypto/key.js';
+
 export class BackupView extends View {
 
   public readonly acctEmail: string;
@@ -36,7 +33,7 @@ export class BackupView extends View {
   public emailProvider: EmailProvider = 'gmail';
   public orgRules!: OrgRules;
   public tabId!: string;
-  public prvKeysToManuallyBackup: PrvKeyIdentity[];
+  public prvKeysToManuallyBackup: KeyIdentity[];
 
   private readonly blocks = ['loading', 'module_status', 'module_manual'];
 
@@ -109,7 +106,7 @@ export class BackupView extends View {
     this.manualModule.setHandlers();
   }
 
-  private addKeyToBackup = (prvKeyIdentity: PrvKeyIdentity) => {
+  private addKeyToBackup = (prvKeyIdentity: KeyIdentity) => {
     this.prvKeysToManuallyBackup.push(prvKeyIdentity);
   }
 

@@ -69,6 +69,13 @@ export interface KeyInfo {
   emails?: string[]; // todo - used to be missing - but migration was supposed to add it? setting back to optional for now
 }
 
+export interface KeyIdentity {
+  id?: string,
+  type?: 'openpgp' | 'x509'
+  email: string,
+  fingerprints: string[]
+}
+
 export interface ExtendedKeyInfo extends KeyInfo {
   passphrase?: string;
   type: 'openpgp' | 'x509'
