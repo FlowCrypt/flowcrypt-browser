@@ -398,6 +398,11 @@ abstract class ControllableBase {
     throw new Error(`Could not find any frame in ${appearIn}s that matches ${urlMatchables.join(' ')}`);
   }
 
+  public ensureElementsCount = async (selector: string, count: number) => {
+    const elements = await this.target.$$(selector);
+    expect(elements.length).to.equal(count);
+  }
+
   public getFrame = async (urlMatchables: string[], { sleep = 1, timeout = 10 } = { sleep: 1, timeout: 10 }): Promise<ControllableFrame> => {
     if (sleep) {
       await Util.sleep(sleep);

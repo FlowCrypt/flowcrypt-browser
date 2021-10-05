@@ -209,7 +209,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
         const errModalLines = [
           'This message could not be encrypted because your own Private Key is expired.',
           '',
-          'You can extend expiration of this key in other OpenPGP software (such as gnupg), then re-import updated key ' +
+          'You can extend the expiration of this key in other OpenPGP software (such as GnuPG), then re-import the updated key ' +
           `<a href="${path}" id="action_update_prv" target="_blank">here</a>.`
         ];
         await Ui.modal.error(errModalLines.join('\n'), true);

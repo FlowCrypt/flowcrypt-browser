@@ -45,7 +45,7 @@ export const equals = (a: string | Uint8Array, b: string | Uint8Array) => {
 };
 
 
-export let defineUnitNodeTests = (testVariant: TestVariant) => {
+export const defineUnitNodeTests = (testVariant: TestVariant) => {
 
   if (testVariant !== 'CONSUMER-LIVE-GMAIL') {
 

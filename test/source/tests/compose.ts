@@ -1,7 +1,6 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
 import * as ava from 'ava';
-import { Page } from 'puppeteer';
 
 import { BrowserHandle, Controllable, ControllablePage, ControllableFrame } from './../browser';
 import { Config, Util } from './../util';
@@ -856,19 +855,6 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       expect(await body.$eval('#input_text img', el => el.getAttribute('src'))).to.eq(imgBase64);
     }));
 
-    ava.default('compose - saving and rendering a draft when offline', testWithBrowser('compatibility', async (t, browser) => {
-      let composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
-      await (composePage.target as Page).setOfflineMode(true); // go offline mode
-      await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, 'offline test', {});
-      expect(await composePage.read('@action-send')).to.eq('Re-enter recipient..'); // ensure offline mode
-      await composePage.type('@input-body', `This is a test of saving a draft when offline`);
-      await ComposePageRecipe.waitWhenDraftIsSavedLocally(composePage);
-      await composePage.close();
-      composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
-      expect(await composePage.value('@input-subject')).to.match(/offline test/);
-      await composePage.waitForContent('@input-body', 'This is a test of saving a draft when offline');
-    }));
-
     ava.default('compose - RTL subject', testWithBrowser('compatibility', async (t, browser) => {
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
       await composePage.type('@input-subject', 'ش');
@@ -1305,13 +1291,37 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       await SetupPageRecipe.manualEnter(settingsPage, 'flowcrypt.test.key.used.pgp', { submitPubkey: false, usedPgpBefore: false },
         { isSavePassphraseChecked: false, isSavePassphraseHidden: false });
       const msgPwd = 'super hard password for the message';
-      const subject = 'PWD encrypted message with FES';
+      const subject = 'PWD encrypted message with FES - access token';
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'user@standardsubdomainfes.test:8001');
       await ComposePageRecipe.fillMsg(composePage, { to: 'to@example.com', bcc: 'bcc@example.com' }, subject);
       const fileInput = await composePage.target.$('input[type=file]');
       await fileInput!.uploadFile('test/samples/small.txt');
       await ComposePageRecipe.sendAndClose(composePage, { password: msgPwd });
-      // this test is using PwdEncryptedMessageWithFesTestStrategy to check sent result based on subject "PWD encrypted message with flowcrypt.com/api"
+      // this test is using PwdEncryptedMessageWithFesAccessTokenTestStrategy to check sent result based on subject "PWD encrypted message with flowcrypt.com/api"
+      // also see '/api/v1/message' in fes-endpoints.ts mock
+    }));
+
+    /**
+     * You need the following line in /etc/hosts:
+     * 127.0.0.1    fes.disablefesaccesstoken.test
+     */
+    ava.default('user@disablefesaccesstoken.test:8001 - DISABLE_FES_ACCESS_TOKEN - PWD encrypted message with FES web portal', testWithBrowser(undefined, async (t, browser) => {
+      const acct = 'user@disablefesaccesstoken.test:8001'; // added port to trick extension into calling the mock
+      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
+      await SetupPageRecipe.manualEnter(settingsPage, 'flowcrypt.test.key.used.pgp', { submitPubkey: false, usedPgpBefore: false },
+        { isSavePassphraseChecked: false, isSavePassphraseHidden: false });
+      const debugFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-show-local-store-contents', ['debug_api.htm']);
+      await debugFrame.waitForContent('@container-pre', 'fes.disablefesaccesstoken.test:8001'); // FES url on standard subdomain
+      await debugFrame.waitForContent('@container-pre', 'DISABLE_FES_ACCESS_TOKEN'); // org rules from FES
+      await SettingsPageRecipe.closeDialog(settingsPage);
+      const msgPwd = 'super hard password for the message';
+      const subject = 'PWD encrypted message with FES - ID TOKEN';
+      const composePage = await ComposePageRecipe.openStandalone(t, browser, 'user@disablefesaccesstoken.test:8001');
+      await ComposePageRecipe.fillMsg(composePage, { to: 'to@example.com', bcc: 'bcc@example.com' }, subject);
+      const fileInput = await composePage.target.$('input[type=file]');
+      await fileInput!.uploadFile('test/samples/small.txt');
+      await ComposePageRecipe.sendAndClose(composePage, { password: msgPwd });
+      // this test is using PwdEncryptedMessageWithFesIdTokenTestStrategy to check sent result based on subject "PWD encrypted message with flowcrypt.com/api"
       // also see '/api/v1/message' in fes-endpoints.ts mock
     }));
 
