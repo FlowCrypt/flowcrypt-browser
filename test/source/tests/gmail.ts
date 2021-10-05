@@ -272,8 +272,8 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       await draft.close();
       // after draft 2 is saved to the cloud, it should be removed from offline drafts
       await gmailPage.page.reload();
-      await gmailPage.ensureElementsCount('#fc_offline_drafts a', 1);
       await gmailPage.waitForContent('#fc_offline_drafts', 'FlowCrypt offline drafts:');
+      await gmailPage.ensureElementsCount('#fc_offline_drafts a', 1);
       await gmailPage.waitAndClick('#fc_offline_drafts a');
       urls = await gmailPage.getFramesUrls(['/chrome/elements/compose.htm'], { sleep: 1 });
       await pageHasSecureDraft(t, browser, urls[0], 'compose draft 1');
