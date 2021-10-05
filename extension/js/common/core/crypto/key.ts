@@ -75,7 +75,7 @@ export interface ExtendedKeyInfo extends KeyInfo {
   type: 'openpgp' | 'x509'
 }
 
-export type KeyAlgo = 'curve25519' | 'rsa2048' | 'rsa4096';
+export type KeyAlgo = 'curve25519' | 'rsa2048' | 'rsa3072' | 'rsa4096';
 
 export type PrvPacket = (OpenPGP.packet.SecretKey | OpenPGP.packet.SecretSubkey);
 

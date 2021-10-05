@@ -11,6 +11,7 @@ import { ApiErr } from '../../common/api/shared/api-error.js';
 import { Attachment } from '../../common/core/attachment.js';
 import { BrowserMsg } from '../../common/browser/browser-msg.js';
 import { Catch } from '../../common/platform/catch.js';
+import { GlobalStore, LocalDraft } from '../../common/platform/store/global-store.js';
 import { Gmail } from '../../common/api/email-provider/gmail/gmail.js';
 import { Injector } from '../../common/inject.js';
 import { PubLookup } from '../../common/api/pub-lookup.js';
@@ -65,7 +66,8 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     settingsBtnContainer: 'div.aeH > div > .fY',
     standardComposeRecipient: 'div.az9 span[email][data-hovercard-id]',
     numberOfAttachments: '.aVW',
-    numberOfAttachmentsDigit: '.aVW span'
+    numberOfAttachmentsDigit: '.aVW span',
+    draftsList: '.ae4',
   };
 
   constructor(factory: XssSafeFactory, orgRules: OrgRules, acctEmail: string, sendAs: Dict<SendAsAlias>,
@@ -149,6 +151,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     this.replaceStandardReplyBox().catch(Catch.reportErr);
     this.evaluateStandardComposeRecipients().catch(Catch.reportErr);
     this.addSettingsBtn();
+    this.renderLocalDrafts().catch(Catch.reportErr);
   }
 
   private replaceArmoredBlocks = () => {
@@ -742,6 +745,47 @@ export class GmailElementReplacer implements WebmailElementReplacer {
       if (settingsBtnContainer.length && !settingsBtnContainer.find('#fc_settings_btn').length) {
         settingsBtnContainer.children().last().before(this.factory.btnSettings('gmail')); // xss-safe-factory
         settingsBtnContainer.find('#fc_settings_btn').click(Ui.event.handle(() => BrowserMsg.send.bg.settings({ acctEmail: this.acctEmail })));
+      }
+    }
+  }
+
+  private renderLocalDrafts = async () => {
+    if (window.location.hash === '#drafts') {
+      const storage = await GlobalStore.get(['local_drafts']);
+      if (!storage.local_drafts) {
+        return;
+      }
+      const offlineComposeDrafts: Dict<LocalDraft> = {};
+      for (const draftId in storage.local_drafts) {
+        if (draftId.startsWith('local-draft-compose-') && storage.local_drafts[draftId].acctEmail === this.acctEmail) {
+          offlineComposeDrafts[draftId] = storage.local_drafts[draftId];
+        }
+      }
+      let offlineDraftsContainer = $(this.sel.draftsList).find('#fc_offline_drafts');
+      if (Object.keys(offlineComposeDrafts).length) {
+        const offlineComposeDraftIds = Object.keys(offlineComposeDrafts);
+        const draftIdsSortedByTimestamp = offlineComposeDraftIds.sort((a, b) => {
+          return offlineComposeDrafts[b].timestamp - offlineComposeDrafts[a].timestamp;
+        });
+        if (offlineDraftsContainer.data('rendered-drafts') === draftIdsSortedByTimestamp.join(',')) {
+          // already rendered
+          return;
+        }
+        offlineDraftsContainer = $('<div id="fc_offline_drafts"><h4>FlowCrypt offline drafts:</h4></div>'); // xss-safe-value
+        offlineDraftsContainer.data('rendered-drafts', draftIdsSortedByTimestamp.join(','));
+        $(this.sel.draftsList).find('#fc_offline_drafts').remove();
+        $(this.sel.draftsList).append(offlineDraftsContainer); // xss-safe-factory
+        for (const draftId of draftIdsSortedByTimestamp) {
+          const draft = offlineComposeDrafts[draftId];
+          const draftLink = $(`<a href>${new Date(draft.timestamp).toLocaleString()}</a>`);
+          draftLink.on('click', (event) => {
+            event.preventDefault();
+            this.injector.openComposeWin(draftId);
+          });
+          offlineDraftsContainer.append(draftLink ); // xss-safe-value
+        }
+      } else {
+        offlineDraftsContainer.remove();
       }
     }
   }

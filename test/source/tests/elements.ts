@@ -7,7 +7,7 @@ import { TestWithBrowser } from '../test';
 
 // tslint:disable:no-blank-lines-func
 
-export let defineElementTests = (testVariant: TestVariant, testWithBrowser: TestWithBrowser) => {
+export const defineElementTests = (testVariant: TestVariant, testWithBrowser: TestWithBrowser) => {
 
   if (testVariant !== 'CONSUMER-LIVE-GMAIL') {
 

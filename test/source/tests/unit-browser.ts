@@ -14,7 +14,7 @@ import { testConstants } from './tooling/consts';
 
 type UnitTest = { title: string, code: string, only: boolean };
 
-export let defineUnitBrowserTests = (testVariant: TestVariant, testWithBrowser: TestWithBrowser) => {
+export const defineUnitBrowserTests = (testVariant: TestVariant, testWithBrowser: TestWithBrowser) => {
 
   if (testVariant !== 'CONSUMER-LIVE-GMAIL') {
 
