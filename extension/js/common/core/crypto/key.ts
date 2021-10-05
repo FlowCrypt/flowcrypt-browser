@@ -62,16 +62,6 @@ export type Contact = {
   revoked: boolean;
 };
 
-export class ContactUtil {
-  public static toPubKeyInfo = (contact: Contact): (PubKeyInfo | undefined) => {
-    if (contact.pubkey) {
-      return { pubkey: contact.pubkey, revoked: contact.pubkey.revoked, lastCheck: contact.pubkey.lastModified };
-    } else {
-      return undefined;
-    }
-  }
-}
-
 export interface KeyInfo {
   private: string;
   public: string; // this cannot be Pubkey has it's being passed to localstorage
@@ -392,5 +382,9 @@ export class KeyUtil {
       return ki.fingerprints.map(fp => OpenPGPKey.fingerprintToLongid(fp));
     }
     return [ki.longid];
+  }
+
+  public static usableAllowingExpired = (pubinfo: PubKeyInfo) => {
+    return !pubinfo.revoked && (pubinfo.pubkey.usableForEncryption || pubinfo.pubkey.usableForEncryptionButExpired);
   }
 }

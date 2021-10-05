@@ -3,7 +3,7 @@
 'use strict';
 
 import { Bm, BrowserMsg } from '../../../js/common/browser/browser-msg.js';
-import { KeyInfo, KeyUtil, Key, ContactUtil } from '../../../js/common/core/crypto/key.js';
+import { KeyInfo, KeyUtil, Key } from '../../../js/common/core/crypto/key.js';
 import { ApiErr } from '../../../js/common/api/shared/api-error.js';
 import { Assert } from '../../../js/common/assert.js';
 import { Catch } from '../../../js/common/platform/catch.js';
@@ -76,51 +76,33 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
   public lookupPubkeyFromKeyserversThenOptionallyFetchExpiredByFingerprintAndUpsertDb = async (
     email: string, name: string | undefined
   ): Promise<PubKeyInfo[] | "fail"> => {
-    // note by Tom 2021-08-10: We are only getting one public key from storage, but should
-    //    work with arrays instead, like with `ContactStore.getOneWithAllPubkeys`.
-    //    However, this whole fingerprint-base section seems unnecessary, we could likely
-    //    remove it and the keys will be updated below using
-    //    `lookupPubkeyFromKeyserversAndUpsertDb` anyway.
-    //    discussion: https://github.com/FlowCrypt/flowcrypt-browser/pull/3898#discussion_r686229818
     // console.log(`>>>> Looking up in DB: ${email}`);
     const storedContact = await ContactStore.getOneWithAllPubkeys(undefined, email);
     // console.log(">>>> " + (storedContact ? JSON.stringify(storedContact) : 'NOT_FOUND'));
-    if (storedContact && storedContact.sortedPubkeys.length) {
-      const results: PubKeyInfo[] = [];
-      for (const pubkey of storedContact.sortedPubkeys) {
-        if (!pubkey.revoked) {
-          // checks if pubkey was updated, asynchronously. By the time user finishes composing,
-          //    newer version would have been updated in db.
-          // This implementation is imperfect in that, if sender didn't pull a particular pubkey
-          //    for a long time and the local pubkey has since expired, and there actually is a
-          //    newer version available on external key server, this may unnecessarily show "bad pubkey",
-          //    until next time user tries to enter recipient in the field again, which will at that point
-          //    get the updated key from db. This could be fixed by:
-          //      - either life fixing the UI after this call finishes, or
-          //      - making this call below synchronous and using the result directly
-          this.checkKeyserverForNewerVersionOfKnownPubkeyIfNeeded(storedContact.info.email, pubkey)
-            .catch(Catch.reportErr);
-          results.push(pubkey);
-        } else {
-          const res = await this.lookupPubkeyFromKeyserversAndUpsertDb(email, name, pubkey);
-          if (res) {
-            if (res === 'fail') return res;
-            results.push(res);
-          }
-        }
+    const bestKey = storedContact?.sortedPubkeys?.length ? storedContact.sortedPubkeys[0] : undefined;
+    if (storedContact && bestKey && KeyUtil.usableAllowingExpired(bestKey)) {
+      // checks if pubkey was updated, asynchronously. By the time user finishes composing,
+      //    newer version would have been updated in db.
+      // This implementation is imperfect in that, if sender didn't pull a particular pubkey
+      //    for a long time and the local pubkey has since expired, and there actually is a
+      //    newer version available on external key server, this may unnecessarily show "bad pubkey",
+      //    until next time user tries to enter recipient in the field again, which will at that point
+      //    get the updated key from db. This could be fixed by:
+      //      - either life fixing the UI after this call finishes, or
+      //      - making this call below synchronous and using the result directly
+      for (const pubinfo of storedContact.sortedPubkeys.filter(p => !p.revoked)) {
+        this.checkKeyserverForNewerVersionOfKnownPubkeyIfNeeded(storedContact.info.email, pubinfo)
+          .catch(Catch.reportErr);
       }
-      return ContactStore.sortPubInfos(results);
+      // return the current set rightaway
+      return storedContact.sortedPubkeys;
     }
-    // console.log(`>>>> Looking up on keyserver: ${email}`);
-    const res = await this.lookupPubkeyFromKeyserversAndUpsertDb(email, name, undefined);
-    if (res) {
-      // console.log(`>>>> Looking up on keyserver: ${email}: result: ${JSON.stringify(res)}`);
-      if (res === 'fail') return res;
-      return [res];
-    } else {
-      // console.log(`>>>> Looking up on keyserver: ${email}: result: NOT_KEYS`);
-      return []; // no PGP keys
+    // no valid keys found, query synchronously
+    if (!await this.lookupPubkeyFromKeyserversAndUpsertDb(email, name)) {
+      return PUBKEY_LOOKUP_RESULT_FAIL;
     }
+    // re-query the storage
+    return (await ContactStore.getOneWithAllPubkeys(undefined, email))?.sortedPubkeys ?? [];
   }
 
   /**
@@ -129,17 +111,12 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
    * We process the response and if there are new public keys, we save them. If there are
    *    newer versions of public keys we already have (compared by fingerprint), then we
    *    update the public keys we already have.
-   * Finally, we return the updated public key back.
+   * Finally, we return `false` if a lookup or storage update fails.
    *
-   * Note by Tom 2021-08-10: We should consider a signature like
-   *    `Promise<{email: string, contacts: Contact[]}>` instead. And the `fail` situations
+   * Note by Tom 2021-08-10: The `fail` situations
    *    should probably be throwing some sort of `PubkeyLookupFailedError` or similar.
-   *    `existingContact` should also change to `Contact[]` instead of `Contact | undefined`
-   *    discussion: https://github.com/FlowCrypt/flowcrypt-browser/pull/3898#discussion_r686244628
    */
-  public lookupPubkeyFromKeyserversAndUpsertDb = async (
-    email: string, name: string | undefined, existingPubKey: PubKeyInfo | undefined
-  ): Promise<PubKeyInfo | "fail" | undefined> => {
+  public lookupPubkeyFromKeyserversAndUpsertDb = async (email: string, name: string | undefined): Promise<boolean> => {
     try {
       const lookupResult = await this.view.pubLookup.lookupEmail(email);
       if (lookupResult && email) {
@@ -162,9 +139,7 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
             updates.push({ name } as ContactUpdate);
           } else {
             // No public key found. Returning early, nothing to update in local store below.
-            if (existingPubKey) return existingPubKey;
-            const contact = await ContactStore.obj({ email });
-            return ContactUtil.toPubKeyInfo(contact);
+            return true; // no error
           }
         }
         for (const pubkey of pubkeys) {
@@ -173,17 +148,14 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
         if (updates.length) {
           await Promise.all(updates.map(async (update) => await ContactStore.update(undefined, email, update)));
         }
-        const emailWithKeys = await ContactStore.getOneWithAllPubkeys(undefined, email);
-        if (emailWithKeys && emailWithKeys.sortedPubkeys.length) {
-          return emailWithKeys.sortedPubkeys[0];
-        }
+        return true;
       }
     } catch (e) {
       if (!ApiErr.isNetErr(e) && !ApiErr.isServerErr(e)) {
         Catch.reportErr(e);
       }
     }
-    return PUBKEY_LOOKUP_RESULT_FAIL;
+    return false;
   }
 
   public checkKeyserverForNewerVersionOfKnownPubkeyIfNeeded = async (

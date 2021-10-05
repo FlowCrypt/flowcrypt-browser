@@ -764,8 +764,8 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
         toLookup.push(contact);
       }
     }
-    await Promise.all(toLookup.map(c => this.view.storageModule.lookupPubkeyFromKeyserversAndUpsertDb(c.email, c.name || undefined, undefined).then(lookupRes => {
-      if (lookupRes && lookupRes === 'fail') {
+    await Promise.all(toLookup.map(c => this.view.storageModule.lookupPubkeyFromKeyserversAndUpsertDb(c.email, c.name || undefined).then(lookupRes => {
+      if (!lookupRes) {
         this.failedLookupEmails.push(c.email);
       }
     })));
