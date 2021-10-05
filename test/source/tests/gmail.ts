@@ -320,11 +320,10 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       await gmailPage.waitAndClick('@action-secure-compose', { delay: 1 });
       await gmailPage.waitAndFocus('body');
       await gmailPage.waitAndClick('[data-tooltip="Drafts"]');
-      await gmailPage.waitForInputValue('[aria-label^="Search"]', 'in:draft');
-      await gmailPage.press('Enter');
+      await gmailPage.waitAndClick('//*[text()="Draft"]');
       await gmailPage.waitAndClick('[class^="open_draft_"]');
       // veryfy that there are two compose windows: new compose window and secure draft
-      const urls = await gmailPage.getFramesUrls(['/chrome/elements/compose.htm']);
+      const urls = await gmailPage.getFramesUrls(['/chrome/elements/compose.htm'], { sleep: 1 });
       expect(urls.length).to.equal(2);
       const composeDraft = await pageHasSecureDraft(t, browser, urls[1], 'compose draft');
       await composeDraft.close();
