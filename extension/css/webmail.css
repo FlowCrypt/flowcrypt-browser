@@ -385,6 +385,26 @@ div.reply_message_iframe_container.inserted {
   margin-left: 72px !important;
 }
 
+/* offline drafts */
+#fc_offline_drafts {
+  margin-top: 3em;
+}
+
+#fc_offline_drafts a {
+  display: block;
+  cursor: pointer;
+  background: rgba(242, 245, 245, 0.8);
+  color: #202124;
+  outline: 1px solid rgb(100 121 143 / 12%);
+  padding: 10px 20px;
+  text-decoration: none;
+  margin-bottom: 1px;
+}
+
+#fc_offline_drafts a:hover {
+  outline: 2px solid rgb(218, 220, 224);
+}
+
 /* augmented */
 body.cryptup_gmail div.recipients_use_encryption {
   min-height: 0;
