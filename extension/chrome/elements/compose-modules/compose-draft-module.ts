@@ -246,6 +246,7 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
     storage.local_drafts[draftId] = {
       id: '',
       timestamp: new Date().getTime(),
+      accEmail: this.view.acctEmail,
       message: { id: '', historyId: '', raw: Buf.fromUtfStr(mimeMsg).toBase64UrlStr(), threadId }
     };
     await GlobalStore.set(storage);

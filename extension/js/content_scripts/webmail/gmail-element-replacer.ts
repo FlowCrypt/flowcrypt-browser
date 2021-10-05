@@ -757,7 +757,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
       }
       const offlineComposeDrafts: Dict<LocalDraft> = {};
       for (const draftId in storage.local_drafts) {
-        if (draftId.startsWith('local-draft-compose-')) {
+        if (draftId.startsWith('local-draft-compose-') && storage.local_drafts[draftId].accEmail === this.acctEmail) {
           offlineComposeDrafts[draftId] = storage.local_drafts[draftId];
         }
       }
