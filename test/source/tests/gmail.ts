@@ -267,7 +267,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       // compose draft 2 should be first in list as drafts are sorted by date descending
       const draft = await pageHasSecureDraft(t, browser, urls[0], 'compose draft 2');
       await Util.sleep(3); // the draft isn't being saved if start typing without this delay
-      await draft.type('@input-body', 'trigger saving to the clound', true);
+      await draft.type('@input-body', 'trigger saving a draft to the cloud', true);
       await ComposePageRecipe.waitWhenDraftIsSaved(draft);
       await draft.close();
       // after draft 2 is saved to the cloud, it should be removed from offline drafts
