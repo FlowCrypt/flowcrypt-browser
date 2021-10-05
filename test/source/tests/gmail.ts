@@ -279,7 +279,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       await pageHasSecureDraft(t, browser, urls[0], 'compose draft 1');
     }));
 
-    ava.default.skip('mail.google.com - secure reply btn, reply draft', testWithBrowser('ci.tests.gmail', async (t, browser) => {
+    ava.default('mail.google.com - secure reply btn, reply draft', testWithBrowser('ci.tests.gmail', async (t, browser) => {
       const gmailPage = await openGmailPage(t, browser, '/');
       const settingsPage = await browser.newPage(t, TestUrls.extensionSettings());
       await BrowserRecipe.deleteAllDraftsInGmailAccount(settingsPage);
