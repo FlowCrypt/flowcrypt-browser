@@ -324,12 +324,13 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
   }
 
   private renderPPDialogAndWaitWhenPPEntered = async () => {
-    const promptText = `Waiting for <a href="#" class="action_open_passphrase_dialog">pass phrase</a> to open draft..`;
+    const promptText = `<div>Waiting for <a href="#" class="action_open_passphrase_dialog">pass phrase</a> to open draft..</div>`;
     if (this.view.isReplyBox) {
       Xss.sanitizeRender(this.view.S.cached('prompt'), promptText).css({ display: 'block' });
       this.view.sizeModule.resizeComposeBox();
     } else {
-      Xss.sanitizeRender(this.view.S.cached('prompt'), `${promptText}<br><br><a href="#" class="action_close">close</a>`).css({ display: 'block', height: '100%' });
+      Xss.sanitizeRender(this.view.S.cached('prompt'), `${promptText}<br><br><a href="#" class="action_close">close</a>`).css({ display: 'flex', height: '100%' });
+      BrowserMsg.send.setActiveWindow(this.view.parentTabId, { frameId: this.view.frameId });
     }
     this.view.S.cached('prompt').find('a.action_open_passphrase_dialog').click(this.view.setHandler(async () => {
       const primaryKi = await KeyStore.getFirstRequired(this.view.acctEmail);
