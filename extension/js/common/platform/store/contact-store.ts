@@ -66,6 +66,14 @@ type DbContactFilter = { hasPgp?: boolean, substring?: string, limit?: number };
 
 export type PubKeyInfo = {
   pubkey: Key,
+  // IMPORTANT NOTE:
+  // It might look like we can format PubkeyInfo[] out of Key[], but that's not good,
+  // because in the storage we have the table Revocations that stores fingerprints
+  // of revoked keys that may not exist in the database (Pubkeys table),
+  // that is pre-emptive external revocation. So (in a rare case) the lookup method
+  // receives a valid key, saves it to the storage, and after re-querying the storage,
+  // this key maybe returned as revoked. This is why PubkeyInfo has revoked property
+  // regardless of the fact that Key itself also has it.
   revoked: boolean,
   lastCheck?: number | undefined
 };
