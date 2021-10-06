@@ -20,11 +20,13 @@ export class SignedMsgMailFormatter extends BaseMailFormatter {
     this.view.errModule.debug(`SignedMsgMailFormatter.sendableMsg signing with key: ${signingPrv.id}`);
     const attachments = this.isDraft ? [] : await this.view.attachmentsModule.attachment.collectAttachments();
     if (signingPrv.type === 'x509') {
-      // todo: attachments, richtext
+      // todo: attachments, richtext #4046, #4047
+      if (this.isDraft) {
+        throw new Error('signed-only PKCS#7 drafts are not supported');
+      }
       const msgBody = this.richtext ? { 'text/plain': newMsg.plaintext, 'text/html': newMsg.plainhtml } : { 'text/plain': newMsg.plaintext };
       const mimeEncodedPlainMessage = await Mime.encode(msgBody, { Subject: newMsg.subject }, attachments);
       const data = await SmimeKey.sign(signingPrv, Buf.fromUtfStr(mimeEncodedPlainMessage));
-      // todo: isDraft?
       return await SendableMsg.createSMimeSigned(this.acctEmail, this.headers(newMsg), data);
     }
     if (!this.richtext) {

@@ -37,7 +37,8 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
     } else if (this.richtext) { // rich text: PGP/MIME - https://tools.ietf.org/html/rfc3156#section-4
       // or S/MIME
       return await this.sendableRichTextMsg(newMsg, pubkeys, signingPrv);
-    } else { // simple text: PGP or S/MIME Inline with attachments in separate files // todo: check attachments for S/MIME
+    } else { // simple text: PGP or S/MIME Inline with attachments in separate files
+      // todo: #4046 check attachments for S/MIME
       return await this.sendableSimpleTextMsg(newMsg, pubkeys, signingPrv);
     }
   }
@@ -121,7 +122,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
   }
 
   private sendableRichTextMsg = async (newMsg: NewMsgData, pubs: PubkeyResult[], signingPrv?: Key) => {
-    // todo: pubs.type === 'x509'
+    // todo: pubs.type === 'x509' #4047
     const plainAttachments = this.isDraft ? [] : await this.view.attachmentsModule.attachment.collectAttachments();
     if (this.isDraft) { // this patch is needed as gmail makes it hard (or impossible) to render messages saved as https://tools.ietf.org/html/rfc3156
       const pgpMimeToEncrypt = await Mime.encode({ 'text/plain': newMsg.plaintext, 'text/html': newMsg.plainhtml }, { Subject: newMsg.subject }, plainAttachments);
@@ -129,7 +130,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
       return await SendableMsg.createInlineArmored(this.acctEmail, this.headers(newMsg), Buf.fromUint8(encrypted).toUtfStr(), plainAttachments, { isDraft: this.isDraft });
     }
     const pgpMimeToEncrypt = await Mime.encode({ 'text/plain': newMsg.plaintext, 'text/html': newMsg.plainhtml }, { Subject: newMsg.subject }, plainAttachments);
-    // todo: don't armor S/MIME and decide what to do with attachments
+    // todo: don't armor S/MIME and decide what to do with attachments #4046 and #4047
     const { data: encrypted } = await this.encryptDataArmor(Buf.fromUtfStr(pgpMimeToEncrypt), undefined, pubs, signingPrv);
     const attachments = this.createPgpMimeAttachments(encrypted);
     return await SendableMsg.createPgpMime(this.acctEmail, this.headers(newMsg), attachments, { isDraft: this.isDraft });
