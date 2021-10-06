@@ -41,9 +41,9 @@ View.run(class MyKeyUpdateView extends View {
     if (this.orgRules.usesKeyManager()) {
       Xss.sanitizeRender('body', `
       <br>
-      <div data-test="container-err-title" style="width: 900px;display:inline-block;">Error: Insufficient Permission</div>
+      <div data-test="container-err-title">Error: Insufficient Permission</div>
       <br><br>
-      <div data-test="container-err-text" style="width: 900px;display:inline-block;">Please contact your IT staff if you wish to update your keys.</div>
+      <div data-test="container-err-text">Please contact your IT staff if you wish to update your keys.</div>
       <br><br>
       `);
     } else {

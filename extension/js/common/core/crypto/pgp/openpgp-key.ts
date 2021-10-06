@@ -398,6 +398,8 @@ export class OpenPGPKey {
       opt.curve = 'curve25519';
     } else if (variant === 'rsa2048') {
       opt.numBits = 2048;
+    } else if (variant === 'rsa3072') {
+      opt.numBits = 3072;
     } else {
       opt.numBits = 4096;
     }

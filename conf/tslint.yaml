@@ -10,7 +10,7 @@ rules: #
     object-literal-sort-keys: false
     arrow-parens: false
     no-console: false
-    prefer-const: true
+    prefer-const: false
     ban-types:
      - true
      - ["Object", "Avoid using the `Object` type. Did you mean `object`?"]
@@ -25,7 +25,7 @@ rules: #
      - true
      - allow-leading-underscore
     member-access: true
-    member-ordering: 
+    member-ordering:
       - true
       - order:
         - "public-static-field"

@@ -23,7 +23,7 @@ import { Buf } from '../core/buf';
 
 // tslint:disable:no-blank-lines-func
 
-export let defineSettingsTests = (testVariant: TestVariant, testWithBrowser: TestWithBrowser) => {
+export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: TestWithBrowser) => {
 
   if (testVariant !== 'CONSUMER-LIVE-GMAIL') {
 
