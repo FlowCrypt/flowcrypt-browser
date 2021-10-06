@@ -37,7 +37,7 @@ export class ComposeAttachmentsModule extends ViewModule<ComposeView> {
     return {
       sizeMb,
       size: sizeMb * 1024 * 1024,
-      count: 10,
+      count: 50,
       oversize: async (combinedSize: number) => {
         await Ui.modal.warning('Combined attachment size is limited to 25 MB. The last file brings it to ' + Math.ceil(combinedSize / (1024 * 1024)) + ' MB.');
       },

@@ -2264,6 +2264,13 @@ body#new_message #loader {
   align-items: center;
 }
 
+body#new_message #initial_prompt {
+  background: white;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
 body#new_message.full_window {
   background-color: rgba(0, 0, 0, 0.5);
   padding: 20px 150px;
@@ -2280,7 +2287,7 @@ div#initial_prompt a {
   height: 36px;
   padding: 0 16px;
   box-shadow: inset 0 0 0 1px #dadce0;
-  margin: 0 12px 6px 0;
+  margin: 6px;
   text-decoration: none;
   outline: none;
 }

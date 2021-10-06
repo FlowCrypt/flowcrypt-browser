@@ -1,7 +1,6 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
 import * as ava from 'ava';
-import { Page } from 'puppeteer';
 
 import { BrowserHandle, Controllable, ControllablePage, ControllableFrame } from './../browser';
 import { Config, Util } from './../util';
@@ -835,19 +834,6 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       const body = await composePage.waitAny('@input-body');
       await composePage.waitAll('#input_text img');
       expect(await body.$eval('#input_text img', el => el.getAttribute('src'))).to.eq(imgBase64);
-    }));
-
-    ava.default('compose - saving and rendering a draft when offline', testWithBrowser('compatibility', async (t, browser) => {
-      let composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
-      await (composePage.target as Page).setOfflineMode(true); // go offline mode
-      await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, 'offline test', {});
-      expect(await composePage.read('@action-send')).to.eq('Re-enter recipient..'); // ensure offline mode
-      await composePage.type('@input-body', `This is a test of saving a draft when offline`);
-      await ComposePageRecipe.waitWhenDraftIsSavedLocally(composePage);
-      await composePage.close();
-      composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
-      expect(await composePage.value('@input-subject')).to.match(/offline test/);
-      await composePage.waitForContent('@input-body', 'This is a test of saving a draft when offline');
     }));
 
     ava.default('compose - RTL subject', testWithBrowser('compatibility', async (t, browser) => {

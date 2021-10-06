@@ -28,7 +28,7 @@ type CreateKeyOpts = {
   usedPgpBefore?: boolean,
   submitPubkey?: boolean,
   enforcedAlgo?: string | boolean,
-  skipForPassphrase?: boolean
+  skipForPassphrase?: boolean,
 };
 
 export class SetupPageRecipe extends PageRecipe {
@@ -44,6 +44,9 @@ export class SetupPageRecipe extends PageRecipe {
     if (enforcedAlgo) {
       expect(await settingsPage.value('@input-step2bmanualcreate-key-type')).to.equal(enforcedAlgo);
       expect(await settingsPage.isDisabled('@input-step2bmanualcreate-key-type')).to.equal(true);
+    }
+    if (selectKeyAlgo) {
+      await settingsPage.selectOption('@input-step2bmanualcreate-key-type', selectKeyAlgo);
     }
     if (backup === 'disabled') { // user not given a backup choice due to NO_PRV_BACKUP OrgRule
       await settingsPage.notPresent('@input-step2bmanualcreate-backup-inbox');

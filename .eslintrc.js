@@ -35,6 +35,9 @@ module.exports = {
     'no-fallthrough': 0,
     'no-undef': 0,
     'no-control-regex': 0,
+    'prefer-const': ['error', {
+      destructuring: 'all',
+    }],
     'sort-imports': ['off', {
       "ignoreCase": false,
       "ignoreDeclarationSort": false,

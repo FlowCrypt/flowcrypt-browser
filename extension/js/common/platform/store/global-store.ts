@@ -10,6 +10,8 @@ import { Catch } from '../catch.js';
 
 export type StoredAdminCode = { date: number, codes: string[] };
 
+export type LocalDraft = GmailRes.GmailDraftGet & { timestamp: number, acctEmail: string }
+
 export type GlobalStoreDict = {
   version?: number | null;
   account_emails?: string; // stringified array
@@ -20,7 +22,7 @@ export type GlobalStoreDict = {
   key_info_store_fingerprints_added?: boolean;
   contact_store_x509_fingerprints_and_longids_updated?: boolean;
   contact_store_opgp_revoked_flags_updated?: boolean;
-  local_drafts?: Dict<GmailRes.GmailDraftGet>;
+  local_drafts?: Dict<LocalDraft>;
 };
 
 export type GlobalIndex = 'version' | 'account_emails' | 'settings_seen' | 'hide_pass_phrases' |
