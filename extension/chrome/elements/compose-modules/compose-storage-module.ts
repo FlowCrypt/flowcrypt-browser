@@ -117,9 +117,9 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
    *    should probably be throwing some sort of `PubkeyLookupFailedError` or similar.
    */
   public lookupPubkeyFromKeyserversAndUpsertDb = async (email: string, name: string | undefined): Promise<boolean> => {
-    try {
-      const lookupResult = await this.view.pubLookup.lookupEmail(email);
-      if (lookupResult && email) {
+    if (email) {
+      try {
+        const lookupResult = await this.view.pubLookup.lookupEmail(email);
         const pubkeys: Key[] = [];
         for (const pubkey of lookupResult.pubkeys) {
           const key = await KeyUtil.parse(pubkey);
@@ -146,13 +146,14 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
           updates.push({ name, pubkey, pubkeyLastCheck: Date.now() });
         }
         if (updates.length) {
-          await Promise.all(updates.map(async (update) => await ContactStore.update(undefined, email, update)));
+          await Promise.all(updates.map(async (update) =>
+            await ContactStore.update(undefined, email, update)));
         }
         return true;
-      }
-    } catch (e) {
-      if (!ApiErr.isNetErr(e) && !ApiErr.isServerErr(e)) {
-        Catch.reportErr(e);
+      } catch (e) {
+        if (!ApiErr.isNetErr(e) && !ApiErr.isServerErr(e)) {
+          Catch.reportErr(e);
+        }
       }
     }
     return false;
