@@ -62,6 +62,27 @@ export let defineSettingsTests = (testVariant: TestVariant, testWithBrowser: Tes
       await SettingsPageRecipe.passphraseTest(settingsPage, Config.key('flowcrypt.compatibility.1pp1').passphrase, true);
     }));
 
+    ava.default('settings - clarify passphrase prompt text', testWithBrowser('compatibility', async (t, browser) => {
+      const acctEmail = 'flowcrypt.compatibility@gmail.com';
+      const settingsPage = await browser.newPage(t, TestUrls.extensionSettings(acctEmail));
+      await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
+      const fingerprint = await (await settingsPage.read('.good')).split(' ').join('');
+      const baseUrl = `chrome/elements/passphrase.htm?acctEmail=${acctEmail}&longids=${fingerprint}&parentTabId=`;
+      let passphrasePage = undefined;
+      passphrasePage = await browser.newPage(t, baseUrl.concat('&type=sign'));
+      expect(await passphrasePage.read('@passphrase-text')).to.equal('Enter FlowCrypt pass phrase to sign email');
+      passphrasePage = await browser.newPage(t, baseUrl.concat('&type=message'));
+      expect(await passphrasePage.read('@passphrase-text')).to.equal('Enter FlowCrypt pass phrase to read encrypted email');
+      passphrasePage = await browser.newPage(t, baseUrl.concat('&type=draft'));
+      expect(await passphrasePage.read('@passphrase-text')).to.equal('Enter FlowCrypt pass phrase to load a draft');
+      passphrasePage = await browser.newPage(t, baseUrl.concat('&type=attachment'));
+      expect(await passphrasePage.read('@passphrase-text')).to.equal('Enter FlowCrypt pass phrase to decrypt a file');
+      passphrasePage = await browser.newPage(t, baseUrl.concat('&type=quote'));
+      expect(await passphrasePage.read('@passphrase-text')).to.equal('Enter FlowCrypt pass phrase to load quoted content');
+      passphrasePage = await browser.newPage(t, baseUrl.concat('&type=backup'));
+      expect(await passphrasePage.read('@passphrase-text')).to.equal('Enter FlowCrypt pass phrase to back up');
+    }));
+
     ava.todo('settings - verify 2pp1 key presense');
     // await tests.settings_my_key_tests(settingsPage, 'flowcrypt.compatibility.2pp1', 'link');
 
