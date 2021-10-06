@@ -45,9 +45,6 @@ export class SetupPageRecipe extends PageRecipe {
       expect(await settingsPage.value('@input-step2bmanualcreate-key-type')).to.equal(enforcedAlgo);
       expect(await settingsPage.isDisabled('@input-step2bmanualcreate-key-type')).to.equal(true);
     }
-    if (selectKeyAlgo) {
-      await settingsPage.selectOption('@input-step2bmanualcreate-key-type', selectKeyAlgo);
-    }
     if (backup === 'disabled') { // user not given a backup choice due to NO_PRV_BACKUP OrgRule
       await settingsPage.notPresent('@input-step2bmanualcreate-backup-inbox');
     } else { // uncheck - because want to choose backup manually
