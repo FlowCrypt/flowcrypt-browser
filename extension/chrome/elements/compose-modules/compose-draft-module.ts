@@ -208,9 +208,6 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
     } else {
       prefix = `(saving of this draft was interrupted - to decrypt it, send it to yourself)\n\n`;
     }
-    if (sendable.body['encrypted/buf']) {
-      sendable.body['encrypted/buf'] = Buf.concat([Buf.fromUtfStr(prefix), sendable.body['encrypted/buf']]);
-    }
     if (sendable.body['text/plain']) {
       sendable.body['text/plain'] = `${prefix}${sendable.body['text/plain'] || ''}`;
     }
@@ -287,7 +284,7 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
   }
 
   private decryptAndRenderDraft = async (encrypted: MimeProccesedMsg): Promise<void> => {
-    const rawBlock = encrypted.blocks.find(b => b.type === 'encryptedMsg' || b.type === 'signedMsg');
+    const rawBlock = encrypted.blocks.find(b => ['encryptedMsg', 'signedMsg', 'pkcs7'].includes(b.type));
     if (!rawBlock) {
       return await this.abortAndRenderReplyMsgComposeTableIfIsReplyBox('!rawBlock');
     }
