@@ -176,6 +176,9 @@ class SmimeEncryptedMessageStrategy implements ITestMsgStrategy {
     expect(mimeMsg.attachments![0].contentType).to.equal('application/pkcs7-mime');
     expect(mimeMsg.attachments![0].filename).to.equal('smime.p7m');
     expect(mimeMsg.attachments![0].size).to.be.greaterThan(300);
+    const msg = new Buf(mimeMsg.attachments![0].content).toRawBytesStr();
+    const p7 = forge.pkcs7.messageFromAsn1(forge.asn1.fromDer(msg));
+    expect(p7.type).to.equal('1.2.840.113549.1.7.3');
   }
 }
 
