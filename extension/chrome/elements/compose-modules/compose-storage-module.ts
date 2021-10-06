@@ -98,7 +98,9 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
       return storedContact.sortedPubkeys;
     }
     // no valid keys found, query synchronously
-    if (!await this.lookupPubkeyFromKeyserversAndUpsertDb(email, name)) {
+    try {
+      await this.lookupPubkeyFromKeyserversAndUpsertDb(email, name);
+    } catch(e) {
       return PUBKEY_LOOKUP_RESULT_FAIL;
     }
     // re-query the storage
@@ -116,47 +118,45 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
    * Note by Tom 2021-08-10: The `fail` situations
    *    should probably be throwing some sort of `PubkeyLookupFailedError` or similar.
    */
-  public lookupPubkeyFromKeyserversAndUpsertDb = async (email: string, name: string | undefined): Promise<boolean> => {
-    if (email) {
-      try {
-        const lookupResult = await this.view.pubLookup.lookupEmail(email);
-        const pubkeys: Key[] = [];
-        for (const pubkey of lookupResult.pubkeys) {
-          const key = await KeyUtil.parse(pubkey);
-          if (!key.usableForEncryption && !key.revoked && !KeyUtil.expired(key)) { // Not to skip expired and revoked keys
-            console.info('Dropping found+parsed key because getEncryptionKeyPacket===null', { for: email, fingerprint: key.id });
-            Ui.toast(`Public Key retrieved for email ${email} with id ${key.id} was ignored because it's not usable for encryption.`, false, 5);
-          } else {
-            pubkeys.push(key);
-          }
-        }
-        // save multiple pubkeys as separate operations
-        // todo: add a convenient method to storage?
-        const updates: ContactUpdate[] = [];
-        if (!pubkeys.length) {
-          if (name) {
-            // update just name
-            updates.push({ name } as ContactUpdate);
-          } else {
-            // No public key found. Returning early, nothing to update in local store below.
-            return true; // no error
-          }
-        }
-        for (const pubkey of pubkeys) {
-          updates.push({ name, pubkey, pubkeyLastCheck: Date.now() });
-        }
-        if (updates.length) {
-          await Promise.all(updates.map(async (update) =>
-            await ContactStore.update(undefined, email, update)));
-        }
-        return true;
-      } catch (e) {
-        if (!ApiErr.isNetErr(e) && !ApiErr.isServerErr(e)) {
-          Catch.reportErr(e);
+  public lookupPubkeyFromKeyserversAndUpsertDb = async (email: string, name: string | undefined): Promise<void> => {
+    if (!email) throw Error("Empty email");
+    try {
+      const lookupResult = await this.view.pubLookup.lookupEmail(email);
+      const pubkeys: Key[] = [];
+      for (const pubkey of lookupResult.pubkeys) {
+        const key = await KeyUtil.parse(pubkey);
+        if (!key.usableForEncryption && !key.revoked && !KeyUtil.expired(key)) { // Not to skip expired and revoked keys
+          console.info('Dropping found+parsed key because getEncryptionKeyPacket===null', { for: email, fingerprint: key.id });
+          Ui.toast(`Public Key retrieved for email ${email} with id ${key.id} was ignored because it's not usable for encryption.`, false, 5);
+        } else {
+          pubkeys.push(key);
         }
       }
+      // save multiple pubkeys as separate operations
+      // todo: add a convenient method to storage?
+      const updates: ContactUpdate[] = [];
+      if (!pubkeys.length) {
+        if (name) {
+          // update just name
+          updates.push({ name } as ContactUpdate);
+        } else {
+          // No public key found. Returning early, nothing to update in local store below.
+          return; // no error
+        }
+      }
+      for (const pubkey of pubkeys) {
+        updates.push({ name, pubkey, pubkeyLastCheck: Date.now() });
+      }
+      if (updates.length) {
+        await Promise.all(updates.map(async (update) =>
+          await ContactStore.update(undefined, email, update)));
+      }
+    } catch (e) {
+      if (!ApiErr.isNetErr(e) && !ApiErr.isServerErr(e)) {
+        Catch.reportErr(e);
+      }
+      throw e;
     }
-    return false;
   }
 
   public checkKeyserverForNewerVersionOfKnownPubkeyIfNeeded = async (
