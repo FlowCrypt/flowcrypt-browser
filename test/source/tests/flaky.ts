@@ -15,7 +15,6 @@ import { Stream } from '../core/stream';
 import { InboxPageRecipe } from './page-recipe/inbox-page-recipe';
 import { TestUrls } from '../browser/test-urls';
 import { OauthPageRecipe } from './page-recipe/oauth-page-recipe';
-import { expectContactsResultEqual, pastePublicKeyManually } from './util';
 import { testConstants } from './tooling/consts';
 
 // tslint:disable:no-blank-lines-func
@@ -126,7 +125,7 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
         const oauthPopup = await browser.newPageTriggeredBy(t, () => composeFrame.waitAndClick('@action-auth-with-contacts-scope'));
         await OauthPageRecipe.google(t, oauthPopup, 'ci.tests.gmail@flowcrypt.test', 'approve');
       }
-      await expectContactsResultEqual(composeFrame, [
+      await ComposePageRecipe.expectContactsResultEqual(composeFrame, [
         'testsearchorder1@flowcrypt.com',
         'testsearchorder2@flowcrypt.com',
         'testsearchorder3@flowcrypt.com',
@@ -141,7 +140,7 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
       // add key + send
       composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
       await ComposePageRecipe.fillMsg(composeFrame, { to: 'testsearchorder3@flowcrypt.com' }, t.title);
-      await pastePublicKeyManually(composeFrame, inboxPage, 'testsearchorder3@flowcrypt.com', testConstants.smimeCert);
+      await ComposePageRecipe.pastePublicKeyManually(composeFrame, inboxPage, 'testsearchorder3@flowcrypt.com', testConstants.smimeCert);
       await composeFrame.waitAndClick('@action-send', { delay: 1 });
       await composeFrame.waitAndClick('.swal2-cancel');
       await composeFrame.waitAndClick('@action-close-new-message');
@@ -149,7 +148,7 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
       // add key
       composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
       await ComposePageRecipe.fillMsg(composeFrame, { to: 'testsearchorder9@flowcrypt.com' }, t.title);
-      await pastePublicKeyManually(composeFrame, inboxPage, 'testsearchorder9@flowcrypt.com', testConstants.smimeCert);
+      await ComposePageRecipe.pastePublicKeyManually(composeFrame, inboxPage, 'testsearchorder9@flowcrypt.com', testConstants.smimeCert);
       await composeFrame.waitAndClick('@action-close-new-message');
       await inboxPage.waitTillGone('@container-new-message');
       // send
@@ -163,7 +162,7 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
       // check that contacts are ordered according to hasPgp and lastUse
       composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
       await composeFrame.type('@input-to', 'testsearchorder');
-      await expectContactsResultEqual(composeFrame, [
+      await ComposePageRecipe.expectContactsResultEqual(composeFrame, [
         'testsearchorder3@flowcrypt.com', // hasPgp + lastUse
         'testsearchorder9@flowcrypt.com', // hasPgp
         'testsearchorder5@flowcrypt.com', // lastUse
