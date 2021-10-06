@@ -261,7 +261,7 @@ export class SmimeKey {
     const emails = SmimeKey.getNormalizedEmailsFromCertificate(certificate);
     const issuerAndSerialNumberAsn1 = SmimeKey.createIssuerAndSerialNumberAsn1(
       forge.pki.distinguishedNameToAsn1(certificate.issuer),
-      forge.util.hexToBytes(certificate.serialNumber));
+      certificate.serialNumber);
     const expiration = SmimeKey.dateToNumber(certificate.validity.notAfter)!;
     const expired = expiration < Date.now();
     const usableIgnoringExpiration = SmimeKey.isEmailCertificate(certificate) && !SmimeKey.isKeyWeak(certificate);
