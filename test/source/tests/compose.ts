@@ -1063,7 +1063,6 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       await settingsPage.close();
       const composePage = await ComposePageRecipe.openStandalone(t, browser, acctEmail);
       await ComposePageRecipe.fillMsg(composePage, { to: 'smime@recipient.com' }, 'send signed S/MIME without attachment', { encrypt: false, sign: true });
-      // await pastePublicKeyManually(composeFrame, inboxPage, 'smime@recipient.com', testConstants.smimeCert);
       await composePage.waitAndClick('@action-send', { delay: 2 });
     }));
 
