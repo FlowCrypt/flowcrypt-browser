@@ -68,7 +68,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
       const fingerprint = await (await settingsPage.read('.good')).split(' ').join('');
       const baseUrl = `chrome/elements/passphrase.htm?acctEmail=${acctEmail}&longids=${fingerprint}&parentTabId=`;
-      let passphrasePage = undefined;
+      let passphrasePage;
       passphrasePage = await browser.newPage(t, baseUrl.concat('&type=sign'));
       expect(await passphrasePage.read('@passphrase-text')).to.equal('Enter FlowCrypt pass phrase to sign email');
       passphrasePage = await browser.newPage(t, baseUrl.concat('&type=message'));
