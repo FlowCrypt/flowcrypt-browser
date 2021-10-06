@@ -203,14 +203,9 @@ export class SmimeKey {
 
   public static getMessageLongids = (msg: SmimeMsg): string[] => {
     return msg.recipients.map(recipient => {
-      const asn1 = forge.asn1.create(
-        forge.asn1.Class.UNIVERSAL, forge.asn1.Type.SEQUENCE, true,
-        [
-          SmimeKey.attributesToDistinguishedNameAsn1(recipient.issuer),
-          // Serial
-          forge.asn1.create(forge.asn1.Class.UNIVERSAL, forge.asn1.Type.INTEGER, false,
-            forge.util.hexToBytes(recipient.serialNumber))
-        ]);
+      const asn1 = SmimeKey.createIssuerAndSerialNumberAsn1(
+        SmimeKey.attributesToDistinguishedNameAsn1(recipient.issuer),
+        recipient.serialNumber);
       const der = forge.asn1.toDer(asn1).getBytes();
       return SmimeKey.getLongIdFromDer(der);
     });
@@ -264,14 +259,9 @@ export class SmimeKey {
     }
     const fingerprint = forge.pki.getPublicKeyFingerprint(certificate.publicKey, { encoding: 'hex' }).toUpperCase();
     const emails = SmimeKey.getNormalizedEmailsFromCertificate(certificate);
-    const issuerAndSerialNumberAsn1 =
-      forge.asn1.create(forge.asn1.Class.UNIVERSAL, forge.asn1.Type.SEQUENCE, true, [
-        // Name
-        forge.pki.distinguishedNameToAsn1(certificate.issuer),
-        // Serial
-        forge.asn1.create(forge.asn1.Class.UNIVERSAL, forge.asn1.Type.INTEGER, false,
-          forge.util.hexToBytes(certificate.serialNumber))
-      ]);
+    const issuerAndSerialNumberAsn1 = SmimeKey.createIssuerAndSerialNumberAsn1(
+      forge.pki.distinguishedNameToAsn1(certificate.issuer),
+      forge.util.hexToBytes(certificate.serialNumber));
     const expiration = SmimeKey.dateToNumber(certificate.validity.notAfter)!;
     const expired = expiration < Date.now();
     const usableIgnoringExpiration = SmimeKey.isEmailCertificate(certificate) && !SmimeKey.isKeyWeak(certificate);
@@ -313,6 +303,19 @@ export class SmimeKey {
       ]);
     }));
   }
+
+  private static createIssuerAndSerialNumberAsn1 = (issuerAsn1: forge.asn1.Asn1, serialNumberHex: string) => {
+    return forge.asn1.create(
+      forge.asn1.Class.UNIVERSAL, forge.asn1.Type.SEQUENCE, true,
+      [
+        // Issuer
+        issuerAsn1,
+        // Serial
+        forge.asn1.create(forge.asn1.Class.UNIVERSAL, forge.asn1.Type.INTEGER, false,
+          forge.util.hexToBytes(serialNumberHex))
+      ]);
+  }
+
   private static getArmoredPrivateKey = (key: Key) => {
     return (key as unknown as { privateKeyArmored: string }).privateKeyArmored;
   }
