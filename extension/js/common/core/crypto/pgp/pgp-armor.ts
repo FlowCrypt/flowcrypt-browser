@@ -91,7 +91,10 @@ export class PgpArmor {
     }
     const utfChunk = new Buf(encrypted.slice(0, 100)).toUtfStr('ignore'); // ignore errors - this may not be utf string, just testing
     if (utfChunk.includes(PgpArmor.headers('pkcs7').begin)) {
-      const p7 = SmimeKey.cryptoMsgPrepareForDecrypt(encrypted); // todo: remove header check from SmimeKey's function?
+      const p7 = SmimeKey.readArmoredPkcs7Message(encrypted);
+      if (p7.type !== '1.2.840.113549.1.7.3') {
+        throw new Error('Not implemented');
+      }
       return { isArmored: true, isCleartext: false, isPkcs7: true, message: p7 };
     }
     const isArmoredEncrypted = utfChunk.includes(PgpArmor.headers('encryptedMsg').begin);

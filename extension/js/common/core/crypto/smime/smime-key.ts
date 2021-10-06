@@ -91,21 +91,9 @@ export class SmimeKey {
     return { data: Buf.fromRawBytesStr(rawString), type: 'smime' };
   }
 
-  // todo: move to a different file and merge with PgpArmor.cryptoMsgPrepareForDecrypt
-  // todo: | PkcsEncryptedData | PkcsSignedData ?
-  public static cryptoMsgPrepareForDecrypt = (encrypted: Uint8Array): forge.pkcs7.PkcsEnvelopedData => {
-    if (!encrypted.length) {
-      throw new Error('Encrypted message could not be parsed because no data was provided');
-    }
-    const utfChunk = new Buf(encrypted.slice(0, 100)).toUtfStr('ignore'); // ignore errors - this may not be utf string, just testing
-    if (!utfChunk.includes(PgpArmor.headers('pkcs7').begin)) {
-      throw new Error('Not implemented'); // todo: not armored? read from DER
-    }
-    const p7 = forge.pkcs7.messageFromPem(new Buf(encrypted).toUtfStr());
-    if (p7.type !== '1.2.840.113549.1.7.3') {
-      throw new Error('Not implemented');
-    }
-    return p7;
+  public static readArmoredPkcs7Message = (encrypted: Uint8Array):
+    forge.pkcs7.PkcsEnvelopedData | forge.pkcs7.PkcsEncryptedData | forge.pkcs7.PkcsSignedData => {
+    return forge.pkcs7.messageFromPem(new Buf(encrypted).toUtfStr());
   }
 
   public static decryptMessage = (p7: forge.pkcs7.PkcsEnvelopedData, key: Key): Uint8Array => {

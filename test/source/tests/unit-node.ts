@@ -1762,8 +1762,9 @@ jA==
         { pubkeys: [publicSmimeKey], data: Buf.fromUtfStr(text), armor: true }) as PgpMsgMethod.EncryptX509Result).data);
       const encryptedMessage = buf.toRawBytesStr();
       expect(encryptedMessage).to.include(PgpArmor.headers('pkcs7').begin);
-      const p7 = SmimeKey.cryptoMsgPrepareForDecrypt(buf);
-      const decrypted = SmimeKey.decryptMessage(p7, privateSmimeKey);
+      const p7 = SmimeKey.readArmoredPkcs7Message(buf);
+      expect(p7.type).to.equal('1.2.840.113549.1.7.3');
+      const decrypted = SmimeKey.decryptMessage(p7 as forge.pkcs7.PkcsEnvelopedData, privateSmimeKey);
       const decryptedMessage = Buf.with(decrypted).toRawBytesStr();
       expect(decryptedMessage).to.equal(text);
       t.pass();
