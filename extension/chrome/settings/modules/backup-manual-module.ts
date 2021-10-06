@@ -55,11 +55,11 @@ export class BackupManualActionModule extends ViewModule<BackupView> {
 
   private actionManualBackupHandler = async () => {
     const primaryKeyToBackup: KeyInfo[] = Array<KeyInfo>();
-    if (this.view.prvKeysToManuallyBackup.length <= 0) {
+    const selected = $('input[type=radio][name=input_backup_choice]:checked').val();
+    if (this.view.prvKeysToManuallyBackup.length <= 0 && (selected === 'inbox' || selected === 'file')) {
       await Ui.modal.error('No keys selected to backup! Please select a key to continue.');
       return;
     }
-    const selected = $('input[type=radio][name=input_backup_choice]:checked').val();
     for (const key of this.view.prvKeysToManuallyBackup) {
       primaryKeyToBackup.push((await KeyStore.get(this.view.acctEmail, key.fingerprints))[0]);
     }
