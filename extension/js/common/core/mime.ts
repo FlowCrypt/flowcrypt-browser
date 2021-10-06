@@ -229,9 +229,9 @@ export class Mime {
     rootNode.setContent(body); // tslint:disable-line:no-unsafe-any
     rootNode.addHeader('Content-Transfer-Encoding', 'base64'); // tslint:disable-line:no-unsafe-any
     rootNode.addHeader('Content-Disposition', 'attachment; filename="smime.p7m"'); // tslint:disable-line:no-unsafe-any
-    let contentDescription = 'S/MIME Encrypted Message'; // todo: check
+    let contentDescription = 'S/MIME Encrypted Message';
     if (type === 'signed-data') {
-      contentDescription = 'S/MIME Signed Message'; // todo: check
+      contentDescription = 'S/MIME Signed Message';
     }
     rootNode.addHeader('Content-Description', contentDescription); // tslint:disable-line:no-unsafe-any
     return rootNode.build(); // tslint:disable-line:no-unsafe-any
