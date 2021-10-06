@@ -68,6 +68,7 @@ export class BackupView extends View {
       $('#button-go-back').css('display', 'none');
       await this.automaticModule.simpleSetupAutoBackupRetryUntilSuccessful();
     } else if (this.action === 'setup_manual') {
+      await this.preparePrvKeysBackupSelection();
       $('#button-go-back').css('display', 'none');
       this.displayBlock('module_manual');
       $('h1').text('Back up your private key');
