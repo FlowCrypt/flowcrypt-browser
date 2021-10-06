@@ -28,6 +28,7 @@ type CreateKeyOpts = {
   usedPgpBefore?: boolean,
   submitPubkey?: boolean,
   enforcedAlgo?: string | boolean,
+  selectKeyAlgo?: string,
   skipForPassphrase?: boolean,
 };
 
@@ -37,13 +38,16 @@ export class SetupPageRecipe extends PageRecipe {
     settingsPage: ControllablePage,
     keyTitle: string,
     backup: 'none' | 'email' | 'file' | 'disabled',
-    { usedPgpBefore = false, submitPubkey = false, enforcedAlgo = false, skipForPassphrase = false, key }: CreateKeyOpts = {},
+    { usedPgpBefore = false, submitPubkey = false, enforcedAlgo = false, selectKeyAlgo = '', skipForPassphrase = false, key }: CreateKeyOpts = {},
     checks: SavePassphraseChecks = {}
   ) => {
     await SetupPageRecipe.createBegin(settingsPage, keyTitle, { key, usedPgpBefore, skipForPassphrase });
     if (enforcedAlgo) {
       expect(await settingsPage.value('@input-step2bmanualcreate-key-type')).to.equal(enforcedAlgo);
       expect(await settingsPage.isDisabled('@input-step2bmanualcreate-key-type')).to.equal(true);
+    }
+    if (selectKeyAlgo) {
+      await settingsPage.selectOption('@input-step2bmanualcreate-key-type', selectKeyAlgo);
     }
     if (backup === 'disabled') { // user not given a backup choice due to NO_PRV_BACKUP OrgRule
       await settingsPage.notPresent('@input-step2bmanualcreate-backup-inbox');
