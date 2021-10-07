@@ -335,22 +335,19 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
 
     ava.default('mail.google.com - plain reply to encrypted and signed messages', testWithBrowser('ci.tests.gmail', async (t, browser) => {
       const gmailPage = await openGmailPage(t, browser, '/FMfcgzGkbDRNgcQxLmkhBCKVSFwkfdvV'); // plain convo
-      await Util.sleep(1);
-      await gmailPage.waitAndClick('[data-tooltip="Reply"]');
+      await gmailPage.waitAndClick('[data-tooltip="Reply"]', { delay: 1 });
       await gotoGmailPage(gmailPage, '/FMfcgzGkbDRNgcPktjdSxpJVhZlZqpTr'); // to go encrypted convo
-      await Util.sleep(1);
-      await gmailPage.waitAndClick('[data-tooltip="Reply"]');
-      await Util.sleep(5);
-      await pageDoesNotHaveSecureReplyContainer(gmailPage);
+      await gmailPage.waitAndClick('[data-tooltip="Reply"]', { delay: 1 });
+      await gmailPage.waitTillGone('.reply_message');
       await gmailPage.waitAll('[data-tooltip^="Send"]'); // The Send button from the Standard reply box
       await gmailPage.waitForContent('.reply_message_evaluated .error_notification', 'The last message was encrypted, but you are composing a reply without encryption.');
       await gmailPage.waitAndClick('[data-tooltip="Secure Reply"]'); // Switch to encrypted reply
-      await Util.sleep(5);
+      await gmailPage.waitAll('.reply_message');
       await pageHasSecureReplyContainer(t, browser, gmailPage, { isReplyPromptAccepted: false });
       await gotoGmailPage(gmailPage, '/FMfcgzGkbDRNpjDdNvCrwzqvXspZZxvh'); // go to signed convo
-      await Util.sleep(1);
-      await gmailPage.waitAndClick('[data-tooltip="Reply"]');
-      await pageDoesNotHaveSecureReplyContainer(gmailPage);
+      await gmailPage.waitAndClick('[data-tooltip="Reply"]', { delay: 1 });
+      await gmailPage.waitTillGone('.reply_message');
+      await gmailPage.waitAll('[data-tooltip^="Send"]'); // The Send button from the Standard reply box
       await gmailPage.notPresent('.reply_message_evaluated .error_notification'); // should not show the warning about switching to encrypted reply
     }));
 
