@@ -13,7 +13,7 @@ import { ViewModule } from '../../../js/common/view-module.js';
 import { ComposeView } from '../compose.js';
 import { KeyStore } from '../../../js/common/platform/store/key-store.js';
 import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
-import { ContactStore, ContactUpdate, PubKeyInfo } from '../../../js/common/platform/store/contact-store.js';
+import { ContactStore, ContactUpdate, PubkeyInfo } from '../../../js/common/platform/store/contact-store.js';
 import { PassphraseStore } from '../../../js/common/platform/store/passphrase-store.js';
 import { Settings } from '../../../js/common/settings.js';
 import { Ui } from '../../../js/common/browser/ui.js';
@@ -75,7 +75,7 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
 
   public lookupPubkeyFromKeyserversThenOptionallyFetchExpiredByFingerprintAndUpsertDb = async (
     email: string, name: string | undefined
-  ): Promise<PubKeyInfo[] | "fail"> => {
+  ): Promise<PubkeyInfo[] | "fail"> => {
     // console.log(`>>>> Looking up in DB: ${email}`);
     const storedContact = await ContactStore.getOneWithAllPubkeys(undefined, email);
     // console.log(">>>> " + (storedContact ? JSON.stringify(storedContact) : 'NOT_FOUND'));
@@ -100,7 +100,7 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
     // no valid keys found, query synchronously
     try {
       await this.lookupPubkeyFromKeyserversAndUpsertDb(email, name);
-    } catch(e) {
+    } catch (e) {
       return PUBKEY_LOOKUP_RESULT_FAIL;
     }
     // re-query the storage
@@ -160,7 +160,7 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
   }
 
   public checkKeyserverForNewerVersionOfKnownPubkeyIfNeeded = async (
-    email: string, pubKeyInfo: PubKeyInfo) => {
+    email: string, pubKeyInfo: PubkeyInfo) => {
     try {
       const lastCheckOverWeekAgoOrNever = !pubKeyInfo.lastCheck ||
         new Date(pubKeyInfo.lastCheck).getTime() < Date.now() - (1000 * 60 * 60 * 24 * 7);

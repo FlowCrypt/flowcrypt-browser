@@ -21,7 +21,7 @@ export type Pubkey = {
   expiresOn: number | null;
 };
 
-export type PubKeyInfo = {
+export type PubkeyInfo = {
   pubkey: Key,
   revoked: boolean,
   lastCheck?: number | undefined

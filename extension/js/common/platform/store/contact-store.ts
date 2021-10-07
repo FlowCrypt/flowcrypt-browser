@@ -64,7 +64,7 @@ export type ContactUpdate = {
 
 type DbContactFilter = { hasPgp?: boolean, substring?: string, limit?: number };
 
-export type PubKeyInfo = {
+export type PubkeyInfo = {
   pubkey: Key,
   // IMPORTANT NOTE:
   // It might look like we can format PubkeyInfo[] out of Key[], but that's not good,
@@ -78,9 +78,9 @@ export type PubKeyInfo = {
   lastCheck?: number | undefined
 };
 
-export type EmailWithSortedPubKeys = {
+export type EmailWithSortedPubkeys = {
   info: Email,
-  sortedPubkeys: PubKeyInfo[]
+  sortedPubkeys: PubkeyInfo[]
 };
 
 const x509postfix = "-X509";
@@ -281,7 +281,7 @@ export class ContactStore extends AbstractStore {
   }
 
   public static getOneWithAllPubkeys = async (db: IDBDatabase | undefined, email: string):
-    Promise<EmailWithSortedPubKeys | undefined> => {
+    Promise<EmailWithSortedPubkeys | undefined> => {
     if (!db) { // relay op through background process
       // tslint:disable-next-line:no-unsafe-any
       return await BrowserMsg.send.bg.await.db({ f: 'getOneWithAllPubkeys', args: [email] });
@@ -449,24 +449,24 @@ export class ContactStore extends AbstractStore {
     });
   }
 
-  public static sortPubKeyInfos = (pubKeyInfos: PubKeyInfo[]): PubKeyInfo[] => {
+  public static sortPubkeyInfos = (pubKeyInfos: PubkeyInfo[]): PubkeyInfo[] => {
     return pubKeyInfos.sort((a, b) => ContactStore.getSortValue(b) - ContactStore.getSortValue(a));
   }
 
-  public static getSortValue = (pubinfo: PubKeyInfo): number => {
+  public static getSortValue = (pubinfo: PubkeyInfo): number => {
     const expirationSortValue = (typeof pubinfo.pubkey.expiration === 'undefined') ? Infinity : pubinfo.pubkey.expiration!;
     // sort non-revoked first, then non-expired
     return (pubinfo.revoked || pubinfo.pubkey.revoked) ? -Infinity : expirationSortValue;
   }
 
-  private static sortKeys = async (pubkeys: Pubkey[], revocations: Revocation[]): Promise<PubKeyInfo[]> => {
+  private static sortKeys = async (pubkeys: Pubkey[], revocations: Revocation[]): Promise<PubkeyInfo[]> => {
     // parse the keys
     const pubKeyInfos = await Promise.all(pubkeys.map(async (pubkey) => {
       const pk = await KeyUtil.parse(pubkey.armoredKey);
       const revoked = pk.revoked || revocations.some(r => ContactStore.equalFingerprints(pk.id, r.fingerprint));
       return { lastCheck: pubkey.lastCheck || undefined, pubkey: pk, revoked };
     }));
-    return ContactStore.sortPubKeyInfos(pubKeyInfos);
+    return ContactStore.sortPubkeyInfos(pubKeyInfos);
   }
 
   private static getPubkeyId = ({ id, type }: { id: string, type: string }): string => {
