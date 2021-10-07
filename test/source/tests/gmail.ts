@@ -61,6 +61,14 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
 
     const pageHasSecureDraft = async (t: AvaContext, browser: BrowserHandle, url: string, expectedContent?: string) => {
       const secureDraft = await browser.newPage(t, url);
+      if (expectedContent === 'reply draft') {
+        console.log('reply draft');
+        console.log(await secureDraft.page.screenshot({ encoding: "base64" }));
+      }
+      if (expectedContent === 'offline reply draft') {
+        console.log('offline reply draft');
+        console.log(await secureDraft.page.screenshot({ encoding: "base64" }));
+      }
       if (expectedContent) {
         await secureDraft.waitForContent('@input-body', expectedContent);
       } else {
@@ -295,15 +303,12 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       await gmailPage.waitAndClick('@secure-reply-button');
       await createSecureDraft(t, browser, gmailPage, 'reply draft');
       await gmailPage.page.reload();
-      await gmailPage.waitAll('.reply_message');
       const urls = await gmailPage.getFramesUrls(['/chrome/elements/compose.htm']);
       expect(urls.length).to.equal(1);
-      console.log('#', await gmailPage.page.screenshot({ encoding: "base64" }));
       let replyBox = await pageHasSecureDraft(t, browser, urls[0], 'reply draft');
       await replyBox.close();
       await createSecureDraft(t, browser, gmailPage, 'offline reply draft', { offline: true });
       await gmailPage.page.reload();
-      console.log('@', await gmailPage.page.screenshot({ encoding: "base64" }));
       replyBox = await pageHasSecureDraft(t, browser, urls[0], 'offline reply draft');
       await replyBox.waitAndClick('@action-send');
       await replyBox.waitTillGone('@action-send');
