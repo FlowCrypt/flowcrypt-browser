@@ -858,21 +858,21 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
         recipient.status = RecipientStatus.HAS_PGP;
         $(el).addClass('has_pgp');
         Xss.sanitizePrepend(el, '<img class="lock-icon" src="/img/svgs/locked-icon.svg" />');
-        $(el).attr('title', 'Does use encryption\n' + this.publicKeysToRenderedText(sortedPubkeyInfos));
+        $(el).attr('title', 'Does use encryption\n\n' + this.formatPubkeysHintText(sortedPubkeyInfos));
       } else if (firstKeyInfo.revoked) {
         recipient.status = RecipientStatus.REVOKED;
         $(el).addClass("revoked");
         Xss.sanitizePrepend(el, '<img src="/img/svgs/revoked.svg" class="revoked-or-expired">');
         $(el).attr('title', 'Does use encryption but their public key is revoked. ' +
-          'You should ask them to send you an updated public key.\n' +
-          this.publicKeysToRenderedText(sortedPubkeyInfos));
+          'You should ask them to send you an updated public key.\n\n' +
+          this.formatPubkeysHintText(sortedPubkeyInfos));
       } else {
         recipient.status = RecipientStatus.EXPIRED;
         $(el).addClass("expired");
         Xss.sanitizePrepend(el, '<img src="/img/svgs/expired-timer.svg" class="revoked-or-expired">');
         $(el).attr('title', 'Does use encryption but their public key is expired. ' +
-          'You should ask them to send you an updated public key.\n' +
-          this.publicKeysToRenderedText(sortedPubkeyInfos));
+          'You should ask them to send you an updated public key.\n\n' +
+          this.formatPubkeysHintText(sortedPubkeyInfos));
       }
     } else {
       recipient.status = RecipientStatus.NO_PGP;
@@ -884,7 +884,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     this.view.myPubkeyModule.reevaluateShouldAttachOrNot();
   }
 
-  private publicKeysToRenderedText = (pubKeyInfos: PubkeyInfo[]): string => {
+  private formatPubkeysHintText = (pubKeyInfos: PubkeyInfo[]): string => {
     const valid: PubkeyInfo[] = [];
     const expired: PubkeyInfo[] = [];
     const revoked: PubkeyInfo[] = [];
@@ -901,21 +901,27 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     if (valid.length) {
       res += 'Valid public key fingerprints:';
       for (const pubKeyInfo of valid) {
-        res += '\n' + this.recipientKeyIdText(pubKeyInfo);
+        if (pubKeyInfo.pubkey.id) {
+          res += '\n' + this.formatPubkeyId(pubKeyInfo);
+        }
       }
     }
     if (expired.length) {
       if (res.length) res += '\n\n';
       res += 'Expired public key fingerprints:';
       for (const pubKeyInfo of valid) {
-        res += '\n' + this.recipientKeyIdText(pubKeyInfo);
+        if (pubKeyInfo.pubkey.id) {
+          res += '\n' + this.formatPubkeyId(pubKeyInfo);
+        }
       }
     }
     if (revoked.length) {
       if (res.length) res += '\n\n';
       res += 'Revoked public key fingerprints:';
       for (const pubKeyInfo of revoked) {
-        res += '\n' + this.recipientKeyIdText(pubKeyInfo);
+        if (pubKeyInfo.pubkey.id) {
+          res += '\n' + this.formatPubkeyId(pubKeyInfo);
+        }
       }
     }
     return res;
@@ -939,11 +945,8 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     await this.reEvaluateRecipients(failedRecipients);
   }
 
-  private recipientKeyIdText = (pubKeyInfo: PubkeyInfo): string => {
-    if (pubKeyInfo.pubkey.id) {
-      return `\n\nRecipient public key fingerprint:\n${Str.spaced(pubKeyInfo.pubkey.id)}`;
-    }
-    return '';
+  private formatPubkeyId = (pubKeyInfo: PubkeyInfo): string => {
+    return `${Str.spaced(pubKeyInfo.pubkey.id)} (${pubKeyInfo.pubkey.type})`;
   }
 
   private generateRecipientId = (): string => {
