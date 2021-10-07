@@ -19,6 +19,8 @@ import { OauthPageRecipe } from './page-recipe/oauth-page-recipe';
  * All tests that use mail.google.com or have to operate without a Gmail API mock should go here
  */
 
+export type GmailCategory = 'inbox' | 'sent' | 'drafts' | 'spam' | 'trash';
+
 // tslint:disable:no-blank-lines-func
 
 export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: TestWithBrowser) => {
@@ -82,8 +84,8 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       return gmailPage;
     };
 
-    const gotoGmailPage = async (gmailPage: ControllablePage, path: string) => {
-      const url = TestUrls.gmail(0, path);
+    const gotoGmailPage = async (gmailPage: ControllablePage, path: string, category: GmailCategory = 'inbox') => {
+      const url = TestUrls.gmail(0, path, category);
       await gmailPage.goto(url);
     };
 
@@ -316,10 +318,9 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       await gmailPage.waitAndClick('@action-secure-compose', { delay: 1 });
       await createSecureDraft(t, browser, gmailPage, 'compose draft');
       await gmailPage.page.reload();
+      await gotoGmailPage(gmailPage, '', 'drafts'); // to go drafts section
       // open new compose window and saved draft
       await gmailPage.waitAndClick('@action-secure-compose', { delay: 1 });
-      await gmailPage.waitAndFocus('body');
-      await gmailPage.waitAndClick('[data-tooltip="Drafts"]');
       await gmailPage.waitAndClick('//*[text()="Draft"]');
       await gmailPage.waitAndClick('[class^="open_draft_"]');
       // veryfy that there are two compose windows: new compose window and secure draft

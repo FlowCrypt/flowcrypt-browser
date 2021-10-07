@@ -1,6 +1,7 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
 import { Config } from '../util';
+import { GmailCategory } from '../tests/gmail';
 
 export class TestUrls {
 
@@ -16,8 +17,8 @@ export class TestUrls {
     return TestUrls.extension(`chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}`);
   }
 
-  public static gmail = (acctLoginIndex = 0, urlEnd = '') => {
-    return `https://mail.google.com/mail/u/${acctLoginIndex}/#inbox${urlEnd}`;
+  public static gmail = (acctLoginIndex = 0, urlEnd = '', category: GmailCategory = 'inbox') => {
+    return `https://mail.google.com/mail/u/${acctLoginIndex}/#${category}${urlEnd}`;
   }
 
   public static googleChat = (acctLoginIndex = 0) => {
