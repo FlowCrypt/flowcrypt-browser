@@ -1,7 +1,6 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
 import * as ava from 'ava';
-import { Page } from 'puppeteer';
 
 import { BrowserHandle, Controllable, ControllablePage, ControllableFrame } from './../browser';
 import { Config, Util } from './../util';
@@ -583,6 +582,25 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         }
       }));
 
+    ava.default('compose - loading drafts - PKCS#7 encrypted draft', testWithBrowser(undefined, async (t, browser) => {
+      const acctEmail = 'flowcrypt.test.key.imported@gmail.com';
+      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
+      await SetupPageRecipe.setupSmimeAccount(settingsPage, {
+        title: 's/mime pkcs12 unprotected key',
+        filePath: 'test/samples/smime/human-unprotected-PKCS12.p12',
+        armored: null, // tslint:disable-line:no-null-keyword
+        passphrase: 'test pp to encrypt unprotected key',
+        longid: null // tslint:disable-line:no-null-keyword
+      });
+      await settingsPage.close();
+      const appendUrl = 'draftId=17c041fd27858466';
+      const composePage = await ComposePageRecipe.openStandalone(t, browser, acctEmail, { appendUrl });
+      await expectRecipientElements(composePage, { to: ['smime@recipient.com'] });
+      const subjectElem = await composePage.waitAny('@input-subject');
+      expect(await PageRecipe.getElementPropertyJson(subjectElem, 'value')).to.equal('Test S/MIME Encrypted Draft');
+      expect((await composePage.read('@input-body')).trim()).to.equal('test text');
+    }));
+
     ava.default('compose - loading drafts - reply', testWithBrowser('compatibility', async (t, browser) => {
       const appendUrl = 'threadId=16cfa9001baaac0a&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___&replyMsgId=16cfa9001baaac0a&draftId=draft-3';
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl, hasReplyPrompt: true, skipClickPropt: true });
@@ -659,7 +677,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       expect(await composePage.isDisabled('#toggle_send_options')).to.be.false;
     }));
 
-    ava.default('compose - load contacts through API', testWithBrowser('ci.tests.gmail', async (t, browser) => {
+    ava.default.skip('compose - load contacts through API', testWithBrowser('ci.tests.gmail', async (t, browser) => {
       let composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
       await composePage.waitAndClick('@action-show-container-cc-bcc-buttons');
       await composePage.type('@input-to', 'contact');
@@ -835,19 +853,6 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       const body = await composePage.waitAny('@input-body');
       await composePage.waitAll('#input_text img');
       expect(await body.$eval('#input_text img', el => el.getAttribute('src'))).to.eq(imgBase64);
-    }));
-
-    ava.default('compose - saving and rendering a draft when offline', testWithBrowser('compatibility', async (t, browser) => {
-      let composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
-      await (composePage.target as Page).setOfflineMode(true); // go offline mode
-      await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, 'offline test', {});
-      expect(await composePage.read('@action-send')).to.eq('Re-enter recipient..'); // ensure offline mode
-      await composePage.type('@input-body', `This is a test of saving a draft when offline`);
-      await ComposePageRecipe.waitWhenDraftIsSavedLocally(composePage);
-      await composePage.close();
-      composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
-      expect(await composePage.value('@input-subject')).to.match(/offline test/);
-      await composePage.waitForContent('@input-body', 'This is a test of saving a draft when offline');
     }));
 
     ava.default('compose - RTL subject', testWithBrowser('compatibility', async (t, browser) => {
@@ -1044,6 +1049,22 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
     ava.todo('compose - reply - new gmail threadId fmt');
 
     ava.todo('compose - reply - skip click prompt');
+
+    ava.default('send signed S/MIME message', testWithBrowser(undefined, async (t, browser) => {
+      const acctEmail = 'flowcrypt.test.key.imported@gmail.com';
+      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
+      await SetupPageRecipe.setupSmimeAccount(settingsPage, {
+        title: 's/mime pkcs12 unprotected key',
+        filePath: 'test/samples/smime/human-unprotected-PKCS12.p12',
+        armored: null, // tslint:disable-line:no-null-keyword
+        passphrase: 'test pp to encrypt unprotected key',
+        longid: null // tslint:disable-line:no-null-keyword
+      });
+      await settingsPage.close();
+      const composePage = await ComposePageRecipe.openStandalone(t, browser, acctEmail);
+      await ComposePageRecipe.fillMsg(composePage, { to: 'smime@recipient.com' }, 'send signed S/MIME without attachment', { encrypt: false, sign: true });
+      await composePage.waitAndClick('@action-send', { delay: 2 });
+    }));
 
     ava.default('send with single S/MIME cert', testWithBrowser('ci.tests.gmail', async (t, browser) => {
       const inboxPage = await browser.newPage(t, TestUrls.extensionInbox('ci.tests.gmail@flowcrypt.test'));
@@ -1269,13 +1290,38 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       await SetupPageRecipe.manualEnter(settingsPage, 'flowcrypt.test.key.used.pgp', { submitPubkey: false, usedPgpBefore: false },
         { isSavePassphraseChecked: false, isSavePassphraseHidden: false });
       const msgPwd = 'super hard password for the message';
-      const subject = 'PWD encrypted message with FES';
+      const subject = 'PWD encrypted message with FES - access token';
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'user@standardsubdomainfes.test:8001');
-      await ComposePageRecipe.fillMsg(composePage, { to: 'test@email.com' }, subject);
+      await ComposePageRecipe.fillMsg(composePage, { to: 'to@example.com', bcc: 'bcc@example.com' }, subject);
       const fileInput = await composePage.target.$('input[type=file]');
       await fileInput!.uploadFile('test/samples/small.txt');
       await ComposePageRecipe.sendAndClose(composePage, { password: msgPwd });
-      // this test is using PwdEncryptedMessageWithFesTestStrategy to check sent result based on subject "PWD encrypted message with flowcrypt.com/api"
+      // this test is using PwdEncryptedMessageWithFesAccessTokenTestStrategy to check sent result based on subject "PWD encrypted message with flowcrypt.com/api"
+      // also see '/api/v1/message' in fes-endpoints.ts mock
+    }));
+
+    /**
+     * You need the following line in /etc/hosts:
+     * 127.0.0.1    fes.disablefesaccesstoken.test
+     */
+    ava.default('user@disablefesaccesstoken.test:8001 - DISABLE_FES_ACCESS_TOKEN - PWD encrypted message with FES web portal', testWithBrowser(undefined, async (t, browser) => {
+      const acct = 'user@disablefesaccesstoken.test:8001'; // added port to trick extension into calling the mock
+      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
+      await SetupPageRecipe.manualEnter(settingsPage, 'flowcrypt.test.key.used.pgp', { submitPubkey: false, usedPgpBefore: false },
+        { isSavePassphraseChecked: false, isSavePassphraseHidden: false });
+      const debugFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-show-local-store-contents', ['debug_api.htm']);
+      await debugFrame.waitForContent('@container-pre', 'fes.disablefesaccesstoken.test:8001'); // FES url on standard subdomain
+      await debugFrame.waitForContent('@container-pre', 'DISABLE_FES_ACCESS_TOKEN'); // org rules from FES
+      await SettingsPageRecipe.closeDialog(settingsPage);
+      const msgPwd = 'super hard password for the message';
+      const subject = 'PWD encrypted message with FES - ID TOKEN';
+      const composePage = await ComposePageRecipe.openStandalone(t, browser, 'user@disablefesaccesstoken.test:8001');
+      await ComposePageRecipe.fillMsg(composePage, { to: 'to@example.com', bcc: 'bcc@example.com' }, subject);
+      const fileInput = await composePage.target.$('input[type=file]');
+      await fileInput!.uploadFile('test/samples/small.txt');
+      await ComposePageRecipe.sendAndClose(composePage, { password: msgPwd });
+      // this test is using PwdEncryptedMessageWithFesIdTokenTestStrategy to check sent result based on subject "PWD encrypted message with flowcrypt.com/api"
+      // also see '/api/v1/message' in fes-endpoints.ts mock
     }));
 
   }

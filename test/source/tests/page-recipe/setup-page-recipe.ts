@@ -1,6 +1,6 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
-import { Config, Util } from '../../util';
+import { Config, TestKeyInfoWithFilepath, Util } from '../../util';
 
 import { ControllablePage } from '../../browser';
 import { PageRecipe } from './abstract-page-recipe';
@@ -19,7 +19,7 @@ type ManualEnterOpts = {
   enforceAttesterSubmitOrgRule?: boolean,
   noPubSubmitRule?: boolean,
   fillOnly?: boolean,
-  key?: { title: string, passphrase: string, armored: string | null, longid: string | null, filePath?: string }
+  key?: TestKeyInfoWithFilepath
 };
 
 type CreateKeyOpts = {
@@ -27,6 +27,7 @@ type CreateKeyOpts = {
   usedPgpBefore?: boolean,
   submitPubkey?: boolean,
   enforcedAlgo?: string | boolean,
+  selectKeyAlgo?: string,
 };
 
 export class SetupPageRecipe extends PageRecipe {
@@ -35,13 +36,16 @@ export class SetupPageRecipe extends PageRecipe {
     settingsPage: ControllablePage,
     keyTitle: string,
     backup: 'none' | 'email' | 'file' | 'disabled',
-    { usedPgpBefore = false, submitPubkey = false, enforcedAlgo = false, key }: CreateKeyOpts = {},
+    { usedPgpBefore = false, submitPubkey = false, enforcedAlgo = false, selectKeyAlgo = '', key }: CreateKeyOpts = {},
     checks: SavePassphraseChecks = {}
   ) => {
     await SetupPageRecipe.createBegin(settingsPage, keyTitle, { key, usedPgpBefore });
     if (enforcedAlgo) {
       expect(await settingsPage.value('@input-step2bmanualcreate-key-type')).to.equal(enforcedAlgo);
       expect(await settingsPage.isDisabled('@input-step2bmanualcreate-key-type')).to.equal(true);
+    }
+    if (selectKeyAlgo) {
+      await settingsPage.selectOption('@input-step2bmanualcreate-key-type', selectKeyAlgo);
     }
     if (backup === 'disabled') { // user not given a backup choice due to NO_PRV_BACKUP OrgRule
       await settingsPage.notPresent('@input-step2bmanualcreate-backup-inbox');
@@ -261,6 +265,15 @@ export class SetupPageRecipe extends PageRecipe {
       await SettingsPageRecipe.ready(settingsPage);
     }
   }
+
+  public static setupSmimeAccount = async (settingsPage: ControllablePage, key: TestKeyInfoWithFilepath) => {
+    await SetupPageRecipe.manualEnter(settingsPage, key.title, { fillOnly: true, submitPubkey: false, usedPgpBefore: false, key });
+    await settingsPage.waitAndClick('@input-step2bmanualenter-save', { delay: 1 });
+    await Util.sleep(1);
+    await settingsPage.waitAndRespondToModal('confirm', 'confirm', 'Using S/MIME as the only key on account is experimental.');
+    await settingsPage.waitAndClick('@action-step4done-account-settings', { delay: 1 });
+    await SettingsPageRecipe.ready(settingsPage);
+  };
 
   private static createBegin = async (settingsPage: ControllablePage, keyTitle: string, { key, usedPgpBefore = false }: { key?: { passphrase: string }, usedPgpBefore?: boolean } = {}) => {
     const k = key || Config.key(keyTitle);

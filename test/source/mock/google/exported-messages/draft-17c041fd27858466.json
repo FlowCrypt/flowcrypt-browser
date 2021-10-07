@@ -1,0 +1,83 @@
+{
+  "acctEmail": "flowcrypt.test.key.imported@gmail.com",
+  "full": {
+    "id": "17c041fd27858466",
+    "threadId": "17c041fd27858466",
+    "labelIds": [
+      "DRAFT"
+    ],
+    "snippet": "[flowcrypt:link:draft_compose:mockfakedraftsave] -----BEGIN PKCS7----- MIICDQYJKoZIhvcNAQcDoIIB/jCCAfoCAQAxggGzMIIBrwIBADCBljCBgTELMAkG A1UEBhMCSVQxEDAOBgNVBAgMB0JlcmdhbW8xGTAXBgNVBAcMEFBvbnRlIFNhbiBQ",
+    "payload": {
+      "partId": "",
+      "mimeType": "multipart/mixed",
+      "filename": "",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "multipart/mixed; boundary=\"----sinikael-?=_1-16321562277590.8883651737565523\""
+        },
+        {
+          "name": "From",
+          "value": "flowcrypt.test.key.imported@gmail.com"
+        },
+        {
+          "name": "To",
+          "value": "smime@recipient.com"
+        },
+        {
+          "name": "Subject",
+          "value": "Test S/MIME Encrypted Draft"
+        },
+        {
+          "name": "Date",
+          "value": "Mon, 20 Sep 2021 16:43:47 +0000"
+        },
+        {
+          "name": "MIME-Version",
+          "value": "1.0"
+        }
+      ],
+      "body": {
+        "size": 0
+      },
+      "parts": [
+        {
+          "partId": "0",
+          "mimeType": "text/plain",
+          "filename": "",
+          "headers": [
+            {
+              "name": "Content-Type",
+              "value": "text/plain"
+            },
+            {
+              "name": "Content-Transfer-Encoding",
+              "value": "quoted-printable"
+            }
+          ],
+          "body": {
+            "size": 812,
+            "data": "W2Zsb3djcnlwdDpsaW5rOmRyYWZ0X2NvbXBvc2U6bW9ja2Zha2VkcmFmdHNhdmVdCgotLS0tLUJFR0lOIFBLQ1M3LS0tLS0KTUlJQ0RRWUpLb1pJaHZjTkFRY0RvSUlCL2pDQ0Fmb0NBUUF4Z2dHek1JSUJyd0lCQURDQmxqQ0JnVEVMTUFrRwpBMVVFQmhNQ1NWUXhFREFPQmdOVkJBZ01CMEpsY21kaGJXOHhHVEFYQmdOVkJBY01FRkJ2Ym5SbElGTmhiaUJRCmFXVjBjbTh4RnpBVkJnTlZCQW9NRGtGamRHRnNhWE1nVXk1d0xrRXVNU3d3S2dZRFZRUUREQ05CWTNSaGJHbHoKSUVOc2FXVnVkQ0JCZFhSb1pXNTBhV05oZEdsdmJpQkRRU0JITXdJUUlWbDBxNFg0M3JaVjB1RjJ4SUpUNlRBTgpCZ2txaGtpRzl3MEJBUUVGQUFTQ0FRQkh0YzF2ZUZPclVXTGV3SlIvREZMWFNxcHl2SEdCM2U0aGQyYzhTNjBjCk1UL0dnSlRMOUZNU0pKU1Y4UWVLUUFQNW1HRnJvWkUzWWZKaWtsVWRkUDVtOWhwZzhOUzJidTltR05qQTZpcFgKMmZ2QmsvZ25nVWthL0R5ZGVMdGpOTm1WQkhCMFkwd3VXQ0JhYW12d3lLVURXYmV3Z2t6ZUw4K2U3c28rVkVZUwpkL1MzamViR01LY0RrdjZ0NHdNdkkvWDB3aDhQU3JqWElaa1RxWk40RDhsbTVseHVmbHQ4b1dKbmpUZVY2d21RCmU3TE5hODEvdGZhU09TUlkyZ210aXhUckFPczVuM0Z3eGEwVjNJM0F5MWl0UkM2TWVMN1dBTk5ST2Z0WWVCSUsKUlQ0aDRrSjhVSFB6SUYxUE1iRjI2M09mSmJtaG1oTVpLUTExM0prZEJoVG5NRDRHQ1NxR1NJYjNEUUVIQVRBZApCZ2xnaGtnQlpRTUVBU29FRUhuaUM2TG5KdkZoK0VqbjlXeWVDaHVnRWdRUWJZTkZRcHcvQzRQc0lUQ2U3M2tRCndRPT0KLS0tLS1FTkQgUEtDUzctLS0tLQo="
+          }
+        }
+      ]
+    },
+    "sizeEstimate": 1573,
+    "historyId": "55298",
+    "internalDate": "1632156227000"
+  },
+  "attachments": {},
+  "raw": {
+    "id": "17c041fd27858466",
+    "threadId": "17c041fd27858466",
+    "labelIds": [
+      "DRAFT",
+      "INBOX"
+    ],
+    "snippet": "[flowcrypt:link:draft_compose:mockfakedraftsave] -----BEGIN PKCS7----- MIICDQYJKoZIhvcNAQcDoIIB/jCCAfoCAQAxggGzMIIBrwIBADCBljCBgTELMAkG A1UEBhMCSVQxEDAOBgNVBAgMB0JlcmdhbW8xGTAXBgNVBAcMEFBvbnRlIFNhbiBQ",
+    "sizeEstimate": 1573,
+    "raw": "Q29udGVudC1UeXBlOiBtdWx0aXBhcnQvbWl4ZWQ7CiBib3VuZGFyeT0iLS0tLXNpbmlrYWVsLT89XzEtMTYzMjE1NjIyNzc1OTAuODg4MzY1MTczNzU2NTUyMyIKRnJvbTogZmxvd2NyeXB0LnRlc3Qua2V5LmltcG9ydGVkQGdtYWlsLmNvbQpUbzogc21pbWVAcmVjaXBpZW50LmNvbQpTdWJqZWN0OiBUZXN0IFMvTUlNRSBFbmNyeXB0ZWQgRHJhZnQKRGF0ZTogTW9uLCAyMCBTZXAgMjAyMSAxNjo0Mzo0NyArMDAwMApNZXNzYWdlLUlkOiA8MTYzMjE1NjIyNzc3MS1mYzBmNTRiYi0wZTFhYmQ2MS03MjEwNjcwMEBnbWFpbC5jb20+Ck1JTUUtVmVyc2lvbjogMS4wCgotLS0tLS1zaW5pa2FlbC0/PV8xLTE2MzIxNTYyMjc3NTkwLjg4ODM2NTE3Mzc1NjU1MjMKQ29udGVudC1UeXBlOiB0ZXh0L3BsYWluCkNvbnRlbnQtVHJhbnNmZXItRW5jb2Rpbmc6IHF1b3RlZC1wcmludGFibGUKCltmbG93Y3J5cHQ6bGluazpkcmFmdF9jb21wb3NlOm1vY2tmYWtlZHJhZnRzYXZlXQoKLS0tLS1CRUdJTiBQS0NTNy0tLS0tCk1JSUNEUVlKS29aSWh2Y05BUWNEb0lJQi9qQ0NBZm9DQVFBeGdnR3pNSUlCcndJQkFEQ0JsakNCZ1RFTE1Ba0cKQTFVRUJoTUNTVlF4RURBT0JnTlZCQWdNQjBKbGNtZGhiVzh4R1RBWEJnTlZCQWNNRUZCdmJuUmxJRk5oYmlCUQphV1YwY204eEZ6QVZCZ05WQkFvTURrRmpkR0ZzYVhNZ1V5NXdMa0V1TVN3d0tnWURWUVFERENOQlkzUmhiR2x6CklFTnNhV1Z1ZENCQmRYUm9aVzUwYVdOaGRHbHZiaUJEUVNCSE13SVFJVmwwcTRYNDNyWlYwdUYyeElKVDZUQU4KQmdrcWhraUc5dzBCQVFFRkFBU0NBUUJIdGMxdmVGT3JVV0xld0pSL0RGTFhTcXB5dkhHQjNlNGhkMmM4UzYwYwpNVC9HZ0pUTDlGTVNKSlNWOFFlS1FBUDVtR0Zyb1pFM1lmSmlrbFVkZFA1bTlocGc4TlMyYnU5bUdOakE2aXBYCjJmdkJrL2duZ1VrYS9EeWRlTHRqTk5tVkJIQjBZMHd1V0NCYWFtdnd5S1VEV2Jld2dremVMOCtlN3NvK1ZFWVMKZC9TM2plYkdNS2NEa3Y2dDR3TXZJL1gwd2g4UFNyalhJWmtUcVpONEQ4bG01bHh1Zmx0OG9XSm5qVGVWNndtUQplN0xOYTgxL3RmYVNPU1JZMmdtdGl4VHJBT3M1bjNGd3hhMFYzSTNBeTFpdFJDNk1lTDdXQU5OUk9mdFllQklLClJUNGg0a0o4VUhQeklGMVBNYkYyNjNPZkpibWhtaE1aS1ExMTNKa2RCaFRuTUQ0R0NTcUdTSWIzRFFFSEFUQWQKQmdsZ2hrZ0JaUU1FQVNvRUVIbmlDNkxuSnZGaCtFam45V3llQ2h1Z0VnUVFiWU5GUXB3L0M0UHNJVENlNzNrUQp3UT0zRD0zRAotLS0tLUVORCBQS0NTNy0tLS0tCgotLS0tLS1zaW5pa2FlbC0/PV8xLTE2MzIxNTYyMjc3NTkwLjg4ODM2NTE3Mzc1NjU1MjMtLQoK",
+    "historyId": "55298",
+    "internalDate": "1632156227000"
+  }
+}

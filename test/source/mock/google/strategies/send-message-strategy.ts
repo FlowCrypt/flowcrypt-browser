@@ -1,5 +1,6 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
+import * as forge from 'node-forge';
 import { AddressObject, ParsedMail, StructuredHeader } from 'mailparser';
 import { ITestMsgStrategy, UnsuportableStrategyError } from './strategy-base.js';
 import { Buf } from '../../../core/buf';
@@ -33,13 +34,36 @@ class PwdEncryptedMessageWithFlowCryptComApiTestStrategy implements ITestMsgStra
   }
 }
 
-class PwdEncryptedMessageWithFesTestStrategy implements ITestMsgStrategy {
+class PwdEncryptedMessageWithFesAccessTokenTestStrategy implements ITestMsgStrategy {
   public test = async (mimeMsg: ParsedMail) => {
     const senderEmail = Str.parseEmail(mimeMsg.from!.text).email;
+    const expectedSenderEmail = 'user@standardsubdomainfes.test:8001';
+    if (senderEmail !== expectedSenderEmail) {
+      throw new HttpClientErr(`Unexpected sender email ${senderEmail}, expecting ${expectedSenderEmail}`);
+    }
     if (!mimeMsg.text?.includes(`${senderEmail} has sent you a password-encrypted email`)) {
       throw new HttpClientErr(`Error checking sent text in:\n\n${mimeMsg.text}`);
     }
     if (!mimeMsg.text?.includes('http://fes.standardsubdomainfes.test:8001/message/FES-MOCK-MESSAGE-ID')) {
+      throw new HttpClientErr(`Error: cannot find pwd encrypted FES link in:\n\n${mimeMsg.text}`);
+    }
+    if (!mimeMsg.text?.includes('Follow this link to open it')) {
+      throw new HttpClientErr(`Error: cannot find pwd encrypted open link prompt in ${mimeMsg.text}`);
+    }
+  }
+}
+
+class PwdEncryptedMessageWithFesIdTokenTestStrategy implements ITestMsgStrategy {
+  public test = async (mimeMsg: ParsedMail) => {
+    const senderEmail = Str.parseEmail(mimeMsg.from!.text).email;
+    const expectedSenderEmail = 'user@disablefesaccesstoken.test:8001';
+    if (senderEmail !== expectedSenderEmail) {
+      throw new HttpClientErr(`Unexpected sender email ${senderEmail}, expecting ${expectedSenderEmail}`);
+    }
+    if (!mimeMsg.text?.includes(`${senderEmail} has sent you a password-encrypted email`)) {
+      throw new HttpClientErr(`Error checking sent text in:\n\n${mimeMsg.text}`);
+    }
+    if (!mimeMsg.text?.includes('http://fes.disablefesaccesstoken.test:8001/message/FES-MOCK-MESSAGE-ID')) {
       throw new HttpClientErr(`Error: cannot find pwd encrypted FES link in:\n\n${mimeMsg.text}`);
     }
     if (!mimeMsg.text?.includes('Follow this link to open it')) {
@@ -152,9 +176,30 @@ class SmimeEncryptedMessageStrategy implements ITestMsgStrategy {
     expect(mimeMsg.attachments![0].contentType).to.equal('application/pkcs7-mime');
     expect(mimeMsg.attachments![0].filename).to.equal('smime.p7m');
     expect(mimeMsg.attachments![0].size).to.be.greaterThan(300);
+    const msg = new Buf(mimeMsg.attachments![0].content).toRawBytesStr();
+    const p7 = forge.pkcs7.messageFromAsn1(forge.asn1.fromDer(msg));
+    expect(p7.type).to.equal('1.2.840.113549.1.7.3');
   }
 }
 
+class SmimeSignedMessageStrategy implements ITestMsgStrategy {
+  public test = async (mimeMsg: ParsedMail) => {
+    expect((mimeMsg.headers.get('content-type') as StructuredHeader).value).to.equal('application/pkcs7-mime');
+    expect((mimeMsg.headers.get('content-type') as StructuredHeader).params.name).to.equal('smime.p7m');
+    expect((mimeMsg.headers.get('content-type') as StructuredHeader).params['smime-type']).to.equal('signed-data');
+    expect(mimeMsg.headers.get('content-transfer-encoding')).to.equal('base64');
+    expect((mimeMsg.headers.get('content-disposition') as StructuredHeader).value).to.equal('attachment');
+    expect((mimeMsg.headers.get('content-disposition') as StructuredHeader).params.filename).to.equal('smime.p7m');
+    expect(mimeMsg.headers.get('content-description')).to.equal('S/MIME Signed Message');
+    expect(mimeMsg.attachments!.length).to.equal(1);
+    expect(mimeMsg.attachments![0].contentType).to.equal('application/pkcs7-mime');
+    expect(mimeMsg.attachments![0].filename).to.equal('smime.p7m');
+    expect(mimeMsg.attachments![0].size).to.be.greaterThan(300);
+    const msg = new Buf(mimeMsg.attachments![0].content).toRawBytesStr();
+    const p7 = forge.pkcs7.messageFromAsn1(forge.asn1.fromDer(msg));
+    expect(p7.type).to.equal('1.2.840.113549.1.7.2');
+  }
+}
 export class TestBySubjectStrategyContext {
   private strategy: ITestMsgStrategy;
 
@@ -171,8 +216,10 @@ export class TestBySubjectStrategyContext {
       this.strategy = new MessageWithFooterTestStrategy();
     } else if (subject.includes('PWD encrypted message with flowcrypt.com/api')) {
       this.strategy = new PwdEncryptedMessageWithFlowCryptComApiTestStrategy();
-    } else if (subject.includes('PWD encrypted message with FES')) {
-      this.strategy = new PwdEncryptedMessageWithFesTestStrategy();
+    } else if (subject.includes('PWD encrypted message with FES - access token')) {
+      this.strategy = new PwdEncryptedMessageWithFesAccessTokenTestStrategy();
+    } else if (subject.includes('PWD encrypted message with FES - ID TOKEN')) {
+      this.strategy = new PwdEncryptedMessageWithFesIdTokenTestStrategy();
     } else if (subject.includes('Message With Image')) {
       this.strategy = new SaveMessageInStorageStrategy();
     } else if (subject.includes('Message With Test Text')) {
@@ -183,6 +230,8 @@ export class TestBySubjectStrategyContext {
       this.strategy = new SmimeEncryptedMessageStrategy();
     } else if (subject.includes('send with S/MIME attachment')) {
       this.strategy = new SmimeEncryptedMessageStrategy();
+    } else if (subject.includes('send signed S/MIME without attachment')) {
+      this.strategy = new SmimeSignedMessageStrategy();
     } else {
       throw new UnsuportableStrategyError(`There isn't any strategy for this subject: ${subject}`);
     }

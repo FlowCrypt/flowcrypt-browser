@@ -45,7 +45,7 @@ export const equals = (a: string | Uint8Array, b: string | Uint8Array) => {
 };
 
 
-export let defineUnitNodeTests = (testVariant: TestVariant) => {
+export const defineUnitNodeTests = (testVariant: TestVariant) => {
 
   if (testVariant !== 'CONSUMER-LIVE-GMAIL') {
 
@@ -643,7 +643,7 @@ ${testConstants.smimeCert}`), { instanceOf: Error, message: `Invalid PEM formatt
     ava.default('[unit][KeyUtil.parse] issuerAndSerialNumber of S/MIME certificate is constructed according to PKCS#7', async t => {
       const key = await KeyUtil.parse(testConstants.smimeCert);
       const buf = Buf.with((await MsgUtil.encryptMessage(
-        { pubkeys: [key], data: Buf.fromUtfStr('anything'), armor: true }) as PgpMsgMethod.EncryptX509Result).data);
+        { pubkeys: [key], data: Buf.fromUtfStr('anything'), armor: false }) as PgpMsgMethod.EncryptX509Result).data);
       const raw = buf.toRawBytesStr();
       expect(raw).to.include(key.issuerAndSerialNumber);
       t.pass();
@@ -1750,6 +1750,23 @@ jA==
       expect(parsed.isPrivate).to.equal(true);
       expect(parsed.isPublic).to.equal(false);
       expect(parsed.fullyDecrypted).to.equal(false);
+      t.pass();
+    });
+
+    ava.default('[unit][SmimeKey.decryptMessage] decrypts an armored S/MIME PKCS#7 message', async t => {
+      const p8 = readFileSync("test/samples/smime/human-unprotected-pem.txt", 'utf8');
+      const privateSmimeKey = await KeyUtil.parse(p8);
+      const publicSmimeKey = await KeyUtil.asPublicKey(privateSmimeKey);
+      const text = 'this is a text to be encrypted';
+      const buf = Buf.with((await MsgUtil.encryptMessage(
+        { pubkeys: [publicSmimeKey], data: Buf.fromUtfStr(text), armor: true }) as PgpMsgMethod.EncryptX509Result).data);
+      const encryptedMessage = buf.toRawBytesStr();
+      expect(encryptedMessage).to.include(PgpArmor.headers('pkcs7').begin);
+      const p7 = SmimeKey.readArmoredPkcs7Message(buf);
+      expect(p7.type).to.equal('1.2.840.113549.1.7.3');
+      const decrypted = SmimeKey.decryptMessage(p7 as forge.pkcs7.PkcsEnvelopedData, privateSmimeKey);
+      const decryptedMessage = Buf.with(decrypted).toRawBytesStr();
+      expect(decryptedMessage).to.equal(text);
       t.pass();
     });
 

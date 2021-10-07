@@ -141,11 +141,24 @@ export class GoogleAuth {
         const uuid = Api.randomFortyHexChars(); // for flowcrypt.com, if used. When FES is used, the access token is given to client.
         const potentialFes = new EnterpriseServer(authRes.acctEmail);
         if (await potentialFes.isFesInstalledAndAvailable()) {
+          // on FES, pulling OrgRules is not authenticated, and it contains info about how to
+          //   authenticate when doing other calls (use access token or OIDC directly)
           await AcctStore.set(authRes.acctEmail, { fesUrl: potentialFes.url });
+          const acctServer = new AccountServer(authRes.acctEmail);
+          // fetch and store OrgRules (not authenticated)
+          await acctServer.accountGetAndUpdateLocalStore({ account: authRes.acctEmail, uuid });
+          // depending on DISABLE_FES_ACCESS_TOKEN, either fetch and store access token, or the ID token itself
+          await acctServer.loginWithOpenid(authRes.acctEmail, uuid, authRes.id_token);
+        } else {
+          // eventually this branch will be dropped once a public FES instance is run for these customers
+          // when using flowcrypt.com/api, pulling OrgRules is authenticated, therefore have
+          //   to retrieve access token first (which is the only way to authenticate other calls)
+          const acctServer = new AccountServer(authRes.acctEmail);
+          // get access token from flowcrypt.com/api
+          await acctServer.loginWithOpenid(authRes.acctEmail, uuid, authRes.id_token);
+          // fetch and store OrgRules (authenticated)
+          await acctServer.accountGetAndUpdateLocalStore({ account: authRes.acctEmail, uuid }); // stores OrgRules
         }
-        const acctServer = new AccountServer(authRes.acctEmail);
-        await acctServer.loginWithOpenid(authRes.acctEmail, uuid, authRes.id_token); // may be calling flowcrypt.com or FES
-        await acctServer.accountGetAndUpdateLocalStore({ account: authRes.acctEmail, uuid }); // stores OrgRules and subscription
       } catch (e) {
         if (GoogleAuth.isFesUnreachableErr(e, authRes.acctEmail)) {
           const error = `Cannot reach your company's FlowCrypt Enterprise Server (FES). Contact human@flowcrypt.com when unsure. (${String(e)})`;

@@ -1,6 +1,6 @@
 {
   "name": "flowcrypt-browser",
-  "version": "8.1.4",
+  "version": "8.1.5",
   "description": "Simple end-to-end encryption to secure email and attachments on Google.",
   "resolutions": {
     "graceful-fs": "4.1.13"
@@ -86,7 +86,7 @@
     "type": "git",
     "url": "git+https://github.com/FlowCrypt/flowcrypt-browser.git"
   },
-  "author": "FlowCrypt Limited",
+  "author": "FlowCrypt a.s.",
   "license": "SEE LICENSE IN <LICENSE>",
   "bugs": {
     "url": "https://github.com/FlowCrypt/flowcrypt-browser/issues"
