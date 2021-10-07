@@ -50,7 +50,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
         await (composeBox.target as Page).setOfflineMode(true); // go offline mode
       }
       await Util.sleep(3); // the draft isn't being saved if start typing without this delay
-      await composeBox.type('@input-body', content);
+      await composeBox.type('@input-body', content, true);
       if (params.offline) {
         await ComposePageRecipe.waitWhenDraftIsSavedLocally(composeBox);
       } else {
@@ -291,9 +291,6 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
 
     ava.default('mail.google.com - secure reply btn, reply draft', testWithBrowser('ci.tests.gmail', async (t, browser) => {
       const gmailPage = await openGmailPage(t, browser, '/');
-      const settingsPage = await browser.newPage(t, TestUrls.extensionSettings());
-      await BrowserRecipe.deleteAllDraftsInGmailAccount(settingsPage);
-      await settingsPage.close();
       await gotoGmailPage(gmailPage, '/FMfcgzGkbDRNgcPktjdSxpJVhZlZqpTr'); // to go encrypted convo
       // Gmail has 100 emails per thread limit, so if there are 98 deleted messages + 1 initial message,
       // the draft number 100 won't be saved. Therefore, we need to delete forever trashed messages from this thread.
