@@ -849,8 +849,8 @@ jLwe8W9IMt765T5x5oux9MmPDXF05xHfm4qfH/BMO3a802x5u2gJjJjuknrFdgXY
       const parsed1 = await KeyUtil.parse(key1.private);
       const parsed2 = await KeyUtil.parse(key2.private);
       const kisWithPp: ExtendedKeyInfo[] = [ // supply both key1 and key2 for decrypt
-        { ... await KeyUtil.keyInfoObj(parsed1), type: parsed1.type, passphrase },
-        { ... await KeyUtil.keyInfoObj(parsed2), type: parsed2.type, passphrase },
+        { ... await KeyUtil.typedKeyInfoObj(parsed1), passphrase },
+        { ... await KeyUtil.typedKeyInfoObj(parsed2), passphrase },
       ];
       // we are testing a private method here because the outcome of this method is not directly testable from the
       //   public method that uses it. It only makes the public method faster, which is hard to test.
@@ -936,7 +936,7 @@ jLwe8W9IMt765T5x5oux9MmPDXF05xHfm4qfH/BMO3a802x5u2gJjJjuknrFdgXY
       const pubkeys = [await KeyUtil.parse(justPrimaryPub)];
       const encrypted = await MsgUtil.encryptMessage({ pubkeys, data, armor: true }) as PgpMsgMethod.EncryptPgpArmorResult;
       const parsed = await KeyUtil.parse(prvEncryptForSubkeyOnlyProtected);
-      const kisWithPp: ExtendedKeyInfo[] = [{ ... await KeyUtil.keyInfoObj(parsed), type: parsed.type, passphrase }];
+      const kisWithPp: ExtendedKeyInfo[] = [{ ... await KeyUtil.typedKeyInfoObj(parsed), type: parsed.type, passphrase }];
       const decrypted = await MsgUtil.decryptMessage({ kisWithPp, encryptedData: encrypted.data });
       // todo - later we'll have an org rule for ignoring this, and then it will be expected to pass as follows:
       // expect(decrypted.success).to.equal(true);

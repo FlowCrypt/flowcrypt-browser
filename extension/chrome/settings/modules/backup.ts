@@ -16,7 +16,7 @@ import { BackupAutomaticModule } from './backup-automatic-module.js';
 import { Lang } from '../../../js/common/lang.js';
 import { AcctStore, EmailProvider } from '../../../js/common/platform/store/acct-store.js';
 import { KeyStore } from '../../../js/common/platform/store/key-store.js';
-import { ExtendedKeyInfo, KeyIdentity, KeyUtil } from '../../../js/common/core/crypto/key.js';
+import { KeyIdentity, KeyUtil, TypedKeyInfo } from '../../../js/common/core/crypto/key.js';
 
 export class BackupView extends View {
 
@@ -107,52 +107,55 @@ export class BackupView extends View {
     this.manualModule.setHandlers();
   }
 
-  private addKeyToBackup = (prvKeyIdentity: KeyIdentity) => {
-    this.prvKeysToManuallyBackup.push(prvKeyIdentity);
-  }
-
-  private removeKeyToBackup = (fingerprints: string[]) => {
-    this.prvKeysToManuallyBackup.splice(this.prvKeysToManuallyBackup.findIndex(prvIdentity => prvIdentity.fingerprints === fingerprints), 1);
-  }
-  private preparePrvKeysBackupSelection = async () => {
-    const primaryKeys = await KeyStore.getAllWithOptionalPassPhrase(this.acctEmail);
-    if (primaryKeys.length > 1) {
-      await this.renderPrvKeysBackupSelection(primaryKeys);
-    } else {
-      this.addKeyToBackup({ 'email': String(primaryKeys[0].emails), 'fingerprints': primaryKeys[0].fingerprints });
+  private addKeyToBackup = (keyIdentity: KeyIdentity) => {
+    if (!this.prvKeysToManuallyBackup.some(prvIdentity => KeyUtil.identityEquals(prvIdentity, keyIdentity))) {
+      this.prvKeysToManuallyBackup.push(keyIdentity);
     }
   }
 
-  private renderPrvKeysBackupSelection = async (primaryKeys: ExtendedKeyInfo[]) => {
-    for (const primaryKi of primaryKeys) {
-      const email = Xss.escape(String(primaryKi.emails![0]));
-      const fingerprints = primaryKi.fingerprints;
-      const keyType = (await KeyUtil.parse(primaryKi.private)).type;
+  private removeKeyToBackup = (keyIdentity: KeyIdentity) => {
+    this.prvKeysToManuallyBackup.splice(this.prvKeysToManuallyBackup.findIndex(prvIdentity => KeyUtil.identityEquals(prvIdentity, keyIdentity)), 1);
+  }
+
+  private preparePrvKeysBackupSelection = async () => {
+    const primaryKeys = await KeyStore.getTypedKeyInfos(this.acctEmail);
+    if (primaryKeys.length > 1) {
+      await this.renderPrvKeysBackupSelection(primaryKeys);
+    } else if (primaryKeys.length === 1 && primaryKeys[0].type === 'openpgp') {
+      this.addKeyToBackup({ id: primaryKeys[0].id, type: primaryKeys[0].type });
+    }
+  }
+
+  private renderPrvKeysBackupSelection = async (primaryKeys: TypedKeyInfo[]) => {
+    for (const ki of primaryKeys) {
+      const email = Xss.escape(String(ki.emails![0]));
       const dom = `
       <div class="mb-20">
         <div class="details">
           <label>
             <p class="m-0">
-            <input class="input_prvkey_backup_checkbox" type="checkbox" data-emails="${email}" data-fingerprints="${fingerprints}" ${keyType === 'x509' ? 'disabled' : 'checked'} />
+            <input class="input_prvkey_backup_checkbox" type="checkbox" data-type="${ki.type}" data-id="${ki.id}" ${ki.type === 'openpgp' ? 'checked' : 'disabled'} />
             ${email}
             </p>
-            <p class="m-0 prv_fingerprint"><span>${keyType} - ${Str.spaced(fingerprints[0])}</span></p>
+            <p class="m-0 prv_fingerprint"><span>${ki.type} - ${Str.spaced(ki.fingerprints[0])}</span></p>
           </label>
         </div>
       </div>
       `.trim();
       $('.key_backup_selection').append(dom); // xss-escaped
-      if (keyType !== 'x509') {
-        this.addKeyToBackup({ email, fingerprints });
+      if (ki.type === 'openpgp') {
+        this.addKeyToBackup({ type: ki.type, id: ki.id });
       }
     }
     $('.input_prvkey_backup_checkbox').click((event) => {
-      const email = String($(event.target).data('emails')).trim();
-      const fingerprints = String($(event.target).data('fingerprints')).split(',');
-      if ($(event.target).prop('checked') && !this.prvKeysToManuallyBackup.includes({ email, fingerprints })) {
-        this.addKeyToBackup({ email, fingerprints });
-      } else {
-        this.removeKeyToBackup(fingerprints);
+      const type = String($(event.target).data('type')).trim();
+      if (type === 'openpgp') {
+        const id = String($(event.target).data('id'));
+        if ($(event.target).prop('checked')) {
+          this.addKeyToBackup({ type, id });
+        } else {
+          this.removeKeyToBackup({ type, id });
+        }
       }
     });
     $('#key_backup_selection_container').show();

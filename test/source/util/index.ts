@@ -74,7 +74,7 @@ export class Config {
     return await Promise.all(Config._secrets.keys
       .filter(key => key.armored && titles.includes(key.title)).map(async key => {
         const parsed = await KeyUtil.parse(key.armored!);
-        return { ...await KeyUtil.keyInfoObj(parsed), type: parsed.type, passphrase: key.passphrase };
+        return { ...await KeyUtil.typedKeyInfoObj(parsed), passphrase: key.passphrase };
       }));
   }
 

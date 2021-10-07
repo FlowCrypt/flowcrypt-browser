@@ -18,9 +18,7 @@ import { MsgBlock } from '../msg-block.js';
  * all dates are expressed as number of milliseconds since Unix Epoch.
  * This is what `Date.now()` returns and `new Date(x)` accepts.
  */
-export interface Key {
-  type: 'openpgp' | 'x509';
-  id: string; // a fingerprint of the primary key in OpenPGP, and similarly a fingerprint of the actual cryptographic key (eg RSA fingerprint) in S/MIME
+export interface Key extends KeyIdentity {
   allIds: string[]; // a list of fingerprints, including those for subkeys
   created: number;
   revoked: boolean;
@@ -70,15 +68,15 @@ export interface KeyInfo {
 }
 
 export interface KeyIdentity {
-  id?: string,
-  type?: 'openpgp' | 'x509'
-  email: string,
-  fingerprints: string[]
+  id: string, // a fingerprint of the primary key in OpenPGP, and similarly a fingerprint of the actual cryptographic key (eg RSA fingerprint) in S/MIME
+  type: 'openpgp' | 'x509'
 }
 
-export interface ExtendedKeyInfo extends KeyInfo {
+export interface TypedKeyInfo extends KeyInfo, KeyIdentity {
+}
+
+export interface ExtendedKeyInfo extends TypedKeyInfo {
   passphrase?: string;
-  type: 'openpgp' | 'x509'
 }
 
 export type KeyAlgo = 'curve25519' | 'rsa2048' | 'rsa3072' | 'rsa4096';
@@ -88,6 +86,10 @@ export type PrvPacket = (OpenPGP.packet.SecretKey | OpenPGP.packet.SecretSubkey)
 export class UnexpectedKeyTypeError extends Error { }
 
 export class KeyUtil {
+
+  public static identityEquals = (keyIdentity1: KeyIdentity, keyIdentity2: KeyIdentity) => {
+    return keyIdentity1.id === keyIdentity2.id && keyIdentity1.type === keyIdentity2.type;
+  }
 
   public static isWithoutSelfCertifications = async (key: Key) => {
     // all non-OpenPGP keys are automatically considered to be not
@@ -363,6 +365,10 @@ export class KeyUtil {
       emails: prv.emails,
       fingerprints: prv.allIds,
     };
+  }
+
+  public static typedKeyInfoObj = async (prv: Key): Promise<TypedKeyInfo> => {
+    return { ...await KeyUtil.keyInfoObj(prv), id: prv.id, type: prv.type };
   }
 
   public static getPubkeyLongids = (pubkey: Key): string[] => {

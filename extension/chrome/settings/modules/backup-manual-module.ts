@@ -8,7 +8,7 @@ import { BackupView } from './backup.js';
 import { Attachment } from '../../../js/common/core/attachment.js';
 import { SendableMsg } from '../../../js/common/api/email-provider/sendable-msg.js';
 import { GMAIL_RECOVERY_EMAIL_SUBJECTS } from '../../../js/common/core/const.js';
-import { KeyInfo, KeyUtil, ExtendedKeyInfo } from '../../../js/common/core/crypto/key.js';
+import { KeyInfo, KeyUtil } from '../../../js/common/core/crypto/key.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { ApiErr } from '../../../js/common/api/shared/api-error.js';
 import { BrowserMsg, Bm } from '../../../js/common/browser/browser-msg.js';
@@ -54,25 +54,22 @@ export class BackupManualActionModule extends ViewModule<BackupView> {
   }
 
   private actionManualBackupHandler = async () => {
-    const primaryKeyToBackup: KeyInfo[] = Array<KeyInfo>();
     const selected = $('input[type=radio][name=input_backup_choice]:checked').val();
     if (this.view.prvKeysToManuallyBackup.length <= 0 && (selected === 'inbox' || selected === 'file')) {
       await Ui.modal.error('No keys selected to backup! Please select a key to continue.');
       return;
     }
-    for (const key of this.view.prvKeysToManuallyBackup) {
-      primaryKeyToBackup.push((await KeyStore.get(this.view.acctEmail, key.fingerprints))[0]);
-    }
-    for (const primaryKi of primaryKeyToBackup) {
-      if (! await this.isPrivateKeyEncrypted((primaryKi as KeyInfo))) {
+    const kinfos = await KeyStore.getTypedKeyInfos(this.view.acctEmail, this.view.prvKeysToManuallyBackup);
+    for (const primaryKi of kinfos) {
+      if (! await this.isPrivateKeyEncrypted(primaryKi)) {
         await Ui.modal.error('Sorry, cannot back up private key because it\'s not protected with a pass phrase.');
         return;
       }
     }
     if (selected === 'inbox') {
-      await this.backupOnEmailProviderAndUpdateUi(primaryKeyToBackup as ExtendedKeyInfo[]);
+      await this.backupOnEmailProviderAndUpdateUi(kinfos);
     } else if (selected === 'file') {
-      await this.backupAsFile(primaryKeyToBackup as ExtendedKeyInfo[]);
+      await this.backupAsFile(kinfos);
     } else if (selected === 'print') {
       await this.backupByBrint();
     } else {
@@ -84,7 +81,7 @@ export class BackupManualActionModule extends ViewModule<BackupView> {
     return new Attachment({ name: `flowcrypt-backup-${this.view.acctEmail.replace(/[^A-Za-z0-9]+/g, '')}.asc`, type: 'application/pgp-keys', data: Buf.fromUtfStr(armoredKey) });
   }
 
-  private backupOnEmailProviderAndUpdateUi = async (primaryKeys: ExtendedKeyInfo[]) => {
+  private backupOnEmailProviderAndUpdateUi = async (primaryKeys: KeyInfo[]) => {
     // todo - identify currently use primary and its fingerprint to encrypt the backup using it.
     const pp = await PassphraseStore.get(this.view.acctEmail, primaryKeys[0].fingerprints[0]);
     if (!this.view.parentTabId) {
@@ -128,7 +125,7 @@ export class BackupManualActionModule extends ViewModule<BackupView> {
     await this.view.renderBackupDone();
   }
 
-  private backupAsFile = async (primaryKeys: ExtendedKeyInfo[]) => { // todo - add a non-encrypted download option
+  private backupAsFile = async (primaryKeys: KeyInfo[]) => { // todo - add a non-encrypted download option
     const prvKeysToBackup: Array<string> = [];
     for (const primaryKi of primaryKeys) {
       prvKeysToBackup.push(primaryKi.private);
