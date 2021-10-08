@@ -49,7 +49,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       if (params.offline) {
         await (composeBox.target as Page).setOfflineMode(true); // go offline mode
       }
-      await Util.sleep(3); // the draft isn't being saved if start typing without this delay
+      await Util.sleep(4); // the draft isn't being saved if start typing without this delay
       await composeBox.type('@input-body', content, true);
       if (params.offline) {
         await ComposePageRecipe.waitWhenDraftIsSavedLocally(composeBox);
@@ -268,7 +268,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       let urls = await gmailPage.getFramesUrls(['/chrome/elements/compose.htm'], { sleep: 1 });
       // compose draft 2 should be first in list as drafts are sorted by date descending
       const draft = await pageHasSecureDraft(t, browser, urls[0], 'compose draft 2');
-      await Util.sleep(3); // the draft isn't being saved if start typing without this delay
+      await Util.sleep(4); // the draft isn't being saved if start typing without this delay
       await draft.type('@input-body', 'trigger saving a draft to the cloud', true);
       await ComposePageRecipe.waitWhenDraftIsSaved(draft);
       await draft.close();
