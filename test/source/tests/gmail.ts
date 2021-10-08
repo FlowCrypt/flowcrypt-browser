@@ -44,7 +44,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
     };
 
     const createSecureDraft = async (t: AvaContext, browser: BrowserHandle, gmailPage: ControllablePage, content: string, params: { offline: boolean } = { offline: false }) => {
-      const urls = await gmailPage.getFramesUrls(['/chrome/elements/compose.htm']);
+      const urls = await gmailPage.getFramesUrls(['/chrome/elements/compose.htm'], { sleep: 1 });
       const composeBox = await browser.newPage(t, urls[0]);
       if (params.offline) {
         await (composeBox.target as Page).setOfflineMode(true); // go offline mode
@@ -56,20 +56,11 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       } else {
         await ComposePageRecipe.waitWhenDraftIsSaved(composeBox);
       }
-      await Util.sleep(3); // the draft isn't being saved sometimes in CI without this delay
       await composeBox.close();
     };
 
     const pageHasSecureDraft = async (t: AvaContext, browser: BrowserHandle, url: string, expectedContent?: string) => {
       const secureDraft = await browser.newPage(t, url);
-      // if (expectedContent === 'reply draft') {
-      //   console.log('reply draft');
-      //   console.log(await secureDraft.page.screenshot({ encoding: "base64" }));
-      // }
-      // if (expectedContent === 'offline reply draft') {
-      //   console.log('offline reply draft');
-      //   console.log(await secureDraft.page.screenshot({ encoding: "base64" }));
-      // }
       if (expectedContent) {
         await secureDraft.waitForContent('@input-body', expectedContent);
       } else {
