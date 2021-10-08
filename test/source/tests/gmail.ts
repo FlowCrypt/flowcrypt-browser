@@ -62,14 +62,14 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
 
     const pageHasSecureDraft = async (t: AvaContext, browser: BrowserHandle, url: string, expectedContent?: string) => {
       const secureDraft = await browser.newPage(t, url);
-      if (expectedContent === 'reply draft') {
-        console.log('reply draft');
-        console.log(await secureDraft.page.screenshot({ encoding: "base64" }));
-      }
-      if (expectedContent === 'offline reply draft') {
-        console.log('offline reply draft');
-        console.log(await secureDraft.page.screenshot({ encoding: "base64" }));
-      }
+      // if (expectedContent === 'reply draft') {
+      //   console.log('reply draft');
+      //   console.log(await secureDraft.page.screenshot({ encoding: "base64" }));
+      // }
+      // if (expectedContent === 'offline reply draft') {
+      //   console.log('offline reply draft');
+      //   console.log(await secureDraft.page.screenshot({ encoding: "base64" }));
+      // }
       if (expectedContent) {
         await secureDraft.waitForContent('@input-body', expectedContent);
       } else {
