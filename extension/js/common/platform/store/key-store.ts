@@ -52,7 +52,7 @@ export class KeyStore extends AbstractStore {
 
   public static getAllWithOptionalPassPhrase = async (acctEmail: string): Promise<ExtendedKeyInfo[]> => {
     const keys = await KeyStore.getTypedKeyInfos(acctEmail);
-    return await Promise.all(keys.map(async (ki) => { return { ...ki, passphrase: await PassphraseStore.get(acctEmail, ki.fingerprints[0]) }; }));
+    return await Promise.all(keys.map(async (ki) => { return { ...ki, passphrase: await PassphraseStore.getByKeyIdentity(acctEmail, ki) }; }));
   }
 
   public static add = async (acctEmail: string, newKey: string | Key) => {

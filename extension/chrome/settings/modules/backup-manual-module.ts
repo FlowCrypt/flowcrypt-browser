@@ -8,13 +8,13 @@ import { BackupView } from './backup.js';
 import { Attachment } from '../../../js/common/core/attachment.js';
 import { SendableMsg } from '../../../js/common/api/email-provider/sendable-msg.js';
 import { GMAIL_RECOVERY_EMAIL_SUBJECTS } from '../../../js/common/core/const.js';
-import { KeyInfo, KeyUtil } from '../../../js/common/core/crypto/key.js';
+import { ExtendedKeyInfo, KeyInfo, KeyUtil, TypedKeyInfo } from '../../../js/common/core/crypto/key.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { ApiErr } from '../../../js/common/api/shared/api-error.js';
 import { BrowserMsg, Bm } from '../../../js/common/browser/browser-msg.js';
 import { Catch } from '../../../js/common/platform/catch.js';
 import { Browser } from '../../../js/common/browser/browser.js';
-import { Url, PromiseCancellation } from '../../../js/common/core/common.js';
+import { Url, PromiseCancellation, Value } from '../../../js/common/core/common.js';
 import { Settings } from '../../../js/common/settings.js';
 import { Buf } from '../../../js/common/core/buf.js';
 import { PassphraseStore } from '../../../js/common/platform/store/passphrase-store.js';
@@ -81,34 +81,40 @@ export class BackupManualActionModule extends ViewModule<BackupView> {
     return new Attachment({ name: `flowcrypt-backup-${this.view.acctEmail.replace(/[^A-Za-z0-9]+/g, '')}.asc`, type: 'application/pgp-keys', data: Buf.fromUtfStr(armoredKey) });
   }
 
-  private backupOnEmailProviderAndUpdateUi = async (kinfos: KeyInfo[]) => {
+  private backupOnEmailProviderAndUpdateUi = async (kinfos: TypedKeyInfo[]) => {
     // todo - identify currently use primary and its fingerprint to encrypt the backup using it.
-    const pp = await PassphraseStore.get(this.view.acctEmail, kinfos[0].fingerprints[0]);
+    const kisWithPp = await Promise.all(kinfos.map(async (ki) => { return { ...ki, passphrase: await PassphraseStore.getByKeyIdentity(this.view.acctEmail, ki) }; }));
     if (!this.view.parentTabId) {
       await Ui.modal.error(`Missing parentTabId. Please restart your browser and try again.`);
       return;
     }
-    const prvKeysToBackup = [];
-    for (const ki of kinfos) {
-      if (!pp) {
-        BrowserMsg.send.passphraseDialog(this.view.parentTabId, { type: 'backup', longids: [ki.longid] });
-        if (! await PassphraseStore.waitUntilPassphraseChanged(this.view.acctEmail, [ki.longid], 1000, this.ppChangedPromiseCancellation)) {
-          return;
-        }
-        await this.backupOnEmailProviderAndUpdateUi(kinfos);
+    const kisMissingPp = kisWithPp.filter(ki => !ki.passphrase);
+    if (kisMissingPp.length) {
+      // todo: try any of known passphrases?
+      const longids = kisMissingPp.map(ki => ki.longid);
+      BrowserMsg.send.passphraseDialog(this.view.parentTabId, { type: 'backup', longids });
+      if (! await PassphraseStore.waitUntilPassphraseChanged(this.view.acctEmail, longids, 1000, this.ppChangedPromiseCancellation)) {
         return;
       }
-      if (!this.isPassPhraseStrongEnough(ki, pp)) {
-        await Ui.modal.warning('Your key is not protected with strong pass phrase.\n\nYou should change your pass phrase.');
-        window.location.href = Url.create('/chrome/settings/modules/change_passphrase.htm', { acctEmail: this.view.acctEmail, parentTabId: this.view.parentTabId });
-        return;
-      }
-      prvKeysToBackup.push(ki.private);
+      await this.backupOnEmailProviderAndUpdateUi(kinfos);
+      return;
+    }
+    if (kisWithPp.some(ki => !this.isPassPhraseStrongEnough(ki))) {
+      await Ui.modal.warning('Your key is not protected with strong pass phrase.\n\nYou should change your pass phrase.');
+      window.location.href = Url.create('/chrome/settings/modules/change_passphrase.htm', { acctEmail: this.view.acctEmail, parentTabId: this.view.parentTabId });
+      return;
+    }
+    const passphrases = Value.arr.unique(kisWithPp.map(ki => ki.passphrase));
+    if (passphrases.length !== 1) {
+      // todo -- re-encode with one of the passphrases ?
+      await Ui.modal.warning('The keys selected for backup are protected with different passphrases.\n\nThis is currently not implemented.');
+      window.location.href = Url.create('/chrome/settings/modules/change_passphrase.htm', { acctEmail: this.view.acctEmail, parentTabId: this.view.parentTabId });
+      return;
     }
     const origBtnText = this.proceedBtn.text();
     Xss.sanitizeRender(this.proceedBtn, Ui.spinner('white'));
     try {
-      await this.doBackupOnEmailProvider(prvKeysToBackup.join('\n'));
+      await this.doBackupOnEmailProvider(kisWithPp.map(ki => ki.private).join('\n'));
     } catch (e) {
       if (ApiErr.isNetErr(e)) {
         return await Ui.modal.warning('Need internet connection to finish. Please click the button again to retry.');
@@ -125,7 +131,7 @@ export class BackupManualActionModule extends ViewModule<BackupView> {
     await this.view.renderBackupDone();
   }
 
-  private backupAsFile = async (kinfos: KeyInfo[]) => { // todo - add a non-encrypted download option
+  private backupAsFile = async (kinfos: TypedKeyInfo[]) => { // todo - add a non-encrypted download option
     const prvKeysToBackup = kinfos.map(ki => ki.private);
     const attachment = this.asBackupFile(prvKeysToBackup.join('\n'));
     Browser.saveToDownloads(attachment);
@@ -141,12 +147,12 @@ export class BackupManualActionModule extends ViewModule<BackupView> {
     await this.view.renderBackupDone(false);
   }
 
-  private isPassPhraseStrongEnough = async (ki: KeyInfo, passphrase: string) => {
+  private isPassPhraseStrongEnough = async (ki: ExtendedKeyInfo) => {
     const prv = await KeyUtil.parse(ki.private);
     if (!prv.fullyEncrypted) {
       return false;
     }
-    if (!passphrase) {
+    if (!ki.passphrase) {
       const pp = prompt('Please enter your pass phrase:');
       if (!pp) {
         return false;
@@ -155,9 +161,9 @@ export class BackupManualActionModule extends ViewModule<BackupView> {
         await Ui.modal.warning('Pass phrase did not match, please try again.');
         return false;
       }
-      passphrase = pp;
+      ki.passphrase = pp;
     }
-    if (Settings.evalPasswordStrength(passphrase).word.pass === true) {
+    if (Settings.evalPasswordStrength(ki.passphrase).word.pass === true) {
       return true;
     }
     await Ui.modal.warning('Please change your pass phrase first.\n\nIt\'s too weak for this backup method.');

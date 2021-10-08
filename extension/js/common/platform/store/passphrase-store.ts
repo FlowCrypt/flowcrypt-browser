@@ -6,6 +6,7 @@ import { PromiseCancellation, Dict } from '../../core/common.js';
 import { Ui } from '../../browser/ui.js';
 import { OpenPGPKey } from '../../core/crypto/pgp/openpgp-key.js';
 import { InMemoryStore } from './in-memory-store.js';
+import { KeyIdentity } from '../../core/crypto/key.js';
 
 /**
  * Local or session store of pass phrases
@@ -13,7 +14,7 @@ import { InMemoryStore } from './in-memory-store.js';
 export class PassphraseStore extends AbstractStore {
 
   /**
-   * todo - make it only accept fingerprints
+   * todo - phase out in favour of KeyIdentity
    */
   public static set = async (storageType: StorageType, acctEmail: string, fingerprintOrLongid: string, passphrase: string | undefined) => {
     const longid = fingerprintOrLongid.length === 40 ? OpenPGPKey.fingerprintToLongid(fingerprintOrLongid) : fingerprintOrLongid;
@@ -32,7 +33,7 @@ export class PassphraseStore extends AbstractStore {
   }
 
   /**
-   * todo - make it only accept fingerprints
+   * todo - phase out in favour of KeyIdentity
    */
   public static get = async (acctEmail: string, fingerprintOrLongid: string, ignoreSession: boolean = false): Promise<string | undefined> => {
     const longid = fingerprintOrLongid.length === 40 ? OpenPGPKey.fingerprintToLongid(fingerprintOrLongid) : fingerprintOrLongid;
@@ -48,8 +49,13 @@ export class PassphraseStore extends AbstractStore {
     return await InMemoryStore.get(acctEmail, storageIndex) ?? undefined;
   }
 
+  public static getByKeyIdentity = async (acctEmail: string, keyIdentity: KeyIdentity, ignoreSession: boolean = false): Promise<string | undefined> => {
+    // todo -- consider x509/openpgp ambiguity
+    return await PassphraseStore.get(acctEmail, keyIdentity.id, ignoreSession);
+  }
+
   /**
-   * todo - make it only accept fingerprints
+   * todo - phase out in favour of KeyIdentity
    */
   public static waitUntilPassphraseChanged = async (
     acctEmail: string, missingOrWrongPpKeyLongids: string[], interval = 1000, cancellation: PromiseCancellation = { cancel: false }
