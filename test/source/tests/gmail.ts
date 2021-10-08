@@ -318,7 +318,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       // open new compose window and saved draft
       await gmailPage.waitAndClick('@action-secure-compose', { delay: 1 });
       await gmailPage.waitAndClick('//*[text()="Draft"]');
-      await gmailPage.waitAndClick('[class^="open_draft_"]');
+      await gmailPage.waitAndClick('[class^="open_draft_"]', { delay: 1 });
       // veryfy that there are two compose windows: new compose window and secure draft
       const urls = await gmailPage.getFramesUrls(['/chrome/elements/compose.htm'], { sleep: 1 });
       expect(urls.length).to.equal(2);
