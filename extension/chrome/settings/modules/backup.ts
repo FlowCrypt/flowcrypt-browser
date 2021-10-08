@@ -33,13 +33,12 @@ export class BackupView extends View {
   public emailProvider: EmailProvider = 'gmail';
   public orgRules!: OrgRules;
   public tabId!: string;
-  public prvKeysToManuallyBackup: KeyIdentity[];
+  public prvKeysToManuallyBackup: KeyIdentity[] = [];
 
   private readonly blocks = ['loading', 'module_status', 'module_manual'];
 
   constructor() {
     super();
-    this.prvKeysToManuallyBackup = [];
     const uncheckedUrlParams = Url.parse(['acctEmail', 'parentTabId', 'action', 'idToken']);
     this.acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
     this.action = Assert.urlParamRequire.oneof(uncheckedUrlParams, 'action', ['setup_automatic', 'setup_manual', 'backup_manual', undefined]);
@@ -52,7 +51,6 @@ export class BackupView extends View {
     this.statusModule = new BackupStatusModule(this);
     this.manualModule = new BackupManualModule(this);
     this.automaticModule = new BackupAutomaticModule(this);
-    this.prvKeysToManuallyBackup = [];
   }
 
   public render = async () => {
@@ -102,7 +100,7 @@ export class BackupView extends View {
     $(`#${showBlockName}`).css('display', 'block');
   }
 
-  public setHandlers = async () => {
+  public setHandlers = () => {
     this.statusModule.setHandlers();
     this.manualModule.setHandlers();
   }
