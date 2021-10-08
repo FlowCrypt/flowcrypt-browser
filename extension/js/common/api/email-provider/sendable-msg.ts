@@ -8,6 +8,7 @@ import { Attachment } from '../../core/attachment.js';
 import { Buf } from '../../core/buf.js';
 import { RecipientType } from '../shared/api.js';
 import { KeyStore } from '../../platform/store/key-store.js';
+import { KeyUtil } from '../../core/crypto/key.js';
 
 type Recipients = { to?: string[], cc?: string[], bcc?: string[] };
 
@@ -39,15 +40,19 @@ export class SendableMsg {
 
   public sign?: (signable: string) => Promise<string>;
 
-  public static createSMime = async (acctEmail: string, headers: SendableMsgHeaders, data: Uint8Array, options: SendableMsgOptions): Promise<SendableMsg> => {
-    return await SendableMsg.createSendableMsg(acctEmail, headers, { "encrypted/buf": Buf.fromUint8(data) }, [], { type: 'smimeEncrypted', isDraft: options.isDraft });
+  public static createSMimeEncrypted = async (acctEmail: string, headers: SendableMsgHeaders, data: Uint8Array, options: SendableMsgOptions): Promise<SendableMsg> => {
+    return await SendableMsg.createSendableMsg(acctEmail, headers, { "pkcs7/buf": Buf.fromUint8(data) }, [], { type: 'smimeEncrypted', isDraft: options.isDraft });
+  }
+
+  public static createSMimeSigned = async (acctEmail: string, headers: SendableMsgHeaders, data: Uint8Array): Promise<SendableMsg> => {
+    return await SendableMsg.createSendableMsg(acctEmail, headers, { "pkcs7/buf": Buf.fromUint8(data) }, [], { type: 'smimeSigned' });
   }
 
   public static createPlain = async (acctEmail: string, headers: SendableMsgHeaders, body: SendableMsgBody, attachments: Attachment[]): Promise<SendableMsg> => {
     return await SendableMsg.createSendableMsg(acctEmail, headers, body, attachments, { type: undefined, isDraft: undefined });
   }
 
-  public static createPgpInline = async (acctEmail: string, headers: SendableMsgHeaders, body: string, attachments: Attachment[], options?: SendableMsgOptions): Promise<SendableMsg> => {
+  public static createInlineArmored = async (acctEmail: string, headers: SendableMsgHeaders, body: string, attachments: Attachment[], options?: SendableMsgOptions): Promise<SendableMsg> => {
     return await SendableMsg.createSendableMsg(acctEmail, headers, { "text/plain": body }, attachments, options ? options : { type: undefined, isDraft: undefined });
   }
 
@@ -91,7 +96,10 @@ export class SendableMsg {
 
   private static create = async (acctEmail: string, { from, recipients, subject, thread, body, attachments, type, isDraft }: SendableMsgDefinition): Promise<SendableMsg> => {
     const primaryKi = await KeyStore.getFirstRequired(acctEmail);
-    const headers: Dict<string> = primaryKi ? { OpenPGP: `id=${primaryKi.longid}` } : {}; // todo - use autocrypt format
+    const headers: Dict<string> = {};
+    if (primaryKi && KeyUtil.getKeyType(primaryKi.private) === 'openpgp') {
+      headers.Openpgp = `id=${primaryKi.longid}`; // todo - use autocrypt format
+    }
     return new SendableMsg(
       acctEmail,
       headers,
@@ -138,14 +146,11 @@ export class SendableMsg {
       }
     }
     this.headers.Subject = this.subject;
-    if (this.type === 'smimeEncrypted' && this.body['encrypted/buf']) {
-      return await Mime.encodeSmime(this.body['encrypted/buf'], this.headers);
+    if (this.body['pkcs7/buf']) {
+      return await Mime.encodeSmime(this.body['pkcs7/buf'], this.headers, this.type === 'smimeSigned' ? 'signed-data' : 'enveloped-data');
     } else if (this.type === 'pgpMimeSigned' && this.sign) {
       return await Mime.encodePgpMimeSigned(this.body, this.headers, this.attachments, this.sign);
-    } else { // encrypted/buf is a Buf instance that is converted to single-part plain/text message
-      if (this.body['encrypted/buf']) {
-        this.body = { 'text/plain': this.body['encrypted/buf'].toString() };
-      }
+    } else {
       return await Mime.encode(this.body, this.headers, this.attachments, this.type);
     }
   }

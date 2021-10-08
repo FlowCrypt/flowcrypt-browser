@@ -41,10 +41,16 @@ export type TestMessage = {
   signature?: string[],
 };
 
+export type TestKeyInfo = {
+  title: string, passphrase: string, armored: string | null, longid: string | null
+};
+
+export type TestKeyInfoWithFilepath = TestKeyInfo & { filePath?: string };
+
 interface TestSecretsInterface {
   ci_admin_token: string;
   auth: { google: { email: string, password?: string, secret_2fa?: string }[], };
-  keys: { title: string, passphrase: string, armored: string | null, longid: string | null }[];
+  keys: TestKeyInfo[];
 }
 
 export class Config {
