@@ -56,6 +56,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       } else {
         await ComposePageRecipe.waitWhenDraftIsSaved(composeBox);
       }
+      await Util.sleep(3); // the draft isn't being saved sometimes in CI without this delay
       await composeBox.close();
     };
 
