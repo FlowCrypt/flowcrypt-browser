@@ -25,6 +25,7 @@ export class BackupView extends View {
   public readonly action: 'setup_automatic' | 'setup_manual' | 'backup_manual' | undefined;
   public readonly gmail: Gmail;
   public readonly parentTabId: string | undefined;
+  public readonly keyIdentity: KeyIdentity | undefined; // the key identity supplied with URL params
 
   public readonly statusModule: BackupStatusModule;
   public readonly manualModule: BackupManualModule;
@@ -46,6 +47,13 @@ export class BackupView extends View {
       this.parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
     } else {
       this.idToken = Assert.urlParamRequire.string(uncheckedUrlParams, 'idToken');
+    }
+    {
+      const id = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'id');
+      const type = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'type');
+      if (id && type === 'openpgp') {
+        this.keyIdentity = { id, type };
+      }
     }
     this.gmail = new Gmail(this.acctEmail);
     this.statusModule = new BackupStatusModule(this);
@@ -118,7 +126,10 @@ export class BackupView extends View {
 
   private preparePrvKeysBackupSelection = async () => {
     const kinfos = await KeyStore.getTypedKeyInfos(this.acctEmail);
-    if (kinfos.length > 1) {
+    if (this.keyIdentity && this.keyIdentity.type === 'openpgp' && kinfos.some(ki => KeyUtil.identityEquals(ki, this.keyIdentity!))) {
+      // todo: error if not found ?
+      this.addKeyToBackup({ id: this.keyIdentity.id, type: this.keyIdentity.type });
+    } else if (kinfos.length > 1) {
       await this.renderPrvKeysBackupSelection(kinfos);
     } else if (kinfos.length === 1 && kinfos[0].type === 'openpgp') {
       this.addKeyToBackup({ id: kinfos[0].id, type: kinfos[0].type });

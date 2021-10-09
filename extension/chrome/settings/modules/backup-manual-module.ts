@@ -67,7 +67,12 @@ export class BackupManualActionModule extends ViewModule<BackupView> {
       }
     }
     if (selected === 'inbox' || selected === 'file') {
-      const encrypted = await this.encryptForBackup(kinfos, { strength: selected === 'inbox' });
+      let encrypted: string | undefined;
+      if (this.view.action === 'setup_manual' && kinfos.length === 1) {
+        encrypted = kinfos[0].private; // we're in setup process, skip checks (and we don't have parentTabId anyway)
+      } else {
+        encrypted = await this.encryptForBackup(kinfos, { strength: selected === 'inbox' });
+      }
       if (encrypted) {
         if (selected === 'inbox') {
           await this.backupOnEmailProviderAndUpdateUi(encrypted);
