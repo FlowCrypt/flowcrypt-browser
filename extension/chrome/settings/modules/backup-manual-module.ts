@@ -66,10 +66,15 @@ export class BackupManualActionModule extends ViewModule<BackupView> {
         return;
       }
     }
-    if (selected === 'inbox') {
-      await this.backupOnEmailProviderAndUpdateUi(kinfos);
-    } else if (selected === 'file') {
-      await this.backupAsFile(kinfos);
+    if (selected === 'inbox' || selected === 'file') {
+      const encrypted = await this.encryptForBackup(kinfos, { strength: selected === 'inbox' });
+      if (encrypted) {
+        if (selected === 'inbox') {
+          await this.backupOnEmailProviderAndUpdateUi(encrypted);
+        } else {
+          await this.backupAsFile(encrypted);
+        }
+      }
     } else if (selected === 'print') {
       await this.backupByBrint();
     } else {
@@ -81,40 +86,44 @@ export class BackupManualActionModule extends ViewModule<BackupView> {
     return new Attachment({ name: `flowcrypt-backup-${this.view.acctEmail.replace(/[^A-Za-z0-9]+/g, '')}.asc`, type: 'application/pgp-keys', data: Buf.fromUtfStr(armoredKey) });
   }
 
-  private backupOnEmailProviderAndUpdateUi = async (kinfos: TypedKeyInfo[]) => {
-    // todo - identify currently use primary and its fingerprint to encrypt the backup using it.
-    const kisWithPp = await Promise.all(kinfos.map(async (ki) => { return { ...ki, passphrase: await PassphraseStore.getByKeyIdentity(this.view.acctEmail, ki) }; }));
+  private encryptForBackup = async (kinfos: TypedKeyInfo[], checks: { strength: boolean }): Promise<string | undefined> => {
     if (!this.view.parentTabId) {
       await Ui.modal.error(`Missing parentTabId. Please restart your browser and try again.`);
-      return;
+      return undefined;
+    }
+    const kisWithPp = await Promise.all(kinfos.map(async (ki) => { return { ...ki, passphrase: await PassphraseStore.getByKeyIdentity(this.view.acctEmail, ki) }; }));
+    const distinctPassphrases = Value.arr.unique(kisWithPp.filter(ki => ki.passphrase).map(ki => ki.passphrase!));
+    if (distinctPassphrases.length > 1) {
+      await Ui.modal.error('Your keys are protected with different pass phrases.\n\nThis is not supported yet.');
+      return undefined;
+    }
+    if (checks.strength && (await Promise.all((kisWithPp.filter(ki => ki.passphrase).map(ki => this.isPassPhraseStrongEnough(ki))))).some(result => !result)) {
+      await Ui.modal.warning('Your key is not protected with strong pass phrase.\n\nYou should change your pass phrase.');
+      window.location.href = Url.create('/chrome/settings/modules/change_passphrase.htm', { acctEmail: this.view.acctEmail, parentTabId: this.view.parentTabId });
+      return undefined;
     }
     const kisMissingPp = kisWithPp.filter(ki => !ki.passphrase);
     if (kisMissingPp.length) {
-      // todo: try any of known passphrases?
+      // todo: try yo apply the known passphrase?
       const longids = kisMissingPp.map(ki => ki.longid);
       BrowserMsg.send.passphraseDialog(this.view.parentTabId, { type: 'backup', longids });
       if (! await PassphraseStore.waitUntilPassphraseChanged(this.view.acctEmail, longids, 1000, this.ppChangedPromiseCancellation)) {
-        return;
+        return undefined;
       }
-      await this.backupOnEmailProviderAndUpdateUi(kinfos);
-      return;
+      return await this.encryptForBackup(kinfos, checks);
     }
-    if (kisWithPp.some(ki => !this.isPassPhraseStrongEnough(ki))) {
-      await Ui.modal.warning('Your key is not protected with strong pass phrase.\n\nYou should change your pass phrase.');
-      window.location.href = Url.create('/chrome/settings/modules/change_passphrase.htm', { acctEmail: this.view.acctEmail, parentTabId: this.view.parentTabId });
-      return;
-    }
-    const passphrases = Value.arr.unique(kisWithPp.map(ki => ki.passphrase));
-    if (passphrases.length !== 1) {
-      // todo -- re-encode with one of the passphrases ?
-      await Ui.modal.warning('The keys selected for backup are protected with different passphrases.\n\nThis is currently not implemented.');
-      window.location.href = Url.create('/chrome/settings/modules/change_passphrase.htm', { acctEmail: this.view.acctEmail, parentTabId: this.view.parentTabId });
+    return kinfos.map(ki => ki.private).join('\n'); // todo: remove extra \n ?
+  }
+
+  private backupOnEmailProviderAndUpdateUi = async (data: string): Promise<void> => {
+    if (!this.view.parentTabId) {
+      await Ui.modal.error(`Missing parentTabId. Please restart your browser and try again.`);
       return;
     }
     const origBtnText = this.proceedBtn.text();
     Xss.sanitizeRender(this.proceedBtn, Ui.spinner('white'));
     try {
-      await this.doBackupOnEmailProvider(kisWithPp.map(ki => ki.private).join('\n'));
+      await this.doBackupOnEmailProvider(data);
     } catch (e) {
       if (ApiErr.isNetErr(e)) {
         return await Ui.modal.warning('Need internet connection to finish. Please click the button again to retry.');
@@ -131,9 +140,8 @@ export class BackupManualActionModule extends ViewModule<BackupView> {
     await this.view.renderBackupDone();
   }
 
-  private backupAsFile = async (kinfos: TypedKeyInfo[]) => { // todo - add a non-encrypted download option
-    const prvKeysToBackup = kinfos.map(ki => ki.private);
-    const attachment = this.asBackupFile(prvKeysToBackup.join('\n'));
+  private backupAsFile = async (data: string) => { // todo - add a non-encrypted download option
+    const attachment = this.asBackupFile(data);
     Browser.saveToDownloads(attachment);
     await Ui.modal.info('Downloading private key backup file..');
     await this.view.renderBackupDone();

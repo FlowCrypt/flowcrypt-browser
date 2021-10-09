@@ -65,20 +65,21 @@ export class BackupView extends View {
     if (this.action === 'setup_automatic') {
       $('#button-go-back').css('display', 'none');
       await this.automaticModule.simpleSetupAutoBackupRetryUntilSuccessful();
-    } else if (this.action === 'setup_manual') {
+    } else {
       await this.preparePrvKeysBackupSelection();
-      $('#button-go-back').css('display', 'none');
-      this.displayBlock('module_manual');
-      $('h1').text('Back up your private key');
-    } else if (this.action === 'backup_manual') {
-      await this.preparePrvKeysBackupSelection();
-      this.displayBlock('module_manual');
-      $('h1').text('Back up your private key');
-    } else { // action = view status
-      $('.hide_if_backup_done').css('display', 'none');
-      $('h1').text('Key Backups');
-      this.displayBlock('loading');
-      await this.statusModule.checkAndRenderBackupStatus();
+      if (this.action === 'setup_manual') {
+        $('#button-go-back').css('display', 'none');
+        this.displayBlock('module_manual');
+        $('h1').text('Back up your private key');
+      } else if (this.action === 'backup_manual') {
+        this.displayBlock('module_manual');
+        $('h1').text('Back up your private key');
+      } else { // action = view status
+        $('.hide_if_backup_done').css('display', 'none');
+        $('h1').text('Key Backups');
+        this.displayBlock('loading');
+        await this.statusModule.checkAndRenderBackupStatus();
+      }
     }
   }
 
@@ -116,16 +117,16 @@ export class BackupView extends View {
   }
 
   private preparePrvKeysBackupSelection = async () => {
-    const primaryKeys = await KeyStore.getTypedKeyInfos(this.acctEmail);
-    if (primaryKeys.length > 1) {
-      await this.renderPrvKeysBackupSelection(primaryKeys);
-    } else if (primaryKeys.length === 1 && primaryKeys[0].type === 'openpgp') {
-      this.addKeyToBackup({ id: primaryKeys[0].id, type: primaryKeys[0].type });
+    const kinfos = await KeyStore.getTypedKeyInfos(this.acctEmail);
+    if (kinfos.length > 1) {
+      await this.renderPrvKeysBackupSelection(kinfos);
+    } else if (kinfos.length === 1 && kinfos[0].type === 'openpgp') {
+      this.addKeyToBackup({ id: kinfos[0].id, type: kinfos[0].type });
     }
   }
 
-  private renderPrvKeysBackupSelection = async (primaryKeys: TypedKeyInfo[]) => {
-    for (const ki of primaryKeys) {
+  private renderPrvKeysBackupSelection = async (kinfos: TypedKeyInfo[]) => {
+    for (const ki of kinfos) {
       const email = Xss.escape(String(ki.emails![0]));
       const dom = `
       <div class="mb-20">
@@ -145,17 +146,17 @@ export class BackupView extends View {
         this.addKeyToBackup({ type: ki.type, id: ki.id });
       }
     }
-    $('.input_prvkey_backup_checkbox').click((event) => {
-      const type = String($(event.target).data('type')).trim();
+    $('.input_prvkey_backup_checkbox').click(Ui.event.handle((target) => {
+      const type = $(target).data('type').trim();
       if (type === 'openpgp') {
-        const id = String($(event.target).data('id'));
-        if ($(event.target).prop('checked')) {
+        const id = $(target).data('id');
+        if ($(target).prop('checked')) {
           this.addKeyToBackup({ type, id });
         } else {
           this.removeKeyToBackup({ type, id });
         }
       }
-    });
+    }));
     $('#key_backup_selection_container').show();
   }
 }
