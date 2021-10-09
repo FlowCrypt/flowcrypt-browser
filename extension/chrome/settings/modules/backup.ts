@@ -158,9 +158,9 @@ export class BackupView extends View {
       }
     }
     $('.input_prvkey_backup_checkbox').click(Ui.event.handle((target) => {
-      const type = $(target).data('type').trim();
+      const type = $(target).data('type') as string;
       if (type === 'openpgp') {
-        const id = $(target).data('id');
+        const id = $(target).data('id') as string;
         if ($(target).prop('checked')) {
           this.addKeyToBackup({ type, id });
         } else {
