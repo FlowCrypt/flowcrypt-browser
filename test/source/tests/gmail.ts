@@ -19,6 +19,8 @@ import { OauthPageRecipe } from './page-recipe/oauth-page-recipe';
  * All tests that use mail.google.com or have to operate without a Gmail API mock should go here
  */
 
+export type GmailCategory = 'inbox' | 'sent' | 'drafts' | 'spam' | 'trash';
+
 // tslint:disable:no-blank-lines-func
 
 export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: TestWithBrowser) => {
@@ -42,13 +44,13 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
     };
 
     const createSecureDraft = async (t: AvaContext, browser: BrowserHandle, gmailPage: ControllablePage, content: string, params: { offline: boolean } = { offline: false }) => {
-      const urls = await gmailPage.getFramesUrls(['/chrome/elements/compose.htm']);
+      const urls = await gmailPage.getFramesUrls(['/chrome/elements/compose.htm'], { sleep: 1 });
       const composeBox = await browser.newPage(t, urls[0]);
       if (params.offline) {
         await (composeBox.target as Page).setOfflineMode(true); // go offline mode
       }
-      await Util.sleep(3); // the draft isn't being saved if start typing without this delay
-      await composeBox.type('@input-body', content);
+      await Util.sleep(4); // the draft isn't being saved if start typing without this delay
+      await composeBox.type('@input-body', content, true);
       if (params.offline) {
         await ComposePageRecipe.waitWhenDraftIsSavedLocally(composeBox);
       } else {
@@ -82,8 +84,8 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       return gmailPage;
     };
 
-    const gotoGmailPage = async (gmailPage: ControllablePage, path: string) => {
-      const url = TestUrls.gmail(0, path);
+    const gotoGmailPage = async (gmailPage: ControllablePage, path: string, category: GmailCategory = 'inbox') => {
+      const url = TestUrls.gmail(0, path, category);
       await gmailPage.goto(url);
     };
 
@@ -266,7 +268,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       let urls = await gmailPage.getFramesUrls(['/chrome/elements/compose.htm'], { sleep: 1 });
       // compose draft 2 should be first in list as drafts are sorted by date descending
       const draft = await pageHasSecureDraft(t, browser, urls[0], 'compose draft 2');
-      await Util.sleep(3); // the draft isn't being saved if start typing without this delay
+      await Util.sleep(4); // the draft isn't being saved if start typing without this delay
       await draft.type('@input-body', 'trigger saving a draft to the cloud', true);
       await ComposePageRecipe.waitWhenDraftIsSaved(draft);
       await draft.close();
@@ -279,11 +281,8 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       await pageHasSecureDraft(t, browser, urls[0], 'compose draft 1');
     }));
 
-    ava.default.skip('mail.google.com - secure reply btn, reply draft', testWithBrowser('ci.tests.gmail', async (t, browser) => {
+    ava.default('mail.google.com - secure reply btn, reply draft', testWithBrowser('ci.tests.gmail', async (t, browser) => {
       const gmailPage = await openGmailPage(t, browser, '/');
-      const settingsPage = await browser.newPage(t, TestUrls.extensionSettings());
-      await BrowserRecipe.deleteAllDraftsInGmailAccount(settingsPage);
-      await settingsPage.close();
       await gotoGmailPage(gmailPage, '/FMfcgzGkbDRNgcPktjdSxpJVhZlZqpTr'); // to go encrypted convo
       // Gmail has 100 emails per thread limit, so if there are 98 deleted messages + 1 initial message,
       // the draft number 100 won't be saved. Therefore, we need to delete forever trashed messages from this thread.
@@ -293,7 +292,6 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       await gmailPage.waitAndClick('@secure-reply-button');
       await createSecureDraft(t, browser, gmailPage, 'reply draft');
       await gmailPage.page.reload();
-      await gmailPage.waitAll('.reply_message');
       const urls = await gmailPage.getFramesUrls(['/chrome/elements/compose.htm']);
       expect(urls.length).to.equal(1);
       let replyBox = await pageHasSecureDraft(t, browser, urls[0], 'reply draft');
@@ -316,15 +314,13 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       await gmailPage.waitAndClick('@action-secure-compose', { delay: 1 });
       await createSecureDraft(t, browser, gmailPage, 'compose draft');
       await gmailPage.page.reload();
+      await gotoGmailPage(gmailPage, '', 'drafts'); // to go drafts section
       // open new compose window and saved draft
       await gmailPage.waitAndClick('@action-secure-compose', { delay: 1 });
-      await gmailPage.waitAndFocus('body');
-      await gmailPage.waitAndClick('[data-tooltip="Drafts"]');
-      await gmailPage.waitForInputValue('[aria-label^="Search"]', 'in:draft');
-      await gmailPage.press('Enter');
-      await gmailPage.waitAndClick('[class^="open_draft_"]');
+      await gmailPage.waitAndClick('//*[text()="Draft"]');
+      await gmailPage.waitAndClick('[class^="open_draft_"]', { delay: 1 });
       // veryfy that there are two compose windows: new compose window and secure draft
-      const urls = await gmailPage.getFramesUrls(['/chrome/elements/compose.htm']);
+      const urls = await gmailPage.getFramesUrls(['/chrome/elements/compose.htm'], { sleep: 1 });
       expect(urls.length).to.equal(2);
       const composeDraft = await pageHasSecureDraft(t, browser, urls[1], 'compose draft');
       await composeDraft.close();
@@ -336,22 +332,19 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
 
     ava.default('mail.google.com - plain reply to encrypted and signed messages', testWithBrowser('ci.tests.gmail', async (t, browser) => {
       const gmailPage = await openGmailPage(t, browser, '/FMfcgzGkbDRNgcQxLmkhBCKVSFwkfdvV'); // plain convo
-      await Util.sleep(1);
-      await gmailPage.waitAndClick('[data-tooltip="Reply"]');
+      await gmailPage.waitAndClick('[data-tooltip="Reply"]', { delay: 1 });
       await gotoGmailPage(gmailPage, '/FMfcgzGkbDRNgcPktjdSxpJVhZlZqpTr'); // to go encrypted convo
-      await Util.sleep(1);
-      await gmailPage.waitAndClick('[data-tooltip="Reply"]');
-      await Util.sleep(5);
-      await pageDoesNotHaveSecureReplyContainer(gmailPage);
+      await gmailPage.waitAndClick('[data-tooltip="Reply"]', { delay: 1 });
+      await gmailPage.waitTillGone('.reply_message');
       await gmailPage.waitAll('[data-tooltip^="Send"]'); // The Send button from the Standard reply box
       await gmailPage.waitForContent('.reply_message_evaluated .error_notification', 'The last message was encrypted, but you are composing a reply without encryption.');
       await gmailPage.waitAndClick('[data-tooltip="Secure Reply"]'); // Switch to encrypted reply
-      await Util.sleep(5);
+      await gmailPage.waitAll('.reply_message');
       await pageHasSecureReplyContainer(t, browser, gmailPage, { isReplyPromptAccepted: false });
       await gotoGmailPage(gmailPage, '/FMfcgzGkbDRNpjDdNvCrwzqvXspZZxvh'); // go to signed convo
-      await Util.sleep(1);
-      await gmailPage.waitAndClick('[data-tooltip="Reply"]');
-      await pageDoesNotHaveSecureReplyContainer(gmailPage);
+      await gmailPage.waitAndClick('[data-tooltip="Reply"]', { delay: 1 });
+      await gmailPage.waitTillGone('.reply_message');
+      await gmailPage.waitAll('[data-tooltip^="Send"]'); // The Send button from the Standard reply box
       await gmailPage.notPresent('.reply_message_evaluated .error_notification'); // should not show the warning about switching to encrypted reply
     }));
 
