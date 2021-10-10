@@ -64,6 +64,25 @@ export type ContactUpdate = {
 
 type DbContactFilter = { hasPgp?: boolean, substring?: string, limit?: number };
 
+export type PubkeyInfo = {
+  pubkey: Key,
+  // IMPORTANT NOTE:
+  // It might look like we can format PubkeyInfo[] out of Key[], but that's not good,
+  // because in the storage we have the table Revocations that stores fingerprints
+  // of revoked keys that may not exist in the database (Pubkeys table),
+  // that is pre-emptive external revocation. So (in a rare case) the lookup method
+  // receives a valid key, saves it to the storage, and after re-querying the storage,
+  // this key maybe returned as revoked. This is why PubkeyInfo has revoked property
+  // regardless of the fact that Key itself also has it.
+  revoked: boolean,
+  lastCheck?: number | undefined
+};
+
+export type EmailWithSortedPubkeys = {
+  info: Email,
+  sortedPubkeys: PubkeyInfo[]
+};
+
 const x509postfix = "-X509";
 
 /**
@@ -262,7 +281,7 @@ export class ContactStore extends AbstractStore {
   }
 
   public static getOneWithAllPubkeys = async (db: IDBDatabase | undefined, email: string):
-    Promise<{ info: Email, sortedPubkeys: { pubkey: Key, revoked: boolean, lastCheck: number | null }[] } | undefined> => {
+    Promise<EmailWithSortedPubkeys | undefined> => {
     if (!db) { // relay op through background process
       // tslint:disable-next-line:no-unsafe-any
       return await BrowserMsg.send.bg.await.db({ f: 'getOneWithAllPubkeys', args: [email] });
@@ -430,21 +449,24 @@ export class ContactStore extends AbstractStore {
     });
   }
 
-  private static sortKeys = async (pubkeys: Pubkey[], revocations: Revocation[]) => {
+  public static sortPubkeyInfos = (pubkeyInfos: PubkeyInfo[]): PubkeyInfo[] => {
+    return pubkeyInfos.sort((a, b) => ContactStore.getSortValue(b) - ContactStore.getSortValue(a));
+  }
+
+  public static getSortValue = (pubinfo: PubkeyInfo): number => {
+    const expirationSortValue = (typeof pubinfo.pubkey.expiration === 'undefined') ? Infinity : pubinfo.pubkey.expiration!;
+    // sort non-revoked first, then non-expired
+    return (pubinfo.revoked || pubinfo.pubkey.revoked) ? -Infinity : expirationSortValue;
+  }
+
+  private static sortKeys = async (pubkeys: Pubkey[], revocations: Revocation[]): Promise<PubkeyInfo[]> => {
     // parse the keys
-    const parsed = await Promise.all(pubkeys.map(async (pubkey) => {
+    const pubkeyInfos = await Promise.all(pubkeys.map(async (pubkey) => {
       const pk = await KeyUtil.parse(pubkey.armoredKey);
       const revoked = pk.revoked || revocations.some(r => ContactStore.equalFingerprints(pk.id, r.fingerprint));
-      const expirationSortValue = (typeof pk.expiration === 'undefined') ? Infinity : pk.expiration!;
-      return {
-        lastCheck: pubkey.lastCheck,
-        pubkey: pk,
-        revoked,
-        // sort non-revoked first, then non-expired
-        sortValue: revoked ? -Infinity : expirationSortValue
-      };
+      return { lastCheck: pubkey.lastCheck || undefined, pubkey: pk, revoked };
     }));
-    return parsed.sort((a, b) => b.sortValue - a.sortValue);
+    return ContactStore.sortPubkeyInfos(pubkeyInfos);
   }
 
   private static getPubkeyId = ({ id, type }: { id: string, type: string }): string => {
