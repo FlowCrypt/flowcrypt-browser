@@ -449,8 +449,8 @@ export class ContactStore extends AbstractStore {
     });
   }
 
-  public static sortPubkeyInfos = (pubKeyInfos: PubkeyInfo[]): PubkeyInfo[] => {
-    return pubKeyInfos.sort((a, b) => ContactStore.getSortValue(b) - ContactStore.getSortValue(a));
+  public static sortPubkeyInfos = (pubkeyInfos: PubkeyInfo[]): PubkeyInfo[] => {
+    return pubkeyInfos.sort((a, b) => ContactStore.getSortValue(b) - ContactStore.getSortValue(a));
   }
 
   public static getSortValue = (pubinfo: PubkeyInfo): number => {
@@ -461,12 +461,12 @@ export class ContactStore extends AbstractStore {
 
   private static sortKeys = async (pubkeys: Pubkey[], revocations: Revocation[]): Promise<PubkeyInfo[]> => {
     // parse the keys
-    const pubKeyInfos = await Promise.all(pubkeys.map(async (pubkey) => {
+    const pubkeyInfos = await Promise.all(pubkeys.map(async (pubkey) => {
       const pk = await KeyUtil.parse(pubkey.armoredKey);
       const revoked = pk.revoked || revocations.some(r => ContactStore.equalFingerprints(pk.id, r.fingerprint));
       return { lastCheck: pubkey.lastCheck || undefined, pubkey: pk, revoked };
     }));
-    return ContactStore.sortPubkeyInfos(pubKeyInfos);
+    return ContactStore.sortPubkeyInfos(pubkeyInfos);
   }
 
   private static getPubkeyId = ({ id, type }: { id: string, type: string }): string => {

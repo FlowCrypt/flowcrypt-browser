@@ -884,24 +884,24 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     this.view.myPubkeyModule.reevaluateShouldAttachOrNot();
   }
 
-  private formatPubkeysHintText = (pubKeyInfos: PubkeyInfo[]): string => {
+  private formatPubkeysHintText = (pubkeyInfos: PubkeyInfo[]): string => {
     const valid: PubkeyInfo[] = [];
     const expired: PubkeyInfo[] = [];
     const revoked: PubkeyInfo[] = [];
-    for (const pubKeyInfo of pubKeyInfos) {
-      if (pubKeyInfo.revoked) {
-        revoked.push(pubKeyInfo);
-      } else if (KeyUtil.expired(pubKeyInfo.pubkey)) {
-        expired.push(pubKeyInfo);
+    for (const pubkeyInfo of pubkeyInfos) {
+      if (pubkeyInfo.revoked) {
+        revoked.push(pubkeyInfo);
+      } else if (KeyUtil.expired(pubkeyInfo.pubkey)) {
+        expired.push(pubkeyInfo);
       } else {
-        valid.push(pubKeyInfo);
+        valid.push(pubkeyInfo);
       }
     }
     return [
-      { groupName: 'Valid public key fingerprints:', pubKeyInfos: valid },
-      { groupName: 'Expired public key fingerprints:', pubKeyInfos: expired },
-      { groupName: 'Revoked public key fingerprints:', pubKeyInfos: revoked }
-    ].filter(g => g.pubKeyInfos.length).map(g => this.formatKeyGroup(g.groupName, g.pubKeyInfos)).join('\n\n');
+      { groupName: 'Valid public key fingerprints:', pubkeyInfos: valid },
+      { groupName: 'Expired public key fingerprints:', pubkeyInfos: expired },
+      { groupName: 'Revoked public key fingerprints:', pubkeyInfos: revoked }
+    ].filter(g => g.pubkeyInfos.length).map(g => this.formatKeyGroup(g.groupName, g.pubkeyInfos)).join('\n\n');
   }
 
   private formatKeyGroup = (groupName: string, pubkeyInfos: PubkeyInfo[]): string => {
@@ -926,8 +926,8 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     await this.reEvaluateRecipients(failedRecipients);
   }
 
-  private formatPubkeyId = (pubKeyInfo: PubkeyInfo): string => {
-    return `${Str.spaced(pubKeyInfo.pubkey.id)} (${pubKeyInfo.pubkey.type})`;
+  private formatPubkeyId = (pubkeyInfo: PubkeyInfo): string => {
+    return `${Str.spaced(pubkeyInfo.pubkey.id)} (${pubkeyInfo.pubkey.type})`;
   }
 
   private generateRecipientId = (): string => {
