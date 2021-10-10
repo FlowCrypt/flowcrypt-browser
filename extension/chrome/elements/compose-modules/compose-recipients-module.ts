@@ -897,34 +897,15 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
         valid.push(pubKeyInfo);
       }
     }
-    let res = '';
-    if (valid.length) {
-      res += 'Valid public key fingerprints:';
-      for (const pubKeyInfo of valid) {
-        if (pubKeyInfo.pubkey.id) {
-          res += '\n' + this.formatPubkeyId(pubKeyInfo);
-        }
-      }
-    }
-    if (expired.length) {
-      if (res.length) res += '\n\n';
-      res += 'Expired public key fingerprints:';
-      for (const pubKeyInfo of valid) {
-        if (pubKeyInfo.pubkey.id) {
-          res += '\n' + this.formatPubkeyId(pubKeyInfo);
-        }
-      }
-    }
-    if (revoked.length) {
-      if (res.length) res += '\n\n';
-      res += 'Revoked public key fingerprints:';
-      for (const pubKeyInfo of revoked) {
-        if (pubKeyInfo.pubkey.id) {
-          res += '\n' + this.formatPubkeyId(pubKeyInfo);
-        }
-      }
-    }
-    return res;
+    return [
+      { groupName: 'Valid public key fingerprints:', pubKeyInfos: valid },
+      { groupName: 'Expired public key fingerprints:', pubKeyInfos: expired },
+      { groupName: 'Revoked public key fingerprints:', pubKeyInfos: revoked }
+    ].filter(g => g.pubKeyInfos.length).map(g => this.formatKeyGroup(g.groupName, g.pubKeyInfos)).join('\n\n');
+  }
+
+  private formatKeyGroup = (groupName: string, pubkeyInfos: PubkeyInfo[]): string => {
+    return [groupName, ...pubkeyInfos.map(info => this.formatPubkeyId(info))].join('\n');
   }
 
   private removeRecipient = (element: HTMLElement) => {
