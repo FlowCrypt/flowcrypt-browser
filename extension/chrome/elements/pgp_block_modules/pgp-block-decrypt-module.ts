@@ -34,12 +34,14 @@ export class PgpBlockViewDecryptModule {
         const parsed = await Mime.decode(mimeMsg);
         if (parsed && typeof parsed.rawSignedContent === 'string' && parsed.signature) {
           this.view.signature.parsedSignature = parsed.signature;
+          console.log('>>>> initialize #1');
           await this.decryptAndRender(Buf.fromUtfStr(parsed.rawSignedContent), verificationPubs);
         } else {
           await this.view.errorModule.renderErr('Error: could not properly parse signed message', parsed.rawSignedContent || parsed.text || parsed.html || mimeMsg.toUtfStr());
         }
       } else if (this.view.encryptedMsgUrlParam && !forcePullMsgFromApi) { // ascii armored message supplied
-        this.view.renderModule.renderText(this.view.signature ? 'Verifying..' : 'Decrypting...');
+        this.view.renderModule.renderText(this.view.signature ? 'Verifying...' : 'Decrypting...');
+        console.log('>>>> initialize #2');
         await this.decryptAndRender(this.view.encryptedMsgUrlParam, verificationPubs);
       } else {  // need to fetch the inline signed + armored or encrypted +armored message block from gmail api
         if (!this.view.msgId) {
@@ -54,6 +56,7 @@ export class PgpBlockViewDecryptModule {
           this.isPwdMsgBasedOnMsgSnippet = isPwdMsg;
           this.view.renderModule.renderText('Decrypting...');
           this.msgFetchedFromApi = format;
+          console.log('>>>> initialize #3');
           await this.decryptAndRender(Buf.fromUtfStr(armored), verificationPubs, subject);
         }
       }
@@ -64,10 +67,11 @@ export class PgpBlockViewDecryptModule {
 
   public canAndShouldFetchFromApi = () => this.canReadEmails && this.msgFetchedFromApi !== 'raw';
 
-  private decryptAndRender = async (encryptedData: Buf, verificationPubs: string[], plainSubject?: string) => {
+      console.log(">>>> PATH #1: before");
     if (!this.view.signature?.parsedSignature) {
       const kisWithPp = await KeyStore.getAllWithOptionalPassPhrase(this.view.acctEmail);
       const decrypt = async (verificationPubs: string[]) => await BrowserMsg.send.bg.await.pgpMsgDecrypt({ kisWithPp, encryptedData, verificationPubs });
+      console.log(">>>> PATH #1: after: " + JSON.stringify(result));
       const result = await decrypt(verificationPubs);
       if (typeof result === 'undefined') {
         await this.view.errorModule.renderErr(Lang.general.restartBrowserAndTryAgain, undefined);
@@ -75,6 +79,7 @@ export class PgpBlockViewDecryptModule {
         await this.view.renderModule.decideDecryptedContentFormattingAndRender(result.content, Boolean(result.isEncrypted), result.signature,
           verificationPubs, async (verificationPubs: string[]) => {
             const decryptResult = await decrypt(verificationPubs);
+              console.log(">>>> PATH #3: " + JSON.stringify(decryptResult));
             if (!decryptResult.success) {
               return undefined; // note: this internal error results in a wrong "Not Signed" badge
             } else {
@@ -118,7 +123,7 @@ export class PgpBlockViewDecryptModule {
       // sometimes signatures come wrongly percent-encoded. Here we check for typical "=3Dabcd" at the end
       const sigText = Buf.fromUtfStr(this.view.signature.parsedSignature.replace('\n=3D', '\n='));
       const verify = async (verificationPubs: string[]) => await BrowserMsg.send.bg.await.pgpMsgVerifyDetached({ plaintext: encryptedData, sigText, verificationPubs });
-      const signatureResult = await verify(verificationPubs);
+      console.log(">>>> PATH #2");
       await this.view.renderModule.decideDecryptedContentFormattingAndRender(encryptedData, false, signatureResult, verificationPubs, verify);
     }
   };

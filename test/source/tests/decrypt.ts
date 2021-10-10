@@ -566,6 +566,21 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
     }));
 
     ava.default('signature - sender is different from pubkey uid', testWithBrowser('ci.tests.gmail', async (t, browser) => {
+      const threadId = '17bfe72dc4aab958';
+      const acctEmail = 'flowcrypt.compatibility@gmail.com';
+      const inboxPage = await browser.newPage(t, TestUrls.extension(
+        `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`));
+      await inboxPage.waitAll('iframe', { timeout: 2 });
+      //const urls = await inboxPage.getFramesUrls(['/chrome/elements/pgp_block.htm'], { sleep: 3 });
+      //expect(urls.length).to.equal(1);
+      //const url = urls[0].split('/chrome/elements/pgp_block.htm')[1];
+      // error - shows up as "not signed" for now
+      //const signature = ['Message Not Signed'];
+      //await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser,
+      //  { params: url, content: ['Here is your random string:'], signature });
+      await Util.sleep(6000); // >>>> debug
+    }));
+
       const threadId = '1766644f13510f58';
       const acctEmail = 'ci.tests.gmail@flowcrypt.test';
       const inboxPage = await browser.newPage(t, TestUrls.extension(`chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`));

@@ -149,6 +149,7 @@ export class MsgUtil {
   };
 
   public static decryptMessage: PgpMsgMethod.Decrypt = async ({ kisWithPp, encryptedData, msgPwd, verificationPubs }) => {
+    console.log(">>>> PATH #4");
     const longids: DecryptError$longids = { message: [], matching: [], chosen: [], needPassphrase: [] };
     let prepared: PreparedForDecrypt;
     try {
@@ -240,6 +241,16 @@ export class MsgUtil {
   };
 
   private static getSortedKeys = async (kiWithPp: ExtendedKeyInfo[], msg: OpenPGP.message.Message): Promise<SortedKeysForDecrypt> => {
+    console.log(">>>> cryptoMsgGetSignedBy: entered");
+    console.log(">>>> cryptoMsgGetSignedBy: Message: " + JSON.stringify(msg));
+    console.log(">>>> cryptoMsgGetSignedBy: Keys: " + JSON.stringify(keys));
+    if (msg.getSigningKeyIds) {
+      console.log(">>>> cryptoMsgGetSignedBy: signing key Ids: "
+        + JSON.stringify(msg.getSigningKeyIds()));
+    } else {
+      console.log(">>>> cryptoMsgGetSignedBy: NO signing key Ids");
+    }
+    console.log(">>>> cryptoMsgGetSignedBy: Keys.signedBy: " + JSON.stringify(keys.signedBy));
     const keys: SortedKeysForDecrypt = {
       encryptedFor: [],
       signedBy: [],

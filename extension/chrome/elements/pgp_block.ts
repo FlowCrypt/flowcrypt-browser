@@ -74,6 +74,7 @@ export class PgpBlockView extends View {
     this.errorModule = new PgpBlockViewErrorModule(this);
     this.renderModule = new PgpBlockViewRenderModule(this);
     this.decryptModule = new PgpBlockViewDecryptModule(this);
+    console.log(">>>> uncheckedUrlParams: " + JSON.stringify(uncheckedUrlParams));
   }
 
   public getExpectedSignerEmail = () => {

@@ -73,7 +73,7 @@
     "test_async_stack": "node build/test/test/source/async-stack.js",
     "test_buf": "node ./node_modules/ava/cli --timeout=20m --verbose --concurrency=1 build/test/test/source/buf.js",
     "test_ci_chrome_consumer_live_gmail": "node ./node_modules/ava/cli --timeout=20m --verbose --concurrency=1 build/test/test/source/test.js -- CONSUMER-LIVE-GMAIL STANDARD-GROUP",
-    "test_ci_chrome_consumer": "node ./node_modules/ava/cli --timeout=20m --verbose --concurrency=1 build/test/test/source/test.js -- CONSUMER-MOCK STANDARD-GROUP",
+    "test_ci_chrome_consumer": "node ./node_modules/ava/cli --timeout=200m --verbose --concurrency=1 build/test/test/source/test.js -- CONSUMER-MOCK STANDARD-GROUP",
     "test_ci_chrome_enterprise": "node ./node_modules/ava/cli --timeout=20m --verbose --concurrency=1 build/test/test/source/test.js -- ENTERPRISE-MOCK STANDARD-GROUP",
     "test_ci_chrome_consumer_flaky": "node ./node_modules/ava/cli --timeout=20m --verbose --concurrency=1 build/test/test/source/test.js -- CONSUMER-MOCK FLAKY-GROUP",
     "dev_start_gmail_mock_api": "./build.sh && cd ./conf && node ../build/tooling/tsc-compiler --project tsconfig.test.json && cd .. && node ./build/test/test/source/mock.js",
