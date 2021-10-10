@@ -1900,6 +1900,8 @@ table#compose td.text div#input_text {
   max-width: 525px;
   overflow-y: auto;
   min-height: 140px;
+  white-space: pre-wrap;
+  tab-size: 4;
 }
 
 table#compose td.text div#input_text img {
