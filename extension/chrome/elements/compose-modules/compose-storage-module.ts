@@ -113,10 +113,6 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
    * We process the response and if there are new public keys, we save them. If there are
    *    newer versions of public keys we already have (compared by fingerprint), then we
    *    update the public keys we already have.
-   * Finally, we return `false` if a lookup or storage update fails.
-   *
-   * Note by Tom 2021-08-10: The `fail` situations
-   *    should probably be throwing some sort of `PubkeyLookupFailedError` or similar.
    */
   public lookupPubkeyFromKeyserversAndUpsertDb = async (email: string, name: string | undefined): Promise<void> => {
     if (!email) throw Error("Empty email");
