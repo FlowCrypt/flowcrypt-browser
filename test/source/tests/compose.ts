@@ -346,7 +346,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         '> From: Mozilla <Mozilla@e.mozilla.org>',
         '> Date: Thu, 6 Jun 2019, 17:22',
         '> Subject: Your misinformation questions ... answered.',
-        '> To: <tom@cryptup.org>'
+        '> To:  <tom@cryptup.org>'
       ].join('\n'));
     }));
 
@@ -358,7 +358,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         'On 2018-10-03 at 14:47, henry.electrum@gmail.com wrote:',
         '> The following text is bold: this is bold',
         '>',
-        '> The following text is red: this text is red'
+        '> The following text is red: this text is        red'
       ].join('\n'));
     }));
 
