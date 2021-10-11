@@ -40,7 +40,7 @@ export class BackupView extends View {
 
   constructor() {
     super();
-    const uncheckedUrlParams = Url.parse(['acctEmail', 'parentTabId', 'action', 'idToken']);
+    const uncheckedUrlParams = Url.parse(['acctEmail', 'parentTabId', 'action', 'idToken', 'id', 'type']);
     this.acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
     this.action = Assert.urlParamRequire.oneof(uncheckedUrlParams, 'action', ['setup_automatic', 'setup_manual', 'backup_manual', undefined]);
     if (this.action !== 'setup_automatic' && this.action !== 'setup_manual') {

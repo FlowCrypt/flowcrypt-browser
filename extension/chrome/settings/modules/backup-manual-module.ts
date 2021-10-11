@@ -92,10 +92,6 @@ export class BackupManualActionModule extends ViewModule<BackupView> {
   }
 
   private encryptForBackup = async (kinfos: TypedKeyInfo[], checks: { strength: boolean }): Promise<string | undefined> => {
-    if (!this.view.parentTabId) {
-      await Ui.modal.error(`Missing parentTabId. Please restart your browser and try again.`);
-      return undefined;
-    }
     const kisWithPp = await Promise.all(kinfos.map(async (ki) => { return { ...ki, passphrase: await PassphraseStore.getByKeyIdentity(this.view.acctEmail, ki) }; }));
     const distinctPassphrases = Value.arr.unique(kisWithPp.filter(ki => ki.passphrase).map(ki => ki.passphrase!));
     if (distinctPassphrases.length > 1) {
@@ -104,13 +100,19 @@ export class BackupManualActionModule extends ViewModule<BackupView> {
     }
     if (checks.strength && (await Promise.all((kisWithPp.filter(ki => ki.passphrase).map(ki => this.isPassPhraseStrongEnough(ki))))).some(result => !result)) {
       await Ui.modal.warning('Your key is not protected with strong pass phrase.\n\nYou should change your pass phrase.');
-      window.location.href = Url.create('/chrome/settings/modules/change_passphrase.htm', { acctEmail: this.view.acctEmail, parentTabId: this.view.parentTabId });
+      if (this.view.parentTabId !== undefined) {
+        window.location.href = Url.create('/chrome/settings/modules/change_passphrase.htm', { acctEmail: this.view.acctEmail, parentTabId: this.view.parentTabId });
+      }
       return undefined;
     }
     const kisMissingPp = kisWithPp.filter(ki => !ki.passphrase);
     if (kisMissingPp.length) {
-      // todo: try yo apply the known passphrase?
+      // todo: try to apply the known passphrase?
       const longids = kisMissingPp.map(ki => ki.longid);
+      if (!this.view.parentTabId) {
+        await Ui.modal.error(`Missing parentTabId. Please restart your browser and try again.`);
+        return undefined;
+      }
       BrowserMsg.send.passphraseDialog(this.view.parentTabId, { type: 'backup', longids });
       if (! await PassphraseStore.waitUntilPassphraseChanged(this.view.acctEmail, longids, 1000, this.ppChangedPromiseCancellation)) {
         return undefined;
@@ -121,10 +123,6 @@ export class BackupManualActionModule extends ViewModule<BackupView> {
   }
 
   private backupOnEmailProviderAndUpdateUi = async (data: string): Promise<void> => {
-    if (!this.view.parentTabId) {
-      await Ui.modal.error(`Missing parentTabId. Please restart your browser and try again.`);
-      return;
-    }
     const origBtnText = this.proceedBtn.text();
     Xss.sanitizeRender(this.proceedBtn, Ui.spinner('white'));
     try {
@@ -133,7 +131,9 @@ export class BackupManualActionModule extends ViewModule<BackupView> {
       if (ApiErr.isNetErr(e)) {
         return await Ui.modal.warning('Need internet connection to finish. Please click the button again to retry.');
       } else if (ApiErr.isAuthErr(e)) {
-        BrowserMsg.send.notificationShowAuthPopupNeeded(this.view.parentTabId, { acctEmail: this.view.acctEmail });
+        if (this.view.parentTabId !== undefined) {
+          BrowserMsg.send.notificationShowAuthPopupNeeded(this.view.parentTabId, { acctEmail: this.view.acctEmail });
+        }
         return await Ui.modal.warning('Account needs to be re-connected first. Please try later.');
       } else {
         Catch.reportErr(e);
