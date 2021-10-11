@@ -156,12 +156,16 @@ export class Mime {
     };
     return await new Promise((resolve, reject) => {
       try {
-        parser.onend = () => {
+        parser.onend = async () => {
           try {
             for (const name of Object.keys(parser.node.headers)) {
               mimeContent.headers[name] = parser.node.headers[name][0].value;
             }
             mimeContent.rawSignedContent = Mime.retrieveRawSignedContent([parser.node]);
+            if (!mimeContent.subject && mimeContent.rawSignedContent) {
+              const rawSignedContentDecoded = await Mime.decode(Buf.fromUtfStr(mimeContent.rawSignedContent));
+              mimeContent.subject = rawSignedContentDecoded.subject;
+            }
             for (const node of Object.values(leafNodes)) {
               if (Mime.getNodeType(node) === 'application/pgp-signature') {
                 mimeContent.signature = node.rawContent;

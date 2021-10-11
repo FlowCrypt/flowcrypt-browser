@@ -1,12 +1,13 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
-import { BrowserHandle, Controllable, ControllablePage } from '../../browser';
+import { BrowserHandle, Controllable, ControllableFrame, ControllablePage } from '../../browser';
 
 import { AvaContext } from '../tooling/';
 import { CommonAcct } from '../../test';
 import { EvaluateFn } from 'puppeteer';
 import { PageRecipe } from './abstract-page-recipe';
 import { Util } from '../../util';
+import { expect } from 'chai';
 
 type RecipientType = "to" | "cc" | "bcc";
 type Recipients = {
@@ -134,4 +135,30 @@ export class ComposePageRecipe extends PageRecipe {
     await composePage.close();
   }
 
+  public static expectContactsResultEqual = async (composePage: ControllablePage | ControllableFrame, emails: string[]) => {
+    const contacts = await composePage.waitAny('@container-contacts');
+    const contactsList = await contacts.$$('li');
+    for (const index in contactsList) { // tslint:disable-line:forin
+      expect(await PageRecipe.getElementPropertyJson(contactsList[index], 'textContent')).to.equal(emails[index]);
+    }
+  };
+
+  public static pastePublicKeyManuallyNoClose = async (composeFrame: ControllableFrame, inboxPage: ControllablePage, recipient: string, pub: string) => {
+    await Util.sleep(1); // todo: should wait until recipient actually loaded
+    // await Util.sleep(6000); // >>>> debug
+    await composeFrame.waitForContent('.email_address.no_pgp', recipient);
+    await composeFrame.waitAndClick('@action-open-add-pubkey-dialog', { delay: 1 });
+    await inboxPage.waitAll('@dialog-add-pubkey');
+    const addPubkeyDialog = await inboxPage.getFrame(['add_pubkey.htm']);
+    await addPubkeyDialog.waitAndType('@input-pubkey', pub);
+    await Util.sleep(1);
+    await addPubkeyDialog.waitAndClick('@action-add-pubkey');
+    return addPubkeyDialog;
+  };
+
+  public static pastePublicKeyManually = async (composeFrame: ControllableFrame, inboxPage: ControllablePage,
+    recipient: string, pub: string) => {
+    await ComposePageRecipe.pastePublicKeyManuallyNoClose(composeFrame, inboxPage, recipient, pub);
+    await inboxPage.waitTillGone('@dialog-add-pubkey');
+  };
 }

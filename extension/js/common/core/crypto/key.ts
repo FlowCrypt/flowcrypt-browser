@@ -10,6 +10,7 @@ import { opgp } from './pgp/openpgpjs-custom.js';
 import { OpenPGPKey } from './pgp/openpgp-key.js';
 import { SmimeKey } from './smime/smime-key.js';
 import { MsgBlock } from '../msg-block.js';
+import { PubkeyInfo } from '../../platform/store/contact-store.js';
 
 /**
  * This is a common Key interface for both OpenPGP and X.509 keys.
@@ -392,5 +393,9 @@ export class KeyUtil {
       return ki.fingerprints.map(fp => OpenPGPKey.fingerprintToLongid(fp));
     }
     return [ki.longid];
+  }
+
+  public static usableAllowingExpired = (pubinfo: PubkeyInfo) => {
+    return !pubinfo.revoked && (pubinfo.pubkey.usableForEncryption || pubinfo.pubkey.usableForEncryptionButExpired);
   }
 }
