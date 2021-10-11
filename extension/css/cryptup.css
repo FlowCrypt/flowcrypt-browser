@@ -1900,6 +1900,12 @@ table#compose td.text div#input_text {
   max-width: 525px;
   overflow-y: auto;
   min-height: 140px;
+}
+
+table#compose td.text div#input_text,
+#pgp_block,
+#backup_block,
+div#reply_message_successful_container > table div.replied_body {
   white-space: pre-wrap;
   tab-size: 4;
 }

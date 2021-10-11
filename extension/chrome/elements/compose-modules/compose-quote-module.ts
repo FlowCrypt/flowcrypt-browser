@@ -179,7 +179,7 @@ export class ComposeQuoteModule extends ViewModule<ComposeView> {
   }
 
   private quoteText = (text: string) => {
-    return text.split('\n').map(line => `&gt; ${line}`.trim()).join('\n');
+    return text.split('\n').map(line => `<br>&gt; ${line}`.trim()).join('\n');
   }
 
   private generateHtmlPreviousMsgQuote = (text: string, date: Date, from: string) => {
