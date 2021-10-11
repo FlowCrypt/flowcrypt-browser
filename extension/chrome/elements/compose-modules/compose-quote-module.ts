@@ -179,11 +179,11 @@ export class ComposeQuoteModule extends ViewModule<ComposeView> {
   }
 
   private quoteText = (text: string) => {
-    return text.split('\n').map(line => `<br>&gt; ${line}`.trim()).join('\n');
+    return text.split('\n').map(line => `<br>&gt; ${line}`.trim()).join('');
   }
 
   private generateHtmlPreviousMsgQuote = (text: string, date: Date, from: string) => {
-    let onDateUserWrote = `On ${Str.fromDate(date).replace(' ', ' at ')}, ${from} wrote:\n`;
+    let onDateUserWrote = `On ${Str.fromDate(date).replace(' ', ' at ')}, ${from} wrote:`;
     const rtl = text.match(new RegExp('[' + Str.rtlChars + ']'));
     if (rtl) {
       onDateUserWrote = `<div dir="ltr">${onDateUserWrote}</div>`;
