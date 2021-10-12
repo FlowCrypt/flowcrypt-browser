@@ -11,6 +11,7 @@ import { HttpClientErr } from '../../lib/api';
 import { MsgUtil } from '../../../core/crypto/pgp/msg-util';
 import { parsedMailAddressObjectAsArray } from '../google-endpoints.js';
 import { Str } from '../../../core/common.js';
+import { GMAIL_RECOVERY_EMAIL_SUBJECTS } from '../../../core/const.js';
 
 // TODO: Make a better structure of ITestMsgStrategy. Because this class doesn't test anything, it only saves message in the Mock
 class SaveMessageInStorageStrategy implements ITestMsgStrategy {
@@ -232,6 +233,8 @@ export class TestBySubjectStrategyContext {
       this.strategy = new SmimeEncryptedMessageStrategy();
     } else if (subject.includes('send signed S/MIME without attachment')) {
       this.strategy = new SmimeSignedMessageStrategy();
+    } else if (GMAIL_RECOVERY_EMAIL_SUBJECTS.includes(subject)) {
+      this.strategy = new SaveMessageInStorageStrategy();
     } else {
       throw new UnsuportableStrategyError(`There isn't any strategy for this subject: ${subject}`);
     }
