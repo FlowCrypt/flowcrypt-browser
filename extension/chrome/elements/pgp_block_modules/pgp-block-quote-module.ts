@@ -59,7 +59,7 @@ export class PgpBlockViewQuoteModule {
         lines.push(...linesQuotedPart.splice(0, linesQuotedPart.length));
       }
       await this.view.renderModule.renderContent(Str.escapeTextAsRenderableHtml(lines.join('\n')), false);
-      if (linesQuotedPart.length) {
+      if (linesQuotedPart.join('').trim()) {
         this.appendCollapsedQuotedContentButton(linesQuotedPart.join('\n'));
       }
     }
