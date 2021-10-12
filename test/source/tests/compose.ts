@@ -801,9 +801,10 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       const appendUrl = 'threadId=16b584ed95837510&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___&replyMsgId=16b584ed95837510';
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl, hasReplyPrompt: true });
       await composePage.waitAndClick('@encrypted-reply', { delay: 5 });
-      await ComposePageRecipe.fillMsg(composePage, {}, undefined, '\tline 1\n\t\tline 2');
+      const bodyWithLeadingTabs = '\tline 1\n\t\tline 2';
+      await ComposePageRecipe.fillMsg(composePage, {}, undefined, bodyWithLeadingTabs);
       await composePage.click('@action-send');
-      await composePage.waitForContent('@container-reply-msg-successful', '\tline 1\n\t\tline 2');
+      await composePage.waitForContent('@container-reply-msg-successful', bodyWithLeadingTabs);
     }));
 
     ava.default('compose - RTL subject', testWithBrowser('compatibility', async (t, browser) => {

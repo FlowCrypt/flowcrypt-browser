@@ -53,7 +53,7 @@ export class ComposeInputModule extends ViewModule<ComposeView> {
     if (type === 'html') {
       return Xss.htmlSanitizeKeepBasicTags(html, 'IMG-KEEP');
     }
-    return Xss.htmlUnescape(Xss.htmlSanitizeAndStripAllTags(html, '\n')).trim();
+    return Xss.htmlUnescape(Xss.htmlSanitizeAndStripAllTags(html, '\n', false));
   }
 
   public extractAttachments = () => {
