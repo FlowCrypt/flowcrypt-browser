@@ -356,6 +356,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       await composePage.waitAndClick('@encrypted-reply', { delay: 1 });
       await clickTripleDotAndExpectQuoteToLoad(composePage, [
         'On 2018-10-03 at 14:47, henry.electrum@gmail.com wrote:',
+        '>',
         '> The following text is bold: this is bold',
         '>',
         '> The following text is red: this text is        red'
@@ -408,6 +409,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         expect(inputBody.trim()).to.be.empty;
         await clickTripleDotAndExpectQuoteToLoad(replyFrame, [
           'On 2019-06-14 at 23:24, flowcrypt.compatibility@gmail.com wrote:',
+          '>',
           '> (Skipping previous message quote)'
         ].join('\n'));
       }));
