@@ -95,7 +95,8 @@ export class BackupView extends View {
     if (this.action === 'setup_automatic' || this.action === 'setup_manual') {
       window.location.href = Url.create('/chrome/settings/setup.htm', { acctEmail: this.acctEmail, action: 'finalize', idToken: this.idToken });
     } else if (backedUp) {
-      await Ui.modal.info('Your private key has been successfully backed up');
+      const pluralOrSingle = this.prvKeysToManuallyBackup.length > 1 ? "keys have" : "key has";
+      await Ui.modal.info(`Your private ${pluralOrSingle} been successfully backed up`);
       BrowserMsg.send.closePage(this.parentTabId as string);
     } else {
       window.location.href = Url.create('/chrome/settings/modules/backup.htm', { acctEmail: this.acctEmail, parentTabId: this.parentTabId as string });
