@@ -8,7 +8,7 @@ import { BackupView } from './backup.js';
 import { Attachment } from '../../../js/common/core/attachment.js';
 import { SendableMsg } from '../../../js/common/api/email-provider/sendable-msg.js';
 import { GMAIL_RECOVERY_EMAIL_SUBJECTS } from '../../../js/common/core/const.js';
-import { ExtendedKeyInfo, KeyInfo, KeyUtil, TypedKeyInfo } from '../../../js/common/core/crypto/key.js';
+import { KeyInfo, KeyUtil, TypedKeyInfo } from '../../../js/common/core/crypto/key.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { ApiErr } from '../../../js/common/api/shared/api-error.js';
 import { BrowserMsg, Bm } from '../../../js/common/browser/browser-msg.js';
@@ -21,7 +21,6 @@ import { PassphraseStore } from '../../../js/common/platform/store/passphrase-st
 import { KeyStore } from '../../../js/common/platform/store/key-store.js';
 
 export class BackupManualActionModule extends ViewModule<BackupView> {
-
   private ppChangedPromiseCancellation: PromiseCancellation = { cancel: false };
   private readonly proceedBtn = $('#module_manual .action_manual_backup');
 
@@ -98,8 +97,8 @@ export class BackupManualActionModule extends ViewModule<BackupView> {
       await Ui.modal.error('Your keys are protected with different pass phrases.\n\nThis is not supported yet.');
       return undefined;
     }
-    if (checks.strength && (await Promise.all((kisWithPp.filter(ki => ki.passphrase).map(ki => this.isPassPhraseStrongEnough(ki))))).some(result => !result)) {
-      await Ui.modal.warning('Your key is not protected with strong pass phrase.\n\nYou should change your pass phrase.');
+    if (checks.strength && distinctPassphrases[0] && !(Settings.evalPasswordStrength(distinctPassphrases[0]).word.pass)) {
+      await Ui.modal.warning('Please change your pass phrase first.\n\nIt\'s too weak for this backup method.');
       if (this.view.parentTabId !== undefined) {
         window.location.href = Url.create('/chrome/settings/modules/change_passphrase.htm', { acctEmail: this.view.acctEmail, parentTabId: this.view.parentTabId });
       }
@@ -158,29 +157,6 @@ export class BackupManualActionModule extends ViewModule<BackupView> {
 
   private backupRefused = async () => {
     await this.view.renderBackupDone(false);
-  }
-
-  private isPassPhraseStrongEnough = async (ki: ExtendedKeyInfo) => {
-    const prv = await KeyUtil.parse(ki.private);
-    if (!prv.fullyEncrypted) {
-      return false;
-    }
-    if (!ki.passphrase) {
-      const pp = prompt('Please enter your pass phrase:');
-      if (!pp) {
-        return false;
-      }
-      if (await KeyUtil.decrypt(prv, pp) !== true) {
-        await Ui.modal.warning('Pass phrase did not match, please try again.');
-        return false;
-      }
-      ki.passphrase = pp;
-    }
-    if (Settings.evalPasswordStrength(ki.passphrase).word.pass === true) {
-      return true;
-    }
-    await Ui.modal.warning('Please change your pass phrase first.\n\nIt\'s too weak for this backup method.');
-    return false;
   }
 
   private isPrivateKeyEncrypted = async (ki: KeyInfo) => {
