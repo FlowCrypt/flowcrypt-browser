@@ -66,12 +66,7 @@ export class BackupManualActionModule extends ViewModule<BackupView> {
       }
     }
     if (selected === 'inbox' || selected === 'file') {
-      let encrypted: string | undefined;
-      if (this.view.action === 'setup_manual' && kinfos.length === 1) {
-        encrypted = kinfos[0].private; // we're in setup process, skip checks (and we don't have parentTabId anyway)
-      } else {
-        encrypted = await this.encryptForBackup(kinfos, { strength: selected === 'inbox' });
-      }
+      const encrypted = await this.encryptForBackup(kinfos, { strength: selected === 'inbox' });
       if (encrypted) {
         if (selected === 'inbox') {
           await this.backupOnEmailProviderAndUpdateUi(encrypted);
@@ -91,7 +86,12 @@ export class BackupManualActionModule extends ViewModule<BackupView> {
   }
 
   private encryptForBackup = async (kinfos: TypedKeyInfo[], checks: { strength: boolean }): Promise<string | undefined> => {
-    const kisWithPp = await Promise.all(kinfos.map(async (ki) => { return { ...ki, passphrase: await PassphraseStore.getByKeyIdentity(this.view.acctEmail, ki) }; }));
+    const kisWithPp = await Promise.all(kinfos.map(async (ki) => {
+      const passphrase = await PassphraseStore.getByKeyIdentity(this.view.acctEmail, ki);
+      // test that the key can actually be decrypted with the passphrase provided
+      const mismatch = passphrase && !await KeyUtil.decrypt(await KeyUtil.parse(ki.private), passphrase);
+      return { ...ki, mismatch, passphrase: mismatch ? undefined : passphrase };
+    }));
     const distinctPassphrases = Value.arr.unique(kisWithPp.filter(ki => ki.passphrase).map(ki => ki.passphrase!));
     if (distinctPassphrases.length > 1) {
       await Ui.modal.error('Your keys are protected with different pass phrases.\n\nThis is not supported yet.');
@@ -106,7 +106,8 @@ export class BackupManualActionModule extends ViewModule<BackupView> {
     }
     const kisMissingPp = kisWithPp.filter(ki => !ki.passphrase);
     if (kisMissingPp.length) {
-      // todo: try to apply the known passphrase?
+      // todo: try to apply the known pass phrase?
+      // todo: reset invalid pass phrases (mismatch === true)?
       const longids = kisMissingPp.map(ki => ki.longid);
       if (!this.view.parentTabId) {
         await Ui.modal.error(`Missing parentTabId. Please restart your browser and try again.`);
