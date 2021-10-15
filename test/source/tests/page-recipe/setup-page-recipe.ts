@@ -123,6 +123,10 @@ export class SetupPageRecipe extends PageRecipe {
         settingsPage.waitAndClick('@input-step2bmanualenter-file', { retryErrs: true })]);
       await fileChooser.accept([key.filePath]);
       await Util.sleep(1);
+      if (checks.isInvalidKey) {
+        await settingsPage.waitAndRespondToModal('error', 'confirm', 'Not able to read this key. Make sure it is a valid PGP private key.');
+        return;
+      }
     } else {
       throw new Error('dont know how to import test key because missing both "armored" and "filePath"');
     }

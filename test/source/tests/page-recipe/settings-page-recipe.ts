@@ -14,6 +14,7 @@ import { KeyUtil } from '../../core/crypto/key';
 export type SavePassphraseChecks = {
   isSavePassphraseHidden?: boolean | undefined,
   isSavePassphraseChecked?: boolean | undefined
+  isInvalidKey?: boolean | undefined
 };
 
 export class SettingsPageRecipe extends PageRecipe {
