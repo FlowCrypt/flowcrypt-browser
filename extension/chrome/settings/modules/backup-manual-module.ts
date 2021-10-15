@@ -59,6 +59,7 @@ export class BackupManualActionModule extends ViewModule<BackupView> {
       return;
     }
     const kinfos = await KeyStore.getTypedKeyInfos(this.view.acctEmail, this.view.prvKeysToManuallyBackup);
+    // todo: this check can also be moved to encryptForBackup method when we solve the same passphrase issue
     for (const ki of kinfos) {
       if (! await this.isPrivateKeyEncrypted(ki)) {
         await Ui.modal.error('Sorry, cannot back up private key because it\'s not protected with a pass phrase.');
@@ -99,23 +100,32 @@ export class BackupManualActionModule extends ViewModule<BackupView> {
     }
     if (checks.strength && distinctPassphrases[0] && !(Settings.evalPasswordStrength(distinctPassphrases[0]).word.pass)) {
       await Ui.modal.warning('Please change your pass phrase first.\n\nIt\'s too weak for this backup method.');
-      if (this.view.parentTabId !== undefined) {
-        window.location.href = Url.create('/chrome/settings/modules/change_passphrase.htm', { acctEmail: this.view.acctEmail, parentTabId: this.view.parentTabId });
-      }
+      window.location.href = Url.create('/chrome/settings/modules/change_passphrase.htm', { acctEmail: this.view.acctEmail, parentTabId: this.view.parentTabId || '' });
       return undefined;
+    }
+    if (distinctPassphrases.length === 1) {
+      // trying to apply the known pass phrase
+      for (const ki of kisWithPp.filter(ki => !ki.passphrase)) {
+        if (await KeyUtil.decrypt(await KeyUtil.parse(ki.private), distinctPassphrases[0])) {
+          ki.passphrase = distinctPassphrases[0];
+        }
+      }
     }
     const kisMissingPp = kisWithPp.filter(ki => !ki.passphrase);
     if (kisMissingPp.length) {
-      // todo: try to apply the known pass phrase?
       // todo: reset invalid pass phrases (mismatch === true)?
       const longids = kisMissingPp.map(ki => ki.longid);
-      if (!this.view.parentTabId) {
-        await Ui.modal.error(`Missing parentTabId. Please restart your browser and try again.`);
-        return undefined;
-      }
-      BrowserMsg.send.passphraseDialog(this.view.parentTabId, { type: 'backup', longids });
-      if (! await PassphraseStore.waitUntilPassphraseChanged(this.view.acctEmail, longids, 1000, this.ppChangedPromiseCancellation)) {
-        return undefined;
+      if (this.view.parentTabId) {
+        BrowserMsg.send.passphraseDialog(this.view.parentTabId, { type: 'backup', longids });
+        if (! await PassphraseStore.waitUntilPassphraseChanged(this.view.acctEmail, longids, 1000, this.ppChangedPromiseCancellation)) {
+          return undefined;
+        }
+      } else {
+        await this.view.factory.showPassphraseDialog(longids, 'backup');
+        if (!(await Promise.all(longids.map(longid => PassphraseStore.get(this.view.acctEmail, longid)))).some(Boolean)) {
+          // no new passphrases entered
+          return undefined;
+        }
       }
       return await this.encryptForBackup(kinfos, checks);
     }
@@ -131,7 +141,7 @@ export class BackupManualActionModule extends ViewModule<BackupView> {
       if (ApiErr.isNetErr(e)) {
         return await Ui.modal.warning('Need internet connection to finish. Please click the button again to retry.');
       } else if (ApiErr.isAuthErr(e)) {
-        if (this.view.parentTabId !== undefined) {
+        if (this.view.parentTabId) {
           BrowserMsg.send.notificationShowAuthPopupNeeded(this.view.parentTabId, { acctEmail: this.view.acctEmail });
         }
         return await Ui.modal.warning('Account needs to be re-connected first. Please try later.');

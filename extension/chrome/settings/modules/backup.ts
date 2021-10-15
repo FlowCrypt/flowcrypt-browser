@@ -17,6 +17,7 @@ import { Lang } from '../../../js/common/lang.js';
 import { AcctStore, EmailProvider } from '../../../js/common/platform/store/acct-store.js';
 import { KeyStore } from '../../../js/common/platform/store/key-store.js';
 import { KeyIdentity, KeyUtil, TypedKeyInfo } from '../../../js/common/core/crypto/key.js';
+import { XssSafeFactory } from '../../../js/common/xss-safe-factory.js';
 
 export class BackupView extends View {
 
@@ -32,6 +33,7 @@ export class BackupView extends View {
   public readonly automaticModule: BackupAutomaticModule;
 
   public emailProvider: EmailProvider = 'gmail';
+  public factory!: XssSafeFactory;
   public orgRules!: OrgRules;
   public tabId!: string;
   public prvKeysToManuallyBackup: KeyIdentity[] = [];
@@ -43,9 +45,8 @@ export class BackupView extends View {
     const uncheckedUrlParams = Url.parse(['acctEmail', 'parentTabId', 'action', 'idToken', 'id', 'type']);
     this.acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
     this.action = Assert.urlParamRequire.oneof(uncheckedUrlParams, 'action', ['setup_automatic', 'setup_manual', 'backup_manual', undefined]);
-    if (this.action !== 'setup_automatic' && this.action !== 'setup_manual') {
-      this.parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
-    } else {
+    this.parentTabId = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'parentTabId');
+    if (this.action === 'setup_automatic' || this.action === 'setup_manual') {
       this.idToken = Assert.urlParamRequire.string(uncheckedUrlParams, 'idToken');
     }
     {
@@ -63,6 +64,7 @@ export class BackupView extends View {
 
   public render = async () => {
     this.tabId = await BrowserMsg.requiredTabId();
+    this.factory = new XssSafeFactory(this.acctEmail, this.tabId);
     this.orgRules = await OrgRules.newInstance(this.acctEmail);
     const storage = await AcctStore.get(this.acctEmail, ['email_provider']);
     this.emailProvider = storage.email_provider || 'gmail';
@@ -97,9 +99,11 @@ export class BackupView extends View {
     } else if (backedUp) {
       const pluralOrSingle = this.prvKeysToManuallyBackup.length > 1 ? "keys have" : "key has";
       await Ui.modal.info(`Your private ${pluralOrSingle} been successfully backed up`);
-      BrowserMsg.send.closePage(this.parentTabId as string);
+      if (this.parentTabId) {
+        BrowserMsg.send.closePage(this.parentTabId);
+      }
     } else {
-      window.location.href = Url.create('/chrome/settings/modules/backup.htm', { acctEmail: this.acctEmail, parentTabId: this.parentTabId as string });
+      window.location.href = Url.create('/chrome/settings/modules/backup.htm', { acctEmail: this.acctEmail, parentTabId: this.parentTabId || '' });
     }
   }
 
