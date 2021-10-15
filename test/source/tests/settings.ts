@@ -736,7 +736,11 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         }
       }, { isSavePassphraseChecked: false, isSavePassphraseHidden: false });
       await settingsPage1.close();
-      await SettingsPageRecipe.addKeyTest(t, browser, acctEmail, testConstants.testKeyMultiple98acfa1eadab5b92, '1234',
+      const passphrase = 'strong enough passphrase for inbox backup';
+      const key98acfa1eadab5b92 = await KeyUtil.parse(testConstants.testKeyMultiple98acfa1eadab5b92);
+      expect(await KeyUtil.decrypt(key98acfa1eadab5b92, '1234')).to.equal(true);
+      await KeyUtil.encrypt(key98acfa1eadab5b92, passphrase);
+      await SettingsPageRecipe.addKeyTest(t, browser, acctEmail, testConstants.testKeyMultiple98acfa1eadab5b92, passphrase,
         { isSavePassphraseChecked: true, isSavePassphraseHidden: false });
       const backupPage = await browser.newPage(t, TestUrls.extension(`/chrome/settings/modules/backup.htm?acctEmail=${acctEmail}&action=setup_manual` +
         '&type=openpgp&id=515431151DDD3EA232B37A4C98ACFA1EADAB5B92&idToken=fakeheader.01'));
