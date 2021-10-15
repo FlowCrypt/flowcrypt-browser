@@ -67,7 +67,7 @@ export const defineSetupTests = (testVariant: TestVariant, testWithBrowser: Test
         passphrase: '',
         longid: null // tslint:disable-line:no-null-keyword
       };
-      await SetupPageRecipe.manualEnter(settingsPage, key.title, { key } , { isInvalidKey: true });
+      await SetupPageRecipe.manualEnter(settingsPage, key.title, { key, isInvalidKey: true });
     }));
 
     ava.default('setup - import key - submit - used before', testWithBrowser(undefined, async (t, browser) => {

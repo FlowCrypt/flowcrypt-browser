@@ -19,7 +19,8 @@ type ManualEnterOpts = {
   enforceAttesterSubmitOrgRule?: boolean,
   noPubSubmitRule?: boolean,
   fillOnly?: boolean,
-  key?: TestKeyInfoWithFilepath
+  key?: TestKeyInfoWithFilepath,
+  isInvalidKey?: boolean | undefined,
 };
 
 type CreateKeyOpts = {
@@ -101,6 +102,7 @@ export class SetupPageRecipe extends PageRecipe {
       fillOnly = false,
       noPubSubmitRule = false,
       key,
+      isInvalidKey = false,
     }: ManualEnterOpts = {},
     checks: SavePassphraseChecks = {}
   ) {
@@ -123,7 +125,7 @@ export class SetupPageRecipe extends PageRecipe {
         settingsPage.waitAndClick('@input-step2bmanualenter-file', { retryErrs: true })]);
       await fileChooser.accept([key.filePath]);
       await Util.sleep(1);
-      if (checks.isInvalidKey) {
+      if (isInvalidKey) {
         await settingsPage.waitAndRespondToModal('error', 'confirm', 'Not able to read this key. Make sure it is a valid PGP private key.');
         return;
       }
