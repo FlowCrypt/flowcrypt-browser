@@ -40,9 +40,18 @@ const win = window as unknown as ContentScriptWindow;
 export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecificInfo) => {
 
   const setUpNotification = `
-    <a href="#" class="action_open_settings" data-test="notification-setup-action-open-settings">Set up FlowCrypt</a> to send and receive secure email on this account.
-    <a href="#" class="notification_setup_needed_dismiss" data-test="notification-setup-action-dismiss">dismiss</a>
-    <a href="#" class="close" data-test="notification-setup-action-close">remind me later</a>
+    Set up FlowCrypt now for encrypted email?
+    <div class="webmail_notification_buttons">
+      <button class="action_open_settings" data-test="notification-setup-action-open-settings">
+        Yes
+      </button>
+      <button class="close" data-test="notification-setup-action-close">
+        Remind me later
+      </button>
+      <button class="notification_setup_needed_dismiss" data-test="notification-setup-action-dismiss">
+        Don't remind again
+      </button>
+    </div>
   `;
   let wasDestroyed = false;
   class DestroyTrigger extends Error { }

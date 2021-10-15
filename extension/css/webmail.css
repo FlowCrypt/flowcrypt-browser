@@ -93,6 +93,14 @@ div.webmail_notifications div.webmail_notification {
   margin-left: 50px;
 }
 
+div.webmail_notifications div.webmail_notification .webmail_notification_buttons {
+  margin: 10px 0 5px;
+}
+
+div.webmail_notifications div.webmail_notification .action_open_settings {
+  font-weight: 500;
+}
+
 div.webmail_notifications div.webmail_notification a {
   color: black;
   padding-left: 6px;
