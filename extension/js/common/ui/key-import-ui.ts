@@ -113,8 +113,12 @@ export class KeyImportUi {
             prv = (await KeyUtil.parse(firstPrv.content.toString()));
           }
         } else {
-          const parsed = await KeyUtil.parseBinary(file.getData(), '');
-          prv = parsed[0];
+          try {
+            const parsed = await KeyUtil.parseBinary(file.getData(), '');
+            prv = parsed[0];
+          } catch (e) {
+            // ignore
+          }
         }
         if (typeof prv !== 'undefined') {
           $('.input_private_key').val(KeyUtil.armor(prv)).change().prop('disabled', true);

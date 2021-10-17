@@ -58,6 +58,18 @@ export const defineSetupTests = (testVariant: TestVariant, testWithBrowser: Test
       await SetupPageRecipe.manualEnter(settingsPage, key.title, { submitPubkey: false, usedPgpBefore: false, key });
     }));
 
+    ava.default('setup - import invalid key file', testWithBrowser(undefined, async (t, browser) => {
+      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.test.key.imported@gmail.com');
+      const key = {
+        title: 'invalid key',
+        filePath: 'test/samples/small.txt',
+        armored: null, // tslint:disable-line:no-null-keyword
+        passphrase: '',
+        longid: null // tslint:disable-line:no-null-keyword
+      };
+      await SetupPageRecipe.manualEnter(settingsPage, key.title, { key, isInvalidKey: true });
+    }));
+
     ava.default('setup - import key - submit - used before', testWithBrowser(undefined, async (t, browser) => {
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.test.key.used.pgp@gmail.com');
       await SetupPageRecipe.manualEnter(settingsPage, 'flowcrypt.test.key.used.pgp', { submitPubkey: true, usedPgpBefore: true },
