@@ -660,9 +660,30 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       expect(await backupPage.isDisabled('[data-id="CB0485FE44FC22FF09AF0DB31B383D0334E38B28"]')).to.equal(false);
       expect(await backupPage.isDisabled('[data-id="515431151DDD3EA232B37A4C98ACFA1EADAB5B92"]')).to.equal(false);
       await backupPage.waitAndClick('@action-backup-step3manual-continue');
-      const ppFrame = await backupPage.getFrame(['passphrase.htm']);
-      expect(await ppFrame.read('@which-key')).to.contain('CB04 85FE 44FC 22FF 09AF 0DB3 1B38 3D03 34E3 8B28');
+      await backupPage.waitAndRespondToModal('error', 'confirm', 'Your keys are protected with different pass phrases');
       await backupPage.close();
+    }));
+
+    ava.default('settings - manual backup a key with a missing pass phrase', testWithBrowser(undefined, async (t, browser) => {
+      const acctEmail = 'flowcrypt.test.key.multiple@gmail.com';
+      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
+      const key = { title: '?', armored: testConstants.testKeyMultiple1b383d0334e38b28, passphrase: '1234', longid: '1b383d0334e38b28' };
+      await SetupPageRecipe.manualEnter(settingsPage, 'unused', { submitPubkey: false, usedPgpBefore: false, key },
+        { isSavePassphraseChecked: false, isSavePassphraseHidden: false });
+      const inboxPage = await browser.newPage(t, TestUrls.extension(`chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}`));
+      await InboxPageRecipe.finishSessionOnInboxPage(inboxPage);
+      await inboxPage.close();
+      await settingsPage.waitAndClick('@action-open-backup-page');
+      const backupFrame = await settingsPage.getFrame(['backup.htm']);
+      await backupFrame.waitAndClick('@action-go-manual');
+      await backupFrame.waitAndClick('@action-backup-step3manual-continue');
+      const ppFrame = await settingsPage.getFrame(['passphrase.htm']);
+      await ppFrame.waitAndType('@input-pass-phrase', key.passphrase);
+      await ppFrame.waitAndClick('@action-confirm-pass-phrase-entry');
+      await Util.sleep(2);
+      expect(ppFrame.frame.isDetached()).to.equal(true);
+      // todo: #4059 we would expect further iteraction with backupFrame here but it is actually wiped out
+      await settingsPage.close();
     }));
 
     ava.default('settings - manual backup several keys to file with different pass phrases', testWithBrowser(undefined, async (t, browser) => {

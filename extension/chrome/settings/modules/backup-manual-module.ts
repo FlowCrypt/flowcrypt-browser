@@ -20,6 +20,7 @@ import { Buf } from '../../../js/common/core/buf.js';
 import { PassphraseStore } from '../../../js/common/platform/store/passphrase-store.js';
 import { KeyStore } from '../../../js/common/platform/store/key-store.js';
 
+const differentPassphrasesError = `Your keys are protected with different pass phrases.\n\nBacking them up together isn't supported yet.`;
 export class BackupManualActionModule extends ViewModule<BackupView> {
   private ppChangedPromiseCancellation: PromiseCancellation = { cancel: false };
   private readonly proceedBtn = $('#module_manual .action_manual_backup');
@@ -67,7 +68,8 @@ export class BackupManualActionModule extends ViewModule<BackupView> {
       }
     }
     if (selected === 'inbox' || selected === 'file') {
-      const encrypted = await this.encryptForBackup(kinfos, { strength: selected === 'inbox' });
+      // in setup_manual we don't have passphrase-related message handlers, so limit the checks
+      const encrypted = await this.encryptForBackup(kinfos, { strength: selected === 'inbox' && this.view.action !== 'setup_manual' });
       if (encrypted) {
         if (selected === 'inbox') {
           await this.backupOnEmailProviderAndUpdateUi(encrypted);
@@ -95,11 +97,12 @@ export class BackupManualActionModule extends ViewModule<BackupView> {
     }));
     const distinctPassphrases = Value.arr.unique(kisWithPp.filter(ki => ki.passphrase).map(ki => ki.passphrase!));
     if (distinctPassphrases.length > 1) {
-      await Ui.modal.error('Your keys are protected with different pass phrases.\n\nThis is not supported yet.');
+      await Ui.modal.error(differentPassphrasesError);
       return undefined;
     }
     if (checks.strength && distinctPassphrases[0] && !(Settings.evalPasswordStrength(distinctPassphrases[0]).word.pass)) {
       await Ui.modal.warning('Please change your pass phrase first.\n\nIt\'s too weak for this backup method.');
+      // todo: Settings.renderSubPage ?
       window.location.href = Url.create('/chrome/settings/modules/change_passphrase.htm', { acctEmail: this.view.acctEmail, parentTabId: this.view.parentTabId || '' });
       return undefined;
     }
@@ -113,6 +116,10 @@ export class BackupManualActionModule extends ViewModule<BackupView> {
     }
     const kisMissingPp = kisWithPp.filter(ki => !ki.passphrase);
     if (kisMissingPp.length) {
+      if (distinctPassphrases.length >= 1) {
+        await Ui.modal.error(differentPassphrasesError);
+        return undefined;
+      }
       // todo: reset invalid pass phrases (mismatch === true)?
       const longids = kisMissingPp.map(ki => ki.longid);
       if (this.view.parentTabId) {
@@ -121,12 +128,11 @@ export class BackupManualActionModule extends ViewModule<BackupView> {
           return undefined;
         }
       } else {
-        await this.view.factory.showPassphraseDialog(longids, 'backup');
-        if (!(await Promise.all(longids.map(longid => PassphraseStore.get(this.view.acctEmail, longid)))).some(Boolean)) {
-          // no new passphrases entered
-          return undefined;
-        }
+        await Ui.modal.error(`Sorry, can't back up private key because its pass phrase can't be extracted. Please restart your browser and try again.`);
+        return undefined;
       }
+      // re-start the function recursively with newly discovered pass phrases
+      // todo: #4059 however, this code is never actually executed, because our backup frame gets wiped out by the passphrase frame
       return await this.encryptForBackup(kinfos, checks);
     }
     return kinfos.map(ki => ki.private).join('\n'); // todo: remove extra \n ?

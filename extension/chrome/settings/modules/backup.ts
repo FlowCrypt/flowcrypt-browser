@@ -17,7 +17,6 @@ import { Lang } from '../../../js/common/lang.js';
 import { AcctStore, EmailProvider } from '../../../js/common/platform/store/acct-store.js';
 import { KeyStore } from '../../../js/common/platform/store/key-store.js';
 import { KeyIdentity, KeyUtil, TypedKeyInfo } from '../../../js/common/core/crypto/key.js';
-import { XssSafeFactory } from '../../../js/common/xss-safe-factory.js';
 
 export class BackupView extends View {
 
@@ -25,7 +24,7 @@ export class BackupView extends View {
   public readonly idToken: string | undefined;
   public readonly action: 'setup_automatic' | 'setup_manual' | 'backup_manual' | undefined;
   public readonly gmail: Gmail;
-  public readonly parentTabId: string | undefined;
+  public readonly parentTabId: string | undefined; // the master page to interact (settings/index.htm)
   public readonly keyIdentity: KeyIdentity | undefined; // the key identity supplied with URL params
 
   public readonly statusModule: BackupStatusModule;
@@ -33,7 +32,6 @@ export class BackupView extends View {
   public readonly automaticModule: BackupAutomaticModule;
 
   public emailProvider: EmailProvider = 'gmail';
-  public factory!: XssSafeFactory;
   public orgRules!: OrgRules;
   public tabId!: string;
   public prvKeysToManuallyBackup: KeyIdentity[] = [];
@@ -45,8 +43,11 @@ export class BackupView extends View {
     const uncheckedUrlParams = Url.parse(['acctEmail', 'parentTabId', 'action', 'idToken', 'id', 'type']);
     this.acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
     this.action = Assert.urlParamRequire.oneof(uncheckedUrlParams, 'action', ['setup_automatic', 'setup_manual', 'backup_manual', undefined]);
-    this.parentTabId = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'parentTabId');
-    if (this.action === 'setup_automatic' || this.action === 'setup_manual') {
+    if (this.action !== 'setup_automatic' && this.action !== 'setup_manual') {
+      this.parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
+    } else {
+      // when sourced from setup.htm page, passphrase-related message handlers are not wired,
+      // so we have limited functionality further down the road
       this.idToken = Assert.urlParamRequire.string(uncheckedUrlParams, 'idToken');
     }
     {
@@ -64,7 +65,6 @@ export class BackupView extends View {
 
   public render = async () => {
     this.tabId = await BrowserMsg.requiredTabId();
-    this.factory = new XssSafeFactory(this.acctEmail, this.tabId);
     this.orgRules = await OrgRules.newInstance(this.acctEmail);
     const storage = await AcctStore.get(this.acctEmail, ['email_provider']);
     this.emailProvider = storage.email_provider || 'gmail';
