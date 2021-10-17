@@ -542,6 +542,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         { isSavePassphraseChecked: true, isSavePassphraseHidden: false });
       await SettingsPageRecipe.addKeyTest(t, browser, acctEmail, testConstants.testKeyMultipleSmimeA35068FD4E037879, '1234',
         { isSavePassphraseChecked: true, isSavePassphraseHidden: false });
+      // opening backup.htm independently of settings/index.htm page limits functionality but sufficient for this test
       const backupPage = await browser.newPage(t, TestUrls.extension(`/chrome/settings/modules/backup.htm?acctEmail=${acctEmail}&action=backup_manual&parentTabId=1%3A0`));
       // OpenPGP keys are checked, x509 keys are unchecked
       expect(await backupPage.isChecked('[data-id="47FB03183E03A8ED44E3BBFCCEA2D53BB9D24871"]')).to.equal(false);
@@ -587,6 +588,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       await settingsPage1.close();
       await SettingsPageRecipe.addKeyTest(t, browser, acctEmail, KeyUtil.armor(key98acfa1eadab5b92), passphrase,
         { isSavePassphraseChecked: true, isSavePassphraseHidden: false });
+      // opening backup.htm independently of settings/index.htm page limits functionality but sufficient for this test
       const backupPage = await browser.newPage(t, TestUrls.extension(`/chrome/settings/modules/backup.htm?acctEmail=${acctEmail}&action=backup_manual&parentTabId=1%3A0`));
       expect(await backupPage.isChecked('[data-id="CB0485FE44FC22FF09AF0DB31B383D0334E38B28"]')).to.equal(true);
       expect(await backupPage.isChecked('[data-id="515431151DDD3EA232B37A4C98ACFA1EADAB5B92"]')).to.equal(true);
@@ -619,8 +621,9 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       await InboxPageRecipe.finishSessionOnInboxPage(inboxPage);
       await SettingsPageRecipe.addKeyTest(t, browser, acctEmail, testConstants.testKeyMultiple98acfa1eadab5b92, '1234',
         { isSavePassphraseChecked: true, isSavePassphraseHidden: false });
+      // opening backup.htm independently of settings/index.htm page limits functionality but sufficient for this test
       const backupPage = await browser.newPage(t, TestUrls.extension(`/chrome/settings/modules/backup.htm?acctEmail=${acctEmail}` +
-        `&action=backup_manual`));
+        `&action=backup_manual&parentTabId=1%3A0`));
       expect(await backupPage.isChecked('[data-id="CB0485FE44FC22FF09AF0DB31B383D0334E38B28"]')).to.equal(true);
       expect(await backupPage.isChecked('[data-id="515431151DDD3EA232B37A4C98ACFA1EADAB5B92"]')).to.equal(true);
       expect(await backupPage.isDisabled('[data-id="CB0485FE44FC22FF09AF0DB31B383D0334E38B28"]')).to.equal(false);
@@ -646,22 +649,23 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
           longid: '1b383d0334e38b28',
         }
       }, { isSavePassphraseChecked: false, isSavePassphraseHidden: false });
-      await settingsPage.close();
       const inboxPage = await browser.newPage(t, TestUrls.extension(`chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}`));
       await InboxPageRecipe.finishSessionOnInboxPage(inboxPage);
+      await inboxPage.close();
       const key98acfa1eadab5b92 = await KeyUtil.parse(testConstants.testKeyMultiple98acfa1eadab5b92);
       expect(await KeyUtil.decrypt(key98acfa1eadab5b92, '1234')).to.equal(true);
       await SettingsPageRecipe.addKeyTest(t, browser, acctEmail, KeyUtil.armor(key98acfa1eadab5b92), 'new passphrase strong enough',
         { isSavePassphraseChecked: true, isSavePassphraseHidden: false });
-      const backupPage = await browser.newPage(t, TestUrls.extension(`/chrome/settings/modules/backup.htm?acctEmail=${acctEmail}` +
-        `&action=backup_manual`)); // &parentTabId=${encodeURIComponent(parentTabId)}`));
-      expect(await backupPage.isChecked('[data-id="CB0485FE44FC22FF09AF0DB31B383D0334E38B28"]')).to.equal(true);
-      expect(await backupPage.isChecked('[data-id="515431151DDD3EA232B37A4C98ACFA1EADAB5B92"]')).to.equal(true);
-      expect(await backupPage.isDisabled('[data-id="CB0485FE44FC22FF09AF0DB31B383D0334E38B28"]')).to.equal(false);
-      expect(await backupPage.isDisabled('[data-id="515431151DDD3EA232B37A4C98ACFA1EADAB5B92"]')).to.equal(false);
-      await backupPage.waitAndClick('@action-backup-step3manual-continue');
-      await backupPage.waitAndRespondToModal('error', 'confirm', 'Your keys are protected with different pass phrases');
-      await backupPage.close();
+      await settingsPage.waitAndClick('@action-open-backup-page');
+      const backupFrame = await settingsPage.getFrame(['backup.htm']);
+      await backupFrame.waitAndClick('@action-go-manual');
+      expect(await backupFrame.isChecked('[data-id="CB0485FE44FC22FF09AF0DB31B383D0334E38B28"]')).to.equal(true);
+      expect(await backupFrame.isChecked('[data-id="515431151DDD3EA232B37A4C98ACFA1EADAB5B92"]')).to.equal(true);
+      expect(await backupFrame.isDisabled('[data-id="CB0485FE44FC22FF09AF0DB31B383D0334E38B28"]')).to.equal(false);
+      expect(await backupFrame.isDisabled('[data-id="515431151DDD3EA232B37A4C98ACFA1EADAB5B92"]')).to.equal(false);
+      await backupFrame.waitAndClick('@action-backup-step3manual-continue');
+      await backupFrame.waitAndRespondToModal('error', 'confirm', 'Your keys are protected with different pass phrases');
+      await settingsPage.close();
     }));
 
     ava.default('settings - manual backup a key with a missing pass phrase', testWithBrowser(undefined, async (t, browser) => {
@@ -704,6 +708,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       expect(await KeyUtil.decrypt(key98acfa1eadab5b92, '1234')).to.equal(true);
       await SettingsPageRecipe.addKeyTest(t, browser, acctEmail, KeyUtil.armor(key98acfa1eadab5b92), 'new passphrase strong enough',
         { isSavePassphraseChecked: true, isSavePassphraseHidden: false });
+      // opening backup.htm independently of settings/index.htm page limits functionality but sufficient for this test
       const backupPage = await browser.newPage(t, TestUrls.extension(`/chrome/settings/modules/backup.htm?acctEmail=${acctEmail}&action=backup_manual&parentTabId=1%3A0`));
       expect(await backupPage.isChecked('[data-id="CB0485FE44FC22FF09AF0DB31B383D0334E38B28"]')).to.equal(true);
       expect(await backupPage.isChecked('[data-id="515431151DDD3EA232B37A4C98ACFA1EADAB5B92"]')).to.equal(true);
@@ -791,6 +796,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       await settingsPage1.close();
       await SettingsPageRecipe.addKeyTest(t, browser, acctEmail, testConstants.testKeyMultiple98acfa1eadab5b92, '1234',
         { isSavePassphraseChecked: true, isSavePassphraseHidden: false });
+      // opening backup.htm independently of settings/index.htm page limits functionality but sufficient for this test
       const backupPage = await browser.newPage(t, TestUrls.extension(`/chrome/settings/modules/backup.htm?acctEmail=${acctEmail}&action=backup_manual&parentTabId=1%3A0`));
       expect(await backupPage.isChecked('[data-id="CB0485FE44FC22FF09AF0DB31B383D0334E38B28"]')).to.equal(true);
       expect(await backupPage.isChecked('[data-id="515431151DDD3EA232B37A4C98ACFA1EADAB5B92"]')).to.equal(true);
