@@ -17,6 +17,7 @@ import { Lang } from '../../../js/common/lang.js';
 import { AcctStore, EmailProvider } from '../../../js/common/platform/store/acct-store.js';
 import { KeyStore } from '../../../js/common/platform/store/key-store.js';
 import { KeyIdentity, KeyUtil, TypedKeyInfo } from '../../../js/common/core/crypto/key.js';
+import { Settings } from '../../../js/common/settings.js';
 
 export class BackupView extends View {
 
@@ -102,8 +103,8 @@ export class BackupView extends View {
       if (this.parentTabId) {
         BrowserMsg.send.closePage(this.parentTabId);
       }
-    } else {
-      window.location.href = Url.create('/chrome/settings/modules/backup.htm', { acctEmail: this.acctEmail, parentTabId: this.parentTabId || '' });
+    } else if (this.parentTabId) { // should be always true as setup_manual is excluded by this point
+      Settings.redirectSubPage(this.acctEmail, this.parentTabId, '/chrome/settings/modules/backup.htm');
     }
   }
 

@@ -12,6 +12,7 @@ import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Backups } from '../../../js/common/api/email-provider/email-provider-api.js';
 import { KeyInfo } from '../../../js/common/core/crypto/key.js';
 import { Str } from '../../../js/common/core/common.js';
+
 export class BackupStatusModule extends ViewModule<BackupView> {
 
   public setHandlers = () => { // is run after checkAndRenderBackupStatus, which renders (some of) these fields first
