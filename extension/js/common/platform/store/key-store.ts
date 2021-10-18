@@ -1,6 +1,6 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
-import { KeyInfo, TypedKeyInfo, ExtendedKeyInfo, KeyUtil, Key, KeyIdentity } from '../../core/crypto/key.js';
+import { KeyInfo, TypedKeyInfo, ExtendedKeyInfo, KeyUtil, Key } from '../../core/crypto/key.js';
 import { AcctStore } from './acct-store.js';
 import { PassphraseStore } from './passphrase-store.js';
 import { AbstractStore } from './abstract-store.js';
@@ -33,16 +33,13 @@ export class KeyStore extends AbstractStore {
     return key as KeyInfo;
   }
 
-  public static getTypedKeyInfos = async (acctEmail: string, ids?: KeyIdentity[] | undefined): Promise<TypedKeyInfo[]> => {
+  public static getTypedKeyInfos = async (acctEmail: string): Promise<TypedKeyInfo[]> => {
     const keys = await KeyStore.get(acctEmail);
     const kis: TypedKeyInfo[] = [];
     for (const ki of keys) {
       const type = KeyUtil.getKeyType(ki.private);
       const id = ki.fingerprints[0];
       if (type !== 'openpgp' && type !== 'x509') {
-        continue;
-      }
-      if (ids && !ids.some(i => KeyUtil.identityEquals(i, { id, type }))) {
         continue;
       }
       kis.push({ ...ki, type, id });

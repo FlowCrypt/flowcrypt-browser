@@ -804,6 +804,8 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       expect(await backupPage.isDisabled('[data-id="515431151DDD3EA232B37A4C98ACFA1EADAB5B92"]')).to.equal(false);
       await backupPage.waitAndClick('@action-backup-step3manual-continue');
       await backupPage.waitAndRespondToModal('warning', 'confirm', `It's too weak for this backup method`);
+      await Util.sleep(2);
+      await backupPage.waitAny('@action-show-confirm-new-pp');
       await backupPage.close();
     }));
 

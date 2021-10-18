@@ -92,6 +92,10 @@ export class KeyUtil {
     return keyIdentity1.id === keyIdentity2.id && keyIdentity1.type === keyIdentity2.type;
   }
 
+  public static filterKeys<T extends KeyIdentity>(kis: T[], ids: KeyIdentity[]): T[] {
+    return kis.filter(ki => ids.some(i => KeyUtil.identityEquals(i, ki)));
+  }
+
   public static isWithoutSelfCertifications = async (key: Key) => {
     // all non-OpenPGP keys are automatically considered to be not
     // "without self certifications"

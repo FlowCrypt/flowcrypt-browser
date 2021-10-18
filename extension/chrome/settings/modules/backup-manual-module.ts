@@ -8,13 +8,13 @@ import { BackupView } from './backup.js';
 import { Attachment } from '../../../js/common/core/attachment.js';
 import { SendableMsg } from '../../../js/common/api/email-provider/sendable-msg.js';
 import { GMAIL_RECOVERY_EMAIL_SUBJECTS } from '../../../js/common/core/const.js';
-import { KeyInfo, KeyUtil, TypedKeyInfo } from '../../../js/common/core/crypto/key.js';
+import { KeyIdentity, KeyInfo, KeyUtil, TypedKeyInfo } from '../../../js/common/core/crypto/key.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { ApiErr } from '../../../js/common/api/shared/api-error.js';
 import { BrowserMsg, Bm } from '../../../js/common/browser/browser-msg.js';
 import { Catch } from '../../../js/common/platform/catch.js';
 import { Browser } from '../../../js/common/browser/browser.js';
-import { Url, PromiseCancellation, Value } from '../../../js/common/core/common.js';
+import { PromiseCancellation, Value } from '../../../js/common/core/common.js';
 import { Settings } from '../../../js/common/settings.js';
 import { Buf } from '../../../js/common/core/buf.js';
 import { PassphraseStore } from '../../../js/common/platform/store/passphrase-store.js';
@@ -56,11 +56,16 @@ export class BackupManualActionModule extends ViewModule<BackupView> {
   private actionManualBackupHandler = async () => {
     const selected = $('input[type=radio][name=input_backup_choice]:checked').val();
     if (this.view.prvKeysToManuallyBackup.length <= 0) {
-      await Ui.modal.error('No keys selected to backup! Please select a key to continue.');
+      await Ui.modal.error('No keys are selected to back up! Please select a key to continue.');
       return;
     }
-    const kinfos = await KeyStore.getTypedKeyInfos(this.view.acctEmail, this.view.prvKeysToManuallyBackup);
-    // todo: this check can also be moved to encryptForBackup method when we solve the same passphrase issue
+    const allKis = await KeyStore.getTypedKeyInfos(this.view.acctEmail);
+    const kinfos = KeyUtil.filterKeys(allKis, this.view.prvKeysToManuallyBackup);
+    if (kinfos.length <= 0) {
+      await Ui.modal.error('Sorry, could not extract these keys from storage. Please restart your browser and try again.');
+      return;
+    }
+    // todo: this check can also be moved to encryptForBackup method when we solve the same passphrase issue (#4060)
     for (const ki of kinfos) {
       if (! await this.isPrivateKeyEncrypted(ki)) {
         await Ui.modal.error('Sorry, cannot back up private key because it\'s not protected with a pass phrase.');
@@ -69,7 +74,7 @@ export class BackupManualActionModule extends ViewModule<BackupView> {
     }
     if (selected === 'inbox' || selected === 'file') {
       // in setup_manual we don't have passphrase-related message handlers, so limit the checks
-      const encrypted = await this.encryptForBackup(kinfos, { strength: selected === 'inbox' && this.view.action !== 'setup_manual' });
+      const encrypted = await this.encryptForBackup(kinfos, { strength: selected === 'inbox' && this.view.action !== 'setup_manual' }, allKis[0]);
       if (encrypted) {
         if (selected === 'inbox') {
           await this.backupOnEmailProviderAndUpdateUi(encrypted);
@@ -88,7 +93,7 @@ export class BackupManualActionModule extends ViewModule<BackupView> {
     return new Attachment({ name: `flowcrypt-backup-${this.view.acctEmail.replace(/[^A-Za-z0-9]+/g, '')}.asc`, type: 'application/pgp-keys', data: Buf.fromUtfStr(armoredKey) });
   }
 
-  private encryptForBackup = async (kinfos: TypedKeyInfo[], checks: { strength: boolean }): Promise<string | undefined> => {
+  private encryptForBackup = async (kinfos: TypedKeyInfo[], checks: { strength: boolean }, primaryKeyIdentity: KeyIdentity): Promise<string | undefined> => {
     const kisWithPp = await Promise.all(kinfos.map(async (ki) => {
       const passphrase = await PassphraseStore.getByKeyIdentity(this.view.acctEmail, ki);
       // test that the key can actually be decrypted with the passphrase provided
@@ -102,8 +107,10 @@ export class BackupManualActionModule extends ViewModule<BackupView> {
     }
     if (checks.strength && distinctPassphrases[0] && !(Settings.evalPasswordStrength(distinctPassphrases[0]).word.pass)) {
       await Ui.modal.warning('Please change your pass phrase first.\n\nIt\'s too weak for this backup method.');
-      // todo: Settings.renderSubPage ?
-      window.location.href = Url.create('/chrome/settings/modules/change_passphrase.htm', { acctEmail: this.view.acctEmail, parentTabId: this.view.parentTabId || '' });
+      // Actually, until #956 is resolved, we can only modify the pass phrase of the first key
+      if (this.view.parentTabId && KeyUtil.identityEquals(kisWithPp[0], primaryKeyIdentity) && kisWithPp[0].passphrase === distinctPassphrases[0]) {
+        Settings.redirectSubPage(this.view.acctEmail, this.view.parentTabId, '/chrome/settings/modules/change_passphrase.htm');
+      }
       return undefined;
     }
     if (distinctPassphrases.length === 1) {
@@ -133,7 +140,7 @@ export class BackupManualActionModule extends ViewModule<BackupView> {
       }
       // re-start the function recursively with newly discovered pass phrases
       // todo: #4059 however, this code is never actually executed, because our backup frame gets wiped out by the passphrase frame
-      return await this.encryptForBackup(kinfos, checks);
+      return await this.encryptForBackup(kinfos, checks, primaryKeyIdentity);
     }
     return kinfos.map(ki => ki.private).join('\n'); // todo: remove extra \n ?
   }
