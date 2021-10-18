@@ -77,10 +77,13 @@ export class BackupManualActionModule extends ViewModule<BackupView> {
       const encrypted = await this.encryptForBackup(kinfos, { strength: selected === 'inbox' && this.view.action !== 'setup_manual' }, allKis[0]);
       if (encrypted) {
         if (selected === 'inbox') {
-          await this.backupOnEmailProviderAndUpdateUi(encrypted);
+          if (!await this.backupOnEmailProviderAndUpdateUi(encrypted)) {
+            return; // some error occured, message displayed, can retry, no reload needed
+          }
         } else {
           await this.backupAsFile(encrypted);
         }
+        await this.view.renderBackupDone(kinfos.length);
       }
     } else if (selected === 'print') {
       await this.backupByBrint();
@@ -145,34 +148,34 @@ export class BackupManualActionModule extends ViewModule<BackupView> {
     return kinfos.map(ki => ki.private).join('\n'); // todo: remove extra \n ?
   }
 
-  private backupOnEmailProviderAndUpdateUi = async (data: string): Promise<void> => {
+  private backupOnEmailProviderAndUpdateUi = async (data: string): Promise<boolean> => {
     const origBtnText = this.proceedBtn.text();
     Xss.sanitizeRender(this.proceedBtn, Ui.spinner('white'));
     try {
       await this.doBackupOnEmailProvider(data);
+      return true;
     } catch (e) {
       if (ApiErr.isNetErr(e)) {
-        return await Ui.modal.warning('Need internet connection to finish. Please click the button again to retry.');
+        await Ui.modal.warning('Need internet connection to finish. Please click the button again to retry.');
       } else if (ApiErr.isAuthErr(e)) {
         if (this.view.parentTabId) {
           BrowserMsg.send.notificationShowAuthPopupNeeded(this.view.parentTabId, { acctEmail: this.view.acctEmail });
         }
-        return await Ui.modal.warning('Account needs to be re-connected first. Please try later.');
+        await Ui.modal.warning('Account needs to be re-connected first. Please try later.');
       } else {
         Catch.reportErr(e);
-        return await Ui.modal.error(`Error happened: ${String(e)}`);
+        await Ui.modal.error(`Error happened: ${String(e)}`);
       }
+      return false;
     } finally {
       this.proceedBtn.text(origBtnText);
     }
-    await this.view.renderBackupDone();
   }
 
   private backupAsFile = async (data: string) => { // todo - add a non-encrypted download option
     const attachment = this.asBackupFile(data);
     Browser.saveToDownloads(attachment);
     await Ui.modal.info('Downloading private key backup file..');
-    await this.view.renderBackupDone();
   }
 
   private backupByBrint = async () => { // todo - implement + add a non-encrypted print option
@@ -180,7 +183,7 @@ export class BackupManualActionModule extends ViewModule<BackupView> {
   }
 
   private backupRefused = async () => {
-    await this.view.renderBackupDone(false);
+    await this.view.renderBackupDone(0);
   }
 
   private isPrivateKeyEncrypted = async (ki: KeyInfo) => {
