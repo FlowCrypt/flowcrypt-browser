@@ -41,20 +41,23 @@ export class BackupStatusModule extends ViewModule<BackupView> {
     }
   }
 
+  private renderGoManualButton = (htmlEscapedText: string) => {
+    Xss.sanitizeRender('#module_status .container', `<button class="button long green action_go_manual" data-test="action-go-manual">${htmlEscapedText}</button>`);
+  }
+
   private renderBackupSummaryAndActionButtons = (backups: Backups) => {
     if (!backups.longids.backups.length) {
       $('.status_summary').text('No backups found on this account. If you lose your device, or it stops working, you will not be able to read your encrypted email.');
-      Xss.sanitizeRender('#module_status .container', '<button class="button long green action_go_manual">BACK UP MY KEY</button>');
+      this.renderGoManualButton('BACK UP MY KEYS');
     } else if (backups.longids.importedNotBackedUp.length) {
       $('.status_summary').text('Some of your keys have not been backed up.');
-      // todo - this would not yet work because currently only backing up first key
-      // Xss.sanitizeRender('#module_status .container', '<button class="button long green action_go_manual">BACK UP MY KEY</button>');
+      this.renderGoManualButton('BACK UP MY KEYS');
     } else if (backups.longids.backupsNotImported.length) {
       $('.status_summary').text('Some of your backups have not been loaded. This may cause incoming encrypted email to not be readable.');
       Xss.sanitizeRender('#module_status .container', '<button class="button long green action_go_add_key">IMPORT MISSING BACKUPS</button>');
     } else {
       $('.status_summary').text('Your account keys are backed up and loaded correctly.');
-      Xss.sanitizeRender('#module_status .container', '<button class="button long green action_go_manual">SEE BACKUP OPTIONS</button>');
+      this.renderGoManualButton('SEE BACKUP OPTIONS');
     }
   }
 
