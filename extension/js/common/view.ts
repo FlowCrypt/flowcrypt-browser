@@ -14,7 +14,7 @@ export abstract class View {
       const view = new viewClass();
       (async () => {
         await view.render();
-        view.setHandlers();
+        await Promise.resolve(view.setHandlers()); // allow both sync and async
         View.setTestViewStateLoaded();
       })().catch(View.reportAndRenderErr);
     } catch (e) {
@@ -42,7 +42,7 @@ export abstract class View {
 
   public abstract render(): Promise<void>;
 
-  public abstract setHandlers(): void;
+  public abstract setHandlers(): void | Promise<void>;
 
   public setHandler = (cb: (e: HTMLElement, event: JQuery.Event<HTMLElement, null>) => void | Promise<void>, errHandlers?: BrowserEventErrHandler) => {
     return Ui.event.handle(cb, errHandlers, this);

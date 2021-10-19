@@ -18,7 +18,10 @@ import { testConstants } from './tooling/consts';
 import { PageRecipe } from './page-recipe/abstract-page-recipe';
 import { OauthPageRecipe } from './page-recipe/oauth-page-recipe';
 import { Pubkey } from '../platform/store/contact-store';
-import { KeyInfo } from '../core/crypto/key';
+import { KeyInfo, KeyUtil } from '../core/crypto/key';
+import { Buf } from '../core/buf';
+import { GoogleData } from '../mock/google/google-data';
+import Parse from './../util/parse';
 
 // tslint:disable:no-blank-lines-func
 
@@ -517,6 +520,293 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         await settingsPage.getFromLocalStorage(['cryptup_flowcrypttestkeymultiplegmailcom_passphrase_98ACFA1EADAB5B92']);
       expect(savedPassphrase).to.equal('1234');
       await settingsPage.close();
+    }));
+
+    ava.default('settings - manual backup several keys to file with the same pass phrase', testWithBrowser(undefined, async (t, browser) => {
+      const acctEmail = 'flowcrypt.test.key.multiple@gmail.com';
+      const settingsPage1 = await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
+      await SetupPageRecipe.manualEnter(settingsPage1, 'unused', {
+        submitPubkey: false,
+        usedPgpBefore: false,
+        key: {
+          title: '?',
+          armored: testConstants.testKeyMultiple1b383d0334e38b28,
+          passphrase: '1234',
+          longid: '1b383d0334e38b28',
+        }
+      }, { isSavePassphraseChecked: false, isSavePassphraseHidden: false });
+      await settingsPage1.close();
+      await SettingsPageRecipe.addKeyTest(t, browser, acctEmail, testConstants.testKeyMultiple98acfa1eadab5b92, '1234',
+        { isSavePassphraseChecked: true, isSavePassphraseHidden: false });
+      await SettingsPageRecipe.addKeyTest(t, browser, acctEmail, testConstants.testKeyMultipleSmimeCEA2D53BB9D24871, '1234',
+        { isSavePassphraseChecked: true, isSavePassphraseHidden: false });
+      await SettingsPageRecipe.addKeyTest(t, browser, acctEmail, testConstants.testKeyMultipleSmimeA35068FD4E037879, '1234',
+        { isSavePassphraseChecked: true, isSavePassphraseHidden: false });
+      // opening backup.htm independently of settings/index.htm page limits functionality but sufficient for this test
+      const backupPage = await browser.newPage(t, TestUrls.extension(`/chrome/settings/modules/backup.htm?acctEmail=${acctEmail}&action=backup_manual&parentTabId=1%3A0`));
+      // OpenPGP keys are checked, x509 keys are unchecked
+      expect(await backupPage.isChecked('[data-id="47FB03183E03A8ED44E3BBFCCEA2D53BB9D24871"]')).to.equal(false);
+      expect(await backupPage.isChecked('[data-id="5A08466253C956E9C76C2E95A35068FD4E037879"]')).to.equal(false);
+      expect(await backupPage.isChecked('[data-id="CB0485FE44FC22FF09AF0DB31B383D0334E38B28"]')).to.equal(true);
+      expect(await backupPage.isChecked('[data-id="515431151DDD3EA232B37A4C98ACFA1EADAB5B92"]')).to.equal(true);
+      // OpenPGP keys are enabled, x509 keys are disabled
+      expect(await backupPage.isDisabled('[data-id="47FB03183E03A8ED44E3BBFCCEA2D53BB9D24871"]')).to.equal(true);
+      expect(await backupPage.isDisabled('[data-id="5A08466253C956E9C76C2E95A35068FD4E037879"]')).to.equal(true);
+      expect(await backupPage.isDisabled('[data-id="CB0485FE44FC22FF09AF0DB31B383D0334E38B28"]')).to.equal(false);
+      expect(await backupPage.isDisabled('[data-id="515431151DDD3EA232B37A4C98ACFA1EADAB5B92"]')).to.equal(false);
+      await backupPage.waitAndClick('@input-backup-step3manual-file');
+      await backupPage.waitAndClick('[data-id="CB0485FE44FC22FF09AF0DB31B383D0334E38B28"]'); // uncheck
+      // backing up to file when only one key is checked
+      const backupFileRawData1 = await backupPage.awaitDownloadTriggeredByClicking('@action-backup-step3manual-continue');
+      const { keys: keys1 } = await KeyUtil.readMany(Buf.fromUtfStr(backupFileRawData1.toString()));
+      expect(keys1.length).to.equal(1);
+      expect(keys1[0].id).to.equal("515431151DDD3EA232B37A4C98ACFA1EADAB5B92");
+      await backupPage.waitAndRespondToModal('info', 'confirm', 'Downloading private key backup file');
+      await backupPage.waitAndRespondToModal('info', 'confirm', 'Your private key has been successfully backed up');
+      await backupPage.waitAndClick('[data-id="CB0485FE44FC22FF09AF0DB31B383D0334E38B28"]'); // check
+      // backing up to file when two keys are checked
+      const backupFileRawData2 = await backupPage.awaitDownloadTriggeredByClicking('@action-backup-step3manual-continue');
+      const { keys: keys2 } = await KeyUtil.readMany(Buf.fromUtfStr(backupFileRawData2.toString()));
+      expect(keys2.length).to.equal(2);
+      await backupPage.close();
+    }));
+
+    ava.default('settings - manual backup several keys to inbox with the same strong pass phrase', testWithBrowser(undefined, async (t, browser) => {
+      const acctEmail = 'flowcrypt.test.key.multiple.inbox2@gmail.com';
+      const passphrase = 'strong enough passphrase for all keys';
+      const settingsPage1 = await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
+      const key1b383d0334e38b28 = await KeyUtil.parse(testConstants.testKeyMultiple1b383d0334e38b28);
+      expect(await KeyUtil.decrypt(key1b383d0334e38b28, '1234')).to.equal(true);
+      await KeyUtil.encrypt(key1b383d0334e38b28, passphrase);
+      const key98acfa1eadab5b92 = await KeyUtil.parse(testConstants.testKeyMultiple98acfa1eadab5b92);
+      expect(await KeyUtil.decrypt(key98acfa1eadab5b92, '1234')).to.equal(true);
+      await SetupPageRecipe.manualEnter(settingsPage1, 'unused', {
+        submitPubkey: false,
+        usedPgpBefore: false,
+        key: { title: '?', armored: KeyUtil.armor(key1b383d0334e38b28), passphrase, longid: '1b383d0334e38b28' }
+      }, { isSavePassphraseChecked: false, isSavePassphraseHidden: false });
+      await settingsPage1.close();
+      await SettingsPageRecipe.addKeyTest(t, browser, acctEmail, KeyUtil.armor(key98acfa1eadab5b92), passphrase,
+        { isSavePassphraseChecked: true, isSavePassphraseHidden: false });
+      // opening backup.htm independently of settings/index.htm page limits functionality but sufficient for this test
+      const backupPage = await browser.newPage(t, TestUrls.extension(`/chrome/settings/modules/backup.htm?acctEmail=${acctEmail}&action=backup_manual&parentTabId=1%3A0`));
+      expect(await backupPage.isChecked('[data-id="CB0485FE44FC22FF09AF0DB31B383D0334E38B28"]')).to.equal(true);
+      expect(await backupPage.isChecked('[data-id="515431151DDD3EA232B37A4C98ACFA1EADAB5B92"]')).to.equal(true);
+      expect(await backupPage.isDisabled('[data-id="CB0485FE44FC22FF09AF0DB31B383D0334E38B28"]')).to.equal(false);
+      expect(await backupPage.isDisabled('[data-id="515431151DDD3EA232B37A4C98ACFA1EADAB5B92"]')).to.equal(false);
+      await backupPage.waitAndClick('@action-backup-step3manual-continue');
+      await backupPage.waitAndRespondToModal('info', 'confirm', 'Your private keys have been successfully backed up');
+      const sentMsg = (await GoogleData.withInitializedData(acctEmail)).getMessageBySubject('Your FlowCrypt Backup')!;
+      const mimeMsg = await Parse.convertBase64ToMimeMsg(sentMsg.raw!);
+      const { keys } = await KeyUtil.readMany(new Buf(mimeMsg.attachments[0]!.content!));
+      expect(keys.length).to.equal(2);
+      await backupPage.close();
+    }));
+
+    ava.default('settings - manual backup several keys to file with a missing but guessed pass phrase', testWithBrowser(undefined, async (t, browser) => {
+      const acctEmail = 'flowcrypt.test.key.multiple@gmail.com';
+      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
+      await SetupPageRecipe.manualEnter(settingsPage, 'unused', {
+        submitPubkey: false,
+        usedPgpBefore: false,
+        key: {
+          title: '?',
+          armored: testConstants.testKeyMultiple1b383d0334e38b28,
+          passphrase: '1234',
+          longid: '1b383d0334e38b28',
+        }
+      }, { isSavePassphraseChecked: false, isSavePassphraseHidden: false });
+      await settingsPage.close();
+      const inboxPage = await browser.newPage(t, TestUrls.extension(`chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}`));
+      await InboxPageRecipe.finishSessionOnInboxPage(inboxPage);
+      await SettingsPageRecipe.addKeyTest(t, browser, acctEmail, testConstants.testKeyMultiple98acfa1eadab5b92, '1234',
+        { isSavePassphraseChecked: true, isSavePassphraseHidden: false });
+      // opening backup.htm independently of settings/index.htm page limits functionality but sufficient for this test
+      const backupPage = await browser.newPage(t, TestUrls.extension(`/chrome/settings/modules/backup.htm?acctEmail=${acctEmail}` +
+        `&action=backup_manual&parentTabId=1%3A0`));
+      expect(await backupPage.isChecked('[data-id="CB0485FE44FC22FF09AF0DB31B383D0334E38B28"]')).to.equal(true);
+      expect(await backupPage.isChecked('[data-id="515431151DDD3EA232B37A4C98ACFA1EADAB5B92"]')).to.equal(true);
+      expect(await backupPage.isDisabled('[data-id="CB0485FE44FC22FF09AF0DB31B383D0334E38B28"]')).to.equal(false);
+      expect(await backupPage.isDisabled('[data-id="515431151DDD3EA232B37A4C98ACFA1EADAB5B92"]')).to.equal(false);
+      await backupPage.waitAndClick('@input-backup-step3manual-file');
+      // one passphrase is not known but successfully guessed
+      const backupFileRawData = await backupPage.awaitDownloadTriggeredByClicking('@action-backup-step3manual-continue');
+      const { keys } = await KeyUtil.readMany(Buf.fromUtfStr(backupFileRawData.toString()));
+      expect(keys.length).to.equal(2);
+      await backupPage.close();
+    }));
+
+    ava.default('settings - manual backup several keys to inbox with a missing pass phrase', testWithBrowser(undefined, async (t, browser) => {
+      const acctEmail = 'flowcrypt.test.key.multiple@gmail.com';
+      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
+      await SetupPageRecipe.manualEnter(settingsPage, 'unused', {
+        submitPubkey: false,
+        usedPgpBefore: false,
+        key: {
+          title: '?',
+          armored: testConstants.testKeyMultiple1b383d0334e38b28,
+          passphrase: '1234',
+          longid: '1b383d0334e38b28',
+        }
+      }, { isSavePassphraseChecked: false, isSavePassphraseHidden: false });
+      const inboxPage = await browser.newPage(t, TestUrls.extension(`chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}`));
+      await InboxPageRecipe.finishSessionOnInboxPage(inboxPage);
+      await inboxPage.close();
+      const key98acfa1eadab5b92 = await KeyUtil.parse(testConstants.testKeyMultiple98acfa1eadab5b92);
+      expect(await KeyUtil.decrypt(key98acfa1eadab5b92, '1234')).to.equal(true);
+      await SettingsPageRecipe.addKeyTest(t, browser, acctEmail, KeyUtil.armor(key98acfa1eadab5b92), 'new passphrase strong enough',
+        { isSavePassphraseChecked: true, isSavePassphraseHidden: false });
+      await settingsPage.waitAndClick('@action-open-backup-page');
+      const backupFrame = await settingsPage.getFrame(['backup.htm']);
+      await backupFrame.waitAndClick('@action-go-manual');
+      expect(await backupFrame.isChecked('[data-id="CB0485FE44FC22FF09AF0DB31B383D0334E38B28"]')).to.equal(true);
+      expect(await backupFrame.isChecked('[data-id="515431151DDD3EA232B37A4C98ACFA1EADAB5B92"]')).to.equal(true);
+      expect(await backupFrame.isDisabled('[data-id="CB0485FE44FC22FF09AF0DB31B383D0334E38B28"]')).to.equal(false);
+      expect(await backupFrame.isDisabled('[data-id="515431151DDD3EA232B37A4C98ACFA1EADAB5B92"]')).to.equal(false);
+      await backupFrame.waitAndClick('@action-backup-step3manual-continue');
+      await backupFrame.waitAndRespondToModal('error', 'confirm', 'Your keys are protected with different pass phrases');
+      await settingsPage.close();
+    }));
+
+    ava.default('settings - manual backup a key with a missing pass phrase', testWithBrowser(undefined, async (t, browser) => {
+      const acctEmail = 'flowcrypt.test.key.multiple@gmail.com';
+      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
+      const key = { title: '?', armored: testConstants.testKeyMultiple1b383d0334e38b28, passphrase: '1234', longid: '1b383d0334e38b28' };
+      await SetupPageRecipe.manualEnter(settingsPage, 'unused', { submitPubkey: false, usedPgpBefore: false, key },
+        { isSavePassphraseChecked: false, isSavePassphraseHidden: false });
+      const inboxPage = await browser.newPage(t, TestUrls.extension(`chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}`));
+      await InboxPageRecipe.finishSessionOnInboxPage(inboxPage);
+      await inboxPage.close();
+      await settingsPage.waitAndClick('@action-open-backup-page');
+      const backupFrame = await settingsPage.getFrame(['backup.htm']);
+      await backupFrame.waitAndClick('@action-go-manual');
+      await backupFrame.waitAndClick('@action-backup-step3manual-continue');
+      const ppFrame = await settingsPage.getFrame(['passphrase.htm']);
+      await ppFrame.waitAndType('@input-pass-phrase', key.passphrase);
+      await ppFrame.waitAndClick('@action-confirm-pass-phrase-entry');
+      await Util.sleep(2);
+      expect(ppFrame.frame.isDetached()).to.equal(true);
+      // todo: #4059 we would expect further iteraction with backupFrame here but it is actually wiped out
+      await settingsPage.close();
+    }));
+
+    ava.default('settings - manual backup several keys to file with different pass phrases', testWithBrowser(undefined, async (t, browser) => {
+      const acctEmail = 'flowcrypt.test.key.multiple@gmail.com';
+      const settingsPage1 = await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
+      await SetupPageRecipe.manualEnter(settingsPage1, 'unused', {
+        submitPubkey: false,
+        usedPgpBefore: false,
+        key: {
+          title: '?',
+          armored: testConstants.testKeyMultiple1b383d0334e38b28,
+          passphrase: '1234',
+          longid: '1b383d0334e38b28',
+        }
+      }, { isSavePassphraseChecked: false, isSavePassphraseHidden: false });
+      await settingsPage1.close();
+      const key98acfa1eadab5b92 = await KeyUtil.parse(testConstants.testKeyMultiple98acfa1eadab5b92);
+      expect(await KeyUtil.decrypt(key98acfa1eadab5b92, '1234')).to.equal(true);
+      await SettingsPageRecipe.addKeyTest(t, browser, acctEmail, KeyUtil.armor(key98acfa1eadab5b92), 'new passphrase strong enough',
+        { isSavePassphraseChecked: true, isSavePassphraseHidden: false });
+      // opening backup.htm independently of settings/index.htm page limits functionality but sufficient for this test
+      const backupPage = await browser.newPage(t, TestUrls.extension(`/chrome/settings/modules/backup.htm?acctEmail=${acctEmail}&action=backup_manual&parentTabId=1%3A0`));
+      expect(await backupPage.isChecked('[data-id="CB0485FE44FC22FF09AF0DB31B383D0334E38B28"]')).to.equal(true);
+      expect(await backupPage.isChecked('[data-id="515431151DDD3EA232B37A4C98ACFA1EADAB5B92"]')).to.equal(true);
+      expect(await backupPage.isDisabled('[data-id="CB0485FE44FC22FF09AF0DB31B383D0334E38B28"]')).to.equal(false);
+      expect(await backupPage.isDisabled('[data-id="515431151DDD3EA232B37A4C98ACFA1EADAB5B92"]')).to.equal(false);
+      await backupPage.waitAndClick('@input-backup-step3manual-file');
+      await backupPage.waitAndClick('@action-backup-step3manual-continue');
+      await backupPage.waitAndRespondToModal('error', 'confirm', 'Your keys are protected with different pass phrases');
+      await backupPage.close();
+    }));
+
+    ava.default('settings - setup_manual only backs up supplied key to file', testWithBrowser(undefined, async (t, browser) => {
+      const acctEmail = 'flowcrypt.test.key.multiple@gmail.com';
+      const settingsPage1 = await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
+      await SetupPageRecipe.manualEnter(settingsPage1, 'unused', {
+        submitPubkey: false,
+        usedPgpBefore: false,
+        key: {
+          title: '?',
+          armored: testConstants.testKeyMultiple1b383d0334e38b28,
+          passphrase: '1234',
+          longid: '1b383d0334e38b28',
+        }
+      }, { isSavePassphraseChecked: false, isSavePassphraseHidden: false });
+      await settingsPage1.close();
+      await SettingsPageRecipe.addKeyTest(t, browser, acctEmail, testConstants.testKeyMultiple98acfa1eadab5b92, '1234',
+        { isSavePassphraseChecked: true, isSavePassphraseHidden: false });
+      const backupPage = await browser.newPage(t, TestUrls.extension(`/chrome/settings/modules/backup.htm?acctEmail=${acctEmail}&action=setup_manual` +
+        '&type=openpgp&id=515431151DDD3EA232B37A4C98ACFA1EADAB5B92&idToken=fakeheader.01'));
+      await backupPage.waitAndClick('@input-backup-step3manual-file');
+      const backupFileRawData = await backupPage.awaitDownloadTriggeredByClicking('@action-backup-step3manual-continue');
+      const { keys } = await KeyUtil.readMany(Buf.fromUtfStr(backupFileRawData.toString()));
+      expect(keys.length).to.equal(1);
+      expect(keys[0].id).to.equal("515431151DDD3EA232B37A4C98ACFA1EADAB5B92");
+      await backupPage.waitAndRespondToModal('info', 'confirm', 'Downloading private key backup file');
+      await backupPage.waitAll('@action-step4done-account-settings');
+      await backupPage.close();
+    }));
+
+    ava.default('settings - setup_manual only backs up supplied key to inbox', testWithBrowser(undefined, async (t, browser) => {
+      const acctEmail = 'flowcrypt.test.key.multiple.inbox1@gmail.com';
+      const settingsPage1 = await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
+      await SetupPageRecipe.manualEnter(settingsPage1, 'unused', {
+        submitPubkey: false,
+        usedPgpBefore: false,
+        key: {
+          title: '?',
+          armored: testConstants.testKeyMultiple1b383d0334e38b28,
+          passphrase: '1234',
+          longid: '1b383d0334e38b28',
+        }
+      }, { isSavePassphraseChecked: false, isSavePassphraseHidden: false });
+      await settingsPage1.close();
+      const passphrase = 'strong enough passphrase for inbox backup';
+      const key98acfa1eadab5b92 = await KeyUtil.parse(testConstants.testKeyMultiple98acfa1eadab5b92);
+      expect(await KeyUtil.decrypt(key98acfa1eadab5b92, '1234')).to.equal(true);
+      await KeyUtil.encrypt(key98acfa1eadab5b92, passphrase);
+      await SettingsPageRecipe.addKeyTest(t, browser, acctEmail, KeyUtil.armor(key98acfa1eadab5b92), passphrase,
+        { isSavePassphraseChecked: true, isSavePassphraseHidden: false });
+      const backupPage = await browser.newPage(t, TestUrls.extension(`/chrome/settings/modules/backup.htm?acctEmail=${acctEmail}&action=setup_manual` +
+        '&type=openpgp&id=515431151DDD3EA232B37A4C98ACFA1EADAB5B92&idToken=fakeheader.01'));
+      await backupPage.waitAndClick('@action-backup-step3manual-continue');
+      await backupPage.waitAll('@action-step4done-account-settings');
+      const sentMsg = (await GoogleData.withInitializedData(acctEmail)).getMessageBySubject('Your FlowCrypt Backup')!;
+      const mimeMsg = await Parse.convertBase64ToMimeMsg(sentMsg.raw!);
+      const { keys } = await KeyUtil.readMany(new Buf(mimeMsg.attachments[0]!.content!));
+      expect(keys.length).to.equal(1);
+      expect(KeyUtil.identityEquals(keys[0], { id: '515431151DDD3EA232B37A4C98ACFA1EADAB5B92', type: 'openpgp' })).to.equal(true);
+      await backupPage.close();
+    }));
+
+    ava.default('settings - manual backup to inbox keys with weak pass phrases results in error', testWithBrowser(undefined, async (t, browser) => {
+      const acctEmail = 'flowcrypt.test.key.multiple@gmail.com';
+      const settingsPage1 = await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
+      await SetupPageRecipe.manualEnter(settingsPage1, 'unused', {
+        submitPubkey: false,
+        usedPgpBefore: false,
+        key: {
+          title: '?',
+          armored: testConstants.testKeyMultiple1b383d0334e38b28,
+          passphrase: '1234',
+          longid: '1b383d0334e38b28',
+        }
+      }, { isSavePassphraseChecked: false, isSavePassphraseHidden: false });
+      await settingsPage1.close();
+      await SettingsPageRecipe.addKeyTest(t, browser, acctEmail, testConstants.testKeyMultiple98acfa1eadab5b92, '1234',
+        { isSavePassphraseChecked: true, isSavePassphraseHidden: false });
+      // opening backup.htm independently of settings/index.htm page limits functionality but sufficient for this test
+      const backupPage = await browser.newPage(t, TestUrls.extension(`/chrome/settings/modules/backup.htm?acctEmail=${acctEmail}&action=backup_manual&parentTabId=1%3A0`));
+      expect(await backupPage.isChecked('[data-id="CB0485FE44FC22FF09AF0DB31B383D0334E38B28"]')).to.equal(true);
+      expect(await backupPage.isChecked('[data-id="515431151DDD3EA232B37A4C98ACFA1EADAB5B92"]')).to.equal(true);
+      expect(await backupPage.isDisabled('[data-id="CB0485FE44FC22FF09AF0DB31B383D0334E38B28"]')).to.equal(false);
+      expect(await backupPage.isDisabled('[data-id="515431151DDD3EA232B37A4C98ACFA1EADAB5B92"]')).to.equal(false);
+      await backupPage.waitAndClick('@action-backup-step3manual-continue');
+      await backupPage.waitAndRespondToModal('warning', 'confirm', `It's too weak for this backup method`);
+      await Util.sleep(2);
+      await backupPage.waitAny('@action-show-confirm-new-pp');
+      await backupPage.close();
     }));
 
     ava.default('settings - manual enter and key update honor FORBID_STORING_PASS_PHRASE OrgRule', testWithBrowser(undefined, async (t, browser) => {
