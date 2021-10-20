@@ -286,6 +286,7 @@ export class SetupPageRecipe extends PageRecipe {
     await SettingsPageRecipe.ready(settingsPage);
   };
 
+  // eslint-disable-next-line max-len
   private static createBegin = async (settingsPage: ControllablePage, keyTitle: string, { key, usedPgpBefore = false, skipForPassphrase = false }: { key?: { passphrase: string }, usedPgpBefore?: boolean, skipForPassphrase?: boolean } = {}) => {
     const k = key || Config.key(keyTitle);
     if (usedPgpBefore) {
