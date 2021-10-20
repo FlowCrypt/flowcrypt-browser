@@ -19,8 +19,9 @@ type ManualEnterOpts = {
   enforceAttesterSubmitOrgRule?: boolean,
   noPubSubmitRule?: boolean,
   fillOnly?: boolean,
-  key?: TestKeyInfoWithFilepath,
   isInvalidKey?: boolean | undefined,
+  checkEmailAliasIfPresent?: boolean,
+  key?: { title: string, passphrase: string, armored: string | null, longid: string | null, filePath?: string }
 };
 
 type CreateKeyOpts = {
@@ -29,6 +30,7 @@ type CreateKeyOpts = {
   submitPubkey?: boolean,
   enforcedAlgo?: string | boolean,
   selectKeyAlgo?: string,
+  skipForPassphrase?: boolean,
 };
 
 export class SetupPageRecipe extends PageRecipe {
@@ -37,10 +39,10 @@ export class SetupPageRecipe extends PageRecipe {
     settingsPage: ControllablePage,
     keyTitle: string,
     backup: 'none' | 'email' | 'file' | 'disabled',
-    { usedPgpBefore = false, submitPubkey = false, enforcedAlgo = false, selectKeyAlgo = '', key }: CreateKeyOpts = {},
+    { usedPgpBefore = false, submitPubkey = false, enforcedAlgo = false, selectKeyAlgo = '', skipForPassphrase = false, key }: CreateKeyOpts = {},
     checks: SavePassphraseChecks = {}
   ) => {
-    await SetupPageRecipe.createBegin(settingsPage, keyTitle, { key, usedPgpBefore });
+    await SetupPageRecipe.createBegin(settingsPage, keyTitle, { key, usedPgpBefore, skipForPassphrase });
     if (enforcedAlgo) {
       expect(await settingsPage.value('@input-step2bmanualcreate-key-type')).to.equal(enforcedAlgo);
       expect(await settingsPage.isDisabled('@input-step2bmanualcreate-key-type')).to.equal(true);
@@ -55,6 +57,9 @@ export class SetupPageRecipe extends PageRecipe {
     }
     if (!submitPubkey && await settingsPage.isElementPresent('@input-step2bmanualcreate-submit-pubkey')) {
       await settingsPage.waitAndClick('@input-step2bmanualcreate-submit-pubkey'); // uncheck
+    }
+    if (skipForPassphrase) {
+      expect(await settingsPage.isElementPresent('@input-email-alias-flowcryptcompatibilitygmailcom')).to.equal(true);
     }
     if (checks.isSavePassphraseHidden !== undefined) {
       expect(await settingsPage.hasClass('@input-step2bmanualcreate-save-passphrase-label', 'hidden')).to.equal(checks.isSavePassphraseHidden);
@@ -281,12 +286,19 @@ export class SetupPageRecipe extends PageRecipe {
     await SettingsPageRecipe.ready(settingsPage);
   };
 
-  private static createBegin = async (settingsPage: ControllablePage, keyTitle: string, { key, usedPgpBefore = false }: { key?: { passphrase: string }, usedPgpBefore?: boolean } = {}) => {
+  private static createBegin = async (settingsPage: ControllablePage, keyTitle: string, { key, usedPgpBefore = false, skipForPassphrase = false }: { key?: { passphrase: string }, usedPgpBefore?: boolean, skipForPassphrase?: boolean } = {}) => {
     const k = key || Config.key(keyTitle);
     if (usedPgpBefore) {
       await settingsPage.waitAndClick('@action-step0foundkey-choose-manual-create');
     } else {
-      await settingsPage.waitAndClick('@action-step1easyormanual-choose-manual-create');
+      if (skipForPassphrase) {
+        await settingsPage.waitAndClick('#lost_pass_phrase');
+        await settingsPage.waitAndClick('.action_skip_recovery');
+        await settingsPage.waitAndRespondToModal('confirm', 'confirm', 'Your account will be set up for encryption again, but your previous encrypted emails will be unreadable.');
+        await settingsPage.waitAndClick('@action-step1easyormanual-choose-manual-create');
+      } else {
+        await settingsPage.waitAndClick('@action-step1easyormanual-choose-manual-create');
+      }
     }
     await settingsPage.waitAndType('@input-step2bmanualcreate-passphrase-1', k.passphrase);
     await settingsPage.waitAndType('@input-step2bmanualcreate-passphrase-2', k.passphrase);

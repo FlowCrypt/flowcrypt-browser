@@ -10,6 +10,7 @@ import { SettingsPageRecipe } from './page-recipe/settings-page-recipe';
 import { ComposePageRecipe } from './page-recipe/compose-page-recipe';
 import { Str } from './../core/common';
 import { MOCK_KM_LAST_INSERTED_KEY } from './../mock/key-manager/key-manager-endpoints';
+import { MOCK_ATTESTER_LAST_INSERTED_PUB } from './../mock/attester/attester-endpoints';
 import { BrowserRecipe } from './tooling/browser-recipe';
 import { KeyInfo, KeyUtil } from '../core/crypto/key';
 import { TestUrls } from '../browser/test-urls';
@@ -38,6 +39,13 @@ export const defineSetupTests = (testVariant: TestVariant, testWithBrowser: Test
     ava.default('settings > login > close oauth window > close popup', testWithBrowser(undefined, async (t, browser) => {
       const settingsPage = await BrowserRecipe.openSettingsLoginButCloseOauthWindowBeforeGrantingPermission(t, browser, 'flowcrypt.test.key.imported@gmail.com');
       await settingsPage.notPresent('.settings-banner');
+    }));
+
+    ava.default('setup - optional checkbox for each email aliases', testWithBrowser(undefined, async (t, browser) => {
+      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.compatibility@gmail.com');
+      await Util.sleep(5);
+      await SetupPageRecipe.createKey(settingsPage, 'unused', 'none', { key: { passphrase: 'long enough to suit requirements' }, usedPgpBefore: false, skipForPassphrase: true });
+      await settingsPage.close();
     }));
 
     ava.default('setup - import key - do not submit - did not use before', testWithBrowser(undefined, async (t, browser) => {
@@ -127,10 +135,7 @@ PGue+yaxxu06N20fsqIxaBh3+uU2ZVfcEre/5XNCj6QxHzqSbclMyHUyVHlv
 ahSQ5oK2VjUFqdoej6p46vt0pt9JOsX7T2eX7Z7TcPoJPNZ0rBDYJDV4RVYk
 tdgA2P4mfbjHZOquexzRgGY9Pn7X/NciUrbmfA6sxyR21aG0xAXMk91bwPDs
 SEEj7ikpIlt7F87yafzwS4JFPzuhhGpZjK1f6t24fAAmufKCdt+IEV4EgkBI
-QWrfUUAXytHIPFyP3z4gcIitmx10DqArxhHeR0sKjtAjOKrMP0qBiQAG6cH+
-y4CdRiBiuEDTazgePzIDJMgIjmWH/hxl5puoEKkQAR9kiiU0bDtphSAQ5GXw
-c/1WhYacYWJytUM+uUWMFAdryd93YmRew1kYxqdZn5AywzOOAbTWD6Q2GME5
-0o0Adfw4CopT2VxsbRq4X74DPtXnReyFGd0167IV3Y8HToHyM4gJxxMVXF3G
+QWrfUUAXytHIPFyP3z4gcIitmx10DqArxhHeR0sKjtAjOKrMP0qBiQAG6cH+DoN
 TNW7CSq2L53kklynLtBnAuJKwunR8my7Sm+CX/errsXpq/u3QGZDeHlAh8ul
 rHeqOTZwEqGHxHb1FcQJ+1QQohrwJp2hHKXxgZyGQH8ykTZyNpPAiqkhcl9O
 DJdxq4Ke6wistyzF/sRGRcaXaLHZ8dKS8TIjjzGuMWMaZtBO+6EqIE5JgEHe
@@ -142,9 +147,7 @@ E8vBGZ/uHCtC9B19ytZxHI51TQtTJgbOkuRkq7KizB+ZZ1TPwrb4HyDxtw4L
 K6kBA0vhvOZeWh4XD7CPSjN457eCaKjnaD6HuvvTin4EVJ9G6B9Ioi6Oyi98
 PB0JA3dpPY4cx/3eggx18cAPeZwiO7vIy0VHtq/G8Obf2Tzowmz1vsgTm+fV
 piZ8lQlQkNBn5Z9/mayZ4bMA1EGaQGzfzS+r4AYP+/UxXRCMlwZ3lt7YYnKI
-5lIZX73TwXzuMwFqGEevIJzD9YkAEQEAAf4JAwhHFiWWy6b0muDxhFu5N7oX
-lhSfbD+RSvezCU8xpDHbkvoOZRC21bKJ1jmkvbC/KKAlxNz5UYJ/OFtffAok
-f0aTlkrNvPxN9apqDgwvsjzC10//3b9BzHjds2rrpGHKjzyapAVkEl0PGWCR
+5lIZX73TwXzuMwFqGEevIJzD9YkAEQEAAf4JAwhHFiWWy6b0muDxhFu5N7oXDoN
 VPdfjC/f5t7GMzOsSNmTqHVS+aCX8aA48BKkjDjFOUjpLGSqVPxoMTe0gUpa
 NxgJhIb5RZ+6JjbmWooZ4nw/GroUGYfupRr4TG3TYVVGXCHN+/CEClyhJDCm
 sqc1ZhdarNINGVndzz/i5sBbuNMnph6j6Mh72duseSEiOxYZ0iOrwNosC0NS
@@ -763,6 +766,50 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       })
     );
 
+  }
+
+  if (testVariant === 'CONSUMER-MOCK') {
+    ava.default('setup - imported key with multiple alias should show checkbox per alias', testWithBrowser(undefined, async (t, browser) => {
+      expect((await KeyUtil.parse(testConstants.keyMultiAliasedUser)).emails.length).to.equals(3);
+      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'multi.aliased.user@example.com');
+      await SetupPageRecipe.manualEnter(settingsPage, '', {
+        submitPubkey: true, fillOnly: true, checkEmailAliasIfPresent: true, key: {
+          title: 'multi.aliased.user@example.com',
+          passphrase: '1basic passphrase to use',
+          armored: testConstants.keyMultiAliasedUser,
+          longid: null // tslint:disable-line:no-null-keyword
+        }
+      }, { isSavePassphraseChecked: false, isSavePassphraseHidden: false });
+      expect(await settingsPage.isChecked('.container_for_import_key_email_alias @input-email-alias-alias1examplecom')).to.equal(true);
+      expect(await settingsPage.isChecked('.container_for_import_key_email_alias @input-email-alias-alias2examplecom')).to.equal(true);
+      await settingsPage.close();
+    }));
+
+    ava.default('setup - imported key from a file with multiple alias', testWithBrowser(undefined, async (t, browser) => {
+      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'multi.aliased.user@example.com');
+      const key = {
+        title: 'unarmored OpenPGP key',
+        filePath: 'test/samples/openpgp/multialiaseduserexamplecom-0x357B908F62498DF8.key',
+        armored: null, // tslint:disable-line:no-null-keyword
+        passphrase: '1basic passphrase to use',
+        longid: null // tslint:disable-line:no-null-keyword
+      };
+      await SetupPageRecipe.manualEnter(settingsPage, key.title, { submitPubkey: true, fillOnly: true, key });
+      expect(await settingsPage.isChecked('.container_for_import_key_email_alias @input-email-alias-alias1examplecom')).to.equal(true);
+      expect(await settingsPage.isChecked('.container_for_import_key_email_alias @input-email-alias-alias2examplecom')).to.equal(true);
+      /* simulate several clicks then exclude alias2@example.com from submitting key from the attester */
+      await settingsPage.waitAndClick('.container_for_import_key_email_alias @input-email-alias-alias1examplecom'); // uncheck
+      await settingsPage.waitAndClick('.container_for_import_key_email_alias @input-email-alias-alias1examplecom'); // check
+      await settingsPage.waitAndClick('.container_for_import_key_email_alias @input-email-alias-alias2examplecom'); // uncheck
+      await settingsPage.waitAndClick('.container_for_import_key_email_alias @input-email-alias-alias2examplecom'); // check
+      await settingsPage.waitAndClick('.container_for_import_key_email_alias @input-email-alias-alias2examplecom'); // finally uncheck
+      await settingsPage.waitAndClick('@input-step2bmanualenter-save', { delay: 1 });
+      await settingsPage.waitAndClick('@action-step4done-account-settings');
+      expect(MOCK_ATTESTER_LAST_INSERTED_PUB['multi.aliased.user@example.com']).not.to.be.an('undefined');
+      expect(MOCK_ATTESTER_LAST_INSERTED_PUB['alias1@example.com']).not.to.be.an('undefined');
+      expect(MOCK_ATTESTER_LAST_INSERTED_PUB['alias2@example.com']).to.be.an('undefined');
+      await settingsPage.close();
+    }));
   }
 
 };

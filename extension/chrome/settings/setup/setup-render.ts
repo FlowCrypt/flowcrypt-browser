@@ -10,6 +10,8 @@ import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
 import { KeyStore } from '../../../js/common/platform/store/key-store.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { PgpPwd } from '../../../js/common/core/crypto/pgp/pgp-password.js';
+import { Xss } from '../../../js/common/platform/xss.js';
+import { KeyImportUi } from '../../../js/common/ui/key-import-ui.js';
 
 export class SetupRenderModule {
 
@@ -137,11 +139,30 @@ export class SetupRenderModule {
   }
 
   private saveAndFillSubmitPubkeysOption = (addresses: string[]) => {
-    this.view.submitKeyForAddrs = this.filterAddressesForSubmittingKeys(addresses);
-    if (this.view.submitKeyForAddrs.length > 1) {
-      $('.addresses').text(Value.arr.withoutVal(this.view.submitKeyForAddrs, this.view.acctEmail).join(', '));
-      $('.manual .input_submit_all').prop({ checked: true, disabled: false }).closest('div.line').css('display', 'block');
+    this.renderEmailAddresses(this.filterAddressesForSubmittingKeys(addresses));
+  }
+
+  private renderEmailAddresses = (addresses: string[]) => {
+    $('.input_submit_all').hide();
+    const emailAliases = Value.arr.withoutVal(addresses, this.view.acctEmail);
+    for (const e of emailAliases) {
+      // eslint-disable-next-line max-len
+      $('.addresses').append(`<label><input type="checkbox" class="input_email_alias" data-email="${Xss.escape(e)}" data-test="input-email-alias-${e.replace(/[^a-z0-9]+/g, '')}" />${Xss.escape(e)}</label><br/>`); // xss-escaped
     }
+    $('.input_email_alias').click((event) => {
+      const email = String($(event.target).data('email'));
+      if ($(event.target).prop('checked')) {
+        if (!this.view.submitKeyForAddrs.includes(email)) {
+          KeyImportUi.addAliasForSubmission(email, this.view.submitKeyForAddrs);
+        }
+      } else {
+        KeyImportUi.removeAliasFromSubmission(email, this.view.submitKeyForAddrs);
+      }
+    });
+    if (emailAliases.length > 0) {
+      $('.container_for_import_key_email_alias').css('visibility', 'visible');
+    }
+    $('.manual .input_submit_all').prop({ checked: true, disabled: false }).closest('div.line').css('display', 'block');
   }
 
   private filterAddressesForSubmittingKeys = (addresses: string[]): string[] => {
