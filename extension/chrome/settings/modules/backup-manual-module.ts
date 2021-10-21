@@ -98,7 +98,7 @@ export class BackupManualActionModule extends ViewModule<BackupView> {
 
   private encryptForBackup = async (kinfos: TypedKeyInfo[], checks: { strength: boolean }, primaryKeyIdentity: KeyIdentity): Promise<string | undefined> => {
     const kisWithPp = await Promise.all(kinfos.map(async (ki) => {
-      const passphrase = await PassphraseStore.getByKeyIdentity(this.view.acctEmail, ki);
+      const passphrase = await PassphraseStore.get(this.view.acctEmail, ki);
       // test that the key can actually be decrypted with the passphrase provided
       const mismatch = passphrase && !await KeyUtil.decrypt(await KeyUtil.parse(ki.private), passphrase);
       return { ...ki, mismatch, passphrase: mismatch ? undefined : passphrase };

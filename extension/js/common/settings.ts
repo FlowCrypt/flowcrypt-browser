@@ -14,7 +14,7 @@ import { Env } from './browser/env.js';
 import { Gmail } from './api/email-provider/gmail/gmail.js';
 import { GoogleAuth } from './api/email-provider/gmail/google-auth.js';
 import { Lang } from './lang.js';
-import { Key, KeyUtil } from './core/crypto/key.js';
+import { ExtendedKeyInfo, Key, KeyUtil } from './core/crypto/key.js';
 import { PgpPwd } from './core/crypto/pgp/pgp-password.js';
 import { OrgRules } from './org-rules.js';
 import { Xss } from './platform/xss.js';
@@ -113,20 +113,20 @@ export class Settings {
       throw new Error(`Filter is empty for account_email "${oldAcctEmail}"`);
     }
     // in case the destination email address was already set up with an account, recover keys and pass phrases before it's overwritten
-    const oldAccountPrivateKeys = await KeyStore.get(oldAcctEmail);
-    const newAccountPrivateKeys = await KeyStore.get(newAcctEmail);
-    const oldAcctPassPhrases: Dict<string> = {};
-    const newAcctPassPhrases: Dict<string> = {};
+    const oldAccountPrivateKeys = await KeyStore.getTypedKeyInfos(oldAcctEmail);
+    const newAccountPrivateKeys = await KeyStore.getTypedKeyInfos(newAcctEmail);
+    const oldAcctPassPhrases: ExtendedKeyInfo[] = [];
+    const newAcctPassPhrases: ExtendedKeyInfo[] = [];
     for (const ki of oldAccountPrivateKeys) {
-      const pp = await PassphraseStore.get(oldAcctEmail, ki.fingerprints[0], true);
-      if (pp) {
-        oldAcctPassPhrases[ki.fingerprints[0]] = pp;
+      const passphrase = await PassphraseStore.get(oldAcctEmail, ki, true);
+      if (passphrase) {
+        oldAcctPassPhrases.push({ ...ki, passphrase });
       }
     }
     for (const ki of newAccountPrivateKeys) {
-      const pp = await PassphraseStore.get(newAcctEmail, ki.fingerprints[0], true);
-      if (pp) {
-        newAcctPassPhrases[ki.fingerprints[0]] = pp;
+      const passphrase = await PassphraseStore.get(newAcctEmail, ki, true);
+      if (passphrase) {
+        newAcctPassPhrases.push({ ...ki, passphrase });
       }
     }
     await GlobalStore.acctEmailsAdd(newAcctEmail);
@@ -164,11 +164,11 @@ export class Settings {
     }
     const newRules = await OrgRules.newInstance(newAcctEmail);
     if (!newRules.forbidStoringPassPhrase()) {
-      for (const fingerprint of Object.keys(oldAcctPassPhrases)) {
-        await PassphraseStore.set('local', newAcctEmail, fingerprint, oldAcctPassPhrases[fingerprint]);
+      for (const ki of oldAcctPassPhrases) {
+        await PassphraseStore.set('local', newAcctEmail, ki, ki.passphrase);
       }
-      for (const fingerprint of Object.keys(newAcctPassPhrases)) {
-        await PassphraseStore.set('local', newAcctEmail, fingerprint, newAcctPassPhrases[fingerprint]);
+      for (const ki of newAcctPassPhrases) {
+        await PassphraseStore.set('local', newAcctEmail, ki, ki.passphrase);
       }
     }
     await Settings.acctStorageReset(oldAcctEmail);
