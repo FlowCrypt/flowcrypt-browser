@@ -53,7 +53,7 @@ View.run(class MyKeyView extends View {
     Xss.sanitizeRender('.email', this.pubKey.emails.map(email => `<span>${Xss.escape(email)}</span>`).join(', '));
     const expiration = this.pubKey.expiration;
     $('.key_expiration').text(expiration && expiration !== Infinity ? Str.datetimeToDate(Str.fromDate(new Date(expiration))) : 'Key does not expire');
-    await this.renderPrvKeyActions();
+    await this.renderPrivateKeyLink();
     await this.renderPubkeyShareableLink();
     await initPassphraseToggle(['input_passphrase']);
   }
@@ -65,7 +65,7 @@ View.run(class MyKeyView extends View {
     $('.action_continue_download').click(this.setHandlerPrevent('double', () => this.downloadRevocationCert(String($('#input_passphrase').val()))));
     $('#input_passphrase').on('keydown', this.setEnterHandlerThatClicks('.action_continue_download'));
     $('.action_cancel_download_cert').click(this.setHandler(() => { $('.enter_pp').hide(); }));
-    const clipboardOpts = { text: () =>  this.keyInfo.public };
+    const clipboardOpts = { text: () => this.keyInfo.public };
     new ClipboardJS('.action_copy_pubkey', clipboardOpts); // tslint:disable-line:no-unused-expression no-unsafe-any
   }
 
@@ -126,12 +126,15 @@ View.run(class MyKeyView extends View {
     Browser.saveToDownloads(prvKeyAttachment);
   }
 
-  private renderPrvKeyActions = () => {
+  private renderPrivateKeyLink = () => {
     if (!this.orgRules.usesKeyManager()) {
+      $('.prv_key_label').addClass('red_label');
       $('.action_view_update').show();
       $('a.action_download_revocation_cert').show();
     } else {
       $('.enter_pp').remove();
+      $('.action_download_prv').parent().remove();
+      $('.prv_key_label').addClass('orange_label').text('this private key was managed by your local key manager');
     }
   }
 
