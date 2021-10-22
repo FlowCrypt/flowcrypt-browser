@@ -11,13 +11,13 @@ import { InMemoryStore } from './in-memory-store.js';
  */
 export class PassphraseStore extends AbstractStore {
 
-  // if we implement (and migrate) password storage to use KeyIdentity instead of longid, we'll have `keyInfo: TypedKeyInfo` here
+  // if we implement (and migrate) password storage to use KeyIdentity instead of longid, we'll have `keyInfo: KeyIdentity` here
   public static get = async (acctEmail: string, keyInfo: { longid: string }, ignoreSession: boolean = false): Promise<string | undefined> => {
     const storageIndex = PassphraseStore.getIndex(keyInfo.longid);
     return await PassphraseStore.getByIndex(acctEmail, storageIndex, ignoreSession);
   }
 
-  // if we implement (and migrate) password storage to use KeyIdentity instead of longid, we'll have `keyInfo: TypedKeyInfo` here
+  // if we implement (and migrate) password storage to use KeyIdentity instead of longid, we'll have `keyInfo: KeyIdentity` here
   public static set = async (storageType: StorageType, acctEmail: string, keyInfo: { longid: string }, passphrase: string | undefined): Promise<void> => {
     const storageIndex = PassphraseStore.getIndex(keyInfo.longid);
     await PassphraseStore.setByIndex(storageType, acctEmail, storageIndex, passphrase);
