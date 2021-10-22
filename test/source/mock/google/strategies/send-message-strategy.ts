@@ -231,6 +231,8 @@ export class TestBySubjectStrategyContext {
       this.strategy = new SmimeEncryptedMessageStrategy();
     } else if (subject.includes('send with S/MIME attachment')) {
       this.strategy = new SmimeEncryptedMessageStrategy();
+    } else if (subject.includes('send signed and encrypted S/MIME')) {
+      this.strategy = new SmimeEncryptedMessageStrategy();
     } else if (subject.includes('send signed S/MIME without attachment')) {
       this.strategy = new SmimeSignedMessageStrategy();
     } else if (GMAIL_RECOVERY_EMAIL_SUBJECTS.includes(subject)) {
