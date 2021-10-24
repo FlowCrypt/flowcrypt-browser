@@ -316,7 +316,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
         expectedContent: '2nd key of of 2 keys with the same passphrase',
         // passphrase for the 2nd key should not be needed because it's the same as for the 1st key
       });
-      // as decrypted s/mime messages are not fully implemented yet, let's test signing instead
+      // as decrypted s/mime messages are not rendered yet (#4070), let's test signing instead
       const composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
       await ComposePageRecipe.fillMsg(composeFrame, { to: 'smime@recipient.com' }, 'send signed and encrypted S/MIME without attachment');
       await ComposePageRecipe.pastePublicKeyManually(composeFrame, inboxPage, 'smime@recipient.com',
