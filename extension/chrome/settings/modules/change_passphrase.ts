@@ -44,7 +44,7 @@ View.run(class ChangePassPhraseView extends View {
     }
     const primaryKi = await KeyStore.getFirstRequired(this.acctEmail);
     this.primaryKi = primaryKi;
-    const storedOrSessionPp = await PassphraseStore.get(this.acctEmail, this.primaryKi.fingerprints[0]);
+    const storedOrSessionPp = await PassphraseStore.get(this.acctEmail, this.primaryKi);
     const key = await KeyUtil.parse(this.primaryKi.private);
     this.primaryPrv = key;
     if (this.primaryPrv.fullyDecrypted || (storedOrSessionPp && await KeyUtil.decrypt(this.primaryPrv, storedOrSessionPp))) {
@@ -112,9 +112,9 @@ View.run(class ChangePassPhraseView extends View {
     }
     await KeyStore.add(this.acctEmail, this.primaryPrv!);
     const shouldSavePassphraseInStorage = !this.orgRules.forbidStoringPassPhrase() &&
-      !!(await PassphraseStore.get(this.acctEmail, this.primaryKi!.fingerprints[0], true));
-    await PassphraseStore.set('local', this.acctEmail, this.primaryKi!.fingerprints[0], shouldSavePassphraseInStorage ? newPp : undefined);
-    await PassphraseStore.set('session', this.acctEmail, this.primaryKi!.fingerprints[0], shouldSavePassphraseInStorage ? undefined : newPp);
+      !!(await PassphraseStore.get(this.acctEmail, this.primaryKi!, true));
+    await PassphraseStore.set('local', this.acctEmail, this.primaryKi!, shouldSavePassphraseInStorage ? newPp : undefined);
+    await PassphraseStore.set('session', this.acctEmail, this.primaryKi!, shouldSavePassphraseInStorage ? undefined : newPp);
     if (this.orgRules.canBackupKeys()) {
       await Ui.modal.info('Now that you changed your pass phrase, you should back up your key. New backup will be protected with new passphrase.');
       Settings.redirectSubPage(this.acctEmail, this.parentTabId, '/chrome/settings/modules/backup.htm', '&action=backup_manual');

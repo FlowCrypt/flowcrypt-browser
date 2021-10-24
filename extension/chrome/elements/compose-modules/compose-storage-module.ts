@@ -70,7 +70,7 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
     if (!senderKi) {
       senderKi = await KeyStore.getFirstRequired(this.view.acctEmail);
     }
-    return await PassphraseStore.get(this.view.acctEmail, senderKi.fingerprints[0]);
+    return await PassphraseStore.get(this.view.acctEmail, senderKi);
   }
 
   public lookupPubkeyFromKeyserversThenOptionallyFetchExpiredByFingerprintAndUpsertDb = async (

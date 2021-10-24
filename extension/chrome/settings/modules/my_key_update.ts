@@ -65,12 +65,13 @@ View.run(class MyKeyUpdateView extends View {
 
   private storeUpdatedKeyAndPassphrase = async (updatedPrv: Key, updatedPrvPassphrase: string) => {
     const shouldSavePassphraseInStorage = !this.orgRules.forbidStoringPassPhrase() &&
-      !!(await PassphraseStore.get(this.acctEmail, this.primaryKi!.fingerprints[0], true));
+      !!(await PassphraseStore.get(this.acctEmail, this.primaryKi!, true));
     await KeyStore.add(this.acctEmail, updatedPrv);
-    await PassphraseStore.set('local', this.acctEmail, this.primaryKi!.fingerprints[0], shouldSavePassphraseInStorage ? updatedPrvPassphrase : undefined);
-    await PassphraseStore.set('session', this.acctEmail, this.primaryKi!.fingerprints[0], shouldSavePassphraseInStorage ? undefined : updatedPrvPassphrase);
+    await PassphraseStore.set('local', this.acctEmail, this.primaryKi!, shouldSavePassphraseInStorage ? updatedPrvPassphrase : undefined);
+    await PassphraseStore.set('session', this.acctEmail, this.primaryKi!, shouldSavePassphraseInStorage ? undefined : updatedPrvPassphrase);
     if (this.orgRules.canSubmitPubToAttester() && await Ui.modal.confirm('Public and private key updated locally.\n\nUpdate public records with new Public Key?')) {
       try {
+        // todo: make sure this is never called for x509 keys
         await Ui.modal.info(await this.pubLookup.attester.updatePubkey(this.primaryKi!.longid, KeyUtil.armor(await KeyUtil.asPublicKey(updatedPrv))));
       } catch (e) {
         ApiErr.reportIfSignificant(e);
