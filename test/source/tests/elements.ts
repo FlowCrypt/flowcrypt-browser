@@ -4,6 +4,8 @@ import * as ava from 'ava';
 
 import { TestVariant } from '../util';
 import { TestWithBrowser } from '../test';
+import { testConstants } from './tooling/consts';
+import { SettingsPageRecipe } from './page-recipe/settings-page-recipe';
 
 // tslint:disable:no-blank-lines-func
 
@@ -19,6 +21,21 @@ export const defineElementTests = (testVariant: TestVariant, testWithBrowser: Te
       const page = await browser.newPage(t, url);
       await page.waitForContent('@container-pgp-pubkey', 'cryptup.tester@gmail.com');
       await page.waitForContent('@container-pgp-pubkey', '06CA 553E C245 5D70');
+    }));
+
+    ava.default('elements/passphrase.htm shows alert when unlocking some other key', testWithBrowser('compatibility', async (t, browser) => {
+      const acctEmail = 'flowcrypt.compatibility@gmail.com';
+      const passphrase = 'pa$$w0rd';
+      await SettingsPageRecipe.addKeyTest(t, browser, acctEmail, testConstants.testkey17AD7D07, passphrase, {}, false);
+      // opening passphrase.htm independently of settings or inbox page limits functionality but sufficient for this test
+      const ppPage = await browser.newPage(t, `chrome/elements/passphrase.htm?acctEmail=${acctEmail}&parentTabId=1%3A0&type=message&longids=ADAC279C95093207`);
+      await ppPage.waitAndType('@input-pass-phrase', passphrase);
+      await ppPage.waitAndClick('@action-confirm-pass-phrase-entry', { delay: 1 });
+      await ppPage.waitForContent('.ui-toast-title', '1 of 3 keys was unlocked by this pass phrase');
+      await SettingsPageRecipe.addKeyTest(t, browser, acctEmail, testConstants.testkey0389D3A7, passphrase, {}, false);
+      await ppPage.waitAndType('@input-pass-phrase', passphrase);
+      await ppPage.waitAndClick('@action-confirm-pass-phrase-entry', { delay: 1 });
+      await ppPage.waitForContent('.ui-toast-title', '2 of 4 keys were unlocked by this pass phrase');
     }));
 
     ava.todo('elements/pgp_pubkey shows graceful error when pubkey not usable');
