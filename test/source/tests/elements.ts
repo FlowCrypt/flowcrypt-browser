@@ -23,7 +23,7 @@ export const defineElementTests = (testVariant: TestVariant, testWithBrowser: Te
       await page.waitForContent('@container-pgp-pubkey', '06CA 553E C245 5D70');
     }));
 
-    ava.default('elements/passphrase.htm shows alert when unlocking some other key', testWithBrowser('compatibility', async (t, browser) => {
+    ava.default('elements/passphrase.htm shows a toast when unlocking some other key', testWithBrowser('compatibility', async (t, browser) => {
       const acctEmail = 'flowcrypt.compatibility@gmail.com';
       const passphrase = 'pa$$w0rd';
       await SettingsPageRecipe.addKeyTest(t, browser, acctEmail, testConstants.testkey17AD7D07, passphrase, {}, false);
