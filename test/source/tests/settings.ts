@@ -290,6 +290,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       await myKeyFrame.waitAll('@content-fingerprint');
       await myKeyFrame.notPresent('@action-update-prv');
       await myKeyFrame.notPresent('@action-revoke-certificate');
+      await myKeyFrame.waitForContent('@label-download-prv', 'THIS PRIVATE KEY IS MANAGED BY EMAIL KEY MANAGER');
       await settingsPage.notPresent('@action-remove-key');
       const fingerprint = await myKeyFrame.readHtml('@content-fingerprint');
       // test for direct access at my_key_update.htm
