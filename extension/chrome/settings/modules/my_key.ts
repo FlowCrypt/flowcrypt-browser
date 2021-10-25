@@ -128,13 +128,13 @@ View.run(class MyKeyView extends View {
 
   private renderPrivateKeyLink = () => {
     if (!this.orgRules.usesKeyManager()) {
-      $('.prv_key_label').addClass('red_label');
+      $('div span.red_label').show();
       $('.action_view_update').show();
       $('a.action_download_revocation_cert').show();
     } else {
       $('.enter_pp').remove();
-      $('.action_download_prv').parent().remove();
-      $('.prv_key_label').addClass('orange_label').text('this private key was managed by your local key manager');
+      $('.container_download_prv').remove();
+      $('div span.orange_label').show();
     }
   }
 
