@@ -54,7 +54,7 @@ View.run(class MyKeyView extends View {
     Xss.sanitizeRender('.email', this.pubKey.emails.map(email => `<span>${Xss.escape(email)}</span>`).join(', '));
     const expiration = this.pubKey.expiration;
     $('.key_expiration').text(expiration && expiration !== Infinity ? Str.datetimeToDate(Str.fromDate(new Date(expiration))) : 'Key does not expire');
-    await this.renderPrvKeyActions();
+    await this.renderPrivateKeyLink();
     await this.renderPubkeyShareableLink();
     await initPassphraseToggle(['input_passphrase']);
   }
@@ -127,12 +127,15 @@ View.run(class MyKeyView extends View {
     Browser.saveToDownloads(prvKeyAttachment);
   }
 
-  private renderPrvKeyActions = () => {
+  private renderPrivateKeyLink = () => {
     if (!this.orgRules.usesKeyManager()) {
+      $('div span.red_label').show();
       $('.action_view_update').show();
       $('a.action_download_revocation_cert').show();
     } else {
       $('.enter_pp').remove();
+      $('.container_download_prv').remove();
+      $('div span.orange_label').show();
     }
   }
 
