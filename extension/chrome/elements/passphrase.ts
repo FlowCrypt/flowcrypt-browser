@@ -57,15 +57,15 @@ View.run(class PassphraseView extends View {
       $('body#settings > div#content.dialog').css({ width: 'inherit', background: '#fafafa', });
       $('.line.which_key').css({ display: 'none', position: 'absolute', visibility: 'hidden', left: '5000px', });
     } else if (this.type === 'sign') {
-      $('h1').text('Enter your pass phrase to sign email');
+      $('h1').text('Enter FlowCrypt pass phrase to sign email');
     } else if (this.type === 'draft') {
-      $('h1').text('Enter your pass phrase to load a draft');
+      $('h1').text('Enter FlowCrypt pass phrase to load a draft');
     } else if (this.type === 'attachment') {
-      $('h1').text('Enter your pass phrase to decrypt a file');
+      $('h1').text('Enter FlowCrypt pass phrase to decrypt a file');
     } else if (this.type === 'quote') {
-      $('h1').text('Enter your pass phrase to load quoted content');
+      $('h1').text('Enter FlowCrypt pass phrase to load quoted content');
     } else if (this.type === 'backup') {
-      $('h1').text('Enter your pass phrase to back up');
+      $('h1').text('Enter FlowCrypt pass phrase to back up');
     }
     $('#passphrase').focus();
     if (allPrivateKeys.length > 1) {
@@ -81,6 +81,7 @@ View.run(class PassphraseView extends View {
       Xss.sanitizeRender('.which_key', html);
       $('.which_key').css('display', 'block');
     }
+    Ui.setTestState('ready');
   }
 
   public setHandlers = () => {

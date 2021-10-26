@@ -1833,6 +1833,7 @@ table#compose td.bottom div#send_btn_note {
   opacity: 0.5;
 }
 
+span.passphrase_hint img,
 table#compose td.bottom .delete-draft {
   width: 20px;
   height: 20px;
