@@ -643,7 +643,7 @@ ${testConstants.smimeCert}`), { instanceOf: Error, message: `Invalid PEM formatt
     ava.default('[unit][KeyUtil.parse] issuerAndSerialNumber of S/MIME certificate is constructed according to PKCS#7', async t => {
       const key = await KeyUtil.parse(testConstants.smimeCert);
       const buf = Buf.with((await MsgUtil.encryptMessage(
-        { pubkeys: [key], data: Buf.fromUtfStr('anything'), armor: true }) as PgpMsgMethod.EncryptX509Result).data);
+        { pubkeys: [key], data: Buf.fromUtfStr('anything'), armor: false }) as PgpMsgMethod.EncryptX509Result).data);
       const raw = buf.toRawBytesStr();
       expect(raw).to.include(key.issuerAndSerialNumber);
       t.pass();
@@ -849,8 +849,8 @@ jLwe8W9IMt765T5x5oux9MmPDXF05xHfm4qfH/BMO3a802x5u2gJjJjuknrFdgXY
       const parsed1 = await KeyUtil.parse(key1.private);
       const parsed2 = await KeyUtil.parse(key2.private);
       const kisWithPp: ExtendedKeyInfo[] = [ // supply both key1 and key2 for decrypt
-        { ... await KeyUtil.keyInfoObj(parsed1), type: parsed1.type, passphrase },
-        { ... await KeyUtil.keyInfoObj(parsed2), type: parsed2.type, passphrase },
+        { ... await KeyUtil.typedKeyInfoObj(parsed1), passphrase },
+        { ... await KeyUtil.typedKeyInfoObj(parsed2), passphrase },
       ];
       // we are testing a private method here because the outcome of this method is not directly testable from the
       //   public method that uses it. It only makes the public method faster, which is hard to test.
@@ -936,7 +936,7 @@ jLwe8W9IMt765T5x5oux9MmPDXF05xHfm4qfH/BMO3a802x5u2gJjJjuknrFdgXY
       const pubkeys = [await KeyUtil.parse(justPrimaryPub)];
       const encrypted = await MsgUtil.encryptMessage({ pubkeys, data, armor: true }) as PgpMsgMethod.EncryptPgpArmorResult;
       const parsed = await KeyUtil.parse(prvEncryptForSubkeyOnlyProtected);
-      const kisWithPp: ExtendedKeyInfo[] = [{ ... await KeyUtil.keyInfoObj(parsed), type: parsed.type, passphrase }];
+      const kisWithPp: ExtendedKeyInfo[] = [{ ... await KeyUtil.typedKeyInfoObj(parsed), type: parsed.type, passphrase }];
       const decrypted = await MsgUtil.decryptMessage({ kisWithPp, encryptedData: encrypted.data });
       // todo - later we'll have an org rule for ignoring this, and then it will be expected to pass as follows:
       // expect(decrypted.success).to.equal(true);
@@ -1750,6 +1750,23 @@ jA==
       expect(parsed.isPrivate).to.equal(true);
       expect(parsed.isPublic).to.equal(false);
       expect(parsed.fullyDecrypted).to.equal(false);
+      t.pass();
+    });
+
+    ava.default('[unit][SmimeKey.decryptMessage] decrypts an armored S/MIME PKCS#7 message', async t => {
+      const p8 = readFileSync("test/samples/smime/human-unprotected-pem.txt", 'utf8');
+      const privateSmimeKey = await KeyUtil.parse(p8);
+      const publicSmimeKey = await KeyUtil.asPublicKey(privateSmimeKey);
+      const text = 'this is a text to be encrypted';
+      const buf = Buf.with((await MsgUtil.encryptMessage(
+        { pubkeys: [publicSmimeKey], data: Buf.fromUtfStr(text), armor: true }) as PgpMsgMethod.EncryptX509Result).data);
+      const encryptedMessage = buf.toRawBytesStr();
+      expect(encryptedMessage).to.include(PgpArmor.headers('pkcs7').begin);
+      const p7 = SmimeKey.readArmoredPkcs7Message(buf);
+      expect(p7.type).to.equal('1.2.840.113549.1.7.3');
+      const decrypted = SmimeKey.decryptMessage(p7 as forge.pkcs7.PkcsEnvelopedData, privateSmimeKey);
+      const decryptedMessage = Buf.with(decrypted).toRawBytesStr();
+      expect(decryptedMessage).to.equal(text);
       t.pass();
     });
 

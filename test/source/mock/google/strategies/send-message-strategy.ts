@@ -1,5 +1,6 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
+import * as forge from 'node-forge';
 import { AddressObject, ParsedMail, StructuredHeader } from 'mailparser';
 import { ITestMsgStrategy, UnsuportableStrategyError } from './strategy-base.js';
 import { Buf } from '../../../core/buf';
@@ -10,6 +11,7 @@ import { HttpClientErr } from '../../lib/api';
 import { MsgUtil } from '../../../core/crypto/pgp/msg-util';
 import { parsedMailAddressObjectAsArray } from '../google-endpoints.js';
 import { Str } from '../../../core/common.js';
+import { GMAIL_RECOVERY_EMAIL_SUBJECTS } from '../../../core/const.js';
 
 // TODO: Make a better structure of ITestMsgStrategy. Because this class doesn't test anything, it only saves message in the Mock
 class SaveMessageInStorageStrategy implements ITestMsgStrategy {
@@ -175,9 +177,30 @@ class SmimeEncryptedMessageStrategy implements ITestMsgStrategy {
     expect(mimeMsg.attachments![0].contentType).to.equal('application/pkcs7-mime');
     expect(mimeMsg.attachments![0].filename).to.equal('smime.p7m');
     expect(mimeMsg.attachments![0].size).to.be.greaterThan(300);
+    const msg = new Buf(mimeMsg.attachments![0].content).toRawBytesStr();
+    const p7 = forge.pkcs7.messageFromAsn1(forge.asn1.fromDer(msg));
+    expect(p7.type).to.equal('1.2.840.113549.1.7.3');
   }
 }
 
+class SmimeSignedMessageStrategy implements ITestMsgStrategy {
+  public test = async (mimeMsg: ParsedMail) => {
+    expect((mimeMsg.headers.get('content-type') as StructuredHeader).value).to.equal('application/pkcs7-mime');
+    expect((mimeMsg.headers.get('content-type') as StructuredHeader).params.name).to.equal('smime.p7m');
+    expect((mimeMsg.headers.get('content-type') as StructuredHeader).params['smime-type']).to.equal('signed-data');
+    expect(mimeMsg.headers.get('content-transfer-encoding')).to.equal('base64');
+    expect((mimeMsg.headers.get('content-disposition') as StructuredHeader).value).to.equal('attachment');
+    expect((mimeMsg.headers.get('content-disposition') as StructuredHeader).params.filename).to.equal('smime.p7m');
+    expect(mimeMsg.headers.get('content-description')).to.equal('S/MIME Signed Message');
+    expect(mimeMsg.attachments!.length).to.equal(1);
+    expect(mimeMsg.attachments![0].contentType).to.equal('application/pkcs7-mime');
+    expect(mimeMsg.attachments![0].filename).to.equal('smime.p7m');
+    expect(mimeMsg.attachments![0].size).to.be.greaterThan(300);
+    const msg = new Buf(mimeMsg.attachments![0].content).toRawBytesStr();
+    const p7 = forge.pkcs7.messageFromAsn1(forge.asn1.fromDer(msg));
+    expect(p7.type).to.equal('1.2.840.113549.1.7.2');
+  }
+}
 export class TestBySubjectStrategyContext {
   private strategy: ITestMsgStrategy;
 
@@ -208,6 +231,12 @@ export class TestBySubjectStrategyContext {
       this.strategy = new SmimeEncryptedMessageStrategy();
     } else if (subject.includes('send with S/MIME attachment')) {
       this.strategy = new SmimeEncryptedMessageStrategy();
+    } else if (subject.includes('send signed and encrypted S/MIME')) {
+      this.strategy = new SmimeEncryptedMessageStrategy();
+    } else if (subject.includes('send signed S/MIME without attachment')) {
+      this.strategy = new SmimeSignedMessageStrategy();
+    } else if (GMAIL_RECOVERY_EMAIL_SUBJECTS.includes(subject)) {
+      this.strategy = new SaveMessageInStorageStrategy();
     } else {
       throw new UnsuportableStrategyError(`There isn't any strategy for this subject: ${subject}`);
     }

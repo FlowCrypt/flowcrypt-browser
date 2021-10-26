@@ -34,13 +34,13 @@ export type MimeContent = {
   bcc: string[];
 };
 
-export type MimeEncodeType = 'pgpMimeEncrypted' | 'pgpMimeSigned' | 'smimeEncrypted' | undefined;
+export type MimeEncodeType = 'pgpMimeEncrypted' | 'pgpMimeSigned' | 'smimeEncrypted' | 'smimeSigned' | undefined;
 export type RichHeaders = Dict<string | string[]>;
 export type SendableMsgBody = {
   [key: string]: string | Buf | undefined;
   'text/plain'?: string;
   'text/html'?: string;
-  'encrypted/buf'?: Buf;
+  'pkcs7/buf'?: Buf; // DER-encoded PKCS#7 message
 };
 export type MimeProccesedMsg = {
   rawSignedContent: string | undefined,
@@ -58,7 +58,7 @@ export class Mime {
     if (decoded.text) {
       const blocksFromTextPart = MsgBlockParser.detectBlocks(Str.normalize(decoded.text)).blocks;
       // if there are some encryption-related blocks found in the text section, which we can use, and not look at the html section
-      if (blocksFromTextPart.find(b => b.type === 'encryptedMsg' || b.type === 'signedMsg' || b.type === 'publicKey' || b.type === 'privateKey')) {
+      if (blocksFromTextPart.find(b => ['pkcs7', 'encryptedMsg', 'signedMsg', 'publicKey', 'privateKey'].includes(b.type))) {
         blocks.push(...blocksFromTextPart); // because the html most likely containt the same thing, just harder to parse pgp sections cause it's html
       } else if (decoded.html) { // if no pgp blocks found in text part and there is html part, prefer html
         blocks.push(MsgBlock.fromContent('plainHtml', decoded.html));
@@ -156,12 +156,16 @@ export class Mime {
     };
     return await new Promise((resolve, reject) => {
       try {
-        parser.onend = () => {
+        parser.onend = async () => {
           try {
             for (const name of Object.keys(parser.node.headers)) {
               mimeContent.headers[name] = parser.node.headers[name][0].value;
             }
             mimeContent.rawSignedContent = Mime.retrieveRawSignedContent([parser.node]);
+            if (!mimeContent.subject && mimeContent.rawSignedContent) {
+              const rawSignedContentDecoded = await Mime.decode(Buf.fromUtfStr(mimeContent.rawSignedContent));
+              mimeContent.subject = rawSignedContentDecoded.subject;
+            }
             for (const node of Object.values(leafNodes)) {
               if (Mime.getNodeType(node) === 'application/pgp-signature') {
                 mimeContent.signature = node.rawContent;
@@ -220,8 +224,8 @@ export class Mime {
     return rootNode.build(); // tslint:disable-line:no-unsafe-any
   }
 
-  public static encodeSmime = async (body: Uint8Array, headers: RichHeaders): Promise<string> => {
-    const rootContentType = 'application/pkcs7-mime; name="smime.p7m"; smime-type=enveloped-data';
+  public static encodeSmime = async (body: Uint8Array, headers: RichHeaders, type: 'enveloped-data' | 'signed-data'): Promise<string> => {
+    const rootContentType = `application/pkcs7-mime; name="smime.p7m"; smime-type=${type}`;
     const rootNode = new MimeBuilder(rootContentType, { includeBccInHeader: true }); // tslint:disable-line:no-unsafe-any
     for (const key of Object.keys(headers)) {
       rootNode.addHeader(key, headers[key]); // tslint:disable-line:no-unsafe-any
@@ -229,7 +233,11 @@ export class Mime {
     rootNode.setContent(body); // tslint:disable-line:no-unsafe-any
     rootNode.addHeader('Content-Transfer-Encoding', 'base64'); // tslint:disable-line:no-unsafe-any
     rootNode.addHeader('Content-Disposition', 'attachment; filename="smime.p7m"'); // tslint:disable-line:no-unsafe-any
-    rootNode.addHeader('Content-Description', 'S/MIME Encrypted Message'); // tslint:disable-line:no-unsafe-any
+    let contentDescription = 'S/MIME Encrypted Message';
+    if (type === 'signed-data') {
+      contentDescription = 'S/MIME Signed Message';
+    }
+    rootNode.addHeader('Content-Description', contentDescription); // tslint:disable-line:no-unsafe-any
     return rootNode.build(); // tslint:disable-line:no-unsafe-any
   }
 

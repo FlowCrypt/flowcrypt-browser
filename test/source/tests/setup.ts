@@ -58,6 +58,18 @@ export const defineSetupTests = (testVariant: TestVariant, testWithBrowser: Test
       await SetupPageRecipe.manualEnter(settingsPage, key.title, { submitPubkey: false, usedPgpBefore: false, key });
     }));
 
+    ava.default('setup - import invalid key file', testWithBrowser(undefined, async (t, browser) => {
+      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.test.key.imported@gmail.com');
+      const key = {
+        title: 'invalid key',
+        filePath: 'test/samples/small.txt',
+        armored: null, // tslint:disable-line:no-null-keyword
+        passphrase: '',
+        longid: null // tslint:disable-line:no-null-keyword
+      };
+      await SetupPageRecipe.manualEnter(settingsPage, key.title, { key, isInvalidKey: true });
+    }));
+
     ava.default('setup - import key - submit - used before', testWithBrowser(undefined, async (t, browser) => {
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.test.key.used.pgp@gmail.com');
       await SetupPageRecipe.manualEnter(settingsPage, 'flowcrypt.test.key.used.pgp', { submitPubkey: true, usedPgpBefore: true },
@@ -741,19 +753,13 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       'setup - s/mime private key',
       testWithBrowser(undefined, async (t, browser) => {
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.test.key.imported@gmail.com');
-        const key = {
+        await SetupPageRecipe.setupSmimeAccount(settingsPage, {
           title: 's/mime pkcs12 unprotected key',
           filePath: 'test/samples/smime/human-unprotected-PKCS12.p12',
           armored: null, // tslint:disable-line:no-null-keyword
           passphrase: 'test pp to encrypt unprotected key',
           longid: null // tslint:disable-line:no-null-keyword
-        };
-        await SetupPageRecipe.manualEnter(settingsPage, key.title, { fillOnly: true, submitPubkey: false, usedPgpBefore: false, key });
-        await settingsPage.waitAndClick('@input-step2bmanualenter-save', { delay: 1 });
-        await Util.sleep(1);
-        await settingsPage.waitAndRespondToModal('confirm', 'confirm', 'Using S/MIME as the only key on account is experimental.');
-        await settingsPage.waitAndClick('@action-step4done-account-settings', { delay: 1 });
-        await SettingsPageRecipe.ready(settingsPage);
+        });
       })
     );
 

@@ -10,7 +10,7 @@ import { PgpArmor, PreparedForDecrypt } from './pgp-armor.js';
 import { opgp } from './openpgpjs-custom.js';
 import { KeyCache } from '../../../platform/key-cache.js';
 import { ContactStore } from '../../../platform/store/contact-store.js';
-import { SmimeKey } from '../smime/smime-key.js';
+import { SmimeKey, SmimeMsg } from '../smime/smime-key.js';
 import { OpenPGPKey } from './openpgp-key.js';
 
 export class DecryptionError extends Error {
@@ -210,22 +210,26 @@ export class MsgUtil {
     } catch (formatErr) {
       return { success: false, error: { type: DecryptErrTypes.format, message: String(formatErr) }, longids };
     }
-    const keys = await MsgUtil.getSortedKeys(kisWithPp, prepared.message);
+    const keys = prepared.isPkcs7 ? await MsgUtil.getSmimeKeys(kisWithPp, prepared.message) : await MsgUtil.getSortedKeys(kisWithPp, prepared.message);
     longids.message = keys.encryptedFor;
     longids.matching = keys.prvForDecrypt.map(ki => ki.longid);
     longids.chosen = keys.prvForDecryptDecrypted.map(decrypted => decrypted.ki.longid);
     longids.needPassphrase = keys.prvForDecryptWithoutPassphrases.map(ki => ki.longid);
     const isEncrypted = !prepared.isCleartext;
-    if (!isEncrypted) {
+    if (!isEncrypted && !prepared.isPkcs7) {
       const signature = await MsgUtil.verify(prepared.message, keys.forVerification, keys.verificationContacts[0]);
       const content = signature.content || Buf.fromUtfStr('no content');
       signature.content = undefined; // no need to duplicate data
       return { success: true, content, isEncrypted, signature };
     }
-    if (!keys.prvForDecryptDecrypted.length && !msgPwd) {
+    if (!keys.prvForDecryptDecrypted.length && (!msgPwd || prepared.isPkcs7)) {
       return { success: false, error: { type: DecryptErrTypes.needPassphrase, message: 'Missing pass phrase' }, longids, isEncrypted };
     }
     try {
+      if (prepared.isPkcs7) {
+        const decrypted = SmimeKey.decryptMessage(prepared.message, keys.prvForDecryptDecrypted[0].decrypted);
+        return { success: true, content: new Buf(decrypted), isEncrypted };
+      }
       const packets = (prepared.message as OpenPGP.message.Message).packets;
       const isSymEncrypted = packets.filter(p => p.tag === opgp.enums.packet.symEncryptedSessionKey).length > 0;
       const isPubEncrypted = packets.filter(p => p.tag === opgp.enums.packet.publicKeyEncryptedSessionKey).length > 0;
@@ -329,6 +333,42 @@ export class MsgUtil {
       // as fixed currently it appears better, but it may be best to instead check `ki.passphrase && await MsgUtil.decryptKeyFor(...)`
       // but that is a larger change that would require separate PR and testing
       if (MsgUtil.isKeyDecryptedFor(parsed, matchingKeyids) || await MsgUtil.decryptKeyFor(parsed, ki.passphrase || '', matchingKeyids) === true) {
+        KeyCache.setDecrypted(parsed);
+        keys.prvForDecryptDecrypted.push({ ki, decrypted: parsed });
+      } else {
+        keys.prvForDecryptWithoutPassphrases.push(ki);
+      }
+    }
+    return keys;
+  }
+
+  private static getSmimeKeys = async (kiWithPp: ExtendedKeyInfo[], msg: SmimeMsg): Promise<SortedKeysForDecrypt> => {
+    const keys: SortedKeysForDecrypt = {
+      verificationContacts: [],
+      forVerification: [],
+      encryptedFor: [],
+      signedBy: [],
+      prvMatching: [],
+      prvForDecrypt: [],
+      prvForDecryptDecrypted: [],
+      prvForDecryptWithoutPassphrases: [],
+    };
+    keys.encryptedFor = SmimeKey.getMessageLongids(msg);
+    if (keys.encryptedFor.length) {
+      keys.prvMatching = kiWithPp.filter(ki => KeyUtil.getKeyInfoLongids(ki).some(
+        longid => keys.encryptedFor.includes(longid)));
+      keys.prvForDecrypt = keys.prvMatching.length ? keys.prvMatching : kiWithPp;
+    } else { // prvs not needed for signed msgs
+      keys.prvForDecrypt = [];
+    }
+    for (const ki of keys.prvForDecrypt) {
+      const cachedKey = KeyCache.getDecrypted(ki.longid);
+      if (cachedKey) {
+        keys.prvForDecryptDecrypted.push({ ki, decrypted: cachedKey });
+        continue;
+      }
+      const parsed = await KeyUtil.parse(ki.private);
+      if (parsed.fullyDecrypted || ki.passphrase && await SmimeKey.decryptKey(parsed, ki.passphrase) === true) {
         KeyCache.setDecrypted(parsed);
         keys.prvForDecryptDecrypted.push({ ki, decrypted: parsed });
       } else {

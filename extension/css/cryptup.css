@@ -44,6 +44,7 @@ button.swal2-styled:focus,
   text-decoration: none;
 }
 
+.prv_fingerprint span,
 a { color: #337ab7; }
 
 .line.red,
@@ -835,6 +836,11 @@ body#settings > div#content.backup div#module_manual table.backup_options label 
 }
 body#settings .password_feedback { display: none; }
 
+div#module_manual .key_backup_selection {
+  max-height: 300px;
+  overflow-y: scroll;
+}
+
 body#settings > div#content.setup div.manual .password_feedback {
   display: none;
   position: absolute;
@@ -1086,6 +1092,7 @@ body#settings > div#content.storage .pre {
 body#settings > div#content .list_table { display: none; }
 body#settings > div#content .list_table table img { width: 15px; }
 
+.prv_fingerprint span,
 body#settings > div#content .list_table table {
   width: 100%;
   font-size: 14px;
@@ -2812,10 +2819,15 @@ body#select_account .action_add_account::before {
   padding-top: 0;
   margin-top: 0;
 }
+
+.m-0 { margin: 0 !important; }
 .mt-20 { margin-top: 20px; }
 .mt-40 { margin-top: 40px; }
+.mb-20 { margin-bottom: 20px; }
 
 .display_none { display: none; }
+
+.display_inline_block { display: inline-block; }
 
 code {
   padding: 0.2em 0.4em;

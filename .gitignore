@@ -18,3 +18,5 @@
 release/log.txt
 release/*
 npm-debug.log
+/rt.sh
+/grt.sh

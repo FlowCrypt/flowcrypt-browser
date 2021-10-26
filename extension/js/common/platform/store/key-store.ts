@@ -1,6 +1,6 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
-import { KeyInfo, ExtendedKeyInfo, KeyUtil, Key } from '../../core/crypto/key.js';
+import { KeyInfo, TypedKeyInfo, ExtendedKeyInfo, KeyUtil, Key, KeyIdentity } from '../../core/crypto/key.js';
 import { AcctStore } from './acct-store.js';
 import { PassphraseStore } from './passphrase-store.js';
 import { AbstractStore } from './abstract-store.js';
@@ -23,8 +23,7 @@ export class KeyStore extends AbstractStore {
   }
 
   public static getFirstOptional = async (acctEmail: string): Promise<KeyInfo | undefined> => {
-    const stored = await AcctStore.get(acctEmail, ['keys']);
-    const keys: KeyInfo[] = stored.keys || [];
+    const keys = await KeyStore.get(acctEmail);
     return keys[0];
   }
 
@@ -34,16 +33,23 @@ export class KeyStore extends AbstractStore {
     return key as KeyInfo;
   }
 
-  public static getAllWithOptionalPassPhrase = async (acctEmail: string): Promise<ExtendedKeyInfo[]> => {
+  public static getTypedKeyInfos = async (acctEmail: string): Promise<TypedKeyInfo[]> => {
     const keys = await KeyStore.get(acctEmail);
-    const withPp: ExtendedKeyInfo[] = [];
+    const kis: TypedKeyInfo[] = [];
     for (const ki of keys) {
       const type = KeyUtil.getKeyType(ki.private);
-      if (type === 'openpgp' || type === 'x509') {
-        withPp.push({ ...ki, type, passphrase: await PassphraseStore.get(acctEmail, ki.fingerprints[0]) });
+      const id = ki.fingerprints[0];
+      if (type !== 'openpgp' && type !== 'x509') {
+        continue;
       }
+      kis.push({ ...ki, type, id });
     }
-    return withPp;
+    return kis;
+  }
+
+  public static getAllWithOptionalPassPhrase = async (acctEmail: string): Promise<ExtendedKeyInfo[]> => {
+    const keys = await KeyStore.getTypedKeyInfos(acctEmail);
+    return await Promise.all(keys.map(async (ki) => { return { ...ki, passphrase: await PassphraseStore.get(acctEmail, ki) }; }));
   }
 
   public static add = async (acctEmail: string, newKey: string | Key) => {
@@ -69,21 +75,18 @@ export class KeyStore extends AbstractStore {
     await AcctStore.set(acctEmail, { keys: keyinfos });
   }
 
-  public static remove = async (acctEmail: string, removeFingerprint: string): Promise<void> => {
-    const privateKeys = await KeyStore.get(acctEmail);
-    const filteredPrivateKeys = privateKeys.filter(ki => ki.fingerprints[0] !== removeFingerprint);
+  public static remove = async (acctEmail: string, keyIdentity: KeyIdentity): Promise<void> => {
+    const privateKeys = await KeyStore.getTypedKeyInfos(acctEmail);
+    const filteredPrivateKeys = privateKeys.filter(ki => !KeyUtil.identityEquals(ki, keyIdentity));
     await KeyStore.set(acctEmail, filteredPrivateKeys);
   }
 
-  /**
-   * todo - switch to fingerprints
-   */
-  public static getLongidsThatCurrentlyHavePassPhraseInSession = async (acctEmail: string): Promise<string[]> => {
-    const keys = await KeyStore.get(acctEmail);
-    const result: string[] = [];
-    for (const key of keys) {
-      if (! await PassphraseStore.get(acctEmail, key.fingerprints[0], true) && await PassphraseStore.get(acctEmail, key.fingerprints[0], false)) {
-        result.push(key.longid);
+  public static getKeyInfosThatCurrentlyHavePassPhraseInSession = async (acctEmail: string): Promise<TypedKeyInfo[]> => {
+    const keys = await KeyStore.getTypedKeyInfos(acctEmail);
+    const result: TypedKeyInfo[] = [];
+    for (const ki of keys) {
+      if (! await PassphraseStore.get(acctEmail, ki, true) && await PassphraseStore.get(acctEmail, ki, false)) {
+        result.push(ki);
       }
     }
     return result;

@@ -10,6 +10,7 @@ import { opgp } from './pgp/openpgpjs-custom.js';
 import { OpenPGPKey } from './pgp/openpgp-key.js';
 import { SmimeKey } from './smime/smime-key.js';
 import { MsgBlock } from '../msg-block.js';
+import { PubkeyInfo } from '../../platform/store/contact-store.js';
 
 /**
  * This is a common Key interface for both OpenPGP and X.509 keys.
@@ -18,9 +19,7 @@ import { MsgBlock } from '../msg-block.js';
  * all dates are expressed as number of milliseconds since Unix Epoch.
  * This is what `Date.now()` returns and `new Date(x)` accepts.
  */
-export interface Key {
-  type: 'openpgp' | 'x509';
-  id: string; // a fingerprint of the primary key in OpenPGP, and similarly a fingerprint of the actual cryptographic key (eg RSA fingerprint) in S/MIME
+export interface Key extends KeyIdentity {
   allIds: string[]; // a list of fingerprints, including those for subkeys
   created: number;
   revoked: boolean;
@@ -69,9 +68,16 @@ export interface KeyInfo {
   emails?: string[]; // todo - used to be missing - but migration was supposed to add it? setting back to optional for now
 }
 
-export interface ExtendedKeyInfo extends KeyInfo {
-  passphrase?: string;
+export interface KeyIdentity {
+  id: string, // a fingerprint of the primary key in OpenPGP, and similarly a fingerprint of the actual cryptographic key (eg RSA fingerprint) in S/MIME
   type: 'openpgp' | 'x509'
+}
+
+export interface TypedKeyInfo extends KeyInfo, KeyIdentity {
+}
+
+export interface ExtendedKeyInfo extends TypedKeyInfo {
+  passphrase?: string;
 }
 
 export type KeyAlgo = 'curve25519' | 'rsa2048' | 'rsa3072' | 'rsa4096';
@@ -81,6 +87,14 @@ export type PrvPacket = (OpenPGP.packet.SecretKey | OpenPGP.packet.SecretSubkey)
 export class UnexpectedKeyTypeError extends Error { }
 
 export class KeyUtil {
+
+  public static identityEquals = (keyIdentity1: KeyIdentity, keyIdentity2: KeyIdentity) => {
+    return keyIdentity1.id === keyIdentity2.id && keyIdentity1.type === keyIdentity2.type;
+  }
+
+  public static filterKeys<T extends KeyIdentity>(kis: T[], ids: KeyIdentity[]): T[] {
+    return kis.filter(ki => ids.some(i => KeyUtil.identityEquals(i, ki)));
+  }
 
   public static isWithoutSelfCertifications = async (key: Key) => {
     // all non-OpenPGP keys are automatically considered to be not
@@ -270,9 +284,6 @@ export class KeyUtil {
     // decrypt will change the key in place so it's important to parse the key here
     // because passing an object from the caller could have unexpected consequences
     const key = await KeyUtil.parse(pkey);
-    if (key.type !== 'openpgp') {
-      throw new Error('Checking password for this key type is not implemented: ' + key.type);
-    }
     return await KeyUtil.decrypt(key, passphrase);
   }
 
@@ -291,21 +302,23 @@ export class KeyUtil {
   }
 
   public static choosePubsBasedOnKeyTypeCombinationForPartialSmimeSupport = (pubs: PubkeyResult[]): Key[] => {
-    const myPubs = pubs.filter(pub => pub.isMine); // currently this must be openpgp pub
-    const otherPgpPubs = pubs.filter(pub => !pub.isMine && pub.pubkey.type === 'openpgp');
-    const otherSmimePubs = pubs.filter(pub => !pub.isMine && pub.pubkey.type === 'x509');
-    if (otherPgpPubs.length && otherSmimePubs.length) {
-      let err = `Cannot use mixed OpenPGP (${otherPgpPubs.map(p => p.email).join(', ')}) and S/MIME (${otherSmimePubs.map(p => p.email).join(', ')}) public keys yet.`;
-      err += 'If you need to email S/MIME recipient, do not add any OpenPGP recipient at the same time.';
-      throw new UnreportableError(err);
+    let pgpPubs = pubs.filter(pub => pub.pubkey.type === 'openpgp');
+    let smimePubs = pubs.filter(pub => pub.pubkey.type === 'x509');
+    if (pgpPubs.length && smimePubs.length) {
+      // get rid of some of my keys to resolve the conflict
+      // todo: how would it work with drafts?
+      if (smimePubs.every(pub => pub.isMine)) {
+        smimePubs = [];
+      } else if (pgpPubs.every(pub => pub.isMine)) {
+        pgpPubs = [];
+      } else {
+        let err = `Cannot use mixed OpenPGP (${pgpPubs.filter(p => !p.isMine).map(p => p.email).join(', ')}) and `
+          + `S/MIME (${smimePubs.filter(p => !p.isMine).map(p => p.email).join(', ')}) public keys yet.`;
+        err += 'If you need to email S/MIME recipient, do not add any OpenPGP recipient at the same time.';
+        throw new UnreportableError(err);
+      }
     }
-    if (otherPgpPubs.length) {
-      return myPubs.concat(...otherPgpPubs).map(p => p.pubkey);
-    }
-    if (otherSmimePubs.length) { // todo - currently skipping my own pgp keys when encrypting message for S/MIME
-      return otherSmimePubs.map(pub => pub.pubkey);
-    }
-    return myPubs.map(p => p.pubkey);
+    return pgpPubs.concat(smimePubs).map(p => p.pubkey);
   }
 
   public static decrypt = async (key: Key, passphrase: string, optionalKeyid?: OpenPGP.Keyid, optionalBehaviorFlag?: 'OK-IF-ALREADY-DECRYPTED'): Promise<boolean> => {
@@ -358,6 +371,10 @@ export class KeyUtil {
     };
   }
 
+  public static typedKeyInfoObj = async (prv: Key): Promise<TypedKeyInfo> => {
+    return { ...await KeyUtil.keyInfoObj(prv), id: prv.id, type: prv.type };
+  }
+
   public static getPubkeyLongids = (pubkey: Key): string[] => {
     if (pubkey.type !== 'x509') {
       return pubkey.allIds.map(id => OpenPGPKey.fingerprintToLongid(id));
@@ -369,11 +386,7 @@ export class KeyUtil {
     if (pubkey.type !== 'x509') {
       return OpenPGPKey.fingerprintToLongid(pubkey.id);
     }
-    const encodedIssuerAndSerialNumber = 'X509-' + Buf.fromRawBytesStr(pubkey.issuerAndSerialNumber!).toBase64Str();
-    if (!encodedIssuerAndSerialNumber) {
-      throw new Error(`Cannot extract IssuerAndSerialNumber from the certificate for: ${pubkey.id}`);
-    }
-    return encodedIssuerAndSerialNumber;
+    return SmimeKey.getKeyLongid(pubkey);
   }
 
   public static getKeyInfoLongids = (ki: ExtendedKeyInfo): string[] => {
@@ -381,5 +394,9 @@ export class KeyUtil {
       return ki.fingerprints.map(fp => OpenPGPKey.fingerprintToLongid(fp));
     }
     return [ki.longid];
+  }
+
+  public static usableAllowingExpired = (pubinfo: PubkeyInfo) => {
+    return !pubinfo.revoked && (pubinfo.pubkey.usableForEncryption || pubinfo.pubkey.usableForEncryptionButExpired);
   }
 }

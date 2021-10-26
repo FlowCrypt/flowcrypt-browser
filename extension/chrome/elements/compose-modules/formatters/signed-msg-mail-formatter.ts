@@ -9,14 +9,26 @@ import { NewMsgData } from '../compose-types.js';
 import { Key } from '../../../../js/common/core/crypto/key.js';
 import { MsgUtil } from '../../../../js/common/core/crypto/pgp/msg-util.js';
 import { SendableMsg } from '../../../../js/common/api/email-provider/sendable-msg.js';
-import { SendableMsgBody } from '../../../../js/common/core/mime.js';
+import { Mime, SendableMsgBody } from '../../../../js/common/core/mime.js';
 import { ContactStore } from '../../../../js/common/platform/store/contact-store.js';
+import { SmimeKey } from '../../../../js/common/core/crypto/smime/smime-key.js';
+import { Buf } from '../../../../js/common/core/buf.js';
 
 export class SignedMsgMailFormatter extends BaseMailFormatter {
 
   public sendableMsg = async (newMsg: NewMsgData, signingPrv: Key): Promise<SendableMsg> => {
     this.view.errModule.debug(`SignedMsgMailFormatter.sendableMsg signing with key: ${signingPrv.id}`);
     const attachments = this.isDraft ? [] : await this.view.attachmentsModule.attachment.collectAttachments();
+    if (signingPrv.type === 'x509') {
+      // todo: attachments, richtext #4046, #4047
+      if (this.isDraft) {
+        throw new Error('signed-only PKCS#7 drafts are not supported');
+      }
+      const msgBody = this.richtext ? { 'text/plain': newMsg.plaintext, 'text/html': newMsg.plainhtml } : { 'text/plain': newMsg.plaintext };
+      const mimeEncodedPlainMessage = await Mime.encode(msgBody, { Subject: newMsg.subject }, attachments);
+      const data = await SmimeKey.sign(signingPrv, Buf.fromUtfStr(mimeEncodedPlainMessage));
+      return await SendableMsg.createSMimeSigned(this.acctEmail, this.headers(newMsg), data);
+    }
     if (!this.richtext) {
       // Folding the lines or GMAIL WILL RAPE THE TEXT, regardless of what encoding is used
       // https://mathiasbynens.be/notes/gmail-plain-text applies to API as well
@@ -33,7 +45,7 @@ export class SignedMsgMailFormatter extends BaseMailFormatter {
       const signedData = await MsgUtil.sign(signingPrv, newMsg.plaintext);
       const allContacts = [...newMsg.recipients.to || [], ...newMsg.recipients.cc || [], ...newMsg.recipients.bcc || []];
       ContactStore.update(undefined, allContacts, { lastUse: Date.now() }).catch(Catch.reportErr);
-      return await SendableMsg.createPgpInline(this.acctEmail, this.headers(newMsg), signedData, attachments);
+      return await SendableMsg.createInlineArmored(this.acctEmail, this.headers(newMsg), signedData, attachments);
     }
     // pgp/mime detached signature - it must be signed later, while being mime-encoded
     // prepare a sign function first, which will be used by Mime.encodePgpMimeSigned later

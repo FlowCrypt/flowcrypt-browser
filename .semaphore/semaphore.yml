@@ -12,6 +12,7 @@ auto_cancel: # cancel running CI for older commits on same branch if new commits
 blocks:
 
   - name: Tests
+    dependencies: []
     execution_time_limit:
       minutes: 20
     task:
@@ -52,10 +53,6 @@ blocks:
             - npm run-script test_async_stack
             - npm run-script test_buf
 
-        - name: Live Gmail tests
-          commands:
-            - npm run-script test_ci_chrome_consumer_live_gmail
-
         - name: consumer mock - unit tests
           commands:
             - npm run-script test_local_unit_consumer
@@ -88,3 +85,35 @@ blocks:
                 echo "Uploading debug files as job artifacts..."
                 artifact push job build/test/test/debugArtifacts/debugHtmlAttachment-*.html
               fi
+
+  - name: Live Gmail tests
+    dependencies: []
+    run:
+      when: "branch = 'master' OR branch =~ 'live-test'  OR branch =~ 'gmail-test'"
+    execution_time_limit:
+      minutes: 20
+    task:
+      secrets:
+        - name: flowcrypt-browser-ci-secrets
+      env_vars:
+        - name: SEMAPHORE_GIT_DIR
+          value: /home/semaphore/git/flowcrypt-browser
+      prologue:
+        commands:
+          - nvm use 12
+          - nvm alias default 12
+          - npm install -g npm@6.14.6 && mkdir ~/git && checkout && mv ~/test-secrets.json ~/git/flowcrypt-browser/test/test-secrets.json
+          - cd ~/git/flowcrypt-browser
+          - npm install
+          - echo "NODE=$(node --version), NPM=$(npm --version), TSC=$( ./node_modules/typescript/bin/tsc --version)"
+          - npm run-script pretest
+          - sudo sh -c "echo '209.250.232.81 cron.flowcrypt.com' >> /etc/hosts"
+          - sudo sh -c "echo '127.0.0.1 fes.google.mock.flowcryptlocal.test' >> /etc/hosts"
+          - sudo sh -c "echo '127.0.0.1 google.mock.flowcryptlocal.test' >> /etc/hosts"
+          - sudo sh -c "echo '127.0.0.1 fes.standardsubdomainfes.test' >> /etc/hosts"
+          - sudo sh -c "echo '127.0.0.1 standardsubdomainfes.test' >> /etc/hosts"
+          - sudo sh -c "echo '127.0.0.1 fes.disablefesaccesstoken.test' >> /etc/hosts"
+      jobs:
+        - name: Live Gmail tests
+          commands:
+            - npm run-script test_ci_chrome_consumer_live_gmail

@@ -641,8 +641,8 @@ declare module "node-forge" {
             getBagsByLocalKeyId: (localKeyId: string, bagType: string) => Bag[]
         }
 
-        function pkcs12FromAsn1(obj: any, strict?: boolean, password?: string): Pkcs12Pfx;
-        function pkcs12FromAsn1(obj: any, password?: string): Pkcs12Pfx;
+        function pkcs12FromAsn1(obj: asn1.Asn1, strict?: boolean, password?: string): Pkcs12Pfx;
+        function pkcs12FromAsn1(obj: asn1.Asn1, password?: string): Pkcs12Pfx;
 
         function toPkcs12Asn1(
             key: pki.PrivateKey,
@@ -670,43 +670,59 @@ declare module "node-forge" {
     }
 
     namespace pkcs7 {
-        interface PkcsSignedData {
+        interface Pkcs7Data {
+            content?: util.ByteBuffer;
+            toAsn1(): asn1.Asn1;
+        }
+
+        interface PkcsSignedData extends Pkcs7Data {
             type: '1.2.840.113549.1.7.2';
-            content?: string | util.ByteBuffer;
             contentInfo?: { value: any[] };
 
             addCertificate(certificate: pki.Certificate | string): void;
             addSigner(options: {
                 key: string;
                 certificate: pki.Certificate | string;
-                digestAlgorithm: string;
-                authenticatedAttributes: { type: string; value?: string }[];
+                digestAlgorithm?: string;
+                authenticatedAttributes?: { type: string; value?: string }[];
             }): void;
             sign(options?: {
                 detached?: boolean
             }): void;
-            toAsn1(): asn1.Asn1;
         }
 
         function createSignedData(): PkcsSignedData;
 
-        interface PkcsEnvelopedData {
+        interface PkcsEnvelopedData extends Pkcs7Data {
             type: '1.2.840.113549.1.7.3';
-            content?: string | util.ByteBuffer;
+            recipients: { issuer: pki.Attribute[], serialNumber: string }[];
             addRecipient(certificate: pki.Certificate): void;
+            findRecipient(cert: pki.Certificate): Recipient;
             encrypt(): void;
-            toAsn1(): asn1.Asn1;
+            decrypt(recipient: Recipient, privKey: pki.PrivateKey): void;
         }
 
         interface PkcsEncryptedData {
             type: '1.2.840.113549.1.7.6';
             // todo: encryptedContent;
             // todo: decrypt(key);
-            // todo: fromAsn1(obj);
+        }
+
+        interface Recipient {
+            version: number,
+            issuer: any[],
+            serialNumber: string,
+            encryptedContent: {
+                algorithm: string,
+                parameter: string,
+                content: util.ByteBuffer
+            }
         }
 
         function createEnvelopedData(): PkcsEnvelopedData;
         function messageFromPem(pem: pki.PEM): PkcsEnvelopedData | PkcsSignedData | PkcsEncryptedData;
+        function messageToPem(msg: PkcsEnvelopedData | PkcsSignedData | PkcsEncryptedData, maxline?: number): pki.PEM;
+        function messageFromAsn1(obj: asn1.Asn1): PkcsEnvelopedData | PkcsSignedData | PkcsEncryptedData;
     }
 
     namespace pkcs5 {
