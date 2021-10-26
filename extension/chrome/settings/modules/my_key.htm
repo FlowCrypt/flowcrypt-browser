@@ -21,7 +21,7 @@
         class="action_view_user_ids">show user ids</a>
     </div>
     <div class="line">Public Fingerprint: <span class="fingerprint good" data-test="content-fingerprint"></span>.
-      This Fingerprint is is unique to your public key. Share this so that your contacts can verify that they
+      This Fingerprint is unique to your public key. Share this so that your contacts can verify that they
       have the right key to encrypt for.</div>
     <div class="line"><span class="green_label">Public Key Below is safe to share with
         others</span></div>
@@ -47,8 +47,11 @@
       &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
       <button class="button gray action_cancel_download_cert">cancel</button>
     </div>
-    <div class="line"><span class="red_label">Never send this to anyone!</span></div>
     <div class="line">
+      <span class="red_label" style="display: none;">Never send this to anyone!</span>
+      <span class="orange_label" style="display: none;" data-test="label-download-prv">This private key is managed by Email Key Manager</span>
+    </div>
+    <div class="line container_download_prv">
       <a href="#" class="action_download_prv bad" data-test="action-download-prv">Save private key to a file</a>
     </div>
   </div>

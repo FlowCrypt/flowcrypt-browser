@@ -233,14 +233,9 @@ export class SetupView extends View {
 
   public saveKeysAndPassPhrase = async (prvs: Key[], options: SetupOptions) => {
     for (const prv of prvs) {
-      const fingerprint = prv.id;
-      if (!fingerprint) {
-        await Ui.modal.error('Cannot save keys to storage because at least one of them is not valid.');
-        return;
-      }
       await KeyStore.add(this.acctEmail, prv);
       await PassphraseStore.set((options.passphrase_save && !this.orgRules.forbidStoringPassPhrase()) ? 'local' : 'session',
-        this.acctEmail, fingerprint, options.passphrase);
+        this.acctEmail, { longid: KeyUtil.getPrimaryLongid(prv) }, options.passphrase);
     }
     const { sendAs } = await AcctStore.get(this.acctEmail, ['sendAs']);
     const myOwnEmailsAddrs: string[] = [this.acctEmail].concat(Object.keys(sendAs!));

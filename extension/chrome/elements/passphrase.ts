@@ -147,12 +147,17 @@ View.run(class PassphraseView extends View {
     const pass = String($('#passphrase').val());
     const storageType: StorageType = ($('.forget-pass-phrase-checkbox').prop('checked') || this.orgRules.forbidStoringPassPhrase()) ? 'session' : 'local';
     let atLeastOneMatched = false;
-    for (const keyinfo of this.keysWeNeedPassPhraseFor!) { // if passphrase matches more keys, it will save the pass phrase for all keys
+    let unlockCount = 0; // may include non-matching keys
+    const allPrivateKeys = await KeyStore.get(this.acctEmail);
+    for (const keyinfo of allPrivateKeys) { // if passphrase matches more keys, it will save the pass phrase for all keys
       const prv = await KeyUtil.parse(keyinfo.private);
       try {
         if (await KeyUtil.decrypt(prv, pass) === true) {
-          await PassphraseStore.set(storageType, this.acctEmail, keyinfo.fingerprints[0], pass);
-          atLeastOneMatched = true;
+          unlockCount++;
+          await PassphraseStore.set(storageType, this.acctEmail, keyinfo, pass);
+          if (this.longids.includes(keyinfo.longid)) {
+            atLeastOneMatched = true;
+          }
           if (storageType === 'session') {
             // TODO: change to 'broadcast' when issue with 'broadcast' is fixed
             BrowserMsg.send.addEndSessionBtn(this.parentTabId);
@@ -167,6 +172,9 @@ View.run(class PassphraseView extends View {
           throw e;
         }
       }
+    }
+    if (unlockCount && allPrivateKeys.length > 1) {
+      Ui.toast(`${unlockCount} of ${allPrivateKeys.length} keys ${(unlockCount > 1) ? 'were' : 'was'} unlocked by this pass phrase`);
     }
     if (atLeastOneMatched) {
       this.closeDialog(true, this.initiatorFrameId);
