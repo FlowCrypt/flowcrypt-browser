@@ -81,6 +81,7 @@ View.run(class PassphraseView extends View {
       Xss.sanitizeRender('.which_key', html);
       $('.which_key').css('display', 'block');
     }
+    Ui.setTestState('ready');
   }
 
   public setHandlers = () => {
