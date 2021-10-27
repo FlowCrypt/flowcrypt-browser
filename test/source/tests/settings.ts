@@ -22,6 +22,7 @@ import { KeyInfo, KeyUtil } from '../core/crypto/key';
 import { Buf } from '../core/buf';
 import { GoogleData } from '../mock/google/google-data';
 import Parse from './../util/parse';
+import { OpenPGPKey } from '../core/crypto/pgp/openpgp-key';
 
 // tslint:disable:no-blank-lines-func
 
@@ -63,6 +64,40 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       const settingsPage = await browser.newPage(t, TestUrls.extensionSettings('flowcrypt.compatibility@gmail.com'));
       await SettingsPageRecipe.passphraseTest(settingsPage, Config.key('flowcrypt.wrong.passphrase').passphrase, false);
       await SettingsPageRecipe.passphraseTest(settingsPage, Config.key('flowcrypt.compatibility.1pp1').passphrase, true);
+    }));
+
+    ava.default('settings - clarify passphrase prompt text', testWithBrowser('compatibility', async (t, browser) => {
+      const acctEmail = 'flowcrypt.compatibility@gmail.com';
+      const settingsPage = await browser.newPage(t, TestUrls.extensionSettings(acctEmail));
+      await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
+      const fingerprint = (await settingsPage.read('.good')).split(' ').join('');
+      const longid = OpenPGPKey.fingerprintToLongid(fingerprint);
+      const baseUrl = `chrome/elements/passphrase.htm?acctEmail=${acctEmail}&longids=${longid}&parentTabId=`;
+      let passphrasePage;
+      passphrasePage = await browser.newPage(t, baseUrl.concat('&type=sign'));
+      await passphrasePage.waitForSelTestState('ready');
+      expect(await passphrasePage.read('@passphrase-text')).to.equal('Enter FlowCrypt pass phrase to sign email');
+      await passphrasePage.close();
+      passphrasePage = await browser.newPage(t, baseUrl.concat('&type=message'));
+      await passphrasePage.waitForSelTestState('ready');
+      expect(await passphrasePage.read('@passphrase-text')).to.equal('Enter FlowCrypt pass phrase to read encrypted email');
+      await passphrasePage.close();
+      passphrasePage = await browser.newPage(t, baseUrl.concat('&type=draft'));
+      await passphrasePage.waitForSelTestState('ready');
+      expect(await passphrasePage.read('@passphrase-text')).to.equal('Enter FlowCrypt pass phrase to load a draft');
+      await passphrasePage.close();
+      passphrasePage = await browser.newPage(t, baseUrl.concat('&type=attachment'));
+      await passphrasePage.waitForSelTestState('ready');
+      expect(await passphrasePage.read('@passphrase-text')).to.equal('Enter FlowCrypt pass phrase to decrypt a file');
+      await passphrasePage.close();
+      passphrasePage = await browser.newPage(t, baseUrl.concat('&type=quote'));
+      await passphrasePage.waitForSelTestState('ready');
+      expect(await passphrasePage.read('@passphrase-text')).to.equal('Enter FlowCrypt pass phrase to load quoted content');
+      await passphrasePage.close();
+      passphrasePage = await browser.newPage(t, baseUrl.concat('&type=backup'));
+      await passphrasePage.waitForSelTestState('ready');
+      expect(await passphrasePage.read('@passphrase-text')).to.equal('Enter FlowCrypt pass phrase to back up');
+      await passphrasePage.close();
     }));
 
     ava.todo('settings - verify 2pp1 key presense');
