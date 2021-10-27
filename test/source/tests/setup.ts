@@ -44,7 +44,19 @@ export const defineSetupTests = (testVariant: TestVariant, testWithBrowser: Test
     ava.default('setup - optional checkbox for each email aliases', testWithBrowser(undefined, async (t, browser) => {
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.compatibility@gmail.com');
       await Util.sleep(5);
-      await SetupPageRecipe.createKey(settingsPage, 'unused', 'none', { key: { passphrase: 'long enough to suit requirements' }, usedPgpBefore: false, skipForPassphrase: true });
+      await SetupPageRecipe.createKey(
+        settingsPage,
+        'unused',
+        'none',
+        {
+          key: { passphrase: 'long enough to suit requirements' },
+          usedPgpBefore: false,
+          skipForPassphrase: true,
+          pageEvaluator: async () => {
+            expect(await settingsPage.isElementPresent('@input-email-alias-flowcryptcompatibilitygmailcom')).to.equal(true);
+          }
+        }
+      );
       await settingsPage.close();
     }));
 

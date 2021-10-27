@@ -31,6 +31,7 @@ type CreateKeyOpts = {
   enforcedAlgo?: string | boolean,
   selectKeyAlgo?: string,
   skipForPassphrase?: boolean,
+  pageEvaluator?: () => void
 };
 
 export class SetupPageRecipe extends PageRecipe {
@@ -39,7 +40,7 @@ export class SetupPageRecipe extends PageRecipe {
     settingsPage: ControllablePage,
     keyTitle: string,
     backup: 'none' | 'email' | 'file' | 'disabled',
-    { usedPgpBefore = false, submitPubkey = false, enforcedAlgo = false, selectKeyAlgo = '', skipForPassphrase = false, key }: CreateKeyOpts = {},
+    { usedPgpBefore = false, submitPubkey = false, enforcedAlgo = false, selectKeyAlgo = '', skipForPassphrase = false, pageEvaluator = undefined, key }: CreateKeyOpts = {},
     checks: SavePassphraseChecks = {}
   ) => {
     await SetupPageRecipe.createBegin(settingsPage, keyTitle, { key, usedPgpBefore, skipForPassphrase });
@@ -58,8 +59,8 @@ export class SetupPageRecipe extends PageRecipe {
     if (!submitPubkey && await settingsPage.isElementPresent('@input-step2bmanualcreate-submit-pubkey')) {
       await settingsPage.waitAndClick('@input-step2bmanualcreate-submit-pubkey'); // uncheck
     }
-    if (skipForPassphrase) {
-      expect(await settingsPage.isElementPresent('@input-email-alias-flowcryptcompatibilitygmailcom')).to.equal(true);
+    if (pageEvaluator !== undefined) {
+      pageEvaluator();
     }
     if (checks.isSavePassphraseHidden !== undefined) {
       expect(await settingsPage.hasClass('@input-step2bmanualcreate-save-passphrase-label', 'hidden')).to.equal(checks.isSavePassphraseHidden);
