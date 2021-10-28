@@ -41,7 +41,7 @@ export const defineSetupTests = (testVariant: TestVariant, testWithBrowser: Test
       await settingsPage.notPresent('.settings-banner');
     }));
 
-    ava.default('setup - 1ptional checkbox for each email aliases', testWithBrowser(undefined, async (t, browser) => {
+    ava.default('setup - optional checkbox for each email aliases', testWithBrowser(undefined, async (t, browser) => {
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.compatibility@gmail.com');
       await Util.sleep(5);
       await SetupPageRecipe.createKey(
