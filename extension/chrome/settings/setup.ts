@@ -204,6 +204,7 @@ export class SetupView extends View {
         $('.input_email_alias').prop({ disabled: false });
       }
     } else {
+      $('.input_email_alias').prop({ checked: false });
       $('.input_email_alias').prop({ disabled: true });
     }
   }
