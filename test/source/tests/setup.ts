@@ -41,7 +41,7 @@ export const defineSetupTests = (testVariant: TestVariant, testWithBrowser: Test
       await settingsPage.notPresent('.settings-banner');
     }));
 
-    ava.default('setup - optional checkbox for each email aliases', testWithBrowser(undefined, async (t, browser) => {
+    ava.default('setup - 1ptional checkbox for each email aliases', testWithBrowser(undefined, async (t, browser) => {
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.compatibility@gmail.com');
       await Util.sleep(5);
       await SetupPageRecipe.createKey(
@@ -52,11 +52,16 @@ export const defineSetupTests = (testVariant: TestVariant, testWithBrowser: Test
           key: { passphrase: 'long enough to suit requirements' },
           usedPgpBefore: false,
           skipForPassphrase: true,
+          submitPubkey: true,
           pageEvaluator: async () => {
-            expect(await settingsPage.isElementPresent('@input-email-alias-flowcryptcompatibilitygmailcom')).to.equal(true);
+            expect(await settingsPage.isChecked('@input-email-alias-flowcryptcompatibilitygmailcom')).to.equal(false); // unchecked by default
+            await settingsPage.clickIfPresent('@input-email-alias-flowcryptcompatibilitygmailcom'); // include by the user (simulated)
+            await settingsPage.waitAndClick('@input-step2bmanualcreate-create-and-save');
           }
         }
       );
+      expect(MOCK_ATTESTER_LAST_INSERTED_PUB['flowcrypt.compatibility@gmail.com']).not.to.be.an('undefined');
+      expect(MOCK_ATTESTER_LAST_INSERTED_PUB['flowcryptcompatibility@gmail.com']).not.to.be.an('undefined');
       await settingsPage.close();
     }));
 
