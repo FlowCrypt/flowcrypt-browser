@@ -36,14 +36,16 @@ export class SetupCreateKeyModule {
       const keyAlgo = this.view.orgRules.getEnforcedKeygenAlgo() || $('#step_2a_manual_create .key_type').val() as KeyAlgo;
       const keyIdentity = await this.createSaveKeyPair(opts, keyAlgo);
       if (keyIdentity) {
-        await this.view.preFinalizeSetup(opts);
         if (this.view.orgRules.canBackupKeys()) {
+          // await this.view.preFinalizeSetup(opts);
           await this.view.submitPublicKeysAndFinalizeSetup(opts);
           const action = $('#step_2a_manual_create .input_backup_inbox').prop('checked') ? 'setup_automatic' : 'setup_manual';
           // only finalize after backup is done. backup.htm will redirect back to this page with ?action=finalize
           window.location.href = Url.create('modules/backup.htm', { action, acctEmail: this.view.acctEmail, idToken: this.view.idToken, id: keyIdentity.id, type: keyIdentity.type });
+        } else {
+          await this.view.submitPublicKeysAndFinalizeSetup(opts);
+          await this.view.setupRender.renderSetupDone();
         }
-        await this.view.setupRender.renderSetupDone();
       }
     } catch (e) {
       Catch.reportErr(e);
