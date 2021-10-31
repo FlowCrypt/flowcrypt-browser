@@ -22,7 +22,7 @@ import { PgpArmor } from '../core/crypto/pgp/pgp-armor';
 import { ExpirationCache } from '../core/expiration-cache';
 import { readFileSync } from 'fs';
 import * as forge from 'node-forge';
-import { SmimeKey } from '../core/crypto/smime/smime-key';
+import { ENVELOPED_DATA_OID, SmimeKey } from '../core/crypto/smime/smime-key';
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;
@@ -147,7 +147,7 @@ export const defineUnitNodeTests = (testVariant: TestVariant) => {
       csr.sign(keys.privateKey);
       // issue a certificate based on the csr
       const cert = forge.pki.createCertificate();
-      cert.serialNumber = '2';
+      cert.serialNumber = '2'; // todo: set something unique here
       cert.validity.notBefore = new Date();
       cert.validity.notAfter = new Date();
       cert.validity.notAfter.setFullYear(cert.validity.notBefore.getFullYear() + 100);
@@ -175,7 +175,11 @@ export const defineUnitNodeTests = (testVariant: TestVariant) => {
       cert.publicKey = csr.publicKey;
       cert.sign(caKey);
       const pem = forge.pki.certificateToPem(cert);
-      */
+      console.log(pem);
+      const p12asn1 = forge.pkcs12.toPkcs12Asn1(keys.privateKey, cert, 'try_me');
+      const rawString = forge.asn1.toDer(p12asn1).getBytes();
+      const buf = Buf.fromRawBytesStr(rawString);
+      writeFileSync("./test.p12", buf); */
       const key = await KeyUtil.parse(testConstants.smimeCert);
       expect(key.id).to.equal('6FE116D2759F0FFAC5623E7E10D6E37941EAA0BB');
       expect(key.type).to.equal('x509');
@@ -1763,7 +1767,7 @@ jA==
       const encryptedMessage = buf.toRawBytesStr();
       expect(encryptedMessage).to.include(PgpArmor.headers('pkcs7').begin);
       const p7 = SmimeKey.readArmoredPkcs7Message(buf);
-      expect(p7.type).to.equal('1.2.840.113549.1.7.3');
+      expect(p7.type).to.equal(ENVELOPED_DATA_OID);
       const decrypted = SmimeKey.decryptMessage(p7 as forge.pkcs7.PkcsEnvelopedData, privateSmimeKey);
       const decryptedMessage = Buf.with(decrypted).toRawBytesStr();
       expect(decryptedMessage).to.equal(text);

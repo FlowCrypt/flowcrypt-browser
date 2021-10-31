@@ -118,7 +118,7 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
       try {
         const msgData = this.view.inputModule.extractAll();
         const primaryKi = await this.view.storageModule.getKey(msgData.from);
-        const pubkeys = [{ isMine: true, email: msgData.from, pubkey: await KeyUtil.parse(primaryKi.public) }];
+        const pubkeys = [{ isMine: true, email: msgData.from, pubkey: await KeyUtil.parse(primaryKi!.public) }];
         msgData.pwd = undefined; // not needed for drafts
         const sendable = await new EncryptedMsgMailFormatter(this.view, true).sendableMsg(msgData, pubkeys);
         if (this.view.replyParams?.inReplyTo) {

@@ -9,7 +9,6 @@ import { NewMsgData, SendBtnTexts } from './compose-types.js';
 import { ApiErr } from '../../../js/common/api/shared/api-error.js';
 import { BrowserExtension } from '../../../js/common/browser/browser-extension.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
-import { KeyInfo } from '../../../js/common/core/crypto/key.js';
 import { Settings } from '../../../js/common/settings.js';
 import { Str } from '../../../js/common/core/common.js';
 import { Xss } from '../../../js/common/platform/xss.js';
@@ -131,9 +130,11 @@ export class ComposeErrModule extends ViewModule<ComposeView> {
     }
   }
 
-  public throwIfEncryptionPasswordInvalid = async (senderKi: KeyInfo, { subject, pwd }: { subject: string, pwd?: string }) => {
+  public throwIfEncryptionPasswordInvalid = async ({ subject, pwd }: { subject: string, pwd?: string }) => {
     if (pwd) {
-      const pp = await this.view.storageModule.passphraseGet(senderKi);
+      // todo: check all available passphrases in storage or session
+      // todo: check if this pwd unlocks any keys
+      const pp = await this.view.storageModule.passphraseGet();
       if (pp && pwd.toLowerCase() === pp.toLowerCase()) {
         throw new ComposerUserError('Please do not use your private key pass phrase as a password for this message.\n\n' +
           'You should come up with some other unique password that you can share with recipient.');

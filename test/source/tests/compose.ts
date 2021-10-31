@@ -1008,12 +1008,25 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       await composePage.waitAndClick('@action-send', { delay: 2 });
     }));
 
+    ava.default('send signed and encrypted S/MIME message', testWithBrowser('compatibility', async (t, browser) => {
+      const acctEmail = 'flowcrypt.compatibility@gmail.com';
+      const passphrase = 'pa$$w0rd';
+      await SettingsPageRecipe.addKeyTest(t, browser, acctEmail, testConstants.testKeyMultipleSmimeCEA2D53BB9D24871, passphrase, {}, false);
+      const inboxPage = await browser.newPage(t, TestUrls.extensionInbox(acctEmail));
+      const composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
+      await ComposePageRecipe.fillMsg(composeFrame, { to: 'smime@recipient.com' }, 'send signed and encrypted S/MIME without attachment');
+      await ComposePageRecipe.pastePublicKeyManually(composeFrame, inboxPage, 'smime@recipient.com',
+        testConstants.testCertificateMultipleSmimeCEA2D53BB9D24871);
+      await composeFrame.waitAndClick('@action-send', { delay: 2 });
+      await inboxPage.waitTillGone('@container-new-message');
+    }));
+
     ava.default('send with single S/MIME cert', testWithBrowser('ci.tests.gmail', async (t, browser) => {
       const inboxPage = await browser.newPage(t, TestUrls.extensionInbox('ci.tests.gmail@flowcrypt.test'));
       const composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
-      await ComposePageRecipe.fillMsg(composeFrame, { to: 'smime@recipient.com' }, t.title);
+      await ComposePageRecipe.fillMsg(composeFrame, { to: 'smime@recipient.com' }, t.title, { sign: false, encrypt: true });
       await ComposePageRecipe.pastePublicKeyManually(composeFrame, inboxPage, 'smime@recipient.com',
-        testConstants.smimeCert);
+        testConstants.testCertificateMultipleSmimeCEA2D53BB9D24871);
       await composeFrame.waitAndClick('@action-send', { delay: 2 });
       await inboxPage.waitTillGone('@container-new-message');
     }));
@@ -1021,9 +1034,9 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
     ava.default('send with several S/MIME certs', testWithBrowser('ci.tests.gmail', async (t, browser) => {
       const inboxPage = await browser.newPage(t, TestUrls.extensionInbox('ci.tests.gmail@flowcrypt.test'));
       const composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
-      await ComposePageRecipe.fillMsg(composeFrame, { to: 'smime1@recipient.com', cc: 'smime2@recipient.com' }, t.title);
+      await ComposePageRecipe.fillMsg(composeFrame, { to: 'smime1@recipient.com', cc: 'smime2@recipient.com' }, t.title, { sign: false, encrypt: true });
       await ComposePageRecipe.pastePublicKeyManually(composeFrame, inboxPage, 'smime1@recipient.com', testConstants.smimeCert);
-      await ComposePageRecipe.pastePublicKeyManually(composeFrame, inboxPage, 'smime2@recipient.com', testConstants.smimeCert);
+      await ComposePageRecipe.pastePublicKeyManually(composeFrame, inboxPage, 'smime2@recipient.com', testConstants.testCertificateMultipleSmimeCEA2D53BB9D24871);
       await composeFrame.waitAndClick('@action-send', { delay: 2 });
       await inboxPage.waitTillGone('@container-new-message');
     }));
@@ -1032,8 +1045,8 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       // todo - this is not yet looking for actual attachment in the result, just checks that it's s/mime message
       const inboxPage = await browser.newPage(t, TestUrls.extensionInbox('ci.tests.gmail@flowcrypt.test'));
       const composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
-      await ComposePageRecipe.fillMsg(composeFrame, { to: 'smime.attachment@recipient.com' }, t.title);
-      await ComposePageRecipe.pastePublicKeyManually(composeFrame, inboxPage, 'smime.attachment@recipient.com', testConstants.smimeCert);
+      await ComposePageRecipe.fillMsg(composeFrame, { to: 'smime.attachment@recipient.com' }, t.title, { sign: false, encrypt: true });
+      await ComposePageRecipe.pastePublicKeyManually(composeFrame, inboxPage, 'smime.attachment@recipient.com', testConstants.testCertificateMultipleSmimeCEA2D53BB9D24871);
       const fileInput = await composeFrame.target.$('input[type=file]');
       await fileInput!.uploadFile('test/samples/small.txt', 'test/samples/small.png', 'test/samples/small.pdf');
       // attachments in composer can be downloaded

@@ -9,7 +9,7 @@ import { ReplaceableMsgBlockType } from '../../msg-block.js';
 import { Str } from '../../common.js';
 import { opgp } from './openpgpjs-custom.js';
 import { Stream } from '../../stream.js';
-import { SmimeKey } from '../smime/smime-key.js';
+import { SmimeKey, ENVELOPED_DATA_OID } from '../smime/smime-key.js';
 
 export type PreparedForDecrypt = { isArmored: boolean, isCleartext: true, isPkcs7: false, message: OpenPGP.cleartext.CleartextMessage | OpenPGP.message.Message }
   | { isArmored: boolean, isCleartext: false, isPkcs7: false, message: OpenPGP.message.Message }
@@ -92,7 +92,7 @@ export class PgpArmor {
     const utfChunk = new Buf(encrypted.slice(0, 100)).toUtfStr('ignore'); // ignore errors - this may not be utf string, just testing
     if (utfChunk.includes(PgpArmor.headers('pkcs7').begin)) {
       const p7 = SmimeKey.readArmoredPkcs7Message(encrypted);
-      if (p7.type !== '1.2.840.113549.1.7.3') {
+      if (p7.type !== ENVELOPED_DATA_OID) {
         throw new Error('Not implemented');
       }
       return { isArmored: true, isCleartext: false, isPkcs7: true, message: p7 };

@@ -320,7 +320,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
       const composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
       await ComposePageRecipe.fillMsg(composeFrame, { to: 'smime@recipient.com' }, 'send signed and encrypted S/MIME without attachment');
       await ComposePageRecipe.pastePublicKeyManually(composeFrame, inboxPage, 'smime@recipient.com',
-        testConstants.smimeCert);
+        testConstants.testCertificateMultipleSmimeCEA2D53BB9D24871);
       await composeFrame.waitAndClick('@action-send', { delay: 2 });
       await inboxPage.waitTillGone('@container-new-message');
     }));

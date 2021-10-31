@@ -4,6 +4,10 @@
 
 import { NewMsgData } from '../compose-types.js';
 import { ComposeView } from '../../compose.js';
+import { Key } from '../../../../js/common/core/crypto/key.js';
+import { SmimeKey } from '../../../../js/common/core/crypto/smime/smime-key.js';
+import { SendableMsg } from '../../../../js/common/api/email-provider/sendable-msg.js';
+import { Buf } from '../../../../js/common/core/buf.js';
 
 export class BaseMailFormatter {
 
@@ -21,4 +25,8 @@ export class BaseMailFormatter {
     return { from: newMsg.from, recipients: newMsg.recipients, subject: newMsg.subject, thread: this.view.threadId };
   }
 
+  protected signMimeMessage = async (signingPrv: Key, mimeEncodedMessage: string, newMsg: NewMsgData) => {
+    const data = await SmimeKey.sign(signingPrv, Buf.fromUtfStr(mimeEncodedMessage));
+    return await SendableMsg.createSMimeSigned(this.acctEmail, this.headers(newMsg), data);
+  }
 }

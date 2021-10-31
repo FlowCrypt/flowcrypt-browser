@@ -9,6 +9,9 @@ import { MsgBlockParser } from '../../msg-block-parser.js';
 import { MsgBlock } from '../../msg-block.js';
 
 export type SmimeMsg = forge.pkcs7.PkcsEnvelopedData;
+export const DATA_OID = '1.2.840.113549.1.7.1';
+export const SIGNED_DATA_OID = '1.2.840.113549.1.7.2';
+export const ENVELOPED_DATA_OID = '1.2.840.113549.1.7.3';
 export class SmimeKey {
 
   public static parse = (text: string): Key => {
@@ -71,7 +74,8 @@ export class SmimeKey {
   /**
    * @param data: an already encoded plain mime message
    */
-  public static encryptMessage = async ({ pubkeys, data, armor }: { pubkeys: Key[], data: Uint8Array, armor: boolean }): Promise<{ data: Uint8Array, type: 'smime' }> => {
+  public static encryptMessage = async ({ pubkeys, data: input, armor }: { pubkeys: Key[], data: Uint8Array, armor: boolean }):
+    Promise<{ data: Uint8Array, type: 'smime' }> => {
     const p7 = forge.pkcs7.createEnvelopedData();
     for (const pubkey of pubkeys) {
       const certificate = SmimeKey.getCertificate(pubkey);
@@ -80,15 +84,15 @@ export class SmimeKey {
       }
       p7.addRecipient(certificate);
     }
-    p7.content = forge.util.createBuffer(data);
+    p7.content = forge.util.createBuffer(input);
     p7.encrypt();
-    let rawString: string;
+    let data: Uint8Array;
     if (armor) {
-      rawString = forge.pkcs7.messageToPem(p7);
+      data = Buf.fromRawBytesStr(forge.pkcs7.messageToPem(p7));
     } else {
-      rawString = forge.asn1.toDer(p7.toAsn1()).getBytes();
+      data = SmimeKey.messageToDer(p7);
     }
-    return { data: Buf.fromRawBytesStr(rawString), type: 'smime' };
+    return { data, type: 'smime' };
   }
 
   public static readArmoredPkcs7Message = (encrypted: Uint8Array):
@@ -125,8 +129,7 @@ export class SmimeKey {
     });
     p7.content = forge.util.createBuffer(data);
     p7.sign();
-    const derBuffer = forge.asn1.toDer(p7.toAsn1()).getBytes();
-    return Buf.fromRawBytesStr(derBuffer);
+    return SmimeKey.messageToDer(p7);
   }
 
   public static decryptKey = async (key: Key, passphrase: string, optionalBehaviorFlag?: 'OK-IF-ALREADY-DECRYPTED'): Promise<boolean> => {
@@ -197,6 +200,11 @@ export class SmimeKey {
       const der = forge.asn1.toDer(asn1).getBytes();
       return SmimeKey.getLongIdFromDer(der);
     });
+  }
+
+  private static messageToDer = (p7: forge.pkcs7.Pkcs7Data): Uint8Array => {
+    const asn1 = p7.toAsn1();
+    return Buf.fromRawBytesStr(forge.asn1.toDer(asn1).getBytes());
   }
 
   // convert from binary string as provided by Forge to a 'X509-' prefixed base64 longid

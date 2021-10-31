@@ -3,11 +3,11 @@
 'use strict';
 
 import { Bm, BrowserMsg } from '../../../js/common/browser/browser-msg.js';
-import { KeyInfo, KeyUtil, Key } from '../../../js/common/core/crypto/key.js';
+import { KeyInfo, KeyUtil, Key, PubkeyResult } from '../../../js/common/core/crypto/key.js';
 import { ApiErr } from '../../../js/common/api/shared/api-error.js';
 import { Assert } from '../../../js/common/assert.js';
 import { Catch } from '../../../js/common/platform/catch.js';
-import { CollectPubkeysResult } from './compose-types.js';
+import { CollectKeysResult } from './compose-types.js';
 import { PUBKEY_LOOKUP_RESULT_FAIL } from './compose-err-module.js';
 import { ViewModule } from '../../../js/common/view-module.js';
 import { ComposeView } from '../compose.js';
@@ -31,12 +31,17 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
     });
   }
 
-  public getKey = async (senderEmail: string): Promise<KeyInfo> => {
-    const keys = await KeyStore.get(this.view.acctEmail);
-    let result = await this.view.myPubkeyModule.chooseMyPublicKeyBySenderEmail(keys, senderEmail);
-    if (!result) {
+  public getKey = async (senderEmail: string | undefined, type?: 'openpgp' | 'x509' | undefined): Promise<KeyInfo> => {
+    const keys = await KeyStore.getTypedKeyInfos(this.view.acctEmail);
+    let result: KeyInfo | undefined;
+    if (senderEmail !== undefined) {
+      const groupedKeys = await this.view.myPubkeyModule.chooseMyKeysByTypeAndSenderEmail(keys, senderEmail, type);
+      const group = type ? groupedKeys[type] : Object.values(groupedKeys)[0];
+      result = group ? group[0] : undefined;
+    }
+    if (result === undefined) {
       this.view.errModule.debug(`ComposerStorage.getKey: could not find key based on senderEmail: ${senderEmail}, using primary instead`);
-      result = keys[0];
+      result = keys.find(k => type === undefined || type === k.type);
       Assert.abortAndRenderErrorIfKeyinfoEmpty(result);
     } else {
       this.view.errModule.debug(`ComposerStorage.getKey: found key based on senderEmail: ${senderEmail}`);
@@ -45,32 +50,57 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
     return result!;
   }
 
-  public collectAllAvailablePublicKeys = async (senderEmail: string, senderKi: KeyInfo, recipients: string[]): Promise<CollectPubkeysResult> => {
+  // returns a set of keys of a single family ('openpgp' or 'x509')
+  public collectAllKeys = async (recipients: string[], senderEmail: string, needSigning: boolean): Promise<CollectKeysResult> => {
     const contacts = await ContactStore.getEncryptionKeys(undefined, recipients);
-    const pubkeys = [{ pubkey: await KeyUtil.parse(senderKi.public), email: senderEmail, isMine: true }];
-    const emailsWithoutPubkeys = [];
-    for (const contact of contacts) {
-      let keysPerEmail = contact.keys;
-      // if non-expired present, return non-expired only
-      if (keysPerEmail.some(k => k.usableForEncryption)) {
-        keysPerEmail = keysPerEmail.filter(k => k.usableForEncryption);
+    const resultsPerType: { [type: string]: CollectKeysResult } = {};
+    for (const i of ['openpgp', 'x509']) {
+      const type = i as ('openpgp' | 'x509');
+      // senderKi for draft encryption!
+      const senderKi = await this.getKey(senderEmail, type);
+      const { pubkeys, emailsWithoutPubkeys } = this.collectPubkeysByType(type, contacts);
+      if (senderKi !== undefined) {
+        // add own key for encryption
+        // todo: check if already added with recipients?
+        pubkeys.push({ pubkey: await KeyUtil.parse(senderKi.public), email: senderEmail, isMine: true });
       }
-      if (keysPerEmail.length) {
-        for (const pubkey of keysPerEmail) {
-          pubkeys.push({ pubkey, email: contact.email, isMine: false });
-        }
-      } else {
-        emailsWithoutPubkeys.push(contact.email);
+      const result = { senderKi, pubkeys, emailsWithoutPubkeys };
+      if (!emailsWithoutPubkeys.length && (senderKi !== undefined || !needSigning)) {
+        return result; // return right away
       }
+      resultsPerType[type] = result;
     }
-    return { pubkeys, emailsWithoutPubkeys };
+    const rank = (x: [string, CollectKeysResult]) => {
+      return (x[1].emailsWithoutPubkeys.length === 0 ? 100 : 0)
+        + (x[1].senderKi ? 10 : 0) + (x[0] === 'openpgp' ? 1 : 0);
+    };
+    return Object.entries(resultsPerType).sort((a, b) => rank(b) - rank(a))[0][1];
   }
 
-  public passphraseGet = async (senderKi?: KeyInfo) => {
+  public passphraseGet = async (senderKi?: { longid: string }) => {
     if (!senderKi) {
       senderKi = await KeyStore.getFirstRequired(this.view.acctEmail);
     }
     return await PassphraseStore.get(this.view.acctEmail, senderKi);
+  }
+
+  public decryptSenderKey = async (senderKi: KeyInfo): Promise<Key | undefined> => {
+    const prv = await KeyUtil.parse(senderKi.private);
+    const passphrase = await this.passphraseGet(senderKi);
+    if (typeof passphrase === 'undefined' && !prv.fullyDecrypted) {
+      BrowserMsg.send.passphraseDialog(this.view.parentTabId, { type: 'sign', longids: [senderKi.longid] });
+      if ((typeof await this.whenMasterPassphraseEntered(60)) !== 'undefined') { // pass phrase entered
+        return await this.decryptSenderKey(senderKi);
+      } else { // timeout - reset - no passphrase entered
+        this.view.sendBtnModule.resetSendBtn();
+        return undefined;
+      }
+    } else {
+      if (!prv.fullyDecrypted) {
+        await KeyUtil.decrypt(prv, passphrase!); // checked !== undefined above
+      }
+      return prv;
+    }
   }
 
   public lookupPubkeyFromKeyserversThenOptionallyFetchExpiredByFingerprintAndUpsertDb = async (
@@ -217,4 +247,23 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
     }
   }
 
+  private collectPubkeysByType = (type: 'openpgp' | 'x509', contacts: { email: string, keys: Key[] }[]): { pubkeys: PubkeyResult[], emailsWithoutPubkeys: string[] } => {
+    const pubkeys: PubkeyResult[] = [];
+    const emailsWithoutPubkeys: string[] = [];
+    for (const contact of contacts) {
+      let keysPerEmail = contact.keys.filter(k => k.type === type);
+      // if non-expired present, return non-expired only
+      if (keysPerEmail.some(k => k.usableForEncryption)) {
+        keysPerEmail = keysPerEmail.filter(k => k.usableForEncryption);
+      }
+      if (keysPerEmail.length) {
+        for (const pubkey of keysPerEmail) {
+          pubkeys.push({ pubkey, email: contact.email, isMine: false }); // todo: I can also be a recipient
+        }
+      } else {
+        emailsWithoutPubkeys.push(contact.email);
+      }
+    }
+    return { pubkeys, emailsWithoutPubkeys };
+  }
 }
