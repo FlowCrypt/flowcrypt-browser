@@ -69,7 +69,7 @@ export class ComposePageRecipe extends PageRecipe {
         await ComposePageRecipe.setPopoverToggle(composePageOrFrame, opt as PopoverOpt, shouldBeTicked);
       }
     }
-    await composePageOrFrame.type('@input-body', body || 'Body placeholder');
+    await composePageOrFrame.type('@input-body', body || subject || ''); // fall back to subject if body is not provided
     return { subject, body };
   }
 
