@@ -40,7 +40,7 @@ export class PgpBlockViewQuoteModule {
         await this.view.renderModule.renderContent(decryptedContent, false);
       }
     } else {
-      const lines = decryptedContent.trim().split(/\r?\n/);
+      const lines = decryptedContent.split(/\r?\n/);
       const linesQuotedPart: string[] = [];
       while (lines.length) {
         const lastLine = lines.pop()!; // lines.length above ensures there is a line
@@ -59,7 +59,7 @@ export class PgpBlockViewQuoteModule {
         lines.push(...linesQuotedPart.splice(0, linesQuotedPart.length));
       }
       await this.view.renderModule.renderContent(Str.escapeTextAsRenderableHtml(lines.join('\n')), false);
-      if (linesQuotedPart.length) {
+      if (linesQuotedPart.join('').trim()) {
         this.appendCollapsedQuotedContentButton(linesQuotedPart.join('\n'));
       }
     }

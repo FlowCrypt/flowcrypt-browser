@@ -51,6 +51,7 @@ export class ComposePageRecipe extends PageRecipe {
     composePageOrFrame: Controllable,
     recipients: Recipients,
     subject?: string | undefined,
+    body?: string | undefined,
     sendingOpt: { encrypt?: boolean, sign?: boolean, richtext?: boolean } = {}, // undefined means leave default
     windowType: 'new' | 'reply' = 'new'
   ) {
@@ -68,8 +69,7 @@ export class ComposePageRecipe extends PageRecipe {
         await ComposePageRecipe.setPopoverToggle(composePageOrFrame, opt as PopoverOpt, shouldBeTicked);
       }
     }
-    const body = subject?.match(/RTL/) ? 'مرحبا' : `This is an automated puppeteer test: ${subject || '(no-subject)'}`;
-    await composePageOrFrame.type('@input-body', body);
+    await composePageOrFrame.type('@input-body', body || subject || ''); // fall back to subject if body is not provided
     return { subject, body };
   }
 

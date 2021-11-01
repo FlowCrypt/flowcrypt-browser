@@ -126,7 +126,7 @@ export class Xss {
    *
    * Will be used when generating a text/plain alternative to outgoing rich text email, or when quoting previous email in a reply.
    */
-  public static htmlSanitizeAndStripAllTags = (dirtyHtml: string, outputNl: string): string => {
+  public static htmlSanitizeAndStripAllTags = (dirtyHtml: string, outputNl: string, trim = true): string => {
     Xss.throwIfNotSupported();
     let html = Xss.htmlSanitizeKeepBasicTags(dirtyHtml, 'IMG-DEL');
     const random = Str.sloppyRandom(5);
@@ -143,7 +143,9 @@ export class Xss {
     text = text.replace(/\n{2,}/g, '\n\n');
     // not all tags were removed above. Remove all remaining tags
     text = DOMPurify.sanitize(text, { ALLOWED_TAGS: [] });
-    text = text.trim();
+    if (trim) {
+      text = text.trim();
+    }
     if (outputNl !== '\n') {
       text = text.replace(/\n/g, outputNl);
     }

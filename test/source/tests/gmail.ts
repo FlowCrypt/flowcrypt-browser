@@ -163,7 +163,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       const gmailPage = await BrowserRecipe.openGmailPageAndVerifyComposeBtnPresent(t, browser);
       const composePage = await GmailPageRecipe.openSecureCompose(t, gmailPage, browser);
       const subject = `New Rich Text Message ${Util.lousyRandom()}`;
-      await ComposePageRecipe.fillMsg(composePage, { to: 'ci.tests.gmail@flowcrypt.dev' }, subject, { richtext: true });
+      await ComposePageRecipe.fillMsg(composePage, { to: 'ci.tests.gmail@flowcrypt.dev' }, subject, undefined, { richtext: true });
       await ComposePageRecipe.sendAndClose(composePage);
       await gmailPage.waitAndClick('[aria-label^="Inbox"]');
       await gmailPage.waitAndClick('[role="row"]'); // click the first message

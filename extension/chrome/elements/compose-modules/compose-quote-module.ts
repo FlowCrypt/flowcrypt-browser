@@ -114,10 +114,10 @@ export class ComposeQuoteModule extends ViewModule<ComposeView> {
       for (const block of readableBlocks) {
         const stringContent = block.content.toString();
         if (block.type === 'decryptedHtml') {
-          const htmlParsed = Xss.htmlSanitizeAndStripAllTags(block ? block.content.toString() : 'No Content', '\n');
+          const htmlParsed = Xss.htmlSanitizeAndStripAllTags(block ? block.content.toString() : 'No Content', '\n', false);
           decryptedAndFormatedContent.push(Xss.htmlUnescape(htmlParsed));
         } else if (block.type === 'plainHtml') {
-          decryptedAndFormatedContent.push(Xss.htmlUnescape(Xss.htmlSanitizeAndStripAllTags(stringContent, '\n')));
+          decryptedAndFormatedContent.push(Xss.htmlUnescape(Xss.htmlSanitizeAndStripAllTags(stringContent, '\n', false)));
         } else if (['encryptedAttachment', 'decryptedAttachment', 'plainAttachment'].includes(block.type)) {
           if (block.attachmentMeta?.data) {
             let attachmentMeta: { content: Buf, filename?: string } | undefined;
@@ -141,7 +141,7 @@ export class ComposeQuoteModule extends ViewModule<ComposeView> {
       }
       return {
         headers,
-        text: decryptedAndFormatedContent.join('\n').trim(),
+        text: decryptedAndFormatedContent.join('\n'),
         isOnlySigned: !!(decoded.rawSignedContent || (message.blocks.length > 0 && message.blocks[0].type === 'signedMsg')),
         decryptedFiles
       };
@@ -179,7 +179,7 @@ export class ComposeQuoteModule extends ViewModule<ComposeView> {
   }
 
   private quoteText = (text: string) => {
-    return text.split('\n').map(l => '<br>&gt; ' + l).join('\n');
+    return text.split('\n').map(line => `<br>&gt; ${line}`.trim()).join('');
   }
 
   private generateHtmlPreviousMsgQuote = (text: string, date: Date, from: string) => {
