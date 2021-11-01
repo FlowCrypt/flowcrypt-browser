@@ -889,7 +889,6 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       const subject = `Test Sending Message With Test Text and HIDE_ARMOR_META OrgRule ${Util.lousyRandom()}`;
       const composePage = await ComposePageRecipe.openStandalone(t, browser, acct);
       await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, subject, undefined, { sign: true });
-      await composePage.waitAndType('@input-body', 'any text', { delay: 1 });
       await ComposePageRecipe.sendAndClose(composePage);
       // get sent msg from mock
       const sentMsg = (await GoogleData.withInitializedData(acct)).getMessageBySubject(subject)!;
@@ -1323,9 +1322,7 @@ const sendTextAndVerifyPresentInSentMsg = async (t: AvaContext,
 ) => {
   const subject = `Test Sending ${sendingOpt.sign ? 'Signed' : ''} ${sendingOpt.encrypt ? 'Encrypted' : ''} Message With Test Text ${text} ${Util.lousyRandom()}`;
   const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
-  await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, subject, undefined, sendingOpt);
-  await composePage.waitAndType('@input-body', text, { delay: 1 });
-  expect(await composePage.read('@input-body')).to.include(text);
+  await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, subject, text, sendingOpt);
   await ComposePageRecipe.sendAndClose(composePage);
   // get sent msg from mock
   const sentMsg = (await GoogleData.withInitializedData('flowcrypt.compatibility@gmail.com')).getMessageBySubject(subject)!;
