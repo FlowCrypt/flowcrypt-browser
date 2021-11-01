@@ -3,7 +3,7 @@
 'use strict';
 
 import { ApiErr } from '../../../js/common/api/shared/api-error.js';
-import { KeyInfo, KeyUtil, TypedKeyInfo } from '../../../js/common/core/crypto/key.js';
+import { KeyUtil } from '../../../js/common/core/crypto/key.js';
 import { Lang } from '../../../js/common/lang.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { ViewModule } from '../../../js/common/view-module.js';
@@ -31,32 +31,13 @@ export class ComposeMyPubkeyModule extends ViewModule<ComposeView> {
     return this.view.S.cached('icon_pubkey').is('.active');
   }
 
-  public chooseMyKeysByTypeAndSenderEmail = async (keys: TypedKeyInfo[], email: string, type: 'openpgp' | 'x509' | undefined): Promise<{ [type: string]: KeyInfo[] }> => {
-    let foundKeys: TypedKeyInfo[] = [];
-    if (type) {
-      foundKeys = keys.filter(key => key.emails?.includes(email.toLowerCase()) && key.type === type);
-      if (!foundKeys.length) {
-        foundKeys = keys.filter(key => key.type === type);
-      }
-    } else {
-      foundKeys = keys.filter(key => key.emails?.includes(email.toLowerCase()));
-      if (!foundKeys.length) {
-        foundKeys = [...keys];
-      }
-    }
-    // group by type
-    return foundKeys.reduce((rv: { [type: string]: TypedKeyInfo[] }, x: TypedKeyInfo) => {
-      (rv[x.type] = rv[x.type] || []).push(x);
-      return rv;
-    }, {});
-  }
-
   public reevaluateShouldAttachOrNot = () => {
     if (this.toggledManually) { // leave it as is if toggled manually before
       return;
     }
     (async () => {
       const senderEmail = this.view.senderModule.getSender();
+      // todo: which one to attach? x509?
       const senderKi = await this.view.storageModule.getKey(senderEmail);
       const primaryFingerprint = (await KeyUtil.parse(senderKi.private)).id;
       // if we have cashed this fingerprint, setAttachPreference(false) rightaway and return

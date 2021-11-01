@@ -31,21 +31,32 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
     });
   }
 
-  public getKey = async (senderEmail: string | undefined, type?: 'openpgp' | 'x509' | undefined): Promise<KeyInfo> => {
+  // returns undefined if not found
+  public getKeyOptional = async (senderEmail: string | undefined, type?: 'openpgp' | 'x509' | undefined) => {
     const keys = await KeyStore.getTypedKeyInfos(this.view.acctEmail);
     let result: KeyInfo | undefined;
     if (senderEmail !== undefined) {
-      const groupedKeys = await this.view.myPubkeyModule.chooseMyKeysByTypeAndSenderEmail(keys, senderEmail, type);
-      const group = type ? groupedKeys[type] : Object.values(groupedKeys)[0];
-      result = group ? group[0] : undefined;
+      const filteredKeys = KeyUtil.filterKeysByTypeAndSenderEmail(keys, senderEmail, type);
+      if (type === undefined) {
+        // prioritize openpgp
+        result = filteredKeys.find(key => key.type === 'openpgp');
+      }
+      if (result === undefined) {
+        result = filteredKeys[0];
+      }
     }
     if (result === undefined) {
-      this.view.errModule.debug(`ComposerStorage.getKey: could not find key based on senderEmail: ${senderEmail}, using primary instead`);
+      this.view.errModule.debug(`ComposerStorage.getKeyOptional: could not find key based on senderEmail: ${senderEmail}, using primary instead`);
       result = keys.find(k => type === undefined || type === k.type);
-      Assert.abortAndRenderErrorIfKeyinfoEmpty(result);
     } else {
-      this.view.errModule.debug(`ComposerStorage.getKey: found key based on senderEmail: ${senderEmail}`);
+      this.view.errModule.debug(`ComposerStorage.getKeyOptional: found key based on senderEmail: ${senderEmail}`);
     }
+    return result;
+  }
+
+  public getKey = async (senderEmail: string | undefined, type?: 'openpgp' | 'x509' | undefined): Promise<KeyInfo> => {
+    const result = await this.getKeyOptional(senderEmail, type);
+    Assert.abortAndRenderErrorIfKeyinfoEmpty(result);
     this.view.errModule.debug(`ComposerStorage.getKey: returning key longid: ${result!.longid}`);
     return result!;
   }
@@ -57,7 +68,7 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
     for (const i of ['openpgp', 'x509']) {
       const type = i as ('openpgp' | 'x509');
       // senderKi for draft encryption!
-      const senderKi = await this.getKey(senderEmail, type);
+      const senderKi = await this.getKeyOptional(senderEmail, type);
       const { pubkeys, emailsWithoutPubkeys } = this.collectPubkeysByType(type, contacts);
       if (senderKi !== undefined) {
         // add own key for encryption

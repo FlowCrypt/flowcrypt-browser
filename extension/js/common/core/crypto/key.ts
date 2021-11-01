@@ -96,6 +96,29 @@ export class KeyUtil {
     return kis.filter(ki => ids.some(i => KeyUtil.identityEquals(i, ki)));
   }
 
+  public static filterKeysByTypeAndSenderEmail = (keys: TypedKeyInfo[], email: string, type: 'openpgp' | 'x509' | undefined): TypedKeyInfo[] => {
+    let foundKeys: TypedKeyInfo[] = [];
+    if (type) {
+      foundKeys = keys.filter(key => key.emails?.includes(email.toLowerCase()) && key.type === type);
+      if (!foundKeys.length) {
+        foundKeys = keys.filter(key => key.type === type);
+      }
+    } else {
+      foundKeys = keys.filter(key => key.emails?.includes(email.toLowerCase()));
+      if (!foundKeys.length) {
+        foundKeys = [...keys];
+      }
+    }
+    return foundKeys;
+  }
+
+  public static groupByType<T extends { type: string }>(items: T[]): { [type: string]: T[] } {
+    return items.reduce((rv: { [type: string]: T[] }, x: T) => {
+      (rv[x.type] = rv[x.type] || []).push(x);
+      return rv;
+    }, {});
+  }
+
   public static isWithoutSelfCertifications = async (key: Key) => {
     // all non-OpenPGP keys are automatically considered to be not
     // "without self certifications"
