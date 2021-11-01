@@ -126,9 +126,9 @@ class IncludeQuotedPartTestStrategy implements ITestMsgStrategy {
   private readonly quotedContent: string = [
     'On 2019-06-14 at 23:24, flowcrypt.compatibility@gmail.com wrote:',
     '> This is some message',
-    '> ',
+    '>',
     '> and below is the quote',
-    '> ',
+    '>',
     '> > this is the quote',
     '> > still the quote',
     '> > third line',
