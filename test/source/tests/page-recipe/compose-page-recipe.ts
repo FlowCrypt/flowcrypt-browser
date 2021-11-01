@@ -69,10 +69,7 @@ export class ComposePageRecipe extends PageRecipe {
         await ComposePageRecipe.setPopoverToggle(composePageOrFrame, opt as PopoverOpt, shouldBeTicked);
       }
     }
-    if (!body) {
-      body = subject?.match(/RTL/) ? 'مرحبا' : `This is an automated puppeteer test: ${subject || '(no-subject)'}`;
-    }
-    await composePageOrFrame.type('@input-body', body);
+    await composePageOrFrame.type('@input-body', body || 'Body placeholder');
     return { subject, body };
   }
 

@@ -479,7 +479,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       const inboxPage = await browser.newPage(t, TestUrls.extensionInbox(acctEmail));
       await InboxPageRecipe.finishSessionOnInboxPage(inboxPage);
       const composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
-      await ComposePageRecipe.fillMsg(composeFrame, { to: 'human@flowcrypt.com' }, 'should not send as pass phrase is not known', '', { encrypt: false });
+      await ComposePageRecipe.fillMsg(composeFrame, { to: 'human@flowcrypt.com' }, 'should not send as pass phrase is not known', undefined, { encrypt: false });
       await composeFrame.waitAndClick('@action-send');
       await inboxPage.waitAll('@dialog-passphrase');
       const passphraseDialog = await inboxPage.getFrame(['passphrase.htm']);
