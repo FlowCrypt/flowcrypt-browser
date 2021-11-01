@@ -856,9 +856,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       const text = 'This message is encrypted with 2 keys of flowcrypt.compatibility';
       const subject = `Test Sending Multi-Encrypted Message With Test Text ${Util.lousyRandom()}`;
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
-      await ComposePageRecipe.fillMsg(composePage, { to: 'flowcrypt.compatibility@gmail.com' }, subject, undefined, { sign: true, encrypt: true });
-      await composePage.waitAndType('@input-body', text, { delay: 1 });
-      expect(await composePage.read('@input-body')).to.include(text);
+      await ComposePageRecipe.fillMsg(composePage, { to: 'flowcrypt.compatibility@gmail.com' }, subject, text, { sign: true, encrypt: true });
       await ComposePageRecipe.sendAndClose(composePage);
       // get sent msg from mock
       const sentMsg = (await GoogleData.withInitializedData('flowcrypt.compatibility@gmail.com')).getMessageBySubject(subject)!;
