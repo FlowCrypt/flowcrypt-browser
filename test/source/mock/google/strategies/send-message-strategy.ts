@@ -189,7 +189,7 @@ class SmimeEncryptedMessageStrategy implements ITestMsgStrategy {
       if (mimeMsg.subject?.includes(' signed ')) {
         expect(decryptedMessage).to.contain('smime-type=signed-data');
       } else {
-        expect(decryptedMessage).to.contain('This is an automated puppeteer test');
+        expect(decryptedMessage).to.contain('This text should be encrypted into PKCS#7 data');
       }
     }
   }
