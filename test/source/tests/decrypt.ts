@@ -11,6 +11,7 @@ import { TestUrls } from './../browser/test-urls';
 import { TestWithBrowser } from './../test';
 import { expect } from "chai";
 import { ComposePageRecipe } from './page-recipe/compose-page-recipe';
+import { PageRecipe } from './page-recipe/abstract-page-recipe';
 
 // tslint:disable:no-blank-lines-func
 // tslint:disable:max-line-length
@@ -401,11 +402,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
       const textParams = `?frameId=none&message=&msgId=16a9c109bc51687d&` +
         `senderEmail=mismatch%40mail.com&isOutgoing=___cu_false___&signature=___cu_true___&acctEmail=flowcrypt.compatibility%40gmail.com`;
       await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, { params: textParams, content: ["1234"], signature: ["Missing pubkey"] });
-      const pubFrameUrl = `chrome/elements/pgp_pubkey.htm?frameId=none&armoredPubkey=${encodeURIComponent(testConstants.protonCompatPub)}&acctEmail=flowcrypt.compatibility%40gmail.com&parentTabId=0`;
-      const pubFrame = await browser.newPage(t, pubFrameUrl);
-      await pubFrame.waitAndClick('@action-add-contact');
-      await Util.sleep(1);
-      await pubFrame.close();
+      await PageRecipe.addPubkey(t, browser, 'flowcrypt.compatibility%40gmail.com', testConstants.protonCompatPub);
       await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
         params: textParams,
         content: ["1234"],
