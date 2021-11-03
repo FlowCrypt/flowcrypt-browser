@@ -6,7 +6,7 @@ import { Bm, BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { KeyInfo, KeyUtil, Key, PubkeyResult } from '../../../js/common/core/crypto/key.js';
 import { ApiErr } from '../../../js/common/api/shared/api-error.js';
 import { Assert } from '../../../js/common/assert.js';
-import { Catch } from '../../../js/common/platform/catch.js';
+import { Catch, UnreportableError } from '../../../js/common/platform/catch.js';
 import { CollectKeysResult } from './compose-types.js';
 import { PUBKEY_LOOKUP_RESULT_FAIL } from './compose-err-module.js';
 import { ViewModule } from '../../../js/common/view-module.js';
@@ -61,11 +61,14 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
     return result!;
   }
 
+  // used when encryption is needed
   // returns a set of keys of a single family ('openpgp' or 'x509')
   public collectAllKeys = async (recipients: string[], senderEmail: string, needSigning: boolean): Promise<CollectKeysResult> => {
     const contacts = await ContactStore.getEncryptionKeys(undefined, recipients);
     const resultsPerType: { [type: string]: CollectKeysResult } = {};
-    for (const i of ['openpgp', 'x509']) {
+    const OPENPGP = 'openpgp';
+    const X509 = 'x509';
+    for (const i of [OPENPGP, X509]) {
       const type = i as ('openpgp' | 'x509');
       // senderKi for draft encryption!
       const senderKi = await this.getKeyOptional(senderEmail, type);
@@ -81,11 +84,19 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
       }
       resultsPerType[type] = result;
     }
+    // per discussion https://github.com/FlowCrypt/flowcrypt-browser/issues/4069#issuecomment-957313631
+    // if one emailsWithoutPubkeys isn't subset of the other, throw an error
+    if (!resultsPerType[OPENPGP].emailsWithoutPubkeys.every(email => resultsPerType[X509].emailsWithoutPubkeys.includes(email)) &&
+      !resultsPerType[X509].emailsWithoutPubkeys.every(email => resultsPerType[OPENPGP].emailsWithoutPubkeys.includes(email))) {
+      let err = `Cannot use mixed OpenPGP (${resultsPerType[OPENPGP].pubkeys.filter(p => !p.isMine).map(p => p.email).join(', ')}) and `
+        + `S/MIME (${resultsPerType[X509].pubkeys.filter(p => !p.isMine).map(p => p.email).join(', ')}) public keys yet.`;
+      err += 'If you need to email S/MIME recipient, do not add any OpenPGP recipient at the same time.';
+      throw new UnreportableError(err);
+    }
     const rank = (x: [string, CollectKeysResult]) => {
-      return (x[1].emailsWithoutPubkeys.length === 0 ? 100 : 0)
-        + (x[1].senderKi ? 10 : 0) + (x[0] === 'openpgp' ? 1 : 0);
+      return x[1].emailsWithoutPubkeys.length * 100 + (x[1].senderKi ? 0 : 10) + (x[0] === 'openpgp' ? 0 : 1);
     };
-    return Object.entries(resultsPerType).sort((a, b) => rank(b) - rank(a))[0][1];
+    return Object.entries(resultsPerType).sort((a, b) => rank(a) - rank(b))[0][1];
   }
 
   public passphraseGet = async (senderKi?: { longid: string }) => {

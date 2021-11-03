@@ -1015,6 +1015,8 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       const composePage = await ComposePageRecipe.openStandalone(t, browser, acctEmail);
       await ComposePageRecipe.fillMsg(composePage, { to: 'smime@recipient.com' }, 'send signed S/MIME without attachment', undefined, { encrypt: false, sign: true });
       await composePage.waitAndClick('@action-send', { delay: 2 });
+      await composePage.waitForSelTestState('closed', 20); // succesfully sent
+      await composePage.close();
     }));
 
     ava.default('send signed and encrypted S/MIME message', testWithBrowser('compatibility', async (t, browser) => {
@@ -1023,7 +1025,8 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       await SettingsPageRecipe.addKeyTest(t, browser, acctEmail, testConstants.testKeyMultipleSmimeCEA2D53BB9D24871, passphrase, {}, false);
       const inboxPage = await browser.newPage(t, TestUrls.extensionInbox(acctEmail));
       const composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
-      await ComposePageRecipe.fillMsg(composeFrame, { to: 'smime@recipient.com' }, 'send signed and encrypted S/MIME without attachment');
+      await ComposePageRecipe.fillMsg(composeFrame, { to: 'smime@recipient.com' }, 'send signed and encrypted S/MIME without attachment',
+        'This text should be encrypted into PKCS#7 data');
       await ComposePageRecipe.pastePublicKeyManually(composeFrame, inboxPage, 'smime@recipient.com',
         testConstants.testCertificateMultipleSmimeCEA2D53BB9D24871);
       await composeFrame.waitAndClick('@action-send', { delay: 2 });
@@ -1080,6 +1083,44 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         contentToCheck: 'Failed to send message due to: Error: Cannot use mixed OpenPGP (human@flowcrypt.com) and S/MIME (smime@recipient.com) public keys yet.If you need to email S/MIME recipient, do not add any OpenPGP recipient at the same time.',
         timeout: 40
       });
+    }));
+
+    ava.default('send with OpenPGP recipients as subset of S/MIME recipients', testWithBrowser('ci.tests.gmail', async (t, browser) => {
+      const acctEmail = 'ci.tests.gmail@flowcrypt.test';
+      const inboxPage = await browser.newPage(t, TestUrls.extensionInbox(acctEmail));
+      const composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
+      await ComposePageRecipe.fillMsg(composeFrame, { to: 'smime@recipient.com', cc: 'human@flowcrypt.com' }, 'send with several S/MIME certs with OpenPGP as subset',
+        'This text should be encrypted into PKCS#7 data');
+      await ComposePageRecipe.pastePublicKeyManually(composeFrame, inboxPage, 'smime@recipient.com',
+        testConstants.testCertificateMultipleSmimeCEA2D53BB9D24871);
+      await composeFrame.waitAndClick('@action-send', { delay: 2 });
+      await PageRecipe.waitForModalAndRespond(composeFrame, 'error', {
+        contentToCheck: 'Failed to send message due to: Error: Cannot use mixed OpenPGP (human@flowcrypt.com) and S/MIME (smime@recipient.com) public keys yet.If you need to email S/MIME recipient, do not add any OpenPGP recipient at the same time.',
+        timeout: 40
+      });
+      // adding an S/MIME certificate for human@flowcrypt.com will allow sending an S/MIME message
+      await PageRecipe.addPubkey(t, browser, acctEmail, testConstants.smimeCert, 'human@flowcrypt.com');
+      await composeFrame.waitAndClick('@action-send', { delay: 2 });
+      await inboxPage.waitTillGone('@container-new-message');
+    }));
+
+    ava.default('send with S/MIME recipients as subset of OpenPGP recipients', testWithBrowser('ci.tests.gmail', async (t, browser) => {
+      const acctEmail = 'ci.tests.gmail@flowcrypt.test';
+      const inboxPage = await browser.newPage(t, TestUrls.extensionInbox(acctEmail));
+      const composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
+      await ComposePageRecipe.fillMsg(composeFrame, { to: 'smime@recipient.com', cc: 'human@flowcrypt.com' }, 'send with several S/MIME certs with OpenPGP as subset',
+        'This text should be encrypted into OpenPGP message');
+      await ComposePageRecipe.pastePublicKeyManually(composeFrame, inboxPage, 'smime@recipient.com',
+        testConstants.testCertificateMultipleSmimeCEA2D53BB9D24871);
+      await composeFrame.waitAndClick('@action-send', { delay: 2 });
+      await PageRecipe.waitForModalAndRespond(composeFrame, 'error', {
+        contentToCheck: 'Failed to send message due to: Error: Cannot use mixed OpenPGP (human@flowcrypt.com) and S/MIME (smime@recipient.com) public keys yet.If you need to email S/MIME recipient, do not add any OpenPGP recipient at the same time.',
+        timeout: 40
+      });
+      // adding an OpenPGP pubkey for smime@recipient.com will allow sending an OpenPGP message
+      await PageRecipe.addPubkey(t, browser, acctEmail, testConstants.testKeyMultiple1b383d0334e38b28, 'smime@recipient.com');
+      await composeFrame.waitAndClick('@action-send', { delay: 2 });
+      await inboxPage.waitTillGone('@container-new-message');
     }));
 
     ava.default('send with broken S/MIME cert - err', testWithBrowser('ci.tests.gmail', async (t, browser) => {
