@@ -1833,6 +1833,7 @@ table#compose td.bottom div#send_btn_note {
   opacity: 0.5;
 }
 
+span.passphrase_hint img,
 table#compose td.bottom .delete-draft {
   width: 20px;
   height: 20px;
@@ -1899,6 +1900,14 @@ table#compose td.text div#input_text {
   max-width: 525px;
   overflow-y: auto;
   min-height: 140px;
+}
+
+table#compose td.text div#input_text,
+#pgp_block,
+#backup_block,
+div#reply_message_successful_container > table div.replied_body {
+  white-space: pre-wrap;
+  tab-size: 4;
 }
 
 table#compose td.text div#input_text img {

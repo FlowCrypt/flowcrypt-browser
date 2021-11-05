@@ -57,15 +57,15 @@ View.run(class PassphraseView extends View {
       $('body#settings > div#content.dialog').css({ width: 'inherit', background: '#fafafa', });
       $('.line.which_key').css({ display: 'none', position: 'absolute', visibility: 'hidden', left: '5000px', });
     } else if (this.type === 'sign') {
-      $('h1').text('Enter your pass phrase to sign email');
+      $('h1').text('Enter FlowCrypt pass phrase to sign email');
     } else if (this.type === 'draft') {
-      $('h1').text('Enter your pass phrase to load a draft');
+      $('h1').text('Enter FlowCrypt pass phrase to load a draft');
     } else if (this.type === 'attachment') {
-      $('h1').text('Enter your pass phrase to decrypt a file');
+      $('h1').text('Enter FlowCrypt pass phrase to decrypt a file');
     } else if (this.type === 'quote') {
-      $('h1').text('Enter your pass phrase to load quoted content');
+      $('h1').text('Enter FlowCrypt pass phrase to load quoted content');
     } else if (this.type === 'backup') {
-      $('h1').text('Enter your pass phrase to back up');
+      $('h1').text('Enter FlowCrypt pass phrase to back up');
     }
     $('#passphrase').focus();
     if (allPrivateKeys.length > 1) {
@@ -81,6 +81,7 @@ View.run(class PassphraseView extends View {
       Xss.sanitizeRender('.which_key', html);
       $('.which_key').css('display', 'block');
     }
+    Ui.setTestState('ready');
   }
 
   public setHandlers = () => {
@@ -147,12 +148,17 @@ View.run(class PassphraseView extends View {
     const pass = String($('#passphrase').val());
     const storageType: StorageType = ($('.forget-pass-phrase-checkbox').prop('checked') || this.orgRules.forbidStoringPassPhrase()) ? 'session' : 'local';
     let atLeastOneMatched = false;
-    for (const keyinfo of this.keysWeNeedPassPhraseFor!) { // if passphrase matches more keys, it will save the pass phrase for all keys
+    let unlockCount = 0; // may include non-matching keys
+    const allPrivateKeys = await KeyStore.get(this.acctEmail);
+    for (const keyinfo of allPrivateKeys) { // if passphrase matches more keys, it will save the pass phrase for all keys
       const prv = await KeyUtil.parse(keyinfo.private);
       try {
         if (await KeyUtil.decrypt(prv, pass) === true) {
-          await PassphraseStore.set(storageType, this.acctEmail, keyinfo.fingerprints[0], pass);
-          atLeastOneMatched = true;
+          unlockCount++;
+          await PassphraseStore.set(storageType, this.acctEmail, keyinfo, pass);
+          if (this.longids.includes(keyinfo.longid)) {
+            atLeastOneMatched = true;
+          }
           if (storageType === 'session') {
             // TODO: change to 'broadcast' when issue with 'broadcast' is fixed
             BrowserMsg.send.addEndSessionBtn(this.parentTabId);
@@ -167,6 +173,9 @@ View.run(class PassphraseView extends View {
           throw e;
         }
       }
+    }
+    if (unlockCount && allPrivateKeys.length > 1) {
+      Ui.toast(`${unlockCount} of ${allPrivateKeys.length} keys ${(unlockCount > 1) ? 'were' : 'was'} unlocked by this pass phrase`);
     }
     if (atLeastOneMatched) {
       this.closeDialog(true, this.initiatorFrameId);

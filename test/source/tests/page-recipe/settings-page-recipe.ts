@@ -110,7 +110,15 @@ export class SettingsPageRecipe extends PageRecipe {
     await settingsPage.waitTillGone('@dialog');
   }
 
-  public static addKeyTest = async (t: AvaContext, browser: BrowserHandle, acctEmail: string, armoredPrvKey: string, passphrase: string, checks: SavePassphraseChecks = {}) => {
+  public static addKeyTest = async (
+    t: AvaContext,
+    browser: BrowserHandle,
+    acctEmail: string,
+    armoredPrvKey: string,
+    passphrase: string,
+    checks: SavePassphraseChecks = {},
+    savePassphrase = true
+  ) => {
     const addPrvPage = await browser.newPage(t, `/chrome/settings/modules/add_key.htm?acctEmail=${Xss.escape(acctEmail)}&parent_tab_id=0`);
     await addPrvPage.waitAndClick('#source_paste');
     await addPrvPage.waitAndType('.input_private_key', armoredPrvKey);
@@ -121,6 +129,9 @@ export class SettingsPageRecipe extends PageRecipe {
     }
     if (checks.isSavePassphraseChecked !== undefined) {
       expect(await addPrvPage.isChecked('@input-save-passphrase')).to.equal(checks.isSavePassphraseChecked);
+    }
+    if (!savePassphrase) {
+      await addPrvPage.click('@input-save-passphrase-label');
     }
     await addPrvPage.waitAndClick('.action_add_private_key', { delay: 1 });
     await addPrvPage.waitTillGone('.swal2-container'); // dialog closed

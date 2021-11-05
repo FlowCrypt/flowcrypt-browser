@@ -284,9 +284,6 @@ export class KeyUtil {
     // decrypt will change the key in place so it's important to parse the key here
     // because passing an object from the caller could have unexpected consequences
     const key = await KeyUtil.parse(pkey);
-    if (key.type !== 'openpgp') {
-      throw new Error('Checking password for this key type is not implemented: ' + key.type);
-    }
     return await KeyUtil.decrypt(key, passphrase);
   }
 

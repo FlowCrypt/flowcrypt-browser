@@ -15,7 +15,7 @@ import { Xss } from '../../../js/common/platform/xss.js';
 import { initPassphraseToggle } from '../../../js/common/ui/passphrase-ui.js';
 import { PassphraseStore } from '../../../js/common/platform/store/passphrase-store.js';
 import { KeyStore } from '../../../js/common/platform/store/key-store.js';
-import { UnexpectedKeyTypeError } from '../../../js/common/core/crypto/key.js';
+import { KeyUtil, UnexpectedKeyTypeError } from '../../../js/common/core/crypto/key.js';
 import { OrgRules } from '../../../js/common/org-rules.js';
 import { StorageType } from '../../../js/common/platform/store/abstract-store.js';
 
@@ -97,7 +97,7 @@ View.run(class AddKeyView extends View {
       if (checked) {
         await KeyStore.add(this.acctEmail, checked.encrypted); // resulting new_key checked above
         const storageType: StorageType = ($('.input_passphrase_save').prop('checked') && !this.orgRules.forbidStoringPassPhrase()) ? 'local' : 'session';
-        await PassphraseStore.set(storageType, this.acctEmail, checked.fingerprint, checked.passphrase);
+        await PassphraseStore.set(storageType, this.acctEmail, { longid: KeyUtil.getPrimaryLongid(checked.encrypted) }, checked.passphrase);
         BrowserMsg.send.reload(this.parentTabId, { advanced: true });
       }
     } catch (e) {

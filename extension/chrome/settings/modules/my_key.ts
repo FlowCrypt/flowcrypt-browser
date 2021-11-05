@@ -34,6 +34,7 @@ View.run(class MyKeyView extends View {
 
   constructor() {
     super();
+    // todo: refactor this and other pages to use 'type' and 'id' instead of 'fingerprint'
     const uncheckedUrlParams = Url.parse(['acctEmail', 'fingerprint', 'parentTabId']);
     this.acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
     this.fingerprint = Assert.urlParamRequire.string(uncheckedUrlParams, 'fingerprint');
@@ -53,7 +54,7 @@ View.run(class MyKeyView extends View {
     Xss.sanitizeRender('.email', this.pubKey.emails.map(email => `<span>${Xss.escape(email)}</span>`).join(', '));
     const expiration = this.pubKey.expiration;
     $('.key_expiration').text(expiration && expiration !== Infinity ? Str.datetimeToDate(Str.fromDate(new Date(expiration))) : 'Key does not expire');
-    await this.renderPrvKeyActions();
+    await this.renderPrivateKeyLink();
     await this.renderPubkeyShareableLink();
     await initPassphraseToggle(['input_passphrase']);
   }
@@ -65,7 +66,7 @@ View.run(class MyKeyView extends View {
     $('.action_continue_download').click(this.setHandlerPrevent('double', () => this.downloadRevocationCert(String($('#input_passphrase').val()))));
     $('#input_passphrase').on('keydown', this.setEnterHandlerThatClicks('.action_continue_download'));
     $('.action_cancel_download_cert').click(this.setHandler(() => { $('.enter_pp').hide(); }));
-    const clipboardOpts = { text: () =>  this.keyInfo.public };
+    const clipboardOpts = { text: () => this.keyInfo.public };
     new ClipboardJS('.action_copy_pubkey', clipboardOpts); // tslint:disable-line:no-unused-expression no-unsafe-any
   }
 
@@ -87,7 +88,7 @@ View.run(class MyKeyView extends View {
   private downloadRevocationCert = async (enteredPP?: string) => {
     const prv = await KeyUtil.parse(this.keyInfo.private);
     if (!prv.fullyDecrypted) {
-      const passphrase = await PassphraseStore.get(this.acctEmail, this.keyInfo.fingerprints[0]) || enteredPP;
+      const passphrase = await PassphraseStore.get(this.acctEmail, this.keyInfo) || enteredPP;
       if (passphrase) {
         if (! await KeyUtil.decrypt(prv, passphrase) && enteredPP) {
           await Ui.modal.error('Pass phrase did not match, please try again.');
@@ -126,12 +127,15 @@ View.run(class MyKeyView extends View {
     Browser.saveToDownloads(prvKeyAttachment);
   }
 
-  private renderPrvKeyActions = () => {
+  private renderPrivateKeyLink = () => {
     if (!this.orgRules.usesKeyManager()) {
+      $('div span.red_label').show();
       $('.action_view_update').show();
       $('a.action_download_revocation_cert').show();
     } else {
       $('.enter_pp').remove();
+      $('.container_download_prv').remove();
+      $('div span.orange_label').show();
     }
   }
 

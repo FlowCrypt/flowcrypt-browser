@@ -4,7 +4,7 @@
 
 import { Bm, BrowserMsg } from '../../js/common/browser/browser-msg.js';
 import { Ui } from '../../js/common/browser/ui.js';
-import { KeyInfo, KeyUtil } from '../../js/common/core/crypto/key.js';
+import { KeyUtil, TypedKeyInfo } from '../../js/common/core/crypto/key.js';
 import { Str, Url, UrlParams } from '../../js/common/core/common.js';
 import { ApiErr } from '../../js/common/api/shared/api-error.js';
 import { Assert } from '../../js/common/assert.js';
@@ -255,7 +255,7 @@ View.run(class SettingsView extends View {
         if (this.advanced) {
           $("#settings").toggleClass("advanced");
         }
-        const privateKeys = await KeyStore.get(this.acctEmail);
+        const privateKeys = await KeyStore.getTypedKeyInfos(this.acctEmail);
         if (privateKeys.length > 4) {
           $('.key_list').css('overflow-y', 'scroll');
         }
@@ -410,7 +410,7 @@ View.run(class SettingsView extends View {
     }
   }
 
-  private addKeyRowsHtml = async (privateKeys: KeyInfo[]) => {
+  private addKeyRowsHtml = async (privateKeys: TypedKeyInfo[]) => {
     let html = '';
     const canRemoveKey = !this.orgRules || !this.orgRules.usesKeyManager();
     for (let i = 0; i < privateKeys.length; i++) {
@@ -418,16 +418,15 @@ View.run(class SettingsView extends View {
       const prv = await KeyUtil.parse(ki.private);
       const created = new Date(prv.created);
       const date = Str.monthName(created.getMonth()) + ' ' + created.getDate() + ', ' + created.getFullYear();
-      const escapedFp = Xss.escape(ki.fingerprints[0]);
       let removeKeyBtn = '';
       if (canRemoveKey && privateKeys.length > 1) {
-        removeKeyBtn = `(<a href="#" class="action_remove_key" data-test="action-remove-key" fingerprint="${escapedFp}">remove</a>)`;
+        removeKeyBtn = `(<a href="#" class="action_remove_key" data-test="action-remove-key" data-type="${ki.type}" data-id="${ki.id}" data-longid="${ki.longid}">remove</a>)`;
       }
       const escapedEmail = Xss.escape(prv.emails[0] || '');
-      const escapedLink = `<a href="#" data-test="action-show-key-${i}" class="action_show_key" page="modules/my_key.htm" addurltext="&fingerprint=${escapedFp}">${escapedEmail}</a>`;
-      const fpHtml = `fingerprint:&nbsp;<span class="good">${Str.spaced(escapedFp)}</span>`;
+      const escapedLink = `<a href="#" data-test="action-show-key-${i}" class="action_show_key" page="modules/my_key.htm" addurltext="&fingerprint=${ki.id}">${escapedEmail}</a>`;
+      const fpHtml = `fingerprint:&nbsp;<span class="good">${Str.spaced(Xss.escape(ki.fingerprints[0]))}</span>`;
       const space = `&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`;
-      html += `<div class="row key-content-row key_${escapedFp}">`;
+      html += `<div class="row key-content-row">`;
       html += `  <div class="col-12">${escapedLink} from ${Xss.escape(date)}${space}${fpHtml}${space}${removeKeyBtn}</div>`;
       html += `</div>`;
     }
@@ -439,10 +438,17 @@ View.run(class SettingsView extends View {
     if (canRemoveKey) {
       $('.action_remove_key').click(this.setHandler(async target => {
         // the UI below only gets rendered when account_email is available
-        await KeyStore.remove(this.acctEmail!, $(target).attr('fingerprint')!);
-        await PassphraseStore.set('local', this.acctEmail!, $(target).attr('fingerprint')!, undefined);
-        await PassphraseStore.set('session', this.acctEmail!, $(target).attr('fingerprint')!, undefined);
-        this.reload(true);
+        const type = $(target).data('type') as string;
+        const id = $(target).data('id') as string;
+        const longid = $(target).data('longid') as string;
+        if (type === 'openpgp' || type === 'x509') {
+          await KeyStore.remove(this.acctEmail!, { type, id });
+          await PassphraseStore.set('local', this.acctEmail!, { longid }, undefined);
+          await PassphraseStore.set('session', this.acctEmail!, { longid }, undefined);
+          this.reload(true);
+        } else {
+          Catch.report(`unexpected key type: ${type}`);
+        }
       }));
     }
   }

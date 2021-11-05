@@ -126,9 +126,9 @@ class IncludeQuotedPartTestStrategy implements ITestMsgStrategy {
   private readonly quotedContent: string = [
     'On 2019-06-14 at 23:24, flowcrypt.compatibility@gmail.com wrote:',
     '> This is some message',
-    '> ',
+    '>',
     '> and below is the quote',
-    '> ',
+    '>',
     '> > this is the quote',
     '> > still the quote',
     '> > third line',
@@ -230,6 +230,8 @@ export class TestBySubjectStrategyContext {
     } else if (subject.includes('send with several S/MIME certs')) {
       this.strategy = new SmimeEncryptedMessageStrategy();
     } else if (subject.includes('send with S/MIME attachment')) {
+      this.strategy = new SmimeEncryptedMessageStrategy();
+    } else if (subject.includes('send signed and encrypted S/MIME')) {
       this.strategy = new SmimeEncryptedMessageStrategy();
     } else if (subject.includes('send signed S/MIME without attachment')) {
       this.strategy = new SmimeSignedMessageStrategy();
