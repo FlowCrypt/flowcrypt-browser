@@ -37,7 +37,7 @@ export class ComposeMyPubkeyModule extends ViewModule<ComposeView> {
     }
     (async () => {
       const senderEmail = this.view.senderModule.getSender();
-      // todo: disable attachment option for S/MIME #4075
+      // todo: disable attaching S/MIME certificate #4075
       const senderKi = await this.view.storageModule.getKey(senderEmail);
       const primaryFingerprint = (await KeyUtil.parse(senderKi.private)).id;
       // if we have cashed this fingerprint, setAttachPreference(false) rightaway and return
