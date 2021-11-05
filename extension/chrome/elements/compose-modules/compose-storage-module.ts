@@ -279,7 +279,7 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
       }
       if (keysPerEmail.length) {
         for (const pubkey of keysPerEmail) {
-          pubkeys.push({ pubkey, email: contact.email, isMine: false }); // todo: I can also be a recipient
+          pubkeys.push({ pubkey, email: contact.email, isMine: false });
         }
       } else {
         emailsWithoutPubkeys.push(contact.email);
