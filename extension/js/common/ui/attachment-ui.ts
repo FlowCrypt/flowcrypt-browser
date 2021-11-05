@@ -7,7 +7,7 @@ import { Catch, UnreportableError } from '../platform/catch.js';
 import { Dict } from '../core/common.js';
 import { MsgUtil } from '../core/crypto/pgp/msg-util.js';
 import { Ui } from '../browser/ui.js';
-import { PubkeyResult, KeyUtil } from '../core/crypto/key.js';
+import { PubkeyResult } from '../core/crypto/key.js';
 
 declare const qq: any;
 
@@ -86,7 +86,7 @@ export class AttachmentUI {
     for (const uploadFileId of Object.keys(this.attachedFiles)) {
       const file = this.attachedFiles[uploadFileId];
       const data = await this.readAttachmentDataAsUint8(uploadFileId);
-      const pubsForEncryption = KeyUtil.choosePubsBasedOnKeyTypeCombinationForPartialSmimeSupport(pubs);
+      const pubsForEncryption = pubs.map(entry => entry.pubkey);
       if (pubs.find(pub => pub.pubkey.type === 'x509')) {
         throw new UnreportableError('Attachments are not yet supported when sending to recipients using S/MIME x509 certificates.');
       }

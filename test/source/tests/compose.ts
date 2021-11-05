@@ -1096,7 +1096,8 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       await composeFrame.waitAndClick('@action-send', { delay: 2 });
       await PageRecipe.waitForModalAndRespond(composeFrame, 'error', {
         contentToCheck: 'Failed to send message due to: Error: Cannot use mixed OpenPGP (human@flowcrypt.com) and S/MIME (smime@recipient.com) public keys yet.If you need to email S/MIME recipient, do not add any OpenPGP recipient at the same time.',
-        timeout: 40
+        timeout: 40,
+        clickOn: 'confirm'
       });
       // adding an S/MIME certificate for human@flowcrypt.com will allow sending an S/MIME message
       await PageRecipe.addPubkey(t, browser, acctEmail, testConstants.smimeCert, 'human@flowcrypt.com');
@@ -1108,17 +1109,18 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       const acctEmail = 'ci.tests.gmail@flowcrypt.test';
       const inboxPage = await browser.newPage(t, TestUrls.extensionInbox(acctEmail));
       const composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
-      await ComposePageRecipe.fillMsg(composeFrame, { to: 'smime@recipient.com', cc: 'human@flowcrypt.com' }, 'send with several S/MIME certs with OpenPGP as subset',
+      await ComposePageRecipe.fillMsg(composeFrame, { to: 'smime@recipient.com', cc: 'human@flowcrypt.com' }, t.title,
         'This text should be encrypted into OpenPGP message');
       await ComposePageRecipe.pastePublicKeyManually(composeFrame, inboxPage, 'smime@recipient.com',
         testConstants.testCertificateMultipleSmimeCEA2D53BB9D24871);
       await composeFrame.waitAndClick('@action-send', { delay: 2 });
       await PageRecipe.waitForModalAndRespond(composeFrame, 'error', {
         contentToCheck: 'Failed to send message due to: Error: Cannot use mixed OpenPGP (human@flowcrypt.com) and S/MIME (smime@recipient.com) public keys yet.If you need to email S/MIME recipient, do not add any OpenPGP recipient at the same time.',
-        timeout: 40
+        timeout: 40,
+        clickOn: 'confirm'
       });
       // adding an OpenPGP pubkey for smime@recipient.com will allow sending an OpenPGP message
-      await PageRecipe.addPubkey(t, browser, acctEmail, testConstants.testKeyMultiple1b383d0334e38b28, 'smime@recipient.com');
+      await PageRecipe.addPubkey(t, browser, acctEmail, testConstants.pubkey2864E326A5BE488A, 'smime@recipient.com');
       await composeFrame.waitAndClick('@action-send', { delay: 2 });
       await inboxPage.waitTillGone('@container-new-message');
     }));
