@@ -12,8 +12,6 @@ import { Str } from './../core/common';
 import { MOCK_KM_LAST_INSERTED_KEY } from './../mock/key-manager/key-manager-endpoints';
 import { BrowserRecipe } from './tooling/browser-recipe';
 import { KeyInfo, KeyUtil } from '../core/crypto/key';
-import { TestUrls } from '../browser/test-urls';
-import { InboxPageRecipe } from './page-recipe/inbox-page-recipe';
 import { testConstants } from './tooling/consts';
 
 // tslint:disable:no-blank-lines-func
