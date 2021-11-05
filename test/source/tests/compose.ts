@@ -1056,7 +1056,6 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
     }));
 
     ava.default('send encrypted-only S/MIME message with attachment', testWithBrowser('ci.tests.gmail', async (t, browser) => {
-      // todo - this is not yet looking for actual attachment in the result, just checks that it's s/mime message
       const inboxPage = await browser.newPage(t, TestUrls.extensionInbox('ci.tests.gmail@flowcrypt.test'));
       const composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
       await ComposePageRecipe.fillMsg(composeFrame, { to: 'smime.attachment@recipient.com' }, t.title,
