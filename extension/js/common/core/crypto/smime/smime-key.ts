@@ -77,7 +77,18 @@ export class SmimeKey {
   public static encryptMessage = async ({ pubkeys, data: input, armor }: { pubkeys: Key[], data: Uint8Array, armor: boolean }):
     Promise<{ data: Uint8Array, type: 'smime' }> => {
     const p7 = forge.pkcs7.createEnvelopedData();
+    // collapse duplicate certificates into one
+    // check both fingerprints and longids (certificate Serial Number and Issuer)
+    const longids: string[] = [];
+    const ids: string[] = [];
     for (const pubkey of pubkeys) {
+      const longid = SmimeKey.getKeyLongid(pubkey);
+      if (ids.includes(pubkey.id) && longids.includes(longid)) {
+        continue;
+      } else {
+        ids.push(pubkey.id);
+        longids.push(longid);
+      }
       const certificate = SmimeKey.getCertificate(pubkey);
       if (SmimeKey.isKeyWeak(certificate)) {
         throw new Error(`The key can't be used for encryption as it doesn't meet the strength requirements`);

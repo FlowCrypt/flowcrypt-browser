@@ -75,7 +75,6 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
       const { pubkeys, emailsWithoutPubkeys } = this.collectPubkeysByType(type, contacts);
       if (senderKi !== undefined) {
         // add own key for encryption
-        // todo: check if already added with recipients?
         pubkeys.push({ pubkey: await KeyUtil.parse(senderKi.public), email: senderEmail, isMine: true });
       }
       const result = { senderKi, pubkeys, emailsWithoutPubkeys };

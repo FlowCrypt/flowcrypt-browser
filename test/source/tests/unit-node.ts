@@ -655,6 +655,19 @@ ${testConstants.smimeCert}`), { instanceOf: Error, message: `Invalid PEM formatt
       t.pass();
     });
 
+    ava.default('[unit][MsgUtil.encryptMessage] duplicate S/MIME recipients are collapsed into one', async t => {
+      const key = await KeyUtil.parse(testConstants.smimeCert);
+      const buf = Buf.with((await MsgUtil.encryptMessage(
+        { pubkeys: [key, key, key], data: Buf.fromUtfStr('anything'), armor: false }) as PgpMsgMethod.EncryptX509Result).data);
+      const msg = buf.toRawBytesStr();
+      const p7 = forge.pkcs7.messageFromAsn1(forge.asn1.fromDer(msg));
+      expect(p7.type).to.equal(ENVELOPED_DATA_OID);
+      if (p7.type === ENVELOPED_DATA_OID) {
+        expect(p7.recipients.length).to.equal(1);
+      }
+      t.pass();
+    });
+
     ava.default('[unit][KeyUtil.parse] Correctly extracting email from SubjectAltName of S/MIME certificate', async t => {
       /*
             // generate a key pair
