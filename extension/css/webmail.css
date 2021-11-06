@@ -65,7 +65,7 @@
   min-width: 42px;
 }
 
-.aeN:not(.anZ) [class*=_destroyable].z0 {
+.aeN:not(.anZ) [class*="_destroyable"].z0 {
   margin-bottom: 0 !important;
 }
 
@@ -157,7 +157,7 @@ body.cryptup_gmail .inserted div.reply_message_button {
   height: auto;
 }
 
-@-moz-document url-prefix() { /* Firefox specific */
+@-moz-document url-prefix('') { /* Firefox specific */
   body.cryptup_gmail .inserted div.reply_message_button {
     padding-bottom: 4px;
   }
@@ -195,7 +195,7 @@ body.cryptup_gmail div.ade.appended span.cryptup_convo_button > span {
   font-size: 9.5px;
   color: white;
   background: #31a217;
-  padding: 2px 3px 2px 3px;
+  padding: 2px 3px;
   display: inline-block;
   border-radius: 2px;
   cursor: default;
@@ -256,7 +256,7 @@ body.cryptup_outlook .cryptup_compose_button_container .new_secure_compose_windo
   height: 19px;
   cursor: pointer;
 }
-body.cryptup_outlook ._fce_i { padding: 0 6px 0 6px; } /* slightly less horizontal padding on other outlook buttons in the same menu so that it doesn't misbehave */
+body.cryptup_outlook ._fce_i { padding: 0 6px; } /* slightly less horizontal padding on other outlook buttons in the same menu so that it doesn't misbehave */
 
 /* elements */
 .secure_compose_window {
