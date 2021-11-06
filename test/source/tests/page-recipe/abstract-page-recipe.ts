@@ -5,6 +5,7 @@ import { BrowserHandle, Controllable, ControllablePage } from '../../browser';
 import { AvaContext } from '../tooling/';
 import { ElementHandle, JSHandle } from 'puppeteer';
 import { expect } from 'chai';
+import { Util } from '../../util';
 
 type ModalOpts = { contentToCheck?: string, clickOn?: 'confirm' | 'cancel', getTriggeredPage?: boolean, timeout?: number };
 type ModalType = 'confirm' | 'error' | 'info' | 'warning';
@@ -42,6 +43,16 @@ export abstract class PageRecipe {
     return (result as { result: { tabId: string } }).result.tabId;
   }
 
+  public static addPubkey = async (t: AvaContext, browser: BrowserHandle, acctEmail: string, pubkey: string, email?: string) => {
+    const pubFrameUrl = `chrome/elements/pgp_pubkey.htm?frameId=none&armoredPubkey=${encodeURIComponent(pubkey)}&acctEmail=${encodeURIComponent(acctEmail)}&parentTabId=0`;
+    const pubFrame = await browser.newPage(t, pubFrameUrl);
+    if (email) {
+      await pubFrame.waitAndType('@input-email', email);
+    }
+    await pubFrame.waitAndClick('@action-add-contact');
+    await Util.sleep(1);
+    await pubFrame.close();
+  }
   /**
    * responding to modal triggers a new page to be open, eg oauth login page
    */

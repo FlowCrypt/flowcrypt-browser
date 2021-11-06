@@ -77,6 +77,38 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       expect(await inboxPage.getOuterHeight('iframe')).to.eq(initialComposeFrameHeight);
     }));
 
+    ava.default('compose - trying to send PWD encrypted message with pass phrase - should show err', testWithBrowser('ci.tests.gmail', async (t, browser) => {
+      const acctEmail = 'ci.tests.gmail@flowcrypt.test';
+      const msgPwd = Config.key('ci.tests.gmail').passphrase;
+      const subject = 'PWD encrypted message with flowcrypt.com/api';
+      const composePage = await ComposePageRecipe.openStandalone(t, browser, acctEmail);
+      await ComposePageRecipe.fillMsg(composePage, { to: 'test@email.com' }, subject);
+      await composePage.waitAndType('@input-password', msgPwd);
+      await composePage.waitAndClick('@action-send', { delay: 1 });
+      await PageRecipe.waitForModalAndRespond(composePage, 'error', {
+        contentToCheck: 'Please do not use your private key pass phrase as a password for this message',
+        clickOn: 'confirm'
+      });
+      // changing case should result in this error too
+      await composePage.waitAndType('@input-password', msgPwd.toUpperCase());
+      await composePage.waitAndClick('@action-send', { delay: 1 });
+      await PageRecipe.waitForModalAndRespond(composePage, 'error', {
+        contentToCheck: 'Please do not use your private key pass phrase as a password for this message',
+        clickOn: 'confirm'
+      });
+      const forgottenPassphrase = 'this passphrase is forgotten';
+      await SettingsPageRecipe.addKeyTest(t, browser, acctEmail, testConstants.testKeyMultipleSmimeCEA2D53BB9D24871, forgottenPassphrase, {}, false);
+      const inboxPage = await browser.newPage(t, TestUrls.extensionInbox(acctEmail));
+      await InboxPageRecipe.finishSessionOnInboxPage(inboxPage);
+      await inboxPage.close();
+      await composePage.waitAndType('@input-password', forgottenPassphrase);
+      await composePage.waitAndClick('@action-send', { delay: 1 });
+      await PageRecipe.waitForModalAndRespond(composePage, 'error', {
+        contentToCheck: 'Please do not use your private key pass phrase as a password for this message',
+        clickOn: 'confirm'
+      });
+    }));
+
     ava.default('compose - signed with entered pass phrase + will remember pass phrase in session', testWithBrowser('ci.tests.gmail', async (t, browser) => {
       const k = Config.key('ci.tests.gmail');
       const settingsPage = await browser.newPage(t, TestUrls.extensionSettings('ci.tests.gmail@flowcrypt.test'));
@@ -1015,14 +1047,31 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       const composePage = await ComposePageRecipe.openStandalone(t, browser, acctEmail);
       await ComposePageRecipe.fillMsg(composePage, { to: 'smime@recipient.com' }, 'send signed S/MIME without attachment', undefined, { encrypt: false, sign: true });
       await composePage.waitAndClick('@action-send', { delay: 2 });
+      await composePage.waitForSelTestState('closed', 20); // succesfully sent
+      await composePage.close();
+    }));
+
+    ava.default('send signed and encrypted S/MIME message', testWithBrowser('compatibility', async (t, browser) => {
+      const acctEmail = 'flowcrypt.compatibility@gmail.com';
+      const passphrase = 'pa$$w0rd';
+      await SettingsPageRecipe.addKeyTest(t, browser, acctEmail, testConstants.testKeyMultipleSmimeCEA2D53BB9D24871, passphrase, {}, false);
+      const inboxPage = await browser.newPage(t, TestUrls.extensionInbox(acctEmail));
+      const composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
+      await ComposePageRecipe.fillMsg(composeFrame, { to: 'smime@recipient.com' }, 'send signed and encrypted S/MIME without attachment',
+        'This text should be encrypted into PKCS#7 data');
+      await ComposePageRecipe.pastePublicKeyManually(composeFrame, inboxPage, 'smime@recipient.com',
+        testConstants.testCertificateMultipleSmimeCEA2D53BB9D24871);
+      await composeFrame.waitAndClick('@action-send', { delay: 2 });
+      await inboxPage.waitTillGone('@container-new-message');
     }));
 
     ava.default('send with single S/MIME cert', testWithBrowser('ci.tests.gmail', async (t, browser) => {
       const inboxPage = await browser.newPage(t, TestUrls.extensionInbox('ci.tests.gmail@flowcrypt.test'));
       const composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
-      await ComposePageRecipe.fillMsg(composeFrame, { to: 'smime@recipient.com' }, t.title);
+      await ComposePageRecipe.fillMsg(composeFrame, { to: 'smime@recipient.com' }, t.title,
+        'This text should be encrypted into PKCS#7 data', { sign: false, encrypt: true });
       await ComposePageRecipe.pastePublicKeyManually(composeFrame, inboxPage, 'smime@recipient.com',
-        testConstants.smimeCert);
+        testConstants.testCertificateMultipleSmimeCEA2D53BB9D24871);
       await composeFrame.waitAndClick('@action-send', { delay: 2 });
       await inboxPage.waitTillGone('@container-new-message');
     }));
@@ -1030,19 +1079,41 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
     ava.default('send with several S/MIME certs', testWithBrowser('ci.tests.gmail', async (t, browser) => {
       const inboxPage = await browser.newPage(t, TestUrls.extensionInbox('ci.tests.gmail@flowcrypt.test'));
       const composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
-      await ComposePageRecipe.fillMsg(composeFrame, { to: 'smime1@recipient.com', cc: 'smime2@recipient.com' }, t.title);
+      await ComposePageRecipe.fillMsg(composeFrame, { to: 'smime1@recipient.com', cc: 'smime2@recipient.com' }, t.title,
+        'This text should be encrypted into PKCS#7 data', { sign: false, encrypt: true });
       await ComposePageRecipe.pastePublicKeyManually(composeFrame, inboxPage, 'smime1@recipient.com', testConstants.smimeCert);
-      await ComposePageRecipe.pastePublicKeyManually(composeFrame, inboxPage, 'smime2@recipient.com', testConstants.smimeCert);
+      await ComposePageRecipe.pastePublicKeyManually(composeFrame, inboxPage, 'smime2@recipient.com', testConstants.testCertificateMultipleSmimeCEA2D53BB9D24871);
       await composeFrame.waitAndClick('@action-send', { delay: 2 });
       await inboxPage.waitTillGone('@container-new-message');
     }));
 
-    ava.default('send with S/MIME attachment', testWithBrowser('ci.tests.gmail', async (t, browser) => {
-      // todo - this is not yet looking for actual attachment in the result, just checks that it's s/mime message
+    ava.default('send encrypted-only S/MIME message with attachment', testWithBrowser('ci.tests.gmail', async (t, browser) => {
       const inboxPage = await browser.newPage(t, TestUrls.extensionInbox('ci.tests.gmail@flowcrypt.test'));
       const composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
+      await ComposePageRecipe.fillMsg(composeFrame, { to: 'smime.attachment@recipient.com' }, t.title,
+        'This text should be encrypted into PKCS#7 data', { sign: false, encrypt: true });
+      await ComposePageRecipe.pastePublicKeyManually(composeFrame, inboxPage, 'smime.attachment@recipient.com', testConstants.testCertificateMultipleSmimeCEA2D53BB9D24871);
+      const fileInput = await composeFrame.target.$('input[type=file]');
+      await fileInput!.uploadFile('test/samples/small.txt', 'test/samples/small.png', 'test/samples/small.pdf');
+      /* todo: #4087 attachments in composer can be downloaded
+      const fileText = await inboxPage.awaitDownloadTriggeredByClicking(async () => {
+        await composeFrame.click('.qq-file-id-0');
+      });
+      expect(fileText.toString()).to.equal(`small text file\nnot much here\nthis worked\n`);
+      */
+      await composeFrame.waitAndClick('@action-send', { delay: 2 });
+      await inboxPage.waitTillGone('@container-new-message');
+    }));
+
+    ava.default('send signed and encrypted S/MIME message with attachment', testWithBrowser('ci.tests.gmail', async (t, browser) => {
+      // todo - this is not yet looking for actual attachment in the result, just checks that it's s/mime message
+      const acctEmail = 'ci.tests.gmail@flowcrypt.test';
+      const passphrase = 'pa$$w0rd';
+      await SettingsPageRecipe.addKeyTest(t, browser, acctEmail, testConstants.testKeyMultipleSmimeCEA2D53BB9D24871, passphrase, {}, false);
+      const inboxPage = await browser.newPage(t, TestUrls.extensionInbox(acctEmail));
+      const composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
       await ComposePageRecipe.fillMsg(composeFrame, { to: 'smime.attachment@recipient.com' }, t.title);
-      await ComposePageRecipe.pastePublicKeyManually(composeFrame, inboxPage, 'smime.attachment@recipient.com', testConstants.smimeCert);
+      await ComposePageRecipe.pastePublicKeyManually(composeFrame, inboxPage, 'smime.attachment@recipient.com', testConstants.testCertificateMultipleSmimeCEA2D53BB9D24871);
       const fileInput = await composeFrame.target.$('input[type=file]');
       await fileInput!.uploadFile('test/samples/small.txt', 'test/samples/small.png', 'test/samples/small.pdf');
       // attachments in composer can be downloaded
@@ -1064,6 +1135,46 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         contentToCheck: 'Failed to send message due to: Error: Cannot use mixed OpenPGP (human@flowcrypt.com) and S/MIME (smime@recipient.com) public keys yet.If you need to email S/MIME recipient, do not add any OpenPGP recipient at the same time.',
         timeout: 40
       });
+    }));
+
+    ava.default('send with OpenPGP recipients as subset of S/MIME recipients', testWithBrowser('ci.tests.gmail', async (t, browser) => {
+      const acctEmail = 'ci.tests.gmail@flowcrypt.test';
+      const inboxPage = await browser.newPage(t, TestUrls.extensionInbox(acctEmail));
+      const composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
+      await ComposePageRecipe.fillMsg(composeFrame, { to: 'smime@recipient.com', cc: 'human@flowcrypt.com' }, 'send with several S/MIME certs with OpenPGP as subset',
+        'This text should be encrypted into PKCS#7 data');
+      await ComposePageRecipe.pastePublicKeyManually(composeFrame, inboxPage, 'smime@recipient.com',
+        testConstants.testCertificateMultipleSmimeCEA2D53BB9D24871);
+      await composeFrame.waitAndClick('@action-send', { delay: 2 });
+      await PageRecipe.waitForModalAndRespond(composeFrame, 'error', {
+        contentToCheck: 'Failed to send message due to: Error: Cannot use mixed OpenPGP (human@flowcrypt.com) and S/MIME (smime@recipient.com) public keys yet.If you need to email S/MIME recipient, do not add any OpenPGP recipient at the same time.',
+        timeout: 40,
+        clickOn: 'confirm'
+      });
+      // adding an S/MIME certificate for human@flowcrypt.com will allow sending an S/MIME message
+      await PageRecipe.addPubkey(t, browser, acctEmail, testConstants.smimeCert, 'human@flowcrypt.com');
+      await composeFrame.waitAndClick('@action-send', { delay: 2 });
+      await inboxPage.waitTillGone('@container-new-message');
+    }));
+
+    ava.default('send with S/MIME recipients as subset of OpenPGP recipients', testWithBrowser('ci.tests.gmail', async (t, browser) => {
+      const acctEmail = 'ci.tests.gmail@flowcrypt.test';
+      const inboxPage = await browser.newPage(t, TestUrls.extensionInbox(acctEmail));
+      const composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
+      await ComposePageRecipe.fillMsg(composeFrame, { to: 'smime@recipient.com', cc: 'human@flowcrypt.com' }, t.title,
+        'This text should be encrypted into OpenPGP message');
+      await ComposePageRecipe.pastePublicKeyManually(composeFrame, inboxPage, 'smime@recipient.com',
+        testConstants.testCertificateMultipleSmimeCEA2D53BB9D24871);
+      await composeFrame.waitAndClick('@action-send', { delay: 2 });
+      await PageRecipe.waitForModalAndRespond(composeFrame, 'error', {
+        contentToCheck: 'Failed to send message due to: Error: Cannot use mixed OpenPGP (human@flowcrypt.com) and S/MIME (smime@recipient.com) public keys yet.If you need to email S/MIME recipient, do not add any OpenPGP recipient at the same time.',
+        timeout: 40,
+        clickOn: 'confirm'
+      });
+      // adding an OpenPGP pubkey for smime@recipient.com will allow sending an OpenPGP message
+      await PageRecipe.addPubkey(t, browser, acctEmail, testConstants.pubkey2864E326A5BE488A, 'smime@recipient.com');
+      await composeFrame.waitAndClick('@action-send', { delay: 2 });
+      await inboxPage.waitTillGone('@container-new-message');
     }));
 
     ava.default('send with broken S/MIME cert - err', testWithBrowser('ci.tests.gmail', async (t, browser) => {
