@@ -985,9 +985,9 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
 
     ava.default('can lookup public key from WKD directly', testWithBrowser('ci.tests.gmail', async (t, browser) => {
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
-      await ComposePageRecipe.fillMsg(composePage, { to: 'test-wkd@metacode.biz' }, 'should find pubkey from WKD directly');
-      await composePage.waitForContent('.email_address.has_pgp', 'test-wkd@metacode.biz');
-      expect(await composePage.attr('.email_address.has_pgp', 'title')).to.contain('5B7A BE66 0D5C 62A6 07FE 2448 716B 1776 4E3F CACA');
+      await ComposePageRecipe.fillMsg(composePage, { to: 'demo@flowcrypt.com' }, 'should find pubkey from WKD directly');
+      await composePage.waitForContent('.email_address.has_pgp', 'demo@flowcrypt.com');
+      expect(await composePage.attr('.email_address.has_pgp', 'title')).to.contain('D688 9296 FD18 83A2 9C56 E7C1 5FF1 C658 5A70 0098 (openpgp)');
     }));
 
     ava.default('timeouts when searching WKD - used to never time out', testWithBrowser('ci.tests.gmail', async (t, browser) => {
