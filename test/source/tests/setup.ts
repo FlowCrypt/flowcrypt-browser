@@ -12,8 +12,6 @@ import { Str } from './../core/common';
 import { MOCK_KM_LAST_INSERTED_KEY } from './../mock/key-manager/key-manager-endpoints';
 import { BrowserRecipe } from './tooling/browser-recipe';
 import { KeyInfo, KeyUtil } from '../core/crypto/key';
-import { TestUrls } from '../browser/test-urls';
-import { InboxPageRecipe } from './page-recipe/inbox-page-recipe';
 import { testConstants } from './tooling/consts';
 
 // tslint:disable:no-blank-lines-func
@@ -441,53 +439,6 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       const attesterFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-attester-page', ['keyserver.htm']);
       await attesterFrame.waitAndClick('@action-submit-pub');
       await attesterFrame.waitAndRespondToModal('error', 'confirm', 'Disallowed by your organisation rules');
-    }));
-
-    ava.default('user@no-submit-org-rule.flowcrypt.test - do not submit to attester on key generation', testWithBrowser(undefined, async (t, browser) => {
-      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'user@no-submit-org-rule.flowcrypt.test');
-      await Util.sleep(5);
-      await SetupPageRecipe.createKey(settingsPage, 'unused', 'none', { key: { passphrase: 'long enough to suit requirements' }, usedPgpBefore: false },
-        { isSavePassphraseChecked: false, isSavePassphraseHidden: false });
-      await settingsPage.notPresent('.swal2-container');
-      await settingsPage.close();
-    }));
-
-    ava.default('settings - generate rsa3072 key', testWithBrowser(undefined, async (t, browser) => {
-      const acctEmail = 'user@no-submit-org-rule.flowcrypt.test';
-      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
-      await Util.sleep(5);
-      await SetupPageRecipe.createKey(settingsPage, 'unused', "none", { selectKeyAlgo: 'rsa3072', key: { passphrase: 'long enough to suit requirements' } });
-      await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
-      const fingerprint = (await settingsPage.read('.good', true)).split(' ').join('');
-      const myKeyFrame = await browser.newPage(t, `chrome/settings/modules/my_key.htm?placement=settings&parentTabId=60%3A0&acctEmail=${acctEmail}&fingerprint=${fingerprint}`);
-      const raw = await myKeyFrame.awaitDownloadTriggeredByClicking('@action-download-prv');
-      const key = await KeyUtil.parse(raw.toString());
-      expect(key.algo.bits).to.equal(3072);
-      expect(key.algo.algorithm).to.equal('rsa_encrypt_sign');
-      await myKeyFrame.close();
-      await settingsPage.close();
-    }));
-
-    ava.default('user@forbid-storing-passphrase-org-rule.flowcrypt.test - do not store passphrase', testWithBrowser(undefined, async (t, browser) => {
-      const acctEmail = 'user@forbid-storing-passphrase-org-rule.flowcrypt.test';
-      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
-      await Util.sleep(5);
-      const passphrase = 'long enough to suit requirements';
-      await SetupPageRecipe.createKey(settingsPage, 'unused', 'none', { key: { passphrase }, usedPgpBefore: false },
-        { isSavePassphraseHidden: true, isSavePassphraseChecked: false });
-      await settingsPage.notPresent('.swal2-container');
-      const inboxPage = await browser.newPage(t, TestUrls.extensionInbox(acctEmail));
-      await InboxPageRecipe.finishSessionOnInboxPage(inboxPage);
-      const composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
-      await ComposePageRecipe.fillMsg(composeFrame, { to: 'human@flowcrypt.com' }, 'should not send as pass phrase is not known', undefined, { encrypt: false });
-      await composeFrame.waitAndClick('@action-send');
-      await inboxPage.waitAll('@dialog-passphrase');
-      const passphraseDialog = await inboxPage.getFrame(['passphrase.htm']);
-      await passphraseDialog.waitForContent('@lost-pass-phrase-with-ekm', 'Ask your IT staff for help if you lost your pass phrase.');
-      expect(await passphraseDialog.hasClass('@forget-pass-phrase-label', 'hidden')).to.equal(true);
-      expect(await passphraseDialog.isChecked('@forget-pass-phrase-checkbox')).to.equal(true);
-      await inboxPage.close();
-      await settingsPage.close();
     }));
 
     ava.default('setup - manualEnter honors DEFAULT_REMEMBER_PASS_PHRASE OrgRule', testWithBrowser(undefined, async (t, browser) => {
