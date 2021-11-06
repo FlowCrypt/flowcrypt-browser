@@ -9,13 +9,14 @@ import { BrowserRecipe } from './tooling/browser-recipe';
 import { ComposePageRecipe } from './page-recipe/compose-page-recipe';
 import { PageRecipe } from './page-recipe/abstract-page-recipe';
 import { SettingsPageRecipe } from './page-recipe/settings-page-recipe';
-import { SetupPageRecipe } from './page-recipe/setup-page-recipe';
 import { TestWithBrowser } from './../test';
 import { Stream } from '../core/stream';
 import { InboxPageRecipe } from './page-recipe/inbox-page-recipe';
 import { TestUrls } from '../browser/test-urls';
 import { OauthPageRecipe } from './page-recipe/oauth-page-recipe';
 import { testConstants } from './tooling/consts';
+import { SetupPageRecipe } from './page-recipe/setup-page-recipe';
+import { KeyUtil } from '../core/crypto/key';
 
 // tslint:disable:no-blank-lines-func
 
@@ -76,6 +77,50 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'setup@prv-create-no-prv-backup.flowcrypt.test');
       await SetupPageRecipe.createKey(settingsPage, 'flowcrypt.test.key.used.pgp', 'disabled', { submitPubkey: false, usedPgpBefore: false, enforcedAlgo: 'rsa2048' },
         { isSavePassphraseChecked: false, isSavePassphraseHidden: false });
+    }));
+
+    ava.default('user@no-submit-org-rule.flowcrypt.test - do not submit to attester on key generation', testWithBrowser(undefined, async (t, browser) => {
+      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'user@no-submit-org-rule.flowcrypt.test');
+      await SetupPageRecipe.createKey(settingsPage, 'unused', 'none', { key: { passphrase: 'long enough to suit requirements' }, usedPgpBefore: false },
+        { isSavePassphraseChecked: false, isSavePassphraseHidden: false });
+      await settingsPage.notPresent('.swal2-container');
+      await settingsPage.close();
+    }));
+
+    ava.default('settings - generate rsa3072 key', testWithBrowser(undefined, async (t, browser) => {
+      const acctEmail = 'user@no-submit-org-rule.flowcrypt.test';
+      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
+      await SetupPageRecipe.createKey(settingsPage, 'unused', "none", { selectKeyAlgo: 'rsa3072', key: { passphrase: 'long enough to suit requirements' } });
+      await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
+      const fingerprint = (await settingsPage.read('.good', true)).split(' ').join('');
+      const myKeyFrame = await browser.newPage(t, `chrome/settings/modules/my_key.htm?placement=settings&parentTabId=60%3A0&acctEmail=${acctEmail}&fingerprint=${fingerprint}`);
+      const raw = await myKeyFrame.awaitDownloadTriggeredByClicking('@action-download-prv');
+      const key = await KeyUtil.parse(raw.toString());
+      expect(key.algo.bits).to.equal(3072);
+      expect(key.algo.algorithm).to.equal('rsa_encrypt_sign');
+      await myKeyFrame.close();
+      await settingsPage.close();
+    }));
+
+    ava.default('user@forbid-storing-passphrase-org-rule.flowcrypt.test - do not store passphrase', testWithBrowser(undefined, async (t, browser) => {
+      const acctEmail = 'user@forbid-storing-passphrase-org-rule.flowcrypt.test';
+      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
+      const passphrase = 'long enough to suit requirements';
+      await SetupPageRecipe.createKey(settingsPage, 'unused', 'none', { key: { passphrase }, usedPgpBefore: false },
+        { isSavePassphraseHidden: true, isSavePassphraseChecked: false });
+      await settingsPage.notPresent('.swal2-container');
+      const inboxPage = await browser.newPage(t, TestUrls.extensionInbox(acctEmail));
+      await InboxPageRecipe.finishSessionOnInboxPage(inboxPage);
+      const composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
+      await ComposePageRecipe.fillMsg(composeFrame, { to: 'human@flowcrypt.com' }, 'should not send as pass phrase is not known', undefined, { encrypt: false });
+      await composeFrame.waitAndClick('@action-send');
+      await inboxPage.waitAll('@dialog-passphrase');
+      const passphraseDialog = await inboxPage.getFrame(['passphrase.htm']);
+      await passphraseDialog.waitForContent('@lost-pass-phrase-with-ekm', 'Ask your IT staff for help if you lost your pass phrase.');
+      expect(await passphraseDialog.hasClass('@forget-pass-phrase-label', 'hidden')).to.equal(true);
+      expect(await passphraseDialog.isChecked('@forget-pass-phrase-checkbox')).to.equal(true);
+      await inboxPage.close();
+      await settingsPage.close();
     }));
 
     ava.default('standalone - different send from, new signed message, verification in mock', testWithBrowser('compatibility', async (t, browser) => {

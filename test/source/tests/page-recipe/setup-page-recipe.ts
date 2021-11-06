@@ -286,7 +286,7 @@ export class SetupPageRecipe extends PageRecipe {
     if (usedPgpBefore) {
       await settingsPage.waitAndClick('@action-step0foundkey-choose-manual-create');
     } else {
-      await settingsPage.waitAndClick('@action-step1easyormanual-choose-manual-create');
+      await settingsPage.waitAndClick('@action-step1easyormanual-choose-manual-create', { retryErrs: true });
     }
     await settingsPage.waitAndType('@input-step2bmanualcreate-passphrase-1', k.passphrase);
     await settingsPage.waitAndType('@input-step2bmanualcreate-passphrase-2', k.passphrase);
