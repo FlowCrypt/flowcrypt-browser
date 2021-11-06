@@ -77,6 +77,38 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       expect(await inboxPage.getOuterHeight('iframe')).to.eq(initialComposeFrameHeight);
     }));
 
+    ava.default('compose - trying to send PWD encrypted message with pass phrase - should show err', testWithBrowser('ci.tests.gmail', async (t, browser) => {
+      const acctEmail = 'ci.tests.gmail@flowcrypt.test';
+      const msgPwd = Config.key('ci.tests.gmail').passphrase;
+      const subject = 'PWD encrypted message with flowcrypt.com/api';
+      const composePage = await ComposePageRecipe.openStandalone(t, browser, acctEmail);
+      await ComposePageRecipe.fillMsg(composePage, { to: 'test@email.com' }, subject);
+      await composePage.waitAndType('@input-password', msgPwd);
+      await composePage.waitAndClick('@action-send', { delay: 1 });
+      await PageRecipe.waitForModalAndRespond(composePage, 'error', {
+        contentToCheck: 'Please do not use your private key pass phrase as a password for this message',
+        clickOn: 'confirm'
+      });
+      // changing case should result in this error too
+      await composePage.waitAndType('@input-password', msgPwd.toUpperCase());
+      await composePage.waitAndClick('@action-send', { delay: 1 });
+      await PageRecipe.waitForModalAndRespond(composePage, 'error', {
+        contentToCheck: 'Please do not use your private key pass phrase as a password for this message',
+        clickOn: 'confirm'
+      });
+      const forgottenPassphrase = 'this passphrase is forgotten';
+      await SettingsPageRecipe.addKeyTest(t, browser, acctEmail, testConstants.testKeyMultipleSmimeCEA2D53BB9D24871, forgottenPassphrase, {}, false);
+      const inboxPage = await browser.newPage(t, TestUrls.extensionInbox(acctEmail));
+      await InboxPageRecipe.finishSessionOnInboxPage(inboxPage);
+      await inboxPage.close();
+      await composePage.waitAndType('@input-password', forgottenPassphrase);
+      await composePage.waitAndClick('@action-send', { delay: 1 });
+      await PageRecipe.waitForModalAndRespond(composePage, 'error', {
+        contentToCheck: 'Please do not use your private key pass phrase as a password for this message',
+        clickOn: 'confirm'
+      });
+    }));
+
     ava.default('compose - signed with entered pass phrase + will remember pass phrase in session', testWithBrowser('ci.tests.gmail', async (t, browser) => {
       const k = Config.key('ci.tests.gmail');
       const settingsPage = await browser.newPage(t, TestUrls.extensionSettings('ci.tests.gmail@flowcrypt.test'));

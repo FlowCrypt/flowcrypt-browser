@@ -124,6 +124,22 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
     }
   }
 
+  public isPwdMatchingPassphrase = async (pwd: string): Promise<boolean> => {
+    const kis = await KeyStore.get(this.view.acctEmail);
+    for (const ki of kis) {
+      const pp = await PassphraseStore.get(this.view.acctEmail, ki, true);
+      if (pp && pwd.toLowerCase() === pp.toLowerCase()) {
+        return true;
+      }
+      // check whether this pwd unlocks the ki
+      const parsed = await KeyUtil.parse(ki.private);
+      if (!parsed.fullyDecrypted && await KeyUtil.decrypt(parsed, pwd)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   public lookupPubkeyFromKeyserversThenOptionallyFetchExpiredByFingerprintAndUpsertDb = async (
     email: string, name: string | undefined
   ): Promise<PubkeyInfo[] | "fail"> => {

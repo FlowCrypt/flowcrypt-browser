@@ -132,10 +132,7 @@ export class ComposeErrModule extends ViewModule<ComposeView> {
 
   public throwIfEncryptionPasswordInvalid = async ({ subject, pwd }: { subject: string, pwd?: string }) => {
     if (pwd) {
-      // todo: check all available passphrases in storage or session
-      // todo: check if this pwd unlocks any keys
-      const pp = await this.view.storageModule.passphraseGet();
-      if (pp && pwd.toLowerCase() === pp.toLowerCase()) {
+      if (await this.view.storageModule.isPwdMatchingPassphrase(pwd)) {
         throw new ComposerUserError('Please do not use your private key pass phrase as a password for this message.\n\n' +
           'You should come up with some other unique password that you can share with recipient.');
       }
