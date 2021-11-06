@@ -1,12 +1,12 @@
 /* © 2016-2018 FlowCrypt Limited. Limitations apply. Contact human@flowcrypt.com */
 
 @font-face {
-  font-family: 'signature';
+  font-family: signature;
   src: url('/fonts/Tangerine_Regular.ttf');
 }
 
 @font-face {
-  font-family: 'signature';
+  font-family: signature;
   src: url('/fonts/Tangerine_Bold.ttf');
   font-weight: bold;
 }
@@ -14,7 +14,6 @@
 .button {
   text-transform: uppercase;
   display: inline-block;
-  -webkit-box-shadow: none;
   box-shadow: none;
   font-weight: 500;
   border: 1px solid transparent;
@@ -137,7 +136,7 @@ span.gray { color: #b7b7b7; }
 .swal2-popup .swal2-styled.swal2-cancel.ui-modal-confirm-checkbox-cancel,
 .button.gray {
   background-color: #b7b7b7;
-  background-image: -webkit-linear-gradient(top, #c5c5c5, #b7b7b7);
+  background-image: linear-gradient(#c5c5c5, #b7b7b7);
   color: white;
 }
 
@@ -182,7 +181,7 @@ span.gray { color: #b7b7b7; }
 
 .button.gray2 {
   background-color: #d9d9d9;
-  background-image: -webkit-linear-gradient(top, #e9e9e9, #dfdfdf);
+  background-image: linear-gradient(#e9e9e9, #dfdfdf);
   color: #444;
 }
 
@@ -274,9 +273,9 @@ div.wide.line { max-width: 850px; }
 div.line.left { text-align: left; }
 div.line.center { text-align: center; }
 
-div.line input[type=text],
-div.line input[type=email],
-div.line input[type=password] {
+div.line input[type="text"],
+div.line input[type="email"],
+div.line input[type="password"] {
   height: 46px;
   padding: 12px;
   min-width: 200px;
@@ -397,8 +396,8 @@ body#settings > div#content hr {
   border-bottom: 1px solid #cacaca;
 }
 
-body#settings > div#content input[type=password],
-body#settings > div#content input[type=text] {
+body#settings > div#content input[type="password"],
+body#settings > div#content input[type="text"] {
   padding: 0;
   box-sizing: border-box;
   width: 360px !important;
@@ -616,23 +615,23 @@ body#settings .signin_button:hover {
 }
 
 body#settings .signin_button.gmail {
-  background-image: url(/img/guidelined/google-signin.png);
+  background-image: url('/img/guidelined/google-signin.png');
   border: 0;
 }
 
 body#settings .signin_button.gmail:active,
 body#settings .signin_button.gmail:focus {
-  background-image: url(/img/guidelined/google-signin-pressed.png);
+  background-image: url('/img/guidelined/google-signin-pressed.png');
 }
 
 body#settings .signin_button.outlook {
-  background-image: url(/img/guidelined/microsoft-signin.png);
+  background-image: url('/img/guidelined/microsoft-signin.png');
   border: 0;
 }
 
 body#settings .signin_button.outlook:active,
 body#settings .signin_button.outlook:focus {
-  background-image: url(/img/guidelined/microsoft-signin-pressed.png);
+  background-image: url('/img/guidelined/microsoft-signin-pressed.png');
 }
 
 body#settings > div#content.setup div#step_2_easy_generating {
@@ -688,7 +687,7 @@ body#settings > div#content.setup div.manual a.back i {
   left: 10px;
 }
 
-body#settings > div#content.setup div.manual input[type=checkbox] {
+body#settings > div#content.setup div.manual input[type="checkbox"] {
   margin: 0 6px;
   transform: scale(1.6);
   position: relative;
@@ -712,7 +711,6 @@ body#settings > div#content.setup div.action_proceed_private {
 body#settings > div#content.setup div.manual div#btn_save_private {
   text-transform: uppercase;
   display: inline-block;
-  -webkit-box-shadow: none;
   box-shadow: none;
   border: 1px solid transparent;
   color: #fff;
@@ -1170,7 +1168,7 @@ td {
   background: white;
   border: 1px solid #f0f0f0;
   border-left: 4px solid #31a217;
-  background-image: url(/img/lock-seamless-bg-alpha.png);
+  background-image: url('/img/lock-seamless-bg-alpha.png');
   padding: 6px 10px;
 }
 
@@ -1214,7 +1212,7 @@ td {
 }
 
 #pgp_block input#answer {
-  padding: 8px 8px;
+  padding: 8px;
   width: 232px;
 }
 
@@ -1508,7 +1506,6 @@ table#compose td.recipients-inputs > div#input_addresses_container div .recipien
   display: inline-block;
   border-radius: 4px;
   position: relative;
-  -webkit-transition: 0.25s;
   transition: 0.25s;
   padding: 2px 6px;
   top: 2px;
@@ -1725,7 +1722,7 @@ table#compose td.input.show_send_from #input_from_settings:hover { opacity: 1; }
 table#compose tr.bottom { background-color: #f5f5f5; }
 
 table#compose td.bottom {
-  padding: 7px 12px 1px 12px;
+  padding: 7px 12px 1px;
   height: 47px;
   border-top: 1px solid #cfcfcf;
 }
@@ -1882,8 +1879,8 @@ table#compose .bottom .icon div {
   margin-top: 4px;
 }
 table#compose .bottom .icon.active { opacity: 1; }
-table#compose .bottom .icon.action_include_pubkey i { background-image: url(/img/footer-icon-pubkey-standard.png); }
-table#compose .bottom .icon.action_include_pubkey.active i { background-image: url(/img/footer-icon-pubkey-active.png); }
+table#compose .bottom .icon.action_include_pubkey i { background-image: url('/img/footer-icon-pubkey-standard.png'); }
+table#compose .bottom .icon.action_include_pubkey.active i { background-image: url('/img/footer-icon-pubkey-active.png'); }
 
 table#compose td.text {
   border-bottom: none;
@@ -1919,7 +1916,7 @@ table#compose td.text div.text_container {
   flex-direction: column;
   height: 100%;
   overflow-x: hidden;
-  background-image: url(/img/lock-seamless-bg-alpha.png);
+  background-image: url('/img/lock-seamless-bg-alpha.png');
 }
 
 /* https://github.com/FlowCrypt/flowcrypt-browser/issues/2420 */
@@ -1989,8 +1986,6 @@ table#compose .intro_container > td > .input_intro {
   padding: 8px;
   border: none;
   height: 50px;
-  -webkit-box-shadow: none !important;
-  -moz-box-shadow: none !important;
   box-shadow: none !important;
   outline: none;
   word-wrap: break-word;
@@ -2174,7 +2169,7 @@ table#compose tr#password_or_pubkey_container td {
   line-height: 1.5;
   position: relative;
 }
-table#compose tr#password_or_pubkey_container td input#input_password::-webkit-input-placeholder { color: #d14836; }
+table#compose tr#password_or_pubkey_container td input#input_password::placeholder { color: #d14836; }
 
 table#compose tr#password_or_pubkey_container td input {
   padding-left: 3px;

@@ -47,6 +47,7 @@
     "jquery": "3.6.0",
     "node-forge": "0.10.0",
     "openpgp": "4.10.10",
+    "postcss-html": "^1.2.0",
     "squire-rte": "1.11.3",
     "sweetalert2": "11.1.7",
     "zxcvbn": "4.4.2"
@@ -66,7 +67,7 @@
     "test_local_unit_enterprise": "npm run-script pretest && node ./node_modules/ava/cli --timeout=20m --verbose --concurrency=1 build/test/test/source/test.js -- UNIT-TESTS --retry=false --pool-size=1 --debug ENTERPRISE-MOCK",
     "test_local_chrome_consumer_mock_headless": "xvfb-run npm run-script test_local_chrome_consumer_mock",
     "test_tslint": "npx tslint --project ./tsconfig.json --config ./conf/tslint.yaml && npx tslint --project ./conf/tsconfig.content_scripts.json --config ./conf/tslint.yaml && npx tslint --project ./conf/tsconfig.test.json --config ./conf/tslint.test.yaml",
-    "test_stylelint": "stylelint extension/css/cryptup.css extension/css/settings.css extension/css/webmail.css extension/**/*.htm",
+    "test_stylelint": "stylelint extension/css/cryptup.css extension/css/settings.css extension/css/webmail.css && stylelint extension/**/*.htm --custom-syntax postcss-html",
     "test_eslint": "eslint --ext ts extension test tooling",
     "test_patterns": "node build/test/test/source/patterns.js",
     "test_async_stack": "node build/test/test/source/async-stack.js",
