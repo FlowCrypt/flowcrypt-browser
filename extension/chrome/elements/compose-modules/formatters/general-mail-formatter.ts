@@ -30,7 +30,7 @@ export class GeneralMailFormatter {
       return { senderKi, msg: await new SignedMsgMailFormatter(view).sendableMsg(newMsgData, signingPrv) };
     }
     // encrypt (optionally sign)
-    const result = await view.storageModule.collectAllKeys(recipientsEmails, newMsgData.from, choices.sign);
+    const result = await view.storageModule.collectSingleFamilyKeys(recipientsEmails, newMsgData.from, choices.sign);
     if (choices.sign && result.senderKi !== undefined) {
       signingPrv = await view.storageModule.decryptSenderKey(result.senderKi);
       if (!signingPrv) {

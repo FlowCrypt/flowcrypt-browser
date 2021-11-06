@@ -31,7 +31,7 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
     });
   }
 
-  // returns undefined if not found
+  // if `type` is supplied, returns undefined if no keys of this type are found
   public getKeyOptional = async (senderEmail: string | undefined, type?: 'openpgp' | 'x509' | undefined) => {
     const keys = await KeyStore.getTypedKeyInfos(this.view.acctEmail);
     let result: KeyInfo | undefined;
@@ -63,7 +63,7 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
 
   // used when encryption is needed
   // returns a set of keys of a single family ('openpgp' or 'x509')
-  public collectAllKeys = async (recipients: string[], senderEmail: string, needSigning: boolean): Promise<CollectKeysResult> => {
+  public collectSingleFamilyKeys = async (recipients: string[], senderEmail: string, needSigning: boolean): Promise<CollectKeysResult> => {
     const contacts = await ContactStore.getEncryptionKeys(undefined, recipients);
     const resultsPerType: { [type: string]: CollectKeysResult } = {};
     const OPENPGP = 'openpgp';
