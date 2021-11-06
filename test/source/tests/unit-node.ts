@@ -874,6 +874,19 @@ jLwe8W9IMt765T5x5oux9MmPDXF05xHfm4qfH/BMO3a802x5u2gJjJjuknrFdgXY
       t.pass();
     });
 
+    ava.default('[unit][OpenPGPKey.create] multiple uids', async t => {
+      const passphrase = 'some pass for testing';
+      const key = await OpenPGPKey.create([
+        { name: 'Key1', email: 'key1@test.com' },
+        { name: 'Key2', email: 'key2@test.com' }], 'curve25519', passphrase, 0);
+      const pub = await KeyUtil.parse(key.public);
+      expect(pub.emails[0]).to.equal('key1@test.com');
+      expect(pub.identities[0]).to.equal('Key1 <key1@test.com>');
+      expect(pub.emails[1]).to.equal('key2@test.com');
+      expect(pub.identities[1]).to.equal('Key2 <key2@test.com>');
+      t.pass();
+    });
+
     ava.default('[OpenPGPKey.fingerprintToLongid] only works for pgp', async t => {
       // shorten pgp fingerprint to become longid
       expect(OpenPGPKey.fingerprintToLongid('3449178FCAAF758E24CB68BE62CB4E6F9ECA6FA1')).to.equal('62CB4E6F9ECA6FA1');
