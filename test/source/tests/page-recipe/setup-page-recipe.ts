@@ -186,7 +186,7 @@ export class SetupPageRecipe extends PageRecipe {
       }
       await settingsPage.waitAndClick('@input-step2bmanualenter-save', { delay: 1 });
       if (fixKey) {
-        await settingsPage.waitAll('@input-compatibility-fix-expire-years');
+        await settingsPage.waitAll('@input-compatibility-fix-expire-years', { timeout: 30000 });
         await settingsPage.selectOption('@input-compatibility-fix-expire-years', '1');
         await settingsPage.waitAndClick('@action-fix-and-import-key');
       }
