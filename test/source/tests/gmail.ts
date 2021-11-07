@@ -213,13 +213,9 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       const signature = ['Limon.Monte@Gmail.Com', 'matching signature'];
       await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, { params: url, content: ['1234'], signature });
       await pageHasSecureReplyContainer(t, browser, gmailPage);
-      // validate pgp_pubkey.htm is rendered
-      const pgpPubkeyUrls = await gmailPage.getFramesUrls(['/chrome/elements/pgp_pubkey.htm'], { sleep: 10, appearIn: 20 });
-      expect(pgpPubkeyUrls.length).to.equal(1);
-      await pageHasSecureReplyContainer(t, browser, gmailPage);
       await testMinimumElementHeight(gmailPage, '.pgp_block.signedMsg', 80);
       await testMinimumElementHeight(gmailPage, '.pgp_block.publicKey', 120);
-      const pubkeyPage = await browser.newPage(t, pgpPubkeyUrls[0]);
+      const pubkeyPage = await gmailPage.getFrame(['/chrome/elements/pgp_pubkey.htm']);
       await pubkeyPage.waitForContent('@container-pgp-pubkey', 'Fingerprint: 50B7 A032 B5E1 FBAB 24BA B205 B362 45FD AC2F BF3D');
     }));
 
@@ -234,11 +230,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       const signature = ['Limon.Monte@Gmail.Com', 'matching signature'];
       await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, { params: url, content: ['1234'], signature });
       await pageHasSecureReplyContainer(t, browser, gmailPage);
-      // validate pgp_pubkey.htm is rendered
-      const pgpPubkeyUrls = await gmailPage.getFramesUrls(['/chrome/elements/pgp_pubkey.htm'], { sleep: 10, appearIn: 20 });
-      expect(pgpPubkeyUrls.length).to.equal(1);
-      await pageHasSecureReplyContainer(t, browser, gmailPage);
-      const pubkeyPage = await browser.newPage(t, pgpPubkeyUrls[0]);
+      const pubkeyPage = await gmailPage.getFrame(['/chrome/elements/pgp_pubkey.htm']);
       await pubkeyPage.waitForContent('@container-pgp-pubkey', 'Fingerprint: 50B7 A032 B5E1 FBAB 24BA B205 B362 45FD AC2F BF3D');
     }));
 
@@ -247,10 +239,8 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       const pgpBlockUrls = await gmailPage.getFramesUrls(['/chrome/elements/pgp_block.htm'], { sleep: 10, appearIn: 20 });
       const url = pgpBlockUrls[0].split('/chrome/elements/pgp_block.htm')[1];
       await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, { params: url, content: ['Encrypted Subject: [ci.test] Thunderbird html signed + encrypted', '1234'] });
-      const urls = await gmailPage.getFramesUrls(['/chrome/elements/pgp_pubkey.htm'], { sleep: 10, appearIn: 20 });
-      expect(urls.length).to.equal(1);
       await pageHasSecureReplyContainer(t, browser, gmailPage);
-      const pubkeyPage = await browser.newPage(t, urls[0]);
+      const pubkeyPage = await gmailPage.getFrame(['/chrome/elements/pgp_pubkey.htm']);
       await pubkeyPage.waitForContent('@container-pgp-pubkey', 'Fingerprint: 50B7 A032 B5E1 FBAB 24BA B205 B362 45FD AC2F BF3D');
     }));
 
@@ -297,6 +287,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       await gmailPage.page.reload();
       replyBox = await pageHasSecureDraft(gmailPage, 'offline reply draft');
       await replyBox.waitAndClick('@action-send');
+      console.log(await gmailPage.page.screenshot({ encoding: 'base64' }));
       await replyBox.waitTillGone('@action-send');
       await gmailPage.page.reload();
       await gmailPage.waitAndClick('.h7:last-child .ajz', { delay: 1 }); // the small triangle which toggles the message details
