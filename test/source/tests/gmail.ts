@@ -1,7 +1,6 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
 import * as ava from 'ava';
-import { Page } from 'puppeteer';
 
 import { BrowserHandle, ControllablePage } from './../browser';
 import { TestVariant, Util } from './../util';
@@ -44,10 +43,13 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
     };
 
     const createSecureDraft = async (t: AvaContext, browser: BrowserHandle, gmailPage: ControllablePage, content: string, params: { offline: boolean } = { offline: false }) => {
+      // TODO(@limonte): for some reason iframe is able to save the draft to the cloud even
+      // after gmailPage.page.setOfflineMode(true) is called. Probable the puppeteer issue, revisit.
+      // const composeBoxFrame = await gmailPage.getFrame(['/chrome/elements/compose.htm']);
       const urls = await gmailPage.getFramesUrls(['/chrome/elements/compose.htm'], { sleep: 1 });
       const composeBox = await browser.newPage(t, urls[0]);
       if (params.offline) {
-        await (composeBox.target as Page).setOfflineMode(true); // go offline mode
+        await composeBox.page.setOfflineMode(true); // go offline mode
       }
       await Util.sleep(4); // the draft isn't being saved if start typing without this delay
       await composeBox.type('@input-body', content, true);
