@@ -43,19 +43,23 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
     };
 
     const createSecureDraft = async (t: AvaContext, browser: BrowserHandle, gmailPage: ControllablePage, content: string, params: { offline: boolean } = { offline: false }) => {
-      // TODO(@limonte): for some reason iframe is able to save the draft to the cloud even
-      // after gmailPage.page.setOfflineMode(true) is called. Probable the puppeteer issue, revisit.
-      // const composeBoxFrame = await gmailPage.getFrame(['/chrome/elements/compose.htm']);
-      const urls = await gmailPage.getFramesUrls(['/chrome/elements/compose.htm'], { sleep: 1 });
-      const composeBox = await browser.newPage(t, urls[0]);
+      let composeBox;
       if (params.offline) {
+        // TODO(@limonte): for some reason iframe is able to save the draft to the cloud even
+        // after gmailPage.page.setOfflineMode(true) is called. Probable the puppeteer issue, revisit.
+        // const composeBoxFrame = await gmailPage.getFrame(['/chrome/elements/compose.htm']);
+        const urls = await gmailPage.getFramesUrls(['/chrome/elements/compose.htm'], { sleep: 1 });
+        composeBox = await browser.newPage(t, urls[0]);
         await composeBox.page.setOfflineMode(true); // go offline mode
+      } else {
+        composeBox = await gmailPage.getFrame(['/chrome/elements/compose.htm']);
       }
       await Util.sleep(5); // the draft isn't being saved if start typing without this delay
       await composeBox.type('@input-body', content, true);
       try {
         if (params.offline) {
           await ComposePageRecipe.waitWhenDraftIsSavedLocally(composeBox);
+          await (composeBox as ControllablePage).close();
         } else {
           await ComposePageRecipe.waitWhenDraftIsSaved(composeBox);
         }
@@ -64,7 +68,6 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
         console.log(await gmailPage.screenshot());
         throw e;
       }
-      await composeBox.close();
     };
 
     const pageHasSecureDraft = async (gmailPage: ControllablePage, expectedContent?: string) => {
@@ -290,14 +293,12 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       }
       await gmailPage.waitAndClick('@secure-reply-button');
       await createSecureDraft(t, browser, gmailPage, 'reply draft');
-      await gmailPage.page.reload({ waitUntil: 'networkidle2' });
-      const urls = await gmailPage.getFramesUrls(['/chrome/elements/compose.htm']);
-      expect(urls.length).to.equal(1);
-      let replyBox = await pageHasSecureDraft(gmailPage, 'reply draft');
       await createSecureDraft(t, browser, gmailPage, 'offline reply draft', { offline: true });
       await gmailPage.page.reload({ waitUntil: 'networkidle2' });
-      replyBox = await pageHasSecureDraft(gmailPage, 'offline reply draft');
-      await replyBox.waitAndClick('@action-send');
+      const replyBox = await pageHasSecureDraft(gmailPage, 'offline reply draft');
+      // await replyBox.waitAndClick('@action-send'); doesn't work for some reason, use keyboard instead
+      await gmailPage.page.keyboard.press('Tab');
+      await gmailPage.page.keyboard.press('Enter');
       await replyBox.waitTillGone('@action-send');
       await gmailPage.page.reload({ waitUntil: 'networkidle2' });
       await gmailPage.waitAndClick('.h7:last-child .ajz', { delay: 1 }); // the small triangle which toggles the message details
