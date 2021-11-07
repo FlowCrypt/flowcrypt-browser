@@ -62,13 +62,13 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
     };
 
     const pageHasSecureDraft = async (gmailPage: ControllablePage, expectedContent?: string) => {
-      const draftFrame = await gmailPage.getFrame(['/chrome/elements/compose.htm', '&draftId=']);
+      const secureDraftFrame = await gmailPage.getFrame(['/chrome/elements/compose.htm', '&draftId=']);
       if (expectedContent) {
-        await draftFrame.waitForContent('@input-body', expectedContent);
+        await secureDraftFrame.waitForContent('@input-body', expectedContent);
       } else {
-        await draftFrame.waitAll('@input-body');
+        await secureDraftFrame.waitAll('@input-body');
       }
-      return draftFrame;
+      return secureDraftFrame;
     };
 
     const pageDoesNotHaveSecureReplyContainer = async (gmailPage: ControllablePage) => {
@@ -78,12 +78,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
 
     const openGmailPage = async (t: AvaContext, browser: BrowserHandle, path: string): Promise<ControllablePage> => {
       const url = TestUrls.gmail(0, path);
-      const gmailPage = await browser.newPage(t, url);
-      await gmailPage.waitAll('@action-secure-compose');
-      if (path) { // gmail does weird things with navigation sometimes, nudge it again
-        await gmailPage.goto(url);
-      }
-      return gmailPage;
+      return await browser.newPage(t, url);
     };
 
     const gotoGmailPage = async (gmailPage: ControllablePage, path: string, category: GmailCategory = 'inbox') => {
