@@ -8,7 +8,6 @@ import { EvaluateFn } from 'puppeteer';
 import { PageRecipe } from './abstract-page-recipe';
 import { Util } from '../../util';
 import { expect } from 'chai';
-import { Page } from 'puppeteer';
 
 type RecipientType = "to" | "cc" | "bcc";
 type Recipients = {
@@ -107,23 +106,11 @@ export class ComposePageRecipe extends PageRecipe {
   }
 
   public static waitWhenDraftIsSaved = async (composePageOrFrame: Controllable) => {
-    try {
-      await composePageOrFrame.verifyContentIsPresentContinuously('@send-btn-note', 'Saved');
-    } catch (e) {
-      console.log('waitWhenDraftIsSaved');
-      console.log(e);
-      console.log(await (composePageOrFrame.target as Page).screenshot({ encoding: 'base64' }));
-    }
+    await composePageOrFrame.verifyContentIsPresentContinuously('@send-btn-note', 'Saved');
   }
 
   public static waitWhenDraftIsSavedLocally = async (composePageOrFrame: Controllable) => {
-    try {
-      await composePageOrFrame.verifyContentIsPresentContinuously('@send-btn-note', 'Draft saved locally (offline)');
-    } catch (e) {
-      console.log('waitWhenDraftIsSaved');
-      console.log(e);
-      console.log(await (composePageOrFrame.target as Page).screenshot({ encoding: 'base64' }));
-    }
+    await composePageOrFrame.verifyContentIsPresentContinuously('@send-btn-note', 'Draft saved locally (offline)');
   }
 
   public static sendAndClose = async (
