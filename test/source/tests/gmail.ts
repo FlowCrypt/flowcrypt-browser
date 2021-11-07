@@ -56,39 +56,22 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       }
       await Util.sleep(5); // the draft isn't being saved if start typing without this delay
       await composeBox.type('@input-body', content, true);
-      try {
-        if (params.offline) {
-          await ComposePageRecipe.waitWhenDraftIsSavedLocally(composeBox);
-          await (composeBox as ControllablePage).close();
-        } else {
-          await ComposePageRecipe.waitWhenDraftIsSaved(composeBox);
-        }
-      } catch (e) {
-        console.log('waitWhenDraftIsSaved');
-        console.log(await gmailPage.screenshot());
-        throw e;
+      if (params.offline) {
+        await ComposePageRecipe.waitWhenDraftIsSavedLocally(composeBox);
+        await (composeBox as ControllablePage).close();
+      } else {
+        await ComposePageRecipe.waitWhenDraftIsSaved(composeBox);
       }
     };
 
     const pageHasSecureDraft = async (gmailPage: ControllablePage, expectedContent?: string) => {
-      try {
-        console.log('pageHasSecureDraft BEFORE getFrame');
-        const urls = await gmailPage.getFramesUrls(['/chrome/elements/compose.htm']);
-        console.log(urls);
-        const secureDraftFrame = await gmailPage.getFrame(['/chrome/elements/compose.htm', '&draftId='], { timeout: 20 });
-        if (expectedContent) {
-          await secureDraftFrame.waitForContent('@input-body', expectedContent);
-        } else {
-          await secureDraftFrame.waitAll('@input-body');
-        }
-        return secureDraftFrame;
-      } catch (e) {
-        console.log('pageHasSecureDraft');
-        const urls = await gmailPage.getFramesUrls(['/chrome/elements/compose.htm']);
-        console.log(urls);
-        console.log(await gmailPage.screenshot());
-        throw e;
+      const secureDraftFrame = await gmailPage.getFrame(['/chrome/elements/compose.htm', '&draftId=']);
+      if (expectedContent) {
+        await secureDraftFrame.waitForContent('@input-body', expectedContent);
+      } else {
+        await secureDraftFrame.waitAll('@input-body');
       }
+      return secureDraftFrame;
     };
 
     const pageDoesNotHaveSecureReplyContainer = async (gmailPage: ControllablePage) => {
