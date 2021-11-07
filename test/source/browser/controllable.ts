@@ -273,11 +273,11 @@ abstract class ControllableBase {
     await this.waitAndClick(`@ui-modal-${type}-${clickBtn}`);
   }
 
-  public waitAndClick = async (selector: string, { delay = 0.1, confirmGone = false, retryErrs = false, sleepWhenDone }:
-    { delay?: number, confirmGone?: boolean, retryErrs?: boolean, sleepWhenDone?: number } = {}) => {
+  public waitAndClick = async (selector: string, { delay = 0.1, timeout = 10000, confirmGone = false, retryErrs = false, sleepWhenDone }:
+    { delay?: number, timeout?: number, confirmGone?: boolean, retryErrs?: boolean, sleepWhenDone?: number } = {}) => {
     for (const i of [1, 2, 3]) {
       this.log(`wait_and_click(i${i}):1:${selector}`);
-      await this.waitAll(selector);
+      await this.waitAll(selector, { timeout });
       this.log(`wait_and_click(i${i}):2:${selector}`);
       await Util.sleep(delay);
       this.log(`wait_and_click(i${i}):3:${selector}`);
