@@ -286,8 +286,9 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       await createSecureDraft(t, browser, gmailPage, 'offline reply draft', { offline: true });
       await gmailPage.page.reload();
       replyBox = await pageHasSecureDraft(gmailPage, 'offline reply draft');
-      await replyBox.waitAndClick('@action-send');
-      console.log(await gmailPage.page.screenshot({ encoding: 'base64' }));
+      // await replyBox.waitAndClick('@action-send'); doesn't work for some reason, use keyboard instead
+      await gmailPage.page.keyboard.press('Tab');
+      await gmailPage.page.keyboard.press('Enter');
       await replyBox.waitTillGone('@action-send');
       await gmailPage.page.reload();
       await gmailPage.waitAndClick('.h7:last-child .ajz', { delay: 1 }); // the small triangle which toggles the message details
