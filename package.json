@@ -20,7 +20,7 @@
     "chai": "4.3.4",
     "chai-as-promised": "7.1.1",
     "del": "6.0.0",
-    "eslint": "7.32.0",
+    "eslint": "8.2.0",
     "eslint-plugin-header": "3.1.1",
     "eslint-plugin-no-only-tests": "2.6.0",
     "fc-node-requests": "git+https://git@github.com/FlowCrypt/node-requests.git",
