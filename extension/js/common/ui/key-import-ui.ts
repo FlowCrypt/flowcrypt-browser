@@ -75,7 +75,7 @@ export class KeyImportUi {
       }
     });
     $('.line.unprotected_key_create_pass_phrase .action_use_random_pass_phrase').click(Ui.event.handle(() => {
-      $('.source_paste_container .input_passphrase').val(PgpPwd.random()).keyup();
+      $('.source_paste_container .input_passphrase').val(PgpPwd.random()).trigger('input');
       $('.input_passphrase').attr('type', 'text');
       $('#e_rememberPassphrase').prop('checked', true);
     }));
