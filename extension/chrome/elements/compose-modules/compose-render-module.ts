@@ -8,7 +8,6 @@ import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Catch } from '../../../js/common/platform/catch.js';
 import { KeyImportUi } from '../../../js/common/ui/key-import-ui.js';
 import { Lang } from '../../../js/common/lang.js';
-import { RecipientType } from '../../../js/common/api/shared/api.js';
 import { Recipients } from '../../../js/common/api/email-provider/email-provider-api.js';
 import { SendableMsg } from '../../../js/common/api/email-provider/sendable-msg.js';
 import { Str } from '../../../js/common/core/common.js';
@@ -206,18 +205,13 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
   }
 
   private actionActivateReplyBoxHandler = async (target: HTMLElement) => {
-    const typesToDelete: RecipientType[] = [];
     const method = $(target).attr('id');
     if (method === 'a_forward') {
       this.responseMethod = 'forward';
-      typesToDelete.push('to');
-      typesToDelete.push('cc');
-      typesToDelete.push('bcc');
+      this.view.recipientsModule.clearRecipients();
     } else if (method === 'a_reply') {
-      typesToDelete.push('cc');
-      typesToDelete.push('bcc');
+      this.view.recipientsModule.clearRecipientsForReply();
     }
-    this.view.recipientsModule.deleteRecipientsBySendingType(typesToDelete);
     await this.renderReplyMsgComposeTable();
   }
 

@@ -160,9 +160,23 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     await this.evaluateRecipients(newRecipients, triggerCallback);
   }
 
-  public deleteRecipientsBySendingType = (types: ('to' | 'cc' | 'bcc')[]) => {
-    for (const recipient of this.addedRecipients.filter(r => types.includes(r.sendingType))) {
+  public clearRecipients = () => {
+    for (const recipient of this.addedRecipients) {
       this.removeRecipient(recipient.element);
+    }
+  }
+
+  public clearRecipientsForReply = () => {
+    for (const recipient of this.addedRecipients.filter(r => r.sendingType !== 'to')) {
+      this.removeRecipient(recipient.element);
+    }
+    // reply only to the sender if the message is not from the same account
+    // otherwise, reply to all 'to' recipients
+    const from = this.view.replyParams?.fromOriginal;
+    if (from !== this.view.acctEmail) {
+      for (const recipient of this.addedRecipients.filter(r => r.email !== from)) {
+        this.removeRecipient(recipient.element);
+      }
     }
   }
 

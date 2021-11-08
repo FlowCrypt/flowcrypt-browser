@@ -19,6 +19,7 @@ export type ReplyParams = {
   cc: string[];
   bcc: string[];
   from: string;
+  fromOriginal?: string;
   subject: string;
   inReplyTo?: string;
 };
