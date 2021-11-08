@@ -331,13 +331,12 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
     ava.default('mail.google.com - plain reply draft', testWithBrowser('ci.tests.gmail', async (t, browser) => {
       const gmailPage = await openGmailPage(t, browser, '/FMfcgzGkbDRNgcPktjdSxpJVhZlZqpTr'); // encrypted convo
       await gmailPage.waitAndClick('[data-tooltip="Reply"]');
-      await Util.sleep(5);
+      await gmailPage.waitTillFocusIsIn('div[aria-label="Message Body"]');
       await gmailPage.type('div[aria-label="Message Body"]', 'plain reply', true);
-      await gotoGmailPage(gmailPage, '/'); // go to Inbox
-      await Util.sleep(1);
-      await gotoGmailPage(gmailPage, '/FMfcgzGkbDRNgcPktjdSxpJVhZlZqpTr'); // go back to encrypted convo with plain reply
+      await gmailPage.waitForContent('.oG.aOy', 'Draft saved');
+      await gmailPage.page.reload({ waitUntil: 'networkidle2' });
       await pageDoesNotHaveSecureReplyContainer(gmailPage);
-      await gmailPage.waitForContent('div[aria-label="Message Body"]', 'plain reply');
+      await gmailPage.waitForContent('div[aria-label="Message Body"]', 'plain reply', 30);
       await gmailPage.click('[aria-label^="Discard draft"]');
     }));
 
