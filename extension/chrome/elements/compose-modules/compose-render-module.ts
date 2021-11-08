@@ -281,7 +281,7 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
   private addComposeTableHandlers = async () => {
     this.view.S.cached('body').keydown(this.view.setHandler((el, ev) => this.onBodyKeydownHandler(el, ev)));
     this.view.S.cached('input_to').bind('paste', this.view.setHandler((el, ev) => this.onRecipientPasteHandler(el, ev)));
-    this.view.inputModule.squire.addEventListener('keyup', () => this.view.S.cached('send_btn_note').text(''));
+    this.view.inputModule.squire.addEventListener('input', () => this.view.S.cached('send_btn_note').text(''));
     this.view.S.cached('input_addresses_container_inner').click(this.view.setHandler(() => this.onRecipientsClickHandler(), this.view.errModule.handle(`focus recipients`)));
     this.view.S.cached('input_addresses_container_inner').children().click(() => false);
     this.view.S.cached('input_subject').bind('input', this.view.setHandler((el: HTMLInputElement) => this.subjectRTLHandler(el))).trigger('input');

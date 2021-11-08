@@ -195,7 +195,7 @@ export class KeyImportUi {
     input.parent().append(validationElements.progressBarElement); // xss-direct
     input.parent().append(validationElements.passwordResultElement); // xss-direct
     const validation = Ui.event.prevent('spree', validate);
-    input.on('keyup', validation);
+    input.on('input', validation);
     const removeValidationElements = () => {
       validationElements.passwordResultElement.remove();
       validationElements.progressBarElement.remove();
