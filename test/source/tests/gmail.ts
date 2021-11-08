@@ -46,7 +46,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       let composeBox;
       if (params.offline) {
         // TODO(@limonte): for some reason iframe is able to save the draft to the cloud even
-        // after gmailPage.page.setOfflineMode(true) is called. Probable the puppeteer issue, revisit.
+        // after gmailPage.page.setOfflineMode(true) is called. Probably, the puppeteer issue, revisit.
         // const composeBoxFrame = await gmailPage.getFrame(['/chrome/elements/compose.htm']);
         const urls = await gmailPage.getFramesUrls(['/chrome/elements/compose.htm'], { sleep: 1 });
         composeBox = await browser.newPage(t, urls[0]);
