@@ -89,7 +89,7 @@ View.run(class ChangePassPhraseView extends View {
   }
 
   private actionUseAnotherPassPhraseHandler = () => {
-    $('#new_pass_phrase').val('').keyup();
+    $('#new_pass_phrase').val('').trigger('input');
     $('#new_pass_phrase_confirm').val('');
     this.displayBlock('step_1_enter_new');
     $('#new_pass_phrase').focus();

@@ -54,7 +54,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
   public setHandlers = (): void => {
     let preventSearchContacts = false;
     const inputs = this.view.S.cached('recipients_inputs');
-    inputs.on('keyup', this.view.setHandlerPrevent('veryslowspree', async (target) => {
+    inputs.on('input', this.view.setHandlerPrevent('veryslowspree', async (target) => {
       if (!preventSearchContacts) {
         await this.searchContacts($(target));
       }
