@@ -246,7 +246,7 @@ export class SetupPageRecipe extends PageRecipe {
 
   public static autoKeygen = async (settingsPage: ControllablePage, { expectErr, enterPp }: {
     expectErr?: { title: string, text: string },
-    enterPp?: { passphrase: string, checks?: SavePassphraseChecks }
+    enterPp?: { passphrase: string, expectPostitNoteReminder: boolean, checks?: SavePassphraseChecks }
   } = {}): Promise<void> => {
     if (enterPp) {
       await Util.sleep(3);
@@ -260,7 +260,7 @@ export class SetupPageRecipe extends PageRecipe {
         expect(await settingsPage.isChecked('@input-step2ekm-save-passphrase')).to.equal(enterPp.checks.isSavePassphraseChecked);
       }
       await settingsPage.waitAndClick('@input-step2ekm-continue');
-      if (enterPp.checks?.postitNoteReminder !== false) {
+      if (enterPp.expectPostitNoteReminder) {
         await settingsPage.waitAndRespondToModal('confirm-checkbox', 'confirm', 'Please write down your pass phrase');
       }
     }

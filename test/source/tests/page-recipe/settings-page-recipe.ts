@@ -14,7 +14,6 @@ import { KeyUtil } from '../../core/crypto/key';
 export type SavePassphraseChecks = {
   isSavePassphraseHidden?: boolean | undefined,
   isSavePassphraseChecked?: boolean | undefined
-  postitNoteReminder?: boolean | undefined
 };
 
 export class SettingsPageRecipe extends PageRecipe {
