@@ -180,7 +180,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       }
     }
     // otherwise, reply to all 'to' recipients including the sender
-    else if (myEmail && this.view.replyParams?.to) {
+    else if (myEmail && this.view.replyParams?.to && !this.view.replyParams.to.includes(myEmail)) {
       await this.addRecipientsAndShowPreview({ to: [myEmail] });
     }
   }
