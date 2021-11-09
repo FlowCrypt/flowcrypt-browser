@@ -167,7 +167,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     }
   }
 
-  public clearRecipientsForReply = () => {
+  public clearRecipientsForReply = async () => {
     for (const recipient of this.addedRecipients.filter(r => r.sendingType !== 'to')) {
       this.removeRecipient(recipient.element);
     }
@@ -181,7 +181,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     }
     // otherwise, reply to all 'to' recipients including the sender
     else if (myEmail && this.view.replyParams?.to) {
-      this.addRecipientsAndShowPreview({ to: [myEmail] });
+      await this.addRecipientsAndShowPreview({ to: [myEmail] });
     }
   }
 

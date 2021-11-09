@@ -47,7 +47,7 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
         this.view.recipientsModule.addRecipients(recipients, false).catch(Catch.reportErr);
         // await this.view.composerContacts.addRecipientsAndShowPreview(recipients);
         if (this.view.skipClickPrompt) { // TODO: fix issue when loading recipients
-          this.view.recipientsModule.clearRecipientsForReply();
+          await this.view.recipientsModule.clearRecipientsForReply();
           await this.renderReplyMsgComposeTable();
         } else {
           $('#a_reply,#a_reply_all,#a_forward')
@@ -211,7 +211,7 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
       this.responseMethod = 'forward';
       this.view.recipientsModule.clearRecipients();
     } else if (method === 'a_reply') {
-      this.view.recipientsModule.clearRecipientsForReply();
+      await this.view.recipientsModule.clearRecipientsForReply();
     }
     await this.renderReplyMsgComposeTable();
   }
