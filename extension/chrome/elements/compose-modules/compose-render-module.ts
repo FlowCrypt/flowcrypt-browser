@@ -47,6 +47,7 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
         this.view.recipientsModule.addRecipients(recipients, false).catch(Catch.reportErr);
         // await this.view.composerContacts.addRecipientsAndShowPreview(recipients);
         if (this.view.skipClickPrompt) { // TODO: fix issue when loading recipients
+          this.view.recipientsModule.clearRecipientsForReply();
           await this.renderReplyMsgComposeTable();
         } else {
           $('#a_reply,#a_reply_all,#a_forward')

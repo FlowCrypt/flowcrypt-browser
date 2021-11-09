@@ -782,7 +782,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
             event.preventDefault();
             this.injector.openComposeWin(draftId);
           });
-          offlineDraftsContainer.append(draftLink ); // xss-safe-value
+          offlineDraftsContainer.append(draftLink); // xss-safe-value
         }
       } else {
         offlineDraftsContainer.remove();
