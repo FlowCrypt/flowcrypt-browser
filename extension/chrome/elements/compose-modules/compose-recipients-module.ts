@@ -181,6 +181,12 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     }
   }
 
+  public clearMyEmailFromRecipients = () => {
+    for (const recipient of this.addedRecipients.filter(r => r.email === this.view.acctEmail)) {
+      this.removeRecipient(recipient.element);
+    }
+  }
+
   public showContacts = () => {
     this.view.S.cached('contacts').css('display', 'block');
   }

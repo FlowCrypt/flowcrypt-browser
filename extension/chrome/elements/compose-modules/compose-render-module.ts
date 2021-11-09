@@ -211,6 +211,8 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
       this.view.recipientsModule.clearRecipients();
     } else if (method === 'a_reply') {
       this.view.recipientsModule.clearRecipientsForReply();
+    } else if (method === 'a_reply_all') {
+      this.view.recipientsModule.clearMyEmailFromRecipients();
     }
     await this.renderReplyMsgComposeTable();
   }

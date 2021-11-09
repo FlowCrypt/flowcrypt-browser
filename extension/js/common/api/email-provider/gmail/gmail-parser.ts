@@ -153,10 +153,6 @@ export class GmailParser {
     if (headers.replyTo) {
       return { to: [headers.replyTo], cc: [], bcc: [], from: myEmail, fromOriginal: headers.from, subject: headers.subject };
     }
-    const replyToWithoutMyEmail = headers.to.filter(e => myEmail !== e); // thinking about moving it in another place
-    if (replyToWithoutMyEmail.length) { // when user sends emails it itself here will be 0 elements
-      headers.to = replyToWithoutMyEmail;
-    }
     return { to: headers.to, cc: headers.cc, bcc: headers.bcc, from: myEmail, fromOriginal: headers.from, subject: headers.subject };
   }
 
