@@ -3,6 +3,7 @@
 import * as ava from 'ava';
 
 import { BrowserHandle, ControllablePage } from './../browser';
+import { Controllable } from './../browser/controllable';
 import { TestVariant, Util } from './../util';
 import { AvaContext } from './tooling';
 import { BrowserRecipe } from './tooling/browser-recipe';
@@ -43,7 +44,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
     };
 
     const createSecureDraft = async (t: AvaContext, browser: BrowserHandle, gmailPage: ControllablePage, content: string, params: { offline: boolean } = { offline: false }) => {
-      let composeBox;
+      let composeBox: Controllable | undefined;
       if (params.offline) {
         // TODO(@limonte): for some reason iframe is able to save the draft to the cloud even
         // after gmailPage.page.setOfflineMode(true) is called. Probably, the puppeteer issue, revisit.
