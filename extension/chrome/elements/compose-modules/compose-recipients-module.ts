@@ -161,7 +161,8 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
   }
 
   public clearRecipients = () => {
-    for (const recipient of this.addedRecipients) {
+    const addedRecipientsCopy = [...this.addedRecipients];
+    for (const recipient of addedRecipientsCopy) {
       this.removeRecipient(recipient.element);
     }
   }
