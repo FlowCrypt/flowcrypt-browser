@@ -95,11 +95,10 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
     await Ui.time.wait(() => !this.currentlySavingDraft ? true : undefined);
     if (this.view.draftId) {
       try {
-        if (this.isLocalDraftId(this.view.draftId)) {
-          await this.localDraftRemove();
-        } else {
+        if (!this.isLocalDraftId(this.view.draftId)) {
           await this.view.emailProvider.draftDelete(this.view.draftId);
         }
+        await this.localDraftRemove();
         this.view.draftId = '';
       } catch (e) {
         if (ApiErr.isAuthErr(e)) {
