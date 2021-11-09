@@ -108,9 +108,9 @@ export class SetupPageRecipe extends PageRecipe {
   ) {
     if (!noPrvCreateOrgRule) {
       if (usedPgpBefore) {
-        await settingsPage.waitAndClick('@action-step0foundkey-choose-manual-enter', { retryErrs: true });
+        await settingsPage.waitAndClick('@action-step0foundkey-choose-manual-enter', { timeout: 30, retryErrs: true });
       } else {
-        await settingsPage.waitAndClick('@action-step1easyormanual-choose-manual-enter', { retryErrs: true });
+        await settingsPage.waitAndClick('@action-step1easyormanual-choose-manual-enter', { timeout: 30, retryErrs: true });
       }
     }
     key = key || Config.key(keyTitle);
@@ -186,7 +186,7 @@ export class SetupPageRecipe extends PageRecipe {
       }
       await settingsPage.waitAndClick('@input-step2bmanualenter-save', { delay: 1 });
       if (fixKey) {
-        await settingsPage.waitAll('@input-compatibility-fix-expire-years');
+        await settingsPage.waitAll('@input-compatibility-fix-expire-years', { timeout: 30 });
         await settingsPage.selectOption('@input-compatibility-fix-expire-years', '1');
         await settingsPage.waitAndClick('@action-fix-and-import-key');
       }
@@ -284,9 +284,9 @@ export class SetupPageRecipe extends PageRecipe {
   private static createBegin = async (settingsPage: ControllablePage, keyTitle: string, { key, usedPgpBefore = false }: { key?: { passphrase: string }, usedPgpBefore?: boolean } = {}) => {
     const k = key || Config.key(keyTitle);
     if (usedPgpBefore) {
-      await settingsPage.waitAndClick('@action-step0foundkey-choose-manual-create');
+      await settingsPage.waitAndClick('@action-step0foundkey-choose-manual-create', { timeout: 30 });
     } else {
-      await settingsPage.waitAndClick('@action-step1easyormanual-choose-manual-create', { retryErrs: true });
+      await settingsPage.waitAndClick('@action-step1easyormanual-choose-manual-create', { timeout: 30, retryErrs: true });
     }
     await settingsPage.waitAndType('@input-step2bmanualcreate-passphrase-1', k.passphrase);
     await settingsPage.waitAndType('@input-step2bmanualcreate-passphrase-2', k.passphrase);
