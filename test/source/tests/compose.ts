@@ -440,7 +440,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         ].join('\n'));
       }));
 
-      ava.default(`cancelling passphrase dialog in composer (${inputMethod})`, testWithBrowser('ci.tests.gmail', async (t, browser) => {
+      ava.default(`compose - pass phrase dialog - dialog cancel (${inputMethod})`, testWithBrowser('ci.tests.gmail', async (t, browser) => {
         const k = Config.key('ci.tests.gmail');
         const acctEmail = 'ci.tests.gmail@flowcrypt.test';
         const settingsPage = await browser.newPage(t, TestUrls.extensionSettings(acctEmail));
@@ -453,11 +453,58 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         expect(passphraseDialog.frame.isDetached()).to.equal(false);
         await Util.sleep(0.5);
         expect(await composeFrame.read('@action-send')).to.eq('Signing...');
+        await passphraseDialog.waitForContent('@passphrase-text', 'Enter FlowCrypt pass phrase to sign email');
         await ComposePageRecipe.cancelPassphraseDialog(inboxPage, inputMethod);
         await Util.sleep(0.5);
         expect(await composeFrame.read('@action-send')).to.eq('Sign and Send');
       }));
+
+      ava.default(`compose - non-primary pass phrase dialog - dialog cancel (${inputMethod})`, testWithBrowser('ci.tests.gmail', async (t, browser) => {
+        const k = Config.key('ci.tests.gmail');
+        const acctEmail = 'ci.tests.gmail@flowcrypt.test';
+        const settingsPage = await browser.newPage(t, TestUrls.extensionSettings(acctEmail));
+        const forgottenPassphrase = "i'll have to re-enter it";
+        await SettingsPageRecipe.addKeyTest(t, browser, acctEmail, testConstants.testKeyMultipleSmimeCEA2D53BB9D24871, forgottenPassphrase, {}, true);
+        await SettingsPageRecipe.forgetAllPassPhrasesInStorage(settingsPage, k.passphrase);
+        const inboxPage = await browser.newPage(t, TestUrls.extensionInbox(acctEmail));
+        const composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
+        await ComposePageRecipe.fillMsg(composeFrame, { to: 'smime@recipient.com' }, 'S/MIME message', undefined);
+        await ComposePageRecipe.pastePublicKeyManually(composeFrame, inboxPage, 'smime@recipient.com',
+          testConstants.testCertificateMultipleSmimeCEA2D53BB9D24871);
+        await composeFrame.waitAndClick('@action-send', { delay: 2 });
+        const passphraseDialog = await inboxPage.getFrame(['passphrase.htm']);
+        expect(passphraseDialog.frame.isDetached()).to.equal(false);
+        await Util.sleep(0.5);
+        expect(await composeFrame.read('@action-send')).to.eq('Loading...');
+        await passphraseDialog.waitForContent('@passphrase-text', 'Enter FlowCrypt pass phrase to sign email');
+        await passphraseDialog.waitForContent('@which-key', '47FB 0318 3E03 A8ED 44E3 BBFC CEA2 D53B B9D2 4871');
+        await ComposePageRecipe.cancelPassphraseDialog(inboxPage, inputMethod);
+        await Util.sleep(0.5);
+        expect(await composeFrame.read('@action-send')).to.eq('Encrypt, Sign and Send');
+      }));
     } // end of tests per inputMethod
+
+    ava.default(`compose - signed and encrypted S/MIME message - pass phrase dialog`, testWithBrowser('ci.tests.gmail', async (t, browser) => {
+      const k = Config.key('ci.tests.gmail');
+      const acctEmail = 'ci.tests.gmail@flowcrypt.test';
+      const settingsPage = await browser.newPage(t, TestUrls.extensionSettings(acctEmail));
+      const forgottenPassphrase = "i'll have to re-enter it";
+      await SettingsPageRecipe.addKeyTest(t, browser, acctEmail, testConstants.testKeyMultipleSmimeCEA2D53BB9D24871, forgottenPassphrase, {}, true);
+      await SettingsPageRecipe.forgetAllPassPhrasesInStorage(settingsPage, k.passphrase);
+      const inboxPage = await browser.newPage(t, TestUrls.extensionInbox(acctEmail));
+      const composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
+      await ComposePageRecipe.fillMsg(composeFrame, { to: 'smime@recipient.com' }, t.title, undefined);
+      await ComposePageRecipe.pastePublicKeyManually(composeFrame, inboxPage, 'smime@recipient.com',
+        testConstants.testCertificateMultipleSmimeCEA2D53BB9D24871);
+      await composeFrame.waitAndClick('@action-send', { delay: 2 });
+      const passphraseDialog = await inboxPage.getFrame(['passphrase.htm']);
+      expect(passphraseDialog.frame.isDetached()).to.equal(false);
+      await passphraseDialog.waitForContent('@passphrase-text', 'Enter FlowCrypt pass phrase to sign email');
+      await passphraseDialog.waitForContent('@which-key', '47FB 0318 3E03 A8ED 44E3 BBFC CEA2 D53B B9D2 4871');
+      await passphraseDialog.waitAndType('@input-pass-phrase', forgottenPassphrase);
+      await passphraseDialog.waitAndClick('@action-confirm-pass-phrase-entry');
+      await inboxPage.waitTillGone('@container-new-message');
+    }));
 
     ava.default('compose - reply - signed message', testWithBrowser('compatibility', async (t, browser) => {
       const appendUrl = 'threadId=15f7f5face7101db&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___&replyMsgId=15f7f5face7101db';
