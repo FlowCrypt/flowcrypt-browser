@@ -161,4 +161,15 @@ export class ComposePageRecipe extends PageRecipe {
     await ComposePageRecipe.pastePublicKeyManuallyNoClose(composeFrame, inboxPage, recipient, pub);
     await inboxPage.waitTillGone('@dialog-add-pubkey');
   };
+
+  public static cancelPassphraseDialog = async (page: ControllablePage, inputMethod: 'mouse' | 'keyboard' | string) => {
+    const passPhraseFrame = await page.getFrame(['passphrase.htm']);
+    if (inputMethod === 'mouse') {
+      await passPhraseFrame.waitAndClick('@action-cancel-pass-phrase-entry');
+    } else if (inputMethod === 'keyboard') {
+      await page.press('Escape');
+    }
+    await page.waitTillGone('@dialog');
+    expect(passPhraseFrame.frame.isDetached()).to.equal(true);
+  };
 }

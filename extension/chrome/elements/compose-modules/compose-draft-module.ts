@@ -13,7 +13,7 @@ import { Env } from '../../../js/common/browser/env.js';
 import { GlobalStore } from '../../../js/common/platform/store/global-store.js';
 import { GmailRes } from '../../../js/common/api/email-provider/gmail/gmail-parser.js';
 import { MsgBlockParser } from '../../../js/common/core/msg-block-parser.js';
-import { MsgUtil } from '../../../js/common/core/crypto/pgp/msg-util.js';
+import { DecryptErrTypes, MsgUtil } from '../../../js/common/core/crypto/pgp/msg-util.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { Str, Url } from '../../../js/common/core/common.js';
 import { Xss } from '../../../js/common/platform/xss.js';
@@ -22,6 +22,7 @@ import { ComposeView } from '../compose.js';
 import { KeyStore } from '../../../js/common/platform/store/key-store.js';
 import { KeyUtil } from '../../../js/common/core/crypto/key.js';
 import { SendableMsg, InvalidRecipientError } from '../../../js/common/api/email-provider/sendable-msg.js';
+import { PassphraseStore } from '../../../js/common/platform/store/passphrase-store.js';
 
 export class ComposeDraftModule extends ViewModule<ComposeView> {
 
@@ -289,28 +290,27 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
       return await this.abortAndRenderReplyMsgComposeTableIfIsReplyBox('!rawBlock');
     }
     const encryptedData = rawBlock.content instanceof Buf ? rawBlock.content : Buf.fromUtfStr(rawBlock.content);
-    const passphrase = await this.view.storageModule.passphraseGet();
-    if (typeof passphrase !== 'undefined') {
-      const decrypted = await MsgUtil.decryptMessage({ kisWithPp: await KeyStore.getAllWithOptionalPassPhrase(this.view.acctEmail), encryptedData });
-      if (!decrypted.success) {
-        return await this.abortAndRenderReplyMsgComposeTableIfIsReplyBox('!decrypted.success');
+    const decrypted = await MsgUtil.decryptMessage({ kisWithPp: await KeyStore.getAllWithOptionalPassPhrase(this.view.acctEmail), encryptedData });
+    if (!decrypted.success) {
+      if (decrypted.error.type === DecryptErrTypes.needPassphrase) {
+        // todo: how to exit the recursion?
+        await this.renderPPDialogAndWaitWhenPPEntered(decrypted.longids.needPassphrase);
+        await this.decryptAndRenderDraft(encrypted);
       }
-      this.wasMsgLoadedFromDraft = true;
-      this.view.S.cached('prompt').css({ display: 'none' });
-      const { blocks, isRichText } = await MsgBlockParser.fmtDecryptedAsSanitizedHtmlBlocks(decrypted.content, 'IMG-KEEP');
-      const sanitizedContent = blocks.find(b => b.type === 'decryptedHtml')?.content;
-      if (!sanitizedContent) {
-        return await this.abortAndRenderReplyMsgComposeTableIfIsReplyBox('!sanitizedContent');
-      }
-      if (isRichText) {
-        this.view.sendBtnModule.popover.toggleItemTick($('.action-toggle-richtext-sending-option'), 'richtext', true);
-      }
-      this.view.inputModule.inputTextHtmlSetSafely(sanitizedContent.toString());
-      this.view.inputModule.squire.focus();
-    } else {
-      await this.renderPPDialogAndWaitWhenPPEntered();
-      await this.decryptAndRenderDraft(encrypted);
+      return await this.abortAndRenderReplyMsgComposeTableIfIsReplyBox('!decrypted.success');
     }
+    this.wasMsgLoadedFromDraft = true;
+    this.view.S.cached('prompt').css({ display: 'none' });
+    const { blocks, isRichText } = await MsgBlockParser.fmtDecryptedAsSanitizedHtmlBlocks(decrypted.content, 'IMG-KEEP');
+    const sanitizedContent = blocks.find(b => b.type === 'decryptedHtml')?.content;
+    if (!sanitizedContent) {
+      return await this.abortAndRenderReplyMsgComposeTableIfIsReplyBox('!sanitizedContent');
+    }
+    if (isRichText) {
+      this.view.sendBtnModule.popover.toggleItemTick($('.action-toggle-richtext-sending-option'), 'richtext', true);
+    }
+    this.view.inputModule.inputTextHtmlSetSafely(sanitizedContent.toString());
+    this.view.inputModule.squire.focus();
   }
 
   private hasBodyChanged = (msgBody: string) => {
@@ -336,7 +336,7 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
     return false;
   }
 
-  private renderPPDialogAndWaitWhenPPEntered = async () => {
+  private renderPPDialogAndWaitWhenPPEntered = async (longids: string[]) => {
     const promptText = `<div>Waiting for <a href="#" class="action_open_passphrase_dialog">pass phrase</a> to open draft..</div>`;
     if (this.view.isReplyBox) {
       Xss.sanitizeRender(this.view.S.cached('prompt'), promptText).css({ display: 'block' });
@@ -346,11 +346,10 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
       BrowserMsg.send.setActiveWindow(this.view.parentTabId, { frameId: this.view.frameId });
     }
     this.view.S.cached('prompt').find('a.action_open_passphrase_dialog').click(this.view.setHandler(async () => {
-      const primaryKi = await KeyStore.getFirstRequired(this.view.acctEmail);
-      BrowserMsg.send.passphraseDialog(this.view.parentTabId, { type: 'draft', longids: [primaryKi.longid] });
+      BrowserMsg.send.passphraseDialog(this.view.parentTabId, { type: 'draft', longids });
     }));
     this.view.S.cached('prompt').find('a.action_close').click(this.view.setHandler(() => this.view.renderModule.closeMsg()));
-    await this.view.storageModule.whenMasterPassphraseEntered();
+    await PassphraseStore.waitUntilPassphraseChanged(this.view.acctEmail, longids, 1000, this.view.ppChangedPromiseCancellation);
   }
 
   private abortAndRenderReplyMsgComposeTableIfIsReplyBox = async (reason: string) => {

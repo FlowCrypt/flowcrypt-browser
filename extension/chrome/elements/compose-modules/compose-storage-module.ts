@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { Bm, BrowserMsg } from '../../../js/common/browser/browser-msg.js';
+import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { KeyInfo, KeyUtil, Key, PubkeyResult } from '../../../js/common/core/crypto/key.js';
 import { ApiErr } from '../../../js/common/api/shared/api-error.js';
 import { Assert } from '../../../js/common/assert.js';
@@ -19,18 +19,6 @@ import { Settings } from '../../../js/common/settings.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 
 export class ComposeStorageModule extends ViewModule<ComposeView> {
-
-  private passphraseInterval: number | undefined;
-
-  public setHandlers = () => {
-    BrowserMsg.addListener('passphrase_entry', async ({ entered }: Bm.PassphraseEntry) => {
-      if (!entered) {
-        clearInterval(this.passphraseInterval);
-        this.view.sendBtnModule.resetSendBtn();
-      }
-    });
-  }
-
   // if `type` is supplied, returns undefined if no keys of this type are found
   public getKeyOptional = async (senderEmail: string | undefined, type?: 'openpgp' | 'x509' | undefined) => {
     const keys = await KeyStore.getTypedKeyInfos(this.view.acctEmail);
@@ -98,7 +86,7 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
     return Object.entries(resultsPerType).sort((a, b) => rank(a) - rank(b))[0][1];
   }
 
-  public passphraseGet = async (senderKi?: { longid: string }) => {
+  public passphraseGet = async (senderKi: { longid: string }) => {
     if (!senderKi) {
       senderKi = await KeyStore.getFirstRequired(this.view.acctEmail);
     }
@@ -109,10 +97,11 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
     const prv = await KeyUtil.parse(senderKi.private);
     const passphrase = await this.passphraseGet(senderKi);
     if (typeof passphrase === 'undefined' && !prv.fullyDecrypted) {
-      BrowserMsg.send.passphraseDialog(this.view.parentTabId, { type: 'sign', longids: [senderKi.longid] });
-      if ((typeof await this.whenMasterPassphraseEntered(60)) !== 'undefined') { // pass phrase entered
+      const longids = [senderKi.longid];
+      BrowserMsg.send.passphraseDialog(this.view.parentTabId, { type: 'sign', longids });
+      if (await PassphraseStore.waitUntilPassphraseChanged(this.view.acctEmail, longids, 1000, this.view.ppChangedPromiseCancellation)) {
         return await this.decryptSenderKey(senderKi);
-      } else { // timeout - reset - no passphrase entered
+      } else { // reset - no passphrase entered
         this.view.sendBtnModule.resetSendBtn();
         return undefined;
       }
@@ -246,23 +235,6 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
     } catch (e) {
       ApiErr.reportIfSignificant(e);
     }
-  }
-
-  public whenMasterPassphraseEntered = async (secondsTimeout?: number): Promise<string | undefined> => {
-    clearInterval(this.passphraseInterval);
-    const timeoutAt = secondsTimeout ? Date.now() + secondsTimeout * 1000 : undefined;
-    return await new Promise(resolve => {
-      this.passphraseInterval = Catch.setHandledInterval(async () => {
-        const passphrase = await this.passphraseGet();
-        if (typeof passphrase !== 'undefined') {
-          clearInterval(this.passphraseInterval);
-          resolve(passphrase);
-        } else if (timeoutAt && Date.now() > timeoutAt) {
-          clearInterval(this.passphraseInterval);
-          resolve(undefined);
-        }
-      }, 1000);
-    });
   }
 
   public refreshAccountAndSubscriptionIfLoggedIn = async () => {

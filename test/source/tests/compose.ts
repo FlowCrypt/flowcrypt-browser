@@ -429,13 +429,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         const { inboxPage, replyFrame } = await setRequirePassPhraseAndOpenRepliedMessage(t, browser, pp);
         // Get Passphrase dialog and cancel confirm passphrase
         await inboxPage.waitAll('@dialog-passphrase');
-        const passPhraseFrame = await inboxPage.getFrame(['passphrase.htm']);
-        if (inputMethod === 'mouse') {
-          await passPhraseFrame.waitAndClick('@action-cancel-pass-phrase-entry');
-        } else if (inputMethod === 'keyboard') {
-          await inboxPage.press('Escape');
-        }
-        await inboxPage.waitTillGone('@dialog');
+        await ComposePageRecipe.cancelPassphraseDialog(inboxPage, inputMethod);
         await replyFrame.waitAll(['@action-expand-quoted-text']);
         const inputBody = await replyFrame.read('@input-body');
         expect(inputBody.trim()).to.be.empty;
@@ -445,7 +439,25 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
           '> (Skipping previous message quote)'
         ].join('\n'));
       }));
-    }
+
+      ava.default(`cancelling passphrase dialog in composer (${inputMethod})`, testWithBrowser('ci.tests.gmail', async (t, browser) => {
+        const k = Config.key('ci.tests.gmail');
+        const acctEmail = 'ci.tests.gmail@flowcrypt.test';
+        const settingsPage = await browser.newPage(t, TestUrls.extensionSettings(acctEmail));
+        await SettingsPageRecipe.forgetAllPassPhrasesInStorage(settingsPage, k.passphrase);
+        const inboxPage = await browser.newPage(t, TestUrls.extensionInbox(acctEmail));
+        const composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
+        await ComposePageRecipe.fillMsg(composeFrame, { to: 'anyone@recipient.com' }, 'send signed-only message', undefined, { encrypt: false });
+        await composeFrame.waitAndClick('@action-send', { delay: 2 });
+        const passphraseDialog = await inboxPage.getFrame(['passphrase.htm']);
+        expect(passphraseDialog.frame.isDetached()).to.equal(false);
+        await Util.sleep(0.5);
+        expect(await composeFrame.read('@action-send')).to.eq('Signing...');
+        await ComposePageRecipe.cancelPassphraseDialog(inboxPage, inputMethod);
+        await Util.sleep(0.5);
+        expect(await composeFrame.read('@action-send')).to.eq('Sign and Send');
+      }));
+    } // end of tests per inputMethod
 
     ava.default('compose - reply - signed message', testWithBrowser('compatibility', async (t, browser) => {
       const appendUrl = 'threadId=15f7f5face7101db&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___&replyMsgId=15f7f5face7101db';
@@ -634,7 +646,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       expect(await PageRecipe.getElementPropertyJson(subjectElem, 'value')).to.equal('Test S/MIME Encrypted Draft');
       expect((await composePage.read('@input-body')).trim()).to.equal('test text');
     }));
-
+    // todo: load a draft encrypted by non-first key, enetering passphrase for it
     ava.default('compose - loading drafts - reply', testWithBrowser('compatibility', async (t, browser) => {
       const appendUrl = 'threadId=16cfa9001baaac0a&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___&replyMsgId=16cfa9001baaac0a&draftId=draft-3';
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl, hasReplyPrompt: true, skipClickPropt: true });
@@ -1057,11 +1069,30 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       await SettingsPageRecipe.addKeyTest(t, browser, acctEmail, testConstants.testKeyMultipleSmimeCEA2D53BB9D24871, passphrase, {}, false);
       const inboxPage = await browser.newPage(t, TestUrls.extensionInbox(acctEmail));
       const composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
-      await ComposePageRecipe.fillMsg(composeFrame, { to: 'smime@recipient.com' }, 'send signed and encrypted S/MIME without attachment',
+      await ComposePageRecipe.fillMsg(composeFrame, { to: 'smime@recipient.com' }, 'send signed and encrypted S/MIME message',
         'This text should be encrypted into PKCS#7 data');
       await ComposePageRecipe.pastePublicKeyManually(composeFrame, inboxPage, 'smime@recipient.com',
         testConstants.testCertificateMultipleSmimeCEA2D53BB9D24871);
       await composeFrame.waitAndClick('@action-send', { delay: 2 });
+      await inboxPage.waitTillGone('@container-new-message');
+    }));
+
+    ava.default('send signed and encrypted S/MIME message entering a non-primary passphrase', testWithBrowser('compatibility', async (t, browser) => {
+      const acctEmail = 'flowcrypt.compatibility@gmail.com';
+      const passphrase = 'pa$$w0rd';
+      await SettingsPageRecipe.addKeyTest(t, browser, acctEmail, testConstants.testKeyMultipleSmimeCEA2D53BB9D24871, passphrase, {}, false);
+      const inboxPage = await browser.newPage(t, TestUrls.extensionInbox(acctEmail));
+      await InboxPageRecipe.finishSessionOnInboxPage(inboxPage);
+      const composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
+      await ComposePageRecipe.fillMsg(composeFrame, { to: 'smime@recipient.com' }, 'send signed and encrypted S/MIME message',
+        'This text should be encrypted into PKCS#7 data');
+      await ComposePageRecipe.pastePublicKeyManually(composeFrame, inboxPage, 'smime@recipient.com',
+        testConstants.testCertificateMultipleSmimeCEA2D53BB9D24871);
+      await composeFrame.waitAndClick('@action-send', { delay: 2 });
+      const passphraseDialog = await inboxPage.getFrame(['passphrase.htm']);
+      await passphraseDialog.waitForContent('@which-key', '47FB 0318 3E03 A8ED 44E3 BBFC CEA2 D53B B9D2 4871');
+      await passphraseDialog.waitAndType('@input-pass-phrase', passphrase);
+      await passphraseDialog.waitAndClick('@action-confirm-pass-phrase-entry');
       await inboxPage.waitTillGone('@container-new-message');
     }));
 
