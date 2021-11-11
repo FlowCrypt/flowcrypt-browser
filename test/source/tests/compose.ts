@@ -1360,7 +1360,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       const appendUrl = 'threadId=17d02296bccd4c5c&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___&replyMsgId=17d02296bccd4c5c';
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl, hasReplyPrompt: true });
       await composePage.waitAndClick('@action-accept-reply-all-prompt', { delay: 1 });
-      await expectRecipientElements(composePage, { to: ['vladimir@flowcrypt.com'], cc: ['limon.monte@gmail.com'], bcc: ['sweetalert2@gmail.com'] });
+      await expectRecipientElements(composePage, { to: ['flowcrypt.compatibility@gmail.com', 'vladimir@flowcrypt.com'], cc: ['limon.monte@gmail.com'], bcc: ['sweetalert2@gmail.com'] });
     }));
 
     ava.default('compose - reply all - from !== acctEmail', testWithBrowser('compatibility', async (t, browser) => {
