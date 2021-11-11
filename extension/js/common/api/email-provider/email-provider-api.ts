@@ -18,8 +18,8 @@ export type ReplyParams = {
   to: string[];
   cc: string[];
   bcc: string[];
-  from: string;
-  fromOriginal?: string;
+  myEmail: string;
+  from?: string;
   subject: string;
   inReplyTo?: string;
 };

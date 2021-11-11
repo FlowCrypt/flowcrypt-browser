@@ -16,8 +16,8 @@ export class ComposeSenderModule extends ViewModule<ComposeView> {
     if (this.view.S.now('input_from').length) {
       return String(this.view.S.now('input_from').val());
     }
-    if (this.view.replyParams?.from) {
-      return this.view.replyParams.from;
+    if (this.view.replyParams?.myEmail) {
+      return this.view.replyParams.myEmail;
     }
     return this.view.acctEmail;
   }

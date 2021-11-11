@@ -172,8 +172,8 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       this.removeRecipient(recipient.element);
     }
     // reply only to the sender if the message is not from the same account
-    const from = this.view.replyParams?.fromOriginal;
-    const myEmail = this.view.replyParams?.from;
+    const from = this.view.replyParams?.from;
+    const myEmail = this.view.replyParams?.myEmail;
     if (from !== myEmail) {
       for (const recipient of this.addedRecipients.filter(r => r.email !== from)) {
         this.removeRecipient(recipient.element);
