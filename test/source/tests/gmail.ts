@@ -269,17 +269,19 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
     }));
 
     ava.default('mail.google.com - secure reply btn, reply draft', testWithBrowser('ci.tests.gmail', async (t, browser) => {
-      const gmailPage = await openGmailPage(t, browser, '/FMfcgzGlkjftvKTsGnTltMvmZdDzdPFB'); // to go encrypted convo
+      const gmailPage = await openGmailPage(t, browser, '/FMfcgzGlkjjNRwQmqlKJbTKMsKqGLHZC'); // to go encrypted convo
       // Gmail has 100 emails per thread limit, so if there are 98 deleted messages + 1 initial message,
       // the draft number 100 won't be saved. Therefore, we need to delete forever trashed messages from this thread.
       if (await gmailPage.isElementPresent('//*[text()="delete forever"]')) {
         await gmailPage.click('//*[text()="delete forever"]');
       }
       await gmailPage.waitAndClick('@secure-reply-button');
+      let replyBox = await gmailPage.getFrame(['/chrome/elements/compose.htm'], { sleep: 3 });
+      expect(await replyBox.read('@recipients-preview')).to.equal('limon.monte@gmail.com');
       await createSecureDraft(t, browser, gmailPage, 'reply draft');
       await createSecureDraft(t, browser, gmailPage, 'offline reply draft', { offline: true });
       await gmailPage.page.reload({ waitUntil: 'networkidle2' });
-      const replyBox = await pageHasSecureDraft(gmailPage, 'offline reply draft');
+      replyBox = await pageHasSecureDraft(gmailPage, 'offline reply draft');
       // await replyBox.waitAndClick('@action-send'); doesn't work for some reason, use keyboard instead
       await gmailPage.page.keyboard.press('Tab');
       await gmailPage.page.keyboard.press('Enter');
