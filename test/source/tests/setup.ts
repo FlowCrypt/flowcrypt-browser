@@ -10,6 +10,7 @@ import { SettingsPageRecipe } from './page-recipe/settings-page-recipe';
 import { ComposePageRecipe } from './page-recipe/compose-page-recipe';
 import { Str } from './../core/common';
 import { MOCK_KM_LAST_INSERTED_KEY } from './../mock/key-manager/key-manager-endpoints';
+import { MOCK_ATTESTER_LAST_INSERTED_PUB } from './../mock/attester/attester-endpoints';
 import { BrowserRecipe } from './tooling/browser-recipe';
 import { KeyInfo, KeyUtil } from '../core/crypto/key';
 import { testConstants } from './tooling/consts';
@@ -36,6 +37,30 @@ export const defineSetupTests = (testVariant: TestVariant, testWithBrowser: Test
     ava.default('settings > login > close oauth window > close popup', testWithBrowser(undefined, async (t, browser) => {
       const settingsPage = await BrowserRecipe.openSettingsLoginButCloseOauthWindowBeforeGrantingPermission(t, browser, 'flowcrypt.test.key.imported@gmail.com');
       await settingsPage.notPresent('.settings-banner');
+    }));
+
+    ava.default('setup - optional checkbox for each email aliases', testWithBrowser(undefined, async (t, browser) => {
+      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.compatibility@gmail.com');
+      await Util.sleep(5);
+      await SetupPageRecipe.createKey(
+        settingsPage,
+        'unused',
+        'none',
+        {
+          key: { passphrase: 'long enough to suit requirements' },
+          usedPgpBefore: false,
+          skipForPassphrase: true,
+          submitPubkey: true,
+          pageEvaluator: async () => {
+            expect(await settingsPage.isChecked('@input-email-alias-flowcryptcompatibilitygmailcom')).to.equal(false); // unchecked by default
+            await settingsPage.clickIfPresent('@input-email-alias-flowcryptcompatibilitygmailcom'); // include by the user (simulated)
+            await settingsPage.waitAndClick('@input-step2bmanualcreate-create-and-save');
+          }
+        }
+      );
+      expect(MOCK_ATTESTER_LAST_INSERTED_PUB['flowcrypt.compatibility@gmail.com']).not.to.be.an('undefined');
+      expect(MOCK_ATTESTER_LAST_INSERTED_PUB['flowcryptcompatibility@gmail.com']).not.to.be.an('undefined');
+      await settingsPage.close();
     }));
 
     ava.default('setup - import key - do not submit - did not use before', testWithBrowser(undefined, async (t, browser) => {
@@ -112,7 +137,6 @@ export const defineSetupTests = (testVariant: TestVariant, testWithBrowser: Test
         key: {
           title: 'UIDless key',
           armored: `-----BEGIN PGP PRIVATE KEY BLOCK-----
-
 xcMFBF8/lc8BCACwwWWyNdfZ9Qjz8zc4sFGNfHXITscT7WCMuXgC2BbFwiSD
 52+Z6fIKaaMFP07MOy8g3PsrW8rrM6j9ew4fh6Kr6taD5JtZfWEWxSnmfl8T
 MqbfcGklJZDyqbSlRBHh53ea4fZe/wCiaL2qhME9Pa7M+w/AiCT1LuXUBiKp
@@ -714,6 +738,50 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       })
     );
 
+  }
+
+  if (testVariant === 'CONSUMER-MOCK') {
+    ava.default('setup - imported key with multiple alias should show checkbox per alias', testWithBrowser(undefined, async (t, browser) => {
+      expect((await KeyUtil.parse(testConstants.keyMultiAliasedUser)).emails.length).to.equals(3);
+      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'multi.aliased.user@example.com');
+      await SetupPageRecipe.manualEnter(settingsPage, '', {
+        submitPubkey: true, fillOnly: true, checkEmailAliasIfPresent: true, key: {
+          title: 'multi.aliased.user@example.com',
+          passphrase: '1basic passphrase to use',
+          armored: testConstants.keyMultiAliasedUser,
+          longid: null // tslint:disable-line:no-null-keyword
+        }
+      }, { isSavePassphraseChecked: false, isSavePassphraseHidden: false });
+      expect(await settingsPage.isChecked('.container_for_import_key_email_alias @input-email-alias-alias1examplecom')).to.equal(true);
+      expect(await settingsPage.isChecked('.container_for_import_key_email_alias @input-email-alias-alias2examplecom')).to.equal(true);
+      await settingsPage.close();
+    }));
+
+    ava.default('setup - imported key from a file with multiple alias', testWithBrowser(undefined, async (t, browser) => {
+      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'multi.aliased.user@example.com');
+      const key = {
+        title: 'unarmored OpenPGP key',
+        filePath: 'test/samples/openpgp/multialiaseduserexamplecom-0x357B908F62498DF8.key',
+        armored: null, // tslint:disable-line:no-null-keyword
+        passphrase: '1basic passphrase to use',
+        longid: null // tslint:disable-line:no-null-keyword
+      };
+      await SetupPageRecipe.manualEnter(settingsPage, key.title, { submitPubkey: true, fillOnly: true, key });
+      expect(await settingsPage.isChecked('.container_for_import_key_email_alias @input-email-alias-alias1examplecom')).to.equal(true);
+      expect(await settingsPage.isChecked('.container_for_import_key_email_alias @input-email-alias-alias2examplecom')).to.equal(true);
+      /* simulate several clicks then exclude alias2@example.com from submitting key from the attester */
+      await settingsPage.waitAndClick('.container_for_import_key_email_alias @input-email-alias-alias1examplecom'); // uncheck
+      await settingsPage.waitAndClick('.container_for_import_key_email_alias @input-email-alias-alias1examplecom'); // check
+      await settingsPage.waitAndClick('.container_for_import_key_email_alias @input-email-alias-alias2examplecom'); // uncheck
+      await settingsPage.waitAndClick('.container_for_import_key_email_alias @input-email-alias-alias2examplecom'); // check
+      await settingsPage.waitAndClick('.container_for_import_key_email_alias @input-email-alias-alias2examplecom'); // finally uncheck
+      await settingsPage.waitAndClick('@input-step2bmanualenter-save', { delay: 1 });
+      await settingsPage.waitAndClick('@action-step4done-account-settings');
+      expect(MOCK_ATTESTER_LAST_INSERTED_PUB['multi.aliased.user@example.com']).not.to.be.an('undefined');
+      expect(MOCK_ATTESTER_LAST_INSERTED_PUB['alias1@example.com']).not.to.be.an('undefined');
+      expect(MOCK_ATTESTER_LAST_INSERTED_PUB['alias2@example.com']).to.be.an('undefined');
+      await settingsPage.close();
+    }));
   }
 
 };

@@ -193,6 +193,7 @@ declare namespace OpenPGP {
     export class Userid extends BasePacket {
       public tag: enums.packet.userid;
       public userid: string;
+      public email: string;
     }
 
     export class SecretSubkey extends BaseKeyPacket {
