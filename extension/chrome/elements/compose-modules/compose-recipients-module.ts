@@ -217,7 +217,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
         // console.log(`>>>> evaluateRecipients: ${JSON.stringify(recipient)}`);
         if (recipient.status !== RecipientStatus.WRONG) {
           pubkeyLookupRes = await this.view.storageModule.
-            lookupPubkeyFromKeyserversThenOptionallyFetchExpiredByFingerprintAndUpsertDb(
+            getPubkeysFromLocalStorageUpdatedFromKeyserver(
               recipient.email, undefined);
         }
         if (pubkeyLookupRes === 'fail' || pubkeyLookupRes === 'wrong') {
@@ -359,7 +359,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
   }
 
   public reRenderRecipientFor = async (email: string): Promise<void> => {
-    if (this.addedRecipients.every(r => r.email !== email)) {
+    if (!this.addedRecipients.find(r => r.email === email)) {
       return;
     }
     const emailAndPubkeys = await ContactStore.getOneWithAllPubkeys(undefined, email);
@@ -767,7 +767,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     if (!newContacts.length) {
       return;
     }
-    const toLookup: Contact[] = [];
+    const toLookupNoPubkeys: Contact[] = [];
     for (const input of newContacts) {
       const contact = await ContactStore.obj({ email: input.email, name: input.name });
       const [storedContact] = await ContactStore.get(undefined, [contact.email]);
@@ -776,11 +776,13 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
           await ContactStore.update(undefined, contact.email, { name: contact.name } as ContactUpdate);
         }
       } else if (!this.failedLookupEmails.includes(contact.email)) {
-        toLookup.push(contact);
+        toLookupNoPubkeys.push(contact);
       }
     }
-    await Promise.all(toLookup.map(c => this.view.storageModule.lookupPubkeyFromKeyserversAndUpsertDb(
-      c.email, c.name || undefined).catch(() => this.failedLookupEmails.push(c.email))));
+    await Promise.all(toLookupNoPubkeys.map(c =>
+      this.view.storageModule.updateLocalPubkeysFromKeyservers([], c.email, c.name || undefined)
+        .catch(() => this.failedLookupEmails.push(c.email))
+    ));
   }
 
   private renderSearchResultsLoadingDone = () => {
