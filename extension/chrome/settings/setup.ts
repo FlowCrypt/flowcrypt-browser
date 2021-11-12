@@ -217,19 +217,23 @@ export class SetupView extends View {
     }
   }
 
-  public preFinalizeSetup = async (options: SetupOptions): Promise<void> => {
-    await AcctStore.set(this.acctEmail, { tmp_submit_main: options.submit_main, tmp_submit_all: options.submit_all });
-  }
-
-  public submitPublicKeysAndFinalizeSetup = async ({ submit_main, submit_all }: { submit_main: boolean, submit_all: boolean }): Promise<void> => {
+  public submitPublicKeys = async (
+    { submit_main, submit_all }: { submit_main: boolean, submit_all: boolean }
+  ): Promise<void> => {
     const primaryKi = await KeyStore.getFirstRequired(this.acctEmail);
     try {
       await this.submitPublicKeyIfNeeded(primaryKi.public, { submit_main, submit_all });
     } catch (e) {
-      return await Settings.promptToRetry(e, Lang.setup.failedToSubmitToAttester, () => this.submitPublicKeysAndFinalizeSetup({ submit_main, submit_all }));
+      return await Settings.promptToRetry(
+        e,
+        Lang.setup.failedToSubmitToAttester,
+        () => this.submitPublicKeys({ submit_main, submit_all })
+      );
     }
+  }
+
+  public finalizeSetup = async (): Promise<void> => {
     await AcctStore.set(this.acctEmail, { setup_date: Date.now(), setup_done: true, cryptup_enabled: true });
-    await AcctStore.remove(this.acctEmail, ['tmp_submit_main', 'tmp_submit_all']);
   }
 
   public saveKeysAndPassPhrase = async (prvs: Key[], options: SetupOptions) => {

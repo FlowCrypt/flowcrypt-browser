@@ -41,12 +41,7 @@ export class SetupRenderModule {
         await this.view.setupRecoverKey.renderAddKeyFromBackup();
       }
     } else if (this.view.action === 'finalize') {
-      const { tmp_submit_all, tmp_submit_main } = await AcctStore.get(this.view.acctEmail, ['tmp_submit_all', 'tmp_submit_main']);
-      if (typeof tmp_submit_all === 'undefined' || typeof tmp_submit_main === 'undefined') {
-        $('#content').text(`Setup session expired. To set up FlowCrypt, please click the FlowCrypt icon on top right.`);
-        return;
-      }
-      await this.view.submitPublicKeysAndFinalizeSetup({ submit_all: tmp_submit_all, submit_main: tmp_submit_main });
+      await this.view.finalizeSetup();
       await this.renderSetupDone();
     } else if (this.view.orgRules.mustAutoImportOrAutogenPrvWithKeyManager()) {
       if (this.view.orgRules.mustAutogenPassPhraseQuietly() && this.view.orgRules.forbidStoringPassPhrase()) {
