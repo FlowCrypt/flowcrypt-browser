@@ -37,12 +37,13 @@ export class SetupCreateKeyModule {
       const keyIdentity = await this.createSaveKeyPair(opts, keyAlgo);
       if (keyIdentity) {
         if (this.view.orgRules.canBackupKeys()) {
-          await this.view.preFinalizeSetup(opts);
+          await this.view.submitPublicKeys(opts);
           const action = $('#step_2a_manual_create .input_backup_inbox').prop('checked') ? 'setup_automatic' : 'setup_manual';
           // only finalize after backup is done. backup.htm will redirect back to this page with ?action=finalize
           window.location.href = Url.create('modules/backup.htm', { action, acctEmail: this.view.acctEmail, idToken: this.view.idToken, id: keyIdentity.id, type: keyIdentity.type });
         } else {
-          await this.view.submitPublicKeysAndFinalizeSetup(opts);
+          await this.view.submitPublicKeys(opts);
+          await this.view.finalizeSetup();
           await this.view.setupRender.renderSetupDone();
         }
       }

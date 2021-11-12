@@ -52,6 +52,14 @@ export class KeyImportUi {
     return;
   }
 
+  public static addAliasForSubmission = (email: string, submitKeyForAddrs: string[]) => {
+    submitKeyForAddrs.push(email);
+  }
+
+  public static removeAliasFromSubmission = (email: string, submitKeyForAddrs: string[]) => {
+    submitKeyForAddrs.splice(submitKeyForAddrs.indexOf(email), 1);
+  }
+
   constructor(o: { rejectKnown?: boolean, checkEncryption?: boolean, checkSigning?: boolean }) {
     this.rejectKnown = o.rejectKnown === true;
     this.checkEncryption = o.checkEncryption === true;
@@ -59,7 +67,7 @@ export class KeyImportUi {
   }
   public onBadPassphrase: VoidCallback = () => undefined;
 
-  public initPrvImportSrcForm = (acctEmail: string, parentTabId: string | undefined) => {
+  public initPrvImportSrcForm = (acctEmail: string, parentTabId: string | undefined, submitKeyForAddrs?: string[] | undefined) => {
     $('input[type=radio][name=source]').off().change(function () {
       if ((this as HTMLInputElement).value === 'file') {
         $('.input_private_key').val('').change().prop('disabled', true);
@@ -79,9 +87,28 @@ export class KeyImportUi {
       $('.input_passphrase').attr('type', 'text');
       $('#e_rememberPassphrase').prop('checked', true);
     }));
+    $('.input_private_key').on('keyup paste change', Ui.event.handle(async target => {
+      $('.action_add_private_key').addClass('btn_disabled').attr('disabled');
+      $('.input_email_alias').prop('checked', false);
+      const { keys: [prv] } = await opgp.key.readArmored(String($(target).val()));
+      if (prv !== undefined) {
+        $('.action_add_private_key').removeClass('btn_disabled').removeAttr('disabled');
+        if (submitKeyForAddrs !== undefined) {
+          const users = prv.users;
+          for (const user of users) {
+            const userId = user.userId;
+            for (const inputCheckboxesWithEmail of $('.input_email_alias')) {
+              if (String($(inputCheckboxesWithEmail).data('email')) === userId!.email) {
+                KeyImportUi.addAliasForSubmission(userId!.email, submitKeyForAddrs!);
+                $(inputCheckboxesWithEmail).prop('checked', true);
+              }
+            }
+          }
+        }
+      }
+    }));
     $('.input_private_key').change(Ui.event.handle(async target => {
       const { keys: [prv] } = await opgp.key.readArmored(String($(target).val()));
-      $('.input_passphrase').val('');
       if (!prv || !prv.isPrivate()) {
         $('.line.unprotected_key_create_pass_phrase').hide();
         return;

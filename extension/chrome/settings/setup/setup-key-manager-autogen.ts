@@ -46,7 +46,8 @@ export class SetupWithEmailKeyManagerModule {
         window.location.href = Url.create('index.htm', { acctEmail: this.view.acctEmail });
         return;
       }
-      await this.view.submitPublicKeysAndFinalizeSetup(setupOptions);
+      await this.view.submitPublicKeys(setupOptions);
+      await this.view.finalizeSetup();
       await this.view.setupRender.renderSetupDone();
     } catch (e) {
       if (ApiErr.isNetErr(e) && await Api.isInternetAccessible()) { // frendly message when key manager is down, helpful during initial infrastructure setup

@@ -66,8 +66,8 @@ export class SetupRecoverKeyModule {
       await this.view.saveKeysAndPassPhrase(newlyMatchingKeys, options);
       const { setup_done } = await AcctStore.get(this.view.acctEmail, ['setup_done']);
       if (!setup_done) { // normal situation - fresh setup
-        await this.view.preFinalizeSetup(options);
-        await this.view.submitPublicKeysAndFinalizeSetup(options);
+        await this.view.submitPublicKeys(options);
+        await this.view.finalizeSetup();
         await this.view.setupRender.renderSetupDone();
       } else { // setup was finished before, just added more keys now
         await this.view.setupRender.renderSetupDone();
