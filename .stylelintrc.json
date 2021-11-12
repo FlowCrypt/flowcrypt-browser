@@ -5,6 +5,14 @@
     "**/*.ts"
   ],
   "rules": {
-    "no-descending-specificity": null
+    "alpha-value-notation": null,
+    "color-function-notation": null,
+    "max-line-length": null,
+    "no-descending-specificity": null,
+    "property-no-vendor-prefix": null,
+    "selector-class-pattern": null,
+    "selector-id-pattern": null,
+    "string-quotes": null,
+    "value-no-vendor-prefix": null
   }
 }

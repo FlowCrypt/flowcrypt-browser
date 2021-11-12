@@ -8,7 +8,6 @@ import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Catch } from '../../../js/common/platform/catch.js';
 import { KeyImportUi } from '../../../js/common/ui/key-import-ui.js';
 import { Lang } from '../../../js/common/lang.js';
-import { RecipientType } from '../../../js/common/api/shared/api.js';
 import { Recipients } from '../../../js/common/api/email-provider/email-provider-api.js';
 import { SendableMsg } from '../../../js/common/api/email-provider/sendable-msg.js';
 import { Str } from '../../../js/common/core/common.js';
@@ -48,6 +47,7 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
         this.view.recipientsModule.addRecipients(recipients, false).catch(Catch.reportErr);
         // await this.view.composerContacts.addRecipientsAndShowPreview(recipients);
         if (this.view.skipClickPrompt) { // TODO: fix issue when loading recipients
+          await this.view.recipientsModule.clearRecipientsForReply();
           await this.renderReplyMsgComposeTable();
         } else {
           $('#a_reply,#a_reply_all,#a_forward')
@@ -206,18 +206,13 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
   }
 
   private actionActivateReplyBoxHandler = async (target: HTMLElement) => {
-    const typesToDelete: RecipientType[] = [];
     const method = $(target).attr('id');
     if (method === 'a_forward') {
       this.responseMethod = 'forward';
-      typesToDelete.push('to');
-      typesToDelete.push('cc');
-      typesToDelete.push('bcc');
+      this.view.recipientsModule.clearRecipients();
     } else if (method === 'a_reply') {
-      typesToDelete.push('cc');
-      typesToDelete.push('bcc');
+      await this.view.recipientsModule.clearRecipientsForReply();
     }
-    this.view.recipientsModule.deleteRecipientsBySendingType(typesToDelete);
     await this.renderReplyMsgComposeTable();
   }
 
@@ -281,7 +276,7 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
   private addComposeTableHandlers = async () => {
     this.view.S.cached('body').keydown(this.view.setHandler((el, ev) => this.onBodyKeydownHandler(el, ev)));
     this.view.S.cached('input_to').bind('paste', this.view.setHandler((el, ev) => this.onRecipientPasteHandler(el, ev)));
-    this.view.inputModule.squire.addEventListener('keyup', () => this.view.S.cached('send_btn_note').text(''));
+    this.view.inputModule.squire.addEventListener('input', () => this.view.S.cached('send_btn_note').text(''));
     this.view.S.cached('input_addresses_container_inner').click(this.view.setHandler(() => this.onRecipientsClickHandler(), this.view.errModule.handle(`focus recipients`)));
     this.view.S.cached('input_addresses_container_inner').children().click(() => false);
     this.view.S.cached('input_subject').bind('input', this.view.setHandler((el: HTMLInputElement) => this.subjectRTLHandler(el))).trigger('input');

@@ -77,13 +77,45 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       expect(await inboxPage.getOuterHeight('iframe')).to.eq(initialComposeFrameHeight);
     }));
 
+    ava.default('compose - trying to send PWD encrypted message with pass phrase - should show err', testWithBrowser('ci.tests.gmail', async (t, browser) => {
+      const acctEmail = 'ci.tests.gmail@flowcrypt.test';
+      const msgPwd = Config.key('ci.tests.gmail').passphrase;
+      const subject = 'PWD encrypted message with flowcrypt.com/api';
+      const composePage = await ComposePageRecipe.openStandalone(t, browser, acctEmail);
+      await ComposePageRecipe.fillMsg(composePage, { to: 'test@email.com' }, subject);
+      await composePage.waitAndType('@input-password', msgPwd);
+      await composePage.waitAndClick('@action-send', { delay: 1 });
+      await PageRecipe.waitForModalAndRespond(composePage, 'error', {
+        contentToCheck: 'Please do not use your private key pass phrase as a password for this message',
+        clickOn: 'confirm'
+      });
+      // changing case should result in this error too
+      await composePage.waitAndType('@input-password', msgPwd.toUpperCase());
+      await composePage.waitAndClick('@action-send', { delay: 1 });
+      await PageRecipe.waitForModalAndRespond(composePage, 'error', {
+        contentToCheck: 'Please do not use your private key pass phrase as a password for this message',
+        clickOn: 'confirm'
+      });
+      const forgottenPassphrase = 'this passphrase is forgotten';
+      await SettingsPageRecipe.addKeyTest(t, browser, acctEmail, testConstants.testKeyMultipleSmimeCEA2D53BB9D24871, forgottenPassphrase, {}, false);
+      const inboxPage = await browser.newPage(t, TestUrls.extensionInbox(acctEmail));
+      await InboxPageRecipe.finishSessionOnInboxPage(inboxPage);
+      await inboxPage.close();
+      await composePage.waitAndType('@input-password', forgottenPassphrase);
+      await composePage.waitAndClick('@action-send', { delay: 1 });
+      await PageRecipe.waitForModalAndRespond(composePage, 'error', {
+        contentToCheck: 'Please do not use your private key pass phrase as a password for this message',
+        clickOn: 'confirm'
+      });
+    }));
+
     ava.default('compose - signed with entered pass phrase + will remember pass phrase in session', testWithBrowser('ci.tests.gmail', async (t, browser) => {
       const k = Config.key('ci.tests.gmail');
       const settingsPage = await browser.newPage(t, TestUrls.extensionSettings('ci.tests.gmail@flowcrypt.test'));
       await SettingsPageRecipe.forgetAllPassPhrasesInStorage(settingsPage, k.passphrase);
       const inboxPage = await browser.newPage(t, TestUrls.extensionInbox('ci.tests.gmail@flowcrypt.test'));
       const composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
-      await ComposePageRecipe.fillMsg(composeFrame, { to: 'human@flowcrypt.com' }, 'sign with entered pass phrase', { encrypt: false });
+      await ComposePageRecipe.fillMsg(composeFrame, { to: 'human@flowcrypt.com' }, 'sign with entered pass phrase', undefined, { encrypt: false });
       await composeFrame.waitAndClick('@action-send');
       await inboxPage.waitAll('@dialog-passphrase');
       const passphraseDialog = await inboxPage.getFrame(['passphrase.htm']);
@@ -94,7 +126,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       await inboxPage.waitTillGone('@container-new-message'); // confirming pass phrase will auto-send the message
       // signed - done, now try to see if it remembered pp in session
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
-      await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, 'signed message pp in session', { encrypt: false });
+      await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, 'signed message pp in session', undefined, { encrypt: false });
       await ComposePageRecipe.sendAndClose(composePage);
       await settingsPage.close();
       await inboxPage.close();
@@ -232,7 +264,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
 
     ava.default('compose - signed message', testWithBrowser('ci.tests.gmail', async (t, browser) => {
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
-      await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, 'signed message', { encrypt: false });
+      await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, 'signed message', undefined, { encrypt: false });
       await ComposePageRecipe.sendAndClose(composePage);
     }));
 
@@ -346,7 +378,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         '> From: Mozilla <Mozilla@e.mozilla.org>',
         '> Date: Thu, 6 Jun 2019, 17:22',
         '> Subject: Your misinformation questions ... answered.',
-        '> To: <tom@cryptup.org>'
+        '> To:  <tom@cryptup.org>'
       ].join('\n'));
     }));
 
@@ -356,9 +388,10 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       await composePage.waitAndClick('@encrypted-reply', { delay: 1 });
       await clickTripleDotAndExpectQuoteToLoad(composePage, [
         'On 2018-10-03 at 14:47, henry.electrum@gmail.com wrote:',
+        '>',
         '> The following text is bold: this is bold',
         '>',
-        '> The following text is red: this text is red'
+        '> The following text is red: this text is        red'
       ].join('\n'));
     }));
 
@@ -408,6 +441,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         expect(inputBody.trim()).to.be.empty;
         await clickTripleDotAndExpectQuoteToLoad(replyFrame, [
           'On 2019-06-14 at 23:24, flowcrypt.compatibility@gmail.com wrote:',
+          '>',
           '> (Skipping previous message quote)'
         ].join('\n'));
       }));
@@ -424,7 +458,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       await composePage.waitAndClick('@action-show-options-popover');
       await composePage.waitAll(['@action-toggle-sign', '@action-toggle-encrypt', '@icon-toggle-sign-tick']);
       await composePage.notPresent(['@icon-toggle-encrypt-tick']); // response to signed message should not be auto-encrypted
-      await ComposePageRecipe.fillMsg(composePage, {}, undefined, {}, 'reply');
+      await ComposePageRecipe.fillMsg(composePage, {}, undefined, undefined, {}, 'reply');
       await ComposePageRecipe.sendAndClose(composePage);
     }));
 
@@ -439,7 +473,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
 
     ava.default('compose - standalone- hide/show btns after signing', testWithBrowser('ci.tests.gmail', async (t, browser) => {
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
-      await ComposePageRecipe.fillMsg(composePage, { to: 'test.no.pgp@test.com' }, 'Signed Message', { encrypt: false });
+      await ComposePageRecipe.fillMsg(composePage, { to: 'test.no.pgp@test.com' }, 'Signed Message', undefined, { encrypt: false });
       expect(await composePage.isElementPresent('@add-intro')).to.be.true;
       expect(await composePage.isElementPresent('@password-or-pubkey-container')).to.be.true;
       await composePage.notPresent('@add-intro');
@@ -456,7 +490,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       const appendUrl = 'threadId=16ce2c965c75e5a6&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___&replyMsgId=16ce2c965c75e5a6';
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl, hasReplyPrompt: true });
       await composePage.waitAndClick('@action-accept-reply-all-prompt', { delay: 2 });
-      await ComposePageRecipe.fillMsg(composePage, { bcc: "test@email.com" }, undefined, undefined, 'reply');
+      await ComposePageRecipe.fillMsg(composePage, { bcc: "test@email.com" }, undefined, undefined, undefined, 'reply');
       await expectRecipientElements(composePage, { to: ['censored@email.com'], cc: ['censored@email.com'], bcc: ['test@email.com'] });
       await Util.sleep(3);
       await ComposePageRecipe.sendAndClose(composePage, { password: 'test-pass' });
@@ -639,7 +673,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
 
     ava.default('compose - send new plain message', testWithBrowser('ci.tests.gmail', async (t, browser) => {
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
-      await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, 'New Plain Message', { encrypt: false, sign: false });
+      await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, 'New Plain Message', undefined, { encrypt: false, sign: false });
       await ComposePageRecipe.sendAndClose(composePage);
     }));
 
@@ -668,7 +702,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
 
     ava.default('compose - send btn should be disabled while encrypting/sending', testWithBrowser('ci.tests.gmail', async (t, browser) => {
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
-      await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, '');
+      await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, undefined);
       await composePage.waitAndClick('@action-send', { delay: 1 });
       expect(await composePage.isDisabled('#send_btn')).to.be.true;
       expect(await composePage.isDisabled('#toggle_send_options')).to.be.true;
@@ -752,7 +786,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
 
     ava.default('compose - new message, Footer Mock Test', testWithBrowser('compatibility', async (t, browser) => {
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
-      await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, 'Test Footer (Mock Test)', {}, 'new');
+      await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, 'Test Footer (Mock Test)', undefined, {}, 'new');
       await ComposePageRecipe.sendAndClose(composePage);
     }));
 
@@ -787,7 +821,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       const imgBase64 = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGQAAABkCAYAAABw4pVUAAAAnElEQVR42u3RAQ0AAAgDIE1u9FvDOahAVzLFGS1ECEKEIEQIQoQgRIgQIQgRghAhCBGCECEIQYgQhAhBiBCECEEIQoQgRAhChCBECEIQIgQhQhAiBCFCEIIQIQgRghAhCBGCEIQIQYgQhAhBiBCEIEQIQoQgRAhChCAEIUIQIgQhQhAiBCEIEYIQIQgRghAhCBEiRAhChCBECEK+W3uw+TnWoJc/AAAAAElFTkSuQmCC';
       let composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
       const subject = `saving and rendering a draft with image ${Util.lousyRandom()}`;
-      await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, subject, { 'richtext': true });
+      await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, subject, undefined, { 'richtext': true });
       await composePage.page.evaluate((src: string) => { $('[data-test=action-insert-image]').val(src).click(); }, imgBase64);
       await ComposePageRecipe.waitWhenDraftIsSaved(composePage);
       await composePage.close();
@@ -795,6 +829,16 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       const body = await composePage.waitAny('@input-body');
       await composePage.waitAll('#input_text img');
       expect(await body.$eval('#input_text img', el => el.getAttribute('src'))).to.eq(imgBase64);
+    }));
+
+    ava.default('compose - leading tabs', testWithBrowser('compatibility', async (t, browser) => {
+      const appendUrl = 'threadId=16b584ed95837510&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___&replyMsgId=16b584ed95837510';
+      const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl, hasReplyPrompt: true });
+      await composePage.waitAndClick('@encrypted-reply', { delay: 5 });
+      const bodyWithLeadingTabs = '\tline 1\n\t\tline 2';
+      await ComposePageRecipe.fillMsg(composePage, {}, undefined, bodyWithLeadingTabs);
+      await composePage.click('@action-send');
+      await composePage.waitForContent('@container-reply-msg-successful', bodyWithLeadingTabs);
     }));
 
     ava.default('compose - RTL subject', testWithBrowser('compatibility', async (t, browser) => {
@@ -810,7 +854,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
     ava.default('compose - saving and rendering a draft with RTL text (plain text)', testWithBrowser('compatibility', async (t, browser) => {
       let composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
       const subject = `مرحبا RTL plain text`;
-      await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, subject, { richtext: false });
+      await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, subject, 'مرحبا', { richtext: false });
       await ComposePageRecipe.waitWhenDraftIsSaved(composePage);
       await composePage.close();
       composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl: 'draftId=draft_with_rtl_text_plain' });
@@ -821,7 +865,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
     ava.default('compose - saving and rendering a draft with RTL text (rich text)', testWithBrowser('compatibility', async (t, browser) => {
       let composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
       const subject = `مرحبا RTL rich text`;
-      await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, subject, { richtext: true });
+      await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, subject, 'مرحبا', { richtext: true });
       await ComposePageRecipe.waitWhenDraftIsSaved(composePage);
       await composePage.close();
       composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl: 'draftId=draft_with_rtl_text_rich' });
@@ -844,9 +888,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       const text = 'This message is encrypted with 2 keys of flowcrypt.compatibility';
       const subject = `Test Sending Multi-Encrypted Message With Test Text ${Util.lousyRandom()}`;
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
-      await ComposePageRecipe.fillMsg(composePage, { to: 'flowcrypt.compatibility@gmail.com' }, subject, { sign: true, encrypt: true });
-      await composePage.waitAndType('@input-body', text, { delay: 1 });
-      expect(await composePage.read('@input-body')).to.include(text);
+      await ComposePageRecipe.fillMsg(composePage, { to: 'flowcrypt.compatibility@gmail.com' }, subject, text, { sign: true, encrypt: true });
       await ComposePageRecipe.sendAndClose(composePage);
       // get sent msg from mock
       const sentMsg = (await GoogleData.withInitializedData('flowcrypt.compatibility@gmail.com')).getMessageBySubject(subject)!;
@@ -878,8 +920,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         { isSavePassphraseChecked: false, isSavePassphraseHidden: false });
       const subject = `Test Sending Message With Test Text and HIDE_ARMOR_META OrgRule ${Util.lousyRandom()}`;
       const composePage = await ComposePageRecipe.openStandalone(t, browser, acct);
-      await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, subject, { sign: true });
-      await composePage.waitAndType('@input-body', 'any text', { delay: 1 });
+      await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, subject, undefined, { sign: true });
       await ComposePageRecipe.sendAndClose(composePage);
       // get sent msg from mock
       const sentMsg = (await GoogleData.withInitializedData(acct)).getMessageBySubject(subject)!;
@@ -976,9 +1017,9 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
 
     ava.default('can lookup public key from WKD directly', testWithBrowser('ci.tests.gmail', async (t, browser) => {
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
-      await ComposePageRecipe.fillMsg(composePage, { to: 'test-wkd@metacode.biz' }, 'should find pubkey from WKD directly');
-      await composePage.waitForContent('.email_address.has_pgp', 'test-wkd@metacode.biz');
-      expect(await composePage.attr('.email_address.has_pgp', 'title')).to.contain('5B7A BE66 0D5C 62A6 07FE 2448 716B 1776 4E3F CACA');
+      await ComposePageRecipe.fillMsg(composePage, { to: 'demo@flowcrypt.com' }, 'should find pubkey from WKD directly');
+      await composePage.waitForContent('.email_address.has_pgp', 'demo@flowcrypt.com');
+      expect(await composePage.attr('.email_address.has_pgp', 'title')).to.contain('D688 9296 FD18 83A2 9C56 E7C1 5FF1 C658 5A70 0098 (openpgp)');
     }));
 
     ava.default('timeouts when searching WKD - used to never time out', testWithBrowser('ci.tests.gmail', async (t, browser) => {
@@ -1004,16 +1045,33 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       });
       await settingsPage.close();
       const composePage = await ComposePageRecipe.openStandalone(t, browser, acctEmail);
-      await ComposePageRecipe.fillMsg(composePage, { to: 'smime@recipient.com' }, 'send signed S/MIME without attachment', { encrypt: false, sign: true });
+      await ComposePageRecipe.fillMsg(composePage, { to: 'smime@recipient.com' }, 'send signed S/MIME without attachment', undefined, { encrypt: false, sign: true });
       await composePage.waitAndClick('@action-send', { delay: 2 });
+      await composePage.waitForSelTestState('closed', 20); // succesfully sent
+      await composePage.close();
+    }));
+
+    ava.default('send signed and encrypted S/MIME message', testWithBrowser('compatibility', async (t, browser) => {
+      const acctEmail = 'flowcrypt.compatibility@gmail.com';
+      const passphrase = 'pa$$w0rd';
+      await SettingsPageRecipe.addKeyTest(t, browser, acctEmail, testConstants.testKeyMultipleSmimeCEA2D53BB9D24871, passphrase, {}, false);
+      const inboxPage = await browser.newPage(t, TestUrls.extensionInbox(acctEmail));
+      const composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
+      await ComposePageRecipe.fillMsg(composeFrame, { to: 'smime@recipient.com' }, 'send signed and encrypted S/MIME without attachment',
+        'This text should be encrypted into PKCS#7 data');
+      await ComposePageRecipe.pastePublicKeyManually(composeFrame, inboxPage, 'smime@recipient.com',
+        testConstants.testCertificateMultipleSmimeCEA2D53BB9D24871);
+      await composeFrame.waitAndClick('@action-send', { delay: 2 });
+      await inboxPage.waitTillGone('@container-new-message');
     }));
 
     ava.default('send with single S/MIME cert', testWithBrowser('ci.tests.gmail', async (t, browser) => {
       const inboxPage = await browser.newPage(t, TestUrls.extensionInbox('ci.tests.gmail@flowcrypt.test'));
       const composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
-      await ComposePageRecipe.fillMsg(composeFrame, { to: 'smime@recipient.com' }, t.title);
+      await ComposePageRecipe.fillMsg(composeFrame, { to: 'smime@recipient.com' }, t.title,
+        'This text should be encrypted into PKCS#7 data', { sign: false, encrypt: true });
       await ComposePageRecipe.pastePublicKeyManually(composeFrame, inboxPage, 'smime@recipient.com',
-        testConstants.smimeCert);
+        testConstants.testCertificateMultipleSmimeCEA2D53BB9D24871);
       await composeFrame.waitAndClick('@action-send', { delay: 2 });
       await inboxPage.waitTillGone('@container-new-message');
     }));
@@ -1021,19 +1079,41 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
     ava.default('send with several S/MIME certs', testWithBrowser('ci.tests.gmail', async (t, browser) => {
       const inboxPage = await browser.newPage(t, TestUrls.extensionInbox('ci.tests.gmail@flowcrypt.test'));
       const composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
-      await ComposePageRecipe.fillMsg(composeFrame, { to: 'smime1@recipient.com', cc: 'smime2@recipient.com' }, t.title);
+      await ComposePageRecipe.fillMsg(composeFrame, { to: 'smime1@recipient.com', cc: 'smime2@recipient.com' }, t.title,
+        'This text should be encrypted into PKCS#7 data', { sign: false, encrypt: true });
       await ComposePageRecipe.pastePublicKeyManually(composeFrame, inboxPage, 'smime1@recipient.com', testConstants.smimeCert);
-      await ComposePageRecipe.pastePublicKeyManually(composeFrame, inboxPage, 'smime2@recipient.com', testConstants.smimeCert);
+      await ComposePageRecipe.pastePublicKeyManually(composeFrame, inboxPage, 'smime2@recipient.com', testConstants.testCertificateMultipleSmimeCEA2D53BB9D24871);
       await composeFrame.waitAndClick('@action-send', { delay: 2 });
       await inboxPage.waitTillGone('@container-new-message');
     }));
 
-    ava.default('send with S/MIME attachment', testWithBrowser('ci.tests.gmail', async (t, browser) => {
-      // todo - this is not yet looking for actual attachment in the result, just checks that it's s/mime message
+    ava.default('send encrypted-only S/MIME message with attachment', testWithBrowser('ci.tests.gmail', async (t, browser) => {
       const inboxPage = await browser.newPage(t, TestUrls.extensionInbox('ci.tests.gmail@flowcrypt.test'));
       const composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
+      await ComposePageRecipe.fillMsg(composeFrame, { to: 'smime.attachment@recipient.com' }, t.title,
+        'This text should be encrypted into PKCS#7 data', { sign: false, encrypt: true });
+      await ComposePageRecipe.pastePublicKeyManually(composeFrame, inboxPage, 'smime.attachment@recipient.com', testConstants.testCertificateMultipleSmimeCEA2D53BB9D24871);
+      const fileInput = await composeFrame.target.$('input[type=file]');
+      await fileInput!.uploadFile('test/samples/small.txt', 'test/samples/small.png', 'test/samples/small.pdf');
+      /* todo: #4087 attachments in composer can be downloaded
+      const fileText = await inboxPage.awaitDownloadTriggeredByClicking(async () => {
+        await composeFrame.click('.qq-file-id-0');
+      });
+      expect(fileText.toString()).to.equal(`small text file\nnot much here\nthis worked\n`);
+      */
+      await composeFrame.waitAndClick('@action-send', { delay: 2 });
+      await inboxPage.waitTillGone('@container-new-message');
+    }));
+
+    ava.default('send signed and encrypted S/MIME message with attachment', testWithBrowser('ci.tests.gmail', async (t, browser) => {
+      // todo - this is not yet looking for actual attachment in the result, just checks that it's s/mime message
+      const acctEmail = 'ci.tests.gmail@flowcrypt.test';
+      const passphrase = 'pa$$w0rd';
+      await SettingsPageRecipe.addKeyTest(t, browser, acctEmail, testConstants.testKeyMultipleSmimeCEA2D53BB9D24871, passphrase, {}, false);
+      const inboxPage = await browser.newPage(t, TestUrls.extensionInbox(acctEmail));
+      const composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
       await ComposePageRecipe.fillMsg(composeFrame, { to: 'smime.attachment@recipient.com' }, t.title);
-      await ComposePageRecipe.pastePublicKeyManually(composeFrame, inboxPage, 'smime.attachment@recipient.com', testConstants.smimeCert);
+      await ComposePageRecipe.pastePublicKeyManually(composeFrame, inboxPage, 'smime.attachment@recipient.com', testConstants.testCertificateMultipleSmimeCEA2D53BB9D24871);
       const fileInput = await composeFrame.target.$('input[type=file]');
       await fileInput!.uploadFile('test/samples/small.txt', 'test/samples/small.png', 'test/samples/small.pdf');
       // attachments in composer can be downloaded
@@ -1055,6 +1135,46 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         contentToCheck: 'Failed to send message due to: Error: Cannot use mixed OpenPGP (human@flowcrypt.com) and S/MIME (smime@recipient.com) public keys yet.If you need to email S/MIME recipient, do not add any OpenPGP recipient at the same time.',
         timeout: 40
       });
+    }));
+
+    ava.default('send with OpenPGP recipients as subset of S/MIME recipients', testWithBrowser('ci.tests.gmail', async (t, browser) => {
+      const acctEmail = 'ci.tests.gmail@flowcrypt.test';
+      const inboxPage = await browser.newPage(t, TestUrls.extensionInbox(acctEmail));
+      const composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
+      await ComposePageRecipe.fillMsg(composeFrame, { to: 'smime@recipient.com', cc: 'human@flowcrypt.com' }, 'send with several S/MIME certs with OpenPGP as subset',
+        'This text should be encrypted into PKCS#7 data');
+      await ComposePageRecipe.pastePublicKeyManually(composeFrame, inboxPage, 'smime@recipient.com',
+        testConstants.testCertificateMultipleSmimeCEA2D53BB9D24871);
+      await composeFrame.waitAndClick('@action-send', { delay: 2 });
+      await PageRecipe.waitForModalAndRespond(composeFrame, 'error', {
+        contentToCheck: 'Failed to send message due to: Error: Cannot use mixed OpenPGP (human@flowcrypt.com) and S/MIME (smime@recipient.com) public keys yet.If you need to email S/MIME recipient, do not add any OpenPGP recipient at the same time.',
+        timeout: 40,
+        clickOn: 'confirm'
+      });
+      // adding an S/MIME certificate for human@flowcrypt.com will allow sending an S/MIME message
+      await PageRecipe.addPubkey(t, browser, acctEmail, testConstants.smimeCert, 'human@flowcrypt.com');
+      await composeFrame.waitAndClick('@action-send', { delay: 2 });
+      await inboxPage.waitTillGone('@container-new-message');
+    }));
+
+    ava.default('send with S/MIME recipients as subset of OpenPGP recipients', testWithBrowser('ci.tests.gmail', async (t, browser) => {
+      const acctEmail = 'ci.tests.gmail@flowcrypt.test';
+      const inboxPage = await browser.newPage(t, TestUrls.extensionInbox(acctEmail));
+      const composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
+      await ComposePageRecipe.fillMsg(composeFrame, { to: 'smime@recipient.com', cc: 'human@flowcrypt.com' }, t.title,
+        'This text should be encrypted into OpenPGP message');
+      await ComposePageRecipe.pastePublicKeyManually(composeFrame, inboxPage, 'smime@recipient.com',
+        testConstants.testCertificateMultipleSmimeCEA2D53BB9D24871);
+      await composeFrame.waitAndClick('@action-send', { delay: 2 });
+      await PageRecipe.waitForModalAndRespond(composeFrame, 'error', {
+        contentToCheck: 'Failed to send message due to: Error: Cannot use mixed OpenPGP (human@flowcrypt.com) and S/MIME (smime@recipient.com) public keys yet.If you need to email S/MIME recipient, do not add any OpenPGP recipient at the same time.',
+        timeout: 40,
+        clickOn: 'confirm'
+      });
+      // adding an OpenPGP pubkey for smime@recipient.com will allow sending an OpenPGP message
+      await PageRecipe.addPubkey(t, browser, acctEmail, testConstants.pubkey2864E326A5BE488A, 'smime@recipient.com');
+      await composeFrame.waitAndClick('@action-send', { delay: 2 });
+      await inboxPage.waitTillGone('@container-new-message');
     }));
 
     ava.default('send with broken S/MIME cert - err', testWithBrowser('ci.tests.gmail', async (t, browser) => {
@@ -1222,6 +1342,34 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       await expectRecipientElements(composePage, { to: [], cc: [], bcc: [] });
     }));
 
+    ava.default('compose - reply - from === acctEmail', testWithBrowser('compatibility', async (t, browser) => {
+      const appendUrl = 'threadId=17d02296bccd4c5c&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___&replyMsgId=17d02296bccd4c5c';
+      const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl, hasReplyPrompt: true });
+      await composePage.waitAndClick('@encrypted-reply', { delay: 1 });
+      await expectRecipientElements(composePage, { to: ['flowcrypt.compatibility@gmail.com', 'vladimir@flowcrypt.com'], cc: [], bcc: [] });
+    }));
+
+    ava.default('compose - reply - from !== acctEmail', testWithBrowser('compatibility', async (t, browser) => {
+      const appendUrl = 'threadId=17d02268f01c7e40&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___&replyMsgId=17d02268f01c7e40';
+      const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl, hasReplyPrompt: true });
+      await composePage.waitAndClick('@encrypted-reply', { delay: 1 });
+      await expectRecipientElements(composePage, { to: ['limon.monte@gmail.com'], cc: [], bcc: [] });
+    }));
+
+    ava.default('compose - reply all - from === acctEmail', testWithBrowser('compatibility', async (t, browser) => {
+      const appendUrl = 'threadId=17d02296bccd4c5c&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___&replyMsgId=17d02296bccd4c5c';
+      const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl, hasReplyPrompt: true });
+      await composePage.waitAndClick('@action-accept-reply-all-prompt', { delay: 1 });
+      await expectRecipientElements(composePage, { to: ['flowcrypt.compatibility@gmail.com', 'vladimir@flowcrypt.com'], cc: ['limon.monte@gmail.com'], bcc: ['sweetalert2@gmail.com'] });
+    }));
+
+    ava.default('compose - reply all - from !== acctEmail', testWithBrowser('compatibility', async (t, browser) => {
+      const appendUrl = 'threadId=17d02268f01c7e40&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___&replyMsgId=17d02268f01c7e40';
+      const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl, hasReplyPrompt: true });
+      await composePage.waitAndClick('@action-accept-reply-all-prompt', { delay: 1 });
+      await expectRecipientElements(composePage, { to: ['limon.monte@gmail.com', 'vladimir@flowcrypt.com'], cc: ['limon.monte@gmail.com'], bcc: [] });
+    }));
+
     /**
      * You need the following lines in /etc/hosts:
      * 127.0.0.1    standardsubdomainfes.test
@@ -1276,8 +1424,9 @@ const sendImgAndVerifyPresentInSentMsg = async (t: AvaContext, browser: BrowserH
   const imgBase64 = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGQAAABkCAYAAABw4pVUAAAAnElEQVR42u3RAQ0AAAgDIE1u9FvDOahAVzLFGS1ECEKEIEQIQoQgRIgQIQgRghAhCBGCECEIQYgQhAhBiBCECEEIQoQgRAhChCBECEIQIgQhQhAiBCFCEIIQIQgRghAhCBGCEIQIQYgQhAhBiBCEIEQIQoQgRAhChCAEIUIQIgQhQhAiBCEIEYIQIQgRghAhCBEiRAhChCBECEK+W3uw+TnWoJc/AAAAAElFTkSuQmCC';
   const sendingTypeForHumans = sendingType === 'encrypt' ? 'Encrypted' : (sendingType === 'sign' ? 'Signed' : 'Plain');
   const subject = `Test Sending ${sendingTypeForHumans} Message With Image ${Util.lousyRandom()}`;
+  const body = `Test Sending ${sendingTypeForHumans} Message With Image ${Util.lousyRandom()}`;
   const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
-  await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, subject, { richtext: true, sign: sendingType === 'sign', encrypt: sendingType === 'encrypt' });
+  await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, subject, body, { richtext: true, sign: sendingType === 'sign', encrypt: sendingType === 'encrypt' });
   // the following is a temporary hack - currently not able to directly paste an image with puppeteer
   // instead we should find a way to load the image into clipboard, and paste it into textbox
   await composePage.page.evaluate((src: string) => { $('[data-test=action-insert-image]').val(src).click(); }, imgBase64);
@@ -1285,7 +1434,7 @@ const sendImgAndVerifyPresentInSentMsg = async (t: AvaContext, browser: BrowserH
   // get sent msg id from mock
   const sentMsg = (await GoogleData.withInitializedData('flowcrypt.compatibility@gmail.com')).getMessageBySubject(subject)!;
   if (sendingType === 'plain') {
-    expect(sentMsg.payload?.body?.data).to.match(/<img src="cid:(.+)@flowcrypt">This is an automated puppeteer test: Test Sending Plain Message With Image/);
+    expect(sentMsg.payload?.body?.data).to.match(/<img src="cid:(.+)@flowcrypt">Test Sending Plain Message With Image/);
     return;
     // todo - this test case is a stop-gap. We need to implement rendering of such messages below,
     //   then let test plain messages with images in them (referenced by cid) just like other types of messages below
@@ -1312,9 +1461,7 @@ const sendTextAndVerifyPresentInSentMsg = async (t: AvaContext,
 ) => {
   const subject = `Test Sending ${sendingOpt.sign ? 'Signed' : ''} ${sendingOpt.encrypt ? 'Encrypted' : ''} Message With Test Text ${text} ${Util.lousyRandom()}`;
   const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
-  await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, subject, sendingOpt);
-  await composePage.waitAndType('@input-body', text, { delay: 1 });
-  expect(await composePage.read('@input-body')).to.include(text);
+  await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, subject, text, sendingOpt);
   await ComposePageRecipe.sendAndClose(composePage);
   // get sent msg from mock
   const sentMsg = (await GoogleData.withInitializedData('flowcrypt.compatibility@gmail.com')).getMessageBySubject(subject)!;

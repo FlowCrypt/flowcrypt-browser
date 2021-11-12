@@ -287,14 +287,17 @@ export class SetupView extends View {
     if (await shouldPassPhraseBeHidden()) {
       notePp = notePp.substring(0, 2) + notePp.substring(2, notePp.length - 2).replace(/[^ ]/g, '*') + notePp.substring(notePp.length - 2, notePp.length);
     }
-    const paperPassPhraseStickyNote = `
-      <div style="font-size: 1.2em">
-        Please write down your pass phrase and store it in safe place or even two.
-        It is needed in order to access your FlowCrypt account.
-      </div>
-      <div class="passphrase-sticky-note">${notePp}</div>
-    `;
-    return await Ui.modal.confirmWithCheckbox('Yes, I wrote it down', paperPassPhraseStickyNote);
+    if (!this.orgRules.usesKeyManager()) {
+      const paperPassPhraseStickyNote = `
+        <div style="font-size: 1.2em">
+          Please write down your pass phrase and store it in safe place or even two.
+          It is needed in order to access your FlowCrypt account.
+        </div>
+        <div class="passphrase-sticky-note">${notePp}</div>
+      `;
+      return await Ui.modal.confirmWithCheckbox('Yes, I wrote it down', paperPassPhraseStickyNote);
+    }
+    return true;
   }
 
   private submitPublicKeyIfNeeded = async (armoredPubkey: string, options: { submit_main: boolean, submit_all: boolean }) => {

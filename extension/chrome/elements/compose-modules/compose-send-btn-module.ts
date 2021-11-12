@@ -13,7 +13,7 @@ import { ComposerUserError } from './compose-err-module.js';
 import { ComposeSendBtnPopoverModule } from './compose-send-btn-popover-module.js';
 import { GeneralMailFormatter } from './formatters/general-mail-formatter.js';
 import { GmailRes } from '../../../js/common/api/email-provider/gmail/gmail-parser.js';
-import { KeyInfo, Key, KeyUtil } from '../../../js/common/core/crypto/key.js';
+import { KeyInfo } from '../../../js/common/core/crypto/key.js';
 import { SendBtnTexts } from './compose-types.js';
 import { SendableMsg } from '../../../js/common/api/email-provider/sendable-msg.js';
 import { Str } from '../../../js/common/core/common.js';
@@ -112,18 +112,12 @@ export class ComposeSendBtnModule extends ViewModule<ComposeView> {
       this.view.S.cached('send_btn_note').text('');
       const newMsgData = this.view.inputModule.extractAll();
       await this.view.errModule.throwIfFormValsInvalid(newMsgData);
-      const senderKi = await this.view.storageModule.getKey(this.view.senderModule.getSender());
-      let signingPrv: Key | undefined;
-      if (this.popover.choices.sign) {
-        signingPrv = await this.decryptSenderKey(senderKi);
-        if (!signingPrv) {
-          return; // user has canceled the pass phrase dialog, or didn't respond to it in time
-        }
-      }
       await ContactStore.update(undefined, Array.prototype.concat.apply([], Object.values(newMsgData.recipients)), { lastUse: Date.now() });
-      const msgObj = await GeneralMailFormatter.processNewMsg(this.view, newMsgData, senderKi, signingPrv);
-      await this.finalizeSendableMsg(msgObj, senderKi);
-      await this.doSendMsg(msgObj);
+      const msgObj = await GeneralMailFormatter.processNewMsg(this.view, newMsgData);
+      if (msgObj) {
+        await this.finalizeSendableMsg(msgObj);
+        await this.doSendMsg(msgObj.msg);
+      }
     } catch (e) {
       await this.view.errModule.handleSendErr(e);
     } finally {
@@ -132,7 +126,7 @@ export class ComposeSendBtnModule extends ViewModule<ComposeView> {
     }
   }
 
-  private finalizeSendableMsg = async (msg: SendableMsg, senderKi: KeyInfo) => {
+  private finalizeSendableMsg = async ({ msg, senderKi }: { msg: SendableMsg, senderKi: KeyInfo | undefined }) => {
     const choices = this.view.sendBtnModule.popover.choices;
     for (const k of Object.keys(this.additionalMsgHeaders)) {
       msg.headers[k] = this.additionalMsgHeaders[k];
@@ -149,7 +143,7 @@ export class ComposeSendBtnModule extends ViewModule<ComposeView> {
       msg.body['text/html'] = htmlWithCidImages;
       msg.attachments.push(...imgAttachments);
     }
-    if (this.view.myPubkeyModule.shouldAttach()) {
+    if (this.view.myPubkeyModule.shouldAttach() && senderKi) { // todo: report on undefined?
       msg.attachments.push(Attachment.keyinfoAsPubkeyAttachment(senderKi));
     }
     await this.addNamesToMsg(msg);
@@ -227,25 +221,6 @@ export class ComposeSendBtnModule extends ViewModule<ComposeView> {
       this.view.renderModule.renderReplySuccess(msg, msgSentRes.id);
     } else {
       this.view.renderModule.closeMsg();
-    }
-  }
-
-  private decryptSenderKey = async (senderKi: KeyInfo): Promise<Key | undefined> => {
-    const prv = await KeyUtil.parse(senderKi.private);
-    const passphrase = await this.view.storageModule.passphraseGet(senderKi);
-    if (typeof passphrase === 'undefined' && !prv.fullyDecrypted) {
-      BrowserMsg.send.passphraseDialog(this.view.parentTabId, { type: 'sign', longids: [senderKi.longid] });
-      if ((typeof await this.view.storageModule.whenMasterPassphraseEntered(60)) !== 'undefined') { // pass phrase entered
-        return await this.decryptSenderKey(senderKi);
-      } else { // timeout - reset - no passphrase entered
-        this.resetSendBtn();
-        return undefined;
-      }
-    } else {
-      if (!prv.fullyDecrypted) {
-        await KeyUtil.decrypt(prv, passphrase!); // checked !== undefined above
-      }
-      return prv;
     }
   }
 

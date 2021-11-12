@@ -100,8 +100,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
   }
 
   private sendableSimpleTextMsg = async (newMsg: NewMsgData, pubs: PubkeyResult[], signingPrv?: Key): Promise<SendableMsg> => {
-    // todo - choosePubsBasedOnKeyTypeCombinationForPartialSmimeSupport is called later inside encryptDataArmor, could be refactored
-    const pubsForEncryption = KeyUtil.choosePubsBasedOnKeyTypeCombinationForPartialSmimeSupport(pubs);
+    const pubsForEncryption = pubs.map(entry => entry.pubkey);
     if (this.isDraft) {
       const { data: encrypted } = await this.encryptDataArmor(Buf.fromUtfStr(newMsg.plaintext), undefined, pubs, signingPrv);
       return await SendableMsg.createInlineArmored(this.acctEmail, this.headers(newMsg), Buf.fromUint8(encrypted).toUtfStr(), [], { isDraft: this.isDraft });
@@ -111,7 +110,12 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
       const attachments: Attachment[] = this.isDraft ? [] : await this.view.attachmentsModule.attachment.collectAttachments(); // collects attachments
       const msgBody = { 'text/plain': newMsg.plaintext };
       const mimeEncodedPlainMessage = await Mime.encode(msgBody, { Subject: newMsg.subject }, attachments);
-      const encryptedMessage = await SmimeKey.encryptMessage({ pubkeys: x509certs, data: Buf.fromUtfStr(mimeEncodedPlainMessage), armor: false });
+      let mimeData = Buf.fromUtfStr(mimeEncodedPlainMessage);
+      if (signingPrv) {
+        const signedMessage = await this.signMimeMessage(signingPrv, mimeEncodedPlainMessage, newMsg);
+        mimeData = Buf.fromUtfStr(await signedMessage.toMime());
+      }
+      const encryptedMessage = await SmimeKey.encryptMessage({ pubkeys: x509certs, data: mimeData, armor: false });
       const data = encryptedMessage.data;
       return await SendableMsg.createSMimeEncrypted(this.acctEmail, this.headers(newMsg), data, { isDraft: this.isDraft });
     } else { // openpgp
@@ -146,7 +150,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
   private encryptDataArmor = async (data: Buf, pwd: string | undefined, pubs: PubkeyResult[], signingPrv?: Key): Promise<PgpMsgMethod.EncryptAnyArmorResult> => {
     const pgpPubs = pubs.filter(pub => pub.pubkey.type === 'openpgp');
     const encryptAsOfDate = await this.encryptMsgAsOfDateIfSomeAreExpiredAndUserConfirmedModal(pgpPubs);
-    const pubsForEncryption = KeyUtil.choosePubsBasedOnKeyTypeCombinationForPartialSmimeSupport(pubs);
+    const pubsForEncryption = pubs.map(entry => entry.pubkey);
     return await MsgUtil.encryptMessage({ pubkeys: pubsForEncryption, signingPrv, pwd, data, armor: true, date: encryptAsOfDate }) as PgpMsgMethod.EncryptAnyArmorResult;
   }
 

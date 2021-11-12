@@ -3,7 +3,7 @@
 'use strict';
 
 import { ApiErr } from '../../../js/common/api/shared/api-error.js';
-import { KeyInfo, KeyUtil } from '../../../js/common/core/crypto/key.js';
+import { KeyUtil } from '../../../js/common/core/crypto/key.js';
 import { Lang } from '../../../js/common/lang.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { ViewModule } from '../../../js/common/view-module.js';
@@ -31,21 +31,13 @@ export class ComposeMyPubkeyModule extends ViewModule<ComposeView> {
     return this.view.S.cached('icon_pubkey').is('.active');
   }
 
-  public chooseMyPublicKeyBySenderEmail = async (keys: KeyInfo[], email: string) => {
-    for (const key of keys) {
-      if (key.emails?.includes(email.toLowerCase())) {
-        return key;
-      }
-    }
-    return undefined;
-  }
-
   public reevaluateShouldAttachOrNot = () => {
     if (this.toggledManually) { // leave it as is if toggled manually before
       return;
     }
     (async () => {
       const senderEmail = this.view.senderModule.getSender();
+      // todo: disable attaching S/MIME certificate #4075
       const senderKi = await this.view.storageModule.getKey(senderEmail);
       const primaryFingerprint = (await KeyUtil.parse(senderKi.private)).id;
       // if we have cashed this fingerprint, setAttachPreference(false) rightaway and return

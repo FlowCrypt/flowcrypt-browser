@@ -83,7 +83,7 @@ export class KeyImportUi {
       }
     });
     $('.line.unprotected_key_create_pass_phrase .action_use_random_pass_phrase').click(Ui.event.handle(() => {
-      $('.source_paste_container .input_passphrase').val(PgpPwd.random()).keyup();
+      $('.source_paste_container .input_passphrase').val(PgpPwd.random()).trigger('input');
       $('.input_passphrase').attr('type', 'text');
       $('#e_rememberPassphrase').prop('checked', true);
     }));
@@ -222,7 +222,7 @@ export class KeyImportUi {
     input.parent().append(validationElements.progressBarElement); // xss-direct
     input.parent().append(validationElements.passwordResultElement); // xss-direct
     const validation = Ui.event.prevent('spree', validate);
-    input.on('keyup', validation);
+    input.on('input', validation);
     const removeValidationElements = () => {
       validationElements.passwordResultElement.remove();
       validationElements.progressBarElement.remove();

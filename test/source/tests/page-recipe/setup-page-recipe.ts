@@ -114,9 +114,9 @@ export class SetupPageRecipe extends PageRecipe {
   ) {
     if (!noPrvCreateOrgRule) {
       if (usedPgpBefore) {
-        await settingsPage.waitAndClick('@action-step0foundkey-choose-manual-enter', { retryErrs: true });
+        await settingsPage.waitAndClick('@action-step0foundkey-choose-manual-enter', { timeout: 30, retryErrs: true });
       } else {
-        await settingsPage.waitAndClick('@action-step1easyormanual-choose-manual-enter', { retryErrs: true });
+        await settingsPage.waitAndClick('@action-step1easyormanual-choose-manual-enter', { timeout: 30, retryErrs: true });
       }
     }
     key = key || Config.key(keyTitle);
@@ -192,7 +192,7 @@ export class SetupPageRecipe extends PageRecipe {
       }
       await settingsPage.waitAndClick('@input-step2bmanualenter-save', { delay: 1 });
       if (fixKey) {
-        await settingsPage.waitAll('@input-compatibility-fix-expire-years');
+        await settingsPage.waitAll('@input-compatibility-fix-expire-years', { timeout: 30 });
         await settingsPage.selectOption('@input-compatibility-fix-expire-years', '1');
         await settingsPage.waitAndClick('@action-fix-and-import-key');
       }
@@ -266,7 +266,6 @@ export class SetupPageRecipe extends PageRecipe {
         expect(await settingsPage.isChecked('@input-step2ekm-save-passphrase')).to.equal(enterPp.checks.isSavePassphraseChecked);
       }
       await settingsPage.waitAndClick('@input-step2ekm-continue');
-      await settingsPage.waitAndRespondToModal('confirm-checkbox', 'confirm', 'Please write down your pass phrase');
     }
     if (expectErr) {
       await settingsPage.waitAll(['@container-err-title', '@container-err-text', '@action-retry-by-reloading']);
@@ -291,15 +290,15 @@ export class SetupPageRecipe extends PageRecipe {
   private static createBegin = async (settingsPage: ControllablePage, keyTitle: string, { key, usedPgpBefore = false, skipForPassphrase = false }: { key?: { passphrase: string }, usedPgpBefore?: boolean, skipForPassphrase?: boolean } = {}) => {
     const k = key || Config.key(keyTitle);
     if (usedPgpBefore) {
-      await settingsPage.waitAndClick('@action-step0foundkey-choose-manual-create');
+      await settingsPage.waitAndClick('@action-step0foundkey-choose-manual-create', { timeout: 30 });
     } else {
       if (skipForPassphrase) {
         await settingsPage.waitAndClick('#lost_pass_phrase');
         await settingsPage.waitAndClick('.action_skip_recovery');
         await settingsPage.waitAndRespondToModal('confirm', 'confirm', 'Your account will be set up for encryption again, but your previous encrypted emails will be unreadable.');
-        await settingsPage.waitAndClick('@action-step1easyormanual-choose-manual-create');
+        await settingsPage.waitAndClick('@action-step1easyormanual-choose-manual-create', { timeout: 30, retryErrs: true });
       } else {
-        await settingsPage.waitAndClick('@action-step1easyormanual-choose-manual-create');
+        await settingsPage.waitAndClick('@action-step1easyormanual-choose-manual-create', { timeout: 30, retryErrs: true });
       }
     }
     await settingsPage.waitAndType('@input-step2bmanualcreate-passphrase-1', k.passphrase);

@@ -11,8 +11,6 @@ import { MsgUtil } from '../../../../js/common/core/crypto/pgp/msg-util.js';
 import { SendableMsg } from '../../../../js/common/api/email-provider/sendable-msg.js';
 import { Mime, SendableMsgBody } from '../../../../js/common/core/mime.js';
 import { ContactStore } from '../../../../js/common/platform/store/contact-store.js';
-import { SmimeKey } from '../../../../js/common/core/crypto/smime/smime-key.js';
-import { Buf } from '../../../../js/common/core/buf.js';
 
 export class SignedMsgMailFormatter extends BaseMailFormatter {
 
@@ -26,8 +24,7 @@ export class SignedMsgMailFormatter extends BaseMailFormatter {
       }
       const msgBody = this.richtext ? { 'text/plain': newMsg.plaintext, 'text/html': newMsg.plainhtml } : { 'text/plain': newMsg.plaintext };
       const mimeEncodedPlainMessage = await Mime.encode(msgBody, { Subject: newMsg.subject }, attachments);
-      const data = await SmimeKey.sign(signingPrv, Buf.fromUtfStr(mimeEncodedPlainMessage));
-      return await SendableMsg.createSMimeSigned(this.acctEmail, this.headers(newMsg), data);
+      return await this.signMimeMessage(signingPrv, mimeEncodedPlainMessage, newMsg);
     }
     if (!this.richtext) {
       // Folding the lines or GMAIL WILL RAPE THE TEXT, regardless of what encoding is used
