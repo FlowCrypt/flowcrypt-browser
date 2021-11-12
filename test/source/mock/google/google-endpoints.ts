@@ -111,6 +111,28 @@ export const mockGoogleEndpoints: HandlersDefinition = {
           treatAsAlias: false,
           verificationStatus: 'accepted'
         });
+      } else if (acct === 'multi.aliased.user@example.com') {
+        const alias1 = 'alias1@example.com';
+        const alias2 = 'alias2@example.com';
+        sendAs.push({
+          sendAsEmail: alias1,
+          displayName: 'An Alias1',
+          replyToAddress: alias1,
+          signature: '',
+          isDefault: false,
+          isPrimary: false,
+          treatAsAlias: false,
+          verificationStatus: 'accepted'
+        }, {
+          sendAsEmail: alias2,
+          displayName: 'An Alias1',
+          replyToAddress: alias2,
+          signature: '',
+          isDefault: false,
+          isPrimary: false,
+          treatAsAlias: false,
+          verificationStatus: 'accepted'
+        });
       }
       return { sendAs };
     }
