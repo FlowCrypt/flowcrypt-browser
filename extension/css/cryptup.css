@@ -61,6 +61,7 @@ td.green,
 b.green,
 span.green { color: #31a217; }
 
+button,
 .line.gray,
 td.gray,
 b.gray,
@@ -131,6 +132,7 @@ span.gray { color: #b7b7b7; }
   color: white;
 }
 
+button.btn_disabled,
 .swal2-popup .swal2-styled.swal2-confirm.ui-modal-warning-confirm,
 .swal2-popup .swal2-styled.swal2-cancel.ui-modal-confirm-cancel,
 .swal2-popup .swal2-styled.swal2-cancel.ui-modal-confirm-checkbox-cancel,

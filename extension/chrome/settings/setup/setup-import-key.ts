@@ -39,8 +39,8 @@ export class SetupImportKeyModule {
       }
       Xss.sanitizeRender('#step_2b_manual_enter .action_add_private_key', Ui.spinner('white'));
       await this.view.saveKeysAndPassPhrase([checked.encrypted], options);
-      await this.view.preFinalizeSetup(options);
-      await this.view.submitPublicKeysAndFinalizeSetup(options);
+      await this.view.submitPublicKeys(options);
+      await this.view.finalizeSetup();
       await this.view.setupRender.renderSetupDone();
     } catch (e) {
       if (e instanceof UserAlert) {
@@ -69,8 +69,8 @@ export class SetupImportKeyModule {
       return;
     }
     await this.view.saveKeysAndPassPhrase([fixedPrv], options);
-    await this.view.preFinalizeSetup(options);
-    await this.view.submitPublicKeysAndFinalizeSetup(options);
+    await this.view.submitPublicKeys(options);
+    await this.view.finalizeSetup();
     await this.view.setupRender.renderSetupDone();
   }
 }

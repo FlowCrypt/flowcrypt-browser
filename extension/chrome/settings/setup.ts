@@ -84,8 +84,8 @@ export class SetupView extends View {
     } else {
       window.location.href = 'index.htm';
     }
-    this.submitKeyForAddrs = [this.acctEmail];
-    this.keyImportUi.initPrvImportSrcForm(this.acctEmail, this.parentTabId); // for step_2b_manual_enter, if user chooses so
+    this.submitKeyForAddrs = [];
+    this.keyImportUi.initPrvImportSrcForm(this.acctEmail, this.parentTabId, this.submitKeyForAddrs); // for step_2b_manual_enter, if user chooses so
     this.keyImportUi.onBadPassphrase = () => $('#step_2b_manual_enter .input_passphrase').val('').focus();
     this.keyImportUi.renderPassPhraseStrengthValidationInput($('#step_2a_manual_create .input_password'), $('#step_2a_manual_create .action_proceed_private'));
     this.keyImportUi.renderPassPhraseStrengthValidationInput($('#step_2_ekm_choose_pass_phrase .input_password'), $('#step_2_ekm_choose_pass_phrase .action_proceed_private'));
@@ -201,10 +201,11 @@ export class SetupView extends View {
     const inputSubmitAll = $(target).closest('.manual').find('.input_submit_all').first();
     if ($(target).prop('checked')) {
       if (inputSubmitAll.closest('div.line').css('visibility') === 'visible') {
-        inputSubmitAll.prop({ checked: true, disabled: false });
+        $('.input_email_alias').prop({ disabled: false });
       }
     } else {
-      inputSubmitAll.prop({ checked: false, disabled: true });
+      $('.input_email_alias').prop({ checked: false });
+      $('.input_email_alias').prop({ disabled: true });
     }
   }
 
@@ -216,19 +217,23 @@ export class SetupView extends View {
     }
   }
 
-  public preFinalizeSetup = async (options: SetupOptions): Promise<void> => {
-    await AcctStore.set(this.acctEmail, { tmp_submit_main: options.submit_main, tmp_submit_all: options.submit_all });
-  }
-
-  public submitPublicKeysAndFinalizeSetup = async ({ submit_main, submit_all }: { submit_main: boolean, submit_all: boolean }): Promise<void> => {
+  public submitPublicKeys = async (
+    { submit_main, submit_all }: { submit_main: boolean, submit_all: boolean }
+  ): Promise<void> => {
     const primaryKi = await KeyStore.getFirstRequired(this.acctEmail);
     try {
       await this.submitPublicKeyIfNeeded(primaryKi.public, { submit_main, submit_all });
     } catch (e) {
-      return await Settings.promptToRetry(e, Lang.setup.failedToSubmitToAttester, () => this.submitPublicKeysAndFinalizeSetup({ submit_main, submit_all }));
+      return await Settings.promptToRetry(
+        e,
+        Lang.setup.failedToSubmitToAttester,
+        () => this.submitPublicKeys({ submit_main, submit_all })
+      );
     }
+  }
+
+  public finalizeSetup = async (): Promise<void> => {
     await AcctStore.set(this.acctEmail, { setup_date: Date.now(), setup_done: true, cryptup_enabled: true });
-    await AcctStore.remove(this.acctEmail, ['tmp_submit_main', 'tmp_submit_all']);
   }
 
   public saveKeysAndPassPhrase = async (prvs: Key[], options: SetupOptions) => {
@@ -237,9 +242,11 @@ export class SetupView extends View {
       await PassphraseStore.set((options.passphrase_save && !this.orgRules.forbidStoringPassPhrase()) ? 'local' : 'session',
         this.acctEmail, { longid: KeyUtil.getPrimaryLongid(prv) }, options.passphrase);
     }
+    const { sendAs } = await AcctStore.get(this.acctEmail, ['sendAs']);
+    const myOwnEmailsAddrs: string[] = [this.acctEmail].concat(Object.keys(sendAs!));
     const myOwnEmailAddrsAsContacts: Contact[] = [];
     const { full_name: name } = await AcctStore.get(this.acctEmail, ['full_name']);
-    for (const email of this.submitKeyForAddrs) {
+    for (const email of myOwnEmailsAddrs) {
       myOwnEmailAddrsAsContacts.push(await ContactStore.obj({ email, name, pubkey: KeyUtil.armor(await KeyUtil.asPublicKey(prvs[0])) }));
     }
     await ContactStore.save(undefined, myOwnEmailAddrsAsContacts);
