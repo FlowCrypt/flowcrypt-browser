@@ -265,7 +265,7 @@ View.run(class ContactsView extends View {
           }
         }
         container.css('display', 'block');
-        $('#bulk_import .input_pubkey, #bulk_import .action_process, #file_import #fineuploader_button').css('display', 'none');
+        $('#bulk_import .input_pubkey, #bulk_import .action_process, #file_import, #fineuploader_button').css('display', 'none');
       }
     } catch (e) {
       ApiErr.reportIfSignificant(e);

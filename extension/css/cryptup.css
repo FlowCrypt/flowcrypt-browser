@@ -54,6 +54,7 @@ span.red { color: #d14836; }
 .line.orange,
 td.orange,
 b.orange,
+div.orange,
 span.orange { color: #c27e23; }
 
 .line.green,
@@ -137,6 +138,11 @@ span.gray { color: #b7b7b7; }
 .button.gray {
   background-color: #b7b7b7;
   background-image: linear-gradient(#c5c5c5, #b7b7b7);
+  color: white;
+}
+
+.button.orange {
+  background: #d18826;
   color: white;
 }
 
@@ -1046,8 +1052,8 @@ body#settings > div#content.dialog.add_pubkey select.copy_from_email {
 
 body#settings > div#content.dialog.add_pubkey textarea.pubkey {
   width: 500px;
-  height: 340px;
-  font-size: 10px;
+  height: 300px;
+  font-size: 12px;
   padding: 8px;
 }
 
