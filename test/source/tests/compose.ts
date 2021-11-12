@@ -1370,6 +1370,15 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       await expectRecipientElements(composePage, { to: ['limon.monte@gmail.com', 'vladimir@flowcrypt.com'], cc: ['limon.monte@gmail.com'], bcc: [] });
     }));
 
+    ava.default('compose - list of pubkeys gets refetched in compose', testWithBrowser('compatibility', async (t, browser) => {
+      // 1. ensure that recipient@example.com has a key published on Attester or WKD
+      // 2. add another, wrong public key manually for recipient@example.com in settings -> Contacts. Make sure this is the only key locally saved for that user.
+      // 3. open compose window
+      // 4. input their email address in recipients, wait a few more seconds
+      // 5. close compose window
+      // 6. open settings again and refresh them, search in Contacts again for recipient@example.com
+    }));
+
     /**
      * You need the following lines in /etc/hosts:
      * 127.0.0.1    standardsubdomainfes.test
