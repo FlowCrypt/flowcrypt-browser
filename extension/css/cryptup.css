@@ -51,9 +51,10 @@ td.red,
 b.red,
 span.red { color: #d14836; }
 
-.line.prange,
+.line.orange,
 td.orange,
 b.orange,
+div.orange,
 span.orange { color: #c27e23; }
 
 .line.green,
@@ -139,6 +140,11 @@ button.btn_disabled,
 .button.gray {
   background-color: #b7b7b7;
   background-image: linear-gradient(#c5c5c5, #b7b7b7);
+  color: white;
+}
+
+.button.orange {
+  background: #d18826;
   color: white;
 }
 
@@ -1048,8 +1054,8 @@ body#settings > div#content.dialog.add_pubkey select.copy_from_email {
 
 body#settings > div#content.dialog.add_pubkey textarea.pubkey {
   width: 500px;
-  height: 340px;
-  font-size: 10px;
+  height: 300px;
+  font-size: 12px;
   padding: 8px;
 }
 
@@ -1336,7 +1342,12 @@ td {
 
 #pgp_block.pgp_pubkey { padding-top: 7px; }
 #pgp_block.pgp_pubkey .line { margin: 0; }
-#pgp_block.pgp_pubkey pre.pubkey { display: none; }
+#pgp_block.pgp_pubkey .add_contact:not(.line) { text-align: center; }
+
+#pgp_block.pgp_pubkey pre.pubkey {
+  margin-top: 0;
+  display: none;
+}
 
 #pgp_block .three_dots {
   text-align: center;
@@ -1902,8 +1913,7 @@ table#compose td.text div#input_text {
 }
 
 table#compose td.text div#input_text,
-#pgp_block,
-#backup_block,
+#pgp_block:not(.pgp_pubkey),
 div#reply_message_successful_container > table div.replied_body {
   white-space: pre-wrap;
   tab-size: 4;
@@ -2826,6 +2836,7 @@ body#select_account .action_add_account::before {
 }
 
 .m-0 { margin: 0 !important; }
+.mt-10 { margin-top: 10px; }
 .mt-20 { margin-top: 20px; }
 .mt-40 { margin-top: 40px; }
 .mb-20 { margin-bottom: 20px; }
