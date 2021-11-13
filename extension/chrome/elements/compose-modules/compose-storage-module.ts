@@ -143,25 +143,33 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
    * Updates them asynchronously if there is at least one usable key for recipinet
    * Updates synchronously if there are no usable keys
    */
-  public getPubkeysFromLocalStorageUpdatedFromKeyserver = async (
-    email: string, name: string | undefined
+  public getUpToDatePubkeys = async (
+    email: string
   ): Promise<PubkeyInfo[] | "fail"> => {
+    this.view.errModule.debug(`getUpToDatePubkeys.email(${email})`);
     const storedContact = await ContactStore.getOneWithAllPubkeys(undefined, email);
+    this.view.errModule.debug(`getUpToDatePubkeys.storedContact.sortedPubkeys.lengh(${storedContact?.sortedPubkeys.length})`);
     const bestKey = storedContact?.sortedPubkeys[0].pubkey;
+    this.view.errModule.debug(`getUpToDatePubkeys.bestKey(${JSON.stringify(bestKey)})`);
     if (storedContact && bestKey?.usableForEncryption) {
+      this.view.errModule.debug(`getUpToDatePubkeys.bestKey is usable, refreshing async`);
       // have at least one valid key. Return keys as they are but fire off
       //  an async method to update them
-      this.updateLocalPubkeysFromKeyservers(storedContact.sortedPubkeys, email, name).catch(ApiErr.reportIfSignificant);
+      this.updateLocalPubkeysFromRemote(storedContact.sortedPubkeys, email)
+        .catch(ApiErr.reportIfSignificant);
       return storedContact.sortedPubkeys;
     }
-    // no valid keys found, query synchronously, then return result
-    try {
-      await this.updateLocalPubkeysFromKeyservers(storedContact?.sortedPubkeys || [], email, name);
+    this.view.errModule.debug(`getUpToDatePubkeys.bestKey not usable, refreshing sync`);
+    try { // no valid keys found, query synchronously, then return result
+      await this.updateLocalPubkeysFromRemote(storedContact?.sortedPubkeys || [], email);
     } catch (e) {
       return PUBKEY_LOOKUP_RESULT_FAIL;
     }
     // re-query the storage, which is now updated
-    return (await ContactStore.getOneWithAllPubkeys(undefined, email))?.sortedPubkeys ?? [];
+    const updatedContact = await ContactStore.getOneWithAllPubkeys(undefined, email);
+    this.view.errModule.debug(`getUpToDatePubkeys.updatedContact.sortedPubkeys.lengh(${updatedContact?.sortedPubkeys.length})`);
+    this.view.errModule.debug(`getUpToDatePubkeys.updatedContact(${updatedContact})`);
+    return updatedContact?.sortedPubkeys ?? [];
   }
 
   /**
@@ -171,8 +179,8 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
    *    newer versions of public keys we already have (compared by fingerprint), then we
    *    update the public keys we already have.
    */
-  public updateLocalPubkeysFromKeyservers = async (
-    storedPubkeys: PubkeyInfo[], email: string, name: string | undefined
+  public updateLocalPubkeysFromRemote = async (
+    storedPubkeys: PubkeyInfo[], email: string, name?: string
   ): Promise<void> => {
     if (!email) {
       throw Error("Empty email");
@@ -195,32 +203,6 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
         Catch.reportErr(e);
       }
       throw e;
-    }
-  }
-
-  public checkKeyserverForNewerVersionOfKnownPubkeyIfNeeded = async (
-    email: string, pubkeyInfo: PubkeyInfo) => {
-    try {
-      const lastCheckOverWeekAgoOrNever = !pubkeyInfo.lastCheck ||
-        new Date(pubkeyInfo.lastCheck).getTime() < Date.now() - (1000 * 60 * 60 * 24 * 7);
-      if (lastCheckOverWeekAgoOrNever || KeyUtil.expired(pubkeyInfo.pubkey)) {
-        const { pubkey: fetchedPubkeyArmored } = await this.view.pubLookup.lookupFingerprint(pubkeyInfo.pubkey.id);
-        if (fetchedPubkeyArmored) {
-          const fetchedPubkey = await KeyUtil.parse(fetchedPubkeyArmored);
-          if (fetchedPubkey.lastModified && (!pubkeyInfo.pubkey.lastModified || fetchedPubkey.lastModified >= pubkeyInfo.pubkey.lastModified)) {
-            // the fetched pubkey has at least the same or newer signature
-            // the "same or newer" was due to a bug we encountered earlier where keys were badly recorded in db
-            // sometime in Oct 2020 we could turn the ">=" back to ">" above
-            await ContactStore.update(undefined, email, { pubkey: fetchedPubkey, lastUse: Date.now(), pubkeyLastCheck: Date.now() });
-            await this.view.recipientsModule.reRenderRecipientFor(email);
-            return;
-          }
-        }
-      }
-      await ContactStore.update(undefined, email, { pubkey: pubkeyInfo.pubkey, pubkeyLastCheck: Date.now() });
-      // we checked for newer key and it did not result in updating the key, don't check again for another week
-    } catch (e) {
-      ApiErr.reportIfSignificant(e);
     }
   }
 
