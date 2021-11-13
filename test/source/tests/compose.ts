@@ -1208,7 +1208,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
 
     // we test that list of public keys get refetched even if we already have a good key
     // useful when recipient now has a completely different public key
-    ava.default('compose - list of pubkeys gets refetched in compose', testWithBrowser('compatibility', async (t, browser) => {
+    ava.default('compose - list of pubkeys gets refetched in compose', testWithBrowser('ci.tests.gmail', async (t, browser) => {
       const recipientEmail = 'mock.only.pubkey@flowcrypt.com'; // has "somePubkey" on Attester
       const validKey = protonMailCompatKey; // doesn't really matter which key we import, as long as different from "somePubkey"
       const settingsPage = await browser.newPage(t, TestUrls.extensionSettings('ci.tests.gmail@flowcrypt.test'));
@@ -1542,7 +1542,7 @@ export const expectRecipientElements = async (controllable: ControllablePage, ex
 };
 
 const importKeyManuallyAndViewTheNewContact = async (
-  settingsPage: ControllablePage, email: string, pubkey: string, button: string
+  settingsPage: ControllablePage, recipientEmail: string, pubkey: string, button: string
 ) => {
   await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
   const contactsFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-contacts-page', ['contacts.htm', 'placement=settings']);
@@ -1553,10 +1553,11 @@ const importKeyManuallyAndViewTheNewContact = async (
   await contactsFrame.waitAll('iframe');
   const pubkeyFrame = await contactsFrame.getFrame(['pgp_pubkey.htm']);
   await pubkeyFrame.waitForContent('@action-add-contact', button);
+  await pubkeyFrame.waitAndType('@input-email', recipientEmail);
   await pubkeyFrame.waitAndClick('@action-add-contact');
-  await pubkeyFrame.waitForContent('@container-pgp-pubkey', `${email} added`);
+  await pubkeyFrame.waitForContent('@container-pgp-pubkey', `${recipientEmail} added`);
   await contactsFrame.waitAndClick('@action-back-to-contact-list', { confirmGone: true });
-  await contactsFrame.waitAndClick(`@action-show-email-${email.replace(/[^a-z0-9]+/g, '')}`);
+  await contactsFrame.waitAndClick(`@action-show-email-${recipientEmail.replace(/[^a-z0-9]+/g, '')}`);
   return contactsFrame;
 };
 
