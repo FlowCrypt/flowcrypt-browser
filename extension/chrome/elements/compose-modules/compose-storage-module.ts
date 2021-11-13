@@ -149,7 +149,7 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
     this.view.errModule.debug(`getUpToDatePubkeys.email(${email})`);
     const storedContact = await ContactStore.getOneWithAllPubkeys(undefined, email);
     this.view.errModule.debug(`getUpToDatePubkeys.storedContact.sortedPubkeys.lengh(${storedContact?.sortedPubkeys.length})`);
-    const bestKey = storedContact?.sortedPubkeys[0].pubkey;
+    const bestKey = storedContact?.sortedPubkeys[0]?.pubkey;
     this.view.errModule.debug(`getUpToDatePubkeys.bestKey(${JSON.stringify(bestKey)})`);
     if (storedContact && bestKey?.usableForEncryption) {
       this.view.errModule.debug(`getUpToDatePubkeys.bestKey is usable, refreshing async`);
