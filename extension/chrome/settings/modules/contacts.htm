@@ -43,11 +43,14 @@
     </div>
 
     <div id="bulk_import" style="display: none;">
+      <div class="line orange">
+        Manually importing Public Keys can be dangerous
+      </div>
       <div class="line" id="file_import">
         <a id="fineuploader_button" href="#">Select a file</a> or paste public key(s) below:
         <div id="fineuploader" class="display_none"></div>
       </div>
-      <div id="processed"></div>
+      <div id="processed" class="mt-20"></div>
       <div class="line">
         <textarea class="input_pubkey"
           data-test="input-bulk-public-keys"
