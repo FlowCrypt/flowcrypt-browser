@@ -334,7 +334,10 @@ export class ContactStore extends AbstractStore {
         },
         reject);
     });
-    return emailEntity ? { info: emailEntity, sortedPubkeys: await ContactStore.sortKeys(pubkeys, revocations) } : undefined;
+    const filteredSorted = (await ContactStore.sortKeys(pubkeys, revocations)).filter(p => !!p);
+    // filtering !undefined for https://github.com/FlowCrypt/flowcrypt-browser/pull/4115#issuecomment-968070758
+    // if you can remove the filter and tests still pass, feel free
+    return emailEntity ? { info: emailEntity, sortedPubkeys: filteredSorted } : undefined;
   }
 
   public static getPubkey = async (db: IDBDatabase | undefined, { id, type }: { id: string, type: string }):
