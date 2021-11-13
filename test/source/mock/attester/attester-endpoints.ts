@@ -160,7 +160,7 @@ DDF85HtNOR10V1aJrfE7F6e3QTzu5SZBjDPi5vVcbtK72eyd
 -----END PGP PUBLIC KEY BLOCK-----
 `;
 
-const protonMailCompatKey = `-----BEGIN PGP PUBLIC KEY BLOCK-----
+export const protonMailCompatKey = `-----BEGIN PGP PUBLIC KEY BLOCK-----
 Version: OpenPGP.js v3.0.5
 Comment: https://openpgpjs.org
 
