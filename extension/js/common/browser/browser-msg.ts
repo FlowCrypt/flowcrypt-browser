@@ -40,6 +40,7 @@ export namespace Bm {
   export type RenderPublicKeys = { afterFrameId: string, publicKeys: string[], traverseUp?: number };
   export type SubscribeDialog = { isAuthErr?: boolean };
   export type ComposeWindow = { frameId: string };
+  export type ComposeWindowOpenDraft = { draftId: string };
   export type ReinsertReplyBox = { replyMsgId: string };
   export type AddPubkeyDialog = { emails: string[] };
   export type Reload = { advanced?: boolean };
@@ -97,7 +98,7 @@ export namespace Bm {
 
   export type AnyRequest = PassphraseEntry | StripeResult | OpenPage | OpenGoogleAuthDialog | Redirect | Reload |
     AddPubkeyDialog | ReinsertReplyBox | ComposeWindow | ScrollToReplyBox | ScrollToCursorInReplyBox | SubscribeDialog |
-    RenderPublicKeys | NotificationShowAuthPopupNeeded |
+    RenderPublicKeys | NotificationShowAuthPopupNeeded | ComposeWindowOpenDraft |
     NotificationShow | PassphraseDialog | PassphraseDialog | Settings | SetCss | AddOrRemoveClass | ReconnectAcctAuthPopup |
     Db | InMemoryStoreSet | InMemoryStoreGet | StoreGlobalGet | StoreGlobalSet | StoreAcctGet | StoreAcctSet | KeyParse |
     PgpMsgDecrypt | PgpMsgDiagnoseMsgPubkeys | PgpMsgVerifyDetached | PgpHashChallengeAnswer | PgpMsgType | Ajax |
