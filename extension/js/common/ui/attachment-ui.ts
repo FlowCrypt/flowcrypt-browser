@@ -50,7 +50,7 @@ export class AttachmentUI {
       this.uploader = new qq.FineUploader(config); // tslint:disable-line:no-unsafe-any
       this.setInputAttributes();
     });
-  }
+  };
 
   public setInputAttributes = (): HTMLInputElement => {
     const input: HTMLInputElement = this.uploader._buttons[0].getInput(); // tslint:disable-line:no-unsafe-any
@@ -58,20 +58,20 @@ export class AttachmentUI {
     input.setAttribute('tabindex', '8');
     input.setAttribute('data-test', 'action-attach-files');
     return input;
-  }
+  };
 
   public hasAttachment = () => {
     return Object.keys(this.attachedFiles).length > 0;
-  }
+  };
 
   public getAttachmentIds = () => {
     return Object.keys(this.attachedFiles);
-  }
+  };
 
   public collectAttachment = async (uploadFileId: string) => {
     const fileData = await this.readAttachmentDataAsUint8(uploadFileId);
     return new Attachment({ name: this.attachedFiles[uploadFileId].name, type: this.attachedFiles[uploadFileId].type, data: fileData });
-  }
+  };
 
   public collectAttachments = async () => {
     const attachments: Attachment[] = [];
@@ -79,7 +79,7 @@ export class AttachmentUI {
       attachments.push(await this.collectAttachment(uploadFileId));
     }
     return attachments;
-  }
+  };
 
   public collectEncryptAttachments = async (pubs: PubkeyResult[]): Promise<Attachment[]> => {
     const attachments: Attachment[] = [];
@@ -94,15 +94,15 @@ export class AttachmentUI {
       attachments.push(new Attachment({ name: Attachment.sanitizeName(file.name) + '.pgp', type: file.type, data: encrypted.message.packets.write() }));
     }
     return attachments;
-  }
+  };
 
   public clearAllAttachments = () => {
     this.attachedFiles = {};
-  }
+  };
 
   public addFile = (file: File) => {
     this.uploader.addFiles([file]); // tslint:disable-line: no-unsafe-any
-  }
+  };
 
   private cancelAttachment = (uploadFileId: string) => {
     delete this.attachedFiles[uploadFileId];
@@ -111,7 +111,7 @@ export class AttachmentUI {
       // this allows code that relies on this to evaluate the DOM after the file has been removed from it
       Catch.setHandledTimeout(this.callbacks.uiChanged, 0);
     }
-  }
+  };
 
   private processNewAttachment = async (uploadFileId: string) => {
     const limits = await this.getLimits();
@@ -143,7 +143,7 @@ export class AttachmentUI {
       Catch.setHandledTimeout(this.callbacks.uiChanged, 0);
     }
     return true;
-  }
+  };
 
   private getFileSizeSum = () => {
     let sum = 0;
@@ -151,7 +151,7 @@ export class AttachmentUI {
       sum += file.size;
     }
     return sum;
-  }
+  };
 
   private readAttachmentDataAsUint8 = async (uploadFileId: string): Promise<Uint8Array> => {
     return await new Promise(resolve => {
@@ -161,6 +161,6 @@ export class AttachmentUI {
       };
       reader.readAsArrayBuffer(this.attachedFiles[uploadFileId]);
     });
-  }
+  };
 
 }

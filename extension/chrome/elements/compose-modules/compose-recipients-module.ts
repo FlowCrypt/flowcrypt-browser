@@ -88,11 +88,11 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       await this.reRenderRecipientFor(contact.email);
     });
     BrowserMsg.listen(this.view.parentTabId);
-  }
+  };
 
   public getRecipients = () => {
     return this.addedRecipients;
-  }
+  };
 
   public validateEmails = (uncheckedEmails: string[]): { valid: string[], invalid: string[] } => {
     const valid: string[] = [];
@@ -106,7 +106,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       }
     }
     return { valid, invalid };
-  }
+  };
 
   public parseRenderRecipients = async (inputs: JQuery<HTMLElement>, force?: boolean, uncheckedEmails?: string[]): Promise<void> => {
     this.view.errModule.debug(`parseRenderRecipients(force: ${force})`);
@@ -142,7 +142,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
         this.view.errModule.debug(`parseRenderRecipients(force: ${force}).4`);
       }
     }
-  }
+  };
 
   public addRecipients = async (recipients: Recipients, triggerCallback: boolean = true) => {
     let newRecipients: RecipientElement[] = [];
@@ -158,14 +158,14 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       }
     }
     await this.evaluateRecipients(newRecipients, triggerCallback);
-  }
+  };
 
   public clearRecipients = () => {
     const addedRecipientsCopy = [...this.addedRecipients];
     for (const recipient of addedRecipientsCopy) {
       this.removeRecipient(recipient.element);
     }
-  }
+  };
 
   public clearRecipientsForReply = async () => {
     for (const recipient of this.addedRecipients.filter(r => r.sendingType !== 'to')) {
@@ -179,23 +179,23 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
         this.removeRecipient(recipient.element);
       }
     }
-  }
+  };
 
   public showContacts = () => {
     this.view.S.cached('contacts').css('display', 'block');
-  }
+  };
 
   public hideContacts = () => {
     this.view.S.cached('contacts').css('display', 'none');
     this.view.S.cached('contacts').find('ul').empty();
     this.view.S.cached('contacts').children().not('ul').remove();
-  }
+  };
 
   public addRecipientsAndShowPreview = async (recipients: Recipients) => {
     this.view.recipientsModule.addRecipients(recipients).catch(Catch.reportErr);
     this.view.recipientsModule.showHideCcAndBccInputsIfNeeded();
     await this.view.recipientsModule.setEmailsPreview(this.getRecipients());
-  }
+  };
 
   public reEvaluateRecipients = async (recipients: RecipientElement[]) => {
     for (const recipient of recipients) {
@@ -203,7 +203,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       Xss.sanitizeAppend(recipient.element, `${Xss.escape(recipient.email)} ${Ui.spinner('green')}`);
     }
     await this.evaluateRecipients(recipients);
-  }
+  };
 
   public evaluateRecipients = async (recipients: RecipientElement[], triggerCallback: boolean = true) => {
     this.view.errModule.debug(`evaluateRecipients`);
@@ -236,7 +236,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     }
     $('body').attr('data-test-state', 'ready');
     this.view.sizeModule.setInputTextHeightManuallyIfNeeded();
-  }
+  };
 
   /**
   * Generate content for emails preview in some container
@@ -284,7 +284,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     } else {
       rest.remove();
     }
-  }
+  };
 
   public showHideCcAndBccInputsIfNeeded = () => {
     const isThere = { cc: false, bcc: false };
@@ -303,7 +303,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     this.view.S.cached('input_addresses_container_outer').find(`#input-container-bcc`).css('display', isThere.bcc ? '' : 'none');
     this.view.S.cached('bcc').css('display', isThere.bcc ? 'none' : '');
     this.view.S.cached('input_addresses_container_outer').children(`:not([style="display: none;"])`).last().append(this.view.S.cached('container_cc_bcc_buttons')); // xss-reinsert
-  }
+  };
 
   public collapseInputsIfNeeded = async (relatedTarget?: HTMLElement | null) => { // TODO: fix issue when loading no-pgp email and user starts typing
     if (!relatedTarget || (!this.view.S.cached('input_addresses_container_outer')[0].contains(relatedTarget)
@@ -319,11 +319,11 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       this.hideContacts();
       this.view.sizeModule.setInputTextHeightManuallyIfNeeded();
     }
-  }
+  };
 
   public onRecipientAdded = (callback: (rec: RecipientElement[]) => void) => {
     this.onRecipientAddedCallbacks.push(callback);
-  }
+  };
 
   // todo: shouldn't we check longid?
   public doesRecipientHaveMyPubkey = async (theirEmailUnchecked: string): Promise<boolean | undefined> => {
@@ -356,7 +356,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       }
       return undefined;
     }
-  }
+  };
 
   public reRenderRecipientFor = async (email: string): Promise<void> => {
     if (this.addedRecipients.every(r => r.email !== email)) {
@@ -369,7 +369,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       this.view.recipientsModule.showHideCcAndBccInputsIfNeeded();
       await this.view.recipientsModule.setEmailsPreview(this.getRecipients());
     }
-  }
+  };
 
   private inputsBlurHandler = async (target: HTMLElement, e: JQuery.Event<HTMLElement, null>) => {
     if (this.dragged) { // blur while drag&drop
@@ -385,7 +385,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     // then we need to collapse inputs
     await this.collapseInputsIfNeeded(e.relatedTarget);
     this.view.errModule.debug(`input_to.blur -> parseRenderRecipients done`);
-  }
+  };
 
   private inputsDragEnterHandler = (target: HTMLElement) => {
     if (Catch.browser().name === 'firefox') {
@@ -393,7 +393,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     } else {
       target.focus();
     }
-  }
+  };
 
   private inputsDragLeaveHandler = (target: HTMLElement) => {
     if (Catch.browser().name === 'firefox') {
@@ -401,7 +401,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     } else {
       target.blur();
     }
-  }
+  };
 
   private inputsDropHandler = (target: HTMLElement) => {
     if (Catch.browser().name === 'firefox') {
@@ -419,7 +419,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       this.view.sizeModule.resizeInput(jqueryTarget.add(previousInput));
       target.focus();
     }
-  }
+  };
 
   private copyCcBccActionsClickHandler = (target: HTMLElement, newContainer: JQuery<HTMLElement>) => {
     const buttonsContainer = target.parentElement!;
@@ -432,7 +432,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     input.focus();
     this.view.sizeModule.resizeComposeBox();
     this.view.sizeModule.setInputTextHeightManuallyIfNeeded();
-  }
+  };
 
   private addTheirPubkeyClickHandler = () => {
     const noPgpRecipients = this.addedRecipients.filter(r => r.element.className.includes('no_pgp'));
@@ -451,7 +451,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
         }
       }
     }, 1000);
-  }
+  };
 
   /**
    * Keyboard navigation in search results.
@@ -528,7 +528,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       return true;
     }
     return false;
-  }
+  };
 
   /**
    * todo - contactSearch should be refactored, plus split into a separate module
@@ -579,7 +579,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       this.contactSearchInProgress = false;
       this.renderSearchResultsLoadingDone();
     }
-  }
+  };
 
   private guessContactsFromSentEmails = async (query: string, knownContacts: ContactPreview[], multiCb: ChunkedCb) => {
     this.view.errModule.debug('guessContactsFromSentEmails start');
@@ -596,7 +596,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       }
     });
     this.view.errModule.debug('guessContactsFromSentEmails end');
-  }
+  };
 
   private searchContactsOnGoogle = async (query: string, knownContacts: ContactPreview[]): Promise<EmailProviderContact[]> => {
     if (this.googleContactsSearchEnabled) {
@@ -607,7 +607,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       }
     }
     return [];
-  }
+  };
 
   private renderSearchRes = (input: JQuery<HTMLElement>, contacts: ContactPreview[], query: ProviderContactsQuery) => {
     if (!input.is(':focus')) { // focus was moved away from input
@@ -697,7 +697,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
         maxHeight: `calc(100% - ${offsetTop + bottomGap}px)`,
       });
     }
-  }
+  };
 
   private addBtnToAllowSearchContactsFromGoogle = (input: JQuery<HTMLElement>) => {
     if (this.view.S.cached('contacts').find('.allow-google-contact-search').length) {
@@ -717,7 +717,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
           await Ui.modal.error(`Could not enable Google Contact search. Please write us at human@flowcrypt.com\n\n[${authResult.result}] ${authResult.error}`);
         }
       }));
-  }
+  };
 
   private selectContact = async (input: JQuery<HTMLElement>, email: string, fromQuery: ProviderContactsQuery) => {
     this.view.errModule.debug(`selectContact 1`);
@@ -732,7 +732,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     this.parseRenderRecipients(input, false, [email]).catch(Catch.reportErr);
     input.focus();
     this.hideContacts();
-  }
+  };
 
   private createRecipientsElements = (container: JQuery<HTMLElement>, emails: string[], sendingType: RecipientType, status: RecipientStatus): RecipientElement[] => {
     const result = [];
@@ -760,7 +760,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       }
     }
     return result;
-  }
+  };
 
   private addApiLoadedContactsToDb = async (newContacts: EmailProviderContact[]) => {
     this.view.errModule.debug('addApiLoadedContactsToDb 1');
@@ -781,13 +781,13 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     }
     await Promise.all(toLookup.map(c => this.view.storageModule.lookupPubkeyFromKeyserversAndUpsertDb(
       c.email, c.name || undefined).catch(() => this.failedLookupEmails.push(c.email))));
-  }
+  };
 
   private renderSearchResultsLoadingDone = () => {
     if (this.view.S.cached('contacts').find('.select_contact, .allow-google-contact-search').length) {
       this.showContacts();
     }
-  }
+  };
 
   private orderRecipientsBySendingType = (a: RecipientElement, b: RecipientElement) => {
     if (a.sendingType === b.sendingType) {
@@ -800,7 +800,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       return -1;
     }
     return 1;
-  }
+  };
 
   private authContacts = async (acctEmail: string) => {
     const connectToGoogleRecipientLine = this.addedRecipients[this.addedRecipients.length - 1];
@@ -818,7 +818,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     } else {
       await Ui.modal.error(Lang.general.somethingWentWrongTryAgain);
     }
-  }
+  };
 
   private checkReciepientsKeys = async () => {
     for (const recipientEl of this.addedRecipients.filter(
@@ -830,7 +830,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
         await this.renderPubkeyResult(recipientEl, dbContacts.sortedPubkeys);
       }
     }
-  }
+  };
 
   private renderPubkeyResult = async (
     recipient: RecipientElement, sortedPubkeyInfos: PubkeyInfo[] | 'fail' | 'wrong'
@@ -897,7 +897,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     }
     this.view.pwdOrPubkeyContainerModule.showHideContainerAndColorSendBtn(); // tslint:disable-line:no-floating-promises
     this.view.myPubkeyModule.reevaluateShouldAttachOrNot();
-  }
+  };
 
   private formatPubkeysHintText = (pubkeyInfos: PubkeyInfo[]): string => {
     const valid: PubkeyInfo[] = [];
@@ -917,11 +917,11 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       { groupName: 'Expired public key fingerprints:', pubkeyInfos: expired },
       { groupName: 'Revoked public key fingerprints:', pubkeyInfos: revoked }
     ].filter(g => g.pubkeyInfos.length).map(g => this.formatKeyGroup(g.groupName, g.pubkeyInfos)).join('\n\n');
-  }
+  };
 
   private formatKeyGroup = (groupName: string, pubkeyInfos: PubkeyInfo[]): string => {
     return [groupName, ...pubkeyInfos.map(info => this.formatPubkeyId(info))].join('\n');
-  }
+  };
 
   private removeRecipient = (element: HTMLElement) => {
     const index = this.addedRecipients.findIndex(r => r.element.isEqualNode(element));
@@ -934,20 +934,20 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     this.addedRecipients.splice(index, 1);
     this.view.pwdOrPubkeyContainerModule.showHideContainerAndColorSendBtn(); // tslint:disable-line:no-floating-promises
     this.view.myPubkeyModule.reevaluateShouldAttachOrNot();
-  }
+  };
 
   private refreshRecipients = async () => {
     const failedRecipients = this.addedRecipients.filter(r => r.element.className.includes('failed'));
     await this.reEvaluateRecipients(failedRecipients);
-  }
+  };
 
   private formatPubkeyId = (pubkeyInfo: PubkeyInfo): string => {
     return `${Str.spaced(pubkeyInfo.pubkey.id)} (${pubkeyInfo.pubkey.type})`;
-  }
+  };
 
   private generateRecipientId = (): string => {
     return `recipient_${this.addedRecipients.length}`;
-  }
+  };
 
   private addDraggableEvents = (element: HTMLElement) => {
     element.draggable = true;
@@ -989,7 +989,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       newInput.focus();
     };
     element.ondragend = () => Catch.setHandledTimeout(() => this.dragged = undefined, 0);
-  }
+  };
 
   private insertCursorBefore = (element: HTMLElement | Element, append?: boolean) => {
     const cursor = document.createElement('i');
@@ -1003,7 +1003,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       element.appendChild(cursor);
     }
     return true;
-  }
+  };
 
   private removeCursor = (element: HTMLElement) => {
     for (const child of element.children) {
@@ -1012,7 +1012,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
         break;
       }
     }
-  }
+  };
 
   private focusRecipients = () => {
     this.view.S.cached('recipients_placeholder').hide();
@@ -1022,6 +1022,6 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       this.view.sizeModule.resizeInput();
     }
     this.view.sizeModule.setInputTextHeightManuallyIfNeeded();
-  }
+  };
 
 }

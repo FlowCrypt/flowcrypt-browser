@@ -45,7 +45,7 @@ export class ComposeErrModule extends ViewModule<ComposeView> {
         await Ui.modal.info(`Could not ${couldNotDoWhat} (unknown error). If this repeats, please contact human@flowcrypt.com.\n\n(${String(e)})`);
       },
     };
-  }
+  };
 
   public debugFocusEvents = (...selNames: string[]) => {
     for (const selName of selNames) {
@@ -53,13 +53,13 @@ export class ComposeErrModule extends ViewModule<ComposeView> {
         .focusin(e => this.debug(`** ${selName} receiving focus from(${e.relatedTarget ? e.relatedTarget.outerHTML : undefined})`))
         .focusout(e => this.debug(`** ${selName} giving focus to(${e.relatedTarget ? e.relatedTarget.outerHTML : undefined})`));
     }
-  }
+  };
 
   public debug = (msg: string) => {
     if (this.view.debug) {
       console.log(`[${this.debugId}] ${msg}`);
     }
-  }
+  };
 
   public handleSendErr = async (e: any) => {
     if (ApiErr.isNetErr(e)) {
@@ -92,7 +92,7 @@ export class ComposeErrModule extends ViewModule<ComposeView> {
     if (!(e instanceof ComposerNotReadyError)) {
       this.view.sendBtnModule.resetSendBtn(100);
     }
-  }
+  };
 
   public throwIfFormNotReady = (): void => {
     if (this.view.S.cached('triple_dot').hasClass('progress')) {
@@ -115,7 +115,7 @@ export class ComposeErrModule extends ViewModule<ComposeView> {
       throw new ComposerUserError('Please add a recipient first');
     }
     throw new ComposerNotReadyError('Still working, please wait.');
-  }
+  };
 
   public throwIfFormValsInvalid = async ({ subject, plaintext, from }: NewMsgData) => {
     if (!subject && ! await Ui.modal.confirm('Send without a subject?')) {
@@ -128,7 +128,7 @@ export class ComposeErrModule extends ViewModule<ComposeView> {
     if ((!plaintext.trim() || (footer && plaintext.trim() === footer.trim())) && ! await Ui.modal.confirm('Send empty message?')) {
       throw new ComposerResetBtnTrigger();
     }
-  }
+  };
 
   public throwIfEncryptionPasswordInvalid = async ({ subject, pwd }: { subject: string, pwd?: string }) => {
     if (pwd) {
@@ -151,6 +151,6 @@ export class ComposeErrModule extends ViewModule<ComposeView> {
       this.view.S.cached('input_password').focus();
       throw new ComposerUserError('Some recipients don\'t have encryption set up. Please add a password.');
     }
-  }
+  };
 
 }

@@ -14,7 +14,7 @@ export class Buf extends Uint8Array {
       offset += array.length;
     }
     return Buf.fromUint8(result);
-  }
+  };
 
   public static with = (input: Uint8Array | Buf | string): Buf => { // utf8 string or Typed Array bytes
     if (input instanceof Buf) {
@@ -24,11 +24,11 @@ export class Buf extends Uint8Array {
     } else {
       return Buf.fromUtfStr(input);
     }
-  }
+  };
 
   public static fromUint8 = (u8a: Uint8Array): Buf => {
     return new Buf(u8a);
-  }
+  };
 
   public static fromRawBytesStr = (rawStr: string): Buf => {
     const length = rawStr.length;
@@ -37,7 +37,7 @@ export class Buf extends Uint8Array {
       buf[i] = rawStr.charCodeAt(i);
     }
     return buf;
-  }
+  };
 
   public static fromUtfStr = (utfStr: string): Buf => {
     // adapted from https://github.com/feross/buffer/blob/master/index.js see https://github.com/feross/buffer/blob/master/LICENSE (MIT as of Jan 2018)
@@ -83,19 +83,19 @@ export class Buf extends Uint8Array {
       }
     }
     return new Buf(bytes);
-  }
+  };
 
   public static fromBase64Str = (b64str: string): Buf => {
     return Buf.fromRawBytesStr(base64decode(b64str));
-  }
+  };
 
   public static fromBase64UrlStr = (b64UrlStr: string): Buf => {
     return Buf.fromBase64Str(b64UrlStr.replace(/-/g, '+').replace(/_/g, '/'));
-  }
+  };
 
   public toString = (mode: 'strict' | 'inform' | 'ignore' = 'inform'): string => { // mimic Node api
     return this.toUtfStr(mode);
-  }
+  };
 
   public toUtfStr = (mode: 'strict' | 'inform' | 'ignore' = 'inform'): string => { // tom
     const length = this.length;
@@ -158,7 +158,7 @@ export class Buf extends Uint8Array {
       }
     }
     return utf8string;
-  }
+  };
 
   public toRawBytesStr = (): string => {
     const chunkSize = 0x8000;
@@ -168,13 +168,13 @@ export class Buf extends Uint8Array {
       chars.push(String.fromCharCode.apply(undefined, Array.from(this.subarray(i, i + chunkSize))));
     }
     return chars.join('');
-  }
+  };
 
   public toBase64Str = (): string => {
     return base64encode(this.toRawBytesStr());
-  }
+  };
 
   public toBase64UrlStr = (): string => {
     return this.toBase64Str().replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-  }
+  };
 }

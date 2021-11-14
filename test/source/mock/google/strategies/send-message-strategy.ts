@@ -20,7 +20,7 @@ import { testConstants } from '../../../tests/tooling/consts.js';
 class SaveMessageInStorageStrategy implements ITestMsgStrategy {
   public test = async (mimeMsg: ParsedMail, base64Msg: string) => {
     (await GoogleData.withInitializedData(mimeMsg.from!.value[0].address!)).storeSentMessage(mimeMsg, base64Msg);
-  }
+  };
 }
 
 class PwdEncryptedMessageWithFlowCryptComApiTestStrategy implements ITestMsgStrategy {
@@ -35,7 +35,7 @@ class PwdEncryptedMessageWithFlowCryptComApiTestStrategy implements ITestMsgStra
     if (!mimeMsg.text?.includes('Follow this link to open it')) {
       throw new HttpClientErr(`Error: cannot find pwd encrypted open link prompt in ${mimeMsg.text}`);
     }
-  }
+  };
 }
 
 class PwdEncryptedMessageWithFesAccessTokenTestStrategy implements ITestMsgStrategy {
@@ -54,7 +54,7 @@ class PwdEncryptedMessageWithFesAccessTokenTestStrategy implements ITestMsgStrat
     if (!mimeMsg.text?.includes('Follow this link to open it')) {
       throw new HttpClientErr(`Error: cannot find pwd encrypted open link prompt in ${mimeMsg.text}`);
     }
-  }
+  };
 }
 
 class PwdEncryptedMessageWithFesIdTokenTestStrategy implements ITestMsgStrategy {
@@ -73,7 +73,7 @@ class PwdEncryptedMessageWithFesIdTokenTestStrategy implements ITestMsgStrategy 
     if (!mimeMsg.text?.includes('Follow this link to open it')) {
       throw new HttpClientErr(`Error: cannot find pwd encrypted open link prompt in ${mimeMsg.text}`);
     }
-  }
+  };
 }
 
 class MessageWithFooterTestStrategy implements ITestMsgStrategy {
@@ -89,7 +89,7 @@ class MessageWithFooterTestStrategy implements ITestMsgStrategy {
     if (!textContent.includes(this.footer)) {
       throw new HttpClientErr(`Error: Msg Text doesn't contain footer. Current: '${mimeMsg.text}', expected footer: '${this.footer}'`);
     }
-  }
+  };
 }
 
 class SignedMessageTestStrategy implements ITestMsgStrategy {
@@ -112,7 +112,7 @@ class SignedMessageTestStrategy implements ITestMsgStrategy {
     if (!content.includes(this.expectedText)) {
       throw new HttpClientErr(`Error: Contents don't match. Expected: '${this.expectedText}' but got: '${content}'.`);
     }
-  }
+  };
 }
 
 class PlainTextMessageTestStrategy implements ITestMsgStrategy {
@@ -122,7 +122,7 @@ class PlainTextMessageTestStrategy implements ITestMsgStrategy {
     if (!mimeMsg.text?.includes(this.expectedText)) {
       throw new HttpClientErr(`Error: Msg Text is not matching expected. Current: '${mimeMsg.text}', expected: '${this.expectedText}'`);
     }
-  }
+  };
 }
 
 class IncludeQuotedPartTestStrategy implements ITestMsgStrategy {
@@ -149,7 +149,7 @@ class IncludeQuotedPartTestStrategy implements ITestMsgStrategy {
     if (!textContent.endsWith(this.quotedContent)) {
       throw new HttpClientErr(`Error: Quoted content isn't included to the Msg. Msg text: '${textContent}'\n Quoted part: '${this.quotedContent}'`, 400);
     }
-  }
+  };
 }
 
 class NewMessageCCAndBCCTestStrategy implements ITestMsgStrategy {
@@ -164,7 +164,7 @@ class NewMessageCCAndBCCTestStrategy implements ITestMsgStrategy {
     if (!hasAtLeastOneRecipient(parsedMailAddressObjectAsArray(mimeMsg.bcc))) {
       throw new HttpClientErr(`Error: There is no 'Bcc' header.`, 400);
     }
-  }
+  };
 }
 
 class SmimeEncryptedMessageStrategy implements ITestMsgStrategy {
@@ -201,7 +201,7 @@ class SmimeEncryptedMessageStrategy implements ITestMsgStrategy {
         }
       }
     }
-  }
+  };
 }
 
 class SmimeSignedMessageStrategy implements ITestMsgStrategy {
@@ -220,7 +220,7 @@ class SmimeSignedMessageStrategy implements ITestMsgStrategy {
     const msg = new Buf(mimeMsg.attachments![0].content).toRawBytesStr();
     const p7 = forge.pkcs7.messageFromAsn1(forge.asn1.fromDer(msg));
     expect(p7.type).to.equal(SIGNED_DATA_OID);
-  }
+  };
 }
 export class TestBySubjectStrategyContext {
   private strategy: ITestMsgStrategy;
@@ -263,5 +263,5 @@ export class TestBySubjectStrategyContext {
 
   public test = async (mimeMsg: ParsedMail, base64Msg: string) => {
     await this.strategy.test(mimeMsg, base64Msg);
-  }
+  };
 }

@@ -87,7 +87,7 @@ export class InboxView extends View {
         await Ui.modal.error(`${ApiErr.eli5(e)}\n\n${String(e)}`);
       }
     }
-  }
+  };
 
   public setHandlers = () => {
     // BrowserMsg.addPgpListeners(); // todo - re-allow when https://github.com/FlowCrypt/flowcrypt-browser/issues/2560 fixed
@@ -100,7 +100,7 @@ export class InboxView extends View {
     }));
     $('.action_add_account').click(this.setHandlerPrevent('double', async () => await Settings.newGoogleAcctAuthPromptThenAlertOrForward(this.tabId)));
     this.addBrowserMsgListeners();
-  }
+  };
 
   public redirectToUrl = (params: UrlParams) => {
     const newUrlSearch = Url.create('', params);
@@ -109,13 +109,13 @@ export class InboxView extends View {
     } else {
       window.location.reload();
     }
-  }
+  };
 
   public displayBlock = (name: string, title: string) => {
     this.S.cached('threads').css('display', name === 'thread' ? 'none' : 'block');
     this.S.cached('thread').css('display', name === 'thread' ? 'block' : 'none');
     Xss.sanitizeRender('h1', `${title}`);
-  }
+  };
 
   private addBrowserMsgListeners = () => {
     BrowserMsg.addListener('add_end_session_btn', () => this.injector.insertEndSessionBtn(this.acctEmail));
@@ -154,7 +154,7 @@ export class InboxView extends View {
     BrowserMsg.addListener('show_attachment_preview', async ({ iframeUrl }: Bm.ShowAttachmentPreview) => {
       await Ui.modal.attachmentPreview(iframeUrl);
     });
-  }
+  };
 
 }
 

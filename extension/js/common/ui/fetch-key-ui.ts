@@ -22,7 +22,7 @@ export class FetchKeyUI {
         }
       }
     }));
-  }
+  };
 
   private fetchPubkey = async (url: string) => {
     try {
@@ -33,5 +33,5 @@ export class FetchKeyUI {
     } catch (e) {
       return;
     }
-  }
+  };
 }

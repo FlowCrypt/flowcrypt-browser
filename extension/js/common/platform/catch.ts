@@ -44,7 +44,7 @@ export class Catch {
     const newErr = new Error(`${message}::${e instanceof Error ? `${e.name}: ${e.message}` : String(e)}`);
     newErr.stack += `\n\n${Catch.stringify(e)}`;
     return newErr;
-  }
+  };
 
   public static stringify = (e: any): string => {
     if (e instanceof Error) {
@@ -58,11 +58,11 @@ export class Catch {
     } catch (cannotStringify) {
       return `[unstringifiable typeof:${(typeof e)}:${String(e)}]`;
     }
-  }
+  };
 
   public static hasStack = (e: any): e is ObjWithStack => {
     return e && typeof e === 'object' && typeof (e as ObjWithStack).stack === 'string' && Boolean((e as ObjWithStack).stack); // tslint:disable-line:no-unsafe-any
-  }
+  };
 
   /**
    * @returns boolean - whether error was reported remotely or not
@@ -98,7 +98,7 @@ export class Catch {
     // consumer flavor
     Catch.doSendErrorToFlowCryptComBackend(formatted);
     return true;
-  }
+  };
 
   /**
    * @returns boolean - whether error was reported remotely or not
@@ -106,20 +106,20 @@ export class Catch {
   public static reportErr = (e: any): boolean => {
     const { line, col } = Catch.getErrorLineAndCol(e);
     return Catch.onErrorInternalHandler(e instanceof Error ? e.message : String(e), window.location.href, line, col, e, true);
-  }
+  };
 
   /**
    * @returns boolean - whether error was reported remotely or not
    */
   public static report = (name: string, details?: any): boolean => {
     return Catch.reportErr(Catch.nameAndDetailsAsException(name, details));
-  }
+  };
 
   public static isPromise = (v: any): v is Promise<any> => {
     return v && typeof v === 'object' // tslint:disable-line:no-unsafe-any
       && typeof (v as Promise<any>).then === 'function' // tslint:disable-line:no-unbound-method - only testing if exists
       && typeof (v as Promise<any>).catch === 'function'; // tslint:disable-line:no-unbound-method - only testing if exists
-  }
+  };
 
   public static try = (code: () => void | Promise<void>) => {
     return () => { // returns a function
@@ -132,7 +132,7 @@ export class Catch {
         Catch.reportErr(codeErr);
       }
     };
-  }
+  };
 
   public static browser = (): { name: 'firefox' | 'ie' | 'chrome' | 'opera' | 'safari' | 'unknown', v: number | undefined } => {
     // http://stackoverflow.com/questions/4825498/how-can-i-find-out-which-browser-a-user-is-using
@@ -149,7 +149,7 @@ export class Catch {
     } else {
       return { name: 'unknown', v: undefined };
     }
-  }
+  };
 
   public static environment = (url = window.location.href): string => {
     const browserName = Catch.browser().name;
@@ -173,7 +173,7 @@ export class Catch {
       env = 'ex:script:gmail';
     }
     return browserName + ':' + env;
-  }
+  };
 
   public static test = (type: 'error' | 'object' = 'error') => {
     if (type === 'error') {
@@ -181,7 +181,7 @@ export class Catch {
     } else {
       throw { what: 'intentional thrown object for debugging' };
     }
-  }
+  };
 
   public static stackTrace = (): string => {
     try {
@@ -191,7 +191,7 @@ export class Catch {
       return `${((e as Error).stack || '').split('\n').splice(3).join('\n')}\n\nurl: ${Catch.censoredUrl(window.location.href)}\n`;
     }
     return ''; // make ts happy - this will never happen
-  }
+  };
 
   public static censoredUrl = (url: string | undefined): string => {
     if (!url) {
@@ -210,7 +210,7 @@ export class Catch {
       return `${url.split('?')[0]}~censored:idToken`;
     }
     return url;
-  }
+  };
 
   public static onUnhandledRejectionInternalHandler = (e: any) => {
     if (Catch.isPromiseRejectionEvent(e)) {
@@ -224,15 +224,15 @@ export class Catch {
       const msg = e instanceof Error ? e.message : String(e);
       Catch.onErrorInternalHandler(`REJECTION: ${msg}`, window.location.href, line, col, e, true);
     }
-  }
+  };
 
   public static setHandledInterval = (cb: () => void | Promise<void>, ms: number): number => {
     return window.setInterval(Catch.try(cb), ms); // error-handled: else setInterval will silently swallow errors
-  }
+  };
 
   public static setHandledTimeout = (cb: () => void | Promise<void>, ms: number): number => {
     return window.setTimeout(Catch.try(cb), ms); // error-handled: else setTimeout will silently swallow errors
-  }
+  };
 
   public static doesReject = async (p: Promise<unknown>, errNeedle?: string[]) => {
     try {
@@ -244,7 +244,7 @@ export class Catch {
       }
       return !!errNeedle.find(needle => String(e).includes(needle));
     }
-  }
+  };
 
   public static undefinedOnException = async <T>(p: Promise<T>): Promise<T | undefined> => {
     try {
@@ -252,7 +252,7 @@ export class Catch {
     } catch (e) {
       return undefined;
     }
-  }
+  };
 
   private static formatExceptionForReport = (thrown: any, line?: number, col?: number): ErrorReport => {
     if (!line || !col) {
@@ -277,7 +277,7 @@ export class Catch {
       version: VERSION,
       environment: Catch.RUNTIME_ENVIRONMENT,
     };
-  }
+  };
 
   private static doSendErrorToFlowCryptComBackend = (errorReport: ErrorReport) => {
     try {
@@ -304,7 +304,7 @@ export class Catch {
       console.error(ajaxErr);
       console.error('%cFlowCrypt ISSUE:' + Catch.CONSOLE_MSG, 'font-weight: bold;');
     }
-  }
+  };
 
   private static formExceptionFromThrown = (thrown: any, errMsg?: string, url?: string, line?: number, col?: number, isManuallyCalled?: boolean): Error => {
     let exception: Error;
@@ -325,7 +325,7 @@ export class Catch {
       exception.stack += `\n\nORIGINAL_ERR:\n${Catch.stringify(thrown)}`;
     }
     return exception;
-  }
+  };
 
   private static getErrorLineAndCol = (e: any) => {
     try {
@@ -335,11 +335,11 @@ export class Catch {
     } catch (lineErr) {
       return { line: 0, col: 0 };
     }
-  }
+  };
 
   private static formattedStackBlock = (name: string, text: string) => {
     return `\n\n### ${name} ###\n# ${text.split('\n').join('\n# ')}\n######################\n`;
-  }
+  };
 
   private static nameAndDetailsAsException = (name: string, details: any): Error => {
     try {
@@ -348,7 +348,7 @@ export class Catch {
       (e as Error).stack += `\n\n\ndetails:\n${Catch.stringify(details)}`;
       return e as Error;
     }
-  }
+  };
 
   private static isPromiseRejectionEvent = (ev: any): ev is PromiseRejectionEvent => {
     if (ev && typeof ev === 'object') {
@@ -357,7 +357,7 @@ export class Catch {
       return eHasReason && eHasPromise;
     }
     return false;
-  }
+  };
 
 }
 

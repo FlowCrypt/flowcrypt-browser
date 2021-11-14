@@ -24,7 +24,7 @@ export abstract class View {
 
   private static setTestViewStateLoaded = () => {
     $('body').attr('data-test-view-state', 'loaded');
-  }
+  };
 
   private static reportAndRenderErr = (e: any) => {
     ApiErr.reportIfSignificant(e);
@@ -38,7 +38,7 @@ export abstract class View {
     `);
     Ui.setTestState('ready');
     View.setTestViewStateLoaded();
-  }
+  };
 
   public abstract render(): Promise<void>;
 
@@ -46,13 +46,13 @@ export abstract class View {
 
   public setHandler = (cb: (e: HTMLElement, event: JQuery.Event<HTMLElement, null>) => void | Promise<void>, errHandlers?: BrowserEventErrHandler) => {
     return Ui.event.handle(cb, errHandlers, this);
-  }
+  };
 
   public setHandlerPrevent = (
     evName: PreventableEventName, cb: (el: HTMLElement, event: Event, resetTimer: () => void) => void | Promise<void>, errHandlers?: BrowserEventErrHandler
   ) => {
     return Ui.event.prevent(evName, cb, errHandlers, this);
-  }
+  };
 
   public setEnterHandlerThatClicks = (selector: string) => {
     return (event: JQuery.Event<HTMLElement, null>) => {
@@ -60,6 +60,6 @@ export abstract class View {
         $(selector).click();
       }
     };
-  }
+  };
 
 }

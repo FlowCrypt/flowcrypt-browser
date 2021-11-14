@@ -63,7 +63,7 @@ export class PgpBlockViewQuoteModule {
         this.appendCollapsedQuotedContentButton(linesQuotedPart.join('\n'));
       }
     }
-  }
+  };
 
   private appendCollapsedQuotedContentButton = (message: string, isHtml: boolean = false) => {
     const pgpBlk = $("#pgp_block");
@@ -74,6 +74,6 @@ export class PgpBlockViewQuoteModule {
       $(".quoted_content").css('display', $(".quoted_content").css('display') === 'none' ? 'block' : 'none');
       this.view.renderModule.resizePgpBlockFrame();
     }));
-  }
+  };
 
 }

@@ -77,7 +77,7 @@ export class XssSafeFactory {
       Catch.report(`don't know how to process block type: ${block.type} (not a hard fail)`);
       return '';
     }
-  }
+  };
 
   /**
    * XSS WARNING
@@ -96,7 +96,7 @@ export class XssSafeFactory {
       r += (r ? '\n\n' : '') + XssSafeFactory.renderableMsgBlock(factory, block, msgId, senderEmail, isOutgoing);
     }
     return r;
-  }
+  };
 
   constructor(acctEmail: string, parentTabId: string, reloadableCls: string = '', destroyableCls: string = '', setParams: UrlParams = {}) {
     this.reloadableCls = Xss.escape(reloadableCls);
@@ -108,19 +108,19 @@ export class XssSafeFactory {
 
   public srcImg = (relPath: string) => {
     return this.extUrl(`img/${relPath}`);
-  }
+  };
 
   public srcComposeMsg = (draftId?: string) => {
     return this.frameSrc(this.extUrl('chrome/elements/compose.htm'), { frameId: this.newId(), draftId });
-  }
+  };
 
   public srcPassphraseDialog = (longids: string[] = [], type: PassphraseDialogType, initiatorFrameId?: string) => {
     return this.frameSrc(this.extUrl('chrome/elements/passphrase.htm'), { type, longids, initiatorFrameId });
-  }
+  };
 
   public srcAddPubkeyDialog = (emails: string[], placement: Placement) => {
     return this.frameSrc(this.extUrl('chrome/elements/add_pubkey.htm'), { emails, placement });
-  }
+  };
 
   public srcPgpAttachmentIframe = (
     a: Attachment,
@@ -136,19 +136,19 @@ export class XssSafeFactory {
     return this.frameSrc(this.extUrl(iframeUrl), {
       frameId: this.newId(), msgId: a.msgId, name: a.name, type: a.type, size: a.length, attachmentId: a.id, url: a.url, isEncrypted, errorDetailsOpened, initiatorFrameId
     }, parentTabId);
-  }
+  };
 
   public srcPgpBlockIframe = (message: string, msgId?: string, isOutgoing?: boolean, senderEmail?: string, signature?: string | boolean) => {
     return this.frameSrc(this.extUrl('chrome/elements/pgp_block.htm'), { frameId: this.newId(), message, msgId, senderEmail, isOutgoing, signature });
-  }
+  };
 
   public srcPgpPubkeyIframe = (armoredPubkey: string, isOutgoing?: boolean) => {
     return this.frameSrc(this.extUrl('chrome/elements/pgp_pubkey.htm'), { frameId: this.newId(), armoredPubkey, minimized: Boolean(isOutgoing), });
-  }
+  };
 
   public srcBackupIframe = (armoredPrvBackup: string) => {
     return this.frameSrc(this.extUrl('chrome/elements/backup.htm'), { frameId: this.newId(), armoredPrvBackup });
-  }
+  };
 
   public srcReplyMsgIframe = (convoParams: FactoryReplyParams, skipClickPrompt: boolean, ignoreDraft: boolean) => {
     const params: UrlParams = {
@@ -161,30 +161,30 @@ export class XssSafeFactory {
       removeAfterClose: convoParams.removeAfterClose
     };
     return this.frameSrc(this.extUrl('chrome/elements/compose.htm'), params);
-  }
+  };
 
   public srcStripeCheckout = () => {
     return this.frameSrc('https://flowcrypt.com/stripe.htm', {});
-  }
+  };
 
   public metaNotificationContainer = () => {
     return `<div class="${this.destroyableCls} webmail_notifications" style="text-align: center;"></div>`;
-  }
+  };
 
   public metaStylesheet = (file: string) => {
     return `<link class="${this.destroyableCls}" rel="stylesheet" href="${this.extUrl(`css/${file}.css`)}" />`;
-  }
+  };
 
   public showPassphraseDialog = async (longids: string[], type: PassphraseDialogType, initiatorFrameId?: string) => {
     const result = await Ui.modal.iframe(this.srcPassphraseDialog(longids, type, initiatorFrameId), 500, 'dialog-passphrase');
     if (result.dismiss) { // dialog is dismissed by user interaction, not by closeDialog()
       BrowserMsg.send.passphraseEntry('broadcast', { entered: false });
     }
-  }
+  };
 
   public showAddPubkeyDialog = async (emails: string[]) => {
     await Ui.modal.iframe(this.srcAddPubkeyDialog(emails, 'gmail'), undefined, 'dialog-add-pubkey');
-  }
+  };
 
   public embeddedCompose = (draftId?: string) => {
     const srcComposeMsg = this.srcComposeMsg(draftId);
@@ -194,39 +194,39 @@ export class XssSafeFactory {
       'data-frame-id': String(Url.parse(['frameId'], srcComposeMsg).frameId),
       'data-test': 'container-new-message',
     });
-  }
+  };
 
   public embeddedAttachment = (meta: Attachment, isEncrypted: boolean, parentTabId?: string) => {
     return Ui.e('span', { class: 'pgp_attachment', html: this.iframe(this.srcPgpAttachmentIframe(meta, isEncrypted, parentTabId)) });
-  }
+  };
 
   public embeddedMsg = (type: MsgBlockType, armored: string, msgId?: string, isOutgoing?: boolean, sender?: string, signature?: string | boolean) => {
     return this.iframe(this.srcPgpBlockIframe(armored, msgId, isOutgoing, sender, signature), ['pgp_block', type]) + this.hideGmailNewMsgInThreadNotification;
-  }
+  };
 
   public embeddedPubkey = (armoredPubkey: string, isOutgoing?: boolean) => {
     return this.iframe(this.srcPgpPubkeyIframe(armoredPubkey, isOutgoing), ['pgp_block', 'publicKey']);
-  }
+  };
 
   public embeddedBackup = (armoredPrvBackup: string) => {
     return this.iframe(this.srcBackupIframe(armoredPrvBackup), ['backup_block']);
-  }
+  };
 
   public embeddedReply = (convoParams: FactoryReplyParams, skipClickPrompt: boolean, ignoreDraft: boolean = false) => {
     return this.iframe(this.srcReplyMsgIframe(convoParams, skipClickPrompt, ignoreDraft), ['reply_message']);
-  }
+  };
 
   public embeddedPassphrase = (longids: string[]) => {
     return this.iframe(this.srcPassphraseDialog(longids, 'embedded'), [], { 'data-test': 'embedded-passphrase' }); // xss-safe-factory
-  }
+  };
 
   public embeddedAttachmentStatus = (content: string) => {
     return Ui.e('div', { class: 'attachment_loader', html: Xss.htmlSanitize(content) });
-  }
+  };
 
   public embeddedStripeCheckout = () => {
     return this.iframe(this.srcStripeCheckout(), [], { sandbox: 'allow-forms allow-scripts allow-same-origin' });
-  }
+  };
 
   public btnCompose = (webmailName: WebMailName) => {
     if (webmailName === 'outlook') {
@@ -236,29 +236,29 @@ export class XssSafeFactory {
       const btn = `<div class="new_secure_compose_window_button" id="flowcrypt_secure_compose_button" role="button" tabindex="0" data-test="action-secure-compose">Secure Compose</div>`;
       return `<div class="${this.destroyableCls} z0">${btn}</div>`;
     }
-  }
+  };
 
   public btnSecureReply = () => {
     return `<div class="${this.destroyableCls} reply_message_button" data-test="secure-reply-button" role="button" tabindex="0" data-tooltip="Secure Reply" aria-label="Secure Reply">
       <img title="Secure Reply" src="${this.srcImg('svgs/reply-icon.svg')}" />
     </div>`;
-  }
+  };
 
   public btnEndPPSession = (webmailName: string) => {
     return `<a href="#" class="action_finish_session" title="End Pass Phrase Session" data-test="action-finish-session">
               <img src="${this.srcImg('svgs/unlock.svg')}">
               ${webmailName === 'gmail' ? 'End Pass Phrase Session' : ''}
             </a>`;
-  }
+  };
 
   public btnWithoutFc = () => {
     const span = `<span>see original</span>`;
     return `<span class="hk J-J5-Ji cryptup_convo_button show_original_conversation ${this.destroyableCls}" data-tooltip="Show conversation without FlowCrypt">${span}</span>`;
-  }
+  };
 
   public btnWithFc = () => {
     return `<span class="hk J-J5-Ji cryptup_convo_button use_secure_reply ${this.destroyableCls}" data-tooltip="Use Secure Reply"><span>secure reply</span></span>`;
-  }
+  };
 
   public btnRecipientsUseEncryption = (webmailName: WebMailName) => {
     if (webmailName !== 'gmail') {
@@ -267,7 +267,7 @@ export class XssSafeFactory {
     } else {
       return '<div class="aoD az6 recipients_use_encryption">Your recipients seem to have encryption set up! <a href="#">Secure Compose</a></div>';
     }
-  }
+  };
 
   public btnSettings = (webmailName: WebMailName) => {
     if (webmailName !== 'gmail') {
@@ -276,7 +276,7 @@ export class XssSafeFactory {
     } else {
       return `<div id="fc_settings_btn" class="f1">FlowCrypt</div>`;
     }
-  }
+  };
 
   private frameSrc = (path: string, params: UrlParams = {}, parentTabId?: string) => {
     for (const k of Object.keys(this.setParams)) {
@@ -286,15 +286,15 @@ export class XssSafeFactory {
       params.parentTabId = parentTabId;
     }
     return Url.create(path, params);
-  }
+  };
 
   private extUrl = (s: string) => {
     return chrome.runtime.getURL(s);
-  }
+  };
 
   private newId = () => {
     return `frame_${Str.sloppyRandom(10)}`;
-  }
+  };
 
   private iframe = (src: string, classes: string[] = [], elAttributes: UrlParams = {}) => {
     const id = String(Url.parse(['frameId'], src).frameId);
@@ -304,5 +304,5 @@ export class XssSafeFactory {
       attrs[name] = String(elAttributes[name]);
     }
     return Ui.e('iframe', attrs);
-  }
+  };
 }

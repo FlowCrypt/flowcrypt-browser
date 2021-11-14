@@ -42,6 +42,6 @@ export class GeneralMailFormatter {
     }
     view.S.now('send_btn_text').text('Encrypting...');
     return { senderKi: result.senderKi, msg: await new EncryptedMsgMailFormatter(view).sendableMsg(newMsgData, result.pubkeys, signingPrv) };
-  }
+  };
 
 }

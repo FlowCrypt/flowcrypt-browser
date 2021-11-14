@@ -33,10 +33,10 @@ View.run(class MyKeyUserIdsView extends View {
     Xss.sanitizeRender('.user_ids', prv.identities.map((uid: string) => `<div>${Xss.escape(uid)}</div>`).join(''));
     $('.email').text(this.acctEmail);
     $('.fingerprint').text(Str.spaced(this.primaryKi.fingerprints[0]));
-  }
+  };
 
   public setHandlers = () => {
     // No need
-  }
+  };
 
 });

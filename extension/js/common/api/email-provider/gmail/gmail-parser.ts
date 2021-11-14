@@ -81,7 +81,7 @@ export class GmailParser {
       }
     }
     return undefined;
-  }
+  };
 
   public static findAttachments = (
     msgOrPayloadOrPart: GmailRes.GmailMsg | GmailRes.GmailMsg$payload | GmailRes.GmailMsg$payload$part,
@@ -108,7 +108,7 @@ export class GmailParser {
       }));
     }
     return internalResults;
-  }
+  };
 
   public static findBodies = (gmailMsg: GmailRes.GmailMsg | GmailRes.GmailMsg$payload | GmailRes.GmailMsg$payload$part, internalResults: SendableMsgBody = {}): SendableMsgBody => {
     const isGmailMsgWithPayload = (v: any): v is GmailRes.GmailMsg => v && typeof (v as GmailRes.GmailMsg).payload !== 'undefined'; // tslint:disable-line:no-unsafe-any
@@ -129,7 +129,7 @@ export class GmailParser {
       }
     }
     return internalResults;
-  }
+  };
 
   public static determineReplyMeta = (acctEmail: string, addresses: string[], lastGmailMsg: GmailRes.GmailMsg): ReplyParams => {
     const headers = {
@@ -160,10 +160,10 @@ export class GmailParser {
       }
     }
     return { to: headers.to, cc: headers.cc, bcc: headers.bcc, myEmail, from: headers.from, subject: headers.subject };
-  }
+  };
 
   private static getAddressesHeader = (gmailMsg: GmailRes.GmailMsg, headerName: RecipientType) => {
     return Value.arr.unique((GmailParser.findHeader(gmailMsg, headerName) || '').split(',').map(e => Str.parseEmail(e).email!).filter(e => !!e));
-  }
+  };
 
 }

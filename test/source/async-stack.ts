@@ -37,7 +37,7 @@
   class Class {
     public static staticConstAttr = (type: Type) => {
       func(type);
-    }
+    };
     public static staticFunc(type: Type) {
       Class.staticConstAttr(type);
     }
@@ -66,7 +66,7 @@
       await wait();
       await obj.paramFunc(type);
       await wait();
-    }
+    };
     public static async staticAsyncFunc(type: Type) {
       await wait();
       await ClassAsync.staticConstAttrAsync(type);

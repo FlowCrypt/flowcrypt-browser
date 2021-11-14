@@ -42,7 +42,7 @@ export class PgpArmor {
       return (match && match.length) ? match[0] : undefined;
     }
     return undefined;
-  }
+  };
 
   public static headers = (blockType: ReplaceableMsgBlockType | 'null', format = 'string'): CryptoArmorHeaderDefinition => {
     const h = PgpArmor.ARMOR_HEADER_DICT[blockType];
@@ -51,7 +51,7 @@ export class PgpArmor {
       end: (typeof h.end === 'string' && format === 're') ? h.end.replace(/ /g, '\\s') : h.end,
       replace: h.replace,
     };
-  }
+  };
 
   public static normalize = (armored: string, type: ReplaceableMsgBlockType | 'key') => {
     armored = Str.normalize(armored).replace(/\n /g, '\n');
@@ -83,7 +83,7 @@ export class PgpArmor {
       }
     }
     return armored;
-  }
+  };
 
   public static cryptoMsgPrepareForDecrypt = async (encrypted: Uint8Array): Promise<PreparedForDecrypt> => {
     if (!encrypted.length) {
@@ -110,15 +110,15 @@ export class PgpArmor {
       return { isArmored, isCleartext: false, isPkcs7: false, message: await opgp.message.read(encrypted) };
     }
     throw new Error('Message does not have armor headers');
-  }
+  };
 
   public static dearmor = async (text: string): Promise<{ type: OpenPGP.enums.armor, data: Uint8Array }> => {
     const decoded = await opgp.armor.decode(text);
     const data = await Stream.readToEnd(decoded.data);
     return { type: decoded.type, data };
-  }
+  };
 
   public static armor = (messagetype: OpenPGP.enums.armor, body: object, partindex?: number, parttotal?: number, customComment?: string): string => {
     return opgp.armor.encode(messagetype, body, partindex, parttotal, customComment);
-  }
+  };
 }

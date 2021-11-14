@@ -35,13 +35,13 @@ View.run(class TestPassphrase extends View {
       Xss.sanitizeRender('#content', `<div class="line">No pass phrase set up yet: <a href="${setUpPpUrl}">set up pass phrase</a></div>`);
       return;
     }
-  }
+  };
 
   public setHandlers = () => {
     $('.action_verify').click(this.setHandler(() => this.verifyHandler()));
     $('#password').keydown(this.setEnterHandlerThatClicks('.action_verify'));
     $('.action_change_passphrase').click(this.setHandler(() => Settings.redirectSubPage(this.acctEmail, this.parentTabId, '/chrome/settings/modules/change_passphrase.htm')));
-  }
+  };
 
   private verifyHandler = async () => {
     if (await KeyUtil.decrypt(this.primaryKey!, String($('#password').val())) === true) {
@@ -53,5 +53,5 @@ View.run(class TestPassphrase extends View {
     } else {
       await Ui.modal.warning('Pass phrase did not match. Please try again. If you forgot your pass phrase, please change it, so that you don\'t get locked out of your encrypted messages.');
     }
-  }
+  };
 });

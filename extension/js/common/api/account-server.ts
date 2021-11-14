@@ -25,7 +25,7 @@ export class AccountServer extends Api {
     } else {
       await FlowCryptComApi.loginWithOpenid(acctEmail, uuid, idToken);
     }
-  }
+  };
 
   public accountGetAndUpdateLocalStore = async (fcAuth: FcUuidAuth): Promise<BackendRes.FcAccountGet> => {
     if (await this.isFesUsed()) {
@@ -45,7 +45,7 @@ export class AccountServer extends Api {
     } else {
       return await FlowCryptComApi.accountGetAndUpdateLocalStore(fcAuth);
     }
-  }
+  };
 
   public accountUpdate = async (fcAuth: FcUuidAuth, profileUpdate: ProfileUpdate): Promise<void> => {
     if (await this.isFesUsed()) {
@@ -54,7 +54,7 @@ export class AccountServer extends Api {
     } else {
       await FlowCryptComApi.accountUpdate(fcAuth, profileUpdate);
     }
-  }
+  };
 
   public messageUpload = async (
     fcAuth: FcUuidAuth | undefined,
@@ -73,7 +73,7 @@ export class AccountServer extends Api {
     } else {
       return await FlowCryptComApi.messageUpload(fcAuth, encrypted, progressCb);
     }
-  }
+  };
 
   public messageToken = async (fcAuth: FcUuidAuth): Promise<{ replyToken: string }> => {
     if (await this.isFesUsed()) {
@@ -83,10 +83,10 @@ export class AccountServer extends Api {
       const res = await FlowCryptComApi.messageToken(fcAuth);
       return { replyToken: res.token };
     }
-  }
+  };
 
   public isFesUsed = async (): Promise<boolean> => {
     const { fesUrl } = await AcctStore.get(this.acctEmail, ['fesUrl']);
     return Boolean(fesUrl);
-  }
+  };
 }

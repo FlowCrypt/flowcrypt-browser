@@ -15,13 +15,13 @@ export class Browser {
 
   public static objUrlCreate = (content: Uint8Array | string) => {
     return window.URL.createObjectURL(new Blob([content], { type: 'application/octet-stream' }));
-  }
+  };
 
   public static objUrlConsume = async (url: string) => {
     const buf = await Api.download(url);
     window.URL.revokeObjectURL(url);
     return buf;
-  }
+  };
 
   public static saveToDownloads = (attachment: Attachment) => {
     const blob = new Blob([attachment.getData()], { type: attachment.type });
@@ -46,7 +46,7 @@ export class Browser {
       }
     }
     Catch.setHandledTimeout(() => window.URL.revokeObjectURL(a.href), 0);
-  }
+  };
 
   public static arrFromDomNodeList = (obj: NodeList | JQuery<HTMLElement>): Node[] => {
     // http://stackoverflow.com/questions/2735067/how-to-convert-a-dom-node-list-to-an-array-in-javascript
@@ -55,7 +55,7 @@ export class Browser {
       array[i] = obj[i];
     }
     return array;
-  }
+  };
 
   public static openSettingsPage = async (path: string = 'index.htm', acctEmail?: string, page: string = '', rawPageUrlParams?: Dict<UrlParam>, addNewAcct = false) => {
     const basePath = chrome.runtime.getURL(`chrome/settings/${path}`);
@@ -68,13 +68,13 @@ export class Browser {
       const acctEmails = await GlobalStore.acctEmailsGet();
       Browser.openExtensionTab(Url.create(basePath, { acctEmail: acctEmails[0], page, pageUrlParams }));
     }
-  }
+  };
 
   public static openExtensionTab = (url: string) => {
     const tab = window.open(url, 'flowcrypt');
     if (tab) {
       tab.focus();
     }
-  }
+  };
 
 }

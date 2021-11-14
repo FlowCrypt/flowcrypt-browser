@@ -91,7 +91,7 @@ export class AttachmentDownloadView extends View {
       this.renderErr(e);
     }
     Ui.setTestState('ready');
-  }
+  };
 
   public setHandlers = () => {
     Ui.event.protect();
@@ -115,7 +115,7 @@ export class AttachmentDownloadView extends View {
       }
     });
     BrowserMsg.listen(this.tabId);
-  }
+  };
 
   protected downloadDataIfNeeded = async () => {
     if (this.attachment.hasData()) {
@@ -129,7 +129,7 @@ export class AttachmentDownloadView extends View {
     } else {
       throw new Error('File is missing both id and url - this should be fixed');
     }
-  }
+  };
 
   protected renderErr = (e: any) => {
     if (ApiErr.isAuthErr(e)) {
@@ -150,12 +150,12 @@ export class AttachmentDownloadView extends View {
       Xss.sanitizeRender('body', `Error downloading file - ${String(e)}. ${Ui.retryLink()}`);
     }
     $('body').addClass('error-occured').attr('title', '');
-  }
+  };
 
   private renderHeader = () => {
     const span = $(`<span>${this.isEncrypted ? 'ENCRYPTED\n' : 'PLAIN\n'} FILE</span>`);
     this.header.empty().append(span); // xss-escaped
-  }
+  };
 
   private getFileIconSrc = () => {
     const icon = (name: string) => `/img/fileformat/${name}.png`;
@@ -172,7 +172,7 @@ export class AttachmentDownloadView extends View {
     } else {
       return icon('generic');
     }
-  }
+  };
 
   private getUrlFileSize = async (url: string): Promise<number | undefined> => {
     console.info('trying to figure out figetUrlFileSizee size');
@@ -200,7 +200,7 @@ export class AttachmentDownloadView extends View {
       };
       xhr.send();
     });
-  }
+  };
 
   private processAsPublicKeyAndHideAttachmentIfAppropriate = async () => {
     if (this.attachment.msgId && this.attachment.id && this.attachment.treatAs() === 'publicKey') { // this is encrypted public key - download && decrypt & parse & render
@@ -217,7 +217,7 @@ export class AttachmentDownloadView extends View {
       }
     }
     return false;
-  }
+  };
 
   private downloadButtonClickedHandler = async () => {
     if (this.downloadInProgress) {
@@ -242,7 +242,7 @@ export class AttachmentDownloadView extends View {
       this.downloadInProgress = false;
       this.downloadButton.show();
     }
-  }
+  };
 
   private previewAttachmentClickedHandler = async (errorDetailsOpened = false) => {
     if (!this.attachment.length) {
@@ -251,7 +251,7 @@ export class AttachmentDownloadView extends View {
     const factory = new XssSafeFactory(this.acctEmail, this.parentTabId);
     const iframeUrl = factory.srcPgpAttachmentIframe(this.attachment, this.isEncrypted, undefined, 'chrome/elements/attachment_preview.htm', errorDetailsOpened, this.frameId);
     BrowserMsg.send.showAttachmentPreview(this.parentTabId, { iframeUrl });
-  }
+  };
 
   private decryptAndSaveAttachmentToDownloads = async () => {
     const result = await MsgUtil.decryptMessage({ kisWithPp: await KeyStore.getAllWithOptionalPassPhrase(this.acctEmail), encryptedData: this.attachment.getData() });
@@ -278,7 +278,7 @@ export class AttachmentDownloadView extends View {
       const name = this.attachment.name;
       Browser.saveToDownloads(new Attachment({ name, type: this.type, data: this.attachment.getData() })); // won't work in ff, possibly neither on some chrome versions (on webmail)
     }
-  }
+  };
 
   private renderProgress = (percent: number, received: number, fileSize: number) => {
     this.size = fileSize || this.size;
@@ -289,7 +289,7 @@ export class AttachmentDownloadView extends View {
     if (percent) {
       progressEl.text(`${Math.min(100, percent)}%`);
     }
-  }
+  };
 
   private recoverMissingAttachmentIdIfNeeded = async () => {
     if (!this.attachment.url && !this.attachment.id && this.attachment.msgId) {
@@ -305,7 +305,7 @@ export class AttachmentDownloadView extends View {
         throw new Error('Could not recover missing attachmentId');
       }
     }
-  }
+  };
 
 }
 

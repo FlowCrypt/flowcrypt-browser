@@ -59,12 +59,12 @@ View.run(class AddKeyView extends View {
       $('.source_selector').css('display', 'block');
       $('#spinner_container').text('');
     }
-  }
+  };
 
   public setHandlers = () => {
     $('.action_add_private_key').click(this.setHandlerPrevent('double', this.addPrivateKeyHandler));
     $('#input_passphrase').keydown(this.setEnterHandlerThatClicks('.action_add_private_key'));
-  }
+  };
 
   private loadAndRenderKeyBackupsOrRenderError = async () => {
     try {
@@ -85,7 +85,7 @@ View.run(class AddKeyView extends View {
       $('label[for=source_backup]').text('Load from backup (error checking backups)').css('color', '#AAA');
       $('#source_backup').prop('disabled', true);
     }
-  }
+  };
 
   private addPrivateKeyHandler = async (submitBtn: HTMLElement) => {
     if (submitBtn.className.includes('gray')) {
@@ -112,5 +112,5 @@ View.run(class AddKeyView extends View {
         return await Ui.modal.error(`An error happened when processing the key: ${String(e)}\nPlease write at human@flowcrypt.com`, false, Ui.testCompatibilityLink);
       }
     }
-  }
+  };
 });

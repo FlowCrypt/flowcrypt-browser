@@ -9,9 +9,9 @@ export class Debug {
     const old = Debug.DATA;
     Debug.DATA = [];
     return old;
-  }
+  };
 
   public static addMessage = async (message: any): Promise<void> => {
     Debug.DATA.push(message);
-  }
+  };
 }

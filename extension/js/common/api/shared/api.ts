@@ -62,7 +62,7 @@ export class Api {
       request.onload = e => request.status <= 299 ? resolve(new Buf(request.response as ArrayBuffer)) : errHandler(e);
       request.send();
     });
-  }
+  };
 
   public static ajax = async (req: JQueryAjaxSettings, stack: string): Promise<any | JQuery.jqXHR<any>> => {
     if (Env.isContentScript()) {
@@ -92,7 +92,7 @@ export class Api {
       }
       throw new Error(`Unknown Ajax error (${String(e)}) type when calling ${req.url}`);
     }
-  }
+  };
 
   public static isInternetAccessible = async () => {
     try {
@@ -104,7 +104,7 @@ export class Api {
       }
       throw e;
     }
-  }
+  };
 
   public static getAjaxProgressXhrFactory = (progressCbs?: ProgressCbs): (() => XMLHttpRequest) | undefined => {
     if (Env.isContentScript() || Env.isBackgroundPage() || !progressCbs || !Object.keys(progressCbs).length) {
@@ -139,12 +139,12 @@ export class Api {
       }
       return progressPeportingXhr;
     };
-  }
+  };
 
   public static randomFortyHexChars = (): string => {
     const bytes = Array.from(secureRandomBytes(20));
     return bytes.map(b => ('0' + (b & 0xFF).toString(16)).slice(-2)).join('');
-  }
+  };
 
   protected static apiCall = async <RT>(
     url: string,
@@ -197,11 +197,11 @@ export class Api {
     };
     const res = await Api.ajax(req, Catch.stackTrace());
     return res as RT;
-  }
+  };
 
   private static isRawAjaxErr = (e: any): e is RawAjaxErr => {
     return e && typeof e === 'object' && typeof (e as RawAjaxErr).readyState === 'number'; // tslint:disable-line:no-unsafe-any
-  }
+  };
 
   /**
    * Security check, in case attacker modifies parameters which are then used in an url
@@ -211,6 +211,6 @@ export class Api {
     if (requestUrl.includes('../') || requestUrl.includes('/..')) {
       throw new Error(`API path traversal forbidden: ${requestUrl}`);
     }
-  }
+  };
 
 }

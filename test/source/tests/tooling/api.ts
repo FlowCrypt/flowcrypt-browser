@@ -16,10 +16,10 @@ export class FlowCryptApi {
     console.info(`hookCiDebugEmail - calling with length: ${debug_html_content.length}`);
     const r = await FlowCryptApi.call('https://flowcrypt.com/api/hook/ci_debug_email', { ci_admin_token, debug_title, debug_html_content });
     console.info('hookCiDebugEmail-response', r.body, r.statusCode);
-  }
+  };
 
   private static call = async (url: string, values: { [k: string]: any }) => {
     return await request.post({ url, json: values, headers: { 'api-version': 3 } });
-  }
+  };
 
 }

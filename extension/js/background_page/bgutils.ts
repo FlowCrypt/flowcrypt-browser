@@ -20,7 +20,7 @@ export class BgUtils {
       const acctEmails = await GlobalStore.acctEmailsGet();
       await BgUtils.openExtensionTab(Url.create(basePath, { acctEmail: acctEmails[0], page, pageUrlParams }));
     }
-  }
+  };
 
   public static openExtensionTab = async (url: string) => {
     const openedTab = await BgUtils.getFcSettingsTabIdIfOpen();
@@ -29,7 +29,7 @@ export class BgUtils {
     } else {
       await chrome.tabs.update(openedTab, { url, active: true });
     }
-  }
+  };
 
   public static getFcSettingsTabIdIfOpen = async (): Promise<number | undefined> => {
     return await new Promise(resolve => {
@@ -44,7 +44,7 @@ export class BgUtils {
         resolve(undefined);
       });
     });
-  }
+  };
 
   public static handleStoreErr = async (e: any, reason?: 'storage_undefined' | 'db_corrupted' | 'db_denied' | 'db_failed') => {
     if (!reason) {
@@ -61,6 +61,6 @@ export class BgUtils {
     }
     await BgUtils.openSettingsPage(Url.create('fatal.htm', { reason, stack: e instanceof Error ? e.stack : Catch.stackTrace() }));
     throw new UnreportableError();
-  }
+  };
 
 }

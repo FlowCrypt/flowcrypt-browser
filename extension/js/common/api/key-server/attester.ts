@@ -25,7 +25,7 @@ export class Attester extends Api {
       return { pubkey: null }; // tslint:disable-line:no-null-keyword
     }
     return await this.doLookup(email);
-  }
+  };
 
   public lookupEmails = async (emails: string[]): Promise<Dict<PubkeySearchResult>> => {
     const results: Dict<PubkeySearchResult> = {};
@@ -33,7 +33,7 @@ export class Attester extends Api {
       results[email] = await this.lookupEmail(email);
     }));
     return results;
-  }
+  };
 
   /**
    * the actual api accepts either email, fingerprint or longid
@@ -48,7 +48,7 @@ export class Attester extends Api {
     }
     return await this.doLookup(fingerprintOrLongid);
     // todo: check returned email to respect disallow_attester_search domain rule?
-  }
+  };
 
   /**
    * Set or replace public key with idToken as an auth mechanism
@@ -60,7 +60,7 @@ export class Attester extends Api {
       throw new Error('Cannot replace pubkey at attester because your organisation rules forbid it');
     }
     await this.pubCall(`pub/${email}`, 'POST', pubkey, { authorization: `Bearer ${idToken}` });
-  }
+  };
 
   /**
    * Request to replace pubkey that will be verified by clicking email
@@ -73,7 +73,7 @@ export class Attester extends Api {
     }
     const r = await this.pubCall(`pub/${email}`, 'POST', pubkey);
     return r.responseText;
-  }
+  };
 
   /**
    * Update pubkey with a newer version of the same pubkey
@@ -85,7 +85,7 @@ export class Attester extends Api {
     }
     const r = await this.pubCall(`pub/${longid}`, 'PUT', pubkey);
     return r.responseText;
-  }
+  };
 
   /**
    * Looking to deprecate this, but still used for some customers
@@ -95,19 +95,19 @@ export class Attester extends Api {
       throw new Error('Cannot submit pubkey to attester because your organisation rules forbid it');
     }
     return await this.jsonCall<{ saved: boolean }>('initial/legacy_submit', { email: Str.parseEmail(email).email, pubkey: pubkey.trim() });
-  }
+  };
 
   public testWelcome = async (email: string, pubkey: string): Promise<{ sent: boolean }> => {
     return await this.jsonCall<{ sent: boolean }>('test/welcome', { email, pubkey });
-  }
+  };
 
   private jsonCall = async <RT>(path: string, values?: Dict<any>, method: ReqMethod = 'POST'): Promise<RT> => {
     return await Api.apiCall(ATTESTER_API_HOST, path, values, 'JSON', undefined, { 'api-version': '3' }, 'json', method) as RT;
-  }
+  };
 
   private pubCall = async (resource: string, method: ReqMethod = 'GET', data?: string | undefined, hdrs?: Dict<string>): Promise<PubCallRes> => {
     return await Api.apiCall(ATTESTER_API_HOST, resource, data, typeof data === 'string' ? 'TEXT' : undefined, undefined, hdrs, 'xhr', method);
-  }
+  };
 
   private doLookup = async (emailOrFingerprint: string): Promise<PubkeySearchResult> => {
     try {
@@ -125,6 +125,6 @@ export class Attester extends Api {
       }
       throw e;
     }
-  }
+  };
 
 }

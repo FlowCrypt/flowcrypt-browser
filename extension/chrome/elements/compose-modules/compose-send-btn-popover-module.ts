@@ -17,7 +17,7 @@ export class ComposeSendBtnPopoverModule extends ViewModule<ComposeView> {
 
   public setHandlers = (): void => {
     this.view.S.cached('toggle_send_options').click(this.view.setHandler((el, ev) => this.toggleVisible(ev)));
-  }
+  };
 
   public render = async () => {
     const popoverItems = {
@@ -44,7 +44,7 @@ export class ComposeSendBtnPopoverModule extends ViewModule<ComposeView> {
       this.view.S.cached('sending_options_container').append(elem); // xss-safe-factory
     }
     this.view.S.cached('title').text(this.composeHeaderText());
-  }
+  };
 
   /**
    * @param machineForceStateTo - if this is present, this is a programmatic call, therefore such choices should not be sticky
@@ -76,7 +76,7 @@ export class ComposeSendBtnPopoverModule extends ViewModule<ComposeView> {
     if (typeof machineForceStateTo === 'undefined' && popoverOpt === 'richtext') { // human-input choice of rich text
       this.richTextUserChoiceStore(newToggleTicked).catch(Catch.reportErr);
     }
-  }
+  };
 
   private toggleVisible = (event: JQuery.Event<HTMLElement, null>) => {
     event.stopPropagation();
@@ -100,7 +100,7 @@ export class ComposeSendBtnPopoverModule extends ViewModule<ComposeView> {
       $('body').off('click');
       this.view.S.cached('toggle_send_options').off('keydown');
     }
-  }
+  };
 
   private keydownHandler = (e: JQuery.Event<HTMLElement, null>): void => {
     const sendingOptions = this.view.S.cached('sending_options_container').find('.sending-option');
@@ -129,16 +129,16 @@ export class ComposeSendBtnPopoverModule extends ViewModule<ComposeView> {
       e.preventDefault();
       currentActive.click();
     }
-  }
+  };
 
   private richTextUserChoiceStore = async (isTicked: boolean) => {
     await AcctStore.set(this.view.acctEmail, { use_rich_text: isTicked });
-  }
+  };
 
   private richTextUserChoiceRetrieve = async (): Promise<boolean> => {
     const store = await AcctStore.get(this.view.acctEmail, ['use_rich_text']);
     return store.use_rich_text || false;
-  }
+  };
 
   private renderCrossOrTick = (elem: JQuery<HTMLElement>, popoverOpt: PopoverOpt, renderTick: boolean) => {
     if (renderTick) {
@@ -150,11 +150,11 @@ export class ComposeSendBtnPopoverModule extends ViewModule<ComposeView> {
       elem.append(`<img class="icon-cross" src="/img/red-cross-mark.png" data-test="icon-toggle-${Xss.escape(popoverOpt)}-cross" />`); // xss-escaped
       elem.css('opacity', '0.5');
     }
-  }
+  };
 
   private isTicked = (popoverItemElem: JQuery<HTMLElement>) => {
     return !!popoverItemElem.find('img.icon-tick').length;
-  }
+  };
 
   private composeHeaderText = (): string => {
     if (this.choices.encrypt && this.choices.sign) {
@@ -166,6 +166,6 @@ export class ComposeSendBtnPopoverModule extends ViewModule<ComposeView> {
     } else {
       return Lang.compose.headers.plain;
     }
-  }
+  };
 
 }

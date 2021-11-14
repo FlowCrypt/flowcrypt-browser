@@ -55,7 +55,7 @@ View.run(class BackupView extends View {
         .after('<div class="line"><button class="button green" id="action_import_key">Import Missing Private Key</button></div>');
     }
     this.sendResizeMsg();
-  }
+  };
 
   public setHandlers = () => {
     if (!this.storedPrvWithMatchingLongid) {
@@ -63,12 +63,12 @@ View.run(class BackupView extends View {
     }
     $('.action_test_pass').click(this.setHandler(async () => this.testPassphraseHandler()));
     $('#pass_phrase').keydown(this.setEnterHandlerThatClicks('.action_test_pass'));
-  }
+  };
 
   private sendResizeMsg = () => {
     const desiredHeight = $('#backup_block').height()!;
     BrowserMsg.send.setCss(this.parentTabId, { selector: `iframe#${this.frameId}`, css: { height: `${desiredHeight}px` } });
-  }
+  };
 
   private testPassphraseHandler = async () => {
     if (await KeyUtil.checkPassPhrase(this.armoredPrvBackup, String($('#pass_phrase').val())) === true) {
@@ -78,5 +78,5 @@ View.run(class BackupView extends View {
         ' locked out of your encrypted messages.');
     }
     $('#pass_phrase').val('');
-  }
+  };
 });

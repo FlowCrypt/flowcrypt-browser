@@ -93,7 +93,7 @@ export class AcctStore extends AbstractStore {
     const storageObj = await storageLocalGet(AcctStore.singleScopeRawIndexArr(acctEmail, keys)) as RawStore;
     const result = AcctStore.buildSingleAccountStoreFromRawResults(acctEmail, storageObj) as AcctStoreDict;
     return AcctStore.fixAcctStorageResult(acctEmail, result, keys);
-  }
+  };
 
   public static getAccounts = async (acctEmails: string[], keys: string[]): Promise<Dict<AcctStoreDict>> => {
     const storageObj = await storageLocalGet(AcctStore.manyScopesRawIndexArr(acctEmails, keys)) as RawStore;
@@ -102,7 +102,7 @@ export class AcctStore extends AbstractStore {
       resultsByAcct[account] = AcctStore.buildSingleAccountStoreFromRawResults(account, storageObj);
     }
     return resultsByAcct;
-  }
+  };
 
   public static set = async (acctEmail: string, values: AcctStoreDict): Promise<void> => {
     if (Env.isContentScript()) {
@@ -126,16 +126,16 @@ export class AcctStore extends AbstractStore {
     if (indexedRemoveFields.length) {
       await storageLocalRemove(indexedRemoveFields);
     }
-  }
+  };
 
   public static authInfo = async (acctEmail: string): Promise<FcUuidAuth> => {
     const { uuid } = await AcctStore.get(acctEmail, ['uuid']);
     return { account: acctEmail, uuid };
-  }
+  };
 
   public static remove = async (acctEmail: string, keys: AccountIndex[]) => {
     await storageLocalRemove(AcctStore.singleScopeRawIndexArr(acctEmail, keys));
-  }
+  };
 
   public static getScopes = async (acctEmail: string): Promise<Scopes> => {
     const { google_token_scopes } = await AcctStore.get(acctEmail, ['google_token_scopes']);
@@ -154,13 +154,13 @@ export class AcctStore extends AbstractStore {
       }
     }
     return result;
-  }
+  };
 
   private static fixAcctStorageResult = (acctEmail: string, acctStore: AcctStoreDict, keys: AccountIndex[]): AcctStoreDict => {
     if (keys.includes('sendAs') && !acctStore.sendAs) {
       acctStore.sendAs = { [acctEmail]: { isPrimary: true, isDefault: true } };
     }
     return acctStore;
-  }
+  };
 
 }

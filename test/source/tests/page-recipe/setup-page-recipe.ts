@@ -90,7 +90,7 @@ export class SetupPageRecipe extends PageRecipe {
     await settingsPage.waitAll('@action-step4done-account-settings', { timeout: 60 }); // create key timeout
     await settingsPage.waitAndClick('@action-step4done-account-settings');
     await SettingsPageRecipe.ready(settingsPage);
-  }
+  };
 
   public static async manualEnter(
     settingsPage: ControllablePage,
@@ -248,7 +248,7 @@ export class SetupPageRecipe extends PageRecipe {
         }
       }
     }
-  }
+  };
 
   public static autoKeygen = async (settingsPage: ControllablePage, { expectErr, enterPp }: {
     expectErr?: { title: string, text: string },
@@ -275,7 +275,7 @@ export class SetupPageRecipe extends PageRecipe {
       await settingsPage.waitAndClick('@action-step4done-account-settings', { retryErrs: true });
       await SettingsPageRecipe.ready(settingsPage);
     }
-  }
+  };
 
   public static setupSmimeAccount = async (settingsPage: ControllablePage, key: TestKeyInfoWithFilepath) => {
     await SetupPageRecipe.manualEnter(settingsPage, key.title, { fillOnly: true, submitPubkey: false, usedPgpBefore: false, key });
@@ -303,6 +303,6 @@ export class SetupPageRecipe extends PageRecipe {
     }
     await settingsPage.waitAndType('@input-step2bmanualcreate-passphrase-1', k.passphrase);
     await settingsPage.waitAndType('@input-step2bmanualcreate-passphrase-2', k.passphrase);
-  }
+  };
 
 }

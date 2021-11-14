@@ -41,7 +41,7 @@ export class Debug {
       };
     });
     return records;
-  }
+  };
 
   /**
   * Add an arbitrary message to `debug` database
@@ -55,7 +55,7 @@ export class Debug {
       const messages = tx.objectStore('messages');
       messages.add(message);
     });
-  }
+  };
 
   private static openDatabase = async (): Promise<IDBDatabase> => {
     const db = await new Promise((resolve, reject) => {
@@ -71,5 +71,5 @@ export class Debug {
       openDbReq.onerror = () => reject(AbstractStore.errCategorize(openDbReq.error));
     });
     return db as IDBDatabase;
-  }
+  };
 }

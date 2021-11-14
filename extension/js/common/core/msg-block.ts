@@ -16,11 +16,11 @@ export class MsgBlock {
 
   public static fromContent = (type: MsgBlockType, content: string | Buf, missingEnd = false): MsgBlock => {
     return new MsgBlock(type, content, !missingEnd);
-  }
+  };
 
   public static fromAttachment = (type: MsgBlockType, content: string, attachmentMeta: AttachmentMeta): MsgBlock => {
     return new MsgBlock(type, content, true, undefined, attachmentMeta);
-  }
+  };
 
   constructor(
     public type: MsgBlockType,

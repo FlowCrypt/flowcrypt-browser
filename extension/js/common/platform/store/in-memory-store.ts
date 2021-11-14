@@ -11,10 +11,10 @@ export class InMemoryStore extends AbstractStore {
 
   public static set = async (acctEmail: string, key: string, value: string | undefined) => {
     return await BrowserMsg.send.bg.await.inMemoryStoreSet({ acctEmail, key, value });
-  }
+  };
 
   public static get = async (acctEmail: string, key: string): Promise<string | undefined> => {
     return await BrowserMsg.send.bg.await.inMemoryStoreGet({ acctEmail, key }) ?? undefined;
-  }
+  };
 
 }

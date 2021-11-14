@@ -35,11 +35,11 @@ View.run(class ManualDecryptView extends View {
     this.factory = new XssSafeFactory(this.acctEmail, tabId);
     BrowserMsg.addListener('close_dialog', async () => { $('.passphrase_dialog').text(''); });
     BrowserMsg.listen(tabId);
-  }
+  };
 
   public setHandlers = () => {
     $('.action_decrypt_and_download').click(this.setHandlerPrevent('double', el => this.actionDecryptAndDownloadHandler(el)));
-  }
+  };
 
   private actionDecryptAndDownloadHandler = async (button: HTMLElement) => {
     const ids = this.attachmentUi.getAttachmentIds();
@@ -52,7 +52,7 @@ View.run(class ManualDecryptView extends View {
     } else {
       await Ui.modal.warning('Please add a file to decrypt');
     }
-  }
+  };
 
   private decryptAndDownload = async (encrypted: Attachment) => { // todo - this is more or less copy-pasted from attachment.js, should use common function
     const result = await MsgUtil.decryptMessage({ kisWithPp: await KeyStore.getAllWithOptionalPassPhrase(this.acctEmail), encryptedData: encrypted.getData() });
@@ -65,6 +65,6 @@ View.run(class ManualDecryptView extends View {
       console.info(result);
       await Ui.modal.error('These was a problem decrypting this file, details are in the console.');
     }
-  }
+  };
 
 });

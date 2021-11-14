@@ -84,7 +84,7 @@ export class GmailParser {
       }
     }
     return undefined;
-  }
+  };
 
 }
 
@@ -132,7 +132,7 @@ export class GoogleData {
       DATA[acct] = acctData;
     }
     return new GoogleData(acct);
-  }
+  };
 
   public static fmtMsg = (m: GmailMsg, format: 'raw' | 'full' | 'metadata' | string) => {
     format = format || 'full';
@@ -152,16 +152,16 @@ export class GoogleData {
       msgCopy.payload!.parts = undefined;
     }
     return msgCopy;
-  }
+  };
 
   private static msgSubject = (m: GmailMsg): string => {
     const subjectHeader = m.payload && m.payload.headers && m.payload.headers.find(h => h.name === 'Subject');
     return (subjectHeader && subjectHeader.value) || '';
-  }
+  };
 
   private static msgPeople = (m: GmailMsg): string => {
     return String(m.payload && m.payload.headers && m.payload.headers.filter(h => h.name === 'To' || h.name === 'From').map(h => h.value!).filter(h => !!h).join(','));
-  }
+  };
 
   constructor(private acct: string) {
     if (!DATA[acct]) {
@@ -201,11 +201,11 @@ export class GoogleData {
     };
     DATA[this.acct].messages.push(barebonesGmailMsg);
     return barebonesGmailMsg.id;
-  }
+  };
 
   public getMessage = (id: string): GmailMsg | undefined => {
     return DATA[this.acct].messages.find(m => m.id === id);
-  }
+  };
 
   public getMessageBySubject = (subject: string): GmailMsg | undefined => {
     return DATA[this.acct].messages.find(m => {
@@ -217,11 +217,11 @@ export class GoogleData {
       }
       return false;
     });
-  }
+  };
 
   public getMessagesByThread = (threadId: string) => {
     return DATA[this.acct].messages.filter(m => m.threadId === threadId);
-  }
+  };
 
   public searchMessages = (q: string) => {
     const subject = (q.match(/subject:"([^"]+)"/) || [])[1];
@@ -242,7 +242,7 @@ export class GoogleData {
       return this.searchMessagesByPeople(includePeople, excludePeople);
     }
     return [];
-  }
+  };
 
   public addDraft = (id: string, raw: string, mimeMsg: ParsedMail) => {
     const draft = new GmailMsg({ labelId: 'DRAFT', id, raw, mimeMsg });
@@ -252,19 +252,19 @@ export class GoogleData {
     } else {
       DATA[this.acct].drafts[index] = draft;
     }
-  }
+  };
 
   public getDraft = (id: string): GmailMsg | undefined => {
     return DATA[this.acct].drafts.find(d => d.id === id);
-  }
+  };
 
   public getAttachment = (attachmentId: string) => {
     return DATA[this.acct].attachments[attachmentId];
-  }
+  };
 
   public getLabels = () => {
     return DATA[this.acct].labels;
-  }
+  };
 
   public getThreads = () => {
     const threads: GmailThread[] = [];
@@ -274,13 +274,13 @@ export class GoogleData {
       }
     }
     return threads;
-  }
+  };
 
   private searchMessagesBySubject = (subject: string) => {
     subject = subject.trim().toLowerCase();
     const messages = DATA[this.acct].messages.filter(m => GoogleData.msgSubject(m).toLowerCase().includes(subject));
     return messages;
-  }
+  };
 
   private searchMessagesByPeople = (includePeople: string[], excludePeople: string[]) => {
     includePeople = includePeople.map(person => person.trim().toLowerCase());
@@ -311,6 +311,6 @@ export class GoogleData {
       }
       return shouldInclude && !shouldExclude;
     });
-  }
+  };
 
 }

@@ -38,7 +38,7 @@ export class InboxListThreadsModule extends ViewModule<InboxView> {
         window.location.reload();
       }
     }
-  }
+  };
 
   private renderInboxItem = async (threadId: string) => {
     this.inboxThreadItemAdd(threadId);
@@ -79,7 +79,7 @@ export class InboxListThreadsModule extends ViewModule<InboxView> {
         threadItem.find('.loading').text('Failed to load');
       }
     }
-  }
+  };
 
   private inboxThreadItemAdd = (threadId: string) => {
     const content = `
@@ -94,11 +94,11 @@ export class InboxListThreadsModule extends ViewModule<InboxView> {
       id: this.threadListItemId(threadId),
       html: `<span class="loading">${Ui.spinner('green')}loading..</span>${content}`,
     }));
-  }
+  };
 
   private threadListItemId = (threadId: string) => {
     return 'list_thread_id_' + threadId;
-  }
+  };
 
   private formatDate = (dateFromApi: string | number | undefined): string => {
     const date = new Date(Number(dateFromApi));
@@ -106,6 +106,6 @@ export class InboxListThreadsModule extends ViewModule<InboxView> {
       return date.toLocaleTimeString();
     }
     return date.toLocaleDateString();
-  }
+  };
 
 }

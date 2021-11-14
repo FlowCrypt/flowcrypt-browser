@@ -23,10 +23,10 @@ export class BaseMailFormatter {
 
   protected headers = (newMsg: NewMsgData) => {
     return { from: newMsg.from, recipients: newMsg.recipients, subject: newMsg.subject, thread: this.view.threadId };
-  }
+  };
 
   protected signMimeMessage = async (signingPrv: Key, mimeEncodedMessage: string, newMsg: NewMsgData) => {
     const data = await SmimeKey.sign(signingPrv, Buf.fromUtfStr(mimeEncodedMessage));
     return await SendableMsg.createSMimeSigned(this.acctEmail, this.headers(newMsg), data);
-  }
+  };
 }
