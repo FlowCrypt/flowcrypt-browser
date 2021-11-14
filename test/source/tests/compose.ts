@@ -693,6 +693,46 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       expect(await PageRecipe.getElementPropertyJson(subjectElem, 'value')).to.equal('Test S/MIME Encrypted Draft');
       expect((await composePage.read('@input-body')).trim()).to.equal('test text');
     }));
+
+    ava.default('compose - loading drafts - PKCS#7 encrypted draft with forgotten non-primary pass phrase', testWithBrowser(undefined, async (t, browser) => {
+      const acctEmail = 'flowcrypt.test.key.imported@gmail.com';
+      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
+      await SetupPageRecipe.manualEnter(settingsPage, 'unused',
+        {
+          submitPubkey: false,
+          usedPgpBefore: false,
+          key: {
+            title: '?',
+            armored: testConstants.testKeyMultiple1b383d0334e38b28,
+            passphrase: '1234',
+            longid: '1b383d0334e38b28',
+          }
+        },
+        { isSavePassphraseChecked: false, isSavePassphraseHidden: false });
+      const forgottenPassphrase = 'this passphrase is forgotten';
+      await SettingsPageRecipe.addKeyTestEx(t, browser, acctEmail, { filePath: 'test/samples/smime/human-unprotected-PKCS12.p12' }, forgottenPassphrase, {}, false);
+      const inboxPage = await browser.newPage(t, TestUrls.extensionInbox(acctEmail) + '&labelId=DRAFT&debug=___cu_true___');
+      await InboxPageRecipe.finishSessionOnInboxPage(inboxPage);
+      const inboxTabId = await PageRecipe.getTabId(inboxPage);
+      // send message from a different tab
+      await PageRecipe.sendMessage(settingsPage, { name: 'open_compose_window', data: { bm: { draftId: '17c041fd27858466' }, objUrls: {} }, to: inboxTabId, uid: '2' });
+      await inboxPage.waitAll('@container-new-message');
+      await Util.sleep(0.5);
+      const composeFrame = await inboxPage.getFrame(['compose.htm']);
+      await composeFrame.waitAndClick('@action-open-passphrase-dialog');
+      const passphraseDialog = await inboxPage.getFrame(['passphrase.htm']);
+      await passphraseDialog.waitForSelTestState('ready');
+      expect(await passphraseDialog.read('@passphrase-text')).to.equal('Enter FlowCrypt pass phrase to load a draft');
+      const whichKeyText = await passphraseDialog.read('@which-key');
+      expect(whichKeyText).to.include('9B5F CFF5 76A0 3249 5AFE 7780 5354 351B 39AB 3BC6');
+      expect(whichKeyText).to.not.include('CB04 85FE 44FC 22FF 09AF 0DB3 1B38 3D03 34E3 8B28');
+      await passphraseDialog.waitAndType('@input-pass-phrase', forgottenPassphrase);
+      await passphraseDialog.waitAndClick('@action-confirm-pass-phrase-entry');
+      await composeFrame.waitForContent('@input-body', 'test text');
+      await inboxPage.close();
+      await settingsPage.close();
+    }));
+
     // todo: load a draft encrypted by non-first key, enetering passphrase for it
     ava.default('compose - loading drafts - reply', testWithBrowser('compatibility', async (t, browser) => {
       const appendUrl = 'threadId=16cfa9001baaac0a&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___&replyMsgId=16cfa9001baaac0a&draftId=draft-3';

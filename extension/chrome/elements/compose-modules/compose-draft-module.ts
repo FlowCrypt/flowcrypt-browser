@@ -336,7 +336,7 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
   }
 
   private renderPPDialogAndWaitWhenPPEntered = async (longids: string[]) => {
-    const promptText = `<div>Waiting for <a href="#" class="action_open_passphrase_dialog">pass phrase</a> to open draft..</div>`;
+    const promptText = `<div>Waiting for <a href="#" data-test="action-open-passphrase-dialog" class="action_open_passphrase_dialog">pass phrase</a> to open draft..</div>`;
     if (this.view.isReplyBox) {
       Xss.sanitizeRender(this.view.S.cached('prompt'), promptText).css({ display: 'block' });
       this.view.sizeModule.resizeComposeBox();
