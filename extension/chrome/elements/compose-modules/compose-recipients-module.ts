@@ -359,7 +359,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
   }
 
   public reRenderRecipientFor = async (email: string): Promise<void> => {
-    if (!this.addedRecipients.find(r => r.email === email)) {
+    if (!this.addedRecipients.some(r => r.email === email)) {
       return;
     }
     const emailAndPubkeys = await ContactStore.getOneWithAllPubkeys(undefined, email);

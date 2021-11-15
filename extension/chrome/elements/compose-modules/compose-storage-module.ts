@@ -140,7 +140,7 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
   }
 
   /**
-   * Updates them asynchronously if there is at least one usable key for recipinet
+   * Updates them asynchronously if there is at least one usable key for recipient
    * Updates synchronously if there are no usable keys
    */
   public getUpToDatePubkeys = async (
@@ -148,7 +148,7 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
   ): Promise<PubkeyInfo[] | "fail"> => {
     this.view.errModule.debug(`getUpToDatePubkeys.email(${email})`);
     const storedContact = await ContactStore.getOneWithAllPubkeys(undefined, email);
-    this.view.errModule.debug(`getUpToDatePubkeys.storedContact.sortedPubkeys.lengh(${storedContact?.sortedPubkeys.length})`);
+    this.view.errModule.debug(`getUpToDatePubkeys.storedContact.sortedPubkeys.length(${storedContact?.sortedPubkeys.length})`);
     const bestKey = storedContact?.sortedPubkeys[0]?.pubkey;
     this.view.errModule.debug(`getUpToDatePubkeys.bestKey(${JSON.stringify(bestKey)})`);
     if (storedContact && bestKey?.usableForEncryption) {
@@ -167,7 +167,7 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
     }
     // re-query the storage, which is now updated
     const updatedContact = await ContactStore.getOneWithAllPubkeys(undefined, email);
-    this.view.errModule.debug(`getUpToDatePubkeys.updatedContact.sortedPubkeys.lengh(${updatedContact?.sortedPubkeys.length})`);
+    this.view.errModule.debug(`getUpToDatePubkeys.updatedContact.sortedPubkeys.length(${updatedContact?.sortedPubkeys.length})`);
     this.view.errModule.debug(`getUpToDatePubkeys.updatedContact(${updatedContact})`);
     return updatedContact?.sortedPubkeys ?? [];
   }
@@ -189,7 +189,7 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
       const lookupResult = await this.view.pubLookup.lookupEmail(email);
       const fetchedPubkeys = await Promise.all(lookupResult.pubkeys.map(KeyUtil.parse));
       for (const fetched of fetchedPubkeys) {
-        const stored = storedPubkeys.find(p => p.pubkey.id === fetched.id)?.pubkey;
+        const stored = storedPubkeys.find(p => KeyUtil.identityEquals(p.pubkey, fetched))?.pubkey;
         if (!stored || KeyUtil.isFetchedNewer({ fetched, stored })) {
           await ContactStore.update(undefined, email, { name, pubkey: fetched, pubkeyLastCheck: Date.now() });
           await this.view.recipientsModule.reRenderRecipientFor(email);
