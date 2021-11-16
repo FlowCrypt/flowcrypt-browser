@@ -44,6 +44,7 @@ export class GoogleAuth {
       compose: 'https://www.googleapis.com/auth/gmail.compose',
       modify: 'https://www.googleapis.com/auth/gmail.modify',
       readContacts: 'https://www.googleapis.com/auth/contacts.readonly',
+      readOtherContacts: 'https://www.googleapis.com/auth/contacts.other.readonly',
     },
     legacy_scopes: {
       read: 'https://www.googleapis.com/auth/gmail.readonly', // deprecated in favor of modify, which also includes read
@@ -52,7 +53,7 @@ export class GoogleAuth {
   };
 
   public static defaultScopes = (group: 'default' | 'contacts' | 'openid' = 'default') => {
-    const { readContacts, compose, modify, openid, email, profile } = GoogleAuth.OAUTH.scopes;
+    const { readContacts, readOtherContacts, compose, modify, openid, email, profile } = GoogleAuth.OAUTH.scopes;
     console.info(`Not using scope ${modify} because not approved on oauth screen yet`);
     const read = GoogleAuth.OAUTH.legacy_scopes.read; // todo - remove as soon as "modify" is approved by google
     if (group === 'openid') {
@@ -63,13 +64,13 @@ export class GoogleAuth {
         return [openid, email, profile, compose, read]; // consumer may freak out that extension asks for their contacts early on
       } else if (FLAVOR === 'enterprise') {
         // todo - replace "read" with "modify" when approved by google
-        return [openid, email, profile, compose, read, readContacts]; // enterprise expects their contact search to work properly
+        return [openid, email, profile, compose, read, readContacts, readOtherContacts]; // enterprise expects their contact search to work properly
       } else {
         throw new Error(`Unknown build ${FLAVOR}`);
       }
     } else if (group === 'contacts') {
       // todo - replace "read" with "modify" when approved by google
-      return [openid, email, profile, compose, read, readContacts];
+      return [openid, email, profile, compose, read, readContacts, readOtherContacts];
     } else {
       throw new Error(`Unknown scope group ${group}`);
     }

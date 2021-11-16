@@ -7,7 +7,7 @@
 import { Api, ProgressCbs, ReqMethod } from '../../shared/api.js';
 import { Dict, Str } from '../../../core/common.js';
 
-import { GOOGLE_API_HOST } from '../../../core/const.js';
+import { GOOGLE_API_HOST, PEOPLE_API_HOST } from '../../../core/const.js';
 import { GmailRes } from './gmail-parser.js';
 import { GoogleAuth } from './google-auth.js';
 import { Serializable } from '../../../platform/store/abstract-store.js';
@@ -41,23 +41,33 @@ export class Google {
     return await GoogleAuth.apiGoogleCallRetryAuthErrorOneTime(acctEmail, request) as RT;
   };
 
-  public static contactsGet = async (acctEmail: string, query?: string, progress?: ProgressCbs, max: number = 10, start: number = 0) => {
+  public static contactsGet = async (acctEmail: string, query?: string, progress?: ProgressCbs, max: number = 10) => {
     progress = progress || {};
     const method = 'GET';
     const contentType = 'application/json; charset=UTF-8';
-    const url = `${GOOGLE_API_HOST}/m8/feeds/contacts/default/thin`;
-    const data = { 'alt': "json", 'q': query, 'v': '3.0', 'max-results': max, 'start-index': start };
+    const searchContactsUrl = `${PEOPLE_API_HOST}/v1/people:searchContacts`;
+    const searchOtherContactsUrl = `${PEOPLE_API_HOST}/v1/otherContacts:search`;
+    const data = { query, 'readMask': 'names,emailAddresses', 'pageSize': max };
     const xhr = Api.getAjaxProgressXhrFactory(progress);
     const headers = { 'Authorization': await GoogleAuth.googleApiAuthHeader(acctEmail) };
-    const contacts = await GoogleAuth.apiGoogleCallRetryAuthErrorOneTime(acctEmail,
-      { xhr, url, method, data, headers, contentType, crossDomain: true, async: true }) as GmailRes.GoogleContacts;
-    return contacts.feed.entry && contacts.feed.entry // todo - causes weird function signature, could be improved to return empty arr
-      .filter(entry => !!(entry.gd$email || []).find(email => email.primary === "true")) // find all entries that have primary email
-      .map(e => ({
-        email: (e.gd$email || []).find(e => e.primary === "true")!.address,
-        name: e.gd$name && e.gd$name.gd$fullName && e.gd$name.gd$fullName.$t
-      }));
-  };
+    const contacts = await Promise.all([
+      GoogleAuth.apiGoogleCallRetryAuthErrorOneTime(acctEmail,
+        { xhr, url: searchContactsUrl, method, data, headers, contentType, crossDomain: true, async: true }) as Promise<GmailRes.GoogleContacts>,
+      GoogleAuth.apiGoogleCallRetryAuthErrorOneTime(acctEmail,
+        { xhr, url: searchOtherContactsUrl, method, data, headers, contentType, crossDomain: true, async: true }) as Promise<GmailRes.GoogleContacts>
+    ]);
+    const contactsMerged = [...contacts[0].results, ...contacts[1].results];
+    return contactsMerged
+      .filter(entry => !!(entry.person?.emailAddresses || []).find(email => email.metadata.primary === true)) // find all entries that have primary email
+      .map(entry => {
+        const email = (entry.person?.emailAddresses || []).find(email => email.metadata.primary === true)!.value;
+        const name = (entry.person?.names || []).find(name => name.metadata.primary === true)!.displayName;
+        return {
+          email,
+          name: name || email
+        };
+      });
+  }
 
   public static encodeAsMultipartRelated = (parts: Dict<string>) => { // todo - this could probably be achieved with emailjs-mime-builder
     const boundary = 'the_boundary_is_' + Str.sloppyRandom(10);

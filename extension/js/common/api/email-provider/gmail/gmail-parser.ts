@@ -52,19 +52,22 @@ export namespace GmailRes { // responses
   };
 
   export type GoogleContacts = {
-    feed: {
-      entry?: {
-        gd$email?: {
-          address: string,
-          primary: string
-        }[],
-        gd$name?: {
-          gd$fullName?: {
-            $t: string
+    results: {
+      person?: {
+        emailAddresses?: {
+          metadata: {
+            primary: boolean
           }
-        }
-      }[]
-    }
+          value: string,
+        }[],
+        names?: {
+          metadata: {
+            primary: boolean
+          }
+          displayName: string
+        }[]
+      }
+    }[]
   };
 
 }

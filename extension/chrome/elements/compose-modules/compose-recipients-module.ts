@@ -47,7 +47,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
 
   constructor(view: ComposeView) {
     super(view);
-    this.googleContactsSearchEnabled = this.view.scopes.readContacts;
+    this.googleContactsSearchEnabled = this.view.scopes.readContacts && this.view.scopes.readOtherContacts;
     this.canReadEmails = this.view.scopes.read || this.view.scopes.modify;
   }
 
@@ -813,6 +813,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       this.googleContactsSearchEnabled = true;
       this.canReadEmails = true;
       this.view.scopes.readContacts = true;
+      this.view.scopes.readOtherContacts = true;
       this.view.scopes.read = true;
       await this.searchContacts(this.view.S.cached('input_to'));
     } else if (authRes.result === 'Denied' || authRes.result === 'Closed') {
