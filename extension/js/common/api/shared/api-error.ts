@@ -26,7 +26,7 @@ abstract class ApiCallErr extends Error {
   protected static describeApiAction = (req: JQueryAjaxSettings) => {
     const describeBody = typeof req.data === 'undefined' ? '(no body)' : typeof req.data;
     return `${req.method || 'GET'}-ing ${Catch.censoredUrl(req.url)} ${describeBody}: ${ApiCallErr.getPayloadStructure(req)}`;
-  }
+  };
 
   private static getPayloadStructure = (req: JQueryAjaxSettings): string => {
     if (typeof req.data === 'string') {
@@ -39,7 +39,7 @@ abstract class ApiCallErr extends Error {
       return Object.keys(req.data).join(',');
     }
     return '';
-  }
+  };
 
 }
 
@@ -72,7 +72,7 @@ export class AjaxErr extends ApiCallErr { // no static props, else will get seri
       resMsg,
       resDetails
     );
-  }
+  };
 
   private static parseResErr = (responseText: string): { resMsg?: string, resDetails?: string, resCode?: number } => {
     const returnable: { resMsg?: string, resDetails?: string, resCode?: number } = {};
@@ -115,7 +115,7 @@ export class AjaxErr extends ApiCallErr { // no static props, else will get seri
       // skip
     }
     return returnable;
-  }
+  };
 
   private static redactSensitiveData = (str: string): string => {
     const lowered = str.toLowerCase();
@@ -126,7 +126,7 @@ export class AjaxErr extends ApiCallErr { // no static props, else will get seri
       return '<REDACTED:IDTOKEN>';
     }
     return str;
-  }
+  };
 
   constructor(
     message: string,
@@ -172,7 +172,7 @@ export class ApiErr {
     } else {
       return 'FlowCrypt encountered an error with unknown cause.';
     }
-  }
+  };
 
   public static isStandardErr = (e: any, internalType: 'auth' | 'subscription'): boolean => {
     if (!e || !(typeof e === 'object')) {
@@ -188,7 +188,7 @@ export class ApiErr {
       return true;
     }
     return false;
-  }
+  };
 
   public static isAuthErr = (e: any): boolean => {
     if (e instanceof AuthErr || e instanceof GoogleAuthErr) {
@@ -212,7 +212,7 @@ export class ApiErr {
       }
     }
     return false;
-  }
+  };
 
   public static isMailOrAcctDisabledOrPolicy = (e: any): boolean => {
     if (e instanceof AjaxErr && ApiErr.isBadReq(e) && typeof e.responseText === 'string') {
@@ -224,7 +224,7 @@ export class ApiErr {
       }
     }
     return false;
-  }
+  };
 
   public static isBlockedByProxy = (e: any): boolean => {
     if (!(e instanceof AjaxErr)) {
@@ -239,7 +239,7 @@ export class ApiErr {
       }
     }
     return false;
-  }
+  };
 
   public static isNetErr = (e: any): e is Error => {
     if (e instanceof TypeError && (e.message === 'Failed to fetch' || e.message === 'NetworkError when attempting to fetch resource.')) {
@@ -255,38 +255,38 @@ export class ApiErr {
       return true; // AWS: Your socket connection to the server was not read from or written to within the timeout period. Idle connections will be closed.
     }
     return false;
-  }
+  };
 
   public static isDecryptErr = (e: any): e is DecryptionError => {
     if (e instanceof DecryptionError) {
       return true;
     }
     return false;
-  }
+  };
 
   public static isSignificant = (e: any): boolean => {
     return !ApiErr.isNetErr(e) && !ApiErr.isServerErr(e) && !ApiErr.isNotFound(e) && !ApiErr.isMailOrAcctDisabledOrPolicy(e)
       && !ApiErr.isAuthErr(e) && !ApiErr.isBlockedByProxy(e);
-  }
+  };
 
   public static isBadReq = (e: any): e is AjaxErr => {
     return e instanceof AjaxErr && e.status === 400;
-  }
+  };
   public static isInsufficientPermission = (e: any): e is AjaxErr => {
     return e instanceof AjaxErr && e.status === 403 && e.responseText.indexOf('insufficientPermissions') !== -1;
-  }
+  };
 
   public static isNotFound = (e: any): e is AjaxErr => {
     return e instanceof AjaxErr && e.status === 404;
-  }
+  };
 
   public static isReqTooLarge = (e: any): boolean => {
     return e instanceof AjaxErr && e.status === 413;
-  }
+  };
 
   public static isServerErr = (e: any): boolean => {
     return e instanceof AjaxErr && e.status >= 500;
-  }
+  };
 
   public static detailsAsHtmlWithNewlines = (e: any): string => {
     let details = 'Below are technical details about the error. This may be useful for debugging.\n\n';
@@ -296,16 +296,16 @@ export class ApiErr {
       details += `<b>Ajax response</b>:\n${Xss.escape(e.responseText)}\n<b>End of Ajax response</b>\n`;
     }
     return details;
-  }
+  };
 
   public static isInPrivateMode = (e: any) => {
     return e instanceof Error && e.message.startsWith('BrowserMsg() (no status text): -1 when GET-ing blob:moz-extension://');
-  }
+  };
 
   public static reportIfSignificant = (e: any) => {
     if (ApiErr.isSignificant(e)) {
       Catch.reportErr(e);
     }
-  }
+  };
 
 }

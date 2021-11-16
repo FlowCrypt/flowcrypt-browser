@@ -13,10 +13,10 @@ View.run(class InitialView extends View {
     } else {
       $('#firefox-steps').css('display', 'block');
     }
-  }
+  };
 
   public setHandlers = () => {
     // none
-  }
+  };
 
 });

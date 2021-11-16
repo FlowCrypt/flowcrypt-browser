@@ -38,12 +38,12 @@ View.run(class SelectAcctPopupView extends View {
       $(self).off().attr('src', '/img/svgs/profile-icon.svg');
     }));
     $('html, body').css('height', $('.content').height()! + (Catch.browser().name === 'firefox' ? 40 : 0)); // .content is in template
-  }
+  };
 
   public setHandlers = () => {
     $('ul.emails a').click(this.setHandler(el => this.actionChooseAcctHandler(el)));
     $('.action_add_account').click(this.setHandler(() => this.actionRedirectToAddAcctPageHandler()));
-  }
+  };
 
   private actionChooseAcctHandler = async (clickedElement: HTMLElement) => {
     if (this.action === 'inbox') {
@@ -53,12 +53,12 @@ View.run(class SelectAcctPopupView extends View {
     }
     await Ui.time.sleep(100);
     window.close();
-  }
+  };
 
   private actionRedirectToAddAcctPageHandler = async () => {
     await Browser.openSettingsPage('index.htm', undefined, undefined, undefined, true);
     await Ui.time.sleep(100);
     window.close();
-  }
+  };
 
 });

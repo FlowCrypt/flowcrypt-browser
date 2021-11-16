@@ -19,14 +19,14 @@ export class BrowserRecipe {
     await OauthPageRecipe.google(t, oauthPopup, acctEmail, 'close');
     await settingsPage.waitAndRespondToModal('confirm', 'cancel', 'Explaining FlowCrypt webmail permissions');
     return settingsPage;
-  }
+  };
 
   public static openSettingsLoginApprove = async (t: AvaContext, browser: BrowserHandle, acctEmail: string) => {
     const settingsPage = await browser.newPage(t, TestUrls.extensionSettings());
     const oauthPopup = await browser.newPageTriggeredBy(t, () => settingsPage.waitAndClick('@action-connect-to-gmail'));
     await OauthPageRecipe.google(t, oauthPopup, acctEmail, 'approve');
     return settingsPage;
-  }
+  };
 
   public static openGmailPage = async (t: AvaContext, browser: BrowserHandle, googleLoginIndex = 0, expectComposeButton = true) => {
     const gmailPage = await browser.newPage(t, TestUrls.gmail(googleLoginIndex));
@@ -38,26 +38,26 @@ export class BrowserRecipe {
       await gmailPage.notPresent('div.z0'); // compose button container not visible
     }
     return gmailPage;
-  }
+  };
 
   public static openGoogleChatPage = async (t: AvaContext, browser: BrowserHandle, googleLoginIndex = 0) => {
     const googleChatPage = await browser.newPage(t, TestUrls.googleChat(googleLoginIndex));
     await googleChatPage.waitAll('h3.acY'); // "No conversation selected" placeholder
     return googleChatPage;
-  }
+  };
 
   public static openGmailPageAndVerifyComposeBtnPresent = async (t: AvaContext, browser: BrowserHandle, googleLoginIndex = 0) => {
     const gmailPage = await BrowserRecipe.openGmailPage(t, browser, googleLoginIndex);
     await gmailPage.waitAll('@action-secure-compose');
     return gmailPage;
-  }
+  };
 
   public static openGmailPageAndVerifyComposeBtnNotPresent = async (t: AvaContext, browser: BrowserHandle, googleLoginIndex = 0) => {
     const gmailPage = await BrowserRecipe.openGmailPage(t, browser, googleLoginIndex);
     await Util.sleep(3);
     await gmailPage.notPresent('@action-secure-compose');
     return gmailPage;
-  }
+  };
 
   public static setUpCommonAcct = async (t: AvaContext, browser: BrowserHandle, acct: 'compatibility' | 'compose' | 'ci.tests.gmail') => {
     if (acct === 'compatibility') {
@@ -86,7 +86,7 @@ export class BrowserRecipe {
       await SetupPageRecipe.recover(settingsPage, 'test.ci.compose');
       await settingsPage.close();
     }
-  }
+  };
 
   public static deleteAllDraftsInGmailAccount = async (settingsPage: ControllablePage): Promise<void> => {
     const accessToken = (await settingsPage.getFromLocalStorage(['cryptup_citestsgmailflowcryptdev_google_token_access'])).cryptup_citestsgmailflowcryptdev_google_token_access as string;
@@ -95,7 +95,7 @@ export class BrowserRecipe {
     if (list.data.drafts) {
       await Promise.all(list.data.drafts!.filter(draft => draft.id).map(draft => gmail.users.drafts.delete({ id: draft.id!, userId: 'me', access_token: accessToken })));
     }
-  }
+  };
 
   // todo - ideally we could just add a 3rd common account: 'compatibility' | 'compose' | 'pp-change' in setUpCommonAcct
   public static setUpFcPpChangeAcct = async (t: AvaContext, browser: BrowserHandle) => {
@@ -104,7 +104,7 @@ export class BrowserRecipe {
     const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
     await SetupPageRecipe.manualEnter(settingsPage, k.title, { usedPgpBefore: false, submitPubkey: false, savePassphrase: true }, { isSavePassphraseHidden: false });
     return { acctEmail, passphrase: k.passphrase, settingsPage };
-  }
+  };
 
   public static setUpFcForbidPpStoringAcct = async (t: AvaContext, browser: BrowserHandle) => {
     const acctEmail = 'user@forbid-storing-passphrase-org-rule.flowcrypt.test';
@@ -112,7 +112,7 @@ export class BrowserRecipe {
     const key = { title: '', armored: testConstants.testKeyB8F687BCDE14435A, passphrase: 'donotstore', longid: 'B8F687BCDE14435A' };
     await SetupPageRecipe.manualEnter(settingsPage, 'unused', { submitPubkey: false, usedPgpBefore: false, key }, { isSavePassphraseChecked: false, isSavePassphraseHidden: true });
     return { acctEmail, passphrase: key.passphrase, settingsPage };
-  }
+  };
 
   public static async pgpBlockVerifyDecryptedContent(t: AvaContext, browser: BrowserHandle, m: TestMessage) {
     const pgpHostPage = await browser.newPage(t, `chrome/dev/ci_pgp_host_page.htm${m.params}`);

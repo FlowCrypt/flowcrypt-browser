@@ -21,7 +21,7 @@ export class SettingsPageRecipe extends PageRecipe {
   public static ready = async (settingsPage: ControllablePage) => {
     await settingsPage.waitAll('@page-settings');
     await settingsPage.waitForSelTestState('ready');
-  }
+  };
 
   public static toggleScreen = async (settingsPage: ControllablePage, to: "basic" | "additional") => {
     await SettingsPageRecipe.ready(settingsPage);
@@ -30,25 +30,25 @@ export class SettingsPageRecipe extends PageRecipe {
     await Util.sleep(0.5);
     await settingsPage.waitAll(to === 'basic' ? '@action-toggle-screen-additional' : '@action-toggle-screen-basic'); // wait for opposite button to show up
     await Util.sleep(0.5);
-  }
+  };
 
   public static closeDialog = async (settingsPage: ControllablePage) => {
     await settingsPage.waitAndClick('@dialog-close', { delay: 3 });
     await settingsPage.waitTillGone('@dialog');
-  }
+  };
 
   public static awaitNewPageFrame = async (settingsPage: ControllablePage, actionBtnSel: string, frameUrlFilter: string[]): Promise<ControllableFrame> => {
     await SettingsPageRecipe.ready(settingsPage);
     await settingsPage.waitAndClick(actionBtnSel);
     await settingsPage.waitAll('@dialog');
     return await settingsPage.getFrame(frameUrlFilter);
-  }
+  };
 
   public static swithAcct = async (settingsPage: ControllablePage, acctEmail: string) => {
     await SettingsPageRecipe.ready(settingsPage);
     await settingsPage.waitAndClick('@action-toggle-accounts-menu');
     await settingsPage.waitAndClick(`@action-switch-to-account(${acctEmail})`);
-  }
+  };
 
   public static changePassphrase = async (settingsPage: ControllablePage, currentPp: string | undefined, newPp: string) => {
     await SettingsPageRecipe.ready(settingsPage);
@@ -68,7 +68,7 @@ export class SettingsPageRecipe extends PageRecipe {
     await securityFrame.waitAndClick('@action-backup-step3manual-continue');
     await securityFrame.waitAndRespondToModal('info', 'confirm', 'Downloading private key backup file');
     await securityFrame.waitAndRespondToModal('info', 'confirm', 'Your private key has been successfully backed up');
-  }
+  };
 
   public static forgetAllPassPhrasesInStorage = async (settingsPage: ControllablePage, passphrase: string) => {
     await SettingsPageRecipe.ready(settingsPage);
@@ -77,7 +77,7 @@ export class SettingsPageRecipe extends PageRecipe {
     await securityFrame.waitAndType('@input-confirm-pass-phrase', passphrase);
     await securityFrame.waitAndClick('@action-confirm-pass-phrase-requirement-change');
     await SettingsPageRecipe.closeDialog(settingsPage);
-  }
+  };
 
   public static verifyMyKeyPage = async (settingsPage: ControllablePage, expectedKeyName: string, trigger: "button" | "link", linkIndex?: number) => {
     await SettingsPageRecipe.ready(settingsPage);
@@ -93,7 +93,7 @@ export class SettingsPageRecipe extends PageRecipe {
     expect(await myKeyFrame.read('@content-fingerprint')).to.contain(Str.spaced(k.longid));
     await SettingsPageRecipe.closeDialog(settingsPage);
     await SettingsPageRecipe.toggleScreen(settingsPage, 'basic');
-  }
+  };
 
   public static passphraseTest = async (settingsPage: ControllablePage, passphrase: string, expectMatch: boolean) => {
     await SettingsPageRecipe.ready(settingsPage);
@@ -108,7 +108,7 @@ export class SettingsPageRecipe extends PageRecipe {
       await SettingsPageRecipe.closeDialog(settingsPage);
     }
     await settingsPage.waitTillGone('@dialog');
-  }
+  };
 
   public static addKeyTest = async (
     t: AvaContext,
@@ -144,5 +144,5 @@ export class SettingsPageRecipe extends PageRecipe {
     const fp = Str.spaced(Xss.escape(key.id));
     await settingsPage.waitForContent('@container-settings-keys-list', fp); // confirm key successfully loaded
     await settingsPage.close();
-  }
+  };
 }

@@ -60,7 +60,7 @@ export class PgpBlockViewDecryptModule {
     } catch (e) {
       await this.view.errorModule.handleInitializeErr(e);
     }
-  }
+  };
 
   private decryptAndRender = async (encryptedData: Buf, optionalPwd?: string, plainSubject?: string) => {
     if (typeof this.view.signature !== 'string') {
@@ -123,6 +123,6 @@ export class PgpBlockViewDecryptModule {
       await this.view.renderModule.decideDecryptedContentFormattingAndRender(encryptedData, false, signatureResult,
         async () => { return await BrowserMsg.send.bg.await.pgpMsgVerifyDetached({ plaintext: encryptedData, sigText }); });
     }
-  }
+  };
 
 }

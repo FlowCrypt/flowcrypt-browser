@@ -89,7 +89,7 @@ export class KeyUtil {
 
   public static identityEquals = (keyIdentity1: KeyIdentity, keyIdentity2: KeyIdentity) => {
     return keyIdentity1.id === keyIdentity2.id && keyIdentity1.type === keyIdentity2.type;
-  }
+  };
 
   public static filterKeys<T extends KeyIdentity>(kis: T[], ids: KeyIdentity[]): T[] {
     return kis.filter(ki => ids.some(i => KeyUtil.identityEquals(i, ki)));
@@ -109,7 +109,7 @@ export class KeyUtil {
       }
     }
     return foundKeys;
-  }
+  };
 
   public static groupByType<T extends { type: string }>(items: T[]): { [type: string]: T[] } {
     return items.reduce((rv: { [type: string]: T[] }, x: T) => {
@@ -125,7 +125,7 @@ export class KeyUtil {
       return false;
     }
     return await OpenPGPKey.isWithoutSelfCertifications(key);
-  }
+  };
 
   /**
    * Read many keys, could be armored or binary, in single armor or separately, useful for importing keychains of various formats
@@ -158,7 +158,7 @@ export class KeyUtil {
       await pushKeysAndErrs(fileData, false);
     }
     return { keys: allKeys, errs: allErrs };
-  }
+  };
 
   public static parse = async (text: string): Promise<Key> => {
     const keys = await KeyUtil.parseMany(text);
@@ -167,7 +167,7 @@ export class KeyUtil {
       throw new Error(`Found ${keysLength} keys, expected one`);
     }
     return keys[0];
-  }
+  };
 
   public static parseMany = async (text: string): Promise<Key[]> => {
     const keyType = KeyUtil.getKeyType(text);
@@ -178,7 +178,7 @@ export class KeyUtil {
       return [SmimeKey.parse(text)];
     }
     throw new UnexpectedKeyTypeError(`Key type is ${keyType}, expecting OpenPGP or x509 S/MIME`);
-  }
+  };
 
   public static readBinary = async (key: Uint8Array, passPhrase?: string | undefined): Promise<{ keys: Key[], err: Error[] }> => {
     const allKeys: Key[] = [], allErr: Error[] = [];
@@ -212,7 +212,7 @@ export class KeyUtil {
       }
     }
     return { keys: allKeys, err: allErr };
-  }
+  };
 
   public static parseBinary = async (key: Uint8Array, passPhrase?: string | undefined): Promise<Key[]> => {
     const { keys, err } = await KeyUtil.readBinary(key, passPhrase);
@@ -220,7 +220,7 @@ export class KeyUtil {
       return keys;
     }
     throw new Error(err.length ? err.map((e, i) => (i + 1) + '. ' + e.message).join('\n') : 'Should not happen: no keys and no errors.');
-  }
+  };
 
   public static armor = (pubkey: Key): string => {
     const armored = (pubkey as unknown as { rawArmored: string }).rawArmored;
@@ -228,7 +228,7 @@ export class KeyUtil {
       throw new Error('The Key object has no rawArmored field.');
     }
     return armored;
-  }
+  };
 
   public static diagnose = async (key: Key, passphrase: string): Promise<Map<string, string>> => {
     let result = new Map<string, string>();
@@ -242,7 +242,7 @@ export class KeyUtil {
     result.set(`internal usableForEncryptionButExpired`, KeyUtil.formatResult(key.usableForEncryptionButExpired));
     result.set(`internal usableForSigningButExpired`, KeyUtil.formatResult(key.usableForSigningButExpired));
     return result;
-  }
+  };
 
   public static formatResultAsync = async (f: () => Promise<unknown>): Promise<string> => {
     try {
@@ -250,11 +250,11 @@ export class KeyUtil {
     } catch (e) {
       return `[${String(e)}]`;
     }
-  }
+  };
 
   public static formatResult = (value: unknown): string => {
     return `[-] ${String(value)}`;
-  }
+  };
 
   public static asPublicKey = async (key: Key): Promise<Key> => {
     if (key.type === 'openpgp') {
@@ -263,7 +263,7 @@ export class KeyUtil {
       return SmimeKey.asPublicKey(key);
     }
     throw new UnexpectedKeyTypeError(`Key type is ${key.type}, expecting OpenPGP or x509 S/MIME`);
-  }
+  };
 
   public static expired = (key: Key): boolean => {
     const exp = key.expiration;
@@ -271,12 +271,12 @@ export class KeyUtil {
       return false;
     }
     return Date.now() > exp;
-  }
+  };
 
   public static dateBeforeExpirationIfAlreadyExpired = (key: Key): Date | undefined => {
     const expiration = key.expiration;
     return expiration && KeyUtil.expired(key) ? new Date(expiration - 1000) : undefined;
-  }
+  };
 
   // todo - this should be made to tolerate smime keys
   public static normalize = async (armored: string): Promise<{ normalized: string, keys: OpenPGP.key.Key[] }> => {
@@ -300,14 +300,14 @@ export class KeyUtil {
       Catch.reportErr(error);
       return { normalized: '', keys: [] };
     }
-  }
+  };
 
   public static checkPassPhrase = async (pkey: string, passphrase: string): Promise<boolean> => {
     // decrypt will change the key in place so it's important to parse the key here
     // because passing an object from the caller could have unexpected consequences
     const key = await KeyUtil.parse(pkey);
     return await KeyUtil.decrypt(key, passphrase);
-  }
+  };
 
   public static getKeyType = (pubkey: string): 'openpgp' | 'x509' | 'unknown' => {
     if (pubkey.includes(PgpArmor.headers('certificate').begin)) {
@@ -321,7 +321,7 @@ export class KeyUtil {
     } else {
       return 'unknown';
     }
-  }
+  };
 
   public static decrypt = async (key: Key, passphrase: string, optionalKeyid?: OpenPGP.Keyid, optionalBehaviorFlag?: 'OK-IF-ALREADY-DECRYPTED'): Promise<boolean> => {
     if (key.type === 'openpgp') {
@@ -331,7 +331,7 @@ export class KeyUtil {
     } else {
       throw new Error(`KeyUtil.decrypt does not support key type ${key.type}`);
     }
-  }
+  };
 
   public static encrypt = async (key: Key, passphrase: string) => {
     if (key.type === 'openpgp') {
@@ -341,7 +341,7 @@ export class KeyUtil {
     } else {
       throw new Error(`KeyUtil.encrypt does not support key type ${key.type}`);
     }
-  }
+  };
 
   public static reformatKey = async (privateKey: Key, passphrase: string, userIds: { email: string | undefined; name: string }[], expireSeconds: number) => {
     if (privateKey.type === 'openpgp') {
@@ -349,7 +349,7 @@ export class KeyUtil {
     } else {
       throw new Error(`KeyUtil.reformatKey does not support key type ${privateKey.type}`);
     }
-  }
+  };
 
   public static revoke = async (key: Key): Promise<string | undefined> => {
     if (key.type === 'openpgp') {
@@ -357,7 +357,7 @@ export class KeyUtil {
     } else {
       throw new Error(`KeyUtil.revoke does not support key type ${key.type}`);
     }
-  }
+  };
 
   public static keyInfoObj = async (prv: Key): Promise<KeyInfo> => {
     if (!prv.isPrivate) {
@@ -371,32 +371,32 @@ export class KeyUtil {
       emails: prv.emails,
       fingerprints: prv.allIds,
     };
-  }
+  };
 
   public static typedKeyInfoObj = async (prv: Key): Promise<TypedKeyInfo> => {
     return { ...await KeyUtil.keyInfoObj(prv), id: prv.id, type: prv.type };
-  }
+  };
 
   public static getPubkeyLongids = (pubkey: Key): string[] => {
     if (pubkey.type !== 'x509') {
       return pubkey.allIds.map(id => OpenPGPKey.fingerprintToLongid(id));
     }
     return [KeyUtil.getPrimaryLongid(pubkey)];
-  }
+  };
 
   public static getPrimaryLongid = (pubkey: Key): string => {
     if (pubkey.type !== 'x509') {
       return OpenPGPKey.fingerprintToLongid(pubkey.id);
     }
     return SmimeKey.getKeyLongid(pubkey);
-  }
+  };
 
   public static getKeyInfoLongids = (ki: ExtendedKeyInfo): string[] => {
     if (ki.type !== 'x509') {
       return ki.fingerprints.map(fp => OpenPGPKey.fingerprintToLongid(fp));
     }
     return [ki.longid];
-  }
+  };
 
   /**
    * Used for comparing public keys that were fetched vs the stored ones
@@ -410,6 +410,6 @@ export class KeyUtil {
       return false;
     }
     return fetched.lastModified > stored.lastModified;
-  }
+  };
 
 }

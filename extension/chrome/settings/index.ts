@@ -93,7 +93,7 @@ View.run(class SettingsView extends View {
     }
     await Settings.populateAccountsMenu('index.htm');
     Ui.setTestState('ready');
-  }
+  };
 
   public setHandlers = () => {
     BrowserMsg.addListener('open_page', async ({ page, addUrlText }: Bm.OpenPage) => {
@@ -194,7 +194,7 @@ View.run(class SettingsView extends View {
     $('#status-row #status_google').click(this.setHandler(async () => await Settings.renderSubPage(this.acctEmail!, this.tabId, 'modules/debug_api.htm', { which: 'google_account' })));
     $('#status-row #status_local_store').click(this.setHandler(async () => await Settings.renderSubPage(this.acctEmail!, this.tabId, 'modules/debug_api.htm', { which: 'local_store' })));
     Ui.activateModalPageLinkTags();
-  }
+  };
 
   private accountsMenuKeydownHandler = (e: JQuery.Event<HTMLElement, null>): void => {
     const currentActive = this.altAccounts.find(':focus');
@@ -217,7 +217,7 @@ View.run(class SettingsView extends View {
       }
       next.focus();
     }
-  }
+  };
 
   private displayOrig = (selector: string) => {
     const filterable = $(selector);
@@ -227,7 +227,7 @@ View.run(class SettingsView extends View {
     filterable.filter('td').css('display', 'table-cell');
     filterable.filter('.row').css('display', 'flex');
     filterable.not('a, b, i, img, span, input, label, select, table, tr, td, .row').css('display', 'block');
-  }
+  };
 
   private initialize = async () => {
     if (this.addNewAcct) {
@@ -280,7 +280,7 @@ View.run(class SettingsView extends View {
         Xss.sanitizeAppend('.blog_post_list', html);
       }
     }).catch(ApiErr.reportIfSignificant);
-  }
+  };
 
   private renderNotificationBanners = async (emailProvider: EmailProvider, rules: OrgRules) => {
     if (!this.acctEmail) {
@@ -298,7 +298,7 @@ View.run(class SettingsView extends View {
       await GlobalStore.set({ install_mobile_app_notification_dismissed: true });
       $('.install_app_notification').remove();
     }));
-  }
+  };
 
   private checkFcAcctAndSubscriptionAndContactPage = async () => {
     const statusContainer = $('.public_profile_indicator_container');
@@ -338,7 +338,7 @@ View.run(class SettingsView extends View {
       $('#status-row #status_flowcrypt').text(`fc:none`);
     }
     statusContainer.css('visibility', 'visible');
-  }
+  };
 
   private resolveChangedGoogleAcct = async (newAcctEmail: string) => {
     try {
@@ -358,7 +358,7 @@ View.run(class SettingsView extends View {
         await Ui.modal.error(`There was an error changing google account, please write human@flowcrypt.com\n\n${ApiErr.eli5(e)}\n\n${String(e)}`);
       }
     }
-  }
+  };
 
   private checkGoogleAcct = async () => {
     try {
@@ -394,7 +394,7 @@ View.run(class SettingsView extends View {
         Catch.reportErr(e);
       }
     }
-  }
+  };
 
   private renderSubscriptionStatusHeader = (subscription: SubscriptionInfo) => {
     const isActive = subscription.level && !subscription.expired;
@@ -408,7 +408,7 @@ View.run(class SettingsView extends View {
         $('.logo-row .subscription .expire').text('expired').css('display', 'inline-block');
       }
     }
-  }
+  };
 
   private addKeyRowsHtml = async (privateKeys: TypedKeyInfo[]) => {
     let html = '';
@@ -451,7 +451,7 @@ View.run(class SettingsView extends View {
         }
       }));
     }
-  }
+  };
 
   private reload = (advanced = false) => {
     if (advanced) {
@@ -459,6 +459,6 @@ View.run(class SettingsView extends View {
     } else {
       window.location.reload();
     }
-  }
+  };
 
 });

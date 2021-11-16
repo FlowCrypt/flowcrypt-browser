@@ -37,9 +37,9 @@ export namespace FesRes {
 // ts-prune-ignore-next
 export class EnterpriseServer extends Api {
 
-  public url: string
+  public url: string;
 
-  private domain: string
+  private domain: string;
   private apiVersion = 'v1';
   private domainsThatUseLaxFesCheckEvenOnEnterprise = ['dmFsZW8uY29t'];
 
@@ -81,11 +81,11 @@ export class EnterpriseServer extends Api {
         throw e;
       }
     }
-  }
+  };
 
   public getServiceInfo = async (): Promise<FesRes.ServiceInfo> => {
     return await this.request<FesRes.ServiceInfo>('GET', `/api/`);
-  }
+  };
 
   public authenticateAndUpdateLocalStore = async (idToken: string): Promise<void> => {
     if ((await OrgRules.newInstance(this.acctEmail)).disableFesAccessToken()) {
@@ -95,13 +95,13 @@ export class EnterpriseServer extends Api {
       const r = await this.request<FesRes.AccessToken>('GET', `/api/${this.apiVersion}/account/access-token`, { Authorization: `Bearer ${idToken}` });
       await AcctStore.set(this.acctEmail, { fesAccessToken: r.accessToken });
     }
-  }
+  };
 
   public fetchAndSaveOrgRules = async (): Promise<DomainRulesJson> => {
     const r = await this.request<FesRes.ClientConfiguration>('GET', `/api/${this.apiVersion}/client-configuration?domain=${this.domain}`);
     await AcctStore.set(this.acctEmail, { rules: r.clientConfiguration });
     return r.clientConfiguration;
-  }
+  };
 
   public reportException = async (errorReport: ErrorReport): Promise<void> => {
     if ((await OrgRules.newInstance(this.acctEmail)).disableFesAccessToken()) {
@@ -110,7 +110,7 @@ export class EnterpriseServer extends Api {
     }
     await this.request<void>('POST', `/api/${this.apiVersion}/log-collector/exception`,
       await this.authHdr('accessToken'), errorReport);
-  }
+  };
 
   public reportEvent = async (tags: EventTag[], message: string, details?: string): Promise<void> => {
     if ((await OrgRules.newInstance(this.acctEmail)).disableFesAccessToken()) {
@@ -119,13 +119,13 @@ export class EnterpriseServer extends Api {
     }
     await this.request<void>('POST', `/api/${this.apiVersion}/log-collector/exception`,
       await this.authHdr('accessToken'), { tags, message, details });
-  }
+  };
 
   public webPortalMessageNewReplyToken = async (): Promise<FesRes.ReplyToken> => {
     const disableAccessToken = (await OrgRules.newInstance(this.acctEmail)).disableFesAccessToken();
     const authHdr = await this.authHdr(disableAccessToken ? 'OIDC' : 'accessToken');
     return await this.request<FesRes.ReplyToken>('POST', `/api/${this.apiVersion}/message/new-reply-token`, authHdr, {});
-  }
+  };
 
   public webPortalMessageUpload = async (
     encrypted: Uint8Array,
@@ -157,12 +157,12 @@ export class EnterpriseServer extends Api {
       this.url, `/api/${this.apiVersion}/message`, multipartBody, 'FORM',
       { upload: progressCb }, authHdr, 'json', 'POST'
     );
-  }
+  };
 
   public accountUpdate = async (profileUpdate: ProfileUpdate): Promise<BackendRes.FcAccountUpdate> => {
     console.log('profile update ignored', profileUpdate);
     throw new UnreportableError('Account update not implemented when using FlowCrypt Enterprise Server');
-  }
+  };
 
   private authHdr = async (type: 'accessToken' | 'OIDC'): Promise<Dict<string>> => {
     if (type === 'accessToken') {
@@ -180,10 +180,10 @@ export class EnterpriseServer extends Api {
       // the FES property responsible for this is api.portal.upload.authenticate=true|false
       return {};
     }
-  }
+  };
 
   private request = async <RT>(method: ReqMethod, path: string, headers: Dict<string> = {}, vals?: Dict<any>): Promise<RT> => {
     return await EnterpriseServer.apiCall(this.url, path, vals, method === 'GET' ? undefined : 'JSON', undefined, headers, 'json', method);
-  }
+  };
 
 }

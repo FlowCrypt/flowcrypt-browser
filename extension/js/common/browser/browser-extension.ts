@@ -27,6 +27,6 @@ export class BrowserExtension { // todo - move extension-specific common.js code
       result += `\n[${k}]\n${bugReport[k]}\n`;
     }
     return result;
-  }
+  };
 
 }

@@ -18,7 +18,7 @@ export class BackupStatusModule extends ViewModule<BackupView> {
   public setHandlers = () => { // is run after checkAndRenderBackupStatus, which renders (some of) these fields first
     $('#module_status .action_go_manual').click(this.view.setHandler(() => this.actionShowManualBackupHandler()));
     $('#module_status .action_go_add_key').click(this.view.setHandler(async () => await this.goTo('add_key.htm')));
-  }
+  };
 
   public checkAndRenderBackupStatus = async () => {
     try {
@@ -39,11 +39,11 @@ export class BackupStatusModule extends ViewModule<BackupView> {
         Xss.sanitizeRender('#content', `Could not check for backups: ${ApiErr.eli5(e)} (${String(e)}). ${Ui.retryLink()}`);
       }
     }
-  }
+  };
 
   private renderGoManualButton = (htmlEscapedText: string) => {
     Xss.sanitizeRender('#module_status .container', `<button class="button long green action_go_manual" data-test="action-go-manual">${htmlEscapedText}</button>`);
-  }
+  };
 
   private renderBackupSummaryAndActionButtons = (backups: Backups) => {
     if (!backups.longids.backups.length) {
@@ -59,7 +59,7 @@ export class BackupStatusModule extends ViewModule<BackupView> {
       $('.status_summary').text('Your account keys are backed up and loaded correctly.');
       this.renderGoManualButton('SEE BACKUP OPTIONS');
     }
-  }
+  };
 
   private renderBackupDetailsText = (backups: Backups) => {
     const detailLines = [
@@ -73,7 +73,7 @@ export class BackupStatusModule extends ViewModule<BackupView> {
       detailLines.push(`Keys missing backup: ${backups.keyinfos.importedNotBackedUp.length}`);
     }
     $('pre.status_details').text(detailLines.join('\n'));
-  }
+  };
 
   private describeBackupCounts = (longids: string[], keyinfos: KeyInfo[]) => {
     let text = `${longids.length}`;
@@ -81,15 +81,15 @@ export class BackupStatusModule extends ViewModule<BackupView> {
       text += ` keys represented by ${Str.pluralize(keyinfos.length, 'backup')}`;
     }
     return text;
-  }
+  };
 
   private actionShowManualBackupHandler = async () => {
     this.view.displayBlock('module_manual');
     $('h1').text('Back up your private key');
-  }
+  };
 
   private goTo = async (page: string) => {
     await Browser.openSettingsPage('index.htm', this.view.acctEmail, `/chrome/settings/modules/${page}`);
-  }
+  };
 
 }

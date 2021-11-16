@@ -20,18 +20,18 @@ export class KeyStore extends AbstractStore {
     // filters by primary fingerprint - subkey fingerprints are ignored
     // todo - could consider also filtering by subkey fingerprints, but need to think about impact
     return keys.filter(ki => fingerprints.includes(ki.fingerprints[0]));
-  }
+  };
 
   public static getFirstOptional = async (acctEmail: string): Promise<KeyInfo | undefined> => {
     const keys = await KeyStore.get(acctEmail);
     return keys[0];
-  }
+  };
 
   public static getFirstRequired = async (acctEmail: string): Promise<KeyInfo> => {
     const key = await KeyStore.getFirstOptional(acctEmail);
     Assert.abortAndRenderErrorIfKeyinfoEmpty(key);
     return key as KeyInfo;
-  }
+  };
 
   public static getTypedKeyInfos = async (acctEmail: string): Promise<TypedKeyInfo[]> => {
     const keys = await KeyStore.get(acctEmail);
@@ -45,12 +45,12 @@ export class KeyStore extends AbstractStore {
       kis.push({ ...ki, type, id });
     }
     return kis;
-  }
+  };
 
   public static getAllWithOptionalPassPhrase = async (acctEmail: string): Promise<ExtendedKeyInfo[]> => {
     const keys = await KeyStore.getTypedKeyInfos(acctEmail);
     return await Promise.all(keys.map(async (ki) => { return { ...ki, passphrase: await PassphraseStore.get(acctEmail, ki) }; }));
-  }
+  };
 
   public static add = async (acctEmail: string, newKey: string | Key) => {
     const keyinfos = await KeyStore.get(acctEmail);
@@ -69,17 +69,17 @@ export class KeyStore extends AbstractStore {
       keyinfos.push(await KeyUtil.keyInfoObj(prv));
     }
     await KeyStore.set(acctEmail, keyinfos);
-  }
+  };
 
   public static set = async (acctEmail: string, keyinfos: KeyInfo[]) => {
     await AcctStore.set(acctEmail, { keys: keyinfos });
-  }
+  };
 
   public static remove = async (acctEmail: string, keyIdentity: KeyIdentity): Promise<void> => {
     const privateKeys = await KeyStore.getTypedKeyInfos(acctEmail);
     const filteredPrivateKeys = privateKeys.filter(ki => !KeyUtil.identityEquals(ki, keyIdentity));
     await KeyStore.set(acctEmail, filteredPrivateKeys);
-  }
+  };
 
   public static getKeyInfosThatCurrentlyHavePassPhraseInSession = async (acctEmail: string): Promise<TypedKeyInfo[]> => {
     const keys = await KeyStore.getTypedKeyInfos(acctEmail);
@@ -90,5 +90,5 @@ export class KeyStore extends AbstractStore {
       }
     }
     return result;
-  }
+  };
 }

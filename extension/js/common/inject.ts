@@ -54,7 +54,7 @@ export class Injector {
   public meta = () => {
     this.S.cached('body').addClass(`cryptup_${this.webmailName} cryptup_${this.webmailName}_${this.webmailVariant} ${Catch.browser().name}`)
       .append(this.factory.metaStylesheet('webmail') + this.factory.metaNotificationContainer());  // xss-safe-factory
-  }
+  };
 
   public openComposeWin = (draftId?: string): boolean => {
     const alreadyOpenedCount = this.S.now('secure_compose_window').length;
@@ -67,7 +67,7 @@ export class Injector {
       Ui.toast('Only 3 FlowCrypt windows can be opened at a time', false, 3, 'top', 'error');
       return false;
     }
-  }
+  };
 
   public btns = () => {
     if (this.S.now('compose_button_container').length === 0) { // don't inject too early
@@ -78,7 +78,7 @@ export class Injector {
         container.find(this.S.sel('compose_button')).click(Ui.event.prevent('double', () => { this.openComposeWin(); }));
       }
     }
-  }
+  };
 
   public insertEndSessionBtn = async (acctEmail: string) => {
     if ($('.action_finish_session').length) {
@@ -105,7 +105,7 @@ export class Injector {
         }
         el.remove();
       }));
-  }
+  };
 
   private shouldInject = () => {
     if (this.webmailName === 'gmail') {
@@ -114,6 +114,6 @@ export class Injector {
       }
     }
     return true;
-  }
+  };
 
 }

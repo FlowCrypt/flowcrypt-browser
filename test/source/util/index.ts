@@ -70,11 +70,11 @@ export class Config {
       }
     }
     return Config._secrets;
-  }
+  };
 
   public static key = (title: string) => {
     return Config.secrets().keys.filter(k => k.title === title)[0];
-  }
+  };
 
   public static getKeyInfo = async (titles: string[]): Promise<ExtendedKeyInfo[]> => {
     return await Promise.all(Config._secrets.keys
@@ -82,7 +82,7 @@ export class Config {
         const parsed = await KeyUtil.parse(key.armored!);
         return { ...await KeyUtil.typedKeyInfoObj(parsed), passphrase: key.passphrase };
       }));
-  }
+  };
 
 }
 
@@ -90,21 +90,21 @@ export class Util {
 
   public static sleep = async (seconds: number) => {
     return await new Promise(resolve => setTimeout(resolve, seconds * 1000));
-  }
+  };
 
   public static shiftPress = async (keyboard: Keyboard, key: KeyInput) => {
     await keyboard.down('Shift');
     await keyboard.press(key);
     await keyboard.up('Shift');
-  }
+  };
 
   public static lousyRandom = () => {
     return Math.random().toString(36).substring(2);
-  }
+  };
 
   public static htmlEscape = (str: string) => {
     return str.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\//g, '&#x2F;');
-  }
+  };
 
   public static deleteFileIfExists = (filename: string) => {
     try {
@@ -112,6 +112,6 @@ export class Util {
     } catch (e) {
       // file didn't exist
     }
-  }
+  };
 
 }

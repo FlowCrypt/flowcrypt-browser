@@ -82,7 +82,7 @@ View.run(class PassphraseView extends View {
       $('.which_key').css('display', 'block');
     }
     Ui.setTestState('ready');
-  }
+  };
 
   public setHandlers = () => {
     $('#passphrase').keyup(this.setHandler(() => this.renderNormalPpPrompt()));
@@ -124,25 +124,25 @@ View.run(class PassphraseView extends View {
         this.closeDialog();
       }
     }));
-  }
+  };
 
   private renderNormalPpPrompt = () => {
     $('#passphrase').css('border-color', '');
     $('#passphrase').css('color', 'black');
     $('#passphrase').focus();
-  }
+  };
 
   private renderFailedEntryPpPrompt = () => {
     $('#passphrase').val('');
     $('#passphrase').css('border-color', 'red');
     $('#passphrase').css('color', 'red');
     $('#passphrase').attr('placeholder', 'Please try again');
-  }
+  };
 
   private closeDialog = (entered: boolean = false, initiatorFrameId?: string) => {
     BrowserMsg.send.closeDialog(this.parentTabId);
     BrowserMsg.send.passphraseEntry('broadcast', { entered, initiatorFrameId });
-  }
+  };
 
   private submitHandler = async () => {
     const pass = String($('#passphrase').val());
@@ -183,5 +183,5 @@ View.run(class PassphraseView extends View {
       this.renderFailedEntryPpPrompt();
       Catch.setHandledTimeout(() => this.renderNormalPpPrompt(), 1500);
     }
-  }
+  };
 });

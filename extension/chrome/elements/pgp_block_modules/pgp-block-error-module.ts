@@ -29,7 +29,7 @@ export class PgpBlockViewErrorModule {
     $('.button.settings_add_key').click(this.view.setHandler(async () => await Browser.openSettingsPage('index.htm', this.view.acctEmail, '/chrome/settings/modules/add_key.htm')));
     $('.button.reply_pubkey_mismatch').click(this.view.setHandler(() => BrowserMsg.send.replyPubkeyMismatch(this.view.parentTabId)));
     Ui.setTestState('ready');
-  }
+  };
 
   public handlePrivateKeyMismatch = async (armoredPubs: string[], message: Uint8Array, isPwdMsg: boolean) => { // todo - make it work for multiple stored keys
     const msgDiagnosis = await BrowserMsg.send.bg.await.pgpMsgDiagnosePubkeys({ armoredPubs, message });
@@ -42,7 +42,7 @@ export class PgpBlockViewErrorModule {
       await this.renderErr(startText + this.btnHtml('import missing key', 'gray2 settings_add_key') + '&nbsp; &nbsp;'
         + this.btnHtml('ask sender to update', 'gray2 short reply_pubkey_mismatch') + '&nbsp; &nbsp;' + this.btnHtml('settings', 'gray2 settings_keyserver'), undefined);
     }
-  }
+  };
 
   public handleInitializeErr = async (e: any) => {
     if (ApiErr.isNetErr(e)) {
@@ -58,10 +58,10 @@ export class PgpBlockViewErrorModule {
       Catch.reportErr(e);
       await this.renderErr(Xss.escape(String(e)), this.view.encryptedMsgUrlParam ? this.view.encryptedMsgUrlParam.toUtfStr() : undefined);
     }
-  }
+  };
 
   public btnHtml = (text: string, addClasses: string) => {
     return `<button class="button long ${addClasses}" style="margin:30px 0;" target="cryptup">${text}</button>`;
-  }
+  };
 
 }

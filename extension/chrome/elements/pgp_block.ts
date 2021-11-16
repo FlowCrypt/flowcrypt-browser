@@ -78,11 +78,11 @@ export class PgpBlockView extends View {
     } else {
       await this.errorModule.renderErr(Lang.pgpBlock.refreshWindow, this.encryptedMsgUrlParam ? this.encryptedMsgUrlParam.toUtfStr() : undefined);
     }
-  }
+  };
 
   public setHandlers = () => {
     // defined as needed, depending on what rendered
-  }
+  };
 
 }
 

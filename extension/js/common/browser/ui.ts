@@ -302,21 +302,21 @@ export class Ui {
     $('[data-swal-page]').click(Ui.event.handle(async (target) => {
       await Ui.modal.page($(target).data('swal-page') as string);
     }));
-  }
+  };
 
   public static retryLink = (caption: string = 'retry') => {
     return `<a href="${Xss.escape(window.location.href)}" data-test="action-retry-by-reloading">${Xss.escape(caption)}</a>`;
-  }
+  };
 
   public static delay = async (ms: number): Promise<void> => {
     return await new Promise(resolve => Catch.setHandledTimeout(resolve, ms));
-  }
+  };
 
   public static spinner = (color: string, placeholderCls: "small_spinner" | "large_spinner" = 'small_spinner') => {
     const path = `/img/svgs/spinner-${color}-small.svg`;
     const url = typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.getURL ? chrome.runtime.getURL(path) : path;
     return `<i class="${placeholderCls}" data-test="spinner"><img src="${url}" /></i>`;
-  }
+  };
 
   public static renderOverlayPromptAwaitUserChoice = async (btns: Dict<{ title?: string, color?: string }>, prompt: string, details?: string): Promise<string> => {
     return await new Promise(resolve => {
@@ -352,7 +352,7 @@ export class Ui {
         }));
       }
     });
-  }
+  };
 
   public static escape = (callback: () => void) => {
     return (e: JQuery.Event<HTMLElement, null>) => { // returns a function
@@ -360,7 +360,7 @@ export class Ui {
         callback();
       }
     };
-  }
+  };
 
   public static tab = (callback: (e: JQuery.Event<HTMLElement>) => void) => {
     return (e: JQuery.Event<HTMLElement>) => { // returns a function
@@ -368,7 +368,7 @@ export class Ui {
         callback(e);
       }
     };
-  }
+  };
 
   public static shiftTab = (callback: (e: JQuery.Event<HTMLElement>) => void) => {
     return (e: JQuery.Event<HTMLElement>) => { // returns a function
@@ -376,7 +376,7 @@ export class Ui {
         callback(e);
       }
     };
-  }
+  };
 
   public static enter = (callback: () => void) => {
     return (e: JQuery.Event<HTMLElement, null>) => { // returns a function
@@ -384,7 +384,7 @@ export class Ui {
         callback();
       }
     };
-  }
+  };
 
   public static ctrlEnter = (callback: () => void) => {
     return (e: JQuery.Event<HTMLElement, null>) => { // returns a function
@@ -395,11 +395,11 @@ export class Ui {
         callback();
       }
     };
-  }
+  };
 
   public static setTestState = (state: 'ready' | 'working' | 'waiting') => {
     $('body').attr('data-test-state', state); // for automated tests
-  }
+  };
 
   public static buildJquerySels = (sels: Dict<string>): SelCache => {
     const cache: NamedSels = {};
@@ -426,7 +426,7 @@ export class Ui {
         return sels[name];
       }
     };
-  }
+  };
 
   public static scroll = (sel: string | JQuery<HTMLElement>, repeat: number[] = []) => {
     const el = $(sel as string).first()[0]; // as string due to JQuery TS quirk. Do not convert to String() as this may actually be JQuery<HTMLElement>
@@ -436,7 +436,7 @@ export class Ui {
         Catch.setHandledTimeout(() => el.scrollIntoView(), delay);
       }
     }
-  }
+  };
 
   public static e(name: string, attrs: Dict<string>) {
     return $(`<${name}/>`, attrs)[0].outerHTML; // xss-tested: jquery escapes attributes
@@ -463,10 +463,10 @@ export class Ui {
         toast.addEventListener('mouseleave', Swal.resumeTimer);
       }
     });
-  }
+  };
 
   private static swal = () => Swal.mixin({
     showClass: { popup: 'swal2-noanimation', backdrop: 'swal2-noanimation' },
     hideClass: { popup: '', backdrop: '' },
-  })
+  });
 }

@@ -49,7 +49,7 @@ View.run(class ContactsView extends View {
     const fetchKeyUI = new FetchKeyUI();
     fetchKeyUI.handleOnPaste($('.input_pubkey'));
     await this.loadAndRenderContactList();
-  }
+  };
 
   public setHandlers = () => {
     $('.action_show_pubkey_list').off().click(this.setHandlerPrevent('double', this.actionRenderListPublicKeyHandler));
@@ -58,7 +58,7 @@ View.run(class ContactsView extends View {
     $('.action_export_all').off().click(this.setHandlerPrevent('double', this.actionExportAllKeysHandler));
     $('.action_view_bulk_import').off().click(this.setHandlerPrevent('double', this.actionRenderBulkImportPageHandler));
     $('.input-search-contacts').off().keyup(this.setHandlerPrevent('double', this.loadAndRenderContactList));
-  }
+  };
 
   // --- PRIVATE
 
@@ -89,7 +89,7 @@ View.run(class ContactsView extends View {
     Xss.sanitizeReplace('#emails', `<div id="emails" class="hide_when_rendering_subpage">${tableContents}</div>`);
     $('.container-table-note').text(contacts.length >= 500 ? '(showing first 500 results)' : '');
     this.setHandlers();
-  }
+  };
 
   private fileAddedHandler = async (file: Attachment) => {
     this.attachmentUI.clearAllAttachments();
@@ -104,13 +104,13 @@ View.run(class ContactsView extends View {
     } else if (errs.length) {
       await Ui.modal.error(`error processing public keys:\n${errs.map(e => `-> ${e.message}\n`).join('')}`);
     }
-  }
+  };
 
   private actionExportAllKeysHandler = async () => {
     const allArmoredPublicKeys = (await ContactStore.searchPubkeys(undefined, { hasPgp: true })).map(a => a!.trim()).join('\n');
     const exportFile = new Attachment({ name: 'public-keys-export.asc', type: 'application/pgp-keys', data: Buf.fromUtfStr(allArmoredPublicKeys) });
     Browser.saveToDownloads(exportFile);
-  }
+  };
 
   private actionRenderListPublicKeyHandler = async (emailRow: HTMLElement) => {
     $(emailRow).addClass('opened');
@@ -147,7 +147,7 @@ View.run(class ContactsView extends View {
       $('.action_show').off().click(this.setHandlerPrevent('double', this.actionRenderViewPublicKeyHandler));
       $('.action_change').off().click(this.setHandlerPrevent('double', this.actionRenderChangePublicKeyHandler));
     }
-  }
+  };
 
   private actionRenderViewPublicKeyHandler = async (viewPubkeyButton: HTMLElement) => {
     const parentRow = $(viewPubkeyButton).closest('[email]');
@@ -176,7 +176,7 @@ View.run(class ContactsView extends View {
     ].join('\n'));
     $('#view_contact').css('display', 'block');
     $('#page_back_button').click(this.setHandler(() => this.loadAndRenderContactList()));
-  }
+  };
 
   private actionRenderChangePublicKeyHandler = (changePubkeyButton: HTMLElement) => {
     $('.hide_when_rendering_subpage').css('display', 'none');
@@ -185,7 +185,7 @@ View.run(class ContactsView extends View {
     $('#edit_contact').css('display', 'block');
     $('#edit_contact .input_pubkey').val('').attr('email', email);
     $('#page_back_button').click(this.setHandler(() => this.loadAndRenderContactList()));
-  }
+  };
 
   private actionSaveEditedPublicKeyHandler = async () => {
     const armoredPubkey = String($('#edit_contact .input_pubkey').val());
@@ -203,7 +203,7 @@ View.run(class ContactsView extends View {
         $('#edit_contact .input_pubkey').val('').focus();
       }
     }
-  }
+  };
 
   private actionRemovePublicKey = async (rmPubkeyButton: HTMLElement) => {
     const parentRow = $(rmPubkeyButton).closest('[email]');
@@ -212,7 +212,7 @@ View.run(class ContactsView extends View {
     const email = parentRow.attr('email')!;
     await ContactStore.unlinkPubkey(undefined, email, { id, type });
     await this.loadAndRenderContactList();
-  }
+  };
 
   private actionRenderBulkImportPageHandler = () => {
     $('.hide_when_rendering_subpage').css('display', 'none');
@@ -224,7 +224,7 @@ View.run(class ContactsView extends View {
     $('#file_import').show();
     $('#file_import #fineuploader_button').css('display', 'inline-block');
     $('#page_back_button').click(this.setHandler(() => this.loadAndRenderContactList()));
-  }
+  };
 
   private actionProcessBulkImportTextInput = async () => {
     try {
@@ -271,6 +271,6 @@ View.run(class ContactsView extends View {
       ApiErr.reportIfSignificant(e);
       await Ui.modal.error(`There was an error trying to find this public key.\n\n${ApiErr.eli5(e)}`);
     }
-  }
+  };
 
 });

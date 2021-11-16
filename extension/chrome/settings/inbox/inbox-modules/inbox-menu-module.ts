@@ -24,7 +24,7 @@ export class InboxMenuModule extends ViewModule<InboxView> {
     this.allLabels = (await this.view.gmail.labelsGet()).labels;
     this.renderMenuAndLabelStyles();
     this.setHandlers();
-  }
+  };
 
   public getLabelName = (labelId: string) => {
     if (labelId === 'ALL') {
@@ -35,16 +35,16 @@ export class InboxMenuModule extends ViewModule<InboxView> {
       return label.name;
     }
     return `UNKNOWN LABEL: ${labelId}`;
-  }
+  };
 
   public renderableLabels = (labelIds: (GmailRes.GmailMsg$labelId | string)[], placement: 'messages' | 'menu' | 'labels') => {
     return labelIds.map(id => this.renderableLabel(id, placement)).join('');
-  }
+  };
 
   private setHandlers = () => {
     $('.action_open_secure_compose_window').click(this.view.setHandlerPrevent('double', () => { this.view.injector.openComposeWin(); }));
     $('.menu > .label').click(this.view.setHandler(this.renderFolder));
-  }
+  };
 
   private renderMenuAndLabelStyles = () => {
     this.addLabelStyles(this.allLabels);
@@ -58,7 +58,7 @@ export class InboxMenuModule extends ViewModule<InboxView> {
         return 0;
       }
     }).map(l => l.id), 'labels'));
-  }
+  };
 
   private addLabelStyles = (labels: GmailRes.GmailLabels$label[]) => {
     let style = '';
@@ -71,7 +71,7 @@ export class InboxMenuModule extends ViewModule<InboxView> {
       }
     }
     $('body').append(`<style>${style}</style>`); // xss-escaped
-  }
+  };
 
   private renderableLabel = (labelId: string, placement: 'messages' | 'menu' | 'labels') => {
     const label = this.allLabels?.find(l => l.id === labelId);
@@ -94,7 +94,7 @@ export class InboxMenuModule extends ViewModule<InboxView> {
     } else {
       return `<span class="label label_${id}">${name}</span>`;
     }
-  }
+  };
 
   private renderNavbartTop = async () => {
     $('.action_open_webmail').attr('href', Google.webmailUrl(this.view.acctEmail));
@@ -109,7 +109,7 @@ export class InboxMenuModule extends ViewModule<InboxView> {
     Catch.setHandledTimeout(() => { $('#banner a').css('color', ''); }, 1000);
     Catch.setHandledTimeout(() => { $('#banner a').css('color', 'red'); }, 1500);
     Catch.setHandledTimeout(() => { $('#banner a').css('color', ''); }, 2000);
-  }
+  };
 
   private renderFolder = (labelEl: HTMLSpanElement) => {
     for (const cls of labelEl.classList) {
@@ -120,6 +120,6 @@ export class InboxMenuModule extends ViewModule<InboxView> {
       }
     }
     this.view.redirectToUrl({ acctEmail: this.view.acctEmail });
-  }
+  };
 
 }

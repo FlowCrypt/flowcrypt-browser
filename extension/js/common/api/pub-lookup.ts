@@ -51,7 +51,7 @@ export class PubLookup {
       return { pubkeys: [attRes.pubkey] };
     }
     return { pubkeys: [] };
-  }
+  };
 
   public lookupFingerprint = async (fingerprintOrLongid: string): Promise<PubkeySearchResult> => {
     if (fingerprintOrLongid.includes('@')) {
@@ -64,6 +64,6 @@ export class PubLookup {
       }
     }
     return await this.attester.lookupFingerprint(fingerprintOrLongid);
-  }
+  };
 
 }

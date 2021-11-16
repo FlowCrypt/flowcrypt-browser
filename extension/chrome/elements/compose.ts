@@ -179,7 +179,7 @@ export class ComposeView extends View {
     BrowserMsg.listen(this.tabId!);
     await this.renderModule.initComposeBox();
     this.senderModule.checkEmailAliases().catch(Catch.reportErr);
-  }
+  };
 
   public setHandlers = () => {
     BrowserMsg.addListener('focus_previous_active_window', async ({ frameId }: Bm.ComposeWindow) => {
@@ -201,7 +201,7 @@ export class ComposeView extends View {
     this.recipientsModule.setHandlers();
     this.sendBtnModule.setHandlers();
     this.draftModule.setHandlers(); // must be the last one so that 'onRecipientAdded/draftSave' to works properly
-  }
+  };
 
 }
 

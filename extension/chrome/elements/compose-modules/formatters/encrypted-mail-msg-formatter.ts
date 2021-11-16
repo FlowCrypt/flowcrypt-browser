@@ -41,7 +41,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
       // todo: #4046 check attachments for S/MIME
       return await this.sendableSimpleTextMsg(newMsg, pubkeys, signingPrv);
     }
-  }
+  };
 
   private prepareAndUploadPwdEncryptedMsg = async (newMsg: NewMsgData): Promise<string> => {
     // PGP/MIME + included attachments (encrypted for password only)
@@ -86,7 +86,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
       (p) => this.view.sendBtnModule.renderUploadProgress(p, 'FIRST-HALF'), // still need to upload to Gmail later, this request represents first half of progress
     );
     return url;
-  }
+  };
 
   private sendablePwdMsg = async (newMsg: NewMsgData, pubs: PubkeyResult[], msgUrl: string, signingPrv?: Key) => {
     // encoded as: PGP/MIME-like structure but with attachments as external files due to email size limit (encrypted for pubkeys only)
@@ -97,7 +97,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
       concat(await this.view.attachmentsModule.attachment.collectEncryptAttachments(pubs)); // encrypted only for pubs
     const emailIntroAndLinkBody = await this.formatPwdEncryptedMsgBodyLink(msgUrl);
     return await SendableMsg.createPwdMsg(this.acctEmail, this.headers(newMsg), emailIntroAndLinkBody, attachments, { isDraft: this.isDraft });
-  }
+  };
 
   private sendableSimpleTextMsg = async (newMsg: NewMsgData, pubs: PubkeyResult[], signingPrv?: Key): Promise<SendableMsg> => {
     const pubsForEncryption = pubs.map(entry => entry.pubkey);
@@ -123,7 +123,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
       const encrypted = await this.encryptDataArmor(Buf.fromUtfStr(newMsg.plaintext), undefined, pubs, signingPrv);
       return await SendableMsg.createInlineArmored(this.acctEmail, this.headers(newMsg), Buf.fromUint8(encrypted.data).toUtfStr(), attachments, { isDraft: this.isDraft });
     }
-  }
+  };
 
   private sendableRichTextMsg = async (newMsg: NewMsgData, pubs: PubkeyResult[], signingPrv?: Key) => {
     // todo: pubs.type === 'x509' #4047
@@ -138,21 +138,21 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
     const { data: encrypted } = await this.encryptDataArmor(Buf.fromUtfStr(pgpMimeToEncrypt), undefined, pubs, signingPrv);
     const attachments = this.createPgpMimeAttachments(encrypted);
     return await SendableMsg.createPgpMime(this.acctEmail, this.headers(newMsg), attachments, { isDraft: this.isDraft });
-  }
+  };
 
   private createPgpMimeAttachments = (data: Uint8Array) => {
     const attachments: Attachment[] = [];
     attachments.push(new Attachment({ data: Buf.fromUtfStr('Version: 1'), type: 'application/pgp-encrypted', contentDescription: 'PGP/MIME version identification' }));
     attachments.push(new Attachment({ data, type: 'application/octet-stream', contentDescription: 'OpenPGP encrypted message', name: 'encrypted.asc', inline: true }));
     return attachments;
-  }
+  };
 
   private encryptDataArmor = async (data: Buf, pwd: string | undefined, pubs: PubkeyResult[], signingPrv?: Key): Promise<PgpMsgMethod.EncryptAnyArmorResult> => {
     const pgpPubs = pubs.filter(pub => pub.pubkey.type === 'openpgp');
     const encryptAsOfDate = await this.encryptMsgAsOfDateIfSomeAreExpiredAndUserConfirmedModal(pgpPubs);
     const pubsForEncryption = pubs.map(entry => entry.pubkey);
     return await MsgUtil.encryptMessage({ pubkeys: pubsForEncryption, signingPrv, pwd, data, armor: true, date: encryptAsOfDate }) as PgpMsgMethod.EncryptAnyArmorResult;
-  }
+  };
 
   private getPwdMsgSendableBodyWithOnlineReplyMsgToken = async (
     authInfo: FcUuidAuth, newMsgData: NewMsgData
@@ -183,7 +183,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
       }
       throw Catch.rewrapErr(msgTokenErr, 'There was a token error sending this message. Please try again. Let us know at human@flowcrypt.com if this happens repeatedly.');
     }
-  }
+  };
 
   private encryptMsgAsOfDateIfSomeAreExpiredAndUserConfirmedModal = async (pubs: PubkeyResult[]): Promise<Date | undefined> => {
     if (!pubs.length) {
@@ -231,7 +231,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
       throw new ComposerResetBtnTrigger();
     }
     return new Date(usableTimeUntil); // latest date none of the keys were expired
-  }
+  };
 
   private formatPwdEncryptedMsgBodyLink = async (msgUrl: string): Promise<SendableMsgBody> => {
     const storage = await AcctStore.get(this.acctEmail, ['outgoing_language']);
@@ -249,6 +249,6 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
     text.push(Lang.compose.msgEncryptedText(lang, senderEmail) + msgUrl + '\n\n');
     html.push(`${Lang.compose.msgEncryptedHtml(lang, senderEmail) + a}<br/><br/>${Lang.compose.alternativelyCopyPaste[lang] + Xss.escape(msgUrl)}<br/><br/>`);
     return { 'text/plain': text.join('\n'), 'text/html': html.join('\n') };
-  }
+  };
 
 }

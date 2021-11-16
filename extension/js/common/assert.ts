@@ -49,7 +49,7 @@ export class Assert {
         }
       }
     }
-  }
+  };
 
   public static abortAndRenderErrorIfKeyinfoEmpty = (ki: KeyInfo | undefined, doThrow: boolean = true) => {
     if (!ki) {
@@ -61,7 +61,7 @@ export class Assert {
         throw new UnreportableError(msg);
       }
     }
-  }
+  };
 
   public static abortAndRenderErrOnUrlParamTypeMismatch = (values: UrlParams, name: string, expectedType: string): UrlParam => {
     const actualType = values[name] === null ? 'null' : typeof values[name];
@@ -80,7 +80,7 @@ export class Assert {
       $('body').text('Thank you. Feel free to reach out to human@flowcrypt.com in you need assistance.');
     }));
     throw new UnreportableError(msg);
-  }
+  };
 
   public static abortAndRenderErrOnUrlParamValMismatch = <T>(values: Dict<T>, name: string, expectedVals: T[]): T => {
     if (expectedVals.indexOf(values[name]) === -1) {
@@ -90,6 +90,6 @@ export class Assert {
       throw new UnreportableError(msg);
     }
     return values[name];
-  }
+  };
 
 }

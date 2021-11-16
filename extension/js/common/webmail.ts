@@ -26,5 +26,5 @@ export class WebmailCommon {
         finishSessionBtn.remove();
       }
     }
-  }
+  };
 }

@@ -66,12 +66,12 @@ View.run(class KeyserverView extends View {
       }
       Xss.sanitizeAppend('#content', `<div class="line left">${Xss.escape(email)}: <span class="${color}">${note}</span> ${action}</div>`);
     }
-  }
+  };
 
   public setHandlers = () => {
     $('.action_submit_key').click(this.setHandlerPrevent('double', this.submitPublicKeyHandler));
     $('.action_replace_pubkey').click(this.setHandlerPrevent('double', this.replacePublicKeyHandler));
-  }
+  };
 
   // -- PRIVATE
 
@@ -89,7 +89,7 @@ View.run(class KeyserverView extends View {
     } finally {
       window.location.reload();
     }
-  }
+  };
 
   private replacePublicKeyHandler = async (target: HTMLElement) => {
     if (!this.orgRules.canSubmitPubToAttester()) {
@@ -106,7 +106,7 @@ View.run(class KeyserverView extends View {
       await Ui.modal.error(ApiErr.eli5(e));
       window.location.reload();
     }
-  }
+  };
 
   private diagnoseKeyserverPubkeys = async (): Promise<AttesterKeyserverDiagnosis> => {
     const diagnosis: AttesterKeyserverDiagnosis = { hasPubkeyMissing: false, hasPubkeyMismatch: false, results: {} };
@@ -130,6 +130,6 @@ View.run(class KeyserverView extends View {
       }
     }
     return diagnosis;
-  }
+  };
 
 });

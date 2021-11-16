@@ -24,7 +24,7 @@ export class SetupWithEmailKeyManagerModule {
     }
     const passphrase = $('#step_2_ekm_choose_pass_phrase .input_password').val();
     await this.setupWithEkmThenRenderSetupDone(typeof passphrase === 'string' ? passphrase : '');
-  }
+  };
 
   public setupWithEkmThenRenderSetupDone = async (passphrase: string) => {
     const setupOptions: SetupOptions = {
@@ -55,7 +55,7 @@ export class SetupWithEmailKeyManagerModule {
       }
       throw e;
     }
-  }
+  };
 
   private processAndStoreKeysFromEkmLocally = async (privateKeys: { decryptedPrivateKey: string }[], setupOptions: SetupOptions) => {
     const { keys } = await KeyUtil.readMany(Buf.fromUtfStr(privateKeys.map(pk => pk.decryptedPrivateKey).join('\n')));
@@ -72,7 +72,7 @@ export class SetupWithEmailKeyManagerModule {
       await KeyUtil.encrypt(prv, setupOptions.passphrase);
     }
     await this.view.saveKeysAndPassPhrase(keys, setupOptions);
-  }
+  };
 
   private autoGenerateKeyAndStoreBothLocallyAndToEkm = async (setupOptions: SetupOptions) => {
     const keygenAlgo = this.view.orgRules.getEnforcedKeygenAlgo();
@@ -94,6 +94,6 @@ export class SetupWithEmailKeyManagerModule {
     const storePrvOnKm = async () => this.view.keyManager!.storePrivateKey(this.view.idToken!, KeyUtil.armor(decryptablePrv), pubArmor);
     await Settings.retryUntilSuccessful(storePrvOnKm, 'Failed to store newly generated key on FlowCrypt Email Key Manager');
     await this.view.saveKeysAndPassPhrase([await KeyUtil.parse(generated.private)], setupOptions); // store encrypted key + pass phrase locally
-  }
+  };
 
 }

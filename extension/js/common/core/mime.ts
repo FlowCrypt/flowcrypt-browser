@@ -104,23 +104,23 @@ export class Mime {
       }
     }
     return { headers: decoded.headers, blocks, from: decoded.from, to: decoded.to, rawSignedContent: decoded.rawSignedContent };
-  }
+  };
 
   public static process = async (mimeMsg: Uint8Array): Promise<MimeProccesedMsg> => {
     const decoded = await Mime.decode(mimeMsg);
     return Mime.processDecoded(decoded);
-  }
+  };
 
   public static isPlainImgAttachment = (b: MsgBlock) => {
     return b.type === 'plainAttachment' && b.attachmentMeta && b.attachmentMeta.type && ['image/jpeg', 'image/jpg',
       'image/bmp', 'image/png', 'image/svg+xml'].includes(b.attachmentMeta.type);
-  }
+  };
 
   public static replyHeaders = (parsedMimeMsg: MimeContent) => {
     const msgId = String(parsedMimeMsg.headers['message-id'] || '');
     const refs = String(parsedMimeMsg.headers['in-reply-to'] || '');
     return { 'in-reply-to': msgId, 'references': refs + ' ' + msgId };
-  }
+  };
 
   public static resemblesMsg = (msg: Uint8Array) => {
     const chunk = new Buf(msg.slice(0, 3000)).toUtfStr().toLowerCase().replace(/\r\n/g, '\n');
@@ -142,7 +142,7 @@ export class Mime {
       return true; // these tend to be inside body-part headers, after the first `\n\n` which we test above
     }
     return contentType.index === 0;
-  }
+  };
 
   public static decode = async (mimeMsg: Uint8Array): Promise<MimeContent> => {
     let mimeContent: MimeContent = { attachments: [], headers: {}, subject: undefined, text: undefined, html: undefined, signature: undefined, from: undefined, to: [], cc: [], bcc: [] };
@@ -198,7 +198,7 @@ export class Mime {
         resolve(mimeContent);
       }
     });
-  }
+  };
 
   public static encode = async (body: SendableMsgBody, headers: RichHeaders, attachments: Attachment[] = [], type?: MimeEncodeType): Promise<string> => {
     const rootContentType = type !== 'pgpMimeEncrypted' ? 'multipart/mixed' : `multipart/encrypted; protocol="application/pgp-encrypted";`;
@@ -222,7 +222,7 @@ export class Mime {
       rootNode.appendChild(Mime.createAttachmentNode(attachment)); // tslint:disable-line:no-unsafe-any
     }
     return rootNode.build(); // tslint:disable-line:no-unsafe-any
-  }
+  };
 
   public static encodeSmime = async (body: Uint8Array, headers: RichHeaders, type: 'enveloped-data' | 'signed-data'): Promise<string> => {
     const rootContentType = `application/pkcs7-mime; name="smime.p7m"; smime-type=${type}`;
@@ -239,11 +239,11 @@ export class Mime {
     }
     rootNode.addHeader('Content-Description', contentDescription); // tslint:disable-line:no-unsafe-any
     return rootNode.build(); // tslint:disable-line:no-unsafe-any
-  }
+  };
 
   public static subjectWithoutPrefixes = (subject: string): string => {
     return subject.replace(/^((Re|Fwd): ?)+/g, '').trim();
-  }
+  };
 
   public static encodePgpMimeSigned = async (body: SendableMsgBody, headers: RichHeaders, attachments: Attachment[] = [], sign: (data: string) => Promise<string>): Promise<string> => {
     const sigPlaceholder = `SIG_PLACEHOLDER_${Str.sloppyRandom(10)}`;
@@ -278,7 +278,7 @@ export class Mime {
       throw new Error('Replaced sigPlaceholder with realSignature but mime stayed the same');
     }
     return pgpMimeSigned;
-  }
+  };
 
   private static headerGetAddress = (parsedMimeMsg: MimeContent, headersNames: Array<SendingType | 'from'>) => {
     const result: { to: string[], cc: string[], bcc: string[] } = { to: [], cc: [], bcc: [] };
@@ -296,7 +296,7 @@ export class Mime {
       }
     }
     return { ...result, from };
-  }
+  };
 
   private static retrieveRawSignedContent = (nodes: MimeParserNode[]): string | undefined => {
     for (const node of nodes) {
@@ -317,7 +317,7 @@ export class Mime {
       return Mime.retrieveRawSignedContent(node._childNodes);
     }
     return undefined;
-  }
+  };
 
   private static createAttachmentNode = (attachment: Attachment): any => { // todo: MimeBuilder types
     const type = `${attachment.type}; name="${attachment.name}"`;
@@ -331,21 +331,21 @@ export class Mime {
     header['Content-ID'] = `<${id}>`;
     header['Content-Transfer-Encoding'] = 'base64';
     return new MimeBuilder(type, { filename: attachment.name }).setHeader(header).setContent(attachment.getData()); // tslint:disable-line:no-unsafe-any
-  }
+  };
 
   private static getNodeType = (node: MimeParserNode, type: 'value' | 'initial' = 'value') => {
     if (node.headers['content-type'] && node.headers['content-type'][0]) {
       return node.headers['content-type'][0][type];
     }
     return undefined;
-  }
+  };
 
   private static getNodeContentId = (node: MimeParserNode) => {
     if (node.headers['content-id'] && node.headers['content-id'][0]) {
       return node.headers['content-id'][0].value;
     }
     return undefined;
-  }
+  };
 
   private static getNodeFilename = (node: MimeParserNode): string | undefined => {
     if (node.headers['content-disposition'] && node.headers['content-disposition'][0]) {
@@ -361,19 +361,19 @@ export class Mime {
       }
     }
     return;
-  }
+  };
 
   private static isNodeInline = (node: MimeParserNode): boolean => {
     const cd = node.headers['content-disposition'];
     return cd && cd[0] && cd[0].value === 'inline';
-  }
+  };
 
   private static fromEqualSignNotationAsBuf = (str: string): Buf => {
     return Buf.fromRawBytesStr(str.replace(/(=[A-F0-9]{2})+/g, equalSignUtfPart => {
       const bytes = equalSignUtfPart.replace(/^=/, '').split('=').map(twoHexDigits => parseInt(twoHexDigits, 16));
       return new Buf(bytes).toRawBytesStr();
     }));
-  }
+  };
 
   private static getNodeAsAttachment = (node: MimeParserNode): Attachment => {
     return new Attachment({
@@ -382,7 +382,7 @@ export class Mime {
       data: node.contentTransferEncoding.value === 'quoted-printable' ? Mime.fromEqualSignNotationAsBuf(node.rawContent!) : node.content,
       cid: Mime.getNodeContentId(node),
     });
-  }
+  };
 
   private static getNodeContentAsUtfStr = (node: MimeParserNode): string => {
     if (node.charset && Iso88592.labels.includes(node.charset)) {
@@ -400,7 +400,7 @@ export class Mime {
       return iso2022jpToUtf(resultBuf);
     }
     return resultBuf.toUtfStr();
-  }
+  };
 
   // tslint:disable-next-line:variable-name
   private static newContentNode = (MimeBuilder: any, type: string, content: string): MimeParserNode => {
@@ -410,6 +410,6 @@ export class Mime {
       node.addHeader('Content-Transfer-Encoding', 'quoted-printable'); // tslint:disable-line:no-unsafe-any
     }
     return node;
-  }
+  };
 
 }

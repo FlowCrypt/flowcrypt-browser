@@ -47,7 +47,7 @@ export class FlowCryptComApi extends Api {
       throw new Error('account_login with id_token did not result in successful verificaion');
     }
     await AcctStore.set(acctEmail, { uuid });
-  }
+  };
 
   public static accountUpdate = async (fcAuth: FcUuidAuth, profileUpdate: ProfileUpdate): Promise<BackendRes.FcAccountUpdate> => {
     FlowCryptComApi.throwIfMissingUuid(fcAuth);
@@ -55,14 +55,14 @@ export class FlowCryptComApi extends Api {
       ...fcAuth,
       ...profileUpdate
     });
-  }
+  };
 
   public static accountGetAndUpdateLocalStore = async (fcAuth: FcUuidAuth): Promise<BackendRes.FcAccountGet> => {
     FlowCryptComApi.throwIfMissingUuid(fcAuth);
     const r = await FlowCryptComApi.request<BackendRes.FcAccountGet>('account/get', fcAuth);
     await AcctStore.set(fcAuth.account, { rules: r.domain_org_rules });
     return r;
-  }
+  };
 
   public static messageUpload = async (fcAuth: FcUuidAuth | undefined, encryptedDataBinary: Uint8Array, progressCb: ProgressCb): Promise<BackendRes.FcMsgUpload> => {
     const content = new Attachment({ name: 'cryptup_encrypted_message.asc', type: 'text/plain', data: encryptedDataBinary });
@@ -73,21 +73,21 @@ export class FlowCryptComApi extends Api {
     // careful - this API request returns `url` as well, but that is URL of the S3 object, not of web portal page
     // therefore we are constructing URL ourselves to point to web portal
     return { url: `https://flowcrypt.com/${rawResponse.short}` };
-  }
+  };
 
   public static messageToken = async (fcAuth: FcUuidAuth): Promise<BackendRes.FcMsgToken> => {
     FlowCryptComApi.throwIfMissingUuid(fcAuth);
     return await FlowCryptComApi.request<BackendRes.FcMsgToken>('message/token', { ...fcAuth });
-  }
+  };
 
   private static request = async <RT>(path: string, vals: Dict<any>, fmt: ReqFmt = 'JSON', addHeaders: Dict<string> = {}, progressCbs?: ProgressCbs): Promise<RT> => {
     return await FlowCryptComApi.apiCall(FlowCryptWebsite.url('api'), path, vals, fmt, progressCbs, { 'api-version': '3', ...addHeaders });
-  }
+  };
 
   private static throwIfMissingUuid = (fcAuth: FcUuidAuth) => {
     if (!fcAuth.uuid) {
       throw new BackendAuthErr('Please log into FlowCrypt account first');
     }
-  }
+  };
 
 }

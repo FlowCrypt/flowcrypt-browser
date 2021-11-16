@@ -214,7 +214,7 @@ export class BrowserMsg {
       div.appendChild(a);
     }
     window.document.body.appendChild(div);
-  }
+  };
 
   public static tabId = async (): Promise<string | null | undefined> => {
     try {
@@ -226,7 +226,7 @@ export class BrowserMsg {
       }
       throw e;
     }
-  }
+  };
 
   public static requiredTabId = async (attempts = 10, delay = 200): Promise<string> => {
     let tabId;
@@ -238,7 +238,7 @@ export class BrowserMsg {
       await Ui.time.sleep(delay);
     }
     throw new TabIdRequiredError(`tabId is required, but received '${String(tabId)}' after ${attempts} attempts`);
-  }
+  };
 
   public static addPgpListeners = () => {
     BrowserMsg.bgAddListener('pgpHashChallengeAnswer', async (r: Bm.PgpHashChallengeAnswer) => ({ hashed: await PgpHash.challengeAnswer(r.answer) }));
@@ -252,11 +252,11 @@ export class BrowserMsg {
         (await Promise.all(r.pubkeys.map(async (pub) => await KeyUtil.parse(pub)))).
           find(k => k.allIds.map(id => OpenPGPKey.fingerprintToLongid(id).includes(r.longid)))
     }));
-  }
+  };
 
   public static addListener = (name: string, handler: Handler) => {
     BrowserMsg.HANDLERS_REGISTERED_FRAME[name] = handler;
-  }
+  };
 
   public static listen = (listenForTabId: string) => {
     const processed: string[] = [];
@@ -294,11 +294,11 @@ export class BrowserMsg {
       }
       return false; // will not respond
     });
-  }
+  };
 
   public static bgAddListener = (name: string, handler: Handler) => {
     BrowserMsg.HANDLERS_REGISTERED_BACKGROUND[name] = handler;
-  }
+  };
 
   public static bgListen = () => {
     chrome.runtime.onMessage.addListener((msg: Bm.Raw, sender, rawRespond: (rawRes: Bm.RawResponse) => void) => {
@@ -343,7 +343,7 @@ export class BrowserMsg {
         return true; // will respond
       }
     });
-  }
+  };
 
   /**
    * When sending message from iframe within extension page, the browser will deliver the message to BOTH
@@ -366,11 +366,11 @@ export class BrowserMsg {
       return true; // sending to a parent content script (must relay, browser does not send directly)
     }
     return false; // sending to a parent that is an extension frame (do not relay, browser does send directly)
-  }
+  };
 
   private static sendCatch = (dest: Bm.Dest | undefined, name: string, bm: Dict<any>) => {
     BrowserMsg.sendAwait(dest, name, bm).catch(Catch.reportErr);
-  }
+  };
 
   private static sendAwait = async (destString: string | undefined, name: string, bm?: Dict<unknown>, awaitRes = false): Promise<Bm.Response> => {
     bm = bm || {};
@@ -432,7 +432,7 @@ export class BrowserMsg {
         }
       }
     });
-  }
+  };
 
   /**
    * Browser messages cannot send a lot of data per message. This will replace Buf objects (which can be large) with an ObjectURL
@@ -451,7 +451,7 @@ export class BrowserMsg {
       }
     }
     return objUrls;
-  }
+  };
 
   /**
    * This method does the opposite of replaceBufWithObjUrlInplace so we end up with original message (or response) containing possibly a large Buf
@@ -464,7 +464,7 @@ export class BrowserMsg {
       }
     }
     return requestOrResponse;
-  }
+  };
 
   private static errToJson = (e: any): Bm.ErrAsJson => {
     if (e instanceof AjaxErr) {
@@ -473,7 +473,7 @@ export class BrowserMsg {
     }
     const { stack, message } = Catch.rewrapErr(e, 'sendRawResponse');
     return { stack, message, errorConstructor: 'Error' };
-  }
+  };
 
   private static jsonToErr = (errAsJson: Bm.ErrAsJson, msg: Bm.Raw) => {
     const stackInfo = `\n\n[callerStack]\n${msg.stack}\n[/callerStack]\n\n[responderStack]\n${errAsJson.stack}\n[/responderStack]\n`;
@@ -484,7 +484,7 @@ export class BrowserMsg {
     const e = new Error(`BrowserMsg(${msg.name}) ${errAsJson.message}`);
     e.stack += stackInfo;
     return e;
-  }
+  };
 
   private static sendRawResponse = (handlerPromise: Promise<Bm.Res.Any>, rawRespond: (rawResponse: Bm.RawResponse) => void) => {
     try {
@@ -497,7 +497,7 @@ export class BrowserMsg {
     } catch (e) {
       rawRespond({ result: undefined, exception: BrowserMsg.errToJson(e), objUrls: {} });
     }
-  }
+  };
 
   private static browserMsgDestParse = (destString: string | null) => {
     const parsed = { tab: undefined as undefined | number, frame: undefined as undefined | number };
@@ -507,6 +507,6 @@ export class BrowserMsg {
       parsed.frame = !isNaN(parsedFrame) ? parsedFrame : undefined;
     }
     return parsed;
-  }
+  };
 
 }

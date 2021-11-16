@@ -59,13 +59,13 @@ export class PgpBlockViewAttachmentsModule {
         await this.decryptAndSaveAttachmentToDownloads(attachment);
       }
     }));
-  }
+  };
 
   private previewAttachmentClickedHandler = async (attachment: Attachment) => {
     const factory = new XssSafeFactory(this.view.acctEmail, this.view.parentTabId);
     const iframeUrl = factory.srcPgpAttachmentIframe(attachment, false, undefined, 'chrome/elements/attachment_preview.htm');
     BrowserMsg.send.showAttachmentPreview(this.view.parentTabId, { iframeUrl });
-  }
+  };
 
   private decryptAndSaveAttachmentToDownloads = async (encrypted: Attachment) => {
     const kisWithPp = await KeyStore.getAllWithOptionalPassPhrase(this.view.acctEmail);
@@ -80,7 +80,7 @@ export class PgpBlockViewAttachmentsModule {
       Browser.saveToDownloads(encrypted);
       this.view.renderModule.resizePgpBlockFrame();
     }
-  }
+  };
 
   private renderProgress = (element: JQuery<HTMLElement>, percent: number | undefined, received: number | undefined, size: number) => {
     if (percent) {
@@ -88,6 +88,6 @@ export class PgpBlockViewAttachmentsModule {
     } else if (size && received) {
       element.text(Math.floor(((received * 0.75) / size) * 100) + '%');
     }
-  }
+  };
 
 }

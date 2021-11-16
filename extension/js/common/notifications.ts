@@ -18,7 +18,7 @@ export class Notifications {
       await AcctStore.set(acctEmail, { notification_setup_done_seen: true });
       this.show('FlowCrypt was successfully set up for this account. <a href="#" class="close" data-test="notification-successfully-setup-action-close">close</a>');
     }
-  }
+  };
 
   public showAuthPopupNeeded = (acctEmail: string) => {
     this.show(`${Lang.compose.pleaseReconnectAccount} <a href="#" class="auth_popup" data-test="action-reconnect-account">Re-connect Account</a>`, {
@@ -31,11 +31,11 @@ export class Notifications {
         }
       },
     });
-  }
+  };
 
   public clear = () => {
     $('.webmail_notifications').text('');
-  }
+  };
 
   public show = (text: string, callbacks: Dict<() => void> = {}) => {
     Xss.sanitizeRender('.webmail_notifications', `<div class="webmail_notification" data-test="webmail-notification">${text}</div>`);
@@ -54,6 +54,6 @@ export class Notifications {
     for (const name of Object.keys(callbacks)) {
       $(`.webmail_notifications .${name}`).click(Ui.event.prevent('double', callbacks[name]));
     }
-  }
+  };
 
 }

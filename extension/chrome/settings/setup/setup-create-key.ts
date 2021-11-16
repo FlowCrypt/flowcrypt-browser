@@ -49,7 +49,7 @@ export class SetupCreateKeyModule {
       await Ui.modal.error(`There was an error, please try again.\n\n(${String(e)})`);
       $('#step_2a_manual_create .action_proceed_private').text('CREATE AND SAVE');
     }
-  }
+  };
 
   public actionShowAdvancedSettingsHandle = async (target: HTMLElement) => {
     const advancedCreateSettings = $('#step_2a_manual_create .advanced_create_settings');
@@ -63,7 +63,7 @@ export class SetupCreateKeyModule {
       $(target).find('span').text('Hide Advanced Settings');
       container.css('width', 'auto');
     }
-  }
+  };
 
   public createSaveKeyPair = async (options: SetupOptions, keyAlgo: KeyAlgo): Promise<KeyIdentity> => {
     await Settings.forbidAndRefreshPageIfCannot('CREATE_KEYS', this.view.orgRules);
@@ -74,5 +74,5 @@ export class SetupCreateKeyModule {
     const prv = await KeyUtil.parse(key.private);
     await this.view.saveKeysAndPassPhrase([prv], options);
     return { id: prv.id, type: prv.type };
-  }
+  };
 }
