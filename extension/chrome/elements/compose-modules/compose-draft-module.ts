@@ -292,7 +292,7 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
     const decrypted = await MsgUtil.decryptMessage({ kisWithPp: await KeyStore.getAllWithOptionalPassPhrase(this.view.acctEmail), encryptedData });
     if (!decrypted.success) {
       if (decrypted.error.type === DecryptErrTypes.needPassphrase) {
-        // todo: how to exit the recursion?
+        // "close" button will wipe this frame out, so no need to exit the recursion
         await this.renderPPDialogAndWaitWhenPPEntered(decrypted.longids.needPassphrase);
         await this.decryptAndRenderDraft(encrypted);
       }
