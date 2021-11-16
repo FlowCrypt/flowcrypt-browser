@@ -4,12 +4,13 @@ import { Config, Util } from '../../util';
 import { BrowserHandle, ControllableFrame, ControllablePage } from '../../browser';
 
 import { PageRecipe } from './abstract-page-recipe';
-import { expect } from 'chai';
+import { assert, expect } from 'chai';
 import { Str } from '../../core/common';
 import { AvaContext } from '../tooling';
 import { TestUrls } from '../../browser/test-urls';
 import { Xss } from '../../platform/xss';
-import { KeyUtil } from '../../core/crypto/key';
+import { Key, KeyUtil } from '../../core/crypto/key';
+import { readFileSync } from 'fs';
 
 export type SavePassphraseChecks = {
   isSavePassphraseHidden?: boolean | undefined,
@@ -119,9 +120,34 @@ export class SettingsPageRecipe extends PageRecipe {
     checks: SavePassphraseChecks = {},
     savePassphrase = true
   ) => {
+    return await SettingsPageRecipe.addKeyTestEx(t, browser, acctEmail, { armoredPrvKey }, passphrase, checks, savePassphrase);
+  };
+
+  public static addKeyTestEx = async (
+    t: AvaContext,
+    browser: BrowserHandle,
+    acctEmail: string,
+    prvKey: { armoredPrvKey?: string, filePath?: string },
+    passphrase: string,
+    checks: SavePassphraseChecks = {},
+    savePassphrase = true
+  ) => {
     const addPrvPage = await browser.newPage(t, `/chrome/settings/modules/add_key.htm?acctEmail=${Xss.escape(acctEmail)}&parent_tab_id=0`);
-    await addPrvPage.waitAndClick('#source_paste');
-    await addPrvPage.waitAndType('.input_private_key', armoredPrvKey);
+    let key: Key | undefined;
+    if (prvKey.armoredPrvKey) {
+      await addPrvPage.waitAndClick('@source-paste');
+      await addPrvPage.waitAndType('@input-armored-key', prvKey.armoredPrvKey);
+      key = await KeyUtil.parse(prvKey.armoredPrvKey);
+    } else if (prvKey.filePath) {
+      const [fileChooser] = await Promise.all([
+        addPrvPage.page.waitForFileChooser(),
+        addPrvPage.waitAndClick('@source-file', { retryErrs: true })]);
+      await fileChooser.accept([prvKey.filePath]);
+      [key] = (await KeyUtil.readBinary(readFileSync(prvKey.filePath))).keys;
+    } else {
+      assert(false);
+    }
+    const fp = Str.spaced(Xss.escape(key!.id));
     await addPrvPage.waitAndClick('#toggle_input_passphrase');
     await addPrvPage.waitAndType('#input_passphrase', passphrase);
     if (checks.isSavePassphraseHidden !== undefined) {
@@ -140,8 +166,6 @@ export class SettingsPageRecipe extends PageRecipe {
     await Util.sleep(1);
     const settingsPage = await browser.newPage(t, TestUrls.extensionSettings(acctEmail));
     await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
-    const key = await KeyUtil.parse(armoredPrvKey);
-    const fp = Str.spaced(Xss.escape(key.id));
     await settingsPage.waitForContent('@container-settings-keys-list', fp); // confirm key successfully loaded
     await settingsPage.close();
   };

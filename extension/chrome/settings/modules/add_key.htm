@@ -26,9 +26,9 @@
         <ul style="list-style: none; margin-left: 0; padding-left: 0;" class="source_selector display_none">
           <li><input type="radio" name="source" id="source_backup" value="backup"> <label for="source_backup">Load from
               backup</label></li>
-          <li><input type="radio" name="source" id="source_file" value="file"> <label for="source_file">Load from a
+          <li><input type="radio" name="source" id="source_file" data-test="source-file" value="file"> <label for="source_file">Load from a
               file</label></li>
-          <li><input type="radio" name="source" id="source_paste" value="paste"> <label for="source_paste">Paste
+          <li><input type="radio" name="source" id="source_paste" data-test="source-paste" value="paste"> <label for="source_paste">Paste
               armored key directly</label></li>
         </ul>
       </div>
@@ -38,7 +38,7 @@
       </div>
       <div class="source_paste_container display_none">
         <div class="line">
-          <textarea class="input_private_key" placeholder="ASCII Armored Private Key"></textarea>
+          <textarea class="input_private_key" data-test="input-armored-key" placeholder="ASCII Armored Private Key"></textarea>
         </div>
         <div class="line display_none unprotected_key_create_pass_phrase" style="text-align: left; padding-left: 40px;">
           This key is unprotected. Create a pass phrase or <a href="#" class="action_use_random_pass_phrase"

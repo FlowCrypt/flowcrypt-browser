@@ -11,7 +11,7 @@ type GmailMsg$payload$part = { partId?: string, body?: GmailMsg$payload$body, fi
 type GmailMsg$payload = { partId?: string, filename?: string, parts?: GmailMsg$payload$part[], headers?: GmailMsg$header[], mimeType?: string, body?: GmailMsg$payload$body };
 type GmailMsg$labelId = 'INBOX' | 'UNREAD' | 'CATEGORY_PERSONAL' | 'IMPORTANT' | 'SENT' | 'CATEGORY_UPDATES' | 'DRAFT';
 type GmailThread = { historyId: string; id: string; snippet: string; };
-type Label = { id: string, name: "CATEGORY_SOCIAL", messageListVisibility: "hide", labelListVisibility: "labelHide", type: 'system' };
+type Label = { id: string, name: string, messageListVisibility: 'show' | 'hide', labelListVisibility: 'labelShow' | 'labelHide', type: 'system' };
 type AcctDataFile = { messages: GmailMsg[]; drafts: GmailMsg[], attachments: { [id: string]: { data: string, size: number, filename?: string } }, labels: Label[] };
 type ExportedMsg = { acctEmail: string, full: GmailMsg, raw: GmailMsg, attachments: { [id: string]: { data: string, size: number } } };
 
@@ -111,7 +111,13 @@ export class GoogleData {
 
   public static withInitializedData = async (acct: string): Promise<GoogleData> => {
     if (typeof DATA[acct] === 'undefined') {
-      const acctData: AcctDataFile = { drafts: [], messages: [], attachments: {}, labels: [] };
+      const acctData: AcctDataFile = {
+        drafts: [], messages: [], attachments: {}, labels:
+          [
+            { id: 'INBOX', name: 'Inbox', messageListVisibility: 'show', labelListVisibility: 'labelShow', type: 'system' },
+            { id: 'DRAFT', name: 'Drafts', messageListVisibility: 'show', labelListVisibility: 'labelShow', type: 'system' }
+          ]
+      };
       const dir = GoogleData.exportedMsgsPath;
       const filenames: string[] = await new Promise((res, rej) => readdir(dir, (e, f) => e ? rej(e) : res(f)));
       const filePromises = filenames.map(f => new Promise((res, rej) => readFile(dir + f, (e, d) => e ? rej(e) : res(d))));
@@ -219,6 +225,10 @@ export class GoogleData {
     });
   };
 
+  public getMessagesAndDraftsByThread = (threadId: string) => {
+    return this.getMessagesAndDrafts().filter(m => m.threadId === threadId);
+  };
+
   public getMessagesByThread = (threadId: string) => {
     return DATA[this.acct].messages.filter(m => m.threadId === threadId);
   };
@@ -266,14 +276,21 @@ export class GoogleData {
     return DATA[this.acct].labels;
   };
 
-  public getThreads = () => {
+  public getThreads = (labelIds: string[] = []) => {
     const threads: GmailThread[] = [];
-    for (const thread of DATA[this.acct].messages.map(m => ({ historyId: m.historyId, id: m.threadId!, snippet: `MOCK SNIPPET: ${GoogleData.msgSubject(m)}` }))) {
+    for (const thread of this.getMessagesAndDrafts().
+      filter(m => labelIds.length ? (m.labelIds || []).some(l => labelIds.includes(l)) : true).
+      map(m => ({ historyId: m.historyId, id: m.threadId!, snippet: `MOCK SNIPPET: ${GoogleData.msgSubject(m)}` }))) {
       if (thread.id && !threads.map(t => t.id).includes(thread.id)) {
         threads.push(thread);
       }
     }
     return threads;
+  };
+
+  // returns ordinary messages and drafts
+  private getMessagesAndDrafts = () => {
+    return DATA[this.acct].messages.concat(DATA[this.acct].drafts);
   };
 
   private searchMessagesBySubject = (subject: string) => {

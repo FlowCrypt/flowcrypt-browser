@@ -173,10 +173,10 @@ export const mockGoogleEndpoints: HandlersDefinition = {
     }
     throw new HttpClientErr(`Method not implemented for ${req.url}: ${req.method}`);
   },
-  '/gmail/v1/users/me/threads': async ({ }, req) => {
+  '/gmail/v1/users/me/threads': async (parsedReq, req) => {
     const acct = oauth.checkAuthorizationHeaderWithAccessToken(req.headers.authorization);
     if (isGet(req)) {
-      const threads = (await GoogleData.withInitializedData(acct)).getThreads();
+      const threads = (await GoogleData.withInitializedData(acct)).getThreads([parsedReq.query.labelIds]); // todo: support arrays?
       return { threads, resultSizeEstimate: threads.length };
     }
     throw new HttpClientErr(`Method not implemented for ${req.url}: ${req.method}`);
@@ -185,7 +185,7 @@ export const mockGoogleEndpoints: HandlersDefinition = {
     const acct = oauth.checkAuthorizationHeaderWithAccessToken(req.headers.authorization);
     if (isGet(req) && (format === 'metadata' || format === 'full')) {
       const id = parseResourceId(req.url!);
-      const msgs = (await GoogleData.withInitializedData(acct)).getMessagesByThread(id);
+      const msgs = (await GoogleData.withInitializedData(acct)).getMessagesAndDraftsByThread(id);
       if (!msgs.length) {
         const statusCode = id === '16841ce0ce5cb74d' ? 404 : 400; // intentionally testing missing thread
         throw new HttpClientErr(`MOCK thread not found for ${acct}: ${id}`, statusCode);
