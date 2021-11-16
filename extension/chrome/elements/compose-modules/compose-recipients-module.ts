@@ -205,33 +205,33 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     await this.evaluateRecipients(recipients);
   }
 
-  public evaluateRecipients = async (recipients: RecipientElement[], triggerCallback: boolean = true) => {
+  public evaluateRecipients = async (recipientEls: RecipientElement[], triggerCallback: boolean = true) => {
     this.view.errModule.debug(`evaluateRecipients`);
     $('body').attr('data-test-state', 'working');
-    for (const recipient of recipients) {
-      this.view.errModule.debug(`evaluateRecipients.email(${String(recipient.email)})`);
+    for (const recipientEl of recipientEls) {
       this.view.S.now('send_btn_text').text(this.BTN_LOADING);
       this.view.sizeModule.setInputTextHeightManuallyIfNeeded();
-      recipient.evaluating = (async () => {
-        let pubkeyLookupRes: PubkeyInfo[] | 'fail' | 'wrong' = 'wrong';
-        // console.log(`>>>> evaluateRecipients: ${JSON.stringify(recipient)}`);
-        if (recipient.status !== RecipientStatus.WRONG) {
-          pubkeyLookupRes = await this.view.storageModule.
-            lookupPubkeyFromKeyserversThenOptionallyFetchExpiredByFingerprintAndUpsertDb(
-              recipient.email, undefined);
-        }
-        if (pubkeyLookupRes === 'fail' || pubkeyLookupRes === 'wrong') {
-          await this.renderPubkeyResult(recipient, pubkeyLookupRes);
+      recipientEl.evaluating = (async () => {
+        this.view.errModule.debug(`evaluateRecipients.evaluat.recipient.email(${String(recipientEl.email)})`);
+        this.view.errModule.debug(`evaluateRecipients.evaluating.recipient.status(${recipientEl.status})`);
+        if (recipientEl.status === RecipientStatus.WRONG) {
+          this.view.errModule.debug(`evaluateRecipients.evaluating: exiting because WRONG`);
+          await this.renderPubkeyResult(recipientEl, 'wrong');
         } else {
-          await this.renderPubkeyResult(recipient, pubkeyLookupRes);
+          this.view.errModule.debug(`evaluateRecipients.evaluating: calling getUpToDatePubkeys`);
+          const pubkeys = await this.view.storageModule.getUpToDatePubkeys(recipientEl.email);
+          await this.renderPubkeyResult(recipientEl, pubkeys);
         }
-        recipient.evaluating = undefined; // Clear promise when it finished
+        // Clear promise when after finished
+        // todo - it would be better if we could avoid doing this, eg
+        //    recipient.evaluating would be a bool
+        Catch.setHandledTimeout(() => { recipientEl.evaluating = undefined; }, 0);
       })();
     }
-    await Promise.all(recipients.map(r => r.evaluating));
+    await Promise.all(recipientEls.map(r => r.evaluating));
     if (triggerCallback) {
       for (const callback of this.onRecipientAddedCallbacks) {
-        callback(recipients);
+        callback(recipientEls);
       }
     }
     $('body').attr('data-test-state', 'ready');
@@ -359,7 +359,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
   }
 
   public reRenderRecipientFor = async (email: string): Promise<void> => {
-    if (this.addedRecipients.every(r => r.email !== email)) {
+    if (!this.addedRecipients.some(r => r.email === email)) {
       return;
     }
     const emailAndPubkeys = await ContactStore.getOneWithAllPubkeys(undefined, email);
@@ -767,7 +767,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     if (!newContacts.length) {
       return;
     }
-    const toLookup: Contact[] = [];
+    const toLookupNoPubkeys: Contact[] = [];
     for (const input of newContacts) {
       const contact = await ContactStore.obj({ email: input.email, name: input.name });
       const [storedContact] = await ContactStore.get(undefined, [contact.email]);
@@ -776,11 +776,13 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
           await ContactStore.update(undefined, contact.email, { name: contact.name } as ContactUpdate);
         }
       } else if (!this.failedLookupEmails.includes(contact.email)) {
-        toLookup.push(contact);
+        toLookupNoPubkeys.push(contact);
       }
     }
-    await Promise.all(toLookup.map(c => this.view.storageModule.lookupPubkeyFromKeyserversAndUpsertDb(
-      c.email, c.name || undefined).catch(() => this.failedLookupEmails.push(c.email))));
+    await Promise.all(toLookupNoPubkeys.map(c => this.view.storageModule
+      .updateLocalPubkeysFromRemote([], c.email, c.name || undefined)
+      .catch(() => this.failedLookupEmails.push(c.email))
+    ));
   }
 
   private renderSearchResultsLoadingDone = () => {
@@ -837,7 +839,6 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
   ) => {
     // console.log(`>>>> renderPubkeyResult: ${JSON.stringify(sortedPubkeyInfos)}`);
     const el = recipient.element;
-    this.view.errModule.debug(`renderPubkeyResult.emailEl(${String(recipient.email)})`);
     this.view.errModule.debug(`renderPubkeyResult.email(${recipient.email})`);
     this.view.errModule.debug(`renderPubkeyResult.contact(${JSON.stringify(sortedPubkeyInfos)})`);
     $(el).children('img, i').remove();

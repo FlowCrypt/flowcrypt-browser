@@ -4,7 +4,6 @@
 
 import { SetupOptions, SetupView } from '../setup.js';
 import { Catch } from '../../../js/common/platform/catch.js';
-import { Lang } from '../../../js/common/lang.js';
 import { KeyAlgo, KeyIdentity, KeyUtil } from '../../../js/common/core/crypto/key.js';
 import { Settings } from '../../../js/common/settings.js';
 import { Ui } from '../../../js/common/browser/ui.js';
@@ -35,17 +34,15 @@ export class SetupCreateKeyModule {
       };
       const keyAlgo = this.view.orgRules.getEnforcedKeygenAlgo() || $('#step_2a_manual_create .key_type').val() as KeyAlgo;
       const keyIdentity = await this.createSaveKeyPair(opts, keyAlgo);
-      if (keyIdentity) {
-        if (this.view.orgRules.canBackupKeys()) {
-          await this.view.submitPublicKeys(opts);
-          const action = $('#step_2a_manual_create .input_backup_inbox').prop('checked') ? 'setup_automatic' : 'setup_manual';
-          // only finalize after backup is done. backup.htm will redirect back to this page with ?action=finalize
-          window.location.href = Url.create('modules/backup.htm', { action, acctEmail: this.view.acctEmail, idToken: this.view.idToken, id: keyIdentity.id, type: keyIdentity.type });
-        } else {
-          await this.view.submitPublicKeys(opts);
-          await this.view.finalizeSetup();
-          await this.view.setupRender.renderSetupDone();
-        }
+      if (this.view.orgRules.canBackupKeys()) {
+        await this.view.submitPublicKeys(opts);
+        const action = $('#step_2a_manual_create .input_backup_inbox').prop('checked') ? 'setup_automatic' : 'setup_manual';
+        // only finalize after backup is done. backup.htm will redirect back to this page with ?action=finalize
+        window.location.href = Url.create('modules/backup.htm', { action, acctEmail: this.view.acctEmail, idToken: this.view.idToken, id: keyIdentity.id, type: keyIdentity.type });
+      } else {
+        await this.view.submitPublicKeys(opts);
+        await this.view.finalizeSetup();
+        await this.view.setupRender.renderSetupDone();
       }
     } catch (e) {
       Catch.reportErr(e);
@@ -68,22 +65,14 @@ export class SetupCreateKeyModule {
     }
   }
 
-  public createSaveKeyPair = async (options: SetupOptions, keyAlgo: KeyAlgo): Promise<KeyIdentity | undefined> => {
+  public createSaveKeyPair = async (options: SetupOptions, keyAlgo: KeyAlgo): Promise<KeyIdentity> => {
     await Settings.forbidAndRefreshPageIfCannot('CREATE_KEYS', this.view.orgRules);
     const { full_name } = await AcctStore.get(this.view.acctEmail, ['full_name']);
     const pgpUids = [{ name: full_name || '', email: this.view.acctEmail }]; // todo - add all addresses?
     const expireMonths = this.view.orgRules.getEnforcedKeygenExpirationMonths();
-    let keyIdentity: KeyIdentity | undefined;
-    try {
-      const key = await OpenPGPKey.create(pgpUids, keyAlgo, options.passphrase, expireMonths);
-      const prv = await KeyUtil.parse(key.private);
-      keyIdentity = { id: prv.id, type: prv.type };
-      await this.view.saveKeysAndPassPhrase([prv], options);
-      return keyIdentity;
-    } catch (e) {
-      Catch.reportErr(e);
-      Xss.sanitizeRender('#step_2_easy_generating, #step_2a_manual_create', Lang.setup.fcDidntSetUpProperly);
-      return keyIdentity; // todo: return undefined ?
-    }
+    const key = await OpenPGPKey.create(pgpUids, keyAlgo, options.passphrase, expireMonths);
+    const prv = await KeyUtil.parse(key.private);
+    await this.view.saveKeysAndPassPhrase([prv], options);
+    return { id: prv.id, type: prv.type };
   }
 }

@@ -71,7 +71,7 @@ export const mockAttesterEndpoints: HandlersDefinition = {
       if (emailOrLongid === 'sha1@sign.com') {
         return sha1signpubkey;
       }
-      if (emailOrLongid === '6D3E09867544EE627F2E928FBEE3A42D9A9C8AC9'.toLowerCase()) { // newer version of expired pubkey
+      if (emailOrLongid === 'auto.refresh.expired.key@recipient.com') { // newer version of expired pubkey
         return newerVersionOfExpiredPubkey;
       }
       if (emailOrLongid === '8EC78F043CEB022498AFD4771E62ED6D15A25921'.toLowerCase()) {
@@ -160,7 +160,7 @@ DDF85HtNOR10V1aJrfE7F6e3QTzu5SZBjDPi5vVcbtK72eyd
 -----END PGP PUBLIC KEY BLOCK-----
 `;
 
-const protonMailCompatKey = `-----BEGIN PGP PUBLIC KEY BLOCK-----
+export const protonMailCompatKey = `-----BEGIN PGP PUBLIC KEY BLOCK-----
 Version: OpenPGP.js v3.0.5
 Comment: https://openpgpjs.org
 

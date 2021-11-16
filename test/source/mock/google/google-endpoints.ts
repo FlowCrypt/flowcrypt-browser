@@ -16,7 +16,7 @@ const allowedRecipients: Array<string> = ['flowcrypt.compatibility@gmail.com', '
   'censored@email.com', 'test@email.com', 'human@flowcrypt.com', 'human+nopgp@flowcrypt.com', 'expired.on.attester@domain.com',
   'ci.tests.gmail@flowcrypt.test', 'smime1@recipient.com', 'smime2@recipient.com', 'smime@recipient.com',
   'smime.attachment@recipient.com', 'auto.refresh.expired.key@recipient.com', 'to@example.com', 'cc@example.com', 'bcc@example.com',
-  'flowcrypt.test.key.multiple.inbox1@gmail.com', 'flowcrypt.test.key.multiple.inbox2@gmail.com'];
+  'flowcrypt.test.key.multiple.inbox1@gmail.com', 'flowcrypt.test.key.multiple.inbox2@gmail.com', 'mock.only.pubkey@flowcrypt.com'];
 
 export const mockGoogleEndpoints: HandlersDefinition = {
   '/o/oauth2/auth': async ({ query: { client_id, response_type, access_type, state, redirect_uri, scope, login_hint, proceed } }, req) => {
