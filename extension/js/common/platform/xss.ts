@@ -23,19 +23,19 @@ export class Xss {
 
   public static sanitizeRender = (selector: string | HTMLElement | JQuery<HTMLElement>, dirtyHtml: string) => { // browser-only (not on node)
     return $(selector as any).html(Xss.htmlSanitize(dirtyHtml)); // xss-sanitized
-  }
+  };
 
   public static sanitizeAppend = (selector: string | HTMLElement | JQuery<HTMLElement>, dirtyHtml: string) => { // browser-only (not on node)
     return $(selector as any).append(Xss.htmlSanitize(dirtyHtml)); // xss-sanitized
-  }
+  };
 
   public static sanitizePrepend = (selector: string | HTMLElement | JQuery<HTMLElement>, dirtyHtml: string) => { // browser-only (not on node)
     return $(selector as any).prepend(Xss.htmlSanitize(dirtyHtml)); // xss-sanitized
-  }
+  };
 
   public static sanitizeReplace = (selector: string | HTMLElement | JQuery<HTMLElement>, dirtyHtml: string) => { // browser-only (not on node)
     return $(selector as any).replaceWith(Xss.htmlSanitize(dirtyHtml)); // xss-sanitized
-  }
+  };
 
   /**
    * Sanitize HTML to protect from nasty content from untrusted sources
@@ -51,7 +51,7 @@ export class Xss {
       FORBID_ATTR: Xss.FORBID_ATTR,
       ALLOWED_URI_REGEXP: Xss.sanitizeHrefRegexp(),
     });
-  }
+  };
 
   /**
    * Sanitize HTML to protect from nasty user-generated external content, and make it "less rich"
@@ -118,7 +118,7 @@ export class Xss {
     });
     DOMPurify.removeAllHooks();
     return cleanHtml;
-  }
+  };
 
   /**
    * Convert untrusted rich html to plain text, preserving newlines caused by div/p/h1/pre/br and similar tags,
@@ -150,30 +150,30 @@ export class Xss {
       text = text.replace(/\n/g, outputNl);
     }
     return text;
-  }
+  };
 
   public static escape = (str: string) => {
     return str.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\//g, '&#x2F;');
-  }
+  };
 
   public static htmlUnescape = (str: string) => {
     // the &nbsp; at the end is replaced with an actual NBSP character, not a space character. IDE won't show you the difference. Do not change.
     return str.replace(/&nbsp;/g, ' ').replace(/&#x2F;/g, '/').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
-  }
+  };
 
   public static replaceElementDANGEROUSLY = (el: Element, safeHtml: string) => { // xss-dangerous-function - must pass a sanitized value
     el.outerHTML = safeHtml; // xss-dangerous-function - must pass a sanitized value
-  }
+  };
 
   public static setElementContentDANGEROUSLY = (el: Element, safeHtml: string) => { // xss-dangerous-function - must pass a sanitized value
     el.innerHTML = safeHtml; // xss-dangerous-function - must pass a sanitized value
-  }
+  };
 
   private static throwIfNotSupported = () => {
     if (!DOMPurify.isSupported) {
       throw new Error('Your browser is not supported. Please use Firefox, Chrome or Edge.');
     }
-  }
+  };
 
   /**
    * allow href links that have same origin as our extension + cid + inline image
@@ -187,6 +187,6 @@ export class Xss {
       }
     }
     return Xss.HREF_REGEX_CACHE;
-  }
+  };
 
 }

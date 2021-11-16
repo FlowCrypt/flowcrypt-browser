@@ -125,7 +125,7 @@ export class ContactStore extends AbstractStore {
       openDbReq.onblocked = () => reject(ContactStore.errCategorize(openDbReq.error));
       openDbReq.onerror = () => reject(ContactStore.errCategorize(openDbReq.error));
     });
-  }
+  };
 
   public static previewObj = ({ email, name }: { email: string, name?: string | null }): ContactPreview => {
     const validEmail = Str.parseEmail(email).email;
@@ -133,7 +133,7 @@ export class ContactStore extends AbstractStore {
       throw new Error(`Cannot handle the contact because email is not valid: ${email}`);
     }
     return { email: validEmail, name: name || null, hasPgp: 0, lastUse: null };
-  }
+  };
 
   public static obj = async ({ email, name, pubkey, lastUse, lastCheck }: DbContactObjArg): Promise<Contact> => {
     if (typeof opgp === 'undefined') {
@@ -168,7 +168,7 @@ export class ContactStore extends AbstractStore {
         ...ContactStore.getKeyAttributes(pk)
       };
     }
-  }
+  };
 
   /**
    * Used to save a contact or an array of contacts.
@@ -193,7 +193,7 @@ export class ContactStore extends AbstractStore {
       return;
     }
     await ContactStore.update(db, contact.email, contact);
-  }
+  };
 
   /**
    * Used to update certain fields of existing contacts or create new contacts using the provided data.
@@ -235,7 +235,7 @@ export class ContactStore extends AbstractStore {
       ContactStore.setTxHandlers(tx, resolve, reject);
       ContactStore.updateTx(tx, validEmail, update);
     });
-  }
+  };
 
   public static get = async (db: undefined | IDBDatabase, emailOrLongid: string[]): Promise<(Contact | undefined)[]> => {
     if (!db) { // relay op through background process
@@ -252,7 +252,7 @@ export class ContactStore extends AbstractStore {
       }
       return results;
     }
-  }
+  };
 
   public static getEncryptionKeys = async (db: undefined | IDBDatabase, emails: string[]): Promise<{ email: string, keys: Key[] }[]> => {
     if (!db) { // relay op through background process
@@ -269,16 +269,16 @@ export class ContactStore extends AbstractStore {
       return (await Promise.all(emails.map(email => ContactStore.getEncryptionKeys(db, [email]))))
         .reduce((a, b) => a.concat(b));
     }
-  }
+  };
 
   public static search = async (db: IDBDatabase | undefined, query: DbContactFilter): Promise<ContactPreview[]> => {
     return (await ContactStore.rawSearch(db, query)).filter(Boolean).map(ContactStore.toContactPreview);
-  }
+  };
 
   public static searchPubkeys = async (db: IDBDatabase | undefined, query: DbContactFilter): Promise<string[]> => {
     const fingerprints = (await ContactStore.rawSearch(db, query)).filter(Boolean).map(email => email.fingerprints).reduce((a, b) => a.concat(b));
     return (await ContactStore.extractPubkeys(db, fingerprints)).map(pubkey => pubkey?.armoredKey).filter(Boolean);
-  }
+  };
 
   public static getOneWithAllPubkeys = async (db: IDBDatabase | undefined, email: string):
     Promise<EmailWithSortedPubkeys | undefined> => {
@@ -335,7 +335,7 @@ export class ContactStore extends AbstractStore {
         reject);
     });
     return emailEntity ? { info: emailEntity, sortedPubkeys: await ContactStore.sortKeys(pubkeys, revocations) } : undefined;
-  }
+  };
 
   public static getPubkey = async (db: IDBDatabase | undefined, { id, type }: { id: string, type: string }):
     Promise<string | undefined> => {
@@ -349,7 +349,7 @@ export class ContactStore extends AbstractStore {
       ContactStore.setReqPipe(req, resolve, reject);
     });
     return pubkeyEntity?.armoredKey;
-  }
+  };
 
   public static unlinkPubkey = async (db: IDBDatabase | undefined, email: string, { id, type }: { id: string, type: string }):
     Promise<void> => {
@@ -374,7 +374,7 @@ export class ContactStore extends AbstractStore {
           }
         });
     });
-  }
+  };
 
   public static updateTx = (tx: IDBTransaction, email: string, update: ContactUpdate) => {
     if (update.pubkey && !update.pubkeyLastCheck) {
@@ -389,7 +389,7 @@ export class ContactStore extends AbstractStore {
     } else {
       ContactStore.updateTxPhase2(tx, email, update, undefined, []);
     }
-  }
+  };
 
   public static setReqPipe<T>(req: IDBRequest, pipe: (value?: T) => void, reject?: ((reason?: any) => void) | undefined) {
     req.onsuccess = () => {
@@ -417,12 +417,12 @@ export class ContactStore extends AbstractStore {
       longids: KeyUtil.getPubkeyLongids(pubkey),
       armoredKey: KeyUtil.armor(pubkey)
     };
-  }
+  };
 
   public static revocationObj = (pubkey: Key): { fingerprint: string, armoredKey: string } => {
     return { fingerprint: ContactStore.getPubkeyId(pubkey), armoredKey: KeyUtil.armor(pubkey) };
     // todo: we can add a timestamp here and/or some other info
-  }
+  };
 
   /**
    * Saves only revocation info (to protect against re-importing an older version of OpenPGP key)
@@ -447,17 +447,17 @@ export class ContactStore extends AbstractStore {
       ContactStore.setTxHandlers(tx, resolve, reject);
       tx.objectStore('revocations').put(ContactStore.revocationObj(pubkey));
     });
-  }
+  };
 
   public static sortPubkeyInfos = (pubkeyInfos: PubkeyInfo[]): PubkeyInfo[] => {
     return pubkeyInfos.sort((a, b) => ContactStore.getSortValue(b) - ContactStore.getSortValue(a));
-  }
+  };
 
   public static getSortValue = (pubinfo: PubkeyInfo): number => {
     const expirationSortValue = (typeof pubinfo.pubkey.expiration === 'undefined') ? Infinity : pubinfo.pubkey.expiration!;
     // sort non-revoked first, then non-expired
     return (pubinfo.revoked || pubinfo.pubkey.revoked) ? -Infinity : expirationSortValue;
-  }
+  };
 
   private static sortKeys = async (pubkeys: Pubkey[], revocations: Revocation[]): Promise<PubkeyInfo[]> => {
     // parse the keys
@@ -467,25 +467,25 @@ export class ContactStore extends AbstractStore {
       return { lastCheck: pubkey.lastCheck || undefined, pubkey: pk, revoked };
     }));
     return ContactStore.sortPubkeyInfos(pubkeyInfos);
-  }
+  };
 
   private static getPubkeyId = ({ id, type }: { id: string, type: string }): string => {
     return (type === 'x509') ? (id + x509postfix) : id;
-  }
+  };
 
   private static stripFingerprint = (fp: string): string => {
     return fp.endsWith(x509postfix) ? fp.slice(0, -x509postfix.length) : fp;
-  }
+  };
 
   private static equalFingerprints = (fp1: string, fp2: string): boolean => {
     return (fp1.endsWith(x509postfix) ? fp1 : (fp1 + x509postfix))
       === (fp2.endsWith(x509postfix) ? fp2 : (fp2 + x509postfix));
-  }
+  };
 
   private static createFingerprintRange = (fp: string): IDBKeyRange => {
     const strippedFp = ContactStore.stripFingerprint(fp);
     return IDBKeyRange.bound(strippedFp, strippedFp + x509postfix, false, false);
-  }
+  };
 
   private static updateTxPhase2 = (tx: IDBTransaction, email: string, update: ContactUpdate,
     existingPubkey: Pubkey | undefined, revocations: Revocation[]) => {
@@ -535,7 +535,7 @@ export class ContactStore extends AbstractStore {
         tx.objectStore('pubkeys').put(pubkeyEntity);
       }
     });
-  }
+  };
 
   private static chainExtraction<T>(
     store: IDBObjectStore,
@@ -576,7 +576,7 @@ export class ContactStore extends AbstractStore {
       return await BrowserMsg.send.bg.await.db({ f: 'extractPubkeys', args: [fingerprints] }) as Pubkey[];
     }
     return await ContactStore.extractKeyset(db, 'pubkeys', fingerprints, 10);
-  }
+  };
 
   private static rawSearch = async (db: IDBDatabase | undefined, query: DbContactFilter): Promise<Email[]> => {
     if (!db) { // relay op through background process
@@ -630,15 +630,15 @@ export class ContactStore extends AbstractStore {
         reject);
     });
     return raw;
-  }
+  };
 
   private static normalizeString = (str: string) => {
     return str.normalize('NFKD').replace(/[\u0300-\u036F]/g, '').toLowerCase();
-  }
+  };
 
   private static dbIndex = (hasPgp: boolean, substring: string): string => {
     return (hasPgp ? 't:' : 'f:') + substring;
-  }
+  };
 
   private static dbIndexRange = (hasPgp: boolean, substring: string): { lowerBound: string, upperBound: string } => {
     // to find all the keys starting with 'abc', we need to use a range search with exlcusive upper boundary
@@ -656,7 +656,7 @@ export class ContactStore extends AbstractStore {
     }
     const upperBound = lowerBound.substring(0, copyLength) + String.fromCharCode(lastChar + 1);
     return { lowerBound, upperBound };
-  }
+  };
 
   private static updateSearchable = (emailEntity: Email) => {
     const email = emailEntity.email.toLowerCase();
@@ -667,7 +667,7 @@ export class ContactStore extends AbstractStore {
       .map(ContactStore.normalizeString).sort((a, b) => b.length - a.length);
     emailEntity.searchable = sortedNormalized.filter((value, index, self) => !self.slice(0, index).find((el) => el.startsWith(value)))
       .map(normalized => ContactStore.dbIndex(emailEntity.fingerprints.length > 0, normalized));
-  }
+  };
 
   private static dbContactInternalGetOne = async (db: IDBDatabase, emailOrLongid: string): Promise<Contact | undefined> => {
     if (emailOrLongid.includes('@')) { // email
@@ -708,11 +708,11 @@ export class ContactStore extends AbstractStore {
         },
         reject);
     });
-  }
+  };
 
   private static getKeyAttributes = (key: Key | undefined): PubkeyAttributes => {
     return { fingerprint: key?.id ?? null, expiresOn: DateUtility.asNumber(key?.expiration) };
-  }
+  };
 
   private static toContact = async (db: IDBDatabase, email: Email, pubkey: Pubkey | undefined): Promise<Contact | undefined> => {
     if (!email) {
@@ -732,7 +732,7 @@ export class ContactStore extends AbstractStore {
       }
     }
     return ContactStore.toContactFromKey(email, parsed, parsed ? pubkey!.lastCheck : null, revokedExternally);
-  }
+  };
 
   private static toContactFromKey = (email: Email, key: Key | undefined, lastCheck: number | undefined | null, revokedExternally: boolean): Contact | undefined => {
     if (!email) {
@@ -749,9 +749,9 @@ export class ContactStore extends AbstractStore {
       ...ContactStore.getKeyAttributes(key),
       revoked: revokedExternally || Boolean(key?.revoked)
     };
-  }
+  };
 
   private static toContactPreview = (result: Email): ContactPreview => {
     return { email: result.email, name: result.name, hasPgp: result.fingerprints.length > 0 ? 1 : 0, lastUse: result.lastUse };
-  }
+  };
 }

@@ -22,13 +22,13 @@ export class BackendData {
       this.uuidsByAcctEmail[acct] = [];
     }
     this.uuidsByAcctEmail[acct].push(uuid);
-  }
+  };
 
   public checkUuidOrThrow = (acct: string, uuid: string) => {
     if (!(this.uuidsByAcctEmail[acct] || []).includes(uuid)) {
       throw new HttpAuthErr(`Wrong mock uuid ${uuid} for acct ${acct}`);
     }
-  }
+  };
 
   public getAcctRow = (acct: string) => {
     return {
@@ -43,11 +43,11 @@ export class BackendData {
       'default_message_expire': 3,
       'token': '1234-mock-acct-token',
     };
-  }
+  };
 
   public getSubscription = (acct: string) => { // eslint-disable-line @typescript-eslint/no-unused-vars
     return { level: null, expire: null, method: null, expired: null };
-  }
+  };
 
   public getOrgRules = (acct: string) => {
     const domain = acct.split('@')[1];
@@ -151,6 +151,6 @@ export class BackendData {
     return {
       "flags": []
     };
-  }
+  };
 
 }

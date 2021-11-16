@@ -29,7 +29,7 @@ export abstract class AbstractStore {
 
   public static singleScopeRawIndex = (scope: string, key: string) => {
     return `cryptup_${emailKeyIndex(scope, key)}`;
-  }
+  };
 
   public static errCategorize = (err: any): Error => {
     let message: string;
@@ -58,16 +58,16 @@ export abstract class AbstractStore {
       Catch.reportErr(err instanceof Error ? err : new Error(message));
       return new StoreFailedError(message);
     }
-  }
+  };
 
   public static setReqOnError = (req: IDBRequest | IDBTransaction, reject: (reason?: any) => void) => {
     req.onerror = () => reject(AbstractStore.errCategorize(req.error || new Error('Unknown db error')));
-  }
+  };
 
   public static setTxHandlers = (tx: IDBTransaction, resolve: (value: unknown) => void, reject: (reason?: any) => void) => {
     tx.oncomplete = () => resolve(undefined);
     AbstractStore.setReqOnError(tx, reject);
-  }
+  };
 
   protected static buildSingleAccountStoreFromRawResults = (scope: string, storageObj: RawStore): AcctStoreDict => {
     const accountStore: AcctStoreDict = {};
@@ -78,11 +78,11 @@ export abstract class AbstractStore {
       }
     }
     return accountStore;
-  }
+  };
 
   protected static singleScopeRawIndexArr = (scope: string, keys: string[]) => {
     return keys.map(key => AbstractStore.singleScopeRawIndex(scope, key));
-  }
+  };
 
   protected static manyScopesRawIndexArr = (scopes: string[], keys: string[]) => {
     const allResults: string[] = [];
@@ -90,6 +90,6 @@ export abstract class AbstractStore {
       allResults.push(...AbstractStore.singleScopeRawIndexArr(scope, keys));
     }
     return allResults;
-  }
+  };
 
 }

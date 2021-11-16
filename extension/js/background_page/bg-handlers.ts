@@ -13,7 +13,7 @@ export class BgHandlers {
 
   public static openSettingsPageHandler: Bm.AsyncResponselessHandler = async ({ page, path, pageUrlParams, addNewAcct, acctEmail }: Bm.Settings) => {
     await BgUtils.openSettingsPage(path, acctEmail, page, pageUrlParams, addNewAcct === true);
-  }
+  };
 
   public static dbOperationHandler = async (db: IDBDatabase, request: Bm.Db): Promise<Bm.Res.Db> => {
     if (!db) {
@@ -25,15 +25,15 @@ export class BgHandlers {
       return await dbFunc(request.args[0] as any); // db not needed, it goes through background because openpgp.js may not be available in the frame
     }
     return await dbFunc(db, ...request.args);
-  }
+  };
 
   public static ajaxHandler = async (r: Bm.Ajax): Promise<Bm.Res.Ajax> => {
     return await Api.ajax(r.req, r.stack); // tslint:disable-line:no-direct-ajax
-  }
+  };
 
   public static ajaxGmailAttachmentGetChunkHandler = async (r: Bm.AjaxGmailAttachmentGetChunk): Promise<Bm.Res.AjaxGmailAttachmentGetChunk> => {
     return { chunk: await new Gmail(r.acctEmail).attachmentGetChunk(r.msgId, r.attachmentId) };
-  }
+  };
 
   public static updateUninstallUrl: Bm.AsyncResponselessHandler = async () => {
     const acctEmails = await GlobalStore.acctEmailsGet();
@@ -41,7 +41,7 @@ export class BgHandlers {
       const email = acctEmails?.length ? acctEmails[0] : undefined;
       chrome.runtime.setUninstallURL(`https://flowcrypt.com/leaving.htm#${JSON.stringify({ email, metrics: null })}`); // tslint:disable-line:no-null-keyword
     }
-  }
+  };
 
   public static getActiveTabInfo: Bm.AsyncRespondingHandler = () => new Promise((resolve, reject) => {
     chrome.tabs.query({ active: true, currentWindow: true, url: ["*://mail.google.com/*", "*://inbox.google.com/*"] }, (activeTabs) => {
@@ -58,7 +58,7 @@ export class BgHandlers {
         resolve({ provider: undefined, acctEmail: undefined, sameWorld: undefined });
       }
     });
-  })
+  });
 
   public static respondWithSenderTabId = async (r: unknown, sender: Bm.Sender): Promise<Bm.Res._tab_> => {
     if (sender === 'background') {
@@ -71,6 +71,6 @@ export class BgHandlers {
       // MDN says the same - thus this is most likely a background script, through browser message passing
       return { tabId: null }; // tslint:disable-line:no-null-keyword
     }
-  }
+  };
 
 }

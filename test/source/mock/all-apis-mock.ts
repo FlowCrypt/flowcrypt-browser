@@ -22,7 +22,7 @@ export const startAllApisMock = async (logger: (line: string) => void) => {
       if (req.url !== '/favicon.ico') {
         logger(`${ms}ms | ${res.statusCode} ${req.method} ${req.url} | ${errRes ? errRes : ''}`);
       }
-    }
+    };
   }
   const api = new LoggedApi<{ query: { [k: string]: string }, body?: unknown }, unknown>('google-mock', {
     ...mockGoogleEndpoints,

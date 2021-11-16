@@ -42,19 +42,19 @@ export class SendableMsg {
 
   public static createSMimeEncrypted = async (acctEmail: string, headers: SendableMsgHeaders, data: Uint8Array, options: SendableMsgOptions): Promise<SendableMsg> => {
     return await SendableMsg.createSendableMsg(acctEmail, headers, { "pkcs7/buf": Buf.fromUint8(data) }, [], { type: 'smimeEncrypted', isDraft: options.isDraft });
-  }
+  };
 
   public static createSMimeSigned = async (acctEmail: string, headers: SendableMsgHeaders, data: Uint8Array): Promise<SendableMsg> => {
     return await SendableMsg.createSendableMsg(acctEmail, headers, { "pkcs7/buf": Buf.fromUint8(data) }, [], { type: 'smimeSigned' });
-  }
+  };
 
   public static createPlain = async (acctEmail: string, headers: SendableMsgHeaders, body: SendableMsgBody, attachments: Attachment[]): Promise<SendableMsg> => {
     return await SendableMsg.createSendableMsg(acctEmail, headers, body, attachments, { type: undefined, isDraft: undefined });
-  }
+  };
 
   public static createInlineArmored = async (acctEmail: string, headers: SendableMsgHeaders, body: string, attachments: Attachment[], options?: SendableMsgOptions): Promise<SendableMsg> => {
     return await SendableMsg.createSendableMsg(acctEmail, headers, { "text/plain": body }, attachments, options ? options : { type: undefined, isDraft: undefined });
-  }
+  };
 
   public static createPwdMsg = async (
     acctEmail: string,
@@ -64,11 +64,11 @@ export class SendableMsg {
     options: SendableMsgOptions
   ): Promise<SendableMsg> => {
     return await SendableMsg.createSendableMsg(acctEmail, headers, body, attachments, { type: undefined, isDraft: options.isDraft });
-  }
+  };
 
   public static createPgpMime = async (acctEmail: string, headers: SendableMsgHeaders, attachments: Attachment[], options?: SendableMsgOptions): Promise<SendableMsg> => {
     return await SendableMsg.createSendableMsg(acctEmail, headers, {}, attachments, { type: (options ? 'pgpMimeEncrypted' : undefined), isDraft: (options ? options.isDraft : undefined) });
-  }
+  };
 
   public static createPgpMimeSigned = async (
     acctEmail: string,
@@ -80,7 +80,7 @@ export class SendableMsg {
     const sendableMsg = await SendableMsg.createSendableMsg(acctEmail, headers, body, attachments, { type: 'pgpMimeSigned', isDraft: undefined });
     sendableMsg.sign = signMethod;
     return sendableMsg;
-  }
+  };
 
   private static createSendableMsg = async (
     acctEmail: string,
@@ -92,7 +92,7 @@ export class SendableMsg {
     const { from, recipients, subject, thread } = headers;
     const { type, isDraft } = options;
     return await SendableMsg.create(acctEmail, { from, recipients, subject, thread, body, attachments, type, isDraft });
-  }
+  };
 
   private static create = async (acctEmail: string, { from, recipients, subject, thread, body, attachments, type, isDraft }: SendableMsgDefinition): Promise<SendableMsg> => {
     const primaryKi = await KeyStore.getFirstRequired(acctEmail);
@@ -112,7 +112,7 @@ export class SendableMsg {
       thread,
       type
     );
-  }
+  };
 
   private constructor(
     public acctEmail: string,
@@ -153,6 +153,6 @@ export class SendableMsg {
     } else {
       return await Mime.encode(this.body, this.headers, this.attachments, this.type);
     }
-  }
+  };
 
 }

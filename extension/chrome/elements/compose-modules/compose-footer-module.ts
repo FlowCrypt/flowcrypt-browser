@@ -15,7 +15,7 @@ export class ComposeFooterModule extends ViewModule<ComposeView> {
       return;
     }
     return sendAs[sender]?.footer || undefined;
-  }
+  };
 
   /**
    * Only replacing footer if it was not yet rendered in textbox
@@ -28,7 +28,7 @@ export class ComposeFooterModule extends ViewModule<ComposeView> {
     } else if (this.view.S.cached('triple_dot')[0] && newFooter) { // ellipsis preset (not yet clicked), but not visible (likely no footer earlier)
       this.view.quoteModule.tripleDotSanitizedHtmlContent = { footer: this.createFooterHtml(newFooter), quote: '' };
     }
-  }
+  };
 
   public createFooterHtml = (footer: string) => {
     const sanitizedPlainFooter = Xss.htmlSanitizeAndStripAllTags(footer, '\n');
@@ -41,6 +41,6 @@ export class ComposeFooterModule extends ViewModule<ComposeView> {
       return sanitizedHtmlFooter;  // first line of footer is already a footer separator, made of special characters
     }
     return `--<br>${sanitizedHtmlFooter}`; // create a custom footer separator
-  }
+  };
 
 }

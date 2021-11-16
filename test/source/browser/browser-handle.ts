@@ -35,7 +35,7 @@ export class BrowserHandle {
       await controllablePage.waitUntilViewLoaded();
     }
     return controllablePage;
-  }
+  };
 
   public newPageTriggeredBy = async (t: AvaContext, triggeringAction: () => Promise<void>): Promise<ControllablePage> => {
     const page = await this.doAwaitTriggeredPage(triggeringAction) as Page;
@@ -55,7 +55,7 @@ export class BrowserHandle {
       }
       throw e;
     }
-  }
+  };
 
   public closeAllPages = async () => {
     for (const page of await this.browser.pages()) {
@@ -64,16 +64,16 @@ export class BrowserHandle {
       }
     }
     this.pages = [];
-  }
+  };
 
   public close = async () => {
     await this.browser.close();
     this.semaphore.release();
-  }
+  };
 
   public release = () => {
     this.semaphore.release();
-  }
+  };
 
   public debugPagesHtml = async (t: AvaContext, alsoLogToConsole: boolean) => {
     let html = '';
@@ -101,7 +101,7 @@ export class BrowserHandle {
       html += '</div>';
     }
     return html;
-  }
+  };
 
   private doAwaitTriggeredPage = (triggeringAction: () => Promise<void>): Promise<Page | null> => {
     return new Promise((resolve, reject) => {
@@ -118,6 +118,6 @@ export class BrowserHandle {
       this.browser.on('targetcreated', listener);
       triggeringAction().catch(console.error);
     });
-  }
+  };
 
 }

@@ -23,7 +23,7 @@ export class OauthMock {
 
   public renderText = (text: string) => {
     return this.htmlPage(text, text);
-  }
+  };
 
   public successPage = (acct: string, state: string) => {
     const authCode = `mock-auth-code-${acct.replace(/[^a-z0-9]+/g, '')}`;
@@ -34,7 +34,7 @@ export class OauthMock {
     this.accessTokenByRefreshToken[refreshToken] = accessToken;
     this.acctByAccessToken[accessToken] = acct;
     return this.htmlPage(`Success code=${encodeURIComponent(authCode)}&state=${encodeURIComponent(state)}&error=`, `Authorized successfully, please return to app`);
-  }
+  };
 
   public getRefreshTokenResponse = (code: string) => {
     const refresh_token = this.refreshTokenByAuthCode[code];
@@ -42,7 +42,7 @@ export class OauthMock {
     const acct = this.acctByAccessToken[access_token];
     const id_token = this.generateIdToken(acct);
     return { access_token, refresh_token, expires_in: this.expiresIn, id_token, token_type: 'refresh_token' }; // guessed the token_type
-  }
+  };
 
   public getAccessTokenResponse = (refreshToken: string) => {
     try {
@@ -53,7 +53,7 @@ export class OauthMock {
     } catch (e) {
       throw new HttpClientErr('invalid_grant', Status.BAD_REQUEST);
     }
-  }
+  };
 
   public checkAuthorizationHeaderWithAccessToken = (authorization: string | undefined) => {
     if (!authorization) {
@@ -65,7 +65,7 @@ export class OauthMock {
       throw new HttpClientErr('Invalid mock auth token', Status.UNAUTHORIZED);
     }
     return acct;
-  }
+  };
 
   /**
    * As if a 3rd party was evaluating it, such as key manager
@@ -80,13 +80,13 @@ export class OauthMock {
       throw new HttpClientErr('Invalid idToken token', Status.UNAUTHORIZED);
     }
     return acct;
-  }
+  };
 
   public isIdTokenValid = (idToken: string) => { // we verify mock idToken by checking if we ever issued it
     const [, data,] = idToken.split('.');
     const claims = JSON.parse(Buf.fromBase64UrlStr(data).toUtfStr());
     return (this.issuedIdTokensByAcct[claims.email] || []).includes(idToken);
-  }
+  };
 
   // -- private
 
@@ -98,7 +98,7 @@ export class OauthMock {
     this.issuedIdTokensByAcct[email].push(newIdToken);
     this.acctByIdToken[newIdToken] = email;
     return newIdToken;
-  }
+  };
 
   private getAccessToken(refreshToken: string): string {
     if (this.accessTokenByRefreshToken[refreshToken]) {
@@ -109,7 +109,7 @@ export class OauthMock {
 
   private htmlPage = (title: string, content: string) => {
     return `<!DOCTYPE HTML><html><head><title>${title}</title></head><body>${content}</body></html>`;
-  }
+  };
 }
 
 export class MockJwt {
@@ -133,7 +133,7 @@ export class MockJwt {
     };
     const newIdToken = `fakeheader.${Buf.fromUtfStr(JSON.stringify(data)).toBase64UrlStr()}.${Str.sloppyRandom(30)}`;
     return newIdToken;
-  }
+  };
 
   public static parseEmail = (jwt: string): string => {
     const email = JSON.parse(Buf.fromBase64Str(jwt.split('.')[1]).toUtfStr()).email;
@@ -141,7 +141,7 @@ export class MockJwt {
       throw new Error(`Missing email in MockJwt ${jwt}`);
     }
     return email;
-  }
+  };
 
 }
 

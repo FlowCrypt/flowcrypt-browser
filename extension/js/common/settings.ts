@@ -31,15 +31,15 @@ export class Settings {
 
   public static evalPasswordStrength = (passphrase: string, type: 'passphrase' | 'pwd' = 'passphrase') => {
     return PgpPwd.estimateStrength(zxcvbn(passphrase, PgpPwd.weakWords()).guesses, type); // tslint:disable-line:no-unsafe-any
-  }
+  };
 
   public static renderSubPage = async (acctEmail: string | undefined, tabId: string, page: string, addUrlTextOrParams?: string | UrlParams) => {
     await Ui.modal.iframe(Settings.prepareNewSettingsLocationUrl(acctEmail, tabId, page, addUrlTextOrParams));
-  }
+  };
 
   public static redirectSubPage = (acctEmail: string, parentTabId: string, page: string, addUrlTextOrParams?: string | UrlParams) => {
     window.location.href = Settings.prepareNewSettingsLocationUrl(acctEmail, parentTabId, page, addUrlTextOrParams);
-  }
+  };
 
   public static refreshSendAs = async (acctEmail: string) => {
     const fetchedSendAs = await Settings.fetchAcctAliasesFromGmail(acctEmail);
@@ -62,7 +62,7 @@ export class Settings {
       result.footerChanged = true;
     }
     return result.aliasesChanged || result.defaultEmailChanged || result.footerChanged ? result : undefined;
-  }
+  };
 
   public static acctStorageReset = async (acctEmail: string): Promise<void> => {
     if (!acctEmail) {
@@ -97,7 +97,7 @@ export class Settings {
         }
       });
     });
-  }
+  };
 
   public static acctStorageChangeEmail = async (oldAcctEmail: string, newAcctEmail: string) => {
     if (!oldAcctEmail || !newAcctEmail || !Str.isEmailValid(newAcctEmail)) {
@@ -173,7 +173,7 @@ export class Settings {
     }
     await Settings.acctStorageReset(oldAcctEmail);
     await GlobalStore.acctEmailsRemove(oldAcctEmail);
-  }
+  };
 
   public static renderPrvCompatFixUiAndWaitTilSubmittedByUser = async (
     acctEmail: string, containerStr: string | JQuery<HTMLElement>, origPrv: Key, passphrase: string, backUrl: string
@@ -242,7 +242,7 @@ export class Settings {
         }
       }));
     });
-  }
+  };
 
   public static retryUntilSuccessful = async (action: () => Promise<void>, errTitle: string) => {
     try {
@@ -250,7 +250,7 @@ export class Settings {
     } catch (e) {
       return await Settings.promptToRetry(e, errTitle, action);
     }
-  }
+  };
 
   /**
    * todo - could probably replace most usages of this method with retryPromptUntilSuccessful which is more intuitive
@@ -275,7 +275,7 @@ export class Settings {
     // if it got down here, user has chosen 'skip'. This option is only available on 'OPTIONAL' type
     // if the error happens again, op will be skipped
     return await retryCb();
-  }
+  };
 
   public static forbidAndRefreshPageIfCannot = async (action: 'CREATE_KEYS' | 'BACKUP_KEYS', orgRules: OrgRules) => {
     if (action === 'CREATE_KEYS' && !orgRules.canCreateKeys()) {
@@ -287,7 +287,7 @@ export class Settings {
       window.location.reload();
       throw new Error('key_backups_not_allowed');
     }
-  }
+  };
 
   public static newGoogleAcctAuthPromptThenAlertOrForward = async (settingsTabId: string | undefined, acctEmail?: string, scopes?: string[]) => {
     try {
@@ -325,7 +325,7 @@ export class Settings {
       await Ui.time.sleep(1000);
       window.location.reload();
     }
-  }
+  };
 
   public static populateAccountsMenu = async (page: 'index.htm' | 'inbox.htm') => {
     const menuAcctHtml = (email: string, picture = '/img/svgs/profile-icon.svg', isHeaderRow: boolean) => {
@@ -354,7 +354,7 @@ export class Settings {
         ? Url.create(page, { acctEmail })
         : Url.create(Env.getBaseUrl() + '/chrome/settings/index.htm', { acctEmail });
     }));
-  }
+  };
 
   public static offerToLoginWithPopupShowModalOnErr = (acctEmail: string, then: (() => void) = () => undefined, prepend = '') => {
     (async () => {
@@ -362,7 +362,7 @@ export class Settings {
         await Settings.loginWithPopupShowModalOnErr(acctEmail, then);
       }
     })().catch(Catch.reportErr);
-  }
+  };
 
   public static loginWithPopupShowModalOnErr = async (acctEmail: string, then: (() => void) = () => undefined) => {
     if (window !== window.top && !chrome.windows) { // Firefox, chrome.windows isn't available in iframes
@@ -376,7 +376,7 @@ export class Settings {
     } else {
       await Ui.modal.warning(`Could not log in:\n${authRes.error || authRes.result}`);
     }
-  }
+  };
 
   public static resetAccount = async (acctEmail: string): Promise<boolean> => {
     const orgRules = await OrgRules.newInstance(acctEmail);
@@ -396,14 +396,14 @@ export class Settings {
       }
       return false;
     }
-  }
+  };
 
   public static collectInfoAndDownloadBackupFile = async (acctEmail: string) => {
     const name = `FlowCrypt_BACKUP_FILE_${acctEmail.replace(/[^a-z0-9]+/, '')}.txt`;
     const backupText = await Settings.collectInfoForAccountBackup(acctEmail);
     Browser.saveToDownloads(new Attachment({ name, type: 'text/plain', data: Buf.fromUtfStr(backupText) }));
     await Ui.delay(1000);
-  }
+  };
 
   /**
     * determines how to treat old values when changing account
@@ -416,7 +416,7 @@ export class Settings {
     } else { // keep old values if any, 'keys' will later be merged with whatever is in the new account
       return 'keep';
     }
-  }
+  };
 
   private static collectInfoForAccountBackup = async (acctEmail: string) => {
     const text = [
@@ -444,7 +444,7 @@ export class Settings {
     }
     text.push('');
     return text.join('\n');
-  }
+  };
 
   private static prepareNewSettingsLocationUrl = (acctEmail: string | undefined, parentTabId: string, page: string, addUrlTextOrParams?: string | UrlParams): string => {
     const pageParams: UrlParams = { placement: 'settings', parentTabId };
@@ -458,7 +458,7 @@ export class Settings {
       addUrlTextOrParams = undefined;
     }
     return Url.create(page, pageParams) + (addUrlTextOrParams || '');
-  }
+  };
 
   private static getDefaultEmailAlias = (sendAs: Dict<SendAsAlias>) => {
     for (const key of Object.keys(sendAs)) {
@@ -467,7 +467,7 @@ export class Settings {
       }
     }
     return undefined;
-  }
+  };
 
   private static fetchAcctAliasesFromGmail = async (acctEmail: string): Promise<Dict<SendAsAlias>> => {
     const response = await new Gmail(acctEmail).fetchAcctAliases();
@@ -477,6 +477,6 @@ export class Settings {
       result[a.sendAsEmail.toLowerCase()] = { name: a.displayName, isPrimary: !!a.isPrimary, isDefault: a.isDefault, footer: a.signature };
     }
     return result;
-  }
+  };
 
 }

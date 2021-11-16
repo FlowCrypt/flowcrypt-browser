@@ -6,5 +6,5 @@ export class Stream {
     const ws = new WritableStream<Uint8Array>({ write: chunk => { buffer = new Uint8Array([...buffer, ...chunk]); } });
     await data.pipeTo(ws);
     return buffer;
-  }
+  };
 }

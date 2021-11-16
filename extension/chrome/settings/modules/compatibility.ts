@@ -17,12 +17,12 @@ View.run(class CompatibilityView extends View {
 
   public render = async () => {
     // No need
-  }
+  };
 
   public setHandlers = () => {
     $('.action_test_key').click(this.setHandlerPrevent('double', this.actionTestKeyHandler));
     $('#input_passphrase').keydown(this.setEnterHandlerThatClicks('.action_test_key'));
-  }
+  };
 
   private performKeyCompatibilityTests = async (keyString: string) => {
     $('pre').text('').css('display', 'block');
@@ -36,11 +36,11 @@ View.run(class CompatibilityView extends View {
     } catch (err) {
       this.appendResult(`Exception: ${String(err)}`);
     }
-  }
+  };
 
   private appendResult = (str: string, err?: Error) => {
     Xss.sanitizeAppend('pre', `(${Xss.escape(`${this.testIndex++}`)}) ${Xss.escape(str)} ${err ? Xss.escape(` !! ${err.message}`) : Xss.escape('')} \n`);
-  }
+  };
 
   private outputKeyResults = async (keys: Key[]) => {
     this.appendResult(`Primary keys found: ${keys.length}`);
@@ -53,7 +53,7 @@ View.run(class CompatibilityView extends View {
         this.appendResult(`${kn} ${entry[0]}: ${entry[1]}`);
       }
     }
-  }
+  };
 
   private actionTestKeyHandler = async (submitBtn: HTMLElement) => {
     const keyString = String($('.input_key').val());
@@ -65,6 +65,6 @@ View.run(class CompatibilityView extends View {
     Xss.sanitizeRender(submitBtn, 'Evaluating.. ' + Ui.spinner('white'));
     await this.performKeyCompatibilityTests(keyString);
     Xss.sanitizeRender(submitBtn, origBtnContent);
-  }
+  };
 
 });

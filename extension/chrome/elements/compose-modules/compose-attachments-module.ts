@@ -30,7 +30,7 @@ export class ComposeAttachmentsModule extends ViewModule<ComposeView> {
       const attachment = await this.attachment.collectAttachment(fileId);
       Browser.saveToDownloads(attachment);
     });
-  }
+  };
 
   private getMaxAttachmentSizeAndOversizeNotice = async (): Promise<AttachmentLimits> => {
     const sizeMb = 25;
@@ -42,6 +42,6 @@ export class ComposeAttachmentsModule extends ViewModule<ComposeView> {
         await Ui.modal.warning('Combined attachment size is limited to 25 MB. The last file brings it to ' + Math.ceil(combinedSize / (1024 * 1024)) + ' MB.');
       },
     };
-  }
+  };
 
 }

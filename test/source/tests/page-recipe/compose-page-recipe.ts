@@ -83,7 +83,7 @@ export class ComposePageRecipe extends PageRecipe {
       await composePageOrFrame.waitAndClick('@input-body'); // close popover
     }
     await composePageOrFrame.waitTillGone('@container-sending-options');
-  }
+  };
 
   public static fillRecipients = async (composePageOrFrame: Controllable, recipients: Recipients, windowType: 'new' | 'reply' | 'forward') => {
     if (windowType === 'reply') { // new messages should already have cc/bcc buttons visible, because they should have recipients in focus
@@ -103,15 +103,15 @@ export class ComposePageRecipe extends PageRecipe {
     }
     await composePageOrFrame.target.evaluate(() => { $('#input_text').focus(); });
     await Util.sleep(1);
-  }
+  };
 
   public static waitWhenDraftIsSaved = async (composePageOrFrame: Controllable) => {
     await composePageOrFrame.verifyContentIsPresentContinuously('@send-btn-note', 'Saved');
-  }
+  };
 
   public static waitWhenDraftIsSavedLocally = async (composePageOrFrame: Controllable) => {
     await composePageOrFrame.verifyContentIsPresentContinuously('@send-btn-note', 'Draft saved locally (offline)');
-  }
+  };
 
   public static sendAndClose = async (
     composePage: ControllablePage,
@@ -125,7 +125,7 @@ export class ComposePageRecipe extends PageRecipe {
       await composePage.waitForContent('@action-send', '%', 20, 10);
     }
     await ComposePageRecipe.closed(composePage, timeout);
-  }
+  };
 
   public static closed = async (composePage: ControllablePage, timeout = 60) => {
     await Promise.race([
@@ -133,7 +133,7 @@ export class ComposePageRecipe extends PageRecipe {
       composePage.waitAny('@container-reply-msg-successful', { timeout }) // in case of reply
     ]);
     await composePage.close();
-  }
+  };
 
   public static expectContactsResultEqual = async (composePage: ControllablePage | ControllableFrame, emails: string[]) => {
     const contacts = await composePage.waitAny('@container-contacts');

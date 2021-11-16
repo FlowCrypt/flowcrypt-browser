@@ -49,13 +49,13 @@ export class InboxPageRecipe extends PageRecipe {
       throw new Error(`message did not decrypt`);
     }
     await inboxPage.close();
-  }
+  };
 
   public static finishSessionOnInboxPage = async (inboxPage: ControllablePage) => {
     await inboxPage.waitAndClick('@action-finish-session');
     await inboxPage.waitTillGone('@action-finish-session');
     await Util.sleep(3); // give frames time to reload, else we will be manipulating them while reloading -> Error: waitForFunction failed: frame got detached.
-  }
+  };
 
   public static checkFinishingSession = async (t: AvaContext, browser: BrowserHandle, acctEmail: string, threadId: string) => {
     const inboxPage = await browser.newPage(t, TestUrls.extension(`chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`));
@@ -66,7 +66,7 @@ export class InboxPageRecipe extends PageRecipe {
     await pgpBlockFrame.waitForSelTestState('ready');
     await pgpBlockFrame.waitAndClick('@action-show-passphrase-dialog', { delay: 1 });
     await inboxPage.waitAll('@dialog-passphrase');
-  }
+  };
 
   public static checkSentMsg = async (t: AvaContext, browser: BrowserHandle, { acctEmail, subject, expectedContent, isEncrypted, isSigned, sender }: CheckSentMsg$opt) => {
     if (typeof isSigned !== 'undefined') {
@@ -84,7 +84,7 @@ export class InboxPageRecipe extends PageRecipe {
       await inboxPage.waitAll(`@container-msg-header(${sender})`);
     }
     await inboxPage.close();
-  }
+  };
 
   public static openAndGetComposeFrame = async (inboxPage: ControllablePage): Promise<ControllableFrame> => {
     await inboxPage.waitAndClick('@action-open-secure-compose-window');
@@ -94,6 +94,6 @@ export class InboxPageRecipe extends PageRecipe {
     await composeFrame.waitAll(['@input-body', '@input-subject', '@action-send', '@container-cc-bcc-buttons']);
     await composeFrame.waitForSelTestState('ready');
     return composeFrame;
-  }
+  };
 
 }

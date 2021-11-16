@@ -56,7 +56,7 @@ export class Wkd extends Api {
       return { keys: [], errs: [] }; // do not retry direct if advanced had a policy file
     }
     return await KeyUtil.readMany(response.buf);
-  }
+  };
 
   public lookupEmail = async (email: string): Promise<PubkeysSearchResult> => {
     const { keys, errs } = await this.rawLookupEmail(email);
@@ -72,7 +72,7 @@ export class Wkd extends Api {
     } catch (e) {
       return { pubkeys: [] };
     }
-  }
+  };
 
   private urlLookup = async (methodUrlBase: string, userPart: string): Promise<{ hasPolicy: boolean, buf?: Buf }> => {
     try {
@@ -92,6 +92,6 @@ export class Wkd extends Api {
       }
       return { hasPolicy: true };
     }
-  }
+  };
 
 }

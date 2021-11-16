@@ -37,11 +37,11 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
     } else {
       return '(' + arr.join(') OR (') + ')';
     }
-  }
+  };
 
   public threadGet = async (threadId: string, format?: GmailResponseFormat, progressCb?: ProgressCb): Promise<GmailRes.GmailThread> => {
     return await Google.gmailCall<GmailRes.GmailThread>(this.acctEmail, 'GET', `threads/${threadId}`, { format }, { download: progressCb });
-  }
+  };
 
   public threadList = async (labelId: string): Promise<GmailRes.GmailThreadList> => {
     return await Google.gmailCall<GmailRes.GmailThreadList>(this.acctEmail, 'GET', `threads`, {
@@ -51,38 +51,38 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
       // q,
       // maxResults
     });
-  }
+  };
 
   public threadModify = async (id: string, rmLabels: string[], addLabels: string[]): Promise<GmailRes.GmailThread> => {
     return await Google.gmailCall<GmailRes.GmailThread>(this.acctEmail, 'POST', `threads/${id}/modify`, {
       removeLabelIds: rmLabels || [], // todo - insufficient permission - need https://github.com/FlowCrypt/flowcrypt-browser/issues/1304
       addLabelIds: addLabels || [],
     });
-  }
+  };
 
   public draftCreate = async (mimeMsg: string, threadId: string): Promise<GmailRes.GmailDraftCreate> => {
     return await Google.gmailCall<GmailRes.GmailDraftCreate>(this.acctEmail, 'POST', 'drafts', { message: { raw: Buf.fromUtfStr(mimeMsg).toBase64UrlStr(), threadId } });
-  }
+  };
 
   public draftDelete = async (id: string): Promise<GmailRes.GmailDraftDelete> => {
     return await Google.gmailCall<GmailRes.GmailDraftDelete>(this.acctEmail, 'DELETE', 'drafts/' + id, undefined);
-  }
+  };
 
   public draftUpdate = async (id: string, mimeMsg: string, threadId: string): Promise<GmailRes.GmailDraftUpdate> => {
     return await Google.gmailCall<GmailRes.GmailDraftUpdate>(this.acctEmail, 'PUT', `drafts/${id}`, { message: { raw: Buf.fromUtfStr(mimeMsg).toBase64UrlStr(), threadId } });
-  }
+  };
 
   public draftGet = async (id: string, format: GmailResponseFormat = 'full'): Promise<GmailRes.GmailDraftGet> => {
     return await Google.gmailCall<GmailRes.GmailDraftGet>(this.acctEmail, 'GET', `drafts/${id}`, { format });
-  }
+  };
 
   public draftList = async (): Promise<GmailRes.GmailDraftList> => {
     return await Google.gmailCall<GmailRes.GmailDraftList>(this.acctEmail, 'GET', 'drafts', undefined);
-  }
+  };
 
   public draftSend = async (id: string): Promise<GmailRes.GmailDraftSend> => {
     return await Google.gmailCall<GmailRes.GmailDraftSend>(this.acctEmail, 'POST', 'drafts/send', { id });
-  }
+  };
 
   public msgSend = async (sendableMsg: SendableMsg, progressCb?: ProgressCb): Promise<GmailRes.GmailMsgSend> => {
     const cbs = { upload: progressCb || Value.noop };
@@ -90,11 +90,11 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
     const mimeMsg = await sendableMsg.toMime();
     const request = Google.encodeAsMultipartRelated({ 'application/json; charset=UTF-8': jsonPart, 'message/rfc822': mimeMsg });
     return await Google.gmailCall<GmailRes.GmailMsgSend>(this.acctEmail, 'POST', 'messages/send', request.body, cbs, request.contentType);
-  }
+  };
 
   public msgList = async (q: string, includeDeleted: boolean = false, pageToken?: string): Promise<GmailRes.GmailMsgList> => {
     return await Google.gmailCall<GmailRes.GmailMsgList>(this.acctEmail, 'GET', 'messages', { q, includeSpamTrash: includeDeleted, pageToken });
-  }
+  };
 
   /**
    * Attempting to `msgGet format:raw` from within content scripts would likely fail if the mime message is 1MB or larger,
@@ -103,21 +103,21 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
    */
   public msgGet = async (msgId: string, format: GmailResponseFormat, progressCb?: ProgressCb): Promise<GmailRes.GmailMsg> => {
     return await Google.gmailCall<GmailRes.GmailMsg>(this.acctEmail, 'GET', `messages/${msgId}`, { format: format || 'full' }, { download: progressCb });
-  }
+  };
 
   public msgsGet = async (msgIds: string[], format: GmailResponseFormat): Promise<GmailRes.GmailMsg[]> => {
     return await Promise.all(msgIds.map(id => this.msgGet(id, format)));
-  }
+  };
 
   public labelsGet = async (): Promise<GmailRes.GmailLabels> => {
     return await Google.gmailCall<GmailRes.GmailLabels>(this.acctEmail, 'GET', `labels`, {});
-  }
+  };
 
   public attachmentGet = async (msgId: string, attId: string, progressCb?: ProgressCb): Promise<GmailRes.GmailAttachment> => {
     type RawGmailAttRes = { attachmentId: string, size: number, data: string };
     const { attachmentId, size, data } = await Google.gmailCall<RawGmailAttRes>(this.acctEmail, 'GET', `messages/${msgId}/attachments/${attId}`, {}, { download: progressCb });
     return { attachmentId, size, data: Buf.fromBase64UrlStr(data) }; // data should be a Buf for ease of passing to/from bg page
-  }
+  };
 
   public attachmentGetChunk = async (msgId: string, attachmentId: string): Promise<Buf> => {
     if (Env.isContentScript()) {
@@ -204,7 +204,7 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
         };
       }).catch(reject);
     });
-  }
+  };
 
   public fetchAttachments = async (attachments: Attachment[], progressCb?: ProgressCb) => {
     if (!attachments.length) {
@@ -228,7 +228,7 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
     for (const i of responses.keys()) {
       attachments[i].setData(responses[i].data);
     }
-  }
+  };
 
   /**
    * This will keep triggering callback with new emails as they are being discovered
@@ -262,7 +262,7 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
       gmailQuery += ` -to:${email}`;
     }
     await this.apiGmailLoopThroughEmailsToCompileContacts(needles, gmailQuery, chunkedCb);
-  }
+  };
 
   /**
    * Extracts the encrypted message from gmail api. Sometimes it's sent as a text, sometimes html, sometimes attachments in various forms.
@@ -314,7 +314,7 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
         throw new FormatError('No text in parsed raw mime', mimeMsg.toUtfStr());
       }
     }
-  }
+  };
 
   public fetchAcctAliases = async (): Promise<GmailRes.GmailAliases> => {
     const res = await Google.gmailCall<GmailRes.GmailAliases>(this.acctEmail, 'GET', 'settings/sendAs', {}) as GmailRes.GmailAliases;
@@ -322,12 +322,12 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
       sendAs.sendAsEmail = sendAs.sendAsEmail.toLowerCase();
     }
     return res;
-  }
+  };
 
   public fetchMsgsHeadersBasedOnQuery = async (q: string, headerNames: string[], msgLimit: number) => {
     const { messages } = await this.msgList(q, false);
     return await this.extractHeadersFromMsgs(messages || [], headerNames, msgLimit);
-  }
+  };
 
   public fetchKeyBackups = async (): Promise<Backups> => {
     const res = await this.msgList(gmailBackupSearchQuery(this.acctEmail), true);
@@ -356,7 +356,7 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
       importedNotBackedUp: Value.arr.unique(keyinfos.importedNotBackedUp.map(ki => ki.longid)),
     };
     return { keyinfos, longids };
-  }
+  };
 
   private apiGmailBuildFilteredQuery = (query: string, allRawEmails: string[]) => {
     let filteredQuery = query;
@@ -367,7 +367,7 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
       }
     }
     return filteredQuery;
-  }
+  };
 
   private apiGmailGetNewUniqueRecipientsFromHeaders = async (toHeaders: string[], allResults: EmailProviderContact[], allRawEmails: string[]): Promise<EmailProviderContact[]> => {
     if (!toHeaders.length) {
@@ -397,7 +397,7 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
       }
     }
     return uniqueNewValidResults;
-  }
+  };
 
   private apiGmailLoopThroughEmailsToCompileContacts = async (needles: string[], gmailQuery: string, chunkedCb: ChunkedCb) => {
     const allResults: EmailProviderContact[] = [];
@@ -427,7 +427,7 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
       }
     }
     await chunkedCb({ new: [], all: allResults });
-  }
+  };
 
   private doesGmailsContactGuessResultMatchNeedles = (needles: string[], contact: EmailProviderContact): boolean => {
     if (!needles.length) {
@@ -435,7 +435,7 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
     }
     const comparable = `${contact.email}\n${contact.name || ''}`.toLowerCase();
     return !!needles.find(needle => comparable.includes(needle));
-  }
+  };
 
   private extractHeadersFromMsgs = async (msgsIds: GmailRes.GmailMsgList$message[], headerNames: string[], msgLimit: number): Promise<Dict<string[]>> => {
     const headerVals: Dict<string[]> = {};
@@ -451,6 +451,6 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
       }
     }
     return headerVals;
-  }
+  };
 
 }

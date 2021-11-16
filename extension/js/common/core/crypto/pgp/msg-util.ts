@@ -137,7 +137,7 @@ export class MsgUtil {
       }
     }
     return undefined;
-  }
+  };
 
   /**
    * Returns signed data if detached=false, armored
@@ -146,7 +146,7 @@ export class MsgUtil {
   public static sign = async (signingPrivate: Key, data: string, detached = false): Promise<string> => {
     // TODO: Delegate to appropriate key type
     return await OpenPGPKey.sign(signingPrivate, data, detached);
-  }
+  };
 
   public static verify = async (msg: OpenpgpMsgOrCleartext, pubs: OpenPGP.key.Key[], contact?: Contact): Promise<VerifyRes> => {
     const verifyRes: VerifyRes = { contact, match: null }; // tslint:disable-line:no-null-keyword
@@ -193,14 +193,14 @@ export class MsgUtil {
       }
     }
     return verifyRes;
-  }
+  };
 
   public static verifyDetached: PgpMsgMethod.VerifyDetached = async ({ plaintext, sigText }) => {
     const message = opgp.message.fromText(Buf.fromUint8(plaintext).toUtfStr());
     await message.appendSignature(Buf.fromUint8(sigText).toUtfStr());
     const keys = await MsgUtil.getSortedKeys([], message);
     return await MsgUtil.verify(message, keys.forVerification, keys.verificationContacts[0]);
-  }
+  };
 
   public static decryptMessage: PgpMsgMethod.Decrypt = async ({ kisWithPp, encryptedData, msgPwd }) => {
     const longids: DecryptError$longids = { message: [], matching: [], chosen: [], needPassphrase: [] };
@@ -254,7 +254,7 @@ export class MsgUtil {
     } catch (e) {
       return { success: false, error: MsgUtil.cryptoMsgDecryptCategorizeErr(e, msgPwd), longids, isEncrypted };
     }
-  }
+  };
 
   public static encryptMessage: PgpMsgMethod.Encrypt = async ({ pubkeys, signingPrv, pwd, data, filename, armor, date }) => {
     const keyTypes = new Set(pubkeys.map(k => k.type));
@@ -266,7 +266,7 @@ export class MsgUtil {
       return await SmimeKey.encryptMessage(input);
     }
     return await OpenPGPKey.encryptMessage(input);
-  }
+  };
 
   public static diagnosePubkeys: PgpMsgMethod.DiagnosePubkeys = async ({ armoredPubs, message }) => {
     const m = await opgp.message.readArmored(Buf.fromUint8(message).toUtfStr());
@@ -285,7 +285,7 @@ export class MsgUtil {
       }
     }
     return diagnosis;
-  }
+  };
 
   private static cryptoMsgGetSignedBy = async (msg: OpenpgpMsgOrCleartext, keys: SortedKeysForDecrypt) => {
     keys.signedBy = Value.arr.unique(msg.getSigningKeyIds ? msg.getSigningKeyIds().map(kid => OpenPGPKey.bytesToLongid(kid.bytes)) : []);
@@ -298,7 +298,7 @@ export class MsgUtil {
         keys.forVerification.push(...keysForVerification);
       }
     }
-  }
+  };
 
   private static getSortedKeys = async (kiWithPp: ExtendedKeyInfo[], msg: OpenpgpMsgOrCleartext): Promise<SortedKeysForDecrypt> => {
     const keys: SortedKeysForDecrypt = {
@@ -340,7 +340,7 @@ export class MsgUtil {
       }
     }
     return keys;
-  }
+  };
 
   private static getSmimeKeys = async (kiWithPp: ExtendedKeyInfo[], msg: SmimeMsg): Promise<SortedKeysForDecrypt> => {
     const keys: SortedKeysForDecrypt = {
@@ -376,11 +376,11 @@ export class MsgUtil {
       }
     }
     return keys;
-  }
+  };
 
   private static matchingKeyids = (longids: string[], encryptedForKeyids: OpenPGP.Keyid[]): OpenPGP.Keyid[] => {
     return encryptedForKeyids.filter(kid => longids.includes(OpenPGPKey.bytesToLongid(kid.bytes)));
-  }
+  };
 
   private static decryptKeyFor = async (prv: Key, passphrase: string, matchingKeyIds: OpenPGP.Keyid[]): Promise<boolean> => {
     if (!matchingKeyIds.length) { // we don't know which keyids match, decrypt all key packets
@@ -392,7 +392,7 @@ export class MsgUtil {
       }
     }
     return true;
-  }
+  };
 
   private static isKeyDecryptedFor = (prv: Key, msgKeyIds: OpenPGP.Keyid[]): boolean => {
     if (prv.fullyDecrypted) {
@@ -405,7 +405,7 @@ export class MsgUtil {
       return false; // we don't know which keyId to decrypt - must decrypt all (but key is only partially decrypted)
     }
     return msgKeyIds.filter(kid => OpenPGPKey.isPacketDecrypted(prv, kid)).length === msgKeyIds.length; // test if all needed key packets are decrypted
-  }
+  };
 
   private static cryptoMsgDecryptCategorizeErr = (decryptErr: any, msgPwd?: string): DecryptError$error => {
     const e = String(decryptErr).replace('Error: ', '').replace('Error decrypting message: ', '');
@@ -424,6 +424,6 @@ export class MsgUtil {
     } else {
       return { type: DecryptErrTypes.other, message: e };
     }
-  }
+  };
 
 }

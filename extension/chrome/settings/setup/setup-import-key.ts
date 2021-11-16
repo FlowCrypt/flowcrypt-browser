@@ -54,7 +54,7 @@ export class SetupImportKeyModule {
         return await Ui.modal.error(`An error happened when processing the key: ${String(e)}\nPlease write at human@flowcrypt.com`, false, Ui.testCompatibilityLink);
       }
     }
-  }
+  };
 
   public renderCompatibilityFixBlockAndFinalizeSetup = async (origPrv: Key, options: SetupOptions) => {
     this.view.setupRender.displayBlock('step_3_compatibility_fix');
@@ -72,5 +72,5 @@ export class SetupImportKeyModule {
     await this.view.submitPublicKeys(options);
     await this.view.finalizeSetup();
     await this.view.setupRender.renderSetupDone();
-  }
+  };
 }

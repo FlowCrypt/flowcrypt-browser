@@ -23,14 +23,14 @@ export class KeyManager extends Api {
 
   public getPrivateKeys = async (idToken: string): Promise<LoadPrvRes> => {
     return await this.request('GET', '/keys/private', undefined, idToken) as LoadPrvRes;
-  }
+  };
 
   public storePrivateKey = async (idToken: string, decryptedPrivateKey: string, publicKey: string): Promise<void> => {
     return await this.request('PUT', '/keys/private', { decryptedPrivateKey, publicKey }, idToken);
-  }
+  };
 
   private request = async <RT>(method: ReqMethod, path: string, vals?: Dict<any> | undefined, idToken?: string): Promise<RT> => {
     return await Api.apiCall(this.url, path, vals, vals ? 'JSON' : undefined, undefined, idToken ? { Authorization: `Bearer ${idToken}` } : undefined, undefined, method);
-  }
+  };
 
 }

@@ -58,7 +58,7 @@ export class SetupRenderModule {
     } else {
       await this.renderSetupDialog();
     }
-  }
+  };
 
   public renderSetupDone = async () => {
     const storedKeys = await KeyStore.get(this.view.acctEmail);
@@ -73,7 +73,7 @@ export class SetupRenderModule {
       $('h1').text(this.view.action !== 'add_key' ? 'You\'re all set!' : 'Recovered all keys!');
       $('.email').text(this.view.acctEmail);
     }
-  }
+  };
 
   public displayBlock = (name: string) => {
     const blocks = [
@@ -95,7 +95,7 @@ export class SetupRenderModule {
         $('#step_2_recovery input').focus();
       }
     }
-  }
+  };
 
   public renderSetupDialog = async (): Promise<void> => {
     let keyserverRes;
@@ -131,11 +131,11 @@ export class SetupRenderModule {
         this.displayBlock('step_2b_manual_enter');
       }
     }
-  }
+  };
 
   private saveAndFillSubmitPubkeysOption = (addresses: string[]) => {
     this.renderEmailAddresses(this.filterAddressesForSubmittingKeys(addresses));
-  }
+  };
 
   private renderEmailAddresses = (addresses: string[]) => {
     $('.input_submit_all').hide();
@@ -158,11 +158,11 @@ export class SetupRenderModule {
       $('.container_for_import_key_email_alias').css('visibility', 'visible');
     }
     $('.manual .input_submit_all').prop({ checked: true, disabled: false }).closest('div.line').css('display', 'block');
-  }
+  };
 
   private filterAddressesForSubmittingKeys = (addresses: string[]): string[] => {
     const filterAddrRegEx = new RegExp(`@(${this.emailDomainsToSkip.join('|')})`);
     return addresses.filter(e => !filterAddrRegEx.test(e));
-  }
+  };
 
 }

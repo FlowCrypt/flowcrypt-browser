@@ -50,14 +50,14 @@ View.run(class SecurityView extends View {
     if (this.orgRules.mustAutogenPassPhraseQuietly()) {
       $('.hide_if_pass_phrase_not_user_configurable').hide();
     }
-  }
+  };
 
   public setHandlers = () => {
     $('.action_change_passphrase').click(this.setHandler(() => Settings.redirectSubPage(this.acctEmail, this.parentTabId, '/chrome/settings/modules/change_passphrase.htm')));
     $('.action_test_passphrase').click(this.setHandler(() => Settings.redirectSubPage(this.acctEmail, this.parentTabId, '/chrome/settings/modules/test_passphrase.htm')));
     $('#hide_message_password').change(this.setHandler((el) => this.hideMsgPasswordHandler(el)));
     $('.password_message_language').change(this.setHandler(() => this.onMsgLanguageUserChange()));
-  }
+  };
 
   private renderPassPhraseOptionsIfStoredPermanently = async () => {
     const keys = await KeyStore.get(this.acctEmail);
@@ -83,7 +83,7 @@ View.run(class SecurityView extends View {
       $('.cancel_passphrase_requirement_change').click(() => window.location.reload());
       $('#passphrase_entry').keydown(this.setEnterHandlerThatClicks('.confirm_passphrase_requirement_change'));
     }
-  }
+  };
 
   private loadAndRenderPwdEncryptedMsgSettings = async () => {
     Xss.sanitizeRender('.select_loader_container', Ui.spinner('green'));
@@ -102,14 +102,14 @@ View.run(class SecurityView extends View {
         Xss.sanitizeRender('.expiration_container', '(unknown error: <a href="#">retry</a>)').find('a').click(() => window.location.reload()); // safe source
       }
     }
-  }
+  };
 
   private onDefaultExpireUserChange = async () => {
     Xss.sanitizeRender('.select_loader_container', Ui.spinner('green'));
     $('.default_message_expire').css('display', 'none');
     await this.acctServer.accountUpdate(this.authInfo!, { default_message_expire: Number($('.default_message_expire').val()) });
     window.location.reload();
-  }
+  };
 
   private onMsgLanguageUserChange = async () => {
     const outgoingLanguage = String($('.password_message_language').val());
@@ -117,12 +117,12 @@ View.run(class SecurityView extends View {
       await AcctStore.set(this.acctEmail, { outgoing_language: outgoingLanguage as 'DE' | 'EN' });
       window.location.reload();
     }
-  }
+  };
 
   private hideMsgPasswordHandler = async (checkbox: HTMLElement) => {
     await AcctStore.set(this.acctEmail, { hide_message_password: $(checkbox).is(':checked') });
     window.location.reload();
-  }
+  };
 
   private isAnyPassPhraseStoredPermanently = async (keys: KeyInfo[]) => {
     for (const key of keys) {
@@ -131,5 +131,5 @@ View.run(class SecurityView extends View {
       }
     }
     return false;
-  }
+  };
 });

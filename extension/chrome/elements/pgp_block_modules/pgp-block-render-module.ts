@@ -26,7 +26,7 @@ export class PgpBlockViewRenderModule {
 
   public renderText = (text: string) => {
     document.getElementById('pgp_block')!.innerText = text;
-  }
+  };
 
   public resizePgpBlockFrame = () => {
     const origHeight = $('#pgp_block').height();
@@ -43,7 +43,7 @@ export class PgpBlockViewRenderModule {
       height = Math.max(this.heightHist[len - 1], this.heightHist[len - 2]); // pick the larger number to stop if from oscillating
     }
     BrowserMsg.send.setCss(this.view.parentTabId, { selector: `iframe#${this.view.frameId}`, css: { height: `${height}px` } });
-  }
+  };
 
   public renderContent = async (htmlContent: string, isErr: boolean) => {
     if (!isErr && !this.view.isOutgoing) { // successfully opened incoming message
@@ -64,7 +64,7 @@ export class PgpBlockViewRenderModule {
     }
     this.resizePgpBlockFrame(); // resize window now
     Catch.setHandledTimeout(() => { $(window).resize(this.view.setHandlerPrevent('spree', () => this.resizePgpBlockFrame())); }, 1000); // start auto-resizing the window after 1s
-  }
+  };
 
   public setFrameColor = (color: 'red' | 'green' | 'gray') => {
     if (color === 'red') {
@@ -74,7 +74,7 @@ export class PgpBlockViewRenderModule {
     } else {
       $('#pgp_background').removeClass('pgp_secure').removeClass('pgp_insecure').addClass('pgp_neutral');
     }
-  }
+  };
 
   public decideDecryptedContentFormattingAndRender = async (decryptedBytes: Buf, isEncrypted: boolean, sigResult: VerifyRes | undefined,
     retryVerification: () => Promise<VerifyRes | undefined>, plainSubject?: string) => {
@@ -130,7 +130,7 @@ export class PgpBlockViewRenderModule {
     if (!this.doNotSetStateAsReadyYet) { // in case async tasks are still being worked at
       Ui.setTestState('ready');
     }
-  }
+  };
 
   private displayImageSrcLinkAsImg = (a: HTMLAnchorElement, event: JQuery.Event<HTMLAnchorElement, null>) => {
     const img = document.createElement('img');
@@ -159,7 +159,7 @@ export class PgpBlockViewRenderModule {
     event.preventDefault();
     event.stopPropagation();
     event.stopImmediatePropagation();
-  }
+  };
 
   private getEncryptedSubjectText = (subject: string, isHtml: boolean) => {
     if (isHtml) {
@@ -170,6 +170,6 @@ export class PgpBlockViewRenderModule {
     } else {
       return `Encrypted Subject: ${subject}\n----------------------------------------------------------------------------------------------------\n`;
     }
-  }
+  };
 
 }

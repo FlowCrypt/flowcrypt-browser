@@ -34,7 +34,7 @@ export class ContactStore {
       // is there any intersection
       (x.pubkey && KeyUtil.getPubkeyLongids(x.pubkey).some(y => emailOrLongid.includes(y))));
     return result;
-  }
+  };
 
   public static update = async (db: void, email: string | string[], update: ContactUpdate): Promise<void> => {
     if (Array.isArray(email)) {
@@ -60,7 +60,7 @@ export class ContactStore {
       updated.expiresOn = key.expiration ? Number(key.expiration) : null;
       updated.hasPgp = 1;
     }
-  }
+  };
 
   public static obj = async ({ email, name, pubkey, lastUse, lastCheck }: any): Promise<Contact> => {
     if (!pubkey) {
@@ -88,7 +88,7 @@ export class ContactStore {
       revoked: pk.revoked
     } as Contact;
     return contact;
-  }
+  };
 
   public static save = async (db: any, contact: Contact | Contact[]): Promise<void> => {
     if (Array.isArray(contact)) {
@@ -96,5 +96,5 @@ export class ContactStore {
     } else {
       DATA.push(contact);
     }
-  }
+  };
 }

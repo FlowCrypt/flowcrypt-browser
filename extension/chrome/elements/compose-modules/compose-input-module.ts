@@ -28,22 +28,22 @@ export class ComposeInputModule extends ViewModule<ComposeView> {
     if (this.view.debug) {
       this.insertDebugElements();
     }
-  }
+  };
 
   public addRichTextFormatting = () => {
     this.squire.setConfig({ addLinks: true });
-  }
+  };
 
   public removeRichTextFormatting = () => {
     this.squire.setHTML(Xss.htmlSanitizeAndStripAllTags(this.squire.getHTML(), '<br>'));
     this.squire.setConfig({ addLinks: false });
-  }
+  };
 
   public inputTextHtmlSetSafely = (html: string) => {
     this.squire.setHTML(
       Xss.htmlSanitize(Xss.htmlSanitizeKeepBasicTags(html, 'IMG-KEEP'))
     );
-  }
+  };
 
   public extract = (type: 'text' | 'html', elSel: 'input_text' | 'input_intro', flag?: 'SKIP-ADDONS') => {
     let html = this.view.S.cached(elSel)[0].innerHTML;
@@ -54,11 +54,11 @@ export class ComposeInputModule extends ViewModule<ComposeView> {
       return Xss.htmlSanitizeKeepBasicTags(html, 'IMG-KEEP');
     }
     return Xss.htmlUnescape(Xss.htmlSanitizeAndStripAllTags(html, '\n', false));
-  }
+  };
 
   public extractAttachments = () => {
     return this.view.S.cached('fineuploader').find('.qq-upload-file').toArray().map((el) => $(el).text().trim());
-  }
+  };
 
   public extractAll = (): NewMsgData => {
     const recipientElements = this.view.recipientsModule.getRecipients();
@@ -70,11 +70,11 @@ export class ComposeInputModule extends ViewModule<ComposeView> {
     const pwd = typeof password === 'string' && password ? password : undefined;
     const from = this.view.senderModule.getSender();
     return { recipients, subject, plaintext, plainhtml, pwd, from };
-  }
+  };
 
   public isRichText = () => {
     return this.view.sendBtnModule.popover.choices.richtext;
-  }
+  };
 
   private handlePaste = () => {
     this.squire.addEventListener('willPaste', (e: WillPasteEvent) => {
@@ -85,7 +85,7 @@ export class ComposeInputModule extends ViewModule<ComposeView> {
       Xss.setElementContentDANGEROUSLY(div, sanitized); // xss-sanitized
       e.fragment.appendChild(div);
     });
-  }
+  };
 
   private handlePasteImages = () => {
     this.squire.addEventListener('drop', (ev: DragEvent) => {
@@ -114,7 +114,7 @@ export class ComposeInputModule extends ViewModule<ComposeView> {
     this.squire.addEventListener('dragover', (e: DragEvent) => {
       e.preventDefault(); // this is needed for 'drop' event to fire
     });
-  }
+  };
 
   private handleRTL = () => {
     const checkRTL = () => {
@@ -133,7 +133,7 @@ export class ComposeInputModule extends ViewModule<ComposeView> {
       }
     };
     this.squire.addEventListener('input', checkRTL);
-  }
+  };
 
   private initShortcuts = () => {
     try {
@@ -177,7 +177,7 @@ export class ComposeInputModule extends ViewModule<ComposeView> {
     } catch (e) {
       Catch.reportErr(e);
     }
-  }
+  };
 
   private resizeReplyBox = () => {
     this.squire.addEventListener('cursor', (e: CursorEvent) => {
@@ -186,7 +186,7 @@ export class ComposeInputModule extends ViewModule<ComposeView> {
         this.view.sizeModule.resizeComposeBox(0, cursorContainer?.offsetTop);
       }
     });
-  }
+  };
 
   // https://github.com/FlowCrypt/flowcrypt-browser/issues/2400
   private scrollIntoView = () => {
@@ -203,14 +203,14 @@ export class ComposeInputModule extends ViewModule<ComposeView> {
         Catch.reportErr(e);
       }
     });
-  }
+  };
 
   private actionAddIntroHandler = (addIntroBtn: HTMLElement) => {
     $(addIntroBtn).css('display', 'none');
     this.view.S.cached('intro_container').css('display', 'table-row');
     this.view.S.cached('input_intro').focus();
     this.view.sizeModule.setInputTextHeightManuallyIfNeeded();
-  }
+  };
 
   private mapRecipients = (recipients: RecipientElement[]) => {
     const result: Recipients = { to: [], cc: [], bcc: [] };
@@ -228,7 +228,7 @@ export class ComposeInputModule extends ViewModule<ComposeView> {
       }
     }
     return result;
-  }
+  };
 
   // We need this method to test images in drafts because we can't paste them dirctly in tests.
   private insertDebugElements = () => {
@@ -237,5 +237,5 @@ export class ComposeInputModule extends ViewModule<ComposeView> {
       this.squire.insertImage(String($(input).val()), {});
       await this.view.draftModule.draftSave();
     }));
-  }
+  };
 }

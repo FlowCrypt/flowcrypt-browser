@@ -47,15 +47,15 @@ View.run(class DebugApiView extends View {
     } else {
       Xss.sanitizeAppend('#content', `Unknown which: ${Xss.escape(this.which)}`);
     }
-  }
+  };
 
   public setHandlers = () => {
     // No need
-  }
+  };
 
   private renderCallRes = (api: string, variables: Dict<any>, result: any, error?: any) => {
     const r = `<b>${api} ${JSON.stringify(variables)}</b><pre data-test="container-pre">${JSON.stringify(result, undefined, 2)} (${error ? JSON.stringify(error) : 'no err'})</pre>`;
     Xss.sanitizeAppend('#content', r);
-  }
+  };
 
 });

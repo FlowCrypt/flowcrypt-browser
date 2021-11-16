@@ -42,7 +42,7 @@ View.run(class AddPubkeyView extends View {
     }
     this.fetchKeyUi.handleOnPaste($('.pubkey'));
     $('.action_settings').click(this.setHandler(async () => await Browser.openSettingsPage('index.htm', this.acctEmail, '/chrome/settings/modules/contacts.htm')));
-  }
+  };
 
   public setHandlers = () => {
     this.attachmentUI.initAttachmentDialog('fineuploader', 'fineuploader_button', {
@@ -63,11 +63,11 @@ View.run(class AddPubkeyView extends View {
     $('select.copy_from_email').change(this.setHandler((el) => this.copyFromEmailHandler(el)));
     $('.action_ok').click(this.setHandler(() => this.submitHandler()));
     $('.action_close').click(this.setHandler(() => this.closeDialog()));
-  }
+  };
 
   private closeDialog = () => {
     BrowserMsg.send.closeDialog(this.parentTabId);
-  }
+  };
 
   private copyFromEmailHandler = async (fromSelect: HTMLElement) => {
     if ($(fromSelect).val()) {
@@ -81,7 +81,7 @@ View.run(class AddPubkeyView extends View {
     } else {
       $('.pubkey').val('').prop('disabled', false);
     }
-  }
+  };
 
   private submitHandler = async () => {
     try {
@@ -97,5 +97,5 @@ View.run(class AddPubkeyView extends View {
         await Ui.modal.error(`Error happened when processing the public key: ${e instanceof Error ? e.message : String(e)}`);
       }
     }
-  }
+  };
 });

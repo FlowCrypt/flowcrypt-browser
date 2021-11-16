@@ -57,7 +57,7 @@ View.run(class MyKeyView extends View {
     await this.renderPrivateKeyLink();
     await this.renderPubkeyShareableLink();
     await initPassphraseToggle(['input_passphrase']);
-  }
+  };
 
   public setHandlers = () => {
     $('.action_download_pubkey').click(this.setHandlerPrevent('double', () => this.downloadPubKeyHandler()));
@@ -68,7 +68,7 @@ View.run(class MyKeyView extends View {
     $('.action_cancel_download_cert').click(this.setHandler(() => { $('.enter_pp').hide(); }));
     const clipboardOpts = { text: () => this.keyInfo.public };
     new ClipboardJS('.action_copy_pubkey', clipboardOpts); // tslint:disable-line:no-unused-expression no-unsafe-any
-  }
+  };
 
   private renderPubkeyShareableLink = async () => {
     try {
@@ -83,7 +83,7 @@ View.run(class MyKeyView extends View {
       ApiErr.reportIfSignificant(e);
       $('.pubkey_link_container').remove();
     }
-  }
+  };
 
   private downloadRevocationCert = async (enteredPP?: string) => {
     const prv = await KeyUtil.parse(this.keyInfo.private);
@@ -115,17 +115,17 @@ View.run(class MyKeyView extends View {
     const name = `${this.acctEmail.replace(/[^a-z0-9]+/g, '')}-0x${this.keyInfo.longid}.revocation-cert.asc`;
     const prvKeyAttachment = new Attachment({ data: Buf.fromUtfStr(revokedArmored), type: 'application/pgp-keys', name });
     Browser.saveToDownloads(prvKeyAttachment);
-  }
+  };
 
   private downloadPubKeyHandler = () => {
     Browser.saveToDownloads(Attachment.keyinfoAsPubkeyAttachment(this.keyInfo));
-  }
+  };
 
   private downloadPrvKeyHandler = () => {
     const name = `flowcrypt-backup-${this.acctEmail.replace(/[^A-Za-z0-9]+/g, '')}-0x${this.keyInfo.longid}.asc`;
     const prvKeyAttachment = new Attachment({ data: Buf.fromUtfStr(this.keyInfo.private), type: 'application/pgp-keys', name });
     Browser.saveToDownloads(prvKeyAttachment);
-  }
+  };
 
   private renderPrivateKeyLink = () => {
     if (!this.orgRules.usesKeyManager()) {
@@ -137,6 +137,6 @@ View.run(class MyKeyView extends View {
       $('.container_download_prv').remove();
       $('div span.orange_label').show();
     }
-  }
+  };
 
 });

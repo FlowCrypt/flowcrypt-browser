@@ -15,13 +15,13 @@ export class PassphraseStore extends AbstractStore {
   public static get = async (acctEmail: string, keyInfo: { longid: string }, ignoreSession: boolean = false): Promise<string | undefined> => {
     const storageIndex = PassphraseStore.getIndex(keyInfo.longid);
     return await PassphraseStore.getByIndex(acctEmail, storageIndex, ignoreSession);
-  }
+  };
 
   // if we implement (and migrate) password storage to use KeyIdentity instead of longid, we'll have `keyInfo: KeyIdentity` here
   public static set = async (storageType: StorageType, acctEmail: string, keyInfo: { longid: string }, passphrase: string | undefined): Promise<void> => {
     const storageIndex = PassphraseStore.getIndex(keyInfo.longid);
     await PassphraseStore.setByIndex(storageType, acctEmail, storageIndex, passphrase);
-  }
+  };
 
   public static waitUntilPassphraseChanged = async (
     acctEmail: string, missingOrWrongPpKeyLongids: string[], interval = 1000, cancellation: PromiseCancellation = { cancel: false }
@@ -44,11 +44,11 @@ export class PassphraseStore extends AbstractStore {
       }
     }
     return false;
-  }
+  };
 
   private static getIndex = (longid: string): AccountIndex => {
     return `passphrase_${longid}` as AccountIndex;
-  }
+  };
 
   private static getByIndex = async (acctEmail: string, storageIndex: AccountIndex, ignoreSession: boolean = false): Promise<string | undefined> => {
     const storage = await AcctStore.get(acctEmail, [storageIndex]);
@@ -61,7 +61,7 @@ export class PassphraseStore extends AbstractStore {
     }
     const res = await InMemoryStore.get(acctEmail, storageIndex) ?? undefined;
     return res;
-  }
+  };
 
   private static setByIndex = async (storageType: StorageType, acctEmail: string, storageIndex: AccountIndex, passphrase: string | undefined): Promise<void> => {
     if (storageType === 'session') {
@@ -75,6 +75,6 @@ export class PassphraseStore extends AbstractStore {
         await AcctStore.set(acctEmail, toSave);
       }
     }
-  }
+  };
 
 }

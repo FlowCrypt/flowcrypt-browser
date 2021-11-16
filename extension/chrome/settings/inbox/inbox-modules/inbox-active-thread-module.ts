@@ -66,7 +66,7 @@ export class InboxActiveThreadModule extends ViewModule<InboxView> {
         Xss.sanitizeRender('.thread', `<br>Failed to load thread due to the following error: <pre>${printable}</pre>`);
       }
     }
-  }
+  };
 
   public setHandlers = () => {
     if (this.threadHasPgpBlock) {
@@ -95,7 +95,7 @@ export class InboxActiveThreadModule extends ViewModule<InboxView> {
       }
     });
     BrowserMsg.addListener('reply_pubkey_mismatch', BrowserMsgCommonHandlers.replyPubkeyMismatch);
-  }
+  };
 
   private renderMsg = async (message: GmailRes.GmailMsg) => {
     const htmlId = this.replyMsgId(message.id);
@@ -143,7 +143,7 @@ export class InboxActiveThreadModule extends ViewModule<InboxView> {
         Xss.sanitizeAppend('.thread', this.wrapMsg(htmlId, `Failed to load a message due to the following error: <pre>${printable}</pre>`));
       }
     }
-  }
+  };
 
   private exportMsgForDebug = async (msgId: string) => {
     const full = await this.view.gmail.msgGet(msgId, 'full');
@@ -159,7 +159,7 @@ export class InboxActiveThreadModule extends ViewModule<InboxView> {
     const combined = { acctEmail: this.view.acctEmail, full, attachments, raw };
     const json = JSON.stringify(combined, undefined, 2);
     Browser.saveToDownloads(new Attachment({ data: Buf.fromUtfStr(json), type: 'application/json', name: `message-export-${msgId}.json` }));
-  }
+  };
 
   private redactExportMsgHeaders = (msg: GmailRes.GmailMsg) => {
     const exclude = ['received', 'dkim', 'authentication', 'feedback', 'ip', 'mailgun', 'unsubscribe', 'return',
@@ -181,26 +181,26 @@ export class InboxActiveThreadModule extends ViewModule<InboxView> {
         return true;
       });
     }
-  }
+  };
 
   private replyMsgId = (msgId: string) => {
     return 'message_id_' + msgId;
-  }
+  };
 
   private renderReplyBox = (replyMsgId: string) => {
     const params: FactoryReplyParams = { replyMsgId };
     this.view.S.cached('thread').append(Ui.e('div', { class: 'reply line', html: this.view.factory.embeddedReply(params, false, false) })); // xss-safe-factory
-  }
+  };
 
   private updateUrlWithoutRedirecting = (title: string, params: UrlParams) => {
     const newUrlSearch = Url.create('', params);
     if (newUrlSearch !== window.location.search) {
       window.history.pushState({}, title, newUrlSearch);
     }
-  }
+  };
 
   private wrapMsg = (id: string, html: string) => {
     return Ui.e('div', { id, class: 'message line', html });
-  }
+  };
 
 }

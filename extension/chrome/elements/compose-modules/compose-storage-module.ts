@@ -219,7 +219,7 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
     } catch (e) {
       ApiErr.reportIfSignificant(e);
     }
-  }
+  };
 
   public refreshAccountAndSubscriptionIfLoggedIn = async () => {
     const auth = await AcctStore.authInfo(this.view.acctEmail);

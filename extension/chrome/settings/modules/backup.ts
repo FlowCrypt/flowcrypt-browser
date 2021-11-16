@@ -92,7 +92,7 @@ export class BackupView extends View {
         await this.statusModule.checkAndRenderBackupStatus();
       }
     }
-  }
+  };
 
   public renderBackupDone = async (backedUpCount: number) => {
     if (this.action === 'setup_automatic' || this.action === 'setup_manual') {
@@ -106,29 +106,29 @@ export class BackupView extends View {
     } else if (this.parentTabId) { // should be always true as setup_manual is excluded by this point
       Settings.redirectSubPage(this.acctEmail, this.parentTabId, '/chrome/settings/modules/backup.htm');
     }
-  }
+  };
 
   public displayBlock = (showBlockName: string) => {
     for (const block of this.blocks) {
       $(`#${block}`).css('display', 'none');
     }
     $(`#${showBlockName}`).css('display', 'block');
-  }
+  };
 
   public setHandlers = () => {
     this.statusModule.setHandlers();
     this.manualModule.setHandlers();
-  }
+  };
 
   private addKeyToBackup = (keyIdentity: KeyIdentity) => {
     if (!this.prvKeysToManuallyBackup.some(prvIdentity => KeyUtil.identityEquals(prvIdentity, keyIdentity))) {
       this.prvKeysToManuallyBackup.push(keyIdentity);
     }
-  }
+  };
 
   private removeKeyToBackup = (keyIdentity: KeyIdentity) => {
     this.prvKeysToManuallyBackup.splice(this.prvKeysToManuallyBackup.findIndex(prvIdentity => KeyUtil.identityEquals(prvIdentity, keyIdentity)), 1);
-  }
+  };
 
   private preparePrvKeysBackupSelection = async () => {
     const kinfos = await KeyStore.getTypedKeyInfos(this.acctEmail);
@@ -140,7 +140,7 @@ export class BackupView extends View {
     } else if (kinfos.length === 1 && kinfos[0].type === 'openpgp') {
       this.addKeyToBackup({ id: kinfos[0].id, type: kinfos[0].type });
     }
-  }
+  };
 
   private renderPrvKeysBackupSelection = async (kinfos: TypedKeyInfo[]) => {
     for (const ki of kinfos) {
@@ -175,7 +175,7 @@ export class BackupView extends View {
       }
     }));
     $('#key_backup_selection_container').show();
-  }
+  };
 }
 
 View.run(BackupView);

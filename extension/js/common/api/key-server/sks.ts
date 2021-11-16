@@ -56,7 +56,7 @@ export class Sks extends Api {
       }
     }
     return await this.lookupFingerprint(Object.keys(foundUidsByLongid)[0]); // else return the first pubkey
-  }
+  };
 
   public lookupFingerprint = async (fingerprintOrLongid: string): Promise<PubkeySearchResult> => {
     if (fingerprintOrLongid.includes('@')) {
@@ -67,7 +67,7 @@ export class Sks extends Api {
       return { pubkey: null }; // tslint:disable-line:no-null-keyword
     }
     return { pubkey };
-  }
+  };
 
   private get = async (path: string): Promise<string | undefined> => {
     try {
@@ -79,6 +79,6 @@ export class Sks extends Api {
       }
       throw e;
     }
-  }
+  };
 
 }

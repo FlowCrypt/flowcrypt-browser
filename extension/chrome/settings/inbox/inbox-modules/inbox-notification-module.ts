@@ -22,7 +22,7 @@ export class InboxNotificationModule extends ViewModule<InboxView> {
   public render = () => {
     this.view.S.cached('body').prepend(this.view.factory.metaNotificationContainer()); // xss-safe-factory
     this.setHandlers();
-  }
+  };
 
   public renderAndHandleAuthPopupNotification = (insufficientPermission = false) => {
     let msg = `Your Google Account needs to be re-connected to your browser <a href="#" class="action_auth_popup">Connect Account</a>`;
@@ -34,22 +34,22 @@ export class InboxNotificationModule extends ViewModule<InboxView> {
       window.location.reload();
     };
     this.showNotification(msg, { action_auth_popup: newAuthPopup, action_add_permission: newAuthPopup });
-  }
+  };
 
   public showNotification = (notification: string, callbacks?: Dict<() => void>) => {
     this.notifications.show(notification, callbacks);
     $('body').one('click', this.view.setHandler(this.notifications.clear));
-  }
+  };
 
   private setHandlers = () => {
     BrowserMsg.addListener('notification_show', this.notificationShowHandler);
     BrowserMsg.addListener('notification_show_auth_popup_needed', async ({ acctEmail }: Bm.NotificationShowAuthPopupNeeded) => {
       this.notifications.showAuthPopupNeeded(acctEmail);
     });
-  }
+  };
 
   private notificationShowHandler: Bm.AsyncResponselessHandler = async ({ notification, callbacks }: Bm.NotificationShow) => {
     this.showNotification(notification, callbacks);
-  }
+  };
 
 }

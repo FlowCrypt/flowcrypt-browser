@@ -33,21 +33,21 @@ export class ComposePwdOrPubkeyContainerModule extends ViewModule<ComposeView> {
       e.preventDefault();
       await this.view.renderModule.openSettingsWithDialog('security');
     }, this.view.errModule.handle(`render settings dialog`)));
-  }
+  };
 
   public inputPwdFocusHandler = () => {
     const passwordContainerHeight = this.view.S.cached('password_or_pubkey').outerHeight() || 0;
     this.view.S.cached('expiration_note').css({ bottom: passwordContainerHeight });
     this.view.S.cached('expiration_note').fadeIn();
     this.showHideContainerAndColorSendBtn(); // tslint:disable-line:no-floating-promises
-  }
+  };
 
   public inputPwdBlurHandler = () => {
     Catch.setHandledTimeout(() => { // timeout here is needed so <a> will be visible once clicked
       this.view.S.cached('expiration_note').fadeOut();
     }, 100);
     this.showHideContainerAndColorSendBtn(); // tslint:disable-line:no-floating-promises
-  }
+  };
 
   public showHideContainerAndColorSendBtn = async () => {
     this.view.sendBtnModule.resetSendBtn();
@@ -78,11 +78,11 @@ export class ComposePwdOrPubkeyContainerModule extends ViewModule<ComposeView> {
       }
     }
     this.view.sizeModule.setInputTextHeightManuallyIfNeeded();
-  }
+  };
 
   public isVisible = () => {
     return !this.view.S.cached('password_or_pubkey').is(':hidden');
-  }
+  };
 
   private showMsgPwdUiAndColorBtn = async (anyNopgp: boolean, anyRevoked: boolean) => {
     if (!this.isVisible()) {
@@ -120,7 +120,7 @@ export class ComposePwdOrPubkeyContainerModule extends ViewModule<ComposeView> {
       const { removeValidationElements } = this.keyImportUI.renderPassPhraseStrengthValidationInput($("#input_password"), undefined, 'pwd');
       this.rmPwdStrengthValidationElements = removeValidationElements;
     }
-  }
+  };
 
   private hideMsgPwdUi = () => {
     this.view.S.cached('password_or_pubkey').css('display', 'none');
@@ -133,6 +133,6 @@ export class ComposePwdOrPubkeyContainerModule extends ViewModule<ComposeView> {
       this.rmPwdStrengthValidationElements = undefined;
     }
     this.view.sizeModule.setInputTextHeightManuallyIfNeeded();
-  }
+  };
 
 }
