@@ -10,7 +10,6 @@ import { opgp } from './pgp/openpgpjs-custom.js';
 import { OpenPGPKey } from './pgp/openpgp-key.js';
 import { SmimeKey } from './smime/smime-key.js';
 import { MsgBlock } from '../msg-block.js';
-import { PubkeyInfo } from '../../platform/store/contact-store.js';
 
 /**
  * This is a common Key interface for both OpenPGP and X.509 keys.
@@ -399,7 +398,18 @@ export class KeyUtil {
     return [ki.longid];
   };
 
-  public static usableAllowingExpired = (pubinfo: PubkeyInfo) => {
-    return !pubinfo.revoked && (pubinfo.pubkey.usableForEncryption || pubinfo.pubkey.usableForEncryptionButExpired);
+  /**
+   * Used for comparing public keys that were fetched vs the stored ones
+   * Soon also for private keys: https://github.com/FlowCrypt/flowcrypt-browser/issues/2602
+   */
+  public static isFetchedNewer = ({ stored, fetched }: { stored: Key, fetched: Key }) => {
+    if (!stored.lastModified) {
+      return !!fetched.lastModified;
+    }
+    if (!fetched.lastModified) {
+      return false;
+    }
+    return fetched.lastModified > stored.lastModified;
   };
+
 }
