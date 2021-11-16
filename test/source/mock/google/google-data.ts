@@ -227,7 +227,7 @@ export class GoogleData {
 
   public getMessagesAndDraftsByThread = (threadId: string) => {
     return this.getMessagesAndDrafts().filter(m => m.threadId === threadId);
-  }
+  };
 
   public getMessagesByThread = (threadId: string) => {
     return DATA[this.acct].messages.filter(m => m.threadId === threadId);
@@ -291,7 +291,7 @@ export class GoogleData {
   // returns ordinary messages and drafts
   private getMessagesAndDrafts = () => {
     return DATA[this.acct].messages.concat(DATA[this.acct].drafts);
-  }
+  };
 
   private searchMessagesBySubject = (subject: string) => {
     subject = subject.trim().toLowerCase();

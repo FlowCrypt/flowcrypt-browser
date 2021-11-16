@@ -162,7 +162,7 @@ export class InboxView extends View {
         this.injector.openComposeWin(draftId);
       });
     }
-  }
+  };
 
 }
 

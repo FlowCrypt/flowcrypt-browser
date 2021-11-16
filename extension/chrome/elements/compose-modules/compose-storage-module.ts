@@ -39,14 +39,14 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
       this.view.errModule.debug(`ComposerStorage.getKeyOptional: found key based on senderEmail: ${senderEmail}`);
     }
     return result;
-  }
+  };
 
   public getKey = async (senderEmail: string | undefined, type?: 'openpgp' | 'x509' | undefined): Promise<KeyInfo> => {
     const result = await this.getKeyOptional(senderEmail, type);
     Assert.abortAndRenderErrorIfKeyinfoEmpty(result);
     this.view.errModule.debug(`ComposerStorage.getKey: returning key longid: ${result!.longid}`);
     return result!;
-  }
+  };
 
   // used when encryption is needed
   // returns a set of keys of a single family ('openpgp' or 'x509')
@@ -83,14 +83,14 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
       return x[1].emailsWithoutPubkeys.length * 100 + (x[1].senderKi ? 0 : 10) + (x[0] === 'openpgp' ? 0 : 1);
     };
     return Object.entries(resultsPerType).sort((a, b) => rank(a) - rank(b))[0][1];
-  }
+  };
 
   public passphraseGet = async (senderKi: { longid: string }) => {
     if (!senderKi) {
       senderKi = await KeyStore.getFirstRequired(this.view.acctEmail);
     }
     return await PassphraseStore.get(this.view.acctEmail, senderKi);
-  }
+  };
 
   public decryptSenderKey = async (senderKi: KeyInfo): Promise<Key | undefined> => {
     const prv = await KeyUtil.parse(senderKi.private);
@@ -110,7 +110,7 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
       }
       return prv;
     }
-  }
+  };
 
   public isPwdMatchingPassphrase = async (pwd: string): Promise<boolean> => {
     const kis = await KeyStore.get(this.view.acctEmail);
@@ -126,7 +126,7 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
       }
     }
     return false;
-  }
+  };
 
   /**
    * Updates them asynchronously if there is at least one usable key for recipient
@@ -159,7 +159,7 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
     this.view.errModule.debug(`getUpToDatePubkeys.updatedContact.sortedPubkeys.length(${updatedContact?.sortedPubkeys.length})`);
     this.view.errModule.debug(`getUpToDatePubkeys.updatedContact(${updatedContact})`);
     return updatedContact?.sortedPubkeys ?? [];
-  }
+  };
 
   /**
    * We are searching recipient public key by email every time we enter the recipient.
@@ -193,7 +193,7 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
       }
       throw e;
     }
-  }
+  };
 
   public checkKeyserverForNewerVersionOfKnownPubkeyIfNeeded = async (
     email: string, pubkeyInfo: PubkeyInfo) => {
@@ -238,7 +238,7 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
         throw e;
       }
     }
-  }
+  };
 
   private collectPubkeysByType = (type: 'openpgp' | 'x509', contacts: { email: string, keys: Key[] }[]): { pubkeys: PubkeyResult[], emailsWithoutPubkeys: string[] } => {
     const pubkeys: PubkeyResult[] = [];
@@ -258,5 +258,5 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
       }
     }
     return { pubkeys, emailsWithoutPubkeys };
-  }
+  };
 }
