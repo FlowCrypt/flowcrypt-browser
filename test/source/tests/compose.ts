@@ -13,7 +13,7 @@ import { InboxPageRecipe } from './page-recipe/inbox-page-recipe';
 import { OauthPageRecipe } from './page-recipe/oauth-page-recipe';
 import { PageRecipe } from './page-recipe/abstract-page-recipe';
 import { SettingsPageRecipe } from './page-recipe/settings-page-recipe';
-import { somePubkey } from './../mock/attester/attester-endpoints';
+import { protonMailCompatKey, somePubkey } from './../mock/attester/attester-endpoints';
 import { TestUrls } from './../browser/test-urls';
 import { TestVariant } from './../util';
 import { TestWithBrowser } from './../test';
@@ -1324,6 +1324,36 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       await addPubkeyDialog.waitAndRespondToModal('warning', 'confirm', 'This public key is correctly formatted, but it cannot be used for encryption because it expired on 2020-07-16 09:56.');
     }));
 
+    // we test that list of public keys get refetched even if we already have a good key
+    // useful when recipient now has a completely different public key
+    ava.default('compose - list of pubkeys gets refetched in compose', testWithBrowser('ci.tests.gmail', async (t, browser) => {
+      const recipientEmail = 'mock.only.pubkey@flowcrypt.com'; // has "somePubkey" on Attester
+      const validKey = protonMailCompatKey; // doesn't really matter which key we import, as long as different from "somePubkey"
+      const settingsPage = await browser.newPage(t, TestUrls.extensionSettings('ci.tests.gmail@flowcrypt.test'));
+      const contactsFrame = await importKeyManuallyAndViewTheNewContact(settingsPage, recipientEmail, validKey, 'IMPORT KEY');
+      await contactsFrame.waitForContent('@page-contacts', 'openpgp - active - AB8C F86E 3715 7C3F 290D 7200 7ED4 3D79 E961 7655');
+      await contactsFrame.waitAndClick(`@action-show-pubkey-AB8CF86E37157C3F290D72007ED43D79E9617655-openpgp`, { confirmGone: true });
+      await contactsFrame.waitForContent('@container-pubkey-details', 'Fingerprint: AB8C F86E 3715 7C3F 290D 7200 7ED4 3D79 E961 7655');
+      await contactsFrame.waitForContent('@container-pubkey-details', 'Users: flowcrypt.compatibility@protonmail.com');
+      // now we want to see that compose page auto-fetches the other key too
+      const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
+      await ComposePageRecipe.fillMsg(composePage, { to: recipientEmail }, t.title);
+      // could further test that the message below already gets encrypted with the new public keys
+      //  - currently not tested
+      await ComposePageRecipe.sendAndClose(composePage);
+      // make sure that the contact got updated to include two keys now
+      await contactsFrame.waitAndClick('@action-back-to-contact-list', { confirmGone: true });
+      await contactsFrame.waitAndClick(`@action-show-email-${recipientEmail.replace(/[^a-z0-9]+/g, '')}`);
+      // contains original key
+      await contactsFrame.waitForContent('@page-contacts', 'openpgp - active - AB8C F86E 3715 7C3F 290D 7200 7ED4 3D79 E961 7655');
+      // contains newly fetched key
+      await contactsFrame.waitForContent('@page-contacts', 'openpgp - active - 8B8A 05A2 216E E6E4 C5EE 3D54 0D56 88EB F310 2BE7');
+      await contactsFrame.waitAndClick(`@action-show-pubkey-8B8A05A2216EE6E4C5EE3D540D5688EBF3102BE7-openpgp`, { confirmGone: true });
+      await contactsFrame.waitForContent('@container-pubkey-details', 'Fingerprint: 8B8A 05A2 216E E6E4 C5EE 3D54 0D56 88EB F310 2BE7');
+      await contactsFrame.waitForContent('@container-pubkey-details', 'Users: tom@bitoasis.net');
+    }));
+
+    // we test that expired key gets re-fetched to become active again
     ava.default('auto-refresh expired key if newer version of the same key available', testWithBrowser('ci.tests.gmail', async (t, browser) => {
       // add an expired key manually
       const settingsPage = await browser.newPage(t, TestUrls.extensionSettings('ci.tests.gmail@flowcrypt.test'));
@@ -1345,6 +1375,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       await contactsFrame.waitForContent('@container-pubkey-details', 'Expiration: Does not expire');
     }));
 
+    // we test that key re-fetching does not happen when attester is disabled
     ava.default('don\'t auto-refresh expired key if disallowed search on attester', testWithBrowser(undefined, async (t, browser) => {
       const acct = 'user@no-search-wildcard-domains-org-rule.flowcrypt.test';
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
@@ -1628,23 +1659,30 @@ export const expectRecipientElements = async (controllable: ControllablePage, ex
   }
 };
 
-const importExpiredKeyForAutoRefresh = async (settingsPage: ControllablePage) => {
-  const expiredPublicKey = '-----BEGIN PGP PUBLIC KEY BLOCK-----\r\nVersion: FlowCrypt Email Encryption 7.8.4\r\nComment: Seamlessly send and receive encrypted email\r\n\r\nxsBNBF8PcdUBCADi8no6T4Bd9Ny5COpbheBuPWEyDOedT2EVeaPrfutB1D8i\r\nCP6Rf1cUvs/qNUX/O7HQHFpgFuW2uOY4OU5cvcrwmNpOxT3pPt2cavxJMdJo\r\nfwEvloY3OfY7MCqdAj5VUcFGMhubfV810V2n5pf2FFUNTirksT6muhviMymy\r\nuWZLdh0F4WxrXEon7k3y2dZ3mI4xsG+Djttb6hj3gNr8/zNQQnTmVjB0mmpO\r\nFcGUQLTTTYMngvVMkz8/sh38trqkVGuf/M81gkbr1egnfKfGz/4NT3qQLjin\r\nnA8In2cSFS/MipIV14gTfHQAICFIMsWuW/xkaXUqygvAnyFa2nAQdgELABEB\r\nAAHNKDxhdXRvLnJlZnJlc2guZXhwaXJlZC5rZXlAcmVjaXBpZW50LmNvbT7C\r\nwJMEEAEIACYFAl8PcdUFCQAAAAEGCwkHCAMCBBUICgIEFgIBAAIZAQIbAwIe\r\nAQAhCRC+46QtmpyKyRYhBG0+CYZ1RO5ify6Sj77jpC2anIrJIvQIALG8TGMN\r\nYB4CRouMJawNCLui6Fx4Ba1ipPTaqlJPybLoe6z/WVZwAA9CmbjkCIk683pp\r\nmGQ3GXv7f8Sdk7DqhEhfZ7JtAK/Uw2VZqqIryNrrB0WV3EUHsENCOlq0YJod\r\nLqtkqgl83lCNDIkeoQwq4IyrgC8wsPgF7YMpxxQLONJvChZxSdCDjnfX3kvO\r\nZsLYFiKnNlX6wyrKAQxWnxxYhglMf0GDDyh0AJ+vOQHJ9m+oeBnA1tJ5AZU5\r\naQHvRtyWBKkYaEhljhyWr3eu1JjK4mn7/W6Rszveso33987wtIoQ66GpGcX2\r\nmh7y217y/uXz4D3X5PUEBXIbhvAPty71bnTOwE0EXw9x1QEIALdJgAsQ0Jnv\r\nLXwAKoOammWlUQmracK89v1Yc4mFnImtHDHS3pGsbx3DbNGuiz5BhXCdoPDf\r\ngMxlGmJgShy9JAhrhWFXkvsjW/7aO4bM1wU486VPKXb7Av/dcrfHH0ASj4zj\r\n/TYAeubNoxQtxHgyb13LVCW1kh4Oe6s0ac/hKtxogwEvNFY3x+4yfloHH0Ik\r\n9sbLGk0gS03bPABDHMpYk346406f5TuP6UDzb9M90i2cFxbq26svyBzBZ0vY\r\nzfMRuNsm6an0+B/wS6NLYBqsRyxwwCTdrhYS512yBzCHDYJJX0o3OJNe85/0\r\nTqEBO1prgkh3QMfw13/Oxq8PuMsyJpUAEQEAAcLAfAQYAQgADwUCXw9x1QUJ\r\nAAAAAQIbDAAhCRC+46QtmpyKyRYhBG0+CYZ1RO5ify6Sj77jpC2anIrJARgH\r\n/1KV7JBOS2ZEtO95FrLYnIqI45rRpvT1XArpBPrYLuHtDBwgMcmpiMhhKIZC\r\nFlZkR1W88ENdSkr8Nx81nW+f9JWRR6HuSyom7kOfS2Gdbfwo3bgp48DWr7K8\r\nKV/HHGuqLqd8UfPyDpsBGNx0w7tRo+8vqUbhskquLAIahYCbhEIE8zgy0fBV\r\nhXKFe1FjuFUoW29iEm0tZWX0k2PT5r1owEgDe0g/X1AXgSQyfPRFVDwE3QNJ\r\n1np/Rmygq1C+DIW2cohJOc7tO4gbl11XolsfQ+FU+HewYXy8aAEbrTSRfsff\r\nMvK6tgT9BZ3kzjOxT5ou2SdvTa0eUk8k+zv8OnJJfXA=\r\n=LPeQ\r\n-----END PGP PUBLIC KEY BLOCK-----\r\n';
-  const recipientEmail = 'auto.refresh.expired.key@recipient.com';
-  // add an expired key manually
+const importKeyManuallyAndViewTheNewContact = async (
+  settingsPage: ControllablePage, recipientEmail: string, pubkey: string, button: string
+) => {
   await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
   const contactsFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-contacts-page', ['contacts.htm', 'placement=settings']);
   await contactsFrame.waitAll('@page-contacts');
   await contactsFrame.waitAndClick('@action-show-import-public-keys-form', { confirmGone: true });
-  await contactsFrame.waitAndType('@input-bulk-public-keys', expiredPublicKey);
+  await contactsFrame.waitAndType('@input-bulk-public-keys', pubkey);
   await contactsFrame.waitAndClick('@action-show-parsed-public-keys', { confirmGone: true });
   await contactsFrame.waitAll('iframe');
   const pubkeyFrame = await contactsFrame.getFrame(['pgp_pubkey.htm']);
-  await pubkeyFrame.waitForContent('@action-add-contact', 'IMPORT EXPIRED KEY');
+  await pubkeyFrame.waitForContent('@action-add-contact', button);
+  await pubkeyFrame.waitAndType('@input-email', recipientEmail);
   await pubkeyFrame.waitAndClick('@action-add-contact');
   await pubkeyFrame.waitForContent('@container-pgp-pubkey', `${recipientEmail} added`);
   await contactsFrame.waitAndClick('@action-back-to-contact-list', { confirmGone: true });
   await contactsFrame.waitAndClick(`@action-show-email-${recipientEmail.replace(/[^a-z0-9]+/g, '')}`);
+  return contactsFrame;
+};
+
+const importExpiredKeyForAutoRefresh = async (settingsPage: ControllablePage) => {
+  const expiredPublicKey = '-----BEGIN PGP PUBLIC KEY BLOCK-----\r\nVersion: FlowCrypt Email Encryption 7.8.4\r\nComment: Seamlessly send and receive encrypted email\r\n\r\nxsBNBF8PcdUBCADi8no6T4Bd9Ny5COpbheBuPWEyDOedT2EVeaPrfutB1D8i\r\nCP6Rf1cUvs/qNUX/O7HQHFpgFuW2uOY4OU5cvcrwmNpOxT3pPt2cavxJMdJo\r\nfwEvloY3OfY7MCqdAj5VUcFGMhubfV810V2n5pf2FFUNTirksT6muhviMymy\r\nuWZLdh0F4WxrXEon7k3y2dZ3mI4xsG+Djttb6hj3gNr8/zNQQnTmVjB0mmpO\r\nFcGUQLTTTYMngvVMkz8/sh38trqkVGuf/M81gkbr1egnfKfGz/4NT3qQLjin\r\nnA8In2cSFS/MipIV14gTfHQAICFIMsWuW/xkaXUqygvAnyFa2nAQdgELABEB\r\nAAHNKDxhdXRvLnJlZnJlc2guZXhwaXJlZC5rZXlAcmVjaXBpZW50LmNvbT7C\r\nwJMEEAEIACYFAl8PcdUFCQAAAAEGCwkHCAMCBBUICgIEFgIBAAIZAQIbAwIe\r\nAQAhCRC+46QtmpyKyRYhBG0+CYZ1RO5ify6Sj77jpC2anIrJIvQIALG8TGMN\r\nYB4CRouMJawNCLui6Fx4Ba1ipPTaqlJPybLoe6z/WVZwAA9CmbjkCIk683pp\r\nmGQ3GXv7f8Sdk7DqhEhfZ7JtAK/Uw2VZqqIryNrrB0WV3EUHsENCOlq0YJod\r\nLqtkqgl83lCNDIkeoQwq4IyrgC8wsPgF7YMpxxQLONJvChZxSdCDjnfX3kvO\r\nZsLYFiKnNlX6wyrKAQxWnxxYhglMf0GDDyh0AJ+vOQHJ9m+oeBnA1tJ5AZU5\r\naQHvRtyWBKkYaEhljhyWr3eu1JjK4mn7/W6Rszveso33987wtIoQ66GpGcX2\r\nmh7y217y/uXz4D3X5PUEBXIbhvAPty71bnTOwE0EXw9x1QEIALdJgAsQ0Jnv\r\nLXwAKoOammWlUQmracK89v1Yc4mFnImtHDHS3pGsbx3DbNGuiz5BhXCdoPDf\r\ngMxlGmJgShy9JAhrhWFXkvsjW/7aO4bM1wU486VPKXb7Av/dcrfHH0ASj4zj\r\n/TYAeubNoxQtxHgyb13LVCW1kh4Oe6s0ac/hKtxogwEvNFY3x+4yfloHH0Ik\r\n9sbLGk0gS03bPABDHMpYk346406f5TuP6UDzb9M90i2cFxbq26svyBzBZ0vY\r\nzfMRuNsm6an0+B/wS6NLYBqsRyxwwCTdrhYS512yBzCHDYJJX0o3OJNe85/0\r\nTqEBO1prgkh3QMfw13/Oxq8PuMsyJpUAEQEAAcLAfAQYAQgADwUCXw9x1QUJ\r\nAAAAAQIbDAAhCRC+46QtmpyKyRYhBG0+CYZ1RO5ify6Sj77jpC2anIrJARgH\r\n/1KV7JBOS2ZEtO95FrLYnIqI45rRpvT1XArpBPrYLuHtDBwgMcmpiMhhKIZC\r\nFlZkR1W88ENdSkr8Nx81nW+f9JWRR6HuSyom7kOfS2Gdbfwo3bgp48DWr7K8\r\nKV/HHGuqLqd8UfPyDpsBGNx0w7tRo+8vqUbhskquLAIahYCbhEIE8zgy0fBV\r\nhXKFe1FjuFUoW29iEm0tZWX0k2PT5r1owEgDe0g/X1AXgSQyfPRFVDwE3QNJ\r\n1np/Rmygq1C+DIW2cohJOc7tO4gbl11XolsfQ+FU+HewYXy8aAEbrTSRfsff\r\nMvK6tgT9BZ3kzjOxT5ou2SdvTa0eUk8k+zv8OnJJfXA=\r\n=LPeQ\r\n-----END PGP PUBLIC KEY BLOCK-----\r\n';
+  const recipientEmail = 'auto.refresh.expired.key@recipient.com';
+  const contactsFrame = await importKeyManuallyAndViewTheNewContact(settingsPage, recipientEmail, expiredPublicKey, 'IMPORT EXPIRED KEY');
   await contactsFrame.waitForContent('@page-contacts', 'openpgp - expired - 6D3E 0986 7544 EE62 7F2E 928F BEE3 A42D 9A9C 8AC9');
   await contactsFrame.waitAndClick(`@action-show-pubkey-6D3E09867544EE627F2E928FBEE3A42D9A9C8AC9-openpgp`, { confirmGone: true });
   await contactsFrame.waitForContent('@container-pubkey-details', 'Type: openpgp');
