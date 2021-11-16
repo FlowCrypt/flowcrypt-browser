@@ -195,32 +195,6 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
     }
   };
 
-  public checkKeyserverForNewerVersionOfKnownPubkeyIfNeeded = async (
-    email: string, pubkeyInfo: PubkeyInfo) => {
-    try {
-      const lastCheckOverWeekAgoOrNever = !pubkeyInfo.lastCheck ||
-        new Date(pubkeyInfo.lastCheck).getTime() < Date.now() - (1000 * 60 * 60 * 24 * 7);
-      if (lastCheckOverWeekAgoOrNever || KeyUtil.expired(pubkeyInfo.pubkey)) {
-        const { pubkey: fetchedPubkeyArmored } = await this.view.pubLookup.lookupFingerprint(pubkeyInfo.pubkey.id);
-        if (fetchedPubkeyArmored) {
-          const fetchedPubkey = await KeyUtil.parse(fetchedPubkeyArmored);
-          if (fetchedPubkey.lastModified && (!pubkeyInfo.pubkey.lastModified || fetchedPubkey.lastModified >= pubkeyInfo.pubkey.lastModified)) {
-            // the fetched pubkey has at least the same or newer signature
-            // the "same or newer" was due to a bug we encountered earlier where keys were badly recorded in db
-            // sometime in Oct 2020 we could turn the ">=" back to ">" above
-            await ContactStore.update(undefined, email, { pubkey: fetchedPubkey, lastUse: Date.now(), pubkeyLastCheck: Date.now() });
-            await this.view.recipientsModule.reRenderRecipientFor(email);
-            return;
-          }
-        }
-      }
-      await ContactStore.update(undefined, email, { pubkey: pubkeyInfo.pubkey, pubkeyLastCheck: Date.now() });
-      // we checked for newer key and it did not result in updating the key, don't check again for another week
-    } catch (e) {
-      ApiErr.reportIfSignificant(e);
-    }
-  };
-
   public refreshAccountAndSubscriptionIfLoggedIn = async () => {
     const auth = await AcctStore.authInfo(this.view.acctEmail);
     if (auth.uuid) {
