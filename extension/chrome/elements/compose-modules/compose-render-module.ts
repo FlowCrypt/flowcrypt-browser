@@ -8,7 +8,6 @@ import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Catch } from '../../../js/common/platform/catch.js';
 import { KeyImportUi } from '../../../js/common/ui/key-import-ui.js';
 import { Lang } from '../../../js/common/lang.js';
-import { RecipientType } from '../../../js/common/api/shared/api.js';
 import { Recipients } from '../../../js/common/api/email-provider/email-provider-api.js';
 import { SendableMsg } from '../../../js/common/api/email-provider/sendable-msg.js';
 import { Str } from '../../../js/common/core/common.js';
@@ -48,6 +47,7 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
         this.view.recipientsModule.addRecipients(recipients, false).catch(Catch.reportErr);
         // await this.view.composerContacts.addRecipientsAndShowPreview(recipients);
         if (this.view.skipClickPrompt) { // TODO: fix issue when loading recipients
+          await this.view.recipientsModule.clearRecipientsForReply();
           await this.renderReplyMsgComposeTable();
         } else {
           $('#a_reply,#a_reply_all,#a_forward')
@@ -65,7 +65,7 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
     this.view.sendBtnModule.resetSendBtn();
     await this.view.sendBtnModule.popover.render();
     this.loadRecipientsThenSetTestStateReady().catch(Catch.reportErr);
-  }
+  };
 
   public renderReplyMsgComposeTable = async (): Promise<void> => {
     this.view.S.cached('prompt').css({ display: 'none' });
@@ -101,7 +101,7 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
       this.view.S.cached('recipients_placeholder').click();
     }
     BrowserMsg.send.scrollToReplyBox(this.view.parentTabId, { replyMsgId: `#${this.view.frameId}` });
-  }
+  };
 
   public renderPrompt = () => {
     this.view.S.cached('prompt').css('display', 'block');
@@ -111,7 +111,7 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
         $('#a_reply_all').css('display', 'inline-flex');
       }
     }
-  }
+  };
 
   public renderReplySuccess = (msg: SendableMsg, msgId: string) => {
     this.view.renderModule.renderReinsertReplyBox(msgId);
@@ -147,15 +147,15 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
     this.view.S.cached('reply_msg_successful').find('div.replied_time').text(time);
     this.view.S.cached('reply_msg_successful').css('display', 'block');
     this.view.sizeModule.resizeComposeBox();
-  }
+  };
 
   public renderReinsertReplyBox = (msgId: string) => {
     BrowserMsg.send.reinsertReplyBox(this.view.parentTabId, { replyMsgId: msgId });
-  }
+  };
 
   public renderAddPubkeyDialog = (emails: string[]) => {
     BrowserMsg.send.addPubkeyDialog(this.view.parentTabId, { emails });
-  }
+  };
 
   public closeMsg = () => {
     $('body').attr('data-test-state', 'closed'); // used by automated tests
@@ -164,11 +164,11 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
     } else {
       BrowserMsg.send.closeComposeWindow(this.view.parentTabId, { frameId: this.view.frameId });
     }
-  }
+  };
 
   public openSettingsWithDialog = async (settingsModule: string) => {
     await Browser.openSettingsPage('index.htm', this.view.acctEmail, `/chrome/settings/modules/${settingsModule}.htm`);
-  }
+  };
 
   public fetchReplyMeta = async (aliases: string[]): Promise<void> => {
     Xss.sanitizePrepend('#new_message', Ui.e('div', { id: 'loader', html: `Loading secure reply box..${Ui.spinner('green')}` }));
@@ -187,7 +187,7 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
     } finally {
       $('#loader').remove();
     }
-  }
+  };
 
   private initComposeBoxStyles = () => {
     if (this.view.isReplyBox) {
@@ -203,23 +203,18 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
     } else {
       this.view.S.cached('compose_table').css({ 'height': '100%' });
     }
-  }
+  };
 
   private actionActivateReplyBoxHandler = async (target: HTMLElement) => {
-    const typesToDelete: RecipientType[] = [];
     const method = $(target).attr('id');
     if (method === 'a_forward') {
       this.responseMethod = 'forward';
-      typesToDelete.push('to');
-      typesToDelete.push('cc');
-      typesToDelete.push('bcc');
+      this.view.recipientsModule.clearRecipients();
     } else if (method === 'a_reply') {
-      typesToDelete.push('cc');
-      typesToDelete.push('bcc');
+      await this.view.recipientsModule.clearRecipientsForReply();
     }
-    this.view.recipientsModule.deleteRecipientsBySendingType(typesToDelete);
     await this.renderReplyMsgComposeTable();
-  }
+  };
 
   private renderReplyMsgAsReplyPubkeyMismatch = async () => {
     this.view.inputModule.inputTextHtmlSetSafely(`Hello,
@@ -231,7 +226,7 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
     this.view.attachmentsModule.attachment.addFile(new File([attachment.getData()], attachment.name));
     this.view.sendBtnModule.popover.toggleItemTick($('.action-toggle-encrypt-sending-option'), 'encrypt', false); // don't encrypt
     this.view.sendBtnModule.popover.toggleItemTick($('.action-toggle-sign-sending-option'), 'sign', false); // don't sign
-  }
+  };
 
   private getFocusableEls = () => {
     return this.view.S.cached('compose_table').find('[tabindex]:not([tabindex="-1"]):visible').toArray().sort((a, b) => {
@@ -244,7 +239,7 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
       }
       return 0;
     });
-  }
+  };
 
   private renderComposeTable = async () => {
     this.view.errModule.debugFocusEvents('input_text', 'send_btn', 'input_to', 'input_subject');
@@ -276,16 +271,16 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
       document.getElementById(focusId)!.focus(); // jQuery no longer worked as of 3.6.0
     }, 100);
     this.view.sizeModule.onComposeTableRender();
-  }
+  };
 
   private addComposeTableHandlers = async () => {
     this.view.S.cached('body').keydown(this.view.setHandler((el, ev) => this.onBodyKeydownHandler(el, ev)));
     this.view.S.cached('input_to').bind('paste', this.view.setHandler((el, ev) => this.onRecipientPasteHandler(el, ev)));
-    this.view.inputModule.squire.addEventListener('keyup', () => this.view.S.cached('send_btn_note').text(''));
+    this.view.inputModule.squire.addEventListener('input', () => this.view.S.cached('send_btn_note').text(''));
     this.view.S.cached('input_addresses_container_inner').click(this.view.setHandler(() => this.onRecipientsClickHandler(), this.view.errModule.handle(`focus recipients`)));
     this.view.S.cached('input_addresses_container_inner').children().click(() => false);
     this.view.S.cached('input_subject').bind('input', this.view.setHandler((el: HTMLInputElement) => this.subjectRTLHandler(el))).trigger('input');
-  }
+  };
 
   private subjectRTLHandler = (el: HTMLInputElement) => {
     const rtlCheck = new RegExp('^[' + Str.rtlChars + ']');
@@ -294,20 +289,20 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
     } else {
       $(el).removeAttr('dir');
     }
-  }
+  };
 
   private actionCloseHandler = async () => {
     if (!this.view.sendBtnModule.isSendMessageInProgres() || await Ui.modal.confirm(Lang.compose.abortSending)) {
       this.view.renderModule.closeMsg();
     }
-  }
+  };
 
   private onRecipientsClickHandler = () => {
     if (!this.view.S.cached('input_to').is(':focus')) {
       this.view.errModule.debug(`input_addresses_container_inner.click -> calling input_to.focus() when input_to.val(${this.view.S.cached('input_to').val()})`);
       this.view.S.cached('input_to').focus();
     }
-  }
+  };
 
   private onRecipientPasteHandler = async (elem: HTMLElement, event: JQuery.Event<HTMLElement>) => {
     if (event.originalEvent instanceof ClipboardEvent && event.originalEvent.clipboardData) {
@@ -335,7 +330,7 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
       this.view.S.cached('input_to').val(key.emails[0]);
       await this.view.recipientsModule.parseRenderRecipients(this.view.S.cached('input_to'));
     }
-  }
+  };
 
   private onBodyKeydownHandler = (_: HTMLElement, e: JQuery.Event<HTMLElement>) => {
     if (this.view.sizeModule.composeWindowIsMinimized) {
@@ -354,12 +349,12 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
         e.preventDefault();
       })(e);
     }
-  }
+  };
 
   private loadRecipientsThenSetTestStateReady = async () => {
     await Promise.all(this.view.recipientsModule.getRecipients().filter(r => r.evaluating).map(r => r.evaluating));
     $('body').attr('data-test-state', 'ready');  // set as ready so that automated tests can evaluate results
-  }
+  };
 
   private renderReplySuccessAttachments = (attachments: Attachment[], msgId: string, isEncrypted: boolean) => {
     const hideAttachmentTypes = this.view.sendBtnModule.popover.choices.richtext ? ['hidden', 'encryptedMsg', 'signature', 'publicKey'] : ['publicKey'];
@@ -370,7 +365,7 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
         return this.view.factory!.embeddedAttachment(attachment, isEncrypted, this.view.parentTabId);
       }).join('')).css('display', 'block');
     }
-  }
+  };
 
   private renderReplySuccessMimeAttachments = (attachmentsFilenames: string[]) => {
     const attachments = $('<div id="attachments"></div>');
@@ -381,5 +376,5 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
       }
     }
     this.view.S.cached('replied_body').append(attachments); // xss-escaped
-  }
+  };
 }

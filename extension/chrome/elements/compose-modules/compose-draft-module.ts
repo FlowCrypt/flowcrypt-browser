@@ -13,7 +13,7 @@ import { Env } from '../../../js/common/browser/env.js';
 import { GlobalStore } from '../../../js/common/platform/store/global-store.js';
 import { GmailRes } from '../../../js/common/api/email-provider/gmail/gmail-parser.js';
 import { MsgBlockParser } from '../../../js/common/core/msg-block-parser.js';
-import { MsgUtil } from '../../../js/common/core/crypto/pgp/msg-util.js';
+import { DecryptErrTypes, MsgUtil } from '../../../js/common/core/crypto/pgp/msg-util.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { Str, Url } from '../../../js/common/core/common.js';
 import { Xss } from '../../../js/common/platform/xss.js';
@@ -22,6 +22,7 @@ import { ComposeView } from '../compose.js';
 import { KeyStore } from '../../../js/common/platform/store/key-store.js';
 import { KeyUtil } from '../../../js/common/core/crypto/key.js';
 import { SendableMsg, InvalidRecipientError } from '../../../js/common/api/email-provider/sendable-msg.js';
+import { PassphraseStore } from '../../../js/common/platform/store/passphrase-store.js';
 
 export class ComposeDraftModule extends ViewModule<ComposeView> {
 
@@ -46,7 +47,7 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
   public setHandlers = () => {
     $('.delete_draft').click(this.view.setHandler(() => this.deleteDraftClickHandler(), this.view.errModule.handle('delete draft')));
     this.view.recipientsModule.onRecipientAdded(async () => await this.draftSave(true));
-  }
+  };
 
   /**
    * Returns `true` if either a local or a cloud draft was loaded, otherwise returns `false`
@@ -87,18 +88,17 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
       }
     }
     return false;
-  }
+  };
 
   public draftDelete = async () => {
     clearInterval(this.saveDraftInterval);
     await Ui.time.wait(() => !this.currentlySavingDraft ? true : undefined);
     if (this.view.draftId) {
       try {
-        if (this.isLocalDraftId(this.view.draftId)) {
-          await this.localDraftRemove();
-        } else {
+        if (!this.isLocalDraftId(this.view.draftId)) {
           await this.view.emailProvider.draftDelete(this.view.draftId);
         }
+        await this.localDraftRemove();
         this.view.draftId = '';
       } catch (e) {
         if (ApiErr.isAuthErr(e)) {
@@ -110,7 +110,7 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
         }
       }
     }
-  }
+  };
 
   public draftSave = async (forceSave: boolean = false): Promise<void> => {
     if (this.hasBodyChanged(this.view.inputModule.squire.getHTML()) || this.hasSubjectChanged(String(this.view.S.cached('input_subject').val())) || forceSave) {
@@ -171,7 +171,7 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
       }
       this.currentlySavingDraft = false;
     }
-  }
+  };
 
   public getLocalDraftId = () => {
     // local draft id passed from openComposeWin()
@@ -184,7 +184,7 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
     }
     // compose local draft
     return `${this.localDraftPrefix}${this.localComposeDraftPrefix}${this.localComposeDraftId}`;
-  }
+  };
 
   public localDraftGet = async (): Promise<GmailRes.GmailDraftGet | undefined> => {
     const draftId = this.getLocalDraftId();
@@ -197,7 +197,7 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
       return localDraft;
     }
     return undefined;
-  }
+  };
 
   private draftSetPrefixIntoBody = (sendable: SendableMsg) => {
     let prefix: string;
@@ -211,7 +211,7 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
     if (sendable.body['text/plain']) {
       sendable.body['text/plain'] = `${prefix}${sendable.body['text/plain'] || ''}`;
     }
-  }
+  };
 
   private doUploadDraftWithLocalStorageFallback = async (mimeMsg: string, uploadDraft: () => Promise<string>) => {
     let draftId: string;
@@ -228,11 +228,11 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
       }
     }
     return draftId;
-  }
+  };
 
   private isLocalDraftId = (draftId: string) => {
     return !!draftId.match(this.localDraftPrefix);
-  }
+  };
 
   private localDraftCreate = async (mimeMsg: string, threadId: string) => {
     const storage = await GlobalStore.get(['local_drafts']);
@@ -248,7 +248,7 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
     };
     await GlobalStore.set(storage);
     return draftId;
-  }
+  };
 
   private localDraftRemove = async () => {
     const draftId = this.getLocalDraftId();
@@ -257,11 +257,11 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
       delete storage.local_drafts[draftId];
       await GlobalStore.set(storage);
     }
-  }
+  };
 
   private isValidLocalDraft = (localDraft: unknown): localDraft is GmailRes.GmailDraftGet => {
     return !!localDraft && typeof (localDraft as GmailRes.GmailDraftGet).message === 'object';
-  }
+  };
 
   private deleteDraftClickHandler = async () => {
     await this.draftDelete();
@@ -271,7 +271,7 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
     } else { // close new msg
       this.view.renderModule.closeMsg();
     }
-  }
+  };
 
   private fillAndRenderDraftHeaders = async (decoded: MimeContent) => {
     await this.view.recipientsModule.addRecipientsAndShowPreview({ to: decoded.to, cc: decoded.cc, bcc: decoded.bcc });
@@ -281,7 +281,7 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
     if (decoded.subject) {
       this.view.S.cached('input_subject').val(decoded.subject);
     }
-  }
+  };
 
   private decryptAndRenderDraft = async (encrypted: MimeProccesedMsg): Promise<void> => {
     const rawBlock = encrypted.blocks.find(b => ['encryptedMsg', 'signedMsg', 'pkcs7'].includes(b.type));
@@ -289,29 +289,28 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
       return await this.abortAndRenderReplyMsgComposeTableIfIsReplyBox('!rawBlock');
     }
     const encryptedData = rawBlock.content instanceof Buf ? rawBlock.content : Buf.fromUtfStr(rawBlock.content);
-    const passphrase = await this.view.storageModule.passphraseGet();
-    if (typeof passphrase !== 'undefined') {
-      const decrypted = await MsgUtil.decryptMessage({ kisWithPp: await KeyStore.getAllWithOptionalPassPhrase(this.view.acctEmail), encryptedData });
-      if (!decrypted.success) {
-        return await this.abortAndRenderReplyMsgComposeTableIfIsReplyBox('!decrypted.success');
+    const decrypted = await MsgUtil.decryptMessage({ kisWithPp: await KeyStore.getAllWithOptionalPassPhrase(this.view.acctEmail), encryptedData });
+    if (!decrypted.success) {
+      if (decrypted.error.type === DecryptErrTypes.needPassphrase) {
+        // "close" button will wipe this frame out, so no need to exit the recursion
+        await this.renderPPDialogAndWaitWhenPPEntered(decrypted.longids.needPassphrase);
+        await this.decryptAndRenderDraft(encrypted);
       }
-      this.wasMsgLoadedFromDraft = true;
-      this.view.S.cached('prompt').css({ display: 'none' });
-      const { blocks, isRichText } = await MsgBlockParser.fmtDecryptedAsSanitizedHtmlBlocks(decrypted.content, 'IMG-KEEP');
-      const sanitizedContent = blocks.find(b => b.type === 'decryptedHtml')?.content;
-      if (!sanitizedContent) {
-        return await this.abortAndRenderReplyMsgComposeTableIfIsReplyBox('!sanitizedContent');
-      }
-      if (isRichText) {
-        this.view.sendBtnModule.popover.toggleItemTick($('.action-toggle-richtext-sending-option'), 'richtext', true);
-      }
-      this.view.inputModule.inputTextHtmlSetSafely(sanitizedContent.toString());
-      this.view.inputModule.squire.focus();
-    } else {
-      await this.renderPPDialogAndWaitWhenPPEntered();
-      await this.decryptAndRenderDraft(encrypted);
+      return await this.abortAndRenderReplyMsgComposeTableIfIsReplyBox('!decrypted.success');
     }
-  }
+    this.wasMsgLoadedFromDraft = true;
+    this.view.S.cached('prompt').css({ display: 'none' });
+    const { blocks, isRichText } = await MsgBlockParser.fmtDecryptedAsSanitizedHtmlBlocks(decrypted.content, 'IMG-KEEP');
+    const sanitizedContent = blocks.find(b => b.type === 'decryptedHtml')?.content;
+    if (!sanitizedContent) {
+      return await this.abortAndRenderReplyMsgComposeTableIfIsReplyBox('!sanitizedContent');
+    }
+    if (isRichText) {
+      this.view.sendBtnModule.popover.toggleItemTick($('.action-toggle-richtext-sending-option'), 'richtext', true);
+    }
+    this.view.inputModule.inputTextHtmlSetSafely(sanitizedContent.toString());
+    this.view.inputModule.squire.focus();
+  };
 
   private hasBodyChanged = (msgBody: string) => {
     if (this.lastDraftBody === undefined) { // first check
@@ -323,7 +322,7 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
       return true;
     }
     return false;
-  }
+  };
 
   private hasSubjectChanged = (subject: string) => {
     if (this.view.isReplyBox) { // user cannot change reply subject
@@ -334,10 +333,10 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
       return true;
     }
     return false;
-  }
+  };
 
-  private renderPPDialogAndWaitWhenPPEntered = async () => {
-    const promptText = `<div>Waiting for <a href="#" class="action_open_passphrase_dialog">pass phrase</a> to open draft..</div>`;
+  private renderPPDialogAndWaitWhenPPEntered = async (longids: string[]) => {
+    const promptText = `<div>Waiting for <a href="#" data-test="action-open-passphrase-dialog" class="action_open_passphrase_dialog">pass phrase</a> to open draft..</div>`;
     if (this.view.isReplyBox) {
       Xss.sanitizeRender(this.view.S.cached('prompt'), promptText).css({ display: 'block' });
       this.view.sizeModule.resizeComposeBox();
@@ -346,19 +345,18 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
       BrowserMsg.send.setActiveWindow(this.view.parentTabId, { frameId: this.view.frameId });
     }
     this.view.S.cached('prompt').find('a.action_open_passphrase_dialog').click(this.view.setHandler(async () => {
-      const primaryKi = await KeyStore.getFirstRequired(this.view.acctEmail);
-      BrowserMsg.send.passphraseDialog(this.view.parentTabId, { type: 'draft', longids: [primaryKi.longid] });
+      BrowserMsg.send.passphraseDialog(this.view.parentTabId, { type: 'draft', longids });
     }));
     this.view.S.cached('prompt').find('a.action_close').click(this.view.setHandler(() => this.view.renderModule.closeMsg()));
-    await this.view.storageModule.whenMasterPassphraseEntered();
-  }
+    await PassphraseStore.waitUntilPassphraseChanged(this.view.acctEmail, longids, 1000, this.view.ppChangedPromiseCancellation);
+  };
 
   private abortAndRenderReplyMsgComposeTableIfIsReplyBox = async (reason: string) => {
     console.info(`gmail.initialDraftLoad: ${reason}`);
     if (this.view.isReplyBox) {
       await this.view.renderModule.renderReplyMsgComposeTable();
     }
-  }
+  };
 
   private urlParams = () => { // used to reload the frame with updated params
     return {
@@ -367,6 +365,6 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
       skipClickPrompt: this.view.skipClickPrompt, parentTabId: this.view.parentTabId, disableDraftSaving: this.view.disableDraftSaving,
       debug: this.view.debug, removeAfterClose: this.view.removeAfterClose, replyPubkeyMismatch: this.view.replyPubkeyMismatch,
     };
-  }
+  };
 
 }

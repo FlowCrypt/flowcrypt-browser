@@ -28,7 +28,7 @@ export class AttachmentPreviewPdf {
     this.attachmentPreviewContainer.addClass('attachment-preview-pdf');
     await this.renderPdf();
     this.renderControls();
-  }
+  };
 
   private renderPdf = async (zoomLevelDiff?: number) => {
     const container = this.attachmentPreviewContainer;
@@ -55,7 +55,7 @@ export class AttachmentPreviewPdf {
         container[0].scrollLeft += (container[0].scrollLeft + container[0].clientWidth / 2) * zoomLevelDiff;
       }
     }
-  }
+  };
 
   private renderPage = async (pdf: PDFDocumentProxy, pageNumber: number, canvas: HTMLCanvasElement) => {
     const page = await pdf.getPage(pageNumber);
@@ -63,7 +63,7 @@ export class AttachmentPreviewPdf {
     canvas.height = viewport.height;
     canvas.width = viewport.width;
     await page.render({ canvasContext: canvas.getContext('2d') as CanvasRenderingContext2D, viewport }).promise;
-  }
+  };
 
   private renderControls = () => {
     const controls = $(`
@@ -92,7 +92,7 @@ export class AttachmentPreviewPdf {
     });
     // Zoom in, zoom out, fit to width, reset zoom
     this.handleZoom();
-  }
+  };
 
   private handleZoom = () => {
     const container = this.attachmentPreviewContainer;
@@ -135,7 +135,7 @@ export class AttachmentPreviewPdf {
       container.find('#pdf-preview-reset-zoom').css('display', 'block');
       container.find('#pdf-preview-fit-to-width').css('display', 'none');
     });
-  }
+  };
 
   private reRenderWithNewZoomLevel = async (newZoomLevel: number) => {
     const container = this.attachmentPreviewContainer;
@@ -149,7 +149,7 @@ export class AttachmentPreviewPdf {
     if (this.currentZoomLevel < 5) {
       container.find('#pdf-preview-zoom-in').prop('disabled', false);
     }
-  }
+  };
 
   // borrowed from https://github.com/twbs/bootstrap/blob/master/js/src/modal.js
   private getScrollbarWidth = (): number => {
@@ -158,6 +158,6 @@ export class AttachmentPreviewPdf {
     const scrollbarWidth = scrollDiv[0].getBoundingClientRect().width - scrollDiv[0].clientWidth;
     scrollDiv.remove();
     return scrollbarWidth;
-  }
+  };
 
 }

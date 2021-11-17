@@ -22,6 +22,7 @@ const knownMockEmails = [
 ];
 
 let data: GoogleData;
+export const MOCK_ATTESTER_LAST_INSERTED_PUB: { [email: string]: string } = {};
 
 const getDC26454AFB71D18EABBAD73D1C7E6D3C5563A941 = async () => {
   if (!data) {
@@ -70,7 +71,7 @@ export const mockAttesterEndpoints: HandlersDefinition = {
       if (emailOrLongid === 'sha1@sign.com') {
         return sha1signpubkey;
       }
-      if (emailOrLongid === '6D3E09867544EE627F2E928FBEE3A42D9A9C8AC9'.toLowerCase()) { // newer version of expired pubkey
+      if (emailOrLongid === 'auto.refresh.expired.key@recipient.com') { // newer version of expired pubkey
         return newerVersionOfExpiredPubkey;
       }
       if (emailOrLongid === '8EC78F043CEB022498AFD4771E62ED6D15A25921'.toLowerCase()) {
@@ -80,6 +81,7 @@ export const mockAttesterEndpoints: HandlersDefinition = {
     } else if (isPost(req)) {
       oauth.checkAuthorizationHeaderWithIdToken(req.headers.authorization);
       expect(body).to.contain('-----BEGIN PGP PUBLIC KEY BLOCK-----');
+      MOCK_ATTESTER_LAST_INSERTED_PUB[emailOrLongid] = body as string;
       return 'Saved'; // 200 OK
     } else {
       throw new HttpClientErr(`Not implemented: ${req.method}`);
@@ -95,6 +97,7 @@ export const mockAttesterEndpoints: HandlersDefinition = {
     if (email === 'no.pub@org-rules-test.flowcrypt.test') {
       throw new HttpClientErr(`Could not find LDAP pubkey on a LDAP-only domain for email ${email} on server keys.flowcrypt.test`);
     }
+    MOCK_ATTESTER_LAST_INSERTED_PUB[email] = pubkey;
     return { saved: true };
   },
   '/attester/test/welcome': async ({ body }, req) => {
@@ -157,7 +160,7 @@ DDF85HtNOR10V1aJrfE7F6e3QTzu5SZBjDPi5vVcbtK72eyd
 -----END PGP PUBLIC KEY BLOCK-----
 `;
 
-const protonMailCompatKey = `-----BEGIN PGP PUBLIC KEY BLOCK-----
+export const protonMailCompatKey = `-----BEGIN PGP PUBLIC KEY BLOCK-----
 Version: OpenPGP.js v3.0.5
 Comment: https://openpgpjs.org
 

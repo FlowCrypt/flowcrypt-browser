@@ -39,7 +39,7 @@ export class BackupManualActionModule extends ViewModule<BackupView> {
   public setHandlers = () => {
     $('#module_manual input[name=input_backup_choice]').click(this.view.setHandler(el => this.actionSelectBackupMethodHandler(el)));
     this.proceedBtn.click(this.view.setHandlerPrevent('double', () => this.actionManualBackupHandler()));
-  }
+  };
 
   public doBackupOnEmailProvider = async (armoredKey: string) => {
     const emailMsg = String(await $.get({ url: '/chrome/emails/email_intro.template.htm', dataType: 'html' }));
@@ -51,7 +51,7 @@ export class BackupManualActionModule extends ViewModule<BackupView> {
     } else {
       throw Error(`Backup method not implemented for ${this.view.emailProvider}`);
     }
-  }
+  };
 
   private actionManualBackupHandler = async () => {
     const selected = $('input[type=radio][name=input_backup_choice]:checked').val();
@@ -90,11 +90,11 @@ export class BackupManualActionModule extends ViewModule<BackupView> {
     } else {
       await this.backupRefused();
     }
-  }
+  };
 
   private asBackupFile = (armoredKey: string) => {
     return new Attachment({ name: `flowcrypt-backup-${this.view.acctEmail.replace(/[^A-Za-z0-9]+/g, '')}.asc`, type: 'application/pgp-keys', data: Buf.fromUtfStr(armoredKey) });
-  }
+  };
 
   private encryptForBackup = async (kinfos: TypedKeyInfo[], checks: { strength: boolean }, primaryKeyIdentity: KeyIdentity): Promise<string | undefined> => {
     const kisWithPp = await Promise.all(kinfos.map(async (ki) => {
@@ -146,7 +146,7 @@ export class BackupManualActionModule extends ViewModule<BackupView> {
       return await this.encryptForBackup(kinfos, checks, primaryKeyIdentity);
     }
     return kinfos.map(ki => ki.private).join('\n'); // todo: remove extra \n ?
-  }
+  };
 
   private backupOnEmailProviderAndUpdateUi = async (data: string): Promise<boolean> => {
     const origBtnText = this.proceedBtn.text();
@@ -170,21 +170,21 @@ export class BackupManualActionModule extends ViewModule<BackupView> {
     } finally {
       this.proceedBtn.text(origBtnText);
     }
-  }
+  };
 
   private backupAsFile = async (data: string) => { // todo - add a non-encrypted download option
     const attachment = this.asBackupFile(data);
     Browser.saveToDownloads(attachment);
     await Ui.modal.info('Downloading private key backup file..');
-  }
+  };
 
   private backupByBrint = async () => { // todo - implement + add a non-encrypted print option
     throw new Error('not implemented');
-  }
+  };
 
   private backupRefused = async () => {
     await this.view.renderBackupDone(0);
-  }
+  };
 
   private isPrivateKeyEncrypted = async (ki: KeyInfo) => {
     const prv = await KeyUtil.parse(ki.private);
@@ -192,7 +192,7 @@ export class BackupManualActionModule extends ViewModule<BackupView> {
       return false;
     }
     return prv.fullyEncrypted;
-  }
+  };
 
   private actionSelectBackupMethodHandler = (target: HTMLElement) => {
     if ($(target).val() === 'inbox') {
@@ -208,6 +208,6 @@ export class BackupManualActionModule extends ViewModule<BackupView> {
       this.proceedBtn.text('try my luck');
       this.proceedBtn.removeClass('green').addClass('red');
     }
-  }
+  };
 
 }

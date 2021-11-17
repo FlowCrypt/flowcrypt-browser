@@ -35,7 +35,7 @@ export class OrgRules {
     }
     const storage = await AcctStore.get(email, ['rules']);
     return new OrgRules(storage.rules || OrgRules.default, Str.getDomainFromEmailAddress(acctEmail));
-  }
+  };
 
   protected constructor(
     private domainRules: DomainRulesJson,
@@ -49,7 +49,7 @@ export class OrgRules {
    */
   public getCustomSksPubkeyServer = (): string | undefined => {
     return this.domainRules.custom_keyserver_url;
-  }
+  };
 
   /**
    * an internal org FlowCrypt Email Key Manager instance, can manage both public and private keys
@@ -57,7 +57,7 @@ export class OrgRules {
    */
   public getKeyManagerUrlForPrivateKeys = (): string | undefined => {
     return this.domainRules.key_manager_url;
-  }
+  };
 
   /**
    * use when finding out if EKM is in use, to change functionality without actually neededing the EKM
@@ -65,7 +65,7 @@ export class OrgRules {
    */
   public usesKeyManager = (): boolean => {
     return !!this.domainRules.key_manager_url;
-  }
+  };
 
   // optional vars
 
@@ -74,14 +74,14 @@ export class OrgRules {
    */
   public getEnforcedKeygenAlgo = (): KeyAlgo | undefined => {
     return this.domainRules.enforce_keygen_algo as KeyAlgo | undefined;
-  }
+  };
 
   /**
    * Some orgs want to have newly generated keys include self-signatures that expire some time in the future.
    */
   public getEnforcedKeygenExpirationMonths = (): number | undefined => {
     return this.domainRules.enforce_keygen_expire_months;
-  }
+  };
 
   // bools
 
@@ -90,14 +90,14 @@ export class OrgRules {
    */
   public canCreateKeys = (): boolean => {
     return !(this.domainRules.flags || []).includes('NO_PRV_CREATE');
-  }
+  };
 
   /**
    * Some orgs want to forbid backing up of public keys (such as inbox or other methods)
    */
   public canBackupKeys = (): boolean => {
     return !(this.domainRules.flags || []).includes('NO_PRV_BACKUP');
-  }
+  };
 
   /**
    * (normally, during setup, if a public key is submitted to Attester and there is
@@ -106,7 +106,7 @@ export class OrgRules {
    */
   public mustSubmitToAttester = (): boolean => {
     return (this.domainRules.flags || []).includes('ENFORCE_ATTESTER_SUBMIT');
-  }
+  };
 
   /**
    * Normally, during setup, "remember pass phrase" is unchecked
@@ -115,11 +115,11 @@ export class OrgRules {
    */
   public rememberPassPhraseByDefault = (): boolean => {
     return (this.domainRules.flags || []).includes('DEFAULT_REMEMBER_PASS_PHRASE') || this.mustAutogenPassPhraseQuietly();
-  }
+  };
 
   public forbidStoringPassPhrase = (): boolean => {
     return (this.domainRules.flags || []).includes('FORBID_STORING_PASS_PHRASE');
-  }
+  };
 
   /**
    * This is to be used for customers who run their own FlowCrypt Email Key Manager
@@ -134,7 +134,7 @@ export class OrgRules {
       throw new Error('Wrong org rules config: using PRV_AUTOIMPORT_OR_AUTOGEN without key_manager_url');
     }
     return true;
-  }
+  };
 
   /**
    * When generating keys, user will not be prompted to choose a pass phrase
@@ -144,18 +144,18 @@ export class OrgRules {
    */
   public mustAutogenPassPhraseQuietly = (): boolean => {
     return this.usesKeyManager() && (this.domainRules.flags || []).includes('PASS_PHRASE_QUIET_AUTOGEN');
-  }
+  };
 
   public userMustChoosePassPhraseDuringPrvAutoimport = (): boolean => {
     return this.usesKeyManager() && !this.mustAutogenPassPhraseQuietly();
-  }
+  };
 
   /**
    * Some orgs prefer to forbid publishing public keys publicly
    */
   public canSubmitPubToAttester = (): boolean => {
     return !(this.domainRules.flags || []).includes('NO_ATTESTER_SUBMIT');
-  }
+  };
 
   /**
    * Some orgs have a list of email domains where they do NOT want such emails to be looked up on public sources (such as Attester)
@@ -171,7 +171,7 @@ export class OrgRules {
       throw new Error(`Not a valid email ${emailAddr}`);
     }
     return !disallowedDomains.includes(userDomain);
-  }
+  };
 
   /**
    *
@@ -179,7 +179,7 @@ export class OrgRules {
    */
   public disallowLookupOnAttester = (): boolean => {
     return (this.domainRules.disallow_attester_search_for_domains || []).includes('*');
-  }
+  };
 
   /**
    * Some orgs use flows that are only implemented in POST /initial/legacy_submit and not in POST /pub/email@corp.co:
@@ -188,14 +188,14 @@ export class OrgRules {
    */
   public useLegacyAttesterSubmit = (): boolean => {
     return (this.domainRules.flags || []).includes('USE_LEGACY_ATTESTER_SUBMIT');
-  }
+  };
 
   /**
    * With this option, sent messages won't have any comment/version in armor, imported keys get imported without armor
    */
   public shouldHideArmorMeta = (): boolean => {
     return (this.domainRules.flags || []).includes('HIDE_ARMOR_META');
-  }
+  };
 
   /**
    * Ask the client app to not fetch access token from FES, and
@@ -205,6 +205,6 @@ export class OrgRules {
    */
   public disableFesAccessToken = (): boolean => {
     return (this.domainRules.flags || []).includes('DISABLE_FES_ACCESS_TOKEN');
-  }
+  };
 
 }

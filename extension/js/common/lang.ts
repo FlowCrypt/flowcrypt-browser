@@ -23,7 +23,6 @@ export const Lang = { // tslint:disable-line:variable-name
     confirmSkipRecovery: 'Your account will be set up for encryption again, but your previous encrypted emails will be unreadable. You will need to inform your encrypted contacts that you have a new key. Regular email will not be affected. Are you sure?',
     nBackupsAlreadyRecoveredOrLeft: (nGot: number, nBups: number, txtTeft: string) => `You successfully recovered ${nGot} of ${nBups} backups. There ${txtTeft} left.<br><br>Try a different pass phrase to unlock all backups.`,
     tryDifferentPassPhraseForRemainingBackups: 'This pass phrase was already used to recover some of your backups.\n\nThe remaining backups use a different pass phrase.\n\nPlease try another one.\n\nYou can skip this step, but some of your encrypted email may not be readable.',
-    fcDidntSetUpProperly: 'FlowCrypt didn\'t set up properly due to en error.<br/><br/>Email human@flowcrypt.com so that we can fix it ASAP.',
     creatingKeysNotAllowedPleaseImport: 'Creating keys is not allowed on your domain. Please import your keys.',
     keyBackupsNotAllowed: 'Key backups are not allowed on this domain.',
     prvHasFixableCompatIssue: 'This key has minor usability issues that can be fixed. This commonly happens when importing keys from Symantec&trade; PGP Desktop or other legacy software. It may be missing User IDs, or it may be missing a self-signature. It is also possible that the key is simply expired.',

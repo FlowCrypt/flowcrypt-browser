@@ -25,14 +25,14 @@ export class FlowCryptWebsite extends Api {
       pubkey: `https://flowcrypt.com/pub/${resource}`,
       web: 'https://flowcrypt.com/',
     } as Dict<string>)[type];
-  }
+  };
 
   public static helpFeedback = async (acctEmail: string, message: string): Promise<FlowCryptWebsiteRes.FcHelpFeedback> => {
     return await FlowCryptWebsite.request<FlowCryptWebsiteRes.FcHelpFeedback>('help/feedback', {
       email: acctEmail,
       message,
     });
-  }
+  };
 
   public static retrieveBlogPosts = async (): Promise<FlowCryptWebsiteRes.FcBlogPost[]> => {
     const xml = await Api.ajax({ url: 'https://flowcrypt.com/blog/feed.xml', dataType: 'xml' }, Catch.stackTrace()) as XMLDocument; // tslint:disable-line:no-direct-ajax
@@ -47,10 +47,10 @@ export class FlowCryptWebsite extends Api {
       }
     }
     return posts.slice(0, 5);
-  }
+  };
 
   private static request = async <RT>(path: string, vals: Dict<any>, fmt: ReqFmt = 'JSON', addHeaders: Dict<string> = {}, progressCbs?: ProgressCbs): Promise<RT> => {
     return await FlowCryptWebsite.apiCall(FlowCryptWebsite.url('api'), path, vals, fmt, progressCbs, { 'api-version': '3', ...addHeaders });
-  }
+  };
 
 }

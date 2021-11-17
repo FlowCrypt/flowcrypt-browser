@@ -49,7 +49,7 @@ export class GlobalStore extends AbstractStore {
       storageUpdate[index] = values[key as GlobalIndex];
     }
     await storageLocalSet(storageUpdate);
-  }
+  };
 
   public static get = async (keys: GlobalIndex[]): Promise<GlobalStoreDict> => {
     if (Env.isContentScript()) {
@@ -59,11 +59,11 @@ export class GlobalStore extends AbstractStore {
     }
     const storageObj = await storageLocalGet(GlobalStore.singleScopeRawIndexArr(GlobalStore.globalStorageScope, keys)) as RawStore;
     return GlobalStore.buildSingleAccountStoreFromRawResults(GlobalStore.globalStorageScope, storageObj) as GlobalStore;
-  }
+  };
 
   public static remove = async (keys: string[]) => {
     await storageLocalRemove(GlobalStore.singleScopeRawIndexArr(GlobalStore.globalStorageScope, keys));
-  }
+  };
 
   public static acctEmailsGet = async (): Promise<string[]> => {
     const storage = await GlobalStore.get(['account_emails']);
@@ -76,7 +76,7 @@ export class GlobalStore extends AbstractStore {
       }
     }
     return acctEmails;
-  }
+  };
 
   public static acctEmailsAdd = async (acctEmail: string): Promise<void> => { // todo: concurrency issues with another tab loaded at the same time
     if (!acctEmail) {
@@ -92,11 +92,11 @@ export class GlobalStore extends AbstractStore {
       await GlobalStore.set({ account_emails: JSON.stringify(acctEmails) });
       BrowserMsg.send.bg.updateUninstallUrl();
     }
-  }
+  };
 
   public static acctEmailsRemove = async (acctEmail: string): Promise<void> => { // todo: concurrency issues with another tab loaded at the same time
     const acctEmails = await GlobalStore.acctEmailsGet();
     await GlobalStore.set({ account_emails: JSON.stringify(Value.arr.withoutVal(acctEmails, acctEmail)) });
     BrowserMsg.send.bg.updateUninstallUrl();
-  }
+  };
 }

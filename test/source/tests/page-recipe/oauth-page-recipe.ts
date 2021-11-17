@@ -24,7 +24,7 @@ export class OauthPageRecipe extends PageRecipe {
       }
       await oauthPage.target.goto(mockOauthUrl + '&proceed=true');
     }
-  }
+  };
 
   public static google = async (t: AvaContext, oauthPage: ControllablePage, acctEmail: string, action: "close" | "deny" | "approve" | 'login'): Promise<void> => {
     try {
@@ -105,6 +105,6 @@ export class OauthPageRecipe extends PageRecipe {
       // t.log(`Attempting to retry google auth:${action} on the same window for ${email} because: ${eStr}`);
       return await OauthPageRecipe.google(t, oauthPage, acctEmail, action); // retry, it should pick up where it left off
     }
-  }
+  };
 
 }

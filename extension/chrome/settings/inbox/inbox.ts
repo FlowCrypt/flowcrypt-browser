@@ -34,6 +34,7 @@ export class InboxView extends View {
   public readonly labelId: string;
   public readonly threadId: string | undefined;
   public readonly showOriginal: boolean;
+  public readonly debug: boolean;
   public readonly S: SelCache;
   public readonly gmail: Gmail;
 
@@ -45,11 +46,12 @@ export class InboxView extends View {
 
   constructor() {
     super();
-    const uncheckedUrlParams = Url.parse(['acctEmail', 'labelId', 'threadId', 'showOriginal']);
+    const uncheckedUrlParams = Url.parse(['acctEmail', 'labelId', 'threadId', 'showOriginal', 'debug']);
     this.acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
     this.labelId = uncheckedUrlParams.labelId ? String(uncheckedUrlParams.labelId) : 'INBOX';
     this.threadId = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'threadId');
     this.showOriginal = uncheckedUrlParams.showOriginal === true;
+    this.debug = uncheckedUrlParams.debug === true;
     this.S = Ui.buildJquerySels({ threads: '.threads', thread: '.thread', body: 'body' });
     this.gmail = new Gmail(this.acctEmail);
     this.inboxMenuModule = new InboxMenuModule(this);
@@ -87,7 +89,7 @@ export class InboxView extends View {
         await Ui.modal.error(`${ApiErr.eli5(e)}\n\n${String(e)}`);
       }
     }
-  }
+  };
 
   public setHandlers = () => {
     // BrowserMsg.addPgpListeners(); // todo - re-allow when https://github.com/FlowCrypt/flowcrypt-browser/issues/2560 fixed
@@ -100,7 +102,7 @@ export class InboxView extends View {
     }));
     $('.action_add_account').click(this.setHandlerPrevent('double', async () => await Settings.newGoogleAcctAuthPromptThenAlertOrForward(this.tabId)));
     this.addBrowserMsgListeners();
-  }
+  };
 
   public redirectToUrl = (params: UrlParams) => {
     const newUrlSearch = Url.create('', params);
@@ -109,13 +111,13 @@ export class InboxView extends View {
     } else {
       window.location.reload();
     }
-  }
+  };
 
   public displayBlock = (name: string, title: string) => {
     this.S.cached('threads').css('display', name === 'thread' ? 'none' : 'block');
     this.S.cached('thread').css('display', name === 'thread' ? 'block' : 'none');
     Xss.sanitizeRender('h1', `${title}`);
-  }
+  };
 
   private addBrowserMsgListeners = () => {
     BrowserMsg.addListener('add_end_session_btn', () => this.injector.insertEndSessionBtn(this.acctEmail));
@@ -154,7 +156,13 @@ export class InboxView extends View {
     BrowserMsg.addListener('show_attachment_preview', async ({ iframeUrl }: Bm.ShowAttachmentPreview) => {
       await Ui.modal.attachmentPreview(iframeUrl);
     });
-  }
+    if (this.debug) {
+      BrowserMsg.addListener('open_compose_window', async ({ draftId }: Bm.ComposeWindowOpenDraft) => {
+        console.log('received open_compose_window');
+        this.injector.openComposeWin(draftId);
+      });
+    }
+  };
 
 }
 

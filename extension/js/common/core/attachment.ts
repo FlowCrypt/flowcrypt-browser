@@ -34,7 +34,7 @@ export class Attachment {
 
   public static keyinfoAsPubkeyAttachment = (ki: { public: string, longid: string }) => {
     return new Attachment({ data: Buf.fromUtfStr(ki.public), type: 'application/pgp-keys', name: `0x${ki.longid}.asc` });
-  }
+  };
 
   public static sanitizeName = (name: string): string => {
     const trimmed = name.trim();
@@ -42,11 +42,11 @@ export class Attachment {
       return '_';
     }
     return trimmed.replace(/[\u0000\u002f\u005c]/g, '_').replace(/__+/g, '_');
-  }
+  };
 
   public static attachmentId = (): string => {
     return `f_${Str.sloppyRandom(30)}@flowcrypt`;
-  }
+  };
 
   constructor({ data, type, name, length, url, inline, id, msgId, treatAs, cid, contentDescription }: AttachmentMeta) {
     if (typeof data === 'undefined' && typeof url === 'undefined' && typeof id === 'undefined') {
@@ -74,14 +74,14 @@ export class Attachment {
 
   public hasData = () => {
     return this.bytes instanceof Uint8Array;
-  }
+  };
 
   public setData = (bytes: Uint8Array) => {
     if (this.hasData()) {
       throw new Error('Attachment bytes already set');
     }
     this.bytes = bytes;
-  }
+  };
 
   public getData = (): Buf => {
     if (this.bytes instanceof Buf) {
@@ -91,7 +91,7 @@ export class Attachment {
       return new Buf(this.bytes);
     }
     throw new Error('Attachment has no data set');
-  }
+  };
 
   public treatAs = (): Attachment$treatAs => {
     if (this.treatAsValue) { // pre-set
@@ -123,6 +123,6 @@ export class Attachment {
     } else {
       return 'plainFile';
     }
-  }
+  };
 
 }

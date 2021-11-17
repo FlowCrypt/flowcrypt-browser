@@ -5,6 +5,7 @@ import { BrowserHandle, Controllable, ControllablePage } from '../../browser';
 import { AvaContext } from '../tooling/';
 import { ElementHandle, JSHandle } from 'puppeteer';
 import { expect } from 'chai';
+import { Util } from '../../util';
 
 type ModalOpts = { contentToCheck?: string, clickOn?: 'confirm' | 'cancel', getTriggeredPage?: boolean, timeout?: number };
 type ModalType = 'confirm' | 'error' | 'info' | 'warning';
@@ -12,11 +13,11 @@ type ModalType = 'confirm' | 'error' | 'info' | 'warning';
 export abstract class PageRecipe {
   public static getElementPropertyJson = async (elem: ElementHandle<Element>, property: string) => {
     return await (await elem.getProperty(property) as JSHandle).jsonValue() as string;
-  }
+  };
 
   public static getElementAttribute = async (elem: ElementHandle<Element>, attribute: string) => {
     return await elem.evaluate((el, attribute) => el.getAttribute(attribute), attribute);
-  }
+  };
 
   public static waitForModalAndRespond = async (controllable: Controllable, type: ModalType, { contentToCheck, clickOn, timeout }: ModalOpts) => {
     const modalContainer = await controllable.waitAny(`.ui-modal-${type}`, { timeout });
@@ -28,20 +29,30 @@ export abstract class PageRecipe {
       const button = await modalContainer.$(`button.ui-modal-${type}-${clickOn}`);
       await button!.click();
     }
-  }
+  };
 
   public static sendMessage = async (controllable: Controllable, msg: any) => {
     return await controllable.target.evaluate(async (msg) => await new Promise((resolve) => {
       chrome.runtime.sendMessage(msg, resolve);
     }), msg);
-  }
+  };
 
   public static getTabId = async (controllable: Controllable): Promise<string> => {
     // tslint:disable-next-line:no-null-keyword
     const result = await PageRecipe.sendMessage(controllable, { name: '_tab_', data: { bm: {}, objUrls: {} }, to: null, uid: '1' });
     return (result as { result: { tabId: string } }).result.tabId;
-  }
+  };
 
+  public static addPubkey = async (t: AvaContext, browser: BrowserHandle, acctEmail: string, pubkey: string, email?: string) => {
+    const pubFrameUrl = `chrome/elements/pgp_pubkey.htm?frameId=none&armoredPubkey=${encodeURIComponent(pubkey)}&acctEmail=${encodeURIComponent(acctEmail)}&parentTabId=0`;
+    const pubFrame = await browser.newPage(t, pubFrameUrl);
+    if (email) {
+      await pubFrame.waitAndType('@input-email', email);
+    }
+    await pubFrame.waitAndClick('@action-add-contact');
+    await Util.sleep(1);
+    await pubFrame.close();
+  };
   /**
    * responding to modal triggers a new page to be open, eg oauth login page
    */

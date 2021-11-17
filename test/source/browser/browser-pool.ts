@@ -64,7 +64,7 @@ export class BrowserPool {
       }
     }
     return handle;
-  }
+  };
 
   public getExtensionId = async (t: AvaContext): Promise<string> => {
     const browser = await this.newBrowserHandle(t, false);
@@ -87,13 +87,13 @@ export class BrowserPool {
     }
     await browser.close();
     throw new Error(`Cannot determine extension id from urls.`);
-  }
+  };
 
   public close = async () => {
     while (this.browsersForReuse.length) {
       await this.browsersForReuse.pop()!.close();
     }
-  }
+  };
 
   public openOrReuseBrowser = async (t: AvaContext): Promise<BrowserHandle> => {
     if (!this.reuse) {
@@ -101,7 +101,7 @@ export class BrowserPool {
     }
     await this.semaphore.acquire();
     return this.browsersForReuse.pop()!;
-  }
+  };
 
   public doneUsingBrowser = async (browser: BrowserHandle) => {
     if (this.reuse) {
@@ -111,7 +111,7 @@ export class BrowserPool {
     } else {
       await browser.close();
     }
-  }
+  };
 
   public getPooledBrowser = async (cb: (t: AvaContext, browser: BrowserHandle) => void, t: AvaContext) => {
     const browser = await this.openOrReuseBrowser(t);
@@ -121,14 +121,14 @@ export class BrowserPool {
       await Util.sleep(1);
       await this.doneUsingBrowser(browser);
     }
-  }
+  };
 
   public cbWithTimeout = (cb: () => Promise<void>, timeout: number): Promise<void> => {
     return new Promise((resolve, reject) => {
       setTimeout(() => reject(new TimeoutError(`Test timed out after ${timeout}ms`)), timeout); // reject in
       cb().then(resolve, reject);
     });
-  }
+  };
 
   public withNewBrowserTimeoutAndRetry = async (cb: (t: AvaContext, browser: BrowserHandle) => void, t: AvaContext, consts: Consts, flag?: 'FAILING') => {
     const withTimeouts = newWithTimeoutsFunc(consts);
@@ -157,7 +157,7 @@ export class BrowserPool {
         this.processTestError(err, t, attemptDebugHtmls, flag);
       }
     }
-  }
+  };
 
   private processTestError = (err: any, t: AvaContext, attemptHtmls: string[], flag?: 'FAILING') => {
     t.retry = undefined;
@@ -170,7 +170,7 @@ export class BrowserPool {
       t.log(`${t.attemptText} Failed:   ${err instanceof Error ? err.stack : String(err)}`);
       t.fail(`[ALL RETRIES FAILED for ${t.title}]`);
     }
-  }
+  };
 
   private testFailSingleAttemptDebugHtml = async (t: AvaContext, browser: BrowserHandle, err: any): Promise<string> => {
     return `
@@ -182,7 +182,7 @@ export class BrowserPool {
       <a href="#" onclick="this.style.display='none';this.parentNode.firstElementChild.style = '';">${String(err)}</a>
     </div>
     `;
-  }
+  };
 
   private throwOnRetryFlagAndReset = async (t: AvaContext) => {
     await Util.sleep(TIMEOUT_DESTROY_UNEXPECTED_ALERT + 1); // in case there was an unexpected alert, don't let that affect next round
@@ -192,7 +192,7 @@ export class BrowserPool {
       e.stack = e.message; // stack is not interesting here, too much clutter would be printed
       throw e;
     }
-  }
+  };
 
 }
 
@@ -222,7 +222,7 @@ export class Semaphore {
     if (this.debug) {
       console.info(`[${this.name}] acquired, now avaialbe: ${this.availableLocks}`);
     }
-  }
+  };
 
   public release = () => {
     if (this.debug) {
@@ -232,10 +232,10 @@ export class Semaphore {
     if (this.debug) {
       console.info(`[${this.name}] released semaphore, now available: ${this.availableLocks}`);
     }
-  }
+  };
 
   private wait = () => {
     return new Promise(resolve => setTimeout(resolve, 1000 + Math.round(Math.random() * 2000))); // wait 1-3s
-  }
+  };
 
 }

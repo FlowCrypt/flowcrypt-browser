@@ -9,15 +9,18 @@ import { expect } from 'chai';
 import { GoogleData } from '../google-data';
 import { HttpClientErr } from '../../lib/api';
 import { MsgUtil } from '../../../core/crypto/pgp/msg-util';
+import Parse from '../../../util/parse';
 import { parsedMailAddressObjectAsArray } from '../google-endpoints.js';
 import { Str } from '../../../core/common.js';
 import { GMAIL_RECOVERY_EMAIL_SUBJECTS } from '../../../core/const.js';
+import { ENVELOPED_DATA_OID, SIGNED_DATA_OID, SmimeKey } from '../../../core/crypto/smime/smime-key.js';
+import { testConstants } from '../../../tests/tooling/consts.js';
 
 // TODO: Make a better structure of ITestMsgStrategy. Because this class doesn't test anything, it only saves message in the Mock
 class SaveMessageInStorageStrategy implements ITestMsgStrategy {
   public test = async (mimeMsg: ParsedMail, base64Msg: string) => {
     (await GoogleData.withInitializedData(mimeMsg.from!.value[0].address!)).storeSentMessage(mimeMsg, base64Msg);
-  }
+  };
 }
 
 class PwdEncryptedMessageWithFlowCryptComApiTestStrategy implements ITestMsgStrategy {
@@ -32,7 +35,7 @@ class PwdEncryptedMessageWithFlowCryptComApiTestStrategy implements ITestMsgStra
     if (!mimeMsg.text?.includes('Follow this link to open it')) {
       throw new HttpClientErr(`Error: cannot find pwd encrypted open link prompt in ${mimeMsg.text}`);
     }
-  }
+  };
 }
 
 class PwdEncryptedMessageWithFesAccessTokenTestStrategy implements ITestMsgStrategy {
@@ -51,7 +54,7 @@ class PwdEncryptedMessageWithFesAccessTokenTestStrategy implements ITestMsgStrat
     if (!mimeMsg.text?.includes('Follow this link to open it')) {
       throw new HttpClientErr(`Error: cannot find pwd encrypted open link prompt in ${mimeMsg.text}`);
     }
-  }
+  };
 }
 
 class PwdEncryptedMessageWithFesIdTokenTestStrategy implements ITestMsgStrategy {
@@ -70,7 +73,7 @@ class PwdEncryptedMessageWithFesIdTokenTestStrategy implements ITestMsgStrategy 
     if (!mimeMsg.text?.includes('Follow this link to open it')) {
       throw new HttpClientErr(`Error: cannot find pwd encrypted open link prompt in ${mimeMsg.text}`);
     }
-  }
+  };
 }
 
 class MessageWithFooterTestStrategy implements ITestMsgStrategy {
@@ -86,7 +89,7 @@ class MessageWithFooterTestStrategy implements ITestMsgStrategy {
     if (!textContent.includes(this.footer)) {
       throw new HttpClientErr(`Error: Msg Text doesn't contain footer. Current: '${mimeMsg.text}', expected footer: '${this.footer}'`);
     }
-  }
+  };
 }
 
 class SignedMessageTestStrategy implements ITestMsgStrategy {
@@ -109,7 +112,7 @@ class SignedMessageTestStrategy implements ITestMsgStrategy {
     if (!content.includes(this.expectedText)) {
       throw new HttpClientErr(`Error: Contents don't match. Expected: '${this.expectedText}' but got: '${content}'.`);
     }
-  }
+  };
 }
 
 class PlainTextMessageTestStrategy implements ITestMsgStrategy {
@@ -119,7 +122,7 @@ class PlainTextMessageTestStrategy implements ITestMsgStrategy {
     if (!mimeMsg.text?.includes(this.expectedText)) {
       throw new HttpClientErr(`Error: Msg Text is not matching expected. Current: '${mimeMsg.text}', expected: '${this.expectedText}'`);
     }
-  }
+  };
 }
 
 class IncludeQuotedPartTestStrategy implements ITestMsgStrategy {
@@ -146,7 +149,7 @@ class IncludeQuotedPartTestStrategy implements ITestMsgStrategy {
     if (!textContent.endsWith(this.quotedContent)) {
       throw new HttpClientErr(`Error: Quoted content isn't included to the Msg. Msg text: '${textContent}'\n Quoted part: '${this.quotedContent}'`, 400);
     }
-  }
+  };
 }
 
 class NewMessageCCAndBCCTestStrategy implements ITestMsgStrategy {
@@ -161,7 +164,7 @@ class NewMessageCCAndBCCTestStrategy implements ITestMsgStrategy {
     if (!hasAtLeastOneRecipient(parsedMailAddressObjectAsArray(mimeMsg.bcc))) {
       throw new HttpClientErr(`Error: There is no 'Bcc' header.`, 400);
     }
-  }
+  };
 }
 
 class SmimeEncryptedMessageStrategy implements ITestMsgStrategy {
@@ -176,11 +179,29 @@ class SmimeEncryptedMessageStrategy implements ITestMsgStrategy {
     expect(mimeMsg.attachments!.length).to.equal(1);
     expect(mimeMsg.attachments![0].contentType).to.equal('application/pkcs7-mime');
     expect(mimeMsg.attachments![0].filename).to.equal('smime.p7m');
-    expect(mimeMsg.attachments![0].size).to.be.greaterThan(300);
+    const withAttachments = mimeMsg.subject?.includes(' with attachment');
+    expect(mimeMsg.attachments![0].size).to.be.greaterThan(withAttachments ? 20000 : 300);
     const msg = new Buf(mimeMsg.attachments![0].content).toRawBytesStr();
     const p7 = forge.pkcs7.messageFromAsn1(forge.asn1.fromDer(msg));
-    expect(p7.type).to.equal('1.2.840.113549.1.7.3');
-  }
+    expect(p7.type).to.equal(ENVELOPED_DATA_OID);
+    if (p7.type === ENVELOPED_DATA_OID) {
+      const key = SmimeKey.parse(testConstants.testKeyMultipleSmimeCEA2D53BB9D24871);
+      const decrypted = SmimeKey.decryptMessage(p7, key);
+      const decryptedMessage = Buf.with(decrypted).toRawBytesStr();
+      if (mimeMsg.subject?.includes(' signed ')) {
+        expect(decryptedMessage).to.contain('smime-type=signed-data');
+        // todo: parse PKCS#7, check that is of SIGNED_DATA_OID content type, extract content?
+        // todo: #4046
+      } else {
+        expect(decryptedMessage).to.contain('This text should be encrypted into PKCS#7 data');
+        if (withAttachments) {
+          const nestedMimeMsg = await Parse.parseMixed(decryptedMessage);
+          expect(nestedMimeMsg.attachments!.length).to.equal(3);
+          expect(nestedMimeMsg.attachments![0].content.toString()).to.equal(`small text file\nnot much here\nthis worked\n`);
+        }
+      }
+    }
+  };
 }
 
 class SmimeSignedMessageStrategy implements ITestMsgStrategy {
@@ -198,8 +219,8 @@ class SmimeSignedMessageStrategy implements ITestMsgStrategy {
     expect(mimeMsg.attachments![0].size).to.be.greaterThan(300);
     const msg = new Buf(mimeMsg.attachments![0].content).toRawBytesStr();
     const p7 = forge.pkcs7.messageFromAsn1(forge.asn1.fromDer(msg));
-    expect(p7.type).to.equal('1.2.840.113549.1.7.2');
-  }
+    expect(p7.type).to.equal(SIGNED_DATA_OID);
+  };
 }
 export class TestBySubjectStrategyContext {
   private strategy: ITestMsgStrategy;
@@ -229,9 +250,7 @@ export class TestBySubjectStrategyContext {
       this.strategy = new SmimeEncryptedMessageStrategy();
     } else if (subject.includes('send with several S/MIME certs')) {
       this.strategy = new SmimeEncryptedMessageStrategy();
-    } else if (subject.includes('send with S/MIME attachment')) {
-      this.strategy = new SmimeEncryptedMessageStrategy();
-    } else if (subject.includes('send signed and encrypted S/MIME')) {
+    } else if (subject.includes('S/MIME message')) {
       this.strategy = new SmimeEncryptedMessageStrategy();
     } else if (subject.includes('send signed S/MIME without attachment')) {
       this.strategy = new SmimeSignedMessageStrategy();
@@ -244,5 +263,5 @@ export class TestBySubjectStrategyContext {
 
   public test = async (mimeMsg: ParsedMail, base64Msg: string) => {
     await this.strategy.test(mimeMsg, base64Msg);
-  }
+  };
 }

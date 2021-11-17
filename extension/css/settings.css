@@ -88,7 +88,7 @@ a.gray_link {
   background: #ccc;
   border-radius: 120px;
 }
-#public-profile-indicator .status-indicator.active { background-image: -webkit-linear-gradient(140deg, #31a217 -40%, green 0%, #31a217 100%); }
+#public-profile-indicator .status-indicator.active { background-image: linear-gradient(140deg, #31a217 -40%, green 0%, #31a217 100%); }
 #public-profile-indicator .status-indicator.inactive { background-image: radial-gradient(50% 81%, #f00 50%, #c90202 81%); }
 
 #public-profile-indicator .status-indicator::before {
@@ -285,7 +285,7 @@ a.gray_link {
 #settings-row .separator {
   background: rgba(0, 0, 0, 0.09);
   max-width: 515px;
-  margin: 15px auto 20px auto;
+  margin: 15px auto 20px;
   height: 1px;
 }
 
@@ -338,7 +338,7 @@ a.gray_link {
   position: absolute;
   right: 21px;
   text-align: center;
-  margin: 0 auto 0 auto;
+  margin: 0 auto;
   bottom: -40px;
   display: inline-block;
 }
@@ -421,7 +421,7 @@ a.gray_link {
 #settings-row a p {
   font-weight: 500;
   text-align: center;
-  margin: 15px auto 5px auto;
+  margin: 15px auto 5px;
   color: #343434;
   text-transform: uppercase;
   font-size: 17px;
@@ -793,7 +793,7 @@ body#settings .settings-border .key_list {
   font-size: 9.5px;
   color: white;
   background: #31a217;
-  padding: 2px 3px 2px 3px;
+  padding: 2px 3px;
   border-radius: 2px;
   cursor: pointer;
   float: right;

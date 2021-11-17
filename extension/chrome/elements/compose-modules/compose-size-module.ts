@@ -16,7 +16,7 @@ export class ComposeSizeModule extends ViewModule<ComposeView> {
   private FULL_WINDOW_CLASS = 'full_window';
   private lastReplyBoxTableHeight = 0;
   private refBodyHeight?: number;
-  private currentWindowSelector = `.secure_compose_window[data-frame-id="${this.view.frameId}"]`
+  private currentWindowSelector = `.secure_compose_window[data-frame-id="${this.view.frameId}"]`;
 
   public setHandlers = () => {
     $('body').click(event => {
@@ -28,22 +28,22 @@ export class ComposeSizeModule extends ViewModule<ComposeView> {
       $('.minimize_compose_window').click(this.view.setHandler(() => this.minimizeComposerWindow()));
       $('.popout').click(this.view.setHandler(() => this.popoutClickHandler()));
     }
-  }
+  };
 
   public popoutClickHandler = async () => {
     this.view.S.cached('body').hide(); // Need to hide because it seems laggy on some devices
     await this.toggleFullScreen();
     this.view.S.cached('body').show();
-  }
+  };
 
   public onComposeTableRender = () => {
     Catch.setHandledTimeout(() => { // delay automatic resizing until a second later
       // we use veryslowspree for reply box because hand-resizing the main window will cause too many events
       // we use spree (faster) for new messages because rendering of window buttons on top right depend on it, else visible lag shows
       $(window).resize(this.view.setHandlerPrevent(this.view.isReplyBox ? 'veryslowspree' : 'spree', () => { this.windowResized().catch(Catch.reportErr); }));
-      this.view.inputModule.squire.addEventListener('keyup', () => this.view.setHandlerPrevent('slowspree', () => { this.windowResized().catch(Catch.reportErr); }));
+      this.view.inputModule.squire.addEventListener('input', () => this.view.setHandlerPrevent('slowspree', () => { this.windowResized().catch(Catch.reportErr); }));
     }, 1000);
-  }
+  };
 
   public resizeComposeBox = (addExtra: number = 0, cursorOffsetTop?: number) => {
     if (this.view.isReplyBox) {
@@ -73,7 +73,7 @@ export class ComposeSizeModule extends ViewModule<ComposeView> {
       this.resizeInput();
       this.view.S.cached('input_text').css('max-width', $('.text_container').width()! - 8 + 'px');
     }
-  }
+  };
 
   /**
    * On Firefox, we have to manage textbox height manually. Only applies to composing new messages
@@ -97,7 +97,7 @@ export class ComposeSizeModule extends ViewModule<ComposeView> {
       const iconShowPrevMsgHeight = this.view.S.cached('triple_dot').outerHeight(true) || 0;
       this.view.S.cached('input_text').css('height', this.refBodyHeight - cellHeightExceptText - attachmentListHeight - inputTextVerticalPadding - iconShowPrevMsgHeight);
     }
-  }
+  };
 
   public resizeInput = (inputs?: JQuery<HTMLElement>) => {
     if (!inputs) {
@@ -119,7 +119,7 @@ export class ComposeSizeModule extends ViewModule<ComposeView> {
       }
       jqueryElem.css('width', (containerWidth - offset - additionalWidth - 11) + 'px');
     }
-  }
+  };
 
   private windowResized = async () => {
     this.resizeComposeBox();
@@ -127,7 +127,7 @@ export class ComposeSizeModule extends ViewModule<ComposeView> {
     if (this.view.S.cached('recipients_placeholder').is(':visible')) {
       await this.view.recipientsModule.setEmailsPreview(this.view.recipientsModule.getRecipients());
     }
-  }
+  };
 
   private minimizeComposerWindow = () => {
     if (this.composeWindowIsMaximized) {
@@ -143,7 +143,7 @@ export class ComposeSizeModule extends ViewModule<ComposeView> {
     } else {
       BrowserMsg.send.removeClass(this.view.parentTabId, { selector: this.currentWindowSelector, class: this.MINIMIZED_CLASS });
     }
-  }
+  };
 
   private toggleFullScreen = async () => {
     if (this.composeWindowIsMinimized) {
@@ -159,7 +159,7 @@ export class ComposeSizeModule extends ViewModule<ComposeView> {
       await this.view.recipientsModule.setEmailsPreview(this.view.recipientsModule.getRecipients());
     }
     this.composeWindowIsMaximized = !this.composeWindowIsMaximized;
-  }
+  };
 
   private addOrRemoveFullScreenStyles = (add: boolean) => {
     if (add) {
@@ -169,6 +169,6 @@ export class ComposeSizeModule extends ViewModule<ComposeView> {
       this.view.S.cached('body').removeClass(this.FULL_WINDOW_CLASS);
       BrowserMsg.send.removeClass(this.view.parentTabId, { class: this.FULL_WINDOW_CLASS, selector: this.currentWindowSelector });
     }
-  }
+  };
 
 }

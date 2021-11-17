@@ -66,8 +66,8 @@ export class SetupRecoverKeyModule {
       await this.view.saveKeysAndPassPhrase(newlyMatchingKeys, options);
       const { setup_done } = await AcctStore.get(this.view.acctEmail, ['setup_done']);
       if (!setup_done) { // normal situation - fresh setup
-        await this.view.preFinalizeSetup(options);
-        await this.view.submitPublicKeysAndFinalizeSetup(options);
+        await this.view.submitPublicKeys(options);
+        await this.view.finalizeSetup();
         await this.view.setupRender.renderSetupDone();
       } else { // setup was finished before, just added more keys now
         await this.view.setupRender.renderSetupDone();
@@ -76,7 +76,7 @@ export class SetupRecoverKeyModule {
       ApiErr.reportIfSignificant(e);
       await Ui.modal.error(`Error setting up FlowCrypt:\n\n${ApiErr.eli5(e)} (${String(e)})\n\nPlease write human@flowcrypt.com if this happens repeatedly.`);
     }
-  }
+  };
 
   public actionRecoverRemainingKeysHandler = async () => {
     this.view.setupRender.displayBlock('step_2_recovery');
@@ -92,7 +92,7 @@ export class SetupRecoverKeyModule {
       Xss.sanitizeRender('#step_2_recovery .recovery_status', `There ${txtKeysTeft} left to recover.<br><br>Try different pass phrases to unlock all backups.`);
       $('#step_2_recovery .line_skip_recovery').css('display', 'none');
     }
-  }
+  };
 
   public actionSkipRecoveryHandler = async () => {
     if (await Ui.modal.confirm(Lang.setup.confirmSkipRecovery)) {
@@ -102,7 +102,7 @@ export class SetupRecoverKeyModule {
       this.view.importedKeysUniqueLongids = [];
       this.view.setupRender.displayBlock('step_1_easy_or_manual');
     }
-  }
+  };
 
   public renderAddKeyFromBackup = async () => { // at this point, account is already set up, and this page is showing in a lightbox after selecting "from backup" in add_key.htm
     $('.profile-row, .skip_recover_remaining, .action_send, .action_account_settings, #lost_pass_phrase').css({ display: 'none', visibility: 'hidden', opacity: 0 });
@@ -124,6 +124,6 @@ export class SetupRecoverKeyModule {
     } else {
       window.location.href = Url.create('modules/add_key.htm', { acctEmail: this.view.acctEmail, parentTabId: this.view.parentTabId });
     }
-  }
+  };
 
 }

@@ -50,7 +50,15 @@ export class KeyImportUi {
       }
     }
     return;
-  }
+  };
+
+  public static addAliasForSubmission = (email: string, submitKeyForAddrs: string[]) => {
+    submitKeyForAddrs.push(email);
+  };
+
+  public static removeAliasFromSubmission = (email: string, submitKeyForAddrs: string[]) => {
+    submitKeyForAddrs.splice(submitKeyForAddrs.indexOf(email), 1);
+  };
 
   constructor(o: { rejectKnown?: boolean, checkEncryption?: boolean, checkSigning?: boolean }) {
     this.rejectKnown = o.rejectKnown === true;
@@ -59,7 +67,7 @@ export class KeyImportUi {
   }
   public onBadPassphrase: VoidCallback = () => undefined;
 
-  public initPrvImportSrcForm = (acctEmail: string, parentTabId: string | undefined) => {
+  public initPrvImportSrcForm = (acctEmail: string, parentTabId: string | undefined, submitKeyForAddrs?: string[] | undefined) => {
     $('input[type=radio][name=source]').off().change(function () {
       if ((this as HTMLInputElement).value === 'file') {
         $('.input_private_key').val('').change().prop('disabled', true);
@@ -75,13 +83,32 @@ export class KeyImportUi {
       }
     });
     $('.line.unprotected_key_create_pass_phrase .action_use_random_pass_phrase').click(Ui.event.handle(() => {
-      $('.source_paste_container .input_passphrase').val(PgpPwd.random()).keyup();
+      $('.source_paste_container .input_passphrase').val(PgpPwd.random()).trigger('input');
       $('.input_passphrase').attr('type', 'text');
       $('#e_rememberPassphrase').prop('checked', true);
     }));
+    $('.input_private_key').on('keyup paste change', Ui.event.handle(async target => {
+      $('.action_add_private_key').addClass('btn_disabled').attr('disabled');
+      $('.input_email_alias').prop('checked', false);
+      const { keys: [prv] } = await opgp.key.readArmored(String($(target).val()));
+      if (prv !== undefined) {
+        $('.action_add_private_key').removeClass('btn_disabled').removeAttr('disabled');
+        if (submitKeyForAddrs !== undefined) {
+          const users = prv.users;
+          for (const user of users) {
+            const userId = user.userId;
+            for (const inputCheckboxesWithEmail of $('.input_email_alias')) {
+              if (String($(inputCheckboxesWithEmail).data('email')) === userId!.email) {
+                KeyImportUi.addAliasForSubmission(userId!.email, submitKeyForAddrs!);
+                $(inputCheckboxesWithEmail).prop('checked', true);
+              }
+            }
+          }
+        }
+      }
+    }));
     $('.input_private_key').change(Ui.event.handle(async target => {
       const { keys: [prv] } = await opgp.key.readArmored(String($(target).val()));
-      $('.input_passphrase').val('');
       if (!prv || !prv.isPrivate()) {
         $('.line.unprotected_key_create_pass_phrase').hide();
         return;
@@ -130,7 +157,7 @@ export class KeyImportUi {
         }
       }
     });
-  }
+  };
 
   public checkPrv = async (acctEmail: string, armored: string, passphrase: string): Promise<KeyImportUiCheckResult> => {
     const { normalized } = await this.normalize('privateKey', armored);
@@ -158,14 +185,14 @@ export class KeyImportUi {
         missing.join(' and ') + '.');
     }
     return { normalized, passphrase, fingerprint: decrypted.id, decrypted, encrypted }; // will have fp if had longid
-  }
+  };
 
   public checkPub = async (armored: string): Promise<string> => {
     const { normalized } = await this.normalize('publicKey', armored);
     await this.read('publicKey', normalized); // throws on err
     await this.checkEncryptionPubIfSelected(normalized);
     return normalized;
-  }
+  };
 
   public renderPassPhraseStrengthValidationInput = (input: JQuery<HTMLElement>, submitButton?: JQuery<HTMLElement>, type: 'passphrase' | 'pwd' = 'passphrase') => {
     const validationElements = this.getPPValidationElements();
@@ -195,7 +222,7 @@ export class KeyImportUi {
     input.parent().append(validationElements.progressBarElement); // xss-direct
     input.parent().append(validationElements.passwordResultElement); // xss-direct
     const validation = Ui.event.prevent('spree', validate);
-    input.on('keyup', validation);
+    input.on('input', validation);
     const removeValidationElements = () => {
       validationElements.passwordResultElement.remove();
       validationElements.progressBarElement.remove();
@@ -208,7 +235,7 @@ export class KeyImportUi {
       validate();
     }
     return { ...validationElements, removeValidationElements };
-  }
+  };
 
   private normalize = async (type: KeyBlockType, armored: string): Promise<{ normalized: string }> => {
     // non-OpenPGP keys are considered to be always normalized
@@ -223,7 +250,7 @@ export class KeyImportUi {
       throw new UserAlert('There was an error processing this key, possibly due to bad formatting.\nPlease insert complete key, including "' + headers.begin + '" and "' + headers.end + '"');
     }
     return normalized;
-  }
+  };
 
   private read = async (type: KeyBlockType, normalized: string) => {
     const headers = PgpArmor.headers(type);
@@ -232,7 +259,7 @@ export class KeyImportUi {
       throw new UserAlert(`${type === 'privateKey' ? 'Private' : 'Public'} key is not correctly formatted. Please insert complete key, including "${headers.begin}" and "${headers.end}"`);
     }
     return k;
-  }
+  };
 
   private rejectIfNot = (type: KeyBlockType, k: Key) => {
     const headers = PgpArmor.headers(type);
@@ -242,7 +269,7 @@ export class KeyImportUi {
     if (type === 'publicKey' && !k.isPublic) {
       throw new UserAlert('This was a public key. Please insert a private key instead. It\'s a block of text starting with "' + headers.begin + '"');
     }
-  }
+  };
 
   private rejectKnownIfSelected = async (acctEmail: string, k: Key) => {
     if (this.rejectKnown) {
@@ -252,7 +279,7 @@ export class KeyImportUi {
         throw new UserAlert('This is one of your current keys, try another one.');
       }
     }
-  }
+  };
 
   private decryptAndEncryptAsNeeded = async (toDecrypt: Key, toEncrypt: Key, passphrase: string): Promise<void> => {
     if (!passphrase) {
@@ -283,7 +310,7 @@ export class KeyImportUi {
       }
       throw new UserAlert(`This key is not supported by FlowCrypt yet. Please write at human@flowcrypt.com to add support soon. (decrypt error: ${String(e)})`);
     }
-  }
+  };
 
   private checkEncryptionPrvIfSelected = async (k: Key, encrypted: Key) => {
     if (this.checkEncryption && (!k.usableForEncryption || k.missingPrivateKeyForDecryption)) {
@@ -306,7 +333,7 @@ export class KeyImportUi {
         throw new UserAlert('This looks like a valid key but it cannot be used for encryption. Please write at human@flowcrypt.com to see why is that.');
       }
     }
-  }
+  };
 
   private checkEncryptionPubIfSelected = async (normalized: string) => {
     const key = await KeyUtil.parse(normalized);
@@ -320,7 +347,7 @@ export class KeyImportUi {
       }
       throw new UserAlert(msg);
     }
-  }
+  };
 
   private checkSigningIfSelected = async (k: Key) => {
     if (this.checkSigning && (!k.usableForSigning || k.missingPrivateKeyForSigning)) {
@@ -331,7 +358,7 @@ export class KeyImportUi {
         throw new UserAlert('This looks like a valid key but it cannot be used for signing. Please write at human@flowcrypt.com to see why is that.');
       }
     }
-  }
+  };
 
   private getPPValidationElements = () => {
     const passwordResultHTML = `<div class="line password_feedback" data-test="container-password-feedback">
@@ -341,6 +368,6 @@ export class KeyImportUi {
                 <div></div>
               </div>`;
     return { passwordResultElement: $(passwordResultHTML), progressBarElement: $(progressBarHTML) };
-  }
+  };
 
 }

@@ -37,11 +37,11 @@ View.run(class HelpView extends View {
       $('.line.info').text('Please describe in detail what were you doing. Does this happen repeatedly?');
       $('#input_text').val(`\n\n\n--------- BUG REPORT ----------\n${this.bugReport}`);
     }
-  }
+  };
 
   public setHandlers = () => {
     $('.action_send_feedback').click(this.setHandler(el => this.sendFeedbackHandler(el)));
-  }
+  };
 
   // --- PRIVATE
 
@@ -76,6 +76,6 @@ View.run(class HelpView extends View {
       $(target).text(origBtnText);
       await Ui.modal.error(`There was an error sending message. Our direct email is human@flowcrypt.com\n\n${ApiErr.eli5(e)}`);
     }
-  }
+  };
 
 });

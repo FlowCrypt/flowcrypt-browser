@@ -16,15 +16,15 @@ export class BrowserMsgCommonHandlers {
       el = el.parent();
     }
     el.css(data.css);
-  }
+  };
 
   public static addClass = async (data: Bm.AddOrRemoveClass) => {
     $(data.selector).addClass(data.class);
-  }
+  };
 
   public static removeClass = async (data: Bm.AddOrRemoveClass) => {
     $(data.selector).removeClass(data.class);
-  }
+  };
 
   // -- these below have to be set manually when appropriate
 
@@ -34,6 +34,6 @@ export class BrowserMsgCommonHandlers {
       const bareSrc = Url.removeParamsFromUrl(replyIframe.src, ['ignoreDraft', 'disableDraftSaving', 'draftId', 'replyPubkeyMismatch', 'skipClickPrompt']);
       replyIframe.src = Url.create(bareSrc, { replyPubkeyMismatch: true, ignoreDraft: true, disableDraftSaving: true, draftId: '', skipClickPrompt: true });
     }
-  }
+  };
 
 }

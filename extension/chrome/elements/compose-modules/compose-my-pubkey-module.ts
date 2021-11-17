@@ -3,7 +3,7 @@
 'use strict';
 
 import { ApiErr } from '../../../js/common/api/shared/api-error.js';
-import { KeyInfo, KeyUtil } from '../../../js/common/core/crypto/key.js';
+import { KeyUtil } from '../../../js/common/core/crypto/key.js';
 import { Lang } from '../../../js/common/lang.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { ViewModule } from '../../../js/common/view-module.js';
@@ -18,27 +18,18 @@ export class ComposeMyPubkeyModule extends ViewModule<ComposeView> {
   public setHandlers = () => {
     this.view.S.cached('icon_pubkey').attr('title', Lang.compose.includePubkeyIconTitle);
     this.view.S.cached('icon_pubkey').click(this.view.setHandler((el) => this.iconPubkeyClickHandler(el), this.view.errModule.handle(`set/unset pub attachment`)));
-  }
+  };
 
   public iconPubkeyClickHandler = (target: HTMLElement) => {
     this.toggledManually = true;
     const includePub = !$(target).is('.active'); // evaluating what the state of the icon was BEFORE clicking
     Ui.toast(`${includePub ? 'Attaching' : 'Removing'} your Public Key`);
     this.setAttachPreference(includePub);
-  }
+  };
 
   public shouldAttach = () => {
     return this.view.S.cached('icon_pubkey').is('.active');
-  }
-
-  public chooseMyPublicKeyBySenderEmail = async (keys: KeyInfo[], email: string) => {
-    for (const key of keys) {
-      if (key.emails?.includes(email.toLowerCase())) {
-        return key;
-      }
-    }
-    return undefined;
-  }
+  };
 
   public reevaluateShouldAttachOrNot = () => {
     if (this.toggledManually) { // leave it as is if toggled manually before
@@ -46,6 +37,7 @@ export class ComposeMyPubkeyModule extends ViewModule<ComposeView> {
     }
     (async () => {
       const senderEmail = this.view.senderModule.getSender();
+      // todo: disable attaching S/MIME certificate #4075
       const senderKi = await this.view.storageModule.getKey(senderEmail);
       const primaryFingerprint = (await KeyUtil.parse(senderKi.private)).id;
       // if we have cashed this fingerprint, setAttachPreference(false) rightaway and return
@@ -80,7 +72,7 @@ export class ComposeMyPubkeyModule extends ViewModule<ComposeView> {
         this.setAttachPreference(false);
       }
     })().catch(ApiErr.reportIfSignificant);
-  }
+  };
 
   private setAttachPreference = (includePubkey: boolean) => {
     if (includePubkey) {
@@ -88,6 +80,6 @@ export class ComposeMyPubkeyModule extends ViewModule<ComposeView> {
     } else {
       this.view.S.cached('icon_pubkey').removeClass('active').attr('title', Lang.compose.includePubkeyIconTitle);
     }
-  }
+  };
 
 }

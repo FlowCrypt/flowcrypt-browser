@@ -9,7 +9,6 @@ import { NewMsgData, SendBtnTexts } from './compose-types.js';
 import { ApiErr } from '../../../js/common/api/shared/api-error.js';
 import { BrowserExtension } from '../../../js/common/browser/browser-extension.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
-import { KeyInfo } from '../../../js/common/core/crypto/key.js';
 import { Settings } from '../../../js/common/settings.js';
 import { Str } from '../../../js/common/core/common.js';
 import { Xss } from '../../../js/common/platform/xss.js';
@@ -46,7 +45,7 @@ export class ComposeErrModule extends ViewModule<ComposeView> {
         await Ui.modal.info(`Could not ${couldNotDoWhat} (unknown error). If this repeats, please contact human@flowcrypt.com.\n\n(${String(e)})`);
       },
     };
-  }
+  };
 
   public debugFocusEvents = (...selNames: string[]) => {
     for (const selName of selNames) {
@@ -54,13 +53,13 @@ export class ComposeErrModule extends ViewModule<ComposeView> {
         .focusin(e => this.debug(`** ${selName} receiving focus from(${e.relatedTarget ? e.relatedTarget.outerHTML : undefined})`))
         .focusout(e => this.debug(`** ${selName} giving focus to(${e.relatedTarget ? e.relatedTarget.outerHTML : undefined})`));
     }
-  }
+  };
 
   public debug = (msg: string) => {
     if (this.view.debug) {
       console.log(`[${this.debugId}] ${msg}`);
     }
-  }
+  };
 
   public handleSendErr = async (e: any) => {
     if (ApiErr.isNetErr(e)) {
@@ -93,7 +92,7 @@ export class ComposeErrModule extends ViewModule<ComposeView> {
     if (!(e instanceof ComposerNotReadyError)) {
       this.view.sendBtnModule.resetSendBtn(100);
     }
-  }
+  };
 
   public throwIfFormNotReady = (): void => {
     if (this.view.S.cached('triple_dot').hasClass('progress')) {
@@ -116,7 +115,7 @@ export class ComposeErrModule extends ViewModule<ComposeView> {
       throw new ComposerUserError('Please add a recipient first');
     }
     throw new ComposerNotReadyError('Still working, please wait.');
-  }
+  };
 
   public throwIfFormValsInvalid = async ({ subject, plaintext, from }: NewMsgData) => {
     if (!subject && ! await Ui.modal.confirm('Send without a subject?')) {
@@ -129,12 +128,11 @@ export class ComposeErrModule extends ViewModule<ComposeView> {
     if ((!plaintext.trim() || (footer && plaintext.trim() === footer.trim())) && ! await Ui.modal.confirm('Send empty message?')) {
       throw new ComposerResetBtnTrigger();
     }
-  }
+  };
 
-  public throwIfEncryptionPasswordInvalid = async (senderKi: KeyInfo, { subject, pwd }: { subject: string, pwd?: string }) => {
+  public throwIfEncryptionPasswordInvalid = async ({ subject, pwd }: { subject: string, pwd?: string }) => {
     if (pwd) {
-      const pp = await this.view.storageModule.passphraseGet(senderKi);
-      if (pp && pwd.toLowerCase() === pp.toLowerCase()) {
+      if (await this.view.storageModule.isPwdMatchingPassphrase(pwd)) {
         throw new ComposerUserError('Please do not use your private key pass phrase as a password for this message.\n\n' +
           'You should come up with some other unique password that you can share with recipient.');
       }
@@ -153,6 +151,6 @@ export class ComposeErrModule extends ViewModule<ComposeView> {
       this.view.S.cached('input_password').focus();
       throw new ComposerUserError('Some recipients don\'t have encryption set up. Please add a password.');
     }
-  }
+  };
 
 }

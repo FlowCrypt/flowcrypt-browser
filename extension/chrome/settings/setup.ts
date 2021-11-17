@@ -84,8 +84,8 @@ export class SetupView extends View {
     } else {
       window.location.href = 'index.htm';
     }
-    this.submitKeyForAddrs = [this.acctEmail];
-    this.keyImportUi.initPrvImportSrcForm(this.acctEmail, this.parentTabId); // for step_2b_manual_enter, if user chooses so
+    this.submitKeyForAddrs = [];
+    this.keyImportUi.initPrvImportSrcForm(this.acctEmail, this.parentTabId, this.submitKeyForAddrs); // for step_2b_manual_enter, if user chooses so
     this.keyImportUi.onBadPassphrase = () => $('#step_2b_manual_enter .input_passphrase').val('').focus();
     this.keyImportUi.renderPassPhraseStrengthValidationInput($('#step_2a_manual_create .input_password'), $('#step_2a_manual_create .action_proceed_private'));
     this.keyImportUi.renderPassPhraseStrengthValidationInput($('#step_2_ekm_choose_pass_phrase .input_password'), $('#step_2_ekm_choose_pass_phrase .action_proceed_private'));
@@ -141,7 +141,7 @@ export class SetupView extends View {
     }
     this.tabId = await BrowserMsg.requiredTabId();
     await this.setupRender.renderInitial();
-  }
+  };
 
   public setHandlers = () => {
     BrowserMsg.addListener('close_page', async () => { Swal.close(); });
@@ -167,12 +167,12 @@ export class SetupView extends View {
     $('#step_2_ekm_choose_pass_phrase .input_password').on('keydown', this.setEnterHandlerThatClicks('#step_2_ekm_choose_pass_phrase .action_proceed_private'));
     $('#step_2_ekm_choose_pass_phrase .input_password2').on('keydown', this.setEnterHandlerThatClicks('#step_2_ekm_choose_pass_phrase .action_proceed_private'));
     $("#recovery_password").on('keydown', this.setEnterHandlerThatClicks('#step_2_recovery .action_recover_account'));
-  }
+  };
 
   public actionBackHandler = () => {
     $('h1').text('Set Up FlowCrypt');
     this.setupRender.displayBlock('step_1_easy_or_manual');
-  }
+  };
 
   public showLostPassPhraseModal = () => {
     Ui.modal.info(`
@@ -194,19 +194,20 @@ export class SetupView extends View {
       `, true).catch(Catch.reportErr);
     $('.action_skip_recovery').click(this.setHandler(() => this.setupRecoverKey.actionSkipRecoveryHandler()));
     $('.reload_page').click(this.setHandler(() => window.location.reload()));
-  }
+  };
 
   public actionSubmitPublicKeyToggleHandler = (target: HTMLElement) => {
     // will be hidden / ignored / forced true when rules.mustSubmitToAttester() === true (for certain orgs)
     const inputSubmitAll = $(target).closest('.manual').find('.input_submit_all').first();
     if ($(target).prop('checked')) {
       if (inputSubmitAll.closest('div.line').css('visibility') === 'visible') {
-        inputSubmitAll.prop({ checked: true, disabled: false });
+        $('.input_email_alias').prop({ disabled: false });
       }
     } else {
-      inputSubmitAll.prop({ checked: false, disabled: true });
+      $('.input_email_alias').prop({ checked: false });
+      $('.input_email_alias').prop({ disabled: true });
     }
-  }
+  };
 
   public actionCloseHandler = () => {
     if (this.parentTabId) {
@@ -214,22 +215,26 @@ export class SetupView extends View {
     } else {
       Catch.report('setup.ts missing parentTabId');
     }
-  }
+  };
 
-  public preFinalizeSetup = async (options: SetupOptions): Promise<void> => {
-    await AcctStore.set(this.acctEmail, { tmp_submit_main: options.submit_main, tmp_submit_all: options.submit_all });
-  }
-
-  public submitPublicKeysAndFinalizeSetup = async ({ submit_main, submit_all }: { submit_main: boolean, submit_all: boolean }): Promise<void> => {
+  public submitPublicKeys = async (
+    { submit_main, submit_all }: { submit_main: boolean, submit_all: boolean }
+  ): Promise<void> => {
     const primaryKi = await KeyStore.getFirstRequired(this.acctEmail);
     try {
       await this.submitPublicKeyIfNeeded(primaryKi.public, { submit_main, submit_all });
     } catch (e) {
-      return await Settings.promptToRetry(e, Lang.setup.failedToSubmitToAttester, () => this.submitPublicKeysAndFinalizeSetup({ submit_main, submit_all }));
+      return await Settings.promptToRetry(
+        e,
+        Lang.setup.failedToSubmitToAttester,
+        () => this.submitPublicKeys({ submit_main, submit_all })
+      );
     }
+  };
+
+  public finalizeSetup = async (): Promise<void> => {
     await AcctStore.set(this.acctEmail, { setup_date: Date.now(), setup_done: true, cryptup_enabled: true });
-    await AcctStore.remove(this.acctEmail, ['tmp_submit_main', 'tmp_submit_all']);
-  }
+  };
 
   public saveKeysAndPassPhrase = async (prvs: Key[], options: SetupOptions) => {
     for (const prv of prvs) {
@@ -237,13 +242,15 @@ export class SetupView extends View {
       await PassphraseStore.set((options.passphrase_save && !this.orgRules.forbidStoringPassPhrase()) ? 'local' : 'session',
         this.acctEmail, { longid: KeyUtil.getPrimaryLongid(prv) }, options.passphrase);
     }
+    const { sendAs } = await AcctStore.get(this.acctEmail, ['sendAs']);
+    const myOwnEmailsAddrs: string[] = [this.acctEmail].concat(Object.keys(sendAs!));
     const myOwnEmailAddrsAsContacts: Contact[] = [];
     const { full_name: name } = await AcctStore.get(this.acctEmail, ['full_name']);
-    for (const email of this.submitKeyForAddrs) {
+    for (const email of myOwnEmailsAddrs) {
       myOwnEmailAddrsAsContacts.push(await ContactStore.obj({ email, name, pubkey: KeyUtil.armor(await KeyUtil.asPublicKey(prvs[0])) }));
     }
     await ContactStore.save(undefined, myOwnEmailAddrsAsContacts);
-  }
+  };
 
   public shouldSubmitPubkey = (checkboxSelector: string) => {
     if (this.orgRules.mustSubmitToAttester() && !this.orgRules.canSubmitPubToAttester()) {
@@ -256,7 +263,7 @@ export class SetupView extends View {
       return true;
     }
     return Boolean($(checkboxSelector).prop('checked'));
-  }
+  };
 
   public isCreatePrivateFormInputCorrect = async (section: string): Promise<boolean> => {
     const password1 = $(`#${section} .input_password`);
@@ -280,15 +287,18 @@ export class SetupView extends View {
     if (await shouldPassPhraseBeHidden()) {
       notePp = notePp.substring(0, 2) + notePp.substring(2, notePp.length - 2).replace(/[^ ]/g, '*') + notePp.substring(notePp.length - 2, notePp.length);
     }
-    const paperPassPhraseStickyNote = `
-      <div style="font-size: 1.2em">
-        Please write down your pass phrase and store it in safe place or even two.
-        It is needed in order to access your FlowCrypt account.
-      </div>
-      <div class="passphrase-sticky-note">${notePp}</div>
-    `;
-    return await Ui.modal.confirmWithCheckbox('Yes, I wrote it down', paperPassPhraseStickyNote);
-  }
+    if (!this.orgRules.usesKeyManager()) {
+      const paperPassPhraseStickyNote = `
+        <div style="font-size: 1.2em">
+          Please write down your pass phrase and store it in safe place or even two.
+          It is needed in order to access your FlowCrypt account.
+        </div>
+        <div class="passphrase-sticky-note">${notePp}</div>
+      `;
+      return await Ui.modal.confirmWithCheckbox('Yes, I wrote it down', paperPassPhraseStickyNote);
+    }
+    return true;
+  };
 
   private submitPublicKeyIfNeeded = async (armoredPubkey: string, options: { submit_main: boolean, submit_all: boolean }) => {
     if (!options.submit_main) {
@@ -309,7 +319,7 @@ export class SetupView extends View {
       addresses = [this.acctEmail];
     }
     await this.submitPubkeys(addresses, armoredPubkey);
-  }
+  };
 
   private submitPubkeys = async (addresses: string[], pubkey: string) => {
     if (this.orgRules.useLegacyAttesterSubmit()) {
@@ -323,7 +333,7 @@ export class SetupView extends View {
     if (aliases.length) {
       await Promise.all(aliases.map(a => this.pubLookup.attester.initialLegacySubmit(a, pubkey)));
     }
-  }
+  };
 
 }
 

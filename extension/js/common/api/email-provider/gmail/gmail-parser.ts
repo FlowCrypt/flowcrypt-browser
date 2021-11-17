@@ -81,7 +81,7 @@ export class GmailParser {
       }
     }
     return undefined;
-  }
+  };
 
   public static findAttachments = (
     msgOrPayloadOrPart: GmailRes.GmailMsg | GmailRes.GmailMsg$payload | GmailRes.GmailMsg$payload$part,
@@ -108,7 +108,7 @@ export class GmailParser {
       }));
     }
     return internalResults;
-  }
+  };
 
   public static findBodies = (gmailMsg: GmailRes.GmailMsg | GmailRes.GmailMsg$payload | GmailRes.GmailMsg$payload$part, internalResults: SendableMsgBody = {}): SendableMsgBody => {
     const isGmailMsgWithPayload = (v: any): v is GmailRes.GmailMsg => v && typeof (v as GmailRes.GmailMsg).payload !== 'undefined'; // tslint:disable-line:no-unsafe-any
@@ -129,7 +129,7 @@ export class GmailParser {
       }
     }
     return internalResults;
-  }
+  };
 
   public static determineReplyMeta = (acctEmail: string, addresses: string[], lastGmailMsg: GmailRes.GmailMsg): ReplyParams => {
     const headers = {
@@ -151,17 +151,19 @@ export class GmailParser {
       myEmail = acctEmailAliasesInMsg[0];
     }
     if (headers.replyTo) {
-      return { to: [headers.replyTo], cc: [], bcc: [], from: myEmail, subject: headers.subject };
+      return { to: [headers.replyTo], cc: [], bcc: [], myEmail, from: headers.from, subject: headers.subject };
     }
-    const replyToWithoutMyEmail = headers.to.filter(e => myEmail !== e); // thinking about moving it in another place
-    if (replyToWithoutMyEmail.length) { // when user sends emails it itself here will be 0 elements
-      headers.to = replyToWithoutMyEmail;
+    if (headers.from !== myEmail) {
+      const replyToWithoutMyEmail = headers.to.filter(e => myEmail !== e); // thinking about moving it in another place
+      if (replyToWithoutMyEmail.length) { // when user sends emails it itself here will be 0 elements
+        headers.to = replyToWithoutMyEmail;
+      }
     }
-    return { to: headers.to, cc: headers.cc, bcc: headers.bcc, from: myEmail, subject: headers.subject };
-  }
+    return { to: headers.to, cc: headers.cc, bcc: headers.bcc, myEmail, from: headers.from, subject: headers.subject };
+  };
 
   private static getAddressesHeader = (gmailMsg: GmailRes.GmailMsg, headerName: RecipientType) => {
     return Value.arr.unique((GmailParser.findHeader(gmailMsg, headerName) || '').split(',').map(e => Str.parseEmail(e).email!).filter(e => !!e));
-  }
+  };
 
 }

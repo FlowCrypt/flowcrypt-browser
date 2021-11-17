@@ -16,7 +16,7 @@ const allowedRecipients: Array<string> = ['flowcrypt.compatibility@gmail.com', '
   'censored@email.com', 'test@email.com', 'human@flowcrypt.com', 'human+nopgp@flowcrypt.com', 'expired.on.attester@domain.com',
   'ci.tests.gmail@flowcrypt.test', 'smime1@recipient.com', 'smime2@recipient.com', 'smime@recipient.com',
   'smime.attachment@recipient.com', 'auto.refresh.expired.key@recipient.com', 'to@example.com', 'cc@example.com', 'bcc@example.com',
-  'flowcrypt.test.key.multiple.inbox1@gmail.com', 'flowcrypt.test.key.multiple.inbox2@gmail.com'];
+  'flowcrypt.test.key.multiple.inbox1@gmail.com', 'flowcrypt.test.key.multiple.inbox2@gmail.com', 'mock.only.pubkey@flowcrypt.com'];
 
 export const mockGoogleEndpoints: HandlersDefinition = {
   '/o/oauth2/auth': async ({ query: { client_id, response_type, access_type, state, redirect_uri, scope, login_hint, proceed } }, req) => {
@@ -111,6 +111,28 @@ export const mockGoogleEndpoints: HandlersDefinition = {
           treatAsAlias: false,
           verificationStatus: 'accepted'
         });
+      } else if (acct === 'multi.aliased.user@example.com') {
+        const alias1 = 'alias1@example.com';
+        const alias2 = 'alias2@example.com';
+        sendAs.push({
+          sendAsEmail: alias1,
+          displayName: 'An Alias1',
+          replyToAddress: alias1,
+          signature: '',
+          isDefault: false,
+          isPrimary: false,
+          treatAsAlias: false,
+          verificationStatus: 'accepted'
+        }, {
+          sendAsEmail: alias2,
+          displayName: 'An Alias1',
+          replyToAddress: alias2,
+          signature: '',
+          isDefault: false,
+          isPrimary: false,
+          treatAsAlias: false,
+          verificationStatus: 'accepted'
+        });
       }
       return { sendAs };
     }
@@ -151,10 +173,10 @@ export const mockGoogleEndpoints: HandlersDefinition = {
     }
     throw new HttpClientErr(`Method not implemented for ${req.url}: ${req.method}`);
   },
-  '/gmail/v1/users/me/threads': async ({ }, req) => {
+  '/gmail/v1/users/me/threads': async (parsedReq, req) => {
     const acct = oauth.checkAuthorizationHeaderWithAccessToken(req.headers.authorization);
     if (isGet(req)) {
-      const threads = (await GoogleData.withInitializedData(acct)).getThreads();
+      const threads = (await GoogleData.withInitializedData(acct)).getThreads([parsedReq.query.labelIds]); // todo: support arrays?
       return { threads, resultSizeEstimate: threads.length };
     }
     throw new HttpClientErr(`Method not implemented for ${req.url}: ${req.method}`);
@@ -163,7 +185,7 @@ export const mockGoogleEndpoints: HandlersDefinition = {
     const acct = oauth.checkAuthorizationHeaderWithAccessToken(req.headers.authorization);
     if (isGet(req) && (format === 'metadata' || format === 'full')) {
       const id = parseResourceId(req.url!);
-      const msgs = (await GoogleData.withInitializedData(acct)).getMessagesByThread(id);
+      const msgs = (await GoogleData.withInitializedData(acct)).getMessagesAndDraftsByThread(id);
       if (!msgs.length) {
         const statusCode = id === '16841ce0ce5cb74d' ? 404 : 400; // intentionally testing missing thread
         throw new HttpClientErr(`MOCK thread not found for ${acct}: ${id}`, statusCode);

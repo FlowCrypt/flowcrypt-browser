@@ -22,7 +22,7 @@ import { PgpArmor } from '../core/crypto/pgp/pgp-armor';
 import { ExpirationCache } from '../core/expiration-cache';
 import { readFileSync } from 'fs';
 import * as forge from 'node-forge';
-import { SmimeKey } from '../core/crypto/smime/smime-key';
+import { ENVELOPED_DATA_OID, SmimeKey } from '../core/crypto/smime/smime-key';
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;
@@ -142,12 +142,12 @@ export const defineUnitNodeTests = (testVariant: TestVariant) => {
       csr.publicKey = keys.publicKey;
       csr.setSubject([{
         name: 'commonName',
-        value: 'certificate@test.com'
+        value: 'smime@recipient.com'
       }]);
       csr.sign(keys.privateKey);
       // issue a certificate based on the csr
       const cert = forge.pki.createCertificate();
-      cert.serialNumber = '2';
+      cert.serialNumber = '20211103'; // todo: set something unique here
       cert.validity.notBefore = new Date();
       cert.validity.notAfter = new Date();
       cert.validity.notAfter.setFullYear(cert.validity.notBefore.getFullYear() + 100);
@@ -175,18 +175,24 @@ export const defineUnitNodeTests = (testVariant: TestVariant) => {
       cert.publicKey = csr.publicKey;
       cert.sign(caKey);
       const pem = forge.pki.certificateToPem(cert);
-      */
+      console.log(pem);
+      const p12asn1 = forge.pkcs12.toPkcs12Asn1(keys.privateKey, cert, 'try_me');
+      const rawString = forge.asn1.toDer(p12asn1).getBytes();
+      let buf = Buf.fromRawBytesStr(pem);
+      writeFileSync("./smime.crt", buf);
+      buf = Buf.fromRawBytesStr(rawString);
+      writeFileSync("./test.p12", buf); */
       const key = await KeyUtil.parse(testConstants.smimeCert);
-      expect(key.id).to.equal('6FE116D2759F0FFAC5623E7E10D6E37941EAA0BB');
+      expect(key.id).to.equal('1D695D97A7C8A473E36C6E1D8C150831E4061A74');
       expect(key.type).to.equal('x509');
       expect(key.usableForEncryption).to.equal(true);
       expect(key.usableForSigning).to.equal(true);
       expect(key.usableForEncryptionButExpired).to.equal(false);
       expect(key.usableForSigningButExpired).to.equal(false);
       expect(key.emails.length).to.equal(1);
-      expect(key.emails[0]).to.equal('certificate@test.com');
+      expect(key.emails[0]).to.equal('smime@recipient.com');
       expect(key.identities.length).to.equal(1);
-      expect(key.identities[0]).to.equal('certificate@test.com');
+      expect(key.identities[0]).to.equal('smime@recipient.com');
       expect(key.isPublic).to.equal(true);
       expect(key.isPrivate).to.equal(false);
       expect(key.expiration).to.not.equal(undefined);
@@ -558,7 +564,7 @@ vpQiyk4ceuTNkUZ/qmgiMpQLxXZnDDo=
       const { keys, errs } = await KeyUtil.readMany(Buf.fromUtfStr(testConstants.smimeCert));
       expect(keys.length).to.equal(1);
       expect(errs.length).to.equal(0);
-      expect(keys[0].id).to.equal('6FE116D2759F0FFAC5623E7E10D6E37941EAA0BB');
+      expect(keys[0].id).to.equal('1D695D97A7C8A473E36C6E1D8C150831E4061A74');
       expect(keys[0].type).to.equal('x509');
       t.pass();
     });
@@ -635,7 +641,7 @@ ${testConstants.smimeCert}`), { instanceOf: Error, message: `Invalid PEM formatt
       const { keys, errs } = await KeyUtil.readMany(Buf.fromRawBytesStr(pem.body));
       expect(keys.length).to.equal(1);
       expect(errs.length).to.equal(0);
-      expect(keys[0].id).to.equal('6FE116D2759F0FFAC5623E7E10D6E37941EAA0BB');
+      expect(keys[0].id).to.equal('1D695D97A7C8A473E36C6E1D8C150831E4061A74');
       expect(keys[0].type).to.equal('x509');
       t.pass();
     });
@@ -646,6 +652,19 @@ ${testConstants.smimeCert}`), { instanceOf: Error, message: `Invalid PEM formatt
         { pubkeys: [key], data: Buf.fromUtfStr('anything'), armor: false }) as PgpMsgMethod.EncryptX509Result).data);
       const raw = buf.toRawBytesStr();
       expect(raw).to.include(key.issuerAndSerialNumber);
+      t.pass();
+    });
+
+    ava.default('[unit][MsgUtil.encryptMessage] duplicate S/MIME recipients are collapsed into one', async t => {
+      const key = await KeyUtil.parse(testConstants.smimeCert);
+      const buf = Buf.with((await MsgUtil.encryptMessage(
+        { pubkeys: [key, key, key], data: Buf.fromUtfStr('anything'), armor: false }) as PgpMsgMethod.EncryptX509Result).data);
+      const msg = buf.toRawBytesStr();
+      const p7 = forge.pkcs7.messageFromAsn1(forge.asn1.fromDer(msg));
+      expect(p7.type).to.equal(ENVELOPED_DATA_OID);
+      if (p7.type === ENVELOPED_DATA_OID) {
+        expect(p7.recipients.length).to.equal(1);
+      }
       t.pass();
     });
 
@@ -741,7 +760,7 @@ jLwe8W9IMt765T5x5oux9MmPDXF05xHfm4qfH/BMO3a802x5u2gJjJjuknrFdgXY
       const { keys, errs } = await KeyUtil.readMany(Buf.fromUtfStr(smimeAndPgp));
       expect(keys.length).to.equal(2);
       expect(errs.length).to.equal(0);
-      expect(keys.some(key => key.id === '6FE116D2759F0FFAC5623E7E10D6E37941EAA0BB')).to.equal(true);
+      expect(keys.some(key => key.id === '1D695D97A7C8A473E36C6E1D8C150831E4061A74')).to.equal(true);
       expect(keys.some(key => key.id === '3449178FCAAF758E24CB68BE62CB4E6F9ECA6FA1')).to.equal(true);
       expect(keys.some(key => key.type === 'openpgp')).to.equal(true);
       expect(keys.some(key => key.type === 'x509')).to.equal(true);
@@ -1776,7 +1795,7 @@ jA==
       const encryptedMessage = buf.toRawBytesStr();
       expect(encryptedMessage).to.include(PgpArmor.headers('pkcs7').begin);
       const p7 = SmimeKey.readArmoredPkcs7Message(buf);
-      expect(p7.type).to.equal('1.2.840.113549.1.7.3');
+      expect(p7.type).to.equal(ENVELOPED_DATA_OID);
       const decrypted = SmimeKey.decryptMessage(p7 as forge.pkcs7.PkcsEnvelopedData, privateSmimeKey);
       const decryptedMessage = Buf.with(decrypted).toRawBytesStr();
       expect(decryptedMessage).to.equal(text);

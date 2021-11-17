@@ -32,7 +32,7 @@ View.run(class ExperimentalView extends View {
 
   public render = async () => {
     $('.email').text(this.acctEmail);
-  }
+  };
 
   public setHandlers = () => {
     $('.action_open_compatibility').click(this.setHandler(() => Settings.redirectSubPage(this.acctEmail, this.parentTabId, '/chrome/settings/modules/compatibility.htm')));
@@ -47,7 +47,7 @@ View.run(class ExperimentalView extends View {
     $('.action_make_google_auth_token_unusable').click(this.setHandler(async (el, e) => { e.preventDefault(); await this.makeGoogleAuthTokenUnusableHandler(); }));
     $('.action_make_google_refresh_token_unusable').click(this.setHandler(async (el, e) => { e.preventDefault(); await this.makeGoogleRefreshTokenUnusableHandler(); }));
     $('.action_account_email_changed').click(this.setHandler(async (el, e) => { e.preventDefault(); await this.acctEmailChangedHandler(); }));
-  }
+  };
 
   // -- PRIVATE
 
@@ -79,32 +79,32 @@ View.run(class ExperimentalView extends View {
         window.location.reload();
       }
     }
-  }
+  };
 
   private makeGoogleAuthTokenUnusableHandler = async () => {
     await AcctStore.set(this.acctEmail, { google_token_access: 'flowcrypt_test_bad_access_token' });
     BrowserMsg.send.reload(this.parentTabId, {});
-  }
+  };
 
   private makeGoogleRefreshTokenUnusableHandler = async () => {
     await AcctStore.set(this.acctEmail, { google_token_refresh: 'flowcrypt_test_bad_refresh_token' });
     BrowserMsg.send.reload(this.parentTabId, {});
-  }
+  };
 
   private regenerateUuidHandler = async () => {
     await AcctStore.set(this.acctEmail, { uuid: Api.randomFortyHexChars() });
     BrowserMsg.send.reload(this.parentTabId, {});
-  }
+  };
 
   private resetFlowCryptAuthHandler = async () => {
     await AcctStore.set(this.acctEmail, { uuid: undefined });
     BrowserMsg.send.reload(this.parentTabId, {});
-  }
+  };
 
   private acctResetHandler = async () => {
     if (await Settings.resetAccount(this.acctEmail)) {
       window.parent.location.reload();
     }
-  }
+  };
 
 });

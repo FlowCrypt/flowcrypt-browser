@@ -28,7 +28,7 @@ export class ComposeQuoteModule extends ViewModule<ComposeView> {
       return '<br />' + (this.tripleDotSanitizedHtmlContent.footer || '') + (this.tripleDotSanitizedHtmlContent.quote || '');
     }
     return '';
-  }
+  };
 
   public addTripleDotQuoteExpandFooterOnlyBtn = async () => {
     const textFooter = await this.view.footerModule.getFooterFromStorage(this.view.senderModule.getSender());
@@ -39,7 +39,7 @@ export class ComposeQuoteModule extends ViewModule<ComposeView> {
     const sanitizedFooter = textFooter && !this.view.draftModule.wasMsgLoadedFromDraft ? this.view.footerModule.createFooterHtml(textFooter) : undefined;
     this.tripleDotSanitizedHtmlContent = { footer: sanitizedFooter, quote: undefined };
     this.view.S.cached('triple_dot').click(this.view.setHandler(el => this.actionRenderTripleDotContentHandle(el)));
-  }
+  };
 
   public addTripleDotQuoteExpandFooterAndQuoteBtn = async (msgId: string, method: 'reply' | 'forward') => {
     if (!this.messageToReplyOrForward) {
@@ -79,7 +79,7 @@ export class ComposeQuoteModule extends ViewModule<ComposeView> {
     } else {
       this.view.S.cached('triple_dot').click(this.view.setHandler(el => this.actionRenderTripleDotContentHandle(el)));
     }
-  }
+  };
 
   private getAndDecryptMessage = async (msgId: string, method: 'reply' | 'forward'): Promise<MessageToReplyOrForward | undefined> => {
     try {
@@ -157,7 +157,7 @@ export class ComposeQuoteModule extends ViewModule<ComposeView> {
       }
       return;
     }
-  }
+  };
 
   private decryptMessage = async (encryptedData: Buf): Promise<string> => {
     const decryptRes = await MsgUtil.decryptMessage({ kisWithPp: await KeyStore.getAllWithOptionalPassPhrase(this.view.acctEmail), encryptedData });
@@ -176,11 +176,11 @@ export class ComposeQuoteModule extends ViewModule<ComposeView> {
     } else {
       return `\n(Failed to decrypt quote from previous message because: ${decryptRes.error.type}: ${decryptRes.error.message})\n`;
     }
-  }
+  };
 
   private quoteText = (text: string) => {
     return text.split('\n').map(line => `<br>&gt; ${line}`.trim()).join('');
-  }
+  };
 
   private generateHtmlPreviousMsgQuote = (text: string, date: Date, from: string) => {
     let onDateUserWrote = `On ${Str.fromDate(date).replace(' ', ' at ')}, ${from} wrote:`;
@@ -190,19 +190,19 @@ export class ComposeQuoteModule extends ViewModule<ComposeView> {
     }
     const sanitizedQuote = Xss.htmlSanitize(onDateUserWrote + this.quoteText(Xss.escape(text)));
     return `<blockquote${rtl ? ' dir="rtl"' : ''}>${sanitizedQuote}</blockquote>`;
-  }
+  };
 
   private actionRenderTripleDotContentHandle = (el: HTMLElement) => {
     $(el).remove();
     Xss.sanitizeAppend(this.view.S.cached('input_text'), this.getTripleDotSanitizedFormattedHtmlContent());
     this.tripleDotSanitizedHtmlContent = undefined;
     this.view.sizeModule.resizeComposeBox();
-  }
+  };
 
   private setQuoteLoaderProgress = (percentOrString: string | number | undefined): void => {
     if (percentOrString) {
       this.view.S.cached('triple_dot').find('#loader').text(typeof percentOrString === 'number' ? `${percentOrString}%` : percentOrString);
     }
-  }
+  };
 
 }

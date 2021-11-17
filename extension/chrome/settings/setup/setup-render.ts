@@ -10,6 +10,8 @@ import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
 import { KeyStore } from '../../../js/common/platform/store/key-store.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { PgpPwd } from '../../../js/common/core/crypto/pgp/pgp-password.js';
+import { Xss } from '../../../js/common/platform/xss.js';
+import { KeyImportUi } from '../../../js/common/ui/key-import-ui.js';
 
 export class SetupRenderModule {
 
@@ -39,12 +41,7 @@ export class SetupRenderModule {
         await this.view.setupRecoverKey.renderAddKeyFromBackup();
       }
     } else if (this.view.action === 'finalize') {
-      const { tmp_submit_all, tmp_submit_main } = await AcctStore.get(this.view.acctEmail, ['tmp_submit_all', 'tmp_submit_main']);
-      if (typeof tmp_submit_all === 'undefined' || typeof tmp_submit_main === 'undefined') {
-        $('#content').text(`Setup session expired. To set up FlowCrypt, please click the FlowCrypt icon on top right.`);
-        return;
-      }
-      await this.view.submitPublicKeysAndFinalizeSetup({ submit_all: tmp_submit_all, submit_main: tmp_submit_main });
+      await this.view.finalizeSetup();
       await this.renderSetupDone();
     } else if (this.view.orgRules.mustAutoImportOrAutogenPrvWithKeyManager()) {
       if (this.view.orgRules.mustAutogenPassPhraseQuietly() && this.view.orgRules.forbidStoringPassPhrase()) {
@@ -61,7 +58,7 @@ export class SetupRenderModule {
     } else {
       await this.renderSetupDialog();
     }
-  }
+  };
 
   public renderSetupDone = async () => {
     const storedKeys = await KeyStore.get(this.view.acctEmail);
@@ -76,7 +73,7 @@ export class SetupRenderModule {
       $('h1').text(this.view.action !== 'add_key' ? 'You\'re all set!' : 'Recovered all keys!');
       $('.email').text(this.view.acctEmail);
     }
-  }
+  };
 
   public displayBlock = (name: string) => {
     const blocks = [
@@ -98,7 +95,7 @@ export class SetupRenderModule {
         $('#step_2_recovery input').focus();
       }
     }
-  }
+  };
 
   public renderSetupDialog = async (): Promise<void> => {
     let keyserverRes;
@@ -134,19 +131,38 @@ export class SetupRenderModule {
         this.displayBlock('step_2b_manual_enter');
       }
     }
-  }
+  };
 
   private saveAndFillSubmitPubkeysOption = (addresses: string[]) => {
-    this.view.submitKeyForAddrs = this.filterAddressesForSubmittingKeys(addresses);
-    if (this.view.submitKeyForAddrs.length > 1) {
-      $('.addresses').text(Value.arr.withoutVal(this.view.submitKeyForAddrs, this.view.acctEmail).join(', '));
-      $('.manual .input_submit_all').prop({ checked: true, disabled: false }).closest('div.line').css('display', 'block');
+    this.renderEmailAddresses(this.filterAddressesForSubmittingKeys(addresses));
+  };
+
+  private renderEmailAddresses = (addresses: string[]) => {
+    $('.input_submit_all').hide();
+    const emailAliases = Value.arr.withoutVal(addresses, this.view.acctEmail);
+    for (const e of emailAliases) {
+      // eslint-disable-next-line max-len
+      $('.addresses').append(`<label><input type="checkbox" class="input_email_alias" data-email="${Xss.escape(e)}" data-test="input-email-alias-${e.replace(/[^a-z0-9]+/g, '')}" />${Xss.escape(e)}</label><br/>`); // xss-escaped
     }
-  }
+    $('.input_email_alias').click((event) => {
+      const email = String($(event.target).data('email'));
+      if ($(event.target).prop('checked')) {
+        if (!this.view.submitKeyForAddrs.includes(email)) {
+          KeyImportUi.addAliasForSubmission(email, this.view.submitKeyForAddrs);
+        }
+      } else {
+        KeyImportUi.removeAliasFromSubmission(email, this.view.submitKeyForAddrs);
+      }
+    });
+    if (emailAliases.length > 0) {
+      $('.container_for_import_key_email_alias').css('visibility', 'visible');
+    }
+    $('.manual .input_submit_all').prop({ checked: true, disabled: false }).closest('div.line').css('display', 'block');
+  };
 
   private filterAddressesForSubmittingKeys = (addresses: string[]): string[] => {
     const filterAddrRegEx = new RegExp(`@(${this.emailDomainsToSkip.join('|')})`);
     return addresses.filter(e => !filterAddrRegEx.test(e));
-  }
+  };
 
 }

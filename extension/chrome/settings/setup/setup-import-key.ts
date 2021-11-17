@@ -39,8 +39,8 @@ export class SetupImportKeyModule {
       }
       Xss.sanitizeRender('#step_2b_manual_enter .action_add_private_key', Ui.spinner('white'));
       await this.view.saveKeysAndPassPhrase([checked.encrypted], options);
-      await this.view.preFinalizeSetup(options);
-      await this.view.submitPublicKeysAndFinalizeSetup(options);
+      await this.view.submitPublicKeys(options);
+      await this.view.finalizeSetup();
       await this.view.setupRender.renderSetupDone();
     } catch (e) {
       if (e instanceof UserAlert) {
@@ -54,7 +54,7 @@ export class SetupImportKeyModule {
         return await Ui.modal.error(`An error happened when processing the key: ${String(e)}\nPlease write at human@flowcrypt.com`, false, Ui.testCompatibilityLink);
       }
     }
-  }
+  };
 
   public renderCompatibilityFixBlockAndFinalizeSetup = async (origPrv: Key, options: SetupOptions) => {
     this.view.setupRender.displayBlock('step_3_compatibility_fix');
@@ -69,8 +69,8 @@ export class SetupImportKeyModule {
       return;
     }
     await this.view.saveKeysAndPassPhrase([fixedPrv], options);
-    await this.view.preFinalizeSetup(options);
-    await this.view.submitPublicKeysAndFinalizeSetup(options);
+    await this.view.submitPublicKeys(options);
+    await this.view.finalizeSetup();
     await this.view.setupRender.renderSetupDone();
-  }
+  };
 }

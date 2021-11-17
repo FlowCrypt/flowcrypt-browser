@@ -14,15 +14,15 @@ export class Catch {
 
   public static handleErr = (e: any) => { // eslint-disable-line @typescript-eslint/no-unused-vars
     // core errs that are not rethrown are not very interesting
-  }
+  };
 
   public static reportErr = (err: any) => { // eslint-disable-line @typescript-eslint/no-unused-vars
     // core reports are not very interesting
-  }
+  };
 
   public static report = (name: string) => { // eslint-disable-line @typescript-eslint/no-unused-vars
     // core reports are not very interesting
-  }
+  };
 
   public static doesReject = async (p: Promise<unknown>, errNeedle?: string[]): Promise<boolean> => {
     try {
@@ -34,7 +34,7 @@ export class Catch {
       }
       return !!errNeedle.find(needle => String(e).includes(needle));
     }
-  }
+  };
 
   public static undefinedOnException = async <T>(p: Promise<T>): Promise<T | undefined> => {
     try {
@@ -42,10 +42,10 @@ export class Catch {
     } catch (e) {
       return undefined;
     }
-  }
+  };
 
   public static version = () => {
     return Catch.RUNTIME_VERSION;
-  }
+  };
 
 }

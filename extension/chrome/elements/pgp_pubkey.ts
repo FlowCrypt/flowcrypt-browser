@@ -102,13 +102,13 @@ View.run(class PgpPubkeyView extends View {
       }
     }
     this.sendResizeMsg();
-  }
+  };
 
   public setHandlers = () => {
     $('.action_add_contact').click(this.setHandler(btn => this.addContactHandler(btn)));
     $('.input_email').keyup(this.setHandler(() => this.setBtnText()));
     $('.action_show_full').click(this.setHandler(btn => this.showFullKeyHandler(btn)));
-  }
+  };
 
   private sendResizeMsg = () => {
     const origHeight = $('#pgp_block').height();
@@ -119,7 +119,7 @@ View.run(class PgpPubkeyView extends View {
     }
     const desiredHeight = origHeight + (this.compact ? 10 : 30);
     BrowserMsg.send.setCss(this.parentTabId, { selector: `iframe#${this.frameId}`, css: { height: `${desiredHeight}px` } });
-  }
+  };
 
   private setBtnText = async () => {
     if (this.publicKeys!.length > 1) {
@@ -130,14 +130,14 @@ View.run(class PgpPubkeyView extends View {
         .text(contact?.hasPgp ? 'update key' : `import ${this.isExpired ? 'expired ' : ''}key`)
         .css('background-color', this.isExpired ? '#989898' : '');
     }
-  }
+  };
 
   private showKeyNotUsableError = () => {
     $('.fingerprints, .add_contact').remove();
     $('#pgp_block.pgp_pubkey .result')
       .prepend('<span class="bad">This OpenPGP key is not usable.</span>'); // xss-direct
     $('.pubkey').addClass('bad');
-  }
+  };
 
   private addContactHandler = async (addContactBtn: HTMLElement) => {
     if (this.publicKeys!.length > 1) {
@@ -168,11 +168,11 @@ View.run(class PgpPubkeyView extends View {
         $('.input_email').focus();
       }
     }
-  }
+  };
 
   private showFullKeyHandler = (showFullBtn: HTMLElement) => {
     $(showFullBtn).css('display', 'none');
     $('pre.pubkey, .line.fingerprints, .line.add_contact').css('display', 'block');
     this.sendResizeMsg();
-  }
+  };
 });

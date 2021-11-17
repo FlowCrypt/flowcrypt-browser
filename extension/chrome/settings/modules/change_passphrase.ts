@@ -55,7 +55,7 @@ View.run(class ChangePassPhraseView extends View {
       $('#current_pass_phrase').focus();
     }
     this.keyImportUi.renderPassPhraseStrengthValidationInput($('#new_pass_phrase'), $('.action_set_pass_phrase'));
-  }
+  };
 
   public setHandlers = () => {
     $('#step_0_enter_current .action_test_current_passphrase').click(this.setHandler(() => this.actionTestCurrentPassPhraseHandler()));
@@ -65,7 +65,7 @@ View.run(class ChangePassPhraseView extends View {
     $('#current_pass_phrase').on('keydown', this.setEnterHandlerThatClicks('#step_0_enter_current .action_test_current_passphrase'));
     $('#new_pass_phrase').on('keydown', this.setEnterHandlerThatClicks('#step_1_enter_new .action_set_pass_phrase'));
     $("#new_pass_phrase_confirm").on('keydown', this.setEnterHandlerThatClicks('#step_2_confirm_new .action_change'));
-  }
+  };
 
   private actionTestCurrentPassPhraseHandler = async () => {
     const prv = await KeyUtil.parse(this.primaryKi!.private);
@@ -77,7 +77,7 @@ View.run(class ChangePassPhraseView extends View {
       await Ui.modal.error('Pass phrase did not match, please try again.');
       $('#current_pass_phrase').val('').focus();
     }
-  }
+  };
 
   private actionSetPassPhraseHandler = async (target: HTMLElement) => {
     if ($(target).hasClass('green')) {
@@ -86,14 +86,14 @@ View.run(class ChangePassPhraseView extends View {
     } else {
       await Ui.modal.warning('Please select a stronger pass phrase. Combinations of 4 to 5 uncommon words are the best.');
     }
-  }
+  };
 
   private actionUseAnotherPassPhraseHandler = () => {
-    $('#new_pass_phrase').val('').keyup();
+    $('#new_pass_phrase').val('').trigger('input');
     $('#new_pass_phrase_confirm').val('');
     this.displayBlock('step_1_enter_new');
     $('#new_pass_phrase').focus();
-  }
+  };
 
   private actionDoChangePassPhraseHandler = async () => {
     const newPp = String($('#new_pass_phrase').val());
@@ -122,7 +122,7 @@ View.run(class ChangePassPhraseView extends View {
       await Ui.modal.info('Pass phrase changed for this device');
       BrowserMsg.send.closePage(this.parentTabId);
     }
-  }
+  };
 
   private displayBlock = (name: string) => {
     const blocks = ['step_0_enter_current', 'step_1_enter_new', 'step_2_confirm_new', 'step_3_done'];
@@ -130,6 +130,6 @@ View.run(class ChangePassPhraseView extends View {
       $(`#${block}`).css('display', 'none');
     }
     $(`#${name}`).css('display', 'block');
-  }
+  };
 
 });

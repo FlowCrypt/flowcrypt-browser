@@ -71,7 +71,7 @@ View.run(class AttachmentPreviewView extends AttachmentDownloadView {
     } catch (e) {
       this.renderErr(e);
     }
-  }
+  };
 
   private getAttachmentType = (filename: string): AttachmentType | undefined => {
     const nameSplit = filename.split('.');
@@ -84,7 +84,7 @@ View.run(class AttachmentPreviewView extends AttachmentDownloadView {
       return 'pdf';
     }
     return undefined;
-  }
+  };
 
   private decrypt = async () => {
     const result = await MsgUtil.decryptMessage({ kisWithPp: await KeyStore.getAllWithOptionalPassPhrase(this.acctEmail), encryptedData: this.attachment.getData() });
@@ -94,5 +94,5 @@ View.run(class AttachmentPreviewView extends AttachmentDownloadView {
       return BrowserMsg.send.passphraseDialog(this.parentTabId, { type: 'attachment', longids: (result as DecryptError).longids.needPassphrase, initiatorFrameId: this.initiatorFrameId });
     }
     throw new DecryptionError(result as DecryptError);
-  }
+  };
 });

@@ -89,7 +89,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
       { interval: 1000, handler: () => this.everything() },
       { interval: 30000, handler: () => this.webmailCommon.addOrRemoveEndSessionBtnIfNeeded() }
     ];
-  }
+  };
 
   public setReplyBoxEditable = async () => {
     const replyContainerIframe = $('.reply_message_iframe_container > iframe').last();
@@ -98,12 +98,12 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     } else {
       await this.replaceStandardReplyBox(undefined, true);
     }
-  }
+  };
 
   public reinsertReplyBox = (replyMsgId: string) => {
     const params: FactoryReplyParams = { sendAs: this.sendAs, replyMsgId };
     $('.reply_message_iframe_container:visible').last().append(this.factory.embeddedReply(params, false, true)); // xss-safe-value
-  }
+  };
 
   public scrollToReplyBox = (replyMsgId: string) => {
     const convoRootScrollable = $(this.sel.convoRootScrollable);
@@ -122,7 +122,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     } else if (window.location.hash.match(/^#inbox\/[a-zA-Z]+$/)) { // is a conversation view, but no scrollable conversation element
       Catch.report(`Cannot find Gmail scrollable element: ${this.sel.convoRootScrollable}`);
     }
-  }
+  };
 
   public scrollToCursorInReplyBox = (replyMsgId: string, cursorOffsetTop: number) => {
     const convoRootScrollable = $(this.sel.convoRootScrollable);
@@ -141,7 +141,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
         convoRootScrollable.get(0).scrollTop += replyMsgOffsetTop + cursorOffsetTop - convoRootScrollable.get(0).clientHeight + bottomGap;
       }
     }
-  }
+  };
 
   private everything = () => {
     this.replaceArmoredBlocks();
@@ -152,7 +152,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     this.evaluateStandardComposeRecipients().catch(Catch.reportErr);
     this.addSettingsBtn();
     this.renderLocalDrafts().catch(Catch.reportErr);
-  }
+  };
 
   private replaceArmoredBlocks = () => {
     const emailsContainingPgpBlock = $(this.sel.msgOuter).find(this.sel.msgInnerContainingPgp).not('.evaluated');
@@ -178,16 +178,16 @@ export class GmailElementReplacer implements WebmailElementReplacer {
         }
       }
     }
-  }
+  };
 
   private addfcConvoIcon = (containerSel: JQueryEl, iconHtml: string, iconSel: string, onClick: () => void) => {
     containerSel.addClass('appended').children('.use_secure_reply, .show_original_conversation').remove(); // remove previous FlowCrypt buttons, if any
     Xss.sanitizeAppend(containerSel, iconHtml).children(iconSel).off().click(Ui.event.prevent('double', Catch.try(onClick)));
-  }
+  };
 
   private isEncrypted = (): boolean => {
     return !!$('iframe.pgp_block').filter(':visible').length;
-  }
+  };
 
   private replaceConvoBtns = (force: boolean = false) => {
     const convoUpperIcons = $('div.ade:visible');
@@ -236,7 +236,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
         }
       }
     }
-  }
+  };
 
   private actionActivateSecureReplyHandler = async (btn: HTMLElement, event: JQuery.Event) => {
     event.stopImmediatePropagation();
@@ -254,7 +254,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     } else {
       this.insertEncryptedReplyBox(messageContainer);
     }
-  }
+  };
 
   private replaceComposeDraftLinks = () => {
     const allContenteditableEls = $("div[contenteditable='true']").not('.evaluated').addClass('evaluated');
@@ -279,7 +279,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
         $('.close_gmail_compose_window').click(Ui.event.handle(closeGmailComposeWindow));
       }
     }
-  }
+  };
 
   /**
    * Related bugs (fixed):
@@ -325,7 +325,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     } finally {
       this.currentlyReplacingAttachments = false;
     }
-  }
+  };
 
   private processNewPgpAttachments = async (pgpAttachments: JQuery<HTMLElement>, attachmentsContainer: JQuery<HTMLElement>) => {
     if (this.debug) {
@@ -363,7 +363,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
         $(newPgpAttachments).prepend(this.factory.embeddedAttachmentStatus('Unknown message id')); // xss-safe-factory
       }
     }
-  }
+  };
 
   private processAttachments = async (msgId: string, attachmentMetas: Attachment[], attachmentsContainerInner: JQueryEl | HTMLElement, skipGoogleDrive: boolean) => {
     if (this.debug) {
@@ -454,7 +454,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     if (!skipGoogleDrive) {
       await this.processGoogleDriveAttachments(msgId, msgEl, attachmentsContainerInner);
     }
-  }
+  };
 
   private processGoogleDriveAttachments = async (msgId: string, msgEl: JQueryEl, attachmentsContainerInner: JQueryEl) => {
     const notProcessedAttachmentsLoaders = attachmentsContainerInner.find('.attachment_loader');
@@ -472,7 +472,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
       }
       await this.processAttachments(msgId, googleDriveAttachments, attachmentsContainerInner, true);
     }
-  }
+  };
 
   private renderPublicKeyFromFile = async (attachmentMeta: Attachment, attachmentsContainerInner: JQueryEl,
     msgEl: JQueryEl, isOutgoing: boolean, attachmentSel: JQueryEl, nRenderedAttachments: number) => {
@@ -492,7 +492,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
       nRenderedAttachments++;
     }
     return nRenderedAttachments;
-  }
+  };
 
   private renderBackupFromFile = async (attachmentMeta: Attachment, attachmentsContainerInner: JQueryEl, msgEl: JQueryEl, attachmentSel: JQueryEl, nRenderedAttachments: number) => {
     let downloadedAttachment: GmailRes.GmailAttachment;
@@ -505,14 +505,14 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     }
     this.updateMsgBodyEl_DANGEROUSLY(msgEl, 'append', this.factory.embeddedBackup(downloadedAttachment.data.toUtfStr())); // xss-safe-factory
     return nRenderedAttachments;
-  }
+  };
 
   private filterAttachments = (potentialMatches: JQueryEl | HTMLElement, regExp: RegExp) => {
     return $(potentialMatches).filter('span.aZo:visible, span.a5r:visible').find('span.aV3').filter(function () {
       const name = $(this).text().trim();
       return regExp.test(name);
     }).closest('span.aZo, span.a5r');
-  }
+  };
 
   private hideAttachment = (attachmentEl: JQueryEl | HTMLElement, attachmentsContainerSel: JQueryEl | HTMLElement) => {
     attachmentEl = $(attachmentEl);
@@ -521,20 +521,20 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     if (!attachmentEl.length) {
       attachmentsContainerSel.children('.attachment_loader').text('Missing file info');
     }
-  }
+  };
 
   private determineMsgId = (innerMsgEl: HTMLElement | JQueryEl) => {
     const parents = $(innerMsgEl).parents(this.sel.msgOuter);
     return parents.attr('data-legacy-message-id') || parents.attr('data-message-id') || '';
-  }
+  };
 
   private getMsgBodyEl = (msgId: string) => {
     return $(this.sel.msgOuter).filter(`[data-legacy-message-id="${msgId}"]`).find(this.sel.msgInner);
-  }
+  };
 
   private wrapMsgBodyEl = (htmlContent: string) => {
     return '<div class="message_inner_body evaluated">' + htmlContent + '</div>';
-  }
+  };
 
   /**
    * XSS WARNING
@@ -580,19 +580,19 @@ export class GmailElementReplacer implements WebmailElementReplacer {
       const dummyParent = $('<div>');
       dummyParent.append(el); // xss-direct
     }
-  }
+  };
 
   private getSenderEmail = (msgEl: HTMLElement | JQueryEl) => {
     return ($(msgEl).closest('.gs').find('span.gD').attr('email') || '').toLowerCase();
-  }
+  };
 
   private getLastMsgReplyParams = (convoRootEl: JQueryEl): FactoryReplyParams => {
     return { sendAs: this.sendAs, replyMsgId: this.determineMsgId($(convoRootEl).find(this.sel.msgInner).last()) };
-  }
+  };
 
   private getGonvoRootEl = (anyInnerElement: HTMLElement) => {
     return $(anyInnerElement).closest('div.if, td.Bu').first();
-  }
+  };
 
   private insertEncryptedReplyBox = (messageContainer: JQuery<HTMLElement>) => {
     const msgIdElement = messageContainer.find('[data-legacy-message-id], [data-message-id]');
@@ -600,7 +600,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     const replyParams: FactoryReplyParams = { sendAs: this.sendAs, replyMsgId: msgId, removeAfterClose: true };
     const secureReplyBoxXssSafe = `<div class="remove_borders reply_message_iframe_container inserted">${this.factory.embeddedReply(replyParams, true, true)}</div>`;
     messageContainer.find('.adn.ads').parent().append(secureReplyBoxXssSafe); // xss-safe-factory
-  }
+  };
 
   private replaceStandardReplyBox = async (msgId?: string, editable: boolean = false, force: boolean = false) => {
     const draftReplyRegex = new RegExp(/\[(flowcrypt|cryptup):link:draft_reply:([0-9a-fr\-]+)]/);
@@ -674,7 +674,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
         }
       }
     }
-  }
+  };
 
   private evaluateStandardComposeRecipients = async () => {
     if (!this.currentlyEvaluatingStandardComposeBoxRecipients) {
@@ -737,7 +737,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
       }
       this.currentlyEvaluatingStandardComposeBoxRecipients = false;
     }
-  }
+  };
 
   private addSettingsBtn = () => {
     if (window.location.hash.startsWith('#settings')) {
@@ -747,7 +747,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
         settingsBtnContainer.find('#fc_settings_btn').click(Ui.event.handle(() => BrowserMsg.send.bg.settings({ acctEmail: this.acctEmail })));
       }
     }
-  }
+  };
 
   private renderLocalDrafts = async () => {
     if (window.location.hash === '#drafts') {
@@ -782,12 +782,12 @@ export class GmailElementReplacer implements WebmailElementReplacer {
             event.preventDefault();
             this.injector.openComposeWin(draftId);
           });
-          offlineDraftsContainer.append(draftLink ); // xss-safe-value
+          offlineDraftsContainer.append(draftLink); // xss-safe-value
         }
       } else {
         offlineDraftsContainer.remove();
       }
     }
-  }
+  };
 
 }

@@ -21,7 +21,7 @@ export class BackupAutomaticModule extends ViewModule<BackupView> {
     } catch (e) {
       return await Settings.promptToRetry(e, Lang.setup.failedToBackUpKey, this.setupCreateSimpleAutomaticInboxBackup);
     }
-  }
+  };
 
   private setupCreateSimpleAutomaticInboxBackup = async () => {
     const primaryKi = await KeyStore.getFirstRequired(this.view.acctEmail);
@@ -43,6 +43,6 @@ export class BackupAutomaticModule extends ViewModule<BackupView> {
         }
       }
     }
-  }
+  };
 
 }

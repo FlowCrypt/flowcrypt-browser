@@ -16,11 +16,11 @@ export class ComposeSenderModule extends ViewModule<ComposeView> {
     if (this.view.S.now('input_from').length) {
       return String(this.view.S.now('input_from').val());
     }
-    if (this.view.replyParams?.from) {
-      return this.view.replyParams.from;
+    if (this.view.replyParams?.myEmail) {
+      return this.view.replyParams.myEmail;
     }
     return this.view.acctEmail;
-  }
+  };
 
   public renderSendFromOrChevron = async () => {
     if (this.view.isReplyBox) {
@@ -34,7 +34,7 @@ export class ComposeSenderModule extends ViewModule<ComposeView> {
     } else {
       await this.renderSendFromIfMoreThanOneAlias();
     }
-  }
+  };
 
   public checkEmailAliases = async () => {
     try {
@@ -56,7 +56,7 @@ export class ComposeSenderModule extends ViewModule<ComposeView> {
       }
       ApiErr.reportIfSignificant(e);
     }
-  }
+  };
 
   private renderSendFromIfMoreThanOneAlias = async () => {
     const { sendAs } = await AcctStore.get(this.view.acctEmail, ['sendAs']);
@@ -75,12 +75,12 @@ export class ComposeSenderModule extends ViewModule<ComposeView> {
         this.view.sizeModule.resizeComposeBox();
       }
     }
-  }
+  };
 
   private actionInputFromChangeHanlder = async () => {
     await this.view.recipientsModule.reEvaluateRecipients(this.view.recipientsModule.getRecipients());
     await this.view.recipientsModule.setEmailsPreview(this.view.recipientsModule.getRecipients());
     this.view.footerModule.onFooterUpdated(await this.view.footerModule.getFooterFromStorage(this.view.senderModule.getSender()));
-  }
+  };
 
 }

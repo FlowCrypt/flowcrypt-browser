@@ -8,7 +8,7 @@ import { Assert } from '../../js/common/assert.js';
 import { Bm, BrowserMsg } from '../../js/common/browser/browser-msg.js';
 import { Gmail } from '../../js/common/api/email-provider/gmail/gmail.js';
 import { Ui } from '../../js/common/browser/ui.js';
-import { Url } from '../../js/common/core/common.js';
+import { PromiseCancellation, Url } from '../../js/common/core/common.js';
 import { View } from '../../js/common/view.js';
 import { XssSafeFactory } from '../../js/common/xss-safe-factory.js';
 import { opgp } from '../../js/common/core/crypto/pgp/openpgpjs-custom.js';
@@ -47,6 +47,7 @@ export class ComposeView extends View {
   public skipClickPrompt: boolean;
   public draftId: string;
   public threadId: string = '';
+  public ppChangedPromiseCancellation: PromiseCancellation = { cancel: false };
 
   public scopes!: Scopes;
   public tabId!: string;
@@ -179,12 +180,18 @@ export class ComposeView extends View {
     BrowserMsg.listen(this.tabId!);
     await this.renderModule.initComposeBox();
     this.senderModule.checkEmailAliases().catch(Catch.reportErr);
-  }
+  };
 
   public setHandlers = () => {
     BrowserMsg.addListener('focus_previous_active_window', async ({ frameId }: Bm.ComposeWindow) => {
       if (this.frameId === frameId) {
         this.S.cached('input_to').focus();
+      }
+    });
+    BrowserMsg.addListener('passphrase_entry', async ({ entered }: Bm.PassphraseEntry) => {
+      if (!entered) {
+        this.ppChangedPromiseCancellation.cancel = true; // update original object which is monitored by a promise
+        this.ppChangedPromiseCancellation = { cancel: false }; // set to a new, not yet used object
       }
     });
     BrowserMsg.listen(this.parentTabId);
@@ -197,11 +204,10 @@ export class ComposeView extends View {
     this.myPubkeyModule.setHandlers();
     this.pwdOrPubkeyContainerModule.setHandlers();
     this.sizeModule.setHandlers();
-    this.storageModule.setHandlers();
     this.recipientsModule.setHandlers();
     this.sendBtnModule.setHandlers();
     this.draftModule.setHandlers(); // must be the last one so that 'onRecipientAdded/draftSave' to works properly
-  }
+  };
 
 }
 

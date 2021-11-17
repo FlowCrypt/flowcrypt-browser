@@ -56,12 +56,12 @@ View.run(class MyKeyUpdateView extends View {
       $('.fingerprint').text(Str.spaced(this.primaryKi.fingerprints[0]));
       this.inputPrivateKey.attr('placeholder', this.inputPrivateKey.attr('placeholder') + ' (' + this.primaryKi.fingerprints[0] + ')');
     }
-  }
+  };
 
   public setHandlers = () => {
     $('.action_update_private_key').click(this.setHandlerPrevent('double', () => this.updatePrivateKeyHandler()));
     $('.input_passphrase').keydown(this.setEnterHandlerThatClicks('.action_update_private_key'));
-  }
+  };
 
   private storeUpdatedKeyAndPassphrase = async (updatedPrv: Key, updatedPrvPassphrase: string) => {
     const shouldSavePassphraseInStorage = !this.orgRules.forbidStoringPassPhrase() &&
@@ -79,7 +79,7 @@ View.run(class MyKeyUpdateView extends View {
       }
     }
     window.location.href = this.showKeyUrl;
-  }
+  };
 
   private updatePrivateKeyHandler = async () => {
     const updatedKey = await KeyUtil.parse(String(this.inputPrivateKey.val()));
@@ -112,6 +112,6 @@ View.run(class MyKeyUpdateView extends View {
         window.location.href = this.showKeyUrl;
       }
     }
-  }
+  };
 
 });

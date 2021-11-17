@@ -73,7 +73,7 @@ export class GoogleAuth {
     } else {
       throw new Error(`Unknown scope group ${group}`);
     }
-  }
+  };
 
   public static googleApiAuthHeader = async (acctEmail: string, forceRefresh = false): Promise<string> => {
     if (!acctEmail) {
@@ -95,7 +95,7 @@ export class GoogleAuth {
         throw new GoogleAuthErr(`Could not refresh google auth token - did not become valid (access:${!!auth.google_token_access},expires:${auth.google_token_expires},now:${Date.now()})`);
       }
     }
-  }
+  };
 
   public static apiGoogleCallRetryAuthErrorOneTime = async (acctEmail: string, request: JQuery.AjaxSettings): Promise<any> => {
     try {
@@ -107,7 +107,7 @@ export class GoogleAuth {
       }
       throw firstAttemptErr;
     }
-  }
+  };
 
   public static newAuthPopup = async ({ acctEmail, scopes, save }: { acctEmail?: string, scopes?: string[], save?: boolean }): Promise<AuthRes> => {
     if (acctEmail) {
@@ -168,7 +168,7 @@ export class GoogleAuth {
       }
     }
     return authRes;
-  }
+  };
 
   /**
    * Happens on enterprise builds
@@ -180,11 +180,11 @@ export class GoogleAuth {
       return true; // err trying to reach FES itself at a predictable URL
     }
     return false;
-  }
+  };
 
   public static newOpenidAuthPopup = async ({ acctEmail }: { acctEmail?: string }): Promise<AuthRes> => {
     return await GoogleAuth.newAuthPopup({ acctEmail, scopes: GoogleAuth.defaultScopes('openid'), save: false });
-  }
+  };
 
   private static waitForOauthWindowClosed = async (oauthWinId: number, acctEmail: string | undefined): Promise<AuthRes> => {
     return await new Promise(resolve => {
@@ -196,7 +196,7 @@ export class GoogleAuth {
       };
       chrome.windows.onRemoved.addListener(onOauthWinClosed);
     });
-  }
+  };
 
   private static processOauthResTitle = (title: string): { result: GoogleAuthWindowResult$result, code?: string, error?: string, csrf?: string } => {
     const parts = title.split(' ', 2);
@@ -212,7 +212,7 @@ export class GoogleAuth {
       return { result: 'Error', error: `Unknown google auth result '${result}'` };
     }
     return { result, code: params.code ? String(params.code) : undefined, error: params.error ? String(params.error) : undefined, csrf: authReq.csrfToken };
-  }
+  };
 
   /**
    * Is the title actually just url of the page? (means real title not loaded yet)
@@ -221,11 +221,11 @@ export class GoogleAuth {
     return title.match(/^(?:https?:\/\/)?accounts\.google\.com/) !== null
       || title.startsWith(GOOGLE_OAUTH_SCREEN_HOST.replace(/^https?:\/\//, ''))
       || title.startsWith(GOOGLE_OAUTH_SCREEN_HOST);
-  }
+  };
 
   private static isForwarding = (title: string) => {
     return title.match(/^Forwarding /) !== null;
-  }
+  };
 
   private static waitForAndProcessOauthWindowResult = async (windowId: number, acctEmail: string | undefined, scopes: string[], csrfToken: string, save: boolean): Promise<AuthRes> => {
     while (true) {
@@ -253,7 +253,7 @@ export class GoogleAuth {
       }
       await Ui.time.sleep(250);
     }
-  }
+  };
 
   private static apiGoogleAuthCodeUrl = (authReq: AuthReq) => {
     return Url.create(GoogleAuth.OAUTH.url_code, {
@@ -265,18 +265,18 @@ export class GoogleAuth {
       scope: (authReq.scopes || []).join(' '),
       login_hint: authReq.acctEmail,
     });
-  }
+  };
 
   private static apiGoogleAuthStatePack = (authReq: AuthReq) => {
     return GoogleAuth.OAUTH.state_header + JSON.stringify(authReq);
-  }
+  };
 
   private static apiGoogleAuthStateUnpack = (state: string): AuthReq => {
     if (!state.startsWith(GoogleAuth.OAUTH.state_header)) {
       throw new Error(`Missing oauth state header`);
     }
     return JSON.parse(state.replace(GoogleAuth.OAUTH.state_header, '')) as AuthReq;
-  }
+  };
 
   private static googleAuthSaveTokens = async (acctEmail: string, tokensObj: GoogleAuthTokensResponse, scopes: string[]) => {
     const openid = GoogleAuth.parseIdToken(tokensObj.id_token);
@@ -293,7 +293,7 @@ export class GoogleAuth {
       toSave.google_token_refresh = tokensObj.refresh_token;
     }
     await AcctStore.set(acctEmail, toSave);
-  }
+  };
 
   private static googleAuthGetTokens = async (code: string) => {
     return await Api.ajax({
@@ -302,7 +302,7 @@ export class GoogleAuth {
       crossDomain: true,
       async: true,
     }, Catch.stackTrace()) as any as GoogleAuthTokensResponse;
-  }
+  };
 
   private static googleAuthRefreshToken = async (refreshToken: string) => {
     return await Api.ajax({
@@ -311,7 +311,7 @@ export class GoogleAuth {
       crossDomain: true,
       async: true,
     }, Catch.stackTrace()) as any as GoogleAuthTokensResponse;
-  }
+  };
 
   private static googleAuthCheckAccessToken = async (accessToken: string) => {
     return await Api.ajax({
@@ -319,14 +319,14 @@ export class GoogleAuth {
       crossDomain: true,
       async: true,
     }, Catch.stackTrace()) as any as GoogleAuthTokenInfo;
-  }
+  };
 
   /**
    * oauth token will be valid for another 2 min
    */
   private static googleApiIsAuthTokenValid = (s: AcctStoreDict) => {
     return s.google_token_access && (!s.google_token_expires || s.google_token_expires > Date.now() + (120 * 1000));
-  }
+  };
 
   // todo - would be better to use a TS type guard instead of the type cast when checking OpenId
   // check for things we actually use: photo/name/locale
@@ -339,7 +339,7 @@ export class GoogleAuth {
       }
     }
     return claims;
-  }
+  };
 
   private static retrieveAndSaveAuthToken = async (authCode: string, scopes: string[]): Promise<{ id_token: string }> => {
     const tokensObj = await GoogleAuth.googleAuthGetTokens(authCode);
@@ -350,7 +350,7 @@ export class GoogleAuth {
     }
     await GoogleAuth.googleAuthSaveTokens(claims.email, tokensObj, scopes);
     return { id_token: tokensObj.id_token };
-  }
+  };
 
   private static apiGoogleAuthPopupPrepareAuthReqScopes = async (acctEmail: string | undefined, addScopes: string[]): Promise<string[]> => {
     if (acctEmail) {
@@ -376,6 +376,6 @@ export class GoogleAuth {
       addScopes.push(GoogleAuth.OAUTH.legacy_scopes.read);
     }
     return addScopes;
-  }
+  };
 
 }

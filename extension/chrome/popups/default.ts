@@ -44,17 +44,17 @@ View.run(class DefaultPopupView extends View {
         await this.redirectToInitSetup();
       }
     }
-  }
+  };
 
   public setHandlers = () => {
     // set below based on what renders
-  }
+  };
 
   private redirectToInitSetup = async (acctEmail?: string) => {
     BrowserMsg.send.bg.settings({ acctEmail: acctEmail || undefined });
     await Ui.time.sleep(100);
     window.close();
-  }
+  };
 
   private renderChooseEmailOrSettingsPopup = (activeAcctEmail?: string) => {
     $('#email_or_settings').css('display', 'block');
@@ -74,12 +74,12 @@ View.run(class DefaultPopupView extends View {
         window.location.href = 'select_account.htm?action=inbox';
       }
     }));
-  }
+  };
 
   private renderSetupAcctPromptPopup = (activeAcctEmail: string) => {
     $('#set_up_account').css('display', 'block');
     $('.email').text(activeAcctEmail);
     $('.action_set_up_account').click(this.setHandlerPrevent('double', () => { this.redirectToInitSetup(activeAcctEmail).catch(Catch.reportErr); }));
-  }
+  };
 
 });

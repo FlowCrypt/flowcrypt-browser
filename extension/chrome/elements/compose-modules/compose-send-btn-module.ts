@@ -13,7 +13,7 @@ import { ComposerUserError } from './compose-err-module.js';
 import { ComposeSendBtnPopoverModule } from './compose-send-btn-popover-module.js';
 import { GeneralMailFormatter } from './formatters/general-mail-formatter.js';
 import { GmailRes } from '../../../js/common/api/email-provider/gmail/gmail-parser.js';
-import { KeyInfo, Key, KeyUtil } from '../../../js/common/core/crypto/key.js';
+import { KeyInfo } from '../../../js/common/core/crypto/key.js';
 import { SendBtnTexts } from './compose-types.js';
 import { SendableMsg } from '../../../js/common/api/email-provider/sendable-msg.js';
 import { Str } from '../../../js/common/core/common.js';
@@ -42,11 +42,11 @@ export class ComposeSendBtnModule extends ViewModule<ComposeView> {
     this.view.S.cached('subject').add(this.view.S.cached('compose')).keydown(ctrlEnterHandler);
     this.view.S.cached('send_btn').click(this.view.setHandlerPrevent('double', () => this.extractProcessSendMsg()));
     this.popover.setHandlers();
-  }
+  };
 
   public isSendMessageInProgres = (): boolean => {
     return this.isSendMessageInProgress;
-  }
+  };
 
   public resetSendBtn = (delay?: number) => {
     const doReset = () => {
@@ -62,17 +62,17 @@ export class ComposeSendBtnModule extends ViewModule<ComposeView> {
     } else {
       Catch.setHandledTimeout(doReset, delay);
     }
-  }
+  };
 
   public disableBtn = () => {
     this.view.S.cached('send_btn').removeClass('green').addClass('gray').prop('disabled', true);
     this.view.S.cached('toggle_send_options').removeClass('green').addClass('gray').prop('disabled', true);
-  }
+  };
 
   public enableBtn = () => {
     this.view.S.cached('send_btn').removeClass('gray').addClass('green').prop('disabled', false);
     this.view.S.cached('toggle_send_options').removeClass('gray').addClass('green').prop('disabled', false);
-  }
+  };
 
   public renderUploadProgress = (progress: number | undefined, progressRepresents: 'FIRST-HALF' | 'SECOND-HALF' | 'EVERYTHING') => {
     if (progress && this.view.attachmentsModule.attachment.hasAttachment()) {
@@ -85,7 +85,7 @@ export class ComposeSendBtnModule extends ViewModule<ComposeView> {
       }
       this.view.S.now('send_btn_text').text(`${SendBtnTexts.BTN_SENDING} ${progress < 100 ? `${progress}%` : ''}`);
     }
-  }
+  };
 
   private btnText = (): string => {
     if (this.popover.choices.encrypt && this.popover.choices.sign) {
@@ -97,7 +97,7 @@ export class ComposeSendBtnModule extends ViewModule<ComposeView> {
     } else {
       return SendBtnTexts.BTN_PLAIN_SEND;
     }
-  }
+  };
 
   private extractProcessSendMsg = async () => {
     if (this.view.S.cached('reply_msg_successful').is(':visible')) {
@@ -112,27 +112,21 @@ export class ComposeSendBtnModule extends ViewModule<ComposeView> {
       this.view.S.cached('send_btn_note').text('');
       const newMsgData = this.view.inputModule.extractAll();
       await this.view.errModule.throwIfFormValsInvalid(newMsgData);
-      const senderKi = await this.view.storageModule.getKey(this.view.senderModule.getSender());
-      let signingPrv: Key | undefined;
-      if (this.popover.choices.sign) {
-        signingPrv = await this.decryptSenderKey(senderKi);
-        if (!signingPrv) {
-          return; // user has canceled the pass phrase dialog, or didn't respond to it in time
-        }
-      }
       await ContactStore.update(undefined, Array.prototype.concat.apply([], Object.values(newMsgData.recipients)), { lastUse: Date.now() });
-      const msgObj = await GeneralMailFormatter.processNewMsg(this.view, newMsgData, senderKi, signingPrv);
-      await this.finalizeSendableMsg(msgObj, senderKi);
-      await this.doSendMsg(msgObj);
+      const msgObj = await GeneralMailFormatter.processNewMsg(this.view, newMsgData);
+      if (msgObj) {
+        await this.finalizeSendableMsg(msgObj);
+        await this.doSendMsg(msgObj.msg);
+      }
     } catch (e) {
       await this.view.errModule.handleSendErr(e);
     } finally {
       this.view.sendBtnModule.enableBtn();
       this.view.S.cached('toggle_send_options').show();
     }
-  }
+  };
 
-  private finalizeSendableMsg = async (msg: SendableMsg, senderKi: KeyInfo) => {
+  private finalizeSendableMsg = async ({ msg, senderKi }: { msg: SendableMsg, senderKi: KeyInfo | undefined }) => {
     const choices = this.view.sendBtnModule.popover.choices;
     for (const k of Object.keys(this.additionalMsgHeaders)) {
       msg.headers[k] = this.additionalMsgHeaders[k];
@@ -149,11 +143,11 @@ export class ComposeSendBtnModule extends ViewModule<ComposeView> {
       msg.body['text/html'] = htmlWithCidImages;
       msg.attachments.push(...imgAttachments);
     }
-    if (this.view.myPubkeyModule.shouldAttach()) {
+    if (this.view.myPubkeyModule.shouldAttach() && senderKi) { // todo: report on undefined?
       msg.attachments.push(Attachment.keyinfoAsPubkeyAttachment(senderKi));
     }
     await this.addNamesToMsg(msg);
-  }
+  };
 
   private extractInlineImagesToAttachments = (html: string) => {
     const imgAttachments: Attachment[] = [];
@@ -188,7 +182,7 @@ export class ComposeSendBtnModule extends ViewModule<ComposeView> {
     const htmlWithCidImages = DOMPurify.sanitize(html);
     DOMPurify.removeAllHooks();
     return { htmlWithCidImages, imgAttachments };
-  }
+  };
 
   private parseInlineImageSrc = (src: string) => {
     let mimeType;
@@ -199,7 +193,7 @@ export class ComposeSendBtnModule extends ViewModule<ComposeView> {
       data = parts[3];
     }
     return { mimeType, data };
-  }
+  };
 
 
   private doSendMsg = async (msg: SendableMsg) => {
@@ -228,26 +222,7 @@ export class ComposeSendBtnModule extends ViewModule<ComposeView> {
     } else {
       this.view.renderModule.closeMsg();
     }
-  }
-
-  private decryptSenderKey = async (senderKi: KeyInfo): Promise<Key | undefined> => {
-    const prv = await KeyUtil.parse(senderKi.private);
-    const passphrase = await this.view.storageModule.passphraseGet(senderKi);
-    if (typeof passphrase === 'undefined' && !prv.fullyDecrypted) {
-      BrowserMsg.send.passphraseDialog(this.view.parentTabId, { type: 'sign', longids: [senderKi.longid] });
-      if ((typeof await this.view.storageModule.whenMasterPassphraseEntered(60)) !== 'undefined') { // pass phrase entered
-        return await this.decryptSenderKey(senderKi);
-      } else { // timeout - reset - no passphrase entered
-        this.resetSendBtn();
-        return undefined;
-      }
-    } else {
-      if (!prv.fullyDecrypted) {
-        await KeyUtil.decrypt(prv, passphrase!); // checked !== undefined above
-      }
-      return prv;
-    }
-  }
+  };
 
   private addNamesToMsg = async (msg: SendableMsg): Promise<void> => {
     const { sendAs } = await AcctStore.get(this.view.acctEmail, ['sendAs']);
@@ -273,6 +248,6 @@ export class ComposeSendBtnModule extends ViewModule<ComposeView> {
     msg.recipients.cc = await addNameToEmail(msg.recipients.cc || []);
     msg.recipients.bcc = await addNameToEmail(msg.recipients.bcc || []);
     msg.from = (await addNameToEmail([msg.from]))[0];
-  }
+  };
 
 }
