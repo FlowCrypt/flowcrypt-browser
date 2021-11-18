@@ -47,7 +47,7 @@ export class PassphraseStore extends AbstractStore {
   };
 
   private static getIndex = (longid: string): AccountIndex => {
-    return `passphrase_${longid}` as AccountIndex;
+    return `passphrase_${longid}` as unknown as AccountIndex;
   };
 
   private static getByIndex = async (acctEmail: string, storageIndex: AccountIndex, ignoreSession: boolean = false): Promise<string | undefined> => {

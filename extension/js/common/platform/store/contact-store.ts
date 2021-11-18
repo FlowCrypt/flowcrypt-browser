@@ -46,7 +46,7 @@ export type ContactV4 = {
   info: Email,
   pubkeys: Pubkey[],
   revocations: Revocation[]
-}
+};
 
 export type ContactPreview = {
   email: string;
