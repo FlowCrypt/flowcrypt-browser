@@ -15,7 +15,7 @@ export type ErrorReport = {
   trace: string;
   version: string;
   environment: string;
-}
+};
 
 export class Catch {
 

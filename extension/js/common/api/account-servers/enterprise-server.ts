@@ -25,7 +25,7 @@ export namespace FesRes {
   export type AccessToken = { accessToken: string };
   export type ReplyToken = { replyToken: string };
   export type MessageUpload = { url: string };
-  export type ServiceInfo = { vendor: string, service: string, orgId: string, version: string, apiVersion: string }
+  export type ServiceInfo = { vendor: string, service: string, orgId: string, version: string, apiVersion: string };
   export type ClientConfiguration = { clientConfiguration: DomainRulesJson };
 }
 
