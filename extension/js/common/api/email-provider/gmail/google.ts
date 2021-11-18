@@ -62,12 +62,9 @@ export class Google {
       .map(entry => {
         const email = (entry.person?.emailAddresses || []).find(email => email.metadata.primary === true)!.value;
         const name = (entry.person?.names || []).find(name => name.metadata.primary === true)!.displayName;
-        return {
-          email,
-          name: name || email
-        };
+        return { email, name: name || email };
       });
-  }
+  };
 
   public static encodeAsMultipartRelated = (parts: Dict<string>) => { // todo - this could probably be achieved with emailjs-mime-builder
     const boundary = 'the_boundary_is_' + Str.sloppyRandom(10);
