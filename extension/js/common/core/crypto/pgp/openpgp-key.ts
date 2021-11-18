@@ -174,12 +174,11 @@ export class OpenPGPKey {
       }
       return Date.now() > exp.getTime();
     };
-    const emails = keyWithoutWeakPackets.users
-      .map(user => user.userId)
-      .filter(userId => userId !== null)
-      .map((userId: OpenPGP.packet.Userid) => {
+    const identities = await OpenPGPKey.getSortedUserids(keyWithoutWeakPackets);
+    const emails = identities
+      .map(userid => {
         try {
-          return opgp.util.parseUserId(userId.userid).email || '';
+          return opgp.util.parseUserId(userid).email || '';
         } catch (e) {
           // ignore bad user IDs
         }
@@ -219,7 +218,7 @@ export class OpenPGPKey {
       emails,
       // full uids that have valid emails in them
       // tslint:disable-next-line: no-unsafe-any
-      identities: keyWithoutWeakPackets.users.map(u => u.userId).filter(u => !!u && u.userid && Str.parseEmail(u.userid).email).map(u => u!.userid).filter(Boolean) as string[],
+      identities,
       lastModified,
       expiration: exp instanceof Date ? exp.getTime() : undefined,
       created: keyWithoutWeakPackets.getCreationTime().getTime(),
@@ -432,6 +431,22 @@ export class OpenPGPKey {
       }
     }
     return undefined;
+  };
+
+  private static getSortedUserids = async (key: OpenPGP.key.Key): Promise<string[]> => {
+    const data = (await Promise.all(key.users.filter(Boolean).map(async (user) => {
+      const primaryKey = key.primaryKey;
+      const dataToVerify = { userId: user.userId, key: primaryKey };
+      const selfCertification = await OpenPGPKey.getLatestValidSignature(user.selfCertifications, primaryKey, opgp.enums.signature.cert_generic, dataToVerify);
+      return { userid: user.userId?.userid, selfCertification };
+    }))).filter(x => x.selfCertification);
+    // sort the same way as OpenPGP.js does
+    data.sort((a, b) => {
+      const A = a.selfCertification!;
+      const B = b.selfCertification!;
+      return Number(A.revoked) - Number(B.revoked) || Number(B.isPrimaryUserID) - Number(A.isPrimaryUserID) || Number(B.created) - Number(A.created);
+    });
+    return data.map(x => x.userid).filter(Boolean).map(y => y!);
   };
 
   // mimicks OpenPGP.helper.getLatestValidSignature
