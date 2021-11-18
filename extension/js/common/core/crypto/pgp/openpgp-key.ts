@@ -438,10 +438,7 @@ export class OpenPGPKey {
       const primaryKey = key.primaryKey;
       const dataToVerify = { userId: user.userId, key: primaryKey };
       const selfCertification = await OpenPGPKey.getLatestValidSignature(user.selfCertifications, primaryKey, opgp.enums.signature.cert_generic, dataToVerify);
-      return {
-        userid: user.userId?.userid,
-        selfCertification
-      };
+      return { userid: user.userId?.userid, selfCertification };
     }))).filter(x => x.selfCertification);
     // sort the same way as OpenPGP.js does
     data.sort((a, b) => {
