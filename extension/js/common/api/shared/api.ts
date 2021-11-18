@@ -20,7 +20,7 @@ export type ReqMethod = 'POST' | 'GET' | 'DELETE' | 'PUT';
 export type EmailProviderContact = {
   email: string;
   name?: string | null;
-}
+};
 type ProviderContactsResults = { new: EmailProviderContact[], all: EmailProviderContact[] };
 type RawAjaxErr = {
   // getAllResponseHeaders?: () => any,

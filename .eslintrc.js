@@ -22,9 +22,9 @@ module.exports = {
   ],
   rules: {
     '@typescript-eslint/no-unused-vars': ['error'],
+    '@typescript-eslint/semi': ['error'],
     'indent': ['error', 2, { SwitchCase: 1 }],
     'max-len': ['error', { code: 190 }],
-    'semi': 'error',
     'no-constant-condition': 0,
     'no-prototype-builtins': 0,
     'no-unused-vars': 0,
@@ -38,6 +38,7 @@ module.exports = {
     'prefer-const': ['error', {
       destructuring: 'all',
     }],
+    'semi': 0,
     'sort-imports': ['off', {
       "ignoreCase": false,
       "ignoreDeclarationSort": false,

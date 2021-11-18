@@ -10,7 +10,7 @@ import { Catch } from '../catch.js';
 
 export type StoredAdminCode = { date: number, codes: string[] };
 
-export type LocalDraft = GmailRes.GmailDraftGet & { timestamp: number, acctEmail: string }
+export type LocalDraft = GmailRes.GmailDraftGet & { timestamp: number, acctEmail: string };
 
 export type GlobalStoreDict = {
   version?: number | null;
