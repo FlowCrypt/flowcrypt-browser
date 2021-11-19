@@ -50,7 +50,7 @@ export const mockGoogleEndpoints: HandlersDefinition = {
     if (!isGet(req)) {
       throw new HttpClientErr(`Method not implemented for ${req.url}: ${req.method}`);
     }
-    const empty = { results: [] };
+    const empty = {};
     const acct = oauth.checkAuthorizationHeaderWithAccessToken(req.headers.authorization);
     if (acct === 'ci.tests.gmail@flowcrypt.test') {
       if (query === 'contact') {
@@ -81,7 +81,7 @@ export const mockGoogleEndpoints: HandlersDefinition = {
     if (!isGet(req)) {
       throw new HttpClientErr(`Method not implemented for ${req.url}: ${req.method}`);
     }
-    const empty = { results: [] };
+    const empty = {};
     const acct = oauth.checkAuthorizationHeaderWithAccessToken(req.headers.authorization);
     if (acct === 'ci.tests.gmail@flowcrypt.test') {
       if (query === 'testsearchorder') {
