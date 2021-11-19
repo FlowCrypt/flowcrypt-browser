@@ -72,7 +72,7 @@ export class PgpBlockView extends View {
     this.orgRules = await OrgRules.newInstance(this.acctEmail);
     this.pubLookup = new PubLookup(this.orgRules);
     const scopes = await AcctStore.getScopes(this.acctEmail);
-    this.decryptModule.canReadEmails = scopes.read || scopes.modify;
+    this.decryptModule.canReadEmails = scopes.modify;
     if (storage.setup_done) {
       await this.decryptModule.initialize();
     } else {

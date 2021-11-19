@@ -47,30 +47,24 @@ export class GoogleAuth {
       readOtherContacts: 'https://www.googleapis.com/auth/contacts.other.readonly',
     },
     legacy_scopes: {
-      read: 'https://www.googleapis.com/auth/gmail.readonly', // deprecated in favor of modify, which also includes read
       gmail: 'https://mail.google.com/', // causes a freakish oauth warn: "can permannently delete all your email" ...
     }
   };
 
   public static defaultScopes = (group: 'default' | 'contacts' | 'openid' = 'default') => {
     const { readContacts, readOtherContacts, compose, modify, openid, email, profile } = GoogleAuth.OAUTH.scopes;
-    console.info(`Not using scope ${modify} because not approved on oauth screen yet`);
-    const read = GoogleAuth.OAUTH.legacy_scopes.read; // todo - remove as soon as "modify" is approved by google
     if (group === 'openid') {
       return [openid, email, profile];
     } else if (group === 'default') {
       if (FLAVOR === 'consumer') {
-        // todo - replace "read" with "modify" when approved by google
-        return [openid, email, profile, compose, read]; // consumer may freak out that extension asks for their contacts early on
+        return [openid, email, profile, compose, modify]; // consumer may freak out that extension asks for their contacts early on
       } else if (FLAVOR === 'enterprise') {
-        // todo - replace "read" with "modify" when approved by google
-        return [openid, email, profile, compose, read, readContacts, readOtherContacts]; // enterprise expects their contact search to work properly
+        return [openid, email, profile, compose, modify, readContacts, readOtherContacts]; // enterprise expects their contact search to work properly
       } else {
         throw new Error(`Unknown build ${FLAVOR}`);
       }
     } else if (group === 'contacts') {
-      // todo - replace "read" with "modify" when approved by google
-      return [openid, email, profile, compose, read, readContacts, readOtherContacts];
+      return [openid, email, profile, compose, modify, readContacts, readOtherContacts];
     } else {
       throw new Error(`Unknown scope group ${group}`);
     }
@@ -359,9 +353,6 @@ export class GoogleAuth {
       addScopes.push(...(google_token_scopes || []));
     }
     addScopes = Value.arr.unique(addScopes);
-    if (addScopes.includes(GoogleAuth.OAUTH.legacy_scopes.read) && addScopes.includes(GoogleAuth.OAUTH.scopes.modify)) {
-      addScopes = Value.arr.withoutVal(addScopes, GoogleAuth.OAUTH.legacy_scopes.read); // modify scope is a superset of read scope
-    }
     if (!addScopes.includes(GoogleAuth.OAUTH.scopes.email)) {
       addScopes.push(GoogleAuth.OAUTH.scopes.email);
     }
@@ -370,11 +361,6 @@ export class GoogleAuth {
     }
     if (!addScopes.includes(GoogleAuth.OAUTH.scopes.profile)) {
       addScopes.push(GoogleAuth.OAUTH.scopes.profile);
-    }
-    // todo - remove these following lines once "modify" scope is verified
-    if (addScopes.includes(GoogleAuth.OAUTH.scopes.modify)) {
-      addScopes = Value.arr.withoutVal(addScopes, GoogleAuth.OAUTH.scopes.modify);
-      addScopes.push(GoogleAuth.OAUTH.legacy_scopes.read);
     }
     return addScopes;
   };

@@ -108,7 +108,7 @@ export class SetupRenderModule {
       if (!this.view.orgRules.canBackupKeys()) {
         // they already have a key recorded on attester, but no backups allowed on the domain. They should enter their prv manually
         this.displayBlock('step_2b_manual_enter');
-      } else if (this.view.storage!.email_provider === 'gmail' && (this.view.scopes!.read || this.view.scopes!.modify)) {
+      } else if (this.view.storage!.email_provider === 'gmail' && this.view.scopes!.modify) {
         try {
           const backups = await this.view.gmail.fetchKeyBackups();
           this.view.fetchedKeyBackups = backups.keyinfos.backups;
