@@ -63,7 +63,7 @@ export class Google {
       .filter(entry => !!(entry.person?.emailAddresses || []).find(email => email.metadata.primary === true)) // find all entries that have primary email
       .map(entry => {
         const email = (entry.person?.emailAddresses || []).find(email => email.metadata.primary === true)!.value;
-        const name = (entry.person?.names || []).find(name => name.metadata.primary === true)!.displayName;
+        const name = (entry.person?.names || []).find(name => name.metadata.primary === true)?.displayName;
         return { email, name: name || email };
       });
   };
