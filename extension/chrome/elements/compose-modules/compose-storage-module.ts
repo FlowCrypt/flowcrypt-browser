@@ -3,7 +3,7 @@
 'use strict';
 
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
-import { KeyInfo, KeyUtil, Key, PubkeyResult } from '../../../js/common/core/crypto/key.js';
+import { KeyInfo, KeyUtil, Key, PubkeyInfo, PubkeyResult } from '../../../js/common/core/crypto/key.js';
 import { ApiErr } from '../../../js/common/api/shared/api-error.js';
 import { Assert } from '../../../js/common/assert.js';
 import { Catch, UnreportableError } from '../../../js/common/platform/catch.js';
@@ -13,7 +13,7 @@ import { ViewModule } from '../../../js/common/view-module.js';
 import { ComposeView } from '../compose.js';
 import { KeyStore } from '../../../js/common/platform/store/key-store.js';
 import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
-import { ContactStore, PubkeyInfo } from '../../../js/common/platform/store/contact-store.js';
+import { ContactStore } from '../../../js/common/platform/store/contact-store.js';
 import { PassphraseStore } from '../../../js/common/platform/store/passphrase-store.js';
 import { Settings } from '../../../js/common/settings.js';
 

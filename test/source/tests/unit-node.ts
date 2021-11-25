@@ -15,8 +15,7 @@ import { OpenPGPKey } from '../core/crypto/pgp/openpgp-key';
 import { DecryptError, DecryptSuccess, MsgUtil, PgpMsgMethod } from '../core/crypto/pgp/msg-util';
 import { opgp } from '../core/crypto/pgp/openpgpjs-custom';
 import { Attachment } from '../core/attachment.js';
-import { ContactStore } from '../platform/store/contact-store.js';
-import { GoogleData, GmailParser, GmailMsg } from '../mock/google/google-data';
+import { GoogleData, GmailMsg } from '../mock/google/google-data';
 import { testConstants } from './tooling/consts';
 import { PgpArmor } from '../core/crypto/pgp/pgp-armor';
 import { ExpirationCache } from '../core/expiration-cache';
@@ -783,12 +782,55 @@ jLwe8W9IMt765T5x5oux9MmPDXF05xHfm4qfH/BMO3a802x5u2gJjJjuknrFdgXY
         .match(/\-\-\-\-\-BEGIN PGP SIGNED MESSAGE\-\-\-\-\-.*\-\-\-\-\-END PGP SIGNATURE\-\-\-\-\-/s)![0];
       const encryptedData = Buf.fromUtfStr(enc);
       const pubkey = await KeyUtil.parse(testConstants.pubkey2864E326A5BE488A);
-      await ContactStore.update(undefined, 'president@forged.com', { name: 'President', pubkey });
-      const decrypted = await MsgUtil.decryptMessage({ kisWithPp: [], encryptedData });
+      const decrypted = await MsgUtil.decryptMessage({ kisWithPp: [], encryptedData, verificationPubs: [{ pubkey, revoked: false }] });
       expect(decrypted.success).to.equal(true);
       const verifyRes = (decrypted as DecryptSuccess).signature!;
       expect(verifyRes.match).to.be.true;
       expect(verifyRes.signer?.primaryUserId).to.equal('A50 Sam <sams50sams50sept@gmail.com>');
+      t.pass();
+    });
+
+    ava.default('[unit][MsgUtil.decryptMessage] finds correct key to verify signature', async t => {
+      const data = await GoogleData.withInitializedData('ci.tests.gmail@flowcrypt.test');
+      const msg: GmailMsg = data.getMessage('1766644f13510f58')!;
+      const enc = Buf.fromBase64Str(msg!.raw!).toUtfStr()
+        .match(/\-\-\-\-\-BEGIN PGP SIGNED MESSAGE\-\-\-\-\-.*\-\-\-\-\-END PGP SIGNATURE\-\-\-\-\-/s)![0];
+      const encryptedData = Buf.fromUtfStr(enc);
+      // actual key the message was signed with
+      const pubkey = await KeyUtil.parse(testConstants.pubkey2864E326A5BE488A);
+      // better key
+      const betterKey = await KeyUtil.parse("-----BEGIN PGP PUBLIC KEY BLOCK-----\r\nVersion: FlowCrypt Email Encryption [BUILD_REPLACEABLE_VERSION]\r\nComment: Seamlessly send and receive encrypted email\r\n\r\nxjMEYZeW2RYJKwYBBAHaRw8BAQdAT5QfLVP3y1yukk3MM/oiuXLNe1f9az5M\r\nBnOlKdF0nKnNJVNvbWVib2R5IDxTYW1zNTBzYW1zNTBzZXB0QEdtYWlsLkNv\r\nbT7CjwQQFgoAIAUCYZeW2QYLCQcIAwIEFQgKAgQWAgEAAhkBAhsDAh4BACEJ\r\nEMrSTYqLk6SUFiEEBP90ux3d6kDwDdzvytJNiouTpJS27QEA7pFlkLfD0KFQ\r\nsH/dwb/NPzn5zCi2L9gjPAC3d8gv1fwA/0FjAy/vKct4D7QH8KwtEGQns5+D\r\nP1WxDr4YI2hp5TkAzjgEYZeW2RIKKwYBBAGXVQEFAQEHQKNLY/bXrhJMWA2+\r\nWTjk3I7KhawyZfLomJ4hovqr7UtOAwEIB8J4BBgWCAAJBQJhl5bZAhsMACEJ\r\nEMrSTYqLk6SUFiEEBP90ux3d6kDwDdzvytJNiouTpJQnpgD/c1CzfS3YzJUx\r\nnFMrhjiE0WVgqOV/3CkfI4m4RA30QUIA/ju8r4AD2h6lu3Mx/6I6PzIRZQty\r\nLvTkcu4UKodZa4kK\r\n=7C4A\r\n-----END PGP PUBLIC KEY BLOCK-----\r\n");
+      {
+        const decrypted1 = await MsgUtil.decryptMessage({
+          kisWithPp: [], encryptedData, verificationPubs: [{ pubkey, revoked: false }, { pubkey: betterKey, revoked: false }]
+        });
+        expect(decrypted1.success).to.equal(true);
+        const verifyRes1 = (decrypted1 as DecryptSuccess).signature!;
+        expect(verifyRes1.match).to.be.true;
+        expect(verifyRes1.signer?.primaryUserId).to.equal('A50 Sam <sams50sams50sept@gmail.com>');
+      }
+      {
+        const decrypted2 = await MsgUtil.decryptMessage({
+          kisWithPp: [], encryptedData, verificationPubs: [{ pubkey: betterKey, revoked: false }, { pubkey, revoked: false }]
+        });
+        expect(decrypted2.success).to.equal(true);
+        const verifyRes2 = (decrypted2 as DecryptSuccess).signature!;
+        expect(verifyRes2.match).to.be.true;
+        expect(verifyRes2.signer?.primaryUserId).to.equal('A50 Sam <sams50sams50sept@gmail.com>');
+      }
+      {
+        const decrypted3 = await MsgUtil.decryptMessage({ kisWithPp: [], encryptedData, verificationPubs: [{ pubkey, revoked: false }] });
+        expect(decrypted3.success).to.equal(true);
+        const verifyRes3 = (decrypted3 as DecryptSuccess).signature!;
+        expect(verifyRes3.match).to.be.true;
+        expect(verifyRes3.signer?.primaryUserId).to.equal('A50 Sam <sams50sams50sept@gmail.com>');
+      }
+      {
+        const decrypted4 = await MsgUtil.decryptMessage({ kisWithPp: [], encryptedData, verificationPubs: [{ pubkey: betterKey, revoked: false }] });
+        expect(decrypted4.success).to.equal(true);
+        const verifyRes4 = (decrypted4 as DecryptSuccess).signature!;
+        expect(verifyRes4.match).to.not.be.true;
+      }
       t.pass();
     });
 
@@ -805,10 +847,10 @@ jLwe8W9IMt765T5x5oux9MmPDXF05xHfm4qfH/BMO3a802x5u2gJjJjuknrFdgXY
       const pubkey = plaintext
         .match(/\-\-\-\-\-BEGIN PGP PUBLIC KEY BLOCK\-\-\-\-\-.*\-\-\-\-\-END PGP PUBLIC KEY BLOCK\-\-\-\-\-/s)![0]
         .replace(/=\r\n/g, '').replace(/=3D/g, '=');
-      const from = GmailParser.findHeader(msg, "from");
-      const contact = await ContactStore.obj({ email: from, pubkey });
-      await ContactStore.save(undefined, contact);
-      const result = await MsgUtil.verifyDetached({ plaintext: Buf.fromUtfStr(plaintext), sigText: Buf.fromUtfStr(sigText) });
+      const result = await MsgUtil.verifyDetached({
+        plaintext: Buf.fromUtfStr(plaintext), sigText: Buf.fromUtfStr(sigText),
+        verificationPubs: [{ pubkey: await KeyUtil.parse(pubkey), revoked: false }]
+      });
       expect(result.match).to.be.true;
       t.pass();
     });
@@ -826,10 +868,11 @@ jLwe8W9IMt765T5x5oux9MmPDXF05xHfm4qfH/BMO3a802x5u2gJjJjuknrFdgXY
       const pubkey = plaintext
         .match(/\-\-\-\-\-BEGIN PGP PUBLIC KEY BLOCK\-\-\-\-\-.*\-\-\-\-\-END PGP PUBLIC KEY BLOCK\-\-\-\-\-/s)![0]
         .replace(/=\r\n/g, '').replace(/=3D/g, '=');
-      const from = GmailParser.findHeader(msg, "from");
-      const contact = await ContactStore.obj({ email: from, pubkey });
-      await ContactStore.save(undefined, contact);
-      const result = await MsgUtil.verifyDetached({ plaintext: Buf.fromUtfStr(plaintext), sigText: Buf.fromUtfStr(sigText) });
+      const result = await MsgUtil.verifyDetached({
+        plaintext: Buf.fromUtfStr(plaintext),
+        sigText: Buf.fromUtfStr(sigText),
+        verificationPubs: [{ pubkey: await KeyUtil.parse(pubkey), revoked: false }]
+      });
       expect(result.match).to.be.true;
       t.pass();
     });
@@ -844,14 +887,11 @@ jLwe8W9IMt765T5x5oux9MmPDXF05xHfm4qfH/BMO3a802x5u2gJjJjuknrFdgXY
       const plaintext = msgText
         .match(/Content\-Type: multipart\/mixed;\r?\n? boundary="\-\-\-\-sinikael\-\?=_2\-16054595384320\.6487848448108896".*\-\-\-\-\-\-sinikael\-\?=_2\-16054595384320\.6487848448108896\-\-\r?\n/s)![0]
         .replace(/\r?\n/g, '\r\n')!;
-      if ((await ContactStore.get(undefined, ['7FDE685548AEA788'])).length === 0) {
-        const contact = await ContactStore.obj({
-          email: 'flowcrypt.compatibility@gmail.com',
-          pubkey: testConstants.flowcryptcompatibilityPublicKey7FDE685548AEA788
-        });
-        await ContactStore.save(undefined, contact);
-      }
-      const result = await MsgUtil.verifyDetached({ plaintext: Buf.fromUtfStr(plaintext), sigText });
+      const result = await MsgUtil.verifyDetached({
+        plaintext: Buf.fromUtfStr(plaintext),
+        sigText,
+        verificationPubs: [{ pubkey: await KeyUtil.parse(testConstants.flowcryptcompatibilityPublicKey7FDE685548AEA788), revoked: false }]
+      });
       expect(result.match).to.be.true;
       t.pass();
     });
@@ -969,7 +1009,7 @@ jLwe8W9IMt765T5x5oux9MmPDXF05xHfm4qfH/BMO3a802x5u2gJjJjuknrFdgXY
       const encrypted = await MsgUtil.encryptMessage({ pubkeys, data, armor: true }) as PgpMsgMethod.EncryptPgpArmorResult;
       const parsed = await KeyUtil.parse(prvEncryptForSubkeyOnlyProtected);
       const kisWithPp: ExtendedKeyInfo[] = [{ ... await KeyUtil.typedKeyInfoObj(parsed), type: parsed.type, passphrase }];
-      const decrypted = await MsgUtil.decryptMessage({ kisWithPp, encryptedData: encrypted.data });
+      const decrypted = await MsgUtil.decryptMessage({ kisWithPp, encryptedData: encrypted.data, verificationPubs: [] });
       // todo - later we'll have an org rule for ignoring this, and then it will be expected to pass as follows:
       // expect(decrypted.success).to.equal(true);
       // expect(decrypted.content!.toUtfStr()).to.equal(data.toUtfStr());

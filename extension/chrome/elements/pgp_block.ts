@@ -67,6 +67,10 @@ export class PgpBlockView extends View {
     this.decryptModule = new PgpBlockViewDecryptModule(this);
   }
 
+  public getSigner = () => {
+    return this.senderEmail;
+  };
+
   public render = async () => {
     const storage = await AcctStore.get(this.acctEmail, ['setup_done', 'google_token_scopes']);
     this.orgRules = await OrgRules.newInstance(this.acctEmail);

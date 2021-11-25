@@ -123,7 +123,11 @@ export class ComposeQuoteModule extends ViewModule<ComposeView> {
             let attachmentMeta: { content: Buf, filename?: string } | undefined;
             if (block.type === 'encryptedAttachment') {
               this.setQuoteLoaderProgress('decrypting...');
-              const result = await MsgUtil.decryptMessage({ kisWithPp: await KeyStore.getAllWithOptionalPassPhrase(this.view.acctEmail), encryptedData: block.attachmentMeta.data });
+              const result = await MsgUtil.decryptMessage({
+                kisWithPp: await KeyStore.getAllWithOptionalPassPhrase(this.view.acctEmail),
+                encryptedData: block.attachmentMeta.data,
+                verificationPubs: [] // todo: signature?
+              });
               if (result.success) {
                 attachmentMeta = { content: result.content, filename: result.filename };
               }
@@ -160,7 +164,7 @@ export class ComposeQuoteModule extends ViewModule<ComposeView> {
   };
 
   private decryptMessage = async (encryptedData: Buf): Promise<string> => {
-    const decryptRes = await MsgUtil.decryptMessage({ kisWithPp: await KeyStore.getAllWithOptionalPassPhrase(this.view.acctEmail), encryptedData });
+    const decryptRes = await MsgUtil.decryptMessage({ kisWithPp: await KeyStore.getAllWithOptionalPassPhrase(this.view.acctEmail), encryptedData, verificationPubs: [] });
     if (decryptRes.success) {
       return decryptRes.content.toUtfStr();
     } else if (decryptRes.error && decryptRes.error.type === DecryptErrTypes.needPassphrase) {

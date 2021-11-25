@@ -5,7 +5,7 @@ import { Catch } from '../catch.js';
 import { opgp } from '../../core/crypto/pgp/openpgpjs-custom.js';
 import { BrowserMsg } from '../../browser/browser-msg.js';
 import { DateUtility, Str } from '../../core/common.js';
-import { Key, Contact, KeyUtil } from '../../core/crypto/key.js';
+import { Key, Contact, KeyUtil, PubkeyInfo } from '../../core/crypto/key.js';
 
 // tslint:disable:no-null-keyword
 
@@ -64,22 +64,8 @@ export type ContactUpdate = {
 
 type DbContactFilter = { hasPgp?: boolean, substring?: string, limit?: number };
 
-export type PubkeyInfo = {
-  pubkey: Key,
-  // IMPORTANT NOTE:
-  // It might look like we can format PubkeyInfo[] out of Key[], but that's not good,
-  // because in the storage we have the table Revocations that stores fingerprints
-  // of revoked keys that may not exist in the database (Pubkeys table),
-  // that is pre-emptive external revocation. So (in a rare case) the lookup method
-  // receives a valid key, saves it to the storage, and after re-querying the storage,
-  // this key maybe returned as revoked. This is why PubkeyInfo has revoked property
-  // regardless of the fact that Key itself also has it.
-  revoked: boolean,
-  lastCheck?: number | undefined
-};
-
-export type EmailWithSortedPubkeys = {
-  info: Email,
+type EmailWithSortedPubkeys = {
+  info: Email, // todo: convert to a model class, exclude unnecessary fields like searchable
   sortedPubkeys: PubkeyInfo[]
 };
 
@@ -337,6 +323,7 @@ export class ContactStore extends AbstractStore {
     return emailEntity ? { info: emailEntity, sortedPubkeys: await ContactStore.sortKeys(pubkeys, revocations) } : undefined;
   };
 
+  // todo: return parsed and with applied revocation
   public static getPubkey = async (db: IDBDatabase | undefined, { id, type }: { id: string, type: string }):
     Promise<string | undefined> => {
     if (!db) { // relay op through background process
@@ -686,40 +673,16 @@ export class ContactStore extends AbstractStore {
       return ContactStore.toContactFromKey(contactWithAllPubkeys.info, selected?.pubkey, selected?.lastCheck, Boolean(selected?.revoked));
     }
     // search all longids
-    const tx = db.transaction(['emails', 'pubkeys'], 'readonly');
-    return await new Promise((resolve, reject) => {
-      const req = tx.objectStore('pubkeys').index('index_longids').get(emailOrLongid);
-      ContactStore.setReqPipe(req,
-        (pubkey: Pubkey) => {
-          if (!pubkey) {
-            resolve(undefined);
-            return;
-          }
-          const req2 = tx.objectStore('emails').index('index_fingerprints').get(pubkey.fingerprint!);
-          ContactStore.setReqPipe(req2,
-            (email: Email) => {
-              if (!email) {
-                resolve(undefined);
-              } else {
-                resolve(ContactStore.toContact(db, email, pubkey));
-              }
-            },
-            reject);
-        },
-        reject);
-    });
+    throw new Error('longid search is deprecated'); // should not get here
   };
 
   private static getKeyAttributes = (key: Key | undefined): PubkeyAttributes => {
     return { fingerprint: key?.id ?? null, expiresOn: DateUtility.asNumber(key?.expiration) };
   };
 
-  private static toContact = async (db: IDBDatabase, email: Email, pubkey: Pubkey | undefined): Promise<Contact | undefined> => {
-    if (!email) {
-      return;
-    }
+  /*
+  private static isRevoked = async (db: IDBDatabase, pubkey: Pubkey | undefined): Promise<boolean> => {
     const parsed = pubkey ? await KeyUtil.parse(pubkey.armoredKey) : undefined;
-    let revokedExternally = false;
     if (parsed && !parsed.revoked) {
       const revocations: Revocation[] = await new Promise((resolve, reject) => {
         const tx = db.transaction(['revocations'], 'readonly');
@@ -728,13 +691,13 @@ export class ContactStore extends AbstractStore {
         ContactStore.setReqPipe(req, resolve, reject);
       });
       if (revocations.length) {
-        revokedExternally = true;
+        return true; // revoked externally
       }
     }
-    return ContactStore.toContactFromKey(email, parsed, parsed ? pubkey!.lastCheck : null, revokedExternally);
+    return parsed?.revoked || false;
   };
-
-  private static toContactFromKey = (email: Email, key: Key | undefined, lastCheck: number | undefined | null, revokedExternally: boolean): Contact | undefined => {
+*/
+  private static toContactFromKey = (email: Email | undefined, key: Key | undefined, lastCheck: number | undefined | null, revokedExternally: boolean): Contact | undefined => {
     if (!email) {
       return;
     }

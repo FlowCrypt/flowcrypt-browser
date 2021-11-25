@@ -81,7 +81,7 @@ class MessageWithFooterTestStrategy implements ITestMsgStrategy {
 
   public test = async (mimeMsg: ParsedMail) => {
     const keyInfo = await Config.getKeyInfo(["flowcrypt.compatibility.1pp1", "flowcrypt.compatibility.2pp1"]);
-    const decrypted = await MsgUtil.decryptMessage({ kisWithPp: keyInfo!, encryptedData: Buf.fromUtfStr(mimeMsg.text || '') });
+    const decrypted = await MsgUtil.decryptMessage({ kisWithPp: keyInfo!, encryptedData: Buf.fromUtfStr(mimeMsg.text || ''), verificationPubs: [] });
     if (!decrypted.success) {
       throw new HttpClientErr(`Error: can't decrypt message`);
     }
@@ -98,7 +98,7 @@ class SignedMessageTestStrategy implements ITestMsgStrategy {
 
   public test = async (mimeMsg: ParsedMail) => {
     const keyInfo = await Config.getKeyInfo(["flowcrypt.compatibility.1pp1", "flowcrypt.compatibility.2pp1"]);
-    const decrypted = await MsgUtil.decryptMessage({ kisWithPp: keyInfo!, encryptedData: Buf.fromUtfStr(mimeMsg.text!) });
+    const decrypted = await MsgUtil.decryptMessage({ kisWithPp: keyInfo!, encryptedData: Buf.fromUtfStr(mimeMsg.text!), verificationPubs: [] });
     if (!decrypted.success) {
       throw new HttpClientErr(`Error: Could not successfully verify signed message`);
     }
@@ -141,7 +141,7 @@ class IncludeQuotedPartTestStrategy implements ITestMsgStrategy {
 
   public test = async (mimeMsg: ParsedMail) => {
     const keyInfo = await Config.getKeyInfo(["flowcrypt.compatibility.1pp1", "flowcrypt.compatibility.2pp1"]);
-    const decrypted = await MsgUtil.decryptMessage({ kisWithPp: keyInfo!, encryptedData: Buf.fromUtfStr(mimeMsg.text!) });
+    const decrypted = await MsgUtil.decryptMessage({ kisWithPp: keyInfo!, encryptedData: Buf.fromUtfStr(mimeMsg.text!), verificationPubs: [] });
     if (!decrypted.success) {
       throw new HttpClientErr(`Error: can't decrypt message`);
     }

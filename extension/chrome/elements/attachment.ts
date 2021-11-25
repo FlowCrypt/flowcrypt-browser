@@ -205,7 +205,11 @@ export class AttachmentDownloadView extends View {
   private processAsPublicKeyAndHideAttachmentIfAppropriate = async () => {
     if (this.attachment.msgId && this.attachment.id && this.attachment.treatAs() === 'publicKey') { // this is encrypted public key - download && decrypt & parse & render
       const { data } = await this.gmail.attachmentGet(this.attachment.msgId, this.attachment.id);
-      const decrRes = await MsgUtil.decryptMessage({ kisWithPp: await KeyStore.getAllWithOptionalPassPhrase(this.acctEmail), encryptedData: data });
+      const decrRes = await MsgUtil.decryptMessage({
+        kisWithPp: await KeyStore.getAllWithOptionalPassPhrase(this.acctEmail),
+        encryptedData: data,
+        verificationPubs: [] // todo: signature?
+      });
       if (decrRes.success && decrRes.content) {
         const openpgpType = await MsgUtil.type({ data: decrRes.content });
         if (openpgpType && openpgpType.type === 'publicKey' && openpgpType.armored) { // 'openpgpType.armored': could potentially process unarmored pubkey files, maybe later
@@ -254,7 +258,11 @@ export class AttachmentDownloadView extends View {
   };
 
   private decryptAndSaveAttachmentToDownloads = async () => {
-    const result = await MsgUtil.decryptMessage({ kisWithPp: await KeyStore.getAllWithOptionalPassPhrase(this.acctEmail), encryptedData: this.attachment.getData() });
+    const result = await MsgUtil.decryptMessage({
+      kisWithPp: await KeyStore.getAllWithOptionalPassPhrase(this.acctEmail),
+      encryptedData: this.attachment.getData(),
+      verificationPubs: [] // todo: signature?
+    });
     Xss.sanitizeRender(this.downloadButton, this.originalButtonHTML || '');
     if (result.success) {
       if (!result.filename || ['msg.txt', 'null'].includes(result.filename)) {

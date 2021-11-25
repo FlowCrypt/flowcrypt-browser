@@ -67,6 +67,20 @@ export interface KeyInfo {
   emails?: string[]; // todo - used to be missing - but migration was supposed to add it? setting back to optional for now
 }
 
+export type PubkeyInfo = {
+  pubkey: Key,
+  // IMPORTANT NOTE:
+  // It might look like we can format PubkeyInfo[] out of Key[], but that's not good,
+  // because in the storage we have the table Revocations that stores fingerprints
+  // of revoked keys that may not exist in the database (Pubkeys table),
+  // that is pre-emptive external revocation. So (in a rare case) the lookup method
+  // receives a valid key, saves it to the storage, and after re-querying the storage,
+  // this key maybe returned as revoked. This is why PubkeyInfo has revoked property
+  // regardless of the fact that Key itself also has it.
+  revoked: boolean,
+  lastCheck?: number | undefined
+};
+
 export interface KeyIdentity {
   id: string, // a fingerprint of the primary key in OpenPGP, and similarly a fingerprint of the actual cryptographic key (eg RSA fingerprint) in S/MIME
   type: 'openpgp' | 'x509'

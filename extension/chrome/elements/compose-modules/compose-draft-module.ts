@@ -289,7 +289,11 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
       return await this.abortAndRenderReplyMsgComposeTableIfIsReplyBox('!rawBlock');
     }
     const encryptedData = rawBlock.content instanceof Buf ? rawBlock.content : Buf.fromUtfStr(rawBlock.content);
-    const decrypted = await MsgUtil.decryptMessage({ kisWithPp: await KeyStore.getAllWithOptionalPassPhrase(this.view.acctEmail), encryptedData });
+    const decrypted = await MsgUtil.decryptMessage({
+      kisWithPp: await KeyStore.getAllWithOptionalPassPhrase(this.view.acctEmail),
+      encryptedData,
+      verificationPubs: []
+    });
     if (!decrypted.success) {
       if (decrypted.error.type === DecryptErrTypes.needPassphrase) {
         // "close" button will wipe this frame out, so no need to exit the recursion

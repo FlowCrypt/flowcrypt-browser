@@ -1,12 +1,14 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
-import { Key, PrvPacket, KeyAlgo, KeyUtil, UnexpectedKeyTypeError } from '../key.js';
+import { Key, PrvPacket, KeyAlgo, KeyUtil, UnexpectedKeyTypeError, PubkeyInfo } from '../key.js';
 import { opgp } from './openpgpjs-custom.js';
 import { Catch } from '../../../platform/catch.js';
 import { Str } from '../../common.js';
 import { Buf } from '../../buf.js';
-import { PgpMsgMethod, MsgUtil } from './msg-util.js';
+import { PgpMsgMethod, VerifyRes } from './msg-util.js';
 
 const internal = Symbol('internal openpgpjs library format key');
+
+type OpenpgpMsgOrCleartext = OpenPGP.message.Message | OpenPGP.cleartext.CleartextMessage;
 
 export class OpenPGPKey {
 
@@ -433,6 +435,57 @@ export class OpenPGPKey {
     return undefined;
   };
 
+  public static verify = async (msg: OpenpgpMsgOrCleartext, pubs: PubkeyInfo[]): Promise<VerifyRes> => {
+    const verifyRes: VerifyRes = { match: null }; // tslint:disable-line:no-null-keyword
+    // msg.getSigningKeyIds ? msg.getSigningKeyIds()
+    // todo: double-check if S/MIME ever gets here
+    const opgpKeys = pubs.filter(x => !x.revoked && x.pubkey.type === 'openpgp').map(x => OpenPGPKey.extractExternalLibraryObjFromKey(x.pubkey));
+    // todo: expired?
+    try {
+      // this is here to ensure execution order when 1) verify, 2) read data, 3) processing signatures
+      // Else it will hang trying to read a stream: https://github.com/openpgpjs/openpgpjs/issues/916#issuecomment-510620625
+      const verifications = await msg.verify(opgpKeys); // first step
+      const stream = msg instanceof opgp.message.Message ? msg.getLiteralData() : msg.getText();
+      if (stream) { // encrypted message
+        const data = await opgp.stream.readToEnd(stream); // second step
+        verifyRes.content = data instanceof Uint8Array ? new Buf(data) : Buf.fromUtfStr(data);
+      }
+      // third step below
+      for (const verification of verifications) {
+        // todo - a valid signature is a valid signature, and should be surfaced. Currently, if any of the signatures are not valid, it's showing all as invalid
+        // .. as it is now this could allow an attacker to append bogus signatures to validly signed messages, making otherwise correct messages seem incorrect
+        // .. which is not really an issue - an attacker that can append signatures could have also just slightly changed the message, causing the same experience
+        // .. so for now #wontfix unless a reasonable usecase surfaces
+        verifyRes.match = (verifyRes.match === true || verifyRes.match === null) && await verification.verified;
+        if (!verifyRes.signer) {
+          // todo - currently only the first signer will be reported. Should we be showing all signers? How common is that?
+          verifyRes.signer = {
+            longid: OpenPGPKey.bytesToLongid(verification.keyid.bytes),
+            primaryUserId: await OpenPGPKey.getPrimaryUserId(opgpKeys, verification.keyid)
+          };
+        }
+      }
+    } catch (verifyErr) {
+      verifyRes.match = null; // tslint:disable-line:no-null-keyword
+      if (verifyErr instanceof Error && verifyErr.message === 'Can only verify message with one literal data packet.') {
+        verifyRes.error = 'FlowCrypt is not equipped to verify this message';
+        verifyRes.isErrFatal = true; // don't try to re-fetch the message from API
+      } else if (verifyErr instanceof Error && verifyErr.message.startsWith('Insecure message hash algorithm:')) {
+        verifyRes.error = `Could not verify message: ${verifyErr.message}. Sender is using old, insecure OpenPGP software.`;
+        verifyRes.isErrFatal = true; // don't try to re-fetch the message from API
+      } else if (verifyErr instanceof Error && verifyErr.message === 'Signature is expired') {
+        verifyRes.error = verifyErr.message;
+        verifyRes.isErrFatal = true; // don't try to re-fetch the message from API
+      } else if (verifyErr instanceof Error && verifyErr.message === 'Message digest did not match') {
+        verifyRes.error = verifyErr.message;
+      } else {
+        verifyRes.error = `Error verifying this message: ${String(verifyErr)}`;
+        Catch.reportErr(verifyErr);
+      }
+    }
+    return verifyRes;
+  };
+
   private static getSortedUserids = async (key: OpenPGP.key.Key): Promise<string[]> => {
     const data = (await Promise.all(key.users.filter(Boolean).map(async (user) => {
       const primaryKey = key.primaryKey;
@@ -696,7 +749,8 @@ export class OpenPGPKey {
       }
       const signedMessage = await opgp.message.fromText(OpenPGPKey.encryptionText).sign([key]);
       output.push('sign msg ok');
-      const verifyResult = await MsgUtil.verify(signedMessage, [key]);
+      const verifyResult = await OpenPGPKey.verify(signedMessage,
+        [{ pubkey: await OpenPGPKey.convertExternalLibraryObjToKey(key), revoked: false }]);
       if (verifyResult.error !== null && typeof verifyResult.error !== 'undefined') {
         output.push(`verify failed: ${verifyResult.error}`);
       } else {

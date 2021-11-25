@@ -21,12 +21,6 @@ export type Pubkey = {
   expiresOn: number | null;
 };
 
-export type PubkeyInfo = {
-  pubkey: Key,
-  revoked: boolean,
-  lastCheck?: number | undefined
-};
-
 export class ContactStore {
 
   public static get = async (db: void, emailOrLongid: string[]): Promise<(Contact | undefined)[]> => {

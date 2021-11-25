@@ -87,7 +87,11 @@ View.run(class AttachmentPreviewView extends AttachmentDownloadView {
   };
 
   private decrypt = async () => {
-    const result = await MsgUtil.decryptMessage({ kisWithPp: await KeyStore.getAllWithOptionalPassPhrase(this.acctEmail), encryptedData: this.attachment.getData() });
+    const result = await MsgUtil.decryptMessage({
+      kisWithPp: await KeyStore.getAllWithOptionalPassPhrase(this.acctEmail),
+      encryptedData: this.attachment.getData(),
+      verificationPubs: [] // todo: signature?
+    });
     if ((result as DecryptSuccess).content) {
       return result.content;
     } else if ((result as DecryptError).error.type === DecryptErrTypes.needPassphrase) {
