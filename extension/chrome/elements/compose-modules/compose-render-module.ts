@@ -259,7 +259,7 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
         }
       });
       await this.view.quoteModule.addTripleDotQuoteExpandFooterOnlyBtn();
-      this.view.sizeModule.setInputTextHeightManuallyIfNeeded();
+      this.view.sizeModule.setInputTextHeightManuallyIfNeeded(true);
     }
     // Firefox needs an iframe to be focused before focusing its content
     this.view.errModule.debug(`renderComposeTable: focusing this iframe`);
