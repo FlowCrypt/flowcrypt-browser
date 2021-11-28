@@ -28,27 +28,32 @@ export class PgpBlockViewSignatureModule {
       $('#pgp_signature > .result').text('matching signature');
     } else {
       if (retryVerification) {
-        this.view.renderModule.renderText('Verifying message...');
-        try {
-          const { pubkeys: newPubkeys } = await this.view.pubLookup.lookupEmail(this.view.getSigner());
-          if (newPubkeys.length) {
-            await this.renderPgpSignatureCheckResult(await retryVerification(newPubkeys), undefined);
-            return;
+        const signerEmail = this.view.getSigner();
+        if (!signerEmail) {
+          // in some tests we load the block without sender information
+          $('#pgp_signature').addClass('neutral').find('.result').text(`Could not verify sender.`);
+        } else {
+          this.view.renderModule.renderText('Verifying message...');
+          try {
+            const { pubkeys: newPubkeys } = await this.view.pubLookup.lookupEmail(this.view.getSigner());
+            if (newPubkeys.length) {
+              await this.renderPgpSignatureCheckResult(await retryVerification(newPubkeys), undefined);
+              return;
+            }
+            $('#pgp_signature').addClass('bad');
+            $('#pgp_signature > .result').text('signature does not match'); // todo: or "neutral" missing pubkey?
+            this.view.renderModule.setFrameColor('red');
+          } catch (e) {
+            if (ApiErr.isSignificant(e)) {
+              Catch.reportErr(e);
+              $('#pgp_signature').addClass('neutral').find('.result').text(`Could not load sender's pubkey due to an error.`);
+            } else {
+              $('#pgp_signature').addClass('neutral').find('.result').text(`Could not look up sender's pubkey due to network error, click to retry.`).click(
+                this.view.setHandler(() => window.location.reload()));
+            }
           }
-        } catch (e) {
-          if (ApiErr.isSignificant(e)) {
-            Catch.reportErr(e);
-            $('#pgp_signature').addClass('neutral').find('.result').text(`Could not load sender's pubkey due to an error.`);
-          } else {
-            $('#pgp_signature').addClass('neutral').find('.result').text(`Could not look up sender's pubkey due to network error, click to retry.`).click(
-              this.view.setHandler(() => window.location.reload()));
-          }
-          return;
         }
       }
-      $('#pgp_signature').addClass('bad');
-      $('#pgp_signature > .result').text('signature does not match');
-      this.view.renderModule.setFrameColor('red');
     }
     if (signature) {
       this.setSigner(signature);
