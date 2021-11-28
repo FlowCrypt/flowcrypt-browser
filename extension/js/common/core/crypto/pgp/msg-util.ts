@@ -1,7 +1,7 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
 'use strict';
-import { Key, KeyInfo, ExtendedKeyInfo, KeyUtil, PubkeyInfo } from '../key.js';
+import { Key, KeyInfo, ExtendedKeyInfo, KeyUtil } from '../key.js';
 import { MsgBlockType, ReplaceableMsgBlockType } from '../../msg-block.js';
 import { Buf } from '../../buf.js';
 import { PgpArmor, PreparedForDecrypt } from './pgp-armor.js';
@@ -9,6 +9,7 @@ import { opgp } from './openpgpjs-custom.js';
 import { KeyCache } from '../../../platform/key-cache.js';
 import { SmimeKey, SmimeMsg } from '../smime/smime-key.js';
 import { OpenPGPKey } from './openpgp-key.js';
+import { ContactStore } from '../../../platform/store/contact-store.js';
 
 export class DecryptionError extends Error {
   public decryptError: DecryptError;
@@ -23,9 +24,9 @@ export namespace PgpMsgMethod {
   export namespace Arg {
     export type Encrypt = { pubkeys: Key[], signingPrv?: Key, pwd?: string, data: Uint8Array, filename?: string, armor: boolean, date?: Date };
     export type Type = { data: Uint8Array | string };
-    export type Decrypt = { kisWithPp: ExtendedKeyInfo[], encryptedData: Uint8Array, msgPwd?: string, verificationPubs: PubkeyInfo[] };
+    export type Decrypt = { kisWithPp: ExtendedKeyInfo[], encryptedData: Uint8Array, msgPwd?: string, verificationPubs: string[] };
     export type DiagnosePubkeys = { armoredPubs: string[], message: Uint8Array };
-    export type VerifyDetached = { plaintext: Uint8Array, sigText: Uint8Array, verificationPubs: PubkeyInfo[] };
+    export type VerifyDetached = { plaintext: Uint8Array, sigText: Uint8Array, verificationPubs: string[] };
   }
   export type DiagnosePubkeys = (arg: Arg.DiagnosePubkeys) => Promise<DiagnoseMsgPubkeysResult>;
   export type VerifyDetached = (arg: Arg.VerifyDetached) => Promise<VerifyRes>;
@@ -146,7 +147,7 @@ export class MsgUtil {
   public static verifyDetached: PgpMsgMethod.VerifyDetached = async ({ plaintext, sigText, verificationPubs }) => {
     const message = opgp.message.fromText(Buf.fromUint8(plaintext).toUtfStr());
     await message.appendSignature(Buf.fromUint8(sigText).toUtfStr());
-    return await OpenPGPKey.verify(message, verificationPubs);
+    return await OpenPGPKey.verify(message, await ContactStore.getPubkeyInfos(undefined, verificationPubs));
   };
 
   public static decryptMessage: PgpMsgMethod.Decrypt = async ({ kisWithPp, encryptedData, msgPwd, verificationPubs }) => {
@@ -159,7 +160,7 @@ export class MsgUtil {
     }
     if (prepared.isCleartext) {
       // todo: error if no verificationPubs?
-      const signature = await OpenPGPKey.verify(prepared.message, verificationPubs);
+      const signature = await OpenPGPKey.verify(prepared.message, await ContactStore.getPubkeyInfos(undefined, verificationPubs));
       const content = signature.content || Buf.fromUtfStr('no content');
       signature.content = undefined; // no need to duplicate data
       return { success: true, content, isEncrypted: false, signature };
@@ -190,7 +191,7 @@ export class MsgUtil {
       const privateKeys = keys.prvForDecryptDecrypted.map(decrypted => decrypted.decrypted);
       const decrypted = await OpenPGPKey.decryptMessage(msg, privateKeys, passwords);
       // todo: test when not signed at all
-      const signature = await OpenPGPKey.verify(decrypted, verificationPubs);
+      const signature = await OpenPGPKey.verify(decrypted, await ContactStore.getPubkeyInfos(undefined, verificationPubs));
       const content = signature?.content || new Buf(await opgp.stream.readToEnd(decrypted.getLiteralData()!));
       if (signature?.content) {
         signature.content = undefined; // already passed as "content" on the response object, don't need it duplicated

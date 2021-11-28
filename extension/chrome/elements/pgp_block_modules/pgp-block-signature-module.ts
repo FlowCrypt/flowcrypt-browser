@@ -2,6 +2,8 @@
 
 'use strict';
 
+import { ApiErr } from '../../../js/common/api/shared/api-error.js';
+import { Catch } from '../../../js/common/platform/catch.js';
 import { PgpBlockView } from '../pgp_block';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { VerifyRes } from '../../../js/common/core/crypto/pgp/msg-util.js';
@@ -11,7 +13,7 @@ export class PgpBlockViewSignatureModule {
   constructor(private view: PgpBlockView) {
   }
 
-  public renderPgpSignatureCheckResult = (signature: VerifyRes | undefined) => {
+  public renderPgpSignatureCheckResult = async (signature: VerifyRes | undefined, retryVerification?: (verificationPubs: string[]) => Promise<VerifyRes | undefined>) => {
     this.view.renderModule.doNotSetStateAsReadyYet = true; // so that body state is not marked as ready too soon - automated tests need to know when to check results
     if (!signature) {
       $('#pgp_signature').addClass('bad');
@@ -25,6 +27,25 @@ export class PgpBlockViewSignatureModule {
       $('#pgp_signature').addClass('good');
       $('#pgp_signature > .result').text('matching signature');
     } else {
+      if (retryVerification) {
+        this.view.renderModule.renderText('Verifying message...');
+        try {
+          const { pubkeys: newPubkeys } = await this.view.pubLookup.lookupEmail(this.view.getSigner());
+          if (newPubkeys.length) {
+            await this.renderPgpSignatureCheckResult(await retryVerification(newPubkeys), undefined);
+            return;
+          }
+        } catch (e) {
+          if (ApiErr.isSignificant(e)) {
+            Catch.reportErr(e);
+            $('#pgp_signature').addClass('neutral').find('.result').text(`Could not load sender's pubkey due to an error.`);
+          } else {
+            $('#pgp_signature').addClass('neutral').find('.result').text(`Could not look up sender's pubkey due to network error, click to retry.`).click(
+              this.view.setHandler(() => window.location.reload()));
+          }
+          return;
+        }
+      }
       $('#pgp_signature').addClass('bad');
       $('#pgp_signature > .result').text('signature does not match');
       this.view.renderModule.setFrameColor('red');

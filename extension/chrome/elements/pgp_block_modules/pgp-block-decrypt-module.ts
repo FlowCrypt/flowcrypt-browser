@@ -13,7 +13,7 @@ import { Ui } from '../../../js/common/browser/ui.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { KeyStore } from '../../../js/common/platform/store/key-store.js';
 import { PassphraseStore } from '../../../js/common/platform/store/passphrase-store.js';
-import { PubkeyInfo } from '../../../js/common/core/crypto/key.js';
+import { KeyUtil } from '../../../js/common/core/crypto/key.js';
 import { ContactStore } from '../../../js/common/platform/store/contact-store.js';
 
 export class PgpBlockViewDecryptModule {
@@ -27,7 +27,10 @@ export class PgpBlockViewDecryptModule {
   }
 
   public initialize = async (forcePullMsgFromApi = false) => {
-    const verificationPubs = (await ContactStore.getOneWithAllPubkeys(undefined, this.view.getSigner()))?.sortedPubkeys ?? [];
+    const parsedPubs = (await ContactStore.getOneWithAllPubkeys(undefined, this.view.getSigner()))?.sortedPubkeys ?? [];
+    // todo: we don't actually need parsed pubs here because we're going to pass them to the backgorund page
+    // maybe we can have a method in ContactStore to extract armored keys
+    const verificationPubs = parsedPubs.map(key => KeyUtil.armor(key.pubkey));
     try {
       if (this.canReadEmails && this.view.signature === true && this.view.msgId) {
         this.view.renderModule.renderText('Loading signed message...');
@@ -65,22 +68,23 @@ export class PgpBlockViewDecryptModule {
     }
   };
 
-  private decryptAndRender = async (encryptedData: Buf, verificationPubs: PubkeyInfo[], optionalPwd?: string, plainSubject?: string) => {
+  private decryptAndRender = async (encryptedData: Buf, verificationPubs: string[], optionalPwd?: string, plainSubject?: string) => {
     if (typeof this.view.signature !== 'string') {
       const kisWithPp = await KeyStore.getAllWithOptionalPassPhrase(this.view.acctEmail);
-      const result = await BrowserMsg.send.bg.await.pgpMsgDecrypt({ kisWithPp, encryptedData, verificationPubs });
+      const decrypt = async (verificationPubs: string[]) => await BrowserMsg.send.bg.await.pgpMsgDecrypt({ kisWithPp, encryptedData, verificationPubs });
+      const result = await decrypt(verificationPubs);
       if (typeof result === 'undefined') {
         await this.view.errorModule.renderErr(Lang.general.restartBrowserAndTryAgain, undefined);
       } else if (result.success) {
         await this.view.renderModule.decideDecryptedContentFormattingAndRender(result.content, Boolean(result.isEncrypted), result.signature,
-          /* todo: retry? async () => {
-            const decryptResult = await BrowserMsg.send.bg.await.pgpMsgDecrypt({ kisWithPp, encryptedData, verificationPubs });
+          async (verificationPubs: string[]) => {
+            const decryptResult = await decrypt(verificationPubs);
             if (!decryptResult.success) {
-              return undefined;
+              return undefined; // note: this internal error results in a wrong "Message Not Signed" badge
             } else {
               return decryptResult.signature;
             }
-          }*/ plainSubject);
+          }, plainSubject);
       } else if (result.error.type === DecryptErrTypes.format) {
         if (this.canReadEmails && this.msgFetchedFromApi !== 'raw') {
           console.info(`re-fetching message ${this.view.msgId} from api because looks like bad formatting: ${!this.msgFetchedFromApi ? 'full' : 'raw'}`);
@@ -117,9 +121,9 @@ export class PgpBlockViewDecryptModule {
     } else { // this.view.signature is string
       // sometimes signatures come wrongly percent-encoded. Here we check for typical "=3Dabcd" at the end
       const sigText = Buf.fromUtfStr(this.view.signature.replace('\n=3D', '\n='));
-      const signatureResult = await BrowserMsg.send.bg.await.pgpMsgVerifyDetached({ plaintext: encryptedData, sigText, verificationPubs });
-      await this.view.renderModule.decideDecryptedContentFormattingAndRender(encryptedData, false, signatureResult);
-      // todo: retry?
+      const verify = async (verificationPubs: string[]) => await BrowserMsg.send.bg.await.pgpMsgVerifyDetached({ plaintext: encryptedData, sigText, verificationPubs });
+      const signatureResult = await verify(verificationPubs);
+      await this.view.renderModule.decideDecryptedContentFormattingAndRender(encryptedData, false, signatureResult, verify);
     }
   };
 

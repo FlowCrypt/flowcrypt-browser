@@ -4,8 +4,8 @@ import { AbstractStore } from './abstract-store.js';
 import { Catch } from '../catch.js';
 import { opgp } from '../../core/crypto/pgp/openpgpjs-custom.js';
 import { BrowserMsg } from '../../browser/browser-msg.js';
-import { DateUtility, Str } from '../../core/common.js';
-import { Key, Contact, KeyUtil, PubkeyInfo } from '../../core/crypto/key.js';
+import { DateUtility, Str, Value } from '../../core/common.js';
+import { Key, Contact, KeyUtil, PubkeyInfo, PubkeyInfoWithLastCheck } from '../../core/crypto/key.js';
 
 // tslint:disable:no-null-keyword
 
@@ -66,7 +66,7 @@ type DbContactFilter = { hasPgp?: boolean, substring?: string, limit?: number };
 
 type EmailWithSortedPubkeys = {
   info: Email, // todo: convert to a model class, exclude unnecessary fields like searchable
-  sortedPubkeys: PubkeyInfo[]
+  sortedPubkeys: PubkeyInfoWithLastCheck[]
 };
 
 const x509postfix = "-X509";
@@ -287,10 +287,9 @@ export class ContactStore extends AbstractStore {
             resolve(email);
             return;
           }
-          const uniqueAndStrippedFingerprints = email.fingerprints.
-            map(ContactStore.stripFingerprint).
-            filter((value, index, self) => !self.slice(0, index).find((el) => el === value));
-          let countdown = email.fingerprints.length + uniqueAndStrippedFingerprints.length;
+          // fire requests to query pubkeys and revocations
+          // when all of them finish, the transaction will complete
+          ContactStore.setTxHandlers(tx, () => resolve(email), reject);
           // request all pubkeys by fingerprints
           for (const fp of email.fingerprints) {
             const req2 = tx.objectStore('pubkeys').get(fp);
@@ -299,24 +298,10 @@ export class ContactStore extends AbstractStore {
                 if (pubkey) {
                   pubkeys.push(pubkey);
                 }
-                if (!--countdown) {
-                  resolve(email);
-                }
-              },
-              reject);
+              });
           }
-          for (const fp of uniqueAndStrippedFingerprints) {
-            const range = ContactStore.createFingerprintRange(fp);
-            const req3 = tx.objectStore('revocations').getAll(range);
-            ContactStore.setReqPipe(req3,
-              (revocation: Revocation[]) => {
-                revocations.push(...revocation);
-                if (!--countdown) {
-                  resolve(email);
-                }
-              },
-              reject);
-          }
+          // fire requests to collect revocations
+          ContactStore.collectRevocations(tx, revocations, email.fingerprints);
         },
         reject);
     });
@@ -436,6 +421,30 @@ export class ContactStore extends AbstractStore {
     });
   };
 
+  // construct PubkeyInfo objects out of provided keys and revocation data in the database
+  // the keys themselves may not be necessarily present in the database
+  public static getPubkeyInfos = async (db: IDBDatabase | undefined, keys: (Key | string)[]): Promise<PubkeyInfo[]> => {
+    if (!db) { // relay op through background process
+      return (await BrowserMsg.send.bg.await.db({ f: 'getPubkeyInfos', args: [keys] })) as PubkeyInfo[];
+    }
+    const parsedKeys = await Promise.all(keys.map(async (key) => await KeyUtil.asPublicKey(typeof key === 'string' ? await KeyUtil.parse(key) : key)));
+    const unrevokedIds = parsedKeys.filter(key => !key.revoked).map(key => key.id);
+    const revocations: Revocation[] = [];
+    if (unrevokedIds.length) { // need to search for external revocations
+      await new Promise((resolve, reject) => {
+        const tx = db.transaction(['revocations'], 'readonly');
+        ContactStore.setTxHandlers(tx, resolve, reject);
+        ContactStore.collectRevocations(tx, revocations, unrevokedIds);
+      });
+    }
+    return parsedKeys.map(key => {
+      return {
+        pubkey: key,
+        revoked: key.revoked || revocations.some(r => ContactStore.equalFingerprints(key.id, r.fingerprint))
+      };
+    });
+  };
+
   public static sortPubkeyInfos = (pubkeyInfos: PubkeyInfo[]): PubkeyInfo[] => {
     return pubkeyInfos.sort((a, b) => ContactStore.getSortValue(b) - ContactStore.getSortValue(a));
   };
@@ -472,6 +481,18 @@ export class ContactStore extends AbstractStore {
   private static createFingerprintRange = (fp: string): IDBKeyRange => {
     const strippedFp = ContactStore.stripFingerprint(fp);
     return IDBKeyRange.bound(strippedFp, strippedFp + x509postfix, false, false);
+  };
+
+  // fire requests to collect revocations
+  private static collectRevocations = (tx: IDBTransaction, revocations: Revocation[], fingerprints: string[]) => {
+    for (const fp of Value.arr.unique(fingerprints.map(ContactStore.stripFingerprint))) {
+      const range = ContactStore.createFingerprintRange(fp);
+      const req = tx.objectStore('revocations').getAll(range);
+      ContactStore.setReqPipe(req,
+        (revocation: Revocation[]) => {
+          revocations.push(...revocation);
+        });
+    }
   };
 
   private static updateTxPhase2 = (tx: IDBTransaction, email: string, update: ContactUpdate,
@@ -680,23 +701,6 @@ export class ContactStore extends AbstractStore {
     return { fingerprint: key?.id ?? null, expiresOn: DateUtility.asNumber(key?.expiration) };
   };
 
-  /*
-  private static isRevoked = async (db: IDBDatabase, pubkey: Pubkey | undefined): Promise<boolean> => {
-    const parsed = pubkey ? await KeyUtil.parse(pubkey.armoredKey) : undefined;
-    if (parsed && !parsed.revoked) {
-      const revocations: Revocation[] = await new Promise((resolve, reject) => {
-        const tx = db.transaction(['revocations'], 'readonly');
-        const range = ContactStore.createFingerprintRange(parsed!.id);
-        const req = tx.objectStore('revocations').getAll(range);
-        ContactStore.setReqPipe(req, resolve, reject);
-      });
-      if (revocations.length) {
-        return true; // revoked externally
-      }
-    }
-    return parsed?.revoked || false;
-  };
-*/
   private static toContactFromKey = (email: Email | undefined, key: Key | undefined, lastCheck: number | undefined | null, revokedExternally: boolean): Contact | undefined => {
     if (!email) {
       return;
