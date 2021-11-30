@@ -352,7 +352,7 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
     }
     this.view.S.cached('prompt').find('.action_open_passphrase_dialog').click(this.view.setHandler(async () => {
       BrowserMsg.send.passphraseDialog(this.view.parentTabId, { type: 'draft', longids });
-    }));
+    })).focus();
     this.view.S.cached('prompt').find('.action_close').click(this.view.setHandler(() => this.view.renderModule.closeMsg()));
     const setActiveWindow = this.view.setHandler(async () => { BrowserMsg.send.setActiveWindow(this.view.parentTabId, { frameId: this.view.frameId }); });
     this.view.S.cached('prompt').on('click', setActiveWindow).trigger('click');
