@@ -607,7 +607,6 @@ body#settings > div#content.setup div#step_1_easy_or_manual > .col:focus-within 
 body#settings .signin_button {
   width: 220px;
   height: 46px;
-  padding: 13px;
   text-align: left;
   padding-left: 50px;
   -moz-user-focus: none;
