@@ -348,6 +348,8 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
       BrowserMsg.send.passphraseDialog(this.view.parentTabId, { type: 'draft', longids });
     }));
     this.view.S.cached('prompt').find('a.action_close').click(this.view.setHandler(() => this.view.renderModule.closeMsg()));
+    const setActiveWindow = this.view.setHandler(async () => { BrowserMsg.send.setActiveWindow(this.view.parentTabId, { frameId: this.view.frameId }); });
+    this.view.S.cached('prompt').on('click', setActiveWindow).trigger('click');
     await PassphraseStore.waitUntilPassphraseChanged(this.view.acctEmail, longids, 1000, this.view.ppChangedPromiseCancellation);
   };
 
