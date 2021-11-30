@@ -303,7 +303,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       const gmailPage = await openGmailPage(t, browser);
       // create compose draft
       await gmailPage.waitAndClick('@action-secure-compose', { delay: 1 });
-      await createSecureDraft(t, browser, gmailPage, 'compose draft');
+      await createSecureDraft(t, browser, gmailPage, 'a compose draft');
       await gmailPage.page.reload();
       await gotoGmailPage(gmailPage, '', 'drafts'); // to go drafts section
       // open new compose window and saved draft
