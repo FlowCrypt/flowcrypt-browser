@@ -104,7 +104,12 @@ export class Injector {
           window.location.reload();
         }
         el.remove();
-      }));
+      }))
+      .hover((e) => {
+        $(e.target).css('z-index', 4);
+      }, (e) => {
+        $(e.target).css('z-index', '');
+      });
   };
 
   private shouldInject = () => {

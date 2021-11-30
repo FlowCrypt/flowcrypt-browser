@@ -163,7 +163,7 @@ export class PgpBlockViewRenderModule {
 
   private getEncryptedSubjectText = (subject: string, isHtml: boolean) => {
     if (isHtml) {
-      return `<div style="font-size: 14px; border-bottom: 1px #cacaca"> Encrypted Subject:
+      return `<div style="white-space: normal"> Encrypted Subject:
                 <b> ${subject}</b>
               </div>
               <hr/>`;
