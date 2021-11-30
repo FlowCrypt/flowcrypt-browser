@@ -223,17 +223,17 @@ export class ContactStore extends AbstractStore {
     });
   };
 
-  public static get = async (db: undefined | IDBDatabase, emailOrLongid: string[]): Promise<(Contact | undefined)[]> => {
+  public static get = async (db: undefined | IDBDatabase, emails: string[]): Promise<(Contact | undefined)[]> => {
     if (!db) { // relay op through background process
-      return await BrowserMsg.send.bg.await.db({ f: 'get', args: [emailOrLongid] }) as (Contact | undefined)[];
+      return await BrowserMsg.send.bg.await.db({ f: 'get', args: [emails] }) as (Contact | undefined)[];
     }
-    if (emailOrLongid.length === 1) {
-      const contact = await ContactStore.dbContactInternalGetOne(db, emailOrLongid[0]);
+    if (emails.length === 1) {
+      const contact = await ContactStore.dbContactInternalGetOne(db, emails[0]);
       return [contact];
     } else {
       const results: (Contact | undefined)[] = [];
-      for (const singleEmailOrLongid of emailOrLongid) {
-        const [contact] = await ContactStore.get(db, [singleEmailOrLongid]);
+      for (const email of emails) {
+        const [contact] = await ContactStore.get(db, [email]);
         results.push(contact);
       }
       return results;
@@ -677,9 +677,9 @@ export class ContactStore extends AbstractStore {
       .map(normalized => ContactStore.dbIndex(emailEntity.fingerprints.length > 0, normalized));
   };
 
-  private static dbContactInternalGetOne = async (db: IDBDatabase, emailOrLongid: string): Promise<Contact | undefined> => {
-    if (emailOrLongid.includes('@')) { // email
-      const contactWithAllPubkeys = await ContactStore.getOneWithAllPubkeys(db, emailOrLongid);
+  private static dbContactInternalGetOne = async (db: IDBDatabase, email: string): Promise<Contact | undefined> => {
+    if (email.includes('@')) { // email
+      const contactWithAllPubkeys = await ContactStore.getOneWithAllPubkeys(db, email);
       if (!contactWithAllPubkeys) {
         return contactWithAllPubkeys;
       }
