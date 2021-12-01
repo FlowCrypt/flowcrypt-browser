@@ -261,7 +261,7 @@ export class AttachmentDownloadView extends View {
     const result = await MsgUtil.decryptMessage({
       kisWithPp: await KeyStore.getAllWithOptionalPassPhrase(this.acctEmail),
       encryptedData: this.attachment.getData(),
-      verificationPubs: [] // todo: signature?
+      verificationPubs: [] // todo: #4158 signature verification of attachments
     });
     Xss.sanitizeRender(this.downloadButton, this.originalButtonHTML || '');
     if (result.success) {

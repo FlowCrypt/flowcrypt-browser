@@ -69,7 +69,7 @@ export class PgpBlockViewAttachmentsModule {
 
   private decryptAndSaveAttachmentToDownloads = async (encrypted: Attachment) => {
     const kisWithPp = await KeyStore.getAllWithOptionalPassPhrase(this.view.acctEmail);
-    // todo: signature?
+    // todo: #4158 signature verification of attachments
     const decrypted = await BrowserMsg.send.bg.await.pgpMsgDecrypt({ kisWithPp, encryptedData: encrypted.getData(), verificationPubs: [] });
     if (decrypted.success) {
       const attachment = new Attachment({ name: encrypted.name.replace(/\.(pgp|gpg)$/, ''), type: encrypted.type, data: decrypted.content });

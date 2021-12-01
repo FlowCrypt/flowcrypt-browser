@@ -126,7 +126,7 @@ export class ComposeQuoteModule extends ViewModule<ComposeView> {
               const result = await MsgUtil.decryptMessage({
                 kisWithPp: await KeyStore.getAllWithOptionalPassPhrase(this.view.acctEmail),
                 encryptedData: block.attachmentMeta.data,
-                verificationPubs: [] // todo: signature?
+                verificationPubs: [] // todo: #4158 signature verification of attachments
               });
               if (result.success) {
                 attachmentMeta = { content: result.content, filename: result.filename };
