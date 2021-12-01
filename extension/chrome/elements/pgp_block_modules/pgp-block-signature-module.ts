@@ -15,7 +15,8 @@ export class PgpBlockViewSignatureModule {
 
   public renderPgpSignatureCheckResult = async (signature: VerifyRes | undefined, retryVerification?: (verificationPubs: string[]) => Promise<VerifyRes | undefined>) => {
     this.view.renderModule.doNotSetStateAsReadyYet = true; // so that body state is not marked as ready too soon - automated tests need to know when to check results
-    if (!signature) {
+    const signerLongid = signature?.signer?.longid;
+    if (!signerLongid) {
       $('#pgp_signature').addClass('bad');
       $('#pgp_signature > .cursive').remove();
       $('#pgp_signature > .result').text('Message Not Signed');
@@ -27,6 +28,12 @@ export class PgpBlockViewSignatureModule {
       $('#pgp_signature').addClass('good');
       $('#pgp_signature > .result').text('matching signature');
     } else {
+      // todo: bad signature when pubkey is hit
+      /*
+            $('#pgp_signature').addClass('bad');
+            $('#pgp_signature > .result').text('signature does not match');
+            this.view.renderModule.setFrameColor('red');
+      */
       if (retryVerification) {
         const signerEmail = this.view.getSigner();
         if (!signerEmail) {
@@ -40,9 +47,7 @@ export class PgpBlockViewSignatureModule {
               await this.renderPgpSignatureCheckResult(await retryVerification(newPubkeys), undefined);
               return;
             }
-            $('#pgp_signature').addClass('bad');
-            $('#pgp_signature > .result').text('signature does not match'); // todo: or "neutral" missing pubkey?
-            this.view.renderModule.setFrameColor('red');
+            this.renderMissingPubkey(signerLongid);
           } catch (e) {
             if (ApiErr.isSignificant(e)) {
               Catch.reportErr(e);
@@ -53,6 +58,8 @@ export class PgpBlockViewSignatureModule {
             }
           }
         }
+      } else { // !retryVerification
+        this.renderMissingPubkey(signerLongid);
       }
     }
     if (signature) {
@@ -65,6 +72,10 @@ export class PgpBlockViewSignatureModule {
   private setSigner = (signature: VerifyRes): void => {
     const signerEmail = signature.match ? this.view.getSigner() : undefined;
     $('#pgp_signature > .cursive > span').text(signerEmail || 'Unknown Signer');
+  };
+
+  private renderMissingPubkey = (signerLongid: string) => {
+    $('#pgp_signature').addClass('neutral').find('.result').text(`Missing pubkey ${signerLongid}`);
   };
 
   /**
