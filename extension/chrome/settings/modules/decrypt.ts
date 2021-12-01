@@ -58,7 +58,7 @@ View.run(class ManualDecryptView extends View {
     const result = await MsgUtil.decryptMessage({
       kisWithPp: await KeyStore.getAllWithOptionalPassPhrase(this.acctEmail),
       encryptedData: encrypted.getData(),
-      verificationPubs: [] // todo: signature?
+      verificationPubs: []
     });
     if (result.success) {
       const attachment = new Attachment({ name: encrypted.name.replace(/\.(pgp|gpg|asc)$/i, ''), type: encrypted.type, data: result.content });
