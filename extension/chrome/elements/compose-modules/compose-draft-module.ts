@@ -340,18 +340,26 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
   };
 
   private renderPPDialogAndWaitWhenPPEntered = async (longids: string[]) => {
-    const promptText = `<div>Waiting for <a href="#" data-test="action-open-passphrase-dialog" class="action_open_passphrase_dialog">pass phrase</a> to open draft..</div>`;
+    const promptText = `<div style="font-size: 18px">Waiting for pass phrase to open draft...</div>`;
     if (this.view.isReplyBox) {
       Xss.sanitizeRender(this.view.S.cached('prompt'), promptText).css({ display: 'block' });
       this.view.sizeModule.resizeComposeBox();
     } else {
-      Xss.sanitizeRender(this.view.S.cached('prompt'), `${promptText}<br><br><a href="#" class="action_close">close</a>`).css({ display: 'flex', height: '100%' });
+      Xss.sanitizeRender(this.view.S.cached('prompt'), `
+        ${promptText}
+        <div class="mt-20">
+          <button href="#" data-test="action-open-passphrase-dialog" class="button long green action_open_passphrase_dialog">Enter pass phrase</button>
+          <button href="#" class="button gray action_close">close</button>
+        </div>
+      `).css({ display: 'flex', height: '100%' });
       BrowserMsg.send.setActiveWindow(this.view.parentTabId, { frameId: this.view.frameId });
     }
-    this.view.S.cached('prompt').find('a.action_open_passphrase_dialog').click(this.view.setHandler(async () => {
+    this.view.S.cached('prompt').find('.action_open_passphrase_dialog').click(this.view.setHandler(async () => {
       BrowserMsg.send.passphraseDialog(this.view.parentTabId, { type: 'draft', longids });
-    }));
-    this.view.S.cached('prompt').find('a.action_close').click(this.view.setHandler(() => this.view.renderModule.closeMsg()));
+    })).focus();
+    this.view.S.cached('prompt').find('.action_close').click(this.view.setHandler(() => this.view.renderModule.closeMsg()));
+    const setActiveWindow = this.view.setHandler(async () => { BrowserMsg.send.setActiveWindow(this.view.parentTabId, { frameId: this.view.frameId }); });
+    this.view.S.cached('prompt').on('click', setActiveWindow).trigger('click');
     await PassphraseStore.waitUntilPassphraseChanged(this.view.acctEmail, longids, 1000, this.view.ppChangedPromiseCancellation);
   };
 
