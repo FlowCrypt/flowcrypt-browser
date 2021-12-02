@@ -61,10 +61,7 @@ type DecryptError$longids = { message: string[]; matching: string[]; chosen: str
 export type DecryptError = { success: false; error: DecryptError$error; longids: DecryptError$longids; content?: Buf; isEncrypted?: boolean; };
 
 export type VerifyRes = {
-  // longid is set up even if the signature isn't verified
-  // primaryUserId is set up from the found key
-  // todo: make `match` a structure and move `primaryUserId` inside it or remove at all (#2147 is no longer appropriate)
-  signer?: { primaryUserId: string | undefined, longid: string };
+  signerLongids: string[];
   match: boolean | null; // we can return some pubkey information here
   error?: string;
   isErrFatal?: boolean,

@@ -775,20 +775,6 @@ jLwe8W9IMt765T5x5oux9MmPDXF05xHfm4qfH/BMO3a802x5u2gJjJjuknrFdgXY
       t.pass();
     });
 
-    ava.default('[unit][MsgUtil.decryptMessage] extracts Primary User ID from key', async t => {
-      const data = await GoogleData.withInitializedData('ci.tests.gmail@flowcrypt.test');
-      const msg: GmailMsg = data.getMessage('1766644f13510f58')!;
-      const enc = Buf.fromBase64Str(msg!.raw!).toUtfStr()
-        .match(/\-\-\-\-\-BEGIN PGP SIGNED MESSAGE\-\-\-\-\-.*\-\-\-\-\-END PGP SIGNATURE\-\-\-\-\-/s)![0];
-      const encryptedData = Buf.fromUtfStr(enc);
-      const decrypted = await MsgUtil.decryptMessage({ kisWithPp: [], encryptedData, verificationPubs: [testConstants.pubkey2864E326A5BE488A] });
-      expect(decrypted.success).to.equal(true);
-      const verifyRes = (decrypted as DecryptSuccess).signature!;
-      expect(verifyRes.match).to.be.true;
-      expect(verifyRes.signer?.primaryUserId).to.equal('A50 Sam <sams50sams50sept@gmail.com>');
-      t.pass();
-    });
-
     ava.default('[unit][MsgUtil.decryptMessage] finds correct key to verify signature', async t => {
       const data = await GoogleData.withInitializedData('ci.tests.gmail@flowcrypt.test');
       const msg: GmailMsg = data.getMessage('1766644f13510f58')!;
@@ -804,21 +790,18 @@ jLwe8W9IMt765T5x5oux9MmPDXF05xHfm4qfH/BMO3a802x5u2gJjJjuknrFdgXY
         expect(decrypted1.success).to.equal(true);
         const verifyRes1 = (decrypted1 as DecryptSuccess).signature!;
         expect(verifyRes1.match).to.be.true;
-        expect(verifyRes1.signer?.primaryUserId).to.equal('A50 Sam <sams50sams50sept@gmail.com>');
       }
       {
         const decrypted2 = await MsgUtil.decryptMessage({ kisWithPp: [], encryptedData, verificationPubs: [betterKey, pubkey] });
         expect(decrypted2.success).to.equal(true);
         const verifyRes2 = (decrypted2 as DecryptSuccess).signature!;
         expect(verifyRes2.match).to.be.true;
-        expect(verifyRes2.signer?.primaryUserId).to.equal('A50 Sam <sams50sams50sept@gmail.com>');
       }
       {
         const decrypted3 = await MsgUtil.decryptMessage({ kisWithPp: [], encryptedData, verificationPubs: [pubkey] });
         expect(decrypted3.success).to.equal(true);
         const verifyRes3 = (decrypted3 as DecryptSuccess).signature!;
         expect(verifyRes3.match).to.be.true;
-        expect(verifyRes3.signer?.primaryUserId).to.equal('A50 Sam <sams50sams50sept@gmail.com>');
       }
       {
         const decrypted4 = await MsgUtil.decryptMessage({ kisWithPp: [], encryptedData, verificationPubs: [betterKey] });
@@ -885,6 +868,45 @@ jLwe8W9IMt765T5x5oux9MmPDXF05xHfm4qfH/BMO3a802x5u2gJjJjuknrFdgXY
         verificationPubs: [testConstants.flowcryptcompatibilityPublicKey7FDE685548AEA788]
       });
       expect(result.match).to.be.true;
+      t.pass();
+    });
+
+    ava.default(`[unit][MsgUtil.verifyDetached] returns errorwhen signature doesn't match`, async t => {
+      const sigText = Buf.fromUtfStr(`-----BEGIN PGP SIGNATURE-----
+
+wsD5BAABCAAjFiEE3CZFSvtx0Y6rutc9HH5tPFVjqUEFAl+QotYFAwAAAAAACgkQHH5tPFVjqUF4
+xgv+MrdQ07MfCVU93ptZg+S+OOkQ1AcZxGFdiivs10KkNGtLm9s+w/iEUAySSWbtKjbLV6O3AYvC
+QFKsFRFr17Ekz6mSPj99zifFMBvTOIAev/d08dmX0kGd6YlP+GyZL3Wqcgy1T1H3obgOmToDtk7R
+V52Ki1aTJYH/Z7v6PsQRWn8emfH/yGYplBhzZy2XjO6UIar9T8wtAJOd6+Ii2sfyGyEPjzGckLaR
+JZOxQ4jpJJUszz2WsvLNwtKoqwV15Eg3oxZzHWYE8P63xXoE4G762604SIqv/ggyQZTt/Es6Scun
+A1BJflFm+cHzQTW2yQfwCCvlzEZNiNwXfwGfV99K5iG1eW3lv7sMLJnitwTidNIlD5LTNdeUnTXj
+XJvkEQsyTUI4qbzzJbUNYz7lraizC2nPiwFzLv692mS0urtD3mUhOBA9hZwk3l/20GsGia0FeUIS
+E1d8Vh/Ey7IJ8TXbfFrdv5ZP3HqMK0089SooZwx/GN2QIaOYQXsS0u7IFNhU\n=q5Sf
+-----END PGP SIGNATURE-----`);
+      const data = await GoogleData.withInitializedData('flowcrypt.compatibility@gmail.com');
+      const msg = data.getMessage('1754cfc37886899e')!;
+      const msgText = Buf.fromBase64Str(msg!.raw!).toUtfStr();
+      {
+        const dhartleyPubkey = msgText
+          .match(/\-\-\-\-\-BEGIN PGP PUBLIC KEY BLOCK\-\-\-\-\-.*\-\-\-\-\-END PGP PUBLIC KEY BLOCK\-\-\-\-\-/s)![0]
+          .replace(/=\r\n/g, '').replace(/=3D/g, '=');
+        const resultRightKey = await MsgUtil.verifyDetached({
+          plaintext: Buf.fromUtfStr('some irrelevant text'),
+          sigText,
+          verificationPubs: [dhartleyPubkey]
+        });
+        expect(resultRightKey.match).to.be.null;
+        expect(resultRightKey.error).to.not.be.undefined;
+      }
+      {
+        const resultWrongKey = await MsgUtil.verifyDetached({
+          plaintext: Buf.fromUtfStr('some irrelevant text'),
+          sigText,
+          verificationPubs: [testConstants.flowcryptcompatibilityPublicKey7FDE685548AEA788]
+        });
+        expect(resultWrongKey.match).to.be.null;
+        expect(resultWrongKey.error).to.be.undefined;
+      }
       t.pass();
     });
 

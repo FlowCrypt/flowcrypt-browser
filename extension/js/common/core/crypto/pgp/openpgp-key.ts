@@ -2,7 +2,7 @@
 import { Key, PrvPacket, KeyAlgo, KeyUtil, UnexpectedKeyTypeError, PubkeyInfo } from '../key.js';
 import { opgp } from './openpgpjs-custom.js';
 import { Catch } from '../../../platform/catch.js';
-import { Str } from '../../common.js';
+import { Str, Value } from '../../common.js';
 import { Buf } from '../../buf.js';
 import { PgpMsgMethod, VerifyRes } from './msg-util.js';
 
@@ -436,7 +436,7 @@ export class OpenPGPKey {
   };
 
   public static verify = async (msg: OpenpgpMsgOrCleartext, pubs: PubkeyInfo[]): Promise<VerifyRes> => {
-    const verifyRes: VerifyRes = { match: null }; // tslint:disable-line:no-null-keyword
+    const verifyRes: VerifyRes = { match: null, signerLongids: [] }; // tslint:disable-line:no-null-keyword
     // msg.getSigningKeyIds ? msg.getSigningKeyIds()
     // todo: double-check if S/MIME ever gets here
     const opgpKeys = pubs.filter(x => !x.revoked && x.pubkey.type === 'openpgp').map(x => OpenPGPKey.extractExternalLibraryObjFromKey(x.pubkey));
@@ -451,20 +451,16 @@ export class OpenPGPKey {
         verifyRes.content = data instanceof Uint8Array ? new Buf(data) : Buf.fromUtfStr(data);
       }
       // third step below
+      const signerLongids: string[] = [];
       for (const verification of verifications) {
         // todo - a valid signature is a valid signature, and should be surfaced. Currently, if any of the signatures are not valid, it's showing all as invalid
         // .. as it is now this could allow an attacker to append bogus signatures to validly signed messages, making otherwise correct messages seem incorrect
         // .. which is not really an issue - an attacker that can append signatures could have also just slightly changed the message, causing the same experience
         // .. so for now #wontfix unless a reasonable usecase surfaces
         verifyRes.match = (verifyRes.match === true || verifyRes.match === null) && await verification.verified;
-        if (!verifyRes.signer) {
-          // todo - currently only the first signer will be reported. Should we be showing all signers? How common is that?
-          verifyRes.signer = {
-            longid: OpenPGPKey.bytesToLongid(verification.keyid.bytes),
-            primaryUserId: await OpenPGPKey.getPrimaryUserId(opgpKeys, verification.keyid)
-          };
-        }
+        signerLongids.push(OpenPGPKey.bytesToLongid(verification.keyid.bytes));
       }
+      verifyRes.signerLongids.push(...Value.arr.unique(signerLongids));
     } catch (verifyErr) {
       verifyRes.match = null; // tslint:disable-line:no-null-keyword
       if (verifyErr instanceof Error && verifyErr.message === 'Can only verify message with one literal data packet.') {
@@ -754,10 +750,10 @@ export class OpenPGPKey {
       if (verifyResult.error !== null && typeof verifyResult.error !== 'undefined') {
         output.push(`verify failed: ${verifyResult.error}`);
       } else {
-        if (verifyResult.match && verifyResult.signer?.longid === OpenPGPKey.bytesToLongid(key.getKeyId().bytes)) {
+        if (verifyResult.match && verifyResult.signerLongids.includes(OpenPGPKey.bytesToLongid(key.getKeyId().bytes))) {
           output.push('verify ok');
         } else {
-          output.push(`verify mismatch: match[${verifyResult.match}] signer.uid[${verifyResult.signer?.primaryUserId}] signer.longid[${verifyResult.signer?.longid}]`);
+          output.push(`verify mismatch: match[${verifyResult.match}]`);
         }
       }
     } catch (e) {

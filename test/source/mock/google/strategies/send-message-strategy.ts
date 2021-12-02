@@ -105,8 +105,8 @@ class SignedMessageTestStrategy implements ITestMsgStrategy {
     if (!decrypted.signature) {
       throw new HttpClientErr(`Error: The message isn't signed.`);
     }
-    if (decrypted.signature.signer?.longid !== this.signedBy) {
-      throw new HttpClientErr(`Error: expected message signed by ${this.signedBy} but was actually signed by ${decrypted.signature.signer?.longid}`);
+    if (!decrypted.signature.signerLongids.includes(this.signedBy)) {
+      throw new HttpClientErr(`Error: expected message signed by ${this.signedBy} but was actually signed by ${decrypted.signature.signerLongids.length} other signers`);
     }
     const content = decrypted.content.toUtfStr();
     if (!content.includes(this.expectedText)) {

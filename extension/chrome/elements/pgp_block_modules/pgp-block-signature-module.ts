@@ -13,18 +13,19 @@ export class PgpBlockViewSignatureModule {
   constructor(private view: PgpBlockView) {
   }
 
-  public renderPgpSignatureCheckResult = async (signature: VerifyRes | undefined, retryVerification?: (verificationPubs: string[]) => Promise<VerifyRes | undefined>) => {
+  public renderPgpSignatureCheckResult = async (verifyRes: VerifyRes | undefined, retryVerification?: (verificationPubs: string[]) => Promise<VerifyRes | undefined>) => {
     this.view.renderModule.doNotSetStateAsReadyYet = true; // so that body state is not marked as ready too soon - automated tests need to know when to check results
-    const signerLongid = signature?.signer?.longid;
-    if (signature?.error) {
+    const signerLongids = verifyRes?.signerLongids;
+    if (verifyRes?.error) {
+      // todo: retry raw here!
       $('#pgp_signature').addClass('bad');
-      $('#pgp_signature > .result').text(signature.error);
+      $('#pgp_signature > .result').text(verifyRes.error);
       this.view.renderModule.setFrameColor('red');
-    } else if (!signerLongid) {
+    } else if (!signerLongids?.length) {
       $('#pgp_signature').addClass('bad');
       $('#pgp_signature > .cursive').remove();
       $('#pgp_signature > .result').text('Message Not Signed');
-    } else if (signature.match) {
+    } else if (verifyRes?.match) {
       $('#pgp_signature').addClass('good');
       $('#pgp_signature > .result').text('matching signature');
     } else {
@@ -47,7 +48,7 @@ export class PgpBlockViewSignatureModule {
               await this.renderPgpSignatureCheckResult(await retryVerification(newPubkeys), undefined);
               return;
             }
-            this.renderMissingPubkey(signerLongid);
+            this.renderMissingPubkey(signerLongids[0]);
           } catch (e) {
             if (ApiErr.isSignificant(e)) {
               Catch.reportErr(e);
@@ -59,11 +60,11 @@ export class PgpBlockViewSignatureModule {
           }
         }
       } else { // !retryVerification
-        this.renderMissingPubkey(signerLongid);
+        this.renderMissingPubkey(signerLongids[0]);
       }
     }
-    if (signature) {
-      this.setSigner(signature);
+    if (verifyRes) {
+      this.setSigner(verifyRes);
     }
     this.view.renderModule.doNotSetStateAsReadyYet = false;
     Ui.setTestState('ready');
