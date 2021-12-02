@@ -8,7 +8,7 @@
   "devDependencies": {
     "@types/chai": "4.2.22",
     "@types/chai-as-promised": "7.1.4",
-    "@types/chrome": "0.0.165",
+    "@types/chrome": "0.0.166",
     "@types/dompurify": "2.3.1",
     "@types/jquery": "3.5.9",
     "@types/mailparser": "3.4.0",
