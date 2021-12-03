@@ -27,7 +27,7 @@
   outline: 0;
 }
 
-.anZ #flowcrypt_secure_compose_button {
+.small #flowcrypt_secure_compose_button {
   height: 40px;
 }
 
@@ -36,8 +36,10 @@
   content: '';
   background-size: 24px;
   min-width: 56px;
-  height: 48px;
-  background-image: url("/img/logo/logo.svg");
+  height: 100%;
+
+  /* inline SVG because of https://github.com/FlowCrypt/flowcrypt-browser/issues/4098#issuecomment-984814877 */
+  background-image: url('data:image/svg+xml;utf8,<svg width="220" height="142" viewBox="0 0 220 142" xmlns="http://www.w3.org/2000/svg"><g fill="none" fill-rule="evenodd"><path d="M31.4 80.108l31.438 31.437-21.6 21.6c-5.467 5.468-14.331 5.468-19.799 0l-15.881-15.88a8 8 0 0 1 0-11.315L31.4 80.108z" fill="%234F4F4F"/><path d="M70.775 40.733l70.735 70.735-21.6 21.6c-5.467 5.467-14.332 5.467-19.8 0L39.277 72.233l31.5-31.5z" fill="%2331A217" opacity=".9"/><path d="M115.1 6.308l100.132 100.133a7 7 0 0 1 0 9.899l-16.65 16.65c-5.468 5.468-14.332 5.468-19.8 0L78.65 32.858l26.55-26.55a7 7 0 0 1 9.9 0z" fill="%2331A217"/></g></svg>');
   background-position: center;
   background-repeat: no-repeat;
 }
@@ -55,17 +57,17 @@
   padding: 0;
 }
 
-.anZ.bhZ:not(.bym) #flowcrypt_secure_compose_button {
+.bhZ:not(.bym) .small #flowcrypt_secure_compose_button {
   width: 40px;
   height: 40px;
   border-radius: 20px;
 }
 
-.anZ.bhZ:not(.bym) #flowcrypt_secure_compose_button::before {
+.bhZ:not(.bym) .small #flowcrypt_secure_compose_button::before {
   min-width: 42px;
 }
 
-.aeN:not(.anZ) [class*="_destroyable"].z0 {
+[class*="_destroyable"].z0:not(.small) {
   margin-bottom: 0 !important;
 }
 

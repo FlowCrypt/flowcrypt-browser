@@ -74,7 +74,13 @@ export class Injector {
       (window as unknown as ContentScriptWindow).TrySetDestroyableTimeout(() => this.btns(), 300);
     } else if (this.shouldInject()) {
       if (this.S.now('compose_button').length === 0) {
-        const container = this.S.now('compose_button_container').first().prepend(this.factory.btnCompose(this.webmailName)); // xss-safe-factory
+        const secureComposeButton = $(this.factory.btnCompose(this.webmailName));
+        const container = this.S.now('compose_button_container').first().prepend(secureComposeButton); // xss-safe-factory
+        if (this.webmailName === 'gmail') {
+          if (!$('.aic').length) { // https://github.com/FlowCrypt/flowcrypt-browser/issues/4063
+            secureComposeButton.addClass('small');
+          }
+        }
         container.find(this.S.sel('compose_button')).click(Ui.event.prevent('double', () => { this.openComposeWin(); }));
       }
     }
