@@ -19,6 +19,8 @@ export class PgpBlockViewSignatureModule {
     const signerLongids = verifyRes?.signerLongids;
     if (verifyRes?.error) {
       if (!verifyRes.isErrFatal && this.view.decryptModule.canFetchFromApi()) {
+        // Sometimes the signed content is slightly modified when parsed from DOM,
+        // so the message should be re-fetched straight from API to make sure we get the original signed data and verify again
         this.view.signature!.parsedSignature = undefined; // force to re-parse
         await this.view.decryptModule.initialize(verificationPubs, true);
         return;
