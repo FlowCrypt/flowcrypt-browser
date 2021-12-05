@@ -18,6 +18,8 @@ import { View } from '../../js/common/view.js';
 import { PubLookup } from '../../js/common/api/pub-lookup.js';
 import { OrgRules } from '../../js/common/org-rules.js';
 import { AcctStore } from '../../js/common/platform/store/acct-store.js';
+import { ContactStore } from '../../js/common/platform/store/contact-store.js';
+import { KeyUtil } from '../../js/common/core/crypto/key.js';
 
 export class PgpBlockView extends View {
 
@@ -28,7 +30,10 @@ export class PgpBlockView extends View {
   public readonly senderEmail: string;
   public readonly msgId: string | undefined;
   public readonly encryptedMsgUrlParam: Buf | undefined;
-  public signature: string | boolean | undefined; // when supplied with "true", decryptModule will replace this with actual signature data
+  public readonly signature?: {
+    // when parsedSignature is undefined, decryptModule will try to fetch the message
+    parsedSignature?: string
+  };
 
   public gmail: Gmail;
   public orgRules!: OrgRules;
@@ -56,7 +61,11 @@ export class PgpBlockView extends View {
       throw new Error('API path traversal forbidden');
     }
     this.encryptedMsgUrlParam = uncheckedUrlParams.message ? Buf.fromUtfStr(Assert.urlParamRequire.string(uncheckedUrlParams, 'message')) : undefined;
-    this.signature = uncheckedUrlParams.signature === true ? true : (uncheckedUrlParams.signature ? String(uncheckedUrlParams.signature) : undefined);
+    if (uncheckedUrlParams.signature === true) {
+      this.signature = {};
+    } else if (uncheckedUrlParams.signature) {
+      this.signature = { parsedSignature: String(uncheckedUrlParams.signature) };
+    }
     this.gmail = new Gmail(this.acctEmail);
     // modules
     this.attachmentsModule = new PgpBlockViewAttachmentsModule(this);
@@ -78,7 +87,11 @@ export class PgpBlockView extends View {
     const scopes = await AcctStore.getScopes(this.acctEmail);
     this.decryptModule.canReadEmails = scopes.read || scopes.modify;
     if (storage.setup_done) {
-      await this.decryptModule.initialize();
+      const parsedPubs = (await ContactStore.getOneWithAllPubkeys(undefined, this.getSigner()))?.sortedPubkeys ?? [];
+      // todo: we don't actually need parsed pubs here because we're going to pass them to the backgorund page
+      // maybe we can have a method in ContactStore to extract armored keys
+      const verificationPubs = parsedPubs.map(key => KeyUtil.armor(key.pubkey));
+      await this.decryptModule.initialize(verificationPubs, false);
     } else {
       await this.errorModule.renderErr(Lang.pgpBlock.refreshWindow, this.encryptedMsgUrlParam ? this.encryptedMsgUrlParam.toUtfStr() : undefined);
     }

@@ -5,6 +5,7 @@ import * as ava from 'ava';
 import { Config, TestVariant, Util } from './../util';
 import { testConstants } from './tooling/consts';
 import { BrowserRecipe } from './tooling/browser-recipe';
+import { GoogleData } from './../mock/google/google-data';
 import { InboxPageRecipe } from './page-recipe/inbox-page-recipe';
 import { SettingsPageRecipe } from './page-recipe/settings-page-recipe';
 import { TestUrls } from './../browser/test-urls';
@@ -12,6 +13,7 @@ import { TestWithBrowser } from './../test';
 import { expect } from "chai";
 import { ComposePageRecipe } from './page-recipe/compose-page-recipe';
 import { PageRecipe } from './page-recipe/abstract-page-recipe';
+import { Buf } from '../core/buf';
 
 // tslint:disable:no-blank-lines-func
 // tslint:disable:max-line-length
@@ -412,6 +414,36 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
         params: url,
         content: ['How is my message signed?'],
         signature: ['President@Forged.Com', 'matching signature']
+      });
+    }));
+
+    ava.default(`decrypt - missing pubkey in "incorrect message digest" scenario`, testWithBrowser('ci.tests.gmail', async (t, browser) => {
+      const msgId = '1766644f13510f58';
+      const acctEmail = 'ci.tests.gmail@flowcrypt.test';
+      const signerEmail = 'sender.for.refetch@domain.com';
+      const data = await GoogleData.withInitializedData(acctEmail);
+      const msg = data.getMessage(msgId)!;
+      const signature = Buf.fromBase64Str(msg!.raw!).toUtfStr()
+        .match(/\-\-\-\-\-BEGIN PGP SIGNATURE\-\-\-\-\-.*\-\-\-\-\-END PGP SIGNATURE\-\-\-\-\-/s)![0];
+      const params = `?frameId=none&account_email=${acctEmail}&senderEmail=${signerEmail}&msgId=${msgId}&message=Some%20corrupted%20message&signature=${encodeURIComponent(signature)}`;
+      // as the verification pubkey is not known, this scenario doesn't trigger message re-fetch
+      await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, { params, content: ['Some corrupted message'], signature: ["Missing pubkey 2864E326A5BE488A"] });
+    }));
+
+    ava.default('decrypt - re-fetch signed-only message from API on non-fatal verification error', testWithBrowser('compatibility', async (t, browser) => {
+      const msgId = '1754cfd1b2f1d6e5';
+      const acctEmail = 'flowcrypt.compatibility@gmail.com';
+      const signerEmail = 'dhartley@verdoncollege.school.nz';
+      const data = await GoogleData.withInitializedData(acctEmail);
+      const msg = data.getMessage(msgId)!;
+      const signature = Buf.fromBase64Str(msg!.raw!).toUtfStr()
+        .match(/\-\-\-\-\-BEGIN PGP SIGNATURE\-\-\-\-\-.*\-\-\-\-\-END PGP SIGNATURE\-\-\-\-\-/s)![0];
+      const params = `?frameId=none&account_email=${acctEmail}&senderEmail=${signerEmail}&msgId=${msgId}&message=Some%20corrupted%20message&signature=${encodeURIComponent(signature)}`;
+      // as the verification pubkey is retrieved from the attester, the incorrect message digest will trigger re-fetching from API
+      await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
+        params,
+        content: [], // todo: #4164 I would expect '1234' here
+        signature: ['Dhartley@Verdoncollege.School.Nz', 'matching signature']
       });
     }));
 

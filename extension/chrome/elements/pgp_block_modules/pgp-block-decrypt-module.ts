@@ -13,8 +13,6 @@ import { Ui } from '../../../js/common/browser/ui.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { KeyStore } from '../../../js/common/platform/store/key-store.js';
 import { PassphraseStore } from '../../../js/common/platform/store/passphrase-store.js';
-import { KeyUtil } from '../../../js/common/core/crypto/key.js';
-import { ContactStore } from '../../../js/common/platform/store/contact-store.js';
 
 export class PgpBlockViewDecryptModule {
 
@@ -26,20 +24,16 @@ export class PgpBlockViewDecryptModule {
   constructor(private view: PgpBlockView) {
   }
 
-  public initialize = async (forcePullMsgFromApi = false) => {
-    const parsedPubs = (await ContactStore.getOneWithAllPubkeys(undefined, this.view.getSigner()))?.sortedPubkeys ?? [];
-    // todo: we don't actually need parsed pubs here because we're going to pass them to the backgorund page
-    // maybe we can have a method in ContactStore to extract armored keys
-    const verificationPubs = parsedPubs.map(key => KeyUtil.armor(key.pubkey));
+  public initialize = async (verificationPubs: string[], forcePullMsgFromApi: boolean) => {
     try {
-      if (this.canReadEmails && this.view.signature === true && this.view.msgId) {
+      if (this.canReadEmails && this.view.signature && !this.view.signature.parsedSignature && this.view.msgId) {
         this.view.renderModule.renderText('Loading signed message...');
         const { raw } = await this.view.gmail.msgGet(this.view.msgId, 'raw');
         this.msgFetchedFromApi = 'raw';
         const mimeMsg = Buf.fromBase64UrlStr(raw!); // used 'raw' above
         const parsed = await Mime.decode(mimeMsg);
         if (parsed && typeof parsed.rawSignedContent === 'string' && parsed.signature) {
-          this.view.signature = parsed.signature;
+          this.view.signature.parsedSignature = parsed.signature;
           await this.decryptAndRender(Buf.fromUtfStr(parsed.rawSignedContent), verificationPubs);
         } else {
           await this.view.errorModule.renderErr('Error: could not properly parse signed message', parsed.rawSignedContent || parsed.text || parsed.html || mimeMsg.toUtfStr());
@@ -68,8 +62,10 @@ export class PgpBlockViewDecryptModule {
     }
   };
 
+  public canFetchFromApi = () => this.canReadEmails && this.msgFetchedFromApi !== 'raw';
+
   private decryptAndRender = async (encryptedData: Buf, verificationPubs: string[], optionalPwd?: string, plainSubject?: string) => {
-    if (typeof this.view.signature !== 'string') {
+    if (!this.view.signature?.parsedSignature) {
       const kisWithPp = await KeyStore.getAllWithOptionalPassPhrase(this.view.acctEmail);
       const decrypt = async (verificationPubs: string[]) => await BrowserMsg.send.bg.await.pgpMsgDecrypt({ kisWithPp, encryptedData, verificationPubs });
       const result = await decrypt(verificationPubs);
@@ -77,7 +73,7 @@ export class PgpBlockViewDecryptModule {
         await this.view.errorModule.renderErr(Lang.general.restartBrowserAndTryAgain, undefined);
       } else if (result.success) {
         await this.view.renderModule.decideDecryptedContentFormattingAndRender(result.content, Boolean(result.isEncrypted), result.signature,
-          async (verificationPubs: string[]) => {
+          verificationPubs, async (verificationPubs: string[]) => {
             const decryptResult = await decrypt(verificationPubs);
             if (!decryptResult.success) {
               return undefined; // note: this internal error results in a wrong "Message Not Signed" badge
@@ -86,9 +82,9 @@ export class PgpBlockViewDecryptModule {
             }
           }, plainSubject);
       } else if (result.error.type === DecryptErrTypes.format) {
-        if (this.canReadEmails && this.msgFetchedFromApi !== 'raw') {
+        if (this.canFetchFromApi()) {
           console.info(`re-fetching message ${this.view.msgId} from api because looks like bad formatting: ${!this.msgFetchedFromApi ? 'full' : 'raw'}`);
-          await this.initialize(true);
+          await this.initialize(verificationPubs, true);
         } else {
           await this.view.errorModule.renderErr(Lang.pgpBlock.badFormat + '\n\n' + result.error.message, encryptedData.toUtfStr());
         }
@@ -118,12 +114,12 @@ export class PgpBlockViewDecryptModule {
           await this.view.errorModule.renderErr(Lang.pgpBlock.cantOpen + Lang.pgpBlock.writeMe + '\n\nDiagnostic info: "' + JSON.stringify(result) + '"', encryptedData.toUtfStr());
         }
       }
-    } else { // this.view.signature is string
+    } else { // this.view.signature.parsedSignature is defined
       // sometimes signatures come wrongly percent-encoded. Here we check for typical "=3Dabcd" at the end
-      const sigText = Buf.fromUtfStr(this.view.signature.replace('\n=3D', '\n='));
+      const sigText = Buf.fromUtfStr(this.view.signature.parsedSignature.replace('\n=3D', '\n='));
       const verify = async (verificationPubs: string[]) => await BrowserMsg.send.bg.await.pgpMsgVerifyDetached({ plaintext: encryptedData, sigText, verificationPubs });
       const signatureResult = await verify(verificationPubs);
-      await this.view.renderModule.decideDecryptedContentFormattingAndRender(encryptedData, false, signatureResult, verify);
+      await this.view.renderModule.decideDecryptedContentFormattingAndRender(encryptedData, false, signatureResult, verificationPubs, verify);
     }
   };
 

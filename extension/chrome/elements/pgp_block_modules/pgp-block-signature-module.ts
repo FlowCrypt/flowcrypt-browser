@@ -13,11 +13,16 @@ export class PgpBlockViewSignatureModule {
   constructor(private view: PgpBlockView) {
   }
 
-  public renderPgpSignatureCheckResult = async (verifyRes: VerifyRes | undefined, retryVerification?: (verificationPubs: string[]) => Promise<VerifyRes | undefined>) => {
+  public renderPgpSignatureCheckResult = async (verifyRes: VerifyRes | undefined, verificationPubs: string[],
+    retryVerification?: (verificationPubs: string[]) => Promise<VerifyRes | undefined>) => {
     this.view.renderModule.doNotSetStateAsReadyYet = true; // so that body state is not marked as ready too soon - automated tests need to know when to check results
     const signerLongids = verifyRes?.signerLongids;
     if (verifyRes?.error) {
-      // todo: retry raw here!
+      if (!verifyRes.isErrFatal && this.view.decryptModule.canFetchFromApi()) {
+        this.view.signature!.parsedSignature = undefined; // force to re-parse
+        await this.view.decryptModule.initialize(verificationPubs, true);
+        return;
+      }
       $('#pgp_signature').addClass('bad');
       $('#pgp_signature > .result').text(verifyRes.error);
       this.view.renderModule.setFrameColor('red');
@@ -45,7 +50,7 @@ export class PgpBlockViewSignatureModule {
           try {
             const { pubkeys: newPubkeys } = await this.view.pubLookup.lookupEmail(this.view.getSigner());
             if (newPubkeys.length) {
-              await this.renderPgpSignatureCheckResult(await retryVerification(newPubkeys), undefined);
+              await this.renderPgpSignatureCheckResult(await retryVerification(newPubkeys), newPubkeys, undefined);
               return;
             }
             this.renderMissingPubkey(signerLongids[0]);

@@ -871,7 +871,7 @@ jLwe8W9IMt765T5x5oux9MmPDXF05xHfm4qfH/BMO3a802x5u2gJjJjuknrFdgXY
       t.pass();
     });
 
-    ava.default(`[unit][MsgUtil.verifyDetached] returns errorwhen signature doesn't match`, async t => {
+    ava.default(`[unit][MsgUtil.verifyDetached] returns non-fatal error when signature doesn't match`, async t => {
       const sigText = Buf.fromUtfStr(`-----BEGIN PGP SIGNATURE-----
 
 wsD5BAABCAAjFiEE3CZFSvtx0Y6rutc9HH5tPFVjqUEFAl+QotYFAwAAAAAACgkQHH5tPFVjqUF4
@@ -897,6 +897,7 @@ E1d8Vh/Ey7IJ8TXbfFrdv5ZP3HqMK0089SooZwx/GN2QIaOYQXsS0u7IFNhU\n=q5Sf
         });
         expect(resultRightKey.match).to.be.null;
         expect(resultRightKey.error).to.not.be.undefined;
+        expect(resultRightKey.isErrFatal).to.be.undefined;
       }
       {
         const resultWrongKey = await MsgUtil.verifyDetached({
