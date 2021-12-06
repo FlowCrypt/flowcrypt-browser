@@ -1213,12 +1213,11 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       await ComposePageRecipe.pastePublicKeyManually(composeFrame, inboxPage, 'smime.attachment@recipient.com', testConstants.testCertificateMultipleSmimeCEA2D53BB9D24871);
       const fileInput = await composeFrame.target.$('input[type=file]');
       await fileInput!.uploadFile('test/samples/small.txt', 'test/samples/small.png', 'test/samples/small.pdf');
-      /* todo: #4087 attachments in composer can be downloaded
+      // attachments in composer can be downloaded
       const fileText = await inboxPage.awaitDownloadTriggeredByClicking(async () => {
         await composeFrame.click('.qq-file-id-0');
       });
       expect(fileText.toString()).to.equal(`small text file\nnot much here\nthis worked\n`);
-      */
       await composeFrame.waitAndClick('@action-send', { delay: 2 });
       await inboxPage.waitTillGone('@container-new-message');
     }));
