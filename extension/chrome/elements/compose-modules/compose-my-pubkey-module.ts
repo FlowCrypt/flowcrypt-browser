@@ -76,9 +76,9 @@ export class ComposeMyPubkeyModule extends ViewModule<ComposeView> {
 
   private setAttachPreference = (includePubkey: boolean) => {
     if (includePubkey) {
-      this.view.S.cached('icon_pubkey').addClass('active').attr('title', Lang.compose.includePubkeyIconTitleActive);
+      this.view.S.cached('icon_pubkey').addClass('active');
     } else {
-      this.view.S.cached('icon_pubkey').removeClass('active').attr('title', Lang.compose.includePubkeyIconTitle);
+      this.view.S.cached('icon_pubkey').removeClass('active');
     }
   };
 

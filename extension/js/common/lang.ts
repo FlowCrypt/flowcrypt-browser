@@ -69,8 +69,7 @@ export const Lang = { // tslint:disable-line:variable-name
     msgEncryptedText: (lang: string, senderEmail: string) => (lang === 'DE') ? `${senderEmail} hat Ihnen eine passwortverschlüsselte E-Mail gesendet. Folgen Sie diesem Link, um es zu öffnen: ` : `${senderEmail} has sent you a password-encrypted email. Follow this link to open it: `,
     alternativelyCopyPaste: { EN: 'Alternatively copy and paste the following link: ', DE: 'Alternativ kopieren Sie folgenden Link und fügen ihn in die Adresszeile Ihres Browsers ein: ' },
     openMsg: { EN: 'Click here to Open Message', DE: 'Klicken Sie hier, um die Nachricht zu öffnen' },
-    includePubkeyIconTitle: 'Include your Public Key with this message.\n\nThis allows people using non-FlowCrypt encryption to reply to you.',
-    includePubkeyIconTitleActive: 'Your Public Key will be included with this message.\n\nThis allows people using non-FlowCrypt encryption to reply to you.',
+    includePubkeyIconTitle: 'Include your Public Key with this message.\n\nIf enabled, your Public Key will be included with this message.\n\nThis allows people using non-FlowCrypt encryption to reply to you.',
     headers: {
       encrypted: 'New Secure Message',
       encryptedAndSigned: 'New Signed Secure Message',
