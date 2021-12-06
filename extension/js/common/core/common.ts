@@ -203,6 +203,7 @@ export class Value {
       return result;
     },
     contains: <T>(arr: T[] | string, value: T): boolean => Boolean(arr && typeof arr.indexOf === 'function' && (arr as any[]).indexOf(value) !== -1),
+    intersection: <T>(array1: T[], array2: T[]): T[] => array1.filter(value => array2.includes(value)),
     sum: (arr: number[]) => arr.reduce((a, b) => a + b, 0),
     average: (arr: number[]) => Value.arr.sum(arr) / arr.length,
     zeroes: (length: number): number[] => new Array(length).map(() => 0)

@@ -61,7 +61,8 @@ type DecryptError$longids = { message: string[]; matching: string[]; chosen: str
 export type DecryptError = { success: false; error: DecryptError$error; longids: DecryptError$longids; content?: Buf; isEncrypted?: boolean; };
 
 export type VerifyRes = {
-  signerLongids: string[];
+  signerLongids: string[]; // signers longids from the message
+  suppliedLongids: string[]; // longids from keys supplied to verify the message
   match: boolean | null; // we can return some pubkey information here
   error?: string;
   isErrFatal?: boolean,

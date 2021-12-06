@@ -436,10 +436,15 @@ export class OpenPGPKey {
   };
 
   public static verify = async (msg: OpenpgpMsgOrCleartext, pubs: PubkeyInfo[]): Promise<VerifyRes> => {
-    const verifyRes: VerifyRes = { match: null, signerLongids: [] }; // tslint:disable-line:no-null-keyword
-    // msg.getSigningKeyIds ? msg.getSigningKeyIds()
     // todo: double-check if S/MIME ever gets here
-    const opgpKeys = pubs.filter(x => !x.revoked && x.pubkey.type === 'openpgp').map(x => OpenPGPKey.extractExternalLibraryObjFromKey(x.pubkey));
+    const validKeys = pubs.filter(x => !x.revoked && x.pubkey.type === 'openpgp').map(x => x.pubkey);
+    // todo: #4172 revoked longid may result in incorrect "Missing pubkey..." output
+    const verifyRes: VerifyRes = {
+      match: null,  // tslint:disable-line:no-null-keyword
+      signerLongids: [],
+      suppliedLongids: validKeys.map(x => x.allIds.map(fp => OpenPGPKey.fingerprintToLongid(fp))).reduce((a, b) => a.concat(b), [])
+    };
+    const opgpKeys = validKeys.map(x => OpenPGPKey.extractExternalLibraryObjFromKey(x));
     // todo: expired?
     try {
       // this is here to ensure execution order when 1) verify, 2) read data, 3) processing signatures
