@@ -18,6 +18,8 @@ import { Buf } from '../core/buf';
 // tslint:disable:no-blank-lines-func
 // tslint:disable:max-line-length
 /* eslint-disable max-len */
+// tslint:disable:no-unused-expression
+/* eslint-disable no-unused-expressions */
 
 export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: TestWithBrowser) => {
 
