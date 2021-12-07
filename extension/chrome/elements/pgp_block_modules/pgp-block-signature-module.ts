@@ -8,6 +8,7 @@ import { PgpBlockView } from '../pgp_block';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { VerifyRes } from '../../../js/common/core/crypto/pgp/msg-util.js';
 import { Value } from '../../../js/common/core/common.js';
+import { ContactStore } from '../../../js/common/platform/store/contact-store.js';
 
 export class PgpBlockViewSignatureModule {
 
@@ -46,9 +47,13 @@ export class PgpBlockViewSignatureModule {
         } else {
           this.view.renderModule.renderText('Verifying message...');
           try {
-            const { pubkeys: newPubkeys } = await this.view.pubLookup.lookupEmail(signerEmail);
-            if (newPubkeys.length) {
-              await this.renderPgpSignatureCheckResult(await retryVerification(newPubkeys), newPubkeys, undefined);
+            const { pubkeys: fetchedPubkeys } = await this.view.pubLookup.lookupEmail(signerEmail);
+            if (fetchedPubkeys.length) {
+              for (const fetched of fetchedPubkeys) { // todo: should we ignore the ones we already have in verificationPubs?
+                // or better yet, create a common method to use both here and in ComposeStorageModule
+                ContactStore.update(undefined, signerEmail, { pubkey: fetched, pubkeyLastCheck: Date.now() }).catch(Catch.reportErr);
+              }
+              await this.renderPgpSignatureCheckResult(await retryVerification(fetchedPubkeys), fetchedPubkeys, undefined);
               return;
             }
             if (intersection.length) {

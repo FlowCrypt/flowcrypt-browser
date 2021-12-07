@@ -373,6 +373,36 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
       await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, { params: url, content: ['1234'], signature });
     }));
 
+    ava.default('decrypt - fetched pubkey is automatically saved to contacts', testWithBrowser('compatibility', async (t, browser) => {
+      const msgId = '1754cfc37886899e';
+      const acctEmail = 'flowcrypt.compatibility@gmail.com';
+      {
+        const settingsPage = await browser.newPage(t, TestUrls.extensionSettings(acctEmail));
+        await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
+        const contactsFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-contacts-page', ['contacts.htm', 'placement=settings']);
+        await contactsFrame.waitAll('@page-contacts');
+        await Util.sleep(1);
+        expect(await contactsFrame.isElementPresent('@action-show-email-flowcryptcompatibilitygmailcom')).to.be.true;
+        expect(await contactsFrame.isElementPresent('@action-show-email-dhartleyverdoncollegeschoolnz')).to.be.false;
+      }
+      const params = `?frameId=none&acctEmail=${acctEmail}&msgId=${msgId}&signature=___cu_true___&senderEmail=dhartley@verdoncollege.school.nz`;
+      await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, { params, content: ['1234'] });
+      // the fetched pubkey is saved to ContactStore asynchronously, so let's wait a little
+      await Util.sleep(1);
+      {
+        const settingsPage = await browser.newPage(t, TestUrls.extensionSettings(acctEmail));
+        await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
+        const contactsFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-contacts-page', ['contacts.htm', 'placement=settings']);
+        await contactsFrame.waitAll('@page-contacts');
+        await Util.sleep(1);
+        expect(await contactsFrame.isElementPresent('@action-show-email-flowcryptcompatibilitygmailcom')).to.be.true;
+        expect(await contactsFrame.isElementPresent('@action-show-email-dhartleyverdoncollegeschoolnz')).to.be.true;
+        await contactsFrame.waitAndClick('@action-show-email-dhartleyverdoncollegeschoolnz');
+        // contains newly fetched key
+        await contactsFrame.waitForContent('@page-contacts', 'openpgp - active - DC26 454A FB71 D18E ABBA D73D 1C7E 6D3C 5563 A941');
+      }
+    }));
+
     ava.default('decrypt - unsigned encrypted message', testWithBrowser('compatibility', async (t, browser) => {
       const threadId = '17918a9d7ca2fbac';
       const acctEmail = 'flowcrypt.compatibility@gmail.com';

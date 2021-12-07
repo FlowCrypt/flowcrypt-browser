@@ -6,7 +6,7 @@ import { storageLocalGetAll, storageLocalRemove } from '../common/browser/chrome
 import { KeyInfo, KeyUtil } from '../common/core/crypto/key.js';
 import { SmimeKey } from '../common/core/crypto/smime/smime-key.js';
 import { Str } from '../common/core/common.js';
-import { ContactStore, ContactUpdate, Email, Pubkey } from '../common/platform/store/contact-store.js';
+import { ContactStore, Email, Pubkey } from '../common/platform/store/contact-store.js';
 import { GlobalStore, LocalDraft } from '../common/platform/store/global-store.js';
 import { KeyStore } from '../common/platform/store/key-store.js';
 
@@ -212,7 +212,7 @@ const moveContactsBatchToEmailsAndPubkeys = async (db: IDBDatabase, count?: numb
         pubkey,
         lastUse: entry.last_use,
         pubkeyLastCheck: pubkey ? entry.pubkey_last_check : undefined
-      } as ContactUpdate
+      }
     };
   }));
   {

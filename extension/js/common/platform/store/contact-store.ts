@@ -58,6 +58,13 @@ export type ContactPreview = {
 export type ContactUpdate = {
   name?: string | null;
   lastUse?: number | null;
+  pubkey?: Key | string;
+  pubkeyLastCheck?: number | null; // when non-null, `pubkey` must be supplied
+};
+
+type ContactUpdateParsed = {
+  name?: string | null;
+  lastUse?: number | null;
   pubkey?: Key;
   pubkeyLastCheck?: number | null; // when non-null, `pubkey` must be supplied
 };
@@ -212,14 +219,15 @@ export class ContactStore extends AbstractStore {
     if (!validEmail) {
       throw Error(`Cannot update contact because email is not valid: ${email}`);
     }
-    if (update.pubkey?.isPrivate) {
-      Catch.report(`Wrongly updating prv ${update.pubkey.id} as contact - converting to pubkey`);
-      update.pubkey = await KeyUtil.asPublicKey(update.pubkey);
+    let pubkey = typeof update.pubkey === 'string' ? await KeyUtil.parse(update.pubkey) : update.pubkey;
+    if (pubkey?.isPrivate) {
+      Catch.report(`Wrongly updating prv ${pubkey.id} as contact - converting to pubkey`);
+      pubkey = await KeyUtil.asPublicKey(pubkey);
     }
     const tx = db.transaction(['emails', 'pubkeys', 'revocations'], 'readwrite');
     await new Promise((resolve, reject) => {
       ContactStore.setTxHandlers(tx, resolve, reject);
-      ContactStore.updateTx(tx, validEmail, update);
+      ContactStore.updateTx(tx, validEmail, { ...update, pubkey });
     });
   };
 
@@ -348,7 +356,7 @@ export class ContactStore extends AbstractStore {
     });
   };
 
-  public static updateTx = (tx: IDBTransaction, email: string, update: ContactUpdate) => {
+  public static updateTx = (tx: IDBTransaction, email: string, update: ContactUpdateParsed) => {
     if (update.pubkey && !update.pubkeyLastCheck) {
       const req = tx.objectStore('pubkeys').get(ContactStore.getPubkeyId(update.pubkey));
       ContactStore.setReqPipe(req, (pubkey: Pubkey) => {
@@ -495,7 +503,7 @@ export class ContactStore extends AbstractStore {
     }
   };
 
-  private static updateTxPhase2 = (tx: IDBTransaction, email: string, update: ContactUpdate,
+  private static updateTxPhase2 = (tx: IDBTransaction, email: string, update: ContactUpdateParsed,
     existingPubkey: Pubkey | undefined, revocations: Revocation[]) => {
     let pubkeyEntity: Pubkey | undefined;
     if (update.pubkey) {
