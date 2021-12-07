@@ -208,7 +208,7 @@ export class AttachmentDownloadView extends View {
       const decrRes = await MsgUtil.decryptMessage({
         kisWithPp: await KeyStore.getAllWithOptionalPassPhrase(this.acctEmail),
         encryptedData: data,
-        verificationPubs: [] // todo: signature?
+        verificationPubs: [] // no need to worry about the public key signature, as public key exchange is inherently unsafe
       });
       if (decrRes.success && decrRes.content) {
         const openpgpType = await MsgUtil.type({ data: decrRes.content });

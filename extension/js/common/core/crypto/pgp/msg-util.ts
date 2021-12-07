@@ -157,7 +157,6 @@ export class MsgUtil {
       return { success: false, error: { type: DecryptErrTypes.format, message: String(formatErr) }, longids };
     }
     if (prepared.isCleartext) {
-      // todo: error if no verificationPubs?
       const signature = await OpenPGPKey.verify(prepared.message, await ContactStore.getPubkeyInfos(undefined, verificationPubs));
       const content = signature.content || Buf.fromUtfStr('no content');
       signature.content = undefined; // no need to duplicate data
@@ -188,7 +187,6 @@ export class MsgUtil {
       const passwords = msgPwd ? [msgPwd] : undefined;
       const privateKeys = keys.prvForDecryptDecrypted.map(decrypted => decrypted.decrypted);
       const decrypted = await OpenPGPKey.decryptMessage(msg, privateKeys, passwords);
-      // todo: test when not signed at all
       const signature = await OpenPGPKey.verify(decrypted, await ContactStore.getPubkeyInfos(undefined, verificationPubs));
       const content = signature?.content || new Buf(await opgp.stream.readToEnd(decrypted.getLiteralData()!));
       if (signature?.content) {
