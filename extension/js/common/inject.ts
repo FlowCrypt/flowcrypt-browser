@@ -26,7 +26,7 @@ export class Injector {
   private S: SelCache;
   private container: { [key: string]: Host } = {
     composeBtnSel: {
-      'gmail': 'div.aeN',
+      'gmail': 'div.aeN, div.aBO', // .aeN for normal look, .aBO for new look https://github.com/FlowCrypt/flowcrypt-browser/issues/4099
       'outlook': 'div._fce_b',
       'settings': '#does_not_have',
     },
@@ -75,7 +75,14 @@ export class Injector {
     } else if (this.shouldInject()) {
       if (this.S.now('compose_button').length === 0) {
         const secureComposeButton = $(this.factory.btnCompose(this.webmailName));
-        const container = this.S.now('compose_button_container').first().prepend(secureComposeButton); // xss-safe-factory
+        let target = this.S.now('compose_button_container').first();
+        // gmail new look, https://github.com/FlowCrypt/flowcrypt-browser/issues/4099
+        if (this.webmailName === 'gmail') {
+          if (this.S.now('compose_button_container').find('div.aBO').length === 1) {
+            target = this.S.now('compose_button_container').find('div.aBO').first();
+          }
+        }
+        const container = target.prepend(secureComposeButton); // xss-safe-factory
         if (this.webmailName === 'gmail') {
           if (!$('.aic').length) { // https://github.com/FlowCrypt/flowcrypt-browser/issues/4063
             secureComposeButton.addClass('small');
