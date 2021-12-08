@@ -62,7 +62,7 @@ export class PgpBlockView extends View {
     }
     this.encryptedMsgUrlParam = uncheckedUrlParams.message ? Buf.fromUtfStr(Assert.urlParamRequire.string(uncheckedUrlParams, 'message')) : undefined;
     if (uncheckedUrlParams.signature === true) {
-      this.signature = {};
+      this.signature = { parsedSignature: undefined }; // decryptModule will try to fetch the message
     } else if (uncheckedUrlParams.signature) {
       this.signature = { parsedSignature: String(uncheckedUrlParams.signature) };
     }
@@ -76,7 +76,12 @@ export class PgpBlockView extends View {
     this.decryptModule = new PgpBlockViewDecryptModule(this);
   }
 
-  public getSigner = () => {
+  public getExpectedSignerEmail = () => {
+    // We always attempt to verify all signatures as "signed by sender", with public keys of the sender.
+    //     That way, signature spoofing attacks are prevented: if Joe manages to spoof a sending address 
+    //     of Jane (send an email from Jane address), then we expect Jane to be this signer: we look up 
+    //     keys recorded for Jane and the signature either succeeds or fails to verify. If it fails (that pubkey 
+    //     which Joe used is not recorded for Jane), it will show an error.
     return this.senderEmail;
   };
 
@@ -87,7 +92,7 @@ export class PgpBlockView extends View {
     const scopes = await AcctStore.getScopes(this.acctEmail);
     this.decryptModule.canReadEmails = scopes.read || scopes.modify;
     if (storage.setup_done) {
-      const parsedPubs = (await ContactStore.getOneWithAllPubkeys(undefined, this.getSigner()))?.sortedPubkeys ?? [];
+      const parsedPubs = (await ContactStore.getOneWithAllPubkeys(undefined, this.getExpectedSignerEmail()))?.sortedPubkeys ?? [];
       // todo: we don't actually need parsed pubs here because we're going to pass them to the backgorund page
       // maybe we can have a method in ContactStore to extract armored keys
       const verificationPubs = parsedPubs.map(key => KeyUtil.armor(key.pubkey));

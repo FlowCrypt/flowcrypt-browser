@@ -62,7 +62,7 @@ export class PgpBlockViewDecryptModule {
     }
   };
 
-  public canFetchFromApi = () => this.canReadEmails && this.msgFetchedFromApi !== 'raw';
+  public canAndShouldFetchFromApi = () => this.canReadEmails && this.msgFetchedFromApi !== 'raw';
 
   private decryptAndRender = async (encryptedData: Buf, verificationPubs: string[], optionalPwd?: string, plainSubject?: string) => {
     if (!this.view.signature?.parsedSignature) {
@@ -82,7 +82,7 @@ export class PgpBlockViewDecryptModule {
             }
           }, plainSubject);
       } else if (result.error.type === DecryptErrTypes.format) {
-        if (this.canFetchFromApi()) {
+        if (this.canAndShouldFetchFromApi()) {
           console.info(`re-fetching message ${this.view.msgId} from api because looks like bad formatting: ${!this.msgFetchedFromApi ? 'full' : 'raw'}`);
           await this.initialize(verificationPubs, true);
         } else {

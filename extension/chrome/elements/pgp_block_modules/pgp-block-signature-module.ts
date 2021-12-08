@@ -19,7 +19,7 @@ export class PgpBlockViewSignatureModule {
     retryVerification?: (verificationPubs: string[]) => Promise<VerifyRes | undefined>) => {
     this.view.renderModule.doNotSetStateAsReadyYet = true; // so that body state is not marked as ready too soon - automated tests need to know when to check results
     if (verifyRes?.error) {
-      if (!verifyRes.isErrFatal && this.view.decryptModule.canFetchFromApi()) {
+      if (!verifyRes.isErrFatal && this.view.decryptModule.canAndShouldFetchFromApi()) {
         // Sometimes the signed content is slightly modified when parsed from DOM,
         // so the message should be re-fetched straight from API to make sure we get the original signed data and verify again
         this.view.signature!.parsedSignature = undefined; // force to re-parse
@@ -37,10 +37,8 @@ export class PgpBlockViewSignatureModule {
       $('#pgp_signature').addClass('good');
       $('#pgp_signature > .result').text('matching signature');
     } else {
-      // is there intersection between supplied longids and signers from the message?
-      const intersection = Value.arr.intersection(verifyRes.signerLongids, verifyRes.suppliedLongids);
       if (retryVerification) {
-        const signerEmail = this.view.getSigner();
+        const signerEmail = this.view.getExpectedSignerEmail();
         if (!signerEmail) {
           // in some tests we load the block without sender information
           $('#pgp_signature').addClass('bad').find('.result').text(`Cannot verify: missing pubkey, missing sender info`);
@@ -56,11 +54,7 @@ export class PgpBlockViewSignatureModule {
               await this.renderPgpSignatureCheckResult(await retryVerification(fetchedPubkeys), fetchedPubkeys, undefined);
               return;
             }
-            if (intersection.length) {
-              this.renderBadSignature();
-            } else {
-              this.renderMissingPubkey(verifyRes.signerLongids[0]);
-            }
+            this.renderMissingPubkeyOrBadSignature(verifyRes);
           } catch (e) {
             if (ApiErr.isSignificant(e)) {
               Catch.reportErr(e);
@@ -72,11 +66,7 @@ export class PgpBlockViewSignatureModule {
           }
         }
       } else { // !retryVerification
-        if (intersection.length) {
-          this.renderBadSignature();
-        } else {
-          this.renderMissingPubkey(verifyRes.signerLongids[0]);
-        }
+        this.renderMissingPubkeyOrBadSignature(verifyRes);
       }
     }
     if (verifyRes) {
@@ -87,7 +77,7 @@ export class PgpBlockViewSignatureModule {
   };
 
   private setSigner = (signature: VerifyRes): void => {
-    const signerEmail = signature.match ? this.view.getSigner() : undefined;
+    const signerEmail = signature.match ? this.view.getExpectedSignerEmail() : undefined;
     $('#pgp_signature > .cursive > span').text(signerEmail || 'Unknown Signer');
   };
 
@@ -100,4 +90,12 @@ export class PgpBlockViewSignatureModule {
     $('#pgp_signature > .result').text('signature does not match');
     this.view.renderModule.setFrameColor('red'); // todo: in what other cases should we set the frame red?
   };
+
+  private renderMissingPubkeyOrBadSignature = (verifyRes: VerifyRes): void => {
+    if (verifyRes.match === null || !Value.arr.hasIntersection(verifyRes.signerLongids, verifyRes.suppliedLongids)) {
+      this.renderMissingPubkey(verifyRes.signerLongids[0]);
+    } else {
+      this.renderBadSignature();
+    }
+  }
 }
