@@ -78,9 +78,9 @@ export class PgpBlockView extends View {
 
   public getExpectedSignerEmail = () => {
     // We always attempt to verify all signatures as "signed by sender", with public keys of the sender.
-    //     That way, signature spoofing attacks are prevented: if Joe manages to spoof a sending address 
-    //     of Jane (send an email from Jane address), then we expect Jane to be this signer: we look up 
-    //     keys recorded for Jane and the signature either succeeds or fails to verify. If it fails (that pubkey 
+    //     That way, signature spoofing attacks are prevented: if Joe manages to spoof a sending address
+    //     of Jane (send an email from Jane address), then we expect Jane to be this signer: we look up
+    //     keys recorded for Jane and the signature either succeeds or fails to verify. If it fails (that pubkey
     //     which Joe used is not recorded for Jane), it will show an error.
     return this.senderEmail;
   };
