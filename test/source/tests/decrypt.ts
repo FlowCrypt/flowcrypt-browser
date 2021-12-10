@@ -371,7 +371,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
       const urls = await inboxPage.getFramesUrls(['/chrome/elements/pgp_block.htm'], { sleep: 10, appearIn: 20 });
       expect(urls.length).to.equal(1);
       const url = urls[0].split('/chrome/elements/pgp_block.htm')[1];
-      const signature = ['Dhartley@Verdoncollege.School.Nz', 'matching signature'];
+      const signature = ['dhartley@verdoncollege.school.nz', 'matching signature'];
       await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, { params: url, content: ['1234'], signature });
     }));
 
@@ -417,7 +417,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
       await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, { params: url, content: ['This is unsigned, encrypted message'], signature });
     }));
 
-    ava.default('signature - sender is different from pubkey email', testWithBrowser('ci.tests.gmail', async (t, browser) => {
+    ava.default('signature - sender is different from pubkey uid', testWithBrowser('ci.tests.gmail', async (t, browser) => {
       const threadId = '1766644f13510f58';
       const acctEmail = 'ci.tests.gmail@flowcrypt.test';
       const inboxPage = await browser.newPage(t, TestUrls.extension(`chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`));
@@ -428,7 +428,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
       await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
         params: url,
         content: ['How is my message signed?'],
-        signature: ['President@Forged.Com', 'matching signature']
+        signature: ['sender@example.com', 'matching signature']
       });
     }));
 
@@ -436,7 +436,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
       const threadId = '1766644f13510f58';
       const acctEmail = 'ci.tests.gmail@flowcrypt.test';
       await PageRecipe.addPubkey(t, browser, acctEmail, '-----BEGIN PGP PUBLIC KEY BLOCK-----\r\nVersion: FlowCrypt Email Encryption [BUILD_REPLACEABLE_VERSION]\r\nComment: Seamlessly send and receive encrypted email\r\n\r\nxjMEYZeW2RYJKwYBBAHaRw8BAQdAT5QfLVP3y1yukk3MM/oiuXLNe1f9az5M\r\nBnOlKdF0nKnNJVNvbWVib2R5IDxTYW1zNTBzYW1zNTBzZXB0QEdtYWlsLkNv\r\nbT7CjwQQFgoAIAUCYZeW2QYLCQcIAwIEFQgKAgQWAgEAAhkBAhsDAh4BACEJ\r\nEMrSTYqLk6SUFiEEBP90ux3d6kDwDdzvytJNiouTpJS27QEA7pFlkLfD0KFQ\r\nsH/dwb/NPzn5zCi2L9gjPAC3d8gv1fwA/0FjAy/vKct4D7QH8KwtEGQns5+D\r\nP1WxDr4YI2hp5TkAzjgEYZeW2RIKKwYBBAGXVQEFAQEHQKNLY/bXrhJMWA2+\r\nWTjk3I7KhawyZfLomJ4hovqr7UtOAwEIB8J4BBgWCAAJBQJhl5bZAhsMACEJ\r\nEMrSTYqLk6SUFiEEBP90ux3d6kDwDdzvytJNiouTpJQnpgD/c1CzfS3YzJUx\r\nnFMrhjiE0WVgqOV/3CkfI4m4RA30QUIA/ju8r4AD2h6lu3Mx/6I6PzIRZQty\r\nLvTkcu4UKodZa4kK\r\n=7C4A\r\n-----END PGP PUBLIC KEY BLOCK-----\r\n',
-        'president@forged.com');
+        'sender@example.com');
       const inboxPage = await browser.newPage(t, TestUrls.extension(`chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`));
       await inboxPage.waitAll('iframe', { timeout: 2 });
       const urls = await inboxPage.getFramesUrls(['/chrome/elements/pgp_block.htm'], { sleep: 10, appearIn: 20 });
@@ -445,7 +445,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
       await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
         params: url,
         content: ['How is my message signed?'],
-        signature: ['President@Forged.Com', 'matching signature']
+        signature: ['sender@example.com', 'matching signature']
       });
     }));
 
@@ -475,7 +475,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
       await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
         params,
         content: [], // todo: #4164 I would expect '1234' here
-        signature: ['Dhartley@Verdoncollege.School.Nz', 'matching signature']
+        signature: ['dhartley@verdoncollege.school.nz', 'matching signature']
       });
     }));
 
@@ -487,14 +487,14 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
       await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
         params: textParams,
         content: ["1234"],
-        signature: ["matching signature", "Some.Alias@Protonmail.Com"]
+        signature: ["matching signature", "some.alias@protonmail.com"]
       });
       const htmlParams = `?frameId=none&message=&msgId=16a9c0fe4e034bc2&` +
         `senderEmail=some.alias%40protonmail.com&isOutgoing=___cu_false___&signature=___cu_true___&acctEmail=flowcrypt.compatibility%40gmail.com`;
       await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
         params: htmlParams,
         content: ["1234"],
-        signature: ["matching signature", "Some.Alias@Protonmail.Com"]
+        signature: ["matching signature", "some.alias@protonmail.com"]
       });
     }));
 
@@ -504,7 +504,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
       await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
         params,
         content: ["1234"],
-        signature: ["matching signature", "Flowcrypt.Compatibility@Protonmail.Com"]
+        signature: ["matching signature", "flowcrypt.compatibility@protonmail.com"]
       });
     }));
 
@@ -513,7 +513,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
       await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
         params,
         content: ['4) signed + encrypted email if supported'],
-        signature: ["matching signature", "Martin@Politick.Ca"]
+        signature: ["matching signature", "martin@politick.ca"]
       });
     }));
 

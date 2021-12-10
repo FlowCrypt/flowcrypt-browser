@@ -213,7 +213,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       const pgpBlockUrls = await gmailPage.getFramesUrls(['/chrome/elements/pgp_block.htm'], { sleep: 10, appearIn: 20 });
       expect(pgpBlockUrls.length).to.equal(1);
       const url = pgpBlockUrls[0].split('/chrome/elements/pgp_block.htm')[1];
-      const signature = ['Limon.Monte@Gmail.Com', 'matching signature'];
+      const signature = ['limon.monte@gmail.com', 'matching signature'];
       await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, { params: url, content: ['1234'], signature });
       await pageHasSecureReplyContainer(t, browser, gmailPage);
       await testMinimumElementHeight(gmailPage, '.pgp_block.signedMsg', 80);
@@ -231,7 +231,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       await testMinimumElementHeight(gmailPage, '.pgp_block.signedMsg', 80);
       await testMinimumElementHeight(gmailPage, '.pgp_block.publicKey', 120);
       const url = pgpBlockUrls[0].split('/chrome/elements/pgp_block.htm')[1];
-      const signature = ['Limon.Monte@Gmail.Com', 'matching signature'];
+      const signature = ['limon.monte@gmail.com', 'matching signature'];
       await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, { params: url, content: ['1234'], signature });
       await pageHasSecureReplyContainer(t, browser, gmailPage);
       const pubkeyPage = await gmailPage.getFrame(['/chrome/elements/pgp_pubkey.htm']);

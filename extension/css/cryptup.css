@@ -1323,7 +1323,6 @@ td {
 #pgp_signature > .cursive {
   font-family: signature; /* stylelint-disable-line font-family-no-missing-generic-family-keyword */
   font-size: 24px;
-  text-transform: capitalize;
   font-weight: bold;
 }
 

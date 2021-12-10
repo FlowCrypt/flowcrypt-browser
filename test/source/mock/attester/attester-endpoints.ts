@@ -62,7 +62,7 @@ export const mockAttesterEndpoints: HandlersDefinition = {
       if (['dhartley@verdoncollege.school.nz', '1C7E6D3C5563A941'.toLowerCase()].includes(emailOrLongid)) {
         return await getDC26454AFB71D18EABBAD73D1C7E6D3C5563A941();
       }
-      if (['sams50sams50sept@gmail.com', 'president@forged.com', '2864E326A5BE488A'.toLowerCase()].includes(emailOrLongid)) {
+      if (['sams50sams50sept@gmail.com', 'sender@example.com'].includes(emailOrLongid)) {
         return testConstants.pubkey2864E326A5BE488A;
       }
       if (emailOrLongid.startsWith('martin@p')) {
