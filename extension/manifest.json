@@ -76,18 +76,7 @@
     "/img/svgs/spinner-white-small.svg",
     "/img/svgs/spinner-green-small.svg",
     "/img/svgs/unlock.svg",
-    "/img/logo/flowcrypt-logo-19-19.png",
-    "/chrome/elements/compose.htm",
-    "/chrome/elements/pgp_block.htm",
-    "/chrome/elements/setup_dialog.htm",
-    "/chrome/elements/attachment.htm",
-    "/chrome/elements/attachment_preview.htm",
-    "/chrome/elements/passphrase.htm",
-    "/chrome/elements/add_pubkey.htm",
-    "/chrome/elements/pgp_pubkey.htm",
-    "/chrome/elements/backup.htm",
-    "/chrome/elements/verification.htm",
-    "/chrome/elements/shared/footer.htm"
+    "/img/logo/flowcrypt-logo-19-19.png"
   ],
   "minimum_chrome_version": "61",
   "content_security_policy": "upgrade-insecure-requests; script-src 'self'; frame-ancestors https://mail.google.com 'self'; img-src 'self' https://*.googleusercontent.com data: blob:; frame-src 'self' blob:; worker-src 'self'; form-action 'none'; media-src 'none'; font-src 'none'; manifest-src 'none'; object-src 'none'; base-uri 'self'"
