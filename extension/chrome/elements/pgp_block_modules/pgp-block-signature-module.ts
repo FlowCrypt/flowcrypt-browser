@@ -97,5 +97,5 @@ export class PgpBlockViewSignatureModule {
     } else {
       this.renderBadSignature();
     }
-  }
+  };
 }
