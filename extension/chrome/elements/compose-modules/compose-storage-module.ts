@@ -16,6 +16,7 @@ import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
 import { ContactStore } from '../../../js/common/platform/store/contact-store.js';
 import { PassphraseStore } from '../../../js/common/platform/store/passphrase-store.js';
 import { Settings } from '../../../js/common/settings.js';
+import { compareAndSavePubkeysToStorage } from '../../../js/common/shared.js';
 
 export class ComposeStorageModule extends ViewModule<ComposeView> {
   // if `type` is supplied, returns undefined if no keys of this type are found
@@ -176,15 +177,10 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
     }
     try {
       const lookupResult = await this.view.pubLookup.lookupEmail(email);
-      const fetchedPubkeys = await Promise.all(lookupResult.pubkeys.map(KeyUtil.parse));
-      for (const fetched of fetchedPubkeys) {
-        const stored = storedPubkeys.find(p => KeyUtil.identityEquals(p.pubkey, fetched))?.pubkey;
-        if (!stored || KeyUtil.isFetchedNewer({ fetched, stored })) {
-          await ContactStore.update(undefined, email, { name, pubkey: fetched, pubkeyLastCheck: Date.now() });
-          await this.view.recipientsModule.reRenderRecipientFor(email);
-        }
+      if (await compareAndSavePubkeysToStorage(email, lookupResult.pubkeys, storedPubkeys)) {
+        await this.view.recipientsModule.reRenderRecipientFor(email);
       }
-      if (!fetchedPubkeys.length && name) { // update just name
+      if (name) { // update name
         await ContactStore.update(undefined, email, { name });
       }
     } catch (e) {
