@@ -156,6 +156,11 @@ export class MsgUtil {
     } catch (formatErr) {
       return { success: false, error: { type: DecryptErrTypes.format, message: String(formatErr) }, longids };
     }
+    // there are 3 types of messages possible at this point
+    // 1. PKCS#7 if isPkcs7 is true
+    // 2. OpenPGP cleartext message if isCleartext is true
+    // 3. Other types of OpenPGP message
+    // Hence isCleartext and isPkcs7 are mutually exclusive
     if (prepared.isCleartext) {
       const signature = await OpenPGPKey.verify(prepared.message, await ContactStore.getPubkeyInfos(undefined, verificationPubs));
       const content = signature.content || Buf.fromUtfStr('no content');
