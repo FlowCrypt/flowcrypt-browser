@@ -814,13 +814,13 @@ jLwe8W9IMt765T5x5oux9MmPDXF05xHfm4qfH/BMO3a802x5u2gJjJjuknrFdgXY
 
     ava.default('[unit][MsgUtil.verifyDetached] verifies Thunderbird html signed message', async t => {
       const data = await GoogleData.withInitializedData('flowcrypt.compatibility@gmail.com');
-      const msg: GmailMsg = data.getMessage('1754cfd1b2f1d6e5')!;
+      const msg: GmailMsg = data.getMessage('17daefa0eb077da6')!;
       const msgText = Buf.fromBase64Str(msg!.raw!).toUtfStr();
       const sigText = msgText
         .match(/\-\-\-\-\-BEGIN PGP SIGNATURE\-\-\-\-\-.*\-\-\-\-\-END PGP SIGNATURE\-\-\-\-\-/s)![0]
         .replace(/=\r\n/g, '').replace(/=3D/g, '=');
       const plaintext = msgText
-        .match(/Content\-Type: multipart\/mixed; boundary="vv8xtFOOk2SxbnIpwvxkobfET7PglPfc3".*\-\-vv8xtFOOk2SxbnIpwvxkobfET7PglPfc3\-\-\r?\n/s)![0]
+        .match(/Content\-Type: multipart\/mixed; boundary="------------0i0uwO075ZQ0NjkA1rJACksf".*--------------0i0uwO075ZQ0NjkA1rJACksf--\r?\n/s)![0]
         .replace(/\r?\n/g, '\r\n')!;
       const pubkey = plaintext
         .match(/\-\-\-\-\-BEGIN PGP PUBLIC KEY BLOCK\-\-\-\-\-.*\-\-\-\-\-END PGP PUBLIC KEY BLOCK\-\-\-\-\-/s)![0]
@@ -832,13 +832,13 @@ jLwe8W9IMt765T5x5oux9MmPDXF05xHfm4qfH/BMO3a802x5u2gJjJjuknrFdgXY
 
     ava.default('[unit][MsgUtil.verifyDetached] verifies Thunderbird text signed message', async t => {
       const data = await GoogleData.withInitializedData('flowcrypt.compatibility@gmail.com');
-      const msg: GmailMsg = data.getMessage('1754cfc37886899e')!;
+      const msg: GmailMsg = data.getMessage('17dad75e63e47f97')!;
       const msgText = Buf.fromBase64Str(msg!.raw!).toUtfStr();
       const sigText = msgText
         .match(/\-\-\-\-\-BEGIN PGP SIGNATURE\-\-\-\-\-.*\-\-\-\-\-END PGP SIGNATURE\-\-\-\-\-/s)![0]
         .replace(/=\r\n/g, '').replace(/=3D/g, '=');
       const plaintext = msgText
-        .match(/Content\-Type: multipart\/mixed; boundary="XWwnusC4nxhk2LRvLCC6Skcb8YiKQ4Lu0".*\-\-XWwnusC4nxhk2LRvLCC6Skcb8YiKQ4Lu0\-\-\r?\n/s)![0]
+        .match(/Content\-Type: multipart\/mixed; boundary="------------FQ7CfxuiGriwTfTfyc4i1ppF".*-------------FQ7CfxuiGriwTfTfyc4i1ppF--\r?\n/s)![0]
         .replace(/\r?\n/g, '\r\n')!;
       const pubkey = plaintext
         .match(/\-\-\-\-\-BEGIN PGP PUBLIC KEY BLOCK\-\-\-\-\-.*\-\-\-\-\-END PGP PUBLIC KEY BLOCK\-\-\-\-\-/s)![0]
@@ -874,26 +874,24 @@ jLwe8W9IMt765T5x5oux9MmPDXF05xHfm4qfH/BMO3a802x5u2gJjJjuknrFdgXY
     ava.default(`[unit][MsgUtil.verifyDetached] returns non-fatal error when signature doesn't match`, async t => {
       const sigText = Buf.fromUtfStr(`-----BEGIN PGP SIGNATURE-----
 
-wsD5BAABCAAjFiEE3CZFSvtx0Y6rutc9HH5tPFVjqUEFAl+QotYFAwAAAAAACgkQHH5tPFVjqUF4
-xgv+MrdQ07MfCVU93ptZg+S+OOkQ1AcZxGFdiivs10KkNGtLm9s+w/iEUAySSWbtKjbLV6O3AYvC
-QFKsFRFr17Ekz6mSPj99zifFMBvTOIAev/d08dmX0kGd6YlP+GyZL3Wqcgy1T1H3obgOmToDtk7R
-V52Ki1aTJYH/Z7v6PsQRWn8emfH/yGYplBhzZy2XjO6UIar9T8wtAJOd6+Ii2sfyGyEPjzGckLaR
-JZOxQ4jpJJUszz2WsvLNwtKoqwV15Eg3oxZzHWYE8P63xXoE4G762604SIqv/ggyQZTt/Es6Scun
-A1BJflFm+cHzQTW2yQfwCCvlzEZNiNwXfwGfV99K5iG1eW3lv7sMLJnitwTidNIlD5LTNdeUnTXj
-XJvkEQsyTUI4qbzzJbUNYz7lraizC2nPiwFzLv692mS0urtD3mUhOBA9hZwk3l/20GsGia0FeUIS
-E1d8Vh/Ey7IJ8TXbfFrdv5ZP3HqMK0089SooZwx/GN2QIaOYQXsS0u7IFNhU\n=q5Sf
+wsB5BAABCAAjFiEEK7IZd28jzkjruGCcID+ucHYAU4EFAmG1nzIFAwAAAAAACgkQID+ucHYAU4H1
+9AgAmi5QUmrzlMa/V8SeEv7VydA3v7Hca/EM18o4ot/ygQgS1BoCm9tAajOGWgzo7eEJwDK8LRj2
+c/XcKWExxcqkLjiem7CdePbi/xr5jMsPYzOlMtcFaD3zY9h8zabiiGM0kIpT8PVCofgFJMqQdByr
+gF0NuioMzAiCY+W9aiaSzquH9FVVE+C4bwsU4leTkANDGi05XBUIYaocNilHnUghG6DyFWS6qYFW
+cU4SvRcN5yDDUUjrtFJqp2a2Cs76KgbBr3KQcD42EypUL4/ZS+7/4MN4SA05R/mMtmfK4HwAKcC2
+jSB6A93JmnQGIkAem/kzGkKclmfAdGfc4FS+3Cn+6Q==Xmrz
 -----END PGP SIGNATURE-----`);
       const data = await GoogleData.withInitializedData('flowcrypt.compatibility@gmail.com');
-      const msg = data.getMessage('1754cfc37886899e')!;
+      const msg = data.getMessage('17dad75e63e47f97')!;
       const msgText = Buf.fromBase64Str(msg!.raw!).toUtfStr();
       {
-        const dhartleyPubkey = msgText
+        const pubkey = msgText
           .match(/\-\-\-\-\-BEGIN PGP PUBLIC KEY BLOCK\-\-\-\-\-.*\-\-\-\-\-END PGP PUBLIC KEY BLOCK\-\-\-\-\-/s)![0]
           .replace(/=\r\n/g, '').replace(/=3D/g, '=');
         const resultRightKey = await MsgUtil.verifyDetached({
           plaintext: Buf.fromUtfStr('some irrelevant text'),
           sigText,
-          verificationPubs: [dhartleyPubkey]
+          verificationPubs: [pubkey]
         });
         expect(resultRightKey.match).to.be.false;
         expect(resultRightKey.error).to.not.be.undefined;

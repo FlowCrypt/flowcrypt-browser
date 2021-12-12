@@ -331,7 +331,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
     }));
 
     ava.default('decrypt - thunderbird - signedHtml verifyDetached doesn\'t duplicate PGP key section', testWithBrowser('compatibility', async (t, browser) => {
-      const threadId = '1754cfd1b2f1d6e5';
+      const threadId = '17daefa0eb077da6';
       const acctEmail = 'flowcrypt.compatibility@gmail.com';
       const inboxPage = await browser.newPage(t, TestUrls.extension(`chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`));
       await inboxPage.waitAll('iframe');
@@ -342,7 +342,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
     }));
 
     ava.default('decrypt - thunderbird - signedMsg verifyDetached doesn\'t duplicate PGP key section', testWithBrowser('compatibility', async (t, browser) => {
-      const threadId = '1754cfc37886899e';
+      const threadId = '17dad75e63e47f97';
       const acctEmail = 'flowcrypt.compatibility@gmail.com';
       const inboxPage = await browser.newPage(t, TestUrls.extension(`chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`));
       await inboxPage.waitAll('iframe');
@@ -364,44 +364,45 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
     }));
 
     ava.default('decrypt - thunderbird - signed text is recognized', testWithBrowser('compatibility', async (t, browser) => {
-      const threadId = '1754cfc37886899e';
+      const threadId = '17dad75e63e47f97';
       const acctEmail = 'flowcrypt.compatibility@gmail.com';
       const inboxPage = await browser.newPage(t, TestUrls.extension(`chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`));
       await inboxPage.waitAll('iframe', { timeout: 2 });
       const urls = await inboxPage.getFramesUrls(['/chrome/elements/pgp_block.htm'], { sleep: 10, appearIn: 20 });
       expect(urls.length).to.equal(1);
       const url = urls[0].split('/chrome/elements/pgp_block.htm')[1];
-      const signature = ['dhartley@verdoncollege.school.nz', 'matching signature'];
+      const signature = ['some.sender@test.com', 'matching signature'];
       await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, { params: url, content: ['1234'], signature });
     }));
 
     ava.default('decrypt - fetched pubkey is automatically saved to contacts', testWithBrowser('compatibility', async (t, browser) => {
-      const msgId = '1754cfc37886899e';
+      const msgId = '17dad75e63e47f97';
       const acctEmail = 'flowcrypt.compatibility@gmail.com';
+      const senderEmail = 'some.sender@test.com';
+      const acctAttr = acctEmail.replace(/[\.@]/g, '');
+      const senderAttr = senderEmail.replace(/[\.@]/g, '');
       {
         const settingsPage = await browser.newPage(t, TestUrls.extensionSettings(acctEmail));
         await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
         const contactsFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-contacts-page', ['contacts.htm', 'placement=settings']);
         await contactsFrame.waitAll('@page-contacts');
         await Util.sleep(1);
-        expect(await contactsFrame.isElementPresent('@action-show-email-flowcryptcompatibilitygmailcom')).to.be.true;
-        expect(await contactsFrame.isElementPresent('@action-show-email-dhartleyverdoncollegeschoolnz')).to.be.false;
+        expect(await contactsFrame.isElementPresent(`@action-show-email-${acctAttr}`)).to.be.true;
+        expect(await contactsFrame.isElementPresent(`@action-show-email-${senderAttr}`)).to.be.false;
       }
-      const params = `?frameId=none&acctEmail=${acctEmail}&msgId=${msgId}&signature=___cu_true___&senderEmail=dhartley@verdoncollege.school.nz`;
+      const params = `?frameId=none&acctEmail=${acctEmail}&msgId=${msgId}&signature=___cu_true___&senderEmail=${senderEmail}`;
       await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, { params, content: ['1234'] });
-      // the fetched pubkey is saved to ContactStore asynchronously, so let's wait a little
-      await Util.sleep(1);
       {
         const settingsPage = await browser.newPage(t, TestUrls.extensionSettings(acctEmail));
         await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
         const contactsFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-contacts-page', ['contacts.htm', 'placement=settings']);
         await contactsFrame.waitAll('@page-contacts');
         await Util.sleep(1);
-        expect(await contactsFrame.isElementPresent('@action-show-email-flowcryptcompatibilitygmailcom')).to.be.true;
-        expect(await contactsFrame.isElementPresent('@action-show-email-dhartleyverdoncollegeschoolnz')).to.be.true;
-        await contactsFrame.waitAndClick('@action-show-email-dhartleyverdoncollegeschoolnz');
-        // contains newly fetched key
-        await contactsFrame.waitForContent('@page-contacts', 'openpgp - active - DC26 454A FB71 D18E ABBA D73D 1C7E 6D3C 5563 A941');
+        expect(await contactsFrame.isElementPresent(`@action-show-email-${acctAttr}`)).to.be.true;
+        expect(await contactsFrame.isElementPresent(`@action-show-email-${senderAttr}`)).to.be.true;
+        await contactsFrame.waitAndClick(`@action-show-email-${senderAttr}`);
+        // contains the  newly fetched key
+        await contactsFrame.waitForContent('@page-contacts', 'openpgp - active - 2BB2 1977 6F23 CE48 EBB8 609C 203F AE70 7600 5381');
       }
     }));
 
@@ -463,9 +464,9 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
     }));
 
     ava.default('decrypt - re-fetch signed-only message from API on non-fatal verification error', testWithBrowser('compatibility', async (t, browser) => {
-      const msgId = '1754cfd1b2f1d6e5';
+      const msgId = '17daefa0eb077da6';
       const acctEmail = 'flowcrypt.compatibility@gmail.com';
-      const signerEmail = 'dhartley@verdoncollege.school.nz';
+      const signerEmail = 'some.sender@test.com';
       const data = await GoogleData.withInitializedData(acctEmail);
       const msg = data.getMessage(msgId)!;
       const signature = Buf.fromBase64Str(msg!.raw!).toUtfStr()
@@ -475,7 +476,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
       await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
         params,
         content: [], // todo: #4164 I would expect '1234' here
-        signature: ['dhartley@verdoncollege.school.nz', 'matching signature']
+        signature: ['some.sender@test.com', 'matching signature']
       });
     }));
 
