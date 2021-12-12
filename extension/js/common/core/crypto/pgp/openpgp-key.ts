@@ -479,6 +479,7 @@ export class OpenPGPKey {
         verifyRes.isErrFatal = true; // don't try to re-fetch the message from API
       } else if (verifyErr instanceof Error && verifyErr.message === 'Message digest did not match') {
         verifyRes.error = verifyErr.message;
+        verifyRes.match = false;
       } else {
         verifyRes.error = `Error verifying this message: ${String(verifyErr)}`;
         Catch.reportErr(verifyErr);

@@ -895,9 +895,9 @@ E1d8Vh/Ey7IJ8TXbfFrdv5ZP3HqMK0089SooZwx/GN2QIaOYQXsS0u7IFNhU\n=q5Sf
           sigText,
           verificationPubs: [dhartleyPubkey]
         });
-        expect(resultRightKey.match).to.be.null;
+        expect(resultRightKey.match).to.be.false;
         expect(resultRightKey.error).to.not.be.undefined;
-        expect(resultRightKey.isErrFatal).to.be.undefined;
+        expect(resultRightKey.isErrFatal).to.not.be.true;
       }
       {
         const resultWrongKey = await MsgUtil.verifyDetached({
