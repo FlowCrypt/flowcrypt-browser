@@ -196,6 +196,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       await contactsFrame.waitAll('iframe');
       const pubkeyFrame = await contactsFrame.getFrame(['pgp_pubkey.htm']);
       await pubkeyFrame.notPresent('@action-add-contact');
+      await pubkeyFrame.notPresent('@manual-import-warning');
       expect((await pubkeyFrame.read('#pgp_block.pgp_pubkey')).toLowerCase()).to.include('not usable');
       const revocationAfter = await dbPage.page.evaluate(async () => {
         const db = await (window as any).ContactStore.dbOpen();

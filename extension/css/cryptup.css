@@ -1343,7 +1343,6 @@ td {
 #pgp_block.pgp_pubkey .add_contact:not(.line) { text-align: center; }
 
 #pgp_block.pgp_pubkey pre.pubkey {
-  margin-top: 0;
   display: none;
 }
 

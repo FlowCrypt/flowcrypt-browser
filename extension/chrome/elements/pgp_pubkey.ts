@@ -133,7 +133,7 @@ View.run(class PgpPubkeyView extends View {
   };
 
   private showKeyNotUsableError = () => {
-    $('.fingerprints, .add_contact').remove();
+    $('.fingerprints, .add_contact, #manual_import_warning').remove();
     $('#pgp_block.pgp_pubkey .result')
       .prepend('<span class="bad">This OpenPGP key is not usable.</span>'); // xss-direct
     $('.pubkey').addClass('bad');
