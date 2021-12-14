@@ -108,7 +108,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       const settingsPage = await BrowserRecipe.openSettingsLoginButCloseOauthWindowBeforeGrantingPermission(t, browser, 'ci.tests.gmail@flowcrypt.dev');
       await settingsPage.close();
       const googleChatPage = await BrowserRecipe.openGoogleChatPage(t, browser);
-      await googleChatPage.notPresent('div.z0'); // compose button should not be injected
+      await googleChatPage.notPresent('div.z0[class*="_destroyable"]'); // compose button should not be injected
     }));
 
     ava.default('mail.google.com - success notif after setup, click hides it, does not re-appear + offers to reauth', testWithBrowser('ci.tests.gmail', async (t, browser) => {
