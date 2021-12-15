@@ -22,7 +22,6 @@ import { InMemoryStore } from '../../platform/store/in-memory-store.js';
 type EventTag = 'compose' | 'decrypt' | 'setup' | 'settings' | 'import-pub' | 'import-prv';
 
 export namespace FesRes {
-  export type AccessToken = { accessToken: string };
   export type ReplyToken = { replyToken: string };
   export type MessageUpload = { url: string };
   export type ServiceInfo = { vendor: string, service: string, orgId: string, version: string, apiVersion: string };
