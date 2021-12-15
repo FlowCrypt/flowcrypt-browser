@@ -145,7 +145,7 @@ export class EnterpriseServer extends Api {
     if (idToken) {
       return { Authorization: `Bearer ${idToken}` };
     }
-    // todo: test this. user should not actually see the message, should be presented with login prompt
+    // user will not actually see this message, they'll see a generic login prompt
     throw new BackendAuthErr('Missing id token, please re-authenticate');
   };
 
