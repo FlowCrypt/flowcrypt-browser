@@ -54,7 +54,7 @@ export class PgpBlockViewDecryptModule {
           this.isPwdMsgBasedOnMsgSnippet = isPwdMsg;
           this.view.renderModule.renderText('Decrypting...');
           this.msgFetchedFromApi = format;
-          await this.decryptAndRender(Buf.fromUtfStr(armored), verificationPubs, undefined, subject);
+          await this.decryptAndRender(Buf.fromUtfStr(armored), verificationPubs, subject);
         }
       }
     } catch (e) {
@@ -64,7 +64,7 @@ export class PgpBlockViewDecryptModule {
 
   public canAndShouldFetchFromApi = () => this.canReadEmails && this.msgFetchedFromApi !== 'raw';
 
-  private decryptAndRender = async (encryptedData: Buf, verificationPubs: string[], optionalPwd?: string, plainSubject?: string) => {
+  private decryptAndRender = async (encryptedData: Buf, verificationPubs: string[], plainSubject?: string) => {
     if (!this.view.signature?.parsedSignature) {
       const kisWithPp = await KeyStore.getAllWithOptionalPassPhrase(this.view.acctEmail);
       const decrypt = async (verificationPubs: string[]) => await BrowserMsg.send.bg.await.pgpMsgDecrypt({ kisWithPp, encryptedData, verificationPubs });
@@ -97,7 +97,7 @@ export class PgpBlockViewDecryptModule {
         }));
         await PassphraseStore.waitUntilPassphraseChanged(this.view.acctEmail, result.longids.needPassphrase);
         this.view.renderModule.renderText('Decrypting...');
-        await this.decryptAndRender(encryptedData, verificationPubs, optionalPwd);
+        await this.decryptAndRender(encryptedData, verificationPubs);
       } else {
         const primaryKi = await KeyStore.getFirstOptional(this.view.acctEmail);
         if (!result.longids.chosen && !primaryKi) {
