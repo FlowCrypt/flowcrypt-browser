@@ -782,29 +782,29 @@ jLwe8W9IMt765T5x5oux9MmPDXF05xHfm4qfH/BMO3a802x5u2gJjJjuknrFdgXY
         .match(/\-\-\-\-\-BEGIN PGP SIGNED MESSAGE\-\-\-\-\-.*\-\-\-\-\-END PGP SIGNATURE\-\-\-\-\-/s)![0];
       const encryptedData = Buf.fromUtfStr(enc);
       // actual key the message was signed with
-      const olderVersionOfPubkey = testConstants.pubkey2864E326A5BE488A;
+      const signerPubkey = testConstants.pubkey2864E326A5BE488A;
       // better key
-      const newlyCreatedPubkey = "-----BEGIN PGP PUBLIC KEY BLOCK-----\r\nVersion: FlowCrypt Email Encryption [BUILD_REPLACEABLE_VERSION]\r\nComment: Seamlessly send and receive encrypted email\r\n\r\nxjMEYZeW2RYJKwYBBAHaRw8BAQdAT5QfLVP3y1yukk3MM/oiuXLNe1f9az5M\r\nBnOlKdF0nKnNJVNvbWVib2R5IDxTYW1zNTBzYW1zNTBzZXB0QEdtYWlsLkNv\r\nbT7CjwQQFgoAIAUCYZeW2QYLCQcIAwIEFQgKAgQWAgEAAhkBAhsDAh4BACEJ\r\nEMrSTYqLk6SUFiEEBP90ux3d6kDwDdzvytJNiouTpJS27QEA7pFlkLfD0KFQ\r\nsH/dwb/NPzn5zCi2L9gjPAC3d8gv1fwA/0FjAy/vKct4D7QH8KwtEGQns5+D\r\nP1WxDr4YI2hp5TkAzjgEYZeW2RIKKwYBBAGXVQEFAQEHQKNLY/bXrhJMWA2+\r\nWTjk3I7KhawyZfLomJ4hovqr7UtOAwEIB8J4BBgWCAAJBQJhl5bZAhsMACEJ\r\nEMrSTYqLk6SUFiEEBP90ux3d6kDwDdzvytJNiouTpJQnpgD/c1CzfS3YzJUx\r\nnFMrhjiE0WVgqOV/3CkfI4m4RA30QUIA/ju8r4AD2h6lu3Mx/6I6PzIRZQty\r\nLvTkcu4UKodZa4kK\r\n=7C4A\r\n-----END PGP PUBLIC KEY BLOCK-----\r\n";
+      const wrongPubkey = "-----BEGIN PGP PUBLIC KEY BLOCK-----\r\nVersion: FlowCrypt Email Encryption [BUILD_REPLACEABLE_VERSION]\r\nComment: Seamlessly send and receive encrypted email\r\n\r\nxjMEYZeW2RYJKwYBBAHaRw8BAQdAT5QfLVP3y1yukk3MM/oiuXLNe1f9az5M\r\nBnOlKdF0nKnNJVNvbWVib2R5IDxTYW1zNTBzYW1zNTBzZXB0QEdtYWlsLkNv\r\nbT7CjwQQFgoAIAUCYZeW2QYLCQcIAwIEFQgKAgQWAgEAAhkBAhsDAh4BACEJ\r\nEMrSTYqLk6SUFiEEBP90ux3d6kDwDdzvytJNiouTpJS27QEA7pFlkLfD0KFQ\r\nsH/dwb/NPzn5zCi2L9gjPAC3d8gv1fwA/0FjAy/vKct4D7QH8KwtEGQns5+D\r\nP1WxDr4YI2hp5TkAzjgEYZeW2RIKKwYBBAGXVQEFAQEHQKNLY/bXrhJMWA2+\r\nWTjk3I7KhawyZfLomJ4hovqr7UtOAwEIB8J4BBgWCAAJBQJhl5bZAhsMACEJ\r\nEMrSTYqLk6SUFiEEBP90ux3d6kDwDdzvytJNiouTpJQnpgD/c1CzfS3YzJUx\r\nnFMrhjiE0WVgqOV/3CkfI4m4RA30QUIA/ju8r4AD2h6lu3Mx/6I6PzIRZQty\r\nLvTkcu4UKodZa4kK\r\n=7C4A\r\n-----END PGP PUBLIC KEY BLOCK-----\r\n";
       {
-        const decrypted1 = await MsgUtil.decryptMessage({ kisWithPp: [], encryptedData, verificationPubs: [olderVersionOfPubkey, newlyCreatedPubkey] });
+        const decrypted1 = await MsgUtil.decryptMessage({ kisWithPp: [], encryptedData, verificationPubs: [signerPubkey, wrongPubkey] });
         expect(decrypted1.success).to.equal(true);
         const verifyRes1 = (decrypted1 as DecryptSuccess).signature!;
         expect(verifyRes1.match).to.be.true;
       }
       {
-        const decrypted2 = await MsgUtil.decryptMessage({ kisWithPp: [], encryptedData, verificationPubs: [newlyCreatedPubkey, olderVersionOfPubkey] });
+        const decrypted2 = await MsgUtil.decryptMessage({ kisWithPp: [], encryptedData, verificationPubs: [wrongPubkey, signerPubkey] });
         expect(decrypted2.success).to.equal(true);
         const verifyRes2 = (decrypted2 as DecryptSuccess).signature!;
         expect(verifyRes2.match).to.be.true;
       }
       {
-        const decrypted3 = await MsgUtil.decryptMessage({ kisWithPp: [], encryptedData, verificationPubs: [olderVersionOfPubkey] });
+        const decrypted3 = await MsgUtil.decryptMessage({ kisWithPp: [], encryptedData, verificationPubs: [signerPubkey] });
         expect(decrypted3.success).to.equal(true);
         const verifyRes3 = (decrypted3 as DecryptSuccess).signature!;
         expect(verifyRes3.match).to.be.true;
       }
       {
-        const decrypted4 = await MsgUtil.decryptMessage({ kisWithPp: [], encryptedData, verificationPubs: [newlyCreatedPubkey] });
+        const decrypted4 = await MsgUtil.decryptMessage({ kisWithPp: [], encryptedData, verificationPubs: [wrongPubkey] });
         expect(decrypted4.success).to.equal(true);
         const verifyRes4 = (decrypted4 as DecryptSuccess).signature!;
         expect(verifyRes4.match).to.not.be.true;
