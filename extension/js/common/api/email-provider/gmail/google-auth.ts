@@ -148,7 +148,7 @@ export class GoogleAuth {
           const acctServer = new AccountServer(authRes.acctEmail);
           // fetch and store OrgRules (not authenticated)
           await acctServer.accountGetAndUpdateLocalStore({ account: authRes.acctEmail, uuid });
-          // depending on DISABLE_FES_ACCESS_TOKEN, either fetch and store access token, or the ID token itself
+          // this is a no-op if FES is used. uuid is generated / stored if flowcrypt.com/api is used
           await acctServer.loginWithOpenid(authRes.acctEmail, uuid, authRes.id_token);
         } else {
           // eventually this branch will be dropped once a public FES instance is run for these customers

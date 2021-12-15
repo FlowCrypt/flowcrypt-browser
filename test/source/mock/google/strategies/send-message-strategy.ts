@@ -38,7 +38,7 @@ class PwdEncryptedMessageWithFlowCryptComApiTestStrategy implements ITestMsgStra
   };
 }
 
-class PwdEncryptedMessageWithFesAccessTokenTestStrategy implements ITestMsgStrategy {
+class PwdEncryptedMessageWithFesIdTokenTestStrategy implements ITestMsgStrategy {
   public test = async (mimeMsg: ParsedMail) => {
     const senderEmail = Str.parseEmail(mimeMsg.from!.text).email;
     const expectedSenderEmail = 'user@standardsubdomainfes.test:8001';
@@ -49,25 +49,6 @@ class PwdEncryptedMessageWithFesAccessTokenTestStrategy implements ITestMsgStrat
       throw new HttpClientErr(`Error checking sent text in:\n\n${mimeMsg.text}`);
     }
     if (!mimeMsg.text?.includes('http://fes.standardsubdomainfes.test:8001/message/FES-MOCK-MESSAGE-ID')) {
-      throw new HttpClientErr(`Error: cannot find pwd encrypted FES link in:\n\n${mimeMsg.text}`);
-    }
-    if (!mimeMsg.text?.includes('Follow this link to open it')) {
-      throw new HttpClientErr(`Error: cannot find pwd encrypted open link prompt in ${mimeMsg.text}`);
-    }
-  };
-}
-
-class PwdEncryptedMessageWithFesIdTokenTestStrategy implements ITestMsgStrategy {
-  public test = async (mimeMsg: ParsedMail) => {
-    const senderEmail = Str.parseEmail(mimeMsg.from!.text).email;
-    const expectedSenderEmail = 'user@disablefesaccesstoken.test:8001';
-    if (senderEmail !== expectedSenderEmail) {
-      throw new HttpClientErr(`Unexpected sender email ${senderEmail}, expecting ${expectedSenderEmail}`);
-    }
-    if (!mimeMsg.text?.includes(`${senderEmail} has sent you a password-encrypted email`)) {
-      throw new HttpClientErr(`Error checking sent text in:\n\n${mimeMsg.text}`);
-    }
-    if (!mimeMsg.text?.includes('http://fes.disablefesaccesstoken.test:8001/message/FES-MOCK-MESSAGE-ID')) {
       throw new HttpClientErr(`Error: cannot find pwd encrypted FES link in:\n\n${mimeMsg.text}`);
     }
     if (!mimeMsg.text?.includes('Follow this link to open it')) {
@@ -238,8 +219,6 @@ export class TestBySubjectStrategyContext {
       this.strategy = new MessageWithFooterTestStrategy();
     } else if (subject.includes('PWD encrypted message with flowcrypt.com/api')) {
       this.strategy = new PwdEncryptedMessageWithFlowCryptComApiTestStrategy();
-    } else if (subject.includes('PWD encrypted message with FES - access token')) {
-      this.strategy = new PwdEncryptedMessageWithFesAccessTokenTestStrategy();
     } else if (subject.includes('PWD encrypted message with FES - ID TOKEN')) {
       this.strategy = new PwdEncryptedMessageWithFesIdTokenTestStrategy();
     } else if (subject.includes('Message With Image')) {

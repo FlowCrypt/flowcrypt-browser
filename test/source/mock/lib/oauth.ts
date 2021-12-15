@@ -44,7 +44,7 @@ export class OauthMock {
     return { access_token, refresh_token, expires_in: this.expiresIn, id_token, token_type: 'refresh_token' }; // guessed the token_type
   };
 
-  public getAccessTokenResponse = (refreshToken: string) => {
+  public getTokenResponse = (refreshToken: string) => {
     try {
       const access_token = this.getAccessToken(refreshToken);
       const acct = this.acctByAccessToken[access_token];

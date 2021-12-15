@@ -52,18 +52,12 @@ export const mockFesEndpoints: HandlersDefinition = {
   },
   '/api/v1/client-configuration': async ({ }, req) => {
     // individual OrgRules are tested using FlowCrypt backend mock, see BackendData.getOrgRules
-    //   (except for DISABLE_FES_ACCESS_TOKEN which is FES specific and returned below)
     if (req.method !== 'GET') {
       throw new HttpClientErr('Unsupported method');
     }
     if (req.headers.host === standardFesUrl && req.url === `/api/v1/client-configuration?domain=standardsubdomainfes.test:8001`) {
       return {
         clientConfiguration: { disallow_attester_search_for_domains: ['got.this@fromstandardfes.com'] },
-      };
-    }
-    if (req.headers.host === disableAccessTokenFesUrl && req.url === `/api/v1/client-configuration?domain=disablefesaccesstoken.test:8001`) {
-      return {
-        clientConfiguration: { flags: ['DISABLE_FES_ACCESS_TOKEN'] },
       };
     }
     throw new HttpClientErr(`Unexpected FES domain "${req.headers.host}" and url "${req.url}"`);
