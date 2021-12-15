@@ -429,4 +429,13 @@ export class KeyUtil {
     return fetched.lastModified > stored.lastModified;
   };
 
+  public static sortPubkeyInfos = (pubkeyInfos: PubkeyInfo[]): PubkeyInfo[] => {
+    return pubkeyInfos.sort((a, b) => KeyUtil.getSortValue(b) - KeyUtil.getSortValue(a));
+  };
+
+  private static getSortValue = (pubinfo: PubkeyInfo): number => {
+    const expirationSortValue = (typeof pubinfo.pubkey.expiration === 'undefined') ? Infinity : pubinfo.pubkey.expiration!;
+    // sort non-revoked first, then non-expired
+    return (pubinfo.revoked || pubinfo.pubkey.revoked) ? -Infinity : expirationSortValue;
+  };
 }

@@ -453,16 +453,6 @@ export class ContactStore extends AbstractStore {
     });
   };
 
-  public static sortPubkeyInfos = (pubkeyInfos: PubkeyInfo[]): PubkeyInfo[] => {
-    return pubkeyInfos.sort((a, b) => ContactStore.getSortValue(b) - ContactStore.getSortValue(a));
-  };
-
-  public static getSortValue = (pubinfo: PubkeyInfo): number => {
-    const expirationSortValue = (typeof pubinfo.pubkey.expiration === 'undefined') ? Infinity : pubinfo.pubkey.expiration!;
-    // sort non-revoked first, then non-expired
-    return (pubinfo.revoked || pubinfo.pubkey.revoked) ? -Infinity : expirationSortValue;
-  };
-
   private static sortKeys = async (pubkeys: Pubkey[], revocations: Revocation[]): Promise<PubkeyInfo[]> => {
     // parse the keys
     const pubkeyInfos = await Promise.all(pubkeys.map(async (pubkey) => {
@@ -470,7 +460,7 @@ export class ContactStore extends AbstractStore {
       const revoked = pk.revoked || revocations.some(r => ContactStore.equalFingerprints(pk.id, r.fingerprint));
       return { lastCheck: pubkey.lastCheck || undefined, pubkey: pk, revoked };
     }));
-    return ContactStore.sortPubkeyInfos(pubkeyInfos);
+    return KeyUtil.sortPubkeyInfos(pubkeyInfos);
   };
 
   private static getPubkeyId = ({ id, type }: { id: string, type: string }): string => {
