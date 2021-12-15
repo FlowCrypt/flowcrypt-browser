@@ -20,6 +20,7 @@ import { Ui } from '../../../browser/ui.js';
 import { AcctStore, AcctStoreDict } from '../../../platform/store/acct-store.js';
 import { AccountServer } from '../../account-server.js';
 import { EnterpriseServer } from '../../account-servers/enterprise-server.js';
+import { InMemoryStore } from '../../../platform/store/in-memory-store.js';
 
 type GoogleAuthTokenInfo = { issued_to: string, audience: string, scope: string, expires_in: number, access_type: 'offline' };
 type GoogleAuthTokensResponse = { access_token: string, expires_in: number, refresh_token?: string, id_token: string, token_type: 'Bearer' };
@@ -279,20 +280,20 @@ export class GoogleAuth {
   };
 
   private static googleAuthSaveTokens = async (acctEmail: string, tokensObj: GoogleAuthTokensResponse, scopes: string[]) => {
-    const openid = GoogleAuth.parseIdToken(tokensObj.id_token);
+    const parsedOpenId = GoogleAuth.parseIdToken(tokensObj.id_token);
     const { full_name, picture } = await AcctStore.get(acctEmail, ['full_name', 'picture']);
     const toSave: AcctStoreDict = {
-      openid,
       google_token_access: tokensObj.access_token,
       google_token_expires: new Date().getTime() + (tokensObj.expires_in as number) * 1000,
       google_token_scopes: scopes,
-      full_name: full_name || openid.name,
-      picture: picture || openid.picture,
+      full_name: full_name || parsedOpenId.name,
+      picture: picture || parsedOpenId.picture,
     };
     if (typeof tokensObj.refresh_token !== 'undefined') {
       toSave.google_token_refresh = tokensObj.refresh_token;
     }
     await AcctStore.set(acctEmail, toSave);
+    await InMemoryStore.set(acctEmail, InMemoryStore.ID_TOKEN_STORAGE_KEY, tokensObj.id_token);
   };
 
   private static googleAuthGetTokens = async (code: string) => {

@@ -20,8 +20,7 @@ export class AccountServer extends Api {
 
   public loginWithOpenid = async (acctEmail: string, uuid: string, idToken: string): Promise<void> => {
     if (await this.isFesUsed()) {
-      const fes = new EnterpriseServer(this.acctEmail);
-      await fes.authenticateAndUpdateLocalStore(idToken);
+      // FES doesn't issue any access tokens
     } else {
       await FlowCryptComApi.loginWithOpenid(acctEmail, uuid, idToken);
     }

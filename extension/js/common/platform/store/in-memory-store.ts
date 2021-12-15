@@ -9,6 +9,8 @@ import { BrowserMsg } from '../../browser/browser-msg.js';
  */
 export class InMemoryStore extends AbstractStore {
 
+  public static ID_TOKEN_STORAGE_KEY = 'idToken';
+
   public static set = async (acctEmail: string, key: string, value: string | undefined) => {
     return await BrowserMsg.send.bg.await.inMemoryStoreSet({ acctEmail, key, value });
   };

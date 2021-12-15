@@ -4,7 +4,6 @@ import { Env } from '../../browser/env.js';
 import { GoogleAuth } from '../../api/email-provider/gmail/google-auth.js';
 import { KeyInfo } from '../../core/crypto/key.js';
 import { Dict } from '../../core/common.js';
-import { GmailRes } from '../../api/email-provider/gmail/gmail-parser.js';
 import { DomainRulesJson } from '../../org-rules.js';
 import { BrowserMsg, BgNotReadyErr } from '../../browser/browser-msg.js';
 import { Ui } from '../../browser/ui.js';
@@ -31,8 +30,7 @@ export type AccountIndex = 'keys' | 'notification_setup_needed_dismissed' | 'ema
   'google_token_refresh' | 'hide_message_password' | 'sendAs' |
   'pubkey_sent_to' | 'full_name' | 'cryptup_enabled' | 'setup_done' |
   'successfully_received_at_leat_one_message' | 'notification_setup_done_seen' | 'picture' |
-  'outgoing_language' | 'setup_date' | 'openid' | 'uuid' | 'use_rich_text' | 'rules' |
-  'fesUrl' | 'fesAccessToken';
+  'outgoing_language' | 'setup_date' | 'uuid' | 'use_rich_text' | 'rules' | 'fesUrl';
 
 export type SendAsAlias = {
   isPrimary: boolean;
@@ -62,11 +60,9 @@ export type AcctStoreDict = {
   outgoing_language?: 'EN' | 'DE';
   setup_date?: number;
   use_rich_text?: boolean;
-  openid?: GmailRes.OpenId;
   uuid?: string;
   rules?: DomainRulesJson;
   fesUrl?: string; // url where FlowCrypt Enterprise Server is deployed
-  fesAccessToken?: string;
 };
 
 /**
