@@ -260,6 +260,71 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
       });
     }));
 
+    ava.default(`decrypt - [security] signed message - maliciously modified - should not pass`, testWithBrowser('compatibility', async (t, browser) => {
+      const acctEmail = 'flowcrypt.compatibility@gmail.com';
+      const msgId = '15f7f7c5979b5a26';
+      const signerEmail = 'sender@domain.com';
+      const params = `?frameId=none&account_email=${acctEmail}&senderEmail=${signerEmail}&msgId=${msgId}`;
+      await PageRecipe.addPubkey(t, browser, acctEmail, `-----BEGIN PGP PUBLIC KEY BLOCK-----
+Version: FlowCrypt Email Encryption 8.2.0
+Comment: Seamlessly send and receive encrypted email
+
+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
+XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
+=1oxZ
+-----END PGP PUBLIC KEY BLOCK-----`, 'sender@domain.com');
+      // as the verification pubkey is not known, this scenario doesn't trigger message re-fetch
+      await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, { params, content: [], signature: ["Unknown Signer", "Message digest did not match"] });
+    }));
+
     ava.default(`decrypt - [everdesk] message encrypted for sub but claims encryptedFor:primary,sub`, testWithBrowser('compatibility', async (t, browser) => {
       await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
         content: ["this is a sample for FlowCrypt compatibility"],

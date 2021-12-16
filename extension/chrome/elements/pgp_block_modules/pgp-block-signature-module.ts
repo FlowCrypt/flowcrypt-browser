@@ -19,10 +19,10 @@ export class PgpBlockViewSignatureModule {
     retryVerification?: (verificationPubs: string[]) => Promise<VerifyRes | undefined>) => {
     this.view.renderModule.doNotSetStateAsReadyYet = true; // so that body state is not marked as ready too soon - automated tests need to know when to check results
     if (verifyRes?.error) {
-      if (!verifyRes.isErrFatal && this.view.decryptModule.canAndShouldFetchFromApi()) {
+      if (this.view.signature && !verifyRes.isErrFatal && this.view.decryptModule.canAndShouldFetchFromApi()) {
         // Sometimes the signed content is slightly modified when parsed from DOM,
         // so the message should be re-fetched straight from API to make sure we get the original signed data and verify again
-        this.view.signature!.parsedSignature = undefined; // force to re-parse
+        this.view.signature.parsedSignature = undefined; // force to re-parse
         await this.view.decryptModule.initialize(verificationPubs, true);
         return;
       }
