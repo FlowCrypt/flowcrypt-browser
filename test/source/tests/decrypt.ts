@@ -440,6 +440,18 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
       await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, { params: url, content: ['1234'], signature });
     }));
 
+    ava.default('verification - message text is rendered prior to pubkey fetching', testWithBrowser('compatibility', async (t, browser) => {
+      const msgId = '17dad75e63e47f97';
+      const acctEmail = 'flowcrypt.compatibility@gmail.com';
+      const senderEmail = 'this.pubkey.takes.long.time.to.load@sender.test';
+      const params = `?frameId=none&acctEmail=${acctEmail}&msgId=${msgId}&signature=___cu_true___&senderEmail=${senderEmail}`;
+      const pgpHostPage = await browser.newPage(t, `chrome/dev/ci_pgp_host_page.htm${params}`);
+      const pgpBlockPage = await pgpHostPage.getFrame(['pgp_block.htm']);
+      await pgpBlockPage.waitForContent('@pgp-block-content', '1234', 4, 10);
+      await pgpBlockPage.waitForContent('@pgp-signature', 'Verifying message', 3, 10);
+      await pgpBlockPage.waitForContent('@pgp-signature', 'matching signature', 10, 10);
+    }));
+
     ava.default('decrypt - fetched pubkey is automatically saved to contacts', testWithBrowser('compatibility', async (t, browser) => {
       const msgId = '17dad75e63e47f97';
       const acctEmail = 'flowcrypt.compatibility@gmail.com';

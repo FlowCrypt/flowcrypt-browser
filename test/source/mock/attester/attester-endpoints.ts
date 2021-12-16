@@ -9,6 +9,7 @@ import { expect } from 'chai';
 import { GoogleData } from '../google/google-data';
 import { Buf } from '../../core/buf';
 import { testConstants } from '../../tests/tooling/consts';
+import { Util } from '../../util';
 
 // tslint:disable:no-blank-lines-func
 
@@ -57,6 +58,10 @@ export const mockAttesterEndpoints: HandlersDefinition = {
         return protonMailCompatKey;
       }
       if (emailOrLongid === 'some.sender@test.com') {
+        return await get203FAE7076005381();
+      }
+      if (emailOrLongid === 'this.pubkey.takes.long.time.to.load@sender.test') {
+        await Util.sleep(5);
         return await get203FAE7076005381();
       }
       if (['sams50sams50sept@gmail.com', 'sender@example.com'].includes(emailOrLongid)) {
