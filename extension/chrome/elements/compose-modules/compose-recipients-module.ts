@@ -3,7 +3,7 @@
 'use strict';
 
 import { ChunkedCb, EmailProviderContact, RecipientType } from '../../../js/common/api/shared/api.js';
-import { Contact, KeyUtil } from '../../../js/common/core/crypto/key.js';
+import { Contact, KeyUtil, PubkeyInfo } from '../../../js/common/core/crypto/key.js';
 import { PUBKEY_LOOKUP_RESULT_FAIL, PUBKEY_LOOKUP_RESULT_WRONG } from './compose-err-module.js';
 import { ProviderContactsQuery, Recipients } from '../../../js/common/api/email-provider/email-provider-api.js';
 import { RecipientElement, RecipientStatus } from './compose-types.js';
@@ -20,7 +20,7 @@ import { moveElementInArray } from '../../../js/common/platform/util.js';
 import { ViewModule } from '../../../js/common/view-module.js';
 import { ComposeView } from '../compose.js';
 import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
-import { ContactPreview, ContactStore, ContactUpdate, PubkeyInfo } from '../../../js/common/platform/store/contact-store.js';
+import { ContactPreview, ContactStore, ContactUpdate } from '../../../js/common/platform/store/contact-store.js';
 
 /**
  * todo - this class is getting too big

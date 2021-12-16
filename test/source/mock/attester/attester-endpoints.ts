@@ -24,18 +24,15 @@ const knownMockEmails = [
 let data: GoogleData;
 export const MOCK_ATTESTER_LAST_INSERTED_PUB: { [email: string]: string } = {};
 
-const getDC26454AFB71D18EABBAD73D1C7E6D3C5563A941 = async () => {
+const get203FAE7076005381 = async () => {
   if (!data) {
     data = await GoogleData.withInitializedData('flowcrypt.compatibility@gmail.com');
   }
-
-  const msg = data.getMessage('1754cfc37886899e')!;
+  const msg = data.getMessage('17dad75e63e47f97')!;
   const msgText = Buf.fromBase64Str(msg!.raw!).toUtfStr();
-  const dhartleyPubkey = msgText
+  return msgText
     .match(/\-\-\-\-\-BEGIN PGP PUBLIC KEY BLOCK\-\-\-\-\-.*\-\-\-\-\-END PGP PUBLIC KEY BLOCK\-\-\-\-\-/s)![0]
     .replace(/=\r\n/g, '').replace(/=3D/g, '=');
-
-  return dhartleyPubkey;
 };
 
 export const mockAttesterEndpoints: HandlersDefinition = {
@@ -59,10 +56,10 @@ export const mockAttesterEndpoints: HandlersDefinition = {
       if (emailOrLongid === 'flowcrypt.compatibility@protonmail.com') {
         return protonMailCompatKey;
       }
-      if (['dhartley@verdoncollege.school.nz', '1C7E6D3C5563A941'.toLowerCase()].includes(emailOrLongid)) {
-        return await getDC26454AFB71D18EABBAD73D1C7E6D3C5563A941();
+      if (emailOrLongid === 'some.sender@test.com') {
+        return await get203FAE7076005381();
       }
-      if (['sams50sams50sept@gmail.com', 'president@forged.com', '2864E326A5BE488A'.toLowerCase()].includes(emailOrLongid)) {
+      if (['sams50sams50sept@gmail.com', 'sender@example.com'].includes(emailOrLongid)) {
         return testConstants.pubkey2864E326A5BE488A;
       }
       if (emailOrLongid.startsWith('martin@p')) {

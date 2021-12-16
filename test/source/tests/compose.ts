@@ -994,14 +994,14 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       const message = sentMsg.payload!.body!.data!;
       const encrypted = message.match(/\-\-\-\-\-BEGIN PGP MESSAGE\-\-\-\-\-.*\-\-\-\-\-END PGP MESSAGE\-\-\-\-\-/s)![0];
       const encryptedData = Buf.fromUtfStr(encrypted);
-      const decrypted0 = await MsgUtil.decryptMessage({ kisWithPp: [], encryptedData });
+      const decrypted0 = await MsgUtil.decryptMessage({ kisWithPp: [], encryptedData, verificationPubs: [] });
       // decryption without a ki should fail
       expect(decrypted0.success).to.equal(false);
       // decryption with ki 1 should succeed
-      const decrypted1 = await MsgUtil.decryptMessage({ kisWithPp: await Config.getKeyInfo(["flowcrypt.compatibility.1pp1"]), encryptedData });
+      const decrypted1 = await MsgUtil.decryptMessage({ kisWithPp: await Config.getKeyInfo(["flowcrypt.compatibility.1pp1"]), encryptedData, verificationPubs: [] });
       expect(decrypted1.success).to.equal(true);
       // decryption with ki 2 should succeed
-      const decrypted2 = await MsgUtil.decryptMessage({ kisWithPp: await Config.getKeyInfo(["flowcrypt.compatibility.2pp1"]), encryptedData });
+      const decrypted2 = await MsgUtil.decryptMessage({ kisWithPp: await Config.getKeyInfo(["flowcrypt.compatibility.2pp1"]), encryptedData, verificationPubs: [] });
       expect(decrypted2.success).to.equal(true);
     }));
 

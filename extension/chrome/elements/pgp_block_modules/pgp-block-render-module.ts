@@ -77,9 +77,9 @@ export class PgpBlockViewRenderModule {
   };
 
   public decideDecryptedContentFormattingAndRender = async (decryptedBytes: Buf, isEncrypted: boolean, sigResult: VerifyRes | undefined,
-    retryVerification: () => Promise<VerifyRes | undefined>, plainSubject?: string) => {
+    verificationPubs: string[], retryVerification: (verificationPubs: string[]) => Promise<VerifyRes | undefined>, plainSubject?: string) => {
     this.setFrameColor(isEncrypted ? 'green' : 'gray');
-    this.view.signatureModule.renderPgpSignatureCheckResult(sigResult, retryVerification);
+    await this.view.signatureModule.renderPgpSignatureCheckResult(sigResult, verificationPubs, retryVerification);
     const publicKeys: string[] = [];
     let renderableAttachments: Attachment[] = [];
     let decryptedContent = decryptedBytes.toUtfStr();

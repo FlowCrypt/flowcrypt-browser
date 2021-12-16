@@ -81,7 +81,7 @@ class MessageWithFooterTestStrategy implements ITestMsgStrategy {
 
   public test = async (mimeMsg: ParsedMail) => {
     const keyInfo = await Config.getKeyInfo(["flowcrypt.compatibility.1pp1", "flowcrypt.compatibility.2pp1"]);
-    const decrypted = await MsgUtil.decryptMessage({ kisWithPp: keyInfo!, encryptedData: Buf.fromUtfStr(mimeMsg.text || '') });
+    const decrypted = await MsgUtil.decryptMessage({ kisWithPp: keyInfo!, encryptedData: Buf.fromUtfStr(mimeMsg.text || ''), verificationPubs: [] });
     if (!decrypted.success) {
       throw new HttpClientErr(`Error: can't decrypt message`);
     }
@@ -98,15 +98,15 @@ class SignedMessageTestStrategy implements ITestMsgStrategy {
 
   public test = async (mimeMsg: ParsedMail) => {
     const keyInfo = await Config.getKeyInfo(["flowcrypt.compatibility.1pp1", "flowcrypt.compatibility.2pp1"]);
-    const decrypted = await MsgUtil.decryptMessage({ kisWithPp: keyInfo!, encryptedData: Buf.fromUtfStr(mimeMsg.text!) });
+    const decrypted = await MsgUtil.decryptMessage({ kisWithPp: keyInfo!, encryptedData: Buf.fromUtfStr(mimeMsg.text!), verificationPubs: [] });
     if (!decrypted.success) {
       throw new HttpClientErr(`Error: Could not successfully verify signed message`);
     }
     if (!decrypted.signature) {
       throw new HttpClientErr(`Error: The message isn't signed.`);
     }
-    if (decrypted.signature.signer?.longid !== this.signedBy) {
-      throw new HttpClientErr(`Error: expected message signed by ${this.signedBy} but was actually signed by ${decrypted.signature.signer?.longid}`);
+    if (!decrypted.signature.signerLongids.includes(this.signedBy)) {
+      throw new HttpClientErr(`Error: expected message signed by ${this.signedBy} but was actually signed by ${decrypted.signature.signerLongids.length} other signers`);
     }
     const content = decrypted.content.toUtfStr();
     if (!content.includes(this.expectedText)) {
@@ -141,7 +141,7 @@ class IncludeQuotedPartTestStrategy implements ITestMsgStrategy {
 
   public test = async (mimeMsg: ParsedMail) => {
     const keyInfo = await Config.getKeyInfo(["flowcrypt.compatibility.1pp1", "flowcrypt.compatibility.2pp1"]);
-    const decrypted = await MsgUtil.decryptMessage({ kisWithPp: keyInfo!, encryptedData: Buf.fromUtfStr(mimeMsg.text!) });
+    const decrypted = await MsgUtil.decryptMessage({ kisWithPp: keyInfo!, encryptedData: Buf.fromUtfStr(mimeMsg.text!), verificationPubs: [] });
     if (!decrypted.success) {
       throw new HttpClientErr(`Error: can't decrypt message`);
     }

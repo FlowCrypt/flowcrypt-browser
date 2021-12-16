@@ -24,7 +24,7 @@
         },
         {
           "name": "From",
-          "value": "Mr President <president@forged.com>"
+          "value": "Mr President <sender@example.com>"
         },
         {
           "name": "MIME-Version",
