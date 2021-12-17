@@ -7,9 +7,9 @@ set -euxo pipefail
 shopt -s globstar
 
 if [[ "$#" == 1 ]] && [[ "$1" == "--assets-only" ]]; then # only build static assets, without re-building TS
-    ( cd $SRCDIR && cp -r --parents ./**/*.{js,htm,css,ttf,woff2,png,svg,txt} ../build/chrome-enterprise )
-    ( cd $SRCDIR && cp -r --parents ./**/*.{js,htm,css,ttf,woff2,png,svg,txt} ../build/chrome-consumer )
-    ( cd $SRCDIR && cp -r --parents ./**/*.{js,htm,css,ttf,woff2,png,svg,txt} ../build/firefox-consumer )
+    ( cd $SRCDIR && cp -r --parents ./**/*.{js,htm,css,woff2,png,svg,txt} ../build/chrome-enterprise )
+    ( cd $SRCDIR && cp -r --parents ./**/*.{js,htm,css,woff2,png,svg,txt} ../build/chrome-consumer )
+    ( cd $SRCDIR && cp -r --parents ./**/*.{js,htm,css,woff2,png,svg,txt} ../build/firefox-consumer )
     exit 0
 fi
 
@@ -71,7 +71,7 @@ cp node_modules/bootstrap/dist/css/bootstrap.min.css $OUTDIR/lib/bootstrap/boots
 # WARN: the steps above are not working as of forge 0.10.0 due to eval/CSP mentioned here: https://github.com/digitalbazaar/forge/issues/814
 
 # remaining build steps sequentially
-( cd $SRCDIR && cp -r --parents ./**/*.{js,htm,css,ttf,woff2,png,svg,txt} ./{.web-extension-id,manifest.json} ../$OUTDIR )
+( cd $SRCDIR && cp -r --parents ./**/*.{js,htm,css,woff2,png,svg,txt} ./{.web-extension-id,manifest.json} ../$OUTDIR )
 node ./build/tooling/resolve-modules
 node ./build/tooling/fill-values
 node ./build/tooling/bundle-content-scripts
