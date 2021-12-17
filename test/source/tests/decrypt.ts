@@ -562,28 +562,16 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
         `senderEmail=some.alias%40protonmail.com&isOutgoing=___cu_false___&signature=___cu_true___&acctEmail=flowcrypt.compatibility%40gmail.com`;
       await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, { params: textParams, content: ["1234"], signature: ["Missing pubkey"] });
       await PageRecipe.addPubkey(t, browser, 'flowcrypt.compatibility%40gmail.com', testConstants.protonCompatPub, 'some.alias@protonmail.com');
-      await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
-        params: textParams,
-        content: ["1234"],
-        signature: ["signed"]
-      });
+      await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, { params: textParams, content: ["1234"], signature: ["signed"] });
       const htmlParams = `?frameId=none&message=&msgId=16a9c0fe4e034bc2&` +
         `senderEmail=some.alias%40protonmail.com&isOutgoing=___cu_false___&signature=___cu_true___&acctEmail=flowcrypt.compatibility%40gmail.com`;
-      await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
-        params: htmlParams,
-        content: ["1234"],
-        signature: ["signed"]
-      });
+      await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, { params: htmlParams, content: ["1234"], signature: ["signed"] });
     }));
 
     ava.default('decrypt - protonmail - auto TOFU load matching pubkey first time', testWithBrowser('compatibility', async (t, browser) => {
       const params = `?frameId=none&message=&msgId=16a9c109bc51687d&` +
         `senderEmail=flowcrypt.compatibility%40protonmail.com&isOutgoing=___cu_false___&signature=___cu_true___&acctEmail=flowcrypt.compatibility%40gmail.com`;
-      await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
-        params,
-        content: ["1234"],
-        signature: ["signed"]
-      });
+      await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, { params, content: ["1234"], signature: ["signed"] });
     }));
 
     ava.default('decrypt - verify encrypted+signed message', testWithBrowser('compatibility', async (t, browser) => {
