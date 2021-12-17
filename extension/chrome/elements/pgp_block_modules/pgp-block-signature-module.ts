@@ -42,6 +42,7 @@ export class PgpBlockViewSignatureModule {
           // in some tests we load the block without sender information
           $('#pgp_signature').addClass('red_label').find('.result').text(`could not verify signature: missing pubkey, missing sender info`);
         } else {
+          $('#pgp_signature').addClass('gray_label')
           $('#pgp_signature > .result').text('verifying signature...');
           try {
             const { pubkeys } = await this.view.pubLookup.lookupEmail(signerEmail);
@@ -54,9 +55,9 @@ export class PgpBlockViewSignatureModule {
           } catch (e) {
             if (ApiErr.isSignificant(e)) {
               Catch.reportErr(e);
-              $('#pgp_signature').addClass('red_label').find('.result').text(`Could not load sender's pubkey due to an error.`);
+              $('#pgp_signature').addClass('red_label').find('.result').text(`error verifying signature: ${e}`);
             } else {
-              $('#pgp_signature').addClass('red_label').find('.result').text(`Could not look up sender's pubkey due to network error, click to retry.`).click(
+              $('#pgp_signature').addClass('red_label').find('.result').text('error verifying signature: offline, click to retry').click(
                 this.view.setHandler(() => window.location.reload()));
             }
           }
@@ -75,7 +76,7 @@ export class PgpBlockViewSignatureModule {
 
   private renderBadSignature = () => {
     $('#pgp_signature').addClass('red_label');
-    $('#pgp_signature > .result').text('signature does not match');
+    $('#pgp_signature > .result').text('bad signature');
     this.view.renderModule.setFrameColor('red'); // todo: in what other cases should we set the frame red?
   };
 

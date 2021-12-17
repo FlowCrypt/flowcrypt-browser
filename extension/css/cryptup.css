@@ -64,6 +64,7 @@ span.gray { color: #b7b7b7; }
   cursor: pointer;
 }
 
+.gray_label,
 .green_label,
 .orange_label,
 .red_label {
@@ -77,9 +78,15 @@ span.gray { color: #b7b7b7; }
   margin-right: 10px;
 }
 
+.gray_label.short,
 .green_label.short,
 .orange_label.short,
 .red_label.short { min-width: 0; }
+
+.gray_label {
+  color: white !important;
+  background-color: #b7b7b7;
+}
 
 .green_label {
   color: white !important;
