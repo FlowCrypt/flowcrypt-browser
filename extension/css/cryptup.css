@@ -1,16 +1,5 @@
 /* © 2016-2018 FlowCrypt Limited. Limitations apply. Contact human@flowcrypt.com */
 
-@font-face {
-  font-family: signature;
-  src: url('/fonts/Tangerine_Regular.ttf');
-}
-
-@font-face {
-  font-family: signature;
-  src: url('/fonts/Tangerine_Bold.ttf');
-  font-weight: bold;
-}
-
 .button {
   text-transform: uppercase;
   display: inline-block;
@@ -1309,34 +1298,14 @@ td {
   max-width: 300px;
   float: right;
   text-align: right;
-  opacity: 0.5;
+  opacity: 1;
   margin-left: 1em;
-}
-
-#pgp_signature.rtl {
-  float: left;
-  text-align: left;
-  margin-left: 0;
-  margin-right: 1em;
-}
-
-#pgp_signature > .cursive {
-  font-family: signature; /* stylelint-disable-line font-family-no-missing-generic-family-keyword */
-  font-size: 24px;
-  font-weight: bold;
 }
 
 #pgp_signature > .result {
   font-size: 10px;
   font-family: monospace;
 }
-
-#pgp_signature.neutral,
-#pgp_signature.bad,
-#pgp_signature:hover { opacity: 1; }
-#pgp_signature.neutral > .cursive { border-bottom: 1px dotted #b7b7b7; }
-#pgp_signature.bad > .cursive { border-bottom: 1px dotted #a44; }
-#pgp_signature.good > .cursive { border-bottom: 1px dotted #088447; }
 
 #pgp_block.pgp_pubkey { padding-top: 7px; }
 #pgp_block.pgp_pubkey .line { margin: 0; }

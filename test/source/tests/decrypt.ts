@@ -322,7 +322,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
 =1oxZ
 -----END PGP PUBLIC KEY BLOCK-----`, 'sender@domain.com');
       // as the verification pubkey is not known, this scenario doesn't trigger message re-fetch
-      await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, { params, content: [], signature: ["Unknown Signer", "Message digest did not match"] });
+      await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, { params, content: [], signature: ["message digest did not match"] });
     }));
 
     ava.default(`decrypt - [everdesk] message encrypted for sub but claims encryptedFor:primary,sub`, testWithBrowser('compatibility', async (t, browser) => {
@@ -436,7 +436,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
       const urls = await inboxPage.getFramesUrls(['/chrome/elements/pgp_block.htm'], { sleep: 10, appearIn: 20 });
       expect(urls.length).to.equal(1);
       const url = urls[0].split('/chrome/elements/pgp_block.htm')[1];
-      const signature = ['some.sender@test.com', 'matching signature'];
+      const signature = ['signed'];
       await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, { params: url, content: ['1234'], signature });
     }));
 
@@ -448,8 +448,8 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
       const pgpHostPage = await browser.newPage(t, `chrome/dev/ci_pgp_host_page.htm${params}`);
       const pgpBlockPage = await pgpHostPage.getFrame(['pgp_block.htm']);
       await pgpBlockPage.waitForContent('@pgp-block-content', '1234', 4, 10);
-      await pgpBlockPage.waitForContent('@pgp-signature', 'Verifying message', 3, 10);
-      await pgpBlockPage.waitForContent('@pgp-signature', 'matching signature', 10, 10);
+      await pgpBlockPage.waitForContent('@pgp-signature', 'verifying signature...', 3, 10);
+      await pgpBlockPage.waitForContent('@pgp-signature', 'signed', 10, 10);
     }));
 
     ava.default('decrypt - fetched pubkey is automatically saved to contacts', testWithBrowser('compatibility', async (t, browser) => {
@@ -491,7 +491,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
       const urls = await inboxPage.getFramesUrls(['/chrome/elements/pgp_block.htm'], { sleep: 3 });
       expect(urls.length).to.equal(1);
       const url = urls[0].split('/chrome/elements/pgp_block.htm')[1];
-      const signature = ['Message Not Signed'];
+      const signature = ['not signed'];
       await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, { params: url, content: ['This is unsigned, encrypted message'], signature });
     }));
 
@@ -506,7 +506,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
       await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
         params: url,
         content: ['How is my message signed?'],
-        signature: ['sender@example.com', 'matching signature']
+        signature: ['signed']
       });
     }));
 
@@ -523,7 +523,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
       await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
         params: url,
         content: ['How is my message signed?'],
-        signature: ['sender@example.com', 'matching signature']
+        signature: ['signed']
       });
     }));
 
@@ -553,7 +553,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
       await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
         params,
         content: [], // todo: #4164 I would expect '1234' here
-        signature: ['some.sender@test.com', 'matching signature']
+        signature: ['signed']
       });
     }));
 
@@ -565,14 +565,14 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
       await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
         params: textParams,
         content: ["1234"],
-        signature: ["matching signature", "some.alias@protonmail.com"]
+        signature: ["signed"]
       });
       const htmlParams = `?frameId=none&message=&msgId=16a9c0fe4e034bc2&` +
         `senderEmail=some.alias%40protonmail.com&isOutgoing=___cu_false___&signature=___cu_true___&acctEmail=flowcrypt.compatibility%40gmail.com`;
       await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
         params: htmlParams,
         content: ["1234"],
-        signature: ["matching signature", "some.alias@protonmail.com"]
+        signature: ["signed"]
       });
     }));
 
@@ -582,7 +582,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
       await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
         params,
         content: ["1234"],
-        signature: ["matching signature", "flowcrypt.compatibility@protonmail.com"]
+        signature: ["signed"]
       });
     }));
 
@@ -591,7 +591,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
       await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
         params,
         content: ['4) signed + encrypted email if supported'],
-        signature: ["matching signature", "martin@politick.ca"]
+        signature: ['signed']
       });
     }));
 

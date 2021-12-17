@@ -76,7 +76,7 @@ export class PgpBlockViewDecryptModule {
           verificationPubs, async (verificationPubs: string[]) => {
             const decryptResult = await decrypt(verificationPubs);
             if (!decryptResult.success) {
-              return undefined; // note: this internal error results in a wrong "Message Not Signed" badge
+              return undefined; // note: this internal error results in a wrong "Not Signed" badge
             } else {
               return decryptResult.signature;
             }

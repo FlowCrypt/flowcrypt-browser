@@ -26,24 +26,23 @@ export class PgpBlockViewSignatureModule {
         await this.view.decryptModule.initialize(verificationPubs, true);
         return;
       }
-      $('#pgp_signature').addClass('bad');
-      $('#pgp_signature > .result').text(verifyRes.error);
+      $('#pgp_signature').addClass('red_label');
+      $('#pgp_signature > .result').text(`error verifying signature: ${verifyRes.error}`);
       this.view.renderModule.setFrameColor('red');
     } else if (!verifyRes || !verifyRes.signerLongids.length) {
-      $('#pgp_signature').addClass('bad');
-      $('#pgp_signature > .cursive').remove();
-      $('#pgp_signature > .result').text('Message Not Signed');
+      $('#pgp_signature').addClass('red_label');
+      $('#pgp_signature > .result').text('not signed');
     } else if (verifyRes.match) {
-      $('#pgp_signature').addClass('good');
-      $('#pgp_signature > .result').text('matching signature');
+      $('#pgp_signature').addClass('green_label');
+      $('#pgp_signature > .result').text('signed');
     } else {
       if (retryVerification) {
         const signerEmail = this.view.getExpectedSignerEmail();
         if (!signerEmail) {
           // in some tests we load the block without sender information
-          $('#pgp_signature').addClass('bad').find('.result').text(`Cannot verify: missing pubkey, missing sender info`);
+          $('#pgp_signature').addClass('red_label').find('.result').text(`could not verify signature: missing pubkey, missing sender info`);
         } else {
-          $('#pgp_signature > .result').text('Verifying message...');
+          $('#pgp_signature > .result').text('verifying signature...');
           try {
             const { pubkeys } = await this.view.pubLookup.lookupEmail(signerEmail);
             if (pubkeys.length) {
@@ -55,9 +54,9 @@ export class PgpBlockViewSignatureModule {
           } catch (e) {
             if (ApiErr.isSignificant(e)) {
               Catch.reportErr(e);
-              $('#pgp_signature').addClass('bad').find('.result').text(`Could not load sender's pubkey due to an error.`);
+              $('#pgp_signature').addClass('red_label').find('.result').text(`Could not load sender's pubkey due to an error.`);
             } else {
-              $('#pgp_signature').addClass('bad').find('.result').text(`Could not look up sender's pubkey due to network error, click to retry.`).click(
+              $('#pgp_signature').addClass('red_label').find('.result').text(`Could not look up sender's pubkey due to network error, click to retry.`).click(
                 this.view.setHandler(() => window.location.reload()));
             }
           }
@@ -66,24 +65,16 @@ export class PgpBlockViewSignatureModule {
         this.renderMissingPubkeyOrBadSignature(verifyRes);
       }
     }
-    if (verifyRes) {
-      this.setSigner(verifyRes);
-    }
     this.view.renderModule.doNotSetStateAsReadyYet = false;
     Ui.setTestState('ready');
   };
 
-  private setSigner = (signature: VerifyRes): void => {
-    const signerEmail = signature.match ? this.view.getExpectedSignerEmail() : undefined;
-    $('#pgp_signature > .cursive > span').text(signerEmail || 'Unknown Signer');
-  };
-
   private renderMissingPubkey = (signerLongid: string) => {
-    $('#pgp_signature').addClass('bad').find('.result').text(`Missing pubkey ${signerLongid}`);
+    $('#pgp_signature').addClass('red_label').find('.result').text(`could not verify signature: missing pubkey ${signerLongid}`);
   };
 
   private renderBadSignature = () => {
-    $('#pgp_signature').addClass('bad');
+    $('#pgp_signature').addClass('red_label');
     $('#pgp_signature > .result').text('signature does not match');
     this.view.renderModule.setFrameColor('red'); // todo: in what other cases should we set the frame red?
   };

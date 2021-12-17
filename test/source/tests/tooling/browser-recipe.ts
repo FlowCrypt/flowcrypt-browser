@@ -146,7 +146,7 @@ export class BrowserRecipe {
     if (m.signature) {
       const sigContent = await pgpBlockPage.read('@pgp-signature');
       for (const expectedSigContent of m.signature) {
-        if (sigContent.indexOf(expectedSigContent) === -1) {
+        if (sigContent.indexOf(expectedSigContent.toUpperCase()) === -1) {
           t.log(`found sig content:${sigContent}`);
           throw new Error(`pgp_block_verify_decrypted_content:missing expected signature content:${expectedSigContent}`);
         }
