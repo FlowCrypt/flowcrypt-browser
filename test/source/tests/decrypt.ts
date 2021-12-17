@@ -448,8 +448,8 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
       const pgpHostPage = await browser.newPage(t, `chrome/dev/ci_pgp_host_page.htm${params}`);
       const pgpBlockPage = await pgpHostPage.getFrame(['pgp_block.htm']);
       await pgpBlockPage.waitForContent('@pgp-block-content', '1234', 4, 10);
-      await pgpBlockPage.waitForContent('@pgp-signature', 'verifying signature...', 3, 10);
-      await pgpBlockPage.waitForContent('@pgp-signature', 'signed', 10, 10);
+      await pgpBlockPage.waitForContent('@pgp-signature', 'VERIFYING SIGNATURE...', 3, 10);
+      await pgpBlockPage.waitForContent('@pgp-signature', 'SIGNED', 10, 10);
     }));
 
     ava.default('decrypt - fetched pubkey is automatically saved to contacts', testWithBrowser('compatibility', async (t, browser) => {
