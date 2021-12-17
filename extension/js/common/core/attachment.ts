@@ -120,6 +120,8 @@ export class Attachment {
       return 'publicKey';
     } else if (this.name.match(/\.asc$/) && this.length < 100000 && !this.inline) {
       return 'encryptedMsg';
+    } else if (this.name.match(/ATT[0-9]{5}$/) || this.type === 'application/pgp-encrypted') {
+      return 'encryptedMsg';
     } else {
       return 'plainFile';
     }
