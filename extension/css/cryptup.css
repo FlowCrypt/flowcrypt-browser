@@ -1301,15 +1301,14 @@ td {
   height: 37px;
 }
 
-#pgp_signature {
+.pgp_badge {
   max-width: 300px;
   float: right;
-  text-align: right;
   opacity: 1;
   margin-left: 1em;
 }
 
-#pgp_signature > .result {
+.pgp_badge > .result {
   font-size: 10px;
   font-family: monospace;
 }
