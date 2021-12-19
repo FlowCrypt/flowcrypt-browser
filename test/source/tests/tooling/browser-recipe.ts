@@ -145,11 +145,18 @@ export class BrowserRecipe {
     }
     if (m.signature) {
       const sigContent = await pgpBlockPage.read('@pgp-signature');
-      for (const expectedSigContent of m.signature) {
-        if (sigContent.indexOf(expectedSigContent.toUpperCase()) === -1) {
-          t.log(`found sig content:${sigContent}`);
-          throw new Error(`pgp_block_verify_decrypted_content:missing expected signature content:${expectedSigContent}`);
-        }
+      const expectedSigContent = m.signature.toUpperCase();
+      if (sigContent !== expectedSigContent) {
+        t.log(`found sig content:${sigContent}`);
+        throw new Error(`pgp_block_verify_decrypted_content:missing expected signature content:${expectedSigContent}`);
+      }
+    }
+    if (m.encryption) {
+      const encContent = await pgpBlockPage.read('@pgp-encryption');
+      const expectedEncContent = m.encryption.toUpperCase();
+      if (encContent !== expectedEncContent) {
+        t.log(`found enc content:${encContent}`);
+        throw new Error(`pgp_block_verify_decrypted_content:missing expected encryption content:${expectedEncContent}`);
       }
     }
     await pgpHostPage.close();
