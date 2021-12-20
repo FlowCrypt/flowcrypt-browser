@@ -25,6 +25,12 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
 
   if (testVariant !== 'CONSUMER-LIVE-GMAIL') {
 
+    ava.default(`decrypt - outlook message with ATTxxxx encrypted email`, testWithBrowser('compatibility', async (t, browser) => {
+      const textParams = `?frameId=none&message=&msgId=17dbdf2425ac0f29&` +
+      `senderEmail=mart%40flowcrypt.com&isOutgoing=___cu_false___&acctEmail=flowcrypt.compatibility%40gmail.com`;
+      await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, { params: textParams, content: [" "] });
+    }));
+
     ava.default(`decrypt - without a subject`, testWithBrowser('compatibility', async (t, browser) => {
       await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
         content: ["This is a compatibility test email"],
