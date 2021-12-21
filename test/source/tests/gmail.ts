@@ -14,6 +14,7 @@ import { TestUrls } from './../browser/test-urls';
 import { TestWithBrowser } from './../test';
 import { expect } from 'chai';
 import { OauthPageRecipe } from './page-recipe/oauth-page-recipe';
+import { SetupPageRecipe } from './page-recipe/setup-page-recipe';
 
 /**
  * All tests that use mail.google.com or have to operate without a Gmail API mock should go here
@@ -350,6 +351,18 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       await pageDoesNotHaveSecureReplyContainer(gmailPage);
       await gmailPage.waitForContent('div[aria-label="Message Body"]', 'plain reply', 30);
       await gmailPage.click('[aria-label^="Discard draft"]');
+    }));
+
+    ava.default('mail.google.com - Outlook encrypted message with attachment is recognized', testWithBrowser(undefined, async (t, browser) => {
+      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'ci.tests.gmail@flowcrypt.dev');
+      await SetupPageRecipe.manualEnter(settingsPage, 'flowcrypt.compatibility.1pp1', {
+        submitPubkey: false,
+        usedPgpBefore: true,
+      }, { isSavePassphraseChecked: false, isSavePassphraseHidden: false });
+      const gmailPage = await openGmailPage(t, browser);
+      await gotoGmailPage(gmailPage, '/FMfcgzGllVqqBbjHQQRDsSwcZBlMRzDr');
+      // todo: some additional checks here
+      await gmailPage.close();
     }));
 
     ava.default('mail.google.com - pubkey file gets rendered', testWithBrowser('ci.tests.gmail', async (t, browser) => {
