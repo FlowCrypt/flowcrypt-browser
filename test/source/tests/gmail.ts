@@ -355,10 +355,8 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
 
     ava.default('mail.google.com - Outlook encrypted message with attachment is recognized', testWithBrowser(undefined, async (t, browser) => {
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'ci.tests.gmail@flowcrypt.dev');
-      await SetupPageRecipe.manualEnter(settingsPage, 'flowcrypt.compatibility.1pp1', {
-        submitPubkey: false,
-        usedPgpBefore: true,
-      }, { isSavePassphraseChecked: false, isSavePassphraseHidden: false });
+      await SetupPageRecipe.manualEnter(settingsPage, 'flowcrypt.compatibility.1pp1', { submitPubkey: false, usedPgpBefore: true, },
+        { isSavePassphraseChecked: false, isSavePassphraseHidden: false });
       const gmailPage = await openGmailPage(t, browser);
       await gotoGmailPage(gmailPage, '/FMfcgzGllVqqBbjHQQRDsSwcZBlMRzDr');
       // todo: some additional checks here
