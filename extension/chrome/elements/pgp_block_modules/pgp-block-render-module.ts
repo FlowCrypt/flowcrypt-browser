@@ -75,14 +75,12 @@ export class PgpBlockViewRenderModule {
     }
   };
 
-  public renderEncryptionStatus = (status: string) => {
-    $('#pgp_encryption').addClass(status === 'encrypted' ? 'green_label' : 'red_label');
-    $('#pgp_encryption > .result').text(status);
+  public renderEncryptionStatus = (status: string): JQuery<HTMLElement> => {
+    return $('#pgp_encryption').addClass(status === 'encrypted' ? 'green_label' : 'red_label').text(status);
   };
 
   public renderSignatureStatus = (status: string): JQuery<HTMLElement> => {
-    $('#pgp_signature').addClass(status === 'signed' ? 'green_label' : 'red_label');
-    return $('#pgp_signature > .result').text(status);
+    return $('#pgp_signature').addClass(status === 'signed' ? 'green_label' : 'red_label').text(status);
   };
 
   public decideDecryptedContentFormattingAndRender = async (decryptedBytes: Buf, isEncrypted: boolean, sigResult: VerifyRes | undefined,

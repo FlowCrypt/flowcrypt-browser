@@ -1303,9 +1303,9 @@ td {
 
 .pgp_badge {
   max-width: 300px;
-  float: right;
   opacity: 1;
   margin-left: 1em;
+  margin-bottom: 1em;
 }
 
 .pgp_badge > .result {
