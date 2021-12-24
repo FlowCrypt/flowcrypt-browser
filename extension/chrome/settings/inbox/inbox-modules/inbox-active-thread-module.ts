@@ -122,7 +122,7 @@ export class InboxActiveThreadModule extends ViewModule<InboxView> {
         }
       }
       if (renderedAttachments) {
-        r += `<div class="attachments">${renderedAttachments}</div>`;
+        r += `<div class="attachments" data-test="attachments">${renderedAttachments}</div>`;
       }
       const exportBtn = this.debugEmails.includes(this.view.acctEmail) ? '<a href="#" class="action-export">download api export</a>' : '';
       r = `<p class="message_header" data-test="container-msg-header">From: ${Xss.escape(from)} <span style="float:right;">${headers.date} ${exportBtn}</p>` + r;
