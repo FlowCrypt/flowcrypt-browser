@@ -25,12 +25,21 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
 
   if (testVariant !== 'CONSUMER-LIVE-GMAIL') {
 
-    ava.default(`decrypt - outlook message with ATTxxxx encrypted email`, testWithBrowser('compatibility', async (t, browser) => {
+    ava.default(`decrypt - outlook message with ATTxxxx encrypted email doesn't show empty attachment`, testWithBrowser('compatibility', async (t, browser) => {
       const threadId = '17dbdf2425ac0f29';
       const acctEmail = 'flowcrypt.compatibility@gmail.com';
       const inboxPage = await browser.newPage(t, TestUrls.extension(`chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`));
       expect(await inboxPage.isElementPresent('@attachments')).to.equal(false);
       await inboxPage.close();
+    }));
+
+    ava.default(`decrypt - outlook message with ATTxxxx encrypted email is correctly decrypted`, testWithBrowser('compatibility', async (t, browser) => {
+      const acctEmail = 'flowcrypt.compatibility@gmail.com';
+      await InboxPageRecipe.checkDecryptMsg(t, browser, {
+        acctEmail,
+        threadId: '17dbdf2425ac0f29',
+        expectedContent: 'Documento anexo de prueba.docx'
+      });
     }));
 
     ava.default(`decrypt - without a subject`, testWithBrowser('compatibility', async (t, browser) => {
