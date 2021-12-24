@@ -105,9 +105,10 @@ export class GmailParser {
     }
     if (msgOrPayloadOrPart.hasOwnProperty('body') && (msgOrPayloadOrPart as GmailRes.GmailMsg$payload$part).body!.hasOwnProperty('attachmentId')) {
       let treatAs: 'hidden' | 'encryptedMsg' | undefined;
-      if (pgpEncryptedIndex === 0) {
+      const payload = msgOrPayloadOrPart as GmailRes.GmailMsg$payload;
+      if (pgpEncryptedIndex === 0 && payload.mimeType === 'application/pgp-encrypted') {
         treatAs = 'hidden';
-      } else if (pgpEncryptedIndex === 1) {
+      } else if (pgpEncryptedIndex === 1 && payload.mimeType === 'application/octet-stream') {
         treatAs = 'encryptedMsg';
       }
       internalResults.push(new Attachment({
