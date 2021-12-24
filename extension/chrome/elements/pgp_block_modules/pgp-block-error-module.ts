@@ -22,6 +22,8 @@ export class PgpBlockViewErrorModule {
     const showRawMsgPrompt = renderRawMsg ? '<a href="#" class="action_show_raw_pgp_block">show original message</a>' : '';
     await this.view.renderModule.renderContent(`<div class="error">${errBoxContent.replace(/\n/g, '<br>')}</div>${showRawMsgPrompt}`, true);
     $('.action_show_raw_pgp_block').click(this.view.setHandler(async () => { // this may contain content missing MDC
+      this.view.renderModule.renderEncryptionStatus('decrypt error: security hazard');
+      this.view.renderModule.renderSignatureStatus('not signed');
       Xss.sanitizeAppend('#pgp_block', `<div class="raw_pgp_block">${Xss.escape(renderRawMsg!)}</div>`); // therefore the .escape is crucial
     }));
     $('.button.settings_keyserver').click(this.view.setHandler(async () => await Browser.openSettingsPage('index.htm', this.view.acctEmail, '/chrome/settings/modules/keyserver.htm')));
