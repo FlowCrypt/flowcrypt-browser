@@ -97,6 +97,7 @@ export class GmailParser {
       const payload = msgOrPayloadOrPart as GmailRes.GmailMsg$payload;
       const contentType = payload.headers?.find(x => x.name.toLowerCase() === 'content-type');
       const parts = payload.parts!;
+      // are we dealing with a PGP/MIME encrypted message?
       const pgpEncrypted = Boolean(parts.length === 2 && contentType?.value?.startsWith('multipart/encrypted;')
         && contentType.value.includes('protocol="application/pgp-encrypted"'));
       for (const [i, part] of parts.entries()) {

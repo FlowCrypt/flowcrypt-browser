@@ -17,7 +17,7 @@ export type FcAttachmentLinkData = { name: string, type: string, size: number };
 export class Attachment {
 
   // eslint-disable-next-line max-len
-  public static readonly webmailNamePattern = /^(((cryptup|flowcrypt)-backup-[a-z0-9]+\.(key|asc))|(.+\.pgp)|(.+\.gpg)|(.+\.asc)|(noname)|(message)|(PGPMIME version identification)|(ATT[0-9]{5})|())$/m;  // should remove ATT pattern soon
+  public static readonly webmailNamePattern = /^(((cryptup|flowcrypt)-backup-[a-z0-9]+\.(key|asc))|(.+\.pgp)|(.+\.gpg)|(.+\.asc)|(noname)|(message)|(PGPMIME version identification)|(ATT[0-9]{5})|())$/m;
   public static readonly encryptedMsgNames = ['message', 'msg.asc', 'message.asc', 'encrypted.asc', 'encrypted.eml.pgp', 'Message.pgp', 'openpgp-encrypted-message.asc'];
 
   public length: number = NaN;
@@ -120,8 +120,6 @@ export class Attachment {
     } else if (this.name.match(/\.asc$/) && this.hasData() && Buf.with(this.getData().subarray(0, 100)).toUtfStr().includes('-----BEGIN PGP PUBLIC KEY BLOCK-----')) {
       return 'publicKey';
     } else if (this.name.match(/\.asc$/) && this.length < 100000 && !this.inline) {
-      return 'encryptedMsg';
-    } else if (this.name.match(/ATT[0-9]{5}$/)) { // should remove ATT pattern soon
       return 'encryptedMsg';
     } else {
       return 'plainFile';
