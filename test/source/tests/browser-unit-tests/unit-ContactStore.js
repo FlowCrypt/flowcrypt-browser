@@ -103,17 +103,16 @@ BROWSER_UNIT_TEST_NAME(`ContactStore is able to search by a chunk spanning acros
 BROWSER_UNIT_TEST_NAME(`ContactStore doesn't store duplicates in searchable`);
 (async () => {
   const db = await ContactStore.dbOpen();
-  const contact = await ContactStore.obj({
-    email: 'this.word.this.word@this.word.this.word', name: 'This Word THIS WORD this word'
-  });
-  await ContactStore.save(db, contact);
+  const email = 'at@this.word';
+  await ContactStore.update(db, email, { name: 'This.Word' });
   // extract the entity from the database to see the actual field
   const entity = await new Promise((resolve, reject) => {
-    const req = db.transaction(['emails'], 'readonly').objectStore('emails').get(contact.email);
+    const req = db.transaction(['emails'], 'readonly').objectStore('emails').get(email);
     ContactStore.setReqPipe(req, resolve, reject);
   });
-  if (entity?.searchable.length !== 2) {
-    throw Error(`Expected 2 entries in 'searchable' but got "${entity?.searchable}"`);
+  if (entity?.searchable.length !== 3 || !entity.searchable.includes('f:at@this.word')
+    || !entity.searchable.includes('f:this.word') || !entity.searchable.includes('f:word')) {
+    throw Error(`Expected ["at@this.word", "this.word", "word"] entries in 'searchable' but got "${entity?.searchable}"`);
   }
   return 'pass';
 })();
@@ -121,18 +120,16 @@ BROWSER_UNIT_TEST_NAME(`ContactStore doesn't store duplicates in searchable`);
 BROWSER_UNIT_TEST_NAME(`ContactStore doesn't store smaller words in searchable when there is a bigger one that starts with it`);
 (async () => {
   const db = await ContactStore.dbOpen();
-  const contact = await ContactStore.obj({
-    email: 'a@big.one', name: 'Bigger'
-  });
-  await ContactStore.save(db, contact);
+  const email = 'com@big.com';
+  await ContactStore.update(db, email, { name: 'Commander' });
   // extract the entity from the database to see the actual field
   const entity = await new Promise((resolve, reject) => {
-    const req = db.transaction(['emails'], 'readonly').objectStore('emails').get(contact.email);
+    const req = db.transaction(['emails'], 'readonly').objectStore('emails').get(email);
     ContactStore.setReqPipe(req, resolve, reject);
   });
-  if (entity?.searchable.length !== 3 || !entity.searchable.includes('f:a')
-    || !entity.searchable.includes('f:bigger') || !entity.searchable.includes('f:one')) {
-    throw Error(`Expected "a bigger one" entries in 'searchable' but got "${entity?.searchable}"`);
+  if (entity?.searchable.length !== 3 || !entity.searchable.includes('f:com@big.com')
+    || !entity.searchable.includes('f:big.com') || !entity.searchable.includes('f:commander')) {
+    throw Error(`Expected ["com@big.com", "big.com", "commander"] in 'searchable' but got "${entity?.searchable}"`);
   }
   return 'pass';
 })();
