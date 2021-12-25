@@ -94,6 +94,19 @@ export class Str {
     return id;
   };
 
+  public static splitExtended = (str: string): string[] => {
+    const result: string[] = [];
+    const regexp = /[a-z0-9]+/g;
+    for (; ;) {
+      const match = regexp.exec(str);
+      if (match === null) {
+        break;
+      }
+      result.push(str.substring(match.index));
+    }
+    return result;
+  };
+
   public static regexEscape = (toBeUsedInRegex: string) => {
     return toBeUsedInRegex.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   };

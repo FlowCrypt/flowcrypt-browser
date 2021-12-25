@@ -67,6 +67,39 @@ BROWSER_UNIT_TEST_NAME(`ContactStore is able to search by partial email address`
   return 'pass';
 })();
 
+BROWSER_UNIT_TEST_NAME(`ContactStore is able to search by a chunk spanning across several parts`);
+(async () => {
+  await ContactStore.update(undefined, 'abcdef.com@abcdef.com', { pubkey: testConstants.abcdefTestComPubkey });
+  await ContactStore.update(undefined, 'abcdef@abcdef.com', { pubkey: testConstants.abcdefTestComPubkey });
+  await ContactStore.update(undefined, 'abcdef@test.com', { pubkey: testConstants.abcdefTestComPubkey });
+  await ContactStore.update(undefined, 'test@abcdef.com', { pubkey: testConstants.abcdefTestComPubkey });
+  {
+    const test = await ContactStore.search(undefined, { hasPgp: true, substring: 'abcdef@' });
+    if (test.length !== 2) {
+      throw Error(`Expected 2 contacts to match "abcdef@" but got "${test.length}"`);
+    }
+  }
+  {
+    const test = await ContactStore.search(undefined, { hasPgp: true, substring: 'abcdef.' });
+    if (test.length !== 3) {
+      throw Error(`Expected 3 contacts to match "abcdef." but got "${test.length}"`);
+    }
+  }
+  {
+    const test = await ContactStore.search(undefined, { hasPgp: true, substring: 'test.com' });
+    if (test.length !== 1) {
+      throw Error(`Expected 1 contact to match "test.com" but got "${test.length}"`);
+    }
+  }
+  {
+    const test = await ContactStore.search(undefined, { hasPgp: true, substring: 'test@abcdef.com' });
+    if (test.length !== 1) {
+      throw Error(`Expected 1 contact to match "test@abcdef.com" but got "${test.length}"`);
+    }
+  }
+  return 'pass';
+})();
+
 BROWSER_UNIT_TEST_NAME(`ContactStore doesn't store duplicates in searchable`);
 (async () => {
   const db = await ContactStore.dbOpen();
@@ -270,7 +303,7 @@ BROWSER_UNIT_TEST_NAME(`ContactStore gets a valid pubkey by e-mail and all pubke
   if (expectedValid.pubkey.id !== 'D6662C5FB9BDE9DA01F3994AAA1EF832D8CCA4F2') {
     throw Error(`Expected to get the key fingerprint D6662C5FB9BDE9DA01F3994AAA1EF832D8CCA4F2 but got ${expectedValid.pubkey.id}`);
   }
-  const {sortedPubkeys: pubs} = await ContactStore.getOneWithAllPubkeys(undefined, `some.revoked@otherhost.com`);
+  const { sortedPubkeys: pubs } = await ContactStore.getOneWithAllPubkeys(undefined, `some.revoked@otherhost.com`);
   if (pubs.length !== 3) {
     throw new Error(`3 pubkeys were expected to be retrieved from the storage but got ${pubs.length}`);
   }
@@ -322,7 +355,7 @@ BROWSER_UNIT_TEST_NAME(`ContactStore: X-509 revocation affects OpenPGP key`);
     throw new Error(`Valid OpenPGP Key is expected to have fingerprint ${fingerprint} but actually is ${opgpKeyOldAndValid.id}`);
   }
   await ContactStore.update(db, 'some.revoked@localhost.com', { pubkey: opgpKeyOldAndValid });
-  const {sortedPubkeys: pubkeys1} = await ContactStore.getOneWithAllPubkeys(db, `some.revoked@localhost.com`);
+  const { sortedPubkeys: pubkeys1 } = await ContactStore.getOneWithAllPubkeys(db, `some.revoked@localhost.com`);
   if (pubkeys1.some(x => x.revoked)) {
     throw new Error('The pubkey was expected to be valid but it is revoked.');
   }
@@ -333,7 +366,7 @@ BROWSER_UNIT_TEST_NAME(`ContactStore: X-509 revocation affects OpenPGP key`);
     tx.objectStore('revocations').put({ fingerprint: fingerprint + "-X509" });
   });
   // original key should be either revoked or missing
-  const {sortedPubkeys: pubkeys2} = await ContactStore.getOneWithAllPubkeys(db, `some.revoked@localhost.com`);
+  const { sortedPubkeys: pubkeys2 } = await ContactStore.getOneWithAllPubkeys(db, `some.revoked@localhost.com`);
   if (pubkeys2.some(x => !x.revoked)) {
     throw new Error('The pubkey was expected to be revoked but it is not.');
   }

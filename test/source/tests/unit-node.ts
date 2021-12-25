@@ -22,6 +22,7 @@ import { ExpirationCache } from '../core/expiration-cache';
 import { readFileSync } from 'fs';
 import * as forge from 'node-forge';
 import { ENVELOPED_DATA_OID, SmimeKey } from '../core/crypto/smime/smime-key';
+import { Str } from '../core/common';
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;
@@ -2168,5 +2169,9 @@ AAAAAAAAAAAAAAAAzzzzzzzzzzzzzzzzzzzzzzzzzzzz.....`)).to.eventually.be.rejectedWi
       t.pass();
     });
 
+    ava.default(`[unit][Str] splitExtended returns all parts extendec till the end of the original string`, async t => {
+      expect(Str.splitExtended('part1.part2@part3.part4')).to.eql(['part1.part2@part3.part4', 'part2@part3.part4', 'part3.part4', 'part4']);
+      t.pass();
+    });
   }
 };
