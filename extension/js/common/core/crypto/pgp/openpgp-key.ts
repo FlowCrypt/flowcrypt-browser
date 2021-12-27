@@ -472,7 +472,7 @@ export class OpenPGPKey {
         verifyRes.error = 'FlowCrypt is not equipped to verify this message';
         verifyRes.isErrFatal = true; // don't try to re-fetch the message from API
       } else if (verifyErr instanceof Error && verifyErr.message.startsWith('Insecure message hash algorithm:')) {
-        verifyRes.error = `Could not verify message: ${verifyErr.message}. Sender is using old, insecure OpenPGP software.`;
+        verifyRes.error = `${verifyErr.message}. Sender is using old, insecure OpenPGP software.`;
         verifyRes.isErrFatal = true; // don't try to re-fetch the message from API
       } else if (verifyErr instanceof Error && verifyErr.message === 'Signature is expired') {
         verifyRes.error = verifyErr.message;

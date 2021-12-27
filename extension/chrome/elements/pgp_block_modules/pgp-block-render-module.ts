@@ -10,7 +10,6 @@ import { Catch } from '../../../js/common/platform/catch.js';
 import { Mime } from '../../../js/common/core/mime.js';
 import { MsgBlock } from '../../../js/common/core/msg-block.js';
 import { PgpBlockView } from '../pgp_block.js';
-import { Str } from '../../../js/common/core/common.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { MsgBlockParser } from '../../../js/common/core/msg-block-parser.js';
@@ -76,9 +75,23 @@ export class PgpBlockViewRenderModule {
     }
   };
 
+  public renderEncryptionStatus = (status: string): JQuery<HTMLElement> => {
+    return $('#pgp_encryption').addClass(status === 'encrypted' ? 'green_label' : 'red_label').text(status);
+  };
+
+  public renderSignatureStatus = (status: string): JQuery<HTMLElement> => {
+    return $('#pgp_signature').addClass(status === 'signed' ? 'green_label' : 'red_label').text(status);
+  };
+
   public decideDecryptedContentFormattingAndRender = async (decryptedBytes: Buf, isEncrypted: boolean, sigResult: VerifyRes | undefined,
     verificationPubs: string[], retryVerification: (verificationPubs: string[]) => Promise<VerifyRes | undefined>, plainSubject?: string) => {
-    this.setFrameColor(isEncrypted ? 'green' : 'gray');
+    if (isEncrypted) {
+      this.renderEncryptionStatus('encrypted');
+      this.setFrameColor('green');
+    } else {
+      this.renderEncryptionStatus('not encrypted');
+      this.setFrameColor('gray');
+    }
     const publicKeys: string[] = [];
     let renderableAttachments: Attachment[] = [];
     let decryptedContent = decryptedBytes.toUtfStr();
@@ -116,9 +129,6 @@ export class PgpBlockViewRenderModule {
       }
     }
     await this.view.quoteModule.separateQuotedContentAndRenderText(decryptedContent, isHtml);
-    if (Str.mostlyRTL(Xss.htmlSanitizeAndStripAllTags(decryptedContent, '\n'))) {
-      $('#pgp_signature').addClass('rtl');
-    }
     await this.view.signatureModule.renderPgpSignatureCheckResult(sigResult, verificationPubs, retryVerification);
     if (isEncrypted && publicKeys.length) {
       BrowserMsg.send.renderPublicKeys(this.view.parentTabId, { afterFrameId: this.view.frameId, publicKeys });
