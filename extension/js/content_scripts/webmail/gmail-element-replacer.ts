@@ -24,8 +24,6 @@ import { OrgRules } from '../../common/org-rules.js';
 import { SendAsAlias } from '../../common/platform/store/acct-store.js';
 import { ContactStore } from '../../common/platform/store/contact-store.js';
 import { Buf } from '../../common/core/buf.js';
-import { MsgUtil } from '../../common/core/crypto/pgp/msg-util.js';
-import { KeyStore } from '../../common/platform/store/key-store.js';
 
 type JQueryEl = JQuery<HTMLElement>;
 
