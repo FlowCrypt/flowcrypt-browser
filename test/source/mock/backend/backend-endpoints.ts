@@ -22,8 +22,7 @@ export const mockBackendEndpoints: HandlersDefinition = {
     mockBackendData.registerOrThrow(parsed.account, parsed.uuid, idToken);
     return JSON.stringify({
       registered: true,
-      verified: true,
-      subscription: mockBackendData.getSubscription(parsed.account),
+      verified: true
     });
   },
   '/api/account/get': async ({ body }, req) => {
@@ -31,7 +30,6 @@ export const mockBackendEndpoints: HandlersDefinition = {
     mockBackendData.checkUuidOrThrow(parsed.account, parsed.uuid);
     return JSON.stringify({
       account: mockBackendData.getAcctRow(parsed.account),
-      subscription: mockBackendData.getSubscription(parsed.account),
       domain_org_rules: mockBackendData.getOrgRules(parsed.account),
     });
   },
