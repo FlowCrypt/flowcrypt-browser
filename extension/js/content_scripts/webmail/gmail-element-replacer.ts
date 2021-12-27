@@ -412,13 +412,6 @@ export class GmailElementReplacer implements WebmailElementReplacer {
                 console.debug('processAttachments() try -> awaiting done and processed');
               }
             } else {
-              const data = (await this.gmail.attachmentGet(msgId, a.id!, undefined, 'full')).data;
-              const result = await MsgUtil.decryptMessage({
-                kisWithPp: await KeyStore.getAllWithOptionalPassPhrase(this.acctEmail),
-                encryptedData: data,
-                verificationPubs: []
-              });
-              console.info(result); // render the message if result.success is True - for Gmail view only
               msgEl = this.updateMsgBodyEl_DANGEROUSLY(msgEl, 'set', this.factory.embeddedMsg('encryptedMsg', '', msgId, false, senderEmail)); // xss-safe-factory
             }
           } else if (treatAs === 'publicKey') { // todo - pubkey should be fetched in pgp_pubkey.js

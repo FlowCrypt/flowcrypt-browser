@@ -113,10 +113,9 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
     return await Google.gmailCall<GmailRes.GmailLabels>(this.acctEmail, 'GET', `labels`, {});
   };
 
-  public attachmentGet = async (msgId: string, attId: string, progressCb?: ProgressCb, format?: GmailResponseFormat,): Promise<GmailRes.GmailAttachment> => {
+  public attachmentGet = async (msgId: string, attId: string, progressCb?: ProgressCb): Promise<GmailRes.GmailAttachment> => {
     type RawGmailAttRes = { attachmentId: string, size: number, data: string };
-    // eslint-disable-next-line max-len
-    const { attachmentId, size, data } = await Google.gmailCall<RawGmailAttRes>(this.acctEmail, 'GET', `messages/${msgId}/attachments/${attId}`, { format: format || 'full' }, { download: progressCb });
+    const { attachmentId, size, data } = await Google.gmailCall<RawGmailAttRes>(this.acctEmail, 'GET', `messages/${msgId}/attachments/${attId}`, {}, { download: progressCb });
     return { attachmentId, size, data: Buf.fromBase64UrlStr(data) }; // data should be a Buf for ease of passing to/from bg page
   };
 
