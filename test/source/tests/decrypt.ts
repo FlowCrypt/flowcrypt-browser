@@ -29,6 +29,8 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
       const threadId = '17dbdf2425ac0f29';
       const acctEmail = 'flowcrypt.compatibility@gmail.com';
       const inboxPage = await browser.newPage(t, TestUrls.extension(`chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`));
+      await Util.sleep(5);
+      await inboxPage.waitAll('iframe');
       expect(await inboxPage.isElementPresent('@attachments')).to.equal(false);
       await inboxPage.close();
     }));

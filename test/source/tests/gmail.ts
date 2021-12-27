@@ -367,6 +367,8 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
         { isSavePassphraseChecked: false, isSavePassphraseHidden: false });
       const gmailPage = await openGmailPage(t, browser);
       await gotoGmailPage(gmailPage, '/FMfcgzGllVqqBbjHQQRDsSwcZBlMRzDr');
+      await Util.sleep(5);
+      await gmailPage.waitAll('iframe');
       expect(await gmailPage.isElementPresent('@attachments')).to.equal(false);
       await gmailPage.close();
     }));
