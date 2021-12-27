@@ -94,9 +94,10 @@ export class Str {
     return id;
   };
 
-  public static splitExtended = (str: string): string[] => {
+  // splits the string to matches,
+  // each match is extended till the end of the original string
+  public static splitExtended = (str: string, regexp: RegExp): string[] => {
     const result: string[] = [];
-    const regexp = /[a-z0-9]+/g;
     for (; ;) {
       const match = regexp.exec(str);
       if (match === null) {
@@ -105,6 +106,12 @@ export class Str {
       result.push(str.substring(match.index));
     }
     return result;
+  };
+
+  // splits the string to alphanumeric chunks,
+  // each chunk is extended till the end of the original string
+  public static splitAlphanumericExtended = (str: string): string[] => {
+    return Str.splitExtended(str, /[a-z0-9]+/g);
   };
 
   public static regexEscape = (toBeUsedInRegex: string) => {

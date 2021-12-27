@@ -2169,8 +2169,8 @@ AAAAAAAAAAAAAAAAzzzzzzzzzzzzzzzzzzzzzzzzzzzz.....`)).to.eventually.be.rejectedWi
       t.pass();
     });
 
-    ava.default(`[unit][Str] splitExtended returns all parts extendec till the end of the original string`, async t => {
-      expect(Str.splitExtended('part1.part2@part3.part4')).to.eql(['part1.part2@part3.part4', 'part2@part3.part4', 'part3.part4', 'part4']);
+    ava.default(`[unit][Str] splitAlphanumericExtended returns all parts extendec till the end of the original string`, async t => {
+      expect(Str.splitAlphanumericExtended('part1.part2@part3.part4')).to.eql(['part1.part2@part3.part4', 'part2@part3.part4', 'part3.part4', 'part4']);
       t.pass();
     });
   }
