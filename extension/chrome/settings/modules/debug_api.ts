@@ -19,7 +19,7 @@ View.run(class DebugApiView extends View {
     super();
     const uncheckedUrlParams = Url.parse(['acctEmail', 'parentTabId', 'which']);
     this.acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
-    this.which = Assert.urlParamRequire.oneof(uncheckedUrlParams, 'which', ['google_account', 'flowcrypt_account', 'flowcrypt_subscription', 'local_store']);
+    this.which = Assert.urlParamRequire.oneof(uncheckedUrlParams, 'which', ['google_account', 'flowcrypt_account', 'local_store']);
     this.gmail = new Gmail(this.acctEmail);
   }
 
@@ -32,8 +32,6 @@ View.run(class DebugApiView extends View {
         this.renderCallRes('gmail.fetchAcctAliases', {}, undefined, e);
       }
     } else if (this.which === 'flowcrypt_account') {
-      Xss.sanitizeAppend('#content', `Unsupported which: ${Xss.escape(this.which)} (not implemented)`);
-    } else if (this.which === 'flowcrypt_subscription') {
       Xss.sanitizeAppend('#content', `Unsupported which: ${Xss.escape(this.which)} (not implemented)`);
     } else if (this.which === 'local_store') {
       const storage = await AcctStore.get(this.acctEmail, [
