@@ -12,10 +12,8 @@ import { PUBKEY_LOOKUP_RESULT_FAIL } from './compose-err-module.js';
 import { ViewModule } from '../../../js/common/view-module.js';
 import { ComposeView } from '../compose.js';
 import { KeyStore } from '../../../js/common/platform/store/key-store.js';
-import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
 import { ContactStore } from '../../../js/common/platform/store/contact-store.js';
 import { PassphraseStore } from '../../../js/common/platform/store/passphrase-store.js';
-import { Settings } from '../../../js/common/settings.js';
 import { compareAndSavePubkeysToStorage } from '../../../js/common/shared.js';
 
 export class ComposeStorageModule extends ViewModule<ComposeView> {
@@ -188,25 +186,6 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
         Catch.reportErr(e);
       }
       throw e;
-    }
-  };
-
-  public refreshAccountAndSubscriptionIfLoggedIn = async () => {
-    const auth = await AcctStore.authInfo(this.view.acctEmail);
-    if (auth.uuid) {
-      try {
-        await this.view.acctServer.accountGetAndUpdateLocalStore(auth); // updates storage
-      } catch (e) {
-        if (ApiErr.isAuthErr(e)) {
-          Settings.offerToLoginWithPopupShowModalOnErr(
-            this.view.acctEmail,
-            () => this.refreshAccountAndSubscriptionIfLoggedIn().catch(ApiErr.reportIfSignificant), // retry this after re-auth
-            `Could not get account information from backend.\n`
-          );
-          return;
-        }
-        throw e;
-      }
     }
   };
 
