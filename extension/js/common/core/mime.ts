@@ -381,12 +381,7 @@ export class Mime {
     if (node._parentNode && node._parentNode.contentType && node._parentNode._childNodes
       && node._parentNode.contentType.params?.protocol === 'application/pgp-encrypted'
       && node._parentNode.contentType.value === 'multipart/encrypted') {
-      if (node.contentType?.value === 'application/pgp-encrypted' && node._parentNode?._childNodes && node._parentNode?._childNodes.indexOf(node) === 0) {
-        treatAs = 'hidden';
-      }
-      if (node.contentType?.value === 'application/octet-stream' && node._parentNode?._childNodes.indexOf(node) === 1) {
-        treatAs = 'encryptedMsg';
-      }
+      treatAs = Attachment.treatAsForMultipartEncryptedAttachments(node.contentType?.value, node._parentNode?._childNodes.indexOf(node));
     }
     return new Attachment({
       treatAs,

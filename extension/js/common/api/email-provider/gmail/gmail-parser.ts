@@ -105,13 +105,8 @@ export class GmailParser {
       }
     }
     if (msgOrPayloadOrPart.hasOwnProperty('body') && (msgOrPayloadOrPart as GmailRes.GmailMsg$payload$part).body!.hasOwnProperty('attachmentId')) {
-      let treatAs: 'hidden' | 'encryptedMsg' | undefined;
       const payload = msgOrPayloadOrPart as GmailRes.GmailMsg$payload;
-      if (pgpEncryptedIndex === 0 && payload.mimeType === 'application/pgp-encrypted') {
-        treatAs = 'hidden';
-      } else if (pgpEncryptedIndex === 1 && payload.mimeType === 'application/octet-stream') {
-        treatAs = 'encryptedMsg';
-      }
+      const treatAs = Attachment.treatAsForMultipartEncryptedAttachments(payload.mimeType , pgpEncryptedIndex);
       internalResults.push(new Attachment({
         msgId: internalMsgId,
         id: (msgOrPayloadOrPart as GmailRes.GmailMsg$payload$part).body!.attachmentId,

@@ -33,6 +33,17 @@ export class Attachment {
   private bytes: Uint8Array | undefined;
   private treatAsValue: Attachment$treatAs | undefined;
 
+  public static treatAsForMultipartEncryptedAttachments = (mimeType: string | undefined, pgpEncryptedIndex: number | undefined) => {
+    let treatAs: 'hidden' | 'encryptedMsg' | undefined;
+    if (mimeType === 'application/pgp-encrypted' && pgpEncryptedIndex === 0) {
+      treatAs = 'hidden';
+    }
+    if (mimeType === 'application/octet-stream' && pgpEncryptedIndex === 1) {
+      treatAs = 'encryptedMsg';
+    }
+    return treatAs;
+  };
+
   public static keyinfoAsPubkeyAttachment = (ki: { public: string, longid: string }) => {
     return new Attachment({ data: Buf.fromUtfStr(ki.public), type: 'application/pgp-keys', name: `0x${ki.longid}.asc` });
   };
