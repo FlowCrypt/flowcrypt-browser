@@ -369,7 +369,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       await gotoGmailPage(gmailPage, '/FMfcgzGllVqqBbjHQQRDsSwcZBlMRzDr');
       await Util.sleep(5);
       await gmailPage.waitAll('iframe');
-      expect(await gmailPage.isElementPresent('@attachments')).to.equal(false);
+      expect(await gmailPage.isElementPresent('@container-attachments')).to.equal(false);
       await gmailPage.close();
     }));
 
