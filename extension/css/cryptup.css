@@ -1304,6 +1304,12 @@ td {
 .pgp_badge {
   opacity: 1;
   margin-bottom: 1em;
+  display: inline-block;
+  text-transform: none;
+  padding: 1px 3px 2px;
+  font-size: 13px;
+  font-weight: normal;
+  margin-right: 6px;
 }
 
 .pgp_badge > .result {
