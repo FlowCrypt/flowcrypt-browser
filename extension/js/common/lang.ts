@@ -10,7 +10,6 @@ const contactMinimalSubsentence = async (acctEmail?: string) => (acctEmail && aw
 const contactIfHappensAgain = async (acctEmail?: string) => `If this happens again, please ${await contactMinimalSubsentence(acctEmail)}. `;
 const contactForSupportSubsentence = async (acctEmail: string) => await isFesUsed(acctEmail) ? 'please contact your Help Desk for support' : 'please write us at human@flowcrypt.com to fix it';
 
-
 export const Lang = { // tslint:disable-line:variable-name
   error: {
     dbFailed: 'Try restarting your browser first. If that doesn\'t help, this will have something to do with your browser settings. Try to install FlowCrypt on a brand new browser profile (both Firefox and Chrome allow you to have several different user profiles). If you leave the new profile on default settings, FlowCrypt should work without issues. Then you can compare your old profile settings to the new one to find out which settings are giving FlowCrypt trouble. Once you find out, please contact us know at human@flowcrypt.com and we will include it below to help other users.',
@@ -91,8 +90,8 @@ export const Lang = { // tslint:disable-line:variable-name
     contactIfHappensAgain,
     contactIfNeedAssistance: async (acctEmail: string) => await isFesUsed(acctEmail) ? 'Contact your Help Desk if you need assistance.' : 'Email human@flowcrypt.com if you need assistance.',
     somethingWentWrongTryAgain: async (acctEmail: string) => `Something went wrong, please try again. ${await contactIfHappensAgain(acctEmail)}`,
-    contactForSupportSubsentence: async (acctEmail: string) => await isFesUsed(acctEmail) ? 'please contact your Help Desk for support' : 'please write us at human@flowcrypt.com to fix it',
-    contactForSupportSentence,
+    contactForSupportSubsentence,
+    contactForSupportSentence: async (acctEmail: string) => await isFesUsed(acctEmail) ? 'Please contact your Help Desk for support.' : 'Please write us at human@flowcrypt.com to fix it.',
     writeMeToFixIt: async (acctEmail: string) => await isFesUsed(acctEmail) ? 'Please contact your Help Desk for support.' : 'Please write us at human@flowcrypt.com to get this resolved.',
     restartBrowserAndTryAgain: async (acctEmail: string) => `Unexpected error occured. Please restart your browser and try again. If this persists after a restart, ${await contactForSupportSubsentence(acctEmail)}.`,
     emailAliasChangedAskForReload: 'Your email aliases on Gmail have refreshed since the last time you used FlowCrypt.\nReload the compose window now?'
