@@ -266,8 +266,8 @@
 
   div#content .subscribe--header-row { text-align: right; }
 
-  body#settings > div#content input[type=password],
-  body#settings > div#content input[type=text] {
+  body#settings > div#content input[type="password"],
+  body#settings > div#content input[type="text"] {
     margin: 0 auto;
     width: 90% !important;
   }

@@ -27,7 +27,6 @@ import { PassphraseStore } from '../../js/common/platform/store/passphrase-store
 import Swal from 'sweetalert2';
 import { FlowCryptWebsite } from '../../js/common/api/flowcrypt-website.js';
 import { AccountServer } from '../../js/common/api/account-server.js';
-import { SubscriptionInfo } from '../../js/common/api/account-servers/flowcrypt-com-api.js';
 
 View.run(class SettingsView extends View {
 
@@ -243,7 +242,7 @@ View.run(class SettingsView extends View {
           $('.show_settings_page[page="modules/backup.htm"]').parent().remove();
         }
         this.checkGoogleAcct().catch(Catch.reportErr);
-        this.checkFcAcctAndSubscriptionAndContactPage().catch(Catch.reportErr);
+        this.checkFcAcctAndContactPage().catch(Catch.reportErr);
         if (storage.picture) {
           $('img.main-profile-img').attr('src', storage.picture).on('error', this.setHandler(self => {
             $(self).off().attr('src', '/img/svgs/profile-icon.svg');
@@ -300,7 +299,7 @@ View.run(class SettingsView extends View {
     }));
   };
 
-  private checkFcAcctAndSubscriptionAndContactPage = async () => {
+  private checkFcAcctAndContactPage = async () => {
     const statusContainer = $('.public_profile_indicator_container');
     const authInfo = await AcctStore.authInfo(this.acctEmail!);
     if (authInfo.uuid) { // have auth email set
@@ -313,7 +312,6 @@ View.run(class SettingsView extends View {
         } else {
           statusContainer.find('.status-indicator').addClass('inactive');
         }
-        this.renderSubscriptionStatusHeader(acctRes.subscription);
       } catch (e) {
         if (ApiErr.isAuthErr(e)) {
           const authNeededLink = $('<a class="bad" href="#">Auth Needed</a>');
@@ -325,7 +323,7 @@ View.run(class SettingsView extends View {
           Settings.offerToLoginWithPopupShowModalOnErr(this.acctEmail!, () => window.location.reload());
         } else if (ApiErr.isNetErr(e)) {
           Xss.sanitizeRender(statusContainer, '<a href="#">Network Error - Retry</a>')
-            .find('a').one('click', this.setHandler(() => this.checkFcAcctAndSubscriptionAndContactPage()));
+            .find('a').one('click', this.setHandler(() => this.checkFcAcctAndContactPage()));
           $('#status-row #status_flowcrypt').text(`fc:offline`);
         } else {
           statusContainer.text('ecp error');
@@ -392,20 +390,6 @@ View.run(class SettingsView extends View {
       } else {
         $('#status-row #status_google').text(`g:?:err`).addClass('bad').attr('title', `Cannot determine Google account: ${Xss.escape(String(e))}`);
         Catch.reportErr(e);
-      }
-    }
-  };
-
-  private renderSubscriptionStatusHeader = (subscription: SubscriptionInfo) => {
-    const isActive = subscription.level && !subscription.expired;
-    const activeOrNotStr = isActive ? 'active' : 'inactive';
-    $('#status-row #status_subscription').text(`s:${activeOrNotStr}`);
-    if (isActive) {
-      $('.logo-row .subscription .level').text('pro').css('display', 'inline-block');
-    } else {
-      $('.logo-row .subscription .level').text('free forever').css('display', 'inline-block');
-      if (subscription.level && subscription.expired) {
-        $('.logo-row .subscription .expire').text('expired').css('display', 'inline-block');
       }
     }
   };

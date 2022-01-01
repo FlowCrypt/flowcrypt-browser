@@ -3,7 +3,6 @@
 'use strict';
 
 import { EmailProviderInterface, ReplyParams } from '../../js/common/api/email-provider/email-provider-api.js';
-import { ApiErr } from '../../js/common/api/shared/api-error.js';
 import { Assert } from '../../js/common/assert.js';
 import { Bm, BrowserMsg } from '../../js/common/browser/browser-msg.js';
 import { Gmail } from '../../js/common/api/email-provider/gmail/gmail.js';
@@ -173,7 +172,6 @@ export class ComposeView extends View {
     if (!this.isReplyBox) {
       await Assert.abortAndRenderErrOnUnprotectedKey(this.acctEmail);
     }
-    this.storageModule.refreshAccountAndSubscriptionIfLoggedIn().catch(ApiErr.reportIfSignificant);
     if (this.replyMsgId) {
       await this.renderModule.fetchReplyMeta(Object.keys(storage.sendAs!));
     }
