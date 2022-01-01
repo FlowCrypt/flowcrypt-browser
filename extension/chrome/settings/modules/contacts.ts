@@ -21,6 +21,7 @@ import { View } from '../../../js/common/view.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { XssSafeFactory } from '../../../js/common/xss-safe-factory.js';
 import { ContactStore } from '../../../js/common/platform/store/contact-store.js';
+import { Lang } from '../../../js/common/lang.js';
 
 View.run(class ContactsView extends View {
 
@@ -199,7 +200,7 @@ View.run(class ContactsView extends View {
         await ContactStore.update(undefined, email, { pubkey, lastUse: Date.now() });
         await this.loadAndRenderContactList();
       } catch (e) {
-        await Ui.modal.warning('Cannot recognize a valid public key, please try again. Let us know at human@flowcrypt.com if you need help.');
+        await Ui.modal.warning('Cannot recognize a valid public key, please try again. ' + await Lang.general.contactIfNeedAssistance(this.acctEmail));
         $('#edit_contact .input_pubkey').val('').focus();
       }
     }

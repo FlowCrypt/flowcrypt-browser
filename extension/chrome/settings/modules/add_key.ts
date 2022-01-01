@@ -18,6 +18,7 @@ import { KeyStore } from '../../../js/common/platform/store/key-store.js';
 import { KeyUtil, UnexpectedKeyTypeError } from '../../../js/common/core/crypto/key.js';
 import { OrgRules } from '../../../js/common/org-rules.js';
 import { StorageType } from '../../../js/common/platform/store/abstract-store.js';
+import { Lang } from '../../../js/common/lang.js';
 
 View.run(class AddKeyView extends View {
 
@@ -104,12 +105,13 @@ View.run(class AddKeyView extends View {
       if (e instanceof UserAlert) {
         return await Ui.modal.warning(e.message, Ui.testCompatibilityLink);
       } else if (e instanceof KeyCanBeFixed) {
-        return await Ui.modal.error(`This type of key cannot be set as non-primary yet. Please write human@flowcrypt.com`, false, Ui.testCompatibilityLink);
+        return await Ui.modal.error(`This type of key cannot be set as non-primary yet. ${await Lang.general.contactForSupportSentence(this.acctEmail)}`, false, Ui.testCompatibilityLink);
       } else if (e instanceof UnexpectedKeyTypeError) {
         return await Ui.modal.warning(`This does not appear to be a validly formatted key.\n\n${e.message}`);
       } else {
         Catch.reportErr(e);
-        return await Ui.modal.error(`An error happened when processing the key: ${String(e)}\nPlease write at human@flowcrypt.com`, false, Ui.testCompatibilityLink);
+        return await Ui.modal.error(`An error happened when processing the key: ${String(e)}\n${await Lang.general.contactForSupportSentence(this.acctEmail)}`,
+          false, Ui.testCompatibilityLink);
       }
     }
   };

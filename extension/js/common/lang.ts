@@ -2,7 +2,14 @@
 
 'use strict';
 
+import { isFesUsed } from './shared.js';
+
 /* eslint-disable max-len */
+
+const contactMinimalSubsentence = async (acctEmail?: string) => (acctEmail && await isFesUsed(acctEmail)) ? 'contact your Help Desk' : 'write us at human@flowcrypt.com';
+const contactIfHappensAgain = async (acctEmail?: string) => `If this happens again, please ${await contactMinimalSubsentence(acctEmail)}. `;
+const contactForSupportSubsentence = async (acctEmail: string) => await isFesUsed(acctEmail) ? 'please contact your Help Desk for support' : 'please write us at human@flowcrypt.com to fix it';
+
 
 export const Lang = { // tslint:disable-line:variable-name
   error: {
@@ -47,10 +54,9 @@ export const Lang = { // tslint:disable-line:variable-name
     wrongPassword: 'Wrong password. ',
     decryptPasswordPrompt: 'Please enter password to decrypt the message',
     connError: 'Could not connect to email provider to open the message, please refresh the page to try again. ',
-    dontKnowHowOpen: 'Please email us at human@flowcrypt.com to submit a bug report, and mention what software was used to send this message to you. ',
+    dontKnowHowOpen: async (acctEmail: string) => `Please ${await contactMinimalSubsentence(acctEmail)} to submit a bug report, and mention what software was used to send this message to you. `,
     enterPassphrase: 'Enter passphrase',
     toOpenMsg: 'to open this message.',
-    writeMe: 'Email human@flowcrypt.com to get this resolved. We respond promptly. ',
     refreshWindow: 'Please refresh your web mail window to read encrypted messages. ',
     updateChromeSettings: 'Need to update chrome settings to view encrypted messages. ',
     notProperlySetUp: 'FlowCrypt is not properly set up to decrypt messages. ',
@@ -81,9 +87,14 @@ export const Lang = { // tslint:disable-line:variable-name
     addMissingPermission: 'Add missing permission',
   },
   general: {
-    somethingWentWrongTryAgain: 'Something went wrong, please try again. If this happens again, please write us at human@flowcrypt.com to fix it. ',
-    writeMeToFixIt: 'Email human@flowcrypt.com to get this resolved if it happens repeatedly. ',
-    restartBrowserAndTryAgain: 'Unexpected error occured. Please restart your browser and try again. If this persists after a restart, please write us at human@flowcrypt.com.',
+    contactMinimalSubsentence,
+    contactIfHappensAgain,
+    contactIfNeedAssistance: async (acctEmail: string) => await isFesUsed(acctEmail) ? 'Contact your Help Desk if you need assistance.' : 'Email human@flowcrypt.com if you need assistance.',
+    somethingWentWrongTryAgain: async (acctEmail: string) => `Something went wrong, please try again. ${await contactIfHappensAgain(acctEmail)}`,
+    contactForSupportSubsentence: async (acctEmail: string) => await isFesUsed(acctEmail) ? 'please contact your Help Desk for support' : 'please write us at human@flowcrypt.com to fix it',
+    contactForSupportSentence,
+    writeMeToFixIt: async (acctEmail: string) => await isFesUsed(acctEmail) ? 'Please contact your Help Desk for support.' : 'Please write us at human@flowcrypt.com to get this resolved.',
+    restartBrowserAndTryAgain: async (acctEmail: string) => `Unexpected error occured. Please restart your browser and try again. If this persists after a restart, ${await contactForSupportSubsentence(acctEmail)}.`,
     emailAliasChangedAskForReload: 'Your email aliases on Gmail have refreshed since the last time you used FlowCrypt.\nReload the compose window now?'
   },
 };

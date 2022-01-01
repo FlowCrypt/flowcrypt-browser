@@ -106,7 +106,7 @@ View.run(class MyKeyUpdateView extends View {
         await this.storeUpdatedKeyAndPassphrase(fixedEncryptedPrv, updatedKeyPassphrase);
       } else {
         await Ui.modal.warning(
-          'Key update: This looks like a valid key but it cannot be used for encryption. Email human@flowcrypt.com to see why is that. We\'re prompt to respond.',
+          `Key update: This looks like a valid key but it cannot be used for encryption. Please ${await Lang.general.contactMinimalSubsentence(this.acctEmail)} to see why is that.`,
           Ui.testCompatibilityLink
         );
         window.location.href = this.showKeyUrl;

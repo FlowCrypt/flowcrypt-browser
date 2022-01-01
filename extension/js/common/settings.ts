@@ -229,14 +229,15 @@ export class Settings {
           }
           if (!reformatted.fullyEncrypted) { // this is a security precaution, in case OpenPGP.js library changes in the future
             Catch.report(`Key update: Key not fully encrypted after update`, { isFullyEncrypted: reformatted.fullyEncrypted, isFullyDecrypted: reformatted.fullyDecrypted });
-            await Ui.modal.error('Key update:Key not fully encrypted after update. Please contact human@flowcrypt.com');
+            await Ui.modal.error('Key update:Key not fully encrypted after update. ' + await Lang.general.contactForSupportSentence(acctEmail));
             Xss.sanitizeReplace(target, Ui.e('a', { href: backUrl, text: 'Go back and try something else' }));
             return;
           }
           if (reformatted.usableForEncryption) {
             resolve(reformatted);
           } else {
-            await Ui.modal.error('Key update: Key still cannot be used for encryption. This looks like a compatibility issue.\n\nPlease write us at human@flowcrypt.com.');
+            await Ui.modal.error('Key update: Key still cannot be used for encryption. This looks like a compatibility issue.\n\n' +
+              await Lang.general.contactForSupportSentence(acctEmail));
             Xss.sanitizeReplace(target, Ui.e('a', { href: backUrl, text: 'Go back and try something else' }));
           }
         }
@@ -244,24 +245,24 @@ export class Settings {
     });
   };
 
-  public static retryUntilSuccessful = async (action: () => Promise<void>, errTitle: string) => {
+  public static retryUntilSuccessful = async (action: () => Promise<void>, errTitle: string, getContactSentence: () => Promise<string>) => {
     try {
       await action();
     } catch (e) {
-      return await Settings.promptToRetry(e, errTitle, action);
+      return await Settings.promptToRetry(e, errTitle, action, await getContactSentence());
     }
   };
 
   /**
    * todo - could probably replace most usages of this method with retryPromptUntilSuccessful which is more intuitive
    */
-  public static promptToRetry = async (lastErr: any, userMsg: string, retryCb: () => Promise<void>): Promise<void> => {
+  public static promptToRetry = async (lastErr: any, userMsg: string, retryCb: () => Promise<void>, contactSentence: string): Promise<void> => {
     let userErrMsg = `${userMsg} ${ApiErr.eli5(lastErr)}`;
     if (lastErr instanceof AjaxErr && (lastErr.status === 400 || lastErr.status === 405)) {
       // this will make reason for err 400 obvious to user - eg on EKM 405 error
       userErrMsg = `${userMsg}, ${lastErr.resMsg}`;
     }
-    while (await Ui.renderOverlayPromptAwaitUserChoice({ retry: {} }, userErrMsg, ApiErr.detailsAsHtmlWithNewlines(lastErr)) === 'retry') {
+    while (await Ui.renderOverlayPromptAwaitUserChoice({ retry: {} }, userErrMsg, ApiErr.detailsAsHtmlWithNewlines(lastErr), contactSentence) === 'retry') {
       try {
         return await retryCb();
       } catch (e2) {
@@ -309,7 +310,7 @@ export class Settings {
         }
       } else {
         Catch.report('failed to log into google in newGoogleAcctAuthPromptThenAlertOrForward', response);
-        await Ui.modal.error(`Failed to connect to Gmail(new). If this happens repeatedly, please write us at human@flowcrypt.com to fix it.\n\n[${response.result}] ${response.error}`);
+        await Ui.modal.error(`Failed to connect to Gmail(new). ${await Lang.general.contactIfHappensAgain(acctEmail)}\n\n[${response.result}] ${response.error}`);
         await Ui.time.sleep(1000);
         window.location.reload();
       }

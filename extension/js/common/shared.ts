@@ -3,6 +3,7 @@
 'use strict';
 
 import { KeyUtil, PubkeyInfo } from './core/crypto/key.js';
+import { AcctStore } from './platform/store/acct-store.js';
 import { ContactStore } from './platform/store/contact-store.js';
 
 /**
@@ -29,4 +30,9 @@ export const saveFetchedPubkeysIfNewerThanInStorage = async ({ email, pubkeys }:
   }
   const storedContact = await ContactStore.getOneWithAllPubkeys(undefined, email);
   return await compareAndSavePubkeysToStorage(email, pubkeys, storedContact?.sortedPubkeys ?? []);
+};
+
+export const isFesUsed = async (acctEmail: string) => {
+  const { fesUrl } = await AcctStore.get(acctEmail, ['fesUrl']);
+  return Boolean(fesUrl);
 };

@@ -29,7 +29,7 @@ export class SetupRenderModule {
         const { sendAs } = await AcctStore.get(this.view.acctEmail, ['sendAs']);
         this.saveAndFillSubmitPubkeysOption(Object.keys(sendAs!));
       } catch (e) {
-        return await Settings.promptToRetry(e, Lang.setup.failedToLoadEmailAliases, () => this.renderInitial());
+        return await Settings.promptToRetry(e, Lang.setup.failedToLoadEmailAliases, () => this.renderInitial(), await Lang.general.contactIfNeedAssistance(this.view.acctEmail));
       }
     }
     if (this.view.storage!.setup_done) {
@@ -102,7 +102,7 @@ export class SetupRenderModule {
     try {
       keyserverRes = await this.view.pubLookup.lookupEmail(this.view.acctEmail);
     } catch (e) {
-      return await Settings.promptToRetry(e, Lang.setup.failedToCheckIfAcctUsesEncryption, () => this.renderSetupDialog());
+      return await Settings.promptToRetry(e, Lang.setup.failedToCheckIfAcctUsesEncryption, () => this.renderSetupDialog(), await Lang.general.contactIfNeedAssistance(this.view.acctEmail));
     }
     if (keyserverRes.pubkeys.length) {
       if (!this.view.orgRules.canBackupKeys()) {
@@ -114,7 +114,7 @@ export class SetupRenderModule {
           this.view.fetchedKeyBackups = backups.keyinfos.backups;
           this.view.fetchedKeyBackupsUniqueLongids = backups.longids.backups;
         } catch (e) {
-          return await Settings.promptToRetry(e, Lang.setup.failedToCheckAccountBackups, () => this.renderSetupDialog());
+          return await Settings.promptToRetry(e, Lang.setup.failedToCheckAccountBackups, () => this.renderSetupDialog(), await Lang.general.contactIfNeedAssistance(this.view.acctEmail));
         }
         if (this.view.fetchedKeyBackupsUniqueLongids.length) {
           this.displayBlock('step_2_recovery');

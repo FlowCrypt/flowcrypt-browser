@@ -227,7 +227,8 @@ export class SetupView extends View {
       return await Settings.promptToRetry(
         e,
         Lang.setup.failedToSubmitToAttester,
-        () => this.submitPublicKeys({ submit_main, submit_all })
+        () => this.submitPublicKeys({ submit_main, submit_all }),
+        await Lang.general.contactIfNeedAssistance(this.acctEmail)
       );
     }
   };

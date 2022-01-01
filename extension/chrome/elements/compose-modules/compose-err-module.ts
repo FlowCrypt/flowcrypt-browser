@@ -15,6 +15,7 @@ import { Xss } from '../../../js/common/platform/xss.js';
 import { ViewModule } from '../../../js/common/view-module.js';
 import { ComposeView } from '../compose.js';
 import { AjaxErrMsgs } from '../../../js/common/api/shared/api-error.js';
+import { Lang } from '../../../js/common/lang.js';
 
 export class ComposerUserError extends Error { }
 class ComposerNotReadyError extends ComposerUserError { }
@@ -42,7 +43,7 @@ export class ComposeErrModule extends ViewModule<ComposeView> {
           }
         }
         Catch.reportErr(e);
-        await Ui.modal.info(`Could not ${couldNotDoWhat} (unknown error). If this repeats, please contact human@flowcrypt.com.\n\n(${String(e)})`);
+        await Ui.modal.info(`Could not ${couldNotDoWhat} (unknown error). ${await Lang.general.contactIfHappensAgain(this.view.acctEmail)}\n\n(${String(e)})`);
       },
     };
   };

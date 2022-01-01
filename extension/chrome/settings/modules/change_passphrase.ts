@@ -15,6 +15,7 @@ import { PassphraseStore } from '../../../js/common/platform/store/passphrase-st
 import { KeyStore } from '../../../js/common/platform/store/key-store.js';
 import { OrgRules } from '../../../js/common/org-rules.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
+import { Lang } from '../../../js/common/lang.js';
 
 View.run(class ChangePassPhraseView extends View {
 
@@ -107,7 +108,7 @@ View.run(class ChangePassPhraseView extends View {
       await KeyUtil.encrypt(this.primaryPrv!, newPp);
     } catch (e) {
       Catch.reportErr(e);
-      await Ui.modal.error(`There was an unexpected error. Please ask for help at human@flowcrypt.com:\n\n${e instanceof Error ? e.stack : String(e)}`);
+      await Ui.modal.error(`There was an unexpected error. ${await Lang.general.contactForSupportSentence(this.acctEmail)}\n\n${e instanceof Error ? e.stack : String(e)}`);
       return;
     }
     await KeyStore.add(this.acctEmail, this.primaryPrv!);

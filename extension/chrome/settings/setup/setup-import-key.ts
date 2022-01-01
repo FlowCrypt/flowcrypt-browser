@@ -10,6 +10,7 @@ import { Settings } from '../../../js/common/settings.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { Key, UnexpectedKeyTypeError } from '../../../js/common/core/crypto/key.js';
+import { Lang } from '../../../js/common/lang.js';
 
 export class SetupImportKeyModule {
 
@@ -51,7 +52,8 @@ export class SetupImportKeyModule {
         return await Ui.modal.warning(`This does not appear to be a validly formatted key.\n\n${e.message}`);
       } else {
         Catch.reportErr(e);
-        return await Ui.modal.error(`An error happened when processing the key: ${String(e)}\nPlease write at human@flowcrypt.com`, false, Ui.testCompatibilityLink);
+        return await Ui.modal.error(`An error happened when processing the key: ${String(e)}\n${await Lang.general.contactForSupportSentence(this.view.acctEmail)}`,
+          false, Ui.testCompatibilityLink);
       }
     }
   };
@@ -64,7 +66,7 @@ export class SetupImportKeyModule {
         this.view.acctEmail, '#step_3_compatibility_fix', origPrv, options.passphrase, window.location.href.replace(/#$/, ''));
     } catch (e) {
       Catch.reportErr(e);
-      await Ui.modal.error(`Failed to fix key (${String(e)}). Please write us at human@flowcrypt.com, we are very prompt to fix similar issues.`, false, Ui.testCompatibilityLink);
+      await Ui.modal.error(`Failed to fix key (${String(e)}). ${await Lang.general.writeMeToFixIt(this.view.acctEmail)}`, false, Ui.testCompatibilityLink);
       this.view.setupRender.displayBlock('step_2b_manual_enter');
       return;
     }

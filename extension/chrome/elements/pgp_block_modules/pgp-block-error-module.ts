@@ -46,14 +46,14 @@ export class PgpBlockViewErrorModule {
     }
   };
 
-  public handleInitializeErr = async (e: any) => {
+  public handleInitializeErr = async (acctEmail: string, e: any) => {
     if (ApiErr.isNetErr(e)) {
       await this.renderErr(`Could not load message due to network error. ${Ui.retryLink()}`, undefined);
     } else if (ApiErr.isAuthErr(e)) {
       BrowserMsg.send.notificationShowAuthPopupNeeded(this.view.parentTabId, { acctEmail: this.view.acctEmail });
       await this.renderErr(`Could not load message due to missing auth. ${Ui.retryLink()}`, undefined);
     } else if (e instanceof FormatError) {
-      await this.renderErr(Lang.pgpBlock.cantOpen + Lang.pgpBlock.badFormat + Lang.pgpBlock.dontKnowHowOpen, e.data);
+      await this.renderErr(Lang.pgpBlock.cantOpen + Lang.pgpBlock.badFormat + await Lang.pgpBlock.dontKnowHowOpen(acctEmail), e.data);
     } else if (ApiErr.isInPrivateMode(e)) {
       await this.renderErr(`FlowCrypt does not work in a Firefox Private Window (or when Firefox Containers are used). Please try in a standard window.`, undefined);
     } else {

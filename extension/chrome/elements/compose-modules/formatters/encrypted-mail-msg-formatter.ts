@@ -181,7 +181,8 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
       } else if (ApiErr.isNetErr(msgTokenErr)) {
         throw msgTokenErr;
       }
-      throw Catch.rewrapErr(msgTokenErr, 'There was a token error sending this message. Please try again. Let us know at human@flowcrypt.com if this happens repeatedly.');
+      throw Catch.rewrapErr(msgTokenErr, 'There was a token error sending this message. Please try again. ' +
+        await Lang.general.contactIfHappensAgain(this.view.acctEmail));
     }
   };
 

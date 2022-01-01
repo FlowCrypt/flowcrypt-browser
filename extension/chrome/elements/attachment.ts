@@ -18,6 +18,7 @@ import { Xss } from '../../js/common/platform/xss.js';
 import { KeyStore } from '../../js/common/platform/store/key-store.js';
 import { PassphraseStore } from '../../js/common/platform/store/passphrase-store.js';
 import { XssSafeFactory } from '../../js/common/xss-safe-factory.js';
+import { Lang } from '../../js/common/lang.js';
 
 export class AttachmentDownloadView extends View {
   protected readonly acctEmail: string;
@@ -70,7 +71,7 @@ export class AttachmentDownloadView extends View {
       this.attachment = new Attachment({ name: this.origNameBasedOnFilename, type: this.type, msgId: this.msgId, id: this.id, url: this.url });
     } catch (e) {
       Catch.reportErr(e);
-      $('body.attachment').text(`Error processing params: ${String(e)}. Contact human@flowcrypt.com`);
+      $('body.attachment').text(`Error processing params: ${String(e)}. ${await Lang.general.writeMeToFixIt(this.acctEmail)}`);
       return;
     }
     $('#type').text(this.type || 'unknown type');

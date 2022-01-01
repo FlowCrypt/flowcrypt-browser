@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { AcctStore } from '../platform/store/acct-store.js';
+import { isFesUsed } from '../shared.js';
 import { EnterpriseServer } from './account-servers/enterprise-server.js';
 import { BackendRes, FcUuidAuth, FlowCryptComApi, ProfileUpdate } from './account-servers/flowcrypt-com-api.js';
 import { Recipients } from './email-provider/email-provider-api.js';
@@ -85,7 +85,6 @@ export class AccountServer extends Api {
   };
 
   public isFesUsed = async (): Promise<boolean> => {
-    const { fesUrl } = await AcctStore.get(this.acctEmail, ['fesUrl']);
-    return Boolean(fesUrl);
+    return await isFesUsed(this.acctEmail);
   };
 }
