@@ -98,7 +98,7 @@ export class Str {
   // each match is extended till the end of the original string
   public static splitExtended = (str: string, regexp: RegExp): string[] => {
     const result: string[] = [];
-    for (; ;) {
+    while (true) {
       const match = regexp.exec(str);
       if (match === null) {
         break;
