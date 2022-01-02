@@ -132,6 +132,7 @@ export class GmailParser {
   };
 
   public static determineReplyMeta = (acctEmail: string, addresses: string[], lastGmailMsg: GmailRes.GmailMsg): ReplyParams => {
+    const subject = GmailParser.findHeader(lastGmailMsg, 'subject') || '';
     const headers = {
       from: Str.parseEmail(GmailParser.findHeader(lastGmailMsg, 'from') || '').email,
       to: GmailParser.getAddressesHeader(lastGmailMsg, 'to'),
@@ -140,7 +141,7 @@ export class GmailParser {
       cc: GmailParser.getAddressesHeader(lastGmailMsg, 'cc').filter(e => !addresses.includes(e)),
       bcc: GmailParser.getAddressesHeader(lastGmailMsg, 'bcc').filter(e => !addresses.includes(e)),
       replyTo: GmailParser.findHeader(lastGmailMsg, 'reply-to'),
-      subject: Mime.subjectWithoutPrefixes(GmailParser.findHeader(lastGmailMsg, 'subject') || ''),
+      subject: Mime.subjectWithoutPrefixes(subject),
     };
     if (headers.from && !headers.to.includes(headers.from)) {
       headers.to.unshift(headers.from);
@@ -153,7 +154,7 @@ export class GmailParser {
     if (headers.replyTo) {
       return { to: [headers.replyTo], cc: [], bcc: [], myEmail, from: headers.from, subject: headers.subject };
     }
-    if (headers.from !== myEmail) {
+    if (headers.from !== myEmail || subject.startsWith('Re: ')) {
       const replyToWithoutMyEmail = headers.to.filter(e => myEmail !== e); // thinking about moving it in another place
       if (replyToWithoutMyEmail.length) { // when user sends emails it itself here will be 0 elements
         headers.to = replyToWithoutMyEmail;
