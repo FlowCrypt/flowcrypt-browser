@@ -140,6 +140,31 @@ export const updateX509FingerprintsAndLongids = async (db: IDBDatabase): Promise
   console.info('done updating');
 };
 
+export const extendSearchables = async (db: IDBDatabase): Promise<void> => {
+  const globalStore = await GlobalStore.get(['contact_store_searchable_extended']);
+  if (globalStore.contact_store_searchable_extended) {
+    return;
+  }
+  console.info('updating ContactStorage to extend searchable values...');
+  const tx = db.transaction(['emails'], 'readwrite');
+  await new Promise((resolve, reject) => {
+    ContactStore.setTxHandlers(tx, resolve, reject);
+    const emailsStore = tx.objectStore('emails');
+    const search = emailsStore.openCursor();
+    ContactStore.setReqPipe(search,
+      (cursor: IDBCursorWithValue) => {
+        if (cursor) {
+          const email = cursor.value as Email;
+          ContactStore.updateSearchable(email);
+          cursor.update(email);
+          cursor.continue();
+        }
+      });
+  });
+  await GlobalStore.set({ contact_store_searchable_extended: true });
+  console.info('done updating');
+};
+
 export const updateOpgpRevocations = async (db: IDBDatabase): Promise<void> => {
   const globalStore = await GlobalStore.get(['contact_store_opgp_revoked_flags_updated']);
   if (globalStore.contact_store_opgp_revoked_flags_updated) {
