@@ -1497,6 +1497,13 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       await expectRecipientElements(composePage, { to: ['flowcrypt.compatibility@gmail.com', 'vladimir@flowcrypt.com'], cc: [], bcc: [] });
     }));
 
+    ava.default('compose - reply - subject starts with Re:', testWithBrowser('compatibility', async (t, browser) => {
+      const appendUrl = 'threadId=17d02296bccd4c5d&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___&replyMsgId=17d02296bccd4c5d';
+      const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl, hasReplyPrompt: true });
+      await composePage.waitAndClick('@encrypted-reply', { delay: 1 });
+      await expectRecipientElements(composePage, { to: ['vladimir@flowcrypt.com'], cc: [], bcc: [] });
+    }));
+
     ava.default('compose - reply - from !== acctEmail', testWithBrowser('compatibility', async (t, browser) => {
       const appendUrl = 'threadId=17d02268f01c7e40&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___&replyMsgId=17d02268f01c7e40';
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl, hasReplyPrompt: true });
