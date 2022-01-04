@@ -36,7 +36,8 @@ export class PgpBlockViewDecryptModule {
           this.view.signature.parsedSignature = parsed.signature;
           await this.decryptAndRender(Buf.fromUtfStr(parsed.rawSignedContent), verificationPubs);
         } else {
-          await this.view.errorModule.renderErr('Error: could not properly parse signed message', parsed.rawSignedContent || parsed.text || parsed.html || mimeMsg.toUtfStr());
+          await this.view.errorModule.renderErr('Error: could not properly parse signed message',
+            parsed.rawSignedContent || parsed.text || parsed.html || mimeMsg.toUtfStr(), true);
         }
       } else if (this.view.encryptedMsgUrlParam && !forcePullMsgFromApi) { // ascii armored message supplied
         this.view.renderModule.renderText(this.view.signature ? 'Verifying..' : 'Decrypting...');
