@@ -22,9 +22,11 @@ import { Xss } from '../../../js/common/platform/xss.js';
 import { XssSafeFactory } from '../../../js/common/xss-safe-factory.js';
 import { ContactStore } from '../../../js/common/platform/store/contact-store.js';
 import { Lang } from '../../../js/common/lang.js';
+import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
 
 View.run(class ContactsView extends View {
 
+  protected fesUrl?: string;
   private acctEmail: string;
 
   private factory: XssSafeFactory | undefined; // set in render()
@@ -40,9 +42,13 @@ View.run(class ContactsView extends View {
     this.acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
   }
 
+  public isFesUsed = () => Boolean(this.fesUrl);
+
   public render = async () => {
     const tabId = await BrowserMsg.requiredTabId();
     BrowserMsg.listen(tabId); // set_css
+    const storage = await AcctStore.get(this.acctEmail, ['fesUrl']);
+    this.fesUrl = storage.fesUrl;
     this.factory = new XssSafeFactory(this.acctEmail, tabId, undefined, undefined, { compact: true });
     this.orgRules = await OrgRules.newInstance(this.acctEmail);
     this.pubLookup = new PubLookup(this.orgRules);
@@ -200,7 +206,7 @@ View.run(class ContactsView extends View {
         await ContactStore.update(undefined, email, { pubkey, lastUse: Date.now() });
         await this.loadAndRenderContactList();
       } catch (e) {
-        await Ui.modal.warning('Cannot recognize a valid public key, please try again. ' + await Lang.general.contactIfNeedAssistance(this.acctEmail));
+        await Ui.modal.warning('Cannot recognize a valid public key, please try again. ' + Lang.general.contactIfNeedAssistance(this.isFesUsed()));
         $('#edit_contact .input_pubkey').val('').focus();
       }
     }

@@ -19,7 +19,8 @@ export class BackupAutomaticModule extends ViewModule<BackupView> {
     try {
       await this.setupCreateSimpleAutomaticInboxBackup();
     } catch (e) {
-      return await Settings.promptToRetry(e, Lang.setup.failedToBackUpKey, this.setupCreateSimpleAutomaticInboxBackup, await Lang.general.contactIfNeedAssistance(this.view.acctEmail));
+      return await Settings.promptToRetry(e, Lang.setup.failedToBackUpKey, this.setupCreateSimpleAutomaticInboxBackup,
+        Lang.general.contactIfNeedAssistance(this.view.isFesUsed()));
     }
   };
 

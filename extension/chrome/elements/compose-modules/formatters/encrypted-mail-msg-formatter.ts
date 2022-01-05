@@ -182,7 +182,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
         throw msgTokenErr;
       }
       throw Catch.rewrapErr(msgTokenErr, 'There was a token error sending this message. Please try again. ' +
-        await Lang.general.contactIfHappensAgain(this.view.acctEmail));
+        Lang.general.contactIfHappensAgain(this.view.isFesUsed()));
     }
   };
 

@@ -98,13 +98,15 @@ export class SetupView extends View {
     this.setupWithEmailKeyManager = new SetupWithEmailKeyManagerModule(this);
   }
 
+  public isFesUsed = () => Boolean(this.storage.fesUrl);
+
   public render = async () => {
     await initPassphraseToggle(['step_2b_manual_enter_passphrase'], 'hide');
     await initPassphraseToggle([
       'step_2a_manual_create_input_password', 'step_2a_manual_create_input_password2',
       'step_2_ekm_input_password', 'step_2_ekm_input_password2',
       'recovery_password']);
-    this.storage = await AcctStore.get(this.acctEmail, ['setup_done', 'email_provider']);
+    this.storage = await AcctStore.get(this.acctEmail, ['setup_done', 'email_provider', 'fesUrl']);
     this.scopes = await AcctStore.getScopes(this.acctEmail);
     this.storage.email_provider = this.storage.email_provider || 'gmail';
     this.orgRules = await OrgRules.newInstance(this.acctEmail);
@@ -228,7 +230,7 @@ export class SetupView extends View {
         e,
         Lang.setup.failedToSubmitToAttester,
         () => this.submitPublicKeys({ submit_main, submit_all }),
-        await Lang.general.contactIfNeedAssistance(this.acctEmail)
+        Lang.general.contactIfNeedAssistance(this.isFesUsed())
       );
     }
   };

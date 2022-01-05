@@ -43,7 +43,7 @@ export class PgpBlockViewDecryptModule {
         await this.decryptAndRender(this.view.encryptedMsgUrlParam, verificationPubs);
       } else {  // need to fetch the inline signed + armored or encrypted +armored message block from gmail api
         if (!this.view.msgId) {
-          Xss.sanitizeRender('#pgp_block', 'Missing msgId to fetch message in pgp_block. ' + await Lang.general.contactIfHappensAgain(this.view.acctEmail));
+          Xss.sanitizeRender('#pgp_block', 'Missing msgId to fetch message in pgp_block. ' + Lang.general.contactIfHappensAgain(this.view.isFesUsed()));
           this.view.renderModule.resizePgpBlockFrame();
         } else {
           this.view.renderModule.renderText('Retrieving message...');
@@ -70,7 +70,7 @@ export class PgpBlockViewDecryptModule {
       const decrypt = async (verificationPubs: string[]) => await BrowserMsg.send.bg.await.pgpMsgDecrypt({ kisWithPp, encryptedData, verificationPubs });
       const result = await decrypt(verificationPubs);
       if (typeof result === 'undefined') {
-        await this.view.errorModule.renderErr(await Lang.general.restartBrowserAndTryAgain(this.view.acctEmail), undefined);
+        await this.view.errorModule.renderErr(Lang.general.restartBrowserAndTryAgain(this.view.isFesUsed()), undefined);
       } else if (result.success) {
         await this.view.renderModule.decideDecryptedContentFormattingAndRender(result.content, Boolean(result.isEncrypted), result.signature,
           verificationPubs, async (verificationPubs: string[]) => {
@@ -111,7 +111,7 @@ export class PgpBlockViewDecryptModule {
         } else if (result.error) {
           await this.view.errorModule.renderErr(`${Lang.pgpBlock.cantOpen}\n\n<em>${result.error.type}: ${result.error.message}</em>`, encryptedData.toUtfStr());
         } else { // should generally not happen
-          await this.view.errorModule.renderErr(Lang.pgpBlock.cantOpen + await Lang.general.writeMeToFixIt(this.view.acctEmail)
+          await this.view.errorModule.renderErr(Lang.pgpBlock.cantOpen + Lang.general.writeMeToFixIt(this.view.isFesUsed())
             + '\n\nDiagnostic info: "' + JSON.stringify(result) + '"', encryptedData.toUtfStr());
         }
       }

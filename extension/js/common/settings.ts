@@ -24,6 +24,7 @@ import { GlobalStore } from './platform/store/global-store.js';
 import { AbstractStore } from './platform/store/abstract-store.js';
 import { KeyStore } from './platform/store/key-store.js';
 import { PassphraseStore } from './platform/store/passphrase-store.js';
+import { isFesUsed } from './shared.js';
 
 declare const zxcvbn: Function; // tslint:disable-line:ban-types
 
@@ -229,7 +230,7 @@ export class Settings {
           }
           if (!reformatted.fullyEncrypted) { // this is a security precaution, in case OpenPGP.js library changes in the future
             Catch.report(`Key update: Key not fully encrypted after update`, { isFullyEncrypted: reformatted.fullyEncrypted, isFullyDecrypted: reformatted.fullyDecrypted });
-            await Ui.modal.error('Key update:Key not fully encrypted after update. ' + await Lang.general.contactForSupportSentence(acctEmail));
+            await Ui.modal.error('Key update:Key not fully encrypted after update. ' + Lang.general.contactForSupportSentence(await isFesUsed(acctEmail)));
             Xss.sanitizeReplace(target, Ui.e('a', { href: backUrl, text: 'Go back and try something else' }));
             return;
           }
@@ -237,7 +238,7 @@ export class Settings {
             resolve(reformatted);
           } else {
             await Ui.modal.error('Key update: Key still cannot be used for encryption. This looks like a compatibility issue.\n\n' +
-              await Lang.general.contactForSupportSentence(acctEmail));
+              Lang.general.contactForSupportSentence(await isFesUsed(acctEmail)));
             Xss.sanitizeReplace(target, Ui.e('a', { href: backUrl, text: 'Go back and try something else' }));
           }
         }
@@ -245,11 +246,11 @@ export class Settings {
     });
   };
 
-  public static retryUntilSuccessful = async (action: () => Promise<void>, errTitle: string, getContactSentence: () => Promise<string>) => {
+  public static retryUntilSuccessful = async (action: () => Promise<void>, errTitle: string, contactSentence: string) => {
     try {
       await action();
     } catch (e) {
-      return await Settings.promptToRetry(e, errTitle, action, await getContactSentence());
+      return await Settings.promptToRetry(e, errTitle, action, contactSentence);
     }
   };
 
@@ -310,7 +311,7 @@ export class Settings {
         }
       } else {
         Catch.report('failed to log into google in newGoogleAcctAuthPromptThenAlertOrForward', response);
-        await Ui.modal.error(`Failed to connect to Gmail(new). ${await Lang.general.contactIfHappensAgain(acctEmail)}\n\n[${response.result}] ${response.error}`);
+        await Ui.modal.error(`Failed to connect to Gmail(new). ${Lang.general.contactIfHappensAgain(acctEmail ? await isFesUsed(acctEmail) : false)}\n\n[${response.result}] ${response.error}`);
         await Ui.time.sleep(1000);
         window.location.reload();
       }

@@ -19,9 +19,11 @@ import { KeyUtil, UnexpectedKeyTypeError } from '../../../js/common/core/crypto/
 import { OrgRules } from '../../../js/common/org-rules.js';
 import { StorageType } from '../../../js/common/platform/store/abstract-store.js';
 import { Lang } from '../../../js/common/lang.js';
+import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
 
 View.run(class AddKeyView extends View {
 
+  protected fesUrl?: string;
   private readonly acctEmail: string;
   private readonly parentTabId: string;
   private readonly keyImportUi = new KeyImportUi({ rejectKnown: true });
@@ -36,7 +38,11 @@ View.run(class AddKeyView extends View {
     this.gmail = new Gmail(this.acctEmail);
   }
 
+  public isFesUsed = () => Boolean(this.fesUrl);
+
   public render = async () => {
+    const storage = await AcctStore.get(this.acctEmail, ['fesUrl']);
+    this.fesUrl = storage.fesUrl;
     this.orgRules = await OrgRules.newInstance(this.acctEmail);
     if (!this.orgRules.forbidStoringPassPhrase()) {
       $('.input_passphrase_save_label').removeClass('hidden');
@@ -105,12 +111,13 @@ View.run(class AddKeyView extends View {
       if (e instanceof UserAlert) {
         return await Ui.modal.warning(e.message, Ui.testCompatibilityLink);
       } else if (e instanceof KeyCanBeFixed) {
-        return await Ui.modal.error(`This type of key cannot be set as non-primary yet. ${await Lang.general.contactForSupportSentence(this.acctEmail)}`, false, Ui.testCompatibilityLink);
+        return await Ui.modal.error(`This type of key cannot be set as non-primary yet. ${Lang.general.contactForSupportSentence(this.isFesUsed())}`,
+          false, Ui.testCompatibilityLink);
       } else if (e instanceof UnexpectedKeyTypeError) {
         return await Ui.modal.warning(`This does not appear to be a validly formatted key.\n\n${e.message}`);
       } else {
         Catch.reportErr(e);
-        return await Ui.modal.error(`An error happened when processing the key: ${String(e)}\n${await Lang.general.contactForSupportSentence(this.acctEmail)}`,
+        return await Ui.modal.error(`An error happened when processing the key: ${String(e)}\n${Lang.general.contactForSupportSentence(this.isFesUsed())}`,
           false, Ui.testCompatibilityLink);
       }
     }

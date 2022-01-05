@@ -2,13 +2,11 @@
 
 'use strict';
 
-import { isFesUsed } from './shared.js';
-
 /* eslint-disable max-len */
 
-const contactMinimalSubsentence = async (acctEmail?: string) => (acctEmail && await isFesUsed(acctEmail)) ? 'contact your Help Desk' : 'write us at human@flowcrypt.com';
-const contactIfHappensAgain = async (acctEmail?: string) => `If this happens again, please ${await contactMinimalSubsentence(acctEmail)}. `;
-const contactForSupportSubsentence = async (acctEmail: string) => await isFesUsed(acctEmail) ? 'please contact your Help Desk for support' : 'please write us at human@flowcrypt.com to fix it';
+const contactMinimalSubsentence = (isFesUsed: boolean) => isFesUsed ? 'contact your Help Desk' : 'write us at human@flowcrypt.com';
+const contactIfHappensAgain = (isFesUsed: boolean) => `If this happens again, please ${contactMinimalSubsentence(isFesUsed)}. `;
+const contactForSupportSubsentence = (isFesUsed: boolean) => isFesUsed ? 'please contact your Help Desk for support' : 'please write us at human@flowcrypt.com to fix it';
 
 export const Lang = { // tslint:disable-line:variable-name
   error: {
@@ -53,7 +51,7 @@ export const Lang = { // tslint:disable-line:variable-name
     wrongPassword: 'Wrong password. ',
     decryptPasswordPrompt: 'Please enter password to decrypt the message',
     connError: 'Could not connect to email provider to open the message, please refresh the page to try again. ',
-    dontKnowHowOpen: async (acctEmail: string) => `Please ${await contactMinimalSubsentence(acctEmail)} to submit a bug report, and mention what software was used to send this message to you. `,
+    dontKnowHowOpen: (isFesUsed: boolean) => `Please ${contactMinimalSubsentence(isFesUsed)} to submit a bug report, and mention what software was used to send this message to you. `,
     enterPassphrase: 'Enter passphrase',
     toOpenMsg: 'to open this message.',
     refreshWindow: 'Please refresh your web mail window to read encrypted messages. ',
@@ -88,12 +86,12 @@ export const Lang = { // tslint:disable-line:variable-name
   general: {
     contactMinimalSubsentence,
     contactIfHappensAgain,
-    contactIfNeedAssistance: async (acctEmail: string) => await isFesUsed(acctEmail) ? 'Contact your Help Desk if you need assistance.' : 'Email human@flowcrypt.com if you need assistance.',
-    somethingWentWrongTryAgain: async (acctEmail: string) => `Something went wrong, please try again. ${await contactIfHappensAgain(acctEmail)}`,
+    contactIfNeedAssistance: (isFesUsed: boolean) => isFesUsed ? 'Contact your Help Desk if you need assistance.' : 'Email human@flowcrypt.com if you need assistance.',
+    somethingWentWrongTryAgain: (isFesUsed: boolean) => `Something went wrong, please try again. ${contactIfHappensAgain(isFesUsed)}`,
     contactForSupportSubsentence,
-    contactForSupportSentence: async (acctEmail: string) => await isFesUsed(acctEmail) ? 'Please contact your Help Desk for support.' : 'Please write us at human@flowcrypt.com to fix it.',
-    writeMeToFixIt: async (acctEmail: string) => await isFesUsed(acctEmail) ? 'Please contact your Help Desk for support.' : 'Please write us at human@flowcrypt.com to get this resolved.',
-    restartBrowserAndTryAgain: async (acctEmail: string) => `Unexpected error occured. Please restart your browser and try again. If this persists after a restart, ${await contactForSupportSubsentence(acctEmail)}.`,
+    contactForSupportSentence: (isFesUsed: boolean) => isFesUsed ? 'Please contact your Help Desk for support.' : 'Please write us at human@flowcrypt.com to fix it.',
+    writeMeToFixIt: (isFesUsed: boolean) => isFesUsed ? 'Please contact your Help Desk for support.' : 'Please write us at human@flowcrypt.com to get this resolved.',
+    restartBrowserAndTryAgain: (isFesUsed: boolean) => `Unexpected error occured. Please restart your browser and try again. If this persists after a restart, ${contactForSupportSubsentence(isFesUsed)}.`,
     emailAliasChangedAskForReload: 'Your email aliases on Gmail have refreshed since the last time you used FlowCrypt.\nReload the compose window now?'
   },
 };

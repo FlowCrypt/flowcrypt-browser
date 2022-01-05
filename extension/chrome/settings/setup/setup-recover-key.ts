@@ -74,7 +74,7 @@ export class SetupRecoverKeyModule {
       }
     } catch (e) {
       ApiErr.reportIfSignificant(e);
-      await Ui.modal.error(`Error setting up FlowCrypt:\n\n${ApiErr.eli5(e)} (${String(e)})\n\n${await Lang.general.contactIfHappensAgain(this.view.acctEmail)}`);
+      await Ui.modal.error(`Error setting up FlowCrypt:\n\n${ApiErr.eli5(e)} (${String(e)})\n\n${Lang.general.contactIfHappensAgain(this.view.isFesUsed())}`);
     }
   };
 

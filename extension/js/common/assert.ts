@@ -12,6 +12,7 @@ import { Xss } from './platform/xss.js';
 import { KeyStore } from './platform/store/key-store.js';
 import { AcctStore } from './platform/store/acct-store.js';
 import { Lang } from './lang.js';
+import { isFesUsed } from './shared.js';
 
 /**
  * Methods in this class will render a fatal message in the browser when assertion fails.
@@ -43,7 +44,8 @@ export class Assert {
           await Settings.renderSubPage(acctEmail, tabId!, '/chrome/settings/modules/change_passphrase.htm');
         } else {
           const msg = `Protect your key with a pass phrase to finish setup.`;
-          const r = await Ui.renderOverlayPromptAwaitUserChoice({ finishSetup: {}, later: { color: 'gray' } }, msg, undefined, await Lang.general.contactIfNeedAssistance(acctEmail));
+          const r = await Ui.renderOverlayPromptAwaitUserChoice({ finishSetup: {}, later: { color: 'gray' } }, msg, undefined,
+            Lang.general.contactIfNeedAssistance(await isFesUsed(acctEmail)));
           if (r === 'finish_setup') {
             await Browser.openSettingsPage('index.htm', acctEmail);
           }

@@ -16,9 +16,11 @@ import { KeyStore } from '../../../js/common/platform/store/key-store.js';
 import { OrgRules } from '../../../js/common/org-rules.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Lang } from '../../../js/common/lang.js';
+import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
 
 View.run(class ChangePassPhraseView extends View {
 
+  protected fesUrl?: string;
   private readonly acctEmail: string;
   private readonly parentTabId: string;
   private readonly keyImportUi = new KeyImportUi({});
@@ -34,7 +36,11 @@ View.run(class ChangePassPhraseView extends View {
     this.parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
   }
 
+  public isFesUsed = () => Boolean(this.fesUrl);
+
   public render = async () => {
+    const storage = await AcctStore.get(this.acctEmail, ['fesUrl']);
+    this.fesUrl = storage.fesUrl;
     this.orgRules = await OrgRules.newInstance(this.acctEmail);
     await initPassphraseToggle(['current_pass_phrase', 'new_pass_phrase', 'new_pass_phrase_confirm']);
     const privateKeys = await KeyStore.get(this.acctEmail);
@@ -108,7 +114,7 @@ View.run(class ChangePassPhraseView extends View {
       await KeyUtil.encrypt(this.primaryPrv!, newPp);
     } catch (e) {
       Catch.reportErr(e);
-      await Ui.modal.error(`There was an unexpected error. ${await Lang.general.contactForSupportSentence(this.acctEmail)}\n\n${e instanceof Error ? e.stack : String(e)}`);
+      await Ui.modal.error(`There was an unexpected error. ${Lang.general.contactForSupportSentence(this.isFesUsed())}\n\n${e instanceof Error ? e.stack : String(e)}`);
       return;
     }
     await KeyStore.add(this.acctEmail, this.primaryPrv!);

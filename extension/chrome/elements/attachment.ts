@@ -19,6 +19,7 @@ import { KeyStore } from '../../js/common/platform/store/key-store.js';
 import { PassphraseStore } from '../../js/common/platform/store/passphrase-store.js';
 import { XssSafeFactory } from '../../js/common/xss-safe-factory.js';
 import { Lang } from '../../js/common/lang.js';
+import { AcctStore } from '../../js/common/platform/store/acct-store.js';
 
 export class AttachmentDownloadView extends View {
   protected readonly acctEmail: string;
@@ -34,6 +35,7 @@ export class AttachmentDownloadView extends View {
   protected readonly url: string | undefined;
   protected readonly gmail: Gmail;
   protected attachment!: Attachment;
+  protected fesUrl?: string;
   protected ppChangedPromiseCancellation: PromiseCancellation = { cancel: false };
 
   private size: number | undefined;
@@ -65,13 +67,17 @@ export class AttachmentDownloadView extends View {
     this.gmail = new Gmail(this.acctEmail);
   }
 
+  public isFesUsed = () => Boolean(this.fesUrl);
+
   public render = async () => {
     this.tabId = await BrowserMsg.requiredTabId();
+    const storage = await AcctStore.get(this.acctEmail, ['setup_done', 'email_provider', 'fesUrl']);
+    this.fesUrl = storage.fesUrl;
     try {
       this.attachment = new Attachment({ name: this.origNameBasedOnFilename, type: this.type, msgId: this.msgId, id: this.id, url: this.url });
     } catch (e) {
       Catch.reportErr(e);
-      $('body.attachment').text(`Error processing params: ${String(e)}. ${await Lang.general.writeMeToFixIt(this.acctEmail)}`);
+      $('body.attachment').text(`Error processing params: ${String(e)}. ${Lang.general.writeMeToFixIt(this.isFesUsed())}`);
       return;
     }
     $('#type').text(this.type || 'unknown type');

@@ -37,6 +37,8 @@ export class BackupView extends View {
   public tabId!: string;
   public prvKeysToManuallyBackup: KeyIdentity[] = [];
 
+  protected fesUrl?: string;
+
   private readonly blocks = ['loading', 'module_status', 'module_manual'];
 
   constructor() {
@@ -64,10 +66,13 @@ export class BackupView extends View {
     this.automaticModule = new BackupAutomaticModule(this);
   }
 
+  public isFesUsed = () => Boolean(this.fesUrl);
+
   public render = async () => {
     this.tabId = await BrowserMsg.requiredTabId();
     this.orgRules = await OrgRules.newInstance(this.acctEmail);
-    const storage = await AcctStore.get(this.acctEmail, ['email_provider']);
+    const storage = await AcctStore.get(this.acctEmail, ['email_provider', 'fesUrl']);
+    this.fesUrl = storage.fesUrl;
     this.emailProvider = storage.email_provider || 'gmail';
     if (!this.orgRules.canBackupKeys()) {
       Xss.sanitizeRender('body', `<div class="line" style="margin-top: 100px;">${Lang.setup.keyBackupsNotAllowed}</div>`);

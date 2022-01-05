@@ -46,6 +46,8 @@ export class PgpBlockView extends View {
   public readonly renderModule: PgpBlockViewRenderModule;
   public readonly decryptModule: PgpBlockViewDecryptModule;
 
+  protected fesUrl?: string;
+
   constructor() {
     super();
     Ui.event.protect();
@@ -85,8 +87,11 @@ export class PgpBlockView extends View {
     return this.senderEmail;
   };
 
+  public isFesUsed = () => Boolean(this.fesUrl);
+
   public render = async () => {
-    const storage = await AcctStore.get(this.acctEmail, ['setup_done', 'google_token_scopes']);
+    const storage = await AcctStore.get(this.acctEmail, ['setup_done', 'google_token_scopes', 'fesUrl']);
+    this.fesUrl = storage.fesUrl;
     this.orgRules = await OrgRules.newInstance(this.acctEmail);
     this.pubLookup = new PubLookup(this.orgRules);
     const scopes = await AcctStore.getScopes(this.acctEmail);

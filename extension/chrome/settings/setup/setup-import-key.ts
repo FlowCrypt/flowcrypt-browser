@@ -52,7 +52,7 @@ export class SetupImportKeyModule {
         return await Ui.modal.warning(`This does not appear to be a validly formatted key.\n\n${e.message}`);
       } else {
         Catch.reportErr(e);
-        return await Ui.modal.error(`An error happened when processing the key: ${String(e)}\n${await Lang.general.contactForSupportSentence(this.view.acctEmail)}`,
+        return await Ui.modal.error(`An error happened when processing the key: ${String(e)}\n${Lang.general.contactForSupportSentence(this.view.isFesUsed())}`,
           false, Ui.testCompatibilityLink);
       }
     }
@@ -66,7 +66,7 @@ export class SetupImportKeyModule {
         this.view.acctEmail, '#step_3_compatibility_fix', origPrv, options.passphrase, window.location.href.replace(/#$/, ''));
     } catch (e) {
       Catch.reportErr(e);
-      await Ui.modal.error(`Failed to fix key (${String(e)}). ${await Lang.general.writeMeToFixIt(this.view.acctEmail)}`, false, Ui.testCompatibilityLink);
+      await Ui.modal.error(`Failed to fix key (${String(e)}). ${Lang.general.writeMeToFixIt(this.view.isFesUsed())}`, false, Ui.testCompatibilityLink);
       this.view.setupRender.displayBlock('step_2b_manual_enter');
       return;
     }

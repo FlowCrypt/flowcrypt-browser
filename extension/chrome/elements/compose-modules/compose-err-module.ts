@@ -43,7 +43,7 @@ export class ComposeErrModule extends ViewModule<ComposeView> {
           }
         }
         Catch.reportErr(e);
-        await Ui.modal.info(`Could not ${couldNotDoWhat} (unknown error). ${await Lang.general.contactIfHappensAgain(this.view.acctEmail)}\n\n(${String(e)})`);
+        await Ui.modal.info(`Could not ${couldNotDoWhat} (unknown error). ${Lang.general.contactIfHappensAgain(this.view.isFesUsed())}\n\n(${String(e)})`);
       },
     };
   };

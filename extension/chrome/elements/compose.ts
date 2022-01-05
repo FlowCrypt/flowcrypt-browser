@@ -122,6 +122,8 @@ export class ComposeView extends View {
     sending_options_container: '#sending-options-container'
   });
 
+  protected fesUrl?: string;
+
   constructor() {
     super();
     Ui.event.protect();
@@ -143,8 +145,11 @@ export class ComposeView extends View {
     this.acctServer = new AccountServer(this.acctEmail);
   }
 
+  public isFesUsed = () => Boolean(this.fesUrl);
+
   public render = async () => {
-    const storage = await AcctStore.get(this.acctEmail, ['sendAs', 'hide_message_password']);
+    const storage = await AcctStore.get(this.acctEmail, ['sendAs', 'hide_message_password', 'fesUrl']);
+    this.fesUrl = storage.fesUrl;
     this.orgRules = await OrgRules.newInstance(this.acctEmail);
     if (this.orgRules.shouldHideArmorMeta()) {
       opgp.config.show_comment = false;

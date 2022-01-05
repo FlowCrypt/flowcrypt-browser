@@ -79,7 +79,7 @@ export class SetupWithEmailKeyManagerModule {
     const keygenAlgo = this.view.orgRules.getEnforcedKeygenAlgo();
     if (!keygenAlgo) {
       const notSupportedErr = 'Combination of org rules not yet supported: PRV_AUTOIMPORT_OR_AUTOGEN cannot yet be used without enforce_keygen_algo.';
-      await Ui.modal.error(`${notSupportedErr}\n\nPlease ${await Lang.general.contactMinimalSubsentence(this.view.acctEmail)} to add support.`);
+      await Ui.modal.error(`${notSupportedErr}\n\nPlease ${Lang.general.contactMinimalSubsentence(this.view.isFesUsed())} to add support.`);
       window.location.href = Url.create('index.htm', { acctEmail: this.view.acctEmail });
       return;
     }
@@ -93,7 +93,7 @@ export class SetupWithEmailKeyManagerModule {
     }
     const pubArmor = KeyUtil.armor(await KeyUtil.asPublicKey(decryptablePrv));
     const storePrvOnKm = async () => this.view.keyManager!.storePrivateKey(this.view.idToken!, KeyUtil.armor(decryptablePrv), pubArmor);
-    await Settings.retryUntilSuccessful(storePrvOnKm, 'Failed to store newly generated key on FlowCrypt Email Key Manager', () => Lang.general.contactIfNeedAssistance(this.view.acctEmail));
+    await Settings.retryUntilSuccessful(storePrvOnKm, 'Failed to store newly generated key on FlowCrypt Email Key Manager', Lang.general.contactIfNeedAssistance(this.view.isFesUsed()));
     await this.view.saveKeysAndPassPhrase([await KeyUtil.parse(generated.private)], setupOptions); // store encrypted key + pass phrase locally
   };
 
