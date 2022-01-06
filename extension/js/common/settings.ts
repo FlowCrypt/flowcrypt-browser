@@ -24,7 +24,7 @@ import { GlobalStore } from './platform/store/global-store.js';
 import { AbstractStore } from './platform/store/abstract-store.js';
 import { KeyStore } from './platform/store/key-store.js';
 import { PassphraseStore } from './platform/store/passphrase-store.js';
-import { isFesUsed } from './shared.js';
+import { isFesUsed } from './helpers.js';
 
 declare const zxcvbn: Function; // tslint:disable-line:ban-types
 
@@ -311,7 +311,8 @@ export class Settings {
         }
       } else {
         Catch.report('failed to log into google in newGoogleAcctAuthPromptThenAlertOrForward', response);
-        await Ui.modal.error(`Failed to connect to Gmail(new). ${Lang.general.contactIfHappensAgain(acctEmail ? await isFesUsed(acctEmail) : false)}\n\n[${response.result}] ${response.error}`);
+        await Ui.modal.error(`Failed to connect to Gmail(new). ${Lang.general.contactIfHappensAgain(acctEmail ?
+          await isFesUsed(acctEmail) : false)}\n\n[${response.result}] ${response.error}`);
         await Ui.time.sleep(1000);
         window.location.reload();
       }

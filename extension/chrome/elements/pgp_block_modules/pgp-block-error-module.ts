@@ -11,7 +11,7 @@ import { Lang } from '../../../js/common/lang.js';
 import { PgpBlockView } from '../pgp_block.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { Xss } from '../../../js/common/platform/xss.js';
-import { isFesUsed } from '../../../js/common/shared.js';
+import { isFesUsed } from '../../../js/common/helpers.js';
 
 export class PgpBlockViewErrorModule {
 

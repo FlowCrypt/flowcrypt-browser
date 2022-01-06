@@ -15,7 +15,7 @@ import { Ui } from '../browser/ui.js';
 import { Url, Str } from '../core/common.js';
 import { opgp } from '../core/crypto/pgp/openpgpjs-custom.js';
 import { KeyStore } from '../platform/store/key-store.js';
-import { isFesUsed } from '../shared.js';
+import { isFesUsed } from '../helpers.js';
 
 type KeyImportUiCheckResult = { normalized: string; passphrase: string; fingerprint: string; decrypted: Key; encrypted: Key; };
 

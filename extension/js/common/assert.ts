@@ -12,7 +12,7 @@ import { Xss } from './platform/xss.js';
 import { KeyStore } from './platform/store/key-store.js';
 import { AcctStore } from './platform/store/acct-store.js';
 import { Lang } from './lang.js';
-import { isFesUsed } from './shared.js';
+import { isFesUsed } from './helpers.js';
 
 /**
  * Methods in this class will render a fatal message in the browser when assertion fails.

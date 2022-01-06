@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { isFesUsed } from '../shared.js';
+import { isFesUsed } from '../helpers.js';
 import { EnterpriseServer } from './account-servers/enterprise-server.js';
 import { BackendRes, FcUuidAuth, FlowCryptComApi, ProfileUpdate } from './account-servers/flowcrypt-com-api.js';
 import { Recipients } from './email-provider/email-provider-api.js';
