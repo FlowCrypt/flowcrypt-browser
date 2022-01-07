@@ -86,7 +86,7 @@ export class PgpBlockView extends View {
   };
 
   public render = async () => {
-    const storage = await AcctStore.get(this.acctEmail, ['setup_done', 'google_token_scopes']);
+    const storage = await AcctStore.get(this.acctEmail, ['setup_done']);
     this.orgRules = await OrgRules.newInstance(this.acctEmail);
     this.pubLookup = new PubLookup(this.orgRules);
     const scopes = await AcctStore.getScopes(this.acctEmail);
