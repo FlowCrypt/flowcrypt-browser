@@ -14,6 +14,8 @@ import { Url } from '../../../js/common/core/common.js';
 import { View } from '../../../js/common/view.js';
 import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
 import { Api } from '../../../js/common/api/shared/api.js';
+import { InMemoryStore } from '../../../js/common/platform/store/in-memory-store.js';
+import { InMemoryStoreKeys } from '../../../js/common/core/const.js';
 
 View.run(class ExperimentalView extends View {
 
@@ -88,7 +90,7 @@ View.run(class ExperimentalView extends View {
   };
 
   private makeGoogleAuthTokenUnusableHandler = async () => {
-    await AcctStore.set(this.acctEmail, { google_token_access: 'flowcrypt_test_bad_access_token' });
+    await InMemoryStore.set(this.acctEmail, InMemoryStoreKeys.GOOGLE_TOKEN_ACCESS, 'flowcrypt_test_bad_access_token');
     BrowserMsg.send.reload(this.parentTabId, {});
   };
 

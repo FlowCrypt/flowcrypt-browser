@@ -90,7 +90,7 @@ export class PgpBlockView extends View {
   public isFesUsed = () => Boolean(this.fesUrl);
 
   public render = async () => {
-    const storage = await AcctStore.get(this.acctEmail, ['setup_done', 'google_token_scopes', 'fesUrl']);
+    const storage = await AcctStore.get(this.acctEmail, ['setup_done', 'fesUrl']);
     this.fesUrl = storage.fesUrl;
     this.orgRules = await OrgRules.newInstance(this.acctEmail);
     this.pubLookup = new PubLookup(this.orgRules);

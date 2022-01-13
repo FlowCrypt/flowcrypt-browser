@@ -16,6 +16,7 @@ export type MimeParserNode = {
   content: Uint8Array;
   appendChild: (child: MimeParserNode) => void;
   contentTransferEncoding: { value: string }; charset?: string;
+  contentType?: { value: string, params?: { protocol?: string } };
   addHeader: (name: string, value: string) => void;
   raw: string; // on all nodes, not just body nodes
   _parentNode: MimeParserNode | null;

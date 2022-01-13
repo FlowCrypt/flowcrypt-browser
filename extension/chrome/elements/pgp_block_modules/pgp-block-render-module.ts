@@ -174,7 +174,7 @@ export class PgpBlockViewRenderModule {
   private getEncryptedSubjectText = (subject: string, isHtml: boolean) => {
     if (isHtml) {
       return `<div style="white-space: normal"> Encrypted Subject:
-                <b> ${subject}</b>
+                <b> ${Xss.escape(subject)}</b>
               </div>
               <hr/>`;
     } else {

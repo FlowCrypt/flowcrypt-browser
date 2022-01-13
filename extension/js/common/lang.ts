@@ -82,6 +82,8 @@ export const Lang = { // tslint:disable-line:variable-name
     pubkeyExpiredConfirmCompose: 'The public key of one of your recipients is expired.\n\nThe right thing to do is to ask the recipient to send you an updated Public Key.\n\nAre you sure you want to encrypt this message for an expired public key? (NOT RECOMMENDED)',
     needReadAccessToReply: 'FlowCrypt has limited functionality. Your browser needs to access this conversation to reply.',
     addMissingPermission: 'Add missing permission',
+    enterprisePasswordPolicy: 'Please use password with the following properties:\n - one uppercase\n - one lowercase\n - one number\n - one special character eg &\"#-\'_%-@,;:!*()\n - 8 characters length',
+    consumerPasswordPolicy: 'Please use a password at least 8 characters long',
   },
   general: {
     contactMinimalSubsentence,

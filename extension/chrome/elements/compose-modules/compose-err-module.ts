@@ -148,6 +148,10 @@ export class ComposeErrModule extends ViewModule<ComposeView> {
           `Sharing password over email undermines password based encryption.\n\n` +
           `You can ask the recipient to also install FlowCrypt, messages between FlowCrypt users don't need a password.`);
       }
+      if (!this.view.pwdOrPubkeyContainerModule.isMessagePasswordStrong(pwd)) {
+        const pwdErrText = this.view.fesUrl ? Lang.compose.enterprisePasswordPolicy : Lang.compose.consumerPasswordPolicy;
+        throw new ComposerUserError(pwdErrText.split('\n').join('<br />'));
+      }
     } else {
       this.view.S.cached('input_password').focus();
       throw new ComposerUserError('Some recipients don\'t have encryption set up. Please add a password.');
