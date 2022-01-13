@@ -442,6 +442,7 @@ export class OpenPGPKey {
     const verifyRes: VerifyRes = {
       match: null,  // tslint:disable-line:no-null-keyword
       signerLongids: [],
+      signerFingerprints: [],
       suppliedLongids: validKeys.map(x => x.allIds.map(fp => OpenPGPKey.fingerprintToLongid(fp))).reduce((a, b) => a.concat(b), [])
     };
     const opgpKeys = validKeys.map(x => OpenPGPKey.extractExternalLibraryObjFromKey(x));
@@ -457,15 +458,19 @@ export class OpenPGPKey {
       }
       // third step below
       const signerLongids: string[] = [];
+      const fingerprints: string[] = [];
       for (const verification of verifications) {
         // todo - a valid signature is a valid signature, and should be surfaced. Currently, if any of the signatures are not valid, it's showing all as invalid
         // .. as it is now this could allow an attacker to append bogus signatures to validly signed messages, making otherwise correct messages seem incorrect
         // .. which is not really an issue - an attacker that can append signatures could have also just slightly changed the message, causing the same experience
         // .. so for now #wontfix unless a reasonable usecase surfaces
         verifyRes.match = (verifyRes.match === true || verifyRes.match === null) && await verification.verified;
+        const signature = await verification.signature;
+        fingerprints.push(...signature.packets.filter(s => s.issuerFingerprint).map(s => Buf.fromUint8(s.issuerFingerprint!).toHexStr()));
         signerLongids.push(OpenPGPKey.bytesToLongid(verification.keyid.bytes));
       }
-      verifyRes.signerLongids.push(...Value.arr.unique(signerLongids));
+      verifyRes.signerLongids = Value.arr.unique(signerLongids);
+      verifyRes.signerFingerprints = Value.arr.unique(fingerprints);
     } catch (verifyErr) {
       verifyRes.match = null; // tslint:disable-line:no-null-keyword
       if (verifyErr instanceof Error && verifyErr.message === 'Can only verify message with one literal data packet.') {
