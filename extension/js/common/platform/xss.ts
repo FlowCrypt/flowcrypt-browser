@@ -85,7 +85,7 @@ export class Xss {
         }
         // strip css styles that could use to overlap with the extension UI
         if (style && (style.includes('z-index') || style.includes('position') || style.includes('background') || style.includes('background-image'))) {
-          style = style.replace(/z-index:.+;|position:.+;|background:.+;|background-color:.+;/,'');
+          style = style.replace(/z-index:.+;|position:.+;|background.+;/,'');
           (node as HTMLElement).setAttribute('style', style);
         }
       }
