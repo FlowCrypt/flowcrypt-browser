@@ -33,7 +33,7 @@ export class Attachment {
   private bytes: Uint8Array | undefined;
   private treatAsValue: Attachment$treatAs | undefined;
 
-  public static treatAsForMultipartEncryptedAttachments = (mimeType: string | undefined, pgpEncryptedIndex: number | undefined) => {
+  public static treatAsForPgpEncryptedAttachments = (mimeType: string | undefined, pgpEncryptedIndex: number | undefined) => {
     let treatAs: 'hidden' | 'encryptedMsg' | undefined;
     if (mimeType === 'application/pgp-encrypted' && pgpEncryptedIndex === 0) {
       treatAs = 'hidden';

@@ -106,7 +106,7 @@ export class GmailParser {
     }
     if (msgOrPayloadOrPart.hasOwnProperty('body') && (msgOrPayloadOrPart as GmailRes.GmailMsg$payload$part).body!.hasOwnProperty('attachmentId')) {
       const payload = msgOrPayloadOrPart as GmailRes.GmailMsg$payload;
-      const treatAs = Attachment.treatAsForMultipartEncryptedAttachments(payload.mimeType , pgpEncryptedIndex);
+      const treatAs = Attachment.treatAsForPgpEncryptedAttachments(payload.mimeType, pgpEncryptedIndex);
       internalResults.push(new Attachment({
         msgId: internalMsgId,
         id: (msgOrPayloadOrPart as GmailRes.GmailMsg$payload$part).body!.attachmentId,

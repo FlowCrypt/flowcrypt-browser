@@ -381,7 +381,7 @@ export class Mime {
     if (node._parentNode && node._parentNode.contentType && node._parentNode._childNodes
       && node._parentNode.contentType.params?.protocol === 'application/pgp-encrypted'
       && node._parentNode.contentType.value === 'multipart/encrypted') {
-      treatAs = Attachment.treatAsForMultipartEncryptedAttachments(node.contentType?.value, node._parentNode?._childNodes.indexOf(node));
+      treatAs = Attachment.treatAsForPgpEncryptedAttachments(node.contentType?.value, node._parentNode?._childNodes.indexOf(node));
     }
     return new Attachment({
       treatAs,
