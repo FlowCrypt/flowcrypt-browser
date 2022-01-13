@@ -144,19 +144,17 @@ export class BrowserRecipe {
       }
     }
     if (m.signature) {
-      const sigContent = await pgpBlockPage.read('@pgp-signature');
-      const expectedSigContent = m.signature.toUpperCase();
-      if (sigContent !== expectedSigContent) {
-        t.log(`found sig content:${sigContent}`);
-        throw new Error(`pgp_block_verify_decrypted_content:missing expected signature content:${expectedSigContent}`);
+      const sigBadgeContent = await pgpBlockPage.read('@pgp-signature');
+      if (sigBadgeContent !== m.signature) {
+        t.log(`found sig content:${sigBadgeContent}`);
+        throw new Error(`pgp_block_verify_decrypted_content:missing expected signature content:${m.signature}`);
       }
     }
     if (m.encryption) {
-      const encContent = await pgpBlockPage.read('@pgp-encryption');
-      const expectedEncContent = m.encryption.toUpperCase();
-      if (encContent !== expectedEncContent) {
-        t.log(`found enc content:${encContent}`);
-        throw new Error(`pgp_block_verify_decrypted_content:missing expected encryption content:${expectedEncContent}`);
+      const encBadgeContent = await pgpBlockPage.read('@pgp-encryption');
+      if (encBadgeContent !== m.encryption) {
+        t.log(`found enc content:${encBadgeContent}`);
+        throw new Error(`pgp_block_verify_decrypted_content:missing expected encryption content:${m.encryption}`);
       }
     }
     await pgpHostPage.close();
