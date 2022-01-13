@@ -11,6 +11,8 @@ import { ApiErr } from '../../../js/common/api/shared/api-error.js';
 import { ViewModule } from '../../../js/common/view-module.js';
 import { ComposeView } from '../compose.js';
 import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
+import { Lang } from '../../../js/common/lang.js';
+import { Xss } from '../../../js/common/platform/xss.js';
 
 export class ComposePwdOrPubkeyContainerModule extends ViewModule<ComposeView> {
 
@@ -84,10 +86,28 @@ export class ComposePwdOrPubkeyContainerModule extends ViewModule<ComposeView> {
     return !this.view.S.cached('password_or_pubkey').is(':hidden');
   };
 
+  public isPasswordStrong = (pwd: string, isFesUsed: boolean): boolean => {
+    const isLengthValid = pwd.length >= 8;
+    if (isFesUsed) { // enterprise FES - use common corporate password rules
+      const isContentValid = /[0-9]/.test(pwd) && /[A-Z]/.test(pwd) && /[a-z]/.test(pwd) && /[^A-Za-z0-9]/.test(pwd);
+      if (!isContentValid || !isLengthValid) {
+        return false;
+      }
+    } else { // consumers - just 8 chars requirement
+      if (!isLengthValid) {
+        return false;
+      }
+    }
+    return true;
+  };
+
   private showMsgPwdUiAndColorBtn = async (anyNopgp: boolean, anyRevoked: boolean) => {
     if (!this.isVisible()) {
       const authInfo = await AcctStore.authInfo(this.view.acctEmail);
       const expirationTextEl = this.view.S.cached('expiration_note').find('#expiration_note_message_expire');
+      const { fesUrl } = await AcctStore.get(this.view.acctEmail, ['fesUrl']);
+      const pwdPolicy = fesUrl ? Lang.compose.enterprisePasswordPolicy : Lang.compose.consumerPasswordPolicy;
+      $('#password-policy-container').html(Xss.htmlSanitize(pwdPolicy.split('\n').join('<br />')));
       if (!authInfo) {
         expirationTextEl.text(Str.pluralize(this.MSG_EXPIRE_DAYS_DEFAULT, 'day'));
       } else {
