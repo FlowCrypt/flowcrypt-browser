@@ -15,7 +15,6 @@ import { Xss } from '../../../js/common/platform/xss.js';
 import { ViewModule } from '../../../js/common/view-module.js';
 import { ComposeView } from '../compose.js';
 import { AjaxErrMsgs } from '../../../js/common/api/shared/api-error.js';
-import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
 import { Lang } from '../../../js/common/lang.js';
 
 export class ComposerUserError extends Error { }
