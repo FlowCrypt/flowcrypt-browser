@@ -1,0 +1,18 @@
+{
+  "acctEmail": "flowcrypt.compatibility@gmail.com",
+  "full": {
+    "id": "corrupted-1",
+    "threadId": "corrupted-1",
+    "historyId": "corrupted-1"
+  },
+  "raw": {
+    "id": "corrupted-1",
+    "threadId": "corrupted-1",
+    "labelIds": [
+      "INBOX"
+    ],
+    "sizeEstimate": 2,
+    "raw": "RSo",
+    "historyId": "corrupted-1"
+  }
+}

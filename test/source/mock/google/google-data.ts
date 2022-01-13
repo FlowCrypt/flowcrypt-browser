@@ -154,8 +154,10 @@ export class GoogleData {
       msgCopy.raw = undefined;
     }
     if (format === 'metadata' || format === 'raw') {
-      msgCopy.payload!.body = undefined;
-      msgCopy.payload!.parts = undefined;
+      if (msgCopy.payload) {
+        msgCopy.payload.body = undefined;
+        msgCopy.payload.parts = undefined;
+      }
     }
     return msgCopy;
   };
