@@ -79,9 +79,13 @@ export class Xss {
       }
       if ('style' in node) {
         // mitigation rather than a fix, which will involve updating CSP, see https://github.com/FlowCrypt/flowcrypt-browser/issues/2648
-        const style = (node as Element).getAttribute('style')?.toLowerCase();
+        let style = (node as Element).getAttribute('style')?.toLowerCase();
         if (style && (style.includes('url(') || style.includes('@import'))) {
           (node as Element).removeAttribute('style'); // don't want any leaks through css url()
+        }
+        if (style && (style.includes('z-index') || style.includes('position'))) {
+          style = style.replace(/z-index:.+;|position:.+;/,'');
+          (node as HTMLElement).setAttribute('style', style);
         }
       }
       if ('src' in node) {
