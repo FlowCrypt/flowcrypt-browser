@@ -77,7 +77,7 @@ export class ComposePwdOrPubkeyContainerModule extends ViewModule<ComposeView> {
       }
     }
     this.view.sizeModule.setInputTextHeightManuallyIfNeeded();
-    const pwdOk = this.isMessagePasswordStrong(String(this.view.S.cached('input_password').val()), !!this.view.fesUrl);
+    const pwdOk = this.isMessagePasswordStrong(String(this.view.S.cached('input_password').val()));
     this.view.S.cached('input_password').css('color', pwdOk ? '#31a217' : '#d14836'); // green : red
   };
 
@@ -85,9 +85,9 @@ export class ComposePwdOrPubkeyContainerModule extends ViewModule<ComposeView> {
     return !this.view.S.cached('password_or_pubkey').is(':hidden');
   };
 
-  public isMessagePasswordStrong = (pwd: string, isFesUsed: boolean): boolean => {
+  public isMessagePasswordStrong = (pwd: string): boolean => {
     const isLengthValid = pwd.length >= 8;
-    if (isFesUsed) { // enterprise FES - use common corporate password rules
+    if (this.view.fesUrl) { // enterprise FES - use common corporate password rules
       const isContentValid = /[0-9]/.test(pwd) && /[A-Z]/.test(pwd) && /[a-z]/.test(pwd) && /[^A-Za-z0-9]/.test(pwd);
       if (!isContentValid || !isLengthValid) {
         return false;
