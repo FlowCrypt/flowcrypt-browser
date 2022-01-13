@@ -105,7 +105,7 @@ export class ComposePwdOrPubkeyContainerModule extends ViewModule<ComposeView> {
       const authInfo = await AcctStore.authInfo(this.view.acctEmail);
       const expirationTextEl = this.view.S.cached('expiration_note').find('#expiration_note_message_expire');
       const pwdPolicy = this.view.fesUrl ? Lang.compose.enterprisePasswordPolicy : Lang.compose.consumerPasswordPolicy;
-      $('#password-policy-container').html(Xss.htmlSanitize(pwdPolicy.split('\n').join('<br />')));
+      $('#password-policy-container').html(Xss.htmlSanitize(pwdPolicy.split('\n').join('<br />'))); // xss-sanitized
       if (!authInfo) {
         expirationTextEl.text(Str.pluralize(this.MSG_EXPIRE_DAYS_DEFAULT, 'day'));
       } else {
