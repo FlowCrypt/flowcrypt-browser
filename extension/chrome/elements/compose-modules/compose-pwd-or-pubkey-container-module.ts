@@ -4,7 +4,6 @@
 
 
 import { RecipientStatus, SendBtnTexts } from './compose-types.js';
-import { KeyImportUi } from '../../../js/common/ui/key-import-ui.js';
 import { Catch } from '../../../js/common/platform/catch.js';
 import { Str } from '../../../js/common/core/common.js';
 import { ApiErr } from '../../../js/common/api/shared/api-error.js';
@@ -17,8 +16,6 @@ import { Xss } from '../../../js/common/platform/xss.js';
 export class ComposePwdOrPubkeyContainerModule extends ViewModule<ComposeView> {
 
   private MSG_EXPIRE_DAYS_DEFAULT = 3; // todo - update to 7 (needs backend work)
-  private keyImportUI = new KeyImportUi({});
-  private rmPwdStrengthValidationElements: (() => void) | undefined;
 
   constructor(view: ComposeView, hideMsgPwd: boolean | undefined) {
     super(view);
@@ -80,13 +77,15 @@ export class ComposePwdOrPubkeyContainerModule extends ViewModule<ComposeView> {
       }
     }
     this.view.sizeModule.setInputTextHeightManuallyIfNeeded();
+    const pwdOk = this.isMessagePasswordStrong(String(this.view.S.cached('input_password').val()), !!this.view.fesUrl);
+    this.view.S.cached('input_password').css('color', pwdOk ? '#31a217' : '#d14836'); // green : red
   };
 
   public isVisible = () => {
     return !this.view.S.cached('password_or_pubkey').is(':hidden');
   };
 
-  public isPasswordStrong = (pwd: string, isFesUsed: boolean): boolean => {
+  public isMessagePasswordStrong = (pwd: string, isFesUsed: boolean): boolean => {
     const isLengthValid = pwd.length >= 8;
     if (isFesUsed) { // enterprise FES - use common corporate password rules
       const isContentValid = /[0-9]/.test(pwd) && /[A-Z]/.test(pwd) && /[a-z]/.test(pwd) && /[^A-Za-z0-9]/.test(pwd);
@@ -136,10 +135,6 @@ export class ComposePwdOrPubkeyContainerModule extends ViewModule<ComposeView> {
     this.view.S.cached('warning_nopgp').css('display', anyNopgp ? 'inline-block' : 'none');
     this.view.S.cached('warning_revoked').css('display', anyRevoked ? 'inline-block' : 'none');
     this.view.sizeModule.setInputTextHeightManuallyIfNeeded();
-    if (!this.rmPwdStrengthValidationElements) {
-      const { removeValidationElements } = this.keyImportUI.renderPassPhraseStrengthValidationInput($("#input_password"), undefined, 'pwd');
-      this.rmPwdStrengthValidationElements = removeValidationElements;
-    }
   };
 
   private hideMsgPwdUi = () => {
@@ -148,10 +143,6 @@ export class ComposePwdOrPubkeyContainerModule extends ViewModule<ComposeView> {
     this.view.S.cached('add_intro').css('display', 'none');
     this.view.S.cached('input_intro').text('');
     this.view.S.cached('intro_container').css('display', 'none');
-    if (this.rmPwdStrengthValidationElements) {
-      this.rmPwdStrengthValidationElements();
-      this.rmPwdStrengthValidationElements = undefined;
-    }
     this.view.sizeModule.setInputTextHeightManuallyIfNeeded();
   };
 
