@@ -705,10 +705,10 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
     }));
 
     ava.default('decrypt - wrong message - checksum throws error', testWithBrowser('compatibility', async (t, browser) => {
-      const acctEmail = 'flowcrypt.compatibility@gmail.com';
       const threadId = '15f7ffb9320bd79e';
       const expectedContent = 'Ascii armor integrity check on message failed';
-      await InboxPageRecipe.checkDecryptMsg(t, browser, { acctEmail, threadId, expectedContent });
+      const params = `?frame_id=&threadId=${threadId}&msgId=${threadId}&senderEmail=&account_email=flowcrypt.compatibility%40gmail.com`;
+      await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, { params, content: [expectedContent], encryption: 'decrypt error', signature: '' });
     }));
 
     ava.default('decrypt - inbox - encrypted message inside signed', testWithBrowser('compatibility', async (t, browser) => {
@@ -752,6 +752,11 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
       const pgpBlockPage = await pgpHostPage.getFrame(['pgp_block.htm']);
       await pgpBlockPage.waitForSelTestState('ready', 5);
       await pgpBlockPage.waitForContent('@container-err-text', 'API path traversal forbidden');
+    }));
+
+    ava.default(`decrypt - signed only - parse error in a badge`, testWithBrowser('compatibility', async (t, browser) => {
+      const params = "?frame_id=&msgId=corrupted-1&signature=___cu_true___&senderEmail=&account_email=flowcrypt.compatibility%40gmail.com";
+      await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, { params, content: [], encryption: '', signature: 'parse error' });
     }));
 
     ava.default(`decrypt - try path traversal forward slash workaround`, testWithBrowser('compatibility', async (t, browser) => {
