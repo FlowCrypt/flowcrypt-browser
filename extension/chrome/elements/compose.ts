@@ -43,6 +43,7 @@ export class ComposeView extends View {
   public readonly isReplyBox: boolean;
   public readonly replyMsgId: string;
   public readonly replyPubkeyMismatch: boolean;
+  public fesUrl?: string;
   public skipClickPrompt: boolean;
   public draftId: string;
   public threadId: string = '';
@@ -144,7 +145,7 @@ export class ComposeView extends View {
   }
 
   public render = async () => {
-    const storage = await AcctStore.get(this.acctEmail, ['sendAs', 'hide_message_password']);
+    const storage = await AcctStore.get(this.acctEmail, ['sendAs', 'hide_message_password', 'fesUrl']);
     this.orgRules = await OrgRules.newInstance(this.acctEmail);
     if (this.orgRules.shouldHideArmorMeta()) {
       opgp.config.show_comment = false;
@@ -160,6 +161,7 @@ export class ComposeView extends View {
     this.recipientsModule = new ComposeRecipientsModule(this);
     this.sendBtnModule = new ComposeSendBtnModule(this);
     this.pwdOrPubkeyContainerModule = new ComposePwdOrPubkeyContainerModule(this, storage.hide_message_password);
+    this.fesUrl = storage.fesUrl;
     this.sizeModule = new ComposeSizeModule(this);
     this.senderModule = new ComposeSenderModule(this);
     this.footerModule = new ComposeFooterModule(this);

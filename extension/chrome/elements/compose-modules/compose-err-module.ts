@@ -15,6 +15,7 @@ import { Xss } from '../../../js/common/platform/xss.js';
 import { ViewModule } from '../../../js/common/view-module.js';
 import { ComposeView } from '../compose.js';
 import { AjaxErrMsgs } from '../../../js/common/api/shared/api-error.js';
+import { Lang } from '../../../js/common/lang.js';
 
 export class ComposerUserError extends Error { }
 class ComposerNotReadyError extends ComposerUserError { }
@@ -146,6 +147,10 @@ export class ComposeErrModule extends ViewModule<ComposeView> {
         throw new ComposerUserError('Please do not include the password in the email intro. ' +
           `Sharing password over email undermines password based encryption.\n\n` +
           `You can ask the recipient to also install FlowCrypt, messages between FlowCrypt users don't need a password.`);
+      }
+      if (!this.view.pwdOrPubkeyContainerModule.isMessagePasswordStrong(pwd)) {
+        const pwdErrText = this.view.fesUrl ? Lang.compose.enterprisePasswordPolicy : Lang.compose.consumerPasswordPolicy;
+        throw new ComposerUserError(pwdErrText.split('\n').join('<br />'));
       }
     } else {
       this.view.S.cached('input_password').focus();
