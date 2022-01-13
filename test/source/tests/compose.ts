@@ -1535,13 +1535,19 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
       await SetupPageRecipe.manualEnter(settingsPage, 'flowcrypt.test.key.used.pgp', { submitPubkey: false, usedPgpBefore: false },
         { isSavePassphraseChecked: false, isSavePassphraseHidden: false });
-      const msgPwd = 'super hard password for the message';
       const subject = 'PWD encrypted message with FES - ID TOKEN';
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'user@standardsubdomainfes.test:8001');
       await ComposePageRecipe.fillMsg(composePage, { to: 'to@example.com', bcc: 'bcc@example.com' }, subject);
       const fileInput = await composePage.target.$('input[type=file]');
       await fileInput!.uploadFile('test/samples/small.txt');
-      await ComposePageRecipe.sendAndClose(composePage, { password: msgPwd });
+      // lousy pwd
+      await composePage.waitAndType('@input-password', 'lousy pwd');
+      await composePage.waitAndClick('@action-send', { delay: 1 });
+      await composePage.waitAndRespondToModal('error', 'confirm', 'Please use password with the following properties');
+      // good pwd
+      await composePage.waitAndType('@input-password', 'gO0d-pwd');
+      await composePage.waitAndClick('@action-send', { delay: 1 });
+      await ComposePageRecipe.closed(composePage);
       // this test is using PwdEncryptedMessageWithFesIdTokenTestStrategy to check sent result based on subject "PWD encrypted message with flowcrypt.com/api"
       // also see '/api/v1/message' in fes-endpoints.ts mock
     }));
