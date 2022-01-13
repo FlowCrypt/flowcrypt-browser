@@ -67,6 +67,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     standardComposeRecipient: 'div.az9 span[email][data-hovercard-id]',
     numberOfAttachments: '.aVW',
     numberOfAttachmentsDigit: '.aVW span',
+    attachmentsButtons: '.aZi',
     draftsList: '.ae4',
   };
 
@@ -372,6 +373,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     let msgEl = this.getMsgBodyEl(msgId); // not a constant because sometimes elements get replaced, then returned by the function that replaced them
     const senderEmail = this.getSenderEmail(msgEl);
     const isOutgoing = !!this.sendAs[senderEmail];
+    $(this.sel.attachmentsButtons).hide();
     attachmentsContainerInner = $(attachmentsContainerInner);
     attachmentsContainerInner.parent().find(this.sel.numberOfAttachments).hide();
     let nRenderedAttachments = attachmentMetas.length;
