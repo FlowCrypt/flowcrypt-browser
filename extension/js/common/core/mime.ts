@@ -376,7 +376,15 @@ export class Mime {
   };
 
   private static getNodeAsAttachment = (node: MimeParserNode): Attachment => {
+    let treatAs: 'hidden' | 'encryptedMsg' | undefined;
+    // are we dealing with a PGP/MIME encrypted message?
+    if (node._parentNode && node._parentNode.contentType && node._parentNode._childNodes
+      && node._parentNode.contentType.params?.protocol === 'application/pgp-encrypted'
+      && node._parentNode.contentType.value === 'multipart/encrypted') {
+      treatAs = Attachment.treatAsForPgpEncryptedAttachments(node.contentType?.value, node._parentNode?._childNodes.indexOf(node));
+    }
     return new Attachment({
+      treatAs,
       name: Mime.getNodeFilename(node),
       type: Mime.getNodeType(node),
       data: node.contentTransferEncoding.value === 'quoted-printable' ? Mime.fromEqualSignNotationAsBuf(node.rawContent!) : node.content,

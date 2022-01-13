@@ -16,7 +16,8 @@ export type FcAttachmentLinkData = { name: string, type: string, size: number };
 
 export class Attachment {
 
-  public static readonly webmailNamePattern = /^(((cryptup|flowcrypt)-backup-[a-z0-9]+\.(key|asc))|(.+\.pgp)|(.+\.gpg)|(.+\.asc)|(noname)|(message)|(PGPMIME version identification)|())$/m;
+  // eslint-disable-next-line max-len
+  public static readonly webmailNamePattern = /^(((cryptup|flowcrypt)-backup-[a-z0-9]+\.(key|asc))|(.+\.pgp)|(.+\.gpg)|(.+\.asc)|(noname)|(message)|(PGPMIME version identification)|(ATT[0-9]{5})|())$/m;
   public static readonly encryptedMsgNames = ['message', 'msg.asc', 'message.asc', 'encrypted.asc', 'encrypted.eml.pgp', 'Message.pgp', 'openpgp-encrypted-message.asc'];
 
   public length: number = NaN;
@@ -31,6 +32,17 @@ export class Attachment {
 
   private bytes: Uint8Array | undefined;
   private treatAsValue: Attachment$treatAs | undefined;
+
+  public static treatAsForPgpEncryptedAttachments = (mimeType: string | undefined, pgpEncryptedIndex: number | undefined) => {
+    let treatAs: 'hidden' | 'encryptedMsg' | undefined;
+    if (mimeType === 'application/pgp-encrypted' && pgpEncryptedIndex === 0) {
+      treatAs = 'hidden';
+    }
+    if (mimeType === 'application/octet-stream' && pgpEncryptedIndex === 1) {
+      treatAs = 'encryptedMsg';
+    }
+    return treatAs;
+  };
 
   public static keyinfoAsPubkeyAttachment = (ki: { public: string, longid: string }) => {
     return new Attachment({ data: Buf.fromUtfStr(ki.public), type: 'application/pgp-keys', name: `0x${ki.longid}.asc` });

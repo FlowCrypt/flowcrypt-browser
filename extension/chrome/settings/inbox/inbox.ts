@@ -89,6 +89,7 @@ export class InboxView extends View {
         await Ui.modal.error(`${ApiErr.eli5(e)}\n\n${String(e)}`);
       }
     }
+    Ui.setTestState('ready');
   };
 
   public setHandlers = () => {
