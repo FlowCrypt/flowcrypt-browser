@@ -26,7 +26,7 @@ export type Scopes = {
   gmail: boolean;
 };
 
-export type AccountIndex = 'keys' | 'notification_setup_needed_dismissed' | 'email_provider' | 'google_token_access' | 'google_token_expires' | 'google_token_scopes' |
+export type AccountIndex = 'keys' | 'notification_setup_needed_dismissed' | 'email_provider' | 'google_token_scopes' |
   'google_token_refresh' | 'hide_message_password' | 'sendAs' |
   'pubkey_sent_to' | 'full_name' | 'cryptup_enabled' | 'setup_done' |
   'successfully_received_at_leat_one_message' | 'notification_setup_done_seen' | 'picture' |
@@ -43,8 +43,6 @@ export type AcctStoreDict = {
   keys?: KeyInfo[];
   notification_setup_needed_dismissed?: boolean;
   email_provider?: EmailProvider;
-  google_token_access?: string;
-  google_token_expires?: number;
   google_token_scopes?: string[]; // these are actuall scope urls the way the provider expects them
   google_token_refresh?: string;
   hide_message_password?: boolean; // is global?

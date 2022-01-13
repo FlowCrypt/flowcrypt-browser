@@ -9,9 +9,9 @@ export class ExpirationCache {
   constructor(public EXPIRATION_TICKS: number) {
   }
 
-  public set = (key: string, value: string | undefined) => {
+  public set = (key: string, value?: string, expiration?: number) => {
     if (value) {
-      this.cache[key] = { value, expiration: Date.now() + this.EXPIRATION_TICKS };
+      this.cache[key] = { value, expiration: expiration || (Date.now() + this.EXPIRATION_TICKS) };
     } else {
       delete this.cache[key];
     }

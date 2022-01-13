@@ -11,7 +11,7 @@ import { BackendRes, ProfileUpdate } from './flowcrypt-com-api.js';
 import { Dict } from '../../core/common.js';
 import { ErrorReport, UnreportableError } from '../../platform/catch.js';
 import { ApiErr, BackendAuthErr } from '../shared/api-error.js';
-import { FLAVOR } from '../../core/const.js';
+import { FLAVOR, InMemoryStoreKeys } from '../../core/const.js';
 import { Attachment } from '../../core/attachment.js';
 import { Recipients } from '../email-provider/email-provider-api.js';
 import { Buf } from '../../core/buf.js';
@@ -141,7 +141,7 @@ export class EnterpriseServer extends Api {
   };
 
   private authHdr = async (): Promise<Dict<string>> => {
-    const idToken = await InMemoryStore.get(this.acctEmail, InMemoryStore.ID_TOKEN_STORAGE_KEY);
+    const idToken = await InMemoryStore.get(this.acctEmail, InMemoryStoreKeys.ID_TOKEN);
     if (idToken) {
       return { Authorization: `Bearer ${idToken}` };
     }

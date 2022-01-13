@@ -3,13 +3,15 @@
 import { Config, Util, TestMessage } from '../../util';
 
 import { AvaContext } from '.';
-import { BrowserHandle, ControllablePage } from '../../browser';
+import { BrowserHandle, Controllable, ControllablePage } from '../../browser';
 import { OauthPageRecipe } from './../page-recipe/oauth-page-recipe';
 import { SetupPageRecipe } from './../page-recipe/setup-page-recipe';
 import { TestUrls } from '../../browser/test-urls';
 import { google } from 'googleapis';
 import { testVariant } from '../../test';
 import { testConstants } from './consts';
+import { PageRecipe } from '../page-recipe/abstract-page-recipe';
+import { InMemoryStoreKeys } from '../../core/const';
 
 export class BrowserRecipe {
 
@@ -88,8 +90,17 @@ export class BrowserRecipe {
     }
   };
 
+  public static getGoogleAccessToken = async (controllable: Controllable, acctEmail: string): Promise<string> => {
+    const result = await PageRecipe.sendMessage(controllable, {
+      name: 'inMemoryStoreGet',
+      // tslint:disable-next-line:no-null-keyword
+      data: { bm: { acctEmail, key: InMemoryStoreKeys.GOOGLE_TOKEN_ACCESS }, objUrls: {} }, to: null, uid: '2'
+    });
+    return (result as { result: string }).result;
+  };
+
   public static deleteAllDraftsInGmailAccount = async (settingsPage: ControllablePage): Promise<void> => {
-    const accessToken = (await settingsPage.getFromLocalStorage(['cryptup_citestsgmailflowcryptdev_google_token_access'])).cryptup_citestsgmailflowcryptdev_google_token_access as string;
+    const accessToken = await BrowserRecipe.getGoogleAccessToken(settingsPage, 'ci.tests.gmail@flowcrypt.dev');
     const gmail = google.gmail({ version: 'v1' });
     const list = await gmail.users.drafts.list({ userId: 'me', access_token: accessToken });
     if (list.data.drafts) {

@@ -50,7 +50,7 @@ export namespace Bm {
   export type StripeResult = { token: string };
   export type PassphraseEntry = { entered: boolean, initiatorFrameId?: string };
   export type Db = { f: string, args: any[] };
-  export type InMemoryStoreSet = { acctEmail: string, key: string, value: string | undefined };
+  export type InMemoryStoreSet = { acctEmail: string, key: string, value: string | undefined, expiration: number | undefined };
   export type InMemoryStoreGet = { acctEmail: string, key: string };
   export type StoreGlobalGet = { keys: GlobalIndex[]; };
   export type StoreGlobalSet = { values: GlobalStoreDict; };
