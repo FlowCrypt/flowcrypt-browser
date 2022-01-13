@@ -170,6 +170,14 @@ export class Buf extends Uint8Array {
     return chars.join('');
   };
 
+  public toHexStr = (): string => {
+    const chars: string[] = [];
+    for (const v of this.values()) {
+      chars.push((('00' + v.toString(16)).slice(-2)).toUpperCase());
+    }
+    return chars.join('');
+  };
+
   public toBase64Str = (): string => {
     return base64encode(this.toRawBytesStr());
   };

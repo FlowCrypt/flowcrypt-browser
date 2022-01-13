@@ -2173,5 +2173,17 @@ AAAAAAAAAAAAAAAAzzzzzzzzzzzzzzzzzzzzzzzzzzzz.....`)).to.eventually.be.rejectedWi
       expect(Str.splitAlphanumericExtended('part1.part2@part3.part4')).to.eql(['part1.part2@part3.part4', 'part2@part3.part4', 'part3.part4', 'part4']);
       t.pass();
     });
+
+    ava.default(`[unit][MsgUtil.verifyDetached] VerifyRes contains signer fingerprints`, async t => {
+      const prv = await KeyUtil.parse(rsaPrimaryKeyAndSubkeyBothHavePrivateKey);
+      await KeyUtil.decrypt(prv, '1234');
+      const plaintext = 'data to sign';
+      const sigText = await MsgUtil.sign(prv, plaintext, true);
+      const verifyRes = await MsgUtil.verifyDetached({ plaintext: Buf.fromRawBytesStr(plaintext), sigText: Buf.fromRawBytesStr(sigText), verificationPubs: [] });
+      expect(verifyRes.signerFingerprints.length).to.equal(1);
+      expect(verifyRes.signerFingerprints[0]).to.equal(prv.id);
+      t.pass();
+    });
+
   }
 };
