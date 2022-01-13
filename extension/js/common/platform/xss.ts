@@ -83,8 +83,9 @@ export class Xss {
         if (style && (style.includes('url(') || style.includes('@import'))) {
           (node as Element).removeAttribute('style'); // don't want any leaks through css url()
         }
-        if (style && (style.includes('z-index') || style.includes('position'))) {
-          style = style.replace(/z-index:.+;|position:.+;/,'');
+        // strip css styles that could use to overlap with the extension UI
+        if (style && (style.includes('z-index') || style.includes('position') || style.includes('background') || style.includes('background-image'))) {
+          style = style.replace(/z-index:.+;|position:.+;|background:.+;|background-color:.+;/,'');
           (node as HTMLElement).setAttribute('style', style);
         }
       }
