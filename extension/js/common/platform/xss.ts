@@ -84,7 +84,7 @@ export class Xss {
           (node as Element).removeAttribute('style'); // don't want any leaks through css url()
         }
         // strip css styles that could use to overlap with the extension UI
-        if (style && (style.includes('z-index') || style.includes('position') || style.includes('background') || style.includes('background-image'))) {
+        if (style && (style.includes('z-index') || style.includes('position') || style.includes('background'))) {
           style = style.replace(/z-index:.+;|position:.+;|background.+;/,'');
           (node as HTMLElement).setAttribute('style', style);
         }
