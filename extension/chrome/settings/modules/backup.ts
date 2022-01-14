@@ -36,8 +36,7 @@ export class BackupView extends View {
   public orgRules!: OrgRules;
   public tabId!: string;
   public prvKeysToManuallyBackup: KeyIdentity[] = [];
-
-  protected fesUrl?: string;
+  public fesUrl?: string;
 
   private readonly blocks = ['loading', 'module_status', 'module_manual'];
 
@@ -65,8 +64,6 @@ export class BackupView extends View {
     this.manualModule = new BackupManualModule(this);
     this.automaticModule = new BackupAutomaticModule(this);
   }
-
-  public isFesUsed = () => Boolean(this.fesUrl);
 
   public render = async () => {
     this.tabId = await BrowserMsg.requiredTabId();

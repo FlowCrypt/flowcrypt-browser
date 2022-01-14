@@ -36,8 +36,6 @@ View.run(class ChangePassPhraseView extends View {
     this.parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
   }
 
-  public isFesUsed = () => Boolean(this.fesUrl);
-
   public render = async () => {
     const storage = await AcctStore.get(this.acctEmail, ['fesUrl']);
     this.fesUrl = storage.fesUrl;
@@ -114,7 +112,7 @@ View.run(class ChangePassPhraseView extends View {
       await KeyUtil.encrypt(this.primaryPrv!, newPp);
     } catch (e) {
       Catch.reportErr(e);
-      await Ui.modal.error(`There was an unexpected error. ${Lang.general.contactForSupportSentence(this.isFesUsed())}\n\n${e instanceof Error ? e.stack : String(e)}`);
+      await Ui.modal.error(`There was an unexpected error. ${Lang.general.contactForSupportSentence(!!this.fesUrl)}\n\n${e instanceof Error ? e.stack : String(e)}`);
       return;
     }
     await KeyStore.add(this.acctEmail, this.primaryPrv!);

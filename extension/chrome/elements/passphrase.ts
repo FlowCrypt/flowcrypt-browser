@@ -20,7 +20,7 @@ import { Lang } from '../../js/common/lang.js';
 import { AcctStore } from '../../js/common/platform/store/acct-store.js';
 
 View.run(class PassphraseView extends View {
-  protected fesUrl?: string;
+  public fesUrl?: string;
   private readonly acctEmail: string;
   private readonly parentTabId: string;
   private readonly longids: string[];
@@ -38,8 +38,6 @@ View.run(class PassphraseView extends View {
     this.type = Assert.urlParamRequire.oneof(uncheckedUrlParams, 'type', ['embedded', 'sign', 'message', 'draft', 'attachment', 'quote', 'backup']);
     this.initiatorFrameId = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'initiatorFrameId');
   }
-
-  public isFesUsed = () => Boolean(this.fesUrl);
 
   public render = async () => {
     Ui.event.protect();
@@ -174,7 +172,7 @@ View.run(class PassphraseView extends View {
       } catch (e) {
         if (e instanceof Error && e.message === 'Unknown s2k type.') {
           let msg = `Your key with fingerprint ${keyinfo.fingerprints[0]} is not supported yet (${String(e)}).`;
-          msg += `\n\nPlease ${Lang.general.contactMinimalSubsentence(this.isFesUsed())} with details about how this key was created.`;
+          msg += `\n\nPlease ${Lang.general.contactMinimalSubsentence(!!this.fesUrl)} with details about how this key was created.`;
           await Ui.modal.error(msg);
         } else {
           throw e;

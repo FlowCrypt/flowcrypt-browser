@@ -46,7 +46,7 @@ export class PgpBlockView extends View {
   public readonly renderModule: PgpBlockViewRenderModule;
   public readonly decryptModule: PgpBlockViewDecryptModule;
 
-  protected fesUrl?: string;
+  public fesUrl?: string;
 
   constructor() {
     super();
@@ -86,8 +86,6 @@ export class PgpBlockView extends View {
     //     which Joe used is not recorded for Jane), it will show an error.
     return this.senderEmail;
   };
-
-  public isFesUsed = () => Boolean(this.fesUrl);
 
   public render = async () => {
     const storage = await AcctStore.get(this.acctEmail, ['setup_done', 'fesUrl']);

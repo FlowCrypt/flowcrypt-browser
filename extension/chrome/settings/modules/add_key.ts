@@ -38,8 +38,6 @@ View.run(class AddKeyView extends View {
     this.gmail = new Gmail(this.acctEmail);
   }
 
-  public isFesUsed = () => Boolean(this.fesUrl);
-
   public render = async () => {
     const storage = await AcctStore.get(this.acctEmail, ['fesUrl']);
     this.fesUrl = storage.fesUrl;
@@ -111,13 +109,13 @@ View.run(class AddKeyView extends View {
       if (e instanceof UserAlert) {
         return await Ui.modal.warning(e.message, Ui.testCompatibilityLink);
       } else if (e instanceof KeyCanBeFixed) {
-        return await Ui.modal.error(`This type of key cannot be set as non-primary yet. ${Lang.general.contactForSupportSentence(this.isFesUsed())}`,
+        return await Ui.modal.error(`This type of key cannot be set as non-primary yet. ${Lang.general.contactForSupportSentence(!!this.fesUrl)}`,
           false, Ui.testCompatibilityLink);
       } else if (e instanceof UnexpectedKeyTypeError) {
         return await Ui.modal.warning(`This does not appear to be a validly formatted key.\n\n${e.message}`);
       } else {
         Catch.reportErr(e);
-        return await Ui.modal.error(`An error happened when processing the key: ${String(e)}\n${Lang.general.contactForSupportSentence(this.isFesUsed())}`,
+        return await Ui.modal.error(`An error happened when processing the key: ${String(e)}\n${Lang.general.contactForSupportSentence(!!this.fesUrl)}`,
           false, Ui.testCompatibilityLink);
       }
     }

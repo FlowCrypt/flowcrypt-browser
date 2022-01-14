@@ -22,6 +22,7 @@ import { Lang } from '../../js/common/lang.js';
 import { AcctStore } from '../../js/common/platform/store/acct-store.js';
 
 export class AttachmentDownloadView extends View {
+  public fesUrl?: string;
   protected readonly acctEmail: string;
   protected readonly parentTabId: string;
   protected readonly frameId: string;
@@ -35,7 +36,6 @@ export class AttachmentDownloadView extends View {
   protected readonly url: string | undefined;
   protected readonly gmail: Gmail;
   protected attachment!: Attachment;
-  protected fesUrl?: string;
   protected ppChangedPromiseCancellation: PromiseCancellation = { cancel: false };
 
   private size: number | undefined;
@@ -67,8 +67,6 @@ export class AttachmentDownloadView extends View {
     this.gmail = new Gmail(this.acctEmail);
   }
 
-  public isFesUsed = () => Boolean(this.fesUrl);
-
   public render = async () => {
     this.tabId = await BrowserMsg.requiredTabId();
     const storage = await AcctStore.get(this.acctEmail, ['setup_done', 'email_provider', 'fesUrl']);
@@ -77,7 +75,7 @@ export class AttachmentDownloadView extends View {
       this.attachment = new Attachment({ name: this.origNameBasedOnFilename, type: this.type, msgId: this.msgId, id: this.id, url: this.url });
     } catch (e) {
       Catch.reportErr(e);
-      $('body.attachment').text(`Error processing params: ${String(e)}. ${Lang.general.writeMeToFixIt(this.isFesUsed())}`);
+      $('body.attachment').text(`Error processing params: ${String(e)}. ${Lang.general.writeMeToFixIt(!!this.fesUrl)}`);
       return;
     }
     $('#type').text(this.type || 'unknown type');

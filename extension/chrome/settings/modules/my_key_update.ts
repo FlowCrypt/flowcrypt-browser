@@ -38,8 +38,6 @@ View.run(class MyKeyUpdateView extends View {
     this.showKeyUrl = Url.create('my_key.htm', uncheckedUrlParams);
   }
 
-  public isFesUsed = () => Boolean(this.fesUrl);
-
   public render = async () => {
     const storage = await AcctStore.get(this.acctEmail, ['fesUrl']);
     this.fesUrl = storage.fesUrl;
@@ -112,7 +110,7 @@ View.run(class MyKeyUpdateView extends View {
         await this.storeUpdatedKeyAndPassphrase(fixedEncryptedPrv, updatedKeyPassphrase);
       } else {
         await Ui.modal.warning(
-          `Key update: This looks like a valid key but it cannot be used for encryption. Please ${Lang.general.contactMinimalSubsentence(this.isFesUsed())} to see why is that.`,
+          `Key update: This looks like a valid key but it cannot be used for encryption. Please ${Lang.general.contactMinimalSubsentence(!!this.fesUrl)} to see why is that.`,
           Ui.testCompatibilityLink
         );
         window.location.href = this.showKeyUrl;

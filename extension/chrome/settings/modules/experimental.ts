@@ -33,8 +33,6 @@ View.run(class ExperimentalView extends View {
     }
   }
 
-  public isFesUsed = () => Boolean(this.fesUrl);
-
   public render = async () => {
     const storage = await AcctStore.get(this.acctEmail, ['fesUrl']);
     this.fesUrl = storage.fesUrl;
@@ -72,17 +70,17 @@ View.run(class ExperimentalView extends View {
               await Browser.openSettingsPage('index.htm', response.acctEmail, '/chrome/settings/modules/keyserver.htm');
             } catch (e) {
               Catch.reportErr(e);
-              await Ui.modal.error(`There was an error changing google account, please ${Lang.general.contactMinimalSubsentence(this.isFesUsed())}`);
+              await Ui.modal.error(`There was an error changing google account, please ${Lang.general.contactMinimalSubsentence(!!this.fesUrl)}`);
             }
           }
         } else {
-          await Ui.modal.error(`Not able to retrieve new account email, please ${Lang.general.contactMinimalSubsentence(this.isFesUsed())}`);
+          await Ui.modal.error(`Not able to retrieve new account email, please ${Lang.general.contactMinimalSubsentence(!!this.fesUrl)}`);
         }
       } else if (response.result === 'Denied' || response.result === 'Closed') {
         await Ui.modal.info('Canceled by user, skipping.');
       } else {
         Catch.report('failed to log into google in action_account_email_changed', response);
-        await Ui.modal.error('Failed to connect to Gmail (change). ' + Lang.general.contactIfHappensAgain(this.isFesUsed())
+        await Ui.modal.error('Failed to connect to Gmail (change). ' + Lang.general.contactIfHappensAgain(!!this.fesUrl)
           + `\n\n[${response.result}] ${response.error}`);
         window.location.reload();
       }

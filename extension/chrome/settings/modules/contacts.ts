@@ -42,8 +42,6 @@ View.run(class ContactsView extends View {
     this.acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
   }
 
-  public isFesUsed = () => Boolean(this.fesUrl);
-
   public render = async () => {
     const tabId = await BrowserMsg.requiredTabId();
     BrowserMsg.listen(tabId); // set_css
@@ -206,7 +204,7 @@ View.run(class ContactsView extends View {
         await ContactStore.update(undefined, email, { pubkey, lastUse: Date.now() });
         await this.loadAndRenderContactList();
       } catch (e) {
-        await Ui.modal.warning('Cannot recognize a valid public key, please try again. ' + Lang.general.contactIfNeedAssistance(this.isFesUsed()));
+        await Ui.modal.warning('Cannot recognize a valid public key, please try again. ' + Lang.general.contactIfNeedAssistance(!!this.fesUrl));
         $('#edit_contact .input_pubkey').val('').focus();
       }
     }
