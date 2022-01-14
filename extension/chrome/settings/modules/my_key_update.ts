@@ -16,9 +16,11 @@ import { OrgRules } from '../../../js/common/org-rules.js';
 import { PubLookup } from '../../../js/common/api/pub-lookup.js';
 import { KeyStore } from '../../../js/common/platform/store/key-store.js';
 import { PassphraseStore } from '../../../js/common/platform/store/passphrase-store.js';
+import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
 
 View.run(class MyKeyUpdateView extends View {
 
+  protected fesUrl?: string;
   private readonly acctEmail: string;
   private readonly fingerprint: string;
   private readonly showKeyUrl: string;
@@ -37,6 +39,8 @@ View.run(class MyKeyUpdateView extends View {
   }
 
   public render = async () => {
+    const storage = await AcctStore.get(this.acctEmail, ['fesUrl']);
+    this.fesUrl = storage.fesUrl;
     this.orgRules = await OrgRules.newInstance(this.acctEmail);
     if (this.orgRules.usesKeyManager()) {
       Xss.sanitizeRender('body', `
@@ -106,7 +110,7 @@ View.run(class MyKeyUpdateView extends View {
         await this.storeUpdatedKeyAndPassphrase(fixedEncryptedPrv, updatedKeyPassphrase);
       } else {
         await Ui.modal.warning(
-          'Key update: This looks like a valid key but it cannot be used for encryption. Email human@flowcrypt.com to see why is that. We\'re prompt to respond.',
+          `Key update: This looks like a valid key but it cannot be used for encryption. Please ${Lang.general.contactMinimalSubsentence(!!this.fesUrl)} to see why is that.`,
           Ui.testCompatibilityLink
         );
         window.location.href = this.showKeyUrl;

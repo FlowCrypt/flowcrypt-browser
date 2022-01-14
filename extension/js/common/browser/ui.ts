@@ -318,7 +318,8 @@ export class Ui {
     return `<i class="${placeholderCls}" data-test="spinner"><img src="${url}" /></i>`;
   };
 
-  public static renderOverlayPromptAwaitUserChoice = async (btns: Dict<{ title?: string, color?: string }>, prompt: string, details?: string): Promise<string> => {
+  public static renderOverlayPromptAwaitUserChoice = async (btns: Dict<{ title?: string, color?: string }>, prompt: string, details: string | undefined,
+    contactSentence: string): Promise<string> => {
     return await new Promise(resolve => {
       const getEscapedColor = (id: string) => Xss.escape(btns[id].color || 'green');
       const getEscapedTitle = (id: string) => Xss.escape(btns[id].title || id.replace(/_/g, ' '));
@@ -339,7 +340,7 @@ export class Ui {
         <div class="line">&nbsp;</div>
         <div style="font-size:12px;">${details || ''}</div>
         <div class="line">&nbsp;</div>
-        <div class="line">Email human@flowcrypt.com if you need assistance.</div>
+        <div class="line">${contactSentence}</div>
       `);
       const overlay = $(Swal.getHtmlContainer()!);
       overlay.find('.action-show-overlay-details').one('click', Ui.event.handle(target => {

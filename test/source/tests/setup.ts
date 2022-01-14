@@ -714,7 +714,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       if (testVariant === 'ENTERPRISE-MOCK') { // shows err on enterprise
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
         await settingsPage.waitAndRespondToModal('error', 'confirm',
-          "Cannot reach your company's FlowCrypt Enterprise Server (FES). Contact human@flowcrypt.com when unsure.");
+          "Cannot reach your company's FlowCrypt Enterprise Server (FES). Contact your Help Desk when unsure.");
       } else if (testVariant === 'CONSUMER-MOCK') { // allows to set up on consumer
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
         await SetupPageRecipe.manualEnter(settingsPage, 'flowcrypt.test.key.used.pgp', { submitPubkey: false, usedPgpBefore: false },

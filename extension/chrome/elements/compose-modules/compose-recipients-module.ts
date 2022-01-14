@@ -714,7 +714,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
           input.focus();
           await this.searchContacts(input);
         } else if (authResult.result !== 'Closed') {
-          await Ui.modal.error(`Could not enable Google Contact search. Please write us at human@flowcrypt.com\n\n[${authResult.result}] ${authResult.error}`);
+          await Ui.modal.error(`Could not enable Google Contact search. ${Lang.general.writeMeToFixIt(!!this.view.fesUrl)}\n\n[${authResult.result}] ${authResult.error}`);
         }
       }));
   };
@@ -818,7 +818,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     } else if (authRes.result === 'Denied' || authRes.result === 'Closed') {
       await Ui.modal.error('FlowCrypt needs this permission to search your contacts on Gmail. Without it, FlowCrypt will keep a separate contact list.');
     } else {
-      await Ui.modal.error(Lang.general.somethingWentWrongTryAgain);
+      await Ui.modal.error(Lang.general.somethingWentWrongTryAgain(!!this.view.fesUrl));
     }
   };
 

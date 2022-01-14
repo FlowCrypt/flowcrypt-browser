@@ -353,7 +353,8 @@ View.run(class SettingsView extends View {
         await Ui.modal.warning('New authorization needed. Please try Additional Settings -> Experimental -> Force Google Account email change');
       } else {
         Catch.reportErr(e);
-        await Ui.modal.error(`There was an error changing google account, please write human@flowcrypt.com\n\n${ApiErr.eli5(e)}\n\n${String(e)}`);
+        await Ui.modal.error(`There was an error changing google account, please ${Lang.general.contactMinimalSubsentence(this.acctServer ?
+          await this.acctServer.isFesUsed() : false)}\n\n${ApiErr.eli5(e)}\n\n${String(e)}`);
       }
     }
   };

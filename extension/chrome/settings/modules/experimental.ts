@@ -19,6 +19,7 @@ import { InMemoryStoreKeys } from '../../../js/common/core/const.js';
 
 View.run(class ExperimentalView extends View {
 
+  protected fesUrl?: string;
   private acctEmail: string;
   private parentTabId: string;
 
@@ -33,6 +34,8 @@ View.run(class ExperimentalView extends View {
   }
 
   public render = async () => {
+    const storage = await AcctStore.get(this.acctEmail, ['fesUrl']);
+    this.fesUrl = storage.fesUrl;
     $('.email').text(this.acctEmail);
   };
 
@@ -67,17 +70,18 @@ View.run(class ExperimentalView extends View {
               await Browser.openSettingsPage('index.htm', response.acctEmail, '/chrome/settings/modules/keyserver.htm');
             } catch (e) {
               Catch.reportErr(e);
-              await Ui.modal.error('There was an error changing google account, please write human@flowcrypt.com');
+              await Ui.modal.error(`There was an error changing google account, please ${Lang.general.contactMinimalSubsentence(!!this.fesUrl)}`);
             }
           }
         } else {
-          await Ui.modal.error('Not able to retrieve new account email, please write at human@flowcrypt.com');
+          await Ui.modal.error(`Not able to retrieve new account email, please ${Lang.general.contactMinimalSubsentence(!!this.fesUrl)}`);
         }
       } else if (response.result === 'Denied' || response.result === 'Closed') {
         await Ui.modal.info('Canceled by user, skipping.');
       } else {
         Catch.report('failed to log into google in action_account_email_changed', response);
-        await Ui.modal.error(`Failed to connect to Gmail (change). If this happens again, please email human@flowcrypt.com to get it fixed.\n\n[${response.result}] ${response.error}`);
+        await Ui.modal.error('Failed to connect to Gmail (change). ' + Lang.general.contactIfHappensAgain(!!this.fesUrl)
+          + `\n\n[${response.result}] ${response.error}`);
         window.location.reload();
       }
     }

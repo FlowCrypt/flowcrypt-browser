@@ -30,3 +30,4 @@ export const saveFetchedPubkeysIfNewerThanInStorage = async ({ email, pubkeys }:
   const storedContact = await ContactStore.getOneWithAllPubkeys(undefined, email);
   return await compareAndSavePubkeysToStorage(email, pubkeys, storedContact?.sortedPubkeys ?? []);
 };
+

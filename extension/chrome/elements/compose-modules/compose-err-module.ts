@@ -43,7 +43,7 @@ export class ComposeErrModule extends ViewModule<ComposeView> {
           }
         }
         Catch.reportErr(e);
-        await Ui.modal.info(`Could not ${couldNotDoWhat} (unknown error). If this repeats, please contact human@flowcrypt.com.\n\n(${String(e)})`);
+        await Ui.modal.info(`Could not ${couldNotDoWhat} (unknown error). ${Lang.general.contactIfHappensAgain(!!this.view.fesUrl)}\n\n(${String(e)})`);
       },
     };
   };
