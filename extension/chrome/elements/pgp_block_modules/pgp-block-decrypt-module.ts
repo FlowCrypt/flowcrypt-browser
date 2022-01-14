@@ -59,7 +59,7 @@ export class PgpBlockViewDecryptModule {
         }
       }
     } catch (e) {
-      await this.view.errorModule.handleInitializeErr(this.view.acctEmail, e);
+      await this.view.errorModule.handleInitializeErr(e);
     }
   };
 
