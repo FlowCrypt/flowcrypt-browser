@@ -370,6 +370,16 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       await Util.sleep(5);
       await gmailPage.waitAll('iframe');
       expect(await gmailPage.isElementPresent('@container-attachments')).to.equal(false);
+      await gmailPage.waitAll(['.aZi'], { visible: false });
+      await gmailPage.close();
+    }));
+
+    ava.default(`mail.google.com - simple attachments triggering processAttachments() keep "download all" button visible`, testWithBrowser('ci.tests.gmail', async (t, browser) => {
+      const gmailPage = await openGmailPage(t, browser);
+      await gotoGmailPage(gmailPage, '/KtbxLvHkSWwbVHxgCbWNvXVKGjFgqMbGQq');
+      await Util.sleep(5);
+      await gmailPage.waitAll('iframe');
+      await gmailPage.waitAll(['.aZi'], { visible: true });
       await gmailPage.close();
     }));
 

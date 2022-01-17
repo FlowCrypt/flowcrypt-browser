@@ -373,7 +373,6 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     let msgEl = this.getMsgBodyEl(msgId); // not a constant because sometimes elements get replaced, then returned by the function that replaced them
     const senderEmail = this.getSenderEmail(msgEl);
     const isOutgoing = !!this.sendAs[senderEmail];
-    $(this.sel.attachmentsButtons).hide();
     attachmentsContainerInner = $(attachmentsContainerInner);
     attachmentsContainerInner.parent().find(this.sel.numberOfAttachments).hide();
     let nRenderedAttachments = attachmentMetas.length;
@@ -523,6 +522,8 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     if (!attachmentEl.length) {
       attachmentsContainerSel.children('.attachment_loader').text('Missing file info');
     }
+    // according to #4200, no point in showing "download all" button if at least one attachment is encrypted etc.
+    $(this.sel.attachmentsButtons).hide();
   };
 
   private determineMsgId = (innerMsgEl: HTMLElement | JQueryEl) => {
