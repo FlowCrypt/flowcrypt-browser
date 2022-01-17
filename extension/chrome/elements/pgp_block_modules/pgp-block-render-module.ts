@@ -34,7 +34,7 @@ export class PgpBlockViewRenderModule {
       // that then causes to default to 20 + 40 = 60px for height, hiding contents of the message if it in fact is taller
       return;
     }
-    let height = Math.max(origHeight, 20) + 40;
+    let height = Math.max(origHeight, 20) + 40 + 17 + 3 + 13; // pgp_badge has 17px height + 3px padding + 1em (13px) bottom margin
     this.heightHist.push(height);
     const len = this.heightHist.length;
     if (len >= 4 && this.heightHist[len - 1] === this.heightHist[len - 3] && this.heightHist[len - 2] === this.heightHist[len - 4] && this.heightHist[len - 1] !== this.heightHist[len - 2]) {
