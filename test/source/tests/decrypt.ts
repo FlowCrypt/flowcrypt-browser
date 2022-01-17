@@ -756,7 +756,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
 
     ava.default(`decrypt - signed only - parse error in a badge`, testWithBrowser('compatibility', async (t, browser) => {
       const params = "?frame_id=&msgId=corrupted-1&signature=___cu_true___&senderEmail=&account_email=flowcrypt.compatibility%40gmail.com";
-      await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, { params, content: [], encryption: '', signature: 'parse error' });
+      await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, { params, content: [], encryption: '', signature: '', error: 'parse error' });
     }));
 
     ava.default(`decrypt - try path traversal forward slash workaround`, testWithBrowser('compatibility', async (t, browser) => {
