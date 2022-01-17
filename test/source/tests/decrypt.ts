@@ -708,7 +708,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
       const threadId = '15f7ffb9320bd79e';
       const expectedContent = 'Ascii armor integrity check on message failed';
       const params = `?frame_id=&threadId=${threadId}&msgId=${threadId}&senderEmail=&account_email=flowcrypt.compatibility%40gmail.com`;
-      await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, { params, content: [expectedContent], encryption: 'decrypt error', signature: '' });
+      await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, { params, content: [expectedContent], encryption: '', signature: '', error: 'decrypt error' });
     }));
 
     ava.default('decrypt - inbox - encrypted message inside signed', testWithBrowser('compatibility', async (t, browser) => {
