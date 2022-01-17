@@ -79,14 +79,14 @@ export class Xss {
       }
       if ('style' in node) {
         // mitigation rather than a fix, which will involve updating CSP, see https://github.com/FlowCrypt/flowcrypt-browser/issues/2648
-        let style = (node as Element).getAttribute('style')?.toLowerCase();
+        const style = (node as Element).getAttribute('style')?.toLowerCase();
         if (style && (style.includes('url(') || style.includes('@import'))) {
           (node as Element).removeAttribute('style'); // don't want any leaks through css url()
         }
         // strip css styles that could use to overlap with the extension UI
         if (style && (style.includes('z-index') || style.includes('position') || style.includes('background'))) {
-          style = style.replace(/z-index:.+;|position:.+;|background.+;/,'');
-          (node as HTMLElement).setAttribute('style', style);
+          const updatedStyle = style.replace(/z-index:[^;]+;|position:[^;]+;|background[^;]+;/g,'');
+          (node as HTMLElement).setAttribute('style', updatedStyle);
         }
       }
       if ('src' in node) {
