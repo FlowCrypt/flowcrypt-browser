@@ -86,7 +86,7 @@ export class Xss {
         }
         // strip css styles that could use to overlap with the extension UI
         if (style && Xss.FORBID_CSS_STYLE.test(style)) {
-          const updatedStyle = style.replace(Xss.FORBID_CSS_STYLE,'');
+          const updatedStyle = style.replace(Xss.FORBID_CSS_STYLE, '');
           (node as HTMLElement).setAttribute('style', updatedStyle);
         }
       }
