@@ -1312,11 +1312,6 @@ td {
   margin-right: 6px;
 }
 
-.pgp_badge > .result {
-  font-size: 10px;
-  font-family: monospace;
-}
-
 #pgp_block.pgp_pubkey { padding-top: 7px; }
 #pgp_block.pgp_pubkey .line { margin: 0; }
 #pgp_block.pgp_pubkey .add_contact:not(.line) { text-align: center; }

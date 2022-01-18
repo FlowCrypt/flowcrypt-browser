@@ -1,5 +1,7 @@
 <div class="lightboxed">
 
+version 8.2.3 on January 17, 2022: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/446?closed=1" target="_blank">Customer feedback: nice to have</a>
+
 version 8.2.1 on December 24, 2021: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/445?closed=1" target="_blank">Customer feedback: must have</a>
 
 version 8.2.0 on November 16, 2021: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/444?closed=1" target="_blank">sign S/MIME, drafts improvements, refetch pubkeys</a>

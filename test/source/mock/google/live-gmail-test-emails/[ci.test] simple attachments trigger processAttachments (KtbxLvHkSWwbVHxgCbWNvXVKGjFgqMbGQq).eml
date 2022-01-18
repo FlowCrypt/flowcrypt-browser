@@ -1,0 +1,47 @@
+MIME-Version: 1.0
+Date: Sun, 16 Jan 2022 12:20:24 +0300
+Message-ID: <CAO9FY9tbmHk7cgZ5p2h8UfenX_fKtEaFMBamXFnpbCMbokwFAg@mail.gmail.com>
+Subject: simple attachments trigger processAttachments
+From: Gmail CI Test <ci.tests.gmail@flowcrypt.dev>
+To: Gmail CI Test <ci.tests.gmail@flowcrypt.dev>
+Content-Type: multipart/mixed; boundary="000000000000c645cf05d5af8b3b"
+
+--000000000000c645cf05d5af8b3b
+Content-Type: multipart/alternative; boundary="000000000000c645cc05d5af8b39"
+
+--000000000000c645cc05d5af8b39
+Content-Type: text/plain; charset="UTF-8"
+
+test
+
+--000000000000c645cc05d5af8b39
+Content-Type: text/html; charset="UTF-8"
+
+<div dir="ltr">test</div>
+
+--000000000000c645cc05d5af8b39--
+--000000000000c645cf05d5af8b3b
+Content-Type: text/plain; charset="US-ASCII"; name="attachment1.txt"
+Content-Disposition: attachment; filename="attachment1.txt"
+Content-Transfer-Encoding: base64
+X-Attachment-Id: f_kyh1s3k81
+Content-ID: <f_kyh1s3k81>
+
+YXR0YWNobWVudDE=
+--000000000000c645cf05d5af8b3b
+Content-Type: application/octet-stream; name=ATT00001
+Content-Disposition: attachment; filename=ATT00001
+Content-Transfer-Encoding: base64
+X-Attachment-Id: f_kyh1s3jy0
+Content-ID: <f_kyh1s3jy0>
+
+dGhlcmUgaXMgc29tZSB0ZXh0IGhlcmU=
+--000000000000c645cf05d5af8b3b
+Content-Type: text/plain; charset="US-ASCII"; name="attachment2.txt"
+Content-Disposition: attachment; filename="attachment2.txt"
+Content-Transfer-Encoding: base64
+X-Attachment-Id: f_kyh1s3ke2
+Content-ID: <f_kyh1s3ke2>
+
+YXR0YWNobWVudDI=
+--000000000000c645cf05d5af8b3b--
