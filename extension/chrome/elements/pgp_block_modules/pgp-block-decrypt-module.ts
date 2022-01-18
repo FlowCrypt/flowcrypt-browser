@@ -97,6 +97,7 @@ export class PgpBlockViewDecryptModule {
           BrowserMsg.send.passphraseDialog(this.view.parentTabId, { type: 'message', longids: result.longids.needPassphrase });
         }));
         await PassphraseStore.waitUntilPassphraseChanged(this.view.acctEmail, result.longids.needPassphrase);
+        this.view.renderModule.clearErrorStatus();
         this.view.renderModule.renderText('Decrypting...');
         await this.decryptAndRender(encryptedData, verificationPubs);
       } else {
