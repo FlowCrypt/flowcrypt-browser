@@ -75,6 +75,14 @@ export class PgpBlockViewRenderModule {
     }
   };
 
+  public renderErrorStatus = (status: string): JQuery<HTMLElement> => {
+    return $('#pgp_error').text(status).show();
+  };
+
+  public clearErrorStatus = (): JQuery<HTMLElement> => {
+    return $('#pgp_error').hide();
+  };
+
   public renderEncryptionStatus = (status: string): JQuery<HTMLElement> => {
     return $('#pgp_encryption').addClass(status === 'encrypted' ? 'green_label' : 'red_label').text(status);
   };

@@ -168,6 +168,13 @@ export class BrowserRecipe {
         throw new Error(`pgp_block_verify_decrypted_content:missing expected encryption content:${m.encryption}`);
       }
     }
+    if (m.error) {
+      const errBadgeContent = await pgpBlockPage.read('@pgp-error');
+      if (errBadgeContent !== m.error) {
+        t.log(`found err content:${errBadgeContent}`);
+        throw new Error(`pgp_block_verify_decrypted_content:missing expected error content:${m.error}`);
+      }
+    }
     await pgpHostPage.close();
   }
 

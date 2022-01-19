@@ -40,6 +40,7 @@ export type TestMessage = {
   expectPercentageProgress?: boolean,
   signature?: string,
   encryption?: string,
+  error?: string
 };
 
 export type TestKeyInfo = {
