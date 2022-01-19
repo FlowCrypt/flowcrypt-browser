@@ -20,6 +20,7 @@ export class Xss {
   private static ADD_ATTR = ['email', 'page', 'addurltext', 'longid', 'index', 'target', 'fingerprint'];
   private static FORBID_ATTR = ['background'];
   private static HREF_REGEX_CACHE: RegExp | undefined;
+  private static FORBID_CSS_STYLE = /z-index:[^;]+;|position:[^;]+;|background[^;]+;/g;
 
   public static sanitizeRender = (selector: string | HTMLElement | JQuery<HTMLElement>, dirtyHtml: string) => { // browser-only (not on node)
     return $(selector as any).html(Xss.htmlSanitize(dirtyHtml)); // xss-sanitized
@@ -79,14 +80,14 @@ export class Xss {
       }
       if ('style' in node) {
         // mitigation rather than a fix, which will involve updating CSP, see https://github.com/FlowCrypt/flowcrypt-browser/issues/2648
-        let style = (node as Element).getAttribute('style')?.toLowerCase();
+        const style = (node as Element).getAttribute('style')?.toLowerCase();
         if (style && (style.includes('url(') || style.includes('@import'))) {
           (node as Element).removeAttribute('style'); // don't want any leaks through css url()
         }
         // strip css styles that could use to overlap with the extension UI
-        if (style && (style.includes('z-index') || style.includes('position') || style.includes('background'))) {
-          style = style.replace(/z-index:.+;|position:.+;|background.+;/,'');
-          (node as HTMLElement).setAttribute('style', style);
+        if (style && Xss.FORBID_CSS_STYLE.test(style)) {
+          const updatedStyle = style.replace(Xss.FORBID_CSS_STYLE, '');
+          (node as HTMLElement).setAttribute('style', updatedStyle);
         }
       }
       if ('src' in node) {
