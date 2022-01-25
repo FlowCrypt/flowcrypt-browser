@@ -37,8 +37,12 @@ View.run(class AddPubkeyView extends View {
     for (const missingPubkeyEmail of this.missingPubkeyEmails) {
       Xss.sanitizeAppend('select.email', `<option value="${Xss.escape(missingPubkeyEmail)}">${Xss.escape(missingPubkeyEmail)}</option>`);
     }
+    const uniqueEmails = new Set<string>();
     for (const contact of await ContactStore.search(undefined, { hasPgp: true })) {
-      Xss.sanitizeAppend('select.copy_from_email', `<option value="${Xss.escape(contact.email)}">${Xss.escape(contact.email)}</option>`);
+      uniqueEmails.add(contact.email);
+    }
+    for (const email of Array.from(uniqueEmails).sort()) {
+      Xss.sanitizeAppend('select.copy_from_email', `<option value="${Xss.escape(email)}">${Xss.escape(email)}</option>`);
     }
     this.fetchKeyUi.handleOnPaste($('.pubkey'));
     $('.action_settings').click(this.setHandler(async () => await Browser.openSettingsPage('index.htm', this.acctEmail, '/chrome/settings/modules/contacts.htm')));
