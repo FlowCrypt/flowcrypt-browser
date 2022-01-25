@@ -35,7 +35,8 @@ View.run(class AddPubkeyView extends View {
   public render = async () => {
     Ui.event.protect();
     for (const missingPubkeyEmail of this.missingPubkeyEmails) {
-      Xss.sanitizeAppend('select.email', `<option value="${Xss.escape(missingPubkeyEmail)}">${Xss.escape(missingPubkeyEmail)}</option>`);
+      const escapedMissingPubkeyEmail = Xss.escape(missingPubkeyEmail);
+      Xss.sanitizeAppend('select.email', `<option value="${escapedMissingPubkeyEmail}">${escapedMissingPubkeyEmail}</option>`);
     }
     const uniqueEmails = new Set<string>();
     for (const contact of await ContactStore.search(undefined, { hasPgp: true })) {
