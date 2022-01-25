@@ -42,7 +42,8 @@ View.run(class AddPubkeyView extends View {
       uniqueEmails.add(contact.email);
     }
     for (const email of Array.from(uniqueEmails).sort()) {
-      Xss.sanitizeAppend('select.copy_from_email', `<option value="${Xss.escape(email)}">${Xss.escape(email)}</option>`);
+      const escapedEmail = Xss.escape(email);
+      Xss.sanitizeAppend('select.copy_from_email', `<option value="${escapedEmail}">${escapedEmail}</option>`);
     }
     this.fetchKeyUi.handleOnPaste($('.pubkey'));
     $('.action_settings').click(this.setHandler(async () => await Browser.openSettingsPage('index.htm', this.acctEmail, '/chrome/settings/modules/contacts.htm')));
