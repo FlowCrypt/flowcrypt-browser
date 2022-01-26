@@ -36,6 +36,9 @@ export class OpenPGPKey {
     }
     const keys = [];
     for (const key of result.keys) {
+      for (const prvPacket of key.toPacketlist().filter(OpenPGPKey.isPacketPrivate).filter(packet => packet.isDecrypted())) {
+        await prvPacket.validate(); // gnu-dummy never raises an exception, invalid keys raise exceptions
+      }
       keys.push(await OpenPGPKey.convertExternalLibraryObjToKey(key));
     }
     return keys;
@@ -70,6 +73,7 @@ export class OpenPGPKey {
       }
       try {
         await prvPacket.decrypt(passphrase); // throws on password mismatch
+        await prvPacket.validate(); // throws
       } catch (e) {
         if (e instanceof Error && e.message.toLowerCase().includes('incorrect key passphrase')) {
           return false;
@@ -411,7 +415,7 @@ export class OpenPGPKey {
     return { public: k.publicKeyArmored, private: k.privateKeyArmored };
   };
 
-  public static isPacketPrivate = (p: OpenPGP.packet.AnyKeyPacket): p is PrvPacket => {
+  public static isPacketPrivate = (p: OpenPGP.packet.BasePacket): p is PrvPacket => {
     return p.tag === opgp.enums.packet.secretKey || p.tag === opgp.enums.packet.secretSubkey;
   };
 
