@@ -1703,8 +1703,7 @@ j+w8FyoMKOrmOAyFTWjJVyVEruMl2a7QDO/CjaWV4sAUt0LMcRdZdTM=
       t.pass();
     });
 
-    ava.default('[unit][KeyUtil.parse] validates the private key if it is not encrypted', async t => {
-      const corruptedRsaKey = `-----BEGIN PGP PRIVATE KEY BLOCK-----
+    const unencryptedCorruptedRsaKey = `-----BEGIN PGP PRIVATE KEY BLOCK-----
 Version: FlowCrypt Email Encryption [BUILD_REPLACEABLE_VERSION]
 Comment: Seamlessly send and receive encrypted email
 
@@ -1766,7 +1765,18 @@ FraCqKUj088pjlLZsORJCsLOgugt7y4O9lf7fNiRo3I81LZsqegqdzcvCeK9
 PBcqDCjq5jgMhU1oyVclRK7jJdmu0Azvwo2lleLAFLdCzHEXWXUz
 =//ru
 -----END PGP PRIVATE KEY BLOCK-----`;
-      await t.throwsAsync(() => KeyUtil.parse(corruptedRsaKey), { instanceOf: Error, message: 'Key is invalid' });
+
+    ava.default('[unit][KeyUtil.parse] validates the private key if it is not encrypted', async t => {
+      await t.throwsAsync(() => KeyUtil.parse(unencryptedCorruptedRsaKey), { instanceOf: Error, message: 'Key is invalid' });
+      t.pass();
+    });
+
+    ava.default('[unit][KeyUtil.readBinary] validates the private key if it is not encrypted', async t => {
+      const binaryKey = (await PgpArmor.dearmor(unencryptedCorruptedRsaKey)).data;
+      const { keys, err } = await KeyUtil.readBinary(binaryKey);
+      expect(keys.length).to.equal(0);
+      expect(err.length).to.equal(1);
+      expect(err[0].message).to.equal('Key is invalid');
       t.pass();
     });
 

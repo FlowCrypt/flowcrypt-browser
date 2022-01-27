@@ -36,12 +36,16 @@ export class OpenPGPKey {
     }
     const keys = [];
     for (const key of result.keys) {
-      for (const prvPacket of key.toPacketlist().filter(OpenPGPKey.isPacketPrivate).filter(packet => packet.isDecrypted())) {
-        await prvPacket.validate(); // gnu-dummy never raises an exception, invalid keys raise exceptions
-      }
+      await OpenPGPKey.validateAllDecryptedPackets(key);
       keys.push(await OpenPGPKey.convertExternalLibraryObjToKey(key));
     }
     return keys;
+  };
+
+  public static validateAllDecryptedPackets = async (key: OpenPGP.key.Key): Promise<void> => {
+    for (const prvPacket of key.toPacketlist().filter(OpenPGPKey.isPacketPrivate).filter(packet => packet.isDecrypted())) {
+      await prvPacket.validate(); // gnu-dummy never raises an exception, invalid keys raise exceptions
+    }
   };
 
   public static asPublicKey = async (pubkey: Key): Promise<Key> => {
