@@ -17,7 +17,6 @@ import { MsgUtil } from '../core/crypto/pgp/msg-util.js';
 import { Ui } from './ui.js';
 import { GlobalStoreDict, GlobalIndex } from '../platform/store/global-store.js';
 import { AcctStoreDict, AccountIndex } from '../platform/store/acct-store.js';
-import { Contact } from '../core/crypto/key.js';
 import { saveFetchedPubkeysIfNewerThanInStorage } from '../shared.js';
 
 export type GoogleAuthWindowResult$result = 'Success' | 'Denied' | 'Error' | 'Closed';

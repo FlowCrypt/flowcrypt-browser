@@ -2,7 +2,6 @@
 
 import { AbstractStore } from './abstract-store.js';
 import { Catch } from '../catch.js';
-import { opgp } from '../../core/crypto/pgp/openpgpjs-custom.js';
 import { BrowserMsg } from '../../browser/browser-msg.js';
 import { DateUtility, Str, Value } from '../../core/common.js';
 import { Key, Contact, KeyUtil, PubkeyInfo, PubkeyInfoWithLastCheck } from '../../core/crypto/key.js';

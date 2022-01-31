@@ -146,8 +146,9 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
 
   public addRecipients = async (recipients: Recipients, triggerCallback: boolean = true) => {
     let newRecipients: RecipientElement[] = [];
-    for (const [sendingType, value] of Object.entries(recipients)) {
-      if (['to', 'cc', 'bcc'].includes(sendingType)) {
+    for (const [key, value] of Object.entries(recipients)) {
+      if (['to', 'cc', 'bcc'].includes(key)) {
+        const sendingType = key as RecipientType;
         if (value?.length) {
           const recipientsContainer = this.view.S.cached('input_addresses_container_outer').find(`#input-container-${sendingType}`);
           newRecipients = newRecipients.concat(this.createRecipientsElements(recipientsContainer, value, sendingType, RecipientStatus.EVALUATING));
