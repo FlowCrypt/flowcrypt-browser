@@ -9,14 +9,6 @@ import { Key, Contact, KeyUtil, PubkeyInfo, PubkeyInfoWithLastCheck } from '../.
 
 // tslint:disable:no-null-keyword
 
-type DbContactObjArg = {
-  email: string,
-  name?: string | null,
-  pubkey?: string | null,
-  lastUse?: number | null, // when was this contact last used to send an email
-  lastCheck?: number | null; // when was the local copy of the pubkey last updated (or checked against Attester)
-};
-
 export type Email = {
   email: string;
   name: string | null;
@@ -126,66 +118,6 @@ export class ContactStore extends AbstractStore {
       throw new Error(`Cannot handle the contact because email is not valid: ${email}`);
     }
     return { email: validEmail, name: name || null, hasPgp: 0, lastUse: null };
-  };
-
-  public static obj = async ({ email, name, pubkey, lastUse, lastCheck }: DbContactObjArg): Promise<Contact> => {
-    if (typeof opgp === 'undefined') {
-      return await BrowserMsg.send.bg.await.db({ f: 'obj', args: [{ email, name, pubkey, lastUse, lastCheck }] }) as Contact;
-    } else {
-      const validEmail = Str.parseEmail(email).email;
-      if (!validEmail) {
-        throw new Error(`Cannot save contact because email is not valid: ${email}`);
-      }
-      if (!pubkey) {
-        return {
-          email: validEmail,
-          name: name || null,
-          pubkey: undefined,
-          hasPgp: 0, // number because we use it for sorting
-          fingerprint: null,
-          lastUse: lastUse || null,
-          pubkeyLastCheck: null,
-          expiresOn: null,
-          revoked: false
-        };
-      }
-      const pk = await KeyUtil.parse(pubkey);
-      return {
-        email: validEmail,
-        name: name || null,
-        pubkey: pk,
-        hasPgp: 1, // number because we use it for sorting
-        lastUse: lastUse || null,
-        pubkeyLastCheck: lastCheck || null,
-        revoked: pk.revoked,
-        ...ContactStore.getKeyAttributes(pk)
-      };
-    }
-  };
-
-  /**
-   * Used to save a contact or an array of contacts.
-   * An underlying update operation is used for each of the provided contact.
-   * Null properties will be ignored if a record already exists in the database
-   * as described in the `update` remarks.
-   *
-   * @param {IDBDatabase} db                     (optional) database to use
-   * @param {Contact | Contact[]} email            a single contact or an array of contacts
-   * @returns {Promise<void>}
-   *
-   * @async
-   * @static
-   */
-  public static save = async (db: IDBDatabase | undefined, contact: Contact | Contact[]): Promise<void> => {
-    if (!db) { // relay op through background process
-      await BrowserMsg.send.bg.await.db({ f: 'save', args: [contact] });
-      return;
-    }
-    if (Array.isArray(contact)) {
-      await Promise.all(contact.map(oneContact => ContactStore.save(db, oneContact)));
-      return;
-    }
-    await ContactStore.update(db, contact.email, contact);
   };
 
   /**

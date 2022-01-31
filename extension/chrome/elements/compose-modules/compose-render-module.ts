@@ -319,14 +319,11 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
         await Ui.modal.warning(`There are no email addresses listed in this Public Key - don't know who this key belongs to.`);
         return;
       }
-      if (! await ContactStore.get(undefined, [key.emails[0]])) {
-        await ContactStore.save(undefined, await ContactStore.obj({
-          email: key.emails[0],
-          name: Str.parseEmail(key.identities[0]).name,
-          pubkey: normalizedPub,
-          lastCheck: Date.now(),
-        }));
-      }
+      await ContactStore.update(undefined, key.emails[0], {
+        name: Str.parseEmail(key.identities[0]).name,
+        pubkey: normalizedPub,
+        pubkeyLastCheck: Date.now()
+      });
       this.view.S.cached('input_to').val(key.emails[0]);
       await this.view.recipientsModule.parseRenderRecipients(this.view.S.cached('input_to'));
     }

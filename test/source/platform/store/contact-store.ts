@@ -61,7 +61,7 @@ export class ContactStore {
     }
   };
 
-  public static obj = async ({ email, name, pubkey, lastUse, lastCheck }: any): Promise<Contact> => {
+  private static obj = async ({ email, name, pubkey, lastUse, lastCheck }: any): Promise<Contact> => {
     if (!pubkey) {
       return {
         email,
@@ -89,11 +89,4 @@ export class ContactStore {
     return contact;
   };
 
-  public static save = async (db: any, contact: Contact | Contact[]): Promise<void> => {
-    if (Array.isArray(contact)) {
-      DATA.push(...contact);
-    } else {
-      DATA.push(contact);
-    }
-  };
 }

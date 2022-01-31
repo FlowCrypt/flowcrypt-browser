@@ -65,7 +65,7 @@ export namespace Bm {
   export type Ajax = { req: JQueryAjaxSettings, stack: string };
   export type AjaxGmailAttachmentGetChunk = { acctEmail: string, msgId: string, attachmentId: string };
   export type ShowAttachmentPreview = { iframeUrl: string };
-  export type ReRenderRecipient = { contact: Contact };
+  export type ReRenderRecipient = { email: string };
   export type SaveFetchedPubkeys = { email: string, pubkeys: string[] };
 
   export namespace Res {

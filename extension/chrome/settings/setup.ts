@@ -7,7 +7,7 @@ import { Url } from '../../js/common/core/common.js';
 import { ApiErr } from '../../js/common/api/shared/api-error.js';
 import { Assert } from '../../js/common/assert.js';
 import { Catch } from '../../js/common/platform/catch.js';
-import { Contact, KeyInfo, Key, KeyUtil } from '../../js/common/core/crypto/key.js';
+import { KeyInfo, Key, KeyUtil } from '../../js/common/core/crypto/key.js';
 import { Gmail } from '../../js/common/api/email-provider/gmail/gmail.js';
 import { Google } from '../../js/common/api/email-provider/gmail/google.js';
 import { KeyImportUi } from '../../js/common/ui/key-import-ui.js';
@@ -247,12 +247,10 @@ export class SetupView extends View {
     }
     const { sendAs } = await AcctStore.get(this.acctEmail, ['sendAs']);
     const myOwnEmailsAddrs: string[] = [this.acctEmail].concat(Object.keys(sendAs!));
-    const myOwnEmailAddrsAsContacts: Contact[] = [];
     const { full_name: name } = await AcctStore.get(this.acctEmail, ['full_name']);
     for (const email of myOwnEmailsAddrs) {
-      myOwnEmailAddrsAsContacts.push(await ContactStore.obj({ email, name, pubkey: KeyUtil.armor(await KeyUtil.asPublicKey(prvs[0])) }));
+      await ContactStore.update(undefined, email, { name, pubkey: KeyUtil.armor(await KeyUtil.asPublicKey(prvs[0])) });
     }
-    await ContactStore.save(undefined, myOwnEmailAddrsAsContacts);
   };
 
   public shouldSubmitPubkey = (checkboxSelector: string) => {
