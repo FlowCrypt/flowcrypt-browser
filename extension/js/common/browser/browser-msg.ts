@@ -17,7 +17,6 @@ import { MsgUtil } from '../core/crypto/pgp/msg-util.js';
 import { Ui } from './ui.js';
 import { GlobalStoreDict, GlobalIndex } from '../platform/store/global-store.js';
 import { AcctStoreDict, AccountIndex } from '../platform/store/acct-store.js';
-import { Contact } from '../core/crypto/key.js';
 import { saveFetchedPubkeysIfNewerThanInStorage } from '../shared.js';
 
 export type GoogleAuthWindowResult$result = 'Success' | 'Denied' | 'Error' | 'Closed';
@@ -65,7 +64,7 @@ export namespace Bm {
   export type Ajax = { req: JQueryAjaxSettings, stack: string };
   export type AjaxGmailAttachmentGetChunk = { acctEmail: string, msgId: string, attachmentId: string };
   export type ShowAttachmentPreview = { iframeUrl: string };
-  export type ReRenderRecipient = { contact: Contact };
+  export type ReRenderRecipient = { email: string };
   export type SaveFetchedPubkeys = { email: string, pubkeys: string[] };
 
   export namespace Res {
