@@ -1535,6 +1535,14 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
       await SetupPageRecipe.manualEnter(settingsPage, 'flowcrypt.test.key.used.pgp', { submitPubkey: false, usedPgpBefore: false },
         { isSavePassphraseChecked: false, isSavePassphraseHidden: false });
+      // add names to contacts
+      const dbPage = await browser.newPage(t, TestUrls.extension('chrome/dev/ci_unit_test.htm'));
+      await dbPage.page.evaluate(async () => {
+        const db = await (window as any).ContactStore.dbOpen();
+        await (window as any).ContactStore.update(db, 'to@example.com', { name: 'Mr To' });
+        await (window as any).ContactStore.update(db, 'bcc@example.com', { name: 'Mr Bcc' });
+      });
+      await dbPage.close();
       const subject = 'PWD encrypted message with FES - ID TOKEN';
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'user@standardsubdomainfes.test:8001');
       await ComposePageRecipe.fillMsg(composePage, { to: 'to@example.com', bcc: 'bcc@example.com' }, subject);

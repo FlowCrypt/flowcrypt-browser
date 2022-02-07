@@ -44,7 +44,7 @@ export class BackupManualActionModule extends ViewModule<BackupView> {
   public doBackupOnEmailProvider = async (armoredKey: string) => {
     const emailMsg = String(await $.get({ url: '/chrome/emails/email_intro.template.htm', dataType: 'html' }));
     const emailAttachments = [this.asBackupFile(armoredKey)];
-    const headers = { from: this.view.acctEmail, recipients: { to: [this.view.acctEmail] }, subject: GMAIL_RECOVERY_EMAIL_SUBJECTS[0] };
+    const headers = { from: this.view.acctEmail, recipients: { to: [{ email: this.view.acctEmail }] }, subject: GMAIL_RECOVERY_EMAIL_SUBJECTS[0] };
     const msg = await SendableMsg.createPlain(this.view.acctEmail, headers, { 'text/html': emailMsg }, emailAttachments);
     if (this.view.emailProvider === 'gmail') {
       return await this.view.gmail.msgSend(msg);

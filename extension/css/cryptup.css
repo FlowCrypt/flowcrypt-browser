@@ -2125,10 +2125,6 @@ div#contacts ul li:not(.loading) {
 
 div#contacts ul li.active:not(.loading) { background: #d6d6d6; }
 
-div#contacts ul li.auth_contacts {
-  background: #fff !important;
-  height: 24px;
-}
 div#contacts .button { padding: 4px 20px; }
 
 div#contacts div.allow-google-contact-search {

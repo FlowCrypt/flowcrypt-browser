@@ -61,7 +61,7 @@ export class ContactStore {
     }
   };
 
-  private static obj = async ({ email, name, pubkey, lastUse, lastCheck }: any): Promise<Contact> => {
+  private static obj = async ({ email, name, pubkey, lastCheck }: any): Promise<Contact> => {
     if (!pubkey) {
       return {
         email,
@@ -69,7 +69,6 @@ export class ContactStore {
         pubkey: undefined,
         hasPgp: 0, // number because we use it for sorting
         fingerprint: null,
-        lastUse: lastUse || null,
         pubkeyLastCheck: null,
         expiresOn: null,
         revoked: false
@@ -82,7 +81,6 @@ export class ContactStore {
       pubkey: pk,
       hasPgp: 1, // number because we use it for sorting
       fingerprint: pk.id,
-      lastUse,
       pubkeyLastCheck: lastCheck,
       revoked: pk.revoked
     } as Contact;

@@ -6,16 +6,14 @@ import { Dict, Str } from '../../core/common.js';
 import { Mime, MimeEncodeType, SendableMsgBody } from '../../core/mime.js';
 import { Attachment } from '../../core/attachment.js';
 import { Buf } from '../../core/buf.js';
-import { RecipientType } from '../shared/api.js';
 import { KeyStore } from '../../platform/store/key-store.js';
 import { KeyUtil } from '../../core/crypto/key.js';
-
-type Recipients = { to?: string[], cc?: string[], bcc?: string[] };
+import { ParsedRecipients } from './email-provider-api.js';
 
 type SendableMsgHeaders = {
   headers?: Dict<string>;
   from: string;
-  recipients: Recipients;
+  recipients: ParsedRecipients;
   subject: string;
   thread?: string;
 };
@@ -119,7 +117,7 @@ export class SendableMsg {
     public headers: Dict<string>,
     isDraft: boolean,
     public from: string,
-    public recipients: Recipients,
+    public recipients: ParsedRecipients,
     public subject: string,
     public body: SendableMsgBody,
     public attachments: Attachment[],
@@ -130,7 +128,7 @@ export class SendableMsg {
     if (!allEmails.length && !isDraft) {
       throw new Error('The To: field is empty. Please add recipients and try again');
     }
-    const invalidEmails = allEmails.filter(email => !Str.isEmailValid(email));
+    const invalidEmails = allEmails.filter(email => !Str.isEmailValid(email.email));
     if (invalidEmails.length) {
       throw new InvalidRecipientError(`The To: field contains invalid emails: ${invalidEmails.join(', ')}\n\nPlease check recipients and try again.`);
     }
@@ -138,11 +136,10 @@ export class SendableMsg {
 
   public toMime = async () => {
     this.headers.From = this.from;
-    for (const recipientTypeStr of Object.keys(this.recipients)) {
-      const recipientType = recipientTypeStr as RecipientType;
-      if (this.recipients[recipientType] && this.recipients[recipientType]!.length) {
+    for (const [recipientType, value] of Object.entries(this.recipients)) {
+      if (value && value!.length) {
         // todo - properly escape/encode this header using emailjs
-        this.headers[recipientType[0].toUpperCase() + recipientType.slice(1)] = this.recipients[recipientType]!.map(h => h.replace(/[,]/g, '')).join(',');
+        this.headers[recipientType[0].toUpperCase() + recipientType.slice(1)] = value.map(h => Str.formatEmailWithOptionalName(h).replace(/[,]/g, '')).join(',');
       }
     }
     this.headers.Subject = this.subject;

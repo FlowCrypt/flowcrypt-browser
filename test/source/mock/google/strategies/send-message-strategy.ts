@@ -40,12 +40,11 @@ class PwdEncryptedMessageWithFlowCryptComApiTestStrategy implements ITestMsgStra
 
 class PwdEncryptedMessageWithFesIdTokenTestStrategy implements ITestMsgStrategy {
   public test = async (mimeMsg: ParsedMail) => {
-    const senderEmail = Str.parseEmail(mimeMsg.from!.text).email;
     const expectedSenderEmail = 'user@standardsubdomainfes.test:8001';
-    if (senderEmail !== expectedSenderEmail) {
-      throw new HttpClientErr(`Unexpected sender email ${senderEmail}, expecting ${expectedSenderEmail}`);
-    }
-    if (!mimeMsg.text?.includes(`${senderEmail} has sent you a password-encrypted email`)) {
+    expect(mimeMsg.from!.text).to.equal(`First Last <${expectedSenderEmail}>`);
+    expect((mimeMsg.to as AddressObject).text).to.equal('Mr To <to@example.com>');
+    expect((mimeMsg.bcc as AddressObject).text).to.equal('Mr Bcc <bcc@example.com>');
+    if (!mimeMsg.text?.includes(`${expectedSenderEmail} has sent you a password-encrypted email`)) {
       throw new HttpClientErr(`Error checking sent text in:\n\n${mimeMsg.text}`);
     }
     if (!mimeMsg.text?.includes('http://fes.standardsubdomainfes.test:8001/message/FES-MOCK-MESSAGE-ID')) {

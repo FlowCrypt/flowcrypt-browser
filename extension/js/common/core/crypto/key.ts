@@ -10,6 +10,7 @@ import { opgp } from './pgp/openpgpjs-custom.js';
 import { OpenPGPKey } from './pgp/openpgp-key.js';
 import { SmimeKey } from './smime/smime-key.js';
 import { MsgBlock } from '../msg-block.js';
+import { EmailParts } from '../common.js';
 
 /**
  * This is a common Key interface for both OpenPGP and X.509 keys.
@@ -49,11 +50,11 @@ export type PubkeyResult = { pubkey: Key, email: string, isMine: boolean };
 
 export type Contact = {
   email: string;
-  name: string | null;
+  name?: string;
   pubkey: Key | undefined;
   hasPgp: 0 | 1;
   fingerprint: string | null;
-  lastUse: number | null;
+  // lastUse: number | null;
   pubkeyLastCheck: number | null;
   expiresOn: number | null;
   revoked: boolean;
@@ -78,6 +79,13 @@ export interface PubkeyInfo {
   // this key maybe returned as revoked. This is why PubkeyInfo has revoked property
   // regardless of the fact that Key itself also has it.
   revoked: boolean;
+}
+
+export type ContactInfo = EmailParts;
+
+export interface ContactInfoWithSortedPubkeys {
+  info: ContactInfo,
+  sortedPubkeys: PubkeyInfoWithLastCheck[]
 }
 
 export interface PubkeyInfoWithLastCheck extends PubkeyInfo {

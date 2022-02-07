@@ -2,11 +2,11 @@
 
 'use strict';
 
-import { NewMsgData, RecipientElement } from './compose-types.js';
+import { NewMsgData, ValidRecipientElement } from './compose-types.js';
 import { CursorEvent, SquireEditor, WillPasteEvent } from '../../../types/squire.js';
 
 import { Catch } from '../../../js/common/platform/catch.js';
-import { Recipients } from '../../../js/common/api/email-provider/email-provider-api.js';
+import { ParsedRecipients } from '../../../js/common/api/email-provider/email-provider-api.js';
 import { Str } from '../../../js/common/core/common.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { ViewModule } from '../../../js/common/view-module.js';
@@ -61,8 +61,7 @@ export class ComposeInputModule extends ViewModule<ComposeView> {
   };
 
   public extractAll = (): NewMsgData => {
-    const recipientElements = this.view.recipientsModule.getRecipients();
-    const recipients = this.mapRecipients(recipientElements);
+    const recipients = this.mapRecipients(this.view.recipientsModule.getValidRecipients());
     const subject = this.view.isReplyBox && this.view.replyParams ? this.view.replyParams.subject : String($('#input_subject').val() || '');
     const plaintext = this.view.inputModule.extract('text', 'input_text');
     const plainhtml = this.view.inputModule.extract('html', 'input_text');
@@ -212,18 +211,18 @@ export class ComposeInputModule extends ViewModule<ComposeView> {
     this.view.sizeModule.setInputTextHeightManuallyIfNeeded();
   };
 
-  private mapRecipients = (recipients: RecipientElement[]) => {
-    const result: Recipients = { to: [], cc: [], bcc: [] };
+  private mapRecipients = (recipients: ValidRecipientElement[]): ParsedRecipients => {
+    const result: ParsedRecipients = { to: [], cc: [], bcc: [] };
     for (const recipient of recipients) {
       switch (recipient.sendingType) {
         case "to":
-          result.to!.push(recipient.email);
+          result.to!.push({ email: recipient.email, name: recipient.name });
           break;
         case "cc":
-          result.cc!.push(recipient.email);
+          result.cc!.push({ email: recipient.email, name: recipient.name });
           break;
         case "bcc":
-          result.bcc!.push(recipient.email);
+          result.bcc!.push({ email: recipient.email, name: recipient.name });
           break;
       }
     }

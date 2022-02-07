@@ -47,8 +47,7 @@ export class ComposeMyPubkeyModule extends ViewModule<ComposeView> {
         return;
       }
       const myDomain = Str.getDomainFromEmailAddress(senderEmail);
-      const foreignRecipients = this.view.recipientsModule.getRecipients().map(r => r.email)
-        .filter(Boolean)
+      const foreignRecipients = this.view.recipientsModule.getValidRecipients().map(r => r.email)
         .filter(email => myDomain !== Str.getDomainFromEmailAddress(email));
       if (foreignRecipients.length > 0) {
         if (!Array.isArray(cached)) {

@@ -3,8 +3,9 @@
 'use strict';
 
 import { RecipientType } from '../../../js/common/api/shared/api.js';
-import { Recipients } from '../../../js/common/api/email-provider/email-provider-api.js';
+import { ParsedRecipients } from '../../../js/common/api/email-provider/email-provider-api.js';
 import { KeyInfo, PubkeyResult } from '../../../js/common/core/crypto/key.js';
+import { EmailParts } from '../../../js/common/core/common.js';
 
 export enum RecipientStatus {
   EVALUATING,
@@ -16,13 +17,21 @@ export enum RecipientStatus {
   FAILED
 }
 
-export interface RecipientElement {
-  email: string;
+interface RecipientElementBase {
   sendingType: RecipientType;
   element: HTMLElement;
   id: string;
   status: RecipientStatus;
   evaluating?: Promise<void>;
+}
+
+export interface RecipientElement extends RecipientElementBase {
+  email?: string;
+  name?: string;
+  invalid?: string;
+}
+
+export interface ValidRecipientElement extends RecipientElementBase, EmailParts {
 }
 
 export type MessageToReplyOrForward = {
@@ -42,7 +51,7 @@ export type CollectKeysResult = { pubkeys: PubkeyResult[], emailsWithoutPubkeys:
 export type PopoverOpt = 'encrypt' | 'sign' | 'richtext';
 export type PopoverChoices = { [key in PopoverOpt]: boolean };
 
-export type NewMsgData = { recipients: Recipients, subject: string, plaintext: string, plainhtml: string, pwd: string | undefined, from: string };
+export type NewMsgData = { recipients: ParsedRecipients, subject: string, plaintext: string, plainhtml: string, pwd: string | undefined, from: string };
 
 export class SendBtnTexts {
   public static readonly BTN_ENCRYPT_AND_SEND: string = "Encrypt and Send";

@@ -9,6 +9,7 @@ export type Dict<T> = { [key: string]: T; };
 export type UrlParam = string | number | null | undefined | boolean | string[];
 export type UrlParams = Dict<UrlParam>;
 export type PromiseCancellation = { cancel: boolean };
+export type EmailParts = { email: string, name?: string };
 
 export class Str {
 
@@ -45,6 +46,10 @@ export class Str {
       return str;
     }
     return str.replace(/[.~!$%^*=?]/gi, '');
+  };
+
+  public static formatEmailWithOptionalName = ({ email, name }: EmailParts): string => {
+    return name ? `${Str.rmSpecialCharsKeepUtf(name, 'ALLOW-SOME')} <${email}>` : email;
   };
 
   public static prettyPrint = (obj: any) => {

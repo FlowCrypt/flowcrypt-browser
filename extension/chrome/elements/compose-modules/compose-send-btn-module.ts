@@ -16,13 +16,13 @@ import { GmailRes } from '../../../js/common/api/email-provider/gmail/gmail-pars
 import { KeyInfo } from '../../../js/common/core/crypto/key.js';
 import { SendBtnTexts } from './compose-types.js';
 import { SendableMsg } from '../../../js/common/api/email-provider/sendable-msg.js';
-import { Str } from '../../../js/common/core/common.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { ViewModule } from '../../../js/common/view-module.js';
 import { ComposeView } from '../compose.js';
-import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
 import { ContactStore } from '../../../js/common/platform/store/contact-store.js';
+import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
+import { Str, Value } from '../../../js/common/core/common.js';
 
 export class ComposeSendBtnModule extends ViewModule<ComposeView> {
 
@@ -112,7 +112,8 @@ export class ComposeSendBtnModule extends ViewModule<ComposeView> {
       this.view.S.cached('send_btn_note').text('');
       const newMsgData = this.view.inputModule.extractAll();
       await this.view.errModule.throwIfFormValsInvalid(newMsgData);
-      await ContactStore.update(undefined, Array.prototype.concat.apply([], Object.values(newMsgData.recipients)), { lastUse: Date.now() });
+      const emails = Value.arr.unique(Object.values(newMsgData.recipients).reduce((a, b) => a.concat(b), []).filter(x => x.email).map(x => x.email));
+      await ContactStore.update(undefined, emails, { lastUse: Date.now() });
       const msgObj = await GeneralMailFormatter.processNewMsg(this.view, newMsgData);
       if (msgObj) {
         await this.finalizeSendableMsg(msgObj);
@@ -146,7 +147,7 @@ export class ComposeSendBtnModule extends ViewModule<ComposeView> {
     if (this.view.myPubkeyModule.shouldAttach() && senderKi) { // todo: report on undefined?
       msg.attachments.push(Attachment.keyinfoAsPubkeyAttachment(senderKi));
     }
-    await this.addNamesToMsg(msg);
+    msg.from = await this.addNameToEmail(msg.from);
   };
 
   private extractInlineImagesToAttachments = (html: string) => {
@@ -224,30 +225,24 @@ export class ComposeSendBtnModule extends ViewModule<ComposeView> {
     }
   };
 
-  private addNamesToMsg = async (msg: SendableMsg): Promise<void> => {
+  private addNameToEmail = async (email: string): Promise<string> => {
+    const parsedEmail = Str.parseEmail(email);
+    if (!parsedEmail.email) {
+      throw new Error(`Recipient email ${email} is not valid`);
+    }
+    if (parsedEmail.name) {
+      return Str.formatEmailWithOptionalName({ email: parsedEmail.email, name: parsedEmail.name });
+    }
     const { sendAs } = await AcctStore.get(this.view.acctEmail, ['sendAs']);
-    const addNameToEmail = async (emails: string[]): Promise<string[]> => {
-      return await Promise.all(emails.map(async email => {
-        let name: string | undefined;
-        if (sendAs && sendAs[email]?.name) {
-          name = sendAs[email].name!;
-        } else {
-          const [contact] = await ContactStore.get(undefined, [email]);
-          if (contact?.name) {
-            name = contact.name;
-          }
-        }
-        const fixedEmail = Str.parseEmail(email).email;
-        if (!fixedEmail) {
-          throw new Error(`Recipient email ${email} is not valid`);
-        }
-        return name ? `${Str.rmSpecialCharsKeepUtf(name, 'ALLOW-SOME')} <${fixedEmail}>` : fixedEmail;
-      }));
-    };
-    msg.recipients.to = await addNameToEmail(msg.recipients.to || []);
-    msg.recipients.cc = await addNameToEmail(msg.recipients.cc || []);
-    msg.recipients.bcc = await addNameToEmail(msg.recipients.bcc || []);
-    msg.from = (await addNameToEmail([msg.from]))[0];
+    let name: string | undefined;
+    if (sendAs && sendAs[email]?.name) {
+      name = sendAs[email].name!;
+    } else {
+      const [contact] = await ContactStore.get(undefined, [email]);
+      if (contact?.name) {
+        name = contact.name;
+      }
+    }
+    return Str.formatEmailWithOptionalName({ email: parsedEmail.email, name });
   };
-
 }

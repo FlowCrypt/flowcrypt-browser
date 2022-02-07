@@ -3,7 +3,7 @@
 'use strict';
 
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
-import { KeyInfo, KeyUtil, Key, PubkeyInfo, PubkeyResult } from '../../../js/common/core/crypto/key.js';
+import { KeyInfo, KeyUtil, Key, PubkeyInfo, PubkeyResult, ContactInfoWithSortedPubkeys } from '../../../js/common/core/crypto/key.js';
 import { ApiErr } from '../../../js/common/api/shared/api-error.js';
 import { Assert } from '../../../js/common/assert.js';
 import { Catch, UnreportableError } from '../../../js/common/platform/catch.js';
@@ -133,7 +133,7 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
    */
   public getUpToDatePubkeys = async (
     email: string
-  ): Promise<PubkeyInfo[] | "fail"> => {
+  ): Promise<ContactInfoWithSortedPubkeys | "fail" | undefined> => {
     this.view.errModule.debug(`getUpToDatePubkeys.email(${email})`);
     const storedContact = await ContactStore.getOneWithAllPubkeys(undefined, email);
     this.view.errModule.debug(`getUpToDatePubkeys.storedContact.sortedPubkeys.length(${storedContact?.sortedPubkeys.length})`);
@@ -145,7 +145,7 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
       //  an async method to update them
       this.updateLocalPubkeysFromRemote(storedContact.sortedPubkeys, email)
         .catch(ApiErr.reportIfSignificant);
-      return storedContact.sortedPubkeys;
+      return storedContact;
     }
     this.view.errModule.debug(`getUpToDatePubkeys.bestKey not usable, refreshing sync`);
     try { // no valid keys found, query synchronously, then return result
@@ -157,7 +157,7 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
     const updatedContact = await ContactStore.getOneWithAllPubkeys(undefined, email);
     this.view.errModule.debug(`getUpToDatePubkeys.updatedContact.sortedPubkeys.length(${updatedContact?.sortedPubkeys.length})`);
     this.view.errModule.debug(`getUpToDatePubkeys.updatedContact(${updatedContact})`);
-    return updatedContact?.sortedPubkeys ?? [];
+    return updatedContact;
   };
 
   /**
@@ -167,9 +167,7 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
    *    newer versions of public keys we already have (compared by fingerprint), then we
    *    update the public keys we already have.
    */
-  public updateLocalPubkeysFromRemote = async (
-    storedPubkeys: PubkeyInfo[], email: string, name?: string
-  ): Promise<void> => {
+  public updateLocalPubkeysFromRemote = async (storedPubkeys: PubkeyInfo[], email: string): Promise<void> => {
     if (!email) {
       throw Error("Empty email");
     }
@@ -177,9 +175,6 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
       const lookupResult = await this.view.pubLookup.lookupEmail(email);
       if (await compareAndSavePubkeysToStorage(email, lookupResult.pubkeys, storedPubkeys)) {
         await this.view.recipientsModule.reRenderRecipientFor(email);
-      }
-      if (name) { // update name
-        await ContactStore.update(undefined, email, { name });
       }
     } catch (e) {
       if (!ApiErr.isNetErr(e) && !ApiErr.isServerErr(e)) {

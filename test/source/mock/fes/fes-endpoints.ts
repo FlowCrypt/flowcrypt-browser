@@ -59,9 +59,9 @@ export const mockFesEndpoints: HandlersDefinition = {
       authenticate(req, 'oidc');
       expect(body).to.contain('-----BEGIN PGP MESSAGE-----');
       expect(body).to.contain('"associateReplyToken":"mock-fes-reply-token"');
-      expect(body).to.contain('"to":["to@example.com"]');
+      expect(body).to.contain('"to":["Mr To <to@example.com>"]');
       expect(body).to.contain('"cc":[]');
-      expect(body).to.contain('"bcc":["bcc@example.com"]');
+      expect(body).to.contain('"bcc":["Mr Bcc <bcc@example.com>"]');
       expect(body).to.contain('"from":"user@standardsubdomainfes.test:8001"');
       return { 'url': `http://${standardFesUrl}/message/FES-MOCK-MESSAGE-ID` };
     }

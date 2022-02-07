@@ -3,11 +3,11 @@
 'use strict';
 
 import { ChunkedCb, EmailProviderContact, RecipientType } from '../../../js/common/api/shared/api.js';
-import { KeyUtil, PubkeyInfo } from '../../../js/common/core/crypto/key.js';
-import { PUBKEY_LOOKUP_RESULT_FAIL, PUBKEY_LOOKUP_RESULT_WRONG } from './compose-err-module.js';
+import { ContactInfoWithSortedPubkeys, KeyUtil, PubkeyInfo } from '../../../js/common/core/crypto/key.js';
+import { PUBKEY_LOOKUP_RESULT_FAIL } from './compose-err-module.js';
 import { ProviderContactsQuery, Recipients } from '../../../js/common/api/email-provider/email-provider-api.js';
-import { RecipientElement, RecipientStatus } from './compose-types.js';
-import { Str } from '../../../js/common/core/common.js';
+import { RecipientElement, RecipientStatus, ValidRecipientElement } from './compose-types.js';
+import { EmailParts, Str } from '../../../js/common/core/common.js';
 import { ApiErr } from '../../../js/common/api/shared/api-error.js';
 import { Bm, BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Catch } from '../../../js/common/platform/catch.js';
@@ -94,13 +94,24 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     return this.addedRecipients;
   };
 
-  public validateEmails = (uncheckedEmails: string[]): { valid: string[], invalid: string[] } => {
-    const valid: string[] = [];
+  public getValidRecipients = (): ValidRecipientElement[] => {
+    const validRecipients: ValidRecipientElement[] = [];
+    for (const recipient of this.addedRecipients) {
+      if (recipient.email) {
+        const email = recipient.email;
+        validRecipients.push({ ...recipient, email });
+      }
+    }
+    return validRecipients;
+  };
+
+  public validateEmails = (uncheckedEmails: string[]): { valid: EmailParts[], invalid: string[] } => {
+    const valid: EmailParts[] = [];
     const invalid: string[] = [];
     for (const email of uncheckedEmails) {
-      const parsed = Str.parseEmail(email).email;
-      if (parsed) {
-        valid.push(parsed);
+      const parsed = Str.parseEmail(email);
+      if (parsed.email) {
+        valid.push({ email: parsed.email, name: parsed.name });
       } else {
         invalid.push(email);
       }
@@ -117,17 +128,17 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       uncheckedEmails = uncheckedEmails || String(input.val()).split(/,/g);
       this.view.errModule.debug(`parseRenderRecipients(force: ${force}) - emails to check(${uncheckedEmails.join(',')})`);
       const validationResult = this.validateEmails(uncheckedEmails);
-      let recipientsToEvaluate: RecipientElement[] = [];
+      let recipientsToEvaluate: ValidRecipientElement[] = [];
       const container = input.parent();
       if (validationResult.valid.length) {
         this.view.errModule.debug(`parseRenderRecipients(force: ${force}) - valid emails(${validationResult.valid.join(',')})`);
-        recipientsToEvaluate = this.createRecipientsElements(container, validationResult.valid, sendingType, RecipientStatus.EVALUATING);
+        recipientsToEvaluate = this.createRecipientsElements(container, validationResult.valid, sendingType, RecipientStatus.EVALUATING) as ValidRecipientElement[];
       }
       const invalidEmails = validationResult.invalid.filter(em => !!em); // remove empty strings
       this.view.errModule.debug(`parseRenderRecipients(force: ${force}) - invalid emails(${validationResult.invalid.join(',')})`);
       if (force && invalidEmails.length) {
         this.view.errModule.debug(`parseRenderRecipients(force: ${force}) - force add invalid recipients`);
-        recipientsToEvaluate = [...recipientsToEvaluate, ...this.createRecipientsElements(container, invalidEmails, sendingType, RecipientStatus.WRONG)];
+        this.createRecipientsElements(container, invalidEmails.map(invalid => { return { invalid }; }), sendingType, RecipientStatus.WRONG);
         input.val('');
       } else {
         this.view.errModule.debug(`parseRenderRecipients(force: ${force}) - setting inputTo with invalid emails`);
@@ -140,18 +151,29 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
         this.view.errModule.debug(`parseRenderRecipients(force: ${force}).3`);
         this.view.sizeModule.resizeInput(input);
         this.view.errModule.debug(`parseRenderRecipients(force: ${force}).4`);
+      } else {
+        this.view.sizeModule.setInputTextHeightManuallyIfNeeded();
       }
     }
   };
 
   public addRecipients = async (recipients: Recipients, triggerCallback: boolean = true) => {
-    let newRecipients: RecipientElement[] = [];
+    const newRecipients: ValidRecipientElement[] = [];
     for (const [key, value] of Object.entries(recipients)) {
       if (['to', 'cc', 'bcc'].includes(key)) {
         const sendingType = key as RecipientType;
         if (value?.length) {
           const recipientsContainer = this.view.S.cached('input_addresses_container_outer').find(`#input-container-${sendingType}`);
-          newRecipients = newRecipients.concat(this.createRecipientsElements(recipientsContainer, value, sendingType, RecipientStatus.EVALUATING));
+          for (const email of value) {
+            const parsed = Str.parseEmail(email);
+            if (parsed.email) {
+              newRecipients.push(...this.createRecipientsElements(recipientsContainer,
+                [{ email: parsed.email, name: parsed.name }],
+                sendingType, RecipientStatus.EVALUATING) as ValidRecipientElement[]);
+            } else {
+              this.createRecipientsElements(recipientsContainer, [{ invalid: email }], sendingType, RecipientStatus.WRONG);
+            }
+          }
           this.view.S.cached('input_addresses_container_outer').find(`#input-container-${sendingType}`).css('display', '');
           this.view.sizeModule.resizeInput(this.view.S.cached('input_addresses_container_outer').find(`#input-container-${sendingType} input`));
         }
@@ -197,7 +219,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     await this.view.recipientsModule.setEmailsPreview(this.getRecipients());
   };
 
-  public reEvaluateRecipients = async (recipients: RecipientElement[]) => {
+  public reEvaluateRecipients = async (recipients: ValidRecipientElement[]) => {
     for (const recipient of recipients) {
       $(recipient.element).empty().removeClass();
       Xss.sanitizeAppend(recipient.element, `${Xss.escape(recipient.email)} ${Ui.spinner('green')}`);
@@ -205,7 +227,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     await this.evaluateRecipients(recipients);
   };
 
-  public evaluateRecipients = async (recipientEls: RecipientElement[], triggerCallback: boolean = true) => {
+  public evaluateRecipients = async (recipientEls: ValidRecipientElement[], triggerCallback: boolean = true) => {
     this.view.errModule.debug(`evaluateRecipients`);
     $('body').attr('data-test-state', 'working');
     for (const recipientEl of recipientEls) {
@@ -214,14 +236,9 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       recipientEl.evaluating = (async () => {
         this.view.errModule.debug(`evaluateRecipients.evaluat.recipient.email(${String(recipientEl.email)})`);
         this.view.errModule.debug(`evaluateRecipients.evaluating.recipient.status(${recipientEl.status})`);
-        if (recipientEl.status === RecipientStatus.WRONG) {
-          this.view.errModule.debug(`evaluateRecipients.evaluating: exiting because WRONG`);
-          await this.renderPubkeyResult(recipientEl, 'wrong');
-        } else {
-          this.view.errModule.debug(`evaluateRecipients.evaluating: calling getUpToDatePubkeys`);
-          const pubkeys = await this.view.storageModule.getUpToDatePubkeys(recipientEl.email);
-          await this.renderPubkeyResult(recipientEl, pubkeys);
-        }
+        this.view.errModule.debug(`evaluateRecipients.evaluating: calling getUpToDatePubkeys`);
+        const info = await this.view.storageModule.getUpToDatePubkeys(recipientEl.email);
+        this.renderPubkeyResult(recipientEl, info);
         // Clear promise when after finished
         // todo - it would be better if we could avoid doing this, eg
         //    recipient.evaluating would be a bool
@@ -268,7 +285,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     while (container.width()! <= maxWidth && orderedRecipients.length >= processed + 1) {
       const recipient = orderedRecipients[processed];
       const escapedTitle = Xss.escape(recipient.element.getAttribute('title') || '');
-      const emailHtml = `<span class="email_address ${recipient.element.className}" title="${escapedTitle}">${Xss.escape(recipient.email)}</span>`;
+      const emailHtml = `<span class="email_address ${recipient.element.className}" title="${escapedTitle}">${Xss.escape(recipient.email || recipient.invalid || '')}</span>`;
       $(emailHtml).insertBefore(rest); // xss-escaped
       processed++;
     }
@@ -359,16 +376,17 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
   };
 
   public reRenderRecipientFor = async (email: string): Promise<void> => {
-    if (!this.addedRecipients.some(r => r.email === email)) {
+    const validRecipients = this.getValidRecipients().filter(r => r.email === email);
+    if (!validRecipients.length) {
       return;
     }
     const emailAndPubkeys = await ContactStore.getOneWithAllPubkeys(undefined, email);
-    for (const recipient of this.addedRecipients.filter(r => r.email === email)) {
+    for (const recipient of validRecipients) {
       this.view.errModule.debug(`re-rendering recipient: ${email}`);
-      await this.renderPubkeyResult(recipient, emailAndPubkeys ? emailAndPubkeys.sortedPubkeys : []);
-      this.view.recipientsModule.showHideCcAndBccInputsIfNeeded();
-      await this.view.recipientsModule.setEmailsPreview(this.getRecipients());
+      this.renderPubkeyResult(recipient, emailAndPubkeys);
     }
+    this.view.recipientsModule.showHideCcAndBccInputsIfNeeded();
+    await this.view.recipientsModule.setEmailsPreview(this.getRecipients());
   };
 
   private inputsBlurHandler = async (target: HTMLElement, e: JQuery.Event<HTMLElement, null>) => {
@@ -435,11 +453,11 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
   };
 
   private addTheirPubkeyClickHandler = () => {
-    const noPgpRecipients = this.addedRecipients.filter(r => r.element.className.includes('no_pgp'));
+    const noPgpRecipients = this.getValidRecipients().filter(r => r.element.className.includes('no_pgp'));
     this.view.renderModule.renderAddPubkeyDialog(noPgpRecipients.map(r => r.email));
     clearInterval(this.addedPubkeyDbLookupInterval); // todo - get rid of Catch.set_interval. just supply tabId and wait for direct callback
     this.addedPubkeyDbLookupInterval = Catch.setHandledInterval(async () => {
-      const recipientsHasPgp: RecipientElement[] = [];
+      const recipientsHasPgp: ValidRecipientElement[] = [];
       for (const recipient of noPgpRecipients) {
         const [contact] = await ContactStore.get(undefined, [recipient.email]);
         if (contact && contact.hasPgp) {
@@ -677,8 +695,6 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
         contactItems.removeClass('active');
         $(this).addClass('active');
       });
-      this.view.S.cached('contacts').find('ul li.auth_contacts').click(this.view.setHandler(() =>
-        this.authContacts(this.view.acctEmail), this.view.errModule.handle(`authorize contact search`)));
       const offset = input.offset()!;
       const inputToPadding = parseInt(input.css('padding-left'));
       let leftOffset: number;
@@ -734,12 +750,14 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     this.hideContacts();
   };
 
-  private createRecipientsElements = (container: JQuery<HTMLElement>, emails: string[], sendingType: RecipientType, status: RecipientStatus): RecipientElement[] => {
-    const result = [];
-    for (const rawEmail of emails) {
-      const { email } = Str.parseEmail(rawEmail);
+  private createRecipientsElements = (container: JQuery<HTMLElement>,
+    emails: { email?: string, name?: string, invalid?: string }[],
+    sendingType: RecipientType,
+    status: RecipientStatus): RecipientElement[] => {
+    const result: RecipientElement[] = [];
+    for (const { email, name, invalid } of emails) {
       const recipientId = this.generateRecipientId();
-      const recipientsHtml = `<span tabindex="0" id="${recipientId}" data-test="${recipientId}"><span>${Xss.escape(email || rawEmail)}</span> ${Ui.spinner('green')}</span>`;
+      const recipientsHtml = `<span tabindex="0" id="${recipientId}" data-test="${recipientId}"><span>${Xss.escape(email || invalid || '')}</span> ${Ui.spinner('green')}</span>`;
       Xss.sanitizeAppend(container.find('.recipients'), recipientsHtml);
       const element = document.getElementById(recipientId);
       if (element) { // if element wasn't created this means that Composer is used by another component
@@ -754,7 +772,11 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
           }
         }, this.view.errModule.handle('remove recipient with keyboard')));
         this.addDraggableEvents(element);
-        const recipient = { email: email || rawEmail, element, id: recipientId, sendingType, status: email ? status : RecipientStatus.WRONG };
+        const recipient = { email, name, invalid, element, id: recipientId, sendingType, status: email ? status : RecipientStatus.WRONG };
+        if (recipient.status === RecipientStatus.WRONG) {
+          this.renderPubkeyResult(recipient, undefined);
+        }
+        // todo: display name if available
         this.addedRecipients.push(recipient);
         result.push(recipient);
       }
@@ -769,18 +791,16 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     }
     const toLookupNoPubkeys = new Set<EmailProviderContact>();
     for (const input of newContacts) {
-      // todo: create and use a lighter method in ContactStore that doesn't return any keys?
       const storedContact = await ContactStore.getOneWithAllPubkeys(undefined, input.email);
-      if (storedContact) {
-        if (!storedContact.info.name && input.name) {
-          await ContactStore.update(undefined, input.email, { name: input.name });
-        }
-      } else if (!this.failedLookupEmails.includes(input.email)) {
+      if (storedContact?.info.name && input.name) {
+        await ContactStore.update(undefined, input.email, { name: input.name });
+      }
+      if ((!storedContact || !storedContact.sortedPubkeys.length) && !this.failedLookupEmails.includes(input.email)) {
         toLookupNoPubkeys.add(input);
       }
     }
     await Promise.all(Array.from(toLookupNoPubkeys).map(c => this.view.storageModule
-      .updateLocalPubkeysFromRemote([], c.email, c.name || undefined)
+      .updateLocalPubkeysFromRemote([], c.email)
       .catch(() => this.failedLookupEmails.push(c.email))
     ));
   };
@@ -804,43 +824,26 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     return 1;
   };
 
-  private authContacts = async (acctEmail: string) => {
-    const connectToGoogleRecipientLine = this.addedRecipients[this.addedRecipients.length - 1];
-    this.view.S.cached('input_to').val(connectToGoogleRecipientLine.email);
-    this.removeRecipient(connectToGoogleRecipientLine.element);
-    const authRes = await GoogleAuth.newAuthPopup({ acctEmail, scopes: GoogleAuth.defaultScopes('contacts') });
-    if (authRes.result === 'Success') {
-      this.googleContactsSearchEnabled = true;
-      this.canReadEmails = true;
-      this.view.scopes.readContacts = true;
-      this.view.scopes.read = true;
-      await this.searchContacts(this.view.S.cached('input_to'));
-    } else if (authRes.result === 'Denied' || authRes.result === 'Closed') {
-      await Ui.modal.error('FlowCrypt needs this permission to search your contacts on Gmail. Without it, FlowCrypt will keep a separate contact list.');
-    } else {
-      await Ui.modal.error(Lang.general.somethingWentWrongTryAgain(!!this.view.fesUrl));
-    }
-  };
-
+  // todo: I guess we can combine this with reRenderRecipientFor
   private checkReciepientsKeys = async () => {
-    for (const recipientEl of this.addedRecipients.filter(
+    for (const recipientEl of this.getValidRecipients().filter(
       r => r.element.className.includes('no_pgp'))) {
       const email = $(recipientEl).text().trim();
       const dbContacts = await ContactStore.getOneWithAllPubkeys(undefined, email);
       if (dbContacts && dbContacts.sortedPubkeys && dbContacts.sortedPubkeys.length) {
         recipientEl.element.classList.remove('no_pgp');
-        await this.renderPubkeyResult(recipientEl, dbContacts.sortedPubkeys);
+        this.renderPubkeyResult(recipientEl, dbContacts);
       }
     }
   };
 
-  private renderPubkeyResult = async (
-    recipient: RecipientElement, sortedPubkeyInfos: PubkeyInfo[] | 'fail' | 'wrong'
+  private renderPubkeyResult = (
+    recipient: RecipientElement, info: ContactInfoWithSortedPubkeys | undefined | 'fail'
   ) => {
-    // console.log(`>>>> renderPubkeyResult: ${JSON.stringify(sortedPubkeyInfos)}`);
+    // console.log(`>>>> renderPubkeyResult: ${JSON.stringify(info)}`);
     const el = recipient.element;
-    this.view.errModule.debug(`renderPubkeyResult.email(${recipient.email})`);
-    this.view.errModule.debug(`renderPubkeyResult.contact(${JSON.stringify(sortedPubkeyInfos)})`);
+    this.view.errModule.debug(`renderPubkeyResult.email(${recipient.email || recipient.invalid})`);
+    this.view.errModule.debug(`renderPubkeyResult.contact(${JSON.stringify(info)})`);
     $(el).children('img, i').remove();
     const contentHtml = '<img src="/img/svgs/close-icon.svg" alt="close" class="close-icon svg" />' +
       '<img src="/img/svgs/close-icon-black.svg" alt="close" class="close-icon svg display_when_sign" />';
@@ -848,7 +851,11 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       .find('img.close-icon')
       .click(this.view.setHandler(target => this.removeRecipient(target.parentElement!), this.view.errModule.handle('remove recipient')));
     $(el).removeClass(['failed', 'wrong', 'has_pgp', 'no_pgp', 'expired']);
-    if (sortedPubkeyInfos === PUBKEY_LOOKUP_RESULT_FAIL) {
+    if (recipient.status === RecipientStatus.WRONG) {
+      this.view.errModule.debug(`renderPubkeyResult: Setting email to wrong / misspelled in harsh mode: ${recipient.invalid}`);
+      $(el).attr('title', 'This email address looks misspelled. Please try again.');
+      $(el).addClass("wrong");
+    } else if (info === PUBKEY_LOOKUP_RESULT_FAIL) {
       recipient.status = RecipientStatus.FAILED;
       $(el).attr('title', 'Failed to load, click to retry');
       $(el).addClass("failed");
@@ -856,12 +863,10 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
         '<img src="/img/svgs/close-icon-black.svg" class="close-icon-black svg remove-reciepient">');
       $(el).find('.action_retry_pubkey_fetch').click(this.view.setHandler(async () => await this.refreshRecipients(), this.view.errModule.handle('refresh recipient')));
       $(el).find('.remove-reciepient').click(this.view.setHandler(element => this.removeRecipient(element.parentElement!), this.view.errModule.handle('remove recipient')));
-    } else if (sortedPubkeyInfos === PUBKEY_LOOKUP_RESULT_WRONG) {
-      recipient.status = RecipientStatus.WRONG;
-      this.view.errModule.debug(`renderPubkeyResult: Setting email to wrong / misspelled in harsh mode: ${recipient.email}`);
-      $(el).attr('title', 'This email address looks misspelled. Please try again.');
-      $(el).addClass("wrong");
-    } else if (sortedPubkeyInfos.length) {
+    } else if (info && info.sortedPubkeys.length) {
+      if (info.info.name) {
+        recipient.name = info.info.name; // todo: render the name
+      }
       // New logic:
       // 1. Keys are sorted in a special way.
       // 2. If there is at least one key:
@@ -869,30 +874,33 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       //    - else if first key is revoked, then REVOKED.
       //    - else EXPIRED.
       // 3. Otherwise NO_PGP.
-      const firstKeyInfo = sortedPubkeyInfos[0];
+      const firstKeyInfo = info.sortedPubkeys[0];
       if (!firstKeyInfo.revoked && !KeyUtil.expired(firstKeyInfo.pubkey)) {
         recipient.status = RecipientStatus.HAS_PGP;
         $(el).addClass('has_pgp');
         Xss.sanitizePrepend(el, '<img class="lock-icon" src="/img/svgs/locked-icon.svg" />');
-        $(el).attr('title', 'Does use encryption\n\n' + this.formatPubkeysHintText(sortedPubkeyInfos));
+        $(el).attr('title', 'Does use encryption\n\n' + this.formatPubkeysHintText(info.sortedPubkeys));
       } else if (firstKeyInfo.revoked) {
         recipient.status = RecipientStatus.REVOKED;
         $(el).addClass("revoked");
         Xss.sanitizePrepend(el, '<img src="/img/svgs/revoked.svg" class="revoked-or-expired">');
         $(el).attr('title', 'Does use encryption but their public key is revoked. ' +
           'You should ask them to send you an updated public key.\n\n' +
-          this.formatPubkeysHintText(sortedPubkeyInfos));
+          this.formatPubkeysHintText(info.sortedPubkeys));
       } else {
         recipient.status = RecipientStatus.EXPIRED;
         $(el).addClass("expired");
         Xss.sanitizePrepend(el, '<img src="/img/svgs/expired-timer.svg" class="revoked-or-expired">');
         $(el).attr('title', 'Does use encryption but their public key is expired. ' +
           'You should ask them to send you an updated public key.\n\n' +
-          this.formatPubkeysHintText(sortedPubkeyInfos));
+          this.formatPubkeysHintText(info.sortedPubkeys));
       }
     } else {
       recipient.status = RecipientStatus.NO_PGP;
       $(el).addClass("no_pgp");
+      if (info?.info.name) {
+        recipient.name = info.info.name; // todo: render the name
+      }
       Xss.sanitizePrepend(el, '<img class="lock-icon" src="/img/svgs/locked-icon.svg" />');
       $(el).attr('title', 'Could not verify their encryption setup. You can encrypt the message with a password below. Alternatively, add their pubkey.');
     }
@@ -938,7 +946,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
   };
 
   private refreshRecipients = async () => {
-    const failedRecipients = this.addedRecipients.filter(r => r.element.className.includes('failed'));
+    const failedRecipients = this.getValidRecipients().filter(r => r.element.className.includes('failed'));
     await this.reEvaluateRecipients(failedRecipients);
   };
 
