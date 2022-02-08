@@ -4,6 +4,10 @@
 
 /* eslint-disable max-len */
 
+const contactMinimalSubsentence = (isFesUsed: boolean) => isFesUsed ? 'contact your Help Desk' : 'write us at human@flowcrypt.com';
+const contactIfHappensAgain = (isFesUsed: boolean) => `If this happens again, please ${contactMinimalSubsentence(isFesUsed)}. `;
+const contactForSupportSubsentence = (isFesUsed: boolean) => isFesUsed ? 'please contact your Help Desk for support' : 'please write us at human@flowcrypt.com to fix it';
+
 export const Lang = { // tslint:disable-line:variable-name
   error: {
     dbFailed: 'Try restarting your browser first. If that doesn\'t help, this will have something to do with your browser settings. Try to install FlowCrypt on a brand new browser profile (both Firefox and Chrome allow you to have several different user profiles). If you leave the new profile on default settings, FlowCrypt should work without issues. Then you can compare your old profile settings to the new one to find out which settings are giving FlowCrypt trouble. Once you find out, please contact us know at human@flowcrypt.com and we will include it below to help other users.',
@@ -47,10 +51,9 @@ export const Lang = { // tslint:disable-line:variable-name
     wrongPassword: 'Wrong password. ',
     decryptPasswordPrompt: 'Please enter password to decrypt the message',
     connError: 'Could not connect to email provider to open the message, please refresh the page to try again. ',
-    dontKnowHowOpen: 'Please email us at human@flowcrypt.com to submit a bug report, and mention what software was used to send this message to you. ',
+    dontKnowHowOpen: (isFesUsed: boolean) => `Please ${contactMinimalSubsentence(isFesUsed)} to submit a bug report, and mention what software was used to send this message to you. `,
     enterPassphrase: 'Enter passphrase',
     toOpenMsg: 'to open this message.',
-    writeMe: 'Email human@flowcrypt.com to get this resolved. We respond promptly. ',
     refreshWindow: 'Please refresh your web mail window to read encrypted messages. ',
     updateChromeSettings: 'Need to update chrome settings to view encrypted messages. ',
     notProperlySetUp: 'FlowCrypt is not properly set up to decrypt messages. ',
@@ -69,8 +72,7 @@ export const Lang = { // tslint:disable-line:variable-name
     msgEncryptedText: (lang: string, senderEmail: string) => (lang === 'DE') ? `${senderEmail} hat Ihnen eine passwortverschlüsselte E-Mail gesendet. Folgen Sie diesem Link, um es zu öffnen: ` : `${senderEmail} has sent you a password-encrypted email. Follow this link to open it: `,
     alternativelyCopyPaste: { EN: 'Alternatively copy and paste the following link: ', DE: 'Alternativ kopieren Sie folgenden Link und fügen ihn in die Adresszeile Ihres Browsers ein: ' },
     openMsg: { EN: 'Click here to Open Message', DE: 'Klicken Sie hier, um die Nachricht zu öffnen' },
-    includePubkeyIconTitle: 'Include your Public Key with this message.\n\nThis allows people using non-FlowCrypt encryption to reply to you.',
-    includePubkeyIconTitleActive: 'Your Public Key will be included with this message.\n\nThis allows people using non-FlowCrypt encryption to reply to you.',
+    includePubkeyIconTitle: 'Include your Public Key with this message.\n\nIf enabled, your Public Key will be included with this message.\n\nThis allows people using non-FlowCrypt encryption to reply to you.',
     headers: {
       encrypted: 'New Secure Message',
       encryptedAndSigned: 'New Signed Secure Message',
@@ -80,11 +82,18 @@ export const Lang = { // tslint:disable-line:variable-name
     pubkeyExpiredConfirmCompose: 'The public key of one of your recipients is expired.\n\nThe right thing to do is to ask the recipient to send you an updated Public Key.\n\nAre you sure you want to encrypt this message for an expired public key? (NOT RECOMMENDED)',
     needReadAccessToReply: 'FlowCrypt has limited functionality. Your browser needs to access this conversation to reply.',
     addMissingPermission: 'Add missing permission',
+    enterprisePasswordPolicy: 'Please use password with the following properties:\n - one uppercase\n - one lowercase\n - one number\n - one special character eg &\"#-\'_%-@,;:!*()\n - 8 characters length',
+    consumerPasswordPolicy: 'Please use a password at least 8 characters long',
   },
   general: {
-    somethingWentWrongTryAgain: 'Something went wrong, please try again. If this happens again, please write us at human@flowcrypt.com to fix it. ',
-    writeMeToFixIt: 'Email human@flowcrypt.com to get this resolved if it happens repeatedly. ',
-    restartBrowserAndTryAgain: 'Unexpected error occured. Please restart your browser and try again. If this persists after a restart, please write us at human@flowcrypt.com.',
+    contactMinimalSubsentence,
+    contactIfHappensAgain,
+    contactIfNeedAssistance: (isFesUsed: boolean) => isFesUsed ? 'Contact your Help Desk if you need assistance.' : 'Email human@flowcrypt.com if you need assistance.',
+    somethingWentWrongTryAgain: (isFesUsed: boolean) => `Something went wrong, please try again. ${contactIfHappensAgain(isFesUsed)}`,
+    contactForSupportSubsentence,
+    contactForSupportSentence: (isFesUsed: boolean) => isFesUsed ? 'Please contact your Help Desk for support.' : 'Please write us at human@flowcrypt.com to fix it.',
+    writeMeToFixIt: (isFesUsed: boolean) => isFesUsed ? 'Please contact your Help Desk for support.' : 'Please write us at human@flowcrypt.com to get this resolved.',
+    restartBrowserAndTryAgain: (isFesUsed: boolean) => `Unexpected error occured. Please restart your browser and try again. If this persists after a restart, ${contactForSupportSubsentence(isFesUsed)}.`,
     emailAliasChangedAskForReload: 'Your email aliases on Gmail have refreshed since the last time you used FlowCrypt.\nReload the compose window now?'
   },
 };

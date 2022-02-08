@@ -89,24 +89,34 @@ export class GmailParser {
   public static findAttachments = (
     msgOrPayloadOrPart: GmailRes.GmailMsg | GmailRes.GmailMsg$payload | GmailRes.GmailMsg$payload$part,
     internalResults: Attachment[] = [],
-    internalMsgId?: string
+    internalMsgId?: string,
+    { pgpEncryptedIndex }: { pgpEncryptedIndex?: number } = {}
   ) => {
     if (msgOrPayloadOrPart.hasOwnProperty('payload')) {
       internalMsgId = (msgOrPayloadOrPart as GmailRes.GmailMsg).id;
       GmailParser.findAttachments((msgOrPayloadOrPart as GmailRes.GmailMsg).payload!, internalResults, internalMsgId);
     }
     if (msgOrPayloadOrPart.hasOwnProperty('parts')) {
-      for (const part of (msgOrPayloadOrPart as GmailRes.GmailMsg$payload).parts!) {
-        GmailParser.findAttachments(part, internalResults, internalMsgId);
+      const payload = msgOrPayloadOrPart as GmailRes.GmailMsg$payload;
+      const contentType = payload.headers?.find(x => x.name.toLowerCase() === 'content-type');
+      const parts = payload.parts!;
+      // are we dealing with a PGP/MIME encrypted message?
+      const pgpEncrypted = Boolean(parts.length === 2 && contentType?.value?.startsWith('multipart/encrypted;')
+        && contentType.value.includes('protocol="application/pgp-encrypted"'));
+      for (const [i, part] of parts.entries()) {
+        GmailParser.findAttachments(part, internalResults, internalMsgId, { pgpEncryptedIndex: pgpEncrypted ? i : undefined });
       }
     }
     if (msgOrPayloadOrPart.hasOwnProperty('body') && (msgOrPayloadOrPart as GmailRes.GmailMsg$payload$part).body!.hasOwnProperty('attachmentId')) {
+      const payload = msgOrPayloadOrPart as GmailRes.GmailMsg$payload;
+      const treatAs = Attachment.treatAsForPgpEncryptedAttachments(payload.mimeType, pgpEncryptedIndex);
       internalResults.push(new Attachment({
         msgId: internalMsgId,
         id: (msgOrPayloadOrPart as GmailRes.GmailMsg$payload$part).body!.attachmentId,
         length: (msgOrPayloadOrPart as GmailRes.GmailMsg$payload$part).body!.size,
         name: (msgOrPayloadOrPart as GmailRes.GmailMsg$payload$part).filename,
         type: (msgOrPayloadOrPart as GmailRes.GmailMsg$payload$part).mimeType,
+        treatAs,
         inline: (GmailParser.findHeader(msgOrPayloadOrPart, 'content-disposition') || '').toLowerCase().indexOf('inline') === 0,
       }));
     }
@@ -135,6 +145,7 @@ export class GmailParser {
   };
 
   public static determineReplyMeta = (acctEmail: string, addresses: string[], lastGmailMsg: GmailRes.GmailMsg): ReplyParams => {
+    const subject = GmailParser.findHeader(lastGmailMsg, 'subject') || '';
     const headers = {
       from: Str.parseEmail(GmailParser.findHeader(lastGmailMsg, 'from') || '').email,
       to: GmailParser.getAddressesHeader(lastGmailMsg, 'to'),
@@ -143,7 +154,7 @@ export class GmailParser {
       cc: GmailParser.getAddressesHeader(lastGmailMsg, 'cc').filter(e => !addresses.includes(e)),
       bcc: GmailParser.getAddressesHeader(lastGmailMsg, 'bcc').filter(e => !addresses.includes(e)),
       replyTo: GmailParser.findHeader(lastGmailMsg, 'reply-to'),
-      subject: Mime.subjectWithoutPrefixes(GmailParser.findHeader(lastGmailMsg, 'subject') || ''),
+      subject: Mime.subjectWithoutPrefixes(subject),
     };
     if (headers.from && !headers.to.includes(headers.from)) {
       headers.to.unshift(headers.from);
@@ -156,7 +167,7 @@ export class GmailParser {
     if (headers.replyTo) {
       return { to: [headers.replyTo], cc: [], bcc: [], myEmail, from: headers.from, subject: headers.subject };
     }
-    if (headers.from !== myEmail) {
+    if (headers.from !== myEmail || subject.startsWith('Re: ')) {
       const replyToWithoutMyEmail = headers.to.filter(e => myEmail !== e); // thinking about moving it in another place
       if (replyToWithoutMyEmail.length) { // when user sends emails it itself here will be 0 elements
         headers.to = replyToWithoutMyEmail;

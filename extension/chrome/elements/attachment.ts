@@ -18,8 +18,11 @@ import { Xss } from '../../js/common/platform/xss.js';
 import { KeyStore } from '../../js/common/platform/store/key-store.js';
 import { PassphraseStore } from '../../js/common/platform/store/passphrase-store.js';
 import { XssSafeFactory } from '../../js/common/xss-safe-factory.js';
+import { Lang } from '../../js/common/lang.js';
+import { AcctStore } from '../../js/common/platform/store/acct-store.js';
 
 export class AttachmentDownloadView extends View {
+  public fesUrl?: string;
   protected readonly acctEmail: string;
   protected readonly parentTabId: string;
   protected readonly frameId: string;
@@ -66,11 +69,13 @@ export class AttachmentDownloadView extends View {
 
   public render = async () => {
     this.tabId = await BrowserMsg.requiredTabId();
+    const storage = await AcctStore.get(this.acctEmail, ['setup_done', 'email_provider', 'fesUrl']);
+    this.fesUrl = storage.fesUrl;
     try {
       this.attachment = new Attachment({ name: this.origNameBasedOnFilename, type: this.type, msgId: this.msgId, id: this.id, url: this.url });
     } catch (e) {
       Catch.reportErr(e);
-      $('body.attachment').text(`Error processing params: ${String(e)}. Contact human@flowcrypt.com`);
+      $('body.attachment').text(`Error processing params: ${String(e)}. ${Lang.general.writeMeToFixIt(!!this.fesUrl)}`);
       return;
     }
     $('#type').text(this.type || 'unknown type');
@@ -205,7 +210,11 @@ export class AttachmentDownloadView extends View {
   private processAsPublicKeyAndHideAttachmentIfAppropriate = async () => {
     if (this.attachment.msgId && this.attachment.id && this.attachment.treatAs() === 'publicKey') { // this is encrypted public key - download && decrypt & parse & render
       const { data } = await this.gmail.attachmentGet(this.attachment.msgId, this.attachment.id);
-      const decrRes = await MsgUtil.decryptMessage({ kisWithPp: await KeyStore.getAllWithOptionalPassPhrase(this.acctEmail), encryptedData: data });
+      const decrRes = await MsgUtil.decryptMessage({
+        kisWithPp: await KeyStore.getAllWithOptionalPassPhrase(this.acctEmail),
+        encryptedData: data,
+        verificationPubs: [] // no need to worry about the public key signature, as public key exchange is inherently unsafe
+      });
       if (decrRes.success && decrRes.content) {
         const openpgpType = await MsgUtil.type({ data: decrRes.content });
         if (openpgpType && openpgpType.type === 'publicKey' && openpgpType.armored) { // 'openpgpType.armored': could potentially process unarmored pubkey files, maybe later
@@ -254,7 +263,11 @@ export class AttachmentDownloadView extends View {
   };
 
   private decryptAndSaveAttachmentToDownloads = async () => {
-    const result = await MsgUtil.decryptMessage({ kisWithPp: await KeyStore.getAllWithOptionalPassPhrase(this.acctEmail), encryptedData: this.attachment.getData() });
+    const result = await MsgUtil.decryptMessage({
+      kisWithPp: await KeyStore.getAllWithOptionalPassPhrase(this.acctEmail),
+      encryptedData: this.attachment.getData(),
+      verificationPubs: [] // todo: #4158 signature verification of attachments
+    });
     Xss.sanitizeRender(this.downloadButton, this.originalButtonHTML || '');
     if (result.success) {
       if (!result.filename || ['msg.txt', 'null'].includes(result.filename)) {

@@ -14,23 +14,20 @@ import { AcctStore } from '../../platform/store/acct-store.js';
 import { FlowCryptWebsite } from '../flowcrypt-website.js';
 
 export type ProfileUpdate = { alias?: string, name?: string, photo?: string, intro?: string, web?: string, phone?: string, default_message_expire?: number };
-export type SubscriptionLevel = 'pro' | null;
 export type FcUuidAuth = { account: string, uuid: string | undefined };
-export type SubscriptionInfo = { level?: SubscriptionLevel; expired?: boolean };
 
 export namespace BackendRes {
   export type FcAccountLogin = { registered: boolean, verified: boolean };
   export type FcAccount$info = { alias?: string | null, default_message_expire: number };
-  export type FcAccountGet = { account: FcAccount$info, subscription: SubscriptionInfo, domain_org_rules: DomainRulesJson };
+  export type FcAccountGet = { account: FcAccount$info, domain_org_rules: DomainRulesJson };
   export type FcAccountUpdate = { result: FcAccount$info, updated: boolean };
-  export type FcAccountSubscribe = { subscription: SubscriptionInfo };
-  export type FcAccountCheck = { email: string | null, subscription: SubscriptionInfo | null };
+  export type FcAccountCheck = { email: string | null };
   export type FcMsgToken = { token: string };
   export type FcMsgUpload = { url: string };
   export type FcLinkMsg = { expire: string, deleted: boolean, url: string, expired: boolean };
   export type FcLinkMe$profile = {
     alias: string | null, name: string | null, photo: string | null, intro: string | null, web: string | null,
-    phone: string | null, token: string | null, subscription_level: string | null, subscription_method: string | null, email: string | null
+    phone: string | null, token: string | null, email: string | null
   };
   export type ApirFcMsgExpiration = { updated: boolean };
 }

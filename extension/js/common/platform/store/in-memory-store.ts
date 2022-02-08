@@ -9,8 +9,8 @@ import { BrowserMsg } from '../../browser/browser-msg.js';
  */
 export class InMemoryStore extends AbstractStore {
 
-  public static set = async (acctEmail: string, key: string, value: string | undefined) => {
-    return await BrowserMsg.send.bg.await.inMemoryStoreSet({ acctEmail, key, value });
+  public static set = async (acctEmail: string, key: string, value?: string, expiration?: number) => {
+    return await BrowserMsg.send.bg.await.inMemoryStoreSet({ acctEmail, key, value, expiration });
   };
 
   public static get = async (acctEmail: string, key: string): Promise<string | undefined> => {

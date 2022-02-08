@@ -38,7 +38,7 @@ class PwdEncryptedMessageWithFlowCryptComApiTestStrategy implements ITestMsgStra
   };
 }
 
-class PwdEncryptedMessageWithFesAccessTokenTestStrategy implements ITestMsgStrategy {
+class PwdEncryptedMessageWithFesIdTokenTestStrategy implements ITestMsgStrategy {
   public test = async (mimeMsg: ParsedMail) => {
     const senderEmail = Str.parseEmail(mimeMsg.from!.text).email;
     const expectedSenderEmail = 'user@standardsubdomainfes.test:8001';
@@ -57,31 +57,12 @@ class PwdEncryptedMessageWithFesAccessTokenTestStrategy implements ITestMsgStrat
   };
 }
 
-class PwdEncryptedMessageWithFesIdTokenTestStrategy implements ITestMsgStrategy {
-  public test = async (mimeMsg: ParsedMail) => {
-    const senderEmail = Str.parseEmail(mimeMsg.from!.text).email;
-    const expectedSenderEmail = 'user@disablefesaccesstoken.test:8001';
-    if (senderEmail !== expectedSenderEmail) {
-      throw new HttpClientErr(`Unexpected sender email ${senderEmail}, expecting ${expectedSenderEmail}`);
-    }
-    if (!mimeMsg.text?.includes(`${senderEmail} has sent you a password-encrypted email`)) {
-      throw new HttpClientErr(`Error checking sent text in:\n\n${mimeMsg.text}`);
-    }
-    if (!mimeMsg.text?.includes('http://fes.disablefesaccesstoken.test:8001/message/FES-MOCK-MESSAGE-ID')) {
-      throw new HttpClientErr(`Error: cannot find pwd encrypted FES link in:\n\n${mimeMsg.text}`);
-    }
-    if (!mimeMsg.text?.includes('Follow this link to open it')) {
-      throw new HttpClientErr(`Error: cannot find pwd encrypted open link prompt in ${mimeMsg.text}`);
-    }
-  };
-}
-
 class MessageWithFooterTestStrategy implements ITestMsgStrategy {
   private readonly footer = 'flowcrypt.compatibility test footer with an img';
 
   public test = async (mimeMsg: ParsedMail) => {
     const keyInfo = await Config.getKeyInfo(["flowcrypt.compatibility.1pp1", "flowcrypt.compatibility.2pp1"]);
-    const decrypted = await MsgUtil.decryptMessage({ kisWithPp: keyInfo!, encryptedData: Buf.fromUtfStr(mimeMsg.text || '') });
+    const decrypted = await MsgUtil.decryptMessage({ kisWithPp: keyInfo!, encryptedData: Buf.fromUtfStr(mimeMsg.text || ''), verificationPubs: [] });
     if (!decrypted.success) {
       throw new HttpClientErr(`Error: can't decrypt message`);
     }
@@ -98,15 +79,15 @@ class SignedMessageTestStrategy implements ITestMsgStrategy {
 
   public test = async (mimeMsg: ParsedMail) => {
     const keyInfo = await Config.getKeyInfo(["flowcrypt.compatibility.1pp1", "flowcrypt.compatibility.2pp1"]);
-    const decrypted = await MsgUtil.decryptMessage({ kisWithPp: keyInfo!, encryptedData: Buf.fromUtfStr(mimeMsg.text!) });
+    const decrypted = await MsgUtil.decryptMessage({ kisWithPp: keyInfo!, encryptedData: Buf.fromUtfStr(mimeMsg.text!), verificationPubs: [] });
     if (!decrypted.success) {
       throw new HttpClientErr(`Error: Could not successfully verify signed message`);
     }
     if (!decrypted.signature) {
       throw new HttpClientErr(`Error: The message isn't signed.`);
     }
-    if (decrypted.signature.signer?.longid !== this.signedBy) {
-      throw new HttpClientErr(`Error: expected message signed by ${this.signedBy} but was actually signed by ${decrypted.signature.signer?.longid}`);
+    if (!decrypted.signature.signerLongids.includes(this.signedBy)) {
+      throw new HttpClientErr(`Error: expected message signed by ${this.signedBy} but was actually signed by ${decrypted.signature.signerLongids.length} other signers`);
     }
     const content = decrypted.content.toUtfStr();
     if (!content.includes(this.expectedText)) {
@@ -141,7 +122,7 @@ class IncludeQuotedPartTestStrategy implements ITestMsgStrategy {
 
   public test = async (mimeMsg: ParsedMail) => {
     const keyInfo = await Config.getKeyInfo(["flowcrypt.compatibility.1pp1", "flowcrypt.compatibility.2pp1"]);
-    const decrypted = await MsgUtil.decryptMessage({ kisWithPp: keyInfo!, encryptedData: Buf.fromUtfStr(mimeMsg.text!) });
+    const decrypted = await MsgUtil.decryptMessage({ kisWithPp: keyInfo!, encryptedData: Buf.fromUtfStr(mimeMsg.text!), verificationPubs: [] });
     if (!decrypted.success) {
       throw new HttpClientErr(`Error: can't decrypt message`);
     }
@@ -238,8 +219,6 @@ export class TestBySubjectStrategyContext {
       this.strategy = new MessageWithFooterTestStrategy();
     } else if (subject.includes('PWD encrypted message with flowcrypt.com/api')) {
       this.strategy = new PwdEncryptedMessageWithFlowCryptComApiTestStrategy();
-    } else if (subject.includes('PWD encrypted message with FES - access token')) {
-      this.strategy = new PwdEncryptedMessageWithFesAccessTokenTestStrategy();
     } else if (subject.includes('PWD encrypted message with FES - ID TOKEN')) {
       this.strategy = new PwdEncryptedMessageWithFesIdTokenTestStrategy();
     } else if (subject.includes('Message With Image')) {

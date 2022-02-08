@@ -3,7 +3,6 @@
 'use strict';
 
 import { EmailProviderInterface, ReplyParams } from '../../js/common/api/email-provider/email-provider-api.js';
-import { ApiErr } from '../../js/common/api/shared/api-error.js';
 import { Assert } from '../../js/common/assert.js';
 import { Bm, BrowserMsg } from '../../js/common/browser/browser-msg.js';
 import { Gmail } from '../../js/common/api/email-provider/gmail/gmail.js';
@@ -44,6 +43,7 @@ export class ComposeView extends View {
   public readonly isReplyBox: boolean;
   public readonly replyMsgId: string;
   public readonly replyPubkeyMismatch: boolean;
+  public fesUrl?: string;
   public skipClickPrompt: boolean;
   public draftId: string;
   public threadId: string = '';
@@ -145,7 +145,7 @@ export class ComposeView extends View {
   }
 
   public render = async () => {
-    const storage = await AcctStore.get(this.acctEmail, ['sendAs', 'hide_message_password']);
+    const storage = await AcctStore.get(this.acctEmail, ['sendAs', 'hide_message_password', 'fesUrl']);
     this.orgRules = await OrgRules.newInstance(this.acctEmail);
     if (this.orgRules.shouldHideArmorMeta()) {
       opgp.config.show_comment = false;
@@ -161,6 +161,7 @@ export class ComposeView extends View {
     this.recipientsModule = new ComposeRecipientsModule(this);
     this.sendBtnModule = new ComposeSendBtnModule(this);
     this.pwdOrPubkeyContainerModule = new ComposePwdOrPubkeyContainerModule(this, storage.hide_message_password);
+    this.fesUrl = storage.fesUrl;
     this.sizeModule = new ComposeSizeModule(this);
     this.senderModule = new ComposeSenderModule(this);
     this.footerModule = new ComposeFooterModule(this);
@@ -173,7 +174,6 @@ export class ComposeView extends View {
     if (!this.isReplyBox) {
       await Assert.abortAndRenderErrOnUnprotectedKey(this.acctEmail);
     }
-    this.storageModule.refreshAccountAndSubscriptionIfLoggedIn().catch(ApiErr.reportIfSignificant);
     if (this.replyMsgId) {
       await this.renderModule.fetchReplyMeta(Object.keys(storage.sendAs!));
     }

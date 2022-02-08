@@ -82,14 +82,15 @@ export class ComposeSendBtnPopoverModule extends ViewModule<ComposeView> {
     event.stopPropagation();
     const sendingContainer = $('.sending-container');
     sendingContainer.toggleClass('popover-opened');
+    const popoverClickHandler = this.view.setHandler((elem, event) => {
+      if (!this.view.S.cached('sending_options_container')[0].contains(event.relatedTarget)) {
+        sendingContainer.removeClass('popover-opened');
+        $('body').off('click', popoverClickHandler);
+        this.view.S.cached('toggle_send_options').off('keydown');
+      }
+    });
     if (sendingContainer.hasClass('popover-opened')) {
-      $('body').click(this.view.setHandler((elem, event) => {
-        if (!this.view.S.cached('sending_options_container')[0].contains(event.relatedTarget)) {
-          sendingContainer.removeClass('popover-opened');
-          $('body').off('click');
-          this.view.S.cached('toggle_send_options').off('keydown');
-        }
-      }));
+      $('body').on('click', popoverClickHandler);
       this.view.S.cached('toggle_send_options').on('keydown', this.view.setHandler(async (target, e) => this.keydownHandler(e)));
       const sendingOptions = this.view.S.cached('sending_options_container').find('.sending-option');
       sendingOptions.hover(function () {
@@ -97,7 +98,7 @@ export class ComposeSendBtnPopoverModule extends ViewModule<ComposeView> {
         $(this).addClass('active');
       });
     } else {
-      $('body').off('click');
+      $('body').off('click', popoverClickHandler);
       this.view.S.cached('toggle_send_options').off('keydown');
     }
   };

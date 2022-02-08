@@ -67,6 +67,23 @@ export interface KeyInfo {
   emails?: string[]; // todo - used to be missing - but migration was supposed to add it? setting back to optional for now
 }
 
+export interface PubkeyInfo {
+  pubkey: Key;
+  // IMPORTANT NOTE:
+  // It might look like we can format PubkeyInfo[] out of Key[], but that's not good,
+  // because in the storage we have the table Revocations that stores fingerprints
+  // of revoked keys that may not exist in the database (Pubkeys table),
+  // that is pre-emptive external revocation. So (in a rare case) the lookup method
+  // receives a valid key, saves it to the storage, and after re-querying the storage,
+  // this key maybe returned as revoked. This is why PubkeyInfo has revoked property
+  // regardless of the fact that Key itself also has it.
+  revoked: boolean;
+}
+
+export interface PubkeyInfoWithLastCheck extends PubkeyInfo {
+  lastCheck?: number | undefined;
+}
+
 export interface KeyIdentity {
   id: string, // a fingerprint of the primary key in OpenPGP, and similarly a fingerprint of the actual cryptographic key (eg RSA fingerprint) in S/MIME
   type: 'openpgp' | 'x509'
@@ -182,19 +199,24 @@ export class KeyUtil {
 
   public static readBinary = async (key: Uint8Array, passPhrase?: string | undefined): Promise<{ keys: Key[], err: Error[] }> => {
     const allKeys: Key[] = [], allErr: Error[] = [];
+    let uncheckedOpgpKeyCount = 0;
     try {
       const { keys, err } = await opgp.key.read(key);
-      if (keys.length > 0) {
-        for (const key of keys) {
+      uncheckedOpgpKeyCount = keys.length;
+      for (const key of keys) {
+        try {
           // we should decrypt them all here to have consistent behavior between pkcs12 files and PGP
           // pkcs12 files must be decrypted during parsing
           // then rename this method to parseDecryptBinary
+          await OpenPGPKey.validateAllDecryptedPackets(key);
           const parsed = await OpenPGPKey.convertExternalLibraryObjToKey(key);
           // if (await KeyUtil.decrypt(parsed, passPhrase, undefined, 'OK-IF-ALREADY-DECRYPTED')) {
           allKeys.push(parsed);
           // } else {
           //   allErr.push(new Error(`Wrong pass phrase for OpenPGP key ${parsed.id} (${parsed.emails[0]})`));
           // }
+        } catch (e) {
+          allErr.push(e as Error);
         }
       }
       if (err) {
@@ -203,7 +225,7 @@ export class KeyUtil {
     } catch (e) {
       allErr.push(e as Error);
     }
-    if (!allKeys.length) {
+    if (!uncheckedOpgpKeyCount) {
       try {
         allKeys.push(SmimeKey.parseDecryptBinary(key, passPhrase ?? ''));
         return { keys: allKeys, err: [] };
@@ -412,4 +434,13 @@ export class KeyUtil {
     return fetched.lastModified > stored.lastModified;
   };
 
+  public static sortPubkeyInfos = (pubkeyInfos: PubkeyInfo[]): PubkeyInfo[] => {
+    return pubkeyInfos.sort((a, b) => KeyUtil.getSortValue(b) - KeyUtil.getSortValue(a));
+  };
+
+  private static getSortValue = (pubinfo: PubkeyInfo): number => {
+    const expirationSortValue = (typeof pubinfo.pubkey.expiration === 'undefined') ? Infinity : pubinfo.pubkey.expiration!;
+    // sort non-revoked first, then non-expired
+    return (pubinfo.revoked || pubinfo.pubkey.revoked) ? -Infinity : expirationSortValue;
+  };
 }

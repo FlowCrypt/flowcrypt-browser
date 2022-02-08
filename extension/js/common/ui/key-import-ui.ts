@@ -15,6 +15,7 @@ import { Ui } from '../browser/ui.js';
 import { Url, Str } from '../core/common.js';
 import { opgp } from '../core/crypto/pgp/openpgpjs-custom.js';
 import { KeyStore } from '../platform/store/key-store.js';
+import { isFesUsed } from '../helpers.js';
 
 type KeyImportUiCheckResult = { normalized: string; passphrase: string; fingerprint: string; decrypted: Key; encrypted: Key; };
 
@@ -165,9 +166,10 @@ export class KeyImportUi {
     const encrypted = await this.read('privateKey', normalized); // original (typically encrypted)
     this.rejectIfNot('privateKey', decrypted);
     await this.rejectKnownIfSelected(acctEmail, decrypted);
-    await this.decryptAndEncryptAsNeeded(decrypted, encrypted, passphrase);
-    await this.checkEncryptionPrvIfSelected(decrypted, encrypted);
-    await this.checkSigningIfSelected(decrypted);
+    const contactSubsentence = Lang.general.contactMinimalSubsentence(await isFesUsed(acctEmail));
+    await this.decryptAndEncryptAsNeeded(decrypted, encrypted, passphrase, contactSubsentence);
+    await this.checkEncryptionPrvIfSelected(decrypted, encrypted, contactSubsentence);
+    await this.checkSigningIfSelected(decrypted, contactSubsentence);
     if (encrypted.identities.length === 0) {
       throw new KeyCanBeFixed(encrypted);
     }
@@ -281,7 +283,7 @@ export class KeyImportUi {
     }
   };
 
-  private decryptAndEncryptAsNeeded = async (toDecrypt: Key, toEncrypt: Key, passphrase: string): Promise<void> => {
+  private decryptAndEncryptAsNeeded = async (toDecrypt: Key, toEncrypt: Key, passphrase: string, contactSubsentence: string): Promise<void> => {
     if (!passphrase) {
       throw new UserAlert('Please enter a pass phrase to use with this key');
     }
@@ -308,11 +310,11 @@ export class KeyImportUi {
       if (e instanceof UserAlert) {
         throw e;
       }
-      throw new UserAlert(`This key is not supported by FlowCrypt yet. Please write at human@flowcrypt.com to add support soon. (decrypt error: ${String(e)})`);
+      throw new UserAlert(`This key is not supported by FlowCrypt yet. Please ${contactSubsentence} to add support soon. (decrypt error: ${String(e)})`);
     }
   };
 
-  private checkEncryptionPrvIfSelected = async (k: Key, encrypted: Key) => {
+  private checkEncryptionPrvIfSelected = async (k: Key, encrypted: Key, contactSubsentence: string) => {
     if (this.checkEncryption && (!k.usableForEncryption || k.missingPrivateKeyForDecryption)) {
       if (k.missingPrivateKeyForDecryption) {
         throw new UserAlert('Looks like this key was exported with --export-secret-subkeys option and missing private key parameters.\n\n' +
@@ -330,7 +332,7 @@ export class KeyImportUi {
           throw new UserAlert('You chose to not import expired key.\n\nPlease import another key, or edit the expired key in another OpenPGP software to extend key validity.');
         }
       } else {
-        throw new UserAlert('This looks like a valid key but it cannot be used for encryption. Please write at human@flowcrypt.com to see why is that.');
+        throw new UserAlert(`This looks like a valid key but it cannot be used for encryption. Please ${contactSubsentence} to see why is that.`);
       }
     }
   };
@@ -349,13 +351,13 @@ export class KeyImportUi {
     }
   };
 
-  private checkSigningIfSelected = async (k: Key) => {
+  private checkSigningIfSelected = async (k: Key, contactSubsentence: string) => {
     if (this.checkSigning && (!k.usableForSigning || k.missingPrivateKeyForSigning)) {
       if (k.missingPrivateKeyForSigning && !k.usableForSigningButExpired) {
         throw new UserAlert('Looks like this key was exported with --export-secret-subkeys option and missing private key parameters.\n\n' +
           'Please export the key with --export-secret-key option.');
       } else {
-        throw new UserAlert('This looks like a valid key but it cannot be used for signing. Please write at human@flowcrypt.com to see why is that.');
+        throw new UserAlert(`This looks like a valid key but it cannot be used for signing. Please ${contactSubsentence} to see why is that.`);
       }
     }
   };

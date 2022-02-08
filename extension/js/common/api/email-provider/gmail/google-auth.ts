@@ -20,6 +20,8 @@ import { Ui } from '../../../browser/ui.js';
 import { AcctStore, AcctStoreDict } from '../../../platform/store/acct-store.js';
 import { AccountServer } from '../../account-server.js';
 import { EnterpriseServer } from '../../account-servers/enterprise-server.js';
+import { InMemoryStore } from '../../../platform/store/in-memory-store.js';
+import { InMemoryStoreKeys } from '../../../core/const.js';
 
 type GoogleAuthTokenInfo = { issued_to: string, audience: string, scope: string, expires_in: number, access_type: 'offline' };
 type GoogleAuthTokensResponse = { access_token: string, expires_in: number, refresh_token?: string, id_token: string, token_type: 'Bearer' };
@@ -74,22 +76,27 @@ export class GoogleAuth {
     if (!acctEmail) {
       throw new Error('missing account_email in api_gmail_call');
     }
-    const storage = await AcctStore.get(acctEmail, ['google_token_access', 'google_token_expires', 'google_token_scopes', 'google_token_refresh']);
-    if (!storage.google_token_access || !storage.google_token_refresh) {
+    const storage = await AcctStore.get(acctEmail, ['google_token_scopes', 'google_token_refresh']);
+    if (!storage.google_token_refresh) {
       throw new GoogleAuthErr(`Account ${acctEmail} not connected to FlowCrypt Browser Extension`);
-    } else if (GoogleAuth.googleApiIsAuthTokenValid(storage) && !forceRefresh) {
-      return `Bearer ${storage.google_token_access}`;
-    } else { // refresh token
-      const refreshTokenRes = await GoogleAuth.googleAuthRefreshToken(storage.google_token_refresh);
-      await GoogleAuth.googleAuthCheckAccessToken(refreshTokenRes.access_token); // https://groups.google.com/forum/#!topic/oauth2-dev/QOFZ4G7Ktzg
-      await GoogleAuth.googleAuthSaveTokens(acctEmail, refreshTokenRes, storage.google_token_scopes || []);
-      const auth = await AcctStore.get(acctEmail, ['google_token_access', 'google_token_expires']);
-      if (GoogleAuth.googleApiIsAuthTokenValid(auth)) { // have a valid gmail_api oauth token
-        return `Bearer ${auth.google_token_access}`;
-      } else {
-        throw new GoogleAuthErr(`Could not refresh google auth token - did not become valid (access:${!!auth.google_token_access},expires:${auth.google_token_expires},now:${Date.now()})`);
+    }
+    if (!forceRefresh) {
+      const googleAccessToken = await InMemoryStore.get(acctEmail, InMemoryStoreKeys.GOOGLE_TOKEN_ACCESS);
+      if (googleAccessToken) {
+        return `Bearer ${googleAccessToken}`;
       }
     }
+    // refresh token
+    const refreshTokenRes = await GoogleAuth.googleAuthRefreshToken(storage.google_token_refresh);
+    if (refreshTokenRes.access_token) {
+      await GoogleAuth.googleAuthCheckAccessToken(refreshTokenRes.access_token); // https://groups.google.com/forum/#!topic/oauth2-dev/QOFZ4G7Ktzg
+      await GoogleAuth.googleAuthSaveTokens(acctEmail, refreshTokenRes, storage.google_token_scopes || []);
+      const googleAccessToken = await InMemoryStore.get(acctEmail, InMemoryStoreKeys.GOOGLE_TOKEN_ACCESS);
+      if (googleAccessToken) {
+        return `Bearer ${googleAccessToken}`;
+      }
+    }
+    throw new GoogleAuthErr(`Could not refresh google auth token - did not become valid (access:${refreshTokenRes.access_token},expires_in:${refreshTokenRes.expires_in},now:${Date.now()})`);
   };
 
   public static apiGoogleCallRetryAuthErrorOneTime = async (acctEmail: string, request: JQuery.AjaxSettings): Promise<any> => {
@@ -142,7 +149,7 @@ export class GoogleAuth {
           const acctServer = new AccountServer(authRes.acctEmail);
           // fetch and store OrgRules (not authenticated)
           await acctServer.accountGetAndUpdateLocalStore({ account: authRes.acctEmail, uuid });
-          // depending on DISABLE_FES_ACCESS_TOKEN, either fetch and store access token, or the ID token itself
+          // this is a no-op if FES is used. uuid is generated / stored if flowcrypt.com/api is used
           await acctServer.loginWithOpenid(authRes.acctEmail, uuid, authRes.id_token);
         } else {
           // eventually this branch will be dropped once a public FES instance is run for these customers
@@ -156,7 +163,7 @@ export class GoogleAuth {
         }
       } catch (e) {
         if (GoogleAuth.isFesUnreachableErr(e, authRes.acctEmail)) {
-          const error = `Cannot reach your company's FlowCrypt Enterprise Server (FES). Contact human@flowcrypt.com when unsure. (${String(e)})`;
+          const error = `Cannot reach your company's FlowCrypt Enterprise Server (FES). Contact your Help Desk when unsure. (${String(e)})`;
           return { result: 'Error', error, acctEmail: authRes.acctEmail, id_token: undefined };
         }
         return { result: 'Error', error: `Grant successful but error accessing fc account: ${String(e)}`, acctEmail: authRes.acctEmail, id_token: undefined };
@@ -274,20 +281,20 @@ export class GoogleAuth {
   };
 
   private static googleAuthSaveTokens = async (acctEmail: string, tokensObj: GoogleAuthTokensResponse, scopes: string[]) => {
-    const openid = GoogleAuth.parseIdToken(tokensObj.id_token);
+    const parsedOpenId = GoogleAuth.parseIdToken(tokensObj.id_token);
     const { full_name, picture } = await AcctStore.get(acctEmail, ['full_name', 'picture']);
+    const googleTokenExpires = new Date().getTime() + (tokensObj.expires_in as number - 120) * 1000; // let our copy expire 2 minutes beforehand
     const toSave: AcctStoreDict = {
-      openid,
-      google_token_access: tokensObj.access_token,
-      google_token_expires: new Date().getTime() + (tokensObj.expires_in as number) * 1000,
       google_token_scopes: scopes,
-      full_name: full_name || openid.name,
-      picture: picture || openid.picture,
+      full_name: full_name || parsedOpenId.name,
+      picture: picture || parsedOpenId.picture,
     };
     if (typeof tokensObj.refresh_token !== 'undefined') {
       toSave.google_token_refresh = tokensObj.refresh_token;
     }
     await AcctStore.set(acctEmail, toSave);
+    await InMemoryStore.set(acctEmail, InMemoryStoreKeys.ID_TOKEN, tokensObj.id_token);
+    await InMemoryStore.set(acctEmail, InMemoryStoreKeys.GOOGLE_TOKEN_ACCESS, tokensObj.access_token, googleTokenExpires);
   };
 
   private static googleAuthGetTokens = async (code: string) => {
@@ -314,13 +321,6 @@ export class GoogleAuth {
       crossDomain: true,
       async: true,
     }, Catch.stackTrace()) as any as GoogleAuthTokenInfo;
-  };
-
-  /**
-   * oauth token will be valid for another 2 min
-   */
-  private static googleApiIsAuthTokenValid = (s: AcctStoreDict) => {
-    return s.google_token_access && (!s.google_token_expires || s.google_token_expires > Date.now() + (120 * 1000));
   };
 
   // todo - would be better to use a TS type guard instead of the type cast when checking OpenId

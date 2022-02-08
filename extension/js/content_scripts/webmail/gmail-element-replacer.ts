@@ -67,6 +67,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     standardComposeRecipient: 'div.az9 span[email][data-hovercard-id]',
     numberOfAttachments: '.aVW',
     numberOfAttachmentsDigit: '.aVW span',
+    attachmentsButtons: '.aZi',
     draftsList: '.ae4',
   };
 
@@ -521,6 +522,8 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     if (!attachmentEl.length) {
       attachmentsContainerSel.children('.attachment_loader').text('Missing file info');
     }
+    // according to #4200, no point in showing "download all" button if at least one attachment is encrypted etc.
+    $(this.sel.attachmentsButtons).hide();
   };
 
   private determineMsgId = (innerMsgEl: HTMLElement | JQueryEl) => {

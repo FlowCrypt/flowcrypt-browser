@@ -94,6 +94,26 @@ export class Str {
     return id;
   };
 
+  // splits the string to matches,
+  // each match is extended till the end of the original string
+  public static splitExtended = (str: string, regexp: RegExp): string[] => {
+    const result: string[] = [];
+    while (true) {
+      const match = regexp.exec(str);
+      if (match === null) {
+        break;
+      }
+      result.push(str.substring(match.index));
+    }
+    return result;
+  };
+
+  // splits the string to alphanumeric chunks,
+  // each chunk is extended till the end of the original string
+  public static splitAlphanumericExtended = (str: string): string[] => {
+    return Str.splitExtended(str, /[a-z0-9]+/g);
+  };
+
   public static regexEscape = (toBeUsedInRegex: string) => {
     return toBeUsedInRegex.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   };
@@ -203,6 +223,8 @@ export class Value {
       return result;
     },
     contains: <T>(arr: T[] | string, value: T): boolean => Boolean(arr && typeof arr.indexOf === 'function' && (arr as any[]).indexOf(value) !== -1),
+    intersection: <T>(array1: T[], array2: T[]): T[] => array1.filter(value => array2.includes(value)),
+    hasIntersection: <T>(array1: T[], array2: T[]): boolean => array1.some(value => array2.includes(value)),
     sum: (arr: number[]) => arr.reduce((a, b) => a + b, 0),
     average: (arr: number[]) => Value.arr.sum(arr) / arr.length,
     zeroes: (length: number): number[] => new Array(length).map(() => 0)

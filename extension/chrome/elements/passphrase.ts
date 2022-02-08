@@ -16,8 +16,11 @@ import { KeyStore } from '../../js/common/platform/store/key-store.js';
 import { PassphraseStore } from '../../js/common/platform/store/passphrase-store.js';
 import { Settings } from '../../js/common/settings.js';
 import { OrgRules } from '../../js/common/org-rules.js';
+import { Lang } from '../../js/common/lang.js';
+import { AcctStore } from '../../js/common/platform/store/acct-store.js';
 
 View.run(class PassphraseView extends View {
+  public fesUrl?: string;
   private readonly acctEmail: string;
   private readonly parentTabId: string;
   private readonly longids: string[];
@@ -38,6 +41,8 @@ View.run(class PassphraseView extends View {
 
   public render = async () => {
     Ui.event.protect();
+    const storage = await AcctStore.get(this.acctEmail, ['fesUrl']);
+    this.fesUrl = storage.fesUrl;
     this.orgRules = await OrgRules.newInstance(this.acctEmail);
     if (!this.orgRules.forbidStoringPassPhrase()) {
       $('.forget-pass-phrase-label').removeClass('hidden');
@@ -167,7 +172,7 @@ View.run(class PassphraseView extends View {
       } catch (e) {
         if (e instanceof Error && e.message === 'Unknown s2k type.') {
           let msg = `Your key with fingerprint ${keyinfo.fingerprints[0]} is not supported yet (${String(e)}).`;
-          msg += '\n\nPlease write human@flowcrypt.com with details about how was this key created.';
+          msg += `\n\nPlease ${Lang.general.contactMinimalSubsentence(!!this.fesUrl)} with details about how this key was created.`;
           await Ui.modal.error(msg);
         } else {
           throw e;

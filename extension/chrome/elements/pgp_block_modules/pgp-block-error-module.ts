@@ -17,11 +17,14 @@ export class PgpBlockViewErrorModule {
   constructor(private view: PgpBlockView) {
   }
 
-  public renderErr = async (errBoxContent: string, renderRawMsg: string | undefined) => {
+  public renderErr = async (errBoxContent: string, renderRawMsg: string | undefined, errMsg?: string) => {
     this.view.renderModule.setFrameColor('red');
+    this.view.renderModule.renderErrorStatus(errMsg || 'decrypt error');
     const showRawMsgPrompt = renderRawMsg ? '<a href="#" class="action_show_raw_pgp_block">show original message</a>' : '';
     await this.view.renderModule.renderContent(`<div class="error">${errBoxContent.replace(/\n/g, '<br>')}</div>${showRawMsgPrompt}`, true);
     $('.action_show_raw_pgp_block').click(this.view.setHandler(async () => { // this may contain content missing MDC
+      this.view.renderModule.renderEncryptionStatus('decrypt error: security hazard');
+      this.view.renderModule.renderSignatureStatus('not signed');
       Xss.sanitizeAppend('#pgp_block', `<div class="raw_pgp_block">${Xss.escape(renderRawMsg!)}</div>`); // therefore the .escape is crucial
     }));
     $('.button.settings_keyserver').click(this.view.setHandler(async () => await Browser.openSettingsPage('index.htm', this.view.acctEmail, '/chrome/settings/modules/keyserver.htm')));
@@ -51,7 +54,7 @@ export class PgpBlockViewErrorModule {
       BrowserMsg.send.notificationShowAuthPopupNeeded(this.view.parentTabId, { acctEmail: this.view.acctEmail });
       await this.renderErr(`Could not load message due to missing auth. ${Ui.retryLink()}`, undefined);
     } else if (e instanceof FormatError) {
-      await this.renderErr(Lang.pgpBlock.cantOpen + Lang.pgpBlock.badFormat + Lang.pgpBlock.dontKnowHowOpen, e.data);
+      await this.renderErr(Lang.pgpBlock.cantOpen + Lang.pgpBlock.badFormat + Lang.pgpBlock.dontKnowHowOpen(!!this.view.fesUrl), e.data);
     } else if (ApiErr.isInPrivateMode(e)) {
       await this.renderErr(`FlowCrypt does not work in a Firefox Private Window (or when Firefox Containers are used). Please try in a standard window.`, undefined);
     } else {

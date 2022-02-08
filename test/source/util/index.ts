@@ -38,7 +38,9 @@ export type TestMessage = {
   params: string,
   quoted?: boolean,
   expectPercentageProgress?: boolean,
-  signature?: string[],
+  signature?: string,
+  encryption?: string,
+  error?: string
 };
 
 export type TestKeyInfo = {

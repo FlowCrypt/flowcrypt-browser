@@ -45,10 +45,6 @@ export class BackendData {
     };
   };
 
-  public getSubscription = (acct: string) => { // eslint-disable-line @typescript-eslint/no-unused-vars
-    return { level: null, expire: null, method: null, expired: null };
-  };
-
   public getOrgRules = (acct: string) => {
     const domain = acct.split('@')[1];
     if (domain === 'org-rules-test.flowcrypt.test') {

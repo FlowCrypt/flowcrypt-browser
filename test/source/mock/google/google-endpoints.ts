@@ -35,7 +35,7 @@ export const mockGoogleEndpoints: HandlersDefinition = {
     if (isPost(req) && grant_type === 'authorization_code' && code && client_id === oauth.clientId) { // auth code from auth screen gets exchanged for access and refresh tokens
       return oauth.getRefreshTokenResponse(code);
     } else if (isPost(req) && grant_type === 'refresh_token' && refreshToken && client_id === oauth.clientId) { // here also later refresh token gets exchanged for access token
-      return oauth.getAccessTokenResponse(refreshToken);
+      return oauth.getTokenResponse(refreshToken);
     }
     throw new Error(`Method not implemented for ${req.url}: ${req.method}`);
   },

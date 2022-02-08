@@ -1,12 +1,14 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
-import { Key, PrvPacket, KeyAlgo, KeyUtil, UnexpectedKeyTypeError } from '../key.js';
+import { Key, PrvPacket, KeyAlgo, KeyUtil, UnexpectedKeyTypeError, PubkeyInfo } from '../key.js';
 import { opgp } from './openpgpjs-custom.js';
 import { Catch } from '../../../platform/catch.js';
-import { Str } from '../../common.js';
+import { Str, Value } from '../../common.js';
 import { Buf } from '../../buf.js';
-import { PgpMsgMethod, MsgUtil } from './msg-util.js';
+import { PgpMsgMethod, VerifyRes } from './msg-util.js';
 
 const internal = Symbol('internal openpgpjs library format key');
+
+type OpenpgpMsgOrCleartext = OpenPGP.message.Message | OpenPGP.cleartext.CleartextMessage;
 
 export class OpenPGPKey {
 
@@ -34,9 +36,16 @@ export class OpenPGPKey {
     }
     const keys = [];
     for (const key of result.keys) {
+      await OpenPGPKey.validateAllDecryptedPackets(key);
       keys.push(await OpenPGPKey.convertExternalLibraryObjToKey(key));
     }
     return keys;
+  };
+
+  public static validateAllDecryptedPackets = async (key: OpenPGP.key.Key): Promise<void> => {
+    for (const prvPacket of key.toPacketlist().filter(OpenPGPKey.isPacketPrivate).filter(packet => packet.isDecrypted())) {
+      await prvPacket.validate(); // gnu-dummy never raises an exception, invalid keys raise exceptions
+    }
   };
 
   public static asPublicKey = async (pubkey: Key): Promise<Key> => {
@@ -68,6 +77,7 @@ export class OpenPGPKey {
       }
       try {
         await prvPacket.decrypt(passphrase); // throws on password mismatch
+        await prvPacket.validate(); // throws
       } catch (e) {
         if (e instanceof Error && e.message.toLowerCase().includes('incorrect key passphrase')) {
           return false;
@@ -174,12 +184,11 @@ export class OpenPGPKey {
       }
       return Date.now() > exp.getTime();
     };
-    const emails = keyWithoutWeakPackets.users
-      .map(user => user.userId)
-      .filter(userId => userId !== null)
-      .map((userId: OpenPGP.packet.Userid) => {
+    const identities = await OpenPGPKey.getSortedUserids(keyWithoutWeakPackets);
+    const emails = identities
+      .map(userid => {
         try {
-          return opgp.util.parseUserId(userId.userid).email || '';
+          return opgp.util.parseUserId(userid).email || '';
         } catch (e) {
           // ignore bad user IDs
         }
@@ -219,7 +228,7 @@ export class OpenPGPKey {
       emails,
       // full uids that have valid emails in them
       // tslint:disable-next-line: no-unsafe-any
-      identities: keyWithoutWeakPackets.users.map(u => u.userId).filter(u => !!u && u.userid && Str.parseEmail(u.userid).email).map(u => u!.userid).filter(Boolean) as string[],
+      identities,
       lastModified,
       expiration: exp instanceof Date ? exp.getTime() : undefined,
       created: keyWithoutWeakPackets.getCreationTime().getTime(),
@@ -410,7 +419,7 @@ export class OpenPGPKey {
     return { public: k.publicKeyArmored, private: k.privateKeyArmored };
   };
 
-  public static isPacketPrivate = (p: OpenPGP.packet.AnyKeyPacket): p is PrvPacket => {
+  public static isPacketPrivate = (p: OpenPGP.packet.BasePacket): p is PrvPacket => {
     return p.tag === opgp.enums.packet.secretKey || p.tag === opgp.enums.packet.secretSubkey;
   };
 
@@ -432,6 +441,80 @@ export class OpenPGPKey {
       }
     }
     return undefined;
+  };
+
+  public static verify = async (msg: OpenpgpMsgOrCleartext, pubs: PubkeyInfo[]): Promise<VerifyRes> => {
+    // todo: double-check if S/MIME ever gets here
+    const validKeys = pubs.filter(x => !x.revoked && x.pubkey.type === 'openpgp').map(x => x.pubkey);
+    // todo: #4172 revoked longid may result in incorrect "Missing pubkey..." output
+    const verifyRes: VerifyRes = {
+      match: null,  // tslint:disable-line:no-null-keyword
+      signerLongids: [],
+      signerFingerprints: [],
+      suppliedLongids: validKeys.map(x => x.allIds.map(fp => OpenPGPKey.fingerprintToLongid(fp))).reduce((a, b) => a.concat(b), [])
+    };
+    const opgpKeys = validKeys.map(x => OpenPGPKey.extractExternalLibraryObjFromKey(x));
+    // todo: expired?
+    try {
+      // this is here to ensure execution order when 1) verify, 2) read data, 3) processing signatures
+      // Else it will hang trying to read a stream: https://github.com/openpgpjs/openpgpjs/issues/916#issuecomment-510620625
+      const verifications = await msg.verify(opgpKeys); // first step
+      const stream = msg instanceof opgp.message.Message ? msg.getLiteralData() : msg.getText();
+      if (stream) { // encrypted message
+        const data = await opgp.stream.readToEnd(stream); // second step
+        verifyRes.content = data instanceof Uint8Array ? new Buf(data) : Buf.fromUtfStr(data);
+      }
+      // third step below
+      const signerLongids: string[] = [];
+      const fingerprints: string[] = [];
+      for (const verification of verifications) {
+        // todo - a valid signature is a valid signature, and should be surfaced. Currently, if any of the signatures are not valid, it's showing all as invalid
+        // .. as it is now this could allow an attacker to append bogus signatures to validly signed messages, making otherwise correct messages seem incorrect
+        // .. which is not really an issue - an attacker that can append signatures could have also just slightly changed the message, causing the same experience
+        // .. so for now #wontfix unless a reasonable usecase surfaces
+        verifyRes.match = (verifyRes.match === true || verifyRes.match === null) && await verification.verified;
+        const signature = await verification.signature;
+        fingerprints.push(...signature.packets.filter(s => s.issuerFingerprint).map(s => Buf.fromUint8(s.issuerFingerprint!).toHexStr()));
+        signerLongids.push(OpenPGPKey.bytesToLongid(verification.keyid.bytes));
+      }
+      verifyRes.signerLongids = Value.arr.unique(signerLongids);
+      verifyRes.signerFingerprints = Value.arr.unique(fingerprints);
+    } catch (verifyErr) {
+      verifyRes.match = null; // tslint:disable-line:no-null-keyword
+      if (verifyErr instanceof Error && verifyErr.message === 'Can only verify message with one literal data packet.') {
+        verifyRes.error = 'FlowCrypt is not equipped to verify this message';
+        verifyRes.isErrFatal = true; // don't try to re-fetch the message from API
+      } else if (verifyErr instanceof Error && verifyErr.message.startsWith('Insecure message hash algorithm:')) {
+        verifyRes.error = `${verifyErr.message}. Sender is using old, insecure OpenPGP software.`;
+        verifyRes.isErrFatal = true; // don't try to re-fetch the message from API
+      } else if (verifyErr instanceof Error && verifyErr.message === 'Signature is expired') {
+        verifyRes.error = verifyErr.message;
+        verifyRes.isErrFatal = true; // don't try to re-fetch the message from API
+      } else if (verifyErr instanceof Error && verifyErr.message === 'Message digest did not match') {
+        verifyRes.error = verifyErr.message;
+        verifyRes.match = false;
+      } else {
+        verifyRes.error = `Error verifying this message: ${String(verifyErr)}`;
+        Catch.reportErr(verifyErr);
+      }
+    }
+    return verifyRes;
+  };
+
+  private static getSortedUserids = async (key: OpenPGP.key.Key): Promise<string[]> => {
+    const data = (await Promise.all(key.users.filter(Boolean).map(async (user) => {
+      const primaryKey = key.primaryKey;
+      const dataToVerify = { userId: user.userId, key: primaryKey };
+      const selfCertification = await OpenPGPKey.getLatestValidSignature(user.selfCertifications, primaryKey, opgp.enums.signature.cert_generic, dataToVerify);
+      return { userid: user.userId?.userid, selfCertification };
+    }))).filter(x => x.selfCertification);
+    // sort the same way as OpenPGP.js does
+    data.sort((a, b) => {
+      const A = a.selfCertification!;
+      const B = b.selfCertification!;
+      return Number(A.revoked) - Number(B.revoked) || Number(B.isPrimaryUserID) - Number(A.isPrimaryUserID) || Number(B.created) - Number(A.created);
+    });
+    return data.map(x => x.userid).filter(Boolean).map(y => y!);
   };
 
   // mimicks OpenPGP.helper.getLatestValidSignature
@@ -681,14 +764,15 @@ export class OpenPGPKey {
       }
       const signedMessage = await opgp.message.fromText(OpenPGPKey.encryptionText).sign([key]);
       output.push('sign msg ok');
-      const verifyResult = await MsgUtil.verify(signedMessage, [key]);
+      const verifyResult = await OpenPGPKey.verify(signedMessage,
+        [{ pubkey: await OpenPGPKey.convertExternalLibraryObjToKey(key), revoked: false }]);
       if (verifyResult.error !== null && typeof verifyResult.error !== 'undefined') {
         output.push(`verify failed: ${verifyResult.error}`);
       } else {
-        if (verifyResult.match && verifyResult.signer?.longid === OpenPGPKey.bytesToLongid(key.getKeyId().bytes)) {
+        if (verifyResult.match && verifyResult.signerLongids.includes(OpenPGPKey.bytesToLongid(key.getKeyId().bytes))) {
           output.push('verify ok');
         } else {
-          output.push(`verify mismatch: match[${verifyResult.match}] signer.uid[${verifyResult.signer?.primaryUserId}] signer.longid[${verifyResult.signer?.longid}]`);
+          output.push(`verify mismatch: match[${verifyResult.match}]`);
         }
       }
     } catch (e) {

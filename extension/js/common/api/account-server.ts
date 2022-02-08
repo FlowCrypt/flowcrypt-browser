@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { AcctStore } from '../platform/store/acct-store.js';
+import { isFesUsed } from '../helpers.js';
 import { EnterpriseServer } from './account-servers/enterprise-server.js';
 import { BackendRes, FcUuidAuth, FlowCryptComApi, ProfileUpdate } from './account-servers/flowcrypt-com-api.js';
 import { Recipients } from './email-provider/email-provider-api.js';
@@ -20,8 +20,7 @@ export class AccountServer extends Api {
 
   public loginWithOpenid = async (acctEmail: string, uuid: string, idToken: string): Promise<void> => {
     if (await this.isFesUsed()) {
-      const fes = new EnterpriseServer(this.acctEmail);
-      await fes.authenticateAndUpdateLocalStore(idToken);
+      // FES doesn't issue any access tokens
     } else {
       await FlowCryptComApi.loginWithOpenid(acctEmail, uuid, idToken);
     }
@@ -33,10 +32,6 @@ export class AccountServer extends Api {
       const fetchedOrgRules = await fes.fetchAndSaveOrgRules();
       return {
         domain_org_rules: fetchedOrgRules,
-        // the subscription and default_message_expire below is a refactor relic
-        //  (used to come from a deprecated FES API that was authenticated)
-        // todo - remove this - issue #4012
-        subscription: { level: 'pro', expired: false },
         // todo - rethink this. On FES, expiration is handled with S3 bucket policy regardless of this number
         //  which is set to 180 days on buckets we manage. This number below may still be rendered somewhere
         //  when composing, which should be evaluated.
@@ -86,7 +81,6 @@ export class AccountServer extends Api {
   };
 
   public isFesUsed = async (): Promise<boolean> => {
-    const { fesUrl } = await AcctStore.get(this.acctEmail, ['fesUrl']);
-    return Boolean(fesUrl);
+    return await isFesUsed(this.acctEmail);
   };
 }

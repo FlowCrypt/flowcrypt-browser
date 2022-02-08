@@ -24,23 +24,21 @@
 
 BROWSER_UNIT_TEST_NAME(`ContactStore is able to search by partial email address`);
 (async () => {
-  const contactABBDEF = await ContactStore.obj({
-    email: 'abbdef@test.com', pubkey: testConstants.abbdefTestComPubkey
+  await ContactStore.update(undefined, 'abbdef@test.com', {
+    pubkey: testConstants.abbdefTestComPubkey
   });
-  const contactABCDEF = await ContactStore.obj({
-    email: 'abcdef@test.com', pubkey: testConstants.abcdefTestComPubkey
+  await ContactStore.update(undefined, 'abcdef@test.com', {
+    pubkey: testConstants.abcdefTestComPubkey
   });
-  const contactABCDDF = await ContactStore.obj({
-    email: 'abcddf@test.com', pubkey: testConstants.abcddfTestComPubkey
+  await ContactStore.update(undefined, 'abcddf@test.com', {
+    pubkey: testConstants.abcddfTestComPubkey
   });
-  const contactABDDEF = await ContactStore.obj({
-    email: 'abddef@test.com', pubkey: testConstants.abddefTestComPubkey
+  await ContactStore.update(undefined, 'abddef@test.com', {
+    pubkey: testConstants.abddefTestComPubkey
   });
-  const contactABCDVWXYZHELLOCOM = await ContactStore.obj({
-    email: 'abcd.vwxyz@hello.com', pubkey: testConstants.abcdVwxyzHelloComPubkey
+  await ContactStore.update(undefined, 'abcd.vwxyz@hello.com', {
+    pubkey: testConstants.abcdVwxyzHelloComPubkey
   });
-  await ContactStore.save(undefined, [contactABBDEF, contactABCDEF, contactABCDDF, contactABDDEF,
-    contactABCDVWXYZHELLOCOM]);
   const contactsABC = await ContactStore.search(undefined, { hasPgp: true, substring: 'abc' });
   if (contactsABC.length !== 3) {
     throw Error(`Expected 3 contacts to match "abc" but got "${contactsABC.length}"`);
@@ -67,20 +65,52 @@ BROWSER_UNIT_TEST_NAME(`ContactStore is able to search by partial email address`
   return 'pass';
 })();
 
+BROWSER_UNIT_TEST_NAME(`ContactStore is able to search by a chunk spanning across several parts`);
+(async () => {
+  await ContactStore.update(undefined, 'abcdef.com@abcdef.com', { pubkey: testConstants.abcdefTestComPubkey });
+  await ContactStore.update(undefined, 'abcdef@abcdef.com', { pubkey: testConstants.abcdefTestComPubkey });
+  await ContactStore.update(undefined, 'abcdef@test.com', { pubkey: testConstants.abcdefTestComPubkey });
+  await ContactStore.update(undefined, 'test@abcdef.com', { pubkey: testConstants.abcdefTestComPubkey });
+  {
+    const test = await ContactStore.search(undefined, { hasPgp: true, substring: 'abcdef@' });
+    if (test.length !== 2) {
+      throw Error(`Expected 2 contacts to match "abcdef@" but got "${test.length}"`);
+    }
+  }
+  {
+    const test = await ContactStore.search(undefined, { hasPgp: true, substring: 'abcdef.' });
+    if (test.length !== 3) {
+      throw Error(`Expected 3 contacts to match "abcdef." but got "${test.length}"`);
+    }
+  }
+  {
+    const test = await ContactStore.search(undefined, { hasPgp: true, substring: 'test.com' });
+    if (test.length !== 1) {
+      throw Error(`Expected 1 contact to match "test.com" but got "${test.length}"`);
+    }
+  }
+  {
+    const test = await ContactStore.search(undefined, { hasPgp: true, substring: 'test@abcdef.com' });
+    if (test.length !== 1) {
+      throw Error(`Expected 1 contact to match "test@abcdef.com" but got "${test.length}"`);
+    }
+  }
+  return 'pass';
+})();
+
 BROWSER_UNIT_TEST_NAME(`ContactStore doesn't store duplicates in searchable`);
 (async () => {
   const db = await ContactStore.dbOpen();
-  const contact = await ContactStore.obj({
-    email: 'this.word.this.word@this.word.this.word', name: 'This Word THIS WORD this word'
-  });
-  await ContactStore.save(db, contact);
+  const email = 'at@this.word';
+  await ContactStore.update(db, email, { name: 'This.Word' });
   // extract the entity from the database to see the actual field
   const entity = await new Promise((resolve, reject) => {
-    const req = db.transaction(['emails'], 'readonly').objectStore('emails').get(contact.email);
+    const req = db.transaction(['emails'], 'readonly').objectStore('emails').get(email);
     ContactStore.setReqPipe(req, resolve, reject);
   });
-  if (entity?.searchable.length !== 2) {
-    throw Error(`Expected 2 entries in 'searchable' but got "${entity?.searchable}"`);
+  if (entity?.searchable.length !== 3 || !entity.searchable.includes('f:at@this.word')
+    || !entity.searchable.includes('f:this.word') || !entity.searchable.includes('f:word')) {
+    throw Error(`Expected ["at@this.word", "this.word", "word"] entries in 'searchable' but got "${entity?.searchable}"`);
   }
   return 'pass';
 })();
@@ -88,18 +118,16 @@ BROWSER_UNIT_TEST_NAME(`ContactStore doesn't store duplicates in searchable`);
 BROWSER_UNIT_TEST_NAME(`ContactStore doesn't store smaller words in searchable when there is a bigger one that starts with it`);
 (async () => {
   const db = await ContactStore.dbOpen();
-  const contact = await ContactStore.obj({
-    email: 'a@big.one', name: 'Bigger'
-  });
-  await ContactStore.save(db, contact);
+  const email = 'com@big.com';
+  await ContactStore.update(db, email, { name: 'Commander' });
   // extract the entity from the database to see the actual field
   const entity = await new Promise((resolve, reject) => {
-    const req = db.transaction(['emails'], 'readonly').objectStore('emails').get(contact.email);
+    const req = db.transaction(['emails'], 'readonly').objectStore('emails').get(email);
     ContactStore.setReqPipe(req, resolve, reject);
   });
-  if (entity?.searchable.length !== 3 || !entity.searchable.includes('f:a')
-    || !entity.searchable.includes('f:bigger') || !entity.searchable.includes('f:one')) {
-    throw Error(`Expected "a bigger one" entries in 'searchable' but got "${entity?.searchable}"`);
+  if (entity?.searchable.length !== 3 || !entity.searchable.includes('f:com@big.com')
+    || !entity.searchable.includes('f:big.com') || !entity.searchable.includes('f:commander')) {
+    throw Error(`Expected ["com@big.com", "big.com", "commander"] in 'searchable' but got "${entity?.searchable}"`);
   }
   return 'pass';
 })();
@@ -109,17 +137,13 @@ BROWSER_UNIT_TEST_NAME(`ContactStore.update updates correct 'pubkeyLastCheck'`);
   const db = await ContactStore.dbOpen();
   const email = 'flowcrypt.compatibility@gmail.com';
   const date2_0 = Date.now();
-  const contacts = [
-    await ContactStore.obj({
-      email,
-      pubkey: testConstants.flowcryptcompatibilityPublicKey7FDE685548AEA788
-    }),
-    await ContactStore.obj({
-      email,
-      pubkey: testConstants.flowcryptcompatibilityPublicKeyADAC279C95093207,
-      lastCheck: date2_0
-    })];
-  await ContactStore.save(db, contacts);
+  await ContactStore.update(undefined, email, {
+    pubkey: testConstants.flowcryptcompatibilityPublicKey7FDE685548AEA788
+  });
+  await ContactStore.update(undefined, email, {
+    pubkey: testConstants.flowcryptcompatibilityPublicKeyADAC279C95093207,
+    pubkeyLastCheck: date2_0
+  });
   // extract the entities from the database
   const fp1 = '5520CACE2CB61EA713E5B0057FDE685548AEA788';
   const fp2 = 'E8F0517BA6D7DAB6081C96E4ADAC279C95093207';
@@ -189,10 +213,8 @@ BROWSER_UNIT_TEST_NAME(`ContactStore.update tests`);
   const db = await ContactStore.dbOpen();
   const email1 = 'email1@test.com';
   const email2 = 'email2@test.com';
-  const contacts = [
-    await ContactStore.obj({ email: email1 }),
-    await ContactStore.obj({ email: email2 })];
-  await ContactStore.save(db, contacts);
+  await ContactStore.update(undefined, email1, {});
+  await ContactStore.update(undefined, email2, {});
   const expectedObj1 = {
     email: email1,
     name: undefined,
@@ -241,10 +263,9 @@ BROWSER_UNIT_TEST_NAME(`ContactStore saves and returns dates as numbers`);
 (async () => {
   // we'll use background operation to make sure the date isn't transformed on its way
   const email = 'test@expired.com';
-  const lastCheck = Date.now();
-  const lastUse = lastCheck + 1000;
-  const contact = await ContactStore.obj({ email, pubkey: testConstants.expiredPub, lastCheck, lastUse });
-  await ContactStore.save(undefined, [contact]);
+  const pubkeyLastCheck = Date.now();
+  const lastUse = pubkeyLastCheck + 1000;
+  await ContactStore.update(undefined, email, { pubkey: testConstants.expiredPub, pubkeyLastCheck, lastUse });
   const [loaded] = await ContactStore.get(undefined, [email]);
   if (typeof loaded.lastUse !== 'number') {
     throw Error(`lastUse was expected to be a number, but got ${typeof loaded.lastUse}`);
@@ -258,87 +279,9 @@ BROWSER_UNIT_TEST_NAME(`ContactStore saves and returns dates as numbers`);
   return 'pass';
 })();
 
-BROWSER_UNIT_TEST_NAME(`ContactStore gets a contact by any longid`);
-(async () => {
-  const contactABBDEF = await ContactStore.obj({
-    email: 'abbdef@test.com', pubkey: testConstants.abbdefTestComPubkey
-  });
-  const contactABCDEF = await ContactStore.obj({
-    email: 'abcdef@test.com', pubkey: testConstants.abcdefTestComPubkey
-  });
-  const contactABCDDF = await ContactStore.obj({
-    email: 'abcddf@test.com', pubkey: testConstants.abcddfTestComPubkey
-  });
-  const contactABDDEF = await ContactStore.obj({
-    email: 'abddef@test.com', pubkey: testConstants.abddefTestComPubkey
-  });
-  await ContactStore.save(undefined, [contactABBDEF, contactABCDEF, contactABCDDF, contactABDDEF]);
-  const [abbdefByPrimaryLongid] = await ContactStore.get(undefined, ['DF63659C3B4A81FB']);
-  if (abbdefByPrimaryLongid.email !== 'abbdef@test.com') {
-    throw Error(`Expected to get the key for abbdef@test.com by primary longid but got ${abbdefByPrimaryLongid.email}`);
-  }
-  if (abbdefByPrimaryLongid.pubkey.id !== 'B790AE8F425DC44633A8C086DF63659C3B4A81FB') {
-    throw Error(`Expected to get the key fingerprint B790AE8F425DC44633A8C086DF63659C3B4A81FB but got ${abbdefByPrimaryLongid.pubkey.id}`);
-  }
-  const [abbdefBySubkeyLongid] = await ContactStore.get(undefined, ['621DE1814AD675E0']);
-  if (abbdefBySubkeyLongid.email !== 'abbdef@test.com') {
-    throw Error(`Expected to get the key for abbdef@test.com by subkey longid but got ${abbdefBySubkeyLongid.email}`);
-  }
-  if (abbdefBySubkeyLongid.pubkey.id !== 'B790AE8F425DC44633A8C086DF63659C3B4A81FB') {
-    throw Error(`Expected to get the key fingerprint B790AE8F425DC44633A8C086DF63659C3B4A81FB but got ${abbdefBySubkeyLongid.pubkey.id}`);
-  }
-
-  const [abcdefByPrimaryLongid] = await ContactStore.get(undefined, ['608BCD797A23FB91']);
-  if (abcdefByPrimaryLongid.email !== 'abcdef@test.com') {
-    throw Error(`Expected to get the key for abcdef@test.com by primary longid but got ${abcdefByPrimaryLongid.email}`);
-  }
-  if (abcdefByPrimaryLongid.pubkey.id !== '3155F118B6E732B3638A1CE1608BCD797A23FB91') {
-    throw Error(`Expected to get the key fingerprint 3155F118B6E732B3638A1CE1608BCD797A23FB91 but got ${abcdefByPrimaryLongid.pubkey.id}`);
-  }
-  const [abcdefBySubkeyLongid] = await ContactStore.get(undefined, ['2D47A41943DFAFCE']);
-  if (abcdefBySubkeyLongid.email !== 'abcdef@test.com') {
-    throw Error(`Expected to get the key for abcdef@test.com by subkey longid but got ${abcdefBySubkeyLongid.email}`);
-  }
-  if (abcdefBySubkeyLongid.pubkey.id !== '3155F118B6E732B3638A1CE1608BCD797A23FB91') {
-    throw Error(`Expected to get the key fingerprint 3155F118B6E732B3638A1CE1608BCD797A23FB91 but got ${abcdefBySubkeyLongid.pubkey.id}`);
-  }
-
-  const [abcddfByPrimaryLongid] = await ContactStore.get(undefined, ['75AA44AB8930F7E9']);
-  if (abcddfByPrimaryLongid.email !== 'abcddf@test.com') {
-    throw Error(`Expected to get the key for abcddf@test.com by primary longid but got ${abcddfByPrimaryLongid.email}`);
-  }
-  if (abcddfByPrimaryLongid.pubkey.id !== '6CF53D2329C2A80828F499D375AA44AB8930F7E9') {
-    throw Error(`Expected to get the key fingerprint 6CF53D2329C2A80828F499D375AA44AB8930F7E9 but got ${abcddfByPrimaryLongid.pubkey.id}`);
-  }
-  const [abcddfBySubkeyLongid] = await ContactStore.get(undefined, ['92CFDAC7AA3A4253']);
-  if (abcddfBySubkeyLongid.email !== 'abcddf@test.com') {
-    throw Error(`Expected to get the key for abcddf@test.com by subkey longid but got ${abcddfBySubkeyLongid.email}`);
-  }
-  if (abcddfBySubkeyLongid.pubkey.id !== '6CF53D2329C2A80828F499D375AA44AB8930F7E9') {
-    throw Error(`Expected to get the key fingerprint 6CF53D2329C2A80828F499D375AA44AB8930F7E9 but got ${abcddfBySubkeyLongid.pubkey.id}`);
-  }
-
-  const [abddefByPrimaryLongid] = await ContactStore.get(undefined, ['5FCC1541CF282951']);
-  if (abddefByPrimaryLongid.email !== 'abddef@test.com') {
-    throw Error(`Expected to get the key for abddef@test.com by primary longid but got ${abddefByPrimaryLongid.email}`);
-  }
-  if (abddefByPrimaryLongid.pubkey.id !== '9E020D9B752FD3FFF17ED9B65FCC1541CF282951') {
-    throw Error(`Expected to get the key fingerprint 9E020D9B752FD3FFF17ED9B65FCC1541CF282951 but got ${abddefByPrimaryLongid.pubkey.id}`);
-  }
-  const [abddefBySubkeyLongid] = await ContactStore.get(undefined, ['EAA7A05FE34F3A1A']);
-  if (abddefBySubkeyLongid.email !== 'abddef@test.com') {
-    throw Error(`Expected to get the key for abddef@test.com by subkey longid but got ${abddefBySubkeyLongid.email}`);
-  }
-  if (abddefBySubkeyLongid.pubkey.id !== '9E020D9B752FD3FFF17ED9B65FCC1541CF282951') {
-    throw Error(`Expected to get the key fingerprint 9E020D9B752FD3FFF17ED9B65FCC1541CF282951 but got ${abddefBySubkeyLongid.pubkey.id}`);
-  }
-  return 'pass';
-})();
-
-BROWSER_UNIT_TEST_NAME(`ContactStore gets a valid pubkey by e-mail, or exact pubkey by longid`);
+BROWSER_UNIT_TEST_NAME(`ContactStore gets a valid pubkey by e-mail and all pubkeys with getOneWithAllPubkeys()`);
 (async () => {
   // Note 1: email differs from pubkey id
-  // Note 2: not necessary to call ContactStore.save, it's possible to always use ContactStore.update
   await ContactStore.update(undefined, 'some.revoked@otherhost.com', { pubkey: await KeyUtil.parse(testConstants.somerevokedRevoked1) });
   await ContactStore.update(undefined, 'some.revoked@otherhost.com', { pubkey: await KeyUtil.parse(testConstants.somerevokedValid) });
   await ContactStore.update(undefined, 'some.revoked@otherhost.com', { pubkey: await KeyUtil.parse(testConstants.somerevokedRevoked2) });
@@ -347,13 +290,18 @@ BROWSER_UNIT_TEST_NAME(`ContactStore gets a valid pubkey by e-mail, or exact pub
   if (expectedValid.pubkey.id !== 'D6662C5FB9BDE9DA01F3994AAA1EF832D8CCA4F2') {
     throw Error(`Expected to get the key fingerprint D6662C5FB9BDE9DA01F3994AAA1EF832D8CCA4F2 but got ${expectedValid.pubkey.id}`);
   }
-  const [expectedRevoked1] = await ContactStore.get(undefined, ['097EEBF354259A5E']);
-  if (expectedRevoked1.pubkey.id !== 'A5CFC8E8EA4AE69989FE2631097EEBF354259A5E') {
-    throw Error(`Expected to get the key fingerprint A5CFC8E8EA4AE69989FE2631097EEBF354259A5E but got ${expectedRevoked1.pubkey.id}`);
+  const { sortedPubkeys: pubs } = await ContactStore.getOneWithAllPubkeys(undefined, `some.revoked@otherhost.com`);
+  if (pubs.length !== 3) {
+    throw new Error(`3 pubkeys were expected to be retrieved from the storage but got ${pubs.length}`);
   }
-  const [expectedRevoked2] = await ContactStore.get(undefined, ['DE8538DDA1648C76']);
-  if (expectedRevoked2.pubkey.id !== '3930752556D57C46A1C56B63DE8538DDA1648C76') {
-    throw Error(`Expected to get the key fingerprint 3930752556D57C46A1C56B63DE8538DDA1648C76 but got ${expectedRevoked2.pubkey.id}`);
+  if (!pubs.some(x => x.pubkey.id === 'A5CFC8E8EA4AE69989FE2631097EEBF354259A5E')) {
+    throw Error(`Expected to get the key with fingerprint A5CFC8E8EA4AE69989FE2631097EEBF354259A5E but missing it`);
+  }
+  if (!pubs.some(x => x.pubkey.id === '3930752556D57C46A1C56B63DE8538DDA1648C76')) {
+    throw Error(`Expected to get the key with fingerprint 3930752556D57C46A1C56B63DE8538DDA1648C76 but missing it`);
+  }
+  if (!pubs.some(x => x.pubkey.id === 'D6662C5FB9BDE9DA01F3994AAA1EF832D8CCA4F2')) {
+    throw Error(`Expected to get the key with fingerprint D6662C5FB9BDE9DA01F3994AAA1EF832D8CCA4F2 but missing it`);
   }
   return 'pass';
 })();
@@ -362,18 +310,10 @@ BROWSER_UNIT_TEST_NAME(`ContactStore stores postfixed fingerprint internally for
 (async () => {
   const db = await ContactStore.dbOpen();
   const email = 'actalis@meta.33mail.com';
-  const contacts = [
-    await ContactStore.obj({
-      email,
-      pubkey: testConstants.expiredSmimeCert
-    })];
-  await ContactStore.save(db, contacts);
+  await ContactStore.update(undefined, email, { pubkey: testConstants.expiredSmimeCert });
   // extract the entity directly from the database
   const entityFp = '16BB407403A3ADC55E1E0E4AF93EEC8FB187C923-X509';
   const fingerprint = '16BB407403A3ADC55E1E0E4AF93EEC8FB187C923';
-  const longid = 'X509-MIGiMIGNMQswCQYDVQQGEwJJVDEQMA4GA1UECAwHQmVyZ2FtbzEZMBcGA1UEBwwQUG9udGUgU2Fu' +
-    'IFBpZXRybzEjMCEGA1UECgwaQWN0YWxpcyBTLnAuQS4vMDMzNTg1MjA5NjcxLDAqBgNVBAMMI0FjdGFsaXMgQ2xpZW50IE' +
-    'F1dGhlbnRpY2F0aW9uIENBIEcyAhBj9wJecA85RTAfsvulZ0+E';
   const entity = await new Promise((resolve, reject) => {
     const req = db.transaction(['pubkeys'], 'readonly').objectStore('pubkeys').get(entityFp);
     ContactStore.setReqPipe(req, resolve, reject);
@@ -381,43 +321,9 @@ BROWSER_UNIT_TEST_NAME(`ContactStore stores postfixed fingerprint internally for
   if (entity.fingerprint !== entityFp) {
     throw Error(`Failed to extract pubkey ${fingerprint}`);
   }
-  const [contactByLongid] = await ContactStore.get(db, [longid]);
-  if (contactByLongid.pubkey.id !== fingerprint) {
-    throw Error(`Failed to extract pubkey ${fingerprint}`);
-  }
   const [contactByEmail] = await ContactStore.get(db, [email]);
   if (contactByEmail.pubkey.id !== fingerprint) {
     throw Error(`Failed to extract pubkey ${fingerprint}`);
-  }
-  return 'pass';
-})();
-
-BROWSER_UNIT_TEST_NAME(`ContactStore searches S/MIME Certificate by PKCS#7 message recipient`);
-(async () => {
-  const db = await ContactStore.dbOpen();
-  const email = 'actalis@meta.33mail.com';
-  const pubkey = testConstants.expiredSmimeCert;
-  const contacts = [await ContactStore.obj({ email, pubkey })];
-  await ContactStore.save(db, contacts);
-  const p7 = forge.pkcs7.createEnvelopedData();
-  const certificate = forge.pki.certificateFromPem(pubkey);
-  p7.addRecipient(certificate);
-  const recipient = p7.recipients[0];
-  const issuerAndSerialNumberAsn1 =
-    forge.asn1.create(forge.asn1.Class.UNIVERSAL, forge.asn1.Type.SEQUENCE, true, [
-      // Name
-      forge.pki.distinguishedNameToAsn1({ attributes: recipient.issuer }),
-      // Serial
-      forge.asn1.create(forge.asn1.Class.UNIVERSAL, forge.asn1.Type.INTEGER, false,
-        forge.util.hexToBytes(recipient.serialNumber))
-    ]);
-  const der = forge.asn1.toDer(issuerAndSerialNumberAsn1).getBytes();
-  const buf = Buf.fromRawBytesStr(der);
-  const [contact] = await ContactStore.get(db, ['X509-' + buf.toBase64Str()]);
-  const foundCert = KeyUtil.armor(contact.pubkey);
-  const foundCertStripped = foundCert.match(/(.*\-\-\-\-\-END CERTIFICATE\-\-\-\-\-)\r?\n?/s)[1];
-  if (foundCertStripped !== pubkey) {
-    throw new Error(`The certificate wasn't found by S/MIME IssuerAndSerialNumber`);
   }
   return 'pass';
 })();
@@ -431,13 +337,9 @@ BROWSER_UNIT_TEST_NAME(`ContactStore: X-509 revocation affects OpenPGP key`);
     throw new Error(`Valid OpenPGP Key is expected to have fingerprint ${fingerprint} but actually is ${opgpKeyOldAndValid.id}`);
   }
   await ContactStore.update(db, 'some.revoked@localhost.com', { pubkey: opgpKeyOldAndValid });
-  const [loadedOpgpKey1] = await ContactStore.get(db, [`some.revoked@localhost.com`]);
-  if (loadedOpgpKey1.pubkey.revoked) {
-    throw new Error(`The loaded OpenPGP Key (1) was expected to be valid but it is revoked.`);
-  }
-  const [loadedOpgpKey2] = await ContactStore.get(db, [`AA1EF832D8CCA4F2`]);
-  if (loadedOpgpKey2.pubkey.revoked) {
-    throw new Error(`The loaded OpenPGP Key (2) was expected to be valid but it is revoked.`);
+  const { sortedPubkeys: pubkeys1 } = await ContactStore.getOneWithAllPubkeys(db, `some.revoked@localhost.com`);
+  if (pubkeys1.some(x => x.revoked)) {
+    throw new Error('The pubkey was expected to be valid but it is revoked.');
   }
   // emulate X-509 revocation
   await new Promise((resolve, reject) => {
@@ -446,13 +348,9 @@ BROWSER_UNIT_TEST_NAME(`ContactStore: X-509 revocation affects OpenPGP key`);
     tx.objectStore('revocations').put({ fingerprint: fingerprint + "-X509" });
   });
   // original key should be either revoked or missing
-  const [loadedOpgpKey3] = await ContactStore.get(db, [`some.revoked@localhost.com`]);
-  if (loadedOpgpKey3.pubkey && !loadedOpgpKey3.pubkey.revoked) {
-    throw new Error(`The loaded OpenPGP Key (3) was expected to be revoked but it is not.`);
-  }
-  const [loadedOpgpKey4] = await ContactStore.get(db, [`AA1EF832D8CCA4F2`]);
-  if (loadedOpgpKey4.pubkey && !loadedOpgpKey4.pubkey.revoked) {
-    throw new Error(`The loaded OpenPGP Key (4) was expected to be revoked but it is not.`);
+  const { sortedPubkeys: pubkeys2 } = await ContactStore.getOneWithAllPubkeys(db, `some.revoked@localhost.com`);
+  if (pubkeys2.some(x => !x.revoked)) {
+    throw new Error('The pubkey was expected to be revoked but it is not.');
   }
   return 'pass';
 })();
@@ -463,13 +361,8 @@ BROWSER_UNIT_TEST_NAME(`ContactStore: OpenPGP revocation affects X.509 certifica
   const smimeKey = await KeyUtil.parse(testConstants.expiredSmimeCert);
   await ContactStore.update(db, 'actalis@meta.33mail.com', { pubkey: smimeKey });
   const [loadedCert1] = await ContactStore.get(db, [`actalis@meta.33mail.com`]);
-  const longid = KeyUtil.getPrimaryLongid(smimeKey);
   if (loadedCert1.pubkey.revoked) {
     throw new Error(`The loaded X.509 certificate (1) was expected to be valid but it is revoked.`);
-  }
-  const [loadedCert2] = await ContactStore.get(db, [longid]);
-  if (loadedCert2.pubkey.revoked) {
-    throw new Error(`The loaded X.509 certificate (2) was expected to be valid but it is revoked.`);
   }
   // emulate openPGP revocation
   await new Promise((resolve, reject) => {
@@ -481,10 +374,6 @@ BROWSER_UNIT_TEST_NAME(`ContactStore: OpenPGP revocation affects X.509 certifica
   const [loadedCert3] = await ContactStore.get(db, [`actalis@meta.33mail.com`]);
   if (loadedCert3.pubkey && !loadedCert3.pubkey.revoked) {
     throw new Error(`The loaded X.509 certificate (3) was expected to be revoked but it is not.`);
-  }
-  const [loadedCert4] = await ContactStore.get(db, [longid]);
-  if (loadedCert4.pubkey && !loadedCert4.pubkey.revoked) {
-    throw new Error(`The loaded X.509 certificate (4) was expected to be revoked but it is not.`);
   }
   return 'pass';
 })();
@@ -506,27 +395,15 @@ BROWSER_UNIT_TEST_NAME(`ContactStore doesn't replace revoked key with older vers
   if (loadedOpgpKey1.pubkey.revoked) {
     throw new Error(`The loaded OpenPGP Key (1) was expected to be valid but it is revoked.`);
   }
-  const [loadedOpgpKey2] = await ContactStore.get(db, [`AA1EF832D8CCA4F2`]);
-  if (loadedOpgpKey2.pubkey.revoked) {
-    throw new Error(`The loaded OpenPGP Key (2) was expected to be valid but it is revoked.`);
-  }
   await ContactStore.update(db, 'some.revoked@localhost.com', { pubkey: opgpKeyRevoked });
+  const [loadedOpgpKey2] = await ContactStore.get(db, [`some.revoked@localhost.com`]);
+  if (loadedOpgpKey2.pubkey && !loadedOpgpKey2.pubkey.revoked) {
+    throw new Error(`The loaded OpenPGP Key (2) was expected to be revoked but it is not.`);
+  }
+  await ContactStore.update(db, 'some.revoked@localhost.com', { pubkey: opgpKeyOldAndValid });
   const [loadedOpgpKey3] = await ContactStore.get(db, [`some.revoked@localhost.com`]);
   if (loadedOpgpKey3.pubkey && !loadedOpgpKey3.pubkey.revoked) {
     throw new Error(`The loaded OpenPGP Key (3) was expected to be revoked but it is not.`);
-  }
-  const [loadedOpgpKey4] = await ContactStore.get(db, [`AA1EF832D8CCA4F2`]);
-  if (loadedOpgpKey4.pubkey && !loadedOpgpKey4.pubkey.revoked) {
-    throw new Error(`The loaded OpenPGP Key (4) was expected to be revoked but it is not.`);
-  }
-  await ContactStore.update(db, 'some.revoked@localhost.com', { pubkey: opgpKeyOldAndValid });
-  const [loadedOpgpKey5] = await ContactStore.get(db, [`some.revoked@localhost.com`]);
-  if (loadedOpgpKey5.pubkey && !loadedOpgpKey5.pubkey.revoked) {
-    throw new Error(`The loaded OpenPGP Key (5) was expected to be revoked but it is not.`);
-  }
-  const [loadedOpgpKey6] = await ContactStore.get(db, [`AA1EF832D8CCA4F2`]);
-  if (loadedOpgpKey6.pubkey && !loadedOpgpKey6.pubkey.revoked) {
-    throw new Error(`The loaded OpenPGP Key (6) was expected to be revoked but it is not.`);
   }
   return 'pass';
 })();
@@ -534,19 +411,18 @@ BROWSER_UNIT_TEST_NAME(`ContactStore doesn't replace revoked key with older vers
 BROWSER_UNIT_TEST_NAME(`ContactStore searchPubkeys { hasPgp: true } returns all keys`);
 (async () => {
   const db = await ContactStore.dbOpen();
-  const contactABBDEF = await ContactStore.obj({
-    email: 'abbdef@test.com', pubkey: testConstants.abbdefTestComPubkey
+  await ContactStore.update(db, 'abbdef@test.com', {
+    pubkey: testConstants.abbdefTestComPubkey
   });
-  const contactABCDEF = await ContactStore.obj({
-    email: 'abcdef@test.com', pubkey: testConstants.abcdefTestComPubkey
+  await ContactStore.update(db, 'abcdef@test.com', {
+    pubkey: testConstants.abcdefTestComPubkey
   });
-  const contactABCDDF = await ContactStore.obj({
-    email: 'abcddf@test.com', pubkey: testConstants.abcddfTestComPubkey
+  await ContactStore.update(db, 'abcddf@test.com', {
+    pubkey: testConstants.abcddfTestComPubkey
   });
-  const contactABDDEF = await ContactStore.obj({
-    email: 'abddef@test.com', pubkey: testConstants.abddefTestComPubkey
+  await ContactStore.update(db, 'abddef@test.com', {
+    pubkey: testConstants.abddefTestComPubkey
   });
-  await ContactStore.save(db, [contactABBDEF, contactABCDEF, contactABCDDF, contactABDDEF]);
   const foundKeys = await ContactStore.searchPubkeys(db, { hasPgp: true });
   const fingerprints = (await Promise.all(foundKeys.map(async (key) => await KeyUtil.parse(key)))).
     map(pk => pk.id);

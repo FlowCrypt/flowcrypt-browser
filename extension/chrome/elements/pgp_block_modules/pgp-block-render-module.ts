@@ -10,7 +10,6 @@ import { Catch } from '../../../js/common/platform/catch.js';
 import { Mime } from '../../../js/common/core/mime.js';
 import { MsgBlock } from '../../../js/common/core/msg-block.js';
 import { PgpBlockView } from '../pgp_block.js';
-import { Str } from '../../../js/common/core/common.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { MsgBlockParser } from '../../../js/common/core/msg-block-parser.js';
@@ -35,7 +34,7 @@ export class PgpBlockViewRenderModule {
       // that then causes to default to 20 + 40 = 60px for height, hiding contents of the message if it in fact is taller
       return;
     }
-    let height = Math.max(origHeight, 20) + 40;
+    let height = Math.max(origHeight, 20) + 40 + 17 + 3 + 13; // pgp_badge has 17px height + 3px padding + 1em (13px) bottom margin
     this.heightHist.push(height);
     const len = this.heightHist.length;
     if (len >= 4 && this.heightHist[len - 1] === this.heightHist[len - 3] && this.heightHist[len - 2] === this.heightHist[len - 4] && this.heightHist[len - 1] !== this.heightHist[len - 2]) {
@@ -76,10 +75,31 @@ export class PgpBlockViewRenderModule {
     }
   };
 
+  public renderErrorStatus = (status: string): JQuery<HTMLElement> => {
+    return $('#pgp_error').text(status).show();
+  };
+
+  public clearErrorStatus = (): JQuery<HTMLElement> => {
+    return $('#pgp_error').hide();
+  };
+
+  public renderEncryptionStatus = (status: string): JQuery<HTMLElement> => {
+    return $('#pgp_encryption').addClass(status === 'encrypted' ? 'green_label' : 'red_label').text(status);
+  };
+
+  public renderSignatureStatus = (status: string): JQuery<HTMLElement> => {
+    return $('#pgp_signature').addClass(status === 'signed' ? 'green_label' : 'red_label').text(status);
+  };
+
   public decideDecryptedContentFormattingAndRender = async (decryptedBytes: Buf, isEncrypted: boolean, sigResult: VerifyRes | undefined,
-    retryVerification: () => Promise<VerifyRes | undefined>, plainSubject?: string) => {
-    this.setFrameColor(isEncrypted ? 'green' : 'gray');
-    this.view.signatureModule.renderPgpSignatureCheckResult(sigResult, retryVerification);
+    verificationPubs: string[], retryVerification: (verificationPubs: string[]) => Promise<VerifyRes | undefined>, plainSubject?: string) => {
+    if (isEncrypted) {
+      this.renderEncryptionStatus('encrypted');
+      this.setFrameColor('green');
+    } else {
+      this.renderEncryptionStatus('not encrypted');
+      this.setFrameColor('gray');
+    }
     const publicKeys: string[] = [];
     let renderableAttachments: Attachment[] = [];
     let decryptedContent = decryptedBytes.toUtfStr();
@@ -117,9 +137,7 @@ export class PgpBlockViewRenderModule {
       }
     }
     await this.view.quoteModule.separateQuotedContentAndRenderText(decryptedContent, isHtml);
-    if (Str.mostlyRTL(Xss.htmlSanitizeAndStripAllTags(decryptedContent, '\n'))) {
-      $('#pgp_signature').addClass('rtl');
-    }
+    await this.view.signatureModule.renderPgpSignatureCheckResult(sigResult, verificationPubs, retryVerification);
     if (isEncrypted && publicKeys.length) {
       BrowserMsg.send.renderPublicKeys(this.view.parentTabId, { afterFrameId: this.view.frameId, publicKeys });
     }
@@ -163,8 +181,8 @@ export class PgpBlockViewRenderModule {
 
   private getEncryptedSubjectText = (subject: string, isHtml: boolean) => {
     if (isHtml) {
-      return `<div style="font-size: 14px; border-bottom: 1px #cacaca"> Encrypted Subject:
-                <b> ${subject}</b>
+      return `<div style="white-space: normal"> Encrypted Subject:
+                <b> ${Xss.escape(subject)}</b>
               </div>
               <hr/>`;
     } else {

@@ -2,7 +2,7 @@
 
 // tslint:disable:no-null-keyword
 
-import { Contact, Key, KeyUtil } from '../../core/crypto/key';
+import { Contact, Key, KeyUtil, PubkeyInfo } from '../../core/crypto/key';
 
 const DATA: Contact[] = [];
 
@@ -21,12 +21,6 @@ export type Pubkey = {
   expiresOn: number | null;
 };
 
-export type PubkeyInfo = {
-  pubkey: Key,
-  revoked: boolean,
-  lastCheck?: number | undefined
-};
-
 export class ContactStore {
 
   public static get = async (db: void, emailOrLongid: string[]): Promise<(Contact | undefined)[]> => {
@@ -34,6 +28,11 @@ export class ContactStore {
       // is there any intersection
       (x.pubkey && KeyUtil.getPubkeyLongids(x.pubkey).some(y => emailOrLongid.includes(y))));
     return result;
+  };
+
+  public static getPubkeyInfos = async (db: IDBDatabase | undefined, keys: (Key | string)[]): Promise<PubkeyInfo[]> => {
+    const parsedKeys = await Promise.all(keys.map(async (key) => await KeyUtil.asPublicKey(typeof key === 'string' ? await KeyUtil.parse(key) : key)));
+    return parsedKeys.map(key => { return { pubkey: key, revoked: false }; });
   };
 
   public static update = async (db: void, email: string | string[], update: ContactUpdate): Promise<void> => {
@@ -62,7 +61,7 @@ export class ContactStore {
     }
   };
 
-  public static obj = async ({ email, name, pubkey, lastUse, lastCheck }: any): Promise<Contact> => {
+  private static obj = async ({ email, name, pubkey, lastUse, lastCheck }: any): Promise<Contact> => {
     if (!pubkey) {
       return {
         email,
@@ -90,11 +89,4 @@ export class ContactStore {
     return contact;
   };
 
-  public static save = async (db: any, contact: Contact | Contact[]): Promise<void> => {
-    if (Array.isArray(contact)) {
-      DATA.push(...contact);
-    } else {
-      DATA.push(contact);
-    }
-  };
 }

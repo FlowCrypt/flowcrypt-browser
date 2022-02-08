@@ -35,3 +35,8 @@ export const gmailBackupSearchQuery = (acctEmail: string) => {
     '-is:trash'
   ].join(' ');
 };
+
+export class InMemoryStoreKeys {
+  public static readonly ID_TOKEN = 'idToken';
+  public static readonly GOOGLE_TOKEN_ACCESS = 'google_token_access';
+}

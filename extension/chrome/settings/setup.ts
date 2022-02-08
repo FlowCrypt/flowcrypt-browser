@@ -7,7 +7,7 @@ import { Url } from '../../js/common/core/common.js';
 import { ApiErr } from '../../js/common/api/shared/api-error.js';
 import { Assert } from '../../js/common/assert.js';
 import { Catch } from '../../js/common/platform/catch.js';
-import { Contact, KeyInfo, Key, KeyUtil } from '../../js/common/core/crypto/key.js';
+import { KeyInfo, Key, KeyUtil } from '../../js/common/core/crypto/key.js';
 import { Gmail } from '../../js/common/api/email-provider/gmail/gmail.js';
 import { Google } from '../../js/common/api/email-provider/gmail/google.js';
 import { KeyImportUi } from '../../js/common/ui/key-import-ui.js';
@@ -98,13 +98,15 @@ export class SetupView extends View {
     this.setupWithEmailKeyManager = new SetupWithEmailKeyManagerModule(this);
   }
 
+  public isFesUsed = () => Boolean(this.storage.fesUrl);
+
   public render = async () => {
     await initPassphraseToggle(['step_2b_manual_enter_passphrase'], 'hide');
     await initPassphraseToggle([
       'step_2a_manual_create_input_password', 'step_2a_manual_create_input_password2',
       'step_2_ekm_input_password', 'step_2_ekm_input_password2',
       'recovery_password']);
-    this.storage = await AcctStore.get(this.acctEmail, ['setup_done', 'email_provider']);
+    this.storage = await AcctStore.get(this.acctEmail, ['setup_done', 'email_provider', 'fesUrl']);
     this.scopes = await AcctStore.getScopes(this.acctEmail);
     this.storage.email_provider = this.storage.email_provider || 'gmail';
     this.orgRules = await OrgRules.newInstance(this.acctEmail);
@@ -227,7 +229,8 @@ export class SetupView extends View {
       return await Settings.promptToRetry(
         e,
         Lang.setup.failedToSubmitToAttester,
-        () => this.submitPublicKeys({ submit_main, submit_all })
+        () => this.submitPublicKeys({ submit_main, submit_all }),
+        Lang.general.contactIfNeedAssistance(this.isFesUsed())
       );
     }
   };
@@ -244,12 +247,10 @@ export class SetupView extends View {
     }
     const { sendAs } = await AcctStore.get(this.acctEmail, ['sendAs']);
     const myOwnEmailsAddrs: string[] = [this.acctEmail].concat(Object.keys(sendAs!));
-    const myOwnEmailAddrsAsContacts: Contact[] = [];
     const { full_name: name } = await AcctStore.get(this.acctEmail, ['full_name']);
     for (const email of myOwnEmailsAddrs) {
-      myOwnEmailAddrsAsContacts.push(await ContactStore.obj({ email, name, pubkey: KeyUtil.armor(await KeyUtil.asPublicKey(prvs[0])) }));
+      await ContactStore.update(undefined, email, { name, pubkey: KeyUtil.armor(await KeyUtil.asPublicKey(prvs[0])) });
     }
-    await ContactStore.save(undefined, myOwnEmailAddrsAsContacts);
   };
 
   public shouldSubmitPubkey = (checkboxSelector: string) => {

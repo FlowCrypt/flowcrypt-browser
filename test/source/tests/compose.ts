@@ -994,14 +994,14 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       const message = sentMsg.payload!.body!.data!;
       const encrypted = message.match(/\-\-\-\-\-BEGIN PGP MESSAGE\-\-\-\-\-.*\-\-\-\-\-END PGP MESSAGE\-\-\-\-\-/s)![0];
       const encryptedData = Buf.fromUtfStr(encrypted);
-      const decrypted0 = await MsgUtil.decryptMessage({ kisWithPp: [], encryptedData });
+      const decrypted0 = await MsgUtil.decryptMessage({ kisWithPp: [], encryptedData, verificationPubs: [] });
       // decryption without a ki should fail
       expect(decrypted0.success).to.equal(false);
       // decryption with ki 1 should succeed
-      const decrypted1 = await MsgUtil.decryptMessage({ kisWithPp: await Config.getKeyInfo(["flowcrypt.compatibility.1pp1"]), encryptedData });
+      const decrypted1 = await MsgUtil.decryptMessage({ kisWithPp: await Config.getKeyInfo(["flowcrypt.compatibility.1pp1"]), encryptedData, verificationPubs: [] });
       expect(decrypted1.success).to.equal(true);
       // decryption with ki 2 should succeed
-      const decrypted2 = await MsgUtil.decryptMessage({ kisWithPp: await Config.getKeyInfo(["flowcrypt.compatibility.2pp1"]), encryptedData });
+      const decrypted2 = await MsgUtil.decryptMessage({ kisWithPp: await Config.getKeyInfo(["flowcrypt.compatibility.2pp1"]), encryptedData, verificationPubs: [] });
       expect(decrypted2.success).to.equal(true);
     }));
 
@@ -1213,12 +1213,11 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       await ComposePageRecipe.pastePublicKeyManually(composeFrame, inboxPage, 'smime.attachment@recipient.com', testConstants.testCertificateMultipleSmimeCEA2D53BB9D24871);
       const fileInput = await composeFrame.target.$('input[type=file]');
       await fileInput!.uploadFile('test/samples/small.txt', 'test/samples/small.png', 'test/samples/small.pdf');
-      /* todo: #4087 attachments in composer can be downloaded
+      // attachments in composer can be downloaded
       const fileText = await inboxPage.awaitDownloadTriggeredByClicking(async () => {
         await composeFrame.click('.qq-file-id-0');
       });
       expect(fileText.toString()).to.equal(`small text file\nnot much here\nthis worked\n`);
-      */
       await composeFrame.waitAndClick('@action-send', { delay: 2 });
       await inboxPage.waitTillGone('@container-new-message');
     }));
@@ -1498,6 +1497,13 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       await expectRecipientElements(composePage, { to: ['flowcrypt.compatibility@gmail.com', 'vladimir@flowcrypt.com'], cc: [], bcc: [] });
     }));
 
+    ava.default('compose - reply - subject starts with Re:', testWithBrowser('compatibility', async (t, browser) => {
+      const appendUrl = 'threadId=17d02296bccd4c5d&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___&replyMsgId=17d02296bccd4c5d';
+      const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl, hasReplyPrompt: true });
+      await composePage.waitAndClick('@encrypted-reply', { delay: 1 });
+      await expectRecipientElements(composePage, { to: ['vladimir@flowcrypt.com'], cc: [], bcc: [] });
+    }));
+
     ava.default('compose - reply - from !== acctEmail', testWithBrowser('compatibility', async (t, browser) => {
       const appendUrl = 'threadId=17d02268f01c7e40&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___&replyMsgId=17d02268f01c7e40';
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl, hasReplyPrompt: true });
@@ -1524,42 +1530,24 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
      * 127.0.0.1    standardsubdomainfes.test
      * 127.0.0.1    fes.standardsubdomainfes.test
      */
-    ava.default('compose - user@standardsubdomainfes.test:8001 - PWD encrypted message with FES web portal', testWithBrowser(undefined, async (t, browser) => {
+    ava.default('user@standardsubdomainfes.test:8001 - PWD encrypted message with FES web portal', testWithBrowser(undefined, async (t, browser) => {
       const acct = 'user@standardsubdomainfes.test:8001'; // added port to trick extension into calling the mock
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
       await SetupPageRecipe.manualEnter(settingsPage, 'flowcrypt.test.key.used.pgp', { submitPubkey: false, usedPgpBefore: false },
         { isSavePassphraseChecked: false, isSavePassphraseHidden: false });
-      const msgPwd = 'super hard password for the message';
-      const subject = 'PWD encrypted message with FES - access token';
+      const subject = 'PWD encrypted message with FES - ID TOKEN';
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'user@standardsubdomainfes.test:8001');
       await ComposePageRecipe.fillMsg(composePage, { to: 'to@example.com', bcc: 'bcc@example.com' }, subject);
       const fileInput = await composePage.target.$('input[type=file]');
       await fileInput!.uploadFile('test/samples/small.txt');
-      await ComposePageRecipe.sendAndClose(composePage, { password: msgPwd });
-      // this test is using PwdEncryptedMessageWithFesAccessTokenTestStrategy to check sent result based on subject "PWD encrypted message with flowcrypt.com/api"
-      // also see '/api/v1/message' in fes-endpoints.ts mock
-    }));
-
-    /**
-     * You need the following line in /etc/hosts:
-     * 127.0.0.1    fes.disablefesaccesstoken.test
-     */
-    ava.default('user@disablefesaccesstoken.test:8001 - DISABLE_FES_ACCESS_TOKEN - PWD encrypted message with FES web portal', testWithBrowser(undefined, async (t, browser) => {
-      const acct = 'user@disablefesaccesstoken.test:8001'; // added port to trick extension into calling the mock
-      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
-      await SetupPageRecipe.manualEnter(settingsPage, 'flowcrypt.test.key.used.pgp', { submitPubkey: false, usedPgpBefore: false },
-        { isSavePassphraseChecked: false, isSavePassphraseHidden: false });
-      const debugFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-show-local-store-contents', ['debug_api.htm']);
-      await debugFrame.waitForContent('@container-pre', 'fes.disablefesaccesstoken.test:8001'); // FES url on standard subdomain
-      await debugFrame.waitForContent('@container-pre', 'DISABLE_FES_ACCESS_TOKEN'); // org rules from FES
-      await SettingsPageRecipe.closeDialog(settingsPage);
-      const msgPwd = 'super hard password for the message';
-      const subject = 'PWD encrypted message with FES - ID TOKEN';
-      const composePage = await ComposePageRecipe.openStandalone(t, browser, 'user@disablefesaccesstoken.test:8001');
-      await ComposePageRecipe.fillMsg(composePage, { to: 'to@example.com', bcc: 'bcc@example.com' }, subject);
-      const fileInput = await composePage.target.$('input[type=file]');
-      await fileInput!.uploadFile('test/samples/small.txt');
-      await ComposePageRecipe.sendAndClose(composePage, { password: msgPwd });
+      // lousy pwd
+      await composePage.waitAndType('@input-password', 'lousy pwd');
+      await composePage.waitAndClick('@action-send', { delay: 1 });
+      await composePage.waitAndRespondToModal('error', 'confirm', 'Please use password with the following properties');
+      // good pwd
+      await composePage.waitAndType('@input-password', 'gO0d-pwd');
+      await composePage.waitAndClick('@action-send', { delay: 1 });
+      await ComposePageRecipe.closed(composePage);
       // this test is using PwdEncryptedMessageWithFesIdTokenTestStrategy to check sent result based on subject "PWD encrypted message with flowcrypt.com/api"
       // also see '/api/v1/message' in fes-endpoints.ts mock
     }));
