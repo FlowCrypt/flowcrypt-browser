@@ -17,13 +17,9 @@ export class PgpBlockViewErrorModule {
   constructor(private view: PgpBlockView) {
   }
 
-  public renderErr = async (errBoxContent: string, renderRawMsg: string | undefined, isParseError = false) => {
+  public renderErr = async (errBoxContent: string, renderRawMsg: string | undefined, errMsg?: string) => {
     this.view.renderModule.setFrameColor('red');
-    if (isParseError) {
-      this.view.renderModule.renderErrorStatus('parse error');
-    } else {
-      this.view.renderModule.renderErrorStatus('decrypt error');
-    }
+    this.view.renderModule.renderErrorStatus(errMsg || 'decrypt error');
     const showRawMsgPrompt = renderRawMsg ? '<a href="#" class="action_show_raw_pgp_block">show original message</a>' : '';
     await this.view.renderModule.renderContent(`<div class="error">${errBoxContent.replace(/\n/g, '<br>')}</div>${showRawMsgPrompt}`, true);
     $('.action_show_raw_pgp_block').click(this.view.setHandler(async () => { // this may contain content missing MDC

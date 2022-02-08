@@ -37,7 +37,7 @@ export class PgpBlockViewDecryptModule {
           await this.decryptAndRender(Buf.fromUtfStr(parsed.rawSignedContent), verificationPubs);
         } else {
           await this.view.errorModule.renderErr('Error: could not properly parse signed message',
-            parsed.rawSignedContent || parsed.text || parsed.html || mimeMsg.toUtfStr(), true);
+            parsed.rawSignedContent || parsed.text || parsed.html || mimeMsg.toUtfStr(), 'parse error');
         }
       } else if (this.view.encryptedMsgUrlParam && !forcePullMsgFromApi) { // ascii armored message supplied
         this.view.renderModule.renderText(this.view.signature ? 'Verifying..' : 'Decrypting...');
@@ -91,7 +91,7 @@ export class PgpBlockViewDecryptModule {
         }
       } else if (result.longids.needPassphrase.length) {
         const enterPp = `<a href="#" class="enter_passphrase" data-test="action-show-passphrase-dialog">${Lang.pgpBlock.enterPassphrase}</a> ${Lang.pgpBlock.toOpenMsg}`;
-        await this.view.errorModule.renderErr(enterPp, undefined);
+        await this.view.errorModule.renderErr(enterPp, undefined, 'pass phrase needed');
         $('.enter_passphrase').click(this.view.setHandler(() => {
           Ui.setTestState('waiting');
           BrowserMsg.send.passphraseDialog(this.view.parentTabId, { type: 'message', longids: result.longids.needPassphrase });
