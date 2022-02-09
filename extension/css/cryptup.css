@@ -601,8 +601,8 @@ body#settings > div#content.setup div#step_1_easy_or_manual > .col:hover,
 body#settings > div#content.setup div#step_1_easy_or_manual > .col:focus-within { opacity: 1; }
 
 body#settings .signin_button {
-  width: 220px;
-  height: 46px;
+  width: 230px;
+  height: 55px;
   text-align: left;
   padding-left: 50px;
   -moz-user-focus: none;
@@ -619,6 +619,8 @@ body#settings .signin_button:hover {
 
 body#settings .signin_button.gmail {
   background-image: url('/img/guidelined/google-signin.png');
+  background-size: cover;
+  background-color: transparent;
   border: 0;
 }
 
