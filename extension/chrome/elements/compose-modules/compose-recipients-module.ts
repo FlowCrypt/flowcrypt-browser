@@ -153,6 +153,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
         this.view.errModule.debug(`parseRenderRecipients(force: ${force}).4`);
       } else {
         this.view.sizeModule.setInputTextHeightManuallyIfNeeded();
+        $('body').attr('data-test-state', 'ready');
       }
     }
   };
