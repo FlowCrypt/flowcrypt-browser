@@ -79,7 +79,6 @@ export class ComposeSenderModule extends ViewModule<ComposeView> {
 
   private actionInputFromChangeHanlder = async () => {
     await this.view.recipientsModule.reEvaluateRecipients(this.view.recipientsModule.getValidRecipients());
-    await this.view.recipientsModule.setEmailsPreview(this.view.recipientsModule.getRecipients());
     this.view.footerModule.onFooterUpdated(await this.view.footerModule.getFooterFromStorage(this.view.senderModule.getSender()));
   };
 

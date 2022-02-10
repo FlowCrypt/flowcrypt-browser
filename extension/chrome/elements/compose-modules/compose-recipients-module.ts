@@ -214,10 +214,10 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     this.view.S.cached('contacts').children().not('ul').remove();
   };
 
-  public addRecipientsAndShowPreview = async (recipients: Recipients) => {
+  public addRecipientsAndShowPreview = (recipients: Recipients) => {
     this.view.recipientsModule.addRecipients(recipients).catch(Catch.reportErr);
     this.view.recipientsModule.showHideCcAndBccInputsIfNeeded();
-    await this.view.recipientsModule.setEmailsPreview(this.getRecipients());
+    this.view.recipientsModule.setEmailsPreview();
   };
 
   public reEvaluateRecipients = async (recipients: ValidRecipientElement[]) => {
@@ -252,6 +252,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
         callback(recipientEls);
       }
     }
+    this.setEmailsPreview();
     $('body').attr('data-test-state', 'ready');
     this.view.sizeModule.setInputTextHeightManuallyIfNeeded();
   };
@@ -260,12 +261,9 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
   * Generate content for emails preview in some container
   * when recipient inputs are collapsed.
   * e.g. 'test@test.com, test2@test.com [3 more]'
-  *
-  * @param container - HTMLElement where emails have to be inserted
-  * @param recipients - Recipients that should be previewed
   */
-  public setEmailsPreview = async (recipients: RecipientElement[]): Promise<void> => {
-    const orderedRecipients = recipients.sort(this.orderRecipientsBySendingType);
+  public setEmailsPreview = (): void => {
+    const orderedRecipients = this.getRecipients().sort(this.orderRecipientsBySendingType);
     if (orderedRecipients.length) {
       this.view.S.cached('recipients_placeholder').find('.placeholder').css('display', 'none');
     } else {
@@ -275,10 +273,12 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     }
     const container = this.view.S.cached('recipients_placeholder').find('.email_preview');
     if (orderedRecipients.find(r => r.status === RecipientStatus.EVALUATING)) {
-      container.append(`<span id="r_loader">Loading Reciepients ${Ui.spinner('green')}</span>`); // xss-direct
-      await Promise.all(orderedRecipients.filter(r => r.evaluating).map(r => r.evaluating!));
-      container.find('r_loader').remove();
+      if (container.find('r_loader').length === 0) {
+        container.append(`<span id="r_loader">Loading Recipients ${Ui.spinner('green')}</span>`); // xss-direct
+      }
+      return;
     }
+    container.find('r_loader').remove();
     Xss.sanitizeRender(container, '<span class="rest"><span id="rest_number"></span> more</span>');
     const maxWidth = container.parent().width()! - this.view.S.cached('container_cc_bcc_buttons').width()!;
     const rest = container.find('.rest');
@@ -333,7 +333,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       this.showHideCcAndBccInputsIfNeeded();
       this.view.S.cached('input_addresses_container_outer').addClass('invisible');
       this.view.S.cached('recipients_placeholder').css('display', 'flex');
-      await this.setEmailsPreview(this.addedRecipients);
+      this.setEmailsPreview();
       this.hideContacts();
       this.view.sizeModule.setInputTextHeightManuallyIfNeeded();
     }
@@ -386,8 +386,8 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       this.view.errModule.debug(`re-rendering recipient: ${email}`);
       this.renderPubkeyResult(recipient, emailAndPubkeys);
     }
-    this.view.recipientsModule.showHideCcAndBccInputsIfNeeded();
-    await this.view.recipientsModule.setEmailsPreview(this.getRecipients());
+    this.showHideCcAndBccInputsIfNeeded();
+    this.setEmailsPreview();
   };
 
   private inputsBlurHandler = async (target: HTMLElement, e: JQuery.Event<HTMLElement, null>) => {
@@ -466,7 +466,6 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
           clearInterval(this.addedPubkeyDbLookupInterval);
           recipientsHasPgp.push(recipient);
           await this.evaluateRecipients(recipientsHasPgp);
-          await this.setEmailsPreview(this.getRecipients());
         }
       }
     }, 1000);
@@ -844,7 +843,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     // console.log(`>>>> renderPubkeyResult: ${JSON.stringify(info)}`);
     const el = recipient.element;
     this.view.errModule.debug(`renderPubkeyResult.email(${recipient.email || recipient.invalid})`);
-    this.view.errModule.debug(`renderPubkeyResult.contact(${JSON.stringify(info)})`);
+    // this.view.errModule.debug(`renderPubkeyResult.contact(${JSON.stringify(info)})`);
     $(el).children('img, i').remove();
     const contentHtml = '<img src="/img/svgs/close-icon.svg" alt="close" class="close-icon svg" />' +
       '<img src="/img/svgs/close-icon-black.svg" alt="close" class="close-icon svg display_when_sign" />';

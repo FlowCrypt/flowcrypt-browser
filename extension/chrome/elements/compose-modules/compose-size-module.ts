@@ -125,7 +125,7 @@ export class ComposeSizeModule extends ViewModule<ComposeView> {
     this.resizeComposeBox();
     this.setInputTextHeightManuallyIfNeeded(true);
     if (this.view.S.cached('recipients_placeholder').is(':visible')) {
-      await this.view.recipientsModule.setEmailsPreview(this.view.recipientsModule.getRecipients());
+      this.view.recipientsModule.setEmailsPreview();
     }
   };
 
@@ -156,7 +156,7 @@ export class ComposeSizeModule extends ViewModule<ComposeView> {
       this.view.S.cached('icon_popout').attr('src', '/img/svgs/maximize.svg').attr('title', 'Full screen');
     }
     if (this.view.S.cached('recipients_placeholder').is(':visible')) {
-      await this.view.recipientsModule.setEmailsPreview(this.view.recipientsModule.getRecipients());
+      this.view.recipientsModule.setEmailsPreview();
     }
     this.composeWindowIsMaximized = !this.composeWindowIsMaximized;
   };
