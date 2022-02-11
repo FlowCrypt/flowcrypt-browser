@@ -792,15 +792,16 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     const toLookupNoPubkeys = new Set<EmailProviderContact>();
     for (const input of newContacts) {
       const storedContact = await ContactStore.getOneWithAllPubkeys(undefined, input.email);
-      if (storedContact?.info.name && input.name) {
-        await ContactStore.update(undefined, input.email, { name: input.name });
-      }
-      if ((!storedContact || !storedContact.sortedPubkeys.length) && !this.failedLookupEmails.includes(input.email)) {
+      if (storedContact) {
+        if (!storedContact.info.name && input.name) {
+          await ContactStore.update(undefined, input.email, { name: input.name });
+        }
+      } else if (!this.failedLookupEmails.includes(input.email)) {
         toLookupNoPubkeys.add(input);
       }
     }
     await Promise.all(Array.from(toLookupNoPubkeys).map(c => this.view.storageModule
-      .updateLocalPubkeysFromRemote([], c.email)
+      .updateLocalPubkeysFromRemote([], c.email, c.name)
       .catch(() => this.failedLookupEmails.push(c.email))
     ));
   };
