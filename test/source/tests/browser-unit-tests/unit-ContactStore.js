@@ -24,23 +24,21 @@
 
 BROWSER_UNIT_TEST_NAME(`ContactStore is able to search by partial email address`);
 (async () => {
-  const contactABBDEF = await ContactStore.obj({
-    email: 'abbdef@test.com', pubkey: testConstants.abbdefTestComPubkey
+  await ContactStore.update(undefined, 'abbdef@test.com', {
+    pubkey: testConstants.abbdefTestComPubkey
   });
-  const contactABCDEF = await ContactStore.obj({
-    email: 'abcdef@test.com', pubkey: testConstants.abcdefTestComPubkey
+  await ContactStore.update(undefined, 'abcdef@test.com', {
+    pubkey: testConstants.abcdefTestComPubkey
   });
-  const contactABCDDF = await ContactStore.obj({
-    email: 'abcddf@test.com', pubkey: testConstants.abcddfTestComPubkey
+  await ContactStore.update(undefined, 'abcddf@test.com', {
+    pubkey: testConstants.abcddfTestComPubkey
   });
-  const contactABDDEF = await ContactStore.obj({
-    email: 'abddef@test.com', pubkey: testConstants.abddefTestComPubkey
+  await ContactStore.update(undefined, 'abddef@test.com', {
+    pubkey: testConstants.abddefTestComPubkey
   });
-  const contactABCDVWXYZHELLOCOM = await ContactStore.obj({
-    email: 'abcd.vwxyz@hello.com', pubkey: testConstants.abcdVwxyzHelloComPubkey
+  await ContactStore.update(undefined, 'abcd.vwxyz@hello.com', {
+    pubkey: testConstants.abcdVwxyzHelloComPubkey
   });
-  await ContactStore.save(undefined, [contactABBDEF, contactABCDEF, contactABCDDF, contactABDDEF,
-    contactABCDVWXYZHELLOCOM]);
   const contactsABC = await ContactStore.search(undefined, { hasPgp: true, substring: 'abc' });
   if (contactsABC.length !== 3) {
     throw Error(`Expected 3 contacts to match "abc" but got "${contactsABC.length}"`);
@@ -139,17 +137,13 @@ BROWSER_UNIT_TEST_NAME(`ContactStore.update updates correct 'pubkeyLastCheck'`);
   const db = await ContactStore.dbOpen();
   const email = 'flowcrypt.compatibility@gmail.com';
   const date2_0 = Date.now();
-  const contacts = [
-    await ContactStore.obj({
-      email,
-      pubkey: testConstants.flowcryptcompatibilityPublicKey7FDE685548AEA788
-    }),
-    await ContactStore.obj({
-      email,
-      pubkey: testConstants.flowcryptcompatibilityPublicKeyADAC279C95093207,
-      lastCheck: date2_0
-    })];
-  await ContactStore.save(db, contacts);
+  await ContactStore.update(undefined, email, {
+    pubkey: testConstants.flowcryptcompatibilityPublicKey7FDE685548AEA788
+  });
+  await ContactStore.update(undefined, email, {
+    pubkey: testConstants.flowcryptcompatibilityPublicKeyADAC279C95093207,
+    pubkeyLastCheck: date2_0
+  });
   // extract the entities from the database
   const fp1 = '5520CACE2CB61EA713E5B0057FDE685548AEA788';
   const fp2 = 'E8F0517BA6D7DAB6081C96E4ADAC279C95093207';
@@ -219,10 +213,8 @@ BROWSER_UNIT_TEST_NAME(`ContactStore.update tests`);
   const db = await ContactStore.dbOpen();
   const email1 = 'email1@test.com';
   const email2 = 'email2@test.com';
-  const contacts = [
-    await ContactStore.obj({ email: email1 }),
-    await ContactStore.obj({ email: email2 })];
-  await ContactStore.save(db, contacts);
+  await ContactStore.update(undefined, email1, {});
+  await ContactStore.update(undefined, email2, {});
   const expectedObj1 = {
     email: email1,
     name: undefined,
@@ -271,10 +263,9 @@ BROWSER_UNIT_TEST_NAME(`ContactStore saves and returns dates as numbers`);
 (async () => {
   // we'll use background operation to make sure the date isn't transformed on its way
   const email = 'test@expired.com';
-  const lastCheck = Date.now();
-  const lastUse = lastCheck + 1000;
-  const contact = await ContactStore.obj({ email, pubkey: testConstants.expiredPub, lastCheck, lastUse });
-  await ContactStore.save(undefined, [contact]);
+  const pubkeyLastCheck = Date.now();
+  const lastUse = pubkeyLastCheck + 1000;
+  await ContactStore.update(undefined, email, { pubkey: testConstants.expiredPub, pubkeyLastCheck, lastUse });
   const [loaded] = await ContactStore.get(undefined, [email]);
   if (typeof loaded.lastUse !== 'number') {
     throw Error(`lastUse was expected to be a number, but got ${typeof loaded.lastUse}`);
@@ -291,7 +282,6 @@ BROWSER_UNIT_TEST_NAME(`ContactStore saves and returns dates as numbers`);
 BROWSER_UNIT_TEST_NAME(`ContactStore gets a valid pubkey by e-mail and all pubkeys with getOneWithAllPubkeys()`);
 (async () => {
   // Note 1: email differs from pubkey id
-  // Note 2: not necessary to call ContactStore.save, it's possible to always use ContactStore.update
   await ContactStore.update(undefined, 'some.revoked@otherhost.com', { pubkey: await KeyUtil.parse(testConstants.somerevokedRevoked1) });
   await ContactStore.update(undefined, 'some.revoked@otherhost.com', { pubkey: await KeyUtil.parse(testConstants.somerevokedValid) });
   await ContactStore.update(undefined, 'some.revoked@otherhost.com', { pubkey: await KeyUtil.parse(testConstants.somerevokedRevoked2) });
@@ -320,12 +310,7 @@ BROWSER_UNIT_TEST_NAME(`ContactStore stores postfixed fingerprint internally for
 (async () => {
   const db = await ContactStore.dbOpen();
   const email = 'actalis@meta.33mail.com';
-  const contacts = [
-    await ContactStore.obj({
-      email,
-      pubkey: testConstants.expiredSmimeCert
-    })];
-  await ContactStore.save(db, contacts);
+  await ContactStore.update(undefined, email, { pubkey: testConstants.expiredSmimeCert });
   // extract the entity directly from the database
   const entityFp = '16BB407403A3ADC55E1E0E4AF93EEC8FB187C923-X509';
   const fingerprint = '16BB407403A3ADC55E1E0E4AF93EEC8FB187C923';
@@ -426,19 +411,18 @@ BROWSER_UNIT_TEST_NAME(`ContactStore doesn't replace revoked key with older vers
 BROWSER_UNIT_TEST_NAME(`ContactStore searchPubkeys { hasPgp: true } returns all keys`);
 (async () => {
   const db = await ContactStore.dbOpen();
-  const contactABBDEF = await ContactStore.obj({
-    email: 'abbdef@test.com', pubkey: testConstants.abbdefTestComPubkey
+  await ContactStore.update(db, 'abbdef@test.com', {
+    pubkey: testConstants.abbdefTestComPubkey
   });
-  const contactABCDEF = await ContactStore.obj({
-    email: 'abcdef@test.com', pubkey: testConstants.abcdefTestComPubkey
+  await ContactStore.update(db, 'abcdef@test.com', {
+    pubkey: testConstants.abcdefTestComPubkey
   });
-  const contactABCDDF = await ContactStore.obj({
-    email: 'abcddf@test.com', pubkey: testConstants.abcddfTestComPubkey
+  await ContactStore.update(db, 'abcddf@test.com', {
+    pubkey: testConstants.abcddfTestComPubkey
   });
-  const contactABDDEF = await ContactStore.obj({
-    email: 'abddef@test.com', pubkey: testConstants.abddefTestComPubkey
+  await ContactStore.update(db, 'abddef@test.com', {
+    pubkey: testConstants.abddefTestComPubkey
   });
-  await ContactStore.save(db, [contactABBDEF, contactABCDEF, contactABCDDF, contactABDDEF]);
   const foundKeys = await ContactStore.searchPubkeys(db, { hasPgp: true });
   const fingerprints = (await Promise.all(foundKeys.map(async (key) => await KeyUtil.parse(key)))).
     map(pk => pk.id);

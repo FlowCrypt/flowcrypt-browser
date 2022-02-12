@@ -3,7 +3,7 @@
 'use strict';
 
 import { ChunkedCb, EmailProviderContact, RecipientType } from '../../../js/common/api/shared/api.js';
-import { Contact, KeyUtil, PubkeyInfo } from '../../../js/common/core/crypto/key.js';
+import { KeyUtil, PubkeyInfo } from '../../../js/common/core/crypto/key.js';
 import { PUBKEY_LOOKUP_RESULT_FAIL, PUBKEY_LOOKUP_RESULT_WRONG } from './compose-err-module.js';
 import { ProviderContactsQuery, Recipients } from '../../../js/common/api/email-provider/email-provider-api.js';
 import { RecipientElement, RecipientStatus } from './compose-types.js';
@@ -20,7 +20,7 @@ import { moveElementInArray } from '../../../js/common/platform/util.js';
 import { ViewModule } from '../../../js/common/view-module.js';
 import { ComposeView } from '../compose.js';
 import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
-import { ContactPreview, ContactStore, ContactUpdate } from '../../../js/common/platform/store/contact-store.js';
+import { ContactPreview, ContactStore } from '../../../js/common/platform/store/contact-store.js';
 
 /**
  * todo - this class is getting too big
@@ -84,8 +84,8 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     this.view.S.cached('compose_table').click(this.view.setHandler(() => this.hideContacts(), this.view.errModule.handle(`hide contact box`)));
     this.view.S.cached('add_their_pubkey').click(this.view.setHandler(() => this.addTheirPubkeyClickHandler(), this.view.errModule.handle('add pubkey')));
     BrowserMsg.addListener('addToContacts', this.checkReciepientsKeys);
-    BrowserMsg.addListener('reRenderRecipient', async ({ contact }: Bm.ReRenderRecipient) => {
-      await this.reRenderRecipientFor(contact.email);
+    BrowserMsg.addListener('reRenderRecipient', async ({ email }: Bm.ReRenderRecipient) => {
+      await this.reRenderRecipientFor(email);
     });
     BrowserMsg.listen(this.view.parentTabId);
   };
@@ -146,12 +146,12 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
 
   public addRecipients = async (recipients: Recipients, triggerCallback: boolean = true) => {
     let newRecipients: RecipientElement[] = [];
-    for (const key in recipients) {
-      if (recipients.hasOwnProperty(key) && ['to', 'cc', 'bcc'].includes(key)) {
+    for (const [key, value] of Object.entries(recipients)) {
+      if (['to', 'cc', 'bcc'].includes(key)) {
         const sendingType = key as RecipientType;
-        if (recipients[sendingType] && recipients[sendingType]!.length) {
+        if (value?.length) {
           const recipientsContainer = this.view.S.cached('input_addresses_container_outer').find(`#input-container-${sendingType}`);
-          newRecipients = newRecipients.concat(this.createRecipientsElements(recipientsContainer, recipients[sendingType]!, sendingType, RecipientStatus.EVALUATING));
+          newRecipients = newRecipients.concat(this.createRecipientsElements(recipientsContainer, value, sendingType, RecipientStatus.EVALUATING));
           this.view.S.cached('input_addresses_container_outer').find(`#input-container-${sendingType}`).css('display', '');
           this.view.sizeModule.resizeInput(this.view.S.cached('input_addresses_container_outer').find(`#input-container-${sendingType} input`));
         }
@@ -767,19 +767,19 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     if (!newContacts.length) {
       return;
     }
-    const toLookupNoPubkeys: Contact[] = [];
+    const toLookupNoPubkeys = new Set<EmailProviderContact>();
     for (const input of newContacts) {
-      const contact = await ContactStore.obj({ email: input.email, name: input.name });
-      const [storedContact] = await ContactStore.get(undefined, [contact.email]);
+      // todo: create and use a lighter method in ContactStore that doesn't return any keys?
+      const storedContact = await ContactStore.getOneWithAllPubkeys(undefined, input.email);
       if (storedContact) {
-        if (!storedContact.name && contact.name) {
-          await ContactStore.update(undefined, contact.email, { name: contact.name } as ContactUpdate);
+        if (!storedContact.info.name && input.name) {
+          await ContactStore.update(undefined, input.email, { name: input.name });
         }
-      } else if (!this.failedLookupEmails.includes(contact.email)) {
-        toLookupNoPubkeys.push(contact);
+      } else if (!this.failedLookupEmails.includes(input.email)) {
+        toLookupNoPubkeys.add(input);
       }
     }
-    await Promise.all(toLookupNoPubkeys.map(c => this.view.storageModule
+    await Promise.all(Array.from(toLookupNoPubkeys).map(c => this.view.storageModule
       .updateLocalPubkeysFromRemote([], c.email, c.name || undefined)
       .catch(() => this.failedLookupEmails.push(c.email))
     ));

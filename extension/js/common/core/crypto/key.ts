@@ -199,19 +199,24 @@ export class KeyUtil {
 
   public static readBinary = async (key: Uint8Array, passPhrase?: string | undefined): Promise<{ keys: Key[], err: Error[] }> => {
     const allKeys: Key[] = [], allErr: Error[] = [];
+    let uncheckedOpgpKeyCount = 0;
     try {
       const { keys, err } = await opgp.key.read(key);
-      if (keys.length > 0) {
-        for (const key of keys) {
+      uncheckedOpgpKeyCount = keys.length;
+      for (const key of keys) {
+        try {
           // we should decrypt them all here to have consistent behavior between pkcs12 files and PGP
           // pkcs12 files must be decrypted during parsing
           // then rename this method to parseDecryptBinary
+          await OpenPGPKey.validateAllDecryptedPackets(key);
           const parsed = await OpenPGPKey.convertExternalLibraryObjToKey(key);
           // if (await KeyUtil.decrypt(parsed, passPhrase, undefined, 'OK-IF-ALREADY-DECRYPTED')) {
           allKeys.push(parsed);
           // } else {
           //   allErr.push(new Error(`Wrong pass phrase for OpenPGP key ${parsed.id} (${parsed.emails[0]})`));
           // }
+        } catch (e) {
+          allErr.push(e as Error);
         }
       }
       if (err) {
@@ -220,7 +225,7 @@ export class KeyUtil {
     } catch (e) {
       allErr.push(e as Error);
     }
-    if (!allKeys.length) {
+    if (!uncheckedOpgpKeyCount) {
       try {
         allKeys.push(SmimeKey.parseDecryptBinary(key, passPhrase ?? ''));
         return { keys: allKeys, err: [] };

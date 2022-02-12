@@ -1634,6 +1634,152 @@ jA==
       t.pass();
     });
 
+    ava.default('[unit][KeyUtil.decrypt] validates the private key', async t => {
+      const corruptedRsaKey = await KeyUtil.parse(`-----BEGIN PGP PRIVATE KEY BLOCK-----
+Comment: Corrupted encrypted RSA private key
+Comment: Passphrase is 123
+
+xcMGBGHcWwkBB/9lhOJ0DQdAaHcrKa50W92WvoH5jBZEKsPrNmefmSol74M1
+MZ+afc9NvCZmFZZLrjcQ6lCFIFExWEmq5LNMKo7J7gR533MfqQMX1q0SP2z0
+4NZqQoFn/SU3oQ9ZsmN/uqWXPZvN54DcMDGdUmJurRaGQB9PN4aJOljfy0bh
+kolS62Nm2A3emsfoaCLxPYBx0R1Mb2mQKgBw40J9bY+5G8fob5G9y2RUrpBu
+z/PZwPAaacSbBzs1LKIUsZ3iBaT2k3wzbORq8Ex2uJ1PYbky2q/v1aUJ2ctx
+vFXGY3mSB1iUluMfL/xlJr1N+ooNEA0NOzUOgff8f+vRHLNzpZskGJ7DABEB
+AAH+CQMICMYSX4cN8LwAPPYfKHrR7jnNscGrXe3zg8R+cOxR10U5F6Et8KQz
+hMeitwq7IvWIGBgQblMJirlW1u/czaI9TVh+UUhDsPjIb54y8sIm9krdqdkV
+NqFlYTFUhdosRrPHWm4izYp2XGJBq3gb6Koj+hYfH5da4bnML8uSBYwoQVXv
+CUxW6hTyB7ShvVkj0hEG/CbpQT46/MIg8RZbqFwGrf8xKSrQ2nzqsmXKGBEN
+l5jhpBqR4DXz/mAKN5+qyDMNMwcBoaaVElJbWsFMhLys4qm+AdgUhBxFq51x
+wsY/Pc7Nnr2OCs5oicpxMmj8dMH6mYXZ9+Bplwxx18FC/s2TGhCoXvz2YvmP
+vXAyyv91Cfy/6YEc97r1S0S8E/swsJxVSTrq/W4IBcEKhcfj71BrEUEF7l2P
+pqqCg4ACb4MKMHKssE5p8/Lzxb/9JpEKchXXbY10CNRMycCCUEEg7ahK5TlC
+YDhYlx0PfXh6xxVfGPVR87uE8KBQslaRTWYqWDEEPkk3N1zFUJxxEJQ9tvSa
+IwvzHVP3gmfX6XQtZL3oIhFj4FCT0O6NvC/L1CnIyc8Nf3WXbuUovthgp/nm
+WrWb+oRYz0hKeHTgaPAMsymyXuPFVVJmbuZmOJ+qjwN/d7j1k4GHJWypJ3Gj
+Ih8vCobK6xZXtgFwJqRkRAtONUQqro3diB8hjc5LPO75H556gaZzouHe1GNv
+jJZ2jxuaUzzEKaw6x1E5hFUWlpNOXf5M9EeOhVRpN0dF4D8nQK3q8mfqvo3K
+oGYniSybTEVA0AMWQgyuXEaJKByV1boJVw3/bUI7gfbCFLWBbD8CPiCp6Ata
+RSdodnbfo4+XEITorHpudp8yTlUsOaKDzbbcOzaNwklHGO6DMwyDC2YrC217
+NZWH0ox/5004Bp+PufBcJT+k8doxe92MzRFCb2IgPHJzYUBib2IuY29tPsLA
+jQQQAQgAIAUCYdxbCwYLCQcIAwIEFQgKAgQWAgEAAhkBAhsDAh4BACEJEKaz
+Zhp29gfTFiEEgv2PZC90lnXoX1ksprNmGnb2B9O4Zwf/W99aYopckyHcESQM
+AHkFTECwQssmUj0S8PrFAaAn7H1bN5OyedzjnpUM3OVQhUg2yBvUwdRryeug
+IhIbK4jEgGD26qhnIAw3h/XJYoijuEqtC2yBslHZYVrTLhid/6qd0o+ENFRj
+r1QsJhFLEfxnbFJcN4vLmgXZWndcqVFNCqz2Ekl8Qyde4+ywfA2l87i/3CUH
+hbFJs6ZKGiNvdgEc5/JDB+r3ZyGlQKugK0uajqDVT53hXfoB+jRDp3r9Xjtf
+t5cUYP7TErN8m1t3g1hbUZQPYecUlg7SaQS+cDg4nzZIaC/3hojOWUcZ27Xi
+xO4IDW32ZNkp/lEhlPirmmJQFcfDBgRh3FsJAQgArX+xZMRXKRN9qk2JzKH8
+cc7XQGb3MeSwubE0yz7+LVPoNnL5r2H20uhi4GHaU/M3x9dsYk4ZkUxkSWD0
+ki2AO9e3TxAQXEWkx4LO8y5LgrYaTET7dKdHiNNJ94eMArw61JFYsjG8KG91
+9r+gYlPAlmrFZMg3WTYzKqMeeDsBs/EwlhcwZrs1TF4dt/s7EEHr4tberaBb
+oper+l9J/7OPdfl+yXMCvdaLyEzJTpf4GRUepxuerOJAelwOxN6g7gXLfSiB
+KAg+RSGxW02r8XhUhlccZ9+lQUKOqmnTyHlj9MIpQGYcP51YhM1nn8ytepWK
+qqNsbJPx1CYMMB+0S0VzWQARAQAB/gkDCDmnzsulUJzTAIgx5A2fbNih52ub
+Quto1KiQjdLVtC4dI0IJqjzOFXxrdTbijxnLoSWj2f0roCLq1VEsUqyyYtar
+glsSkhrvAOxv8P2CR7aCYRJEkdQM0J2ZfG6WcfhGH1E7iR1/eewxaRPXZEYy
+QZZdLvzdYQ872+xvtlw7RjgJ8qQF2jGmMGKelRH6Y7xhRZsHjdQV2cN6MVZ+
+4brHS4lAxNcwCJ50dn0Mm8FUfskO6zU/DL0t8VZUCQDyKCDDZRGsc7CoO86b
+AxjIO1rokPa36zeP/BALp48vW56YUMdZqz/R0v5hHAOphzKHVFjIqUuxHjP4
+hzKvaBxreHFyG0qXfZneGEzL9r4AaLvvZ/mB8I8wSxrAzRoiXW0U63t+lA0Y
+0U992THjpwAA++e1BI05OM+vw/c1RsY8JUfss3oRY9sZd5ubSmeOJvF2Ntre
+6FGNI9RogXR4vhNAV0JPOJGJVLe5/6FmhG4qAgP8EGFG9QR6sBetYSLYcInW
+o/Oy4hCEWtgPfsx/n7M2ne9XWrNqniu1vlFDghL/N9OnPVF0LncQ0zqw4KQC
+bnzy2CtQ/s7qKOrVyL9G40747AaUxQCrN5ew4SMDie801WO131No5CHaldVZ
+IGBojEG5FXTPtl50PNMM8W2tYkV1+EUD3DW8wqJGbW0UAz6gmr1n89PRtTLM
+Cp33EzzU475s3lkIZxghtpi8UQizomuxfssxQc5yzZwg71Sw+SSNhamHMLq5
+BdzWaB5B+vcYdDTtYM30L5aiGFOdl2ZimWjV8Dw9ClBBoUmBW729x3691fP7
+dc0Uj0gkY/yXRXiMmOHdsXtNhkJQa/7Axzm4iyVmLUrL1gfo3Bt7lTnWos0F
+zSIeuzFpYHQ6HADK0dUHvEvLcD2Ts3tZkjjdhIws/G3/Q9fv3xwrHXiAo8LA
+dgQYAQgACQUCYdxbCwIbDAAhCRCms2YadvYH0xYhBIL9j2QvdJZ16F9ZLKaz
+Zhp29gfTmsAH/iYW0FoaaO6JO+mM5WG3dSjeFUG/CM3992/Bogg2EBWQFJqe
++2WfX+NuQafc4JlC2hBnMNzCqWmTLw7qqSW1fJrkZiWF39u1Q7HsvvO35Y6l
+wVKFcVmhYwHS5r1VxePJBZ59WsDTL34CAvWmGx4mN6V8zfat/Rd6AB53ErE3
+E6kWtoKopSPTzymOUtmw5EkKws6C6C3vLg72V/t82JGjcjzUtmyp6Cp3Ny8J
+4r3Xq2H+1GIRL/BTCF1VG8sAJIY5UIbCxazUowlB6qrHEjGvGDTO/vKTXtYh
+j+w8FyoMKOrmOAyFTWjJVyVEruMl2a7QDO/CjaWV4sAUt0LMcRdZdTM=
+=kFcl
+-----END PGP PRIVATE KEY BLOCK-----`);
+      await t.throwsAsync(() => KeyUtil.decrypt(corruptedRsaKey, '123'), { instanceOf: Error, message: 'Key is invalid' });
+      t.pass();
+    });
+
+    const unencryptedCorruptedRsaKey = `-----BEGIN PGP PRIVATE KEY BLOCK-----
+Version: FlowCrypt Email Encryption [BUILD_REPLACEABLE_VERSION]
+Comment: Seamlessly send and receive encrypted email
+
+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
+=//ru
+-----END PGP PRIVATE KEY BLOCK-----`;
+
+    ava.default('[unit][KeyUtil.parse] validates the private key if it is not encrypted', async t => {
+      await t.throwsAsync(() => KeyUtil.parse(unencryptedCorruptedRsaKey), { instanceOf: Error, message: 'Key is invalid' });
+      t.pass();
+    });
+
+    ava.default('[unit][KeyUtil.readBinary] validates the private key if it is not encrypted', async t => {
+      const binaryKey = (await PgpArmor.dearmor(unencryptedCorruptedRsaKey)).data;
+      const { keys, err } = await KeyUtil.readBinary(binaryKey);
+      expect(keys.length).to.equal(0);
+      expect(err.length).to.equal(1);
+      expect(err[0].message).to.equal('Key is invalid');
+      t.pass();
+    });
+
     ava.default('[unit][KeyUtil.decrypt] correctly handles signing/encryption detection for PKSK with private keys', async t => {
       const dsakey = await KeyUtil.parse(dsaPrimaryKeyAndSubkeyBothHavePrivateKey);
       expect(await KeyUtil.decrypt(dsakey, '1234')).to.be.true;

@@ -29,6 +29,8 @@ export class InboxPageRecipe extends PageRecipe {
     await pgpBlockFrame.waitForSelTestState('ready');
     if (enterPp) {
       await inboxPage.notPresent("@action-finish-session");
+      const errBadgeContent = await pgpBlockFrame.read('@pgp-error');
+      expect(errBadgeContent).to.equal('pass phrase needed');
       await pgpBlockFrame.waitAndClick('@action-show-passphrase-dialog', { delay: 1 });
       await inboxPage.waitAll('@dialog-passphrase');
       const ppFrame = await inboxPage.getFrame(['passphrase.htm']);
@@ -44,6 +46,7 @@ export class InboxPageRecipe extends PageRecipe {
       await inboxPage.waitAll('@action-finish-session');
       await Util.sleep(1);
     }
+    await pgpBlockFrame.waitAll('@pgp-error', { visible: false });
     const content = await pgpBlockFrame.read('@pgp-block-content');
     if (content.indexOf(expectedContent) === -1) {
       throw new Error(`message did not decrypt`);

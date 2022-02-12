@@ -93,7 +93,7 @@ View.run(class AddPubkeyView extends View {
     try {
       const keyImportUi = new KeyImportUi({ checkEncryption: true });
       const normalized = await keyImportUi.checkPub(String($('.pubkey').val()));
-      await ContactStore.save(undefined, await ContactStore.obj({ email: String($('select.email').val()), pubkey: normalized }));
+      await ContactStore.update(undefined, String($('select.email').val()), { pubkey: normalized });
       this.closeDialog();
     } catch (e) {
       if (e instanceof UserAlert) {

@@ -5,7 +5,7 @@
 import { Assert } from '../../js/common/assert.js';
 import { BrowserMsg } from '../../js/common/browser/browser-msg.js';
 import { Catch } from '../../js/common/platform/catch.js';
-import { Contact, Key, KeyUtil } from '../../js/common/core/crypto/key.js';
+import { Key, KeyUtil } from '../../js/common/core/crypto/key.js';
 import { PgpArmor } from '../../js/common/core/crypto/pgp/pgp-armor.js';
 import { Str } from '../../js/common/core/common.js';
 import { Ui } from '../../js/common/browser/ui.js';
@@ -141,28 +141,28 @@ View.run(class PgpPubkeyView extends View {
 
   private addContactHandler = async (addContactBtn: HTMLElement) => {
     if (this.publicKeys!.length > 1) {
-      const contacts: Contact[] = [];
+      const emails = new Set<string>();
       for (const pubkey of this.publicKeys!) {
         const email = pubkey.emails[0];
         if (email) {
-          contacts.push(await ContactStore.obj({ email, pubkey: KeyUtil.armor(pubkey) }));
+          await ContactStore.update(undefined, email, { pubkey: KeyUtil.armor(pubkey) });
+          emails.add(email);
         }
       }
-      await ContactStore.save(undefined, contacts);
       Xss.sanitizeReplace(addContactBtn, '<span class="good">added public keys</span>');
       BrowserMsg.send.addToContacts(this.parentTabId);
-      for (const contact of contacts) {
-        BrowserMsg.send.reRenderRecipient('broadcast', { contact });
+      for (const email of emails) {
+        BrowserMsg.send.reRenderRecipient('broadcast', { email });
       }
       $('.input_email').remove();
     } else if (this.publicKeys!.length) {
       if (Str.isEmailValid(String($('.input_email').val()))) {
-        const contact = await ContactStore.obj({ email: String($('.input_email').val()), pubkey: KeyUtil.armor(this.publicKeys![0]) });
-        await ContactStore.save(undefined, contact);
+        const email = String($('.input_email').val());
+        await ContactStore.update(undefined, email, { pubkey: KeyUtil.armor(this.publicKeys![0]) });
         BrowserMsg.send.addToContacts(this.parentTabId);
         Xss.sanitizeReplace(addContactBtn, `<span class="good">${Xss.escape(String($('.input_email').val()))} added</span>`);
         $('.input_email').remove();
-        BrowserMsg.send.reRenderRecipient('broadcast', { contact });
+        BrowserMsg.send.reRenderRecipient('broadcast', { email });
       } else {
         await Ui.modal.error('This email is invalid, please check for typos. Not added.');
         $('.input_email').focus();
