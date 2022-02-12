@@ -92,8 +92,12 @@ View.run(class AddPubkeyView extends View {
   private submitHandler = async () => {
     try {
       const keyImportUi = new KeyImportUi({ checkEncryption: true });
-      const normalized = await keyImportUi.checkPub(String($('.pubkey').val()));
-      await ContactStore.update(undefined, String($('select.email').val()), { pubkey: normalized });
+      if (!$('.copy_from_email').val()) {
+        const normalized = await keyImportUi.checkPub(String($('.pubkey').val()));
+        await ContactStore.update(undefined, String($('select.email').val()), { pubkey: normalized });
+      } else {
+        // TODO copy keys from the existing email
+      }
       this.closeDialog();
     } catch (e) {
       if (e instanceof UserAlert) {
