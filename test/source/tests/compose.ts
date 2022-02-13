@@ -32,13 +32,14 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
 
   if (testVariant !== 'CONSUMER-LIVE-GMAIL') {
 
-    ava.default('compose - check for sender [flowcrypt.compatibility@gmail.com] from a password-protected email', testWithBrowser('compatibility', async (t, browser) => {
+    ava.default.only('compose - check for sender [flowcrypt.compatibility@gmail.com] from a password-protected email', testWithBrowser('compatibility', async (t, browser) => {
       const senderEmail = 'flowcrypt.compatibility@gmail.com';
       const msgPwd = 'super hard password for the message';
       const subject = 'PWD encrypted message with flowcrypt.com/api';
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
       await composePage.selectOption('@input-from', senderEmail);
       await ComposePageRecipe.fillMsg(composePage, { to: 'test@email.com' }, subject);
+      await composePage.sleep(600);
       await ComposePageRecipe.sendAndClose(composePage, { password: msgPwd });
       // this test is using PwdEncryptedMessageWithFlowCryptComApiTestStrategy to check sent result based on subject "PWD encrypted message with flowcrypt.com/api"
     }));
