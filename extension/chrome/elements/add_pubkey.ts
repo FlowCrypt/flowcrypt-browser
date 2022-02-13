@@ -94,9 +94,11 @@ View.run(class AddPubkeyView extends View {
       const email = String($('select.email').val());
       if ($('.copy_from_email').val()) {
         const fromEmail = String($('.copy_from_email').val());
-        const keys = (await ContactStore.getEncryptionKeys(undefined, [fromEmail])).keys;
-        for (const key in keys) {
-          await ContactStore.update(undefined, email, { pubkey: key });
+        const keys = await ContactStore.getEncryptionKeys(undefined, [fromEmail]);
+        for (const keyArray of keys) {
+          for (const key of keyArray.keys) {
+            await ContactStore.update(undefined, email, { pubkey: key });
+          }
         }
       } else {
         const keyImportUi = new KeyImportUi({ checkEncryption: true });
