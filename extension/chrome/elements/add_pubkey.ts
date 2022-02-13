@@ -59,6 +59,7 @@ View.run(class AddPubkeyView extends View {
           if (errs.length) {
             await Ui.modal.warning(`some keys could not be processed due to errors:\n${errs.map(e => `-> ${e.message}\n`).join('')}`);
           }
+          $('.copy_from_email').val('');
           $('.pubkey').val(String(KeyUtil.armor(keys[0])));
           $('.action_ok').trigger('click');
         } else if (errs.length) {
@@ -79,13 +80,13 @@ View.run(class AddPubkeyView extends View {
     if ($(fromSelect).val()) {
       const [contact] = await ContactStore.get(undefined, [String($(fromSelect).val())]);
       if (contact?.pubkey) {
-        $('.pubkey').val('').prop('disabled', true).prop('visibility', 'hidden');
+        $('.pubkey').val('').prop('disabled', true).prop('style', 'display: none;');
       } else {
         Catch.report('Contact unexpectedly not found when copying pubkey by email in add_pubkey.htm');
         await Ui.modal.error('Contact not found.');
       }
     } else {
-      $('.pubkey').val('').prop('disabled', false).prop('visibility', 'visible');
+      $('.pubkey').val('').prop('disabled', false).prop('style', 'display: inline;');
     }
   };
 
