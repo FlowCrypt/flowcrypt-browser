@@ -31,9 +31,9 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
       //    - flowcrypt.com/api (consumers and customers without on-prem setup), or
       //    - FlowCrypt Enterprise Server (enterprise customers with on-prem setup)
       //    It will be served to recipient through web
-      const msgUrl = await this.prepareAndUploadPwdEncryptedMsg(newMsg); // encrypted for pwd only, pubkeys ignored
+      const { url: msgUrl, externalId } = await this.prepareAndUploadPwdEncryptedMsg(newMsg); // encrypted for pwd only, pubkeys ignored
       newMsg.pwd = undefined;
-      return await this.sendablePwdMsg(newMsg, pubkeys, msgUrl, signingPrv); // encrypted for pubkeys only, pwd ignored
+      return await this.sendablePwdMsg(newMsg, pubkeys, { msgUrl, externalId }, signingPrv); // encrypted for pubkeys only, pwd ignored
     } else if (this.richtext) { // rich text: PGP/MIME - https://tools.ietf.org/html/rfc3156#section-4
       // or S/MIME
       return await this.sendableRichTextMsg(newMsg, pubkeys, signingPrv);
@@ -43,7 +43,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
     }
   };
 
-  private prepareAndUploadPwdEncryptedMsg = async (newMsg: NewMsgData): Promise<string> => {
+  private prepareAndUploadPwdEncryptedMsg = async (newMsg: NewMsgData): Promise<{ url: string; externalId?: string }> => {
     // PGP/MIME + included attachments (encrypted for password only)
     if (!newMsg.pwd) {
       throw new Error('password unexpectedly missing');
@@ -77,7 +77,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
     const { bodyWithReplyToken, replyToken } = await this.getPwdMsgSendableBodyWithOnlineReplyMsgToken(authInfo, newMsg);
     const pgpMimeWithAttachments = await Mime.encode(bodyWithReplyToken, { Subject: newMsg.subject }, await this.view.attachmentsModule.attachment.collectAttachments());
     const { data: pwdEncryptedWithAttachments } = await this.encryptDataArmor(Buf.fromUtfStr(pgpMimeWithAttachments), newMsg.pwd, []); // encrypted only for pwd, not signed
-    const { url } = await this.view.acctServer.messageUpload(
+    const { url, externalId } = await this.view.acctServer.messageUpload(
       authInfo.uuid ? authInfo : undefined,
       pwdEncryptedWithAttachments,
       replyToken,
@@ -85,10 +85,10 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
       newMsg.recipients,
       (p) => this.view.sendBtnModule.renderUploadProgress(p, 'FIRST-HALF'), // still need to upload to Gmail later, this request represents first half of progress
     );
-    return url;
+    return { url, externalId };
   };
 
-  private sendablePwdMsg = async (newMsg: NewMsgData, pubs: PubkeyResult[], msgUrl: string, signingPrv?: Key) => {
+  private sendablePwdMsg = async (newMsg: NewMsgData, pubs: PubkeyResult[], { msgUrl, externalId }: { msgUrl: string, externalId?: string }, signingPrv?: Key) => {
     // encoded as: PGP/MIME-like structure but with attachments as external files due to email size limit (encrypted for pubkeys only)
     const msgBody = this.richtext ? { 'text/plain': newMsg.plaintext, 'text/html': newMsg.plainhtml } : { 'text/plain': newMsg.plaintext };
     const pgpMimeNoAttachments = await Mime.encode(msgBody, { Subject: newMsg.subject }, []); // no attachments, attached to email separately
@@ -96,7 +96,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
     const attachments = this.createPgpMimeAttachments(pubEncryptedNoAttachments).
       concat(await this.view.attachmentsModule.attachment.collectEncryptAttachments(pubs)); // encrypted only for pubs
     const emailIntroAndLinkBody = await this.formatPwdEncryptedMsgBodyLink(msgUrl);
-    return await SendableMsg.createPwdMsg(this.acctEmail, this.headers(newMsg), emailIntroAndLinkBody, attachments, { isDraft: this.isDraft });
+    return await SendableMsg.createPwdMsg(this.acctEmail, this.headers(newMsg), emailIntroAndLinkBody, attachments, { isDraft: this.isDraft, externalId });
   };
 
   private sendableSimpleTextMsg = async (newMsg: NewMsgData, pubs: PubkeyResult[], signingPrv?: Key): Promise<SendableMsg> => {

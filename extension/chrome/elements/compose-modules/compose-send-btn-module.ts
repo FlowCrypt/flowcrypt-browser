@@ -214,6 +214,9 @@ export class ComposeSendBtnModule extends ViewModule<ComposeView> {
         throw e;
       }
     }
+    if (msg.externalId) {
+      this.view.acctServer.messageGatewayUpdate(msg.externalId, msgSentRes.id).catch(Catch.reportErr);
+    }
     BrowserMsg.send.notificationShow(this.view.parentTabId, { notification: `Your ${this.view.isReplyBox ? 'reply' : 'message'} has been sent.` });
     BrowserMsg.send.focusBody(this.view.parentTabId); // Bring focus back to body so Gmails shortcuts will work
     await this.view.draftModule.draftDelete();
