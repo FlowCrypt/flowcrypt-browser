@@ -12,7 +12,7 @@ import { oauth } from '../lib/oauth';
 
 type DraftSaveModel = { message: { raw: string, threadId: string } };
 
-const allowedRecipients: Array<string> = ['flowcrypt.compatibility@gmail.com', 'human+manualcopypgp@flowcrypt.com',
+const allowedRecipients: Array<string> = ['flowcrypt.compatibility@gmail.com', 'manualcopypgp@flowcrypt.com',
   'censored@email.com', 'test@email.com', 'human@flowcrypt.com', 'human+nopgp@flowcrypt.com', 'expired.on.attester@domain.com',
   'ci.tests.gmail@flowcrypt.test', 'smime1@recipient.com', 'smime2@recipient.com', 'smime@recipient.com',
   'smime.attachment@recipient.com', 'auto.refresh.expired.key@recipient.com', 'to@example.com', 'cc@example.com', 'bcc@example.com',

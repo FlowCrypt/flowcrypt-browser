@@ -23,6 +23,7 @@ import { SetupPageRecipe } from './page-recipe/setup-page-recipe';
 import { testConstants } from './tooling/consts';
 import { MsgUtil } from '../core/crypto/pgp/msg-util';
 import { Buf } from '../core/buf';
+import { PubkeyInfoWithLastCheck } from '../core/crypto/key';
 
 // tslint:disable:no-blank-lines-func
 // tslint:disable:no-unused-expression
@@ -269,25 +270,37 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
     }));
 
     ava.default('compose - settings - manually copied pubkey', testWithBrowser('ci.tests.gmail', async (t, browser) => {
+      const dbPage = await browser.newPage(t, TestUrls.extension('chrome/dev/ci_unit_test.htm'));
+      // add a contact containing 2 pubkeys to the storage
+      await dbPage.page.evaluate(async (pubkeys: string[]) => {
+        for (const pubkey of pubkeys) {
+          const key = await (window as any).KeyUtil.parse(pubkey);
+          await (window as any).ContactStore.update(undefined, 'tocopyfrom@example.test', { pubkey: key });
+        }
+      }, [testConstants.abcddfTestComPubkey, testConstants.abcdefTestComPubkey]);
       const inboxPage = await browser.newPage(t, TestUrls.extensionInbox('ci.tests.gmail@flowcrypt.test'));
-      let composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
-      await ComposePageRecipe.fillMsg(composeFrame, { to: 'human@flowcrypt.com' }, 'just to load - will close this page');
-      await Util.sleep(2); // todo: should wait until actually loaded
-      await composeFrame.waitAndClick('@action-close-new-message');
-      await inboxPage.waitTillGone('@container-new-message');
-      composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
-      await ComposePageRecipe.fillMsg(composeFrame, { to: 'human+manualcopypgp@flowcrypt.com' }, 'manual copied key');
+      const composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
+      await ComposePageRecipe.fillMsg(composeFrame, { to: 'manualcopypgp@flowcrypt.com' }, 'manual copied key');
       await composeFrame.waitAndClick('@action-open-add-pubkey-dialog', { delay: 1 });
       await inboxPage.waitAll('@dialog-add-pubkey');
       const addPubkeyDialog = await inboxPage.getFrame(['add_pubkey.htm']);
       await addPubkeyDialog.waitAll('@input-select-copy-from');
       await Util.sleep(1);
-      await addPubkeyDialog.selectOption('@input-select-copy-from', 'human@flowcrypt.com');
+      await addPubkeyDialog.selectOption('@input-select-copy-from', 'tocopyfrom@example.test');
       await Util.sleep(1);
       await addPubkeyDialog.waitAndClick('@action-add-pubkey');
       await inboxPage.waitTillGone('@dialog-add-pubkey');
       await composeFrame.waitAndClick('@action-send', { delay: 2 });
       await inboxPage.waitTillGone('@container-new-message');
+      await inboxPage.close();
+      // test the pubkeys we copied
+      const contact = await dbPage.page.evaluate(async () => {
+        return await (window as any).ContactStore.getOneWithAllPubkeys(undefined, 'manualcopypgp@flowcrypt.com');
+      });
+      expect(contact.sortedPubkeys.length).to.equal(2);
+      expect((contact.sortedPubkeys as PubkeyInfoWithLastCheck[]).map(pub => pub.pubkey.id)).to.include.members(
+        ['6CF53D2329C2A80828F499D375AA44AB8930F7E9', '3155F118B6E732B3638A1CE1608BCD797A23FB91']);
+      await dbPage.close();
     }));
 
     ava.default('compose - keyboard - Ctrl+Enter sends message', testWithBrowser('ci.tests.gmail', async (t, browser) => {
