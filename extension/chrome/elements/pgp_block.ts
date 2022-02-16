@@ -93,7 +93,7 @@ export class PgpBlockView extends View {
     this.orgRules = await OrgRules.newInstance(this.acctEmail);
     this.pubLookup = new PubLookup(this.orgRules);
     const scopes = await AcctStore.getScopes(this.acctEmail);
-    this.decryptModule.canReadEmails = scopes.read || scopes.modify;
+    this.decryptModule.canReadEmails = scopes.modify;
     if (storage.setup_done) {
       const parsedPubs = (await ContactStore.getOneWithAllPubkeys(undefined, this.getExpectedSignerEmail()))?.sortedPubkeys ?? [];
       // todo: we don't actually need parsed pubs here because we're going to pass them to the backgorund page
