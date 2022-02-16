@@ -76,18 +76,19 @@ export class Injector {
       if (this.S.now('compose_button').length === 0) {
         const secureComposeButton = $(this.factory.btnCompose(this.webmailName));
         let target = this.S.now('compose_button_container').first();
-        // gmail new look, https://github.com/FlowCrypt/flowcrypt-browser/issues/4099
-        if (this.webmailName === 'gmail') {
-          if (this.S.now('compose_button_container').find('div.aBO').length === 1) {
-            target = this.S.now('compose_button_container').find('div.aBO').first();
-          }
+        // https://github.com/FlowCrypt/flowcrypt-browser/issues/4099
+        const isGmail2022 = this.webmailName === 'gmail' && this.S.now('compose_button_container').find('div.aBO').length === 1;
+        // https://github.com/FlowCrypt/flowcrypt-browser/issues/4063
+        const isGmail2021collapsed = this.webmailName === 'gmail' && !$('.aic').length;
+        if (isGmail2022) { // inject into left slim menu
+          target = this.S.now('compose_button_container').find('div.aBO').first();
+        }
+        if (isGmail2022 || isGmail2021collapsed) { // circular btn w/o text + tooltip on hover
+          secureComposeButton.addClass('small');
+          secureComposeButton.attr('data-tooltip', 'Secure Compose');
+          secureComposeButton.attr('aria-label', 'Secure Compose');
         }
         const container = target.prepend(secureComposeButton); // xss-safe-factory
-        if (this.webmailName === 'gmail') {
-          if (!$('.aic').length) { // https://github.com/FlowCrypt/flowcrypt-browser/issues/4063
-            secureComposeButton.addClass('small');
-          }
-        }
         container.find(this.S.sel('compose_button')).click(Ui.event.prevent('double', () => { this.openComposeWin(); }));
       }
     }
