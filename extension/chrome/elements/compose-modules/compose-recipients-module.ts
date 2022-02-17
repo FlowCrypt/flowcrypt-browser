@@ -47,8 +47,8 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
 
   constructor(view: ComposeView) {
     super(view);
-    this.googleContactsSearchEnabled = this.view.scopes.readContacts;
-    this.canReadEmails = this.view.scopes.read || this.view.scopes.modify;
+    this.googleContactsSearchEnabled = this.view.scopes.readContacts && this.view.scopes.readOtherContacts;
+    this.canReadEmails = this.view.scopes.modify;
   }
 
   public setHandlers = (): void => {
@@ -813,7 +813,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       this.googleContactsSearchEnabled = true;
       this.canReadEmails = true;
       this.view.scopes.readContacts = true;
-      this.view.scopes.read = true;
+      this.view.scopes.readOtherContacts = true;
       await this.searchContacts(this.view.S.cached('input_to'));
     } else if (authRes.result === 'Denied' || authRes.result === 'Closed') {
       await Ui.modal.error('FlowCrypt needs this permission to search your contacts on Gmail. Without it, FlowCrypt will keep a separate contact list.');

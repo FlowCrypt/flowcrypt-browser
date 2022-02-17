@@ -52,7 +52,7 @@ export class InboxActiveThreadModule extends ViewModule<InboxView> {
         this.renderReplyBox(lastMsg.id);
       }
       this.setHandlers();
-      // await gmail.threadModify(acctEmail, threadId, [LABEL.UNREAD], []); // missing permission https://github.com/FlowCrypt/flowcrypt-browser/issues/1304
+      await this.view.gmail.threadModify(threadId, [this.view.inboxMenuModule.LABEL.UNREAD], []);
     } catch (e) {
       if (ApiErr.isNetErr(e)) {
         Xss.sanitizeRender('.thread', `<br>Failed to load thread - network error. ${Ui.retryLink()}`);

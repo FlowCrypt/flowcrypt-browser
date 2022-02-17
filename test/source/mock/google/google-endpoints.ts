@@ -46,36 +46,51 @@ export const mockGoogleEndpoints: HandlersDefinition = {
     }
     throw new HttpClientErr(`Method not implemented for ${req.url}: ${req.method}`);
   },
-  '/m8/feeds/contacts/default/thin': async ({ query: { q } }, req) => {
+  '/v1/people:searchContacts': async ({ query: { query } }, req) => {
     if (!isGet(req)) {
       throw new HttpClientErr(`Method not implemented for ${req.url}: ${req.method}`);
     }
-    const empty = { feed: { entry: [] } };
+    const empty = {};
     const acct = oauth.checkAuthorizationHeaderWithAccessToken(req.headers.authorization);
     if (acct === 'ci.tests.gmail@flowcrypt.test') {
-      if (q === 'contact') {
+      if (query === 'contact') {
         return {
-          feed: {
-            entry: [
-              { gd$email: [{ address: 'contact.test@flowcrypt.com', primary: "true" }] }
-            ]
-          }
+          results: [
+            { person: { emailAddresses: [{ metdata: { primary: true }, value: 'contact.test@flowcrypt.com' }] } },
+          ]
         };
-      } else if (q === 'testsearchorder') {
+      } else if (query === 'testsearchorder') {
         return {
-          feed: {
-            entry: [
-              { gd$email: [{ address: 'testsearchorder1@flowcrypt.com', primary: "true" }] },
-              { gd$email: [{ address: 'testsearchorder2@flowcrypt.com', primary: "true" }] },
-              { gd$email: [{ address: 'testsearchorder3@flowcrypt.com', primary: "true" }] },
-              { gd$email: [{ address: 'testsearchorder4@flowcrypt.com', primary: "true" }] },
-              { gd$email: [{ address: 'testsearchorder5@flowcrypt.com', primary: "true" }] },
-              { gd$email: [{ address: 'testsearchorder6@flowcrypt.com', primary: "true" }] },
-              { gd$email: [{ address: 'testsearchorder7@flowcrypt.com', primary: "true" }] },
-              { gd$email: [{ address: 'testsearchorder8@flowcrypt.com', primary: "true" }] },
-              { gd$email: [{ address: 'testsearchorder9@flowcrypt.com', primary: "true" }] },
-            ]
-          }
+          results: [
+            { person: { emailAddresses: [{ metdata: { primary: true }, value: 'testsearchorder1@flowcrypt.com' }] } },
+            { person: { emailAddresses: [{ metdata: { primary: true }, value: 'testsearchorder2@flowcrypt.com' }] } },
+            { person: { emailAddresses: [{ metdata: { primary: true }, value: 'testsearchorder3@flowcrypt.com' }] } },
+            { person: { emailAddresses: [{ metdata: { primary: true }, value: 'testsearchorder4@flowcrypt.com' }] } },
+            { person: { emailAddresses: [{ metdata: { primary: true }, value: 'testsearchorder5@flowcrypt.com' }] } },
+            { person: { emailAddresses: [{ metdata: { primary: true }, value: 'testsearchorder6@flowcrypt.com' }] } },
+          ]
+        };
+      } else {
+        return empty;
+      }
+    } else {
+      return empty;
+    }
+  },
+  '/v1/otherContacts:search': async ({ query: { query } }, req) => {
+    if (!isGet(req)) {
+      throw new HttpClientErr(`Method not implemented for ${req.url}: ${req.method}`);
+    }
+    const empty = {};
+    const acct = oauth.checkAuthorizationHeaderWithAccessToken(req.headers.authorization);
+    if (acct === 'ci.tests.gmail@flowcrypt.test') {
+      if (query === 'testsearchorder') {
+        return {
+          results: [
+            { person: { emailAddresses: [{ metdata: { primary: true }, value: 'testsearchorder7@flowcrypt.com' }] } },
+            { person: { emailAddresses: [{ metdata: { primary: true }, value: 'testsearchorder8@flowcrypt.com' }] } },
+            { person: { emailAddresses: [{ metdata: { primary: true }, value: 'testsearchorder9@flowcrypt.com' }] } },
+          ]
         };
       } else {
         return empty;
@@ -182,6 +197,9 @@ export const mockGoogleEndpoints: HandlersDefinition = {
     throw new HttpClientErr(`Method not implemented for ${req.url}: ${req.method}`);
   },
   '/gmail/v1/users/me/threads/?': async ({ query: { format } }, req) => {
+    if (req.url!.match(/\/modify$/)) {
+      return {};
+    }
     const acct = oauth.checkAuthorizationHeaderWithAccessToken(req.headers.authorization);
     if (isGet(req) && (format === 'metadata' || format === 'full')) {
       const id = parseResourceId(req.url!);
