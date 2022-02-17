@@ -269,7 +269,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       await ComposePageRecipe.sendAndClose(composePage);
     }));
 
-    ava.default('compose - settings - manually copied pubkey', testWithBrowser('ci.tests.gmail', async (t, browser) => {
+    ava.default.only('compose - settings - manually copied pubkey', testWithBrowser('ci.tests.gmail', async (t, browser) => {
       const dbPage = await browser.newPage(t, TestUrls.extension('chrome/dev/ci_unit_test.htm'));
       // add a contact containing 2 pubkeys to the storage
       await dbPage.page.evaluate(async (pubkeys: string[]) => {
@@ -287,7 +287,11 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       await addPubkeyDialog.waitAll('@input-select-copy-from');
       await Util.sleep(1);
       await addPubkeyDialog.selectOption('@input-select-copy-from', 'tocopyfrom@example.test');
-      await Util.sleep(1);
+      await addPubkeyDialog.waitTillGone('@input-pubkey');
+      await addPubkeyDialog.selectOption('@input-select-copy-from', 'Copy from Contact');
+      await addPubkeyDialog.waitAll('@input-pubkey');
+      await addPubkeyDialog.selectOption('@input-select-copy-from', 'tocopyfrom@example.test');
+      await addPubkeyDialog.waitTillGone('@input-pubkey');
       await addPubkeyDialog.waitAndClick('@action-add-pubkey');
       await inboxPage.waitTillGone('@dialog-add-pubkey');
       await composeFrame.waitAndClick('@action-send', { delay: 2 });
