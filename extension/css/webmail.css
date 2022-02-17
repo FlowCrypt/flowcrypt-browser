@@ -44,6 +44,17 @@
   background-repeat: no-repeat;
 }
 
+.only-icon #flowcrypt_secure_compose_button {
+  height: 40px;
+  width: 16px;
+  border-radius: 20px;
+}
+
+.only-icon #flowcrypt_secure_compose_button::before {
+  background-position-x: 9px !important;
+  background-position-y: 12px !important;
+}
+
 #flowcrypt_secure_compose_button:hover,
 #flowcrypt_secure_compose_button:focus {
   box-shadow: 0 5px 10px 2px rgb(60 64 67 / 20%);

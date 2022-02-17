@@ -22,7 +22,7 @@ export type Scopes = {
   compose: boolean;
   modify: boolean;
   readContacts: boolean;
-  read: boolean;
+  readOtherContacts: boolean;
   gmail: boolean;
 };
 
@@ -135,7 +135,7 @@ export class AcctStore extends AbstractStore {
     const { google_token_scopes } = await AcctStore.get(acctEmail, ['google_token_scopes']);
     const result: { [key in GoogleAuthScopesNames]: boolean } = {
       email: false, openid: false, profile: false, compose: false,
-      modify: false, readContacts: false, gmail: false, read: false
+      modify: false, readContacts: false, readOtherContacts: false, gmail: false
     };
     if (google_token_scopes) {
       for (const key of Object.keys({ ...GoogleAuth.OAUTH.scopes, ...GoogleAuth.OAUTH.legacy_scopes })) {

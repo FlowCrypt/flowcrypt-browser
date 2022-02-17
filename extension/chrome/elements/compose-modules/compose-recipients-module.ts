@@ -47,8 +47,8 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
 
   constructor(view: ComposeView) {
     super(view);
-    this.googleContactsSearchEnabled = this.view.scopes.readContacts;
-    this.canReadEmails = this.view.scopes.read || this.view.scopes.modify;
+    this.googleContactsSearchEnabled = this.view.scopes.readContacts && this.view.scopes.readOtherContacts;
+    this.canReadEmails = this.view.scopes.modify;
   }
 
   public setHandlers = (): void => {
