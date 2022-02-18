@@ -64,7 +64,7 @@ export class Google {
       .map(entry => {
         const email = (entry.person?.emailAddresses || []).find(email => email.metadata.primary === true)!.value;
         const name = (entry.person?.names || []).find(name => name.metadata.primary === true)?.displayName;
-        return { email, name: name || email };
+        return { email, name };
       });
   };
 
