@@ -683,10 +683,6 @@ export class ControllablePage extends ControllableBase {
     return html;
   };
 
-  public sleep = async (seconds: number) => {
-    return await Util.sleep(seconds);
-  };
-
   // passing (keys = null) will return all entries
   public getFromLocalStorage = async (keys: string[] | null): Promise<Dict<unknown>> => {
     const result = await (this.target as Page).evaluate(async (keys) => await new Promise((resolve) => {
