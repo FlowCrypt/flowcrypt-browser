@@ -757,7 +757,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     const result: RecipientElement[] = [];
     for (const { email, name, invalid } of emails) {
       const recipientId = this.generateRecipientId();
-      const recipientsHtml = `<span tabindex="0" id="${recipientId}" data-test="${recipientId}"><span>${Xss.escape(email || invalid || '')}</span> ${Ui.spinner('green')}</span>`;
+      const recipientsHtml = `<span tabindex="0" id="${recipientId}" data-test="${recipientId}"><span class="recipient-name">${Xss.escape(name || '')}</span><span>${Xss.escape(email || invalid || '')}</span> ${Ui.spinner('green')}</span>`;
       Xss.sanitizeAppend(container.find('.recipients'), recipientsHtml);
       const element = document.getElementById(recipientId);
       if (element) { // if element wasn't created this means that Composer is used by another component
@@ -776,7 +776,6 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
         if (recipient.status === RecipientStatus.WRONG) {
           this.renderPubkeyResult(recipient, undefined);
         }
-        // todo: display name if available
         this.addedRecipients.push(recipient);
         result.push(recipient);
       }
@@ -866,7 +865,8 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       $(el).find('.remove-reciepient').click(this.view.setHandler(element => this.removeRecipient(element.parentElement!), this.view.errModule.handle('remove recipient')));
     } else if (info && info.sortedPubkeys.length) {
       if (info.info.name) {
-        recipient.name = info.info.name; // todo: render the name
+        recipient.name = info.info.name;
+        $(el).find('.recipient-name').text(Xss.escape(info.info.name));
       }
       // New logic:
       // 1. Keys are sorted in a special way.
@@ -900,7 +900,8 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       recipient.status = RecipientStatus.NO_PGP;
       $(el).addClass("no_pgp");
       if (info?.info.name) {
-        recipient.name = info.info.name; // todo: render the name
+        recipient.name = info.info.name;
+        $(el).find('.recipient-name').text(Xss.escape(info.info.name));
       }
       Xss.sanitizePrepend(el, '<img class="lock-icon" src="/img/svgs/locked-icon.svg" />');
       $(el).attr('title', 'Could not verify their encryption setup. You can encrypt the message with a password below. Alternatively, add their pubkey.');
