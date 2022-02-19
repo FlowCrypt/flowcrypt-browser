@@ -12,7 +12,7 @@ import { oauth } from '../lib/oauth';
 
 type DraftSaveModel = { message: { raw: string, threadId: string } };
 
-const allowedRecipients: Array<string> = ['flowcrypt.compatibility@gmail.com', 'human+manualcopypgp@flowcrypt.com',
+const allowedRecipients: Array<string> = ['flowcrypt.compatibility@gmail.com', 'manualcopypgp@flowcrypt.com',
   'censored@email.com', 'test@email.com', 'human@flowcrypt.com', 'human+nopgp@flowcrypt.com', 'expired.on.attester@domain.com',
   'ci.tests.gmail@flowcrypt.test', 'smime1@recipient.com', 'smime2@recipient.com', 'smime@recipient.com',
   'smime.attachment@recipient.com', 'auto.refresh.expired.key@recipient.com', 'to@example.com', 'cc@example.com', 'bcc@example.com',
@@ -56,18 +56,18 @@ export const mockGoogleEndpoints: HandlersDefinition = {
       if (query === 'contact') {
         return {
           results: [
-            { person: { emailAddresses: [{ metdata: { primary: true }, value: 'contact.test@flowcrypt.com' }] } },
+            { person: { emailAddresses: [{ metadata: { primary: true }, value: 'contact.test@flowcrypt.com' }] } },
           ]
         };
       } else if (query === 'testsearchorder') {
         return {
           results: [
-            { person: { emailAddresses: [{ metdata: { primary: true }, value: 'testsearchorder1@flowcrypt.com' }] } },
-            { person: { emailAddresses: [{ metdata: { primary: true }, value: 'testsearchorder2@flowcrypt.com' }] } },
-            { person: { emailAddresses: [{ metdata: { primary: true }, value: 'testsearchorder3@flowcrypt.com' }] } },
-            { person: { emailAddresses: [{ metdata: { primary: true }, value: 'testsearchorder4@flowcrypt.com' }] } },
-            { person: { emailAddresses: [{ metdata: { primary: true }, value: 'testsearchorder5@flowcrypt.com' }] } },
-            { person: { emailAddresses: [{ metdata: { primary: true }, value: 'testsearchorder6@flowcrypt.com' }] } },
+            { person: { emailAddresses: [{ metadata: { primary: true }, value: 'testsearchorder1@flowcrypt.com' }] } },
+            { person: { emailAddresses: [{ metadata: { primary: true }, value: 'testsearchorder2@flowcrypt.com' }] } },
+            { person: { emailAddresses: [{ metadata: { primary: true }, value: 'testsearchorder3@flowcrypt.com' }] } },
+            { person: { emailAddresses: [{ metadata: { primary: true }, value: 'testsearchorder4@flowcrypt.com' }] } },
+            { person: { emailAddresses: [{ metadata: { primary: true }, value: 'testsearchorder5@flowcrypt.com' }] } },
+            { person: { emailAddresses: [{ metadata: { primary: true }, value: 'testsearchorder6@flowcrypt.com' }] } },
           ]
         };
       } else {
@@ -87,9 +87,9 @@ export const mockGoogleEndpoints: HandlersDefinition = {
       if (query === 'testsearchorder') {
         return {
           results: [
-            { person: { emailAddresses: [{ metdata: { primary: true }, value: 'testsearchorder7@flowcrypt.com' }] } },
-            { person: { emailAddresses: [{ metdata: { primary: true }, value: 'testsearchorder8@flowcrypt.com' }] } },
-            { person: { emailAddresses: [{ metdata: { primary: true }, value: 'testsearchorder9@flowcrypt.com' }] } },
+            { person: { emailAddresses: [{ metadata: { primary: true }, value: 'testsearchorder7@flowcrypt.com' }] } },
+            { person: { emailAddresses: [{ metadata: { primary: true }, value: 'testsearchorder8@flowcrypt.com' }] } },
+            { person: { emailAddresses: [{ metadata: { primary: true }, value: 'testsearchorder9@flowcrypt.com' }] } },
           ]
         };
       } else {

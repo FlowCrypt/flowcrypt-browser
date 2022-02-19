@@ -35,10 +35,16 @@ View.run(class AddPubkeyView extends View {
   public render = async () => {
     Ui.event.protect();
     for (const missingPubkeyEmail of this.missingPubkeyEmails) {
-      Xss.sanitizeAppend('select.email', `<option value="${Xss.escape(missingPubkeyEmail)}">${Xss.escape(missingPubkeyEmail)}</option>`);
+      const escapedMissingPubkeyEmail = Xss.escape(missingPubkeyEmail);
+      Xss.sanitizeAppend('select.email', `<option value="${escapedMissingPubkeyEmail}">${escapedMissingPubkeyEmail}</option>`);
     }
+    const uniqueEmails = new Set<string>();
     for (const contact of await ContactStore.search(undefined, { hasPgp: true })) {
-      Xss.sanitizeAppend('select.copy_from_email', `<option value="${Xss.escape(contact.email)}">${Xss.escape(contact.email)}</option>`);
+      uniqueEmails.add(contact.email);
+    }
+    for (const email of Array.from(uniqueEmails).sort()) {
+      const escapedEmail = Xss.escape(email);
+      Xss.sanitizeAppend('select.copy_from_email', `<option value="${escapedEmail}">${escapedEmail}</option>`);
     }
     this.fetchKeyUi.handleOnPaste($('.pubkey'));
     $('.action_settings').click(this.setHandler(async () => await Browser.openSettingsPage('index.htm', this.acctEmail, '/chrome/settings/modules/contacts.htm')));
@@ -53,6 +59,7 @@ View.run(class AddPubkeyView extends View {
           if (errs.length) {
             await Ui.modal.warning(`some keys could not be processed due to errors:\n${errs.map(e => `-> ${e.message}\n`).join('')}`);
           }
+          $('.copy_from_email').val('');
           $('.pubkey').val(String(KeyUtil.armor(keys[0])));
           $('.action_ok').trigger('click');
         } else if (errs.length) {
@@ -73,21 +80,34 @@ View.run(class AddPubkeyView extends View {
     if ($(fromSelect).val()) {
       const [contact] = await ContactStore.get(undefined, [String($(fromSelect).val())]);
       if (contact?.pubkey) {
-        $('.pubkey').val(KeyUtil.armor(contact.pubkey)).prop('disabled', true);
+        $('.pubkey').val('').prop('disabled', true).prop('style', 'display: none;');
+        $('#manual-import-warning').prop('style', 'display: none;');
       } else {
         Catch.report('Contact unexpectedly not found when copying pubkey by email in add_pubkey.htm');
         await Ui.modal.error('Contact not found.');
       }
     } else {
-      $('.pubkey').val('').prop('disabled', false);
+      $('.pubkey').val('').prop('disabled', false).prop('style', 'display: inline;');
+      $('#manual-import-warning').prop('style', 'display: inline;');
     }
   };
 
   private submitHandler = async () => {
     try {
-      const keyImportUi = new KeyImportUi({ checkEncryption: true });
-      const normalized = await keyImportUi.checkPub(String($('.pubkey').val()));
-      await ContactStore.update(undefined, String($('select.email').val()), { pubkey: normalized });
+      const email = String($('select.email').val());
+      if ($('.copy_from_email').val()) {
+        const fromEmail = String($('.copy_from_email').val());
+        const keys = await ContactStore.getEncryptionKeys(undefined, [fromEmail]);
+        for (const keyArray of keys) {
+          for (const key of keyArray.keys) {
+            await ContactStore.update(undefined, email, { pubkey: key });
+          }
+        }
+      } else {
+        const keyImportUi = new KeyImportUi({ checkEncryption: true });
+        const normalized = await keyImportUi.checkPub(String($('.pubkey').val()));
+        await ContactStore.update(undefined, email, { pubkey: normalized });
+      }
       this.closeDialog();
     } catch (e) {
       if (e instanceof UserAlert) {
