@@ -246,10 +246,11 @@ export class KeyImportUi {
     if (KeyUtil.getKeyType(armored) !== 'openpgp') {
       return { normalized: armored };
     }
-    const headers = PgpArmor.headers(type);
     const normalized = await KeyUtil.normalize(armored);
     if (!normalized) {
-      throw new UserAlert('There was an error processing this key, possibly due to bad formatting.\nPlease insert complete key, including "' + headers.begin + '" and "' + headers.end + '"');
+      const headers = PgpArmor.headers(type);
+      throw new UserAlert('There was an error processing this key, possibly due to bad formatting.\n' +
+        `Please insert complete key, including "${headers.begin}" and "${headers.end}".`);
     }
     return normalized;
   };
