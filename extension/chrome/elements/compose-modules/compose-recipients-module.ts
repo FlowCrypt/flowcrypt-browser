@@ -286,7 +286,8 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     while (container.width()! <= maxWidth && orderedRecipients.length >= processed + 1) {
       const recipient = orderedRecipients[processed];
       const escapedTitle = Xss.escape(recipient.element.getAttribute('title') || '');
-      const emailHtml = `<span class="email_address ${recipient.element.className}" title="${escapedTitle}">${Xss.escape(recipient.email || recipient.invalid || '')}</span>`;
+      const nameOrEmail = recipient.name || recipient.email || recipient.invalid || '';
+      const emailHtml = `<span class="email_address ${recipient.element.className}" title="${escapedTitle}">${Xss.escape(nameOrEmail)}</span>`;
       $(emailHtml).insertBefore(rest); // xss-escaped
       processed++;
     }
