@@ -7,7 +7,7 @@ import { Config, Util } from './../util';
 import { writeFileSync } from 'fs';
 import { AvaContext } from './tooling';
 import { ComposePageRecipe } from './page-recipe/compose-page-recipe';
-import { Dict } from './../core/common';
+import { Dict, EmailParts } from './../core/common';
 import { GoogleData } from './../mock/google/google-data';
 import { InboxPageRecipe } from './page-recipe/inbox-page-recipe';
 import { OauthPageRecipe } from './page-recipe/oauth-page-recipe';
@@ -567,7 +567,11 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl, hasReplyPrompt: true });
       await composePage.waitAndClick('@action-accept-reply-all-prompt', { delay: 2 });
       await ComposePageRecipe.fillMsg(composePage, { bcc: "test@email.com" }, undefined, undefined, undefined, 'reply');
-      await expectRecipientElements(composePage, { to: ['censored@email.com'], cc: ['censored@email.com'], bcc: ['test@email.com'] });
+      await expectRecipientElements(composePage, {
+        to: [{ email: 'censored@email.com' }],
+        cc: [{ email: 'censored@email.com' }],
+        bcc: [{ email: 'test@email.com' }]
+      });
       await Util.sleep(3);
       await ComposePageRecipe.sendAndClose(composePage, { password: 'test-pass' });
     }));
@@ -683,7 +687,11 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       testWithBrowser('compatibility', async (t, browser) => {
         const appendUrl = 'draftId=draft-1';
         const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl });
-        await expectRecipientElements(composePage, { to: ['flowcryptcompatibility@gmail.com'], cc: ['flowcrypt.compatibility@gmail.com'], bcc: ['human@flowcrypt.com'] });
+        await expectRecipientElements(composePage, {
+          to: [{ email: 'flowcryptcompatibility@gmail.com', name: 'First Last' }],
+          cc: [{ email: 'flowcrypt.compatibility@gmail.com', name: 'First Last' }],
+          bcc: [{ email: 'human@flowcrypt.com' }]
+        });
         const subjectElem = await composePage.waitAny('@input-subject');
         expect(await PageRecipe.getElementPropertyJson(subjectElem, 'value')).to.equal('Test Draft - New Message');
         expect((await composePage.read('@input-body')).trim()).to.equal('Testing Drafts (Do not delete)');
@@ -705,7 +713,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       await settingsPage.close();
       const appendUrl = 'draftId=17c041fd27858466';
       const composePage = await ComposePageRecipe.openStandalone(t, browser, acctEmail, { appendUrl });
-      await expectRecipientElements(composePage, { to: ['smime@recipient.com'] });
+      await expectRecipientElements(composePage, { to: [{ email: 'smime@recipient.com' }] });
       const subjectElem = await composePage.waitAny('@input-subject');
       expect(await PageRecipe.getElementPropertyJson(subjectElem, 'value')).to.equal('Test S/MIME Encrypted Draft');
       expect((await composePage.read('@input-body')).trim()).to.equal('test text');
@@ -755,7 +763,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       const appendUrl = 'threadId=16cfa9001baaac0a&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___&replyMsgId=16cfa9001baaac0a&draftId=draft-3';
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl, hasReplyPrompt: true, skipClickPropt: true });
       await composePage.waitAndClick('@action-show-container-cc-bcc-buttons');
-      await expectRecipientElements(composePage, { to: ['flowcryptcompatibility@gmail.com'] });
+      await expectRecipientElements(composePage, { to: [{ email: 'flowcryptcompatibility@gmail.com', name: 'First Last' }] });
       expect(await composePage.read('@input-body')).to.include('Test Draft Reply (Do not delete, tests is using this draft)');
     }));
 
@@ -764,7 +772,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       const replyMismatchPage = await browser.newPage(t, 'chrome/elements/compose.htm?account_email=flowcrypt.compatibility%40gmail.com&parent_tab_id=0&debug=___cu_true___&frameId=none&' + params);
       await replyMismatchPage.waitForSelTestState('ready');
       await Util.sleep(3);
-      await expectRecipientElements(replyMismatchPage, { to: ['censored@email.com'], cc: [], bcc: [] });
+      await expectRecipientElements(replyMismatchPage, { to: [{ email: 'censored@email.com' }], cc: [], bcc: [] });
       expect(await replyMismatchPage.read('@input-body')).to.include('I was not able to read your encrypted message because it was encrypted for a wrong key.');
       await replyMismatchPage.waitAll('.qq-upload-file');
       await ComposePageRecipe.sendAndClose(replyMismatchPage);
@@ -855,14 +863,16 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       await composePage.press('Enter');
       await composePage.waitAndType(`@input-to`, 'human3@flowcrypt.com');
       await composePage.press('Enter');
-      await expectRecipientElements(composePage, { to: ['human1@flowcrypt.com', 'human2@flowcrypt.com', 'human3@flowcrypt.com'] });
+      await expectRecipientElements(composePage, {
+        to: [{ email: 'human1@flowcrypt.com' }, { email: 'human2@flowcrypt.com' }, { email: 'human3@flowcrypt.com' }]
+      });
       // delete recipient with Backspace when #input_to is focued
       await composePage.press('Backspace');
-      await expectRecipientElements(composePage, { to: ['human1@flowcrypt.com', 'human2@flowcrypt.com'] });
+      await expectRecipientElements(composePage, { to: [{ email: 'human1@flowcrypt.com' }, { email: 'human2@flowcrypt.com' }] });
       // delete recipient with Delete when it's focused
       await composePage.waitAndFocus('@recipient_0');
       await composePage.press('Delete');
-      await expectRecipientElements(composePage, { to: ['human2@flowcrypt.com'] });
+      await expectRecipientElements(composePage, { to: [{ email: 'human2@flowcrypt.com' }] });
       // delete recipient with Backspace when it's focused
       await composePage.waitAndFocus('@recipient_1');
       await composePage.press('Backspace');
@@ -1511,35 +1521,44 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       const appendUrl = 'threadId=17d02296bccd4c5c&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___&replyMsgId=17d02296bccd4c5c';
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl, hasReplyPrompt: true });
       await composePage.waitAndClick('@encrypted-reply', { delay: 1 });
-      await expectRecipientElements(composePage, { to: ['flowcrypt.compatibility@gmail.com', 'vladimir@flowcrypt.com'], cc: [], bcc: [] });
+      await expectRecipientElements(composePage, {
+        to: [{ email: 'flowcrypt.compatibility@gmail.com', name: 'First Last' }, { email: 'vladimir@flowcrypt.com' }],
+        cc: [], bcc: []
+      });
     }));
 
     ava.default('compose - reply - subject starts with Re:', testWithBrowser('compatibility', async (t, browser) => {
       const appendUrl = 'threadId=17d02296bccd4c5d&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___&replyMsgId=17d02296bccd4c5d';
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl, hasReplyPrompt: true });
       await composePage.waitAndClick('@encrypted-reply', { delay: 1 });
-      await expectRecipientElements(composePage, { to: ['vladimir@flowcrypt.com'], cc: [], bcc: [] });
+      await expectRecipientElements(composePage, { to: [{ email: 'vladimir@flowcrypt.com' }], cc: [], bcc: [] });
     }));
 
     ava.default('compose - reply - from !== acctEmail', testWithBrowser('compatibility', async (t, browser) => {
       const appendUrl = 'threadId=17d02268f01c7e40&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___&replyMsgId=17d02268f01c7e40';
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl, hasReplyPrompt: true });
       await composePage.waitAndClick('@encrypted-reply', { delay: 1 });
-      await expectRecipientElements(composePage, { to: ['limon.monte@gmail.com'], cc: [], bcc: [] });
+      await expectRecipientElements(composePage, { to: [{ email: 'limon.monte@gmail.com' }], cc: [], bcc: [] });
     }));
 
     ava.default('compose - reply all - from === acctEmail', testWithBrowser('compatibility', async (t, browser) => {
       const appendUrl = 'threadId=17d02296bccd4c5c&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___&replyMsgId=17d02296bccd4c5c';
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl, hasReplyPrompt: true });
       await composePage.waitAndClick('@action-accept-reply-all-prompt', { delay: 1 });
-      await expectRecipientElements(composePage, { to: ['flowcrypt.compatibility@gmail.com', 'vladimir@flowcrypt.com'], cc: ['limon.monte@gmail.com'], bcc: ['sweetalert2@gmail.com'] });
+      await expectRecipientElements(composePage, {
+        to: [{ email: 'flowcrypt.compatibility@gmail.com' }, { email: 'vladimir@flowcrypt.com' }],
+        cc: [{ email: 'limon.monte@gmail.com' }], bcc: [{ email: 'sweetalert2@gmail.com' }]
+      });
     }));
 
     ava.default('compose - reply all - from !== acctEmail', testWithBrowser('compatibility', async (t, browser) => {
       const appendUrl = 'threadId=17d02268f01c7e40&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___&replyMsgId=17d02268f01c7e40';
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl, hasReplyPrompt: true });
       await composePage.waitAndClick('@action-accept-reply-all-prompt', { delay: 1 });
-      await expectRecipientElements(composePage, { to: ['limon.monte@gmail.com', 'vladimir@flowcrypt.com'], cc: ['limon.monte@gmail.com'], bcc: [] });
+      await expectRecipientElements(composePage, {
+        to: [{ email: 'limon.monte@gmail.com' }, { email: 'vladimir@flowcrypt.com' }],
+        cc: [{ email: 'limon.monte@gmail.com' }], bcc: []
+      });
     }));
 
     /**
@@ -1657,16 +1676,19 @@ const clickTripleDotAndExpectQuoteToLoad = async (composePage: Controllable, tex
   expect(await composePage.read('@input-body')).to.include(textToInclude);
 };
 
-export const expectRecipientElements = async (controllable: ControllablePage, expected: { to?: string[], cc?: string[], bcc?: string[] }) => {
+export const expectRecipientElements = async (controllable: ControllablePage, expected: { to?: EmailParts[], cc?: EmailParts[], bcc?: EmailParts[] }) => {
   for (const type of ['to', 'cc', 'bcc']) {
-    const expectedEmails: string[] | undefined = (expected as Dict<string[]>)[type] || undefined; // tslint:disable-line:no-unsafe-any
+    const expectedEmails: EmailParts[] | undefined = (expected as Dict<EmailParts[]>)[type] || undefined; // tslint:disable-line:no-unsafe-any
     if (expectedEmails) {
       const container = await controllable.waitAny(`@container-${type}`, { visible: false });
       const recipientElements = await container.$$('.recipients > span');
       expect(recipientElements.length).to.equal(expectedEmails.length);
       for (const recipientElement of recipientElements) {
-        const textContent = await PageRecipe.getElementPropertyJson(recipientElement, 'textContent');
-        expect(expectedEmails).to.include(textContent.trim());
+        const emailElement = await recipientElement.$('.recipient-email');
+        const nameElement = await recipientElement.$('.recipient-name');
+        const email = emailElement ? await PageRecipe.getElementPropertyJson(emailElement, 'textContent') : undefined;
+        const name = nameElement ? await PageRecipe.getElementPropertyJson(nameElement, 'textContent') : undefined;
+        expect(expectedEmails).to.deep.include(name ? { email, name } : { email });
       }
     }
   }

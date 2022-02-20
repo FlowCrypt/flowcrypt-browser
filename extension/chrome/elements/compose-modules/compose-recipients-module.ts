@@ -757,7 +757,9 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     const result: RecipientElement[] = [];
     for (const { email, name, invalid } of emails) {
       const recipientId = this.generateRecipientId();
-      const recipientsHtml = `<span tabindex="0" id="${recipientId}" data-test="${recipientId}"><span class="recipient-name">${Xss.escape(name || '')}</span><span>${Xss.escape(email || invalid || '')}</span> ${Ui.spinner('green')}</span>`;
+      const recipientsHtml = `<span tabindex="0" id="${recipientId}" data-test="${recipientId}">` +
+        `<span class="recipient-name">${Xss.escape(name || '')}</span>` +
+        `<span class="recipient-email">${Xss.escape(email || invalid || '')}</span> ${Ui.spinner('green')}</span>`;
       Xss.sanitizeAppend(container.find('.recipients'), recipientsHtml);
       const element = document.getElementById(recipientId);
       if (element) { // if element wasn't created this means that Composer is used by another component
