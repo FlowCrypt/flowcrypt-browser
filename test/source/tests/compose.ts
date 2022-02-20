@@ -1546,7 +1546,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl, hasReplyPrompt: true });
       await composePage.waitAndClick('@action-accept-reply-all-prompt', { delay: 1 });
       await expectRecipientElements(composePage, {
-        to: [{ email: 'flowcrypt.compatibility@gmail.com' }, { email: 'vladimir@flowcrypt.com' }],
+        to: [{ email: 'flowcrypt.compatibility@gmail.com', name: 'First Last' }, { email: 'vladimir@flowcrypt.com' }],
         cc: [{ email: 'limon.monte@gmail.com' }], bcc: [{ email: 'sweetalert2@gmail.com' }]
       });
     }));
