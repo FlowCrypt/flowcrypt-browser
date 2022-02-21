@@ -38,11 +38,11 @@ export const defineElementTests = (testVariant: TestVariant, testWithBrowser: Te
       await ppPage.waitForContent('.ui-toast-title', '2 of 4 keys were unlocked by this pass phrase');
     }));
 
-    ava.todo('elements/pgp_pubkey shows graceful error when pubkey not usable');
+    ava.default.todo('elements/pgp_pubkey shows graceful error when pubkey not usable');
 
-    ava.todo('elements/pgp_pubkey can render several pubkeys in one armor');
+    ava.default.todo('elements/pgp_pubkey can render several pubkeys in one armor');
 
-    ava.todo('compose - elements/pgp_pubkey can import several pubkeys in one armor');
+    ava.default.todo('compose - elements/pgp_pubkey can import several pubkeys in one armor');
 
   }
 

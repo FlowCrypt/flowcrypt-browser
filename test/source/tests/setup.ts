@@ -26,13 +26,13 @@ export const defineSetupTests = (testVariant: TestVariant, testWithBrowser: Test
     // note - `SetupPageRecipe.createKey` tests are in `defineFlakyTests` - running serially
     // because the keygen CPU spike can cause trouble to other concurrent tests
 
-    ava.todo('setup - no connection when pulling backup - retry prompt shows and works');
+    ava.default.todo('setup - no connection when pulling backup - retry prompt shows and works');
 
-    ava.todo('setup - simple - no connection when making a backup - retry prompt shows');
+    ava.default.todo('setup - simple - no connection when making a backup - retry prompt shows');
 
-    ava.todo('setup - advanced - no connection when making a backup - retry prompt shows');
+    ava.default.todo('setup - advanced - no connection when making a backup - retry prompt shows');
 
-    ava.todo('setup - no connection when submitting public key - retry prompt shows and works');
+    ava.default.todo('setup - no connection when submitting public key - retry prompt shows and works');
 
     ava.default('settings > login > close oauth window > close popup', testWithBrowser(undefined, async (t, browser) => {
       const settingsPage = await BrowserRecipe.openSettingsLoginButCloseOauthWindowBeforeGrantingPermission(t, browser, 'flowcrypt.test.key.imported@gmail.com');
@@ -111,7 +111,7 @@ export const defineSetupTests = (testVariant: TestVariant, testWithBrowser: Test
         { isSavePassphraseChecked: false, isSavePassphraseHidden: false });
     }));
 
-    ava.todo('setup - import key - naked - do not supply pass phrase gets error');
+    ava.default.todo('setup - import key - naked - do not supply pass phrase gets error');
 
     ava.default('setup - import key - fix key self signatures', testWithBrowser(undefined, async (t, browser) => {
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.test.key.imported@gmail.com');
@@ -130,7 +130,7 @@ export const defineSetupTests = (testVariant: TestVariant, testWithBrowser: Test
     //
     // The test will also succeed if local openpgp.js is patched and
     // `!this.users.length` condition is removed from the Key constructor.
-    ava.failing('setup - import key - fix uids', testWithBrowser(undefined, async (t, browser) => {
+    ava.default.failing('setup - import key - fix uids', testWithBrowser(undefined, async (t, browser) => {
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.test.key.imported@gmail.com');
       await SetupPageRecipe.manualEnter(settingsPage, 'unused', {
         submitPubkey: false, fixKey: true,
@@ -396,7 +396,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       await SetupPageRecipe.recover(settingsPage, 'flowcrypt.compatibility.2pp1', {});
     }));
 
-    ava.todo('setup - recover with a pass phrase - 1pp1 then wrong, then skip');
+    ava.default.todo('setup - recover with a pass phrase - 1pp1 then wrong, then skip');
     // ava.default('setup - recover with a pass phrase - 1pp1 then wrong, then skip', test_with_browser(async (t, browser) => {
     //   const settingsPage = await BrowserRecipe.open_settings_login_approve(t, browser,'flowcrypt.compatibility@gmail.com');
     //   await SetupPageRecipe.setup_recover(settingsPage, 'flowcrypt.compatibility.1pp1', {has_recover_more: true, click_recover_more: true});

@@ -1145,9 +1145,9 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       await composePage.waitAll('@input-password');
     }));
 
-    ava.todo('compose - reply - new gmail threadId fmt');
+    ava.default.todo('compose - reply - new gmail threadId fmt');
 
-    ava.todo('compose - reply - skip click prompt');
+    ava.default.todo('compose - reply - skip click prompt');
 
     ava.default('send signed S/MIME message', testWithBrowser(undefined, async (t, browser) => {
       const acctEmail = 'flowcrypt.test.key.imported@gmail.com';

@@ -744,7 +744,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
       await Util.sleep(5);
     }));
 
-    ava.todo('decrypt - by entering secondary pass phrase');
+    ava.default.todo('decrypt - by entering secondary pass phrase');
 
     ava.default(`decrypt - don't allow api path traversal`, testWithBrowser('compatibility', async (t, browser) => {
       const params = "?frame_id=frame_TWloVRhvZE&message=&message_id=../test&senderEmail=&is_outgoing=___cu_false___&account_email=flowcrypt.compatibility%40gmail.com";
