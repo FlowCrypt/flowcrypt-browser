@@ -5,7 +5,7 @@
 import { RecipientType } from '../../../js/common/api/shared/api.js';
 import { ParsedRecipients } from '../../../js/common/api/email-provider/email-provider-api.js';
 import { KeyInfo, PubkeyResult } from '../../../js/common/core/crypto/key.js';
-import { EmailParts } from '../../../js/common/core/common.js';
+import { EmailParts, Value } from '../../../js/common/core/common.js';
 
 export enum RecipientStatus {
   EVALUATING,
@@ -61,3 +61,7 @@ export class SendBtnTexts {
   public static readonly BTN_WRONG_ENTRY: string = "Re-enter recipient..";
   public static readonly BTN_SENDING: string = "Sending..";
 }
+
+export const getUniqueRecipientEmails = (recipients: ParsedRecipients) => {
+  return Value.arr.unique(Object.values(recipients).reduce((a, b) => a.concat(b), []).filter(x => x.email).map(x => x.email));
+};

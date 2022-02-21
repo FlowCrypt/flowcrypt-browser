@@ -5,7 +5,7 @@
 import { BaseMailFormatter } from './base-mail-formatter.js';
 import { ComposerResetBtnTrigger } from '../compose-err-module.js';
 import { Mime, SendableMsgBody } from '../../../../js/common/core/mime.js';
-import { NewMsgData } from '../compose-types.js';
+import { getUniqueRecipientEmails, NewMsgData } from '../compose-types.js';
 import { Str, Url, Value } from '../../../../js/common/core/common.js';
 import { ApiErr } from '../../../../js/common/api/shared/api-error.js';
 import { Attachment } from '../../../../js/common/core/attachment.js';
@@ -157,7 +157,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
   private getPwdMsgSendableBodyWithOnlineReplyMsgToken = async (
     authInfo: FcUuidAuth, newMsgData: NewMsgData
   ): Promise<{ bodyWithReplyToken: SendableMsgBody, replyToken: string }> => {
-    const recipients = Value.arr.unique(Object.values(newMsgData.recipients).reduce((a, b) => a.concat(b), []).map(x => x.email));
+    const recipients = getUniqueRecipientEmails(newMsgData.recipients);
     try {
       const response = await this.view.acctServer.messageToken(authInfo);
       const infoDiv = Ui.e('div', {

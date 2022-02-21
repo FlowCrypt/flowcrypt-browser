@@ -4,19 +4,18 @@
 
 import { EncryptedMsgMailFormatter } from './encrypted-mail-msg-formatter.js';
 import { Key, KeyInfo } from "../../../../js/common/core/crypto/key.js";
-import { NewMsgData } from "../compose-types.js";
+import { getUniqueRecipientEmails, NewMsgData } from "../compose-types.js";
 import { PlainMsgMailFormatter } from './plain-mail-msg-formatter.js';
 import { SendableMsg } from '../../../../js/common/api/email-provider/sendable-msg.js';
 import { SignedMsgMailFormatter } from './signed-msg-mail-formatter.js';
 import { ComposeView } from '../../compose.js';
-import { Value } from '../../../../js/common/core/common.js';
 
 export class GeneralMailFormatter {
 
   // returns undefined in case user cancelled decryption of the signing key
   public static processNewMsg = async (view: ComposeView, newMsgData: NewMsgData): Promise<{ msg: SendableMsg, senderKi: KeyInfo | undefined } | undefined> => {
     const choices = view.sendBtnModule.popover.choices;
-    const recipientsEmails = Value.arr.unique(Object.values(newMsgData.recipients).reduce((a, b) => a.concat(b), []).map(x => x.email));
+    const recipientsEmails = getUniqueRecipientEmails(newMsgData.recipients);
     if (!choices.encrypt && !choices.sign) { // plain
       return { senderKi: undefined, msg: await new PlainMsgMailFormatter(view).sendableMsg(newMsgData) };
     }
