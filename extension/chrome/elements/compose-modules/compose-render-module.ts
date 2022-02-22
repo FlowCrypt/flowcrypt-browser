@@ -60,7 +60,7 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
     } else {
       this.view.S.cached('body').css('overflow', 'hidden'); // do not enable this for replies or automatic resize won't work
       await this.renderComposeTable();
-      await this.view.recipientsModule.setEmailsPreview(this.view.recipientsModule.getRecipients());
+      this.view.recipientsModule.setEmailsPreview();
     }
     this.view.sendBtnModule.resetSendBtn();
     await this.view.sendBtnModule.popover.render();
@@ -70,7 +70,7 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
   public renderReplyMsgComposeTable = async (): Promise<void> => {
     this.view.S.cached('prompt').css({ display: 'none' });
     this.view.recipientsModule.showHideCcAndBccInputsIfNeeded();
-    await this.view.recipientsModule.setEmailsPreview(this.view.recipientsModule.getRecipients());
+    this.view.recipientsModule.setEmailsPreview();
     await this.renderComposeTable();
     if (this.view.replyParams) {
       const thread = await this.view.emailProvider.threadGet(this.view.threadId, 'metadata');

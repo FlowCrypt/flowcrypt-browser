@@ -1564,6 +1564,15 @@ table#compose td.recipients-inputs > div#input_addresses_container div .recipien
 table#compose td.recipients-inputs > div#input_addresses_container div .recipients > span.failed { border: 1px dashed #a44; }
 table#compose td.recipients-inputs > div#input_addresses_container div .recipients > span.failed .close-icon { opacity: 1; }
 
+.recipient-name {
+  font-weight: 500;
+  margin: 2px 4px 0 0;
+}
+
+.recipient-name:empty {
+  margin: 0;
+}
+
 table#compose td.recipients-inputs > div#input_addresses_container div .recipients i.drag-cursor {
   width: 2px;
   height: 20px;
@@ -2127,10 +2136,6 @@ div#contacts ul li:not(.loading) {
 
 div#contacts ul li.active:not(.loading) { background: #d6d6d6; }
 
-div#contacts ul li.auth_contacts {
-  background: #fff !important;
-  height: 24px;
-}
 div#contacts .button { padding: 4px 20px; }
 
 div#contacts div.allow-google-contact-search {

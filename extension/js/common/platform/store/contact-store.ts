@@ -3,8 +3,8 @@
 import { AbstractStore } from './abstract-store.js';
 import { Catch } from '../catch.js';
 import { BrowserMsg } from '../../browser/browser-msg.js';
-import { DateUtility, Str, Value } from '../../core/common.js';
-import { Key, Contact, KeyUtil, PubkeyInfo, PubkeyInfoWithLastCheck } from '../../core/crypto/key.js';
+import { DateUtility, EmailParts, Str, Value } from '../../core/common.js';
+import { Key, Contact, KeyUtil, PubkeyInfo, ContactInfoWithSortedPubkeys, ContactInfo } from '../../core/crypto/key.js';
 
 // tslint:disable:no-null-keyword
 
@@ -39,9 +39,7 @@ export type ContactV4 = {
   revocations: Revocation[]
 };
 
-export type ContactPreview = {
-  email: string;
-  name: string | null;
+export type ContactPreview = EmailParts & {
   hasPgp: 0 | 1;
   lastUse: number | null;
 };
@@ -61,11 +59,6 @@ type ContactUpdateParsed = {
 };
 
 type DbContactFilter = { hasPgp?: boolean, substring?: string, limit?: number };
-
-type EmailWithSortedPubkeys = {
-  info: Email, // todo: convert to a model class, exclude unnecessary fields like searchable
-  sortedPubkeys: PubkeyInfoWithLastCheck[]
-};
 
 const x509postfix = "-X509";
 
@@ -111,12 +104,12 @@ export class ContactStore extends AbstractStore {
     });
   };
 
-  public static previewObj = ({ email, name }: { email: string, name?: string | null }): ContactPreview => {
+  public static previewObj = ({ email, name }: EmailParts): ContactPreview => {
     const validEmail = Str.parseEmail(email).email;
     if (!validEmail) {
       throw new Error(`Cannot handle the contact because email is not valid: ${email}`);
     }
-    return { email: validEmail, name: name || null, hasPgp: 0, lastUse: null };
+    return { email: validEmail, name, hasPgp: 0, lastUse: null };
   };
 
   /**
@@ -206,7 +199,7 @@ export class ContactStore extends AbstractStore {
   };
 
   public static getOneWithAllPubkeys = async (db: IDBDatabase | undefined, email: string):
-    Promise<EmailWithSortedPubkeys | undefined> => {
+    Promise<ContactInfoWithSortedPubkeys | undefined> => {
     if (!db) { // relay op through background process
       // tslint:disable-next-line:no-unsafe-any
       return await BrowserMsg.send.bg.await.db({ f: 'getOneWithAllPubkeys', args: [email] });
@@ -244,7 +237,10 @@ export class ContactStore extends AbstractStore {
         },
         reject);
     });
-    return emailEntity ? { info: emailEntity, sortedPubkeys: await ContactStore.sortKeys(pubkeys, revocations) } : undefined;
+    return emailEntity ? {
+      info: { email: emailEntity.email, name: emailEntity.name || undefined },
+      sortedPubkeys: await ContactStore.sortKeys(pubkeys, revocations)
+    } : undefined;
   };
 
   // todo: return parsed and with applied revocation
@@ -630,17 +626,13 @@ export class ContactStore extends AbstractStore {
     return { fingerprint: key?.id ?? null, expiresOn: DateUtility.asNumber(key?.expiration) };
   };
 
-  private static toContactFromKey = (email: Email | undefined, key: Key | undefined, lastCheck: number | undefined | null, revokedExternally: boolean): Contact | undefined => {
-    if (!email) {
-      return;
-    }
+  private static toContactFromKey = (email: ContactInfo, key: Key | undefined, lastCheck: number | undefined | null, revokedExternally: boolean): Contact | undefined => {
     const safeKey = revokedExternally ? undefined : key;
     return {
       email: email.email,
       name: email.name,
       pubkey: safeKey,
       hasPgp: safeKey ? 1 : 0,
-      lastUse: email.lastUse,
       pubkeyLastCheck: lastCheck ?? null,
       ...ContactStore.getKeyAttributes(key),
       revoked: revokedExternally || Boolean(key?.revoked)
@@ -648,6 +640,6 @@ export class ContactStore extends AbstractStore {
   };
 
   private static toContactPreview = (result: Email): ContactPreview => {
-    return { email: result.email, name: result.name, hasPgp: result.fingerprints.length > 0 ? 1 : 0, lastUse: result.lastUse };
+    return { email: result.email, name: result.name || undefined, hasPgp: result.fingerprints.length > 0 ? 1 : 0, lastUse: result.lastUse };
   };
 }

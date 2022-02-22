@@ -8,12 +8,12 @@
 import { Api, ProgressCb, ReqMethod } from '../shared/api.js';
 import { AcctStore } from '../../platform/store/acct-store.js';
 import { BackendRes, ProfileUpdate } from './flowcrypt-com-api.js';
-import { Dict } from '../../core/common.js';
+import { Dict, Str } from '../../core/common.js';
 import { ErrorReport, UnreportableError } from '../../platform/catch.js';
 import { ApiErr, BackendAuthErr } from '../shared/api-error.js';
 import { FLAVOR, InMemoryStoreKeys } from '../../core/const.js';
 import { Attachment } from '../../core/attachment.js';
-import { Recipients } from '../email-provider/email-provider-api.js';
+import { ParsedRecipients } from '../email-provider/email-provider-api.js';
 import { Buf } from '../../core/buf.js';
 import { DomainRulesJson } from '../../org-rules.js';
 import { InMemoryStore } from '../../platform/store/in-memory-store.js';
@@ -108,7 +108,7 @@ export class EnterpriseServer extends Api {
     encrypted: Uint8Array,
     associateReplyToken: string,
     from: string,
-    recipients: Recipients,
+    recipients: ParsedRecipients,
     progressCb: ProgressCb
   ): Promise<FesRes.MessageUpload> => {
     const content = new Attachment({
@@ -122,9 +122,9 @@ export class EnterpriseServer extends Api {
       data: Buf.fromUtfStr(JSON.stringify({
         associateReplyToken,
         from,
-        to: recipients.to || [],
-        cc: recipients.cc || [],
-        bcc: recipients.bcc || []
+        to: (recipients.to || []).map(Str.formatEmailWithOptionalName),
+        cc: (recipients.cc || []).map(Str.formatEmailWithOptionalName),
+        bcc: (recipients.bcc || []).map(Str.formatEmailWithOptionalName)
       }))
     });
     const multipartBody = { content, details };

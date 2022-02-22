@@ -10,8 +10,10 @@ import { KeyInfo } from '../../core/crypto/key.js';
 import { GmailRes } from './gmail/gmail-parser.js';
 import { GmailResponseFormat } from './gmail/gmail.js';
 import { SendableMsg } from './sendable-msg.js';
+import { EmailParts } from '../../core/common.js';
 
 export type Recipients = { to?: string[], cc?: string[], bcc?: string[] };
+export type ParsedRecipients = { to?: EmailParts[], cc?: EmailParts[], bcc?: EmailParts[] };
 export type ProviderContactsQuery = { substring: string };
 
 export type ReplyParams = {

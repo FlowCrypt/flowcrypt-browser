@@ -2,20 +2,24 @@
 
 'use strict';
 
+import { EmailParts } from './core/common.js';
 import { KeyUtil, PubkeyInfo } from './core/crypto/key.js';
 import { ContactStore } from './platform/store/contact-store.js';
 
 /**
  * Save fetched keys if they are newer versions of public keys we already have (compared by fingerprint)
  */
-export const compareAndSavePubkeysToStorage = async (email: string, fetchedPubkeys: string[], storedPubkeys: PubkeyInfo[]): Promise<boolean> => {
+export const compareAndSavePubkeysToStorage = async ({ email, name }: EmailParts, fetchedPubkeys: string[], storedPubkeys: PubkeyInfo[]): Promise<boolean> => {
   let updated = false;
   for (const fetched of await Promise.all(fetchedPubkeys.map(KeyUtil.parse))) {
     const stored = storedPubkeys.find(p => KeyUtil.identityEquals(p.pubkey, fetched))?.pubkey;
     if (!stored || KeyUtil.isFetchedNewer({ fetched, stored })) {
-      await ContactStore.update(undefined, email, { pubkey: fetched, pubkeyLastCheck: Date.now() });
+      await ContactStore.update(undefined, email, { pubkey: fetched, pubkeyLastCheck: Date.now(), name });
       updated = true;
     }
+  }
+  if (!updated && name) {
+    await ContactStore.update(undefined, email, { name });
   }
   return updated;
 };
@@ -28,6 +32,6 @@ export const saveFetchedPubkeysIfNewerThanInStorage = async ({ email, pubkeys }:
     return false;
   }
   const storedContact = await ContactStore.getOneWithAllPubkeys(undefined, email);
-  return await compareAndSavePubkeysToStorage(email, pubkeys, storedContact?.sortedPubkeys ?? []);
+  return await compareAndSavePubkeysToStorage({ email }, pubkeys, storedContact?.sortedPubkeys ?? []);
 };
 

@@ -267,9 +267,6 @@ BROWSER_UNIT_TEST_NAME(`ContactStore saves and returns dates as numbers`);
   const lastUse = pubkeyLastCheck + 1000;
   await ContactStore.update(undefined, email, { pubkey: testConstants.expiredPub, pubkeyLastCheck, lastUse });
   const [loaded] = await ContactStore.get(undefined, [email]);
-  if (typeof loaded.lastUse !== 'number') {
-    throw Error(`lastUse was expected to be a number, but got ${typeof loaded.lastUse}`);
-  }
   if (typeof loaded.pubkeyLastCheck !== 'number') {
     throw Error(`pubkeyLastCheck was expected to be a number, but got ${typeof loaded.pubkeyLastCheck}`);
   }

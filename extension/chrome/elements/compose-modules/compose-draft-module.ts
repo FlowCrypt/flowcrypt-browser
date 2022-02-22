@@ -274,7 +274,7 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
   };
 
   private fillAndRenderDraftHeaders = async (decoded: MimeContent) => {
-    await this.view.recipientsModule.addRecipientsAndShowPreview({ to: decoded.to, cc: decoded.cc, bcc: decoded.bcc });
+    this.view.recipientsModule.addRecipientsAndShowPreview({ to: decoded.to, cc: decoded.cc, bcc: decoded.bcc });
     if (decoded.from) {
       this.view.S.now('input_from').val(decoded.from);
     }

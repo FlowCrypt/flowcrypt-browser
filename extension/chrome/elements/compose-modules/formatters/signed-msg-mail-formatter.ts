@@ -5,7 +5,7 @@
 import { BaseMailFormatter } from './base-mail-formatter.js';
 import { BrowserWindow } from '../../../../js/common/browser/browser-window.js';
 import { Catch } from '../../../../js/common/platform/catch.js';
-import { NewMsgData } from '../compose-types.js';
+import { getUniqueRecipientEmails, NewMsgData } from '../compose-types.js';
 import { Key } from '../../../../js/common/core/crypto/key.js';
 import { MsgUtil } from '../../../../js/common/core/crypto/pgp/msg-util.js';
 import { SendableMsg } from '../../../../js/common/api/email-provider/sendable-msg.js';
@@ -40,8 +40,8 @@ export class SignedMsgMailFormatter extends BaseMailFormatter {
       // Removing them here will prevent Gmail from screwing up the signature
       newMsg.plaintext = newMsg.plaintext.split('\n').map(l => l.replace(/\s+$/g, '')).join('\n').trim();
       const signedData = await MsgUtil.sign(signingPrv, newMsg.plaintext);
-      const allContacts = [...newMsg.recipients.to || [], ...newMsg.recipients.cc || [], ...newMsg.recipients.bcc || []];
-      ContactStore.update(undefined, allContacts, { lastUse: Date.now() }).catch(Catch.reportErr);
+      const recipients = getUniqueRecipientEmails(newMsg.recipients);
+      ContactStore.update(undefined, recipients, { lastUse: Date.now() }).catch(Catch.reportErr);
       return await SendableMsg.createInlineArmored(this.acctEmail, this.headers(newMsg), signedData, attachments);
     }
     // pgp/mime detached signature - it must be signed later, while being mime-encoded
