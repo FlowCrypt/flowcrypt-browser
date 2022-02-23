@@ -100,7 +100,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       await passphrasePage.close();
     }));
 
-    ava.todo('settings - verify 2pp1 key presense');
+    ava.default.todo('settings - verify 2pp1 key presense');
     // await tests.settings_my_key_tests(settingsPage, 'flowcrypt.compatibility.2pp1', 'link');
 
     ava.default('settings - feedback form', testWithBrowser('compatibility', async (t, browser) => {
@@ -337,7 +337,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       await addKeyFrame.waitForContent('@container-err-text', 'Please contact your IT staff if you wish to update your keys');
     }));
 
-    ava.todo('settings - edit contact public key');
+    ava.default.todo('settings - edit contact public key');
 
     ava.default('settings - change passphrase - current in local storage', testWithBrowser(undefined, async (t, browser) => {
       const { acctEmail, settingsPage } = await BrowserRecipe.setUpFcPpChangeAcct(t, browser);
@@ -976,9 +976,9 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       expect(savedPassphrase2).to.be.an('undefined');
     }));
 
-    ava.todo('settings - change passphrase - mismatch curent pp');
+    ava.default.todo('settings - change passphrase - mismatch curent pp');
 
-    ava.todo('settings - change passphrase - mismatch new pp');
+    ava.default.todo('settings - change passphrase - mismatch new pp');
 
   }
 

@@ -50,7 +50,7 @@ const browserPool = new BrowserPool(consts.POOL_SIZE, 'browserPool', false, buil
 let closeMockApi: () => Promise<void>;
 const mockApiLogs: string[] = [];
 
-ava.before('set config and mock api', async t => {
+ava.default.before('set config and mock api', async t => {
   standaloneTestTimeout(t, consts.TIMEOUT_EACH_RETRY, t.title);
   Config.extensionId = await browserPool.getExtensionId(t);
   console.info(`Extension url: chrome-extension://${Config.extensionId}`);
@@ -66,7 +66,7 @@ ava.before('set config and mock api', async t => {
   t.pass();
 });
 
-const testWithBrowser = (acct: CommonAcct | undefined, cb: (t: AvaContext, browser: BrowserHandle) => Promise<void>, flag?: 'FAILING'): ava.Implementation<{}> => {
+const testWithBrowser = (acct: CommonAcct | undefined, cb: (t: AvaContext, browser: BrowserHandle) => Promise<void>, flag?: 'FAILING'): ava.Implementation<unknown[]> => {
   return async (t: AvaContext) => {
     await browserPool.withNewBrowserTimeoutAndRetry(async (t, browser) => {
       const start = Date.now();
@@ -98,21 +98,21 @@ const testWithBrowser = (acct: CommonAcct | undefined, cb: (t: AvaContext, brows
 
 export type TestWithBrowser = typeof testWithBrowser;
 
-ava.after.always('close browsers', async t => {
+ava.default.after.always('close browsers', async t => {
   standaloneTestTimeout(t, consts.TIMEOUT_SHORT, t.title);
   await browserPool.close();
   t.pass();
 });
 
 if (isMock) {
-  ava.after.always('close mock api', async t => {
+  ava.default.after.always('close mock api', async t => {
     standaloneTestTimeout(t, consts.TIMEOUT_SHORT, t.title);
     closeMockApi().catch(t.log);
     t.pass();
   });
 }
 
-ava.after.always('evaluate Catch.reportErr errors', async t => {
+ava.default.after.always('evaluate Catch.reportErr errors', async t => {
   if (!isMock || testGroup !== 'STANDARD-GROUP') { // can only collect reported errs when running with a mocked api
     t.pass();
     return;
@@ -148,7 +148,7 @@ ava.after.always('evaluate Catch.reportErr errors', async t => {
   }
 });
 
-ava.after.always('send debug info if any', async t => {
+ava.default.after.always('send debug info if any', async t => {
   console.info('send debug info - deciding');
   const failRnd = Util.lousyRandom();
   const testId = `FlowCrypt Browser Extension ${testVariant} ${failRnd}`;
