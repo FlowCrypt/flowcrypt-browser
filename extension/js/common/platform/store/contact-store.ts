@@ -155,23 +155,6 @@ export class ContactStore extends AbstractStore {
     });
   };
 
-  public static get = async (db: undefined | IDBDatabase, emails: string[]): Promise<(Contact | undefined)[]> => {
-    if (!db) { // relay op through background process
-      return await BrowserMsg.send.bg.await.db({ f: 'get', args: [emails] }) as (Contact | undefined)[];
-    }
-    if (emails.length === 1) {
-      const contact = await ContactStore.dbContactInternalGetOne(db, emails[0]);
-      return [contact];
-    } else {
-      const results: (Contact | undefined)[] = [];
-      for (const email of emails) {
-        const [contact] = await ContactStore.get(db, [email]);
-        results.push(contact);
-      }
-      return results;
-    }
-  };
-
   public static getEncryptionKeys = async (db: undefined | IDBDatabase, emails: string[]): Promise<{ email: string, keys: Key[] }[]> => {
     if (!db) { // relay op through background process
       return await BrowserMsg.send.bg.await.db({ f: 'getEncryptionKeys', args: [emails] }) as { email: string, keys: Key[] }[];
