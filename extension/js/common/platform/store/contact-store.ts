@@ -4,7 +4,7 @@ import { AbstractStore } from './abstract-store.js';
 import { Catch } from '../catch.js';
 import { BrowserMsg } from '../../browser/browser-msg.js';
 import { DateUtility, EmailParts, Str, Value } from '../../core/common.js';
-import { Key, Contact, KeyUtil, PubkeyInfo, ContactInfoWithSortedPubkeys, ContactInfo } from '../../core/crypto/key.js';
+import { Key, KeyUtil, PubkeyInfo, ContactInfoWithSortedPubkeys } from '../../core/crypto/key.js';
 
 // tslint:disable:no-null-keyword
 
@@ -587,19 +587,6 @@ export class ContactStore extends AbstractStore {
 
   private static getKeyAttributes = (key: Key | undefined): PubkeyAttributes => {
     return { fingerprint: key?.id ?? null, expiresOn: DateUtility.asNumber(key?.expiration) };
-  };
-
-  private static toContactFromKey = (email: ContactInfo, key: Key | undefined, lastCheck: number | undefined | null, revokedExternally: boolean): Contact | undefined => {
-    const safeKey = revokedExternally ? undefined : key;
-    return {
-      email: email.email,
-      name: email.name,
-      pubkey: safeKey,
-      hasPgp: safeKey ? 1 : 0,
-      pubkeyLastCheck: lastCheck ?? null,
-      ...ContactStore.getKeyAttributes(key),
-      revoked: revokedExternally || Boolean(key?.revoked)
-    };
   };
 
   private static toContactPreview = (result: Email): ContactPreview => {
