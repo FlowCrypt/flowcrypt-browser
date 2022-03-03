@@ -42,7 +42,6 @@ View.run(class ExperimentalView extends View {
   public setHandlers = () => {
     $('.action_open_compatibility').click(this.setHandler(() => Settings.redirectSubPage(this.acctEmail, this.parentTabId, '/chrome/settings/modules/compatibility.htm')));
     $('.action_open_decrypt').click(this.setHandler(() => Settings.redirectSubPage(this.acctEmail, this.parentTabId, '/chrome/settings/modules/decrypt.htm')));
-    $('.action_backup').click(this.setHandler((el, e) => { e.preventDefault(); Settings.collectInfoAndDownloadBackupFile(this.acctEmail).catch(Catch.reportErr); }));
     $('.action_throw_unchecked').click((e) => { e.preventDefault(); Catch.test('error'); });
     $('.action_throw_err').click(this.setHandler((el, e) => { e.preventDefault(); Catch.test('error'); }));
     $('.action_throw_obj').click(this.setHandler((el, e) => { e.preventDefault(); Catch.test('object'); }));
