@@ -6,16 +6,16 @@
  * These tests use JavaScript instead of TypeScript to avoid dealing with types in cross-environment setup.
  * (tests are injected from NodeJS through puppeteer into a browser environment)
  * While this makes them less convenient to write, the result is more flexible.
- * 
+ *
  * Import your lib to `ci_unit_test.ts` to resolve `ReferenceError: SomeClass is not defined`
- * 
+ *
  * Each test must return "pass" to pass. To reject, throw an Error.
- * 
- * Each test must start with one of (depending on which flavors you want it to run): 
+ *
+ * Each test must start with one of (depending on which flavors you want it to run):
  *  - BROWSER_UNIT_TEST_NAME(`some test name`);
  *  - BROWSER_UNIT_TEST_NAME(`some test name`).enterprise;
  *  - BROWSER_UNIT_TEST_NAME(`some test name`).consumer;
- * 
+ *
  * This is not a JavaScript file. It's a text file that gets parsed, split into chunks, and
  *    parts of it executed as javascript. The structure is very rigid. The only flexible place is inside
  *    the async functions. For the rest, do not change the structure or our parser will get confused.
@@ -266,14 +266,10 @@ BROWSER_UNIT_TEST_NAME(`ContactStore saves and returns dates as numbers`);
   const pubkeyLastCheck = Date.now();
   const lastUse = pubkeyLastCheck + 1000;
   await ContactStore.update(undefined, email, { pubkey: testConstants.expiredPub, pubkeyLastCheck, lastUse });
-  const [loaded] = await ContactStore.get(undefined, [email]);
-  if (typeof loaded.pubkeyLastCheck !== 'number') {
+  const loaded = await ContactStore.getOneWithAllPubkeys(undefined, email);
+  if (!loaded.sortedPubKeys.all(key => typeof key.pubkeyLastCheck === 'number')) {
     throw Error(`pubkeyLastCheck was expected to be a number, but got ${typeof loaded.pubkeyLastCheck}`);
   }
-  if (typeof loaded.expiresOn !== 'number') {
-    throw Error(`expiresOn was expected to be a number, but got ${typeof loaded.expiresOn}`);
-  }
-  return 'pass';
 })();
 
 BROWSER_UNIT_TEST_NAME(`ContactStore gets a valid pubkey by e-mail and all pubkeys with getOneWithAllPubkeys()`);
@@ -283,11 +279,11 @@ BROWSER_UNIT_TEST_NAME(`ContactStore gets a valid pubkey by e-mail and all pubke
   await ContactStore.update(undefined, 'some.revoked@otherhost.com', { pubkey: await KeyUtil.parse(testConstants.somerevokedValid) });
   await ContactStore.update(undefined, 'some.revoked@otherhost.com', { pubkey: await KeyUtil.parse(testConstants.somerevokedRevoked2) });
 
-  const [expectedValid] = await ContactStore.get(undefined, ['some.revoked@otherhost.com']);
-  if (expectedValid.pubkey.id !== 'D6662C5FB9BDE9DA01F3994AAA1EF832D8CCA4F2') {
+  const expectedValid = await ContactStore.getOneWithAllPubkeys(undefined, 'some.revoked@otherhost.com');
+  if (expectedValid.sortedPubkeys[0].pubkey.id !== 'D6662C5FB9BDE9DA01F3994AAA1EF832D8CCA4F2') {
     throw Error(`Expected to get the key fingerprint D6662C5FB9BDE9DA01F3994AAA1EF832D8CCA4F2 but got ${expectedValid.pubkey.id}`);
   }
-  const { sortedPubkeys: pubs } = await ContactStore.getOneWithAllPubkeys(undefined, `some.revoked@otherhost.com`);
+  const { sortedPubkeys: pubs } = await ContactStore.getOneWithAllPubkeys(undefined, 'some.revoked@otherhost.com');
   if (pubs.length !== 3) {
     throw new Error(`3 pubkeys were expected to be retrieved from the storage but got ${pubs.length}`);
   }
@@ -318,8 +314,8 @@ BROWSER_UNIT_TEST_NAME(`ContactStore stores postfixed fingerprint internally for
   if (entity.fingerprint !== entityFp) {
     throw Error(`Failed to extract pubkey ${fingerprint}`);
   }
-  const [contactByEmail] = await ContactStore.get(db, [email]);
-  if (contactByEmail.pubkey.id !== fingerprint) {
+  const contactByEmail = await ContactStore.getOneWithAllPubkeys(db, email);
+  if (contactByEmail.sortedPubkeys.pubkey.id !== fingerprint) {
     throw Error(`Failed to extract pubkey ${fingerprint}`);
   }
   return 'pass';
@@ -357,8 +353,8 @@ BROWSER_UNIT_TEST_NAME(`ContactStore: OpenPGP revocation affects X.509 certifica
   const db = await ContactStore.dbOpen();
   const smimeKey = await KeyUtil.parse(testConstants.expiredSmimeCert);
   await ContactStore.update(db, 'actalis@meta.33mail.com', { pubkey: smimeKey });
-  const [loadedCert1] = await ContactStore.get(db, [`actalis@meta.33mail.com`]);
-  if (loadedCert1.pubkey.revoked) {
+  const loadedCert1 = await ContactStore.getOneWithAllPubkeys(db, 'actalis@meta.33mail.com');
+  if (loadedCert1.sortedPubKeys[0].pubkey.revoked) {
     throw new Error(`The loaded X.509 certificate (1) was expected to be valid but it is revoked.`);
   }
   // emulate openPGP revocation
@@ -368,8 +364,8 @@ BROWSER_UNIT_TEST_NAME(`ContactStore: OpenPGP revocation affects X.509 certifica
     tx.objectStore('revocations').put({ fingerprint: ContactStore.stripFingerprint(smimeKey.id) });
   });
   // original key should be either revoked or missing
-  const [loadedCert3] = await ContactStore.get(db, [`actalis@meta.33mail.com`]);
-  if (loadedCert3.pubkey && !loadedCert3.pubkey.revoked) {
+  const loadedCert3 = await ContactStore.getOneWithAllPubkeys(db, 'actalis@meta.33mail.com');
+  if (loadedCert3 && loadedCert3.sortedPubKeys && loadedCert3.sortedPubKeys.length > 0 && loadedCert3.sortedPubKeys[0].pubkey && !loadedCert3.pubkey.revoked) {
     throw new Error(`The loaded X.509 certificate (3) was expected to be revoked but it is not.`);
   }
   return 'pass';
@@ -388,18 +384,18 @@ BROWSER_UNIT_TEST_NAME(`ContactStore doesn't replace revoked key with older vers
     throw new Error(`RevokedOpenPGP Key is expected to have fingerprint ${fingerprint} but actually is ${opgpKeyRevoked.id}`);
   }
   await ContactStore.update(db, 'some.revoked@localhost.com', { pubkey: opgpKeyOldAndValid });
-  const [loadedOpgpKey1] = await ContactStore.get(db, [`some.revoked@localhost.com`]);
-  if (loadedOpgpKey1.pubkey.revoked) {
+  const loadedOpgpKey1 = await ContactStore.getOneWithAllPubkeys(db, 'some.revoked@localhost.com');
+  if (loadedOpgpKey1.sortedPubkeys[0].pubkey.revoked) {
     throw new Error(`The loaded OpenPGP Key (1) was expected to be valid but it is revoked.`);
   }
   await ContactStore.update(db, 'some.revoked@localhost.com', { pubkey: opgpKeyRevoked });
-  const [loadedOpgpKey2] = await ContactStore.get(db, [`some.revoked@localhost.com`]);
-  if (loadedOpgpKey2.pubkey && !loadedOpgpKey2.pubkey.revoked) {
+  const loadedOpgpKey2 = await ContactStore.getOneWithAllPubkeys(db, 'some.revoked@localhost.com');
+  if (loadedOpgpKey2.sortedPubkeys[0].pubkey && !loadedOpgpKey2.sortedPubkeys[0].pubkey.revoked) {
     throw new Error(`The loaded OpenPGP Key (2) was expected to be revoked but it is not.`);
   }
   await ContactStore.update(db, 'some.revoked@localhost.com', { pubkey: opgpKeyOldAndValid });
-  const [loadedOpgpKey3] = await ContactStore.get(db, [`some.revoked@localhost.com`]);
-  if (loadedOpgpKey3.pubkey && !loadedOpgpKey3.pubkey.revoked) {
+  const loadedOpgpKey3 = await ContactStore.getOneWithAllPubkeys(db, 'some.revoked@localhost.com');
+  if (loadedOpgpKey3.sortedPubkeys[0].pubkey && !loadedOpgpKey3.sortedPubkeys[0].pubkey.revoked) {
     throw new Error(`The loaded OpenPGP Key (3) was expected to be revoked but it is not.`);
   }
   return 'pass';
