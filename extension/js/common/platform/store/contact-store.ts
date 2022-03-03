@@ -585,26 +585,6 @@ export class ContactStore extends AbstractStore {
     return { lowerBound, upperBound };
   };
 
-  private static dbContactInternalGetOne = async (db: IDBDatabase, email: string): Promise<Contact | undefined> => {
-    if (email.includes('@')) { // email
-      const contactWithAllPubkeys = await ContactStore.getOneWithAllPubkeys(db, email);
-      if (!contactWithAllPubkeys) {
-        return contactWithAllPubkeys;
-      }
-      // pick first usableForEncryption
-      let selected = contactWithAllPubkeys.sortedPubkeys.find(entry => !entry.revoked && entry.pubkey.usableForEncryption);
-      if (!selected) {
-        selected = contactWithAllPubkeys.sortedPubkeys.find(entry => !entry.revoked && entry.pubkey.usableForEncryptionButExpired);
-      }
-      if (!selected) {
-        selected = contactWithAllPubkeys.sortedPubkeys[0];
-      }
-      return ContactStore.toContactFromKey(contactWithAllPubkeys.info, selected?.pubkey, selected?.lastCheck, Boolean(selected?.revoked));
-    }
-    // search all longids
-    throw new Error('longid search is deprecated'); // should not get here
-  };
-
   private static getKeyAttributes = (key: Key | undefined): PubkeyAttributes => {
     return { fingerprint: key?.id ?? null, expiresOn: DateUtility.asNumber(key?.expiration) };
   };
