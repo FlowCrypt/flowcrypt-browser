@@ -259,19 +259,6 @@ BROWSER_UNIT_TEST_NAME(`ContactStore.update tests`);
   return 'pass';
 })();
 
-BROWSER_UNIT_TEST_NAME(`ContactStore saves and returns dates as numbers`);
-(async () => {
-  // we'll use background operation to make sure the date isn't transformed on its way
-  const email = 'test@expired.com';
-  const pubkeyLastCheck = Date.now();
-  const lastUse = pubkeyLastCheck + 1000;
-  await ContactStore.update(undefined, email, { pubkey: testConstants.expiredPub, pubkeyLastCheck, lastUse });
-  const loaded = await ContactStore.getOneWithAllPubkeys(undefined, email);
-  if (!loaded.sortedPubkeys.every(key => typeof key.pubkeyLastCheck === 'number')) {
-    throw Error(`pubkeyLastCheck was expected to be a number, but got ${typeof loaded.pubkeyLastCheck}`);
-  }
-})();
-
 BROWSER_UNIT_TEST_NAME(`ContactStore gets a valid pubkey by e-mail and all pubkeys with getOneWithAllPubkeys()`);
 (async () => {
   // Note 1: email differs from pubkey id
