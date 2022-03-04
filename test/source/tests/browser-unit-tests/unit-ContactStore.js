@@ -267,7 +267,7 @@ BROWSER_UNIT_TEST_NAME(`ContactStore saves and returns dates as numbers`);
   const lastUse = pubkeyLastCheck + 1000;
   await ContactStore.update(undefined, email, { pubkey: testConstants.expiredPub, pubkeyLastCheck, lastUse });
   const loaded = await ContactStore.getOneWithAllPubkeys(undefined, email);
-  if (!loaded.sortedPubkeys.all(key => typeof key.pubkeyLastCheck === 'number')) {
+  if (!loaded.sortedPubkeys.every(key => typeof key.pubkeyLastCheck === 'number')) {
     throw Error(`pubkeyLastCheck was expected to be a number, but got ${typeof loaded.pubkeyLastCheck}`);
   }
 })();
@@ -315,7 +315,7 @@ BROWSER_UNIT_TEST_NAME(`ContactStore stores postfixed fingerprint internally for
     throw Error(`Failed to extract pubkey ${fingerprint}`);
   }
   const contactByEmail = await ContactStore.getOneWithAllPubkeys(db, email);
-  if (contactByEmail.sortedPubkeys.pubkey.id !== fingerprint) {
+  if (contactByEmail.sortedPubkeys[0].id !== fingerprint) {
     throw Error(`Failed to extract pubkey ${fingerprint}`);
   }
   return 'pass';
@@ -354,7 +354,7 @@ BROWSER_UNIT_TEST_NAME(`ContactStore: OpenPGP revocation affects X.509 certifica
   const smimeKey = await KeyUtil.parse(testConstants.expiredSmimeCert);
   await ContactStore.update(db, 'actalis@meta.33mail.com', { pubkey: smimeKey });
   const loadedCert1 = await ContactStore.getOneWithAllPubkeys(db, 'actalis@meta.33mail.com');
-  if (loadedCert1.sortedPubkeys[0].pubkey.revoked) {
+  if (loadedCert1.sortedPubkeys[0].revoked) {
     throw new Error(`The loaded X.509 certificate (1) was expected to be valid but it is revoked.`);
   }
   // emulate openPGP revocation
@@ -365,7 +365,7 @@ BROWSER_UNIT_TEST_NAME(`ContactStore: OpenPGP revocation affects X.509 certifica
   });
   // original key should be either revoked or missing
   const loadedCert3 = await ContactStore.getOneWithAllPubkeys(db, 'actalis@meta.33mail.com');
-  if (loadedCert3 && loadedCert3.sortedPubkeys && loadedCert3.sortedPubkeys.length > 0 && loadedCert3.sortedPubkeys[0].pubkey && !loadedCert3.pubkey.revoked) {
+  if (!loadedCert3.sortedPubkeys[0].revoked) {
     throw new Error(`The loaded X.509 certificate (3) was expected to be revoked but it is not.`);
   }
   return 'pass';
