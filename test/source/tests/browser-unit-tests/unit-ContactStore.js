@@ -286,6 +286,9 @@ BROWSER_UNIT_TEST_NAME(`ContactStore gets a valid pubkey by e-mail and all pubke
   return 'pass';
 })();
 
+// This ine gives error:
+// Error: Failed to extract pubkey 16BB407403A3ADC55E1E0E4AF93EEC8FB187C923
+// no idea why
 BROWSER_UNIT_TEST_NAME(`ContactStore stores postfixed fingerprint internally for X.509 certificate`);
 (async () => {
   const db = await ContactStore.dbOpen();
