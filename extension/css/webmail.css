@@ -44,6 +44,16 @@
   background-repeat: no-repeat;
 }
 
+.new_secure_compose_button_for_new_ui {
+  height: 33px !important;
+  margin: 0 12px !important;
+}
+
+.new_secure_compose_button_for_new_ui::before {
+  left: -4px;
+  position: relative;
+}
+
 .only-icon #flowcrypt_secure_compose_button {
   height: 40px;
   width: 16px;

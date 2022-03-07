@@ -233,7 +233,12 @@ export class XssSafeFactory {
       const btn = `<div class="new_secure_compose_window_button" id="flowcrypt_secure_compose_button" title="New Secure Email"><img src="${this.srcImg('logo-19-19.png')}"></div>`;
       return `<div class="_fce_c ${this.destroyableCls} cryptup_compose_button_container" role="presentation">${btn}</div>`;
     } else {
-      const btn = `<div class="new_secure_compose_window_button" id="flowcrypt_secure_compose_button" role="button" tabindex="0" data-test="action-secure-compose">Secure Compose</div>`;
+      let btn = '';
+      if ($('.V6.CL.W9').length === 1) { // if mail primary button present for new Gmail UI
+        btn = `<div class="new_secure_compose_window_button new_secure_compose_button_for_new_ui" id="flowcrypt_secure_compose_button" role="button" tabindex="0" data-test="action-secure-compose"></div>`
+      } else {
+        btn = `<div class="new_secure_compose_window_button" id="flowcrypt_secure_compose_button" role="button" tabindex="0" data-test="action-secure-compose">Secure Compose</div>`; 
+      }
       return `<div class="${this.destroyableCls} z0">${btn}</div>`;
     }
   };
