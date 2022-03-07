@@ -44,13 +44,13 @@
   background-repeat: no-repeat;
 }
 
-.secure_compose_simple {
+.compose_button_simple {
   height: 33px !important;
   margin: 0 12px !important;
   display: block !important;
 }
 
-.secure_compose_simple::before {
+.compose_button_simple::before {
   left: -4px;
   position: relative;
 }

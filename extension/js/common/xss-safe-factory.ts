@@ -235,7 +235,7 @@ export class XssSafeFactory {
     } else {
       let btn = `<div class="new_secure_compose_window_button" id="flowcrypt_secure_compose_button" role="button" tabindex="0" data-test="action-secure-compose">Secure Compose</div>`;
       if ($('.V6.CL.W9').length === 1) { // if mail primary button present for new Gmail UI
-        btn = `<div class="new_secure_compose_window_button secure_compose_simple" id="flowcrypt_secure_compose_button" role="button" tabindex="0" data-test="action-secure-compose">
+        btn = `<div class="new_secure_compose_window_button compose_button_simple" id="flowcrypt_secure_compose_button" role="button" tabindex="0" data-test="action-secure-compose">
         </div><div class="apW">FlowCrypt</div>`;
       }
       return `<div class="${this.destroyableCls} z0 ${$('.V6.CL.W9').length === 1 ? 'pb-10px' : '' }">${btn}</div>`;
