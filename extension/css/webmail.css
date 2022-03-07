@@ -44,12 +44,13 @@
   background-repeat: no-repeat;
 }
 
-.new_secure_compose_button_for_new_ui {
+.secure_compose_simple {
   height: 33px !important;
   margin: 0 12px !important;
+  display: block !important;
 }
 
-.new_secure_compose_button_for_new_ui::before {
+.secure_compose_simple::before {
   left: -4px;
   position: relative;
 }
@@ -88,8 +89,13 @@
   min-width: 42px;
 }
 
+.pb-10px {
+  padding-bottom: 10px;
+}
+
 [class*="_destroyable"].z0:not(.small) {
   margin-bottom: 0 !important;
+  display: initial;
 }
 
 /* notifications */
