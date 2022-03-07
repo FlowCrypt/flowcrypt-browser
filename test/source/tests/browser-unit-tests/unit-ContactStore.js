@@ -267,6 +267,12 @@ BROWSER_UNIT_TEST_NAME(`ContactStore saves and returns dates as numbers`);
   const lastUse = pubkeyLastCheck + 1000;
   await ContactStore.update(undefined, email, { pubkey: testConstants.expiredPub, pubkeyLastCheck, lastUse });
   const loaded = await ContactStore.getOneWithAllPubkeys(undefined, email);
+  if (!loaded) {
+    throw Error('Contact not found');
+  }
+  if (!loaded.sortedPubkeys.length) {
+    throw Error('Contact doesn\'t have pubkeys');
+  }
   if (typeof loaded.sortedPubkeys[0].lastCheck !== 'number') {
     throw Error(
       'pubkeyLastCheck was expected to be a number, ' +
