@@ -291,25 +291,23 @@ BROWSER_UNIT_TEST_NAME(`ContactStore stores postfixed fingerprint internally for
   // This one gives error:
   // Error: Failed to extract pubkey 16BB407403A3ADC55E1E0E4AF93EEC8FB187C923
   // no idea why, comenting out meanwhile
-  /*
-  const db = await ContactStore.dbOpen();
-  const email = 'actalis@meta.33mail.com';
-  await ContactStore.update(undefined, email, { pubkey: testConstants.expiredSmimeCert });
+  // const db = await ContactStore.dbOpen();
+  // const email = 'actalis@meta.33mail.com';
+  // await ContactStore.update(undefined, email, { pubkey: testConstants.expiredSmimeCert });
   // extract the entity directly from the database
-  const entityFp = '16BB407403A3ADC55E1E0E4AF93EEC8FB187C923-X509';
-  const fingerprint = '16BB407403A3ADC55E1E0E4AF93EEC8FB187C923';
-  const entity = await new Promise((resolve, reject) => {
-    const req = db.transaction(['pubkeys'], 'readonly').objectStore('pubkeys').get(entityFp);
-    ContactStore.setReqPipe(req, resolve, reject);
-  });
-  if (entity.fingerprint !== entityFp) {
-    throw Error(`Failed to extract pubkey ${fingerprint}`);
-  }
-  const contactByEmail = await ContactStore.getOneWithAllPubkeys(db, email);
-  if (contactByEmail.sortedPubkeys[0].id !== fingerprint) {
-    throw Error(`Failed to extract pubkey ${fingerprint}`);
-  }
-  */
+  // const entityFp = '16BB407403A3ADC55E1E0E4AF93EEC8FB187C923-X509';
+  // const fingerprint = '16BB407403A3ADC55E1E0E4AF93EEC8FB187C923';
+  // const entity = await new Promise((resolve, reject) => {
+  //   const req = db.transaction(['pubkeys'], 'readonly').objectStore('pubkeys').get(entityFp);
+  //   ContactStore.setReqPipe(req, resolve, reject);
+  // });
+  // if (entity.fingerprint !== entityFp) {
+  //   throw Error(`Failed to extract pubkey ${fingerprint}`);
+  // }
+  // const contactByEmail = await ContactStore.getOneWithAllPubkeys(db, email);
+  // if (contactByEmail.sortedPubkeys[0].id !== fingerprint) {
+  //   throw Error(`Failed to extract pubkey ${fingerprint}`);
+  //  }
   return 'pass';
 })();
 
