@@ -278,6 +278,7 @@ BROWSER_UNIT_TEST_NAME(`ContactStore saves and returns dates as numbers`);
       'pubkeyLastCheck was expected to be a number, ' +
       `but got ${typeof loaded.sortedPubkeys[0].lastCheck}`);
   }
+  return 'pass';
 })();
 
 BROWSER_UNIT_TEST_NAME(`ContactStore gets a valid pubkey by e-mail and all pubkeys with getOneWithAllPubkeys()`);
