@@ -89,8 +89,12 @@
   min-width: 42px;
 }
 
-.pb-10px {
-  padding-bottom: 10px;
+.apW {
+  margin-top: 3px;
+}
+
+.pb-25px {
+  padding-bottom: 25px;
 }
 
 [class*="_destroyable"].z0:not(.small) {
