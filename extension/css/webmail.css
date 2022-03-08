@@ -44,6 +44,17 @@
   background-repeat: no-repeat;
 }
 
+.compose_button_simple {
+  height: 33px !important;
+  margin: 0 12px !important;
+  display: block !important;
+}
+
+.compose_button_simple::before {
+  left: -4px;
+  position: relative;
+}
+
 .only-icon #flowcrypt_secure_compose_button {
   height: 40px;
   width: 16px;
@@ -78,8 +89,17 @@
   min-width: 42px;
 }
 
+.apW {
+  margin-top: 3px;
+}
+
+.pb-25px {
+  padding-bottom: 25px;
+}
+
 [class*="_destroyable"].z0:not(.small) {
   margin-bottom: 0 !important;
+  display: initial;
 }
 
 /* notifications */
