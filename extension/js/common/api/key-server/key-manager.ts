@@ -35,7 +35,7 @@ export class KeyManager extends Api {
     try {
       res = await Api.apiCall(this.url, path, vals, vals ? 'JSON' : undefined, undefined, idToken ? { Authorization: `Bearer ${idToken}` } : undefined, undefined, method);
     } catch (e) {
-      Ui.modal.error(`Error while communicating with the key manager: ${e}`);
+      await Ui.modal.error(`Error while communicating with the key manager: ${e}`);
     }
     return res as RT;
   }
