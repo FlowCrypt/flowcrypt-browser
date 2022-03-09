@@ -31,12 +31,6 @@ export class KeyManager extends Api {
   };
 
   private request = async <RT>(method: ReqMethod, path: string, vals?: Dict<any> | undefined, idToken?: string): Promise<RT> => {
-    let res;
-    try {
-      res = await Api.apiCall(this.url, path, vals, vals ? 'JSON' : undefined, undefined, idToken ? { Authorization: `Bearer ${idToken}` } : undefined, undefined, method);
-    } catch (e) {
-      await Ui.modal.error(`Error while communicating with the key manager: ${e}`);
-    }
-    return res as RT;
+      return await Api.apiCall(this.url, path, vals, vals ? 'JSON' : undefined, undefined, idToken ? { Authorization: `Bearer ${idToken}` } : undefined, undefined, method);
   };
 }
