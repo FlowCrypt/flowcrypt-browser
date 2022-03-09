@@ -35,10 +35,14 @@ export class SetupWithEmailKeyManagerModule {
       passphrase
     };
     try {
-      const { privateKeys } = await this.view.keyManager!.getPrivateKeys(this.view.idToken!);
-      if (privateKeys.length) {
+      const response = await this.view.keyManager!.getPrivateKeys(this.view.idToken!);
+      if (response.error) {
+        await Ui.modal.error(`Error while communicating with the key manager: ${response.error}`);
+        return;
+      }
+      if (response.keys?.length) {
         // keys already exist on keyserver, auto-import
-        await this.processAndStoreKeysFromEkmLocally(privateKeys, setupOptions);
+        await this.processAndStoreKeysFromEkmLocally(response?.keys, setupOptions);
       } else if (this.view.orgRules.canCreateKeys()) {
         // generate keys on client and store them on key manager
         await this.autoGenerateKeyAndStoreBothLocallyAndToEkm(setupOptions);
