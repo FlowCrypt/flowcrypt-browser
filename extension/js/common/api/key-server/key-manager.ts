@@ -38,5 +38,5 @@ export class KeyManager extends Api {
       await Ui.modal.error(`Error while communicating with the key manager: ${e}`);
     }
     return res as RT;
-  }
-};
+  };
+}
