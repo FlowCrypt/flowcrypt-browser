@@ -35,14 +35,10 @@ export class SetupWithEmailKeyManagerModule {
       passphrase
     };
     try {
-      const response = await this.view.keyManager!.getPrivateKeys(this.view.idToken!);
-      if (response.error) {
-        await Ui.modal.error(`Error while communicating with the key manager: ${response.error}`);
-        return;
-      }
-      if (response.keys?.length) {
+      const { privateKeys } = await this.view.keyManager!.getPrivateKeys(this.view.idToken!);
+      if (privateKeys.length) {
         // keys already exist on keyserver, auto-import
-        await this.processAndStoreKeysFromEkmLocally(response?.keys, setupOptions);
+        await this.processAndStoreKeysFromEkmLocally(privateKeys, setupOptions);
       } else if (this.view.orgRules.canCreateKeys()) {
         // generate keys on client and store them on key manager
         await this.autoGenerateKeyAndStoreBothLocallyAndToEkm(setupOptions);
@@ -58,7 +54,7 @@ export class SetupWithEmailKeyManagerModule {
       if (ApiErr.isNetErr(e) && await Api.isInternetAccessible()) { // frendly message when key manager is down, helpful during initial infrastructure setup
         e.message = `FlowCrypt Email Key Manager at ${this.view.orgRules.getKeyManagerUrlForPrivateKeys()} is down, please inform your network admin.`;
       }
-      throw e;
+      await Ui.modal.error((e as Error).message);
     }
   };
 
