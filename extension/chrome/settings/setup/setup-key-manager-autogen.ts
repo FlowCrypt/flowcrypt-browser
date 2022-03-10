@@ -55,6 +55,7 @@ export class SetupWithEmailKeyManagerModule {
         e.message = `FlowCrypt Email Key Manager at ${this.view.orgRules.getKeyManagerUrlForPrivateKeys()} is down, please inform your network admin.`;
       }
       await Ui.modal.error((e as Error).message);
+      throw e;
     }
   };
 
