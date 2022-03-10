@@ -309,9 +309,10 @@ BROWSER_UNIT_TEST_NAME('ContactStore.getOneWithAllPubkeys() returns all pubkeys 
 
 BROWSER_UNIT_TEST_NAME(`ContactStore stores postfixed fingerprint internally for X.509 certificate`);
 (async () => {
-  // This one gives error:
+  // This one gives me an error:
   // Error: Failed to extract pubkey 16BB407403A3ADC55E1E0E4AF93EEC8FB187C923
-  // no idea why, comenting out meanwhile
+  // No idea why this happens, so I'm meanwhile comenting out it.
+  //
   // const db = await ContactStore.dbOpen();
   // const email = 'actalis@meta.33mail.com';
   // await ContactStore.update(undefined, email, { pubkey: testConstants.expiredSmimeCert });
@@ -374,7 +375,7 @@ BROWSER_UNIT_TEST_NAME(`ContactStore: OpenPGP revocation affects X.509 certifica
     ContactStore.setTxHandlers(tx, resolve, reject);
     tx.objectStore('revocations').put({ fingerprint: ContactStore.stripFingerprint(smimeKey.id) });
   });
-  // original key should be either revoked or missing
+  // original key should be either revoked
   const loadedCert3 = await ContactStore.getOneWithAllPubkeys(db, 'actalis@meta.33mail.com');
   if (!loadedCert3.sortedPubkeys[0].revoked) {
     throw new Error(`The loaded X.509 certificate (3) was expected to be revoked but it is not.`);
