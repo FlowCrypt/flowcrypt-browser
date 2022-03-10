@@ -1,5 +1,7 @@
 <div class="lightboxed">
 
+version 8.2.6 on March 8, 2022: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/450?closed=1" target="_blank">Compose button fix</a>
+
 version 8.2.5 on February 16, 2022: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/449?closed=1" target="_blank">People API, fixed Gmail button</a>
 
 version 8.2.4 on January 24, 2022: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/448?closed=1" target="_blank">Badge color bugfix</a>
