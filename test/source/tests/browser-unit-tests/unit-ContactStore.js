@@ -281,18 +281,17 @@ BROWSER_UNIT_TEST_NAME(`ContactStore saves and returns dates as numbers`);
   return 'pass';
 })();
 
-BROWSER_UNIT_TEST_NAME(`ContactStore gets a valid pubkey by e-mail and all pubkeys with getOneWithAllPubkeys()`);
+BROWSER_UNIT_TEST_NAME('ContactStore.getOneWithAllPubkeys() returns all pubkeys with non-revoked placed first');
 (async () => {
   // Note 1: email differs from pubkey id
   await ContactStore.update(undefined, 'some.revoked@otherhost.com', { pubkey: await KeyUtil.parse(testConstants.somerevokedRevoked1) });
   await ContactStore.update(undefined, 'some.revoked@otherhost.com', { pubkey: await KeyUtil.parse(testConstants.somerevokedValid) });
   await ContactStore.update(undefined, 'some.revoked@otherhost.com', { pubkey: await KeyUtil.parse(testConstants.somerevokedRevoked2) });
 
-  const expectedValid = await ContactStore.getOneWithAllPubkeys(undefined, 'some.revoked@otherhost.com');
-  if (expectedValid.sortedPubkeys[0].pubkey.id !== 'D6662C5FB9BDE9DA01F3994AAA1EF832D8CCA4F2') {
-    throw Error(`Expected to get the key fingerprint D6662C5FB9BDE9DA01F3994AAA1EF832D8CCA4F2 but got ${expectedValid.pubkey.id}`);
-  }
   const { sortedPubkeys: pubs } = await ContactStore.getOneWithAllPubkeys(undefined, 'some.revoked@otherhost.com');
+  if (pubs[0].pubkey.id !== 'D6662C5FB9BDE9DA01F3994AAA1EF832D8CCA4F2') {
+    throw Error(`Expected to get the key fingerprint D6662C5FB9BDE9DA01F3994AAA1EF832D8CCA4F2 but got ${pubs[0].pubkey.id}`);
+  }
   if (pubs.length !== 3) {
     throw new Error(`3 pubkeys were expected to be retrieved from the storage but got ${pubs.length}`);
   }
