@@ -289,7 +289,8 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
         return { armored: fromHtmlBody, subject, isPwdMsg };
       }
       if ((fromTextBody === undefined || fromHtmlBody === undefined) && attachments.length === 0) {
-        return { armored: '', plaintext: textBody || htmlBody, subject, isPwdMsg };
+        const clippedText = (textBody || htmlBody).substring((textBody || htmlBody).search('----BEGIN PGP MESSAGE----'));
+        return { armored: '', plaintext: clippedText, subject, isPwdMsg };
       }
       if (attachments.length) {
         for (const attachment of attachments) {
