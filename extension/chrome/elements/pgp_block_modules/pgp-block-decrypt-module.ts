@@ -49,13 +49,20 @@ export class PgpBlockViewDecryptModule {
         } else {
           this.view.renderModule.renderText('Retrieving message...');
           const format: GmailResponseFormat = (!this.msgFetchedFromApi) ? 'full' : 'raw';
-          const { armored, subject, isPwdMsg } = await this.view.gmail.extractArmoredBlock(this.view.msgId, format, (progress) => {
+          const { armored, plaintext, subject, isPwdMsg } = await this.view.gmail.extractArmoredBlock(this.view.msgId, format, (progress) => {
             this.view.renderModule.renderText(`Retrieving message... ${progress}%`);
           });
           this.isPwdMsgBasedOnMsgSnippet = isPwdMsg;
           this.view.renderModule.renderText('Decrypting...');
           this.msgFetchedFromApi = format;
-          await this.decryptAndRender(Buf.fromUtfStr(armored), verificationPubs, subject);
+          if (plaintext) {
+            this.view.renderModule.setFrameColor('gray');
+            this.view.renderModule.renderSignatureStatus('not signed');
+            this.view.renderModule.renderEncryptionStatus('not encrypted');
+            this.view.quoteModule.separateQuotedContentAndRenderText(plaintext, false);
+          } else {
+            await this.decryptAndRender(Buf.fromUtfStr(armored), verificationPubs, subject);
+          }
         }
       }
     } catch (e) {

@@ -267,7 +267,7 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
   /**
    * Extracts the encrypted message from gmail api. Sometimes it's sent as a text, sometimes html, sometimes attachments in various forms.
    */
-  public extractArmoredBlock = async (msgId: string, format: GmailResponseFormat, progressCb?: ProgressCb): Promise<{ armored: string, subject?: string, isPwdMsg: boolean }> => {
+  public extractArmoredBlock = async (msgId: string, format: GmailResponseFormat, progressCb?: ProgressCb): Promise<{ armored: string, plaintext?: string, subject?: string, isPwdMsg: boolean }> => {
     // only track progress in this call if we are getting RAW mime, because these tend to be big, while 'full' and 'metadata' are tiny
     // since we often do full + get attachments below, the user would see 100% after the first short request,
     //   and then again 0% when attachments start downloading, which would be confusing
@@ -277,13 +277,18 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
     if (format === 'full') {
       const bodies = GmailParser.findBodies(gmailMsg);
       const attachments = GmailParser.findAttachments(gmailMsg);
-      const fromTextBody = PgpArmor.clip(Buf.fromBase64UrlStr(bodies['text/plain'] || '').toUtfStr());
+      const textBody = Buf.fromBase64UrlStr(bodies['text/plain'] || '').toUtfStr();
+      const htmlBody = Xss.htmlSanitizeAndStripAllTags(Buf.fromBase64UrlStr(bodies['text/html'] || '').toUtfStr(), '\n');
+      const fromTextBody = PgpArmor.clip(textBody);
       if (fromTextBody) {
         return { armored: fromTextBody, subject, isPwdMsg };
       }
-      const fromHtmlBody = PgpArmor.clip(Xss.htmlSanitizeAndStripAllTags(Buf.fromBase64UrlStr(bodies['text/html'] || '').toUtfStr(), '\n'));
+      const fromHtmlBody = PgpArmor.clip(htmlBody);
       if (fromHtmlBody) {
         return { armored: fromHtmlBody, subject, isPwdMsg };
+      }
+      if (fromTextBody === undefined || fromHtmlBody === undefined) {
+        return { armored: '', plaintext: textBody || htmlBody, subject, isPwdMsg };
       }
       if (attachments.length) {
         for (const attachment of attachments) {
