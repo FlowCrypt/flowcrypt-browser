@@ -250,10 +250,12 @@ export class SetupPageRecipe extends PageRecipe {
     }
   };
 
-  public static autoSetupWithEKM = async (settingsPage: ControllablePage, { expectErr, enterPp }: {
-    expectErr?: { title: string, text: string },
-    enterPp?: { passphrase: string, checks?: SavePassphraseChecks }
-  } = {}): Promise<void> => {
+  public static autoSetupWithEKM = async (settingsPage: ControllablePage,
+    { expectErrView, enterPp, expectErrModal }: {
+      expectErrView?: { title: string, text: string },
+      expectErrModal?: string,
+      enterPp?: { passphrase: string, checks?: SavePassphraseChecks }
+    } = {}): Promise<void> => {
     if (enterPp) {
       await Util.sleep(3);
       await settingsPage.waitAndType('@input-step2ekm-passphrase-1', enterPp.passphrase);
@@ -267,10 +269,12 @@ export class SetupPageRecipe extends PageRecipe {
       }
       await settingsPage.waitAndClick('@input-step2ekm-continue');
     }
-    if (expectErr) {
+    if (expectErrView) { // this err is rendered in `view.ts` - `View` base class
       await settingsPage.waitAll(['@container-err-title', '@container-err-text', '@action-retry-by-reloading']);
-      expect(await settingsPage.read('@container-err-title')).to.contain(expectErr.title);
-      expect(await settingsPage.read('@container-err-text')).to.contain(expectErr.text);
+      expect(await settingsPage.read('@container-err-title')).to.contain(expectErrView.title);
+      expect(await settingsPage.read('@container-err-text')).to.contain(expectErrView.text);
+    } else if (expectErrModal) { // this err is rendered in other views by showing a modal
+      await settingsPage.waitAndRespondToModal('error', 'confirm', expectErrModal);
     } else {
       await settingsPage.waitAndClick('@action-step4done-account-settings', { retryErrs: true });
       await SettingsPageRecipe.ready(settingsPage);

@@ -617,7 +617,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       const acct = 'get.error@key-manager-autogen.flowcrypt.test';
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
       await SetupPageRecipe.autoSetupWithEKM(settingsPage, {
-        expectErr: {
+        expectErrView: {
           title: 'Server responded with an unexpected error.',
           text: '500 when GET-ing https://localhost:8001/flowcrypt-email-key-manager/keys/private (no body): -> Intentional error for get.error to test client behavior',
         }
@@ -643,7 +643,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       const acct = 'fail@key-manager-server-offline.flowcrypt.test';
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
       await SetupPageRecipe.autoSetupWithEKM(settingsPage, {
-        expectErr: {
+        expectErrView: {
           title: 'Network connection issue.',
           text: 'FlowCrypt Email Key Manager at https://localhost:1230/intentionally-wrong cannot be reached. If your organization requires a VPN, please connect to it. Else, please inform your network admin.',
         }
@@ -654,10 +654,8 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       const acct = 'get.key@ekm-offline-retrieve.flowcrypt.test';
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
       await SetupPageRecipe.autoSetupWithEKM(settingsPage, {
-        expectErr: {
-          title: 'Network connection issue.',
-          text: 'FlowCrypt Email Key Manager at https://localhost:1230/intentionally-wrong cannot be reached. If your organization requires a VPN, please connect to it. Else, please inform your network admin.',
-        }
+        enterPp: { passphrase: 'l3o3kqSa:;[]Leppaanz' },
+        expectErrModal: 'FlowCrypt Email Key Manager at https://localhost:1230/intentionally-wrong cannot be reached. If your organization requires a VPN, please connect to it. Else, please inform your network admin.'
       });
     }));
 

@@ -135,10 +135,8 @@ export class BackendData {
     }
     if (domain === 'ekm-offline-retrieve.flowcrypt.test') {
       return { // EKM offline during gey retrieval flow
-        "clientConfiguration": {
-          "flags": ["NO_PRV_CREATE", "NO_PRV_BACKUP", "NO_ATTESTER_SUBMIT"],
-          "key_manager_url": "https://localhost:1230/intentionally-wrong"
-        }
+        "flags": ["NO_PRV_CREATE", "NO_PRV_BACKUP", "NO_ATTESTER_SUBMIT", "PRV_AUTOIMPORT_OR_AUTOGEN"],
+        "key_manager_url": "https://localhost:1230/intentionally-wrong"
       };
     }
     if (domain === 'key-manager-keygen-expiration.flowcrypt.test') {
