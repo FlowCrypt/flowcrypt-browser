@@ -267,7 +267,8 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
   /**
    * Extracts the encrypted message from gmail api. Sometimes it's sent as a text, sometimes html, sometimes attachments in various forms.
    */
-  public extractArmoredBlock = async (msgId: string, format: GmailResponseFormat, progressCb?: ProgressCb): Promise<{ armored: string, plaintext?: string, subject?: string, isPwdMsg: boolean }> => {
+  public extractArmoredBlock = async (msgId: string, format: GmailResponseFormat, progressCb?: ProgressCb): 
+  Promise<{ armored: string, plaintext?: string, subject?: string, isPwdMsg: boolean }> => {
     // only track progress in this call if we are getting RAW mime, because these tend to be big, while 'full' and 'metadata' are tiny
     // since we often do full + get attachments below, the user would see 100% after the first short request,
     //   and then again 0% when attachments start downloading, which would be confusing

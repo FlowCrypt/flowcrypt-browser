@@ -59,7 +59,7 @@ export class PgpBlockViewDecryptModule {
             this.view.renderModule.setFrameColor('gray');
             this.view.renderModule.renderSignatureStatus('not signed');
             this.view.renderModule.renderEncryptionStatus('not encrypted');
-            this.view.quoteModule.separateQuotedContentAndRenderText(plaintext, false);
+            await this.view.quoteModule.separateQuotedContentAndRenderText(plaintext, false);
           } else {
             await this.decryptAndRender(Buf.fromUtfStr(armored), verificationPubs, subject);
           }
