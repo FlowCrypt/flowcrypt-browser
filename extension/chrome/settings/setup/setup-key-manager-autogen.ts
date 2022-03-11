@@ -20,11 +20,15 @@ export class SetupWithEmailKeyManagerModule {
   }
 
   public continueEkmSetupHandler = async () => {
-    if (! await this.view.isCreatePrivateFormInputCorrect('step_2_ekm_choose_pass_phrase')) {
-      return;
+    try {
+      if (! await this.view.isCreatePrivateFormInputCorrect('step_2_ekm_choose_pass_phrase')) {
+        return;
+      }
+      const passphrase = $('#step_2_ekm_choose_pass_phrase .input_password').val();
+      await this.setupWithEkmThenRenderSetupDone(typeof passphrase === 'string' ? passphrase : '');
+    } catch (e) {
+      await Ui.modal.error(`There was an error setting up your account: ${String(e)}`);
     }
-    const passphrase = $('#step_2_ekm_choose_pass_phrase .input_password').val();
-    await this.setupWithEkmThenRenderSetupDone(typeof passphrase === 'string' ? passphrase : '');
   };
 
   public setupWithEkmThenRenderSetupDone = async (passphrase: string) => {
