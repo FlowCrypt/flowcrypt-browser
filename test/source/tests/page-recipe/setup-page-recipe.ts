@@ -250,7 +250,7 @@ export class SetupPageRecipe extends PageRecipe {
     }
   };
 
-  public static autoKeygen = async (settingsPage: ControllablePage, { expectErr, enterPp }: {
+  public static autoSetupWithEKM = async (settingsPage: ControllablePage, { expectErr, enterPp }: {
     expectErr?: { title: string, text: string },
     enterPp?: { passphrase: string, checks?: SavePassphraseChecks }
   } = {}): Promise<void> => {
