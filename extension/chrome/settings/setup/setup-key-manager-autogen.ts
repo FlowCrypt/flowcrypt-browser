@@ -27,7 +27,7 @@ export class SetupWithEmailKeyManagerModule {
       const passphrase = $('#step_2_ekm_choose_pass_phrase .input_password').val();
       await this.setupWithEkmThenRenderSetupDone(typeof passphrase === 'string' ? passphrase : '');
     } catch (e) {
-      await Ui.modal.error(`There was an error setting up your account: ${String(e)}`);
+      await Ui.modal.error(String(e));
     }
   };
 
@@ -56,7 +56,8 @@ export class SetupWithEmailKeyManagerModule {
       await this.view.setupRender.renderSetupDone();
     } catch (e) {
       if (ApiErr.isNetErr(e) && await Api.isInternetAccessible()) { // frendly message when key manager is down, helpful during initial infrastructure setup
-        e.message = `FlowCrypt Email Key Manager at ${this.view.orgRules.getKeyManagerUrlForPrivateKeys()} is down, please inform your network admin.`;
+        e.message = `FlowCrypt Email Key Manager at ${this.view.orgRules.getKeyManagerUrlForPrivateKeys()} cannot be reached. `
+          + "If your organization requires a VPN, please connect to it. Else, please inform your network admin.";
       }
       throw e;
     }

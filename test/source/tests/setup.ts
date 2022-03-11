@@ -645,7 +645,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       await SetupPageRecipe.autoSetupWithEKM(settingsPage, {
         expectErr: {
           title: 'Network connection issue.',
-          text: 'FlowCrypt Email Key Manager at https://localhost:1230/intentionally-wrong is down, please inform your network admin.',
+          text: 'FlowCrypt Email Key Manager at https://localhost:1230/intentionally-wrong cannot be reached. If your organization requires a VPN, please connect to it. Else, please inform your network admin.',
         }
       });
     }));
@@ -656,7 +656,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       await SetupPageRecipe.autoSetupWithEKM(settingsPage, {
         expectErr: {
           title: 'Network connection issue.',
-          text: 'FlowCrypt Email Key Manager at https://localhost:1230/intentionally-wrong is down, please inform your network admin.',
+          text: 'FlowCrypt Email Key Manager at https://localhost:1230/intentionally-wrong cannot be reached. If your organization requires a VPN, please connect to it. Else, please inform your network admin.',
         }
       });
     }));
