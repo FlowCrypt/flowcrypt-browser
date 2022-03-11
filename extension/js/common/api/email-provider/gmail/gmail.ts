@@ -288,7 +288,7 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
       if (fromHtmlBody) {
         return { armored: fromHtmlBody, subject, isPwdMsg };
       }
-      if (fromTextBody === undefined || fromHtmlBody === undefined) {
+      if ((fromTextBody === undefined || fromHtmlBody === undefined) && attachments.length === 0) {
         return { armored: '', plaintext: textBody || htmlBody, subject, isPwdMsg };
       }
       if (attachments.length) {
