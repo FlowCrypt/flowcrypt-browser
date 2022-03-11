@@ -54,7 +54,6 @@ export class SetupWithEmailKeyManagerModule {
       if (ApiErr.isNetErr(e) && await Api.isInternetAccessible()) { // frendly message when key manager is down, helpful during initial infrastructure setup
         e.message = `FlowCrypt Email Key Manager at ${this.view.orgRules.getKeyManagerUrlForPrivateKeys()} is down, please inform your network admin.`;
       }
-      await Ui.modal.error((e as Error).message);
       throw e;
     }
   };

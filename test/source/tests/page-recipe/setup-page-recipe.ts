@@ -268,7 +268,6 @@ export class SetupPageRecipe extends PageRecipe {
       await settingsPage.waitAndClick('@input-step2ekm-continue');
     }
     if (expectErr) {
-      await settingsPage.waitAndRespondToModal('error', 'confirm', expectErr.text);
       await settingsPage.waitAll(['@container-err-title', '@container-err-text', '@action-retry-by-reloading']);
       expect(await settingsPage.read('@container-err-title')).to.contain(expectErr.title);
       expect(await settingsPage.read('@container-err-text')).to.contain(expectErr.text);
