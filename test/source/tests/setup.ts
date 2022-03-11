@@ -653,7 +653,12 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
     ava.default('get.key@ekm-offline-retrieve.flowcrypt.test - show clear error to user - during retrieval', testWithBrowser(undefined, async (t, browser) => {
       const acct = 'get.key@ekm-offline-retrieve.flowcrypt.test';
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
-      await SetupPageRecipe.autoSetupWithEKM(settingsPage, { expectErr: { title: 'todo1', text: 'todo2' } });
+      await SetupPageRecipe.autoSetupWithEKM(settingsPage, {
+        expectErr: {
+          title: 'Network connection issue.',
+          text: 'FlowCrypt Email Key Manager at https://localhost:1230/intentionally-wrong is down, please inform your network admin.',
+        }
+      });
     }));
 
     ava.default(
