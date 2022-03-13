@@ -19,6 +19,13 @@ export class Wkd extends Api {
 
   public port: number | undefined;
 
+  constructor(
+    private domainName: string,
+    private usesKeyManager: boolean
+  ) {
+    super();
+  }
+
   // returns all the received keys
   public rawLookupEmail = async (email: string): Promise<{ keys: Key[], errs: Error[] }> => {
     // todo: should we return errs on network failures etc.?
@@ -37,7 +44,9 @@ export class Wkd extends Api {
       // the proper fix would be to run encodeZBase32 through background scripts
       return { keys: [], errs: [] };
     }
-    const directDomain = recipientDomain.toLowerCase();
+    const lowerCaseRecipientDomain = recipientDomain.toLowerCase();
+    const directDomain = lowerCaseRecipientDomain;
+    const timeout = (this.usesKeyManager && lowerCaseRecipientDomain === this.domainName) ? 10 : 4;
     const advancedDomainPrefix = (directDomain === 'localhost') ? '' : 'openpgpkey.';
     const hu = opgp.util.encodeZBase32(await opgp.crypto.hash.digest(opgp.enums.hash.sha1, Buf.fromUtfStr(user.toLowerCase())));
     const directHost = (typeof this.port === 'undefined') ? directDomain : `${directDomain}:${this.port}`;
@@ -45,12 +54,12 @@ export class Wkd extends Api {
     const userPart = `hu/${hu}?l=${encodeURIComponent(user)}`;
     const advancedUrl = `https://${advancedHost}/.well-known/openpgpkey/${directDomain}`;
     const directUrl = `https://${directHost}/.well-known/openpgpkey`;
-    let response = await this.urlLookup(advancedUrl, userPart);
+    let response = await this.urlLookup(advancedUrl, userPart, timeout);
     if (!response.buf && response.hasPolicy) {
       return { keys: [], errs: [] }; // do not retry direct if advanced had a policy file
     }
     if (!response.buf) {
-      response = await this.urlLookup(directUrl, userPart);
+      response = await this.urlLookup(directUrl, userPart, timeout);
     }
     if (!response.buf) {
       return { keys: [], errs: [] }; // do not retry direct if advanced had a policy file
@@ -74,14 +83,14 @@ export class Wkd extends Api {
     }
   };
 
-  private urlLookup = async (methodUrlBase: string, userPart: string): Promise<{ hasPolicy: boolean, buf?: Buf }> => {
+  private urlLookup = async (methodUrlBase: string, userPart: string, timeout: number): Promise<{ hasPolicy: boolean, buf?: Buf }> => {
     try {
-      await Wkd.download(`${methodUrlBase}/policy`, undefined, 4);
+      await Wkd.download(`${methodUrlBase}/policy`, undefined, timeout);
     } catch (e) {
       return { hasPolicy: false };
     }
     try {
-      const buf = await Wkd.download(`${methodUrlBase}/${userPart}`, undefined, 4);
+      const buf = await Wkd.download(`${methodUrlBase}/${userPart}`, undefined, timeout);
       if (buf.length) {
         console.info(`Loaded WKD url ${methodUrlBase}/${userPart} and will try to extract Public Keys`);
       }
