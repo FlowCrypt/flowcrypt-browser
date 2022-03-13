@@ -1310,7 +1310,8 @@ export class ContactStore extends AbstractStore {
     // we only need the longest word if it starts with a shorter one,
     // e.g. we don't need "flowcrypt" if we have "flowcryptcompatibility"
     // also, filter out top level domains from emails
-    const emailTokens = Str.splitAlphanumericExtended(email).filter(s => !ContactStore.tlds.includes(ContactStore.normalizeString(s)));
+    const emailTokens = Str.splitAlphanumericExtended(email)
+      .filter(s => !ContactStore.tlds.includes(ContactStore.normalizeString(s)));
     const nameTokens = Str.splitAlphanumericExtended(name);
     const sortedNormalized = [...emailTokens, ...nameTokens].filter(p => !!p)
       .map(ContactStore.normalizeString).sort((a, b) => b.length - a.length);
