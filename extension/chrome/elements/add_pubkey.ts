@@ -78,8 +78,8 @@ View.run(class AddPubkeyView extends View {
 
   private copyFromEmailHandler = async (fromSelect: HTMLElement) => {
     if ($(fromSelect).val()) {
-      const [contact] = await ContactStore.get(undefined, [String($(fromSelect).val())]);
-      if (contact?.pubkey) {
+      const pubkeys = (await ContactStore.getEncryptionKeys(undefined, [String($(fromSelect).val())]))[0].keys;
+      if (pubkeys.length > 0) {
         $('.pubkey').val('').prop('disabled', true).prop('style', 'display: none;');
         $('#manual-import-warning').prop('style', 'display: none;');
       } else {
