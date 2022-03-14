@@ -29,7 +29,7 @@ export class PubLookup {
   ) {
     const internalSksUrl = this.orgRules.getCustomSksPubkeyServer();
     this.attester = new Attester(orgRules);
-    this.wkd = new Wkd();
+    this.wkd = new Wkd(this.orgRules.domainName, this.orgRules.usesKeyManager());
     if (internalSksUrl) {
       this.internalSks = new Sks(internalSksUrl);
     }
