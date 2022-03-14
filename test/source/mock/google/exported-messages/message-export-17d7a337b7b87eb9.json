@@ -1,0 +1,70 @@
+{
+  "acctEmail": "flowcrypt.compatibility@gmail.com",
+  "full": {
+    "id": "17d7a337b7b87eb9",
+    "threadId": "17d7a32a0613071d",
+    "labelIds": [
+      "IMPORTANT",
+      "Label_14",
+      "Label_15",
+      "SENT",
+      "INBOX"
+    ],
+    "snippet": "-----BEGIN PGP MESSAGE----- This is not a valid PGP message",
+    "payload": {
+      "partId": "",
+      "mimeType": "text/plain",
+      "filename": "",
+      "headers": [
+        {
+          "name": "MIME-Version",
+          "value": "1.0"
+        },
+        {
+          "name": "Date",
+          "value": "Thu, 2 Dec 2021 16:12:13 +0800"
+        },
+        {
+          "name": "Subject",
+          "value": "Bogus PGP Message"
+        },
+        {
+          "name": "From",
+          "value": "sender@domain.com"
+        },
+        {
+          "name": "To",
+          "value": "flowcrypt.compatibility@gmail.com"
+        },
+        {
+          "name": "Content-Type",
+          "value": "text/plain; charset=\"UTF-8\""
+        }
+      ],
+      "body": {
+        "size": 64,
+        "data": "LS0tLS1CRUdJTiBQR1AgTUVTU0FHRS0tLS0tDQoNClRoaXMgaXMgbm90IGEgdmFsaWQgUEdQIG1lc3NhZ2UNCg=="
+      }
+    },
+    "sizeEstimate": 408,
+    "historyId": "1345319",
+    "internalDate": "1638432733000"
+  },
+  "attachments": {},
+  "raw": {
+    "id": "17d7a337b7b87eb9",
+    "threadId": "17d7a32a0613071d",
+    "labelIds": [
+      "IMPORTANT",
+      "Label_14",
+      "Label_15",
+      "SENT",
+      "INBOX"
+    ],
+    "snippet": "-----BEGIN PGP MESSAGE----- This is not a valid PGP message",
+    "sizeEstimate": 408,
+    "raw": "TUlNRS1WZXJzaW9uOiAxLjANCkRhdGU6IFRodSwgMiBEZWMgMjAyMSAxNjoxMjoxMyArMDgwMA0KTWVzc2FnZS1JRDogPENBS2J1TFRxeXBFZEd5czhzWUtFd0RibTFEYXNkMHR6QUZtcVlOX05iLStjVlJMakZwZ0BtYWlsLmdtYWlsLmNvbT4NClN1YmplY3Q6IEJvZ3VzIFBHUCBNZXNzYWdlDQpGcm9tOiBGbG93Q3J5cHQgQ29tcGF0aWJpbGl0eSA8Zmxvd2NyeXB0LmNvbXBhdGliaWxpdHlAZ21haWwuY29tPg0KVG86IEZsb3dDcnlwdCBDb21wYXRpYmlsaXR5IDxmbG93Y3J5cHQuY29tcGF0aWJpbGl0eUBnbWFpbC5jb20-DQpDb250ZW50LVR5cGU6IHRleHQvcGxhaW47IGNoYXJzZXQ9IlVURi04Ig0KDQotLS0tLUJFR0lOIFBHUCBNRVNTQUdFLS0tLS0NCg0KVGhpcyBpcyBub3QgYSB2YWxpZCBQR1AgbWVzc2FnZQ0K",
+    "historyId": "1345319",
+    "internalDate": "1638432733000"
+  }
+}
