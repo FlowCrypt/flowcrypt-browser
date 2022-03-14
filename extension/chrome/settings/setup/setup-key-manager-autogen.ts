@@ -20,11 +20,15 @@ export class SetupWithEmailKeyManagerModule {
   }
 
   public continueEkmSetupHandler = async () => {
-    if (! await this.view.isCreatePrivateFormInputCorrect('step_2_ekm_choose_pass_phrase')) {
-      return;
+    try {
+      if (! await this.view.isCreatePrivateFormInputCorrect('step_2_ekm_choose_pass_phrase')) {
+        return;
+      }
+      const passphrase = $('#step_2_ekm_choose_pass_phrase .input_password').val();
+      await this.setupWithEkmThenRenderSetupDone(typeof passphrase === 'string' ? passphrase : '');
+    } catch (e) {
+      await Ui.modal.error(String(e));
     }
-    const passphrase = $('#step_2_ekm_choose_pass_phrase .input_password').val();
-    await this.setupWithEkmThenRenderSetupDone(typeof passphrase === 'string' ? passphrase : '');
   };
 
   public setupWithEkmThenRenderSetupDone = async (passphrase: string) => {
@@ -52,9 +56,9 @@ export class SetupWithEmailKeyManagerModule {
       await this.view.setupRender.renderSetupDone();
     } catch (e) {
       if (ApiErr.isNetErr(e) && await Api.isInternetAccessible()) { // frendly message when key manager is down, helpful during initial infrastructure setup
-        e.message = `FlowCrypt Email Key Manager at ${this.view.orgRules.getKeyManagerUrlForPrivateKeys()} is down, please inform your network admin.`;
+        e.message = `FlowCrypt Email Key Manager at ${this.view.orgRules.getKeyManagerUrlForPrivateKeys()} cannot be reached. `
+          + "If your organization requires a VPN, please connect to it. Else, please inform your network admin.";
       }
-      await Ui.modal.error((e as Error).message);
       throw e;
     }
   };

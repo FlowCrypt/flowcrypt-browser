@@ -216,7 +216,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
     ava.default(`compose - auto include pubkey is inactive when our key is available on Wkd`, testWithBrowser(undefined, async (t, browser) => {
       const acct = 'wkd@google.mock.flowcryptlocal.test:8001';
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
-      await SetupPageRecipe.autoKeygen(settingsPage);
+      await SetupPageRecipe.autoSetupWithEKM(settingsPage);
       const composePage = await ComposePageRecipe.openStandalone(t, browser, acct);
       await composePage.page.setViewport({ width: 540, height: 606 });
       await ComposePageRecipe.fillMsg(composePage, { to: 'ci.tests.gmail@flowcrypt.test' }, 'testing auto include pubkey');

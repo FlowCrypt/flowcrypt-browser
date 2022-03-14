@@ -130,8 +130,14 @@ export class BackendData {
           'FORBID_STORING_PASS_PHRASE']
       };
     }
-    if (domain === 'key-manager-server-offline.flowcrypt.test') {
-      return { ...keyManagerAutogenRules, "key_manager_url": "https://localhost:1230/intentionally-wrong", };
+    if (domain === 'key-manager-server-offline.flowcrypt.test') { // EKM offline during local key autogen / upload to EKM flow
+      return { ...keyManagerAutogenRules, "key_manager_url": "https://localhost:1230/intentionally-wrong" };
+    }
+    if (domain === 'ekm-offline-retrieve.flowcrypt.test') {
+      return { // EKM offline during key retrieval from EKM flow
+        "flags": ["NO_PRV_CREATE", "NO_PRV_BACKUP", "NO_ATTESTER_SUBMIT", "PRV_AUTOIMPORT_OR_AUTOGEN"],
+        "key_manager_url": "https://localhost:1230/intentionally-wrong"
+      };
     }
     if (domain === 'key-manager-keygen-expiration.flowcrypt.test') {
       return { ...keyManagerAutogenRules, "enforce_keygen_expire_months": 1 };
