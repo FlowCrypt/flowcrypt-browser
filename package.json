@@ -16,7 +16,7 @@
     "@types/request": "2.48.8",
     "@typescript-eslint/eslint-plugin": "5.14.0",
     "@typescript-eslint/parser": "5.14.0",
-    "ava": "4.0.1",
+    "ava": "4.1.0",
     "chai": "4.3.6",
     "chai-as-promised": "7.1.1",
     "del": "6.0.0",
