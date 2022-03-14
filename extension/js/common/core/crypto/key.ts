@@ -48,18 +48,6 @@ export interface Key extends KeyIdentity {
 
 export type PubkeyResult = { pubkey: Key, email: string, isMine: boolean };
 
-export type Contact = {
-  email: string;
-  name?: string;
-  pubkey: Key | undefined;
-  hasPgp: 0 | 1;
-  fingerprint: string | null;
-  // lastUse: number | null;
-  pubkeyLastCheck: number | null;
-  expiresOn: number | null;
-  revoked: boolean;
-};
-
 export interface KeyInfo {
   private: string;
   public: string; // this cannot be Pubkey has it's being passed to localstorage
