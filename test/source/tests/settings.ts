@@ -17,7 +17,6 @@ import { SetupPageRecipe } from './page-recipe/setup-page-recipe';
 import { testConstants } from './tooling/consts';
 import { PageRecipe } from './page-recipe/abstract-page-recipe';
 import { OauthPageRecipe } from './page-recipe/oauth-page-recipe';
-import { Pubkey } from '../platform/store/contact-store';
 import { KeyInfo, KeyUtil } from '../core/crypto/key';
 import { Buf } from '../core/buf';
 import { GoogleData } from '../mock/google/google-data';
@@ -218,12 +217,12 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         // so they remain linked only to `flowcryptcompatibility@gmail.com'
         await (window as any).ContactStore.unlinkPubkey(db, 'flowcrypt.compatibility@gmail.com', { id: '5520CACE2CB61EA713E5B0057FDE685548AEA788', type: 'openpgp ' });
         await (window as any).ContactStore.unlinkPubkey(db, 'flowcrypt.compatibility@gmail.com', { id: 'E8F0517BA6D7DAB6081C96E4ADAC279C95093207', type: 'openpgp ' });
-        const pubkey7FDE685548AEA788: Pubkey = await new Promise((resolve, reject) => {
+        const pubkey7FDE685548AEA788: { fingerprint: string } = await new Promise((resolve, reject) => {
           const tx = db.transaction(['pubkeys'], 'readonly');
           const req = tx.objectStore('pubkeys').get('5520CACE2CB61EA713E5B0057FDE685548AEA788');
           (window as any).ContactStore.setReqPipe(req, resolve, reject);
         });
-        const pubkeyADAC279C95093207: Pubkey = await new Promise((resolve, reject) => {
+        const pubkeyADAC279C95093207: { fingerprint: string } = await new Promise((resolve, reject) => {
           const tx = db.transaction(['pubkeys'], 'readonly');
           const req = tx.objectStore('pubkeys').get('E8F0517BA6D7DAB6081C96E4ADAC279C95093207');
           (window as any).ContactStore.setReqPipe(req, resolve, reject);
@@ -249,12 +248,12 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       await Util.sleep(1);
       const foundKeys1 = await dbPage.page.evaluate(async () => {
         const db = await (window as any).ContactStore.dbOpen();
-        const pubkey7FDE685548AEA788: Pubkey = await new Promise((resolve, reject) => {
+        const pubkey7FDE685548AEA788: { fingerprint: string } = await new Promise((resolve, reject) => {
           const tx = db.transaction(['pubkeys'], 'readonly');
           const req = tx.objectStore('pubkeys').get('5520CACE2CB61EA713E5B0057FDE685548AEA788');
           (window as any).ContactStore.setReqPipe(req, resolve, reject);
         });
-        const pubkeyADAC279C95093207: Pubkey = await new Promise((resolve, reject) => {
+        const pubkeyADAC279C95093207: { fingerprint: string } = await new Promise((resolve, reject) => {
           const tx = db.transaction(['pubkeys'], 'readonly');
           const req = tx.objectStore('pubkeys').get('E8F0517BA6D7DAB6081C96E4ADAC279C95093207');
           (window as any).ContactStore.setReqPipe(req, resolve, reject);
@@ -275,12 +274,12 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       await Util.sleep(1);
       const foundKeys2 = await dbPage.page.evaluate(async () => {
         const db = await (window as any).ContactStore.dbOpen();
-        const pubkey7FDE685548AEA788: Pubkey = await new Promise((resolve, reject) => {
+        const pubkey7FDE685548AEA788: { fingerprint: string } = await new Promise((resolve, reject) => {
           const tx = db.transaction(['pubkeys'], 'readonly');
           const req = tx.objectStore('pubkeys').get('5520CACE2CB61EA713E5B0057FDE685548AEA788');
           (window as any).ContactStore.setReqPipe(req, resolve, reject);
         });
-        const pubkeyADAC279C95093207: Pubkey = await new Promise((resolve, reject) => {
+        const pubkeyADAC279C95093207: { fingerprint: string } = await new Promise((resolve, reject) => {
           const tx = db.transaction(['pubkeys'], 'readonly');
           const req = tx.objectStore('pubkeys').get('E8F0517BA6D7DAB6081C96E4ADAC279C95093207');
           (window as any).ContactStore.setReqPipe(req, resolve, reject);
@@ -318,7 +317,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
     ava.default('settings - my key page - privileged frames and action buttons should be hidden when using key manager test', testWithBrowser(undefined, async (t, browser) => {
       const acct = 'two.keys@key-manager-autogen.flowcrypt.test';
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
-      await SetupPageRecipe.autoKeygen(settingsPage);
+      await SetupPageRecipe.autoSetupWithEKM(settingsPage);
       await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
       // check imported key at index 1
       const myKeyFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, `@action-show-key-1`, ['my_key.htm', 'placement=settings']);

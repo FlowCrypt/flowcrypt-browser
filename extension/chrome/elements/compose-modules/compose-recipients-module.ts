@@ -461,8 +461,8 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     this.addedPubkeyDbLookupInterval = Catch.setHandledInterval(async () => {
       const recipientsHasPgp: ValidRecipientElement[] = [];
       for (const recipient of noPgpRecipients) {
-        const [contact] = await ContactStore.get(undefined, [recipient.email]);
-        if (contact && contact.hasPgp) {
+        const pubkeys = (await ContactStore.getEncryptionKeys(undefined, [recipient.email]))[0].keys;
+        if (pubkeys.length > 0) {
           $(recipient.element).removeClass('no_pgp').find('i').remove();
           clearInterval(this.addedPubkeyDbLookupInterval);
           recipientsHasPgp.push(recipient);
