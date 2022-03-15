@@ -238,9 +238,9 @@ export class ComposeSendBtnModule extends ViewModule<ComposeView> {
     if (sendAs && sendAs[email]?.name) {
       name = sendAs[email].name!;
     } else {
-      const [contact] = await ContactStore.get(undefined, [email]);
-      if (contact?.name) {
-        name = contact.name;
+      const contactWithPubKeys = await ContactStore.getOneWithAllPubkeys(undefined, email);
+      if (contactWithPubKeys && contactWithPubKeys.info.name) {
+        name = contactWithPubKeys.info.name;
       }
     }
     return Str.formatEmailWithOptionalName({ email: parsedEmail.email, name });

@@ -233,7 +233,7 @@ export class XssSafeFactory {
       const btn = `<div class="new_secure_compose_window_button" id="flowcrypt_secure_compose_button" title="New Secure Email"><img src="${this.srcImg('logo-19-19.png')}"></div>`;
       return `<div class="_fce_c ${this.destroyableCls} cryptup_compose_button_container" role="presentation">${btn}</div>`;
     } else {
-      const isNewGmailUi2022 = $('.V6.CL.W9').length === 1;
+      const isNewGmailUi2022 = ($('.V6.CL.W9').length === 1 && $('.V6.CL.W9').width() as number <= 28);
       let btn = `<div class="new_secure_compose_window_button" id="flowcrypt_secure_compose_button" role="button" tabindex="0" data-test="action-secure-compose"` +
       `data-tooltip="Secure Compose" aria-label="Secure Compose">Secure Compose</div>`;
       if (isNewGmailUi2022) {

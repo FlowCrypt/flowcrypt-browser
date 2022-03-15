@@ -4,7 +4,7 @@ import { AbstractStore } from './abstract-store.js';
 import { Catch } from '../catch.js';
 import { BrowserMsg } from '../../browser/browser-msg.js';
 import { DateUtility, EmailParts, Str, Value } from '../../core/common.js';
-import { Key, Contact, KeyUtil, PubkeyInfo, ContactInfoWithSortedPubkeys, ContactInfo } from '../../core/crypto/key.js';
+import { Key, KeyUtil, PubkeyInfo, ContactInfoWithSortedPubkeys } from '../../core/crypto/key.js';
 
 // tslint:disable:no-null-keyword
 
@@ -153,23 +153,6 @@ export class ContactStore extends AbstractStore {
       ContactStore.setTxHandlers(tx, resolve, reject);
       ContactStore.updateTx(tx, validEmail, { ...update, pubkey });
     });
-  };
-
-  public static get = async (db: undefined | IDBDatabase, emails: string[]): Promise<(Contact | undefined)[]> => {
-    if (!db) { // relay op through background process
-      return await BrowserMsg.send.bg.await.db({ f: 'get', args: [emails] }) as (Contact | undefined)[];
-    }
-    if (emails.length === 1) {
-      const contact = await ContactStore.dbContactInternalGetOne(db, emails[0]);
-      return [contact];
-    } else {
-      const results: (Contact | undefined)[] = [];
-      for (const email of emails) {
-        const [contact] = await ContactStore.get(db, [email]);
-        results.push(contact);
-      }
-      return results;
-    }
   };
 
   public static getEncryptionKeys = async (db: undefined | IDBDatabase, emails: string[]): Promise<{ email: string, keys: Key[] }[]> => {
@@ -602,41 +585,8 @@ export class ContactStore extends AbstractStore {
     return { lowerBound, upperBound };
   };
 
-  private static dbContactInternalGetOne = async (db: IDBDatabase, email: string): Promise<Contact | undefined> => {
-    if (email.includes('@')) { // email
-      const contactWithAllPubkeys = await ContactStore.getOneWithAllPubkeys(db, email);
-      if (!contactWithAllPubkeys) {
-        return contactWithAllPubkeys;
-      }
-      // pick first usableForEncryption
-      let selected = contactWithAllPubkeys.sortedPubkeys.find(entry => !entry.revoked && entry.pubkey.usableForEncryption);
-      if (!selected) {
-        selected = contactWithAllPubkeys.sortedPubkeys.find(entry => !entry.revoked && entry.pubkey.usableForEncryptionButExpired);
-      }
-      if (!selected) {
-        selected = contactWithAllPubkeys.sortedPubkeys[0];
-      }
-      return ContactStore.toContactFromKey(contactWithAllPubkeys.info, selected?.pubkey, selected?.lastCheck, Boolean(selected?.revoked));
-    }
-    // search all longids
-    throw new Error('longid search is deprecated'); // should not get here
-  };
-
   private static getKeyAttributes = (key: Key | undefined): PubkeyAttributes => {
     return { fingerprint: key?.id ?? null, expiresOn: DateUtility.asNumber(key?.expiration) };
-  };
-
-  private static toContactFromKey = (email: ContactInfo, key: Key | undefined, lastCheck: number | undefined | null, revokedExternally: boolean): Contact | undefined => {
-    const safeKey = revokedExternally ? undefined : key;
-    return {
-      email: email.email,
-      name: email.name,
-      pubkey: safeKey,
-      hasPgp: safeKey ? 1 : 0,
-      pubkeyLastCheck: lastCheck ?? null,
-      ...ContactStore.getKeyAttributes(key),
-      revoked: revokedExternally || Boolean(key?.revoked)
-    };
   };
 
   private static toContactPreview = (result: Email): ContactPreview => {

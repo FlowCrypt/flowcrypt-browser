@@ -125,9 +125,11 @@ View.run(class PgpPubkeyView extends View {
     if (this.publicKeys!.length > 1) {
       $('.action_add_contact').text('import ' + this.publicKeys!.length + ' public keys');
     } else {
-      const [contact] = await ContactStore.get(undefined, [String($('.input_email').val())]);
+      const contactWithPubKeys = await ContactStore.getOneWithAllPubkeys(
+        undefined, String($('.input_email').val()));
       $('.action_add_contact')
-        .text(contact?.hasPgp ? 'update key' : `import ${this.isExpired ? 'expired ' : ''}key`)
+        .text((contactWithPubKeys && contactWithPubKeys.sortedPubkeys && contactWithPubKeys.sortedPubkeys.length > 0)
+          ? 'update key' : `import ${this.isExpired ? 'expired ' : ''}key`)
         .css('background-color', this.isExpired ? '#989898' : '');
     }
   };

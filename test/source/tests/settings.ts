@@ -318,7 +318,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
     ava.default('settings - my key page - privileged frames and action buttons should be hidden when using key manager test', testWithBrowser(undefined, async (t, browser) => {
       const acct = 'two.keys@key-manager-autogen.flowcrypt.test';
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
-      await SetupPageRecipe.autoKeygen(settingsPage);
+      await SetupPageRecipe.autoSetupWithEKM(settingsPage);
       await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
       // check imported key at index 1
       const myKeyFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, `@action-show-key-1`, ['my_key.htm', 'placement=settings']);

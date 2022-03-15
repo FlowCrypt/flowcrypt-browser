@@ -512,7 +512,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
     ava.default('get.key@key-manager-autogen.flowcrypt.test - automatic setup with key found on key manager', testWithBrowser(undefined, async (t, browser) => {
       const acct = 'get.key@key-manager-autogen.flowcrypt.test';
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
-      await SetupPageRecipe.autoKeygen(settingsPage);
+      await SetupPageRecipe.autoSetupWithEKM(settingsPage);
       await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
       // check no "add key"
       await settingsPage.notPresent('@action-open-add-key-page');
@@ -534,7 +534,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       const acct = 'get.key@key-manager-choose-passphrase.flowcrypt.test';
       const passphrase = 'Long and complicated pass PHRASE';
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
-      await SetupPageRecipe.autoKeygen(settingsPage, { enterPp: { passphrase, checks: { isSavePassphraseChecked: true, isSavePassphraseHidden: false } } });
+      await SetupPageRecipe.autoSetupWithEKM(settingsPage, { enterPp: { passphrase, checks: { isSavePassphraseChecked: true, isSavePassphraseHidden: false } } });
       const { cryptup_getkeykeymanagerchoosepassphraseflowcrypttest_keys: keys,
         cryptup_getkeykeymanagerchoosepassphraseflowcrypttest_rules: rules,
         cryptup_getkeykeymanagerchoosepassphraseflowcrypttest_passphrase_00B0115807969D75: savedPassphrase
@@ -552,7 +552,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
     ava.default('get.key@key-manager-choose-passphrase-forbid-storing.flowcrypt.test - passphrase chosen by user with key found on key manager and forbid storing', testWithBrowser(undefined, async (t, browser) => {
       const acct = 'get.key@key-manager-choose-passphrase-forbid-storing.flowcrypt.test';
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
-      await SetupPageRecipe.autoKeygen(settingsPage, { enterPp: { passphrase: 'long enough to suit requirements', checks: { isSavePassphraseChecked: false, isSavePassphraseHidden: true } } });
+      await SetupPageRecipe.autoSetupWithEKM(settingsPage, { enterPp: { passphrase: 'long enough to suit requirements', checks: { isSavePassphraseChecked: false, isSavePassphraseHidden: true } } });
       const { cryptup_getkeykeymanagerchoosepassphraseforbidstoringflowcrypttest_keys: keys,
         cryptup_getkeykeymanagerchoosepassphraseforbidstoringflowcrypttest_rules: rules,
         cryptup_getkeykeymanagerchoosepassphraseforbidstoringflowcrypttest_passphrase_00B0115807969D75: savedPassphrase
@@ -576,7 +576,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
     ava.default('get.key@no-submit-org-rule.key-manager-autogen.flowcrypt.test - automatic setup with key found on key manager and no submit rule', testWithBrowser(undefined, async (t, browser) => {
       const acct = 'get.key@no-submit-org-rule.key-manager-autogen.flowcrypt.test';
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
-      await SetupPageRecipe.autoKeygen(settingsPage);
+      await SetupPageRecipe.autoSetupWithEKM(settingsPage);
       await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
       // check no "add key"
       await settingsPage.notPresent('@action-open-add-key-page');
@@ -591,7 +591,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
     ava.default('put.key@key-manager-autogen.flowcrypt.test - automatic setup with key not found on key manager, then generated', testWithBrowser(undefined, async (t, browser) => {
       const acct = 'put.key@key-manager-autogen.flowcrypt.test';
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
-      await SetupPageRecipe.autoKeygen(settingsPage);
+      await SetupPageRecipe.autoSetupWithEKM(settingsPage);
       await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
       // check no "add key"
       await settingsPage.notPresent('@action-open-add-key-page');
@@ -616,8 +616,8 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
     ava.default('get.error@key-manager-autogen.flowcrypt.test - handles error during KM key GET', testWithBrowser(undefined, async (t, browser) => {
       const acct = 'get.error@key-manager-autogen.flowcrypt.test';
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
-      await SetupPageRecipe.autoKeygen(settingsPage, {
-        expectErr: {
+      await SetupPageRecipe.autoSetupWithEKM(settingsPage, {
+        expectErrView: {
           title: 'Server responded with an unexpected error.',
           text: '500 when GET-ing https://localhost:8001/flowcrypt-email-key-manager/keys/private (no body): -> Intentional error for get.error to test client behavior',
         }
@@ -639,14 +639,23 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       expect(details).to.not.contain('<REDACTED:');
     }));
 
-    ava.default('fail@key-manager-server-offline.flowcrypt.test - shows friendly KM not reachable error', testWithBrowser(undefined, async (t, browser) => {
+    ava.default('fail@key-manager-server-offline.flowcrypt.test - shows friendly EKM not reachable error - during autogen', testWithBrowser(undefined, async (t, browser) => {
       const acct = 'fail@key-manager-server-offline.flowcrypt.test';
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
-      await SetupPageRecipe.autoKeygen(settingsPage, {
-        expectErr: {
+      await SetupPageRecipe.autoSetupWithEKM(settingsPage, {
+        expectErrView: {
           title: 'Network connection issue.',
-          text: 'FlowCrypt Email Key Manager at https://localhost:1230/intentionally-wrong is down, please inform your network admin.',
+          text: 'FlowCrypt Email Key Manager at https://localhost:1230/intentionally-wrong cannot be reached. If your organization requires a VPN, please connect to it. Else, please inform your network admin.',
         }
+      });
+    }));
+
+    ava.default('get.key@ekm-offline-retrieve.flowcrypt.test - show clear error to user - during retrieval', testWithBrowser(undefined, async (t, browser) => {
+      const acct = 'get.key@ekm-offline-retrieve.flowcrypt.test';
+      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
+      await SetupPageRecipe.autoSetupWithEKM(settingsPage, {
+        enterPp: { passphrase: 'l3o3kqSa:;[]Leppaanz' },
+        expectErrModal: 'FlowCrypt Email Key Manager at https://localhost:1230/intentionally-wrong cannot be reached. If your organization requires a VPN, please connect to it. Else, please inform your network admin.'
       });
     }));
 
@@ -655,7 +664,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       testWithBrowser(undefined, async (t, browser) => {
         const acct = 'expire@key-manager-keygen-expiration.flowcrypt.test';
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
-        await SetupPageRecipe.autoKeygen(settingsPage);
+        await SetupPageRecipe.autoSetupWithEKM(settingsPage);
         await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
         const myKeyFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, `@action-show-key-0`, ['my_key.htm', 'placement=settings']);
         await Util.sleep(1);

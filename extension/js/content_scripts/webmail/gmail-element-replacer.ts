@@ -698,8 +698,8 @@ export class GmailElementReplacer implements WebmailElementReplacer {
               }
               if (typeof cache === 'undefined') {
                 try {
-                  const [contact] = await ContactStore.get(undefined, [email]);
-                  if (contact && contact.pubkey) {
+                  const contactWithPubKeys = await ContactStore.getOneWithAllPubkeys(undefined, email);
+                  if (contactWithPubKeys && contactWithPubKeys.sortedPubkeys && contactWithPubKeys.sortedPubkeys.length > 0) {
                     this.recipientHasPgpCache[email] = true;
                   } else if ((await this.pubLookup.lookupEmail(email)).pubkeys.length) {
                     this.recipientHasPgpCache[email] = true;
