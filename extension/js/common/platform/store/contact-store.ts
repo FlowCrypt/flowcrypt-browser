@@ -363,6 +363,7 @@ export class ContactStore extends AbstractStore {
     });
   };
 
+  // Taken from https://github.com/derhuerst/email-providers
   private static commonDomains = new Set([
     "facebook.com",
     "yahoo.com",
