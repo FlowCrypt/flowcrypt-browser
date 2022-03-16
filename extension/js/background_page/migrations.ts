@@ -140,9 +140,9 @@ export const updateX509FingerprintsAndLongids = async (db: IDBDatabase): Promise
   console.info('done updating');
 };
 
-export const extendSearchables = async (db: IDBDatabase): Promise<void> => {
-  const globalStore = await GlobalStore.get(['contact_store_searchable_extended']);
-  if (globalStore.contact_store_searchable_extended) {
+export const updateSearchables = async (db: IDBDatabase): Promise<void> => {
+  const globalStore = await GlobalStore.get(['contact_store_searchable_pruned']);
+  if (globalStore.contact_store_searchable_pruned) {
     return;
   }
   console.info('updating ContactStorage to extend searchable values...');
@@ -161,7 +161,7 @@ export const extendSearchables = async (db: IDBDatabase): Promise<void> => {
         }
       });
   });
-  await GlobalStore.set({ contact_store_searchable_extended: true });
+  await GlobalStore.set({ contact_store_searchable_pruned: true });
   console.info('done updating');
 };
 
