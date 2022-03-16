@@ -56,10 +56,7 @@ export class PgpBlockViewDecryptModule {
           this.view.renderModule.renderText('Decrypting...');
           this.msgFetchedFromApi = format;
           if (plaintext) {
-            this.view.renderModule.setFrameColor('gray');
-            this.view.renderModule.renderSignatureStatus('not signed');
-            this.view.renderModule.renderEncryptionStatus('not encrypted');
-            await this.view.quoteModule.separateQuotedContentAndRenderText(plaintext, false);
+            await this.view.renderModule.renderAsRegularContent(plaintext);
           } else {
             await this.decryptAndRender(Buf.fromUtfStr(armored), verificationPubs, subject);
           }
@@ -94,7 +91,11 @@ export class PgpBlockViewDecryptModule {
           console.info(`re-fetching message ${this.view.msgId} from api because looks like bad formatting: ${!this.msgFetchedFromApi ? 'full' : 'raw'}`);
           await this.initialize(verificationPubs, true);
         } else {
-          await this.view.errorModule.renderErr(Lang.pgpBlock.badFormat + '\n\n' + result.error.message, encryptedData.toUtfStr());
+          if (result.error.message.includes('This message / key probably does not conform to a valid OpenPGP format.')) { // format === raw
+            await this.view.renderModule.renderAsRegularContent(encryptedData.toUtfStr());
+          } else {
+            await this.view.errorModule.renderErr(Lang.pgpBlock.badFormat + '\n\n' + result.error.message, encryptedData.toUtfStr());
+          }
         }
       } else if (result.longids.needPassphrase.length) {
         const enterPp = `<a href="#" class="enter_passphrase" data-test="action-show-passphrase-dialog">${Lang.pgpBlock.enterPassphrase}</a> ${Lang.pgpBlock.toOpenMsg}`;
