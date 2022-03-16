@@ -84,12 +84,6 @@ BROWSER_UNIT_TEST_NAME(`ContactStore is able to search by a chunk spanning acros
     }
   }
   {
-    const test = await ContactStore.search(undefined, { hasPgp: true, substring: 'test.com' });
-    if (test.length !== 1) {
-      throw Error(`Expected 1 contact to match "test.com" but got "${test.length}"`);
-    }
-  }
-  {
     const test = await ContactStore.search(undefined, { hasPgp: true, substring: 'test@abcdef.com' });
     if (test.length !== 1) {
       throw Error(`Expected 1 contact to match "test@abcdef.com" but got "${test.length}"`);
