@@ -73,296 +73,6 @@ export class ContactStore extends AbstractStore {
 
   private static dbQueryKeys = ['limit', 'substring', 'hasPgp'];
 
-  public static dbOpen = async (): Promise<IDBDatabase> => {
-    return await new Promise((resolve, reject) => {
-      const openDbReq = indexedDB.open('cryptup', 5);
-      openDbReq.onupgradeneeded = (event) => {
-        const db = openDbReq.result;
-        if (event.oldVersion < 4) {
-          const emails = db.createObjectStore('emails', { keyPath: 'email' });
-          const pubkeys = db.createObjectStore('pubkeys', { keyPath: 'fingerprint' });
-          emails.createIndex('search', 'searchable', { multiEntry: true });
-          emails.createIndex('index_fingerprints', 'fingerprints', { multiEntry: true }); // fingerprints of all connected pubkeys
-          pubkeys.createIndex('index_longids', 'longids', { multiEntry: true }); // longids of all public key packets in armored pubkey
-        }
-        if (event.oldVersion < 5) {
-          db.createObjectStore('revocations', { keyPath: 'fingerprint' });
-        }
-        if (db.objectStoreNames.contains('contacts')) {
-          const countRequest = openDbReq.transaction!.objectStore('contacts').count();
-          ContactStore.setReqPipe(countRequest, (count: number) => {
-            if (count === 0) {
-              console.info('contacts store is now empty, deleting it...');
-              db.deleteObjectStore('contacts');
-            }
-          });
-        }
-      };
-      openDbReq.onsuccess = () => resolve(openDbReq.result as IDBDatabase);
-      openDbReq.onblocked = () => reject(ContactStore.errCategorize(openDbReq.error));
-      openDbReq.onerror = () => reject(ContactStore.errCategorize(openDbReq.error));
-    });
-  };
-
-  public static previewObj = ({ email, name }: EmailParts): ContactPreview => {
-    const validEmail = Str.parseEmail(email).email;
-    if (!validEmail) {
-      throw new Error(`Cannot handle the contact because email is not valid: ${email}`);
-    }
-    return { email: validEmail, name, hasPgp: 0, lastUse: null };
-  };
-
-  /**
-   * Used to update certain fields of existing contacts or create new contacts using the provided data.
-   * If an array of emails is provided, the update operation will be performed independently on each of them.
-   * Null or missing properties from the `update` object will not be overwritten in the database,
-   * The `pubkey` property will be used only to add or update a pubkey record by the pubkey fingerprint.
-   * Null value of `pubkey` won't affect any pubkey records.
-   * The `pubkeyLastCheck` property can be set to a non-null value only when `pubkey` specified
-   * and will be applied only to that specific pubkey record. Missing or null `pubkeyLastCheck` will
-   * leave the `pubkeyLastCheck` value of the existing pubkey unchanged.
-   *
-   * @param {IDBDatabase} db                     (optional) database to use
-   * @param {string | string[]} email            a single email or an array of emails
-   * @param {ContactUpdate} update               object containing fields to be updated
-   * @returns {Promise<void>}
-   *
-   * @async
-   * @static
-   */
-  public static update = async (db: IDBDatabase | undefined, email: string | string[], update: ContactUpdate): Promise<void> => {
-    if (!db) { // relay op through background process
-      await BrowserMsg.send.bg.await.db({ f: 'update', args: [email, update] });
-      return;
-    }
-    if (Array.isArray(email)) {
-      await Promise.all(email.map(oneEmail => ContactStore.update(db, oneEmail, update)));
-      return;
-    }
-    const validEmail = Str.parseEmail(email).email;
-    if (!validEmail) {
-      throw Error(`Cannot update contact because email is not valid: ${email}`);
-    }
-    let pubkey = typeof update.pubkey === 'string' ? await KeyUtil.parse(update.pubkey) : update.pubkey;
-    if (pubkey?.isPrivate) {
-      Catch.report(`Wrongly updating prv ${pubkey.id} as contact - converting to pubkey`);
-      pubkey = await KeyUtil.asPublicKey(pubkey);
-    }
-    const tx = db.transaction(['emails', 'pubkeys', 'revocations'], 'readwrite');
-    await new Promise((resolve, reject) => {
-      ContactStore.setTxHandlers(tx, resolve, reject);
-      ContactStore.updateTx(tx, validEmail, { ...update, pubkey });
-    });
-  };
-
-  public static getEncryptionKeys = async (db: undefined | IDBDatabase, emails: string[]): Promise<{ email: string, keys: Key[] }[]> => {
-    if (!db) { // relay op through background process
-      return await BrowserMsg.send.bg.await.db({ f: 'getEncryptionKeys', args: [emails] }) as { email: string, keys: Key[] }[];
-    }
-    if (emails.length === 1) {
-      const email = emails[0];
-      const contact = await ContactStore.getOneWithAllPubkeys(db, email);
-      return [{
-        email,
-        keys: (contact?.sortedPubkeys || []).filter(k => !k.revoked && (k.pubkey.usableForEncryption || k.pubkey.usableForEncryptionButExpired)).map(k => k.pubkey)
-      }];
-    } else {
-      return (await Promise.all(emails.map(email => ContactStore.getEncryptionKeys(db, [email]))))
-        .reduce((a, b) => a.concat(b));
-    }
-  };
-
-  public static search = async (db: IDBDatabase | undefined, query: DbContactFilter): Promise<ContactPreview[]> => {
-    return (await ContactStore.rawSearch(db, query)).filter(Boolean).map(ContactStore.toContactPreview);
-  };
-
-  public static searchPubkeys = async (db: IDBDatabase | undefined, query: DbContactFilter): Promise<string[]> => {
-    const fingerprints = (await ContactStore.rawSearch(db, query)).filter(Boolean).map(email => email.fingerprints).reduce((a, b) => a.concat(b));
-    return (await ContactStore.extractPubkeys(db, fingerprints)).map(pubkey => pubkey?.armoredKey).filter(Boolean);
-  };
-
-  public static getOneWithAllPubkeys = async (db: IDBDatabase | undefined, email: string):
-    Promise<ContactInfoWithSortedPubkeys | undefined> => {
-    if (!db) { // relay op through background process
-      // tslint:disable-next-line:no-unsafe-any
-      return await BrowserMsg.send.bg.await.db({ f: 'getOneWithAllPubkeys', args: [email] });
-    }
-    const tx = db.transaction(['emails', 'pubkeys', 'revocations'], 'readonly');
-    const pubkeys: Pubkey[] = [];
-    const revocations: Revocation[] = [];
-    const emailEntity: Email | undefined = await new Promise((resolve, reject) => {
-      const req = tx.objectStore('emails').get(email);
-      ContactStore.setReqPipe(req,
-        (email: Email) => {
-          if (!email) {
-            resolve(undefined);
-            return;
-          }
-          if (!email.fingerprints || email.fingerprints.length === 0) {
-            resolve(email);
-            return;
-          }
-          // fire requests to query pubkeys and revocations
-          // when all of them finish, the transaction will complete
-          ContactStore.setTxHandlers(tx, () => resolve(email), reject);
-          // request all pubkeys by fingerprints
-          for (const fp of email.fingerprints) {
-            const req2 = tx.objectStore('pubkeys').get(fp);
-            ContactStore.setReqPipe(req2,
-              (pubkey: Pubkey) => {
-                if (pubkey) {
-                  pubkeys.push(pubkey);
-                }
-              });
-          }
-          // fire requests to collect revocations
-          ContactStore.collectRevocations(tx, revocations, email.fingerprints);
-        },
-        reject);
-    });
-    return emailEntity ? {
-      info: { email: emailEntity.email, name: emailEntity.name || undefined },
-      sortedPubkeys: await ContactStore.sortKeys(pubkeys, revocations)
-    } : undefined;
-  };
-
-  // todo: return parsed and with applied revocation
-  public static getPubkey = async (db: IDBDatabase | undefined, { id, type }: { id: string, type: string }):
-    Promise<string | undefined> => {
-    if (!db) { // relay op through background process
-      return (await BrowserMsg.send.bg.await.db({ f: 'getPubkey', args: [{ id, type }] })) as string | undefined;
-    }
-    const internalFingerprint = ContactStore.getPubkeyId({ id, type });
-    const tx = db.transaction(['pubkeys'], 'readonly');
-    const pubkeyEntity: Pubkey = await new Promise((resolve, reject) => {
-      const req = tx.objectStore('pubkeys').get(internalFingerprint);
-      ContactStore.setReqPipe(req, resolve, reject);
-    });
-    return pubkeyEntity?.armoredKey;
-  };
-
-  public static unlinkPubkey = async (db: IDBDatabase | undefined, email: string, { id, type }: { id: string, type: string }):
-    Promise<void> => {
-    if (!db) { // relay op through background process
-      await BrowserMsg.send.bg.await.db({ f: 'unlinkPubkey', args: [email, { id, type }] });
-      return;
-    }
-    const internalFingerprint = ContactStore.getPubkeyId({ id, type });
-    const tx = db.transaction(['emails', 'pubkeys'], 'readwrite');
-    await new Promise((resolve, reject) => {
-      ContactStore.setTxHandlers(tx, resolve, reject);
-      const req = tx.objectStore('emails').index('index_fingerprints').getAll(internalFingerprint);
-      ContactStore.setReqPipe(req,
-        (referencingEmails: Email[]) => {
-          for (const entity of referencingEmails.filter(e => e.email === email)) {
-            entity.fingerprints = entity.fingerprints.filter(fp => fp !== internalFingerprint);
-            ContactStore.updateSearchable(entity);
-            tx.objectStore('emails').put(entity);
-          }
-          if (!referencingEmails.some(e => e.email !== email)) {
-            tx.objectStore('pubkeys').delete(internalFingerprint);
-          }
-        });
-    });
-  };
-
-  public static updateTx = (tx: IDBTransaction, email: string, update: ContactUpdateParsed) => {
-    if (update.pubkey && !update.pubkeyLastCheck) {
-      const req = tx.objectStore('pubkeys').get(ContactStore.getPubkeyId(update.pubkey));
-      ContactStore.setReqPipe(req, (pubkey: Pubkey) => {
-        const range = ContactStore.createFingerprintRange(update.pubkey!.id);
-        const req2 = tx.objectStore('revocations').getAll(range);
-        ContactStore.setReqPipe(req2, (revocations: Revocation[]) => {
-          ContactStore.updateTxPhase2(tx, email, update, pubkey, revocations);
-        });
-      });
-    } else {
-      ContactStore.updateTxPhase2(tx, email, update, undefined, []);
-    }
-  };
-
-  public static setReqPipe<T>(req: IDBRequest, pipe: (value?: T) => void, reject?: ((reason?: any) => void) | undefined) {
-    req.onsuccess = () => {
-      try {
-        pipe(req.result as T);
-      } catch (codeErr) {
-        req.transaction!.dispatchEvent(new ErrorEvent('error'));
-        if (reject) {
-          reject(codeErr);
-        }
-        Catch.reportErr(codeErr);
-      }
-    };
-    if (reject) {
-      this.setReqOnError(req, reject);
-    }
-  }
-
-  public static pubkeyObj = (pubkey: Key, lastCheck: number | null | undefined): Pubkey => {
-    const keyAttrs = ContactStore.getKeyAttributes(pubkey);
-    return {
-      fingerprint: ContactStore.getPubkeyId(pubkey),
-      lastCheck: DateUtility.asNumber(lastCheck),
-      expiresOn: keyAttrs.expiresOn,
-      longids: KeyUtil.getPubkeyLongids(pubkey),
-      armoredKey: KeyUtil.armor(pubkey)
-    };
-  };
-
-  public static revocationObj = (pubkey: Key): { fingerprint: string, armoredKey: string } => {
-    return { fingerprint: ContactStore.getPubkeyId(pubkey), armoredKey: KeyUtil.armor(pubkey) };
-    // todo: we can add a timestamp here and/or some other info
-  };
-
-  /**
-   * Saves only revocation info (to protect against re-importing an older version of OpenPGP key)
-   *
-   * @param {IDBDatabase} db  (optional) database to use
-   * @param {Key} pubkey      a revoked key
-   * @returns {Promise<void>}
-   *
-   * @async
-   * @static
-   */
-  public static saveRevocation = async (db: IDBDatabase | undefined, pubkey: Key): Promise<void> => {
-    if (!pubkey.revoked) {
-      throw new Error('Non-revoked key is supplied to save revocation info');
-    }
-    if (!db) { // relay op through background process
-      await BrowserMsg.send.bg.await.db({ f: 'saveRevocation', args: [pubkey] });
-      return;
-    }
-    const tx = db.transaction(['revocations'], 'readwrite');
-    await new Promise((resolve, reject) => {
-      ContactStore.setTxHandlers(tx, resolve, reject);
-      tx.objectStore('revocations').put(ContactStore.revocationObj(pubkey));
-    });
-  };
-
-  // construct PubkeyInfo objects out of provided keys and revocation data in the database
-  // the keys themselves may not be necessarily present in the database
-  public static getPubkeyInfos = async (db: IDBDatabase | undefined, keys: (Key | string)[]): Promise<PubkeyInfo[]> => {
-    if (!db) { // relay op through background process
-      return (await BrowserMsg.send.bg.await.db({ f: 'getPubkeyInfos', args: [keys] })) as PubkeyInfo[];
-    }
-    const parsedKeys = await Promise.all(keys.map(async (key) => await KeyUtil.asPublicKey(typeof key === 'string' ? await KeyUtil.parse(key) : key)));
-    const unrevokedIds = parsedKeys.filter(key => !key.revoked).map(key => key.id);
-    const revocations: Revocation[] = [];
-    if (unrevokedIds.length) { // need to search for external revocations
-      await new Promise((resolve, reject) => {
-        const tx = db.transaction(['revocations'], 'readonly');
-        ContactStore.setTxHandlers(tx, resolve, reject);
-        ContactStore.collectRevocations(tx, revocations, unrevokedIds);
-      });
-    }
-    return parsedKeys.map(key => {
-      return {
-        pubkey: key,
-        revoked: key.revoked || revocations.some(r => ContactStore.equalFingerprints(key.id, r.fingerprint))
-      };
-    });
-  };
-
   // Taken from https://github.com/derhuerst/email-providers
   private static commonDomains = new Set([
     "facebook.com",
@@ -721,6 +431,296 @@ export class ContactStore extends AbstractStore {
     "yopmail.com",
     "ymail.com"
   ]);
+
+  public static dbOpen = async (): Promise<IDBDatabase> => {
+    return await new Promise((resolve, reject) => {
+      const openDbReq = indexedDB.open('cryptup', 5);
+      openDbReq.onupgradeneeded = (event) => {
+        const db = openDbReq.result;
+        if (event.oldVersion < 4) {
+          const emails = db.createObjectStore('emails', { keyPath: 'email' });
+          const pubkeys = db.createObjectStore('pubkeys', { keyPath: 'fingerprint' });
+          emails.createIndex('search', 'searchable', { multiEntry: true });
+          emails.createIndex('index_fingerprints', 'fingerprints', { multiEntry: true }); // fingerprints of all connected pubkeys
+          pubkeys.createIndex('index_longids', 'longids', { multiEntry: true }); // longids of all public key packets in armored pubkey
+        }
+        if (event.oldVersion < 5) {
+          db.createObjectStore('revocations', { keyPath: 'fingerprint' });
+        }
+        if (db.objectStoreNames.contains('contacts')) {
+          const countRequest = openDbReq.transaction!.objectStore('contacts').count();
+          ContactStore.setReqPipe(countRequest, (count: number) => {
+            if (count === 0) {
+              console.info('contacts store is now empty, deleting it...');
+              db.deleteObjectStore('contacts');
+            }
+          });
+        }
+      };
+      openDbReq.onsuccess = () => resolve(openDbReq.result as IDBDatabase);
+      openDbReq.onblocked = () => reject(ContactStore.errCategorize(openDbReq.error));
+      openDbReq.onerror = () => reject(ContactStore.errCategorize(openDbReq.error));
+    });
+  };
+
+  public static previewObj = ({ email, name }: EmailParts): ContactPreview => {
+    const validEmail = Str.parseEmail(email).email;
+    if (!validEmail) {
+      throw new Error(`Cannot handle the contact because email is not valid: ${email}`);
+    }
+    return { email: validEmail, name, hasPgp: 0, lastUse: null };
+  };
+
+  /**
+   * Used to update certain fields of existing contacts or create new contacts using the provided data.
+   * If an array of emails is provided, the update operation will be performed independently on each of them.
+   * Null or missing properties from the `update` object will not be overwritten in the database,
+   * The `pubkey` property will be used only to add or update a pubkey record by the pubkey fingerprint.
+   * Null value of `pubkey` won't affect any pubkey records.
+   * The `pubkeyLastCheck` property can be set to a non-null value only when `pubkey` specified
+   * and will be applied only to that specific pubkey record. Missing or null `pubkeyLastCheck` will
+   * leave the `pubkeyLastCheck` value of the existing pubkey unchanged.
+   *
+   * @param {IDBDatabase} db                     (optional) database to use
+   * @param {string | string[]} email            a single email or an array of emails
+   * @param {ContactUpdate} update               object containing fields to be updated
+   * @returns {Promise<void>}
+   *
+   * @async
+   * @static
+   */
+  public static update = async (db: IDBDatabase | undefined, email: string | string[], update: ContactUpdate): Promise<void> => {
+    if (!db) { // relay op through background process
+      await BrowserMsg.send.bg.await.db({ f: 'update', args: [email, update] });
+      return;
+    }
+    if (Array.isArray(email)) {
+      await Promise.all(email.map(oneEmail => ContactStore.update(db, oneEmail, update)));
+      return;
+    }
+    const validEmail = Str.parseEmail(email).email;
+    if (!validEmail) {
+      throw Error(`Cannot update contact because email is not valid: ${email}`);
+    }
+    let pubkey = typeof update.pubkey === 'string' ? await KeyUtil.parse(update.pubkey) : update.pubkey;
+    if (pubkey?.isPrivate) {
+      Catch.report(`Wrongly updating prv ${pubkey.id} as contact - converting to pubkey`);
+      pubkey = await KeyUtil.asPublicKey(pubkey);
+    }
+    const tx = db.transaction(['emails', 'pubkeys', 'revocations'], 'readwrite');
+    await new Promise((resolve, reject) => {
+      ContactStore.setTxHandlers(tx, resolve, reject);
+      ContactStore.updateTx(tx, validEmail, { ...update, pubkey });
+    });
+  };
+
+  public static getEncryptionKeys = async (db: undefined | IDBDatabase, emails: string[]): Promise<{ email: string, keys: Key[] }[]> => {
+    if (!db) { // relay op through background process
+      return await BrowserMsg.send.bg.await.db({ f: 'getEncryptionKeys', args: [emails] }) as { email: string, keys: Key[] }[];
+    }
+    if (emails.length === 1) {
+      const email = emails[0];
+      const contact = await ContactStore.getOneWithAllPubkeys(db, email);
+      return [{
+        email,
+        keys: (contact?.sortedPubkeys || []).filter(k => !k.revoked && (k.pubkey.usableForEncryption || k.pubkey.usableForEncryptionButExpired)).map(k => k.pubkey)
+      }];
+    } else {
+      return (await Promise.all(emails.map(email => ContactStore.getEncryptionKeys(db, [email]))))
+        .reduce((a, b) => a.concat(b));
+    }
+  };
+
+  public static search = async (db: IDBDatabase | undefined, query: DbContactFilter): Promise<ContactPreview[]> => {
+    return (await ContactStore.rawSearch(db, query)).filter(Boolean).map(ContactStore.toContactPreview);
+  };
+
+  public static searchPubkeys = async (db: IDBDatabase | undefined, query: DbContactFilter): Promise<string[]> => {
+    const fingerprints = (await ContactStore.rawSearch(db, query)).filter(Boolean).map(email => email.fingerprints).reduce((a, b) => a.concat(b));
+    return (await ContactStore.extractPubkeys(db, fingerprints)).map(pubkey => pubkey?.armoredKey).filter(Boolean);
+  };
+
+  public static getOneWithAllPubkeys = async (db: IDBDatabase | undefined, email: string):
+    Promise<ContactInfoWithSortedPubkeys | undefined> => {
+    if (!db) { // relay op through background process
+      // tslint:disable-next-line:no-unsafe-any
+      return await BrowserMsg.send.bg.await.db({ f: 'getOneWithAllPubkeys', args: [email] });
+    }
+    const tx = db.transaction(['emails', 'pubkeys', 'revocations'], 'readonly');
+    const pubkeys: Pubkey[] = [];
+    const revocations: Revocation[] = [];
+    const emailEntity: Email | undefined = await new Promise((resolve, reject) => {
+      const req = tx.objectStore('emails').get(email);
+      ContactStore.setReqPipe(req,
+        (email: Email) => {
+          if (!email) {
+            resolve(undefined);
+            return;
+          }
+          if (!email.fingerprints || email.fingerprints.length === 0) {
+            resolve(email);
+            return;
+          }
+          // fire requests to query pubkeys and revocations
+          // when all of them finish, the transaction will complete
+          ContactStore.setTxHandlers(tx, () => resolve(email), reject);
+          // request all pubkeys by fingerprints
+          for (const fp of email.fingerprints) {
+            const req2 = tx.objectStore('pubkeys').get(fp);
+            ContactStore.setReqPipe(req2,
+              (pubkey: Pubkey) => {
+                if (pubkey) {
+                  pubkeys.push(pubkey);
+                }
+              });
+          }
+          // fire requests to collect revocations
+          ContactStore.collectRevocations(tx, revocations, email.fingerprints);
+        },
+        reject);
+    });
+    return emailEntity ? {
+      info: { email: emailEntity.email, name: emailEntity.name || undefined },
+      sortedPubkeys: await ContactStore.sortKeys(pubkeys, revocations)
+    } : undefined;
+  };
+
+  // todo: return parsed and with applied revocation
+  public static getPubkey = async (db: IDBDatabase | undefined, { id, type }: { id: string, type: string }):
+    Promise<string | undefined> => {
+    if (!db) { // relay op through background process
+      return (await BrowserMsg.send.bg.await.db({ f: 'getPubkey', args: [{ id, type }] })) as string | undefined;
+    }
+    const internalFingerprint = ContactStore.getPubkeyId({ id, type });
+    const tx = db.transaction(['pubkeys'], 'readonly');
+    const pubkeyEntity: Pubkey = await new Promise((resolve, reject) => {
+      const req = tx.objectStore('pubkeys').get(internalFingerprint);
+      ContactStore.setReqPipe(req, resolve, reject);
+    });
+    return pubkeyEntity?.armoredKey;
+  };
+
+  public static unlinkPubkey = async (db: IDBDatabase | undefined, email: string, { id, type }: { id: string, type: string }):
+    Promise<void> => {
+    if (!db) { // relay op through background process
+      await BrowserMsg.send.bg.await.db({ f: 'unlinkPubkey', args: [email, { id, type }] });
+      return;
+    }
+    const internalFingerprint = ContactStore.getPubkeyId({ id, type });
+    const tx = db.transaction(['emails', 'pubkeys'], 'readwrite');
+    await new Promise((resolve, reject) => {
+      ContactStore.setTxHandlers(tx, resolve, reject);
+      const req = tx.objectStore('emails').index('index_fingerprints').getAll(internalFingerprint);
+      ContactStore.setReqPipe(req,
+        (referencingEmails: Email[]) => {
+          for (const entity of referencingEmails.filter(e => e.email === email)) {
+            entity.fingerprints = entity.fingerprints.filter(fp => fp !== internalFingerprint);
+            ContactStore.updateSearchable(entity);
+            tx.objectStore('emails').put(entity);
+          }
+          if (!referencingEmails.some(e => e.email !== email)) {
+            tx.objectStore('pubkeys').delete(internalFingerprint);
+          }
+        });
+    });
+  };
+
+  public static updateTx = (tx: IDBTransaction, email: string, update: ContactUpdateParsed) => {
+    if (update.pubkey && !update.pubkeyLastCheck) {
+      const req = tx.objectStore('pubkeys').get(ContactStore.getPubkeyId(update.pubkey));
+      ContactStore.setReqPipe(req, (pubkey: Pubkey) => {
+        const range = ContactStore.createFingerprintRange(update.pubkey!.id);
+        const req2 = tx.objectStore('revocations').getAll(range);
+        ContactStore.setReqPipe(req2, (revocations: Revocation[]) => {
+          ContactStore.updateTxPhase2(tx, email, update, pubkey, revocations);
+        });
+      });
+    } else {
+      ContactStore.updateTxPhase2(tx, email, update, undefined, []);
+    }
+  };
+
+  public static setReqPipe<T>(req: IDBRequest, pipe: (value?: T) => void, reject?: ((reason?: any) => void) | undefined) {
+    req.onsuccess = () => {
+      try {
+        pipe(req.result as T);
+      } catch (codeErr) {
+        req.transaction!.dispatchEvent(new ErrorEvent('error'));
+        if (reject) {
+          reject(codeErr);
+        }
+        Catch.reportErr(codeErr);
+      }
+    };
+    if (reject) {
+      this.setReqOnError(req, reject);
+    }
+  }
+
+  public static pubkeyObj = (pubkey: Key, lastCheck: number | null | undefined): Pubkey => {
+    const keyAttrs = ContactStore.getKeyAttributes(pubkey);
+    return {
+      fingerprint: ContactStore.getPubkeyId(pubkey),
+      lastCheck: DateUtility.asNumber(lastCheck),
+      expiresOn: keyAttrs.expiresOn,
+      longids: KeyUtil.getPubkeyLongids(pubkey),
+      armoredKey: KeyUtil.armor(pubkey)
+    };
+  };
+
+  public static revocationObj = (pubkey: Key): { fingerprint: string, armoredKey: string } => {
+    return { fingerprint: ContactStore.getPubkeyId(pubkey), armoredKey: KeyUtil.armor(pubkey) };
+    // todo: we can add a timestamp here and/or some other info
+  };
+
+  /**
+   * Saves only revocation info (to protect against re-importing an older version of OpenPGP key)
+   *
+   * @param {IDBDatabase} db  (optional) database to use
+   * @param {Key} pubkey      a revoked key
+   * @returns {Promise<void>}
+   *
+   * @async
+   * @static
+   */
+  public static saveRevocation = async (db: IDBDatabase | undefined, pubkey: Key): Promise<void> => {
+    if (!pubkey.revoked) {
+      throw new Error('Non-revoked key is supplied to save revocation info');
+    }
+    if (!db) { // relay op through background process
+      await BrowserMsg.send.bg.await.db({ f: 'saveRevocation', args: [pubkey] });
+      return;
+    }
+    const tx = db.transaction(['revocations'], 'readwrite');
+    await new Promise((resolve, reject) => {
+      ContactStore.setTxHandlers(tx, resolve, reject);
+      tx.objectStore('revocations').put(ContactStore.revocationObj(pubkey));
+    });
+  };
+
+  // construct PubkeyInfo objects out of provided keys and revocation data in the database
+  // the keys themselves may not be necessarily present in the database
+  public static getPubkeyInfos = async (db: IDBDatabase | undefined, keys: (Key | string)[]): Promise<PubkeyInfo[]> => {
+    if (!db) { // relay op through background process
+      return (await BrowserMsg.send.bg.await.db({ f: 'getPubkeyInfos', args: [keys] })) as PubkeyInfo[];
+    }
+    const parsedKeys = await Promise.all(keys.map(async (key) => await KeyUtil.asPublicKey(typeof key === 'string' ? await KeyUtil.parse(key) : key)));
+    const unrevokedIds = parsedKeys.filter(key => !key.revoked).map(key => key.id);
+    const revocations: Revocation[] = [];
+    if (unrevokedIds.length) { // need to search for external revocations
+      await new Promise((resolve, reject) => {
+        const tx = db.transaction(['revocations'], 'readonly');
+        ContactStore.setTxHandlers(tx, resolve, reject);
+        ContactStore.collectRevocations(tx, revocations, unrevokedIds);
+      });
+    }
+    return parsedKeys.map(key => {
+      return {
+        pubkey: key,
+        revoked: key.revoked || revocations.some(r => ContactStore.equalFingerprints(key.id, r.fingerprint))
+      };
+    });
+  };
 
   public static updateSearchable = (emailEntity: Email) => {
     const email = emailEntity.email.toLowerCase();
