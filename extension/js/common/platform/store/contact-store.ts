@@ -370,10 +370,7 @@ export class ContactStore extends AbstractStore {
     // e.g. we don't need "flowcrypt" if we have "flowcryptcompatibility"
     // also, filter out top level domains from emails
     const emailTokens = Str.splitAlphanumericExtended(email);
-    // handle correctly email like user@host
-    if (emailTokens.length > 2 && emailTokens[emailTokens.length - 2].indexOf('@') == -1) {
-      emailTokens.pop();
-    }
+    emailTokens.pop(); // remove TLD
     const nameTokens = Str.splitAlphanumericExtended(name);
     const sortedNormalized = [...emailTokens, ...nameTokens].filter(p => !!p)
       .map(ContactStore.normalizeString).sort((a, b) => b.length - a.length);
