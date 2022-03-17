@@ -92,6 +92,32 @@ BROWSER_UNIT_TEST_NAME(`ContactStore is able to search by a chunk spanning acros
   return 'pass';
 })();
 
+BROWSER_UNIT_TEST_NAME('ContactStore.search ignores top-level domains and common domains');
+(async () => {
+  await ContactStore.update(undefined, 'abcdef.com@abcdef.com', { pubkey: testConstants.abcdefTestComPubkey });
+  await ContactStore.update(undefined, 'abcdef@test.com', { pubkey: testConstants.abcdefTestComPubkey });
+  await ContactStore.update(undefined, 'test@abcdef.com', { pubkey: testConstants.abcdefTestComPubkey });
+  {
+    const test = await ContactStore.search(undefined, { hasPgp: true, substring: 'test' });
+    if (test.length !== 1) {
+      throw Error(`Expected 1 contacts to match "test" but got "${test.length}"`);
+    }
+  }
+  {
+    const test = await ContactStore.search(undefined, { hasPgp: true, substring: 'com' });
+    if (test.length !== 1) {
+      throw Error(`Expected 1 contacts to match "com" but got "${test.length}"`);
+    }
+  }
+  {
+    const test = await ContactStore.search(undefined, { hasPgp: true, substring: 'test.com' });
+    if (test.length !== 0) {
+      throw Error(`Expected 0 contacts to match "test.com" but got "${test.length}"`);
+    }
+  }
+  return 'pass';
+})();
+
 BROWSER_UNIT_TEST_NAME(`ContactStore doesn't store duplicates in searchable`);
 (async () => {
   const db = await ContactStore.dbOpen();
