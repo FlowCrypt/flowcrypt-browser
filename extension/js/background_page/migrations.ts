@@ -145,7 +145,7 @@ export const updateSearchables = async (db: IDBDatabase): Promise<void> => {
   if (globalStore.contact_store_searchable_pruned) {
     return;
   }
-  console.info('updating ContactStorage to extend searchable values...');
+  console.info('updating ContactStorage to re-generate searchable values...');
   const tx = db.transaction(['emails'], 'readwrite');
   await new Promise((resolve, reject) => {
     ContactStore.setTxHandlers(tx, resolve, reject);
