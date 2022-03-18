@@ -118,6 +118,32 @@ BROWSER_UNIT_TEST_NAME('ContactStore.search ignores top-level domains and common
   return 'pass';
 })();
 
+BROWSER_UNIT_TEST_NAME('ContactStore.search allows searching for name parts that look like top-level domains and common domains');
+(async () => {
+  await ContactStore.update(undefined, 'abcdef.com@abcdef.com', { name: 'com', pubkey: testConstants.abcdefTestComPubkey });
+  await ContactStore.update(undefined, 'abcdef@test.com', { name: 'test.com', pubkey: testConstants.abcdefTestComPubkey });
+  await ContactStore.update(undefined, 'abcdef@abcdef.com', { name: 'test', pubkey: testConstants.abcdefTestComPubkey });
+  {
+    const test = await ContactStore.search(undefined, { hasPgp: true, substring: 'test' });
+    if (test.length !== 2) { // test and test.com
+      throw Error(`Expected 2 contacts to match "test" but got "${test.length}"`);
+    }
+  }
+  {
+    const test = await ContactStore.search(undefined, { hasPgp: true, substring: 'com' });
+    if (test.length !== 2) { // com and test.com
+      throw Error(`Expected 2 contacts to match "com" but got "${test.length}"`);
+    }
+  }
+  {
+    const test = await ContactStore.search(undefined, { hasPgp: true, substring: 'test.com' });
+    if (test.length !== 1) { // test.com
+      throw Error(`Expected 1 contacts to match "test.com" but got "${test.length}"`);
+    }
+  }
+  return 'pass';
+})();
+
 BROWSER_UNIT_TEST_NAME(`ContactStore doesn't store duplicates in searchable`);
 (async () => {
   const db = await ContactStore.dbOpen();
