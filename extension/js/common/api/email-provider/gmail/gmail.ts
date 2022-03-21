@@ -289,7 +289,7 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
         return { armored: fromHtmlBody, subject, isPwdMsg };
       }
       if ((fromTextBody === undefined || fromHtmlBody === undefined) && attachments.length === 0) {
-        const clippedText = (textBody || htmlBody).substring((textBody || htmlBody).search('----BEGIN PGP MESSAGE----'));
+        const clippedText = (textBody || htmlBody).substring((textBody || htmlBody).search('-----BEGIN PGP MESSAGE-----'));
         return { armored: '', plaintext: clippedText, subject, isPwdMsg };
       }
       if (attachments.length) {
@@ -315,7 +315,7 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
         if (armoredMsg) {
           return { armored: armoredMsg, subject, isPwdMsg };
         } else {
-          throw new FormatError('Could not find armored message in parsed raw mime', mimeMsg.toUtfStr());
+          return { armored: '', plaintext: decoded.text, subject, isPwdMsg };
         }
       } else {
         throw new FormatError('No text in parsed raw mime', mimeMsg.toUtfStr());

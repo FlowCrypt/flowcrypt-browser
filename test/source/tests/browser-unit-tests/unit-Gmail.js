@@ -24,11 +24,11 @@ BROWSER_UNIT_TEST_NAME(`Gmail.extractArmoredBlock helps detect bogus PGP message
 (async () => {
   const gmail = new Gmail('flowcrypt.compatibility@gmail.com');
   const extractedFull = await gmail.extractArmoredBlock('17d7a337b7b87eb9', 'full', undefined);
-  if (extractedFull.plaintext !== '----BEGIN PGP MESSAGE-----\r\n\r\nThis is not a valid PGP message\r\n') {
+  if (extractedFull.plaintext !== '-----BEGIN PGP MESSAGE-----\r\n\r\nThis is not a valid PGP message\r\n') {
     throw Error(`extractedFull.plaintext unexpectedly equals ${extractedFull.plaintext}`);
   }
   const extractedRaw = await gmail.extractArmoredBlock('17d7a337b7b87eb9', 'raw', undefined);
-  if (extractedRaw.plaintext !== '----BEGIN PGP MESSAGE-----\r\n\r\nThis is not a valid PGP message\r\n') {
+  if (extractedRaw.plaintext !== '-----BEGIN PGP MESSAGE-----\n\nThis is not a valid PGP message\n') {
     throw Error(`extractedRaw.plaintext unexpectedly equals ${extractedRaw.plaintext}`);
   }
   return 'pass';
