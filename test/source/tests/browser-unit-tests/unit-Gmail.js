@@ -20,7 +20,7 @@
  *    Do not put any code whatsoever outside of the async functions.
  */
 
-BROWSER_UNIT_TEST_NAME(`Gmail.extractArmoredBlock helps detect bogus PGP message`).acct(`compatibility`).only;
+BROWSER_UNIT_TEST_NAME(`Gmail.extractArmoredBlock helps detect bogus PGP message`).acct(`compatibility`);
 (async () => {
   const gmail = new Gmail('flowcrypt.compatibility@gmail.com');
   const extractedFull = await gmail.extractArmoredBlock('17d7a337b7b87eb9', 'full', undefined);
