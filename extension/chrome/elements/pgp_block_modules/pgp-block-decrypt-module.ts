@@ -91,11 +91,7 @@ export class PgpBlockViewDecryptModule {
           console.info(`re-fetching message ${this.view.msgId} from api because looks like bad formatting: ${!this.msgFetchedFromApi ? 'full' : 'raw'}`);
           await this.initialize(verificationPubs, true);
         } else {
-          if (result.error.message.includes('This message / key probably does not conform to a valid OpenPGP format.')) { // format === raw
-            await this.view.renderModule.renderAsRegularContent(encryptedData.toUtfStr());
-          } else {
-            await this.view.errorModule.renderErr(Lang.pgpBlock.badFormat + '\n\n' + result.error.message, encryptedData.toUtfStr());
-          }
+          await this.view.errorModule.renderErr(Lang.pgpBlock.badFormat + '\n\n' + result.error.message, encryptedData.toUtfStr());
         }
       } else if (result.longids.needPassphrase.length) {
         const enterPp = `<a href="#" class="enter_passphrase" data-test="action-show-passphrase-dialog">${Lang.pgpBlock.enterPassphrase}</a> ${Lang.pgpBlock.toOpenMsg}`;
