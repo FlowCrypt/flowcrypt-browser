@@ -314,7 +314,7 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
         const armoredMsg = PgpArmor.clip(decoded.text); // todo - the message might be in attachments
         if (armoredMsg) {
           return { armored: armoredMsg, subject, isPwdMsg };
-        } else if (armoredMsg?.indexOf('-----END PGP MESSAGE-----') != -1) {
+        } else if (armoredMsg?.indexOf('-----END PGP MESSAGE-----') !== -1) {
           return { armored: '', plaintext: decoded.text, subject, isPwdMsg };
         } else {
           throw new FormatError('Could not find armored message in parsed raw mime', mimeMsg.toUtfStr());
