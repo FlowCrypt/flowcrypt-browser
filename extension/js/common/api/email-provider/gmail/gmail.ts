@@ -275,6 +275,8 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
     const gmailMsg = await this.msgGet(msgId, format, format === 'raw' ? progressCb : undefined);
     const isPwdMsg = /https:\/\/flowcrypt\.com\/[a-zA-Z0-9]{10}$/.test(gmailMsg.snippet || '');
     const subject = gmailMsg.payload ? GmailParser.findHeader(gmailMsg.payload, 'subject') : undefined;
+    const pgpBeginHeader = PgpArmor.headers('encryptedMsg').begin;
+    const pgpEndFooter = PgpArmor.headers('encryptedMsg').end as string;
     if (format === 'full') {
       const bodies = GmailParser.findBodies(gmailMsg);
       const attachments = GmailParser.findAttachments(gmailMsg);
@@ -289,7 +291,7 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
         return { armored: fromHtmlBody, subject, isPwdMsg };
       }
       if ((fromTextBody === undefined || fromHtmlBody === undefined) && attachments.length === 0) {
-        const clippedText = (textBody || htmlBody).substring((textBody || htmlBody).search('-----BEGIN PGP MESSAGE-----'));
+        const clippedText = (textBody || htmlBody).substring((textBody || htmlBody).indexOf(pgpBeginHeader));
         return { armored: '', plaintext: clippedText, subject, isPwdMsg };
       }
       if (attachments.length) {
@@ -314,7 +316,7 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
         const armoredMsg = PgpArmor.clip(decoded.text); // todo - the message might be in attachments
         if (armoredMsg) {
           return { armored: armoredMsg, subject, isPwdMsg };
-        } else if (armoredMsg?.indexOf('-----END PGP MESSAGE-----') !== -1) {
+        } else if (!armoredMsg?.includes(pgpEndFooter)) {
           return { armored: '', plaintext: decoded.text, subject, isPwdMsg };
         } else {
           throw new FormatError('Could not find armored message in parsed raw mime', mimeMsg.toUtfStr());
