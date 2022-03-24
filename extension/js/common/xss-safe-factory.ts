@@ -239,8 +239,8 @@ export class XssSafeFactory {
       const btnEl = webmailVersion === 'gmail2022'
         ? `<div class="${btnCls} compose_button_simple only-icon" ${elAttrs}></div><div class="apW">${title}</div>`
         : `<div class="${btnCls} small" ${elAttrs}>${title}</div>`;
-      const containerCls = webmailVersion === 'gmail2022' ? 'pb-25px' : '';
-      return `<div class="${this.destroyableCls} z0 ${containerCls}}">${btnEl}</div>`;
+      const containerCls = webmailVersion === 'gmail2022' ? 'pb-25px' : 'z0';
+      return `<div class="${this.destroyableCls} ${containerCls}}">${btnEl}</div>`;
     }
   };
 

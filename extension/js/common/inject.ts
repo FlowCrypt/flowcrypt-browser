@@ -74,12 +74,9 @@ export class Injector {
       (window as unknown as ContentScriptWindow).TrySetDestroyableTimeout(() => this.btns(), 300);
     } else if (this.shouldInject()) {
       if (this.S.now('compose_button').length === 0) {
-        const webmailVersion = this.determineWebmailVersion();
-        const secureComposeButton = $(this.factory.btnCompose(this.webmailName, webmailVersion));
-        const target = webmailVersion === 'gmail2022'
-          ? this.S.now('compose_button_container').find('div.aBO').first() // inject in left slim menu
-          : this.S.now('compose_button_container').first(); // inject in menu
-        const container = target.prepend(secureComposeButton); // xss-safe-factory
+        const secureComposeButton = $(this.factory.btnCompose(this.webmailName, this.determineWebmailVersion()));
+        const insertBtnOnTopOf = this.S.now('compose_button_container').first();
+        const container = insertBtnOnTopOf.prepend(secureComposeButton); // xss-safe-factory
         container.find(this.S.sel('compose_button')).click(Ui.event.prevent('double', () => { this.openComposeWin(); }));
       }
     }
