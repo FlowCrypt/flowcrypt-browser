@@ -13,7 +13,7 @@ import { MsgBlock, MsgBlockType } from './core/msg-block.js';
 import { MsgBlockParser } from './core/msg-block-parser.js';
 import { PgpArmor } from './core/crypto/pgp/pgp-armor.js';
 import { Ui } from './browser/ui.js';
-import { WebMailName } from './browser/env.js';
+import { WebMailName, WebMailVersion } from './browser/env.js';
 import { Xss } from './platform/xss.js';
 import { SendAsAlias } from './platform/store/acct-store.js';
 
@@ -228,19 +228,19 @@ export class XssSafeFactory {
     return this.iframe(this.srcStripeCheckout(), [], { sandbox: 'allow-forms allow-scripts allow-same-origin' });
   };
 
-  public btnCompose = (webmailName: WebMailName) => {
+  public btnCompose = (webmailName: WebMailName, webmailVersion: WebMailVersion) => {
+    const btnCls = 'new_secure_compose_window_button';
     if (webmailName === 'outlook') {
       const btn = `<div class="new_secure_compose_window_button" id="flowcrypt_secure_compose_button" title="New Secure Email"><img src="${this.srcImg('logo-19-19.png')}"></div>`;
       return `<div class="_fce_c ${this.destroyableCls} cryptup_compose_button_container" role="presentation">${btn}</div>`;
     } else {
-      const isNewGmailUi2022 = ($('.V6.CL.W9').length === 1 && $('.V6.CL.W9').width() as number <= 28);
-      let btn = `<div class="new_secure_compose_window_button" id="flowcrypt_secure_compose_button" role="button" tabindex="0" data-test="action-secure-compose"` +
-      `data-tooltip="Secure Compose" aria-label="Secure Compose">Secure Compose</div>`;
-      if (isNewGmailUi2022) {
-        btn = `<div class="new_secure_compose_window_button compose_button_simple" id="flowcrypt_secure_compose_button" role="button" tabindex="0" data-test="action-secure-compose"` +
-        `data-tooltip="Secure Compose" aria-label="Secure Compose"></div><div class="apW">Secure Compose</div>`;
-      }
-      return `<div class="${this.destroyableCls} z0 ${isNewGmailUi2022 ? 'pb-25px' : '' }">${btn}</div>`;
+      const elAttrs = 'role="button" tabindex="0" data-test="action-secure-compose" data-tooltip="Secure Compose" aria-label="Secure Compose" id="flowcrypt_secure_compose_button"';
+      const title = 'Secure Compose';
+      const btnEl = webmailVersion === 'gmail2022'
+        ? `<div class="${btnCls} compose_button_simple only-icon" ${elAttrs}></div><div class="apW">${title}</div>`
+        : `<div class="${btnCls} small" ${elAttrs}>${title}</div>`;
+      const containerCls = webmailVersion === 'gmail2022' ? 'pb-25px' : 'z0';
+      return `<div class="${this.destroyableCls} ${containerCls}}">${btnEl}</div>`;
     }
   };
 

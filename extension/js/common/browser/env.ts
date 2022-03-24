@@ -5,6 +5,7 @@
 'use strict';
 
 export type WebMailName = 'gmail' | 'outlook' | 'settings';
+export type WebMailVersion = 'generic' | 'gmail2020' | 'gmail2022';
 
 export class Env {
 
