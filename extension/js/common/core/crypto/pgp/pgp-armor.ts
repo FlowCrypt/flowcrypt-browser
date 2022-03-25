@@ -38,7 +38,7 @@ export class PgpArmor {
 
   public static clip = (text: string, extractMessageWithoutPgpFooter?: boolean): string | undefined => {
     if (extractMessageWithoutPgpFooter) {
-      const match = text?.match(/(-----BEGIN PGP (MESSAGE|SIGNED MESSAGE|SIGNATURE|PUBLIC KEY BLOCK)-----[^]+)/);
+      const match = text?.match(/(-----BEGIN PGP (MESSAGE|SIGNED MESSAGE|SIGNATURE|PUBLIC KEY BLOCK)-----[^]+)/gm);
       return (match && match.length) ? match[0] : undefined;
     }
     if (text?.includes(PgpArmor.ARMOR_HEADER_DICT.null.begin) && text.includes(String(PgpArmor.ARMOR_HEADER_DICT.null.end))) {
