@@ -36,7 +36,10 @@ export class PgpArmor {
     encryptedMsg: { begin: '-----BEGIN PGP MESSAGE-----', end: '-----END PGP MESSAGE-----', replace: true },
   };
 
-  public static clip = (text: string): string | undefined => {
+  public static clip = (text: string, extractBogusMessage?: boolean): string | undefined => {
+    if (extractBogusMessage) {
+      return text.substring(text.indexOf(PgpArmor.headers('encryptedMsg').begin));
+    }
     if (text?.includes(PgpArmor.ARMOR_HEADER_DICT.null.begin) && text.includes(String(PgpArmor.ARMOR_HEADER_DICT.null.end))) {
       const match = text.match(/(-----BEGIN PGP (MESSAGE|SIGNED MESSAGE|SIGNATURE|PUBLIC KEY BLOCK)-----[^]+-----END PGP (MESSAGE|SIGNATURE|PUBLIC KEY BLOCK)-----)/gm);
       return (match && match.length) ? match[0] : undefined;
