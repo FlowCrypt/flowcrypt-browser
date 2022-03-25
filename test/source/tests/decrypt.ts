@@ -32,9 +32,9 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
       await inboxPage.waitForSelTestState('ready', 100);
       await inboxPage.waitAll('iframe');
       const pgpBlock = await inboxPage.getFrame(['pgp_block.htm']);
-      await pgpBlock.waitForContent('@pgp-encryption','not encrypted');
-      await pgpBlock.waitForContent('@pgp-signature','not signed');
-      await pgpBlock.waitForContent('@pgp-block-content','----BEGIN PGP MESSAGE-----\n\nThis is not a valid PGP message');
+      await pgpBlock.waitForContent('@pgp-encryption', 'not encrypted');
+      await pgpBlock.waitForContent('@pgp-signature', 'not signed');
+      await pgpBlock.waitForContent('@pgp-block-content', '-----BEGIN PGP MESSAGE-----\n\nThis is not a valid PGP message');
       await inboxPage.close();
     }));
 
