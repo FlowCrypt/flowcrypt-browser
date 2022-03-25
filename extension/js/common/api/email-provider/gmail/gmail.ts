@@ -288,33 +288,30 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
       if (fromHtmlBody) {
         return { armored: fromHtmlBody, subject, isPwdMsg };
       }
+      for (const attachment of attachments) {
+        if (attachment.treatAs() === 'encryptedMsg') {
+          await this.fetchAttachments([attachment], progressCb);
+          const armoredMsg = PgpArmor.clip(attachment.getData().toUtfStr());
+          if (!armoredMsg) {
+            throw new FormatError('Problem extracting armored message', attachment.getData().toUtfStr());
+          }
+          return { armored: armoredMsg, subject, isPwdMsg };
+        }
+      }
       const plaintext = PgpArmor.clipIncomplete(textBody || htmlBody);
       if (plaintext) {
         return { armored: '', plaintext, subject, isPwdMsg };
       }
-      if (attachments.length) {
-        for (const attachment of attachments) {
-          if (attachment.treatAs() === 'encryptedMsg') {
-            await this.fetchAttachments([attachment], progressCb);
-            const armoredMsg = PgpArmor.clip(attachment.getData().toUtfStr());
-            if (!armoredMsg) {
-              throw new FormatError('Problem extracting armored message', attachment.getData().toUtfStr());
-            }
-            return { armored: armoredMsg, subject, isPwdMsg };
-          }
-        }
-        throw new FormatError('Armored message not found', JSON.stringify(gmailMsg.payload, undefined, 2));
-      } else {
-        throw new FormatError('No attachments', JSON.stringify(gmailMsg.payload, undefined, 2));
-      }
+      throw new FormatError('Armored message not found', JSON.stringify(gmailMsg.payload, undefined, 2));
     } else { // format === raw
       const mimeMsg = Buf.fromBase64UrlStr(gmailMsg.raw!);
       const decoded = await Mime.decode(mimeMsg);
       if (decoded.text !== undefined) {
-        const armoredMsg = PgpArmor.clip(decoded.text); // todo - the message might be in attachments
+        const armoredMsg = PgpArmor.clip(decoded.text);
         if (armoredMsg) {
           return { armored: armoredMsg, subject, isPwdMsg };
         }
+        // todo - the message might be in attachments
         const plaintext = PgpArmor.clipIncomplete(decoded.text);
         if (plaintext) {
           return { armored: '', plaintext, subject, isPwdMsg };
