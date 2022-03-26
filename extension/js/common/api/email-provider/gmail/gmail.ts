@@ -266,6 +266,7 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
 
   /**
    * Extracts the encrypted message from gmail api. Sometimes it's sent as a text, sometimes html, sometimes attachments in various forms.
+   * As MsgBlockParser detects incomplete encryptedMsg etc. and they get through, we're handling them too
    */
   public extractArmoredBlock = async (msgId: string, format: GmailResponseFormat, progressCb?: ProgressCb):
     Promise<{ armored: string, plaintext?: string, subject?: string, isPwdMsg: boolean }> => {
@@ -298,7 +299,7 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
           return { armored: armoredMsg, subject, isPwdMsg };
         }
       }
-      const plaintext = PgpArmor.clipIncomplete(textBody || htmlBody);
+      const plaintext = PgpArmor.clipIncomplete(textBody) || PgpArmor.clipIncomplete(htmlBody);
       if (plaintext) {
         return { armored: '', plaintext, subject, isPwdMsg };
       }
