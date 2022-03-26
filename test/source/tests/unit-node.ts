@@ -2306,6 +2306,13 @@ AAAAAAAAAAAAAAAAzzzzzzzzzzzzzzzzzzzzzzzzzzzz.....`)).to.eventually.be.rejectedWi
       t.pass();
     });
 
+    ava.default(`[unit][PgpArmor.clipIncomplete] correctly handles all the cases`, async t => {
+      expect(PgpArmor.clipIncomplete('')).to.be.an.undefined;
+      expect(PgpArmor.clipIncomplete('plain text')).to.be.an.undefined;
+      expect(PgpArmor.clipIncomplete('prefix -----BEGIN PGP MESSAGE-----\n\nexample')).to.equal('-----BEGIN PGP MESSAGE-----\n\nexample');
+      t.pass();
+    });
+
     ava.default(`[unit][ExpirationCache] entry expires after configured interval`, async t => {
       const cache = new ExpirationCache(2000); // 2 seconds
       cache.set('test-key', 'test-value');
