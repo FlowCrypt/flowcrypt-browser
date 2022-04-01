@@ -12,7 +12,7 @@ import { Catch } from '../../../js/common/platform/catch.js';
 import { ComposerUserError } from './compose-err-module.js';
 import { ComposeSendBtnPopoverModule } from './compose-send-btn-popover-module.js';
 import { GeneralMailFormatter } from './formatters/general-mail-formatter.js';
-import { GmailRes } from '../../../js/common/api/email-provider/gmail/gmail-parser.js';
+import { GmailParser, GmailRes } from '../../../js/common/api/email-provider/gmail/gmail-parser.js';
 import { KeyInfo } from '../../../js/common/core/crypto/key.js';
 import { getUniqueRecipientEmails, SendBtnTexts } from './compose-types.js';
 import { SendableMsg } from '../../../js/common/api/email-provider/sendable-msg.js';
@@ -214,12 +214,21 @@ export class ComposeSendBtnModule extends ViewModule<ComposeView> {
         throw e;
       }
     }
-    if (msg.externalId) {
-      this.view.acctServer.messageGatewayUpdate(msg.externalId, msgSentRes.id).catch(Catch.reportErr);
-    }
     BrowserMsg.send.notificationShow(this.view.parentTabId, { notification: `Your ${this.view.isReplyBox ? 'reply' : 'message'} has been sent.` });
     BrowserMsg.send.focusBody(this.view.parentTabId); // Bring focus back to body so Gmails shortcuts will work
-    await this.view.draftModule.draftDelete();
+    const operations = [this.view.draftModule.draftDelete()];
+    if (msg.externalId) {
+      operations.push((async (externalId, id) => {
+        const gmailMsg = await this.view.emailProvider.msgGet(id, 'metadata');
+        const messageId = GmailParser.findHeader(gmailMsg, 'message-id');
+        if (messageId) {
+          await this.view.acctServer.messageGatewayUpdate(externalId, messageId);
+        } else {
+          Catch.report('Failed to extract Message-ID of sent message');
+        }
+      })(msg.externalId, msgSentRes.id));
+    }
+    await Promise.all(operations);
     this.isSendMessageInProgress = false;
     if (this.view.isReplyBox) {
       this.view.renderModule.renderReplySuccess(msg, msgSentRes.id);

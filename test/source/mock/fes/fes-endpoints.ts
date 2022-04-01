@@ -71,7 +71,7 @@ export const mockFesEndpoints: HandlersDefinition = {
     if (req.headers.host === standardFesUrl && req.method === 'POST') {
       // test: `compose - user@standardsubdomainfes.test:8001 - PWD encrypted message with FES web portal`
       authenticate(req, 'oidc');
-      expect(body).to.equal('{"emailGatewayMessageId":"fakesendid"}');
+      expect(body).to.match(/{"emailGatewayMessageId":"<(.+)@standardsubdomainfes.test:8001>"}/);
       return {};
     }
     throw new HttpClientErr('Not Found', 404);

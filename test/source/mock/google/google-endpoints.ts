@@ -9,6 +9,7 @@ import { AddressObject, ParsedMail } from 'mailparser';
 import { TestBySubjectStrategyContext } from './strategies/send-message-strategy';
 import { UnsuportableStrategyError } from './strategies/strategy-base';
 import { oauth } from '../lib/oauth';
+import { Util } from '../../util';
 
 type DraftSaveModel = { message: { raw: string, threadId: string } };
 
@@ -217,16 +218,17 @@ export const mockGoogleEndpoints: HandlersDefinition = {
       if (parsedReq.body && typeof parsedReq.body === 'string') {
         const parseResult = await parseMultipartDataAsMimeMsg(parsedReq.body);
         await validateMimeMsg(acct, parseResult.mimeMsg, parseResult.threadId);
+        const id = `fake_msg_id_${Util.lousyRandom()}`;
         try {
           const testingStrategyContext = new TestBySubjectStrategyContext(parseResult.mimeMsg.subject || '');
-          await testingStrategyContext.test(parseResult.mimeMsg, parseResult.base64);
+          await testingStrategyContext.test(parseResult.mimeMsg, parseResult.base64, id);
         } catch (e) {
           if (!(e instanceof UnsuportableStrategyError)) { // No such strategy for test
             throw e; // todo - should start throwing unsupported test strategies too, else changing subject will cause incomplete testing
             // todo - should stop calling it "strategy", better just "SentMessageTest" or similar
           }
         }
-        return { id: 'fakesendid', labelIds: ['SENT'], threadId: parseResult.threadId };
+        return { id, labelIds: ['SENT'], threadId: parseResult.threadId };
       }
     }
     throw new HttpClientErr(`Method not implemented for ${req.url}: ${req.method}`);

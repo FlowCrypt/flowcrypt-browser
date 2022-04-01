@@ -177,7 +177,7 @@ export class GoogleData {
     }
   }
 
-  public storeSentMessage = (parsedMail: ParsedMail, base64Msg: string): string => {
+  public storeSentMessage = (parsedMail: ParsedMail, base64Msg: string, id: string): string => {
     let bodyContentAtt: { data: string; size: number; filename?: string; id: string } | undefined;
     for (const attachment of parsedMail.attachments || []) {
       const attId = Util.lousyRandom();
@@ -197,12 +197,15 @@ export class GoogleData {
       throw new Error('MOCK storeSentMessage: no parsedMail body, no appropriate bodyContentAtt');
     }
     const barebonesGmailMsg: GmailMsg = { // todo - could be improved - very barebones
-      id: `msg_id_${Util.lousyRandom()}`,
+      id,
       threadId: null, // tslint:disable-line:no-null-keyword
       historyId: '',
       labelIds: ['SENT' as GmailMsg$labelId],
       payload: {
-        headers: [{ name: 'Subject', value: parsedMail.subject || '' }],
+        headers: [
+          { name: 'Subject', value: parsedMail.subject || '' },
+          { name: 'Message-ID', value: parsedMail.messageId || '' }
+        ],
         body
       },
       raw: base64Msg
