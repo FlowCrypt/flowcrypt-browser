@@ -704,6 +704,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       const acctEmail = 'flowcrypt.test.key.imported@gmail.com';
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
       await SetupPageRecipe.setupSmimeAccount(settingsPage, {
+        expired: true,
         title: 's/mime pkcs12 unprotected key',
         filePath: 'test/samples/smime/human-unprotected-PKCS12.p12',
         armored: null, // tslint:disable-line:no-null-keyword
@@ -1164,7 +1165,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
       await SetupPageRecipe.setupSmimeAccount(settingsPage, {
         title: 's/mime pkcs12 unprotected key',
-        filePath: 'test/samples/smime/human-unprotected-PKCS12.p12',
+        filePath: 'test/samples/smime/test-unprotected-PKCS12.p12',
         armored: null, // tslint:disable-line:no-null-keyword
         passphrase: 'test pp to encrypt unprotected key',
         longid: null // tslint:disable-line:no-null-keyword
