@@ -739,7 +739,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.test.key.imported@gmail.com');
         await SetupPageRecipe.setupSmimeAccount(settingsPage, {
           title: 's/mime pkcs12 unprotected key',
-          filePath: 'test/samples/smime/human-unprotected-PKCS12.p12',
+          filePath: 'test/samples/smime/test-unprotected-PKCS12.p12',
           armored: null, // tslint:disable-line:no-null-keyword
           passphrase: 'test pp to encrypt unprotected key',
           longid: null // tslint:disable-line:no-null-keyword

@@ -47,7 +47,7 @@ export type TestKeyInfo = {
   title: string, passphrase: string, armored: string | null, longid: string | null
 };
 
-export type TestKeyInfoWithFilepath = TestKeyInfo & { filePath?: string };
+export type TestKeyInfoWithFilepath = TestKeyInfo & { filePath?: string, expired?: boolean };
 
 interface TestSecretsInterface {
   ci_admin_token: string;
