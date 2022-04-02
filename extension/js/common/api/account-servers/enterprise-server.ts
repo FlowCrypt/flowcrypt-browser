@@ -23,7 +23,7 @@ type EventTag = 'compose' | 'decrypt' | 'setup' | 'settings' | 'import-pub' | 'i
 
 export namespace FesRes {
   export type ReplyToken = { replyToken: string };
-  export type MessageUpload = { url: string };
+  export type MessageUpload = { url: string; externalId: string };
   export type ServiceInfo = { vendor: string, service: string, orgId: string, version: string, apiVersion: string };
   export type ClientConfiguration = { clientConfiguration: DomainRulesJson };
 }
@@ -133,6 +133,10 @@ export class EnterpriseServer extends Api {
       this.url, `/api/${this.apiVersion}/message`, multipartBody, 'FORM',
       { upload: progressCb }, authHdr, 'json', 'POST'
     );
+  };
+
+  public messageGatewayUpdate = async (externalId: string, emailGatewayMessageId: string) => {
+    await this.request<void>('POST', `/api/${this.apiVersion}/message/${externalId}/gateway`, await this.authHdr(), { emailGatewayMessageId });
   };
 
   public accountUpdate = async (profileUpdate: ProfileUpdate): Promise<BackendRes.FcAccountUpdate> => {

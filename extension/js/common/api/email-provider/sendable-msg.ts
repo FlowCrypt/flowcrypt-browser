@@ -21,6 +21,7 @@ type SendableMsgHeaders = {
 type SendableMsgOptions = {
   type?: MimeEncodeType,
   isDraft?: boolean;
+  externalId?: string; // id of pwd-protected message on FES
 };
 
 type SignMethod = (signable: string) => Promise<string>;
@@ -61,7 +62,7 @@ export class SendableMsg {
     attachments: Attachment[],
     options: SendableMsgOptions
   ): Promise<SendableMsg> => {
-    return await SendableMsg.createSendableMsg(acctEmail, headers, body, attachments, { type: undefined, isDraft: options.isDraft });
+    return await SendableMsg.createSendableMsg(acctEmail, headers, body, attachments, { type: undefined, isDraft: options.isDraft, externalId: options.externalId });
   };
 
   public static createPgpMime = async (acctEmail: string, headers: SendableMsgHeaders, attachments: Attachment[], options?: SendableMsgOptions): Promise<SendableMsg> => {
@@ -88,11 +89,11 @@ export class SendableMsg {
     options: SendableMsgOptions
   ): Promise<SendableMsg> => {
     const { from, recipients, subject, thread } = headers;
-    const { type, isDraft } = options;
-    return await SendableMsg.create(acctEmail, { from, recipients, subject, thread, body, attachments, type, isDraft });
+    const { type, isDraft, externalId } = options;
+    return await SendableMsg.create(acctEmail, { from, recipients, subject, thread, body, attachments, type, isDraft, externalId });
   };
 
-  private static create = async (acctEmail: string, { from, recipients, subject, thread, body, attachments, type, isDraft }: SendableMsgDefinition): Promise<SendableMsg> => {
+  private static create = async (acctEmail: string, { from, recipients, subject, thread, body, attachments, type, isDraft, externalId }: SendableMsgDefinition): Promise<SendableMsg> => {
     const primaryKi = await KeyStore.getFirstRequired(acctEmail);
     const headers: Dict<string> = {};
     if (primaryKi && KeyUtil.getKeyType(primaryKi.private) === 'openpgp') {
@@ -108,7 +109,8 @@ export class SendableMsg {
       body || {},
       attachments || [],
       thread,
-      type
+      type,
+      externalId
     );
   };
 
@@ -123,6 +125,7 @@ export class SendableMsg {
     public attachments: Attachment[],
     public thread: string | undefined,
     public type: MimeEncodeType,
+    public externalId?: string, // for binding a password-protected message
   ) {
     const allEmails = [...recipients.to || [], ...recipients.cc || [], ...recipients.bcc || []];
     if (!allEmails.length && !isDraft) {
