@@ -285,6 +285,10 @@ export class SetupPageRecipe extends PageRecipe {
     await SetupPageRecipe.manualEnter(settingsPage, key.title, { fillOnly: true, submitPubkey: false, usedPgpBefore: false, key });
     await settingsPage.waitAndClick('@input-step2bmanualenter-save', { delay: 1 });
     await Util.sleep(1);
+    if (key.expired) {
+      await settingsPage.waitAndRespondToModal('confirm', 'confirm', 'You are importing a key that is expired.');
+      await Util.sleep(1);
+    }
     await settingsPage.waitAndRespondToModal('confirm', 'confirm', 'Using S/MIME as the only key on account is experimental.');
     await settingsPage.waitAndClick('@action-step4done-account-settings', { delay: 1 });
     await SettingsPageRecipe.ready(settingsPage);
