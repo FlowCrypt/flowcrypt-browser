@@ -116,8 +116,10 @@ export class ComposeSendBtnModule extends ViewModule<ComposeView> {
       await ContactStore.update(undefined, emails, { lastUse: Date.now() });
       const msgObj = await GeneralMailFormatter.processNewMsg(this.view, newMsgData);
       if (msgObj) {
-        await this.finalizeSendableMsg(msgObj);
-        await this.doSendMsg(msgObj.msg);
+        for (const msg of msgObj.msgs) {
+          await this.finalizeSendableMsg({ msg, senderKi: msgObj.senderKi });
+        }
+        await this.doSendMsgs(msgObj.msgs);
       }
     } catch (e) {
       await this.view.errModule.handleSendErr(e);
@@ -197,21 +199,26 @@ export class ComposeSendBtnModule extends ViewModule<ComposeView> {
   };
 
 
-  private doSendMsg = async (msg: SendableMsg) => {
+  private doSendMsgs = async (msgs: SendableMsg[]) => {
     // if this is a password-encrypted message, then we've already shown progress for uploading to backend
     // and this requests represents second half of uploadable effort. Else this represents all (no previous heavy requests)
     const progressRepresents = this.view.pwdOrPubkeyContainerModule.isVisible() ? 'SECOND-HALF' : 'EVERYTHING';
     let msgSentRes: GmailRes.GmailMsgSend;
-    try {
-      this.isSendMessageInProgress = true;
-      msgSentRes = await this.view.emailProvider.msgSend(msg, (p) => this.renderUploadProgress(p, progressRepresents));
-    } catch (e) {
-      if (msg.thread && ApiErr.isNotFound(e) && this.view.threadId) { // cannot send msg because threadId not found - eg user since deleted it
-        msg.thread = undefined;
+    for (const msg of msgs) {
+      try {
+        this.isSendMessageInProgress = true;
         msgSentRes = await this.view.emailProvider.msgSend(msg, (p) => this.renderUploadProgress(p, progressRepresents));
-      } else {
-        this.isSendMessageInProgress = false;
-        throw e;
+      } catch (e) {
+        if (msg.thread && ApiErr.isNotFound(e) && this.view.threadId) { // cannot send msg because threadId not found - eg user since deleted it
+          msg.thread = undefined;
+          msgSentRes = await this.view.emailProvider.msgSend(msg, (p) => this.renderUploadProgress(p, progressRepresents));
+        } else {
+          this.isSendMessageInProgress = false;
+          throw e;
+        }
+      }
+      if (msg.externalId) {
+        this.view.acctServer.messageGatewayUpdate(msg.externalId, msgSentRes.id).catch(Catch.reportErr);
       }
     }
     BrowserMsg.send.notificationShow(this.view.parentTabId, { notification: `Your ${this.view.isReplyBox ? 'reply' : 'message'} has been sent.` });

@@ -120,7 +120,7 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
         const primaryKi = await this.view.storageModule.getKey(msgData.from);
         const pubkeys = [{ isMine: true, email: msgData.from, pubkey: await KeyUtil.parse(primaryKi.public) }];
         msgData.pwd = undefined; // not needed for drafts
-        const sendable = await new EncryptedMsgMailFormatter(this.view, true).sendableMsg(msgData, pubkeys);
+        const [sendable] = await new EncryptedMsgMailFormatter(this.view, true).sendableMsgs(msgData, pubkeys);
         if (this.view.replyParams?.inReplyTo) {
           sendable.headers.References = this.view.replyParams.inReplyTo;
           sendable.headers['In-Reply-To'] = this.view.replyParams.inReplyTo;

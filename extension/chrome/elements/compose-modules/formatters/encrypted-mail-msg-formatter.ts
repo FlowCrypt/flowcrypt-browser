@@ -22,28 +22,41 @@ import { AcctStore } from '../../../../js/common/platform/store/acct-store.js';
 import { FcUuidAuth } from '../../../../js/common/api/account-servers/flowcrypt-com-api.js';
 import { SmimeKey } from '../../../../js/common/core/crypto/smime/smime-key.js';
 import { PgpHash } from '../../../../js/common/core/crypto/pgp/pgp-hash.js';
+import { UploadedMessageData } from '../../../../js/common/api/account-server.js';
 
 export class EncryptedMsgMailFormatter extends BaseMailFormatter {
 
-  public sendableMsg = async (newMsg: NewMsgData, pubkeys: PubkeyResult[], signingPrv?: Key): Promise<SendableMsg> => {
+  public sendableMsgs = async (newMsg: NewMsgData, pubkeys: PubkeyResult[], signingPrv?: Key): Promise<SendableMsg[]> => {
     if (newMsg.pwd && !this.isDraft) {
       // password-protected message, temporarily uploaded (already encrypted) to:
       //    - flowcrypt.com/api (consumers and customers without on-prem setup), or
       //    - FlowCrypt Enterprise Server (enterprise customers with on-prem setup)
       //    It will be served to recipient through web
-      const { url: msgUrl, externalId } = await this.prepareAndUploadPwdEncryptedMsg(newMsg); // encrypted for pwd only, pubkeys ignored
+      const uploadedMessageData = await this.prepareAndUploadPwdEncryptedMsg(newMsg); // encrypted for pwd only, pubkeys ignored
       newMsg.pwd = undefined;
-      return await this.sendablePwdMsg(newMsg, pubkeys, { msgUrl, externalId }, signingPrv); // encrypted for pubkeys only, pwd ignored
+      const entries = Object.entries(uploadedMessageData.emailToExternalIdAndUrl ?? {});
+      if (entries.length) {
+        const msgs: SendableMsg[] = [];
+        for (const entry of entries) {
+          const recipientEmail = entry[0];
+          const msgUrl = entry[1].url;
+          const externalId = entry[1].externalId;
+          msgs.push(await this.sendablePwdMsg(newMsg, pubkeys, { recipientEmail, msgUrl, externalId }, signingPrv));
+        }
+        return msgs;
+      } else {
+        return [await this.sendablePwdMsg(newMsg, pubkeys, { msgUrl: uploadedMessageData.url, externalId: uploadedMessageData.externalId }, signingPrv)];
+      }
     } else if (this.richtext) { // rich text: PGP/MIME - https://tools.ietf.org/html/rfc3156#section-4
       // or S/MIME
-      return await this.sendableRichTextMsg(newMsg, pubkeys, signingPrv);
+      return [await this.sendableRichTextMsg(newMsg, pubkeys, signingPrv)];
     } else { // simple text: PGP or S/MIME Inline with attachments in separate files
       // todo: #4046 check attachments for S/MIME
-      return await this.sendableSimpleTextMsg(newMsg, pubkeys, signingPrv);
+      return [await this.sendableSimpleTextMsg(newMsg, pubkeys, signingPrv)];
     }
   };
 
-  private prepareAndUploadPwdEncryptedMsg = async (newMsg: NewMsgData): Promise<{ url: string; externalId?: string }> => {
+  private prepareAndUploadPwdEncryptedMsg = async (newMsg: NewMsgData): Promise<UploadedMessageData> => {
     // PGP/MIME + included attachments (encrypted for password only)
     if (!newMsg.pwd) {
       throw new Error('password unexpectedly missing');
@@ -77,7 +90,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
     const { bodyWithReplyToken, replyToken } = await this.getPwdMsgSendableBodyWithOnlineReplyMsgToken(authInfo, newMsg);
     const pgpMimeWithAttachments = await Mime.encode(bodyWithReplyToken, { Subject: newMsg.subject }, await this.view.attachmentsModule.attachment.collectAttachments());
     const { data: pwdEncryptedWithAttachments } = await this.encryptDataArmor(Buf.fromUtfStr(pgpMimeWithAttachments), newMsg.pwd, []); // encrypted only for pwd, not signed
-    const { url, externalId } = await this.view.acctServer.messageUpload(
+    return await this.view.acctServer.messageUpload(
       authInfo.uuid ? authInfo : undefined,
       pwdEncryptedWithAttachments,
       replyToken,
@@ -85,10 +98,13 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
       newMsg.recipients,
       (p) => this.view.sendBtnModule.renderUploadProgress(p, 'FIRST-HALF'), // still need to upload to Gmail later, this request represents first half of progress
     );
-    return { url, externalId };
   };
 
-  private sendablePwdMsg = async (newMsg: NewMsgData, pubs: PubkeyResult[], { msgUrl, externalId }: { msgUrl: string, externalId?: string }, signingPrv?: Key) => {
+  private sendablePwdMsg = async (
+    newMsg: NewMsgData,
+    pubs: PubkeyResult[],
+    { msgUrl, externalId, recipientEmail }: { msgUrl: string, externalId?: string, recipientEmail?: string },
+    signingPrv?: Key) => {
     // encoded as: PGP/MIME-like structure but with attachments as external files due to email size limit (encrypted for pubkeys only)
     const msgBody = this.richtext ? { 'text/plain': newMsg.plaintext, 'text/html': newMsg.plainhtml } : { 'text/plain': newMsg.plaintext };
     const pgpMimeNoAttachments = await Mime.encode(msgBody, { Subject: newMsg.subject }, []); // no attachments, attached to email separately
@@ -96,7 +112,14 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
     const attachments = this.createPgpMimeAttachments(pubEncryptedNoAttachments).
       concat(await this.view.attachmentsModule.attachment.collectEncryptAttachments(pubs)); // encrypted only for pubs
     const emailIntroAndLinkBody = await this.formatPwdEncryptedMsgBodyLink(msgUrl);
-    return await SendableMsg.createPwdMsg(this.acctEmail, this.headers(newMsg), emailIntroAndLinkBody, attachments, { isDraft: this.isDraft, externalId });
+    const headers = this.headers(newMsg);
+    if (recipientEmail) {
+      // we will send this copy of the message only to this recipient
+      const foundParsedRecipient = (headers.recipients.to ?? []).concat(headers.recipients.cc ?? []).concat(headers.recipients.bcc ?? []).
+        find(r => r.email.toLowerCase() === recipientEmail.toLowerCase());
+      headers.recipients = { to: [foundParsedRecipient ?? { email: recipientEmail }] };
+    }
+    return await SendableMsg.createPwdMsg(this.acctEmail, headers, emailIntroAndLinkBody, attachments, { isDraft: this.isDraft, externalId });
   };
 
   private sendableSimpleTextMsg = async (newMsg: NewMsgData, pubs: PubkeyResult[], signingPrv?: Key): Promise<SendableMsg> => {

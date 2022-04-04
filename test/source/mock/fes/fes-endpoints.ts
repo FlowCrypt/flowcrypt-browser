@@ -63,11 +63,45 @@ export const mockFesEndpoints: HandlersDefinition = {
       expect(body).to.contain('"cc":[]');
       expect(body).to.contain('"bcc":["Mr Bcc <bcc@example.com>"]');
       expect(body).to.contain('"from":"user@standardsubdomainfes.test:8001"');
-      return { 'url': `http://${standardFesUrl}/message/FES-MOCK-MESSAGE-ID`, 'externalId': 'FES-MOCK-EXTERNAL-ID' };
+      const response =
+      {
+        // todo: do we need to support and test legacy?
+        'url': `http://${standardFesUrl}/message/FES-MOCK-MESSAGE-ID`,
+        'externalId': 'FES-MOCK-EXTERNAL-ID',
+        emailToExternalIdAndUrl: {} as { [email: string]: { url: string, externalId: string } }
+      };
+      response.emailToExternalIdAndUrl['to@example.com'] = {
+        url: `http://${standardFesUrl}/message/FES-MOCK-MESSAGE-FOR-TO@EXAMPLE.COM-ID`,
+        externalId: 'FES-MOCK-EXTERNAL-FOR-TO@EXAMPLE.COM-ID'
+      };
+      response.emailToExternalIdAndUrl['bcc@example.com'] = {
+        url: `http://${standardFesUrl}/message/FES-MOCK-MESSAGE-FOR-BCC@EXAMPLE.COM-ID`,
+        externalId: 'FES-MOCK-EXTERNAL-FOR-BCC@EXAMPLE.COM-ID'
+      };
+      return response;
     }
     throw new HttpClientErr('Not Found', 404);
   },
   '/api/v1/message/FES-MOCK-EXTERNAL-ID/gateway': async ({ body }, req) => {
+    if (req.headers.host === standardFesUrl && req.method === 'POST') {
+      // todo: remove legacy endpoint?
+      // test: `compose - user@standardsubdomainfes.test:8001 - PWD encrypted message with FES web portal`
+      authenticate(req, 'oidc');
+      expect(body).to.match(/{"emailGatewayMessageId":"<(.+)@standardsubdomainfes.test:8001>"}/);
+      return {};
+    }
+    throw new HttpClientErr('Not Found', 404);
+  },
+  '/api/v1/message/FES-MOCK-EXTERNAL-FOR-TO@EXAMPLE.COM-ID/gateway': async ({ body }, req) => {
+    if (req.headers.host === standardFesUrl && req.method === 'POST') {
+      // test: `compose - user@standardsubdomainfes.test:8001 - PWD encrypted message with FES web portal`
+      authenticate(req, 'oidc');
+      expect(body).to.match(/{"emailGatewayMessageId":"<(.+)@standardsubdomainfes.test:8001>"}/);
+      return {};
+    }
+    throw new HttpClientErr('Not Found', 404);
+  },
+  '/api/v1/message/FES-MOCK-EXTERNAL-FOR-BCC@EXAMPLE.COM-ID/gateway': async ({ body }, req) => {
     if (req.headers.host === standardFesUrl && req.method === 'POST') {
       // test: `compose - user@standardsubdomainfes.test:8001 - PWD encrypted message with FES web portal`
       authenticate(req, 'oidc');

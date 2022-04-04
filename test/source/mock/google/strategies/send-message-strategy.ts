@@ -42,12 +42,24 @@ class PwdEncryptedMessageWithFesIdTokenTestStrategy implements ITestMsgStrategy 
   public test = async (mimeMsg: ParsedMail, base64Msg: string, id: string) => {
     const expectedSenderEmail = 'user@standardsubdomainfes.test:8001';
     expect(mimeMsg.from!.text).to.equal(`First Last <${expectedSenderEmail}>`);
-    expect((mimeMsg.to as AddressObject).text).to.equal('Mr To <to@example.com>');
-    expect((mimeMsg.bcc as AddressObject).text).to.equal('Mr Bcc <bcc@example.com>');
     if (!mimeMsg.text?.includes(`${expectedSenderEmail} has sent you a password-encrypted email`)) {
       throw new HttpClientErr(`Error checking sent text in:\n\n${mimeMsg.text}`);
     }
-    if (!mimeMsg.text?.includes('http://fes.standardsubdomainfes.test:8001/message/FES-MOCK-MESSAGE-ID')) {
+    if (mimeMsg.text?.includes('http://fes.standardsubdomainfes.test:8001/message/FES-MOCK-MESSAGE-ID')) {
+      // legacy
+      // todo: remove this test?
+      expect((mimeMsg.to as AddressObject).text).to.equal('Mr To <to@example.com>');
+      expect(mimeMsg.cc).to.be.an.undefined;
+      expect((mimeMsg.bcc as AddressObject).text).to.equal('Mr Bcc <bcc@example.com>');
+    } else if (mimeMsg.text?.includes('http://fes.standardsubdomainfes.test:8001/message/FES-MOCK-MESSAGE-FOR-TO@EXAMPLE.COM-ID')) {
+      expect((mimeMsg.to as AddressObject).text).to.equal('Mr To <to@example.com>');
+      expect(mimeMsg.cc).to.be.an.undefined;
+      expect(mimeMsg.bcc).to.be.an.undefined;
+    } else if (mimeMsg.text?.includes('http://fes.standardsubdomainfes.test:8001/message/FES-MOCK-MESSAGE-FOR-BCC@EXAMPLE.COM-ID')) {
+      expect((mimeMsg.to as AddressObject).text).to.equal('Mr Bcc <bcc@example.com>');
+      expect(mimeMsg.cc).to.be.an.undefined;
+      expect(mimeMsg.bcc).to.be.an.undefined;
+    } else {
       throw new HttpClientErr(`Error: cannot find pwd encrypted FES link in:\n\n${mimeMsg.text}`);
     }
     if (!mimeMsg.text?.includes('Follow this link to open it')) {

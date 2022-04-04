@@ -13,11 +13,11 @@ import { ComposeView } from '../../compose.js';
 export class GeneralMailFormatter {
 
   // returns undefined in case user cancelled decryption of the signing key
-  public static processNewMsg = async (view: ComposeView, newMsgData: NewMsgData): Promise<{ msg: SendableMsg, senderKi: KeyInfo | undefined } | undefined> => {
+  public static processNewMsg = async (view: ComposeView, newMsgData: NewMsgData): Promise<{ msgs: SendableMsg[], senderKi: KeyInfo | undefined } | undefined> => {
     const choices = view.sendBtnModule.popover.choices;
     const recipientsEmails = getUniqueRecipientEmails(newMsgData.recipients);
     if (!choices.encrypt && !choices.sign) { // plain
-      return { senderKi: undefined, msg: await new PlainMsgMailFormatter(view).sendableMsg(newMsgData) };
+      return { senderKi: undefined, msgs: [await new PlainMsgMailFormatter(view).sendableMsg(newMsgData)] };
     }
     let signingPrv: Key | undefined;
     if (!choices.encrypt && choices.sign) { // sign only
@@ -27,7 +27,7 @@ export class GeneralMailFormatter {
       if (!signingPrv) {
         return undefined;
       }
-      return { senderKi, msg: await new SignedMsgMailFormatter(view).sendableMsg(newMsgData, signingPrv) };
+      return { senderKi, msgs: [await new SignedMsgMailFormatter(view).sendableMsg(newMsgData, signingPrv)] };
     }
     // encrypt (optionally sign)
     const result = await view.storageModule.collectSingleFamilyKeys(recipientsEmails, newMsgData.from, choices.sign);
@@ -41,7 +41,7 @@ export class GeneralMailFormatter {
       await view.errModule.throwIfEncryptionPasswordInvalid(newMsgData);
     }
     view.S.now('send_btn_text').text('Encrypting...');
-    return { senderKi: result.senderKi, msg: await new EncryptedMsgMailFormatter(view).sendableMsg(newMsgData, result.pubkeys, signingPrv) };
+    return { senderKi: result.senderKi, msgs: await new EncryptedMsgMailFormatter(view).sendableMsgs(newMsgData, result.pubkeys, signingPrv) };
   };
 
 }
