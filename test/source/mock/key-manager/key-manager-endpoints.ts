@@ -189,6 +189,24 @@ oEdXpz065GJRpAccNRQ1iZTLln2yNKVFp1PuyBs2zqUdo0O/cy0XgYV4z6Vt
 -----END PGP PRIVATE KEY BLOCK-----
 `;
 
+const revokedPrv = `
+-----BEGIN PGP PRIVATE KEY BLOCK-----
+Version: BCPG v1.69
+
+lFgEYW8BThYJKwYBBAHaRw8BAQdAYtEoS4d+3cwQWXcs3lvMQueypexTYai7uXQm
+xqyOoKoAAP92ki9qlV4AX2m+WPUq//vL03GGge+Y4rcyN3f5/Y/2AhMdiHUEIBYK
+AB0FAmFvAiwWIQQ5MbdBPbsvpgzvhc5fFZeJEKF4CgAKCRBfFZeJEKF4CqTkAQCm
+fxfc57sQWB1+jmWSCHq5umaDJFSl9geRATb9Lor5PQEA8azanLnXlpRUCCJHLtsm
+6hgMops48vU2l3RuB6cqAwa0FXJldm9la2RAZmxvd2NyeXB0LmNvbYheBBMWCgAG
+BQJhbwFrAAoJEF8Vl4kQoXgKEP8A/2B2biuLIDPIaEPg/xkZbca1ESTnqxZEEHcD
+/5FRf6psAQDcVYKzZtSXqmZqxc/xACLT/Oiu5mJKFHZjaZUAzdPUBLQVcmV2b2tl
+ZEBmbG93Y3J5cHQuY29tiF4EExYKAAYFAmFvAWsACgkQXxWXiRCheAp5ygEAt2sP
+yeSm0uVPwODhwX7ezB9jW6uVt0R8S8iM3rQdEMsA/jDep5LNn47K6o8VrDt0zYo6
+7j75aKC1vFGkOGlD1TwF
+=1tta
+-----END PGP PRIVATE KEY BLOCK-----
+`;
+
 export const MOCK_KM_LAST_INSERTED_KEY: { [acct: string]: { decryptedPrivateKey: string, publicKey: string } } = {}; // accessed from test runners
 
 export const mockKeyManagerEndpoints: HandlersDefinition = {
@@ -232,10 +250,10 @@ export const mockKeyManagerEndpoints: HandlersDefinition = {
         return { privateKeys: [] };
       }
       if (acctEmail === 'first.key.revoked@key-manager-autoimport-no-prv-create.flowcrypt.test') {
-        return { privateKeys: [{ decryptedPrivateKey: testConstants.somerevokedRevoked1 }, { decryptedPrivateKey: twoKeys2 }] };
+        return { privateKeys: [{ decryptedPrivateKey: revokedPrv }, { decryptedPrivateKey: twoKeys2 }] };
       }
       if (acctEmail === 'revoked@key-manager-autoimport-no-prv-create.flowcrypt.test') {
-        return { privateKeys: [{ decryptedPrivateKey: testConstants.somerevokedRevoked1 }] };
+        return { privateKeys: [{ decryptedPrivateKey: revokedPrv }] };
       }
       if (acctEmail === 'get.error@key-manager-autogen.flowcrypt.test') {
         throw new Error('Intentional error for get.error to test client behavior');

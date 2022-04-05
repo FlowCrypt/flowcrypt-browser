@@ -1597,10 +1597,10 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       // also see '/api/v1/message' in fes-endpoints.ts mock
     }));
 
-    ava.default('first.key.revoked@key-manager-autoimport-no-prv-create.flowcrypt.test - selects valid own key when saving draft or sending', testWithBrowser(undefined, async (t, browser) => {
+    ava.default.only('first.key.revoked@key-manager-autoimport-no-prv-create.flowcrypt.test - selects valid own key when saving draft or sending', testWithBrowser(undefined, async (t, browser) => {
       const acct = 'first.key.revoked@key-manager-autoimport-no-prv-create.flowcrypt.test';
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
-      await SetupPageRecipe.autoSetupWithEKM(settingsPage, { enterPp: { passphrase: 'l3o3kqSa:;[]Leppaanz' } });
+      await SetupPageRecipe.autoSetupWithEKM(settingsPage);
       const composePage = await ComposePageRecipe.openStandalone(t, browser, acct);
       await ComposePageRecipe.fillMsg(composePage, { to: 'to@example.com' }, 'choose valid key');
       await ComposePageRecipe.noToastAppears(composePage); // no error saving draft
@@ -1610,7 +1610,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
     ava.default('revoked@key-manager-autoimport-no-prv-create.flowcrypt.test - shows error no valid keys when saving draft or sending', testWithBrowser(undefined, async (t, browser) => {
       const acct = 'revoked@key-manager-autoimport-no-prv-create.flowcrypt.test';
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
-      await SetupPageRecipe.autoSetupWithEKM(settingsPage, { enterPp: { passphrase: 'l3o3kqSa:;[]Leppaanz' } });
+      await SetupPageRecipe.autoSetupWithEKM(settingsPage);
       const composePage = await ComposePageRecipe.openStandalone(t, browser, acct);
       await ComposePageRecipe.fillMsg(composePage, { to: 'to@example.com' }, 'no valid key');
       await ComposePageRecipe.waitForToastToAppearAndDisappear(composePage, 'Draft not saved: your account has no usable keys');
