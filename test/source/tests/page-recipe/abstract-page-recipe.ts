@@ -11,6 +11,7 @@ type ModalOpts = { contentToCheck?: string, clickOn?: 'confirm' | 'cancel', getT
 type ModalType = 'confirm' | 'error' | 'info' | 'warning';
 
 export abstract class PageRecipe {
+
   public static getElementPropertyJson = async (elem: ElementHandle<Element>, property: string) => {
     return await (await elem.getProperty(property) as JSHandle).jsonValue() as string;
   };
@@ -28,6 +29,19 @@ export abstract class PageRecipe {
     if (clickOn) {
       const button = await modalContainer.$(`button.ui-modal-${type}-${clickOn}`);
       await button!.click();
+    }
+  };
+
+  public static waitForToastToAppearAndDisappear = async (controllable: Controllable, containsText: string | RegExp): Promise<void> => {
+    await controllable.waitForContent('.ui-toast-container', containsText);
+    await controllable.waitTillGone('.ui-toast-container');
+  };
+
+  public static noToastAppears = async (controllable: Controllable, waitSeconds = 5): Promise<void> => {
+    await controllable.notPresent('.ui-toast-container');
+    for (let i = 0; i < waitSeconds; i++) {
+      await Util.sleep(1);
+      await controllable.notPresent('.ui-toast-container');
     }
   };
 
