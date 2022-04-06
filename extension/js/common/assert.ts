@@ -42,7 +42,7 @@ export class Assert {
       const { setup_done } = await AcctStore.get(acctEmail, ['setup_done']);
       if (setup_done && kis.length) {
         for (const key of parsedKeys) {
-          if (key.fullyEncrypted) {
+          if (!key.fullyEncrypted) {
             if (window.location.pathname === '/chrome/settings/index.htm') {
               await Settings.renderSubPage(acctEmail, tabId!, '/chrome/settings/modules/change_passphrase.htm');
             } else {
@@ -53,6 +53,7 @@ export class Assert {
                 await Browser.openSettingsPage('index.htm', acctEmail);
               }
             }
+            return; // can fix one key at a time. When they reload, it will complain about another key
           }
         }
       }
