@@ -42,9 +42,9 @@ View.run(class ChangePassPhraseView extends View {
     await initPassphraseToggle(['current_pass_phrase', 'new_pass_phrase', 'new_pass_phrase_confirm']);
     const privateKeys = await KeyStore.get(this.acctEmail);
     if (privateKeys.length > 1) {
-      $('#step_0_enter_current .sentence').text('Enter the current passphrase for your primary key');
-      $('#step_0_enter_current #current_pass_phrase').attr('placeholder', 'Current primary key pass phrase');
-      $('#step_1_enter_new #new_pass_phrase').attr('placeholder', 'Enter a new primary key pass phrase');
+      $('#step_0_enter_current .sentence').text('Enter the current passphrase for your key');
+      $('#step_0_enter_current #current_pass_phrase').attr('placeholder', 'Current key pass phrase');
+      $('#step_1_enter_new #new_pass_phrase').attr('placeholder', 'Enter a new key pass phrase');
     }
     // todo - should be working across all keys. Existing keys may be encrypted for various pass phrases,
     //  which will complicate UI once implemented

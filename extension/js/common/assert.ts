@@ -61,7 +61,7 @@ export class Assert {
 
   public static abortAndRenderErrorIfKeyinfoEmpty = (kis: KeyInfo[], doThrow: boolean = true) => {
     if (kis.length) {
-      const msg = `Cannot find primary key. Is FlowCrypt not set up yet? ${Ui.retryLink()}`;
+      const msg = `Cannot find any account key. Is FlowCrypt not set up yet? ${Ui.retryLink()}`;
       const target = $($('#content').length ? '#content' : 'body');
       target.addClass('error-occured');
       Xss.sanitizeRender(target, msg);

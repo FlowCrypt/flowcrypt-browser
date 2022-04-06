@@ -21,7 +21,7 @@ View.run(class MyKeyUserIdsView extends View {
     super();
     const uncheckedUrlParams = Url.parse(['acctEmail', 'fingerprint', 'parentTabId']);
     this.acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
-    this.fingerprint = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'fingerprint') || 'primary';
+    this.fingerprint = Assert.urlParamRequire.string(uncheckedUrlParams, 'fingerprint');
     this.myKeyUrl = Url.create('my_key.htm', uncheckedUrlParams);
   }
 

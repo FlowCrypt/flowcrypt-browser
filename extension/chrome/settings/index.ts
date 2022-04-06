@@ -363,12 +363,12 @@ View.run(class SettingsView extends View {
   private checkGoogleAcct = async () => {
     try {
       const { sendAs } = await this.gmail!.fetchAcctAliases();
-      const primary = sendAs.find(addr => addr.isPrimary === true);
-      if (!primary) {
+      const primarySendAs = sendAs.find(addr => addr.isPrimary === true);
+      if (!primarySendAs) {
         await Ui.modal.warning(`Your account sendAs does not have any primary sendAsEmail`);
         return;
       }
-      const googleAcctEmailAddr = primary.sendAsEmail;
+      const googleAcctEmailAddr = primarySendAs.sendAsEmail;
       $('#status-row #status_google').text(`g:${googleAcctEmailAddr}:ok`);
       if (googleAcctEmailAddr !== this.acctEmail) {
         $('#status-row #status_google').text(`g:${googleAcctEmailAddr}:changed`).addClass('bad').attr('title', 'Account email address has changed');

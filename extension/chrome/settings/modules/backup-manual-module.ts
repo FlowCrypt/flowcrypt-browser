@@ -101,7 +101,7 @@ export class BackupManualActionModule extends ViewModule<BackupView> {
     return new Attachment({ name: `flowcrypt-backup-${this.view.acctEmail.replace(/[^A-Za-z0-9]+/g, '')}.asc`, type: 'application/pgp-keys', data: Buf.fromUtfStr(armoredKey) });
   };
 
-  private encryptForBackup = async (kinfos: TypedKeyInfo[], checks: { strength: boolean }, primaryKeyIdentity: KeyIdentity): Promise<string | undefined> => {
+  private encryptForBackup = async (kinfos: TypedKeyInfo[], checks: { strength: boolean }, keyIdentity: KeyIdentity): Promise<string | undefined> => {
     const kisWithPp = await Promise.all(kinfos.map(async (ki) => {
       const passphrase = await PassphraseStore.get(this.view.acctEmail, ki);
       // test that the key can actually be decrypted with the passphrase provided
@@ -116,7 +116,7 @@ export class BackupManualActionModule extends ViewModule<BackupView> {
     if (checks.strength && distinctPassphrases[0] && !(Settings.evalPasswordStrength(distinctPassphrases[0]).word.pass)) {
       await Ui.modal.warning('Please change your pass phrase first.\n\nIt\'s too weak for this backup method.');
       // Actually, until #956 is resolved, we can only modify the pass phrase of the first key
-      if (this.view.parentTabId && KeyUtil.identityEquals(kisWithPp[0], primaryKeyIdentity) && kisWithPp[0].passphrase === distinctPassphrases[0]) {
+      if (this.view.parentTabId && KeyUtil.identityEquals(kisWithPp[0], keyIdentity) && kisWithPp[0].passphrase === distinctPassphrases[0]) {
         Settings.redirectSubPage(this.view.acctEmail, this.view.parentTabId, '/chrome/settings/modules/change_passphrase.htm');
       }
       return undefined;
@@ -148,7 +148,7 @@ export class BackupManualActionModule extends ViewModule<BackupView> {
       }
       // re-start the function recursively with newly discovered pass phrases
       // todo: #4059 however, this code is never actually executed, because our backup frame gets wiped out by the passphrase frame
-      return await this.encryptForBackup(kinfos, checks, primaryKeyIdentity);
+      return await this.encryptForBackup(kinfos, checks, keyIdentity);
     }
     return kinfos.map(ki => ki.private).join('\n'); // todo: remove extra \n ?
   };
