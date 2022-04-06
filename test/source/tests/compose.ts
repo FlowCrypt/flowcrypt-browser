@@ -1615,10 +1615,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       await ComposePageRecipe.fillMsg(composePage, { to: 'to@example.com' }, 'no valid key');
       await ComposePageRecipe.waitForToastToAppearAndDisappear(composePage, 'Draft not saved: your account has no usable keys');
       await composePage.waitAndClick('@action-send', { delay: 1 });
-      await PageRecipe.waitForModalAndRespond(composePage, 'error', {
-        contentToCheck: 'Your account has no usable keys',
-        clickOn: 'confirm'
-      });
+      await PageRecipe.waitForModalAndRespond(composePage, 'error', { contentToCheck: 'Your account has no usable keys', clickOn: 'confirm' });
     }));
 
   }
