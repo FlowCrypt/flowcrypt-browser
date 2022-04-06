@@ -222,7 +222,7 @@ export class SetupView extends View {
   public submitPublicKeys = async (
     { submit_main, submit_all }: { submit_main: boolean, submit_all: boolean }
   ): Promise<void> => {
-    const mostUsefulPrv = await KeyStoreUtil.chooseMostUseful(
+    const mostUsefulPrv = KeyStoreUtil.chooseMostUseful(
       await KeyStoreUtil.parse(await KeyStore.getRequired(this.acctEmail)),
       'ONLY-FULLY-USABLE'
     );
