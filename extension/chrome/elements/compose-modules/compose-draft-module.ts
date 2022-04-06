@@ -19,8 +19,7 @@ import { Str, Url } from '../../../js/common/core/common.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { ViewModule } from '../../../js/common/view-module.js';
 import { ComposeView } from '../compose.js';
-import { KeyStore } from '../../../js/common/platform/store/key-store.js';
-import { KeyUtil } from '../../../js/common/core/crypto/key.js';
+import { KeyStore, KeyStoreUtil } from '../../../js/common/platform/store/key-store.js';
 import { SendableMsg, InvalidRecipientError } from '../../../js/common/api/email-provider/sendable-msg.js';
 import { PassphraseStore } from '../../../js/common/platform/store/passphrase-store.js';
 
@@ -117,12 +116,10 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
       this.currentlySavingDraft = true;
       try {
         const msgData = this.view.inputModule.extractAll();
-        const pubkeys = [];
-        for (const ki of await this.view.storageModule.getAccountKeys(msgData.from)) {
-          pubkeys.push({ isMine: true, email: msgData.from, pubkey: await KeyUtil.parse(ki.public) });
-        }
+        const { pubkeys, senderKis } = await this.view.storageModule.collectSingleFamilyKeys([], msgData.from, true);
+        const mostUsefulPrv = KeyStoreUtil.chooseMostUseful(await KeyStoreUtil.parse(senderKis), 'EVEN-IF-UNUSABLE');
         msgData.pwd = undefined; // not needed for drafts
-        const sendable = await new EncryptedMsgMailFormatter(this.view, true).sendableMsg(msgData, pubkeys);
+        const sendable = await new EncryptedMsgMailFormatter(this.view, true).sendableMsg(msgData, pubkeys, mostUsefulPrv?.key);
         if (this.view.replyParams?.inReplyTo) {
           sendable.headers.References = this.view.replyParams.inReplyTo;
           sendable.headers['In-Reply-To'] = this.view.replyParams.inReplyTo;
