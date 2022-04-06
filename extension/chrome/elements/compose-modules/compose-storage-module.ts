@@ -90,9 +90,6 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
   };
 
   public passphraseGet = async (senderKi: { longid: string }) => {
-    if (!senderKi) {
-      senderKi = await KeyStore.getFirstRequired(this.view.acctEmail);
-    }
     return await PassphraseStore.get(this.view.acctEmail, senderKi);
   };
 

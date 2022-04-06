@@ -5,14 +5,14 @@
 import { Assert } from '../../../js/common/assert.js';
 import { Catch } from '../../../js/common/platform/catch.js';
 import { KeyImportUi } from '../../../js/common/ui/key-import-ui.js';
-import { KeyInfo, Key, KeyUtil } from '../../../js/common/core/crypto/key.js';
+import { KeyUtil } from '../../../js/common/core/crypto/key.js';
 import { Settings } from '../../../js/common/settings.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { Url } from '../../../js/common/core/common.js';
 import { View } from '../../../js/common/view.js';
 import { initPassphraseToggle } from '../../../js/common/ui/passphrase-ui.js';
 import { PassphraseStore } from '../../../js/common/platform/store/passphrase-store.js';
-import { KeyStore } from '../../../js/common/platform/store/key-store.js';
+import { KeyStore, KeyStoreUtil, ParsedKeyInfo } from '../../../js/common/platform/store/key-store.js';
 import { OrgRules } from '../../../js/common/org-rules.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Lang } from '../../../js/common/lang.js';
@@ -25,8 +25,7 @@ View.run(class ChangePassPhraseView extends View {
   private readonly parentTabId: string;
   private readonly keyImportUi = new KeyImportUi({});
 
-  private primaryKi: KeyInfo | undefined;
-  private primaryPrv: Key | undefined;
+  private mostUsefulPrv: ParsedKeyInfo | undefined;
   private orgRules!: OrgRules;
 
   constructor() {
@@ -47,12 +46,14 @@ View.run(class ChangePassPhraseView extends View {
       $('#step_0_enter_current #current_pass_phrase').attr('placeholder', 'Current primary key pass phrase');
       $('#step_1_enter_new #new_pass_phrase').attr('placeholder', 'Enter a new primary key pass phrase');
     }
-    const primaryKi = await KeyStore.getFirstRequired(this.acctEmail);
-    this.primaryKi = primaryKi;
-    const storedOrSessionPp = await PassphraseStore.get(this.acctEmail, this.primaryKi);
-    const key = await KeyUtil.parse(this.primaryKi.private);
-    this.primaryPrv = key;
-    if (this.primaryPrv.fullyDecrypted || (storedOrSessionPp && await KeyUtil.decrypt(this.primaryPrv, storedOrSessionPp))) {
+    // todo - should be working across all keys. Existing keys may be encrypted for various pass phrases,
+    //  which will complicate UI once implemented
+    this.mostUsefulPrv = KeyStoreUtil.chooseMostUseful(
+      await KeyStoreUtil.parse(await KeyStore.getRequired(this.acctEmail)),
+      'EVEN-IF-UNUSABLE'
+    );
+    const storedOrSessionPp = await PassphraseStore.get(this.acctEmail, this.mostUsefulPrv!.keyInfo);
+    if (this.mostUsefulPrv?.key.fullyDecrypted || (storedOrSessionPp && await KeyUtil.decrypt(this.mostUsefulPrv!.key, storedOrSessionPp))) {
       this.displayBlock('step_1_enter_new'); // current pp is already known
       $('#new_pass_phrase').focus();
     } else {
@@ -73,9 +74,9 @@ View.run(class ChangePassPhraseView extends View {
   };
 
   private actionTestCurrentPassPhraseHandler = async () => {
-    const prv = await KeyUtil.parse(this.primaryKi!.private);
+    const prv = await KeyUtil.parse(this.mostUsefulPrv!.keyInfo.private);
     if (await KeyUtil.decrypt(prv, String($('#current_pass_phrase').val())) === true) {
-      this.primaryPrv = prv;
+      this.mostUsefulPrv!.key = prv;
       this.displayBlock('step_1_enter_new');
       $('#new_pass_phrase').focus();
     } else {
@@ -109,17 +110,17 @@ View.run(class ChangePassPhraseView extends View {
       return;
     }
     try {
-      await KeyUtil.encrypt(this.primaryPrv!, newPp);
+      await KeyUtil.encrypt(this.mostUsefulPrv!.key, newPp);
     } catch (e) {
       Catch.reportErr(e);
       await Ui.modal.error(`There was an unexpected error. ${Lang.general.contactForSupportSentence(!!this.fesUrl)}\n\n${e instanceof Error ? e.stack : String(e)}`);
       return;
     }
-    await KeyStore.add(this.acctEmail, this.primaryPrv!);
+    await KeyStore.add(this.acctEmail, this.mostUsefulPrv!.key);
     const shouldSavePassphraseInStorage = !this.orgRules.forbidStoringPassPhrase() &&
-      !!(await PassphraseStore.get(this.acctEmail, this.primaryKi!, true));
-    await PassphraseStore.set('local', this.acctEmail, this.primaryKi!, shouldSavePassphraseInStorage ? newPp : undefined);
-    await PassphraseStore.set('session', this.acctEmail, this.primaryKi!, shouldSavePassphraseInStorage ? undefined : newPp);
+      !!(await PassphraseStore.get(this.acctEmail, this.mostUsefulPrv!.keyInfo, true));
+    await PassphraseStore.set('local', this.acctEmail, this.mostUsefulPrv!.keyInfo, shouldSavePassphraseInStorage ? newPp : undefined);
+    await PassphraseStore.set('session', this.acctEmail, this.mostUsefulPrv!.keyInfo, shouldSavePassphraseInStorage ? undefined : newPp);
     if (this.orgRules.canBackupKeys()) {
       await Ui.modal.info('Now that you changed your pass phrase, you should back up your key. New backup will be protected with new passphrase.');
       Settings.redirectSubPage(this.acctEmail, this.parentTabId, '/chrome/settings/modules/backup.htm', '&action=backup_manual');
