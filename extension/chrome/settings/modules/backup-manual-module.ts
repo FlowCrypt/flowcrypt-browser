@@ -74,17 +74,22 @@ export class BackupManualActionModule extends ViewModule<BackupView> {
     }
     if (selected === 'inbox' || selected === 'file') {
       // in setup_manual we don't have passphrase-related message handlers, so limit the checks
-      const encrypted = await this.encryptForBackup(kinfos, { strength: selected === 'inbox' && this.view.action !== 'setup_manual' }, allKis[0]);
-      if (encrypted) {
-        if (selected === 'inbox') {
-          if (!await this.backupOnEmailProviderAndUpdateUi(encrypted)) {
-            return; // some error occured, message displayed, can retry, no reload needed
-          }
-        } else {
-          await this.backupAsFile(encrypted);
+      const encryptedArmoredPrvs: string[] = [];
+      for (const ki of allKis) {
+        const encryptedArmoredPrv = await this.encryptForBackup(kinfos, { strength: selected === 'inbox' && this.view.action !== 'setup_manual' }, ki);
+        if (!encryptedArmoredPrv) {
+          return; // error modal was already rendered inside encryptForBackup
         }
-        await this.view.renderBackupDone(kinfos.length);
+        encryptedArmoredPrvs.push(encryptedArmoredPrv);
       }
+      if (selected === 'inbox') {
+        if (!await this.backupOnEmailProviderAndUpdateUi(encryptedArmoredPrvs)) {
+          return; // some error occured, message displayed, can retry, no reload needed
+        }
+      } else {
+        await this.backupAsFile(encryptedArmoredPrvs);
+      }
+      await this.view.renderBackupDone(kinfos.length);
     } else if (selected === 'print') {
       await this.backupByBrint();
     } else {
@@ -148,11 +153,11 @@ export class BackupManualActionModule extends ViewModule<BackupView> {
     return kinfos.map(ki => ki.private).join('\n'); // todo: remove extra \n ?
   };
 
-  private backupOnEmailProviderAndUpdateUi = async (data: string): Promise<boolean> => {
+  private backupOnEmailProviderAndUpdateUi = async (armoredPrvs: string[]): Promise<boolean> => {
     const origBtnText = this.proceedBtn.text();
     Xss.sanitizeRender(this.proceedBtn, Ui.spinner('white'));
     try {
-      await this.doBackupOnEmailProvider(data);
+      await this.doBackupOnEmailProvider(armoredPrvs);
       return true;
     } catch (e) {
       if (ApiErr.isNetErr(e)) {
@@ -172,9 +177,11 @@ export class BackupManualActionModule extends ViewModule<BackupView> {
     }
   };
 
-  private backupAsFile = async (data: string) => { // todo - add a non-encrypted download option
-    const attachment = this.asBackupFile(data);
-    Browser.saveToDownloads(attachment);
+  private backupAsFile = async (encryptedArmoredPrvs: string[]) => { // todo - add a non-encrypted download option
+    for (const encryptedArmoredPrv of encryptedArmoredPrvs) {
+      const attachment = this.asBackupFile(encryptedArmoredPrv);
+      Browser.saveToDownloads(attachment);
+    }
     await Ui.modal.info('Downloading private key backup file..');
   };
 
