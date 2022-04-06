@@ -6,8 +6,7 @@ import { Dict, Str } from '../../core/common.js';
 import { Mime, MimeEncodeType, SendableMsgBody } from '../../core/mime.js';
 import { Attachment } from '../../core/attachment.js';
 import { Buf } from '../../core/buf.js';
-import { KeyStore } from '../../platform/store/key-store.js';
-import { KeyUtil } from '../../core/crypto/key.js';
+import { KeyStore, KeyStoreUtil } from '../../platform/store/key-store.js';
 import { ParsedRecipients } from './email-provider-api.js';
 
 type SendableMsgHeaders = {
@@ -94,10 +93,13 @@ export class SendableMsg {
   };
 
   private static create = async (acctEmail: string, { from, recipients, subject, thread, body, attachments, type, isDraft, externalId }: SendableMsgDefinition): Promise<SendableMsg> => {
-    const primaryKi = await KeyStore.getFirstRequired(acctEmail);
+    const mostUsefulPrv = KeyStoreUtil.chooseMostUseful(
+      await KeyStoreUtil.parse(await KeyStore.getRequired(acctEmail)),
+      'EVEN-IF-UNUSABLE'
+    );
     const headers: Dict<string> = {};
-    if (primaryKi && KeyUtil.getKeyType(primaryKi.private) === 'openpgp') {
-      headers.Openpgp = `id=${primaryKi.longid}`; // todo - use autocrypt format
+    if (mostUsefulPrv && mostUsefulPrv.key.type === 'openpgp') {
+      headers.Openpgp = `id=${mostUsefulPrv.key.id}`; // todo - use autocrypt format
     }
     return new SendableMsg(
       acctEmail,
