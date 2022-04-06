@@ -21,7 +21,7 @@ import { View } from '../../js/common/view.js';
 import { Xss } from '../../js/common/platform/xss.js';
 import { XssSafeFactory } from '../../js/common/xss-safe-factory.js';
 import { AcctStore, EmailProvider } from '../../js/common/platform/store/acct-store.js';
-import { KeyStore } from '../../js/common/platform/store/key-store.js';
+import { KeyStore, KeyStoreUtil } from '../../js/common/platform/store/key-store.js';
 import { GlobalStore } from '../../js/common/platform/store/global-store.js';
 import { PassphraseStore } from '../../js/common/platform/store/passphrase-store.js';
 import Swal from 'sweetalert2';
@@ -148,8 +148,9 @@ View.run(class SettingsView extends View {
       }
     }));
     $('.action_open_public_key_page').click(this.setHandler(async () => {
-      const ki = await KeyStore.getFirstRequired(this.acctEmail!);
-      const escapedFp = Xss.escape(ki.fingerprints[0]);
+      const prvs = await KeyStoreUtil.parse(await KeyStore.getRequired(this.acctEmail!));
+      const mostUsefulPrv = KeyStoreUtil.chooseMostUseful(prvs, 'EVEN-IF-UNUSABLE');
+      const escapedFp = Xss.escape(mostUsefulPrv!.key.id);
       await Settings.renderSubPage(this.acctEmail!, this.tabId, 'modules/my_key.htm', `&fingerprint=${escapedFp}`);
     }));
     $('.action_show_encrypted_inbox').click(this.setHandler(() => {

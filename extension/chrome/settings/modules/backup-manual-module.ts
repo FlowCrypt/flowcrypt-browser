@@ -41,9 +41,9 @@ export class BackupManualActionModule extends ViewModule<BackupView> {
     this.proceedBtn.click(this.view.setHandlerPrevent('double', () => this.actionManualBackupHandler()));
   };
 
-  public doBackupOnEmailProvider = async (armoredKey: string) => {
+  public doBackupOnEmailProvider = async (armoredPrvs: string[]) => {
     const emailMsg = String(await $.get({ url: '/chrome/emails/email_intro.template.htm', dataType: 'html' }));
-    const emailAttachments = [this.asBackupFile(armoredKey)];
+    const emailAttachments = armoredPrvs.map(k => this.asBackupFile(k));
     const headers = { from: this.view.acctEmail, recipients: { to: [{ email: this.view.acctEmail }] }, subject: GMAIL_RECOVERY_EMAIL_SUBJECTS[0] };
     const msg = await SendableMsg.createPlain(this.view.acctEmail, headers, { 'text/html': emailMsg }, emailAttachments);
     if (this.view.emailProvider === 'gmail') {

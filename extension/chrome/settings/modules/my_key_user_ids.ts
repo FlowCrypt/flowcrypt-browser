@@ -15,7 +15,7 @@ View.run(class MyKeyUserIdsView extends View {
   private readonly acctEmail: string;
   private readonly fingerprint: string;
   private readonly myKeyUrl: string;
-  private primaryKi: KeyInfo | undefined;
+  private ki: KeyInfo | undefined;
 
   constructor() {
     super();
@@ -26,13 +26,13 @@ View.run(class MyKeyUserIdsView extends View {
   }
 
   public render = async () => {
-    [this.primaryKi] = await KeyStore.get(this.acctEmail, [this.fingerprint]);
-    Assert.abortAndRenderErrorIfKeyinfoEmpty(this.primaryKi);
+    [this.ki] = await KeyStore.get(this.acctEmail, [this.fingerprint]);
+    Assert.abortAndRenderErrorIfKeyinfoEmpty([this.ki]);
     $('.action_show_public_key').attr('href', this.myKeyUrl);
-    const prv = await KeyUtil.parse(this.primaryKi.private);
+    const prv = await KeyUtil.parse(this.ki.private);
     Xss.sanitizeRender('.user_ids', prv.identities.map((uid: string) => `<div>${Xss.escape(uid)}</div>`).join(''));
     $('.email').text(this.acctEmail);
-    $('.fingerprint').text(Str.spaced(this.primaryKi.fingerprints[0]));
+    $('.fingerprint').text(Str.spaced(this.ki.fingerprints[0]));
   };
 
   public setHandlers = () => {

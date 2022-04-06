@@ -37,25 +37,30 @@ export class Assert {
 
   public static abortAndRenderErrOnUnprotectedKey = async (acctEmail?: string, tabId?: string) => {
     if (acctEmail) {
-      const primaryKi = await KeyStore.getFirstOptional(acctEmail);
+      const kis = await KeyStore.get(acctEmail);
+      const parsedKeys = await Promise.all(kis.map(ki => KeyUtil.parse(ki.private)));
       const { setup_done } = await AcctStore.get(acctEmail, ['setup_done']);
-      if (setup_done && primaryKi && !(await KeyUtil.parse(primaryKi.private)).fullyEncrypted) {
-        if (window.location.pathname === '/chrome/settings/index.htm') {
-          await Settings.renderSubPage(acctEmail, tabId!, '/chrome/settings/modules/change_passphrase.htm');
-        } else {
-          const msg = `Protect your key with a pass phrase to finish setup.`;
-          const r = await Ui.renderOverlayPromptAwaitUserChoice({ finishSetup: {}, later: { color: 'gray' } }, msg, undefined,
-            Lang.general.contactIfNeedAssistance(await isFesUsed(acctEmail)));
-          if (r === 'finish_setup') {
-            await Browser.openSettingsPage('index.htm', acctEmail);
+      if (setup_done && kis.length) {
+        for (const key of parsedKeys) {
+          if (key.fullyEncrypted) {
+            if (window.location.pathname === '/chrome/settings/index.htm') {
+              await Settings.renderSubPage(acctEmail, tabId!, '/chrome/settings/modules/change_passphrase.htm');
+            } else {
+              const msg = `Protect your key with a pass phrase to finish setup.`;
+              const r = await Ui.renderOverlayPromptAwaitUserChoice({ finishSetup: {}, later: { color: 'gray' } }, msg, undefined,
+                Lang.general.contactIfNeedAssistance(await isFesUsed(acctEmail)));
+              if (r === 'finish_setup') {
+                await Browser.openSettingsPage('index.htm', acctEmail);
+              }
+            }
           }
         }
       }
     }
   };
 
-  public static abortAndRenderErrorIfKeyinfoEmpty = (ki: KeyInfo | undefined, doThrow: boolean = true) => {
-    if (!ki) {
+  public static abortAndRenderErrorIfKeyinfoEmpty = (kis: KeyInfo[], doThrow: boolean = true) => {
+    if (kis.length) {
       const msg = `Cannot find primary key. Is FlowCrypt not set up yet? ${Ui.retryLink()}`;
       const target = $($('#content').length ? '#content' : 'body');
       target.addClass('error-occured');

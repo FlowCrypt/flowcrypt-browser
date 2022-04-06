@@ -6,6 +6,8 @@ import { PassphraseStore } from './passphrase-store.js';
 import { AbstractStore } from './abstract-store.js';
 import { Assert } from '../../assert.js';
 
+export type ParsedKeyInfo = { keyInfo: KeyInfo, key: Key };
+
 /**
  * Local store of account private keys
  */
@@ -22,15 +24,10 @@ export class KeyStore extends AbstractStore {
     return keys.filter(ki => fingerprints.includes(ki.fingerprints[0]));
   };
 
-  public static getFirstOptional = async (acctEmail: string): Promise<KeyInfo | undefined> => {
+  public static getRequired = async (acctEmail: string): Promise<KeyInfo[]> => {
     const keys = await KeyStore.get(acctEmail);
-    return keys[0];
-  };
-
-  public static getFirstRequired = async (acctEmail: string): Promise<KeyInfo> => {
-    const key = await KeyStore.getFirstOptional(acctEmail);
-    Assert.abortAndRenderErrorIfKeyinfoEmpty(key);
-    return key as KeyInfo;
+    Assert.abortAndRenderErrorIfKeyinfoEmpty(keys);
+    return keys;
   };
 
   public static getTypedKeyInfos = async (acctEmail: string): Promise<TypedKeyInfo[]> => {
@@ -91,4 +88,41 @@ export class KeyStore extends AbstractStore {
     }
     return result;
   };
+}
+
+export class KeyStoreUtil {
+
+  public static parse = async (keyInfos: KeyInfo[]): Promise<ParsedKeyInfo[]> => {
+    const parsed: ParsedKeyInfo[] = [];
+    for (const keyInfo of keyInfos) {
+      const key = await KeyUtil.parse(keyInfo.private);
+      parsed.push({ keyInfo, key });
+    }
+    return parsed;
+  };
+
+  public static chooseMostUseful = (
+    prvs: ParsedKeyInfo[], criteria: 'ONLY-FULLY-USABLE' | 'AT-LEAST-USABLE-BUT-EXPIRED' | 'EVEN-IF-UNUSABLE'
+  ): ParsedKeyInfo | undefined => {
+    const usablePrv = prvs.find(prv => prv.key.usableForEncryption && prv.key.usableForSigning)
+      || prvs.find(prv => prv.key.usableForEncryption)
+      || prvs.find(prv => prv.key.usableForSigning);
+    if (usablePrv || criteria === 'ONLY-FULLY-USABLE') {
+      return usablePrv;
+    }
+    const usableExpiredPrv =
+      prvs.find(prv =>
+        (prv.key.usableForEncryption || prv.key.usableForEncryptionButExpired)
+        && (prv.key.usableForSigning || prv.key.usableForSigningButExpired)
+      )
+      || prvs.find(prv => prv.key.usableForEncryption || prv.key.usableForEncryptionButExpired)
+      || prvs.find(prv => prv.key.usableForSigning || prv.key.usableForSigningButExpired);
+    if (usableExpiredPrv || criteria === 'AT-LEAST-USABLE-BUT-EXPIRED') {
+      return usableExpiredPrv;
+    }
+    // criteria === EVEN-IF-UNUSABLE
+    return prvs.find(prv => !prv.key.revoked)
+      || prvs[0];
+  };
+
 }

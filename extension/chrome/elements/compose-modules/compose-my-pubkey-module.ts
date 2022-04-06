@@ -13,7 +13,7 @@ import { Str } from '../../../js/common/core/common.js';
 export class ComposeMyPubkeyModule extends ViewModule<ComposeView> {
 
   private toggledManually = false;
-  private wkdFingerprints: { [acctEmail: string]: string[] } = {};
+  private wkdFingerprints: { [acctEmail: string]: string[] | undefined } = {};
 
   public setHandlers = () => {
     this.view.S.cached('icon_pubkey').attr('title', Lang.compose.includePubkeyIconTitle);
@@ -38,13 +38,15 @@ export class ComposeMyPubkeyModule extends ViewModule<ComposeView> {
     (async () => {
       const senderEmail = this.view.senderModule.getSender();
       // todo: disable attaching S/MIME certificate #4075
-      const senderKi = await this.view.storageModule.getKey(senderEmail);
-      const primaryFingerprint = (await KeyUtil.parse(senderKi.private)).id;
+      const senderKis = await this.view.storageModule.getAccountKeys(senderEmail);
+      const parsedPrvs = await Promise.all(senderKis.map(ki => KeyUtil.parse(ki.private)));
       // if we have cashed this fingerprint, setAttachPreference(false) rightaway and return
       const cached = this.wkdFingerprints[senderEmail];
-      if (Array.isArray(cached) && cached.includes(primaryFingerprint)) {
-        this.setAttachPreference(false);
-        return;
+      for (const parsedPrv of parsedPrvs.filter(prv => prv.usableForEncryption || prv.usableForSigning)) {
+        if (cached && cached.includes(parsedPrv.allIds[0])) {
+          this.setAttachPreference(false); // at least one of our valid keys is on WKD: no need to attach
+          return;
+        }
       }
       const myDomain = Str.getDomainFromEmailAddress(senderEmail);
       const foreignRecipients = this.view.recipientsModule.getValidRecipients().map(r => r.email)
@@ -55,9 +57,11 @@ export class ComposeMyPubkeyModule extends ViewModule<ComposeView> {
           const { keys } = await this.view.pubLookup.wkd.rawLookupEmail(senderEmail);
           const fingerprints = keys.map(key => key.id);
           this.wkdFingerprints[senderEmail] = fingerprints;
-          if (fingerprints.includes(primaryFingerprint)) {
-            this.setAttachPreference(false);
-            return;
+          for (const parsedPrv of parsedPrvs) {
+            if (fingerprints.includes(parsedPrv.id)) {
+              this.setAttachPreference(false);
+              return;
+            }
           }
         }
         for (const recipient of foreignRecipients) {

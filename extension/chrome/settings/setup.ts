@@ -25,7 +25,7 @@ import { Xss } from '../../js/common/platform/xss.js';
 import { initPassphraseToggle } from '../../js/common/ui/passphrase-ui.js';
 import { PubLookup } from '../../js/common/api/pub-lookup.js';
 import { Scopes, AcctStoreDict, AcctStore } from '../../js/common/platform/store/acct-store.js';
-import { KeyStore } from '../../js/common/platform/store/key-store.js';
+import { KeyStore, KeyStoreUtil } from '../../js/common/platform/store/key-store.js';
 import { PassphraseStore } from '../../js/common/platform/store/passphrase-store.js';
 import { ContactStore } from '../../js/common/platform/store/contact-store.js';
 import { KeyManager } from '../../js/common/api/key-server/key-manager.js';
@@ -222,9 +222,16 @@ export class SetupView extends View {
   public submitPublicKeys = async (
     { submit_main, submit_all }: { submit_main: boolean, submit_all: boolean }
   ): Promise<void> => {
-    const primaryKi = await KeyStore.getFirstRequired(this.acctEmail);
+    const mostUsefulPrv = await KeyStoreUtil.chooseMostUseful(
+      await KeyStoreUtil.parse(await KeyStore.getRequired(this.acctEmail)),
+      'ONLY-FULLY-USABLE'
+    );
+    if (!mostUsefulPrv) {
+      await Ui.modal.warning('Public key not usable - not sumbitting to Attester');
+      return;
+    }
     try {
-      await this.submitPublicKeyIfNeeded(primaryKi.public, { submit_main, submit_all });
+      await this.submitPublicKeyIfNeeded(mostUsefulPrv.keyInfo.public, { submit_main, submit_all });
     } catch (e) {
       return await Settings.promptToRetry(
         e,

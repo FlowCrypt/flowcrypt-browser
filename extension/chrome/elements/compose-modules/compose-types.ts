@@ -46,7 +46,7 @@ export type MessageToReplyOrForward = {
   decryptedFiles: File[]
 };
 
-export type CollectKeysResult = { pubkeys: PubkeyResult[], emailsWithoutPubkeys: string[], senderKi: KeyInfo | undefined };
+export type CollectKeysResult = { pubkeys: PubkeyResult[], emailsWithoutPubkeys: string[], senderKis: KeyInfo[] };
 
 export type PopoverOpt = 'encrypt' | 'sign' | 'richtext';
 export type PopoverChoices = { [key in PopoverOpt]: boolean };
