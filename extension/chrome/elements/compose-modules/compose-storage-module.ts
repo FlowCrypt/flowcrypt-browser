@@ -25,7 +25,7 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
     if (!matchingSenderEmail.length) {
       matchingSenderEmail = keys; // if no key exactly matches sender email, continue using all
     }
-    const matchingSenderEmailAndType = keys.filter(ki => !type || ki.type === type);
+    const matchingSenderEmailAndType = matchingSenderEmail.filter(ki => !type || ki.type === type);
     this.view.errModule.debug(`ComposerStorage.getAccountKeys: returning key longids: ${matchingSenderEmailAndType.map(ki => ki.longid).join(',')}`);
     return matchingSenderEmailAndType;
   };
