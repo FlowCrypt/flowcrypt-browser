@@ -1613,7 +1613,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       await SetupPageRecipe.autoSetupWithEKM(settingsPage, { expectWarnModal: 'Public key not usable - not sumbitting to Attester' });
     }));
 
-    ava.default.only('revoked@key-manager-autoimport-no-prv-create-no-attester-submit.flowcrypt.test - cannot draft or send msg', testWithBrowser(undefined, async (t, browser) => {
+    ava.default('revoked@key-manager-autoimport-no-prv-create-no-attester-submit.flowcrypt.test - cannot draft or send msg', testWithBrowser(undefined, async (t, browser) => {
       const acct = 'revoked@key-manager-autoimport-no-prv-create-no-attester-submit.flowcrypt.test';
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
       await SetupPageRecipe.autoSetupWithEKM(settingsPage);
