@@ -395,10 +395,6 @@ export class KeyUtil {
     };
   };
 
-  public static typedKeyInfoObj = async (prv: Key): Promise<KeyInfoWithIdentity> => {
-    return { ...await KeyUtil.keyInfoObj(prv), id: prv.id, family: prv.family };
-  };
-
   public static getPubkeyLongids = (pubkey: Key): string[] => {
     if (pubkey.family !== 'x509') {
       return pubkey.allIds.map(id => OpenPGPKey.fingerprintToLongid(id));
