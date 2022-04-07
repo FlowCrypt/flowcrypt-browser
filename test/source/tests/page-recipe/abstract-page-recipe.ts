@@ -33,8 +33,8 @@ export abstract class PageRecipe {
   };
 
   public static waitForToastToAppearAndDisappear = async (controllable: Controllable, containsText: string | RegExp): Promise<void> => {
-    await controllable.waitForContent('.ui-toast-container', containsText);
-    await controllable.waitTillGone('.ui-toast-container');
+    await controllable.waitForContent('.ui-toast-title', containsText);
+    await controllable.waitTillGone('.ui-toast-title');
   };
 
   public static noToastAppears = async (controllable: Controllable, waitSeconds = 5): Promise<void> => {
