@@ -4,7 +4,6 @@ import { BrowserHandle, Controllable, ControllablePage } from '../../browser';
 
 import { AvaContext } from '../tooling/';
 import { ElementHandle, JSHandle } from 'puppeteer';
-import { expect } from 'chai';
 import { Util } from '../../util';
 
 type ModalOpts = { contentToCheck?: string, clickOn?: 'confirm' | 'cancel', getTriggeredPage?: boolean, timeout?: number };
