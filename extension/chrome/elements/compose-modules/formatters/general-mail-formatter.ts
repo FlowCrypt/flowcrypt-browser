@@ -23,12 +23,12 @@ export class GeneralMailFormatter {
       return { senderKi: undefined, msg: await new PlainMsgMailFormatter(view).sendableMsg(newMsgData) };
     }
     if (!choices.encrypt && choices.sign) { // sign only
+      view.S.now('send_btn_text').text('Signing...');
       const senderKis = await view.storageModule.getAccountKeys(newMsgData.from);
       const signingKey = await GeneralMailFormatter.chooseSigningKeyAndDecryptIt(view, senderKis);
       if (!signingKey) {
         throw new UnreportableError('Could not find account key usable for signing this plain text message');
       }
-      view.S.now('send_btn_text').text('Signing...');
       return { senderKi: signingKey!.keyInfo, msg: await new SignedMsgMailFormatter(view).sendableMsg(newMsgData, signingKey!.key) };
     }
     // encrypt (optionally sign)
