@@ -28,6 +28,8 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
     }
     const matchingFamilyAndSenderEmail = matchingFamily.filter(ki => ki.emails?.includes(senderEmail));
     if (!matchingFamilyAndSenderEmail.length) {
+      // if couldn't find any key that matches email, use all from this family
+      // x509 keys may not have email on them, and sometimes OpenPGP users use keys with other email
       return matchingFamily;
     }
     return matchingFamilyAndSenderEmail;
