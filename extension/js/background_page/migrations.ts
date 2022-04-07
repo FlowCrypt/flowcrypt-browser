@@ -78,7 +78,7 @@ export const migrateGlobal = async () => {
 };
 
 const processSmimeKey = (pubkey: Pubkey, tx: IDBTransaction, data: PubkeyMigrationData, next: () => void) => {
-  if (KeyUtil.getKeyType(pubkey.armoredKey) !== 'x509') {
+  if (KeyUtil.getKeyFamily(pubkey.armoredKey) !== 'x509') {
     next();
     return;
   }
@@ -176,7 +176,7 @@ export const updateOpgpRevocations = async (db: IDBDatabase): Promise<void> => {
     const search = tx.objectStore('pubkeys').getAll();
     ContactStore.setReqPipe(search, resolve, reject);
   });
-  const revokedKeys = (await Promise.all(pubkeys.filter(entity => KeyUtil.getKeyType(entity.armoredKey) === 'openpgp').
+  const revokedKeys = (await Promise.all(pubkeys.filter(entity => KeyUtil.getKeyFamily(entity.armoredKey) === 'openpgp').
     map(async (entity) => await KeyUtil.parse(entity.armoredKey)))).
     filter(k => k.revoked);
   const txUpdate = db.transaction(['revocations'], 'readwrite');

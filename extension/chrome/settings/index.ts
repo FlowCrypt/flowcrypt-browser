@@ -424,16 +424,16 @@ View.run(class SettingsView extends View {
     if (canRemoveKey) {
       $('.action_remove_key').click(this.setHandler(async target => {
         // the UI below only gets rendered when account_email is available
-        const type = $(target).data('type') as string;
+        const family = $(target).data('type') as string;
         const id = $(target).data('id') as string;
         const longid = $(target).data('longid') as string;
-        if (type === 'openpgp' || type === 'x509') {
-          await KeyStore.remove(this.acctEmail!, { family: type, id });
+        if (family === 'openpgp' || family === 'x509') {
+          await KeyStore.remove(this.acctEmail!, { family, id });
           await PassphraseStore.set('local', this.acctEmail!, { longid }, undefined);
           await PassphraseStore.set('session', this.acctEmail!, { longid }, undefined);
           this.reload(true);
         } else {
-          Catch.report(`unexpected key type: ${type}`);
+          Catch.report(`unexpected key type: ${family}`);
         }
       }));
     }

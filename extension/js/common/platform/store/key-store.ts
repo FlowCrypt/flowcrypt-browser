@@ -81,12 +81,12 @@ export class KeyStore extends AbstractStore {
   private static addFamilyAndIdToKeyInfos = (keyInfos: StoredKeyInfo[]): KeyInfoWithIdentity[] => {
     const kis: KeyInfoWithIdentity[] = [];
     for (const ki of keyInfos) {
-      const type = KeyUtil.getKeyType(ki.private);
+      const family = KeyUtil.getKeyFamily(ki.private);
       const id = ki.fingerprints[0];
-      if (type !== 'openpgp' && type !== 'x509') {
+      if (family !== 'openpgp' && family !== 'x509') {
         continue;
       }
-      kis.push({ ...ki, family: type, id });
+      kis.push({ ...ki, family, id });
     }
     return kis;
   };

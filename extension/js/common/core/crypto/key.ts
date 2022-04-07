@@ -185,7 +185,7 @@ export class KeyUtil {
   };
 
   public static parseMany = async (text: string): Promise<Key[]> => {
-    const keyType = KeyUtil.getKeyType(text);
+    const keyType = KeyUtil.getKeyFamily(text);
     if (keyType === 'openpgp') {
       return await OpenPGPKey.parseMany(text);
     } else if (keyType === 'x509') {
@@ -329,7 +329,7 @@ export class KeyUtil {
     return await KeyUtil.decrypt(key, passphrase);
   };
 
-  public static getKeyType = (pubkey: string): 'openpgp' | 'x509' | 'unknown' => {
+  public static getKeyFamily = (pubkey: string): KeyFamily | 'unknown' => {
     if (pubkey.includes(PgpArmor.headers('certificate').begin)) {
       return 'x509';
     } else if (pubkey.startsWith(PgpArmor.headers('pkcs12').begin)) {

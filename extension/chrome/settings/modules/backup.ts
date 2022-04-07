@@ -54,9 +54,9 @@ export class BackupView extends View {
     }
     {
       const id = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'id');
-      const type = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'type');
-      if (id && type === 'openpgp') {
-        this.keyIdentity = { id, family: type };
+      const family = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'type');
+      if (id && family === 'openpgp') {
+        this.keyIdentity = { id, family };
       }
     }
     this.gmail = new Gmail(this.acctEmail);
@@ -166,13 +166,13 @@ export class BackupView extends View {
       }
     }
     $('.input_prvkey_backup_checkbox').click(Ui.event.handle((target) => {
-      const type = $(target).data('type') as string;
-      if (type === 'openpgp') {
+      const family = $(target).data('type') as string;
+      if (family === 'openpgp') {
         const id = $(target).data('id') as string;
         if ($(target).prop('checked')) {
-          this.addKeyToBackup({ family: type, id });
+          this.addKeyToBackup({ family, id });
         } else {
-          this.removeKeyToBackup({ family: type, id });
+          this.removeKeyToBackup({ family, id });
         }
       }
     }));
