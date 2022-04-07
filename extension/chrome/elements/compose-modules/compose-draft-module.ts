@@ -7,7 +7,7 @@ import { AjaxErr } from '../../../js/common/api/shared/api-error.js';
 import { ApiErr } from '../../../js/common/api/shared/api-error.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Buf } from '../../../js/common/core/buf.js';
-import { Catch } from '../../../js/common/platform/catch.js';
+import { Catch, UnreportableError } from '../../../js/common/platform/catch.js';
 import { EncryptedMsgMailFormatter } from './formatters/encrypted-mail-msg-formatter.js';
 import { Env } from '../../../js/common/browser/env.js';
 import { GlobalStore } from '../../../js/common/platform/store/global-store.js';
@@ -117,6 +117,17 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
       try {
         const msgData = this.view.inputModule.extractAll();
         const { pubkeys } = await this.view.storageModule.collectSingleFamilyKeys([], msgData.from, true);
+        // collectSingleFamilyKeys filters out bad keys, but only if there are any good keys available
+        //  if no good keys available, it leaves bad keys so we can explain the issue here
+        if (pubkeys.find(pub => pub.pubkey.expiration && pub.pubkey.expiration > Date.now())) {
+          throw new UnreportableError('Your account keys are expired');
+        }
+        if (pubkeys.find(pub => pub.pubkey.revoked)) {
+          throw new UnreportableError('Your account keys are revoked');
+        }
+        if (pubkeys.find(pub => !pub.pubkey.usableForEncryption)) {
+          throw new UnreportableError('Your account keys are not usable for encryption');
+        }
         msgData.pwd = undefined; // not needed for drafts
         const sendable = await new EncryptedMsgMailFormatter(this.view, true).sendableMsg(msgData, pubkeys);
         if (this.view.replyParams?.inReplyTo) {

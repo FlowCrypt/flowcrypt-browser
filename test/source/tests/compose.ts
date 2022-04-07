@@ -1607,15 +1607,19 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       await ComposePageRecipe.sendAndClose(composePage); // no error sending msg
     }));
 
-    ava.default('revoked@key-manager-autoimport-no-prv-create.flowcrypt.test - shows error no valid keys when saving draft or sending', testWithBrowser(undefined, async (t, browser) => {
+    ava.default('revoked@key-manager-autoimport-no-prv-create.flowcrypt.test - shows modal not submitting to attester', testWithBrowser(undefined, async (t, browser) => {
       const acct = 'revoked@key-manager-autoimport-no-prv-create.flowcrypt.test';
+      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
+      await SetupPageRecipe.autoSetupWithEKM(settingsPage, { expectWarnModal: 'Public key not usable - not sumbitting to Attester' });
+    }));
+
+    ava.default('revoked@key-manager-autoimport-no-prv-create-no-attester-submit.flowcrypt.test - cannot draft or send msg', testWithBrowser(undefined, async (t, browser) => {
+      const acct = 'revoked@key-manager-autoimport-no-prv-create-no-attester-submit.flowcrypt.test';
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
       await SetupPageRecipe.autoSetupWithEKM(settingsPage);
       const composePage = await ComposePageRecipe.openStandalone(t, browser, acct);
       await ComposePageRecipe.fillMsg(composePage, { to: 'mock.only.pubkey@flowcrypt.com' }, 'no valid key');
-      await ComposePageRecipe.waitForToastToAppearAndDisappear(composePage, 'Draft not saved: your account has no usable keys');
-      await composePage.waitAndClick('@action-send', { delay: 1 });
-      await PageRecipe.waitForModalAndRespond(composePage, 'error', { contentToCheck: 'Your account has no usable keys', clickOn: 'confirm' });
+      await ComposePageRecipe.waitForToastToAppearAndDisappear(composePage, 'Draft not saved: Your account keys are revoked');
     }));
 
   }

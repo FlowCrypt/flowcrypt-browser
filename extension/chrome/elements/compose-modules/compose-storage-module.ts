@@ -58,7 +58,7 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
       const isSenderPubUsableForSigning = senderPubsUnfiltered.some(k => k.usableForSigning);
       for (const senderKi of senderKisUnfiltered) {
         if (!isSenderPubUsableForSigning) {
-          // if none is usable, add all, then downstream code can diagnose and show the issue to user
+          // if none is usable, add all, then code below can diagnose and show the issue to user
           senderKis.push(senderKi);
         } else {
           const relatedPub = senderPubsUnfiltered.find(pub => pub.allIds[0] === senderKi.fingerprints[0]);

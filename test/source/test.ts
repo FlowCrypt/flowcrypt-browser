@@ -126,6 +126,7 @@ ava.default.after.always('evaluate Catch.reportErr errors', async t => {
     .filter(e => !e.trace.includes('-1 when GET-ing https://fes.example.com'))
     // todo - ideally mock tests would never call this. But we do tests with human@flowcrypt.com so it's calling here
     .filter(e => !e.trace.includes('-1 when GET-ing https://openpgpkey.flowcrypt.com'));
+  // this is for test ""
   const foundExpectedErr = usefulErrors.find(re => re.message === `intentional error for debugging`);
   const foundUnwantedErrs = usefulErrors.filter(re => re.message !== `intentional error for debugging` && !re.message.includes('traversal forbidden'));
   if (testVariant === 'CONSUMER-MOCK' && internalTestState.expectIntentionalErrReport && !foundExpectedErr) {

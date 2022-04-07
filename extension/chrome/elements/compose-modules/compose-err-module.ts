@@ -85,8 +85,12 @@ export class ComposeErrModule extends ViewModule<ComposeView> {
       await Ui.modal.error(e.message, true);
     } else {
       if (!(e instanceof ComposerResetBtnTrigger || e instanceof ComposerNotReadyError)) {
-        Catch.reportErr(e);
-        await Ui.modal.error(`Failed to send message due to: ${String(e)}`);
+        if (String(e).includes('revoked') || String(e).includes('expired')) {
+          await Ui.modal.warning(`Failed to send message due to: ${String(e)}`);
+        } else {
+          await Ui.modal.error(`Failed to send message due to: ${String(e)}`);
+          Catch.reportErr(e);
+        }
       }
     }
     if (!(e instanceof ComposerNotReadyError)) {

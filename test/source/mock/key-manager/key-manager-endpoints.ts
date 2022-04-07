@@ -255,6 +255,9 @@ export const mockKeyManagerEndpoints: HandlersDefinition = {
       if (acctEmail === 'revoked@key-manager-autoimport-no-prv-create.flowcrypt.test') {
         return { privateKeys: [{ decryptedPrivateKey: revokedPrv }] };
       }
+      if (acctEmail === 'revoked@key-manager-autoimport-no-prv-create-no-attester-submit.flowcrypt.test') {
+        return { privateKeys: [{ decryptedPrivateKey: revokedPrv }] };
+      }
       if (acctEmail === 'get.error@key-manager-autogen.flowcrypt.test') {
         throw new Error('Intentional error for get.error to test client behavior');
       }

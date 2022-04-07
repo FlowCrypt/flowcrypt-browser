@@ -226,12 +226,8 @@ export class SetupView extends View {
       await KeyStoreUtil.parse(await KeyStore.getRequired(this.acctEmail)),
       'ONLY-FULLY-USABLE'
     );
-    if (!mostUsefulPrv) {
-      await Ui.modal.warning('Public key not usable - not sumbitting to Attester');
-      return;
-    }
     try {
-      await this.submitPublicKeyIfNeeded(mostUsefulPrv.keyInfo.public, { submit_main, submit_all });
+      await this.submitPublicKeyIfNeeded(mostUsefulPrv?.keyInfo.public, { submit_main, submit_all });
     } catch (e) {
       return await Settings.promptToRetry(
         e,
@@ -308,12 +304,25 @@ export class SetupView extends View {
     return true;
   };
 
-  private submitPublicKeyIfNeeded = async (armoredPubkey: string, options: { submit_main: boolean, submit_all: boolean }) => {
+  /**
+   * empty pubkey means key not usable
+   */
+  private submitPublicKeyIfNeeded = async (
+    armoredPubkey: string | undefined,
+    options: { submit_main: boolean, submit_all: boolean }
+  ) => {
     if (!options.submit_main) {
       return;
     }
     if (!this.orgRules.canSubmitPubToAttester()) {
-      await Ui.modal.error('Not submitting public key to Attester - disabled for your org');
+      if (!this.orgRules.usesKeyManager) { // users who use EKM get their setup automated - no need to inform them of this
+        // other users chose this manually - let them know it's not allowed
+        await Ui.modal.error('Not submitting public key to Attester - disabled for your org');
+      }
+      return;
+    }
+    if (!armoredPubkey) {
+      await Ui.modal.warning('Public key not usable - not sumbitting to Attester');
       return;
     }
     const pub = await KeyUtil.parse(armoredPubkey);
