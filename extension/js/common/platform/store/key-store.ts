@@ -37,9 +37,6 @@ export class KeyStore extends AbstractStore {
 
   public static add = async (acctEmail: string, newKey: string | Key) => {
     const keyinfos = await KeyStore.get(acctEmail);
-    // the cast above will end up storing TypedKeyInfo to storage below but I don't see any issue there
-    //   we should migrate storage to TypedKeyInfo (and just call it KeyInfo again) anyway,
-    //   to reduce the amount of different types of KeyInfo we have
     let updated = false;
     const prv: Key = (typeof newKey === 'string') ? await KeyUtil.parse(newKey) : newKey;
     if (!prv.fullyEncrypted) {
