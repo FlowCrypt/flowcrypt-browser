@@ -185,7 +185,7 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
       // but if all are invalid, downstream code can inform the user what happened
       ? senderPubsUnfiltered.filter(k => k.usableForEncryption)
       : senderPubsUnfiltered;
-    const { pubkeys, emailsWithoutPubkeys } = this.collectPubkeysByType(family, contacts);
+    const { pubkeys, emailsWithoutPubkeys } = this.collectPubkeysByFamily(family, contacts);
     for (const senderPub of senderPubs) { // add own key for encryption
       pubkeys.push({ pubkey: senderPub, email: senderEmail, isMine: true });
     }
@@ -209,11 +209,11 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
     return { senderKis, pubkeys, emailsWithoutPubkeys, family };
   };
 
-  private collectPubkeysByType = (type: 'openpgp' | 'x509', contacts: { email: string, keys: Key[] }[]): { pubkeys: PubkeyResult[], emailsWithoutPubkeys: string[] } => {
+  private collectPubkeysByFamily = (family: KeyFamily, contacts: { email: string, keys: Key[] }[]): { pubkeys: PubkeyResult[], emailsWithoutPubkeys: string[] } => {
     const pubkeys: PubkeyResult[] = [];
     const emailsWithoutPubkeys: string[] = [];
     for (const contact of contacts) {
-      let keysPerEmail = contact.keys.filter(k => k.family === type);
+      let keysPerEmail = contact.keys.filter(k => k.family === family);
       // if non-expired present, return non-expired only
       if (keysPerEmail.some(k => k.usableForEncryption)) {
         keysPerEmail = keysPerEmail.filter(k => k.usableForEncryption);
