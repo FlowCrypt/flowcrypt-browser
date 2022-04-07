@@ -15,7 +15,7 @@ export class KeyStore extends AbstractStore {
 
   public static get = async (acctEmail: string, fingerprints?: string[]): Promise<KeyInfoWithIdentity[]> => {
     const stored = await AcctStore.get(acctEmail, ['keys']);
-    const keys: KeyInfoWithIdentity[] = KeyStore.addFamilyAndIdToKeyInfos(stored.keys || []);
+    const keys: KeyInfoWithIdentity[] = KeyStore.addIdentityKeyInfos(stored.keys || []);
     if (!fingerprints) {
       return keys;
     }
@@ -75,7 +75,7 @@ export class KeyStore extends AbstractStore {
     return result;
   };
 
-  private static addFamilyAndIdToKeyInfos = (keyInfos: StoredKeyInfo[]): KeyInfoWithIdentity[] => {
+  private static addIdentityKeyInfos = (keyInfos: StoredKeyInfo[]): KeyInfoWithIdentity[] => {
     const kis: KeyInfoWithIdentity[] = [];
     for (const ki of keyInfos) {
       const family = KeyUtil.getKeyFamily(ki.private);
