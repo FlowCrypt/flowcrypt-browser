@@ -413,6 +413,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
     }));
 
     for (const inputMethod of ['mouse', 'keyboard']) {
+
       ava.default(`compose - reply - pass phrase dialog - dialog ok (${inputMethod})`, testWithBrowser('compatibility', async (t, browser) => {
         const pp = Config.key('flowcrypt.compatibility.1pp1').passphrase;
         const { inboxPage, replyFrame } = await setRequirePassPhraseAndOpenRepliedMessage(t, browser, pp);

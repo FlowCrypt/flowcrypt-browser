@@ -8,7 +8,7 @@ import { ApiErr } from '../../../js/common/api/shared/api-error.js';
 import { Assert } from '../../../js/common/assert.js';
 import { Catch, UnreportableError } from '../../../js/common/platform/catch.js';
 import { CollectKeysResult } from './compose-types.js';
-import { PUBKEY_LOOKUP_RESULT_FAIL } from './compose-err-module.js';
+import { ComposerResetBtnTrigger, PUBKEY_LOOKUP_RESULT_FAIL } from './compose-err-module.js';
 import { ViewModule } from '../../../js/common/view-module.js';
 import { ComposeView } from '../compose.js';
 import { KeyStore, ParsedKeyInfo } from '../../../js/common/platform/store/key-store.js';
@@ -78,16 +78,19 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
     return await PassphraseStore.get(this.view.acctEmail, senderKi);
   };
 
-  public decryptSenderKey = async (parsedKey: ParsedKeyInfo): Promise<ParsedKeyInfo | undefined> => {
+  /**
+   * returns decrypted key (potentially using user-entered pass phrase)
+   * otherwise throws ComposerResetBtnTrigger when pass phrase not entered
+   */
+  public decryptSenderKey = async (parsedKey: ParsedKeyInfo): Promise<ParsedKeyInfo> => {
     const passphrase = await this.passphraseGet(parsedKey.keyInfo);
     if (typeof passphrase === 'undefined' && !parsedKey.key.fullyDecrypted) {
       const longids = [parsedKey.keyInfo.longid];
       BrowserMsg.send.passphraseDialog(this.view.parentTabId, { type: 'sign', longids });
       if (await PassphraseStore.waitUntilPassphraseChanged(this.view.acctEmail, longids, 1000, this.view.ppChangedPromiseCancellation)) {
         return await this.decryptSenderKey(parsedKey);
-      } else { // reset - no passphrase entered
-        this.view.sendBtnModule.resetSendBtn();
-        return undefined;
+      } else {// reset - no passphrase entered
+        throw new ComposerResetBtnTrigger('no pass phrase entered');
       }
     } else {
       if (!parsedKey.key.fullyDecrypted) {

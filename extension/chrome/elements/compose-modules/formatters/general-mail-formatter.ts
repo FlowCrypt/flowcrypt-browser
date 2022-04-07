@@ -60,11 +60,8 @@ export class GeneralMailFormatter {
     if (!parsedSenderPrv) {
       return undefined;
     }
-    const signingPrv = await view.storageModule.decryptSenderKey(parsedSenderPrv);
-    if (!signingPrv) {
-      return undefined;
-    }
-    return signingPrv;
+    // throws ComposerResetBtnTrigger when user closes pass phrase dialog without entering
+    return await view.storageModule.decryptSenderKey(parsedSenderPrv);
   };
 
 }
