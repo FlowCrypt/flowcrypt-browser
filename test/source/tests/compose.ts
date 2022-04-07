@@ -1622,7 +1622,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       await ComposePageRecipe.waitForToastToAppearAndDisappear(composePage, 'Draft not saved: Error: Your account keys are revoked');
       await composePage.waitAndClick('@action-send', { delay: 1 });
       await PageRecipe.waitForModalAndRespond(composePage, 'error', {
-        contentToCheck: 'Failed to send message due to: Error: Could not find account key usable for signing',
+        contentToCheck: 'Failed to send message due to: Error: Could not find account openpgp key usable for signing this encrypted message',
         clickOn: 'confirm'
       });
     }));

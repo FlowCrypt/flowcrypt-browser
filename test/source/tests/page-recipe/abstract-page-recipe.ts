@@ -24,7 +24,10 @@ export abstract class PageRecipe {
     const modalContainer = await controllable.waitAny(`.ui-modal-${type}`, { timeout });
     if (typeof contentToCheck !== 'undefined') {
       const contentElement = await modalContainer.$('.swal2-html-container');
-      expect(await PageRecipe.getElementPropertyJson(contentElement!, 'textContent')).to.include(contentToCheck);
+      const actualContent = await PageRecipe.getElementPropertyJson(contentElement!, 'textContent');
+      if (!actualContent.includes(contentToCheck)) {
+        throw new Error(`Expected modal to contain "${contentToCheck}" but contained "${actualContent}"`);
+      }
     }
     if (clickOn) {
       const button = await modalContainer.$(`button.ui-modal-${type}-${clickOn}`);
