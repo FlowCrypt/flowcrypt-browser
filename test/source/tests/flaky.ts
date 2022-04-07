@@ -70,7 +70,7 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
       await updatePrvPage.close();
       // Try send message again
       composePage = await ComposePageRecipe.openStandalone(t, browser, 'flowcrypt.test.key.new.manual@gmail.com');
-      await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, 'Own Key Expired');
+      await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, 'Own Key Expired no more');
       await ComposePageRecipe.sendAndClose(composePage);
     }));
 
