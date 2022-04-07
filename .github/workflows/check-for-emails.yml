@@ -13,7 +13,7 @@ jobs:
       uses: actions/checkout@v2
     - name: Scan comment
       id: scan
-      uses: FlowCrypt/comment-email-address-alerts@v20
+      uses: FlowCrypt/comment-email-address-alerts@v19
       with:
         repo-token: ${{ secrets.GITHUB_TOKEN }}
         exemptions: test,example.com,flowcrypt.com
