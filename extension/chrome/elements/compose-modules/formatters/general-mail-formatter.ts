@@ -26,7 +26,7 @@ export class GeneralMailFormatter {
       const senderKis = await view.storageModule.getAccountKeys(newMsgData.from);
       const signingKey = await GeneralMailFormatter.chooseSigningKeyAndDecryptIt(view, senderKis);
       if (!signingKey) {
-        throw new UnreportableError('Could not find account key usable for signing');
+        throw new UnreportableError('Could not find account key usable for signing this plain text message');
       }
       view.S.now('send_btn_text').text('Signing...');
       return { senderKi: signingKey!.keyInfo, msg: await new SignedMsgMailFormatter(view).sendableMsg(newMsgData, signingKey!.key) };
@@ -40,7 +40,7 @@ export class GeneralMailFormatter {
     if (choices.sign) {
       const signingKey = await GeneralMailFormatter.chooseSigningKeyAndDecryptIt(view, singleFamilyKeys.senderKis);
       if (!signingKey) {
-        throw new UnreportableError('Could not find account key usable for signing');
+        throw new UnreportableError('Could not find account key usable for signing this encrypted message');
       }
     }
     view.S.now('send_btn_text').text('Encrypting...');

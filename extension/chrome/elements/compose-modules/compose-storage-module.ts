@@ -37,44 +37,19 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
     senderEmail: string,
     needSigning: boolean
   ): Promise<CollectKeysResult> => {
-    const contacts = recipients.length
-      ? await ContactStore.getEncryptionKeys(undefined, recipients)
-      : []; // in case collecting only our own keys for draft
     const resultsPerType: { [type: string]: CollectKeysResult } = {};
     const OPENPGP = 'openpgp';
     const X509 = 'x509';
-    for (const i of [OPENPGP, X509]) {
-      const type = i as ('openpgp' | 'x509');
-      const senderKisUnfiltered = await this.getAccountKeys(senderEmail, type); // also for draft encryption!
-      const senderKis = [];
-      const senderPubsUnfiltered = await Promise.all(senderKisUnfiltered.map(ki => KeyUtil.parse(ki.public)));
-      const senderPubs = senderPubsUnfiltered.some(k => k.usableForEncryption)
-        // if non-expired present, return non-expired only
-        // that way, there will be no error if some keys are valid
-        // but if all are invalid, downstream code can inform the user what happened
-        ? senderPubsUnfiltered.filter(k => k.usableForEncryption)
-        : senderPubsUnfiltered;
-      const { pubkeys, emailsWithoutPubkeys } = this.collectPubkeysByType(type, contacts);
-      const isSenderPubUsableForSigning = senderPubsUnfiltered.some(k => k.usableForSigning);
-      for (const senderKi of senderKisUnfiltered) {
-        if (!isSenderPubUsableForSigning) {
-          // if none is usable, add all, then code below can diagnose and show the issue to user
-          senderKis.push(senderKi);
-        } else {
-          const relatedPub = senderPubsUnfiltered.find(pub => pub.allIds[0] === senderKi.fingerprints[0]);
-          if (relatedPub?.usableForSigning) {
-            senderKis.push(senderKi);
-          }
-        }
-      }
-      for (const senderPub of senderPubs) { // add own key for encryption
-        pubkeys.push({ pubkey: senderPub, email: senderEmail, isMine: true });
-      }
-      const result = { senderKis, pubkeys, emailsWithoutPubkeys };
-      if (!emailsWithoutPubkeys.length && (senderKis.length || !needSigning)) {
-        return result; // return right away
-      }
-      resultsPerType[type] = result;
+    const contacts = recipients.length
+      ? await ContactStore.getEncryptionKeys(undefined, recipients)
+      : []; // in case collecting only our own keys for draft
+    for (const family of [OPENPGP, X509]) {
+      resultsPerType[family] = await this.collectSingleFamilyKeysInternal(
+        family as 'openpgp' | 'x509',
+        senderEmail,
+        contacts,
+        needSigning
+      );
     }
     // per discussion https://github.com/FlowCrypt/flowcrypt-browser/issues/4069#issuecomment-957313631
     // if one emailsWithoutPubkeys isn't subset of the other, throw an error
@@ -187,6 +162,48 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
       }
       throw e;
     }
+  };
+
+  private collectSingleFamilyKeysInternal = async (
+    type: 'openpgp' | 'x509',
+    senderEmail: string,
+    contacts: { email: string, keys: Key[] }[],
+    needSigning: boolean
+  ): Promise<CollectKeysResult> => {
+    const senderKisUnfiltered = await this.getAccountKeys(senderEmail, type); // also for draft encryption!
+    const senderPubsUnfiltered = await Promise.all(senderKisUnfiltered.map(ki => KeyUtil.parse(ki.public)));
+    const senderPubs = senderPubsUnfiltered.some(k => k.usableForEncryption)
+      // if non-expired present, return non-expired only
+      // that way, there will be no error if some keys are valid
+      // but if all are invalid, downstream code can inform the user what happened
+      ? senderPubsUnfiltered.filter(k => k.usableForEncryption)
+      : senderPubsUnfiltered;
+    const { pubkeys, emailsWithoutPubkeys } = this.collectPubkeysByType(type, contacts);
+    for (const senderPub of senderPubs) { // add own key for encryption
+      pubkeys.push({ pubkey: senderPub, email: senderEmail, isMine: true });
+    }
+    const senderKis = [];
+    const isAnySenderKeyUsableForSigning = senderPubsUnfiltered.some(k => k.usableForSigning);
+    for (const senderKi of senderKisUnfiltered) {
+      if (!isAnySenderKeyUsableForSigning) {
+        // if none is usable, add all
+        // then downstream code can diagnose and show the issue to user
+        senderKis.push(senderKi);
+      } else {
+        const relatedPub = senderPubsUnfiltered.find(pub => pub.allIds[0] === senderKi.fingerprints[0]);
+        // want to avoid parsing the prvs when pubs were already parsed
+        //  threfore checking parameters of already parsed related pub, which are equal
+        //  but actually pushing prv since it's meant for signing
+        if (relatedPub?.usableForSigning) {
+          senderKis.push(senderKi);
+        }
+      }
+    }
+    const result = { senderKis, pubkeys, emailsWithoutPubkeys };
+    if (!emailsWithoutPubkeys.length && (senderKis.length || !needSigning)) {
+      return result; // return right away
+    }
+    return result;
   };
 
   private collectPubkeysByType = (type: 'openpgp' | 'x509', contacts: { email: string, keys: Key[] }[]): { pubkeys: PubkeyResult[], emailsWithoutPubkeys: string[] } => {
