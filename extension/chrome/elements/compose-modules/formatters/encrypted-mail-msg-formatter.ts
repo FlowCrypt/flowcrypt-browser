@@ -205,23 +205,6 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
     if (Math.max(...usableUntil) > Date.now()) { // all keys either don't expire or expire in the future
       return undefined;
     }
-    for (const myKey of pubs.filter(ap => ap.isMine)) {
-      if (myKey.pubkey.usableForEncryptionButExpired) {
-        const path = Url.create(chrome.runtime.getURL('chrome/settings/index.htm'), {
-          acctEmail: myKey.email,
-          page: '/chrome/settings/modules/my_key_update.htm',
-          pageUrlParams: JSON.stringify({ fingerprint: myKey.pubkey.id }),
-        });
-        const errModalLines = [
-          'This message could not be encrypted because your own Private Key is expired.',
-          '',
-          'You can extend the expiration of this key in other OpenPGP software (such as GnuPG), then re-import the updated key ' +
-          `<a href="${path}" id="action_update_prv" target="_blank">here</a>.`
-        ];
-        await Ui.modal.error(errModalLines.join('\n'), true);
-        throw new ComposerResetBtnTrigger();
-      }
-    }
     const usableTimeFrom = Math.max(...usableFrom);
     const usableTimeUntil = Math.min(...usableUntil);
     if (usableTimeFrom > usableTimeUntil) { // used public keys have no intersection of usable dates

@@ -43,7 +43,10 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
       let composePage = await ComposePageRecipe.openStandalone(t, browser, 'flowcrypt.test.key.new.manual@gmail.com');
       await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, 'Own Key Expired');
       await composePage.waitAndClick('@action-send');
-      await ComposePageRecipe.waitForModalAndRespond(composePage, 'error', { contentToCheck: 'your own Private Key is expired', timeout: 45 });
+      await ComposePageRecipe.waitForModalAndRespond(composePage, 'error', {
+        contentToCheck: 'Failed to send message due to: Error: Could not find account openpgp key usable for signing this encrypted message',
+        timeout: 45
+      });
       const settingsWithUpdatePrvForm = await browser.newPageTriggeredBy(t, () => composePage.waitAndClick('#action_update_prv'));
       const urls = await settingsWithUpdatePrvForm.getFramesUrls(['my_key_update.htm']);
       await composePage.close();
