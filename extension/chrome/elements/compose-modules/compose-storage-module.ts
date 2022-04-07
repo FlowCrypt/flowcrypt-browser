@@ -20,16 +20,17 @@ import { KeyFamily } from '../../../js/common/core/crypto/key.js';
 export class ComposeStorageModule extends ViewModule<ComposeView> {
 
   public getAccountKeys = async (senderEmail: string | undefined, family?: 'openpgp' | 'x509' | undefined): Promise<KeyInfoWithIdentity[]> => {
-    const keys = await KeyStore.get(this.view.acctEmail);
-    Assert.abortAndRenderErrorIfKeyinfoEmpty(keys);
-    let matchingSenderEmail = keys.filter(ki => !senderEmail || ki.emails?.includes(senderEmail));
-    if (!matchingSenderEmail.length) {
-      matchingSenderEmail = keys; // if no key exactly matches sender email, continue using all
+    const unfilteredKeys = await KeyStore.get(this.view.acctEmail);
+    Assert.abortAndRenderErrorIfKeyinfoEmpty(unfilteredKeys);
+    const matchingFamily = unfilteredKeys.filter(ki => !family || ki.family === family);
+    if (!senderEmail) {
+      return matchingFamily;
     }
-    console.log(`getAccountKeys ${family}`, matchingSenderEmail);
-    const matchingSenderEmailAndType = matchingSenderEmail.filter(ki => !family || ki.family === family);
-    this.view.errModule.debug(`ComposerStorage.getAccountKeys: returning key longids: ${matchingSenderEmailAndType.map(ki => ki.longid).join(',')}`);
-    return matchingSenderEmailAndType;
+    const matchingFamilyAndSenderEmail = matchingFamily.filter(ki => ki.emails?.includes(senderEmail));
+    if (!matchingFamilyAndSenderEmail.length) {
+      return matchingFamily;
+    }
+    return matchingFamilyAndSenderEmail;
   };
 
   // used when encryption is needed
@@ -175,7 +176,6 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
     contacts: { email: string, keys: Key[] }[]
   ): Promise<CollectKeysResult> => {
     const senderKisUnfiltered = await this.getAccountKeys(senderEmail, family); // for draft encryption!
-    console.log('collectSingleFamilyKeysInternal.senderKisUnfiltered', senderKisUnfiltered);
     const senderPubsUnfiltered = await Promise.all(senderKisUnfiltered.map(ki => KeyUtil.parse(ki.public)));
     const senderPubs = senderPubsUnfiltered.some(k => k.usableForEncryption)
       // if non-expired present, return non-expired only

@@ -37,9 +37,7 @@ export class GeneralMailFormatter {
       await view.errModule.throwIfEncryptionPasswordInvalid(newMsgData);
     }
     let signingKey: ParsedKeyInfo | undefined;
-    console.log(`choices.sign=${choices.sign}`);
     if (choices.sign) {
-      console.log('should sign');
       signingKey = await GeneralMailFormatter.chooseSigningKeyAndDecryptIt(view, singleFamilyKeys.senderKis);
       if (!signingKey && singleFamilyKeys.family === 'openpgp') {
         // we are ignoring missing signing keys for x509 family for now. We skip signing when missing
@@ -55,18 +53,14 @@ export class GeneralMailFormatter {
     view: ComposeView,
     senderKis: KeyInfoWithIdentity[]
   ): Promise<ParsedKeyInfo | undefined> => {
-    console.log('choosing signing key from', senderKis);
     const parsedSenderPrvs = await KeyStoreUtil.parse(senderKis);
-    console.log('choosing from parsed', parsedSenderPrvs);
     // to consider - currently we choose first valid key for signing. Should we sign with all?
     //   alternatively we could use most recenlty modified valid key
     const parsedSenderPrv = parsedSenderPrvs.find(k => k.key.usableForSigning);
-    console.log(`parsedSenderPrv`, parsedSenderPrv);
     if (!parsedSenderPrv) {
       return undefined;
     }
     const signingPrv = await view.storageModule.decryptSenderKey(parsedSenderPrv);
-    console.log(`signingPrv`, signingPrv);
     if (!signingPrv) {
       return undefined;
     }
