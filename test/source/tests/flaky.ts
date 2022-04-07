@@ -55,10 +55,10 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
         timeout: 45,
         clickOn: 'confirm'
       });
+      await composePage.close();
       await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
       await settingsPage.waitAndClick('@action-show-key-0');
       const urls = await settingsPage.getFramesUrls(['my_key.htm'], { appearIn: 5 });
-      await composePage.close();
       await settingsPage.close();
       // Updating the key to valid one
       const updatePrvPage = await browser.newPage(t, urls[0]);
