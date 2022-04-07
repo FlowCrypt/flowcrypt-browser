@@ -44,12 +44,15 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
       ? await ContactStore.getEncryptionKeys(undefined, recipients)
       : []; // in case collecting only our own keys for draft
     for (const family of [OPENPGP, X509]) {
-      resultsPerType[family] = await this.collectSingleFamilyKeysInternal(
+      const collected = await this.collectSingleFamilyKeysInternal(
         family as 'openpgp' | 'x509',
         senderEmail,
-        contacts,
-        needSigning
+        contacts
       );
+      if (!collected.emailsWithoutPubkeys.length && (collected.senderKis.length || !needSigning)) {
+        return collected; // return right away - we have all we needed in single family
+      }
+      resultsPerType[family] = collected;
     }
     // per discussion https://github.com/FlowCrypt/flowcrypt-browser/issues/4069#issuecomment-957313631
     // if one emailsWithoutPubkeys isn't subset of the other, throw an error
@@ -167,8 +170,7 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
   private collectSingleFamilyKeysInternal = async (
     type: 'openpgp' | 'x509',
     senderEmail: string,
-    contacts: { email: string, keys: Key[] }[],
-    needSigning: boolean
+    contacts: { email: string, keys: Key[] }[]
   ): Promise<CollectKeysResult> => {
     const senderKisUnfiltered = await this.getAccountKeys(senderEmail, type); // also for draft encryption!
     const senderPubsUnfiltered = await Promise.all(senderKisUnfiltered.map(ki => KeyUtil.parse(ki.public)));
@@ -199,11 +201,7 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
         }
       }
     }
-    const result = { senderKis, pubkeys, emailsWithoutPubkeys };
-    if (!emailsWithoutPubkeys.length && (senderKis.length || !needSigning)) {
-      return result; // return right away
-    }
-    return result;
+    return { senderKis, pubkeys, emailsWithoutPubkeys };
   };
 
   private collectPubkeysByType = (type: 'openpgp' | 'x509', contacts: { email: string, keys: Key[] }[]): { pubkeys: PubkeyResult[], emailsWithoutPubkeys: string[] } => {
