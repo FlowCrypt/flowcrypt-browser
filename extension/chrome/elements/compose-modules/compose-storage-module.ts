@@ -15,6 +15,7 @@ import { KeyStore, ParsedKeyInfo } from '../../../js/common/platform/store/key-s
 import { ContactStore } from '../../../js/common/platform/store/contact-store.js';
 import { PassphraseStore } from '../../../js/common/platform/store/passphrase-store.js';
 import { compareAndSavePubkeysToStorage } from '../../../js/common/shared.js';
+import { KeyFamily } from '../../../js/common/core/crypto/key.js';
 
 export class ComposeStorageModule extends ViewModule<ComposeView> {
 
@@ -45,7 +46,7 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
       : []; // in case collecting only our own keys for draft
     for (const family of [OPENPGP, X509]) {
       const collected = await this.collectSingleFamilyKeysInternal(
-        family as 'openpgp' | 'x509',
+        family as KeyFamily,
         senderEmail,
         contacts
       );
@@ -168,7 +169,7 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
   };
 
   private collectSingleFamilyKeysInternal = async (
-    type: 'openpgp' | 'x509',
+    type: KeyFamily,
     senderEmail: string,
     contacts: { email: string, keys: Key[] }[]
   ): Promise<CollectKeysResult> => {
@@ -201,7 +202,7 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
         }
       }
     }
-    return { senderKis, pubkeys, emailsWithoutPubkeys };
+    return { senderKis, pubkeys, emailsWithoutPubkeys, family: type };
   };
 
   private collectPubkeysByType = (type: 'openpgp' | 'x509', contacts: { email: string, keys: Key[] }[]): { pubkeys: PubkeyResult[], emailsWithoutPubkeys: string[] } => {

@@ -38,9 +38,11 @@ export class GeneralMailFormatter {
     }
     let signingKey: ParsedKeyInfo | undefined;
     if (choices.sign) {
-      const signingKey = await GeneralMailFormatter.chooseSigningKeyAndDecryptIt(view, singleFamilyKeys.senderKis);
-      if (!signingKey) {
-        throw new UnreportableError('Could not find account key usable for signing this encrypted message');
+      signingKey = await GeneralMailFormatter.chooseSigningKeyAndDecryptIt(view, singleFamilyKeys.senderKis);
+      if (!signingKey && singleFamilyKeys.family === 'openpgp') {
+        // we are ignoring missing signing keys for x509 family for now. We skip signing when missing
+        //   see https://github.com/FlowCrypt/flowcrypt-browser/pull/4372/files#r845012403
+        throw new UnreportableError(`Could not find account ${singleFamilyKeys.family} key usable for signing this encrypted message`);
       }
     }
     view.S.now('send_btn_text').text('Encrypting...');

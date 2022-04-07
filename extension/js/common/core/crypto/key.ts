@@ -80,9 +80,11 @@ export interface PubkeyInfoWithLastCheck extends PubkeyInfo {
   lastCheck?: number | undefined;
 }
 
+export type KeyFamily = 'openpgp' | 'x509';
+
 export interface KeyIdentity {
   id: string, // a fingerprint of the primary key in OpenPGP, and similarly a fingerprint of the actual cryptographic key (eg RSA fingerprint) in S/MIME
-  type: 'openpgp' | 'x509'
+  type: KeyFamily;
 }
 
 export interface TypedKeyInfo extends KeyInfo, KeyIdentity {
