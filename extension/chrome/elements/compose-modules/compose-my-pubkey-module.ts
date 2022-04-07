@@ -3,12 +3,12 @@
 'use strict';
 
 import { ApiErr } from '../../../js/common/api/shared/api-error.js';
-import { KeyUtil } from '../../../js/common/core/crypto/key.js';
 import { Lang } from '../../../js/common/lang.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { ViewModule } from '../../../js/common/view-module.js';
 import { ComposeView } from '../compose.js';
 import { Str } from '../../../js/common/core/common.js';
+import { KeyStoreUtil } from '../../../js/common/platform/store/key-store.js';
 
 export class ComposeMyPubkeyModule extends ViewModule<ComposeView> {
 
@@ -38,12 +38,11 @@ export class ComposeMyPubkeyModule extends ViewModule<ComposeView> {
     (async () => {
       const senderEmail = this.view.senderModule.getSender();
       // todo: disable attaching S/MIME certificate #4075
-      const senderKis = await this.view.storageModule.getAccountKeys(senderEmail);
-      const parsedPrvs = await Promise.all(senderKis.map(ki => KeyUtil.parse(ki.private)));
+      const parsedPrvs = await KeyStoreUtil.parse(await this.view.storageModule.getAccountKeys(senderEmail));
       // if we have cashed this fingerprint, setAttachPreference(false) rightaway and return
       const cached = this.wkdFingerprints[senderEmail];
-      for (const parsedPrv of parsedPrvs.filter(prv => prv.usableForEncryption || prv.usableForSigning)) {
-        if (cached && cached.includes(parsedPrv.allIds[0])) {
+      for (const parsedPrv of parsedPrvs.filter(prv => prv.key.usableForEncryption || prv.key.usableForSigning)) {
+        if (cached && cached.includes(parsedPrv.key.allIds[0])) {
           this.setAttachPreference(false); // at least one of our valid keys is on WKD: no need to attach
           return;
         }
@@ -58,7 +57,7 @@ export class ComposeMyPubkeyModule extends ViewModule<ComposeView> {
           const fingerprints = keys.map(key => key.id);
           this.wkdFingerprints[senderEmail] = fingerprints;
           for (const parsedPrv of parsedPrvs) {
-            if (fingerprints.includes(parsedPrv.id)) {
+            if (fingerprints.includes(parsedPrv.key.id)) {
               this.setAttachPreference(false);
               return;
             }
