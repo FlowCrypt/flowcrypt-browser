@@ -193,7 +193,7 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
         // then downstream code can diagnose and show the issue to user
         senderKis.push(senderKi);
       } else {
-        const relatedPub = senderPubsUnfiltered.find(pub => pub.allIds[0] === senderKi.fingerprints[0]);
+        const relatedPub = senderPubsUnfiltered.find(pub => pub.id === senderKi.fingerprints[0]);
         // want to avoid parsing the prvs when pubs were already parsed
         //  threfore checking parameters of already parsed related pub, which are equal
         //  but actually pushing prv since it's meant for signing
