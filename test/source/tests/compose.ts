@@ -1620,7 +1620,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       const composePage = await ComposePageRecipe.openStandalone(t, browser, acct);
       await ComposePageRecipe.fillMsg(composePage, { to: 'mock.only.pubkey@flowcrypt.com' }, 'no valid key');
       await ComposePageRecipe.waitForToastToAppearAndDisappear(composePage, 'Draft not saved: Error: Your account keys are revoked');
-      await composePage.waitAndClick('@action-send', { delay: 2 });
+      await composePage.waitAndClick('@action-send', { delay: 1 });
       await PageRecipe.waitForModalAndRespond(composePage, 'error', {
         contentToCheck: 'Failed to send message due to: Error: Could not find account key usable for signing',
         clickOn: 'confirm'

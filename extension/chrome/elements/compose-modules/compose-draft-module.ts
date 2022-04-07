@@ -28,6 +28,7 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
   public wasMsgLoadedFromDraft = false;
 
   private currentlySavingDraft = false;
+  private disableSendingDrafts = false;
   private saveDraftInterval?: number;
   private lastDraftBody?: string;
   private lastDraftSubject = '';
@@ -112,6 +113,9 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
   };
 
   public draftSave = async (forceSave: boolean = false): Promise<void> => {
+    if (this.disableSendingDrafts) {
+      return;
+    }
     if (this.hasBodyChanged(this.view.inputModule.squire.getHTML()) || this.hasSubjectChanged(String(this.view.S.cached('input_subject').val())) || forceSave) {
       this.currentlySavingDraft = true;
       try {
@@ -176,6 +180,13 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
           Catch.reportErr(e);
           this.view.S.cached('send_btn_note').text('Not saved (error)');
           Ui.toast(`Draft not saved: ${e}`, false, 5);
+          if (!ApiErr.isNetErr(e)) {
+            // no point trying again on fatal error
+            // eg maybe keys could be broken or missing
+            this.disableSendingDrafts = true;
+            // todo - could in the future add "once" click handler on send_btn_note
+            //   which would set this back to false & re-run draftSave
+          }
         }
       }
       this.currentlySavingDraft = false;
