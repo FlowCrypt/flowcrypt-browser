@@ -27,7 +27,7 @@ View.run(class MyKeyUserIdsView extends View {
 
   public render = async () => {
     [this.ki] = await KeyStore.get(this.acctEmail, [this.fingerprint]);
-    Assert.abortAndRenderErrorIfKeyinfoEmpty([this.ki]);
+    Assert.abortAndRenderErrorIfKeyinfoEmpty(this.ki ? [this.ki] : []);
     $('.action_show_public_key').attr('href', this.myKeyUrl);
     const prv = await KeyUtil.parse(this.ki.private);
     Xss.sanitizeRender('.user_ids', prv.identities.map((uid: string) => `<div>${Xss.escape(uid)}</div>`).join(''));

@@ -46,7 +46,7 @@ View.run(class MyKeyView extends View {
     this.orgRules = await OrgRules.newInstance(this.acctEmail);
     this.pubLookup = new PubLookup(this.orgRules);
     [this.keyInfo] = await KeyStore.get(this.acctEmail, [this.fingerprint]);
-    Assert.abortAndRenderErrorIfKeyinfoEmpty([this.keyInfo]);
+    Assert.abortAndRenderErrorIfKeyinfoEmpty(this.keyInfo ? [this.keyInfo] : []);
     this.pubKey = await KeyUtil.parse(this.keyInfo.public);
     $('.action_view_user_ids').attr('href', this.myKeyUserIdsUrl);
     $('.action_view_update').attr('href', this.myKeyUpdateUrl);

@@ -54,7 +54,7 @@ View.run(class MyKeyUpdateView extends View {
       $('#content').show();
       this.pubLookup = new PubLookup(this.orgRules);
       [this.ki] = await KeyStore.get(this.acctEmail, [this.fingerprint]);
-      Assert.abortAndRenderErrorIfKeyinfoEmpty([this.ki]);
+      Assert.abortAndRenderErrorIfKeyinfoEmpty(this.ki ? [this.ki] : []);
       $('.action_show_public_key').attr('href', this.showKeyUrl);
       $('.email').text(this.acctEmail);
       $('.fingerprint').text(Str.spaced(this.ki.fingerprints[0]));
