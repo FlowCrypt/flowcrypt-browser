@@ -48,7 +48,7 @@ export interface Key extends KeyIdentity {
 
 export type PubkeyResult = { pubkey: Key, email: string, isMine: boolean };
 
-export interface KeyInfo {
+export interface StoredKeyInfo {
   private: string;
   public: string; // this cannot be Pubkey has it's being passed to localstorage
   longid: string;
@@ -84,13 +84,13 @@ export type KeyFamily = 'openpgp' | 'x509';
 
 export interface KeyIdentity {
   id: string, // a fingerprint of the primary key in OpenPGP, and similarly a fingerprint of the actual cryptographic key (eg RSA fingerprint) in S/MIME
-  type: KeyFamily;
+  family: KeyFamily;
 }
 
-export interface TypedKeyInfo extends KeyInfo, KeyIdentity {
+export interface KeyInfoWithIdentity extends StoredKeyInfo, KeyIdentity {
 }
 
-export interface ExtendedKeyInfo extends TypedKeyInfo {
+export interface KeyInfoWithIdentityAndOptionalPp extends KeyInfoWithIdentity {
   passphrase?: string;
 }
 
@@ -103,19 +103,19 @@ export class UnexpectedKeyTypeError extends Error { }
 export class KeyUtil {
 
   public static identityEquals = (keyIdentity1: KeyIdentity, keyIdentity2: KeyIdentity) => {
-    return keyIdentity1.id === keyIdentity2.id && keyIdentity1.type === keyIdentity2.type;
+    return keyIdentity1.id === keyIdentity2.id && keyIdentity1.family === keyIdentity2.family;
   };
 
   public static filterKeys<T extends KeyIdentity>(kis: T[], ids: KeyIdentity[]): T[] {
     return kis.filter(ki => ids.some(i => KeyUtil.identityEquals(i, ki)));
   }
 
-  public static filterKeysByTypeAndSenderEmail = (keys: TypedKeyInfo[], email: string, type: 'openpgp' | 'x509' | undefined): TypedKeyInfo[] => {
-    let foundKeys: TypedKeyInfo[] = [];
+  public static filterKeysByTypeAndSenderEmail = (keys: KeyInfoWithIdentity[], email: string, type: 'openpgp' | 'x509' | undefined): KeyInfoWithIdentity[] => {
+    let foundKeys: KeyInfoWithIdentity[] = [];
     if (type) {
-      foundKeys = keys.filter(key => key.emails?.includes(email.toLowerCase()) && key.type === type);
+      foundKeys = keys.filter(key => key.emails?.includes(email.toLowerCase()) && key.family === type);
       if (!foundKeys.length) {
-        foundKeys = keys.filter(key => key.type === type);
+        foundKeys = keys.filter(key => key.family === type);
       }
     } else {
       foundKeys = keys.filter(key => key.emails?.includes(email.toLowerCase()));
@@ -136,7 +136,7 @@ export class KeyUtil {
   public static isWithoutSelfCertifications = async (key: Key) => {
     // all non-OpenPGP keys are automatically considered to be not
     // "without self certifications"
-    if (key.type !== 'openpgp') {
+    if (key.family !== 'openpgp') {
       return false;
     }
     return await OpenPGPKey.isWithoutSelfCertifications(key);
@@ -252,8 +252,8 @@ export class KeyUtil {
 
   public static diagnose = async (key: Key, passphrase: string): Promise<Map<string, string>> => {
     let result = new Map<string, string>();
-    result.set(`Key type`, key.type);
-    if (key.type === 'openpgp') {
+    result.set(`Key type`, key.family);
+    if (key.family === 'openpgp') {
       const opgpresult = await OpenPGPKey.diagnose(key, passphrase);
       result = new Map<string, string>([...result, ...opgpresult]);
     }
@@ -277,12 +277,12 @@ export class KeyUtil {
   };
 
   public static asPublicKey = async (key: Key): Promise<Key> => {
-    if (key.type === 'openpgp') {
+    if (key.family === 'openpgp') {
       return await OpenPGPKey.asPublicKey(key);
-    } else if (key.type === 'x509') {
+    } else if (key.family === 'x509') {
       return SmimeKey.asPublicKey(key);
     }
-    throw new UnexpectedKeyTypeError(`Key type is ${key.type}, expecting OpenPGP or x509 S/MIME`);
+    throw new UnexpectedKeyTypeError(`Key type is ${key.family}, expecting OpenPGP or x509 S/MIME`);
   };
 
   public static expired = (key: Key): boolean => {
@@ -344,42 +344,42 @@ export class KeyUtil {
   };
 
   public static decrypt = async (key: Key, passphrase: string, optionalKeyid?: OpenPGP.Keyid, optionalBehaviorFlag?: 'OK-IF-ALREADY-DECRYPTED'): Promise<boolean> => {
-    if (key.type === 'openpgp') {
+    if (key.family === 'openpgp') {
       return await OpenPGPKey.decryptKey(key, passphrase, optionalKeyid, optionalBehaviorFlag);
-    } else if (key.type === 'x509') {
+    } else if (key.family === 'x509') {
       return await SmimeKey.decryptKey(key, passphrase, optionalBehaviorFlag);
     } else {
-      throw new Error(`KeyUtil.decrypt does not support key type ${key.type}`);
+      throw new Error(`KeyUtil.decrypt does not support key type ${key.family}`);
     }
   };
 
   public static encrypt = async (key: Key, passphrase: string) => {
-    if (key.type === 'openpgp') {
+    if (key.family === 'openpgp') {
       return await OpenPGPKey.encryptKey(key, passphrase);
-    } else if (key.type === 'x509') {
+    } else if (key.family === 'x509') {
       return await SmimeKey.encryptKey(key, passphrase);
     } else {
-      throw new Error(`KeyUtil.encrypt does not support key type ${key.type}`);
+      throw new Error(`KeyUtil.encrypt does not support key type ${key.family}`);
     }
   };
 
   public static reformatKey = async (privateKey: Key, passphrase: string, userIds: { email: string | undefined; name: string }[], expireSeconds: number) => {
-    if (privateKey.type === 'openpgp') {
+    if (privateKey.family === 'openpgp') {
       return await OpenPGPKey.reformatKey(privateKey, passphrase, userIds, expireSeconds);
     } else {
-      throw new Error(`KeyUtil.reformatKey does not support key type ${privateKey.type}`);
+      throw new Error(`KeyUtil.reformatKey does not support key type ${privateKey.family}`);
     }
   };
 
   public static revoke = async (key: Key): Promise<string | undefined> => {
-    if (key.type === 'openpgp') {
+    if (key.family === 'openpgp') {
       return await OpenPGPKey.revoke(key);
     } else {
-      throw new Error(`KeyUtil.revoke does not support key type ${key.type}`);
+      throw new Error(`KeyUtil.revoke does not support key type ${key.family}`);
     }
   };
 
-  public static keyInfoObj = async (prv: Key): Promise<KeyInfo> => {
+  public static keyInfoObj = async (prv: Key): Promise<KeyInfoWithIdentity> => {
     if (!prv.isPrivate) {
       throw new Error('Key passed into KeyUtil.keyInfoObj must be a Private Key');
     }
@@ -390,29 +390,31 @@ export class KeyUtil {
       longid: KeyUtil.getPrimaryLongid(pubkey),
       emails: prv.emails,
       fingerprints: prv.allIds,
+      id: prv.id,
+      family: prv.family
     };
   };
 
-  public static typedKeyInfoObj = async (prv: Key): Promise<TypedKeyInfo> => {
-    return { ...await KeyUtil.keyInfoObj(prv), id: prv.id, type: prv.type };
+  public static typedKeyInfoObj = async (prv: Key): Promise<KeyInfoWithIdentity> => {
+    return { ...await KeyUtil.keyInfoObj(prv), id: prv.id, family: prv.family };
   };
 
   public static getPubkeyLongids = (pubkey: Key): string[] => {
-    if (pubkey.type !== 'x509') {
+    if (pubkey.family !== 'x509') {
       return pubkey.allIds.map(id => OpenPGPKey.fingerprintToLongid(id));
     }
     return [KeyUtil.getPrimaryLongid(pubkey)];
   };
 
   public static getPrimaryLongid = (pubkey: Key): string => {
-    if (pubkey.type !== 'x509') {
+    if (pubkey.family !== 'x509') {
       return OpenPGPKey.fingerprintToLongid(pubkey.id);
     }
     return SmimeKey.getKeyLongid(pubkey);
   };
 
-  public static getKeyInfoLongids = (ki: ExtendedKeyInfo): string[] => {
-    if (ki.type !== 'x509') {
+  public static getKeyInfoLongids = (ki: KeyInfoWithIdentityAndOptionalPp): string[] => {
+    if (ki.family !== 'x509') {
       return ki.fingerprints.map(fp => OpenPGPKey.fingerprintToLongid(fp));
     }
     return [ki.longid];

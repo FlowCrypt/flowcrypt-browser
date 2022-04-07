@@ -13,7 +13,7 @@ import { ComposerUserError } from './compose-err-module.js';
 import { ComposeSendBtnPopoverModule } from './compose-send-btn-popover-module.js';
 import { GeneralMailFormatter } from './formatters/general-mail-formatter.js';
 import { GmailParser, GmailRes } from '../../../js/common/api/email-provider/gmail/gmail-parser.js';
-import { KeyInfo } from '../../../js/common/core/crypto/key.js';
+import { KeyInfoWithIdentity } from '../../../js/common/core/crypto/key.js';
 import { getUniqueRecipientEmails, SendBtnTexts } from './compose-types.js';
 import { SendableMsg } from '../../../js/common/api/email-provider/sendable-msg.js';
 import { Ui } from '../../../js/common/browser/ui.js';
@@ -125,7 +125,7 @@ export class ComposeSendBtnModule extends ViewModule<ComposeView> {
     }
   };
 
-  private finalizeSendableMsg = async ({ msg, senderKi }: { msg: SendableMsg, senderKi: KeyInfo | undefined }) => {
+  private finalizeSendableMsg = async ({ msg, senderKi }: { msg: SendableMsg, senderKi: KeyInfoWithIdentity | undefined }) => {
     const choices = this.view.sendBtnModule.popover.choices;
     for (const k of Object.keys(this.additionalMsgHeaders)) {
       msg.headers[k] = this.additionalMsgHeaders[k];

@@ -4,7 +4,7 @@
 
 import { ApiErr } from '../../../js/common/api/shared/api-error.js';
 import { Assert } from '../../../js/common/assert.js';
-import { KeyInfo, Key, KeyUtil } from '../../../js/common/core/crypto/key.js';
+import { Key, KeyInfoWithIdentity, KeyUtil } from '../../../js/common/core/crypto/key.js';
 import { Lang } from '../../../js/common/lang.js';
 import { PgpArmor } from '../../../js/common/core/crypto/pgp/pgp-armor.js';
 import { Settings } from '../../../js/common/settings.js';
@@ -26,7 +26,7 @@ View.run(class MyKeyUpdateView extends View {
   private readonly showKeyUrl: string;
   private readonly inputPrivateKey = $('.input_private_key');
   private readonly prvHeaders = PgpArmor.headers('privateKey');
-  private ki: KeyInfo | undefined;
+  private ki: KeyInfoWithIdentity | undefined;
   private orgRules!: OrgRules;
   private pubLookup!: PubLookup;
 

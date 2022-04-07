@@ -1,7 +1,7 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
 'use strict';
-import { Key, KeyInfo, ExtendedKeyInfo, KeyUtil } from '../key.js';
+import { Key, KeyInfoWithIdentity, KeyInfoWithIdentityAndOptionalPp, KeyUtil } from '../key.js';
 import { MsgBlockType, ReplaceableMsgBlockType } from '../../msg-block.js';
 import { Buf } from '../../buf.js';
 import { PgpArmor, PreparedForDecrypt } from './pgp-armor.js';
@@ -24,7 +24,7 @@ export namespace PgpMsgMethod {
   export namespace Arg {
     export type Encrypt = { pubkeys: Key[], signingPrv?: Key, pwd?: string, data: Uint8Array, filename?: string, armor: boolean, date?: Date };
     export type Type = { data: Uint8Array | string };
-    export type Decrypt = { kisWithPp: ExtendedKeyInfo[], encryptedData: Uint8Array, msgPwd?: string, verificationPubs: string[] };
+    export type Decrypt = { kisWithPp: KeyInfoWithIdentityAndOptionalPp[], encryptedData: Uint8Array, msgPwd?: string, verificationPubs: string[] };
     export type DiagnosePubkeys = { armoredPubs: string[], message: Uint8Array };
     export type VerifyDetached = { plaintext: Uint8Array, sigText: Uint8Array, verificationPubs: string[] };
   }
@@ -49,10 +49,10 @@ export namespace PgpMsgMethod {
 type SortedKeysForDecrypt = {
   encryptedFor: string[];
   signedBy: string[];
-  prvMatching: ExtendedKeyInfo[];
-  prvForDecrypt: ExtendedKeyInfo[];
-  prvForDecryptDecrypted: { ki: ExtendedKeyInfo, decrypted: Key }[];
-  prvForDecryptWithoutPassphrases: KeyInfo[];
+  prvMatching: KeyInfoWithIdentityAndOptionalPp[];
+  prvForDecrypt: KeyInfoWithIdentityAndOptionalPp[];
+  prvForDecryptDecrypted: { ki: KeyInfoWithIdentityAndOptionalPp, decrypted: Key }[];
+  prvForDecryptWithoutPassphrases: KeyInfoWithIdentity[];
 };
 
 export type DecryptSuccess = { success: true; signature?: VerifyRes; isEncrypted?: boolean, filename?: string, content: Buf };
@@ -210,7 +210,7 @@ export class MsgUtil {
   };
 
   public static encryptMessage: PgpMsgMethod.Encrypt = async ({ pubkeys, signingPrv, pwd, data, filename, armor, date }) => {
-    const keyTypes = new Set(pubkeys.map(k => k.type));
+    const keyTypes = new Set(pubkeys.map(k => k.family));
     if (keyTypes.has('openpgp') && keyTypes.has('x509')) {
       throw new Error('Mixed key types are not allowed: ' + [...keyTypes]);
     }
@@ -240,7 +240,7 @@ export class MsgUtil {
     return diagnosis;
   };
 
-  private static getSortedKeys = async (kiWithPp: ExtendedKeyInfo[], msg: OpenPGP.message.Message): Promise<SortedKeysForDecrypt> => {
+  private static getSortedKeys = async (kiWithPp: KeyInfoWithIdentityAndOptionalPp[], msg: OpenPGP.message.Message): Promise<SortedKeysForDecrypt> => {
     const keys: SortedKeysForDecrypt = {
       encryptedFor: [],
       signedBy: [],
@@ -279,7 +279,7 @@ export class MsgUtil {
     return keys;
   };
 
-  private static getSmimeKeys = async (kiWithPp: ExtendedKeyInfo[], msg: SmimeMsg): Promise<SortedKeysForDecrypt> => {
+  private static getSmimeKeys = async (kiWithPp: KeyInfoWithIdentityAndOptionalPp[], msg: SmimeMsg): Promise<SortedKeysForDecrypt> => {
     const keys: SortedKeysForDecrypt = {
       encryptedFor: [],
       signedBy: [],

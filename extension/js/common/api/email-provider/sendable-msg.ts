@@ -98,7 +98,7 @@ export class SendableMsg {
       'EVEN-IF-UNUSABLE'
     );
     const headers: Dict<string> = {};
-    if (mostUsefulPrv && mostUsefulPrv.key.type === 'openpgp') {
+    if (mostUsefulPrv && mostUsefulPrv.key.family === 'openpgp') {
       headers.Openpgp = `id=${mostUsefulPrv.key.id}`; // todo - use autocrypt format
     }
     return new SendableMsg(

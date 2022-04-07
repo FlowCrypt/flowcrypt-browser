@@ -16,7 +16,7 @@ import { BackupAutomaticModule } from './backup-automatic-module.js';
 import { Lang } from '../../../js/common/lang.js';
 import { AcctStore, EmailProvider } from '../../../js/common/platform/store/acct-store.js';
 import { KeyStore } from '../../../js/common/platform/store/key-store.js';
-import { KeyIdentity, KeyUtil, TypedKeyInfo } from '../../../js/common/core/crypto/key.js';
+import { KeyIdentity, KeyUtil, KeyInfoWithIdentity } from '../../../js/common/core/crypto/key.js';
 import { Settings } from '../../../js/common/settings.js';
 
 export class BackupView extends View {
@@ -56,7 +56,7 @@ export class BackupView extends View {
       const id = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'id');
       const type = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'type');
       if (id && type === 'openpgp') {
-        this.keyIdentity = { id, type };
+        this.keyIdentity = { id, family: type };
       }
     }
     this.gmail = new Gmail(this.acctEmail);
@@ -133,18 +133,18 @@ export class BackupView extends View {
   };
 
   private preparePrvKeysBackupSelection = async () => {
-    const kinfos = await KeyStore.getTypedKeyInfos(this.acctEmail);
-    if (this.keyIdentity && this.keyIdentity.type === 'openpgp' && kinfos.some(ki => KeyUtil.identityEquals(ki, this.keyIdentity!))) {
+    const kinfos = await KeyStore.get(this.acctEmail);
+    if (this.keyIdentity && this.keyIdentity.family === 'openpgp' && kinfos.some(ki => KeyUtil.identityEquals(ki, this.keyIdentity!))) {
       // todo: error if not found ?
-      this.addKeyToBackup({ id: this.keyIdentity.id, type: this.keyIdentity.type });
+      this.addKeyToBackup({ id: this.keyIdentity.id, family: this.keyIdentity.family });
     } else if (kinfos.length > 1) {
       await this.renderPrvKeysBackupSelection(kinfos);
-    } else if (kinfos.length === 1 && kinfos[0].type === 'openpgp') {
-      this.addKeyToBackup({ id: kinfos[0].id, type: kinfos[0].type });
+    } else if (kinfos.length === 1 && kinfos[0].family === 'openpgp') {
+      this.addKeyToBackup({ id: kinfos[0].id, family: kinfos[0].family });
     }
   };
 
-  private renderPrvKeysBackupSelection = async (kinfos: TypedKeyInfo[]) => {
+  private renderPrvKeysBackupSelection = async (kinfos: KeyInfoWithIdentity[]) => {
     for (const ki of kinfos) {
       const email = Xss.escape(String(ki.emails![0]));
       const dom = `
@@ -152,17 +152,17 @@ export class BackupView extends View {
         <div class="details">
           <label>
             <p class="m-0">
-            <input class="input_prvkey_backup_checkbox" type="checkbox" data-type="${ki.type}" data-id="${ki.id}" ${ki.type === 'openpgp' ? 'checked' : 'disabled'} />
+            <input class="input_prvkey_backup_checkbox" type="checkbox" data-type="${ki.family}" data-id="${ki.id}" ${ki.family === 'openpgp' ? 'checked' : 'disabled'} />
             ${email}
             </p>
-            <p class="m-0 prv_fingerprint"><span>${ki.type} - ${Str.spaced(ki.fingerprints[0])}</span></p>
+            <p class="m-0 prv_fingerprint"><span>${ki.family} - ${Str.spaced(ki.fingerprints[0])}</span></p>
           </label>
         </div>
       </div>
       `.trim();
       $('.key_backup_selection').append(dom); // xss-escaped
-      if (ki.type === 'openpgp') {
-        this.addKeyToBackup({ type: ki.type, id: ki.id });
+      if (ki.family === 'openpgp') {
+        this.addKeyToBackup({ family: ki.family, id: ki.id });
       }
     }
     $('.input_prvkey_backup_checkbox').click(Ui.event.handle((target) => {
@@ -170,9 +170,9 @@ export class BackupView extends View {
       if (type === 'openpgp') {
         const id = $(target).data('id') as string;
         if ($(target).prop('checked')) {
-          this.addKeyToBackup({ type, id });
+          this.addKeyToBackup({ family: type, id });
         } else {
-          this.removeKeyToBackup({ type, id });
+          this.removeKeyToBackup({ family: type, id });
         }
       }
     }));

@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { KeyInfo, KeyUtil } from '../../../js/common/core/crypto/key.js';
+import { KeyInfoWithIdentity, KeyUtil } from '../../../js/common/core/crypto/key.js';
 
 import { Assert } from '../../../js/common/assert.js';
 import { Url, Str } from '../../../js/common/core/common.js';
@@ -15,7 +15,7 @@ View.run(class MyKeyUserIdsView extends View {
   private readonly acctEmail: string;
   private readonly fingerprint: string;
   private readonly myKeyUrl: string;
-  private ki: KeyInfo | undefined;
+  private ki: KeyInfoWithIdentity | undefined;
 
   constructor() {
     super();

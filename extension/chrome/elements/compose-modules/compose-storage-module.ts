@@ -3,7 +3,7 @@
 'use strict';
 
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
-import { KeyInfo, KeyUtil, Key, PubkeyInfo, PubkeyResult, ContactInfoWithSortedPubkeys } from '../../../js/common/core/crypto/key.js';
+import { KeyUtil, Key, PubkeyInfo, PubkeyResult, ContactInfoWithSortedPubkeys, KeyInfoWithIdentity } from '../../../js/common/core/crypto/key.js';
 import { ApiErr } from '../../../js/common/api/shared/api-error.js';
 import { Assert } from '../../../js/common/assert.js';
 import { Catch, UnreportableError } from '../../../js/common/platform/catch.js';
@@ -19,14 +19,15 @@ import { KeyFamily } from '../../../js/common/core/crypto/key.js';
 
 export class ComposeStorageModule extends ViewModule<ComposeView> {
 
-  public getAccountKeys = async (senderEmail: string | undefined, type?: 'openpgp' | 'x509' | undefined): Promise<KeyInfo[]> => {
-    const keys = await KeyStore.getTypedKeyInfos(this.view.acctEmail);
+  public getAccountKeys = async (senderEmail: string | undefined, family?: 'openpgp' | 'x509' | undefined): Promise<KeyInfoWithIdentity[]> => {
+    const keys = await KeyStore.get(this.view.acctEmail);
     Assert.abortAndRenderErrorIfKeyinfoEmpty(keys);
     let matchingSenderEmail = keys.filter(ki => !senderEmail || ki.emails?.includes(senderEmail));
     if (!matchingSenderEmail.length) {
       matchingSenderEmail = keys; // if no key exactly matches sender email, continue using all
     }
-    const matchingSenderEmailAndType = matchingSenderEmail.filter(ki => !type || ki.type === type);
+    console.log(`getAccountKeys ${family}`, matchingSenderEmail);
+    const matchingSenderEmailAndType = matchingSenderEmail.filter(ki => !family || ki.family === family);
     this.view.errModule.debug(`ComposerStorage.getAccountKeys: returning key longids: ${matchingSenderEmailAndType.map(ki => ki.longid).join(',')}`);
     return matchingSenderEmailAndType;
   };
@@ -169,11 +170,12 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
   };
 
   private collectSingleFamilyKeysInternal = async (
-    type: KeyFamily,
+    family: KeyFamily,
     senderEmail: string,
     contacts: { email: string, keys: Key[] }[]
   ): Promise<CollectKeysResult> => {
-    const senderKisUnfiltered = await this.getAccountKeys(senderEmail, type); // also for draft encryption!
+    const senderKisUnfiltered = await this.getAccountKeys(senderEmail, family); // for draft encryption!
+    console.log('collectSingleFamilyKeysInternal.senderKisUnfiltered', senderKisUnfiltered);
     const senderPubsUnfiltered = await Promise.all(senderKisUnfiltered.map(ki => KeyUtil.parse(ki.public)));
     const senderPubs = senderPubsUnfiltered.some(k => k.usableForEncryption)
       // if non-expired present, return non-expired only
@@ -181,7 +183,7 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
       // but if all are invalid, downstream code can inform the user what happened
       ? senderPubsUnfiltered.filter(k => k.usableForEncryption)
       : senderPubsUnfiltered;
-    const { pubkeys, emailsWithoutPubkeys } = this.collectPubkeysByType(type, contacts);
+    const { pubkeys, emailsWithoutPubkeys } = this.collectPubkeysByType(family, contacts);
     for (const senderPub of senderPubs) { // add own key for encryption
       pubkeys.push({ pubkey: senderPub, email: senderEmail, isMine: true });
     }
@@ -202,14 +204,14 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
         }
       }
     }
-    return { senderKis, pubkeys, emailsWithoutPubkeys, family: type };
+    return { senderKis, pubkeys, emailsWithoutPubkeys, family };
   };
 
   private collectPubkeysByType = (type: 'openpgp' | 'x509', contacts: { email: string, keys: Key[] }[]): { pubkeys: PubkeyResult[], emailsWithoutPubkeys: string[] } => {
     const pubkeys: PubkeyResult[] = [];
     const emailsWithoutPubkeys: string[] = [];
     for (const contact of contacts) {
-      let keysPerEmail = contact.keys.filter(k => k.type === type);
+      let keysPerEmail = contact.keys.filter(k => k.family === type);
       // if non-expired present, return non-expired only
       if (keysPerEmail.some(k => k.usableForEncryption)) {
         keysPerEmail = keysPerEmail.filter(k => k.usableForEncryption);

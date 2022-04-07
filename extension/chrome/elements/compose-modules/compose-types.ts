@@ -4,7 +4,7 @@
 
 import { RecipientType } from '../../../js/common/api/shared/api.js';
 import { ParsedRecipients } from '../../../js/common/api/email-provider/email-provider-api.js';
-import { KeyFamily, KeyInfo, PubkeyResult } from '../../../js/common/core/crypto/key.js';
+import { KeyFamily, PubkeyResult, KeyInfoWithIdentity } from '../../../js/common/core/crypto/key.js';
 import { EmailParts, Value } from '../../../js/common/core/common.js';
 
 export enum RecipientStatus {
@@ -46,7 +46,7 @@ export type MessageToReplyOrForward = {
   decryptedFiles: File[]
 };
 
-export type CollectKeysResult = { pubkeys: PubkeyResult[], emailsWithoutPubkeys: string[], senderKis: KeyInfo[], family: KeyFamily };
+export type CollectKeysResult = { pubkeys: PubkeyResult[], emailsWithoutPubkeys: string[], senderKis: KeyInfoWithIdentity[], family: KeyFamily };
 
 export type PopoverOpt = 'encrypt' | 'sign' | 'richtext';
 export type PopoverChoices = { [key in PopoverOpt]: boolean };

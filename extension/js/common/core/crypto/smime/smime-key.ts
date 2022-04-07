@@ -184,8 +184,8 @@ export class SmimeKey {
   };
 
   public static asPublicKey = (key: Key): Key => {
-    if (key.type !== 'x509') {
-      throw new UnexpectedKeyTypeError(`Key type is ${key.type}, expecting x509 S/MIME`);
+    if (key.family !== 'x509') {
+      throw new UnexpectedKeyTypeError(`Key type is ${key.family}, expecting x509 S/MIME`);
     }
     if (key.isPrivate) {
       return SmimeKey.getKeyFromCertificate(SmimeKey.getArmoredCertificate(key), undefined);
@@ -273,7 +273,7 @@ export class SmimeKey {
     const expired = expiration < Date.now();
     const usableIgnoringExpiration = SmimeKey.isEmailCertificate(certificate) && !SmimeKey.isKeyWeak(certificate);
     const key = {
-      type: 'x509',
+      family: 'x509',
       id: fingerprint,
       allIds: [fingerprint],
       usableForEncryption: usableIgnoringExpiration && !expired,

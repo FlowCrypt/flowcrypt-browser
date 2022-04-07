@@ -5,7 +5,7 @@
 import { Catch, UnreportableError } from './platform/catch.js';
 import { Dict, UrlParam, UrlParams } from './core/common.js';
 import { Browser } from './browser/browser.js';
-import { KeyInfo, KeyUtil } from './core/crypto/key.js';
+import { KeyInfoWithIdentity, KeyUtil } from './core/crypto/key.js';
 import { Settings } from './settings.js';
 import { Ui } from './browser/ui.js';
 import { Xss } from './platform/xss.js';
@@ -60,7 +60,7 @@ export class Assert {
     }
   };
 
-  public static abortAndRenderErrorIfKeyinfoEmpty = (kis: KeyInfo[], doThrow: boolean = true) => {
+  public static abortAndRenderErrorIfKeyinfoEmpty = (kis: KeyInfoWithIdentity[], doThrow: boolean = true) => {
     if (!kis.length) {
       const msg = `Cannot find any account key. Is FlowCrypt not set up yet? ${Ui.retryLink()}`;
       const target = $($('#content').length ? '#content' : 'body');

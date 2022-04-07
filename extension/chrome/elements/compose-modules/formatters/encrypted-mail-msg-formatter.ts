@@ -105,7 +105,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
       const { data: encrypted } = await this.encryptDataArmor(Buf.fromUtfStr(newMsg.plaintext), undefined, pubs, signingPrv);
       return await SendableMsg.createInlineArmored(this.acctEmail, this.headers(newMsg), Buf.fromUint8(encrypted).toUtfStr(), [], { isDraft: this.isDraft });
     }
-    const x509certs = pubsForEncryption.filter(pub => pub.type === 'x509');
+    const x509certs = pubsForEncryption.filter(pub => pub.family === 'x509');
     if (x509certs.length) { // s/mime
       const attachments: Attachment[] = this.isDraft ? [] : await this.view.attachmentsModule.attachment.collectAttachments(); // collects attachments
       const msgBody = { 'text/plain': newMsg.plaintext };
@@ -148,7 +148,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
   };
 
   private encryptDataArmor = async (data: Buf, pwd: string | undefined, pubs: PubkeyResult[], signingPrv?: Key): Promise<PgpMsgMethod.EncryptAnyArmorResult> => {
-    const pgpPubs = pubs.filter(pub => pub.pubkey.type === 'openpgp');
+    const pgpPubs = pubs.filter(pub => pub.pubkey.family === 'openpgp');
     const encryptAsOfDate = await this.encryptMsgAsOfDateIfSomeAreExpiredAndUserConfirmedModal(pgpPubs);
     const pubsForEncryption = pubs.map(entry => entry.pubkey);
     return await MsgUtil.encryptMessage({ pubkeys: pubsForEncryption, signingPrv, pwd, data, armor: true, date: encryptAsOfDate }) as PgpMsgMethod.EncryptAnyArmorResult;

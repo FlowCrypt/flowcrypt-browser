@@ -4,7 +4,7 @@
 
 import { Bm, BrowserMsg } from '../../js/common/browser/browser-msg.js';
 import { Ui } from '../../js/common/browser/ui.js';
-import { KeyUtil, TypedKeyInfo } from '../../js/common/core/crypto/key.js';
+import { KeyUtil, KeyInfoWithIdentity } from '../../js/common/core/crypto/key.js';
 import { Str, Url, UrlParams } from '../../js/common/core/common.js';
 import { ApiErr } from '../../js/common/api/shared/api-error.js';
 import { Assert } from '../../js/common/assert.js';
@@ -255,7 +255,7 @@ View.run(class SettingsView extends View {
         if (this.advanced) {
           $("#settings").toggleClass("advanced");
         }
-        const privateKeys = await KeyStore.getTypedKeyInfos(this.acctEmail);
+        const privateKeys = await KeyStore.get(this.acctEmail);
         if (privateKeys.length > 4) {
           $('.key_list').css('overflow-y', 'scroll');
         }
@@ -396,7 +396,7 @@ View.run(class SettingsView extends View {
     }
   };
 
-  private addKeyRowsHtml = async (privateKeys: TypedKeyInfo[]) => {
+  private addKeyRowsHtml = async (privateKeys: KeyInfoWithIdentity[]) => {
     let html = '';
     const canRemoveKey = !this.orgRules || !this.orgRules.usesKeyManager();
     for (let i = 0; i < privateKeys.length; i++) {
@@ -406,7 +406,7 @@ View.run(class SettingsView extends View {
       const date = Str.monthName(created.getMonth()) + ' ' + created.getDate() + ', ' + created.getFullYear();
       let removeKeyBtn = '';
       if (canRemoveKey && privateKeys.length > 1) {
-        removeKeyBtn = `(<a href="#" class="action_remove_key" data-test="action-remove-key" data-type="${ki.type}" data-id="${ki.id}" data-longid="${ki.longid}">remove</a>)`;
+        removeKeyBtn = `(<a href="#" class="action_remove_key" data-test="action-remove-key" data-type="${ki.family}" data-id="${ki.id}" data-longid="${ki.longid}">remove</a>)`;
       }
       const escapedEmail = Xss.escape(prv.emails[0] || '');
       const escapedLink = `<a href="#" data-test="action-show-key-${i}" class="action_show_key" page="modules/my_key.htm" addurltext="&fingerprint=${ki.id}">${escapedEmail}</a>`;
@@ -428,7 +428,7 @@ View.run(class SettingsView extends View {
         const id = $(target).data('id') as string;
         const longid = $(target).data('longid') as string;
         if (type === 'openpgp' || type === 'x509') {
-          await KeyStore.remove(this.acctEmail!, { type, id });
+          await KeyStore.remove(this.acctEmail!, { family: type, id });
           await PassphraseStore.set('local', this.acctEmail!, { longid }, undefined);
           await PassphraseStore.set('session', this.acctEmail!, { longid }, undefined);
           this.reload(true);

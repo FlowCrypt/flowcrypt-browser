@@ -1,21 +1,21 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
-import { KeyInfo, TypedKeyInfo, ExtendedKeyInfo, KeyUtil, Key, KeyIdentity } from '../../core/crypto/key.js';
+import { StoredKeyInfo, KeyInfoWithIdentity, KeyInfoWithIdentityAndOptionalPp, KeyUtil, Key, KeyIdentity } from '../../core/crypto/key.js';
 import { AcctStore } from './acct-store.js';
 import { PassphraseStore } from './passphrase-store.js';
 import { AbstractStore } from './abstract-store.js';
 import { Assert } from '../../assert.js';
 
-export type ParsedKeyInfo = { keyInfo: KeyInfo, key: Key };
+export type ParsedKeyInfo = { keyInfo: KeyInfoWithIdentity, key: Key };
 
 /**
  * Local store of account private keys
  */
 export class KeyStore extends AbstractStore {
 
-  public static get = async (acctEmail: string, fingerprints?: string[]): Promise<KeyInfo[]> => {
+  public static get = async (acctEmail: string, fingerprints?: string[]): Promise<KeyInfoWithIdentity[]> => {
     const stored = await AcctStore.get(acctEmail, ['keys']);
-    const keys: KeyInfo[] = stored.keys || [];
+    const keys: KeyInfoWithIdentity[] = KeyStore.addFamilyAndIdToKeyInfos(stored.keys || []);
     if (!fingerprints) {
       return keys;
     }
@@ -24,33 +24,22 @@ export class KeyStore extends AbstractStore {
     return keys.filter(ki => fingerprints.includes(ki.fingerprints[0]));
   };
 
-  public static getRequired = async (acctEmail: string): Promise<KeyInfo[]> => {
+  public static getRequired = async (acctEmail: string): Promise<KeyInfoWithIdentity[]> => {
     const keys = await KeyStore.get(acctEmail);
     Assert.abortAndRenderErrorIfKeyinfoEmpty(keys);
     return keys;
   };
 
-  public static getTypedKeyInfos = async (acctEmail: string): Promise<TypedKeyInfo[]> => {
+  public static getAllWithOptionalPassPhrase = async (acctEmail: string): Promise<KeyInfoWithIdentityAndOptionalPp[]> => {
     const keys = await KeyStore.get(acctEmail);
-    const kis: TypedKeyInfo[] = [];
-    for (const ki of keys) {
-      const type = KeyUtil.getKeyType(ki.private);
-      const id = ki.fingerprints[0];
-      if (type !== 'openpgp' && type !== 'x509') {
-        continue;
-      }
-      kis.push({ ...ki, type, id });
-    }
-    return kis;
-  };
-
-  public static getAllWithOptionalPassPhrase = async (acctEmail: string): Promise<ExtendedKeyInfo[]> => {
-    const keys = await KeyStore.getTypedKeyInfos(acctEmail);
     return await Promise.all(keys.map(async (ki) => { return { ...ki, passphrase: await PassphraseStore.get(acctEmail, ki) }; }));
   };
 
   public static add = async (acctEmail: string, newKey: string | Key) => {
     const keyinfos = await KeyStore.get(acctEmail);
+    // the cast above will end up storing TypedKeyInfo to storage below but I don't see any issue there
+    //   we should migrate storage to TypedKeyInfo (and just call it KeyInfo again) anyway,
+    //   to reduce the amount of different types of KeyInfo we have
     let updated = false;
     const prv: Key = (typeof newKey === 'string') ? await KeyUtil.parse(newKey) : newKey;
     if (!prv.fullyEncrypted) {
@@ -68,19 +57,19 @@ export class KeyStore extends AbstractStore {
     await KeyStore.set(acctEmail, keyinfos);
   };
 
-  public static set = async (acctEmail: string, keyinfos: KeyInfo[]) => {
+  public static set = async (acctEmail: string, keyinfos: KeyInfoWithIdentity[]) => {
     await AcctStore.set(acctEmail, { keys: keyinfos });
   };
 
   public static remove = async (acctEmail: string, keyIdentity: KeyIdentity): Promise<void> => {
-    const privateKeys = await KeyStore.getTypedKeyInfos(acctEmail);
+    const privateKeys = await KeyStore.get(acctEmail);
     const filteredPrivateKeys = privateKeys.filter(ki => !KeyUtil.identityEquals(ki, keyIdentity));
     await KeyStore.set(acctEmail, filteredPrivateKeys);
   };
 
-  public static getKeyInfosThatCurrentlyHavePassPhraseInSession = async (acctEmail: string): Promise<TypedKeyInfo[]> => {
-    const keys = await KeyStore.getTypedKeyInfos(acctEmail);
-    const result: TypedKeyInfo[] = [];
+  public static getKeyInfosThatCurrentlyHavePassPhraseInSession = async (acctEmail: string): Promise<KeyInfoWithIdentity[]> => {
+    const keys = await KeyStore.get(acctEmail);
+    const result: KeyInfoWithIdentity[] = [];
     for (const ki of keys) {
       if (! await PassphraseStore.get(acctEmail, ki, true) && await PassphraseStore.get(acctEmail, ki, false)) {
         result.push(ki);
@@ -88,11 +77,24 @@ export class KeyStore extends AbstractStore {
     }
     return result;
   };
+
+  private static addFamilyAndIdToKeyInfos = (keyInfos: StoredKeyInfo[]): KeyInfoWithIdentity[] => {
+    const kis: KeyInfoWithIdentity[] = [];
+    for (const ki of keyInfos) {
+      const type = KeyUtil.getKeyType(ki.private);
+      const id = ki.fingerprints[0];
+      if (type !== 'openpgp' && type !== 'x509') {
+        continue;
+      }
+      kis.push({ ...ki, family: type, id });
+    }
+    return kis;
+  };
 }
 
 export class KeyStoreUtil {
 
-  public static parse = async (keyInfos: KeyInfo[]): Promise<ParsedKeyInfo[]> => {
+  public static parse = async (keyInfos: KeyInfoWithIdentity[]): Promise<ParsedKeyInfo[]> => {
     const parsed: ParsedKeyInfo[] = [];
     for (const keyInfo of keyInfos) {
       const key = await KeyUtil.parse(keyInfo.private);

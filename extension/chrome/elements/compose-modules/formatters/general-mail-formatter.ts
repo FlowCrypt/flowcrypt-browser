@@ -3,7 +3,7 @@
 'use strict';
 
 import { EncryptedMsgMailFormatter } from './encrypted-mail-msg-formatter.js';
-import { KeyInfo } from "../../../../js/common/core/crypto/key.js";
+import { KeyInfoWithIdentity } from "../../../../js/common/core/crypto/key.js";
 import { getUniqueRecipientEmails, NewMsgData } from "../compose-types.js";
 import { PlainMsgMailFormatter } from './plain-mail-msg-formatter.js';
 import { SendableMsg } from '../../../../js/common/api/email-provider/sendable-msg.js';
@@ -15,7 +15,7 @@ import { UnreportableError } from '../../../../js/common/platform/catch.js';
 export class GeneralMailFormatter {
 
   // returns undefined in case user cancelled decryption of the signing key
-  public static processNewMsg = async (view: ComposeView, newMsgData: NewMsgData): Promise<{ msg: SendableMsg, senderKi: KeyInfo | undefined }> => {
+  public static processNewMsg = async (view: ComposeView, newMsgData: NewMsgData): Promise<{ msg: SendableMsg, senderKi: KeyInfoWithIdentity | undefined }> => {
     const choices = view.sendBtnModule.popover.choices;
     const recipientsEmails = getUniqueRecipientEmails(newMsgData.recipients);
     if (!choices.encrypt && !choices.sign) { // plain
@@ -37,7 +37,9 @@ export class GeneralMailFormatter {
       await view.errModule.throwIfEncryptionPasswordInvalid(newMsgData);
     }
     let signingKey: ParsedKeyInfo | undefined;
+    console.log(`choices.sign=${choices.sign}`);
     if (choices.sign) {
+      console.log('should sign');
       signingKey = await GeneralMailFormatter.chooseSigningKeyAndDecryptIt(view, singleFamilyKeys.senderKis);
       if (!signingKey && singleFamilyKeys.family === 'openpgp') {
         // we are ignoring missing signing keys for x509 family for now. We skip signing when missing
@@ -51,16 +53,20 @@ export class GeneralMailFormatter {
 
   private static chooseSigningKeyAndDecryptIt = async (
     view: ComposeView,
-    senderKis: KeyInfo[]
+    senderKis: KeyInfoWithIdentity[]
   ): Promise<ParsedKeyInfo | undefined> => {
+    console.log('choosing signing key from', senderKis);
     const parsedSenderPrvs = await KeyStoreUtil.parse(senderKis);
+    console.log('choosing from parsed', parsedSenderPrvs);
     // to consider - currently we choose first valid key for signing. Should we sign with all?
     //   alternatively we could use most recenlty modified valid key
     const parsedSenderPrv = parsedSenderPrvs.find(k => k.key.usableForSigning);
+    console.log(`parsedSenderPrv`, parsedSenderPrv);
     if (!parsedSenderPrv) {
       return undefined;
     }
     const signingPrv = await view.storageModule.decryptSenderKey(parsedSenderPrv);
+    console.log(`signingPrv`, signingPrv);
     if (!signingPrv) {
       return undefined;
     }

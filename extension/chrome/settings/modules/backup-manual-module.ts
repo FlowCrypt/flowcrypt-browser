@@ -8,7 +8,7 @@ import { BackupView } from './backup.js';
 import { Attachment } from '../../../js/common/core/attachment.js';
 import { SendableMsg } from '../../../js/common/api/email-provider/sendable-msg.js';
 import { GMAIL_RECOVERY_EMAIL_SUBJECTS } from '../../../js/common/core/const.js';
-import { KeyIdentity, KeyInfo, KeyUtil, TypedKeyInfo } from '../../../js/common/core/crypto/key.js';
+import { KeyIdentity, KeyUtil, KeyInfoWithIdentity } from '../../../js/common/core/crypto/key.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { ApiErr } from '../../../js/common/api/shared/api-error.js';
 import { BrowserMsg, Bm } from '../../../js/common/browser/browser-msg.js';
@@ -59,7 +59,7 @@ export class BackupManualActionModule extends ViewModule<BackupView> {
       await Ui.modal.error('No keys are selected to back up! Please select a key to continue.');
       return;
     }
-    const allKis = await KeyStore.getTypedKeyInfos(this.view.acctEmail);
+    const allKis = await KeyStore.get(this.view.acctEmail);
     const kinfos = KeyUtil.filterKeys(allKis, this.view.prvKeysToManuallyBackup);
     if (kinfos.length <= 0) {
       await Ui.modal.error('Sorry, could not extract these keys from storage. Please restart your browser and try again.');
@@ -101,7 +101,7 @@ export class BackupManualActionModule extends ViewModule<BackupView> {
     return new Attachment({ name: `flowcrypt-backup-${this.view.acctEmail.replace(/[^A-Za-z0-9]+/g, '')}.asc`, type: 'application/pgp-keys', data: Buf.fromUtfStr(armoredKey) });
   };
 
-  private encryptForBackup = async (kinfos: TypedKeyInfo[], checks: { strength: boolean }, keyIdentity: KeyIdentity): Promise<string | undefined> => {
+  private encryptForBackup = async (kinfos: KeyInfoWithIdentity[], checks: { strength: boolean }, keyIdentity: KeyIdentity): Promise<string | undefined> => {
     const kisWithPp = await Promise.all(kinfos.map(async (ki) => {
       const passphrase = await PassphraseStore.get(this.view.acctEmail, ki);
       // test that the key can actually be decrypted with the passphrase provided
@@ -193,7 +193,7 @@ export class BackupManualActionModule extends ViewModule<BackupView> {
     await this.view.renderBackupDone(0);
   };
 
-  private isPrivateKeyEncrypted = async (ki: KeyInfo) => {
+  private isPrivateKeyEncrypted = async (ki: KeyInfoWithIdentity) => {
     const prv = await KeyUtil.parse(ki.private);
     if (await KeyUtil.decrypt(prv, '', undefined, 'OK-IF-ALREADY-DECRYPTED') === true) {
       return false;

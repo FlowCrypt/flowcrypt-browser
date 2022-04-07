@@ -87,7 +87,7 @@ export class AttachmentUI {
       const file = this.attachedFiles[uploadFileId];
       const data = await this.readAttachmentDataAsUint8(uploadFileId);
       const pubsForEncryption = pubs.map(entry => entry.pubkey);
-      if (pubs.find(pub => pub.pubkey.type === 'x509')) {
+      if (pubs.find(pub => pub.pubkey.family === 'x509')) {
         throw new UnreportableError('Attachments are not yet supported when sending to recipients using S/MIME x509 certificates.');
       }
       const encrypted = await MsgUtil.encryptMessage({ pubkeys: pubsForEncryption, data, filename: file.name, armor: false }) as OpenPGP.EncryptBinaryResult;

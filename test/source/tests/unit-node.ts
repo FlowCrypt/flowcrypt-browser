@@ -8,7 +8,7 @@ import { PgpHash } from '../core/crypto/pgp/pgp-hash';
 import { TestVariant, Util } from '../util';
 import chai = require('chai');
 import chaiAsPromised = require('chai-as-promised');
-import { KeyUtil, ExtendedKeyInfo } from '../core/crypto/key';
+import { KeyUtil, KeyInfoWithIdentityAndOptionalPp } from '../core/crypto/key';
 import { UnreportableError } from '../platform/catch.js';
 import { Buf } from '../core/buf';
 import { OpenPGPKey } from '../core/crypto/pgp/openpgp-key';
@@ -921,9 +921,9 @@ jSB6A93JmnQGIkAem/kzGkKclmfAdGfc4FS+3Cn+6Q==Xmrz
       const m = await opgp.message.readArmored(Buf.fromUint8(data).toUtfStr());
       const parsed1 = await KeyUtil.parse(key1.private);
       const parsed2 = await KeyUtil.parse(key2.private);
-      const kisWithPp: ExtendedKeyInfo[] = [ // supply both key1 and key2 for decrypt
-        { ... await KeyUtil.typedKeyInfoObj(parsed1), passphrase },
-        { ... await KeyUtil.typedKeyInfoObj(parsed2), passphrase },
+      const kisWithPp: KeyInfoWithIdentityAndOptionalPp[] = [ // supply both key1 and key2 for decrypt
+        { ... await KeyUtil.family(parsed1), passphrase },
+        { ... await KeyUtil.family(parsed2), passphrase },
       ];
       // we are testing a private method here because the outcome of this method is not directly testable from the
       //   public method that uses it. It only makes the public method faster, which is hard to test.
@@ -1022,7 +1022,7 @@ jSB6A93JmnQGIkAem/kzGkKclmfAdGfc4FS+3Cn+6Q==Xmrz
       const pubkeys = [await KeyUtil.parse(justPrimaryPub)];
       const encrypted = await MsgUtil.encryptMessage({ pubkeys, data, armor: true }) as PgpMsgMethod.EncryptPgpArmorResult;
       const parsed = await KeyUtil.parse(prvEncryptForSubkeyOnlyProtected);
-      const kisWithPp: ExtendedKeyInfo[] = [{ ... await KeyUtil.typedKeyInfoObj(parsed), type: parsed.type, passphrase }];
+      const kisWithPp: KeyInfoWithIdentityAndOptionalPp[] = [{ ... await KeyUtil.family(parsed), type: parsed.type, passphrase }];
       const decrypted = await MsgUtil.decryptMessage({ kisWithPp, encryptedData: encrypted.data, verificationPubs: [] });
       // todo - later we'll have an org rule for ignoring this, and then it will be expected to pass as follows:
       // expect(decrypted.success).to.equal(true);

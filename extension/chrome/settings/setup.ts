@@ -7,7 +7,7 @@ import { Url } from '../../js/common/core/common.js';
 import { ApiErr } from '../../js/common/api/shared/api-error.js';
 import { Assert } from '../../js/common/assert.js';
 import { Catch } from '../../js/common/platform/catch.js';
-import { KeyInfo, Key, KeyUtil } from '../../js/common/core/crypto/key.js';
+import { Key, KeyInfoWithIdentity, KeyUtil } from '../../js/common/core/crypto/key.js';
 import { Gmail } from '../../js/common/api/email-provider/gmail/gmail.js';
 import { Google } from '../../js/common/api/email-provider/gmail/google.js';
 import { KeyImportUi } from '../../js/common/ui/key-import-ui.js';
@@ -63,7 +63,7 @@ export class SetupView extends View {
   public pubLookup!: PubLookup;
   public keyManager: KeyManager | undefined; // not set if no url in org rules
 
-  public fetchedKeyBackups: KeyInfo[] = [];
+  public fetchedKeyBackups: KeyInfoWithIdentity[] = [];
   public fetchedKeyBackupsUniqueLongids: string[] = [];
   public importedKeysUniqueLongids: string[] = [];
   public mathingPassphrases: string[] = [];

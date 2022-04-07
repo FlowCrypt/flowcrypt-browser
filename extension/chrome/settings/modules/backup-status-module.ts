@@ -10,8 +10,8 @@ import { ApiErr } from '../../../js/common/api/shared/api-error.js';
 import { Browser } from '../../../js/common/browser/browser.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Backups } from '../../../js/common/api/email-provider/email-provider-api.js';
-import { KeyInfo } from '../../../js/common/core/crypto/key.js';
 import { Str } from '../../../js/common/core/common.js';
+import { KeyInfoWithIdentity } from '../../../js/common/core/crypto/key.js';
 
 export class BackupStatusModule extends ViewModule<BackupView> {
 
@@ -75,7 +75,7 @@ export class BackupStatusModule extends ViewModule<BackupView> {
     $('pre.status_details').text(detailLines.join('\n'));
   };
 
-  private describeBackupCounts = (longids: string[], keyinfos: KeyInfo[]) => {
+  private describeBackupCounts = (longids: string[], keyinfos: KeyInfoWithIdentity[]) => {
     let text = `${longids.length}`;
     if (keyinfos.length !== longids.length) {
       text += ` keys represented by ${Str.pluralize(keyinfos.length, 'backup')}`;
