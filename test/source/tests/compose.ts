@@ -1178,7 +1178,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       await composePage.close();
     }));
 
-    ava.default.only('send signed and encrypted S/MIME message', testWithBrowser('compatibility', async (t, browser) => {
+    ava.default('send signed and encrypted S/MIME message', testWithBrowser('compatibility', async (t, browser) => {
       const acctEmail = 'flowcrypt.compatibility@gmail.com';
       const passphrase = 'pa$$w0rd';
       await SettingsPageRecipe.addKeyTest(t, browser, acctEmail, testConstants.testKeyMultipleSmimeCEA2D53BB9D24871, passphrase, {}, false);
