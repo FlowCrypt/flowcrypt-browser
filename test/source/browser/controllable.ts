@@ -321,33 +321,19 @@ abstract class ControllableBase {
     await this.waitAny(selector);
     const start = Date.now();
     const texts: string[] = [];
-    let lastErr: unknown;
     while (Date.now() - start < timeoutSec * 1000) {
-      try {
-        await this.waitAny(selector);
-        const text = await this.read(selector, true);
-        if (typeof needle === 'string') { // str
-          if (text.includes(needle)) {
-            return;
-          }
-        } else { // regex
-          if (text.match(needle)) {
-            return;
-          }
+      const text = await this.read(selector, true);
+      if (typeof needle === 'string') { // str
+        if (text.includes(needle)) {
+          return;
         }
-        texts.push(text);
-        await Util.sleep(testLoopLengthMs / 1000);
-      } catch (e) {
-        // useful when reading Toast messages that tend to disappear quickly. At least tests would err gracefully
-        if (String(e).includes(`Cannot read properties of undefined (reading 'innerText')`)) {
-          lastErr = e;
-          continue;
+      } else { // regex
+        if (text.match(needle)) {
+          return;
         }
-        throw e;
       }
-    }
-    if (lastErr) {
-      throw lastErr;
+      texts.push(text);
+      await Util.sleep(testLoopLengthMs / 1000);
     }
     throw new Error(`Selector ${selector} was found but did not match "${needle}" within ${timeoutSec}s. Last content: "${JSON.stringify(texts, undefined, 2)}"`);
   };
