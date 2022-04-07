@@ -1602,7 +1602,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
       await SetupPageRecipe.autoSetupWithEKM(settingsPage);
       const composePage = await ComposePageRecipe.openStandalone(t, browser, acct);
-      await ComposePageRecipe.fillMsg(composePage, { to: 'to@example.com' }, 'choose valid key');
+      await ComposePageRecipe.fillMsg(composePage, { to: 'mock.only.pubkey@flowcrypt.com' }, 'choose valid key');
       await ComposePageRecipe.noToastAppears(composePage); // no error saving draft
       await ComposePageRecipe.sendAndClose(composePage); // no error sending msg
     }));
@@ -1612,7 +1612,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
       await SetupPageRecipe.autoSetupWithEKM(settingsPage);
       const composePage = await ComposePageRecipe.openStandalone(t, browser, acct);
-      await ComposePageRecipe.fillMsg(composePage, { to: 'to@example.com' }, 'no valid key');
+      await ComposePageRecipe.fillMsg(composePage, { to: 'mock.only.pubkey@flowcrypt.com' }, 'no valid key');
       await ComposePageRecipe.waitForToastToAppearAndDisappear(composePage, 'Draft not saved: your account has no usable keys');
       await composePage.waitAndClick('@action-send', { delay: 1 });
       await PageRecipe.waitForModalAndRespond(composePage, 'error', { contentToCheck: 'Your account has no usable keys', clickOn: 'confirm' });

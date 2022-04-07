@@ -37,7 +37,9 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
     senderEmail: string,
     needSigning: boolean
   ): Promise<CollectKeysResult> => {
-    const contacts = await ContactStore.getEncryptionKeys(undefined, recipients);
+    const contacts = recipients.length
+      ? await ContactStore.getEncryptionKeys(undefined, recipients)
+      : []; // in case collecting only our own keys for draft
     const resultsPerType: { [type: string]: CollectKeysResult } = {};
     const OPENPGP = 'openpgp';
     const X509 = 'x509';
