@@ -115,10 +115,8 @@ export class ComposeSendBtnModule extends ViewModule<ComposeView> {
       const emails = getUniqueRecipientEmails(newMsgData.recipients);
       await ContactStore.update(undefined, emails, { lastUse: Date.now() });
       const msgObj = await GeneralMailFormatter.processNewMsg(this.view, newMsgData);
-      if (msgObj) {
-        await this.finalizeSendableMsg(msgObj);
-        await this.doSendMsg(msgObj.msg);
-      }
+      await this.finalizeSendableMsg(msgObj);
+      await this.doSendMsg(msgObj.msg);
     } catch (e) {
       await this.view.errModule.handleSendErr(e);
     } finally {

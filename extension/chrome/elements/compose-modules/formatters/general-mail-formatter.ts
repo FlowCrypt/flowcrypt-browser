@@ -10,11 +10,12 @@ import { SendableMsg } from '../../../../js/common/api/email-provider/sendable-m
 import { SignedMsgMailFormatter } from './signed-msg-mail-formatter.js';
 import { ComposeView } from '../../compose.js';
 import { KeyStoreUtil, ParsedKeyInfo } from '../../../../js/common/platform/store/key-store.js';
+import { UnreportableError } from '../../../../js/common/platform/catch.js';
 
 export class GeneralMailFormatter {
 
   // returns undefined in case user cancelled decryption of the signing key
-  public static processNewMsg = async (view: ComposeView, newMsgData: NewMsgData): Promise<{ msg: SendableMsg, senderKi: KeyInfo | undefined } | undefined> => {
+  public static processNewMsg = async (view: ComposeView, newMsgData: NewMsgData): Promise<{ msg: SendableMsg, senderKi: KeyInfo | undefined }> => {
     const choices = view.sendBtnModule.popover.choices;
     const recipientsEmails = getUniqueRecipientEmails(newMsgData.recipients);
     if (!choices.encrypt && !choices.sign) { // plain
@@ -25,7 +26,7 @@ export class GeneralMailFormatter {
       const senderKis = await view.storageModule.getAccountKeys(newMsgData.from);
       const signingKey = await GeneralMailFormatter.chooseSigningKeyAndDecryptIt(view, senderKis);
       if (!signingKey) {
-        return undefined;
+        throw new UnreportableError('Could not find account key usable for signing');
       }
       view.S.now('send_btn_text').text('Signing...');
       return { senderKi: signingKey!.keyInfo, msg: await new SignedMsgMailFormatter(view).sendableMsg(newMsgData, signingKey!.key) };
@@ -39,7 +40,7 @@ export class GeneralMailFormatter {
     if (choices.sign) {
       const signingKey = await GeneralMailFormatter.chooseSigningKeyAndDecryptIt(view, singleFamilyKeys.senderKis);
       if (!signingKey) {
-        return undefined;
+        throw new UnreportableError('Could not find account key usable for signing');
       }
     }
     view.S.now('send_btn_text').text('Encrypting...');
