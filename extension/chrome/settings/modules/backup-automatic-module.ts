@@ -10,7 +10,8 @@ import { UnreportableError } from '../../../js/common/platform/catch.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { ApiErr } from '../../../js/common/api/shared/api-error.js';
 import { GoogleAuth } from '../../../js/common/api/email-provider/gmail/google-auth.js';
-import { KeyStore, KeyStoreUtil } from '../../../js/common/platform/store/key-store.js';
+import { KeyStore } from '../../../js/common/platform/store/key-store.js';
+import { KeyStoreUtil } from "../../../js/common/core/crypto/key-store-util";
 
 export class BackupAutomaticModule extends ViewModule<BackupView> {
 

@@ -12,7 +12,8 @@ import { Url } from '../../../js/common/core/common.js';
 import { View } from '../../../js/common/view.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { initPassphraseToggle } from '../../../js/common/ui/passphrase-ui.js';
-import { KeyStore, KeyStoreUtil, ParsedKeyInfo } from '../../../js/common/platform/store/key-store.js';
+import { KeyStore } from '../../../js/common/platform/store/key-store.js';
+import { KeyStoreUtil, ParsedKeyInfo } from "../../../js/common/core/crypto/key-store-util";
 
 View.run(class TestPassphrase extends View {
   private readonly acctEmail: string;

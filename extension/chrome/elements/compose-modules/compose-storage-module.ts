@@ -11,11 +11,12 @@ import { CollectKeysResult } from './compose-types.js';
 import { ComposerResetBtnTrigger, PUBKEY_LOOKUP_RESULT_FAIL } from './compose-err-module.js';
 import { ViewModule } from '../../../js/common/view-module.js';
 import { ComposeView } from '../compose.js';
-import { KeyStore, ParsedKeyInfo } from '../../../js/common/platform/store/key-store.js';
+import { KeyStore } from '../../../js/common/platform/store/key-store.js';
 import { ContactStore } from '../../../js/common/platform/store/contact-store.js';
 import { PassphraseStore } from '../../../js/common/platform/store/passphrase-store.js';
 import { compareAndSavePubkeysToStorage } from '../../../js/common/shared.js';
 import { KeyFamily } from '../../../js/common/core/crypto/key.js';
+import { ParsedKeyInfo } from '../../../js/common/core/crypto/key-store-util.js';
 
 export class ComposeStorageModule extends ViewModule<ComposeView> {
 
@@ -42,7 +43,7 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
     senderEmail: string,
     needSigning: boolean
   ): Promise<CollectKeysResult> => {
-    const resultsPerType: { [type: string]: CollectKeysResult } = {};
+    const resultsPerFamily: { [type: string]: CollectKeysResult } = {};
     const OPENPGP = 'openpgp';
     const X509 = 'x509';
     const contacts = recipients.length
@@ -57,21 +58,21 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
       if (!collected.emailsWithoutPubkeys.length && (collected.senderKis.length || !needSigning)) {
         return collected; // return right away - we have all we needed in single family
       }
-      resultsPerType[family] = collected;
+      resultsPerFamily[family] = collected;
     }
     // per discussion https://github.com/FlowCrypt/flowcrypt-browser/issues/4069#issuecomment-957313631
     // if one emailsWithoutPubkeys isn't subset of the other, throw an error
-    if (!resultsPerType[OPENPGP].emailsWithoutPubkeys.every(email => resultsPerType[X509].emailsWithoutPubkeys.includes(email)) &&
-      !resultsPerType[X509].emailsWithoutPubkeys.every(email => resultsPerType[OPENPGP].emailsWithoutPubkeys.includes(email))) {
-      let err = `Cannot use mixed OpenPGP (${resultsPerType[OPENPGP].pubkeys.filter(p => !p.isMine).map(p => p.email).join(', ')}) and `
-        + `S/MIME (${resultsPerType[X509].pubkeys.filter(p => !p.isMine).map(p => p.email).join(', ')}) public keys yet.`;
+    if (!resultsPerFamily[OPENPGP].emailsWithoutPubkeys.every(email => resultsPerFamily[X509].emailsWithoutPubkeys.includes(email)) &&
+      !resultsPerFamily[X509].emailsWithoutPubkeys.every(email => resultsPerFamily[OPENPGP].emailsWithoutPubkeys.includes(email))) {
+      let err = `Cannot use mixed OpenPGP (${resultsPerFamily[OPENPGP].pubkeys.filter(p => !p.isMine).map(p => p.email).join(', ')}) and `
+        + `S/MIME (${resultsPerFamily[X509].pubkeys.filter(p => !p.isMine).map(p => p.email).join(', ')}) public keys yet.`;
       err += 'If you need to email S/MIME recipient, do not add any OpenPGP recipient at the same time.';
       throw new UnreportableError(err);
     }
     const rank = (x: [string, CollectKeysResult]) => {
       return x[1].emailsWithoutPubkeys.length * 100 + (x[1].senderKis.length ? 0 : 10) + (x[0] === 'openpgp' ? 0 : 1);
     };
-    return Object.entries(resultsPerType).sort((a, b) => rank(a) - rank(b))[0][1];
+    return Object.entries(resultsPerFamily).sort((a, b) => rank(a) - rank(b))[0][1];
   };
 
   public passphraseGet = async (senderKi: { longid: string }) => {
@@ -202,7 +203,7 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
       } else {
         const relatedPub = senderPubsUnfiltered.find(pub => pub.id === senderKi.fingerprints[0]);
         // want to avoid parsing the prvs when pubs were already parsed
-        //  threfore checking parameters of already parsed related pub, which are equal
+        //  therefore checking parameters of already parsed related pub, which are equal
         //  but actually pushing prv since it's meant for signing
         if (relatedPub?.usableForSigning) {
           senderKis.push(senderKi);

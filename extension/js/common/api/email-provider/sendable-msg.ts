@@ -6,7 +6,8 @@ import { Dict, Str } from '../../core/common.js';
 import { Mime, MimeEncodeType, SendableMsgBody } from '../../core/mime.js';
 import { Attachment } from '../../core/attachment.js';
 import { Buf } from '../../core/buf.js';
-import { KeyStore, KeyStoreUtil } from '../../platform/store/key-store.js';
+import { KeyStore } from '../../platform/store/key-store.js';
+import { KeyStoreUtil } from "../../core/crypto/key-store-util";
 import { ParsedRecipients } from './email-provider-api.js';
 
 type SendableMsgHeaders = {

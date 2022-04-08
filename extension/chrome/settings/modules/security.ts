@@ -13,7 +13,8 @@ import { View } from '../../../js/common/view.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { initPassphraseToggle } from '../../../js/common/ui/passphrase-ui.js';
 import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
-import { KeyStore, KeyStoreUtil, ParsedKeyInfo } from '../../../js/common/platform/store/key-store.js';
+import { KeyStore } from '../../../js/common/platform/store/key-store.js';
+import { KeyStoreUtil, ParsedKeyInfo } from "../../../js/common/core/crypto/key-store-util";
 import { PassphraseStore } from '../../../js/common/platform/store/passphrase-store.js';
 import { OrgRules } from '../../../js/common/org-rules.js';
 import { AccountServer } from '../../../js/common/api/account-server.js';
@@ -66,9 +67,6 @@ View.run(class SecurityView extends View {
         $('.passphrase_entry_container').css('display', '');
       }));
       $('.confirm_passphrase_requirement_change').click(this.setHandler(async () => {
-        // todo - for now checking just the most useful key. Should be checking that pp matches all
-        //  but each key may have different pp, so the UI may get complicated.
-        //  so for now we check that it matches any
         const allPassPhrases = (await Promise.all(this.prvs.map(prv => PassphraseStore.get(this.acctEmail, prv.keyInfo))))
           .filter(pp => !!pp);
         if (allPassPhrases.includes(String($('input#passphrase_entry').val()))) {

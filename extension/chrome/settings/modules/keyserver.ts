@@ -14,7 +14,8 @@ import { View } from '../../../js/common/view.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { PubLookup } from '../../../js/common/api/pub-lookup.js';
 import { OrgRules } from '../../../js/common/org-rules.js';
-import { KeyStore, KeyStoreUtil } from '../../../js/common/platform/store/key-store.js';
+import { KeyStore } from '../../../js/common/platform/store/key-store.js';
+import { KeyStoreUtil } from "../../../js/common/core/crypto/key-store-util";
 import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
 import { KeyUtil } from '../../../js/common/core/crypto/key.js';
 
@@ -101,8 +102,9 @@ View.run(class KeyserverView extends View {
       return await Ui.modal.error('Disallowed by your organisation rules');
     }
     Xss.sanitizeRender(target, Ui.spinner('white'));
-    const mostUsefulPrv = await KeyStoreUtil.chooseMostUseful(
-      await KeyStoreUtil.parse(await KeyStore.getRequired(this.acctEmail)), 'ONLY-FULLY-USABLE');
+    const prvs = await KeyStoreUtil.parse(await KeyStore.getRequired(this.acctEmail));
+    const openpgpPrvs = prvs.filter(prv => prv.key.family === 'openpgp'); // attester doesn't support x509
+    const mostUsefulPrv = KeyStoreUtil.chooseMostUseful(openpgpPrvs, 'ONLY-FULLY-USABLE');
     if (!mostUsefulPrv) {
       await Ui.modal.warning('This account has no usable key set up (may be expired or revoked). Check Additional Settings -> My Keys');
       return;
