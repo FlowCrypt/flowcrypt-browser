@@ -26,7 +26,7 @@ import { initPassphraseToggle } from '../../js/common/ui/passphrase-ui.js';
 import { PubLookup } from '../../js/common/api/pub-lookup.js';
 import { Scopes, AcctStoreDict, AcctStore } from '../../js/common/platform/store/acct-store.js';
 import { KeyStore } from '../../js/common/platform/store/key-store.js';
-import { KeyStoreUtil } from "../../js/common/core/crypto/key-store-util";
+import { KeyStoreUtil } from "../../js/common/core/crypto/key-store-util.js";
 import { PassphraseStore } from '../../js/common/platform/store/passphrase-store.js';
 import { ContactStore } from '../../js/common/platform/store/contact-store.js';
 import { KeyManager } from '../../js/common/api/key-server/key-manager.js';

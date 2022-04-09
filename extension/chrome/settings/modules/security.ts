@@ -14,7 +14,7 @@ import { Xss } from '../../../js/common/platform/xss.js';
 import { initPassphraseToggle } from '../../../js/common/ui/passphrase-ui.js';
 import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
 import { KeyStore } from '../../../js/common/platform/store/key-store.js';
-import { KeyStoreUtil, ParsedKeyInfo } from "../../../js/common/core/crypto/key-store-util";
+import { KeyStoreUtil, ParsedKeyInfo } from "../../../js/common/core/crypto/key-store-util.js";
 import { PassphraseStore } from '../../../js/common/platform/store/passphrase-store.js';
 import { OrgRules } from '../../../js/common/org-rules.js';
 import { AccountServer } from '../../../js/common/api/account-server.js';

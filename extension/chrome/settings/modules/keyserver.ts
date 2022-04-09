@@ -15,7 +15,7 @@ import { Xss } from '../../../js/common/platform/xss.js';
 import { PubLookup } from '../../../js/common/api/pub-lookup.js';
 import { OrgRules } from '../../../js/common/org-rules.js';
 import { KeyStore } from '../../../js/common/platform/store/key-store.js';
-import { KeyStoreUtil } from "../../../js/common/core/crypto/key-store-util";
+import { KeyStoreUtil } from "../../../js/common/core/crypto/key-store-util.js";
 import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
 import { KeyUtil } from '../../../js/common/core/crypto/key.js';
 

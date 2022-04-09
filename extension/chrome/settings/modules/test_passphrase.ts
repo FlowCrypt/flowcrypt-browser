@@ -13,7 +13,7 @@ import { View } from '../../../js/common/view.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { initPassphraseToggle } from '../../../js/common/ui/passphrase-ui.js';
 import { KeyStore } from '../../../js/common/platform/store/key-store.js';
-import { KeyStoreUtil, ParsedKeyInfo } from "../../../js/common/core/crypto/key-store-util";
+import { KeyStoreUtil, ParsedKeyInfo } from "../../../js/common/core/crypto/key-store-util.js";
 
 View.run(class TestPassphrase extends View {
   private readonly acctEmail: string;

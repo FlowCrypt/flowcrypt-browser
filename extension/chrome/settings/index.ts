@@ -22,7 +22,7 @@ import { Xss } from '../../js/common/platform/xss.js';
 import { XssSafeFactory } from '../../js/common/xss-safe-factory.js';
 import { AcctStore, EmailProvider } from '../../js/common/platform/store/acct-store.js';
 import { KeyStore } from '../../js/common/platform/store/key-store.js';
-import { KeyStoreUtil } from "../../js/common/core/crypto/key-store-util";
+import { KeyStoreUtil } from "../../js/common/core/crypto/key-store-util.js";
 import { GlobalStore } from '../../js/common/platform/store/global-store.js';
 import { PassphraseStore } from '../../js/common/platform/store/passphrase-store.js';
 import Swal from 'sweetalert2';

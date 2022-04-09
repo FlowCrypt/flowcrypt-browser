@@ -9,7 +9,7 @@ import { PlainMsgMailFormatter } from './plain-mail-msg-formatter.js';
 import { SendableMsg } from '../../../../js/common/api/email-provider/sendable-msg.js';
 import { SignedMsgMailFormatter } from './signed-msg-mail-formatter.js';
 import { ComposeView } from '../../compose.js';
-import { KeyStoreUtil, ParsedKeyInfo } from "../../../../js/common/core/crypto/key-store-util";
+import { KeyStoreUtil, ParsedKeyInfo } from "../../../../js/common/core/crypto/key-store-util.js";
 import { UnreportableError } from '../../../../js/common/platform/catch.js';
 
 export class GeneralMailFormatter {

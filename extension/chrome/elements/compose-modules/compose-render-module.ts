@@ -18,7 +18,7 @@ import { ComposeView } from '../compose.js';
 import { ApiErr } from '../../../js/common/api/shared/api-error.js';
 import { GmailParser } from '../../../js/common/api/email-provider/gmail/gmail-parser.js';
 import { KeyStore } from '../../../js/common/platform/store/key-store.js';
-import { KeyStoreUtil } from "../../../js/common/core/crypto/key-store-util";
+import { KeyStoreUtil } from "../../../js/common/core/crypto/key-store-util.js";
 import { ContactStore } from '../../../js/common/platform/store/contact-store.js';
 import { KeyUtil } from '../../../js/common/core/crypto/key.js';
 

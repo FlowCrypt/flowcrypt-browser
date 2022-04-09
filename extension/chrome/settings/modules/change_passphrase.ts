@@ -13,7 +13,7 @@ import { View } from '../../../js/common/view.js';
 import { initPassphraseToggle } from '../../../js/common/ui/passphrase-ui.js';
 import { PassphraseStore } from '../../../js/common/platform/store/passphrase-store.js';
 import { KeyStore } from '../../../js/common/platform/store/key-store.js';
-import { KeyStoreUtil, ParsedKeyInfo } from "../../../js/common/core/crypto/key-store-util";
+import { KeyStoreUtil, ParsedKeyInfo } from "../../../js/common/core/crypto/key-store-util.js";
 import { OrgRules } from '../../../js/common/org-rules.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Lang } from '../../../js/common/lang.js';

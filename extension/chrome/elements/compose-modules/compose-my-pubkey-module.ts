@@ -8,7 +8,7 @@ import { Ui } from '../../../js/common/browser/ui.js';
 import { ViewModule } from '../../../js/common/view-module.js';
 import { ComposeView } from '../compose.js';
 import { Str } from '../../../js/common/core/common.js';
-import { KeyStoreUtil } from "../../../js/common/core/crypto/key-store-util";
+import { KeyStoreUtil } from "../../../js/common/core/crypto/key-store-util.js";
 
 export class ComposeMyPubkeyModule extends ViewModule<ComposeView> {
 
