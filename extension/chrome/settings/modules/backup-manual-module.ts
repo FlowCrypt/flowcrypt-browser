@@ -41,9 +41,9 @@ export class BackupManualActionModule extends ViewModule<BackupView> {
     this.proceedBtn.click(this.view.setHandlerPrevent('double', () => this.actionManualBackupHandler()));
   };
 
-  public doBackupOnEmailProvider = async (armoredPrvs: string[]) => {
+  public doBackupOnEmailProvider = async (encryptedPrvs: KeyInfoWithIdentity[]) => {
     const emailMsg = String(await $.get({ url: '/chrome/emails/email_intro.template.htm', dataType: 'html' }));
-    const emailAttachments = armoredPrvs.map(k => this.asBackupFile(k));
+    const emailAttachments = encryptedPrvs.map(prv => this.asBackupFile(prv));
     const headers = { from: this.view.acctEmail, recipients: { to: [{ email: this.view.acctEmail }] }, subject: GMAIL_RECOVERY_EMAIL_SUBJECTS[0] };
     const msg = await SendableMsg.createPlain(this.view.acctEmail, headers, { 'text/html': emailMsg }, emailAttachments);
     if (this.view.emailProvider === 'gmail') {
@@ -96,11 +96,15 @@ export class BackupManualActionModule extends ViewModule<BackupView> {
     }
   };
 
-  private asBackupFile = (armoredKey: string) => {
-    return new Attachment({ name: `flowcrypt-backup-${this.view.acctEmail.replace(/[^A-Za-z0-9]+/g, '')}.asc`, type: 'application/pgp-keys', data: Buf.fromUtfStr(armoredKey) });
+  private asBackupFile = (prv: KeyInfoWithIdentity) => {
+    return new Attachment({
+      name: `flowcrypt-backup-${this.view.acctEmail.replace(/[^A-Za-z0-9]+/g, '')}-${prv.id}.asc`,
+      type: 'application/pgp-keys',
+      data: Buf.fromUtfStr(prv.private)
+    });
   };
 
-  private encryptForBackup = async (keyInfos: KeyInfoWithIdentity[], checks: { checkStrength: boolean }): Promise<string[] | undefined> => {
+  private encryptForBackup = async (keyInfos: KeyInfoWithIdentity[], checks: { checkStrength: boolean }): Promise<KeyInfoWithIdentity[] | undefined> => {
     const kisWithPp = await Promise.all(keyInfos.map(async (ki) => {
       const passphrase = await PassphraseStore.get(this.view.acctEmail, ki);
       // test that the key can actually be decrypted with the passphrase provided
@@ -149,14 +153,14 @@ export class BackupManualActionModule extends ViewModule<BackupView> {
       // todo: #4059 however, this code is never actually executed, because our backup frame gets wiped out by the passphrase frame
       return await this.encryptForBackup(keyInfos, checks);
     }
-    return keyInfos.map(ki => ki.private);
+    return keyInfos;
   };
 
-  private backupOnEmailProviderAndUpdateUi = async (armoredPrvs: string[]): Promise<boolean> => {
+  private backupOnEmailProviderAndUpdateUi = async (encryptedPrvs: KeyInfoWithIdentity[]): Promise<boolean> => {
     const origBtnText = this.proceedBtn.text();
     Xss.sanitizeRender(this.proceedBtn, Ui.spinner('white'));
     try {
-      await this.doBackupOnEmailProvider(armoredPrvs);
+      await this.doBackupOnEmailProvider(encryptedPrvs);
       return true;
     } catch (e) {
       if (ApiErr.isNetErr(e)) {
@@ -176,8 +180,8 @@ export class BackupManualActionModule extends ViewModule<BackupView> {
     }
   };
 
-  private backupAsFiles = async (encryptedArmoredPrvs: string[]) => { // todo - add a non-encrypted download option
-    for (const encryptedArmoredPrv of encryptedArmoredPrvs) {
+  private backupAsFiles = async (encryptedPrvs: KeyInfoWithIdentity[]) => { // todo - add a non-encrypted download option
+    for (const encryptedArmoredPrv of encryptedPrvs) {
       const attachment = this.asBackupFile(encryptedArmoredPrv);
       Browser.saveToDownloads(attachment);
     }

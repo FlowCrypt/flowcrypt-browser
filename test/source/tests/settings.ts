@@ -666,8 +666,8 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       expect(await backupPage.isDisabled('[data-id="515431151DDD3EA232B37A4C98ACFA1EADAB5B92"]')).to.equal(false);
       await backupPage.waitAndClick('@input-backup-step3manual-file');
       // one passphrase is not known but successfully guessed
-      const downloadedFiles = await backupPage.awaitDownloadTriggeredByClicking('@action-backup-step3manual-continue');
-      const { keys } = await KeyUtil.readMany(Buf.fromUtfStr(Object.values(downloadedFiles).pop()!.toString()));
+      const downloadedFiles = await backupPage.awaitDownloadTriggeredByClicking('@action-backup-step3manual-continue', 2);
+      const { keys } = await KeyUtil.readMany(Buf.fromUtfStr(Buffer.concat(Object.values(downloadedFiles)).toString()));
       expect(keys.length).to.equal(2);
       await backupPage.close();
     }));
