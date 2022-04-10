@@ -453,7 +453,6 @@ abstract class ControllableBase {
       }
       for (let i = 0; i < expectFileCount; i++) {
         const filename = await this.waitForFileToDownload(downloadPath);
-        console.log(`filename: ${filename}`);
         files[filename] = fs.readFileSync(path.resolve(downloadPath, filename));
       }
     })();
