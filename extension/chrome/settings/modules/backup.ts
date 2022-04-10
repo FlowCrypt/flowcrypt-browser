@@ -35,7 +35,7 @@ export class BackupView extends View {
   public emailProvider: EmailProvider = 'gmail';
   public orgRules!: OrgRules;
   public tabId!: string;
-  public prvKeysToManuallyBackup: KeyIdentity[] = [];
+  public identityOfKeysToManuallyBackup: KeyIdentity[] = [];
   public fesUrl?: string;
 
   private readonly blocks = ['loading', 'module_status', 'module_manual'];
@@ -123,13 +123,13 @@ export class BackupView extends View {
   };
 
   private addKeyToBackup = (keyIdentity: KeyIdentity) => {
-    if (!this.prvKeysToManuallyBackup.some(prvIdentity => KeyUtil.identityEquals(prvIdentity, keyIdentity))) {
-      this.prvKeysToManuallyBackup.push(keyIdentity);
+    if (!this.identityOfKeysToManuallyBackup.some(prvIdentity => KeyUtil.identityEquals(prvIdentity, keyIdentity))) {
+      this.identityOfKeysToManuallyBackup.push(keyIdentity);
     }
   };
 
   private removeKeyToBackup = (keyIdentity: KeyIdentity) => {
-    this.prvKeysToManuallyBackup.splice(this.prvKeysToManuallyBackup.findIndex(prvIdentity => KeyUtil.identityEquals(prvIdentity, keyIdentity)), 1);
+    this.identityOfKeysToManuallyBackup.splice(this.identityOfKeysToManuallyBackup.findIndex(prvIdentity => KeyUtil.identityEquals(prvIdentity, keyIdentity)), 1);
   };
 
   private preparePrvKeysBackupSelection = async () => {

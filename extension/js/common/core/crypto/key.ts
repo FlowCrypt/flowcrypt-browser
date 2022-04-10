@@ -106,7 +106,7 @@ export class KeyUtil {
     return keyIdentity1.id === keyIdentity2.id && keyIdentity1.family === keyIdentity2.family;
   };
 
-  public static filterKeys<T extends KeyIdentity>(kis: T[], ids: KeyIdentity[]): T[] {
+  public static filterKeysByIdentity<T extends KeyIdentity>(kis: T[], ids: KeyIdentity[]): T[] {
     return kis.filter(ki => ids.some(i => KeyUtil.identityEquals(i, ki)));
   }
 
