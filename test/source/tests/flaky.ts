@@ -107,8 +107,8 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
       await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
       const fingerprint = (await settingsPage.read('.good', true)).split(' ').join('');
       const myKeyFrame = await browser.newPage(t, `chrome/settings/modules/my_key.htm?placement=settings&parentTabId=60%3A0&acctEmail=${acctEmail}&fingerprint=${fingerprint}`);
-      const raw = await myKeyFrame.awaitDownloadTriggeredByClicking('@action-download-prv');
-      const key = await KeyUtil.parse(raw.toString());
+      const files = await myKeyFrame.awaitDownloadTriggeredByClicking('@action-download-prv');
+      const key = await KeyUtil.parse(Object.values(files).pop().toString());
       expect(key.algo.bits).to.equal(3072);
       expect(key.algo.algorithm).to.equal('rsa_encrypt_sign');
       await myKeyFrame.close();

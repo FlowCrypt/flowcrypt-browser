@@ -437,8 +437,12 @@ abstract class ControllableBase {
     throw Error(`Frame not found within ${timeout}s: ${urlMatchables.join(',')}`);
   };
 
-  public awaitDownloadTriggeredByClicking = async (selector: string | (() => Promise<void>)): Promise<Buffer> => {
-    const resolvePromise: Promise<Buffer> = (async () => {
+  public awaitDownloadTriggeredByClicking = async (
+    selector: string | (() => Promise<void>),
+    expectFileCount = 1
+  ): Promise<Dict<Buffer>> => {
+    const files: Dict<Buffer> = {};
+    const resolvePromise: Promise<void> = (async () => {
       const downloadPath = path.resolve(__dirname, 'download', Util.lousyRandom());
       mkdirp.sync(downloadPath);
       await (this.target as any)._client.send('Page.setDownloadBehavior', { behavior: 'allow', downloadPath });
@@ -447,11 +451,14 @@ abstract class ControllableBase {
       } else {
         await selector();
       }
-      const filename = await this.waitForFileToDownload(downloadPath);
-      return fs.readFileSync(path.resolve(downloadPath, filename));
+      for (let i = 0; i < expectFileCount; i++) {
+        const filename = await this.waitForFileToDownload(downloadPath);
+        files[filename] = fs.readFileSync(path.resolve(downloadPath, filename));
+      }
     })();
     const timeoutPromise = newTimeoutPromise(`awaitDownloadTriggeredByClicking timeout for ${selector}`, 20);
-    return await Promise.race([resolvePromise, timeoutPromise]);
+    await Promise.race([resolvePromise, timeoutPromise]);
+    return files;
   };
 
   protected log = (msg: string) => {
