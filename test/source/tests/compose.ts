@@ -492,11 +492,11 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         await composeFrame.waitAndClick('@action-send', { delay: 2 });
         const passphraseDialog = await inboxPage.getFrame(['passphrase.htm']);
         expect(passphraseDialog.frame.isDetached()).to.equal(false);
-        composeFrame.waitForContent('@action-send', 'Loading...');
+        await composeFrame.waitForContent('@action-send', 'Loading...');
         await passphraseDialog.waitForContent('@passphrase-text', 'Enter FlowCrypt pass phrase to sign email');
         await passphraseDialog.waitForContent('@which-key', '47FB 0318 3E03 A8ED 44E3 BBFC CEA2 D53B B9D2 4871');
         await ComposePageRecipe.cancelPassphraseDialog(inboxPage, inputMethod);
-        composeFrame.waitForContent('@action-send', 'Encrypt, Sign and Send');
+        await composeFrame.waitForContent('@action-send', 'Encrypt, Sign and Send');
       }));
     } // end of tests per inputMethod
 
