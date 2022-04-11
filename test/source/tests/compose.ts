@@ -820,7 +820,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       const downloadedFiles = await composePage.awaitDownloadTriggeredByClicking(async () => {
         await attachment.click('#download');
       });
-      expect(downloadedFiles[attachmentFilename].toString()).to.equal(`small text file\nnot much here\nthis worked\n`);
+      expect(downloadedFiles[attachmentFilename]!.toString()).to.equal(`small text file\nnot much here\nthis worked\n`);
       await composePage.close();
     }));
 
@@ -1244,7 +1244,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       const downloadedFiles = await inboxPage.awaitDownloadTriggeredByClicking(async () => {
         await composeFrame.click('.qq-file-id-0');
       });
-      expect(downloadedFiles['small.txt'].toString()).to.equal(`small text file\nnot much here\nthis worked\n`);
+      expect(downloadedFiles['small.txt']!.toString()).to.equal(`small text file\nnot much here\nthis worked\n`);
       await composeFrame.waitAndClick('@action-send', { delay: 2 });
       await inboxPage.waitTillGone('@container-new-message');
     }));
@@ -1264,7 +1264,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       const downloadedFiles = await inboxPage.awaitDownloadTriggeredByClicking(async () => {
         await composeFrame.click('.qq-file-id-0');
       });
-      expect(downloadedFiles['small.txt'].toString()).to.equal(`small text file\nnot much here\nthis worked\n`);
+      expect(downloadedFiles['small.txt']!.toString()).to.equal(`small text file\nnot much here\nthis worked\n`);
       await composeFrame.waitAndClick('@action-send', { delay: 2 });
       await inboxPage.waitTillGone('@container-new-message');
     }));
