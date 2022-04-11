@@ -594,7 +594,6 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       await backupPage.waitAndClick('[data-id="CB0485FE44FC22FF09AF0DB31B383D0334E38B28"]'); // uncheck
       // backing up to file when only one key is checked
       const backupFileRawData1 = await backupPage.awaitDownloadTriggeredByClicking('@action-backup-step3manual-continue');
-      console.log("*** FILES(2):" + JSON.stringify(Object.keys(backupFileRawData1)));
       const { keys: keys1 } = await KeyUtil.readMany(Buf.fromUtfStr(backupFileRawData1['flowcrypt-backup-flowcrypttestkeymultiplegmailcom-515431151DDD3EA232B37A4C98ACFA1EADAB5B92.asc']!
         .toString()));
       expect(keys1.length).to.equal(1);
@@ -604,7 +603,6 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       await backupPage.waitAndClick('[data-id="CB0485FE44FC22FF09AF0DB31B383D0334E38B28"]'); // check
       // backing up to file when two keys are checked
       const backupFileRawData2 = await backupPage.awaitDownloadTriggeredByClicking('@action-backup-step3manual-continue', 2);
-      console.log("*** FILES(3):" + JSON.stringify(Object.keys(backupFileRawData2)));
       const { keys: keys2 } = await KeyUtil.readMany(Buf.fromUtfStr(Buf.concat(Object.values(backupFileRawData2)).toString()));
       expect(keys2.length).to.equal(2);
       await backupPage.close();
@@ -670,7 +668,6 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       await backupPage.waitAndClick('@input-backup-step3manual-file');
       // one passphrase is not known but successfully guessed
       const downloadedFiles = await backupPage.awaitDownloadTriggeredByClicking('@action-backup-step3manual-continue', 2);
-      console.log("*** FILES(4):" + JSON.stringify(Object.keys(downloadedFiles)));
       expect(Object.keys(downloadedFiles).length).to.equal(2);
       const { keys: keys1 } = await KeyUtil.readMany(Buf.fromUtfStr(downloadedFiles['flowcrypt-backup-flowcrypttestkeymultiplegmailcom-515431151DDD3EA232B37A4C98ACFA1EADAB5B92.asc']!
         .toString()));
@@ -785,7 +782,6 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         '&type=openpgp&id=515431151DDD3EA232B37A4C98ACFA1EADAB5B92&idToken=fakeheader.01'));
       await backupPage.waitAndClick('@input-backup-step3manual-file');
       const downloadedFiles = await backupPage.awaitDownloadTriggeredByClicking('@action-backup-step3manual-continue');
-      console.log("*** FILES(5):" + JSON.stringify(Object.keys(downloadedFiles)));
       const { keys } = await KeyUtil.readMany(Buf.fromUtfStr(downloadedFiles['flowcrypt-backup-flowcrypttestkeymultiplegmailcom-515431151DDD3EA232B37A4C98ACFA1EADAB5B92.asc']!.toString()));
       expect(keys.length).to.equal(1);
       expect(keys[0].id).to.equal("515431151DDD3EA232B37A4C98ACFA1EADAB5B92");
