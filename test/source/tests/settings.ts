@@ -675,8 +675,11 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       // one passphrase is not known but successfully guessed
       const downloadedFiles = await backupPage.awaitDownloadTriggeredByClicking('@action-backup-step3manual-continue', 2);
       console.log("*** FILES(4):" + JSON.stringify(Object.keys(downloadedFiles)));
-      const { keys } = await KeyUtil.readMany(Buf.fromUtfStr(Buffer.concat(Object.values(downloadedFiles)).toString()));
-      expect(keys.length).to.equal(2);
+      expect(Object.keys(downloadedFiles.length)).to.equal(2);
+      const keys1 = await KeyUtil.readMany(Buf.fromUtfStr(downloadedFiles['flowcrypt-backup-flowcrypttestkeymultiplegmailcom-515431151DDD3EA232B37A4C98ACFA1EADAB5B92.asc']!.toString()));
+      expect(keys1.keys.length).to.equal(1);
+      const keys2 = await KeyUtil.readMany(Buf.fromUtfStr(downloadedFiles['flowcrypt-backup-flowcrypttestkeymultiplegmailcom-515431151DDD3EA232B37A4C98ACFA1EADAB5B92.asc']!.toString()));
+      expect(keys2.keys.length).to.equal(1);
       await backupPage.close();
     }));
 
