@@ -595,7 +595,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       // backing up to file when only one key is checked
       const backupFileRawData1 = await backupPage.awaitDownloadTriggeredByClicking('@action-backup-step3manual-continue');
       console.log("*** FILES(2):" + JSON.stringify(Object.keys(backupFileRawData1)));
-      const fileName = testVariant == 'CONSUMER-MOCK'
+      const fileName = testVariant === 'CONSUMER-MOCK'
         ? 'flowcrypt-backup-flowcrypttestkeymultiplegmailcom-515431151DDD3EA232B37A4C98ACFA1EADAB5B92.asc'
         : 'flowcrypt-backup-flowcrypttestkeymultiplegmailcom-CB0485FE44FC22FF09AF0DB31B383D0334E38B28.asc';
       const { keys: keys1 } = await KeyUtil.readMany(Buf.fromUtfStr(backupFileRawData1[fileName]!.toString()));
