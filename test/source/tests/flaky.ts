@@ -109,7 +109,9 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
       const myKeyFrame = await browser.newPage(t, `chrome/settings/modules/my_key.htm?placement=settings&parentTabId=60%3A0&acctEmail=${acctEmail}&fingerprint=${fingerprint}`);
       const downloadedFiles = await myKeyFrame.awaitDownloadTriggeredByClicking('@action-download-prv');
       console.log("*** FILES(1):" + JSON.stringify(Object.keys(downloadedFiles)));
-      const key = await KeyUtil.parse(downloadedFiles['flowcrypt-backup-usernosubmitorgruleflowcrypttest-0x042CDA70288EC003.asc'].toString());
+      // It is not possible to have predictable file name here, because key is generated
+      // and file name depends on the key ID.
+      const key = await KeyUtil.parse(Object.values(downloadedFiles).pop()!.toString());
       expect(key.algo.bits).to.equal(3072);
       expect(key.algo.algorithm).to.equal('rsa_encrypt_sign');
       await myKeyFrame.close();
