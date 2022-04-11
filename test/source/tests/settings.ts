@@ -607,9 +607,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       // backing up to file when two keys are checked
       const backupFileRawData2 = await backupPage.awaitDownloadTriggeredByClicking('@action-backup-step3manual-continue', 2);
       console.log("*** FILES(3):" + JSON.stringify(Object.keys(backupFileRawData2)));
-      const { keys: keys2 } = await KeyUtil.readMany(Buf.fromUtfStr(
-        backupFileRawData2['flowcrypt-backup-flowcrypttestkeymultiplegmailcom-515431151DDD3EA232B37A4C98ACFA1EADAB5B92.asc']
-          .toString()));
+      const { keys: keys2 } = await KeyUtil.readMany(Buf.fromUtfStr(Buf.concat(Object.values(backupFileRawData2)).toString()));
       expect(keys2.length).to.equal(2);
       await backupPage.close();
     }));
