@@ -212,7 +212,7 @@ export class MsgUtil {
   public static encryptMessage: PgpMsgMethod.Encrypt = async ({ pubkeys, signingPrv, pwd, data, filename, armor, date }) => {
     const keyTypes = new Set(pubkeys.map(k => k.family));
     if (keyTypes.has('openpgp') && keyTypes.has('x509')) {
-      throw new Error('Mixed key types are not allowed: ' + [...keyTypes]);
+      throw new Error('Mixed key families are not allowed: ' + [...keyTypes]);
     }
     const input = { pubkeys, signingPrv, pwd, data, filename, armor, date };
     if (keyTypes.has('x509')) {

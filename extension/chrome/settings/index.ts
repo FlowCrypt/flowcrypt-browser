@@ -434,7 +434,7 @@ View.run(class SettingsView extends View {
           await PassphraseStore.set('session', this.acctEmail!, { longid }, undefined);
           this.reload(true);
         } else {
-          Catch.report(`unexpected key type: ${family}`);
+          Catch.report(`unexpected key family: ${family}`);
         }
       }));
     }

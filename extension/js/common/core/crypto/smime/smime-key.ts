@@ -374,7 +374,7 @@ export class SmimeKey {
       }
       throw new UnreportableError("Certificate doesn't match the private key");
     }
-    throw new UnreportableError("This key type is not supported");
+    throw new UnreportableError("This key family is not supported");
     /* todo: edwards25519
     const derivedPublicKey = forge.pki.ed25519.publicKeyFromPrivateKey({ privateKey: privateKey as forge.pki.ed25519.BinaryBuffer });
     Buffer.from(derivedPublicKey).compare(Buffer.from(certificate.publicKey as forge.pki.ed25519.NativeBuffer)) === 0;
