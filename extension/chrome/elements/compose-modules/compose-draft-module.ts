@@ -7,7 +7,7 @@ import { AjaxErr } from '../../../js/common/api/shared/api-error.js';
 import { ApiErr } from '../../../js/common/api/shared/api-error.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Buf } from '../../../js/common/core/buf.js';
-import { Catch } from '../../../js/common/platform/catch.js';
+import { Catch, UnreportableError } from '../../../js/common/platform/catch.js';
 import { EncryptedMsgMailFormatter } from './formatters/encrypted-mail-msg-formatter.js';
 import { Env } from '../../../js/common/browser/env.js';
 import { GlobalStore } from '../../../js/common/platform/store/global-store.js';
@@ -20,7 +20,6 @@ import { Xss } from '../../../js/common/platform/xss.js';
 import { ViewModule } from '../../../js/common/view-module.js';
 import { ComposeView } from '../compose.js';
 import { KeyStore } from '../../../js/common/platform/store/key-store.js';
-import { KeyUtil } from '../../../js/common/core/crypto/key.js';
 import { SendableMsg, InvalidRecipientError } from '../../../js/common/api/email-provider/sendable-msg.js';
 import { PassphraseStore } from '../../../js/common/platform/store/passphrase-store.js';
 
@@ -29,6 +28,7 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
   public wasMsgLoadedFromDraft = false;
 
   private currentlySavingDraft = false;
+  private disableSendingDrafts = false;
   private saveDraftInterval?: number;
   private lastDraftBody?: string;
   private lastDraftSubject = '';
@@ -113,12 +113,25 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
   };
 
   public draftSave = async (forceSave: boolean = false): Promise<void> => {
+    if (this.disableSendingDrafts) {
+      return;
+    }
     if (this.hasBodyChanged(this.view.inputModule.squire.getHTML()) || this.hasSubjectChanged(String(this.view.S.cached('input_subject').val())) || forceSave) {
       this.currentlySavingDraft = true;
       try {
         const msgData = this.view.inputModule.extractAll();
-        const primaryKi = await this.view.storageModule.getKey(msgData.from);
-        const pubkeys = [{ isMine: true, email: msgData.from, pubkey: await KeyUtil.parse(primaryKi.public) }];
+        const { pubkeys } = await this.view.storageModule.collectSingleFamilyKeys([], msgData.from, true);
+        // collectSingleFamilyKeys filters out bad keys, but only if there are any good keys available
+        //  if no good keys available, it leaves bad keys so we can explain the issue here
+        if (pubkeys.some(pub => pub.pubkey.expiration && pub.pubkey.expiration < Date.now())) {
+          throw new UnreportableError('Your account keys are expired');
+        }
+        if (pubkeys.some(pub => pub.pubkey.revoked)) {
+          throw new UnreportableError('Your account keys are revoked');
+        }
+        if (pubkeys.some(pub => !pub.pubkey.usableForEncryption)) {
+          throw new UnreportableError('Your account keys are not usable for encryption');
+        }
         msgData.pwd = undefined; // not needed for drafts
         const sendable = await new EncryptedMsgMailFormatter(this.view, true).sendableMsg(msgData, pubkeys);
         if (this.view.replyParams?.inReplyTo) {
@@ -167,6 +180,13 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
           Catch.reportErr(e);
           this.view.S.cached('send_btn_note').text('Not saved (error)');
           Ui.toast(`Draft not saved: ${e}`, false, 5);
+          if (!ApiErr.isNetErr(e)) {
+            // no point trying again on fatal error
+            // eg maybe keys could be broken or missing
+            this.disableSendingDrafts = true;
+            // todo - could in the future add "once" click handler on send_btn_note
+            //   which would set this back to false & re-run draftSave
+          }
         }
       }
       this.currentlySavingDraft = false;

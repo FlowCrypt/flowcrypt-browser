@@ -4,7 +4,7 @@ import { AbstractStore } from './abstract-store.js';
 import { Catch } from '../catch.js';
 import { BrowserMsg } from '../../browser/browser-msg.js';
 import { DateUtility, EmailParts, Str, Value } from '../../core/common.js';
-import { Key, KeyUtil, PubkeyInfo, ContactInfoWithSortedPubkeys } from '../../core/crypto/key.js';
+import { Key, KeyUtil, PubkeyInfo, ContactInfoWithSortedPubkeys, KeyIdentity } from '../../core/crypto/key.js';
 
 // tslint:disable:no-null-keyword
 
@@ -586,12 +586,12 @@ export class ContactStore extends AbstractStore {
   };
 
   // todo: return parsed and with applied revocation
-  public static getPubkey = async (db: IDBDatabase | undefined, { id, type }: { id: string, type: string }):
+  public static getPubkey = async (db: IDBDatabase | undefined, { id, family }: KeyIdentity):
     Promise<string | undefined> => {
     if (!db) { // relay op through background process
-      return (await BrowserMsg.send.bg.await.db({ f: 'getPubkey', args: [{ id, type }] })) as string | undefined;
+      return (await BrowserMsg.send.bg.await.db({ f: 'getPubkey', args: [{ id, family }] })) as string | undefined;
     }
-    const internalFingerprint = ContactStore.getPubkeyId({ id, type });
+    const internalFingerprint = ContactStore.getPubkeyId({ id, family });
     const tx = db.transaction(['pubkeys'], 'readonly');
     const pubkeyEntity: Pubkey = await new Promise((resolve, reject) => {
       const req = tx.objectStore('pubkeys').get(internalFingerprint);
@@ -600,13 +600,13 @@ export class ContactStore extends AbstractStore {
     return pubkeyEntity?.armoredKey;
   };
 
-  public static unlinkPubkey = async (db: IDBDatabase | undefined, email: string, { id, type }: { id: string, type: string }):
+  public static unlinkPubkey = async (db: IDBDatabase | undefined, email: string, { id, family }: KeyIdentity):
     Promise<void> => {
     if (!db) { // relay op through background process
-      await BrowserMsg.send.bg.await.db({ f: 'unlinkPubkey', args: [email, { id, type }] });
+      await BrowserMsg.send.bg.await.db({ f: 'unlinkPubkey', args: [email, { id, family }] });
       return;
     }
-    const internalFingerprint = ContactStore.getPubkeyId({ id, type });
+    const internalFingerprint = ContactStore.getPubkeyId({ id, family });
     const tx = db.transaction(['emails', 'pubkeys'], 'readwrite');
     await new Promise((resolve, reject) => {
       ContactStore.setTxHandlers(tx, resolve, reject);
@@ -747,8 +747,8 @@ export class ContactStore extends AbstractStore {
     return KeyUtil.sortPubkeyInfos(pubkeyInfos);
   };
 
-  private static getPubkeyId = ({ id, type }: { id: string, type: string }): string => {
-    return (type === 'x509') ? (id + x509postfix) : id;
+  private static getPubkeyId = (keyIdentity: KeyIdentity): string => {
+    return (keyIdentity.family === 'x509') ? (keyIdentity.id + x509postfix) : keyIdentity.id;
   };
 
   private static stripFingerprint = (fp: string): string => {
@@ -782,7 +782,7 @@ export class ContactStore extends AbstractStore {
     let pubkeyEntity: Pubkey | undefined;
     if (update.pubkey) {
       const internalFingerprint = ContactStore.getPubkeyId(update.pubkey!);
-      if (update.pubkey.type === 'openpgp' && !update.pubkey.revoked && revocations.some(r => r.fingerprint === internalFingerprint)) {
+      if (update.pubkey.family === 'openpgp' && !update.pubkey.revoked && revocations.some(r => r.fingerprint === internalFingerprint)) {
         // we have this fingerprint revoked but the supplied key isn't
         // so let's not save it
         // pubkeyEntity = undefined

@@ -7,7 +7,7 @@ import { Assert } from '../../../js/common/assert.js';
 import { Attachment } from '../../../js/common/core/attachment.js';
 import { Browser } from '../../../js/common/browser/browser.js';
 import { Buf } from '../../../js/common/core/buf.js';
-import { KeyInfo, Key, KeyUtil } from '../../../js/common/core/crypto/key.js';
+import { KeyInfoWithIdentity, Key, KeyUtil } from '../../../js/common/core/crypto/key.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { Url, Str } from '../../../js/common/core/common.js';
 import { View } from '../../../js/common/view.js';
@@ -27,7 +27,7 @@ View.run(class MyKeyView extends View {
   private readonly fingerprint: string;
   private readonly myKeyUserIdsUrl: string;
   private readonly myKeyUpdateUrl: string;
-  private keyInfo!: KeyInfo;
+  private keyInfo!: KeyInfoWithIdentity;
   private pubKey!: Key;
   private orgRules!: OrgRules;
   private pubLookup!: PubLookup;
@@ -46,7 +46,7 @@ View.run(class MyKeyView extends View {
     this.orgRules = await OrgRules.newInstance(this.acctEmail);
     this.pubLookup = new PubLookup(this.orgRules);
     [this.keyInfo] = await KeyStore.get(this.acctEmail, [this.fingerprint]);
-    Assert.abortAndRenderErrorIfKeyinfoEmpty(this.keyInfo);
+    Assert.abortAndRenderErrorIfKeyinfoEmpty(this.keyInfo ? [this.keyInfo] : []);
     this.pubKey = await KeyUtil.parse(this.keyInfo.public);
     $('.action_view_user_ids').attr('href', this.myKeyUserIdsUrl);
     $('.action_view_update').attr('href', this.myKeyUpdateUrl);

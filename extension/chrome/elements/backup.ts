@@ -5,7 +5,7 @@
 import { Assert } from '../../js/common/assert.js';
 import { Browser } from '../../js/common/browser/browser.js';
 import { BrowserMsg } from '../../js/common/browser/browser-msg.js';
-import { KeyInfo, KeyUtil } from '../../js/common/core/crypto/key.js';
+import { KeyUtil, KeyInfoWithIdentity } from '../../js/common/core/crypto/key.js';
 import { Ui } from '../../js/common/browser/ui.js';
 import { Url, Str } from '../../js/common/core/common.js';
 import { View } from '../../js/common/view.js';
@@ -18,7 +18,7 @@ View.run(class BackupView extends View {
   private readonly parentTabId: string;
   private readonly frameId: string;
   private readonly armoredPrvBackup: string;
-  private storedPrvWithMatchingLongid: KeyInfo | undefined;
+  private storedPrvWithMatchingLongid: KeyInfoWithIdentity | undefined;
 
   constructor() {
     super();

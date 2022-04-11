@@ -3,7 +3,7 @@
 'use strict';
 
 import { storageLocalGetAll, storageLocalRemove } from '../common/browser/chrome.js';
-import { KeyInfo, KeyUtil } from '../common/core/crypto/key.js';
+import { KeyInfoWithIdentity, KeyUtil } from '../common/core/crypto/key.js';
 import { SmimeKey } from '../common/core/crypto/smime/smime-key.js';
 import { Str } from '../common/core/common.js';
 import { ContactStore, Email, Pubkey } from '../common/platform/store/contact-store.js';
@@ -31,7 +31,7 @@ type PubkeyMigrationData = {
 const addKeyInfoFingerprints = async () => {
   for (const acctEmail of await GlobalStore.acctEmailsGet()) {
     const originalKis = await KeyStore.get(acctEmail);
-    const updated: KeyInfo[] = [];
+    const updated: KeyInfoWithIdentity[] = [];
     for (const originalKi of originalKis) {
       updated.push(await KeyUtil.keyInfoObj(await KeyUtil.parse(originalKi.private)));
     }
@@ -78,7 +78,7 @@ export const migrateGlobal = async () => {
 };
 
 const processSmimeKey = (pubkey: Pubkey, tx: IDBTransaction, data: PubkeyMigrationData, next: () => void) => {
-  if (KeyUtil.getKeyType(pubkey.armoredKey) !== 'x509') {
+  if (KeyUtil.getKeyFamily(pubkey.armoredKey) !== 'x509') {
     next();
     return;
   }
@@ -176,7 +176,7 @@ export const updateOpgpRevocations = async (db: IDBDatabase): Promise<void> => {
     const search = tx.objectStore('pubkeys').getAll();
     ContactStore.setReqPipe(search, resolve, reject);
   });
-  const revokedKeys = (await Promise.all(pubkeys.filter(entity => KeyUtil.getKeyType(entity.armoredKey) === 'openpgp').
+  const revokedKeys = (await Promise.all(pubkeys.filter(entity => KeyUtil.getKeyFamily(entity.armoredKey) === 'openpgp').
     map(async (entity) => await KeyUtil.parse(entity.armoredKey)))).
     filter(k => k.revoked);
   const txUpdate = db.transaction(['revocations'], 'readwrite');

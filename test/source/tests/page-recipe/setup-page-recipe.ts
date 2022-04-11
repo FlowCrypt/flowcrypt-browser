@@ -251,9 +251,15 @@ export class SetupPageRecipe extends PageRecipe {
   };
 
   public static autoSetupWithEKM = async (settingsPage: ControllablePage,
-    { expectErrView, enterPp, expectErrModal }: {
+    {
+      expectErrView,
+      expectErrModal,
+      expectWarnModal,
+      enterPp
+    }: {
       expectErrView?: { title: string, text: string },
       expectErrModal?: string,
+      expectWarnModal?: string,
       enterPp?: { passphrase: string, checks?: SavePassphraseChecks }
     } = {}): Promise<void> => {
     if (enterPp) {
@@ -268,6 +274,9 @@ export class SetupPageRecipe extends PageRecipe {
         expect(await settingsPage.isChecked('@input-step2ekm-save-passphrase')).to.equal(enterPp.checks.isSavePassphraseChecked);
       }
       await settingsPage.waitAndClick('@input-step2ekm-continue');
+    }
+    if (expectWarnModal) {
+      await settingsPage.waitAndRespondToModal('warning', 'confirm', expectWarnModal);
     }
     if (expectErrView) { // this err is rendered in `view.ts` - `View` base class
       await settingsPage.waitAll(['@container-err-title', '@container-err-text', '@action-retry-by-reloading']);

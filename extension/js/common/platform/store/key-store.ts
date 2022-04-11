@@ -1,6 +1,6 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
-import { KeyInfo, TypedKeyInfo, ExtendedKeyInfo, KeyUtil, Key, KeyIdentity } from '../../core/crypto/key.js';
+import { StoredKeyInfo, KeyInfoWithIdentity, KeyInfoWithIdentityAndOptionalPp, KeyUtil, Key, KeyIdentity } from '../../core/crypto/key.js';
 import { AcctStore } from './acct-store.js';
 import { PassphraseStore } from './passphrase-store.js';
 import { AbstractStore } from './abstract-store.js';
@@ -11,9 +11,9 @@ import { Assert } from '../../assert.js';
  */
 export class KeyStore extends AbstractStore {
 
-  public static get = async (acctEmail: string, fingerprints?: string[]): Promise<KeyInfo[]> => {
+  public static get = async (acctEmail: string, fingerprints?: string[]): Promise<KeyInfoWithIdentity[]> => {
     const stored = await AcctStore.get(acctEmail, ['keys']);
-    const keys: KeyInfo[] = stored.keys || [];
+    const keys: KeyInfoWithIdentity[] = KeyStore.addIdentityToKeyInfos(stored.keys || []);
     if (!fingerprints) {
       return keys;
     }
@@ -22,33 +22,14 @@ export class KeyStore extends AbstractStore {
     return keys.filter(ki => fingerprints.includes(ki.fingerprints[0]));
   };
 
-  public static getFirstOptional = async (acctEmail: string): Promise<KeyInfo | undefined> => {
+  public static getRequired = async (acctEmail: string): Promise<KeyInfoWithIdentity[]> => {
     const keys = await KeyStore.get(acctEmail);
-    return keys[0];
+    Assert.abortAndRenderErrorIfKeyinfoEmpty(keys);
+    return keys;
   };
 
-  public static getFirstRequired = async (acctEmail: string): Promise<KeyInfo> => {
-    const key = await KeyStore.getFirstOptional(acctEmail);
-    Assert.abortAndRenderErrorIfKeyinfoEmpty(key);
-    return key as KeyInfo;
-  };
-
-  public static getTypedKeyInfos = async (acctEmail: string): Promise<TypedKeyInfo[]> => {
+  public static getAllWithOptionalPassPhrase = async (acctEmail: string): Promise<KeyInfoWithIdentityAndOptionalPp[]> => {
     const keys = await KeyStore.get(acctEmail);
-    const kis: TypedKeyInfo[] = [];
-    for (const ki of keys) {
-      const type = KeyUtil.getKeyType(ki.private);
-      const id = ki.fingerprints[0];
-      if (type !== 'openpgp' && type !== 'x509') {
-        continue;
-      }
-      kis.push({ ...ki, type, id });
-    }
-    return kis;
-  };
-
-  public static getAllWithOptionalPassPhrase = async (acctEmail: string): Promise<ExtendedKeyInfo[]> => {
-    const keys = await KeyStore.getTypedKeyInfos(acctEmail);
     return await Promise.all(keys.map(async (ki) => { return { ...ki, passphrase: await PassphraseStore.get(acctEmail, ki) }; }));
   };
 
@@ -71,24 +52,37 @@ export class KeyStore extends AbstractStore {
     await KeyStore.set(acctEmail, keyinfos);
   };
 
-  public static set = async (acctEmail: string, keyinfos: KeyInfo[]) => {
+  public static set = async (acctEmail: string, keyinfos: KeyInfoWithIdentity[]) => {
     await AcctStore.set(acctEmail, { keys: keyinfos });
   };
 
   public static remove = async (acctEmail: string, keyIdentity: KeyIdentity): Promise<void> => {
-    const privateKeys = await KeyStore.getTypedKeyInfos(acctEmail);
+    const privateKeys = await KeyStore.get(acctEmail);
     const filteredPrivateKeys = privateKeys.filter(ki => !KeyUtil.identityEquals(ki, keyIdentity));
     await KeyStore.set(acctEmail, filteredPrivateKeys);
   };
 
-  public static getKeyInfosThatCurrentlyHavePassPhraseInSession = async (acctEmail: string): Promise<TypedKeyInfo[]> => {
-    const keys = await KeyStore.getTypedKeyInfos(acctEmail);
-    const result: TypedKeyInfo[] = [];
+  public static getKeyInfosThatCurrentlyHavePassPhraseInSession = async (acctEmail: string): Promise<KeyInfoWithIdentity[]> => {
+    const keys = await KeyStore.get(acctEmail);
+    const result: KeyInfoWithIdentity[] = [];
     for (const ki of keys) {
       if (! await PassphraseStore.get(acctEmail, ki, true) && await PassphraseStore.get(acctEmail, ki, false)) {
         result.push(ki);
       }
     }
     return result;
+  };
+
+  private static addIdentityToKeyInfos = (keyInfos: StoredKeyInfo[]): KeyInfoWithIdentity[] => {
+    const kis: KeyInfoWithIdentity[] = [];
+    for (const ki of keyInfos) {
+      const family = KeyUtil.getKeyFamily(ki.private);
+      const id = ki.fingerprints[0];
+      if (family !== 'openpgp' && family !== 'x509') {
+        continue;
+      }
+      kis.push({ ...ki, family, id });
+    }
+    return kis;
   };
 }

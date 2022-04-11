@@ -5,7 +5,7 @@
 import { Catch, UnreportableError } from './platform/catch.js';
 import { Dict, UrlParam, UrlParams } from './core/common.js';
 import { Browser } from './browser/browser.js';
-import { KeyInfo, KeyUtil } from './core/crypto/key.js';
+import { KeyInfoWithIdentity, KeyUtil } from './core/crypto/key.js';
 import { Settings } from './settings.js';
 import { Ui } from './browser/ui.js';
 import { Xss } from './platform/xss.js';
@@ -37,26 +37,31 @@ export class Assert {
 
   public static abortAndRenderErrOnUnprotectedKey = async (acctEmail?: string, tabId?: string) => {
     if (acctEmail) {
-      const primaryKi = await KeyStore.getFirstOptional(acctEmail);
+      const kis = await KeyStore.get(acctEmail);
+      const parsedKeys = await Promise.all(kis.map(ki => KeyUtil.parse(ki.private)));
       const { setup_done } = await AcctStore.get(acctEmail, ['setup_done']);
-      if (setup_done && primaryKi && !(await KeyUtil.parse(primaryKi.private)).fullyEncrypted) {
-        if (window.location.pathname === '/chrome/settings/index.htm') {
-          await Settings.renderSubPage(acctEmail, tabId!, '/chrome/settings/modules/change_passphrase.htm');
-        } else {
-          const msg = `Protect your key with a pass phrase to finish setup.`;
-          const r = await Ui.renderOverlayPromptAwaitUserChoice({ finishSetup: {}, later: { color: 'gray' } }, msg, undefined,
-            Lang.general.contactIfNeedAssistance(await isFesUsed(acctEmail)));
-          if (r === 'finish_setup') {
-            await Browser.openSettingsPage('index.htm', acctEmail);
+      if (setup_done && kis.length) {
+        const key = parsedKeys.find(k => !k.fullyEncrypted);
+        if (key) {
+          // can fix one key at a time. When they reload, it will complain about another key
+          if (window.location.pathname === '/chrome/settings/index.htm') {
+            await Settings.renderSubPage(acctEmail, tabId!, '/chrome/settings/modules/change_passphrase.htm');
+          } else {
+            const msg = `Protect your key with a pass phrase to finish setup.`;
+            const r = await Ui.renderOverlayPromptAwaitUserChoice({ finishSetup: {}, later: { color: 'gray' } }, msg, undefined,
+              Lang.general.contactIfNeedAssistance(await isFesUsed(acctEmail)));
+            if (r === 'finish_setup') {
+              await Browser.openSettingsPage('index.htm', acctEmail);
+            }
           }
         }
       }
     }
   };
 
-  public static abortAndRenderErrorIfKeyinfoEmpty = (ki: KeyInfo | undefined, doThrow: boolean = true) => {
-    if (!ki) {
-      const msg = `Cannot find primary key. Is FlowCrypt not set up yet? ${Ui.retryLink()}`;
+  public static abortAndRenderErrorIfKeyinfoEmpty = (kis: KeyInfoWithIdentity[], doThrow: boolean = true) => {
+    if (!kis.length) {
+      const msg = `Cannot find any account key. Is FlowCrypt not set up yet? ${Ui.retryLink()}`;
       const target = $($('#content').length ? '#content' : 'body');
       target.addClass('error-occured');
       Xss.sanitizeRender(target, msg);

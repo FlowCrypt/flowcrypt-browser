@@ -22,8 +22,8 @@ View.run(class PgpPubkeyView extends View {
   private readonly frameId: string;
   private readonly compact: boolean; // means the details take up very little space.
   private readonly minimized: boolean; // means I have to click to see details.
-  private publicKeys: Key[] | undefined;
-  private primaryPubKey: Key | undefined;
+  private parsedPublicKeys: Key[] | undefined;
+  private firstParsedPublicKey: Key | undefined;
   private isExpired: boolean | undefined;
 
   constructor() {
@@ -45,12 +45,12 @@ View.run(class PgpPubkeyView extends View {
       if (pubKey.revoked) {
         await ContactStore.saveRevocation(undefined, pubKey);
       }
-      this.publicKeys = [pubKey];
+      this.parsedPublicKeys = [pubKey];
     } catch (e) {
       console.error('Unusable key: ' + e);
-      this.publicKeys = [];
+      this.parsedPublicKeys = [];
     }
-    this.primaryPubKey = this.publicKeys ? this.publicKeys[0] : undefined;
+    this.firstParsedPublicKey = this.parsedPublicKeys ? this.parsedPublicKeys[0] : undefined;
     $('.pubkey').text(this.armoredPubkey);
     if (this.compact) {
       $('.hide_if_compact').remove();
@@ -58,22 +58,22 @@ View.run(class PgpPubkeyView extends View {
       $('.line').removeClass('line');
     }
     $('.line.fingerprints, .line.add_contact').css('display', this.minimized ? 'none' : 'block');
-    if (this.publicKeys.length === 1) {
-      $('.line.fingerprints .fingerprint').text(Str.spaced(this.primaryPubKey?.id || 'err'));
+    if (this.parsedPublicKeys.length === 1) {
+      $('.line.fingerprints .fingerprint').text(Str.spaced(this.firstParsedPublicKey?.id || 'err'));
     } else {
       $('.line.fingerprints').css({ display: 'none' });
     }
-    if (this.primaryPubKey) {
-      if (!this.primaryPubKey.usableForEncryptionButExpired && !this.primaryPubKey.usableForSigningButExpired
-        && !this.primaryPubKey.usableForEncryption && !this.primaryPubKey.usableForSigning) {
+    if (this.firstParsedPublicKey) {
+      if (!this.firstParsedPublicKey.usableForEncryptionButExpired && !this.firstParsedPublicKey.usableForSigningButExpired
+        && !this.firstParsedPublicKey.usableForEncryption && !this.firstParsedPublicKey.usableForSigning) {
         this.showKeyNotUsableError();
       } else {
         if (this.compact) {
           $('.hide_if_compact_and_not_error').remove();
         }
         let emailText = '';
-        if (this.publicKeys.length === 1) {
-          const email = this.primaryPubKey.emails[0];
+        if (this.parsedPublicKeys.length === 1) {
+          const email = this.firstParsedPublicKey.emails[0];
           if (email) {
             emailText = email;
             $('.input_email').val(email); // checked above
@@ -81,7 +81,7 @@ View.run(class PgpPubkeyView extends View {
         } else {
           emailText = 'more than one person';
           $('.input_email').css({ display: 'none' });
-          Xss.sanitizeAppend('.add_contact', Xss.escape(' for ' + this.publicKeys.map(pub => pub.emails[0]).filter(e => !!e).join(', ')));
+          Xss.sanitizeAppend('.add_contact', Xss.escape(' for ' + this.parsedPublicKeys.map(pub => pub.emails[0]).filter(e => !!e).join(', ')));
         }
         Xss.sanitizePrepend('#pgp_block.pgp_pubkey .result', `<span>This message includes a Public Key for <span class= "email">${Xss.escape(emailText)}</span>.</span>`);
         $('.pubkey').addClass('good');
@@ -122,8 +122,8 @@ View.run(class PgpPubkeyView extends View {
   };
 
   private setBtnText = async () => {
-    if (this.publicKeys!.length > 1) {
-      $('.action_add_contact').text('import ' + this.publicKeys!.length + ' public keys');
+    if (this.parsedPublicKeys!.length > 1) {
+      $('.action_add_contact').text('import ' + this.parsedPublicKeys!.length + ' public keys');
     } else {
       const contactWithPubKeys = await ContactStore.getOneWithAllPubkeys(
         undefined, String($('.input_email').val()));
@@ -142,9 +142,9 @@ View.run(class PgpPubkeyView extends View {
   };
 
   private addContactHandler = async (addContactBtn: HTMLElement) => {
-    if (this.publicKeys!.length > 1) {
+    if (this.parsedPublicKeys!.length > 1) {
       const emails = new Set<string>();
-      for (const pubkey of this.publicKeys!) {
+      for (const pubkey of this.parsedPublicKeys!) {
         const email = pubkey.emails[0];
         if (email) {
           await ContactStore.update(undefined, email, { pubkey: KeyUtil.armor(pubkey) });
@@ -157,10 +157,10 @@ View.run(class PgpPubkeyView extends View {
         BrowserMsg.send.reRenderRecipient('broadcast', { email });
       }
       $('.input_email').remove();
-    } else if (this.publicKeys!.length) {
+    } else if (this.parsedPublicKeys!.length) {
       if (Str.isEmailValid(String($('.input_email').val()))) {
         const email = String($('.input_email').val());
-        await ContactStore.update(undefined, email, { pubkey: KeyUtil.armor(this.publicKeys![0]) });
+        await ContactStore.update(undefined, email, { pubkey: KeyUtil.armor(this.parsedPublicKeys![0]) });
         BrowserMsg.send.addToContacts(this.parentTabId);
         Xss.sanitizeReplace(addContactBtn, `<span class="good">${Xss.escape(String($('.input_email').val()))} added</span>`);
         $('.input_email').remove();

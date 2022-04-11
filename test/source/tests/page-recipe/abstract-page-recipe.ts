@@ -4,13 +4,13 @@ import { BrowserHandle, Controllable, ControllablePage } from '../../browser';
 
 import { AvaContext } from '../tooling/';
 import { ElementHandle, JSHandle } from 'puppeteer';
-import { expect } from 'chai';
 import { Util } from '../../util';
 
 type ModalOpts = { contentToCheck?: string, clickOn?: 'confirm' | 'cancel', getTriggeredPage?: boolean, timeout?: number };
 type ModalType = 'confirm' | 'error' | 'info' | 'warning';
 
 export abstract class PageRecipe {
+
   public static getElementPropertyJson = async (elem: ElementHandle<Element>, property: string) => {
     return await (await elem.getProperty(property) as JSHandle).jsonValue() as string;
   };
@@ -23,11 +23,27 @@ export abstract class PageRecipe {
     const modalContainer = await controllable.waitAny(`.ui-modal-${type}`, { timeout });
     if (typeof contentToCheck !== 'undefined') {
       const contentElement = await modalContainer.$('.swal2-html-container');
-      expect(await PageRecipe.getElementPropertyJson(contentElement!, 'textContent')).to.include(contentToCheck);
+      const actualContent = await PageRecipe.getElementPropertyJson(contentElement!, 'textContent');
+      if (!actualContent.includes(contentToCheck)) {
+        throw new Error(`Expected modal to contain "${contentToCheck}" but contained "${actualContent}"`);
+      }
     }
     if (clickOn) {
       const button = await modalContainer.$(`button.ui-modal-${type}-${clickOn}`);
       await button!.click();
+    }
+  };
+
+  public static waitForToastToAppearAndDisappear = async (controllable: Controllable, containsText: string | RegExp): Promise<void> => {
+    await controllable.waitForContent('.ui-toast-title', containsText);
+    await controllable.waitTillGone('.ui-toast-title');
+  };
+
+  public static noToastAppears = async (controllable: Controllable, waitSeconds = 5): Promise<void> => {
+    await controllable.notPresent('.ui-toast-container');
+    for (let i = 0; i < waitSeconds; i++) {
+      await Util.sleep(1);
+      await controllable.notPresent('.ui-toast-container');
     }
   };
 

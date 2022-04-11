@@ -4,7 +4,7 @@
 
 import { Bm, BrowserMsg } from '../../js/common/browser/browser-msg.js';
 import { Ui } from '../../js/common/browser/ui.js';
-import { KeyUtil, TypedKeyInfo } from '../../js/common/core/crypto/key.js';
+import { KeyUtil, KeyInfoWithIdentity } from '../../js/common/core/crypto/key.js';
 import { Str, Url, UrlParams } from '../../js/common/core/common.js';
 import { ApiErr } from '../../js/common/api/shared/api-error.js';
 import { Assert } from '../../js/common/assert.js';
@@ -22,6 +22,7 @@ import { Xss } from '../../js/common/platform/xss.js';
 import { XssSafeFactory } from '../../js/common/xss-safe-factory.js';
 import { AcctStore, EmailProvider } from '../../js/common/platform/store/acct-store.js';
 import { KeyStore } from '../../js/common/platform/store/key-store.js';
+import { KeyStoreUtil } from "../../js/common/core/crypto/key-store-util.js";
 import { GlobalStore } from '../../js/common/platform/store/global-store.js';
 import { PassphraseStore } from '../../js/common/platform/store/passphrase-store.js';
 import Swal from 'sweetalert2';
@@ -148,8 +149,9 @@ View.run(class SettingsView extends View {
       }
     }));
     $('.action_open_public_key_page').click(this.setHandler(async () => {
-      const ki = await KeyStore.getFirstRequired(this.acctEmail!);
-      const escapedFp = Xss.escape(ki.fingerprints[0]);
+      const prvs = await KeyStoreUtil.parse(await KeyStore.getRequired(this.acctEmail!));
+      const mostUsefulPrv = KeyStoreUtil.chooseMostUseful(prvs, 'EVEN-IF-UNUSABLE');
+      const escapedFp = Xss.escape(mostUsefulPrv!.key.id);
       await Settings.renderSubPage(this.acctEmail!, this.tabId, 'modules/my_key.htm', `&fingerprint=${escapedFp}`);
     }));
     $('.action_show_encrypted_inbox').click(this.setHandler(() => {
@@ -254,7 +256,7 @@ View.run(class SettingsView extends View {
         if (this.advanced) {
           $("#settings").toggleClass("advanced");
         }
-        const privateKeys = await KeyStore.getTypedKeyInfos(this.acctEmail);
+        const privateKeys = await KeyStore.get(this.acctEmail);
         if (privateKeys.length > 4) {
           $('.key_list').css('overflow-y', 'scroll');
         }
@@ -362,12 +364,12 @@ View.run(class SettingsView extends View {
   private checkGoogleAcct = async () => {
     try {
       const { sendAs } = await this.gmail!.fetchAcctAliases();
-      const primary = sendAs.find(addr => addr.isPrimary === true);
-      if (!primary) {
+      const primarySendAs = sendAs.find(addr => addr.isPrimary === true);
+      if (!primarySendAs) {
         await Ui.modal.warning(`Your account sendAs does not have any primary sendAsEmail`);
         return;
       }
-      const googleAcctEmailAddr = primary.sendAsEmail;
+      const googleAcctEmailAddr = primarySendAs.sendAsEmail;
       $('#status-row #status_google').text(`g:${googleAcctEmailAddr}:ok`);
       if (googleAcctEmailAddr !== this.acctEmail) {
         $('#status-row #status_google').text(`g:${googleAcctEmailAddr}:changed`).addClass('bad').attr('title', 'Account email address has changed');
@@ -395,7 +397,7 @@ View.run(class SettingsView extends View {
     }
   };
 
-  private addKeyRowsHtml = async (privateKeys: TypedKeyInfo[]) => {
+  private addKeyRowsHtml = async (privateKeys: KeyInfoWithIdentity[]) => {
     let html = '';
     const canRemoveKey = !this.orgRules || !this.orgRules.usesKeyManager();
     for (let i = 0; i < privateKeys.length; i++) {
@@ -405,7 +407,7 @@ View.run(class SettingsView extends View {
       const date = Str.monthName(created.getMonth()) + ' ' + created.getDate() + ', ' + created.getFullYear();
       let removeKeyBtn = '';
       if (canRemoveKey && privateKeys.length > 1) {
-        removeKeyBtn = `(<a href="#" class="action_remove_key" data-test="action-remove-key" data-type="${ki.type}" data-id="${ki.id}" data-longid="${ki.longid}">remove</a>)`;
+        removeKeyBtn = `(<a href="#" class="action_remove_key" data-test="action-remove-key" data-type="${ki.family}" data-id="${ki.id}" data-longid="${ki.longid}">remove</a>)`;
       }
       const escapedEmail = Xss.escape(prv.emails[0] || '');
       const escapedLink = `<a href="#" data-test="action-show-key-${i}" class="action_show_key" page="modules/my_key.htm" addurltext="&fingerprint=${ki.id}">${escapedEmail}</a>`;
@@ -423,16 +425,16 @@ View.run(class SettingsView extends View {
     if (canRemoveKey) {
       $('.action_remove_key').click(this.setHandler(async target => {
         // the UI below only gets rendered when account_email is available
-        const type = $(target).data('type') as string;
+        const family = $(target).data('type') as string;
         const id = $(target).data('id') as string;
         const longid = $(target).data('longid') as string;
-        if (type === 'openpgp' || type === 'x509') {
-          await KeyStore.remove(this.acctEmail!, { type, id });
+        if (family === 'openpgp' || family === 'x509') {
+          await KeyStore.remove(this.acctEmail!, { family, id });
           await PassphraseStore.set('local', this.acctEmail!, { longid }, undefined);
           await PassphraseStore.set('session', this.acctEmail!, { longid }, undefined);
           this.reload(true);
         } else {
-          Catch.report(`unexpected key type: ${type}`);
+          Catch.report(`unexpected key type: ${family}`);
         }
       }));
     }

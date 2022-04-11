@@ -437,8 +437,15 @@ abstract class ControllableBase {
     throw Error(`Frame not found within ${timeout}s: ${urlMatchables.join(',')}`);
   };
 
-  public awaitDownloadTriggeredByClicking = async (selector: string | (() => Promise<void>)): Promise<Buffer> => {
-    const resolvePromise: Promise<Buffer> = (async () => {
+  /**
+   * when downloading several files, only notices files with unique names
+   */
+  public awaitDownloadTriggeredByClicking = async (
+    selector: string | (() => Promise<void>),
+    expectFileCount = 1
+  ): Promise<Dict<Buffer>> => {
+    const files: Dict<Buffer> = {};
+    const resolvePromise: Promise<void> = (async () => {
       const downloadPath = path.resolve(__dirname, 'download', Util.lousyRandom());
       mkdirp.sync(downloadPath);
       await (this.target as any)._client.send('Page.setDownloadBehavior', { behavior: 'allow', downloadPath });
@@ -447,11 +454,16 @@ abstract class ControllableBase {
       } else {
         await selector();
       }
-      const filename = await this.waitForFileToDownload(downloadPath);
-      return fs.readFileSync(path.resolve(downloadPath, filename));
+      while (Object.keys(files).length < expectFileCount) {
+        const newFilenames = await this.waitForFilesToDownload(downloadPath);
+        for (const filename of newFilenames) {
+          files[filename] = fs.readFileSync(path.resolve(downloadPath, filename));
+        }
+      }
     })();
     const timeoutPromise = newTimeoutPromise(`awaitDownloadTriggeredByClicking timeout for ${selector}`, 20);
-    return await Promise.race([resolvePromise, timeoutPromise]);
+    await Promise.race([resolvePromise, timeoutPromise]);
+    return files;
   };
 
   protected log = (msg: string) => {
@@ -510,13 +522,14 @@ abstract class ControllableBase {
     return matchingLinks;
   };
 
-  private waitForFileToDownload = async (downloadPath: string) => {
-    let filename;
-    while (!filename || filename.endsWith('.crdownload')) {
-      filename = fs.readdirSync(downloadPath)[0];
-      await Util.sleep(1);
+  private waitForFilesToDownload = async (downloadPath: string): Promise<string[]> => {
+    while (true) {
+      const filenames = fs.readdirSync(downloadPath);
+      if (!filenames.some(fn => fn.endsWith('.crdownload'))) {
+        return filenames;
+      }
+      await Util.sleep(0.2);
     }
-    return filename;
   };
 
 }

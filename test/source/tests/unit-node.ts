@@ -8,7 +8,7 @@ import { PgpHash } from '../core/crypto/pgp/pgp-hash';
 import { TestVariant, Util } from '../util';
 import chai = require('chai');
 import chaiAsPromised = require('chai-as-promised');
-import { KeyUtil, ExtendedKeyInfo } from '../core/crypto/key';
+import { KeyUtil, KeyInfoWithIdentityAndOptionalPp } from '../core/crypto/key';
 import { UnreportableError } from '../platform/catch.js';
 import { Buf } from '../core/buf';
 import { OpenPGPKey } from '../core/crypto/pgp/openpgp-key';
@@ -184,7 +184,7 @@ export const defineUnitNodeTests = (testVariant: TestVariant) => {
       writeFileSync("./test.p12", buf); */
       const key = await KeyUtil.parse(testConstants.smimeCert);
       expect(key.id).to.equal('1D695D97A7C8A473E36C6E1D8C150831E4061A74');
-      expect(key.type).to.equal('x509');
+      expect(key.family).to.equal('x509');
       expect(key.usableForEncryption).to.equal(true);
       expect(key.usableForSigning).to.equal(true);
       expect(key.usableForEncryptionButExpired).to.equal(false);
@@ -314,7 +314,7 @@ sOLAw7KgpiL2+0v777saxSO5vtufJCKk4OOEaVDufeijlejKTM+H7twVer4iGqiW
       expect(key.allIds.length).to.equal(2);
       expect(key.allIds[0]).to.equal('3449178FCAAF758E24CB68BE62CB4E6F9ECA6FA1');
       expect(key.allIds[1]).to.equal('2D3391762FAC9394F7D5E9EDB30FE36B3AEC2F8F');
-      expect(key.type).to.equal('openpgp');
+      expect(key.family).to.equal('openpgp');
       expect(key.usableForEncryption).equal(false);
       expect(key.usableForSigning).equal(false);
       expect(key.usableForEncryptionButExpired).equal(true);
@@ -386,7 +386,7 @@ cmKFmmDYm+rrWuAv6Q==
       expect(key.allIds.length).to.equal(2);
       expect(key.allIds[0]).to.equal('7C3B38BB2C8A7E693C29DF455C08033166AF91E3');
       expect(key.allIds[1]).to.equal('28A4CCBFA1AF056C3B73EA4DECF8F9D42D8DFED8');
-      expect(key.type).to.equal('openpgp');
+      expect(key.family).to.equal('openpgp');
       expect(key.usableForEncryption).equal(true);
       expect(key.usableForSigning).equal(true);
       expect(key.usableForEncryptionButExpired).equal(false);
@@ -485,7 +485,7 @@ zZFGf6poIjKUC8V2Zww6
       expect(errs.length).to.equal(0);
       expect(keys.some(key => key.id === '5A5F75AEA28751C3EE8CFFC3AC5F0CE1BB2B99DD')).to.equal(true);
       expect(keys.some(key => key.id === 'BBC75684E46EF0948D31359992C4E7841B3AFF74')).to.equal(true);
-      expect(keys.every(key => key.type === 'openpgp')).to.equal(true);
+      expect(keys.every(key => key.family === 'openpgp')).to.equal(true);
       t.pass();
     });
 
@@ -556,7 +556,7 @@ vpQiyk4ceuTNkUZ/qmgiMpQLxXZnDDo=
       expect(errs.length).to.equal(0);
       expect(keys.some(key => key.id === '5A5F75AEA28751C3EE8CFFC3AC5F0CE1BB2B99DD')).to.equal(true);
       expect(keys.some(key => key.id === 'BBC75684E46EF0948D31359992C4E7841B3AFF74')).to.equal(true);
-      expect(keys.every(key => key.type === 'openpgp')).to.equal(true);
+      expect(keys.every(key => key.family === 'openpgp')).to.equal(true);
       t.pass();
     });
 
@@ -565,7 +565,7 @@ vpQiyk4ceuTNkUZ/qmgiMpQLxXZnDDo=
       expect(keys.length).to.equal(1);
       expect(errs.length).to.equal(0);
       expect(keys[0].id).to.equal('1D695D97A7C8A473E36C6E1D8C150831E4061A74');
-      expect(keys[0].type).to.equal('x509');
+      expect(keys[0].family).to.equal('x509');
       t.pass();
     });
 
@@ -642,7 +642,7 @@ ${testConstants.smimeCert}`), { instanceOf: Error, message: `Invalid PEM formatt
       expect(keys.length).to.equal(1);
       expect(errs.length).to.equal(0);
       expect(keys[0].id).to.equal('1D695D97A7C8A473E36C6E1D8C150831E4061A74');
-      expect(keys[0].type).to.equal('x509');
+      expect(keys[0].family).to.equal('x509');
       t.pass();
     });
 
@@ -762,8 +762,8 @@ jLwe8W9IMt765T5x5oux9MmPDXF05xHfm4qfH/BMO3a802x5u2gJjJjuknrFdgXY
       expect(errs.length).to.equal(0);
       expect(keys.some(key => key.id === '1D695D97A7C8A473E36C6E1D8C150831E4061A74')).to.equal(true);
       expect(keys.some(key => key.id === '3449178FCAAF758E24CB68BE62CB4E6F9ECA6FA1')).to.equal(true);
-      expect(keys.some(key => key.type === 'openpgp')).to.equal(true);
-      expect(keys.some(key => key.type === 'x509')).to.equal(true);
+      expect(keys.some(key => key.family === 'openpgp')).to.equal(true);
+      expect(keys.some(key => key.family === 'x509')).to.equal(true);
       t.pass();
     });
 
@@ -921,9 +921,9 @@ jSB6A93JmnQGIkAem/kzGkKclmfAdGfc4FS+3Cn+6Q==Xmrz
       const m = await opgp.message.readArmored(Buf.fromUint8(data).toUtfStr());
       const parsed1 = await KeyUtil.parse(key1.private);
       const parsed2 = await KeyUtil.parse(key2.private);
-      const kisWithPp: ExtendedKeyInfo[] = [ // supply both key1 and key2 for decrypt
-        { ... await KeyUtil.typedKeyInfoObj(parsed1), passphrase },
-        { ... await KeyUtil.typedKeyInfoObj(parsed2), passphrase },
+      const kisWithPp: KeyInfoWithIdentityAndOptionalPp[] = [ // supply both key1 and key2 for decrypt
+        { ... await KeyUtil.keyInfoObj(parsed1), passphrase },
+        { ... await KeyUtil.keyInfoObj(parsed2), passphrase },
       ];
       // we are testing a private method here because the outcome of this method is not directly testable from the
       //   public method that uses it. It only makes the public method faster, which is hard to test.
@@ -1022,7 +1022,7 @@ jSB6A93JmnQGIkAem/kzGkKclmfAdGfc4FS+3Cn+6Q==Xmrz
       const pubkeys = [await KeyUtil.parse(justPrimaryPub)];
       const encrypted = await MsgUtil.encryptMessage({ pubkeys, data, armor: true }) as PgpMsgMethod.EncryptPgpArmorResult;
       const parsed = await KeyUtil.parse(prvEncryptForSubkeyOnlyProtected);
-      const kisWithPp: ExtendedKeyInfo[] = [{ ... await KeyUtil.typedKeyInfoObj(parsed), type: parsed.type, passphrase }];
+      const kisWithPp: KeyInfoWithIdentityAndOptionalPp[] = [{ ... await KeyUtil.keyInfoObj(parsed), family: parsed.family, passphrase }];
       const decrypted = await MsgUtil.decryptMessage({ kisWithPp, encryptedData: encrypted.data, verificationPubs: [] });
       // todo - later we'll have an org rule for ignoring this, and then it will be expected to pass as follows:
       // expect(decrypted.success).to.equal(true);
@@ -1884,7 +1884,7 @@ PBcqDCjq5jgMhU1oyVclRK7jJdmu0Azvwo2lleLAFLdCzHEXWXUz
       const parsed = await KeyUtil.parseBinary(key, 'test');
       expect(parsed.length).to.be.equal(1);
       expect(parsed[0].id).to.be.equal('60EFFE4DF7B2114A77021459C273F0AA864AFF7F');
-      expect(parsed[0].type).to.be.equal('x509');
+      expect(parsed[0].family).to.be.equal('x509');
       expect(parsed[0].emails.length).to.be.equal(1);
       expect(parsed[0].emails[0]).to.be.equal('test@example.com');
       expect(parsed[0].isPrivate).to.be.equal(true);
@@ -1896,7 +1896,7 @@ PBcqDCjq5jgMhU1oyVclRK7jJdmu0Azvwo2lleLAFLdCzHEXWXUz
       const p8 = readFileSync("test/samples/smime/human-pwd-pem.txt", 'utf8');
       let parsed = await KeyUtil.parse(p8);
       expect(parsed.id).to.equal('9B5FCFF576A032495AFE77805354351B39AB3BC6');
-      expect(parsed.type).to.equal('x509');
+      expect(parsed.family).to.equal('x509');
       expect(parsed.emails.length).to.equal(1);
       expect(parsed.emails[0]).to.equal('human@flowcrypt.com');
       expect(parsed.isPrivate).to.equal(true);
@@ -1915,7 +1915,7 @@ PBcqDCjq5jgMhU1oyVclRK7jJdmu0Azvwo2lleLAFLdCzHEXWXUz
       expect(armoredAfterDecryption).to.include('-----BEGIN RSA PRIVATE KEY-----');
       parsed = await KeyUtil.parse(armoredAfterDecryption);
       expect(parsed.id).to.equal('9B5FCFF576A032495AFE77805354351B39AB3BC6');
-      expect(parsed.type).to.equal('x509');
+      expect(parsed.family).to.equal('x509');
       expect(parsed.emails.length).to.equal(1);
       expect(parsed.emails[0]).to.equal('human@flowcrypt.com');
       expect(parsed.isPrivate).to.equal(true);
@@ -1928,7 +1928,7 @@ PBcqDCjq5jgMhU1oyVclRK7jJdmu0Azvwo2lleLAFLdCzHEXWXUz
       const p8 = readFileSync("test/samples/smime/human-pwd-shuffled-pem.txt", 'utf8');
       let parsed = await KeyUtil.parse(p8);
       expect(parsed.id).to.equal('9B5FCFF576A032495AFE77805354351B39AB3BC6');
-      expect(parsed.type).to.equal('x509');
+      expect(parsed.family).to.equal('x509');
       expect(parsed.emails.length).to.equal(1);
       expect(parsed.emails[0]).to.equal('human@flowcrypt.com');
       expect(parsed.isPrivate).to.equal(true);
@@ -1947,7 +1947,7 @@ PBcqDCjq5jgMhU1oyVclRK7jJdmu0Azvwo2lleLAFLdCzHEXWXUz
       expect(armoredAfterDecryption).to.include('-----BEGIN RSA PRIVATE KEY-----');
       parsed = await KeyUtil.parse(armoredAfterDecryption);
       expect(parsed.id).to.equal('9B5FCFF576A032495AFE77805354351B39AB3BC6');
-      expect(parsed.type).to.equal('x509');
+      expect(parsed.family).to.equal('x509');
       expect(parsed.emails.length).to.equal(1);
       expect(parsed.emails[0]).to.equal('human@flowcrypt.com');
       expect(parsed.isPrivate).to.equal(true);
@@ -1960,7 +1960,7 @@ PBcqDCjq5jgMhU1oyVclRK7jJdmu0Azvwo2lleLAFLdCzHEXWXUz
       const p8 = readFileSync("test/samples/smime/human-unprotected-pem.txt", 'utf8');
       let parsed = await KeyUtil.parse(p8);
       expect(parsed.id).to.equal('9B5FCFF576A032495AFE77805354351B39AB3BC6');
-      expect(parsed.type).to.equal('x509');
+      expect(parsed.family).to.equal('x509');
       expect(parsed.emails.length).to.equal(1);
       expect(parsed.emails[0]).to.equal('human@flowcrypt.com');
       expect(parsed.isPrivate).to.equal(true);
@@ -1976,7 +1976,7 @@ PBcqDCjq5jgMhU1oyVclRK7jJdmu0Azvwo2lleLAFLdCzHEXWXUz
       expect(armoredAfterEncryption).to.not.include('-----BEGIN PRIVATE KEY-----');
       parsed = await KeyUtil.parse(armoredAfterEncryption);
       expect(parsed.id).to.equal('9B5FCFF576A032495AFE77805354351B39AB3BC6');
-      expect(parsed.type).to.equal('x509');
+      expect(parsed.family).to.equal('x509');
       expect(parsed.emails.length).to.equal(1);
       expect(parsed.emails[0]).to.equal('human@flowcrypt.com');
       expect(parsed.isPrivate).to.equal(true);

@@ -105,8 +105,7 @@ export class PgpBlockViewDecryptModule {
         this.view.renderModule.renderText('Decrypting...');
         await this.decryptAndRender(encryptedData, verificationPubs);
       } else {
-        const primaryKi = await KeyStore.getFirstOptional(this.view.acctEmail);
-        if (!result.longids.chosen && !primaryKi) {
+        if (!result.longids.chosen && !(await KeyStore.get(this.view.acctEmail)).length) {
           await this.view.errorModule.renderErr(Lang.pgpBlock.notProperlySetUp + this.view.errorModule.btnHtml('FlowCrypt settings', 'green settings'), undefined);
         } else if (result.error.type === DecryptErrTypes.keyMismatch) {
           await this.view.errorModule.handlePrivateKeyMismatch(kisWithPp.map(ki => ki.public), encryptedData, this.isPwdMsgBasedOnMsgSnippet === true);

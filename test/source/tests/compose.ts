@@ -413,6 +413,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
     }));
 
     for (const inputMethod of ['mouse', 'keyboard']) {
+
       ava.default(`compose - reply - pass phrase dialog - dialog ok (${inputMethod})`, testWithBrowser('compatibility', async (t, browser) => {
         const pp = Config.key('flowcrypt.compatibility.1pp1').passphrase;
         const { inboxPage, replyFrame } = await setRequirePassPhraseAndOpenRepliedMessage(t, browser, pp);
@@ -491,13 +492,11 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         await composeFrame.waitAndClick('@action-send', { delay: 2 });
         const passphraseDialog = await inboxPage.getFrame(['passphrase.htm']);
         expect(passphraseDialog.frame.isDetached()).to.equal(false);
-        await Util.sleep(0.5);
-        expect(await composeFrame.read('@action-send')).to.eq('Loading...');
+        await composeFrame.waitForContent('@action-send', 'Loading...');
         await passphraseDialog.waitForContent('@passphrase-text', 'Enter FlowCrypt pass phrase to sign email');
         await passphraseDialog.waitForContent('@which-key', '47FB 0318 3E03 A8ED 44E3 BBFC CEA2 D53B B9D2 4871');
         await ComposePageRecipe.cancelPassphraseDialog(inboxPage, inputMethod);
-        await Util.sleep(0.5);
-        expect(await composeFrame.read('@action-send')).to.eq('Encrypt, Sign and Send');
+        await composeFrame.waitForContent('@action-send', 'Encrypt, Sign and Send');
       }));
     } // end of tests per inputMethod
 
@@ -821,7 +820,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       const fileText = await composePage.awaitDownloadTriggeredByClicking(async () => {
         await attachment.click('#download');
       });
-      expect(fileText.toString()).to.equal(`small text file\nnot much here\nthis worked\n`);
+      expect(Object.values(fileText).pop()!.toString()).to.equal(`small text file\nnot much here\nthis worked\n`);
       await composePage.close();
     }));
 
@@ -1245,7 +1244,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       const fileText = await inboxPage.awaitDownloadTriggeredByClicking(async () => {
         await composeFrame.click('.qq-file-id-0');
       });
-      expect(fileText.toString()).to.equal(`small text file\nnot much here\nthis worked\n`);
+      expect(Object.values(fileText).pop()!.toString()).to.equal(`small text file\nnot much here\nthis worked\n`);
       await composeFrame.waitAndClick('@action-send', { delay: 2 });
       await inboxPage.waitTillGone('@container-new-message');
     }));
@@ -1265,7 +1264,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       const fileText = await inboxPage.awaitDownloadTriggeredByClicking(async () => {
         await composeFrame.click('.qq-file-id-0');
       });
-      expect(fileText.toString()).to.equal(`small text file\nnot much here\nthis worked\n`);
+      expect(Object.values(fileText).pop()!.toString()).to.equal(`small text file\nnot much here\nthis worked\n`);
       await composeFrame.waitAndClick('@action-send', { delay: 2 });
       await inboxPage.waitTillGone('@container-new-message');
     }));
@@ -1595,6 +1594,36 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       await ComposePageRecipe.closed(composePage);
       // this test is using PwdEncryptedMessageWithFesIdTokenTestStrategy to check sent result based on subject "PWD encrypted message with flowcrypt.com/api"
       // also see '/api/v1/message' in fes-endpoints.ts mock
+    }));
+
+    ava.default('first.key.revoked@key-manager-autoimport-no-prv-create.flowcrypt.test - selects valid own key when saving draft or sending', testWithBrowser(undefined, async (t, browser) => {
+      const acct = 'first.key.revoked@key-manager-autoimport-no-prv-create.flowcrypt.test';
+      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
+      await SetupPageRecipe.autoSetupWithEKM(settingsPage);
+      const composePage = await ComposePageRecipe.openStandalone(t, browser, acct);
+      await ComposePageRecipe.fillMsg(composePage, { to: 'mock.only.pubkey@flowcrypt.com' }, 'choose valid key');
+      await ComposePageRecipe.noToastAppears(composePage); // no error saving draft
+      await ComposePageRecipe.sendAndClose(composePage); // no error sending msg
+    }));
+
+    ava.default('revoked@key-manager-autoimport-no-prv-create.flowcrypt.test - shows modal not submitting to attester', testWithBrowser(undefined, async (t, browser) => {
+      const acct = 'revoked@key-manager-autoimport-no-prv-create.flowcrypt.test';
+      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
+      await SetupPageRecipe.autoSetupWithEKM(settingsPage, { expectWarnModal: 'Public key not usable - not sumbitting to Attester' });
+    }));
+
+    ava.default('revoked@key-manager-autoimport-no-prv-create-no-attester-submit.flowcrypt.test - cannot draft or send msg', testWithBrowser(undefined, async (t, browser) => {
+      const acct = 'revoked@key-manager-autoimport-no-prv-create-no-attester-submit.flowcrypt.test';
+      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
+      await SetupPageRecipe.autoSetupWithEKM(settingsPage);
+      const composePage = await ComposePageRecipe.openStandalone(t, browser, acct);
+      await ComposePageRecipe.fillMsg(composePage, { to: 'mock.only.pubkey@flowcrypt.com' }, 'no valid key');
+      await ComposePageRecipe.waitForToastToAppearAndDisappear(composePage, 'Draft not saved: Error: Your account keys are revoked');
+      await composePage.waitAndClick('@action-send', { delay: 1 });
+      await PageRecipe.waitForModalAndRespond(composePage, 'error', {
+        contentToCheck: 'Failed to send message due to: Error: Could not find account openpgp key usable for signing this encrypted message',
+        clickOn: 'confirm'
+      });
     }));
 
   }
