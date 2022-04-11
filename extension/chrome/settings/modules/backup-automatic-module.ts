@@ -31,7 +31,7 @@ export class BackupAutomaticModule extends ViewModule<BackupView> {
       throw new UnreportableError('Key not protected with a pass phrase, skipping');
     }
     try {
-      await this.view.manualModule.doBackupOnEmailProvider(prvs.map(prv => prv.keyInfo.private));
+      await this.view.manualModule.doBackupOnEmailProvider(prvs.map(prv => prv.keyInfo));
       await this.view.renderBackupDone(1);
     } catch (e) {
       if (ApiErr.isAuthErr(e)) {
