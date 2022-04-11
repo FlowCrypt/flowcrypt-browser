@@ -32,6 +32,7 @@ export class GeneralMailFormatter {
       return { senderKi: signingKey!.keyInfo, msg: await new SignedMsgMailFormatter(view).sendableMsg(newMsgData, signingKey!.key) };
     }
     // encrypt (optionally sign)
+    view.S.now('send_btn_text').text('Encrypting...');
     const singleFamilyKeys = await view.storageModule.collectSingleFamilyKeys(recipientsEmails, newMsgData.from, choices.sign);
     if (singleFamilyKeys.emailsWithoutPubkeys.length) {
       await view.errModule.throwIfEncryptionPasswordInvalid(newMsgData);
@@ -45,7 +46,6 @@ export class GeneralMailFormatter {
         throw new UnreportableError(`Could not find account ${singleFamilyKeys.family} key usable for signing this encrypted message`);
       }
     }
-    view.S.now('send_btn_text').text('Encrypting...');
     return { senderKi: signingKey?.keyInfo, msg: await new EncryptedMsgMailFormatter(view).sendableMsg(newMsgData, singleFamilyKeys.pubkeys, signingKey?.key) };
   };
 
