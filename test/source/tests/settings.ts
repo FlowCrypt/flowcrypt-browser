@@ -607,7 +607,9 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       // backing up to file when two keys are checked
       const backupFileRawData2 = await backupPage.awaitDownloadTriggeredByClicking('@action-backup-step3manual-continue', 2);
       console.log("*** FILES(3):" + JSON.stringify(Object.keys(backupFileRawData1)));
-      const { keys: keys2 } = await KeyUtil.readMany(Buf.fromUtfStr(Buf.concat(Object.values(backupFileRawData2)).toString()));
+      const { keys: keys2 } = await KeyUtil.readMany(Buf.fromUtfStr(
+        backupFileRawData2['flowcrypt-backup-flowcrypttestkeymultiplegmailcom-515431151DDD3EA232B37A4C98ACFA1EADAB5B92.asc']
+          .toString()));
       expect(keys2.length).to.equal(2);
       await backupPage.close();
     }));
@@ -672,7 +674,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       await backupPage.waitAndClick('@input-backup-step3manual-file');
       // one passphrase is not known but successfully guessed
       const downloadedFiles = await backupPage.awaitDownloadTriggeredByClicking('@action-backup-step3manual-continue', 2);
-      console.log("*** FILES(2):" + JSON.stringify(Object.keys(downloadedFiles)));
+      console.log("*** FILES(4):" + JSON.stringify(Object.keys(downloadedFiles)));
       const { keys } = await KeyUtil.readMany(Buf.fromUtfStr(Buffer.concat(Object.values(downloadedFiles)).toString()));
       expect(keys.length).to.equal(2);
       await backupPage.close();
@@ -782,7 +784,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         '&type=openpgp&id=515431151DDD3EA232B37A4C98ACFA1EADAB5B92&idToken=fakeheader.01'));
       await backupPage.waitAndClick('@input-backup-step3manual-file');
       const downloadedFiles = await backupPage.awaitDownloadTriggeredByClicking('@action-backup-step3manual-continue');
-      console.log("*** FILES(2):" + JSON.stringify(Object.keys(downloadedFiles)));
+      console.log("*** FILES(5):" + JSON.stringify(Object.keys(downloadedFiles)));
       const { keys } = await KeyUtil.readMany(Buf.fromUtfStr(Object.values(downloadedFiles).pop()!.toString()));
       expect(keys.length).to.equal(1);
       expect(keys[0].id).to.equal("515431151DDD3EA232B37A4C98ACFA1EADAB5B92");
