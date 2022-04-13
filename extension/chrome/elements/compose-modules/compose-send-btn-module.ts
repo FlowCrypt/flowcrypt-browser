@@ -13,7 +13,7 @@ import { ComposerUserError } from './compose-err-module.js';
 import { ComposeSendBtnPopoverModule } from './compose-send-btn-popover-module.js';
 import { GeneralMailFormatter } from './formatters/general-mail-formatter.js';
 import { GmailParser, GmailRes } from '../../../js/common/api/email-provider/gmail/gmail-parser.js';
-import { KeyInfo } from '../../../js/common/core/crypto/key.js';
+import { KeyInfoWithIdentity } from '../../../js/common/core/crypto/key.js';
 import { getUniqueRecipientEmails, SendBtnTexts } from './compose-types.js';
 import { SendableMsg } from '../../../js/common/api/email-provider/sendable-msg.js';
 import { Ui } from '../../../js/common/browser/ui.js';
@@ -115,12 +115,10 @@ export class ComposeSendBtnModule extends ViewModule<ComposeView> {
       const emails = getUniqueRecipientEmails(newMsgData.recipients);
       await ContactStore.update(undefined, emails, { lastUse: Date.now() });
       const msgObj = await GeneralMailFormatter.processNewMsg(this.view, newMsgData);
-      if (msgObj) {
-        for (const msg of msgObj.msgs) {
-          await this.finalizeSendableMsg({ msg, senderKi: msgObj.senderKi });
-        }
-        await this.doSendMsgs(msgObj.msgs);
+      for (const msg of msgObj.msgs) {
+        await this.finalizeSendableMsg({ msg, senderKi: msgObj.senderKi });
       }
+      await this.doSendMsgs(msgObj.msgs);
     } catch (e) {
       await this.view.errModule.handleSendErr(e);
     } finally {
@@ -129,7 +127,7 @@ export class ComposeSendBtnModule extends ViewModule<ComposeView> {
     }
   };
 
-  private finalizeSendableMsg = async ({ msg, senderKi }: { msg: SendableMsg, senderKi: KeyInfo | undefined }) => {
+  private finalizeSendableMsg = async ({ msg, senderKi }: { msg: SendableMsg, senderKi: KeyInfoWithIdentity | undefined }) => {
     const choices = this.view.sendBtnModule.popover.choices;
     for (const k of Object.keys(this.additionalMsgHeaders)) {
       msg.headers[k] = this.additionalMsgHeaders[k];
@@ -204,6 +202,7 @@ export class ComposeSendBtnModule extends ViewModule<ComposeView> {
     // and this requests represents second half of uploadable effort. Else this represents all (no previous heavy requests)
     const progressRepresents = this.view.pwdOrPubkeyContainerModule.isVisible() ? 'SECOND-HALF' : 'EVERYTHING';
     let msgSentRes: GmailRes.GmailMsgSend;
+    const operations = [this.view.draftModule.draftDelete()];
     for (const msg of msgs) {
       try {
         this.isSendMessageInProgress = true;
@@ -218,23 +217,19 @@ export class ComposeSendBtnModule extends ViewModule<ComposeView> {
         }
       }
       if (msg.externalId) {
-        this.view.acctServer.messageGatewayUpdate(msg.externalId, msgSentRes.id).catch(Catch.reportErr);
+        operations.push((async (externalId, id) => {
+          const gmailMsg = await this.view.emailProvider.msgGet(id, 'metadata');
+          const messageId = GmailParser.findHeader(gmailMsg, 'message-id');
+          if (messageId) {
+            await this.view.acctServer.messageGatewayUpdate(externalId, messageId);
+          } else {
+            Catch.report('Failed to extract Message-ID of sent message');
+          }
+        })(msg.externalId, msgSentRes.id));
       }
     }
     BrowserMsg.send.notificationShow(this.view.parentTabId, { notification: `Your ${this.view.isReplyBox ? 'reply' : 'message'} has been sent.` });
     BrowserMsg.send.focusBody(this.view.parentTabId); // Bring focus back to body so Gmails shortcuts will work
-    const operations = [this.view.draftModule.draftDelete()];
-    if (msg.externalId) {
-      operations.push((async (externalId, id) => {
-        const gmailMsg = await this.view.emailProvider.msgGet(id, 'metadata');
-        const messageId = GmailParser.findHeader(gmailMsg, 'message-id');
-        if (messageId) {
-          await this.view.acctServer.messageGatewayUpdate(externalId, messageId);
-        } else {
-          Catch.report('Failed to extract Message-ID of sent message');
-        }
-      })(msg.externalId, msgSentRes.id));
-    }
     await Promise.all(operations);
     this.isSendMessageInProgress = false;
     if (this.view.isReplyBox) {

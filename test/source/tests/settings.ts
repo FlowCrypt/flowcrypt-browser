@@ -17,7 +17,7 @@ import { SetupPageRecipe } from './page-recipe/setup-page-recipe';
 import { testConstants } from './tooling/consts';
 import { PageRecipe } from './page-recipe/abstract-page-recipe';
 import { OauthPageRecipe } from './page-recipe/oauth-page-recipe';
-import { KeyInfo, KeyUtil } from '../core/crypto/key';
+import { KeyInfoWithIdentity, KeyUtil } from '../core/crypto/key';
 import { Buf } from '../core/buf';
 import { GoogleData } from '../mock/google/google-data';
 import Parse from './../util/parse';
@@ -383,7 +383,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         cryptup_userforbidstoringpassphraseorgruleflowcrypttest_keys: keys }
         = await settingsPage.getFromLocalStorage(['cryptup_userforbidstoringpassphraseorgruleflowcrypttest_passphrase_B8F687BCDE14435A',
           'cryptup_userforbidstoringpassphraseorgruleflowcrypttest_keys']);
-      expect((keys as KeyInfo[])[0].longid).to.equal('B8F687BCDE14435A');
+      expect((keys as KeyInfoWithIdentity[])[0].longid).to.equal('B8F687BCDE14435A');
       expect(savedPassphrase1).to.be.an('undefined');
       const newPp = `temp ci test pp: ${Util.lousyRandom()}`;
       // decrypt msg, enter pp and make sure it's not stored to the local storage
@@ -594,15 +594,15 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       await backupPage.waitAndClick('[data-id="CB0485FE44FC22FF09AF0DB31B383D0334E38B28"]'); // uncheck
       // backing up to file when only one key is checked
       const backupFileRawData1 = await backupPage.awaitDownloadTriggeredByClicking('@action-backup-step3manual-continue');
-      const { keys: keys1 } = await KeyUtil.readMany(Buf.fromUtfStr(backupFileRawData1.toString()));
+      const { keys: keys1 } = await KeyUtil.readMany(Buf.fromUtfStr(Object.values(backupFileRawData1).pop()!.toString()));
       expect(keys1.length).to.equal(1);
       expect(keys1[0].id).to.equal("515431151DDD3EA232B37A4C98ACFA1EADAB5B92");
       await backupPage.waitAndRespondToModal('info', 'confirm', 'Downloading private key backup file');
       await backupPage.waitAndRespondToModal('info', 'confirm', 'Your private key has been successfully backed up');
       await backupPage.waitAndClick('[data-id="CB0485FE44FC22FF09AF0DB31B383D0334E38B28"]'); // check
       // backing up to file when two keys are checked
-      const backupFileRawData2 = await backupPage.awaitDownloadTriggeredByClicking('@action-backup-step3manual-continue');
-      const { keys: keys2 } = await KeyUtil.readMany(Buf.fromUtfStr(backupFileRawData2.toString()));
+      const backupFileRawData2 = await backupPage.awaitDownloadTriggeredByClicking('@action-backup-step3manual-continue', 2);
+      const { keys: keys2 } = await KeyUtil.readMany(Buf.fromUtfStr(Buf.concat(Object.values(backupFileRawData2)).toString()));
       expect(keys2.length).to.equal(2);
       await backupPage.close();
     }));
@@ -634,7 +634,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       await backupPage.waitAndRespondToModal('info', 'confirm', 'Your private keys have been successfully backed up');
       const sentMsg = (await GoogleData.withInitializedData(acctEmail)).getMessageBySubject('Your FlowCrypt Backup')!;
       const mimeMsg = await Parse.convertBase64ToMimeMsg(sentMsg.raw!);
-      const { keys } = await KeyUtil.readMany(new Buf(mimeMsg.attachments[0]!.content!));
+      const { keys } = await KeyUtil.readMany(Buf.concat(mimeMsg.attachments.map(a => a.content)));
       expect(keys.length).to.equal(2);
       await backupPage.close();
     }));
@@ -666,8 +666,8 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       expect(await backupPage.isDisabled('[data-id="515431151DDD3EA232B37A4C98ACFA1EADAB5B92"]')).to.equal(false);
       await backupPage.waitAndClick('@input-backup-step3manual-file');
       // one passphrase is not known but successfully guessed
-      const backupFileRawData = await backupPage.awaitDownloadTriggeredByClicking('@action-backup-step3manual-continue');
-      const { keys } = await KeyUtil.readMany(Buf.fromUtfStr(backupFileRawData.toString()));
+      const downloadedFiles = await backupPage.awaitDownloadTriggeredByClicking('@action-backup-step3manual-continue', 2);
+      const { keys } = await KeyUtil.readMany(Buf.fromUtfStr(Buffer.concat(Object.values(downloadedFiles)).toString()));
       expect(keys.length).to.equal(2);
       await backupPage.close();
     }));
@@ -775,8 +775,8 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       const backupPage = await browser.newPage(t, TestUrls.extension(`/chrome/settings/modules/backup.htm?acctEmail=${acctEmail}&action=setup_manual` +
         '&type=openpgp&id=515431151DDD3EA232B37A4C98ACFA1EADAB5B92&idToken=fakeheader.01'));
       await backupPage.waitAndClick('@input-backup-step3manual-file');
-      const backupFileRawData = await backupPage.awaitDownloadTriggeredByClicking('@action-backup-step3manual-continue');
-      const { keys } = await KeyUtil.readMany(Buf.fromUtfStr(backupFileRawData.toString()));
+      const downloadedFiles = await backupPage.awaitDownloadTriggeredByClicking('@action-backup-step3manual-continue');
+      const { keys } = await KeyUtil.readMany(Buf.fromUtfStr(Object.values(downloadedFiles).pop()!.toString()));
       expect(keys.length).to.equal(1);
       expect(keys[0].id).to.equal("515431151DDD3EA232B37A4C98ACFA1EADAB5B92");
       await backupPage.waitAndRespondToModal('info', 'confirm', 'Downloading private key backup file');
@@ -812,7 +812,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       const mimeMsg = await Parse.convertBase64ToMimeMsg(sentMsg.raw!);
       const { keys } = await KeyUtil.readMany(new Buf(mimeMsg.attachments[0]!.content!));
       expect(keys.length).to.equal(1);
-      expect(KeyUtil.identityEquals(keys[0], { id: '515431151DDD3EA232B37A4C98ACFA1EADAB5B92', type: 'openpgp' })).to.equal(true);
+      expect(KeyUtil.identityEquals(keys[0], { id: '515431151DDD3EA232B37A4C98ACFA1EADAB5B92', family: 'openpgp' })).to.equal(true);
       await backupPage.close();
     }));
 
@@ -852,7 +852,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         = await settingsPage.getFromLocalStorage(['cryptup_userforbidstoringpassphraseorgruleflowcrypttest_passphrase_B8F687BCDE14435A',
           'cryptup_userforbidstoringpassphraseorgruleflowcrypttest_keys']);
       expect(savedPassphrase1).to.be.an('undefined');
-      expect((keys as KeyInfo[])[0].longid).to.equal('B8F687BCDE14435A');
+      expect((keys as KeyInfoWithIdentity[])[0].longid).to.equal('B8F687BCDE14435A');
       await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
       // open key at index 0
       const myKeyFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, `@action-show-key-0`, ['my_key.htm', 'placement=settings']);
@@ -917,7 +917,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
           'cryptup_userdefaultrememberpassphraseorgruleflowcrypttest_passphrase_07481C8ACF9D49FE',
           'cryptup_userdefaultrememberpassphraseorgruleflowcrypttest_keys']);
       expect((newRules as { flags: string[] }).flags).to.include('DEFAULT_REMEMBER_PASS_PHRASE');
-      expect((keys as KeyInfo[])[0].longid).to.equal('07481C8ACF9D49FE');
+      expect((keys as KeyInfoWithIdentity[])[0].longid).to.equal('07481C8ACF9D49FE');
       expect(savedPassphrase2).not.to.be.an('undefined');
       await newSettingsPage.close();
       await settingsPage.close();
@@ -951,7 +951,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
           'cryptup_userforbidstoringpassphraseorgruleflowcrypttest_keys',
           'cryptup_userforbidstoringpassphraseorgruleflowcrypttest_passphrase_07481C8ACF9D49FE']);
       expect((newRules as { flags: string[] }).flags).to.include('FORBID_STORING_PASS_PHRASE');
-      expect((keys as KeyInfo[])[0].longid).to.equal('07481C8ACF9D49FE');
+      expect((keys as KeyInfoWithIdentity[])[0].longid).to.equal('07481C8ACF9D49FE');
       expect(savedPassphrase2).to.be.an('undefined');
       await newSettingsPage.close();
       await settingsPage.close();
@@ -963,7 +963,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         cryptup_userforbidstoringpassphraseorgruleflowcrypttest_keys: keys1 }
         = await settingsPage.getFromLocalStorage(['cryptup_userforbidstoringpassphraseorgruleflowcrypttest_passphrase_B8F687BCDE14435A',
           'cryptup_userforbidstoringpassphraseorgruleflowcrypttest_keys']);
-      expect((keys1 as KeyInfo[])[0].longid).to.equal('B8F687BCDE14435A');
+      expect((keys1 as KeyInfoWithIdentity[])[0].longid).to.equal('B8F687BCDE14435A');
       expect(savedPassphrase1).to.be.an('undefined');
       await SettingsPageRecipe.addKeyTest(t, browser, acctEmail, testConstants.testKeyMultiple98acfa1eadab5b92, '1234',
         { isSavePassphraseChecked: false, isSavePassphraseHidden: true });
@@ -971,7 +971,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         cryptup_userforbidstoringpassphraseorgruleflowcrypttest_keys: keys2 }
         = await settingsPage.getFromLocalStorage(['cryptup_userforbidstoringpassphraseorgruleflowcrypttest_passphrase_98ACFA1EADAB5B92',
           'cryptup_userforbidstoringpassphraseorgruleflowcrypttest_keys']);
-      expect((keys2 as KeyInfo[]).map(ki => ki.longid)).to.include.members(['B8F687BCDE14435A', '98ACFA1EADAB5B92']);
+      expect((keys2 as KeyInfoWithIdentity[]).map(ki => ki.longid)).to.include.members(['B8F687BCDE14435A', '98ACFA1EADAB5B92']);
       expect(savedPassphrase2).to.be.an('undefined');
     }));
 

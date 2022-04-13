@@ -2,7 +2,7 @@
 
 import { Env } from '../../browser/env.js';
 import { GoogleAuth } from '../../api/email-provider/gmail/google-auth.js';
-import { KeyInfo } from '../../core/crypto/key.js';
+import { KeyInfoWithIdentity, StoredKeyInfo } from '../../core/crypto/key.js';
 import { Dict } from '../../core/common.js';
 import { DomainRulesJson } from '../../org-rules.js';
 import { BrowserMsg, BgNotReadyErr } from '../../browser/browser-msg.js';
@@ -40,7 +40,7 @@ export type SendAsAlias = {
 };
 
 export type AcctStoreDict = {
-  keys?: KeyInfo[];
+  keys?: (StoredKeyInfo | KeyInfoWithIdentity)[]; // todo - migrate to KeyInfoWithIdentity only
   notification_setup_needed_dismissed?: boolean;
   email_provider?: EmailProvider;
   google_token_scopes?: string[]; // these are actuall scope urls the way the provider expects them

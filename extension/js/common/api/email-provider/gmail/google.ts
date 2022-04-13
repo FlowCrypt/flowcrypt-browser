@@ -56,9 +56,9 @@ export class Google {
       GoogleAuth.apiGoogleCallRetryAuthErrorOneTime(acctEmail,
         { xhr, url: searchOtherContactsUrl, method, data, headers, contentType, crossDomain: true, async: true }) as Promise<GmailRes.GoogleContacts>
     ]);
-    const primaryContacts = contacts[0].results || [];
+    const userContacts = contacts[0].results || [];
     const otherContacts = contacts[1].results || [];
-    const contactsMerged = [...primaryContacts, ...otherContacts];
+    const contactsMerged = [...userContacts, ...otherContacts];
     return contactsMerged
       .filter(entry => !!(entry.person?.emailAddresses || []).find(email => email.metadata.primary === true)) // find all entries that have primary email
       .map(entry => {

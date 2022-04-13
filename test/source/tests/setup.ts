@@ -12,7 +12,7 @@ import { Str } from './../core/common';
 import { MOCK_KM_LAST_INSERTED_KEY } from './../mock/key-manager/key-manager-endpoints';
 import { MOCK_ATTESTER_LAST_INSERTED_PUB } from './../mock/attester/attester-endpoints';
 import { BrowserRecipe } from './tooling/browser-recipe';
-import { KeyInfo, KeyUtil } from '../core/crypto/key';
+import { KeyInfoWithIdentity, KeyUtil } from '../core/crypto/key';
 import { testConstants } from './tooling/consts';
 
 // tslint:disable:no-blank-lines-func
@@ -434,7 +434,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       await Util.sleep(1);
       await settingsPage.notPresent(['@action-open-backup-page']);
       const { cryptup_haspuborgrulestestflowcrypttest_keys: keys } = await settingsPage.getFromLocalStorage(['cryptup_haspuborgrulestestflowcrypttest_keys']);
-      const ki = keys as KeyInfo[];
+      const ki = keys as KeyInfoWithIdentity[];
       expect(ki.length).to.equal(1);
       expect(ki[0].private).to.include('PGP PRIVATE KEY');
       expect(ki[0].private).to.not.include('Version');
@@ -545,7 +545,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       ]);
       expect((rules as { flags: string[] }).flags).not.to.include('FORBID_STORING_PASS_PHRASE');
       expect((rules as { flags: string[] }).flags).to.include('DEFAULT_REMEMBER_PASS_PHRASE');
-      expect((keys as KeyInfo[])[0].longid).to.equal('00B0115807969D75');
+      expect((keys as KeyInfoWithIdentity[])[0].longid).to.equal('00B0115807969D75');
       expect(savedPassphrase).to.equal(passphrase);
     }));
 
@@ -563,7 +563,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       ]);
       expect((rules as { flags: string[] }).flags).to.include('FORBID_STORING_PASS_PHRASE');
       expect((rules as { flags: string[] }).flags).not.to.include('DEFAULT_REMEMBER_PASS_PHRASE');
-      expect((keys as KeyInfo[])[0].longid).to.equal('00B0115807969D75');
+      expect((keys as KeyInfoWithIdentity[])[0].longid).to.equal('00B0115807969D75');
       expect(savedPassphrase).to.be.an('undefined');
     }));
 

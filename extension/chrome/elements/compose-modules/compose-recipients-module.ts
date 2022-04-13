@@ -956,7 +956,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
   };
 
   private formatPubkeyId = (pubkeyInfo: PubkeyInfo): string => {
-    return `${Str.spaced(pubkeyInfo.pubkey.id)} (${pubkeyInfo.pubkey.type})`;
+    return `${Str.spaced(pubkeyInfo.pubkey.id)} (${pubkeyInfo.pubkey.family})`;
   };
 
   private generateRecipientId = (): string => {

@@ -8,7 +8,7 @@ import { BackupView } from './backup.js';
 import { Attachment } from '../../../js/common/core/attachment.js';
 import { SendableMsg } from '../../../js/common/api/email-provider/sendable-msg.js';
 import { GMAIL_RECOVERY_EMAIL_SUBJECTS } from '../../../js/common/core/const.js';
-import { KeyIdentity, KeyInfo, KeyUtil, TypedKeyInfo } from '../../../js/common/core/crypto/key.js';
+import { KeyUtil, KeyInfoWithIdentity } from '../../../js/common/core/crypto/key.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { ApiErr } from '../../../js/common/api/shared/api-error.js';
 import { BrowserMsg, Bm } from '../../../js/common/browser/browser-msg.js';
@@ -41,9 +41,9 @@ export class BackupManualActionModule extends ViewModule<BackupView> {
     this.proceedBtn.click(this.view.setHandlerPrevent('double', () => this.actionManualBackupHandler()));
   };
 
-  public doBackupOnEmailProvider = async (armoredKey: string) => {
+  public doBackupOnEmailProvider = async (encryptedPrvs: KeyInfoWithIdentity[]) => {
     const emailMsg = String(await $.get({ url: '/chrome/emails/email_intro.template.htm', dataType: 'html' }));
-    const emailAttachments = [this.asBackupFile(armoredKey)];
+    const emailAttachments = encryptedPrvs.map(prv => this.asBackupFile(prv));
     const headers = { from: this.view.acctEmail, recipients: { to: [{ email: this.view.acctEmail }] }, subject: GMAIL_RECOVERY_EMAIL_SUBJECTS[0] };
     const msg = await SendableMsg.createPlain(this.view.acctEmail, headers, { 'text/html': emailMsg }, emailAttachments);
     if (this.view.emailProvider === 'gmail') {
@@ -55,36 +55,40 @@ export class BackupManualActionModule extends ViewModule<BackupView> {
 
   private actionManualBackupHandler = async () => {
     const selected = $('input[type=radio][name=input_backup_choice]:checked').val();
-    if (this.view.prvKeysToManuallyBackup.length <= 0) {
+    if (!this.view.identityOfKeysToManuallyBackup.length) {
       await Ui.modal.error('No keys are selected to back up! Please select a key to continue.');
       return;
     }
-    const allKis = await KeyStore.getTypedKeyInfos(this.view.acctEmail);
-    const kinfos = KeyUtil.filterKeys(allKis, this.view.prvKeysToManuallyBackup);
-    if (kinfos.length <= 0) {
+    const keyInfosToBackup = KeyUtil.filterKeysByIdentity(
+      await KeyStore.get(this.view.acctEmail),
+      this.view.identityOfKeysToManuallyBackup
+    );
+    if (!keyInfosToBackup.length) {
       await Ui.modal.error('Sorry, could not extract these keys from storage. Please restart your browser and try again.');
       return;
     }
-    // todo: this check can also be moved to encryptForBackup method when we solve the same passphrase issue (#4060)
-    for (const ki of kinfos) {
-      if (! await this.isPrivateKeyEncrypted(ki)) {
-        await Ui.modal.error('Sorry, cannot back up private key because it\'s not protected with a pass phrase.');
-        return;
-      }
-    }
     if (selected === 'inbox' || selected === 'file') {
       // in setup_manual we don't have passphrase-related message handlers, so limit the checks
-      const encrypted = await this.encryptForBackup(kinfos, { strength: selected === 'inbox' && this.view.action !== 'setup_manual' }, allKis[0]);
-      if (encrypted) {
-        if (selected === 'inbox') {
-          if (!await this.backupOnEmailProviderAndUpdateUi(encrypted)) {
-            return; // some error occured, message displayed, can retry, no reload needed
-          }
-        } else {
-          await this.backupAsFile(encrypted);
+      for (const ki of keyInfosToBackup) {
+        if (! await this.isPrivateKeyEncrypted(ki)) {
+          // todo: this check can also be moved to encryptForBackup method when we solve the same passphrase issue (#4060)
+          await Ui.modal.error('Sorry, cannot back up private key because it\'s not protected with a pass phrase.');
+          return;
         }
-        await this.view.renderBackupDone(kinfos.length);
       }
+      const checkStrength = selected === 'inbox' && this.view.action !== 'setup_manual';
+      const encryptedArmoredPrvs = await this.encryptForBackup(keyInfosToBackup, { checkStrength });
+      if (!encryptedArmoredPrvs) {
+        return; // error modal was already rendered inside encryptForBackup
+      }
+      if (selected === 'inbox') {
+        if (!await this.backupOnEmailProviderAndUpdateUi(encryptedArmoredPrvs)) {
+          return; // some error occured, message displayed, can retry, no reload needed
+        }
+      } else {
+        await this.backupAsFiles(encryptedArmoredPrvs);
+      }
+      await this.view.renderBackupDone(keyInfosToBackup.length);
     } else if (selected === 'print') {
       await this.backupByBrint();
     } else {
@@ -92,12 +96,16 @@ export class BackupManualActionModule extends ViewModule<BackupView> {
     }
   };
 
-  private asBackupFile = (armoredKey: string) => {
-    return new Attachment({ name: `flowcrypt-backup-${this.view.acctEmail.replace(/[^A-Za-z0-9]+/g, '')}.asc`, type: 'application/pgp-keys', data: Buf.fromUtfStr(armoredKey) });
+  private asBackupFile = (prv: KeyInfoWithIdentity) => {
+    return new Attachment({
+      name: `flowcrypt-backup-${this.view.acctEmail.replace(/[^A-Za-z0-9]+/g, '')}-${prv.id}.asc`,
+      type: 'application/pgp-keys',
+      data: Buf.fromUtfStr(prv.private)
+    });
   };
 
-  private encryptForBackup = async (kinfos: TypedKeyInfo[], checks: { strength: boolean }, primaryKeyIdentity: KeyIdentity): Promise<string | undefined> => {
-    const kisWithPp = await Promise.all(kinfos.map(async (ki) => {
+  private encryptForBackup = async (keyInfos: KeyInfoWithIdentity[], checks: { checkStrength: boolean }): Promise<KeyInfoWithIdentity[] | undefined> => {
+    const kisWithPp = await Promise.all(keyInfos.map(async (ki) => {
       const passphrase = await PassphraseStore.get(this.view.acctEmail, ki);
       // test that the key can actually be decrypted with the passphrase provided
       const mismatch = passphrase && !await KeyUtil.decrypt(await KeyUtil.parse(ki.private), passphrase);
@@ -108,10 +116,10 @@ export class BackupManualActionModule extends ViewModule<BackupView> {
       await Ui.modal.error(differentPassphrasesError);
       return undefined;
     }
-    if (checks.strength && distinctPassphrases[0] && !(Settings.evalPasswordStrength(distinctPassphrases[0]).word.pass)) {
+    if (checks.checkStrength && distinctPassphrases[0] && !(Settings.evalPasswordStrength(distinctPassphrases[0]).word.pass)) {
       await Ui.modal.warning('Please change your pass phrase first.\n\nIt\'s too weak for this backup method.');
       // Actually, until #956 is resolved, we can only modify the pass phrase of the first key
-      if (this.view.parentTabId && KeyUtil.identityEquals(kisWithPp[0], primaryKeyIdentity) && kisWithPp[0].passphrase === distinctPassphrases[0]) {
+      if (this.view.parentTabId && kisWithPp[0].passphrase === distinctPassphrases[0]) {
         Settings.redirectSubPage(this.view.acctEmail, this.view.parentTabId, '/chrome/settings/modules/change_passphrase.htm');
       }
       return undefined;
@@ -143,16 +151,16 @@ export class BackupManualActionModule extends ViewModule<BackupView> {
       }
       // re-start the function recursively with newly discovered pass phrases
       // todo: #4059 however, this code is never actually executed, because our backup frame gets wiped out by the passphrase frame
-      return await this.encryptForBackup(kinfos, checks, primaryKeyIdentity);
+      return await this.encryptForBackup(keyInfos, checks);
     }
-    return kinfos.map(ki => ki.private).join('\n'); // todo: remove extra \n ?
+    return keyInfos;
   };
 
-  private backupOnEmailProviderAndUpdateUi = async (data: string): Promise<boolean> => {
+  private backupOnEmailProviderAndUpdateUi = async (encryptedPrvs: KeyInfoWithIdentity[]): Promise<boolean> => {
     const origBtnText = this.proceedBtn.text();
     Xss.sanitizeRender(this.proceedBtn, Ui.spinner('white'));
     try {
-      await this.doBackupOnEmailProvider(data);
+      await this.doBackupOnEmailProvider(encryptedPrvs);
       return true;
     } catch (e) {
       if (ApiErr.isNetErr(e)) {
@@ -172,9 +180,11 @@ export class BackupManualActionModule extends ViewModule<BackupView> {
     }
   };
 
-  private backupAsFile = async (data: string) => { // todo - add a non-encrypted download option
-    const attachment = this.asBackupFile(data);
-    Browser.saveToDownloads(attachment);
+  private backupAsFiles = async (encryptedPrvs: KeyInfoWithIdentity[]) => { // todo - add a non-encrypted download option
+    for (const encryptedArmoredPrv of encryptedPrvs) {
+      const attachment = this.asBackupFile(encryptedArmoredPrv);
+      Browser.saveToDownloads(attachment);
+    }
     await Ui.modal.info('Downloading private key backup file..');
   };
 
@@ -186,7 +196,7 @@ export class BackupManualActionModule extends ViewModule<BackupView> {
     await this.view.renderBackupDone(0);
   };
 
-  private isPrivateKeyEncrypted = async (ki: KeyInfo) => {
+  private isPrivateKeyEncrypted = async (ki: KeyInfoWithIdentity) => {
     const prv = await KeyUtil.parse(ki.private);
     if (await KeyUtil.decrypt(prv, '', undefined, 'OK-IF-ALREADY-DECRYPTED') === true) {
       return false;

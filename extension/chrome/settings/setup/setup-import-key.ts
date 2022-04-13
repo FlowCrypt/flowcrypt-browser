@@ -31,7 +31,7 @@ export class SetupImportKeyModule {
     };
     try {
       const checked = await this.view.keyImportUi.checkPrv(this.view.acctEmail, String($('#step_2b_manual_enter .input_private_key').val()), options.passphrase);
-      if (checked.decrypted.type === 'x509') {
+      if (checked.decrypted.family === 'x509') {
         if (!await Ui.modal.confirm('Using S/MIME as the only key on account is experimental. '
           + 'You should instead import an OpenPGP key here, and then add S/MIME keys as additional keys in FlowCrypt Settings.' +
           '\n\nContinue anyway? (not recommented).')) {

@@ -17,7 +17,7 @@ export class SignedMsgMailFormatter extends BaseMailFormatter {
   public sendableMsg = async (newMsg: NewMsgData, signingPrv: Key): Promise<SendableMsg> => {
     this.view.errModule.debug(`SignedMsgMailFormatter.sendableMsg signing with key: ${signingPrv.id}`);
     const attachments = this.isDraft ? [] : await this.view.attachmentsModule.attachment.collectAttachments();
-    if (signingPrv.type === 'x509') {
+    if (signingPrv.family === 'x509') {
       // todo: attachments, richtext #4046, #4047
       if (this.isDraft) {
         throw new Error('signed-only PKCS#7 drafts are not supported');

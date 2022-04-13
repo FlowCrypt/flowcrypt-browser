@@ -49,8 +49,8 @@ export class OpenPGPKey {
   };
 
   public static asPublicKey = async (pubkey: Key): Promise<Key> => {
-    if (pubkey.type !== 'openpgp') {
-      throw new UnexpectedKeyTypeError(`Key type is ${pubkey.type}, expecting OpenPGP`);
+    if (pubkey.family !== 'openpgp') {
+      throw new UnexpectedKeyTypeError(`Key type is ${pubkey.family}, expecting OpenPGP`);
     }
     if (pubkey.isPrivate) {
       return await OpenPGPKey.convertExternalLibraryObjToKey(OpenPGPKey.extractStrengthUncheckedExternalLibraryObjFromKey(pubkey).toPublic());
@@ -215,7 +215,7 @@ export class OpenPGPKey {
     const missingPrivateKeyForSigning = signingKeyIgnoringExpiration?.keyPacket ? OpenPGPKey.arePrivateParamsMissing(signingKeyIgnoringExpiration.keyPacket) : false;
     const missingPrivateKeyForDecryption = encryptionKeyIgnoringExpiration?.keyPacket ? OpenPGPKey.arePrivateParamsMissing(encryptionKeyIgnoringExpiration.keyPacket) : false;
     Object.assign(key, {
-      type: 'openpgp',
+      family: 'openpgp',
       id: fingerprint.toUpperCase(),
       allIds: keyWithoutWeakPackets.getKeys().map(k => k.getFingerprint().toUpperCase()),
       usableForEncryption: encryptionKey ? true : false,
@@ -445,7 +445,7 @@ export class OpenPGPKey {
 
   public static verify = async (msg: OpenpgpMsgOrCleartext, pubs: PubkeyInfo[]): Promise<VerifyRes> => {
     // todo: double-check if S/MIME ever gets here
-    const validKeys = pubs.filter(x => !x.revoked && x.pubkey.type === 'openpgp').map(x => x.pubkey);
+    const validKeys = pubs.filter(x => !x.revoked && x.pubkey.family === 'openpgp').map(x => x.pubkey);
     // todo: #4172 revoked longid may result in incorrect "Missing pubkey..." output
     const verifyRes: VerifyRes = {
       match: null,  // tslint:disable-line:no-null-keyword
@@ -631,8 +631,8 @@ export class OpenPGPKey {
   };
 
   private static extractExternalLibraryObjFromKey = (pubkey: Key) => {
-    if (pubkey.type !== 'openpgp') {
-      throw new UnexpectedKeyTypeError(`Key type is ${pubkey.type}, expecting OpenPGP`);
+    if (pubkey.family !== 'openpgp') {
+      throw new UnexpectedKeyTypeError(`Key type is ${pubkey.family}, expecting OpenPGP`);
     }
     const opgpKey = (pubkey as unknown as { [internal]: OpenPGP.key.Key })[internal];
     if (!opgpKey) {
@@ -642,8 +642,8 @@ export class OpenPGPKey {
   };
 
   private static extractStrengthUncheckedExternalLibraryObjFromKey = (pubkey: Key) => {
-    if (pubkey.type !== 'openpgp') {
-      throw new UnexpectedKeyTypeError(`Key type is ${pubkey.type}, expecting OpenPGP`);
+    if (pubkey.family !== 'openpgp') {
+      throw new UnexpectedKeyTypeError(`Key type is ${pubkey.family}, expecting OpenPGP`);
     }
     const raw = (pubkey as unknown as { rawKey: OpenPGP.key.Key });
     return raw?.rawKey;

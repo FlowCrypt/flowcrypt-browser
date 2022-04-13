@@ -38,7 +38,7 @@ export class SetupCreateKeyModule {
         await this.view.submitPublicKeys(opts);
         const action = $('#step_2a_manual_create .input_backup_inbox').prop('checked') ? 'setup_automatic' : 'setup_manual';
         // only finalize after backup is done. backup.htm will redirect back to this page with ?action=finalize
-        window.location.href = Url.create('modules/backup.htm', { action, acctEmail: this.view.acctEmail, idToken: this.view.idToken, id: keyIdentity.id, type: keyIdentity.type });
+        window.location.href = Url.create('modules/backup.htm', { action, acctEmail: this.view.acctEmail, idToken: this.view.idToken, id: keyIdentity.id, type: keyIdentity.family });
       } else {
         await this.view.submitPublicKeys(opts);
         await this.view.finalizeSetup();
@@ -73,6 +73,6 @@ export class SetupCreateKeyModule {
     const key = await OpenPGPKey.create(pgpUids, keyAlgo, options.passphrase, expireMonths);
     const prv = await KeyUtil.parse(key.private);
     await this.view.saveKeysAndPassPhrase([prv], options);
-    return { id: prv.id, type: prv.type };
+    return { id: prv.id, family: prv.family };
   };
 }
