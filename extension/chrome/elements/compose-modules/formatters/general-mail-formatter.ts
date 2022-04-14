@@ -47,7 +47,7 @@ export class GeneralMailFormatter {
     }
     view.S.now('send_btn_text').text('Encrypting...');
     return { senderKi: signingKey?.keyInfo, msgs: await new EncryptedMsgMailFormatter(view).sendableMsgs(newMsgData, singleFamilyKeys.pubkeys, signingKey?.key) };
-  }
+  };
 
   private static chooseSigningKeyAndDecryptIt = async (
     view: ComposeView,

@@ -52,6 +52,10 @@ export class Str {
     return name ? `${Str.rmSpecialCharsKeepUtf(name, 'ALLOW-SOME')} <${email}>` : email;
   };
 
+  public static formatEmailList = (list: EmailParts[]): string => {
+    return list.map(Str.formatEmailWithOptionalName).join(', ');
+  };
+
   public static prettyPrint = (obj: any) => {
     return (typeof obj === 'object') ? JSON.stringify(obj, undefined, 2).replace(/ /g, '&nbsp;').replace(/\n/g, '<br />') : String(obj);
   };

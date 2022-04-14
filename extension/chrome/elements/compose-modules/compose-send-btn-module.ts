@@ -201,9 +201,10 @@ export class ComposeSendBtnModule extends ViewModule<ComposeView> {
     // if this is a password-encrypted message, then we've already shown progress for uploading to backend
     // and this requests represents second half of uploadable effort. Else this represents all (no previous heavy requests)
     const progressRepresents = this.view.pwdOrPubkeyContainerModule.isVisible() ? 'SECOND-HALF' : 'EVERYTHING';
-    let msgSentRes: GmailRes.GmailMsgSend;
+    const sentIds: string[] = [];
     const operations = [this.view.draftModule.draftDelete()];
     for (const msg of msgs) {
+      let msgSentRes: GmailRes.GmailMsgSend;
       try {
         this.isSendMessageInProgress = true;
         msgSentRes = await this.view.emailProvider.msgSend(msg, (p) => this.renderUploadProgress(p, progressRepresents));
@@ -216,6 +217,7 @@ export class ComposeSendBtnModule extends ViewModule<ComposeView> {
           throw e;
         }
       }
+      sentIds.push(msgSentRes.id);
       if (msg.externalId) {
         operations.push((async (externalId, id) => {
           const gmailMsg = await this.view.emailProvider.msgGet(id, 'metadata');
@@ -233,7 +235,10 @@ export class ComposeSendBtnModule extends ViewModule<ComposeView> {
     await Promise.all(operations);
     this.isSendMessageInProgress = false;
     if (this.view.isReplyBox) {
-      this.view.renderModule.renderReplySuccess(msg, msgSentRes.id);
+      // todo: collect recipients correctly
+      // todo: collect attachments correctly
+      const attachments = msgs.map(m => m.attachments).reduce((a, b) => a.concat(b), []);
+      this.view.renderModule.renderReplySuccess(attachments, msgs[0].recipients, sentIds[0]); // todo:
     } else {
       this.view.renderModule.closeMsg();
     }

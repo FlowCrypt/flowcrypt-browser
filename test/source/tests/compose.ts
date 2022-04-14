@@ -965,6 +965,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       await ComposePageRecipe.fillMsg(composePage, {}, undefined, bodyWithLeadingTabs);
       await composePage.click('@action-send');
       await composePage.waitForContent('@container-reply-msg-successful', bodyWithLeadingTabs);
+      await composePage.waitForContent('@replied-to', 'to: First Last <flowcrypt.compatibility@gmail.com>');
     }));
 
     ava.default('compose - RTL subject', testWithBrowser('compatibility', async (t, browser) => {
