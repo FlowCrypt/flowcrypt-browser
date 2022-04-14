@@ -49,16 +49,21 @@ class PwdEncryptedMessageWithFesIdTokenTestStrategy implements ITestMsgStrategy 
       // legacy
       // todo: remove this test?
       expect((mimeMsg.to as AddressObject).text).to.equal('Mr To <to@example.com>');
-      expect(mimeMsg.cc).to.be.an.undefined;
+      // tslint:disable-next-line:no-unused-expression
+      expect(mimeMsg.cc).to.be.an.undefined; // eslint-disable-line no-unused-expressions
       expect((mimeMsg.bcc as AddressObject).text).to.equal('Mr Bcc <bcc@example.com>');
     } else if (mimeMsg.text?.includes('http://fes.standardsubdomainfes.test:8001/message/FES-MOCK-MESSAGE-FOR-TO@EXAMPLE.COM-ID')) {
       expect((mimeMsg.to as AddressObject).text).to.equal('Mr To <to@example.com>');
-      expect(mimeMsg.cc).to.be.an.undefined;
-      expect(mimeMsg.bcc).to.be.an.undefined;
+      // tslint:disable-next-line:no-unused-expression
+      expect(mimeMsg.cc).to.be.an.undefined; // eslint-disable-line no-unused-expressions
+      // tslint:disable-next-line:no-unused-expression
+      expect(mimeMsg.bcc).to.be.an.undefined; // eslint-disable-line no-unused-expressions
     } else if (mimeMsg.text?.includes('http://fes.standardsubdomainfes.test:8001/message/FES-MOCK-MESSAGE-FOR-BCC@EXAMPLE.COM-ID')) {
       expect((mimeMsg.to as AddressObject).text).to.equal('Mr Bcc <bcc@example.com>');
-      expect(mimeMsg.cc).to.be.an.undefined;
-      expect(mimeMsg.bcc).to.be.an.undefined;
+      // tslint:disable-next-line:no-unused-expression
+      expect(mimeMsg.cc).to.be.an.undefined; // eslint-disable-line no-unused-expressions
+      // tslint:disable-next-line:no-unused-expression
+      expect(mimeMsg.bcc).to.be.an.undefined; // eslint-disable-line no-unused-expressions
     } else {
       throw new HttpClientErr(`Error: cannot find pwd encrypted FES link in:\n\n${mimeMsg.text}`);
     }
