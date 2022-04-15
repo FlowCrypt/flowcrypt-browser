@@ -110,6 +110,7 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
       const downloadedFiles = await myKeyFrame.awaitDownloadTriggeredByClicking('@action-download-prv');
       // It is not possible to have predictable file name here, because key is generated
       // and file name depends on the key ID.
+      console.log('>>> DOWNLOADED FILES: ' + Object.keys(downloadedFiles));
       const key = await KeyUtil.parse(Object.values(downloadedFiles).pop()!.toString());
       expect(key.algo.bits).to.equal(3072);
       expect(key.algo.algorithm).to.equal('rsa_encrypt_sign');
