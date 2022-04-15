@@ -110,8 +110,10 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
       const downloadedFiles = await myKeyFrame.awaitDownloadTriggeredByClicking('@action-download-prv');
       // It is not possible to have predictable file name here, because key is generated
       // and file name depends on the key ID.
+      const fileName = `flowcrypt-backup-usernosubmitorgruleflowcrypttest-0x${fingerprint}.asc`;
       console.log('>>> DOWNLOADED FILES: ' + Object.keys(downloadedFiles));
-      const key = await KeyUtil.parse(Object.values(downloadedFiles).pop()!.toString());
+      console.log('>>> EXPECTED FILE: ' + fileName);
+      const key = await KeyUtil.parse(downloadedFiles[fileName]!.toString());
       expect(key.algo.bits).to.equal(3072);
       expect(key.algo.algorithm).to.equal('rsa_encrypt_sign');
       await myKeyFrame.close();
