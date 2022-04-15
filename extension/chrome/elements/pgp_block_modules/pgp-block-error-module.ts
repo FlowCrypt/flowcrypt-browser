@@ -12,6 +12,7 @@ import { PgpBlockView } from '../pgp_block.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { base64decode } from '../../../js/common/platform/util.js';
+import { GmailRes } from '../../../js/common/api/email-provider/gmail/gmail-parser.js';
 
 export class PgpBlockViewErrorModule {
 
@@ -55,7 +56,8 @@ export class PgpBlockViewErrorModule {
       BrowserMsg.send.notificationShowAuthPopupNeeded(this.view.parentTabId, { acctEmail: this.view.acctEmail });
       await this.renderErr(`Could not load message due to missing auth. ${Ui.retryLink()}`, undefined);
     } else if (e instanceof FormatError) {
-      const emailBody = base64decode(JSON.parse(e.data).parts[0].parts[0].body.data);
+      const data = (JSON.parse(e.data)) as GmailRes.GmailMsg$payload$part;
+      const emailBody = base64decode(data!.parts![0].parts![0].body!.data as string);
       await this.renderErr(Lang.pgpBlock.cantOpen + Lang.pgpBlock.badFormat + Lang.pgpBlock.dontKnowHowOpen(!!this.view.fesUrl), emailBody);
     } else if (ApiErr.isInPrivateMode(e)) {
       await this.renderErr(`FlowCrypt does not work in a Firefox Private Window (or when Firefox Containers are used). Please try in a standard window.`, undefined);
