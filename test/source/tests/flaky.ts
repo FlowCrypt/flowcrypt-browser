@@ -108,9 +108,9 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
       const fingerprint = (await settingsPage.read('.good', true)).split(' ').join('');
       const myKeyFrame = await browser.newPage(t, `chrome/settings/modules/my_key.htm?placement=settings&parentTabId=60%3A0&acctEmail=${acctEmail}&fingerprint=${fingerprint}`);
       const downloadedFiles = await myKeyFrame.awaitDownloadTriggeredByClicking('@action-download-prv');
-      // It is not possible to have predictable file name here, because key is generated
-      // and file name depends on the key ID.
-      const fileName = `flowcrypt-backup-usernosubmitorgruleflowcrypttest-0x${fingerprint}.asc`;
+      // Key ID is last 16 characters of the fingerprint
+      const keyID = fingerprint.substring(fingerprint.length - 16);
+      const fileName = `flowcrypt-backup-usernosubmitorgruleflowcrypttest-0x${keyID}.asc`;
       console.log('>>> DOWNLOADED FILES: ' + Object.keys(downloadedFiles));
       console.log('>>> EXPECTED FILE: ' + fileName);
       const key = await KeyUtil.parse(downloadedFiles[fileName]!.toString());
