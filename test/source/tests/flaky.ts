@@ -111,8 +111,6 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
       // Key ID is last 16 characters of the fingerprint
       const keyID = fingerprint.substring(fingerprint.length - 16);
       const fileName = `flowcrypt-backup-usernosubmitorgruleflowcrypttest-0x${keyID}.asc`;
-      console.log('>>> DOWNLOADED FILES: ' + Object.keys(downloadedFiles));
-      console.log('>>> EXPECTED FILE: ' + fileName);
       const key = await KeyUtil.parse(downloadedFiles[fileName]!.toString());
       expect(key.algo.bits).to.equal(3072);
       expect(key.algo.algorithm).to.equal('rsa_encrypt_sign');
