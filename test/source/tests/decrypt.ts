@@ -85,6 +85,15 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
       });
     }));
 
+    ava.default.only(`decrypt - iso-2022-jp, signed plain text`, testWithBrowser('compatibility', async (t, browser) => {
+      await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
+        content: ["ゾし逸現飲"],
+        encryption: 'not encrypted',
+        signature: 'signed',
+        params: "?frameId=none&msgId=18024d53a24b19ff&senderEmail=&isOutgoing=___cu_false___&acctEmail=flowcrypt.compatibility%40gmail.com"
+      });
+    }));
+
     ava.default(`decrypt - quoted part parsing will not crash browser`, testWithBrowser('compatibility', async (t, browser) => {
       await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
         content: ["point to them directly", "free cert through", "will honestly soon", "dropped significantly"],
