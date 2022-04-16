@@ -108,9 +108,9 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
       const fingerprint = (await settingsPage.read('.good', true)).split(' ').join('');
       const myKeyFrame = await browser.newPage(t, `chrome/settings/modules/my_key.htm?placement=settings&parentTabId=60%3A0&acctEmail=${acctEmail}&fingerprint=${fingerprint}`);
       const downloadedFiles = await myKeyFrame.awaitDownloadTriggeredByClicking('@action-download-prv');
-      // Key ID is last 16 characters of the fingerprint
-      const keyID = fingerprint.substring(fingerprint.length - 16);
-      const fileName = `flowcrypt-backup-usernosubmitorgruleflowcrypttest-0x${keyID}.asc`;
+      // const longid = OpenPGPKey.fingerprintToLongid(fingerprint);
+      const longid = fingerprint.substring(fingerprint.length - 16);
+      const fileName = `flowcrypt-backup-usernosubmitorgruleflowcrypttest-0x${longid}.asc`;
       const key = await KeyUtil.parse(downloadedFiles[fileName]!.toString());
       expect(key.algo.bits).to.equal(3072);
       expect(key.algo.algorithm).to.equal('rsa_encrypt_sign');
