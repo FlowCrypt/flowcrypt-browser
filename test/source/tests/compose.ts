@@ -815,6 +815,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       const fileInput = await composePage.target.$('input[type=file]');
       await fileInput!.uploadFile(`test/samples/${attachmentFilename}`);
       await composePage.waitAndClick('@action-send', { delay: 1 });
+      await composePage.waitForContent('@replied-to', 'to: censored@email.com');
       const attachment = await composePage.getFrame(['attachment.htm', `name=${attachmentFilename}`]);
       await attachment.waitForSelTestState('ready');
       const fileText = await composePage.awaitDownloadTriggeredByClicking(async () => {
@@ -1550,6 +1551,12 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         to: [{ email: 'flowcrypt.compatibility@gmail.com', name: 'First Last' }, { email: 'vladimir@flowcrypt.com' }],
         cc: [{ email: 'limon.monte@gmail.com' }], bcc: [{ email: 'sweetalert2@gmail.com' }]
       });
+      await composePage.waitAndType('@input-password', 'gO0d-pwd');
+      await composePage.waitAndClick('@action-send', { delay: 1 });
+      // test rendering of recipients after successful sending
+      await composePage.waitForContent('@replied-to', 'to: First Last <flowcrypt.compatibility@gmail.com>, vladimir@flowcrypt.com');
+      await composePage.waitForContent('@replied-cc', 'cc: limon.monte@gmail.com');
+      await composePage.waitForContent('@replied-bcc', 'bcc: sweetalert2@gmail.com');
     }));
 
     ava.default('compose - reply all - from !== acctEmail', testWithBrowser('compatibility', async (t, browser) => {

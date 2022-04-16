@@ -123,6 +123,10 @@ class PlainTextMessageTestStrategy implements ITestMsgStrategy {
   };
 }
 
+class NoopTestStrategy implements ITestMsgStrategy {
+  public test = async () => { };
+}
+
 class IncludeQuotedPartTestStrategy implements ITestMsgStrategy {
   private readonly quotedContent: string = [
     'On 2019-06-14 at 23:24, flowcrypt.compatibility@gmail.com wrote:',
@@ -252,6 +256,8 @@ export class TestBySubjectStrategyContext {
       this.strategy = new SmimeSignedMessageStrategy();
     } else if (GMAIL_RECOVERY_EMAIL_SUBJECTS.includes(subject)) {
       this.strategy = new SaveMessageInStorageStrategy();
+    } else if (subject.includes('Re: FROM: flowcrypt.compatibility@gmail.com, TO: flowcrypt.compatibility@gmail.com + vladimir@flowcrypt.com')) {
+      this.strategy = new NoopTestStrategy();
     } else {
       throw new UnsuportableStrategyError(`There isn't any strategy for this subject: ${subject}`);
     }
