@@ -87,7 +87,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
 
     ava.default.only(`decrypt - iso-2022-jp, signed plain text`, testWithBrowser('compatibility', async (t, browser) => {
       await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
-        content: ["ゾし逸現飲"],
+        content: ['テストです\nテスト\n'],
         encryption: 'not encrypted',
         signature: 'signed',
         params: "?frameId=none&msgId=18024d53a24b19ff&senderEmail=&isOutgoing=___cu_false___&acctEmail=flowcrypt.compatibility%40gmail.com"
