@@ -25,10 +25,10 @@ export class PgpBlockViewDecryptModule {
   }
 
   public initialize = async (verificationPubs: string[], forcePullMsgFromApi: boolean) => {
-    let caseId = 0;
+    let debugId = 0;
     try {
       if (this.canReadEmails && this.view.signature && !this.view.signature.parsedSignature && this.view.msgId) {
-        caseId = 1;
+        debugId = 1;
         this.view.renderModule.renderText('Loading signed message...');
         const { raw } = await this.view.gmail.msgGet(this.view.msgId, 'raw');
         this.msgFetchedFromApi = 'raw';
@@ -42,21 +42,23 @@ export class PgpBlockViewDecryptModule {
             parsed.rawSignedContent || parsed.text || parsed.html || mimeMsg.toUtfStr(), 'parse error');
         }
       } else if (this.view.encryptedMsgUrlParam && !forcePullMsgFromApi) { // ascii armored message supplied
-        caseId = 2;
+        debugId = 2;
         this.view.renderModule.renderText(this.view.signature ? 'Verifying...' : 'Decrypting...');
         await this.decryptAndRender(this.view.encryptedMsgUrlParam, verificationPubs);
       } else {  // need to fetch the inline signed + armored or encrypted +armored message block from gmail api
         if (!this.view.msgId) {
-          caseId = 3;
+          debugId = 3;
           Xss.sanitizeRender('#pgp_block', 'Missing msgId to fetch message in pgp_block. ' + Lang.general.contactIfHappensAgain(!!this.view.fesUrl));
           this.view.renderModule.resizePgpBlockFrame();
         } else {
-          caseId = 3;
+          debugId = 3;
           this.view.renderModule.renderText('Retrieving message...');
           const format: GmailResponseFormat = (!this.msgFetchedFromApi) ? 'full' : 'raw';
+          debugId = 30;
           const { armored, plaintext, subject, isPwdMsg } = await this.view.gmail.extractArmoredBlock(this.view.msgId, format, (progress) => {
             this.view.renderModule.renderText(`Retrieving message... ${progress}%`);
           });
+          debugId = 40;
           this.isPwdMsgBasedOnMsgSnippet = isPwdMsg;
           this.view.renderModule.renderText('Decrypting...');
           this.msgFetchedFromApi = format;
@@ -68,7 +70,7 @@ export class PgpBlockViewDecryptModule {
         }
       }
     } catch (e) {
-      await this.view.errorModule.handleInitializeErr(e, caseId);
+      await this.view.errorModule.handleInitializeErr(e, debugId);
     }
   };
 
