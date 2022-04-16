@@ -142,6 +142,7 @@ export class BrowserRecipe {
       }
     }
     const content = await pgpBlockPage.read('@pgp-block-content');
+    console.log(`ACTUAL CONTENT: [${content}]`);
     for (const expectedContent of m.content) {
       if (content.indexOf(expectedContent) === -1) {
         throw new Error(`pgp_block_verify_decrypted_content:missing expected content: ${expectedContent}`);

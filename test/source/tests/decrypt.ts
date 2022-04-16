@@ -90,7 +90,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
         content: ['テストです\nテスト\n'],
         encryption: 'not encrypted',
         signature: 'signed',
-        params: "?frameId=none&message=&msgId=18024d53a24b19ff&senderEmail=&isOutgoing=___cu_false___&acctEmail=flowcrypt.compatibility%40gmail.com"
+        params: "?frameId=none&msgId=18024d53a24b19ff&senderEmail=&isOutgoing=___cu_false___&acctEmail=flowcrypt.compatibility%40gmail.com"
       });
     }));
 
