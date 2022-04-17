@@ -85,7 +85,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
       });
     }));
 
-    ava.default.only(`decrypt - iso-2022-jp, signed plain text`, testWithBrowser('compatibility', async (t, browser) => {
+    ava.default(`decrypt - iso-2022-jp, signed plain text`, testWithBrowser('compatibility', async (t, browser) => {
       await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
         content: ['テストです\nテスト'],
         encryption: 'not encrypted',
