@@ -176,7 +176,7 @@ export class Mime {
                 mimeContent.html = (mimeContent.html || '') + Mime.getNodeContentAsUtfStr(node);
               } else if (nodeType === 'text/plain' && (!Mime.getNodeFilename(node) || Mime.isNodeInline(node))) {
                 mimeContent.text = (mimeContent.text ? `${mimeContent.text}\n\n` : '') + Mime.getNodeContentAsUtfStr(node, true);
-                alert(`text/plain\nAFTER: [${mimeContent.text}]`);
+                // alert(`text/plain\nAFTER: [${mimeContent.text}]`);
               } else if (nodeType === 'text/rfc822-headers') {
                 if (node._parentNode && node._parentNode.headers.subject) {
                   mimeContent.subject = node._parentNode.headers.subject[0].value;
