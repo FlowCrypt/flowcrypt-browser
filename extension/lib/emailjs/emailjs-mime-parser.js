@@ -810,7 +810,8 @@
             }
 
             // override charset for text nodes
-            this.charset = this.contentType.params.charset = 'utf-8';
+            // issue #3520 - do not override it
+            // this.charset = this.contentType.params.charset = 'utf-8';
         }
         this._bodyBuffer = '';
 
