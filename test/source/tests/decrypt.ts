@@ -89,7 +89,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
       await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
         content: ['テストです\nテスト'],
         encryption: 'not encrypted',
-        signature: 'signed',
+        signature: 'could not verify signature: missing pubkey, missing sender info',
         params: "?frameId=none&message=&msgId=18024d53a24b19ff&senderEmail=&isOutgoing=___cu_false___&signature=___cu_true___&acctEmail=flowcrypt.compatibility%40gmail.com"
       });
     }));
