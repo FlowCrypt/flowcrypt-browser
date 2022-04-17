@@ -175,7 +175,7 @@ export class Mime {
                 // AppleMail does this with inline attachments
                 mimeContent.html = (mimeContent.html || '') + Mime.getNodeContentAsUtfStr(node);
               } else if (nodeType === 'text/plain' && (!Mime.getNodeFilename(node) || Mime.isNodeInline(node))) {
-                mimeContent.text = (mimeContent.text ? `${mimeContent.text}\n\n` : '') + Mime.getNodeContentAsUtfStr(node);
+                mimeContent.text = (mimeContent.text ? `${mimeContent.text}\n\n` : '') + Mime.getNodeContentAsUtfStr(node, true);
                 alert(`text/plain\nAFTER: [${mimeContent.text}]`);
               } else if (nodeType === 'text/rfc822-headers') {
                 if (node._parentNode && node._parentNode.headers.subject) {
@@ -394,7 +394,8 @@ export class Mime {
     });
   };
 
-  private static getNodeContentAsUtfStr = (node: MimeParserNode): string => {
+  private static getNodeContentAsUtfStr = (node: MimeParserNode, debug: boolean = false): string => {
+    if (debug) alert(`getNodeContentAsUtfStr: ${node.charset}`);
     if (node.charset && Iso88592.labels.includes(node.charset)) {
       return Iso88592.decode(node.rawContent!); // tslint:disable-line:no-unsafe-any
     }
