@@ -394,8 +394,7 @@ export class Mime {
     });
   };
 
-  private static getNodeContentAsUtfStr = (node: MimeParserNode, debug: boolean = false): string => {
-    if (debug) alert(`getNodeContentAsUtfStr: ${node.charset}`);
+  private static getNodeContentAsUtfStr = (node: MimeParserNode): string => {
     if (node.charset && Iso88592.labels.includes(node.charset)) {
       return Iso88592.decode(node.rawContent!); // tslint:disable-line:no-unsafe-any
     }
