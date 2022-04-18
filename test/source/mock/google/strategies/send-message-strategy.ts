@@ -124,7 +124,7 @@ class PlainTextMessageTestStrategy implements ITestMsgStrategy {
 }
 
 class NoopTestStrategy implements ITestMsgStrategy {
-  public test = async () => { };
+  public test = async () => { }; // tslint:disable-line:no-empty
 }
 
 class IncludeQuotedPartTestStrategy implements ITestMsgStrategy {
