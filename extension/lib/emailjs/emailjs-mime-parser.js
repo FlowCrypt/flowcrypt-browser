@@ -810,13 +810,13 @@
             }
 
             // override charset for text nodes
-            // issue #3520 - do not override ISO-2022-JP
-            if (this.charset?.toUpperCase() !== 'ISO-2022-JP') {
+            // issue #3520 - do not override 7bit econdings and ISO-2022-JPxxx
+            if (!((this.headers['Content-Transfer-Encoding'] && this.headers['Content-Transfer-Encoding'].toLowerCase() === '7bit')
+                || (this.charset && this.charset.toUpperCase().startsWith('ISO-2022-JP')))) {
                 this.charset = this.contentType.params.charset = 'utf-8';
             }
         }
         this._bodyBuffer = '';
-
         this._parser.onbody(this, this.content);
     };
 
