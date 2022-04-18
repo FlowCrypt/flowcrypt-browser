@@ -23,6 +23,7 @@ import { PgpArmor } from '../../../core/crypto/pgp/pgp-armor.js';
 import { SendableMsg } from '../sendable-msg.js';
 import { Xss } from '../../../platform/xss.js';
 import { KeyStore } from '../../../platform/store/key-store.js';
+import { base64decode } from '../../../../../js/common/platform/util.js';
 
 export type GmailResponseFormat = 'raw' | 'full' | 'metadata';
 
@@ -303,7 +304,7 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
       if (plaintext) {
         return { armored: '', plaintext, subject, isPwdMsg };
       }
-      throw new FormatError('Armored message not found', JSON.stringify(gmailMsg.payload, undefined, 2));
+      throw new FormatError('Armored message not found', base64decode(gmailMsg.payload!.parts![0].parts![0].body!.data as string));
     } else { // format === raw
       const mimeMsg = Buf.fromBase64UrlStr(gmailMsg.raw!);
       const decoded = await Mime.decode(mimeMsg);
