@@ -810,8 +810,10 @@
             }
 
             // override charset for text nodes
-            // issue #3520 - do not override it
-            // this.charset = this.contentType.params.charset = 'utf-8';
+            // issue #3520 - do not override ISO-2022-JP
+            if (this.charset?.toUpperCase() !== 'ISO-2022-JP') {
+                this.charset = this.contentType.params.charset = 'utf-8';
+            }
         }
         this._bodyBuffer = '';
 
