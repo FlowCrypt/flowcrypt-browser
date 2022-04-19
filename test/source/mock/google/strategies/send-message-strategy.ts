@@ -242,6 +242,8 @@ export class TestBySubjectStrategyContext {
       this.strategy = new PwdEncryptedMessageWithFlowCryptComApiTestStrategy();
     } else if (subject.includes('PWD encrypted message with FES - ID TOKEN')) {
       this.strategy = new PwdEncryptedMessageWithFesIdTokenTestStrategy();
+    } else if (subject.includes('PWD encrypted message with FES - Reply rendering')) {
+      this.strategy = new SaveMessageInStorageStrategy();
     } else if (subject.includes('Message With Image')) {
       this.strategy = new SaveMessageInStorageStrategy();
     } else if (subject.includes('Message With Test Text')) {

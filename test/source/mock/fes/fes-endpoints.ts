@@ -9,6 +9,51 @@ import { MockJwt } from '../lib/oauth';
 const standardFesUrl = 'fes.standardsubdomainfes.test:8001';
 const issuedAccessTokens: string[] = [];
 
+const processMessageFromUser = (body: string) => {
+  expect(body).to.contain('-----BEGIN PGP MESSAGE-----');
+  expect(body).to.contain('"associateReplyToken":"mock-fes-reply-token"');
+  expect(body).to.contain('"to":["Mr To <to@example.com>"]');
+  expect(body).to.contain('"cc":[]');
+  expect(body).to.contain('"bcc":["Mr Bcc <bcc@example.com>"]');
+  const response =
+  {
+    // todo: do we need to support and test legacy?
+    'url': `http://${standardFesUrl}/message/FES-MOCK-MESSAGE-ID`,
+    'externalId': 'FES-MOCK-EXTERNAL-ID',
+    emailToExternalIdAndUrl: {} as { [email: string]: { url: string, externalId: string } }
+  };
+  response.emailToExternalIdAndUrl['to@example.com'] = {
+    url: `http://${standardFesUrl}/message/FES-MOCK-MESSAGE-FOR-TO@EXAMPLE.COM-ID`,
+    externalId: 'FES-MOCK-EXTERNAL-FOR-TO@EXAMPLE.COM-ID'
+  };
+  response.emailToExternalIdAndUrl['bcc@example.com'] = {
+    url: `http://${standardFesUrl}/message/FES-MOCK-MESSAGE-FOR-BCC@EXAMPLE.COM-ID`,
+    externalId: 'FES-MOCK-EXTERNAL-FOR-BCC@EXAMPLE.COM-ID'
+  };
+  return response;
+}
+
+const processMessageFromUser2 = (body: string) => {
+  expect(body).to.contain('-----BEGIN PGP MESSAGE-----');
+  expect(body).to.contain('"associateReplyToken":"mock-fes-reply-token"');
+  expect(body).to.contain('"to":["sender@domain.com","flowcrypt.compatibility@gmail.com","to@example.com","mock.only.pubkey@flowcrypt.com"]');
+  expect(body).to.contain('"cc":[]');
+  expect(body).to.contain('"bcc":[]');
+  const response =
+  {
+    emailToExternalIdAndUrl: {} as { [email: string]: { url: string, externalId: string } }
+  };
+  response.emailToExternalIdAndUrl['to@example.com'] = {
+    url: `http://${standardFesUrl}/message/FES-MOCK-MESSAGE-FOR-TO@EXAMPLE.COM-ID`,
+    externalId: 'FES-MOCK-EXTERNAL-FOR-TO@EXAMPLE.COM-ID'
+  };
+  response.emailToExternalIdAndUrl['sender@domain.com'] = {
+    url: `http://${standardFesUrl}/message/FES-MOCK-MESSAGE-FOR-SENDER@DOMAIN.COM-ID`,
+    externalId: 'FES-MOCK-EXTERNAL-FOR-SENDER@DOMAIN.COM-ID'
+  };
+  return response;
+}
+
 export const mockFesEndpoints: HandlersDefinition = {
   // standard fes location at https://fes.domain.com
   '/api/': async ({ }, req) => {
@@ -54,31 +99,15 @@ export const mockFesEndpoints: HandlersDefinition = {
   },
   '/api/v1/message': async ({ body }, req) => {
     // body is a mime-multipart string, we're doing a few smoke checks here without parsing it
-    if (req.headers.host === standardFesUrl && req.method === 'POST') {
+    if (req.headers.host === standardFesUrl && req.method === 'POST' && typeof body === 'string') {
       // test: `compose - user@standardsubdomainfes.test:8001 - PWD encrypted message with FES web portal`
       authenticate(req, 'oidc');
-      expect(body).to.contain('-----BEGIN PGP MESSAGE-----');
-      expect(body).to.contain('"associateReplyToken":"mock-fes-reply-token"');
-      expect(body).to.contain('"to":["Mr To <to@example.com>"]');
-      expect(body).to.contain('"cc":[]');
-      expect(body).to.contain('"bcc":["Mr Bcc <bcc@example.com>"]');
-      expect(body).to.contain('"from":"user@standardsubdomainfes.test:8001"');
-      const response =
-      {
-        // todo: do we need to support and test legacy?
-        'url': `http://${standardFesUrl}/message/FES-MOCK-MESSAGE-ID`,
-        'externalId': 'FES-MOCK-EXTERNAL-ID',
-        emailToExternalIdAndUrl: {} as { [email: string]: { url: string, externalId: string } }
-      };
-      response.emailToExternalIdAndUrl['to@example.com'] = {
-        url: `http://${standardFesUrl}/message/FES-MOCK-MESSAGE-FOR-TO@EXAMPLE.COM-ID`,
-        externalId: 'FES-MOCK-EXTERNAL-FOR-TO@EXAMPLE.COM-ID'
-      };
-      response.emailToExternalIdAndUrl['bcc@example.com'] = {
-        url: `http://${standardFesUrl}/message/FES-MOCK-MESSAGE-FOR-BCC@EXAMPLE.COM-ID`,
-        externalId: 'FES-MOCK-EXTERNAL-FOR-BCC@EXAMPLE.COM-ID'
-      };
-      return response;
+      if (body.includes('"from":"user@standardsubdomainfes.test:8001"')) {
+        return processMessageFromUser(body);
+      }
+      if (body.includes('"from":"user2@standardsubdomainfes.test:8001"')) {
+        return processMessageFromUser2(body);
+      }
     }
     throw new HttpClientErr('Not Found', 404);
   },
@@ -92,9 +121,19 @@ export const mockFesEndpoints: HandlersDefinition = {
     }
     throw new HttpClientErr('Not Found', 404);
   },
+  '/api/v1/message/FES-MOCK-EXTERNAL-FOR-SENDER@DOMAIN.COM-ID/gateway': async ({ body }, req) => {
+    if (req.headers.host === standardFesUrl && req.method === 'POST') {
+      // test: `compose - user2@standardsubdomainfes.test:8001 - PWD encrypted message with FES - Reply rendering`
+      authenticate(req, 'oidc');
+      expect(body).to.match(/{"emailGatewayMessageId":"<(.+)@standardsubdomainfes.test:8001>"}/);
+      return {};
+    }
+    throw new HttpClientErr('Not Found', 404);
+  },
   '/api/v1/message/FES-MOCK-EXTERNAL-FOR-TO@EXAMPLE.COM-ID/gateway': async ({ body }, req) => {
     if (req.headers.host === standardFesUrl && req.method === 'POST') {
       // test: `compose - user@standardsubdomainfes.test:8001 - PWD encrypted message with FES web portal`
+      // test: `compose - user2@standardsubdomainfes.test:8001 - PWD encrypted message with FES - Reply rendering`
       authenticate(req, 'oidc');
       expect(body).to.match(/{"emailGatewayMessageId":"<(.+)@standardsubdomainfes.test:8001>"}/);
       return {};

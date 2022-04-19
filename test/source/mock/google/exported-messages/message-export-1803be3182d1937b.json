@@ -1,0 +1,97 @@
+{
+  "acctEmail": "user2@standardsubdomainfes.test:8001",
+  "full": {
+    "id": "1803be3182d1937b",
+    "threadId": "1803be2e506153d2",
+    "labelIds": [
+      "IMPORTANT",
+      "SENT",
+      "INBOX"
+    ],
+    "snippet": "some dummy text",
+    "payload": {
+      "partId": "",
+      "mimeType": "multipart/alternative",
+      "filename": "",
+      "headers": [
+        {
+          "name": "MIME-Version",
+          "value": "1.0"
+        },
+        {
+          "name": "Date",
+          "value": "Mon, 18 Apr 2022 11:56:18 +0300"
+        },
+        {
+          "name": "Subject",
+          "value": "PWD encrypted message with FES - Reply rendering"
+        },
+        {
+          "name": "From",
+          "value": "sender@domain.com"
+        },
+        {
+          "name": "To",
+          "value": "flowcrypt.compatibility@gmail.com, to@example.com, mock.only.pubkey@flowcrypt.com"
+        },
+        {
+          "name": "Content-Type",
+          "value": "multipart/alternative; boundary=\"0000000000001c389105dce9ef23\""
+        }
+      ],
+      "body": {
+        "size": 0
+      },
+      "parts": [
+        {
+          "partId": "0",
+          "mimeType": "text/plain",
+          "filename": "",
+          "headers": [
+            {
+              "name": "Content-Type",
+              "value": "text/plain; charset=\"UTF-8\""
+            }
+          ],
+          "body": {
+            "size": 17,
+            "data": "c29tZSBkdW1teSB0ZXh0DQo="
+          }
+        },
+        {
+          "partId": "1",
+          "mimeType": "text/html",
+          "filename": "",
+          "headers": [
+            {
+              "name": "Content-Type",
+              "value": "text/html; charset=\"UTF-8\""
+            }
+          ],
+          "body": {
+            "size": 38,
+            "data": "PGRpdiBkaXI9Imx0ciI-c29tZSBkdW1teSB0ZXh0PC9kaXY-DQo="
+          }
+        }
+      ]
+    },
+    "sizeEstimate": 595,
+    "historyId": "2271300",
+    "internalDate": "1650272178000"
+  },
+  "attachments": {},
+  "raw": {
+    "id": "1803be3182d1937b",
+    "threadId": "1803be2e506153d2",
+    "labelIds": [
+      "IMPORTANT",
+      "SENT",
+      "INBOX"
+    ],
+    "snippet": "some dummy text",
+    "sizeEstimate": 595,
+    "raw": "TUlNRS1WZXJzaW9uOiAxLjANCkRhdGU6IE1vbiwgMTggQXByIDIwMjIgMTE6NTY6MTggKzAzMDANCk1lc3NhZ2UtSUQ6IDxDQU85Rlk5dnE5ejRqVXE3WnAzUUFuRWtNdC04Y05yQmlxS0hSQngxMTRWYmNMcHN5ZVFAbWFpbC5nbWFpbC5jb20-DQpTdWJqZWN0OiBzb21lIGR1bW15IG1lc3NhZ2UNCkZyb206IEdtYWlsIENJIFRlc3QgPGNpLnRlc3RzLmdtYWlsQGZsb3djcnlwdC5kZXY-DQpUbzogR21haWwgQ0kgVGVzdCA8Y2kudGVzdHMuZ21haWxAZmxvd2NyeXB0LmRldj4NCkNvbnRlbnQtVHlwZTogbXVsdGlwYXJ0L2FsdGVybmF0aXZlOyBib3VuZGFyeT0iMDAwMDAwMDAwMDAwMWMzODkxMDVkY2U5ZWYyMyINCg0KLS0wMDAwMDAwMDAwMDAxYzM4OTEwNWRjZTllZjIzDQpDb250ZW50LVR5cGU6IHRleHQvcGxhaW47IGNoYXJzZXQ9IlVURi04Ig0KDQpzb21lIGR1bW15IHRleHQNCg0KLS0wMDAwMDAwMDAwMDAxYzM4OTEwNWRjZTllZjIzDQpDb250ZW50LVR5cGU6IHRleHQvaHRtbDsgY2hhcnNldD0iVVRGLTgiDQoNCjxkaXYgZGlyPSJsdHIiPnNvbWUgZHVtbXkgdGV4dDwvZGl2Pg0KDQotLTAwMDAwMDAwMDAwMDFjMzg5MTA1ZGNlOWVmMjMtLQ==",
+    "historyId": "2271300",
+    "internalDate": "1650272178000"
+  }
+}
