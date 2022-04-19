@@ -37,6 +37,7 @@ export const Lang = { // tslint:disable-line:variable-name
   },
   pgpBlock: {
     cantOpen: 'Could not open this message with FlowCrypt.\n\n',
+    details: 'Details: ',
     pwdMsgOnlyReadableOnWeb: 'This password-encrypted message (received before installing FlowCrypt?) is only readable on the web.\n\nPlease click "Open Message" above and enter sender-provided message password to open it.\n\nAlternatively, ask sender to re-send it - newly received messages will be readable in inbox.\n\n',
     yourKeyCantOpenImportIfHave: 'Your current key cannot open this message. If you have any other keys available, you should import them now.\n',
     encryptedCorrectlyFileBug: 'It\'s correctly encrypted for you. Please file a bug report if you see this on multiple messages. ',
