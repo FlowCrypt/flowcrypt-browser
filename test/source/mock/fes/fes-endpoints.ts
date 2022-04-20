@@ -39,10 +39,7 @@ const processMessageFromUser2 = (body: string) => {
   expect(body).to.contain('"to":["sender@domain.com","flowcrypt.compatibility@gmail.com","to@example.com","mock.only.pubkey@flowcrypt.com"]');
   expect(body).to.contain('"cc":[]');
   expect(body).to.contain('"bcc":[]');
-  const response =
-  {
-    emailToExternalIdAndUrl: {} as { [email: string]: { url: string, externalId: string } }
-  };
+  const response = { emailToExternalIdAndUrl: {} as { [email: string]: { url: string, externalId: string } } };
   response.emailToExternalIdAndUrl['to@example.com'] = {
     url: `http://${standardFesUrl}/message/FES-MOCK-MESSAGE-FOR-TO@EXAMPLE.COM-ID`,
     externalId: 'FES-MOCK-EXTERNAL-FOR-TO@EXAMPLE.COM-ID'
