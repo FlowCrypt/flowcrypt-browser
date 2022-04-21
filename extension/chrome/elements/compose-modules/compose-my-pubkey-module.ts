@@ -3,17 +3,17 @@
 'use strict';
 
 import { ApiErr } from '../../../js/common/api/shared/api-error.js';
-import { KeyUtil } from '../../../js/common/core/crypto/key.js';
 import { Lang } from '../../../js/common/lang.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { ViewModule } from '../../../js/common/view-module.js';
 import { ComposeView } from '../compose.js';
 import { Str } from '../../../js/common/core/common.js';
+import { KeyStoreUtil } from "../../../js/common/core/crypto/key-store-util.js";
 
 export class ComposeMyPubkeyModule extends ViewModule<ComposeView> {
 
   private toggledManually = false;
-  private wkdFingerprints: { [acctEmail: string]: string[] } = {};
+  private wkdFingerprints: { [acctEmail: string]: string[] | undefined } = {};
 
   public setHandlers = () => {
     this.view.S.cached('icon_pubkey').attr('title', Lang.compose.includePubkeyIconTitle);
@@ -38,13 +38,14 @@ export class ComposeMyPubkeyModule extends ViewModule<ComposeView> {
     (async () => {
       const senderEmail = this.view.senderModule.getSender();
       // todo: disable attaching S/MIME certificate #4075
-      const senderKi = await this.view.storageModule.getKey(senderEmail);
-      const primaryFingerprint = (await KeyUtil.parse(senderKi.private)).id;
+      const parsedPrvs = await KeyStoreUtil.parse(await this.view.storageModule.getAccountKeys(senderEmail));
       // if we have cashed this fingerprint, setAttachPreference(false) rightaway and return
       const cached = this.wkdFingerprints[senderEmail];
-      if (Array.isArray(cached) && cached.includes(primaryFingerprint)) {
-        this.setAttachPreference(false);
-        return;
+      for (const parsedPrv of parsedPrvs.filter(prv => prv.key.usableForEncryption || prv.key.usableForSigning)) {
+        if (cached && cached.includes(parsedPrv.key.id)) {
+          this.setAttachPreference(false); // at least one of our valid keys is on WKD: no need to attach
+          return;
+        }
       }
       const myDomain = Str.getDomainFromEmailAddress(senderEmail);
       const foreignRecipients = this.view.recipientsModule.getValidRecipients().map(r => r.email)
@@ -55,9 +56,11 @@ export class ComposeMyPubkeyModule extends ViewModule<ComposeView> {
           const { keys } = await this.view.pubLookup.wkd.rawLookupEmail(senderEmail);
           const fingerprints = keys.map(key => key.id);
           this.wkdFingerprints[senderEmail] = fingerprints;
-          if (fingerprints.includes(primaryFingerprint)) {
-            this.setAttachPreference(false);
-            return;
+          for (const parsedPrv of parsedPrvs) {
+            if (fingerprints.includes(parsedPrv.key.id)) {
+              this.setAttachPreference(false);
+              return;
+            }
           }
         }
         for (const recipient of foreignRecipients) {

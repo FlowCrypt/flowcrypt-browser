@@ -15,6 +15,7 @@ import { Xss } from '../../../js/common/platform/xss.js';
 import { PubLookup } from '../../../js/common/api/pub-lookup.js';
 import { OrgRules } from '../../../js/common/org-rules.js';
 import { KeyStore } from '../../../js/common/platform/store/key-store.js';
+import { KeyStoreUtil } from "../../../js/common/core/crypto/key-store-util.js";
 import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
 import { KeyUtil } from '../../../js/common/core/crypto/key.js';
 
@@ -80,9 +81,14 @@ View.run(class KeyserverView extends View {
       return await Ui.modal.error('Disallowed by your organisation rules');
     }
     Xss.sanitizeRender(target, Ui.spinner('white'));
-    const primaryKi = await KeyStore.getFirstRequired(this.acctEmail);
+    const mostUsefulPrv = await KeyStoreUtil.chooseMostUseful(
+      await KeyStoreUtil.parse(await KeyStore.getRequired(this.acctEmail)), 'ONLY-FULLY-USABLE');
+    if (!mostUsefulPrv) {
+      await Ui.modal.warning('This account has no usable key set up (may be expired or revoked). Check Additional Settings -> My Keys');
+      return;
+    }
     try {
-      await this.pubLookup.attester.initialLegacySubmit(String($(target).attr('email')), primaryKi.public);
+      await this.pubLookup.attester.initialLegacySubmit(String($(target).attr('email')), mostUsefulPrv.keyInfo.public);
     } catch (e) {
       ApiErr.reportIfSignificant(e);
       await Ui.modal.error(ApiErr.eli5(e));
@@ -96,9 +102,15 @@ View.run(class KeyserverView extends View {
       return await Ui.modal.error('Disallowed by your organisation rules');
     }
     Xss.sanitizeRender(target, Ui.spinner('white'));
-    const primaryKi = await KeyStore.getFirstRequired(this.acctEmail);
+    const prvs = await KeyStoreUtil.parse(await KeyStore.getRequired(this.acctEmail));
+    const openpgpPrvs = prvs.filter(prv => prv.key.family === 'openpgp'); // attester doesn't support x509
+    const mostUsefulPrv = KeyStoreUtil.chooseMostUseful(openpgpPrvs, 'ONLY-FULLY-USABLE');
+    if (!mostUsefulPrv) {
+      await Ui.modal.warning('This account has no usable key set up (may be expired or revoked). Check Additional Settings -> My Keys');
+      return;
+    }
     try {
-      const responseText = await this.pubLookup.attester.replacePubkey(String($(target).attr('email')), primaryKi.public);
+      const responseText = await this.pubLookup.attester.replacePubkey(String($(target).attr('email')), mostUsefulPrv.keyInfo.public);
       await Ui.modal.info(responseText);
       BrowserMsg.send.closePage(this.parentTabId);
     } catch (e) {

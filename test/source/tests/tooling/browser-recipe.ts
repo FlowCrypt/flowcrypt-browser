@@ -144,7 +144,8 @@ export class BrowserRecipe {
     const content = await pgpBlockPage.read('@pgp-block-content');
     for (const expectedContent of m.content) {
       if (content.indexOf(expectedContent) === -1) {
-        throw new Error(`pgp_block_verify_decrypted_content:missing expected content: ${expectedContent}`);
+        throw new Error(`pgp_block_verify_decrypted_content:missing expected content: ${expectedContent}`
+          + `\nactual content: ${content}`);
       }
     }
     if (m.unexpectedContent) {
@@ -158,7 +159,7 @@ export class BrowserRecipe {
       const sigBadgeContent = await pgpBlockPage.read('@pgp-signature');
       if (sigBadgeContent !== m.signature) {
         t.log(`found sig content:${sigBadgeContent}`);
-        throw new Error(`pgp_block_verify_decrypted_content:missing expected signature content:${m.signature}`);
+        throw new Error(`pgp_block_verify_decrypted_content:missing expected signature content:${m.signature}\nactual sig content:${sigBadgeContent}`);
       }
     }
     if (m.encryption) {

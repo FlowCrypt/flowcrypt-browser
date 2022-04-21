@@ -167,15 +167,16 @@ export class Mime {
               mimeContent.subject = rawSignedContentDecoded.subject;
             }
             for (const node of Object.values(leafNodes)) {
-              if (Mime.getNodeType(node) === 'application/pgp-signature') {
+              const nodeType = Mime.getNodeType(node);
+              if (nodeType === 'application/pgp-signature') {
                 mimeContent.signature = node.rawContent;
-              } else if (Mime.getNodeType(node) === 'text/html' && !Mime.getNodeFilename(node)) {
+              } else if (nodeType === 'text/html' && !Mime.getNodeFilename(node)) {
                 // html content may be broken up into smaller pieces by attachments in between
                 // AppleMail does this with inline attachments
                 mimeContent.html = (mimeContent.html || '') + Mime.getNodeContentAsUtfStr(node);
-              } else if (Mime.getNodeType(node) === 'text/plain' && (!Mime.getNodeFilename(node) || Mime.isNodeInline(node))) {
+              } else if (nodeType === 'text/plain' && (!Mime.getNodeFilename(node) || Mime.isNodeInline(node))) {
                 mimeContent.text = (mimeContent.text ? `${mimeContent.text}\n\n` : '') + Mime.getNodeContentAsUtfStr(node);
-              } else if (Mime.getNodeType(node) === 'text/rfc822-headers') {
+              } else if (nodeType === 'text/rfc822-headers') {
                 if (node._parentNode && node._parentNode.headers.subject) {
                   mimeContent.subject = node._parentNode.headers.subject[0].value;
                 }

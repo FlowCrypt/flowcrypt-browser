@@ -1,5 +1,7 @@
 <div class="lightboxed">
 
+version 8.2.8 on April 11, 2022: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/452?closed=1" target="_blank">Fixed own revoked keys + FES threads requires 2022-05</a>
+
 version 8.2.7 on March 24, 2022: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/451?closed=1" target="_blank">Compose button fix II</a>
 
 version 8.2.6 on March 8, 2022: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/450?closed=1" target="_blank">Compose button fix</a>

@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { KeyInfo, KeyUtil } from '../../js/common/core/crypto/key.js';
+import { KeyUtil, KeyInfoWithIdentity } from '../../js/common/core/crypto/key.js';
 import { StorageType } from '../../js/common/platform/store/abstract-store.js';
 import { Assert } from '../../js/common/assert.js';
 import { BrowserMsg } from '../../js/common/browser/browser-msg.js';
@@ -26,7 +26,7 @@ View.run(class PassphraseView extends View {
   private readonly longids: string[];
   private readonly type: string;
   private readonly initiatorFrameId?: string;
-  private keysWeNeedPassPhraseFor: KeyInfo[] | undefined;
+  private keysWeNeedPassPhraseFor: KeyInfoWithIdentity[] | undefined;
   private orgRules!: OrgRules;
 
   constructor() {

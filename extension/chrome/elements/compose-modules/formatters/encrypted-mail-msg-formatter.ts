@@ -6,7 +6,7 @@ import { BaseMailFormatter } from './base-mail-formatter.js';
 import { ComposerResetBtnTrigger } from '../compose-err-module.js';
 import { Mime, SendableMsgBody } from '../../../../js/common/core/mime.js';
 import { getUniqueRecipientEmails, NewMsgData } from '../compose-types.js';
-import { Str, Url, Value } from '../../../../js/common/core/common.js';
+import { Str, Value } from '../../../../js/common/core/common.js';
 import { ApiErr } from '../../../../js/common/api/shared/api-error.js';
 import { Attachment } from '../../../../js/common/core/attachment.js';
 import { Buf } from '../../../../js/common/core/buf.js';
@@ -105,7 +105,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
       const { data: encrypted } = await this.encryptDataArmor(Buf.fromUtfStr(newMsg.plaintext), undefined, pubs, signingPrv);
       return await SendableMsg.createInlineArmored(this.acctEmail, this.headers(newMsg), Buf.fromUint8(encrypted).toUtfStr(), [], { isDraft: this.isDraft });
     }
-    const x509certs = pubsForEncryption.filter(pub => pub.type === 'x509');
+    const x509certs = pubsForEncryption.filter(pub => pub.family === 'x509');
     if (x509certs.length) { // s/mime
       const attachments: Attachment[] = this.isDraft ? [] : await this.view.attachmentsModule.attachment.collectAttachments(); // collects attachments
       const msgBody = { 'text/plain': newMsg.plaintext };
@@ -148,7 +148,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
   };
 
   private encryptDataArmor = async (data: Buf, pwd: string | undefined, pubs: PubkeyResult[], signingPrv?: Key): Promise<PgpMsgMethod.EncryptAnyArmorResult> => {
-    const pgpPubs = pubs.filter(pub => pub.pubkey.type === 'openpgp');
+    const pgpPubs = pubs.filter(pub => pub.pubkey.family === 'openpgp');
     const encryptAsOfDate = await this.encryptMsgAsOfDateIfSomeAreExpiredAndUserConfirmedModal(pgpPubs);
     const pubsForEncryption = pubs.map(entry => entry.pubkey);
     return await MsgUtil.encryptMessage({ pubkeys: pubsForEncryption, signingPrv, pwd, data, armor: true, date: encryptAsOfDate }) as PgpMsgMethod.EncryptAnyArmorResult;
@@ -204,23 +204,6 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
     }
     if (Math.max(...usableUntil) > Date.now()) { // all keys either don't expire or expire in the future
       return undefined;
-    }
-    for (const myKey of pubs.filter(ap => ap.isMine)) {
-      if (myKey.pubkey.usableForEncryptionButExpired) {
-        const path = Url.create(chrome.runtime.getURL('chrome/settings/index.htm'), {
-          acctEmail: myKey.email,
-          page: '/chrome/settings/modules/my_key_update.htm',
-          pageUrlParams: JSON.stringify({ fingerprint: myKey.pubkey.id }),
-        });
-        const errModalLines = [
-          'This message could not be encrypted because your own Private Key is expired.',
-          '',
-          'You can extend the expiration of this key in other OpenPGP software (such as GnuPG), then re-import the updated key ' +
-          `<a href="${path}" id="action_update_prv" target="_blank">here</a>.`
-        ];
-        await Ui.modal.error(errModalLines.join('\n'), true);
-        throw new ComposerResetBtnTrigger();
-      }
     }
     const usableTimeFrom = Math.max(...usableFrom);
     const usableTimeUntil = Math.min(...usableUntil);

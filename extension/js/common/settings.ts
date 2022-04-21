@@ -14,7 +14,7 @@ import { Env } from './browser/env.js';
 import { Gmail } from './api/email-provider/gmail/gmail.js';
 import { GoogleAuth } from './api/email-provider/gmail/google-auth.js';
 import { Lang } from './lang.js';
-import { ExtendedKeyInfo, Key, KeyUtil } from './core/crypto/key.js';
+import { KeyInfoWithIdentityAndOptionalPp, Key, KeyUtil } from './core/crypto/key.js';
 import { PgpPwd } from './core/crypto/pgp/pgp-password.js';
 import { OrgRules } from './org-rules.js';
 import { Xss } from './platform/xss.js';
@@ -114,10 +114,10 @@ export class Settings {
       throw new Error(`Filter is empty for account_email "${oldAcctEmail}"`);
     }
     // in case the destination email address was already set up with an account, recover keys and pass phrases before it's overwritten
-    const oldAccountPrivateKeys = await KeyStore.getTypedKeyInfos(oldAcctEmail);
-    const newAccountPrivateKeys = await KeyStore.getTypedKeyInfos(newAcctEmail);
-    const oldAcctPassPhrases: ExtendedKeyInfo[] = [];
-    const newAcctPassPhrases: ExtendedKeyInfo[] = [];
+    const oldAccountPrivateKeys = await KeyStore.get(oldAcctEmail);
+    const newAccountPrivateKeys = await KeyStore.get(newAcctEmail);
+    const oldAcctPassPhrases: KeyInfoWithIdentityAndOptionalPp[] = [];
+    const newAcctPassPhrases: KeyInfoWithIdentityAndOptionalPp[] = [];
     for (const ki of oldAccountPrivateKeys) {
       const passphrase = await PassphraseStore.get(oldAcctEmail, ki, true);
       if (passphrase) {

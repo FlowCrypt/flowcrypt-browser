@@ -3,7 +3,7 @@
 import * as fs from 'fs';
 import { Keyboard, KeyInput } from 'puppeteer';
 import { testKeyConstants } from '../tests/tooling/consts';
-import { ExtendedKeyInfo, KeyUtil } from '../core/crypto/key.js';
+import { KeyInfoWithIdentityAndOptionalPp, KeyUtil } from '../core/crypto/key.js';
 
 export type TestVariant = 'CONSUMER-MOCK' | 'ENTERPRISE-MOCK' | 'CONSUMER-LIVE-GMAIL' | 'UNIT-TESTS';
 
@@ -78,11 +78,11 @@ export class Config {
     return Config.secrets().keys.filter(k => k.title === title)[0];
   };
 
-  public static getKeyInfo = async (titles: string[]): Promise<ExtendedKeyInfo[]> => {
+  public static getKeyInfo = async (titles: string[]): Promise<KeyInfoWithIdentityAndOptionalPp[]> => {
     return await Promise.all(Config._secrets.keys
       .filter(key => key.armored && titles.includes(key.title)).map(async key => {
         const parsed = await KeyUtil.parse(key.armored!);
-        return { ...await KeyUtil.typedKeyInfoObj(parsed), passphrase: key.passphrase };
+        return { ...await KeyUtil.keyInfoObj(parsed), passphrase: key.passphrase };
       }));
   };
 

@@ -18,6 +18,7 @@ import { ComposeView } from '../compose.js';
 import { ApiErr } from '../../../js/common/api/shared/api-error.js';
 import { GmailParser } from '../../../js/common/api/email-provider/gmail/gmail-parser.js';
 import { KeyStore } from '../../../js/common/platform/store/key-store.js';
+import { KeyStoreUtil } from "../../../js/common/core/crypto/key-store-util.js";
 import { ContactStore } from '../../../js/common/platform/store/contact-store.js';
 import { KeyUtil } from '../../../js/common/core/crypto/key.js';
 
@@ -221,8 +222,16 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
       <br><br>I was not able to read your encrypted message because it was encrypted for a wrong key.
       <br><br>My current public key is attached below. Please update your records and send me a new encrypted message.
       <br><br>Thank you</div>`);
-    const primaryKi = await KeyStore.getFirstRequired(this.view.acctEmail);
-    const attachment = Attachment.keyinfoAsPubkeyAttachment(primaryKi);
+    const prvs = await KeyStoreUtil.parse(await KeyStore.getRequired(this.view.acctEmail));
+    // todo - send all valid?
+    const mostUsefulPrv = KeyStoreUtil.chooseMostUseful(prvs, 'ONLY-FULLY-USABLE');
+    if (!mostUsefulPrv) {
+      await Ui.modal.warning('None of your private keys are usable.\n\n' +
+        'If you are part of an enterprise deployment, ask your Help Desk\n\n.' +
+        'Other users, please check Settings -> Additional settings -> My keys.');
+      return;
+    }
+    const attachment = Attachment.keyinfoAsPubkeyAttachment(mostUsefulPrv.keyInfo);
     this.view.attachmentsModule.attachment.addFile(new File([attachment.getData()], attachment.name));
     this.view.sendBtnModule.popover.toggleItemTick($('.action-toggle-encrypt-sending-option'), 'encrypt', false); // don't encrypt
     this.view.sendBtnModule.popover.toggleItemTick($('.action-toggle-sign-sending-option'), 'sign', false); // don't sign
