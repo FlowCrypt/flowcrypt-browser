@@ -24,6 +24,7 @@ import { testConstants } from './tooling/consts';
 import { MsgUtil } from '../core/crypto/pgp/msg-util';
 import { Buf } from '../core/buf';
 import { PubkeyInfoWithLastCheck } from '../core/crypto/key';
+import { Page } from 'puppeteer';
 
 // tslint:disable:no-blank-lines-func
 // tslint:disable:no-unused-expression
@@ -1617,11 +1618,27 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       const appendUrl = 'threadId=1803be2e506153d2&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___&replyMsgId=1803be3182d1937b';
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'user2@standardsubdomainfes.test:8001', { appendUrl, hasReplyPrompt: true });
       await composePage.waitAndClick('@action-accept-reply-all-prompt', { delay: 2 });
+      // we should have 4 recipients, 2 green and 2 gray
+      const container = (await composePage.waitAny('@container-to'))!;
+      const recipients = await container.$$('.recipients > span');
+      expect(recipients.length).to.equal(4);
+      expect(await PageRecipe.getElementPropertyJson(recipients[0], 'textContent')).to.equal('sender@domain.com ');
+      expect(await PageRecipe.getElementPropertyJson(recipients[0], 'className')).to.equal('no_pgp');
+      expect(await PageRecipe.getElementPropertyJson(recipients[1], 'textContent')).to.equal('flowcrypt.compatibility@gmail.com ');
+      expect(await PageRecipe.getElementPropertyJson(recipients[1], 'className')).to.equal('has_pgp');
+      expect(await PageRecipe.getElementPropertyJson(recipients[2], 'textContent')).to.equal('to@example.com ');
+      expect(await PageRecipe.getElementPropertyJson(recipients[2], 'className')).to.equal('no_pgp');
+      expect(await PageRecipe.getElementPropertyJson(recipients[3], 'textContent')).to.equal('mock.only.pubkey@flowcrypt.com ');
+      expect(await PageRecipe.getElementPropertyJson(recipients[3], 'className')).to.equal('has_pgp');
       const fileInput = await composePage.target.$('input[type=file]');
       await fileInput!.uploadFile('test/samples/small.txt');
       await composePage.waitAndType('@input-password', 'gO0d-pwd');
       await composePage.waitAndClick('@action-send', { delay: 1 });
-      // todo:
+      const attachmentsContainer = (await composePage.waitAny('@replied-attachments'))!;
+      const attachments = await attachmentsContainer.$$('.pgp_attachment');
+      expect(attachments.length).to.equal(6); // todo:
+      const attachmentFrames = (composePage.target as Page).frames();
+      expect(attachmentFrames.length).to.equal(7); // todo:
     }));
 
     ava.default('first.key.revoked@key-manager-autoimport-no-prv-create.flowcrypt.test - selects valid own key when saving draft or sending', testWithBrowser(undefined, async (t, browser) => {
