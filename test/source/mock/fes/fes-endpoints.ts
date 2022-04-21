@@ -31,7 +31,7 @@ const processMessageFromUser = (body: string) => {
     externalId: 'FES-MOCK-EXTERNAL-FOR-BCC@EXAMPLE.COM-ID'
   };
   return response;
-}
+};
 
 const processMessageFromUser2 = (body: string) => {
   expect(body).to.contain('-----BEGIN PGP MESSAGE-----');
@@ -49,7 +49,7 @@ const processMessageFromUser2 = (body: string) => {
     externalId: 'FES-MOCK-EXTERNAL-FOR-SENDER@DOMAIN.COM-ID'
   };
   return response;
-}
+};
 
 export const mockFesEndpoints: HandlersDefinition = {
   // standard fes location at https://fes.domain.com
