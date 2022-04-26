@@ -817,10 +817,10 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       await composePage.waitAndClick('@action-send', { delay: 1 });
       const attachment = await composePage.getFrame(['attachment.htm', `name=${attachmentFilename}`]);
       await attachment.waitForSelTestState('ready');
-      const fileText = await composePage.awaitDownloadTriggeredByClicking(async () => {
+      const downloadedFiles = await composePage.awaitDownloadTriggeredByClicking(async () => {
         await attachment.click('#download');
       });
-      expect(Object.values(fileText).pop()!.toString()).to.equal(`small text file\nnot much here\nthis worked\n`);
+      expect(downloadedFiles[attachmentFilename]!.toString()).to.equal(`small text file\nnot much here\nthis worked\n`);
       await composePage.close();
     }));
 
@@ -1241,10 +1241,10 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       const fileInput = await composeFrame.target.$('input[type=file]');
       await fileInput!.uploadFile('test/samples/small.txt', 'test/samples/small.png', 'test/samples/small.pdf');
       // attachments in composer can be downloaded
-      const fileText = await inboxPage.awaitDownloadTriggeredByClicking(async () => {
+      const downloadedFiles = await inboxPage.awaitDownloadTriggeredByClicking(async () => {
         await composeFrame.click('.qq-file-id-0');
       });
-      expect(Object.values(fileText).pop()!.toString()).to.equal(`small text file\nnot much here\nthis worked\n`);
+      expect(downloadedFiles['small.txt']!.toString()).to.equal(`small text file\nnot much here\nthis worked\n`);
       await composeFrame.waitAndClick('@action-send', { delay: 2 });
       await inboxPage.waitTillGone('@container-new-message');
     }));
@@ -1261,10 +1261,10 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       const fileInput = await composeFrame.target.$('input[type=file]');
       await fileInput!.uploadFile('test/samples/small.txt', 'test/samples/small.png', 'test/samples/small.pdf');
       // attachments in composer can be downloaded
-      const fileText = await inboxPage.awaitDownloadTriggeredByClicking(async () => {
+      const downloadedFiles = await inboxPage.awaitDownloadTriggeredByClicking(async () => {
         await composeFrame.click('.qq-file-id-0');
       });
-      expect(Object.values(fileText).pop()!.toString()).to.equal(`small text file\nnot much here\nthis worked\n`);
+      expect(downloadedFiles['small.txt']!.toString()).to.equal(`small text file\nnot much here\nthis worked\n`);
       await composeFrame.waitAndClick('@action-send', { delay: 2 });
       await inboxPage.waitTillGone('@container-new-message');
     }));

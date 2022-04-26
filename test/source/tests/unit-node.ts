@@ -244,7 +244,7 @@ WeNYP84Yjw6OFSHdi2W0VojRGhxm7PZCMqswN/XaBg==
       await t.throwsAsync(() => KeyUtil.parse(httpsCert), { instanceOf: UnreportableError, message: 'This S/MIME x.509 certificate has an invalid recipient email: news.ycombinator.com' });
     });
 
-    ava.default('[unit][KeyUtil.parse] Unknown key type parsing fails', async t => {
+    ava.default('[unit][KeyUtil.parse] Unknown key family parsing fails', async t => {
       await t.throwsAsync(() => KeyUtil.parse('dummy string for unknown key'), { instanceOf: Error, message: 'Key type is unknown, expecting OpenPGP or x509 S/MIME' });
     });
 

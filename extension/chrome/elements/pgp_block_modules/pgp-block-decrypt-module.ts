@@ -40,7 +40,7 @@ export class PgpBlockViewDecryptModule {
             parsed.rawSignedContent || parsed.text || parsed.html || mimeMsg.toUtfStr(), 'parse error');
         }
       } else if (this.view.encryptedMsgUrlParam && !forcePullMsgFromApi) { // ascii armored message supplied
-        this.view.renderModule.renderText(this.view.signature ? 'Verifying..' : 'Decrypting...');
+        this.view.renderModule.renderText(this.view.signature ? 'Verifying...' : 'Decrypting...');
         await this.decryptAndRender(this.view.encryptedMsgUrlParam, verificationPubs);
       } else {  // need to fetch the inline signed + armored or encrypted +armored message block from gmail api
         if (!this.view.msgId) {

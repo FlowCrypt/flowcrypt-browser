@@ -349,7 +349,7 @@ export class KeyUtil {
     } else if (key.family === 'x509') {
       return await SmimeKey.decryptKey(key, passphrase, optionalBehaviorFlag);
     } else {
-      throw new Error(`KeyUtil.decrypt does not support key type ${key.family}`);
+      throw new Error(`KeyUtil.decrypt does not support key family ${key.family}`);
     }
   };
 
@@ -359,7 +359,7 @@ export class KeyUtil {
     } else if (key.family === 'x509') {
       return await SmimeKey.encryptKey(key, passphrase);
     } else {
-      throw new Error(`KeyUtil.encrypt does not support key type ${key.family}`);
+      throw new Error(`KeyUtil.encrypt does not support key family ${key.family}`);
     }
   };
 
@@ -367,7 +367,7 @@ export class KeyUtil {
     if (privateKey.family === 'openpgp') {
       return await OpenPGPKey.reformatKey(privateKey, passphrase, userIds, expireSeconds);
     } else {
-      throw new Error(`KeyUtil.reformatKey does not support key type ${privateKey.family}`);
+      throw new Error(`KeyUtil.reformatKey does not support key family ${privateKey.family}`);
     }
   };
 
@@ -375,7 +375,7 @@ export class KeyUtil {
     if (key.family === 'openpgp') {
       return await OpenPGPKey.revoke(key);
     } else {
-      throw new Error(`KeyUtil.revoke does not support key type ${key.family}`);
+      throw new Error(`KeyUtil.revoke does not support key family ${key.family}`);
     }
   };
 
