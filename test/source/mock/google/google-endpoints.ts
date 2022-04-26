@@ -222,7 +222,7 @@ export const mockGoogleEndpoints: HandlersDefinition = {
         const id = `msg_id_${Util.lousyRandom()}`;
         try {
           const testingStrategyContext = new TestBySubjectStrategyContext(parseResult.mimeMsg.subject || '');
-          await testingStrategyContext.test(parseResult.mimeMsg, parseResult.base64, id);
+          await testingStrategyContext.test(parseResult, id);
         } catch (e) {
           if (!(e instanceof UnsuportableStrategyError)) { // No such strategy for test
             throw e; // todo - should start throwing unsupported test strategies too, else changing subject will cause incomplete testing

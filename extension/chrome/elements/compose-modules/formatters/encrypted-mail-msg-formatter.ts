@@ -23,10 +23,12 @@ import { FcUuidAuth } from '../../../../js/common/api/account-servers/flowcrypt-
 import { SmimeKey } from '../../../../js/common/core/crypto/smime/smime-key.js';
 import { PgpHash } from '../../../../js/common/core/crypto/pgp/pgp-hash.js';
 import { UploadedMessageData } from '../../../../js/common/api/account-server.js';
+import { ParsedKeyInfo } from '../../../../js/common/core/crypto/key-store-util.js';
+import { MultipleMessages } from './general-mail-formatter.js';
 
 export class EncryptedMsgMailFormatter extends BaseMailFormatter {
 
-  public sendableMsgs = async (newMsg: NewMsgData, pubkeys: PubkeyResult[], signingPrv?: Key): Promise<SendableMsg[]> => {
+  public sendableMsgs = async (newMsg: NewMsgData, pubkeys: PubkeyResult[], signingKey?: ParsedKeyInfo): Promise<MultipleMessages> => {
     if (newMsg.pwd && !this.isDraft) {
       // password-protected message, temporarily uploaded (already encrypted) to:
       //    - flowcrypt.com/api (consumers and customers without on-prem setup), or
@@ -34,25 +36,40 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
       //    It will be served to recipient through web
       const uploadedMessageData = await this.prepareAndUploadPwdEncryptedMsg(newMsg); // encrypted for pwd only, pubkeys ignored
       newMsg.pwd = undefined;
-      const entries = Object.entries(uploadedMessageData.emailToExternalIdAndUrl ?? {});
-      if (entries.length) {
-        const msgs: SendableMsg[] = [];
-        for (const entry of entries) {
-          const recipientEmail = entry[0];
-          const msgUrl = entry[1].url;
-          const externalId = entry[1].externalId;
-          msgs.push(await this.sendablePwdMsg(newMsg, pubkeys, { recipientEmail, msgUrl, externalId }, signingPrv));
-        }
-        return msgs;
-      } else {
-        return [await this.sendablePwdMsg(newMsg, pubkeys, { msgUrl: uploadedMessageData.url, externalId: uploadedMessageData.externalId }, signingPrv)];
+      const collectedAttachments = await this.view.attachmentsModule.attachment.collectEncryptAttachments(pubkeys);
+      // we always have at least one pubkey, this is the main message, encrypted for pubkeys
+      const msgs: SendableMsg[] = [
+        await this.sendablePwdMsg(
+          newMsg,
+          pubkeys,
+          { msgUrl: uploadedMessageData.url, externalId: uploadedMessageData.externalId },
+          collectedAttachments,
+          signingKey?.key)
+      ];
+      // adding individual messages for each recipient that doesn't have a pubkey
+      for (const recipientEmail of Object.keys(uploadedMessageData.emailToExternalIdAndUrl ?? {}).filter(email => !pubkeys.some(p => p.email === email))) {
+        const { url, externalId } = uploadedMessageData.emailToExternalIdAndUrl![recipientEmail];
+        msgs.push(await this.sendablePwdMsg(newMsg, pubkeys, { recipientEmail, msgUrl: url, externalId }, [], signingKey?.key));
       }
-    } else if (this.richtext) { // rich text: PGP/MIME - https://tools.ietf.org/html/rfc3156#section-4
+      return { senderKi: signingKey?.keyInfo, msgs, recipients: newMsg.recipients, attachments: collectedAttachments };
+    } else {
+      const msg = await this.sendableNonPwdMsg(newMsg, pubkeys, signingKey?.key);
+      return {
+        senderKi: signingKey?.keyInfo,
+        msgs: [msg],
+        recipients: msg.recipients,
+        attachments: msg.attachments // todo: perhaps, we should hide technical attachments, like `encrypted.asc` and use collectedAttachments too?
+      };
+    }
+  };
+
+  public sendableNonPwdMsg = async (newMsg: NewMsgData, pubkeys: PubkeyResult[], signingPrv?: Key): Promise<SendableMsg> => {
+    if (this.richtext) { // rich text: PGP/MIME - https://tools.ietf.org/html/rfc3156#section-4
       // or S/MIME
-      return [await this.sendableRichTextMsg(newMsg, pubkeys, signingPrv)];
+      return await this.sendableRichTextMsg(newMsg, pubkeys, signingPrv);
     } else { // simple text: PGP or S/MIME Inline with attachments in separate files
       // todo: #4046 check attachments for S/MIME
-      return [await this.sendableSimpleTextMsg(newMsg, pubkeys, signingPrv)];
+      return await this.sendableSimpleTextMsg(newMsg, pubkeys, signingPrv);
     }
   };
 
@@ -104,13 +121,12 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
     newMsg: NewMsgData,
     pubs: PubkeyResult[],
     { msgUrl, externalId, recipientEmail }: { msgUrl: string, externalId?: string, recipientEmail?: string },
+    attachments: Attachment[],
     signingPrv?: Key) => {
     // encoded as: PGP/MIME-like structure but with attachments as external files due to email size limit (encrypted for pubkeys only)
     const msgBody = this.richtext ? { 'text/plain': newMsg.plaintext, 'text/html': newMsg.plainhtml } : { 'text/plain': newMsg.plaintext };
     const pgpMimeNoAttachments = await Mime.encode(msgBody, { Subject: newMsg.subject }, []); // no attachments, attached to email separately
     const { data: pubEncryptedNoAttachments } = await this.encryptDataArmor(Buf.fromUtfStr(pgpMimeNoAttachments), undefined, pubs, signingPrv); // encrypted only for pubs
-    const attachments = this.createPgpMimeAttachments(pubEncryptedNoAttachments).
-      concat(await this.view.attachmentsModule.attachment.collectEncryptAttachments(pubs)); // encrypted only for pubs
     const emailIntroAndLinkBody = await this.formatPwdEncryptedMsgBodyLink(msgUrl);
     const headers = this.headers(newMsg);
     if (recipientEmail) {
@@ -119,7 +135,9 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
         find(r => r.email.toLowerCase() === recipientEmail.toLowerCase());
       headers.recipients = { to: [foundParsedRecipient ?? { email: recipientEmail }] };
     }
-    return await SendableMsg.createPwdMsg(this.acctEmail, headers, emailIntroAndLinkBody, attachments, { isDraft: this.isDraft, externalId });
+    return await SendableMsg.createPwdMsg(this.acctEmail, headers, emailIntroAndLinkBody,
+      this.createPgpMimeAttachments(pubEncryptedNoAttachments).concat(attachments),
+      { isDraft: this.isDraft, externalId });
   };
 
   private sendableSimpleTextMsg = async (newMsg: NewMsgData, pubs: PubkeyResult[], signingPrv?: Key): Promise<SendableMsg> => {

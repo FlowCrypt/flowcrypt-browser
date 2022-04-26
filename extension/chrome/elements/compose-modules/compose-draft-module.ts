@@ -133,7 +133,7 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
           throw new UnreportableError('Your account keys are not usable for encryption');
         }
         msgData.pwd = undefined; // not needed for drafts
-        const [sendable] = await new EncryptedMsgMailFormatter(this.view, true).sendableMsgs(msgData, pubkeys);
+        const sendable = await new EncryptedMsgMailFormatter(this.view, true).sendableNonPwdMsg(msgData, pubkeys);
         if (this.view.replyParams?.inReplyTo) {
           sendable.headers.References = this.view.replyParams.inReplyTo;
           sendable.headers['In-Reply-To'] = this.view.replyParams.inReplyTo;

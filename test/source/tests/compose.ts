@@ -2,7 +2,7 @@
 
 import * as ava from 'ava';
 
-import { BrowserHandle, Controllable, ControllablePage } from './../browser';
+import { BrowserHandle, Controllable, ControllableFrame, ControllablePage } from './../browser';
 import { Config, Util } from './../util';
 import { writeFileSync } from 'fs';
 import { AvaContext } from './tooling';
@@ -1632,13 +1632,20 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       expect(await PageRecipe.getElementPropertyJson(recipients[3], 'className')).to.equal('has_pgp');
       const fileInput = await composePage.target.$('input[type=file]');
       await fileInput!.uploadFile('test/samples/small.txt');
+      await fileInput!.uploadFile('test/samples/small.pdf');
       await composePage.waitAndType('@input-password', 'gO0d-pwd');
       await composePage.waitAndClick('@action-send', { delay: 1 });
       const attachmentsContainer = (await composePage.waitAny('@replied-attachments'))!;
       const attachments = await attachmentsContainer.$$('.pgp_attachment');
-      expect(attachments.length).to.equal(6); // todo:
+      expect(attachments.length).to.equal(2);
+      await composePage.waitForContent('@replied-to', 'to: sender@domain.com, flowcrypt.compatibility@gmail.com, to@example.com, mock.only.pubkey@flowcrypt.com');
+      const sentMsgs = (await GoogleData.withInitializedData(acct)).getMessagesByThread('1803be2e506153d2');
+      expect(sentMsgs.length).to.equal(4); // 1 original + 3 newly sent
       const attachmentFrames = (composePage.target as Page).frames();
-      expect(attachmentFrames.length).to.equal(7); // todo:
+      expect(attachmentFrames.length).to.equal(3); // 1 pgp block + 2 attachments
+      expect(await Promise.all(attachmentFrames.filter(f => f.url().includes('attachment.htm')).map(async (frame) =>
+        await PageRecipe.getElementPropertyJson(await new ControllableFrame(frame).waitAny("@attachment-name"), 'textContent')))).
+        to.eql(['small.txt.pgp', 'small.pdf.pgp']);
     }));
 
     ava.default('first.key.revoked@key-manager-autoimport-no-prv-create.flowcrypt.test - selects valid own key when saving draft or sending', testWithBrowser(undefined, async (t, browser) => {

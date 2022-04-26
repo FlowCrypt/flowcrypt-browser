@@ -4,6 +4,7 @@ import { AddressObject, ParsedMail, StructuredHeader } from 'mailparser';
 
 import { Util } from '../../util/index';
 import { readFile, readdir } from 'fs';
+import { ParseMsgResult } from '../../util/parse';
 
 type GmailMsg$header = { name: string, value: string };
 type GmailMsg$payload$body = { attachmentId?: string, size: number, data?: string };
@@ -177,8 +178,9 @@ export class GoogleData {
     }
   }
 
-  public storeSentMessage = (parsedMail: ParsedMail, base64Msg: string, id: string): string => {
+  public storeSentMessage = (parseResult: ParseMsgResult, id: string): string => {
     let bodyContentAtt: { data: string; size: number; filename?: string; id: string } | undefined;
+    const parsedMail = parseResult.mimeMsg;
     for (const attachment of parsedMail.attachments || []) {
       const attId = Util.lousyRandom();
       const gmailAtt = { data: attachment.content.toString('base64'), size: attachment.size, filename: attachment.filename, id: attId };
@@ -198,7 +200,7 @@ export class GoogleData {
     }
     const barebonesGmailMsg: GmailMsg = { // todo - could be improved - very barebones
       id,
-      threadId: null, // tslint:disable-line:no-null-keyword
+      threadId: parseResult.threadId ?? null, // tslint:disable-line:no-null-keyword
       historyId: '',
       labelIds: ['SENT' as GmailMsg$labelId],
       payload: {
@@ -208,7 +210,7 @@ export class GoogleData {
         ],
         body
       },
-      raw: base64Msg
+      raw: parseResult.base64
     };
     DATA[this.acct].messages.push(barebonesGmailMsg);
     return barebonesGmailMsg.id;

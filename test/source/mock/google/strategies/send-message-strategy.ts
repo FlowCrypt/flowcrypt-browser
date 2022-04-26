@@ -1,7 +1,7 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
 import * as forge from 'node-forge';
-import { AddressObject, ParsedMail, StructuredHeader } from 'mailparser';
+import { AddressObject, StructuredHeader } from 'mailparser';
 import { ITestMsgStrategy, UnsuportableStrategyError } from './strategy-base.js';
 import { Buf } from '../../../core/buf';
 import { Config } from '../../../util';
@@ -9,7 +9,7 @@ import { expect } from 'chai';
 import { GoogleData } from '../google-data';
 import { HttpClientErr } from '../../lib/api';
 import { MsgUtil } from '../../../core/crypto/pgp/msg-util';
-import Parse from '../../../util/parse';
+import Parse, { ParseMsgResult } from '../../../util/parse';
 import { parsedMailAddressObjectAsArray } from '../google-endpoints.js';
 import { Str } from '../../../core/common.js';
 import { GMAIL_RECOVERY_EMAIL_SUBJECTS } from '../../../core/const.js';
@@ -18,13 +18,14 @@ import { testConstants } from '../../../tests/tooling/consts.js';
 
 // TODO: Make a better structure of ITestMsgStrategy. Because this class doesn't test anything, it only saves message in the Mock
 class SaveMessageInStorageStrategy implements ITestMsgStrategy {
-  public test = async (mimeMsg: ParsedMail, base64Msg: string, id: string) => {
-    (await GoogleData.withInitializedData(mimeMsg.from!.value[0].address!)).storeSentMessage(mimeMsg, base64Msg, id);
+  public test = async (parseResult: ParseMsgResult, id: string) => {
+    (await GoogleData.withInitializedData(parseResult.mimeMsg.from!.value[0].address!)).storeSentMessage(parseResult, id);
   };
 }
 
 class PwdEncryptedMessageWithFlowCryptComApiTestStrategy implements ITestMsgStrategy {
-  public test = async (mimeMsg: ParsedMail) => {
+  public test = async (parseResult: ParseMsgResult) => {
+    const mimeMsg = parseResult.mimeMsg;
     const senderEmail = Str.parseEmail(mimeMsg.from!.text).email;
     if (!mimeMsg.text?.includes(`${senderEmail} has sent you a password-encrypted email`)) {
       throw new HttpClientErr(`Error checking sent text in:\n\n${mimeMsg.text}`);
@@ -39,7 +40,8 @@ class PwdEncryptedMessageWithFlowCryptComApiTestStrategy implements ITestMsgStra
 }
 
 class PwdEncryptedMessageWithFesIdTokenTestStrategy implements ITestMsgStrategy {
-  public test = async (mimeMsg: ParsedMail, base64Msg: string, id: string) => {
+  public test = async (parseResult: ParseMsgResult, id: string) => {
+    const mimeMsg = parseResult.mimeMsg;
     const expectedSenderEmail = 'user@standardsubdomainfes.test:8001';
     expect(mimeMsg.from!.text).to.equal(`First Last <${expectedSenderEmail}>`);
     if (!mimeMsg.text?.includes(`${expectedSenderEmail} has sent you a password-encrypted email`)) {
@@ -70,14 +72,15 @@ class PwdEncryptedMessageWithFesIdTokenTestStrategy implements ITestMsgStrategy 
     if (!mimeMsg.text?.includes('Follow this link to open it')) {
       throw new HttpClientErr(`Error: cannot find pwd encrypted open link prompt in ${mimeMsg.text}`);
     }
-    await new SaveMessageInStorageStrategy().test(mimeMsg, base64Msg, id);
+    await new SaveMessageInStorageStrategy().test(parseResult, id);
   };
 }
 
 class MessageWithFooterTestStrategy implements ITestMsgStrategy {
   private readonly footer = 'flowcrypt.compatibility test footer with an img';
 
-  public test = async (mimeMsg: ParsedMail) => {
+  public test = async (parseResult: ParseMsgResult) => {
+    const mimeMsg = parseResult.mimeMsg;
     const keyInfo = await Config.getKeyInfo(["flowcrypt.compatibility.1pp1", "flowcrypt.compatibility.2pp1"]);
     const decrypted = await MsgUtil.decryptMessage({ kisWithPp: keyInfo!, encryptedData: Buf.fromUtfStr(mimeMsg.text || ''), verificationPubs: [] });
     if (!decrypted.success) {
@@ -94,7 +97,8 @@ class SignedMessageTestStrategy implements ITestMsgStrategy {
   private readonly expectedText = 'New Signed Message (Mock Test)';
   private readonly signedBy = 'B6BE3C4293DDCF66'; // could potentially grab this from test-secrets.json file
 
-  public test = async (mimeMsg: ParsedMail) => {
+  public test = async (parseResult: ParseMsgResult) => {
+    const mimeMsg = parseResult.mimeMsg;
     const keyInfo = await Config.getKeyInfo(["flowcrypt.compatibility.1pp1", "flowcrypt.compatibility.2pp1"]);
     const decrypted = await MsgUtil.decryptMessage({ kisWithPp: keyInfo!, encryptedData: Buf.fromUtfStr(mimeMsg.text!), verificationPubs: [] });
     if (!decrypted.success) {
@@ -116,7 +120,8 @@ class SignedMessageTestStrategy implements ITestMsgStrategy {
 class PlainTextMessageTestStrategy implements ITestMsgStrategy {
   private readonly expectedText = 'New Plain Message';
 
-  public test = async (mimeMsg: ParsedMail) => {
+  public test = async (parseResult: ParseMsgResult) => {
+    const mimeMsg = parseResult.mimeMsg;
     if (!mimeMsg.text?.includes(this.expectedText)) {
       throw new HttpClientErr(`Error: Msg Text is not matching expected. Current: '${mimeMsg.text}', expected: '${this.expectedText}'`);
     }
@@ -141,9 +146,9 @@ class IncludeQuotedPartTestStrategy implements ITestMsgStrategy {
     '> >> again double quote'
   ].join('\n');
 
-  public test = async (mimeMsg: ParsedMail) => {
+  public test = async (parseResult: ParseMsgResult) => {
     const keyInfo = await Config.getKeyInfo(["flowcrypt.compatibility.1pp1", "flowcrypt.compatibility.2pp1"]);
-    const decrypted = await MsgUtil.decryptMessage({ kisWithPp: keyInfo!, encryptedData: Buf.fromUtfStr(mimeMsg.text!), verificationPubs: [] });
+    const decrypted = await MsgUtil.decryptMessage({ kisWithPp: keyInfo!, encryptedData: Buf.fromUtfStr(parseResult.mimeMsg.text!), verificationPubs: [] });
     if (!decrypted.success) {
       throw new HttpClientErr(`Error: can't decrypt message`);
     }
@@ -155,7 +160,8 @@ class IncludeQuotedPartTestStrategy implements ITestMsgStrategy {
 }
 
 class NewMessageCCAndBCCTestStrategy implements ITestMsgStrategy {
-  public test = async (mimeMsg: ParsedMail) => {
+  public test = async (parseResult: ParseMsgResult) => {
+    const mimeMsg = parseResult.mimeMsg;
     const hasAtLeastOneRecipient = (ao: AddressObject[]) => ao && ao.length && ao[0].value && ao[0].value.length && ao[0].value[0].address;
     if (!hasAtLeastOneRecipient(parsedMailAddressObjectAsArray(mimeMsg.to))) {
       throw new HttpClientErr(`Error: There is no 'To' header.`, 400);
@@ -170,7 +176,8 @@ class NewMessageCCAndBCCTestStrategy implements ITestMsgStrategy {
 }
 
 class SmimeEncryptedMessageStrategy implements ITestMsgStrategy {
-  public test = async (mimeMsg: ParsedMail) => {
+  public test = async (parseResult: ParseMsgResult) => {
+    const mimeMsg = parseResult.mimeMsg;
     expect((mimeMsg.headers.get('content-type') as StructuredHeader).value).to.equal('application/pkcs7-mime');
     expect((mimeMsg.headers.get('content-type') as StructuredHeader).params.name).to.equal('smime.p7m');
     expect((mimeMsg.headers.get('content-type') as StructuredHeader).params['smime-type']).to.equal('enveloped-data');
@@ -207,7 +214,8 @@ class SmimeEncryptedMessageStrategy implements ITestMsgStrategy {
 }
 
 class SmimeSignedMessageStrategy implements ITestMsgStrategy {
-  public test = async (mimeMsg: ParsedMail) => {
+  public test = async (parseResult: ParseMsgResult) => {
+    const mimeMsg = parseResult.mimeMsg;
     expect((mimeMsg.headers.get('content-type') as StructuredHeader).value).to.equal('application/pkcs7-mime');
     expect((mimeMsg.headers.get('content-type') as StructuredHeader).params.name).to.equal('smime.p7m');
     expect((mimeMsg.headers.get('content-type') as StructuredHeader).params['smime-type']).to.equal('signed-data');
@@ -265,7 +273,7 @@ export class TestBySubjectStrategyContext {
     }
   }
 
-  public test = async (mimeMsg: ParsedMail, base64Msg: string, id: string) => {
-    await this.strategy.test(mimeMsg, base64Msg, id);
+  public test = async (parseResult: ParseMsgResult, id: string) => {
+    await this.strategy.test(parseResult, id);
   };
 }

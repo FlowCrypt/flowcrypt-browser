@@ -1,9 +1,9 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
-import { ParsedMail } from 'mailparser';
+import { ParseMsgResult } from '../../../util/parse';
 
 export interface ITestMsgStrategy {
-    test(mimeMsg: ParsedMail, base64Msg: string, id: string): Promise<void>;
+    test(parseResult: ParseMsgResult, id: string): Promise<void>;
 }
 
 export class UnsuportableStrategyError extends Error { }

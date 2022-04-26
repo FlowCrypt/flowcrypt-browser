@@ -11,7 +11,7 @@ import { Buf } from '../../../js/common/core/buf.js';
 import { Catch } from '../../../js/common/platform/catch.js';
 import { ComposerUserError } from './compose-err-module.js';
 import { ComposeSendBtnPopoverModule } from './compose-send-btn-popover-module.js';
-import { GeneralMailFormatter } from './formatters/general-mail-formatter.js';
+import { GeneralMailFormatter, MultipleMessages } from './formatters/general-mail-formatter.js';
 import { GmailParser, GmailRes } from '../../../js/common/api/email-provider/gmail/gmail-parser.js';
 import { KeyInfoWithIdentity } from '../../../js/common/core/crypto/key.js';
 import { getUniqueRecipientEmails, SendBtnTexts } from './compose-types.js';
@@ -118,7 +118,7 @@ export class ComposeSendBtnModule extends ViewModule<ComposeView> {
       for (const msg of msgObj.msgs) {
         await this.finalizeSendableMsg({ msg, senderKi: msgObj.senderKi });
       }
-      await this.doSendMsgs(msgObj.msgs);
+      await this.doSendMsgs(msgObj);
     } catch (e) {
       await this.view.errModule.handleSendErr(e);
     } finally {
@@ -197,13 +197,13 @@ export class ComposeSendBtnModule extends ViewModule<ComposeView> {
   };
 
 
-  private doSendMsgs = async (msgs: SendableMsg[]) => {
+  private doSendMsgs = async (msgObj: MultipleMessages) => {
     // if this is a password-encrypted message, then we've already shown progress for uploading to backend
     // and this requests represents second half of uploadable effort. Else this represents all (no previous heavy requests)
     const progressRepresents = this.view.pwdOrPubkeyContainerModule.isVisible() ? 'SECOND-HALF' : 'EVERYTHING';
     const sentIds: string[] = [];
     const operations = [this.view.draftModule.draftDelete()];
-    for (const msg of msgs) {
+    for (const msg of msgObj.msgs) {
       let msgSentRes: GmailRes.GmailMsgSend;
       try {
         this.isSendMessageInProgress = true;
@@ -235,10 +235,7 @@ export class ComposeSendBtnModule extends ViewModule<ComposeView> {
     await Promise.all(operations);
     this.isSendMessageInProgress = false;
     if (this.view.isReplyBox) {
-      // todo: collect recipients correctly
-      // todo: collect attachments correctly
-      const attachments = msgs.map(m => m.attachments).reduce((a, b) => a.concat(b), []);
-      this.view.renderModule.renderReplySuccess(attachments, msgs[0].recipients, sentIds[0]); // todo:
+      this.view.renderModule.renderReplySuccess(msgObj.attachments, msgObj.recipients, sentIds[0]);
     } else {
       this.view.renderModule.closeMsg();
     }

@@ -17,9 +17,9 @@ const processMessageFromUser = (body: string) => {
   expect(body).to.contain('"bcc":["Mr Bcc <bcc@example.com>"]');
   const response =
   {
-    // todo: do we need to support and test legacy?
-    'url': `http://${standardFesUrl}/message/FES-MOCK-MESSAGE-ID`,
-    'externalId': 'FES-MOCK-EXTERNAL-ID',
+    // this url is required for pubkey encrypted message
+    url: `http://${standardFesUrl}/message/FES-MOCK-MESSAGE-ID`,
+    externalId: 'FES-MOCK-EXTERNAL-ID',
     emailToExternalIdAndUrl: {} as { [email: string]: { url: string, externalId: string } }
   };
   response.emailToExternalIdAndUrl['to@example.com'] = {
@@ -39,7 +39,12 @@ const processMessageFromUser2 = (body: string) => {
   expect(body).to.contain('"to":["sender@domain.com","flowcrypt.compatibility@gmail.com","to@example.com","mock.only.pubkey@flowcrypt.com"]');
   expect(body).to.contain('"cc":[]');
   expect(body).to.contain('"bcc":[]');
-  const response = { emailToExternalIdAndUrl: {} as { [email: string]: { url: string, externalId: string } } };
+  const response = {
+    // this url is required for pubkey encrypted message
+    url: `http://${standardFesUrl}/message/FES-MOCK-MESSAGE-ID`,
+    externalId: 'FES-MOCK-EXTERNAL-ID',
+    emailToExternalIdAndUrl: {} as { [email: string]: { url: string, externalId: string } }
+  };
   response.emailToExternalIdAndUrl['to@example.com'] = {
     url: `http://${standardFesUrl}/message/FES-MOCK-MESSAGE-FOR-TO@EXAMPLE.COM-ID`,
     externalId: 'FES-MOCK-EXTERNAL-FOR-TO@EXAMPLE.COM-ID'
@@ -47,6 +52,14 @@ const processMessageFromUser2 = (body: string) => {
   response.emailToExternalIdAndUrl['sender@domain.com'] = {
     url: `http://${standardFesUrl}/message/FES-MOCK-MESSAGE-FOR-SENDER@DOMAIN.COM-ID`,
     externalId: 'FES-MOCK-EXTERNAL-FOR-SENDER@DOMAIN.COM-ID'
+  };
+  response.emailToExternalIdAndUrl['flowcrypt.compatibility@gmail.com'] = {
+    url: `http://${standardFesUrl}/message/FES-MOCK-MESSAGE-FOR-FLOWCRYPT.COMPATIBILITY@GMAIL.COM-ID`,
+    externalId: 'FES-MOCK-EXTERNAL-FOR-FLOWCRYPT.COMPATIBILITY@GMAIL.COM-ID'
+  };
+  response.emailToExternalIdAndUrl['mock.only.pubkey@flowcrypt.com'] = {
+    url: `http://${standardFesUrl}/message/FES-MOCK-MESSAGE-FOR-MOCK.ONLY.PUBKEY@FLOWCRYPT.COM-ID`,
+    externalId: 'FES-MOCK-EXTERNAL-FOR-MOCK.ONLY.PUBKEY@FLOWCRYPT.COM-ID'
   };
   return response;
 };
