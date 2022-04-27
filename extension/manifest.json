@@ -69,7 +69,9 @@
   "background": {
     "page": "/js/background_page/background_page.htm"
   },
-  "options_page": "/chrome/settings/index.htm",
+  "options_ui": {
+    "page": "/chrome/settings/index.htm"
+  },
   "web_accessible_resources": [
     "/css/webmail.css",
     "/img/svgs/reply-icon.svg",
