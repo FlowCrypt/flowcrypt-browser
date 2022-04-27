@@ -220,18 +220,6 @@ export class GoogleData {
     return DATA[this.acct].messages.find(m => m.id === id);
   };
 
-  public getMessageBySubject = (subject: string): GmailMsg | undefined => {
-    return DATA[this.acct].messages.find(m => {
-      if (m.payload?.headers) {
-        const subjectHeader = m.payload.headers.find(x => x.name === 'Subject');
-        if (subjectHeader) {
-          return subjectHeader.value.includes(subject);
-        }
-      }
-      return false;
-    });
-  };
-
   public getMessagesAndDraftsByThread = (threadId: string) => {
     return this.getMessagesAndDrafts().filter(m => m.threadId === threadId);
   };
@@ -295,15 +283,15 @@ export class GoogleData {
     return threads;
   };
 
-  // returns ordinary messages and drafts
-  private getMessagesAndDrafts = () => {
-    return DATA[this.acct].messages.concat(DATA[this.acct].drafts);
-  };
-
-  private searchMessagesBySubject = (subject: string) => {
+  public searchMessagesBySubject = (subject: string) => {
     subject = subject.trim().toLowerCase();
     const messages = DATA[this.acct].messages.filter(m => GoogleData.msgSubject(m).toLowerCase().includes(subject));
     return messages;
+  };
+
+  // returns ordinary messages and drafts
+  private getMessagesAndDrafts = () => {
+    return DATA[this.acct].messages.concat(DATA[this.acct].drafts);
   };
 
   private searchMessagesByPeople = (includePeople: string[], excludePeople: string[]) => {
