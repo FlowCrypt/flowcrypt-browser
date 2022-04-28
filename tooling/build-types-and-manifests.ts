@@ -37,7 +37,17 @@ addManifest('chrome-enterprise', manifest => {
   manifest.name = 'FlowCrypt for Enterprise';
   manifest.description = 'FlowCrypt Chrome Extension for Enterprise clients (stable)';
   // careful - changing this will likely cause all extensions to be disabled in their user's browsers
-  manifest.permissions = ["storage", "tabs", "https://*.google.com/*", "https://www.googleapis.com/*", "https://flowcrypt.com/*", "unlimitedStorage"];
+  manifest.permissions = [
+    "storage",
+    "tabs",
+    "https://*.google.com/*",
+    "https://oauth2.googleapis.com/*",
+    "https://gmail.googleapis.com/*",
+    "https://people.googleapis.com/*",
+    "https://www.googleapis.com/*",
+    "https://flowcrypt.com/*",
+    "unlimitedStorage"
+  ];
   for (const csDef of manifest.content_scripts) {
     csDef.matches = csDef.matches.filter((host: string) => host === 'https://mail.google.com/*');
   }

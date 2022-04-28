@@ -35,6 +35,9 @@
     "https://outlook.office.com/*",
     "https://graph.microsoft.com/*",
     "https://login.microsoftonline.com/*",
+    "https://oauth2.googleapis.com/*",
+    "https://gmail.googleapis.com/*",
+    "https://people.googleapis.com/*",
     "https://www.googleapis.com/*",
     "unlimitedStorage"
   ],
