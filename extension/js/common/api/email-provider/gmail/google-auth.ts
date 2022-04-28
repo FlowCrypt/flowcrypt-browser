@@ -5,7 +5,7 @@
 // tslint:disable:no-direct-ajax
 // tslint:disable:oneliner-object-literal
 
-import { GOOGLE_API_HOST, GOOGLE_OAUTH_SCREEN_HOST, FLAVOR } from '../../../core/const.js';
+import { OAUTH_GOOGLE_API_HOST, GOOGLE_OAUTH_SCREEN_HOST, FLAVOR } from '../../../core/const.js';
 import { Str, Url, Value } from '../../../core/common.js';
 import { tabsQuery, windowsCreate } from '../../../browser/chrome.js';
 import { Api } from './../../shared/api.js';
@@ -36,7 +36,7 @@ export class GoogleAuth {
   public static OAUTH = {
     client_id: '717284730244-ostjo2fdtr3ka4q9td69tdr9acmmru2p.apps.googleusercontent.com',
     url_code: `${GOOGLE_OAUTH_SCREEN_HOST}/o/oauth2/auth`,
-    url_tokens: `${GOOGLE_API_HOST}/oauth2/v4/token`,
+    url_tokens: `${OAUTH_GOOGLE_API_HOST}/token`,
     url_redirect: 'urn:ietf:wg:oauth:2.0:oob:auto',
     state_header: 'CRYPTUP_STATE_',
     scopes: {
@@ -317,7 +317,7 @@ export class GoogleAuth {
 
   private static googleAuthCheckAccessToken = async (accessToken: string) => {
     return await Api.ajax({
-      url: Url.create(`${GOOGLE_API_HOST}/oauth2/v1/tokeninfo`, { access_token: accessToken }),
+      url: Url.create(`${OAUTH_GOOGLE_API_HOST}/tokeninfo`, { access_token: accessToken }),
       crossDomain: true,
       async: true,
     }, Catch.stackTrace()) as any as GoogleAuthTokenInfo;

@@ -37,7 +37,16 @@ addManifest('chrome-enterprise', manifest => {
   manifest.name = 'FlowCrypt for Enterprise';
   manifest.description = 'FlowCrypt Chrome Extension for Enterprise clients (stable)';
   // careful - changing this will likely cause all extensions to be disabled in their user's browsers
-  manifest.permissions = ["storage", "tabs", "https://*.google.com/*", "https://www.googleapis.com/*", "https://flowcrypt.com/*", "unlimitedStorage"];
+  manifest.permissions = [
+    "storage",
+    "tabs",
+    "https://*.google.com/*",
+    "https://oauth2.googleapis.com/*",
+    "https://gmail.googleapis.com/*",
+    "https://people.googleapis.com/*",
+    "https://flowcrypt.com/*",
+    "unlimitedStorage"
+  ];
   for (const csDef of manifest.content_scripts) {
     csDef.matches = csDef.matches.filter((host: string) => host === 'https://mail.google.com/*');
   }
@@ -66,7 +75,7 @@ const makeMockBuild = (sourceBuildType: string) => {
   exec(`cp -r ${buildDir(sourceBuildType)} ${buildDir(mockBuildType)}`);
   const editor = (code: string) => {
     return code
-      .replace(/const (GOOGLE_API_HOST|PEOPLE_API_HOST|GOOGLE_OAUTH_SCREEN_HOST) = [^;]+;/g, `const $1 = '${MOCK_HOST[sourceBuildType]}';`)
+      .replace(/const (OAUTH_GOOGLE_API_HOST|GMAIL_GOOGLE_API_HOST|PEOPLE_API_HOST|GOOGLE_OAUTH_SCREEN_HOST) = [^;]+;/g, `const $1 = '${MOCK_HOST[sourceBuildType]}';`)
       .replace(/const (BACKEND_API_HOST) = [^;]+;/g, `const $1 = 'https://localhost:8001/api/';`)
       .replace(/const (ATTESTER_API_HOST) = [^;]+;/g, `const $1 = 'https://localhost:8001/attester/';`)
       .replace(/https:\/\/flowcrypt.com\/api\/help\/error/g, 'https://localhost:8001/api/help/error');

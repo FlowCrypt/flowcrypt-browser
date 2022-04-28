@@ -14,7 +14,8 @@ const { version } = JSON.parse(readFileSync(`./package.json`).toString());
 const replaceables: { needle: RegExp, val: string }[] = [
   { needle: /\[BUILD_REPLACEABLE_VERSION\]/g, val: version },
   { needle: /\[BUILD_REPLACEABLE_FLAVOR\]/g, val: 'consumer' },
-  { needle: /\[BUILD_REPLACEABLE_GOOGLE_API_HOST\]/g, val: 'https://www.googleapis.com' },
+  { needle: /\[BUILD_REPLACEABLE_OAUTH_GOOGLE_API_HOST\]/g, val: 'https://oauth2.googleapis.com' },
+  { needle: /\[BUILD_REPLACEABLE_GMAIL_GOOGLE_API_HOST\]/g, val: 'https://gmail.googleapis.com' },
   { needle: /\[BUILD_REPLACEABLE_PEOPLE_API_HOST\]/g, val: 'https://people.googleapis.com' },
   { needle: /\[BUILD_REPLACEABLE_GOOGLE_OAUTH_SCREEN_HOST\]/g, val: 'https://accounts.google.com' },
   { needle: /\[BUILD_REPLACEABLE_BACKEND_API_HOST\]/g, val: 'https://flowcrypt.com/api/' },

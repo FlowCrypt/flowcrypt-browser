@@ -7,7 +7,7 @@
 import { Api, ProgressCbs, ReqMethod } from '../../shared/api.js';
 import { Dict, Str } from '../../../core/common.js';
 
-import { GOOGLE_API_HOST, PEOPLE_API_HOST } from '../../../core/const.js';
+import { GMAIL_GOOGLE_API_HOST, PEOPLE_API_HOST } from '../../../core/const.js';
 import { GmailRes } from './gmail-parser.js';
 import { GoogleAuth } from './google-auth.js';
 import { Serializable } from '../../../platform/store/abstract-store.js';
@@ -24,10 +24,10 @@ export class Google {
     progress = progress || {};
     let data, url;
     if (typeof progress.upload === 'function') {
-      url = `${GOOGLE_API_HOST}/upload/gmail/v1/users/me/${path}?uploadType=multipart`;
+      url = `${GMAIL_GOOGLE_API_HOST}/upload/gmail/v1/users/me/${path}?uploadType=multipart`;
       data = params;
     } else {
-      url = `${GOOGLE_API_HOST}/gmail/v1/users/me/${path}`;
+      url = `${GMAIL_GOOGLE_API_HOST}/gmail/v1/users/me/${path}`;
       if (method === 'GET' || method === 'DELETE') {
         data = params;
       } else {
