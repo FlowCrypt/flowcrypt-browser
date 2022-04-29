@@ -30,7 +30,7 @@
     "openpgp": "4.10.10",
     "pdfjs-dist": "2.13.216",
     "puppeteer": "13.7.0",
-    "stylelint": "14.8.0",
+    "stylelint": "14.8.1",
     "stylelint-config-standard": "25.0.0",
     "tslint": "6.1.3",
     "tsutils": "^3.21.0",
@@ -49,7 +49,7 @@
     "openpgp": "4.10.10",
     "postcss-html": "^1.4.1",
     "squire-rte": "1.11.3",
-    "sweetalert2": "11.4.9",
+    "sweetalert2": "11.4.10",
     "zxcvbn": "4.4.2"
   },
   "scripts": {
