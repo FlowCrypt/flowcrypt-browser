@@ -65,8 +65,8 @@ export class ComposeErrModule extends ViewModule<ComposeView> {
     this.view.errModule.debug(`handleSendErr: ${String(e)}`);
     if (ApiErr.isNetErr(e)) {
       let netErrMsg = 'Could not send message due to network error. Please check your internet connection and try again.\n';
-      netErrMsg += '(This may also be caused by <a href="https://flowcrypt.com/docs/help/network-error.html">missing extension permissions</a>).)';
-      await Ui.modal.error(netErrMsg);
+      netErrMsg += '(This may also be caused by <a href="https://flowcrypt.com/docs/help/network-error.html" target="_blank">missing extension permissions</a>).)';
+      await Ui.modal.error(netErrMsg, true);
     } else if (ApiErr.isAuthErr(e)) {
       BrowserMsg.send.notificationShowAuthPopupNeeded(this.view.parentTabId, { acctEmail: this.view.acctEmail });
       Settings.offerToLoginWithPopupShowModalOnErr(this.view.acctEmail);
