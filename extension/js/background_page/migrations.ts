@@ -3,7 +3,7 @@
 'use strict';
 
 import { storageLocalGetAll, storageLocalRemove } from '../common/browser/chrome.js';
-import { KeyInfo, KeyUtil } from '../common/core/crypto/key.js';
+import { KeyInfoWithIdentity, KeyUtil } from '../common/core/crypto/key.js';
 import { SmimeKey } from '../common/core/crypto/smime/smime-key.js';
 import { Str } from '../common/core/common.js';
 import { ContactStore, Email, Pubkey } from '../common/platform/store/contact-store.js';
@@ -31,7 +31,7 @@ type PubkeyMigrationData = {
 const addKeyInfoFingerprints = async () => {
   for (const acctEmail of await GlobalStore.acctEmailsGet()) {
     const originalKis = await KeyStore.get(acctEmail);
-    const updated: KeyInfo[] = [];
+    const updated: KeyInfoWithIdentity[] = [];
     for (const originalKi of originalKis) {
       updated.push(await KeyUtil.keyInfoObj(await KeyUtil.parse(originalKi.private)));
     }
@@ -78,7 +78,7 @@ export const migrateGlobal = async () => {
 };
 
 const processSmimeKey = (pubkey: Pubkey, tx: IDBTransaction, data: PubkeyMigrationData, next: () => void) => {
-  if (KeyUtil.getKeyType(pubkey.armoredKey) !== 'x509') {
+  if (KeyUtil.getKeyFamily(pubkey.armoredKey) !== 'x509') {
     next();
     return;
   }
@@ -140,12 +140,12 @@ export const updateX509FingerprintsAndLongids = async (db: IDBDatabase): Promise
   console.info('done updating');
 };
 
-export const extendSearchables = async (db: IDBDatabase): Promise<void> => {
-  const globalStore = await GlobalStore.get(['contact_store_searchable_extended']);
-  if (globalStore.contact_store_searchable_extended) {
+export const updateSearchables = async (db: IDBDatabase): Promise<void> => {
+  const globalStore = await GlobalStore.get(['contact_store_searchable_pruned']);
+  if (globalStore.contact_store_searchable_pruned) {
     return;
   }
-  console.info('updating ContactStorage to extend searchable values...');
+  console.info('updating ContactStorage to re-generate searchable values...');
   const tx = db.transaction(['emails'], 'readwrite');
   await new Promise((resolve, reject) => {
     ContactStore.setTxHandlers(tx, resolve, reject);
@@ -161,7 +161,7 @@ export const extendSearchables = async (db: IDBDatabase): Promise<void> => {
         }
       });
   });
-  await GlobalStore.set({ contact_store_searchable_extended: true });
+  await GlobalStore.set({ contact_store_searchable_pruned: true });
   console.info('done updating');
 };
 
@@ -176,7 +176,7 @@ export const updateOpgpRevocations = async (db: IDBDatabase): Promise<void> => {
     const search = tx.objectStore('pubkeys').getAll();
     ContactStore.setReqPipe(search, resolve, reject);
   });
-  const revokedKeys = (await Promise.all(pubkeys.filter(entity => KeyUtil.getKeyType(entity.armoredKey) === 'openpgp').
+  const revokedKeys = (await Promise.all(pubkeys.filter(entity => KeyUtil.getKeyFamily(entity.armoredKey) === 'openpgp').
     map(async (entity) => await KeyUtil.parse(entity.armoredKey)))).
     filter(k => k.revoked);
   const txUpdate = db.transaction(['revocations'], 'readwrite');

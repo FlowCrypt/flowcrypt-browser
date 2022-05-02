@@ -75,6 +75,13 @@ export class PgpBlockViewRenderModule {
     }
   };
 
+  public renderAsRegularContent = async (content: string) => {
+    this.setFrameColor('gray');
+    this.renderSignatureStatus('not signed');
+    this.renderEncryptionStatus('not encrypted');
+    await this.renderContent(content, false);
+  };
+
   public renderErrorStatus = (status: string): JQuery<HTMLElement> => {
     return $('#pgp_error').text(status).show();
   };

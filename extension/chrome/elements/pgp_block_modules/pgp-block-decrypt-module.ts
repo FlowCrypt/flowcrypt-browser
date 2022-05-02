@@ -40,7 +40,7 @@ export class PgpBlockViewDecryptModule {
             parsed.rawSignedContent || parsed.text || parsed.html || mimeMsg.toUtfStr(), 'parse error');
         }
       } else if (this.view.encryptedMsgUrlParam && !forcePullMsgFromApi) { // ascii armored message supplied
-        this.view.renderModule.renderText(this.view.signature ? 'Verifying..' : 'Decrypting...');
+        this.view.renderModule.renderText(this.view.signature ? 'Verifying...' : 'Decrypting...');
         await this.decryptAndRender(this.view.encryptedMsgUrlParam, verificationPubs);
       } else {  // need to fetch the inline signed + armored or encrypted +armored message block from gmail api
         if (!this.view.msgId) {
@@ -49,13 +49,17 @@ export class PgpBlockViewDecryptModule {
         } else {
           this.view.renderModule.renderText('Retrieving message...');
           const format: GmailResponseFormat = (!this.msgFetchedFromApi) ? 'full' : 'raw';
-          const { armored, subject, isPwdMsg } = await this.view.gmail.extractArmoredBlock(this.view.msgId, format, (progress) => {
+          const { armored, plaintext, subject, isPwdMsg } = await this.view.gmail.extractArmoredBlock(this.view.msgId, format, (progress) => {
             this.view.renderModule.renderText(`Retrieving message... ${progress}%`);
           });
           this.isPwdMsgBasedOnMsgSnippet = isPwdMsg;
           this.view.renderModule.renderText('Decrypting...');
           this.msgFetchedFromApi = format;
-          await this.decryptAndRender(Buf.fromUtfStr(armored), verificationPubs, subject);
+          if (plaintext) {
+            await this.view.renderModule.renderAsRegularContent(plaintext);
+          } else {
+            await this.decryptAndRender(Buf.fromUtfStr(armored), verificationPubs, subject);
+          }
         }
       }
     } catch (e) {
@@ -101,8 +105,7 @@ export class PgpBlockViewDecryptModule {
         this.view.renderModule.renderText('Decrypting...');
         await this.decryptAndRender(encryptedData, verificationPubs);
       } else {
-        const primaryKi = await KeyStore.getFirstOptional(this.view.acctEmail);
-        if (!result.longids.chosen && !primaryKi) {
+        if (!result.longids.chosen && !(await KeyStore.get(this.view.acctEmail)).length) {
           await this.view.errorModule.renderErr(Lang.pgpBlock.notProperlySetUp + this.view.errorModule.btnHtml('FlowCrypt settings', 'green settings'), undefined);
         } else if (result.error.type === DecryptErrTypes.keyMismatch) {
           await this.view.errorModule.handlePrivateKeyMismatch(kisWithPp.map(ki => ki.public), encryptedData, this.isPwdMsgBasedOnMsgSnippet === true);

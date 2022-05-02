@@ -242,8 +242,8 @@ export class KeyImportUi {
   private normalize = async (type: KeyBlockType, armored: string): Promise<{ normalized: string }> => {
     // non-OpenPGP keys are considered to be always normalized
     // TODO: PgpKey.normalize depends on OpenPGP.key.Key objects, when this is resolved
-    // this check for key type should be moved to PgpKey.normalize function.
-    if (KeyUtil.getKeyType(armored) !== 'openpgp') {
+    // this check for key family should be moved to PgpKey.normalize function.
+    if (KeyUtil.getKeyFamily(armored) !== 'openpgp') {
       return { normalized: armored };
     }
     const normalized = await KeyUtil.normalize(armored);

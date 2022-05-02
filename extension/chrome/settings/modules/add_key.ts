@@ -109,7 +109,7 @@ View.run(class AddKeyView extends View {
       if (e instanceof UserAlert) {
         return await Ui.modal.warning(e.message, Ui.testCompatibilityLink);
       } else if (e instanceof KeyCanBeFixed) {
-        return await Ui.modal.error(`This type of key cannot be set as non-primary yet. ${Lang.general.contactForSupportSentence(!!this.fesUrl)}`,
+        return await Ui.modal.error(`This type of key cannot be set as additional keys yet. ${Lang.general.contactForSupportSentence(!!this.fesUrl)}`,
           false, Ui.testCompatibilityLink);
       } else if (e instanceof UnexpectedKeyTypeError) {
         return await Ui.modal.warning(`This does not appear to be a validly formatted key.\n\n${e.message}`);

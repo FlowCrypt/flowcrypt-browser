@@ -58,7 +58,7 @@ export class AccountServer extends Api {
     from: string,
     recipients: ParsedRecipients,
     progressCb: ProgressCb
-  ): Promise<{ url: string }> => {
+  ): Promise<{ url: string, externalId?: string }> => {
     if (await this.isFesUsed()) {
       const fes = new EnterpriseServer(this.acctEmail);
       // Recipients are used to later cross-check replies from the web
@@ -67,6 +67,13 @@ export class AccountServer extends Api {
       return await fes.webPortalMessageUpload(encrypted, replyToken, from, recipients, progressCb);
     } else {
       return await FlowCryptComApi.messageUpload(fcAuth, encrypted, progressCb);
+    }
+  };
+
+  public messageGatewayUpdate = async (externalId: string, emailGatewayMessageId: string) => {
+    if (await this.isFesUsed()) {
+      const fes = new EnterpriseServer(this.acctEmail);
+      await fes.messageGatewayUpdate(externalId, emailGatewayMessageId);
     }
   };
 

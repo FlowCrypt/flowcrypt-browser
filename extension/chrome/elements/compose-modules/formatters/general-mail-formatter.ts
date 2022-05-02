@@ -3,45 +3,65 @@
 'use strict';
 
 import { EncryptedMsgMailFormatter } from './encrypted-mail-msg-formatter.js';
-import { Key, KeyInfo } from "../../../../js/common/core/crypto/key.js";
+import { KeyInfoWithIdentity } from "../../../../js/common/core/crypto/key.js";
 import { getUniqueRecipientEmails, NewMsgData } from "../compose-types.js";
 import { PlainMsgMailFormatter } from './plain-mail-msg-formatter.js';
 import { SendableMsg } from '../../../../js/common/api/email-provider/sendable-msg.js';
 import { SignedMsgMailFormatter } from './signed-msg-mail-formatter.js';
 import { ComposeView } from '../../compose.js';
+import { KeyStoreUtil, ParsedKeyInfo } from "../../../../js/common/core/crypto/key-store-util.js";
+import { UnreportableError } from '../../../../js/common/platform/catch.js';
 
 export class GeneralMailFormatter {
 
   // returns undefined in case user cancelled decryption of the signing key
-  public static processNewMsg = async (view: ComposeView, newMsgData: NewMsgData): Promise<{ msg: SendableMsg, senderKi: KeyInfo | undefined } | undefined> => {
+  public static processNewMsg = async (view: ComposeView, newMsgData: NewMsgData): Promise<{ msg: SendableMsg, senderKi: KeyInfoWithIdentity | undefined }> => {
     const choices = view.sendBtnModule.popover.choices;
     const recipientsEmails = getUniqueRecipientEmails(newMsgData.recipients);
     if (!choices.encrypt && !choices.sign) { // plain
+      view.S.now('send_btn_text').text('Formatting...');
       return { senderKi: undefined, msg: await new PlainMsgMailFormatter(view).sendableMsg(newMsgData) };
     }
-    let signingPrv: Key | undefined;
     if (!choices.encrypt && choices.sign) { // sign only
       view.S.now('send_btn_text').text('Signing...');
-      const senderKi = await view.storageModule.getKey(newMsgData.from);
-      signingPrv = await view.storageModule.decryptSenderKey(senderKi);
-      if (!signingPrv) {
-        return undefined;
+      const senderKis = await view.storageModule.getAccountKeys(newMsgData.from);
+      const signingKey = await GeneralMailFormatter.chooseSigningKeyAndDecryptIt(view, senderKis);
+      if (!signingKey) {
+        throw new UnreportableError('Could not find account key usable for signing this plain text message');
       }
-      return { senderKi, msg: await new SignedMsgMailFormatter(view).sendableMsg(newMsgData, signingPrv) };
+      return { senderKi: signingKey!.keyInfo, msg: await new SignedMsgMailFormatter(view).sendableMsg(newMsgData, signingKey!.key) };
     }
     // encrypt (optionally sign)
-    const result = await view.storageModule.collectSingleFamilyKeys(recipientsEmails, newMsgData.from, choices.sign);
-    if (choices.sign && result.senderKi !== undefined) {
-      signingPrv = await view.storageModule.decryptSenderKey(result.senderKi);
-      if (!signingPrv) {
-        return undefined;
-      }
-    }
-    if (result.emailsWithoutPubkeys.length) {
+    const singleFamilyKeys = await view.storageModule.collectSingleFamilyKeys(recipientsEmails, newMsgData.from, choices.sign);
+    if (singleFamilyKeys.emailsWithoutPubkeys.length) {
       await view.errModule.throwIfEncryptionPasswordInvalid(newMsgData);
     }
+    let signingKey: ParsedKeyInfo | undefined;
+    if (choices.sign) {
+      signingKey = await GeneralMailFormatter.chooseSigningKeyAndDecryptIt(view, singleFamilyKeys.senderKis);
+      if (!signingKey && singleFamilyKeys.family === 'openpgp') {
+        // we are ignoring missing signing keys for x509 family for now. We skip signing when missing
+        //   see https://github.com/FlowCrypt/flowcrypt-browser/pull/4372/files#r845012403
+        throw new UnreportableError(`Could not find account ${singleFamilyKeys.family} key usable for signing this encrypted message`);
+      }
+    }
     view.S.now('send_btn_text').text('Encrypting...');
-    return { senderKi: result.senderKi, msg: await new EncryptedMsgMailFormatter(view).sendableMsg(newMsgData, result.pubkeys, signingPrv) };
+    return { senderKi: signingKey?.keyInfo, msg: await new EncryptedMsgMailFormatter(view).sendableMsg(newMsgData, singleFamilyKeys.pubkeys, signingKey?.key) };
+  };
+
+  private static chooseSigningKeyAndDecryptIt = async (
+    view: ComposeView,
+    senderKis: KeyInfoWithIdentity[]
+  ): Promise<ParsedKeyInfo | undefined> => {
+    const parsedSenderPrvs = await KeyStoreUtil.parse(senderKis);
+    // to consider - currently we choose first valid key for signing. Should we sign with all?
+    //   alternatively we could use most recenlty modified valid key
+    const parsedSenderPrv = parsedSenderPrvs.find(k => k.key.usableForSigning);
+    if (!parsedSenderPrv) {
+      return undefined;
+    }
+    // throws ComposerResetBtnTrigger when user closes pass phrase dialog without entering
+    return await view.storageModule.decryptSenderKey(parsedSenderPrv);
   };
 
 }

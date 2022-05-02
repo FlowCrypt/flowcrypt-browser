@@ -7,7 +7,7 @@ import { Url } from '../../js/common/core/common.js';
 import { ApiErr } from '../../js/common/api/shared/api-error.js';
 import { Assert } from '../../js/common/assert.js';
 import { Catch } from '../../js/common/platform/catch.js';
-import { KeyInfo, Key, KeyUtil } from '../../js/common/core/crypto/key.js';
+import { Key, KeyInfoWithIdentity, KeyUtil } from '../../js/common/core/crypto/key.js';
 import { Gmail } from '../../js/common/api/email-provider/gmail/gmail.js';
 import { Google } from '../../js/common/api/email-provider/gmail/google.js';
 import { KeyImportUi } from '../../js/common/ui/key-import-ui.js';
@@ -26,6 +26,7 @@ import { initPassphraseToggle } from '../../js/common/ui/passphrase-ui.js';
 import { PubLookup } from '../../js/common/api/pub-lookup.js';
 import { Scopes, AcctStoreDict, AcctStore } from '../../js/common/platform/store/acct-store.js';
 import { KeyStore } from '../../js/common/platform/store/key-store.js';
+import { KeyStoreUtil } from "../../js/common/core/crypto/key-store-util.js";
 import { PassphraseStore } from '../../js/common/platform/store/passphrase-store.js';
 import { ContactStore } from '../../js/common/platform/store/contact-store.js';
 import { KeyManager } from '../../js/common/api/key-server/key-manager.js';
@@ -63,7 +64,7 @@ export class SetupView extends View {
   public pubLookup!: PubLookup;
   public keyManager: KeyManager | undefined; // not set if no url in org rules
 
-  public fetchedKeyBackups: KeyInfo[] = [];
+  public fetchedKeyBackups: KeyInfoWithIdentity[] = [];
   public fetchedKeyBackupsUniqueLongids: string[] = [];
   public importedKeysUniqueLongids: string[] = [];
   public mathingPassphrases: string[] = [];
@@ -222,9 +223,12 @@ export class SetupView extends View {
   public submitPublicKeys = async (
     { submit_main, submit_all }: { submit_main: boolean, submit_all: boolean }
   ): Promise<void> => {
-    const primaryKi = await KeyStore.getFirstRequired(this.acctEmail);
+    const mostUsefulPrv = KeyStoreUtil.chooseMostUseful(
+      await KeyStoreUtil.parse(await KeyStore.getRequired(this.acctEmail)),
+      'ONLY-FULLY-USABLE'
+    );
     try {
-      await this.submitPublicKeyIfNeeded(primaryKi.public, { submit_main, submit_all });
+      await this.submitPublicKeyIfNeeded(mostUsefulPrv?.keyInfo.public, { submit_main, submit_all });
     } catch (e) {
       return await Settings.promptToRetry(
         e,
@@ -301,12 +305,25 @@ export class SetupView extends View {
     return true;
   };
 
-  private submitPublicKeyIfNeeded = async (armoredPubkey: string, options: { submit_main: boolean, submit_all: boolean }) => {
+  /**
+   * empty pubkey means key not usable
+   */
+  private submitPublicKeyIfNeeded = async (
+    armoredPubkey: string | undefined,
+    options: { submit_main: boolean, submit_all: boolean }
+  ) => {
     if (!options.submit_main) {
       return;
     }
     if (!this.orgRules.canSubmitPubToAttester()) {
-      await Ui.modal.error('Not submitting public key to Attester - disabled for your org');
+      if (!this.orgRules.usesKeyManager) { // users who use EKM get their setup automated - no need to inform them of this
+        // other users chose this manually - let them know it's not allowed
+        await Ui.modal.error('Not submitting public key to Attester - disabled for your org');
+      }
+      return;
+    }
+    if (!armoredPubkey) {
+      await Ui.modal.warning('Public key not usable - not sumbitting to Attester');
       return;
     }
     const pub = await KeyUtil.parse(armoredPubkey);

@@ -3,7 +3,7 @@
 import * as ava from 'ava';
 
 import { TestVariant } from '../util';
-import { TestWithBrowser } from '../test';
+import { CommonAcct, TestWithBrowser } from '../test';
 import { TestUrls } from '../browser/test-urls';
 import { readdirSync, readFileSync } from 'fs';
 import { Buf } from '../core/buf';
@@ -12,7 +12,7 @@ import { testConstants } from './tooling/consts';
 // tslint:disable:no-blank-lines-func
 /* eslint-disable max-len */
 
-type UnitTest = { title: string, code: string, only: boolean };
+type UnitTest = { title: string, code: string, acct?: CommonAcct, only: boolean };
 
 export const defineUnitBrowserTests = (testVariant: TestVariant, testWithBrowser: TestWithBrowser) => {
 
@@ -20,9 +20,9 @@ export const defineUnitBrowserTests = (testVariant: TestVariant, testWithBrowser
 
     const browserUnitTestsFolder = './test/source/tests/browser-unit-tests/';
 
-    const defineAvaTest = (title: string, testCode: string, flag?: 'only') => {
+    const defineAvaTest = (title: string, testCode: string, acct?: CommonAcct, flag?: 'only') => {
       // eslint-disable-next-line no-only-tests/no-only-tests
-      (flag !== 'only' ? ava.default : ava.default.only)(title, testWithBrowser(undefined, async (t, browser) => {
+      (flag !== 'only' ? ava.default : ava.default.only)(title, testWithBrowser(acct, async (t, browser) => {
         const hostPage = await browser.newPage(t, TestUrls.extension(`chrome/dev/ci_unit_test.htm`));
         // update host page h1
         await hostPage.target.evaluate((title) => { window.document.getElementsByTagName('h1')[0].textContent = title; }, title);
@@ -69,17 +69,45 @@ export const defineUnitBrowserTests = (testVariant: TestVariant, testWithBrowser
         }
         const testCodeLines = code.split('\n');
         let thisUnitTestTitle = testCodeLines.shift()!.trim();
-        if (thisUnitTestTitle.includes('`).enterprise') && testVariant === 'CONSUMER-MOCK') {
+        if (thisUnitTestTitle.endsWith(';')) {
+          thisUnitTestTitle = thisUnitTestTitle.slice(0, -1);
+        }
+        let only = false;
+        let consumerOnly = false;
+        let enterpriseOnly = false;
+        let acct: CommonAcct | undefined;
+        const options = thisUnitTestTitle.split('.');
+        for (; ;) {
+          const option = options.pop();
+          if (!option) {
+            break;
+          }
+          if (option === 'only') {
+            only = true;
+          } else if (option === 'enterprise') {
+            enterpriseOnly = true;
+          } else if (option === 'consumer') {
+            consumerOnly = true;
+          } else if (option === 'acct(`compatibility`)') {
+            acct = 'compatibility';
+          } else if (option === 'acct(`compose`)') {
+            acct = 'compose';
+          } else if (option === 'acct(`ci.tests.gmail`)') {
+            acct = 'ci.tests.gmail';
+          } else {
+            break;
+          }
+        }
+        if (enterpriseOnly && testVariant === 'CONSUMER-MOCK') {
           continue;
         }
-        if (thisUnitTestTitle.includes('`).consumer') && testVariant === 'ENTERPRISE-MOCK') {
+        if (consumerOnly && testVariant === 'ENTERPRISE-MOCK') {
           continue;
         }
-        const only = thisUnitTestTitle.endsWith('.only;');
         thisUnitTestTitle = thisUnitTestTitle.replace(/`.+$/, '');
         code = testCodeLines.join('\n'); // without the title, just code
         const title = `[${filename}] ${thisUnitTestTitle}`;
-        unitTests.push({ title, code, only });
+        unitTests.push({ title, code, only, acct });
       }
       return unitTests;
     };
@@ -91,11 +119,11 @@ export const defineUnitBrowserTests = (testVariant: TestVariant, testWithBrowser
     const markedAsOnly: UnitTest[] = allUnitTests.filter(unitTest => unitTest.only);
     if (!markedAsOnly.length) { // no tests marked as only - run all
       for (const unitTest of allUnitTests) {
-        defineAvaTest(unitTest.title, unitTest.code);
+        defineAvaTest(unitTest.title, unitTest.code, unitTest.acct);
       }
     } else { // some tests marked as only - only run those + run one test that always fails
       for (const unitTest of markedAsOnly) {
-        defineAvaTest(unitTest.title, unitTest.code, 'only');
+        defineAvaTest(unitTest.title, unitTest.code, unitTest.acct, 'only');
       }
       // eslint-disable-next-line no-only-tests/no-only-tests
       ava.default.only('reminder to remove .only', async t => {

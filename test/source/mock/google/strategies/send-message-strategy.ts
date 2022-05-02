@@ -18,8 +18,8 @@ import { testConstants } from '../../../tests/tooling/consts.js';
 
 // TODO: Make a better structure of ITestMsgStrategy. Because this class doesn't test anything, it only saves message in the Mock
 class SaveMessageInStorageStrategy implements ITestMsgStrategy {
-  public test = async (mimeMsg: ParsedMail, base64Msg: string) => {
-    (await GoogleData.withInitializedData(mimeMsg.from!.value[0].address!)).storeSentMessage(mimeMsg, base64Msg);
+  public test = async (mimeMsg: ParsedMail, base64Msg: string, id: string) => {
+    (await GoogleData.withInitializedData(mimeMsg.from!.value[0].address!)).storeSentMessage(mimeMsg, base64Msg, id);
   };
 }
 
@@ -39,7 +39,7 @@ class PwdEncryptedMessageWithFlowCryptComApiTestStrategy implements ITestMsgStra
 }
 
 class PwdEncryptedMessageWithFesIdTokenTestStrategy implements ITestMsgStrategy {
-  public test = async (mimeMsg: ParsedMail) => {
+  public test = async (mimeMsg: ParsedMail, base64Msg: string, id: string) => {
     const expectedSenderEmail = 'user@standardsubdomainfes.test:8001';
     expect(mimeMsg.from!.text).to.equal(`First Last <${expectedSenderEmail}>`);
     expect((mimeMsg.to as AddressObject).text).to.equal('Mr To <to@example.com>');
@@ -53,6 +53,7 @@ class PwdEncryptedMessageWithFesIdTokenTestStrategy implements ITestMsgStrategy 
     if (!mimeMsg.text?.includes('Follow this link to open it')) {
       throw new HttpClientErr(`Error: cannot find pwd encrypted open link prompt in ${mimeMsg.text}`);
     }
+    await new SaveMessageInStorageStrategy().test(mimeMsg, base64Msg, id);
   };
 }
 
@@ -239,7 +240,7 @@ export class TestBySubjectStrategyContext {
     }
   }
 
-  public test = async (mimeMsg: ParsedMail, base64Msg: string) => {
-    await this.strategy.test(mimeMsg, base64Msg);
+  public test = async (mimeMsg: ParsedMail, base64Msg: string, id: string) => {
+    await this.strategy.test(mimeMsg, base64Msg, id);
   };
 }

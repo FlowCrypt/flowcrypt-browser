@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { KeyUtil } from '../../../js/common/core/crypto/key.js';
+import { KeyFamily, KeyUtil } from '../../../js/common/core/crypto/key.js';
 import { Str, Url } from '../../../js/common/core/common.js';
 import { ApiErr } from '../../../js/common/api/shared/api-error.js';
 import { Assert } from '../../../js/common/assert.js';
@@ -126,7 +126,7 @@ View.run(class ContactsView extends View {
       let tableContents = '';
       for (const pubkey of contact.sortedPubkeys) {
         const keyid = Xss.escape(pubkey.pubkey.id);
-        const type = Xss.escape(pubkey.pubkey.type);
+        const type = Xss.escape(pubkey.pubkey.family);
         let status: string;
         if (pubkey.revoked) {
           status = 'revoked';
@@ -157,9 +157,9 @@ View.run(class ContactsView extends View {
   private actionRenderViewPublicKeyHandler = async (viewPubkeyButton: HTMLElement) => {
     const parentRow = $(viewPubkeyButton).closest('[email]');
     const id = parentRow.attr('keyid')!;
-    const type = parentRow.attr('type')!;
+    const family = parentRow.attr('type')! as KeyFamily;
     const email = parentRow.attr('email')!;
-    const armoredPubkey = await ContactStore.getPubkey(undefined, { id, type });
+    const armoredPubkey = await ContactStore.getPubkey(undefined, { id, family });
     if (!armoredPubkey) {
       // todo: show error message like 'key disappeared'?
       return;
@@ -169,7 +169,7 @@ View.run(class ContactsView extends View {
     Xss.sanitizeRender('h1', `${this.backBtn}${this.space}${email}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`);
     $('#view_contact .key_dump').text(armoredPubkey);
     $('#view_contact #container-pubkey-details').text([
-      `Type: ${key.type}`,
+      `Type: ${key.family}`,
       `Fingerprint: ${Str.spaced(key.id || 'none')}`,
       `Users: ${key.emails?.join(', ')}`,
       `Created on: ${key.created ? new Date(key.created) : ''}`,
@@ -213,9 +213,9 @@ View.run(class ContactsView extends View {
   private actionRemovePublicKey = async (rmPubkeyButton: HTMLElement) => {
     const parentRow = $(rmPubkeyButton).closest('[email]');
     const id = parentRow.attr('keyid')!;
-    const type = parentRow.attr('type')!;
+    const family = parentRow.attr('type')! as KeyFamily; // todo - rename attr to "family"
     const email = parentRow.attr('email')!;
-    await ContactStore.unlinkPubkey(undefined, email, { id, type });
+    await ContactStore.unlinkPubkey(undefined, email, { id, family });
     await this.loadAndRenderContactList();
   };
 

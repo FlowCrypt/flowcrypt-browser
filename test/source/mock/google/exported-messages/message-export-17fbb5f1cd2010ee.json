@@ -1,0 +1,70 @@
+{
+  "acctEmail": "flowcrypt.compatibility@gmail.com",
+  "full": {
+    "id": "17fbb5f1cd2010ee",
+    "threadId": "17fbb5db49ddc1eb",
+    "labelIds": [
+      "IMPORTANT",
+      "Label_14",
+      "Label_15",
+      "SENT",
+      "INBOX"
+    ],
+    "snippet": "An OpenPGP message starts with this header: -----BEGIN PGP MESSAGE----- example",
+    "payload": {
+      "partId": "",
+      "mimeType": "text/plain",
+      "filename": "",
+      "headers": [
+        {
+          "name": "MIME-Version",
+          "value": "1.0"
+        },
+        {
+          "name": "Date",
+          "value": "Thu, 24 Mar 2022 18:00:46 +0800"
+        },
+        {
+          "name": "Subject",
+          "value": "Bogus PGP Message test for browser extension"
+        },
+        {
+          "name": "From",
+          "value": "sender@domain.com"
+        },
+        {
+          "name": "To",
+          "value": "flowcrypt.compatibility@gmail.com"
+        },
+        {
+          "name": "Content-Type",
+          "value": "text/plain; charset=\"UTF-8\""
+        }
+      ],
+      "body": {
+        "size": 85,
+        "data": "QW4gT3BlblBHUCBtZXNzYWdlIHN0YXJ0cyB3aXRoIHRoaXMgaGVhZGVyOg0KLS0tLS1CRUdJTiBQR1AgTUVTU0FHRS0tLS0tDQoNCmV4YW1wbGUNCg=="
+      }
+    },
+    "sizeEstimate": 457,
+    "historyId": "1347379",
+    "internalDate": "1648116046000"
+  },
+  "attachments": {},
+  "raw": {
+    "id": "17fbb5f1cd2010ee",
+    "threadId": "17fbb5db49ddc1eb",
+    "labelIds": [
+      "IMPORTANT",
+      "Label_14",
+      "Label_15",
+      "SENT",
+      "INBOX"
+    ],
+    "snippet": "An OpenPGP message starts with this header: -----BEGIN PGP MESSAGE----- example",
+    "sizeEstimate": 457,
+    "raw": "TUlNRS1WZXJzaW9uOiAxLjANCkRhdGU6IFRodSwgMjQgTWFyIDIwMjIgMTg6MDA6NDYgKzA4MDANCk1lc3NhZ2UtSUQ6IDxDQUtidUxUb2I0K1N0ckgtMj13djM5Rlo4aUNkNHZEVUE2MFBDQUtTNkI9eEJxcCt6SmdAbWFpbC5nbWFpbC5jb20-DQpTdWJqZWN0OiBCb2d1cyBQR1AgTWVzc2FnZSB0ZXN0IGZvciBicm93c2VyIGV4dGVuc2lvbg0KRnJvbTogRmxvd0NyeXB0IENvbXBhdGliaWxpdHkgPGZsb3djcnlwdC5jb21wYXRpYmlsaXR5QGdtYWlsLmNvbT4NClRvOiBGbG93Q3J5cHQgQ29tcGF0aWJpbGl0eSA8Zmxvd2NyeXB0LmNvbXBhdGliaWxpdHlAZ21haWwuY29tPg0KQ29udGVudC1UeXBlOiB0ZXh0L3BsYWluOyBjaGFyc2V0PSJVVEYtOCINCg0KQW4gT3BlblBHUCBtZXNzYWdlIHN0YXJ0cyB3aXRoIHRoaXMgaGVhZGVyOg0KLS0tLS1CRUdJTiBQR1AgTUVTU0FHRS0tLS0tDQoNCmV4YW1wbGUNCg==",
+    "historyId": "1347379",
+    "internalDate": "1648116046000"
+  }
+}
