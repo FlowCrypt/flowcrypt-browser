@@ -305,7 +305,7 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
       if (plaintext) {
         return { armored: '', plaintext, subject, isPwdMsg };
       }
-      throw new FormatError('Armored message not found', base64decode(bodies['text/plain'] || ''));
+      throw new FormatError('Armored message not found', base64decode(textBody || htmlBody));
     } else { // format === raw
       const mimeMsg = Buf.fromBase64UrlStr(gmailMsg.raw!);
       const decoded = await Mime.decode(mimeMsg);
