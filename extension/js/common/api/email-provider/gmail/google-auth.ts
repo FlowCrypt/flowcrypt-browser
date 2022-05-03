@@ -35,7 +35,7 @@ export class GoogleAuth {
   public static OAUTH = {
     client_id: '717284730244-ostjo2fdtr3ka4q9td69tdr9acmmru2p.apps.googleusercontent.com',
     url_code: `${GOOGLE_OAUTH_SCREEN_HOST}/o/oauth2/auth`,
-    url_tokens: `${OAUTH_GOOGLE_API_HOST}/token`,
+    url_tokens: `${OAUTH_GOOGLE_API_HOST}/oauth2/v4/token`,
     url_redirect: 'urn:ietf:wg:oauth:2.0:oob:auto',
     state_header: 'CRYPTUP_STATE_',
     scopes: {
