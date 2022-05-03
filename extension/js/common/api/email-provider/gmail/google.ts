@@ -7,7 +7,7 @@
 import { Api, ProgressCbs, ReqMethod } from '../../shared/api.js';
 import { Dict, Str } from '../../../core/common.js';
 
-import { GMAIL_GOOGLE_API_HOST, PEOPLE_API_HOST } from '../../../core/const.js';
+import { GMAIL_GOOGLE_API_HOST, PEOPLE_GOOGLE_API_HOST } from '../../../core/const.js';
 import { GmailRes } from './gmail-parser.js';
 import { GoogleAuth } from './google-auth.js';
 import { Serializable } from '../../../platform/store/abstract-store.js';
@@ -45,8 +45,8 @@ export class Google {
     progress = progress || {};
     const method = 'GET';
     const contentType = 'application/json; charset=UTF-8';
-    const searchContactsUrl = `${PEOPLE_API_HOST}/v1/people:searchContacts`;
-    const searchOtherContactsUrl = `${PEOPLE_API_HOST}/v1/otherContacts:search`;
+    const searchContactsUrl = `${PEOPLE_GOOGLE_API_HOST}/v1/people:searchContacts`;
+    const searchOtherContactsUrl = `${PEOPLE_GOOGLE_API_HOST}/v1/otherContacts:search`;
     const data = { query, 'readMask': 'names,emailAddresses', 'pageSize': max };
     const xhr = Api.getAjaxProgressXhrFactory(progress);
     const headers = { 'Authorization': await GoogleAuth.googleApiAuthHeader(acctEmail) };

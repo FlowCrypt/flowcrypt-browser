@@ -2,6 +2,7 @@ import { readFileSync, writeFileSync } from 'fs';
 import { execSync as exec } from 'child_process';
 
 // tslint:disable:no-unsafe-any
+// tslint:disable:oneliner-object-literal
 
 /**
  * This file was originally two files: one that edited manifests, and one that copied build folders and edited mock versions
@@ -76,6 +77,36 @@ const edit = (filepath: string, editor: (content: string) => string) => {
   writeFileSync(filepath, editor(readFileSync(filepath, { encoding: 'utf-8' })));
 };
 
+const updateEnterpriseBuild = () => {
+  const replaceConstsInEnterpriseBuild: { pattern: RegExp, replacement: string }[] = [
+    {
+      pattern: /export const FLAVOR = 'consumer';/g,
+      replacement: `export const FLAVOR = 'enterprise';`
+    },
+    {
+      pattern: /export const OAUTH_GOOGLE_API_HOST = '[^']+';/g,
+      replacement: `export const OAUTH_GOOGLE_API_HOST = 'https://oauth2.googleapis.com';`,
+    },
+    {
+      pattern: /export const GMAIL_GOOGLE_API_HOST = '[^']+';/g,
+      replacement: `export const GMAIL_GOOGLE_API_HOST = 'https://gmail.googleapis.com';`
+    },
+    {
+      pattern: /export const PEOPLE_GOOGLE_API_HOST = '[^']+';/g,
+      replacement: `export const PEOPLE_GOOGLE_API_HOST = 'https://people.googleapis.com';`
+    }
+  ];
+  const constFilepath = `${buildDir(CHROME_ENTERPRISE)}/js/common/core/const.js`;
+  edit(constFilepath, (code: string) => {
+    for (const item of replaceConstsInEnterpriseBuild) {
+      if (!item.pattern.test(code)) {
+        throw new Error(`Expecting to find FLAVOR in ${constFilepath}`);
+      }
+      return code.replace(item.pattern, item.replacement);
+    }
+  });
+};
+
 const makeMockBuild = (sourceBuildType: string) => {
   const mockBuildType = `${sourceBuildType}-mock`;
   exec(`cp -r ${buildDir(sourceBuildType)} ${buildDir(mockBuildType)}`);
@@ -97,17 +128,6 @@ const makeLocalFesBuild = (sourceBuildType: string) => {
   edit(`${buildDir(localFesBuildType)}/js/common/api/account-servers/enterprise-server.js`,
     code => code.replace('https://fes.${this.domain}', 'http://localhost:32337')
   );
-};
-
-const updateEnterpriseBuild = () => {
-  const constFilepath = `${buildDir(CHROME_ENTERPRISE)}/js/common/core/const.js`;
-  edit(constFilepath, (code: string) => {
-    const flavorPattern = /export const FLAVOR = 'consumer';/g;
-    if (!flavorPattern.test(code)) {
-      throw new Error(`Expecting to find FLAVOR in ${constFilepath}`);
-    }
-    return code.replace(flavorPattern, `export const FLAVOR = 'enterprise';`);
-  });
 };
 
 updateEnterpriseBuild();
