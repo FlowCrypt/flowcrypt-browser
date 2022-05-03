@@ -41,10 +41,15 @@ addManifest('chrome-enterprise', manifest => {
     "storage",
     "tabs",
     "https://*.google.com/*",
-    "https://oauth2.googleapis.com/*",
-    "https://gmail.googleapis.com/*",
-    "https://people.googleapis.com/*",
-    "https://www.googleapis.com/*",
+    // customer enterprise environments use people,gmail,oauth2 subdomains of googleapis.com
+    // instead of the generic www.googleapis.com subdomain as used by consumer extension
+    // consumer extension could eventually start using subdomains as well,
+    // but is blocked on CORS dues to either of these two options:
+    //   - CORS issue on /upload Google endpoint
+    //        https://partnerissuetracker.corp.google.com/issues/157312473#comment17
+    //   - working around the CORS issue by adding *.googleapis.com which
+    //        disables installed extensions / asks user to re-enable
+    "https://*.googleapis.com/*",
     "https://flowcrypt.com/*",
     "unlimitedStorage"
   ];
