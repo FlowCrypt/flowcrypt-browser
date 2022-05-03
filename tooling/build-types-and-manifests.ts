@@ -102,8 +102,9 @@ const updateEnterpriseBuild = () => {
       if (!item.pattern.test(code)) {
         throw new Error(`Expecting to find FLAVOR in ${constFilepath}`);
       }
-      return code.replace(item.pattern, item.replacement);
+      code = code.replace(item.pattern, item.replacement);
     }
+    return code;
   });
 };
 
