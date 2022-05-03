@@ -78,9 +78,13 @@ for (const srcFilePath of getAllFilesInDir('./extension', /\.ts$/)) {
  * check for problems in manifest file (because dynamically generated)
  * https://github.com/FlowCrypt/flowcrypt-browser/issues/2934
  */
-const expectedPermissions = ["storage", "tabs", "https://*.google.com/*", "https://www.googleapis.com/*", "https://flowcrypt.com/*", "unlimitedStorage"];
+const expectedConsumerPermissions = ["storage", "tabs", "https://*.google.com/*", "https://www.googleapis.com/*", "https://flowcrypt.com/*", "unlimitedStorage"];
+const expectedEnterprisePermissions = ["storage", "tabs", "https://*.google.com/*", "https://*.googleapis.com/*", "https://flowcrypt.com/*", "unlimitedStorage"];
 for (const buildType of ['chrome-consumer', 'chrome-enterprise', 'firefox-consumer']) {
   const manifest = JSON.parse(readFileSync(`./build/${buildType}/manifest.json`).toString());
+  const expectedPermissions = buildType.includes('consumer')
+    ? expectedConsumerPermissions
+    : expectedEnterprisePermissions;
   for (const expectedPermission of expectedPermissions) {
     if (!manifest.permissions.includes(expectedPermission)) {
       if (!(expectedPermission === 'unlimitedStorage' && buildType === 'firefox-consumer')) {
