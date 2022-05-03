@@ -167,7 +167,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
       }
       const senderEmail = this.getSenderEmail(emailContainer);
       const isOutgoing = !!this.sendAs[senderEmail];
-      const replacementXssSafe = XssSafeFactory.replaceRenderableMsgBlocks(this.factory, emailContainer.innerText, this.determineMsgId(emailContainer), senderEmail, isOutgoing);
+      const replacementXssSafe = XssSafeFactory.replaceRenderableMsgBlocks(this.factory, emailContainer.innerText.replace('\n\n\n','\n\n'), this.determineMsgId(emailContainer), senderEmail, isOutgoing);
       if (typeof replacementXssSafe !== 'undefined') {
         $(this.sel.translatePrompt).hide();
         if (this.debug) {
