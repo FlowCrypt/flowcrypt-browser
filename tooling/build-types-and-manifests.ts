@@ -84,16 +84,10 @@ const updateEnterpriseBuild = () => {
       replacement: `export const FLAVOR = 'enterprise';`
     },
     {
-      pattern: /export const OAUTH_GOOGLE_API_HOST = '[^']+';/g,
-      replacement: `export const OAUTH_GOOGLE_API_HOST = 'https://oauth2.googleapis.com';`,
-    },
-    {
+      // for now we use www.googleapis.com on consumer until CORS resolved to use gmail.googleapis.com
+      // (on enterprise we already use gmail.googleapis.com)
       pattern: /export const GMAIL_GOOGLE_API_HOST = '[^']+';/g,
       replacement: `export const GMAIL_GOOGLE_API_HOST = 'https://gmail.googleapis.com';`
-    },
-    {
-      pattern: /export const PEOPLE_GOOGLE_API_HOST = '[^']+';/g,
-      replacement: `export const PEOPLE_GOOGLE_API_HOST = 'https://people.googleapis.com';`
     }
   ];
   const constFilepath = `${buildDir(CHROME_ENTERPRISE)}/js/common/core/const.js`;
