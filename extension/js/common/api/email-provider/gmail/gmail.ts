@@ -6,7 +6,7 @@ import { AddrParserResult, BrowserWindow } from '../../../browser/browser-window
 import { ChunkedCb, ProgressCb, EmailProviderContact } from '../../shared/api.js';
 import { Dict, Str, Value } from '../../../core/common.js';
 import { EmailProviderApi, EmailProviderInterface, Backups } from '../email-provider-api.js';
-import { GOOGLE_API_HOST, gmailBackupSearchQuery } from '../../../core/const.js';
+import { GMAIL_GOOGLE_API_HOST, gmailBackupSearchQuery } from '../../../core/const.js';
 import { GmailParser, GmailRes } from './gmail-parser.js';
 import { AjaxErr } from '../../shared/api-error.js';
 import { Attachment } from '../../../core/attachment.js';
@@ -168,7 +168,7 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
       GoogleAuth.googleApiAuthHeader(this.acctEmail).then(authToken => {
         const r = new XMLHttpRequest();
         const method = 'GET';
-        const url = `${GOOGLE_API_HOST}/gmail/v1/users/me/messages/${msgId}/attachments/${attachmentId}`;
+        const url = `${GMAIL_GOOGLE_API_HOST}/gmail/v1/users/me/messages/${msgId}/attachments/${attachmentId}`;
         r.open(method, url, true);
         r.setRequestHeader('Authorization', authToken);
         r.send();
@@ -304,7 +304,7 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
       if (plaintext) {
         return { armored: '', plaintext, subject, isPwdMsg };
       }
-      throw new FormatError('Armored message not found', JSON.stringify(gmailMsg.payload, undefined, 2));
+      throw new FormatError('Armored message not found', textBody || htmlBody);
     } else { // format === raw
       const mimeMsg = Buf.fromBase64UrlStr(gmailMsg.raw!);
       const decoded = await Mime.decode(mimeMsg);
