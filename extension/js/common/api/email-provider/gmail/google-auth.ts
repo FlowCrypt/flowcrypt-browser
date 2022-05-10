@@ -5,7 +5,7 @@
 // tslint:disable:no-direct-ajax
 // tslint:disable:oneliner-object-literal
 
-import { GOOGLE_API_HOST, GOOGLE_OAUTH_SCREEN_HOST, FLAVOR } from '../../../core/const.js';
+import { OAUTH_GOOGLE_API_HOST, GOOGLE_OAUTH_SCREEN_HOST, FLAVOR } from '../../../core/const.js';
 import { Str, Url, Value } from '../../../core/common.js';
 import { tabsQuery, windowsCreate } from '../../../browser/chrome.js';
 import { Api } from './../../shared/api.js';
@@ -23,7 +23,6 @@ import { EnterpriseServer } from '../../account-servers/enterprise-server.js';
 import { InMemoryStore } from '../../../platform/store/in-memory-store.js';
 import { InMemoryStoreKeys } from '../../../core/const.js';
 
-type GoogleAuthTokenInfo = { issued_to: string, audience: string, scope: string, expires_in: number, access_type: 'offline' };
 type GoogleAuthTokensResponse = { access_token: string, expires_in: number, refresh_token?: string, id_token: string, token_type: 'Bearer' };
 type AuthResultSuccess = { result: 'Success', acctEmail: string, id_token: string, error?: undefined };
 type AuthResultError = { result: GoogleAuthWindowResult$result, acctEmail?: string, error?: string, id_token: undefined };
@@ -36,7 +35,7 @@ export class GoogleAuth {
   public static OAUTH = {
     client_id: '717284730244-ostjo2fdtr3ka4q9td69tdr9acmmru2p.apps.googleusercontent.com',
     url_code: `${GOOGLE_OAUTH_SCREEN_HOST}/o/oauth2/auth`,
-    url_tokens: `${GOOGLE_API_HOST}/oauth2/v4/token`,
+    url_tokens: `${OAUTH_GOOGLE_API_HOST}/token`,
     url_redirect: 'urn:ietf:wg:oauth:2.0:oob:auto',
     state_header: 'CRYPTUP_STATE_',
     scopes: {
@@ -89,7 +88,6 @@ export class GoogleAuth {
     // refresh token
     const refreshTokenRes = await GoogleAuth.googleAuthRefreshToken(storage.google_token_refresh);
     if (refreshTokenRes.access_token) {
-      await GoogleAuth.googleAuthCheckAccessToken(refreshTokenRes.access_token); // https://groups.google.com/forum/#!topic/oauth2-dev/QOFZ4G7Ktzg
       await GoogleAuth.googleAuthSaveTokens(acctEmail, refreshTokenRes, storage.google_token_scopes || []);
       const googleAccessToken = await InMemoryStore.get(acctEmail, InMemoryStoreKeys.GOOGLE_TOKEN_ACCESS);
       if (googleAccessToken) {
@@ -315,14 +313,6 @@ export class GoogleAuth {
     }, Catch.stackTrace()) as any as GoogleAuthTokensResponse;
   };
 
-  private static googleAuthCheckAccessToken = async (accessToken: string) => {
-    return await Api.ajax({
-      url: Url.create(`${GOOGLE_API_HOST}/oauth2/v1/tokeninfo`, { access_token: accessToken }),
-      crossDomain: true,
-      async: true,
-    }, Catch.stackTrace()) as any as GoogleAuthTokenInfo;
-  };
-
   // todo - would be better to use a TS type guard instead of the type cast when checking OpenId
   // check for things we actually use: photo/name/locale
   private static parseIdToken = (idToken: string): GmailRes.OpenId => {
@@ -338,7 +328,6 @@ export class GoogleAuth {
 
   private static retrieveAndSaveAuthToken = async (authCode: string, scopes: string[]): Promise<{ id_token: string }> => {
     const tokensObj = await GoogleAuth.googleAuthGetTokens(authCode);
-    await GoogleAuth.googleAuthCheckAccessToken(tokensObj.access_token); // https://groups.google.com/forum/#!topic/oauth2-dev/QOFZ4G7Ktzg
     const claims = GoogleAuth.parseIdToken(tokensObj.id_token);
     if (!claims.email) {
       throw new Error('Missing email address in id_token');

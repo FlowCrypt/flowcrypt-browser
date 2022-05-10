@@ -2,6 +2,7 @@ import { readFileSync, writeFileSync } from 'fs';
 import { execSync as exec } from 'child_process';
 
 // tslint:disable:no-unsafe-any
+// tslint:disable:oneliner-object-literal
 
 /**
  * This file was originally two files: one that edited manifests, and one that copied build folders and edited mock versions
@@ -37,7 +38,22 @@ addManifest('chrome-enterprise', manifest => {
   manifest.name = 'FlowCrypt for Enterprise';
   manifest.description = 'FlowCrypt Chrome Extension for Enterprise clients (stable)';
   // careful - changing this will likely cause all extensions to be disabled in their user's browsers
-  manifest.permissions = ["storage", "tabs", "https://*.google.com/*", "https://www.googleapis.com/*", "https://flowcrypt.com/*", "unlimitedStorage"];
+  manifest.permissions = [
+    "storage",
+    "tabs",
+    "https://*.google.com/*",
+    // customer enterprise environments use people,gmail,oauth2 subdomains of googleapis.com
+    // instead of the generic www.googleapis.com subdomain as used by consumer extension
+    // consumer extension could eventually start using subdomains as well,
+    // but is blocked on CORS dues to either of these two options:
+    //   - CORS issue on /upload Google endpoint
+    //        https://partnerissuetracker.corp.google.com/issues/157312473#comment17
+    //   - working around the CORS issue by adding *.googleapis.com which
+    //        disables installed extensions / asks user to re-enable
+    "https://*.googleapis.com/*",
+    "https://flowcrypt.com/*",
+    "unlimitedStorage"
+  ];
   for (const csDef of manifest.content_scripts) {
     csDef.matches = csDef.matches.filter((host: string) => host === 'https://mail.google.com/*');
   }
@@ -61,12 +77,37 @@ const edit = (filepath: string, editor: (content: string) => string) => {
   writeFileSync(filepath, editor(readFileSync(filepath, { encoding: 'utf-8' })));
 };
 
+const updateEnterpriseBuild = () => {
+  const replaceConstsInEnterpriseBuild: { pattern: RegExp, replacement: string }[] = [
+    {
+      pattern: /export const FLAVOR = 'consumer';/g,
+      replacement: `export const FLAVOR = 'enterprise';`
+    },
+    {
+      // for now we use www.googleapis.com on consumer until CORS resolved to use gmail.googleapis.com
+      // (on enterprise we already use gmail.googleapis.com)
+      pattern: /export const GMAIL_GOOGLE_API_HOST = '[^']+';/g,
+      replacement: `export const GMAIL_GOOGLE_API_HOST = 'https://gmail.googleapis.com';`
+    }
+  ];
+  const constFilepath = `${buildDir(CHROME_ENTERPRISE)}/js/common/core/const.js`;
+  edit(constFilepath, (code: string) => {
+    for (const item of replaceConstsInEnterpriseBuild) {
+      if (!item.pattern.test(code)) {
+        throw new Error(`Expecting to find FLAVOR in ${constFilepath}`);
+      }
+      code = code.replace(item.pattern, item.replacement);
+    }
+    return code;
+  });
+};
+
 const makeMockBuild = (sourceBuildType: string) => {
   const mockBuildType = `${sourceBuildType}-mock`;
   exec(`cp -r ${buildDir(sourceBuildType)} ${buildDir(mockBuildType)}`);
   const editor = (code: string) => {
     return code
-      .replace(/const (GOOGLE_API_HOST|PEOPLE_API_HOST|GOOGLE_OAUTH_SCREEN_HOST) = [^;]+;/g, `const $1 = '${MOCK_HOST[sourceBuildType]}';`)
+      .replace(/const (OAUTH_GOOGLE_API_HOST|GMAIL_GOOGLE_API_HOST|PEOPLE_GOOGLE_API_HOST|GOOGLE_OAUTH_SCREEN_HOST) = [^;]+;/g, `const $1 = '${MOCK_HOST[sourceBuildType]}';`)
       .replace(/const (BACKEND_API_HOST) = [^;]+;/g, `const $1 = 'https://localhost:8001/api/';`)
       .replace(/const (ATTESTER_API_HOST) = [^;]+;/g, `const $1 = 'https://localhost:8001/attester/';`)
       .replace(/https:\/\/flowcrypt.com\/api\/help\/error/g, 'https://localhost:8001/api/help/error');
@@ -82,17 +123,6 @@ const makeLocalFesBuild = (sourceBuildType: string) => {
   edit(`${buildDir(localFesBuildType)}/js/common/api/account-servers/enterprise-server.js`,
     code => code.replace('https://fes.${this.domain}', 'http://localhost:32337')
   );
-};
-
-const updateEnterpriseBuild = () => {
-  const constFilepath = `${buildDir(CHROME_ENTERPRISE)}/js/common/core/const.js`;
-  edit(constFilepath, (code: string) => {
-    const flavorPattern = /export const FLAVOR = 'consumer';/g;
-    if (!flavorPattern.test(code)) {
-      throw new Error(`Expecting to find FLAVOR in ${constFilepath}`);
-    }
-    return code.replace(flavorPattern, `export const FLAVOR = 'enterprise';`);
-  });
 };
 
 updateEnterpriseBuild();

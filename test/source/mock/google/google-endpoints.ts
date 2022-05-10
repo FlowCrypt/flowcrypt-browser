@@ -32,20 +32,13 @@ export const mockGoogleEndpoints: HandlersDefinition = {
     }
     throw new HttpClientErr(`Method not implemented for ${req.url}: ${req.method}`);
   },
-  '/oauth2/v4/token': async ({ query: { grant_type, refreshToken, client_id, code } }, req) => {
+  '/token': async ({ query: { grant_type, refreshToken, client_id, code } }, req) => {
     if (isPost(req) && grant_type === 'authorization_code' && code && client_id === oauth.clientId) { // auth code from auth screen gets exchanged for access and refresh tokens
       return oauth.getRefreshTokenResponse(code);
     } else if (isPost(req) && grant_type === 'refresh_token' && refreshToken && client_id === oauth.clientId) { // here also later refresh token gets exchanged for access token
       return oauth.getTokenResponse(refreshToken);
     }
     throw new Error(`Method not implemented for ${req.url}: ${req.method}`);
-  },
-  '/oauth2/v1/tokeninfo': async ({ query: { access_token } }, req) => {
-    oauth.checkAuthorizationHeaderWithAccessToken(`Bearer ${access_token}`);
-    if (isGet(req)) {
-      return { issued_to: 'issued_to', audience: 'audience', scope: 'scope', expires_in: oauth.expiresIn, access_type: 'offline' };
-    }
-    throw new HttpClientErr(`Method not implemented for ${req.url}: ${req.method}`);
   },
   '/v1/people:searchContacts': async ({ query: { query } }, req) => {
     if (!isGet(req)) {
