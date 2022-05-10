@@ -89,6 +89,7 @@ class PwdEncryptedMessageWithFesIdReplyRenderingTestStrategy implements ITestMsg
       expect((mimeMsg.to as AddressObject).text).to.equal('flowcrypt.compatibility@gmail.com, mock.only.pubkey@flowcrypt.com');
       // tslint:disable-next-line:no-unused-expression
       expect(mimeMsg.cc).to.be.an.undefined; // eslint-disable-line no-unused-expressions
+      // tslint:disable-next-line:no-unused-expression
       expect(mimeMsg.bcc).to.be.an.undefined; // eslint-disable-line no-unused-expressions
       expect((mimeMsg.headers.get('reply-to') as AddressObject).text).to.equal('First Last <user2@standardsubdomainfes.test:8001>, sender@domain.com, to@example.com');
     } else if (mimeMsg.text?.includes('http://fes.standardsubdomainfes.test:8001/message/FES-MOCK-MESSAGE-FOR-SENDER@DOMAIN.COM-ID')) {
@@ -97,6 +98,7 @@ class PwdEncryptedMessageWithFesIdReplyRenderingTestStrategy implements ITestMsg
       expect(mimeMsg.cc).to.be.an.undefined; // eslint-disable-line no-unused-expressions
       // tslint:disable-next-line:no-unused-expression
       expect(mimeMsg.bcc).to.be.an.undefined; // eslint-disable-line no-unused-expressions
+      // tslint:disable-next-line:no-unused-expression
       expect(mimeMsg.headers.get('reply-to')).to.be.an.undefined; // eslint-disable-line no-unused-expressions
     } else if (mimeMsg.text?.includes('http://fes.standardsubdomainfes.test:8001/message/FES-MOCK-MESSAGE-FOR-TO@EXAMPLE.COM-ID')) {
       expect((mimeMsg.to as AddressObject).text).to.equal('to@example.com');
@@ -104,6 +106,7 @@ class PwdEncryptedMessageWithFesIdReplyRenderingTestStrategy implements ITestMsg
       expect(mimeMsg.cc).to.be.an.undefined; // eslint-disable-line no-unused-expressions
       // tslint:disable-next-line:no-unused-expression
       expect(mimeMsg.bcc).to.be.an.undefined; // eslint-disable-line no-unused-expressions
+      // tslint:disable-next-line:no-unused-expression
       expect(mimeMsg.headers.get('reply-to')).to.be.an.undefined; // eslint-disable-line no-unused-expressions
     } else {
       throw new HttpClientErr(`Error: cannot find pwd encrypted FES link in:\n\n${mimeMsg.text}`);
