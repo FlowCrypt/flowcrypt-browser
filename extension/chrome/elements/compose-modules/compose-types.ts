@@ -51,7 +51,7 @@ export type CollectKeysResult = { pubkeys: PubkeyResult[], emailsWithoutPubkeys:
 export type PopoverOpt = 'encrypt' | 'sign' | 'richtext';
 export type PopoverChoices = { [key in PopoverOpt]: boolean };
 
-export type NewMsgData = { recipients: ParsedRecipients, subject: string, plaintext: string, plainhtml: string, pwd: string | undefined, from: string };
+export type NewMsgData = { recipients: ParsedRecipients, subject: string, plaintext: string, plainhtml: string, pwd: string | undefined, from: EmailParts, replyTo?: string };
 
 export class SendBtnTexts {
   public static readonly BTN_ENCRYPT_AND_SEND: string = "Encrypt and Send";

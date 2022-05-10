@@ -34,7 +34,7 @@ export class GeneralMailFormatter {
     }
     if (!choices.encrypt && choices.sign) { // sign only
       view.S.now('send_btn_text').text('Signing...');
-      const senderKis = await view.storageModule.getAccountKeys(newMsgData.from);
+      const senderKis = await view.storageModule.getAccountKeys(newMsgData.from.email);
       const signingKey = await GeneralMailFormatter.chooseSigningKeyAndDecryptIt(view, senderKis);
       if (!signingKey) {
         throw new UnreportableError('Could not find account key usable for signing this plain text message');
@@ -43,7 +43,7 @@ export class GeneralMailFormatter {
       return { senderKi: signingKey!.keyInfo, msgs: [msg], recipients: msg.recipients, attachments: msg.attachments };
     }
     // encrypt (optionally sign)
-    const singleFamilyKeys = await view.storageModule.collectSingleFamilyKeys(recipientsEmails, newMsgData.from, choices.sign);
+    const singleFamilyKeys = await view.storageModule.collectSingleFamilyKeys(recipientsEmails, newMsgData.from.email, choices.sign);
     if (singleFamilyKeys.emailsWithoutPubkeys.length) {
       await view.errModule.throwIfEncryptionPasswordInvalid(newMsgData);
     }

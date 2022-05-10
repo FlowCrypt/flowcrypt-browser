@@ -126,7 +126,7 @@ export class ComposeErrModule extends ViewModule<ComposeView> {
     if (!subject && ! await Ui.modal.confirm('Send without a subject?')) {
       throw new ComposerResetBtnTrigger();
     }
-    let footer = await this.view.footerModule.getFooterFromStorage(from);
+    let footer = await this.view.footerModule.getFooterFromStorage(from.email);
     if (footer) { // format footer the way it would be in outgoing plaintext
       footer = Xss.htmlUnescape(Xss.htmlSanitizeAndStripAllTags(this.view.footerModule.createFooterHtml(footer), '\n')).trim();
     }

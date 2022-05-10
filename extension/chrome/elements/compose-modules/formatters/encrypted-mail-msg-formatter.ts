@@ -6,7 +6,7 @@ import { BaseMailFormatter } from './base-mail-formatter.js';
 import { ComposerResetBtnTrigger } from '../compose-err-module.js';
 import { Mime, SendableMsgBody } from '../../../../js/common/core/mime.js';
 import { getUniqueRecipientEmails, NewMsgData } from '../compose-types.js';
-import { Str, Value } from '../../../../js/common/core/common.js';
+import { EmailParts, Str, Value } from '../../../../js/common/core/common.js';
 import { ApiErr } from '../../../../js/common/api/shared/api-error.js';
 import { Attachment } from '../../../../js/common/core/attachment.js';
 import { Buf } from '../../../../js/common/core/buf.js';
@@ -25,6 +25,7 @@ import { PgpHash } from '../../../../js/common/core/crypto/pgp/pgp-hash.js';
 import { UploadedMessageData } from '../../../../js/common/api/account-server.js';
 import { ParsedKeyInfo } from '../../../../js/common/core/crypto/key-store-util.js';
 import { MultipleMessages } from './general-mail-formatter.js';
+import { RecipientType } from '../../../../js/common/api/shared/api.js';
 
 export class EncryptedMsgMailFormatter extends BaseMailFormatter {
 
@@ -38,9 +39,30 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
       newMsg.pwd = undefined;
       const collectedAttachments = await this.view.attachmentsModule.attachment.collectEncryptAttachments(pubkeys);
       // we always have at least one pubkey, this is the main message, encrypted for pubkeys
+      const pubkeyRecipients: { [type in RecipientType]?: EmailParts[] } = {};
+      for (const [key, value] of Object.entries(newMsg.recipients)) {
+        if (['to', 'cc', 'bcc'].includes(key)) {
+          const sendingType = key as RecipientType;
+          pubkeyRecipients[sendingType] = value?.filter(emailPart => pubkeys.some(p => p.email === emailPart.email));
+        }
+      }
+      const uniquePubkeyRecipientEmails = Value.arr.unique((pubkeyRecipients.to || []).concat(pubkeyRecipients.cc || [])
+        .map(recipient => recipient.email.toLowerCase()));
+      // pubkey recipients should be able to reply to "to" and "cc" pwd recipients
+      const replyTo = (newMsg.recipients.to ?? []).concat(newMsg.recipients.cc ?? [])
+        .filter(recipient => !uniquePubkeyRecipientEmails.includes(recipient.email.toLowerCase()));
+      const pubkeyMsgData = {
+        ...newMsg,
+        recipients: pubkeyRecipients,
+        // brackets are required for test emails like '@test:8001'
+        replyTo: replyTo.length ? `${Str.formatEmailList([newMsg.from, ...replyTo], true)}` : undefined
+      };
+      if (!uniquePubkeyRecipientEmails.length) {
+        // todo: add myself?
+      }
       const msgs: SendableMsg[] = [
         await this.sendablePwdMsg(
-          newMsg,
+          pubkeyMsgData,
           pubkeys,
           { msgUrl: uploadedMessageData.url, externalId: uploadedMessageData.externalId },
           collectedAttachments,
@@ -49,7 +71,10 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
       // adding individual messages for each recipient that doesn't have a pubkey
       for (const recipientEmail of Object.keys(uploadedMessageData.emailToExternalIdAndUrl ?? {}).filter(email => !pubkeys.some(p => p.email === email))) {
         const { url, externalId } = uploadedMessageData.emailToExternalIdAndUrl![recipientEmail];
-        msgs.push(await this.sendablePwdMsg(newMsg, pubkeys, { recipientEmail, msgUrl: url, externalId }, [], signingKey?.key));
+        const foundParsedRecipient = (newMsg.recipients.to ?? []).concat(newMsg.recipients.cc ?? []).concat(newMsg.recipients.bcc ?? []).
+          find(r => r.email.toLowerCase() === recipientEmail.toLowerCase());
+        const individualMsgData = { ...newMsg, recipients: { to: [foundParsedRecipient ?? { email: recipientEmail }] } };
+        msgs.push(await this.sendablePwdMsg(individualMsgData, pubkeys, { msgUrl: url, externalId }, [], signingKey?.key));
       }
       return { senderKi: signingKey?.keyInfo, msgs, recipients: newMsg.recipients, attachments: collectedAttachments };
     } else {
@@ -111,7 +136,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
       authInfo.uuid ? authInfo : undefined,
       pwdEncryptedWithAttachments,
       replyToken,
-      newMsg.from,
+      newMsg.from.email, // todo: Str.formatEmailWithOptionalName?
       newMsg.recipients,
       (p) => this.view.sendBtnModule.renderUploadProgress(p, 'FIRST-HALF'), // still need to upload to Gmail later, this request represents first half of progress
     );
@@ -120,7 +145,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
   private sendablePwdMsg = async (
     newMsg: NewMsgData,
     pubs: PubkeyResult[],
-    { msgUrl, externalId, recipientEmail }: { msgUrl: string, externalId?: string, recipientEmail?: string },
+    { msgUrl, externalId }: { msgUrl: string, externalId?: string },
     attachments: Attachment[],
     signingPrv?: Key) => {
     // encoded as: PGP/MIME-like structure but with attachments as external files due to email size limit (encrypted for pubkeys only)
@@ -129,12 +154,6 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
     const { data: pubEncryptedNoAttachments } = await this.encryptDataArmor(Buf.fromUtfStr(pgpMimeNoAttachments), undefined, pubs, signingPrv); // encrypted only for pubs
     const emailIntroAndLinkBody = await this.formatPwdEncryptedMsgBodyLink(msgUrl);
     const headers = this.headers(newMsg);
-    if (recipientEmail) {
-      // we will send this copy of the message only to this recipient
-      const foundParsedRecipient = (headers.recipients.to ?? []).concat(headers.recipients.cc ?? []).concat(headers.recipients.bcc ?? []).
-        find(r => r.email.toLowerCase() === recipientEmail.toLowerCase());
-      headers.recipients = { to: [foundParsedRecipient ?? { email: recipientEmail }] };
-    }
     return await SendableMsg.createPwdMsg(this.acctEmail, headers, emailIntroAndLinkBody,
       this.createPgpMimeAttachments(pubEncryptedNoAttachments).concat(attachments),
       { isDraft: this.isDraft, externalId });
@@ -206,7 +225,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
         'class': 'cryptup_reply',
         'cryptup-data': Str.htmlAttrEncode({
           sender: newMsgData.from,
-          recipient: Value.arr.withoutVal(Value.arr.withoutVal(recipients, newMsgData.from), this.acctEmail),
+          recipient: Value.arr.withoutVal(Value.arr.withoutVal(recipients, newMsgData.from.email), this.acctEmail),
           subject: newMsgData.subject,
           token: response.replyToken,
         })

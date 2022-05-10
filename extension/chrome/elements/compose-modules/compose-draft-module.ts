@@ -119,8 +119,8 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
     if (this.hasBodyChanged(this.view.inputModule.squire.getHTML()) || this.hasSubjectChanged(String(this.view.S.cached('input_subject').val())) || forceSave) {
       this.currentlySavingDraft = true;
       try {
-        const msgData = this.view.inputModule.extractAll();
-        const { pubkeys } = await this.view.storageModule.collectSingleFamilyKeys([], msgData.from, true);
+        const msgData = await this.view.inputModule.extractAll();
+        const { pubkeys } = await this.view.storageModule.collectSingleFamilyKeys([], msgData.from.email, true);
         // collectSingleFamilyKeys filters out bad keys, but only if there are any good keys available
         //  if no good keys available, it leaves bad keys so we can explain the issue here
         if (pubkeys.some(pub => pub.pubkey.expiration && pub.pubkey.expiration < Date.now())) {

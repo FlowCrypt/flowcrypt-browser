@@ -21,8 +21,6 @@ import { Xss } from '../../../js/common/platform/xss.js';
 import { ViewModule } from '../../../js/common/view-module.js';
 import { ComposeView } from '../compose.js';
 import { ContactStore } from '../../../js/common/platform/store/contact-store.js';
-import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
-import { Str } from '../../../js/common/core/common.js';
 
 export class ComposeSendBtnModule extends ViewModule<ComposeView> {
 
@@ -110,7 +108,7 @@ export class ComposeSendBtnModule extends ViewModule<ComposeView> {
       this.view.S.now('send_btn_text').text('Loading...');
       Xss.sanitizeRender(this.view.S.now('send_btn_i'), Ui.spinner('white'));
       this.view.S.cached('send_btn_note').text('');
-      const newMsgData = this.view.inputModule.extractAll();
+      const newMsgData = await this.view.inputModule.extractAll();
       await this.view.errModule.throwIfFormValsInvalid(newMsgData);
       const emails = getUniqueRecipientEmails(newMsgData.recipients);
       await ContactStore.update(undefined, emails, { lastUse: Date.now() });
@@ -147,7 +145,6 @@ export class ComposeSendBtnModule extends ViewModule<ComposeView> {
     if (this.view.myPubkeyModule.shouldAttach() && senderKi) { // todo: report on undefined?
       msg.attachments.push(Attachment.keyinfoAsPubkeyAttachment(senderKi));
     }
-    msg.from = await this.formatSenderEmailAsMimeString(msg.from);
   };
 
   private extractInlineImagesToAttachments = (html: string) => {
@@ -241,24 +238,4 @@ export class ComposeSendBtnModule extends ViewModule<ComposeView> {
     }
   };
 
-  private formatSenderEmailAsMimeString = async (email: string): Promise<string> => {
-    const parsedEmail = Str.parseEmail(email);
-    if (!parsedEmail.email) {
-      throw new Error(`Recipient email ${email} is not valid`);
-    }
-    if (parsedEmail.name) {
-      return Str.formatEmailWithOptionalName({ email: parsedEmail.email, name: parsedEmail.name });
-    }
-    const { sendAs } = await AcctStore.get(this.view.acctEmail, ['sendAs']);
-    let name: string | undefined;
-    if (sendAs && sendAs[email]?.name) {
-      name = sendAs[email].name!;
-    } else {
-      const contactWithPubKeys = await ContactStore.getOneWithAllPubkeys(undefined, email);
-      if (contactWithPubKeys && contactWithPubKeys.info.name) {
-        name = contactWithPubKeys.info.name;
-      }
-    }
-    return Str.formatEmailWithOptionalName({ email: parsedEmail.email, name });
-  };
 }

@@ -9,6 +9,8 @@ import { Xss } from '../../../js/common/platform/xss.js';
 import { ViewModule } from '../../../js/common/view-module.js';
 import { ComposeView } from '../compose.js';
 import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
+import { EmailParts, Str } from '../../../js/common/core/common.js';
+import { ContactStore } from '../../../js/common/platform/store/contact-store.js';
 
 export class ComposeSenderModule extends ViewModule<ComposeView> {
 
@@ -20,6 +22,28 @@ export class ComposeSenderModule extends ViewModule<ComposeView> {
       return this.view.replyParams.myEmail;
     }
     return this.view.acctEmail;
+  };
+
+  // searches in AcctStore and ContactStore to find name for this email (if it is missing in MIME string)
+  public getEmailWithOptionalName = async (emailInMimeFormat: string): Promise<EmailParts> => {
+    const parsedEmail = Str.parseEmail(emailInMimeFormat);
+    if (!parsedEmail.email) {
+      throw new Error(`Recipient email ${emailInMimeFormat} is not valid`);
+    }
+    if (parsedEmail.name) {
+      return { email: parsedEmail.email, name: parsedEmail.name };
+    }
+    const { sendAs } = await AcctStore.get(this.view.acctEmail, ['sendAs']);
+    let name: string | undefined;
+    if (sendAs && sendAs[parsedEmail.email]?.name) {
+      name = sendAs[parsedEmail.email].name!;
+    } else {
+      const contactWithPubKeys = await ContactStore.getOneWithAllPubkeys(undefined, parsedEmail.email);
+      if (contactWithPubKeys && contactWithPubKeys.info.name) {
+        name = contactWithPubKeys.info.name;
+      }
+    }
+    return { email: parsedEmail.email, name };
   };
 
   public renderSendFromOrChevron = async () => {

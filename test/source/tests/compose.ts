@@ -1601,6 +1601,12 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       await composePage.waitAndType('@input-password', 'gO0d-pwd');
       await composePage.waitAndClick('@action-send', { delay: 1 });
       await ComposePageRecipe.closed(composePage);
+      const sentMsgs = (await GoogleData.withInitializedData(acct)).searchMessagesBySubject(subject);
+      for (const msg of sentMsgs) {
+        const message = msg.payload!.body!.data!;
+        console.log(message);
+      }
+      expect(sentMsgs.length).to.equal(2);
       // this test is using PwdEncryptedMessageWithFesIdTokenTestStrategy to check sent result based on subject "PWD encrypted message with flowcrypt.com/api"
       // also see '/api/v1/message' in fes-endpoints.ts mock
     }));
