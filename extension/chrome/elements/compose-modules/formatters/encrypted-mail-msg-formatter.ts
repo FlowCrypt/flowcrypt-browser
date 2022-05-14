@@ -38,7 +38,6 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
       const uploadedMessageData = await this.prepareAndUploadPwdEncryptedMsg(newMsg); // encrypted for pwd only, pubkeys ignored
       newMsg.pwd = undefined;
       const collectedAttachments = await this.view.attachmentsModule.attachment.collectEncryptAttachments(pubkeys);
-      // we always have at least one pubkey, this is the main message, encrypted for pubkeys
       const pubkeyRecipients: { [type in RecipientType]?: EmailParts[] } = {};
       for (const [key, value] of Object.entries(newMsg.recipients)) {
         if (['to', 'cc', 'bcc'].includes(key)) {
@@ -46,33 +45,33 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
           pubkeyRecipients[sendingType] = value?.filter(emailPart => pubkeys.some(p => p.email === emailPart.email));
         }
       }
-      const uniquePubkeyRecipientEmails = Value.arr.unique((pubkeyRecipients.to || []).concat(pubkeyRecipients.cc || [])
+      const uniquePubkeyRecipientToAndCCs = Value.arr.unique((pubkeyRecipients.to || []).concat(pubkeyRecipients.cc || [])
         .map(recipient => recipient.email.toLowerCase()));
       // pubkey recipients should be able to reply to "to" and "cc" pwd recipients
       const replyTo = (newMsg.recipients.to ?? []).concat(newMsg.recipients.cc ?? [])
-        .filter(recipient => !uniquePubkeyRecipientEmails.includes(recipient.email.toLowerCase()));
-      const pubkeyMsgData = {
-        ...newMsg,
-        recipients: pubkeyRecipients,
-        // brackets are required for test emails like '@test:8001'
-        replyTo: replyTo.length ? `${Str.formatEmailList([newMsg.from, ...replyTo], true)}` : undefined
-      };
-      if (!uniquePubkeyRecipientEmails.length) {
-        // todo: add myself?
-      }
-      const msgs: SendableMsg[] = [
-        await this.sendablePwdMsg(
+        .filter(recipient => !uniquePubkeyRecipientToAndCCs.includes(recipient.email.toLowerCase()));
+      const msgs: SendableMsg[] = [];
+      if (pubkeyRecipients.to?.length || pubkeyRecipients.cc?.length || pubkeyRecipients.bcc?.length) {
+        const pubkeyMsgData = {
+          ...newMsg,
+          recipients: pubkeyRecipients,
+          // brackets are required for test emails like '@test:8001'
+          replyTo: replyTo.length ? `${Str.formatEmailList([newMsg.from, ...replyTo], true)}` : undefined
+        };
+        msgs.push(await this.sendablePwdMsg(
           pubkeyMsgData,
           pubkeys,
           { msgUrl: uploadedMessageData.url, externalId: uploadedMessageData.externalId },
           collectedAttachments,
           signingKey?.key)
-      ];
+        );
+      }
       // adding individual messages for each recipient that doesn't have a pubkey
       for (const recipientEmail of Object.keys(uploadedMessageData.emailToExternalIdAndUrl ?? {}).filter(email => !pubkeys.some(p => p.email === email))) {
         const { url, externalId } = uploadedMessageData.emailToExternalIdAndUrl![recipientEmail];
         const foundParsedRecipient = (newMsg.recipients.to ?? []).concat(newMsg.recipients.cc ?? []).concat(newMsg.recipients.bcc ?? []).
           find(r => r.email.toLowerCase() === recipientEmail.toLowerCase());
+        // todo: since a message is allowed to have only `cc` or `bcc` without `to`, should we preserve the original placement(s) of the recipient?
         const individualMsgData = { ...newMsg, recipients: { to: [foundParsedRecipient ?? { email: recipientEmail }] } };
         msgs.push(await this.sendablePwdMsg(individualMsgData, pubkeys, { msgUrl: url, externalId }, [], signingKey?.key));
       }

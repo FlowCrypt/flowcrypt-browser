@@ -64,6 +64,30 @@ const processMessageFromUser2 = (body: string) => {
   return response;
 };
 
+const processMessageFromUser3 = (body: string) => {
+  expect(body).to.contain('-----BEGIN PGP MESSAGE-----');
+  expect(body).to.contain('"associateReplyToken":"mock-fes-reply-token"');
+  expect(body).to.contain('"to":["to@example.com"]');
+  expect(body).to.contain('"cc":[]');
+  expect(body).to.contain('"bcc":["flowcrypt.compatibility@gmail.com"]');
+  const response =
+  {
+    // this url is required for pubkey encrypted message
+    url: `http://${standardFesUrl}/message/FES-MOCK-MESSAGE-ID`,
+    externalId: 'FES-MOCK-EXTERNAL-ID',
+    emailToExternalIdAndUrl: {} as { [email: string]: { url: string, externalId: string } }
+  };
+  response.emailToExternalIdAndUrl['to@example.com'] = {
+    url: `http://${standardFesUrl}/message/FES-MOCK-MESSAGE-FOR-TO@EXAMPLE.COM-ID`,
+    externalId: 'FES-MOCK-EXTERNAL-FOR-TO@EXAMPLE.COM-ID'
+  };
+  response.emailToExternalIdAndUrl['flowcrypt.compatibility@gmail.com'] = {
+    url: `http://${standardFesUrl}/message/FES-MOCK-MESSAGE-FOR-FLOWCRYPT.COMPATIBILITY@GMAIL.COM-ID`,
+    externalId: 'FES-MOCK-EXTERNAL-FOR-FLOWCRYPT.COMPATIBILITY@GMAIL.COM-ID'
+  };
+  return response;
+};
+
 export const mockFesEndpoints: HandlersDefinition = {
   // standard fes location at https://fes.domain.com
   '/api/': async ({ }, req) => {
@@ -117,6 +141,9 @@ export const mockFesEndpoints: HandlersDefinition = {
       }
       if (body.includes('"from":"user2@standardsubdomainfes.test:8001"')) {
         return processMessageFromUser2(body);
+      }
+      if (body.includes('"from":"user3@standardsubdomainfes.test:8001"')) {
+        return processMessageFromUser3(body);
       }
     }
     throw new HttpClientErr('Not Found', 404);

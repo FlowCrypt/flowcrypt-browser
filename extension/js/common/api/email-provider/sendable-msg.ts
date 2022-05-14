@@ -138,9 +138,10 @@ export class SendableMsg {
   ) {
     const allEmails = [...recipients.to || [], ...recipients.cc || [], ...recipients.bcc || []];
     if (!allEmails.length && !isDraft) {
-      throw new Error('The To: field is empty. Please add recipients and try again');
+      throw new Error('The To:, Cc: and Bcc: fields are empty. Please add recipients and try again');
     }
     const invalidEmails = allEmails.filter(email => !Str.isEmailValid(email.email));
+    // todo: distinguish To:, Cc: and Bcc: in error report?
     if (invalidEmails.length) {
       throw new InvalidRecipientError(`The To: field contains invalid emails: ${invalidEmails.join(', ')}\n\nPlease check recipients and try again.`);
     }

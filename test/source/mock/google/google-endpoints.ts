@@ -337,10 +337,8 @@ const validateMimeMsg = async (acct: string, mimeMsg: ParsedMail, threadId?: str
   if (!mimeMsg.text && !mimeMsg.attachments?.length) {
     throw new HttpClientErr('Error: Message body cannot be empty', 400);
   }
-  if (
-    !parsedMailAddressObjectAsArray(mimeMsg.to).length && parsedMailAddressObjectAsArray(mimeMsg.to)[0].value.length
-    || parsedMailAddressObjectAsArray(mimeMsg.to)[0].value.find(em => !allowedRecipients.includes(em.address!))
-  ) {
+  const recipients = parsedMailAddressObjectAsArray(mimeMsg.to).concat(parsedMailAddressObjectAsArray(mimeMsg.cc)).concat(parsedMailAddressObjectAsArray(mimeMsg.bcc));
+  if (!recipients.length || recipients.some(addr => addr.value.some(em => !allowedRecipients.includes(em.address!)))) {
     throw new HttpClientErr('Error: You can\'t send a message to unexisting email address(es)');
   }
   const aliases = [acct];

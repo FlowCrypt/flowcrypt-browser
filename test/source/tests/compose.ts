@@ -1607,7 +1607,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         console.log(message);
       }
       expect(sentMsgs.length).to.equal(2);
-      // this test is using PwdEncryptedMessageWithFesIdTokenTestStrategy to check sent result based on subject "PWD encrypted message with flowcrypt.com/api"
+      // this test is using PwdEncryptedMessageWithFesIdTokenTestStrategy to check sent result based on subject "PWD encrypted message with FES - ID TOKEN"
       // also see '/api/v1/message' in fes-endpoints.ts mock
     }));
 
@@ -1641,6 +1641,8 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       await fileInput!.uploadFile('test/samples/small.pdf');
       await composePage.waitAndType('@input-password', 'gO0d-pwd');
       await composePage.waitAndClick('@action-send', { delay: 1 });
+      // this test is using PwdEncryptedMessageWithFesReplyRenderingTestStrategy to check sent result based on subject "PWD encrypted message with FES - Reply rendering"
+      // also see '/api/v1/message' in fes-endpoints.ts mock
       const attachmentsContainer = (await composePage.waitAny('@replied-attachments'))!;
       const attachments = await attachmentsContainer.$$('.pgp_attachment');
       expect(attachments.length).to.equal(2);
@@ -1652,6 +1654,32 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       expect(await Promise.all(attachmentFrames.filter(f => f.url().includes('attachment.htm')).map(async (frame) =>
         await PageRecipe.getElementPropertyJson(await new ControllableFrame(frame).waitAny("@attachment-name"), 'textContent')))).
         to.eql(['small.txt.pgp', 'small.pdf.pgp']);
+    }));
+
+    /**
+     * You need the following lines in /etc/hosts:
+     * 127.0.0.1    standardsubdomainfes.test
+     * 127.0.0.1    fes.standardsubdomainfes.test
+     */
+    ava.default('user3@standardsubdomainfes.test:8001 - PWD encrypted message with FES web portal - pubkey recipient in bcc', testWithBrowser(undefined, async (t, browser) => {
+      const acct = 'user3@standardsubdomainfes.test:8001'; // added port to trick extension into calling the mock
+      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
+      await SetupPageRecipe.manualEnter(settingsPage, 'flowcrypt.test.key.used.pgp', { submitPubkey: false, usedPgpBefore: false },
+        { isSavePassphraseChecked: false, isSavePassphraseHidden: false });
+      const subject = 'PWD encrypted message with FES - pubkey recipient in bcc';
+      const composePage = await ComposePageRecipe.openStandalone(t, browser, 'user3@standardsubdomainfes.test:8001');
+      await ComposePageRecipe.fillMsg(composePage, { to: 'to@example.com', bcc: 'flowcrypt.compatibility@gmail.com' }, subject);
+      await composePage.waitAndType('@input-password', 'gO0d-pwd');
+      await composePage.waitAndClick('@action-send', { delay: 1 });
+      await ComposePageRecipe.closed(composePage);
+      const sentMsgs = (await GoogleData.withInitializedData(acct)).searchMessagesBySubject(subject);
+      for (const msg of sentMsgs) {
+        const message = msg.payload!.body!.data!;
+        console.log(message);
+      }
+      expect(sentMsgs.length).to.equal(2);
+      // this test is using PwdEncryptedMessageWithFesPubkeyRecipientInBccTestStrategy to check sent result based on subject "PWD encrypted message with FES - pubkey recipient in bcc"
+      // also see '/api/v1/message' in fes-endpoints.ts mock
     }));
 
     ava.default('first.key.revoked@key-manager-autoimport-no-prv-create.flowcrypt.test - selects valid own key when saving draft or sending', testWithBrowser(undefined, async (t, browser) => {
