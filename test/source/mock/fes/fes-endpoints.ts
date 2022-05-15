@@ -2,6 +2,8 @@
 
 import { expect } from 'chai';
 import { IncomingMessage } from 'http';
+import { Buf } from '../../core/buf';
+import { MsgUtil } from '../../core/crypto/pgp/msg-util';
 import { HandlersDefinition } from '../all-apis-mock';
 import { HttpClientErr } from '../lib/api';
 import { MockJwt } from '../lib/oauth';
@@ -9,12 +11,24 @@ import { MockJwt } from '../lib/oauth';
 const standardFesUrl = 'fes.standardsubdomainfes.test:8001';
 const issuedAccessTokens: string[] = [];
 
-const processMessageFromUser = (body: string) => {
+const processMessageFromUser = async (body: string) => {
   expect(body).to.contain('-----BEGIN PGP MESSAGE-----');
   expect(body).to.contain('"associateReplyToken":"mock-fes-reply-token"');
   expect(body).to.contain('"to":["Mr To <to@example.com>"]');
   expect(body).to.contain('"cc":[]');
   expect(body).to.contain('"bcc":["Mr Bcc <bcc@example.com>"]');
+  const encryptedData = Buf.fromUtfStr(body.match(/-----BEGIN PGP MESSAGE-----.*-----END PGP MESSAGE-----/s)![0]);
+  const decrypted = await MsgUtil.decryptMessage({ kisWithPp: [], msgPwd: 'lousy pwdgO0d-pwd', encryptedData, verificationPubs: [] });
+  expect(decrypted.success).to.equal(true);
+  const decryptedMimeMsg = decrypted.content!.toUtfStr();
+  expect(decryptedMimeMsg).to.contain('Content-Type: text/plain\r\n' +
+    'Content-Transfer-Encoding: quoted-printable\r\n\r\n' +
+    'PWD encrypted message with FES - ID TOKEN');
+  // small.txt
+  expect(decryptedMimeMsg).to.contain('Content-Type: text/plain; name=small.txt\r\n' +
+    'Content-Disposition: attachment; filename=small.txt');
+  expect(decryptedMimeMsg).to.contain('Content-Transfer-Encoding: base64\r\n\r\n' +
+    'c21hbGwgdGV4dCBmaWxlCm5vdCBtdWNoIGhlcmUKdGhpcyB3b3JrZWQK');
   const response =
   {
     // this url is required for pubkey encrypted message
@@ -33,12 +47,26 @@ const processMessageFromUser = (body: string) => {
   return response;
 };
 
-const processMessageFromUser2 = (body: string) => {
+const processMessageFromUser2 = async (body: string) => {
   expect(body).to.contain('-----BEGIN PGP MESSAGE-----');
   expect(body).to.contain('"associateReplyToken":"mock-fes-reply-token"');
   expect(body).to.contain('"to":["sender@domain.com","flowcrypt.compatibility@gmail.com","to@example.com","mock.only.pubkey@flowcrypt.com"]');
   expect(body).to.contain('"cc":[]');
   expect(body).to.contain('"bcc":[]');
+  const encryptedData = Buf.fromUtfStr(body.match(/-----BEGIN PGP MESSAGE-----.*-----END PGP MESSAGE-----/s)![0]);
+  const decrypted = await MsgUtil.decryptMessage({ kisWithPp: [], msgPwd: 'gO0d-pwd', encryptedData, verificationPubs: [] });
+  expect(decrypted.success).to.equal(true);
+  const decryptedMimeMsg = decrypted.content!.toUtfStr();
+  // small.txt
+  expect(decryptedMimeMsg).to.contain('Content-Type: text/plain; name=small.txt\r\n' +
+    'Content-Disposition: attachment; filename=small.txt');
+  expect(decryptedMimeMsg).to.contain('Content-Transfer-Encoding: base64\r\n\r\n' +
+    'c21hbGwgdGV4dCBmaWxlCm5vdCBtdWNoIGhlcmUKdGhpcyB3b3JrZWQK');
+  // small.pdf
+  expect(decryptedMimeMsg).to.contain('Content-Type: application/pdf; name=small.pdf\r\n' +
+    'Content-Disposition: attachment; filename=small.pdf');
+  expect(decryptedMimeMsg).to.contain('Content-Transfer-Encoding: base64\r\n\r\n' +
+    'JVBERi0xLjQKJcOkw7zDtsOfCjIgMCBvYmoKPDwvTGVuZ3RoIDMgMCBSL0ZpbHRlci9GbGF0ZURl');
   const response = {
     // this url is required for pubkey encrypted message
     url: `http://${standardFesUrl}/message/FES-MOCK-MESSAGE-ID`,
@@ -64,12 +92,20 @@ const processMessageFromUser2 = (body: string) => {
   return response;
 };
 
-const processMessageFromUser3 = (body: string) => {
+const processMessageFromUser3 = async (body: string) => {
   expect(body).to.contain('-----BEGIN PGP MESSAGE-----');
   expect(body).to.contain('"associateReplyToken":"mock-fes-reply-token"');
   expect(body).to.contain('"to":["to@example.com"]');
   expect(body).to.contain('"cc":[]');
   expect(body).to.contain('"bcc":["flowcrypt.compatibility@gmail.com"]');
+  const encryptedData = Buf.fromUtfStr(body.match(/-----BEGIN PGP MESSAGE-----.*-----END PGP MESSAGE-----/s)![0]);
+  const decrypted = await MsgUtil.decryptMessage({ kisWithPp: [], msgPwd: 'gO0d-pwd', encryptedData, verificationPubs: [] });
+  expect(decrypted.success).to.equal(true);
+  const decryptedMimeMsg = decrypted.content!.toUtfStr();
+  // small.txt
+  expect(decryptedMimeMsg).to.contain('Content-Type: text/plain\r\n' +
+    'Content-Transfer-Encoding: quoted-printable\r\n\r\n' +
+    'PWD encrypted message with FES - pubkey recipient in bcc');
   const response =
   {
     // this url is required for pubkey encrypted message
@@ -137,13 +173,13 @@ export const mockFesEndpoints: HandlersDefinition = {
       // test: `compose - user@standardsubdomainfes.test:8001 - PWD encrypted message with FES web portal`
       authenticate(req, 'oidc');
       if (body.includes('"from":"user@standardsubdomainfes.test:8001"')) {
-        return processMessageFromUser(body);
+        return await processMessageFromUser(body);
       }
       if (body.includes('"from":"user2@standardsubdomainfes.test:8001"')) {
-        return processMessageFromUser2(body);
+        return await processMessageFromUser2(body);
       }
       if (body.includes('"from":"user3@standardsubdomainfes.test:8001"')) {
-        return processMessageFromUser3(body);
+        return await processMessageFromUser3(body);
       }
     }
     throw new HttpClientErr('Not Found', 404);
