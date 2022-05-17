@@ -38,6 +38,20 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
       const uploadedMessageData = await this.prepareAndUploadPwdEncryptedMsg(newMsg); // encrypted for pwd only, pubkeys ignored
       newMsg.pwd = undefined;
       const collectedAttachments = await this.view.attachmentsModule.attachment.collectEncryptAttachments(pubkeys);
+      if (!Object.keys(uploadedMessageData.emailToExternalIdAndUrl ?? {}).length) {
+        const legacyMsg = await this.sendablePwdMsg(
+          newMsg,
+          pubkeys,
+          { msgUrl: uploadedMessageData.url, externalId: uploadedMessageData.externalId },
+          collectedAttachments,
+          signingKey?.key);
+        return {
+          senderKi: signingKey?.keyInfo,
+          msgs: [legacyMsg],
+          recipients: legacyMsg.recipients,
+          attachments: collectedAttachments
+        };
+      }
       const pubkeyRecipients: { [type in RecipientType]?: EmailParts[] } = {};
       for (const [key, value] of Object.entries(newMsg.recipients)) {
         if (['to', 'cc', 'bcc'].includes(key)) {
