@@ -45,12 +45,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
           { msgUrl: uploadedMessageData.url, externalId: uploadedMessageData.externalId },
           collectedAttachments,
           signingKey?.key);
-        return {
-          senderKi: signingKey?.keyInfo,
-          msgs: [legacyMsg],
-          recipients: legacyMsg.recipients,
-          attachments: collectedAttachments
-        };
+        return { senderKi: signingKey?.keyInfo, msgs: [legacyMsg], recipients: legacyMsg.recipients, attachments: collectedAttachments };
       }
       const pubkeyRecipients: { [type in RecipientType]?: EmailParts[] } = {};
       for (const [key, value] of Object.entries(newMsg.recipients)) {
