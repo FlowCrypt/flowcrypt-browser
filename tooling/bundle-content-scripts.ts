@@ -48,16 +48,3 @@ buildContentScript(([] as string[]).concat(
   getFilesInDir(`${sourceDir}/common`, /\.js$/, false),
   getFilesInDir(`${sourceDir}/content_scripts/webmail`, /\.js$/),
 ), 'webmail_bundle.js');
-
-// checkout
-buildContentScript(([] as string[]).concat(
-  getFilesInDir(`${sourceDir}/common/platform`, /\.js$/, false),
-  [
-    `${sourceDir}/common/assert.js`,
-    `${sourceDir}/common/core/common.js`,
-  ],
-  getFilesInDir(`${sourceDir}/common/browser`, /\.js$/, false),
-  [
-    `${sourceDir}/content_scripts/checkout/stripe.js`,
-  ],
-), 'stripe_bundle.js');
