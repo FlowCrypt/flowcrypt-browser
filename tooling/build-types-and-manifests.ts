@@ -69,7 +69,10 @@ addManifest('chrome-enterprise', manifest => {
 
 const CHROME_CONSUMER = 'chrome-consumer';
 const CHROME_ENTERPRISE = 'chrome-enterprise';
-const MOCK_HOST: { [buildType: string]: string } = { 'chrome-consumer': 'https://localhost:8001', 'chrome-enterprise': 'https://google.mock.flowcryptlocal.test:8001' };
+const MOCK_HOST: { [buildType: string]: string } = {
+  'chrome-consumer': 'https://localhost:8001',
+  'chrome-enterprise': 'https://google.mock.flowcryptlocal.test:8001',
+};
 
 const buildDir = (buildType: string) => `./build/${buildType}`;
 
@@ -80,26 +83,31 @@ const edit = (filepath: string, editor: (content: string) => string) => {
 const updateEnterpriseBuild = () => {
   const replaceConstsInEnterpriseBuild: { pattern: RegExp, replacement: string }[] = [
     {
-      pattern: /export const FLAVOR = 'consumer';/g,
-      replacement: `export const FLAVOR = 'enterprise';`
+      pattern: /const FLAVOR = 'consumer';/g,
+      replacement: `const FLAVOR = 'enterprise';`
     },
     {
       // for now we use www.googleapis.com on consumer until CORS resolved to use gmail.googleapis.com
       // (on enterprise we already use gmail.googleapis.com)
-      pattern: /export const GMAIL_GOOGLE_API_HOST = '[^']+';/g,
-      replacement: `export const GMAIL_GOOGLE_API_HOST = 'https://gmail.googleapis.com';`
+      pattern: /const GMAIL_GOOGLE_API_HOST = '[^']+';/g,
+      replacement: `const GMAIL_GOOGLE_API_HOST = 'https://gmail.googleapis.com';`
     }
   ];
-  const constFilepath = `${buildDir(CHROME_ENTERPRISE)}/js/common/core/const.js`;
-  edit(constFilepath, (code: string) => {
-    for (const item of replaceConstsInEnterpriseBuild) {
-      if (!item.pattern.test(code)) {
-        throw new Error(`Expecting to find FLAVOR in ${constFilepath}`);
+  const constFilepaths = [
+    `${buildDir(CHROME_ENTERPRISE)}/js/common/core/const.js`,
+    `${buildDir(CHROME_ENTERPRISE)}/js/content_scripts/webmail_bundle.js`
+  ];
+  for (const constFilepath of constFilepaths) {
+    edit(constFilepath, (code: string) => {
+      for (const item of replaceConstsInEnterpriseBuild) {
+        if (!item.pattern.test(code)) {
+          throw new Error(`Expecting to find '${item.pattern.source}' in ${constFilepath}`);
+        }
+        code = code.replace(item.pattern, item.replacement);
       }
-      code = code.replace(item.pattern, item.replacement);
-    }
-    return code;
-  });
+      return code;
+    });
+  }
 };
 
 const makeMockBuild = (sourceBuildType: string) => {
