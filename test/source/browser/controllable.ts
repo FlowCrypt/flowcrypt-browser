@@ -333,7 +333,7 @@ abstract class ControllableBase {
         }
       }
       const lastText = observedContentHistory[observedContentHistory.length - 1];
-      if (lastText && currentText !== lastText) {
+      if (typeof lastText !== 'undefined' && currentText !== lastText) {
         observedContentHistory.push(currentText);
       }
       await Util.sleep(testLoopLengthMs / 1000);
