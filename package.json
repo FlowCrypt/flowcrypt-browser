@@ -8,7 +8,7 @@
   "devDependencies": {
     "@types/chai": "4.3.1",
     "@types/chai-as-promised": "7.1.5",
-    "@types/chrome": "0.0.186",
+    "@types/chrome": "0.0.188",
     "@types/dompurify": "2.3.3",
     "@types/jquery": "3.5.14",
     "@types/mailparser": "3.4.0",
@@ -19,7 +19,7 @@
     "ava": "4.2.0",
     "chai": "4.3.6",
     "chai-as-promised": "7.1.1",
-    "del": "6.0.0",
+    "del": "6.1.0",
     "eslint": "8.15.0",
     "eslint-plugin-header": "3.1.1",
     "eslint-plugin-no-only-tests": "2.6.0",
