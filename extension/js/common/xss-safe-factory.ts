@@ -163,10 +163,6 @@ export class XssSafeFactory {
     return this.frameSrc(this.extUrl('chrome/elements/compose.htm'), params);
   };
 
-  public srcStripeCheckout = () => {
-    return this.frameSrc('https://flowcrypt.com/stripe.htm', {});
-  };
-
   public metaNotificationContainer = () => {
     return `<div class="${this.destroyableCls} webmail_notifications" style="text-align: center;"></div>`;
   };
@@ -222,10 +218,6 @@ export class XssSafeFactory {
 
   public embeddedAttachmentStatus = (content: string) => {
     return Ui.e('div', { class: 'attachment_loader', html: Xss.htmlSanitize(content) });
-  };
-
-  public embeddedStripeCheckout = () => {
-    return this.iframe(this.srcStripeCheckout(), [], { sandbox: 'allow-forms allow-scripts allow-same-origin' });
   };
 
   public btnCompose = (webmailName: WebMailName, webmailVersion: WebMailVersion) => {

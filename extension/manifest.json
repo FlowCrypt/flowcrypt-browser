@@ -53,17 +53,6 @@
         "/lib/sweetalert2.js",
         "/js/content_scripts/webmail_bundle.js"
       ]
-    },
-    {
-      "matches": [
-        "https://flowcrypt.com/stripe*"
-      ],
-      "js": [
-        "/lib/purify.js",
-        "/lib/jquery.min.js",
-        "/js/content_scripts/stripe_bundle.js"
-      ],
-      "all_frames": true
     }
   ],
   "background": {

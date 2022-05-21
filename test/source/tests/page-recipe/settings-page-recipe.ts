@@ -161,9 +161,9 @@ export class SettingsPageRecipe extends PageRecipe {
     }
     await addPrvPage.waitAndClick('.action_add_private_key', { delay: 1 });
     await addPrvPage.waitTillGone('.swal2-container'); // dialog closed
-    await Util.sleep(1);
+    await Util.sleep(2);
     await addPrvPage.close();
-    await Util.sleep(1);
+    await Util.sleep(2);
     const settingsPage = await browser.newPage(t, TestUrls.extensionSettings(acctEmail));
     await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
     await settingsPage.waitForContent('@container-settings-keys-list', fp); // confirm key successfully loaded

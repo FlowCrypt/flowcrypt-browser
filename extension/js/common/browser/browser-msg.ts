@@ -46,7 +46,6 @@ export namespace Bm {
   export type Redirect = { location: string };
   export type OpenGoogleAuthDialog = { acctEmail?: string, scopes?: string[] };
   export type OpenPage = { page: string, addUrlText?: string | UrlParams };
-  export type StripeResult = { token: string };
   export type PassphraseEntry = { entered: boolean, initiatorFrameId?: string };
   export type Db = { f: string, args: any[] };
   export type InMemoryStoreSet = { acctEmail: string, key: string, value: string | undefined, expiration: number | undefined };
@@ -93,7 +92,7 @@ export namespace Bm {
       | AjaxGmailAttachmentGetChunk | SaveFetchedPubkeys;
   }
 
-  export type AnyRequest = PassphraseEntry | StripeResult | OpenPage | OpenGoogleAuthDialog | Redirect | Reload |
+  export type AnyRequest = PassphraseEntry | OpenPage | OpenGoogleAuthDialog | Redirect | Reload |
     AddPubkeyDialog | ReinsertReplyBox | ComposeWindow | ScrollToReplyBox | ScrollToCursorInReplyBox | SubscribeDialog |
     RenderPublicKeys | NotificationShowAuthPopupNeeded | ComposeWindowOpenDraft |
     NotificationShow | PassphraseDialog | PassphraseDialog | Settings | SetCss | AddOrRemoveClass | ReconnectAcctAuthPopup |
@@ -151,7 +150,6 @@ export class BrowserMsg {
     },
     passphraseEntry: (dest: Bm.Dest, bm: Bm.PassphraseEntry) => BrowserMsg.sendCatch(dest, 'passphrase_entry', bm),
     addEndSessionBtn: (dest: Bm.Dest) => BrowserMsg.sendCatch(dest, 'add_end_session_btn', {}),
-    stripeResult: (dest: Bm.Dest, bm: Bm.StripeResult) => BrowserMsg.sendCatch(dest, 'stripe_result', bm),
     openPage: (dest: Bm.Dest, bm: Bm.OpenPage) => BrowserMsg.sendCatch(dest, 'open_page', bm),
     setCss: (dest: Bm.Dest, bm: Bm.SetCss) => BrowserMsg.sendCatch(dest, 'set_css', bm),
     addClass: (dest: Bm.Dest, bm: Bm.AddOrRemoveClass) => BrowserMsg.sendCatch(dest, 'add_class', bm),
