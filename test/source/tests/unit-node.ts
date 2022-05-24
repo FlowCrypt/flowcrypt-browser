@@ -1796,24 +1796,6 @@ PBcqDCjq5jgMhU1oyVclRK7jJdmu0Azvwo2lleLAFLdCzHEXWXUz
       t.pass();
     });
 
-    ava.default('[unit][KeyUtil.parse] determines PK missing private key for signing', async t => {
-      // testing encrypted key
-      const encryptedKey = await KeyUtil.parse(rsaPrimaryKeyIsMissingPrivateKey);
-      expect(encryptedKey.usableForSigning).to.be.true;
-      expect(encryptedKey.missingPrivateKeyForSigning).to.be.true;
-      expect(encryptedKey.usableForEncryption).to.be.true;
-      expect(encryptedKey.missingPrivateKeyForDecryption).to.be.false;
-      expect(await KeyUtil.decrypt(encryptedKey, '1234')).to.be.true;
-      const armoredKey = KeyUtil.armor(encryptedKey);
-      // testing decrypted key
-      const key = await KeyUtil.parse(armoredKey);
-      expect(key.usableForSigning).to.be.true;
-      expect(key.missingPrivateKeyForSigning).to.be.true;
-      expect(key.usableForEncryption).to.be.true;
-      expect(key.missingPrivateKeyForDecryption).to.be.false;
-      t.pass();
-    });
-
     ava.default('[unit][KeyUtil.decrypt] determines PK missing private key for signing', async t => {
       const dsakey = await KeyUtil.parse(dsaPrimaryKeyIsMissingPrivateKey);
       expect(await KeyUtil.decrypt(dsakey, '1234')).to.be.true;
