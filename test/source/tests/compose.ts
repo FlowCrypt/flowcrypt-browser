@@ -1695,11 +1695,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       let expectedNumberOfPassedMessages = (await GoogleData.withInitializedData(acct)).searchMessagesBySubject(subject).length;
       // 1. vague Gmail error with partial success
       let composePage = await ComposePageRecipe.openStandalone(t, browser, 'user4@standardsubdomainfes.test:8001');
-      await ComposePageRecipe.fillMsg(composePage, {
-        to: 'to@example.com',
-        cc: 'cc@example.com',
-        bcc: 'flowcrypt.compatibility@gmail.com'
-      }, subject);
+      await ComposePageRecipe.fillMsg(composePage, { to: 'to@example.com', cc: 'cc@example.com', bcc: 'flowcrypt.compatibility@gmail.com' }, subject);
       await composePage.waitAndType('@input-password', 'gO0d-pwd');
       await composePage.waitAndClick('@action-send', { delay: 1 });
       await composePage.waitAndRespondToModal('confirm', 'cancel',
@@ -1709,10 +1705,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       expect((await GoogleData.withInitializedData(acct)).searchMessagesBySubject(subject).length).to.equal(++expectedNumberOfPassedMessages);
       // 2. vague Gmail error with all failures
       composePage = await ComposePageRecipe.openStandalone(t, browser, 'user4@standardsubdomainfes.test:8001');
-      await ComposePageRecipe.fillMsg(composePage, {
-        cc: 'cc@example.com',
-        bcc: 'flowcrypt.compatibility@gmail.com'
-      }, subject);
+      await ComposePageRecipe.fillMsg(composePage, { cc: 'cc@example.com', bcc: 'flowcrypt.compatibility@gmail.com' }, subject);
       await composePage.waitAndType('@input-password', 'gO0d-pwd');
       await composePage.waitAndClick('@action-send', { delay: 1 });
       await composePage.waitAndRespondToModal('confirm', 'cancel',
@@ -1722,10 +1715,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       expect((await GoogleData.withInitializedData(acct)).searchMessagesBySubject(subject).length).to.equal(expectedNumberOfPassedMessages); // + 0 messages
       // 3. "invalid To" Gmail error with partial success
       composePage = await ComposePageRecipe.openStandalone(t, browser, 'user4@standardsubdomainfes.test:8001');
-      await ComposePageRecipe.fillMsg(composePage, {
-        to: 'invalid@example.com',
-        cc: 'to@example.com'
-      }, subject);
+      await ComposePageRecipe.fillMsg(composePage, { to: 'invalid@example.com', cc: 'to@example.com' }, subject);
       await composePage.waitAndType('@input-password', 'gO0d-pwd');
       await composePage.waitAndClick('@action-send', { delay: 1 });
       await composePage.waitAndRespondToModal('error', 'confirm',
@@ -1735,10 +1725,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       expect((await GoogleData.withInitializedData(acct)).searchMessagesBySubject(subject).length).to.equal(++expectedNumberOfPassedMessages);
       // 4. "invalid To" Gmail error with all failures
       composePage = await ComposePageRecipe.openStandalone(t, browser, 'user4@standardsubdomainfes.test:8001');
-      await ComposePageRecipe.fillMsg(composePage, {
-        to: 'invalid@example.com',
-        cc: 'cc@example.com'
-      }, subject);
+      await ComposePageRecipe.fillMsg(composePage, { to: 'invalid@example.com', cc: 'cc@example.com' }, subject);
       await composePage.waitAndType('@input-password', 'gO0d-pwd');
       await composePage.waitAndClick('@action-send', { delay: 1 });
       await composePage.waitAndRespondToModal('error', 'confirm',
@@ -1747,10 +1734,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       expect((await GoogleData.withInitializedData(acct)).searchMessagesBySubject(subject).length).to.equal(expectedNumberOfPassedMessages); // + 0 messages
       // 5. "RequestTimeout" error with partial success
       composePage = await ComposePageRecipe.openStandalone(t, browser, 'user4@standardsubdomainfes.test:8001');
-      await ComposePageRecipe.fillMsg(composePage, {
-        to: 'timeout@example.com',
-        cc: 'to@example.com'
-      }, subject);
+      await ComposePageRecipe.fillMsg(composePage, { to: 'timeout@example.com', cc: 'to@example.com' }, subject);
       await composePage.waitAndType('@input-password', 'gO0d-pwd');
       await composePage.waitAndClick('@action-send', { delay: 1 });
       await composePage.waitAndRespondToModal('error', 'confirm',
@@ -1760,10 +1744,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       expect((await GoogleData.withInitializedData(acct)).searchMessagesBySubject(subject).length).to.equal(++expectedNumberOfPassedMessages);
       // 6. "RequestTimeout" error with all failures
       composePage = await ComposePageRecipe.openStandalone(t, browser, 'user4@standardsubdomainfes.test:8001');
-      await ComposePageRecipe.fillMsg(composePage, {
-        to: 'timeout@example.com',
-        cc: 'cc@example.com'
-      }, subject);
+      await ComposePageRecipe.fillMsg(composePage, { to: 'timeout@example.com', cc: 'cc@example.com' }, subject);
       await composePage.waitAndType('@input-password', 'gO0d-pwd');
       await composePage.waitAndClick('@action-send', { delay: 1 });
       await composePage.waitAndRespondToModal('error', 'confirm',
