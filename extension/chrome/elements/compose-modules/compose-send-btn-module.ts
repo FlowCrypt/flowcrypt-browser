@@ -14,13 +14,14 @@ import { ComposeSendBtnPopoverModule } from './compose-send-btn-popover-module.j
 import { GeneralMailFormatter, MultipleMessages } from './formatters/general-mail-formatter.js';
 import { GmailParser, GmailRes } from '../../../js/common/api/email-provider/gmail/gmail-parser.js';
 import { KeyInfoWithIdentity } from '../../../js/common/core/crypto/key.js';
-import { getUniqueRecipientEmails, SendBtnTexts } from './compose-types.js';
+import { getUniqueRecipientEmails, SendBtnTexts, SendMsgsResult } from './compose-types.js';
 import { SendableMsg } from '../../../js/common/api/email-provider/sendable-msg.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { ViewModule } from '../../../js/common/view-module.js';
 import { ComposeView } from '../compose.js';
 import { ContactStore } from '../../../js/common/platform/store/contact-store.js';
+import { EmailParts } from '../../../js/common/core/common.js';
 
 export class ComposeSendBtnModule extends ViewModule<ComposeView> {
 
@@ -105,6 +106,7 @@ export class ComposeSendBtnModule extends ViewModule<ComposeView> {
     this.view.S.cached('toggle_send_options').hide();
     try {
       this.view.errModule.throwIfFormNotReady();
+      this.isSendMessageInProgress = true;
       this.view.S.now('send_btn_text').text('Loading...');
       Xss.sanitizeRender(this.view.S.now('send_btn_i'), Ui.spinner('white'));
       this.view.S.cached('send_btn_note').text('');
@@ -116,10 +118,15 @@ export class ComposeSendBtnModule extends ViewModule<ComposeView> {
       for (const msg of msgObj.msgs) {
         await this.finalizeSendableMsg({ msg, senderKi: msgObj.senderKi });
       }
-      await this.doSendMsgs(msgObj);
+      const result = await this.doSendMsgs(msgObj);
+      if (result.failures.length) {
+        await this.view.errModule.handleSendErr(result.failures[0].e, result);
+      }
+      // todo: supplementary operation errors?
     } catch (e) {
-      await this.view.errModule.handleSendErr(e);
+      await this.view.errModule.handleSendErr(e, undefined);
     } finally {
+      this.isSendMessageInProgress = false;
       this.view.sendBtnModule.enableBtn();
       this.view.S.cached('toggle_send_options').show();
     }
@@ -193,49 +200,63 @@ export class ComposeSendBtnModule extends ViewModule<ComposeView> {
     return { mimeType, data };
   };
 
-
-  private doSendMsgs = async (msgObj: MultipleMessages) => {
+  private doSendMsgs = async (msgObj: MultipleMessages): Promise<SendMsgsResult> => {
     // if this is a password-encrypted message, then we've already shown progress for uploading to backend
     // and this requests represents second half of uploadable effort. Else this represents all (no previous heavy requests)
     const progressRepresents = this.view.pwdOrPubkeyContainerModule.isVisible() ? 'SECOND-HALF' : 'EVERYTHING';
     const sentIds: string[] = [];
-    const operations = [this.view.draftModule.draftDelete()];
+    const operations = [this.view.draftModule.draftDelete()]; // todo: don't delete on error
+    const success: EmailParts[] = [];
+    const failures: { recipient: EmailParts, e: any }[] = [];
     for (const msg of msgObj.msgs) {
       let msgSentRes: GmailRes.GmailMsgSend;
-      try {
-        this.isSendMessageInProgress = true;
-        msgSentRes = await this.view.emailProvider.msgSend(msg, (p) => this.renderUploadProgress(p, progressRepresents));
-      } catch (e) {
-        if (msg.thread && ApiErr.isNotFound(e) && this.view.threadId) { // cannot send msg because threadId not found - eg user since deleted it
-          msg.thread = undefined;
+      const msgRecipients = msg.getAllRecipients();
+      while (true) { // first try with msg.thread, and then possibly try again without it
+        try {
           msgSentRes = await this.view.emailProvider.msgSend(msg, (p) => this.renderUploadProgress(p, progressRepresents));
-        } else {
-          this.isSendMessageInProgress = false;
-          throw e;
-        }
-      }
-      sentIds.push(msgSentRes.id);
-      if (msg.externalId) {
-        operations.push((async (externalId, id) => {
-          const gmailMsg = await this.view.emailProvider.msgGet(id, 'metadata');
-          const messageId = GmailParser.findHeader(gmailMsg, 'message-id');
-          if (messageId) {
-            await this.view.acctServer.messageGatewayUpdate(externalId, messageId);
-          } else {
-            Catch.report('Failed to extract Message-ID of sent message');
+          success.push(...msgRecipients);
+          sentIds.push(msgSentRes.id);
+          if (msg.externalId) {
+            operations.push((async (externalId, id) => {
+              const gmailMsg = await this.view.emailProvider.msgGet(id, 'metadata');
+              const messageId = GmailParser.findHeader(gmailMsg, 'message-id');
+              if (messageId) {
+                await this.view.acctServer.messageGatewayUpdate(externalId, messageId);
+              } else {
+                Catch.report('Failed to extract Message-ID of sent message');
+              }
+            })(msg.externalId, msgSentRes.id));
           }
-        })(msg.externalId, msgSentRes.id));
-      }
+        } catch (e) {
+          if (msg.thread && ApiErr.isNotFound(e) && this.view.threadId) { // cannot send msg because threadId not found - eg user since deleted it
+            msg.thread = undefined;
+            continue;
+            // give it another try, this time without msg.thread
+          } else {
+            failures.push(...msgRecipients.map(recipient => { return { recipient, e }; }));
+          }
+        }
+        break;
+      } // while loop for thread retry
     }
     BrowserMsg.send.notificationShow(this.view.parentTabId, { notification: `Your ${this.view.isReplyBox ? 'reply' : 'message'} has been sent.` });
     BrowserMsg.send.focusBody(this.view.parentTabId); // Bring focus back to body so Gmails shortcuts will work
-    await Promise.all(operations);
-    this.isSendMessageInProgress = false;
-    if (this.view.isReplyBox) {
-      this.view.renderModule.renderReplySuccess(msgObj.attachments, msgObj.recipients, sentIds[0]);
-    } else {
-      this.view.renderModule.closeMsg();
+    try {
+      await Promise.all(operations);
+    } catch (e) {
+      // todo: bindings or draft delete failed, not really critical, add to supplementary errors
     }
+    this.isSendMessageInProgress = false;
+    if (!failures.length) {
+      // todo: supplementary errors
+      // closing the composer on successful send
+      if (this.view.isReplyBox) {
+        this.view.renderModule.renderReplySuccess(msgObj.attachments, msgObj.recipients, sentIds[0]);
+      } else {
+        this.view.renderModule.closeMsg();
+      }
+    }
+    return { success, failures, supplementaryOperationsError: undefined }; // todo:
   };
 
 }

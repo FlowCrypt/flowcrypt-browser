@@ -65,3 +65,9 @@ export class SendBtnTexts {
 export const getUniqueRecipientEmails = (recipients: ParsedRecipients) => {
   return Value.arr.unique(Object.values(recipients).reduce((a, b) => a.concat(b), []).filter(x => x.email).map(x => x.email));
 };
+
+export type SendMsgsResult = {
+  success: EmailParts[],
+  failures: { recipient: EmailParts, e: any }[],
+  supplementaryOperationsError: any
+};

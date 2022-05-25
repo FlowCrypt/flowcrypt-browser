@@ -36,22 +36,17 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
       //    - FlowCrypt Enterprise Server (enterprise customers with on-prem setup)
       //    It will be served to recipient through web
       const uploadedMessageData = await this.prepareAndUploadPwdEncryptedMsg(newMsg); // encrypted for pwd only, pubkeys ignored
+      // pwdRecipients that have their personal link
+      const pwdRecipients = Object.keys(uploadedMessageData.emailToExternalIdAndUrl ?? {}).filter(email => !pubkeys.some(p => p.email === email));
       newMsg.pwd = undefined;
       const collectedAttachments = await this.view.attachmentsModule.attachment.collectEncryptAttachments(pubkeys);
-      if (!Object.keys(uploadedMessageData.emailToExternalIdAndUrl ?? {}).length) {
-        const legacyMsg = await this.sendablePwdMsg(
-          newMsg,
-          pubkeys,
-          { msgUrl: uploadedMessageData.url, externalId: uploadedMessageData.externalId },
-          collectedAttachments,
-          signingKey?.key);
-        return { senderKi: signingKey?.keyInfo, msgs: [legacyMsg], recipients: legacyMsg.recipients, attachments: collectedAttachments };
-      }
       const pubkeyRecipients: { [type in RecipientType]?: EmailParts[] } = {};
       for (const [key, value] of Object.entries(newMsg.recipients)) {
         if (['to', 'cc', 'bcc'].includes(key)) {
           const sendingType = key as RecipientType;
-          pubkeyRecipients[sendingType] = value?.filter(emailPart => pubkeys.some(p => p.email === emailPart.email));
+          pubkeyRecipients[sendingType] = value?.filter(emailPart => pubkeys.some(p => p.email === emailPart.email)
+            // pwd recipients that have no personal links go to legacy message
+            || (uploadedMessageData.emailToExternalIdAndUrl || {})[emailPart.email] === undefined);
         }
       }
       const uniquePubkeyRecipientToAndCCs = Value.arr.unique((pubkeyRecipients.to || []).concat(pubkeyRecipients.cc || [])
@@ -76,7 +71,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
         );
       }
       // adding individual messages for each recipient that doesn't have a pubkey
-      for (const recipientEmail of Object.keys(uploadedMessageData.emailToExternalIdAndUrl ?? {}).filter(email => !pubkeys.some(p => p.email === email))) {
+      for (const recipientEmail of pwdRecipients) {
         const { url, externalId } = uploadedMessageData.emailToExternalIdAndUrl![recipientEmail];
         const foundParsedRecipient = (newMsg.recipients.to ?? []).concat(newMsg.recipients.cc ?? []).concat(newMsg.recipients.bcc ?? []).
           find(r => r.email.toLowerCase() === recipientEmail.toLowerCase());

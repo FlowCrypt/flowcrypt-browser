@@ -124,6 +124,41 @@ const processMessageFromUser3 = async (body: string) => {
   return response;
 };
 
+const processMessageFromUser4 = async (body: string) => {
+  const response =
+  {
+    // this url is required for pubkey encrypted message
+    url: `http://${standardFesUrl}/message/FES-MOCK-MESSAGE-ID`,
+    externalId: 'FES-MOCK-EXTERNAL-ID',
+    emailToExternalIdAndUrl: {} as { [email: string]: { url: string, externalId: string } }
+  };
+  if (body.includes("to@example.com")) {
+    response.emailToExternalIdAndUrl['to@example.com'] = {
+      url: `http://${standardFesUrl}/message/FES-MOCK-MESSAGE-FOR-TO@EXAMPLE.COM-ID`,
+      externalId: 'FES-MOCK-EXTERNAL-FOR-TO@EXAMPLE.COM-ID'
+    };
+  }
+  if (body.includes("invalid@example.com")) {
+    response.emailToExternalIdAndUrl['invalid@example.com'] = {
+      url: `http://${standardFesUrl}/message/FES-MOCK-MESSAGE-FOR-INVALID@EXAMPLE.COM-ID`,
+      externalId: 'FES-MOCK-EXTERNAL-FOR-INVALID@EXAMPLE.COM-ID'
+    };
+  }
+  if (body.includes("Mr Cc <cc@example.com>")) {
+    response.emailToExternalIdAndUrl['cc@example.com'] = {
+      url: `http://${standardFesUrl}/message/FES-MOCK-MESSAGE-FOR-CC@EXAMPLE.COM-ID`,
+      externalId: 'FES-MOCK-EXTERNAL-FOR-CC@EXAMPLE.COM-ID'
+    };
+  }
+  if (body.includes("First Last <flowcrypt.compatibility@gmail.com>")) {
+    response.emailToExternalIdAndUrl['flowcrypt.compatibility@gmail.com'] = {
+      url: `http://${standardFesUrl}/message/FES-MOCK-MESSAGE-FOR-FLOWCRYPT.COMPATIBILITY@GMAIL.COM-ID`,
+      externalId: 'FES-MOCK-EXTERNAL-FOR-FLOWCRYPT.COMPATIBILITY@GMAIL.COM-ID'
+    };
+  }
+  return response;
+};
+
 export const mockFesEndpoints: HandlersDefinition = {
   // standard fes location at https://fes.domain.com
   '/api/': async ({ }, req) => {
@@ -180,6 +215,9 @@ export const mockFesEndpoints: HandlersDefinition = {
       }
       if (body.includes('"from":"user3@standardsubdomainfes.test:8001"')) {
         return await processMessageFromUser3(body);
+      }
+      if (body.includes('"from":"user4@standardsubdomainfes.test:8001"')) {
+        return await processMessageFromUser4(body);
       }
     }
     throw new HttpClientErr('Not Found', 404);

@@ -136,7 +136,7 @@ export class SendableMsg {
     public type: MimeEncodeType,
     public externalId?: string, // for binding a password-protected message
   ) {
-    const allEmails = [...recipients.to || [], ...recipients.cc || [], ...recipients.bcc || []];
+    const allEmails = this.getAllRecipients();
     if (!allEmails.length && !isDraft) {
       throw new Error('The To:, Cc: and Bcc: fields are empty. Please add recipients and try again');
     }
@@ -146,6 +146,8 @@ export class SendableMsg {
       throw new InvalidRecipientError(`The To: field contains invalid emails: ${invalidEmails.join(', ')}\n\nPlease check recipients and try again.`);
     }
   }
+
+  public getAllRecipients = () => [...this.recipients.to || [], ...this.recipients.cc || [], ...this.recipients.bcc || []];
 
   public toMime = async () => {
     this.headers.From = this.from;
