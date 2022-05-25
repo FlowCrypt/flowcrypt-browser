@@ -30,7 +30,7 @@ export class ComposeErrModule extends ViewModule<ComposeView> {
   private static getErrSayingSomeMessagesHaveBeenSent = (sendMsgsResult: SendMsgsResult) => {
     return 'Messages to some recipients were sent successfully, while messages to ' +
       Str.formatEmailList(sendMsgsResult.failures.map(el => el.recipient)) + ' encountered ';
-  }
+  };
 
   public handle = (couldNotDoWhat: string): BrowserEventErrHandler => {
     return {
