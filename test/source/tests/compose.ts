@@ -1691,7 +1691,8 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         await (window as any).ContactStore.update(db, 'cc@example.com', { name: 'Mr Cc' });
       });
       await dbPage.close();
-      const subject = 'PWD encrypted message with FES web portal - some sends fail with BadRequest error';
+      const subject = 'PWD encrypted message with FES web portal - some sends fail with BadRequest error - ' + testVariant;
+      let expectedNumberOfPassedMessages = (await GoogleData.withInitializedData(acct)).searchMessagesBySubject(subject).length;
       // 1. vague Gmail error with partial success
       let composePage = await ComposePageRecipe.openStandalone(t, browser, 'user4@standardsubdomainfes.test:8001');
       await ComposePageRecipe.fillMsg(composePage, {
@@ -1705,7 +1706,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         'Messages to some recipients were sent successfully, while messages to flowcrypt.compatibility@gmail.com, Mr Cc <cc@example.com> ' +
         'encountered error(s) from Gmail. Please help us improve FlowCrypt by reporting the error to us.');
       await composePage.close();
-      expect((await GoogleData.withInitializedData(acct)).searchMessagesBySubject(subject).length).to.equal(1);
+      expect((await GoogleData.withInitializedData(acct)).searchMessagesBySubject(subject).length).to.equal(++expectedNumberOfPassedMessages);
       // 2. vague Gmail error with all failures
       composePage = await ComposePageRecipe.openStandalone(t, browser, 'user4@standardsubdomainfes.test:8001');
       await ComposePageRecipe.fillMsg(composePage, {
@@ -1718,7 +1719,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         'Google returned an error when sending message. ' +
         'Please help us improve FlowCrypt by reporting the error to us.');
       await composePage.close();
-      expect((await GoogleData.withInitializedData(acct)).searchMessagesBySubject(subject).length).to.equal(1); // + 0 messages
+      expect((await GoogleData.withInitializedData(acct)).searchMessagesBySubject(subject).length).to.equal(expectedNumberOfPassedMessages); // + 0 messages
       // 3. "invalid To" Gmail error with partial success
       composePage = await ComposePageRecipe.openStandalone(t, browser, 'user4@standardsubdomainfes.test:8001');
       await ComposePageRecipe.fillMsg(composePage, {
@@ -1731,7 +1732,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         'Messages to some recipients were sent successfully, while messages to invalid@example.com ' +
         'encountered error(s) from Gmail: Invalid recipients\n\nPlease remove recipients, add them back and re-send the message.');
       await composePage.close();
-      expect((await GoogleData.withInitializedData(acct)).searchMessagesBySubject(subject).length).to.equal(2); // + 1 message
+      expect((await GoogleData.withInitializedData(acct)).searchMessagesBySubject(subject).length).to.equal(++expectedNumberOfPassedMessages);
       // 4. "invalid To" Gmail error with all failures
       composePage = await ComposePageRecipe.openStandalone(t, browser, 'user4@standardsubdomainfes.test:8001');
       await ComposePageRecipe.fillMsg(composePage, {
@@ -1743,7 +1744,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       await composePage.waitAndRespondToModal('error', 'confirm',
         'Error from google: Invalid recipients\n\nPlease remove recipients, add them back and re-send the message.');
       await composePage.close();
-      expect((await GoogleData.withInitializedData(acct)).searchMessagesBySubject(subject).length).to.equal(2); // + 0 messages
+      expect((await GoogleData.withInitializedData(acct)).searchMessagesBySubject(subject).length).to.equal(expectedNumberOfPassedMessages); // + 0 messages
       // 5. "RequestTimeout" error with partial success
       composePage = await ComposePageRecipe.openStandalone(t, browser, 'user4@standardsubdomainfes.test:8001');
       await ComposePageRecipe.fillMsg(composePage, {
@@ -1756,7 +1757,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         'Messages to some recipients were sent successfully, while messages to timeout@example.com ' +
         'encountered network errors. Please check your internet connection and try again.');
       await composePage.close();
-      expect((await GoogleData.withInitializedData(acct)).searchMessagesBySubject(subject).length).to.equal(3); // + 1 message
+      expect((await GoogleData.withInitializedData(acct)).searchMessagesBySubject(subject).length).to.equal(++expectedNumberOfPassedMessages);
       // 6. "RequestTimeout" error with all failures
       composePage = await ComposePageRecipe.openStandalone(t, browser, 'user4@standardsubdomainfes.test:8001');
       await ComposePageRecipe.fillMsg(composePage, {
@@ -1769,7 +1770,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         'Could not send message due to network error. Please check your internet connection and try again. ' +
         '(This may also be caused by missing extension permissions).');
       await composePage.close();
-      expect((await GoogleData.withInitializedData(acct)).searchMessagesBySubject(subject).length).to.equal(3); // + 0 messages
+      expect((await GoogleData.withInitializedData(acct)).searchMessagesBySubject(subject).length).to.equal(expectedNumberOfPassedMessages); // + 0 messages
       // this test is using PwdEncryptedMessageWithFesReplyBadRequestTestStrategy to check sent result based on subject "PWD encrypted message with FES web portal - some sends fail with BadRequest error"
       // also see '/api/v1/message' in fes-endpoints.ts mock
     }));

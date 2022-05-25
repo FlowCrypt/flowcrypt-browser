@@ -27,6 +27,11 @@ export class ComposeErrModule extends ViewModule<ComposeView> {
 
   private debugId = Str.sloppyRandom();
 
+  private static getErrSayingSomeMessagesHaveBeenSent = (sendMsgsResult: SendMsgsResult) => {
+    return 'Messages to some recipients were sent successfully, while messages to ' +
+      Str.formatEmailList(sendMsgsResult.failures.map(el => el.recipient)) + ' encountered ';
+  }
+
   public handle = (couldNotDoWhat: string): BrowserEventErrHandler => {
     return {
       network: async () => await Ui.modal.info(`Could not ${couldNotDoWhat} (network error). Please try again.`),
@@ -62,7 +67,6 @@ export class ComposeErrModule extends ViewModule<ComposeView> {
   };
 
   public handleSendErr = async (e: any, sendMsgsResult?: SendMsgsResult) => {
-    // 
     this.view.errModule.debug(`handleSendErr: ${String(e)}`);
     if (ApiErr.isNetErr(e)) {
       let netErrMsg: string | undefined;
@@ -174,10 +178,5 @@ export class ComposeErrModule extends ViewModule<ComposeView> {
       throw new ComposerUserError('Some recipients don\'t have encryption set up. Please add a password.');
     }
   };
-
-  private static getErrSayingSomeMessagesHaveBeenSent = (sendMsgsResult: SendMsgsResult) => {
-    return 'Messages to some recipients were sent successfully, while messages to ' +
-      Str.formatEmailList(sendMsgsResult.failures.map(el => el.recipient)) + ' encountered ';
-  }
 
 }
