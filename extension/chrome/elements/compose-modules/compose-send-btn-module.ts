@@ -260,9 +260,8 @@ export class ComposeSendBtnModule extends ViewModule<ComposeView> {
         break;
       } // while loop for thread retry
     }
-    const isSentToAllRecipients = !failures.length;
     try {
-      if (isSentToAllRecipients) {
+      if (!failures.length) {
         supplementaryOperations.push(this.view.draftModule.draftDelete());
       }
       await Promise.all(supplementaryOperations);
