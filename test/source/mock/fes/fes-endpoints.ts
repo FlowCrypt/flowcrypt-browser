@@ -145,7 +145,7 @@ const processMessageFromUser4 = async (body: string) => {
     };
   }
   // we can add a clause for timeout@example.com here, but it's not necessary as without it the recipient goes to the legacy clause
-  // and the test is still valid 
+  // and the test is still valid
   if (body.includes("Mr Cc <cc@example.com>")) {
     response.emailToExternalIdAndUrl['cc@example.com'] = {
       url: `http://${standardFesUrl}/message/FES-MOCK-MESSAGE-FOR-CC@EXAMPLE.COM-ID`,
