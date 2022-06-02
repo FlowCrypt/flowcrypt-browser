@@ -1756,6 +1756,29 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       // also see '/api/v1/message' in fes-endpoints.ts mock
     }));
 
+    /**
+     * You need the following lines in /etc/hosts:
+     * 127.0.0.1    standardsubdomainfes.test
+     * 127.0.0.1    fes.standardsubdomainfes.test
+     */
+    ava.default('user4@standardsubdomainfes.test:8001 - PWD encrypted message with FES web portal - a send fails with gateway update error', testWithBrowser(undefined, async (t, browser) => {
+      const acct = 'user4@standardsubdomainfes.test:8001'; // added port to trick extension into calling the mock
+      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
+      await SetupPageRecipe.manualEnter(settingsPage, 'flowcrypt.test.key.used.pgp', { submitPubkey: false, usedPgpBefore: false },
+        { isSavePassphraseChecked: false, isSavePassphraseHidden: false });
+      const subject = 'PWD encrypted message with FES web portal - a send fails with gateway update error - ' + testVariant;
+      const expectedNumberOfPassedMessages = (await GoogleData.withInitializedData(acct)).searchMessagesBySubject(subject).length;
+      const composePage = await ComposePageRecipe.openStandalone(t, browser, 'user4@standardsubdomainfes.test:8001');
+      await ComposePageRecipe.fillMsg(composePage, { to: 'gatewayfailure@example.com' }, subject);
+      await composePage.waitAndType('@input-password', 'gO0d-pwd');
+      await composePage.waitAndClick('@action-send', { delay: 1 });
+      await composePage.waitForContent('.ui-toast-title', 'Failed to bind Gateway ID of the message:');
+      await composePage.close();
+      expect((await GoogleData.withInitializedData(acct)).searchMessagesBySubject(subject).length).to.equal(expectedNumberOfPassedMessages + 1);
+      // this test is using PwdEncryptedMessageWithFesReplyGatewayErrorTestStrategy to check sent result based on subject "PWD encrypted message with FES web portal - a send fails with gateway update error"
+      // also see '/api/v1/message' in fes-endpoints.ts mock
+    }));
+
     ava.default('first.key.revoked@key-manager-autoimport-no-prv-create.flowcrypt.test - selects valid own key when saving draft or sending', testWithBrowser(undefined, async (t, browser) => {
       const acct = 'first.key.revoked@key-manager-autoimport-no-prv-create.flowcrypt.test';
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);

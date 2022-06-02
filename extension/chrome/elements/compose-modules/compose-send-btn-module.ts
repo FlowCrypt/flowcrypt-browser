@@ -119,10 +119,24 @@ export class ComposeSendBtnModule extends ViewModule<ComposeView> {
         await this.finalizeSendableMsg({ msg, senderKi: msgObj.senderKi });
       }
       const result = await this.doSendMsgs(msgObj);
-      if (result.failures.length) {
+      if (!result.failures.length) {
+        // toast isn't supported together with a confirmation/alert popup
+        if (result.supplementaryOperationsErrors.length) {
+          console.error(result.supplementaryOperationsErrors);
+          Catch.setHandledTimeout(() => {
+            Ui.toast(result.supplementaryOperationsErrors[0]);
+          }, 0);
+        }
+        BrowserMsg.send.notificationShow(this.view.parentTabId, { notification: `Your ${this.view.isReplyBox ? 'reply' : 'message'} has been sent.` });
+        BrowserMsg.send.focusBody(this.view.parentTabId); // Bring focus back to body so Gmails shortcuts will work
+        if (this.view.isReplyBox) {
+          this.view.renderModule.renderReplySuccess(msgObj.attachments, msgObj.recipients, result.sentIds[0]);
+        } else {
+          this.view.renderModule.closeMsg();
+        }
+      } else {
         await this.view.errModule.handleSendErr(result.failures[0].e, result);
       }
-      // todo: supplementary operation errors?
     } catch (e) {
       await this.view.errModule.handleSendErr(e, undefined);
     } finally {
@@ -205,7 +219,8 @@ export class ComposeSendBtnModule extends ViewModule<ComposeView> {
     // and this requests represents second half of uploadable effort. Else this represents all (no previous heavy requests)
     const progressRepresents = this.view.pwdOrPubkeyContainerModule.isVisible() ? 'SECOND-HALF' : 'EVERYTHING';
     const sentIds: string[] = [];
-    const operations = [this.view.draftModule.draftDelete()]; // todo: don't delete on error
+    const supplementaryOperations: Promise<void>[] = [];
+    const supplementaryOperationsErrors: any[] = []; // tslint:disable-line:no-unsafe-any
     const success: EmailParts[] = [];
     const failures: { recipient: EmailParts, e: any }[] = [];
     for (const msg of msgObj.msgs) {
@@ -217,15 +232,21 @@ export class ComposeSendBtnModule extends ViewModule<ComposeView> {
           success.push(...msgRecipients);
           sentIds.push(msgSentRes.id);
           if (msg.externalId) {
-            operations.push((async (externalId, id) => {
+            const operation = (async (externalId, id) => {
               const gmailMsg = await this.view.emailProvider.msgGet(id, 'metadata');
               const messageId = GmailParser.findHeader(gmailMsg, 'message-id');
               if (messageId) {
                 await this.view.acctServer.messageGatewayUpdate(externalId, messageId);
               } else {
-                Catch.report('Failed to extract Message-ID of sent message');
+                throw new Error('Failed to extract Message-ID of sent message');
               }
-            })(msg.externalId, msgSentRes.id));
+            })(msg.externalId, msgSentRes.id);
+            supplementaryOperations.push(operation.catch(
+              e => {
+                supplementaryOperationsErrors.push(`Failed to bind Gateway ID of the message: ${e}`);
+                Catch.reportErr(e);
+              }
+            ));
           }
         } catch (e) {
           if (msg.thread && ApiErr.isNotFound(e) && this.view.threadId) { // cannot send msg because threadId not found - eg user since deleted it
@@ -239,24 +260,17 @@ export class ComposeSendBtnModule extends ViewModule<ComposeView> {
         break;
       } // while loop for thread retry
     }
-    BrowserMsg.send.notificationShow(this.view.parentTabId, { notification: `Your ${this.view.isReplyBox ? 'reply' : 'message'} has been sent.` });
-    BrowserMsg.send.focusBody(this.view.parentTabId); // Bring focus back to body so Gmails shortcuts will work
+    const isSentToAllRecipients = !failures.length;
     try {
-      await Promise.all(operations);
-    } catch (e) {
-      // todo: bindings or draft delete failed, not really critical, add to supplementary errors
-    }
-    this.isSendMessageInProgress = false;
-    if (!failures.length) {
-      // todo: supplementary errors
-      // closing the composer on successful send
-      if (this.view.isReplyBox) {
-        this.view.renderModule.renderReplySuccess(msgObj.attachments, msgObj.recipients, sentIds[0]);
-      } else {
-        this.view.renderModule.closeMsg();
+      if (isSentToAllRecipients) {
+        supplementaryOperations.push(this.view.draftModule.draftDelete());
       }
+      await Promise.all(supplementaryOperations);
+    } catch (e) {
+      Catch.reportErr(e);
+      supplementaryOperationsErrors.push(e);
     }
-    return { success, failures, supplementaryOperationsError: undefined }; // todo:
+    return { success, failures, supplementaryOperationsErrors, sentIds };
   };
 
 }

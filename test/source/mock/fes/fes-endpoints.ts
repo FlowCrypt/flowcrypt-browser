@@ -5,7 +5,7 @@ import { IncomingMessage } from 'http';
 import { Buf } from '../../core/buf';
 import { MsgUtil } from '../../core/crypto/pgp/msg-util';
 import { HandlersDefinition } from '../all-apis-mock';
-import { HttpClientErr } from '../lib/api';
+import { HttpClientErr, Status } from '../lib/api';
 import { MockJwt } from '../lib/oauth';
 
 const standardFesUrl = 'fes.standardsubdomainfes.test:8001';
@@ -144,6 +144,8 @@ const processMessageFromUser4 = async (body: string) => {
       externalId: 'FES-MOCK-EXTERNAL-FOR-INVALID@EXAMPLE.COM-ID'
     };
   }
+  // we can add a clause for timeout@example.com here, but it's not necessary as without it the recipient goes to the legacy clause
+  // and the test is still valid 
   if (body.includes("Mr Cc <cc@example.com>")) {
     response.emailToExternalIdAndUrl['cc@example.com'] = {
       url: `http://${standardFesUrl}/message/FES-MOCK-MESSAGE-FOR-CC@EXAMPLE.COM-ID`,
@@ -154,6 +156,12 @@ const processMessageFromUser4 = async (body: string) => {
     response.emailToExternalIdAndUrl['flowcrypt.compatibility@gmail.com'] = {
       url: `http://${standardFesUrl}/message/FES-MOCK-MESSAGE-FOR-FLOWCRYPT.COMPATIBILITY@GMAIL.COM-ID`,
       externalId: 'FES-MOCK-EXTERNAL-FOR-FLOWCRYPT.COMPATIBILITY@GMAIL.COM-ID'
+    };
+  }
+  if (body.includes("gatewayfailure@example.com")) {
+    response.emailToExternalIdAndUrl['gatewayfailure@example.com'] = {
+      url: `http://${standardFesUrl}/message/FES-MOCK-MESSAGE-FOR-GATEWAYFAILURE@EXAMPLE.COM-ID`,
+      externalId: 'FES-MOCK-EXTERNAL-FOR-GATEWAYFAILURE@EXAMPLE.COM-ID'
     };
   }
   return response;
@@ -224,7 +232,6 @@ export const mockFesEndpoints: HandlersDefinition = {
   },
   '/api/v1/message/FES-MOCK-EXTERNAL-ID/gateway': async ({ body }, req) => {
     if (req.headers.host === standardFesUrl && req.method === 'POST') {
-      // todo: remove legacy endpoint?
       // test: `compose - user@standardsubdomainfes.test:8001 - PWD encrypted message with FES web portal`
       authenticate(req, 'oidc');
       expect(body).to.match(/{"emailGatewayMessageId":"<(.+)@standardsubdomainfes.test:8001>"}/);
@@ -245,6 +252,8 @@ export const mockFesEndpoints: HandlersDefinition = {
     if (req.headers.host === standardFesUrl && req.method === 'POST') {
       // test: `compose - user@standardsubdomainfes.test:8001 - PWD encrypted message with FES web portal`
       // test: `compose - user2@standardsubdomainfes.test:8001 - PWD encrypted message with FES - Reply rendering`
+      // test: `compose - user3@standardsubdomainfes.test:8001 - PWD encrypted message with FES web portal - pubkey recipient in bcc`
+      // test: `compose - user4@standardsubdomainfes.test:8001 - PWD encrypted message with FES web portal - some sends fail with BadRequest error`
       authenticate(req, 'oidc');
       expect(body).to.match(/{"emailGatewayMessageId":"<(.+)@standardsubdomainfes.test:8001>"}/);
       return {};
@@ -259,7 +268,11 @@ export const mockFesEndpoints: HandlersDefinition = {
       return {};
     }
     throw new HttpClientErr('Not Found', 404);
-  }
+  },
+  '/api/v1/message/FES-MOCK-EXTERNAL-FOR-GATEWAYFAILURE@EXAMPLE.COM-ID/gateway': async () => {
+    // test: `user4@standardsubdomainfes.test:8001 - PWD encrypted message with FES web portal - a send fails with gateway update error`
+    throw new HttpClientErr(`Test error`, Status.BAD_REQUEST);
+  },
 };
 
 const authenticate = (req: IncomingMessage, type: 'oidc' | 'fes'): string => {
