@@ -124,7 +124,7 @@ export class ComposeSendBtnModule extends ViewModule<ComposeView> {
         if (result.supplementaryOperationsErrors.length) {
           console.error(result.supplementaryOperationsErrors);
           Catch.setHandledTimeout(() => {
-            Ui.toast(result.supplementaryOperationsErrors[0]);
+            Ui.toast(result.supplementaryOperationsErrors[0]); // tslint:disable-line:no-unsafe-any
           }, 0);
         }
         BrowserMsg.send.notificationShow(this.view.parentTabId, { notification: `Your ${this.view.isReplyBox ? 'reply' : 'message'} has been sent.` });
