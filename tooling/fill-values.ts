@@ -25,7 +25,7 @@ const replaceables: { needle: RegExp, val: string }[] = [
 
 const paths = [
   `${targetDirExtension}/js/common/core/const.js`,
-  `./build/${targetDirContentScripts}/common/core/const.js`,
+  `./build/${targetDirContentScripts}/js/common/core/const.js`,
 ];
 
 for (const path of paths) {
