@@ -11,6 +11,7 @@ import { Url } from '../../../js/common/core/common.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
 import { OpenPGPKey } from '../../../js/common/core/crypto/pgp/openpgp-key.js';
+import { saveKeysAndPassPhrase } from '../../../js/common/shared.js';
 
 export class SetupCreateKeyModule {
 
@@ -72,7 +73,7 @@ export class SetupCreateKeyModule {
     const expireMonths = this.view.orgRules.getEnforcedKeygenExpirationMonths();
     const key = await OpenPGPKey.create(pgpUids, keyAlgo, options.passphrase, expireMonths);
     const prv = await KeyUtil.parse(key.private);
-    await this.view.saveKeysAndPassPhrase([prv], options);
+    await saveKeysAndPassPhrase(this.view.acctEmail, [prv], options);
     return { id: prv.id, family: prv.family };
   };
 }

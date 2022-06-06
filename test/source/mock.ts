@@ -2,12 +2,12 @@
 
 import { startAllApisMock } from './mock/all-apis-mock';
 
-export const mock = async (logger: (line: string) => void) => {
-  return await startAllApisMock(logger);
+export const mock = async (isMock: boolean, logger: (line: string) => void) => {
+  return await startAllApisMock(isMock, logger);
 };
 
 if (require.main === module) {
-  mock(msgLog => console.log(msgLog)).catch(e => {
+  mock(true, msgLog => console.log(msgLog)).catch(e => {
     console.error(e);
     process.exit(1);
   });

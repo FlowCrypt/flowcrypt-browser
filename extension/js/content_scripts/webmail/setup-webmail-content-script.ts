@@ -12,9 +12,12 @@ import { Injector } from '../../common/inject.js';
 import { Notifications } from '../../common/notifications.js';
 import Swal from 'sweetalert2';
 import { Ui } from '../../common/browser/ui.js';
-import { VERSION } from '../../common/core/const.js';
+import { InMemoryStoreKeys, VERSION } from '../../common/core/const.js';
 import { AcctStore } from '../../common/platform/store/acct-store.js';
 import { GlobalStore } from '../../common/platform/store/global-store.js';
+import { OrgRules } from '../../common/org-rules.js';
+import { KeyManager } from '../../common/api/key-server/key-manager.js';
+import { InMemoryStore } from '../../common/platform/store/in-memory-store.js';
 
 export type WebmailVariantObject = { newDataLayer: undefined | boolean, newUi: undefined | boolean, email: undefined | string, gmailVariant: WebmailVariantString };
 export type IntervalFunction = { interval: number, handler: () => void };
@@ -24,7 +27,7 @@ type WebmailSpecificInfo = {
   getUserAccountEmail: () => string | undefined;
   getUserFullName: () => string | undefined;
   getReplacer: () => WebmailElementReplacer;
-  start: (acctEmail: string, inject: Injector, notifications: Notifications, factory: XssSafeFactory, notifyMurdered: () => void) => Promise<void>;
+  start: (acctEmail: string, orgRules: OrgRules, inject: Injector, notifications: Notifications, factory: XssSafeFactory, notifyMurdered: () => void) => Promise<void>;
 };
 export interface WebmailElementReplacer {
   getIntervalFunctions: () => Array<IntervalFunction>;
@@ -232,13 +235,28 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
     notifEl.appendChild(div);
   };
 
+  const startPullingKeysFromEkm = async (acctEmail: string, orgRules: OrgRules) => {
+    if (orgRules.usesKeyManager()) {
+      const idToken = await InMemoryStore.get(acctEmail, InMemoryStoreKeys.ID_TOKEN);
+      if (idToken) {
+        const keyManager = new KeyManager(orgRules.getKeyManagerUrlForPrivateKeys()!);
+        Catch.setHandledTimeout(async () => {
+          const { privateKeys } = await keyManager.getPrivateKeys(idToken);
+          console.log(privateKeys); // processAndStoreKeysFromEkmLocally
+        }, 0);
+      }
+    }
+  };
+
   const entrypoint = async () => {
     try {
       const acctEmail = await waitForAcctEmail();
       const { tabId, notifications, factory, inject } = await initInternalVars(acctEmail);
       await showNotificationsAndWaitTilAcctSetUp(acctEmail, notifications);
       browserMsgListen(acctEmail, tabId, inject, factory, notifications);
-      await webmailSpecific.start(acctEmail, inject, notifications, factory, notifyMurdered);
+      const orgRules = await OrgRules.newInstance(acctEmail);
+      await startPullingKeysFromEkm(acctEmail, orgRules);
+      await webmailSpecific.start(acctEmail, orgRules, inject, notifications, factory, notifyMurdered);
     } catch (e) {
       if (e instanceof TabIdRequiredError) {
         console.error(`FlowCrypt cannot start: ${String(e)}`);

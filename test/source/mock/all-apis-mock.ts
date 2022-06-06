@@ -7,14 +7,14 @@ import * as http from 'http';
 import { mockAttesterEndpoints } from './attester/attester-endpoints';
 import { mockBackendEndpoints } from './backend/backend-endpoints';
 import { mockGoogleEndpoints } from './google/google-endpoints';
-import { mockKeyManagerEndpoints } from './key-manager/key-manager-endpoints';
+import { liveKeyManagerEndpoints, mockKeyManagerEndpoints } from './key-manager/key-manager-endpoints';
 import { mockWkdEndpoints } from './wkd/wkd-endpoints';
 import { mockSksEndpoints } from './sks/sks-endpoints';
 import { mockFesEndpoints } from './fes/fes-endpoints';
 
 export type HandlersDefinition = Handlers<{ query: { [k: string]: string; }; body?: unknown; }, unknown>;
 
-export const startAllApisMock = async (logger: (line: string) => void) => {
+export const startAllApisMock = async (isMock: boolean, logger: (line: string) => void) => {
   class LoggedApi<REQ, RES> extends Api<REQ, RES> {
     protected throttleChunkMsUpload = 15;
     protected throttleChunkMsDownload = 50;
@@ -24,7 +24,7 @@ export const startAllApisMock = async (logger: (line: string) => void) => {
       }
     };
   }
-  const api = new LoggedApi<{ query: { [k: string]: string }, body?: unknown }, unknown>('google-mock', {
+  const handlers = isMock ? {
     ...mockGoogleEndpoints,
     ...mockBackendEndpoints,
     ...mockAttesterEndpoints,
@@ -33,7 +33,8 @@ export const startAllApisMock = async (logger: (line: string) => void) => {
     ...mockSksEndpoints,
     ...mockFesEndpoints,
     '/favicon.ico': async () => '',
-  });
+  } : { ...liveKeyManagerEndpoints };
+  const api = new LoggedApi<{ query: { [k: string]: string }, body?: unknown }, unknown>('google-mock', handlers);
   await api.listen(8001);
   return api;
 };

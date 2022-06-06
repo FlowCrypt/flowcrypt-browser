@@ -15,6 +15,8 @@ import { TestWithBrowser } from './../test';
 import { expect } from 'chai';
 import { OauthPageRecipe } from './page-recipe/oauth-page-recipe';
 import { SetupPageRecipe } from './page-recipe/setup-page-recipe';
+import { LIVE_KM_RESPONSE } from '../mock/key-manager/key-manager-endpoints';
+import { testConstants } from './tooling/consts';
 
 /**
  * All tests that use mail.google.com or have to operate without a Gmail API mock should go here
@@ -389,6 +391,22 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       const urls = await gmailPage.getFramesUrls(['/chrome/elements/pgp_pubkey.htm']);
       expect(urls.length).to.equal(1);
       await pageHasSecureReplyContainer(t, browser, gmailPage);
+    }));
+
+    ava.default('mail.google.com - fetching new private key -- asking for pass phrase', testWithBrowser('ci.tests.gmail', async (t, browser) => {
+      const dbPage = await browser.newPage(t, TestUrls.extension('chrome/dev/ci_unit_test.htm'));
+      // forge OrgRules to wire the key manager
+      await dbPage.page.evaluate(async () => {
+        await (window as any).AcctStore.set('ci.tests.gmail@flowcrypt.dev', {
+          flags: ['PRV_AUTOIMPORT_OR_AUTOGEN'], // todo: ATTESTER_SUBMIT, FORBID_STORING_PASSPHRASE
+          rules: { key_manager_url: 'https://localhost:8001/flowcrypt-email-key-manager' }
+        });
+      });
+      LIVE_KM_RESPONSE.privateKeys = [{ decryptedPrivateKey: testConstants.existingPrv }];
+      const gmailPage = await openGmailPage(t, browser);
+      await Util.sleep(10);
+      // todo:
+      await gmailPage.close();
     }));
 
     // ava.default('mail.google.com - reauth after uuid change', testWithBrowser('ci.tests.gmail', async (t, browser) => {

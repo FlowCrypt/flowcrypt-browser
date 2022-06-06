@@ -40,8 +40,8 @@ export class BrowserPool {
     ];
     if (this.isMock) {
       args.push('--ignore-certificate-errors');
-      args.push('--allow-insecure-localhost');
     }
+    args.push('--allow-insecure-localhost');
     const slowMo = this.isMock ? 60 : 60;
     const browser = await puppeteer.launch({ args, ignoreHTTPSErrors: this.isMock, headless: false, devtools: false, slowMo });
     const handle = new BrowserHandle(browser, this.semaphore, this.height, this.width);

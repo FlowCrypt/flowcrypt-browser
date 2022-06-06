@@ -12,6 +12,7 @@ import { Url } from '../../../js/common/core/common.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
 import { KeyStore } from '../../../js/common/platform/store/key-store.js';
+import { saveKeysAndPassPhrase } from '../../../js/common/shared.js';
 
 export class SetupRecoverKeyModule {
 
@@ -63,7 +64,7 @@ export class SetupRecoverKeyModule {
         passphrase_save: true, // todo - reevaluate saving passphrase when recovering
         recovered: true,
       };
-      await this.view.saveKeysAndPassPhrase(newlyMatchingKeys, options);
+      await saveKeysAndPassPhrase(this.view.acctEmail, newlyMatchingKeys, options);
       const { setup_done } = await AcctStore.get(this.view.acctEmail, ['setup_done']);
       if (!setup_done) { // normal situation - fresh setup
         await this.view.submitPublicKeys(options);
