@@ -166,7 +166,6 @@ export class OrgRules {
     if (!userDomain) {
       throw new Error(`Not a valid email ${emailAddr}`);
     }
-
     // When allow_attester_search_only_for_domains is set, ignore disallow_attester_search_for_domains rule
     if (this.domainRules.allow_attester_search_only_for_domains) {
       return this.domainRules.allow_attester_search_only_for_domains.includes(userDomain);
