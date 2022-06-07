@@ -497,6 +497,30 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       await composePage.waitAll('@input-password');
     }));
 
+    ava.default('user@only-allow-some-domains-org-rule.flowcrypt.test - search attester for recipients only on particular domains', testWithBrowser(undefined, async (t, browser) => {
+      // disallow_attester_search_for_domains is not respected if allow_attester_search_only_for_domains is set
+      // searching attester for pubkeys only on "flowcrypt.com" domain
+      const acct = 'user@only-allow-some-domains-org-rule.flowcrypt.test';
+      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
+      await SetupPageRecipe.manualEnter(settingsPage, 'flowcrypt.test.key.used.pgp');
+      const composePage = await ComposePageRecipe.openStandalone(t, browser, acct);
+      await ComposePageRecipe.fillMsg(composePage, { to: 'mock.only.pubkey@flowcrypt.com,mock.only.pubkey@other.com' }, 'flowcrypt domain should be found. other domains should not be found');
+      await composePage.waitForContent('.email_address.has_pgp', 'mock.only.pubkey@flowcrypt.com');
+      await composePage.waitForContent('.email_address.no_pgp', 'mock.only.pubkey@other.com');
+      await composePage.waitAll('@input-password');
+    }));
+
+    ava.default('user@no-allow-domains-org-rule.flowcrypt.test - search attester for recipients doesn\'t work on any domains', testWithBrowser(undefined, async (t, browser) => {
+      // as `allow_attester_search_only_for_domains: []` is set, attester search shouldn't work for any domains
+      const acct = 'user@no-allow-domains-org-rule.flowcrypt.test';
+      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
+      await SetupPageRecipe.manualEnter(settingsPage, 'flowcrypt.test.key.used.pgp');
+      const composePage = await ComposePageRecipe.openStandalone(t, browser, acct);
+      await ComposePageRecipe.fillMsg(composePage, { to: 'mock.only.pubkey@flowcrypt.com' }, 'all domains should not be found');
+      await composePage.waitForContent('.email_address.no_pgp', 'mock.only.pubkey@flowcrypt.com');
+      await composePage.waitAll('@input-password');
+    }));
+
     ava.default('user@no-search-wildcard-domains-org-rule.flowcrypt.test - do not search attester for recipients on any domain', testWithBrowser(undefined, async (t, browser) => {
       // disallowed searching attester for pubkeys on * domain
       // below we search for mock.only.pubkey@other.com which normally has pubkey on attester, but none should be found due to the rule
