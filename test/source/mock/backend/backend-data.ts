@@ -91,6 +91,19 @@ export class BackendData {
         "disallow_attester_search_for_domains": ["*"]
       };
     }
+    if (domain === 'only-allow-some-domains-org-rule.flowcrypt.test') {
+      return {
+        "flags": [],
+        "allow_attester_search_only_for_domains": ["flowcrypt.com"],
+        "disallow_attester_search_for_domains": ["*"]
+      };
+    }
+    if (domain === 'no-allow-domains-org-rule.flowcrypt.test') {
+      return {
+        "flags": [],
+        "allow_attester_search_only_for_domains": []
+      };
+    }
     const keyManagerAutogenRules = {
       "flags": [
         "NO_PRV_BACKUP",
