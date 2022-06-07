@@ -2,7 +2,6 @@
 
 import * as fs from 'fs';
 import { Keyboard, KeyInput } from 'puppeteer';
-import { testKeyConstants } from '../tests/tooling/consts';
 import { KeyInfoWithIdentityAndOptionalPp, KeyUtil } from '../core/crypto/key.js';
 
 export type TestVariant = 'CONSUMER-MOCK' | 'ENTERPRISE-MOCK' | 'CONSUMER-LIVE-GMAIL' | 'UNIT-TESTS';
@@ -67,7 +66,7 @@ export class Config {
         Config._secrets = JSON.parse(fs.readFileSync('test/test-secrets.json', 'utf8'));
       } catch (e) {
         console.error(`skipping loading test secrets because ${e}`);
-        Config._secrets = { auth: { google: [] } } as unknown as TestSecretsInterface;
+        Config._secrets = { ci_admin_token: "", auth: { google: [] } };
       }
     }
     return Config._secrets;
