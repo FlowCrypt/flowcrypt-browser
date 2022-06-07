@@ -23,7 +23,7 @@ module.exports = {
   rules: {
     '@typescript-eslint/no-unused-vars': ['error'],
     '@typescript-eslint/semi': ['error'],
-    "@typescript-eslint/no-explicit-any": ["warn"],
+    "@typescript-eslint/no-explicit-any": ['warn'],
     'indent': ['error', 2, { SwitchCase: 1 }],
     'max-len': ['error', { code: 190 }],
     'no-constant-condition': 0,
