@@ -67,7 +67,7 @@ export class Config {
         Config._secrets = JSON.parse(fs.readFileSync('test/test-secrets.json', 'utf8'));
       } catch (e) {
         console.error(`skipping loading test secrets because ${e}`);
-        Config._secrets = { auth: { google: [] } } as TestSecretsInterface;
+        Config._secrets = { auth: { google: [] } } as unknown as TestSecretsInterface;
       }
     }
     return Config._secrets;
