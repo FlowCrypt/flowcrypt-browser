@@ -51,7 +51,7 @@ export type TestKeyInfoWithFilepath = TestKeyInfo & { filePath?: string, expired
 
 interface TestSecretsInterface {
   ci_admin_token: string;
-  auth: { google: { email: string, password?: string, secret_2fa?: string }[], };
+  auth: { google: { email: string, password?: string, secret_2fa?: string }[] };
 }
 
 export class Config {
@@ -67,7 +67,7 @@ export class Config {
         Config._secrets = JSON.parse(fs.readFileSync('test/test-secrets.json', 'utf8'));
       } catch (e) {
         console.error(`skipping loading test secrets because ${e}`);
-        Config._secrets = { auth: { google: [] } } as any as TestSecretsInterface;
+        Config._secrets = { auth: { google: [] } } as TestSecretsInterface;
       }
     }
     return Config._secrets;
@@ -75,12 +75,7 @@ export class Config {
 
   public static keys = (): TestKeyInfo[] => {
     if (!Config._keys) {
-      try {
-        Config._keys = JSON.parse(fs.readFileSync('test/test-keys.json', 'utf8'));
-      } catch (e) {
-        console.error(`skipping loading test keys because ${e}`);
-        Config._keys = [];
-      }
+      Config._keys = JSON.parse(fs.readFileSync('test/test-keys.json', 'utf8'));
     }
     return Config._keys;
   };
