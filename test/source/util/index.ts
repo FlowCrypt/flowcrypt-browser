@@ -3,6 +3,7 @@
 import * as fs from 'fs';
 import { Keyboard, KeyInput } from 'puppeteer';
 import { KeyInfoWithIdentityAndOptionalPp, KeyUtil } from '../core/crypto/key.js';
+import { testKeyConstants } from '../tests/tooling/consts';
 
 export type TestVariant = 'CONSUMER-MOCK' | 'ENTERPRISE-MOCK' | 'CONSUMER-LIVE-GMAIL' | 'UNIT-TESTS';
 
@@ -58,7 +59,6 @@ export class Config {
   public static extensionId = '';
 
   private static _secrets: TestSecretsInterface;
-  private static _keys: TestKeyInfo[];
 
   public static secrets = (): TestSecretsInterface => {
     if (!Config._secrets) {
@@ -72,19 +72,12 @@ export class Config {
     return Config._secrets;
   };
 
-  public static keys = (): TestKeyInfo[] => {
-    if (!Config._keys) {
-      Config._keys = JSON.parse(fs.readFileSync('test/test-keys.json', 'utf8'));
-    }
-    return Config._keys;
-  };
-
   public static key = (title: string) => {
-    return Config.keys().filter(k => k.title === title)[0];
+    return testKeyConstants.keys.filter(k => k.title === title)[0];
   };
 
   public static getKeyInfo = async (titles: string[]): Promise<KeyInfoWithIdentityAndOptionalPp[]> => {
-    return await Promise.all(Config._keys
+    return await Promise.all(testKeyConstants.keys
       .filter(key => key.armored && titles.includes(key.title)).map(async key => {
         const parsed = await KeyUtil.parse(key.armored!);
         return { ...await KeyUtil.keyInfoObj(parsed), passphrase: key.passphrase };
