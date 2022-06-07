@@ -52,7 +52,6 @@ export type TestKeyInfoWithFilepath = TestKeyInfo & { filePath?: string, expired
 interface TestSecretsInterface {
   ci_admin_token: string;
   auth: { google: { email: string, password?: string, secret_2fa?: string }[], };
-  keys: TestKeyInfo[];
 }
 
 export class Config {
@@ -60,26 +59,38 @@ export class Config {
   public static extensionId = '';
 
   private static _secrets: TestSecretsInterface;
+  private static _keys: TestKeyInfo[];
 
   public static secrets = (): TestSecretsInterface => {
     if (!Config._secrets) {
       try {
         Config._secrets = JSON.parse(fs.readFileSync('test/test-secrets.json', 'utf8'));
-        Config._secrets.keys = testKeyConstants.keys;
       } catch (e) {
         console.error(`skipping loading test secrets because ${e}`);
-        Config._secrets = { auth: { google: [] }, keys: [] } as any as TestSecretsInterface;
+        Config._secrets = { auth: { google: [] } } as any as TestSecretsInterface;
       }
     }
     return Config._secrets;
   };
 
+  public static keys = (): TestKeyInfo[] => {
+    if (!Config._keys) {
+      try {
+        Config._keys = JSON.parse(fs.readFileSync('test/test-keys.json', 'utf8'));
+      } catch (e) {
+        console.error(`skipping loading test keys because ${e}`);
+        Config._keys = [];
+      }
+    }
+    return Config._keys;
+  };
+
   public static key = (title: string) => {
-    return Config.secrets().keys.filter(k => k.title === title)[0];
+    return Config.keys().filter(k => k.title === title)[0];
   };
 
   public static getKeyInfo = async (titles: string[]): Promise<KeyInfoWithIdentityAndOptionalPp[]> => {
-    return await Promise.all(Config._secrets.keys
+    return await Promise.all(Config._keys
       .filter(key => key.armored && titles.includes(key.title)).map(async key => {
         const parsed = await KeyUtil.parse(key.armored!);
         return { ...await KeyUtil.keyInfoObj(parsed), passphrase: key.passphrase };
