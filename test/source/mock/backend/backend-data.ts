@@ -58,7 +58,7 @@ export class BackendData {
         ]
       };
     }
-    if (domain === 'no-submit-client-configuration.flowcrypt.test') {
+    if (domain === 'no-submit-org-rule.flowcrypt.test') {
       return {
         "flags": [
           "NO_ATTESTER_SUBMIT"
@@ -158,7 +158,7 @@ export class BackendData {
     if (domain === 'key-manager-keygen-expiration.flowcrypt.test') {
       return { ...keyManagerAutogenRules, "enforce_keygen_expire_months": 1 };
     }
-    if (domain === 'no-submit-client-configuration.key-manager-autogen.flowcrypt.test') {
+    if (domain === 'get.key@no-submit-org-rule.key-manager-autogen.flowcrypt.test') {
       return { ...keyManagerAutogenRules, flags: [...keyManagerAutogenRules.flags, 'NO_ATTESTER_SUBMIT'] };
     }
     if (domain === 'prv-create-no-prv-backup.flowcrypt.test') {
