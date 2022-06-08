@@ -6,7 +6,7 @@ import { Api, ReqMethod } from './../shared/api.js';
 import { Dict, Str } from '../../core/common.js';
 import { PubkeySearchResult } from './../pub-lookup.js';
 import { ApiErr } from '../shared/api-error.js';
-import { ClientConfiguration } from '../../client-configuration.js';
+import { ClientConfiguration } from "../../client-configuration";
 import { ATTESTER_API_HOST } from '../../core/const.js';
 
 type PubCallRes = { responseText: string, getResponseHeader: (n: string) => string | null };
@@ -33,21 +33,6 @@ export class Attester extends Api {
       results[email] = await this.lookupEmail(email);
     }));
     return results;
-  };
-
-  /**
-   * the actual api accepts either email, fingerprint or longid
-   */
-  public lookupFingerprint = async (fingerprintOrLongid: string) => {
-    if (fingerprintOrLongid.includes('@')) {
-      throw new Error('Expected fingerprint or longid, got email');
-    }
-    if (this.clientConfiguration.disallowLookupOnAttester()) {
-      console.info(`Skipping attester lookup because it is disabled for all domains.`);
-      return { pubkey: null }; // tslint:disable-line:no-null-keyword
-    }
-    return await this.doLookup(fingerprintOrLongid);
-    // todo: check returned email to respect disallow_attester_search domain rule?
   };
 
   /**

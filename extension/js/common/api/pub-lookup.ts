@@ -52,18 +52,4 @@ export class PubLookup {
     }
     return { pubkeys: [] };
   };
-
-  public lookupFingerprint = async (fingerprintOrLongid: string): Promise<PubkeySearchResult> => {
-    if (fingerprintOrLongid.includes('@')) {
-      throw new Error('Expected fingerprint or longid, got email');
-    }
-    if (this.internalSks) {
-      const res = await this.internalSks.lookupFingerprint(fingerprintOrLongid);
-      if (res.pubkey) {
-        return res;
-      }
-    }
-    return await this.attester.lookupFingerprint(fingerprintOrLongid);
-  };
-
 }

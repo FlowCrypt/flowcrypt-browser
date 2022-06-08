@@ -170,19 +170,11 @@ export class ClientConfiguration {
     if (this.clientConfigurationJson.allow_attester_search_only_for_domains) {
       return this.clientConfigurationJson.allow_attester_search_only_for_domains.includes(userDomain);
     }
-    if (this.disallowLookupOnAttester()) {
+    const disallowedDomains = this.clientConfigurationJson.disallow_attester_search_for_domains || [];
+    if (disallowedDomains.includes('*')) {
       return false;
     }
-    const disallowedDomains = this.clientConfigurationJson.disallow_attester_search_for_domains || [];
     return !disallowedDomains.includes(userDomain);
-  };
-
-  /**
-   *
-   * Some orgs might want to disallow lookup on attester completely
-   */
-  public disallowLookupOnAttester = (): boolean => {
-    return (this.clientConfigurationJson.disallow_attester_search_for_domains || []).includes('*');
   };
 
   /**
