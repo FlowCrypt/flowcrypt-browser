@@ -171,6 +171,9 @@ export class OrgRules {
       return this.domainRules.allow_attester_search_only_for_domains.includes(userDomain);
     }
     const disallowedDomains = this.domainRules.disallow_attester_search_for_domains || [];
+    if (disallowedDomains.includes('*')) {
+      return false;
+    }
     return !disallowedDomains.includes(userDomain);
   };
 
