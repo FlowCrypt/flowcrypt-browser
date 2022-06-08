@@ -15,8 +15,8 @@ type ManualEnterOpts = {
   naked?: boolean,
   genPp?: boolean,
   simulateRetryOffline?: boolean,
-  noPrvCreateOrgRule?: boolean,
-  enforceAttesterSubmitOrgRule?: boolean,
+  noPrvCreateClientConfiguration?: boolean,
+  enforceAttesterSubmitClientConfiguration?: boolean,
   noPubSubmitRule?: boolean,
   fillOnly?: boolean,
   isInvalidKey?: boolean | undefined,
@@ -51,7 +51,7 @@ export class SetupPageRecipe extends PageRecipe {
     if (selectKeyAlgo) {
       await settingsPage.selectOption('@input-step2bmanualcreate-key-type', selectKeyAlgo);
     }
-    if (backup === 'disabled') { // user not given a backup choice due to NO_PRV_BACKUP OrgRule
+    if (backup === 'disabled') { // user not given a backup choice due to NO_PRV_BACKUP ClientConfiguration
       await settingsPage.notPresent('@input-step2bmanualcreate-backup-inbox');
     } else { // uncheck - because want to choose backup manually
       await settingsPage.waitAndClick('@input-step2bmanualcreate-backup-inbox');
@@ -103,8 +103,8 @@ export class SetupPageRecipe extends PageRecipe {
       naked = false,
       genPp = false,
       simulateRetryOffline = false,
-      noPrvCreateOrgRule = false,
-      enforceAttesterSubmitOrgRule = false,
+      noPrvCreateClientConfiguration = false,
+      enforceAttesterSubmitClientConfiguration = false,
       fillOnly = false,
       noPubSubmitRule = false,
       key,
@@ -112,7 +112,7 @@ export class SetupPageRecipe extends PageRecipe {
     }: ManualEnterOpts = {},
     checks: SavePassphraseChecks = {}
   ) {
-    if (!noPrvCreateOrgRule) {
+    if (!noPrvCreateClientConfiguration) {
       if (usedPgpBefore) {
         await settingsPage.waitAndClick('@action-step0foundkey-choose-manual-enter', { timeout: 30, retryErrs: true });
       } else {
@@ -139,7 +139,7 @@ export class SetupPageRecipe extends PageRecipe {
       throw new Error('dont know how to import test key because missing both "armored" and "filePath"');
     }
     await settingsPage.waitAndClick('@input-step2bmanualenter-passphrase'); // blur ascii key input
-    if (noPrvCreateOrgRule) { // NO_PRV_CREATE cannot use the back button, so that they cannot select another setup method
+    if (noPrvCreateClientConfiguration) { // NO_PRV_CREATE cannot use the back button, so that they cannot select another setup method
       await settingsPage.notPresent('@action-setup-go-back');
     }
     if (checks.isSavePassphraseHidden !== undefined) {
@@ -174,7 +174,7 @@ export class SetupPageRecipe extends PageRecipe {
         await settingsPage.waitAndType('@input-step2bmanualenter-passphrase', key.passphrase);
       }
     }
-    if (enforceAttesterSubmitOrgRule || noPubSubmitRule) {
+    if (enforceAttesterSubmitClientConfiguration || noPubSubmitRule) {
       await settingsPage.notPresent('@input-step2bmanualenter-submit-pubkey');
     } else {
       await settingsPage.waitAll('@input-step2bmanualenter-submit-pubkey');
