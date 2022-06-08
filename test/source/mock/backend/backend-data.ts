@@ -47,7 +47,7 @@ export class BackendData {
 
   public getClientConfiguration = (acct: string) => {
     const domain = acct.split('@')[1];
-    if (domain === 'client-configurations-test.flowcrypt.test') {
+    if (domain === 'org-rules-test.flowcrypt.test') {
       return {
         "flags": [
           "NO_PRV_CREATE",
@@ -158,7 +158,7 @@ export class BackendData {
     if (domain === 'key-manager-keygen-expiration.flowcrypt.test') {
       return { ...keyManagerAutogenRules, "enforce_keygen_expire_months": 1 };
     }
-    if (domain === 'get.key@no-submit-org-rule.key-manager-autogen.flowcrypt.test') {
+    if (domain === 'no-submit-org-rule.key-manager-autogen.flowcrypt.test') {
       return { ...keyManagerAutogenRules, flags: [...keyManagerAutogenRules.flags, 'NO_ATTESTER_SUBMIT'] };
     }
     if (domain === 'prv-create-no-prv-backup.flowcrypt.test') {

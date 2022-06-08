@@ -100,7 +100,7 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
       await settingsPage.close();
     }));
 
-    ava.default.only('settings - generate rsa3072 key', testWithBrowser(undefined, async (t, browser) => {
+    ava.default('settings - generate rsa3072 key', testWithBrowser(undefined, async (t, browser) => {
       const acctEmail = 'user@no-submit-org-rule.flowcrypt.test';
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
       await SetupPageRecipe.createKey(settingsPage, 'unused', "none", { selectKeyAlgo: 'rsa3072', key: { passphrase: 'long enough to suit requirements' } });
