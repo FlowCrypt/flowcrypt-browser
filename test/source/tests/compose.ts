@@ -1042,7 +1042,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
     ava.default('compose - sent message should\'t have version and comment based on ClientConfiguration', testWithBrowser(undefined, async (t, browser) => {
       const acct = 'has.pub@client-configurations-test.flowcrypt.test';
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
-      await SetupPageRecipe.manualEnter(settingsPage, 'has.pub.client.configuration.test', { noPrvCreateOrgRule: true, enforceAttesterSubmitOrgRule: true },
+      await SetupPageRecipe.manualEnter(settingsPage, 'has.pub.orgrulestest', { noPrvCreateOrgRule: true, enforceAttesterSubmitOrgRule: true },
         { isSavePassphraseChecked: false, isSavePassphraseHidden: false });
       const subject = `Test Sending Message With Test Text and HIDE_ARMOR_META ClientConfiguration ${Util.lousyRandom()}`;
       const composePage = await ComposePageRecipe.openStandalone(t, browser, acct);
