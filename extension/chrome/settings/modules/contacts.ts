@@ -12,8 +12,6 @@ import { Browser } from '../../../js/common/browser/browser.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Buf } from '../../../js/common/core/buf.js';
 import { FetchKeyUI } from '../../../js/common/ui/fetch-key-ui.js';
-import { KeyImportUi } from '../../../js/common/ui/key-import-ui.js';
-import { PubLookup } from '../../../js/common/api/pub-lookup.js';
 import { MsgBlockParser } from '../../../js/common/core/msg-block-parser.js';
 import { OrgRules } from '../../../js/common/org-rules.js';
 import { Ui } from '../../../js/common/browser/ui.js';
@@ -32,7 +30,6 @@ View.run(class ContactsView extends View {
   private factory: XssSafeFactory | undefined; // set in render()
   private attachmentUI = new AttachmentUI(() => Promise.resolve({ sizeMb: 5, size: 5 * 1024 * 1024, count: 1 }));
   private orgRules!: OrgRules;
-  private pubLookup!: PubLookup;
   private backBtn = '<a href="#" id="page_back_button" data-test="action-back-to-contact-list">back</a>';
   private space = '&nbsp;&nbsp;&nbsp;&nbsp;';
 
@@ -49,7 +46,6 @@ View.run(class ContactsView extends View {
     this.fesUrl = storage.fesUrl;
     this.factory = new XssSafeFactory(this.acctEmail, tabId, undefined, undefined, { compact: true });
     this.orgRules = await OrgRules.newInstance(this.acctEmail);
-    this.pubLookup = new PubLookup(this.orgRules);
     this.attachmentUI.initAttachmentDialog('fineuploader', 'fineuploader_button', { attachmentAdded: this.fileAddedHandler });
     const fetchKeyUI = new FetchKeyUI();
     fetchKeyUI.handleOnPaste($('.input_pubkey'));
@@ -238,20 +234,7 @@ View.run(class ContactsView extends View {
         await Ui.modal.warning('Please paste public key(s).');
         return;
       }
-      const normalizedFingerprintOrLongid = KeyImportUi.normalizeFingerprintOrLongId(value);
-      let pub: string;
-      if (normalizedFingerprintOrLongid) {
-        const data = await this.pubLookup.lookupFingerprint(normalizedFingerprintOrLongid);
-        if (data.pubkey) {
-          pub = data.pubkey;
-        } else {
-          await Ui.modal.warning('Could not find any Public Key in our public records that matches this fingerprint or longid');
-          return;
-        }
-      } else {
-        pub = value;
-      }
-      let { blocks } = MsgBlockParser.detectBlocks(pub);
+      let { blocks } = MsgBlockParser.detectBlocks(value);
       blocks = blocks.filter((b, i) => blocks.findIndex(f => f.content === b.content) === i); // remove duplicates
       if (!blocks.length) {
         await Ui.modal.warning('Could not find any new public keys.');

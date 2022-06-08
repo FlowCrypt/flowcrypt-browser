@@ -36,21 +36,6 @@ export class Attester extends Api {
   };
 
   /**
-   * the actual api accepts either email, fingerprint or longid
-   */
-  public lookupFingerprint = async (fingerprintOrLongid: string) => {
-    if (fingerprintOrLongid.includes('@')) {
-      throw new Error('Expected fingerprint or longid, got email');
-    }
-    if (this.orgRules.disallowLookupOnAttester()) {
-      console.info(`Skipping attester lookup because it is disabled for all domains.`);
-      return { pubkey: null }; // tslint:disable-line:no-null-keyword
-    }
-    return await this.doLookup(fingerprintOrLongid);
-    // todo: check returned email to respect disallow_attester_search domain rule?
-  };
-
-  /**
    * Set or replace public key with idToken as an auth mechanism
    * Used during setup
    * Can only be used for primary email because idToken does not contain info about aliases
