@@ -14,7 +14,7 @@ import { initPassphraseToggle } from '../../../js/common/ui/passphrase-ui.js';
 import { PassphraseStore } from '../../../js/common/platform/store/passphrase-store.js';
 import { KeyStore } from '../../../js/common/platform/store/key-store.js';
 import { KeyStoreUtil, ParsedKeyInfo } from "../../../js/common/core/crypto/key-store-util.js";
-import { OrgRules } from '../../../js/common/org-rules.js';
+import { ClientConfiguration } from '../../../js/common/client-configuration.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Lang } from '../../../js/common/lang.js';
 import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
@@ -27,7 +27,7 @@ View.run(class ChangePassPhraseView extends View {
   private readonly keyImportUi = new KeyImportUi({});
 
   private mostUsefulPrv: ParsedKeyInfo | undefined;
-  private orgRules!: OrgRules;
+  private clientConfiguration!: ClientConfiguration;
 
   constructor() {
     super();
@@ -39,7 +39,7 @@ View.run(class ChangePassPhraseView extends View {
   public render = async () => {
     const storage = await AcctStore.get(this.acctEmail, ['fesUrl']);
     this.fesUrl = storage.fesUrl;
-    this.orgRules = await OrgRules.newInstance(this.acctEmail);
+    this.clientConfiguration = await ClientConfiguration.newInstance(this.acctEmail);
     await initPassphraseToggle(['current_pass_phrase', 'new_pass_phrase', 'new_pass_phrase_confirm']);
     const privateKeys = await KeyStore.get(this.acctEmail);
     if (privateKeys.length > 1) {
@@ -118,11 +118,11 @@ View.run(class ChangePassPhraseView extends View {
       return;
     }
     await KeyStore.add(this.acctEmail, this.mostUsefulPrv!.key);
-    const shouldSavePassphraseInStorage = !this.orgRules.forbidStoringPassPhrase() &&
+    const shouldSavePassphraseInStorage = !this.clientConfiguration.forbidStoringPassPhrase() &&
       !!(await PassphraseStore.get(this.acctEmail, this.mostUsefulPrv!.keyInfo, true));
     await PassphraseStore.set('local', this.acctEmail, this.mostUsefulPrv!.keyInfo, shouldSavePassphraseInStorage ? newPp : undefined);
     await PassphraseStore.set('session', this.acctEmail, this.mostUsefulPrv!.keyInfo, shouldSavePassphraseInStorage ? undefined : newPp);
-    if (this.orgRules.canBackupKeys()) {
+    if (this.clientConfiguration.canBackupKeys()) {
       await Ui.modal.info('Now that you changed your pass phrase, you should back up your key. New backup will be protected with new passphrase.');
       Settings.redirectSubPage(this.acctEmail, this.parentTabId, '/chrome/settings/modules/backup.htm', '&action=backup_manual');
     } else {

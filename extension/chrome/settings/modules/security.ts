@@ -16,7 +16,7 @@ import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
 import { KeyStore } from '../../../js/common/platform/store/key-store.js';
 import { KeyStoreUtil, ParsedKeyInfo } from "../../../js/common/core/crypto/key-store-util.js";
 import { PassphraseStore } from '../../../js/common/platform/store/passphrase-store.js';
-import { OrgRules } from '../../../js/common/org-rules.js';
+import { ClientConfiguration } from '../../../js/common/client-configuration.js';
 import { AccountServer } from '../../../js/common/api/account-server.js';
 import { FcUuidAuth } from '../../../js/common/api/account-servers/flowcrypt-com-api.js';
 
@@ -26,7 +26,7 @@ View.run(class SecurityView extends View {
   private readonly parentTabId: string;
   private prvs!: ParsedKeyInfo[];
   private authInfo: FcUuidAuth | undefined;
-  private orgRules!: OrgRules;
+  private clientConfiguration!: ClientConfiguration;
   private acctServer: AccountServer;
 
   constructor() {
@@ -42,12 +42,12 @@ View.run(class SecurityView extends View {
     this.prvs = await KeyStoreUtil.parse(await KeyStore.getRequired(this.acctEmail));
     this.authInfo = await AcctStore.authInfo(this.acctEmail);
     const storage = await AcctStore.get(this.acctEmail, ['hide_message_password', 'outgoing_language']);
-    this.orgRules = await OrgRules.newInstance(this.acctEmail);
+    this.clientConfiguration = await ClientConfiguration.newInstance(this.acctEmail);
     $('#hide_message_password').prop('checked', storage.hide_message_password === true);
     $('.password_message_language').val(storage.outgoing_language || 'EN');
     await this.renderPassPhraseOptionsIfStoredPermanently();
     await this.loadAndRenderPwdEncryptedMsgSettings();
-    if (this.orgRules.mustAutogenPassPhraseQuietly()) {
+    if (this.clientConfiguration.mustAutogenPassPhraseQuietly()) {
       $('.hide_if_pass_phrase_not_user_configurable').hide();
     }
   };

@@ -118,7 +118,7 @@ export class BrowserRecipe {
   };
 
   public static setUpFcForbidPpStoringAcct = async (t: AvaContext, browser: BrowserHandle) => {
-    const acctEmail = 'user@forbid-storing-passphrase-org-rule.flowcrypt.test';
+    const acctEmail = 'user@forbid-storing-passphrase-client-configuration.flowcrypt.test';
     const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
     const key = { title: '', armored: testConstants.testKeyB8F687BCDE14435A, passphrase: 'donotstore', longid: 'B8F687BCDE14435A' };
     await SetupPageRecipe.manualEnter(settingsPage, 'unused', { submitPubkey: false, usedPgpBefore: false, key }, { isSavePassphraseChecked: false, isSavePassphraseHidden: true });

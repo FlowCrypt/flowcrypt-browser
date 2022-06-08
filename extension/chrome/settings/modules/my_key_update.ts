@@ -12,7 +12,7 @@ import { Ui } from '../../../js/common/browser/ui.js';
 import { Url, Str } from '../../../js/common/core/common.js';
 import { View } from '../../../js/common/view.js';
 import { Xss } from '../../../js/common/platform/xss.js';
-import { OrgRules } from '../../../js/common/org-rules.js';
+import { ClientConfiguration } from '../../../js/common/client-configuration.js';
 import { PubLookup } from '../../../js/common/api/pub-lookup.js';
 import { KeyStore } from '../../../js/common/platform/store/key-store.js';
 import { PassphraseStore } from '../../../js/common/platform/store/passphrase-store.js';
@@ -27,7 +27,7 @@ View.run(class MyKeyUpdateView extends View {
   private readonly inputPrivateKey = $('.input_private_key');
   private readonly prvHeaders = PgpArmor.headers('privateKey');
   private ki: KeyInfoWithIdentity | undefined;
-  private orgRules!: OrgRules;
+  private clientConfiguration!: ClientConfiguration;
   private pubLookup!: PubLookup;
 
   constructor() {
@@ -41,8 +41,8 @@ View.run(class MyKeyUpdateView extends View {
   public render = async () => {
     const storage = await AcctStore.get(this.acctEmail, ['fesUrl']);
     this.fesUrl = storage.fesUrl;
-    this.orgRules = await OrgRules.newInstance(this.acctEmail);
-    if (this.orgRules.usesKeyManager()) {
+    this.clientConfiguration = await ClientConfiguration.newInstance(this.acctEmail);
+    if (this.clientConfiguration.usesKeyManager()) {
       Xss.sanitizeRender('body', `
       <br>
       <div data-test="container-err-title">Error: Insufficient Permission</div>
@@ -52,7 +52,7 @@ View.run(class MyKeyUpdateView extends View {
       `);
     } else {
       $('#content').show();
-      this.pubLookup = new PubLookup(this.orgRules);
+      this.pubLookup = new PubLookup(this.clientConfiguration);
       [this.ki] = await KeyStore.get(this.acctEmail, [this.fingerprint]);
       Assert.abortAndRenderErrorIfKeyinfoEmpty(this.ki ? [this.ki] : []);
       $('.action_show_public_key').attr('href', this.showKeyUrl);
@@ -68,12 +68,12 @@ View.run(class MyKeyUpdateView extends View {
   };
 
   private storeUpdatedKeyAndPassphrase = async (updatedPrv: Key, updatedPrvPassphrase: string) => {
-    const shouldSavePassphraseInStorage = !this.orgRules.forbidStoringPassPhrase() &&
+    const shouldSavePassphraseInStorage = !this.clientConfiguration.forbidStoringPassPhrase() &&
       !!(await PassphraseStore.get(this.acctEmail, this.ki!, true));
     await KeyStore.add(this.acctEmail, updatedPrv);
     await PassphraseStore.set('local', this.acctEmail, this.ki!, shouldSavePassphraseInStorage ? updatedPrvPassphrase : undefined);
     await PassphraseStore.set('session', this.acctEmail, this.ki!, shouldSavePassphraseInStorage ? undefined : updatedPrvPassphrase);
-    if (this.orgRules.canSubmitPubToAttester() && await Ui.modal.confirm('Public and private key updated locally.\n\nUpdate public records with new Public Key?')) {
+    if (this.clientConfiguration.canSubmitPubToAttester() && await Ui.modal.confirm('Public and private key updated locally.\n\nUpdate public records with new Public Key?')) {
       try {
         // todo: make sure this is never called for x509 keys
         await Ui.modal.info(await this.pubLookup.attester.updatePubkey(this.ki!.longid, KeyUtil.armor(await KeyUtil.asPublicKey(updatedPrv))));

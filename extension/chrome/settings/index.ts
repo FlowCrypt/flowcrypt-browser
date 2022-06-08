@@ -14,7 +14,7 @@ import { Env } from '../../js/common/browser/env.js';
 import { Gmail } from '../../js/common/api/email-provider/gmail/gmail.js';
 import { Lang } from '../../js/common/lang.js';
 import { Notifications } from '../../js/common/notifications.js';
-import { OrgRules } from '../../js/common/org-rules.js';
+import { ClientConfiguration } from '../../js/common/client-configuration.js';
 import { Settings } from '../../js/common/settings.js';
 import { VERSION } from '../../js/common/core/const.js';
 import { View } from '../../js/common/view.js';
@@ -40,7 +40,7 @@ View.run(class SettingsView extends View {
   private readonly gmail: Gmail | undefined;
   private tabId!: string;
   private notifications!: Notifications;
-  private orgRules: OrgRules | undefined;
+  private clientConfiguration: ClientConfiguration | undefined;
   private acctServer: AccountServer | undefined;
 
   private altAccounts: JQuery<HTMLElement>;
@@ -75,12 +75,12 @@ View.run(class SettingsView extends View {
     this.tabId = await BrowserMsg.requiredTabId();
     this.notifications = new Notifications();
     if (this.acctEmail) {
-      this.orgRules = await OrgRules.newInstance(this.acctEmail);
+      this.clientConfiguration = await ClientConfiguration.newInstance(this.acctEmail);
     }
-    if (this.orgRules && !this.orgRules.canSubmitPubToAttester()) {
+    if (this.clientConfiguration && !this.clientConfiguration.canSubmitPubToAttester()) {
       $('.public_profile_indicator_container').hide(); // contact page is useless if user cannot submit to attester
     }
-    if (this.orgRules && this.orgRules.usesKeyManager()) {
+    if (this.clientConfiguration && this.clientConfiguration.usesKeyManager()) {
       $(".add_key").hide(); // users which a key manager should not be adding keys manually
     }
     $('#status-row #status_version').click(this.setHandler(async () => {
@@ -239,7 +239,7 @@ View.run(class SettingsView extends View {
       $('.email-address').text(this.acctEmail);
       const storage = await AcctStore.get(this.acctEmail, ['setup_done', 'email_provider', 'picture']);
       if (storage.setup_done) {
-        const rules = await OrgRules.newInstance(this.acctEmail);
+        const rules = await ClientConfiguration.newInstance(this.acctEmail);
         if (!rules.canBackupKeys()) {
           $('.show_settings_page[page="modules/backup.htm"]').parent().remove();
         }
@@ -283,7 +283,7 @@ View.run(class SettingsView extends View {
     }).catch(ApiErr.reportIfSignificant);
   };
 
-  private renderNotificationBanners = async (emailProvider: EmailProvider, rules: OrgRules) => {
+  private renderNotificationBanners = async (emailProvider: EmailProvider, rules: ClientConfiguration) => {
     if (!this.acctEmail) {
       return;
     }
@@ -399,7 +399,7 @@ View.run(class SettingsView extends View {
 
   private addKeyRowsHtml = async (privateKeys: KeyInfoWithIdentity[]) => {
     let html = '';
-    const canRemoveKey = !this.orgRules || !this.orgRules.usesKeyManager();
+    const canRemoveKey = !this.clientConfiguration || !this.clientConfiguration.usesKeyManager();
     for (let i = 0; i < privateKeys.length; i++) {
       const ki = privateKeys[i];
       const prv = await KeyUtil.parse(ki.private);

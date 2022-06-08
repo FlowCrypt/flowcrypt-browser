@@ -219,7 +219,7 @@ export const mockKeyManagerEndpoints: HandlersDefinition = {
       if (acctEmail === 'get.key@key-manager-autogen.flowcrypt.test') {
         return { privateKeys: [{ decryptedPrivateKey: existingPrv }] };
       }
-      if (acctEmail === 'get.key@no-submit-org-rule.key-manager-autogen.flowcrypt.test') {
+      if (acctEmail === 'get.key@no-submit-client-configuration.key-manager-autogen.flowcrypt.test') {
         return { privateKeys: [{ decryptedPrivateKey: prvNoSubmit }] };
       }
       if (acctEmail === 'two.keys@key-manager-autogen.flowcrypt.test') {

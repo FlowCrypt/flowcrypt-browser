@@ -4,7 +4,7 @@ import { Env } from '../../browser/env.js';
 import { GoogleAuth } from '../../api/email-provider/gmail/google-auth.js';
 import { KeyInfoWithIdentity, StoredKeyInfo } from '../../core/crypto/key.js';
 import { Dict } from '../../core/common.js';
-import { DomainRulesJson } from '../../org-rules.js';
+import { ClientConfigurationJson } from '../../client-configuration.js';
 import { BrowserMsg, BgNotReadyErr } from '../../browser/browser-msg.js';
 import { Ui } from '../../browser/ui.js';
 import { storageLocalGet, storageLocalSet, storageLocalRemove } from '../../browser/chrome.js';
@@ -59,7 +59,7 @@ export type AcctStoreDict = {
   setup_date?: number;
   use_rich_text?: boolean;
   uuid?: string;
-  rules?: DomainRulesJson;
+  rules?: ClientConfigurationJson;
   fesUrl?: string; // url where FlowCrypt Enterprise Server is deployed
 };
 

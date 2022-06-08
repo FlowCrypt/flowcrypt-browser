@@ -376,8 +376,8 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       });
     }));
 
-    ava.default('settings - change passphrase honoring FORBID_STORING_PASS_PHRASE OrgRule', testWithBrowser(undefined, async (t, browser) => {
-      const acctEmail = 'user@forbid-storing-passphrase-org-rule.flowcrypt.test';
+    ava.default('settings - change passphrase honoring FORBID_STORING_PASS_PHRASE ClientConfiguration', testWithBrowser(undefined, async (t, browser) => {
+      const acctEmail = 'user@forbid-storing-passphrase-client-configuration.flowcrypt.test';
       const { settingsPage, passphrase } = await BrowserRecipe.setUpFcForbidPpStoringAcct(t, browser);
       const { cryptup_userforbidstoringpassphraseorgruleflowcrypttest_passphrase_B8F687BCDE14435A: savedPassphrase1,
         cryptup_userforbidstoringpassphraseorgruleflowcrypttest_keys: keys }
@@ -896,7 +896,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
 
     ava.default('settings - email change', testWithBrowser('ci.tests.gmail', async (t, browser) => {
       const acct1 = 'ci.tests.gmail@flowcrypt.test';
-      const acct2 = 'user@default-remember-passphrase-org-rule.flowcrypt.test';
+      const acct2 = 'user@default-remember-passphrase-client-configuration.flowcrypt.test';
       const settingsPage = await browser.newPage(t, TestUrls.extensionSettings(acct1));
       const { cryptup_citestsgmailflowcrypttest_rules: oldRules, cryptup_citestsgmailflowcrypttest_passphrase_07481C8ACF9D49FE: savedPassphrase1 } =
         await settingsPage.getFromLocalStorage(['cryptup_citestsgmailflowcrypttest_rules', 'cryptup_citestsgmailflowcrypttest_passphrase_07481C8ACF9D49FE']);
@@ -909,9 +909,9 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         { contentToCheck: 'email address has changed', clickOn: 'confirm' }));
       await OauthPageRecipe.mock(t, oauthPopup1, acct2, 'override_acct');
       await PageRecipe.waitForModalAndRespond(experimentalFrame, 'confirm',
-        { contentToCheck: 'email from ci.tests.gmail@flowcrypt.test to user@default-remember-passphrase-org-rule.flowcrypt.test', clickOn: 'confirm' });
+        { contentToCheck: 'email from ci.tests.gmail@flowcrypt.test to user@default-remember-passphrase-client-configuration.flowcrypt.test', clickOn: 'confirm' });
       const newSettingsPage = await browser.newPageTriggeredBy(t, () => PageRecipe.waitForModalAndRespond(experimentalFrame, 'info',
-        { contentToCheck: 'Email address changed to user@default-remember-passphrase-org-rule.flowcrypt.test', clickOn: 'confirm' }));
+        { contentToCheck: 'Email address changed to user@default-remember-passphrase-client-configuration.flowcrypt.test', clickOn: 'confirm' }));
       await Util.sleep(2);
       // await PageRecipe.waitForModalAndRespond(?, 'confirm',
       //   { contentToCheck: 'Your email aliases on Gmail have refreshed since the last time you used FlowCrypt', clickOn: 'confirm' });
@@ -931,7 +931,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
 
     ava.default('settings - email change to account that has FORBID_STORING_PASS_PHRASE', testWithBrowser('ci.tests.gmail', async (t, browser) => {
       const acct1 = 'ci.tests.gmail@flowcrypt.test';
-      const acct2 = 'user@forbid-storing-passphrase-org-rule.flowcrypt.test';
+      const acct2 = 'user@forbid-storing-passphrase-client-configuration.flowcrypt.test';
       const settingsPage = await browser.newPage(t, TestUrls.extensionSettings(acct1));
       const { cryptup_citestsgmailflowcrypttest_rules: oldRules, cryptup_citestsgmailflowcrypttest_passphrase_07481C8ACF9D49FE: savedPassphrase1 } =
         await settingsPage.getFromLocalStorage(['cryptup_citestsgmailflowcrypttest_rules', 'cryptup_citestsgmailflowcrypttest_passphrase_07481C8ACF9D49FE']);
@@ -944,9 +944,9 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         { contentToCheck: 'email address has changed', clickOn: 'confirm' }));
       await OauthPageRecipe.mock(t, oauthPopup1, acct2, 'override_acct');
       await PageRecipe.waitForModalAndRespond(experimentalFrame, 'confirm',
-        { contentToCheck: 'email from ci.tests.gmail@flowcrypt.test to user@forbid-storing-passphrase-org-rule.flowcrypt.test', clickOn: 'confirm' });
+        { contentToCheck: 'email from ci.tests.gmail@flowcrypt.test to user@forbid-storing-passphrase-client-configuration.flowcrypt.test', clickOn: 'confirm' });
       const newSettingsPage = await browser.newPageTriggeredBy(t, () => PageRecipe.waitForModalAndRespond(experimentalFrame, 'info',
-        { contentToCheck: 'Email address changed to user@forbid-storing-passphrase-org-rule.flowcrypt.test', clickOn: 'confirm' }));
+        { contentToCheck: 'Email address changed to user@forbid-storing-passphrase-client-configuration.flowcrypt.test', clickOn: 'confirm' }));
       await Util.sleep(2);
       // await PageRecipe.waitForModalAndRespond(?, 'confirm',
       //   { contentToCheck: 'Your email aliases on Gmail have refreshed since the last time you used FlowCrypt', clickOn: 'confirm' });
