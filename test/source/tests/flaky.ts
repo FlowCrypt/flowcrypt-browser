@@ -118,8 +118,8 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
       await settingsPage.close();
     }));
 
-    ava.default('user@forbid-storing-passphrase-client-configuration.flowcrypt.test - do not store passphrase', testWithBrowser(undefined, async (t, browser) => {
-      const acctEmail = 'user@forbid-storing-passphrase-client-configuration.flowcrypt.test';
+    ava.default('user@forbid-storing-passphrase-org-rule.flowcrypt.test - do not store passphrase', testWithBrowser(undefined, async (t, browser) => {
+      const acctEmail = 'user@forbid-storing-passphrase-org-rule.flowcrypt.test';
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
       const passphrase = 'long enough to suit requirements';
       await SetupPageRecipe.createKey(settingsPage, 'unused', 'none', { key: { passphrase }, usedPgpBefore: false },

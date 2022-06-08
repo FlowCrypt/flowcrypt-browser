@@ -1083,7 +1083,7 @@ mp+d37nWzm561RPm8+YfLI+Ps/OcsYogXm/RZNirn08XSaCuRBwwIiDasHTi
 lTjK+SO789oXkNajtP6A8FbrkF6HlNBgpaYB10Y4qfW5
 =aZpf
 -----END PGP PUBLIC KEY BLOCK-----`,
-  // Primary User: user@forbid-storing-passphrase-client-configuration.flowcrypt.test
+  // Primary User: user@forbid-storing-passphrase-org-rule.flowcrypt.test
   // Fingerprint: 90C0 E236 7788 5E09 6C6D 9182 B8F6 87BC DE14 435A
   testKeyB8F687BCDE14435A: `-----BEGIN PGP PRIVATE KEY BLOCK-----
 
@@ -1136,7 +1136,7 @@ p8Qtgku70p8i7PfPXMfXMymkkt8E47ytFApCr6HtGnDWyfmi51TOE9ZIUH2fySBjXMl4Wh6JbfbD
 dvzjieEBTGpMii/Iu5lEitk=
 =tUfh
 -----END PGP PRIVATE KEY BLOCK-----`,
-  // Primary User: user@default-remember-passphrase-client-configuration.flowcrypt.test
+  // Primary User: user@default-remember-passphrase-org-rule.flowcrypt.test
   // Fingerprint: 0FD9 F145 B0E2 2E93 4981 D2B8 715E DCDC 7939 A8F7
   testkey715EDCDC7939A8F7: `-----BEGIN PGP PRIVATE KEY BLOCK-----
 

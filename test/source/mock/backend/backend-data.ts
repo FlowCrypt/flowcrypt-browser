@@ -65,14 +65,14 @@ export class BackendData {
         ]
       };
     }
-    if (domain === 'forbid-storing-passphrase-client-configuration.flowcrypt.test') {
+    if (domain === 'forbid-storing-passphrase-org-rule.flowcrypt.test') {
       return {
         "flags": [
           "FORBID_STORING_PASS_PHRASE"
         ]
       };
     }
-    if (domain === 'default-remember-passphrase-client-configuration.flowcrypt.test') {
+    if (domain === 'default-remember-passphrase-org-rule.flowcrypt.test') {
       return {
         "flags": [
           "DEFAULT_REMEMBER_PASS_PHRASE"

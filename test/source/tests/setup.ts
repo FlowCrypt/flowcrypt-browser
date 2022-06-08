@@ -466,7 +466,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
     }));
 
     ava.default('setup - manualEnter honors DEFAULT_REMEMBER_PASS_PHRASE OrgRule', testWithBrowser(undefined, async (t, browser) => {
-      const acctEmail = 'user@default-remember-passphrase-client-configuration.flowcrypt.test';
+      const acctEmail = 'user@default-remember-passphrase-org-rule.flowcrypt.test';
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
       await SetupPageRecipe.manualEnter(settingsPage, 'unused', {
         submitPubkey: false,
