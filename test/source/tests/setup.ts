@@ -643,7 +643,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       await SetupPageRecipe.autoSetupWithEKM(settingsPage, {
         expectErrView: {
           title: 'Server responded with an unexpected error.',
-          text: '500 when GET-ing https://localhost:8001/flowcrypt-email-key-manager/keys/private (no body): -> Intentional error for get.error to test client behavior',
+          text: '500 when GET-ing https://localhost:8001/flowcrypt-email-key-manager/v1/keys/private (no body): -> Intentional error for get.error to test client behavior',
         }
       });
     }));
@@ -658,7 +658,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       await settingsPage.waitAll('@container-overlay-details');
       await Util.sleep(0.5);
       const details = await settingsPage.read('@container-overlay-details');
-      expect(details).to.contain('500 when PUT-ing https://localhost:8001/flowcrypt-email-key-manager/keys/private string: decryptedPrivateKey,publicKey -> Intentional error for put.error user to test client behavior');
+      expect(details).to.contain('500 when PUT-ing https://localhost:8001/flowcrypt-email-key-manager/v1/keys/private string: decryptedPrivateKey,publicKey -> Intentional error for put.error user to test client behavior');
       expect(details).to.not.contain('PRIVATE KEY');
       expect(details).to.not.contain('<REDACTED:');
     }));
@@ -717,7 +717,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         await settingsPage.waitAll('@container-overlay-details');
         await Util.sleep(0.5);
         const details = await settingsPage.read('@container-overlay-details');
-        expect(details).to.contain('405 when PUT-ing https://localhost:8001/flowcrypt-email-key-manager/keys/private string: ' +
+        expect(details).to.contain('405 when PUT-ing https://localhost:8001/flowcrypt-email-key-manager/v1/keys/private string: ' +
           'decryptedPrivateKey,publicKey -> No key has been generated for reject.client.keypair@key-manager-autogen.flowcrypt.test yet');
         expect(details).to.not.contain('PRIVATE KEY');
       })
