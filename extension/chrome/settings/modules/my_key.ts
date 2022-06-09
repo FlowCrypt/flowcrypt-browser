@@ -13,7 +13,7 @@ import { Url, Str } from '../../../js/common/core/common.js';
 import { View } from '../../../js/common/view.js';
 import { initPassphraseToggle } from '../../../js/common/ui/passphrase-ui.js';
 import { PubLookup } from '../../../js/common/api/pub-lookup.js';
-import { OrgRules } from '../../../js/common/org-rules.js';
+import { ClientConfiguration } from '../../../js/common/client-configuration.js';
 import { PassphraseStore } from '../../../js/common/platform/store/passphrase-store.js';
 import { KeyStore } from '../../../js/common/platform/store/key-store.js';
 import { Xss } from '../../../js/common/platform/xss.js';
@@ -29,7 +29,7 @@ View.run(class MyKeyView extends View {
   private readonly myKeyUpdateUrl: string;
   private keyInfo!: KeyInfoWithIdentity;
   private pubKey!: Key;
-  private orgRules!: OrgRules;
+  private clientConfiguration!: ClientConfiguration;
   private pubLookup!: PubLookup;
 
   constructor() {
@@ -43,8 +43,8 @@ View.run(class MyKeyView extends View {
   }
 
   public render = async () => {
-    this.orgRules = await OrgRules.newInstance(this.acctEmail);
-    this.pubLookup = new PubLookup(this.orgRules);
+    this.clientConfiguration = await ClientConfiguration.newInstance(this.acctEmail);
+    this.pubLookup = new PubLookup(this.clientConfiguration);
     [this.keyInfo] = await KeyStore.get(this.acctEmail, [this.fingerprint]);
     Assert.abortAndRenderErrorIfKeyinfoEmpty(this.keyInfo ? [this.keyInfo] : []);
     this.pubKey = await KeyUtil.parse(this.keyInfo.public);
@@ -128,7 +128,7 @@ View.run(class MyKeyView extends View {
   };
 
   private renderPrivateKeyLink = () => {
-    if (!this.orgRules.usesKeyManager()) {
+    if (!this.clientConfiguration.usesKeyManager()) {
       $('div span.red_label').show();
       $('.action_view_update').show();
       $('a.action_download_revocation_cert').show();

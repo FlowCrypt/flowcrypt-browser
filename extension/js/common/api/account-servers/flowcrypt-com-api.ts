@@ -9,7 +9,7 @@ import { Api, ProgressCb, ProgressCbs, ReqFmt } from '../shared/api.js';
 import { Dict } from '../../core/common.js';
 import { Attachment } from '../../core/attachment.js';
 import { BackendAuthErr } from '../shared/api-error.js';
-import { DomainRulesJson } from '../../org-rules.js';
+import { ClientConfigurationJson } from '../../client-configuration.js';
 import { AcctStore } from '../../platform/store/acct-store.js';
 import { FlowCryptWebsite } from '../flowcrypt-website.js';
 
@@ -19,7 +19,7 @@ export type FcUuidAuth = { account: string, uuid: string | undefined };
 export namespace BackendRes {
   export type FcAccountLogin = { registered: boolean, verified: boolean };
   export type FcAccount$info = { alias?: string | null, default_message_expire: number };
-  export type FcAccountGet = { account: FcAccount$info, domain_org_rules: DomainRulesJson };
+  export type FcAccountGet = { account: FcAccount$info, domain_org_rules: ClientConfigurationJson };
   export type FcAccountUpdate = { result: FcAccount$info, updated: boolean };
   export type FcAccountCheck = { email: string | null };
   export type FcMsgToken = { token: string };

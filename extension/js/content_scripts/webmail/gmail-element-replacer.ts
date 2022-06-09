@@ -20,7 +20,7 @@ import { PgpArmor } from '../../common/core/crypto/pgp/pgp-armor.js';
 import { Ui } from '../../common/browser/ui.js';
 import { WebmailCommon } from "../../common/webmail.js";
 import { Xss } from '../../common/platform/xss.js';
-import { OrgRules } from '../../common/org-rules.js';
+import { ClientConfiguration } from '../../common/client-configuration.js';
 import { SendAsAlias } from '../../common/platform/store/acct-store.js';
 import { ContactStore } from '../../common/platform/store/contact-store.js';
 import { Buf } from '../../common/core/buf.js';
@@ -35,7 +35,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
   private recipientHasPgpCache: Dict<boolean> = {};
   private sendAs: Dict<SendAsAlias>;
   private factory: XssSafeFactory;
-  private orgRules: OrgRules;
+  private clientConfiguration: ClientConfiguration;
   private pubLookup: PubLookup;
   private acctEmail: string;
   private injector: Injector;
@@ -71,7 +71,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     draftsList: '.ae4',
   };
 
-  constructor(factory: XssSafeFactory, orgRules: OrgRules, acctEmail: string, sendAs: Dict<SendAsAlias>,
+  constructor(factory: XssSafeFactory, clientConfiguration: ClientConfiguration, acctEmail: string, sendAs: Dict<SendAsAlias>,
     injector: Injector, notifications: Notifications, gmailVariant: WebmailVariantString) {
     this.factory = factory;
     this.acctEmail = acctEmail;
@@ -81,8 +81,8 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     this.notifications = notifications;
     this.webmailCommon = new WebmailCommon(acctEmail, injector);
     this.gmail = new Gmail(acctEmail);
-    this.orgRules = orgRules;
-    this.pubLookup = new PubLookup(this.orgRules);
+    this.clientConfiguration = clientConfiguration;
+    this.pubLookup = new PubLookup(this.clientConfiguration);
   }
 
   public getIntervalFunctions = (): Array<IntervalFunction> => {

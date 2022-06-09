@@ -15,7 +15,7 @@ import { initPassphraseToggle } from '../../js/common/ui/passphrase-ui.js';
 import { KeyStore } from '../../js/common/platform/store/key-store.js';
 import { PassphraseStore } from '../../js/common/platform/store/passphrase-store.js';
 import { Settings } from '../../js/common/settings.js';
-import { OrgRules } from '../../js/common/org-rules.js';
+import { ClientConfiguration } from '../../js/common/client-configuration.js';
 import { Lang } from '../../js/common/lang.js';
 import { AcctStore } from '../../js/common/platform/store/acct-store.js';
 
@@ -27,7 +27,7 @@ View.run(class PassphraseView extends View {
   private readonly type: string;
   private readonly initiatorFrameId?: string;
   private keysWeNeedPassPhraseFor: KeyInfoWithIdentity[] | undefined;
-  private orgRules!: OrgRules;
+  private clientConfiguration!: ClientConfiguration;
 
   constructor() {
     super();
@@ -43,11 +43,11 @@ View.run(class PassphraseView extends View {
     Ui.event.protect();
     const storage = await AcctStore.get(this.acctEmail, ['fesUrl']);
     this.fesUrl = storage.fesUrl;
-    this.orgRules = await OrgRules.newInstance(this.acctEmail);
-    if (!this.orgRules.forbidStoringPassPhrase()) {
+    this.clientConfiguration = await ClientConfiguration.newInstance(this.acctEmail);
+    if (!this.clientConfiguration.forbidStoringPassPhrase()) {
       $('.forget-pass-phrase-label').removeClass('hidden');
     }
-    if (this.orgRules.usesKeyManager() || this.orgRules.forbidStoringPassPhrase()) {
+    if (this.clientConfiguration.usesKeyManager() || this.clientConfiguration.forbidStoringPassPhrase()) {
       $('#lost-pass-phrase').removeAttr('id').removeAttr('href');
       $('.lost-pass-phrase-with-ekm').show();
     } else {
@@ -151,7 +151,7 @@ View.run(class PassphraseView extends View {
 
   private submitHandler = async () => {
     const pass = String($('#passphrase').val());
-    const storageType: StorageType = ($('.forget-pass-phrase-checkbox').prop('checked') || this.orgRules.forbidStoringPassPhrase()) ? 'session' : 'local';
+    const storageType: StorageType = ($('.forget-pass-phrase-checkbox').prop('checked') || this.clientConfiguration.forbidStoringPassPhrase()) ? 'session' : 'local';
     let atLeastOneMatched = false;
     let unlockCount = 0; // may include non-matching keys
     const allPrivateKeys = await KeyStore.get(this.acctEmail);

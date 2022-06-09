@@ -30,7 +30,7 @@ export const mockBackendEndpoints: HandlersDefinition = {
     mockBackendData.checkUuidOrThrow(parsed.account, parsed.uuid);
     return JSON.stringify({
       account: mockBackendData.getAcctRow(parsed.account),
-      domain_org_rules: mockBackendData.getOrgRules(parsed.account),
+      domain_org_rules: mockBackendData.getClientConfiguration(parsed.account),
     });
   },
   '/api/account/update': async ({ }, req) => {

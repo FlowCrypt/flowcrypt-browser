@@ -15,7 +15,7 @@ import { FLAVOR, InMemoryStoreKeys } from '../../core/const.js';
 import { Attachment } from '../../core/attachment.js';
 import { ParsedRecipients } from '../email-provider/email-provider-api.js';
 import { Buf } from '../../core/buf.js';
-import { DomainRulesJson } from '../../org-rules.js';
+import { ClientConfigurationJson } from '../../client-configuration.js';
 import { InMemoryStore } from '../../platform/store/in-memory-store.js';
 
 // todo - decide which tags to use
@@ -25,7 +25,7 @@ export namespace FesRes {
   export type ReplyToken = { replyToken: string };
   export type MessageUpload = { url: string; externalId: string };
   export type ServiceInfo = { vendor: string, service: string, orgId: string, version: string, apiVersion: string };
-  export type ClientConfiguration = { clientConfiguration: DomainRulesJson };
+  export type ClientConfiguration = { clientConfiguration: ClientConfigurationJson };
 }
 
 /**
@@ -84,7 +84,7 @@ export class EnterpriseServer extends Api {
     return await this.request<FesRes.ServiceInfo>('GET', `/api/`);
   };
 
-  public fetchAndSaveOrgRules = async (): Promise<DomainRulesJson> => {
+  public fetchAndSaveClientConfiguration = async (): Promise<ClientConfigurationJson> => {
     const r = await this.request<FesRes.ClientConfiguration>('GET', `/api/${this.apiVersion}/client-configuration?domain=${this.domain}`);
     await AcctStore.set(this.acctEmail, { rules: r.clientConfiguration });
     return r.clientConfiguration;
