@@ -214,51 +214,56 @@ export class ComposeSendBtnModule extends ViewModule<ComposeView> {
     return { mimeType, data };
   };
 
+  private sendAttempt = async (msg: SendableMsg): Promise<GmailRes.GmailMsgSend> => {
+    const progressRepresents = this.view.pwdOrPubkeyContainerModule.isVisible() ? 'SECOND-HALF' : 'EVERYTHING';
+    try {
+      return await this.view.emailProvider.msgSend(msg, (p) => this.renderUploadProgress(p, progressRepresents));
+    } catch (e) {
+      if (msg.thread && ApiErr.isNotFound(e) && this.view.threadId) { // cannot send msg because threadId not found - eg user since deleted it
+        msg.thread = undefined;
+        // give it another try, this time without msg.thread
+        return await this.sendAttempt(msg);
+      } else {
+        throw e;
+      }
+    }
+  };
+
+  private bindMessageId = async (externalId: string, id: string, supplementaryOperationsErrors: any[]) => {
+    try {
+      const gmailMsg = await this.view.emailProvider.msgGet(id, 'metadata');
+      const messageId = GmailParser.findHeader(gmailMsg, 'message-id');
+      if (messageId) {
+        await this.view.acctServer.messageGatewayUpdate(externalId, messageId);
+      } else {
+        throw new Error('Failed to extract Message-ID of sent message');
+      }
+    } catch (e) {
+      supplementaryOperationsErrors.push(`Failed to bind Gateway ID of the message: ${e}`);
+      Catch.reportErr(e);
+    }
+  };
+
   private doSendMsgs = async (msgObj: MultipleMessages): Promise<SendMsgsResult> => {
     // if this is a password-encrypted message, then we've already shown progress for uploading to backend
     // and this requests represents second half of uploadable effort. Else this represents all (no previous heavy requests)
-    const progressRepresents = this.view.pwdOrPubkeyContainerModule.isVisible() ? 'SECOND-HALF' : 'EVERYTHING';
     const sentIds: string[] = [];
     const supplementaryOperations: Promise<void>[] = [];
     const supplementaryOperationsErrors: any[] = []; // tslint:disable-line:no-unsafe-any
     const success: EmailParts[] = [];
     const failures: { recipient: EmailParts, e: any }[] = [];
     for (const msg of msgObj.msgs) {
-      let msgSentRes: GmailRes.GmailMsgSend;
       const msgRecipients = msg.getAllRecipients();
-      while (true) { // first try with msg.thread, and then possibly try again without it
-        try {
-          msgSentRes = await this.view.emailProvider.msgSend(msg, (p) => this.renderUploadProgress(p, progressRepresents));
-          success.push(...msgRecipients);
-          sentIds.push(msgSentRes.id);
-          if (msg.externalId) {
-            const operation = (async (externalId, id) => {
-              const gmailMsg = await this.view.emailProvider.msgGet(id, 'metadata');
-              const messageId = GmailParser.findHeader(gmailMsg, 'message-id');
-              if (messageId) {
-                await this.view.acctServer.messageGatewayUpdate(externalId, messageId);
-              } else {
-                throw new Error('Failed to extract Message-ID of sent message');
-              }
-            })(msg.externalId, msgSentRes.id);
-            supplementaryOperations.push(operation.catch(
-              e => {
-                supplementaryOperationsErrors.push(`Failed to bind Gateway ID of the message: ${e}`);
-                Catch.reportErr(e);
-              }
-            ));
-          }
-        } catch (e) {
-          if (msg.thread && ApiErr.isNotFound(e) && this.view.threadId) { // cannot send msg because threadId not found - eg user since deleted it
-            msg.thread = undefined;
-            continue;
-            // give it another try, this time without msg.thread
-          } else {
-            failures.push(...msgRecipients.map(recipient => { return { recipient, e }; }));
-          }
+      try {
+        const msgSentRes = await this.sendAttempt(msg);
+        success.push(...msgRecipients);
+        sentIds.push(msgSentRes.id);
+        if (msg.externalId) {
+          supplementaryOperations.push(this.bindMessageId(msg.externalId, msgSentRes.id, supplementaryOperationsErrors));
         }
-        break;
-      } // while loop for thread retry
+      } catch (e) {
+        failures.push(...msgRecipients.map(recipient => { return { recipient, e }; }));
+      }
     }
     try {
       if (!failures.length) {
