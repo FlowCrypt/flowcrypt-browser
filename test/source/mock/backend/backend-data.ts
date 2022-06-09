@@ -47,7 +47,7 @@ export class BackendData {
 
   public getClientConfiguration = (acct: string) => {
     const domain = acct.split('@')[1];
-    if (domain === 'org-rules-test.flowcrypt.test') {
+    if (domain === 'client-configuration-test.flowcrypt.test') {
       return {
         "flags": [
           "NO_PRV_CREATE",
@@ -58,21 +58,21 @@ export class BackendData {
         ]
       };
     }
-    if (domain === 'no-submit-org-rule.flowcrypt.test') {
+    if (domain === 'no-submit-client-configuration.flowcrypt.test') {
       return {
         "flags": [
           "NO_ATTESTER_SUBMIT"
         ]
       };
     }
-    if (domain === 'forbid-storing-passphrase-org-rule.flowcrypt.test') {
+    if (domain === 'forbid-storing-passphrase-client-configuration.flowcrypt.test') {
       return {
         "flags": [
           "FORBID_STORING_PASS_PHRASE"
         ]
       };
     }
-    if (domain === 'default-remember-passphrase-org-rule.flowcrypt.test') {
+    if (domain === 'default-remember-passphrase-client-configuration.flowcrypt.test') {
       return {
         "flags": [
           "DEFAULT_REMEMBER_PASS_PHRASE"
@@ -158,7 +158,7 @@ export class BackendData {
     if (domain === 'key-manager-keygen-expiration.flowcrypt.test') {
       return { ...keyManagerAutogenRules, "enforce_keygen_expire_months": 1 };
     }
-    if (domain === 'no-submit-org-rule.key-manager-autogen.flowcrypt.test') {
+    if (domain === 'no-submit-client-configuration.key-manager-autogen.flowcrypt.test') {
       return { ...keyManagerAutogenRules, flags: [...keyManagerAutogenRules.flags, 'NO_ATTESTER_SUBMIT'] };
     }
     if (domain === 'prv-create-no-prv-backup.flowcrypt.test') {

@@ -377,12 +377,12 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
     }));
 
     ava.default('settings - change passphrase honoring FORBID_STORING_PASS_PHRASE ClientConfiguration', testWithBrowser(undefined, async (t, browser) => {
-      const acctEmail = 'user@forbid-storing-passphrase-org-rule.flowcrypt.test';
+      const acctEmail = 'user@forbid-storing-passphrase-client-configuration.flowcrypt.test';
       const { settingsPage, passphrase } = await BrowserRecipe.setUpFcForbidPpStoringAcct(t, browser);
-      const { cryptup_userforbidstoringpassphraseorgruleflowcrypttest_passphrase_B8F687BCDE14435A: savedPassphrase1,
-        cryptup_userforbidstoringpassphraseorgruleflowcrypttest_keys: keys }
-        = await settingsPage.getFromLocalStorage(['cryptup_userforbidstoringpassphraseorgruleflowcrypttest_passphrase_B8F687BCDE14435A',
-          'cryptup_userforbidstoringpassphraseorgruleflowcrypttest_keys']);
+      const { cryptup_userforbidstoringpassphraseclientconfigurationflowcrypttest_passphrase_B8F687BCDE14435A: savedPassphrase1,
+        cryptup_userforbidstoringpassphraseclientconfigurationflowcrypttest_keys: keys }
+        = await settingsPage.getFromLocalStorage(['cryptup_userforbidstoringpassphraseclientconfigurationflowcrypttest_passphrase_B8F687BCDE14435A',
+          'cryptup_userforbidstoringpassphraseclientconfigurationflowcrypttest_keys']);
       expect((keys as KeyInfoWithIdentity[])[0].longid).to.equal('B8F687BCDE14435A');
       expect(savedPassphrase1).to.be.an('undefined');
       const newPp = `temp ci test pp: ${Util.lousyRandom()}`;
@@ -394,13 +394,13 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         enterPp: { passphrase, isForgetPpHidden: true, isForgetPpChecked: true },
         expectedContent: 'changed correctly if this can be decrypted'
       });
-      const { cryptup_userforbidstoringpassphraseorgruleflowcrypttest_passphrase_B8F687BCDE14435A: savedPassphrase2 }
-        = await settingsPage.getFromLocalStorage(['cryptup_userforbidstoringpassphraseorgruleflowcrypttest_passphrase_B8F687BCDE14435A']);
+      const { cryptup_userforbidstoringpassphraseclientconfigurationflowcrypttest_passphrase_B8F687BCDE14435A: savedPassphrase2 }
+        = await settingsPage.getFromLocalStorage(['cryptup_userforbidstoringpassphraseclientconfigurationflowcrypttest_passphrase_B8F687BCDE14435A']);
       expect(savedPassphrase2).to.be.an('undefined');
       // change pp - should not ask for pp because already in session
       await SettingsPageRecipe.changePassphrase(settingsPage, undefined, newPp);
-      const { cryptup_userforbidstoringpassphraseorgruleflowcrypttest_passphrase_B8F687BCDE14435A: savedPassphrase3 }
-        = await settingsPage.getFromLocalStorage(['cryptup_userforbidstoringpassphraseorgruleflowcrypttest_passphrase_B8F687BCDE14435A']);
+      const { cryptup_userforbidstoringpassphraseclientconfigurationflowcrypttest_passphrase_B8F687BCDE14435A: savedPassphrase3 }
+        = await settingsPage.getFromLocalStorage(['cryptup_userforbidstoringpassphraseclientconfigurationflowcrypttest_passphrase_B8F687BCDE14435A']);
       expect(savedPassphrase3).to.be.an('undefined');
       // test decrypt - should not ask for pp because already in session
       await InboxPageRecipe.checkDecryptMsg(t, browser, {
@@ -851,12 +851,12 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       await backupPage.close();
     }));
 
-    ava.default('settings - manual enter and key update honor FORBID_STORING_PASS_PHRASE OrgRule', testWithBrowser(undefined, async (t, browser) => {
+    ava.default('settings - manual enter and key update honor FORBID_STORING_PASS_PHRASE ClientConfiguration', testWithBrowser(undefined, async (t, browser) => {
       const { settingsPage, passphrase } = await BrowserRecipe.setUpFcForbidPpStoringAcct(t, browser);
-      const { cryptup_userforbidstoringpassphraseorgruleflowcrypttest_passphrase_B8F687BCDE14435A: savedPassphrase1,
-        cryptup_userforbidstoringpassphraseorgruleflowcrypttest_keys: keys }
-        = await settingsPage.getFromLocalStorage(['cryptup_userforbidstoringpassphraseorgruleflowcrypttest_passphrase_B8F687BCDE14435A',
-          'cryptup_userforbidstoringpassphraseorgruleflowcrypttest_keys']);
+      const { cryptup_userforbidstoringpassphraseclientconfigurationflowcrypttest_passphrase_B8F687BCDE14435A: savedPassphrase1,
+        cryptup_userforbidstoringpassphraseclientconfigurationflowcrypttest_keys: keys }
+        = await settingsPage.getFromLocalStorage(['cryptup_userforbidstoringpassphraseclientconfigurationflowcrypttest_passphrase_B8F687BCDE14435A',
+          'cryptup_userforbidstoringpassphraseclientconfigurationflowcrypttest_keys']);
       expect(savedPassphrase1).to.be.an('undefined');
       expect((keys as KeyInfoWithIdentity[])[0].longid).to.equal('B8F687BCDE14435A');
       await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
@@ -869,8 +869,8 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       await myKeyFrame.type('@input-passphrase', passphrase);
       await myKeyFrame.waitAndClick('@action-update-key');
       await PageRecipe.waitForModalAndRespond(myKeyFrame, 'confirm', { contentToCheck: 'Public and private key updated locally', clickOn: 'cancel' });
-      const { cryptup_userforbidstoringpassphraseorgruleflowcrypttest_passphrase_B8F687BCDE14435A: savedPassphrase2 }
-        = await settingsPage.getFromLocalStorage(['cryptup_userforbidstoringpassphraseorgruleflowcrypttest_passphrase_B8F687BCDE14435A']);
+      const { cryptup_userforbidstoringpassphraseclientconfigurationflowcrypttest_passphrase_B8F687BCDE14435A: savedPassphrase2 }
+        = await settingsPage.getFromLocalStorage(['cryptup_userforbidstoringpassphraseclientconfigurationflowcrypttest_passphrase_B8F687BCDE14435A']);
       expect(savedPassphrase2).to.be.an('undefined');
       await settingsPage.close();
     }));
@@ -896,7 +896,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
 
     ava.default('settings - email change', testWithBrowser('ci.tests.gmail', async (t, browser) => {
       const acct1 = 'ci.tests.gmail@flowcrypt.test';
-      const acct2 = 'user@default-remember-passphrase-org-rule.flowcrypt.test';
+      const acct2 = 'user@default-remember-passphrase-client-configuration.flowcrypt.test';
       const settingsPage = await browser.newPage(t, TestUrls.extensionSettings(acct1));
       const { cryptup_citestsgmailflowcrypttest_rules: oldRules, cryptup_citestsgmailflowcrypttest_passphrase_07481C8ACF9D49FE: savedPassphrase1 } =
         await settingsPage.getFromLocalStorage(['cryptup_citestsgmailflowcrypttest_rules', 'cryptup_citestsgmailflowcrypttest_passphrase_07481C8ACF9D49FE']);
@@ -909,19 +909,19 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         { contentToCheck: 'email address has changed', clickOn: 'confirm' }));
       await OauthPageRecipe.mock(t, oauthPopup1, acct2, 'override_acct');
       await PageRecipe.waitForModalAndRespond(experimentalFrame, 'confirm',
-        { contentToCheck: 'email from ci.tests.gmail@flowcrypt.test to user@default-remember-passphrase-org-rule.flowcrypt.test', clickOn: 'confirm' });
+        { contentToCheck: 'email from ci.tests.gmail@flowcrypt.test to user@default-remember-passphrase-client-configuration.flowcrypt.test', clickOn: 'confirm' });
       const newSettingsPage = await browser.newPageTriggeredBy(t, () => PageRecipe.waitForModalAndRespond(experimentalFrame, 'info',
-        { contentToCheck: 'Email address changed to user@default-remember-passphrase-org-rule.flowcrypt.test', clickOn: 'confirm' }));
+        { contentToCheck: 'Email address changed to user@default-remember-passphrase-client-configuration.flowcrypt.test', clickOn: 'confirm' }));
       await Util.sleep(2);
       // await PageRecipe.waitForModalAndRespond(?, 'confirm',
       //   { contentToCheck: 'Your email aliases on Gmail have refreshed since the last time you used FlowCrypt', clickOn: 'confirm' });
-      const { cryptup_userdefaultrememberpassphraseorgruleflowcrypttest_rules: newRules,
-        cryptup_userdefaultrememberpassphraseorgruleflowcrypttest_passphrase_07481C8ACF9D49FE: savedPassphrase2,
-        cryptup_userdefaultrememberpassphraseorgruleflowcrypttest_keys: keys } =
+      const { cryptup_userdefaultrememberpassphraseclientconfigurationflowcrypttest_rules: newRules,
+        cryptup_userdefaultrememberpassphraseclientconfigurationflowcrypttest_passphrase_07481C8ACF9D49FE: savedPassphrase2,
+        cryptup_userdefaultrememberpassphraseclientconfigurationflowcrypttest_keys: keys } =
         await settingsPage.getFromLocalStorage([
-          'cryptup_userdefaultrememberpassphraseorgruleflowcrypttest_rules',
-          'cryptup_userdefaultrememberpassphraseorgruleflowcrypttest_passphrase_07481C8ACF9D49FE',
-          'cryptup_userdefaultrememberpassphraseorgruleflowcrypttest_keys']);
+          'cryptup_userdefaultrememberpassphraseclientconfigurationflowcrypttest_rules',
+          'cryptup_userdefaultrememberpassphraseclientconfigurationflowcrypttest_passphrase_07481C8ACF9D49FE',
+          'cryptup_userdefaultrememberpassphraseclientconfigurationflowcrypttest_keys']);
       expect((newRules as { flags: string[] }).flags).to.include('DEFAULT_REMEMBER_PASS_PHRASE');
       expect((keys as KeyInfoWithIdentity[])[0].longid).to.equal('07481C8ACF9D49FE');
       expect(savedPassphrase2).not.to.be.an('undefined');
@@ -931,7 +931,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
 
     ava.default('settings - email change to account that has FORBID_STORING_PASS_PHRASE', testWithBrowser('ci.tests.gmail', async (t, browser) => {
       const acct1 = 'ci.tests.gmail@flowcrypt.test';
-      const acct2 = 'user@forbid-storing-passphrase-org-rule.flowcrypt.test';
+      const acct2 = 'user@forbid-storing-passphrase-client-configuration.flowcrypt.test';
       const settingsPage = await browser.newPage(t, TestUrls.extensionSettings(acct1));
       const { cryptup_citestsgmailflowcrypttest_rules: oldRules, cryptup_citestsgmailflowcrypttest_passphrase_07481C8ACF9D49FE: savedPassphrase1 } =
         await settingsPage.getFromLocalStorage(['cryptup_citestsgmailflowcrypttest_rules', 'cryptup_citestsgmailflowcrypttest_passphrase_07481C8ACF9D49FE']);
@@ -944,18 +944,18 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         { contentToCheck: 'email address has changed', clickOn: 'confirm' }));
       await OauthPageRecipe.mock(t, oauthPopup1, acct2, 'override_acct');
       await PageRecipe.waitForModalAndRespond(experimentalFrame, 'confirm',
-        { contentToCheck: 'email from ci.tests.gmail@flowcrypt.test to user@forbid-storing-passphrase-org-rule.flowcrypt.test', clickOn: 'confirm' });
+        { contentToCheck: 'email from ci.tests.gmail@flowcrypt.test to user@forbid-storing-passphrase-client-configuration.flowcrypt.test', clickOn: 'confirm' });
       const newSettingsPage = await browser.newPageTriggeredBy(t, () => PageRecipe.waitForModalAndRespond(experimentalFrame, 'info',
-        { contentToCheck: 'Email address changed to user@forbid-storing-passphrase-org-rule.flowcrypt.test', clickOn: 'confirm' }));
+        { contentToCheck: 'Email address changed to user@forbid-storing-passphrase-client-configuration.flowcrypt.test', clickOn: 'confirm' }));
       await Util.sleep(2);
       // await PageRecipe.waitForModalAndRespond(?, 'confirm',
       //   { contentToCheck: 'Your email aliases on Gmail have refreshed since the last time you used FlowCrypt', clickOn: 'confirm' });
-      const { cryptup_userforbidstoringpassphraseorgruleflowcrypttest_rules: newRules,
-        cryptup_userforbidstoringpassphraseorgruleflowcrypttest_keys: keys,
-        cryptup_userforbidstoringpassphraseorgruleflowcrypttest_passphrase_07481C8ACF9D49FE: savedPassphrase2 } =
-        await settingsPage.getFromLocalStorage(['cryptup_userforbidstoringpassphraseorgruleflowcrypttest_rules',
-          'cryptup_userforbidstoringpassphraseorgruleflowcrypttest_keys',
-          'cryptup_userforbidstoringpassphraseorgruleflowcrypttest_passphrase_07481C8ACF9D49FE']);
+      const { cryptup_userforbidstoringpassphraseclientconfigurationflowcrypttest_rules: newRules,
+        cryptup_userforbidstoringpassphraseclientconfigurationflowcrypttest_keys: keys,
+        cryptup_userforbidstoringpassphraseclientconfigurationflowcrypttest_passphrase_07481C8ACF9D49FE: savedPassphrase2 } =
+        await settingsPage.getFromLocalStorage(['cryptup_userforbidstoringpassphraseclientconfigurationflowcrypttest_rules',
+          'cryptup_userforbidstoringpassphraseclientconfigurationflowcrypttest_keys',
+          'cryptup_userforbidstoringpassphraseclientconfigurationflowcrypttest_passphrase_07481C8ACF9D49FE']);
       expect((newRules as { flags: string[] }).flags).to.include('FORBID_STORING_PASS_PHRASE');
       expect((keys as KeyInfoWithIdentity[])[0].longid).to.equal('07481C8ACF9D49FE');
       expect(savedPassphrase2).to.be.an('undefined');
@@ -963,20 +963,20 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       await settingsPage.close();
     }));
 
-    ava.default('settings - adding a key honors FORBID_STORING_PASS_PHRASE OrgRule', testWithBrowser(undefined, async (t, browser) => {
+    ava.default('settings - adding a key honors FORBID_STORING_PASS_PHRASE ClientConfiguration', testWithBrowser(undefined, async (t, browser) => {
       const { acctEmail, settingsPage } = await BrowserRecipe.setUpFcForbidPpStoringAcct(t, browser);
-      const { cryptup_userforbidstoringpassphraseorgruleflowcrypttest_passphrase_B8F687BCDE14435A: savedPassphrase1,
-        cryptup_userforbidstoringpassphraseorgruleflowcrypttest_keys: keys1 }
-        = await settingsPage.getFromLocalStorage(['cryptup_userforbidstoringpassphraseorgruleflowcrypttest_passphrase_B8F687BCDE14435A',
-          'cryptup_userforbidstoringpassphraseorgruleflowcrypttest_keys']);
+      const { cryptup_userforbidstoringpassphraseclientconfigurationflowcrypttest_passphrase_B8F687BCDE14435A: savedPassphrase1,
+        cryptup_userforbidstoringpassphraseclientconfigurationflowcrypttest_keys: keys1 }
+        = await settingsPage.getFromLocalStorage(['cryptup_userforbidstoringpassphraseclientconfigurationflowcrypttest_passphrase_B8F687BCDE14435A',
+          'cryptup_userforbidstoringpassphraseclientconfigurationflowcrypttest_keys']);
       expect((keys1 as KeyInfoWithIdentity[])[0].longid).to.equal('B8F687BCDE14435A');
       expect(savedPassphrase1).to.be.an('undefined');
       await SettingsPageRecipe.addKeyTest(t, browser, acctEmail, testConstants.testKeyMultiple98acfa1eadab5b92, '1234',
         { isSavePassphraseChecked: false, isSavePassphraseHidden: true });
-      const { cryptup_userforbidstoringpassphraseorgruleflowcrypttest_passphrase_98ACFA1EADAB5B92: savedPassphrase2,
-        cryptup_userforbidstoringpassphraseorgruleflowcrypttest_keys: keys2 }
-        = await settingsPage.getFromLocalStorage(['cryptup_userforbidstoringpassphraseorgruleflowcrypttest_passphrase_98ACFA1EADAB5B92',
-          'cryptup_userforbidstoringpassphraseorgruleflowcrypttest_keys']);
+      const { cryptup_userforbidstoringpassphraseclientconfigurationflowcrypttest_passphrase_98ACFA1EADAB5B92: savedPassphrase2,
+        cryptup_userforbidstoringpassphraseclientconfigurationflowcrypttest_keys: keys2 }
+        = await settingsPage.getFromLocalStorage(['cryptup_userforbidstoringpassphraseclientconfigurationflowcrypttest_passphrase_98ACFA1EADAB5B92',
+          'cryptup_userforbidstoringpassphraseclientconfigurationflowcrypttest_keys']);
       expect((keys2 as KeyInfoWithIdentity[]).map(ki => ki.longid)).to.include.members(['B8F687BCDE14435A', '98ACFA1EADAB5B92']);
       expect(savedPassphrase2).to.be.an('undefined');
     }));
