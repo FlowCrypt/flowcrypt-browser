@@ -67,7 +67,7 @@ export class ComposeInputModule extends ViewModule<ComposeView> {
     const plainhtml = this.view.inputModule.extract('html', 'input_text');
     const password = this.view.S.cached('input_password').val();
     const pwd = typeof password === 'string' && password ? password : undefined;
-    const from = await this.view.senderModule.getEmailWithOptionalName(this.view.senderModule.getSender());
+    const from = await this.view.storageModule.getEmailWithOptionalName(this.view.senderModule.getSender());
     return { recipients, subject, plaintext, plainhtml, pwd, from };
   };
 
