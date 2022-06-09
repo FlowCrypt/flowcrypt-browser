@@ -214,7 +214,7 @@ export class ComposeSendBtnModule extends ViewModule<ComposeView> {
     return { mimeType, data };
   };
 
-  private sendAttempt = async (msg: SendableMsg): Promise<GmailRes.GmailMsgSend> => {
+  private attemptSendMsg = async (msg: SendableMsg): Promise<GmailRes.GmailMsgSend> => {
     const progressRepresents = this.view.pwdOrPubkeyContainerModule.isVisible() ? 'SECOND-HALF' : 'EVERYTHING';
     try {
       return await this.view.emailProvider.msgSend(msg, (p) => this.renderUploadProgress(p, progressRepresents));
@@ -222,7 +222,7 @@ export class ComposeSendBtnModule extends ViewModule<ComposeView> {
       if (msg.thread && ApiErr.isNotFound(e) && this.view.threadId) { // cannot send msg because threadId not found - eg user since deleted it
         msg.thread = undefined;
         // give it another try, this time without msg.thread
-        return await this.sendAttempt(msg);
+        return await this.attemptSendMsg(msg);
       } else {
         throw e;
       }
@@ -255,7 +255,7 @@ export class ComposeSendBtnModule extends ViewModule<ComposeView> {
     for (const msg of msgObj.msgs) {
       const msgRecipients = msg.getAllRecipients();
       try {
-        const msgSentRes = await this.sendAttempt(msg);
+        const msgSentRes = await this.attemptSendMsg(msg);
         success.push(...msgRecipients);
         sentIds.push(msgSentRes.id);
         if (msg.externalId) {
