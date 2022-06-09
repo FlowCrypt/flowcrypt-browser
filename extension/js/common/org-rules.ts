@@ -14,6 +14,7 @@ export type DomainRulesJson = {
   flags?: DomainRules$flag[],
   custom_keyserver_url?: string,
   key_manager_url?: string,
+  allow_attester_search_only_for_domains?: string[],
   disallow_attester_search_for_domains?: string[],
   enforce_keygen_algo?: string,
   enforce_keygen_expire_months?: number,
@@ -161,23 +162,19 @@ export class OrgRules {
    * This is because they already have other means to obtain public keys for these domains, such as from their own internal keyserver
    */
   public canLookupThisRecipientOnAttester = (emailAddr: string): boolean => {
-    if (this.disallowLookupOnAttester()) {
-      return false;
-    }
-    const disallowedDomains = this.domainRules.disallow_attester_search_for_domains || [];
     const userDomain = Str.getDomainFromEmailAddress(emailAddr);
     if (!userDomain) {
       throw new Error(`Not a valid email ${emailAddr}`);
     }
+    // When allow_attester_search_only_for_domains is set, ignore disallow_attester_search_for_domains rule
+    if (this.domainRules.allow_attester_search_only_for_domains) {
+      return this.domainRules.allow_attester_search_only_for_domains.includes(userDomain);
+    }
+    const disallowedDomains = this.domainRules.disallow_attester_search_for_domains || [];
+    if (disallowedDomains.includes('*')) {
+      return false;
+    }
     return !disallowedDomains.includes(userDomain);
-  };
-
-  /**
-   *
-   * Some orgs might want to disallow lookup on attester completely
-   */
-  public disallowLookupOnAttester = (): boolean => {
-    return (this.domainRules.disallow_attester_search_for_domains || []).includes('*');
   };
 
   /**

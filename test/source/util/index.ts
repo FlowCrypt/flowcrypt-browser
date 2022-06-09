@@ -2,8 +2,8 @@
 
 import * as fs from 'fs';
 import { Keyboard, KeyInput } from 'puppeteer';
-import { testKeyConstants } from '../tests/tooling/consts';
 import { KeyInfoWithIdentityAndOptionalPp, KeyUtil } from '../core/crypto/key.js';
+import { testKeyConstants } from '../tests/tooling/consts';
 
 export type TestVariant = 'CONSUMER-MOCK' | 'ENTERPRISE-MOCK' | 'CONSUMER-LIVE-GMAIL' | 'UNIT-TESTS';
 
@@ -51,8 +51,7 @@ export type TestKeyInfoWithFilepath = TestKeyInfo & { filePath?: string, expired
 
 interface TestSecretsInterface {
   ci_admin_token: string;
-  auth: { google: { email: string, password?: string, secret_2fa?: string }[], };
-  keys: TestKeyInfo[];
+  auth: { google: { email: string, password?: string, secret_2fa?: string }[] };
 }
 
 export class Config {
@@ -65,21 +64,20 @@ export class Config {
     if (!Config._secrets) {
       try {
         Config._secrets = JSON.parse(fs.readFileSync('test/test-secrets.json', 'utf8'));
-        Config._secrets.keys = testKeyConstants.keys;
       } catch (e) {
         console.error(`skipping loading test secrets because ${e}`);
-        Config._secrets = { auth: { google: [] }, keys: [] } as any as TestSecretsInterface;
+        Config._secrets = { ci_admin_token: "", auth: { google: [] } };
       }
     }
     return Config._secrets;
   };
 
   public static key = (title: string) => {
-    return Config.secrets().keys.filter(k => k.title === title)[0];
+    return testKeyConstants.keys.filter(k => k.title === title)[0];
   };
 
   public static getKeyInfo = async (titles: string[]): Promise<KeyInfoWithIdentityAndOptionalPp[]> => {
-    return await Promise.all(Config._secrets.keys
+    return await Promise.all(testKeyConstants.keys
       .filter(key => key.armored && titles.includes(key.title)).map(async key => {
         const parsed = await KeyUtil.parse(key.armored!);
         return { ...await KeyUtil.keyInfoObj(parsed), passphrase: key.passphrase };

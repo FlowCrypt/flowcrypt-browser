@@ -210,7 +210,7 @@ yeSm0uVPwODhwX7ezB9jW6uVt0R8S8iM3rQdEMsA/jDep5LNn47K6o8VrDt0zYo6
 export const MOCK_KM_LAST_INSERTED_KEY: { [acct: string]: { decryptedPrivateKey: string, publicKey: string } } = {}; // accessed from test runners
 
 export const mockKeyManagerEndpoints: HandlersDefinition = {
-  '/flowcrypt-email-key-manager/keys/private': async ({ body }, req) => {
+  '/flowcrypt-email-key-manager/v1/keys/private': async ({ body }, req) => {
     const acctEmail = oauth.checkAuthorizationHeaderWithIdToken(req.headers.authorization);
     if (isGet(req)) {
       if (acctEmail === 'wkd@google.mock.flowcryptlocal.test:8001') {
@@ -261,7 +261,7 @@ export const mockKeyManagerEndpoints: HandlersDefinition = {
       if (acctEmail === 'get.error@key-manager-autogen.flowcrypt.test') {
         throw new Error('Intentional error for get.error to test client behavior');
       }
-      throw new HttpClientErr(`Unexpectedly calling mockKeyManagerEndpoints:/keys/private GET with acct ${acctEmail}`);
+      throw new HttpClientErr(`Unexpectedly calling mockKeyManagerEndpoints:/v1/keys/private GET with acct ${acctEmail}`);
     }
     if (isPut(req)) {
       const { decryptedPrivateKey, publicKey } = body as Dict<string>;
@@ -311,7 +311,7 @@ export const mockKeyManagerEndpoints: HandlersDefinition = {
         MOCK_KM_LAST_INSERTED_KEY[acctEmail] = { decryptedPrivateKey, publicKey };
         return {};
       }
-      throw new HttpClientErr(`Unexpectedly calling mockKeyManagerEndpoints:/keys/private PUT with acct ${acctEmail}`);
+      throw new HttpClientErr(`Unexpectedly calling mockKeyManagerEndpoints:/v1/keys/private PUT with acct ${acctEmail}`);
     }
     throw new HttpClientErr(`Unknown method: ${req.method}`);
   }
