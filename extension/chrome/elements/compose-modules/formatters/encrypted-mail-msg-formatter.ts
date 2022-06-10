@@ -49,19 +49,20 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
             || (uploadedMessageData.emailToExternalIdAndUrl || {})[emailPart.email] === undefined);
         }
       }
-      const uniquePubkeyRecipientToAndCCs = Value.arr.unique((pubkeyRecipients.to || []).concat(pubkeyRecipients.cc || [])
-        .map(recipient => recipient.email.toLowerCase()));
-      // pubkey recipients should be able to reply to "to" and "cc" pwd recipients
-      const replyTo = (newMsg.recipients.to ?? []).concat(newMsg.recipients.cc ?? [])
-        .filter(recipient => !uniquePubkeyRecipientToAndCCs.includes(recipient.email.toLowerCase()));
       const msgs: SendableMsg[] = [];
       // pubkey recipients get one combined message. If there are not pubkey recpients, only password - protected messages will be sent
       if (pubkeyRecipients.to?.length || pubkeyRecipients.cc?.length || pubkeyRecipients.bcc?.length) {
+        const uniquePubkeyRecipientToAndCCs = Value.arr.unique((pubkeyRecipients.to || []).concat(pubkeyRecipients.cc || [])
+          .map(recipient => recipient.email.toLowerCase()));
+        // pubkey recipients should be able to reply to "to" and "cc" pwd recipients
+        const replyToForMessageSentToPubkeyRecipients = (newMsg.recipients.to ?? []).concat(newMsg.recipients.cc ?? [])
+          .filter(recipient => !uniquePubkeyRecipientToAndCCs.includes(recipient.email.toLowerCase()));
         const pubkeyMsgData = {
           ...newMsg,
           recipients: pubkeyRecipients,
           // brackets are required for test emails like '@test:8001'
-          replyTo: replyTo.length ? `${Str.formatEmailList([newMsg.from, ...replyTo], true)}` : undefined
+          replyTo: replyToForMessageSentToPubkeyRecipients.length ? `${Str.formatEmailList([newMsg.from, ...replyToForMessageSentToPubkeyRecipients], true)}`
+            : undefined
         };
         msgs.push(await this.sendablePwdMsg(
           pubkeyMsgData,
