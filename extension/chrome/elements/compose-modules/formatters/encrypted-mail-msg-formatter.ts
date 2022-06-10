@@ -44,7 +44,8 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
       for (const [sendingType, value] of Object.entries(newMsg.recipients)) {
         if (Api.isRecipientHeaderNameType(sendingType)) {
           pubkeyRecipients[sendingType] = value?.filter(emailPart => pubkeys.some(p => p.email === emailPart.email)
-            // pwd recipients that have no personal links go to legacy message
+            // flowcrypt.com/api doesn't return individual links unlike FES
+            // so pwd recipients without individual links will go to legacy message
             || (uploadedMessageData.emailToExternalIdAndUrl || {})[emailPart.email] === undefined);
         }
       }
@@ -54,6 +55,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
       const replyTo = (newMsg.recipients.to ?? []).concat(newMsg.recipients.cc ?? [])
         .filter(recipient => !uniquePubkeyRecipientToAndCCs.includes(recipient.email.toLowerCase()));
       const msgs: SendableMsg[] = [];
+      // pubkey recipients get one combined message. If there are not pubkey recpients, only password - protected messages will be sent
       if (pubkeyRecipients.to?.length || pubkeyRecipients.cc?.length || pubkeyRecipients.bcc?.length) {
         const pubkeyMsgData = {
           ...newMsg,
