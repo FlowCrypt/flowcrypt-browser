@@ -18,7 +18,7 @@ export class SetupCreateKeyModule {
   }
 
   public actionCreateKeyHandler = async () => {
-    await Settings.forbidAndRefreshPageIfCannot('CREATE_KEYS', this.view.orgRules);
+    await Settings.forbidAndRefreshPageIfCannot('CREATE_KEYS', this.view.clientConfiguration);
     if (! await this.view.isCreatePrivateFormInputCorrect('step_2a_manual_create')) {
       return;
     }
@@ -32,9 +32,9 @@ export class SetupCreateKeyModule {
         submit_all: this.view.shouldSubmitPubkey('#step_2a_manual_create .input_submit_all'),
         recovered: false,
       };
-      const keyAlgo = this.view.orgRules.getEnforcedKeygenAlgo() || $('#step_2a_manual_create .key_type').val() as KeyAlgo;
+      const keyAlgo = this.view.clientConfiguration.getEnforcedKeygenAlgo() || $('#step_2a_manual_create .key_type').val() as KeyAlgo;
       const keyIdentity = await this.createSaveKeyPair(opts, keyAlgo);
-      if (this.view.orgRules.canBackupKeys()) {
+      if (this.view.clientConfiguration.canBackupKeys()) {
         await this.view.submitPublicKeys(opts);
         const action = $('#step_2a_manual_create .input_backup_inbox').prop('checked') ? 'setup_automatic' : 'setup_manual';
         // only finalize after backup is done. backup.htm will redirect back to this page with ?action=finalize
@@ -66,10 +66,10 @@ export class SetupCreateKeyModule {
   };
 
   public createSaveKeyPair = async (options: SetupOptions, keyAlgo: KeyAlgo): Promise<KeyIdentity> => {
-    await Settings.forbidAndRefreshPageIfCannot('CREATE_KEYS', this.view.orgRules);
+    await Settings.forbidAndRefreshPageIfCannot('CREATE_KEYS', this.view.clientConfiguration);
     const { full_name } = await AcctStore.get(this.view.acctEmail, ['full_name']);
     const pgpUids = [{ name: full_name || '', email: this.view.acctEmail }]; // todo - add all addresses?
-    const expireMonths = this.view.orgRules.getEnforcedKeygenExpirationMonths();
+    const expireMonths = this.view.clientConfiguration.getEnforcedKeygenExpirationMonths();
     const key = await OpenPGPKey.create(pgpUids, keyAlgo, options.passphrase, expireMonths);
     const prv = await KeyUtil.parse(key.private);
     await this.view.saveKeysAndPassPhrase([prv], options);

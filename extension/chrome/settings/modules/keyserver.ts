@@ -13,7 +13,7 @@ import { Ui } from '../../../js/common/browser/ui.js';
 import { View } from '../../../js/common/view.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { PubLookup } from '../../../js/common/api/pub-lookup.js';
-import { OrgRules } from '../../../js/common/org-rules.js';
+import { ClientConfiguration } from '../../../js/common/client-configuration.js';
 import { KeyStore } from '../../../js/common/platform/store/key-store.js';
 import { KeyStoreUtil } from "../../../js/common/core/crypto/key-store-util.js";
 import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
@@ -26,7 +26,7 @@ View.run(class KeyserverView extends View {
   private acctEmail: string;
   private parentTabId: string;
   private pubLookup!: PubLookup;
-  private orgRules!: OrgRules;
+  private clientConfiguration!: ClientConfiguration;
 
   constructor() {
     super();
@@ -36,8 +36,8 @@ View.run(class KeyserverView extends View {
   }
 
   public render = async () => {
-    this.orgRules = await OrgRules.newInstance(this.acctEmail);
-    this.pubLookup = new PubLookup(this.orgRules);
+    this.clientConfiguration = await ClientConfiguration.newInstance(this.acctEmail);
+    this.pubLookup = new PubLookup(this.clientConfiguration);
     $('.email-address').text(this.acctEmail);
     Xss.sanitizeRender('.summary', '<br><br><br><br>Loading from keyserver<br><br>' + Ui.spinner('green'));
     (async () => {
@@ -77,7 +77,7 @@ View.run(class KeyserverView extends View {
   // -- PRIVATE
 
   private submitPublicKeyHandler = async (target: HTMLElement) => {
-    if (!this.orgRules.canSubmitPubToAttester()) {
+    if (!this.clientConfiguration.canSubmitPubToAttester()) {
       return await Ui.modal.error('Disallowed by your organisation rules');
     }
     Xss.sanitizeRender(target, Ui.spinner('white'));
@@ -98,7 +98,7 @@ View.run(class KeyserverView extends View {
   };
 
   private replacePublicKeyHandler = async (target: HTMLElement) => {
-    if (!this.orgRules.canSubmitPubToAttester()) {
+    if (!this.clientConfiguration.canSubmitPubToAttester()) {
       return await Ui.modal.error('Disallowed by your organisation rules');
     }
     Xss.sanitizeRender(target, Ui.spinner('white'));

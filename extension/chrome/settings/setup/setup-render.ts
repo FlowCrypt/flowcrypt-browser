@@ -35,7 +35,7 @@ export class SetupRenderModule {
     if (this.view.storage!.setup_done) {
       if (this.view.action !== 'add_key') {
         await this.renderSetupDone();
-      } else if (this.view.orgRules.mustAutoImportOrAutogenPrvWithKeyManager()) {
+      } else if (this.view.clientConfiguration.mustAutoImportOrAutogenPrvWithKeyManager()) {
         throw new Error('Manual add_key is not supported when PRV_AUTOIMPORT_OR_AUTOGEN org rule is in use');
       } else {
         await this.view.setupRecoverKey.renderAddKeyFromBackup();
@@ -43,14 +43,14 @@ export class SetupRenderModule {
     } else if (this.view.action === 'finalize') {
       await this.view.finalizeSetup();
       await this.renderSetupDone();
-    } else if (this.view.orgRules.mustAutoImportOrAutogenPrvWithKeyManager()) {
-      if (this.view.orgRules.mustAutogenPassPhraseQuietly() && this.view.orgRules.forbidStoringPassPhrase()) {
+    } else if (this.view.clientConfiguration.mustAutoImportOrAutogenPrvWithKeyManager()) {
+      if (this.view.clientConfiguration.mustAutogenPassPhraseQuietly() && this.view.clientConfiguration.forbidStoringPassPhrase()) {
         const notSupportedErr = 'Combination of org rules not valid: PASS_PHRASE_QUIET_AUTOGEN cannot be used together with FORBID_STORING_PASS_PHRASE.';
         await Ui.modal.error(notSupportedErr);
         window.location.href = Url.create('index.htm', { acctEmail: this.view.acctEmail });
         return;
       }
-      if (this.view.orgRules.userMustChoosePassPhraseDuringPrvAutoimport()) {
+      if (this.view.clientConfiguration.userMustChoosePassPhraseDuringPrvAutoimport()) {
         this.displayBlock('step_2_ekm_choose_pass_phrase');
       } else {
         await this.view.setupWithEmailKeyManager.setupWithEkmThenRenderSetupDone(PgpPwd.random());
@@ -106,7 +106,7 @@ export class SetupRenderModule {
         Lang.general.contactIfNeedAssistance(this.view.isFesUsed()));
     }
     if (keyserverRes.pubkeys.length) {
-      if (!this.view.orgRules.canBackupKeys()) {
+      if (!this.view.clientConfiguration.canBackupKeys()) {
         // they already have a key recorded on attester, but no backups allowed on the domain. They should enter their prv manually
         this.displayBlock('step_2b_manual_enter');
       } else if (this.view.storage!.email_provider === 'gmail' && this.view.scopes!.modify) {
@@ -127,7 +127,7 @@ export class SetupRenderModule {
         throw new Error('Not able to load backups from inbox due to missing permissions');
       }
     } else { // no indication that the person used pgp before
-      if (this.view.orgRules.canCreateKeys()) {
+      if (this.view.clientConfiguration.canCreateKeys()) {
         this.displayBlock('step_1_easy_or_manual');
       } else {
         this.displayBlock('step_2b_manual_enter');

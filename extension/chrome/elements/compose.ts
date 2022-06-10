@@ -26,7 +26,7 @@ import { ComposeSenderModule } from './compose-modules/compose-sender-module.js'
 import { ComposeSizeModule } from './compose-modules/compose-size-module.js';
 import { ComposeStorageModule } from './compose-modules/compose-storage-module.js';
 import { Catch } from '../../js/common/platform/catch.js';
-import { OrgRules } from '../../js/common/org-rules.js';
+import { ClientConfiguration } from '../../js/common/client-configuration.js';
 import { PubLookup } from '../../js/common/api/pub-lookup.js';
 import { Scopes, AcctStore } from '../../js/common/platform/store/acct-store.js';
 import { AccountServer } from '../../js/common/api/account-server.js';
@@ -54,7 +54,7 @@ export class ComposeView extends View {
   public factory!: XssSafeFactory;
   public replyParams: ReplyParams | undefined;
   public emailProvider: EmailProviderInterface;
-  public orgRules!: OrgRules;
+  public clientConfiguration!: ClientConfiguration;
   public pubLookup!: PubLookup;
   public acctServer: AccountServer;
 
@@ -146,13 +146,13 @@ export class ComposeView extends View {
 
   public render = async () => {
     const storage = await AcctStore.get(this.acctEmail, ['sendAs', 'hide_message_password', 'fesUrl']);
-    this.orgRules = await OrgRules.newInstance(this.acctEmail);
-    if (this.orgRules.shouldHideArmorMeta()) {
+    this.clientConfiguration = await ClientConfiguration.newInstance(this.acctEmail);
+    if (this.clientConfiguration.shouldHideArmorMeta()) {
       opgp.config.show_comment = false;
       opgp.config.show_version = false;
     }
     opgp.initWorker({ path: '/lib/openpgp.worker.js' });
-    this.pubLookup = new PubLookup(this.orgRules);
+    this.pubLookup = new PubLookup(this.clientConfiguration);
     this.tabId = await BrowserMsg.requiredTabId();
     this.factory = new XssSafeFactory(this.acctEmail, this.tabId);
     this.scopes = await AcctStore.getScopes(this.acctEmail);

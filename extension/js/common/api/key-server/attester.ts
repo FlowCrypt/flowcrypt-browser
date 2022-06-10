@@ -6,7 +6,7 @@ import { Api, ReqMethod } from './../shared/api.js';
 import { Dict, Str } from '../../core/common.js';
 import { PubkeySearchResult } from './../pub-lookup.js';
 import { ApiErr } from '../shared/api-error.js';
-import { OrgRules } from '../../org-rules.js';
+import { ClientConfiguration } from "../../client-configuration";
 import { ATTESTER_API_HOST } from '../../core/const.js';
 
 type PubCallRes = { responseText: string, getResponseHeader: (n: string) => string | null };
@@ -14,13 +14,13 @@ type PubCallRes = { responseText: string, getResponseHeader: (n: string) => stri
 export class Attester extends Api {
 
   constructor(
-    private orgRules: OrgRules
+    private clientConfiguration: ClientConfiguration
   ) {
     super();
   }
 
   public lookupEmail = async (email: string): Promise<PubkeySearchResult> => {
-    if (!this.orgRules.canLookupThisRecipientOnAttester(email)) {
+    if (!this.clientConfiguration.canLookupThisRecipientOnAttester(email)) {
       console.info(`Skipping attester lookup of ${email} because attester search on this domain is disabled.`);
       return { pubkey: null }; // tslint:disable-line:no-null-keyword
     }
@@ -41,7 +41,7 @@ export class Attester extends Api {
    * Can only be used for primary email because idToken does not contain info about aliases
    */
   public submitPrimaryEmailPubkey = async (email: string, pubkey: string, idToken: string): Promise<void> => {
-    if (!this.orgRules.canSubmitPubToAttester()) {
+    if (!this.clientConfiguration.canSubmitPubToAttester()) {
       throw new Error('Cannot replace pubkey at attester because your organisation rules forbid it');
     }
     await this.pubCall(`pub/${email}`, 'POST', pubkey, { authorization: `Bearer ${idToken}` });
@@ -53,7 +53,7 @@ export class Attester extends Api {
    * Can also be used for aliases
    */
   public replacePubkey = async (email: string, pubkey: string): Promise<string> => {
-    if (!this.orgRules.canSubmitPubToAttester()) {
+    if (!this.clientConfiguration.canSubmitPubToAttester()) {
       throw new Error('Cannot replace pubkey at attester because your organisation rules forbid it');
     }
     const r = await this.pubCall(`pub/${email}`, 'POST', pubkey);
@@ -65,7 +65,7 @@ export class Attester extends Api {
    * Does not need email verification, fingerprints compared, last signatures compared
    */
   public updatePubkey = async (longid: string, pubkey: string): Promise<string> => {
-    if (!this.orgRules.canSubmitPubToAttester()) {
+    if (!this.clientConfiguration.canSubmitPubToAttester()) {
       throw new Error('Cannot update pubkey at attester because your organisation rules forbid it');
     }
     const r = await this.pubCall(`pub/${longid}`, 'PUT', pubkey);
@@ -76,7 +76,7 @@ export class Attester extends Api {
    * Looking to deprecate this, but still used for some customers
    */
   public initialLegacySubmit = async (email: string, pubkey: string): Promise<{ saved: boolean }> => {
-    if (!this.orgRules.canSubmitPubToAttester()) {
+    if (!this.clientConfiguration.canSubmitPubToAttester()) {
       throw new Error('Cannot submit pubkey to attester because your organisation rules forbid it');
     }
     return await this.jsonCall<{ saved: boolean }>('initial/legacy_submit', { email: Str.parseEmail(email).email, pubkey: pubkey.trim() });

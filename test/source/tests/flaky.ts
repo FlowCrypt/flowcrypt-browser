@@ -92,8 +92,8 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
         { isSavePassphraseChecked: false, isSavePassphraseHidden: false });
     }));
 
-    ava.default('user@no-submit-org-rule.flowcrypt.test - do not submit to attester on key generation', testWithBrowser(undefined, async (t, browser) => {
-      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'user@no-submit-org-rule.flowcrypt.test');
+    ava.default('user@no-submit-client-configuration.flowcrypt.test - do not submit to attester on key generation', testWithBrowser(undefined, async (t, browser) => {
+      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'user@no-submit-client-configuration.flowcrypt.test');
       await SetupPageRecipe.createKey(settingsPage, 'unused', 'none', { key: { passphrase: 'long enough to suit requirements' }, usedPgpBefore: false },
         { isSavePassphraseChecked: false, isSavePassphraseHidden: false });
       await settingsPage.notPresent('.swal2-container');
@@ -101,7 +101,7 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
     }));
 
     ava.default('settings - generate rsa3072 key', testWithBrowser(undefined, async (t, browser) => {
-      const acctEmail = 'user@no-submit-org-rule.flowcrypt.test';
+      const acctEmail = 'user@no-submit-client-configuration.flowcrypt.test';
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
       await SetupPageRecipe.createKey(settingsPage, 'unused', "none", { selectKeyAlgo: 'rsa3072', key: { passphrase: 'long enough to suit requirements' } });
       await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
@@ -110,7 +110,7 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
       const downloadedFiles = await myKeyFrame.awaitDownloadTriggeredByClicking('@action-download-prv');
       // const longid = OpenPGPKey.fingerprintToLongid(fingerprint);
       const longid = fingerprint.substring(fingerprint.length - 16);
-      const fileName = `flowcrypt-backup-usernosubmitorgruleflowcrypttest-0x${longid}.asc`;
+      const fileName = `flowcrypt-backup-usernosubmitclientconfigurationflowcrypttest-0x${longid}.asc`;
       const key = await KeyUtil.parse(downloadedFiles[fileName]!.toString());
       expect(key.algo.bits).to.equal(3072);
       expect(key.algo.algorithm).to.equal('rsa_encrypt_sign');
@@ -118,8 +118,8 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
       await settingsPage.close();
     }));
 
-    ava.default('user@forbid-storing-passphrase-org-rule.flowcrypt.test - do not store passphrase', testWithBrowser(undefined, async (t, browser) => {
-      const acctEmail = 'user@forbid-storing-passphrase-org-rule.flowcrypt.test';
+    ava.default('user@forbid-storing-passphrase-client-configuration.flowcrypt.test - do not store passphrase', testWithBrowser(undefined, async (t, browser) => {
+      const acctEmail = 'user@forbid-storing-passphrase-client-configuration.flowcrypt.test';
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
       const passphrase = 'long enough to suit requirements';
       await SetupPageRecipe.createKey(settingsPage, 'unused', 'none', { key: { passphrase }, usedPgpBefore: false },

@@ -192,7 +192,7 @@ export const mockFesEndpoints: HandlersDefinition = {
     throw new HttpClientErr(`Not running any FES here: ${req.headers.host}`);
   },
   '/api/v1/client-configuration': async ({ }, req) => {
-    // individual OrgRules are tested using FlowCrypt backend mock, see BackendData.getOrgRules
+    // individual ClientConfiguration is tested using FlowCrypt backend mock, see BackendData.getClientConfiguration
     if (req.method !== 'GET') {
       throw new HttpClientErr('Unsupported method');
     }

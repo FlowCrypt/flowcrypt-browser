@@ -35,9 +35,9 @@ export class AccountServer extends Api {
   public accountGetAndUpdateLocalStore = async (fcAuth: FcUuidAuth): Promise<BackendRes.FcAccountGet> => {
     if (await this.isFesUsed()) {
       const fes = new EnterpriseServer(this.acctEmail);
-      const fetchedOrgRules = await fes.fetchAndSaveOrgRules();
+      const fetchedClientConfiguration = await fes.fetchAndSaveClientConfiguration();
       return {
-        domain_org_rules: fetchedOrgRules,
+        domain_org_rules: fetchedClientConfiguration,
         // todo - rethink this. On FES, expiration is handled with S3 bucket policy regardless of this number
         //  which is set to 180 days on buckets we manage. This number below may still be rendered somewhere
         //  when composing, which should be evaluated.

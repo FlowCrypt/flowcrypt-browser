@@ -1,5 +1,5 @@
 {
-  "acctEmail": "user@forbid-storing-passphrase-org-rule.flowcrypt.test",
+  "acctEmail": "user@forbid-storing-passphrase-client-configuration.flowcrypt.test",
   "full": {
     "id": "179f6feb575df213",
     "threadId": "179f6feb575df213",
@@ -28,7 +28,7 @@
         },
         {
           "name": "To",
-          "value": "user@forbid-storing-passphrase-org-rule.flowcrypt.test"
+          "value": "user@forbid-storing-passphrase-client-configuration.flowcrypt.test"
         },
         {
           "name": "Subject",

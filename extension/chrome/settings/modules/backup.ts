@@ -6,7 +6,7 @@ import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Str, Url } from '../../../js/common/core/common.js';
 import { Assert } from '../../../js/common/assert.js';
 import { Gmail } from '../../../js/common/api/email-provider/gmail/gmail.js';
-import { OrgRules } from '../../../js/common/org-rules.js';
+import { ClientConfiguration } from '../../../js/common/client-configuration.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { View } from '../../../js/common/view.js';
 import { Xss } from '../../../js/common/platform/xss.js';
@@ -33,7 +33,7 @@ export class BackupView extends View {
   public readonly automaticModule: BackupAutomaticModule;
 
   public emailProvider: EmailProvider = 'gmail';
-  public orgRules!: OrgRules;
+  public clientConfiguration!: ClientConfiguration;
   public tabId!: string;
   public identityOfKeysToManuallyBackup: KeyIdentity[] = [];
   public fesUrl?: string;
@@ -67,11 +67,11 @@ export class BackupView extends View {
 
   public render = async () => {
     this.tabId = await BrowserMsg.requiredTabId();
-    this.orgRules = await OrgRules.newInstance(this.acctEmail);
+    this.clientConfiguration = await ClientConfiguration.newInstance(this.acctEmail);
     const storage = await AcctStore.get(this.acctEmail, ['email_provider', 'fesUrl']);
     this.fesUrl = storage.fesUrl;
     this.emailProvider = storage.email_provider || 'gmail';
-    if (!this.orgRules.canBackupKeys()) {
+    if (!this.clientConfiguration.canBackupKeys()) {
       Xss.sanitizeRender('body', `<div class="line" style="margin-top: 100px;">${Lang.setup.keyBackupsNotAllowed}</div>`);
       return;
     }
