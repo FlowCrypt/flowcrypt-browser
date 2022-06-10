@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { ChunkedCb, EmailProviderContact, RecipientType } from '../../../js/common/api/shared/api.js';
+import { Api, ChunkedCb, EmailProviderContact, RecipientType } from '../../../js/common/api/shared/api.js';
 import { ContactInfoWithSortedPubkeys, KeyUtil, PubkeyInfo } from '../../../js/common/core/crypto/key.js';
 import { PUBKEY_LOOKUP_RESULT_FAIL } from './compose-err-module.js';
 import { ProviderContactsQuery, Recipients } from '../../../js/common/api/email-provider/email-provider-api.js';
@@ -160,9 +160,8 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
 
   public addRecipients = async (recipients: Recipients, triggerCallback: boolean = true) => {
     const newRecipients: ValidRecipientElement[] = [];
-    for (const [key, value] of Object.entries(recipients)) {
-      if (['to', 'cc', 'bcc'].includes(key)) {
-        const sendingType = key as RecipientType;
+    for (const [sendingType, value] of Object.entries(recipients)) {
+      if (Api.isRecipientHeaderNameType(sendingType)) {
         if (value?.length) {
           const recipientsContainer = this.view.S.cached('input_addresses_container_outer').find(`#input-container-${sendingType}`);
           for (const email of value) {

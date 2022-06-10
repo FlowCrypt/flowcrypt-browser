@@ -143,6 +143,10 @@ export class Api {
     return bytes.map(b => ('0' + (b & 0xFF).toString(16)).slice(-2)).join('');
   };
 
+  public static isRecipientHeaderNameType = (value: string): value is "to" | "cc" | "bcc" => {
+    return ['to', 'cc', 'bcc'].includes(value);
+  }
+
   protected static apiCall = async <RT>(
     url: string,
     path: string,

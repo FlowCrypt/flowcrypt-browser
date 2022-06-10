@@ -25,7 +25,7 @@ import { PgpHash } from '../../../../js/common/core/crypto/pgp/pgp-hash.js';
 import { UploadedMessageData } from '../../../../js/common/api/account-server.js';
 import { ParsedKeyInfo } from '../../../../js/common/core/crypto/key-store-util.js';
 import { MultipleMessages } from './general-mail-formatter.js';
-import { RecipientType } from '../../../../js/common/api/shared/api.js';
+import { Api, RecipientType } from '../../../../js/common/api/shared/api.js';
 
 export class EncryptedMsgMailFormatter extends BaseMailFormatter {
 
@@ -41,9 +41,8 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
       newMsg.pwd = undefined;
       const collectedAttachments = await this.view.attachmentsModule.attachment.collectEncryptAttachments(pubkeys);
       const pubkeyRecipients: { [type in RecipientType]?: EmailParts[] } = {};
-      for (const [key, value] of Object.entries(newMsg.recipients)) {
-        if (['to', 'cc', 'bcc'].includes(key)) {
-          const sendingType = key as RecipientType;
+      for (const [sendingType, value] of Object.entries(newMsg.recipients)) {
+        if (Api.isRecipientHeaderNameType(sendingType)) {
           pubkeyRecipients[sendingType] = value?.filter(emailPart => pubkeys.some(p => p.email === emailPart.email)
             // pwd recipients that have no personal links go to legacy message
             || (uploadedMessageData.emailToExternalIdAndUrl || {})[emailPart.email] === undefined);
