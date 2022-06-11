@@ -145,7 +145,7 @@ export class Api {
 
   public static isRecipientHeaderNameType = (value: string): value is "to" | "cc" | "bcc" => {
     return ['to', 'cc', 'bcc'].includes(value);
-  }
+  };
 
   protected static apiCall = async <RT>(
     url: string,
