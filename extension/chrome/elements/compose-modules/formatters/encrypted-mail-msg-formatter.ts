@@ -39,7 +39,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
       // pwdRecipients that have their personal link
       const pwdRecipients = Object.keys(uploadedMessageData.emailToExternalIdAndUrl ?? {}).filter(email => !pubkeys.some(p => p.email === email));
       newMsg.pwd = undefined;
-      const collectedAttachments = await this.view.attachmentsModule.attachment.collectEncryptAttachments(pubkeys);
+      const encryptedAttachments = await this.view.attachmentsModule.attachment.collectEncryptAttachments(pubkeys);
       const pubkeyRecipients: { [type in RecipientType]?: EmailParts[] } = {};
       for (const [sendingType, value] of Object.entries(newMsg.recipients)) {
         if (Api.isRecipientHeaderNameType(sendingType)) {
@@ -64,11 +64,11 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
           replyTo: replyToForMessageSentToPubkeyRecipients.length ? `${Str.formatEmailList([newMsg.from, ...replyToForMessageSentToPubkeyRecipients], true)}`
             : undefined
         };
-        msgs.push(await this.sendablePwdMsg(
+        msgs.push(await this.sendablePubkeyMsgWithPwdLink(
           pubkeyMsgData,
           pubkeys,
           { msgUrl: uploadedMessageData.url, externalId: uploadedMessageData.externalId },
-          collectedAttachments,
+          encryptedAttachments,
           signingKey?.key)
         );
       }
@@ -79,9 +79,9 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
           find(r => r.email.toLowerCase() === recipientEmail.toLowerCase());
         // todo: since a message is allowed to have only `cc` or `bcc` without `to`, should we preserve the original placement(s) of the recipient?
         const individualMsgData = { ...newMsg, recipients: { to: [foundParsedRecipient ?? { email: recipientEmail }] } };
-        msgs.push(await this.sendablePwdMsg(individualMsgData, pubkeys, { msgUrl: url, externalId }, [], signingKey?.key));
+        msgs.push(await this.sendablePwdMsg(individualMsgData, pubkeys, { msgUrl: url, externalId }, signingKey?.key));
       }
-      return { senderKi: signingKey?.keyInfo, msgs, recipients: newMsg.recipients, attachments: collectedAttachments };
+      return { senderKi: signingKey?.keyInfo, msgs, recipients: newMsg.recipients, attachments: encryptedAttachments };
     } else {
       const msg = await this.sendableNonPwdMsg(newMsg, pubkeys, signingKey?.key);
       return {
@@ -94,13 +94,40 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
   };
 
   public sendableNonPwdMsg = async (newMsg: NewMsgData, pubkeys: PubkeyResult[], signingPrv?: Key): Promise<SendableMsg> => {
-    if (this.richtext) { // rich text: PGP/MIME - https://tools.ietf.org/html/rfc3156#section-4
-      // or S/MIME
-      return await this.sendableRichTextMsg(newMsg, pubkeys, signingPrv);
-    } else { // simple text: PGP or S/MIME Inline with attachments in separate files
-      // todo: #4046 check attachments for S/MIME
-      return await this.sendableSimpleTextMsg(newMsg, pubkeys, signingPrv);
+    const x509certs = pubkeys.map(entry => entry.pubkey).filter(pub => pub.family === 'x509');
+    if (x509certs.length) { // s/mime
+      return await this.sendableSmimeMsg(newMsg, x509certs, signingPrv);
     }
+    const textToEncrypt = this.richtext
+      ? await Mime.encode({ 'text/plain': newMsg.plaintext, 'text/html': newMsg.plainhtml }, { Subject: newMsg.subject },
+        this.isDraft ? [] : await this.view.attachmentsModule.attachment.collectAttachments())
+      : newMsg.plaintext;
+    const { data: encrypted } = await this.encryptDataArmor(Buf.fromUtfStr(textToEncrypt), undefined, pubkeys, signingPrv);
+    if (!this.richtext || this.isDraft) {
+      // draft richtext messages go inline as gmail makes it hard (or impossible) to render messages saved as https://tools.ietf.org/html/rfc3156
+      return await SendableMsg.createInlineArmored(this.acctEmail, this.headers(newMsg), Buf.fromUint8(encrypted).toUtfStr(),
+        this.isDraft ? [] : await this.view.attachmentsModule.attachment.collectEncryptAttachments(pubkeys),
+        { isDraft: this.isDraft });
+    }
+    // rich text: PGP/MIME - https://tools.ietf.org/html/rfc3156#section-4
+    const attachments = this.createPgpMimeAttachments(encrypted);
+    return await SendableMsg.createPgpMime(this.acctEmail, this.headers(newMsg), attachments, { isDraft: this.isDraft });
+  };
+
+  private sendablePubkeyMsgWithPwdLink = async (
+    newMsg: NewMsgData,
+    pubs: PubkeyResult[],
+    { msgUrl, externalId }: { msgUrl: string, externalId?: string },
+    encryptedAttachments: Attachment[],
+    signingPrv?: Key) => {
+    // encoded as: PGP/MIME-like structure but with attachments as external files due to email size limit (encrypted for pubkeys only)
+    const msgBody = this.richtext ? { 'text/plain': newMsg.plaintext, 'text/html': newMsg.plainhtml } : { 'text/plain': newMsg.plaintext };
+    const pgpMimeNoAttachments = await Mime.encode(msgBody, { Subject: newMsg.subject }, []); // no attachments, attached to email separately
+    const { data: pubEncryptedNoAttachments } = await this.encryptDataArmor(Buf.fromUtfStr(pgpMimeNoAttachments), undefined, pubs, signingPrv); // encrypted only for pubs
+    const emailIntroAndLinkBody = await this.formatPwdEncryptedMsgBodyLink(msgUrl);
+    return await SendableMsg.createPwdMsg(this.acctEmail, this.headers(newMsg), emailIntroAndLinkBody,
+      this.createPgpMimeAttachments(pubEncryptedNoAttachments).concat(encryptedAttachments),
+      { isDraft: this.isDraft, externalId });
   };
 
   private prepareAndUploadPwdEncryptedMsg = async (newMsg: NewMsgData): Promise<UploadedMessageData> => {
@@ -151,58 +178,28 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
     newMsg: NewMsgData,
     pubs: PubkeyResult[],
     { msgUrl, externalId }: { msgUrl: string, externalId?: string },
-    attachments: Attachment[],
     signingPrv?: Key) => {
     // encoded as: PGP/MIME-like structure but with attachments as external files due to email size limit (encrypted for pubkeys only)
     const msgBody = this.richtext ? { 'text/plain': newMsg.plaintext, 'text/html': newMsg.plainhtml } : { 'text/plain': newMsg.plaintext };
     const pgpMimeNoAttachments = await Mime.encode(msgBody, { Subject: newMsg.subject }, []); // no attachments, attached to email separately
     const { data: pubEncryptedNoAttachments } = await this.encryptDataArmor(Buf.fromUtfStr(pgpMimeNoAttachments), undefined, pubs, signingPrv); // encrypted only for pubs
     const emailIntroAndLinkBody = await this.formatPwdEncryptedMsgBodyLink(msgUrl);
-    const headers = this.headers(newMsg);
-    return await SendableMsg.createPwdMsg(this.acctEmail, headers, emailIntroAndLinkBody,
-      this.createPgpMimeAttachments(pubEncryptedNoAttachments).concat(attachments),
+    return await SendableMsg.createPwdMsg(this.acctEmail, this.headers(newMsg), emailIntroAndLinkBody,
+      this.createPgpMimeAttachments(pubEncryptedNoAttachments),
       { isDraft: this.isDraft, externalId });
   };
 
-  private sendableSimpleTextMsg = async (newMsg: NewMsgData, pubs: PubkeyResult[], signingPrv?: Key): Promise<SendableMsg> => {
-    const pubsForEncryption = pubs.map(entry => entry.pubkey);
-    if (this.isDraft) {
-      const { data: encrypted } = await this.encryptDataArmor(Buf.fromUtfStr(newMsg.plaintext), undefined, pubs, signingPrv);
-      return await SendableMsg.createInlineArmored(this.acctEmail, this.headers(newMsg), Buf.fromUint8(encrypted).toUtfStr(), [], { isDraft: this.isDraft });
+  private sendableSmimeMsg = async (newMsg: NewMsgData, x509certs: Key[], signingPrv?: Key): Promise<SendableMsg> => {
+    const plainAttachments: Attachment[] = this.isDraft ? [] : await this.view.attachmentsModule.attachment.collectAttachments();
+    const msgBody = { 'text/plain': newMsg.plaintext }; // todo: richtext #4047
+    const mimeEncodedPlainMessage = await Mime.encode(msgBody, { Subject: newMsg.subject }, plainAttachments);
+    let mimeData = Buf.fromUtfStr(mimeEncodedPlainMessage);
+    if (signingPrv) {
+      const signedMessage = await this.signMimeMessage(signingPrv, mimeEncodedPlainMessage, newMsg);
+      mimeData = Buf.fromUtfStr(await signedMessage.toMime());
     }
-    const x509certs = pubsForEncryption.filter(pub => pub.family === 'x509');
-    if (x509certs.length) { // s/mime
-      const attachments: Attachment[] = this.isDraft ? [] : await this.view.attachmentsModule.attachment.collectAttachments(); // collects attachments
-      const msgBody = { 'text/plain': newMsg.plaintext };
-      const mimeEncodedPlainMessage = await Mime.encode(msgBody, { Subject: newMsg.subject }, attachments);
-      let mimeData = Buf.fromUtfStr(mimeEncodedPlainMessage);
-      if (signingPrv) {
-        const signedMessage = await this.signMimeMessage(signingPrv, mimeEncodedPlainMessage, newMsg);
-        mimeData = Buf.fromUtfStr(await signedMessage.toMime());
-      }
-      const encryptedMessage = await SmimeKey.encryptMessage({ pubkeys: x509certs, data: mimeData, armor: false });
-      const data = encryptedMessage.data;
-      return await SendableMsg.createSMimeEncrypted(this.acctEmail, this.headers(newMsg), data, { isDraft: this.isDraft });
-    } else { // openpgp
-      const attachments: Attachment[] = this.isDraft ? [] : await this.view.attachmentsModule.attachment.collectEncryptAttachments(pubs);
-      const encrypted = await this.encryptDataArmor(Buf.fromUtfStr(newMsg.plaintext), undefined, pubs, signingPrv);
-      return await SendableMsg.createInlineArmored(this.acctEmail, this.headers(newMsg), Buf.fromUint8(encrypted.data).toUtfStr(), attachments, { isDraft: this.isDraft });
-    }
-  };
-
-  private sendableRichTextMsg = async (newMsg: NewMsgData, pubs: PubkeyResult[], signingPrv?: Key) => {
-    // todo: pubs.type === 'x509' #4047
-    const plainAttachments = this.isDraft ? [] : await this.view.attachmentsModule.attachment.collectAttachments();
-    if (this.isDraft) { // this patch is needed as gmail makes it hard (or impossible) to render messages saved as https://tools.ietf.org/html/rfc3156
-      const pgpMimeToEncrypt = await Mime.encode({ 'text/plain': newMsg.plaintext, 'text/html': newMsg.plainhtml }, { Subject: newMsg.subject }, plainAttachments);
-      const { data: encrypted } = await this.encryptDataArmor(Buf.fromUtfStr(pgpMimeToEncrypt), undefined, pubs, signingPrv);
-      return await SendableMsg.createInlineArmored(this.acctEmail, this.headers(newMsg), Buf.fromUint8(encrypted).toUtfStr(), plainAttachments, { isDraft: this.isDraft });
-    }
-    const pgpMimeToEncrypt = await Mime.encode({ 'text/plain': newMsg.plaintext, 'text/html': newMsg.plainhtml }, { Subject: newMsg.subject }, plainAttachments);
-    // todo: don't armor S/MIME and decide what to do with attachments #4046 and #4047
-    const { data: encrypted } = await this.encryptDataArmor(Buf.fromUtfStr(pgpMimeToEncrypt), undefined, pubs, signingPrv);
-    const attachments = this.createPgpMimeAttachments(encrypted);
-    return await SendableMsg.createPgpMime(this.acctEmail, this.headers(newMsg), attachments, { isDraft: this.isDraft });
+    const encryptedMessage = await SmimeKey.encryptMessage({ pubkeys: x509certs, data: mimeData, armor: false });
+    return await SendableMsg.createSMimeEncrypted(this.acctEmail, this.headers(newMsg), encryptedMessage.data, { isDraft: this.isDraft });
   };
 
   private createPgpMimeAttachments = (data: Uint8Array) => {
