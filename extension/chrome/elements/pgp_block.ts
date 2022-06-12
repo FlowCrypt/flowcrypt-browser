@@ -16,7 +16,7 @@ import { PgpBlockViewSignatureModule } from './pgp_block_modules/pgp-block-signa
 import { Ui } from '../../js/common/browser/ui.js';
 import { View } from '../../js/common/view.js';
 import { PubLookup } from '../../js/common/api/pub-lookup.js';
-import { OrgRules } from '../../js/common/org-rules.js';
+import { ClientConfiguration } from '../../js/common/client-configuration.js';
 import { AcctStore } from '../../js/common/platform/store/acct-store.js';
 import { ContactStore } from '../../js/common/platform/store/contact-store.js';
 import { KeyUtil } from '../../js/common/core/crypto/key.js';
@@ -36,7 +36,7 @@ export class PgpBlockView extends View {
   };
 
   public gmail: Gmail;
-  public orgRules!: OrgRules;
+  public clientConfiguration!: ClientConfiguration;
   public pubLookup!: PubLookup;
 
   public readonly attachmentsModule: PgpBlockViewAttachmentsModule;
@@ -90,8 +90,8 @@ export class PgpBlockView extends View {
   public render = async () => {
     const storage = await AcctStore.get(this.acctEmail, ['setup_done', 'fesUrl']);
     this.fesUrl = storage.fesUrl;
-    this.orgRules = await OrgRules.newInstance(this.acctEmail);
-    this.pubLookup = new PubLookup(this.orgRules);
+    this.clientConfiguration = await ClientConfiguration.newInstance(this.acctEmail);
+    this.pubLookup = new PubLookup(this.clientConfiguration);
     const scopes = await AcctStore.getScopes(this.acctEmail);
     this.decryptModule.canReadEmails = scopes.modify;
     if (storage.setup_done) {

@@ -16,7 +16,7 @@ import { GoogleAuth } from './api/email-provider/gmail/google-auth.js';
 import { Lang } from './lang.js';
 import { KeyInfoWithIdentityAndOptionalPp, Key, KeyUtil } from './core/crypto/key.js';
 import { PgpPwd } from './core/crypto/pgp/pgp-password.js';
-import { OrgRules } from './org-rules.js';
+import { ClientConfiguration } from './client-configuration.js';
 import { Xss } from './platform/xss.js';
 import { storageLocalGetAll } from './browser/chrome.js';
 import { AccountIndex, AcctStore, SendAsAlias } from './platform/store/acct-store.js';
@@ -163,7 +163,7 @@ export class Settings {
     for (const ki of newAccountPrivateKeys) {
       await KeyStore.add(newAcctEmail, ki.private); // merge kept keys with newAccountPrivateKeys
     }
-    const newRules = await OrgRules.newInstance(newAcctEmail);
+    const newRules = await ClientConfiguration.newInstance(newAcctEmail);
     if (!newRules.forbidStoringPassPhrase()) {
       for (const ki of oldAcctPassPhrases) {
         await PassphraseStore.set('local', newAcctEmail, ki, ki.passphrase);
@@ -279,12 +279,12 @@ export class Settings {
     return await retryCb();
   };
 
-  public static forbidAndRefreshPageIfCannot = async (action: 'CREATE_KEYS' | 'BACKUP_KEYS', orgRules: OrgRules) => {
-    if (action === 'CREATE_KEYS' && !orgRules.canCreateKeys()) {
+  public static forbidAndRefreshPageIfCannot = async (action: 'CREATE_KEYS' | 'BACKUP_KEYS', clientConfiguration: ClientConfiguration) => {
+    if (action === 'CREATE_KEYS' && !clientConfiguration.canCreateKeys()) {
       await Ui.modal.error(Lang.setup.creatingKeysNotAllowedPleaseImport);
       window.location.reload();
       throw new Error('creating_keys_not_allowed_please_import');
-    } else if (action === 'BACKUP_KEYS' && !orgRules.canBackupKeys()) {
+    } else if (action === 'BACKUP_KEYS' && !clientConfiguration.canBackupKeys()) {
       await Ui.modal.error(Lang.setup.keyBackupsNotAllowed);
       window.location.reload();
       throw new Error('key_backups_not_allowed');
@@ -382,8 +382,8 @@ export class Settings {
   };
 
   public static resetAccount = async (acctEmail: string): Promise<boolean> => {
-    const orgRules = await OrgRules.newInstance(acctEmail);
-    if (orgRules.usesKeyManager()) {
+    const clientConfiguration = await ClientConfiguration.newInstance(acctEmail);
+    if (clientConfiguration.usesKeyManager()) {
       if (await Ui.modal.confirm(Lang.setup.confirmResetAcctForEkm)) {
         await Settings.acctStorageReset(acctEmail);
         return true;

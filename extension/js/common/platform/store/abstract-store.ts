@@ -4,17 +4,17 @@
 
 import { KeyInfoWithIdentity, StoredKeyInfo } from '../../core/crypto/key.js';
 import { Dict, emailKeyIndex } from '../../core/common.js';
-import { DomainRulesJson } from '../../org-rules.js';
+import { ClientConfigurationJson } from '../../client-configuration.js';
 import { GmailRes } from '../../api/email-provider/gmail/gmail-parser.js';
 import { AcctStoreDict, AccountIndex } from './acct-store.js';
 import { UnreportableError, Catch } from '../catch.js';
 import { StoredAdminCode } from './global-store.js';
 
-type SerializableTypes = FlatTypes | string[] | number[] | boolean[] | DomainRulesJson;
+type SerializableTypes = FlatTypes | string[] | number[] | boolean[] | ClientConfigurationJson;
 export type StorageType = 'session' | 'local';
 export type FlatTypes = null | undefined | number | string | boolean;
 type Storable = FlatTypes | string[] | StoredKeyInfo[] | KeyInfoWithIdentity[] | Dict<StoredAdminCode>
-  | GmailRes.OpenId | DomainRulesJson;
+  | GmailRes.OpenId | ClientConfigurationJson;
 export type Serializable = SerializableTypes | SerializableTypes[] | Dict<SerializableTypes> | Dict<SerializableTypes>[];
 
 export interface RawStore {

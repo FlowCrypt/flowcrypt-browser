@@ -33,8 +33,8 @@ export class SetupWithEmailKeyManagerModule {
 
   public setupWithEkmThenRenderSetupDone = async (passphrase: string) => {
     const setupOptions: SetupOptions = {
-      passphrase_save: this.view.orgRules.mustAutogenPassPhraseQuietly() || Boolean($('#step_2_ekm_choose_pass_phrase .input_passphrase_save').prop('checked')),
-      submit_main: this.view.orgRules.canSubmitPubToAttester(),
+      passphrase_save: this.view.clientConfiguration.mustAutogenPassPhraseQuietly() || Boolean($('#step_2_ekm_choose_pass_phrase .input_passphrase_save').prop('checked')),
+      submit_main: this.view.clientConfiguration.canSubmitPubToAttester(),
       submit_all: false,
       passphrase
     };
@@ -43,7 +43,7 @@ export class SetupWithEmailKeyManagerModule {
       if (privateKeys.length) {
         // keys already exist on keyserver, auto-import
         await processAndStoreKeysFromEkmLocally(this.view.acctEmail, privateKeys, setupOptions);
-      } else if (this.view.orgRules.canCreateKeys()) {
+      } else if (this.view.clientConfiguration.canCreateKeys()) {
         // generate keys on client and store them on key manager
         await this.autoGenerateKeyAndStoreBothLocallyAndToEkm(setupOptions);
       } else {
@@ -56,7 +56,7 @@ export class SetupWithEmailKeyManagerModule {
       await this.view.setupRender.renderSetupDone();
     } catch (e) {
       if (ApiErr.isNetErr(e) && await Api.isInternetAccessible()) { // frendly message when key manager is down, helpful during initial infrastructure setup
-        e.message = `FlowCrypt Email Key Manager at ${this.view.orgRules.getKeyManagerUrlForPrivateKeys()} cannot be reached. `
+        e.message = `FlowCrypt Email Key Manager at ${this.view.clientConfiguration.getKeyManagerUrlForPrivateKeys()} cannot be reached. `
           + "If your organization requires a VPN, please connect to it. Else, please inform your network admin.";
       }
       throw e;
@@ -64,7 +64,7 @@ export class SetupWithEmailKeyManagerModule {
   };
 
   private autoGenerateKeyAndStoreBothLocallyAndToEkm = async (setupOptions: SetupOptions) => {
-    const keygenAlgo = this.view.orgRules.getEnforcedKeygenAlgo();
+    const keygenAlgo = this.view.clientConfiguration.getEnforcedKeygenAlgo();
     if (!keygenAlgo) {
       const notSupportedErr = 'Combination of org rules not yet supported: PRV_AUTOIMPORT_OR_AUTOGEN cannot yet be used without enforce_keygen_algo.';
       await Ui.modal.error(`${notSupportedErr}\n\nPlease ${Lang.general.contactMinimalSubsentence(this.view.isFesUsed())} to add support.`);
@@ -72,7 +72,7 @@ export class SetupWithEmailKeyManagerModule {
       return;
     }
     const { full_name } = await AcctStore.get(this.view.acctEmail, ['full_name']);
-    const expireInMonths = this.view.orgRules.getEnforcedKeygenExpirationMonths();
+    const expireInMonths = this.view.clientConfiguration.getEnforcedKeygenExpirationMonths();
     const pgpUids = [{ name: full_name || '', email: this.view.acctEmail }];
     const generated = await OpenPGPKey.create(pgpUids, keygenAlgo, setupOptions.passphrase, expireInMonths);
     const decryptablePrv = await KeyUtil.parse(generated.private);

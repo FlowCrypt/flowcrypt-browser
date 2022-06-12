@@ -395,7 +395,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
 
     ava.default('mail.google.com - fetching new private key -- asking for pass phrase', testWithBrowser('ci.tests.gmail', async (t, browser) => {
       const dbPage = await browser.newPage(t, TestUrls.extension('chrome/dev/ci_unit_test.htm'));
-      // forge OrgRules to wire the key manager
+      // forge ClientConfiguration to wire the key manager
       await dbPage.page.evaluate(async () => {
         await (window as any).AcctStore.set('ci.tests.gmail@flowcrypt.dev', {
           flags: ['PRV_AUTOIMPORT_OR_AUTOGEN'], // todo: ATTESTER_SUBMIT, FORBID_STORING_PASSPHRASE

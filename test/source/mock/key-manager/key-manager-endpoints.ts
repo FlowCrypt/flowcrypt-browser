@@ -221,7 +221,7 @@ export const liveKeyManagerEndpoints: HandlersDefinition = {
 };
 
 export const mockKeyManagerEndpoints: HandlersDefinition = {
-  '/flowcrypt-email-key-manager/keys/private': async ({ body }, req) => {
+  '/flowcrypt-email-key-manager/v1/keys/private': async ({ body }, req) => {
     const acctEmail = oauth.checkAuthorizationHeaderWithIdToken(req.headers.authorization);
     if (isGet(req)) {
       if (acctEmail === 'wkd@google.mock.flowcryptlocal.test:8001') {
@@ -230,7 +230,7 @@ export const mockKeyManagerEndpoints: HandlersDefinition = {
       if (acctEmail === 'get.key@key-manager-autogen.flowcrypt.test') {
         return { privateKeys: [{ decryptedPrivateKey: testConstants.existingPrv }] };
       }
-      if (acctEmail === 'get.key@no-submit-org-rule.key-manager-autogen.flowcrypt.test') {
+      if (acctEmail === 'get.key@no-submit-client-configuration.key-manager-autogen.flowcrypt.test') {
         return { privateKeys: [{ decryptedPrivateKey: prvNoSubmit }] };
       }
       if (acctEmail === 'two.keys@key-manager-autogen.flowcrypt.test') {
@@ -272,7 +272,7 @@ export const mockKeyManagerEndpoints: HandlersDefinition = {
       if (acctEmail === 'get.error@key-manager-autogen.flowcrypt.test') {
         throw new Error('Intentional error for get.error to test client behavior');
       }
-      throw new HttpClientErr(`Unexpectedly calling mockKeyManagerEndpoints:/keys/private GET with acct ${acctEmail}`);
+      throw new HttpClientErr(`Unexpectedly calling mockKeyManagerEndpoints:/v1/keys/private GET with acct ${acctEmail}`);
     }
     if (isPut(req)) {
       const { decryptedPrivateKey, publicKey } = body as Dict<string>;
@@ -322,7 +322,7 @@ export const mockKeyManagerEndpoints: HandlersDefinition = {
         MOCK_KM_LAST_INSERTED_KEY[acctEmail] = { decryptedPrivateKey, publicKey };
         return {};
       }
-      throw new HttpClientErr(`Unexpectedly calling mockKeyManagerEndpoints:/keys/private PUT with acct ${acctEmail}`);
+      throw new HttpClientErr(`Unexpectedly calling mockKeyManagerEndpoints:/v1/keys/private PUT with acct ${acctEmail}`);
     }
     throw new HttpClientErr(`Unknown method: ${req.method}`);
   }

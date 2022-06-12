@@ -426,14 +426,14 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         { isSavePassphraseChecked: false, isSavePassphraseHidden: false });
     }));
 
-    ava.default('has.pub@org-rules-test - no backup, no keygen', testWithBrowser(undefined, async (t, browser) => {
-      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'has.pub@org-rules-test.flowcrypt.test');
-      await SetupPageRecipe.manualEnter(settingsPage, 'has.pub.orgrulestest', { noPrvCreateOrgRule: true, enforceAttesterSubmitOrgRule: true },
+    ava.default('has.pub@client-configuration-test.flowcrypt.test - no backup, no keygen', testWithBrowser(undefined, async (t, browser) => {
+      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'has.pub@client-configuration-test.flowcrypt.test');
+      await SetupPageRecipe.manualEnter(settingsPage, 'has.pub.client.configuration.test', { noPrvCreateClientConfiguration: true, enforceAttesterSubmitClientConfiguration: true },
         { isSavePassphraseChecked: false, isSavePassphraseHidden: false });
       await settingsPage.waitAll(['@action-show-encrypted-inbox', '@action-open-security-page']);
       await Util.sleep(1);
       await settingsPage.notPresent(['@action-open-backup-page']);
-      const { cryptup_haspuborgrulestestflowcrypttest_keys: keys } = await settingsPage.getFromLocalStorage(['cryptup_haspuborgrulestestflowcrypttest_keys']);
+      const { cryptup_haspubclientconfigurationtestflowcrypttest_keys: keys } = await settingsPage.getFromLocalStorage(['cryptup_haspubclientconfigurationtestflowcrypttest_keys']);
       const ki = keys as KeyInfoWithIdentity[];
       expect(ki.length).to.equal(1);
       expect(ki[0].private).to.include('PGP PRIVATE KEY');
@@ -444,19 +444,19 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       expect(ki[0].public).to.not.include('Comment');
     }));
 
-    ava.default('no.pub@org-rules-test - no backup, no keygen, enforce attester submit with submit err', testWithBrowser(undefined, async (t, browser) => {
-      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'no.pub@org-rules-test.flowcrypt.test');
-      await SetupPageRecipe.manualEnter(settingsPage, 'no.pub.orgrulestest', { noPrvCreateOrgRule: true, enforceAttesterSubmitOrgRule: true, fillOnly: true },
+    ava.default('no.pub@client-configurations-test - no backup, no keygen, enforce attester submit with submit err', testWithBrowser(undefined, async (t, browser) => {
+      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'no.pub@client-configuration-test.flowcrypt.test');
+      await SetupPageRecipe.manualEnter(settingsPage, 'no.pub.client.configuration', { noPrvCreateClientConfiguration: true, enforceAttesterSubmitClientConfiguration: true, fillOnly: true },
         { isSavePassphraseChecked: false, isSavePassphraseHidden: false });
       await settingsPage.waitAndClick('@input-step2bmanualenter-save');
       await settingsPage.waitAll(['@container-overlay-prompt-text', '@action-overlay-retry']);
       const renderedErr = await settingsPage.read('@container-overlay-prompt-text');
       expect(renderedErr).to.contain(`Failed to submit to Attester`);
-      expect(renderedErr).to.contain(`Could not find LDAP pubkey on a LDAP-only domain for email no.pub@org-rules-test.flowcrypt.test on server keys.flowcrypt.test`);
+      expect(renderedErr).to.contain(`Could not find LDAP pubkey on a LDAP-only domain for email no.pub@client-configuration-test.flowcrypt.test on server keys.flowcrypt.test`);
     }));
 
-    ava.default('user@no-submit-org-rule.flowcrypt.test - do not submit to attester', testWithBrowser(undefined, async (t, browser) => {
-      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'user@no-submit-org-rule.flowcrypt.test');
+    ava.default('user@no-submit-client-configuration.flowcrypt.test - do not submit to attester', testWithBrowser(undefined, async (t, browser) => {
+      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'user@no-submit-client-configuration.flowcrypt.test');
       await SetupPageRecipe.manualEnter(settingsPage, 'flowcrypt.test.key.used.pgp', { noPubSubmitRule: true },
         { isSavePassphraseChecked: false, isSavePassphraseHidden: false });
       await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
@@ -465,8 +465,8 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       await attesterFrame.waitAndRespondToModal('error', 'confirm', 'Disallowed by your organisation rules');
     }));
 
-    ava.default('setup - manualEnter honors DEFAULT_REMEMBER_PASS_PHRASE OrgRule', testWithBrowser(undefined, async (t, browser) => {
-      const acctEmail = 'user@default-remember-passphrase-org-rule.flowcrypt.test';
+    ava.default('setup - manualEnter honors DEFAULT_REMEMBER_PASS_PHRASE ClientConfiguration', testWithBrowser(undefined, async (t, browser) => {
+      const acctEmail = 'user@default-remember-passphrase-client-configuration.flowcrypt.test';
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
       await SetupPageRecipe.manualEnter(settingsPage, 'unused', {
         submitPubkey: false,
@@ -478,16 +478,16 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
           longid: '715EDCDC7939A8F7',
         }
       }, { isSavePassphraseChecked: true, isSavePassphraseHidden: false });
-      const { cryptup_userdefaultrememberpassphraseorgruleflowcrypttest_passphrase_715EDCDC7939A8F7: savedPassphrase }
-        = await settingsPage.getFromLocalStorage(['cryptup_userdefaultrememberpassphraseorgruleflowcrypttest_passphrase_715EDCDC7939A8F7']);
+      const { cryptup_userdefaultrememberpassphraseclientconfigurationflowcrypttest_passphrase_715EDCDC7939A8F7: savedPassphrase }
+        = await settingsPage.getFromLocalStorage(['cryptup_userdefaultrememberpassphraseclientconfigurationflowcrypttest_passphrase_715EDCDC7939A8F7']);
       expect(savedPassphrase).to.equal('1234');
       await settingsPage.close();
     }));
 
-    ava.default('user@no-search-domains-org-rule.flowcrypt.test - do not search attester for recipients on particular domains', testWithBrowser(undefined, async (t, browser) => {
+    ava.default('user@no-search-domains-client-configuration.flowcrypt.test - do not search attester for recipients on particular domains', testWithBrowser(undefined, async (t, browser) => {
       // disallowed searching attester for pubkeys on "flowcrypt.com" domain
       // below we search for human@flowcrypt.com which normally has pubkey on attester, but none should be found due to the rule
-      const acct = 'user@no-search-domains-org-rule.flowcrypt.test';
+      const acct = 'user@no-search-domains-client-configuration.flowcrypt.test';
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
       await SetupPageRecipe.manualEnter(settingsPage, 'flowcrypt.test.key.used.pgp');
       const composePage = await ComposePageRecipe.openStandalone(t, browser, acct);
@@ -497,10 +497,34 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       await composePage.waitAll('@input-password');
     }));
 
-    ava.default('user@no-search-wildcard-domains-org-rule.flowcrypt.test - do not search attester for recipients on any domain', testWithBrowser(undefined, async (t, browser) => {
+    ava.default('user@only-allow-some-domains-client-configuration.flowcrypt.test - search attester for recipients only on particular domains', testWithBrowser(undefined, async (t, browser) => {
+      // disallow_attester_search_for_domains is not respected if allow_attester_search_only_for_domains is set
+      // searching attester for pubkeys only on "flowcrypt.com" domain
+      const acct = 'user@only-allow-some-domains-client-configuration.flowcrypt.test';
+      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
+      await SetupPageRecipe.manualEnter(settingsPage, 'flowcrypt.test.key.used.pgp');
+      const composePage = await ComposePageRecipe.openStandalone(t, browser, acct);
+      await ComposePageRecipe.fillMsg(composePage, { to: 'mock.only.pubkey@flowcrypt.com,mock.only.pubkey@other.com' }, 'flowcrypt domain should be found. other domains should not be found');
+      await composePage.waitForContent('.email_address.has_pgp', 'mock.only.pubkey@flowcrypt.com');
+      await composePage.waitForContent('.email_address.no_pgp', 'mock.only.pubkey@other.com');
+      await composePage.waitAll('@input-password');
+    }));
+
+    ava.default('user@no-allow-domains-client-configuration.flowcrypt.test - search attester for recipients doesn\'t work on any domains', testWithBrowser(undefined, async (t, browser) => {
+      // as `allow_attester_search_only_for_domains: []` is set, attester search shouldn't work for any domains
+      const acct = 'user@no-allow-domains-client-configuration.flowcrypt.test';
+      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
+      await SetupPageRecipe.manualEnter(settingsPage, 'flowcrypt.test.key.used.pgp');
+      const composePage = await ComposePageRecipe.openStandalone(t, browser, acct);
+      await ComposePageRecipe.fillMsg(composePage, { to: 'mock.only.pubkey@flowcrypt.com' }, 'all domains should not be found');
+      await composePage.waitForContent('.email_address.no_pgp', 'mock.only.pubkey@flowcrypt.com');
+      await composePage.waitAll('@input-password');
+    }));
+
+    ava.default('user@no-search-wildcard-domains-client-configuration.flowcrypt.test - do not search attester for recipients on any domain', testWithBrowser(undefined, async (t, browser) => {
       // disallowed searching attester for pubkeys on * domain
       // below we search for mock.only.pubkey@other.com which normally has pubkey on attester, but none should be found due to the rule
-      const acct = 'user@no-search-wildcard-domains-org-rule.flowcrypt.test';
+      const acct = 'user@no-search-wildcard-domains-client-configuration.flowcrypt.test';
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
       await SetupPageRecipe.manualEnter(settingsPage, 'flowcrypt.test.key.used.pgp');
       const composePage = await ComposePageRecipe.openStandalone(t, browser, acct);
@@ -573,8 +597,8 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       await settingsPage.waitAndRespondToModal('error', 'confirm', 'Keys for your account were not set up yet - please ask your systems administrator');
     }));
 
-    ava.default('get.key@no-submit-org-rule.key-manager-autogen.flowcrypt.test - automatic setup with key found on key manager and no submit rule', testWithBrowser(undefined, async (t, browser) => {
-      const acct = 'get.key@no-submit-org-rule.key-manager-autogen.flowcrypt.test';
+    ava.default('get.key@no-submit-client-configuration.key-manager-autogen.flowcrypt.test - automatic setup with key found on key manager and no submit rule', testWithBrowser(undefined, async (t, browser) => {
+      const acct = 'get.key@no-submit-client-configuration.key-manager-autogen.flowcrypt.test';
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
       await SetupPageRecipe.autoSetupWithEKM(settingsPage);
       await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
@@ -619,7 +643,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       await SetupPageRecipe.autoSetupWithEKM(settingsPage, {
         expectErrView: {
           title: 'Server responded with an unexpected error.',
-          text: '500 when GET-ing https://localhost:8001/flowcrypt-email-key-manager/keys/private (no body): -> Intentional error for get.error to test client behavior',
+          text: '500 when GET-ing https://localhost:8001/flowcrypt-email-key-manager/v1/keys/private (no body): -> Intentional error for get.error to test client behavior',
         }
       });
     }));
@@ -634,7 +658,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       await settingsPage.waitAll('@container-overlay-details');
       await Util.sleep(0.5);
       const details = await settingsPage.read('@container-overlay-details');
-      expect(details).to.contain('500 when PUT-ing https://localhost:8001/flowcrypt-email-key-manager/keys/private string: decryptedPrivateKey,publicKey -> Intentional error for put.error user to test client behavior');
+      expect(details).to.contain('500 when PUT-ing https://localhost:8001/flowcrypt-email-key-manager/v1/keys/private string: decryptedPrivateKey,publicKey -> Intentional error for put.error user to test client behavior');
       expect(details).to.not.contain('PRIVATE KEY');
       expect(details).to.not.contain('<REDACTED:');
     }));
@@ -660,7 +684,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
     }));
 
     ava.default(
-      'expire@key-manager-keygen-expiration.flowcrypt.test - OrgRule enforce_keygen_expire_months: 1',
+      'expire@key-manager-keygen-expiration.flowcrypt.test - ClientConfiguration enforce_keygen_expire_months: 1',
       testWithBrowser(undefined, async (t, browser) => {
         const acct = 'expire@key-manager-keygen-expiration.flowcrypt.test';
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
@@ -693,7 +717,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         await settingsPage.waitAll('@container-overlay-details');
         await Util.sleep(0.5);
         const details = await settingsPage.read('@container-overlay-details');
-        expect(details).to.contain('405 when PUT-ing https://localhost:8001/flowcrypt-email-key-manager/keys/private string: ' +
+        expect(details).to.contain('405 when PUT-ing https://localhost:8001/flowcrypt-email-key-manager/v1/keys/private string: ' +
           'decryptedPrivateKey,publicKey -> No key has been generated for reject.client.keypair@key-manager-autogen.flowcrypt.test yet');
         expect(details).to.not.contain('PRIVATE KEY');
       })

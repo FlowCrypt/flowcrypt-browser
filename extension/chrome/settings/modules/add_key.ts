@@ -16,7 +16,7 @@ import { initPassphraseToggle } from '../../../js/common/ui/passphrase-ui.js';
 import { PassphraseStore } from '../../../js/common/platform/store/passphrase-store.js';
 import { KeyStore } from '../../../js/common/platform/store/key-store.js';
 import { KeyUtil, UnexpectedKeyTypeError } from '../../../js/common/core/crypto/key.js';
-import { OrgRules } from '../../../js/common/org-rules.js';
+import { ClientConfiguration } from '../../../js/common/client-configuration.js';
 import { StorageType } from '../../../js/common/platform/store/abstract-store.js';
 import { Lang } from '../../../js/common/lang.js';
 import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
@@ -28,7 +28,7 @@ View.run(class AddKeyView extends View {
   private readonly parentTabId: string;
   private readonly keyImportUi = new KeyImportUi({ rejectKnown: true });
   private readonly gmail: Gmail;
-  private orgRules!: OrgRules;
+  private clientConfiguration!: ClientConfiguration;
 
   constructor() {
     super();
@@ -41,12 +41,12 @@ View.run(class AddKeyView extends View {
   public render = async () => {
     const storage = await AcctStore.get(this.acctEmail, ['fesUrl']);
     this.fesUrl = storage.fesUrl;
-    this.orgRules = await OrgRules.newInstance(this.acctEmail);
-    if (!this.orgRules.forbidStoringPassPhrase()) {
+    this.clientConfiguration = await ClientConfiguration.newInstance(this.acctEmail);
+    if (!this.clientConfiguration.forbidStoringPassPhrase()) {
       $('.input_passphrase_save_label').removeClass('hidden');
       $('.input_passphrase_save').prop('checked', true);
     }
-    if (this.orgRules.usesKeyManager()) {
+    if (this.clientConfiguration.usesKeyManager()) {
       Xss.sanitizeRender('body', `
       <br><br>
       <div data-test="container-err-text">Please contact your IT staff if you wish to update your keys.</div>
@@ -54,7 +54,7 @@ View.run(class AddKeyView extends View {
       `);
     } else {
       $('#content').show();
-      if (!this.orgRules.forbidStoringPassPhrase()) {
+      if (!this.clientConfiguration.forbidStoringPassPhrase()) {
         $('.input_passphrase_save').prop('checked', true).prop('disabled', false);
       }
       await initPassphraseToggle(['input_passphrase']);
@@ -101,7 +101,7 @@ View.run(class AddKeyView extends View {
       const checked = await this.keyImportUi.checkPrv(this.acctEmail, String($('.input_private_key').val()), String($('.input_passphrase').val()));
       if (checked) {
         await KeyStore.add(this.acctEmail, checked.encrypted); // resulting new_key checked above
-        const storageType: StorageType = ($('.input_passphrase_save').prop('checked') && !this.orgRules.forbidStoringPassPhrase()) ? 'local' : 'session';
+        const storageType: StorageType = ($('.input_passphrase_save').prop('checked') && !this.clientConfiguration.forbidStoringPassPhrase()) ? 'local' : 'session';
         await PassphraseStore.set(storageType, this.acctEmail, { longid: KeyUtil.getPrimaryLongid(checked.encrypted) }, checked.passphrase);
         BrowserMsg.send.reload(this.parentTabId, { advanced: true });
       }

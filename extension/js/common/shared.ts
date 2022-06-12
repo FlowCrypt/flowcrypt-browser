@@ -6,7 +6,7 @@ import { SetupOptions } from '../../chrome/settings/setup.js';
 import { Buf } from './core/buf.js';
 import { EmailParts } from './core/common.js';
 import { Key, KeyUtil, PubkeyInfo } from './core/crypto/key.js';
-import { OrgRules } from './org-rules.js';
+import { ClientConfiguration } from './client-configuration.js';
 import { AcctStore } from './platform/store/acct-store.js';
 import { ContactStore } from './platform/store/contact-store.js';
 import { KeyStore } from './platform/store/key-store.js';
@@ -41,12 +41,12 @@ export const saveFetchedPubkeysIfNewerThanInStorage = async ({ email, pubkeys }:
   return await compareAndSavePubkeysToStorage({ email }, pubkeys, storedContact?.sortedPubkeys ?? []);
 };
 
-// todo: where to take acctEmail and orgRules
+// todo: where to take acctEmail and clientConfiguration
 export const saveKeysAndPassPhrase = async (acctEmail: string, prvs: Key[], options: SetupOptions) => {
   for (const prv of prvs) {
     await KeyStore.add(acctEmail, prv);
-    const orgRules = await OrgRules.newInstance(acctEmail);
-    await PassphraseStore.set((options.passphrase_save && !orgRules.forbidStoringPassPhrase()) ? 'local' : 'session',
+    const clientConfiguration = await ClientConfiguration.newInstance(acctEmail);
+    await PassphraseStore.set((options.passphrase_save && !clientConfiguration.forbidStoringPassPhrase()) ? 'local' : 'session',
       acctEmail, { longid: KeyUtil.getPrimaryLongid(prv) }, options.passphrase);
   }
   const { sendAs } = await AcctStore.get(acctEmail, ['sendAs']);

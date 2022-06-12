@@ -7,13 +7,13 @@ import { Url } from '../../js/common/core/common.js';
 import { ApiErr } from '../../js/common/api/shared/api-error.js';
 import { Assert } from '../../js/common/assert.js';
 import { Catch } from '../../js/common/platform/catch.js';
-import { KeyInfoWithIdentity, KeyUtil } from '../../js/common/core/crypto/key.js';
+import { Key, KeyInfoWithIdentity, KeyUtil } from '../../js/common/core/crypto/key.js';
 import { Gmail } from '../../js/common/api/email-provider/gmail/gmail.js';
 import { Google } from '../../js/common/api/email-provider/gmail/google.js';
 import { KeyImportUi } from '../../js/common/ui/key-import-ui.js';
 import { Lang } from '../../js/common/lang.js';
 import { opgp } from '../../js/common/core/crypto/pgp/openpgpjs-custom.js';
-import { OrgRules } from '../../js/common/org-rules.js';
+import { ClientConfiguration } from '../../js/common/client-configuration.js';
 import { Settings } from '../../js/common/settings.js';
 import { SetupCreateKeyModule } from './setup/setup-create-key.js';
 import { SetupImportKeyModule } from './setup/setup-import-key.js';
@@ -31,6 +31,8 @@ import { KeyManager } from '../../js/common/api/key-server/key-manager.js';
 import { SetupWithEmailKeyManagerModule } from './setup/setup-key-manager-autogen.js';
 import { shouldPassPhraseBeHidden } from '../../js/common/ui/passphrase-ui.js';
 import Swal from 'sweetalert2';
+import { PassphraseStore } from '../../js/common/platform/store/passphrase-store.js';
+import { ContactStore } from '../../js/common/platform/store/contact-store.js';
 
 export interface SetupOptions {
   passphrase: string;
@@ -58,7 +60,7 @@ export class SetupView extends View {
   public tabId!: string;
   public scopes!: Scopes;
   public storage!: AcctStoreDict;
-  public orgRules!: OrgRules;
+  public clientConfiguration!: ClientConfiguration;
   public pubLookup!: PubLookup;
   public keyManager: KeyManager | undefined; // not set if no url in org rules
 
@@ -108,35 +110,35 @@ export class SetupView extends View {
     this.storage = await AcctStore.get(this.acctEmail, ['setup_done', 'email_provider', 'fesUrl']);
     this.scopes = await AcctStore.getScopes(this.acctEmail);
     this.storage.email_provider = this.storage.email_provider || 'gmail';
-    this.orgRules = await OrgRules.newInstance(this.acctEmail);
-    if (this.orgRules.shouldHideArmorMeta() && typeof opgp !== 'undefined') {
+    this.clientConfiguration = await ClientConfiguration.newInstance(this.acctEmail);
+    if (this.clientConfiguration.shouldHideArmorMeta() && typeof opgp !== 'undefined') {
       opgp.config.show_comment = false;
       opgp.config.show_version = false;
     }
-    this.pubLookup = new PubLookup(this.orgRules);
-    if (this.orgRules.usesKeyManager() && this.idToken) {
-      this.keyManager = new KeyManager(this.orgRules.getKeyManagerUrlForPrivateKeys()!);
+    this.pubLookup = new PubLookup(this.clientConfiguration);
+    if (this.clientConfiguration.usesKeyManager() && this.idToken) {
+      this.keyManager = new KeyManager(this.clientConfiguration.getKeyManagerUrlForPrivateKeys()!);
     }
-    if (!this.orgRules.canCreateKeys()) {
+    if (!this.clientConfiguration.canCreateKeys()) {
       const forbidden = `${Lang.setup.creatingKeysNotAllowedPleaseImport} <a href="${Xss.escape(window.location.href)}">Back</a>`;
       Xss.sanitizeRender('#step_2a_manual_create, #step_2_easy_generating', `<div class="aligncenter"><div class="line">${forbidden}</div></div>`);
       $('#button-go-back').remove(); // back button would allow users to choose other options (eg create - not allowed)
     }
-    if (this.orgRules.mustSubmitToAttester() || !this.orgRules.canSubmitPubToAttester()) {
+    if (this.clientConfiguration.mustSubmitToAttester() || !this.clientConfiguration.canSubmitPubToAttester()) {
       $('.remove_if_pubkey_submitting_not_user_configurable').remove();
     }
-    if (this.orgRules.forbidStoringPassPhrase()) {
+    if (this.clientConfiguration.forbidStoringPassPhrase()) {
       $('.input_passphrase_save').prop('checked', false);
     } else {
       $('.input_passphrase_save_label').removeClass('hidden');
-      if (this.orgRules.rememberPassPhraseByDefault()) {
+      if (this.clientConfiguration.rememberPassPhraseByDefault()) {
         $('.input_passphrase_save').prop('checked', true);
       }
     }
-    if (this.orgRules.getEnforcedKeygenAlgo()) {
-      $('.key_type').val(this.orgRules.getEnforcedKeygenAlgo()!).prop('disabled', true);
+    if (this.clientConfiguration.getEnforcedKeygenAlgo()) {
+      $('.key_type').val(this.clientConfiguration.getEnforcedKeygenAlgo()!).prop('disabled', true);
     }
-    if (!this.orgRules.canBackupKeys()) {
+    if (!this.clientConfiguration.canBackupKeys()) {
       $('.input_backup_inbox').prop('checked', false).prop('disabled', true);
       $('.remove_if_backup_not_allowed').remove();
     }
@@ -241,14 +243,28 @@ export class SetupView extends View {
     await AcctStore.set(this.acctEmail, { setup_date: Date.now(), setup_done: true, cryptup_enabled: true });
   };
 
+  public saveKeysAndPassPhrase = async (prvs: Key[], options: SetupOptions) => {
+    for (const prv of prvs) {
+      await KeyStore.add(this.acctEmail, prv);
+      await PassphraseStore.set((options.passphrase_save && !this.clientConfiguration.forbidStoringPassPhrase()) ? 'local' : 'session',
+        this.acctEmail, { longid: KeyUtil.getPrimaryLongid(prv) }, options.passphrase);
+    }
+    const { sendAs } = await AcctStore.get(this.acctEmail, ['sendAs']);
+    const myOwnEmailsAddrs: string[] = [this.acctEmail].concat(Object.keys(sendAs!));
+    const { full_name: name } = await AcctStore.get(this.acctEmail, ['full_name']);
+    for (const email of myOwnEmailsAddrs) {
+      await ContactStore.update(undefined, email, { name, pubkey: KeyUtil.armor(await KeyUtil.asPublicKey(prvs[0])) });
+    }
+  };
+
   public shouldSubmitPubkey = (checkboxSelector: string) => {
-    if (this.orgRules.mustSubmitToAttester() && !this.orgRules.canSubmitPubToAttester()) {
+    if (this.clientConfiguration.mustSubmitToAttester() && !this.clientConfiguration.canSubmitPubToAttester()) {
       throw new Error('Organisation rules are misconfigured: ENFORCE_ATTESTER_SUBMIT not compatible with NO_ATTESTER_SUBMIT');
     }
-    if (!this.orgRules.canSubmitPubToAttester()) {
+    if (!this.clientConfiguration.canSubmitPubToAttester()) {
       return false;
     }
-    if (this.orgRules.mustSubmitToAttester()) {
+    if (this.clientConfiguration.mustSubmitToAttester()) {
       return true;
     }
     return Boolean($(checkboxSelector).prop('checked'));
@@ -276,7 +292,7 @@ export class SetupView extends View {
     if (await shouldPassPhraseBeHidden()) {
       notePp = notePp.substring(0, 2) + notePp.substring(2, notePp.length - 2).replace(/[^ ]/g, '*') + notePp.substring(notePp.length - 2, notePp.length);
     }
-    if (!this.orgRules.usesKeyManager()) {
+    if (!this.clientConfiguration.usesKeyManager()) {
       const paperPassPhraseStickyNote = `
         <div style="font-size: 1.2em">
           Please write down your pass phrase and store it in safe place or even two.
@@ -299,8 +315,8 @@ export class SetupView extends View {
     if (!options.submit_main) {
       return;
     }
-    if (!this.orgRules.canSubmitPubToAttester()) {
-      if (!this.orgRules.usesKeyManager) { // users who use EKM get their setup automated - no need to inform them of this
+    if (!this.clientConfiguration.canSubmitPubToAttester()) {
+      if (!this.clientConfiguration.usesKeyManager) { // users who use EKM get their setup automated - no need to inform them of this
         // other users chose this manually - let them know it's not allowed
         await Ui.modal.error('Not submitting public key to Attester - disabled for your org');
       }
@@ -324,7 +340,7 @@ export class SetupView extends View {
   };
 
   private submitPubkeys = async (addresses: string[], pubkey: string) => {
-    if (this.orgRules.useLegacyAttesterSubmit()) {
+    if (this.clientConfiguration.useLegacyAttesterSubmit()) {
       // this will generally ignore errors if conflicting key already exists, except for certain orgs
       await this.pubLookup.attester.initialLegacySubmit(this.acctEmail, pubkey);
     } else {

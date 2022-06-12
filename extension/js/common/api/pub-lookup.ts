@@ -6,7 +6,7 @@ import { Attester } from './key-server/attester.js';
 import { KeyManager } from './key-server/key-manager.js';
 import { Sks } from './key-server/sks.js';
 import { Wkd } from './key-server/wkd.js';
-import { OrgRules } from '../org-rules.js';
+import { ClientConfiguration } from '../client-configuration.js';
 
 export type PubkeySearchResult = { pubkey: string | null };
 export type PubkeysSearchResult = { pubkeys: string[] };
@@ -25,11 +25,11 @@ export class PubLookup {
   public internalSks: Sks | undefined; // this is an internal company pubkey server that has SKS-like interface
 
   constructor(
-    private orgRules: OrgRules
+    private clientConfiguration: ClientConfiguration
   ) {
-    const internalSksUrl = this.orgRules.getCustomSksPubkeyServer();
-    this.attester = new Attester(orgRules);
-    this.wkd = new Wkd(this.orgRules.domainName, this.orgRules.usesKeyManager());
+    const internalSksUrl = this.clientConfiguration.getCustomSksPubkeyServer();
+    this.attester = new Attester(clientConfiguration);
+    this.wkd = new Wkd(this.clientConfiguration.domainName, this.clientConfiguration.usesKeyManager());
     if (internalSksUrl) {
       this.internalSks = new Sks(internalSksUrl);
     }
@@ -52,18 +52,4 @@ export class PubLookup {
     }
     return { pubkeys: [] };
   };
-
-  public lookupFingerprint = async (fingerprintOrLongid: string): Promise<PubkeySearchResult> => {
-    if (fingerprintOrLongid.includes('@')) {
-      throw new Error('Expected fingerprint or longid, got email');
-    }
-    if (this.internalSks) {
-      const res = await this.internalSks.lookupFingerprint(fingerprintOrLongid);
-      if (res.pubkey) {
-        return res;
-      }
-    }
-    return await this.attester.lookupFingerprint(fingerprintOrLongid);
-  };
-
 }
