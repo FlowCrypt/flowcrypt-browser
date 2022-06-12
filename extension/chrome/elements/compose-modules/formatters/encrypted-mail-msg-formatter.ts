@@ -31,57 +31,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
 
   public sendableMsgs = async (newMsg: NewMsgData, pubkeys: PubkeyResult[], signingKey?: ParsedKeyInfo): Promise<MultipleMessages> => {
     if (newMsg.pwd && !this.isDraft) {
-      // password-protected message, temporarily uploaded (already encrypted) to:
-      //    - flowcrypt.com/api (consumers and customers without on-prem setup), or
-      //    - FlowCrypt Enterprise Server (enterprise customers with on-prem setup)
-      //    It will be served to recipient through web
-      const uploadedMessageData = await this.prepareAndUploadPwdEncryptedMsg(newMsg); // encrypted for pwd only, pubkeys ignored
-      // pwdRecipients that have their personal link
-      const pwdRecipients = Object.keys(uploadedMessageData.emailToExternalIdAndUrl ?? {}).filter(email => !pubkeys.some(p => p.email === email));
-      newMsg.pwd = undefined;
-      const encryptedAttachments = await this.view.attachmentsModule.attachment.collectEncryptAttachments(pubkeys);
-      const pubkeyRecipients: { [type in RecipientType]?: EmailParts[] } = {};
-      for (const [sendingType, value] of Object.entries(newMsg.recipients)) {
-        if (Api.isRecipientHeaderNameType(sendingType)) {
-          pubkeyRecipients[sendingType] = value?.filter(emailPart => pubkeys.some(p => p.email === emailPart.email)
-            // flowcrypt.com/api doesn't return individual links unlike FES
-            // so pwd recipients without individual links will go to legacy message
-            || (uploadedMessageData.emailToExternalIdAndUrl || {})[emailPart.email] === undefined);
-        }
-      }
-      const msgs: SendableMsg[] = [];
-      // pubkey recipients get one combined message. If there are not pubkey recpients, only password - protected messages will be sent
-      if (pubkeyRecipients.to?.length || pubkeyRecipients.cc?.length || pubkeyRecipients.bcc?.length) {
-        const uniquePubkeyRecipientToAndCCs = Value.arr.unique((pubkeyRecipients.to || []).concat(pubkeyRecipients.cc || [])
-          .map(recipient => recipient.email.toLowerCase()));
-        // pubkey recipients should be able to reply to "to" and "cc" pwd recipients
-        const replyToForMessageSentToPubkeyRecipients = (newMsg.recipients.to ?? []).concat(newMsg.recipients.cc ?? [])
-          .filter(recipient => !uniquePubkeyRecipientToAndCCs.includes(recipient.email.toLowerCase()));
-        const pubkeyMsgData = {
-          ...newMsg,
-          recipients: pubkeyRecipients,
-          // brackets are required for test emails like '@test:8001'
-          replyTo: replyToForMessageSentToPubkeyRecipients.length ? `${Str.formatEmailList([newMsg.from, ...replyToForMessageSentToPubkeyRecipients], true)}`
-            : undefined
-        };
-        msgs.push(await this.sendablePubkeyMsgWithPwdLink(
-          pubkeyMsgData,
-          pubkeys,
-          { msgUrl: uploadedMessageData.url, externalId: uploadedMessageData.externalId },
-          encryptedAttachments,
-          signingKey?.key)
-        );
-      }
-      // adding individual messages for each recipient that doesn't have a pubkey
-      for (const recipientEmail of pwdRecipients) {
-        const { url, externalId } = uploadedMessageData.emailToExternalIdAndUrl![recipientEmail];
-        const foundParsedRecipient = (newMsg.recipients.to ?? []).concat(newMsg.recipients.cc ?? []).concat(newMsg.recipients.bcc ?? []).
-          find(r => r.email.toLowerCase() === recipientEmail.toLowerCase());
-        // todo: since a message is allowed to have only `cc` or `bcc` without `to`, should we preserve the original placement(s) of the recipient?
-        const individualMsgData = { ...newMsg, recipients: { to: [foundParsedRecipient ?? { email: recipientEmail }] } };
-        msgs.push(await this.sendablePwdMsg(individualMsgData, pubkeys, { msgUrl: url, externalId }, signingKey?.key));
-      }
-      return { senderKi: signingKey?.keyInfo, msgs, recipients: newMsg.recipients, attachments: encryptedAttachments };
+      return await this.formatSendablePwdMsgs(newMsg, pubkeys, signingKey);
     } else {
       const msg = await this.sendableNonPwdMsg(newMsg, pubkeys, signingKey?.key);
       return {
@@ -131,6 +81,60 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
     return await SendableMsg.createPwdMsg(this.acctEmail, this.headers(newMsg), emailIntroAndLinkBody,
       this.createPgpMimeAttachments(pubEncryptedNoAttachments).concat(encryptedAttachments),
       { isDraft: this.isDraft, externalId });
+  };
+
+  private formatSendablePwdMsgs = async (newMsg: NewMsgData, pubkeys: PubkeyResult[], signingKey?: ParsedKeyInfo) => {
+    // password-protected message, temporarily uploaded (already encrypted) to:
+    //    - flowcrypt.com/api (consumers and customers without on-prem setup), or
+    //    - FlowCrypt Enterprise Server (enterprise customers with on-prem setup)
+    //    It will be served to recipient through web
+    const uploadedMessageData = await this.prepareAndUploadPwdEncryptedMsg(newMsg); // encrypted for pwd only, pubkeys ignored
+    // pwdRecipients that have their personal link
+    const pwdRecipients = Object.keys(uploadedMessageData.emailToExternalIdAndUrl ?? {}).filter(email => !pubkeys.some(p => p.email === email));
+    newMsg.pwd = undefined;
+    const encryptedAttachments = await this.view.attachmentsModule.attachment.collectEncryptAttachments(pubkeys);
+    const pubkeyRecipients: { [type in RecipientType]?: EmailParts[] } = {};
+    for (const [sendingType, value] of Object.entries(newMsg.recipients)) {
+      if (Api.isRecipientHeaderNameType(sendingType)) {
+        pubkeyRecipients[sendingType] = value?.filter(emailPart => pubkeys.some(p => p.email === emailPart.email)
+          // flowcrypt.com/api doesn't return individual links unlike FES
+          // so pwd recipients without individual links will go to legacy message
+          || (uploadedMessageData.emailToExternalIdAndUrl || {})[emailPart.email] === undefined);
+      }
+    }
+    const msgs: SendableMsg[] = [];
+    // pubkey recipients get one combined message. If there are not pubkey recpients, only password - protected messages will be sent
+    if (pubkeyRecipients.to?.length || pubkeyRecipients.cc?.length || pubkeyRecipients.bcc?.length) {
+      const uniquePubkeyRecipientToAndCCs = Value.arr.unique((pubkeyRecipients.to || []).concat(pubkeyRecipients.cc || [])
+        .map(recipient => recipient.email.toLowerCase()));
+      // pubkey recipients should be able to reply to "to" and "cc" pwd recipients
+      const replyToForMessageSentToPubkeyRecipients = (newMsg.recipients.to ?? []).concat(newMsg.recipients.cc ?? [])
+        .filter(recipient => !uniquePubkeyRecipientToAndCCs.includes(recipient.email.toLowerCase()));
+      const pubkeyMsgData = {
+        ...newMsg,
+        recipients: pubkeyRecipients,
+        // brackets are required for test emails like '@test:8001'
+        replyTo: replyToForMessageSentToPubkeyRecipients.length ? `${Str.formatEmailList([newMsg.from, ...replyToForMessageSentToPubkeyRecipients], true)}`
+          : undefined
+      };
+      msgs.push(await this.sendablePubkeyMsgWithPwdLink(
+        pubkeyMsgData,
+        pubkeys,
+        { msgUrl: uploadedMessageData.url, externalId: uploadedMessageData.externalId },
+        encryptedAttachments,
+        signingKey?.key)
+      );
+    }
+    // adding individual messages for each recipient that doesn't have a pubkey
+    for (const recipientEmail of pwdRecipients) {
+      const { url, externalId } = uploadedMessageData.emailToExternalIdAndUrl![recipientEmail];
+      const foundParsedRecipient = (newMsg.recipients.to ?? []).concat(newMsg.recipients.cc ?? []).concat(newMsg.recipients.bcc ?? []).
+        find(r => r.email.toLowerCase() === recipientEmail.toLowerCase());
+      // todo: since a message is allowed to have only `cc` or `bcc` without `to`, should we preserve the original placement(s) of the recipient?
+      const individualMsgData = { ...newMsg, recipients: { to: [foundParsedRecipient ?? { email: recipientEmail }] } };
+      msgs.push(await this.sendablePwdMsg(individualMsgData, pubkeys, { msgUrl: url, externalId }, signingKey?.key));
+    }
+    return { senderKi: signingKey?.keyInfo, msgs, recipients: newMsg.recipients, attachments: encryptedAttachments };
   };
 
   private prepareAndUploadPwdEncryptedMsg = async (newMsg: NewMsgData): Promise<UploadedMessageData> => {
