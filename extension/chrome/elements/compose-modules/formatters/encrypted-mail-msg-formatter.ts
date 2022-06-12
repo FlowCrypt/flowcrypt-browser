@@ -94,9 +94,12 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
   };
 
   public sendableNonPwdMsg = async (newMsg: NewMsgData, pubkeys: PubkeyResult[], signingPrv?: Key): Promise<SendableMsg> => {
-    const x509certs = pubkeys.map(entry => entry.pubkey).filter(pub => pub.family === 'x509');
-    if (x509certs.length) { // s/mime
-      return await this.sendableSmimeMsg(newMsg, x509certs, signingPrv);
+    if (!this.isDraft) {
+      // S/MIME drafts are currently formatted with inline armored data
+      const x509certs = pubkeys.map(entry => entry.pubkey).filter(pub => pub.family === 'x509');
+      if (x509certs.length) { // s/mime
+        return await this.sendableSmimeMsg(newMsg, x509certs, signingPrv);
+      }
     }
     const textToEncrypt = this.richtext
       ? await Mime.encode({ 'text/plain': newMsg.plaintext, 'text/html': newMsg.plainhtml }, { Subject: newMsg.subject },
