@@ -215,6 +215,9 @@ export class ComposeSendBtnModule extends ViewModule<ComposeView> {
   };
 
   private attemptSendMsg = async (msg: SendableMsg): Promise<GmailRes.GmailMsgSend> => {
+    // if this is a password-encrypted message, then we've already shown progress for uploading to backend
+    // and this requests represents second half of uploadable effort. Else this represents all (no previous heavy requests)
+    // todo: this isn't correct when we're sending multiple messages
     const progressRepresents = this.view.pwdOrPubkeyContainerModule.isVisible() ? 'SECOND-HALF' : 'EVERYTHING';
     try {
       return await this.view.emailProvider.msgSend(msg, (p) => this.renderUploadProgress(p, progressRepresents));
@@ -222,6 +225,7 @@ export class ComposeSendBtnModule extends ViewModule<ComposeView> {
       if (msg.thread && ApiErr.isNotFound(e) && this.view.threadId) { // cannot send msg because threadId not found - eg user since deleted it
         msg.thread = undefined;
         // give it another try, this time without msg.thread
+        // todo: progressRepresents?
         return await this.attemptSendMsg(msg);
       } else {
         throw e;
@@ -245,8 +249,6 @@ export class ComposeSendBtnModule extends ViewModule<ComposeView> {
   };
 
   private doSendMsgs = async (msgObj: MultipleMessages): Promise<SendMsgsResult> => {
-    // if this is a password-encrypted message, then we've already shown progress for uploading to backend
-    // and this requests represents second half of uploadable effort. Else this represents all (no previous heavy requests)
     const sentIds: string[] = [];
     const supplementaryOperations: Promise<void>[] = [];
     const supplementaryOperationsErrors: any[] = []; // tslint:disable-line:no-unsafe-any
