@@ -12,7 +12,7 @@ import { Settings } from '../../../js/common/settings.js';
 import { KeyUtil } from '../../../js/common/core/crypto/key.js';
 import { OpenPGPKey } from '../../../js/common/core/crypto/pgp/openpgp-key.js';
 import { Lang } from '../../../js/common/lang.js';
-import { processAndStoreKeysFromEkmLocally, saveKeysAndPassPhrase } from '../../../js/common/shared.js';
+import { processAndStoreKeysFromEkmLocally, saveKeysAndPassPhrase } from '../../../js/common/helpers.js';
 
 export class SetupWithEmailKeyManagerModule {
 

@@ -11,7 +11,7 @@ import { Ui } from '../../../js/common/browser/ui.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { Key, UnexpectedKeyTypeError } from '../../../js/common/core/crypto/key.js';
 import { Lang } from '../../../js/common/lang.js';
-import { saveKeysAndPassPhrase } from '../../../js/common/shared.js';
+import { saveKeysAndPassPhrase } from '../../../js/common/helpers.js';
 
 export class SetupImportKeyModule {
 

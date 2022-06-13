@@ -11,7 +11,7 @@ import { Url } from '../../../js/common/core/common.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
 import { OpenPGPKey } from '../../../js/common/core/crypto/pgp/openpgp-key.js';
-import { saveKeysAndPassPhrase } from '../../../js/common/shared.js';
+import { saveKeysAndPassPhrase } from '../../../js/common/helpers.js';
 
 export class SetupCreateKeyModule {
 

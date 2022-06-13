@@ -12,7 +12,7 @@ import { Url } from '../../../js/common/core/common.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
 import { KeyStore } from '../../../js/common/platform/store/key-store.js';
-import { saveKeysAndPassPhrase } from '../../../js/common/shared.js';
+import { saveKeysAndPassPhrase } from '../../../js/common/helpers.js';
 
 export class SetupRecoverKeyModule {
 
