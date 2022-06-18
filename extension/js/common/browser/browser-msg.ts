@@ -18,6 +18,7 @@ import { Ui } from './ui.js';
 import { GlobalStoreDict, GlobalIndex } from '../platform/store/global-store.js';
 import { AcctStoreDict, AccountIndex } from '../platform/store/acct-store.js';
 import { saveFetchedPubkeysIfNewerThanInStorage } from '../shared.js';
+import { processAndStoreKeysFromEkmLocally } from '../helpers.js';
 
 export type GoogleAuthWindowResult$result = 'Success' | 'Denied' | 'Error' | 'Closed';
 
@@ -65,6 +66,7 @@ export namespace Bm {
   export type ShowAttachmentPreview = { iframeUrl: string };
   export type ReRenderRecipient = { email: string };
   export type SaveFetchedPubkeys = { email: string, pubkeys: string[] };
+  export type ProcessKeysFromEkm = { acctEmail: string, privateKeys: { decryptedPrivateKey: string }[] };
 
   export namespace Res {
     export type GetActiveTabInfo = { provider: 'gmail' | undefined, acctEmail: string | undefined, sameWorld: boolean | undefined };
@@ -83,13 +85,14 @@ export namespace Bm {
     export type AjaxGmailAttachmentGetChunk = { chunk: Buf };
     export type _tab_ = { tabId: string | null | undefined };
     export type SaveFetchedPubkeys = boolean;
+    export type ProcessKeysFromEkm = void;
     export type Db = any; // not included in Any below
     export type Ajax = any; // not included in Any below
 
     export type Any = GetActiveTabInfo | _tab_ | ReconnectAcctAuthPopup
       | PgpMsgDecrypt | PgpMsgDiagnoseMsgPubkeys | PgpMsgVerify | PgpHashChallengeAnswer | PgpMsgType
       | InMemoryStoreGet | InMemoryStoreSet | StoreAcctGet | StoreAcctSet | StoreGlobalGet | StoreGlobalSet
-      | AjaxGmailAttachmentGetChunk | SaveFetchedPubkeys;
+      | AjaxGmailAttachmentGetChunk | SaveFetchedPubkeys | ProcessKeysFromEkm;
   }
 
   export type AnyRequest = PassphraseEntry | OpenPage | OpenGoogleAuthDialog | Redirect | Reload |
@@ -98,7 +101,7 @@ export namespace Bm {
     NotificationShow | PassphraseDialog | PassphraseDialog | Settings | SetCss | AddOrRemoveClass | ReconnectAcctAuthPopup |
     Db | InMemoryStoreSet | InMemoryStoreGet | StoreGlobalGet | StoreGlobalSet | StoreAcctGet | StoreAcctSet |
     PgpMsgDecrypt | PgpMsgDiagnoseMsgPubkeys | PgpMsgVerifyDetached | PgpHashChallengeAnswer | PgpMsgType | Ajax |
-    ShowAttachmentPreview | ReRenderRecipient | SaveFetchedPubkeys;
+    ShowAttachmentPreview | ReRenderRecipient | SaveFetchedPubkeys | ProcessKeysFromEkm;
 
   // export type RawResponselessHandler = (req: AnyRequest) => Promise<void>;
   // export type RawRespoHandler = (req: AnyRequest) => Promise<void>;
@@ -146,6 +149,7 @@ export class BrowserMsg {
         pgpMsgVerifyDetached: (bm: Bm.PgpMsgVerifyDetached) => BrowserMsg.sendAwait(undefined, 'pgpMsgVerifyDetached', bm, true) as Promise<Bm.Res.PgpMsgVerify>,
         pgpMsgType: (bm: Bm.PgpMsgType) => BrowserMsg.sendAwait(undefined, 'pgpMsgType', bm, true) as Promise<Bm.Res.PgpMsgType>,
         saveFetchedPubkeys: (bm: Bm.SaveFetchedPubkeys) => BrowserMsg.sendAwait(undefined, 'saveFetchedPubkeys', bm, true) as Promise<Bm.Res.SaveFetchedPubkeys>,
+        processKeysFromEkm: (bm: Bm.ProcessKeysFromEkm) => BrowserMsg.sendAwait(undefined, 'processKeysFromEkm', bm, true) as Promise<Bm.Res.ProcessKeysFromEkm>,
       },
     },
     passphraseEntry: (dest: Bm.Dest, bm: Bm.PassphraseEntry) => BrowserMsg.sendCatch(dest, 'passphrase_entry', bm),
@@ -242,6 +246,7 @@ export class BrowserMsg {
     BrowserMsg.bgAddListener('pgpMsgVerifyDetached', MsgUtil.verifyDetached);
     BrowserMsg.bgAddListener('pgpMsgType', MsgUtil.type);
     BrowserMsg.bgAddListener('saveFetchedPubkeys', saveFetchedPubkeysIfNewerThanInStorage);
+    BrowserMsg.bgAddListener('processKeysFromEkm', processAndStoreKeysFromEkmLocally);
   };
 
   public static addListener = (name: string, handler: Handler) => {

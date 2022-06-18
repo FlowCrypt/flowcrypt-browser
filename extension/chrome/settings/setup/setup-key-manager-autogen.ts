@@ -42,7 +42,8 @@ export class SetupWithEmailKeyManagerModule {
       const { privateKeys } = await this.view.keyManager!.getPrivateKeys(this.view.idToken!);
       if (privateKeys.length) {
         // keys already exist on keyserver, auto-import
-        await processAndStoreKeysFromEkmLocally(this.view.acctEmail, privateKeys, setupOptions);
+        // todo: do we need to submit on auto-update?
+        await processAndStoreKeysFromEkmLocally({ acctEmail: this.view.acctEmail, privateKeys, options: setupOptions });
       } else if (this.view.clientConfiguration.canCreateKeys()) {
         // generate keys on client and store them on key manager
         await this.autoGenerateKeyAndStoreBothLocallyAndToEkm(setupOptions);

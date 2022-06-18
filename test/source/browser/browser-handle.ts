@@ -20,8 +20,11 @@ export class BrowserHandle {
     this.viewport = { height, width };
   }
 
-  public newPage = async (t: AvaContext, url?: string, initialScript?: EvaluateFn): Promise<ControllablePage> => {
+  public newPage = async (t: AvaContext, url?: string, initialScript?: EvaluateFn, extraHeaders?: Record<string, string>): Promise<ControllablePage> => {
     const page = await this.browser.newPage();
+    if (extraHeaders !== undefined) {
+      await page.setExtraHTTPHeaders(extraHeaders);
+    }
     await page.setViewport(this.viewport);
     const controllablePage = new ControllablePage(t, page);
     if (url) {

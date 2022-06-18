@@ -151,7 +151,7 @@ export class OpenPGPKey {
     return await Catch.doesReject(opgpPrv.verifyPrimaryKey(), ['No self-certifications']);
   };
 
-  public static reformatKey = async (privateKey: Key, passphrase: string, userIds: { email: string | undefined; name: string }[], expireSeconds: number) => {
+  public static reformatKey = async (privateKey: Key, passphrase: string | undefined, userIds: { email: string | undefined; name: string }[], expireSeconds: number) => {
     const opgpPrv = OpenPGPKey.extractExternalLibraryObjFromKey(privateKey);
     const keyPair = await opgp.reformatKey({ privateKey: opgpPrv, passphrase, userIds, keyExpirationTime: expireSeconds });
     return await OpenPGPKey.convertExternalLibraryObjToKey(keyPair.key);

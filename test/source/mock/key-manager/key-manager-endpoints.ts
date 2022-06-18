@@ -230,6 +230,16 @@ export const mockKeyManagerEndpoints: HandlersDefinition = {
       if (acctEmail === 'get.key@key-manager-autogen.flowcrypt.test') {
         return { privateKeys: [{ decryptedPrivateKey: testConstants.existingPrv }] };
       }
+      if (acctEmail === 'get.updating.key@key-manager-autogen.flowcrypt.test') {
+        if (!LIVE_KM_RESPONSE.privateKeys.length) {
+          LIVE_KM_RESPONSE.privateKeys = [{ decryptedPrivateKey: testConstants.updatingPrv }];
+        } else {
+          const key = await KeyUtil.parse(LIVE_KM_RESPONSE.privateKeys[0].decryptedPrivateKey);
+          const updatedKey = await KeyUtil.reformatKey(key, undefined, [{ name: 'Full Name', email: key.emails[0] }], 6000);
+          LIVE_KM_RESPONSE.privateKeys = [{ decryptedPrivateKey: KeyUtil.armor(updatedKey) }];
+        }
+        return LIVE_KM_RESPONSE; // todo: rename
+      }
       if (acctEmail === 'get.key@no-submit-client-configuration.key-manager-autogen.flowcrypt.test') {
         return { privateKeys: [{ decryptedPrivateKey: prvNoSubmit }] };
       }

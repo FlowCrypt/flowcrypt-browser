@@ -32,9 +32,12 @@ import { SetupWithEmailKeyManagerModule } from './setup/setup-key-manager-autoge
 import { shouldPassPhraseBeHidden } from '../../js/common/ui/passphrase-ui.js';
 import Swal from 'sweetalert2';
 
-export interface SetupOptions {
+export interface PassphraseOptions {
   passphrase: string;
   passphrase_save: boolean;
+}
+
+export interface SetupOptions extends PassphraseOptions {
   submit_main: boolean;
   submit_all: boolean;
   recovered?: boolean;

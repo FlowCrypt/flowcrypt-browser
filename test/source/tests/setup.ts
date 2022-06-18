@@ -554,6 +554,30 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       await securityFrame.notPresent(['@action-change-passphrase-begin', '@action-test-passphrase-begin', '@action-forget-pp']);
     }));
 
+    ava.default('get.updating.key@key-manager-autogen.flowcrypt.test - automatic update of key found on key manager', testWithBrowser(undefined, async (t, browser) => {
+      const acct = 'get.updating.key@key-manager-autogen.flowcrypt.test';
+      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
+      await SetupPageRecipe.autoSetupWithEKM(settingsPage);
+      const { cryptup_getupdatingkeykeymanagerautogenflowcrypttest_keys: oldKeys } = await settingsPage.getFromLocalStorage([
+        'cryptup_getupdatingkeykeymanagerautogenflowcrypttest_keys'
+      ]);
+      const oldKi = oldKeys as KeyInfoWithIdentity[];
+      expect(oldKi.length).to.equal(1);
+      const oldLastModified = (await KeyUtil.parse(oldKi[0].private)).lastModified!;
+      const accessToken = await BrowserRecipe.getGoogleAccessToken(settingsPage, acct);
+      const gmailPage = await browser.newPage(t, "https://localhost:8001/gmail", undefined, { Authorization: `Bearer ${accessToken}` });
+      await Util.sleep(3);
+      const { cryptup_getupdatingkeykeymanagerautogenflowcrypttest_keys: newKeys } = await settingsPage.getFromLocalStorage([
+        'cryptup_getupdatingkeykeymanagerautogenflowcrypttest_keys'
+      ]);
+      const newKi = newKeys as KeyInfoWithIdentity[];
+      expect(newKi.length).to.equal(1);
+      const newLastModified = (await KeyUtil.parse(newKi[0].private)).lastModified!;
+      expect(newLastModified !== oldLastModified).to.be.true;
+      // todo: passphrase checks?
+      await gmailPage.close();
+    }));
+
     ava.default('get.key@key-manager-choose-passphrase.flowcrypt.test - passphrase chosen by user with key found on key manager', testWithBrowser(undefined, async (t, browser) => {
       const acct = 'get.key@key-manager-choose-passphrase.flowcrypt.test';
       const passphrase = 'Long and complicated pass PHRASE';

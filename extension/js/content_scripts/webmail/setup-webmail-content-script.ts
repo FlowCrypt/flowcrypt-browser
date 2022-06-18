@@ -242,7 +242,7 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
         const keyManager = new KeyManager(clientConfiguration.getKeyManagerUrlForPrivateKeys()!);
         Catch.setHandledTimeout(async () => {
           const { privateKeys } = await keyManager.getPrivateKeys(idToken);
-          console.log(privateKeys); // processAndStoreKeysFromEkmLocally
+          await BrowserMsg.send.bg.await.processKeysFromEkm({ acctEmail, privateKeys });
         }, 0);
       }
     }
