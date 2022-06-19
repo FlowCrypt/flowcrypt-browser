@@ -18,7 +18,6 @@ import { Ui } from './ui.js';
 import { GlobalStoreDict, GlobalIndex } from '../platform/store/global-store.js';
 import { AcctStoreDict, AccountIndex } from '../platform/store/acct-store.js';
 import { saveFetchedPubkeysIfNewerThanInStorage } from '../shared.js';
-import { processAndStoreKeysFromEkmLocally } from '../helpers.js';
 
 export type GoogleAuthWindowResult$result = 'Success' | 'Denied' | 'Error' | 'Closed';
 
@@ -246,7 +245,6 @@ export class BrowserMsg {
     BrowserMsg.bgAddListener('pgpMsgVerifyDetached', MsgUtil.verifyDetached);
     BrowserMsg.bgAddListener('pgpMsgType', MsgUtil.type);
     BrowserMsg.bgAddListener('saveFetchedPubkeys', saveFetchedPubkeysIfNewerThanInStorage);
-    BrowserMsg.bgAddListener('processKeysFromEkm', processAndStoreKeysFromEkmLocally);
   };
 
   public static addListener = (name: string, handler: Handler) => {

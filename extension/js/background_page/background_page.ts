@@ -16,6 +16,7 @@ import { ContactStore } from '../common/platform/store/contact-store.js';
 import { AcctStore } from '../common/platform/store/acct-store.js';
 import { ExpirationCache } from '../common/core/expiration-cache.js';
 import { emailKeyIndex } from '../common/core/common.js';
+import { processAndStoreKeysFromEkmLocally } from '../common/helpers.js';
 
 console.info('background_process.js starting');
 
@@ -61,6 +62,7 @@ opgp.initWorker({ path: '/lib/openpgp.worker.js' });
   BrowserMsg.bgAddListener('storeGlobalSet', (r: Bm.StoreGlobalSet) => GlobalStore.set(r.values));
   BrowserMsg.bgAddListener('storeAcctGet', (r: Bm.StoreAcctGet) => AcctStore.get(r.acctEmail, r.keys));
   BrowserMsg.bgAddListener('storeAcctSet', (r: Bm.StoreAcctSet) => AcctStore.set(r.acctEmail, r.values));
+  BrowserMsg.bgAddListener('processKeysFromEkm', processAndStoreKeysFromEkmLocally);
 
   BrowserMsg.addPgpListeners(); // todo - remove https://github.com/FlowCrypt/flowcrypt-browser/issues/2560 fixed
 
