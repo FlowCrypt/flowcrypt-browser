@@ -22,7 +22,7 @@ import { Gmail } from '../../js/common/api/email-provider/gmail/gmail.js';
  * importing all libs that are tested in ci tests
  * add lib name below, let the IDE resolve the actual import
  */
-const libs: any[] = [
+const libs: unknown[] = [
   ApiErr,
   Attachment,
   AttachmentUI,

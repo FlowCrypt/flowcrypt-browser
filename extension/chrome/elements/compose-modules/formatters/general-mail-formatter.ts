@@ -46,6 +46,7 @@ export class GeneralMailFormatter {
       }
     }
     view.S.now('send_btn_text').text('Encrypting...');
+    console.log('pubkeys:',singleFamilyKeys.pubkeys);
     return { senderKi: signingKey?.keyInfo, msg: await new EncryptedMsgMailFormatter(view).sendableMsg(newMsgData, singleFamilyKeys.pubkeys, signingKey?.key) };
   };
 
