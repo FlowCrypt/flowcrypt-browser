@@ -69,22 +69,6 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
     return await SendableMsg.createPgpMime(this.acctEmail, this.headers(newMsg), attachments, { isDraft: this.isDraft });
   };
 
-  private sendablePubkeyMsgWithPwdLink = async (
-    newMsg: NewMsgData,
-    pubs: PubkeyResult[],
-    { msgUrl, externalId }: { msgUrl: string, externalId?: string },
-    encryptedAttachments: Attachment[],
-    signingPrv?: Key) => {
-    // encoded as: PGP/MIME-like structure but with attachments as external files due to email size limit (encrypted for pubkeys only)
-    const msgBody = this.richtext ? { 'text/plain': newMsg.plaintext, 'text/html': newMsg.plainhtml } : { 'text/plain': newMsg.plaintext };
-    const pgpMimeNoAttachments = await Mime.encode(msgBody, { Subject: newMsg.subject }, []); // no attachments, attached to email separately
-    const { data: pubEncryptedNoAttachments } = await this.encryptDataArmor(Buf.fromUtfStr(pgpMimeNoAttachments), undefined, pubs, signingPrv); // encrypted only for pubs
-    const emailIntroAndLinkBody = await this.formatPwdEncryptedMsgBodyLink(msgUrl);
-    return await SendableMsg.createPwdMsg(this.acctEmail, this.headers(newMsg), emailIntroAndLinkBody,
-      this.formatEncryptedMimeDataAsPgpMimeMetaAttachments(pubEncryptedNoAttachments).concat(encryptedAttachments),
-      { isDraft: this.isDraft, externalId });
-  };
-
   private formatSendablePwdMsgs = async (newMsg: NewMsgData, pubkeys: PubkeyResult[], signingKey?: ParsedKeyInfo) => {
     // password-protected message, temporarily uploaded (already encrypted) to:
     //    - flowcrypt.com/api (consumers and customers without on-prem setup), or
@@ -119,13 +103,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
         replyTo: replyToForMessageSentToPubkeyRecipients.length ? `${Str.formatEmailList([newMsg.from, ...replyToForMessageSentToPubkeyRecipients], true)}`
           : undefined
       };
-      msgs.push(await this.sendablePubkeyMsgWithPwdLink(
-        pubkeyMsgData,
-        pubkeys,
-        { msgUrl: uploadedMessageData.url, externalId: uploadedMessageData.externalId },
-        encryptedAttachments,
-        signingKey?.key)
-      );
+      msgs.push(await this.sendableNonPwdMsg(pubkeyMsgData, pubkeys, signingKey?.key));
     }
     // adding individual messages for each recipient that doesn't have a pubkey
     for (const recipientEmail of pwdRecipients) {
