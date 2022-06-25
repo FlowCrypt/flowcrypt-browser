@@ -130,7 +130,7 @@ export class ComposeSendBtnModule extends ViewModule<ComposeView> {
         BrowserMsg.send.notificationShow(this.view.parentTabId, { notification: `Your ${this.view.isReplyBox ? 'reply' : 'message'} has been sent.` });
         BrowserMsg.send.focusBody(this.view.parentTabId); // Bring focus back to body so Gmails shortcuts will work
         if (this.view.isReplyBox) {
-          this.view.renderModule.renderReplySuccess(msgObj.attachments, msgObj.recipients, result.sentIds[0]);
+          this.view.renderModule.renderReplySuccess(msgObj.renderSentMessage.attachments, msgObj.renderSentMessage.recipients, result.sentIds[0]);
         } else {
           this.view.renderModule.closeMsg();
         }

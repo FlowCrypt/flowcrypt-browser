@@ -17,8 +17,7 @@ import { Attachment } from '../../../../js/common/core/attachment.js';
 export type MultipleMessages = {
   msgs: SendableMsg[];
   senderKi: KeyInfoWithIdentity | undefined;
-  recipients: ParsedRecipients;
-  attachments: Attachment[];
+  renderSentMessage: { recipients: ParsedRecipients, attachments: Attachment[] };
 };
 
 export class GeneralMailFormatter {
@@ -30,7 +29,7 @@ export class GeneralMailFormatter {
     if (!choices.encrypt && !choices.sign) { // plain
       view.S.now('send_btn_text').text('Formatting...');
       const msg = await new PlainMsgMailFormatter(view).sendableMsg(newMsgData);
-      return { senderKi: undefined, msgs: [msg], recipients: msg.recipients, attachments: msg.attachments };
+      return { senderKi: undefined, msgs: [msg], renderSentMessage: { recipients: msg.recipients, attachments: msg.attachments } };
     }
     if (!choices.encrypt && choices.sign) { // sign only
       view.S.now('send_btn_text').text('Signing...');
@@ -40,7 +39,7 @@ export class GeneralMailFormatter {
         throw new UnreportableError('Could not find account key usable for signing this plain text message');
       }
       const msg = await new SignedMsgMailFormatter(view).sendableMsg(newMsgData, signingKey!.key);
-      return { senderKi: signingKey!.keyInfo, msgs: [msg], recipients: msg.recipients, attachments: msg.attachments };
+      return { senderKi: signingKey!.keyInfo, msgs: [msg], renderSentMessage: { recipients: msg.recipients, attachments: msg.attachments } };
     }
     // encrypt (optionally sign)
     const singleFamilyKeys = await view.storageModule.collectSingleFamilyKeys(recipientsEmails, newMsgData.from.email, choices.sign);

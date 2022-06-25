@@ -37,8 +37,10 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
       return {
         senderKi: signingKey?.keyInfo,
         msgs: [msg],
-        recipients: msg.recipients,
-        attachments: msg.attachments // todo: perhaps, we should hide technical attachments, like `encrypted.asc` and use collectedAttachments too?
+        renderSentMessage: {
+          recipients: msg.recipients,
+          attachments: msg.attachments // todo: perhaps, we should hide technical attachments, like `encrypted.asc` and use collectedAttachments too?
+        }
       };
     }
   };
@@ -134,7 +136,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
       const individualMsgData = { ...newMsg, recipients: { to: [foundParsedRecipient ?? { email: recipientEmail }] } };
       msgs.push(await this.sendablePwdMsg(individualMsgData, pubkeys, { msgUrl: url, externalId }, signingKey?.key));
     }
-    return { senderKi: signingKey?.keyInfo, msgs, recipients: newMsg.recipients, attachments: encryptedAttachments };
+    return { senderKi: signingKey?.keyInfo, msgs, renderSentMessage: { recipients: newMsg.recipients, attachments: encryptedAttachments } };
   };
 
   private prepareAndUploadPwdEncryptedMsg = async (newMsg: NewMsgData): Promise<UploadedMessageData> => {
