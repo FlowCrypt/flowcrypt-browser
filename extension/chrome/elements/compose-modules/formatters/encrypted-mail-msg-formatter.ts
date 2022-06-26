@@ -76,16 +76,17 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
     //    It will be served to recipient through web
     const uploadedMessageData = await this.prepareAndUploadPwdEncryptedMsg(newMsg); // encrypted for pwd only, pubkeys ignored
     // pwdRecipients that have their personal link
-    const pwdRecipients = Object.keys(uploadedMessageData.emailToExternalIdAndUrl ?? {}).filter(email => !pubkeys.some(p => p.email === email));
+    const individualPwdRecipients = Object.keys(uploadedMessageData.emailToExternalIdAndUrl ?? {}).filter(email => !pubkeys.some(p => p.email === email));
+    const legacyPwdRecipients: { [type in RecipientType]?: EmailParts[] } = {};
     newMsg.pwd = undefined;
     const encryptedAttachments = await this.view.attachmentsModule.attachment.collectEncryptAttachments(pubkeys);
     const pubkeyRecipients: { [type in RecipientType]?: EmailParts[] } = {};
     for (const [sendingType, value] of Object.entries(newMsg.recipients)) {
       if (Api.isRecipientHeaderNameType(sendingType)) {
-        pubkeyRecipients[sendingType] = value?.filter(emailPart => pubkeys.some(p => p.email === emailPart.email)
-          // flowcrypt.com/api doesn't return individual links unlike FES
-          // so pwd recipients without individual links will go to legacy message
-          || (uploadedMessageData.emailToExternalIdAndUrl || {})[emailPart.email] === undefined);
+        pubkeyRecipients[sendingType] = value?.filter(emailPart => pubkeys.some(p => p.email === emailPart.email));
+        legacyPwdRecipients[sendingType] = value?.filter(
+          emailPart => !pubkeys.some(p => p.email === emailPart.email)
+            && !individualPwdRecipients.includes(emailPart.email));
       }
     }
     const msgs: SendableMsg[] = [];
@@ -106,13 +107,17 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
       msgs.push(await this.sendableNonPwdMsg(pubkeyMsgData, pubkeys, signingKey?.key));
     }
     // adding individual messages for each recipient that doesn't have a pubkey
-    for (const recipientEmail of pwdRecipients) {
+    for (const recipientEmail of individualPwdRecipients) {
       const { url, externalId } = uploadedMessageData.emailToExternalIdAndUrl![recipientEmail];
       const foundParsedRecipient = (newMsg.recipients.to ?? []).concat(newMsg.recipients.cc ?? []).concat(newMsg.recipients.bcc ?? []).
         find(r => r.email.toLowerCase() === recipientEmail.toLowerCase());
       // todo: since a message is allowed to have only `cc` or `bcc` without `to`, should we preserve the original placement(s) of the recipient?
       const individualMsgData = { ...newMsg, recipients: { to: [foundParsedRecipient ?? { email: recipientEmail }] } };
       msgs.push(await this.sendablePwdMsg(individualMsgData, pubkeys, { msgUrl: url, externalId }, signingKey?.key));
+    }
+    if (legacyPwdRecipients.to?.length || legacyPwdRecipients.cc?.length || legacyPwdRecipients.bcc?.length) {
+      const legacyPwdMsgData = { ...newMsg, recipients: legacyPwdRecipients };
+      msgs.push(await this.sendablePwdMsg(legacyPwdMsgData, pubkeys, { msgUrl: uploadedMessageData.url }, signingKey?.key));
     }
     return { senderKi: signingKey?.keyInfo, msgs, renderSentMessage: { recipients: newMsg.recipients, attachments: encryptedAttachments } };
   };
