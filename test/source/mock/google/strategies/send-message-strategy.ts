@@ -88,7 +88,8 @@ class PwdEncryptedMessageWithFesPubkeyRecipientInBccTestStrategy implements ITes
       const kisWithPp = await Config.getKeyInfo(['flowcrypt.test.key.used.pgp']);
       const encryptedData = Buf.fromUtfStr(mimeMsg.text!);
       const decrypted = await MsgUtil.decryptMessage({ kisWithPp, encryptedData, verificationPubs: [] });
-      expect(decrypted.success).to.be.true;
+      // tslint:disable-next-line:no-unused-expression
+      expect(decrypted.success).to.be.true; // eslint-disable-line no-unused-expressions
       expect(decrypted.content!.toUtfStr()).to.equal('PWD encrypted message with FES - pubkey recipient in bcc');
       expect((mimeMsg.bcc as AddressObject).text).to.equal('flowcrypt.compatibility@gmail.com');
       // tslint:disable-next-line:no-unused-expression
@@ -155,7 +156,8 @@ class PwdEncryptedMessageWithFesReplyRenderingTestStrategy implements ITestMsgSt
       const kisWithPp = await Config.getKeyInfo(['flowcrypt.test.key.used.pgp']);
       const encryptedData = Buf.fromUtfStr(mimeMsg.text!);
       const decrypted = await MsgUtil.decryptMessage({ kisWithPp, encryptedData, verificationPubs: [] });
-      expect(decrypted.success).to.be.true;
+      // tslint:disable-next-line:no-unused-expression
+      expect(decrypted.success).to.be.true; // eslint-disable-line no-unused-expressions
       expect(decrypted.content!.toUtfStr()).to.include('> some dummy text');
       expect((mimeMsg.to as AddressObject).text).to.equal('flowcrypt.compatibility@gmail.com, mock.only.pubkey@flowcrypt.com');
       // tslint:disable-next-line:no-unused-expression
