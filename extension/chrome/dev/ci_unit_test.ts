@@ -43,4 +43,4 @@ const libs: unknown[] = [
 for (const lib of libs) {
   (window as any)[(lib as any).name] = lib;
 }
-(window as any).forge = forge;
+window.forge = forge;
