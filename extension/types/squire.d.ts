@@ -21,8 +21,8 @@ declare interface FontInfo {
 declare type SquireEvent = 'focus' | 'blur' | 'keydown' | 'keypress' | 'keyup' | 'input' | 'pathChange' | 'select' | 'cursor' | 'undoStateChange' | 'willPaste' | 'drop' | 'dragover';
 
 export declare class SquireEditor {
-  addEventListener(event: SquireEvent, callback: (e: any) => void): SquireEditor;
-  removeEventListener(event: SquireEvent, callback: (e: any) => void): SquireEditor;
+  addEventListener(event: SquireEvent, callback: (e: unknown) => void): SquireEditor;
+  removeEventListener(event: SquireEvent, callback: (e: unknown) => void): SquireEditor;
   setKeyHandler(key: string, handler: (self: SquireEditor, event: Event) => void): SquireEditor;
   focus(): SquireEditor;
   blur(): SquireEditor;
