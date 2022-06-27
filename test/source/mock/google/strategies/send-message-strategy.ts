@@ -27,7 +27,7 @@ class PwdAndPubkeyEncryptedMessagesWithFlowCryptComApiTestStrategy implements IT
   public test = async (parseResult: ParseMsgResult, id: string) => {
     const mimeMsg = parseResult.mimeMsg;
     const senderEmail = Str.parseEmail(mimeMsg.from!.text).email;
-    (new SaveMessageInStorageStrategy()).test(parseResult, id);
+    await (new SaveMessageInStorageStrategy()).test(parseResult, id);
     if (mimeMsg.cc) {
       // this is a message to the pubkey recipient
       expect((mimeMsg.cc as AddressObject).text!).to.include('flowcrypt.compatibility@gmail.com');
