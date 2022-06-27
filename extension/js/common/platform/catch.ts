@@ -40,13 +40,13 @@ export class Catch {
     'ResizeObserver loop limit exceeded',
   ];
 
-  public static rewrapErr = (e: any, message: string): Error => {
+  public static rewrapErr = (e: unknown, message: string): Error => {
     const newErr = new Error(`${message}::${e instanceof Error ? `${e.name}: ${e.message}` : String(e)}`);
     newErr.stack += `\n\n${Catch.stringify(e)}`;
     return newErr;
   };
 
-  public static stringify = (e: any): string => {
+  public static stringify = (e: unknown): string => {
     if (e instanceof Error) {
       return `[typeof:Error:${e.name}] ${e.message}\n\n${e.stack}`;
     }
@@ -103,7 +103,7 @@ export class Catch {
   /**
    * @returns boolean - whether error was reported remotely or not
    */
-  public static reportErr = (e: any): boolean => {
+  public static reportErr = (e: unknown): boolean => {
     const { line, col } = Catch.getErrorLineAndCol(e);
     return Catch.onErrorInternalHandler(e instanceof Error ? e.message : String(e), window.location.href, line, col, e, true);
   };
@@ -212,7 +212,7 @@ export class Catch {
     return url;
   };
 
-  public static onUnhandledRejectionInternalHandler = (e: any) => {
+  public static onUnhandledRejectionInternalHandler = (e: unknown) => {
     if (Catch.isPromiseRejectionEvent(e)) {
       Catch.reportErr(e.reason);
     } else {

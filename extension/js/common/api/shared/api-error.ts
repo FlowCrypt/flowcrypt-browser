@@ -144,7 +144,7 @@ export class AjaxErr extends ApiCallErr { // no static props, else will get seri
 }
 
 export class ApiErr {
-  public static eli5 = (e: any): string => { // "explain like I'm five"
+  public static eli5 = (e: unknown): string => { // "explain like I'm five"
     if (ApiErr.isMailOrAcctDisabledOrPolicy(e)) {
       return 'Email account is disabled, or access has been blocked by admin policy. Contact your email administrator.';
     } else if (ApiErr.isAuthErr(e)) {
@@ -174,7 +174,7 @@ export class ApiErr {
     }
   };
 
-  public static isStandardErr = (e: any, internalType: 'auth' | 'subscription'): boolean => {
+  public static isStandardErr = (e: unknown, internalType: 'auth' | 'subscription'): boolean => {
     if (!e || !(typeof e === 'object')) {
       return false;
     }
@@ -190,7 +190,7 @@ export class ApiErr {
     return false;
   };
 
-  public static isAuthErr = (e: any): boolean => {
+  public static isAuthErr = (e: unknown): boolean => {
     if (e instanceof AuthErr || e instanceof GoogleAuthErr) {
       return true;
     }
@@ -214,7 +214,7 @@ export class ApiErr {
     return false;
   };
 
-  public static isMailOrAcctDisabledOrPolicy = (e: any): boolean => {
+  public static isMailOrAcctDisabledOrPolicy = (e: unknown): boolean => {
     if (e instanceof AjaxErr && ApiErr.isBadReq(e) && typeof e.responseText === 'string') {
       if (e.responseText.indexOf('Mail service not enabled') !== -1 || e.responseText.indexOf('Account has been deleted') !== -1) {
         return true;
@@ -226,7 +226,7 @@ export class ApiErr {
     return false;
   };
 
-  public static isBlockedByProxy = (e: any): boolean => {
+  public static isBlockedByProxy = (e: unknown): boolean => {
     if (!(e instanceof AjaxErr)) {
       return false;
     }
@@ -241,7 +241,7 @@ export class ApiErr {
     return false;
   };
 
-  public static isNetErr = (e: any): e is Error => {
+  public static isNetErr = (e: unknown): e is Error => {
     if (e instanceof TypeError && (e.message === 'Failed to fetch' || e.message === 'NetworkError when attempting to fetch resource.')) {
       return true; // openpgp.js uses fetch()... which produces these errors
     }
@@ -257,38 +257,38 @@ export class ApiErr {
     return false;
   };
 
-  public static isDecryptErr = (e: any): e is DecryptionError => {
+  public static isDecryptErr = (e: unknown): e is DecryptionError => {
     if (e instanceof DecryptionError) {
       return true;
     }
     return false;
   };
 
-  public static isSignificant = (e: any): boolean => {
+  public static isSignificant = (e: unknown): boolean => {
     return !ApiErr.isNetErr(e) && !ApiErr.isServerErr(e) && !ApiErr.isNotFound(e) && !ApiErr.isMailOrAcctDisabledOrPolicy(e)
       && !ApiErr.isAuthErr(e) && !ApiErr.isBlockedByProxy(e);
   };
 
-  public static isBadReq = (e: any): e is AjaxErr => {
+  public static isBadReq = (e: unknown): e is AjaxErr => {
     return e instanceof AjaxErr && e.status === 400;
   };
-  public static isInsufficientPermission = (e: any): e is AjaxErr => {
+  public static isInsufficientPermission = (e: unknown): e is AjaxErr => {
     return e instanceof AjaxErr && e.status === 403 && e.responseText.indexOf('insufficientPermissions') !== -1;
   };
 
-  public static isNotFound = (e: any): e is AjaxErr => {
+  public static isNotFound = (e: unknown): e is AjaxErr => {
     return e instanceof AjaxErr && e.status === 404;
   };
 
-  public static isReqTooLarge = (e: any): boolean => {
+  public static isReqTooLarge = (e: unknown): boolean => {
     return e instanceof AjaxErr && e.status === 413;
   };
 
-  public static isServerErr = (e: any): boolean => {
+  public static isServerErr = (e: unknown): boolean => {
     return e instanceof AjaxErr && e.status >= 500;
   };
 
-  public static detailsAsHtmlWithNewlines = (e: any): string => {
+  public static detailsAsHtmlWithNewlines = (e: unknown): string => {
     let details = 'Below are technical details about the error. This may be useful for debugging.\n\n';
     details += `<b>Error string</b>: ${Xss.escape(String(e))}\n\n`;
     details += `<b>Error stack</b>: ${e instanceof Error ? Xss.escape((e.stack || '(empty)')) : '(no error stack)'}\n\n`;
@@ -298,11 +298,11 @@ export class ApiErr {
     return details;
   };
 
-  public static isInPrivateMode = (e: any) => {
+  public static isInPrivateMode = (e: unknown) => {
     return e instanceof Error && e.message.startsWith('BrowserMsg() (no status text): -1 when GET-ing blob:moz-extension://');
   };
 
-  public static reportIfSignificant = (e: any) => {
+  public static reportIfSignificant = (e: unknown) => {
     if (ApiErr.isSignificant(e)) {
       Catch.reportErr(e);
     }
