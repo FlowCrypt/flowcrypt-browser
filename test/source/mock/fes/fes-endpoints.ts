@@ -144,8 +144,12 @@ const processMessageFromUser4 = async (body: string) => {
       externalId: 'FES-MOCK-EXTERNAL-FOR-INVALID@EXAMPLE.COM-ID'
     };
   }
-  // we can add a clause for timeout@example.com here, but it's not necessary as without it the recipient goes to the legacy clause
-  // and the test is still valid
+  if (body.includes("timeout@example.com")) {
+    response.emailToExternalIdAndUrl['timeout@example.com'] = {
+      url: `http://${standardFesUrl}/message/FES-MOCK-MESSAGE-FOR-TIMEOUT@EXAMPLE.COM-ID`,
+      externalId: 'FES-MOCK-EXTERNAL-FOR-TIMEOUT@EXAMPLE.COM-ID'
+    };
+  }
   if (body.includes("Mr Cc <cc@example.com>")) {
     response.emailToExternalIdAndUrl['cc@example.com'] = {
       url: `http://${standardFesUrl}/message/FES-MOCK-MESSAGE-FOR-CC@EXAMPLE.COM-ID`,
