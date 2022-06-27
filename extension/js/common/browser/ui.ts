@@ -13,7 +13,7 @@ type ProvidedEventHandler = (e: HTMLElement, event: JQuery.Event<HTMLElement, nu
 
 export type SelCache = { cached: (name: string) => JQuery<HTMLElement>; now: (name: string) => JQuery<HTMLElement>; sel: (name: string) => string; };
 export type PreventableEventName = 'double' | 'parallel' | 'spree' | 'slowspree' | 'veryslowspree';
-export type BrowserEventErrHandler = { auth?: () => Promise<void>, authPopup?: () => Promise<void>, network?: () => Promise<void>, other?: (e: unknown) => Promise<void> };
+export type BrowserEventErrHandler = { auth?: () => Promise<void>, authPopup?: () => Promise<void>, network?: () => Promise<void>, other?: (e: any) => Promise<void> };
 
 export class Ui {
 
@@ -53,7 +53,7 @@ export class Ui {
         }
       };
     },
-    _dispatchErr: (e: unknown, errHandlers?: BrowserEventErrHandler) => {
+    _dispatchErr: (e: any, errHandlers?: BrowserEventErrHandler) => {
       if (ApiErr.isNetErr(e) && errHandlers && errHandlers.network) {
         errHandlers.network().catch(Catch.reportErr);
       } else if (ApiErr.isAuthErr(e) && errHandlers && errHandlers.auth) {

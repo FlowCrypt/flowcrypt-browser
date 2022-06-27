@@ -173,7 +173,7 @@ export class GoogleAuth {
   /**
    * Happens on enterprise builds
    */
-  public static isFesUnreachableErr = (e: unknown, email: string): boolean => {
+  public static isFesUnreachableErr = (e: any, email: string): boolean => {
     const domain = Str.getDomainFromEmailAddress(email);
     const errString = String(e);
     if (errString.includes(`-1 when GET-ing https://fes.${domain}/api/ `)) { // the space is important to match the full url

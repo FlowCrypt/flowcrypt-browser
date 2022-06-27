@@ -150,7 +150,7 @@ export class Api<REQ, RES> {
     }
   };
 
-  protected fmtErr = (e: unknown): Buffer => {
+  protected fmtErr = (e: any): Buffer => {
     if (String(e).includes('invalid_grant')) {
       return Buffer.from(JSON.stringify({ "error": "invalid_grant", "error_description": "Bad Request" }));
     }

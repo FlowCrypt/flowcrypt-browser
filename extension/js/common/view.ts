@@ -26,7 +26,7 @@ export abstract class View {
     $('body').attr('data-test-view-state', 'loaded');
   };
 
-  private static reportAndRenderErr = (e: unknown) => {
+  private static reportAndRenderErr = (e: any) => {
     ApiErr.reportIfSignificant(e);
     Xss.sanitizeRender('body', `
       <br>

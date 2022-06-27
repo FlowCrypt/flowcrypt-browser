@@ -461,7 +461,7 @@ export class BrowserMsg {
     return requestOrResponse;
   };
 
-  private static errToJson = (e: unknown): Bm.ErrAsJson => {
+  private static errToJson = (e: any): Bm.ErrAsJson => {
     if (e instanceof AjaxErr) {
       const { message, stack, status, url, responseText, statusText, resMsg, resDetails } = e;
       return { stack, message, errorConstructor: 'AjaxErr', ajaxErrorDetails: { status, url, responseText, statusText, resMsg, resDetails } };

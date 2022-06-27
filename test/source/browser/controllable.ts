@@ -598,7 +598,7 @@ export class ControllablePage extends ControllableBase {
           this.preventclose = true;
           t.log(`${t.attemptText} Dismissing unexpected alert ${alert.message()}`);
           try {
-            alert.dismiss().catch((e: unknown) => t.log(`${t.attemptText} Err1 dismissing alert ${String(e)}`));
+            alert.dismiss().catch((e: any) => t.log(`${t.attemptText} Err1 dismissing alert ${String(e)}`));
           } catch (e) {
             t.log(`${t.attemptText} Err2 dismissing alert ${String(e)}`);
           }
