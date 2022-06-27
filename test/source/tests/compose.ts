@@ -34,6 +34,19 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
 
   if (testVariant !== 'CONSUMER-LIVE-GMAIL') {
 
+    ava.default('compose - send an encrypted message to a legacy pwd recipient and a pubkey recipient', testWithBrowser('compatibility', async (t, browser) => {
+      const acct = 'flowcrypt.compatibility@gmail.com';
+      const msgPwd = 'super hard password for the message';
+      const subject = 'PWD and pubkey encrypted messages with flowcrypt.com/api';
+      const expectedNumberOfPassedMessages = (await GoogleData.withInitializedData(acct)).searchMessagesBySubject(subject).length + 2;
+      const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
+      await composePage.selectOption('@input-from', acct);
+      await ComposePageRecipe.fillMsg(composePage, { to: 'test@email.com', cc: 'flowcrypt.compatibility@gmail.com' }, subject);
+      await ComposePageRecipe.sendAndClose(composePage, { password: msgPwd });
+      expect((await GoogleData.withInitializedData(acct)).searchMessagesBySubject(subject).length).to.equal(expectedNumberOfPassedMessages);
+      // this test is using PwdAndPubkeyEncryptedMessagesWithFlowCryptComApiTestStrategy to check sent result based on subject "PWD and pubkey encrypted messages with flowcrypt.com/api"
+    }));
+
     ava.default('compose - check for sender [flowcrypt.compatibility@gmail.com] from a password-protected email', testWithBrowser('compatibility', async (t, browser) => {
       const senderEmail = 'flowcrypt.compatibility@gmail.com';
       const msgPwd = 'super hard password for the message';

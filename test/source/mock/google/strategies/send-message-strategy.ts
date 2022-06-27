@@ -23,6 +23,36 @@ class SaveMessageInStorageStrategy implements ITestMsgStrategy {
   };
 }
 
+class PwdAndPubkeyEncryptedMessagesWithFlowCryptComApiTestStrategy implements ITestMsgStrategy {
+  public test = async (parseResult: ParseMsgResult, id: string) => {
+    const mimeMsg = parseResult.mimeMsg;
+    const senderEmail = Str.parseEmail(mimeMsg.from!.text).email;
+    (new SaveMessageInStorageStrategy()).test(parseResult, id);
+    if (mimeMsg.cc) {
+      // this is a message to the pubkey recipient
+      expect((mimeMsg.cc as AddressObject).text!).to.include('flowcrypt.compatibility@gmail.com');
+      expect(mimeMsg.text!).to.not.include('has sent you a password-encrypted email');
+      expect(mimeMsg.text!).to.not.include('Follow this link to open it');
+      const kisWithPp = await Config.getKeyInfo(['flowcrypt.compatibility.1pp1', 'flowcrypt.compatibility.2pp1']);
+      const encryptedData = Buf.fromUtfStr(mimeMsg.text!);
+      const decrypted = await MsgUtil.decryptMessage({ kisWithPp, encryptedData, verificationPubs: [] });
+      // tslint:disable-next-line:no-unused-expression
+      expect(decrypted.success).to.be.true; // eslint-disable-line no-unused-expressions
+      expect(decrypted.content!.toUtfStr()).to.contain('PWD and pubkey encrypted messages with flowcrypt.com/api');
+      // tslint:disable-next-line:no-unused-expression
+      expect(mimeMsg.bcc).to.be.an.undefined; // eslint-disable-line no-unused-expressions
+      // tslint:disable-next-line:no-unused-expression
+      expect(mimeMsg.to).to.be.an.undefined; // eslint-disable-line no-unused-expressions
+      expect((mimeMsg.headers.get('reply-to') as AddressObject).text).to.equal('First Last <flowcrypt.compatibility@gmail.com>, test@email.com');
+    } else {
+      expect(mimeMsg.text!).to.contain(`${senderEmail} has sent you a password-encrypted email`);
+      expect(mimeMsg.text!).to.contain('Follow this link to open it');
+      if (!mimeMsg.text?.match(/https:\/\/flowcrypt.com\/[a-z0-9A-Z]{10}/)) {
+        throw new HttpClientErr(`Error: cannot find pwd encrypted flowcrypt.com/api link in:\n\n${mimeMsg.text}`);
+      }
+    }
+  };
+}
 class PwdEncryptedMessageWithFlowCryptComApiTestStrategy implements ITestMsgStrategy {
   public test = async (parseResult: ParseMsgResult) => {
     const mimeMsg = parseResult.mimeMsg;
@@ -342,6 +372,8 @@ export class TestBySubjectStrategyContext {
       this.strategy = new MessageWithFooterTestStrategy();
     } else if (subject.includes('PWD encrypted message with flowcrypt.com/api')) {
       this.strategy = new PwdEncryptedMessageWithFlowCryptComApiTestStrategy();
+    } else if (subject.includes('PWD and pubkey encrypted messages with flowcrypt.com/api')) {
+      this.strategy = new PwdAndPubkeyEncryptedMessagesWithFlowCryptComApiTestStrategy();
     } else if (subject.includes('PWD encrypted message with FES - ID TOKEN')) {
       this.strategy = new PwdEncryptedMessageWithFesIdTokenTestStrategy();
     } else if (subject.includes('PWD encrypted message with FES - Reply rendering')) {
