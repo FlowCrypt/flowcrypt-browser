@@ -565,7 +565,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       expect(oldKi.length).to.equal(1);
       const oldLastModified = (await KeyUtil.parse(oldKi[0].private)).lastModified!;
       const accessToken = await BrowserRecipe.getGoogleAccessToken(settingsPage, acct);
-      const gmailPage = await browser.newPage(t, "https://localhost:8001/gmail", undefined, { Authorization: `Bearer ${accessToken}` });
+      const gmailPage = await browser.newPage(t, "https://gmail.localhost:8001/gmail", undefined, { Authorization: `Bearer ${accessToken}` });
       await Util.sleep(3);
       const { cryptup_getupdatingkeykeymanagerautogenflowcrypttest_keys: newKeys } = await settingsPage.getFromLocalStorage([
         'cryptup_getupdatingkeykeymanagerautogenflowcrypttest_keys'
