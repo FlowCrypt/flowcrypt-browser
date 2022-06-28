@@ -208,18 +208,6 @@ export const MOCK_KM_LAST_INSERTED_KEY: { [acct: string]: { decryptedPrivateKey:
 
 export const LIVE_KM_RESPONSE: { privateKeys: { decryptedPrivateKey: string }[] } = { privateKeys: [] };
 
-export const liveKeyManagerEndpoints: HandlersDefinition = {
-  '/flowcrypt-email-key-manager/keys/private': async ({ }, req) => {
-    if (isGet(req)) {
-      return LIVE_KM_RESPONSE;
-    }
-    if (isPut(req)) {
-      throw new HttpClientErr(`Unexpectedly calling liveKeyManagerEndpoints:/keys/private PUT`);
-    }
-    throw new HttpClientErr(`Unknown method: ${req.method}`);
-  }
-};
-
 export const mockKeyManagerEndpoints: HandlersDefinition = {
   '/flowcrypt-email-key-manager/v1/keys/private': async ({ body }, req) => {
     const acctEmail = oauth.checkAuthorizationHeaderWithIdToken(req.headers.authorization);
