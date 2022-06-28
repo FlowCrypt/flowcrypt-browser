@@ -15,8 +15,6 @@ import { TestWithBrowser } from './../test';
 import { expect } from 'chai';
 import { OauthPageRecipe } from './page-recipe/oauth-page-recipe';
 import { SetupPageRecipe } from './page-recipe/setup-page-recipe';
-import { LIVE_KM_RESPONSE } from '../mock/key-manager/key-manager-endpoints';
-import { testConstants } from './tooling/consts';
 
 /**
  * All tests that use mail.google.com or have to operate without a Gmail API mock should go here
