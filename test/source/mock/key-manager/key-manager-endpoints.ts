@@ -206,7 +206,7 @@ yeSm0uVPwODhwX7ezB9jW6uVt0R8S8iM3rQdEMsA/jDep5LNn47K6o8VrDt0zYo6
 
 export const MOCK_KM_LAST_INSERTED_KEY: { [acct: string]: { decryptedPrivateKey: string, publicKey: string } } = {}; // accessed from test runners
 
-export const LIVE_KM_RESPONSE: { privateKeys: { decryptedPrivateKey: string }[] } = { privateKeys: [] };
+export const MOCK_KM_UPDATING_KEY: { privateKeys: { decryptedPrivateKey: string }[] } = { privateKeys: [] };
 
 export const mockKeyManagerEndpoints: HandlersDefinition = {
   '/flowcrypt-email-key-manager/v1/keys/private': async ({ body }, req) => {
@@ -219,14 +219,14 @@ export const mockKeyManagerEndpoints: HandlersDefinition = {
         return { privateKeys: [{ decryptedPrivateKey: testConstants.existingPrv }] };
       }
       if (acctEmail === 'get.updating.key@key-manager-autogen.flowcrypt.test') {
-        if (!LIVE_KM_RESPONSE.privateKeys.length) {
-          LIVE_KM_RESPONSE.privateKeys = [{ decryptedPrivateKey: testConstants.updatingPrv }];
+        if (!MOCK_KM_UPDATING_KEY.privateKeys.length) {
+          MOCK_KM_UPDATING_KEY.privateKeys = [{ decryptedPrivateKey: testConstants.updatingPrv }];
         } else {
-          const key = await KeyUtil.parse(LIVE_KM_RESPONSE.privateKeys[0].decryptedPrivateKey);
+          const key = await KeyUtil.parse(MOCK_KM_UPDATING_KEY.privateKeys[0].decryptedPrivateKey);
           const updatedKey = await KeyUtil.reformatKey(key, undefined, [{ name: 'Full Name', email: key.emails[0] }], 6000);
-          LIVE_KM_RESPONSE.privateKeys = [{ decryptedPrivateKey: KeyUtil.armor(updatedKey) }];
+          MOCK_KM_UPDATING_KEY.privateKeys = [{ decryptedPrivateKey: KeyUtil.armor(updatedKey) }];
         }
-        return LIVE_KM_RESPONSE; // todo: rename
+        return MOCK_KM_UPDATING_KEY;
       }
       if (acctEmail === 'get.key@no-submit-client-configuration.key-manager-autogen.flowcrypt.test') {
         return { privateKeys: [{ decryptedPrivateKey: prvNoSubmit }] };
