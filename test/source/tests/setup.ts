@@ -625,7 +625,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       await myKeyFrame.waitAll('@content-fingerprint');
       const fromKm = MOCK_KM_LAST_INSERTED_KEY[acct];
       expect(fromKm).to.exist;
-      const k = await KeyUtil.parse(fromKm.publicKey);
+      const k = await KeyUtil.parse(fromKm.privateKey);
       expect(await myKeyFrame.read('@content-fingerprint')).to.equal(Str.spaced(k.id));
       expect(await myKeyFrame.read('@content-key-expiration')).to.equal('Key does not expire');
       await SettingsPageRecipe.closeDialog(settingsPage);
@@ -658,7 +658,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       await settingsPage.waitAll('@container-overlay-details');
       await Util.sleep(0.5);
       const details = await settingsPage.read('@container-overlay-details');
-      expect(details).to.contain('500 when PUT-ing https://localhost:8001/flowcrypt-email-key-manager/v1/keys/private string: decryptedPrivateKey,publicKey -> Intentional error for put.error user to test client behavior');
+      expect(details).to.contain('500 when PUT-ing https://localhost:8001/flowcrypt-email-key-manager/v1/keys/private string: privateKey -> Intentional error for put.error user to test client behavior');
       expect(details).to.not.contain('PRIVATE KEY');
       expect(details).to.not.contain('<REDACTED:');
     }));
@@ -695,7 +695,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         await myKeyFrame.waitAll('@content-fingerprint');
         const fromKm = MOCK_KM_LAST_INSERTED_KEY[acct];
         expect(fromKm).to.exist;
-        const k = await KeyUtil.parse(fromKm.publicKey);
+        const k = await KeyUtil.parse(fromKm.privateKey);
         expect(await myKeyFrame.read('@content-fingerprint')).to.equal(Str.spaced(k.id));
         const approxMonth = [29, 30, 31].map(days => Str.datetimeToDate(Str.fromDate(new Date(Date.now() + 1000 * 60 * 60 * 24 * days))));
         expect(await myKeyFrame.read('@content-key-expiration')).to.be.oneOf(approxMonth);
@@ -718,7 +718,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         await Util.sleep(0.5);
         const details = await settingsPage.read('@container-overlay-details');
         expect(details).to.contain('405 when PUT-ing https://localhost:8001/flowcrypt-email-key-manager/v1/keys/private string: ' +
-          'decryptedPrivateKey,publicKey -> No key has been generated for reject.client.keypair@key-manager-autogen.flowcrypt.test yet');
+          'privateKey -> No key has been generated for reject.client.keypair@key-manager-autogen.flowcrypt.test yet');
         expect(details).to.not.contain('PRIVATE KEY');
       })
     );
