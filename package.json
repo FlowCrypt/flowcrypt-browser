@@ -34,7 +34,7 @@
     "stylelint-config-standard": "25.0.0",
     "tslint": "6.1.3",
     "tsutils": "^3.21.0",
-    "typescript": "4.7.2",
+    "typescript": "4.7.4",
     "web-ext": "7.1.0"
   },
   "dependencies": {
