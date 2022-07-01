@@ -32,10 +32,10 @@ export abstract class View {
       <br>
       <div data-test="container-err-title">${ApiErr.eli5(e)}</div>
       <br><br>
-      <div data-test="container-err-text">${String(e)}</div>
+      <div data-test="container-err-text">${Xss.escape(String(e))}</div>
       <br><br>
       ${Ui.retryLink()}
-    `);
+    `); // xss-escaped
     Ui.setTestState('ready');
     View.setTestViewStateLoaded();
   };
