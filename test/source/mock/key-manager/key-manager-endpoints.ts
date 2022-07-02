@@ -204,7 +204,7 @@ yeSm0uVPwODhwX7ezB9jW6uVt0R8S8iM3rQdEMsA/jDep5LNn47K6o8VrDt0zYo6
 -----END PGP PRIVATE KEY BLOCK-----
 `;
 
-export const MOCK_KM_LAST_INSERTED_KEY: { [acct: string]: { decryptedPrivateKey: string, publicKey: string } } = {}; // accessed from test runners
+export const MOCK_KM_LAST_INSERTED_KEY: { [acct: string]: { privateKey: string } } = {}; // accessed from test runners
 
 export const MOCK_KM_UPDATING_KEY: { privateKeys: { decryptedPrivateKey: string }[] } = { privateKeys: [] };
 
@@ -273,9 +273,9 @@ export const mockKeyManagerEndpoints: HandlersDefinition = {
       throw new HttpClientErr(`Unexpectedly calling mockKeyManagerEndpoints:/v1/keys/private GET with acct ${acctEmail}`);
     }
     if (isPut(req)) {
-      const { decryptedPrivateKey, publicKey } = body as Dict<string>;
+      const { privateKey } = body as Dict<string>;
       if (acctEmail === 'put.key@key-manager-autogen.flowcrypt.test') {
-        const prv = await KeyUtil.parseMany(decryptedPrivateKey);
+        const prv = await KeyUtil.parseMany(privateKey);
         expect(prv).to.have.length(1);
         expect(prv[0].algo.bits).to.equal(2048);
         expect(prv[0].identities).to.have.length(1);
@@ -283,15 +283,7 @@ export const mockKeyManagerEndpoints: HandlersDefinition = {
         expect(prv[0].isPrivate).to.be.true;
         expect(prv[0].fullyDecrypted).to.be.true;
         expect(prv[0].expiration).to.not.exist;
-        const pub = await KeyUtil.parseMany(publicKey);
-        expect(pub).to.have.length(1);
-        expect(pub[0].algo.bits).to.equal(2048);
-        expect(pub[0].identities).to.have.length(1);
-        expect(pub[0].identities[0]).to.equal('First Last <put.key@key-manager-autogen.flowcrypt.test>');
-        expect(pub[0].isPrivate).to.equal(false);
-        expect(pub[0].expiration).to.not.exist;
-        expect(pub[0].id).to.equal(prv[0].id);
-        MOCK_KM_LAST_INSERTED_KEY[acctEmail] = { decryptedPrivateKey, publicKey };
+        MOCK_KM_LAST_INSERTED_KEY[acctEmail] = { privateKey };
         return {};
       }
       if (acctEmail === 'put.error@key-manager-autogen.flowcrypt.test') {
@@ -301,7 +293,7 @@ export const mockKeyManagerEndpoints: HandlersDefinition = {
         throw new HttpClientErr(`No key has been generated for ${acctEmail} yet. Please ask your administrator.`, 405);
       }
       if (acctEmail === 'expire@key-manager-keygen-expiration.flowcrypt.test') {
-        const prv = await KeyUtil.parseMany(decryptedPrivateKey);
+        const prv = await KeyUtil.parseMany(privateKey);
         expect(prv).to.have.length(1);
         expect(prv[0].algo.bits).to.equal(2048);
         expect(prv[0].identities).to.have.length(1);
@@ -309,15 +301,7 @@ export const mockKeyManagerEndpoints: HandlersDefinition = {
         expect(prv[0].isPrivate).to.be.true;
         expect(prv[0].fullyDecrypted).to.be.true;
         expect(prv[0].expiration).to.exist;
-        const pub = await KeyUtil.parseMany(publicKey);
-        expect(pub).to.have.length(1);
-        expect(pub[0].algo.bits).to.equal(2048);
-        expect(pub[0].id).to.equal(prv[0].id);
-        expect(pub[0].identities).to.have.length(1);
-        expect(pub[0].identities[0]).to.equal('First Last <expire@key-manager-keygen-expiration.flowcrypt.test>');
-        expect(pub[0].isPrivate).to.be.false;
-        expect(pub[0].expiration).to.exist;
-        MOCK_KM_LAST_INSERTED_KEY[acctEmail] = { decryptedPrivateKey, publicKey };
+        MOCK_KM_LAST_INSERTED_KEY[acctEmail] = { privateKey };
         return {};
       }
       throw new HttpClientErr(`Unexpectedly calling mockKeyManagerEndpoints:/v1/keys/private PUT with acct ${acctEmail}`);
