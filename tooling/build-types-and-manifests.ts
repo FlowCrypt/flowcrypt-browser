@@ -118,13 +118,13 @@ const makeMockBuild = (sourceBuildType: string) => {
       .replace(/const (OAUTH_GOOGLE_API_HOST|GMAIL_GOOGLE_API_HOST|PEOPLE_GOOGLE_API_HOST|GOOGLE_OAUTH_SCREEN_HOST) = [^;]+;/g, `const $1 = '${MOCK_HOST[sourceBuildType]}';`)
       .replace(/const (BACKEND_API_HOST) = [^;]+;/g, `const $1 = 'https://localhost:8001/api/';`)
       .replace(/const (ATTESTER_API_HOST) = [^;]+;/g, `const $1 = 'https://localhost:8001/attester/';`)
-      .replace(/https:\/\/flowcrypt.com\/api\/help\/error/g, 'https://localhost:8001/api/help/error');
+      .replace(/https:\/\/flowcrypt\.com\/api\/help\/error/g, 'https://localhost:8001/api/help/error');
   };
   edit(`${buildDir(mockBuildType)}/js/common/core/const.js`, editor);
   edit(`${buildDir(mockBuildType)}/js/common/platform/catch.js`, editor);
   edit(`${buildDir(mockBuildType)}/js/content_scripts/webmail_bundle.js`, editor);
   edit(`${buildDir(mockBuildType)}/manifest.json`, (code) =>
-    code.replace(/https:\/\/mail.google.com/g, 'https://gmail.localhost:8001')
+    code.replace(/https:\/\/mail\.google\.com/g, 'https://gmail.localhost:8001')
   );
 };
 
