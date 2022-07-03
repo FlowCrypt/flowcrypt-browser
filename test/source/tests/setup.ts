@@ -14,6 +14,8 @@ import { MOCK_ATTESTER_LAST_INSERTED_PUB } from './../mock/attester/attester-end
 import { BrowserRecipe } from './tooling/browser-recipe';
 import { KeyInfoWithIdentity, KeyUtil } from '../core/crypto/key';
 import { testConstants } from './tooling/consts';
+import { TestUrls } from '../browser/test-urls';
+import { InboxPageRecipe } from './page-recipe/inbox-page-recipe';
 
 // tslint:disable:no-blank-lines-func
 // tslint:disable:no-unused-expression
@@ -554,27 +556,58 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       await securityFrame.notPresent(['@action-change-passphrase-begin', '@action-test-passphrase-begin', '@action-forget-pp']);
     }));
 
-    ava.default('get.updating.key@key-manager-autogen.flowcrypt.test - automatic update of key found on key manager', testWithBrowser(undefined, async (t, browser) => {
-      const acct = 'get.updating.key@key-manager-autogen.flowcrypt.test';
+    ava.default('get.updating.key@key-manager-choose-passphrase-forbid-storing.flowcrypt.test - automatic update of key found on key manager', testWithBrowser(undefined, async (t, browser) => {
+      const acct = 'get.updating.key@key-manager-choose-passphrase-forbid-storing.flowcrypt.test';
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
-      await SetupPageRecipe.autoSetupWithEKM(settingsPage);
-      const { cryptup_getupdatingkeykeymanagerautogenflowcrypttest_keys: oldKeys } = await settingsPage.getFromLocalStorage([
-        'cryptup_getupdatingkeykeymanagerautogenflowcrypttest_keys'
-      ]);
-      const oldKi = oldKeys as KeyInfoWithIdentity[];
-      expect(oldKi.length).to.equal(1);
-      const oldLastModified = (await KeyUtil.parse(oldKi[0].private)).lastModified!;
+      const oldPassphrase = 'long enough to suit requirements';
+      await SetupPageRecipe.autoSetupWithEKM(settingsPage, {
+        enterPp: {
+          passphrase: oldPassphrase,
+          checks: { isSavePassphraseChecked: false, isSavePassphraseHidden: true }
+        }
+      });
+      const { cryptup_getupdatingkeykeymanagerchoosepassphraseforbidstoringflowcrypttest_keys: keyset1 }
+        = await settingsPage.getFromLocalStorage(['cryptup_getupdatingkeykeymanagerchoosepassphraseforbidstoringflowcrypttest_keys']);
+      const ki1 = keyset1 as KeyInfoWithIdentity[];
+      expect(ki1.length).to.equal(1);
+      const prv1 = await KeyUtil.parse(ki1[0].private);
+      const prv1LastModified = prv1.lastModified!;
+      expect(prv1.fullyEncrypted).to.be.true;
+      expect(await KeyUtil.decrypt(prv1, oldPassphrase as string, undefined, undefined)).to.be.true;
       const accessToken = await BrowserRecipe.getGoogleAccessToken(settingsPage, acct);
-      const gmailPage = await browser.newPage(t, "https://gmail.localhost:8001/gmail", undefined, { Authorization: `Bearer ${accessToken}` });
-      await Util.sleep(3);
-      const { cryptup_getupdatingkeykeymanagerautogenflowcrypttest_keys: newKeys } = await settingsPage.getFromLocalStorage([
-        'cryptup_getupdatingkeykeymanagerautogenflowcrypttest_keys'
-      ]);
-      const newKi = newKeys as KeyInfoWithIdentity[];
-      expect(newKi.length).to.equal(1);
-      const newLastModified = (await KeyUtil.parse(newKi[0].private)).lastModified!;
-      expect(newLastModified !== oldLastModified).to.be.true;
-      // todo: passphrase checks?
+      let gmailPage = await browser.newPage(t, "https://gmail.localhost:8001/gmail", undefined, { Authorization: `Bearer ${accessToken}` });
+      await Util.sleep(3); // todo: wait for notification
+      const { cryptup_getupdatingkeykeymanagerchoosepassphraseforbidstoringflowcrypttest_keys: keyset2 }
+        = await settingsPage.getFromLocalStorage(['cryptup_getupdatingkeykeymanagerchoosepassphraseforbidstoringflowcrypttest_keys']);
+      const ki2 = keyset2 as KeyInfoWithIdentity[];
+      expect(ki2.length).to.equal(1);
+      const prv2 = await KeyUtil.parse(ki2[0].private);
+      const prv2LastModified = prv2.lastModified!;
+      expect(prv2LastModified).to.not.equal(prv1LastModified); // an update happened
+      expect(prv2.fullyEncrypted).to.be.true;
+      expect(await KeyUtil.decrypt(prv2, oldPassphrase as string, undefined, undefined)).to.be.true;
+      await gmailPage.close();
+      // forget the passphrase
+      const inboxPage = await browser.newPage(t, TestUrls.extension(`chrome/settings/inbox/inbox.htm?acctEmail=${acct}`));
+      await InboxPageRecipe.finishSessionOnInboxPage(inboxPage);
+      gmailPage = await browser.newPage(t, "https://gmail.localhost:8001/gmail", undefined, { Authorization: `Bearer ${accessToken}` });
+      await gmailPage.waitAll('@dialog-passphrase');
+      const passphraseDialog = await gmailPage.getFrame(['passphrase.htm']);
+      await passphraseDialog.waitForContent('@passphrase-text', 'Enter FlowCrypt pass phrase to keep your account keys up to date');
+      // todo: await ComposePageRecipe.cancelPassphraseDialog(inboxPage, inputMethod);
+      await passphraseDialog.waitAndType('@input-pass-phrase', oldPassphrase);
+      await passphraseDialog.waitAndClick('@action-confirm-pass-phrase-entry');
+      await inboxPage.waitTillGone('@dialog-passphrase');
+      await Util.sleep(3); // todo: wait for notification
+      const { cryptup_getupdatingkeykeymanagerchoosepassphraseforbidstoringflowcrypttest_keys: keyset3
+      } = await settingsPage.getFromLocalStorage(['cryptup_getupdatingkeykeymanagerchoosepassphraseforbidstoringflowcrypttest_keys']);
+      const ki3 = keyset3 as KeyInfoWithIdentity[];
+      expect(ki3.length).to.equal(1);
+      const prv3 = await KeyUtil.parse(ki3[0].private);
+      const prv3LastModified = prv3.lastModified!;
+      expect(prv3LastModified).to.not.equal(prv2LastModified); // an update happened
+      expect(prv3.fullyEncrypted).to.be.true;
+      expect(await KeyUtil.decrypt(prv3, oldPassphrase as string, undefined, undefined)).to.be.true;
       await gmailPage.close();
     }));
 

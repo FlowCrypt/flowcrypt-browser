@@ -124,7 +124,7 @@ const makeMockBuild = (sourceBuildType: string) => {
   edit(`${buildDir(mockBuildType)}/js/common/platform/catch.js`, editor);
   edit(`${buildDir(mockBuildType)}/js/content_scripts/webmail_bundle.js`, editor);
   edit(`${buildDir(mockBuildType)}/manifest.json`, (code) =>
-    code.replace(/(\"matches\":\s*\[\s*)(\"https:\/\/mail.google.com\/\*")(\s*\])/gm, '$1"https://gmail.localhost:8001/gmail"$3')
+    code.replace(/https:\/\/mail.google.com/g, 'https://gmail.localhost:8001')
   );
 };
 

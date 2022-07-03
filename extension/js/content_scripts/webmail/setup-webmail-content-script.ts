@@ -119,7 +119,7 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
     }
   };
 
-  const browserMsgListen = (acctEmail: string, tabId: string, inject: Injector, factory: XssSafeFactory, notifications: Notifications) => {
+  const browserMsgListen = (acctEmail: string, tabId: string, inject: Injector, factory: XssSafeFactory, notifications: Notifications, ppEvent: { entered?: boolean }) => {
     BrowserMsg.addListener('set_active_window', async ({ frameId }: Bm.ComposeWindow) => {
       if ($(`.secure_compose_window.active[data-frame-id="${frameId}"]`).length) {
         return; // already active
@@ -177,8 +177,11 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
     BrowserMsg.addListener('scroll_to_cursor_in_reply_box', async ({ replyMsgId, cursorOffsetTop }: Bm.ScrollToCursorInReplyBox) => {
       webmailSpecific.getReplacer().scrollToCursorInReplyBox(replyMsgId, cursorOffsetTop);
     });
-    BrowserMsg.addListener('passphrase_dialog', async ({ longids, type, initiatorFrameId }: Bm.PassphraseDialog) => {
-      await factory.showPassphraseDialog(longids, type, initiatorFrameId);
+    BrowserMsg.addListener('passphrase_dialog', async (args: Bm.PassphraseDialog) => {
+      await showPassphraseDialog(factory, args);
+    });
+    BrowserMsg.addListener('passphrase_entry', async ({ entered }: Bm.PassphraseEntry) => {
+      ppEvent.entered = entered;
     });
     BrowserMsg.addListener('add_pubkey_dialog', async ({ emails }: Bm.AddPubkeyDialog) => {
       await factory.showAddPubkeyDialog(emails);
@@ -235,14 +238,36 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
     notifEl.appendChild(div);
   };
 
-  const startPullingKeysFromEkm = async (acctEmail: string, clientConfiguration: ClientConfiguration) => {
+  const showPassphraseDialog = async (factory: XssSafeFactory, { longids, type, initiatorFrameId }: Bm.PassphraseDialog) => {
+    await factory.showPassphraseDialog(longids, type, initiatorFrameId);
+  };
+
+  const processKeysFromEkm = async (acctEmail: string, decryptedPrivateKeys: string[], factory: XssSafeFactory, ppEvent: { entered?: boolean }) => {
+    const { unencryptedKeysToSave } = await BrowserMsg.send.bg.await.processKeysFromEkm({ acctEmail, decryptedPrivateKeys });
+    if (unencryptedKeysToSave.length) {
+      ppEvent.entered = undefined;
+      await showPassphraseDialog(factory, { longids: [], type: 'update_key' });
+      while (ppEvent.entered === undefined) {
+        await Ui.time.sleep(100);
+      }
+      if (ppEvent.entered) {
+        await processKeysFromEkm(acctEmail, unencryptedKeysToSave, factory, ppEvent);
+      } else {
+        return; // todo: alert
+      }
+    }
+  };
+
+  const startPullingKeysFromEkm = async (acctEmail: string, clientConfiguration: ClientConfiguration, factory: XssSafeFactory, ppEvent: { entered?: boolean }) => {
     if (clientConfiguration.usesKeyManager()) {
       const idToken = await InMemoryStore.get(acctEmail, InMemoryStoreKeys.ID_TOKEN);
       if (idToken) {
         const keyManager = new KeyManager(clientConfiguration.getKeyManagerUrlForPrivateKeys()!);
         Catch.setHandledTimeout(async () => {
           const { privateKeys } = await keyManager.getPrivateKeys(idToken);
-          await BrowserMsg.send.bg.await.processKeysFromEkm({ acctEmail, privateKeys });
+          if (privateKeys.length) {
+            await processKeysFromEkm(acctEmail, privateKeys.map(entry => entry.decryptedPrivateKey), factory, ppEvent);
+          }
         }, 0);
       }
     }
@@ -253,9 +278,10 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
       const acctEmail = await waitForAcctEmail();
       const { tabId, notifications, factory, inject } = await initInternalVars(acctEmail);
       await showNotificationsAndWaitTilAcctSetUp(acctEmail, notifications);
-      browserMsgListen(acctEmail, tabId, inject, factory, notifications);
+      const ppEvent: { entered?: boolean } = {};
+      browserMsgListen(acctEmail, tabId, inject, factory, notifications, ppEvent);
       const clientConfiguration = await ClientConfiguration.newInstance(acctEmail);
-      await startPullingKeysFromEkm(acctEmail, clientConfiguration);
+      await startPullingKeysFromEkm(acctEmail, clientConfiguration, factory, ppEvent);
       await webmailSpecific.start(acctEmail, clientConfiguration, inject, notifications, factory, notifyMurdered);
     } catch (e) {
       if (e instanceof TabIdRequiredError) {

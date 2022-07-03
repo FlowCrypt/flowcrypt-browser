@@ -1500,7 +1500,7 @@ ZFAUVxQrW2a7PVytQbF4Jn8oasXvCzGOicXkK+K5Qtwbu+mK3tVWxlWncnHz
 jqbTjQE5H6b0hHiDw2XnI5+UEt/QdNVudMmWRYQOofPRXOgW13Q=
 =tqvP
 -----END PGP PRIVATE KEY BLOCK-----`,
-  updatingPrv: // get.updating.key@key-manager-autogen.flowcrypt.test
+  updatingPrv: // get.updating.key@key-manager-choose-passphrase-forbid-storing.flowcrypt.test
     `-----BEGIN PGP PRIVATE KEY BLOCK-----
 Version: FlowCrypt Email Encryption [BUILD_REPLACEABLE_VERSION]
 Comment: Seamlessly send and receive encrypted email

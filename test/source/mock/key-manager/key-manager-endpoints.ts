@@ -218,7 +218,7 @@ export const mockKeyManagerEndpoints: HandlersDefinition = {
       if (acctEmail === 'get.key@key-manager-autogen.flowcrypt.test') {
         return { privateKeys: [{ decryptedPrivateKey: testConstants.existingPrv }] };
       }
-      if (acctEmail === 'get.updating.key@key-manager-autogen.flowcrypt.test') {
+      if (acctEmail === 'get.updating.key@key-manager-choose-passphrase-forbid-storing.flowcrypt.test') {
         if (!MOCK_KM_UPDATING_KEY.privateKeys.length) {
           MOCK_KM_UPDATING_KEY.privateKeys = [{ decryptedPrivateKey: testConstants.updatingPrv }];
         } else {

@@ -10,6 +10,7 @@ import { ClientConfiguration } from './client-configuration.js';
 import { ContactStore } from './platform/store/contact-store.js';
 import { KeyStore } from './platform/store/key-store.js';
 import { PassphraseStore } from './platform/store/passphrase-store.js';
+import { Bm } from './browser/browser-msg.js';
 export const isFesUsed = async (acctEmail: string) => {
   const { fesUrl } = await AcctStore.get(acctEmail, ['fesUrl']);
   return Boolean(fesUrl);
@@ -40,15 +41,22 @@ export const saveKeysAndPassPhrase = async (acctEmail: string, prvs: Key[], opti
 };
 
 export const processAndStoreKeysFromEkmLocally = async (
-  { acctEmail, privateKeys, options }: { acctEmail: string, privateKeys: { decryptedPrivateKey: string }[], options?: PassphraseOptions }
-) => {
-  const { keys } = await KeyUtil.readMany(Buf.fromUtfStr(privateKeys.map(pk => pk.decryptedPrivateKey).join('\n')));
+  { acctEmail, decryptedPrivateKeys, options }: { acctEmail: string, decryptedPrivateKeys: string[], options?: PassphraseOptions }
+): Promise<Bm.Res.ProcessKeysFromEkm> => {
+  const { keys } = await KeyUtil.readMany(Buf.fromUtfStr(decryptedPrivateKeys.join('\n')));
   if (!keys.length) {
     throw new Error(`Could not parse any valid keys from Key Manager response for user ${acctEmail}`);
   }
+  let unencryptedKeysToSave: Key[] = [];
   const existingKeys = await KeyStore.get(acctEmail);
-  const keysToSave: Key[] = [];
+  let passphrase = options?.passphrase;
+  if (passphrase === undefined && !existingKeys.length) {
+    return { unencryptedKeysToSave: [] }; // return success as we can't possibly validate a passphrase
+    // this can only happen on misconfiguration
+    // todo: or should we throw?
+  }
   for (const prv of keys) {
+    // todo: should we still process remaining correct keys?
     if (!prv.isPrivate) {
       throw new Error(`Key ${prv.id} for user ${acctEmail} is not a private key`);
     }
@@ -59,24 +67,38 @@ export const processAndStoreKeysFromEkmLocally = async (
       // updating here
       // todo: refactor?
       const longid = KeyUtil.getPrimaryLongid(prv);
-      const keyToUpdate = existingKeys.filter(ki => ki.longid === longid);
-      if (keyToUpdate.length !== 1) {
-        throw new Error('Not supported yet.');
+      const keyToUpdate = existingKeys.filter(ki => ki.longid === longid && ki.family === prv.family);
+      if (keyToUpdate.length === 1) {
+        const oldKey = await KeyUtil.parse(keyToUpdate[0].private);
+        if (!oldKey.lastModified || !prv.lastModified || oldKey.lastModified === prv.lastModified) {
+          continue;
+        }
+      } else if (keyToUpdate.length > 1) {
+        throw new Error(`Unexpected error: key search by longid=${longid} yielded ${keyToUpdate.length} results`);
       }
-      const oldKey = await KeyUtil.parse(keyToUpdate[0].private);
-      if (!oldKey.lastModified || !prv.lastModified || oldKey.lastModified === prv.lastModified) {
-        continue;
-      }
-      const passphrase = await PassphraseStore.get(acctEmail, { longid });
-      if (passphrase === undefined) {
-        throw new Error('Not supported yet.');
-      }
-      console.log(`passphrase is "${passphrase}"`);
-      await KeyUtil.encrypt(prv, passphrase);
-    } else {
-      await KeyUtil.encrypt(prv, options.passphrase);
     }
-    keysToSave.push(prv);
+    unencryptedKeysToSave.push(prv);
   }
-  await saveKeysAndPassPhrase(acctEmail, keysToSave, options);
+  let encryptedKeys: Key[] = [];
+  if (unencryptedKeysToSave.length) {
+    if (passphrase === undefined) {
+      // trying to find a passphrase that unlocks at least one key
+      const passphrases = await PassphraseStore.getMany(acctEmail, existingKeys);
+      passphrase = passphrases.find(pp => pp !== undefined);
+    }
+    if (passphrase !== undefined) {
+      const pp = passphrase;
+      // todo: some more fancy conversion, preserving a passphrase for a particual longid?
+      await Promise.all(unencryptedKeysToSave.map(prv => KeyUtil.encrypt(prv, pp)));
+      encryptedKeys = unencryptedKeysToSave;
+      unencryptedKeysToSave = [];
+    }
+  }
+  if (encryptedKeys.length) {
+    // also updates `name`, todo: refactor?
+    await saveKeysAndPassPhrase(acctEmail, encryptedKeys, options);
+    return { unencryptedKeysToSave: [] };
+  } else {
+    return { unencryptedKeysToSave: unencryptedKeysToSave.map(KeyUtil.armor) };
+  }
 };

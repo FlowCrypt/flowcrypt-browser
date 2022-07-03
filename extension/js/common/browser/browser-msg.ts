@@ -65,7 +65,7 @@ export namespace Bm {
   export type ShowAttachmentPreview = { iframeUrl: string };
   export type ReRenderRecipient = { email: string };
   export type SaveFetchedPubkeys = { email: string, pubkeys: string[] };
-  export type ProcessKeysFromEkm = { acctEmail: string, privateKeys: { decryptedPrivateKey: string }[] };
+  export type ProcessKeysFromEkm = { acctEmail: string, decryptedPrivateKeys: string[] };
 
   export namespace Res {
     export type GetActiveTabInfo = { provider: 'gmail' | undefined, acctEmail: string | undefined, sameWorld: boolean | undefined };
@@ -84,7 +84,7 @@ export namespace Bm {
     export type AjaxGmailAttachmentGetChunk = { chunk: Buf };
     export type _tab_ = { tabId: string | null | undefined };
     export type SaveFetchedPubkeys = boolean;
-    export type ProcessKeysFromEkm = void;
+    export type ProcessKeysFromEkm = { unencryptedKeysToSave: string[] };
     export type Db = any; // not included in Any below
     export type Ajax = any; // not included in Any below
 

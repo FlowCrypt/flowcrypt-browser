@@ -34,8 +34,10 @@ View.run(class PassphraseView extends View {
     const uncheckedUrlParams = Url.parse(['acctEmail', 'parentTabId', 'longids', 'type', 'initiatorFrameId']);
     this.acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
     this.parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
-    this.longids = Assert.urlParamRequire.string(uncheckedUrlParams, 'longids').split(',');
-    this.type = Assert.urlParamRequire.oneof(uncheckedUrlParams, 'type', ['embedded', 'sign', 'message', 'draft', 'attachment', 'quote', 'backup']);
+    const longidsParam = Assert.urlParamRequire.string(uncheckedUrlParams, 'longids');
+    this.longids = longidsParam ? longidsParam.split(',') : [];
+    this.type = Assert.urlParamRequire.oneof(uncheckedUrlParams, 'type',
+      ['embedded', 'sign', 'message', 'draft', 'attachment', 'quote', 'backup', 'update_key']);
     this.initiatorFrameId = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'initiatorFrameId');
   }
 
@@ -55,6 +57,9 @@ View.run(class PassphraseView extends View {
     }
     await initPassphraseToggle(['passphrase']);
     const allPrivateKeys = await KeyStore.get(this.acctEmail);
+    if (this.longids.length === 0) {
+      this.longids.push(...allPrivateKeys.map(ki => ki.longid));
+    }
     this.keysWeNeedPassPhraseFor = allPrivateKeys.filter(ki => this.longids.includes(ki.longid));
     if (this.type === 'embedded') {
       $('h1').parent().css('display', 'none');
@@ -71,6 +76,8 @@ View.run(class PassphraseView extends View {
       $('h1').text('Enter FlowCrypt pass phrase to load quoted content');
     } else if (this.type === 'backup') {
       $('h1').text('Enter FlowCrypt pass phrase to back up');
+    } else if (this.type === 'update_key') {
+      $('h1').text('Enter FlowCrypt pass phrase to keep your account keys up to date');
     }
     $('#passphrase').focus();
     if (allPrivateKeys.length > 1) {
@@ -183,6 +190,7 @@ View.run(class PassphraseView extends View {
       Ui.toast(`${unlockCount} of ${allPrivateKeys.length} keys ${(unlockCount > 1) ? 'were' : 'was'} unlocked by this pass phrase`);
     }
     if (atLeastOneMatched) {
+      console.log('At least one matched');
       this.closeDialog(true, this.initiatorFrameId);
     } else {
       this.renderFailedEntryPpPrompt();
