@@ -824,20 +824,16 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       await composePage.close();
     }));
 
-    ava.default('compose - enforce message signing when encrypting', testWithBrowser('compatibility', async (t, browser) => {
+    ava.default.only('compose - enforce message signing when encrypting', testWithBrowser('compatibility', async (t, browser) => {
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
-      await composePage.waitAndClick('@action-show-options-popover');
-      await composePage.waitAndClick('@action-toggle-sign');
+      await ComposePageRecipe.setPopoverToggle(composePage, 'sign', false);
       // Should still encryptSignSend because we enfore message signing when encrypting
       expect(await composePage.read('@action-send')).to.eq('Encrypt, Sign and Send');
-      await composePage.waitAndClick('@action-show-options-popover');
-      await composePage.waitAndClick('@action-toggle-encrypt');
+      await ComposePageRecipe.setPopoverToggle(composePage, 'encrypt', false);
       expect(await composePage.read('@action-send')).to.eq('Sign and Send');
-      await composePage.waitAndClick('@action-show-options-popover');
-      await composePage.waitAndClick('@action-toggle-sign');
+      await ComposePageRecipe.setPopoverToggle(composePage, 'sign', false);
       expect(await composePage.read('@action-send')).to.eq('Send plain');
-      await composePage.waitAndClick('@action-show-options-popover');
-      await composePage.waitAndClick('@action-toggle-encrypt');
+      await ComposePageRecipe.setPopoverToggle(composePage, 'encrypt', true);
       // on "encrypt" clicking, if user is enabling "encrypt", it should also auto-enable "sign"
       expect(await composePage.read('@action-send')).to.eq('Encrypt, Sign and Send');
       await composePage.close();
@@ -1025,7 +1021,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       await sendImgAndVerifyPresentInSentMsg(t, browser, 'sign');
     }));
 
-    ava.default('compose - sending and rendering plain message with image', testWithBrowser('compatibility', async (t, browser) => {
+    ava.default.only('compose - sending and rendering plain message with image', testWithBrowser('compatibility', async (t, browser) => {
       await sendImgAndVerifyPresentInSentMsg(t, browser, 'plain');
     }));
 
