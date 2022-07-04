@@ -65,7 +65,6 @@ export class ComposeSendBtnPopoverModule extends ViewModule<ComposeView> {
     if (popoverOpt == 'sign' && this.choices['encrypt'] && !newToggleTicked) {
       newToggleTicked = true;
     }
-
     this.choices[popoverOpt] = newToggleTicked;
     if (currentlyTicked && !newToggleTicked) {
       this.renderCrossOrTick(elem, popoverOpt, false);
