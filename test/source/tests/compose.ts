@@ -1021,7 +1021,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       await sendImgAndVerifyPresentInSentMsg(t, browser, 'sign');
     }));
 
-    ava.default.only('compose - sending and rendering plain message with image', testWithBrowser('compatibility', async (t, browser) => {
+    ava.default('compose - sending and rendering plain message with image', testWithBrowser('compatibility', async (t, browser) => {
       await sendImgAndVerifyPresentInSentMsg(t, browser, 'plain');
     }));
 
