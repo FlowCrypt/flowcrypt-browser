@@ -27,10 +27,10 @@ export class SetupWithEmailKeyManagerModule {
       submitButton.addClass(type === 'gray' ? 'gray' : 'green');
       submitButton.removeClass(type === 'gray' ? 'green' : 'gray');
     };
+    if (! await this.view.isCreatePrivateFormInputCorrect('step_2_ekm_choose_pass_phrase')) {
+      return;
+    }
     try {
-      if (! await this.view.isCreatePrivateFormInputCorrect('step_2_ekm_choose_pass_phrase')) {
-        return;
-      }
       Xss.sanitizeRender(submitButtonSelelctor, Ui.spinner('white') + 'Loading...');
       setBtnColor('gray');
       const passphrase = $('#step_2_ekm_choose_pass_phrase .input_password').val();
