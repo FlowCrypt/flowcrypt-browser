@@ -152,7 +152,7 @@ export class AttachmentDownloadView extends View {
       `);
     } else {
       Catch.reportErr(e);
-      Xss.sanitizeRender('body', `Error downloading file - ${String(e)}. ${Ui.retryLink()}`);
+      Xss.sanitizeRender('body', `Error downloading file - ${Xss.escape(String(e))}. ${Ui.retryLink()}`); // xss-escaped
     }
     $('body').addClass('error-occured').attr('title', '');
   };
