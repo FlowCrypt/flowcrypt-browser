@@ -16,6 +16,7 @@ import { KeyInfoWithIdentity, KeyUtil } from '../core/crypto/key';
 import { testConstants } from './tooling/consts';
 import { TestUrls } from '../browser/test-urls';
 import { InboxPageRecipe } from './page-recipe/inbox-page-recipe';
+import { PageRecipe } from './page-recipe/abstract-page-recipe';
 
 // tslint:disable:no-blank-lines-func
 // tslint:disable:no-unused-expression
@@ -576,7 +577,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       expect(await KeyUtil.decrypt(prv1, oldPassphrase as string, undefined, undefined)).to.be.true;
       const accessToken = await BrowserRecipe.getGoogleAccessToken(settingsPage, acct);
       let gmailPage = await browser.newPage(t, "https://gmail.localhost:8001/gmail", undefined, { Authorization: `Bearer ${accessToken}` });
-      await Util.sleep(3); // todo: wait for notification
+      await PageRecipe.waitForToastToAppearAndDisappear(gmailPage, 'Account keys updated');
       const { cryptup_getupdatingkeykeymanagerchoosepassphraseforbidstoringflowcrypttest_keys: keyset2 }
         = await settingsPage.getFromLocalStorage(['cryptup_getupdatingkeykeymanagerchoosepassphraseforbidstoringflowcrypttest_keys']);
       const ki2 = keyset2 as KeyInfoWithIdentity[];
@@ -598,7 +599,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       await passphraseDialog.waitAndType('@input-pass-phrase', oldPassphrase);
       await passphraseDialog.waitAndClick('@action-confirm-pass-phrase-entry');
       await inboxPage.waitTillGone('@dialog-passphrase');
-      await Util.sleep(3); // todo: wait for notification
+      await PageRecipe.waitForToastToAppearAndDisappear(gmailPage, 'Account keys updated');
       const { cryptup_getupdatingkeykeymanagerchoosepassphraseforbidstoringflowcrypttest_keys: keyset3
       } = await settingsPage.getFromLocalStorage(['cryptup_getupdatingkeykeymanagerchoosepassphraseforbidstoringflowcrypttest_keys']);
       const ki3 = keyset3 as KeyInfoWithIdentity[];

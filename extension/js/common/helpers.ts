@@ -51,7 +51,7 @@ export const processAndStoreKeysFromEkmLocally = async (
   const existingKeys = await KeyStore.get(acctEmail);
   let passphrase = options?.passphrase;
   if (passphrase === undefined && !existingKeys.length) {
-    return { unencryptedKeysToSave: [] }; // return success as we can't possibly validate a passphrase
+    return { unencryptedKeysToSave: [], updateCount: 0 }; // return success as we can't possibly validate a passphrase
     // this can only happen on misconfiguration
     // todo: or should we throw?
   }
@@ -97,8 +97,8 @@ export const processAndStoreKeysFromEkmLocally = async (
   if (encryptedKeys.length) {
     // also updates `name`, todo: refactor?
     await saveKeysAndPassPhrase(acctEmail, encryptedKeys, options);
-    return { unencryptedKeysToSave: [] };
+    return { unencryptedKeysToSave: [], updateCount: encryptedKeys.length };
   } else {
-    return { unencryptedKeysToSave: unencryptedKeysToSave.map(KeyUtil.armor) };
+    return { unencryptedKeysToSave: unencryptedKeysToSave.map(KeyUtil.armor), updateCount: 0 };
   }
 };

@@ -243,9 +243,10 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
   };
 
   const processKeysFromEkm = async (acctEmail: string, decryptedPrivateKeys: string[], factory: XssSafeFactory, ppEvent: { entered?: boolean }) => {
-    const { unencryptedKeysToSave } = await BrowserMsg.send.bg.await.processKeysFromEkm({ acctEmail, decryptedPrivateKeys });
+    const { unencryptedKeysToSave, updateCount } = await BrowserMsg.send.bg.await.processKeysFromEkm({ acctEmail, decryptedPrivateKeys });
     if (unencryptedKeysToSave.length) {
       ppEvent.entered = undefined;
+      // todo: we need to think about possible collision with a pass phrase dialog activated by a compose frame
       await showPassphraseDialog(factory, { longids: [], type: 'update_key' });
       while (ppEvent.entered === undefined) {
         await Ui.time.sleep(100);
@@ -255,6 +256,8 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
       } else {
         return; // todo: alert
       }
+    } else if (updateCount > 0) {
+      Ui.toast('Account keys updated');
     }
   };
 
