@@ -104,7 +104,6 @@ export class ComposeErrModule extends ViewModule<ComposeView> {
       throw new ComposerNotReadyError('Retrieving previous message, please wait.');
     }
     const btnReadyTexts = [
-      SendBtnTexts.BTN_ENCRYPT_AND_SEND,
       SendBtnTexts.BTN_SIGN_AND_SEND,
       SendBtnTexts.BTN_ENCRYPT_SIGN_AND_SEND,
       SendBtnTexts.BTN_PLAIN_SEND

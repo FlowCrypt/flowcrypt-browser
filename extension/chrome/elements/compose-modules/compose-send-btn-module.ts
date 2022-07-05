@@ -90,8 +90,6 @@ export class ComposeSendBtnModule extends ViewModule<ComposeView> {
   private btnText = (): string => {
     if (this.popover.choices.encrypt && this.popover.choices.sign) {
       return SendBtnTexts.BTN_ENCRYPT_SIGN_AND_SEND;
-    } else if (this.popover.choices.encrypt) {
-      return SendBtnTexts.BTN_ENCRYPT_AND_SEND;
     } else if (this.popover.choices.sign) {
       return SendBtnTexts.BTN_SIGN_AND_SEND;
     } else {

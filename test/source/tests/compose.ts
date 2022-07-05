@@ -824,6 +824,21 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       await composePage.close();
     }));
 
+    ava.default('compose - enforce message signing when encrypting', testWithBrowser('compatibility', async (t, browser) => {
+      const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
+      await ComposePageRecipe.setPopoverToggle(composePage, 'sign', false);
+      // Should still encryptSignSend because we enfore message signing when encrypting
+      expect(await composePage.read('@action-send')).to.eq('Encrypt, Sign and Send');
+      await ComposePageRecipe.setPopoverToggle(composePage, 'encrypt', false);
+      expect(await composePage.read('@action-send')).to.eq('Sign and Send');
+      await ComposePageRecipe.setPopoverToggle(composePage, 'sign', false);
+      expect(await composePage.read('@action-send')).to.eq('Send plain');
+      await ComposePageRecipe.setPopoverToggle(composePage, 'encrypt', true);
+      // on "encrypt" clicking, if user is enabling "encrypt", it should also auto-enable "sign"
+      expect(await composePage.read('@action-send')).to.eq('Encrypt, Sign and Send');
+      await composePage.close();
+    }));
+
     ava.default('compose - send btn should be disabled while encrypting/sending', testWithBrowser('ci.tests.gmail', async (t, browser) => {
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
       await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, undefined);

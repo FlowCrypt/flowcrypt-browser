@@ -51,9 +51,19 @@ export class ComposeSendBtnPopoverModule extends ViewModule<ComposeView> {
    */
   public toggleItemTick = (elem: JQuery<HTMLElement>, popoverOpt: PopoverOpt, machineForceStateTo?: boolean) => {
     const currentlyTicked = this.isTicked(elem);
-    const newToggleTicked = (typeof machineForceStateTo !== 'undefined') ? machineForceStateTo : !currentlyTicked;
+    let newToggleTicked = (typeof machineForceStateTo !== 'undefined') ? machineForceStateTo : !currentlyTicked;
     if (newToggleTicked === this.choices[popoverOpt] && newToggleTicked === currentlyTicked) {
       return; // internal state as well as UI state is in sync with newly desired result, nothing to do
+    }
+    // https://github.com/FlowCrypt/flowcrypt-browser/issues/3475
+    // on "encrypt" clicking, if user is enabling "encrypt", it should also auto-enable "sign"
+    if (popoverOpt === 'encrypt' && newToggleTicked && !this.choices.sign) {
+      this.choices.sign = true;
+      this.renderCrossOrTick($('.action-toggle-sign-sending-option'), popoverOpt, true);
+    }
+    // on "sign" clicking, always set sign to true regardless of previous state if "encrypt" is selected
+    if (popoverOpt === 'sign' && this.choices.encrypt && !newToggleTicked) {
+      newToggleTicked = true;
     }
     this.choices[popoverOpt] = newToggleTicked;
     if (currentlyTicked && !newToggleTicked) {

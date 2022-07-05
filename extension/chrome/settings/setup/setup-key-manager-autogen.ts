@@ -13,6 +13,7 @@ import { Settings } from '../../../js/common/settings.js';
 import { KeyUtil } from '../../../js/common/core/crypto/key.js';
 import { OpenPGPKey } from '../../../js/common/core/crypto/pgp/openpgp-key.js';
 import { Lang } from '../../../js/common/lang.js';
+import { Xss } from '../../../js/common/platform/xss.js';
 
 export class SetupWithEmailKeyManagerModule {
 
@@ -20,14 +21,26 @@ export class SetupWithEmailKeyManagerModule {
   }
 
   public continueEkmSetupHandler = async () => {
+    const submitButtonSelector = '#step_2_ekm_choose_pass_phrase .action_proceed_private';
+    const submitButton = $(submitButtonSelector);
+    const submitButtonText = submitButton.text();
+    const setBtnColor = (type: 'gray' | 'green') => {
+      submitButton.addClass(type === 'gray' ? 'gray' : 'green');
+      submitButton.removeClass(type === 'gray' ? 'green' : 'gray');
+    };
+    if (! await this.view.isCreatePrivateFormInputCorrect('step_2_ekm_choose_pass_phrase')) {
+      return;
+    }
     try {
-      if (! await this.view.isCreatePrivateFormInputCorrect('step_2_ekm_choose_pass_phrase')) {
-        return;
-      }
+      Xss.sanitizeRender(submitButtonSelector, Ui.spinner('white') + 'Loading...');
+      setBtnColor('gray');
       const passphrase = $('#step_2_ekm_choose_pass_phrase .input_password').val();
       await this.setupWithEkmThenRenderSetupDone(typeof passphrase === 'string' ? passphrase : '');
     } catch (e) {
       await Ui.modal.error(String(e));
+    } finally {
+      setBtnColor('green');
+      submitButton.text(submitButtonText);
     }
   };
 
