@@ -102,8 +102,7 @@
       "npm run test_eslint"
     ],
     "*.{css,htm}": [
-      "npm run test_tslint",
-      "npm run test_eslint"
+      "npm run test_stylelint"
     ]
   }
 }
