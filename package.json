@@ -25,6 +25,8 @@
     "eslint-plugin-no-only-tests": "2.6.0",
     "fc-node-requests": "git+https://git@github.com/FlowCrypt/node-requests.git",
     "googleapis": "104.0.0",
+    "husky": "^8.0.1",
+    "lint-staged": "^13.0.3",
     "mailparser": "3.5.0",
     "mkdirp": "1.0.4",
     "openpgp": "4.10.10",
@@ -81,7 +83,8 @@
     "run_firefox_windows": "npm run build-incremental && npx web-ext run --source-dir ./build/firefox-consumer/ --firefox-profile %userprofile%/AppData/Local/Mozilla/Firefox/Profiles/flowcrypt-dev --keep-profile-changes",
     "find_unused": "ts-prune -p tsconfig.json | grep -v extension/types | grep -v extension/js/common/core",
     "release": "npm run build && node ./tooling/release.js",
-    "release-finish": "./../flowcrypt-script/browser/firefox_upload && ./../flowcrypt-script/browser/firefox_update_web"
+    "release-finish": "./../flowcrypt-script/browser/firefox_upload && ./../flowcrypt-script/browser/firefox_update_web",
+    "prepare": "husky install"
   },
   "repository": {
     "type": "git",
@@ -92,5 +95,15 @@
   "bugs": {
     "url": "https://github.com/FlowCrypt/flowcrypt-browser/issues"
   },
-  "homepage": "https://flowcrypt.com"
+  "homepage": "https://flowcrypt.com",
+  "lint-staged": {
+    "*.ts": [
+      "npm run test_tslint",
+      "np,m run test_eslint"
+    ],
+    "*.{css,htm}": [
+      "npm run test_tslint",
+      "npm run test_eslint"
+    ]
+  }
 }
