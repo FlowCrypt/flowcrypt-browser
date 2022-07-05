@@ -23,6 +23,7 @@ export class SetupWithEmailKeyManagerModule {
   public continueEkmSetupHandler = async () => {
     const submitButtonSelector = '#step_2_ekm_choose_pass_phrase .action_proceed_private';
     const submitButton = $(submitButtonSelector);
+    const submitButtonText = submitButton.text();
     const setBtnColor = (type: 'gray' | 'green') => {
       submitButton.addClass(type === 'gray' ? 'gray' : 'green');
       submitButton.removeClass(type === 'gray' ? 'green' : 'gray');
@@ -39,7 +40,7 @@ export class SetupWithEmailKeyManagerModule {
       await Ui.modal.error(String(e));
     } finally {
       setBtnColor('green');
-      submitButton.text('CONTINUE');
+      submitButton.text(submitButtonText);
     }
   };
 
