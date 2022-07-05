@@ -63,7 +63,8 @@ export class ComposePageRecipe extends PageRecipe {
       await composePageOrFrame.type('@input-subject', subject?.match(/RTL/) ? subject : `Automated puppeteer test: ${subject}`);
     }
     const sendingOpts = sendingOpt as { [key: string]: boolean | undefined };
-    for (const opt of Object.keys(sendingOpts)) {
+    const keys = ['richtext', 'encrypt', 'sign'];
+    for (const opt of keys) {
       const shouldBeTicked = sendingOpts[opt];
       if (typeof shouldBeTicked !== 'undefined') {
         await ComposePageRecipe.setPopoverToggle(composePageOrFrame, opt as PopoverOpt, shouldBeTicked);
