@@ -170,7 +170,7 @@ export class ComposePageRecipe extends PageRecipe {
     } else if (inputMethod === 'keyboard') {
       await page.press('Escape');
     }
-    await page.waitTillGone('@dialog');
+    await page.waitTillGone('@dialog-passphrase');
     expect(passPhraseFrame.frame.isDetached()).to.equal(true);
   };
 }

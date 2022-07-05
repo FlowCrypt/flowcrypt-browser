@@ -70,7 +70,7 @@ export const processAndStoreKeysFromEkmLocally = async (
       const keyToUpdate = existingKeys.filter(ki => ki.longid === longid && ki.family === prv.family);
       if (keyToUpdate.length === 1) {
         const oldKey = await KeyUtil.parse(keyToUpdate[0].private);
-        if (!oldKey.lastModified || !prv.lastModified || oldKey.lastModified === prv.lastModified) {
+        if (!oldKey.lastModified || !prv.lastModified || oldKey.lastModified >= prv.lastModified) {
           continue;
         }
       } else if (keyToUpdate.length > 1) {

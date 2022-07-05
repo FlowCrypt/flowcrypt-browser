@@ -219,13 +219,6 @@ export const mockKeyManagerEndpoints: HandlersDefinition = {
         return { privateKeys: [{ decryptedPrivateKey: testConstants.existingPrv }] };
       }
       if (acctEmail === 'get.updating.key@key-manager-choose-passphrase-forbid-storing.flowcrypt.test') {
-        if (!MOCK_KM_UPDATING_KEY.privateKeys.length) {
-          MOCK_KM_UPDATING_KEY.privateKeys = [{ decryptedPrivateKey: testConstants.updatingPrv }];
-        } else {
-          const key = await KeyUtil.parse(MOCK_KM_UPDATING_KEY.privateKeys[0].decryptedPrivateKey);
-          const updatedKey = await KeyUtil.reformatKey(key, undefined, [{ name: 'Full Name', email: key.emails[0] }], 6000);
-          MOCK_KM_UPDATING_KEY.privateKeys = [{ decryptedPrivateKey: KeyUtil.armor(updatedKey) }];
-        }
         return MOCK_KM_UPDATING_KEY;
       }
       if (acctEmail === 'get.key@no-submit-client-configuration.key-manager-autogen.flowcrypt.test') {

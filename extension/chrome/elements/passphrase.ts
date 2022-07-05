@@ -190,7 +190,6 @@ View.run(class PassphraseView extends View {
       Ui.toast(`${unlockCount} of ${allPrivateKeys.length} keys ${(unlockCount > 1) ? 'were' : 'was'} unlocked by this pass phrase`);
     }
     if (atLeastOneMatched) {
-      console.log('At least one matched');
       this.closeDialog(true, this.initiatorFrameId);
     } else {
       this.renderFailedEntryPpPrompt();
