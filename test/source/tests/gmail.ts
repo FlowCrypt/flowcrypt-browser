@@ -284,6 +284,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
 
     ava.default('mail.google.com - secure reply btn, reply draft', testWithBrowser('ci.tests.gmail', async (t, browser) => {
       const gmailPage = await openGmailPage(t, browser);
+      await Util.sleep(1);
       await gotoGmailPage(gmailPage, '/FMfcgzGpGnLZzLxNpWchTnNfxKkNzBSD'); // to go encrypted convo
       // Gmail has 100 emails per thread limit, so if there are 98 deleted messages + 1 initial message,
       // the draft number 100 won't be saved. Therefore, we need to delete forever trashed messages from this thread.
@@ -292,6 +293,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       }
       await gmailPage.waitAndClick('@secure-reply-button');
       let replyBox = await gmailPage.getFrame(['/chrome/elements/compose.htm'], { sleep: 3 });
+      await Util.sleep(3);
       expect(await replyBox.read('@recipients-preview')).to.equal('e2e.enterprise.test@flowcrypt.com');
       await createSecureDraft(t, browser, gmailPage, 'reply draft');
       await createSecureDraft(t, browser, gmailPage, 'offline reply draft', { offline: true });
