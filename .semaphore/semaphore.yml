@@ -70,8 +70,6 @@ blocks:
                 echo "Uploading debug files as job artifacts..."
                 artifact push job build/test/test/debugArtifacts/debugHtmlAttachment-*.html
               fi
-    run:
-      when: branch = 'master' OR branch =~ 'live-test'  OR branch =~ 'gmail-test'
   - name: Live Gmail tests
     dependencies: []
     execution_time_limit:
@@ -101,3 +99,5 @@ blocks:
         - name: Live Gmail tests
           commands:
             - npm run-script test_ci_chrome_consumer_live_gmail
+    run:
+      when: branch = 'master' OR branch =~ 'live-test'  OR branch =~ 'gmail-test'
