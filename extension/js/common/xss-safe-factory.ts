@@ -232,7 +232,7 @@ export class XssSafeFactory {
         ? `<div class="${btnCls} compose_button_simple only-icon" ${elAttrs}></div><div class="apW">${title}</div>`
         : `<div class="${btnCls} small" ${elAttrs}>${title}</div>`;
       const containerCls = webmailVersion === 'gmail2022' ? 'pb-25px' : 'z0';
-      return `<div class="${this.destroyableCls} ${containerCls}}">${btnEl}</div>`;
+      return `<div class="${this.destroyableCls} ${containerCls}">${btnEl}</div>`;
     }
   };
 
