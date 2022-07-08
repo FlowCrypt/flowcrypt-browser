@@ -14,7 +14,7 @@ export class BackupView extends BackupUi {
 
   constructor() {
     super();
-    const uncheckedUrlParams = Url.parse(['acctEmail', 'parentTabId', 'idToken', 'id', 'type']);
+    const uncheckedUrlParams = Url.parse(['acctEmail', 'parentTabId', 'action', 'idToken', 'id', 'type']);
     const acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
     const action = Assert.urlParamRequire.oneof(uncheckedUrlParams, 'action', ['backup_manual', undefined]);
     const parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
