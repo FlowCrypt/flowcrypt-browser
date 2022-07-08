@@ -243,21 +243,26 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
   };
 
   const processKeysFromEkm = async (acctEmail: string, decryptedPrivateKeys: string[], factory: XssSafeFactory, ppEvent: { entered?: boolean }) => {
-    const { unencryptedKeysToSave, updateCount } = await BrowserMsg.send.bg.await.processKeysFromEkm({ acctEmail, decryptedPrivateKeys });
-    if (unencryptedKeysToSave.length) {
-      ppEvent.entered = undefined;
-      // todo: we need to think about possible collision with a pass phrase dialog activated by a compose frame
-      await showPassphraseDialog(factory, { longids: [], type: 'update_key' });
-      while (ppEvent.entered === undefined) {
-        await Ui.time.sleep(100);
+    try {
+      const { unencryptedKeysToSave, updateCount } = await BrowserMsg.send.bg.await.processKeysFromEkm({ acctEmail, decryptedPrivateKeys });
+      if (unencryptedKeysToSave.length) {
+        ppEvent.entered = undefined;
+        // todo: we need to think about possible collision with a pass phrase dialog activated by a compose frame
+        await showPassphraseDialog(factory, { longids: [], type: 'update_key' });
+        while (ppEvent.entered === undefined) {
+          await Ui.time.sleep(100);
+        }
+        if (ppEvent.entered) {
+          await processKeysFromEkm(acctEmail, unencryptedKeysToSave, factory, ppEvent);
+        } else {
+          return;
+        }
+      } else if (updateCount > 0) {
+        Ui.toast('Account keys updated');
       }
-      if (ppEvent.entered) {
-        await processKeysFromEkm(acctEmail, unencryptedKeysToSave, factory, ppEvent);
-      } else {
-        return; // todo: alert
-      }
-    } else if (updateCount > 0) {
-      Ui.toast('Account keys updated');
+    } catch (e) {
+      Catch.reportErr(e);
+      Ui.toast(`Could not update keys from EKM due to error: ${e instanceof Error ? e.message : String(e)}`);
     }
   };
 

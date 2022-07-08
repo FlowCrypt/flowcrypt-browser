@@ -564,6 +564,9 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       await SetupPageRecipe.autoSetupWithEKM(settingsPage, {
         enterPp: { passphrase, checks: { isSavePassphraseChecked: false, isSavePassphraseHidden: true } }
       });
+      const accessToken = await BrowserRecipe.getGoogleAccessToken(settingsPage, acct);
+      const dummyGmailUrl = 'https://gmail.localhost:8001/gmail';
+      const extraAuthHeaders = { Authorization: `Bearer ${accessToken}` };
       const retrieveAndCheckKeys = async (expectedKeyCount: number) => {
         const { cryptup_getupdatingkeykeymanagerchoosepassphraseforbidstoringflowcrypttest_keys: keyset }
           = await settingsPage.getFromLocalStorage(['cryptup_getupdatingkeykeymanagerchoosepassphraseforbidstoringflowcrypttest_keys']);
@@ -581,9 +584,6 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         return KeyUtil.armor(await KeyUtil.reformatKey(prv, undefined, [{ name: 'Full Name', email: acct }], 6000));
       };
       const set1 = await retrieveAndCheckKeys(1);
-      const accessToken = await BrowserRecipe.getGoogleAccessToken(settingsPage, acct);
-      const dummyGmailUrl = 'https://gmail.localhost:8001/gmail';
-      const extraAuthHeaders = { Authorization: `Bearer ${accessToken}` };
       // 1. EKM returns the same key, no update, no toast
       let gmailPage = await browser.newPage(t, dummyGmailUrl, undefined, extraAuthHeaders);
       await PageRecipe.noToastAppears(gmailPage);
@@ -627,10 +627,12 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       // 6. EKM returns a newer version of the existing key, entering the passphrase, update toast
       gmailPage = await browser.newPage(t, dummyGmailUrl, undefined, extraAuthHeaders);
       await gmailPage.waitAll('@dialog-passphrase');
-      const passphraseDialog = await gmailPage.getFrame(['passphrase.htm']);
-      await passphraseDialog.waitForContent('@passphrase-text', 'Enter FlowCrypt pass phrase to keep your account keys up to date');
-      await passphraseDialog.waitAndType('@input-pass-phrase', passphrase);
-      await passphraseDialog.waitAndClick('@action-confirm-pass-phrase-entry');
+      {
+        const passphraseDialog = await gmailPage.getFrame(['passphrase.htm']);
+        await passphraseDialog.waitForContent('@passphrase-text', 'Enter FlowCrypt pass phrase to keep your account keys up to date');
+        await passphraseDialog.waitAndType('@input-pass-phrase', passphrase);
+        await passphraseDialog.waitAndClick('@action-confirm-pass-phrase-entry');
+      }
       await gmailPage.waitTillGone('@dialog-passphrase');
       await PageRecipe.waitForToastToAppearAndDisappear(gmailPage, 'Account keys updated');
       const set7 = await retrieveAndCheckKeys(1);
@@ -665,6 +667,53 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       expect(mainKey10.length).to.equal(1);
       expect(KeyUtil.filterKeysByIdentity(set10.map(ki => ki.prv), [{ family: 'openpgp', id: 'FAFB7D675AC74E87F84D169F00B0115807969D75' }]).length).to.equal(1);
       expect(mainKey10[0].lastModified!).to.be.greaterThan(mainKey9[0].lastModified!); // updated this key
+      // 10. Forget the passphrase, EKM returns a third key, we enter a passphrase that doesn't match any of the existing keys, no update
+      await InboxPageRecipe.finishSessionOnInboxPage(gmailPage);
+      await gmailPage.close();
+      MOCK_KM_UPDATING_KEY.privateKeys = [{ decryptedPrivateKey: testConstants.unprotectedPrvKey }];
+      gmailPage = await browser.newPage(t, dummyGmailUrl, undefined, extraAuthHeaders);
+      await gmailPage.waitAll('@dialog-passphrase');
+      {
+        const passphraseDialog = await gmailPage.getFrame(['passphrase.htm']);
+        await passphraseDialog.waitAndType('@input-pass-phrase', 'g00D_pa$$worD-But_Different');
+        await passphraseDialog.waitAndClick('@action-confirm-pass-phrase-entry');
+        // todo: how to wait properly
+        await passphraseDialog.waitForContent('@input-pass-phrase', /^$/);
+        expect(await passphraseDialog.attr('@input-pass-phrase', 'placeholder')).to.eq('Please try again');
+      }
+      await ComposePageRecipe.cancelPassphraseDialog(gmailPage, 'keyboard');
+      await PageRecipe.noToastAppears(gmailPage);
+      const set11 = await retrieveAndCheckKeys(2);
+      expect(set11.map(entry => entry.prv.id)).to.eql(['392FB1E9FF4184659AB6A246835C0141B9ECF536', 'FAFB7D675AC74E87F84D169F00B0115807969D75']);
+      await gmailPage.close();
+      // 11. EKM returns a new third key, we enter a passphrase matching an existing key, update happens
+      gmailPage = await browser.newPage(t, dummyGmailUrl, undefined, extraAuthHeaders);
+      await gmailPage.waitAll('@dialog-passphrase');
+      {
+        const passphraseDialog = await gmailPage.getFrame(['passphrase.htm']);
+        await passphraseDialog.waitForContent('@passphrase-text', 'Enter FlowCrypt pass phrase to keep your account keys up to date');
+        await passphraseDialog.waitAndType('@input-pass-phrase', passphrase);
+        await passphraseDialog.waitAndClick('@action-confirm-pass-phrase-entry');
+      }
+      await gmailPage.waitTillGone('@dialog-passphrase');
+      await PageRecipe.waitForToastToAppearAndDisappear(gmailPage, 'Account keys updated');
+      const set12 = await retrieveAndCheckKeys(3);
+      expect(set12.map(entry => entry.prv.id)).to.eql([
+        '392FB1E9FF4184659AB6A246835C0141B9ECF536',
+        'FAFB7D675AC74E87F84D169F00B0115807969D75',
+        '277D1ADA213881F4ABE0415395E783DC0289E2E2'
+      ]);
+      await InboxPageRecipe.finishSessionOnInboxPage(gmailPage);
+      await gmailPage.close();
+      // 12. Forget the passphrase, EKM sends a broken key
+      // todo: we should probably update the valid keys?
+      MOCK_KM_UPDATING_KEY.privateKeys = [
+        { decryptedPrivateKey: await updateAndArmorKey(mainKey10[0]) }, // update the main key
+        // only include a half of another armored key
+        { decryptedPrivateKey: testConstants.unprotectedPrvKey.substring(0, testConstants.unprotectedPrvKey.length / 2) }
+      ];
+      gmailPage = await browser.newPage(t, dummyGmailUrl, undefined, extraAuthHeaders);
+      await PageRecipe.waitForToastToAppearAndDisappear(gmailPage, 'Could not update keys from EKM due to error:');
       await gmailPage.close();
     }));
 
