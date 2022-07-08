@@ -53,7 +53,8 @@ export abstract class BackupUi extends View {
       this.keyIdentity = { id: keyIdentityId, family: keyIdentityFamily };
     }
     const htmlUrl = '/chrome/elements/shared/backup.template.htm';
-    $('#backup-template-container').html(await (await fetch(htmlUrl)).text());
+    const sanitized = Xss.htmlSanitize(await (await fetch(htmlUrl)).text());
+    Xss.setElementContentDANGEROUSLY($('#backup-template-container').get(0), sanitized); // xss-sanitized
     this.gmail = new Gmail(this.acctEmail);
     this.statusModule = new BackupStatusModule(this);
     this.manualModule = new BackupManualModule(this);
