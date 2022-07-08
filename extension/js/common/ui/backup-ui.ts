@@ -31,8 +31,8 @@ export abstract class BackupUi extends View {
   public clientConfiguration!: ClientConfiguration;
   public fesUrl?: string;
   public identityOfKeysToManuallyBackup: KeyIdentity[] = [];
+  public backupAction: BackupUiActionType;
   private keyIdentity: KeyIdentity | undefined; // the key identity supplied with URL params
-  private backupAction: BackupUiActionType;
   private readonly blocks = ['loading', 'module_status', 'module_manual'];
 
   constructor() {
