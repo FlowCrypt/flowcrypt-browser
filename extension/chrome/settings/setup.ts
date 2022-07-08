@@ -33,6 +33,7 @@ import { KeyManager } from '../../js/common/api/key-server/key-manager.js';
 import { SetupWithEmailKeyManagerModule } from './setup/setup-key-manager-autogen.js';
 import { shouldPassPhraseBeHidden } from '../../js/common/ui/passphrase-ui.js';
 import Swal from 'sweetalert2';
+import { BackupUi } from '../../js/common/ui/backup-ui.js';
 
 export interface SetupOptions {
   passphrase: string;
@@ -42,12 +43,12 @@ export interface SetupOptions {
   recovered?: boolean;
 }
 
-export class SetupView extends View {
+export class SetupView extends BackupUi {
 
   public readonly acctEmail: string;
   public readonly parentTabId: string | undefined;
-  public readonly action: 'add_key' | 'finalize' | undefined;
-  public readonly idToken: string | undefined; // only needed for initial setup, not for add_key or 'finalize'
+  public readonly action: 'add_key' | undefined;
+  public readonly idToken: string | undefined; // only needed for initial setup, not for add_key
 
   public readonly keyImportUi = new KeyImportUi({ checkEncryption: true });
   public readonly gmail: Gmail;
@@ -74,7 +75,7 @@ export class SetupView extends View {
     super();
     const uncheckedUrlParams = Url.parse(['acctEmail', 'action', 'idToken', 'parentTabId']);
     this.acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
-    this.action = Assert.urlParamRequire.oneof(uncheckedUrlParams, 'action', ['add_key', 'finalize', undefined]) as 'add_key' | 'finalize' | undefined;
+    this.action = Assert.urlParamRequire.oneof(uncheckedUrlParams, 'action', ['add_key', undefined]) as 'add_key' | undefined;
     if (this.action === 'add_key') {
       this.parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
     } else {
@@ -100,6 +101,12 @@ export class SetupView extends View {
   }
 
   public isFesUsed = () => Boolean(this.storage.fesUrl);
+
+  public renderBackupDone = async () => {
+    $('#backup-template-container').remove();
+    await this.finalizeSetup();
+    await this.setupRender.renderSetupDone();
+  };
 
   public render = async () => {
     await initPassphraseToggle(['step_2b_manual_enter_passphrase'], 'hide');

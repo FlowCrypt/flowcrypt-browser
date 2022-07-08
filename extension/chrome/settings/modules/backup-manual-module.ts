@@ -4,7 +4,6 @@
 
 import { ViewModule } from '../../../js/common/view-module.js';
 import { Xss } from '../../../js/common/platform/xss.js';
-import { BackupView } from './backup.js';
 import { Attachment } from '../../../js/common/core/attachment.js';
 import { SendableMsg } from '../../../js/common/api/email-provider/sendable-msg.js';
 import { GMAIL_RECOVERY_EMAIL_SUBJECTS } from '../../../js/common/core/const.js';
@@ -19,13 +18,14 @@ import { Settings } from '../../../js/common/settings.js';
 import { Buf } from '../../../js/common/core/buf.js';
 import { PassphraseStore } from '../../../js/common/platform/store/passphrase-store.js';
 import { KeyStore } from '../../../js/common/platform/store/key-store.js';
+import { BackupUi } from '../../../js/common/ui/backup-ui.js';
 
 const differentPassphrasesError = `Your keys are protected with different pass phrases.\n\nBacking them up together isn't supported yet.`;
-export class BackupManualActionModule extends ViewModule<BackupView> {
+export class BackupManualActionModule extends ViewModule<BackupUi> {
   private ppChangedPromiseCancellation: PromiseCancellation = { cancel: false };
   private readonly proceedBtn = $('#module_manual .action_manual_backup');
 
-  constructor(view: BackupView) {
+  constructor(view: BackupUi) {
     super(view);
     BrowserMsg.addListener('passphrase_entry', async ({ entered }: Bm.PassphraseEntry) => {
       if (!entered) {
@@ -76,7 +76,7 @@ export class BackupManualActionModule extends ViewModule<BackupView> {
           return;
         }
       }
-      const checkStrength = selected === 'inbox' && this.view.action !== 'setup_manual';
+      const checkStrength = selected === 'inbox' && this.view.backupAction !== 'setup_manual';
       const encryptedArmoredPrvs = await this.encryptForBackup(keyInfosToBackup, { checkStrength });
       if (!encryptedArmoredPrvs) {
         return; // error modal was already rendered inside encryptForBackup

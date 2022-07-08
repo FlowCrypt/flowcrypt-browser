@@ -4,7 +4,6 @@
 
 import { Lang } from '../../../js/common/lang.js';
 import { ViewModule } from '../../../js/common/view-module.js';
-import { BackupView } from './backup.js';
 import { Settings } from '../../../js/common/settings.js';
 import { UnreportableError } from '../../../js/common/platform/catch.js';
 import { Ui } from '../../../js/common/browser/ui.js';
@@ -12,8 +11,9 @@ import { ApiErr } from '../../../js/common/api/shared/api-error.js';
 import { GoogleAuth } from '../../../js/common/api/email-provider/gmail/google-auth.js';
 import { KeyStore } from '../../../js/common/platform/store/key-store.js';
 import { KeyStoreUtil } from "../../../js/common/core/crypto/key-store-util.js";
+import { BackupUi } from '../../../js/common/ui/backup-ui.js';
 
-export class BackupAutomaticModule extends ViewModule<BackupView> {
+export class BackupAutomaticModule extends ViewModule<BackupUi> {
 
   public simpleSetupAutoBackupRetryUntilSuccessful = async () => {
     try {

@@ -810,28 +810,28 @@ body#settings > div#content.setup div.loading {
   padding-right: 0;
 }
 
-body#settings > div#content.backup .colored_label {
+#backup-template-container > div#content.backup .colored_label {
   float: right;
   opacity: 0.75;
 }
 
-body#settings > div#content.backup div#module_manual { display: none; }
-body#settings > div#content.backup div#module_manual .details { text-align: left; }
+#backup-template-container > div#content.backup div#module_manual { display: none; }
+#backup-template-container > div#content.backup div#module_manual .details { text-align: left; }
 
 body#settings > div#content.change_passphrase div#step_0_enter { display: none; }
 body#settings > div#content.change_passphrase div#step_3_done { display: none; }
 
-body#settings > div#content.backup div#module_manual .backup_options_details_option {
+#backup-template-container > div#content.backup div#module_manual .backup_options_details_option {
   margin-bottom: 10px;
   display: inline-block;
   margin-right: 10px;
   width: 100%;
 }
-body#settings > div#content.backup div#module_manual .backup_options_details_option label { font-weight: 600; }
-body#settings > div#content.backup div#module_manual .d-inline-block { display: inline-block; }
-body#settings > div#content.backup div#module_manual table.backup_options tr.text td { padding-bottom: 20px; }
+#backup-template-container > div#content.backup div#module_manual .backup_options_details_option label { font-weight: 600; }
+#backup-template-container > div#content.backup div#module_manual .d-inline-block { display: inline-block; }
+#backup-template-container > div#content.backup div#module_manual table.backup_options tr.text td { padding-bottom: 20px; }
 
-body#settings > div#content.backup div#module_manual table.backup_options label {
+#backup-template-container > div#content.backup div#module_manual table.backup_options label {
   text-transform: uppercase;
   font-weight: bold;
   position: relative;
@@ -861,7 +861,7 @@ body#settings > div#content.setup div.manual .setup_page .pp_container {
   padding-left: 40px;
 }
 
-body#settings > div#content.backup .password_result,
+#backup-template-container > div#content.backup .password_result,
 body#settings > div#content.setup div.manual .password_result {
   margin-top: 7px;
   text-transform: uppercase;
