@@ -56,11 +56,15 @@ export class SetupWithEmailKeyManagerModule {
       if (privateKeys.length) {
         // keys already exist on keyserver, auto-import
         // todo: do we need to submit on auto-update?
-        await processAndStoreKeysFromEkmLocally({
-          acctEmail: this.view.acctEmail,
-          decryptedPrivateKeys: privateKeys.map(entry => entry.decryptedPrivateKey),
-          options: setupOptions
-        });
+        try {
+          await processAndStoreKeysFromEkmLocally({
+            acctEmail: this.view.acctEmail,
+            decryptedPrivateKeys: privateKeys.map(entry => entry.decryptedPrivateKey),
+            options: setupOptions
+          });
+        } catch (e) {
+          throw new Error(`Could not store keys from EKM due to error: ${e instanceof Error ? e.message : String(e)}`);
+        }
       } else if (this.view.clientConfiguration.canCreateKeys()) {
         // generate keys on client and store them on key manager
         await this.autoGenerateKeyAndStoreBothLocallyAndToEkm(setupOptions);

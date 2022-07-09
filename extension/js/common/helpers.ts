@@ -5,7 +5,7 @@
 import { AcctStore } from './platform/store/acct-store.js';
 import { PassphraseOptions } from '../../chrome/settings/setup.js';
 import { Buf } from './core/buf.js';
-import { Key, KeyUtil } from './core/crypto/key.js';
+import { Key, KeyInfoWithIdentity, KeyUtil } from './core/crypto/key.js';
 import { ClientConfiguration } from './client-configuration.js';
 import { ContactStore } from './platform/store/contact-store.js';
 import { KeyStore } from './platform/store/key-store.js';
@@ -16,12 +16,11 @@ export const isFesUsed = async (acctEmail: string) => {
   return Boolean(fesUrl);
 };
 
-// todo: where to take acctEmail and clientConfiguration
 export const saveKeysAndPassPhrase = async (acctEmail: string, prvs: Key[], options?: PassphraseOptions) => {
+  const clientConfiguration = await ClientConfiguration.newInstance(acctEmail);
   for (const prv of prvs) {
     await KeyStore.add(acctEmail, prv);
     if (options !== undefined) {
-      const clientConfiguration = await ClientConfiguration.newInstance(acctEmail);
       await PassphraseStore.set((options.passphrase_save && !clientConfiguration.forbidStoringPassPhrase()) ? 'local' : 'session',
         acctEmail, { longid: KeyUtil.getPrimaryLongid(prv) }, options.passphrase);
     }
@@ -40,14 +39,55 @@ export const saveKeysAndPassPhrase = async (acctEmail: string, prvs: Key[], opti
   }
 };
 
+const parseAndCheckPrivateKeys = async (decryptedPrivateKeys: string[]) => {
+  const unencryptedPrvs: Key[] = [];
+  // parse and check that all the keys are valid
+  for (const entry of decryptedPrivateKeys) {
+    const { keys, errs } = await KeyUtil.readMany(Buf.fromUtfStr(entry));
+    if (errs.length) {
+      throw new Error(`Some keys could not be parsed`);
+    }
+    if (!keys.length) {
+      throw new Error(`Could not parse any valid keys`);
+    }
+    for (const prv of keys) {
+      if (!prv.isPrivate) {
+        throw new Error(`Key ${prv.id} is not a private key`);
+      }
+      if (!prv.fullyDecrypted) {
+        throw new Error(`Key ${prv.id} is not fully decrypted`);
+      }
+    }
+    unencryptedPrvs.push(...keys);
+  }
+  return { unencryptedPrvs };
+};
+
+const filterKeysToSave = async (candidateKeys: Key[], existingKeys: KeyInfoWithIdentity[]) => {
+  if (!existingKeys.length) {
+    return candidateKeys;
+  }
+  const result: Key[] = [];
+  for (const candidate of candidateKeys) {
+    const longid = KeyUtil.getPrimaryLongid(candidate);
+    const keyToUpdate = existingKeys.filter(ki => ki.longid === longid && ki.family === candidate.family);
+    if (keyToUpdate.length === 1) {
+      const oldKey = await KeyUtil.parse(keyToUpdate[0].private);
+      if (!oldKey.lastModified || !candidate.lastModified || oldKey.lastModified >= candidate.lastModified) {
+        continue;
+      }
+    } else if (keyToUpdate.length > 1) {
+      throw new Error(`Unexpected error: key search by longid=${longid} yielded ${keyToUpdate.length} results`);
+    }
+    result.push(candidate);
+  };
+  return result;
+};
+
 export const processAndStoreKeysFromEkmLocally = async (
   { acctEmail, decryptedPrivateKeys, options }: { acctEmail: string, decryptedPrivateKeys: string[], options?: PassphraseOptions }
 ): Promise<Bm.Res.ProcessKeysFromEkm> => {
-  const { keys } = await KeyUtil.readMany(Buf.fromUtfStr(decryptedPrivateKeys.join('\n')));
-  if (!keys.length) {
-    throw new Error(`Could not parse any valid keys from Key Manager response for user ${acctEmail}`);
-  }
-  let unencryptedKeysToSave: Key[] = [];
+  const { unencryptedPrvs } = await parseAndCheckPrivateKeys(decryptedPrivateKeys);
   const existingKeys = await KeyStore.get(acctEmail);
   let passphrase = options?.passphrase;
   if (passphrase === undefined && !existingKeys.length) {
@@ -55,30 +95,7 @@ export const processAndStoreKeysFromEkmLocally = async (
     // this can only happen on misconfiguration
     // todo: or should we throw?
   }
-  for (const prv of keys) {
-    // todo: should we still process remaining correct keys?
-    if (!prv.isPrivate) {
-      throw new Error(`Key ${prv.id} for user ${acctEmail} is not a private key`);
-    }
-    if (!prv.fullyDecrypted) {
-      throw new Error(`Key ${prv.id} for user ${acctEmail} from FlowCrypt Email Key Manager is not fully decrypted`);
-    }
-    if (options === undefined) {
-      // updating here
-      // todo: refactor?
-      const longid = KeyUtil.getPrimaryLongid(prv);
-      const keyToUpdate = existingKeys.filter(ki => ki.longid === longid && ki.family === prv.family);
-      if (keyToUpdate.length === 1) {
-        const oldKey = await KeyUtil.parse(keyToUpdate[0].private);
-        if (!oldKey.lastModified || !prv.lastModified || oldKey.lastModified >= prv.lastModified) {
-          continue;
-        }
-      } else if (keyToUpdate.length > 1) {
-        throw new Error(`Unexpected error: key search by longid=${longid} yielded ${keyToUpdate.length} results`);
-      }
-    }
-    unencryptedKeysToSave.push(prv);
-  }
+  let unencryptedKeysToSave = await filterKeysToSave(unencryptedPrvs, existingKeys);
   let encryptedKeys: Key[] = [];
   if (unencryptedKeysToSave.length) {
     if (passphrase === undefined) {

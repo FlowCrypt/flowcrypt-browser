@@ -703,17 +703,18 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         'FAFB7D675AC74E87F84D169F00B0115807969D75',
         '277D1ADA213881F4ABE0415395E783DC0289E2E2'
       ]);
-      await InboxPageRecipe.finishSessionOnInboxPage(gmailPage);
-      await gmailPage.close();
       // 12. Forget the passphrase, EKM sends a broken key
       // todo: we should probably update the valid keys?
+      await InboxPageRecipe.finishSessionOnInboxPage(gmailPage);
+      await gmailPage.close();
       MOCK_KM_UPDATING_KEY.privateKeys = [
-        { decryptedPrivateKey: await updateAndArmorKey(mainKey10[0]) }, // update the main key
+        { decryptedPrivateKey: await updateAndArmorKey(set2[0].prv) }, // update the main key
         // only include a half of another armored key
         { decryptedPrivateKey: testConstants.unprotectedPrvKey.substring(0, testConstants.unprotectedPrvKey.length / 2) }
       ];
       gmailPage = await browser.newPage(t, dummyGmailUrl, undefined, extraAuthHeaders);
-      await PageRecipe.waitForToastToAppearAndDisappear(gmailPage, 'Could not update keys from EKM due to error:');
+      await PageRecipe.waitForToastToAppearAndDisappear(gmailPage,
+        'Could not update keys from EKM due to error: BrowserMsg(processKeysFromEkm) sendRawResponse::Error: Some keys could not be parsed');
       await gmailPage.close();
     }));
 
