@@ -48,8 +48,12 @@ export class Str {
     return str.replace(/[.~!$%^*=?]/gi, '');
   };
 
-  public static formatEmailWithOptionalName = ({ email, name }: EmailParts): string => {
-    return name ? `${Str.rmSpecialCharsKeepUtf(name, 'ALLOW-SOME')} <${email}>` : email;
+  public static formatEmailWithOptionalName = (emailParts: EmailParts): string => {
+    return Str.formatEmailWithOptionalNameEx(emailParts);
+  };
+
+  public static formatEmailList = (list: EmailParts[], forceBrackets?: boolean): string => {
+    return list.map(x => Str.formatEmailWithOptionalNameEx(x, forceBrackets)).join(', ');
   };
 
   public static prettyPrint = (obj: any) => {
@@ -168,6 +172,13 @@ export class Str {
     const rtlCount = string.match(new RegExp('[' + Str.rtlChars + ']', 'g'))?.length || 0;
     const lrtCount = string.match(new RegExp('[' + Str.ltrChars + ']', 'g'))?.length || 0;
     return rtlCount > lrtCount;
+  };
+
+  private static formatEmailWithOptionalNameEx = ({ email, name }: EmailParts, forceBrackets?: boolean): string => {
+    if (name) {
+      return `${Str.rmSpecialCharsKeepUtf(name, 'ALLOW-SOME')} <${email}>`;
+    }
+    return forceBrackets ? `<${email}>` : email;
   };
 
   private static base64urlUtfEncode = (str: string) => {

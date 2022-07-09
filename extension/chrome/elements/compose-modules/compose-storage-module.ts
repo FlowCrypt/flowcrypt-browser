@@ -17,6 +17,8 @@ import { PassphraseStore } from '../../../js/common/platform/store/passphrase-st
 import { compareAndSavePubkeysToStorage } from '../../../js/common/shared.js';
 import { KeyFamily } from '../../../js/common/core/crypto/key.js';
 import { ParsedKeyInfo } from '../../../js/common/core/crypto/key-store-util.js';
+import { EmailParts, Str } from '../../../js/common/core/common.js';
+import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
 
 export class ComposeStorageModule extends ViewModule<ComposeView> {
 
@@ -174,6 +176,28 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
       }
       throw e;
     }
+  };
+
+  // searches in AcctStore and ContactStore to find name for this email (if it is missing in MIME string)
+  public getEmailWithOptionalName = async (emailInMimeFormat: string): Promise<EmailParts> => {
+    const parsedEmail = Str.parseEmail(emailInMimeFormat);
+    if (!parsedEmail.email) {
+      throw new Error(`Recipient email ${emailInMimeFormat} is not valid`);
+    }
+    if (parsedEmail.name) {
+      return { email: parsedEmail.email, name: parsedEmail.name };
+    }
+    const { sendAs } = await AcctStore.get(this.view.acctEmail, ['sendAs']);
+    let name: string | undefined;
+    if (sendAs && sendAs[parsedEmail.email]?.name) {
+      name = sendAs[parsedEmail.email].name!;
+    } else {
+      const contactWithPubKeys = await ContactStore.getOneWithAllPubkeys(undefined, parsedEmail.email);
+      if (contactWithPubKeys && contactWithPubKeys.info.name) {
+        name = contactWithPubKeys.info.name;
+      }
+    }
+    return { email: parsedEmail.email, name };
   };
 
   private collectSingleFamilyKeysInternal = async (

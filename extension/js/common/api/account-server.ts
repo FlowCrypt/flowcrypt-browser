@@ -8,6 +8,12 @@ import { BackendRes, FcUuidAuth, FlowCryptComApi, ProfileUpdate } from './accoun
 import { ParsedRecipients } from './email-provider/email-provider-api.js';
 import { Api, ProgressCb } from './shared/api.js';
 
+export type UploadedMessageData = {
+  url: string, // both FES and FlowCryptComApi
+  externalId?: string, // legacy FES
+  emailToExternalIdAndUrl?: { [email: string]: { url: string, externalId: string } } // FES only
+};
+
 /**
  * This may be calling to FlowCryptComApi or Enterprise Server (FES, customer on-prem) depending on
  *   whether FES is deployed on the customer domain or not.
@@ -58,7 +64,7 @@ export class AccountServer extends Api {
     from: string,
     recipients: ParsedRecipients,
     progressCb: ProgressCb
-  ): Promise<{ url: string, externalId?: string }> => {
+  ): Promise<UploadedMessageData> => {
     if (await this.isFesUsed()) {
       const fes = new EnterpriseServer(this.acctEmail);
       // Recipients are used to later cross-check replies from the web
