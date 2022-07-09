@@ -80,7 +80,7 @@ const filterKeysToSave = async (candidateKeys: Key[], existingKeys: KeyInfoWithI
       throw new Error(`Unexpected error: key search by longid=${longid} yielded ${keyToUpdate.length} results`);
     }
     result.push(candidate);
-  };
+  }
   return result;
 };
 
