@@ -15,9 +15,10 @@ type DraftSaveModel = { message: { raw: string, threadId: string } };
 
 const allowedRecipients: Array<string> = ['flowcrypt.compatibility@gmail.com', 'manualcopypgp@flowcrypt.com',
   'censored@email.com', 'test@email.com', 'human@flowcrypt.com', 'human+nopgp@flowcrypt.com', 'expired.on.attester@domain.com',
-  'ci.tests.gmail@flowcrypt.test', 'smime1@recipient.com', 'smime2@recipient.com', 'smime@recipient.com',
-  'smime.attachment@recipient.com', 'auto.refresh.expired.key@recipient.com', 'to@example.com', 'cc@example.com', 'bcc@example.com',
-  'flowcrypt.test.key.multiple.inbox1@gmail.com', 'flowcrypt.test.key.multiple.inbox2@gmail.com', 'mock.only.pubkey@flowcrypt.com'];
+  'ci.tests.gmail@flowcrypt.test', 'smime1@recipient.com', 'smime2@recipient.com', 'smime@recipient.com', 'smime.attachment@recipient.com',
+  'auto.refresh.expired.key@recipient.com', 'to@example.com', 'cc@example.com', 'bcc@example.com', 'gatewayfailure@example.com',
+  'flowcrypt.test.key.multiple.inbox1@gmail.com', 'flowcrypt.test.key.multiple.inbox2@gmail.com', 'mock.only.pubkey@flowcrypt.com',
+  'vladimir@flowcrypt.com', 'limon.monte@gmail.com', 'sweetalert2@gmail.com', 'sender@domain.com', 'invalid@example.com', 'timeout@example.com'];
 
 export const mockGoogleEndpoints: HandlersDefinition = {
   '/o/oauth2/auth': async ({ query: { client_id, response_type, access_type, state, redirect_uri, scope, login_hint, proceed } }, req) => {
@@ -222,7 +223,7 @@ export const mockGoogleEndpoints: HandlersDefinition = {
         const id = `msg_id_${Util.lousyRandom()}`;
         try {
           const testingStrategyContext = new TestBySubjectStrategyContext(parseResult.mimeMsg.subject || '');
-          await testingStrategyContext.test(parseResult.mimeMsg, parseResult.base64, id);
+          await testingStrategyContext.test(parseResult, id);
         } catch (e) {
           if (!(e instanceof UnsuportableStrategyError)) { // No such strategy for test
             throw e; // todo - should start throwing unsupported test strategies too, else changing subject will cause incomplete testing
@@ -344,10 +345,8 @@ const validateMimeMsg = async (acct: string, mimeMsg: ParsedMail, threadId?: str
   if (!mimeMsg.text && !mimeMsg.attachments?.length) {
     throw new HttpClientErr('Error: Message body cannot be empty', 400);
   }
-  if (
-    !parsedMailAddressObjectAsArray(mimeMsg.to).length && parsedMailAddressObjectAsArray(mimeMsg.to)[0].value.length
-    || parsedMailAddressObjectAsArray(mimeMsg.to)[0].value.find(em => !allowedRecipients.includes(em.address!))
-  ) {
+  const recipients = parsedMailAddressObjectAsArray(mimeMsg.to).concat(parsedMailAddressObjectAsArray(mimeMsg.cc)).concat(parsedMailAddressObjectAsArray(mimeMsg.bcc));
+  if (!recipients.length || recipients.some(addr => addr.value.some(em => !allowedRecipients.includes(em.address!)))) {
     throw new HttpClientErr('Error: You can\'t send a message to unexisting email address(es)');
   }
   const aliases = [acct];

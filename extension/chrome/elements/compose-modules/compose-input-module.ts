@@ -60,14 +60,14 @@ export class ComposeInputModule extends ViewModule<ComposeView> {
     return this.view.S.cached('fineuploader').find('.qq-upload-file').toArray().map((el) => $(el).text().trim());
   };
 
-  public extractAll = (): NewMsgData => {
+  public extractAll = async (): Promise<NewMsgData> => {
     const recipients = this.mapRecipients(this.view.recipientsModule.getValidRecipients());
     const subject = this.view.isReplyBox && this.view.replyParams ? this.view.replyParams.subject : String($('#input_subject').val() || '');
     const plaintext = this.view.inputModule.extract('text', 'input_text');
     const plainhtml = this.view.inputModule.extract('html', 'input_text');
     const password = this.view.S.cached('input_password').val();
     const pwd = typeof password === 'string' && password ? password : undefined;
-    const from = this.view.senderModule.getSender();
+    const from = await this.view.storageModule.getEmailWithOptionalName(this.view.senderModule.getSender());
     return { recipients, subject, plaintext, plainhtml, pwd, from };
   };
 

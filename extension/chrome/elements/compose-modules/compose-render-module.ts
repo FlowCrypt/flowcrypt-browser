@@ -8,8 +8,7 @@ import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Catch } from '../../../js/common/platform/catch.js';
 import { KeyImportUi } from '../../../js/common/ui/key-import-ui.js';
 import { Lang } from '../../../js/common/lang.js';
-import { Recipients } from '../../../js/common/api/email-provider/email-provider-api.js';
-import { SendableMsg } from '../../../js/common/api/email-provider/sendable-msg.js';
+import { ParsedRecipients, Recipients } from '../../../js/common/api/email-provider/email-provider-api.js';
 import { Str } from '../../../js/common/core/common.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { Xss } from '../../../js/common/platform/xss.js';
@@ -114,7 +113,7 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
     }
   };
 
-  public renderReplySuccess = (msg: SendableMsg, msgId: string) => {
+  public renderReplySuccess = (attachments: Attachment[], recipients: ParsedRecipients, msgId: string) => {
     this.view.renderModule.renderReinsertReplyBox(msgId);
     if (!this.view.sendBtnModule.popover.choices.encrypt) {
       this.view.S.cached('replied_body').removeClass('pgp_secure');
@@ -125,13 +124,13 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
     this.view.S.cached('replied_body').css('width', ($('table#compose').width() || 500) - 30);
     this.view.S.cached('compose_table').css('display', 'none');
     this.view.S.cached('reply_msg_successful').find('div.replied_from').text(this.view.senderModule.getSender());
-    this.view.S.cached('reply_msg_successful').find('div.replied_to span').text(msg.headers.To.replace(/,/g, ', '));
-    if (msg.recipients.cc !== undefined && msg.recipients.cc.length > 0) {
-      this.view.S.cached('reply_msg_successful').find('div.replied_cc span').text(msg.recipients.cc.join(', '));
+    this.view.S.cached('reply_msg_successful').find('div.replied_to span').text(Str.formatEmailList(recipients.to || []));
+    if (recipients.cc !== undefined && recipients.cc.length > 0) {
+      this.view.S.cached('reply_msg_successful').find('div.replied_cc span').text(Str.formatEmailList(recipients.cc));
       $('.replied_cc').show();
     }
-    if (msg.recipients.bcc !== undefined && msg.recipients.bcc.length > 0) {
-      this.view.S.cached('reply_msg_successful').find('div.replied_bcc span').text(msg.recipients.bcc.join(', '));
+    if (recipients.bcc !== undefined && recipients.bcc.length > 0) {
+      this.view.S.cached('reply_msg_successful').find('div.replied_bcc span').text(Str.formatEmailList(recipients.bcc));
       $('.replied_bcc').show();
     }
     const repliedBodyEl = this.view.S.cached('reply_msg_successful').find('div.replied_body');
@@ -141,7 +140,7 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
       this.renderReplySuccessMimeAttachments(this.view.inputModule.extractAttachments());
     } else {
       Xss.sanitizeRender(repliedBodyEl, Str.escapeTextAsRenderableHtml(this.view.inputModule.extract('text', 'input_text', 'SKIP-ADDONS')));
-      this.renderReplySuccessAttachments(msg.attachments, msgId, this.view.sendBtnModule.popover.choices.encrypt);
+      this.renderReplySuccessAttachments(attachments, msgId, this.view.sendBtnModule.popover.choices.encrypt);
     }
     const t = new Date();
     const time = ((t.getHours() !== 12) ? (t.getHours() % 12) : 12) + ':' + (t.getMinutes() < 10 ? '0' : '') + t.getMinutes() + ((t.getHours() >= 12) ? ' PM ' : ' AM ') + '(0 minutes ago)';
