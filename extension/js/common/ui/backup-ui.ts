@@ -2,7 +2,7 @@
 
 'use strict';
 
-// import { BackupAutomaticModule } from '../../../chrome/settings/modules/backup-automatic-module.js';
+import { BackupAutomaticModule } from '../../../chrome/settings/modules/backup-automatic-module.js';
 import { BackupStatusModule } from '../../../chrome/settings/modules/backup-status-module.js';
 import { BackupManualActionModule as BackupManualModule } from '../../../chrome/settings/modules/backup-manual-module.js';
 import { Gmail } from '../api/email-provider/gmail/gmail.js';
@@ -30,9 +30,9 @@ export class BackupUi {
   public parentTabId: string | undefined; // the master page to interact (settings/index.htm)
   public acctEmail!: string;
   public gmail!: Gmail;
-  public statusModule!: BackupStatusModule;
-  public manualModule!: BackupManualModule;
-  // public automaticModule!: BackupAutomaticModule;
+  public readonly statusModule: BackupStatusModule;
+  public readonly manualModule: BackupManualModule;
+  public readonly automaticModule: BackupAutomaticModule;
   public emailProvider: EmailProvider = 'gmail';
   public tabId!: string;
   public clientConfiguration!: ClientConfiguration;
@@ -46,7 +46,7 @@ export class BackupUi {
   constructor() {
     this.statusModule = new BackupStatusModule();
     this.manualModule = new BackupManualModule();
-    // this.automaticModule = new BackupAutomaticModule();
+    this.automaticModule = new BackupAutomaticModule();
   }
 
   public async initialize(
@@ -89,7 +89,7 @@ export class BackupUi {
     }
     if (this.action === 'setup_automatic') {
       $('#button-go-back').css('display', 'none');
-      // await this.automaticModule.simpleSetupAutoBackupRetryUntilSuccessful();
+      await this.automaticModule.simpleSetupAutoBackupRetryUntilSuccessful();
     } else {
       await this.preparePrvKeysBackupSelection();
       if (this.action === 'setup_manual') {
