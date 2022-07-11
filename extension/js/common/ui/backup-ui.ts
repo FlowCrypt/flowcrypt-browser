@@ -43,7 +43,7 @@ export class BackupUi {
   private keyIdentity: KeyIdentity | undefined; // the key identity supplied with URL params
   private readonly blocks = ['loading', 'module_status', 'module_manual'];
 
-  public async initialize(options: BackupUiOptions) {
+  public initialize = async (options: BackupUiOptions) => {
     this.acctEmail = options.acctEmail;
     this.action = options.action;
     this.parentTabId = options.parentTabId;
@@ -60,7 +60,7 @@ export class BackupUi {
     this.automaticModule = new BackupAutomaticModule(this);
     await this.renderBackupView();
     this.setBackupHandlers();
-  }
+  };
 
   public setHandler = (cb: (e: HTMLElement, event: JQuery.Event<HTMLElement, null>) => void | Promise<void>, errHandlers?: BrowserEventErrHandler) => {
     return Ui.event.handle(cb, errHandlers, this);
