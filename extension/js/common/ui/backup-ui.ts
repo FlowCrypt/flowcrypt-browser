@@ -43,9 +43,7 @@ export class BackupUi {
   private keyIdentity: KeyIdentity | undefined; // the key identity supplied with URL params
   private readonly blocks = ['loading', 'module_status', 'module_manual'];
 
-  public async initialize(
-    options: BackupUiOptions,
-  ) {
+  public async initialize(options: BackupUiOptions) {
     this.acctEmail = options.acctEmail;
     this.action = options.action;
     this.parentTabId = options.parentTabId;
