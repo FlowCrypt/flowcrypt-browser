@@ -96,7 +96,6 @@ export const mockGoogleEndpoints: HandlersDefinition = {
   },
   '/gmail': async (_parsedReq, req) => {
     if (isGet(req)) {
-      await Util.sleep(2); // necessary to activate setup web content script?
       const acct = oauth.checkAuthorizationHeaderWithAccessToken(req.headers.authorization);
       return GoogleData.getMockGmailPage(acct);
     }
