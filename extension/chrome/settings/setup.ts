@@ -43,7 +43,7 @@ export interface SetupOptions {
   recovered?: boolean;
 }
 
-export class SetupView extends BackupUi {
+export class SetupView extends View {
 
   public readonly acctEmail: string;
   public readonly parentTabId: string | undefined;
@@ -57,6 +57,7 @@ export class SetupView extends BackupUi {
   public readonly setupImportKey: SetupImportKeyModule;
   public readonly setupRender: SetupRenderModule;
   public readonly setupWithEmailKeyManager: SetupWithEmailKeyManagerModule;
+  public readonly backupUi: BackupUi;
 
   public tabId!: string;
   public scopes!: Scopes;
@@ -98,15 +99,10 @@ export class SetupView extends BackupUi {
     this.setupImportKey = new SetupImportKeyModule(this);
     this.setupRender = new SetupRenderModule(this);
     this.setupWithEmailKeyManager = new SetupWithEmailKeyManagerModule(this);
+    this.backupUi = new BackupUi();
   }
 
   public isFesUsed = () => Boolean(this.storage.fesUrl);
-
-  public renderBackupDone = async () => {
-    $('#backup-template-container').remove();
-    await this.finalizeSetup();
-    await this.setupRender.renderSetupDone();
-  };
 
   public render = async () => {
     await initPassphraseToggle(['step_2b_manual_enter_passphrase'], 'hide');

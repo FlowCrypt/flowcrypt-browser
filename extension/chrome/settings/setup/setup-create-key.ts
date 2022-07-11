@@ -38,7 +38,17 @@ export class SetupCreateKeyModule {
         const action = $('#step_2a_manual_create .input_backup_inbox').prop('checked') ? 'setup_automatic' : 'setup_manual';
         // only finalize after backup is done.
         $('#step_2a_manual_create').hide();
-        await this.view.initialize(this.view.acctEmail, action, undefined, keyIdentity.id, keyIdentity.family);
+        await this.view.backupUi.initialize({
+          acctEmail: this.view.acctEmail,
+          action,
+          keyIdentityId: keyIdentity.id,
+          keyIdentityFamily: keyIdentity.family,
+          onBackedUpFinished: async () => {
+            $('#backup-template-container').remove();
+            await this.view.finalizeSetup();
+            await this.view.setupRender.renderSetupDone();
+          }
+        });
       } else {
         await this.view.submitPublicKeys(opts);
         await this.view.finalizeSetup();

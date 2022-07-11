@@ -2,7 +2,6 @@
 
 'use strict';
 
-import { ViewModule } from '../../../js/common/view-module.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { ApiErr } from '../../../js/common/api/shared/api-error.js';
@@ -13,25 +12,25 @@ import { Str } from '../../../js/common/core/common.js';
 import { KeyInfoWithIdentity } from '../../../js/common/core/crypto/key.js';
 import { BackupUi } from '../../../js/common/ui/backup-ui.js';
 
-export class BackupStatusModule extends ViewModule<BackupUi> {
+export class BackupStatusModule extends BackupUi {
 
   public setHandlers = () => { // is run after checkAndRenderBackupStatus, which renders (some of) these fields first
-    $('#module_status .action_go_manual').click(this.view.setHandler(() => this.actionShowManualBackupHandler()));
-    $('#module_status .action_go_add_key').click(this.view.setHandler(async () => await this.goTo('add_key.htm')));
+    $('#module_status .action_go_manual').click(this.setHandler(() => this.actionShowManualBackupHandler()));
+    $('#module_status .action_go_add_key').click(this.setHandler(async () => await this.goTo('add_key.htm')));
   };
 
   public checkAndRenderBackupStatus = async () => {
     try {
-      const backups = await this.view.gmail.fetchKeyBackups();
-      this.view.displayBackupBlock('module_status');
+      const backups = await this.gmail.fetchKeyBackups();
+      this.displayBackupBlock('module_status');
       this.renderBackupSummaryAndActionButtons(backups);
       this.renderBackupDetailsText(backups);
     } catch (e) {
       if (ApiErr.isNetErr(e)) {
         Xss.sanitizeRender('#content', `Could not check for backups: no internet. ${Ui.retryLink()}`);
       } else if (ApiErr.isAuthErr(e)) {
-        if (this.view.parentTabId) {
-          BrowserMsg.send.notificationShowAuthPopupNeeded(this.view.parentTabId, { acctEmail: this.view.acctEmail });
+        if (this.parentTabId) {
+          BrowserMsg.send.notificationShowAuthPopupNeeded(this.parentTabId, { acctEmail: this.acctEmail });
         }
         Xss.sanitizeRender('#content', `Could not check for backups: account needs to be re-connected. ${Ui.retryLink()}`);
       } else {
@@ -84,12 +83,12 @@ export class BackupStatusModule extends ViewModule<BackupUi> {
   };
 
   private actionShowManualBackupHandler = async () => {
-    this.view.displayBackupBlock('module_manual');
+    this.displayBackupBlock('module_manual');
     $('h1').text('Back up your private key');
   };
 
   private goTo = async (page: string) => {
-    await Browser.openSettingsPage('index.htm', this.view.acctEmail, `/chrome/settings/modules/${page}`);
+    await Browser.openSettingsPage('index.htm', this.acctEmail, `/chrome/settings/modules/${page}`);
   };
 
 }

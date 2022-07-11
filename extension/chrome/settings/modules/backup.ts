@@ -10,7 +10,9 @@ import { Settings } from '../../../js/common/settings.js';
 import { BackupUi, BackupUiActionType } from '../../../js/common/ui/backup-ui.js';
 import { View } from '../../../js/common/view.js';
 
-export class BackupView extends BackupUi {
+export class BackupView extends View {
+
+  private readonly backupUi: BackupUi;
 
   constructor() {
     super();
@@ -20,23 +22,27 @@ export class BackupView extends BackupUi {
     const parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
     const keyIdentityId = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'id');
     const keyIdentityFamily = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'type');
-    void this.initialize(acctEmail, action as BackupUiActionType, parentTabId, keyIdentityId, keyIdentityFamily);
+    this.backupUi = new BackupUi();
+    void this.backupUi.initialize({
+      acctEmail,
+      action: action as BackupUiActionType,
+      parentTabId,
+      keyIdentityId,
+      keyIdentityFamily,
+      onBackedUpFinished: async (backedUpCount: number) => {
+        if (backedUpCount > 0) {
+          const pluralOrSingle = backedUpCount > 1 ? "keys have" : "key has";
+          await Ui.modal.info(`Your private ${pluralOrSingle} been successfully backed up`);
+          BrowserMsg.send.closePage(parentTabId);
+        } else {
+          Settings.redirectSubPage(acctEmail, parentTabId, '/chrome/settings/modules/backup.htm');
+        }
+      }
+    });
   }
 
-  public renderBackupDone = async (backedUpCount: number) => {
-    if (backedUpCount > 0) {
-      const pluralOrSingle = backedUpCount > 1 ? "keys have" : "key has";
-      await Ui.modal.info(`Your private ${pluralOrSingle} been successfully backed up`);
-      if (this.parentTabId) {
-        BrowserMsg.send.closePage(this.parentTabId);
-      }
-    } else if (this.parentTabId) { // should be always true as setup_manual is excluded by this point
-      Settings.redirectSubPage(this.acctEmail, this.parentTabId, '/chrome/settings/modules/backup.htm');
-    }
-  };
-
   public render = async () => {
-    // defined as needed will be rendered with renderBackupView function
+    // defined as needed will be rendered with BackupUi
   };
 
   public setHandlers = async () => {

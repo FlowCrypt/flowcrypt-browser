@@ -2,66 +2,80 @@
 
 'use strict';
 
-import { BackupAutomaticModule } from '../../../chrome/settings/modules/backup-automatic-module.js';
+// import { BackupAutomaticModule } from '../../../chrome/settings/modules/backup-automatic-module.js';
 import { BackupStatusModule } from '../../../chrome/settings/modules/backup-status-module.js';
 import { BackupManualActionModule as BackupManualModule } from '../../../chrome/settings/modules/backup-manual-module.js';
 import { Gmail } from '../api/email-provider/gmail/gmail.js';
-import { View } from '../view.js';
 import { AcctStore, EmailProvider } from '../platform/store/acct-store.js';
 import { BrowserMsg } from '../browser/browser-msg.js';
 import { ClientConfiguration } from '../client-configuration.js';
 import { Xss } from '../platform/xss.js';
 import { KeyIdentity, KeyInfoWithIdentity, KeyUtil } from '../core/crypto/key.js';
 import { KeyStore } from '../platform/store/key-store.js';
-import { Ui } from '../browser/ui.js';
+import { BrowserEventErrHandler, PreventableEventName, Ui } from '../browser/ui.js';
 import { Str } from '../core/common.js';
 import { Lang } from '../lang.js';
 
+interface BackupUiOptions {
+  acctEmail: string;
+  action: BackupUiActionType;
+  parentTabId?: string;
+  keyIdentityId?: string;
+  keyIdentityFamily?: string;
+  onBackedUpFinished: (backedUpCount: number) => Promise<void>;
+}
 export type BackupUiActionType = 'setup_automatic' | 'setup_manual' | 'backup_manual' | undefined;
-export abstract class BackupUi extends View {
+export class BackupUi {
 
   public parentTabId: string | undefined; // the master page to interact (settings/index.htm)
   public acctEmail!: string;
   public gmail!: Gmail;
   public statusModule!: BackupStatusModule;
   public manualModule!: BackupManualModule;
-  public automaticModule!: BackupAutomaticModule;
+  // public automaticModule!: BackupAutomaticModule;
   public emailProvider: EmailProvider = 'gmail';
   public tabId!: string;
   public clientConfiguration!: ClientConfiguration;
   public fesUrl?: string;
   public identityOfKeysToManuallyBackup: KeyIdentity[] = [];
-  public backupAction: BackupUiActionType;
+  public action: BackupUiActionType;
+  public onBackedUpFinished!: (backedUpCount?: number) => Promise<void>;
   private keyIdentity: KeyIdentity | undefined; // the key identity supplied with URL params
   private readonly blocks = ['loading', 'module_status', 'module_manual'];
 
   constructor() {
-    super();
+    this.statusModule = new BackupStatusModule();
+    this.manualModule = new BackupManualModule();
+    // this.automaticModule = new BackupAutomaticModule();
   }
 
   public async initialize(
-    acctEmail: string,
-    backupAction: BackupUiActionType,
-    parentTabId: string | undefined,
-    keyIdentityId: string | undefined,
-    keyIdentityFamily: string | undefined
+    options: BackupUiOptions,
   ) {
-    this.acctEmail = acctEmail;
-    this.backupAction = backupAction;
-    this.parentTabId = parentTabId;
-    if (keyIdentityId && keyIdentityFamily === 'openpgp') {
-      this.keyIdentity = { id: keyIdentityId, family: keyIdentityFamily };
+    this.acctEmail = options.acctEmail;
+    this.action = options.action;
+    this.parentTabId = options.parentTabId;
+    if (options.keyIdentityId && options.keyIdentityFamily === 'openpgp') {
+      this.keyIdentity = { id: options.keyIdentityId, family: options.keyIdentityFamily };
     }
+    this.onBackedUpFinished = options.onBackedUpFinished;
     const htmlUrl = '/chrome/elements/shared/backup.template.htm';
     const sanitized = Xss.htmlSanitize(await (await fetch(htmlUrl)).text());
     Xss.setElementContentDANGEROUSLY($('#backup-template-container').get(0), sanitized); // xss-sanitized
     this.gmail = new Gmail(this.acctEmail);
-    this.statusModule = new BackupStatusModule(this);
-    this.manualModule = new BackupManualModule(this);
-    this.automaticModule = new BackupAutomaticModule(this);
     await this.renderBackupView();
     this.setBackupHandlers();
   }
+
+  public setHandler = (cb: (e: HTMLElement, event: JQuery.Event<HTMLElement, null>) => void | Promise<void>, errHandlers?: BrowserEventErrHandler) => {
+    return Ui.event.handle(cb, errHandlers, this);
+  };
+
+  public setHandlerPrevent = (
+    evName: PreventableEventName, cb: (el: HTMLElement, event: Event, resetTimer: () => void) => void | Promise<void>, errHandlers?: BrowserEventErrHandler
+  ) => {
+    return Ui.event.prevent(evName, cb, errHandlers, this);
+  };
 
   public renderBackupView = async () => {
     this.tabId = await BrowserMsg.requiredTabId();
@@ -73,16 +87,16 @@ export abstract class BackupUi extends View {
       Xss.sanitizeRender('body', `<div class="line" style="margin-top: 100px;">${Lang.setup.keyBackupsNotAllowed}</div>`);
       return;
     }
-    if (this.backupAction === 'setup_automatic') {
+    if (this.action === 'setup_automatic') {
       $('#button-go-back').css('display', 'none');
-      await this.automaticModule.simpleSetupAutoBackupRetryUntilSuccessful();
+      // await this.automaticModule.simpleSetupAutoBackupRetryUntilSuccessful();
     } else {
       await this.preparePrvKeysBackupSelection();
-      if (this.backupAction === 'setup_manual') {
+      if (this.action === 'setup_manual') {
         $('#button-go-back').css('display', 'none');
         this.displayBackupBlock('module_manual');
         $('h1').text('Back up your private key');
-      } else if (this.backupAction === 'backup_manual') {
+      } else if (this.action === 'backup_manual') {
         this.displayBackupBlock('module_manual');
         $('h1').text('Back up your private key');
       } else { // action = view status
@@ -93,16 +107,6 @@ export abstract class BackupUi extends View {
       }
     }
   };
-
-  public render(): Promise<void> {
-    throw new Error('should be implemented');
-  }
-
-  public setHandlers(): void | Promise<void> {
-    throw new Error('should be implemented');
-  }
-
-  public abstract renderBackupDone(backedUpCount: number): Promise<void>;
 
   public displayBackupBlock = (showBlockName: string) => {
     for (const block of this.blocks) {
