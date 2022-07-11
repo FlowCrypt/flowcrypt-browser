@@ -821,7 +821,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       await backupPage.close();
     }));
 
-    ava.default.only('settings - manual backup to inbox keys with weak pass phrases results in error', testWithBrowser(undefined, async (t, browser) => {
+    ava.default('settings - manual backup to inbox keys with weak pass phrases results in error', testWithBrowser(undefined, async (t, browser) => {
       const acctEmail = 'flowcrypt.test.key.multiple@gmail.com';
       const settingsPage1 = await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
       await SetupPageRecipe.manualEnter(settingsPage1, 'unused', {
