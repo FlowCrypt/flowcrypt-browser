@@ -18,49 +18,50 @@ import { Buf } from '../../../js/common/core/buf.js';
 import { PassphraseStore } from '../../../js/common/platform/store/passphrase-store.js';
 import { KeyStore } from '../../../js/common/platform/store/key-store.js';
 import { BackupUi } from '../../../js/common/ui/backup-ui.js';
+import { BackupUiModule } from './backup-ui-module.js';
 
 const differentPassphrasesError = `Your keys are protected with different pass phrases.\n\nBacking them up together isn't supported yet.`;
-export class BackupManualActionModule extends BackupUi {
+export class BackupManualActionModule extends BackupUiModule<BackupUi> {
   private ppChangedPromiseCancellation: PromiseCancellation = { cancel: false };
   private readonly proceedBtn = $('#module_manual .action_manual_backup');
 
-  constructor() {
-    super();
+  constructor(ui: BackupUi) {
+    super(ui);
     BrowserMsg.addListener('passphrase_entry', async ({ entered }: Bm.PassphraseEntry) => {
       if (!entered) {
         this.ppChangedPromiseCancellation.cancel = true; // update original object which is monitored by a promise
         this.ppChangedPromiseCancellation = { cancel: false }; // set to a new, not yet used object
       }
     });
-    BrowserMsg.listen(this.tabId);
+    BrowserMsg.listen(this.ui.tabId);
   }
 
   public setHandlers = () => {
-    $('#module_manual input[name=input_backup_choice]').click(this.setHandler(el => this.actionSelectBackupMethodHandler(el)));
-    this.proceedBtn.click(this.setHandlerPrevent('double', () => this.actionManualBackupHandler()));
+    $('#module_manual input[name=input_backup_choice]').click(this.ui.setHandler(el => this.actionSelectBackupMethodHandler(el)));
+    this.proceedBtn.click(this.ui.setHandlerPrevent('double', () => this.actionManualBackupHandler()));
   };
 
   public doBackupOnEmailProvider = async (encryptedPrvs: KeyInfoWithIdentity[]) => {
     const emailMsg = String(await $.get({ url: '/chrome/emails/email_intro.template.htm', dataType: 'html' }));
     const emailAttachments = encryptedPrvs.map(prv => this.asBackupFile(prv));
-    const headers = { from: this.acctEmail, recipients: { to: [{ email: this.acctEmail }] }, subject: GMAIL_RECOVERY_EMAIL_SUBJECTS[0] };
-    const msg = await SendableMsg.createPlain(this.acctEmail, headers, { 'text/html': emailMsg }, emailAttachments);
-    if (this.emailProvider === 'gmail') {
-      return await this.gmail.msgSend(msg);
+    const headers = { from: this.ui.acctEmail, recipients: { to: [{ email: this.ui.acctEmail }] }, subject: GMAIL_RECOVERY_EMAIL_SUBJECTS[0] };
+    const msg = await SendableMsg.createPlain(this.ui.acctEmail, headers, { 'text/html': emailMsg }, emailAttachments);
+    if (this.ui.emailProvider === 'gmail') {
+      return await this.ui.gmail.msgSend(msg);
     } else {
-      throw Error(`Backup method not implemented for ${this.emailProvider}`);
+      throw Error(`Backup method not implemented for ${this.ui.emailProvider}`);
     }
   };
 
   private actionManualBackupHandler = async () => {
     const selected = $('input[type=radio][name=input_backup_choice]:checked').val();
-    if (!this.identityOfKeysToManuallyBackup.length) {
+    if (!this.ui.identityOfKeysToManuallyBackup.length) {
       await Ui.modal.error('No keys are selected to back up! Please select a key to continue.');
       return;
     }
     const keyInfosToBackup = KeyUtil.filterKeysByIdentity(
-      await KeyStore.get(this.acctEmail),
-      this.identityOfKeysToManuallyBackup
+      await KeyStore.get(this.ui.acctEmail),
+      this.ui.identityOfKeysToManuallyBackup
     );
     if (!keyInfosToBackup.length) {
       await Ui.modal.error('Sorry, could not extract these keys from storage. Please restart your browser and try again.');
@@ -75,7 +76,7 @@ export class BackupManualActionModule extends BackupUi {
           return;
         }
       }
-      const checkStrength = selected === 'inbox' && this.action !== 'setup_manual';
+      const checkStrength = selected === 'inbox' && this.ui.action !== 'setup_manual';
       const encryptedArmoredPrvs = await this.encryptForBackup(keyInfosToBackup, { checkStrength });
       if (!encryptedArmoredPrvs) {
         return; // error modal was already rendered inside encryptForBackup
@@ -87,7 +88,7 @@ export class BackupManualActionModule extends BackupUi {
       } else {
         await this.backupAsFiles(encryptedArmoredPrvs);
       }
-      await this.onBackedUpFinished(keyInfosToBackup.length);
+      await this.ui.onBackedUpFinished(keyInfosToBackup.length);
     } else if (selected === 'print') {
       await this.backupByBrint();
     } else {
@@ -97,7 +98,7 @@ export class BackupManualActionModule extends BackupUi {
 
   private asBackupFile = (prv: KeyInfoWithIdentity) => {
     return new Attachment({
-      name: `flowcrypt-backup-${this.acctEmail.replace(/[^A-Za-z0-9]+/g, '')}-${prv.id}.asc`,
+      name: `flowcrypt-backup-${this.ui.acctEmail.replace(/[^A-Za-z0-9]+/g, '')}-${prv.id}.asc`,
       type: 'application/pgp-keys',
       data: Buf.fromUtfStr(prv.private)
     });
@@ -105,7 +106,7 @@ export class BackupManualActionModule extends BackupUi {
 
   private encryptForBackup = async (keyInfos: KeyInfoWithIdentity[], checks: { checkStrength: boolean }): Promise<KeyInfoWithIdentity[] | undefined> => {
     const kisWithPp = await Promise.all(keyInfos.map(async (ki) => {
-      const passphrase = await PassphraseStore.get(this.acctEmail, ki);
+      const passphrase = await PassphraseStore.get(this.ui.acctEmail, ki);
       // test that the key can actually be decrypted with the passphrase provided
       const mismatch = passphrase && !await KeyUtil.decrypt(await KeyUtil.parse(ki.private), passphrase);
       return { ...ki, mismatch, passphrase: mismatch ? undefined : passphrase };
@@ -118,8 +119,8 @@ export class BackupManualActionModule extends BackupUi {
     if (checks.checkStrength && distinctPassphrases[0] && !(Settings.evalPasswordStrength(distinctPassphrases[0]).word.pass)) {
       await Ui.modal.warning('Please change your pass phrase first.\n\nIt\'s too weak for this backup method.');
       // Actually, until #956 is resolved, we can only modify the pass phrase of the first key
-      if (this.parentTabId && kisWithPp[0].passphrase === distinctPassphrases[0]) {
-        Settings.redirectSubPage(this.acctEmail, this.parentTabId, '/chrome/settings/modules/change_passphrase.htm');
+      if (this.ui.parentTabId && kisWithPp[0].passphrase === distinctPassphrases[0]) {
+        Settings.redirectSubPage(this.ui.acctEmail, this.ui.parentTabId, '/chrome/settings/modules/change_passphrase.htm');
       }
       return undefined;
     }
@@ -139,9 +140,9 @@ export class BackupManualActionModule extends BackupUi {
       }
       // todo: reset invalid pass phrases (mismatch === true)?
       const longids = kisMissingPp.map(ki => ki.longid);
-      if (this.parentTabId) {
-        BrowserMsg.send.passphraseDialog(this.parentTabId, { type: 'backup', longids });
-        if (! await PassphraseStore.waitUntilPassphraseChanged(this.acctEmail, longids, 1000, this.ppChangedPromiseCancellation)) {
+      if (this.ui.parentTabId) {
+        BrowserMsg.send.passphraseDialog(this.ui.parentTabId, { type: 'backup', longids });
+        if (! await PassphraseStore.waitUntilPassphraseChanged(this.ui.acctEmail, longids, 1000, this.ppChangedPromiseCancellation)) {
           return undefined;
         }
       } else {
@@ -165,8 +166,8 @@ export class BackupManualActionModule extends BackupUi {
       if (ApiErr.isNetErr(e)) {
         await Ui.modal.warning('Need internet connection to finish. Please click the button again to retry.');
       } else if (ApiErr.isAuthErr(e)) {
-        if (this.parentTabId) {
-          BrowserMsg.send.notificationShowAuthPopupNeeded(this.parentTabId, { acctEmail: this.acctEmail });
+        if (this.ui.parentTabId) {
+          BrowserMsg.send.notificationShowAuthPopupNeeded(this.ui.parentTabId, { acctEmail: this.ui.acctEmail });
         }
         await Ui.modal.warning('Account needs to be re-connected first. Please try later.');
       } else {
@@ -192,7 +193,7 @@ export class BackupManualActionModule extends BackupUi {
   };
 
   private backupRefused = async () => {
-    await this.onBackedUpFinished(0);
+    await this.ui.onBackedUpFinished(0);
   };
 
   private isPrivateKeyEncrypted = async (ki: KeyInfoWithIdentity) => {

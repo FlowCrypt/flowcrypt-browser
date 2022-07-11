@@ -30,9 +30,9 @@ export class BackupUi {
   public parentTabId: string | undefined; // the master page to interact (settings/index.htm)
   public acctEmail!: string;
   public gmail!: Gmail;
-  public readonly statusModule: BackupStatusModule;
-  public readonly manualModule: BackupManualModule;
-  public readonly automaticModule: BackupAutomaticModule;
+  public statusModule!: BackupStatusModule;
+  public manualModule!: BackupManualModule;
+  public automaticModule!: BackupAutomaticModule;
   public emailProvider: EmailProvider = 'gmail';
   public tabId!: string;
   public clientConfiguration!: ClientConfiguration;
@@ -42,12 +42,6 @@ export class BackupUi {
   public onBackedUpFinished!: (backedUpCount?: number) => Promise<void>;
   private keyIdentity: KeyIdentity | undefined; // the key identity supplied with URL params
   private readonly blocks = ['loading', 'module_status', 'module_manual'];
-
-  constructor() {
-    this.statusModule = new BackupStatusModule();
-    this.manualModule = new BackupManualModule();
-    this.automaticModule = new BackupAutomaticModule();
-  }
 
   public async initialize(
     options: BackupUiOptions,
@@ -63,6 +57,9 @@ export class BackupUi {
     const sanitized = Xss.htmlSanitize(await (await fetch(htmlUrl)).text());
     Xss.setElementContentDANGEROUSLY($('#backup-template-container').get(0), sanitized); // xss-sanitized
     this.gmail = new Gmail(this.acctEmail);
+    this.statusModule = new BackupStatusModule(this);
+    this.manualModule = new BackupManualModule(this);
+    this.automaticModule = new BackupAutomaticModule(this);
     await this.renderBackupView();
     this.setBackupHandlers();
   }

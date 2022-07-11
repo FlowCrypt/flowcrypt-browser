@@ -11,31 +11,32 @@ import { GoogleAuth } from '../../../js/common/api/email-provider/gmail/google-a
 import { KeyStore } from '../../../js/common/platform/store/key-store.js';
 import { KeyStoreUtil } from "../../../js/common/core/crypto/key-store-util.js";
 import { BackupUi } from '../../../js/common/ui/backup-ui.js';
+import { BackupUiModule } from './backup-ui-module.js';
 
-export class BackupAutomaticModule extends BackupUi {
+export class BackupAutomaticModule extends BackupUiModule<BackupUi> {
 
   public simpleSetupAutoBackupRetryUntilSuccessful = async () => {
     try {
       await this.setupCreateSimpleAutomaticInboxBackup();
     } catch (e) {
       return await Settings.promptToRetry(e, Lang.setup.failedToBackUpKey, this.setupCreateSimpleAutomaticInboxBackup,
-        Lang.general.contactIfNeedAssistance(!!this.fesUrl));
+        Lang.general.contactIfNeedAssistance(!!this.ui.fesUrl));
     }
   };
 
   private setupCreateSimpleAutomaticInboxBackup = async () => {
-    const prvs = await KeyStoreUtil.parse(await KeyStore.getRequired(this.acctEmail));
+    const prvs = await KeyStoreUtil.parse(await KeyStore.getRequired(this.ui.acctEmail));
     if (prvs.find(prv => !prv.key.fullyEncrypted)) {
       await Ui.modal.warning('Key not protected with a pass phrase, skipping');
       throw new UnreportableError('Key not protected with a pass phrase, skipping');
     }
     try {
-      await this.manualModule.doBackupOnEmailProvider(prvs.map(prv => prv.keyInfo));
-      await this.onBackedUpFinished();
+      await this.ui.manualModule.doBackupOnEmailProvider(prvs.map(prv => prv.keyInfo));
+      await this.ui.onBackedUpFinished();
     } catch (e) {
       if (ApiErr.isAuthErr(e)) {
         await Ui.modal.info("Authorization Error. FlowCrypt needs to reconnect your Gmail account");
-        const connectResult = await GoogleAuth.newAuthPopup({ acctEmail: this.acctEmail });
+        const connectResult = await GoogleAuth.newAuthPopup({ acctEmail: this.ui.acctEmail });
         if (!connectResult.error) {
           await this.setupCreateSimpleAutomaticInboxBackup();
         } else {
