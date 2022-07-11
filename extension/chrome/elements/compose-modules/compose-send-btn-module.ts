@@ -11,18 +11,17 @@ import { Buf } from '../../../js/common/core/buf.js';
 import { Catch } from '../../../js/common/platform/catch.js';
 import { ComposerUserError } from './compose-err-module.js';
 import { ComposeSendBtnPopoverModule } from './compose-send-btn-popover-module.js';
-import { GeneralMailFormatter } from './formatters/general-mail-formatter.js';
+import { GeneralMailFormatter, MultipleMessages } from './formatters/general-mail-formatter.js';
 import { GmailParser, GmailRes } from '../../../js/common/api/email-provider/gmail/gmail-parser.js';
 import { KeyInfoWithIdentity } from '../../../js/common/core/crypto/key.js';
-import { getUniqueRecipientEmails, SendBtnTexts } from './compose-types.js';
+import { getUniqueRecipientEmails, SendBtnTexts, SendMsgsResult } from './compose-types.js';
 import { SendableMsg } from '../../../js/common/api/email-provider/sendable-msg.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { ViewModule } from '../../../js/common/view-module.js';
 import { ComposeView } from '../compose.js';
 import { ContactStore } from '../../../js/common/platform/store/contact-store.js';
-import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
-import { Str } from '../../../js/common/core/common.js';
+import { EmailParts } from '../../../js/common/core/common.js';
 
 export class ComposeSendBtnModule extends ViewModule<ComposeView> {
 
@@ -90,8 +89,6 @@ export class ComposeSendBtnModule extends ViewModule<ComposeView> {
   private btnText = (): string => {
     if (this.popover.choices.encrypt && this.popover.choices.sign) {
       return SendBtnTexts.BTN_ENCRYPT_SIGN_AND_SEND;
-    } else if (this.popover.choices.encrypt) {
-      return SendBtnTexts.BTN_ENCRYPT_AND_SEND;
     } else if (this.popover.choices.sign) {
       return SendBtnTexts.BTN_SIGN_AND_SEND;
     } else {
@@ -107,19 +104,41 @@ export class ComposeSendBtnModule extends ViewModule<ComposeView> {
     this.view.S.cached('toggle_send_options').hide();
     try {
       this.view.errModule.throwIfFormNotReady();
+      this.isSendMessageInProgress = true;
       this.view.S.now('send_btn_text').text('Loading...');
       Xss.sanitizeRender(this.view.S.now('send_btn_i'), Ui.spinner('white'));
       this.view.S.cached('send_btn_note').text('');
-      const newMsgData = this.view.inputModule.extractAll();
+      const newMsgData = await this.view.inputModule.extractAll();
       await this.view.errModule.throwIfFormValsInvalid(newMsgData);
       const emails = getUniqueRecipientEmails(newMsgData.recipients);
       await ContactStore.update(undefined, emails, { lastUse: Date.now() });
       const msgObj = await GeneralMailFormatter.processNewMsg(this.view, newMsgData);
-      await this.finalizeSendableMsg(msgObj);
-      await this.doSendMsg(msgObj.msg);
+      for (const msg of msgObj.msgs) {
+        await this.finalizeSendableMsg({ msg, senderKi: msgObj.senderKi });
+      }
+      const result = await this.doSendMsgs(msgObj);
+      if (!result.failures.length) {
+        // toast isn't supported together with a confirmation/alert popup
+        if (result.supplementaryOperationsErrors.length) {
+          console.error(result.supplementaryOperationsErrors);
+          Catch.setHandledTimeout(() => {
+            Ui.toast(result.supplementaryOperationsErrors[0]); // tslint:disable-line:no-unsafe-any
+          }, 0);
+        }
+        BrowserMsg.send.notificationShow(this.view.parentTabId, { notification: `Your ${this.view.isReplyBox ? 'reply' : 'message'} has been sent.` });
+        BrowserMsg.send.focusBody(this.view.parentTabId); // Bring focus back to body so Gmails shortcuts will work
+        if (this.view.isReplyBox) {
+          this.view.renderModule.renderReplySuccess(msgObj.renderSentMessage.attachments, msgObj.renderSentMessage.recipients, result.sentIds[0]);
+        } else {
+          this.view.renderModule.closeMsg();
+        }
+      } else {
+        await this.view.errModule.handleSendErr(result.failures[0].e, result);
+      }
     } catch (e) {
-      await this.view.errModule.handleSendErr(e);
+      await this.view.errModule.handleSendErr(e, undefined);
     } finally {
+      this.isSendMessageInProgress = false;
       this.view.sendBtnModule.enableBtn();
       this.view.S.cached('toggle_send_options').show();
     }
@@ -145,7 +164,6 @@ export class ComposeSendBtnModule extends ViewModule<ComposeView> {
     if (this.view.myPubkeyModule.shouldAttach() && senderKi) { // todo: report on undefined?
       msg.attachments.push(Attachment.keyinfoAsPubkeyAttachment(senderKi));
     }
-    msg.from = await this.formatSenderEmailAsMimeString(msg.from);
   };
 
   private extractInlineImagesToAttachments = (html: string) => {
@@ -194,65 +212,69 @@ export class ComposeSendBtnModule extends ViewModule<ComposeView> {
     return { mimeType, data };
   };
 
-
-  private doSendMsg = async (msg: SendableMsg) => {
+  private attemptSendMsg = async (msg: SendableMsg): Promise<GmailRes.GmailMsgSend> => {
     // if this is a password-encrypted message, then we've already shown progress for uploading to backend
     // and this requests represents second half of uploadable effort. Else this represents all (no previous heavy requests)
+    // todo: this isn't correct when we're sending multiple messages
     const progressRepresents = this.view.pwdOrPubkeyContainerModule.isVisible() ? 'SECOND-HALF' : 'EVERYTHING';
-    let msgSentRes: GmailRes.GmailMsgSend;
     try {
-      this.isSendMessageInProgress = true;
-      msgSentRes = await this.view.emailProvider.msgSend(msg, (p) => this.renderUploadProgress(p, progressRepresents));
+      return await this.view.emailProvider.msgSend(msg, (p) => this.renderUploadProgress(p, progressRepresents));
     } catch (e) {
       if (msg.thread && ApiErr.isNotFound(e) && this.view.threadId) { // cannot send msg because threadId not found - eg user since deleted it
         msg.thread = undefined;
-        msgSentRes = await this.view.emailProvider.msgSend(msg, (p) => this.renderUploadProgress(p, progressRepresents));
+        // give it another try, this time without msg.thread
+        // todo: progressRepresents?
+        return await this.attemptSendMsg(msg);
       } else {
-        this.isSendMessageInProgress = false;
         throw e;
       }
     }
-    BrowserMsg.send.notificationShow(this.view.parentTabId, { notification: `Your ${this.view.isReplyBox ? 'reply' : 'message'} has been sent.` });
-    BrowserMsg.send.focusBody(this.view.parentTabId); // Bring focus back to body so Gmails shortcuts will work
-    const operations = [this.view.draftModule.draftDelete()];
-    if (msg.externalId) {
-      operations.push((async (externalId, id) => {
-        const gmailMsg = await this.view.emailProvider.msgGet(id, 'metadata');
-        const messageId = GmailParser.findHeader(gmailMsg, 'message-id');
-        if (messageId) {
-          await this.view.acctServer.messageGatewayUpdate(externalId, messageId);
-        } else {
-          Catch.report('Failed to extract Message-ID of sent message');
-        }
-      })(msg.externalId, msgSentRes.id));
-    }
-    await Promise.all(operations);
-    this.isSendMessageInProgress = false;
-    if (this.view.isReplyBox) {
-      this.view.renderModule.renderReplySuccess(msg, msgSentRes.id);
-    } else {
-      this.view.renderModule.closeMsg();
+  };
+
+  private bindMessageId = async (externalId: string, id: string, supplementaryOperationsErrors: any[]) => {
+    try {
+      const gmailMsg = await this.view.emailProvider.msgGet(id, 'metadata');
+      const messageId = GmailParser.findHeader(gmailMsg, 'message-id');
+      if (messageId) {
+        await this.view.acctServer.messageGatewayUpdate(externalId, messageId);
+      } else {
+        throw new Error('Failed to extract Message-ID of sent message');
+      }
+    } catch (e) {
+      supplementaryOperationsErrors.push(`Failed to bind Gateway ID of the message: ${e}`);
+      Catch.reportErr(e);
     }
   };
 
-  private formatSenderEmailAsMimeString = async (email: string): Promise<string> => {
-    const parsedEmail = Str.parseEmail(email);
-    if (!parsedEmail.email) {
-      throw new Error(`Recipient email ${email} is not valid`);
-    }
-    if (parsedEmail.name) {
-      return Str.formatEmailWithOptionalName({ email: parsedEmail.email, name: parsedEmail.name });
-    }
-    const { sendAs } = await AcctStore.get(this.view.acctEmail, ['sendAs']);
-    let name: string | undefined;
-    if (sendAs && sendAs[email]?.name) {
-      name = sendAs[email].name!;
-    } else {
-      const contactWithPubKeys = await ContactStore.getOneWithAllPubkeys(undefined, email);
-      if (contactWithPubKeys && contactWithPubKeys.info.name) {
-        name = contactWithPubKeys.info.name;
+  private doSendMsgs = async (msgObj: MultipleMessages): Promise<SendMsgsResult> => {
+    const sentIds: string[] = [];
+    const supplementaryOperations: Promise<void>[] = [];
+    const supplementaryOperationsErrors: any[] = []; // tslint:disable-line:no-unsafe-any
+    const success: EmailParts[] = [];
+    const failures: { recipient: EmailParts, e: any }[] = [];
+    for (const msg of msgObj.msgs) {
+      const msgRecipients = msg.getAllRecipients();
+      try {
+        const msgSentRes = await this.attemptSendMsg(msg);
+        success.push(...msgRecipients);
+        sentIds.push(msgSentRes.id);
+        if (msg.externalId) {
+          supplementaryOperations.push(this.bindMessageId(msg.externalId, msgSentRes.id, supplementaryOperationsErrors));
+        }
+      } catch (e) {
+        failures.push(...msgRecipients.map(recipient => { return { recipient, e }; }));
       }
     }
-    return Str.formatEmailWithOptionalName({ email: parsedEmail.email, name });
+    try {
+      if (!failures.length) {
+        supplementaryOperations.push(this.view.draftModule.draftDelete());
+      }
+      await Promise.all(supplementaryOperations);
+    } catch (e) {
+      Catch.reportErr(e);
+      supplementaryOperationsErrors.push(e);
+    }
+    return { success, failures, supplementaryOperationsErrors, sentIds };
   };
+
 }

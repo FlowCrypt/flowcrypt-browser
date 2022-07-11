@@ -58,15 +58,15 @@ export class OauthPageRecipe extends PageRecipe {
         await oauthPage.waitAndType(selectors.googleEmailInput, acctEmail, { delay: 2 });
         await oauthPage.waitAndClick(selectors.googleEmailConfirmBtn, { delay: 2 });  // confirm email
         await oauthPage.waitForNavigationIfAny();
-      } else if (await oauthPage.target.$(`#profileIdentifier[data-email="${acctEmail}"]`) !== null) { // already logged in - just choose an account
-        await oauthPage.waitAndClick(`#profileIdentifier[data-email="${acctEmail}"]`, { delay: 1 });
+      } else if (await oauthPage.target.$(`.wLBAL[data-email="${acctEmail}"]`) !== null) { // already logged in - just choose an account
+        await oauthPage.waitAndClick(`.wLBAL[data-email="${acctEmail}"]`, { delay: 1 });
       } else if (await oauthPage.target.$(alreadyLoggedSelector) !== null) { // select from accounts where already logged in
         await oauthPage.waitAndClick(alreadyLoggedChooseOtherAccountSelector, { delay: 1 }); // choose other account, also try .TnvOCe .k6Zj8d .XraQ3b
         await Util.sleep(2);
         return await OauthPageRecipe.google(t, oauthPage, acctEmail, action); // start from beginning after clicking "other email acct"
-      } else if (await oauthPage.target.$('#profileIdentifier[data-email="dummy"]') !== null) {
+      } else if (await oauthPage.target.$('.wLBAL[data-email="dummy"]') !== null) {
         // let any e-mail pass
-        const href = await oauthPage.attr('#profileIdentifier', 'href') + acctEmail;
+        const href = await oauthPage.attr('.wLBAL', 'href') + acctEmail;
         await oauthPage.goto(href);
       }
       await Util.sleep(2);

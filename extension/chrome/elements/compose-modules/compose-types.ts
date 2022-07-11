@@ -51,10 +51,9 @@ export type CollectKeysResult = { pubkeys: PubkeyResult[], emailsWithoutPubkeys:
 export type PopoverOpt = 'encrypt' | 'sign' | 'richtext';
 export type PopoverChoices = { [key in PopoverOpt]: boolean };
 
-export type NewMsgData = { recipients: ParsedRecipients, subject: string, plaintext: string, plainhtml: string, pwd: string | undefined, from: string };
+export type NewMsgData = { recipients: ParsedRecipients, subject: string, plaintext: string, plainhtml: string, pwd: string | undefined, from: EmailParts, replyTo?: string };
 
 export class SendBtnTexts {
-  public static readonly BTN_ENCRYPT_AND_SEND: string = "Encrypt and Send";
   public static readonly BTN_SIGN_AND_SEND: string = "Sign and Send";
   public static readonly BTN_ENCRYPT_SIGN_AND_SEND: string = "Encrypt, Sign and Send";
   public static readonly BTN_PLAIN_SEND: string = "Send plain";
@@ -64,4 +63,11 @@ export class SendBtnTexts {
 
 export const getUniqueRecipientEmails = (recipients: ParsedRecipients) => {
   return Value.arr.unique(Object.values(recipients).reduce((a, b) => a.concat(b), []).filter(x => x.email).map(x => x.email));
+};
+
+export type SendMsgsResult = {
+  success: EmailParts[],
+  failures: { recipient: EmailParts, e: any }[],
+  supplementaryOperationsErrors: any[],
+  sentIds: string[]
 };

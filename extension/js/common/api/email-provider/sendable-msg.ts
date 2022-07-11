@@ -13,6 +13,7 @@ import { ParsedRecipients } from './email-provider-api.js';
 type SendableMsgHeaders = {
   headers?: Dict<string>;
   from: string;
+  replyTo?: string;
   recipients: ParsedRecipients;
   subject: string;
   thread?: string;
@@ -88,12 +89,15 @@ export class SendableMsg {
     attachments: Attachment[],
     options: SendableMsgOptions
   ): Promise<SendableMsg> => {
-    const { from, recipients, subject, thread } = headers;
+    const { from, replyTo, recipients, subject, thread } = headers;
     const { type, isDraft, externalId } = options;
-    return await SendableMsg.create(acctEmail, { from, recipients, subject, thread, body, attachments, type, isDraft, externalId });
+    return await SendableMsg.create(acctEmail, { from, replyTo, recipients, subject, thread, body, attachments, type, isDraft, externalId });
   };
 
-  private static create = async (acctEmail: string, { from, recipients, subject, thread, body, attachments, type, isDraft, externalId }: SendableMsgDefinition): Promise<SendableMsg> => {
+  private static create = async (
+    acctEmail: string,
+    { from, replyTo, recipients, subject, thread, body, attachments, type, isDraft, externalId }: SendableMsgDefinition
+  ): Promise<SendableMsg> => {
     const mostUsefulPrv = KeyStoreUtil.chooseMostUseful(
       await KeyStoreUtil.parse(await KeyStore.getRequired(acctEmail)),
       'EVEN-IF-UNUSABLE'
@@ -107,6 +111,7 @@ export class SendableMsg {
       headers,
       isDraft === true,
       from,
+      replyTo,
       recipients,
       subject,
       body || {},
@@ -122,6 +127,7 @@ export class SendableMsg {
     public headers: Dict<string>,
     isDraft: boolean,
     public from: string,
+    public replyTo: string | undefined,
     public recipients: ParsedRecipients,
     public subject: string,
     public body: SendableMsgBody,
@@ -130,18 +136,24 @@ export class SendableMsg {
     public type: MimeEncodeType,
     public externalId?: string, // for binding a password-protected message
   ) {
-    const allEmails = [...recipients.to || [], ...recipients.cc || [], ...recipients.bcc || []];
+    const allEmails = this.getAllRecipients();
     if (!allEmails.length && !isDraft) {
-      throw new Error('The To: field is empty. Please add recipients and try again');
+      throw new Error('The To:, Cc: and Bcc: fields are empty. Please add recipients and try again');
     }
     const invalidEmails = allEmails.filter(email => !Str.isEmailValid(email.email));
+    // todo: distinguish To:, Cc: and Bcc: in error report?
     if (invalidEmails.length) {
       throw new InvalidRecipientError(`The To: field contains invalid emails: ${invalidEmails.join(', ')}\n\nPlease check recipients and try again.`);
     }
   }
 
+  public getAllRecipients = () => [...this.recipients.to || [], ...this.recipients.cc || [], ...this.recipients.bcc || []];
+
   public toMime = async () => {
     this.headers.From = this.from;
+    if (this.replyTo) {
+      this.headers['Reply-To'] = this.replyTo;
+    }
     for (const [recipientType, value] of Object.entries(this.recipients)) {
       if (value && value!.length) {
         // todo - properly escape/encode this header using emailjs

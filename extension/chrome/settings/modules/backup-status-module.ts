@@ -36,7 +36,7 @@ export class BackupStatusModule extends ViewModule<BackupView> {
         Xss.sanitizeRender('#content', `Could not check for backups: account needs to be re-connected. ${Ui.retryLink()}`);
       } else {
         ApiErr.reportIfSignificant(e);
-        Xss.sanitizeRender('#content', `Could not check for backups: ${ApiErr.eli5(e)} (${String(e)}). ${Ui.retryLink()}`);
+        Xss.sanitizeRender('#content', `Could not check for backups: ${ApiErr.eli5(e)} (${Xss.escape(String(e))}). ${Ui.retryLink()}`); // xss-escaped
       }
     }
   };
