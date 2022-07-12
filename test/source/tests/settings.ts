@@ -633,7 +633,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       expect(await backupPage.isDisabled('[data-id="515431151DDD3EA232B37A4C98ACFA1EADAB5B92"]')).to.equal(false);
       await backupPage.waitAndClick('@action-backup-step3manual-continue');
       await backupPage.waitAndRespondToModal('info', 'confirm', 'Your private keys have been successfully backed up');
-      const sentMsg = (await GoogleData.withInitializedData(acctEmail)).getMessageBySubject('Your FlowCrypt Backup')!;
+      const sentMsg = (await GoogleData.withInitializedData(acctEmail)).searchMessagesBySubject('Your FlowCrypt Backup')[0]!;
       const mimeMsg = await Parse.convertBase64ToMimeMsg(sentMsg.raw!);
       const { keys } = await KeyUtil.readMany(Buf.concat(mimeMsg.attachments.map(a => a.content)));
       expect(keys.length).to.equal(2);
@@ -814,7 +814,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         '&type=openpgp&id=515431151DDD3EA232B37A4C98ACFA1EADAB5B92&idToken=fakeheader.01'));
       await backupPage.waitAndClick('@action-backup-step3manual-continue');
       await backupPage.waitAll('@action-step4done-account-settings');
-      const sentMsg = (await GoogleData.withInitializedData(acctEmail)).getMessageBySubject('Your FlowCrypt Backup')!;
+      const sentMsg = (await GoogleData.withInitializedData(acctEmail)).searchMessagesBySubject('Your FlowCrypt Backup')[0]!;
       const mimeMsg = await Parse.convertBase64ToMimeMsg(sentMsg.raw!);
       const { keys } = await KeyUtil.readMany(new Buf(mimeMsg.attachments[0]!.content!));
       expect(keys.length).to.equal(1);

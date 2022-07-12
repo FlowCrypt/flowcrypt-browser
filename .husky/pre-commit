@@ -1,0 +1,4 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+# npx lint-staged # this will be re-enabled after https://github.com/FlowCrypt/flowcrypt-browser/issues/4526 is finished

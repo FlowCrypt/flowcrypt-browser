@@ -44,7 +44,7 @@ export class BrowserRecipe {
 
   public static openGoogleChatPage = async (t: AvaContext, browser: BrowserHandle, googleLoginIndex = 0) => {
     const googleChatPage = await browser.newPage(t, TestUrls.googleChat(googleLoginIndex));
-    await googleChatPage.waitAll('h3.acY'); // "No conversation selected" placeholder
+    await googleChatPage.waitAll('h1.acY'); // "No conversation selected" placeholder
     return googleChatPage;
   };
 

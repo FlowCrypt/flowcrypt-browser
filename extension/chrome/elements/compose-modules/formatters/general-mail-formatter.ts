@@ -11,28 +11,38 @@ import { SignedMsgMailFormatter } from './signed-msg-mail-formatter.js';
 import { ComposeView } from '../../compose.js';
 import { KeyStoreUtil, ParsedKeyInfo } from "../../../../js/common/core/crypto/key-store-util.js";
 import { UnreportableError } from '../../../../js/common/platform/catch.js';
+import { ParsedRecipients } from '../../../../js/common/api/email-provider/email-provider-api.js';
+import { Attachment } from '../../../../js/common/core/attachment.js';
+
+export type MultipleMessages = {
+  msgs: SendableMsg[];
+  senderKi: KeyInfoWithIdentity | undefined;
+  renderSentMessage: { recipients: ParsedRecipients, attachments: Attachment[] };
+};
 
 export class GeneralMailFormatter {
 
   // returns undefined in case user cancelled decryption of the signing key
-  public static processNewMsg = async (view: ComposeView, newMsgData: NewMsgData): Promise<{ msg: SendableMsg, senderKi: KeyInfoWithIdentity | undefined }> => {
+  public static processNewMsg = async (view: ComposeView, newMsgData: NewMsgData): Promise<MultipleMessages> => {
     const choices = view.sendBtnModule.popover.choices;
     const recipientsEmails = getUniqueRecipientEmails(newMsgData.recipients);
     if (!choices.encrypt && !choices.sign) { // plain
       view.S.now('send_btn_text').text('Formatting...');
-      return { senderKi: undefined, msg: await new PlainMsgMailFormatter(view).sendableMsg(newMsgData) };
+      const msg = await new PlainMsgMailFormatter(view).sendableMsg(newMsgData);
+      return { senderKi: undefined, msgs: [msg], renderSentMessage: { recipients: msg.recipients, attachments: msg.attachments } };
     }
     if (!choices.encrypt && choices.sign) { // sign only
       view.S.now('send_btn_text').text('Signing...');
-      const senderKis = await view.storageModule.getAccountKeys(newMsgData.from);
+      const senderKis = await view.storageModule.getAccountKeys(newMsgData.from.email);
       const signingKey = await GeneralMailFormatter.chooseSigningKeyAndDecryptIt(view, senderKis);
       if (!signingKey) {
         throw new UnreportableError('Could not find account key usable for signing this plain text message');
       }
-      return { senderKi: signingKey!.keyInfo, msg: await new SignedMsgMailFormatter(view).sendableMsg(newMsgData, signingKey!.key) };
+      const msg = await new SignedMsgMailFormatter(view).sendableMsg(newMsgData, signingKey!.key);
+      return { senderKi: signingKey!.keyInfo, msgs: [msg], renderSentMessage: { recipients: msg.recipients, attachments: msg.attachments } };
     }
     // encrypt (optionally sign)
-    const singleFamilyKeys = await view.storageModule.collectSingleFamilyKeys(recipientsEmails, newMsgData.from, choices.sign);
+    const singleFamilyKeys = await view.storageModule.collectSingleFamilyKeys(recipientsEmails, newMsgData.from.email, choices.sign);
     if (singleFamilyKeys.emailsWithoutPubkeys.length) {
       await view.errModule.throwIfEncryptionPasswordInvalid(newMsgData);
     }
@@ -46,7 +56,7 @@ export class GeneralMailFormatter {
       }
     }
     view.S.now('send_btn_text').text('Encrypting...');
-    return { senderKi: signingKey?.keyInfo, msg: await new EncryptedMsgMailFormatter(view).sendableMsg(newMsgData, singleFamilyKeys.pubkeys, signingKey?.key) };
+    return await new EncryptedMsgMailFormatter(view).sendableMsgs(newMsgData, singleFamilyKeys.pubkeys, signingKey);
   };
 
   private static chooseSigningKeyAndDecryptIt = async (

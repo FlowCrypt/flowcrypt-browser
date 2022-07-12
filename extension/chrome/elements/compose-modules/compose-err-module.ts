@@ -5,7 +5,7 @@
 import { Browser } from '../../../js/common/browser/browser.js';
 import { BrowserEventErrHandler, Ui } from '../../../js/common/browser/ui.js';
 import { Catch } from '../../../js/common/platform/catch.js';
-import { NewMsgData, SendBtnTexts } from './compose-types.js';
+import { NewMsgData, SendBtnTexts, SendMsgsResult } from './compose-types.js';
 import { ApiErr } from '../../../js/common/api/shared/api-error.js';
 import { BrowserExtension } from '../../../js/common/browser/browser-extension.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
@@ -26,6 +26,11 @@ export const PUBKEY_LOOKUP_RESULT_FAIL: 'fail' = 'fail';
 export class ComposeErrModule extends ViewModule<ComposeView> {
 
   private debugId = Str.sloppyRandom();
+
+  private static getErrSayingSomeMessagesHaveBeenSent = (sendMsgsResult: SendMsgsResult) => {
+    return 'Messages to some recipients were sent successfully, while messages to ' +
+      Str.formatEmailList(sendMsgsResult.failures.map(el => el.recipient)) + ' encountered ';
+  };
 
   public handle = (couldNotDoWhat: string): BrowserEventErrHandler => {
     return {
@@ -61,11 +66,18 @@ export class ComposeErrModule extends ViewModule<ComposeView> {
     }
   };
 
-  public handleSendErr = async (e: unknown) => {
+  public handleSendErr = async (e: unknown, sendMsgsResult?: SendMsgsResult) => {
     this.view.errModule.debug(`handleSendErr: ${String(e)}`);
     if (ApiErr.isNetErr(e)) {
-      let netErrMsg = 'Could not send message due to network error. Please check your internet connection and try again.\n';
-      netErrMsg += '(This may also be caused by <a href="https://flowcrypt.com/docs/help/network-error.html" target="_blank">missing extension permissions</a>).';
+      let netErrMsg: string | undefined;
+      if (sendMsgsResult?.success.length) {
+        // there were some successful sends
+        netErrMsg = ComposeErrModule.getErrSayingSomeMessagesHaveBeenSent(sendMsgsResult) +
+          'network errors. Please check your internet connection and try again.';
+      } else {
+        netErrMsg = 'Could not send message due to network error. Please check your internet connection and try again.\n' +
+          '(This may also be caused by <a href="https://flowcrypt.com/docs/help/network-error.html" target="_blank">missing extension permissions</a>).';
+      }
       await Ui.modal.error(netErrMsg, true);
     } else if (ApiErr.isAuthErr(e)) {
       BrowserMsg.send.notificationShowAuthPopupNeeded(this.view.parentTabId, { acctEmail: this.view.acctEmail });
@@ -73,10 +85,15 @@ export class ComposeErrModule extends ViewModule<ComposeView> {
     } else if (ApiErr.isReqTooLarge(e)) {
       await Ui.modal.error(`Could not send: message or attachments too large.`);
     } else if (ApiErr.isBadReq(e)) {
+      let gmailErrMsg: string | undefined;
+      if (sendMsgsResult?.success.length) {
+        gmailErrMsg = ComposeErrModule.getErrSayingSomeMessagesHaveBeenSent(sendMsgsResult) + 'error(s) from Gmail';
+      }
       if (e.resMsg === AjaxErrMsgs.GOOGLE_INVALID_TO_HEADER || e.resMsg === AjaxErrMsgs.GOOGLE_RECIPIENT_ADDRESS_REQUIRED) {
-        await Ui.modal.error('Error from google: Invalid recipients\n\nPlease remove recipients, add them back and re-send the message.');
+        await Ui.modal.error((gmailErrMsg || 'Error from google') + ': Invalid recipients\n\nPlease remove recipients, add them back and re-send the message.');
       } else {
-        if (await Ui.modal.confirm(`Google returned an error when sending message. Please help us improve FlowCrypt by reporting the error to us.`)) {
+        if (await Ui.modal.confirm((gmailErrMsg || 'Google returned an error when sending message') +
+          `. Please help us improve FlowCrypt by reporting the error to us.`)) {
           const page = '/chrome/settings/modules/help.htm';
           const pageUrlParams = { bugReport: BrowserExtension.prepareBugReport(`composer: send: bad request (errMsg: ${e.resMsg})`, {}, e) };
           await Browser.openSettingsPage('index.htm', this.view.acctEmail, page, pageUrlParams);
@@ -125,7 +142,7 @@ export class ComposeErrModule extends ViewModule<ComposeView> {
     if (!subject && ! await Ui.modal.confirm('Send without a subject?')) {
       throw new ComposerResetBtnTrigger();
     }
-    let footer = await this.view.footerModule.getFooterFromStorage(from);
+    let footer = await this.view.footerModule.getFooterFromStorage(from.email);
     if (footer) { // format footer the way it would be in outgoing plaintext
       footer = Xss.htmlUnescape(Xss.htmlSanitizeAndStripAllTags(this.view.footerModule.createFooterHtml(footer), '\n')).trim();
     }
