@@ -97,7 +97,7 @@ export class GoogleAuth {
     throw new GoogleAuthErr(`Could not refresh google auth token - did not become valid (access:${refreshTokenRes.access_token},expires_in:${refreshTokenRes.expires_in},now:${Date.now()})`);
   };
 
-  public static apiGoogleCallRetryAuthErrorOneTime = async (acctEmail: string, request: JQuery.AjaxSettings): Promise<any> => {
+  public static apiGoogleCallRetryAuthErrorOneTime = async (acctEmail: string, request: JQuery.AjaxSettings): Promise<unknown> => {
     try {
       return await Api.ajax(request, Catch.stackTrace());
     } catch (firstAttemptErr) {
@@ -301,7 +301,7 @@ export class GoogleAuth {
       method: 'POST',
       crossDomain: true,
       async: true,
-    }, Catch.stackTrace()) as any as GoogleAuthTokensResponse;
+    }, Catch.stackTrace()) as unknown as GoogleAuthTokensResponse;
   };
 
   private static googleAuthRefreshToken = async (refreshToken: string) => {
@@ -310,7 +310,7 @@ export class GoogleAuth {
       method: 'POST',
       crossDomain: true,
       async: true,
-    }, Catch.stackTrace()) as any as GoogleAuthTokensResponse;
+    }, Catch.stackTrace()) as unknown as GoogleAuthTokensResponse;
   };
 
   // todo - would be better to use a TS type guard instead of the type cast when checking OpenId

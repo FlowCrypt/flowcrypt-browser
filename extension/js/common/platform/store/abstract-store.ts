@@ -31,7 +31,7 @@ export abstract class AbstractStore {
     return `cryptup_${emailKeyIndex(scope, key)}`;
   };
 
-  public static errCategorize = (err: any): Error => {
+  public static errCategorize = (err: unknown): Error => {
     let message: string;
     if (err instanceof Error) {
       message = err.message;
@@ -60,11 +60,11 @@ export abstract class AbstractStore {
     }
   };
 
-  public static setReqOnError = (req: IDBRequest | IDBTransaction, reject: (reason?: any) => void) => {
+  public static setReqOnError = (req: IDBRequest | IDBTransaction, reject: (reason?: unknown) => void) => {
     req.onerror = () => reject(AbstractStore.errCategorize(req.error || new Error('Unknown db error')));
   };
 
-  public static setTxHandlers = (tx: IDBTransaction, resolve: (value: unknown) => void, reject: (reason?: any) => void) => {
+  public static setTxHandlers = (tx: IDBTransaction, resolve: (value: unknown) => void, reject: (reason?: unknown) => void) => {
     tx.oncomplete = () => resolve(undefined);
     AbstractStore.setReqOnError(tx, reject);
   };

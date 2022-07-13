@@ -23,7 +23,7 @@ const handleFatalErr = (reason: 'storage_undefined', error: Error) => {
   } catch (e) {
     if (e && e instanceof Error && e.message === 'Extension context invalidated.') {
       console.info(`FlowCrypt cannot handle fatal error because: Extension context invalidated. Destroying.`, error);
-      (window as any as ContentScriptWindow).destroy();
+      (window as unknown as ContentScriptWindow).destroy();
     } else {
       throw e;
     }
