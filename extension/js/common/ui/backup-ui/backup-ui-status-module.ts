@@ -2,18 +2,18 @@
 
 'use strict';
 
-import { Xss } from '../../../js/common/platform/xss.js';
-import { Ui } from '../../../js/common/browser/ui.js';
-import { ApiErr } from '../../../js/common/api/shared/api-error.js';
-import { Browser } from '../../../js/common/browser/browser.js';
-import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
-import { Backups } from '../../../js/common/api/email-provider/email-provider-api.js';
-import { Str } from '../../../js/common/core/common.js';
-import { KeyInfoWithIdentity } from '../../../js/common/core/crypto/key.js';
-import { BackupUi } from '../../../js/common/ui/backup-ui.js';
+import { Xss } from '../../platform/xss.js';
+import { Ui } from '../../browser/ui.js';
+import { ApiErr } from '../../api/shared/api-error.js';
+import { Browser } from '../../browser/browser.js';
+import { BrowserMsg } from '../../browser/browser-msg.js';
+import { Backups } from '../../api/email-provider/email-provider-api.js';
+import { Str } from '../../core/common.js';
+import { KeyInfoWithIdentity } from '../../core/crypto/key.js';
+import { BackupUi } from './backup-ui.js';
 import { BackupUiModule } from './backup-ui-module.js';
 
-export class BackupStatusModule extends BackupUiModule<BackupUi> {
+export class BackupUiStatusModule extends BackupUiModule<BackupUi> {
 
   public setHandlers = () => { // is run after checkAndRenderBackupStatus, which renders (some of) these fields first
     $('#module_status .action_go_manual').click(this.ui.setHandler(() => this.actionShowManualBackupHandler()));

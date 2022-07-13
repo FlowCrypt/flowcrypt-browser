@@ -2,18 +2,18 @@
 
 'use strict';
 
-import { Lang } from '../../../js/common/lang.js';
-import { Settings } from '../../../js/common/settings.js';
-import { UnreportableError } from '../../../js/common/platform/catch.js';
-import { Ui } from '../../../js/common/browser/ui.js';
-import { ApiErr } from '../../../js/common/api/shared/api-error.js';
-import { GoogleAuth } from '../../../js/common/api/email-provider/gmail/google-auth.js';
-import { KeyStore } from '../../../js/common/platform/store/key-store.js';
-import { KeyStoreUtil } from "../../../js/common/core/crypto/key-store-util.js";
-import { BackupUi } from '../../../js/common/ui/backup-ui.js';
+import { Lang } from '../../lang.js';
+import { Settings } from '../../settings.js';
+import { UnreportableError } from '../../platform/catch.js';
+import { Ui } from '../../browser/ui.js';
+import { ApiErr } from '../../api/shared/api-error.js';
+import { GoogleAuth } from '../../api/email-provider/gmail/google-auth.js';
+import { KeyStore } from '../../platform/store/key-store.js';
+import { KeyStoreUtil } from "../../core/crypto/key-store-util.js";
+import { BackupUi } from './backup-ui.js';
 import { BackupUiModule } from './backup-ui-module.js';
 
-export class BackupAutomaticModule extends BackupUiModule<BackupUi> {
+export class BackupUiAutomaticModule extends BackupUiModule<BackupUi> {
 
   public simpleSetupAutoBackupRetryUntilSuccessful = async () => {
     try {

@@ -2,26 +2,26 @@
 
 'use strict';
 
-import { Xss } from '../../../js/common/platform/xss.js';
-import { Attachment } from '../../../js/common/core/attachment.js';
-import { SendableMsg } from '../../../js/common/api/email-provider/sendable-msg.js';
-import { GMAIL_RECOVERY_EMAIL_SUBJECTS } from '../../../js/common/core/const.js';
-import { KeyUtil, KeyInfoWithIdentity } from '../../../js/common/core/crypto/key.js';
-import { Ui } from '../../../js/common/browser/ui.js';
-import { ApiErr } from '../../../js/common/api/shared/api-error.js';
-import { BrowserMsg, Bm } from '../../../js/common/browser/browser-msg.js';
-import { Catch } from '../../../js/common/platform/catch.js';
-import { Browser } from '../../../js/common/browser/browser.js';
-import { PromiseCancellation, Value } from '../../../js/common/core/common.js';
-import { Settings } from '../../../js/common/settings.js';
-import { Buf } from '../../../js/common/core/buf.js';
-import { PassphraseStore } from '../../../js/common/platform/store/passphrase-store.js';
-import { KeyStore } from '../../../js/common/platform/store/key-store.js';
-import { BackupUi } from '../../../js/common/ui/backup-ui.js';
+import { Xss } from '../../platform/xss.js';
+import { Attachment } from '../../core/attachment.js';
+import { SendableMsg } from '../../api/email-provider/sendable-msg.js';
+import { GMAIL_RECOVERY_EMAIL_SUBJECTS } from '../../core/const.js';
+import { KeyUtil, KeyInfoWithIdentity } from '../../core/crypto/key.js';
+import { Ui } from '../../browser/ui.js';
+import { ApiErr } from '../../api/shared/api-error.js';
+import { BrowserMsg, Bm } from '../../browser/browser-msg.js';
+import { Catch } from '../../platform/catch.js';
+import { Browser } from '../../browser/browser.js';
+import { PromiseCancellation, Value } from '../../core/common.js';
+import { Settings } from '../../settings.js';
+import { Buf } from '../../core/buf.js';
+import { PassphraseStore } from '../../platform/store/passphrase-store.js';
+import { KeyStore } from '../../platform/store/key-store.js';
+import { BackupUi } from './backup-ui.js';
 import { BackupUiModule } from './backup-ui-module.js';
 
 const differentPassphrasesError = `Your keys are protected with different pass phrases.\n\nBacking them up together isn't supported yet.`;
-export class BackupManualActionModule extends BackupUiModule<BackupUi> {
+export class BackupUiManualActionModule extends BackupUiModule<BackupUi> {
   private ppChangedPromiseCancellation: PromiseCancellation = { cancel: false };
   private readonly proceedBtn = $('#module_manual .action_manual_backup');
 

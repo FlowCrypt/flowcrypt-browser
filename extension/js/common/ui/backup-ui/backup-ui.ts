@@ -2,26 +2,25 @@
 
 'use strict';
 
-import { BackupAutomaticModule } from '../../../chrome/settings/modules/backup-automatic-module.js';
-import { BackupStatusModule } from '../../../chrome/settings/modules/backup-status-module.js';
-import { BackupManualActionModule as BackupManualModule } from '../../../chrome/settings/modules/backup-manual-module.js';
-import { Gmail } from '../api/email-provider/gmail/gmail.js';
-import { AcctStore, EmailProvider } from '../platform/store/acct-store.js';
-import { BrowserMsg } from '../browser/browser-msg.js';
-import { ClientConfiguration } from '../client-configuration.js';
-import { Xss } from '../platform/xss.js';
-import { KeyIdentity, KeyInfoWithIdentity, KeyUtil } from '../core/crypto/key.js';
-import { KeyStore } from '../platform/store/key-store.js';
-import { BrowserEventErrHandler, PreventableEventName, Ui } from '../browser/ui.js';
-import { Str } from '../core/common.js';
-import { Lang } from '../lang.js';
+import { BackupUiAutomaticModule } from './backup-ui-automatic-module.js';
+import { BackupUiStatusModule } from './backup-ui-status-module.js';
+import { BackupUiManualActionModule as BackupUiManualModule } from './backup-ui-manual-module.js';
+import { Gmail } from '../../api/email-provider/gmail/gmail.js';
+import { AcctStore, EmailProvider } from '../../platform/store/acct-store.js';
+import { BrowserMsg } from '../../browser/browser-msg.js';
+import { ClientConfiguration } from '../../client-configuration.js';
+import { Xss } from '../../platform/xss.js';
+import { KeyIdentity, KeyInfoWithIdentity, KeyUtil } from '../../core/crypto/key.js';
+import { KeyStore } from '../../platform/store/key-store.js';
+import { BrowserEventErrHandler, PreventableEventName, Ui } from '../../browser/ui.js';
+import { Str } from '../../core/common.js';
+import { Lang } from '../../lang.js';
 
 interface BackupUiOptions {
   acctEmail: string;
   action: BackupUiActionType;
   parentTabId?: string;
-  keyIdentityId?: string;
-  keyIdentityFamily?: string;
+  keyIdentity?: KeyIdentity;
   onBackedUpFinished: (backedUpCount: number) => Promise<void>;
 }
 export type BackupUiActionType = 'setup_automatic' | 'setup_manual' | 'backup_manual' | undefined;
@@ -30,9 +29,9 @@ export class BackupUi {
   public parentTabId: string | undefined; // the master page to interact (settings/index.htm)
   public acctEmail!: string;
   public gmail!: Gmail;
-  public statusModule!: BackupStatusModule;
-  public manualModule!: BackupManualModule;
-  public automaticModule!: BackupAutomaticModule;
+  public statusModule!: BackupUiStatusModule;
+  public manualModule!: BackupUiManualModule;
+  public automaticModule!: BackupUiAutomaticModule;
   public emailProvider: EmailProvider = 'gmail';
   public tabId!: string;
   public clientConfiguration!: ClientConfiguration;
@@ -47,17 +46,15 @@ export class BackupUi {
     this.acctEmail = options.acctEmail;
     this.action = options.action;
     this.parentTabId = options.parentTabId;
-    if (options.keyIdentityId && options.keyIdentityFamily === 'openpgp') {
-      this.keyIdentity = { id: options.keyIdentityId, family: options.keyIdentityFamily };
-    }
+    this.keyIdentity = options.keyIdentity;
     this.onBackedUpFinished = options.onBackedUpFinished;
     const htmlUrl = '/chrome/elements/shared/backup.template.htm';
     const sanitized = Xss.htmlSanitize(await (await fetch(htmlUrl)).text());
     Xss.setElementContentDANGEROUSLY($('#backup-template-container').get(0), sanitized); // xss-sanitized
     this.gmail = new Gmail(this.acctEmail);
-    this.statusModule = new BackupStatusModule(this);
-    this.manualModule = new BackupManualModule(this);
-    this.automaticModule = new BackupAutomaticModule(this);
+    this.statusModule = new BackupUiStatusModule(this);
+    this.manualModule = new BackupUiManualModule(this);
+    this.automaticModule = new BackupUiAutomaticModule(this);
     await this.renderBackupView();
     this.setBackupHandlers();
   };

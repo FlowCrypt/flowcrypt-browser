@@ -6,8 +6,9 @@ import { Assert } from '../../../js/common/assert.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { Url } from '../../../js/common/core/common.js';
+import { KeyIdentity } from '../../../js/common/core/crypto/key.js';
 import { Settings } from '../../../js/common/settings.js';
-import { BackupUi, BackupUiActionType } from '../../../js/common/ui/backup-ui.js';
+import { BackupUi, BackupUiActionType } from '../../../js/common/ui/backup-ui/backup-ui.js';
 import { View } from '../../../js/common/view.js';
 
 export class BackupView extends View {
@@ -22,13 +23,16 @@ export class BackupView extends View {
     const parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
     const keyIdentityId = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'id');
     const keyIdentityFamily = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'type');
+    let keyIdentity: KeyIdentity | undefined;
+    if (keyIdentityId && keyIdentityFamily === 'openpgp') {
+      keyIdentity = { id: keyIdentityId, family: keyIdentityFamily };
+    }
     this.backupUi = new BackupUi();
     void this.backupUi.initialize({
       acctEmail,
       action: action as BackupUiActionType,
       parentTabId,
-      keyIdentityId,
-      keyIdentityFamily,
+      keyIdentity,
       onBackedUpFinished: async (backedUpCount: number) => {
         if (backedUpCount > 0) {
           const pluralOrSingle = backedUpCount > 1 ? "keys have" : "key has";

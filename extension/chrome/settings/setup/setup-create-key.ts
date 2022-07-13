@@ -41,8 +41,7 @@ export class SetupCreateKeyModule {
         await this.view.backupUi.initialize({
           acctEmail: this.view.acctEmail,
           action,
-          keyIdentityId: keyIdentity.id,
-          keyIdentityFamily: keyIdentity.family,
+          keyIdentity,
           onBackedUpFinished: async () => {
             $('#backup-template-container').remove();
             await this.view.finalizeSetup();

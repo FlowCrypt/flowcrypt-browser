@@ -33,7 +33,7 @@ import { KeyManager } from '../../js/common/api/key-server/key-manager.js';
 import { SetupWithEmailKeyManagerModule } from './setup/setup-key-manager-autogen.js';
 import { shouldPassPhraseBeHidden } from '../../js/common/ui/passphrase-ui.js';
 import Swal from 'sweetalert2';
-import { BackupUi } from '../../js/common/ui/backup-ui.js';
+import { BackupUi } from '../../js/common/ui/backup-ui/backup-ui.js';
 
 export interface SetupOptions {
   passphrase: string;
