@@ -31,7 +31,7 @@
     "mkdirp": "1.0.4",
     "openpgp": "4.10.10",
     "pdfjs-dist": "2.14.305",
-    "puppeteer": "14.1.1",
+    "puppeteer": "15.4.0",
     "stylelint": "14.8.5",
     "stylelint-config-standard": "25.0.0",
     "tslint": "6.1.3",
