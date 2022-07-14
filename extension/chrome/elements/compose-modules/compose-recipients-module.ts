@@ -909,7 +909,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       $(el).attr('title', 'Could not verify their encryption setup. You can encrypt the message with a password below. Alternatively, add their pubkey.');
     }
     // Replace updated recipient in addedRecipients
-    const changedIndex = this.addedRecipients.findIndex((addedRecipient) => addedRecipient.email === recipient.email && addedRecipient.id == recipient.id);
+    const changedIndex = this.addedRecipients.findIndex((addedRecipient) => addedRecipient.email === recipient.email && addedRecipient.id === recipient.id);
     this.addedRecipients.splice(changedIndex, 1, recipient);
     this.view.pwdOrPubkeyContainerModule.showHideContainerAndColorSendBtn(); // tslint:disable-line:no-floating-promises
     this.view.myPubkeyModule.reevaluateShouldAttachOrNot();
