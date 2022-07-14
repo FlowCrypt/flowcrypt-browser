@@ -778,7 +778,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       await settingsPage1.close();
       await SettingsPageRecipe.addKeyTest(t, browser, acctEmail, testConstants.testKeyMultiple98acfa1eadab5b92, '1234',
         { isSavePassphraseChecked: true, isSavePassphraseHidden: false });
-      const backupPage = await browser.newPage(t, TestUrls.extension(`/chrome/settings/modules/backup.htm?acctEmail=${acctEmail}&action=setup_manual` +
+      const backupPage = await browser.newPage(t, TestUrls.extension(`/chrome/settings/modules/backup.htm?acctEmail=${acctEmail}&action=backup_manual&parentTabId=1%3A0` +
         '&type=openpgp&id=515431151DDD3EA232B37A4C98ACFA1EADAB5B92&idToken=fakeheader.01'));
       await backupPage.waitAndClick('@input-backup-step3manual-file');
       const downloadedFiles = await backupPage.awaitDownloadTriggeredByClicking('@action-backup-step3manual-continue');
@@ -786,7 +786,6 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       expect(keys.length).to.equal(1);
       expect(keys[0].id).to.equal("515431151DDD3EA232B37A4C98ACFA1EADAB5B92");
       await backupPage.waitAndRespondToModal('info', 'confirm', 'Downloading private key backup file');
-      await backupPage.waitAll('@action-step4done-account-settings');
       await backupPage.close();
     }));
 
@@ -810,10 +809,10 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       await KeyUtil.encrypt(key98acfa1eadab5b92, passphrase);
       await SettingsPageRecipe.addKeyTest(t, browser, acctEmail, KeyUtil.armor(key98acfa1eadab5b92), passphrase,
         { isSavePassphraseChecked: true, isSavePassphraseHidden: false });
-      const backupPage = await browser.newPage(t, TestUrls.extension(`/chrome/settings/modules/backup.htm?acctEmail=${acctEmail}&action=setup_manual` +
+      const backupPage = await browser.newPage(t, TestUrls.extension(`/chrome/settings/modules/backup.htm?acctEmail=${acctEmail}&action=backup_manual&parentTabId=17%3A0` +
         '&type=openpgp&id=515431151DDD3EA232B37A4C98ACFA1EADAB5B92&idToken=fakeheader.01'));
       await backupPage.waitAndClick('@action-backup-step3manual-continue');
-      await backupPage.waitAll('@action-step4done-account-settings');
+      await backupPage.waitAndRespondToModal('info', 'confirm', 'Your private key has been successfully backed up');
       const sentMsg = (await GoogleData.withInitializedData(acctEmail)).searchMessagesBySubject('Your FlowCrypt Backup')[0]!;
       const mimeMsg = await Parse.convertBase64ToMimeMsg(sentMsg.raw!);
       const { keys } = await KeyUtil.readMany(new Buf(mimeMsg.attachments[0]!.content!));

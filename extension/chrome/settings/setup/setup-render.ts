@@ -40,9 +40,6 @@ export class SetupRenderModule {
       } else {
         await this.view.setupRecoverKey.renderAddKeyFromBackup();
       }
-    } else if (this.view.action === 'finalize') {
-      await this.view.finalizeSetup();
-      await this.renderSetupDone();
     } else if (this.view.clientConfiguration.mustAutoImportOrAutogenPrvWithKeyManager()) {
       if (this.view.clientConfiguration.mustAutogenPassPhraseQuietly() && this.view.clientConfiguration.forbidStoringPassPhrase()) {
         const notSupportedErr = 'Combination of org rules not valid: PASS_PHRASE_QUIET_AUTOGEN cannot be used together with FORBID_STORING_PASS_PHRASE.';
