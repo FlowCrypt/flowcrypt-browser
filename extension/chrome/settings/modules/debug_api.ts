@@ -50,7 +50,7 @@ View.run(class DebugApiView extends View {
     // No need
   };
 
-  private renderCallRes = (api: string, variables: Dict<any>, result: any, error?: any) => {
+  private renderCallRes = (api: string, variables: Dict<unknown>, result: unknown, error?: unknown) => {
     const r = `<b>${api} ${JSON.stringify(variables)}</b><pre data-test="container-pre">${JSON.stringify(result, undefined, 2)} (${error ? JSON.stringify(error) : 'no err'})</pre>`;
     Xss.sanitizeAppend('#content', r);
   };
