@@ -1542,11 +1542,12 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
     }));
 
     ava.default('compose - reply - CC&BCC test forward', testWithBrowser('compatibility', async (t, browser) => {
-      const appendUrl = 'threadId=16ce2c965c75e5a6&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___&replyMsgId=16ce2c965c75e5a6';
+      const appendUrl = 'threadId=17d02296bccd4c5c&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___&replyMsgId=16ce2c965c75e5a6';
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl, hasReplyPrompt: true });
       await composePage.waitAndClick('@action-forward', { delay: 2 });
       await composePage.waitAny('@input-to');
       await composePage.waitUntilFocused('@input-to');
+      await Util.sleep(1000);
       await expectRecipientElements(composePage, { to: [], cc: [], bcc: [] });
     }));
 
