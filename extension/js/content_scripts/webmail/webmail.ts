@@ -54,7 +54,7 @@ Catch.try(async () => {
         '</script>',
       ].join('')); // executed synchronously - we can read the vars below
       try {
-        const extracted = (JSON.parse($('body > div#FC_VAR_PASS').text()) as any[]).map(String);
+        const extracted = (JSON.parse($('body > div#FC_VAR_PASS').text()) as unknown[]).map(String);
         if (extracted[0] === 'true') {
           insights.newDataLayer = true;
         } else if (extracted[0] === 'false') {

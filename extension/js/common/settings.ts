@@ -257,7 +257,7 @@ export class Settings {
   /**
    * todo - could probably replace most usages of this method with retryPromptUntilSuccessful which is more intuitive
    */
-  public static promptToRetry = async (lastErr: any, userMsg: string, retryCb: () => Promise<void>, contactSentence: string): Promise<void> => {
+  public static promptToRetry = async (lastErr: unknown, userMsg: string, retryCb: () => Promise<void>, contactSentence: string): Promise<void> => {
     let userErrMsg = `${userMsg} ${ApiErr.eli5(lastErr)}`;
     if (lastErr instanceof AjaxErr && (lastErr.status === 400 || lastErr.status === 405)) {
       // this will make reason for err 400 obvious to user - eg on EKM 405 error
