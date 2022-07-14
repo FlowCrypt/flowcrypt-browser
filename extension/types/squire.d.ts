@@ -1,12 +1,9 @@
-import * as forge from 'node-forge';
-
 export as namespace SquireClass;
 
 declare global {
   interface Window {
     // @ts-ignore
     Squire: SquireClass;
-    forge: typeof forge;
   }
 }
 
