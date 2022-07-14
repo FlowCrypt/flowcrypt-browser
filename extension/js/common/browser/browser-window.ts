@@ -2,7 +2,7 @@
 
 'use strict';
 
-type AnyThirdPartyLibrary = any;
+type AnyThirdPartyLibrary = unknown;
 export type AddrParserResult = { name?: string, address?: string };
 
 export interface BrowserWindow extends Window {

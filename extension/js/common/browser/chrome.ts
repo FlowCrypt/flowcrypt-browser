@@ -62,7 +62,7 @@ export const storageLocalGet = async (keys: string[]): Promise<Dict<unknown>> =>
   });
 };
 
-export const storageLocalGetAll = async (): Promise<{ [key: string]: any }> => {
+export const storageLocalGetAll = async (): Promise<{ [key: string]: unknown }> => {
   return await new Promise((resolve) => {
     if (typeof chrome.storage === 'undefined') {
       handleFatalErr('storage_undefined', new Error('storage is undefined'));
@@ -72,7 +72,7 @@ export const storageLocalGetAll = async (): Promise<{ [key: string]: any }> => {
   });
 };
 
-export const storageLocalSet = async (values: Dict<any>): Promise<void> => {
+export const storageLocalSet = async (values: Dict<unknown>): Promise<void> => {
   return await new Promise((resolve) => {
     if (typeof chrome.storage === 'undefined') {
       handleFatalErr('storage_undefined', new Error('storage is undefined'));

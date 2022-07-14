@@ -24,8 +24,8 @@ export type GoogleAuthWindowResult$result = 'Success' | 'Denied' | 'Error' | 'Cl
 export namespace Bm {
   export type Dest = string;
   export type Sender = chrome.runtime.MessageSender | 'background';
-  export type Response = any;
-  export type RawResponse = { result: any, objUrls: { [name: string]: string }, exception?: Bm.ErrAsJson };
+  export type Response = unknown;
+  export type RawResponse = { result: unknown, objUrls: { [name: string]: string }, exception?: Bm.ErrAsJson };
   export type Raw = { name: string; data: { bm: AnyRequest | {}, objUrls: Dict<string> }; to: Dest | null; uid: string; stack: string };
 
   export type SetCss = { css: Dict<string>, traverseUp?: number, selector: string; };
@@ -47,7 +47,7 @@ export namespace Bm {
   export type OpenGoogleAuthDialog = { acctEmail?: string, scopes?: string[] };
   export type OpenPage = { page: string, addUrlText?: string | UrlParams };
   export type PassphraseEntry = { entered: boolean, initiatorFrameId?: string };
-  export type Db = { f: string, args: any[] };
+  export type Db = { f: string, args: unknown[] };
   export type InMemoryStoreSet = { acctEmail: string, key: string, value: string | undefined, expiration: number | undefined };
   export type InMemoryStoreGet = { acctEmail: string, key: string };
   export type StoreGlobalGet = { keys: GlobalIndex[]; };
@@ -84,7 +84,7 @@ export namespace Bm {
     export type _tab_ = { tabId: string | null | undefined };
     export type SaveFetchedPubkeys = boolean;
     export type Db = any; // not included in Any below
-    export type Ajax = any; // not included in Any below
+    export type Ajax = unknown; // not included in Any below
 
     export type Any = GetActiveTabInfo | _tab_ | ReconnectAcctAuthPopup
       | PgpMsgDecrypt | PgpMsgDiagnoseMsgPubkeys | PgpMsgVerify | PgpHashChallengeAnswer | PgpMsgType
