@@ -1547,7 +1547,6 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       await composePage.waitAndClick('@action-forward', { delay: 2 });
       await composePage.waitAny('@input-to');
       await composePage.waitUntilFocused('@input-to');
-      await Util.sleep(1000);
       await expectRecipientElements(composePage, { to: [], cc: [], bcc: [] });
     }));
 
