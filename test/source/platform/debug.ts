@@ -3,15 +3,15 @@
 'use strict';
 
 export class Debug {
-  private static DATA: any[] = [];
+  private static DATA: unknown[] = [];
 
-  public static readDatabase = async (): Promise<any[]> => {
+  public static readDatabase = async (): Promise<unknown[]> => {
     const old = Debug.DATA;
     Debug.DATA = [];
     return old;
   };
 
-  public static addMessage = async (message: any): Promise<void> => {
+  public static addMessage = async (message: unknown): Promise<void> => {
     Debug.DATA.push(message);
   };
 }

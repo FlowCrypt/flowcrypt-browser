@@ -18,7 +18,7 @@ export class FlowCryptApi {
     console.info('hookCiDebugEmail-response', r.body, r.statusCode);
   };
 
-  private static call = async (url: string, values: { [k: string]: any }) => {
+  private static call = async (url: string, values: { [k: string]: unknown }) => {
     return await request.post({ url, json: values, headers: { 'api-version': 3 } });
   };
 
