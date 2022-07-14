@@ -122,7 +122,7 @@ export class ComposeSendBtnModule extends ViewModule<ComposeView> {
         if (result.supplementaryOperationsErrors.length) {
           console.error(result.supplementaryOperationsErrors);
           Catch.setHandledTimeout(() => {
-            Ui.toast(result.supplementaryOperationsErrors[0] as string); // tslint:disable-line:no-unsafe-any
+            Ui.toast(result.supplementaryOperationsErrors[0] as string);
           }, 0);
         }
         BrowserMsg.send.notificationShow(this.view.parentTabId, { notification: `Your ${this.view.isReplyBox ? 'reply' : 'message'} has been sent.` });
@@ -249,7 +249,7 @@ export class ComposeSendBtnModule extends ViewModule<ComposeView> {
   private doSendMsgs = async (msgObj: MultipleMessages): Promise<SendMsgsResult> => {
     const sentIds: string[] = [];
     const supplementaryOperations: Promise<void>[] = [];
-    const supplementaryOperationsErrors: unknown[] = []; // tslint:disable-line:no-unsafe-any
+    const supplementaryOperationsErrors: unknown[] = [];
     const success: EmailParts[] = [];
     const failures: { recipient: EmailParts, e: unknown }[] = [];
     for (const msg of msgObj.msgs) {

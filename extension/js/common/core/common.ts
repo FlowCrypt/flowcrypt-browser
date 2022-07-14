@@ -142,7 +142,7 @@ export class Str {
 
   public static htmlAttrDecode = (encoded: string): unknown => {
     try {
-      return JSON.parse(Str.base64urlUtfDecode(encoded)); // tslint:disable-line:no-unsafe-any
+      return JSON.parse(Str.base64urlUtfDecode(encoded));
     } catch (e) {
       return undefined;
     }
