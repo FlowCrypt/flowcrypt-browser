@@ -13,7 +13,7 @@ import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
 export class ComposeSenderModule extends ViewModule<ComposeView> {
 
   public getSender = (): string => {
-    if (this.view.S.now('input_from').length) {
+    if (this.view.S.now('input_from').val()) {
       return String(this.view.S.now('input_from').val());
     }
     if (this.view.replyParams?.myEmail) {
@@ -22,23 +22,10 @@ export class ComposeSenderModule extends ViewModule<ComposeView> {
     return this.view.acctEmail;
   };
 
-  public renderSendFromOrChevron = async () => {
-    if (this.view.isReplyBox) {
-      const { sendAs } = await AcctStore.get(this.view.acctEmail, ['sendAs']);
-      if (Object.keys(sendAs!).length > 1) {
-        const showAliasChevronHtml = '<img tabindex="22" id="render_send_from" src="/img/svgs/chevron-left.svg" title="Choose sending address">';
-        const inputAddrContainer = this.view.S.cached('container_cc_bcc_buttons');
-        Xss.sanitizeAppend(inputAddrContainer, showAliasChevronHtml);
-        inputAddrContainer.find('#render_send_from').click(this.view.setHandler(() => this.renderSendFromIfMoreThanOneAlias(), this.view.errModule.handle(`render send-from`)));
-      }
-    } else {
-      await this.renderSendFromIfMoreThanOneAlias();
-    }
-  };
-
   public checkEmailAliases = async () => {
     try {
       const refreshResult = await Settings.refreshSendAs(this.view.acctEmail);
+      console.log(refreshResult);
       if (refreshResult) {
         if (refreshResult.aliasesChanged || refreshResult.defaultEmailChanged) {
           await this.renderSendFromIfMoreThanOneAlias();
@@ -58,21 +45,20 @@ export class ComposeSenderModule extends ViewModule<ComposeView> {
     }
   };
 
-  private renderSendFromIfMoreThanOneAlias = async () => {
+  public renderSendFromIfMoreThanOneAlias = async () => {
     const { sendAs } = await AcctStore.get(this.view.acctEmail, ['sendAs']);
-    $('#render_send_from').remove(); // created in renderSendFromChevron, if any
     const emailAliases = Object.keys(sendAs!);
     const fromContainer = $('#input-container-from');
+    const fromSelect = fromContainer.find('#input_from');
+    Xss.sanitizeRender(fromSelect, ''); // First remove previously added options
     if (emailAliases.length > 1) {
       const fmtOpt = (addr: string) => `<option value="${Xss.escape(addr)}" ${this.getSender() === addr ? 'selected' : ''}>${Xss.escape(addr)}</option>`;
       emailAliases.sort((a, b) => (sendAs![a].isDefault === sendAs![b].isDefault) ? 0 : sendAs![a].isDefault ? -1 : 1);
-      Xss.sanitizeAppend(fromContainer.find('#input_from'), emailAliases.map(fmtOpt).join('')).change(() => this.view.myPubkeyModule.reevaluateShouldAttachOrNot());
+      Xss.sanitizeRender(fromSelect, emailAliases.map(fmtOpt).join('')).change(() => this.view.myPubkeyModule.reevaluateShouldAttachOrNot());
       this.view.S.now('input_from').change(this.view.setHandler(() => this.actionInputFromChangeHanlder()));
       if (this.view.isReplyBox) {
         this.view.sizeModule.resizeComposeBox();
       }
-    } else {
-      fromContainer.remove();
     }
   };
 
