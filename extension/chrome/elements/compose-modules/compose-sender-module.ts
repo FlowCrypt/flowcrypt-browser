@@ -48,16 +48,16 @@ export class ComposeSenderModule extends ViewModule<ComposeView> {
     const { sendAs } = await AcctStore.get(this.view.acctEmail, ['sendAs']);
     const emailAliases = Object.keys(sendAs!);
     const fromContainer = $('#input-container-from');
-    const fromSelect = fromContainer.find('#input_from');
-    Xss.sanitizeRender(fromSelect, ''); // First remove previously added options
     if (emailAliases.length > 1) {
       const fmtOpt = (addr: string) => `<option value="${Xss.escape(addr)}" ${this.getSender() === addr ? 'selected' : ''}>${Xss.escape(addr)}</option>`;
       emailAliases.sort((a, b) => (sendAs![a].isDefault === sendAs![b].isDefault) ? 0 : sendAs![a].isDefault ? -1 : 1);
-      Xss.sanitizeRender(fromSelect, emailAliases.map(fmtOpt).join('')).change(() => this.view.myPubkeyModule.reevaluateShouldAttachOrNot());
+      Xss.sanitizeRender(fromContainer.find('#input_from'), emailAliases.map(fmtOpt).join('')).change(() => this.view.myPubkeyModule.reevaluateShouldAttachOrNot());
       this.view.S.now('input_from').change(this.view.setHandler(() => this.actionInputFromChangeHanlder()));
       if (this.view.isReplyBox) {
         this.view.sizeModule.resizeComposeBox();
       }
+    } else { // if user doesn't have alias, then just hide from container
+      fromContainer.hide();
     }
   };
 
