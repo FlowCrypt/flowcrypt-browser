@@ -25,7 +25,6 @@ export class ComposeSenderModule extends ViewModule<ComposeView> {
   public checkEmailAliases = async () => {
     try {
       const refreshResult = await Settings.refreshSendAs(this.view.acctEmail);
-      console.log(refreshResult);
       if (refreshResult) {
         if (refreshResult.aliasesChanged || refreshResult.defaultEmailChanged) {
           await this.renderSendFromIfMoreThanOneAlias();
