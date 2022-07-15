@@ -67,7 +67,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     inputs.on('dragleave', this.view.setHandler((target) => this.inputsDragLeaveHandler(target)));
     inputs.on('dragover', (e) => e.preventDefault());
     inputs.on('drop', this.view.setHandler((target) => this.inputsDropHandler(target)));
-    this.view.S.cached('recipients_toogle_elements').on('focus', this.view.setHandler(() => this.collapseInputs()));
+    this.view.S.cached('recipients_toogle_elements').on('focus', this.view.setHandler(() => this.collapseInputsIfNeeded()));
     this.view.S.now('cc').click(this.view.setHandler((target) => {
       const newContainer = this.view.S.cached('input_addresses_container_outer').find(`#input-container-cc`);
       this.copyCcBccActionsClickHandler(target, newContainer);
@@ -324,7 +324,10 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     this.view.S.cached('input_addresses_container_outer').children(`:not([style="display: none;"])`).last().append(this.view.S.cached('container_cc_bcc_buttons')); // xss-reinsert
   };
 
-  public collapseInputs = async () => {
+  public collapseInputsIfNeeded = async () => {
+    if (this.view.S.cached('input_addresses_container_outer').hasClass('invisible')) {
+      return;
+    }
     await Promise.all(this.addedRecipients.map(r => r.evaluating)); // Wait untill all recipients loaded.
     this.showHideCcAndBccInputsIfNeeded();
     this.view.S.cached('input_addresses_container_outer').addClass('invisible');
