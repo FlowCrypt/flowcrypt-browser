@@ -62,18 +62,17 @@ export class ComposeSenderModule extends ViewModule<ComposeView> {
     const { sendAs } = await AcctStore.get(this.view.acctEmail, ['sendAs']);
     $('#render_send_from').remove(); // created in renderSendFromChevron, if any
     const emailAliases = Object.keys(sendAs!);
-    const inputAddrContainer = $('.recipients-inputs');
-    inputAddrContainer.find('#input_from').remove();
+    const fromContainer = $('#input-container-from');
     if (emailAliases.length > 1) {
-      inputAddrContainer.addClass('show_send_from');
-      Xss.sanitizeAppend(inputAddrContainer, '<select id="input_from" tabindex="1" data-test="input-from"></select>');
       const fmtOpt = (addr: string) => `<option value="${Xss.escape(addr)}" ${this.getSender() === addr ? 'selected' : ''}>${Xss.escape(addr)}</option>`;
       emailAliases.sort((a, b) => (sendAs![a].isDefault === sendAs![b].isDefault) ? 0 : sendAs![a].isDefault ? -1 : 1);
-      Xss.sanitizeAppend(inputAddrContainer.find('#input_from'), emailAliases.map(fmtOpt).join('')).change(() => this.view.myPubkeyModule.reevaluateShouldAttachOrNot());
+      Xss.sanitizeAppend(fromContainer.find('#input_from'), emailAliases.map(fmtOpt).join('')).change(() => this.view.myPubkeyModule.reevaluateShouldAttachOrNot());
       this.view.S.now('input_from').change(this.view.setHandler(() => this.actionInputFromChangeHanlder()));
       if (this.view.isReplyBox) {
         this.view.sizeModule.resizeComposeBox();
       }
+    } else {
+      fromContainer.remove();
     }
   };
 
