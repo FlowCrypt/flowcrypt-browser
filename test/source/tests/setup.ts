@@ -712,7 +712,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       ];
       gmailPage = await browser.newPage(t, dummyGmailUrl, undefined, extraAuthHeaders);
       await PageRecipe.waitForToastToAppearAndDisappear(gmailPage,
-        'Could not update keys from EKM due to error: BrowserMsg(processKeysFromEkm) sendRawResponse::Error: Some keys could not be parsed');
+        'Could not update keys from EKM due to error: BrowserMsg(processAndStoreKeysFromEkmLocally) sendRawResponse::Error: Some keys could not be parsed');
       await gmailPage.notPresent('@dialog-passphrase');
       const set13 = await retrieveAndCheckKeys(3);
       expect(set13.map(entry => entry.id)).to.eql([

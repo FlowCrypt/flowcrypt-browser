@@ -124,7 +124,7 @@ ava.default.after.always('evaluate Catch.reportErr errors', async t => {
     .filter(e => e.message !== 'Too few bytes to read ASN.1 value.')
     // below for test "get.updating.key@key-manager-choose-passphrase-forbid-storing.flowcrypt.test - automatic update of key found on key manager"
     .filter(e => ![
-      'BrowserMsg(processKeysFromEkm) sendRawResponse::Error: Some keys could not be parsed',
+      'BrowserMsg(processAndStoreKeysFromEkmLocally) sendRawResponse::Error: Some keys could not be parsed',
       'BrowserMsg(ajax) Bad Request: 400 when GET-ing https://localhost:8001/flowcrypt-email-key-manager/v1/keys/private (no body):  -> RequestTimeout'
     ].includes(e.message))
     // below for test "user4@standardsubdomainfes.test:8001 - PWD encrypted message with FES web portal - a send fails with gateway update error"

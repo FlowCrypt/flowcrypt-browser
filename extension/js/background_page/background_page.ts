@@ -62,7 +62,7 @@ opgp.initWorker({ path: '/lib/openpgp.worker.js' });
   BrowserMsg.bgAddListener('storeGlobalSet', (r: Bm.StoreGlobalSet) => GlobalStore.set(r.values));
   BrowserMsg.bgAddListener('storeAcctGet', (r: Bm.StoreAcctGet) => AcctStore.get(r.acctEmail, r.keys));
   BrowserMsg.bgAddListener('storeAcctSet', (r: Bm.StoreAcctSet) => AcctStore.set(r.acctEmail, r.values));
-  BrowserMsg.bgAddListener('processKeysFromEkm', processAndStoreKeysFromEkmLocally);
+  BrowserMsg.bgAddListener('processAndStoreKeysFromEkmLocally', processAndStoreKeysFromEkmLocally);
 
   BrowserMsg.addPgpListeners(); // todo - remove https://github.com/FlowCrypt/flowcrypt-browser/issues/2560 fixed
 

@@ -86,12 +86,12 @@ const filterKeysToSave = async (candidateKeys: Key[], existingKeys: KeyInfoWithI
 
 export const processAndStoreKeysFromEkmLocally = async (
   { acctEmail, decryptedPrivateKeys, options }: { acctEmail: string, decryptedPrivateKeys: string[], options?: PassphraseOptions }
-): Promise<Bm.Res.ProcessKeysFromEkm> => {
+): Promise<Bm.Res.ProcessAndStoreKeysFromEkmLocally> => {
   const { unencryptedPrvs } = await parseAndCheckPrivateKeys(decryptedPrivateKeys);
   const existingKeys = await KeyStore.get(acctEmail);
   let passphrase = options?.passphrase;
   if (passphrase === undefined && !existingKeys.length) {
-    return { unencryptedKeysToSave: [], updateCount: 0 }; // return success as we can't possibly validate a passphrase
+    return { needPassphrase: false, updateCount: 0 }; // return success as we can't possibly validate a passphrase
     // this can only happen on misconfiguration
     // todo: or should we throw?
   }
@@ -114,8 +114,8 @@ export const processAndStoreKeysFromEkmLocally = async (
   if (encryptedKeys.length) {
     // also updates `name`, todo: refactor?
     await saveKeysAndPassPhrase(acctEmail, encryptedKeys, options);
-    return { unencryptedKeysToSave: [], updateCount: encryptedKeys.length };
+    return { needPassphrase: false, updateCount: encryptedKeys.length };
   } else {
-    return { unencryptedKeysToSave: unencryptedKeysToSave.map(KeyUtil.armor), updateCount: 0 };
+    return { needPassphrase: unencryptedKeysToSave.length > 0, updateCount: 0 };
   }
 };
