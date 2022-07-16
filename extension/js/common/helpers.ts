@@ -72,7 +72,7 @@ const filterKeysToSave = async (candidateKeys: Key[], existingKeys: KeyInfoWithI
     const keyToUpdate = existingKeys.filter(ki => ki.longid === longid && ki.family === candidate.family);
     if (keyToUpdate.length === 1) {
       const oldKey = await KeyUtil.parse(keyToUpdate[0].private);
-      if (!oldKey.lastModified || !candidate.lastModified || oldKey.lastModified >= candidate.lastModified) {
+      if (!candidate.lastModified || (oldKey.lastModified && oldKey.lastModified >= candidate.lastModified)) {
         continue;
       }
     } else if (keyToUpdate.length > 1) {
