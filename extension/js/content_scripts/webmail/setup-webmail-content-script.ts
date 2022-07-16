@@ -247,7 +247,6 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
       const { needPassphrase, updateCount } = await BrowserMsg.send.bg.await.processAndStoreKeysFromEkmLocally({ acctEmail, decryptedPrivateKeys });
       if (needPassphrase) {
         ppEvent.entered = undefined;
-        // todo: we need to think about possible collision with a pass phrase dialog activated by a compose frame
         await showPassphraseDialog(factory, { longids: [], type: 'update_key' });
         while (ppEvent.entered === undefined) {
           await Ui.time.sleep(100);

@@ -29,8 +29,7 @@ export const saveKeysAndPassPhrase = async (acctEmail: string, prvs: Key[], opti
   const myOwnEmailsAddrs: string[] = [acctEmail].concat(Object.keys(sendAs!));
   for (const email of myOwnEmailsAddrs) {
     if (options !== undefined) {
-      // first run, update name
-      // todo: refactor?
+      // first run, update `name`, todo: refactor in #4545
       await ContactStore.update(undefined, email, { name });
     }
     for (const prv of prvs) {
@@ -112,7 +111,7 @@ export const processAndStoreKeysFromEkmLocally = async (
     }
   }
   if (encryptedKeys.length) {
-    // also updates `name`, todo: refactor?
+    // also updates `name`, todo: refactor in #4545
     await saveKeysAndPassPhrase(acctEmail, encryptedKeys, options);
     return { needPassphrase: false, updateCount: encryptedKeys.length };
   } else {
