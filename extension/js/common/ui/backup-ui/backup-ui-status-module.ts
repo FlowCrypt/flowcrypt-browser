@@ -2,36 +2,36 @@
 
 'use strict';
 
-import { ViewModule } from '../../../js/common/view-module.js';
-import { Xss } from '../../../js/common/platform/xss.js';
-import { BackupView } from './backup.js';
-import { Ui } from '../../../js/common/browser/ui.js';
-import { ApiErr } from '../../../js/common/api/shared/api-error.js';
-import { Browser } from '../../../js/common/browser/browser.js';
-import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
-import { Backups } from '../../../js/common/api/email-provider/email-provider-api.js';
-import { Str } from '../../../js/common/core/common.js';
-import { KeyInfoWithIdentity } from '../../../js/common/core/crypto/key.js';
+import { Xss } from '../../platform/xss.js';
+import { Ui } from '../../browser/ui.js';
+import { ApiErr } from '../../api/shared/api-error.js';
+import { Browser } from '../../browser/browser.js';
+import { BrowserMsg } from '../../browser/browser-msg.js';
+import { Backups } from '../../api/email-provider/email-provider-api.js';
+import { Str } from '../../core/common.js';
+import { KeyInfoWithIdentity } from '../../core/crypto/key.js';
+import { BackupUi } from './backup-ui.js';
+import { BackupUiModule } from './backup-ui-module.js';
 
-export class BackupStatusModule extends ViewModule<BackupView> {
+export class BackupUiStatusModule extends BackupUiModule<BackupUi> {
 
   public setHandlers = () => { // is run after checkAndRenderBackupStatus, which renders (some of) these fields first
-    $('#module_status .action_go_manual').click(this.view.setHandler(() => this.actionShowManualBackupHandler()));
-    $('#module_status .action_go_add_key').click(this.view.setHandler(async () => await this.goTo('add_key.htm')));
+    $('#module_status .action_go_manual').click(this.ui.setHandler(() => this.actionShowManualBackupHandler()));
+    $('#module_status .action_go_add_key').click(this.ui.setHandler(async () => await this.goTo('add_key.htm')));
   };
 
   public checkAndRenderBackupStatus = async () => {
     try {
-      const backups = await this.view.gmail.fetchKeyBackups();
-      this.view.displayBlock('module_status');
+      const backups = await this.ui.gmail.fetchKeyBackups();
+      this.ui.displayBackupBlock('module_status');
       this.renderBackupSummaryAndActionButtons(backups);
       this.renderBackupDetailsText(backups);
     } catch (e) {
       if (ApiErr.isNetErr(e)) {
         Xss.sanitizeRender('#content', `Could not check for backups: no internet. ${Ui.retryLink()}`);
       } else if (ApiErr.isAuthErr(e)) {
-        if (this.view.parentTabId) {
-          BrowserMsg.send.notificationShowAuthPopupNeeded(this.view.parentTabId, { acctEmail: this.view.acctEmail });
+        if (this.ui.parentTabId) {
+          BrowserMsg.send.notificationShowAuthPopupNeeded(this.ui.parentTabId, { acctEmail: this.ui.acctEmail });
         }
         Xss.sanitizeRender('#content', `Could not check for backups: account needs to be re-connected. ${Ui.retryLink()}`);
       } else {
@@ -84,12 +84,12 @@ export class BackupStatusModule extends ViewModule<BackupView> {
   };
 
   private actionShowManualBackupHandler = async () => {
-    this.view.displayBlock('module_manual');
+    this.ui.displayBackupBlock('module_manual');
     $('h1').text('Back up your private key');
   };
 
   private goTo = async (page: string) => {
-    await Browser.openSettingsPage('index.htm', this.view.acctEmail, `/chrome/settings/modules/${page}`);
+    await Browser.openSettingsPage('index.htm', this.ui.acctEmail, `/chrome/settings/modules/${page}`);
   };
 
 }

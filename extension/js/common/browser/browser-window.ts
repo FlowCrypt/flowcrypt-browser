@@ -6,7 +6,7 @@ type AnyThirdPartyLibrary = any;
 export type AddrParserResult = { name?: string, address?: string };
 
 export interface BrowserWindow extends Window {
-  onunhandledrejection: (e: any) => void;
+  onunhandledrejection: (e: unknown) => void;
   'emailjs-mime-codec': AnyThirdPartyLibrary;
   'emailjs-mime-parser': AnyThirdPartyLibrary;
   'emailjs-mime-builder': AnyThirdPartyLibrary;
