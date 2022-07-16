@@ -31,7 +31,7 @@ export class Assert {
       throw new Error(`urlParamRequire.optionalString: type of ${name} unexpectedly ${typeof r}`);
     },
     oneof: <T>(values: UrlParams, name: string, allowed: T[]): T => {
-      return Assert.abortAndRenderErrOnUrlParamValMismatch(values, name, allowed as any as UrlParam[]) as any as T; // todo - there should be a better way
+      return Assert.abortAndRenderErrOnUrlParamValMismatch(values, name, allowed as unknown as UrlParam[]) as unknown as T; // todo - there should be a better way
     },
   };
 

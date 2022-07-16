@@ -7,7 +7,6 @@ import { Catch } from '../../../js/common/platform/catch.js';
 import { KeyAlgo, KeyIdentity, KeyUtil } from '../../../js/common/core/crypto/key.js';
 import { Settings } from '../../../js/common/settings.js';
 import { Ui } from '../../../js/common/browser/ui.js';
-import { Url } from '../../../js/common/core/common.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
 import { OpenPGPKey } from '../../../js/common/core/crypto/pgp/openpgp-key.js';
@@ -37,8 +36,18 @@ export class SetupCreateKeyModule {
       if (this.view.clientConfiguration.canBackupKeys()) {
         await this.view.submitPublicKeys(opts);
         const action = $('#step_2a_manual_create .input_backup_inbox').prop('checked') ? 'setup_automatic' : 'setup_manual';
-        // only finalize after backup is done. backup.htm will redirect back to this page with ?action=finalize
-        window.location.href = Url.create('modules/backup.htm', { action, acctEmail: this.view.acctEmail, idToken: this.view.idToken, id: keyIdentity.id, type: keyIdentity.family });
+        // only finalize after backup is done.
+        $('#step_2a_manual_create').hide();
+        await this.view.backupUi.initialize({
+          acctEmail: this.view.acctEmail,
+          action,
+          keyIdentity,
+          onBackedUpFinished: async () => {
+            $('#backup-template-container').remove();
+            await this.view.finalizeSetup();
+            await this.view.setupRender.renderSetupDone();
+          }
+        });
       } else {
         await this.view.submitPublicKeys(opts);
         await this.view.finalizeSetup();

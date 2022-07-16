@@ -18,7 +18,7 @@ import { Url } from '../../js/common/core/common.js';
 
 type AttachmentType = 'img' | 'txt' | 'pdf';
 
-declare const pdfjsLib: any; // tslint:disable-line:ban-types
+declare const pdfjsLib: { getDocument: Function }; // tslint:disable-line:ban-types
 
 View.run(class AttachmentPreviewView extends AttachmentDownloadView {
   protected readonly initiatorFrameId?: string;

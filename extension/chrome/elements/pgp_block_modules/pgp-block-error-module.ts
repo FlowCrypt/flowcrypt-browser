@@ -47,7 +47,7 @@ export class PgpBlockViewErrorModule {
     }
   };
 
-  public handleInitializeErr = async (e: any) => {
+  public handleInitializeErr = async (e: unknown) => {
     if (ApiErr.isNetErr(e)) {
       await this.renderErr(`Could not load message due to network error. ${Ui.retryLink()}`, undefined);
     } else if (ApiErr.isAuthErr(e)) {

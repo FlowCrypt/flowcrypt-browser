@@ -19,7 +19,9 @@ import { KeyStore } from '../../../js/common/platform/store/key-store.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { FlowCryptWebsite } from '../../../js/common/api/flowcrypt-website.js';
 
-declare const ClipboardJS: any;
+declare class ClipboardJS {
+  constructor(selector: string, options: {});
+}
 
 View.run(class MyKeyView extends View {
 

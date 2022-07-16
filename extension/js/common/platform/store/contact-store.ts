@@ -640,7 +640,7 @@ export class ContactStore extends AbstractStore {
     }
   };
 
-  public static setReqPipe<T>(req: IDBRequest, pipe: (value?: T) => void, reject?: ((reason?: any) => void) | undefined) {
+  public static setReqPipe<T>(req: IDBRequest, pipe: (value?: T) => void, reject?: ((reason?: unknown) => void) | undefined) {
     req.onsuccess = () => {
       try {
         pipe(req.result as T);

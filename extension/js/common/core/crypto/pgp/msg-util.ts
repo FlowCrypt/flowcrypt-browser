@@ -342,7 +342,7 @@ export class MsgUtil {
     return msgKeyIds.filter(kid => OpenPGPKey.isPacketDecrypted(prv, kid)).length === msgKeyIds.length; // test if all needed key packets are decrypted
   };
 
-  private static cryptoMsgDecryptCategorizeErr = (decryptErr: any, msgPwd?: string): DecryptError$error => {
+  private static cryptoMsgDecryptCategorizeErr = (decryptErr: unknown, msgPwd?: string): DecryptError$error => {
     const e = String(decryptErr).replace('Error: ', '').replace('Error decrypting message: ', '');
     const keyMismatchErrStrings = ['Cannot read property \'isDecrypted\' of null', 'privateKeyPacket is null',
       'TypeprivateKeyPacket is null', 'Session key decryption failed.', 'Invalid session key for decryption.'];

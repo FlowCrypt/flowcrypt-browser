@@ -40,13 +40,13 @@ export class Catch {
     'ResizeObserver loop limit exceeded',
   ];
 
-  public static rewrapErr = (e: any, message: string): Error => {
+  public static rewrapErr = (e: unknown, message: string): Error => {
     const newErr = new Error(`${message}::${e instanceof Error ? `${e.name}: ${e.message}` : String(e)}`);
     newErr.stack += `\n\n${Catch.stringify(e)}`;
     return newErr;
   };
 
-  public static stringify = (e: any): string => {
+  public static stringify = (e: unknown): string => {
     if (e instanceof Error) {
       return `[typeof:Error:${e.name}] ${e.message}\n\n${e.stack}`;
     }
@@ -67,7 +67,7 @@ export class Catch {
   /**
    * @returns boolean - whether error was reported remotely or not
    */
-  public static onErrorInternalHandler = (errMsg: string | undefined, url: string, line: number, col: number, originalErr: any, isManuallyCalled: boolean): boolean => {
+  public static onErrorInternalHandler = (errMsg: string | undefined, url: string, line: number, col: number, originalErr: unknown, isManuallyCalled: boolean): boolean => {
     const exception = Catch.formExceptionFromThrown(originalErr, errMsg, url, line, col, isManuallyCalled);
     if ((Catch.IGNORE_ERR_MSG.indexOf(exception.message) !== -1) || (errMsg && Catch.IGNORE_ERR_MSG.indexOf(errMsg) !== -1)) {
       return false;
@@ -103,7 +103,7 @@ export class Catch {
   /**
    * @returns boolean - whether error was reported remotely or not
    */
-  public static reportErr = (e: any): boolean => {
+  public static reportErr = (e: unknown): boolean => {
     const { line, col } = Catch.getErrorLineAndCol(e);
     return Catch.onErrorInternalHandler(e instanceof Error ? e.message : String(e), window.location.href, line, col, e, true);
   };
@@ -111,11 +111,11 @@ export class Catch {
   /**
    * @returns boolean - whether error was reported remotely or not
    */
-  public static report = (name: string, details?: any): boolean => {
+  public static report = (name: string, details?: unknown): boolean => {
     return Catch.reportErr(Catch.nameAndDetailsAsException(name, details));
   };
 
-  public static isPromise = (v: any): v is Promise<any> => {
+  public static isPromise = (v: any): v is Promise<unknown> => {
     return v && typeof v === 'object' // tslint:disable-line:no-unsafe-any
       && typeof (v as Promise<any>).then === 'function' // tslint:disable-line:no-unbound-method - only testing if exists
       && typeof (v as Promise<any>).catch === 'function'; // tslint:disable-line:no-unbound-method - only testing if exists
@@ -212,7 +212,7 @@ export class Catch {
     return url;
   };
 
-  public static onUnhandledRejectionInternalHandler = (e: any) => {
+  public static onUnhandledRejectionInternalHandler = (e: unknown) => {
     if (Catch.isPromiseRejectionEvent(e)) {
       Catch.reportErr(e.reason);
     } else {
@@ -254,7 +254,7 @@ export class Catch {
     }
   };
 
-  private static formatExceptionForReport = (thrown: any, line?: number, col?: number): ErrorReport => {
+  private static formatExceptionForReport = (thrown: unknown, line?: number, col?: number): ErrorReport => {
     if (!line || !col) {
       const { line: parsedLine, col: parsedCol } = Catch.getErrorLineAndCol(thrown);
       line = parsedLine;
@@ -306,7 +306,7 @@ export class Catch {
     }
   };
 
-  private static formExceptionFromThrown = (thrown: any, errMsg?: string, url?: string, line?: number, col?: number, isManuallyCalled?: boolean): Error => {
+  private static formExceptionFromThrown = (thrown: unknown, errMsg?: string, url?: string, line?: number, col?: number, isManuallyCalled?: boolean): Error => {
     let exception: Error;
     if (typeof thrown !== 'object') {
       exception = new Error(`THROWN_NON_OBJECT[${typeof thrown}]: ${String(thrown)}`);
@@ -341,7 +341,7 @@ export class Catch {
     return `\n\n### ${name} ###\n# ${text.split('\n').join('\n# ')}\n######################\n`;
   };
 
-  private static nameAndDetailsAsException = (name: string, details: any): Error => {
+  private static nameAndDetailsAsException = (name: string, details: unknown): Error => {
     try {
       throw new Error(name);
     } catch (e) {
@@ -350,7 +350,7 @@ export class Catch {
     }
   };
 
-  private static isPromiseRejectionEvent = (ev: any): ev is PromiseRejectionEvent => {
+  private static isPromiseRejectionEvent = (ev: unknown): ev is PromiseRejectionEvent => {
     if (ev && typeof ev === 'object') {
       const eHasReason = (ev as {}).hasOwnProperty('reason') && typeof (ev as PromiseRejectionEvent).reason === 'object';
       const eHasPromise = (ev as {}).hasOwnProperty('promise') && Catch.isPromise((ev as PromiseRejectionEvent).promise);

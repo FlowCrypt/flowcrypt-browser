@@ -67,7 +67,7 @@ export const getUniqueRecipientEmails = (recipients: ParsedRecipients) => {
 
 export type SendMsgsResult = {
   success: EmailParts[],
-  failures: { recipient: EmailParts, e: any }[],
-  supplementaryOperationsErrors: any[],
+  failures: { recipient: EmailParts, e: unknown }[],
+  supplementaryOperationsErrors: unknown[],
   sentIds: string[]
 };

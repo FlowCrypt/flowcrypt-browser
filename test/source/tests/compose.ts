@@ -1446,21 +1446,23 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       expect(await PageRecipe.getElementPropertyJson(recipient!, 'className')).to.include('expired'); // should not auto-reload
     }));
 
-    ava.default('expired key will turn green when manually updated in different window', testWithBrowser('ci.tests.gmail', async (t, browser) => {
+    ava.default('recipient without pub key will turn green & hide password input view when manually updated in different window', testWithBrowser('ci.tests.gmail', async (t, browser) => {
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
-      const recipientEmail = 'expired.on.attester@domain.com';
+      const recipientEmail = 'test-no-pub-key@domain.com';
       await ComposePageRecipe.fillMsg(composePage, { to: recipientEmail }, t.title);
-      await composePage.waitForContent('.email_address.expired', recipientEmail);
+      await composePage.waitForContent('.email_address.no_pgp', recipientEmail);
+      await composePage.waitAny('@password-or-pubkey-container');
       // now open a pubkey frame and update the pubkey
       const pubkeyFrameUrl = `chrome/elements/pgp_pubkey.htm?frameId=none&armoredPubkey=${encodeURIComponent(somePubkey)}&acctEmail=flowcrypt.compatibility%40gmail.com&parentTabId=0`;
       const pubkeyFrame = await browser.newPage(t, pubkeyFrameUrl);
       await pubkeyFrame.waitAndType('.input_email', recipientEmail);
-      await pubkeyFrame.waitForContent('@action-add-contact', 'UPDATE KEY');
+      await pubkeyFrame.waitForContent('@action-add-contact', 'IMPORT KEY');
       await pubkeyFrame.waitAndClick('@action-add-contact');
       await pubkeyFrame.waitForContent('@container-pgp-pubkey', `${recipientEmail} added`);
       await Util.sleep(1);
       await pubkeyFrame.close();
-      await composePage.waitForContent('.email_address.has_pgp:not(.expired)', recipientEmail);
+      await composePage.waitForContent('.email_address.has_pgp:not(.no_pgp)', recipientEmail);
+      await composePage.waitAny('@password-or-pubkey-container', { visible: false });
     }));
 
     ava.default('do not auto-refresh key if older version of the same key available on attester', testWithBrowser('ci.tests.gmail', async (t, browser) => {

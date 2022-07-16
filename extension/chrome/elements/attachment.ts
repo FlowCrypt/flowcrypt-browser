@@ -136,7 +136,7 @@ export class AttachmentDownloadView extends View {
     }
   };
 
-  protected renderErr = (e: any) => {
+  protected renderErr = (e: unknown) => {
     if (ApiErr.isAuthErr(e)) {
       BrowserMsg.send.notificationShowAuthPopupNeeded(this.parentTabId, { acctEmail: this.acctEmail });
       Xss.sanitizeRender('body', `Error downloading file - google auth needed. ${Ui.retryLink()}`);

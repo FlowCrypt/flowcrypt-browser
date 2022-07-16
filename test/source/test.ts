@@ -37,7 +37,7 @@ const consts = { // higher concurrency can cause 429 google errs when composing
   TIMEOUT_OVERALL: minutes(19),
   ATTEMPTS: testGroup === 'STANDARD-GROUP' ? oneIfNotPooled(3) : process.argv.includes('--retry=false') ? 1 : 3,
   POOL_SIZE: oneIfNotPooled(isMock ? 20 : 3),
-  PROMISE_TIMEOUT_OVERALL: undefined as any as Promise<never>, // will be set right below
+  PROMISE_TIMEOUT_OVERALL: undefined as unknown as Promise<never>, // will be set right below
   IS_LOCAL_DEBUG: process.argv.includes('--debug') ? true : false, // run locally by developer, not in ci
 };
 console.info('consts: ', JSON.stringify(consts), '\n');
