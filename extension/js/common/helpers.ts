@@ -16,19 +16,19 @@ export const isFesUsed = async (acctEmail: string) => {
   return Boolean(fesUrl);
 };
 
-export const saveKeysAndPassPhrase = async (acctEmail: string, prvs: Key[], options?: PassphraseOptions) => {
+export const saveKeysAndPassPhrase = async (acctEmail: string, prvs: Key[], ppOptions?: PassphraseOptions) => {
   const clientConfiguration = await ClientConfiguration.newInstance(acctEmail);
   for (const prv of prvs) {
     await KeyStore.add(acctEmail, prv);
-    if (options !== undefined) {
-      await PassphraseStore.set((options.passphrase_save && !clientConfiguration.forbidStoringPassPhrase()) ? 'local' : 'session',
-        acctEmail, { longid: KeyUtil.getPrimaryLongid(prv) }, options.passphrase);
+    if (ppOptions !== undefined) {
+      await PassphraseStore.set((ppOptions.passphrase_save && !clientConfiguration.forbidStoringPassPhrase()) ? 'local' : 'session',
+        acctEmail, { longid: KeyUtil.getPrimaryLongid(prv) }, ppOptions.passphrase);
     }
   }
   const { sendAs, full_name: name } = await AcctStore.get(acctEmail, ['sendAs', 'full_name']);
   const myOwnEmailsAddrs: string[] = [acctEmail].concat(Object.keys(sendAs!));
   for (const email of myOwnEmailsAddrs) {
-    if (options !== undefined) {
+    if (ppOptions !== undefined) {
       // first run, update `name`, todo: refactor in #4545
       await ContactStore.update(undefined, email, { name });
     }
@@ -84,11 +84,11 @@ const filterKeysToSave = async (candidateKeys: Key[], existingKeys: KeyInfoWithI
 };
 
 export const processAndStoreKeysFromEkmLocally = async (
-  { acctEmail, decryptedPrivateKeys, options }: { acctEmail: string, decryptedPrivateKeys: string[], options?: PassphraseOptions }
+  { acctEmail, decryptedPrivateKeys, ppOptions }: { acctEmail: string, decryptedPrivateKeys: string[], ppOptions?: PassphraseOptions }
 ): Promise<Bm.Res.ProcessAndStoreKeysFromEkmLocally> => {
   const { unencryptedPrvs } = await parseAndCheckPrivateKeys(decryptedPrivateKeys);
   const existingKeys = await KeyStore.get(acctEmail);
-  let passphrase = options?.passphrase;
+  let passphrase = ppOptions?.passphrase;
   if (passphrase === undefined && !existingKeys.length) {
     return { needPassphrase: false, updateCount: 0 }; // return success as we can't possibly validate a passphrase
     // this can only happen on misconfiguration
@@ -112,7 +112,7 @@ export const processAndStoreKeysFromEkmLocally = async (
   }
   if (encryptedKeys.length) {
     // also updates `name`, todo: refactor in #4545
-    await saveKeysAndPassPhrase(acctEmail, encryptedKeys, options);
+    await saveKeysAndPassPhrase(acctEmail, encryptedKeys, ppOptions);
     return { needPassphrase: false, updateCount: encryptedKeys.length };
   } else {
     return { needPassphrase: unencryptedKeysToSave.length > 0, updateCount: 0 };

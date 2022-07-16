@@ -59,7 +59,7 @@ export class SetupWithEmailKeyManagerModule {
           await processAndStoreKeysFromEkmLocally({
             acctEmail: this.view.acctEmail,
             decryptedPrivateKeys: privateKeys.map(entry => entry.decryptedPrivateKey),
-            options: setupOptions
+            ppOptions: setupOptions
           });
         } catch (e) {
           throw new Error(`Could not store keys from EKM due to error: ${e instanceof Error ? e.message : String(e)}`);
