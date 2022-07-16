@@ -131,7 +131,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       let recipientsToEvaluate: ValidRecipientElement[] = [];
       const container = input.parent();
       if (validationResult.valid.length) {
-        this.view.errModule.debug(`parseRenderRecipients(force: ${force}) - valid emails(${validationResult.valid.join(',')})`);
+        this.view.errModule.debug(`parseRenderRecipients(force: ${force}) - valid emails(${Str.formatEmailList(validationResult.valid)}`);
         recipientsToEvaluate = this.createRecipientsElements(container, validationResult.valid, sendingType, RecipientStatus.EVALUATING) as ValidRecipientElement[];
       }
       const invalidEmails = validationResult.invalid.filter(em => !!em); // remove empty strings
