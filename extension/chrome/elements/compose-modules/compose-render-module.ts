@@ -70,8 +70,10 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
   public renderReplyMsgComposeTable = async (): Promise<void> => {
     this.view.S.cached('prompt').css({ display: 'none' });
     this.view.recipientsModule.showHideCcAndBccInputsIfNeeded();
-    this.view.recipientsModule.setEmailsPreview();
+    // 4498 setEmailsPreview() can't be called here as parent elements width is not yet set up (when called from actionActivateReplyBoxHandler)
+    // need to await something first https://stackoverflow.com/a/6132918
     await this.renderComposeTable();
+    this.view.recipientsModule.setEmailsPreview();
     if (this.view.replyParams) {
       const thread = await this.view.emailProvider.threadGet(this.view.threadId, 'metadata');
       const inReplyToMessage = thread.messages?.find((message) => message.id === this.view.replyMsgId);

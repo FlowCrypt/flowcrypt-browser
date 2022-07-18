@@ -1682,6 +1682,15 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         to.eql(['small.txt.pgp', 'small.pdf.pgp']);
     }));
 
+    ava.default('compose - reply box correctly resizes recipients on opening', testWithBrowser('ci.tests.gmail', async (t, browser) => {
+      const acct = 'ci.tests.gmail@flowcrypt.test';
+      const msgId = 'demo-with-reply-to-10';
+      const appendUrl = `threadId=${msgId}&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___&replyMsgId=${msgId}`;
+      const composePage = await ComposePageRecipe.openStandalone(t, browser, acct, { appendUrl, hasReplyPrompt: true });
+      await composePage.waitAndClick('@action-accept-reply-all-prompt', { delay: 2 });
+      await composePage.waitForContent('@recipients-preview', ' more');
+    }));
+
     /**
      * You need the following lines in /etc/hosts:
      * 127.0.0.1    standardsubdomainfes.test

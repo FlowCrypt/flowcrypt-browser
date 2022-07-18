@@ -153,30 +153,29 @@ export class GmailParser {
       // maybe would be better to return from this method all emails addresses and then filter them in another place
       cc: GmailParser.getAddressesHeader(lastGmailMsg, 'cc').filter(e => !addresses.includes(e)),
       bcc: GmailParser.getAddressesHeader(lastGmailMsg, 'bcc').filter(e => !addresses.includes(e)),
-      replyTo: GmailParser.findHeader(lastGmailMsg, 'reply-to'),
+      replyTo: GmailParser.getAddressesHeader(lastGmailMsg, 'reply-to').filter(e => !addresses.includes(e)),
       subject: Mime.subjectWithoutPrefixes(subject),
     };
-    if (headers.from && !headers.to.includes(headers.from)) {
-      headers.to.unshift(headers.from);
+    let to = Value.arr.unique([...headers.to, ...headers.replyTo]);
+    if (headers.from && !to.includes(headers.from)) {
+      to.unshift(headers.from);
     }
-    const acctEmailAliasesInMsg = [...headers.to, ...headers.cc, ...headers.bcc].filter(e => addresses.includes(e));
+    const acctEmailAliasesInMsg = [...to, ...headers.cc, ...headers.bcc].filter(e => addresses.includes(e));
     let myEmail = acctEmail;
     if (acctEmailAliasesInMsg.length && !acctEmailAliasesInMsg.includes(acctEmail)) {
       myEmail = acctEmailAliasesInMsg[0];
     }
-    if (headers.replyTo) {
-      return { to: [headers.replyTo], cc: [], bcc: [], myEmail, from: headers.from, subject: headers.subject };
-    }
     if (headers.from !== myEmail || subject.startsWith('Re: ')) {
-      const replyToWithoutMyEmail = headers.to.filter(e => myEmail !== e); // thinking about moving it in another place
+      const replyToWithoutMyEmail = to.filter(e => myEmail !== e); // thinking about moving it in another place
       if (replyToWithoutMyEmail.length) { // when user sends emails it itself here will be 0 elements
-        headers.to = replyToWithoutMyEmail;
+        to = replyToWithoutMyEmail;
       }
     }
-    return { to: headers.to, cc: headers.cc, bcc: headers.bcc, myEmail, from: headers.from, subject: headers.subject };
+    return { to, cc: headers.cc, bcc: headers.bcc, myEmail, from: headers.from, subject: headers.subject };
   };
 
-  private static getAddressesHeader = (gmailMsg: GmailRes.GmailMsg, headerName: RecipientType) => {
+  private static getAddressesHeader = (gmailMsg: GmailRes.GmailMsg, headerName: RecipientType | 'reply-to') => {
+    // todo: keep names in email addresses?
     return Value.arr.unique((GmailParser.findHeader(gmailMsg, headerName) || '').split(',').map(e => Str.parseEmail(e).email!).filter(e => !!e));
   };
 
