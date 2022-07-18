@@ -118,7 +118,7 @@ export class ComposeView extends View {
     input_container_from: '#input-container-from',
     input_addresses_container_inner: '#input_addresses_container > div:first',
     recipients_inputs: '#input_addresses_container input',
-    recipients_toogle_elements: '#input_subject, #input_text, #input_password',
+    recipients_toggle_elements: '#input_subject, #input_text, #input_password',
     attached_files: 'table#compose #fineuploader .qq-upload-list li',
     container_cc_bcc_buttons: '#input_addresses_container .container-cc-bcc-buttons',
     cc: '#cc',
