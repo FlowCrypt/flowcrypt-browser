@@ -332,8 +332,6 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     this.showHideCcAndBccInputsIfNeeded();
     this.view.S.cached('input_addresses_container_outer').addClass('invisible');
     this.view.S.cached('recipients_placeholder').css('display', 'flex');
-    this.view.S.cached('recipient_left_label').hide();
-    this.view.S.cached('input_container_from').hide();
     this.setEmailsPreview();
     this.hideContacts();
     this.view.sizeModule.setInputTextHeightManuallyIfNeeded();
@@ -1024,8 +1022,6 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
 
   private focusRecipients = () => {
     this.view.S.cached('recipients_placeholder').hide();
-    this.view.S.cached('recipient_left_label').show();
-    this.view.S.cached('input_container_from').css('display', 'flex');
     this.view.S.cached('input_addresses_container_outer').removeClass('invisible');
     this.view.sizeModule.resizeComposeBox();
     if (this.view.isReplyBox) {

@@ -1463,6 +1463,14 @@ table#compose td.recipients-inputs > div#input_addresses_container.invisible inp
   opacity: 0;
 }
 
+table#compose td.recipients-inputs > div#input_addresses_container.invisible .recipient-left-label {
+  display: none;
+}
+
+table#compose td.recipients-inputs > div#input_addresses_container.invisible #input-container-from {
+  display: none;
+}
+
 table#compose td.recipients-inputs > div#input_addresses_container.invisible .recipients {
   display: none;
 }
@@ -1482,7 +1490,6 @@ table#compose td.recipients-inputs > div#input_addresses_container div input {
 }
 
 table#compose td.recipients-inputs .recipient-left-label {
-  display: none;
   color: #777;
   font-size: 15px;
   text-align: left;
@@ -1688,7 +1695,7 @@ table#compose td input {
 }
 
 table#compose #input-container-from {
-  display: none;
+  display: flex;
 }
 
 table#compose #input-container-from select#input_from {
