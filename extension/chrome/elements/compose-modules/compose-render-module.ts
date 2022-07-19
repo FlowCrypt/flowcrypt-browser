@@ -255,7 +255,7 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
     this.view.errModule.debugFocusEvents('input_text', 'send_btn', 'input_to', 'input_subject');
     this.view.S.cached('compose_table').css('display', 'table');
     await this.addComposeTableHandlers();
-    await this.view.senderModule.renderSendFromOrChevron();
+    await this.view.senderModule.renderSendFromIfMoreThanOneAlias();
     if (this.view.isReplyBox) {
       if (this.view.replyParams?.to.length) {
         // Firefox will not always respond to initial automatic $input_text.blur(): recipients may be left unrendered, as standard text, with a trailing comma
