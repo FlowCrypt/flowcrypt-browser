@@ -318,10 +318,8 @@ BROWSER_UNIT_TEST_NAME(`Mime attachment file names`);
   return 'pass';
 })();
 
-BROWSER_UNIT_TEST_NAME(`Mime attachment file name issue 3352`);
-(async () => {
-  const originalName = 'XX J 1 IT E (P 4) p_c.pdf';
-  const attachments = [new Attachment({ name: originalName, type: 'text/plain', data: new Uint8Array([80, 81]) })];
+const checkAttachmentDecode = async (fileName) => {
+  const attachments = [new Attachment({ name: fileName, type: 'text/plain', data: new Uint8Array([80, 81]) })];
   const encoded = await Mime.encode({ 'text/plain': 'text' }, { Subject: 'subject' }, attachments);
   const decoded = await Mime.decode(encoded);
   if (decoded.attachments.length !== 1) {
@@ -333,8 +331,18 @@ BROWSER_UNIT_TEST_NAME(`Mime attachment file name issue 3352`);
     throw Error(`could not extract attachment at index ${index}`);
   }
   const extractedName = extractedAttachment.name;
-  if (extractedName !== originalName) {
-    throw Error(`extractedName unexpectedly ${extractedName}, expecting ${originalName}`);
+  if (extractedName !== fileName) {
+    throw Error(`extractedName unexpectedly ${extractedName}, expecting ${fileName}`);
   }
   return 'pass';
+};
+
+BROWSER_UNIT_TEST_NAME(`Mime attachment file name issue 3352`);
+(async () => {
+  return await checkAttachmentDecode('XX J 1 IT E (P 4) p_c.pdf');
+})();
+
+BROWSER_UNIT_TEST_NAME(`Mime attachment file name issue #3505`);
+(async () => {
+  return await checkAttachmentDecode('what\'s_up?.txt');
 })();
