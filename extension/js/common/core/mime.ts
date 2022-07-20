@@ -225,7 +225,7 @@ export class Mime {
     return rootNode.build(); // tslint:disable-line:no-unsafe-any
   };
 
-  public static async checkAttachmentDecode(filename: string) {
+  public static checkAttachmentDecode = async (filename: string): Promise<string> => {
     const attachments = [new Attachment({ name: filename, type: 'text/plain', data: new Uint8Array([80, 81]) })];
     const encoded = await Mime.encode({ 'text/plain': 'text' }, { Subject: 'subject' }, attachments);
     const decoded = await Mime.decode(new TextEncoder().encode(encoded));
@@ -242,7 +242,7 @@ export class Mime {
       throw Error(`extractedName unexpectedly ${extractedName}, expecting ${filename}`);
     }
     return 'pass';
-  }
+  };
 
   public static encodeSmime = async (body: Uint8Array, headers: RichHeaders, type: 'enveloped-data' | 'signed-data'): Promise<string> => {
     const rootContentType = `application/pkcs7-mime; name="smime.p7m"; smime-type=${type}`;
