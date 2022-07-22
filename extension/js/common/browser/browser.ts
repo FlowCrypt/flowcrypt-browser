@@ -9,7 +9,6 @@ import { Attachment } from '../core/attachment.js';
 import { Catch } from '../platform/catch.js';
 import { Dict, Url, UrlParam } from '../core/common.js';
 import { GlobalStore } from '../platform/store/global-store.js';
-import { Xss } from '../platform/xss.js';
 
 export class Browser {
 
@@ -27,7 +26,7 @@ export class Browser {
     const blob = new Blob([attachment.getData()], { type: attachment.type });
     const a = window.document.createElement('a');
     a.href = window.URL.createObjectURL(blob);
-    a.download = Xss.escape(attachment.name);
+    a.download = attachment.name;
     if (typeof a.click === 'function') { // tslint:disable-line:no-unbound-method - only testing if exists
       a.click();
     } else { // safari
