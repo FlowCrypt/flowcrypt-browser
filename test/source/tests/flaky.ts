@@ -144,7 +144,7 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
       await SettingsPageRecipe.addKeyTest(t, browser, 'flowcrypt.compatibility@gmail.com', key.armored!, key.passphrase!,
         { isSavePassphraseChecked: true, isSavePassphraseHidden: false });
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
-      await composePage.selectOption('@input-from', 'flowcryptcompatibility@gmail.com');
+      await ComposePageRecipe.selectFromOption(composePage, 'flowcryptcompatibility@gmail.com');
       await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, 'New Signed Message (Mock Test)', undefined, { encrypt: false });
       await ComposePageRecipe.sendAndClose(composePage);
     }));
