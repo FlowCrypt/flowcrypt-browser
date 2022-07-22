@@ -134,7 +134,7 @@ export class XssSafeFactory {
       a.url = Browser.objUrlCreate(a.getData());
     }
     return this.frameSrc(this.extUrl(iframeUrl), {
-      frameId: this.newId(), msgId: a.msgId, name: decodeURIComponent(a.name), type: a.type, size: a.length, attachmentId: a.id, url: a.url, isEncrypted, errorDetailsOpened, initiatorFrameId
+      frameId: this.newId(), msgId: a.msgId, name: a.name, type: a.type, size: a.length, attachmentId: a.id, url: a.url, isEncrypted, errorDetailsOpened, initiatorFrameId
     }, parentTabId);
   };
 
