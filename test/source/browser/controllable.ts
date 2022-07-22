@@ -31,6 +31,13 @@ abstract class ControllableBase {
     return Boolean(await this.element(selector));
   };
 
+  public isElementVisible = async (selector: string) => {
+    // check element visibility by checking `display` property and element offset height
+    return await this.target.$eval(this.selector(selector), (elem) => {
+      return window.getComputedStyle(elem).getPropertyValue('display') !== 'none' && (elem as HTMLElement).offsetHeight > 0;
+    });
+  };
+
   public waitForSelTestState = async (state: 'ready' | 'working' | 'waiting' | 'closed', timeout = TIMEOUT_TEST_STATE_SATISFY) => {
     await this.waitAll(`[data-test-state="${state}"]`, { timeout, visible: false });
   };
@@ -598,7 +605,7 @@ export class ControllablePage extends ControllableBase {
           this.preventclose = true;
           t.log(`${t.attemptText} Dismissing unexpected alert ${alert.message()}`);
           try {
-            alert.dismiss().catch((e: any) => t.log(`${t.attemptText} Err1 dismissing alert ${String(e)}`));
+            alert.dismiss().catch((e: unknown) => t.log(`${t.attemptText} Err1 dismissing alert ${String(e)}`));
           } catch (e) {
             t.log(`${t.attemptText} Err2 dismissing alert ${String(e)}`);
           }

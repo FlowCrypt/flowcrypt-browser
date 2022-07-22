@@ -13,7 +13,7 @@ import { Str } from './common.js';
 import { FcAttachmentLinkData } from './attachment.js';
 import { KeyUtil } from './crypto/key.js';
 
-type SanitizedBlocks = { blocks: MsgBlock[], subject: string | undefined, isRichText: boolean, webReplyToken: any | undefined };
+type SanitizedBlocks = { blocks: MsgBlock[], subject: string | undefined, isRichText: boolean, webReplyToken: unknown | undefined };
 
 export class MsgBlockParser {
 
@@ -43,7 +43,7 @@ export class MsgBlockParser {
   public static fmtDecryptedAsSanitizedHtmlBlocks = async (decryptedContent: Uint8Array, imgHandling: SanitizeImgHandling = 'IMG-TO-LINK'): Promise<SanitizedBlocks> => {
     const blocks: MsgBlock[] = [];
     let isRichText = false;
-    let webReplyToken: any | undefined;
+    let webReplyToken: unknown | undefined;
     if (!Mime.resemblesMsg(decryptedContent)) {
       let plain = Buf.fromUint8(decryptedContent).toUtfStr();
       plain = MsgBlockParser.extractFcAttachments(plain, blocks);

@@ -521,7 +521,7 @@ export class OpenPGPKey {
   private static getLatestValidSignature = async (signatures: OpenPGP.packet.Signature[],
     primaryKey: OpenPGP.packet.PublicKey | OpenPGP.packet.SecretKey,
     signatureType: OpenPGP.enums.signature,
-    dataToVerify: any,
+    dataToVerify: unknown,
     date = new Date()):
     Promise<OpenPGP.packet.Signature | undefined> => {
     let signature: OpenPGP.packet.Signature | undefined;

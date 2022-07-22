@@ -5,7 +5,7 @@
 'use strict';
 
 export const requireOpenpgp = (): typeof OpenPGP => {
-  return require('openpgp') as any as typeof OpenPGP;
+  return require('openpgp') as unknown as typeof OpenPGP;
 };
 
 export const requireMimeParser = (): any => {

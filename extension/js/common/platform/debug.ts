@@ -26,9 +26,9 @@ export class Debug {
   /**
    * Extracts all the stored messages from the `debug` database, also deleting them
    */
-  public static readDatabase = async (): Promise<any[]> => {
+  public static readDatabase = async (): Promise<unknown[]> => {
     const db = await Debug.openDatabase();
-    const records: any[] = [];
+    const records: unknown[] = [];
     const tx = db.transaction(['messages'], 'readwrite');
     await new Promise((resolve, reject) => {
       tx.oncomplete = () => resolve(undefined);
@@ -46,7 +46,7 @@ export class Debug {
   /**
   * Add an arbitrary message to `debug` database
   */
-  public static addMessage = async (message: any): Promise<void> => {
+  public static addMessage = async (message: unknown): Promise<void> => {
     const db = await Debug.openDatabase();
     const tx = db.transaction(['messages'], 'readwrite');
     await new Promise((resolve, reject) => {

@@ -159,7 +159,7 @@ export class BrowserPool {
     }
   };
 
-  private processTestError = (err: any, t: AvaContext, attemptHtmls: string[], flag?: 'FAILING') => {
+  private processTestError = (err: unknown, t: AvaContext, attemptHtmls: string[], flag?: 'FAILING') => {
     t.retry = undefined;
     if (t.attemptNumber! < t.totalAttempts!) {
       t.log(`${t.attemptText} Retrying: ${String(err)}`);
@@ -172,7 +172,7 @@ export class BrowserPool {
     }
   };
 
-  private testFailSingleAttemptDebugHtml = async (t: AvaContext, browser: BrowserHandle, err: any): Promise<string> => {
+  private testFailSingleAttemptDebugHtml = async (t: AvaContext, browser: BrowserHandle, err: unknown): Promise<string> => {
     return `
     <div class="attempt">
       <div style="display:none;">
