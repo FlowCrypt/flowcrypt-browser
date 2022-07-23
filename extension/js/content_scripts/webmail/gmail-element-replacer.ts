@@ -196,7 +196,9 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     // reply buttons
     const visibleReplyBtns = $('td.acX:visible');
     if (visibleReplyBtns.not('.replaced, .inserted').length) { // last reply button in convo gets replaced
-      $(this.sel.autoReplies).remove();
+      if (this.isEncrypted()) {
+        $(this.sel.autoReplies).remove(); // make smart replies available for non-encrypted conversations
+      }
       const convoReplyBtnsToReplace = visibleReplyBtns.not('.replaced, .inserted');
       const convoReplyBtnsArr = convoReplyBtnsToReplace.get();
       // only replace the last one FlowCrypt reply button if does not have any buttons replaced yet, and only replace the last one
