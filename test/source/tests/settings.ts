@@ -518,7 +518,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       await inboxPage.close();
     };
 
-    ava.default.only('settings - check if downloaded attachment name is correct', testWithBrowser('compatibility', async (t, browser) => {
+    ava.default('settings - check if downloaded attachment name is correct', testWithBrowser('compatibility', async (t, browser) => {
       // `what's up?.txt` becomes `what's_up_.txt` and this is native way and we can't change this logic
       // https://github.com/FlowCrypt/flowcrypt-browser/issues/3505#issuecomment-812269422
       await checkIfFileDownloadCorrectly(t, browser, '1821bf879a6f71e0', 'what\'s_up_.txt');
