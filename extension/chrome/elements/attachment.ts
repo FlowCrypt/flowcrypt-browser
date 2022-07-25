@@ -79,10 +79,9 @@ export class AttachmentDownloadView extends View {
       return;
     }
     $('#type').text(this.type || 'unknown type');
-    const attachmentName = decodeURIComponent(this.name || 'noname');
-    $('#name').text(attachmentName);
+    $('#name').text(this.name || 'noname');
     this.renderHeader();
-    $('#name').attr('title', attachmentName);
+    $('#name').attr('title', this.name || '');
     $('img#file-format').attr('src', this.getFileIconSrc());
     if (!this.size && this.url) { // download url of a file that has an unknown size
       this.getUrlFileSize(this.url!).then(fileSize => {
