@@ -36,7 +36,7 @@ export class GeneralMailFormatter {
       const senderKis = await view.storageModule.getAccountKeys(newMsgData.from.email);
       const signingKey = await GeneralMailFormatter.chooseSigningKeyAndDecryptIt(view, senderKis);
       if (!signingKey) {
-        throw new UnreportableError('Could not find account key usable for signing this plain text message');
+        throw new UnreportableError('Could not find account\'s key usable for signing this plain text message');
       }
       const msg = await new SignedMsgMailFormatter(view).sendableMsg(newMsgData, signingKey!.key);
       return { senderKi: signingKey!.keyInfo, msgs: [msg], renderSentMessage: { recipients: msg.recipients, attachments: msg.attachments } };

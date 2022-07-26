@@ -1842,8 +1842,8 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       await ComposePageRecipe.fillMsg(composePage, { to: 'mock.only.pubkey@flowcrypt.com' }, 'no valid key');
       await ComposePageRecipe.waitForToastToAppearAndDisappear(composePage, 'Draft not saved: Error: Your account keys are revoked');
       await composePage.waitAndClick('@action-send', { delay: 1 });
-      await PageRecipe.waitForModalAndRespond(composePage, 'error', {
-        contentToCheck: 'Failed to send message due to: Error: Could not find account openpgp key usable for signing this encrypted message',
+      await PageRecipe.waitForModalAndRespond(composePage, 'warning', {
+        contentToCheck: 'Failed to send message due to: Error: Your account keys are revoked',
         clickOn: 'confirm'
       });
     }));

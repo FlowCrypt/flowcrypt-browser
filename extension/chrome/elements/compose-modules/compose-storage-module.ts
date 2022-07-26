@@ -38,6 +38,20 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
     return matchingFamilyAndSenderEmail;
   };
 
+  private throwIfKeysAreInvalid = (keys: CollectKeysResult): CollectKeysResult => {
+    const { pubkeys } = keys;
+    if (pubkeys.some(pub => pub.pubkey.expiration && pub.pubkey.expiration < Date.now())) {
+      throw new UnreportableError('Your account keys are expired');
+    }
+    if (pubkeys.some(pub => pub.pubkey.revoked)) {
+      throw new UnreportableError('Your account keys are revoked');
+    }
+    if (pubkeys.some(pub => !pub.pubkey.usableForEncryption)) {
+      throw new UnreportableError('Your account keys are not usable for encryption');
+    }
+    return keys;
+  };
+
   // used when encryption is needed
   // returns a set of keys of a single family ('openpgp' or 'x509')
   public collectSingleFamilyKeys = async (
@@ -58,7 +72,7 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
         contacts
       );
       if (!collected.emailsWithoutPubkeys.length && (collected.senderKis.length || !needSigning)) {
-        return collected; // return right away - we have all we needed in single family
+        return this.throwIfKeysAreInvalid(collected); // return right away - we have all we needed in single family
       }
       resultsPerFamily[family] = collected;
     }
@@ -74,18 +88,7 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
     const rank = (x: [string, CollectKeysResult]) => {
       return x[1].emailsWithoutPubkeys.length * 100 + (x[1].senderKis.length ? 0 : 10) + (x[0] === 'openpgp' ? 0 : 1);
     };
-    const keys = Object.entries(resultsPerFamily).sort((a, b) => rank(a) - rank(b))[0][1];
-    const { pubkeys } = keys;
-    if (pubkeys.some(pub => pub.pubkey.expiration && pub.pubkey.expiration < Date.now())) {
-      throw new UnreportableError('Your account keys are expired');
-    }
-    if (pubkeys.some(pub => pub.pubkey.revoked)) {
-      throw new UnreportableError('Your account keys are revoked');
-    }
-    if (pubkeys.some(pub => !pub.pubkey.usableForEncryption)) {
-      throw new UnreportableError('Your account keys are not usable for encryption');
-    }
-    return keys;
+    return this.throwIfKeysAreInvalid(Object.entries(resultsPerFamily).sort((a, b) => rank(a) - rank(b))[0][1]);
   };
 
   public passphraseGet = async (senderKi: { longid: string }) => {
