@@ -121,17 +121,6 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
       try {
         const msgData = await this.view.inputModule.extractAll();
         const { pubkeys } = await this.view.storageModule.collectSingleFamilyKeys([], msgData.from.email, true);
-        // collectSingleFamilyKeys filters out bad keys, but only if there are any good keys available
-        //  if no good keys available, it leaves bad keys so we can explain the issue here
-        if (pubkeys.some(pub => pub.pubkey.expiration && pub.pubkey.expiration < Date.now())) {
-          throw new UnreportableError('Your account keys are expired');
-        }
-        if (pubkeys.some(pub => pub.pubkey.revoked)) {
-          throw new UnreportableError('Your account keys are revoked');
-        }
-        if (pubkeys.some(pub => !pub.pubkey.usableForEncryption)) {
-          throw new UnreportableError('Your account keys are not usable for encryption');
-        }
         msgData.pwd = undefined; // not needed for drafts
         const sendable = await new EncryptedMsgMailFormatter(this.view, true).sendableNonPwdMsg(msgData, pubkeys);
         if (this.view.replyParams?.inReplyTo) {

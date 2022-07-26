@@ -74,7 +74,18 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
     const rank = (x: [string, CollectKeysResult]) => {
       return x[1].emailsWithoutPubkeys.length * 100 + (x[1].senderKis.length ? 0 : 10) + (x[0] === 'openpgp' ? 0 : 1);
     };
-    return Object.entries(resultsPerFamily).sort((a, b) => rank(a) - rank(b))[0][1];
+    const keys = Object.entries(resultsPerFamily).sort((a, b) => rank(a) - rank(b))[0][1];
+    const { pubkeys } = keys;
+    if (pubkeys.some(pub => pub.pubkey.expiration && pub.pubkey.expiration < Date.now())) {
+      throw new UnreportableError('Your account keys are expired');
+    }
+    if (pubkeys.some(pub => pub.pubkey.revoked)) {
+      throw new UnreportableError('Your account keys are revoked');
+    }
+    if (pubkeys.some(pub => !pub.pubkey.usableForEncryption)) {
+      throw new UnreportableError('Your account keys are not usable for encryption');
+    }
+    return keys;
   };
 
   public passphraseGet = async (senderKi: { longid: string }) => {
