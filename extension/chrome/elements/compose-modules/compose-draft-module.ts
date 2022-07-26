@@ -7,7 +7,7 @@ import { AjaxErr } from '../../../js/common/api/shared/api-error.js';
 import { ApiErr } from '../../../js/common/api/shared/api-error.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Buf } from '../../../js/common/core/buf.js';
-import { Catch, UnreportableError } from '../../../js/common/platform/catch.js';
+import { Catch } from '../../../js/common/platform/catch.js';
 import { EncryptedMsgMailFormatter } from './formatters/encrypted-mail-msg-formatter.js';
 import { Env } from '../../../js/common/browser/env.js';
 import { GlobalStore } from '../../../js/common/platform/store/global-store.js';
