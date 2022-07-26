@@ -38,20 +38,6 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
     return matchingFamilyAndSenderEmail;
   };
 
-  private throwIfKeysAreInvalid = (keys: CollectKeysResult): CollectKeysResult => {
-    const { pubkeys } = keys;
-    if (pubkeys.some(pub => pub.pubkey.expiration && pub.pubkey.expiration < Date.now())) {
-      throw new UnreportableError('Your account keys are expired');
-    }
-    if (pubkeys.some(pub => pub.pubkey.revoked)) {
-      throw new UnreportableError('Your account keys are revoked');
-    }
-    if (pubkeys.some(pub => !pub.pubkey.usableForEncryption)) {
-      throw new UnreportableError('Your account keys are not usable for encryption');
-    }
-    return keys;
-  };
-
   // used when encryption is needed
   // returns a set of keys of a single family ('openpgp' or 'x509')
   public collectSingleFamilyKeys = async (
@@ -212,6 +198,20 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
       }
     }
     return { email: parsedEmail.email, name };
+  };
+
+  private throwIfKeysAreInvalid = (keys: CollectKeysResult): CollectKeysResult => {
+    const { pubkeys } = keys;
+    if (pubkeys.some(pub => pub.pubkey.expiration && pub.pubkey.expiration < Date.now() && pub.isMine)) {
+      throw new UnreportableError('Your account keys are expired');
+    }
+    if (pubkeys.some(pub => pub.pubkey.revoked && pub.isMine)) {
+      throw new UnreportableError('Your account keys are revoked');
+    }
+    if (pubkeys.some(pub => !pub.pubkey.usableForEncryption && pub.isMine)) {
+      throw new UnreportableError('Your account keys are not usable for encryption');
+    }
+    return keys;
   };
 
   private collectSingleFamilyKeysInternal = async (
