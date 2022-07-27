@@ -36,7 +36,7 @@ export class GeneralMailFormatter {
       const senderKis = await view.storageModule.getAccountKeys(newMsgData.from.email);
       const signingKey = await GeneralMailFormatter.chooseSigningKeyAndDecryptIt(view, senderKis);
       if (!signingKey) {
-        throw new UnreportableError('Could not find account key usable for signing this plain text message');
+        throw new UnreportableError('Could not find account\'s key usable for signing this plain text message');
       }
       const msg = await new SignedMsgMailFormatter(view).sendableMsg(newMsgData, signingKey!.key);
       return { senderKi: signingKey!.keyInfo, msgs: [msg], renderSentMessage: { recipients: msg.recipients, attachments: msg.attachments } };
@@ -52,7 +52,7 @@ export class GeneralMailFormatter {
       if (!signingKey && singleFamilyKeys.family === 'openpgp') {
         // we are ignoring missing signing keys for x509 family for now. We skip signing when missing
         //   see https://github.com/FlowCrypt/flowcrypt-browser/pull/4372/files#r845012403
-        throw new UnreportableError(`Could not find account ${singleFamilyKeys.family} key usable for signing this encrypted message`);
+        throw new UnreportableError(`Could not find account's ${singleFamilyKeys.family} key usable for signing this encrypted message`);
       }
     }
     view.S.now('send_btn_text').text('Encrypting...');
