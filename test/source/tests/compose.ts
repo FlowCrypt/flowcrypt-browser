@@ -865,7 +865,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       expect(await composePage.isDisabled('#toggle_send_options')).to.be.false;
     }));
 
-    ava.default.skip('compose - load contacts through API', testWithBrowser('ci.tests.gmail', async (t, browser) => {
+    ava.default('compose - load contacts through API', testWithBrowser('ci.tests.gmail', async (t, browser) => {
       let composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
       await composePage.waitAndClick('@action-show-container-cc-bcc-buttons');
       await composePage.type('@input-to', 'contact');
@@ -877,6 +877,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         const oauthPopup = await browser.newPageTriggeredBy(t, () => composePage.waitAndClick('@action-auth-with-contacts-scope'));
         await OauthPageRecipe.google(t, oauthPopup, 'ci.tests.gmail@flowcrypt.test', 'approve');
       }
+      await Util.sleep(3);
       await ComposePageRecipe.expectContactsResultEqual(composePage, ['contact.test@flowcrypt.com']);
       // re-load the compose window, expect that it remembers scope was connected, and remembers the contact
       composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
