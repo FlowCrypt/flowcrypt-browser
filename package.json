@@ -51,7 +51,7 @@
     "openpgp": "4.10.10",
     "postcss-html": "^1.4.1",
     "squire-rte": "1.11.3",
-    "sweetalert2": "11.4.19",
+    "sweetalert2": "11.4.20",
     "zxcvbn": "4.4.2"
   },
   "scripts": {
