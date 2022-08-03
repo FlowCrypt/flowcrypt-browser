@@ -760,7 +760,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
       await Util.sleep(5);
       const flowcryptTab = (await browser.browser.pages()).find(p => p.url() === 'https://flowcrypt.com/');
       await flowcryptTab!.waitForSelector("body");
-      flowcryptTab!.on('console', msg => expect((msg as any)._text).to.equal('Opener: null'));
+      flowcryptTab!.on('console', msg => expect((msg as any)._text).to.equal(undefined));
       await Util.sleep(5);
       await flowcryptTab!.evaluate(() => console.log(`Opener: ${JSON.stringify(window.opener)}`));
       await Util.sleep(5);
