@@ -17,6 +17,7 @@ import { OauthPageRecipe } from './page-recipe/oauth-page-recipe';
 import { testConstants } from './tooling/consts';
 import { SetupPageRecipe } from './page-recipe/setup-page-recipe';
 import { KeyUtil } from '../core/crypto/key';
+import { ElementHandle } from 'puppeteer';
 
 // tslint:disable:no-blank-lines-func
 
@@ -152,7 +153,7 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
     ava.default('with attachments + shows progress %', testWithBrowser('compatibility', async (t, browser) => {
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
       await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, 'with files');
-      const fileInput = await composePage.target.$('input[type=file]');
+      const fileInput = await composePage.target.$('input[type=file]') as ElementHandle<HTMLInputElement>;
       await fileInput!.uploadFile('test/samples/small.txt', 'test/samples/small.png', 'test/samples/small.pdf', 'test/samples/large.jpg');
       await ComposePageRecipe.sendAndClose(composePage, { expectProgress: true, timeout: 120 });
     }));
@@ -160,7 +161,7 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
     ava.default('compose > large file > public domain account (should not prompt to upgrade)', testWithBrowser('compatibility', async (t, browser) => {
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
       await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, 'a large file test (gmail account)');
-      const fileInput = await composePage.target.$('input[type=file]');
+      const fileInput = await composePage.target.$('input[type=file]') as ElementHandle<HTMLInputElement>;
       await fileInput!.uploadFile('test/samples/large.jpg');
       await Util.sleep(2);
       await ComposePageRecipe.sendAndClose(composePage, { timeout: 60, expectProgress: true });
@@ -171,7 +172,7 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
       const subject = 'PWD encrypted message with flowcrypt.com/api';
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
       await ComposePageRecipe.fillMsg(composePage, { to: 'test@email.com' }, subject);
-      const fileInput = await composePage.target.$('input[type=file]');
+      const fileInput = await composePage.target.$('input[type=file]') as ElementHandle<HTMLInputElement>;
       await fileInput!.uploadFile('test/samples/small.txt');
       await ComposePageRecipe.sendAndClose(composePage, { password: msgPwd });
       // this test is using PwdEncryptedMessageWithFlowCryptComApiTestStrategy to check sent result based on subject "PWD encrypted message with flowcrypt.com/api"

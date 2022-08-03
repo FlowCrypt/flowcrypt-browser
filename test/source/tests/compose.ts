@@ -24,7 +24,7 @@ import { testConstants } from './tooling/consts';
 import { MsgUtil } from '../core/crypto/pgp/msg-util';
 import { Buf } from '../core/buf';
 import { PubkeyInfoWithLastCheck } from '../core/crypto/key';
-import { Page } from 'puppeteer';
+import { ElementHandle, Page } from 'puppeteer';
 
 // tslint:disable:no-blank-lines-func
 // tslint:disable:no-unused-expression
@@ -272,7 +272,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
     ava.default('compose - with attachments + nopgp', testWithBrowser('ci.tests.gmail', async (t, browser) => {
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
       await ComposePageRecipe.fillMsg(composePage, { to: 'human+nopgp@flowcrypt.com' }, 'with files + nonppg');
-      const fileInput = await composePage.target.$('input[type=file]');
+      const fileInput = await composePage.target.$('input[type=file]') as ElementHandle<HTMLInputElement>;
       await fileInput!.uploadFile('test/samples/small.txt', 'test/samples/small.png', 'test/samples/small.pdf');
       await ComposePageRecipe.sendAndClose(composePage, { password: 'test-pass', timeout: 90 });
     }));
@@ -826,7 +826,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       await composePage.waitAndClick('@action-show-options-popover');
       await composePage.waitAll(['@action-toggle-sign', '@action-toggle-encrypt', '@icon-toggle-sign-tick']);
       await composePage.notPresent(['@icon-toggle-encrypt-tick']); // response to signed message should not be auto-encrypted
-      const fileInput = await composePage.target.$('input[type=file]');
+      const fileInput = await composePage.target.$('input[type=file]') as ElementHandle<HTMLInputElement>;
       await fileInput!.uploadFile(`test/samples/${attachmentFilename}`);
       await composePage.waitAndClick('@action-send', { delay: 1 });
       await composePage.waitForContent('@replied-to', 'to: censored@email.com');
@@ -1133,7 +1133,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
     ava.default.skip('oversize attachment does not get erroneously added', testWithBrowser('ci.tests.gmail', async (t, browser) => {
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
       // big file will get canceled
-      const fileInput = await composePage.target.$('input[type=file]');
+      const fileInput = await composePage.target.$('input[type=file]') as ElementHandle<HTMLInputElement>;
       const localpath = 'test/samples/oversize.txt';
       await writeFileSync(localpath, 'x'.repeat(30 * 1024 * 1024));
       await fileInput!.uploadFile(localpath); // 30mb
@@ -1152,7 +1152,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       await inboxPage.waitAll('iframe');
       const replyFrame = await inboxPage.getFrame(['compose.htm']);
       await replyFrame.waitAndClick('@encrypted-reply');
-      const fileInput = await replyFrame.target.$('input[type=file]');
+      const fileInput = await replyFrame.target.$('input[type=file]') as ElementHandle<HTMLInputElement>;
       await fileInput!.uploadFile('test/samples/small.png');
       await replyFrame.waitAndClick('@action-send');
       const attachment = await replyFrame.getFrame(['attachment.htm', 'name=small.png']);
@@ -1270,7 +1270,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       await ComposePageRecipe.fillMsg(composeFrame, { to: 'smime.attachment@recipient.com' }, t.title,
         'This text should be encrypted into PKCS#7 data', { sign: false, encrypt: true });
       await ComposePageRecipe.pastePublicKeyManually(composeFrame, inboxPage, 'smime.attachment@recipient.com', testConstants.testCertificateMultipleSmimeCEA2D53BB9D24871);
-      const fileInput = await composeFrame.target.$('input[type=file]');
+      const fileInput = await composeFrame.target.$('input[type=file]') as ElementHandle<HTMLInputElement>;
       await fileInput!.uploadFile('test/samples/small.txt', 'test/samples/small.png', 'test/samples/small.pdf');
       // attachments in composer can be downloaded
       const downloadedFiles = await inboxPage.awaitDownloadTriggeredByClicking(async () => {
@@ -1290,7 +1290,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       const composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
       await ComposePageRecipe.fillMsg(composeFrame, { to: 'smime.attachment@recipient.com' }, t.title);
       await ComposePageRecipe.pastePublicKeyManually(composeFrame, inboxPage, 'smime.attachment@recipient.com', testConstants.testCertificateMultipleSmimeCEA2D53BB9D24871);
-      const fileInput = await composeFrame.target.$('input[type=file]');
+      const fileInput = await composeFrame.target.$('input[type=file]') as ElementHandle<HTMLInputElement>;
       await fileInput!.uploadFile('test/samples/small.txt', 'test/samples/small.png', 'test/samples/small.pdf');
       // attachments in composer can be downloaded
       const downloadedFiles = await inboxPage.awaitDownloadTriggeredByClicking(async () => {
@@ -1622,7 +1622,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       const subject = 'PWD encrypted message with FES - ID TOKEN';
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'user@standardsubdomainfes.test:8001');
       await ComposePageRecipe.fillMsg(composePage, { to: 'to@example.com', bcc: 'bcc@example.com' }, subject);
-      const fileInput = await composePage.target.$('input[type=file]');
+      const fileInput = await composePage.target.$('input[type=file]') as ElementHandle<HTMLInputElement>;
       await fileInput!.uploadFile('test/samples/small.txt');
       // lousy pwd
       await composePage.waitAndType('@input-password', 'lousy pwd');
@@ -1663,7 +1663,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       expect(await PageRecipe.getElementPropertyJson(recipients[2], 'className')).to.equal('no_pgp');
       expect(await PageRecipe.getElementPropertyJson(recipients[3], 'textContent')).to.equal('mock.only.pubkey@flowcrypt.com ');
       expect(await PageRecipe.getElementPropertyJson(recipients[3], 'className')).to.equal('has_pgp');
-      const fileInput = await composePage.target.$('input[type=file]');
+      const fileInput = await composePage.target.$('input[type=file]') as ElementHandle<HTMLInputElement>;
       await fileInput!.uploadFile('test/samples/small.txt');
       await fileInput!.uploadFile('test/samples/small.pdf');
       await composePage.waitAndType('@input-password', 'gO0d-pwd');
