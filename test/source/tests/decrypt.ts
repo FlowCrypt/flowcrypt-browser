@@ -751,7 +751,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
       expect(htmlContent).to.include('rel="noopener noreferrer"');
     }));
 
-    ava.default('decrypt - inbox - Verify null window.opener object after opening PGP/MIME links', testWithBrowser('compatibility', async (t, browser) => {
+    ava.default.only('decrypt - inbox - Verify null window.opener object after opening PGP/MIME links', testWithBrowser('compatibility', async (t, browser) => {
       const inboxPage = await browser.newPage(t, 'chrome/settings/inbox/inbox.htm?acctEmail=flowcrypt.compatibility%40gmail.com&threadId=1762c9a49bedbf6f');
       await inboxPage.waitAll('iframe.pgp_block');
       const pgpBlock = await inboxPage.getFrame(['pgp_block.htm']);
@@ -760,10 +760,8 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
       await Util.sleep(5);
       const flowcryptTab = (await browser.browser.pages()).find(p => p.url() === 'https://flowcrypt.com/');
       await flowcryptTab!.waitForSelector("body");
-      flowcryptTab!.on('console', msg => expect((msg as any)._text).to.equal(undefined));
-      await Util.sleep(5);
-      await flowcryptTab!.evaluate(() => console.log(`Opener: ${JSON.stringify(window.opener)}`));
-      await Util.sleep(5);
+      await Util.sleep(3);
+      expect(await flowcryptTab!.evaluate(() => `Opener: ${JSON.stringify(window.opener)}`)).to.equal('Opener: null');
     }));
 
     ava.default.todo('decrypt - by entering secondary pass phrase');
