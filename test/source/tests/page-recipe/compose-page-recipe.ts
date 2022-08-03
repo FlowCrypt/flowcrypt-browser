@@ -4,7 +4,7 @@ import { BrowserHandle, Controllable, ControllableFrame, ControllablePage } from
 
 import { AvaContext } from '../tooling/';
 import { CommonAcct } from '../../test';
-import { EvaluateFn } from 'puppeteer';
+import { EvaluateFunc } from 'puppeteer';
 import { PageRecipe } from './abstract-page-recipe';
 import { Util } from '../../util';
 import { expect } from 'chai';
@@ -20,7 +20,7 @@ export class ComposePageRecipe extends PageRecipe {
 
   public static async openStandalone(
     t: AvaContext, browser: BrowserHandle, group: CommonAcct | string, options:
-      { appendUrl?: string, hasReplyPrompt?: boolean, skipClickPropt?: boolean, skipValidation?: boolean, initialScript?: EvaluateFn } = {}
+      { appendUrl?: string, hasReplyPrompt?: boolean, skipClickPropt?: boolean, skipValidation?: boolean, initialScript?: EvaluateFunc<unknown[]> } = {}
   ): Promise<ControllablePage> {
     if (group === 'compatibility') { // More common accounts
       group = 'flowcrypt.compatibility@gmail.com';
