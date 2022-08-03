@@ -459,7 +459,7 @@ abstract class ControllableBase {
     const resolvePromise: Promise<void> = (async () => {
       const downloadPath = path.resolve(__dirname, 'download', Util.lousyRandom());
       mkdirp.sync(downloadPath);
-      await (this.target as any)._client.send('Page.setDownloadBehavior', { behavior: 'allow', downloadPath });
+      await (this.target as any)._client().send('Page.setDownloadBehavior', { behavior: 'allow', downloadPath });
       if (typeof selector === 'string') {
         await this.waitAndClick(selector);
       } else {
