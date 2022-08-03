@@ -38,9 +38,10 @@ const libs: unknown[] = [
   Catch,
   Gmail,
 ];
-
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // add them to global scope so ci can use them
 for (const lib of libs) {
   (window as any)[(lib as any).name] = lib;
 }
 (window as any).forge = forge;
+/* eslint-enable */
