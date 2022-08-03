@@ -751,7 +751,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
       expect(htmlContent).to.include('rel="noopener noreferrer"');
     }));
 
-    ava.default.only('decrypt - inbox - Verify null window.opener object after opening PGP/MIME links', testWithBrowser('compatibility', async (t, browser) => {
+    ava.default('decrypt - inbox - Verify null window.opener object after opening PGP/MIME links', testWithBrowser('compatibility', async (t, browser) => {
       const inboxPage = await browser.newPage(t, 'chrome/settings/inbox/inbox.htm?acctEmail=flowcrypt.compatibility%40gmail.com&threadId=1762c9a49bedbf6f');
       await inboxPage.waitAll('iframe.pgp_block');
       const pgpBlock = await inboxPage.getFrame(['pgp_block.htm']);
