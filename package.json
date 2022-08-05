@@ -30,7 +30,7 @@
     "mailparser": "3.5.0",
     "mkdirp": "1.0.4",
     "openpgp": "4.10.10",
-    "pdfjs-dist": "2.14.305",
+    "pdfjs-dist": "2.15.349",
     "puppeteer": "15.5.0",
     "stylelint": "14.8.5",
     "stylelint-config-standard": "25.0.0",
