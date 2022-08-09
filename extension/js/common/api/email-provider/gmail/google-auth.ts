@@ -121,10 +121,14 @@ export class GoogleAuth {
     }
     const authRequest: AuthReq = { acctEmail, scopes, csrfToken: `csrf-${Api.randomFortyHexChars()}` };
     const url = GoogleAuth.apiGoogleAuthCodeUrl(authRequest);
-    const adaptiveHeight = Math.floor((window.innerHeight || window.screen.height) * 0.9);
-    const adaptiveWidth = Math.floor((window.innerWidth || window.screen.width) * 0.4);
-    const leftOffset = Math.floor((window.screen.width / 2) - (adaptiveWidth / 2) + (window as any).screen.availLeft); // tslint:disable-line:no-unsafe-any
-    const topOffset = Math.floor((window.innerHeight / 2) - (adaptiveHeight / 2) + (window as any).screen.availTop); // tslint:disable-line:no-unsafe-any
+    const screenWidth = (window.screen.width || window.innerWidth);
+    const screenHeight = (window.screen.height || window.innerHeight);
+    const { availLeft, availTop } = (window.screen as unknown as { availLeft?: number, availTop?: number });
+    let adaptiveWidth = Math.floor(screenWidth * 0.4);
+    const adaptiveHeight = Math.floor(screenHeight * 0.9);
+    adaptiveWidth = adaptiveWidth < 550 ? adaptiveWidth + Math.floor(screenWidth * 0.5) : adaptiveWidth;
+    const leftOffset = Math.floor((screenWidth / 2) - (adaptiveWidth / 2) + availLeft!);
+    const topOffset = Math.floor((screenHeight / 2) - (adaptiveHeight / 2) + availTop!);
     const oauthWin = await windowsCreate({ url, left: leftOffset, top: topOffset, height: adaptiveHeight, width: adaptiveWidth, type: 'popup' });
     if (!oauthWin || !oauthWin.tabs || !oauthWin.tabs.length || !oauthWin.id) {
       return { result: 'Error', error: 'No oauth window returned after initiating it', acctEmail, id_token: undefined };
