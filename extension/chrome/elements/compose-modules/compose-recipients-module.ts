@@ -619,6 +619,27 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     return [];
   };
 
+  private setContactPopupStyle = (input: JQuery<HTMLElement>) => {
+    const contactEl = this.view.S.cached('contacts');
+    const offset = input.offset()!;
+    const offsetTop = input.outerHeight()! + offset.top; // both are in the template
+    const bottomGap = 10;
+    const inputToPadding = parseInt(input.css('padding-left'));
+    let leftOffset: number;
+    if (this.view.S.cached('body').width()! < offset.left + inputToPadding + contactEl.width()!) {
+      // Here we need to align contacts popover by right side
+      leftOffset = offset.left + inputToPadding + input.width()! - contactEl.width()!;
+    } else {
+      leftOffset = offset.left + inputToPadding;
+    }
+    this.view.S.cached('contacts').css({
+      display: 'block',
+      top: offsetTop,
+      left: leftOffset,
+      maxHeight: `calc(100% - ${offsetTop + bottomGap}px)`
+    });
+  };
+
   private renderSearchRes = (input: JQuery<HTMLElement>, contacts: ContactPreview[], query: ProviderContactsQuery) => {
     if (!input.is(':focus')) { // focus was moved away from input
       return;
@@ -643,6 +664,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       }
       return 0;
     });
+    const contactEl = this.view.S.cached('contacts');
     const renderableContacts = sortedContacts.slice(0, this.MAX_CONTACTS_LENGTH);
     if (renderableContacts.length > 0) {
       let ulHtml = '';
@@ -668,8 +690,8 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
         }
         ulHtml += '</li>';
       }
-      Xss.sanitizeRender(this.view.S.cached('contacts').find('ul'), ulHtml);
-      const contactItems = this.view.S.cached('contacts').find('ul li.select_contact');
+      Xss.sanitizeRender(contactEl.find('ul'), ulHtml);
+      const contactItems = contactEl.find('ul li.select_contact');
       contactItems.first().addClass('active');
       contactItems.click(this.view.setHandlerPrevent('double', async (target: HTMLElement) => {
         const email = Str.parseEmail($(target).attr('email') || '').email;
@@ -681,25 +703,10 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
         contactItems.removeClass('active');
         $(this).addClass('active');
       });
-      const offset = input.offset()!;
-      const inputToPadding = parseInt(input.css('padding-left'));
-      let leftOffset: number;
-      if (this.view.S.cached('body').width()! < offset.left + inputToPadding + this.view.S.cached('contacts').width()!) {
-        // Here we need to align contacts popover by right side
-        leftOffset = offset.left + inputToPadding + input.width()! - this.view.S.cached('contacts').width()!;
-      } else {
-        leftOffset = offset.left + inputToPadding;
-      }
-      const offsetTop = input.outerHeight()! + offset.top; // both are in the template
-      const bottomGap = 10;
-      this.view.S.cached('contacts').css({
-        display: renderableContacts.length > 0 ? 'block' : 'none', // show popup only when there are renderableContacts
-        left: leftOffset,
-        top: offsetTop,
-        maxHeight: `calc(100% - ${offsetTop + bottomGap}px)`,
-      });
+      this.setContactPopupStyle(input);
     } else {
-      this.view.S.cached('contacts').find('ul').html('<li>No Contacts Found</li>'); // xss-direct
+      this.setContactPopupStyle(input);
+      contactEl.find('ul').html('<li>No Contacts Found</li>'); // xss-direct
       if (!this.googleContactsSearchEnabled) {
         this.addBtnToAllowSearchContactsFromGoogle(input);
       }
