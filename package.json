@@ -52,10 +52,13 @@
     "postcss-html": "^1.5.0",
     "squire-rte": "1.11.3",
     "sweetalert2": "11.4.26",
+    "tsc-watch": "^5.0.3",
     "zxcvbn": "4.4.2"
   },
   "scripts": {
     "build": "./build.sh",
+    "sync": "./sync-extension.sh",
+    "dev": "tsc-watch -p ./tsconfig.json --onSuccess 'npm run build-incremental'",
     "build-incremental": "./build.sh --incremental",
     "build-assets-only": "./build.sh --assets-only",
     "pretest": "npm run build --silent && cd conf && node ../build/tooling/tsc-compiler --project tsconfig.test.json",
