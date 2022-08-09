@@ -501,7 +501,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       const attachmentPreviewImage = await inboxPage.getFrame(['attachment_preview.htm']);
       await attachmentPreviewImage.waitAll('#attachment-preview-container img.attachment-preview-img');
       // @ts-ignore
-      await (inboxPage.target as Page)._client.send('Page.setDownloadBehavior', { behavior: 'allow', downloadPath: __dirname });
+      await (inboxPage.target as Page)._client().send('Page.setDownloadBehavior', { behavior: 'allow', downloadPath: __dirname });
       await attachmentPreviewImage.waitAndClick('@attachment-preview-download');
       await Util.sleep(1);
       expect(fs.existsSync(downloadedAttachmentFilename)).to.be.true; // tslint:disable-line:no-unused-expression
