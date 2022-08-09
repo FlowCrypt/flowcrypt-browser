@@ -121,6 +121,9 @@ export class GoogleAuth {
     }
     const authRequest: AuthReq = { acctEmail, scopes, csrfToken: `csrf-${Api.randomFortyHexChars()}` };
     const url = GoogleAuth.apiGoogleAuthCodeUrl(authRequest);
+    // To fix https://github.com/FlowCrypt/flowcrypt-browser/issues/4553#issuecomment-1198290842
+    // we need to use availLeft and availTop to make the popup window appear on the same screen as the original Flowcrypt window.
+    // It's hard to test because it'd require using --screen-config browser switch to test headless with multiple displays, so tested manually.
     const screenWidth = (window.screen.width || window.innerWidth);
     const screenHeight = (window.screen.height || window.innerHeight);
     // non-standard but supported by most of the browsers
