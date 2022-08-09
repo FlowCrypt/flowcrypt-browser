@@ -644,7 +644,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       return 0;
     });
     const renderableContacts = sortedContacts.slice(0, this.MAX_CONTACTS_LENGTH);
-    if (renderableContacts.length > 0 || !this.googleContactsSearchEnabled) {
+    if (renderableContacts.length > 0) {
       let ulHtml = '';
       for (const contact of renderableContacts) {
         ulHtml += `<li class="select_contact" email="${Xss.escape(contact.email.replace(/<\/?b>/g, ''))}">`;
@@ -669,12 +669,6 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
         ulHtml += '</li>';
       }
       Xss.sanitizeRender(this.view.S.cached('contacts').find('ul'), ulHtml);
-      if (!this.googleContactsSearchEnabled) {
-        if (!contacts.length) {
-          this.view.S.cached('contacts').find('ul').append('<li>No Contacts Found</li>'); // xss-direct
-        }
-        this.addBtnToAllowSearchContactsFromGoogle(input);
-      }
       const contactItems = this.view.S.cached('contacts').find('ul li.select_contact');
       contactItems.first().addClass('active');
       contactItems.click(this.view.setHandlerPrevent('double', async (target: HTMLElement) => {
@@ -704,6 +698,11 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
         top: offsetTop,
         maxHeight: `calc(100% - ${offsetTop + bottomGap}px)`,
       });
+    } else {
+      this.view.S.cached('contacts').find('ul').html('<li>No Contacts Found</li>'); // xss-direct
+      if (!this.googleContactsSearchEnabled) {
+        this.addBtnToAllowSearchContactsFromGoogle(input);
+      }
     }
   };
 
