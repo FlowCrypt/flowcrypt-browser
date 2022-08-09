@@ -35,7 +35,6 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
 
   private readonly MAX_CONTACTS_LENGTH = 8;
 
-  private contactSearchInProgress = false;
   private addedPubkeyDbLookupInterval?: number;
 
   private onRecipientAddedCallbacks: ((rec: RecipientElement[]) => void)[] = [];
@@ -549,7 +548,6 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
    */
   private searchContacts = async (input: JQuery<HTMLElement>): Promise<void> => {
     try {
-      this.contactSearchInProgress = true;
       this.view.errModule.debug(`searchContacts`);
       const substring = Str.parseEmail(String(input.val()), 'DO-NOT-VALIDATE').email;
       this.view.errModule.debug(`searchContacts.query.substring(${JSON.stringify(substring)})`);
@@ -589,7 +587,6 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       throw e;
     } finally {
       this.view.errModule.debug('searchContacts 7 - finishing');
-      this.contactSearchInProgress = false;
       this.renderSearchResultsLoadingDone();
     }
   };
@@ -647,7 +644,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       return 0;
     });
     const renderableContacts = sortedContacts.slice(0, this.MAX_CONTACTS_LENGTH);
-    if ((renderableContacts.length > 0 || this.contactSearchInProgress) || !this.googleContactsSearchEnabled) {
+    if (renderableContacts.length > 0 || !this.googleContactsSearchEnabled) {
       let ulHtml = '';
       for (const contact of renderableContacts) {
         ulHtml += `<li class="select_contact" email="${Xss.escape(contact.email.replace(/<\/?b>/g, ''))}">`;
