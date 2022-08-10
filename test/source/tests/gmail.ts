@@ -177,7 +177,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
 
     ava.default('mail.google.com - decrypt message in offline mode', testWithBrowser('ci.tests.gmail', async (t, browser) => {
       const gmailPage = await openGmailPage(t, browser);
-      /* 
+      /*
       await gmailPage.type('[aria-label^="Search"]', 'encrypted email for offline decrypt');
       await gmailPage.press('Enter'); // submit search
       await Util.sleep(2); // wait for search results
