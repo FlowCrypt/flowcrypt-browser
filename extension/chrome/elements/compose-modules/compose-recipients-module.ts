@@ -567,6 +567,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       this.view.errModule.debug(`searchContacts 3`);
       const foundOnGoogle = await this.searchContactsOnGoogle(substring, contacts);
       await this.addApiLoadedContactsToDb(foundOnGoogle);
+      this.view.errModule.debug(`searchContacts foundOnGoogle, count: ${foundOnGoogle.length}`);
       contacts.push(...foundOnGoogle.map(c => ContactStore.previewObj({ email: c.email, name: c.name })));
       this.renderSearchRes(input, contacts, { substring });
       if (contacts.length >= this.MAX_CONTACTS_LENGTH) {
@@ -578,6 +579,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
         this.view.errModule.debug(`searchContacts (Gmail Sent Messages) 6.b`);
         await this.guessContactsFromSentEmails(substring, contacts, async guessed => {
           await this.addApiLoadedContactsToDb(guessed.new);
+          this.view.errModule.debug(`searchContacts (Gmail Sent Messages), count: ${guessed.new.length}`);
           contacts.push(...guessed.new.map(c => ContactStore.previewObj({ email: c.email, name: c.name })));
           this.renderSearchRes(input, contacts, { substring });
         });
@@ -706,7 +708,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       this.setContactPopupStyle(input);
     } else {
       this.setContactPopupStyle(input);
-      contactEl.find('ul').html('<li>No Contacts Found</li>'); // xss-direct
+      contactEl.find('ul').html('<li data-test="no-contact-found">No Contacts Found</li>'); // xss-direct
       if (!this.googleContactsSearchEnabled) {
         this.addBtnToAllowSearchContactsFromGoogle(input);
       }
