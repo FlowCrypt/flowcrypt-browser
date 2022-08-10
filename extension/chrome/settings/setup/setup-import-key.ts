@@ -11,6 +11,7 @@ import { Ui } from '../../../js/common/browser/ui.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { Key, UnexpectedKeyTypeError } from '../../../js/common/core/crypto/key.js';
 import { Lang } from '../../../js/common/lang.js';
+import { saveKeysAndPassPhrase } from '../../../js/common/helpers.js';
 
 export class SetupImportKeyModule {
 
@@ -39,7 +40,7 @@ export class SetupImportKeyModule {
         }
       }
       Xss.sanitizeRender('#step_2b_manual_enter .action_add_private_key', Ui.spinner('white'));
-      await this.view.saveKeysAndPassPhrase([checked.encrypted], options);
+      await saveKeysAndPassPhrase(this.view.acctEmail, [checked.encrypted], options);
       await this.view.submitPublicKeys(options);
       await this.view.finalizeSetup();
       await this.view.setupRender.renderSetupDone();
@@ -70,7 +71,7 @@ export class SetupImportKeyModule {
       this.view.setupRender.displayBlock('step_2b_manual_enter');
       return;
     }
-    await this.view.saveKeysAndPassPhrase([fixedPrv], options);
+    await saveKeysAndPassPhrase(this.view.acctEmail, [fixedPrv], options);
     await this.view.submitPublicKeys(options);
     await this.view.finalizeSetup();
     await this.view.setupRender.renderSetupDone();
