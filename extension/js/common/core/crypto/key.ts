@@ -363,7 +363,7 @@ export class KeyUtil {
     }
   };
 
-  public static reformatKey = async (privateKey: Key, passphrase: string, userIds: { email: string | undefined; name: string }[], expireSeconds: number) => {
+  public static reformatKey = async (privateKey: Key, passphrase: string | undefined, userIds: { email: string | undefined; name: string }[], expireSeconds: number) => {
     if (privateKey.family === 'openpgp') {
       return await OpenPGPKey.reformatKey(privateKey, passphrase, userIds, expireSeconds);
     } else {

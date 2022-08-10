@@ -13,8 +13,13 @@ export class PassphraseStore extends AbstractStore {
 
   // if we implement (and migrate) password storage to use KeyIdentity instead of longid, we'll have `keyInfo: KeyIdentity` here
   public static get = async (acctEmail: string, keyInfo: { longid: string }, ignoreSession: boolean = false): Promise<string | undefined> => {
-    const storageIndex = PassphraseStore.getIndex(keyInfo.longid);
-    return await PassphraseStore.getByIndex(acctEmail, storageIndex, ignoreSession);
+    return (await PassphraseStore.getMany(acctEmail, [keyInfo], ignoreSession))[0];
+  };
+
+  // if we implement (and migrate) password storage to use KeyIdentity instead of longid, we'll have `keyInfo: KeyIdentity` here
+  public static getMany = async (acctEmail: string, keyInfos: { longid: string }[], ignoreSession: boolean = false): Promise<(string | undefined)[]> => {
+    const storageIndexes = keyInfos.map(keyInfo => PassphraseStore.getIndex(keyInfo.longid));
+    return await PassphraseStore.getByIndexes(acctEmail, storageIndexes, ignoreSession);
   };
 
   // if we implement (and migrate) password storage to use KeyIdentity instead of longid, we'll have `keyInfo: KeyIdentity` here
@@ -50,17 +55,19 @@ export class PassphraseStore extends AbstractStore {
     return `passphrase_${longid}` as unknown as AccountIndex;
   };
 
-  private static getByIndex = async (acctEmail: string, storageIndex: AccountIndex, ignoreSession: boolean = false): Promise<string | undefined> => {
-    const storage = await AcctStore.get(acctEmail, [storageIndex]);
-    const found = storage[storageIndex];
-    if (typeof found === 'string') {
-      return found;
-    }
-    if (ignoreSession) {
-      return undefined;
-    }
-    const res = await InMemoryStore.get(acctEmail, storageIndex) ?? undefined;
-    return res;
+  private static getByIndexes = async (acctEmail: string, storageIndexes: AccountIndex[], ignoreSession: boolean = false): Promise<(string | undefined)[]> => {
+    const storage = await AcctStore.get(acctEmail, storageIndexes);
+    const results = await Promise.all(storageIndexes.map(async storageIndex => {
+      const found = storage[storageIndex];
+      if (typeof found === 'string') {
+        return found;
+      }
+      if (ignoreSession) {
+        return undefined;
+      }
+      return await InMemoryStore.get(acctEmail, storageIndex) ?? undefined;
+    }));
+    return results;
   };
 
   private static setByIndex = async (storageType: StorageType, acctEmail: string, storageIndex: AccountIndex, passphrase: string | undefined): Promise<void> => {

@@ -81,10 +81,15 @@ Catch.try(async () => {
       return insights;
     };
 
-    const start = async (acctEmail: string, injector: Injector, notifications: Notifications, factory: XssSafeFactory, notifyMurdered: () => void) => {
+    const start = async (acctEmail: string,
+      clientConfiguration: ClientConfiguration,
+      injector: Injector,
+      notifications: Notifications,
+      factory: XssSafeFactory,
+      notifyMurdered: () => void
+    ) => {
       hijackGmailHotkeys();
       const storage = await AcctStore.get(acctEmail, ['sendAs', 'full_name']);
-      const clientConfiguration = await ClientConfiguration.newInstance(acctEmail);
       if (!storage.sendAs) {
         storage.sendAs = {};
         storage.sendAs[acctEmail] = { name: storage.full_name, isPrimary: true };

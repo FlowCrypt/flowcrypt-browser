@@ -94,6 +94,13 @@ export const mockGoogleEndpoints: HandlersDefinition = {
       return empty;
     }
   },
+  '/gmail': async (_parsedReq, req) => {
+    if (isGet(req)) {
+      const acct = oauth.checkAuthorizationHeaderWithAccessToken(req.headers.authorization);
+      return GoogleData.getMockGmailPage(acct);
+    }
+    throw new HttpClientErr(`Method not implemented for ${req.url}: ${req.method}`);
+  },
   '/gmail/v1/users/me/settings/sendAs': async (parsedReq, req) => {
     const acct = oauth.checkAuthorizationHeaderWithAccessToken(req.headers.authorization);
     if (isGet(req)) {
