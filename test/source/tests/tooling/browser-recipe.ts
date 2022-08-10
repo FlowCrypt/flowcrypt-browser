@@ -14,6 +14,7 @@ import { PageRecipe } from '../page-recipe/abstract-page-recipe';
 import { InMemoryStoreKeys } from '../../core/const';
 
 export class BrowserRecipe {
+  public static oldAndNewComposeButtonSelectors = ['div.z0[class*="_destroyable"]', '.new_secure_compose_window_button'];
 
   public static openSettingsLoginButCloseOauthWindowBeforeGrantingPermission = async (t: AvaContext, browser: BrowserHandle, acctEmail: string) => {
     const settingsPage = await browser.newPage(t, TestUrls.extensionSettings());
@@ -33,11 +34,11 @@ export class BrowserRecipe {
   public static openGmailPage = async (t: AvaContext, browser: BrowserHandle, googleLoginIndex = 0, expectComposeButton = true) => {
     const gmailPage = await browser.newPage(t, TestUrls.gmail(googleLoginIndex));
     if (expectComposeButton) {
-      await gmailPage.waitAll('div.z0[class*="_destroyable"]'); // compose button container visible
+      await gmailPage.waitAny(BrowserRecipe.oldAndNewComposeButtonSelectors); // compose button container visible
     }
     await Util.sleep(3); // give it extra time to make sure FlowCrypt is initialized if it was supposed to
     if (!expectComposeButton) {
-      await gmailPage.notPresent('div.z0[class*="_destroyable"]'); // compose button container not visible
+      await gmailPage.notPresent(BrowserRecipe.oldAndNewComposeButtonSelectors); // compose button container not visible
     }
     return gmailPage;
   };
