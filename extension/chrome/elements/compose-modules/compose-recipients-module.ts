@@ -692,6 +692,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
         }
         ulHtml += '</li>';
       }
+      this.removeBtnToAllowSearchContactsFromGoogle(); // remove allow search contacts from google if it was present
       Xss.sanitizeRender(contactEl.find('ul'), ulHtml);
       const contactItems = contactEl.find('ul li.select_contact');
       contactItems.first().addClass('active');
@@ -733,6 +734,10 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
           await Ui.modal.error(`Could not enable Google Contact search. ${Lang.general.writeMeToFixIt(!!this.view.fesUrl)}\n\n[${authResult.result}] ${authResult.error}`);
         }
       }));
+  };
+
+  private removeBtnToAllowSearchContactsFromGoogle = () => {
+    this.view.S.cached('contacts').find('.allow-google-contact-search')?.remove();
   };
 
   private selectContact = async (input: JQuery<HTMLElement>, email: string, fromQuery: ProviderContactsQuery) => {
