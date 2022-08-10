@@ -22,6 +22,8 @@ import { Buf } from '../core/buf';
 import { GoogleData } from '../mock/google/google-data';
 import Parse from './../util/parse';
 import { OpenPGPKey } from '../core/crypto/pgp/openpgp-key';
+import { BrowserHandle } from '../browser';
+import { AvaContext } from './tooling';
 
 // tslint:disable:no-blank-lines-func
 
@@ -499,11 +501,28 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       const attachmentPreviewImage = await inboxPage.getFrame(['attachment_preview.htm']);
       await attachmentPreviewImage.waitAll('#attachment-preview-container img.attachment-preview-img');
       // @ts-ignore
-      await (inboxPage.target as Page)._client.send('Page.setDownloadBehavior', { behavior: 'allow', downloadPath: __dirname });
+      await (inboxPage.target as Page)._client().send('Page.setDownloadBehavior', { behavior: 'allow', downloadPath: __dirname });
       await attachmentPreviewImage.waitAndClick('@attachment-preview-download');
       await Util.sleep(1);
       expect(fs.existsSync(downloadedAttachmentFilename)).to.be.true; // tslint:disable-line:no-unused-expression
       Util.deleteFileIfExists(downloadedAttachmentFilename);
+    }));
+
+    const checkIfFileDownloadsCorrectly = async (t: AvaContext, browser: BrowserHandle, threadId: string, fileName: string) => {
+      const inboxPage = await browser.newPage(t, TestUrls.extension(`chrome/settings/inbox/inbox.htm?acctEmail=flowcrypt.compatibility@gmail.com&threadId=${threadId}`));
+      const attachment = await inboxPage.getFrame(['attachment.htm']);
+      const downloadedFiles = await inboxPage.awaitDownloadTriggeredByClicking(async () => {
+        await attachment.waitAndClick('@download-attachment');
+      });
+      expect(Object.keys(downloadedFiles)).contains(fileName);
+      await inboxPage.close();
+    };
+
+    ava.default('settings - check if downloaded attachment name is correct', testWithBrowser('compatibility', async (t, browser) => {
+      // `what's up?.txt` becomes `what's_up_.txt` and this is native way and we can't change this logic
+      // https://github.com/FlowCrypt/flowcrypt-browser/issues/3505#issuecomment-812269422
+      await checkIfFileDownloadsCorrectly(t, browser, '1821bf879a6f71e0', 'what\'s_up_.txt');
+      await checkIfFileDownloadsCorrectly(t, browser, '182263bf9f105adf', 'what\'s_up%253F.txt');
     }));
 
     ava.default('settings - add unprotected key', testWithBrowser('ci.tests.gmail', async (t, browser) => {

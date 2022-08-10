@@ -67,6 +67,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     inputs.on('dragleave', this.view.setHandler((target) => this.inputsDragLeaveHandler(target)));
     inputs.on('dragover', (e) => e.preventDefault());
     inputs.on('drop', this.view.setHandler((target) => this.inputsDropHandler(target)));
+    this.view.S.cached('recipients_toggle_elements').on('focus', this.view.setHandler(() => this.collapseInputsIfNeeded()));
     this.view.S.now('cc').click(this.view.setHandler((target) => {
       const newContainer = this.view.S.cached('input_addresses_container_outer').find(`#input-container-cc`);
       this.copyCcBccActionsClickHandler(target, newContainer);
@@ -131,7 +132,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       let recipientsToEvaluate: ValidRecipientElement[] = [];
       const container = input.parent();
       if (validationResult.valid.length) {
-        this.view.errModule.debug(`parseRenderRecipients(force: ${force}) - valid emails(${validationResult.valid.join(',')})`);
+        this.view.errModule.debug(`parseRenderRecipients(force: ${force}) - valid emails(${Str.formatEmailList(validationResult.valid)}`);
         recipientsToEvaluate = this.createRecipientsElements(container, validationResult.valid, sendingType, RecipientStatus.EVALUATING) as ValidRecipientElement[];
       }
       const invalidEmails = validationResult.invalid.filter(em => !!em); // remove empty strings
@@ -323,20 +324,17 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     this.view.S.cached('input_addresses_container_outer').children(`:not([style="display: none;"])`).last().append(this.view.S.cached('container_cc_bcc_buttons')); // xss-reinsert
   };
 
-  public collapseInputsIfNeeded = async (relatedTarget?: HTMLElement | null) => { // TODO: fix issue when loading no-pgp email and user starts typing
-    if (!relatedTarget || (!this.view.S.cached('input_addresses_container_outer')[0].contains(relatedTarget)
-      && !this.view.S.cached('contacts')[0].contains(relatedTarget))) {
-      await Promise.all(this.addedRecipients.map(r => r.evaluating)); // Wait untill all recipients loaded.
-      if (this.view.S.cached('recipients_inputs').is(':focus')) { // We don't need to colapse it if some input is on focus again.
-        return;
-      }
-      this.showHideCcAndBccInputsIfNeeded();
-      this.view.S.cached('input_addresses_container_outer').addClass('invisible');
-      this.view.S.cached('recipients_placeholder').css('display', 'flex');
-      this.setEmailsPreview();
-      this.hideContacts();
-      this.view.sizeModule.setInputTextHeightManuallyIfNeeded();
+  public collapseInputsIfNeeded = async () => {
+    if (this.view.S.cached('input_addresses_container_outer').hasClass('invisible')) {
+      return;
     }
+    await Promise.all(this.addedRecipients.map(r => r.evaluating)); // Wait until all recipients loaded.
+    this.showHideCcAndBccInputsIfNeeded();
+    this.view.S.cached('input_addresses_container_outer').addClass('invisible');
+    this.view.S.cached('recipients_placeholder').css('display', 'flex');
+    this.setEmailsPreview();
+    this.hideContacts();
+    this.view.sizeModule.setInputTextHeightManuallyIfNeeded();
   };
 
   public onRecipientAdded = (callback: (rec: RecipientElement[]) => void) => {
@@ -400,9 +398,6 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     this.view.errModule.debug(`input_to.blur -> parseRenderRecipients start causedBy(${e.relatedTarget ? e.relatedTarget.outerHTML : undefined})`);
     this.hideContacts();
     await this.parseRenderRecipients($(target));
-    // If thereis no related target or related target isn't in recipients functionality
-    // then we need to collapse inputs
-    await this.collapseInputsIfNeeded(e.relatedTarget);
     this.view.errModule.debug(`input_to.blur -> parseRenderRecipients done`);
   };
 
@@ -446,7 +441,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     const input = newContainer.find('input');
     curentContainer.removeChild(buttonsContainer);
     newContainer.append(buttonsContainer); // xss-safe-value
-    newContainer.css('display', 'block');
+    newContainer.css('display', 'flex');
     target.style.display = 'none';
     input.focus();
     this.view.sizeModule.resizeComposeBox();
@@ -763,11 +758,6 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       Xss.sanitizeAppend(container.find('.recipients'), recipientsHtml);
       const element = document.getElementById(recipientId);
       if (element) { // if element wasn't created this means that Composer is used by another component
-        $(element).on('blur', this.view.setHandler(async (elem, event) => {
-          if (!this.dragged) {
-            await this.collapseInputsIfNeeded(event.relatedTarget);
-          }
-        }));
         $(element).on('keydown', this.view.setHandler((el, ev) => {
           if (ev.key === 'Delete' || ev.key === 'Backspace') {
             this.removeRecipient(element);

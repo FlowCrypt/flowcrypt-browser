@@ -1,0 +1,77 @@
+Delivered-To: ci.tests.gmail@flowcrypt.dev
+Received: by 2002:a05:6408:330f:b0:19d:62d6:6df8 with SMTP id ck15csp390243egb;
+        Fri, 22 Jul 2022 06:12:25 -0700 (PDT)
+X-Received: by 2002:a05:6102:5047:b0:34b:d9ef:bd26 with SMTP id by7-20020a056102504700b0034bd9efbd26mr179358vsb.14.1658495545328;
+        Fri, 22 Jul 2022 06:12:25 -0700 (PDT)
+ARC-Seal: i=1; a=rsa-sha256; t=1658495545; cv=none;
+        d=google.com; s=arc-20160816;
+        b=C3NTkgVL0aR0EYMknpO9ghhAi1l5pxVXqAetpDzezX27VIHS/7DZWFhflF9cAuoMcZ
+         bvxzyQUUTb6s09FlW8ql+pks2bYp3kU1jQYdWIojIeOUsZKZV53oys0ZM3sqH8vJ2Exx
+         e49x5hCvyiZhXwoVKWxNV36vhB5UeixzIvGulIFpxN+3LtWer3P7LsB73wwLOMS3Sw+M
+         IBF1BcmNRiHeY5ACULGKJo87wQrV7/IGB+Ke6Wf9cmCIBNuPLFFWxlpIf4JXYJ3+ZYdR
+         1VjnYipuHFmsrxzmRmvagUeY9JPvQCYh5LyFl+24GOjVq1UOBR6lBPnOX5Rf8uGN+8D5
+         VlSQ==
+ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=google.com; s=arc-20160816;
+        h=to:subject:message-id:date:from:mime-version:dkim-signature;
+        bh=VqRwvq0o1I5LkQSOGsugdfCOMJ1zM1Q30neuwFYizcs=;
+        b=KGB48Dc9fmuj40OKqK8gQfL2yNB9jTfpsqB4ng7/w/lulIpWs7sXzZXK6hWXbd6Cem
+         g0M0pUhy4yQ7zjXjCs6Hfzt1IfDA6Awx9ahlII6mvsHAvMlpy/gnMzuTRFIhmgSgVs9j
+         aqngZ5lx/ANTKKN8J5YoLFmsxeNaQNjvfN/IpSJ2N+AsD2q+zlECkBHFrHO6ga3KG9Zf
+         mEzagox4BcHpwm8hlvdlWzUYNtBHrwAxurqowA3qxQoEtPAFDDM35Hb65xXIHvxoSBEK
+         xIqJUr0HSJRMciRNuN7f2rlqVNyFZC0sd5AoCMGoYxeT4Z7pdRkdN6eunfhem8r1cI6q
+         TzFg==
+ARC-Authentication-Results: i=1; mx.google.com;
+       dkim=pass header.i=@gmail.com header.s=20210112 header.b=eV+oGLdl;
+       spf=pass (google.com: domain of flowcrypt.compatibility@gmail.com designates 209.85.220.41 as permitted sender) smtp.mailfrom=flowcrypt.compatibility@gmail.com;
+       dmarc=pass (p=NONE sp=QUARANTINE dis=NONE) header.from=gmail.com
+Return-Path: <flowcrypt.compatibility@gmail.com>
+Received: from mail-sor-f41.google.com (mail-sor-f41.google.com. [209.85.220.41])
+        by mx.google.com with SMTPS id i25-20020ab029d9000000b00382d66ac732sor1173461uaq.17.2022.07.22.06.12.24
+        for <ci.tests.gmail@flowcrypt.dev>
+        (Google Transport Security);
+        Fri, 22 Jul 2022 06:12:25 -0700 (PDT)
+Received-SPF: pass (google.com: domain of flowcrypt.compatibility@gmail.com designates 209.85.220.41 as permitted sender) client-ip=209.85.220.41;
+Authentication-Results: mx.google.com;
+       dkim=pass header.i=@gmail.com header.s=20210112 header.b=eV+oGLdl;
+       spf=pass (google.com: domain of flowcrypt.compatibility@gmail.com designates 209.85.220.41 as permitted sender) smtp.mailfrom=flowcrypt.compatibility@gmail.com;
+       dmarc=pass (p=NONE sp=QUARANTINE dis=NONE) header.from=gmail.com
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20210112;
+        h=mime-version:from:date:message-id:subject:to;
+        bh=VqRwvq0o1I5LkQSOGsugdfCOMJ1zM1Q30neuwFYizcs=;
+        b=eV+oGLdlV/Kr+nGDfnpQcsXsMp0BW7Lzywu4ns9/nslQ4y1ZzY6PePOy9M4GtzSs6C
+         hUKV8s2w2TCmjIGV/yzo3kKvrtxeCphmrlCa9F44P9yKXv1PGqCxiik4Xtkp0lPdvCxP
+         P8MKYSScwdXsXn+LTrIi6K+5IQ5l0r1HUsT8mBt0l4m9kGZtFci+IzICAGnMkmcgDg6C
+         x53OCqROT8a3l3LoM2rtdQhL8umDdMdf47HfbmyywkuV0aUniSzsABxMUdSC8b0HEsHG
+         fYTTFaoMrOqF22GsuvD+rrgNZ/ui7+oUUya/jI+dBBoC8m/RWNxvHtid/e/W+0G70qc3
+         7h4w==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20210112;
+        h=x-gm-message-state:mime-version:from:date:message-id:subject:to;
+        bh=VqRwvq0o1I5LkQSOGsugdfCOMJ1zM1Q30neuwFYizcs=;
+        b=HS185jHobJhXPNMkdpJnzgimW/mXBNm8wb+5kXGVE8IchM+iUzCV2GwyDVtDtKA6h0
+         lw7PyO0SohWDTaofbWwYSu8rJcc7b30XzFpwPrPwvksbGEXQc0g9Puao/z5BcfIz5oZs
+         +LRm9GdMnDq7CLIAhNQukFw5ztjoKRDLEYvbZzA4mIBlQ1tiF3mXHmVoHIqpfP7vEGgZ
+         GuuMONb1cOzRwAi3NBGTfgmzZ5q1+bv9bCbb1OO5usj0ejUIF96ZVM1lxUDKyMB+JS7K
+         fTrjOdwi+sLZ9+M0FnWvVjSqSRgP/YiZYamjQJHjyscwKlpHPUfOZnLQ4UXbQ5dOQnBZ
+         FODA==
+X-Gm-Message-State: AJIora+HzUmMbjauFxoBxI92ZWjShXq5gqN7BYGl/qVM+DdRAImLjYzx
+	/sEgfeEAKOB8kNbKlNIy3JhFNcSpjxypZMd4dIc37w0TOEj2vA==
+X-Google-Smtp-Source: AGRyM1ucx2XfPE483QiX1LxsS8eQX5zXHrmyA30yPJNJ7r2LN0ht26seaqo3GNTk847s4hjIx7y03PQTMD7+zLN3Wz4=
+X-Received: by 2002:ab0:67cf:0:b0:341:257f:ce52 with SMTP id
+ w15-20020ab067cf000000b00341257fce52mr163863uar.109.1658495544109; Fri, 22
+ Jul 2022 06:12:24 -0700 (PDT)
+MIME-Version: 1.0
+From: FlowCrypt Compatibility <flowcrypt.compatibility@gmail.com>
+Date: Fri, 22 Jul 2022 16:12:14 +0300
+Message-ID: <CAKbuLTp4ZzkXr2csJ=qh=iH=4b5DxL90+HzJKX0QXEm0QfMn-w@mail.gmail.com>
+Subject: Plain message triggering a smart reply
+To: ci.tests.gmail@flowcrypt.dev
+Content-Type: text/plain; charset="UTF-8"
+
+Hi!
+
+Have we agreed to meet tomorrow?
+
+-- 
+signature

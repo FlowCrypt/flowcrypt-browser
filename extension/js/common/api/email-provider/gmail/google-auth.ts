@@ -121,7 +121,21 @@ export class GoogleAuth {
     }
     const authRequest: AuthReq = { acctEmail, scopes, csrfToken: `csrf-${Api.randomFortyHexChars()}` };
     const url = GoogleAuth.apiGoogleAuthCodeUrl(authRequest);
-    const oauthWin = await windowsCreate({ url, left: 100, top: 50, height: 800, width: 550, type: 'popup' });
+    // To fix https://github.com/FlowCrypt/flowcrypt-browser/issues/4553#issuecomment-1198290842
+    // we need to use availLeft and availTop to make the popup window appear on the same screen as the original Flowcrypt window.
+    // It's hard to test because it'd require using --screen-config browser switch to test headless with multiple displays, so tested manually.
+    const screenWidth = (window.screen.width || window.innerWidth);
+    const screenHeight = (window.screen.height || window.innerHeight);
+    // non-standard but supported by most of the browsers
+    const { availLeft, availTop } = (window.screen as unknown as { availLeft?: number, availTop?: number });
+    let adaptiveWidth = Math.floor(screenWidth * 0.4);
+    if (adaptiveWidth < 550) {
+      adaptiveWidth = Math.min(550, Math.floor(screenWidth * 0.9));
+    }
+    const adaptiveHeight = Math.floor(screenHeight * 0.9);
+    const leftOffset = Math.floor((screenWidth / 2) - (adaptiveWidth / 2) + (availLeft || 0));
+    const topOffset = Math.floor((screenHeight / 2) - (adaptiveHeight / 2) + (availTop || 0));
+    const oauthWin = await windowsCreate({ url, left: leftOffset, top: topOffset, height: adaptiveHeight, width: adaptiveWidth, type: 'popup' });
     if (!oauthWin || !oauthWin.tabs || !oauthWin.tabs.length || !oauthWin.id) {
       return { result: 'Error', error: 'No oauth window returned after initiating it', acctEmail, id_token: undefined };
     }

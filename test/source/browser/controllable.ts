@@ -31,6 +31,13 @@ abstract class ControllableBase {
     return Boolean(await this.element(selector));
   };
 
+  public isElementVisible = async (selector: string) => {
+    // check element visibility by checking `display` property and element offset height
+    return await this.target.$eval(this.selector(selector), (elem) => {
+      return window.getComputedStyle(elem).getPropertyValue('display') !== 'none' && (elem as HTMLElement).offsetHeight > 0;
+    });
+  };
+
   public waitForSelTestState = async (state: 'ready' | 'working' | 'waiting' | 'closed', timeout = TIMEOUT_TEST_STATE_SATISFY) => {
     await this.waitAll(`[data-test-state="${state}"]`, { timeout, visible: false });
   };
@@ -70,7 +77,7 @@ abstract class ControllableBase {
           const elements = await (this.isXpath(selector) ? this.target.$x(selector) : this.target.$$(selector));
           for (const element of elements) {
             if ((await element.boundingBox()) !== null || !visible) { // element is visible
-              return element;
+              return element as ElementHandle<Element>;
             }
           }
         }
@@ -171,7 +178,7 @@ abstract class ControllableBase {
       await e.type(text);
     } else {
       const typeLastTenChars = await this.target.evaluate((s, t) => {
-        const el = document.querySelector(s);
+        const el = document.querySelector(s) as HTMLInputElement;
         if (el.contentEditable === 'true') {
           el.innerText = t;
           el.selectionEnd = el.innerText.length;
@@ -193,7 +200,7 @@ abstract class ControllableBase {
 
   public attr = async (selector: string, attr: string): Promise<string | null> => {
     return await this.target.evaluate((selector, attr) => {
-      const el = document.querySelector(selector); // this will get evaluated in the browser
+      const el = document.querySelector(selector) as HTMLElement; // this will get evaluated in the browser
       return el.getAttribute(attr);
     }, this.selector(selector), attr);
   };
@@ -201,7 +208,7 @@ abstract class ControllableBase {
   public value = async (selector: string): Promise<string> => {
     await this.waitAll(selector);
     return await this.target.evaluate((s) => {
-      const e = document.querySelector(s); // this will get evaluated in the browser
+      const e = document.querySelector(s) as HTMLSelectElement; // this will get evaluated in the browser
       if (e.tagName === 'SELECT') {
         return e.options[e.selectedIndex].value;
       } else {
@@ -211,22 +218,22 @@ abstract class ControllableBase {
   };
 
   public isDisabled = async (selector: string): Promise<boolean> => {
-    return await this.target.evaluate((s) => document.querySelector(s).disabled, this.selector(selector));
+    return await this.target.evaluate((s) => (document.querySelector(s) as HTMLInputElement).disabled, this.selector(selector));
   };
 
   public isChecked = async (selector: string): Promise<boolean> => {
-    return await this.target.evaluate((s) => document.querySelector(s).checked, this.selector(selector));
+    return await this.target.evaluate((s) => (document.querySelector(s) as HTMLInputElement).checked, this.selector(selector));
   };
 
   public hasClass = async (selector: string, className: string): Promise<boolean> => {
-    const classList = await this.target.evaluate((s) => document.querySelector(s).classList, this.selector(selector));
+    const classList = await this.target.evaluate((s) => (document.querySelector(s) as HTMLElement).classList, this.selector(selector));
     return Object.values(classList).includes(className);
   };
 
   // Get the current computed outer height (including padding, border)
   public getOuterHeight = async (selector: string): Promise<string> => {
     return await this.target.evaluate((s) => {
-      const computedStyle = getComputedStyle(document.querySelector(s));
+      const computedStyle = getComputedStyle(document.querySelector(s) as HTMLElement);
       const paddings = parseInt(computedStyle.getPropertyValue('padding-top')) + parseInt(computedStyle.getPropertyValue('padding-bottom'));
       const border = parseInt(computedStyle.getPropertyValue('border-top-width')) + parseInt(computedStyle.getPropertyValue('border-bottom-width'));
       const outerHeight = parseInt(computedStyle.getPropertyValue('height')) + paddings + border;
@@ -239,12 +246,12 @@ abstract class ControllableBase {
     if (onlyVisible) {
       return await this.target.evaluate((s) => [].slice.call(document.querySelectorAll(s)).find((el: HTMLElement) => el.offsetParent !== null).innerText, selector);
     } else {
-      return await this.target.evaluate((s) => document.querySelector(s).innerText, selector);
+      return await this.target.evaluate((s) => (document.querySelector(s) as HTMLElement).innerText, selector);
     }
   };
 
   public readHtml = async (selector: string): Promise<string> => {
-    return await this.target.evaluate((s) => document.querySelector(s).innerHTML, this.selector(selector));
+    return await this.target.evaluate((s) => (document.querySelector(s) as HTMLElement).innerHTML, this.selector(selector));
   };
 
   public selectOption = async (selector: string, choice: string) => {
@@ -348,7 +355,7 @@ abstract class ControllableBase {
     const start = Date.now();
     const values: string[] = [];
     while (Date.now() - start < timeoutSec * 1000) {
-      const value = await this.target.evaluate((s) => document.querySelector(s).value, selector);
+      const value = await this.target.evaluate((s) => (document.querySelector(s) as HTMLInputElement).value, selector);
       if (typeof needle === 'string') { // str
         if (value.includes(needle)) {
           return;
@@ -452,7 +459,7 @@ abstract class ControllableBase {
     const resolvePromise: Promise<void> = (async () => {
       const downloadPath = path.resolve(__dirname, 'download', Util.lousyRandom());
       mkdirp.sync(downloadPath);
-      await (this.target as any)._client.send('Page.setDownloadBehavior', { behavior: 'allow', downloadPath });
+      await (this.target as any)._client().send('Page.setDownloadBehavior', { behavior: 'allow', downloadPath });
       if (typeof selector === 'string') {
         await this.waitAndClick(selector);
       } else {
@@ -504,7 +511,7 @@ abstract class ControllableBase {
   protected element = async (selector: string): Promise<ElementHandle | null> => {
     selector = this.selector(selector);
     if (this.isXpath(selector)) {
-      return (await this.target.$x(selector))[0];
+      return (await this.target.$x(selector))[0] as ElementHandle<Element>;
     } else {
       return await this.target.$(selector);
     }
