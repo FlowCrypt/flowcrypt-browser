@@ -572,15 +572,20 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
     ava.default('compose - show no contact found result if there are no contacts', testWithBrowser('ci.tests.gmail', async (t, browser) => {
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
       await ComposePageRecipe.showRecipientInput(composePage);
-      await composePage.waitAndType('@input-to', 'aaaaaaaaaaa');
-      await Util.sleep(3);
-      expect(await composePage.isElementPresent('@no-contact-found')).to.be.true;
+      const noContactSelectors = ['@no-contact-found'];
+      if (testVariant === 'CONSUMER-MOCK') {
+        noContactSelectors.push('@action-auth-with-contacts-scope'); // also check for "Enable..." button
+      }
       await composePage.waitAndType('@input-to', 'ci.tests.gmail');
       await Util.sleep(3);
-      expect(await composePage.isElementPresent('@no-contact-found')).to.be.false;
+      await composePage.notPresent(noContactSelectors);
       await composePage.waitAndType('@input-to', 'aaaaaaaaaaa');
+      await composePage.waitAll(noContactSelectors);
+      await composePage.waitAndType('@input-to', 'ci.tests.gmail');
       await Util.sleep(3);
-      expect(await composePage.isElementPresent('@no-contact-found')).to.be.true;
+      await composePage.notPresent(noContactSelectors);
+      await composePage.waitAndType('@input-to', 'aaaaaaaaaaa');
+      await composePage.waitAll(noContactSelectors);
     }));
 
     ava.default('compose - CC&BCC new message', testWithBrowser('ci.tests.gmail', async (t, browser) => {
