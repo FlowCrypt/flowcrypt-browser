@@ -569,6 +569,25 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       await composePage.notPresent('@password-or-pubkey-container');
     }));
 
+    ava.default('compose - show no contact found result if there are no contacts', testWithBrowser('ci.tests.gmail', async (t, browser) => {
+      const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
+      await ComposePageRecipe.showRecipientInput(composePage);
+      const noContactSelectors = ['@no-contact-found'];
+      if (testVariant === 'CONSUMER-MOCK') {
+        noContactSelectors.push('@action-auth-with-contacts-scope'); // also check for "Enable..." button
+      }
+      await composePage.waitAndType('@input-to', 'ci.tests.gmail');
+      await Util.sleep(3);
+      await composePage.notPresent(noContactSelectors);
+      await composePage.waitAndType('@input-to', 'aaaaaaaaaaa');
+      await composePage.waitAll(noContactSelectors);
+      await composePage.waitAndType('@input-to', 'ci.tests.gmail');
+      await Util.sleep(3);
+      await composePage.notPresent(noContactSelectors);
+      await composePage.waitAndType('@input-to', 'aaaaaaaaaaa');
+      await composePage.waitAll(noContactSelectors);
+    }));
+
     ava.default('compose - CC&BCC new message', testWithBrowser('ci.tests.gmail', async (t, browser) => {
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
       await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com', cc: 'human@flowcrypt.com', bcc: 'human@flowcrypt.com' }, 'Testing CC And BCC');

@@ -35,7 +35,6 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
 
   private readonly MAX_CONTACTS_LENGTH = 8;
 
-  private contactSearchInProgress = false;
   private addedPubkeyDbLookupInterval?: number;
 
   private onRecipientAddedCallbacks: ((rec: RecipientElement[]) => void)[] = [];
@@ -549,7 +548,6 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
    */
   private searchContacts = async (input: JQuery<HTMLElement>): Promise<void> => {
     try {
-      this.contactSearchInProgress = true;
       this.view.errModule.debug(`searchContacts`);
       const substring = Str.parseEmail(String(input.val()), 'DO-NOT-VALIDATE').email;
       this.view.errModule.debug(`searchContacts.query.substring(${JSON.stringify(substring)})`);
@@ -569,6 +567,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       this.view.errModule.debug(`searchContacts 3`);
       const foundOnGoogle = await this.searchContactsOnGoogle(substring, contacts);
       await this.addApiLoadedContactsToDb(foundOnGoogle);
+      this.view.errModule.debug(`searchContacts foundOnGoogle, count: ${foundOnGoogle.length}`);
       contacts.push(...foundOnGoogle.map(c => ContactStore.previewObj({ email: c.email, name: c.name })));
       this.renderSearchRes(input, contacts, { substring });
       if (contacts.length >= this.MAX_CONTACTS_LENGTH) {
@@ -580,6 +579,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
         this.view.errModule.debug(`searchContacts (Gmail Sent Messages) 6.b`);
         await this.guessContactsFromSentEmails(substring, contacts, async guessed => {
           await this.addApiLoadedContactsToDb(guessed.new);
+          this.view.errModule.debug(`searchContacts (Gmail Sent Messages), count: ${guessed.new.length}`);
           contacts.push(...guessed.new.map(c => ContactStore.previewObj({ email: c.email, name: c.name })));
           this.renderSearchRes(input, contacts, { substring });
         });
@@ -589,7 +589,6 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       throw e;
     } finally {
       this.view.errModule.debug('searchContacts 7 - finishing');
-      this.contactSearchInProgress = false;
       this.renderSearchResultsLoadingDone();
     }
   };
@@ -622,6 +621,27 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     return [];
   };
 
+  private setContactPopupStyle = (input: JQuery<HTMLElement>) => {
+    const contactEl = this.view.S.cached('contacts');
+    const offset = input.offset()!;
+    const offsetTop = input.outerHeight()! + offset.top; // both are in the template
+    const bottomGap = 10;
+    const inputToPadding = parseInt(input.css('padding-left'));
+    let leftOffset: number;
+    if (this.view.S.cached('body').width()! < offset.left + inputToPadding + contactEl.width()!) {
+      // Here we need to align contacts popover by right side
+      leftOffset = offset.left + inputToPadding + input.width()! - contactEl.width()!;
+    } else {
+      leftOffset = offset.left + inputToPadding;
+    }
+    this.view.S.cached('contacts').css({
+      display: 'block',
+      top: offsetTop,
+      left: leftOffset,
+      maxHeight: `calc(100% - ${offsetTop + bottomGap}px)`
+    });
+  };
+
   private renderSearchRes = (input: JQuery<HTMLElement>, contacts: ContactPreview[], query: ProviderContactsQuery) => {
     if (!input.is(':focus')) { // focus was moved away from input
       return;
@@ -646,8 +666,9 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       }
       return 0;
     });
+    const contactEl = this.view.S.cached('contacts');
     const renderableContacts = sortedContacts.slice(0, this.MAX_CONTACTS_LENGTH);
-    if ((renderableContacts.length > 0 || this.contactSearchInProgress) || !this.googleContactsSearchEnabled) {
+    if (renderableContacts.length > 0) {
       let ulHtml = '';
       for (const contact of renderableContacts) {
         ulHtml += `<li class="select_contact" email="${Xss.escape(contact.email.replace(/<\/?b>/g, ''))}">`;
@@ -671,14 +692,9 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
         }
         ulHtml += '</li>';
       }
-      Xss.sanitizeRender(this.view.S.cached('contacts').find('ul'), ulHtml);
-      if (!this.googleContactsSearchEnabled) {
-        if (!contacts.length) {
-          this.view.S.cached('contacts').find('ul').append('<li>No Contacts Found</li>'); // xss-direct
-        }
-        this.addBtnToAllowSearchContactsFromGoogle(input);
-      }
-      const contactItems = this.view.S.cached('contacts').find('ul li.select_contact');
+      this.removeBtnToAllowSearchContactsFromGoogle(); // remove allow search contacts from google if it was present
+      Xss.sanitizeRender(contactEl.find('ul'), ulHtml);
+      const contactItems = contactEl.find('ul li.select_contact');
       contactItems.first().addClass('active');
       contactItems.click(this.view.setHandlerPrevent('double', async (target: HTMLElement) => {
         const email = Str.parseEmail($(target).attr('email') || '').email;
@@ -690,23 +706,13 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
         contactItems.removeClass('active');
         $(this).addClass('active');
       });
-      const offset = input.offset()!;
-      const inputToPadding = parseInt(input.css('padding-left'));
-      let leftOffset: number;
-      if (this.view.S.cached('body').width()! < offset.left + inputToPadding + this.view.S.cached('contacts').width()!) {
-        // Here we need to align contacts popover by right side
-        leftOffset = offset.left + inputToPadding + input.width()! - this.view.S.cached('contacts').width()!;
-      } else {
-        leftOffset = offset.left + inputToPadding;
+      this.setContactPopupStyle(input);
+    } else {
+      this.setContactPopupStyle(input);
+      contactEl.find('ul').html('<li data-test="no-contact-found">No Contacts Found</li>'); // xss-direct
+      if (!this.googleContactsSearchEnabled) {
+        this.addBtnToAllowSearchContactsFromGoogle(input);
       }
-      const offsetTop = input.outerHeight()! + offset.top; // both are in the template
-      const bottomGap = 10;
-      this.view.S.cached('contacts').css({
-        display: 'none',
-        left: leftOffset,
-        top: offsetTop,
-        maxHeight: `calc(100% - ${offsetTop + bottomGap}px)`,
-      });
     }
   };
 
@@ -728,6 +734,10 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
           await Ui.modal.error(`Could not enable Google Contact search. ${Lang.general.writeMeToFixIt(!!this.view.fesUrl)}\n\n[${authResult.result}] ${authResult.error}`);
         }
       }));
+  };
+
+  private removeBtnToAllowSearchContactsFromGoogle = () => {
+    this.view.S.cached('contacts').find('.allow-google-contact-search')?.remove();
   };
 
   private selectContact = async (input: JQuery<HTMLElement>, email: string, fromQuery: ProviderContactsQuery) => {
