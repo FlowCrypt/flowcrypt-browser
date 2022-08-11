@@ -55,7 +55,7 @@ export class PgpBlockViewErrorModule {
       await this.renderErr(`Could not load message due to missing auth. ${Ui.retryLink()}`, undefined);
     } else if (e instanceof FormatError) {
       await this.renderErr(Lang.pgpBlock.cantOpen + Lang.pgpBlock.badFormat + Lang.pgpBlock.details
-        + e.message  + ' ' + Lang.pgpBlock.dontKnowHowOpen(!!this.view.fesUrl), e.data);
+        + e.message + ' ' + Lang.pgpBlock.dontKnowHowOpen(!!this.view.fesUrl), e.data);
     } else if (ApiErr.isInPrivateMode(e)) {
       await this.renderErr(`FlowCrypt does not work in a Firefox Private Window (or when Firefox Containers are used). Please try in a standard window.`, undefined);
     } else {

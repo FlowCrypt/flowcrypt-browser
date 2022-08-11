@@ -20,6 +20,8 @@ import { ClientConfiguration } from '../../js/common/client-configuration.js';
 import { AcctStore } from '../../js/common/platform/store/acct-store.js';
 import { ContactStore } from '../../js/common/platform/store/contact-store.js';
 import { KeyUtil } from '../../js/common/core/crypto/key.js';
+import { GmailParser } from '../../js/common/api/email-provider/gmail/gmail-parser.js';
+import { Xss } from '../../js/common/platform/xss.js';
 
 export class PgpBlockView extends View {
 
@@ -47,6 +49,8 @@ export class PgpBlockView extends View {
   public readonly decryptModule: PgpBlockViewDecryptModule;
 
   public fesUrl?: string;
+
+  private printMailInfoHtml!: string;
 
   constructor() {
     super();
@@ -94,6 +98,7 @@ export class PgpBlockView extends View {
     this.pubLookup = new PubLookup(this.clientConfiguration);
     const scopes = await AcctStore.getScopes(this.acctEmail);
     this.decryptModule.canReadEmails = scopes.modify;
+    await this.initPrintView();
     if (storage.setup_done) {
       const parsedPubs = (await ContactStore.getOneWithAllPubkeys(undefined, this.getExpectedSignerEmail()))?.sortedPubkeys ?? [];
       // todo: we don't actually need parsed pubs here because we're going to pass them to the backgorund page
@@ -106,7 +111,105 @@ export class PgpBlockView extends View {
   };
 
   public setHandlers = () => {
-    // defined as needed, depending on what rendered
+    $('.pgp_print_button').click(this.setHandler(() => this.printPGPBlock()));
+  };
+
+  private initPrintView = async () => {
+    const fullName = await AcctStore.get(this.acctEmail, ['full_name']);
+    $('.print_user_email').html(`<b>${fullName.full_name}</b> &lt;${this.acctEmail}&gt;`); // xss-escaped
+    const gmailMsg = await this.gmail.msgGet(this.msgId!, 'full', undefined);
+    const sentDate = new Date(GmailParser.findHeader(gmailMsg, 'date') ?? '');
+    const sentDateStr = Str.fromDate(sentDate).replace(' ', ' at ');
+    const from = Str.parseEmail(GmailParser.findHeader(gmailMsg, 'from') ?? '');
+    const fromHtml = from.name ? `<b>${from.name}</b> &lt;${from.email}&gt;` : from.email;
+    const ccString = GmailParser.findHeader(gmailMsg, 'cc') ? `Cc: <span>${Xss.escape(GmailParser.findHeader(gmailMsg, 'cc')!)}</span><br/>` : '';
+    const bccString = GmailParser.findHeader(gmailMsg, 'bcc') ? `Bcc: <span>${Xss.escape(GmailParser.findHeader(gmailMsg, 'bcc')!)}</span><br/>` : '';
+    this.printMailInfoHtml = `
+      <hr>
+      <p class="subject-label">${GmailParser.findHeader(gmailMsg, 'subject')}</p>
+      <hr>
+      <br/>
+      <div>
+        <div class="inline-block">
+          <span>From: ${fromHtml}</span>
+        </div>
+        <div class="float-right">
+          <span>${sentDateStr}</span>
+        </div>
+      </div>
+      <span>To: ${Xss.escape(GmailParser.findHeader(gmailMsg, 'to') ?? '')}</span><br/>
+      ${ccString}
+      ${bccString}
+      <br/><hr>
+    `;
+  };
+
+  private printPGPBlock = async () => {
+    const w = window.open();
+    const html = `
+      <!DOCTYPE html>
+      <html lang="en-us">
+      <head>
+        <style>
+          #action_show_quoted_content {
+            display: none;
+          }
+          .print_user_email {
+            text-align: right;
+            color: #777777;
+            font-weight: bold;
+            -webkit-print-color-adjust: exact;
+          }
+          .subject-label {
+            font-weight: bold;
+            font-size: 20px;
+          }
+          .inline-block {
+            display: inline-block;
+          }
+          .float-right {
+            float: right;
+          }
+          .quoted_content {
+            display: none;
+          }
+          #attachments a.preview-attachment {
+            display: inline-flex;
+            color: #333 !important;
+            align-items: center;
+            height: 36px;
+            background: #f8f8f8;
+            border: 1px solid #ccc;
+            border-left: 4px solid #31a217 !important;
+            font-family: inherit;
+            font-size: inherit;
+            margin-bottom: 8px;
+            cursor: pointer;
+            margin-right: 12px;
+            padding: 0 8px;
+            text-decoration: none;
+          }
+          #attachments a.preview-attachment .download-attachment {
+            display: none;
+          }
+        </style>
+      </head>
+      <body>
+        ${$('#print-header').html()}
+        <br>
+        ${this.printMailInfoHtml}
+        <br>
+        ${$("#pgp_block").html()}
+      </body>
+      </html>
+    `;
+    w!.document.write(html);
+    // Give some time for above dom to load in print dialog
+    // https://stackoverflow.com/questions/31725373/google-chrome-not-showing-image-in-print-preview
+    setTimeout(function () {
+      w!.window.print();
+      w!.document.close();
+    }, 250);
   };
 
 }

@@ -1308,6 +1308,11 @@ td {
   margin-right: 6px;
 }
 
+.pgp_print_button {
+  display: none;
+  float: right;
+  color: #31a217;
+}
 #pgp_block.pgp_pubkey { padding-top: 7px; }
 #pgp_block.pgp_pubkey .line { margin: 0; }
 #pgp_block.pgp_pubkey .add_contact:not(.line) { text-align: center; }
@@ -2892,6 +2897,27 @@ body#settings div.webmail_notifications div.webmail_notification a {
   line-height: inherit;
 }
 body#settings div.webmail_notifications div.webmail_notification a:hover { text-decoration: none; }
+
+/* print class */
+@media screen {
+  .printable {
+    display: none;
+  }
+
+  .non-printable {
+    display: block;
+  }
+}
+
+@media print {
+  .printable {
+    display: block;
+  }
+
+  .non-printable {
+    display: none;
+  }
+}
 
 /* short frames */
 @media (max-height: 200px) {

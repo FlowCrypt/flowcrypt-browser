@@ -49,9 +49,11 @@ export class PgpBlockViewRenderModule {
       await AcctStore.set(this.view.acctEmail, { successfully_received_at_leat_one_message: true });
     }
     if (!isErr) { // rendering message content
+      $('.pgp_print_button').show();
       const pgpBlock = $('#pgp_block').html(Xss.htmlSanitizeKeepBasicTags(htmlContent, 'IMG-TO-LINK')); // xss-sanitized
       pgpBlock.find('a.image_src_link').one('click', this.view.setHandler((el, ev) => this.displayImageSrcLinkAsImg(el as HTMLAnchorElement, ev as JQuery.Event<HTMLAnchorElement, null>)));
     } else { // rendering our own ui
+      $('.pgp_print_button').hide();
       Xss.sanitizeRender('#pgp_block', htmlContent);
     }
     if (isErr) {
