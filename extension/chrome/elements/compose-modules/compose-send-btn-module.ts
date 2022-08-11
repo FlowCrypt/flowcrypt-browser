@@ -122,7 +122,7 @@ export class ComposeSendBtnModule extends ViewModule<ComposeView> {
         if (result.supplementaryOperationsErrors.length) {
           console.error(result.supplementaryOperationsErrors);
           Catch.setHandledTimeout(() => {
-            Ui.toast(result.supplementaryOperationsErrors[0]); // tslint:disable-line:no-unsafe-any
+            Ui.toast(result.supplementaryOperationsErrors[0] as string);
           }, 0);
         }
         BrowserMsg.send.notificationShow(this.view.parentTabId, { notification: `Your ${this.view.isReplyBox ? 'reply' : 'message'} has been sent.` });
@@ -231,7 +231,7 @@ export class ComposeSendBtnModule extends ViewModule<ComposeView> {
     }
   };
 
-  private bindMessageId = async (externalId: string, id: string, supplementaryOperationsErrors: any[]) => {
+  private bindMessageId = async (externalId: string, id: string, supplementaryOperationsErrors: unknown[]) => {
     try {
       const gmailMsg = await this.view.emailProvider.msgGet(id, 'metadata');
       const messageId = GmailParser.findHeader(gmailMsg, 'message-id');
@@ -249,9 +249,9 @@ export class ComposeSendBtnModule extends ViewModule<ComposeView> {
   private doSendMsgs = async (msgObj: MultipleMessages): Promise<SendMsgsResult> => {
     const sentIds: string[] = [];
     const supplementaryOperations: Promise<void>[] = [];
-    const supplementaryOperationsErrors: any[] = []; // tslint:disable-line:no-unsafe-any
+    const supplementaryOperationsErrors: unknown[] = [];
     const success: EmailParts[] = [];
-    const failures: { recipient: EmailParts, e: any }[] = [];
+    const failures: { recipient: EmailParts, e: unknown }[] = [];
     for (const msg of msgObj.msgs) {
       const msgRecipients = msg.getAllRecipients();
       try {

@@ -151,7 +151,7 @@ export class OpenPGPKey {
     return await Catch.doesReject(opgpPrv.verifyPrimaryKey(), ['No self-certifications']);
   };
 
-  public static reformatKey = async (privateKey: Key, passphrase: string, userIds: { email: string | undefined; name: string }[], expireSeconds: number) => {
+  public static reformatKey = async (privateKey: Key, passphrase: string | undefined, userIds: { email: string | undefined; name: string }[], expireSeconds: number) => {
     const opgpPrv = OpenPGPKey.extractExternalLibraryObjFromKey(privateKey);
     const keyPair = await opgp.reformatKey({ privateKey: opgpPrv, passphrase, userIds, keyExpirationTime: expireSeconds });
     return await OpenPGPKey.convertExternalLibraryObjToKey(keyPair.key);
@@ -521,7 +521,7 @@ export class OpenPGPKey {
   private static getLatestValidSignature = async (signatures: OpenPGP.packet.Signature[],
     primaryKey: OpenPGP.packet.PublicKey | OpenPGP.packet.SecretKey,
     signatureType: OpenPGP.enums.signature,
-    dataToVerify: any,
+    dataToVerify: unknown,
     date = new Date()):
     Promise<OpenPGP.packet.Signature | undefined> => {
     let signature: OpenPGP.packet.Signature | undefined;

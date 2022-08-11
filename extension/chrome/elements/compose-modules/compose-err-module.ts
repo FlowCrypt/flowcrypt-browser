@@ -36,7 +36,7 @@ export class ComposeErrModule extends ViewModule<ComposeView> {
     return {
       network: async () => await Ui.modal.info(`Could not ${couldNotDoWhat} (network error). Please try again.`),
       auth: async () => Settings.offerToLoginWithPopupShowModalOnErr(this.view.acctEmail, undefined, `Could not ${couldNotDoWhat}.\n`),
-      other: async (e: any) => {
+      other: async (e: unknown) => {
         if (e instanceof Error) {
           e.stack = (e.stack || '') + `\n\n[compose action: ${couldNotDoWhat}]`;
         } else if (typeof e === 'object' && e && typeof (e as any).stack === 'undefined') {
@@ -66,7 +66,7 @@ export class ComposeErrModule extends ViewModule<ComposeView> {
     }
   };
 
-  public handleSendErr = async (e: any, sendMsgsResult?: SendMsgsResult) => {
+  public handleSendErr = async (e: unknown, sendMsgsResult?: SendMsgsResult) => {
     this.view.errModule.debug(`handleSendErr: ${String(e)}`);
     if (ApiErr.isNetErr(e)) {
       let netErrMsg: string | undefined;

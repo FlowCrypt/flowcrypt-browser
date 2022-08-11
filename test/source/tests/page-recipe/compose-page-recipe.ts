@@ -4,7 +4,7 @@ import { BrowserHandle, Controllable, ControllableFrame, ControllablePage } from
 
 import { AvaContext } from '../tooling/';
 import { CommonAcct } from '../../test';
-import { EvaluateFn } from 'puppeteer';
+import { EvaluateFunc } from 'puppeteer';
 import { PageRecipe } from './abstract-page-recipe';
 import { Util } from '../../util';
 import { expect } from 'chai';
@@ -20,7 +20,7 @@ export class ComposePageRecipe extends PageRecipe {
 
   public static async openStandalone(
     t: AvaContext, browser: BrowserHandle, group: CommonAcct | string, options:
-      { appendUrl?: string, hasReplyPrompt?: boolean, skipClickPropt?: boolean, skipValidation?: boolean, initialScript?: EvaluateFn } = {}
+      { appendUrl?: string, hasReplyPrompt?: boolean, skipClickPropt?: boolean, skipValidation?: boolean, initialScript?: EvaluateFunc<unknown[]> } = {}
   ): Promise<ControllablePage> {
     if (group === 'compatibility') { // More common accounts
       group = 'flowcrypt.compatibility@gmail.com';
@@ -47,16 +47,31 @@ export class ComposePageRecipe extends PageRecipe {
     return composePage;
   }
 
+  public static async selectFromOption(
+    composePageOrFrame: Controllable,
+    choice: string
+  ) {
+    // Show recipient input first
+    await this.showRecipientInput(composePageOrFrame);
+    await composePageOrFrame.selectOption('@input-from', choice);
+  }
+
+  public static async showRecipientInput(composePageOrFrame: Controllable) {
+    // Show recipient input by clicking recipient preview label if it's present
+    if (await composePageOrFrame.isElementVisible('@action-show-container-cc-bcc-buttons')) {
+      await composePageOrFrame.click('@action-show-container-cc-bcc-buttons');
+    }
+  }
+
   public static async fillMsg(
     composePageOrFrame: Controllable,
     recipients: Recipients,
     subject?: string | undefined,
     body?: string | undefined,
     sendingOpt: { encrypt?: boolean, sign?: boolean, richtext?: boolean } = {}, // undefined means leave default
-    windowType: 'new' | 'reply' = 'new'
   ) {
     await Util.sleep(0.5);
-    await ComposePageRecipe.fillRecipients(composePageOrFrame, recipients, windowType);
+    await ComposePageRecipe.fillRecipients(composePageOrFrame, recipients);
     if (subject) {
       await composePageOrFrame.click('@input-subject');
       await Util.sleep(1);
@@ -86,10 +101,8 @@ export class ComposePageRecipe extends PageRecipe {
     await composePageOrFrame.waitTillGone('@container-sending-options');
   };
 
-  public static fillRecipients = async (composePageOrFrame: Controllable, recipients: Recipients, windowType: 'new' | 'reply' | 'forward') => {
-    if (windowType === 'reply') { // new messages should already have cc/bcc buttons visible, because they should have recipients in focus
-      await composePageOrFrame.waitAndClick('@action-show-container-cc-bcc-buttons');
-    }
+  public static fillRecipients = async (composePageOrFrame: Controllable, recipients: Recipients) => {
+    await this.showRecipientInput(composePageOrFrame);
     await composePageOrFrame.waitAll('@container-cc-bcc-buttons');
     for (const key of Object.keys(recipients)) {
       const sendingType = key as RecipientType;
@@ -170,7 +183,7 @@ export class ComposePageRecipe extends PageRecipe {
     } else if (inputMethod === 'keyboard') {
       await page.press('Escape');
     }
-    await page.waitTillGone('@dialog');
+    await page.waitTillGone('@dialog-passphrase');
     expect(passPhraseFrame.frame.isDetached()).to.equal(true);
   };
 }

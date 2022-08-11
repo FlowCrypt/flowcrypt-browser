@@ -7,7 +7,7 @@ import { Url } from '../../js/common/core/common.js';
 import { ApiErr } from '../../js/common/api/shared/api-error.js';
 import { Assert } from '../../js/common/assert.js';
 import { Catch } from '../../js/common/platform/catch.js';
-import { Key, KeyInfoWithIdentity, KeyUtil } from '../../js/common/core/crypto/key.js';
+import { KeyInfoWithIdentity, KeyUtil } from '../../js/common/core/crypto/key.js';
 import { Gmail } from '../../js/common/api/email-provider/gmail/gmail.js';
 import { Google } from '../../js/common/api/email-provider/gmail/google.js';
 import { KeyImportUi } from '../../js/common/ui/key-import-ui.js';
@@ -27,16 +27,18 @@ import { PubLookup } from '../../js/common/api/pub-lookup.js';
 import { Scopes, AcctStoreDict, AcctStore } from '../../js/common/platform/store/acct-store.js';
 import { KeyStore } from '../../js/common/platform/store/key-store.js';
 import { KeyStoreUtil } from "../../js/common/core/crypto/key-store-util.js";
-import { PassphraseStore } from '../../js/common/platform/store/passphrase-store.js';
-import { ContactStore } from '../../js/common/platform/store/contact-store.js';
 import { KeyManager } from '../../js/common/api/key-server/key-manager.js';
 import { SetupWithEmailKeyManagerModule } from './setup/setup-key-manager-autogen.js';
 import { shouldPassPhraseBeHidden } from '../../js/common/ui/passphrase-ui.js';
 import Swal from 'sweetalert2';
+import { BackupUi } from '../../js/common/ui/backup-ui/backup-ui.js';
 
-export interface SetupOptions {
+export interface PassphraseOptions {
   passphrase: string;
   passphrase_save: boolean;
+}
+
+export interface SetupOptions extends PassphraseOptions {
   submit_main: boolean;
   submit_all: boolean;
   recovered?: boolean;
@@ -46,8 +48,8 @@ export class SetupView extends View {
 
   public readonly acctEmail: string;
   public readonly parentTabId: string | undefined;
-  public readonly action: 'add_key' | 'finalize' | undefined;
-  public readonly idToken: string | undefined; // only needed for initial setup, not for add_key or 'finalize'
+  public readonly action: 'add_key' | undefined;
+  public readonly idToken: string | undefined; // only needed for initial setup, not for add_key
 
   public readonly keyImportUi = new KeyImportUi({ checkEncryption: true });
   public readonly gmail: Gmail;
@@ -56,6 +58,7 @@ export class SetupView extends View {
   public readonly setupImportKey: SetupImportKeyModule;
   public readonly setupRender: SetupRenderModule;
   public readonly setupWithEmailKeyManager: SetupWithEmailKeyManagerModule;
+  public readonly backupUi: BackupUi;
 
   public tabId!: string;
   public scopes!: Scopes;
@@ -74,7 +77,7 @@ export class SetupView extends View {
     super();
     const uncheckedUrlParams = Url.parse(['acctEmail', 'action', 'idToken', 'parentTabId']);
     this.acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
-    this.action = Assert.urlParamRequire.oneof(uncheckedUrlParams, 'action', ['add_key', 'finalize', undefined]) as 'add_key' | 'finalize' | undefined;
+    this.action = Assert.urlParamRequire.oneof(uncheckedUrlParams, 'action', ['add_key', undefined]) as 'add_key' | undefined;
     if (this.action === 'add_key') {
       this.parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
     } else {
@@ -97,6 +100,7 @@ export class SetupView extends View {
     this.setupImportKey = new SetupImportKeyModule(this);
     this.setupRender = new SetupRenderModule(this);
     this.setupWithEmailKeyManager = new SetupWithEmailKeyManagerModule(this);
+    this.backupUi = new BackupUi();
   }
 
   public isFesUsed = () => Boolean(this.storage.fesUrl);
@@ -241,20 +245,6 @@ export class SetupView extends View {
 
   public finalizeSetup = async (): Promise<void> => {
     await AcctStore.set(this.acctEmail, { setup_date: Date.now(), setup_done: true, cryptup_enabled: true });
-  };
-
-  public saveKeysAndPassPhrase = async (prvs: Key[], options: SetupOptions) => {
-    for (const prv of prvs) {
-      await KeyStore.add(this.acctEmail, prv);
-      await PassphraseStore.set((options.passphrase_save && !this.clientConfiguration.forbidStoringPassPhrase()) ? 'local' : 'session',
-        this.acctEmail, { longid: KeyUtil.getPrimaryLongid(prv) }, options.passphrase);
-    }
-    const { sendAs } = await AcctStore.get(this.acctEmail, ['sendAs']);
-    const myOwnEmailsAddrs: string[] = [this.acctEmail].concat(Object.keys(sendAs!));
-    const { full_name: name } = await AcctStore.get(this.acctEmail, ['full_name']);
-    for (const email of myOwnEmailsAddrs) {
-      await ContactStore.update(undefined, email, { name, pubkey: KeyUtil.armor(await KeyUtil.asPublicKey(prvs[0])) });
-    }
   };
 
   public shouldSubmitPubkey = (checkboxSelector: string) => {

@@ -97,7 +97,7 @@ export class GoogleAuth {
     throw new GoogleAuthErr(`Could not refresh google auth token - did not become valid (access:${refreshTokenRes.access_token},expires_in:${refreshTokenRes.expires_in},now:${Date.now()})`);
   };
 
-  public static apiGoogleCallRetryAuthErrorOneTime = async (acctEmail: string, request: JQuery.AjaxSettings): Promise<any> => {
+  public static apiGoogleCallRetryAuthErrorOneTime = async (acctEmail: string, request: JQuery.AjaxSettings): Promise<unknown> => {
     try {
       return await Api.ajax(request, Catch.stackTrace());
     } catch (firstAttemptErr) {
@@ -121,7 +121,21 @@ export class GoogleAuth {
     }
     const authRequest: AuthReq = { acctEmail, scopes, csrfToken: `csrf-${Api.randomFortyHexChars()}` };
     const url = GoogleAuth.apiGoogleAuthCodeUrl(authRequest);
-    const oauthWin = await windowsCreate({ url, left: 100, top: 50, height: 800, width: 550, type: 'popup' });
+    // To fix https://github.com/FlowCrypt/flowcrypt-browser/issues/4553#issuecomment-1198290842
+    // we need to use availLeft and availTop to make the popup window appear on the same screen as the original Flowcrypt window.
+    // It's hard to test because it'd require using --screen-config browser switch to test headless with multiple displays, so tested manually.
+    const screenWidth = (window.screen.width || window.innerWidth);
+    const screenHeight = (window.screen.height || window.innerHeight);
+    // non-standard but supported by most of the browsers
+    const { availLeft, availTop } = (window.screen as unknown as { availLeft?: number, availTop?: number });
+    let adaptiveWidth = Math.floor(screenWidth * 0.4);
+    if (adaptiveWidth < 550) {
+      adaptiveWidth = Math.min(550, Math.floor(screenWidth * 0.9));
+    }
+    const adaptiveHeight = Math.floor(screenHeight * 0.9);
+    const leftOffset = Math.floor((screenWidth / 2) - (adaptiveWidth / 2) + (availLeft || 0));
+    const topOffset = Math.floor((screenHeight / 2) - (adaptiveHeight / 2) + (availTop || 0));
+    const oauthWin = await windowsCreate({ url, left: leftOffset, top: topOffset, height: adaptiveHeight, width: adaptiveWidth, type: 'popup' });
     if (!oauthWin || !oauthWin.tabs || !oauthWin.tabs.length || !oauthWin.id) {
       return { result: 'Error', error: 'No oauth window returned after initiating it', acctEmail, id_token: undefined };
     }
@@ -173,7 +187,7 @@ export class GoogleAuth {
   /**
    * Happens on enterprise builds
    */
-  public static isFesUnreachableErr = (e: any, email: string): boolean => {
+  public static isFesUnreachableErr = (e: unknown, email: string): boolean => {
     const domain = Str.getDomainFromEmailAddress(email);
     const errString = String(e);
     if (errString.includes(`-1 when GET-ing https://fes.${domain}/api/ `)) { // the space is important to match the full url
@@ -301,7 +315,7 @@ export class GoogleAuth {
       method: 'POST',
       crossDomain: true,
       async: true,
-    }, Catch.stackTrace()) as any as GoogleAuthTokensResponse;
+    }, Catch.stackTrace()) as unknown as GoogleAuthTokensResponse;
   };
 
   private static googleAuthRefreshToken = async (refreshToken: string) => {
@@ -310,7 +324,7 @@ export class GoogleAuth {
       method: 'POST',
       crossDomain: true,
       async: true,
-    }, Catch.stackTrace()) as any as GoogleAuthTokensResponse;
+    }, Catch.stackTrace()) as unknown as GoogleAuthTokensResponse;
   };
 
   // todo - would be better to use a TS type guard instead of the type cast when checking OpenId

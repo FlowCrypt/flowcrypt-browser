@@ -102,7 +102,7 @@ export class Api<REQ, RES> {
   };
 
   public close = (): Promise<void> => {
-    return new Promise((resolve, reject) => this.server.close((err: any) => err ? reject(err) : resolve()));
+    return new Promise((resolve, reject) => this.server.close((err: unknown) => err ? reject(err) : resolve()));
   };
 
   protected log = (ms: number, req: http.IncomingMessage, res: http.ServerResponse, errRes?: Buffer) => { // eslint-disable-line @typescript-eslint/no-unused-vars
@@ -150,7 +150,7 @@ export class Api<REQ, RES> {
     }
   };
 
-  protected fmtErr = (e: any): Buffer => {
+  protected fmtErr = (e: unknown): Buffer => {
     if (String(e).includes('invalid_grant')) {
       return Buffer.from(JSON.stringify({ "error": "invalid_grant", "error_description": "Bad Request" }));
     }

@@ -12,6 +12,7 @@ import { Wkd } from '../../js/common/api/key-server/wkd.js';
 import { MsgUtil } from '../../js/common/core/crypto/pgp/msg-util.js';
 import { Sks } from '../../js/common/api/key-server/sks.js';
 import { Ui } from '../../js/common/browser/ui.js';
+import { AcctStore } from '../../js/common/platform/store/acct-store.js';
 import { ContactStore } from '../../js/common/platform/store/contact-store.js';
 import { Debug } from '../../js/common/platform/debug.js';
 import { Catch } from '../../js/common/platform/catch.js';
@@ -22,7 +23,7 @@ import { Gmail } from '../../js/common/api/email-provider/gmail/gmail.js';
  * importing all libs that are tested in ci tests
  * add lib name below, let the IDE resolve the actual import
  */
-const libs: any[] = [
+const libs: unknown[] = [
   ApiErr,
   Attachment,
   AttachmentUI,
@@ -33,14 +34,16 @@ const libs: any[] = [
   Sks,
   MsgUtil,
   Ui,
+  AcctStore,
   ContactStore,
   Debug,
   Catch,
   Gmail,
 ];
-
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // add them to global scope so ci can use them
 for (const lib of libs) {
   (window as any)[(lib as any).name] = lib;
 }
 (window as any).forge = forge;
+/* eslint-enable */
