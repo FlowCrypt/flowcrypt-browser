@@ -154,11 +154,15 @@ export class PgpBlockView extends View {
           #action_show_quoted_content {
             display: none;
           }
-          .print_user_email {
-            text-align: right;
+          .print_header_info {
             color: #777777;
             font-weight: bold;
             -webkit-print-color-adjust: exact;
+          }
+          .print_encrypted_with_label {
+            display: table-cell;
+            vertical-align: middle;
+            padding-right: 5px;
           }
           .subject-label {
             font-weight: bold;
@@ -166,6 +170,9 @@ export class PgpBlockView extends View {
           }
           .inline-block {
             display: inline-block;
+          }
+          .display-table {
+            display: table;
           }
           .float-right {
             float: right;
@@ -206,7 +213,7 @@ export class PgpBlockView extends View {
     w!.document.write(html);
     // Give some time for above dom to load in print dialog
     // https://stackoverflow.com/questions/31725373/google-chrome-not-showing-image-in-print-preview
-    setTimeout(function () {
+    setTimeout(() => {
       w!.window.print();
       w!.document.close();
     }, 250);
