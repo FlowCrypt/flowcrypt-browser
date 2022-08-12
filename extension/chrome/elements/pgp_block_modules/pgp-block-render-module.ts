@@ -117,7 +117,7 @@ export class PgpBlockViewRenderModule {
           }
         </style>
       </head>
-      <body>
+      <body data-test-view-state="loaded">
         ${$('#print-header').html()}
         <br>
         ${Xss.htmlSanitize(this.printMailInfoHtml)}

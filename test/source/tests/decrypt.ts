@@ -522,11 +522,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
       await inboxPage.waitAll('iframe');
       const pgpBlock = await inboxPage.getFrame(['pgp_block.htm']);
       await pgpBlock.waitForSelTestState('ready');
-      expect(await pgpBlock.isElementPresent('@action-print')).to.be.true;
-      await pgpBlock.click('@action-print');
-      await Util.sleep(3);
-      const pages = await browser.browser.pages();
-      const printPage = new ControllablePage(t, pages[pages.length - 1]); // last tab is print tab
+      const printPage = await browser.newPageTriggeredBy(t, () => pgpBlock.click('@action-print'));
       await printPage.waitForContent('@print-user-email', 'First Last <flowcrypt.compatibility@gmail.com>');
       await printPage.waitForContent('@print-subject', 'Test print dialog');
       await printPage.waitForContent('@print-from', 'From: sender@domain.com');
