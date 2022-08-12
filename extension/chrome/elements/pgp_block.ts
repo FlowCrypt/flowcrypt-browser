@@ -49,8 +49,6 @@ export class PgpBlockView extends View {
 
   public fesUrl?: string;
 
-  private printMailInfoHtml!: string;
-
   constructor() {
     super();
     Ui.event.protect();
