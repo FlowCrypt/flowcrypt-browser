@@ -219,10 +219,9 @@ export class PgpBlockView extends View {
     w!.document.write(html);
     // Give some time for above dom to load in print dialog
     // https://stackoverflow.com/questions/31725373/google-chrome-not-showing-image-in-print-preview
-    setTimeout(() => {
-      w!.window.print();
-      w!.document.close();
-    }, 250);
+    await Ui.time.sleep(250);
+    w!.window.print();
+    w!.document.close();
   };
 
 }
