@@ -756,7 +756,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
       await inboxPage.waitAll('iframe.pgp_block');
       const pgpBlock = await inboxPage.getFrame(['pgp_block.htm']);
       await pgpBlock.waitForSelTestState('ready');
-      await pgpBlock.click('a');
+      await pgpBlock.click('#pgp_block a');
       await Util.sleep(5);
       const flowcryptTab = (await browser.browser.pages()).find(p => p.url() === 'https://flowcrypt.com/');
       await flowcryptTab!.waitForSelector("body");
