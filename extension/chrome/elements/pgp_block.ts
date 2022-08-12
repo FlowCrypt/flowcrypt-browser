@@ -41,6 +41,7 @@ export class PgpBlockView extends View {
   public clientConfiguration!: ClientConfiguration;
   public pubLookup!: PubLookup;
 
+  public readonly debug: boolean;
   public readonly attachmentsModule: PgpBlockViewAttachmentsModule;
   public readonly signatureModule: PgpBlockViewSignatureModule;
   public readonly quoteModule: PgpBlockViewQuoteModule;
@@ -55,11 +56,12 @@ export class PgpBlockView extends View {
   constructor() {
     super();
     Ui.event.protect();
-    const uncheckedUrlParams = Url.parse(['acctEmail', 'frameId', 'message', 'parentTabId', 'msgId', 'isOutgoing', 'senderEmail', 'signature']);
+    const uncheckedUrlParams = Url.parse(['acctEmail', 'frameId', 'message', 'parentTabId', 'msgId', 'isOutgoing', 'senderEmail', 'signature', 'debug']);
     this.acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
     this.parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
     this.frameId = Assert.urlParamRequire.string(uncheckedUrlParams, 'frameId');
     this.isOutgoing = uncheckedUrlParams.isOutgoing === true;
+    this.debug = uncheckedUrlParams.debug === true;
     const senderEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'senderEmail');
     this.senderEmail = Str.parseEmail(senderEmail).email || '';
     this.msgId = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'msgId');
@@ -116,15 +118,16 @@ export class PgpBlockView extends View {
 
   private initPrintView = async () => {
     const fullName = await AcctStore.get(this.acctEmail, ['full_name']);
-    $('.print_user_email').html(`<b>${fullName.full_name}</b> &lt;${this.acctEmail}&gt;`); // xss-escaped
-    const gmailMsg = await this.gmail.msgGet(this.msgId!, 'full', undefined);
-    const sentDate = new Date(GmailParser.findHeader(gmailMsg, 'date') ?? '');
-    const sentDateStr = Str.fromDate(sentDate).replace(' ', ' at ');
-    const from = Str.parseEmail(GmailParser.findHeader(gmailMsg, 'from') ?? '');
-    const fromHtml = from.name ? `<b>${from.name}</b> &lt;${from.email}&gt;` : from.email;
-    const ccString = GmailParser.findHeader(gmailMsg, 'cc') ? `Cc: <span>${Xss.escape(GmailParser.findHeader(gmailMsg, 'cc')!)}</span><br/>` : '';
-    const bccString = GmailParser.findHeader(gmailMsg, 'bcc') ? `Bcc: <span>${Xss.escape(GmailParser.findHeader(gmailMsg, 'bcc')!)}</span><br/>` : '';
-    this.printMailInfoHtml = `
+    Xss.sanitizeRender('.print_user_email', `<b>${fullName.full_name}</b> &lt;${this.acctEmail}&gt;`);
+    try {
+      const gmailMsg = await this.gmail.msgGet(this.msgId!, 'full', undefined);
+      const sentDate = new Date(GmailParser.findHeader(gmailMsg, 'date') ?? '');
+      const sentDateStr = Str.fromDate(sentDate).replace(' ', ' at ');
+      const from = Str.parseEmail(GmailParser.findHeader(gmailMsg, 'from') ?? '');
+      const fromHtml = from.name ? `<b>${from.name}</b> &lt;${from.email}&gt;` : from.email;
+      const ccString = GmailParser.findHeader(gmailMsg, 'cc') ? `Cc: <span>${Xss.escape(GmailParser.findHeader(gmailMsg, 'cc')!)}</span><br/>` : '';
+      const bccString = GmailParser.findHeader(gmailMsg, 'bcc') ? `Bcc: <span>${Xss.escape(GmailParser.findHeader(gmailMsg, 'bcc')!)}</span><br/>` : '';
+      this.printMailInfoHtml = `
       <hr>
       <p class="subject-label">${GmailParser.findHeader(gmailMsg, 'subject')}</p>
       <hr>
@@ -142,6 +145,9 @@ export class PgpBlockView extends View {
       ${bccString}
       <br/><hr>
     `;
+    } catch (e) {
+      this.errorModule.debug(`Error while getting gmail message for ${this.msgId} message. ${e}`);
+    }
   };
 
   private printPGPBlock = async () => {
