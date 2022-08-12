@@ -14,6 +14,7 @@ import { expect } from "chai";
 import { ComposePageRecipe } from './page-recipe/compose-page-recipe';
 import { PageRecipe } from './page-recipe/abstract-page-recipe';
 import { Buf } from '../core/buf';
+import { ControllablePage } from '../browser';
 
 // tslint:disable:no-blank-lines-func
 // tslint:disable:max-line-length
@@ -512,6 +513,26 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
       await pgpBlock.waitForSelTestState('ready');
       const urls = await inboxPage.getFramesUrls(['pgp_pubkey.htm'], { sleep: 3 });
       expect(urls.length).to.be.lessThan(2);
+    }));
+
+    ava.default('decrypt - print feature in pgp block', testWithBrowser('compatibility', async (t, browser) => {
+      const threadId = '182917712be838e1';
+      const acctEmail = 'flowcrypt.compatibility@gmail.com';
+      const inboxPage = await browser.newPage(t, TestUrls.extension(`chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`));
+      await inboxPage.waitAll('iframe');
+      const pgpBlock = await inboxPage.getFrame(['pgp_block.htm']);
+      await pgpBlock.waitForSelTestState('ready');
+      expect(await pgpBlock.isElementPresent('@action-print')).to.be.true;
+      await pgpBlock.click('@action-print');
+      await Util.sleep(3);
+      const pages = await browser.browser.pages();
+      const printPage = new ControllablePage(t, pages[pages.length - 1]); // last tab is print tab
+      await printPage.waitForContent('@print-user-email', 'First Last <flowcrypt.compatibility@gmail.com>');
+      await printPage.waitForContent('@print-subject', 'Test print dialog');
+      await printPage.waitForContent('@print-from', 'From: sender@domain.com');
+      await printPage.waitForContent('@print-to', 'To: flowcrypt.compatibility@gmail.com');
+      await printPage.waitForContent('@print-cc', 'ci.tests.gmail@flowcrypt.dev');
+      await printPage.waitForContent('@print-content', 'Test print message');
     }));
 
     ava.default('decrypt - thunderbird - signedMsg verifyDetached doesn\'t duplicate PGP key section', testWithBrowser('compatibility', async (t, browser) => {

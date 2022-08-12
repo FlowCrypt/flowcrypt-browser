@@ -33,6 +33,7 @@ export class BrowserPool {
     const args = [
       '--no-sandbox', // make it work in travis-ci
       '--disable-setuid-sandbox',
+      '--kiosk-printing',
       '--disable-features=site-per-process',
       `--disable-extensions-except=${this.extensionBuildDir}`,
       `--load-extension=${this.extensionBuildDir}`,

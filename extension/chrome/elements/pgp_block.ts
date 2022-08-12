@@ -125,22 +125,22 @@ export class PgpBlockView extends View {
       const sentDateStr = Str.fromDate(sentDate).replace(' ', ' at ');
       const from = Str.parseEmail(GmailParser.findHeader(gmailMsg, 'from') ?? '');
       const fromHtml = from.name ? `<b>${from.name}</b> &lt;${from.email}&gt;` : from.email;
-      const ccString = GmailParser.findHeader(gmailMsg, 'cc') ? `Cc: <span>${Xss.escape(GmailParser.findHeader(gmailMsg, 'cc')!)}</span><br/>` : '';
+      const ccString = GmailParser.findHeader(gmailMsg, 'cc') ? `Cc: <span data-test="print-cc">${Xss.escape(GmailParser.findHeader(gmailMsg, 'cc')!)}</span><br/>` : '';
       const bccString = GmailParser.findHeader(gmailMsg, 'bcc') ? `Bcc: <span>${Xss.escape(GmailParser.findHeader(gmailMsg, 'bcc')!)}</span><br/>` : '';
       this.printMailInfoHtml = `
       <hr>
-      <p class="subject-label">${GmailParser.findHeader(gmailMsg, 'subject')}</p>
+      <p class="subject-label" data-test="print-subject">${GmailParser.findHeader(gmailMsg, 'subject')}</p>
       <hr>
       <br/>
       <div>
         <div class="inline-block">
-          <span>From: ${fromHtml}</span>
+          <span data-test="print-from">From: ${fromHtml}</span>
         </div>
         <div class="float-right">
           <span>${sentDateStr}</span>
         </div>
       </div>
-      <span>To: ${Xss.escape(GmailParser.findHeader(gmailMsg, 'to') ?? '')}</span><br/>
+      <span data-test="print-to">To: ${Xss.escape(GmailParser.findHeader(gmailMsg, 'to') ?? '')}</span><br/>
       ${ccString}
       ${bccString}
       <br/><hr>
@@ -212,7 +212,9 @@ export class PgpBlockView extends View {
         <br>
         ${this.printMailInfoHtml}
         <br>
-        ${$("#pgp_block").html()}
+        <div data-test="print-content">
+          ${$("#pgp_block").html()}
+        </div>
       </body>
       </html>
     `;
