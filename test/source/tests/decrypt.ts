@@ -14,7 +14,6 @@ import { expect } from "chai";
 import { ComposePageRecipe } from './page-recipe/compose-page-recipe';
 import { PageRecipe } from './page-recipe/abstract-page-recipe';
 import { Buf } from '../core/buf';
-import { ControllablePage } from '../browser';
 
 // tslint:disable:no-blank-lines-func
 // tslint:disable:max-line-length
