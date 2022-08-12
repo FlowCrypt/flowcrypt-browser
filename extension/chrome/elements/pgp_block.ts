@@ -100,7 +100,7 @@ export class PgpBlockView extends View {
     this.pubLookup = new PubLookup(this.clientConfiguration);
     const scopes = await AcctStore.getScopes(this.acctEmail);
     this.decryptModule.canReadEmails = scopes.modify;
-    await this.initPrintView();
+    await this.renderModule.initPrintView();
     if (storage.setup_done) {
       const parsedPubs = (await ContactStore.getOneWithAllPubkeys(undefined, this.getExpectedSignerEmail()))?.sortedPubkeys ?? [];
       // todo: we don't actually need parsed pubs here because we're going to pass them to the backgorund page
@@ -113,117 +113,7 @@ export class PgpBlockView extends View {
   };
 
   public setHandlers = () => {
-    $('.pgp_print_button').click(this.setHandler(() => this.printPGPBlock()));
-  };
-
-  private initPrintView = async () => {
-    const fullName = await AcctStore.get(this.acctEmail, ['full_name']);
-    Xss.sanitizeRender('.print_user_email', `<b>${fullName.full_name}</b> &lt;${this.acctEmail}&gt;`);
-    try {
-      const gmailMsg = await this.gmail.msgGet(this.msgId!, 'full', undefined);
-      const sentDate = new Date(GmailParser.findHeader(gmailMsg, 'date') ?? '');
-      const sentDateStr = Str.fromDate(sentDate).replace(' ', ' at ');
-      const from = Str.parseEmail(GmailParser.findHeader(gmailMsg, 'from') ?? '');
-      const fromHtml = from.name ? `<b>${from.name}</b> &lt;${from.email}&gt;` : from.email;
-      const ccString = GmailParser.findHeader(gmailMsg, 'cc') ? `Cc: <span data-test="print-cc">${Xss.escape(GmailParser.findHeader(gmailMsg, 'cc')!)}</span><br/>` : '';
-      const bccString = GmailParser.findHeader(gmailMsg, 'bcc') ? `Bcc: <span>${Xss.escape(GmailParser.findHeader(gmailMsg, 'bcc')!)}</span><br/>` : '';
-      this.printMailInfoHtml = `
-      <hr>
-      <p class="subject-label" data-test="print-subject">${GmailParser.findHeader(gmailMsg, 'subject')}</p>
-      <hr>
-      <br/>
-      <div>
-        <div class="inline-block">
-          <span data-test="print-from">From: ${fromHtml}</span>
-        </div>
-        <div class="float-right">
-          <span>${sentDateStr}</span>
-        </div>
-      </div>
-      <span data-test="print-to">To: ${Xss.escape(GmailParser.findHeader(gmailMsg, 'to') ?? '')}</span><br/>
-      ${ccString}
-      ${bccString}
-      <br/><hr>
-    `;
-    } catch (e) {
-      this.errorModule.debug(`Error while getting gmail message for ${this.msgId} message. ${e}`);
-    }
-  };
-
-  private printPGPBlock = async () => {
-    const w = window.open();
-    const html = `
-      <!DOCTYPE html>
-      <html lang="en-us">
-      <head>
-        <style>
-          #action_show_quoted_content {
-            display: none;
-          }
-          .print_header_info {
-            color: #777777;
-            font-weight: bold;
-            -webkit-print-color-adjust: exact;
-          }
-          .print_encrypted_with_label {
-            display: table-cell;
-            vertical-align: middle;
-            padding-right: 5px;
-          }
-          .subject-label {
-            font-weight: bold;
-            font-size: 20px;
-          }
-          .inline-block {
-            display: inline-block;
-          }
-          .display-table {
-            display: table;
-          }
-          .float-right {
-            float: right;
-          }
-          .quoted_content {
-            display: none;
-          }
-          #attachments a.preview-attachment {
-            display: inline-flex;
-            color: #333 !important;
-            align-items: center;
-            height: 36px;
-            background: #f8f8f8;
-            border: 1px solid #ccc;
-            border-left: 4px solid #31a217 !important;
-            font-family: inherit;
-            font-size: inherit;
-            margin-bottom: 8px;
-            cursor: pointer;
-            margin-right: 12px;
-            padding: 0 8px;
-            text-decoration: none;
-          }
-          #attachments a.preview-attachment .download-attachment {
-            display: none;
-          }
-        </style>
-      </head>
-      <body>
-        ${$('#print-header').html()}
-        <br>
-        ${this.printMailInfoHtml}
-        <br>
-        <div data-test="print-content">
-          ${$("#pgp_block").html()}
-        </div>
-      </body>
-      </html>
-    `;
-    w!.document.write(html);
-    // Give some time for above dom to load in print dialog
-    // https://stackoverflow.com/questions/31725373/google-chrome-not-showing-image-in-print-preview
-    await Ui.time.sleep(250);
-    w!.window.print();
-    w!.document.close();
+    $('.pgp_print_button').click(this.setHandler(() => this.renderModule.printPGPBlock()));
   };
 
 }
