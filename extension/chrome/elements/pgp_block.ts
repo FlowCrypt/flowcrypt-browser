@@ -20,8 +20,6 @@ import { ClientConfiguration } from '../../js/common/client-configuration.js';
 import { AcctStore } from '../../js/common/platform/store/acct-store.js';
 import { ContactStore } from '../../js/common/platform/store/contact-store.js';
 import { KeyUtil } from '../../js/common/core/crypto/key.js';
-import { GmailParser } from '../../js/common/api/email-provider/gmail/gmail-parser.js';
-import { Xss } from '../../js/common/platform/xss.js';
 
 export class PgpBlockView extends View {
 
