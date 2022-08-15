@@ -30,16 +30,16 @@ export class PgpBlockViewRenderModule {
     const fullName = await AcctStore.get(this.view.acctEmail, ['full_name']);
     Xss.sanitizeRender('.print_user_email', `<b>${fullName.full_name}</b> &lt;${this.view.acctEmail}&gt;`);
     try {
-      const gmailMsg = await this.view.gmail.msgGet(this.view.msgId!, 'full', undefined);
+      const gmailMsg = await this.view.gmail.msgGet(this.view.msgId!, 'metadata', undefined);
       const sentDate = new Date(GmailParser.findHeader(gmailMsg, 'date') ?? '');
       const sentDateStr = Str.fromDate(sentDate).replace(' ', ' at ');
       const from = Str.parseEmail(GmailParser.findHeader(gmailMsg, 'from') ?? '');
-      const fromHtml = from.name ? `<b>${from.name}</b> &lt;${from.email}&gt;` : from.email;
+      const fromHtml = from.name ? `<b>${Xss.htmlSanitize(from.name)}</b> &lt;${from.email}&gt;` : from.email;
       const ccString = GmailParser.findHeader(gmailMsg, 'cc') ? `Cc: <span data-test="print-cc">${Xss.escape(GmailParser.findHeader(gmailMsg, 'cc')!)}</span><br/>` : '';
       const bccString = GmailParser.findHeader(gmailMsg, 'bcc') ? `Bcc: <span>${Xss.escape(GmailParser.findHeader(gmailMsg, 'bcc')!)}</span><br/>` : '';
       this.printMailInfoHtml = `
       <hr>
-      <p class="subject-label" data-test="print-subject">${GmailParser.findHeader(gmailMsg, 'subject')}</p>
+      <p class="subject-label" data-test="print-subject">${Xss.htmlSanitize(GmailParser.findHeader(gmailMsg, 'subject') ?? '')}</p>
       <hr>
       <br/>
       <div>
