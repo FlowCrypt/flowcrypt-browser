@@ -176,8 +176,7 @@ export class BrowserRecipe {
         t.log(`found err content:${errBadgeContent}`);
         throw new Error(`pgp_block_verify_decrypted_content:missing expected error content:${m.error}`);
       }
-    }
-    if (m.content.length > 0) {
+    } else if (m.content.length > 0) {
       if (!await pgpBlockPage.isElementVisible('@action-print')) {
         throw new Error(`Print button is invisible`);
       }
