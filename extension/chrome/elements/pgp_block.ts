@@ -94,8 +94,6 @@ export class PgpBlockView extends View {
     this.fesUrl = storage.fesUrl;
     this.clientConfiguration = await ClientConfiguration.newInstance(this.acctEmail);
     this.pubLookup = new PubLookup(this.clientConfiguration);
-    const scopes = await AcctStore.getScopes(this.acctEmail);
-    this.decryptModule.canReadEmails = scopes.modify;
     await this.renderModule.initPrintView();
     if (storage.setup_done) {
       const parsedPubs = (await ContactStore.getOneWithAllPubkeys(undefined, this.getExpectedSignerEmail()))?.sortedPubkeys ?? [];

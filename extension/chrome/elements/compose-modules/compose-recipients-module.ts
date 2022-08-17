@@ -42,12 +42,10 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
   private dragged: Element | undefined = undefined;
 
   private googleContactsSearchEnabled: boolean;
-  private canReadEmails: boolean;
 
   constructor(view: ComposeView) {
     super(view);
     this.googleContactsSearchEnabled = this.view.scopes.readContacts && this.view.scopes.readOtherContacts;
-    this.canReadEmails = this.view.scopes.modify;
   }
 
   public setHandlers = (): void => {
@@ -350,9 +348,6 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     if (storage.pubkey_sent_to && storage.pubkey_sent_to.includes(theirEmail)) {
       return true;
     }
-    if (!this.canReadEmails) {
-      return undefined;
-    }
     const qSentPubkey = `is:sent to:${theirEmail} "BEGIN PGP PUBLIC KEY" "END PGP PUBLIC KEY"`;
     const qReceivedMsg = `from:${theirEmail} "BEGIN PGP MESSAGE" "END PGP MESSAGE"`;
     try {
@@ -560,22 +555,25 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       this.view.errModule.debug(`searchContacts substring: ${substring}`);
       this.view.errModule.debug(`searchContacts db count: ${contacts.length}`);
       this.renderSearchRes(input, contacts, { substring });
-      if (contacts.length >= this.MAX_CONTACTS_LENGTH || !(this.canReadEmails || this.googleContactsSearchEnabled)) {
+      if (contacts.length >= this.MAX_CONTACTS_LENGTH) {
         this.view.errModule.debug(`searchContacts 2, count: ${contacts.length}`);
         return;
       }
-      this.view.errModule.debug(`searchContacts 3`);
-      const foundOnGoogle = await this.searchContactsOnGoogle(substring, contacts);
-      await this.addApiLoadedContactsToDb(foundOnGoogle);
-      this.view.errModule.debug(`searchContacts foundOnGoogle, count: ${foundOnGoogle.length}`);
-      contacts.push(...foundOnGoogle.map(c => ContactStore.previewObj({ email: c.email, name: c.name })));
-      this.renderSearchRes(input, contacts, { substring });
-      if (contacts.length >= this.MAX_CONTACTS_LENGTH) {
-        this.view.errModule.debug(`searchContacts 3.b, count: ${contacts.length}`);
-        return;
+      let foundOnGoogle: EmailProviderContact[] = [];
+      if (this.googleContactsSearchEnabled) {
+        this.view.errModule.debug(`searchContacts 3`);
+        foundOnGoogle = await this.searchContactsOnGoogle(substring, contacts);
+        await this.addApiLoadedContactsToDb(foundOnGoogle);
+        this.view.errModule.debug(`searchContacts foundOnGoogle, count: ${foundOnGoogle.length}`);
+        contacts.push(...foundOnGoogle.map(c => ContactStore.previewObj({ email: c.email, name: c.name })));
+        this.renderSearchRes(input, contacts, { substring });
+        if (contacts.length >= this.MAX_CONTACTS_LENGTH) {
+          this.view.errModule.debug(`searchContacts 3.b, count: ${contacts.length}`);
+          return;
+        }
       }
       this.view.errModule.debug(`searchContacts 4`);
-      if (this.canReadEmails && !foundOnGoogle.length) {
+      if (!foundOnGoogle.length) {
         this.view.errModule.debug(`searchContacts (Gmail Sent Messages) 6.b`);
         await this.guessContactsFromSentEmails(substring, contacts, async guessed => {
           await this.addApiLoadedContactsToDb(guessed.new);
