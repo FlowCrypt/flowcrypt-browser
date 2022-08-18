@@ -19,7 +19,7 @@ import { KeyStoreUtil } from "../../../js/common/core/crypto/key-store-util.js";
 import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
 import { KeyUtil } from '../../../js/common/core/crypto/key.js';
 
-type AttesterKeyserverDiagnosis = { hasPubkeyMissing: boolean, hasPubkeyMismatch: boolean, results: Dict<{ pubkey?: string, match: boolean }> };
+type AttesterKeyserverDiagnosis = { hasPubkeyMissing: boolean, hasPubkeyMismatch: boolean, results: Dict<{ pubkeys: string[], match: boolean }> };
 
 View.run(class KeyserverView extends View {
 
@@ -51,7 +51,7 @@ View.run(class KeyserverView extends View {
     for (const email of Object.keys(diagnosis.results)) {
       const result = diagnosis.results[email];
       let note, action, color;
-      if (!result.pubkey) {
+      if (!result.pubkeys.length) {
         note = 'Missing record. Your contacts will not know you have encryption set up.';
         action = `<button class="button gray2 small action_submit_key" data-test="action-submit-pub" email="${Xss.escape(email)}">Submit public key</button>`;
         color = 'orange';
@@ -128,18 +128,9 @@ View.run(class KeyserverView extends View {
     const results = await this.pubLookup.attester.lookupEmails(sendAs ? Object.keys(sendAs) : [this.acctEmail]);
     for (const email of Object.keys(results)) {
       const pubkeySearchResult = results[email];
-      if (!pubkeySearchResult.pubkey) {
-        diagnosis.hasPubkeyMissing = true;
-        diagnosis.results[email] = { pubkey: undefined, match: false };
-      } else {
-        const pub = await KeyUtil.parse(pubkeySearchResult.pubkey);
-        let match = true;
-        if (!storedKeysIds.includes(pub.id)) {
-          diagnosis.hasPubkeyMismatch = true;
-          match = false;
-        }
-        diagnosis.results[email] = { pubkey: pubkeySearchResult.pubkey, match };
-      }
+      const hasMatchingKey = pubkeySearchResult.pubkeys.some(async (pubkey) => storedKeysIds.includes((await KeyUtil.parse(pubkey)).id));
+      diagnosis.hasPubkeyMismatch = !hasMatchingKey;
+      diagnosis.results[email] = { pubkeys: pubkeySearchResult.pubkeys, match: hasMatchingKey };
     }
     return diagnosis;
   };

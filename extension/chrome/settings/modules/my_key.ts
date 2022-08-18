@@ -76,7 +76,8 @@ View.run(class MyKeyView extends View {
     try {
       const result = await this.pubLookup.attester.lookupEmail(this.acctEmail);
       const url = FlowCryptWebsite.url('pubkey', this.acctEmail);
-      if (result.pubkey && (await KeyUtil.parse(result.pubkey)).id === this.keyInfo.fingerprints[0]) {
+      const doesContainKey = result.pubkeys.some(async (pubkey) => (await KeyUtil.parse(pubkey)).id === this.keyInfo.fingerprints[0]);
+      if (doesContainKey) {
         $('.pubkey_link_container a').text(url.replace('https://', '')).attr('href', url).parent().css('display', '');
       } else {
         $('.pubkey_link_container').remove();
