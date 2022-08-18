@@ -7,8 +7,32 @@ import { OauthMock } from '../lib/oauth';
 // tslint:disable:no-null-keyword
 // tslint:disable:oneliner-object-literal
 
+export const keyManagerAutogenRules = {
+  "flags": [
+    "NO_PRV_BACKUP",
+    "ENFORCE_ATTESTER_SUBMIT",
+    "PRV_AUTOIMPORT_OR_AUTOGEN",
+    "PASS_PHRASE_QUIET_AUTOGEN",
+    "DEFAULT_REMEMBER_PASS_PHRASE",
+  ],
+  "key_manager_url": "https://localhost:8001/flowcrypt-email-key-manager",
+  "enforce_keygen_algo": "rsa2048",
+  "disallow_attester_search_for_domains": []
+};
+
 export class BackendData {
   public reportedErrors: { name: string, message: string, url: string, line: number, col: number, trace: string, version: string, environmane: string }[] = [];
+
+  public clientConfigurationByAcctEmail: Dict<{
+    // todo: should we somehow import the type from `client-configuration.ts`?
+    flags?: string[],
+    custom_keyserver_url?: string,
+    key_manager_url?: string,
+    allow_attester_search_only_for_domains?: string[],
+    disallow_attester_search_for_domains?: string[],
+    enforce_keygen_algo?: string,
+    enforce_keygen_expire_months?: number,
+  }> = {};
 
   private uuidsByAcctEmail: Dict<string[]> = {};
 
@@ -46,6 +70,10 @@ export class BackendData {
   };
 
   public getClientConfiguration = (acct: string) => {
+    const foundConfiguration = this.clientConfigurationByAcctEmail[acct];
+    if (foundConfiguration) {
+      return foundConfiguration;
+    }
     const domain = acct.split('@')[1];
     if (domain === 'client-configuration-test.flowcrypt.test') {
       return {
@@ -104,18 +132,6 @@ export class BackendData {
         "allow_attester_search_only_for_domains": []
       };
     }
-    const keyManagerAutogenRules = {
-      "flags": [
-        "NO_PRV_BACKUP",
-        "ENFORCE_ATTESTER_SUBMIT",
-        "PRV_AUTOIMPORT_OR_AUTOGEN",
-        "PASS_PHRASE_QUIET_AUTOGEN",
-        "DEFAULT_REMEMBER_PASS_PHRASE",
-      ],
-      "key_manager_url": "https://localhost:8001/flowcrypt-email-key-manager",
-      "enforce_keygen_algo": "rsa2048",
-      "disallow_attester_search_for_domains": []
-    };
     if (domain === 'google.mock.flowcryptlocal.test:8001') {
       return { ...keyManagerAutogenRules, flags: [...keyManagerAutogenRules.flags, 'NO_ATTESTER_SUBMIT'] };
     }

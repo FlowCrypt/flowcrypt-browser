@@ -266,6 +266,9 @@ export const mockKeyManagerEndpoints: HandlersDefinition = {
       if (acctEmail === 'get.error@key-manager-autogen.flowcrypt.test') {
         throw new Error('Intentional error for get.error to test client behavior');
       }
+      if (acctEmail === 'settings@settings.flowcrypt.test') {
+        return { privateKeys: [{ decryptedPrivateKey: testConstants.existingPrv }] };
+      }
       throw new HttpClientErr(`Unexpectedly calling mockKeyManagerEndpoints:/v1/keys/private GET with acct ${acctEmail}`);
     }
     if (isPut(req)) {

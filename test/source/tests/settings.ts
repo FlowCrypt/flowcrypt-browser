@@ -24,6 +24,8 @@ import Parse from './../util/parse';
 import { OpenPGPKey } from '../core/crypto/pgp/openpgp-key';
 import { BrowserHandle } from '../browser';
 import { AvaContext } from './tooling';
+import { mockBackendData } from '../mock/backend/backend-endpoints';
+import { keyManagerAutogenRules } from '../mock/backend/backend-data';
 
 // tslint:disable:no-blank-lines-func
 
@@ -945,6 +947,47 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       expect(savedPassphrase2).not.to.be.an('undefined');
       await newSettingsPage.close();
       await settingsPage.close();
+    }));
+
+    ava.default('settings - update', testWithBrowser(undefined, async (t, browser) => {
+      const acct = 'settings@settings.flowcrypt.test';
+      // set up the client configuration returned for the account
+      mockBackendData.clientConfigurationByAcctEmail[acct] = keyManagerAutogenRules;
+      const setupPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
+      await SetupPageRecipe.autoSetupWithEKM(setupPage);
+      const {
+        cryptup_settingssettingsflowcrypttest_rules: rules1
+      } = await setupPage.getFromLocalStorage([
+        'cryptup_settingssettingsflowcrypttest_rules'
+      ]);
+      expect((rules1 as { flags: string[] }).flags).to.eql([
+        'NO_PRV_BACKUP',
+        'ENFORCE_ATTESTER_SUBMIT',
+        'PRV_AUTOIMPORT_OR_AUTOGEN',
+        'PASS_PHRASE_QUIET_AUTOGEN',
+        'DEFAULT_REMEMBER_PASS_PHRASE']);
+      await setupPage.close();
+
+      // modify the flags returned for the account
+      mockBackendData.clientConfigurationByAcctEmail[acct] = {
+        ...keyManagerAutogenRules,
+        flags: [
+          'NO_ATTESTER_SUBMIT',
+          'HIDE_ARMOR_META',
+          'DEFAULT_REMEMBER_PASS_PHRASE'
+        ]
+      }
+      // open the settings page
+      const settingsPage = await browser.newPage(t, TestUrls.extensionSettings(acct));
+      const {
+        cryptup_settingssettingsflowcrypttest_rules: rules2
+      } = await settingsPage.getFromLocalStorage(['cryptup_settingssettingsflowcrypttest_rules']);
+      // check that the flags in the storage have changed
+      expect((rules2 as { flags: string[] }).flags).to.eql([
+        'NO_ATTESTER_SUBMIT',
+        'HIDE_ARMOR_META',
+        'DEFAULT_REMEMBER_PASS_PHRASE']);
+      await setupPage.close();
     }));
 
     ava.default('settings - email change to account that has FORBID_STORING_PASS_PHRASE', testWithBrowser('ci.tests.gmail', async (t, browser) => {
