@@ -57,6 +57,9 @@ export const mockAttesterEndpoints: HandlersDefinition = {
       if (emailOrLongid === 'flowcrypt.compatibility@protonmail.com') {
         return protonMailCompatKey;
       }
+      if (emailOrLongid === 'multiple.pub.key@flowcrypt.com') {
+        return [somePubkey, protonMailCompatKey].join('\n');
+      }
       if (emailOrLongid === 'some.sender@test.com') {
         return await get203FAE7076005381();
       }
