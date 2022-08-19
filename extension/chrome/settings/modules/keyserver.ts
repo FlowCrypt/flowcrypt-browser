@@ -136,7 +136,7 @@ View.run(class KeyserverView extends View {
     const results = await this.pubLookup.attester.lookupEmails(sendAs ? Object.keys(sendAs) : [this.acctEmail]);
     for (const email of Object.keys(results)) {
       const pubkeySearchResult = results[email];
-      const hasMatchingKey = await asyncSome(pubkeySearchResult.pubkeys, (async (pubkey: string) =>
+      const hasMatchingKey = await asyncSome(pubkeySearchResult.pubkeys, (async (pubkey) =>
         storedKeysIds.includes((await KeyUtil.parse(pubkey)).id))
       );
       diagnosis.hasPubkeyMismatch = !hasMatchingKey;
