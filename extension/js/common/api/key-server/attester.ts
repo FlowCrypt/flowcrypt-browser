@@ -23,7 +23,7 @@ export class Attester extends Api {
   public lookupEmail = async (email: string): Promise<PubkeysSearchResult> => {
     if (!this.clientConfiguration.canLookupThisRecipientOnAttester(email)) {
       console.info(`Skipping attester lookup of ${email} because attester search on this domain is disabled.`);
-      return { pubkeys: [] }; // tslint:disable-line:no-null-keyword
+      return { pubkeys: [] };
     }
     return await this.doLookup(email);
   };
@@ -103,7 +103,7 @@ export class Attester extends Api {
       return { pubkeys };
     } catch (e) {
       if (ApiErr.isNotFound(e)) {
-        return { pubkeys: [] }; // tslint:disable-line:no-null-keyword
+        return { pubkeys: [] };
       }
       throw e;
     }
