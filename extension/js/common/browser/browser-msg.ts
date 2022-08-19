@@ -315,7 +315,7 @@ export class BrowserMsg {
         if (BrowserMsg.shouldRelayMsgToOtherPage(sender, msg.to)) { // message that has to be relayed through bg
           if (msg.to === 'broadcast' && sender.tab?.id) {
             // bounce the broadcast message back to the sender tab to make it reach all the frames (in Firefox), fixes #4072
-            chrome.tabs.sendMessage(sender.tab.id, msg);
+            void chrome.tabs.sendMessage(sender.tab.id, msg);
             return true;
           }
           const { tab, frame } = BrowserMsg.browserMsgDestParse(msg.to);
