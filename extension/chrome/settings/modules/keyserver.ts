@@ -65,7 +65,15 @@ View.run(class KeyserverView extends View {
         action = `<button class="button gray2 small action_replace_pubkey" email="${Xss.escape(email)}">Correct public records</button>`;
         color = 'red';
       }
-      Xss.sanitizeAppend('#content', `<div class="line left">${Xss.escape(email)}: <span class="${color}">${note}</span> ${action}</div>`);
+      Xss.sanitizeAppend('#content', `
+        <div class="line left">
+          ${Xss.escape(email)}:
+          <span data-test="attester-${email.replace(/[^a-z0-9]+/g, '')}-pubkey-result" class="${color}">
+            ${note}
+          </span>
+          ${action}
+        </div>
+      `);
     }
   };
 
@@ -128,7 +136,9 @@ View.run(class KeyserverView extends View {
     const results = await this.pubLookup.attester.lookupEmails(sendAs ? Object.keys(sendAs) : [this.acctEmail]);
     for (const email of Object.keys(results)) {
       const pubkeySearchResult = results[email];
-      const hasMatchingKey = await asyncSome(pubkeySearchResult.pubkeys, (async (pubkey: string) => storedKeysIds.includes((await KeyUtil.parse(pubkey)).id)));
+      const hasMatchingKey = await asyncSome(pubkeySearchResult.pubkeys, (async (pubkey: string) =>
+        storedKeysIds.includes((await KeyUtil.parse(pubkey)).id))
+      );
       diagnosis.hasPubkeyMismatch = !hasMatchingKey;
       diagnosis.results[email] = { pubkeys: pubkeySearchResult.pubkeys, match: hasMatchingKey };
     }

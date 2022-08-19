@@ -354,7 +354,7 @@ export const emailKeyIndex = (scope: string, key: string): string => {
   return `${scope.replace(/[^A-Za-z0-9]+/g, '').toLowerCase()}_${key}`;
 };
 
-export const asyncSome = async (arr: Array<unknown>, predicate: (e: unknown) => Promise<boolean>) => {
+export const asyncSome = async<T>(arr: Array<T>, predicate: (e: unknown) => Promise<boolean>) => {
   for (const e of arr) {
     if (await predicate(e)) return true;
   }

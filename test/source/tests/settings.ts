@@ -43,17 +43,24 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       await SettingsPageRecipe.toggleScreen(settingsPage, 'basic');
     }));
 
-    ava.default('settings - attester shows my emails', testWithBrowser('compatibility', async (t, browser) => {
-      const settingsPage = await browser.newPage(t, TestUrls.extensionSettings('flowcrypt.compatibility@gmail.com'));
+    ava.default('settings - attester shows mismatch information correctly', testWithBrowser(undefined, async (t, browser) => {
+      const email = 'test.match.attester.key@gmail.com';
+      const mismatchEmail = 'test.mismatch.attester.key@gmail.com';
+      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, email);
+      await SetupPageRecipe.manualEnter(settingsPage, 'test.match.attester.key', { submitPubkey: false, usedPgpBefore: true },
+        { isSavePassphraseChecked: false, isSavePassphraseHidden: false });
       await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
       const attesterFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-attester-page', ['keyserver.htm', 'placement=settings']);
       await attesterFrame.waitAll('@page-attester');
-      await Util.sleep(1);
       await attesterFrame.waitTillGone('@spinner');
-      await attesterFrame.waitForContent('@page-attester', 'flowcrypt.compatibility@gmail.com');
-      await attesterFrame.waitForContent('@page-attester', 'flowcryptcompatibility@gmail.com');
-      await SettingsPageRecipe.closeDialog(settingsPage);
-      await SettingsPageRecipe.toggleScreen(settingsPage, 'basic');
+      await attesterFrame.waitForContent(
+        `@attester-${email.replace(/[^a-z0-9]+/g, '')}-pubkey-result`,
+        'Submitted correctly, can receive encrypted email.'
+      );
+      await attesterFrame.waitForContent(
+        `@attester-${mismatchEmail.replace(/[^a-z0-9]+/g, '')}-pubkey-result`,
+        'Wrong public key recorded. Your incoming email may be unreadable when encrypted.'
+      );
     }));
 
     ava.default('settings - verify key presense 1pp1', testWithBrowser('compatibility', async (t, browser) => {

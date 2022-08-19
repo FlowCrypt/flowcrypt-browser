@@ -48,6 +48,12 @@ export const mockAttesterEndpoints: HandlersDefinition = {
       if (emailOrLongid === 'mock.only.pubkey@flowcrypt.com') {
         return somePubkey;
       }
+      if (emailOrLongid === 'test.match.attester.key@gmail.com') {
+        return testMatchPubKey;
+      }
+      if (emailOrLongid === 'test.mismatch.attester.key@gmail.com') {
+        return somePubkey;
+      }
       if (emailOrLongid === 'mock.only.pubkey@other.com') {
         return somePubkey;
       }
@@ -136,6 +142,47 @@ A6fEpV8aLaFnAt+zh3cw4A7SNAO9omGAUZeBl4Pz1IlN2lC2grc2zpqoxo8o
 VFI1MhkJ6Xhrug==
 =+de8
 -----END PGP PUBLIC KEY BLOCK-----`;
+
+const testMatchPubKey = `-----BEGIN PGP PUBLIC KEY BLOCK-----
+
+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
+hcNvAZK183w=
+=Ayyi
+-----END PGP PUBLIC KEY BLOCK-----
+`;
 
 const expiredPubkey = `-----BEGIN PGP PUBLIC KEY BLOCK-----
 
