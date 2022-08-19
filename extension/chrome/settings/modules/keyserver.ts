@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { Dict, Url } from '../../../js/common/core/common.js';
+import { asyncSome, Dict, Url } from '../../../js/common/core/common.js';
 
 import { ApiErr } from '../../../js/common/api/shared/api-error.js';
 import { Assert } from '../../../js/common/assert.js';
@@ -128,7 +128,7 @@ View.run(class KeyserverView extends View {
     const results = await this.pubLookup.attester.lookupEmails(sendAs ? Object.keys(sendAs) : [this.acctEmail]);
     for (const email of Object.keys(results)) {
       const pubkeySearchResult = results[email];
-      const hasMatchingKey = pubkeySearchResult.pubkeys.some(async (pubkey) => storedKeysIds.includes((await KeyUtil.parse(pubkey)).id));
+      const hasMatchingKey = await asyncSome(pubkeySearchResult.pubkeys, (async (pubkey: string) => storedKeysIds.includes((await KeyUtil.parse(pubkey)).id)));
       diagnosis.hasPubkeyMismatch = !hasMatchingKey;
       diagnosis.results[email] = { pubkeys: pubkeySearchResult.pubkeys, match: hasMatchingKey };
     }
