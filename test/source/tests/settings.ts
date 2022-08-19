@@ -56,7 +56,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       await SettingsPageRecipe.toggleScreen(settingsPage, 'basic');
     }));
 
-    ava.default('settings - attester shows mismatch information correctly', testWithBrowser(undefined, async (t, browser) => {
+    ava.default('settings - attester diagnostics page shows mismatch information correctly', testWithBrowser(undefined, async (t, browser) => {
       const email = 'test.match.attester.key@gmail.com';
       const mismatchEmail = 'test.mismatch.attester.key@gmail.com';
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, email);
