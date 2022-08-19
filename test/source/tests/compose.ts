@@ -1485,7 +1485,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       await composePage.waitAny('@password-or-pubkey-container', { visible: false });
     }));
 
-    ava.default('attester should understand more than one pub key', testWithBrowser('ci.tests.gmail', async (t, browser) => {
+    ava.default('attester client should understand more than one pub key', testWithBrowser('ci.tests.gmail', async (t, browser) => {
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
       const recipientEmail = 'multiple.pub.key@flowcrypt.com';
       await ComposePageRecipe.fillMsg(composePage, { to: recipientEmail }, t.title);
