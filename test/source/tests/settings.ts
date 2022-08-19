@@ -43,6 +43,19 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       await SettingsPageRecipe.toggleScreen(settingsPage, 'basic');
     }));
 
+    ava.default('settings - attester shows my emails', testWithBrowser('compatibility', async (t, browser) => {
+      const settingsPage = await browser.newPage(t, TestUrls.extensionSettings('flowcrypt.compatibility@gmail.com'));
+      await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
+      const attesterFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-attester-page', ['keyserver.htm', 'placement=settings']);
+      await attesterFrame.waitAll('@page-attester');
+      await Util.sleep(1);
+      await attesterFrame.waitTillGone('@spinner');
+      await attesterFrame.waitForContent('@page-attester', 'flowcrypt.compatibility@gmail.com');
+      await attesterFrame.waitForContent('@page-attester', 'flowcryptcompatibility@gmail.com');
+      await SettingsPageRecipe.closeDialog(settingsPage);
+      await SettingsPageRecipe.toggleScreen(settingsPage, 'basic');
+    }));
+
     ava.default('settings - attester shows mismatch information correctly', testWithBrowser(undefined, async (t, browser) => {
       const email = 'test.match.attester.key@gmail.com';
       const mismatchEmail = 'test.mismatch.attester.key@gmail.com';
