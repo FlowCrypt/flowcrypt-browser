@@ -150,6 +150,18 @@ export const mockGoogleEndpoints: HandlersDefinition = {
           treatAsAlias: false,
           verificationStatus: 'accepted'
         });
+      } else if (acct === 'test.match.attester.key@gmail.com') {
+        const alias = 'test.mismatch.attester.key@gmail.com';
+        sendAs.push({
+          sendAsEmail: alias,
+          displayName: 'Test mismatch',
+          replyToAddress: alias,
+          signature: '',
+          isDefault: false,
+          isPrimary: false,
+          treatAsAlias: false,
+          verificationStatus: 'accepted'
+        });
       }
       return { sendAs };
     }

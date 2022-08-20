@@ -46,10 +46,6 @@ export class PubLookup {
         return { pubkeys: [res.pubkey] };
       }
     }
-    const attRes = await this.attester.lookupEmail(email);
-    if (attRes.pubkey) {
-      return { pubkeys: [attRes.pubkey] };
-    }
-    return { pubkeys: [] };
+    return await this.attester.lookupEmail(email);
   };
 }
