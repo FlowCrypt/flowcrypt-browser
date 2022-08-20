@@ -20,19 +20,21 @@ export const keyManagerAutogenRules = {
   "disallow_attester_search_for_domains": []
 };
 
+export type ClientConfiguration = {
+  // todo: should we somehow import the type from `client-configuration.ts`?
+  flags?: string[],
+  custom_keyserver_url?: string,
+  key_manager_url?: string,
+  allow_attester_search_only_for_domains?: string[],
+  disallow_attester_search_for_domains?: string[],
+  enforce_keygen_algo?: string,
+  enforce_keygen_expire_months?: number
+};
+
 export class BackendData {
   public reportedErrors: { name: string, message: string, url: string, line: number, col: number, trace: string, version: string, environmane: string }[] = [];
 
-  public clientConfigurationByAcctEmail: Dict<{
-    // todo: should we somehow import the type from `client-configuration.ts`?
-    flags?: string[],
-    custom_keyserver_url?: string,
-    key_manager_url?: string,
-    allow_attester_search_only_for_domains?: string[],
-    disallow_attester_search_for_domains?: string[],
-    enforce_keygen_algo?: string,
-    enforce_keygen_expire_months?: number,
-  }> = {};
+  public clientConfigurationByAcctEmail: Dict<ClientConfiguration> = {};
 
   private uuidsByAcctEmail: Dict<string[]> = {};
 

@@ -18,6 +18,7 @@ import { GlobalStore } from '../../common/platform/store/global-store.js';
 import { ClientConfiguration } from '../../common/client-configuration.js';
 import { KeyManager } from '../../common/api/key-server/key-manager.js';
 import { InMemoryStore } from '../../common/platform/store/in-memory-store.js';
+import { AccountServer } from '../../common/api/account-server.js';
 
 export type WebmailVariantObject = { newDataLayer: undefined | boolean, newUi: undefined | boolean, email: undefined | string, gmailVariant: WebmailVariantString };
 export type IntervalFunction = { interval: number, handler: () => void };
@@ -285,6 +286,11 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
       const acctEmail = await waitForAcctEmail();
       const { tabId, notifications, factory, inject } = await initInternalVars(acctEmail);
       await showNotificationsAndWaitTilAcctSetUp(acctEmail, notifications);
+      const authInfo = await AcctStore.authInfo(acctEmail);
+      if (authInfo.uuid) { // have auth email set
+        // todo: catch? ignore?
+        await (new AccountServer(acctEmail)).accountGetAndUpdateLocalStore(authInfo);
+      }
       const ppEvent: { entered?: boolean } = {};
       browserMsgListen(acctEmail, tabId, inject, factory, notifications, ppEvent);
       const clientConfiguration = await ClientConfiguration.newInstance(acctEmail);

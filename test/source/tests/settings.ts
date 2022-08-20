@@ -25,7 +25,7 @@ import { OpenPGPKey } from '../core/crypto/pgp/openpgp-key';
 import { BrowserHandle } from '../browser';
 import { AvaContext } from './tooling';
 import { mockBackendData } from '../mock/backend/backend-endpoints';
-import { keyManagerAutogenRules } from '../mock/backend/backend-data';
+import { ClientConfiguration } from '../mock/backend/backend-data';
 
 // tslint:disable:no-blank-lines-func
 
@@ -949,10 +949,22 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       await settingsPage.close();
     }));
 
-    ava.default('settings - update', testWithBrowser(undefined, async (t, browser) => {
+    ava.default('settings - client configuration gets updated on settings and content script reloads', testWithBrowser(undefined, async (t, browser) => {
       const acct = 'settings@settings.flowcrypt.test';
       // set up the client configuration returned for the account
-      mockBackendData.clientConfigurationByAcctEmail[acct] = keyManagerAutogenRules;
+      const setup = {
+        flags: [
+          "NO_PRV_BACKUP",
+          "ENFORCE_ATTESTER_SUBMIT",
+          "PRV_AUTOIMPORT_OR_AUTOGEN",
+          "PASS_PHRASE_QUIET_AUTOGEN",
+          "DEFAULT_REMEMBER_PASS_PHRASE",
+        ],
+        key_manager_url: 'https://localhost:8001/flowcrypt-email-key-manager',
+        enforce_keygen_algo: 'rsa2048',
+        disallow_attester_search_for_domains: ['disallowed_domain1.test', 'disallowed_domain2.test']
+      };
+      mockBackendData.clientConfigurationByAcctEmail[acct] = setup;
       const setupPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
       await SetupPageRecipe.autoSetupWithEKM(setupPage);
       const {
@@ -960,34 +972,63 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       } = await setupPage.getFromLocalStorage([
         'cryptup_settingssettingsflowcrypttest_rules'
       ]);
-      expect((rules1 as { flags: string[] }).flags).to.eql([
+      const clientConfiguration1 = rules1 as ClientConfiguration;
+      expect(clientConfiguration1.flags).to.eql([
         'NO_PRV_BACKUP',
         'ENFORCE_ATTESTER_SUBMIT',
         'PRV_AUTOIMPORT_OR_AUTOGEN',
         'PASS_PHRASE_QUIET_AUTOGEN',
         'DEFAULT_REMEMBER_PASS_PHRASE']);
+      expect(clientConfiguration1.disallow_attester_search_for_domains).to.eql(['disallowed_domain1.test', 'disallowed_domain2.test']);
+      expect(clientConfiguration1.enforce_keygen_algo).to.equal('rsa2048');
+      expect(clientConfiguration1.key_manager_url).to.equal('https://localhost:8001/flowcrypt-email-key-manager');
       await setupPage.close();
 
       // modify the flags returned for the account
-      mockBackendData.clientConfigurationByAcctEmail[acct] = {
-        ...keyManagerAutogenRules,
-        flags: [
-          'NO_ATTESTER_SUBMIT',
-          'HIDE_ARMOR_META',
-          'DEFAULT_REMEMBER_PASS_PHRASE'
-        ]
-      }
+      setup.flags = ['NO_ATTESTER_SUBMIT', 'HIDE_ARMOR_META', 'DEFAULT_REMEMBER_PASS_PHRASE'];
+      // modify other settings
+      setup.disallow_attester_search_for_domains = ['disallowed_domain3.test', 'disallowed_domain4.test'];
+      setup.enforce_keygen_algo = 'rsa3072';
       // open the settings page
       const settingsPage = await browser.newPage(t, TestUrls.extensionSettings(acct));
       const {
         cryptup_settingssettingsflowcrypttest_rules: rules2
       } = await settingsPage.getFromLocalStorage(['cryptup_settingssettingsflowcrypttest_rules']);
-      // check that the flags in the storage have changed
-      expect((rules2 as { flags: string[] }).flags).to.eql([
-        'NO_ATTESTER_SUBMIT',
-        'HIDE_ARMOR_META',
+      // check that the configuration in the storage has been updated
+      const clientConfiguration2 = rules2 as ClientConfiguration;
+      expect(clientConfiguration2.flags).to.eql(['NO_ATTESTER_SUBMIT', 'HIDE_ARMOR_META', 'DEFAULT_REMEMBER_PASS_PHRASE']);
+      expect(clientConfiguration2.disallow_attester_search_for_domains).to.eql(['disallowed_domain3.test', 'disallowed_domain4.test']);
+      expect(clientConfiguration2.enforce_keygen_algo).to.equal('rsa3072');
+      const accessToken = await BrowserRecipe.getGoogleAccessToken(settingsPage, acct);
+      // keep settingsPage open to re-read the storage later via it
+      // re-configure the setup again
+      setup.flags = [
+        'NO_PRV_BACKUP',
+        'ENFORCE_ATTESTER_SUBMIT',
+        'PRV_AUTOIMPORT_OR_AUTOGEN',
+        'PASS_PHRASE_QUIET_AUTOGEN',
+        'DEFAULT_REMEMBER_PASS_PHRASE'];
+      setup.disallow_attester_search_for_domains = ['disallowed_domain5.test', 'disallowed_domain6.test'];
+      setup.enforce_keygen_algo = 'rsa2048';
+      const extraAuthHeaders = { Authorization: `Bearer ${accessToken}` };
+      const gmailPage = await browser.newPage(t, TestUrls.mockGmailUrl(), undefined, extraAuthHeaders);
+      await Util.sleep(3);
+      // read the local storage from via the extension's own page (settings)
+      const {
+        cryptup_settingssettingsflowcrypttest_rules: rules3
+      } = await settingsPage.getFromLocalStorage(['cryptup_settingssettingsflowcrypttest_rules']);
+      // check that the configuration in the storage has been updated
+      const clientConfiguration3 = rules3 as ClientConfiguration;
+      expect(clientConfiguration3.flags).to.eql([
+        'NO_PRV_BACKUP',
+        'ENFORCE_ATTESTER_SUBMIT',
+        'PRV_AUTOIMPORT_OR_AUTOGEN',
+        'PASS_PHRASE_QUIET_AUTOGEN',
         'DEFAULT_REMEMBER_PASS_PHRASE']);
-      await setupPage.close();
+      expect(clientConfiguration3.disallow_attester_search_for_domains).to.eql(['disallowed_domain5.test', 'disallowed_domain6.test']);
+      expect(clientConfiguration3.enforce_keygen_algo).to.equal('rsa2048');
+      await gmailPage.close();
+      await settingsPage.close();
     }));
 
     ava.default('settings - email change to account that has FORBID_STORING_PASS_PHRASE', testWithBrowser('ci.tests.gmail', async (t, browser) => {
