@@ -353,3 +353,10 @@ export class Url {
 export const emailKeyIndex = (scope: string, key: string): string => {
   return `${scope.replace(/[^A-Za-z0-9]+/g, '').toLowerCase()}_${key}`;
 };
+
+export const asyncSome = async<T>(arr: Array<T>, predicate: (e: T) => Promise<boolean>) => {
+  for (const e of arr) {
+    if (await predicate(e)) return true;
+  }
+  return false;
+};
