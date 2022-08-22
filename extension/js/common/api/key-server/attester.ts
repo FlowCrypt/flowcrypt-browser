@@ -5,7 +5,7 @@
 import { Api, ReqMethod } from './../shared/api.js';
 import { Dict, Str } from '../../core/common.js';
 import { PubkeysSearchResult } from './../pub-lookup.js';
-import { ApiErr } from '../shared/api-error.js';
+import { AjaxErr, ApiErr } from '../shared/api-error.js';
 import { ClientConfiguration } from "../../client-configuration";
 import { ATTESTER_API_HOST } from '../../core/const.js';
 import { MsgBlockParser } from '../../core/msg-block-parser.js';
@@ -52,7 +52,9 @@ export class Attester extends Api {
       const pubkeys = blocks.filter((block) => block.type === 'publicKey').map((block) => block.content.toString());
       return { pubkeys };
     } catch (e) {
-      if (ApiErr.isNotFound(e)) {
+      // treat error 500 as error 404 on this particular endpoint
+      // https://github.com/FlowCrypt/flowcrypt-browser/pull/4627#issuecomment-1222624065
+      if (ApiErr.isNotFound(e) || (e as AjaxErr).status === 500) {
         return { pubkeys: [] };
       }
       throw e;
