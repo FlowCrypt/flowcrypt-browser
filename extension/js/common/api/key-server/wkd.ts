@@ -6,15 +6,12 @@ import { Api } from './../shared/api.js';
 import { ApiErr } from '../shared/api-error.js';
 import { Buf } from '../../core/buf.js';
 import { PubkeysSearchResult } from './../pub-lookup.js';
-import { KeyUtil } from '../../core/crypto/key.js';
 import { IS_MOCK_TEST_ENVIRONMENT } from '../../core/const.js';
 import { opgp } from '../../core/crypto/pgp/openpgpjs-custom.js';
 import { BrowserMsg } from '../../browser/browser-msg.js';
-
+import { ArmoredKeyWithEmailsAndId, KeyUtil } from '../../core/crypto/key.js';
 
 // tslint:disable:no-direct-ajax
-
-export type ArmoredKeyWithEmailsAndId = { id: string, emails: string[], armored: string };
 
 export class Wkd extends Api {
 
@@ -23,13 +20,6 @@ export class Wkd extends Api {
   // https://metacode.biz/openpgp/web-key-directory
 
   public port: number | undefined;
-
-  public static parseAndArmorKeys = async (
-    binaryKeysData: Uint8Array
-  ): Promise<ArmoredKeyWithEmailsAndId[]> => {
-    const { keys } = await KeyUtil.readMany(Buf.fromUint8(binaryKeysData));
-    return keys.map(k => ({ id: k.id, emails: k.emails, armored: KeyUtil.armor(k) }));
-  };
 
   constructor(
     private domainName: string,
@@ -71,7 +61,7 @@ export class Wkd extends Api {
       return [];
     }
     if (typeof opgp !== 'undefined') {
-      return await Wkd.parseAndArmorKeys(response.buf);
+      return await KeyUtil.parseAndArmorKeys(response.buf);
     }
     // in pgp-block.html there is no openpgp loaded for performance, use background
     const armored = await BrowserMsg.send.bg.await.pgpKeyBinaryToArmored({ binaryKeysData: response.buf });

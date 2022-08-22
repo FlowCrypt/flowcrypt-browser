@@ -18,7 +18,7 @@ import { Ui } from './ui.js';
 import { GlobalStoreDict, GlobalIndex } from '../platform/store/global-store.js';
 import { AcctStoreDict, AccountIndex } from '../platform/store/acct-store.js';
 import { saveFetchedPubkeysIfNewerThanInStorage } from '../shared.js';
-import { ArmoredKeyWithEmailsAndId, Wkd } from '../api/key-server/wkd.js';
+import { ArmoredKeyWithEmailsAndId, KeyUtil } from '../core/crypto/key.js';
 
 export type GoogleAuthWindowResult$result = 'Success' | 'Denied' | 'Error' | 'Closed';
 
@@ -252,7 +252,7 @@ export class BrowserMsg {
     BrowserMsg.bgAddListener('pgpMsgVerifyDetached', MsgUtil.verifyDetached);
     BrowserMsg.bgAddListener('pgpMsgType', MsgUtil.type);
     BrowserMsg.bgAddListener('saveFetchedPubkeys', saveFetchedPubkeysIfNewerThanInStorage);
-    BrowserMsg.bgAddListener('pgpKeyBinaryToArmored', async (r: Bm.PgpKeyBinaryToArmored) => ({ keys: await Wkd.parseAndArmorKeys(r.binaryKeysData) }));
+    BrowserMsg.bgAddListener('pgpKeyBinaryToArmored', async (r: Bm.PgpKeyBinaryToArmored) => ({ keys: await KeyUtil.parseAndArmorKeys(r.binaryKeysData) }));
   };
 
   public static addListener = (name: string, handler: Handler) => {

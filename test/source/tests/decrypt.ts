@@ -579,14 +579,12 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
     }));
 
     ava.default('verification - public key fetched from WKD', testWithBrowser('compatibility', async (t, browser) => {
-      const msgId = '17dad75e63e47f97';
-      const acctEmail = 'flowcrypt.compatibility@gmail.com';
       const senderEmail = 'only.on.wkd@localhost:8001';
       await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
         content: ["1234"],
         encryption: 'not encrypted',
         signature: 'signed',
-        params: `?frameId=none&acctEmail=${acctEmail}&msgId=${msgId}&signature=___cu_true___&senderEmail=${senderEmail}`
+        params: `?frameId=none&acctEmail=flowcrypt.compatibility@gmail.com&msgId=17dad75e63e47f97&signature=___cu_true___&senderEmail=${senderEmail}`
       });
     }));
 
