@@ -76,7 +76,7 @@ export class Wkd extends Api {
   };
 
   private pubkeyUidFilter = (uidEmail: string, expectedEmail: string) => {
-    if (!IS_MOCK_TEST_ENVIRONMENT) {
+    if (!IS_MOCK_TEST_ENVIRONMENT) { // lgtm [js/trivial-conditional]
       // WKD spec requires UIDs of keys received from server to match searched string
       return uidEmail.toLowerCase() === expectedEmail.toLowerCase();
     } else {
