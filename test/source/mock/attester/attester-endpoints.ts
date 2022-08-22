@@ -24,7 +24,7 @@ const knownMockEmails = [
 
 let data: GoogleData;
 export const MOCK_ATTESTER_LAST_INSERTED_PUB: { [email: string]: string } = {};
-export const getPublicKey203FAE7076005381 = async () => {
+export const get203FAE7076005381 = async () => {
   if (!data) {
     data = await GoogleData.withInitializedData('flowcrypt.compatibility@gmail.com');
   }
@@ -66,11 +66,11 @@ export const mockAttesterEndpoints: HandlersDefinition = {
         return [somePubkey, protonMailCompatKey].join('\n');
       }
       if (emailOrLongid === 'some.sender@test.com') {
-        return await getPublicKey203FAE7076005381();
+        return await get203FAE7076005381();
       }
       if (emailOrLongid === 'this.pubkey.takes.long.time.to.load@sender.test') {
         await Util.sleep(5);
-        return await getPublicKey203FAE7076005381();
+        return await get203FAE7076005381();
       }
       if (['sams50sams50sept@gmail.com', 'sender@example.com'].includes(emailOrLongid)) {
         return testConstants.pubkey2864E326A5BE488A;

@@ -53,7 +53,7 @@ export class ComposeMyPubkeyModule extends ViewModule<ComposeView> {
       if (foreignRecipients.length > 0) {
         if (!Array.isArray(cached)) {
           // slow operation -- test WKD for our own key and cache the result
-          const { keys } = await this.view.pubLookup.wkd.rawLookupEmail(senderEmail);
+          const keys = await this.view.pubLookup.wkd.rawLookupEmail(senderEmail);
           const fingerprints = keys.map(key => key.id);
           this.wkdFingerprints[senderEmail] = fingerprints;
           for (const parsedPrv of parsedPrvs) {

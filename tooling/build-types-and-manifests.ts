@@ -118,7 +118,8 @@ const makeMockBuild = (sourceBuildType: string) => {
       .replace(/const (OAUTH_GOOGLE_API_HOST|GMAIL_GOOGLE_API_HOST|PEOPLE_GOOGLE_API_HOST|GOOGLE_OAUTH_SCREEN_HOST) = [^;]+;/g, `const $1 = '${MOCK_HOST[sourceBuildType]}';`)
       .replace(/const (BACKEND_API_HOST) = [^;]+;/g, `const $1 = 'https://localhost:8001/api/';`)
       .replace(/const (ATTESTER_API_HOST) = [^;]+;/g, `const $1 = 'https://localhost:8001/attester/';`)
-      .replace(/https:\/\/flowcrypt\.com\/api\/help\/error/g, 'https://localhost:8001/api/help/error');
+      .replace(/https:\/\/flowcrypt\.com\/api\/help\/error/g, 'https://localhost:8001/api/help/error')
+      .replace(/const (IS_MOCK_TEST_ENVIRONMENT) = false;/g, `const $1 = true;`);
   };
   edit(`${buildDir(mockBuildType)}/js/common/core/const.js`, editor);
   edit(`${buildDir(mockBuildType)}/js/common/platform/catch.js`, editor);

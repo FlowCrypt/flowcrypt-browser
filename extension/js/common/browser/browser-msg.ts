@@ -18,6 +18,7 @@ import { Ui } from './ui.js';
 import { GlobalStoreDict, GlobalIndex } from '../platform/store/global-store.js';
 import { AcctStoreDict, AccountIndex } from '../platform/store/acct-store.js';
 import { saveFetchedPubkeysIfNewerThanInStorage } from '../shared.js';
+import { ArmoredKeyWithEmailsAndId, Wkd } from '../api/key-server/wkd.js';
 
 export type GoogleAuthWindowResult$result = 'Success' | 'Denied' | 'Error' | 'Closed';
 
@@ -60,6 +61,7 @@ export namespace Bm {
   export type PgpMsgVerifyDetached = PgpMsgMethod.Arg.VerifyDetached;
   export type PgpHashChallengeAnswer = { answer: string };
   export type PgpMsgType = PgpMsgMethod.Arg.Type;
+  export type PgpKeyBinaryToArmored = { binaryKeysData: Uint8Array };
   export type Ajax = { req: JQueryAjaxSettings, stack: string };
   export type AjaxGmailAttachmentGetChunk = { acctEmail: string, msgId: string, attachmentId: string };
   export type ShowAttachmentPreview = { iframeUrl: string };
@@ -81,6 +83,7 @@ export namespace Bm {
     export type PgpMsgVerify = VerifyRes;
     export type PgpMsgType = PgpMsgTypeResult;
     export type PgpHashChallengeAnswer = { hashed: string };
+    export type PgpKeyBinaryToArmored = { keys: ArmoredKeyWithEmailsAndId[] };
     export type AjaxGmailAttachmentGetChunk = { chunk: Buf };
     export type _tab_ = { tabId: string | null | undefined };
     export type SaveFetchedPubkeys = boolean;
@@ -91,7 +94,8 @@ export namespace Bm {
     export type Any = GetActiveTabInfo | _tab_ | ReconnectAcctAuthPopup
       | PgpMsgDecrypt | PgpMsgDiagnoseMsgPubkeys | PgpMsgVerify | PgpHashChallengeAnswer | PgpMsgType
       | InMemoryStoreGet | InMemoryStoreSet | StoreAcctGet | StoreAcctSet | StoreGlobalGet | StoreGlobalSet
-      | AjaxGmailAttachmentGetChunk | SaveFetchedPubkeys | ProcessAndStoreKeysFromEkmLocally;
+      | AjaxGmailAttachmentGetChunk | SaveFetchedPubkeys | ProcessAndStoreKeysFromEkmLocally
+      | PgpKeyBinaryToArmored;
   }
 
   export type AnyRequest = PassphraseEntry | OpenPage | OpenGoogleAuthDialog | Redirect | Reload |
@@ -100,7 +104,8 @@ export namespace Bm {
     NotificationShow | PassphraseDialog | PassphraseDialog | Settings | SetCss | AddOrRemoveClass | ReconnectAcctAuthPopup |
     Db | InMemoryStoreSet | InMemoryStoreGet | StoreGlobalGet | StoreGlobalSet | StoreAcctGet | StoreAcctSet |
     PgpMsgDecrypt | PgpMsgDiagnoseMsgPubkeys | PgpMsgVerifyDetached | PgpHashChallengeAnswer | PgpMsgType | Ajax |
-    ShowAttachmentPreview | ReRenderRecipient | SaveFetchedPubkeys | ProcessAndStoreKeysFromEkmLocally;
+    ShowAttachmentPreview | ReRenderRecipient | SaveFetchedPubkeys | ProcessAndStoreKeysFromEkmLocally |
+    PgpKeyBinaryToArmored;
 
   // export type RawResponselessHandler = (req: AnyRequest) => Promise<void>;
   // export type RawRespoHandler = (req: AnyRequest) => Promise<void>;
@@ -147,6 +152,7 @@ export class BrowserMsg {
         pgpMsgDecrypt: (bm: Bm.PgpMsgDecrypt) => BrowserMsg.sendAwait(undefined, 'pgpMsgDecrypt', bm, true) as Promise<Bm.Res.PgpMsgDecrypt>,
         pgpMsgVerifyDetached: (bm: Bm.PgpMsgVerifyDetached) => BrowserMsg.sendAwait(undefined, 'pgpMsgVerifyDetached', bm, true) as Promise<Bm.Res.PgpMsgVerify>,
         pgpMsgType: (bm: Bm.PgpMsgType) => BrowserMsg.sendAwait(undefined, 'pgpMsgType', bm, true) as Promise<Bm.Res.PgpMsgType>,
+        pgpKeyBinaryToArmored: (bm: Bm.PgpKeyBinaryToArmored) => BrowserMsg.sendAwait(undefined, 'pgpKeyBinaryToArmored', bm, true) as Promise<Bm.Res.PgpKeyBinaryToArmored>,
         saveFetchedPubkeys: (bm: Bm.SaveFetchedPubkeys) => BrowserMsg.sendAwait(undefined, 'saveFetchedPubkeys', bm, true) as Promise<Bm.Res.SaveFetchedPubkeys>,
         processAndStoreKeysFromEkmLocally:
           (bm: Bm.ProcessAndStoreKeysFromEkmLocally) => BrowserMsg.sendAwait(undefined, 'processAndStoreKeysFromEkmLocally', bm, true) as Promise<Bm.Res.ProcessAndStoreKeysFromEkmLocally>,
@@ -246,6 +252,7 @@ export class BrowserMsg {
     BrowserMsg.bgAddListener('pgpMsgVerifyDetached', MsgUtil.verifyDetached);
     BrowserMsg.bgAddListener('pgpMsgType', MsgUtil.type);
     BrowserMsg.bgAddListener('saveFetchedPubkeys', saveFetchedPubkeysIfNewerThanInStorage);
+    BrowserMsg.bgAddListener('pgpKeyBinaryToArmored', async (r: Bm.PgpKeyBinaryToArmored) => ({ keys: await Wkd.parseAndArmorKeys(r.binaryKeysData) }));
   };
 
   public static addListener = (name: string, handler: Handler) => {

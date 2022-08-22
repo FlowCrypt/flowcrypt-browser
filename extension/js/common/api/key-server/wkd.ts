@@ -6,9 +6,15 @@ import { Api } from './../shared/api.js';
 import { ApiErr } from '../shared/api-error.js';
 import { Buf } from '../../core/buf.js';
 import { PubkeysSearchResult } from './../pub-lookup.js';
-import { Key, KeyUtil } from '../../core/crypto/key.js';
+import { KeyUtil } from '../../core/crypto/key.js';
+import { IS_MOCK_TEST_ENVIRONMENT } from '../../core/const.js';
+import { opgp } from '../../core/crypto/pgp/openpgpjs-custom.js';
+import { BrowserMsg } from '../../browser/browser-msg.js';
+
 
 // tslint:disable:no-direct-ajax
+
+export type ArmoredKeyWithEmailsAndId = { id: string, emails: string[], armored: string };
 
 export class Wkd extends Api {
 
@@ -18,6 +24,13 @@ export class Wkd extends Api {
 
   public port: number | undefined;
 
+  public static parseAndArmorKeys = async (
+    binaryKeysData: Uint8Array
+  ): Promise<ArmoredKeyWithEmailsAndId[]> => {
+    const { keys } = await KeyUtil.readMany(Buf.fromUint8(binaryKeysData));
+    return keys.map(k => ({ id: k.id, emails: k.emails, armored: KeyUtil.armor(k) }));
+  };
+
   constructor(
     private domainName: string,
     private usesKeyManager: boolean
@@ -26,15 +39,15 @@ export class Wkd extends Api {
   }
 
   // returns all the received keys
-  public rawLookupEmail = async (email: string): Promise<{ keys: Key[], errs: Error[] }> => {
+  public rawLookupEmail = async (email: string): Promise<ArmoredKeyWithEmailsAndId[]> => {
     // todo: should we return errs on network failures etc.?
     const parts = email.split('@');
     if (parts.length !== 2) {
-      return { keys: [], errs: [] };
+      return [];
     }
     const [user, recipientDomain] = parts;
     if (!user || !recipientDomain) {
-      return { keys: [], errs: [] };
+      return [];
     }
     const lowerCaseRecipientDomain = recipientDomain.toLowerCase();
     const directDomain = lowerCaseRecipientDomain;
@@ -49,30 +62,37 @@ export class Wkd extends Api {
     const directUrl = `https://${directHost}/.well-known/openpgpkey`;
     let response = await this.urlLookup(advancedUrl, userPart, timeout);
     if (!response.buf && response.hasPolicy) {
-      return { keys: [], errs: [] }; // do not retry direct if advanced had a policy file
+      return [];
     }
     if (!response.buf) {
       response = await this.urlLookup(directUrl, userPart, timeout);
     }
     if (!response.buf) {
-      return { keys: [], errs: [] }; // do not retry direct if advanced had a policy file
+      return [];
     }
-    return await KeyUtil.readMany(response.buf);
+    if (typeof opgp !== 'undefined') {
+      return await Wkd.parseAndArmorKeys(response.buf);
+    }
+    // in pgp-block.html there is no openpgp loaded for performance, use background
+    const armored = await BrowserMsg.send.bg.await.pgpKeyBinaryToArmored({ binaryKeysData: response.buf });
+    return armored.keys;
   };
 
   public lookupEmail = async (email: string): Promise<PubkeysSearchResult> => {
-    const { keys, errs } = await this.rawLookupEmail(email);
-    if (errs.length) {
-      return { pubkeys: [] };
-    }
-    const pubkeys = keys.filter(key => key.emails.some(x => x.toLowerCase() === email.toLowerCase()));
-    if (!pubkeys.length) {
-      return { pubkeys: [] };
-    }
-    try {
-      return { pubkeys: pubkeys.map(pubkey => KeyUtil.armor(pubkey)) };
-    } catch (e) {
-      return { pubkeys: [] };
+    const all = await this.rawLookupEmail(email);
+    console.log(all);
+    const filtered = all.filter(key => key.emails.some(e => this.pubkeyUidFilter(e, email)));
+    return { pubkeys: filtered.map(pubkey => pubkey.armored) };
+  };
+
+  private pubkeyUidFilter = (uidEmail: string, expectedEmail: string) => {
+    if (!IS_MOCK_TEST_ENVIRONMENT) {
+      // WKD spec requires UIDs of keys received from server to match searched string
+      return uidEmail.toLowerCase() === expectedEmail.toLowerCase();
+    } else {
+      // our tests search for emails like something@localhost:8001 which is not a valid email for pgp key
+      // therefore we work around it here
+      return uidEmail.toLowerCase() === expectedEmail.toLowerCase() || expectedEmail.endsWith('@localhost:8001');
     }
   };
 
