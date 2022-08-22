@@ -1520,7 +1520,6 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       };
       await ComposePageRecipe.fillMsg(composePage, recipients, t.title);
       await composePage.close();
-      // Check if multiple keys are imported to multiple.pub.key@flowcrypt.com account
       const settingsPage = await browser.newPage(t, TestUrls.extensionSettings('ci.tests.gmail@flowcrypt.test'));
       await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
       const contactsFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-contacts-page', ['contacts.htm', 'placement=settings']);
