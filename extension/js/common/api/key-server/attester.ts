@@ -25,7 +25,35 @@ export class Attester extends Api {
       console.info(`Skipping attester lookup of ${email} because attester search on this domain is disabled.`);
       return { pubkeys: [] };
     }
-    return await this.doLookup(email);
+    const customerLdapRes = await this.doLookupLdap(email);
+    if (customerLdapRes.pubkeys.length) {
+      return customerLdapRes;
+    }
+    const flowcryptRes = await this.doLookup(email);
+    if (flowcryptRes.pubkeys.length) {
+      return flowcryptRes;
+    }
+    return await this.doLookupLdap(email, 'keyserver.pgp.com');
+  };
+
+  public doLookupLdap = async (email: string, server?: string): Promise<PubkeysSearchResult> => {
+    const parts = email.split('@');
+    if (parts.length !== 2) {
+      return { pubkeys: [] };
+    }
+    const [, recipientDomain] = parts;
+    const ldapServer = server ?? `keys.${recipientDomain}`;
+    try {
+      const r = await this.pubCall(`ldap-relay?server=${ldapServer}&search=${email}`);
+      const { blocks } = MsgBlockParser.detectBlocks(r.responseText);
+      const pubkeys = blocks.filter((block) => block.type === 'publicKey').map((block) => block.content.toString());
+      return { pubkeys };
+    } catch (e) {
+      if (ApiErr.isNotFound(e)) {
+        return { pubkeys: [] };
+      }
+      throw e;
+    }
   };
 
   public lookupEmails = async (emails: string[]): Promise<Dict<PubkeysSearchResult>> => {
