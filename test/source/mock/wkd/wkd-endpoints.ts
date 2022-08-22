@@ -4,6 +4,7 @@ import { KeyUtil } from '../../core/crypto/key.js';
 import { PgpArmor } from '../../core/crypto/pgp/pgp-armor.js';
 import { testConstants } from '../../tests/tooling/consts.js';
 import { HandlersDefinition } from '../all-apis-mock';
+import { getPublicKey203FAE7076005381 } from '../attester/attester-endpoints.js';
 
 const alice = `-----BEGIN PGP PUBLIC KEY BLOCK-----
 
@@ -105,6 +106,9 @@ export const mockWkdEndpoints: HandlersDefinition = {
     // direct for wkd@google.mock.flowcryptlocal.test:8001
     const pub = await KeyUtil.asPublicKey(await KeyUtil.parse(testConstants.wkdAtgooglemockflowcryptlocalcom8001Private));
     return Buffer.from((await PgpArmor.dearmor(KeyUtil.armor(pub))).data);
+  },
+  '/.well-known/openpgpkey/hu/n4qtbfz8ussx74ofsd1cbowqnaeoig3f?l=only.on.wkd': async () => {
+    return Buffer.from((await PgpArmor.dearmor(await getPublicKey203FAE7076005381())).data); // for only.on.wkd@localhost:8001
   },
   '/.well-known/openpgpkey/hu/ihyath4noz8dsckzjbuyqnh4kbup6h4i?l=john.doe': async () => {
     return Buffer.from((await PgpArmor.dearmor(johnDoe1)).data); // direct for john.doe@localhost

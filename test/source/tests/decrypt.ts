@@ -578,6 +578,17 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
       await pgpBlockPage.waitForContent('@pgp-signature', 'signed', 10, 10);
     }));
 
+    ava.default('verification - public key fetched from WKD', testWithBrowser('compatibility', async (t, browser) => {
+      const msgId = '17dad75e63e47f97';
+      const acctEmail = 'flowcrypt.compatibility@gmail.com';
+      const senderEmail = 'only.on.wkd@localhost:8001';
+      const params = `?frameId=none&acctEmail=${acctEmail}&msgId=${msgId}&signature=___cu_true___&senderEmail=${senderEmail}`;
+      const pgpHostPage = await browser.newPage(t, `chrome/dev/ci_pgp_host_page.htm${params}`);
+      const pgpBlockPage = await pgpHostPage.getFrame(['pgp_block.htm']);
+      await pgpBlockPage.waitForContent('@pgp-block-content', '1234');
+      await pgpBlockPage.waitForContent('@pgp-signature', 'signed');
+    }));
+
     ava.default('decrypt - fetched pubkey is automatically saved to contacts', testWithBrowser('compatibility', async (t, browser) => {
       const msgId = '17dad75e63e47f97';
       const acctEmail = 'flowcrypt.compatibility@gmail.com';

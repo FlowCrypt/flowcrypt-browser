@@ -15,8 +15,11 @@ export class PgpBlockViewSignatureModule {
   constructor(private view: PgpBlockView) {
   }
 
-  public renderPgpSignatureCheckResult = async (verifyRes: VerifyRes | undefined, verificationPubs: string[],
-    retryVerification?: (verificationPubs: string[]) => Promise<VerifyRes | undefined>) => {
+  public renderPgpSignatureCheckResult = async (
+    verifyRes: VerifyRes | undefined,
+    verificationPubs: string[],
+    retryVerification?: (verificationPubs: string[]) => Promise<VerifyRes | undefined>
+  ) => {
     this.view.renderModule.doNotSetStateAsReadyYet = true; // so that body state is not marked as ready too soon - automated tests need to know when to check results
     if (verifyRes?.error) {
       if (this.view.signature && !verifyRes.isErrFatal && this.view.decryptModule.canAndShouldFetchFromApi()) {
@@ -41,6 +44,7 @@ export class PgpBlockViewSignatureModule {
         } else {
           $('#pgp_signature').addClass('gray_label').text('verifying signature...');
           try {
+            console.log(`looking up soon ${signerEmail}`);
             const { pubkeys } = await this.view.pubLookup.lookupEmail(signerEmail);
             if (pubkeys.length) {
               await BrowserMsg.send.bg.await.saveFetchedPubkeys({ email: signerEmail, pubkeys });

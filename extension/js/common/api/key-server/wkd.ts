@@ -4,7 +4,6 @@
 
 import { Api } from './../shared/api.js';
 import { ApiErr } from '../shared/api-error.js';
-import { opgp } from '../../core/crypto/pgp/openpgpjs-custom.js';
 import { Buf } from '../../core/buf.js';
 import { PubkeysSearchResult } from './../pub-lookup.js';
 import { Key, KeyUtil } from '../../core/crypto/key.js';
@@ -37,18 +36,12 @@ export class Wkd extends Api {
     if (!user || !recipientDomain) {
       return { keys: [], errs: [] };
     }
-    if (!opgp) {
-      // pgp_block.htm does not have openpgp loaded
-      // the particular usecase (auto-loading pubkeys to verify signatures) is not that important,
-      //    the user typically gets the key loaded from composing anyway
-      // the proper fix would be to run encodeZBase32 through background scripts
-      return { keys: [], errs: [] };
-    }
     const lowerCaseRecipientDomain = recipientDomain.toLowerCase();
     const directDomain = lowerCaseRecipientDomain;
     const timeout = (this.usesKeyManager && lowerCaseRecipientDomain === this.domainName) ? 10 : 4;
     const advancedDomainPrefix = (directDomain === 'localhost') ? '' : 'openpgpkey.';
-    const hu = opgp.util.encodeZBase32(await opgp.crypto.hash.digest(opgp.enums.hash.sha1, Buf.fromUtfStr(user.toLowerCase())));
+    const hashed = await window.crypto.subtle.digest('SHA-1', Buf.fromUtfStr(user.toLowerCase()));
+    const hu = this.encodeZBase32(new Uint8Array(hashed));
     const directHost = (typeof this.port === 'undefined') ? directDomain : `${directDomain}:${this.port}`;
     const advancedHost = `${advancedDomainPrefix}${directHost}`;
     const userPart = `hu/${hu}?l=${encodeURIComponent(user)}`;
@@ -101,6 +94,40 @@ export class Wkd extends Api {
       }
       return { hasPolicy: true };
     }
+  };
+
+  /**
+   * The following method is a modified version of code under LGPL 3.0 received from:
+   * https://github.com/openpgpjs/wkd-client/blob/a175bc6c90fcea0c91e94061237a53c5b43ee0f8/src/wkd.js
+   * This method remains under the same license.
+   */
+  private encodeZBase32 = (data: Uint8Array) => {
+    if (data.length === 0) {
+      return '';
+    }
+    const ALPHABET = "ybndrfg8ejkmcpqxot1uwisza345h769";
+    const SHIFT = 5;
+    const MASK = 31;
+    let buffer = data[0];
+    let index = 1;
+    let bitsLeft = 8;
+    let result = '';
+    while (bitsLeft > 0 || index < data.length) {
+      if (bitsLeft < SHIFT) {
+        if (index < data.length) {
+          buffer <<= 8;
+          buffer |= data[index++] & 0xff;
+          bitsLeft += 8;
+        } else {
+          const pad = SHIFT - bitsLeft;
+          buffer <<= pad;
+          bitsLeft += pad;
+        }
+      }
+      bitsLeft -= SHIFT;
+      result += ALPHABET[MASK & (buffer >> bitsLeft)];
+    }
+    return result;
   };
 
 }
