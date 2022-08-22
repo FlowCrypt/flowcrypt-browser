@@ -44,7 +44,6 @@ export class PgpBlockViewSignatureModule {
         } else {
           $('#pgp_signature').addClass('gray_label').text('verifying signature...');
           try {
-            console.log(`looking up soon ${signerEmail}`);
             const { pubkeys } = await this.view.pubLookup.lookupEmail(signerEmail);
             if (pubkeys.length) {
               await BrowserMsg.send.bg.await.saveFetchedPubkeys({ email: signerEmail, pubkeys });
