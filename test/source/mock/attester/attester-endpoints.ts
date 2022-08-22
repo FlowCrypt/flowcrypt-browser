@@ -88,12 +88,36 @@ export const mockAttesterEndpoints: HandlersDefinition = {
       if (emailOrLongid === '8EC78F043CEB022498AFD4771E62ED6D15A25921'.toLowerCase()) {
         return testConstants.oldHasOlderKeyOnAttester;
       }
+      if (emailOrLongid === 'test.ldap.priority@gmail.com') {
+        return somePubkey;
+      }
+      if (emailOrLongid === 'test.flowcrypt.pubkeyserver.priority@gmail.com') {
+        return somePubkey;
+      }
       throw new HttpClientErr('Pubkey not found', 404);
     } else if (isPost(req)) {
       oauth.checkAuthorizationHeaderWithIdToken(req.headers.authorization);
       expect(body).to.contain('-----BEGIN PGP PUBLIC KEY BLOCK-----');
       MOCK_ATTESTER_LAST_INSERTED_PUB[emailOrLongid] = body as string;
       return 'Saved'; // 200 OK
+    } else {
+      throw new HttpClientErr(`Not implemented: ${req.method}`);
+    }
+  },
+  '/attester/ldap-relay': async (parsedReq, req) => {
+    const server = parsedReq.query.server;
+    const emailOrLongid = parsedReq.query.search;
+    if (isGet(req)) {
+      if (emailOrLongid === 'test.ldap.priority@gmail.com') {
+        return protonMailCompatKey;
+      }
+      if (emailOrLongid === 'test.flowcrypt.pubkeyserver.priority@gmail.com') {
+        return protonMailCompatKey;
+      }
+      if (emailOrLongid === 'test.ldap.keyserver.pgp@gmail.com' && server === 'keyserver.pgp.com') {
+        return [protonMailCompatKey, testMatchPubKey].join('\n');
+      }
+      throw new HttpClientErr('No OpenPGP LDAP server on this address.', 404);
     } else {
       throw new HttpClientErr(`Not implemented: ${req.method}`);
     }

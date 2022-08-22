@@ -25,14 +25,17 @@ export class Attester extends Api {
       console.info(`Skipping attester lookup of ${email} because attester search on this domain is disabled.`);
       return { pubkeys: [] };
     }
+    // first get from recipient-specific LDAP server, if any, relayed through flowcrypt.com
     const customerLdapRes = await this.doLookupLdap(email);
     if (customerLdapRes.pubkeys.length) {
       return customerLdapRes;
     }
+    // get from flowcrypt.com public keyserver database
     const flowcryptRes = await this.doLookup(email);
     if (flowcryptRes.pubkeys.length) {
       return flowcryptRes;
     }
+    // get from keyserver.pgp.com, relayed through flowcrypt.com
     return await this.doLookupLdap(email, 'keyserver.pgp.com');
   };
 
