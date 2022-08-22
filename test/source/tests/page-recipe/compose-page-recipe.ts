@@ -112,7 +112,7 @@ export class ComposePageRecipe extends PageRecipe {
           await composePageOrFrame.waitAndClick(`@action-show-${sendingType}`);
         }
         await composePageOrFrame.waitAndType(`@input-${sendingType}`, email);
-        await composePageOrFrame.waitTillGone('@spinner');
+        await Util.sleep(2);
       }
     }
     await composePageOrFrame.target.evaluate(() => { $('#input_text').focus(); });

@@ -70,19 +70,20 @@ BROWSER_UNIT_TEST_NAME(`Sks lookup pubkey - not found`);
   return 'pass';
 })();
 
-BROWSER_UNIT_TEST_NAME(`Sks lookup pubkey - from live host`);
-(async () => {
-  // this may be flaky - if so, can disable it
-  const email = 'human@flowcrypt.com';
-  const sks = new Sks('https://attester.flowcrypt.com');
-  const { pubkey } = await sks.lookupEmail(email);
-  const key = await KeyUtil.parse(pubkey);
-  const expectedKeyIds = [
-    '6BF16EE1ECE7A66C4B6636DF0C9C2E6A4D273C6F',
-    '8B8A05A2216EE6E4C5EE3D540D5688EBF3102BE7'
-  ];
-  if (!expectedKeyIds.includes(key.id)) {
-    throw Error(`Expecting key.id in [${expectedKeyIds}] but got ${key.id}`);
-  }
-  return 'pass';
-})();
+// https://github.com/FlowCrypt/flowcrypt-browser/pull/4624#issuecomment-1222594297
+// BROWSER_UNIT_TEST_NAME(`Sks lookup pubkey - from live host`);
+// (async () => {
+//   // this may be flaky - if so, can disable it
+//   const email = 'human@flowcrypt.com';
+//   const sks = new Sks('https://attester.flowcrypt.com');
+//   const { pubkey } = await sks.lookupEmail(email);
+//   const key = await KeyUtil.parse(pubkey);
+//   const expectedKeyIds = [
+//     '6BF16EE1ECE7A66C4B6636DF0C9C2E6A4D273C6F',
+//     '8B8A05A2216EE6E4C5EE3D540D5688EBF3102BE7'
+//   ];
+//   if (!expectedKeyIds.includes(key.id)) {
+//     throw Error(`Expecting key.id in [${expectedKeyIds}] but got ${key.id}`);
+//   }
+//   return 'pass';
+// })();
