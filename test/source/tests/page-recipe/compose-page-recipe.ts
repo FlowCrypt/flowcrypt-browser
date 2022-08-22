@@ -111,8 +111,7 @@ export class ComposePageRecipe extends PageRecipe {
         if (sendingType !== 'to') { // input-to is always visible
           await composePageOrFrame.waitAndClick(`@action-show-${sendingType}`);
         }
-        await Util.sleep(1);
-        await composePageOrFrame.waitAndType(`@input-${sendingType}`, email);
+        await composePageOrFrame.waitAndType(`@input-${sendingType}`, email + '\n');
         await Util.sleep(1);
       }
     }
