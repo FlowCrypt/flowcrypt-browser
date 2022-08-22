@@ -1527,7 +1527,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       // Check test.ldap.priority@gmail.com
       await contactsFrame.waitAndClick(`@action-show-email-${recipients.to.replace(/[^a-z0-9]+/g, '')}`);
       await contactsFrame.waitAny(`@action-show-pubkey-AB8CF86E37157C3F290D72007ED43D79E9617655-openpgp`);
-      // Check test.ldap.priority@gmail.com
+      // Check test.ldap.keyserver.pgp@gmail.com
       await contactsFrame.waitAndClick(`@action-show-email-${recipients.cc.replace(/[^a-z0-9]+/g, '')}`);
       await contactsFrame.waitAny(`@action-show-pubkey-AB8CF86E37157C3F290D72007ED43D79E9617655-openpgp`);
       await contactsFrame.waitAny(`@action-show-pubkey-3E3C9310CC969D00028DC98F7D3D56F9152646A8-openpgp`);
