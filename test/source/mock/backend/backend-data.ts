@@ -1,7 +1,7 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
 import { Dict } from '../../core/common';
-import { HttpAuthErr } from '../lib/api';
+import { HttpAuthErr, HttpClientErr } from '../lib/api';
 import { OauthMock } from '../lib/oauth';
 
 // tslint:disable:no-null-keyword
@@ -34,7 +34,7 @@ export type ClientConfiguration = {
 export class BackendData {
   public reportedErrors: { name: string, message: string, url: string, line: number, col: number, trace: string, version: string, environmane: string }[] = [];
 
-  public clientConfigurationByAcctEmail: Dict<ClientConfiguration> = {};
+  public clientConfigurationByAcctEmail: Dict<ClientConfiguration | HttpClientErr> = {};
 
   private uuidsByAcctEmail: Dict<string[]> = {};
 
@@ -74,6 +74,9 @@ export class BackendData {
   public getClientConfiguration = (acct: string) => {
     const foundConfiguration = this.clientConfigurationByAcctEmail[acct];
     if (foundConfiguration) {
+      if (foundConfiguration instanceof HttpClientErr) {
+        throw foundConfiguration;
+      }
       return foundConfiguration;
     }
     const domain = acct.split('@')[1];

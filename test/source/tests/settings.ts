@@ -26,6 +26,7 @@ import { BrowserHandle } from '../browser';
 import { AvaContext } from './tooling';
 import { mockBackendData } from '../mock/backend/backend-endpoints';
 import { ClientConfiguration } from '../mock/backend/backend-data';
+import { HttpClientErr, Status } from '../mock/lib/api';
 
 // tslint:disable:no-blank-lines-func
 
@@ -972,7 +973,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
     ava.default('settings - client configuration gets updated on settings and content script reloads', testWithBrowser(undefined, async (t, browser) => {
       const acct = 'settings@settings.flowcrypt.test';
       // set up the client configuration returned for the account
-      const setup = {
+      mockBackendData.clientConfigurationByAcctEmail[acct] = {
         flags: [
           "NO_PRV_BACKUP",
           "ENFORCE_ATTESTER_SUBMIT",
@@ -980,11 +981,13 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
           "PASS_PHRASE_QUIET_AUTOGEN",
           "DEFAULT_REMEMBER_PASS_PHRASE",
         ],
+        // custom_keyserver_url: undefined,
         key_manager_url: 'https://localhost:8001/flowcrypt-email-key-manager',
+        // allow_attester_search_only_for_domains: undefined,
+        disallow_attester_search_for_domains: ['disallowed_domain1.test', 'disallowed_domain2.test'],
         enforce_keygen_algo: 'rsa2048',
-        disallow_attester_search_for_domains: ['disallowed_domain1.test', 'disallowed_domain2.test']
+        // enforce_keygen_expire_months: undefined
       };
-      mockBackendData.clientConfigurationByAcctEmail[acct] = setup;
       const setupPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
       await SetupPageRecipe.autoSetupWithEKM(setupPage);
       const {
@@ -999,16 +1002,24 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         'PRV_AUTOIMPORT_OR_AUTOGEN',
         'PASS_PHRASE_QUIET_AUTOGEN',
         'DEFAULT_REMEMBER_PASS_PHRASE']);
+      expect(clientConfiguration1.allow_attester_search_only_for_domains).to.be.an.undefined; // eslint-disable-line no-unused-expressions
       expect(clientConfiguration1.disallow_attester_search_for_domains).to.eql(['disallowed_domain1.test', 'disallowed_domain2.test']);
       expect(clientConfiguration1.enforce_keygen_algo).to.equal('rsa2048');
+      expect(clientConfiguration1.enforce_keygen_expire_months).to.be.an.undefined; // eslint-disable-line no-unused-expressions
+      expect(clientConfiguration1.custom_keyserver_url).to.be.an.undefined; // eslint-disable-line no-unused-expressions
       expect(clientConfiguration1.key_manager_url).to.equal('https://localhost:8001/flowcrypt-email-key-manager');
       await setupPage.close();
 
-      // modify the flags returned for the account
-      setup.flags = ['NO_ATTESTER_SUBMIT', 'HIDE_ARMOR_META', 'DEFAULT_REMEMBER_PASS_PHRASE'];
-      // modify other settings
-      setup.disallow_attester_search_for_domains = ['disallowed_domain3.test', 'disallowed_domain4.test'];
-      setup.enforce_keygen_algo = 'rsa3072';
+      // modify the setup
+      mockBackendData.clientConfigurationByAcctEmail[acct] = {
+        flags: ['NO_ATTESTER_SUBMIT', 'HIDE_ARMOR_META', 'DEFAULT_REMEMBER_PASS_PHRASE'],
+        custom_keyserver_url: 'https://localhost:8001',
+        // key_manager_url: undefined,
+        allow_attester_search_only_for_domains: ['allowed_domain1.test', 'allowed_domain2.test'],
+        // disallow_attester_search_for_domains: undefined
+        // enforce_keygen_algo: undefined
+        enforce_keygen_expire_months: 12
+      };
       // open the settings page
       const settingsPage = await browser.newPage(t, TestUrls.extensionSettings(acct));
       const {
@@ -1017,21 +1028,32 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       // check that the configuration in the storage has been updated
       const clientConfiguration2 = rules2 as ClientConfiguration;
       expect(clientConfiguration2.flags).to.eql(['NO_ATTESTER_SUBMIT', 'HIDE_ARMOR_META', 'DEFAULT_REMEMBER_PASS_PHRASE']);
-      expect(clientConfiguration2.disallow_attester_search_for_domains).to.eql(['disallowed_domain3.test', 'disallowed_domain4.test']);
-      expect(clientConfiguration2.enforce_keygen_algo).to.equal('rsa3072');
+      expect(clientConfiguration2.custom_keyserver_url).to.equal('https://localhost:8001');
+      expect(clientConfiguration2.key_manager_url).to.be.an.undefined; // eslint-disable-line no-unused-expressions
+      expect(clientConfiguration2.allow_attester_search_only_for_domains).to.eql(['allowed_domain1.test', 'allowed_domain2.test']);
+      expect(clientConfiguration2.disallow_attester_search_for_domains).to.be.an.undefined; // eslint-disable-line no-unused-expressions
+      expect(clientConfiguration2.enforce_keygen_algo).to.be.an.undefined; // eslint-disable-line no-unused-expressions
+      expect(clientConfiguration2.enforce_keygen_expire_months).to.equal(12);
       const accessToken = await BrowserRecipe.getGoogleAccessToken(settingsPage, acct);
       // keep settingsPage open to re-read the storage later via it
       // re-configure the setup again
-      setup.flags = [
-        'NO_PRV_BACKUP',
-        'ENFORCE_ATTESTER_SUBMIT',
-        'PRV_AUTOIMPORT_OR_AUTOGEN',
-        'PASS_PHRASE_QUIET_AUTOGEN',
-        'DEFAULT_REMEMBER_PASS_PHRASE'];
-      setup.disallow_attester_search_for_domains = ['disallowed_domain5.test', 'disallowed_domain6.test'];
-      setup.enforce_keygen_algo = 'rsa2048';
+      mockBackendData.clientConfigurationByAcctEmail[acct] = {
+        flags: [
+          "NO_PRV_BACKUP",
+          "ENFORCE_ATTESTER_SUBMIT",
+          "PRV_AUTOIMPORT_OR_AUTOGEN",
+          "PASS_PHRASE_QUIET_AUTOGEN",
+          "DEFAULT_REMEMBER_PASS_PHRASE",
+        ],
+        // custom_keyserver_url: undefined,
+        key_manager_url: 'https://localhost:8001/flowcrypt-email-key-manager',
+        // allow_attester_search_only_for_domains: undefined,
+        disallow_attester_search_for_domains: [],
+        enforce_keygen_algo: 'rsa3072',
+        // enforce_keygen_expire_months: undefined
+      };
       const extraAuthHeaders = { Authorization: `Bearer ${accessToken}` };
-      const gmailPage = await browser.newPage(t, TestUrls.mockGmailUrl(), undefined, extraAuthHeaders);
+      let gmailPage = await browser.newPage(t, TestUrls.mockGmailUrl(), undefined, extraAuthHeaders);
       await Util.sleep(3);
       // read the local storage from via the extension's own page (settings)
       const {
@@ -1045,9 +1067,38 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         'PRV_AUTOIMPORT_OR_AUTOGEN',
         'PASS_PHRASE_QUIET_AUTOGEN',
         'DEFAULT_REMEMBER_PASS_PHRASE']);
-      expect(clientConfiguration3.disallow_attester_search_for_domains).to.eql(['disallowed_domain5.test', 'disallowed_domain6.test']);
-      expect(clientConfiguration3.enforce_keygen_algo).to.equal('rsa2048');
+      expect(clientConfiguration3.allow_attester_search_only_for_domains).to.be.an.undefined; // eslint-disable-line no-unused-expressions
+      expect(clientConfiguration3.disallow_attester_search_for_domains).to.eql([]);
+      expect(clientConfiguration3.enforce_keygen_algo).to.equal('rsa3072');
+      expect(clientConfiguration3.enforce_keygen_expire_months).to.be.an.undefined; // eslint-disable-line no-unused-expressions
+      expect(clientConfiguration3.custom_keyserver_url).to.be.an.undefined; // eslint-disable-line no-unused-expressions
+      expect(clientConfiguration3.key_manager_url).to.equal('https://localhost:8001/flowcrypt-email-key-manager');
       await gmailPage.close();
+      // configure an error
+      mockBackendData.clientConfigurationByAcctEmail[acct] = new HttpClientErr('Test error', Status.BAD_REQUEST);
+      gmailPage = await browser.newPage(t, TestUrls.mockGmailUrl(), undefined, extraAuthHeaders);
+      await PageRecipe.waitForToastToAppearAndDisappear(gmailPage,
+        'Failed to update FlowCrypt Client Configuration: ' +
+        'BrowserMsg(ajax) Bad Request: 400 when POST-ing https://localhost:8001/api/account/get string: account,uuid -> Test error');
+      await gmailPage.close();
+      // check that the configuration hasn't changed
+      const {
+        cryptup_settingssettingsflowcrypttest_rules: rules4
+      } = await settingsPage.getFromLocalStorage(['cryptup_settingssettingsflowcrypttest_rules']);
+      // check that the configuration in the storage has been updated
+      const clientConfiguration4 = rules4 as ClientConfiguration;
+      expect(clientConfiguration4.flags).to.eql([
+        'NO_PRV_BACKUP',
+        'ENFORCE_ATTESTER_SUBMIT',
+        'PRV_AUTOIMPORT_OR_AUTOGEN',
+        'PASS_PHRASE_QUIET_AUTOGEN',
+        'DEFAULT_REMEMBER_PASS_PHRASE']);
+      expect(clientConfiguration4.allow_attester_search_only_for_domains).to.be.an.undefined; // eslint-disable-line no-unused-expressions
+      expect(clientConfiguration4.disallow_attester_search_for_domains).to.eql([]);
+      expect(clientConfiguration4.enforce_keygen_algo).to.equal('rsa3072');
+      expect(clientConfiguration4.enforce_keygen_expire_months).to.be.an.undefined; // eslint-disable-line no-unused-expressions
+      expect(clientConfiguration4.custom_keyserver_url).to.be.an.undefined; // eslint-disable-line no-unused-expressions
+      expect(clientConfiguration4.key_manager_url).to.equal('https://localhost:8001/flowcrypt-email-key-manager');
       await settingsPage.close();
     }));
 
