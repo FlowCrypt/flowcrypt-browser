@@ -1558,7 +1558,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       const recipients = { to: 'attester.return.error@flowcrypt.test' };
       await ComposePageRecipe.fillMsg(composePage, recipients, t.title);
       await ComposePageRecipe.showRecipientInput(composePage);
-      await composePage.waitAndClick(`action-retry-${recipients.to.replace(/[^a-z0-9]+/g, '')}-pubkey-fetch`);
+      await composePage.waitAndClick(`@action-retry-${recipients.to.replace(/[^a-z0-9]+/g, '')}-pubkey-fetch`);
     }));
 
     ava.default('do not auto-refresh key if older version of the same key available on attester', testWithBrowser('ci.tests.gmail', async (t, browser) => {

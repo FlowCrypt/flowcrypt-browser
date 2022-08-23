@@ -38,7 +38,7 @@ export class Attester extends Api {
       }
     }
     if (results[1].status === 'rejected') {
-      throw new Error(String(results[1].reason));
+      throw results[1].reason as unknown;
     }
     return { pubkeys: [] };
   };
