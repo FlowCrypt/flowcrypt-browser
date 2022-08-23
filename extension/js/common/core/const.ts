@@ -10,7 +10,7 @@ export const PEOPLE_GOOGLE_API_HOST = '[BUILD_REPLACEABLE_PEOPLE_GOOGLE_API_HOST
 export const GOOGLE_OAUTH_SCREEN_HOST = '[BUILD_REPLACEABLE_GOOGLE_OAUTH_SCREEN_HOST]';
 export const BACKEND_API_HOST = '[BUILD_REPLACEABLE_BACKEND_API_HOST]';
 export const ATTESTER_API_HOST = '[BUILD_REPLACEABLE_ATTESTER_API_HOST]';
-export const IS_MOCK_TEST_ENVIRONMENT = false;
+export const WKD_API_HOST = ''; // empty means choose host per recipient domain
 
 /**
  * Only put constants below if:

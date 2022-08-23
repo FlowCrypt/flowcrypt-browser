@@ -24,7 +24,7 @@ const knownMockEmails = [
 
 let data: GoogleData;
 export const MOCK_ATTESTER_LAST_INSERTED_PUB: { [email: string]: string } = {};
-export const get203FAE7076005381 = async () => {
+const get203FAE7076005381 = async () => {
   if (!data) {
     data = await GoogleData.withInitializedData('flowcrypt.compatibility@gmail.com');
   }

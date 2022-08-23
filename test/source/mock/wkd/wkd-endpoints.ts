@@ -4,7 +4,6 @@ import { KeyUtil } from '../../core/crypto/key.js';
 import { PgpArmor } from '../../core/crypto/pgp/pgp-armor.js';
 import { testConstants } from '../../tests/tooling/consts.js';
 import { HandlersDefinition } from '../all-apis-mock';
-import { get203FAE7076005381 } from '../attester/attester-endpoints.js';
 
 const alice = `-----BEGIN PGP PUBLIC KEY BLOCK-----
 
@@ -99,6 +98,45 @@ nmusEeYtrrMytL4oUohBVZk=
 -----END PGP PUBLIC KEY BLOCK-----
 `;
 
+// only.on.wkd@signing.test
+const onlyOnWkdPub = `-----BEGIN PGP PUBLIC KEY BLOCK-----
+Version: FlowCrypt Email Encryption 8.3.2
+Comment: Seamlessly send and receive encrypted email
+
+xjMEYwSypBYJKwYBBAHaRw8BAQdAemcNzRPSZIEa5LnljFUCjpDaYKE+NIzb
+8/HdulmYTlbNH1Rlc3QgPG9ubHkub24ud2tkQHNpZ25pbmcudGVzdD7CjwQQ
+FgoAIAUCYwSypAYLCQcIAwIEFQgKAgQWAgEAAhkBAhsDAh4BACEJEPtcd1B2
+gxxRFiEELyOUpuDorKxUIF1D+1x3UHaDHFG6bQD/QhRpAMQf0XNWcICs4yGj
+buOprbmk1jbXveNvjM3xm68A/Rw4xKpYTcBwvnnFk8DRk8UUd1Tyby9nCUM5
+Rxyj75IKzjgEYwSypBIKKwYBBAGXVQEFAQEHQAeZ33tlMW1POXw7duxkZreg
++m8aHebGrIWdoAt0GSUMAwEIB8J4BBgWCAAJBQJjBLKkAhsMACEJEPtcd1B2
+gxxRFiEELyOUpuDorKxUIF1D+1x3UHaDHFH9AAD8DbMt2efR80LWUse6Zj9L
+wWzzLlqxcoNz8vHQegOJcwgA/1YymI8CeDGKXCmext6mL6295e5tjUySwItc
+lU5tXucF
+=zRyT
+-----END PGP PUBLIC KEY BLOCK-----`;
+
+/*
+// use for signing or decryption when defining tests
+const onlyOnWkdPrv = `-----BEGIN PGP PRIVATE KEY BLOCK-----
+Version: FlowCrypt Email Encryption 8.3.2
+Comment: Seamlessly send and receive encrypted email
+
+xVgEYwSypBYJKwYBBAHaRw8BAQdAemcNzRPSZIEa5LnljFUCjpDaYKE+NIzb
+8/HdulmYTlYAAP9k6oWvA0F7X5FzM/W5XfsWpMDlSoBx1dREwJIrY9h2FxGo
+zR9UZXN0IDxvbmx5Lm9uLndrZEBzaWduaW5nLnRlc3Q+wo8EEBYKACAFAmME
+sqQGCwkHCAMCBBUICgIEFgIBAAIZAQIbAwIeAQAhCRD7XHdQdoMcURYhBC8j
+lKbg6KysVCBdQ/tcd1B2gxxRum0A/0IUaQDEH9FzVnCArOMho27jqa25pNY2
+173jb4zN8ZuvAP0cOMSqWE3AcL55xZPA0ZPFFHdU8m8vZwlDOUcco++SCsdd
+BGMEsqQSCisGAQQBl1UBBQEBB0AHmd97ZTFtTzl8O3bsZGa3oPpvGh3mxqyF
+naALdBklDAMBCAcAAP9uJ95pTXPZYrC/l1YoTzA8wJTetz2YuWSdimIaFRjc
+OA/UwngEGBYIAAkFAmMEsqQCGwwAIQkQ+1x3UHaDHFEWIQQvI5Sm4OisrFQg
+XUP7XHdQdoMcUf0AAPwNsy3Z59HzQtZSx7pmP0vBbPMuWrFyg3Py8dB6A4lz
+CAD/VjKYjwJ4MYpcKZ7G3qYvrb3l7m2NTJLAi1yVTm1e5wU=
+=Dq31
+-----END PGP PRIVATE KEY BLOCK-----`;
+*/
+
 // todo - add a not found test with: throw new HttpClientErr('Pubkey not found', 404);
 
 export const mockWkdEndpoints: HandlersDefinition = {
@@ -108,7 +146,7 @@ export const mockWkdEndpoints: HandlersDefinition = {
     return Buffer.from((await PgpArmor.dearmor(KeyUtil.armor(pub))).data);
   },
   '/.well-known/openpgpkey/hu/n4qtbfz8ussx74ofsd1cbowqnaeoig3f?l=only.on.wkd': async () => {
-    return Buffer.from((await PgpArmor.dearmor(await get203FAE7076005381())).data); // for only.on.wkd@localhost:8001
+    return Buffer.from((await PgpArmor.dearmor(onlyOnWkdPub)).data); // for only.on.wkd@signing.test
   },
   '/.well-known/openpgpkey/hu/ihyath4noz8dsckzjbuyqnh4kbup6h4i?l=john.doe': async () => {
     return Buffer.from((await PgpArmor.dearmor(johnDoe1)).data); // direct for john.doe@localhost

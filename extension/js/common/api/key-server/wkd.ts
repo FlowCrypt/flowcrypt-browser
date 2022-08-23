@@ -6,7 +6,7 @@ import { Api } from './../shared/api.js';
 import { ApiErr } from '../shared/api-error.js';
 import { Buf } from '../../core/buf.js';
 import { PubkeysSearchResult } from './../pub-lookup.js';
-import { IS_MOCK_TEST_ENVIRONMENT } from '../../core/const.js';
+import { WKD_API_HOST } from '../../core/const.js';
 import { opgp } from '../../core/crypto/pgp/openpgpjs-custom.js';
 import { BrowserMsg } from '../../browser/browser-msg.js';
 import { ArmoredKeyWithEmailsAndId, KeyUtil } from '../../core/crypto/key.js';
@@ -18,8 +18,6 @@ export class Wkd extends Api {
   // https://datatracker.ietf.org/doc/draft-koch-openpgp-webkey-service/?include_text=1
   // https://www.sektioneins.de/en/blog/18-11-23-gnupg-wkd.html
   // https://metacode.biz/openpgp/web-key-directory
-
-  public port: number | undefined;
 
   constructor(
     private domainName: string,
@@ -40,16 +38,14 @@ export class Wkd extends Api {
       return [];
     }
     const lowerCaseRecipientDomain = recipientDomain.toLowerCase();
-    const directDomain = lowerCaseRecipientDomain;
     const timeout = (this.usesKeyManager && lowerCaseRecipientDomain === this.domainName) ? 10 : 4;
-    const advancedDomainPrefix = (directDomain === 'localhost') ? '' : 'openpgpkey.';
     const hashed = await window.crypto.subtle.digest('SHA-1', Buf.fromUtfStr(user.toLowerCase()));
     const hu = this.encodeZBase32(new Uint8Array(hashed));
-    const directHost = (typeof this.port === 'undefined') ? directDomain : `${directDomain}:${this.port}`;
-    const advancedHost = `${advancedDomainPrefix}${directHost}`;
+    const directHost = WKD_API_HOST || `https://${lowerCaseRecipientDomain}`;
+    const advancedHost = WKD_API_HOST || `https://openpgpkey.${lowerCaseRecipientDomain}`;
     const userPart = `hu/${hu}?l=${encodeURIComponent(user)}`;
-    const advancedUrl = `https://${advancedHost}/.well-known/openpgpkey/${directDomain}`;
-    const directUrl = `https://${directHost}/.well-known/openpgpkey`;
+    const advancedUrl = `${advancedHost}/.well-known/openpgpkey/${lowerCaseRecipientDomain}`;
+    const directUrl = `${directHost}/.well-known/openpgpkey`;
     let response = await this.urlLookup(advancedUrl, userPart, timeout);
     if (!response.buf && response.hasPolicy) {
       return [];
@@ -70,20 +66,8 @@ export class Wkd extends Api {
 
   public lookupEmail = async (email: string): Promise<PubkeysSearchResult> => {
     const all = await this.rawLookupEmail(email);
-    console.log(all);
-    const filtered = all.filter(key => key.emails.some(e => this.pubkeyUidFilter(e, email)));
+    const filtered = all.filter(key => key.emails.some(e => e.toLowerCase() === email.toLowerCase()));
     return { pubkeys: filtered.map(pubkey => pubkey.armored) };
-  };
-
-  private pubkeyUidFilter = (uidEmail: string, expectedEmail: string) => {
-    if (!IS_MOCK_TEST_ENVIRONMENT) { // lgtm [js/trivial-conditional]
-      // WKD spec requires UIDs of keys received from server to match searched string
-      return uidEmail.toLowerCase() === expectedEmail.toLowerCase();
-    } else {
-      // our tests search for emails like something@localhost:8001 which is not a valid email for pgp key
-      // therefore we work around it here
-      return uidEmail.toLowerCase() === expectedEmail.toLowerCase() || expectedEmail.endsWith('@localhost:8001');
-    }
   };
 
   private urlLookup = async (methodUrlBase: string, userPart: string, timeout: number): Promise<{ hasPolicy: boolean, buf?: Buf }> => {
