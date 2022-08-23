@@ -106,18 +106,8 @@ export const defineUnitNodeTests = (testVariant: TestVariant) => {
       t.pass();
     });
 
-    ava.default(`[unit][PgpHash.sha1] hello`, async t => {
-      expect(await PgpHash.sha1UtfStr("hello")).to.equal("aaf4c61ddcc5e8a2dabede0f3b482cd9aea9434d");
-      t.pass();
-    });
-
     ava.default(`[unit][PgpHash.sha256] hello`, async t => {
       expect(await PgpHash.sha256UtfStr("hello")).to.equal('2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824');
-      t.pass();
-    });
-
-    ava.default(`[unit][PgpHash.doubleSha1Upper] hello`, async t => {
-      expect(await PgpHash.doubleSha1Upper("hello")).to.equal("9CF5CAF6C36F5CCCDE8C73FAD8894C958F4983DA");
       t.pass();
     });
 
