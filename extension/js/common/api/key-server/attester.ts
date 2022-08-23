@@ -3,7 +3,7 @@
 'use strict';
 
 import { Api, ReqMethod } from './../shared/api.js';
-import { Dict, Str } from '../../core/common.js';
+import { Dict, promiseAllSettled, Str } from '../../core/common.js';
 import { PubkeysSearchResult } from './../pub-lookup.js';
 import { AjaxErr, ApiErr } from '../shared/api-error.js';
 import { ClientConfiguration } from "../../client-configuration";
@@ -25,14 +25,16 @@ export class Attester extends Api {
       console.info(`Skipping attester lookup of ${email} because attester search on this domain is disabled.`);
       return { pubkeys: [] };
     }
-    const results = await Promise.all([
+    // Can't use Promise.allSettled because we are using ES2018 (Available from ES2020)
+    const results = await promiseAllSettled([
       this.doLookupLdap(email),  // get from recipient-specific LDAP server, if any, relayed through flowcrypt.com
       this.doLookup(email),  // get from flowcrypt.com public keyserver database
       this.doLookupLdap(email, 'keyserver.pgp.com'), // get from keyserver.pgp.com, relayed through flowcrypt.com
     ]);
-    for (const result of results) {
-      if (result.pubkeys.length) {
-        return result;
+    const validResults = results.filter(result => result.status === 'fulfilled' && result.value);
+    for (const result of validResults) {
+      if (result.value!.pubkeys.length) {
+        return result.value!;
       }
     }
     return { pubkeys: [] };
@@ -42,7 +44,7 @@ export class Attester extends Api {
     const ldapServer = server ?? `keys.${Str.getDomainFromEmailAddress(email)}`;
     try {
       const r = await this.pubCall(`ldap-relay?server=${ldapServer}&search=${email}`);
-      return this.getPubKeysSearchResult(r);
+      return await this.getPubKeysSearchResult(r);
     } catch (e) {
       // treat error 500 as error 404 on this particular endpoint
       // https://github.com/FlowCrypt/flowcrypt-browser/pull/4627#issuecomment-1222624065
@@ -51,12 +53,6 @@ export class Attester extends Api {
       }
       throw e;
     }
-  };
-
-  private getPubKeysSearchResult = async (r: PubCallRes): Promise<PubkeysSearchResult> => {
-    const { blocks } = MsgBlockParser.detectBlocks(r.responseText);
-    const pubkeys = blocks.filter((block) => block.type === 'publicKey').map((block) => block.content.toString());
-    return { pubkeys };
   };
 
   public lookupEmails = async (emails: string[]): Promise<Dict<PubkeysSearchResult>> => {
@@ -126,10 +122,16 @@ export class Attester extends Api {
     return await Api.apiCall(ATTESTER_API_HOST, resource, data, typeof data === 'string' ? 'TEXT' : undefined, undefined, hdrs, 'xhr', method);
   };
 
+  private getPubKeysSearchResult = async (r: PubCallRes): Promise<PubkeysSearchResult> => {
+    const { blocks } = MsgBlockParser.detectBlocks(r.responseText);
+    const pubkeys = blocks.filter((block) => block.type === 'publicKey').map((block) => block.content.toString());
+    return { pubkeys };
+  };
+
   private doLookup = async (email: string): Promise<PubkeysSearchResult> => {
     try {
       const r = await this.pubCall(`pub/${email}`);
-      return this.getPubKeysSearchResult(r);
+      return await this.getPubKeysSearchResult(r);
     } catch (e) {
       if (ApiErr.isNotFound(e)) {
         return { pubkeys: [] };

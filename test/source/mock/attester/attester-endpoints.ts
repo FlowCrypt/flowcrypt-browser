@@ -94,6 +94,12 @@ export const mockAttesterEndpoints: HandlersDefinition = {
       if (emailOrLongid === 'test.flowcrypt.pubkeyserver.priority@gmail.com') {
         return somePubkey;
       }
+      if (emailOrLongid === 'test.ldap.timeout@gmail.com') {
+        return somePubkey;
+      }
+      if (emailOrLongid === 'test.flowcrypt.pubkey.timeout@gmail.com') {
+        throw new HttpClientErr('RequestTimeout', Status.BAD_REQUEST);
+      }
       throw new HttpClientErr('Pubkey not found', 404);
     } else if (isPost(req)) {
       oauth.checkAuthorizationHeaderWithIdToken(req.headers.authorization);
@@ -116,6 +122,12 @@ export const mockAttesterEndpoints: HandlersDefinition = {
       }
       if (emailOrLongid === 'test.ldap.keyserver.pgp@gmail.com' && server === 'keyserver.pgp.com') {
         return [protonMailCompatKey, testMatchPubKey].join('\n');
+      }
+      if (emailOrLongid === 'test.ldap.timeout@gmail.com') {
+        throw new HttpClientErr('RequestTimeout', Status.BAD_REQUEST);
+      }
+      if (emailOrLongid === 'test.flowcrypt.pubkey.timeout@gmail.com') {
+        return somePubkey;
       }
       throw new HttpClientErr('No OpenPGP LDAP server on this address.', Status.NOT_FOUND);
     } else {

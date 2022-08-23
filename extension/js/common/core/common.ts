@@ -360,3 +360,19 @@ export const asyncSome = async<T>(arr: Array<T>, predicate: (e: T) => Promise<bo
   }
   return false;
 };
+
+interface PromiseAllSettledInterface<T> {
+  status: string;
+  value?: T;
+  reason?: string;
+}
+export const promiseAllSettled = async <T>(promises: Promise<T>[]): Promise<PromiseAllSettledInterface<T>[]> => {
+  const result = await Promise.all(
+    promises.map((promise) =>
+      promise
+        .then(value => ({ status: "fulfilled", value }))
+        .catch(reason => ({ status: "rejected", reason }))
+    )
+  );
+  return result;
+};
