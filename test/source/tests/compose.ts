@@ -1536,7 +1536,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       await contactsFrame.waitAny(`@action-show-pubkey-AB8CF86E37157C3F290D72007ED43D79E9617655-openpgp`);
     }));
 
-    ava.default.only('check attester ldap timeout', testWithBrowser('ci.tests.gmail', async (t, browser) => {
+    ava.default('check attester ldap timeout', testWithBrowser('ci.tests.gmail', async (t, browser) => {
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
       const recipients = { to: 'test.ldap.timeout@gmail.com', cc: 'test.flowcrypt.pubkey.timeout@gmail.com' };
       await ComposePageRecipe.fillMsg(composePage, recipients, t.title);
