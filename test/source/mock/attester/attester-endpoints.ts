@@ -100,6 +100,9 @@ export const mockAttesterEndpoints: HandlersDefinition = {
       if (emailOrLongid === 'test.flowcrypt.pubkey.timeout@gmail.com') {
         throw new HttpClientErr('RequestTimeout', Status.BAD_REQUEST);
       }
+      if (emailOrLongid === 'attester.return.error@flowcrypt.test') {
+        throw new HttpClientErr('Server error. Please try again', Status.SERVER_ERROR);
+      }
       throw new HttpClientErr('Pubkey not found', 404);
     } else if (isPost(req)) {
       oauth.checkAuthorizationHeaderWithIdToken(req.headers.authorization);

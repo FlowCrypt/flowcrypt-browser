@@ -3,7 +3,7 @@
 'use strict';
 
 import { Api, ReqMethod } from './../shared/api.js';
-import { Dict, promiseAllSettled, Str } from '../../core/common.js';
+import { Dict, Str } from '../../core/common.js';
 import { PubkeysSearchResult } from './../pub-lookup.js';
 import { AjaxErr, ApiErr } from '../shared/api-error.js';
 import { ClientConfiguration } from "../../client-configuration";
@@ -25,17 +25,20 @@ export class Attester extends Api {
       console.info(`Skipping attester lookup of ${email} because attester search on this domain is disabled.`);
       return { pubkeys: [] };
     }
-    // Can't use Promise.allSettled because we are using ES2018 (Available from ES2020)
-    const results = await promiseAllSettled([
+    const results = await Promise.allSettled([
       this.doLookupLdap(email),  // get from recipient-specific LDAP server, if any, relayed through flowcrypt.com
       this.doLookup(email),  // get from flowcrypt.com public keyserver database
       this.doLookupLdap(email, 'keyserver.pgp.com'), // get from keyserver.pgp.com, relayed through flowcrypt.com
     ]);
-    const validResults = results.filter(result => result.status === 'fulfilled' && result.value);
+    const validResults = results.filter(result => result.status === 'fulfilled');
     for (const result of validResults) {
-      if (result.value!.pubkeys.length) {
-        return result.value!;
+      const fulfilResult = result as PromiseFulfilledResult<PubkeysSearchResult>;
+      if (fulfilResult.value.pubkeys.length) {
+        return fulfilResult.value;
       }
+    }
+    if (results[1].status === 'rejected') {
+      throw new Error(String(results[1].reason));
     }
     return { pubkeys: [] };
   };

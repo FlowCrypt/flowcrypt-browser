@@ -1553,6 +1553,14 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       await contactsFrame.waitAny(`@action-show-pubkey-8B8A05A2216EE6E4C5EE3D540D5688EBF3102BE7-openpgp`);
     }));
 
+    ava.default('allows to retry public key search when attester returns error', testWithBrowser('ci.tests.gmail', async (t, browser) => {
+      const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
+      const recipients = { to: 'attester.return.error@flowcrypt.test' };
+      await ComposePageRecipe.fillMsg(composePage, recipients, t.title);
+      await ComposePageRecipe.showRecipientInput(composePage);
+      await composePage.waitAndClick(`action-retry-${recipients.to.replace(/[^a-z0-9]+/g, '')}-pubkey-fetch`);
+    }));
+
     ava.default('do not auto-refresh key if older version of the same key available on attester', testWithBrowser('ci.tests.gmail', async (t, browser) => {
       const recipientEmail = 'has.older.key.on.attester@recipient.com';
       // add a newer expired key manually
