@@ -100,6 +100,11 @@ export type PrvPacket = (OpenPGP.packet.SecretKey | OpenPGP.packet.SecretSubkey)
 
 export class UnexpectedKeyTypeError extends Error { }
 
+export interface ArmoredKeyIdentityWithEmails extends KeyIdentity {
+  armored: string;
+  emails: string[];
+}
+
 export class KeyUtil {
 
   public static identityEquals = (keyIdentity1: KeyIdentity, keyIdentity2: KeyIdentity) => {
@@ -432,6 +437,11 @@ export class KeyUtil {
 
   public static sortPubkeyInfos = (pubkeyInfos: PubkeyInfo[]): PubkeyInfo[] => {
     return pubkeyInfos.sort((a, b) => KeyUtil.getSortValue(b) - KeyUtil.getSortValue(a));
+  };
+
+  public static parseAndArmorKeys = async (binaryKeysData: Uint8Array): Promise<ArmoredKeyIdentityWithEmails[]> => {
+    const { keys } = await KeyUtil.readMany(Buf.fromUint8(binaryKeysData));
+    return keys.map(k => ({ id: k.id, emails: k.emails, armored: KeyUtil.armor(k), family: k.family }));
   };
 
   private static getSortValue = (pubinfo: PubkeyInfo): number => {
