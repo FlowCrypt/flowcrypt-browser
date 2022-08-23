@@ -1192,13 +1192,6 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       await decryptErrorDetails.waitForContent('@error-details', '"type": "key_mismatch"'); // DecryptError
     }));
 
-    ava.default('can lookup public key from WKD directly', testWithBrowser('ci.tests.gmail', async (t, browser) => {
-      const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
-      await ComposePageRecipe.fillMsg(composePage, { to: 'demo@flowcrypt.com' }, 'should find pubkey from WKD directly');
-      await composePage.waitForContent('.email_address.has_pgp', 'demo@flowcrypt.com');
-      expect(await composePage.attr('.email_address.has_pgp', 'title')).to.contain('0997 7F6F 512C A5AD 76F0 C210 248B 60EB 6D04 4DF8 (openpgp)');
-    }));
-
     ava.default('timeouts when searching WKD - used to never time out', testWithBrowser('ci.tests.gmail', async (t, browser) => {
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
       await ComposePageRecipe.fillMsg(composePage, { to: 'somewhere@mac.com' }, 'should show no pubkey within a few seconds');

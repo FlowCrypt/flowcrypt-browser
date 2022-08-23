@@ -64,7 +64,9 @@ opgp.initWorker({ path: '/lib/openpgp.worker.js' });
   BrowserMsg.bgAddListener('storeAcctSet', (r: Bm.StoreAcctSet) => AcctStore.set(r.acctEmail, r.values));
   BrowserMsg.bgAddListener('processAndStoreKeysFromEkmLocally', processAndStoreKeysFromEkmLocally);
 
-  BrowserMsg.addPgpListeners(); // todo - remove https://github.com/FlowCrypt/flowcrypt-browser/issues/2560 fixed
+  // todo - when https://github.com/FlowCrypt/flowcrypt-browser/issues/2560
+  //   is fixed, this can be moved to the gmail content script, and some may be removed
+  BrowserMsg.addPgpListeners();
 
   BrowserMsg.bgAddListener('ajax', BgHandlers.ajaxHandler);
   BrowserMsg.bgAddListener('ajaxGmailAttachmentGetChunk', BgHandlers.ajaxGmailAttachmentGetChunkHandler);
