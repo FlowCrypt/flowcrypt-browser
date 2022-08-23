@@ -25,32 +25,24 @@ export class Attester extends Api {
       console.info(`Skipping attester lookup of ${email} because attester search on this domain is disabled.`);
       return { pubkeys: [] };
     }
-    // first get from recipient-specific LDAP server, if any, relayed through flowcrypt.com
-    const customerLdapRes = await this.doLookupLdap(email);
-    if (customerLdapRes.pubkeys.length) {
-      return customerLdapRes;
+    const results = await Promise.all([
+      this.doLookup(email),  // get from flowcrypt.com public keyserver database
+      this.doLookupLdap(email),  // get from recipient-specific LDAP server, if any, relayed through flowcrypt.com
+      this.doLookupLdap(email, 'keyserver.pgp.com'), // get from keyserver.pgp.com, relayed through flowcrypt.com
+    ]);
+    for (const result of results) {
+      if (result.pubkeys.length) {
+        return result;
+      }
     }
-    // get from flowcrypt.com public keyserver database
-    const flowcryptRes = await this.doLookup(email);
-    if (flowcryptRes.pubkeys.length) {
-      return flowcryptRes;
-    }
-    // get from keyserver.pgp.com, relayed through flowcrypt.com
-    return await this.doLookupLdap(email, 'keyserver.pgp.com');
+    return { pubkeys: [] };
   };
 
   public doLookupLdap = async (email: string, server?: string): Promise<PubkeysSearchResult> => {
-    const parts = email.split('@');
-    if (parts.length !== 2) {
-      return { pubkeys: [] };
-    }
-    const [, recipientDomain] = parts;
-    const ldapServer = server ?? `keys.${recipientDomain}`;
+    const ldapServer = server ?? `keys.${Str.getDomainFromEmailAddress(email)}`;
     try {
       const r = await this.pubCall(`ldap-relay?server=${ldapServer}&search=${email}`);
-      const { blocks } = MsgBlockParser.detectBlocks(r.responseText);
-      const pubkeys = blocks.filter((block) => block.type === 'publicKey').map((block) => block.content.toString());
-      return { pubkeys };
+      return this.getPubKeysSearchResult(r);
     } catch (e) {
       // treat error 500 as error 404 on this particular endpoint
       // https://github.com/FlowCrypt/flowcrypt-browser/pull/4627#issuecomment-1222624065
@@ -59,6 +51,12 @@ export class Attester extends Api {
       }
       throw e;
     }
+  };
+
+  private getPubKeysSearchResult = async (r: PubCallRes): Promise<PubkeysSearchResult> => {
+    const { blocks } = MsgBlockParser.detectBlocks(r.responseText);
+    const pubkeys = blocks.filter((block) => block.type === 'publicKey').map((block) => block.content.toString());
+    return { pubkeys };
   };
 
   public lookupEmails = async (emails: string[]): Promise<Dict<PubkeysSearchResult>> => {
@@ -131,9 +129,7 @@ export class Attester extends Api {
   private doLookup = async (email: string): Promise<PubkeysSearchResult> => {
     try {
       const r = await this.pubCall(`pub/${email}`);
-      const { blocks } = MsgBlockParser.detectBlocks(r.responseText);
-      const pubkeys = blocks.filter((block) => block.type === 'publicKey').map((block) => block.content.toString());
-      return { pubkeys };
+      return this.getPubKeysSearchResult(r);
     } catch (e) {
       if (ApiErr.isNotFound(e)) {
         return { pubkeys: [] };

@@ -1,6 +1,6 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
-import { HttpClientErr } from '../lib/api';
+import { HttpClientErr, Status } from '../lib/api';
 import { Dict } from '../../core/common';
 import { HandlersDefinition } from '../all-apis-mock';
 import { isPost, isGet } from '../lib/mock-util';
@@ -117,7 +117,7 @@ export const mockAttesterEndpoints: HandlersDefinition = {
       if (emailOrLongid === 'test.ldap.keyserver.pgp@gmail.com' && server === 'keyserver.pgp.com') {
         return [protonMailCompatKey, testMatchPubKey].join('\n');
       }
-      throw new HttpClientErr('No OpenPGP LDAP server on this address.', 404);
+      throw new HttpClientErr('No OpenPGP LDAP server on this address.', Status.NOT_FOUND);
     } else {
       throw new HttpClientErr(`Not implemented: ${req.method}`);
     }
