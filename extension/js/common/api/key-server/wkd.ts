@@ -9,7 +9,7 @@ import { PubkeysSearchResult } from './../pub-lookup.js';
 import { WKD_API_HOST } from '../../core/const.js';
 import { opgp } from '../../core/crypto/pgp/openpgpjs-custom.js';
 import { BrowserMsg } from '../../browser/browser-msg.js';
-import { ArmoredKeyWithEmailsAndId, KeyUtil } from '../../core/crypto/key.js';
+import { ArmoredKeyIdentityWithEmails, KeyUtil } from '../../core/crypto/key.js';
 
 // tslint:disable:no-direct-ajax
 
@@ -27,7 +27,7 @@ export class Wkd extends Api {
   }
 
   // returns all the received keys
-  public rawLookupEmail = async (email: string): Promise<ArmoredKeyWithEmailsAndId[]> => {
+  public rawLookupEmail = async (email: string): Promise<ArmoredKeyIdentityWithEmails[]> => {
     // todo: should we return errs on network failures etc.?
     const parts = email.split('@');
     if (parts.length !== 2) {

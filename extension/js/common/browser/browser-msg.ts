@@ -18,7 +18,7 @@ import { Ui } from './ui.js';
 import { GlobalStoreDict, GlobalIndex } from '../platform/store/global-store.js';
 import { AcctStoreDict, AccountIndex } from '../platform/store/acct-store.js';
 import { saveFetchedPubkeysIfNewerThanInStorage } from '../shared.js';
-import { ArmoredKeyWithEmailsAndId, KeyUtil } from '../core/crypto/key.js';
+import { ArmoredKeyIdentityWithEmails, KeyUtil } from '../core/crypto/key.js';
 
 export type GoogleAuthWindowResult$result = 'Success' | 'Denied' | 'Error' | 'Closed';
 
@@ -83,7 +83,7 @@ export namespace Bm {
     export type PgpMsgVerify = VerifyRes;
     export type PgpMsgType = PgpMsgTypeResult;
     export type PgpHashChallengeAnswer = { hashed: string };
-    export type PgpKeyBinaryToArmored = { keys: ArmoredKeyWithEmailsAndId[] };
+    export type PgpKeyBinaryToArmored = { keys: ArmoredKeyIdentityWithEmails[] };
     export type AjaxGmailAttachmentGetChunk = { chunk: Buf };
     export type _tab_ = { tabId: string | null | undefined };
     export type SaveFetchedPubkeys = boolean;
