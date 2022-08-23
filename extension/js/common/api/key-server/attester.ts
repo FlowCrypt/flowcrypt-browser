@@ -26,8 +26,8 @@ export class Attester extends Api {
       return { pubkeys: [] };
     }
     const results = await Promise.all([
-      this.doLookup(email),  // get from flowcrypt.com public keyserver database
       this.doLookupLdap(email),  // get from recipient-specific LDAP server, if any, relayed through flowcrypt.com
+      this.doLookup(email),  // get from flowcrypt.com public keyserver database
       this.doLookupLdap(email, 'keyserver.pgp.com'), // get from keyserver.pgp.com, relayed through flowcrypt.com
     ]);
     for (const result of results) {
