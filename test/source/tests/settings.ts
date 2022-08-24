@@ -976,11 +976,11 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       // set up the client configuration returned for the account
       mockBackendData.clientConfigurationByAcctEmail[acct] = {
         flags: [
-          "NO_PRV_BACKUP",
-          "ENFORCE_ATTESTER_SUBMIT",
-          "PRV_AUTOIMPORT_OR_AUTOGEN",
-          "PASS_PHRASE_QUIET_AUTOGEN",
-          "DEFAULT_REMEMBER_PASS_PHRASE",
+          'NO_PRV_BACKUP',
+          'ENFORCE_ATTESTER_SUBMIT',
+          'PRV_AUTOIMPORT_OR_AUTOGEN',
+          'PASS_PHRASE_QUIET_AUTOGEN',
+          'DEFAULT_REMEMBER_PASS_PHRASE'
         ],
         // custom_keyserver_url: undefined,
         key_manager_url: 'https://localhost:8001/flowcrypt-email-key-manager',
@@ -1040,11 +1040,11 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       // re-configure the setup again
       mockBackendData.clientConfigurationByAcctEmail[acct] = {
         flags: [
-          "NO_PRV_BACKUP",
-          "ENFORCE_ATTESTER_SUBMIT",
-          "PRV_AUTOIMPORT_OR_AUTOGEN",
-          "PASS_PHRASE_QUIET_AUTOGEN",
-          "DEFAULT_REMEMBER_PASS_PHRASE",
+          'NO_PRV_BACKUP',
+          'ENFORCE_ATTESTER_SUBMIT',
+          'PRV_AUTOIMPORT_OR_AUTOGEN',
+          'PASS_PHRASE_QUIET_AUTOGEN',
+          'DEFAULT_REMEMBER_PASS_PHRASE'
         ],
         // custom_keyserver_url: undefined,
         key_manager_url: 'https://localhost:8001/flowcrypt-email-key-manager',
@@ -1080,7 +1080,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       gmailPage = await browser.newPage(t, TestUrls.mockGmailUrl(), undefined, extraAuthHeaders);
       await PageRecipe.waitForToastToAppearAndDisappear(gmailPage,
         'Failed to update FlowCrypt Client Configuration: ' +
-        'BrowserMsg(ajax) Bad Request: 400 when POST-ing https://localhost:8001/api/account/get string: account,uuid -> Test error');
+        'BrowserMsg(ajax) Bad Request: 400 when POST-ing https://localhost:8001/api/account/get string: account,uuid -> Test error (AjaxErr)');
       await gmailPage.close();
       // check that the configuration hasn't changed
       const {

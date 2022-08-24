@@ -294,7 +294,9 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
         // ignore
       } else {
         Catch.reportErr(e);
-        Ui.toast(`Failed to update FlowCrypt Client Configuration: ${e instanceof Error ? e.message : String(e)}`);
+        // tslint:disable-next-line:no-unsafe-any
+        const errType = e.constructor?.name || 'Error';
+        Ui.toast(`Failed to update FlowCrypt Client Configuration: ${e instanceof Error ? e.message : String(e)} (${errType})`);
       }
     }
 
@@ -305,7 +307,7 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
       const acctEmail = await waitForAcctEmail();
       const { tabId, notifications, factory, inject } = await initInternalVars(acctEmail);
       await showNotificationsAndWaitTilAcctSetUp(acctEmail, notifications);
-      await updateClientConfiguration(acctEmail);
+      Catch.setHandledTimeout(() => updateClientConfiguration(acctEmail), 0);
       const ppEvent: { entered?: boolean } = {};
       browserMsgListen(acctEmail, tabId, inject, factory, notifications, ppEvent);
       const clientConfiguration = await ClientConfiguration.newInstance(acctEmail);
