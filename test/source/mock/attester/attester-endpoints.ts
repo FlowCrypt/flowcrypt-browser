@@ -1,6 +1,6 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
-import { HttpClientErr } from '../lib/api';
+import { HttpClientErr, Status } from '../lib/api';
 import { Dict } from '../../core/common';
 import { HandlersDefinition } from '../all-apis-mock';
 import { isPost, isGet } from '../lib/mock-util';
@@ -87,12 +87,51 @@ export const mockAttesterEndpoints: HandlersDefinition = {
       if (emailOrLongid === '8EC78F043CEB022498AFD4771E62ED6D15A25921'.toLowerCase()) {
         return testConstants.oldHasOlderKeyOnAttester;
       }
+      if (emailOrLongid === 'test.ldap.priority@gmail.com') {
+        return somePubkey;
+      }
+      if (emailOrLongid === 'test.flowcrypt.pubkeyserver.priority@gmail.com') {
+        return somePubkey;
+      }
+      if (emailOrLongid === 'test.ldap.timeout@gmail.com') {
+        return somePubkey;
+      }
+      if (emailOrLongid === 'test.flowcrypt.pubkey.timeout@gmail.com') {
+        throw new HttpClientErr('RequestTimeout', Status.BAD_REQUEST);
+      }
+      if (emailOrLongid === 'attester.return.error@flowcrypt.test') {
+        throw new HttpClientErr('Server error. Please try again', Status.SERVER_ERROR);
+      }
       throw new HttpClientErr('Pubkey not found', 404);
     } else if (isPost(req)) {
       oauth.checkAuthorizationHeaderWithIdToken(req.headers.authorization);
       expect(body).to.contain('-----BEGIN PGP PUBLIC KEY BLOCK-----');
       MOCK_ATTESTER_LAST_INSERTED_PUB[emailOrLongid] = body as string;
       return 'Saved'; // 200 OK
+    } else {
+      throw new HttpClientErr(`Not implemented: ${req.method}`);
+    }
+  },
+  '/attester/ldap-relay': async (parsedReq, req) => {
+    const server = parsedReq.query.server;
+    const emailOrLongid = parsedReq.query.search;
+    if (isGet(req)) {
+      if (emailOrLongid === 'test.ldap.priority@gmail.com') {
+        return protonMailCompatKey;
+      }
+      if (emailOrLongid === 'test.flowcrypt.pubkeyserver.priority@gmail.com') {
+        return protonMailCompatKey;
+      }
+      if (emailOrLongid === 'test.ldap.keyserver.pgp@gmail.com' && server === 'keyserver.pgp.com') {
+        return [protonMailCompatKey, testMatchPubKey].join('\n');
+      }
+      if (emailOrLongid === 'test.ldap.timeout@gmail.com') {
+        throw new HttpClientErr('RequestTimeout', Status.BAD_REQUEST);
+      }
+      if (emailOrLongid === 'test.flowcrypt.pubkey.timeout@gmail.com') {
+        return somePubkey;
+      }
+      throw new HttpClientErr('No OpenPGP LDAP server on this address.', Status.NOT_FOUND);
     } else {
       throw new HttpClientErr(`Not implemented: ${req.method}`);
     }

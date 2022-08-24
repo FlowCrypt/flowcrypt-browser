@@ -111,8 +111,8 @@ export class ComposePageRecipe extends PageRecipe {
         if (sendingType !== 'to') { // input-to is always visible
           await composePageOrFrame.waitAndClick(`@action-show-${sendingType}`);
         }
-        await composePageOrFrame.waitAndType(`@input-${sendingType}`, email);
-        await Util.sleep(1);
+        await composePageOrFrame.waitAndType(`@input-${sendingType}`, email + '\n');
+        await composePageOrFrame.waitTillGone('@spinner');
       }
     }
     await composePageOrFrame.target.evaluate(() => { $('#input_text').focus(); });
