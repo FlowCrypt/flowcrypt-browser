@@ -29,6 +29,7 @@ import { ClientConfiguration } from '../mock/backend/backend-data';
 import { HttpClientErr, Status } from '../mock/lib/api';
 
 // tslint:disable:no-blank-lines-func
+// tslint:disable:no-unused-expression
 
 export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: TestWithBrowser) => {
 
@@ -1002,11 +1003,11 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         'PRV_AUTOIMPORT_OR_AUTOGEN',
         'PASS_PHRASE_QUIET_AUTOGEN',
         'DEFAULT_REMEMBER_PASS_PHRASE']);
-      expect(clientConfiguration1.allow_attester_search_only_for_domains).to.be.an.undefined; // eslint-disable-line @typescript-eslint/no-unused-expressions
+      expect(clientConfiguration1.allow_attester_search_only_for_domains).to.be.an.undefined; // eslint-disable-line no-unused-expressions
       expect(clientConfiguration1.disallow_attester_search_for_domains).to.eql(['disallowed_domain1.test', 'disallowed_domain2.test']);
       expect(clientConfiguration1.enforce_keygen_algo).to.equal('rsa2048');
-      expect(clientConfiguration1.enforce_keygen_expire_months).to.be.an.undefined; // eslint-disable-line @typescript-eslint/no-unused-expressions
-      expect(clientConfiguration1.custom_keyserver_url).to.be.an.undefined; // eslint-disable-line @typescript-eslint/no-unused-expressions
+      expect(clientConfiguration1.enforce_keygen_expire_months).to.be.an.undefined; // eslint-disable-line no-unused-expressions
+      expect(clientConfiguration1.custom_keyserver_url).to.be.an.undefined; // eslint-disable-line no-unused-expressions
       expect(clientConfiguration1.key_manager_url).to.equal('https://localhost:8001/flowcrypt-email-key-manager');
       await setupPage.close();
 
@@ -1029,10 +1030,10 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       const clientConfiguration2 = rules2 as ClientConfiguration;
       expect(clientConfiguration2.flags).to.eql(['NO_ATTESTER_SUBMIT', 'HIDE_ARMOR_META', 'DEFAULT_REMEMBER_PASS_PHRASE']);
       expect(clientConfiguration2.custom_keyserver_url).to.equal('https://localhost:8001');
-      expect(clientConfiguration2.key_manager_url).to.be.an.undefined; // eslint-disable-line @typescript-eslint/no-unused-expressions
+      expect(clientConfiguration2.key_manager_url).to.be.an.undefined; // eslint-disable-line no-unused-expressions
       expect(clientConfiguration2.allow_attester_search_only_for_domains).to.eql(['allowed_domain1.test', 'allowed_domain2.test']);
-      expect(clientConfiguration2.disallow_attester_search_for_domains).to.be.an.undefined; // eslint-disable-line @typescript-eslint/no-unused-expressions
-      expect(clientConfiguration2.enforce_keygen_algo).to.be.an.undefined; // eslint-disable-line @typescript-eslint/no-unused-expressions
+      expect(clientConfiguration2.disallow_attester_search_for_domains).to.be.an.undefined; // eslint-disable-line no-unused-expressions
+      expect(clientConfiguration2.enforce_keygen_algo).to.be.an.undefined; // eslint-disable-line no-unused-expressions
       expect(clientConfiguration2.enforce_keygen_expire_months).to.equal(12);
       const accessToken = await BrowserRecipe.getGoogleAccessToken(settingsPage, acct);
       // keep settingsPage open to re-read the storage later via it
@@ -1067,11 +1068,11 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         'PRV_AUTOIMPORT_OR_AUTOGEN',
         'PASS_PHRASE_QUIET_AUTOGEN',
         'DEFAULT_REMEMBER_PASS_PHRASE']);
-      expect(clientConfiguration3.allow_attester_search_only_for_domains).to.be.an.undefined; // eslint-disable-line @typescript-eslint/no-unused-expressions
+      expect(clientConfiguration3.allow_attester_search_only_for_domains).to.be.an.undefined; // eslint-disable-line no-unused-expressions
       expect(clientConfiguration3.disallow_attester_search_for_domains).to.eql([]);
       expect(clientConfiguration3.enforce_keygen_algo).to.equal('rsa3072');
-      expect(clientConfiguration3.enforce_keygen_expire_months).to.be.an.undefined; // eslint-disable-line @typescript-eslint/no-unused-expressions
-      expect(clientConfiguration3.custom_keyserver_url).to.be.an.undefined; // eslint-disable-line @typescript-eslint/no-unused-expressions
+      expect(clientConfiguration3.enforce_keygen_expire_months).to.be.an.undefined; // eslint-disable-line no-unused-expressions
+      expect(clientConfiguration3.custom_keyserver_url).to.be.an.undefined; // eslint-disable-line no-unused-expressions
       expect(clientConfiguration3.key_manager_url).to.equal('https://localhost:8001/flowcrypt-email-key-manager');
       await gmailPage.close();
       // configure an error
@@ -1093,11 +1094,11 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         'PRV_AUTOIMPORT_OR_AUTOGEN',
         'PASS_PHRASE_QUIET_AUTOGEN',
         'DEFAULT_REMEMBER_PASS_PHRASE']);
-      expect(clientConfiguration4.allow_attester_search_only_for_domains).to.be.an.undefined; // eslint-disable-line @typescript-eslint/no-unused-expressions
+      expect(clientConfiguration4.allow_attester_search_only_for_domains).to.be.an.undefined; // eslint-disable-line no-unused-expressions
       expect(clientConfiguration4.disallow_attester_search_for_domains).to.eql([]);
       expect(clientConfiguration4.enforce_keygen_algo).to.equal('rsa3072');
-      expect(clientConfiguration4.enforce_keygen_expire_months).to.be.an.undefined; // eslint-disable-line @typescript-eslint/no-unused-expressions
-      expect(clientConfiguration4.custom_keyserver_url).to.be.an.undefined; // eslint-disable-line @typescript-eslint/no-unused-expressions
+      expect(clientConfiguration4.enforce_keygen_expire_months).to.be.an.undefined; // eslint-disable-line no-unused-expressions
+      expect(clientConfiguration4.custom_keyserver_url).to.be.an.undefined; // eslint-disable-line no-unused-expressions
       expect(clientConfiguration4.key_manager_url).to.equal('https://localhost:8001/flowcrypt-email-key-manager');
       await settingsPage.close();
     }));
