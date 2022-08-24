@@ -1501,6 +1501,59 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       await contactsFrame.waitForContent('@container-pubkey-details', 'Users: flowcrypt.compatibility@protonmail.com');
     }));
 
+    ava.default('check attester ldap search', testWithBrowser('ci.tests.gmail', async (t, browser) => {
+      const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
+      const recipients = {
+        to: 'test.ldap.priority@gmail.com', // check if recipient-specific LDAP server results are priotized than flowcrypt pubkey server
+        // check if we can get results from keyserver.pgp.com when no results are returned from flowcrypt key server and recipient-specific LDAP server
+        // And check if it can handle multiple keys
+        cc: 'test.ldap.keyserver.pgp@gmail.com',
+        // check if flowcrypt keyserver results are priotized than keyserver.pgp.com results
+        bcc: 'test.flowcrypt.pubkeyserver.priority@gmail.com'
+      };
+      await ComposePageRecipe.fillMsg(composePage, recipients, t.title);
+      await composePage.close();
+      const settingsPage = await browser.newPage(t, TestUrls.extensionSettings('ci.tests.gmail@flowcrypt.test'));
+      await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
+      const contactsFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-contacts-page', ['contacts.htm', 'placement=settings']);
+      await contactsFrame.waitAll('@page-contacts');
+      // Check test.ldap.priority@gmail.com
+      await contactsFrame.waitAndClick(`@action-show-email-${recipients.to.replace(/[^a-z0-9]+/g, '')}`);
+      await contactsFrame.waitAny(`@action-show-pubkey-AB8CF86E37157C3F290D72007ED43D79E9617655-openpgp`);
+      // Check test.ldap.keyserver.pgp@gmail.com
+      await contactsFrame.waitAndClick(`@action-show-email-${recipients.cc.replace(/[^a-z0-9]+/g, '')}`);
+      await contactsFrame.waitAny(`@action-show-pubkey-AB8CF86E37157C3F290D72007ED43D79E9617655-openpgp`);
+      await contactsFrame.waitAny(`@action-show-pubkey-3E3C9310CC969D00028DC98F7D3D56F9152646A8-openpgp`);
+      // Check test.flowcrypt.pubkeyserver.priority@gmail.com
+      await contactsFrame.waitAndClick(`@action-show-email-${recipients.bcc.replace(/[^a-z0-9]+/g, '')}`);
+      await contactsFrame.waitAny(`@action-show-pubkey-AB8CF86E37157C3F290D72007ED43D79E9617655-openpgp`);
+    }));
+
+    ava.default('check attester ldap timeout', testWithBrowser('ci.tests.gmail', async (t, browser) => {
+      const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
+      const recipients = { to: 'test.ldap.timeout@gmail.com', cc: 'test.flowcrypt.pubkey.timeout@gmail.com' };
+      await ComposePageRecipe.fillMsg(composePage, recipients, t.title);
+      await composePage.close();
+      const settingsPage = await browser.newPage(t, TestUrls.extensionSettings('ci.tests.gmail@flowcrypt.test'));
+      await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
+      const contactsFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-contacts-page', ['contacts.htm', 'placement=settings']);
+      await contactsFrame.waitAll('@page-contacts');
+      // Check test.ldap.timeout@gmail.com
+      await contactsFrame.waitAndClick(`@action-show-email-${recipients.to.replace(/[^a-z0-9]+/g, '')}`);
+      await contactsFrame.waitAny(`@action-show-pubkey-8B8A05A2216EE6E4C5EE3D540D5688EBF3102BE7-openpgp`);
+      // Check test.flowcrypt.pubkey.timeout@gmail.com
+      await contactsFrame.waitAndClick(`@action-show-email-${recipients.cc.replace(/[^a-z0-9]+/g, '')}`);
+      await contactsFrame.waitAny(`@action-show-pubkey-8B8A05A2216EE6E4C5EE3D540D5688EBF3102BE7-openpgp`);
+    }));
+
+    ava.default('allows to retry public key search when attester returns error', testWithBrowser('ci.tests.gmail', async (t, browser) => {
+      const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
+      const recipients = { to: 'attester.return.error@flowcrypt.test' };
+      await ComposePageRecipe.fillMsg(composePage, recipients, t.title);
+      await ComposePageRecipe.showRecipientInput(composePage);
+      await composePage.waitAndClick(`@action-retry-${recipients.to.replace(/[^a-z0-9]+/g, '')}-pubkey-fetch`);
+    }));
+
     ava.default('do not auto-refresh key if older version of the same key available on attester', testWithBrowser('ci.tests.gmail', async (t, browser) => {
       const recipientEmail = 'has.older.key.on.attester@recipient.com';
       // add a newer expired key manually
