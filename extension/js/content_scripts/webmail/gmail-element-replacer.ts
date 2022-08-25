@@ -46,8 +46,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
   max-width: 1px !important; position: absolute !important; z-index: -1000 !important`;
   private currentlyEvaluatingStandardComposeBoxRecipients = false;
   private currentlyReplacingAttachments = false;
-  private keepNextStandardReplyBox = false;
-  private showSwitchToEncryptedReplyWarning = false;
+  private switchToEncryptedReply = false;
   private removeNextReplyBoxBorders = false;
 
   private sel = { // gmail_variant=standard|new
@@ -116,7 +115,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
         const topGap = 80; // so the bottom of the prev message will be visible
         // scroll to the bottom of the element,
         // or to the top of the element if the element's height is bigger than the convoRoot
-        convoRootScrollable.get(0).scrollTop =
+        convoRootScrollable.get(0)!.scrollTop =
           replyMsg.position()!.top + $(replyMsg).height()! -
           Math.max(0, $(replyMsg).height()! - convoRootScrollable.height()! + gmailHeaderHeight + topGap);
       }
@@ -134,12 +133,12 @@ export class GmailElementReplacer implements WebmailElementReplacer {
       // check if cursor went above the visible part of convoRootScrollable
       if (replyMsgOffsetTop + cursorOffsetTop < 0) {
         convoRootScrollable.css('scroll-behavior', '');
-        convoRootScrollable.get(0).scrollTop += replyMsgOffsetTop + cursorOffsetTop;
+        convoRootScrollable.get(0)!.scrollTop += replyMsgOffsetTop + cursorOffsetTop;
       }
       // check if cursor went below the visible part of convoRootScrollable
-      if (replyMsgOffsetTop + cursorOffsetTop > convoRootScrollable.get(0).clientHeight - bottomGap) {
+      if (replyMsgOffsetTop + cursorOffsetTop > convoRootScrollable.get(0)!.clientHeight - bottomGap) {
         convoRootScrollable.css('scroll-behavior', '');
-        convoRootScrollable.get(0).scrollTop += replyMsgOffsetTop + cursorOffsetTop - convoRootScrollable.get(0).clientHeight + bottomGap;
+        convoRootScrollable.get(0)!.scrollTop += replyMsgOffsetTop + cursorOffsetTop - convoRootScrollable.get(0)!.clientHeight + bottomGap;
       }
     }
   };
@@ -205,7 +204,6 @@ export class GmailElementReplacer implements WebmailElementReplacer {
       for (const elem of convoReplyBtnsArr) {
         $(elem).addClass('inserted');
         const gmailReplyBtn = $(elem).find('[aria-label="Reply"]');
-        const gmailReplyToAllBtn = $(elem).find('[aria-label="Reply to all"]');
         const secureReplyBtn = $(this.factory.btnSecureReply()).insertAfter(gmailReplyBtn);  // xss-safe-factory
         secureReplyBtn.addClass(gmailReplyBtn.attr('class') || '');
         secureReplyBtn.off();
@@ -220,13 +218,6 @@ export class GmailElementReplacer implements WebmailElementReplacer {
             $(secureReplyBtn).click();
           }
         });
-        gmailReplyBtn.add(gmailReplyToAllBtn).click(Ui.event.handle((target) => {
-          const replyContainerIframe = $('.reply_message_iframe_container > iframe').last();
-          if (replyContainerIframe.length && !$('#switch_to_encrypted_reply').length) {
-            this.keepNextStandardReplyBox = true;
-            this.showSwitchToEncryptedReplyWarning = $(target).closest(this.sel.msgOuter).find('iframe.pgp_block').hasClass('encryptedMsg');
-          }
-        }));
       }
     }
     // conversation top-right icon buttons
@@ -624,39 +615,22 @@ export class GmailElementReplacer implements WebmailElementReplacer {
       const alreadyHasEncryptedReplyBox = Boolean(convoRootEl.find('div.reply_message_iframe_container').filter(':visible').length);
       let midConvoDraft = false;
       if (doReplace) {
-        if (this.keepNextStandardReplyBox) {
-          for (const replyBoxEl of newReplyBoxes) {
-            $(replyBoxEl).addClass('reply_message_evaluated');
-            if (this.showSwitchToEncryptedReplyWarning) {
-              const notification = $('<div class="error_notification">The last message was encrypted, but you are composing a reply without encryption. </div>');
-              const swithToEncryptedReply = $('<a href id="switch_to_encrypted_reply">Switch to encrypted reply</a>');
-              swithToEncryptedReply.click(Ui.event.handle((el, ev: JQuery.Event) => {
-                ev.preventDefault();
-                $(el).closest('.reply_message_evaluated').removeClass('reply_message_evaluated');
-                this.removeNextReplyBoxBorders = true;
-              }));
-              notification.append(swithToEncryptedReply); // xss-direct
-              $(replyBoxEl).prepend(notification); // xss-direct
-            }
-          }
-          this.keepNextStandardReplyBox = false;
-          this.showSwitchToEncryptedReplyWarning = false;
-          return;
-        }
         for (const replyBoxEl of newReplyBoxes.reverse()) { // looping in reverse
           const replyBox = $(replyBoxEl);
           const msgInnerText = replyBox.find(this.sel.msgInnerText);
           if (msgInnerText.length && !msgInnerText.find('[contenteditable]').length) { // div[contenteditable] is not loaded yet (e.g. when refreshing a thread), do nothing
             continue;
           }
-          const replyBoxInnerText = replyBox.find(this.sel.msgInnerText).text().trim();
+          const replyBoxInnerText = msgInnerText.text().trim();
           const draftReplyLinkMatch = replyBoxInnerText.substr(0, 1000).match(draftReplyRegex);
           if (draftReplyLinkMatch) { // reply draft
             replyParams.draftId = draftReplyLinkMatch[2];
-          } else if (replyBoxInnerText) { // plain reply
+          } else if (msgInnerText.length && !this.switchToEncryptedReply) { // plain reply
+            this.showSwitchToEncryptedReplyWarningIfNeeded(replyBox);
             replyBox.addClass('reply_message_evaluated');
             continue;
           }
+          this.switchToEncryptedReply = false;
           if (this.removeNextReplyBoxBorders) {
             replyBox.addClass('remove_borders');
             this.removeNextReplyBoxBorders = false;
@@ -678,6 +652,23 @@ export class GmailElementReplacer implements WebmailElementReplacer {
           }
         }
       }
+    }
+  };
+
+  private showSwitchToEncryptedReplyWarningIfNeeded = (reployBox: JQueryEl) => {
+    const showSwitchToEncryptedReplyWarning = reployBox.closest('div.h7').find(this.sel.msgOuter).find('iframe.pgp_block').hasClass('encryptedMsg');
+    if (showSwitchToEncryptedReplyWarning) {
+      const notification = $('<div class="error_notification">The last message was encrypted, but you are composing a reply without encryption. </div>');
+      const swithToEncryptedReply = $('<a href id="switch_to_encrypted_reply">Switch to encrypted reply</a>');
+      swithToEncryptedReply.click(Ui.event.handle((el, ev: JQuery.Event) => {
+        ev.preventDefault();
+        $(el).closest('.reply_message_evaluated').removeClass('reply_message_evaluated');
+        this.removeNextReplyBoxBorders = true;
+        this.switchToEncryptedReply = true;
+        notification.remove();
+      }));
+      notification.append(swithToEncryptedReply); // xss-direct
+      reployBox.prepend(notification); // xss-direct
     }
   };
 
