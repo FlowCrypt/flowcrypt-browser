@@ -359,6 +359,23 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       await gmailPage.notPresent('.reply_message_evaluated .error_notification'); // should not show the warning about switching to encrypted reply
     }));
 
+    ava.default('mail.google.com - plain reply with dot menu', testWithBrowser('ci.tests.gmail', async (t, browser) => {
+      const gmailPage = await openGmailPage(t, browser);
+      await gotoGmailPage(gmailPage, '/FMfcgzGkbDRNgcQxLmkhBCKVSFwkfdvV'); // plain convo
+      await gmailPage.waitAndClick('[data-tooltip="Reply"]', { delay: 1 });
+      await gotoGmailPage(gmailPage, '/FMfcgzGpGnLZzLxNpWchTnNfxKkNzBSD'); // to go encrypted convo
+      await Util.sleep(5);
+      await gmailPage.waitAndClick('.adn [data-tooltip="More"]', { delay: 1 });
+      await gmailPage.waitAndClick('[act="94"]', { delay: 1 });
+      await Util.sleep(3);
+      await gmailPage.waitAll('.reply_message_evaluated .error_notification');
+      await gmailPage.waitAll('[data-tooltip^="Send"]'); // The Send button from the Standard reply box
+      await gmailPage.waitForContent('.reply_message_evaluated .error_notification', 'The last message was encrypted, but you are composing a reply without encryption.');
+      await gmailPage.waitAndClick('[data-tooltip="Secure Reply"]'); // Switch to encrypted reply
+      await gmailPage.waitAll('.reply_message');
+      await pageHasSecureReplyContainer(t, browser, gmailPage, { isReplyPromptAccepted: false });
+    }));
+
     ava.default('mail.google.com - plain reply draft', testWithBrowser('ci.tests.gmail', async (t, browser) => {
       const gmailPage = await openGmailPage(t, browser);
       await gotoGmailPage(gmailPage, '/FMfcgzGpGnLZzLxNpWchTnNfxKkNzBSD'); // go to encrypted convo

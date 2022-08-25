@@ -18,6 +18,8 @@ import { GlobalStore } from '../../common/platform/store/global-store.js';
 import { ClientConfiguration } from '../../common/client-configuration.js';
 import { KeyManager } from '../../common/api/key-server/key-manager.js';
 import { InMemoryStore } from '../../common/platform/store/in-memory-store.js';
+import { AccountServer } from '../../common/api/account-server.js';
+import { ApiErr, BackendAuthErr } from '../../common/api/shared/api-error.js';
 
 export type WebmailVariantObject = { newDataLayer: undefined | boolean, newUi: undefined | boolean, email: undefined | string, gmailVariant: WebmailVariantString };
 export type IntervalFunction = { interval: number, handler: () => void };
@@ -280,11 +282,32 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
     }
   };
 
+  const updateClientConfiguration = async (acctEmail: string) => {
+    try {
+      const authInfo = await AcctStore.authInfo(acctEmail);
+      await (new AccountServer(acctEmail)).accountGetAndUpdateLocalStore(authInfo);
+    } catch (e) {
+      if (e instanceof BackendAuthErr) {
+        // user will see a prompt to log in during some other actions that involve backend, and therefore authInfo.uuid will eventually be filled,
+        // at which point the update will happen next time user loads the page
+      } else if (ApiErr.isNetErr(e)) {
+        // ignore
+      } else {
+        Catch.reportErr(e);
+        // tslint:disable-next-line:no-unsafe-any
+        const errType = e.constructor?.name || 'Error';
+        Ui.toast(`Failed to update FlowCrypt Client Configuration: ${e instanceof Error ? e.message : String(e)} (${errType})`);
+      }
+    }
+
+  };
+
   const entrypoint = async () => {
     try {
       const acctEmail = await waitForAcctEmail();
       const { tabId, notifications, factory, inject } = await initInternalVars(acctEmail);
       await showNotificationsAndWaitTilAcctSetUp(acctEmail, notifications);
+      Catch.setHandledTimeout(() => updateClientConfiguration(acctEmail), 0);
       const ppEvent: { entered?: boolean } = {};
       browserMsgListen(acctEmail, tabId, inject, factory, notifications, ppEvent);
       const clientConfiguration = await ClientConfiguration.newInstance(acctEmail);
