@@ -204,7 +204,6 @@ export class GmailElementReplacer implements WebmailElementReplacer {
       for (const elem of convoReplyBtnsArr) {
         $(elem).addClass('inserted');
         const gmailReplyBtn = $(elem).find('[aria-label="Reply"]');
-        const gmailReplyToAllBtn = $(elem).find('[aria-label="Reply to all"]');
         const secureReplyBtn = $(this.factory.btnSecureReply()).insertAfter(gmailReplyBtn);  // xss-safe-factory
         secureReplyBtn.addClass(gmailReplyBtn.attr('class') || '');
         secureReplyBtn.off();
