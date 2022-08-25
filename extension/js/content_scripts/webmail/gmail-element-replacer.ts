@@ -655,7 +655,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     }
   };
 
-  private showSwitchToEncryptedReplyWarningIfNeeded = async (reployBox: JQueryEl) => {
+  private showSwitchToEncryptedReplyWarningIfNeeded = (reployBox: JQueryEl) => {
     const showSwitchToEncryptedReplyWarning = reployBox.closest('div.h7').find(this.sel.msgOuter).find('iframe.pgp_block').hasClass('encryptedMsg');
     if (showSwitchToEncryptedReplyWarning) {
       const notification = $('<div class="error_notification">The last message was encrypted, but you are composing a reply without encryption. </div>');
