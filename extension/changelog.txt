@@ -1,5 +1,7 @@
 <div class="lightboxed">
 
+version 8.3.3 on August 25, 2022: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/456?closed=1" target="_blank">One link per FES recipient, EKM and FES sync, export PDF, WKD verify fix</a>
+
 version 8.3.2 on June 9, 2022: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/455?closed=1" target="_blank">allow_attester_search_only_for_domains</a>
 
 version 8.3.1 on May 18, 2022: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/454?closed=1" target="_blank">Enterprise Gmail API fix</a>
