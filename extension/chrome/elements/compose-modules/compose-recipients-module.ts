@@ -859,8 +859,17 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       recipient.status = RecipientStatus.FAILED;
       $(el).attr('title', 'Failed to load, click to retry');
       $(el).addClass("failed");
-      Xss.sanitizeReplace($(el).children('img:visible'), '<img src="/img/svgs/repeat-icon.svg" class="repeat-icon action_retry_pubkey_fetch">' +
-        '<img src="/img/svgs/close-icon-black.svg" class="close-icon-black svg remove-reciepient">');
+      Xss.sanitizeReplace(
+        $(el).children('img:visible'),
+        `
+          <img
+            src="/img/svgs/repeat-icon.svg"
+            data-test="action-retry-${recipient.email?.replace(/[^a-z0-9]+/g, '')}-pubkey-fetch"
+            class="repeat-icon action_retry_pubkey_fetch"
+          >
+          <img src="/img/svgs/close-icon-black.svg" class="close-icon-black svg remove-reciepient">
+        `
+      );
       $(el).find('.action_retry_pubkey_fetch').click(this.view.setHandler(async () => await this.refreshRecipients(), this.view.errModule.handle('refresh recipient')));
       $(el).find('.remove-reciepient').click(this.view.setHandler(element => this.removeRecipient(element.parentElement!), this.view.errModule.handle('remove recipient')));
     } else if (info && info.sortedPubkeys.length) {
