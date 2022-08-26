@@ -773,10 +773,10 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
         }, this.view.errModule.handle('remove recipient with keyboard')));
         this.addDraggableEvents(element);
         const recipient = { email, name, invalid, element, id: recipientId, sendingType, status: email ? status : RecipientStatus.WRONG };
+        this.addedRecipients.push(recipient);
         if (recipient.status === RecipientStatus.WRONG) {
           this.renderPubkeyResult(recipient, undefined);
         }
-        this.addedRecipients.push(recipient);
         result.push(recipient);
       }
     }
@@ -868,7 +868,8 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
             class="repeat-icon action_retry_pubkey_fetch"
           >
           <img src="/img/svgs/close-icon-black.svg" class="close-icon-black svg remove-reciepient">
-        `);
+        `
+      );
       $(el).find('.action_retry_pubkey_fetch').click(this.view.setHandler(async () => await this.refreshRecipients(), this.view.errModule.handle('refresh recipient')));
       $(el).find('.remove-reciepient').click(this.view.setHandler(element => this.removeRecipient(element.parentElement!), this.view.errModule.handle('remove recipient')));
     } else if (info && info.sortedPubkeys.length) {
@@ -915,7 +916,9 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       $(el).attr('title', 'Could not verify their encryption setup. You can encrypt the message with a password below. Alternatively, add their pubkey.');
     }
     // Replace updated recipient in addedRecipients
-    const changedIndex = this.addedRecipients.findIndex((addedRecipient) => addedRecipient.email === recipient.email && addedRecipient.id === recipient.id);
+    const changedIndex = this.addedRecipients.findIndex(
+      (addedRecipient) => (!recipient.email || addedRecipient.email === recipient.email) && addedRecipient.id === recipient.id
+    );
     this.addedRecipients.splice(changedIndex, 1, recipient);
     this.view.pwdOrPubkeyContainerModule.showHideContainerAndColorSendBtn(); // tslint:disable-line:no-floating-promises
     this.view.myPubkeyModule.reevaluateShouldAttachOrNot();
