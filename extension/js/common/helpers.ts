@@ -3,7 +3,7 @@
 'use strict';
 
 import { AcctStore } from './platform/store/acct-store.js';
-import { PassphraseOptions } from '../../chrome/settings/setup.js';
+import { SaveKeysOptions } from '../../chrome/settings/setup.js';
 import { Buf } from './core/buf.js';
 import { Key, KeyInfoWithIdentity, KeyUtil } from './core/crypto/key.js';
 import { ClientConfiguration } from './client-configuration.js';
@@ -16,11 +16,18 @@ export const isFesUsed = async (acctEmail: string) => {
   return Boolean(fesUrl);
 };
 
-export const saveKeysAndPassPhrase = async (acctEmail: string, prvs: Key[], ppOptions?: PassphraseOptions) => {
+export const saveKeysAndPassPhrase = async (acctEmail: string, prvs: Key[], { keys_replace, ppOptions }: SaveKeysOptions) => {
   const clientConfiguration = await ClientConfiguration.newInstance(acctEmail);
+  if (keys_replace) {
+    await KeyStore.set(acctEmail, await Promise.all(prvs.map(KeyUtil.keyInfoObj))); // todo: duplicate identities
+    // todo: should we delete passphrases matching the deleted keys?
+  }
   for (const prv of prvs) {
-    await KeyStore.add(acctEmail, prv);
+    if (!keys_replace) {
+      await KeyStore.add(acctEmail, prv);
+    }
     if (ppOptions !== undefined) {
+      // todo: perhaps it's easier just to store a set of passphrases without specifying longids?
       await PassphraseStore.set((ppOptions.passphrase_save && !clientConfiguration.forbidStoringPassPhrase()) ? 'local' : 'session',
         acctEmail, { longid: KeyUtil.getPrimaryLongid(prv) }, ppOptions.passphrase);
     }
@@ -63,38 +70,41 @@ const parseAndCheckPrivateKeys = async (decryptedPrivateKeys: string[]) => {
 };
 
 const filterKeysToSave = async (candidateKeys: Key[], existingKeys: KeyInfoWithIdentity[]) => {
+  // todo: check for uniqueness of candidateKeys identities here?
   if (!existingKeys.length) {
-    return candidateKeys;
+    return { keysToRetain: [], unencryptedKeysToSave: candidateKeys };
   }
-  const result: Key[] = [];
+  const keysToRetain: Key[] = [];
+  const unencryptedKeysToSave: Key[] = [];
   for (const candidate of candidateKeys) {
     const longid = KeyUtil.getPrimaryLongid(candidate);
     const keyToUpdate = existingKeys.filter(ki => ki.longid === longid && ki.family === candidate.family);
     if (keyToUpdate.length === 1) {
       const oldKey = await KeyUtil.parse(keyToUpdate[0].private);
       if (!candidate.lastModified || (oldKey.lastModified && oldKey.lastModified >= candidate.lastModified)) {
+        keysToRetain.push(oldKey);
         continue;
       }
     } else if (keyToUpdate.length > 1) {
       throw new Error(`Unexpected error: key search by longid=${longid} yielded ${keyToUpdate.length} results`);
     }
-    result.push(candidate);
+    unencryptedKeysToSave.push(candidate);
   }
-  return result;
+  return { keysToRetain, unencryptedKeysToSave };
 };
 
 export const processAndStoreKeysFromEkmLocally = async (
-  { acctEmail, decryptedPrivateKeys, ppOptions }: { acctEmail: string, decryptedPrivateKeys: string[], ppOptions?: PassphraseOptions }
+  { acctEmail, decryptedPrivateKeys, saveKeysOptions }: { acctEmail: string, decryptedPrivateKeys: string[], saveKeysOptions: SaveKeysOptions }
 ): Promise<Bm.Res.ProcessAndStoreKeysFromEkmLocally> => {
   const { unencryptedPrvs } = await parseAndCheckPrivateKeys(decryptedPrivateKeys);
   const existingKeys = await KeyStore.get(acctEmail);
-  let passphrase = ppOptions?.passphrase;
+  let passphrase = saveKeysOptions.ppOptions?.passphrase;
   if (passphrase === undefined && !existingKeys.length) {
     return { needPassphrase: false, updateCount: 0 }; // return success as we can't possibly validate a passphrase
     // this can only happen on misconfiguration
     // todo: or should we throw?
   }
-  let unencryptedKeysToSave = await filterKeysToSave(unencryptedPrvs, existingKeys);
+  let { keysToRetain, unencryptedKeysToSave } = await filterKeysToSave(unencryptedPrvs, existingKeys);
   let encryptedKeys: Key[] = [];
   if (unencryptedKeysToSave.length) {
     if (passphrase === undefined) {
@@ -112,7 +122,7 @@ export const processAndStoreKeysFromEkmLocally = async (
   }
   if (encryptedKeys.length) {
     // also updates `name`, todo: refactor in #4545
-    await saveKeysAndPassPhrase(acctEmail, encryptedKeys, ppOptions);
+    await saveKeysAndPassPhrase(acctEmail, keysToRetain.concat(encryptedKeys), saveKeysOptions);
     return { needPassphrase: false, updateCount: encryptedKeys.length };
   } else {
     return { needPassphrase: unencryptedKeysToSave.length > 0, updateCount: 0 };

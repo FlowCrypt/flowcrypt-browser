@@ -19,6 +19,7 @@ import { GlobalStoreDict, GlobalIndex } from '../platform/store/global-store.js'
 import { AcctStoreDict, AccountIndex } from '../platform/store/acct-store.js';
 import { saveFetchedPubkeysIfNewerThanInStorage } from '../shared.js';
 import { ArmoredKeyIdentityWithEmails, KeyUtil } from '../core/crypto/key.js';
+import { SaveKeysOptions } from '../../../chrome/settings/setup.js';
 
 export type GoogleAuthWindowResult$result = 'Success' | 'Denied' | 'Error' | 'Closed';
 
@@ -67,7 +68,7 @@ export namespace Bm {
   export type ShowAttachmentPreview = { iframeUrl: string };
   export type ReRenderRecipient = { email: string };
   export type SaveFetchedPubkeys = { email: string, pubkeys: string[] };
-  export type ProcessAndStoreKeysFromEkmLocally = { acctEmail: string, decryptedPrivateKeys: string[] };
+  export type ProcessAndStoreKeysFromEkmLocally = { acctEmail: string, decryptedPrivateKeys: string[], saveKeysOptions: SaveKeysOptions };
 
   export namespace Res {
     export type GetActiveTabInfo = { provider: 'gmail' | undefined, acctEmail: string | undefined, sameWorld: boolean | undefined };

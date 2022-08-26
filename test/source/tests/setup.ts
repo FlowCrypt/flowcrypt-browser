@@ -661,10 +661,9 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       gmailPage = await browser.newPage(t, TestUrls.mockGmailUrl(), undefined, extraAuthHeaders);
       await PageRecipe.waitForToastToAppearAndDisappear(gmailPage, 'Account keys updated');
       await gmailPage.notPresent('@dialog-passphrase');
-      const set10 = await retrieveAndCheckKeys(2);
+      const set10 = await retrieveAndCheckKeys(1);
       const mainKey10 = KeyUtil.filterKeysByIdentity(set10, [{ family: 'openpgp', id: '392FB1E9FF4184659AB6A246835C0141B9ECF536' }]);
       expect(mainKey10.length).to.equal(1);
-      expect(KeyUtil.filterKeysByIdentity(set10, [{ family: 'openpgp', id: 'FAFB7D675AC74E87F84D169F00B0115807969D75' }]).length).to.equal(1);
       expect(mainKey10[0].lastModified!).to.be.greaterThan(mainKey9[0].lastModified!); // updated this key
       // 10. Forget the passphrase, EKM returns a third key, we enter a passphrase that doesn't match any of the existing keys, no update
       await InboxPageRecipe.finishSessionOnInboxPage(gmailPage);
@@ -682,8 +681,8 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       }
       await ComposePageRecipe.cancelPassphraseDialog(gmailPage, 'keyboard');
       await PageRecipe.noToastAppears(gmailPage);
-      const set11 = await retrieveAndCheckKeys(2);
-      expect(set11.map(entry => entry.id)).to.eql(['392FB1E9FF4184659AB6A246835C0141B9ECF536', 'FAFB7D675AC74E87F84D169F00B0115807969D75']);
+      const set11 = await retrieveAndCheckKeys(1);
+      expect(set11.map(entry => entry.id)).to.eql(['392FB1E9FF4184659AB6A246835C0141B9ECF536']);
       await gmailPage.close();
       // 11. EKM returns a new third key, we enter a passphrase matching an existing key, update happens
       gmailPage = await browser.newPage(t, TestUrls.mockGmailUrl(), undefined, extraAuthHeaders);
@@ -696,12 +695,10 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       }
       await gmailPage.waitTillGone('@dialog-passphrase');
       await PageRecipe.waitForToastToAppearAndDisappear(gmailPage, 'Account keys updated');
-      const set12 = await retrieveAndCheckKeys(3);
-      expect(set12.map(entry => entry.id)).to.eql([
-        '392FB1E9FF4184659AB6A246835C0141B9ECF536',
-        'FAFB7D675AC74E87F84D169F00B0115807969D75',
-        '277D1ADA213881F4ABE0415395E783DC0289E2E2'
-      ]);
+      const set12 = await retrieveAndCheckKeys(1);
+      expect(set12.map(entry => entry.id)).to.eql(['277D1ADA213881F4ABE0415395E783DC0289E2E2']);
+      const mainKey12 = KeyUtil.filterKeysByIdentity(set12, [{ family: 'openpgp', id: '277D1ADA213881F4ABE0415395E783DC0289E2E2' }]);
+      expect(mainKey12.length).to.equal(1);
       // 12. Forget the passphrase, EKM sends a broken key, no passphrase dialog, no updates
       await InboxPageRecipe.finishSessionOnInboxPage(gmailPage);
       await gmailPage.close();
@@ -714,28 +711,20 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       await PageRecipe.waitForToastToAppearAndDisappear(gmailPage,
         'Could not update keys from EKM due to error: BrowserMsg(processAndStoreKeysFromEkmLocally) sendRawResponse::Error: Some keys could not be parsed');
       await gmailPage.notPresent('@dialog-passphrase');
-      const set13 = await retrieveAndCheckKeys(3);
-      expect(set13.map(entry => entry.id)).to.eql([
-        '392FB1E9FF4184659AB6A246835C0141B9ECF536',
-        'FAFB7D675AC74E87F84D169F00B0115807969D75',
-        '277D1ADA213881F4ABE0415395E783DC0289E2E2'
-      ]);
-      const mainKey13 = KeyUtil.filterKeysByIdentity(set13, [{ family: 'openpgp', id: '392FB1E9FF4184659AB6A246835C0141B9ECF536' }]);
+      const set13 = await retrieveAndCheckKeys(1);
+      expect(set13.map(entry => entry.id)).to.eql(['277D1ADA213881F4ABE0415395E783DC0289E2E2']);
+      const mainKey13 = KeyUtil.filterKeysByIdentity(set13, [{ family: 'openpgp', id: '277D1ADA213881F4ABE0415395E783DC0289E2E2' }]);
       expect(mainKey13.length).to.equal(1);
-      expect(mainKey13[0].lastModified).to.equal(mainKey10[0].lastModified); // no update
+      expect(mainKey13[0].lastModified).to.equal(mainKey12[0].lastModified); // no update
       await gmailPage.close();
       // 13. EKM down, no toast, no passphrase dialog, no updates
       MOCK_KM_UPDATING_KEY.badRequestError = 'RequestTimeout';
       gmailPage = await browser.newPage(t, TestUrls.mockGmailUrl(), undefined, extraAuthHeaders);
       await PageRecipe.noToastAppears(gmailPage);
       await gmailPage.notPresent('@dialog-passphrase');
-      const set14 = await retrieveAndCheckKeys(3);
-      expect(set14.map(entry => entry.id)).to.eql([
-        '392FB1E9FF4184659AB6A246835C0141B9ECF536',
-        'FAFB7D675AC74E87F84D169F00B0115807969D75',
-        '277D1ADA213881F4ABE0415395E783DC0289E2E2'
-      ]);
-      const mainKey14 = KeyUtil.filterKeysByIdentity(set14.map(ki => ki), [{ family: 'openpgp', id: '392FB1E9FF4184659AB6A246835C0141B9ECF536' }]);
+      const set14 = await retrieveAndCheckKeys(1);
+      expect(set14.map(entry => entry.id)).to.eql(['277D1ADA213881F4ABE0415395E783DC0289E2E2']);
+      const mainKey14 = KeyUtil.filterKeysByIdentity(set14.map(ki => ki), [{ family: 'openpgp', id: '277D1ADA213881F4ABE0415395E783DC0289E2E2' }]);
       expect(mainKey14.length).to.equal(1);
       expect(mainKey14[0].lastModified).to.equal(mainKey13[0].lastModified); // no update
       await gmailPage.close();

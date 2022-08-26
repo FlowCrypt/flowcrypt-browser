@@ -246,7 +246,8 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
 
   const processKeysFromEkm = async (acctEmail: string, decryptedPrivateKeys: string[], factory: XssSafeFactory, ppEvent: { entered?: boolean }) => {
     try {
-      const { needPassphrase, updateCount } = await BrowserMsg.send.bg.await.processAndStoreKeysFromEkmLocally({ acctEmail, decryptedPrivateKeys });
+      const { needPassphrase, updateCount } =
+        await BrowserMsg.send.bg.await.processAndStoreKeysFromEkmLocally({ acctEmail, decryptedPrivateKeys, saveKeysOptions: { keys_replace: true } });
       if (needPassphrase) {
         ppEvent.entered = undefined;
         await showPassphraseDialog(factory, { longids: [], type: 'update_key' });

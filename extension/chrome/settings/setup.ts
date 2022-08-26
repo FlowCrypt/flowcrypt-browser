@@ -38,6 +38,11 @@ export interface PassphraseOptions {
   passphrase_save: boolean;
 }
 
+export interface SaveKeysOptions {
+  keys_replace?: boolean; // replace existing keys in the storage
+  ppOptions?: PassphraseOptions;
+}
+
 export interface SetupOptions extends PassphraseOptions {
   submit_main: boolean;
   submit_all: boolean;
