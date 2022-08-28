@@ -21,7 +21,7 @@ type ManualEnterOpts = {
   fillOnly?: boolean,
   isInvalidKey?: boolean | undefined,
   checkEmailAliasIfPresent?: boolean,
-  key?: { title: string, passphrase: string, armored: string | null, longid: string | null, filePath?: string }
+  key?: TestKeyInfoWithFilepath
 };
 
 type CreateKeyOpts = {
@@ -191,6 +191,10 @@ export class SetupPageRecipe extends PageRecipe {
         await settingsPage.page.setOfflineMode(true); // offline mode
       }
       await settingsPage.waitAndClick('@input-step2bmanualenter-save', { delay: 1 });
+      if (key.expired) {
+        await settingsPage.waitAndRespondToModal('confirm', 'confirm', 'You are importing a key that is expired.');
+        await Util.sleep(1);
+      }
       if (fixKey) {
         await settingsPage.waitAll('@input-compatibility-fix-expire-years', { timeout: 30 });
         await settingsPage.selectOption('@input-compatibility-fix-expire-years', '1');
