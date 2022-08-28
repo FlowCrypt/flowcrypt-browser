@@ -19,7 +19,6 @@ import { GlobalStoreDict, GlobalIndex } from '../platform/store/global-store.js'
 import { AcctStoreDict, AccountIndex } from '../platform/store/acct-store.js';
 import { saveFetchedPubkeysIfNewerThanInStorage } from '../shared.js';
 import { ArmoredKeyIdentityWithEmails, KeyUtil } from '../core/crypto/key.js';
-import { SaveKeysOptions } from '../../../chrome/settings/setup.js';
 
 export type GoogleAuthWindowResult$result = 'Success' | 'Denied' | 'Error' | 'Closed';
 
@@ -68,7 +67,7 @@ export namespace Bm {
   export type ShowAttachmentPreview = { iframeUrl: string };
   export type ReRenderRecipient = { email: string };
   export type SaveFetchedPubkeys = { email: string, pubkeys: string[] };
-  export type ProcessAndStoreKeysFromEkmLocally = { acctEmail: string, decryptedPrivateKeys: string[], saveKeysOptions: SaveKeysOptions };
+  export type ProcessAndStoreKeysFromEkmLocally = { acctEmail: string, decryptedPrivateKeys: string[] };
 
   export namespace Res {
     export type GetActiveTabInfo = { provider: 'gmail' | undefined, acctEmail: string | undefined, sameWorld: boolean | undefined };
@@ -88,7 +87,7 @@ export namespace Bm {
     export type AjaxGmailAttachmentGetChunk = { chunk: Buf };
     export type _tab_ = { tabId: string | null | undefined };
     export type SaveFetchedPubkeys = boolean;
-    export type ProcessAndStoreKeysFromEkmLocally = { needPassphrase: boolean, updateCount: number };
+    export type ProcessAndStoreKeysFromEkmLocally = { needPassphrase?: boolean, updateCount?: number, needSetup?: boolean };
     export type Db = any; // not included in Any below
     export type Ajax = any; // not included in Any below
 

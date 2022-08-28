@@ -64,7 +64,7 @@ export class SetupRecoverKeyModule {
         passphrase_save: true, // todo - reevaluate saving passphrase when recovering
         recovered: true,
       };
-      await saveKeysAndPassPhrase(this.view.acctEmail, newlyMatchingKeys, { ppOptions: options });
+      await saveKeysAndPassPhrase(this.view.acctEmail, newlyMatchingKeys, options);
       const { setup_done } = await AcctStore.get(this.view.acctEmail, ['setup_done']);
       if (!setup_done) { // normal situation - fresh setup
         await this.view.submitPublicKeys(options);

@@ -3,7 +3,7 @@
 'use strict';
 
 import { AcctStore } from './platform/store/acct-store.js';
-import { SaveKeysOptions } from '../../chrome/settings/setup.js';
+import { PassphraseOptions } from '../../chrome/settings/setup.js';
 import { Buf } from './core/buf.js';
 import { Key, KeyInfoWithIdentity, KeyUtil } from './core/crypto/key.js';
 import { ClientConfiguration } from './client-configuration.js';
@@ -16,14 +16,14 @@ export const isFesUsed = async (acctEmail: string) => {
   return Boolean(fesUrl);
 };
 
-export const saveKeysAndPassPhrase = async (acctEmail: string, prvs: Key[], { keys_replace, ppOptions }: SaveKeysOptions) => {
+export const saveKeysAndPassPhrase = async (acctEmail: string, prvs: Key[], ppOptions?: PassphraseOptions, replaceKeys: boolean = false) => {
   const clientConfiguration = await ClientConfiguration.newInstance(acctEmail);
-  if (keys_replace) {
+  if (replaceKeys) {
     await KeyStore.set(acctEmail, await Promise.all(prvs.map(KeyUtil.keyInfoObj))); // todo: duplicate identities
     // todo: should we delete passphrases matching the deleted keys?
   }
   for (const prv of prvs) {
-    if (!keys_replace) {
+    if (!replaceKeys) {
       await KeyStore.add(acctEmail, prv);
     }
     if (ppOptions !== undefined) {
@@ -94,17 +94,19 @@ const filterKeysToSave = async (candidateKeys: Key[], existingKeys: KeyInfoWithI
 };
 
 export const processAndStoreKeysFromEkmLocally = async (
-  { acctEmail, decryptedPrivateKeys, saveKeysOptions }: { acctEmail: string, decryptedPrivateKeys: string[], saveKeysOptions: SaveKeysOptions }
+  { acctEmail, decryptedPrivateKeys, ppOptions }: { acctEmail: string, decryptedPrivateKeys: string[], ppOptions?: PassphraseOptions }
 ): Promise<Bm.Res.ProcessAndStoreKeysFromEkmLocally> => {
   const { unencryptedPrvs } = await parseAndCheckPrivateKeys(decryptedPrivateKeys);
   const existingKeys = await KeyStore.get(acctEmail);
-  let passphrase = saveKeysOptions.ppOptions?.passphrase;
-  if (passphrase === undefined && !existingKeys.length) {
-    return { needPassphrase: false, updateCount: 0 }; // return success as we can't possibly validate a passphrase
-    // this can only happen on misconfiguration
-    // todo: or should we throw?
-  }
   let { keysToRetain, unencryptedKeysToSave } = await filterKeysToSave(unencryptedPrvs, existingKeys);
+  if (!unencryptedKeysToSave.length && keysToRetain.length === existingKeys.length) {
+    // nothing to update
+    return { needPassphrase: false, needSetup: !existingKeys.length };
+  }
+  let passphrase = ppOptions?.passphrase;
+  if (passphrase === undefined && !existingKeys.length) {
+    return { needPassphrase: true, needSetup: true };
+  }
   let encryptedKeys: Key[] = [];
   if (unencryptedKeysToSave.length) {
     if (passphrase === undefined) {
@@ -120,11 +122,13 @@ export const processAndStoreKeysFromEkmLocally = async (
       unencryptedKeysToSave = [];
     }
   }
-  if (encryptedKeys.length) {
+  if (encryptedKeys.length || !unencryptedKeysToSave.length) {
     // also updates `name`, todo: refactor in #4545
-    await saveKeysAndPassPhrase(acctEmail, keysToRetain.concat(encryptedKeys), saveKeysOptions);
-    return { needPassphrase: false, updateCount: encryptedKeys.length };
+    const newKeyset = keysToRetain.concat(encryptedKeys);
+    await saveKeysAndPassPhrase(acctEmail, newKeyset, ppOptions, true);
+    return { updateCount: encryptedKeys.length + (existingKeys.length - keysToRetain.length), needSetup: !newKeyset.length };
   } else {
-    return { needPassphrase: unencryptedKeysToSave.length > 0, updateCount: 0 };
+    // todo: should we delete?
+    return { needPassphrase: unencryptedKeysToSave.length > 0 };
   }
 };

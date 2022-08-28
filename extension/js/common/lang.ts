@@ -31,6 +31,7 @@ export const Lang = { // tslint:disable-line:variable-name
     keyBackupsNotAllowed: 'Key backups are not allowed on this domain.',
     prvHasFixableCompatIssue: 'This key has minor usability issues that can be fixed. This commonly happens when importing keys from Symantec&trade; PGP Desktop or other legacy software. It may be missing User IDs, or it may be missing a self-signature. It is also possible that the key is simply expired.',
     ppMatchAllSet: 'Your pass phrase matches. Good job! You\'re all set.',
+    noKeys: 'Keys for your account were not set up yet - please ask your systems administrator.',
   },
   account: {
     googleAcctDisabledOrPolicy: `Your Google Account or Google Email seems to be disabled, or access to this app is disabled by your organisation admin policy. Contact your email administrator.`,

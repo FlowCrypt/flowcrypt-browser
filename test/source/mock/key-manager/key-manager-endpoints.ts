@@ -206,7 +206,7 @@ yeSm0uVPwODhwX7ezB9jW6uVt0R8S8iM3rQdEMsA/jDep5LNn47K6o8VrDt0zYo6
 
 export const MOCK_KM_LAST_INSERTED_KEY: { [acct: string]: { privateKey: string } } = {}; // accessed from test runners
 
-export const MOCK_KM_UPDATING_KEY: { response?: { privateKeys: { decryptedPrivateKey: string }[] }, badRequestError?: string } = {};
+export const MOCK_KM_UPDATING_KEY: { [acct: string]: { response?: { privateKeys: { decryptedPrivateKey: string }[] }, badRequestError?: string } } = {};
 
 export const mockKeyManagerEndpoints: HandlersDefinition = {
   '/flowcrypt-email-key-manager/v1/keys/private': async ({ body }, req) => {
@@ -218,11 +218,12 @@ export const mockKeyManagerEndpoints: HandlersDefinition = {
       if (acctEmail === 'get.key@key-manager-autogen.flowcrypt.test') {
         return { privateKeys: [{ decryptedPrivateKey: testConstants.existingPrv }] };
       }
-      if (acctEmail === 'get.updating.key@key-manager-choose-passphrase-forbid-storing.flowcrypt.test') {
-        if (MOCK_KM_UPDATING_KEY.response !== undefined && MOCK_KM_UPDATING_KEY.badRequestError === undefined) {
-          return MOCK_KM_UPDATING_KEY.response;
+      if (acctEmail.includes('updating.key')) {
+        const { response, badRequestError } = MOCK_KM_UPDATING_KEY[acctEmail];
+        if (response !== undefined && badRequestError === undefined) {
+          return response;
         }
-        throw new HttpClientErr(MOCK_KM_UPDATING_KEY.badRequestError || 'Vague error', Status.BAD_REQUEST);
+        throw new HttpClientErr(badRequestError || 'Vague error', Status.BAD_REQUEST);
       }
       if (acctEmail === 'get.key@no-submit-client-configuration.key-manager-autogen.flowcrypt.test') {
         return { privateKeys: [{ decryptedPrivateKey: prvNoSubmit }] };
@@ -300,6 +301,17 @@ export const mockKeyManagerEndpoints: HandlersDefinition = {
         expect(prv[0].isPrivate).to.be.true;
         expect(prv[0].fullyDecrypted).to.be.true;
         expect(prv[0].expiration).to.exist;
+        MOCK_KM_LAST_INSERTED_KEY[acctEmail] = { privateKey };
+        return {};
+      }
+      if (acctEmail.includes('updating.key')) {
+        const prv = await KeyUtil.parseMany(privateKey);
+        expect(prv).to.have.length(1);
+        expect(prv[0].algo.bits).to.equal(2048);
+        expect(prv[0].identities).to.have.length(1);
+        expect(prv[0].isPrivate).to.be.true;
+        expect(prv[0].fullyDecrypted).to.be.true;
+        expect(prv[0].expiration).to.not.exist;
         MOCK_KM_LAST_INSERTED_KEY[acctEmail] = { privateKey };
         return {};
       }

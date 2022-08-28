@@ -59,7 +59,7 @@ export class SetupWithEmailKeyManagerModule {
           await processAndStoreKeysFromEkmLocally({
             acctEmail: this.view.acctEmail,
             decryptedPrivateKeys: privateKeys.map(entry => entry.decryptedPrivateKey),
-            saveKeysOptions: { ppOptions: setupOptions }
+            ppOptions: setupOptions
           });
         } catch (e) {
           throw new Error(`Could not store keys from EKM due to error: ${e instanceof Error ? e.message : String(e)}`);
@@ -68,7 +68,7 @@ export class SetupWithEmailKeyManagerModule {
         // generate keys on client and store them on key manager
         await this.autoGenerateKeyAndStoreBothLocallyAndToEkm(setupOptions);
       } else {
-        await Ui.modal.error(`Keys for your account were not set up yet - please ask your systems administrator.`);
+        await Ui.modal.error(Lang.setup.noKeys);
         window.location.href = Url.create('index.htm', { acctEmail: this.view.acctEmail });
         return;
       }
@@ -102,7 +102,7 @@ export class SetupWithEmailKeyManagerModule {
     }
     const storePrvOnKm = async () => this.view.keyManager!.storePrivateKey(this.view.idToken!, KeyUtil.armor(decryptablePrv));
     await Settings.retryUntilSuccessful(storePrvOnKm, 'Failed to store newly generated key on FlowCrypt Email Key Manager', Lang.general.contactIfNeedAssistance(this.view.isFesUsed()));
-    await saveKeysAndPassPhrase(this.view.acctEmail, [await KeyUtil.parse(generated.private)], { ppOptions: setupOptions }); // store encrypted key + pass phrase locally
+    await saveKeysAndPassPhrase(this.view.acctEmail, [await KeyUtil.parse(generated.private)], setupOptions, true); // store encrypted key + pass phrase locally
   };
 
 }

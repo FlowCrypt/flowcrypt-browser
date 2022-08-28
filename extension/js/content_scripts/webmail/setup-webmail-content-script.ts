@@ -20,6 +20,8 @@ import { KeyManager } from '../../common/api/key-server/key-manager.js';
 import { InMemoryStore } from '../../common/platform/store/in-memory-store.js';
 import { AccountServer } from '../../common/api/account-server.js';
 import { ApiErr, BackendAuthErr } from '../../common/api/shared/api-error.js';
+import { Url } from '../../common/core/common.js';
+import { Lang } from '../../common/lang.js';
 
 export type WebmailVariantObject = { newDataLayer: undefined | boolean, newUi: undefined | boolean, email: undefined | string, gmailVariant: WebmailVariantString };
 export type IntervalFunction = { interval: number, handler: () => void };
@@ -244,10 +246,19 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
     await factory.showPassphraseDialog(longids, type, initiatorFrameId);
   };
 
-  const processKeysFromEkm = async (acctEmail: string, decryptedPrivateKeys: string[], factory: XssSafeFactory, ppEvent: { entered?: boolean }) => {
+  const processKeysFromEkm = async (acctEmail: string, decryptedPrivateKeys: string[], clientConfiguration: ClientConfiguration, factory: XssSafeFactory, idToken: string, ppEvent: { entered?: boolean }) => {
     try {
-      const { needPassphrase, updateCount } =
-        await BrowserMsg.send.bg.await.processAndStoreKeysFromEkmLocally({ acctEmail, decryptedPrivateKeys, saveKeysOptions: { keys_replace: true } });
+      const { needPassphrase, updateCount, needSetup } =
+        await BrowserMsg.send.bg.await.processAndStoreKeysFromEkmLocally({ acctEmail, decryptedPrivateKeys });
+      if (needSetup) {
+        if (!needPassphrase && !clientConfiguration.canCreateKeys()) {
+          await Ui.modal.error(Lang.setup.noKeys);
+          BrowserMsg.send.bg.settings({ acctEmail, path: 'index.htm' });
+        } else {
+          BrowserMsg.send.bg.settings({ acctEmail, path: Url.create('setup.htm', { idToken, action: 'update_from_ekm' }) });
+        }
+        return;
+      }
       if (needPassphrase) {
         ppEvent.entered = undefined;
         await showPassphraseDialog(factory, { longids: [], type: 'update_key' });
@@ -255,11 +266,11 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
           await Ui.time.sleep(100);
         }
         if (ppEvent.entered) {
-          await processKeysFromEkm(acctEmail, decryptedPrivateKeys, factory, ppEvent);
+          await processKeysFromEkm(acctEmail, decryptedPrivateKeys, clientConfiguration, factory, idToken, ppEvent);
         } else {
           return;
         }
-      } else if (updateCount > 0) {
+      } else if (updateCount && updateCount > 0) {
         Ui.toast('Account keys updated');
       }
     } catch (e) {
@@ -275,9 +286,7 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
         const keyManager = new KeyManager(clientConfiguration.getKeyManagerUrlForPrivateKeys()!);
         Catch.setHandledTimeout(async () => {
           const { privateKeys } = await keyManager.getPrivateKeys(idToken);
-          if (privateKeys.length) {
-            await processKeysFromEkm(acctEmail, privateKeys.map(entry => entry.decryptedPrivateKey), factory, ppEvent);
-          }
+          await processKeysFromEkm(acctEmail, privateKeys.map(entry => entry.decryptedPrivateKey), clientConfiguration, factory, idToken, ppEvent);
         }, 0);
       }
     }
