@@ -353,6 +353,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
 -----END PGP PRIVATE KEY BLOCK-----`,
           passphrase: 'correct horse battery staple',
           longid: '123',
+          expired: true
         }
       }, { isSavePassphraseChecked: false, isSavePassphraseHidden: false });
       await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
