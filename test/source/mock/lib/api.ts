@@ -171,7 +171,7 @@ export class Api<REQ, RES> {
     return this.fmtRes(handlerRes);
   };
 
-  protected fmtRes = (response: {} | string): Buffer => {
+  protected fmtRes = (response: {} | RES | string): Buffer => {
     if (response instanceof Buffer) {
       return response;
     } else if (typeof response === 'string') {
