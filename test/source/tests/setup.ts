@@ -733,34 +733,52 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       await gmailPage.close();
     }));
 
-    ava.default('put.updating.key@key-manager-choose-passphrase-forbid-storing.flowcrypt.test - updates of key found on key manager via setup page', testWithBrowser(undefined, async (t, browser) => {
-      const acct = 'put.updating.key@key-manager-choose-passphrase-forbid-storing.flowcrypt.test';
-      MOCK_KM_UPDATING_KEY[acct] = { response: { privateKeys: [{ decryptedPrivateKey: testConstants.updatingPrv }] } };
-      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
-      const passphrase = 'long enough to suit requirements';
-      await SetupPageRecipe.autoSetupWithEKM(settingsPage, {
-        enterPp: { passphrase, checks: { isSavePassphraseChecked: false, isSavePassphraseHidden: true } }
-      });
-      const accessToken = await BrowserRecipe.getGoogleAccessToken(settingsPage, acct);
-      const extraAuthHeaders = { Authorization: `Bearer ${accessToken}` };
-      const set1 = await retrieveAndCheckKeys(settingsPage, acct, passphrase, 1);
-      MOCK_KM_UPDATING_KEY[acct].response = { privateKeys: [] };
-      // 1. EKM returns the empty set, forcing to auto-generate
-      let gmailPage = await browser.newPage(t, TestUrls.mockGmailUrl(), undefined, extraAuthHeaders);
-      await PageRecipe.noToastAppears(gmailPage);
-      await gmailPage.notPresent('@dialog-passphrase');
-      await gmailPage.close(); // todo: why settingsPage is losing focus?
-      await retrieveAndCheckKeys(settingsPage, acct, passphrase, 0); // no keys, auto-generation
-      delete MOCK_KM_LAST_INSERTED_KEY[acct];
-      await SetupPageRecipe.autoSetupWithEKM(settingsPage, {
-        enterPp: { passphrase, checks: { isSavePassphraseChecked: false, isSavePassphraseHidden: true } }
-      });
-      expect(MOCK_KM_LAST_INSERTED_KEY[acct]).to.exist;
-      const set2 = await retrieveAndCheckKeys(settingsPage, acct, passphrase, 1);
-      expect(set2[0].id).to.not.equal(set1[0].id); // entirely new key was generated
-      // wire the new key: const generatedKey = MOCK_KM_LAST_INSERTED_KEY[acct].privateKey;
-      // MOCK_KM_UPDATING_KEY[acct].response = { privateKeys: [{ decryptedPrivateKey: generatedKey }] };
-    }));
+    ava.default('put.updating.key@key-manager-choose-passphrase-forbid-storing.flowcrypt.test - updates of key found on key manager via setup page (with passphrase)',
+      testWithBrowser(undefined, async (t, browser) => {
+        const acct = 'put.updating.key@key-manager-choose-passphrase-forbid-storing.flowcrypt.test';
+        MOCK_KM_UPDATING_KEY[acct] = { response: { privateKeys: [{ decryptedPrivateKey: testConstants.updatingPrv }] } };
+        const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
+        const passphrase = 'long enough to suit requirements';
+        await SetupPageRecipe.autoSetupWithEKM(settingsPage, {
+          enterPp: { passphrase, checks: { isSavePassphraseChecked: false, isSavePassphraseHidden: true } }
+        });
+        const accessToken = await BrowserRecipe.getGoogleAccessToken(settingsPage, acct);
+        const extraAuthHeaders = { Authorization: `Bearer ${accessToken}` };
+        const set1 = await retrieveAndCheckKeys(settingsPage, acct, passphrase, 1);
+        MOCK_KM_UPDATING_KEY[acct].response = { privateKeys: [] };
+        // 1. EKM returns the empty set, forcing to auto-generate
+        let gmailPage = await browser.newPage(t, TestUrls.mockGmailUrl(), undefined, extraAuthHeaders);
+        await PageRecipe.noToastAppears(gmailPage);
+        await gmailPage.notPresent('@dialog-passphrase');
+        await gmailPage.close(); // todo: why settingsPage is losing focus?
+        await retrieveAndCheckKeys(settingsPage, acct, passphrase, 0); // no keys, auto-generation
+        delete MOCK_KM_LAST_INSERTED_KEY[acct];
+        await SetupPageRecipe.autoSetupWithEKM(settingsPage, {
+          enterPp: { passphrase, checks: { isSavePassphraseChecked: false, isSavePassphraseHidden: true } }
+        });
+        expect(MOCK_KM_LAST_INSERTED_KEY[acct]).to.exist;
+        const set2 = await retrieveAndCheckKeys(settingsPage, acct, passphrase, 1);
+        expect(set2[0].id).to.not.equal(set1[0].id); // entirely new key was generated
+        // 2. Adding a new key from the key manager when there is none in the storage
+        // First, erase the keys
+        gmailPage = await browser.newPage(t, TestUrls.mockGmailUrl(), undefined, extraAuthHeaders);
+        await PageRecipe.noToastAppears(gmailPage);
+        await gmailPage.notPresent('@dialog-passphrase');
+        await gmailPage.close();
+        await retrieveAndCheckKeys(settingsPage, acct, passphrase, 0); // no keys, auto-generation
+        await settingsPage.close();
+        MOCK_KM_UPDATING_KEY[acct] = { response: { privateKeys: [{ decryptedPrivateKey: testConstants.updatingPrv }] } };
+        gmailPage = await browser.newPage(t, undefined, undefined, extraAuthHeaders);
+        const newSettingsPage = await browser.newPageTriggeredBy(t, () => gmailPage.goto(TestUrls.mockGmailUrl()));
+        await SetupPageRecipe.autoSetupWithEKM(newSettingsPage, {
+          enterPp: { passphrase, checks: { isSavePassphraseChecked: false, isSavePassphraseHidden: true } }
+        });
+        expect(MOCK_KM_LAST_INSERTED_KEY[acct]).to.exist;
+        const set3 = await retrieveAndCheckKeys(newSettingsPage, acct, passphrase, 1);
+        expect(set3[0].id).to.equal(set1[0].id); // the key was received from the EKM
+        await newSettingsPage.close();
+        await gmailPage.close();
+      }));
 
     ava.default('get.key@key-manager-choose-passphrase.flowcrypt.test - passphrase chosen by user with key found on key manager', testWithBrowser(undefined, async (t, browser) => {
       const acct = 'get.key@key-manager-choose-passphrase.flowcrypt.test';
