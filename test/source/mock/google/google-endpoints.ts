@@ -21,8 +21,8 @@ const allowedRecipients: Array<string> = ['flowcrypt.compatibility@gmail.com', '
   'vladimir@flowcrypt.com', 'limon.monte@gmail.com', 'sweetalert2@gmail.com', 'sender@domain.com', 'invalid@example.com', 'timeout@example.com'];
 
 export const mockGoogleEndpoints: HandlersDefinition = {
-  '/o/oauth2/auth': async ({ query: { client_id, response_type, access_type, state, redirect_uri, scope, login_hint, proceed } }, req) => {
-    if (isGet(req) && client_id === oauth.clientId && response_type === 'code' && access_type === 'offline' && state && redirect_uri === oauth.redirectUri && scope) { // auth screen
+  '/o/oauth2/auth': async ({ query: { client_id, response_type, access_type, state, scope, login_hint, proceed } }, req) => {
+    if (isGet(req) && client_id === oauth.clientId && response_type === 'code' && access_type === 'offline' && state && scope) { // auth screen
       if (!login_hint) {
         return oauth.renderText('choose account with login_hint');
       } else if (!proceed) {

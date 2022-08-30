@@ -12,7 +12,6 @@ export class OauthMock {
 
   public clientId = '717284730244-ostjo2fdtr3ka4q9td69tdr9acmmru2p.apps.googleusercontent.com';
   public expiresIn = 2 * 60 * 60; // 2hrs in seconds
-  public redirectUri = 'urn:ietf:wg:oauth:2.0:oob:auto';
 
   private authCodesByAcct: { [acct: string]: string } = {};
   private refreshTokenByAuthCode: { [authCode: string]: string } = {};

@@ -15,7 +15,7 @@ import { Buf } from '../../../core/buf.js';
 import { Catch } from '../../../platform/catch.js';
 import { GmailRes } from './gmail-parser';
 import { GoogleAuthErr } from '../../shared/api-error.js';
-import { GoogleAuthWindowResult$result } from '../../../browser/browser-msg.js';
+import { BrowserMsg, GoogleAuthWindowResult$result } from '../../../browser/browser-msg.js';
 import { Ui } from '../../../browser/ui.js';
 import { AcctStore, AcctStoreDict } from '../../../platform/store/acct-store.js';
 import { AccountServer } from '../../account-server.js';
@@ -36,7 +36,6 @@ export class GoogleAuth {
     client_id: '717284730244-ostjo2fdtr3ka4q9td69tdr9acmmru2p.apps.googleusercontent.com',
     url_code: `${GOOGLE_OAUTH_SCREEN_HOST}/o/oauth2/auth`,
     url_tokens: `${OAUTH_GOOGLE_API_HOST}/token`,
-    url_redirect: 'urn:ietf:wg:oauth:2.0:oob:auto',
     state_header: 'CRYPTUP_STATE_',
     scopes: {
       email: 'email',
@@ -71,6 +70,41 @@ export class GoogleAuth {
     }
   };
 
+  // callback = function (error, httpStatus, responseText);
+  public static authenticatedXhr = (method: string, url: string, callback: (error?: unknown, status?: number, response?: string) => {}) => {
+    var retry = true;
+    function getTokenAndXhr() {
+      chrome.identity.getAuthToken({/* details */ },
+        function (access_token) {
+          if (chrome.runtime.lastError) {
+            callback(chrome.runtime.lastError);
+            return;
+          }
+
+          var xhr = new XMLHttpRequest();
+          xhr.open(method, url);
+          xhr.setRequestHeader('Authorization',
+            'Bearer ' + access_token);
+
+          xhr.onload = function () {
+            if (this.status === 401 && retry) {
+              // This status may indicate that the cached
+              // access token was invalid. Retry once with
+              // a fresh token.
+              retry = false;
+              chrome.identity.removeCachedAuthToken(
+                { 'token': access_token },
+                getTokenAndXhr);
+              return;
+            }
+
+            callback(null, this.status, this.responseText);
+          };
+        });
+    }
+    getTokenAndXhr();
+  };
+
   public static googleApiAuthHeader = async (acctEmail: string, forceRefresh = false): Promise<string> => {
     if (!acctEmail) {
       throw new Error('missing account_email in api_gmail_call');
@@ -99,6 +133,7 @@ export class GoogleAuth {
 
   public static apiGoogleCallRetryAuthErrorOneTime = async (acctEmail: string, request: JQuery.AjaxSettings): Promise<unknown> => {
     try {
+      request.headers!.Authorization = `Bearer ${await BrowserMsg.send.bg.await.getAuthToken()}`;
       return await Api.ajax(request, Catch.stackTrace());
     } catch (firstAttemptErr) {
       if (ApiErr.isAuthErr(firstAttemptErr)) { // force refresh token
@@ -275,7 +310,6 @@ export class GoogleAuth {
       response_type: 'code',
       access_type: 'offline',
       state: GoogleAuth.apiGoogleAuthStatePack(authReq),
-      redirect_uri: GoogleAuth.OAUTH.url_redirect,
       scope: (authReq.scopes || []).join(' '),
       login_hint: authReq.acctEmail,
     });
@@ -311,7 +345,9 @@ export class GoogleAuth {
 
   private static googleAuthGetTokens = async (code: string) => {
     return await Api.ajax({
-      url: Url.create(GoogleAuth.OAUTH.url_tokens, { grant_type: 'authorization_code', code, client_id: GoogleAuth.OAUTH.client_id, redirect_uri: GoogleAuth.OAUTH.url_redirect }),
+      url: Url.create(GoogleAuth.OAUTH.url_tokens, {
+        grant_type: 'authorization_code', code, client_id: GoogleAuth.OAUTH.client_id
+      }),
       method: 'POST',
       crossDomain: true,
       async: true,
