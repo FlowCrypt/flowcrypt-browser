@@ -74,7 +74,7 @@ export class SetupPageRecipe extends PageRecipe {
       await settingsPage.waitAll('@input-backup-step3manual-no-backup', { timeout: 90 });
       await settingsPage.waitAndClick('@input-backup-step3manual-no-backup');
     } else if (backup === 'email') {
-      throw new Error('tests.setup_manual_create options.backup=email not implemented');
+      // no click, it's default
     } else if (backup === 'file') {
       await settingsPage.waitAndClick('@input-backup-step3manual-file');
     } else if (backup !== 'disabled') {
