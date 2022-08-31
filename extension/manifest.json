@@ -84,17 +84,5 @@
   ],
   "minimum_chrome_version": "96",
   "content_security_policy": "upgrade-insecure-requests; script-src 'self'; frame-ancestors https://mail.google.com 'self'; img-src 'self' https://*.googleusercontent.com data: blob:; frame-src 'self' blob:; worker-src 'self'; form-action 'none'; media-src 'none'; font-src 'none'; manifest-src 'none'; object-src 'none'; base-uri 'self'",
-  "oauth2": {
-    "client_id": "717284730244-5oejn54f10gnrektjdc4fv4rbic1bj1p.apps.googleusercontent.com",
-    "scopes": [
-      "email",
-      "openid",
-      "https://www.googleapis.com/auth/userinfo.profile",
-      "https://www.googleapis.com/auth/gmail.compose",
-      "https://www.googleapis.com/auth/gmail.modify",
-      "https://www.googleapis.com/auth/contacts.readonly",
-      "https://www.googleapis.com/auth/contacts.other.readonly"
-    ]
-  },
   "key": "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAgB2GuIuszufxH4YgzDif\n6HI/oTii28+qFAv3lU3n/k0rQShwC8D/a1ZV0NLLrqJNWrUNpowOtyKJKT5u33BI\nX4GZI8R+805mtgY2tdbSCTjyl4tUxHmqSVnXUu801tVkmfAt7/catr8WWW+uGC3G\nF5RoYgDu0jQREkCFL5wko7G3X84ldJqPY/FSWoUt0W01T0PttN8RYXyY4KeihvMt\nc9d4u4L1HUp84WhNJ5gJFV/iFUyHU6rf0bW6RpRlm44A649U2B6KdRuR5JiXrCkR\nnMlaPLUhQebKKs/Z7tZiOT4z2EPPsH5P+I0lwc8ZaSWyI/Rk0A8Y/gS+mHsCl78w\n+wIDAQAB\n-----END PUBLIC KEY-----"
 }

@@ -32,6 +32,7 @@ export class GoogleAuth {
 
   public static OAUTH = {
     client_id: '717284730244-5oejn54f10gnrektjdc4fv4rbic1bj1p.apps.googleusercontent.com',
+    client_secret: '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',
     url_code: `${GOOGLE_OAUTH_SCREEN_HOST}/o/oauth2/auth`,
     url_tokens: `${OAUTH_GOOGLE_API_HOST}/token`,
     state_header: 'CRYPTUP_STATE_',
@@ -179,8 +180,8 @@ export class GoogleAuth {
         grant_type: 'authorization_code',
         code,
         client_id: GoogleAuth.OAUTH.client_id,
-        client_secret: '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',
-        redirect_uri: 'https://bnjglocicdkmhmoohhfkfkbbkejdhdgc.chromiumapp.org/'
+        client_secret: GoogleAuth.OAUTH.client_secret,
+        redirect_uri: chrome.identity.getRedirectURL()
       }),
       method: 'POST',
       crossDomain: true,
@@ -205,10 +206,8 @@ export class GoogleAuth {
 
   private static oauthLogin: (req: AuthReq) => Promise<string> = (r: AuthReq) => new Promise((resolve, reject) => {
     const redirectURL = chrome.identity.getRedirectURL();
-    const { oauth2 } = chrome.runtime.getManifest();
-    const clientId = oauth2?.client_id!;
     const authParams = new URLSearchParams({
-      client_id: clientId,
+      client_id: GoogleAuth.OAUTH.client_id,
       response_type: 'code',
       redirect_uri: redirectURL,
       access_type: 'offline',
@@ -273,7 +272,12 @@ export class GoogleAuth {
 
   private static googleAuthRefreshToken = async (refreshToken: string) => {
     return await Api.ajax({
-      url: Url.create(GoogleAuth.OAUTH.url_tokens, { grant_type: 'refresh_token', refreshToken, client_id: GoogleAuth.OAUTH.client_id }),
+      url: Url.create(GoogleAuth.OAUTH.url_tokens, {
+        grant_type: 'refresh_token',
+        refreshToken,
+        client_id: GoogleAuth.OAUTH.client_id,
+        client_secret: GoogleAuth.OAUTH.client_secret
+      }),
       method: 'POST',
       crossDomain: true,
       async: true,
