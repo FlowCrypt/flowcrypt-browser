@@ -106,83 +106,6 @@ export class GoogleAuth {
     }
   };
 
-  private static googleAuthGetTokens = async (code: string) => {
-    return await Api.ajax({
-      url: Url.create(GoogleAuth.OAUTH.url_tokens, {
-        grant_type: 'authorization_code',
-        code,
-        client_id: GoogleAuth.OAUTH.client_id,
-        client_secret: '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',
-        redirect_uri: 'https://bnjglocicdkmhmoohhfkfkbbkejdhdgc.chromiumapp.org/'
-      }),
-      method: 'POST',
-      crossDomain: true,
-      async: true,
-    }, Catch.stackTrace()) as unknown as GoogleAuthTokensResponse;
-  };
-
-  private static retrieveAndSaveAuthToken = async (authCode: string, scopes: string[]): Promise<{ id_token: string }> => {
-    const tokensObj = await GoogleAuth.googleAuthGetTokens(authCode);
-    const claims = GoogleAuth.parseIdToken(tokensObj.id_token);
-    if (!claims.email) {
-      throw new Error('Missing email address in id_token');
-    }
-    await GoogleAuth.googleAuthSaveTokens(claims.email, tokensObj, scopes);
-    return { id_token: tokensObj.id_token };
-  };
-
-  public static getParameterByName = (search: string, name: string) => {
-    var match = RegExp('[?&]' + name + '=([^&]*)').exec(search);
-    return match && decodeURIComponent(match[1].replace(/\+/g, ' '));
-  };
-
-  public static oauthLogin: (req: AuthReq) => Promise<string> = (r: AuthReq) => new Promise((resolve, reject) => {
-    const redirectURL = chrome.identity.getRedirectURL();
-    const { oauth2 } = chrome.runtime.getManifest();
-    const clientId = oauth2?.client_id!;
-    const authParams = new URLSearchParams({
-      client_id: clientId,
-      response_type: 'code',
-      redirect_uri: redirectURL,
-      access_type: 'offline',
-      state: GoogleAuth.apiGoogleAuthStatePack(r),
-      scope: (r.scopes ?? []).join(' '),
-      prompt: 'consent',
-      login_hint: r.acctEmail ?? ''
-    });
-    const authURL = `${GoogleAuth.OAUTH.url_code}?${authParams.toString()}`;
-    chrome.identity.launchWebAuthFlow({ url: authURL, interactive: true }, (responseUrl) => {
-      if (chrome.runtime.lastError) {
-        reject(chrome.runtime.lastError);
-        return;
-      }
-      if (!responseUrl) {
-        resolve('');
-        return;
-      }
-      const url = new URL(responseUrl!);
-      resolve(this.getParameterByName(url.search, 'code') ?? '');
-    });
-  });
-
-  private static getOAuthResult = async ({ acctEmail, scopes, save }: { acctEmail?: string, scopes: string[], save: boolean }): Promise<AuthRes> => {
-    try {
-      const authRequest: AuthReq = { acctEmail, scopes, csrfToken: `csrf-${Api.randomFortyHexChars()}` };
-      const code = await this.oauthLogin(authRequest);
-      if (!code) {
-        return { acctEmail, result: 'Denied', error: "Google auth result was 'Success' but no auth code", id_token: undefined };
-      }
-      const { id_token } = save ? await GoogleAuth.retrieveAndSaveAuthToken(code, scopes) : await GoogleAuth.googleAuthGetTokens(code);
-      const { email } = GoogleAuth.parseIdToken(id_token);
-      if (!email) {
-        throw new Error('Missing email address in id_token');
-      }
-      return { acctEmail: email, result: 'Success', id_token };
-    } catch (error) {
-      return { acctEmail, result: 'Denied', error: String(error), id_token: undefined };
-    }
-  };
-
   public static newAuthPopup = async ({ acctEmail, scopes, save }: { acctEmail?: string, scopes?: string[], save?: boolean }): Promise<AuthRes> => {
     if (acctEmail) {
       acctEmail = acctEmail.toLowerCase();
@@ -250,6 +173,83 @@ export class GoogleAuth {
     return await GoogleAuth.newAuthPopup({ acctEmail, scopes: GoogleAuth.defaultScopes('openid'), save: false });
   };
 
+  private static googleAuthGetTokens = async (code: string) => {
+    return await Api.ajax({
+      url: Url.create(GoogleAuth.OAUTH.url_tokens, {
+        grant_type: 'authorization_code',
+        code,
+        client_id: GoogleAuth.OAUTH.client_id,
+        client_secret: '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',
+        redirect_uri: 'https://bnjglocicdkmhmoohhfkfkbbkejdhdgc.chromiumapp.org/'
+      }),
+      method: 'POST',
+      crossDomain: true,
+      async: true,
+    }, Catch.stackTrace()) as unknown as GoogleAuthTokensResponse;
+  };
+
+  private static retrieveAndSaveAuthToken = async (authCode: string, scopes: string[]): Promise<{ id_token: string }> => {
+    const tokensObj = await GoogleAuth.googleAuthGetTokens(authCode);
+    const claims = GoogleAuth.parseIdToken(tokensObj.id_token);
+    if (!claims.email) {
+      throw new Error('Missing email address in id_token');
+    }
+    await GoogleAuth.googleAuthSaveTokens(claims.email, tokensObj, scopes);
+    return { id_token: tokensObj.id_token };
+  };
+
+  private static getParameterByName = (search: string, name: string) => {
+    const match = RegExp('[?&]' + name + '=([^&]*)').exec(search);
+    return match && decodeURIComponent(match[1].replace(/\+/g, ' '));
+  };
+
+  private static oauthLogin: (req: AuthReq) => Promise<string> = (r: AuthReq) => new Promise((resolve, reject) => {
+    const redirectURL = chrome.identity.getRedirectURL();
+    const { oauth2 } = chrome.runtime.getManifest();
+    const clientId = oauth2?.client_id!;
+    const authParams = new URLSearchParams({
+      client_id: clientId,
+      response_type: 'code',
+      redirect_uri: redirectURL,
+      access_type: 'offline',
+      state: GoogleAuth.apiGoogleAuthStatePack(r),
+      scope: (r.scopes ?? []).join(' '),
+      prompt: 'consent',
+      login_hint: r.acctEmail ?? ''
+    });
+    const authURL = `${GoogleAuth.OAUTH.url_code}?${authParams.toString()}`;
+    chrome.identity.launchWebAuthFlow({ url: authURL, interactive: true }, (responseUrl) => {
+      if (chrome.runtime.lastError) {
+        reject(chrome.runtime.lastError);
+        return;
+      }
+      if (!responseUrl) {
+        resolve('');
+        return;
+      }
+      const url = new URL(responseUrl!);
+      resolve(this.getParameterByName(url.search, 'code') ?? '');
+    });
+  });
+
+  private static getOAuthResult = async ({ acctEmail, scopes, save }: { acctEmail?: string, scopes: string[], save: boolean }): Promise<AuthRes> => {
+    try {
+      const authRequest: AuthReq = { acctEmail, scopes, csrfToken: `csrf-${Api.randomFortyHexChars()}` };
+      const code = await this.oauthLogin(authRequest);
+      if (!code) {
+        return { acctEmail, result: 'Denied', error: "Google auth result was 'Success' but no auth code", id_token: undefined };
+      }
+      const { id_token } = save ? await GoogleAuth.retrieveAndSaveAuthToken(code, scopes) : await GoogleAuth.googleAuthGetTokens(code);
+      const { email } = GoogleAuth.parseIdToken(id_token);
+      if (!email) {
+        throw new Error('Missing email address in id_token');
+      }
+      return { acctEmail: email, result: 'Success', id_token };
+    } catch (error) {
+      return { acctEmail, result: 'Denied', error: String(error), id_token: undefined };
+    }
+  };
+
   private static googleAuthSaveTokens = async (acctEmail: string, tokensObj: GoogleAuthTokensResponse, scopes: string[]) => {
     const parsedOpenId = GoogleAuth.parseIdToken(tokensObj.id_token);
     const { full_name, picture } = await AcctStore.get(acctEmail, ['full_name', 'picture']);
@@ -267,7 +267,7 @@ export class GoogleAuth {
     await InMemoryStore.set(acctEmail, InMemoryStoreKeys.GOOGLE_TOKEN_ACCESS, tokensObj.access_token, googleTokenExpires);
   };
 
-  public static apiGoogleAuthStatePack = (authReq: AuthReq) => {
+  private static apiGoogleAuthStatePack = (authReq: AuthReq) => {
     return GoogleAuth.OAUTH.state_header + JSON.stringify(authReq);
   };
 
