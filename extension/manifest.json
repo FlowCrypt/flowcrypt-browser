@@ -85,7 +85,7 @@
   "minimum_chrome_version": "96",
   "content_security_policy": "upgrade-insecure-requests; script-src 'self'; frame-ancestors https://mail.google.com 'self'; img-src 'self' https://*.googleusercontent.com data: blob:; frame-src 'self' blob:; worker-src 'self'; form-action 'none'; media-src 'none'; font-src 'none'; manifest-src 'none'; object-src 'none'; base-uri 'self'",
   "oauth2": {
-    "client_id": "717284730244-2m781alo57indm2e78tn7opakm4l7093.apps.googleusercontent.com",
+    "client_id": "717284730244-5oejn54f10gnrektjdc4fv4rbic1bj1p.apps.googleusercontent.com",
     "scopes": [
       "email",
       "openid",

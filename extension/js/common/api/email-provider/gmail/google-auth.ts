@@ -5,35 +5,33 @@
 // tslint:disable:no-direct-ajax
 // tslint:disable:oneliner-object-literal
 
-import { OAUTH_GOOGLE_API_HOST, GOOGLE_OAUTH_SCREEN_HOST, FLAVOR } from '../../../core/const.js';
 import { Str, Url, Value } from '../../../core/common.js';
-import { tabsQuery, windowsCreate } from '../../../browser/chrome.js';
-import { Api } from './../../shared/api.js';
+import { FLAVOR, GOOGLE_OAUTH_SCREEN_HOST, OAUTH_GOOGLE_API_HOST } from '../../../core/const.js';
 import { ApiErr } from '../../shared/api-error.js';
+import { Api } from './../../shared/api.js';
 
+import { GoogleAuthWindowResult$result } from '../../../browser/browser-msg.js';
 import { Buf } from '../../../core/buf.js';
+import { InMemoryStoreKeys } from '../../../core/const.js';
 import { Catch } from '../../../platform/catch.js';
-import { GmailRes } from './gmail-parser';
-import { GoogleAuthErr } from '../../shared/api-error.js';
-import { BrowserMsg, GoogleAuthWindowResult$result } from '../../../browser/browser-msg.js';
-import { Ui } from '../../../browser/ui.js';
 import { AcctStore, AcctStoreDict } from '../../../platform/store/acct-store.js';
+import { InMemoryStore } from '../../../platform/store/in-memory-store.js';
 import { AccountServer } from '../../account-server.js';
 import { EnterpriseServer } from '../../account-servers/enterprise-server.js';
-import { InMemoryStore } from '../../../platform/store/in-memory-store.js';
-import { InMemoryStoreKeys } from '../../../core/const.js';
+import { GoogleAuthErr } from '../../shared/api-error.js';
+import { GmailRes } from './gmail-parser';
 
 type GoogleAuthTokensResponse = { access_token: string, expires_in: number, refresh_token?: string, id_token: string, token_type: 'Bearer' };
 type AuthResultSuccess = { result: 'Success', acctEmail: string, id_token: string, error?: undefined };
 type AuthResultError = { result: GoogleAuthWindowResult$result, acctEmail?: string, error?: string, id_token: undefined };
 
-type AuthReq = { acctEmail?: string, scopes: string[], messageId?: string, csrfToken: string };
+export type AuthReq = { acctEmail?: string, scopes: string[], messageId?: string, csrfToken: string };
 export type AuthRes = AuthResultSuccess | AuthResultError;
 
 export class GoogleAuth {
 
   public static OAUTH = {
-    client_id: '717284730244-ostjo2fdtr3ka4q9td69tdr9acmmru2p.apps.googleusercontent.com',
+    client_id: '717284730244-5oejn54f10gnrektjdc4fv4rbic1bj1p.apps.googleusercontent.com',
     url_code: `${GOOGLE_OAUTH_SCREEN_HOST}/o/oauth2/auth`,
     url_tokens: `${OAUTH_GOOGLE_API_HOST}/token`,
     state_header: 'CRYPTUP_STATE_',
@@ -70,41 +68,6 @@ export class GoogleAuth {
     }
   };
 
-  // callback = function (error, httpStatus, responseText);
-  public static authenticatedXhr = (method: string, url: string, callback: (error?: unknown, status?: number, response?: string) => {}) => {
-    var retry = true;
-    function getTokenAndXhr() {
-      chrome.identity.getAuthToken({/* details */ },
-        function (access_token) {
-          if (chrome.runtime.lastError) {
-            callback(chrome.runtime.lastError);
-            return;
-          }
-
-          var xhr = new XMLHttpRequest();
-          xhr.open(method, url);
-          xhr.setRequestHeader('Authorization',
-            'Bearer ' + access_token);
-
-          xhr.onload = function () {
-            if (this.status === 401 && retry) {
-              // This status may indicate that the cached
-              // access token was invalid. Retry once with
-              // a fresh token.
-              retry = false;
-              chrome.identity.removeCachedAuthToken(
-                { 'token': access_token },
-                getTokenAndXhr);
-              return;
-            }
-
-            callback(null, this.status, this.responseText);
-          };
-        });
-    }
-    getTokenAndXhr();
-  };
-
   public static googleApiAuthHeader = async (acctEmail: string, forceRefresh = false): Promise<string> => {
     if (!acctEmail) {
       throw new Error('missing account_email in api_gmail_call');
@@ -133,7 +96,6 @@ export class GoogleAuth {
 
   public static apiGoogleCallRetryAuthErrorOneTime = async (acctEmail: string, request: JQuery.AjaxSettings): Promise<unknown> => {
     try {
-      request.headers!.Authorization = `Bearer ${await BrowserMsg.send.bg.await.getAuthToken()}`;
       return await Api.ajax(request, Catch.stackTrace());
     } catch (firstAttemptErr) {
       if (ApiErr.isAuthErr(firstAttemptErr)) { // force refresh token
@@ -141,6 +103,83 @@ export class GoogleAuth {
         return await Api.ajax(request, Catch.stackTrace());
       }
       throw firstAttemptErr;
+    }
+  };
+
+  private static googleAuthGetTokens = async (code: string) => {
+    return await Api.ajax({
+      url: Url.create(GoogleAuth.OAUTH.url_tokens, {
+        grant_type: 'authorization_code',
+        code,
+        client_id: GoogleAuth.OAUTH.client_id,
+        client_secret: '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',
+        redirect_uri: 'https://bnjglocicdkmhmoohhfkfkbbkejdhdgc.chromiumapp.org/'
+      }),
+      method: 'POST',
+      crossDomain: true,
+      async: true,
+    }, Catch.stackTrace()) as unknown as GoogleAuthTokensResponse;
+  };
+
+  private static retrieveAndSaveAuthToken = async (authCode: string, scopes: string[]): Promise<{ id_token: string }> => {
+    const tokensObj = await GoogleAuth.googleAuthGetTokens(authCode);
+    const claims = GoogleAuth.parseIdToken(tokensObj.id_token);
+    if (!claims.email) {
+      throw new Error('Missing email address in id_token');
+    }
+    await GoogleAuth.googleAuthSaveTokens(claims.email, tokensObj, scopes);
+    return { id_token: tokensObj.id_token };
+  };
+
+  public static getParameterByName = (search: string, name: string) => {
+    var match = RegExp('[?&]' + name + '=([^&]*)').exec(search);
+    return match && decodeURIComponent(match[1].replace(/\+/g, ' '));
+  };
+
+  public static oauthLogin: (req: AuthReq) => Promise<string> = (r: AuthReq) => new Promise((resolve, reject) => {
+    const redirectURL = chrome.identity.getRedirectURL();
+    const { oauth2 } = chrome.runtime.getManifest();
+    const clientId = oauth2?.client_id!;
+    const authParams = new URLSearchParams({
+      client_id: clientId,
+      response_type: 'code',
+      redirect_uri: redirectURL,
+      access_type: 'offline',
+      state: GoogleAuth.apiGoogleAuthStatePack(r),
+      scope: (r.scopes ?? []).join(' '),
+      prompt: 'consent',
+      login_hint: r.acctEmail ?? ''
+    });
+    const authURL = `${GoogleAuth.OAUTH.url_code}?${authParams.toString()}`;
+    chrome.identity.launchWebAuthFlow({ url: authURL, interactive: true }, (responseUrl) => {
+      if (chrome.runtime.lastError) {
+        reject(chrome.runtime.lastError);
+        return;
+      }
+      if (!responseUrl) {
+        resolve('');
+        return;
+      }
+      const url = new URL(responseUrl!);
+      resolve(this.getParameterByName(url.search, 'code') ?? '');
+    });
+  });
+
+  private static getOAuthResult = async ({ acctEmail, scopes, save }: { acctEmail?: string, scopes: string[], save: boolean }): Promise<AuthRes> => {
+    try {
+      const authRequest: AuthReq = { acctEmail, scopes, csrfToken: `csrf-${Api.randomFortyHexChars()}` };
+      const code = await this.oauthLogin(authRequest);
+      if (!code) {
+        return { acctEmail, result: 'Denied', error: "Google auth result was 'Success' but no auth code", id_token: undefined };
+      }
+      const { id_token } = save ? await GoogleAuth.retrieveAndSaveAuthToken(code, scopes) : await GoogleAuth.googleAuthGetTokens(code);
+      const { email } = GoogleAuth.parseIdToken(id_token);
+      if (!email) {
+        throw new Error('Missing email address in id_token');
+      }
+      return { acctEmail: email, result: 'Success', id_token };
+    } catch (error) {
+      return { acctEmail, result: 'Denied', error: String(error), id_token: undefined };
     }
   };
 
@@ -154,32 +193,8 @@ export class GoogleAuth {
     if (save || !scopes) { // if tokens will be saved (meaning also scopes should be pulled from storage) or if no scopes supplied
       scopes = await GoogleAuth.apiGoogleAuthPopupPrepareAuthReqScopes(acctEmail, scopes || GoogleAuth.defaultScopes());
     }
-    const authRequest: AuthReq = { acctEmail, scopes, csrfToken: `csrf-${Api.randomFortyHexChars()}` };
-    const url = GoogleAuth.apiGoogleAuthCodeUrl(authRequest);
-    // To fix https://github.com/FlowCrypt/flowcrypt-browser/issues/4553#issuecomment-1198290842
-    // we need to use availLeft and availTop to make the popup window appear on the same screen as the original Flowcrypt window.
-    // It's hard to test because it'd require using --screen-config browser switch to test headless with multiple displays, so tested manually.
-    const screenWidth = (window.screen.width || window.innerWidth);
-    const screenHeight = (window.screen.height || window.innerHeight);
-    // non-standard but supported by most of the browsers
-    const { availLeft, availTop } = (window.screen as unknown as { availLeft?: number, availTop?: number });
-    let adaptiveWidth = Math.floor(screenWidth * 0.4);
-    if (adaptiveWidth < 550) {
-      adaptiveWidth = Math.min(550, Math.floor(screenWidth * 0.9));
-    }
-    const adaptiveHeight = Math.floor(screenHeight * 0.9);
-    const leftOffset = Math.floor((screenWidth / 2) - (adaptiveWidth / 2) + (availLeft || 0));
-    const topOffset = Math.floor((screenHeight / 2) - (adaptiveHeight / 2) + (availTop || 0));
-    const oauthWin = await windowsCreate({ url, left: leftOffset, top: topOffset, height: adaptiveHeight, width: adaptiveWidth, type: 'popup' });
-    if (!oauthWin || !oauthWin.tabs || !oauthWin.tabs.length || !oauthWin.id) {
-      return { result: 'Error', error: 'No oauth window returned after initiating it', acctEmail, id_token: undefined };
-    }
-    const authRes = await Promise.race([
-      GoogleAuth.waitForAndProcessOauthWindowResult(oauthWin.id, acctEmail, scopes, authRequest.csrfToken, save),
-      GoogleAuth.waitForOauthWindowClosed(oauthWin.id, acctEmail),
-    ]);
+    const authRes = await this.getOAuthResult({ acctEmail, scopes, save });
     if (authRes.result === 'Success') {
-      await chrome.windows.remove(oauthWin.id); // The prompt windows is removed when the user is authorized.
       if (!authRes.id_token) {
         return { result: 'Error', error: 'Grant was successful but missing id_token', acctEmail: authRes.acctEmail, id_token: undefined };
       }
@@ -235,97 +250,6 @@ export class GoogleAuth {
     return await GoogleAuth.newAuthPopup({ acctEmail, scopes: GoogleAuth.defaultScopes('openid'), save: false });
   };
 
-  private static waitForOauthWindowClosed = async (oauthWinId: number, acctEmail: string | undefined): Promise<AuthRes> => {
-    return await new Promise(resolve => {
-      const onOauthWinClosed = (closedWinId: number) => {
-        if (closedWinId === oauthWinId) {
-          chrome.windows.onRemoved.removeListener(onOauthWinClosed);
-          resolve({ result: 'Closed', acctEmail, id_token: undefined });
-        }
-      };
-      chrome.windows.onRemoved.addListener(onOauthWinClosed);
-    });
-  };
-
-  private static processOauthResTitle = (title: string): { result: GoogleAuthWindowResult$result, code?: string, error?: string, csrf?: string } => {
-    const parts = title.split(' ', 2);
-    const result = parts[0] as GoogleAuthWindowResult$result;
-    const params = Url.parse(['code', 'state', 'error'], parts[1]);
-    let authReq: AuthReq;
-    try {
-      authReq = GoogleAuth.apiGoogleAuthStateUnpack(String(params.state));
-    } catch (e) {
-      return { result: 'Error', error: `Wrong oauth state response: ${e}` };
-    }
-    if (!['Success', 'Denied', 'Error'].includes(result)) {
-      return { result: 'Error', error: `Unknown google auth result '${result}'` };
-    }
-    return { result, code: params.code ? String(params.code) : undefined, error: params.error ? String(params.error) : undefined, csrf: authReq.csrfToken };
-  };
-
-  /**
-   * Is the title actually just url of the page? (means real title not loaded yet)
-   */
-  private static isUrl = (title: string) => {
-    return title.match(/^(?:https?:\/\/)?accounts\.google\.com/) !== null
-      || title.startsWith(GOOGLE_OAUTH_SCREEN_HOST.replace(/^https?:\/\//, ''))
-      || title.startsWith(GOOGLE_OAUTH_SCREEN_HOST);
-  };
-
-  private static isForwarding = (title: string) => {
-    return title.match(/^Forwarding /) !== null;
-  };
-
-  private static waitForAndProcessOauthWindowResult = async (windowId: number, acctEmail: string | undefined, scopes: string[], csrfToken: string, save: boolean): Promise<AuthRes> => {
-    while (true) {
-      const [oauth] = await tabsQuery({ windowId });
-      if (oauth?.title && oauth.title.includes(GoogleAuth.OAUTH.state_header) && !GoogleAuth.isUrl(oauth.title) && !GoogleAuth.isForwarding(oauth.title)) {
-        const { result, error, code, csrf } = GoogleAuth.processOauthResTitle(oauth.title);
-        if (error === 'access_denied') {
-          return { acctEmail, result: 'Denied', error, id_token: undefined }; // sometimes it was coming in as {"result":"Error","error":"access_denied"}
-        }
-        if (result === 'Success') {
-          if (!csrf || csrf !== csrfToken) {
-            return { acctEmail, result: 'Error', error: `Wrong oauth CSRF token. Please try again.`, id_token: undefined };
-          }
-          if (code) {
-            const { id_token } = save ? await GoogleAuth.retrieveAndSaveAuthToken(code, scopes) : await GoogleAuth.googleAuthGetTokens(code);
-            const { email } = GoogleAuth.parseIdToken(id_token);
-            if (!email) {
-              throw new Error('Missing email address in id_token');
-            }
-            return { acctEmail: email, result: 'Success', id_token };
-          }
-          return { acctEmail, result: 'Error', error: `Google auth result was 'Success' but no auth code`, id_token: undefined };
-        }
-        return { acctEmail, result, error: error ? error : '(no error provided)', id_token: undefined };
-      }
-      await Ui.time.sleep(250);
-    }
-  };
-
-  private static apiGoogleAuthCodeUrl = (authReq: AuthReq) => {
-    return Url.create(GoogleAuth.OAUTH.url_code, {
-      client_id: GoogleAuth.OAUTH.client_id,
-      response_type: 'code',
-      access_type: 'offline',
-      state: GoogleAuth.apiGoogleAuthStatePack(authReq),
-      scope: (authReq.scopes || []).join(' '),
-      login_hint: authReq.acctEmail,
-    });
-  };
-
-  private static apiGoogleAuthStatePack = (authReq: AuthReq) => {
-    return GoogleAuth.OAUTH.state_header + JSON.stringify(authReq);
-  };
-
-  private static apiGoogleAuthStateUnpack = (state: string): AuthReq => {
-    if (!state.startsWith(GoogleAuth.OAUTH.state_header)) {
-      throw new Error(`Missing oauth state header`);
-    }
-    return JSON.parse(state.replace(GoogleAuth.OAUTH.state_header, '')) as AuthReq;
-  };
-
   private static googleAuthSaveTokens = async (acctEmail: string, tokensObj: GoogleAuthTokensResponse, scopes: string[]) => {
     const parsedOpenId = GoogleAuth.parseIdToken(tokensObj.id_token);
     const { full_name, picture } = await AcctStore.get(acctEmail, ['full_name', 'picture']);
@@ -343,15 +267,8 @@ export class GoogleAuth {
     await InMemoryStore.set(acctEmail, InMemoryStoreKeys.GOOGLE_TOKEN_ACCESS, tokensObj.access_token, googleTokenExpires);
   };
 
-  private static googleAuthGetTokens = async (code: string) => {
-    return await Api.ajax({
-      url: Url.create(GoogleAuth.OAUTH.url_tokens, {
-        grant_type: 'authorization_code', code, client_id: GoogleAuth.OAUTH.client_id
-      }),
-      method: 'POST',
-      crossDomain: true,
-      async: true,
-    }, Catch.stackTrace()) as unknown as GoogleAuthTokensResponse;
+  public static apiGoogleAuthStatePack = (authReq: AuthReq) => {
+    return GoogleAuth.OAUTH.state_header + JSON.stringify(authReq);
   };
 
   private static googleAuthRefreshToken = async (refreshToken: string) => {
@@ -376,15 +293,6 @@ export class GoogleAuth {
     return claims;
   };
 
-  private static retrieveAndSaveAuthToken = async (authCode: string, scopes: string[]): Promise<{ id_token: string }> => {
-    const tokensObj = await GoogleAuth.googleAuthGetTokens(authCode);
-    const claims = GoogleAuth.parseIdToken(tokensObj.id_token);
-    if (!claims.email) {
-      throw new Error('Missing email address in id_token');
-    }
-    await GoogleAuth.googleAuthSaveTokens(claims.email, tokensObj, scopes);
-    return { id_token: tokensObj.id_token };
-  };
 
   private static apiGoogleAuthPopupPrepareAuthReqScopes = async (acctEmail: string | undefined, addScopes: string[]): Promise<string[]> => {
     if (acctEmail) {

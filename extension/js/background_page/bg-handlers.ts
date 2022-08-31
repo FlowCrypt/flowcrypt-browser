@@ -60,18 +60,6 @@ export class BgHandlers {
     });
   });
 
-  public static getAuthToken: Bm.AsyncRespondingHandler = () => new Promise((resolve, reject) => {
-    chrome.identity.getAuthToken({ 'interactive': true }, (access_token) => {
-      if (chrome.runtime.lastError) {
-        console.log(chrome.runtime.lastError);
-        reject(chrome.runtime.lastError);
-      } else {
-        console.log(access_token);
-        resolve(access_token);
-      }
-    });
-  });
-
   public static respondWithSenderTabId = async (r: unknown, sender: Bm.Sender): Promise<Bm.Res._tab_> => {
     if (sender === 'background') {
       return { tabId: null };  // tslint:disable-line:no-null-keyword
