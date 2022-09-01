@@ -599,13 +599,13 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       const correctButtonStatusTxt = 'Encrypt, Sign and Send';
       await ComposePageRecipe.showRecipientInput(composePage);
       await composePage.waitAll('@container-cc-bcc-buttons');
-      expect(await composePage.read('@action-send')).to.eq(correctButtonStatusTxt);
+      await composePage.waitForContent('@action-send', correctButtonStatusTxt);
       await composePage.waitAndType(`@input-to`, 'aaaaa\n'); // First enter invalid recipient
-      expect(await composePage.read('@action-send')).to.eq('Re-enter recipient..');
+      await composePage.waitForContent('@action-send', 'Re-enter recipient..');
       await composePage.press('Backspace'); // Delete invalid recipient
-      expect(await composePage.read('@action-send')).to.eq(correctButtonStatusTxt); // check if sent button status is correct
+      await composePage.waitForContent('@action-send', correctButtonStatusTxt); // check if sent button status is correct
       await composePage.waitAndType(`@input-to`, 'mock.only.pubkey@flowcrypt.com\n'); // Now enter correct recipient and check if send button status is correct.
-      expect(await composePage.read('@action-send')).to.eq(correctButtonStatusTxt);
+      await composePage.waitForContent('@action-send', correctButtonStatusTxt);
     }));
 
     ava.default('compose - reply - CC&BCC test reply', testWithBrowser('compatibility', async (t, browser) => {
