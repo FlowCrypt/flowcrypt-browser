@@ -28,6 +28,14 @@ type AuthResultError = { result: GoogleAuthWindowResult$result, acctEmail?: stri
 export type AuthReq = { acctEmail?: string, scopes: string[], messageId?: string, csrfToken: string };
 export type AuthRes = AuthResultSuccess | AuthResultError;
 
+class InsufficientPermissionError extends Error {
+  constructor() {
+    super("Insufficient permission");
+    // Set the prototype explicitly.
+    Object.setPrototypeOf(this, InsufficientPermissionError.prototype);
+  }
+}
+
 export class GoogleAuth {
 
   public static OAUTH = {
@@ -213,11 +221,10 @@ export class GoogleAuth {
       access_type: 'offline',
       state: GoogleAuth.apiGoogleAuthStatePack(r),
       scope: (r.scopes ?? []).join(' '),
-      prompt: 'consent',
       login_hint: r.acctEmail ?? ''
     });
     const authURL = `${GoogleAuth.OAUTH.url_code}?${authParams.toString()}`;
-    chrome.identity.launchWebAuthFlow({ url: authURL, interactive: true }, (responseUrl) => {
+    chrome.identity.launchWebAuthFlow({ url: authURL, interactive: true }, async (responseUrl) => {
       if (chrome.runtime.lastError) {
         reject(chrome.runtime.lastError);
         return;
@@ -227,7 +234,20 @@ export class GoogleAuth {
         return;
       }
       const url = new URL(responseUrl!);
-      resolve(this.getParameterByName(url.search, 'code') ?? '');
+      const scopes = this.getParameterByName(url.search, 'scope');
+      const code = this.getParameterByName(url.search, 'code') ?? '';
+      if (!scopes?.includes(this.OAUTH.scopes.compose) || !scopes?.includes(this.OAUTH.scopes.modify) ||
+        // Below condition code should be removed once we move `allowed scope` read feature from AcctStore to Google OAuth
+        // https://github.com/FlowCrypt/flowcrypt-browser/pull/4657#issuecomment-1233147850
+        !scopes?.includes(this.OAUTH.scopes.readContacts) || !scopes?.includes(this.OAUTH.scopes.readOtherContacts)) {
+        if (code !== '') {
+          // Try to get auth token to let login authorization be granted
+          await GoogleAuth.googleAuthGetTokens(code);
+        }
+        reject(new InsufficientPermissionError());
+        return;
+      }
+      resolve(code);
     });
   });
 
