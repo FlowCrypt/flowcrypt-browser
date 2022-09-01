@@ -27,6 +27,21 @@ import { ParsedKeyInfo } from '../../../../js/common/core/crypto/key-store-util.
 import { MultipleMessages } from './general-mail-formatter.js';
 import { Api, RecipientType } from '../../../../js/common/api/shared/api.js';
 
+/**
+ * this type must be kept in sync with FES UI code, changes must be backwards compatible
+ */
+type ReplyInfoRaw = {
+  // client apps send a simple string - a message can only have one sender
+  // FES UI, when a single link is sent to many recipients and one of them replies,
+  //    sets and array of possible senders here, because it doesn't know who replied
+  sender: string | string[],
+  // all clients today send an array of recipients
+  recipient: string[],
+  subject: string,
+  // reply token which is needed to send a reply through FES
+  token: string
+};
+
 export class EncryptedMsgMailFormatter extends BaseMailFormatter {
 
   public sendableMsgs = async (newMsg: NewMsgData, pubkeys: PubkeyResult[], signingKey?: ParsedKeyInfo): Promise<MultipleMessages> => {
@@ -214,18 +229,19 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
     const recipients = getUniqueRecipientEmails(newMsgData.recipients);
     try {
       const response = await this.view.acctServer.messageToken(authInfo);
-      const infoDiv = Ui.e('div', {
+      const replyInfoRaw: ReplyInfoRaw = {
+        sender: newMsgData.from.email,
+        recipient: Value.arr.withoutVal(Value.arr.withoutVal(recipients, newMsgData.from.email), this.acctEmail),
+        subject: newMsgData.subject,
+        token: response.replyToken,
+      };
+      const replyInfoDiv = Ui.e('div', {
         'style': 'display: none;',
         'class': 'cryptup_reply',
-        'cryptup-data': Str.htmlAttrEncode({
-          sender: newMsgData.from,
-          recipient: Value.arr.withoutVal(Value.arr.withoutVal(recipients, newMsgData.from.email), this.acctEmail),
-          subject: newMsgData.subject,
-          token: response.replyToken,
-        })
+        'cryptup-data': Str.htmlAttrEncode(replyInfoRaw)
       });
       return {
-        bodyWithReplyToken: { 'text/plain': newMsgData.plaintext + '\n\n' + infoDiv, 'text/html': newMsgData.plainhtml + '<br /><br />' + infoDiv },
+        bodyWithReplyToken: { 'text/plain': newMsgData.plaintext + '\n\n' + replyInfoDiv, 'text/html': newMsgData.plainhtml + '<br /><br />' + replyInfoDiv },
         replyToken: response.replyToken
       };
     } catch (msgTokenErr) {
