@@ -11,6 +11,7 @@ import { ContactStore } from './platform/store/contact-store.js';
 import { KeyStore } from './platform/store/key-store.js';
 import { PassphraseStore } from './platform/store/passphrase-store.js';
 import { Bm } from './browser/browser-msg.js';
+import { PgpPwd } from './core/crypto/pgp/pgp-password.js';
 export const isFesUsed = async (acctEmail: string) => {
   const { fesUrl } = await AcctStore.get(acctEmail, ['fesUrl']);
   return Boolean(fesUrl);
@@ -94,18 +95,24 @@ const filterKeysToSave = async (candidateKeys: Key[], existingKeys: KeyInfoWithI
 };
 
 export const processAndStoreKeysFromEkmLocally = async (
-  { acctEmail, decryptedPrivateKeys, ppOptions }: { acctEmail: string, decryptedPrivateKeys: string[], ppOptions?: PassphraseOptions }
+  { acctEmail, decryptedPrivateKeys, ppOptions: originalOptions }: { acctEmail: string, decryptedPrivateKeys: string[], ppOptions?: PassphraseOptions }
 ): Promise<Bm.Res.ProcessAndStoreKeysFromEkmLocally> => {
   const { unencryptedPrvs } = await parseAndCheckPrivateKeys(decryptedPrivateKeys);
   const existingKeys = await KeyStore.get(acctEmail);
   let { keysToRetain, unencryptedKeysToSave } = await filterKeysToSave(unencryptedPrvs, existingKeys);
   if (!unencryptedKeysToSave.length && keysToRetain.length === existingKeys.length) {
     // nothing to update
-    return { needPassphrase: false, needSetup: !existingKeys.length };
+    return { needPassphrase: false, noKeysSetup: !existingKeys.length };
+  }
+  let ppOptions: PassphraseOptions | undefined; // the options to pass to saveKeysAndPassPhrase
+  if (!originalOptions?.passphrase && (await ClientConfiguration.newInstance(acctEmail)).mustAutogenPassPhraseQuietly()) {
+    ppOptions = { passphrase: PgpPwd.random(), passphrase_save: true };
+  } else {
+    ppOptions = originalOptions;
   }
   let passphrase = ppOptions?.passphrase;
   if (passphrase === undefined && !existingKeys.length) {
-    return { needPassphrase: true, needSetup: true };
+    return { needPassphrase: true, noKeysSetup: true };
   }
   let encryptedKeys: Key[] = [];
   if (unencryptedKeysToSave.length) {
@@ -126,7 +133,7 @@ export const processAndStoreKeysFromEkmLocally = async (
     // also updates `name`, todo: refactor in #4545
     const newKeyset = keysToRetain.concat(encryptedKeys);
     await saveKeysAndPassPhrase(acctEmail, newKeyset, ppOptions, true);
-    return { updateCount: encryptedKeys.length + (existingKeys.length - keysToRetain.length), needSetup: !newKeyset.length };
+    return { updateCount: encryptedKeys.length + (existingKeys.length - keysToRetain.length), noKeysSetup: !newKeyset.length };
   } else {
     // todo: should we delete?
     return { needPassphrase: unencryptedKeysToSave.length > 0 };
