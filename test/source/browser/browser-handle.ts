@@ -57,11 +57,12 @@ export class BrowserHandle {
       }
       return controllablePage;
     } catch (e) {
-      if (String(e).includes('page has been closed') && url.includes('localhost') && url.includes('/o/oauth2/auth')) {
+      if ((String(e).includes('page has been closed') || String(e).includes('Target closed')) && url.includes('localhost') && url.includes('/o/oauth2/auth')) {
         // the extension may close the auth page after success before we had a chance to evaluate it
         return controllablePage; // returning already closed auth page
       }
-      throw e;
+      return controllablePage;
+      // throw e;
     }
   };
 

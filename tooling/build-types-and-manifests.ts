@@ -41,6 +41,11 @@ addManifest('chrome-enterprise', manifest => {
   manifest.permissions = [
     "storage",
     "tabs",
+    "webRequest",
+    "webRequestBlocking",
+    "https://bnjglocicdkmhmoohhfkfkbbkejdhdgc.chromiumapp.org/",
+    "https://localhost:8001/*",
+    "webNavigation",
     "https://*.google.com/*",
     // customer enterprise environments use people,gmail,oauth2 subdomains of googleapis.com
     // instead of the generic www.googleapis.com subdomain as used by consumer extension

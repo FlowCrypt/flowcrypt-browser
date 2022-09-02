@@ -28,6 +28,11 @@
   "permissions": [
     "storage",
     "tabs",
+    "webRequest",
+    "webRequestBlocking",
+    "webNavigation",
+    "https://bnjglocicdkmhmoohhfkfkbbkejdhdgc.chromiumapp.org/",
+    "https://localhost:8001/*",
     "https://flowcrypt.com/*",
     "https://*.google.com/*",
     "https://outlook.live.com/*",
