@@ -95,7 +95,7 @@ const filterKeysToSave = async (candidateKeys: Key[], existingKeys: KeyInfoWithI
 };
 
 export const processAndStoreKeysFromEkmLocally = async (
-  { acctEmail, decryptedPrivateKeys, ppOptions: originalOptions }: { acctEmail: string, decryptedPrivateKeys: string[], ppOptions?: PassphraseOptions }
+  { acctEmail, decryptedPrivateKeys, ppOptions: originalOptions }: Bm.ProcessAndStoreKeysFromEkmLocally & { ppOptions?: PassphraseOptions }
 ): Promise<Bm.Res.ProcessAndStoreKeysFromEkmLocally> => {
   const { unencryptedPrvs } = await parseAndCheckPrivateKeys(decryptedPrivateKeys);
   const existingKeys = await KeyStore.get(acctEmail);
