@@ -10,7 +10,7 @@ import { FLAVOR, GOOGLE_OAUTH_SCREEN_HOST, OAUTH_GOOGLE_API_HOST } from '../../.
 import { ApiErr } from '../../shared/api-error.js';
 import { Api } from './../../shared/api.js';
 
-import { GoogleAuthWindowResult$result } from '../../../browser/browser-msg.js';
+import { BrowserMsg, GoogleAuthWindowResult$result } from '../../../browser/browser-msg.js';
 import { Buf } from '../../../core/buf.js';
 import { InMemoryStoreKeys } from '../../../core/const.js';
 import { Catch } from '../../../platform/catch.js';
@@ -212,49 +212,40 @@ export class GoogleAuth {
     return match && decodeURIComponent(match[1].replace(/\+/g, ' '));
   };
 
-  private static oauthLogin: (req: AuthReq) => Promise<string> = (r: AuthReq) => new Promise((resolve, reject) => {
-    const redirectURL = chrome.identity.getRedirectURL();
-    const authParams = new URLSearchParams({
-      client_id: GoogleAuth.OAUTH.client_id,
-      response_type: 'code',
-      redirect_uri: redirectURL,
-      access_type: 'offline',
-      state: GoogleAuth.apiGoogleAuthStatePack(r),
-      scope: (r.scopes ?? []).join(' '),
-      login_hint: r.acctEmail ?? ''
-    });
-    const authURL = `${GoogleAuth.OAUTH.url_code}?${authParams.toString()}`;
-    chrome.identity.launchWebAuthFlow({ url: authURL, interactive: true }, async (responseUrl) => {
-      if (chrome.runtime.lastError) {
-        reject(chrome.runtime.lastError);
-        return;
-      }
-      if (!responseUrl) {
-        resolve('');
-        return;
-      }
-      const url = new URL(responseUrl!);
-      const scopes = this.getParameterByName(url.search, 'scope');
-      const code = this.getParameterByName(url.search, 'code') ?? '';
-      if (!scopes?.includes(this.OAUTH.scopes.compose) || !scopes?.includes(this.OAUTH.scopes.modify) ||
-        // Below condition code should be removed once we move `allowed scope` read feature from AcctStore to Google OAuth
-        // https://github.com/FlowCrypt/flowcrypt-browser/pull/4657#issuecomment-1233147850
-        !scopes?.includes(this.OAUTH.scopes.readContacts) || !scopes?.includes(this.OAUTH.scopes.readOtherContacts)) {
-        if (code !== '') {
-          // Try to get auth token to let login authorization be granted
-          await GoogleAuth.googleAuthGetTokens(code);
-        }
-        reject(new InsufficientPermissionError());
-        return;
-      }
-      resolve(code);
-    });
-  });
 
   private static getOAuthResult = async ({ acctEmail, scopes, save }: { acctEmail?: string, scopes: string[], save: boolean }): Promise<AuthRes> => {
     try {
       const authRequest: AuthReq = { acctEmail, scopes, csrfToken: `csrf-${Api.randomFortyHexChars()}` };
-      const code = await this.oauthLogin(authRequest);
+      const { responseUrl, errorMsg } = await BrowserMsg.send.bg.await.oauthLogin(authRequest);
+
+      console.log(`--------_${responseUrl}--------`);
+      console.log(`--------_${errorMsg}--------`);
+      if (errorMsg) {
+        return { acctEmail, result: 'Denied', error: errorMsg, id_token: undefined };
+      }
+      if (!responseUrl) {
+        return { acctEmail, result: 'Denied', error: 'Invalid response url', id_token: undefined };
+      }
+      const url = new URL(responseUrl!);
+      const allowedScopes = this.getParameterByName(url.search, 'scope');
+      console.log('------------------------');
+      console.log(allowedScopes);
+      console.log(allowedScopes?.includes(this.OAUTH.scopes.compose));
+      console.log(allowedScopes?.includes(this.OAUTH.scopes.modify));
+      console.log(allowedScopes?.includes(this.OAUTH.scopes.readContacts));
+      console.log(allowedScopes?.includes(this.OAUTH.scopes.readOtherContacts));
+      const code = this.getParameterByName(url.search, 'code') ?? '';
+      console.log('--------------------', code);
+      if (!allowedScopes?.includes(this.OAUTH.scopes.compose) || !allowedScopes?.includes(this.OAUTH.scopes.modify) ||
+        // Below condition code should be removed once we move `allowed scope` read feature from AcctStore to Google OAuth
+        // https://github.com/FlowCrypt/flowcrypt-browser/pull/4657#issuecomment-1233147850
+        !allowedScopes?.includes(this.OAUTH.scopes.readContacts) || !allowedScopes?.includes(this.OAUTH.scopes.readOtherContacts)) {
+        if (code !== '') {
+          // Try to get auth token to let login authorization be granted
+          await GoogleAuth.googleAuthGetTokens(code);
+        }
+        return { acctEmail, result: 'Denied', error: new InsufficientPermissionError().message, id_token: undefined };
+      }
       if (!code) {
         return { acctEmail, result: 'Denied', error: "Google auth result was 'Success' but no auth code", id_token: undefined };
       }
@@ -286,7 +277,7 @@ export class GoogleAuth {
     await InMemoryStore.set(acctEmail, InMemoryStoreKeys.GOOGLE_TOKEN_ACCESS, tokensObj.access_token, googleTokenExpires);
   };
 
-  private static apiGoogleAuthStatePack = (authReq: AuthReq) => {
+  public static apiGoogleAuthStatePack = (authReq: AuthReq) => {
     return GoogleAuth.OAUTH.state_header + JSON.stringify(authReq);
   };
 

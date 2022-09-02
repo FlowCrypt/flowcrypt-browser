@@ -8,6 +8,7 @@ import { Bm } from '../common/browser/browser-msg.js';
 import { Gmail } from '../common/api/email-provider/gmail/gmail.js';
 import { GlobalStore } from '../common/platform/store/global-store.js';
 import { ContactStore } from '../common/platform/store/contact-store.js';
+import { AuthReq, GoogleAuth } from '../common/api/email-provider/gmail/google-auth.js';
 
 export class BgHandlers {
 
@@ -57,6 +58,26 @@ export class BgHandlers {
       } else {
         resolve({ provider: undefined, acctEmail: undefined, sameWorld: undefined });
       }
+    });
+  });
+
+  public static oauthLogin: Bm.AsyncRespondingHandler = (authReq: AuthReq) => new Promise((resolve) => {
+    const redirectURL = chrome.identity.getRedirectURL();
+    const authParams = new URLSearchParams({
+      client_id: GoogleAuth.OAUTH.client_id,
+      response_type: 'code',
+      redirect_uri: redirectURL,
+      access_type: 'offline',
+      state: GoogleAuth.apiGoogleAuthStatePack(authReq),
+      scope: (authReq.scopes ?? []).join(' '),
+      login_hint: authReq.acctEmail ?? ''
+    });
+    const authURL = `${GoogleAuth.OAUTH.url_code}?${authParams.toString()}`;
+    chrome.identity.launchWebAuthFlow({ url: authURL, interactive: true }, async (responseUrl) => {
+      resolve({
+        responseUrl,
+        errorMsg: chrome.runtime.lastError?.message
+      });
     });
   });
 

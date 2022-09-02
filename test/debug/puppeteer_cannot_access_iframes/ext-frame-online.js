@@ -15,15 +15,15 @@ let browser;
     slowMo: 50,
   });
 
-  let page = await browser.newPage();
+  const page = await browser.newPage();
   await page.goto('https://google.com/404');
 
   await page.waitForSelector('iframe', { timeout: 5000, visible: true });
-  let iframeHandle = await page.$('iframe');
-  let iframeSrc = await (await iframeHandle.getProperty('src')).jsonValue();
+  const iframeHandle = await page.$('iframe');
+  const iframeSrc = await (await iframeHandle.getProperty('src')).jsonValue();
 
-  let frames = await page.frames();
-  let urls = frames.map(frame => frame.url());
+  const frames = await page.frames();
+  const urls = frames.map(frame => frame.url());
 
   console.info(`parsed iframe src: ${iframeSrc}`);
   console.info(`page.frames() url: ${JSON.stringify(urls)}`);

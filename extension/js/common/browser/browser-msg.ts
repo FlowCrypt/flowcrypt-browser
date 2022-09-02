@@ -5,7 +5,7 @@
 import { DecryptResult, DiagnoseMsgPubkeysResult, PgpMsgMethod, VerifyRes, PgpMsgTypeResult } from '../core/crypto/pgp/msg-util.js';
 import { Dict, Str, UrlParams } from '../core/common.js';
 import { AjaxErr } from '../api/shared/api-error.js';
-import { AuthRes } from '../api/email-provider/gmail/google-auth.js';
+import { AuthReq, AuthRes } from '../api/email-provider/gmail/google-auth.js';
 import { Browser } from './browser.js';
 import { BrowserMsgCommonHandlers } from './browser-msg-common-handlers.js';
 import { Buf } from '../core/buf.js';
@@ -71,6 +71,7 @@ export namespace Bm {
 
   export namespace Res {
     export type GetActiveTabInfo = { provider: 'gmail' | undefined, acctEmail: string | undefined, sameWorld: boolean | undefined };
+    export type OAuthLogin = { responseUrl: string | undefined, errorMsg: string | undefined };
     export type InMemoryStoreGet = string | null;
     export type InMemoryStoreSet = void;
     export type StoreGlobalGet = GlobalStoreDict;
@@ -91,7 +92,7 @@ export namespace Bm {
     export type Db = any; // not included in Any below
     export type Ajax = any; // not included in Any below
 
-    export type Any = GetActiveTabInfo | _tab_ | ReconnectAcctAuthPopup
+    export type Any = GetActiveTabInfo | OAuthLogin | _tab_ | ReconnectAcctAuthPopup
       | PgpMsgDecrypt | PgpMsgDiagnoseMsgPubkeys | PgpMsgVerify | PgpHashChallengeAnswer | PgpMsgType
       | InMemoryStoreGet | InMemoryStoreSet | StoreAcctGet | StoreAcctSet | StoreGlobalGet | StoreGlobalSet
       | AjaxGmailAttachmentGetChunk | SaveFetchedPubkeys | ProcessAndStoreKeysFromEkmLocally
@@ -138,6 +139,7 @@ export class BrowserMsg {
         reconnectAcctAuthPopup: (bm: Bm.ReconnectAcctAuthPopup) => BrowserMsg.sendAwait(undefined, 'reconnect_acct_auth_popup', bm, true) as Promise<Bm.Res.ReconnectAcctAuthPopup>,
         getActiveTabInfo: () => BrowserMsg.sendAwait(undefined, 'get_active_tab_info', undefined, true) as Promise<Bm.Res.GetActiveTabInfo>,
         inMemoryStoreGet: (bm: Bm.InMemoryStoreGet) => BrowserMsg.sendAwait(undefined, 'inMemoryStoreGet', bm, true) as Promise<Bm.Res.InMemoryStoreGet>,
+        oauthLogin: (bm: AuthReq) => BrowserMsg.sendAwait(undefined, 'oauth_login', bm, true) as Promise<Bm.Res.OAuthLogin>,
         inMemoryStoreSet: (bm: Bm.InMemoryStoreSet) => BrowserMsg.sendAwait(undefined, 'inMemoryStoreSet', bm, true) as Promise<Bm.Res.InMemoryStoreSet>,
         storeGlobalGet: (bm: Bm.StoreGlobalGet) => BrowserMsg.sendAwait(undefined, 'storeGlobalGet', bm, true) as Promise<Bm.Res.StoreGlobalGet>,
         storeGlobalSet: (bm: Bm.StoreGlobalSet) => BrowserMsg.sendAwait(undefined, 'storeGlobalSet', bm, true) as Promise<Bm.Res.StoreGlobalSet>,
