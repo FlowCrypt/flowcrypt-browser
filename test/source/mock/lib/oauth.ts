@@ -13,6 +13,7 @@ export class OauthMock {
   public clientId = '717284730244-5oejn54f10gnrektjdc4fv4rbic1bj1p.apps.googleusercontent.com';
   public expiresIn = 2 * 60 * 60; // 2hrs in seconds
 
+  private authCodesByAcct: { [acct: string]: string } = {};
   private refreshTokenByAuthCode: { [authCode: string]: string } = {};
   private accessTokenByRefreshToken: { [refreshToken: string]: string } = {};
   private acctByAccessToken: { [acct: string]: string } = {};
@@ -23,7 +24,7 @@ export class OauthMock {
     return this.htmlPage(text, text);
   };
 
-  public successResult = (redirect_uri: string, state: string) => {
+  public successResult = (acct: string, redirect_uri: string, state: string) => {
     const scopes = [
       "openid",
       "email",
@@ -33,10 +34,10 @@ export class OauthMock {
       "https://www.googleapis.com/auth/contacts.readonly",
       "https://www.googleapis.com/auth/contacts.other.readonly"
     ].join(' ');
-    const acct = `${Str.sloppyRandom(5)}@example.com`;
     const authCode = `mock-auth-code-${acct.replace(/[^a-z0-9]+/g, '')}`;
     const refreshToken = `mock-refresh-token-${acct.replace(/[^a-z0-9]+/g, '')}`;
     const accessToken = `mock-access-token-${acct.replace(/[^a-z0-9]+/g, '')}`;
+    this.authCodesByAcct[acct] = authCode;
     this.refreshTokenByAuthCode[authCode] = refreshToken;
     this.accessTokenByRefreshToken[refreshToken] = accessToken;
     this.acctByAccessToken[accessToken] = acct;
