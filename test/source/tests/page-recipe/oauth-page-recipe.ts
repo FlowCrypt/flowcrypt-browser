@@ -27,17 +27,17 @@ export class OauthPageRecipe extends PageRecipe {
   };
 
   public static google = async (t: AvaContext, oauthPage: ControllablePage, acctEmail: string, action: "close" | "deny" | "approve" | 'login'): Promise<void> => {
-    try {
-      const isMock = oauthPage.target.url().includes('localhost') || oauthPage.target.url().includes('google.mock.flowcryptlocal.test');
-      if (isMock) {
+    const isMock = oauthPage.target.url().includes('localhost') || oauthPage.target.url().includes('google.mock.flowcryptlocal.test');
+    if (isMock) {
+      try {
         await OauthPageRecipe.mock(t, oauthPage, acctEmail, action);
-        return;
+      } catch (e) {
+        if (String(e).includes('page has been closed')) {
+          // the extension may close the auth page after success before we had a chance to evaluate it
+          return; // in this case the login was already successful
+        }
       }
-    } catch (e) {
-      if (String(e).includes('page has been closed')) {
-        // the extension may close the auth page after success before we had a chance to evaluate it
-        return; // in this case the login was already successful
-      }
+      return;
     }
     const auth = Config.secrets().auth.google.find(a => a.email === acctEmail);
     const acctPassword = auth?.password;
