@@ -12,6 +12,7 @@ export class OauthMock {
 
   public clientId = '717284730244-5oejn54f10gnrektjdc4fv4rbic1bj1p.apps.googleusercontent.com';
   public expiresIn = 2 * 60 * 60; // 2hrs in seconds
+  public redirectUri = 'https://bnjglocicdkmhmoohhfkfkbbkejdhdgc.chromiumapp.org/';
 
   private authCodesByAcct: { [acct: string]: string } = {};
   private refreshTokenByAuthCode: { [authCode: string]: string } = {};
