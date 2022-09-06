@@ -150,6 +150,7 @@ export class ComposePageRecipe extends PageRecipe {
   };
 
   public static expectContactsResultEqual = async (composePage: ControllablePage | ControllableFrame, emails: string[]) => {
+    await Util.sleep(5);
     const contacts = await composePage.waitAny('@container-contacts');
     const contactsList = await contacts.$$('li');
     for (const index in contactsList) { // tslint:disable-line:forin
