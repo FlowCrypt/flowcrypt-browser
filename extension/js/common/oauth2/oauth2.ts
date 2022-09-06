@@ -1,10 +1,10 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
-/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-explicit-any  */
 import { windowsCreate } from '../browser/chrome.js';
 
 export class OAuth2 {
 
-  public static launchWebAuthFlow = async (url: string, callback: (url: string | null) => void) => {
+  public static launchWebAuthFlow = async (url: string, callback: (url: string | undefined) => void) => {
     const screenWidth = (window.screen.width || window.innerWidth);
     const screenHeight = (window.screen.height || window.innerHeight);
     // non-standard but supported by most of the browsers
@@ -19,14 +19,14 @@ export class OAuth2 {
     const oauthWin = await windowsCreate({ url, left: leftOffset, top: topOffset, height: adaptiveHeight, width: adaptiveWidth, type: 'popup' });
     if (!oauthWin || !oauthWin.tabs || !oauthWin.tabs.length || !oauthWin.id) {
       chrome.runtime.lastError = new Error('No oauth window returned after initiating it');
-      callback(null);
+      callback(undefined);
     }
     const tabId = oauthWin?.tabs && oauthWin.tabs[0].id;
     chrome.tabs.onRemoved.addListener((removedTabId) => {
       // Only reject error when auth result not successful
       if (removedTabId === tabId && !(window as any)['oauth-login-finished']) {
         chrome.runtime.lastError = new Error('Canceled by user');
-        callback(null);
+        callback(undefined);
       }
     });
     (window as any)['oauth-login-finished'] = false;
@@ -34,11 +34,11 @@ export class OAuth2 {
   };
 
   public static finishAuth = (url: string) => {
-    var views = chrome.extension.getViews();
+    const views = chrome.extension.getViews();
     // Loop through existing extension views and excute any stored callbacks.
     for (const view of views) {
       if ((view as any)['oauth-callback']) {
-        (view as any)['oauth-callback'](url);
+        (view as any)['oauth-callback'](url); // tslint:disable-line:no-unsafe-any
         (view as any)['oauth-login-finished'] = true;
       }
     }

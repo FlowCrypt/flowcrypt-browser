@@ -163,14 +163,12 @@ export class GoogleAuth {
 
   public static oauthLogin = async (url: string): Promise<string> => {
     return await new Promise((resolve, reject) => {
-      OAuth2.launchWebAuthFlow(url, (url: string) => {
-        console.log(chrome.runtime.lastError);
+      void OAuth2.launchWebAuthFlow(url, (redirectUrl: string) => {
         if (chrome.runtime.lastError) {
           reject(chrome.runtime.lastError.message);
           return;
         }
-        console.log(`oauth get url ${url}`);
-        resolve(url);
+        resolve(redirectUrl);
       });
     });
   };
@@ -210,7 +208,7 @@ export class GoogleAuth {
       const code = this.getParameterByName(url.search, 'code') ?? '';
       console.log(code);
       if (!allowedScopes?.includes(this.OAUTH.scopes.compose) || !allowedScopes?.includes(this.OAUTH.scopes.modify)) {
-        if (code) {
+        if (code !== '') {
           // Try to get auth token to let login authorization be granted
           await GoogleAuth.googleAuthGetTokens(code);
         }
