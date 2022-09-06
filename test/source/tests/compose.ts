@@ -887,7 +887,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       await composePage.close();
     }));
 
-    ava.default.only('compose - send btn should be disabled while encrypting/sending', testWithBrowser('ci.tests.gmail', async (t, browser) => {
+    ava.default('compose - send btn should be disabled while encrypting/sending', testWithBrowser('ci.tests.gmail', async (t, browser) => {
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
       await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, undefined);
       await composePage.waitAndClick('@action-send', { delay: 1 });
