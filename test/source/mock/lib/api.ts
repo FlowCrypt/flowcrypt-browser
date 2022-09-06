@@ -225,11 +225,17 @@ export class Api<REQ, RES> {
   };
 
   private throttledResponse = async (response: http.ServerResponse, data: Buffer) => {
-    const chunkSize = 100 * 1024;
-    for (let i = 0; i < data.length; i += chunkSize) {
-      const chunk = data.slice(i, i + chunkSize);
-      response.write(chunk);
-      if (i > 0) {
+    // If google oauth2 login, then redirect to url
+    if (/^https:\/\/www\.google.com\/robots\.txt/.test(data.toString())) {
+      response.writeHead(302, { 'Location': data.toString() });
+    } else {
+      const chunkSize = 100 * 1024;
+      for (let i = 0; i < data.length; i += chunkSize) {
+        const chunk = data.slice(i, i + chunkSize);
+        response.write(chunk);
+        if (i > 0) {
+          await Util.sleep(this.throttleChunkMsDownload / 1000);
+        }
         await Util.sleep(this.throttleChunkMsDownload / 1000);
       }
     }
