@@ -29,7 +29,7 @@ export const mockGoogleEndpoints: HandlersDefinition = {
       } else if (!proceed) {
         return oauth.renderText('redirect with proceed=true to continue');
       } else {
-        return oauth.successResult(login_hint, redirect_uri, state);
+        return oauth.successResult(login_hint, redirect_uri, state, scope);
       }
     }
     throw new HttpClientErr(`Method not implemented for ${req.url}: ${req.method}`);

@@ -25,16 +25,7 @@ export class OauthMock {
     return this.htmlPage(text, text);
   };
 
-  public successResult = (acct: string, redirect_uri: string, state: string) => {
-    const scopes = [
-      "openid",
-      "email",
-      "https://www.googleapis.com/auth/userinfo.profile",
-      "https://www.googleapis.com/auth/gmail.compose",
-      "https://www.googleapis.com/auth/gmail.modify",
-      "https://www.googleapis.com/auth/contacts.readonly",
-      "https://www.googleapis.com/auth/contacts.other.readonly"
-    ].join(' ');
+  public successResult = (acct: string, redirect_uri: string, state: string, scope: string) => {
     const authCode = `mock-auth-code-${acct.replace(/[^a-z0-9]+/g, '')}`;
     const refreshToken = `mock-refresh-token-${acct.replace(/[^a-z0-9]+/g, '')}`;
     const accessToken = `mock-access-token-${acct.replace(/[^a-z0-9]+/g, '')}`;
@@ -44,7 +35,7 @@ export class OauthMock {
     this.acctByAccessToken[accessToken] = acct;
     const url = new URL(redirect_uri);
     url.searchParams.set('code', authCode);
-    url.searchParams.set('scope', scopes);
+    url.searchParams.set('scope', scope);
     url.searchParams.set('state', state);
     return url.href;
   };
