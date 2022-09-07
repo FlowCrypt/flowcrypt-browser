@@ -24,13 +24,13 @@ export class OAuth2 {
     const tabId = oauthWin?.tabs && oauthWin.tabs[0].id;
     chrome.tabs.onRemoved.addListener((removedTabId) => {
       // Only reject error when auth result not successful
-      if (removedTabId === tabId && !(window as any)['oauth-login-finished']) {
+      if (removedTabId === tabId && !(window.top as any)['oauth-login-finished']) {
         chrome.runtime.lastError = new Error('Canceled by user');
         callback(undefined);
       }
     });
-    (window as any)['oauth-login-finished'] = false;
-    (window as any)['oauth-callback'] = callback;
+    (window.top as any)['oauth-login-finished'] = false;
+    (window.top as any)['oauth-callback'] = callback;
   };
 
   public static finishAuth = (url: string) => {
@@ -42,6 +42,7 @@ export class OAuth2 {
         (view as any)['oauth-login-finished'] = true;
       }
     }
+    chrome.runtime.lastError = undefined;
     window.open('', '_self', '');
     window.close();
   };

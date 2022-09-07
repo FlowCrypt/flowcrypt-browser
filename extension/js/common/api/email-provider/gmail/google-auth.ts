@@ -204,9 +204,7 @@ export class GoogleAuth {
       }
       const url = new URL(responseUrl!);
       const allowedScopes = this.getParameterByName(url.search, 'scope');
-      console.log(allowedScopes);
       const code = this.getParameterByName(url.search, 'code') ?? '';
-      console.log(code);
       if (!allowedScopes?.includes(this.OAUTH.scopes.compose) || !allowedScopes?.includes(this.OAUTH.scopes.modify)) {
         if (code !== '') {
           // Try to get auth token to let login authorization be granted
