@@ -126,6 +126,7 @@ const makeMockBuild = (sourceBuildType: string) => {
   edit(`${buildDir(mockBuildType)}/js/content_scripts/webmail_bundle.js`, editor);
   edit(`${buildDir(mockBuildType)}/manifest.json`, (code) =>
     code.replace(/https:\/\/mail\.google\.com/g, 'https://gmail.localhost:8001')
+      .replace(/https:\/\/www\.google\.com/g, 'https://google.localhost:8001')
   );
 };
 

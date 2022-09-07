@@ -120,7 +120,7 @@ export class GoogleAuth {
     if (save || !scopes) { // if tokens will be saved (meaning also scopes should be pulled from storage) or if no scopes supplied
       scopes = await GoogleAuth.apiGoogleAuthPopupPrepareAuthReqScopes(acctEmail, scopes || GoogleAuth.defaultScopes());
     }
-    const authRes = await GoogleAuth.getOAuthResult({ acctEmail, scopes, save });
+    const authRes = await GoogleAuth.renderOAuthWindowAndGetResult({ acctEmail, scopes, save });
     if (authRes.result === 'Success') {
       if (!authRes.id_token) {
         return { result: 'Error', error: 'Grant was successful but missing id_token', acctEmail: authRes.acctEmail, id_token: undefined };
@@ -194,7 +194,7 @@ export class GoogleAuth {
     return match && decodeURIComponent(match[1].replace(/\+/g, ' '));
   };
 
-  private static getOAuthResult = async ({ acctEmail, scopes, save }: { acctEmail?: string, scopes: string[], save: boolean }): Promise<AuthRes> => {
+  private static renderOAuthWindowAndGetResult = async ({ acctEmail, scopes, save }: { acctEmail?: string, scopes: string[], save: boolean }): Promise<AuthRes> => {
     const authRequest: AuthReq = { acctEmail, scopes, csrfToken: `csrf-${Api.randomFortyHexChars()}` };
     const authUrl = GoogleAuth.apiGoogleAuthCodeUrl(authRequest);
     try {

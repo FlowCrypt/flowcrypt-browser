@@ -12,7 +12,7 @@ export class OauthMock {
 
   public clientId = '717284730244-5oejn54f10gnrektjdc4fv4rbic1bj1p.apps.googleusercontent.com';
   public expiresIn = 2 * 60 * 60; // 2hrs in seconds
-  public redirectUri = 'https://www.google.com/robots.txt';
+  public redirectUri = 'https://google.localhost:8001/robots.txt';
 
   private authCodesByAcct: { [acct: string]: string } = {};
   private refreshTokenByAuthCode: { [authCode: string]: string } = {};
@@ -25,7 +25,7 @@ export class OauthMock {
     return this.htmlPage(text, text);
   };
 
-  public successResult = (acct: string, redirect_uri: string, state: string, scope: string) => {
+  public successResult = (acct: string, state: string, scope: string) => {
     const authCode = `mock-auth-code-${acct.replace(/[^a-z0-9]+/g, '')}`;
     const refreshToken = `mock-refresh-token-${acct.replace(/[^a-z0-9]+/g, '')}`;
     const accessToken = `mock-access-token-${acct.replace(/[^a-z0-9]+/g, '')}`;
@@ -33,7 +33,7 @@ export class OauthMock {
     this.refreshTokenByAuthCode[authCode] = refreshToken;
     this.accessTokenByRefreshToken[refreshToken] = accessToken;
     this.acctByAccessToken[accessToken] = acct;
-    const url = new URL(redirect_uri);
+    const url = new URL(this.redirectUri);
     url.searchParams.set('code', authCode);
     url.searchParams.set('scope', scope);
     url.searchParams.set('state', state);
