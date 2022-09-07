@@ -214,7 +214,7 @@ export class GoogleAuth {
       if (!code) {
         return { acctEmail, result: 'Denied', error: "Google auth result was 'Success' but no auth code", id_token: undefined };
       }
-      const { id_token } = save ? await GoogleAuth.retrieveAndSaveAuthToken(code, scopes) : await GoogleAuth.googleAuthGetTokens(code);
+      const { id_token } = save ? await GoogleAuth.retrieveAndSaveAuthToken(code, allowedScopes?.split(' ') ?? []) : await GoogleAuth.googleAuthGetTokens(code);
       const { email } = GoogleAuth.parseIdToken(id_token);
       if (!email) {
         throw new Error('Missing email address in id_token');
