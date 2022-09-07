@@ -236,7 +236,6 @@ export class Api<REQ, RES> {
         if (i > 0) {
           await Util.sleep(this.throttleChunkMsDownload / 1000);
         }
-        await Util.sleep(this.throttleChunkMsDownload / 1000);
       }
     }
     response.end();
