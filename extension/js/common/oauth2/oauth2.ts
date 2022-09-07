@@ -1,11 +1,11 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 /* eslint-disable @typescript-eslint/no-explicit-any  */
-import { BrowserMsg } from '../browser/browser-msg.js';
+import { Bm, BrowserMsg } from '../browser/browser-msg.js';
 import { windowsCreate } from '../browser/chrome.js';
 
 export class OAuth2 {
 
-  public static launchWebAuthFlow = async (url: string) => {
+  public static webAuthFlow = async (url: string): Promise<Bm.AuthWindowResult> => {
     const screenWidth = (window.screen.width || window.innerWidth);
     const screenHeight = (window.screen.height || window.innerHeight);
     // non-standard but supported by most of the browsers
@@ -19,15 +19,19 @@ export class OAuth2 {
     const topOffset = Math.floor((screenHeight / 2) - (adaptiveHeight / 2) + (availTop || 0));
     const oauthWin = await windowsCreate({ url, left: leftOffset, top: topOffset, height: adaptiveHeight, width: adaptiveWidth, type: 'popup' });
     if (!oauthWin || !oauthWin.tabs || !oauthWin.tabs.length || !oauthWin.id) {
-      BrowserMsg.send.authWindowResult('broadcast', { error: 'No oauth window returned after initiating it' });
-      return;
+      return { error: 'No oauth window returned after initiating it' };
     }
     const tabId = oauthWin?.tabs && oauthWin.tabs[0].id;
-    chrome.tabs.onRemoved.addListener((removedTabId) => {
-      // Only reject error when auth result not successful
-      if (removedTabId === tabId) {
-        BrowserMsg.send.authWindowResult('broadcast', { error: 'Canceled by user' });
-      }
+    return await new Promise((resolve) => {
+      BrowserMsg.addListener('auth_window_result', async (result: Bm.AuthWindowResult) => {
+        resolve(result);
+      });
+      chrome.tabs.onRemoved.addListener((removedTabId) => {
+        // Only reject error when auth result not successful
+        if (removedTabId === tabId) {
+          resolve({ error: 'Canceled by user' });
+        }
+      });
     });
   };
 

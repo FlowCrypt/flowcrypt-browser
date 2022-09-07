@@ -10,7 +10,7 @@ import { FLAVOR, GOOGLE_OAUTH_SCREEN_HOST, OAUTH_GOOGLE_API_HOST } from '../../.
 import { ApiErr } from '../../shared/api-error.js';
 import { Api } from './../../shared/api.js';
 
-import { Bm, BrowserMsg, GoogleAuthWindowResult$result } from '../../../browser/browser-msg.js';
+import { Bm, GoogleAuthWindowResult$result } from '../../../browser/browser-msg.js';
 import { Buf } from '../../../core/buf.js';
 import { InMemoryStoreKeys } from '../../../core/const.js';
 import { OAuth2 } from '../../../oauth2/oauth2.js';
@@ -110,18 +110,6 @@ export class GoogleAuth {
     }
   };
 
-  public static until = async (conditionFunction: any) => {
-
-    const poll = (resolve: any) => {
-      if (conditionFunction()) resolve();
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      else setTimeout(_ => poll(resolve), 400);
-    };
-
-    return new Promise(poll);
-  };
-
-
   public static newAuthPopup = async ({ acctEmail, scopes, save }: { acctEmail?: string, scopes?: string[], save?: boolean }): Promise<AuthRes> => {
     if (acctEmail) {
       acctEmail = acctEmail.toLowerCase();
@@ -133,22 +121,10 @@ export class GoogleAuth {
       scopes = await GoogleAuth.apiGoogleAuthPopupPrepareAuthReqScopes(acctEmail, scopes || GoogleAuth.defaultScopes());
     }
     // below codes are all temporary codes and need cleanup if we want to proceed this way
-    localStorage.setItem('didGetAuthResult', 'false');
-    BrowserMsg.addListener('auth_window_result', async ({ url, error }: Bm.AuthWindowResult) => {
-      localStorage.responseUrl = url; // temporary solution to store response url to compare with previous callback method
-      localStorage.responseError = error;
-      localStorage.setItem('didGetAuthResult', 'true');
-    });
     const authRequest: AuthReq = { acctEmail, scopes, csrfToken: `csrf-${Api.randomFortyHexChars()}` };
     const authUrl = GoogleAuth.apiGoogleAuthCodeUrl(authRequest);
-    await OAuth2.launchWebAuthFlow(authUrl);
-    await GoogleAuth.until(() => Boolean(localStorage.getItem('didGetAuthResult')) === true);
-    localStorage.didGetAuthResult = false;
-    return GoogleAuth.getAuthResult({ acctEmail, save }) as unknown as AuthRes;
-  };
-
-  private static getAuthResult = async ({ acctEmail, save }: { acctEmail?: string, save: boolean }) => {
-    const authRes = await GoogleAuth.renderOAuthWindowAndGetResult({ acctEmail, save });
+    const authWindowResult = await OAuth2.webAuthFlow(authUrl);
+    const authRes = await GoogleAuth.renderOAuthWindowAndGetResult({ acctEmail, save, authWindowResult });
     if (authRes.result === 'Success') {
       if (!authRes.id_token) {
         return { result: 'Error', error: 'Grant was successful but missing id_token', acctEmail: authRes.acctEmail, id_token: undefined };
@@ -210,15 +186,16 @@ export class GoogleAuth {
     return match && decodeURIComponent(match[1].replace(/\+/g, ' '));
   };
 
-  private static renderOAuthWindowAndGetResult = async ({ acctEmail, save }: { acctEmail?: string, save: boolean }): Promise<AuthRes> => {
+  private static renderOAuthWindowAndGetResult = async ({ acctEmail, save, authWindowResult }:
+    { acctEmail?: string, save: boolean, authWindowResult: Bm.AuthWindowResult }): Promise<AuthRes> => {
     try {
-      if (!localStorage.responseUrl) {
+      if (!authWindowResult.url) {
         return { acctEmail, result: 'Denied', error: 'Invalid response url', id_token: undefined };
       }
-      if (localStorage.responseError) {
-        return { acctEmail, result: 'Denied', error: localStorage.responseError, id_token: undefined };
+      if (authWindowResult.error) {
+        return { acctEmail, result: 'Denied', error: authWindowResult.error, id_token: undefined };
       }
-      const url = new URL(localStorage.responseUrl!);
+      const url = new URL(authWindowResult.url!);
       const allowedScopes = this.getParameterByName(url.search, 'scope');
       const code = this.getParameterByName(url.search, 'code') ?? '';
       if (!allowedScopes?.includes(this.OAUTH.scopes.compose) || !allowedScopes?.includes(this.OAUTH.scopes.modify)) {
