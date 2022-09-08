@@ -6,7 +6,7 @@ import { FLAVOR } from "./core/const.js";
 
 /* eslint-disable max-len */
 
-const contactMinimalSubsentence = (isFesUsed: boolean) => isFesUsed || FLAVOR == 'enterprise' ? 'contact your Help Desk' : 'write us at human@flowcrypt.com';
+const contactMinimalSubsentence = (isFesUsed: boolean) => isFesUsed || FLAVOR === 'enterprise' ? 'contact your Help Desk' : 'write us at human@flowcrypt.com';
 const contactIfHappensAgain = (isFesUsed: boolean) => `If this happens again, please ${contactMinimalSubsentence(isFesUsed)}. `;
 const contactForSupportSubsentence = (isFesUsed: boolean) => isFesUsed ? 'please contact your Help Desk for support' : 'please write us at human@flowcrypt.com to fix it';
 
@@ -91,11 +91,11 @@ export const Lang = { // tslint:disable-line:variable-name
   general: {
     contactMinimalSubsentence,
     contactIfHappensAgain,
-    contactIfNeedAssistance: (isFesUsed: boolean) => isFesUsed || FLAVOR == 'enterprise' ? 'Contact your Help Desk if you need assistance.' : 'Email human@flowcrypt.com if you need assistance.',
+    contactIfNeedAssistance: (isFesUsed: boolean) => isFesUsed || FLAVOR === 'enterprise' ? 'Contact your Help Desk if you need assistance.' : 'Email human@flowcrypt.com if you need assistance.',
     somethingWentWrongTryAgain: (isFesUsed: boolean) => `Something went wrong, please try again. ${contactIfHappensAgain(isFesUsed)}`,
     contactForSupportSubsentence,
     contactForSupportSentence: (isFesUsed: boolean) => isFesUsed ? 'Please contact your Help Desk for support.' : 'Please write us at human@flowcrypt.com to fix it.',
-    writeMeToFixIt: (isFesUsed: boolean) => isFesUsed || FLAVOR == 'enterprise' ? 'Please contact your Help Desk for support.' : 'Please write us at human@flowcrypt.com to get this resolved.',
+    writeMeToFixIt: (isFesUsed: boolean) => isFesUsed || FLAVOR === 'enterprise' ? 'Please contact your Help Desk for support.' : 'Please write us at human@flowcrypt.com to get this resolved.',
     restartBrowserAndTryAgain: (isFesUsed: boolean) => `Unexpected error occured. Please restart your browser and try again. If this persists after a restart, ${contactForSupportSubsentence(isFesUsed)}.`,
     emailAliasChangedAskForReload: 'Your email aliases on Gmail have refreshed since the last time you used FlowCrypt.\nReload the compose window now?'
   },
