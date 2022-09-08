@@ -85,7 +85,6 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     BrowserMsg.addListener('reRenderRecipient', async ({ email }: Bm.ReRenderRecipient) => {
       await this.reRenderRecipientFor(email);
     });
-    console.log(this.view.parentTabId);
     BrowserMsg.listen(this.view.parentTabId);
   };
 
