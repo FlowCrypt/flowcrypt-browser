@@ -17,6 +17,7 @@ import { testConstants } from './tooling/consts';
 import { InboxPageRecipe } from './page-recipe/inbox-page-recipe';
 import { PageRecipe } from './page-recipe/abstract-page-recipe';
 import { TestUrls } from '../browser/test-urls';
+import { OauthPageRecipe } from './page-recipe/oauth-page-recipe';
 
 // tslint:disable:no-blank-lines-func
 // tslint:disable:no-unused-expression
@@ -428,6 +429,16 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.test.key.used.pgp@gmail.com');
       await SetupPageRecipe.manualEnter(settingsPage, 'flowcrypt.test.key.used.pgp', { submitPubkey: true, usedPgpBefore: true, simulateRetryOffline: true },
         { isSavePassphraseChecked: false, isSavePassphraseHidden: false });
+    }));
+
+    ava.default('setup - enterprise users should be redirected to their help desk when an error occured', testWithBrowser(undefined, async (t, browser) => {
+      if (testVariant === 'ENTERPRISE-MOCK') {
+        const acctEmail = 'flowcrypt.compatibility@gmail.com';
+        const settingsPage = await browser.newPage(t, TestUrls.extensionSettings());
+        const oauthPopup = await browser.newPageTriggeredBy(t, () => settingsPage.waitAndClick('@action-connect-to-gmail'));
+        await OauthPageRecipe.mock(t, oauthPopup, acctEmail, 'login_with_invalid_state');
+        settingsPage.waitForContent('@container-error-modal-text', 'If this happens again, please contact your Help Desk');
+      }
     }));
 
     ava.default('has.pub@client-configuration-test.flowcrypt.test - no backup, no keygen', testWithBrowser(undefined, async (t, browser) => {

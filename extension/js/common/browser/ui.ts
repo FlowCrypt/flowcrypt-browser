@@ -163,7 +163,7 @@ export class Ui {
     error: async (text: string, isHTML: boolean = false, footer?: string): Promise<void> => {
       text = isHTML ? Xss.htmlSanitize(text) : Xss.escape(text).replace(/\n/g, '<br>');
       await Ui.swal().fire({
-        html: `<span class="red">${text}</span>`,
+        html: `<span class="red" data-test="container-error-modal-text">${text}</span>`,
         footer: footer ? Xss.htmlSanitize(footer) : '',
         allowOutsideClick: false,
         customClass: {
