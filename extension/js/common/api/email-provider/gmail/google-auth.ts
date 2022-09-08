@@ -21,6 +21,7 @@ import { AccountServer } from '../../account-server.js';
 import { EnterpriseServer } from '../../account-servers/enterprise-server.js';
 import { GoogleAuthErr } from '../../shared/api-error.js';
 import { GmailRes } from './gmail-parser';
+import { Assert } from '../../../assert.js';
 
 type GoogleAuthTokensResponse = { access_token: string, expires_in: number, refresh_token?: string, id_token: string, token_type: 'Bearer' };
 type AuthResultSuccess = { result: 'Success', acctEmail: string, id_token: string, error?: undefined };
@@ -120,7 +121,6 @@ export class GoogleAuth {
     if (save || !scopes) { // if tokens will be saved (meaning also scopes should be pulled from storage) or if no scopes supplied
       scopes = await GoogleAuth.apiGoogleAuthPopupPrepareAuthReqScopes(acctEmail, scopes || GoogleAuth.defaultScopes());
     }
-    // below codes are all temporary codes and need cleanup if we want to proceed this way
     const authRequest: AuthReq = { acctEmail, scopes, csrfToken: `csrf-${Api.randomFortyHexChars()}` };
     const authUrl = GoogleAuth.apiGoogleAuthCodeUrl(authRequest);
     const authWindowResult = await OAuth2.webAuthFlow(authUrl);
@@ -181,11 +181,6 @@ export class GoogleAuth {
     return await GoogleAuth.newAuthPopup({ acctEmail, scopes: GoogleAuth.defaultScopes('openid'), save: false });
   };
 
-  private static getParameterByName = (search: string, name: string) => {
-    const match = RegExp('[?&]' + name + '=([^&]*)').exec(search);
-    return match && decodeURIComponent(match[1].replace(/\+/g, ' '));
-  };
-
   private static getAuthRes = async ({ acctEmail, save, authWindowResult }:
     { acctEmail?: string, save: boolean, authWindowResult: Bm.AuthWindowResult }): Promise<AuthRes> => {
     try {
@@ -195,9 +190,10 @@ export class GoogleAuth {
       if (authWindowResult.error) {
         return { acctEmail, result: 'Denied', error: authWindowResult.error, id_token: undefined };
       }
-      const url = new URL(authWindowResult.url!);
-      const allowedScopes = this.getParameterByName(url.search, 'scope');
-      const code = this.getParameterByName(url.search, 'code') ?? '';
+      const uncheckedUrlParams = Url.parse(['scope', 'code'], authWindowResult.url!);
+      const allowedScopes = Assert.urlParamRequire.string(uncheckedUrlParams, 'scope');
+      const code = Assert.urlParamRequire.string(uncheckedUrlParams, 'code');
+
       if (!allowedScopes?.includes(this.OAUTH.scopes.compose) || !allowedScopes?.includes(this.OAUTH.scopes.modify)) {
         if (code !== '') {
           // Try to get auth token to let login authorization be granted
