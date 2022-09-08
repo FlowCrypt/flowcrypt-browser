@@ -124,7 +124,7 @@ export class GoogleAuth {
     const authRequest: AuthReq = { acctEmail, scopes, csrfToken: `csrf-${Api.randomFortyHexChars()}` };
     const authUrl = GoogleAuth.apiGoogleAuthCodeUrl(authRequest);
     const authWindowResult = await OAuth2.webAuthFlow(authUrl);
-    const authRes = await GoogleAuth.getAuthRes({ acctEmail, save, authWindowResult });
+    const authRes = await GoogleAuth.getAuthRes({ acctEmail, save, state: GoogleAuth.apiGoogleAuthStatePack(authRequest), authWindowResult });
     if (authRes.result === 'Success') {
       if (!authRes.id_token) {
         return { result: 'Error', error: 'Grant was successful but missing id_token', acctEmail: authRes.acctEmail, id_token: undefined };
@@ -181,8 +181,8 @@ export class GoogleAuth {
     return await GoogleAuth.newAuthPopup({ acctEmail, scopes: GoogleAuth.defaultScopes('openid'), save: false });
   };
 
-  private static getAuthRes = async ({ acctEmail, save, authWindowResult }:
-    { acctEmail?: string, save: boolean, authWindowResult: Bm.AuthWindowResult }): Promise<AuthRes> => {
+  private static getAuthRes = async ({ acctEmail, save, state, authWindowResult }:
+    { acctEmail?: string, save: boolean, state: string, authWindowResult: Bm.AuthWindowResult }): Promise<AuthRes> => {
     try {
       if (!authWindowResult.url) {
         return { acctEmail, result: 'Denied', error: 'Invalid response url', id_token: undefined };
@@ -190,12 +190,12 @@ export class GoogleAuth {
       if (authWindowResult.error) {
         return { acctEmail, result: 'Denied', error: authWindowResult.error, id_token: undefined };
       }
-      const uncheckedUrlParams = Url.parse(['scope', 'code'], authWindowResult.url!);
+      const uncheckedUrlParams = Url.parse(['scope', 'code', 'state'], authWindowResult.url!);
       const allowedScopes = Assert.urlParamRequire.string(uncheckedUrlParams, 'scope');
-      const code = Assert.urlParamRequire.string(uncheckedUrlParams, 'code');
-
+      const code = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'code');
+      const receivedState = Assert.urlParamRequire.string(uncheckedUrlParams, 'state');
       if (!allowedScopes?.includes(this.OAUTH.scopes.compose) || !allowedScopes?.includes(this.OAUTH.scopes.modify)) {
-        if (code !== '') {
+        if (code) {
           // Try to get auth token to let login authorization be granted
           await GoogleAuth.googleAuthGetTokens(code);
         }
@@ -203,7 +203,10 @@ export class GoogleAuth {
       if (!code) {
         return { acctEmail, result: 'Denied', error: "Google auth result was 'Success' but no auth code", id_token: undefined };
       }
-      const { id_token } = save ? await GoogleAuth.retrieveAndSaveAuthToken(code, allowedScopes?.split(' ') ?? []) : await GoogleAuth.googleAuthGetTokens(code);
+      if (state !== receivedState) {
+        return { acctEmail, result: 'Error', error: `Wrong oauth CSRF token. Please try again.`, id_token: undefined };
+      }
+      const { id_token } = save ? await GoogleAuth.retrieveAndSaveAuthToken(code, allowedScopes?.split('+') ?? []) : await GoogleAuth.googleAuthGetTokens(code);
       const { email } = GoogleAuth.parseIdToken(id_token);
       if (!email) {
         throw new Error('Missing email address in id_token');
