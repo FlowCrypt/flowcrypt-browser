@@ -2,13 +2,13 @@
 
 'use strict';
 
-import { BrowserMsg } from './browser/browser-msg.js';
-import { Catch } from './platform/catch.js';
+import { GoogleAuth } from './api/email-provider/gmail/google-auth.js';
+import { Ui } from './browser/ui.js';
 import { Dict } from './core/common.js';
 import { Lang } from './lang.js';
-import { Ui } from './browser/ui.js';
-import { Xss } from './platform/xss.js';
+import { Catch } from './platform/catch.js';
 import { AcctStore } from './platform/store/acct-store.js';
+import { Xss } from './platform/xss.js';
 
 export class Notifications {
 
@@ -23,7 +23,7 @@ export class Notifications {
   public showAuthPopupNeeded = (acctEmail: string) => {
     this.show(`${Lang.compose.pleaseReconnectAccount} <a href="#" class="auth_popup" data-test="action-reconnect-account">Re-connect Account</a>`, {
       auth_popup: async () => {
-        const authRes = await BrowserMsg.send.bg.await.reconnectAcctAuthPopup({ acctEmail });
+        const authRes = await GoogleAuth.newAuthPopup({ acctEmail });
         if (authRes.result === 'Success') {
           this.show(`Connected successfully. You may need to reload the tab. <a href="#" class="close">Close</a>`);
         } else {
