@@ -145,7 +145,6 @@ export class ComposeView extends View {
     this.isReplyBox = !!this.replyMsgId;
     this.emailProvider = new Gmail(this.acctEmail);
     this.acctServer = new AccountServer(this.acctEmail);
-    BrowserMsg.listen(this.parentTabId);
   }
 
   public render = async () => {
