@@ -2,23 +2,21 @@
 
 'use strict';
 
-import { DecryptResult, DiagnoseMsgPubkeysResult, PgpMsgMethod, VerifyRes, PgpMsgTypeResult } from '../core/crypto/pgp/msg-util.js';
-import { Dict, Str, UrlParams } from '../core/common.js';
 import { AjaxErr } from '../api/shared/api-error.js';
-import { AuthRes } from '../api/email-provider/gmail/google-auth.js';
-import { Browser } from './browser.js';
-import { BrowserMsgCommonHandlers } from './browser-msg-common-handlers.js';
 import { Buf } from '../core/buf.js';
-import { Catch } from '../platform/catch.js';
-import { Env } from './env.js';
-import { PassphraseDialogType } from '../xss-safe-factory.js';
-import { PgpHash } from '../core/crypto/pgp/pgp-hash.js';
-import { MsgUtil } from '../core/crypto/pgp/msg-util.js';
-import { Ui } from './ui.js';
-import { GlobalStoreDict, GlobalIndex } from '../platform/store/global-store.js';
-import { AcctStoreDict, AccountIndex } from '../platform/store/acct-store.js';
-import { saveFetchedPubkeysIfNewerThanInStorage } from '../shared.js';
+import { Dict, Str, UrlParams } from '../core/common.js';
 import { ArmoredKeyIdentityWithEmails, KeyUtil } from '../core/crypto/key.js';
+import { DecryptResult, DiagnoseMsgPubkeysResult, MsgUtil, PgpMsgMethod, PgpMsgTypeResult, VerifyRes } from '../core/crypto/pgp/msg-util.js';
+import { PgpHash } from '../core/crypto/pgp/pgp-hash.js';
+import { Catch } from '../platform/catch.js';
+import { AccountIndex, AcctStoreDict } from '../platform/store/acct-store.js';
+import { GlobalIndex, GlobalStoreDict } from '../platform/store/global-store.js';
+import { saveFetchedPubkeysIfNewerThanInStorage } from '../shared.js';
+import { PassphraseDialogType } from '../xss-safe-factory.js';
+import { BrowserMsgCommonHandlers } from './browser-msg-common-handlers.js';
+import { Browser } from './browser.js';
+import { Env } from './env.js';
+import { Ui } from './ui.js';
 
 export type GoogleAuthWindowResult$result = 'Success' | 'Denied' | 'Error' | 'Closed';
 
