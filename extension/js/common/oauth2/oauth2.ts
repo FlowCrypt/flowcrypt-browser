@@ -25,7 +25,7 @@ export class OAuth2 {
     return await new Promise((resolve) => {
       chrome.runtime.onMessage.addListener((msg: Bm.Raw) => {
         if (msg.name === 'auth_window_result') {
-          chrome.tabs.remove(tabId!);
+          void chrome.tabs.remove(tabId!);
           resolve(msg.data.bm as unknown as Bm.AuthWindowResult);
         }
         return false;
