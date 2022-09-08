@@ -1117,6 +1117,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       const oauthPopup1 = await browser.newPageTriggeredBy(t, () => PageRecipe.waitForModalAndRespond(experimentalFrame, 'confirm',
         { contentToCheck: 'email address has changed', clickOn: 'confirm' }));
       await OauthPageRecipe.mock(t, oauthPopup1, acct2, 'override_acct');
+      await Util.sleep(10000);
       await PageRecipe.waitForModalAndRespond(experimentalFrame, 'confirm',
         { contentToCheck: 'email from ci.tests.gmail@flowcrypt.test to user@forbid-storing-passphrase-client-configuration.flowcrypt.test', clickOn: 'confirm' });
       const newSettingsPage = await browser.newPageTriggeredBy(t, () => PageRecipe.waitForModalAndRespond(experimentalFrame, 'info',

@@ -23,9 +23,19 @@ export class OAuth2 {
     }
     const tabId = oauthWin?.tabs && oauthWin.tabs[0].id;
     return await new Promise((resolve) => {
-      BrowserMsg.addListener('auth_window_result', async (result: Bm.AuthWindowResult) => {
-        resolve(result);
+      chrome.runtime.onMessage.addListener((msg: Bm.Raw) => {
+        if (msg.name === 'auth_window_result') {
+          chrome.tabs.remove(tabId!);
+          resolve(msg.data.bm as unknown as Bm.AuthWindowResult);
+        }
+        return false;
       });
+      // BrowserMsg.addListener('auth_window_result', async (result: Bm.AuthWindowResult) => {
+      //   console.log('get auth result');
+      //   chrome.tabs.remove(tabId!);
+      //   resolve(result);
+      //   return false;
+      // });
       chrome.tabs.onRemoved.addListener((removedTabId) => {
         // Only reject error when auth result not successful
         if (removedTabId === tabId) {
@@ -37,16 +47,5 @@ export class OAuth2 {
 
   public static finishAuth = (url: string) => {
     BrowserMsg.send.authWindowResult('broadcast', { url });
-    const views = chrome.extension.getViews();
-    // Loop through existing extension views and excute any stored callbacks.
-    for (const view of views) {
-      if ((view as any)['oauth-callback']) {
-        (view as any)['oauth-callback'](url); // tslint:disable-line:no-unsafe-any
-        (view as any)['oauth-login-finished'] = true;
-      }
-    }
-    chrome.runtime.lastError = undefined;
-    window.open('', '_self', '');
-    window.close();
   };
 }

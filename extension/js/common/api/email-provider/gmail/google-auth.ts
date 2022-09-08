@@ -124,7 +124,7 @@ export class GoogleAuth {
     const authRequest: AuthReq = { acctEmail, scopes, csrfToken: `csrf-${Api.randomFortyHexChars()}` };
     const authUrl = GoogleAuth.apiGoogleAuthCodeUrl(authRequest);
     const authWindowResult = await OAuth2.webAuthFlow(authUrl);
-    const authRes = await GoogleAuth.renderOAuthWindowAndGetResult({ acctEmail, save, authWindowResult });
+    const authRes = await GoogleAuth.getAuthRes({ acctEmail, save, authWindowResult });
     if (authRes.result === 'Success') {
       if (!authRes.id_token) {
         return { result: 'Error', error: 'Grant was successful but missing id_token', acctEmail: authRes.acctEmail, id_token: undefined };
@@ -186,7 +186,7 @@ export class GoogleAuth {
     return match && decodeURIComponent(match[1].replace(/\+/g, ' '));
   };
 
-  private static renderOAuthWindowAndGetResult = async ({ acctEmail, save, authWindowResult }:
+  private static getAuthRes = async ({ acctEmail, save, authWindowResult }:
     { acctEmail?: string, save: boolean, authWindowResult: Bm.AuthWindowResult }): Promise<AuthRes> => {
     try {
       if (!authWindowResult.url) {
