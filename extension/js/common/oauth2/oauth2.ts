@@ -23,19 +23,11 @@ export class OAuth2 {
     }
     const tabId = oauthWin?.tabs && oauthWin.tabs[0].id;
     return await new Promise((resolve) => {
-      chrome.runtime.onMessage.addListener((msg: Bm.Raw) => {
-        if (msg.name === 'auth_window_result') {
-          void chrome.tabs.remove(tabId!);
-          resolve(msg.data.bm as unknown as Bm.AuthWindowResult);
-        }
+      BrowserMsg.addListener('auth_window_result', async (result: Bm.AuthWindowResult) => {
+        void chrome.tabs.remove(tabId!);
+        resolve(result);
         return false;
       });
-      // BrowserMsg.addListener('auth_window_result', async (result: Bm.AuthWindowResult) => {
-      //   console.log('get auth result');
-      //   chrome.tabs.remove(tabId!);
-      //   resolve(result);
-      //   return false;
-      // });
       chrome.tabs.onRemoved.addListener((removedTabId) => {
         // Only reject error when auth result not successful
         if (removedTabId === tabId) {
