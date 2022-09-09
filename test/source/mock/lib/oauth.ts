@@ -36,7 +36,8 @@ export class OauthMock {
     const url = new URL(this.redirectUri);
     url.searchParams.set('code', authCode);
     url.searchParams.set('scope', scope);
-    url.searchParams.set('state', state);
+    // return invalid state for test.invalid.csrf@gmail.com to check invalid csrf login
+    url.searchParams.set('state', acct === 'test.invalid.csrf@gmail.com' ? 'invalid state' : state);
     return url.href;
   };
 
