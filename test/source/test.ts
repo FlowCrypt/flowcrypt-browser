@@ -136,7 +136,9 @@ ava.default.after.always('evaluate Catch.reportErr errors', async t => {
     // below for "test allows to retry public key search when attester returns error"
     .filter(e => !e.message.includes('Error: Internal Server Error: 500 when GET-ing https://localhost:8001/attester/pub/attester.return.error@flowcrypt.test'));
   const foundExpectedErr = usefulErrors.find(re => re.message === `intentional error for debugging`);
-  const foundUnwantedErrs = usefulErrors.filter(re => re.message !== `intentional error for debugging` && !re.message.includes('traversal forbidden'));
+  const foundUnwantedErrs = usefulErrors.filter(re => re.message !== `intentional error for debugging` &&
+    !re.message.includes('traversal forbidden') &&
+    !re.message.includes('newGoogleAcctAuthPromptThenAlertOrForward'));
   if (testVariant === 'CONSUMER-MOCK' && internalTestState.expectIntentionalErrReport && !foundExpectedErr) {
     // on consumer flavor app, we submit errors to flowcrypt.com backend
     t.fail(`Catch.reportErr errors: missing intentional error report on consumer flavor`);
