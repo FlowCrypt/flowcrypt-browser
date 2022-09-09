@@ -60,6 +60,7 @@ export class SetupImportKeyModule {
   };
 
   public renderCompatibilityFixBlockAndFinalizeSetup = async (origPrv: Key, options: SetupOptions) => {
+    $('.ask_support_assistance_container').text(Lang.general.contactIfNeedAssistance(this.view.isFesUsed()));
     this.view.setupRender.displayBlock('step_3_compatibility_fix');
     let fixedPrv;
     try {
