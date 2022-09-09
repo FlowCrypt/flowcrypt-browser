@@ -14,6 +14,7 @@ import { AcctStore } from './platform/store/acct-store.js';
 import { Lang } from './lang.js';
 import { isFesUsed } from './helpers.js';
 
+export class AssertError extends Error { }
 /**
  * Methods in this class will render a fatal message in the browser when assertion fails.
  */
@@ -66,7 +67,7 @@ export class Assert {
       target.addClass('error-occured');
       Xss.sanitizeRender(target, msg);
       if (doThrow) {
-        throw new UnreportableError(msg);
+        throw new AssertError(msg);
       }
     }
   };
@@ -87,7 +88,7 @@ export class Assert {
       Catch.report(msg, { currentUrl: window.location.href, params: values });
       $('body').text('Thank you. Feel free to reach out to human@flowcrypt.com in you need assistance.');
     }));
-    throw new UnreportableError(msg);
+    throw new AssertError(msg);
   };
 
   public static abortAndRenderErrOnUrlParamValMismatch = <T>(values: Dict<T>, name: string, expectedVals: T[]): T => {
@@ -95,7 +96,7 @@ export class Assert {
       const msg = `Cannot render page (expected ${Xss.escape(name)} to be one of ${Xss.escape(expectedVals.map(String).join(','))}
         but got ${Xss.escape(String(values[name]))}<br><br>Was the URL editted manually? Please write human@flowcrypt.com for help.`;
       Xss.sanitizeRender('body', msg).addClass('bad').css({ padding: '20px', 'font-size': '16px' });
-      throw new UnreportableError(msg);
+      throw new AssertError(msg);
     }
     return values[name];
   };

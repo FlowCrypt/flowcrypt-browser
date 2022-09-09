@@ -21,13 +21,13 @@ import { AccountServer } from '../../account-server.js';
 import { EnterpriseServer } from '../../account-servers/enterprise-server.js';
 import { GoogleAuthErr } from '../../shared/api-error.js';
 import { GmailRes } from './gmail-parser';
-import { Assert } from '../../../assert.js';
+import { Assert, AssertError } from '../../../assert.js';
 
 type GoogleAuthTokensResponse = { access_token: string, expires_in: number, refresh_token?: string, id_token: string, token_type: 'Bearer' };
 type AuthResultSuccess = { result: 'Success', acctEmail: string, id_token: string, error?: undefined };
 type AuthResultError = { result: GoogleAuthWindowResult$result, acctEmail?: string, error?: string, id_token: undefined };
 
-type AuthReq = { acctEmail?: string, scopes: string[], messageId?: string, csrfToken: string };
+type AuthReq = { acctEmail?: string, scopes: string[], messageId?: string, expectedState: string };
 export type AuthRes = AuthResultSuccess | AuthResultError;
 
 export class GoogleAuth {
@@ -121,10 +121,10 @@ export class GoogleAuth {
     if (save || !scopes) { // if tokens will be saved (meaning also scopes should be pulled from storage) or if no scopes supplied
       scopes = await GoogleAuth.apiGoogleAuthPopupPrepareAuthReqScopes(acctEmail, scopes || GoogleAuth.defaultScopes());
     }
-    const authRequest: AuthReq = { acctEmail, scopes, csrfToken: `csrf-${Api.randomFortyHexChars()}` };
+    const authRequest = GoogleAuth.newAuthRequest(acctEmail, scopes);
     const authUrl = GoogleAuth.apiGoogleAuthCodeUrl(authRequest);
     const authWindowResult = await OAuth2.webAuthFlow(authUrl);
-    const authRes = await GoogleAuth.getAuthRes({ acctEmail, save, state: GoogleAuth.apiGoogleAuthStatePack(authRequest), authWindowResult });
+    const authRes = await GoogleAuth.getAuthRes({ acctEmail, save, expectedState: authRequest.expectedState, authWindowResult });
     if (authRes.result === 'Success') {
       if (!authRes.id_token) {
         return { result: 'Error', error: 'Grant was successful but missing id_token', acctEmail: authRes.acctEmail, id_token: undefined };
@@ -181,8 +181,8 @@ export class GoogleAuth {
     return await GoogleAuth.newAuthPopup({ acctEmail, scopes: GoogleAuth.defaultScopes('openid'), save: false });
   };
 
-  private static getAuthRes = async ({ acctEmail, save, state, authWindowResult }:
-    { acctEmail?: string, save: boolean, state: string, authWindowResult: Bm.AuthWindowResult }): Promise<AuthRes> => {
+  private static getAuthRes = async ({ acctEmail, save, expectedState, authWindowResult }:
+    { acctEmail?: string, save: boolean, expectedState: string, authWindowResult: Bm.AuthWindowResult }): Promise<AuthRes> => {
     try {
       if (!authWindowResult.url) {
         return { acctEmail, result: 'Denied', error: 'Invalid response url', id_token: undefined };
@@ -203,7 +203,7 @@ export class GoogleAuth {
       if (!code) {
         return { acctEmail, result: 'Denied', error: "Google auth result was 'Success' but no auth code", id_token: undefined };
       }
-      if (state !== receivedState) {
+      if (receivedState !== expectedState) {
         return { acctEmail, result: 'Error', error: `Wrong oauth CSRF token. Please try again.`, id_token: undefined };
       }
       const { id_token } = save ? await GoogleAuth.retrieveAndSaveAuthToken(code, allowedScopes?.split('+') ?? []) : await GoogleAuth.googleAuthGetTokens(code);
@@ -213,8 +213,23 @@ export class GoogleAuth {
       }
       return { acctEmail: email, result: 'Success', id_token };
     } catch (err) {
+      if (err instanceof AssertError) {
+        return { acctEmail, result: 'Error', error: 'Could not parse URL returned from Google', id_token: undefined };
+      }
       return { acctEmail, result: 'Denied', error: String(err), id_token: undefined };
     }
+  };
+
+  private static newAuthRequest = (acctEmail: string | undefined, scopes: string[]): AuthReq => {
+    const authReq = {
+      acctEmail,
+      scopes,
+      csrfToken: `csrf-${Api.randomFortyHexChars()}`
+    };
+    return {
+      ...authReq,
+      expectedState: GoogleAuth.OAUTH.state_header + JSON.stringify(authReq)
+    };
   };
 
   private static apiGoogleAuthCodeUrl = (authReq: AuthReq) => {
@@ -223,15 +238,11 @@ export class GoogleAuth {
       response_type: 'code',
       access_type: 'offline',
       prompt: 'consent',
-      state: GoogleAuth.apiGoogleAuthStatePack(authReq),
+      state: authReq.expectedState,
       redirect_uri: GoogleAuth.OAUTH.redirect_uri,
       scope: (authReq.scopes || []).join(' '),
       login_hint: authReq.acctEmail,
     });
-  };
-
-  private static apiGoogleAuthStatePack = (authReq: AuthReq) => {
-    return GoogleAuth.OAUTH.state_header + JSON.stringify(authReq);
   };
 
   private static googleAuthSaveTokens = async (acctEmail: string, tokensObj: GoogleAuthTokensResponse, scopes: string[]) => {
