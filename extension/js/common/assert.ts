@@ -8,13 +8,13 @@ import { Dict, UrlParam, UrlParams } from './core/common.js';
 import { KeyInfoWithIdentity, KeyUtil } from './core/crypto/key.js';
 import { isFesUsed } from './helpers.js';
 import { Lang } from './lang.js';
-import { Catch } from './platform/catch.js';
+import { Catch, UnreportableError } from './platform/catch.js';
 import { AcctStore } from './platform/store/acct-store.js';
 import { KeyStore } from './platform/store/key-store.js';
 import { Xss } from './platform/xss.js';
 import { Settings } from './settings.js';
 
-export class AssertError extends Error { }
+export class AssertError extends UnreportableError { }
 /**
  * Methods in this class will render a fatal message in the browser when assertion fails.
  */
