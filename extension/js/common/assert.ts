@@ -12,7 +12,7 @@ import { Xss } from './platform/xss.js';
 import { KeyStore } from './platform/store/key-store.js';
 import { AcctStore } from './platform/store/acct-store.js';
 import { Lang } from './lang.js';
-import { isFesUsed } from './helpers.js';
+import { isEnterpriseBuildUsed, isFesUsed } from './helpers.js';
 
 /**
  * Methods in this class will render a fatal message in the browser when assertion fails.
@@ -85,7 +85,7 @@ export class Assert {
     Xss.sanitizeRender('body', renderMsg).addClass('bad').css({ padding: '20px', 'font-size': '16px' });
     $('.action_report_issue').click(Ui.event.handle(async () => {
       Catch.report(msg, { currentUrl: window.location.href, params: values });
-      $('body').text('Thank you. Feel free to reach out to human@flowcrypt.com in you need assistance.');
+      $('body').text(`Thank you. ${Lang.general.contactIfNeedAssistance(isEnterpriseBuildUsed())}`);
     }));
     throw new UnreportableError(msg);
   };

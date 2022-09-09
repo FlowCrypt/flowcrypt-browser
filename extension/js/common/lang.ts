@@ -2,13 +2,13 @@
 
 'use strict';
 
-import { FLAVOR } from "./core/const.js";
+import { isEnterpriseBuildUsed } from './helpers.js';
 
 /* eslint-disable max-len */
 
-const contactMinimalSubsentence = (isFesUsed: boolean) => isFesUsed || FLAVOR === 'enterprise' ? 'contact your Help Desk' : 'write us at human@flowcrypt.com';
+const contactMinimalSubsentence = (isFesUsed: boolean) => isFesUsed || isEnterpriseBuildUsed() ? 'contact your Help Desk' : 'write us at human@flowcrypt.com';
 const contactIfHappensAgain = (isFesUsed: boolean) => `If this happens again, please ${contactMinimalSubsentence(isFesUsed)}. `;
-const contactForSupportSubsentence = (isFesUsed: boolean, reason: string = '') => isFesUsed || FLAVOR === 'enterprise' ? `please contact your Help Desk ${reason}` : `please write us at human@flowcrypt.com ${reason}`;
+const contactForSupportSubsentence = (isFesUsed: boolean, reason: string = '') => isFesUsed || isEnterpriseBuildUsed() ? `please contact your Help Desk ${reason}` : `please write us at human@flowcrypt.com ${reason}`;
 
 export const Lang = { // tslint:disable-line:variable-name
   error: {
