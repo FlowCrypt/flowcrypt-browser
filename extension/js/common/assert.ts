@@ -2,17 +2,17 @@
 
 'use strict';
 
-import { Catch, UnreportableError } from './platform/catch.js';
-import { Dict, UrlParam, UrlParams } from './core/common.js';
 import { Browser } from './browser/browser.js';
-import { KeyInfoWithIdentity, KeyUtil } from './core/crypto/key.js';
-import { Settings } from './settings.js';
 import { Ui } from './browser/ui.js';
-import { Xss } from './platform/xss.js';
-import { KeyStore } from './platform/store/key-store.js';
-import { AcctStore } from './platform/store/acct-store.js';
-import { Lang } from './lang.js';
+import { Dict, UrlParam, UrlParams } from './core/common.js';
+import { KeyInfoWithIdentity, KeyUtil } from './core/crypto/key.js';
 import { isFesUsed } from './helpers.js';
+import { Lang } from './lang.js';
+import { Catch } from './platform/catch.js';
+import { AcctStore } from './platform/store/acct-store.js';
+import { KeyStore } from './platform/store/key-store.js';
+import { Xss } from './platform/xss.js';
+import { Settings } from './settings.js';
 
 export class AssertError extends Error { }
 /**
