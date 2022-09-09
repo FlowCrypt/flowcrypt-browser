@@ -2,23 +2,21 @@
 
 'use strict';
 
-import { DecryptResult, DiagnoseMsgPubkeysResult, PgpMsgMethod, VerifyRes, PgpMsgTypeResult } from '../core/crypto/pgp/msg-util.js';
-import { Dict, Str, UrlParams } from '../core/common.js';
 import { AjaxErr } from '../api/shared/api-error.js';
-import { AuthRes } from '../api/email-provider/gmail/google-auth.js';
-import { Browser } from './browser.js';
-import { BrowserMsgCommonHandlers } from './browser-msg-common-handlers.js';
 import { Buf } from '../core/buf.js';
-import { Catch } from '../platform/catch.js';
-import { Env } from './env.js';
-import { PassphraseDialogType } from '../xss-safe-factory.js';
-import { PgpHash } from '../core/crypto/pgp/pgp-hash.js';
-import { MsgUtil } from '../core/crypto/pgp/msg-util.js';
-import { Ui } from './ui.js';
-import { GlobalStoreDict, GlobalIndex } from '../platform/store/global-store.js';
-import { AcctStoreDict, AccountIndex } from '../platform/store/acct-store.js';
-import { saveFetchedPubkeysIfNewerThanInStorage } from '../shared.js';
+import { Dict, Str, UrlParams } from '../core/common.js';
 import { ArmoredKeyIdentityWithEmails, KeyUtil } from '../core/crypto/key.js';
+import { DecryptResult, DiagnoseMsgPubkeysResult, MsgUtil, PgpMsgMethod, PgpMsgTypeResult, VerifyRes } from '../core/crypto/pgp/msg-util.js';
+import { PgpHash } from '../core/crypto/pgp/pgp-hash.js';
+import { Catch } from '../platform/catch.js';
+import { AccountIndex, AcctStoreDict } from '../platform/store/acct-store.js';
+import { GlobalIndex, GlobalStoreDict } from '../platform/store/global-store.js';
+import { saveFetchedPubkeysIfNewerThanInStorage } from '../shared.js';
+import { PassphraseDialogType } from '../xss-safe-factory.js';
+import { BrowserMsgCommonHandlers } from './browser-msg-common-handlers.js';
+import { Browser } from './browser.js';
+import { Env } from './env.js';
+import { Ui } from './ui.js';
 
 export type GoogleAuthWindowResult$result = 'Success' | 'Denied' | 'Error' | 'Closed';
 
@@ -48,6 +46,7 @@ export namespace Bm {
   export type OpenGoogleAuthDialog = { acctEmail?: string, scopes?: string[] };
   export type OpenPage = { page: string, addUrlText?: string | UrlParams };
   export type PassphraseEntry = { entered: boolean, initiatorFrameId?: string };
+  export type AuthWindowResult = { url?: string, error?: string };
   export type Db = { f: string, args: unknown[] };
   export type InMemoryStoreSet = { acctEmail: string, key: string, value: string | undefined, expiration: number | undefined };
   export type InMemoryStoreGet = { acctEmail: string, key: string };
@@ -55,7 +54,6 @@ export namespace Bm {
   export type StoreGlobalSet = { values: GlobalStoreDict; };
   export type StoreAcctGet = { acctEmail: string, keys: AccountIndex[]; };
   export type StoreAcctSet = { acctEmail: string, values: AcctStoreDict; };
-  export type ReconnectAcctAuthPopup = { acctEmail: string, scopes?: string[] };
   export type PgpMsgDecrypt = PgpMsgMethod.Arg.Decrypt;
   export type PgpMsgDiagnoseMsgPubkeys = PgpMsgMethod.Arg.DiagnosePubkeys;
   export type PgpMsgVerifyDetached = PgpMsgMethod.Arg.VerifyDetached;
@@ -77,7 +75,6 @@ export namespace Bm {
     export type StoreGlobalSet = void;
     export type StoreAcctGet = AcctStoreDict;
     export type StoreAcctSet = void;
-    export type ReconnectAcctAuthPopup = AuthRes;
     export type PgpMsgDecrypt = DecryptResult;
     export type PgpMsgDiagnoseMsgPubkeys = DiagnoseMsgPubkeysResult;
     export type PgpMsgVerify = VerifyRes;
@@ -91,7 +88,7 @@ export namespace Bm {
     export type Db = any; // not included in Any below
     export type Ajax = any; // not included in Any below
 
-    export type Any = GetActiveTabInfo | _tab_ | ReconnectAcctAuthPopup
+    export type Any = GetActiveTabInfo | _tab_
       | PgpMsgDecrypt | PgpMsgDiagnoseMsgPubkeys | PgpMsgVerify | PgpHashChallengeAnswer | PgpMsgType
       | InMemoryStoreGet | InMemoryStoreSet | StoreAcctGet | StoreAcctSet | StoreGlobalGet | StoreGlobalSet
       | AjaxGmailAttachmentGetChunk | SaveFetchedPubkeys | ProcessAndStoreKeysFromEkmLocally
@@ -101,11 +98,11 @@ export namespace Bm {
   export type AnyRequest = PassphraseEntry | OpenPage | OpenGoogleAuthDialog | Redirect | Reload |
     AddPubkeyDialog | ReinsertReplyBox | ComposeWindow | ScrollToReplyBox | ScrollToCursorInReplyBox | SubscribeDialog |
     RenderPublicKeys | NotificationShowAuthPopupNeeded | ComposeWindowOpenDraft |
-    NotificationShow | PassphraseDialog | PassphraseDialog | Settings | SetCss | AddOrRemoveClass | ReconnectAcctAuthPopup |
+    NotificationShow | PassphraseDialog | PassphraseDialog | Settings | SetCss | AddOrRemoveClass |
     Db | InMemoryStoreSet | InMemoryStoreGet | StoreGlobalGet | StoreGlobalSet | StoreAcctGet | StoreAcctSet |
     PgpMsgDecrypt | PgpMsgDiagnoseMsgPubkeys | PgpMsgVerifyDetached | PgpHashChallengeAnswer | PgpMsgType | Ajax |
     ShowAttachmentPreview | ReRenderRecipient | SaveFetchedPubkeys | ProcessAndStoreKeysFromEkmLocally |
-    PgpKeyBinaryToArmored;
+    PgpKeyBinaryToArmored | AuthWindowResult;
 
   // export type RawResponselessHandler = (req: AnyRequest) => Promise<void>;
   // export type RawRespoHandler = (req: AnyRequest) => Promise<void>;
@@ -135,7 +132,6 @@ export class BrowserMsg {
       settings: (bm: Bm.Settings) => BrowserMsg.sendCatch(undefined, 'settings', bm),
       updateUninstallUrl: () => BrowserMsg.sendCatch(undefined, 'update_uninstall_url', {}),
       await: {
-        reconnectAcctAuthPopup: (bm: Bm.ReconnectAcctAuthPopup) => BrowserMsg.sendAwait(undefined, 'reconnect_acct_auth_popup', bm, true) as Promise<Bm.Res.ReconnectAcctAuthPopup>,
         getActiveTabInfo: () => BrowserMsg.sendAwait(undefined, 'get_active_tab_info', undefined, true) as Promise<Bm.Res.GetActiveTabInfo>,
         inMemoryStoreGet: (bm: Bm.InMemoryStoreGet) => BrowserMsg.sendAwait(undefined, 'inMemoryStoreGet', bm, true) as Promise<Bm.Res.InMemoryStoreGet>,
         inMemoryStoreSet: (bm: Bm.InMemoryStoreSet) => BrowserMsg.sendAwait(undefined, 'inMemoryStoreSet', bm, true) as Promise<Bm.Res.InMemoryStoreSet>,
@@ -165,6 +161,7 @@ export class BrowserMsg {
     addClass: (dest: Bm.Dest, bm: Bm.AddOrRemoveClass) => BrowserMsg.sendCatch(dest, 'add_class', bm),
     removeClass: (dest: Bm.Dest, bm: Bm.AddOrRemoveClass) => BrowserMsg.sendCatch(dest, 'remove_class', bm),
     closeDialog: (dest: Bm.Dest) => BrowserMsg.sendCatch(dest, 'close_dialog', {}),
+    authWindowResult: (dest: Bm.Dest, bm: Bm.AuthWindowResult) => BrowserMsg.sendCatch(dest, 'auth_window_result', bm),
     closePage: (dest: Bm.Dest) => BrowserMsg.sendCatch(dest, 'close_page', {}),
     setActiveWindow: (dest: Bm.Dest, bm: Bm.ComposeWindow) => BrowserMsg.sendCatch(dest, 'set_active_window', bm),
     focusPreviousActiveWindow: (dest: Bm.Dest, bm: Bm.ComposeWindow) => BrowserMsg.sendCatch(dest, 'focus_previous_active_window', bm),

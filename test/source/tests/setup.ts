@@ -17,6 +17,7 @@ import { testConstants } from './tooling/consts';
 import { InboxPageRecipe } from './page-recipe/inbox-page-recipe';
 import { PageRecipe } from './page-recipe/abstract-page-recipe';
 import { TestUrls } from '../browser/test-urls';
+import { OauthPageRecipe } from './page-recipe/oauth-page-recipe';
 
 // tslint:disable:no-blank-lines-func
 // tslint:disable:no-unused-expression
@@ -40,6 +41,13 @@ export const defineSetupTests = (testVariant: TestVariant, testWithBrowser: Test
     ava.default('settings > login > close oauth window > close popup', testWithBrowser(undefined, async (t, browser) => {
       const settingsPage = await BrowserRecipe.openSettingsLoginButCloseOauthWindowBeforeGrantingPermission(t, browser, 'flowcrypt.test.key.imported@gmail.com');
       await settingsPage.notPresent('.settings-banner');
+    }));
+
+    ava.default('setup - invalid csrf token returns error on gmail login', testWithBrowser(undefined, async (t, browser) => {
+      const settingsPage = await browser.newPage(t, TestUrls.extensionSettings());
+      const oauthPopup = await browser.newPageTriggeredBy(t, () => settingsPage.waitAndClick('@action-connect-to-gmail'));
+      await OauthPageRecipe.mock(t, oauthPopup, 'test.invalid.csrf@gmail.com', 'login');
+      await settingsPage.waitAndRespondToModal('error', 'confirm', 'Wrong oauth CSRF token. Please try again.');
     }));
 
     ava.default('setup - optional checkbox for each email aliases', testWithBrowser(undefined, async (t, browser) => {

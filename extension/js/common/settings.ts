@@ -310,7 +310,10 @@ export class Settings {
           await Settings.newGoogleAcctAuthPromptThenAlertOrForward(settingsTabId, acctEmail, scopes);
         }
       } else {
-        Catch.report('failed to log into google in newGoogleAcctAuthPromptThenAlertOrForward', response);
+        // Do not report error for csrf
+        if (response.error !== 'Wrong oauth CSRF token. Please try again.') {
+          Catch.report('failed to log into google in newGoogleAcctAuthPromptThenAlertOrForward', response);
+        }
         await Ui.modal.error(`Failed to connect to Gmail(new). ${Lang.general.contactIfHappensAgain(acctEmail ?
           await isFesUsed(acctEmail) : false)}\n\n[${response.result}] ${response.error}`);
         await Ui.time.sleep(1000);
