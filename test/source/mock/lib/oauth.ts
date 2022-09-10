@@ -10,9 +10,9 @@ const authURL = 'https://localhost:8001';
 
 export class OauthMock {
 
-  public clientId = '717284730244-ostjo2fdtr3ka4q9td69tdr9acmmru2p.apps.googleusercontent.com';
+  public clientId = '717284730244-5oejn54f10gnrektjdc4fv4rbic1bj1p.apps.googleusercontent.com';
   public expiresIn = 2 * 60 * 60; // 2hrs in seconds
-  public redirectUri = 'urn:ietf:wg:oauth:2.0:oob:auto';
+  public redirectUri = 'https://google.localhost:8001/robots.txt';
 
   private authCodesByAcct: { [acct: string]: string } = {};
   private refreshTokenByAuthCode: { [authCode: string]: string } = {};
@@ -25,7 +25,7 @@ export class OauthMock {
     return this.htmlPage(text, text);
   };
 
-  public successPage = (acct: string, state: string) => {
+  public successResult = (acct: string, state: string, scope: string) => {
     const authCode = `mock-auth-code-${acct.replace(/[^a-z0-9]+/g, '')}`;
     const refreshToken = `mock-refresh-token-${acct.replace(/[^a-z0-9]+/g, '')}`;
     const accessToken = `mock-access-token-${acct.replace(/[^a-z0-9]+/g, '')}`;
@@ -33,7 +33,12 @@ export class OauthMock {
     this.refreshTokenByAuthCode[authCode] = refreshToken;
     this.accessTokenByRefreshToken[refreshToken] = accessToken;
     this.acctByAccessToken[accessToken] = acct;
-    return this.htmlPage(`Success code=${encodeURIComponent(authCode)}&state=${encodeURIComponent(state)}&error=`, `Authorized successfully, please return to app`);
+    const url = new URL(this.redirectUri);
+    url.searchParams.set('code', authCode);
+    url.searchParams.set('scope', scope);
+    // return invalid state for test.invalid.csrf@gmail.com to check invalid csrf login
+    url.searchParams.set('state', acct === 'test.invalid.csrf@gmail.com' ? 'invalid state' : state);
+    return url.href;
   };
 
   public getRefreshTokenResponse = (code: string) => {
