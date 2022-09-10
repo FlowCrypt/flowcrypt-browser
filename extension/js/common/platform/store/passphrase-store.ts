@@ -22,6 +22,14 @@ export class PassphraseStore extends AbstractStore {
     return await PassphraseStore.getByIndexes(acctEmail, storageIndexes, ignoreSession);
   };
 
+  public static removeMany = async (acctEmail: string, keyInfos: { longid: string }[]) => {
+    const storageIndexes = keyInfos.map(keyInfo => PassphraseStore.getIndex(keyInfo.longid));
+    await Promise.all([
+      AcctStore.remove(acctEmail, storageIndexes), // remove from local storage
+      ...storageIndexes.map(storageIndex => InMemoryStore.set(acctEmail, storageIndex, undefined)) // remove from session
+    ]);
+  };
+
   // if we implement (and migrate) password storage to use KeyIdentity instead of longid, we'll have `keyInfo: KeyIdentity` here
   public static set = async (storageType: StorageType, acctEmail: string, keyInfo: { longid: string }, passphrase: string | undefined): Promise<void> => {
     const storageIndex = PassphraseStore.getIndex(keyInfo.longid);
@@ -78,7 +86,7 @@ export class PassphraseStore extends AbstractStore {
         await AcctStore.remove(acctEmail, [storageIndex]);
       } else {
         const toSave: AcctStoreDict = {};
-        toSave[storageIndex] = passphrase as any;
+        (toSave as Dict<unknown>)[storageIndex] = passphrase;
         await AcctStore.set(acctEmail, toSave);
       }
     }

@@ -20,8 +20,12 @@ export const isFesUsed = async (acctEmail: string) => {
 export const saveKeysAndPassPhrase = async (acctEmail: string, prvs: Key[], ppOptions?: PassphraseOptions, replaceKeys: boolean = false) => {
   const clientConfiguration = await ClientConfiguration.newInstance(acctEmail);
   if (replaceKeys) {
+    // track longids to remove related passhprases
+    const existingKeys = await KeyStore.get(acctEmail);
+    const deletedKeys = existingKeys.filter(old => !prvs.some(prvIdentity => KeyUtil.identityEquals(prvIdentity, old)));
+    // set actually replaces the set of keys in storage with the new set
     await KeyStore.set(acctEmail, await Promise.all(prvs.map(KeyUtil.keyInfoObj))); // todo: duplicate identities
-    // todo: should we delete passphrases matching the deleted keys?
+    await PassphraseStore.removeMany(acctEmail, deletedKeys);
   }
   for (const prv of prvs) {
     if (!replaceKeys) {
@@ -123,7 +127,6 @@ export const processAndStoreKeysFromEkmLocally = async (
     }
     if (passphrase !== undefined) {
       const pp = passphrase;
-      // todo: some more fancy conversion, preserving a passphrase for a particual longid?
       await Promise.all(unencryptedKeysToSave.map(prv => KeyUtil.encrypt(prv, pp)));
       encryptedKeys = unencryptedKeysToSave;
       unencryptedKeysToSave = [];
