@@ -81,19 +81,19 @@ const filterKeysToSave = async (candidateKeys: Key[], existingKeys: KeyInfoWithI
   }
   const keysToRetain: Key[] = [];
   const unencryptedKeysToSave: Key[] = [];
-  for (const candidate of candidateKeys) {
-    const longid = KeyUtil.getPrimaryLongid(candidate);
-    const keyToUpdate = existingKeys.filter(ki => ki.longid === longid && ki.family === candidate.family);
+  for (const candidateKey of candidateKeys) {
+    const longid = KeyUtil.getPrimaryLongid(candidateKey);
+    const keyToUpdate = existingKeys.filter(ki => ki.longid === longid && ki.family === candidateKey.family);
     if (keyToUpdate.length === 1) {
       const oldKey = await KeyUtil.parse(keyToUpdate[0].private);
-      if (!candidate.lastModified || (oldKey.lastModified && oldKey.lastModified >= candidate.lastModified)) {
+      if (!candidateKey.lastModified || (oldKey.lastModified && oldKey.lastModified >= candidateKey.lastModified)) {
         keysToRetain.push(oldKey);
         continue;
       }
     } else if (keyToUpdate.length > 1) {
       throw new Error(`Unexpected error: key search by longid=${longid} yielded ${keyToUpdate.length} results`);
     }
-    unencryptedKeysToSave.push(candidate);
+    unencryptedKeysToSave.push(candidateKey);
   }
   return { keysToRetain, unencryptedKeysToSave };
 };
