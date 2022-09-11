@@ -31,6 +31,7 @@ View.run(class ExperimentalView extends View {
     if (!this.acctEmail) {
       throw new Error('acctEmail is required');
     }
+    BrowserMsg.listen(this.parentTabId);
   }
 
   public render = async () => {

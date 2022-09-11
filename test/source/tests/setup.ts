@@ -43,6 +43,13 @@ export const defineSetupTests = (testVariant: TestVariant, testWithBrowser: Test
       await settingsPage.notPresent('.settings-banner');
     }));
 
+    ava.default('setup - invalid csrf token returns error on gmail login', testWithBrowser(undefined, async (t, browser) => {
+      const settingsPage = await browser.newPage(t, TestUrls.extensionSettings());
+      const oauthPopup = await browser.newPageTriggeredBy(t, () => settingsPage.waitAndClick('@action-connect-to-gmail'));
+      await OauthPageRecipe.mock(t, oauthPopup, 'test.invalid.csrf@gmail.com', 'login');
+      await settingsPage.waitAndRespondToModal('error', 'confirm', 'Wrong oauth CSRF token. Please try again.');
+    }));
+
     ava.default('setup - optional checkbox for each email aliases', testWithBrowser(undefined, async (t, browser) => {
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.compatibility@gmail.com');
       await Util.sleep(5);
