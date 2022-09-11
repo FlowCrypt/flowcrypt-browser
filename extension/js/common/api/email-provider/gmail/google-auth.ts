@@ -5,35 +5,37 @@
 // tslint:disable:no-direct-ajax
 // tslint:disable:oneliner-object-literal
 
-import { OAUTH_GOOGLE_API_HOST, GOOGLE_OAUTH_SCREEN_HOST, FLAVOR } from '../../../core/const.js';
 import { Str, Url, Value } from '../../../core/common.js';
-import { tabsQuery, windowsCreate } from '../../../browser/chrome.js';
-import { Api } from './../../shared/api.js';
+import { FLAVOR, GOOGLE_OAUTH_SCREEN_HOST, OAUTH_GOOGLE_API_HOST } from '../../../core/const.js';
 import { ApiErr } from '../../shared/api-error.js';
+import { Api } from './../../shared/api.js';
 
+import { Bm, GoogleAuthWindowResult$result } from '../../../browser/browser-msg.js';
 import { Buf } from '../../../core/buf.js';
+import { InMemoryStoreKeys } from '../../../core/const.js';
+import { OAuth2 } from '../../../oauth2/oauth2.js';
 import { Catch } from '../../../platform/catch.js';
-import { GmailRes } from './gmail-parser';
-import { GoogleAuthErr } from '../../shared/api-error.js';
-import { GoogleAuthWindowResult$result } from '../../../browser/browser-msg.js';
-import { Ui } from '../../../browser/ui.js';
 import { AcctStore, AcctStoreDict } from '../../../platform/store/acct-store.js';
+import { InMemoryStore } from '../../../platform/store/in-memory-store.js';
 import { AccountServer } from '../../account-server.js';
 import { EnterpriseServer } from '../../account-servers/enterprise-server.js';
-import { InMemoryStore } from '../../../platform/store/in-memory-store.js';
-import { InMemoryStoreKeys } from '../../../core/const.js';
+import { GoogleAuthErr } from '../../shared/api-error.js';
+import { GmailRes } from './gmail-parser';
+import { Assert, AssertError } from '../../../assert.js';
 
 type GoogleAuthTokensResponse = { access_token: string, expires_in: number, refresh_token?: string, id_token: string, token_type: 'Bearer' };
 type AuthResultSuccess = { result: 'Success', acctEmail: string, id_token: string, error?: undefined };
 type AuthResultError = { result: GoogleAuthWindowResult$result, acctEmail?: string, error?: string, id_token: undefined };
 
-type AuthReq = { acctEmail?: string, scopes: string[], messageId?: string, csrfToken: string };
+type AuthReq = { acctEmail?: string, scopes: string[], messageId?: string, expectedState: string };
 export type AuthRes = AuthResultSuccess | AuthResultError;
 
 export class GoogleAuth {
 
   public static OAUTH = {
-    client_id: '717284730244-ostjo2fdtr3ka4q9td69tdr9acmmru2p.apps.googleusercontent.com',
+    client_id: '717284730244-5oejn54f10gnrektjdc4fv4rbic1bj1p.apps.googleusercontent.com',
+    client_secret: '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',
+    redirect_uri: 'https://www.google.com/robots.txt',
     url_code: `${GOOGLE_OAUTH_SCREEN_HOST}/o/oauth2/auth`,
     url_tokens: `${OAUTH_GOOGLE_API_HOST}/token`,
     url_redirect: 'urn:ietf:wg:oauth:2.0:oob:auto',
@@ -119,32 +121,11 @@ export class GoogleAuth {
     if (save || !scopes) { // if tokens will be saved (meaning also scopes should be pulled from storage) or if no scopes supplied
       scopes = await GoogleAuth.apiGoogleAuthPopupPrepareAuthReqScopes(acctEmail, scopes || GoogleAuth.defaultScopes());
     }
-    const authRequest: AuthReq = { acctEmail, scopes, csrfToken: `csrf-${Api.randomFortyHexChars()}` };
-    const url = GoogleAuth.apiGoogleAuthCodeUrl(authRequest);
-    // To fix https://github.com/FlowCrypt/flowcrypt-browser/issues/4553#issuecomment-1198290842
-    // we need to use availLeft and availTop to make the popup window appear on the same screen as the original Flowcrypt window.
-    // It's hard to test because it'd require using --screen-config browser switch to test headless with multiple displays, so tested manually.
-    const screenWidth = (window.screen.width || window.innerWidth);
-    const screenHeight = (window.screen.height || window.innerHeight);
-    // non-standard but supported by most of the browsers
-    const { availLeft, availTop } = (window.screen as unknown as { availLeft?: number, availTop?: number });
-    let adaptiveWidth = Math.floor(screenWidth * 0.4);
-    if (adaptiveWidth < 550) {
-      adaptiveWidth = Math.min(550, Math.floor(screenWidth * 0.9));
-    }
-    const adaptiveHeight = Math.floor(screenHeight * 0.9);
-    const leftOffset = Math.floor((screenWidth / 2) - (adaptiveWidth / 2) + (availLeft || 0));
-    const topOffset = Math.floor((screenHeight / 2) - (adaptiveHeight / 2) + (availTop || 0));
-    const oauthWin = await windowsCreate({ url, left: leftOffset, top: topOffset, height: adaptiveHeight, width: adaptiveWidth, type: 'popup' });
-    if (!oauthWin || !oauthWin.tabs || !oauthWin.tabs.length || !oauthWin.id) {
-      return { result: 'Error', error: 'No oauth window returned after initiating it', acctEmail, id_token: undefined };
-    }
-    const authRes = await Promise.race([
-      GoogleAuth.waitForAndProcessOauthWindowResult(oauthWin.id, acctEmail, scopes, authRequest.csrfToken, save),
-      GoogleAuth.waitForOauthWindowClosed(oauthWin.id, acctEmail),
-    ]);
+    const authRequest = GoogleAuth.newAuthRequest(acctEmail, scopes);
+    const authUrl = GoogleAuth.apiGoogleAuthCodeUrl(authRequest);
+    const authWindowResult = await OAuth2.webAuthFlow(authUrl);
+    const authRes = await GoogleAuth.getAuthRes({ acctEmail, save, expectedState: authRequest.expectedState, authWindowResult });
     if (authRes.result === 'Success') {
-      await chrome.windows.remove(oauthWin.id); // The prompt windows is removed when the user is authorized.
       if (!authRes.id_token) {
         return { result: 'Error', error: 'Grant was successful but missing id_token', acctEmail: authRes.acctEmail, id_token: undefined };
       }
@@ -200,73 +181,55 @@ export class GoogleAuth {
     return await GoogleAuth.newAuthPopup({ acctEmail, scopes: GoogleAuth.defaultScopes('openid'), save: false });
   };
 
-  private static waitForOauthWindowClosed = async (oauthWinId: number, acctEmail: string | undefined): Promise<AuthRes> => {
-    return await new Promise(resolve => {
-      const onOauthWinClosed = (closedWinId: number) => {
-        if (closedWinId === oauthWinId) {
-          chrome.windows.onRemoved.removeListener(onOauthWinClosed);
-          resolve({ result: 'Closed', acctEmail, id_token: undefined });
-        }
-      };
-      chrome.windows.onRemoved.addListener(onOauthWinClosed);
-    });
-  };
-
-  private static processOauthResTitle = (title: string): { result: GoogleAuthWindowResult$result, code?: string, error?: string, csrf?: string } => {
-    const parts = title.split(' ', 2);
-    const result = parts[0] as GoogleAuthWindowResult$result;
-    const params = Url.parse(['code', 'state', 'error'], parts[1]);
-    let authReq: AuthReq;
+  private static getAuthRes = async ({ acctEmail, save, expectedState, authWindowResult }:
+    { acctEmail?: string, save: boolean, expectedState: string, authWindowResult: Bm.AuthWindowResult }): Promise<AuthRes> => {
     try {
-      authReq = GoogleAuth.apiGoogleAuthStateUnpack(String(params.state));
-    } catch (e) {
-      return { result: 'Error', error: `Wrong oauth state response: ${e}` };
-    }
-    if (!['Success', 'Denied', 'Error'].includes(result)) {
-      return { result: 'Error', error: `Unknown google auth result '${result}'` };
-    }
-    return { result, code: params.code ? String(params.code) : undefined, error: params.error ? String(params.error) : undefined, csrf: authReq.csrfToken };
-  };
-
-  /**
-   * Is the title actually just url of the page? (means real title not loaded yet)
-   */
-  private static isUrl = (title: string) => {
-    return title.match(/^(?:https?:\/\/)?accounts\.google\.com/) !== null
-      || title.startsWith(GOOGLE_OAUTH_SCREEN_HOST.replace(/^https?:\/\//, ''))
-      || title.startsWith(GOOGLE_OAUTH_SCREEN_HOST);
-  };
-
-  private static isForwarding = (title: string) => {
-    return title.match(/^Forwarding /) !== null;
-  };
-
-  private static waitForAndProcessOauthWindowResult = async (windowId: number, acctEmail: string | undefined, scopes: string[], csrfToken: string, save: boolean): Promise<AuthRes> => {
-    while (true) {
-      const [oauth] = await tabsQuery({ windowId });
-      if (oauth?.title && oauth.title.includes(GoogleAuth.OAUTH.state_header) && !GoogleAuth.isUrl(oauth.title) && !GoogleAuth.isForwarding(oauth.title)) {
-        const { result, error, code, csrf } = GoogleAuth.processOauthResTitle(oauth.title);
-        if (error === 'access_denied') {
-          return { acctEmail, result: 'Denied', error, id_token: undefined }; // sometimes it was coming in as {"result":"Error","error":"access_denied"}
-        }
-        if (result === 'Success') {
-          if (!csrf || csrf !== csrfToken) {
-            return { acctEmail, result: 'Error', error: `Wrong oauth CSRF token. Please try again.`, id_token: undefined };
-          }
-          if (code) {
-            const { id_token } = save ? await GoogleAuth.retrieveAndSaveAuthToken(code, scopes) : await GoogleAuth.googleAuthGetTokens(code);
-            const { email } = GoogleAuth.parseIdToken(id_token);
-            if (!email) {
-              throw new Error('Missing email address in id_token');
-            }
-            return { acctEmail: email, result: 'Success', id_token };
-          }
-          return { acctEmail, result: 'Error', error: `Google auth result was 'Success' but no auth code`, id_token: undefined };
-        }
-        return { acctEmail, result, error: error ? error : '(no error provided)', id_token: undefined };
+      if (!authWindowResult.url) {
+        return { acctEmail, result: 'Denied', error: 'Invalid response url', id_token: undefined };
       }
-      await Ui.time.sleep(250);
+      if (authWindowResult.error) {
+        return { acctEmail, result: 'Denied', error: authWindowResult.error, id_token: undefined };
+      }
+      const uncheckedUrlParams = Url.parse(['scope', 'code', 'state'], authWindowResult.url!);
+      const allowedScopes = Assert.urlParamRequire.string(uncheckedUrlParams, 'scope');
+      const code = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'code');
+      const receivedState = Assert.urlParamRequire.string(uncheckedUrlParams, 'state');
+      if (!allowedScopes?.includes(this.OAUTH.scopes.compose) || !allowedScopes?.includes(this.OAUTH.scopes.modify)) {
+        if (code) {
+          // Try to get auth token to let login authorization be granted
+          await GoogleAuth.googleAuthGetTokens(code);
+        }
+      }
+      if (!code) {
+        return { acctEmail, result: 'Denied', error: "Google auth result was 'Success' but no auth code", id_token: undefined };
+      }
+      if (receivedState !== expectedState) {
+        return { acctEmail, result: 'Error', error: `Wrong oauth CSRF token. Please try again.`, id_token: undefined };
+      }
+      const { id_token } = save ? await GoogleAuth.retrieveAndSaveAuthToken(code, allowedScopes?.split('+') ?? []) : await GoogleAuth.googleAuthGetTokens(code);
+      const { email } = GoogleAuth.parseIdToken(id_token);
+      if (!email) {
+        throw new Error('Missing email address in id_token');
+      }
+      return { acctEmail: email, result: 'Success', id_token };
+    } catch (err) {
+      if (err instanceof AssertError) {
+        return { acctEmail, result: 'Error', error: 'Could not parse URL returned from Google', id_token: undefined };
+      }
+      return { acctEmail, result: 'Denied', error: String(err), id_token: undefined };
     }
+  };
+
+  private static newAuthRequest = (acctEmail: string | undefined, scopes: string[]): AuthReq => {
+    const authReq = {
+      acctEmail,
+      scopes,
+      csrfToken: `csrf-${Api.randomFortyHexChars()}`
+    };
+    return {
+      ...authReq,
+      expectedState: GoogleAuth.OAUTH.state_header + JSON.stringify(authReq)
+    };
   };
 
   private static apiGoogleAuthCodeUrl = (authReq: AuthReq) => {
@@ -274,22 +237,12 @@ export class GoogleAuth {
       client_id: GoogleAuth.OAUTH.client_id,
       response_type: 'code',
       access_type: 'offline',
-      state: GoogleAuth.apiGoogleAuthStatePack(authReq),
-      redirect_uri: GoogleAuth.OAUTH.url_redirect,
+      prompt: 'consent',
+      state: authReq.expectedState,
+      redirect_uri: GoogleAuth.OAUTH.redirect_uri,
       scope: (authReq.scopes || []).join(' '),
       login_hint: authReq.acctEmail,
     });
-  };
-
-  private static apiGoogleAuthStatePack = (authReq: AuthReq) => {
-    return GoogleAuth.OAUTH.state_header + JSON.stringify(authReq);
-  };
-
-  private static apiGoogleAuthStateUnpack = (state: string): AuthReq => {
-    if (!state.startsWith(GoogleAuth.OAUTH.state_header)) {
-      throw new Error(`Missing oauth state header`);
-    }
-    return JSON.parse(state.replace(GoogleAuth.OAUTH.state_header, '')) as AuthReq;
   };
 
   private static googleAuthSaveTokens = async (acctEmail: string, tokensObj: GoogleAuthTokensResponse, scopes: string[]) => {
@@ -311,7 +264,16 @@ export class GoogleAuth {
 
   private static googleAuthGetTokens = async (code: string) => {
     return await Api.ajax({
-      url: Url.create(GoogleAuth.OAUTH.url_tokens, { grant_type: 'authorization_code', code, client_id: GoogleAuth.OAUTH.client_id, redirect_uri: GoogleAuth.OAUTH.url_redirect }),
+      url: Url.create(
+        GoogleAuth.OAUTH.url_tokens,
+        {
+          grant_type: 'authorization_code',
+          code,
+          client_id: GoogleAuth.OAUTH.client_id,
+          client_secret: GoogleAuth.OAUTH.client_secret,
+          redirect_uri: GoogleAuth.OAUTH.redirect_uri
+        }
+      ),
       method: 'POST',
       crossDomain: true,
       async: true,
@@ -320,7 +282,12 @@ export class GoogleAuth {
 
   private static googleAuthRefreshToken = async (refreshToken: string) => {
     return await Api.ajax({
-      url: Url.create(GoogleAuth.OAUTH.url_tokens, { grant_type: 'refresh_token', refreshToken, client_id: GoogleAuth.OAUTH.client_id }),
+      url: Url.create(GoogleAuth.OAUTH.url_tokens, {
+        grant_type: 'refresh_token',
+        refreshToken,
+        client_id: GoogleAuth.OAUTH.client_id,
+        client_secret: GoogleAuth.OAUTH.client_secret
+      }),
       method: 'POST',
       crossDomain: true,
       async: true,

@@ -3,20 +3,19 @@
 'use strict';
 
 import { Bm, BrowserMsg } from '../common/browser/browser-msg.js';
+import { emailKeyIndex } from '../common/core/common.js';
+import { VERSION } from '../common/core/const.js';
+import { opgp } from '../common/core/crypto/pgp/openpgpjs-custom.js';
+import { ExpirationCache } from '../common/core/expiration-cache.js';
+import { processAndStoreKeysFromEkmLocally } from '../common/helpers.js';
+import { Catch } from '../common/platform/catch.js';
+import { AcctStore } from '../common/platform/store/acct-store.js';
+import { ContactStore } from '../common/platform/store/contact-store.js';
+import { GlobalStore, GlobalStoreDict } from '../common/platform/store/global-store.js';
 import { BgHandlers } from './bg-handlers.js';
 import { BgUtils } from './bgutils.js';
-import { Catch } from '../common/platform/catch.js';
-import { GoogleAuth } from '../common/api/email-provider/gmail/google-auth.js';
-import { VERSION } from '../common/core/const.js';
 import { injectFcIntoWebmail } from './inject.js';
-import { updateSearchables, migrateGlobal, moveContactsToEmailsAndPubkeys, updateOpgpRevocations, updateX509FingerprintsAndLongids } from './migrations.js';
-import { opgp } from '../common/core/crypto/pgp/openpgpjs-custom.js';
-import { GlobalStoreDict, GlobalStore } from '../common/platform/store/global-store.js';
-import { ContactStore } from '../common/platform/store/contact-store.js';
-import { AcctStore } from '../common/platform/store/acct-store.js';
-import { ExpirationCache } from '../common/core/expiration-cache.js';
-import { emailKeyIndex } from '../common/core/common.js';
-import { processAndStoreKeysFromEkmLocally } from '../common/helpers.js';
+import { migrateGlobal, moveContactsToEmailsAndPubkeys, updateOpgpRevocations, updateSearchables, updateX509FingerprintsAndLongids } from './migrations.js';
 
 console.info('background_process.js starting');
 
@@ -73,7 +72,6 @@ opgp.initWorker({ path: '/lib/openpgp.worker.js' });
   BrowserMsg.bgAddListener('settings', BgHandlers.openSettingsPageHandler);
   BrowserMsg.bgAddListener('update_uninstall_url', BgHandlers.updateUninstallUrl);
   BrowserMsg.bgAddListener('get_active_tab_info', BgHandlers.getActiveTabInfo);
-  BrowserMsg.bgAddListener('reconnect_acct_auth_popup', (r: Bm.ReconnectAcctAuthPopup) => GoogleAuth.newAuthPopup(r));
   BrowserMsg.bgAddListener('_tab_', BgHandlers.respondWithSenderTabId);
   BrowserMsg.bgListen();
 
