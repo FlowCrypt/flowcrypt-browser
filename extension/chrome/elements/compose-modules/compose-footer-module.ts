@@ -37,7 +37,7 @@ export class ComposeFooterModule extends ViewModule<ComposeView> {
     if (!footerFirstLine) {
       return '';
     }
-    if (/^[*-_=+#~ ]+$/.test(footerFirstLine)) {
+    if (/^[*\-_=+#~ ]+$/.test(footerFirstLine)) {
       return sanitizedHtmlFooter;  // first line of footer is already a footer separator, made of special characters
     }
     return `--<br>${sanitizedHtmlFooter}`; // create a custom footer separator
