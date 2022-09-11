@@ -623,7 +623,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       gmailPage = await browser.newPage(t, TestUrls.mockGmailUrl(), undefined, extraAuthHeaders);
       await PageRecipe.noToastAppears(gmailPage);
       await gmailPage.notPresent('@dialog-passphrase');
-      const set4 = await retrieveAndCheckKeys(settingsPage, acct, 1, passphrase);
+      const set4 = await retrieveAndCheckKeys(settingsPage, acct, 1);
       expect(set4[0].lastModified).to.equal(set3[0].lastModified); // no update
       // 4. Forget the passphrase, EKM the same version of the existing key, no prompt
       await InboxPageRecipe.finishSessionOnInboxPage(gmailPage);
@@ -670,10 +670,11 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       gmailPage = await browser.newPage(t, TestUrls.mockGmailUrl(), undefined, extraAuthHeaders);
       await PageRecipe.waitForToastToAppearAndDisappear(gmailPage, 'Account keys updated');
       await gmailPage.notPresent('@dialog-passphrase');
-      const set9 = await retrieveAndCheckKeys(settingsPage, acct, 2);
+      const set9 = await retrieveAndCheckKeys(settingsPage, acct, 2, passphrase); // todo: passphrase should be stored?!
       const mainKey9 = KeyUtil.filterKeysByIdentity(set9, [{ family: 'openpgp', id: '392FB1E9FF4184659AB6A246835C0141B9ECF536' }]);
       expect(mainKey9.length).to.equal(1);
-      expect(KeyUtil.filterKeysByIdentity(set9, [{ family: 'openpgp', id: 'FAFB7D675AC74E87F84D169F00B0115807969D75' }]).length).to.equal(1);
+      const secondaryKey9 = KeyUtil.filterKeysByIdentity(set9, [{ family: 'openpgp', id: 'FAFB7D675AC74E87F84D169F00B0115807969D75' }]);
+      expect(secondaryKey9.length).to.equal(1);
       expect(mainKey9[0].lastModified).to.equal(set8[0].lastModified); // no update
       await gmailPage.close();
       // 9. EKM returns a newer version of one key, fully omitting the other one, a toast, an update and removal
@@ -682,8 +683,8 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       await PageRecipe.waitForToastToAppearAndDisappear(gmailPage, 'Account keys updated');
       await gmailPage.notPresent('@dialog-passphrase');
       const set10 = await retrieveAndCheckKeys(settingsPage, acct, 1);
-      // todo: check that the passphrase from the removed key is deleted from session?
-      const mainKey10 = KeyUtil.filterKeysByIdentity(set10, [{ family: 'openpgp', id: '392FB1E9FF4184659AB6A246835C0141B9ECF536' }]);
+      const mainKey10 = KeyUtil.filterKeysByIdentity(set10, [mainKey9[0]]);
+      expect(await getPassphrase(settingsPage, acct, KeyUtil.getPrimaryLongid(secondaryKey9[0]))).to.be.an.undefined; // the passphrase for the old key was deleted
       expect(mainKey10.length).to.equal(1);
       expect(mainKey10[0].lastModified!).to.be.greaterThan(mainKey9[0].lastModified!); // updated this key
       // 10. Forget the passphrase, EKM returns a third key, we enter a passphrase that doesn't match any of the existing keys, no update
@@ -702,7 +703,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       }
       await ComposePageRecipe.cancelPassphraseDialog(gmailPage, 'keyboard');
       await PageRecipe.noToastAppears(gmailPage);
-      const set11 = await retrieveAndCheckKeys(settingsPage, acct, 1);
+      const set11 = await retrieveAndCheckKeys(settingsPage, acct, 1, passphrase);
       expect(set11.map(entry => entry.id)).to.eql(['392FB1E9FF4184659AB6A246835C0141B9ECF536']);
       await gmailPage.close();
       // 11. EKM returns a new third key, we enter a passphrase matching an existing key, update happens, the old key is removed
@@ -716,8 +717,8 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       }
       await gmailPage.waitTillGone('@dialog-passphrase');
       await PageRecipe.waitForToastToAppearAndDisappear(gmailPage, 'Account keys updated');
-      const set12 = await retrieveAndCheckKeys(settingsPage, acct, 1);
-      // todo: check that the passphrase from the removed key is deleted from session?
+      const set12 = await retrieveAndCheckKeys(settingsPage, acct, 1, passphrase); // todo: passphrase should be stored?!
+      expect(await getPassphrase(settingsPage, acct, KeyUtil.getPrimaryLongid(set11[0]))).to.be.an.undefined; // the passphrase for the old key was deleted
       expect(set12.map(entry => entry.id)).to.eql(['277D1ADA213881F4ABE0415395E783DC0289E2E2']);
       const mainKey12 = KeyUtil.filterKeysByIdentity(set12, [{ family: 'openpgp', id: '277D1ADA213881F4ABE0415395E783DC0289E2E2' }]);
       expect(mainKey12.length).to.equal(1);
@@ -733,7 +734,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       await PageRecipe.waitForToastToAppearAndDisappear(gmailPage,
         'Could not update keys from EKM due to error: BrowserMsg(processAndStoreKeysFromEkmLocally) sendRawResponse::Error: Some keys could not be parsed');
       await gmailPage.notPresent('@dialog-passphrase');
-      const set13 = await retrieveAndCheckKeys(settingsPage, acct, 1);
+      const set13 = await retrieveAndCheckKeys(settingsPage, acct, 1, passphrase);
       expect(set13.map(entry => entry.id)).to.eql(['277D1ADA213881F4ABE0415395E783DC0289E2E2']);
       const mainKey13 = KeyUtil.filterKeysByIdentity(set13, [{ family: 'openpgp', id: '277D1ADA213881F4ABE0415395E783DC0289E2E2' }]);
       expect(mainKey13.length).to.equal(1);
@@ -744,7 +745,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       gmailPage = await browser.newPage(t, TestUrls.mockGmailUrl(), undefined, extraAuthHeaders);
       await PageRecipe.noToastAppears(gmailPage);
       await gmailPage.notPresent('@dialog-passphrase');
-      const set14 = await retrieveAndCheckKeys(settingsPage, acct, 1);
+      const set14 = await retrieveAndCheckKeys(settingsPage, acct, 1, passphrase);
       expect(set14.map(entry => entry.id)).to.eql(['277D1ADA213881F4ABE0415395E783DC0289E2E2']);
       const mainKey14 = KeyUtil.filterKeysByIdentity(set14.map(ki => ki), [{ family: 'openpgp', id: '277D1ADA213881F4ABE0415395E783DC0289E2E2' }]);
       expect(mainKey14.length).to.equal(1);
@@ -819,7 +820,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         await gmailPage.waitAndRespondToModal('error', 'confirm', 'Keys for your account were not set up yet - please ask your systems administrator'); await PageRecipe.noToastAppears(gmailPage);
         await gmailPage.close();
         await retrieveAndCheckKeys(settingsPage, acct, 0); // no keys
-        // todo: check that the passphrase is deleted from storage?
+        expect(await getPassphrase(settingsPage, acct, KeyUtil.getPrimaryLongid(set1[0]))).to.be.an.undefined; // the passphrase for the old key was deleted
         await settingsPage.close();
         // 2. Adding a new key from the key manager when there is none in the storage
         MOCK_KM_UPDATING_KEY[acct] = { response: { privateKeys: [{ decryptedPrivateKey: testConstants.updatingPrv }] } };
