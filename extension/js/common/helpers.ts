@@ -77,10 +77,10 @@ const parseAndCheckPrivateKeys = async (decryptedPrivateKeys: string[]) => {
 const filterKeysToSave = async (candidateKeys: Key[], existingKeys: KeyInfoWithIdentity[]) => {
   // todo: check for uniqueness of candidateKeys identities here?
   if (!existingKeys.length) {
-    return { keysToRetain: [], unencryptedKeysToSave: candidateKeys };
+    return { keysToRetain: [], newUnencryptedKeysToSave: candidateKeys };
   }
   const keysToRetain: Key[] = [];
-  const unencryptedKeysToSave: Key[] = [];
+  const newUnencryptedKeysToSave: Key[] = [];
   for (const candidateKey of candidateKeys) {
     const existingKey = existingKeys.find(ki => KeyUtil.identityEquals(ki, candidateKey));
     if (existingKey) {
@@ -90,9 +90,9 @@ const filterKeysToSave = async (candidateKeys: Key[], existingKeys: KeyInfoWithI
         continue;
       }
     }
-    unencryptedKeysToSave.push(candidateKey);
+    newUnencryptedKeysToSave.push(candidateKey);
   }
-  return { keysToRetain, unencryptedKeysToSave };
+  return { keysToRetain, newUnencryptedKeysToSave };
 };
 
 export const processAndStoreKeysFromEkmLocally = async (
@@ -100,8 +100,8 @@ export const processAndStoreKeysFromEkmLocally = async (
 ): Promise<Bm.Res.ProcessAndStoreKeysFromEkmLocally> => {
   const { unencryptedPrvs } = await parseAndCheckPrivateKeys(decryptedPrivateKeys);
   const existingKeys = await KeyStore.get(acctEmail);
-  let { keysToRetain, unencryptedKeysToSave } = await filterKeysToSave(unencryptedPrvs, existingKeys);
-  if (!unencryptedKeysToSave.length && keysToRetain.length === existingKeys.length) {
+  let { keysToRetain, newUnencryptedKeysToSave } = await filterKeysToSave(unencryptedPrvs, existingKeys);
+  if (!newUnencryptedKeysToSave.length && keysToRetain.length === existingKeys.length) {
     // nothing to update
     return { needPassphrase: false, noKeysSetup: !existingKeys.length };
   }
@@ -116,7 +116,7 @@ export const processAndStoreKeysFromEkmLocally = async (
     return { needPassphrase: true, noKeysSetup: true };
   }
   let encryptedKeys: Key[] = [];
-  if (unencryptedKeysToSave.length) {
+  if (newUnencryptedKeysToSave.length) {
     if (passphrase === undefined) {
       // trying to find a passphrase that unlocks at least one key
       const passphrases = await PassphraseStore.getMany(acctEmail, existingKeys);
@@ -124,18 +124,18 @@ export const processAndStoreKeysFromEkmLocally = async (
     }
     if (passphrase !== undefined) {
       const pp = passphrase;
-      await Promise.all(unencryptedKeysToSave.map(prv => KeyUtil.encrypt(prv, pp)));
-      encryptedKeys = unencryptedKeysToSave;
-      unencryptedKeysToSave = [];
+      await Promise.all(newUnencryptedKeysToSave.map(prv => KeyUtil.encrypt(prv, pp)));
+      encryptedKeys = newUnencryptedKeysToSave;
+      newUnencryptedKeysToSave = [];
     }
   }
-  if (encryptedKeys.length || !unencryptedKeysToSave.length) {
+  if (encryptedKeys.length || !newUnencryptedKeysToSave.length) {
     // also updates `name`, todo: refactor in #4545
     const newKeyset = keysToRetain.concat(encryptedKeys);
     await saveKeysAndPassPhrase(acctEmail, newKeyset, ppOptions, true);
     return { updateCount: encryptedKeys.length + (existingKeys.length - keysToRetain.length), noKeysSetup: !newKeyset.length };
   } else {
     // todo: should we delete?
-    return { needPassphrase: unencryptedKeysToSave.length > 0 };
+    return { needPassphrase: newUnencryptedKeysToSave.length > 0 };
   }
 };
