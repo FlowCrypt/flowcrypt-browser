@@ -7,7 +7,6 @@ import { Buf } from '../core/buf.js';
 import { Dict, Str, UrlParams } from '../core/common.js';
 import { ArmoredKeyIdentityWithEmails, KeyUtil } from '../core/crypto/key.js';
 import { DecryptResult, DiagnoseMsgPubkeysResult, MsgUtil, PgpMsgMethod, PgpMsgTypeResult, VerifyRes } from '../core/crypto/pgp/msg-util.js';
-import { PgpHash } from '../core/crypto/pgp/pgp-hash.js';
 import { Catch } from '../platform/catch.js';
 import { AccountIndex, AcctStoreDict } from '../platform/store/acct-store.js';
 import { GlobalIndex, GlobalStoreDict } from '../platform/store/global-store.js';
