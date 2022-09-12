@@ -1688,6 +1688,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       await composePage.waitAndType('@input-password', 'gO0d-pwd');
       await composePage.waitAndClick('@action-send', { delay: 1 });
       // test rendering of recipients after successful sending
+      await Util.sleep(10);
       await composePage.waitForContent('@replied-to', 'to: First Last <flowcrypt.compatibility@gmail.com>, vladimir@flowcrypt.com');
       await composePage.waitForContent('@replied-cc', 'cc: limon.monte@gmail.com');
       await composePage.waitForContent('@replied-bcc', 'bcc: sweetalert2@gmail.com');
