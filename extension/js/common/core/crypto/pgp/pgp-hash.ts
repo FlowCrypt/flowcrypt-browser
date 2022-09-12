@@ -7,7 +7,7 @@ import { Buf } from '../../buf.js';
 export class PgpHash {
 
   public static sha256UtfStr = async (string: string) => {
-    const digest = await window.crypto.subtle.digest('sha256', Buf.fromUtfStr(string));
+    const digest = await window.crypto.subtle.digest('SHA-256', Buf.fromUtfStr(string));
     return Buf.fromUint8(new Uint8Array(digest)).toHexStr();
   };
 
