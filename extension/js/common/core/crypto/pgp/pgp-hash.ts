@@ -3,12 +3,12 @@
 'use strict';
 
 import { Buf } from '../../buf.js';
-import { opgp } from './openpgpjs-custom.js';
 
 export class PgpHash {
 
   public static sha256UtfStr = async (string: string) => {
-    return opgp.util.Uint8Array_to_hex(await opgp.crypto.hash.digest(opgp.enums.hash.sha256, Buf.fromUtfStr(string)));
+    const digest = await window.crypto.subtle.digest('sha256', Buf.fromUtfStr(string));
+    return Buf.fromUint8(new Uint8Array(digest)).toHexStr();
   };
 
   public static challengeAnswer = async (answer: string) => {

@@ -57,7 +57,6 @@ export namespace Bm {
   export type PgpMsgDecrypt = PgpMsgMethod.Arg.Decrypt;
   export type PgpMsgDiagnoseMsgPubkeys = PgpMsgMethod.Arg.DiagnosePubkeys;
   export type PgpMsgVerifyDetached = PgpMsgMethod.Arg.VerifyDetached;
-  export type PgpHashChallengeAnswer = { answer: string };
   export type PgpMsgType = PgpMsgMethod.Arg.Type;
   export type PgpKeyBinaryToArmored = { binaryKeysData: Uint8Array };
   export type Ajax = { req: JQueryAjaxSettings, stack: string };
@@ -79,7 +78,6 @@ export namespace Bm {
     export type PgpMsgDiagnoseMsgPubkeys = DiagnoseMsgPubkeysResult;
     export type PgpMsgVerify = VerifyRes;
     export type PgpMsgType = PgpMsgTypeResult;
-    export type PgpHashChallengeAnswer = { hashed: string };
     export type PgpKeyBinaryToArmored = { keys: ArmoredKeyIdentityWithEmails[] };
     export type AjaxGmailAttachmentGetChunk = { chunk: Buf };
     export type _tab_ = { tabId: string | null | undefined };
@@ -89,7 +87,7 @@ export namespace Bm {
     export type Ajax = any; // not included in Any below
 
     export type Any = GetActiveTabInfo | _tab_
-      | PgpMsgDecrypt | PgpMsgDiagnoseMsgPubkeys | PgpMsgVerify | PgpHashChallengeAnswer | PgpMsgType
+      | PgpMsgDecrypt | PgpMsgDiagnoseMsgPubkeys | PgpMsgVerify | PgpMsgType
       | InMemoryStoreGet | InMemoryStoreSet | StoreAcctGet | StoreAcctSet | StoreGlobalGet | StoreGlobalSet
       | AjaxGmailAttachmentGetChunk | SaveFetchedPubkeys | ProcessAndStoreKeysFromEkmLocally
       | PgpKeyBinaryToArmored;
@@ -100,7 +98,7 @@ export namespace Bm {
     RenderPublicKeys | NotificationShowAuthPopupNeeded | ComposeWindowOpenDraft |
     NotificationShow | PassphraseDialog | PassphraseDialog | Settings | SetCss | AddOrRemoveClass |
     Db | InMemoryStoreSet | InMemoryStoreGet | StoreGlobalGet | StoreGlobalSet | StoreAcctGet | StoreAcctSet |
-    PgpMsgDecrypt | PgpMsgDiagnoseMsgPubkeys | PgpMsgVerifyDetached | PgpHashChallengeAnswer | PgpMsgType | Ajax |
+    PgpMsgDecrypt | PgpMsgDiagnoseMsgPubkeys | PgpMsgVerifyDetached | PgpMsgType | Ajax |
     ShowAttachmentPreview | ReRenderRecipient | SaveFetchedPubkeys | ProcessAndStoreKeysFromEkmLocally |
     PgpKeyBinaryToArmored | AuthWindowResult;
 
@@ -144,7 +142,6 @@ export class BrowserMsg {
         ajaxGmailAttachmentGetChunk: (bm: Bm.AjaxGmailAttachmentGetChunk) => BrowserMsg.sendAwait(undefined, 'ajaxGmailAttachmentGetChunk',
           bm, true) as Promise<Bm.Res.AjaxGmailAttachmentGetChunk>,
         pgpMsgDiagnosePubkeys: (bm: Bm.PgpMsgDiagnoseMsgPubkeys) => BrowserMsg.sendAwait(undefined, 'pgpMsgDiagnosePubkeys', bm, true) as Promise<Bm.Res.PgpMsgDiagnoseMsgPubkeys>,
-        pgpHashChallengeAnswer: (bm: Bm.PgpHashChallengeAnswer) => BrowserMsg.sendAwait(undefined, 'pgpHashChallengeAnswer', bm, true) as Promise<Bm.Res.PgpHashChallengeAnswer>,
         pgpMsgDecrypt: (bm: Bm.PgpMsgDecrypt) => BrowserMsg.sendAwait(undefined, 'pgpMsgDecrypt', bm, true) as Promise<Bm.Res.PgpMsgDecrypt>,
         pgpMsgVerifyDetached: (bm: Bm.PgpMsgVerifyDetached) => BrowserMsg.sendAwait(undefined, 'pgpMsgVerifyDetached', bm, true) as Promise<Bm.Res.PgpMsgVerify>,
         pgpMsgType: (bm: Bm.PgpMsgType) => BrowserMsg.sendAwait(undefined, 'pgpMsgType', bm, true) as Promise<Bm.Res.PgpMsgType>,
@@ -243,7 +240,6 @@ export class BrowserMsg {
   };
 
   public static addPgpListeners = () => {
-    BrowserMsg.bgAddListener('pgpHashChallengeAnswer', async (r: Bm.PgpHashChallengeAnswer) => ({ hashed: await PgpHash.challengeAnswer(r.answer) }));
     BrowserMsg.bgAddListener('pgpMsgDiagnosePubkeys', MsgUtil.diagnosePubkeys);
     BrowserMsg.bgAddListener('pgpMsgDecrypt', MsgUtil.decryptMessage);
     BrowserMsg.bgAddListener('pgpMsgVerifyDetached', MsgUtil.verifyDetached);
