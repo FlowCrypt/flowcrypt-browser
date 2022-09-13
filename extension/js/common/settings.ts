@@ -33,8 +33,8 @@ export class Settings {
     return PgpPwd.estimateStrength(zxcvbn(passphrase, PgpPwd.weakWords()).guesses, type); // tslint:disable-line:no-unsafe-any
   };
 
-  public static renderSubPage = async (acctEmail: string | undefined, tabId: string, page: string, addUrlTextOrParams?: string | UrlParams) => {
-    await Ui.modal.iframe(Settings.prepareNewSettingsLocationUrl(acctEmail, tabId, page, addUrlTextOrParams));
+  public static renderSubPage = async (acctEmail: string | undefined, tabId: string, page: string, addUrlTextOrParams?: string | UrlParams, iframeHeight?: number) => {
+    await Ui.modal.iframe(Settings.prepareNewSettingsLocationUrl(acctEmail, tabId, page, addUrlTextOrParams), iframeHeight || undefined);
   };
 
   public static redirectSubPage = (acctEmail: string, parentTabId: string, page: string, addUrlTextOrParams?: string | UrlParams) => {
@@ -304,7 +304,7 @@ export class Settings {
           window.location.href = Url.create('/chrome/settings/setup.htm', { acctEmail: response.acctEmail, idToken: response.id_token });
         }
       } else if (response.result === 'Denied' || response.result === 'Closed') {
-        await Ui.modal.iframe('/chrome/settings/modules/auth_denied.htm', 450);
+        await this.renderSubPage(acctEmail, settingsTabId!, '/chrome/settings/modules/auth_denied.htm', undefined, 450);
       } else {
         // Do not report error for csrf
         if (response.error !== 'Wrong oauth CSRF token. Please try again.') {
