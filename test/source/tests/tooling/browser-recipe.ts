@@ -20,7 +20,8 @@ export class BrowserRecipe {
     const settingsPage = await browser.newPage(t, TestUrls.extensionSettings());
     const oauthPopup = await browser.newPageTriggeredBy(t, () => settingsPage.waitAndClick('@action-connect-to-gmail'));
     await OauthPageRecipe.google(t, oauthPopup, acctEmail, 'close');
-    await settingsPage.waitAndRespondToModal('confirm', 'cancel', 'Explaining FlowCrypt webmail permissions');
+    const authDeniedPage = await settingsPage.getFrame(['auth_denied.htm']);
+    await authDeniedPage.waitForContent('@auth-denied-page-header', 'Explaining FlowCrypt webmail permissions');
     return settingsPage;
   };
 
