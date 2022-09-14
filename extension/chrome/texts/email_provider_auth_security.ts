@@ -4,9 +4,9 @@
 
 import { Lang } from '../../js/common/lang.js';
 import { isEnterpriseBuildUsed } from '../../js/common/helpers.js';
-import { Ui } from '../../js/common/browser/ui.js';
 
 const contactForSupportContainer = $('.ask_support_assistance_container');
+const htmlBody = $('body');
 
 contactForSupportContainer.text(Lang.general.contactMinimalSubsentence(isEnterpriseBuildUsed()));
-Ui.activateModalPageLinkTags();
+htmlBody.css('display', 'block');

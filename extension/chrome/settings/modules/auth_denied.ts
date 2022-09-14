@@ -7,6 +7,8 @@ import { isEnterpriseBuildUsed } from '../../../js/common/helpers.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 
 const contactForSupportContainer = $('.ask_support_assistance_container');
+const htmlBody = $('body');
 
 contactForSupportContainer.text(Lang.general.contactIfNeedAssistance(isEnterpriseBuildUsed()));
+htmlBody.css('display', 'block');
 Ui.activateModalPageLinkTags();
