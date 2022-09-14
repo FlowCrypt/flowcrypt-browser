@@ -28,7 +28,8 @@ export type ClientConfiguration = {
   allow_attester_search_only_for_domains?: string[],
   disallow_attester_search_for_domains?: string[],
   enforce_keygen_algo?: string,
-  enforce_keygen_expire_months?: number
+  enforce_keygen_expire_months?: number,
+  in_memory_pass_phrase_session_length?: number
 };
 
 export class BackendData {
@@ -89,6 +90,14 @@ export class BackendData {
           "ENFORCE_ATTESTER_SUBMIT",
           "USE_LEGACY_ATTESTER_SUBMIT",
         ]
+      };
+    }
+    if (domain === 'passphrase-session-length-client-configuration.flowcrypt.test') {
+      return {
+        "flags": [
+          "FORBID_STORING_PASS_PHRASE",
+        ],
+        "in_memory_pass_phrase_session_length": 60
       };
     }
     if (domain === 'no-submit-client-configuration.flowcrypt.test') {

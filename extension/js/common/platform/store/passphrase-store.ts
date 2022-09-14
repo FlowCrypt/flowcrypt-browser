@@ -74,7 +74,7 @@ export class PassphraseStore extends AbstractStore {
   private static setByIndex = async (storageType: StorageType, acctEmail: string, storageIndex: AccountIndex, passphrase: string | undefined): Promise<void> => {
     const clientConfiguration = await ClientConfiguration.newInstance(acctEmail);
     if (storageType === 'session') {
-      return await InMemoryStore.set(acctEmail, storageIndex, passphrase, clientConfiguration.getInMemoryPassPhraseSessionLength());
+      return await InMemoryStore.set(acctEmail, storageIndex, passphrase, clientConfiguration.getInMemoryPassPhraseSessionExpiration());
     } else {
       if (typeof passphrase === 'undefined') {
         await AcctStore.remove(acctEmail, [storageIndex]);

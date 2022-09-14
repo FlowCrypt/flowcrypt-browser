@@ -88,12 +88,13 @@ export class ClientConfiguration {
    * pass phrase session length to be configurable with client configuraiton
    * default 4 hours
    */
-  public getInMemoryPassPhraseSessionLength = (): number | undefined => {
-    // in_memory_pass_phrase_session_length min: 1, max: Int max value
+  public getInMemoryPassPhraseSessionExpiration = (): number => {
+    let expireIn = 4 * 60 * 60;
     if (this.clientConfigurationJson.in_memory_pass_phrase_session_length) {
-      return Math.max(1, Math.min(this.clientConfigurationJson.in_memory_pass_phrase_session_length!, Number.MAX_VALUE)) * 1000;
+      // in_memory_pass_phrase_session_length min: 1, max: Int max value
+      expireIn = Math.max(1, Math.min(this.clientConfigurationJson.in_memory_pass_phrase_session_length, Number.MAX_VALUE));
     }
-    return undefined;
+    return Date.now() + expireIn * 1000;
   };
 
   // bools
