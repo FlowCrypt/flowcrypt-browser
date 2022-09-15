@@ -722,7 +722,8 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       .append('<div class="allow-google-contact-search" data-test="action-auth-with-contacts-scope"><img src="/img/svgs/gmail.svg" />Enable Google Contact Search</div>') // xss-direct
       .find('.allow-google-contact-search')
       .click(this.view.setHandler(async () => {
-        const authResult = await GoogleAuth.newAuthPopup({ acctEmail: this.view.acctEmail, scopes: GoogleAuth.defaultScopes('contacts') });
+        // Need to use BrowserMsg.send.bg because chrome.windows is undefined in gmail page
+        const authResult = await BrowserMsg.send.bg.await.reconnectAcctAuthPopup({ acctEmail: this.view.acctEmail, scopes: GoogleAuth.defaultScopes('contacts') });
         if (authResult.result === 'Success') {
           this.googleContactsSearchEnabled = true;
           this.hideContacts();

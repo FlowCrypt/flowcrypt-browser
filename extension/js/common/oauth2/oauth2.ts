@@ -23,10 +23,14 @@ export class OAuth2 {
     }
     const tabId = oauthWin?.tabs && oauthWin.tabs[0].id;
     return await new Promise((resolve) => {
-      BrowserMsg.addListener('auth_window_result', async (result: Bm.AuthWindowResult) => {
-        void chrome.tabs.remove(tabId!);
-        resolve(result);
-        return false;
+      // need to use chrome.runtime.onMessage because BrowserMsg.addListener doesn't work
+      // In gmail page reconnect auth popup, it sends event to background page (BrowserMsg.send.bg.await.reconnectAcctAuthPopup)
+      // thefore BrowserMsg.addListener doesn't work
+      chrome.runtime.onMessage.addListener((message: Bm.Raw) => {
+        if (message.name === 'auth_window_result') {
+          void chrome.tabs.remove(tabId!);
+          resolve(message.data.bm as Bm.AuthWindowResult);
+        }
       });
       chrome.tabs.onRemoved.addListener((removedTabId) => {
         // Only reject error when auth result not successful
