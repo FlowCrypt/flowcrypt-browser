@@ -4,9 +4,18 @@
 
 import { Lang } from '../../js/common/lang.js';
 import { isEnterpriseBuildUsed } from '../../js/common/helpers.js';
+import { View } from '../../js/common/view.js';
+View.run(class EmailProviderAuthSecurityView extends View {
 
-const contactForSupportContainer = $('.ask_support_assistance_container');
-const htmlBody = $('body');
+  public render = async () => {
+    const contactForSupportContainer = $('.ask_support_assistance_container');
+    const htmlBody = $('body');
+    contactForSupportContainer.text(Lang.general.contactMinimalSubsentence(isEnterpriseBuildUsed()));
+    htmlBody.css('display', 'block');
+  };
 
-contactForSupportContainer.text(Lang.general.contactMinimalSubsentence(isEnterpriseBuildUsed()));
-htmlBody.css('display', 'block');
+  public setHandlers = () => {
+    // no need
+  };
+
+});

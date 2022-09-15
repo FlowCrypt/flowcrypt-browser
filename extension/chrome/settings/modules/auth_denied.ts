@@ -4,9 +4,19 @@
 
 import { Lang } from '../../../js/common/lang.js';
 import { isEnterpriseBuildUsed } from '../../../js/common/helpers.js';
+import { View } from '../../../js/common/view.js';
 
-const contactForSupportContainer = $('.ask_support_assistance_container');
-const htmlBody = $('body');
+View.run(class AuthDeniedView extends View {
 
-contactForSupportContainer.text(Lang.general.contactIfNeedAssistance(isEnterpriseBuildUsed()));
-htmlBody.css('display', 'block');
+  public render = async () => {
+    const contactForSupportContainer = $('.ask_support_assistance_container');
+    const htmlBody = $('body');
+    contactForSupportContainer.text(Lang.general.contactIfNeedAssistance(isEnterpriseBuildUsed()));
+    htmlBody.css('display', 'block');
+  };
+
+  public setHandlers = () => {
+    // No need
+  };
+
+});
