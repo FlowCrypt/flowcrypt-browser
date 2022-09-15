@@ -5,7 +5,6 @@
 import { Lang } from '../../js/common/lang.js';
 import { Url } from '../../js/common/core/common.js';
 import { Xss } from '../../js/common/platform/xss.js';
-import { isEnterpriseBuildUsed } from '../../js/common/helpers.js';
 
 const uncheckedUrlParams = Url.parse(['reason', 'stack']);
 const reason = String(uncheckedUrlParams.reason);
@@ -22,7 +21,7 @@ const dbCorruptedHtml = `
       and remove FlowCrypt from your browser. After that, go to <a href="https://flowcrypt.com">flowcrypt.com</a> to install it again.</li>
     <li>If this didn't help either, you may need to re-install your browser.</li>
   </ol>
-  <p>${Lang.general.contactForSupportSentence(isEnterpriseBuildUsed())}</p>
+  <p>${Lang.general.contactForSupportSentence()}</p>
 `;
 
 const checkFfSettings = `If you are on Firefox, check that <b>indexedDB.enabled</b> is set to <b>true</b> in browser about:config
@@ -41,7 +40,7 @@ if (reason === 'db_corrupted') {
   title.text('FlowCrypt cannot function because browser storage is disabled or missing');
   Xss.sanitizeRender(details, `<p>browser.storage is undefined</p><p>If you are on Firefox, check for any special browser settings, or use a clean Firefox Profile.</p>`);
 } else {
-  details.text(`Unknown reason. ${Lang.general.contactForSupportSentence(isEnterpriseBuildUsed())}`);
+  details.text(`Unknown reason. ${Lang.general.contactForSupportSentence()}`);
 }
 
 if (stack) {

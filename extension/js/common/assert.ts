@@ -12,7 +12,7 @@ import { AcctStore } from './platform/store/acct-store.js';
 import { KeyStore } from './platform/store/key-store.js';
 import { Xss } from './platform/xss.js';
 import { Settings } from './settings.js';
-import { isEnterpriseBuildUsed, isFesUsed } from './helpers.js';
+import { isFesUsed } from './helpers.js';
 
 
 export class AssertError extends UnreportableError { }
@@ -87,7 +87,7 @@ export class Assert {
     Xss.sanitizeRender('body', renderMsg).addClass('bad').css({ padding: '20px', 'font-size': '16px' });
     $('.action_report_issue').click(Ui.event.handle(async () => {
       Catch.report(msg, { currentUrl: window.location.href, params: values });
-      $('body').text(`Thank you. ${Lang.general.contactIfNeedAssistance(isEnterpriseBuildUsed())}`);
+      $('body').text(`Thank you. ${Lang.general.contactIfNeedAssistance()}`);
     }));
     throw new AssertError(msg);
   };
