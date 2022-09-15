@@ -206,7 +206,7 @@ export class GoogleAuth {
       if (receivedState !== expectedState) {
         return { acctEmail, result: 'Error', error: `Wrong oauth CSRF token. Please try again.`, id_token: undefined };
       }
-      const { id_token } = save ? await GoogleAuth.retrieveAndSaveAuthToken(code, allowedScopes?.split('+') ?? []) : await GoogleAuth.googleAuthGetTokens(code);
+      const { id_token } = save ? await GoogleAuth.retrieveAndSaveAuthToken(code, allowedScopes?.replace(/\+/g, ' ')?.split(' ') ?? []) : await GoogleAuth.googleAuthGetTokens(code);
       const { email } = GoogleAuth.parseIdToken(id_token);
       if (!email) {
         throw new Error('Missing email address in id_token');
