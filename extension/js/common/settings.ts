@@ -24,6 +24,7 @@ import { AbstractStore } from './platform/store/abstract-store.js';
 import { KeyStore } from './platform/store/key-store.js';
 import { PassphraseStore } from './platform/store/passphrase-store.js';
 import { isFesUsed } from './helpers.js';
+import { Api } from './api/shared/api.js';
 
 declare const zxcvbn: Function; // tslint:disable-line:ban-types
 
@@ -304,7 +305,8 @@ export class Settings {
           window.location.href = Url.create('/chrome/settings/setup.htm', { acctEmail: response.acctEmail, idToken: response.id_token });
         }
       } else if (response.result === 'Denied' || response.result === 'Closed') {
-        await this.renderSubPage(acctEmail, settingsTabId!, '/chrome/settings/modules/auth_denied.htm', undefined, 450);
+        const authDeniedHtml = await Api.ajax({ url: '/chrome/settings/modules/auth_denied.htm' }, Catch.stackTrace()) as string; // tslint:disable-line:no-direct-ajax
+        await Ui.modal.info(`${authDeniedHtml}\n<div class="line">${Lang.general.contactIfNeedAssistance()}`, true);
       } else {
         // Do not report error for csrf
         if (response.error !== 'Wrong oauth CSRF token. Please try again.') {
