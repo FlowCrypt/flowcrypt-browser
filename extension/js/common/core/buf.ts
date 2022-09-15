@@ -170,10 +170,14 @@ export class Buf extends Uint8Array {
     return chars.join('');
   };
 
-  public toHexStr = (): string => {
+  public toHexStr = (uppercaseFlag = true): string => {
     const chars: string[] = [];
     for (const v of this.values()) {
-      chars.push((('00' + v.toString(16)).slice(-2)).toUpperCase());
+      let char = ('00' + v.toString(16)).slice(-2);
+      if (uppercaseFlag) {
+        char = char.toUpperCase();
+      }
+      chars.push(char);
     }
     return chars.join('');
   };
