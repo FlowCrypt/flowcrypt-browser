@@ -612,10 +612,6 @@ export class ControllablePage extends ControllableBase {
         }
       }, TIMEOUT_DESTROY_UNEXPECTED_ALERT * 1000);
     });
-    // Disable `Changes you made may not be saved` dialog
-    this.target.evaluate(() => {
-      window.onbeforeunload = () => { return false; };
-    });
   }
 
   public newAlertTriggeredBy = async (triggeringAction: () => Promise<void>): Promise<ControllableAlert> => {
