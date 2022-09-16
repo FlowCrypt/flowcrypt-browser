@@ -166,8 +166,10 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
      *   Therefore, eventually, this `if` branch with the line below will be removed once both
      *   consumers and enterprises use API with the same structure.
      */
+    this.view.errModule.debug(`Is fes used: ${await this.view.acctServer.isFesUsed()}`);
     if (! await this.view.acctServer.isFesUsed()) { // if flowcrypt.com/api is used
       newMsg.pwd = await PgpHash.challengeAnswer(newMsg.pwd); // then hash the password to preserve compatibility
+      this.view.errModule.debug(`newMsg pwd: ${newMsg.pwd}`);
     }
     const authInfo = await AcctStore.authInfo(this.acctEmail);
     this.view.errModule.debug(`prepareAndUploadPwdEncryptedMsg: authInfo: ${authInfo}`);
