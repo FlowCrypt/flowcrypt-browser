@@ -85,7 +85,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       const page = await browser.newPage(t, url);
       if (disableOnBeforeUnload) {
         await page.target.evaluate(() => {
-          window.onbeforeunload = () => { return null; };
+          window.onbeforeunload = () => { return undefined; }; // tslint:disable-line:no-null-keyword
         });
       }
       return page;
