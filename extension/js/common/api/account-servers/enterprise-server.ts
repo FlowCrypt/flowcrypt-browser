@@ -133,6 +133,7 @@ export class EnterpriseServer extends Api {
     });
     const multipartBody = { content, details };
     const authHdr = await this.authHdr();
+    console.log(`enterprise message upload: ${this.url}/api/${this.apiVersion}/message ${multipartBody}`);
     return await EnterpriseServer.apiCall<FesRes.MessageUpload>(
       this.url, `/api/${this.apiVersion}/message`, multipartBody, 'FORM',
       { upload: progressCb }, authHdr, 'json', 'POST'

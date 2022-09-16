@@ -89,7 +89,9 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
     //    - flowcrypt.com/api (consumers and customers without on-prem setup), or
     //    - FlowCrypt Enterprise Server (enterprise customers with on-prem setup)
     //    It will be served to recipient through web
+    this.view.errModule.debug(`formatSendablePwdMsgs start`);
     const uploadedMessageData = await this.prepareAndUploadPwdEncryptedMsg(newMsg); // encrypted for pwd only, pubkeys ignored
+    this.view.errModule.debug(`formatSendablePwdMsgs uploadedMessageData: ${JSON.stringify(uploadedMessageData)}`);
     // pwdRecipients that have their personal link
     const individualPwdRecipients = Object.keys(uploadedMessageData.emailToExternalIdAndUrl ?? {}).filter(email => !pubkeys.some(p => p.email === email));
     const legacyPwdRecipients: { [type in RecipientType]?: EmailParts[] } = {};
@@ -168,6 +170,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
       newMsg.pwd = await PgpHash.challengeAnswer(newMsg.pwd); // then hash the password to preserve compatibility
     }
     const authInfo = await AcctStore.authInfo(this.acctEmail);
+    this.view.errModule.debug(`prepareAndUploadPwdEncryptedMsg: authInfo: ${authInfo}`);
     const { bodyWithReplyToken, replyToken } = await this.getPwdMsgSendableBodyWithOnlineReplyMsgToken(authInfo, newMsg);
     const pgpMimeWithAttachments = await Mime.encode(bodyWithReplyToken, { Subject: newMsg.subject }, await this.view.attachmentsModule.attachment.collectAttachments());
     const { data: pwdEncryptedWithAttachments } = await this.encryptDataArmor(Buf.fromUtfStr(pgpMimeWithAttachments), newMsg.pwd, []); // encrypted only for pwd, not signed

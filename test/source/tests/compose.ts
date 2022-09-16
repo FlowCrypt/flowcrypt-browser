@@ -1677,7 +1677,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       await expectRecipientElements(composePage, { to: [{ email: 'limon.monte@gmail.com' }], cc: [], bcc: [] });
     }));
 
-    ava.default('compose - reply all - from === acctEmail', testWithBrowser('compatibility', async (t, browser) => {
+    ava.default.only('compose - reply all - from === acctEmail', testWithBrowser('compatibility', async (t, browser) => {
       const appendUrl = 'threadId=17d02296bccd4c5c&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___&replyMsgId=17d02296bccd4c5c';
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl, hasReplyPrompt: true });
       await composePage.waitAndClick('@action-accept-reply-all-prompt', { delay: 1 });
@@ -1688,7 +1688,6 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       await composePage.waitAndType('@input-password', 'gO0d-pwd');
       await composePage.waitAndClick('@action-send', { delay: 1 });
       // test rendering of recipients after successful sending
-      await Util.sleep(5);
       await composePage.waitForContent('@replied-to', 'to: First Last <flowcrypt.compatibility@gmail.com>, vladimir@flowcrypt.com');
       await composePage.waitForContent('@replied-cc', 'cc: limon.monte@gmail.com');
       await composePage.waitForContent('@replied-bcc', 'bcc: sweetalert2@gmail.com');
