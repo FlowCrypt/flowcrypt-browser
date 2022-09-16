@@ -245,7 +245,7 @@ export class Ui {
       Ui.activateModalPageLinkTags(); // in case the page itself has data-swal-page links
       await userResponsePromise;
     },
-    iframe: async (iframeUrl: string, iframeHeight?: number, dataTest?: string, allowJs?: boolean | false): Promise<SweetAlertResult> => {
+    iframe: async (iframeUrl: string, iframeHeight?: number, dataTest?: string): Promise<SweetAlertResult> => {
       const iframeWidth = Math.min(800, $('body').width()! - 200);
       iframeHeight = iframeHeight || $('body').height()! - ($('body').height()! > 800 ? 150 : 75);
       return await Ui.swal().fire({
@@ -258,7 +258,7 @@ export class Ui {
           window.history.pushState('', '', urlWithoutPageParam);
         },
         keydownListenerCapture: true,
-        html: `<iframe src="${Xss.escape(iframeUrl)}" width="${iframeWidth}" height="${iframeHeight}" ${allowJs ? 'sandbox="allow-scripts"' : 'sandbox'} style="border: 0"></iframe>`,
+        html: `<iframe src="${Xss.escape(iframeUrl)}" width="${iframeWidth}" height="${iframeHeight}" style="border: 0"></iframe>`,
         width: 'auto',
         backdrop: 'rgba(0, 0, 0, 0.6)',
         showCloseButton: true,
@@ -307,7 +307,7 @@ export class Ui {
       const jsAllowedSwalPage = $(target).data('swal-page-allow-js') as boolean; // use this flag is the swal-page contains javascript
       const htmlUrl = $(target).data('swal-page') as string;
       if (jsAllowedSwalPage) {
-        await Ui.modal.iframe(htmlUrl, undefined, undefined, true);
+        await Ui.modal.iframe(htmlUrl);
       } else {
         await Ui.modal.page(htmlUrl);
       }
