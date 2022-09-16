@@ -289,7 +289,6 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
 
     ava.default('mail.google.com - secure reply btn, reply draft', testWithBrowser('ci.tests.gmail', async (t, browser) => {
       const gmailPage = await openGmailPage(t, browser);
-      await Util.sleep(1);
       await gotoGmailPage(gmailPage, '/FMfcgzGpGnLZzLxNpWchTnNfxKkNzBSD'); // to go encrypted convo
       // Gmail has 100 emails per thread limit, so if there are 98 deleted messages + 1 initial message,
       // the draft number 100 won't be saved. Therefore, we need to delete forever trashed messages from this thread.
@@ -381,13 +380,15 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
     ava.default.only('mail.google.com - plain reply draft', testWithBrowser('ci.tests.gmail', async (t, browser) => {
       const gmailPage = await openGmailPage(t, browser);
       await gotoGmailPage(gmailPage, '/FMfcgzGpGnLZzLxNpWchTnNfxKkNzBSD'); // go to encrypted convo
-      await gmailPage.waitAndClick('[data-tooltip="Reply"]');
-      await gmailPage.waitTillFocusIsIn('div[aria-label="Message Body"]');
+      await gmailPage.waitAndClick('[data-tooltip="Reply"]', { delay: 5 });
+      await Util.sleep(20);
+      await gmailPage.waitTillFocusIsIn('div[aria-label="Message Body"]', { timeout: 10 });
       await gmailPage.type('div[aria-label="Message Body"]', 'plain reply', true);
       await gmailPage.waitForContent('.oG.aOy', 'Draft saved');
+      await Util.sleep(10);
       await gmailPage.page.reload({ waitUntil: 'networkidle2' });
-      await pageDoesNotHaveSecureReplyContainer(gmailPage);
       await gmailPage.waitForContent('div[aria-label="Message Body"]', 'plain reply', 30);
+      await pageDoesNotHaveSecureReplyContainer(gmailPage);
       await gmailPage.click('[aria-label^="Discard draft"]');
     }));
 

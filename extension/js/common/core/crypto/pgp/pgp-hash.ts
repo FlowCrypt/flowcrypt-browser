@@ -15,13 +15,10 @@ export class PgpHash {
     return await PgpHash.cryptoHashSha256Loop(answer);
   };
 
-  private static cryptoHashSha256Loop = async (string: string, times = 100) => {
-    console.log(`cryptoHashSha256Loop start`);
-    console.log(`first try ${(await PgpHash.sha256UtfStr(string))}`);
+  private static cryptoHashSha256Loop = async (string: string, times = 10000) => {
     for (let i = 0; i < times; i++) {
       string = await PgpHash.sha256UtfStr(string);
     }
-    console.log(`cryptoHashSha256Loop end ${string}`);
     return string;
   };
 

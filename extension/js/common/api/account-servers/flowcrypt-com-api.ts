@@ -63,9 +63,7 @@ export class FlowCryptComApi extends Api {
 
   public static messageUpload = async (fcAuth: FcUuidAuth | undefined, encryptedDataBinary: Uint8Array, progressCb: ProgressCb): Promise<BackendRes.FcMsgUpload> => {
     const content = new Attachment({ name: 'cryptup_encrypted_message.asc', type: 'text/plain', data: encryptedDataBinary });
-    console.log(`message upload start: ${content}`);
     const rawResponse = await FlowCryptComApi.request<{ short: string }>('message/upload', { content, ...(fcAuth || {}) }, 'FORM', undefined, { upload: progressCb });
-    console.log(`message upload end: ${rawResponse}`);
     if (!rawResponse.short) {
       throw new Error('Unexpectedly missing message upload short id');
     }

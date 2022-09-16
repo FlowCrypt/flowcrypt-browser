@@ -612,6 +612,10 @@ export class ControllablePage extends ControllableBase {
         }
       }, TIMEOUT_DESTROY_UNEXPECTED_ALERT * 1000);
     });
+    // Disable `Changes you made may not be saved` dialog
+    this.target.evaluate(() => {
+      window.onbeforeunload = () => { return false; };
+    });
   }
 
   public newAlertTriggeredBy = async (triggeringAction: () => Promise<void>): Promise<ControllableAlert> => {
@@ -637,6 +641,9 @@ export class ControllablePage extends ControllableBase {
 
   public goto = async (url: string) => {
     url = url.indexOf('https://') === 0 || url.indexOf(TestUrls.extension('')) === 0 ? url : TestUrls.extension(url);
+    // Below code is for flaky issue when not navigating to correct
+    this.page.goto('about:blank');
+    await Util.sleep(0.1);
     // await this.page.goto(url); // may produce intermittent Navigation Timeout Exceeded in CI environment
     this.page.goto(url).catch(e => this.t.log(`goto: ${e.message}: ${url}`));
     await Promise.race([
