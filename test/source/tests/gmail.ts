@@ -80,14 +80,9 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       expect(urls.length).to.equal(0);
     };
 
-    const openGmailPage = async (t: AvaContext, browser: BrowserHandle, disableOnBeforeUnload = false): Promise<ControllablePage> => {
+    const openGmailPage = async (t: AvaContext, browser: BrowserHandle): Promise<ControllablePage> => {
       const url = TestUrls.gmail(0);
       const page = await browser.newPage(t, url);
-      if (disableOnBeforeUnload) {
-        await page.target.evaluate(() => {
-          window.onbeforeunload = () => { return null; }; // tslint:disable-line:no-null-keyword
-        });
-      }
       return page;
     };
 
@@ -294,7 +289,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
     }));
 
     ava.default('mail.google.com - secure reply btn, reply draft', testWithBrowser('ci.tests.gmail', async (t, browser) => {
-      const gmailPage = await openGmailPage(t, browser, true);
+      const gmailPage = await openGmailPage(t, browser);
       await gotoGmailPage(gmailPage, '/FMfcgzGpGnLZzLxNpWchTnNfxKkNzBSD'); // to go encrypted convo
       // Gmail has 100 emails per thread limit, so if there are 98 deleted messages + 1 initial message,
       // the draft number 100 won't be saved. Therefore, we need to delete forever trashed messages from this thread.
@@ -349,7 +344,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
     }));
 
     ava.default('mail.google.com - plain reply to encrypted and signed messages', testWithBrowser('ci.tests.gmail', async (t, browser) => {
-      const gmailPage = await openGmailPage(t, browser, true);
+      const gmailPage = await openGmailPage(t, browser);
       await gotoGmailPage(gmailPage, '/FMfcgzGkbDRNgcQxLmkhBCKVSFwkfdvV'); // plain convo
       await gmailPage.waitAndClick('[data-tooltip="Reply"]', { delay: 1 });
       await gotoGmailPage(gmailPage, '/FMfcgzGpGnLZzLxNpWchTnNfxKkNzBSD'); // to go encrypted convo
@@ -368,7 +363,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
     }));
 
     ava.default('mail.google.com - plain reply with dot menu', testWithBrowser('ci.tests.gmail', async (t, browser) => {
-      const gmailPage = await openGmailPage(t, browser, true);
+      const gmailPage = await openGmailPage(t, browser);
       await gotoGmailPage(gmailPage, '/FMfcgzGkbDRNgcQxLmkhBCKVSFwkfdvV'); // plain convo
       await gmailPage.waitAndClick('[data-tooltip="Reply"]', { delay: 1 });
       await gotoGmailPage(gmailPage, '/FMfcgzGpGnLZzLxNpWchTnNfxKkNzBSD'); // to go encrypted convo
