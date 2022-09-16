@@ -82,8 +82,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
 
     const openGmailPage = async (t: AvaContext, browser: BrowserHandle): Promise<ControllablePage> => {
       const url = TestUrls.gmail(0);
-      const page = await browser.newPage(t, url);
-      return page;
+      return await browser.newPage(t, url);
     };
 
     const gotoGmailPage = async (gmailPage: ControllablePage, path: string, category: GmailCategory = 'inbox') => {
@@ -383,7 +382,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       const gmailPage = await openGmailPage(t, browser);
       await gotoGmailPage(gmailPage, '/FMfcgzGpGnLZzLxNpWchTnNfxKkNzBSD'); // go to encrypted convo
       await gmailPage.waitAndClick('[data-tooltip="Reply"]', { delay: 5 });
-      await Util.sleep(20);
+      await Util.sleep(30);
       await gmailPage.waitTillFocusIsIn('div[aria-label="Message Body"]', { timeout: 10 });
       await gmailPage.type('div[aria-label="Message Body"]', 'plain reply', true);
       await gmailPage.waitForContent('.oG.aOy', 'Draft saved');
