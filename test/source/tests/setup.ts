@@ -438,6 +438,21 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         { isSavePassphraseChecked: false, isSavePassphraseHidden: false });
     }));
 
+    ava.default('setup - enterprise users should be redirected to their help desk when an error occured', testWithBrowser(undefined, async (t, browser) => {
+      const acctEmail = 'flowcrypt.compatibility@gmail.com';
+      if (testVariant === 'ENTERPRISE-MOCK') {
+        const settingsPage = await browser.newPage(t, TestUrls.extensionSettings());
+        const oauthPopup = await browser.newPageTriggeredBy(t, () => settingsPage.waitAndClick('@action-connect-to-gmail'));
+        await OauthPageRecipe.mock(t, oauthPopup, acctEmail, 'login_with_invalid_state');
+        await settingsPage.waitForContent('@container-error-modal-text', 'please contact your Help Desk');
+      } else if (testVariant === 'CONSUMER-MOCK') {
+        const settingsPage = await browser.newPage(t, TestUrls.extensionSettings());
+        const oauthPopup = await browser.newPageTriggeredBy(t, () => settingsPage.waitAndClick('@action-connect-to-gmail'));
+        await OauthPageRecipe.mock(t, oauthPopup, acctEmail, 'login_with_invalid_state');
+        await settingsPage.waitForContent('@container-error-modal-text', 'write us at human@flowcrypt.com');
+      }
+    }));
+
     ava.default('has.pub@client-configuration-test.flowcrypt.test - no backup, no keygen', testWithBrowser(undefined, async (t, browser) => {
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'has.pub@client-configuration-test.flowcrypt.test');
       await SetupPageRecipe.manualEnter(settingsPage, 'has.pub.client.configuration.test', { noPrvCreateClientConfiguration: true, enforceAttesterSubmitClientConfiguration: true },

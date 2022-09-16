@@ -11,6 +11,7 @@ import { ContactStore } from './platform/store/contact-store.js';
 import { KeyStore } from './platform/store/key-store.js';
 import { PassphraseStore } from './platform/store/passphrase-store.js';
 import { Bm } from './browser/browser-msg.js';
+
 export const isFesUsed = async (acctEmail: string) => {
   const { fesUrl } = await AcctStore.get(acctEmail, ['fesUrl']);
   return Boolean(fesUrl);
