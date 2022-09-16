@@ -15,7 +15,7 @@ export class PgpHash {
     return await PgpHash.cryptoHashSha256Loop(answer);
   };
 
-  private static cryptoHashSha256Loop = async (string: string, times = 10000) => {
+  private static cryptoHashSha256Loop = async (string: string, times = 100000) => {
     for (let i = 0; i < times; i++) {
       string = await PgpHash.sha256UtfStr(string);
     }
