@@ -18,6 +18,7 @@ import { testConstants } from './tooling/consts';
 import { SetupPageRecipe } from './page-recipe/setup-page-recipe';
 import { KeyUtil } from '../core/crypto/key';
 import { ElementHandle } from 'puppeteer';
+import { expectRecipientElements } from './compose';
 
 // tslint:disable:no-blank-lines-func
 
@@ -97,6 +98,22 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'setup@prv-create-no-prv-backup.flowcrypt.test');
       await SetupPageRecipe.createKey(settingsPage, 'flowcrypt.test.key.used.pgp', 'disabled', { submitPubkey: false, usedPgpBefore: false, enforcedAlgo: 'rsa2048' },
         { isSavePassphraseChecked: false, isSavePassphraseHidden: false });
+    }));
+
+    ava.default('compose - reply all - from === acctEmail', testWithBrowser('compatibility', async (t, browser) => {
+      const appendUrl = 'threadId=17d02296bccd4c5c&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___&replyMsgId=17d02296bccd4c5c';
+      const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl, hasReplyPrompt: true });
+      await composePage.waitAndClick('@action-accept-reply-all-prompt', { delay: 1 });
+      await expectRecipientElements(composePage, {
+        to: [{ email: 'flowcrypt.compatibility@gmail.com', name: 'First Last' }, { email: 'vladimir@flowcrypt.com' }],
+        cc: [{ email: 'limon.monte@gmail.com' }], bcc: [{ email: 'sweetalert2@gmail.com' }]
+      });
+      await composePage.waitAndType('@input-password', 'gO0d-pwd');
+      await composePage.waitAndClick('@action-send', { delay: 1 });
+      // test rendering of recipients after successful sending
+      await composePage.waitForContent('@replied-to', 'to: First Last <flowcrypt.compatibility@gmail.com>, vladimir@flowcrypt.com');
+      await composePage.waitForContent('@replied-cc', 'cc: limon.monte@gmail.com');
+      await composePage.waitForContent('@replied-bcc', 'bcc: sweetalert2@gmail.com');
     }));
 
     ava.default('user@no-submit-client-configuration.flowcrypt.test - do not submit to attester on key generation', testWithBrowser(undefined, async (t, browser) => {
