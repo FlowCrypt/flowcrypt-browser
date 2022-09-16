@@ -138,7 +138,7 @@ export class Ui {
   public static modal = {
     info: async (text: string, isHTML: boolean = false): Promise<void> => {
       text = isHTML ? Xss.htmlSanitize(text) : Xss.escape(text).replace(/\n/g, '<br>');
-      await Ui.swal().fire({
+      const userResponsePromise = Ui.swal().fire({
         html: text,
         allowOutsideClick: false,
         customClass: {
@@ -147,9 +147,10 @@ export class Ui {
         },
       });
       Ui.activateModalPageLinkTags(); // in case the page itself has data-swal-page links
+      await userResponsePromise;
     },
     warning: async (text: string, footer?: string): Promise<void> => {
-      await Ui.swal().fire({
+      const userResponsePromise = Ui.swal().fire({
         html: `<span class="orange">${Xss.escape(text).replace(/\n/g, '<br>')}</span>`,
         footer: footer ? Xss.htmlSanitize(footer) : '',
         allowOutsideClick: false,
@@ -159,10 +160,11 @@ export class Ui {
         },
       });
       Ui.activateModalPageLinkTags(); // in case the page itself has data-swal-page links
+      await userResponsePromise;
     },
     error: async (text: string, isHTML: boolean = false, footer?: string): Promise<void> => {
       text = isHTML ? Xss.htmlSanitize(text) : Xss.escape(text).replace(/\n/g, '<br>');
-      await Ui.swal().fire({
+      const userResponsePromise = Ui.swal().fire({
         html: `<span class="red" data-test="container-error-modal-text">${text}</span>`,
         footer: footer ? Xss.htmlSanitize(footer) : '',
         allowOutsideClick: false,
@@ -172,6 +174,7 @@ export class Ui {
         },
       });
       Ui.activateModalPageLinkTags(); // in case the page itself has data-swal-page links
+      await userResponsePromise;
     },
     /**
      * Presents a modal where user can respond with confirm or cancel.
@@ -225,7 +228,7 @@ export class Ui {
       if (replaceNewlines) {
         html = html.replace(/\n/g, '<br>');
       }
-      await Ui.swal().fire({
+      const userResponsePromise = Ui.swal().fire({
         didOpen: () => {
           Swal.getCloseButton()!.blur();
         },
@@ -240,6 +243,7 @@ export class Ui {
         }
       });
       Ui.activateModalPageLinkTags(); // in case the page itself has data-swal-page links
+      await userResponsePromise;
     },
     iframe: async (iframeUrl: string, iframeHeight?: number, dataTest?: string): Promise<SweetAlertResult> => {
       const iframeWidth = Math.min(800, $('body').width()! - 200);

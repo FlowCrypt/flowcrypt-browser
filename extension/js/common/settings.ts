@@ -306,7 +306,7 @@ export class Settings {
         }
       } else if (response.result === 'Denied' || response.result === 'Closed') {
         const authDeniedHtml = await Api.ajax({ url: '/chrome/settings/modules/auth_denied.htm' }, Catch.stackTrace()) as string; // tslint:disable-line:no-direct-ajax
-        await Ui.modal.info(`${authDeniedHtml}\n<div class="line">${Lang.general.contactIfNeedAssistance()}`, true);
+        await Ui.modal.info(`${authDeniedHtml}\n<div class="line">${Lang.general.contactIfNeedAssistance()}</div>`, true);
       } else {
         // Do not report error for csrf
         if (response.error !== 'Wrong oauth CSRF token. Please try again.') {
