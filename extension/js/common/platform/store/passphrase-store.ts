@@ -13,11 +13,12 @@ export class PassphraseStore extends AbstractStore {
 
   // if we implement (and migrate) password storage to use KeyIdentity instead of longid, we'll have `keyInfo: KeyIdentity` here
   public static get = async (acctEmail: string, keyInfo: { longid: string }, ignoreSession: boolean = false): Promise<string | undefined> => {
-    return (await PassphraseStore.getMany(acctEmail, [keyInfo], ignoreSession))[0];
+    return (await PassphraseStore.getMany(acctEmail, [keyInfo], ignoreSession))[0]?.value;
   };
 
   // if we implement (and migrate) password storage to use KeyIdentity instead of longid, we'll have `keyInfo: KeyIdentity` here
-  public static getMany = async (acctEmail: string, keyInfos: { longid: string }[], ignoreSession: boolean = false): Promise<(string | undefined)[]> => {
+  public static getMany = async (acctEmail: string, keyInfos: { longid: string }[], ignoreSession: boolean = false):
+    Promise<({ value: string, source: StorageType } | undefined)[]> => {
     const storageIndexes = keyInfos.map(keyInfo => PassphraseStore.getIndex(keyInfo.longid));
     return await PassphraseStore.getByIndexes(acctEmail, storageIndexes, ignoreSession);
   };
@@ -63,17 +64,22 @@ export class PassphraseStore extends AbstractStore {
     return `passphrase_${longid}` as unknown as AccountIndex;
   };
 
-  private static getByIndexes = async (acctEmail: string, storageIndexes: AccountIndex[], ignoreSession: boolean = false): Promise<(string | undefined)[]> => {
+  private static getByIndexes = async (acctEmail: string, storageIndexes: AccountIndex[], ignoreSession: boolean = false):
+    Promise<({ value: string, source: StorageType } | undefined)[]> => {
     const storage = await AcctStore.get(acctEmail, storageIndexes);
     const results = await Promise.all(storageIndexes.map(async storageIndex => {
       const found = storage[storageIndex];
       if (typeof found === 'string') {
-        return found;
+        return { value: found, source: 'local' as StorageType };
       }
       if (ignoreSession) {
         return undefined;
       }
-      return await InMemoryStore.get(acctEmail, storageIndex) ?? undefined;
+      const value = await InMemoryStore.get(acctEmail, storageIndex);
+      if (typeof value === 'undefined') {
+        return undefined;
+      }
+      return { value, source: 'session' as StorageType };
     }));
     return results;
   };
