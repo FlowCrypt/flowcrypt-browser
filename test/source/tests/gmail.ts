@@ -183,6 +183,8 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       await Util.sleep(2); // wait for search results
       */
       await gotoGmailPage(gmailPage, '/FMfcgzGkbDWztBnnCgRHzjrvmFqLtcJD');
+      const pgpBlockUrls = await gmailPage.getFramesUrls(['/chrome/elements/pgp_block.htm'], { sleep: 10, appearIn: 25 });
+      expect(pgpBlockUrls.length).to.equal(1);
       await gmailPage.page.setOfflineMode(true); // go offline mode
       await gmailPage.press('Enter'); // open the message
       const pgpBlockFrame = await gmailPage.getFrame(['pgp_block.htm']);
@@ -287,7 +289,6 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
 
     ava.default('mail.google.com - secure reply btn, reply draft', testWithBrowser('ci.tests.gmail', async (t, browser) => {
       const gmailPage = await openGmailPage(t, browser);
-      await Util.sleep(1);
       await gotoGmailPage(gmailPage, '/FMfcgzGpGnLZzLxNpWchTnNfxKkNzBSD'); // to go encrypted convo
       // Gmail has 100 emails per thread limit, so if there are 98 deleted messages + 1 initial message,
       // the draft number 100 won't be saved. Therefore, we need to delete forever trashed messages from this thread.
@@ -301,6 +302,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       await createSecureDraft(t, browser, gmailPage, 'reply draft');
       await createSecureDraft(t, browser, gmailPage, 'offline reply draft', { offline: true });
       await gmailPage.page.reload({ waitUntil: 'networkidle2' });
+      await Util.sleep(30);
       replyBox = await pageHasSecureDraft(gmailPage, 'offline reply draft');
       // await replyBox.waitAndClick('@action-send'); doesn't work for some reason, use keyboard instead
       await gmailPage.page.keyboard.press('Tab');
@@ -379,13 +381,15 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
     ava.default('mail.google.com - plain reply draft', testWithBrowser('ci.tests.gmail', async (t, browser) => {
       const gmailPage = await openGmailPage(t, browser);
       await gotoGmailPage(gmailPage, '/FMfcgzGpGnLZzLxNpWchTnNfxKkNzBSD'); // go to encrypted convo
-      await gmailPage.waitAndClick('[data-tooltip="Reply"]');
-      await gmailPage.waitTillFocusIsIn('div[aria-label="Message Body"]');
+      await gmailPage.waitAndClick('[data-tooltip="Reply"]', { delay: 5 });
+      await Util.sleep(30);
+      await gmailPage.waitTillFocusIsIn('div[aria-label="Message Body"]', { timeout: 10 });
       await gmailPage.type('div[aria-label="Message Body"]', 'plain reply', true);
       await gmailPage.waitForContent('.oG.aOy', 'Draft saved');
+      await Util.sleep(10);
       await gmailPage.page.reload({ waitUntil: 'networkidle2' });
-      await pageDoesNotHaveSecureReplyContainer(gmailPage);
       await gmailPage.waitForContent('div[aria-label="Message Body"]', 'plain reply', 30);
+      await pageDoesNotHaveSecureReplyContainer(gmailPage);
       await gmailPage.click('[aria-label^="Discard draft"]');
     }));
 
@@ -421,7 +425,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
 
     // uses live openpgpkey.flowcrypt.com WKD
     ava.default('can lookup public key from WKD directly', testWithBrowser('ci.tests.gmail', async (t, browser) => {
-      const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
+      const composePage = await ComposePageRecipe.openStandalone(t, browser, 'ci.tests.gmail@flowcrypt.dev');
       await ComposePageRecipe.fillMsg(composePage, { to: 'demo@flowcrypt.com' }, 'should find pubkey from WKD directly');
       await composePage.waitForContent('.email_address.has_pgp', 'demo@flowcrypt.com');
       expect(await composePage.attr('.email_address.has_pgp', 'title')).to.contain('0997 7F6F 512C A5AD 76F0 C210 248B 60EB 6D04 4DF8 (openpgp)');

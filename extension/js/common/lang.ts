@@ -2,11 +2,15 @@
 
 'use strict';
 
+import { FLAVOR } from './core/const.js';
+
 /* eslint-disable max-len */
 
-const contactMinimalSubsentence = (isFesUsed: boolean) => isFesUsed ? 'contact your Help Desk' : 'write us at human@flowcrypt.com';
+const isEnterpriseBuildUsed = FLAVOR === 'enterprise';
+
+const contactMinimalSubsentence = (isFesUsed: boolean) => isFesUsed || isEnterpriseBuildUsed ? 'contact your Help Desk' : 'write us at human@flowcrypt.com';
 const contactIfHappensAgain = (isFesUsed: boolean) => `If this happens again, please ${contactMinimalSubsentence(isFesUsed)}. `;
-const contactForSupportSubsentence = (isFesUsed: boolean) => isFesUsed ? 'please contact your Help Desk for support' : 'please write us at human@flowcrypt.com to fix it';
+const contactForSupportSubsentence = (isFesUsed: boolean, reason: string = '') => isFesUsed || isEnterpriseBuildUsed ? `Please contact your Help Desk ${reason}` : `Please write us at human@flowcrypt.com ${reason}`;
 
 export const Lang = { // tslint:disable-line:variable-name
   error: {
@@ -90,11 +94,11 @@ export const Lang = { // tslint:disable-line:variable-name
   general: {
     contactMinimalSubsentence,
     contactIfHappensAgain,
-    contactIfNeedAssistance: (isFesUsed: boolean) => isFesUsed ? 'Contact your Help Desk if you need assistance.' : 'Email human@flowcrypt.com if you need assistance.',
+    contactIfNeedAssistance: (isFesUsed = false) => contactForSupportSubsentence(isFesUsed, 'if you need an assistance.'),
     somethingWentWrongTryAgain: (isFesUsed: boolean) => `Something went wrong, please try again. ${contactIfHappensAgain(isFesUsed)}`,
     contactForSupportSubsentence,
-    contactForSupportSentence: (isFesUsed: boolean) => isFesUsed ? 'Please contact your Help Desk for support.' : 'Please write us at human@flowcrypt.com to fix it.',
-    writeMeToFixIt: (isFesUsed: boolean) => isFesUsed ? 'Please contact your Help Desk for support.' : 'Please write us at human@flowcrypt.com to get this resolved.',
+    contactForSupportSentence: (isFesUsed = false) => contactForSupportSubsentence(isFesUsed, 'for support.'),
+    writeMeToFixIt: (isFesUsed: boolean) => contactForSupportSubsentence(isFesUsed, 'to fix it.'),
     restartBrowserAndTryAgain: (isFesUsed: boolean) => `Unexpected error occured. Please restart your browser and try again. If this persists after a restart, ${contactForSupportSubsentence(isFesUsed)}.`,
     emailAliasChangedAskForReload: 'Your email aliases on Gmail have refreshed since the last time you used FlowCrypt.\nReload the compose window now?'
   },

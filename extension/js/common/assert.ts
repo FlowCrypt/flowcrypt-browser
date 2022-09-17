@@ -6,13 +6,14 @@ import { Browser } from './browser/browser.js';
 import { Ui } from './browser/ui.js';
 import { Dict, UrlParam, UrlParams } from './core/common.js';
 import { KeyInfoWithIdentity, KeyUtil } from './core/crypto/key.js';
-import { isFesUsed } from './helpers.js';
 import { Lang } from './lang.js';
 import { Catch, UnreportableError } from './platform/catch.js';
 import { AcctStore } from './platform/store/acct-store.js';
 import { KeyStore } from './platform/store/key-store.js';
 import { Xss } from './platform/xss.js';
 import { Settings } from './settings.js';
+import { isFesUsed } from './helpers.js';
+
 
 export class AssertError extends UnreportableError { }
 /**
@@ -86,7 +87,7 @@ export class Assert {
     Xss.sanitizeRender('body', renderMsg).addClass('bad').css({ padding: '20px', 'font-size': '16px' });
     $('.action_report_issue').click(Ui.event.handle(async () => {
       Catch.report(msg, { currentUrl: window.location.href, params: values });
-      $('body').text('Thank you. Feel free to reach out to human@flowcrypt.com in you need assistance.');
+      $('body').text(`Thank you. ${Lang.general.contactIfNeedAssistance()}`);
     }));
     throw new AssertError(msg);
   };

@@ -12,6 +12,7 @@ import { KeyStore } from './platform/store/key-store.js';
 import { PassphraseStore } from './platform/store/passphrase-store.js';
 import { Bm } from './browser/browser-msg.js';
 import { PgpPwd } from './core/crypto/pgp/pgp-password.js';
+
 export const isFesUsed = async (acctEmail: string) => {
   const { fesUrl } = await AcctStore.get(acctEmail, ['fesUrl']);
   return Boolean(fesUrl);
