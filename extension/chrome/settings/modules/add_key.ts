@@ -103,7 +103,7 @@ View.run(class AddKeyView extends View {
           this.clientConfiguration,
           this.acctEmail,
           [checked.encrypted],
-          { passphrase: checked.passphrase, passphrase_save: $('.input_passphrase_save').prop('checked') }
+          { passphrase: checked.passphrase, passphrase_save: !!$('.input_passphrase_save').prop('checked') }
         );
         BrowserMsg.send.reload(this.parentTabId, { advanced: true });
       }
