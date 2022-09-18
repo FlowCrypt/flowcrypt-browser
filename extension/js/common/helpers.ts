@@ -18,21 +18,23 @@ export const isFesUsed = async (acctEmail: string) => {
   return Boolean(fesUrl);
 };
 
-const setPassphraseForPrvs = async (acctEmail: string, prvs: Key[], ppOptions: PassphraseOptions) => {
-  const clientConfiguration = await ClientConfiguration.newInstance(acctEmail);
+export const setPassphraseForPrvs = async (clientConfiguration: ClientConfiguration, acctEmail: string, prvs: Key[], ppOptions: PassphraseOptions) => {
   const storageType = (ppOptions.passphrase_save && !clientConfiguration.forbidStoringPassPhrase()) ? 'local' : 'session';
   for (const prv of prvs) {
     await PassphraseStore.set(storageType, acctEmail, { longid: KeyUtil.getPrimaryLongid(prv) }, ppOptions.passphrase);
   }
 };
 
-export const saveKeysAndPassPhrase = async (acctEmail: string, prvs: Key[], ppOptions?: PassphraseOptions, replaceKeys: boolean = false) => {
+// note: for `replaceKeys = true` need to make sure that `prvs` don't have duplicate identities,
+// they is currently guaranteed by filterKeysToSave()
+// todo: perhaps split into two different functions for add or replace as part of #4545?
+const addOrReplaceKeysAndPassPhrase = async (acctEmail: string, prvs: Key[], ppOptions?: PassphraseOptions, replaceKeys: boolean = false) => {
   if (replaceKeys) {
     // track longids to remove related passhprases
     const existingKeys = await KeyStore.get(acctEmail);
     const deletedKeys = existingKeys.filter(old => !prvs.some(prvIdentity => KeyUtil.identityEquals(prvIdentity, old)));
     // set actually replaces the set of keys in storage with the new set
-    await KeyStore.set(acctEmail, await Promise.all(prvs.map(KeyUtil.keyInfoObj))); // todo: duplicate identities
+    await KeyStore.set(acctEmail, await Promise.all(prvs.map(KeyUtil.keyInfoObj)));
     await PassphraseStore.removeMany(acctEmail, deletedKeys);
   } else {
     for (const prv of prvs) {
@@ -42,7 +44,7 @@ export const saveKeysAndPassPhrase = async (acctEmail: string, prvs: Key[], ppOp
   if (ppOptions !== undefined) {
     // todo: it would be good to check that the passphrase isn't present in the other storage type
     //    though this situation is not possible with current use cases
-    await setPassphraseForPrvs(acctEmail, prvs, ppOptions);
+    await setPassphraseForPrvs(await ClientConfiguration.newInstance(acctEmail), acctEmail, prvs, ppOptions);
   }
   const { sendAs, full_name: name } = await AcctStore.get(acctEmail, ['sendAs', 'full_name']);
   const myOwnEmailsAddrs: string[] = [acctEmail].concat(Object.keys(sendAs!));
@@ -56,6 +58,8 @@ export const saveKeysAndPassPhrase = async (acctEmail: string, prvs: Key[], ppOp
     }
   }
 };
+
+export const saveKeysAndPassPhrase: (acctEmail: string, prvs: Key[], ppOptions?: PassphraseOptions) => Promise<void> = addOrReplaceKeysAndPassPhrase;
 
 const parseAndCheckPrivateKeys = async (decryptedPrivateKeys: string[]) => {
   const unencryptedPrvs: Key[] = [];
@@ -146,7 +150,7 @@ export const processAndStoreKeysFromEkmLocally = async (
   }
   // stage 1. Clear all existingKeys, except for keysToRetain
   if (existingKeys.length !== keysToRetain.length) {
-    await saveKeysAndPassPhrase(acctEmail, keysToRetain, undefined, true);
+    await addOrReplaceKeysAndPassPhrase(acctEmail, keysToRetain, undefined, true);
   }
   // stage 2. Adding new keys
   if (encryptedKeys?.keys.length) {
@@ -155,7 +159,7 @@ export const processAndStoreKeysFromEkmLocally = async (
     // ppOptions have special meaning in saveKeysAndPassPhrase(), they trigger `name` updates, todo: refactor in #4545
     await saveKeysAndPassPhrase(acctEmail, encryptedKeys.keys, ppOptions ? effectivePpOptions : undefined);
     if (!ppOptions) {
-      await setPassphraseForPrvs(acctEmail, encryptedKeys.keys, effectivePpOptions);
+      await setPassphraseForPrvs(await ClientConfiguration.newInstance(acctEmail), acctEmail, encryptedKeys.keys, effectivePpOptions);
     }
   }
   return { updateCount: encryptedKeys?.keys.length ?? 0 + (existingKeys.length - keysToRetain.length), noKeysSetup: !(encryptedKeys?.keys.length || keysToRetain.length) };

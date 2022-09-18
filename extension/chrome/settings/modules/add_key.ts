@@ -13,13 +13,11 @@ import { Ui } from '../../../js/common/browser/ui.js';
 import { View } from '../../../js/common/view.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { initPassphraseToggle } from '../../../js/common/ui/passphrase-ui.js';
-import { PassphraseStore } from '../../../js/common/platform/store/passphrase-store.js';
-import { KeyStore } from '../../../js/common/platform/store/key-store.js';
-import { KeyUtil, UnexpectedKeyTypeError } from '../../../js/common/core/crypto/key.js';
+import { UnexpectedKeyTypeError } from '../../../js/common/core/crypto/key.js';
 import { ClientConfiguration } from '../../../js/common/client-configuration.js';
-import { StorageType } from '../../../js/common/platform/store/abstract-store.js';
 import { Lang } from '../../../js/common/lang.js';
 import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
+import { saveKeysAndPassPhrase, setPassphraseForPrvs } from '../../../js/common/helpers.js';
 
 View.run(class AddKeyView extends View {
 
@@ -100,9 +98,13 @@ View.run(class AddKeyView extends View {
     try {
       const checked = await this.keyImportUi.checkPrv(this.acctEmail, String($('.input_private_key').val()), String($('.input_passphrase').val()));
       if (checked) {
-        await KeyStore.add(this.acctEmail, checked.encrypted); // resulting new_key checked above
-        const storageType: StorageType = ($('.input_passphrase_save').prop('checked') && !this.clientConfiguration.forbidStoringPassPhrase()) ? 'local' : 'session';
-        await PassphraseStore.set(storageType, this.acctEmail, { longid: KeyUtil.getPrimaryLongid(checked.encrypted) }, checked.passphrase);
+        await saveKeysAndPassPhrase(this.acctEmail, [checked.encrypted]); // resulting new_key checked above
+        await setPassphraseForPrvs(
+          this.clientConfiguration,
+          this.acctEmail,
+          [checked.encrypted],
+          { passphrase: checked.passphrase, passphrase_save: $('.input_passphrase_save').prop('checked') }
+        );
         BrowserMsg.send.reload(this.parentTabId, { advanced: true });
       }
     } catch (e) {
