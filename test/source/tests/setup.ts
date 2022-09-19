@@ -780,8 +780,8 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         const accessToken = await BrowserRecipe.getGoogleAccessToken(settingsPage, acct);
         const extraAuthHeaders = { Authorization: `Bearer ${accessToken}` };
         const set1 = await retrieveAndCheckKeys(settingsPage, acct, 1);
-        MOCK_KM_UPDATING_KEY[acct].response = { privateKeys: [] };
         // 1. EKM returns the empty set, forcing to auto-generate
+        MOCK_KM_UPDATING_KEY[acct].response = { privateKeys: [] };
         let gmailPage = await browser.newPage(t, TestUrls.mockGmailUrl(), undefined, extraAuthHeaders);
         // The new settingsPage is loaded in place of the existing settings tab (this is by design)
         // However, after a second the newly-activated (old) settings tab loses focus in favour of the gmailPage, why is that?
@@ -799,7 +799,8 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         const set2 = await retrieveAndCheckKeys(settingsPage, acct, 1);
         expect(set2[0].id).to.not.equal(set1[0].id); // entirely new key was generated
         // 2. Adding a new key from the key manager when there is none in the storage
-        // First, erase the keys
+        // First, erase the keys by supplying an empty set from mock EKM
+        MOCK_KM_UPDATING_KEY[acct].response = { privateKeys: [] };
         gmailPage = await browser.newPage(t, TestUrls.mockGmailUrl(), undefined, extraAuthHeaders);
         await PageRecipe.noToastAppears(gmailPage);
         await gmailPage.notPresent('@dialog-passphrase');
@@ -807,6 +808,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         await retrieveAndCheckKeys(settingsPage, acct, 0); // no keys, auto-generation
         expect(await getPassphrase(settingsPage, acct, KeyUtil.getPrimaryLongid(set2[0]))).to.be.an.undefined; // the passphrase for the old key was deleted
         await settingsPage.close();
+        // Secondly, configure mock EKM to return a key and re-load the gmail page
         MOCK_KM_UPDATING_KEY[acct] = { response: { privateKeys: [{ decryptedPrivateKey: testConstants.updatingPrv }] } };
         gmailPage = await browser.newPage(t, undefined, undefined, extraAuthHeaders);
         const newSettingsPage = await browser.newPageTriggeredBy(t, () => gmailPage.goto(TestUrls.mockGmailUrl()));
