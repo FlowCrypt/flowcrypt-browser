@@ -802,6 +802,34 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       expect(savedPassphrase).to.be.an('undefined');
     }));
 
+    ava.default('user@passphrase-session-length-client-configuration.flowcrypt.test - passphrase should expire in in_memory_pass_phrase_session_length', testWithBrowser(undefined, async (t, browser) => {
+      const acctEmail = 'user@passphrase-session-length-client-configuration.flowcrypt.test';
+      const longid = '715EDCDC7939A8F7';
+      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
+      const passphrase = '1234';
+      await SetupPageRecipe.manualEnter(settingsPage, 'unused', {
+        submitPubkey: false,
+        usedPgpBefore: false,
+        key: {
+          title: 'my key',
+          armored: testConstants.testkey715EDCDC7939A8F7,
+          passphrase,
+          longid,
+        }
+      });
+      const { cryptup_userpassphrasesessionlengthclientconfigurationflowcrypttest_rules: rules
+      } = await settingsPage.getFromLocalStorage([
+        'cryptup_userpassphrasesessionlengthclientconfigurationflowcrypttest_rules'
+      ]);
+      let savedPassphrase = await BrowserRecipe.getPassphraseFromInMemoryStore(settingsPage, acctEmail, longid);
+      expect((rules as { in_memory_pass_phrase_session_length: number }).in_memory_pass_phrase_session_length).to.be.equal(3);
+      expect(savedPassphrase).to.be.equal(passphrase);
+      // wait 1 minute because we delete expired passphrase every 1 minute
+      await Util.sleep(3);
+      savedPassphrase = await BrowserRecipe.getPassphraseFromInMemoryStore(settingsPage, acctEmail, longid);
+      expect(savedPassphrase).to.be.undefined;
+    }));
+
     ava.default('get.key@key-manager-autoimport-no-prv-create.flowcrypt.test - respect NO_PRV_CREATE when key not found on key manager', testWithBrowser(undefined, async (t, browser) => {
       const acct = 'get.key@key-manager-autoimport-no-prv-create.flowcrypt.test';
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);

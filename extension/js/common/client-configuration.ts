@@ -18,6 +18,7 @@ export type ClientConfigurationJson = {
   disallow_attester_search_for_domains?: string[],
   enforce_keygen_algo?: string,
   enforce_keygen_expire_months?: number,
+  in_memory_pass_phrase_session_length?: number;
 };
 
 /**
@@ -81,6 +82,19 @@ export class ClientConfiguration {
    */
   public getEnforcedKeygenExpirationMonths = (): number | undefined => {
     return this.clientConfigurationJson.enforce_keygen_expire_months;
+  };
+
+  /**
+   * pass phrase session length to be configurable with client configuraiton
+   * default 4 hours
+   */
+  public getInMemoryPassPhraseSessionExpirationMs = (): number => {
+    let expireIn = 4 * 60 * 60;
+    if (this.clientConfigurationJson.in_memory_pass_phrase_session_length) {
+      // in_memory_pass_phrase_session_length min: 1, max: Int max value
+      expireIn = Math.max(1, Math.min(this.clientConfigurationJson.in_memory_pass_phrase_session_length, Number.MAX_VALUE));
+    }
+    return expireIn * 1000;
   };
 
   // bools

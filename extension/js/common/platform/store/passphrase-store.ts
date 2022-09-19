@@ -5,6 +5,7 @@ import { AccountIndex, AcctStore, AcctStoreDict } from './acct-store.js';
 import { PromiseCancellation, Dict } from '../../core/common.js';
 import { Ui } from '../../browser/ui.js';
 import { InMemoryStore } from './in-memory-store.js';
+import { ClientConfiguration } from '../../client-configuration.js';
 
 /**
  * Local or session store of pass phrases
@@ -71,8 +72,9 @@ export class PassphraseStore extends AbstractStore {
   };
 
   private static setByIndex = async (storageType: StorageType, acctEmail: string, storageIndex: AccountIndex, passphrase: string | undefined): Promise<void> => {
+    const clientConfiguration = await ClientConfiguration.newInstance(acctEmail);
     if (storageType === 'session') {
-      return await InMemoryStore.set(acctEmail, storageIndex, passphrase);
+      return await InMemoryStore.set(acctEmail, storageIndex, passphrase, Date.now() + clientConfiguration.getInMemoryPassPhraseSessionExpirationMs());
     } else {
       if (typeof passphrase === 'undefined') {
         await AcctStore.remove(acctEmail, [storageIndex]);

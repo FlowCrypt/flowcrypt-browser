@@ -100,6 +100,15 @@ export class BrowserRecipe {
     return (result as { result: string }).result;
   };
 
+  public static getPassphraseFromInMemoryStore = async (controllable: Controllable, acctEmail: string, longid: string): Promise<string> => {
+    const result = await PageRecipe.sendMessage(controllable, {
+      name: 'inMemoryStoreGet',
+      // tslint:disable-next-line:no-null-keyword
+      data: { bm: { acctEmail, key: `passphrase_${longid}` }, objUrls: {} }, to: null, uid: '2'
+    });
+    return (result as { result: string }).result;
+  };
+
   public static deleteAllDraftsInGmailAccount = async (settingsPage: ControllablePage): Promise<void> => {
     const accessToken = await BrowserRecipe.getGoogleAccessToken(settingsPage, 'ci.tests.gmail@flowcrypt.dev');
     const gmail = google.gmail({ version: 'v1' });
