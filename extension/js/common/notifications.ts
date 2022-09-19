@@ -20,21 +20,6 @@ export class Notifications {
     }
   };
 
-  private reconnectAcctAuthPopup = async (acctEmail: string) => {
-    const authRes = await BrowserMsg.send.bg.await.reconnectAcctAuthPopup({ acctEmail });
-    if (authRes.result === 'Success') {
-      this.show(`Connected successfully. You may need to reload the tab. <a href="#" class="close">Close</a>`);
-    } else if (authRes.result === 'Denied') {
-      this.show(`Connection successful. Please also add missing permissions <a href="#" class="add_missing_permission", data-test="action-add-missing-permission">Add permission now</a>`, {
-        add_missing_permission: async () => {
-          await this.reconnectAcctAuthPopup(acctEmail);
-        }
-      });
-    } else {
-      this.show(`Failed to connect (${authRes.result}) ${authRes.error || ''}. <a href="#" class="close">Close</a>`);
-    }
-  };
-
   public showAuthPopupNeeded = (acctEmail: string) => {
     this.show(`${Lang.compose.pleaseReconnectAccount} <a href="#" class="auth_popup" data-test="action-reconnect-account">Re-connect Account</a>`, {
       auth_popup: async () => {
@@ -66,4 +51,18 @@ export class Notifications {
     }
   };
 
+  private reconnectAcctAuthPopup = async (acctEmail: string) => {
+    const authRes = await BrowserMsg.send.bg.await.reconnectAcctAuthPopup({ acctEmail });
+    if (authRes.result === 'Success') {
+      this.show(`Connected successfully. You may need to reload the tab. <a href="#" class="close">Close</a>`);
+    } else if (authRes.result === 'Denied') {
+      this.show(`Connection successful. Please also add missing permissions <a href="#" class="add_missing_permission", data-test="action-add-missing-permission">Add permission now</a>`, {
+        add_missing_permission: async () => {
+          await this.reconnectAcctAuthPopup(acctEmail);
+        }
+      });
+    } else {
+      this.show(`Failed to connect (${authRes.result}) ${authRes.error || ''}. <a href="#" class="close">Close</a>`);
+    }
+  };
 }
