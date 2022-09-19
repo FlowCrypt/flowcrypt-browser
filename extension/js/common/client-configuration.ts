@@ -94,7 +94,7 @@ export class ClientConfiguration {
       // in_memory_pass_phrase_session_length min: 1, max: Int max value
       expireIn = Math.max(1, Math.min(this.clientConfigurationJson.in_memory_pass_phrase_session_length, Number.MAX_VALUE));
     }
-    return expireIn;
+    return expireIn * 1000;
   };
 
   // bools
