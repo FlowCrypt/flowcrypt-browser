@@ -584,7 +584,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
 
     const getPassphrase = async (page: ControllablePage, acctEmail: string, longid: string) => {
       const key = `cryptup_${emailKeyIndex(acctEmail, 'passphrase')}_${longid}`;
-      const passphrase = (await page.getFromLocalStorage([key]))[key] || await BrowserRecipe.getFromInMemoryStore(page, acctEmail, `passphrase_${longid}`);
+      const passphrase = (await page.getFromLocalStorage([key]))[key] || await BrowserRecipe.getPassphraseFromInMemoryStore(page, acctEmail, longid);
       expect(passphrase).to.be.a.string;
       return passphrase as string;
     };
