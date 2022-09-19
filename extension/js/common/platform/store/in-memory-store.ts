@@ -4,7 +4,6 @@ import { AbstractStore } from './abstract-store.js';
 import { BrowserMsg } from '../../browser/browser-msg.js';
 
 /**
-<<<<<<< HEAD
  * Temporary In-Memory store for sensitive values, expiring after clientConfiguration.in_memory_pass_phrase_session_length (or default 4 hours)
  * see background_page.ts for the other end, also ExpirationCache class
  */
