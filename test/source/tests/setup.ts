@@ -806,12 +806,12 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       } = await settingsPage.getFromLocalStorage([
         'cryptup_userpassphrasesessionlengthclientconfigurationflowcrypttest_rules'
       ]);
-      let savedPassphrase = await BrowserRecipe.getSavedPassPhrase(settingsPage, acctEmail, longid);
-      expect((rules as { in_memory_pass_phrase_session_length: number }).in_memory_pass_phrase_session_length).to.be.equal(60);
+      let savedPassphrase = await BrowserRecipe.getPassphraseFromInMemoryStore(settingsPage, acctEmail, longid);
+      expect((rules as { in_memory_pass_phrase_session_length: number }).in_memory_pass_phrase_session_length).to.be.equal(3);
       expect(savedPassphrase).to.be.equal(passphrase);
       // wait 1 minute because we delete expired passphrase every 1 minute
-      await Util.sleep(60);
-      savedPassphrase = await BrowserRecipe.getSavedPassPhrase(settingsPage, acctEmail, longid);
+      await Util.sleep(3);
+      savedPassphrase = await BrowserRecipe.getPassphraseFromInMemoryStore(settingsPage, acctEmail, longid);
       expect(savedPassphrase).to.be.undefined;
     }));
 

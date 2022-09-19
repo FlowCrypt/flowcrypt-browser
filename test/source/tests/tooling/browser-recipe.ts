@@ -100,7 +100,7 @@ export class BrowserRecipe {
     return (result as { result: string }).result;
   };
 
-  public static getSavedPassPhrase = async (controllable: Controllable, acctEmail: string, longid: string): Promise<string> => {
+  public static getPassphraseFromInMemoryStore = async (controllable: Controllable, acctEmail: string, longid: string): Promise<string> => {
     const result = await PageRecipe.sendMessage(controllable, {
       name: 'inMemoryStoreGet',
       // tslint:disable-next-line:no-null-keyword

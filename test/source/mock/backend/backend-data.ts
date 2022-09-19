@@ -97,7 +97,7 @@ export class BackendData {
         "flags": [
           "FORBID_STORING_PASS_PHRASE",
         ],
-        "in_memory_pass_phrase_session_length": 60
+        "in_memory_pass_phrase_session_length": 3
       };
     }
     if (domain === 'no-submit-client-configuration.flowcrypt.test') {
