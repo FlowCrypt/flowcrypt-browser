@@ -109,6 +109,9 @@ export class BrowserRecipe {
     return (result as { result: string }).result;
   };
 
+  public static getPassphraseFromInMemoryStore = (controllable: Controllable, acctEmail: string, longid: string): Promise<string> =>
+    BrowserRecipe.getFromInMemoryStore(controllable, acctEmail, `passphrase_${longid}`);
+
   public static deleteAllDraftsInGmailAccount = async (settingsPage: ControllablePage): Promise<void> => {
     const accessToken = await BrowserRecipe.getGoogleAccessToken(settingsPage, 'ci.tests.gmail@flowcrypt.dev');
     const gmail = google.gmail({ version: 'v1' });
