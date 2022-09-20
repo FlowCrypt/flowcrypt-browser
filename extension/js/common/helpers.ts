@@ -11,20 +11,40 @@ import { ContactStore } from './platform/store/contact-store.js';
 import { KeyStore } from './platform/store/key-store.js';
 import { PassphraseStore } from './platform/store/passphrase-store.js';
 import { Bm } from './browser/browser-msg.js';
+import { PgpPwd } from './core/crypto/pgp/pgp-password.js';
 
 export const isFesUsed = async (acctEmail: string) => {
   const { fesUrl } = await AcctStore.get(acctEmail, ['fesUrl']);
   return Boolean(fesUrl);
 };
 
-export const saveKeysAndPassPhrase = async (acctEmail: string, prvs: Key[], ppOptions?: PassphraseOptions) => {
-  const clientConfiguration = await ClientConfiguration.newInstance(acctEmail);
+export const setPassphraseForPrvs = async (clientConfiguration: ClientConfiguration, acctEmail: string, prvs: Key[], ppOptions: PassphraseOptions) => {
+  const storageType = (ppOptions.passphrase_save && !clientConfiguration.forbidStoringPassPhrase()) ? 'local' : 'session';
   for (const prv of prvs) {
-    await KeyStore.add(acctEmail, prv);
-    if (ppOptions !== undefined) {
-      await PassphraseStore.set((ppOptions.passphrase_save && !clientConfiguration.forbidStoringPassPhrase()) ? 'local' : 'session',
-        acctEmail, { longid: KeyUtil.getPrimaryLongid(prv) }, ppOptions.passphrase);
+    await PassphraseStore.set(storageType, acctEmail, { longid: KeyUtil.getPrimaryLongid(prv) }, ppOptions.passphrase);
+  }
+};
+
+// note: for `replaceKeys = true` need to make sure that `prvs` don't have duplicate identities,
+// they is currently guaranteed by filterKeysToSave()
+// todo: perhaps split into two different functions for add or replace as part of #4545?
+const addOrReplaceKeysAndPassPhrase = async (acctEmail: string, prvs: Key[], ppOptions?: PassphraseOptions, replaceKeys: boolean = false) => {
+  if (replaceKeys) {
+    // track longids to remove related passhprases
+    const existingKeys = await KeyStore.get(acctEmail);
+    const deletedKeys = existingKeys.filter(old => !prvs.some(prvIdentity => KeyUtil.identityEquals(prvIdentity, old)));
+    // set actually replaces the set of keys in storage with the new set
+    await KeyStore.set(acctEmail, await Promise.all(prvs.map(KeyUtil.keyInfoObj)));
+    await PassphraseStore.removeMany(acctEmail, deletedKeys);
+  } else {
+    for (const prv of prvs) {
+      await KeyStore.add(acctEmail, prv);
     }
+  }
+  if (ppOptions !== undefined) {
+    // todo: it would be good to check that the passphrase isn't present in the other storage type
+    //    though this situation is not possible with current use cases
+    await setPassphraseForPrvs(await ClientConfiguration.newInstance(acctEmail), acctEmail, prvs, ppOptions);
   }
   const { sendAs, full_name: name } = await AcctStore.get(acctEmail, ['sendAs', 'full_name']);
   const myOwnEmailsAddrs: string[] = [acctEmail].concat(Object.keys(sendAs!));
@@ -38,6 +58,8 @@ export const saveKeysAndPassPhrase = async (acctEmail: string, prvs: Key[], ppOp
     }
   }
 };
+
+export const saveKeysAndPassPhrase: (acctEmail: string, prvs: Key[], ppOptions?: PassphraseOptions) => Promise<void> = addOrReplaceKeysAndPassPhrase;
 
 const parseAndCheckPrivateKeys = async (decryptedPrivateKeys: string[]) => {
   const unencryptedPrvs: Key[] = [];
@@ -64,58 +86,81 @@ const parseAndCheckPrivateKeys = async (decryptedPrivateKeys: string[]) => {
 };
 
 const filterKeysToSave = async (candidateKeys: Key[], existingKeys: KeyInfoWithIdentity[]) => {
+  // todo: check for uniqueness of candidateKeys identities here?
   if (!existingKeys.length) {
-    return candidateKeys;
+    return { keysToRetain: [], newUnencryptedKeysToSave: candidateKeys };
   }
-  const result: Key[] = [];
-  for (const candidate of candidateKeys) {
-    const longid = KeyUtil.getPrimaryLongid(candidate);
-    const keyToUpdate = existingKeys.filter(ki => ki.longid === longid && ki.family === candidate.family);
-    if (keyToUpdate.length === 1) {
-      const oldKey = await KeyUtil.parse(keyToUpdate[0].private);
-      if (!candidate.lastModified || (oldKey.lastModified && oldKey.lastModified >= candidate.lastModified)) {
+  const keysToRetain: Key[] = [];
+  const newUnencryptedKeysToSave: Key[] = [];
+  for (const candidateKey of candidateKeys) {
+    const existingKey = existingKeys.find(ki => KeyUtil.identityEquals(ki, candidateKey));
+    if (existingKey) {
+      const parsedExistingKey = await KeyUtil.parse(existingKey.private);
+      if (!candidateKey.lastModified || (parsedExistingKey.lastModified && parsedExistingKey.lastModified >= candidateKey.lastModified)) {
+        keysToRetain.push(parsedExistingKey);
         continue;
       }
-    } else if (keyToUpdate.length > 1) {
-      throw new Error(`Unexpected error: key search by longid=${longid} yielded ${keyToUpdate.length} results`);
     }
-    result.push(candidate);
+    newUnencryptedKeysToSave.push(candidateKey);
   }
-  return result;
+  return { keysToRetain, newUnencryptedKeysToSave };
 };
 
 export const processAndStoreKeysFromEkmLocally = async (
-  { acctEmail, decryptedPrivateKeys, ppOptions }: { acctEmail: string, decryptedPrivateKeys: string[], ppOptions?: PassphraseOptions }
+  { acctEmail, decryptedPrivateKeys, ppOptions: originalOptions }: Bm.ProcessAndStoreKeysFromEkmLocally & { ppOptions?: PassphraseOptions }
 ): Promise<Bm.Res.ProcessAndStoreKeysFromEkmLocally> => {
   const { unencryptedPrvs } = await parseAndCheckPrivateKeys(decryptedPrivateKeys);
   const existingKeys = await KeyStore.get(acctEmail);
-  let passphrase = ppOptions?.passphrase;
-  if (passphrase === undefined && !existingKeys.length) {
-    return { needPassphrase: false, updateCount: 0 }; // return success as we can't possibly validate a passphrase
-    // this can only happen on misconfiguration
-    // todo: or should we throw?
+  let { keysToRetain, newUnencryptedKeysToSave } = await filterKeysToSave(unencryptedPrvs, existingKeys);
+  if (!newUnencryptedKeysToSave.length && keysToRetain.length === existingKeys.length) {
+    // nothing to update
+    return { needPassphrase: false, noKeysSetup: !existingKeys.length };
   }
-  let unencryptedKeysToSave = await filterKeysToSave(unencryptedPrvs, existingKeys);
-  let encryptedKeys: Key[] = [];
-  if (unencryptedKeysToSave.length) {
+  let ppOptions: PassphraseOptions | undefined; // the options to pass to saveKeysAndPassPhrase
+  if (!originalOptions?.passphrase && (await ClientConfiguration.newInstance(acctEmail)).mustAutogenPassPhraseQuietly()) {
+    ppOptions = { passphrase: PgpPwd.random(), passphrase_save: true };
+  } else {
+    ppOptions = originalOptions;
+  }
+  let passphrase = ppOptions?.passphrase;
+  let passphraseInLocalStorage = !!ppOptions?.passphrase_save;
+  if (passphrase === undefined && !existingKeys.length) {
+    return { needPassphrase: true, noKeysSetup: true };
+  }
+  let encryptedKeys: { passphrase: string, keys: Key[] } | undefined;
+  if (newUnencryptedKeysToSave.length) {
     if (passphrase === undefined) {
       // trying to find a passphrase that unlocks at least one key
       const passphrases = await PassphraseStore.getMany(acctEmail, existingKeys);
-      passphrase = passphrases.find(pp => pp !== undefined);
+      const foundPassphrase = passphrases.find(pp => pp !== undefined);
+      if (foundPassphrase) {
+        passphrase = foundPassphrase.value;
+        passphraseInLocalStorage = foundPassphrase.source === 'local';
+      }
     }
     if (passphrase !== undefined) {
-      const pp = passphrase;
-      // todo: some more fancy conversion, preserving a passphrase for a particual longid?
-      await Promise.all(unencryptedKeysToSave.map(prv => KeyUtil.encrypt(prv, pp)));
-      encryptedKeys = unencryptedKeysToSave;
-      unencryptedKeysToSave = [];
+      const pp = passphrase; // explicitly defined constant string for the mapping function
+      await Promise.all(newUnencryptedKeysToSave.map(prv => KeyUtil.encrypt(prv, pp)));
+      encryptedKeys = { keys: newUnencryptedKeysToSave, passphrase };
+      newUnencryptedKeysToSave = [];
     }
   }
-  if (encryptedKeys.length) {
-    // also updates `name`, todo: refactor in #4545
-    await saveKeysAndPassPhrase(acctEmail, encryptedKeys, ppOptions);
-    return { needPassphrase: false, updateCount: encryptedKeys.length };
-  } else {
-    return { needPassphrase: unencryptedKeysToSave.length > 0, updateCount: 0 };
+  if (newUnencryptedKeysToSave.length > 0) {
+    return { needPassphrase: true };
   }
+  // stage 1. Clear all existingKeys, except for keysToRetain
+  if (existingKeys.length !== keysToRetain.length) {
+    await addOrReplaceKeysAndPassPhrase(acctEmail, keysToRetain, undefined, true);
+  }
+  // stage 2. Adding new keys
+  if (encryptedKeys?.keys.length) {
+    // new keys are about to be added, they must be accompanied with the passphrase setting
+    const effectivePpOptions = { passphrase: encryptedKeys.passphrase, passphrase_save: passphraseInLocalStorage };
+    // ppOptions have special meaning in saveKeysAndPassPhrase(), they trigger `name` updates, todo: refactor in #4545
+    await saveKeysAndPassPhrase(acctEmail, encryptedKeys.keys, ppOptions ? effectivePpOptions : undefined);
+    if (!ppOptions) {
+      await setPassphraseForPrvs(await ClientConfiguration.newInstance(acctEmail), acctEmail, encryptedKeys.keys, effectivePpOptions);
+    }
+  }
+  return { updateCount: encryptedKeys?.keys.length ?? 0 + (existingKeys.length - keysToRetain.length), noKeysSetup: !(encryptedKeys?.keys.length || keysToRetain.length) };
 };

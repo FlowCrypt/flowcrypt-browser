@@ -48,7 +48,7 @@ export class SetupView extends View {
 
   public readonly acctEmail: string;
   public readonly parentTabId: string | undefined;
-  public readonly action: 'add_key' | undefined;
+  public readonly action: 'add_key' | 'update_from_ekm' | undefined;
   public readonly idToken: string | undefined; // only needed for initial setup, not for add_key
 
   public readonly keyImportUi = new KeyImportUi({ checkEncryption: true });
@@ -77,7 +77,7 @@ export class SetupView extends View {
     super();
     const uncheckedUrlParams = Url.parse(['acctEmail', 'action', 'idToken', 'parentTabId']);
     this.acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
-    this.action = Assert.urlParamRequire.oneof(uncheckedUrlParams, 'action', ['add_key', undefined]) as 'add_key' | undefined;
+    this.action = Assert.urlParamRequire.oneof(uncheckedUrlParams, 'action', ['add_key', 'update_from_ekm', undefined]) as 'add_key' | 'update_from_ekm' | undefined;
     if (this.action === 'add_key') {
       this.parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
     } else {

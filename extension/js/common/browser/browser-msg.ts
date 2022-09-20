@@ -84,7 +84,7 @@ export namespace Bm {
     export type AjaxGmailAttachmentGetChunk = { chunk: Buf };
     export type _tab_ = { tabId: string | null | undefined };
     export type SaveFetchedPubkeys = boolean;
-    export type ProcessAndStoreKeysFromEkmLocally = { needPassphrase: boolean, updateCount: number };
+    export type ProcessAndStoreKeysFromEkmLocally = { needPassphrase?: boolean, updateCount?: number, noKeysSetup?: boolean };
     export type Db = any; // not included in Any below
     export type Ajax = any; // not included in Any below
 
