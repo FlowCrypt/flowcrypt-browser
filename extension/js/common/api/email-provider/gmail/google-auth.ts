@@ -194,14 +194,14 @@ export class GoogleAuth {
       const allowedScopes = Assert.urlParamRequire.string(uncheckedUrlParams, 'scope');
       const code = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'code');
       const receivedState = Assert.urlParamRequire.string(uncheckedUrlParams, 'state');
-      const mandatoryScopes = [
+      const scopesToCheck = [
         this.OAUTH.scopes.compose,
         this.OAUTH.scopes.modify,
         this.OAUTH.scopes.readContacts,
         this.OAUTH.scopes.readOtherContacts,
       ];
-      for (const mandatoryScope of mandatoryScopes) {
-        if (requestedScopes.includes(mandatoryScope) && !allowedScopes?.includes(mandatoryScope)) {
+      for (const scopeToCheck of scopesToCheck) {
+        if (requestedScopes.includes(scopeToCheck) && !allowedScopes?.includes(scopeToCheck)) {
           return { acctEmail, result: 'Denied', error: 'Missing permissions', id_token: undefined };
         }
       }
