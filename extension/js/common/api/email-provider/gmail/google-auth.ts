@@ -124,7 +124,7 @@ export class GoogleAuth {
     const authRequest = GoogleAuth.newAuthRequest(acctEmail, scopes);
     const authUrl = GoogleAuth.apiGoogleAuthCodeUrl(authRequest);
     const authWindowResult = await OAuth2.webAuthFlow(authUrl);
-    const authRes = await GoogleAuth.getAuthRes({ acctEmail, save, expectedState: authRequest.expectedState, authWindowResult });
+    const authRes = await GoogleAuth.getAuthRes({ acctEmail, save, requestedScopes: scopes, expectedState: authRequest.expectedState, authWindowResult });
     if (authRes.result === 'Success') {
       if (!authRes.id_token) {
         return { result: 'Error', error: 'Grant was successful but missing id_token', acctEmail: authRes.acctEmail, id_token: undefined };
@@ -181,8 +181,8 @@ export class GoogleAuth {
     return await GoogleAuth.newAuthPopup({ acctEmail, scopes: GoogleAuth.defaultScopes('openid'), save: false });
   };
 
-  private static getAuthRes = async ({ acctEmail, save, expectedState, authWindowResult }:
-    { acctEmail?: string, save: boolean, expectedState: string, authWindowResult: Bm.AuthWindowResult }): Promise<AuthRes> => {
+  private static getAuthRes = async ({ acctEmail, save, requestedScopes, expectedState, authWindowResult }:
+    { acctEmail?: string, save: boolean, requestedScopes: string[], expectedState: string, authWindowResult: Bm.AuthWindowResult }): Promise<AuthRes> => {
     try {
       if (!authWindowResult.url) {
         return { acctEmail, result: 'Denied', error: 'Invalid response url', id_token: undefined };
@@ -194,10 +194,14 @@ export class GoogleAuth {
       const allowedScopes = Assert.urlParamRequire.string(uncheckedUrlParams, 'scope');
       const code = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'code');
       const receivedState = Assert.urlParamRequire.string(uncheckedUrlParams, 'state');
-      if (!allowedScopes?.includes(this.OAUTH.scopes.compose) || !allowedScopes?.includes(this.OAUTH.scopes.modify)) {
-        if (code) {
-          // Try to get auth token to let login authorization be granted
-          await GoogleAuth.googleAuthGetTokens(code);
+      const mandatoryScopes = [
+        this.OAUTH.scopes.compose,
+        this.OAUTH.scopes.modify,
+        this.OAUTH.scopes.readContacts,
+        this.OAUTH.scopes.readOtherContacts,
+      ];
+      for (const mandatoryScope of mandatoryScopes) {
+        if (requestedScopes.includes(mandatoryScope) && !allowedScopes?.includes(mandatoryScope)) {
           return { acctEmail, result: 'Denied', error: 'Missing permissions', id_token: undefined };
         }
       }

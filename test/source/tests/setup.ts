@@ -408,7 +408,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       await SetupPageRecipe.recover(settingsPage, 'flowcrypt.compatibility.2pp1', {});
     }));
 
-    ava.default.only('test re-auth after updating chrome extension', testWithBrowser('compatibility', async (t, browser) => {
+    ava.default('test re-auth after updating chrome extension', testWithBrowser('compatibility', async (t, browser) => {
       const acctEmail = 'flowcrypt.compatibility@gmail.com';
       const settingsPage = await browser.newPage(t, TestUrls.extensionSettings(acctEmail));
       const accessToken = await BrowserRecipe.getGoogleAccessToken(settingsPage, acctEmail);
