@@ -41,7 +41,7 @@ export class KeyStore extends AbstractStore {
       throw new Error('Cannot import plain, unprotected key.');
     }
     for (const i in keyinfos) {
-      if (prv.id === keyinfos[i].fingerprints[0]) { // replacing a key
+      if (KeyUtil.identityEquals(prv, keyinfos[i])) { // replacing a key
         keyinfos[i] = await KeyUtil.keyInfoObj(prv);
         updated = true;
       }

@@ -1,5 +1,13 @@
 <div class="lightboxed">
 
+version 8.3.6 on September 16, 2022: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/460?closed=1" target="_blank">Drop google auth OOB</a>
+
+version 8.3.5 on September 2, 2022: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/459?closed=1" target="_blank">Fixed replies from FES</a>
+
+version 8.3.4 on August 29, 2022: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/458?closed=1" target="_blank">Fixed consumer setup flow</a>
+
+version 8.3.3 on August 25, 2022: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/456?closed=1" target="_blank">One link per FES recipient, EKM and FES sync, export PDF, WKD verify fix</a>
+
 version 8.3.2 on June 9, 2022: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/455?closed=1" target="_blank">allow_attester_search_only_for_domains</a>
 
 version 8.3.1 on May 18, 2022: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/454?closed=1" target="_blank">Enterprise Gmail API fix</a>

@@ -1,14 +1,41 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
 import { Dict } from '../../core/common';
-import { HttpAuthErr } from '../lib/api';
+import { HttpAuthErr, HttpClientErr } from '../lib/api';
 import { OauthMock } from '../lib/oauth';
 
 // tslint:disable:no-null-keyword
 // tslint:disable:oneliner-object-literal
 
+export const keyManagerAutogenRules = {
+  "flags": [
+    "NO_PRV_BACKUP",
+    "ENFORCE_ATTESTER_SUBMIT",
+    "PRV_AUTOIMPORT_OR_AUTOGEN",
+    "PASS_PHRASE_QUIET_AUTOGEN",
+    "DEFAULT_REMEMBER_PASS_PHRASE",
+  ],
+  "key_manager_url": "https://localhost:8001/flowcrypt-email-key-manager",
+  "enforce_keygen_algo": "rsa2048",
+  "disallow_attester_search_for_domains": []
+};
+
+export type ClientConfiguration = {
+  // todo: should we somehow import the type from `client-configuration.ts`?
+  flags?: string[],
+  custom_keyserver_url?: string,
+  key_manager_url?: string,
+  allow_attester_search_only_for_domains?: string[],
+  disallow_attester_search_for_domains?: string[],
+  enforce_keygen_algo?: string,
+  enforce_keygen_expire_months?: number,
+  in_memory_pass_phrase_session_length?: number
+};
+
 export class BackendData {
   public reportedErrors: { name: string, message: string, url: string, line: number, col: number, trace: string, version: string, environmane: string }[] = [];
+
+  public clientConfigurationByAcctEmail: Dict<ClientConfiguration | HttpClientErr> = {};
 
   private uuidsByAcctEmail: Dict<string[]> = {};
 
@@ -46,6 +73,13 @@ export class BackendData {
   };
 
   public getClientConfiguration = (acct: string) => {
+    const foundConfiguration = this.clientConfigurationByAcctEmail[acct];
+    if (foundConfiguration) {
+      if (foundConfiguration instanceof HttpClientErr) {
+        throw foundConfiguration;
+      }
+      return foundConfiguration;
+    }
     const domain = acct.split('@')[1];
     if (domain === 'client-configuration-test.flowcrypt.test') {
       return {
@@ -56,6 +90,14 @@ export class BackendData {
           "ENFORCE_ATTESTER_SUBMIT",
           "USE_LEGACY_ATTESTER_SUBMIT",
         ]
+      };
+    }
+    if (domain === 'passphrase-session-length-client-configuration.flowcrypt.test') {
+      return {
+        "flags": [
+          "FORBID_STORING_PASS_PHRASE",
+        ],
+        "in_memory_pass_phrase_session_length": 3
       };
     }
     if (domain === 'no-submit-client-configuration.flowcrypt.test') {
@@ -104,18 +146,6 @@ export class BackendData {
         "allow_attester_search_only_for_domains": []
       };
     }
-    const keyManagerAutogenRules = {
-      "flags": [
-        "NO_PRV_BACKUP",
-        "ENFORCE_ATTESTER_SUBMIT",
-        "PRV_AUTOIMPORT_OR_AUTOGEN",
-        "PASS_PHRASE_QUIET_AUTOGEN",
-        "DEFAULT_REMEMBER_PASS_PHRASE",
-      ],
-      "key_manager_url": "https://localhost:8001/flowcrypt-email-key-manager",
-      "enforce_keygen_algo": "rsa2048",
-      "disallow_attester_search_for_domains": []
-    };
     if (domain === 'google.mock.flowcryptlocal.test:8001') {
       return { ...keyManagerAutogenRules, flags: [...keyManagerAutogenRules.flags, 'NO_ATTESTER_SUBMIT'] };
     }

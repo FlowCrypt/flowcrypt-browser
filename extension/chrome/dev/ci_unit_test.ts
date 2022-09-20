@@ -12,11 +12,13 @@ import { Wkd } from '../../js/common/api/key-server/wkd.js';
 import { MsgUtil } from '../../js/common/core/crypto/pgp/msg-util.js';
 import { Sks } from '../../js/common/api/key-server/sks.js';
 import { Ui } from '../../js/common/browser/ui.js';
+import { AcctStore } from '../../js/common/platform/store/acct-store.js';
 import { ContactStore } from '../../js/common/platform/store/contact-store.js';
 import { Debug } from '../../js/common/platform/debug.js';
 import { Catch } from '../../js/common/platform/catch.js';
 import * as forge from 'node-forge';
 import { Gmail } from '../../js/common/api/email-provider/gmail/gmail.js';
+import { PgpHash } from '../../js/common/core/crypto/pgp/pgp-hash.js';
 
 /**
  * importing all libs that are tested in ci tests
@@ -33,10 +35,12 @@ const libs: unknown[] = [
   Sks,
   MsgUtil,
   Ui,
+  AcctStore,
   ContactStore,
   Debug,
   Catch,
   Gmail,
+  PgpHash
 ];
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // add them to global scope so ci can use them

@@ -2,8 +2,8 @@
 
 import { AddressObject, ParsedMail, StructuredHeader } from 'mailparser';
 
+import { readdir, readFile } from 'fs';
 import { Util } from '../../util/index';
-import { readFile, readdir } from 'fs';
 import { ParseMsgResult } from '../../util/parse';
 
 type GmailMsg$header = { name: string, value: string };
@@ -162,6 +162,19 @@ export class GoogleData {
     }
     return msgCopy;
   };
+
+  public static getMockGmailPage = (acct: string) => `<!DOCTYPE HTML><html>
+  <body>
+  <div class="gb_Cb">
+    <div class="gb_Ib">${acct}</div>
+  </div>
+  <div class="gb_hb">
+    <div class="gb_lb">Full Name</div>
+  </div>
+  <!-- Compose Button Selector -->
+  <div class="aeN" style="width: 180px; height: 800px"></div>
+  </body></html>
+  `;
 
   private static msgSubject = (m: GmailMsg): string => {
     const subjectHeader = m.payload && m.payload.headers && m.payload.headers.find(h => h.name === 'Subject');

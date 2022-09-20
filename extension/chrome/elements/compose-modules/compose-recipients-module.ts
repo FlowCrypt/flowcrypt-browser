@@ -35,7 +35,6 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
 
   private readonly MAX_CONTACTS_LENGTH = 8;
 
-  private contactSearchInProgress = false;
   private addedPubkeyDbLookupInterval?: number;
 
   private onRecipientAddedCallbacks: ((rec: RecipientElement[]) => void)[] = [];
@@ -43,12 +42,10 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
   private dragged: Element | undefined = undefined;
 
   private googleContactsSearchEnabled: boolean;
-  private canReadEmails: boolean;
 
   constructor(view: ComposeView) {
     super(view);
     this.googleContactsSearchEnabled = this.view.scopes.readContacts && this.view.scopes.readOtherContacts;
-    this.canReadEmails = this.view.scopes.modify;
   }
 
   public setHandlers = (): void => {
@@ -351,9 +348,6 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     if (storage.pubkey_sent_to && storage.pubkey_sent_to.includes(theirEmail)) {
       return true;
     }
-    if (!this.canReadEmails) {
-      return undefined;
-    }
     const qSentPubkey = `is:sent to:${theirEmail} "BEGIN PGP PUBLIC KEY" "END PGP PUBLIC KEY"`;
     const qReceivedMsg = `from:${theirEmail} "BEGIN PGP MESSAGE" "END PGP MESSAGE"`;
     try {
@@ -549,7 +543,6 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
    */
   private searchContacts = async (input: JQuery<HTMLElement>): Promise<void> => {
     try {
-      this.contactSearchInProgress = true;
       this.view.errModule.debug(`searchContacts`);
       const substring = Str.parseEmail(String(input.val()), 'DO-NOT-VALIDATE').email;
       this.view.errModule.debug(`searchContacts.query.substring(${JSON.stringify(substring)})`);
@@ -562,24 +555,29 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       this.view.errModule.debug(`searchContacts substring: ${substring}`);
       this.view.errModule.debug(`searchContacts db count: ${contacts.length}`);
       this.renderSearchRes(input, contacts, { substring });
-      if (contacts.length >= this.MAX_CONTACTS_LENGTH || !(this.canReadEmails || this.googleContactsSearchEnabled)) {
+      if (contacts.length >= this.MAX_CONTACTS_LENGTH) {
         this.view.errModule.debug(`searchContacts 2, count: ${contacts.length}`);
         return;
       }
-      this.view.errModule.debug(`searchContacts 3`);
-      const foundOnGoogle = await this.searchContactsOnGoogle(substring, contacts);
-      await this.addApiLoadedContactsToDb(foundOnGoogle);
-      contacts.push(...foundOnGoogle.map(c => ContactStore.previewObj({ email: c.email, name: c.name })));
-      this.renderSearchRes(input, contacts, { substring });
-      if (contacts.length >= this.MAX_CONTACTS_LENGTH) {
-        this.view.errModule.debug(`searchContacts 3.b, count: ${contacts.length}`);
-        return;
+      let foundOnGoogle: EmailProviderContact[] = [];
+      if (this.googleContactsSearchEnabled) {
+        this.view.errModule.debug(`searchContacts 3`);
+        foundOnGoogle = await this.searchContactsOnGoogle(substring, contacts);
+        await this.addApiLoadedContactsToDb(foundOnGoogle);
+        this.view.errModule.debug(`searchContacts foundOnGoogle, count: ${foundOnGoogle.length}`);
+        contacts.push(...foundOnGoogle.map(c => ContactStore.previewObj({ email: c.email, name: c.name })));
+        this.renderSearchRes(input, contacts, { substring });
+        if (contacts.length >= this.MAX_CONTACTS_LENGTH) {
+          this.view.errModule.debug(`searchContacts 3.b, count: ${contacts.length}`);
+          return;
+        }
       }
       this.view.errModule.debug(`searchContacts 4`);
-      if (this.canReadEmails && !foundOnGoogle.length) {
+      if (!foundOnGoogle.length) {
         this.view.errModule.debug(`searchContacts (Gmail Sent Messages) 6.b`);
         await this.guessContactsFromSentEmails(substring, contacts, async guessed => {
           await this.addApiLoadedContactsToDb(guessed.new);
+          this.view.errModule.debug(`searchContacts (Gmail Sent Messages), count: ${guessed.new.length}`);
           contacts.push(...guessed.new.map(c => ContactStore.previewObj({ email: c.email, name: c.name })));
           this.renderSearchRes(input, contacts, { substring });
         });
@@ -589,7 +587,6 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       throw e;
     } finally {
       this.view.errModule.debug('searchContacts 7 - finishing');
-      this.contactSearchInProgress = false;
       this.renderSearchResultsLoadingDone();
     }
   };
@@ -622,6 +619,27 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     return [];
   };
 
+  private setContactPopupStyle = (input: JQuery<HTMLElement>) => {
+    const contactEl = this.view.S.cached('contacts');
+    const offset = input.offset()!;
+    const offsetTop = input.outerHeight()! + offset.top; // both are in the template
+    const bottomGap = 10;
+    const inputToPadding = parseInt(input.css('padding-left'));
+    let leftOffset: number;
+    if (this.view.S.cached('body').width()! < offset.left + inputToPadding + contactEl.width()!) {
+      // Here we need to align contacts popover by right side
+      leftOffset = offset.left + inputToPadding + input.width()! - contactEl.width()!;
+    } else {
+      leftOffset = offset.left + inputToPadding;
+    }
+    this.view.S.cached('contacts').css({
+      display: 'block',
+      top: offsetTop,
+      left: leftOffset,
+      maxHeight: `calc(100% - ${offsetTop + bottomGap}px)`
+    });
+  };
+
   private renderSearchRes = (input: JQuery<HTMLElement>, contacts: ContactPreview[], query: ProviderContactsQuery) => {
     if (!input.is(':focus')) { // focus was moved away from input
       return;
@@ -646,8 +664,9 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       }
       return 0;
     });
+    const contactEl = this.view.S.cached('contacts');
     const renderableContacts = sortedContacts.slice(0, this.MAX_CONTACTS_LENGTH);
-    if ((renderableContacts.length > 0 || this.contactSearchInProgress) || !this.googleContactsSearchEnabled) {
+    if (renderableContacts.length > 0) {
       let ulHtml = '';
       for (const contact of renderableContacts) {
         ulHtml += `<li class="select_contact" email="${Xss.escape(contact.email.replace(/<\/?b>/g, ''))}">`;
@@ -671,14 +690,9 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
         }
         ulHtml += '</li>';
       }
-      Xss.sanitizeRender(this.view.S.cached('contacts').find('ul'), ulHtml);
-      if (!this.googleContactsSearchEnabled) {
-        if (!contacts.length) {
-          this.view.S.cached('contacts').find('ul').append('<li>No Contacts Found</li>'); // xss-direct
-        }
-        this.addBtnToAllowSearchContactsFromGoogle(input);
-      }
-      const contactItems = this.view.S.cached('contacts').find('ul li.select_contact');
+      this.removeBtnToAllowSearchContactsFromGoogle(); // remove allow search contacts from google if it was present
+      Xss.sanitizeRender(contactEl.find('ul'), ulHtml);
+      const contactItems = contactEl.find('ul li.select_contact');
       contactItems.first().addClass('active');
       contactItems.click(this.view.setHandlerPrevent('double', async (target: HTMLElement) => {
         const email = Str.parseEmail($(target).attr('email') || '').email;
@@ -690,23 +704,13 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
         contactItems.removeClass('active');
         $(this).addClass('active');
       });
-      const offset = input.offset()!;
-      const inputToPadding = parseInt(input.css('padding-left'));
-      let leftOffset: number;
-      if (this.view.S.cached('body').width()! < offset.left + inputToPadding + this.view.S.cached('contacts').width()!) {
-        // Here we need to align contacts popover by right side
-        leftOffset = offset.left + inputToPadding + input.width()! - this.view.S.cached('contacts').width()!;
-      } else {
-        leftOffset = offset.left + inputToPadding;
+      this.setContactPopupStyle(input);
+    } else {
+      this.setContactPopupStyle(input);
+      contactEl.find('ul').html('<li data-test="no-contact-found">No Contacts Found</li>'); // xss-direct
+      if (!this.googleContactsSearchEnabled) {
+        this.addBtnToAllowSearchContactsFromGoogle(input);
       }
-      const offsetTop = input.outerHeight()! + offset.top; // both are in the template
-      const bottomGap = 10;
-      this.view.S.cached('contacts').css({
-        display: 'none',
-        left: leftOffset,
-        top: offsetTop,
-        maxHeight: `calc(100% - ${offsetTop + bottomGap}px)`,
-      });
     }
   };
 
@@ -718,6 +722,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       .append('<div class="allow-google-contact-search" data-test="action-auth-with-contacts-scope"><img src="/img/svgs/gmail.svg" />Enable Google Contact Search</div>') // xss-direct
       .find('.allow-google-contact-search')
       .click(this.view.setHandler(async () => {
+        // Need to use BrowserMsg.send.bg because chrome.windows is undefined in gmail page
         const authResult = await BrowserMsg.send.bg.await.reconnectAcctAuthPopup({ acctEmail: this.view.acctEmail, scopes: GoogleAuth.defaultScopes('contacts') });
         if (authResult.result === 'Success') {
           this.googleContactsSearchEnabled = true;
@@ -728,6 +733,10 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
           await Ui.modal.error(`Could not enable Google Contact search. ${Lang.general.writeMeToFixIt(!!this.view.fesUrl)}\n\n[${authResult.result}] ${authResult.error}`);
         }
       }));
+  };
+
+  private removeBtnToAllowSearchContactsFromGoogle = () => {
+    this.view.S.cached('contacts').find('.allow-google-contact-search')?.remove();
   };
 
   private selectContact = async (input: JQuery<HTMLElement>, email: string, fromQuery: ProviderContactsQuery) => {
@@ -765,10 +774,10 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
         }, this.view.errModule.handle('remove recipient with keyboard')));
         this.addDraggableEvents(element);
         const recipient = { email, name, invalid, element, id: recipientId, sendingType, status: email ? status : RecipientStatus.WRONG };
+        this.addedRecipients.push(recipient);
         if (recipient.status === RecipientStatus.WRONG) {
           this.renderPubkeyResult(recipient, undefined);
         }
-        this.addedRecipients.push(recipient);
         result.push(recipient);
       }
     }
@@ -851,8 +860,17 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       recipient.status = RecipientStatus.FAILED;
       $(el).attr('title', 'Failed to load, click to retry');
       $(el).addClass("failed");
-      Xss.sanitizeReplace($(el).children('img:visible'), '<img src="/img/svgs/repeat-icon.svg" class="repeat-icon action_retry_pubkey_fetch">' +
-        '<img src="/img/svgs/close-icon-black.svg" class="close-icon-black svg remove-reciepient">');
+      Xss.sanitizeReplace(
+        $(el).children('img:visible'),
+        `
+          <img
+            src="/img/svgs/repeat-icon.svg"
+            data-test="action-retry-${recipient.email?.replace(/[^a-z0-9]+/g, '')}-pubkey-fetch"
+            class="repeat-icon action_retry_pubkey_fetch"
+          >
+          <img src="/img/svgs/close-icon-black.svg" class="close-icon-black svg remove-reciepient">
+        `
+      );
       $(el).find('.action_retry_pubkey_fetch').click(this.view.setHandler(async () => await this.refreshRecipients(), this.view.errModule.handle('refresh recipient')));
       $(el).find('.remove-reciepient').click(this.view.setHandler(element => this.removeRecipient(element.parentElement!), this.view.errModule.handle('remove recipient')));
     } else if (info && info.sortedPubkeys.length) {
@@ -899,7 +917,9 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       $(el).attr('title', 'Could not verify their encryption setup. You can encrypt the message with a password below. Alternatively, add their pubkey.');
     }
     // Replace updated recipient in addedRecipients
-    const changedIndex = this.addedRecipients.findIndex((addedRecipient) => addedRecipient.email === recipient.email && addedRecipient.id === recipient.id);
+    const changedIndex = this.addedRecipients.findIndex(
+      (addedRecipient) => (!recipient.email || addedRecipient.email === recipient.email) && addedRecipient.id === recipient.id
+    );
     this.addedRecipients.splice(changedIndex, 1, recipient);
     this.view.pwdOrPubkeyContainerModule.showHideContainerAndColorSendBtn(); // tslint:disable-line:no-floating-promises
     this.view.myPubkeyModule.reevaluateShouldAttachOrNot();

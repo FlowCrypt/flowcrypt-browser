@@ -4,10 +4,11 @@
 
 import { Api, ReqMethod } from './../shared/api.js';
 import { Dict, Str } from '../../core/common.js';
-import { PubkeySearchResult } from './../pub-lookup.js';
-import { ApiErr } from '../shared/api-error.js';
+import { PubkeysSearchResult } from './../pub-lookup.js';
+import { AjaxErr, ApiErr } from '../shared/api-error.js';
 import { ClientConfiguration } from "../../client-configuration";
 import { ATTESTER_API_HOST } from '../../core/const.js';
+import { MsgBlockParser } from '../../core/msg-block-parser.js';
 
 type PubCallRes = { responseText: string, getResponseHeader: (n: string) => string | null };
 
@@ -19,16 +20,46 @@ export class Attester extends Api {
     super();
   }
 
-  public lookupEmail = async (email: string): Promise<PubkeySearchResult> => {
+  public lookupEmail = async (email: string): Promise<PubkeysSearchResult> => {
     if (!this.clientConfiguration.canLookupThisRecipientOnAttester(email)) {
       console.info(`Skipping attester lookup of ${email} because attester search on this domain is disabled.`);
-      return { pubkey: null }; // tslint:disable-line:no-null-keyword
+      return { pubkeys: [] };
     }
-    return await this.doLookup(email);
+    const results = await Promise.allSettled([
+      this.doLookupLdap(email),  // get from recipient-specific LDAP server, if any, relayed through flowcrypt.com
+      this.doLookup(email),  // get from flowcrypt.com public keyserver database
+      this.doLookupLdap(email, 'keyserver.pgp.com'), // get from keyserver.pgp.com, relayed through flowcrypt.com
+    ]);
+    const validResults = results.filter(result => result.status === 'fulfilled');
+    for (const result of validResults) {
+      const fulfilResult = result as PromiseFulfilledResult<PubkeysSearchResult>;
+      if (fulfilResult.value.pubkeys.length) {
+        return fulfilResult.value;
+      }
+    }
+    if (results[1].status === 'rejected') {
+      throw results[1].reason as unknown;
+    }
+    return { pubkeys: [] };
   };
 
-  public lookupEmails = async (emails: string[]): Promise<Dict<PubkeySearchResult>> => {
-    const results: Dict<PubkeySearchResult> = {};
+  public doLookupLdap = async (email: string, server?: string): Promise<PubkeysSearchResult> => {
+    const ldapServer = server ?? `keys.${Str.getDomainFromEmailAddress(email)}`;
+    try {
+      const r = await this.pubCall(`ldap-relay?server=${ldapServer}&search=${email}`);
+      return await this.getPubKeysSearchResult(r);
+    } catch (e) {
+      // treat error 500 as error 404 on this particular endpoint
+      // https://github.com/FlowCrypt/flowcrypt-browser/pull/4627#issuecomment-1222624065
+      if (ApiErr.isNotFound(e) || (e as AjaxErr).status === 500) {
+        return { pubkeys: [] };
+      }
+      throw e;
+    }
+  };
+
+  public lookupEmails = async (emails: string[]): Promise<Dict<PubkeysSearchResult>> => {
+    const results: Dict<PubkeysSearchResult> = {};
     await Promise.all(emails.map(async (email: string) => {
       results[email] = await this.lookupEmail(email);
     }));
@@ -94,19 +125,19 @@ export class Attester extends Api {
     return await Api.apiCall(ATTESTER_API_HOST, resource, data, typeof data === 'string' ? 'TEXT' : undefined, undefined, hdrs, 'xhr', method);
   };
 
-  private doLookup = async (emailOrFingerprint: string): Promise<PubkeySearchResult> => {
+  private getPubKeysSearchResult = async (r: PubCallRes): Promise<PubkeysSearchResult> => {
+    const { blocks } = MsgBlockParser.detectBlocks(r.responseText);
+    const pubkeys = blocks.filter((block) => block.type === 'publicKey').map((block) => block.content.toString());
+    return { pubkeys };
+  };
+
+  private doLookup = async (email: string): Promise<PubkeysSearchResult> => {
     try {
-      const r = await this.pubCall(`pub/${emailOrFingerprint}`);
-      // when requested from the content script, `getResponseHeader` will be missing because it's not a real XMLHttpRequest we are getting back
-      // because it had to go through background scripts, and objects are serialized when this happens
-      // the proper fix would be to send back headers from bg along with response text, and parse it here
-      if (!r.getResponseHeader) {
-        return { pubkey: r.responseText };
-      }
-      return { pubkey: r.responseText };
+      const r = await this.pubCall(`pub/${email}`);
+      return await this.getPubKeysSearchResult(r);
     } catch (e) {
       if (ApiErr.isNotFound(e)) {
-        return { pubkey: null }; // tslint:disable-line:no-null-keyword
+        return { pubkeys: [] };
       }
       throw e;
     }

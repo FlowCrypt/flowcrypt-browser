@@ -39,6 +39,7 @@ export class PgpBlockView extends View {
   public clientConfiguration!: ClientConfiguration;
   public pubLookup!: PubLookup;
 
+  public readonly debug: boolean;
   public readonly attachmentsModule: PgpBlockViewAttachmentsModule;
   public readonly signatureModule: PgpBlockViewSignatureModule;
   public readonly quoteModule: PgpBlockViewQuoteModule;
@@ -51,11 +52,12 @@ export class PgpBlockView extends View {
   constructor() {
     super();
     Ui.event.protect();
-    const uncheckedUrlParams = Url.parse(['acctEmail', 'frameId', 'message', 'parentTabId', 'msgId', 'isOutgoing', 'senderEmail', 'signature']);
+    const uncheckedUrlParams = Url.parse(['acctEmail', 'frameId', 'message', 'parentTabId', 'msgId', 'isOutgoing', 'senderEmail', 'signature', 'debug']);
     this.acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
     this.parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
     this.frameId = Assert.urlParamRequire.string(uncheckedUrlParams, 'frameId');
     this.isOutgoing = uncheckedUrlParams.isOutgoing === true;
+    this.debug = uncheckedUrlParams.debug === true;
     const senderEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'senderEmail');
     this.senderEmail = Str.parseEmail(senderEmail).email || '';
     this.msgId = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'msgId');
@@ -92,8 +94,7 @@ export class PgpBlockView extends View {
     this.fesUrl = storage.fesUrl;
     this.clientConfiguration = await ClientConfiguration.newInstance(this.acctEmail);
     this.pubLookup = new PubLookup(this.clientConfiguration);
-    const scopes = await AcctStore.getScopes(this.acctEmail);
-    this.decryptModule.canReadEmails = scopes.modify;
+    await this.renderModule.initPrintView();
     if (storage.setup_done) {
       const parsedPubs = (await ContactStore.getOneWithAllPubkeys(undefined, this.getExpectedSignerEmail()))?.sortedPubkeys ?? [];
       // todo: we don't actually need parsed pubs here because we're going to pass them to the backgorund page
@@ -106,7 +107,7 @@ export class PgpBlockView extends View {
   };
 
   public setHandlers = () => {
-    // defined as needed, depending on what rendered
+    $('.pgp_print_button').click(this.setHandler(() => this.renderModule.printPGPBlock()));
   };
 
 }

@@ -10,11 +10,19 @@ export class OauthPageRecipe extends PageRecipe {
 
   private static longTimeout = 40;
 
-  public static mock = async (t: AvaContext, oauthPage: ControllablePage, acctEmail: string, action: 'close' | 'deny' | 'approve' | 'login' | 'override_acct'): Promise<void> => {
+  public static mock = async (t: AvaContext, oauthPage: ControllablePage, acctEmail: string,
+    action: 'close' | 'deny' | 'approve' | 'login' | 'login_with_invalid_state' | 'override_acct' | 'missing_permission'): Promise<void> => {
     let mockOauthUrl = oauthPage.target.url();
     const { login_hint } = Url.parse(['login_hint'], mockOauthUrl);
     if (action === 'close') {
       await oauthPage.close();
+    } else if (action === 'login_with_invalid_state') {
+      mockOauthUrl = Url.removeParamsFromUrl(mockOauthUrl, ['login_hint']);
+      await oauthPage.target.goto(mockOauthUrl.replace('CRYPTUP_STATE', 'INVALID_CRYPTUP_STATE') + '&login_hint=' + encodeURIComponent(acctEmail) + '&proceed=true');
+    } else if (action === 'missing_permission') {
+      mockOauthUrl = Url.removeParamsFromUrl(mockOauthUrl, ['scope']);
+      mockOauthUrl += '&scope=missing_scope';
+      await oauthPage.target.goto(mockOauthUrl + '&proceed=true');
     } else if (!login_hint) {
       await oauthPage.target.goto(mockOauthUrl + '&login_hint=' + encodeURIComponent(acctEmail) + '&proceed=true');
     } else {
@@ -26,7 +34,8 @@ export class OauthPageRecipe extends PageRecipe {
     }
   };
 
-  public static google = async (t: AvaContext, oauthPage: ControllablePage, acctEmail: string, action: "close" | "deny" | "approve" | 'login'): Promise<void> => {
+  public static google = async (t: AvaContext, oauthPage: ControllablePage, acctEmail: string,
+    action: "close" | "deny" | "approve" | "login" | "login_with_invalid_state"): Promise<void> => {
     try {
       const isMock = oauthPage.target.url().includes('localhost') || oauthPage.target.url().includes('google.mock.flowcryptlocal.test');
       if (isMock) {

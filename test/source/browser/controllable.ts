@@ -637,6 +637,7 @@ export class ControllablePage extends ControllableBase {
 
   public goto = async (url: string) => {
     url = url.indexOf('https://') === 0 || url.indexOf(TestUrls.extension('')) === 0 ? url : TestUrls.extension(url);
+    await Util.sleep(1);
     // await this.page.goto(url); // may produce intermittent Navigation Timeout Exceeded in CI environment
     this.page.goto(url).catch(e => this.t.log(`goto: ${e.message}: ${url}`));
     await Promise.race([

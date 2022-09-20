@@ -2,18 +2,20 @@
 
 'use strict';
 
-import { Catch, UnreportableError } from './platform/catch.js';
-import { Dict, UrlParam, UrlParams } from './core/common.js';
 import { Browser } from './browser/browser.js';
-import { KeyInfoWithIdentity, KeyUtil } from './core/crypto/key.js';
-import { Settings } from './settings.js';
 import { Ui } from './browser/ui.js';
-import { Xss } from './platform/xss.js';
-import { KeyStore } from './platform/store/key-store.js';
-import { AcctStore } from './platform/store/acct-store.js';
+import { Dict, UrlParam, UrlParams } from './core/common.js';
+import { KeyInfoWithIdentity, KeyUtil } from './core/crypto/key.js';
 import { Lang } from './lang.js';
+import { Catch, UnreportableError } from './platform/catch.js';
+import { AcctStore } from './platform/store/acct-store.js';
+import { KeyStore } from './platform/store/key-store.js';
+import { Xss } from './platform/xss.js';
+import { Settings } from './settings.js';
 import { isFesUsed } from './helpers.js';
 
+
+export class AssertError extends UnreportableError { }
 /**
  * Methods in this class will render a fatal message in the browser when assertion fails.
  */
@@ -66,7 +68,7 @@ export class Assert {
       target.addClass('error-occured');
       Xss.sanitizeRender(target, msg);
       if (doThrow) {
-        throw new UnreportableError(msg);
+        throw new AssertError(msg);
       }
     }
   };
@@ -85,9 +87,9 @@ export class Assert {
     Xss.sanitizeRender('body', renderMsg).addClass('bad').css({ padding: '20px', 'font-size': '16px' });
     $('.action_report_issue').click(Ui.event.handle(async () => {
       Catch.report(msg, { currentUrl: window.location.href, params: values });
-      $('body').text('Thank you. Feel free to reach out to human@flowcrypt.com in you need assistance.');
+      $('body').text(`Thank you. ${Lang.general.contactIfNeedAssistance()}`);
     }));
-    throw new UnreportableError(msg);
+    throw new AssertError(msg);
   };
 
   public static abortAndRenderErrOnUrlParamValMismatch = <T>(values: Dict<T>, name: string, expectedVals: T[]): T => {
@@ -95,7 +97,7 @@ export class Assert {
       const msg = `Cannot render page (expected ${Xss.escape(name)} to be one of ${Xss.escape(expectedVals.map(String).join(','))}
         but got ${Xss.escape(String(values[name]))}<br><br>Was the URL editted manually? Please write human@flowcrypt.com for help.`;
       Xss.sanitizeRender('body', msg).addClass('bad').css({ padding: '20px', 'font-size': '16px' });
-      throw new UnreportableError(msg);
+      throw new AssertError(msg);
     }
     return values[name];
   };

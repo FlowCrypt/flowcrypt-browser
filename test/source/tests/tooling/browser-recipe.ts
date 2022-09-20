@@ -14,12 +14,13 @@ import { PageRecipe } from '../page-recipe/abstract-page-recipe';
 import { InMemoryStoreKeys } from '../../core/const';
 
 export class BrowserRecipe {
+  public static oldAndNewComposeButtonSelectors = ['div.z0[class*="_destroyable"]', '.new_secure_compose_window_button'];
 
   public static openSettingsLoginButCloseOauthWindowBeforeGrantingPermission = async (t: AvaContext, browser: BrowserHandle, acctEmail: string) => {
     const settingsPage = await browser.newPage(t, TestUrls.extensionSettings());
     const oauthPopup = await browser.newPageTriggeredBy(t, () => settingsPage.waitAndClick('@action-connect-to-gmail'));
     await OauthPageRecipe.google(t, oauthPopup, acctEmail, 'close');
-    await settingsPage.waitAndRespondToModal('confirm', 'cancel', 'Explaining FlowCrypt webmail permissions');
+    await settingsPage.waitAndRespondToModal('info', 'confirm', 'Explaining FlowCrypt webmail permissions');
     return settingsPage;
   };
 
@@ -33,11 +34,11 @@ export class BrowserRecipe {
   public static openGmailPage = async (t: AvaContext, browser: BrowserHandle, googleLoginIndex = 0, expectComposeButton = true) => {
     const gmailPage = await browser.newPage(t, TestUrls.gmail(googleLoginIndex));
     if (expectComposeButton) {
-      await gmailPage.waitAll('div.z0[class*="_destroyable"]'); // compose button container visible
+      await gmailPage.waitAny(BrowserRecipe.oldAndNewComposeButtonSelectors); // compose button container visible
     }
     await Util.sleep(3); // give it extra time to make sure FlowCrypt is initialized if it was supposed to
     if (!expectComposeButton) {
-      await gmailPage.notPresent('div.z0[class*="_destroyable"]'); // compose button container not visible
+      await gmailPage.notPresent(BrowserRecipe.oldAndNewComposeButtonSelectors); // compose button container not visible
     }
     return gmailPage;
   };
@@ -98,6 +99,18 @@ export class BrowserRecipe {
     });
     return (result as { result: string }).result;
   };
+
+  public static getFromInMemoryStore = async (controllable: Controllable, acctEmail: string, key: string): Promise<string> => {
+    const result = await PageRecipe.sendMessage(controllable, {
+      name: 'inMemoryStoreGet',
+      // tslint:disable-next-line:no-null-keyword
+      data: { bm: { acctEmail, key }, objUrls: {} }, to: null, uid: '2' // todo: random uid?
+    });
+    return (result as { result: string }).result;
+  };
+
+  public static getPassphraseFromInMemoryStore = (controllable: Controllable, acctEmail: string, longid: string): Promise<string> =>
+    BrowserRecipe.getFromInMemoryStore(controllable, acctEmail, `passphrase_${longid}`);
 
   public static deleteAllDraftsInGmailAccount = async (settingsPage: ControllablePage): Promise<void> => {
     const accessToken = await BrowserRecipe.getGoogleAccessToken(settingsPage, 'ci.tests.gmail@flowcrypt.dev');
@@ -170,10 +183,15 @@ export class BrowserRecipe {
       }
     }
     if (m.error) {
+      await pgpBlockPage.notPresent('@action-print');
       const errBadgeContent = await pgpBlockPage.read('@pgp-error');
       if (errBadgeContent !== m.error) {
         t.log(`found err content:${errBadgeContent}`);
         throw new Error(`pgp_block_verify_decrypted_content:missing expected error content:${m.error}`);
+      }
+    } else if (m.content.length > 0) {
+      if (!await pgpBlockPage.isElementVisible('@action-print')) {
+        throw new Error(`Print button is invisible`);
       }
     }
     await pgpHostPage.close();

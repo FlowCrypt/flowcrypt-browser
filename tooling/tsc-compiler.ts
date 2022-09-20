@@ -47,7 +47,7 @@ const preserveAsyncStackTracesTransformerFactory = () => {
     const statements: ts.Statement[] = [];
     const addStackLine = `\\n    at <async> ${getNameAndPos(f)}`;
     const code = `if(t instanceof Error){t.stack+="${addStackLine}";throw t}const e=new Error("Thrown["+typeof t+"]"+t);e.thrown=t;throw e`;
-    statements.push(ts.createStatement(ts.createIdentifier(code)));
+    statements.push(ts.createStatement(ts.factory.createIdentifier(code)));
     return statements;
   };
   const visitor = (ctx: ts.TransformationContext) => {
@@ -55,13 +55,13 @@ const preserveAsyncStackTracesTransformerFactory = () => {
       if (ts.isFunctionDeclaration(node) || ts.isArrowFunction(node) || ts.isMethodDeclaration(node) || ts.isFunctionExpression(node)) {
         if (node.modifiers && node.modifiers.filter(modifier => modifier.kind === ts.SyntaxKind.AsyncKeyword).length) {
           if (node.body) {
-            const catchClause = ts.createCatchClause('t', ts.createBlock(createStackTracePreservingCatchBlockStatements(node), true));
+            const catchClause = ts.factory.createCatchClause('t', ts.factory.createBlock(createStackTracePreservingCatchBlockStatements(node), true));
             if ((node.body as ts.FunctionBody).statements && (node.body as ts.FunctionBody).statements.length) {
-              const origFuncContent = ts.createBlock((node.body as ts.FunctionBody).statements, true);
-              (node.body as any).statements = ts.createNodeArray([ts.createTry(origFuncContent, catchClause, undefined)]);
+              const origFuncContent = ts.factory.createBlock((node.body as ts.FunctionBody).statements, true);
+              (node.body as any).statements = ts.factory.createNodeArray([ts.factory.createTryStatement(origFuncContent, catchClause, undefined)]);
             } else if (ts.isCallExpression(node.body) || ts.isAwaitExpression(node.body)) { // eg: `x.click(async () => whatever())` or `x.click(async () => await whatever())`
-              const origFuncContent = ts.createBlock([ts.createReturn(node.body)], true);
-              (node.body as any) = ts.createBlock([ts.createTry(origFuncContent, catchClause, undefined)], true);
+              const origFuncContent = ts.factory.createBlock([ts.factory.createReturnStatement(node.body)], true);
+              (node.body as any) = ts.factory.createBlock([ts.factory.createTryStatement(origFuncContent, catchClause, undefined)], true);
             }
           }
         }

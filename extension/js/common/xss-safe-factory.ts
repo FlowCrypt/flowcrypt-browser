@@ -19,7 +19,7 @@ import { SendAsAlias } from './platform/store/acct-store.js';
 
 type Placement = 'settings' | 'settings_compose' | 'default' | 'dialog' | 'gmail' | 'embedded' | 'compose';
 export type WebmailVariantString = undefined | 'html' | 'standard' | 'new';
-export type PassphraseDialogType = 'embedded' | 'message' | 'attachment' | 'draft' | 'sign' | `quote` | `backup`;
+export type PassphraseDialogType = 'embedded' | 'message' | 'attachment' | 'draft' | 'sign' | `quote` | `backup` | 'update_key';
 export type FactoryReplyParams = {
   replyMsgId?: string,
   draftId?: string,

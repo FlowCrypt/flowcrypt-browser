@@ -11,8 +11,11 @@ import { Lang } from '../../../js/common/lang.js';
 import { PgpBlockView } from '../pgp_block.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { Xss } from '../../../js/common/platform/xss.js';
+import { Str } from '../../../js/common/core/common.js';
 
 export class PgpBlockViewErrorModule {
+
+  private debugId = Str.sloppyRandom();
 
   constructor(private view: PgpBlockView) {
   }
@@ -32,6 +35,12 @@ export class PgpBlockViewErrorModule {
     $('.button.settings_add_key').click(this.view.setHandler(async () => await Browser.openSettingsPage('index.htm', this.view.acctEmail, '/chrome/settings/modules/add_key.htm')));
     $('.button.reply_pubkey_mismatch').click(this.view.setHandler(() => BrowserMsg.send.replyPubkeyMismatch(this.view.parentTabId)));
     Ui.setTestState('ready');
+  };
+
+  public debug = (msg: string) => {
+    if (this.view.debug) {
+      console.log(`[${this.debugId}] ${msg}`);
+    }
   };
 
   public handlePrivateKeyMismatch = async (armoredPubs: string[], message: Uint8Array, isPwdMsg: boolean) => { // todo - make it work for multiple stored keys
@@ -55,7 +64,7 @@ export class PgpBlockViewErrorModule {
       await this.renderErr(`Could not load message due to missing auth. ${Ui.retryLink()}`, undefined);
     } else if (e instanceof FormatError) {
       await this.renderErr(Lang.pgpBlock.cantOpen + Lang.pgpBlock.badFormat + Lang.pgpBlock.details
-        + e.message  + ' ' + Lang.pgpBlock.dontKnowHowOpen(!!this.view.fesUrl), e.data);
+        + e.message + ' ' + Lang.pgpBlock.dontKnowHowOpen(!!this.view.fesUrl), e.data);
     } else if (ApiErr.isInPrivateMode(e)) {
       await this.renderErr(`FlowCrypt does not work in a Firefox Private Window (or when Firefox Containers are used). Please try in a standard window.`, undefined);
     } else {

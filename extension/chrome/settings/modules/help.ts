@@ -13,6 +13,8 @@ import { VERSION } from '../../../js/common/core/const.js';
 import { View } from '../../../js/common/view.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { FlowCryptWebsite } from '../../../js/common/api/flowcrypt-website.js';
+import { Lang } from '../../../js/common/lang.js';
+import { isFesUsed } from '../../../js/common/helpers.js';
 
 View.run(class HelpView extends View {
 
@@ -69,12 +71,12 @@ View.run(class HelpView extends View {
         BrowserMsg.send.closePage(this.parentTabId);
       } else {
         $(target).text(origBtnText);
-        await Ui.modal.error('There was an error sending message. Our direct email is human@flowcrypt.com');
+        await Ui.modal.error(`There was an error sending message. ${Lang.general.contactForSupportSentence(await isFesUsed(this.acctEmail || ''))}`);
       }
     } catch (e) {
       ApiErr.reportIfSignificant(e);
       $(target).text(origBtnText);
-      await Ui.modal.error(`There was an error sending message. Our direct email is human@flowcrypt.com\n\n${ApiErr.eli5(e)}`);
+      await Ui.modal.error(`There was an error sending message. ${Lang.general.contactForSupportSentence(await isFesUsed(this.acctEmail || ''))}\n\n${ApiErr.eli5(e)}`);
     }
   };
 

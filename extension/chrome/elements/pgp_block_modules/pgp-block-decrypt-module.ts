@@ -16,8 +16,6 @@ import { PassphraseStore } from '../../../js/common/platform/store/passphrase-st
 
 export class PgpBlockViewDecryptModule {
 
-  public canReadEmails: undefined | boolean;
-
   private msgFetchedFromApi: false | GmailResponseFormat = false;
   private isPwdMsgBasedOnMsgSnippet: boolean | undefined;
 
@@ -26,7 +24,7 @@ export class PgpBlockViewDecryptModule {
 
   public initialize = async (verificationPubs: string[], forcePullMsgFromApi: boolean) => {
     try {
-      if (this.canReadEmails && this.view.signature && !this.view.signature.parsedSignature && this.view.msgId) {
+      if (this.view.signature && !this.view.signature.parsedSignature && this.view.msgId) {
         this.view.renderModule.renderText('Loading signed message...');
         const { raw } = await this.view.gmail.msgGet(this.view.msgId, 'raw');
         this.msgFetchedFromApi = 'raw';
@@ -67,7 +65,7 @@ export class PgpBlockViewDecryptModule {
     }
   };
 
-  public canAndShouldFetchFromApi = () => this.canReadEmails && this.msgFetchedFromApi !== 'raw';
+  public canAndShouldFetchFromApi = () => this.msgFetchedFromApi !== 'raw';
 
   private decryptAndRender = async (encryptedData: Buf, verificationPubs: string[], plainSubject?: string) => {
     if (!this.view.signature?.parsedSignature) {

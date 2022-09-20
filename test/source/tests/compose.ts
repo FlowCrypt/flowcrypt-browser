@@ -569,10 +569,43 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       await composePage.notPresent('@password-or-pubkey-container');
     }));
 
+    ava.default('compose - show no contact found result if there are no contacts', testWithBrowser('ci.tests.gmail', async (t, browser) => {
+      const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
+      await ComposePageRecipe.showRecipientInput(composePage);
+      const noContactSelectors = ['@no-contact-found'];
+      if (testVariant === 'CONSUMER-MOCK') {
+        noContactSelectors.push('@action-auth-with-contacts-scope'); // also check for "Enable..." button
+      }
+      await composePage.waitAndType('@input-to', 'ci.tests.gmail');
+      await Util.sleep(3);
+      await composePage.notPresent(noContactSelectors);
+      await composePage.waitAndType('@input-to', 'aaaaaaaaaaa');
+      await composePage.waitAll(noContactSelectors);
+      await composePage.waitAndType('@input-to', 'ci.tests.gmail');
+      await Util.sleep(3);
+      await composePage.notPresent(noContactSelectors);
+      await composePage.waitAndType('@input-to', 'aaaaaaaaaaa');
+      await composePage.waitAll(noContactSelectors);
+    }));
+
     ava.default('compose - CC&BCC new message', testWithBrowser('ci.tests.gmail', async (t, browser) => {
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
       await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com', cc: 'human@flowcrypt.com', bcc: 'human@flowcrypt.com' }, 'Testing CC And BCC');
       await ComposePageRecipe.sendAndClose(composePage);
+    }));
+
+    ava.default('compose - check recipient validation after user inputs incorrect recipient', testWithBrowser('ci.tests.gmail', async (t, browser) => {
+      const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
+      const correctButtonStatusTxt = 'Encrypt, Sign and Send';
+      await ComposePageRecipe.showRecipientInput(composePage);
+      await composePage.waitAll('@container-cc-bcc-buttons');
+      await composePage.waitForContent('@action-send', correctButtonStatusTxt);
+      await composePage.waitAndType(`@input-to`, 'aaaaa\n'); // First enter invalid recipient
+      await composePage.waitForContent('@action-send', 'Re-enter recipient..');
+      await composePage.press('Backspace'); // Delete invalid recipient
+      await composePage.waitForContent('@action-send', correctButtonStatusTxt); // check if sent button status is correct
+      await composePage.waitAndType(`@input-to`, 'mock.only.pubkey@flowcrypt.com\n'); // Now enter correct recipient and check if send button status is correct.
+      await composePage.waitForContent('@action-send', correctButtonStatusTxt);
     }));
 
     ava.default('compose - reply - CC&BCC test reply', testWithBrowser('compatibility', async (t, browser) => {
@@ -1173,13 +1206,6 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       await decryptErrorDetails.waitForContent('@error-details', '"type": "key_mismatch"'); // DecryptError
     }));
 
-    ava.default('can lookup public key from WKD directly', testWithBrowser('ci.tests.gmail', async (t, browser) => {
-      const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
-      await ComposePageRecipe.fillMsg(composePage, { to: 'demo@flowcrypt.com' }, 'should find pubkey from WKD directly');
-      await composePage.waitForContent('.email_address.has_pgp', 'demo@flowcrypt.com');
-      expect(await composePage.attr('.email_address.has_pgp', 'title')).to.contain('0997 7F6F 512C A5AD 76F0 C210 248B 60EB 6D04 4DF8 (openpgp)');
-    }));
-
     ava.default('timeouts when searching WKD - used to never time out', testWithBrowser('ci.tests.gmail', async (t, browser) => {
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
       await ComposePageRecipe.fillMsg(composePage, { to: 'somewhere@mac.com' }, 'should show no pubkey within a few seconds');
@@ -1466,6 +1492,82 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       await composePage.waitAny('@password-or-pubkey-container', { visible: false });
     }));
 
+    ava.default('attester client should understand more than one pub key', testWithBrowser('ci.tests.gmail', async (t, browser) => {
+      const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
+      const recipientEmail = 'multiple.pub.key@flowcrypt.com';
+      await ComposePageRecipe.fillMsg(composePage, { to: recipientEmail }, t.title);
+      await composePage.close();
+      // Check if multiple keys are imported to multiple.pub.key@flowcrypt.com account
+      const settingsPage = await browser.newPage(t, TestUrls.extensionSettings('ci.tests.gmail@flowcrypt.test'));
+      await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
+      const contactsFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-contacts-page', ['contacts.htm', 'placement=settings']);
+      await contactsFrame.waitAll('@page-contacts');
+      await contactsFrame.waitAndClick(`@action-show-email-${recipientEmail.replace(/[^a-z0-9]+/g, '')}`);
+      // Check protonMailCompatKey key
+      await contactsFrame.waitAndClick(`@action-show-pubkey-8B8A05A2216EE6E4C5EE3D540D5688EBF3102BE7-openpgp`, { confirmGone: true });
+      await contactsFrame.waitForContent('@container-pubkey-details', 'Fingerprint: 8B8A 05A2 216E E6E4 C5EE 3D54 0D56 88EB F310 2BE7');
+      await contactsFrame.waitForContent('@container-pubkey-details', 'Users: tom@bitoasis.net');
+      // Check somePubkey
+      await contactsFrame.waitAndClick('@action-back-to-contact-list', { confirmGone: true });
+      await contactsFrame.waitAndClick(`@action-show-email-${recipientEmail.replace(/[^a-z0-9]+/g, '')}`);
+      await contactsFrame.waitAndClick(`@action-show-pubkey-AB8CF86E37157C3F290D72007ED43D79E9617655-openpgp`, { confirmGone: true });
+      await contactsFrame.waitForContent('@container-pubkey-details', 'Fingerprint: AB8C F86E 3715 7C3F 290D 7200 7ED4 3D79 E961 7655');
+      await contactsFrame.waitForContent('@container-pubkey-details', 'Users: flowcrypt.compatibility@protonmail.com');
+    }));
+
+    ava.default('check attester ldap search', testWithBrowser('ci.tests.gmail', async (t, browser) => {
+      const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
+      const recipients = {
+        to: 'test.ldap.priority@gmail.com', // check if recipient-specific LDAP server results are priotized than flowcrypt pubkey server
+        // check if we can get results from keyserver.pgp.com when no results are returned from flowcrypt key server and recipient-specific LDAP server
+        // And check if it can handle multiple keys
+        cc: 'test.ldap.keyserver.pgp@gmail.com',
+        // check if flowcrypt keyserver results are priotized than keyserver.pgp.com results
+        bcc: 'test.flowcrypt.pubkeyserver.priority@gmail.com'
+      };
+      await ComposePageRecipe.fillMsg(composePage, recipients, t.title);
+      await composePage.close();
+      const settingsPage = await browser.newPage(t, TestUrls.extensionSettings('ci.tests.gmail@flowcrypt.test'));
+      await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
+      const contactsFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-contacts-page', ['contacts.htm', 'placement=settings']);
+      await contactsFrame.waitAll('@page-contacts');
+      // Check test.ldap.priority@gmail.com
+      await contactsFrame.waitAndClick(`@action-show-email-${recipients.to.replace(/[^a-z0-9]+/g, '')}`);
+      await contactsFrame.waitAny(`@action-show-pubkey-AB8CF86E37157C3F290D72007ED43D79E9617655-openpgp`);
+      // Check test.ldap.keyserver.pgp@gmail.com
+      await contactsFrame.waitAndClick(`@action-show-email-${recipients.cc.replace(/[^a-z0-9]+/g, '')}`);
+      await contactsFrame.waitAny(`@action-show-pubkey-AB8CF86E37157C3F290D72007ED43D79E9617655-openpgp`);
+      await contactsFrame.waitAny(`@action-show-pubkey-3E3C9310CC969D00028DC98F7D3D56F9152646A8-openpgp`);
+      // Check test.flowcrypt.pubkeyserver.priority@gmail.com
+      await contactsFrame.waitAndClick(`@action-show-email-${recipients.bcc.replace(/[^a-z0-9]+/g, '')}`);
+      await contactsFrame.waitAny(`@action-show-pubkey-AB8CF86E37157C3F290D72007ED43D79E9617655-openpgp`);
+    }));
+
+    ava.default('check attester ldap timeout', testWithBrowser('ci.tests.gmail', async (t, browser) => {
+      const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
+      const recipients = { to: 'test.ldap.timeout@gmail.com', cc: 'test.flowcrypt.pubkey.timeout@gmail.com' };
+      await ComposePageRecipe.fillMsg(composePage, recipients, t.title);
+      await composePage.close();
+      const settingsPage = await browser.newPage(t, TestUrls.extensionSettings('ci.tests.gmail@flowcrypt.test'));
+      await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
+      const contactsFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-contacts-page', ['contacts.htm', 'placement=settings']);
+      await contactsFrame.waitAll('@page-contacts');
+      // Check test.ldap.timeout@gmail.com
+      await contactsFrame.waitAndClick(`@action-show-email-${recipients.to.replace(/[^a-z0-9]+/g, '')}`);
+      await contactsFrame.waitAny(`@action-show-pubkey-8B8A05A2216EE6E4C5EE3D540D5688EBF3102BE7-openpgp`);
+      // Check test.flowcrypt.pubkey.timeout@gmail.com
+      await contactsFrame.waitAndClick(`@action-show-email-${recipients.cc.replace(/[^a-z0-9]+/g, '')}`);
+      await contactsFrame.waitAny(`@action-show-pubkey-8B8A05A2216EE6E4C5EE3D540D5688EBF3102BE7-openpgp`);
+    }));
+
+    ava.default('allows to retry public key search when attester returns error', testWithBrowser('ci.tests.gmail', async (t, browser) => {
+      const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
+      const recipients = { to: 'attester.return.error@flowcrypt.test' };
+      await ComposePageRecipe.fillMsg(composePage, recipients, t.title);
+      await ComposePageRecipe.showRecipientInput(composePage);
+      await composePage.waitAndClick(`@action-retry-${recipients.to.replace(/[^a-z0-9]+/g, '')}-pubkey-fetch`);
+    }));
+
     ava.default('do not auto-refresh key if older version of the same key available on attester', testWithBrowser('ci.tests.gmail', async (t, browser) => {
       const recipientEmail = 'has.older.key.on.attester@recipient.com';
       // add a newer expired key manually
@@ -1573,22 +1675,6 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl, hasReplyPrompt: true });
       await composePage.waitAndClick('@encrypted-reply', { delay: 1 });
       await expectRecipientElements(composePage, { to: [{ email: 'limon.monte@gmail.com' }], cc: [], bcc: [] });
-    }));
-
-    ava.default('compose - reply all - from === acctEmail', testWithBrowser('compatibility', async (t, browser) => {
-      const appendUrl = 'threadId=17d02296bccd4c5c&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___&replyMsgId=17d02296bccd4c5c';
-      const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl, hasReplyPrompt: true });
-      await composePage.waitAndClick('@action-accept-reply-all-prompt', { delay: 1 });
-      await expectRecipientElements(composePage, {
-        to: [{ email: 'flowcrypt.compatibility@gmail.com', name: 'First Last' }, { email: 'vladimir@flowcrypt.com' }],
-        cc: [{ email: 'limon.monte@gmail.com' }], bcc: [{ email: 'sweetalert2@gmail.com' }]
-      });
-      await composePage.waitAndType('@input-password', 'gO0d-pwd');
-      await composePage.waitAndClick('@action-send', { delay: 1 });
-      // test rendering of recipients after successful sending
-      await composePage.waitForContent('@replied-to', 'to: First Last <flowcrypt.compatibility@gmail.com>, vladimir@flowcrypt.com');
-      await composePage.waitForContent('@replied-cc', 'cc: limon.monte@gmail.com');
-      await composePage.waitForContent('@replied-bcc', 'bcc: sweetalert2@gmail.com');
     }));
 
     ava.default('compose - reply all - from !== acctEmail', testWithBrowser('compatibility', async (t, browser) => {

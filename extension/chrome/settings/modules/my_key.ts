@@ -9,7 +9,7 @@ import { Browser } from '../../../js/common/browser/browser.js';
 import { Buf } from '../../../js/common/core/buf.js';
 import { KeyInfoWithIdentity, Key, KeyUtil } from '../../../js/common/core/crypto/key.js';
 import { Ui } from '../../../js/common/browser/ui.js';
-import { Url, Str } from '../../../js/common/core/common.js';
+import { Url, Str, asyncSome } from '../../../js/common/core/common.js';
 import { View } from '../../../js/common/view.js';
 import { initPassphraseToggle } from '../../../js/common/ui/passphrase-ui.js';
 import { PubLookup } from '../../../js/common/api/pub-lookup.js';
@@ -76,7 +76,8 @@ View.run(class MyKeyView extends View {
     try {
       const result = await this.pubLookup.attester.lookupEmail(this.acctEmail);
       const url = FlowCryptWebsite.url('pubkey', this.acctEmail);
-      if (result.pubkey && (await KeyUtil.parse(result.pubkey)).id === this.keyInfo.fingerprints[0]) {
+      const doesContainKey = await asyncSome(result.pubkeys, async (pubkey) => KeyUtil.identityEquals(await KeyUtil.parse(pubkey), this.keyInfo));
+      if (doesContainKey) {
         $('.pubkey_link_container a').text(url.replace('https://', '')).attr('href', url).parent().css('display', '');
       } else {
         $('.pubkey_link_container').remove();

@@ -111,8 +111,8 @@ export class ComposePageRecipe extends PageRecipe {
         if (sendingType !== 'to') { // input-to is always visible
           await composePageOrFrame.waitAndClick(`@action-show-${sendingType}`);
         }
-        await composePageOrFrame.waitAndType(`@input-${sendingType}`, email);
-        await Util.sleep(1);
+        await composePageOrFrame.waitAndType(`@input-${sendingType}`, email + '\n');
+        await composePageOrFrame.waitTillGone('@spinner');
       }
     }
     await composePageOrFrame.target.evaluate(() => { $('#input_text').focus(); });
@@ -150,6 +150,7 @@ export class ComposePageRecipe extends PageRecipe {
   };
 
   public static expectContactsResultEqual = async (composePage: ControllablePage | ControllableFrame, emails: string[]) => {
+    await Util.sleep(5);
     const contacts = await composePage.waitAny('@container-contacts');
     const contactsList = await contacts.$$('li');
     for (const index in contactsList) { // tslint:disable-line:forin
@@ -183,7 +184,7 @@ export class ComposePageRecipe extends PageRecipe {
     } else if (inputMethod === 'keyboard') {
       await page.press('Escape');
     }
-    await page.waitTillGone('@dialog');
+    await page.waitTillGone('@dialog-passphrase');
     expect(passPhraseFrame.frame.isDetached()).to.equal(true);
   };
 }
