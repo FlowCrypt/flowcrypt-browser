@@ -11,7 +11,7 @@ export class OauthPageRecipe extends PageRecipe {
   private static longTimeout = 40;
 
   public static mock = async (t: AvaContext, oauthPage: ControllablePage, acctEmail: string,
-    action: 'close' | 'deny' | 'approve' | 'login' | 'login_with_invalid_state' | 'override_acct'): Promise<void> => {
+    action: 'close' | 'deny' | 'approve' | 'login' | 'login_with_invalid_state' | 'override_acct' | 'missing_permission'): Promise<void> => {
     let mockOauthUrl = oauthPage.target.url();
     const { login_hint } = Url.parse(['login_hint'], mockOauthUrl);
     if (action === 'close') {
@@ -19,6 +19,10 @@ export class OauthPageRecipe extends PageRecipe {
     } else if (action === 'login_with_invalid_state') {
       mockOauthUrl = Url.removeParamsFromUrl(mockOauthUrl, ['login_hint']);
       await oauthPage.target.goto(mockOauthUrl.replace('CRYPTUP_STATE', 'INVALID_CRYPTUP_STATE') + '&login_hint=' + encodeURIComponent(acctEmail) + '&proceed=true');
+    } else if (action === 'missing_permission') {
+      mockOauthUrl = Url.removeParamsFromUrl(mockOauthUrl, ['scope']);
+      mockOauthUrl += '&scope=missing_scope';
+      await oauthPage.target.goto(mockOauthUrl + '&proceed=true');
     } else if (!login_hint) {
       await oauthPage.target.goto(mockOauthUrl + '&login_hint=' + encodeURIComponent(acctEmail) + '&proceed=true');
     } else {
