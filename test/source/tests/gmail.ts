@@ -2,19 +2,18 @@
 
 import * as ava from 'ava';
 
+import { expect } from 'chai';
 import { BrowserHandle, ControllablePage } from './../browser';
 import { Controllable } from './../browser/controllable';
-import { TestVariant, Util } from './../util';
-import { AvaContext } from './tooling';
-import { BrowserRecipe } from './tooling/browser-recipe';
-import { ComposePageRecipe } from './page-recipe/compose-page-recipe';
-import { GmailPageRecipe } from './page-recipe/gmail-page-recipe';
-import { SettingsPageRecipe } from './page-recipe/settings-page-recipe';
 import { TestUrls } from './../browser/test-urls';
 import { TestWithBrowser } from './../test';
-import { expect } from 'chai';
+import { TestVariant, Util } from './../util';
+import { ComposePageRecipe } from './page-recipe/compose-page-recipe';
+import { GmailPageRecipe } from './page-recipe/gmail-page-recipe';
 import { OauthPageRecipe } from './page-recipe/oauth-page-recipe';
 import { SetupPageRecipe } from './page-recipe/setup-page-recipe';
+import { AvaContext } from './tooling';
+import { BrowserRecipe } from './tooling/browser-recipe';
 
 /**
  * All tests that use mail.google.com or have to operate without a Gmail API mock should go here
@@ -121,14 +120,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       await gmailPage.notPresent(['@webmail-notification', '@notification-setup-action-close', '@notification-successfully-setup-action-close']);
       await gmailPage.close();
       // below test that can re-auth after lost access (simulating situation when user changed password on google)
-      for (const wipeTokenBtnSelector of ['@action-wipe-google-refresh-token', '@action-wipe-google-access-token']) {
-        const settingsPage = await browser.newPage(t, TestUrls.extensionSettings(acct));
-        await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
-        const experimentalFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-module-experimental', ['experimental.htm']);
-        await experimentalFrame.waitAndClick(wipeTokenBtnSelector);
-        await Util.sleep(2);
-        await settingsPage.close();
-      }
+      await Util.wipeGoogleTokensUsingExperimentalSettingsPage(t, browser, acct);
       const settingsPage = await browser.newPage(t, TestUrls.extensionSettings(acct));
       await settingsPage.waitAndRespondToModal('confirm', 'cancel', 'FlowCrypt must be re-connected to your Google account.');
       // *** these tests below are very flaky in CI environment, Google will want to re-authenticate the user for whatever reason

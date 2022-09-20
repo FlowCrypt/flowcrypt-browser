@@ -2,8 +2,12 @@
 
 import * as fs from 'fs';
 import { Keyboard, KeyInput } from 'puppeteer';
+import { BrowserHandle } from '../browser/browser-handle.js';
+import { TestUrls } from '../browser/test-urls.js';
 import { KeyInfoWithIdentityAndOptionalPp, KeyUtil } from '../core/crypto/key.js';
+import { SettingsPageRecipe } from '../tests/page-recipe/settings-page-recipe.js';
 import { testKeyConstants } from '../tests/tooling/consts';
+import { AvaContext } from '../tests/tooling/index.js';
 
 export type TestVariant = 'CONSUMER-MOCK' | 'ENTERPRISE-MOCK' | 'CONSUMER-LIVE-GMAIL' | 'UNIT-TESTS';
 
@@ -111,6 +115,17 @@ export class Util {
       fs.unlinkSync(filename);
     } catch (e) {
       // file didn't exist
+    }
+  };
+
+  public static wipeGoogleTokensUsingExperimentalSettingsPage = async (t: AvaContext, browser: BrowserHandle, acct: string) => {
+    for (const wipeTokenBtnSelector of ['@action-wipe-google-refresh-token', '@action-wipe-google-access-token']) {
+      const settingsPage = await browser.newPage(t, TestUrls.extensionSettings(acct));
+      await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
+      const experimentalFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-module-experimental', ['experimental.htm']);
+      await experimentalFrame.waitAndClick(wipeTokenBtnSelector);
+      await Util.sleep(2);
+      await settingsPage.close();
     }
   };
 

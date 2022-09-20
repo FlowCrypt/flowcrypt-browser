@@ -198,6 +198,7 @@ export class GoogleAuth {
         if (code) {
           // Try to get auth token to let login authorization be granted
           await GoogleAuth.googleAuthGetTokens(code);
+          return { acctEmail, result: 'Denied', error: 'Missing permissions', id_token: undefined };
         }
       }
       if (!code) {

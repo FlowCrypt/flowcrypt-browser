@@ -408,6 +408,32 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       await SetupPageRecipe.recover(settingsPage, 'flowcrypt.compatibility.2pp1', {});
     }));
 
+    ava.default('test re-auth after updating chrome extension', testWithBrowser('compatibility', async (t, browser) => {
+      const acctEmail = 'flowcrypt.compatibility@gmail.com';
+      const settingsPage = await browser.newPage(t, TestUrls.extensionSettings(acctEmail));
+      const accessToken = await BrowserRecipe.getGoogleAccessToken(settingsPage, acctEmail);
+      const extraAuthHeaders = { Authorization: `Bearer ${accessToken}` };
+      // Wipe google tokens to test re-auth popup
+      await Util.wipeGoogleTokensUsingExperimentalSettingsPage(t, browser, acctEmail);
+      const gmailPage = await browser.newPage(t, TestUrls.mockGmailUrl(), undefined, extraAuthHeaders);
+      await gmailPage.waitAndClick('@action-secure-compose');
+      // Check reconnect auth notification
+      await gmailPage.waitForContent('@webmail-notification', 'Please reconnect FlowCrypt to your Gmail Account.');
+      let oauthPopup = await browser.newPageTriggeredBy(t, () => gmailPage.waitAndClick('@action-reconnect-account'));
+      // mock api will return missing scopes
+      await OauthPageRecipe.mock(t, oauthPopup, acctEmail, 'missing_permission');
+      // Check missing permission notification
+      await gmailPage.waitForContent('@webmail-notification', 'Connection successful. Please also add missing permissions');
+      oauthPopup = await browser.newPageTriggeredBy(t, () => gmailPage.waitAndClick('@action-add-missing-permission'));
+      await OauthPageRecipe.mock(t, oauthPopup, acctEmail, 'approve');
+      // after successful reauth, check if connection is successful
+      await gmailPage.waitForContent('@webmail-notification', 'Connected successfully. You may need to reload the tab.');
+      // reload and test that it has no more notifications
+      await gmailPage.waitAndClick('@action-secure-compose');
+      await Util.sleep(2);
+      await gmailPage.notPresent(['@webmail-notification']);
+    }));
+
     ava.default.todo('setup - recover with a pass phrase - 1pp1 then wrong, then skip');
     // ava.default('setup - recover with a pass phrase - 1pp1 then wrong, then skip', test_with_browser(async (t, browser) => {
     //   const settingsPage = await BrowserRecipe.open_settings_login_approve(t, browser,'flowcrypt.compatibility@gmail.com');
