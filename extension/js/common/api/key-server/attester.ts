@@ -103,16 +103,6 @@ export class Attester extends Api {
     return r.responseText;
   };
 
-  /**
-   * Looking to deprecate this, but still used for some customers
-   */
-  public initialLegacySubmit = async (email: string, pubkey: string): Promise<{ saved: boolean }> => {
-    if (!this.clientConfiguration.canSubmitPubToAttester()) {
-      throw new Error('Cannot submit pubkey to attester because your organisation rules forbid it');
-    }
-    return await this.jsonCall<{ saved: boolean }>('initial/legacy_submit', { email: Str.parseEmail(email).email, pubkey: pubkey.trim() });
-  };
-
   public testWelcome = async (email: string, pubkey: string): Promise<{ sent: boolean }> => {
     return await this.jsonCall<{ sent: boolean }>('test/welcome', { email, pubkey });
   };

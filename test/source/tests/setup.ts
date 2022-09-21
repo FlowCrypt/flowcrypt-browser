@@ -499,6 +499,17 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       expect(ki[0].public).to.not.include('Comment');
     }));
 
+    ava.default('invalid.pub@client-configuration-test.flowcrypt.test - no backup, no keygen', testWithBrowser(undefined, async (t, browser) => {
+      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'invalid.pub@client-configuration-test.flowcrypt.test');
+      await SetupPageRecipe.manualEnter(settingsPage, 'has.pub.client.configuration.test', { noPrvCreateClientConfiguration: true, enforceAttesterSubmitClientConfiguration: true, fillOnly: true },
+        { isSavePassphraseChecked: false, isSavePassphraseHidden: false });
+      await settingsPage.waitAndClick('@input-step2bmanualenter-save');
+      await settingsPage.waitAll(['@container-overlay-prompt-text', '@action-overlay-retry']);
+      const renderedErr = await settingsPage.read('@container-overlay-prompt-text');
+      expect(renderedErr).to.contain('Failed to submit to Attester');
+      expect(renderedErr).to.contain('Imported private key with ids 576C48E8E9E33B772FF07B11BC614F7068DB6E23 does not match public keys on company LDAP server with ids AB8CF86E37157C3F290D72007ED43D79E9617655. Please ask your help desk.');
+    }));
+
     ava.default('no.pub@client-configurations-test - no backup, no keygen, enforce attester submit with submit err', testWithBrowser(undefined, async (t, browser) => {
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'no.pub@client-configuration-test.flowcrypt.test');
       await SetupPageRecipe.manualEnter(settingsPage, 'no.pub.client.configuration', { noPrvCreateClientConfiguration: true, enforceAttesterSubmitClientConfiguration: true, fillOnly: true },
@@ -507,7 +518,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       await settingsPage.waitAll(['@container-overlay-prompt-text', '@action-overlay-retry']);
       const renderedErr = await settingsPage.read('@container-overlay-prompt-text');
       expect(renderedErr).to.contain(`Failed to submit to Attester`);
-      expect(renderedErr).to.contain(`Could not find LDAP pubkey on a LDAP-only domain for email no.pub@client-configuration-test.flowcrypt.test on server keys.flowcrypt.test`);
+      expect(renderedErr).to.contain(`Your organization requires public keys to be present on company LDAP server, but no public key was found. Please ask your internal help desk.`);
     }));
 
     ava.default('user@no-submit-client-configuration.flowcrypt.test - do not submit to attester', testWithBrowser(undefined, async (t, browser) => {

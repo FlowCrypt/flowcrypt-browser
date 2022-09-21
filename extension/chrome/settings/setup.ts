@@ -3,10 +3,10 @@
 'use strict';
 
 import { Bm, BrowserMsg } from '../../js/common/browser/browser-msg.js';
-import { Url } from '../../js/common/core/common.js';
+import { asyncSome, Url, Value } from '../../js/common/core/common.js';
 import { ApiErr } from '../../js/common/api/shared/api-error.js';
 import { Assert } from '../../js/common/assert.js';
-import { Catch } from '../../js/common/platform/catch.js';
+import { Catch, SubmitPubKeyError } from '../../js/common/platform/catch.js';
 import { KeyInfoWithIdentity, KeyUtil } from '../../js/common/core/crypto/key.js';
 import { Gmail } from '../../js/common/api/email-provider/gmail/gmail.js';
 import { Google } from '../../js/common/api/email-provider/gmail/google.js';
@@ -330,16 +330,29 @@ export class SetupView extends View {
   };
 
   private submitPubkeys = async (addresses: string[], pubkey: string) => {
-    if (this.clientConfiguration.useLegacyAttesterSubmit()) {
+    if (this.clientConfiguration.setupEnsureImportedPrvMatchLdapPub()) {
       // this will generally ignore errors if conflicting key already exists, except for certain orgs
-      await this.pubLookup.attester.initialLegacySubmit(this.acctEmail, pubkey);
+      const result = await this.pubLookup.attester.doLookupLdap(this.acctEmail);
+      if (result.pubkeys.length) {
+        const prvs = await KeyStoreUtil.parse(await KeyStore.getRequired(this.acctEmail));
+        const parsedPubKeys = await KeyUtil.parseMany(result.pubkeys.join('\n'));
+        const hasMatchingKey = await asyncSome(prvs, (async (privateKey) => {
+          return parsedPubKeys.some((parsedPubKey) => Value.arr.hasIntersection(privateKey.key.allIds, parsedPubKey.allIds));
+        }));
+        if (!hasMatchingKey) {
+          // eslint-disable-next-line max-len
+          throw new SubmitPubKeyError(`Imported private key with ids ${prvs.map(prv => prv.key.id).join(', ')} does not match public keys on company LDAP server with ids ${parsedPubKeys.map(pub => pub.id).join(', ')}. Please ask your help desk.`);
+        }
+      } else {
+        throw new SubmitPubKeyError('Your organization requires public keys to be present on company LDAP server, but no public key was found. Please ask your internal help desk.');
+      }
     } else {
       // this will actually replace the submitted public key if there was a conflict, better ux
       await this.pubLookup.attester.submitPrimaryEmailPubkey(this.acctEmail, pubkey, this.idToken!);
     }
     const aliases = addresses.filter(a => a !== this.acctEmail);
     if (aliases.length) {
-      await Promise.all(aliases.map(a => this.pubLookup.attester.initialLegacySubmit(a, pubkey)));
+      await Promise.all(aliases.map(a => this.pubLookup.attester.replacePubkey(a, pubkey)));
     }
   };
 
