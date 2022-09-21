@@ -87,6 +87,26 @@ export class OauthMock {
     return acct;
   };
 
+  /**
+   * Check authorization with email parameter
+   * if emailToCheck is primary email, then we need authorization,
+   * if not, we don't require authorization
+   */
+  public checkAuthorizationForEmail = (authorization: string | undefined, emailToCheck: string) => {
+    if (!authorization) {
+      // if primary email and no authorization, then throw error
+      if (Object.keys(this.authCodesByAcct).includes(emailToCheck)) {
+        throw new HttpClientErr('Missing mock bearer authorization header', Status.UNAUTHORIZED);
+      }
+      return;
+    }
+    const accessToken = authorization.replace(/^Bearer /, '');
+    const acct = this.acctByIdToken[accessToken];
+    if (!acct) {
+      throw new HttpClientErr('Invalid idToken token', Status.UNAUTHORIZED);
+    }
+  };
+
   public isIdTokenValid = (idToken: string) => { // we verify mock idToken by checking if we ever issued it
     const [, data,] = idToken.split('.');
     const claims = JSON.parse(Buf.fromBase64UrlStr(data).toUtfStr());

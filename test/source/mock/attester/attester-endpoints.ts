@@ -104,7 +104,7 @@ export const mockAttesterEndpoints: HandlersDefinition = {
       }
       throw new HttpClientErr('Pubkey not found', 404);
     } else if (isPost(req)) {
-      oauth.checkAuthorizationHeaderWithIdToken(req.headers.authorization);
+      oauth.checkAuthorizationForEmail(req.headers.authorization, emailOrLongid);
       expect(body).to.contain('-----BEGIN PGP PUBLIC KEY BLOCK-----');
       MOCK_ATTESTER_LAST_INSERTED_PUB[emailOrLongid] = body as string;
       return 'Saved'; // 200 OK
