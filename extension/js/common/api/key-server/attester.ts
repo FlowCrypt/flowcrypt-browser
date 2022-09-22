@@ -83,7 +83,7 @@ export class Attester extends Api {
    * Used when user manually chooses to replace key
    * Can also be used for aliases
    */
-  public replacePubkey = async (email: string, pubkey: string): Promise<string> => {
+  public submitPubkeyWithConditionalEmailVerification = async (email: string, pubkey: string): Promise<string> => {
     if (!this.clientConfiguration.canSubmitPubToAttester()) {
       throw new Error('Cannot replace pubkey at attester because your organisation rules forbid it');
     }
@@ -101,16 +101,6 @@ export class Attester extends Api {
     }
     const r = await this.pubCall(`pub/${longid}`, 'PUT', pubkey);
     return r.responseText;
-  };
-
-  /**
-   * Looking to deprecate this, but still used for some customers
-   */
-  public initialLegacySubmit = async (email: string, pubkey: string): Promise<{ saved: boolean }> => {
-    if (!this.clientConfiguration.canSubmitPubToAttester()) {
-      throw new Error('Cannot submit pubkey to attester because your organisation rules forbid it');
-    }
-    return await this.jsonCall<{ saved: boolean }>('initial/legacy_submit', { email: Str.parseEmail(email).email, pubkey: pubkey.trim() });
   };
 
   public testWelcome = async (email: string, pubkey: string): Promise<{ sent: boolean }> => {

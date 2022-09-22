@@ -5,6 +5,7 @@
 import { FLAVOR, VERSION } from '../core/const.js';
 
 export class UnreportableError extends Error { }
+export class CompanyLdapKeyMismatchError extends UnreportableError { }
 type ObjWithStack = { stack: string };
 export type ErrorReport = {
   name: string;

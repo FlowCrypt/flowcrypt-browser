@@ -7,7 +7,7 @@ import { AcctStore } from './platform/store/acct-store.js';
 import { KeyAlgo } from './core/crypto/key.js';
 
 type ClientConfiguration$flag = 'NO_PRV_CREATE' | 'NO_PRV_BACKUP' | 'PRV_AUTOIMPORT_OR_AUTOGEN' | 'PASS_PHRASE_QUIET_AUTOGEN' |
-  'ENFORCE_ATTESTER_SUBMIT' | 'NO_ATTESTER_SUBMIT' | 'USE_LEGACY_ATTESTER_SUBMIT' |
+  'ENFORCE_ATTESTER_SUBMIT' | 'NO_ATTESTER_SUBMIT' | 'SETUP_ENSURE_IMPORTED_PRV_MATCH_LDAP_PUB' |
   'DEFAULT_REMEMBER_PASS_PHRASE' | 'HIDE_ARMOR_META' | 'FORBID_STORING_PASS_PHRASE';
 
 export type ClientConfigurationJson = {
@@ -192,12 +192,10 @@ export class ClientConfiguration {
   };
 
   /**
-   * Some orgs use flows that are only implemented in POST /initial/legacy_submit and not in POST /pub/email@corp.co:
-   *  -> enforcing that submitted keys match customer key server
-   * Until the newer endpoint is ready, this flag will point users in those orgs to the original endpoint
+   * Some orgs will require user's imported private key to match their LDAP pub key result
    */
-  public useLegacyAttesterSubmit = (): boolean => {
-    return (this.clientConfigurationJson.flags || []).includes('USE_LEGACY_ATTESTER_SUBMIT');
+  public setupEnsureImportedPrvMatchLdapPub = (): boolean => {
+    return (this.clientConfigurationJson.flags || []).includes('SETUP_ENSURE_IMPORTED_PRV_MATCH_LDAP_PUB');
   };
 
   /**
