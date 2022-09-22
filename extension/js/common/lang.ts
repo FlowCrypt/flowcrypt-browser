@@ -25,6 +25,7 @@ export const Lang = { // tslint:disable-line:variable-name
     failedToCheckIfAcctUsesEncryption: 'Failed to check if encryption is already set up on your account. ',
     failedToCheckAccountBackups: 'Failed to check for account backups. ',
     failedToSubmitToAttester: 'Failed to submit to Attester. ',
+    failedToImportUnknownKey: 'Attempting to import unknown key. ',
     failedToBackUpKey: 'Failed to back up your key. ',
     failedToLoadEmailAliases: 'Failed to load your email aliases. ',
     cannotLocateBackupPasteManually: 'FlowCrypt can\'t locate your backup automatically.</div><div class="line">Find "Your FlowCrypt Backup" email, open the attachment, copy all text and paste it below.',

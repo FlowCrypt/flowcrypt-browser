@@ -3,7 +3,7 @@
 'use strict';
 
 import { Bm, BrowserMsg } from '../../js/common/browser/browser-msg.js';
-import { asyncSome, Url, Value } from '../../js/common/core/common.js';
+import { asyncSome, Url } from '../../js/common/core/common.js';
 import { ApiErr } from '../../js/common/api/shared/api-error.js';
 import { Assert } from '../../js/common/assert.js';
 import { Catch, SubmitPubKeyError } from '../../js/common/platform/catch.js';
@@ -236,7 +236,7 @@ export class SetupView extends View {
     } catch (e) {
       return await Settings.promptToRetry(
         e,
-        Lang.setup.failedToSubmitToAttester,
+        e instanceof SubmitPubKeyError ? Lang.setup.failedToImportUnknownKey : Lang.setup.failedToSubmitToAttester,
         () => this.submitPublicKeys({ submit_main, submit_all }),
         Lang.general.contactIfNeedAssistance(this.isFesUsed())
       );
@@ -337,14 +337,15 @@ export class SetupView extends View {
         const prvs = await KeyStoreUtil.parse(await KeyStore.getRequired(this.acctEmail));
         const parsedPubKeys = await KeyUtil.parseMany(result.pubkeys.join('\n'));
         const hasMatchingKey = await asyncSome(prvs, (async (privateKey) => {
-          return parsedPubKeys.some((parsedPubKey) => Value.arr.hasIntersection(privateKey.key.allIds, parsedPubKey.allIds));
+          return parsedPubKeys.some((parsedPubKey) => privateKey.key.id === parsedPubKey.id);
         }));
         if (!hasMatchingKey) {
           // eslint-disable-next-line max-len
-          throw new SubmitPubKeyError(`Imported private key with ids ${prvs.map(prv => prv.key.id).join(', ')} does not match public keys on company LDAP server with ids ${parsedPubKeys.map(pub => pub.id).join(', ')}. Please ask your help desk.`);
+          throw new SubmitPubKeyError(`Imported private key with ids ${prvs.map(prv => prv.key.id).join(', ')} does not match public keys on company LDAP server with ids ${parsedPubKeys.map(pub => pub.id).join(', ')} for ${this.acctEmail}. Please ask your help desk.`);
         }
       } else {
-        throw new SubmitPubKeyError('Your organization requires public keys to be present on company LDAP server, but no public key was found. Please ask your internal help desk.');
+        // eslint-disable-next-line max-len
+        throw new SubmitPubKeyError(`Your organization requires public keys to be present on company LDAP server, but no public key was found for ${this.acctEmail}. Please ask your internal help desk.`);
       }
     } else {
       // this will actually replace the submitted public key if there was a conflict, better ux
@@ -352,7 +353,7 @@ export class SetupView extends View {
     }
     const aliases = addresses.filter(a => a !== this.acctEmail);
     if (aliases.length) {
-      await Promise.all(aliases.map(a => this.pubLookup.attester.replacePubkey(a, pubkey)));
+      await Promise.all(aliases.map(a => this.pubLookup.attester.submitPubkeyWithConditionalEmailVerification(a, pubkey)));
     }
   };
 

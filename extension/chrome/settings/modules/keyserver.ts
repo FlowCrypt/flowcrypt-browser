@@ -104,7 +104,7 @@ View.run(class KeyserverView extends View {
         const idToken = await InMemoryStore.get(this.acctEmail, InMemoryStoreKeys.ID_TOKEN);
         await this.pubLookup.attester.submitPrimaryEmailPubkey(email, mostUsefulPrv.keyInfo.public, idToken!);
       } else { // If email is alias email
-        await this.pubLookup.attester.replacePubkey(email, mostUsefulPrv.keyInfo.public);
+        await this.pubLookup.attester.submitPubkeyWithConditionalEmailVerification(email, mostUsefulPrv.keyInfo.public);
       }
     } catch (e) {
       ApiErr.reportIfSignificant(e);
@@ -127,7 +127,7 @@ View.run(class KeyserverView extends View {
       return;
     }
     try {
-      const responseText = await this.pubLookup.attester.replacePubkey(String($(target).attr('email')), mostUsefulPrv.keyInfo.public);
+      const responseText = await this.pubLookup.attester.submitPubkeyWithConditionalEmailVerification(String($(target).attr('email')), mostUsefulPrv.keyInfo.public);
       await Ui.modal.info(responseText);
       BrowserMsg.send.closePage(this.parentTabId);
     } catch (e) {

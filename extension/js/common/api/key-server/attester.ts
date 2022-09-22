@@ -83,7 +83,7 @@ export class Attester extends Api {
    * Used when user manually chooses to replace key
    * Can also be used for aliases
    */
-  public replacePubkey = async (email: string, pubkey: string): Promise<string> => {
+  public submitPubkeyWithConditionalEmailVerification = async (email: string, pubkey: string): Promise<string> => {
     if (!this.clientConfiguration.canSubmitPubToAttester()) {
       throw new Error('Cannot replace pubkey at attester because your organisation rules forbid it');
     }
