@@ -54,16 +54,7 @@ abstract class ControllableBase {
     const selectors = this.selsAsProcessedArr(selector);
     this.log(`wait_all:1:${selectors.join(',')}`);
     for (const selector of selectors) {
-      this.log(`wait_all:2:${selector}`);
-      if (this.isXpath(selector)) {
-        this.log(`wait_all:3:${selector}`);
-        await this.target.waitForXPath(selector, { timeout: timeout * 1000, visible });
-        this.log(`wait_all:4:${selector}`);
-      } else {
-        this.log(`wait_all:5:${selector}`);
-        await this.target.waitForSelector(selector, { timeout: timeout * 1000, visible });
-        this.log(`wait_all:6:${selector}`);
-      }
+      await this.waitAny(selector, { timeout, visible });
     }
     this.log(`wait_all:7:${selectors.join(',')}`);
   };
