@@ -8,7 +8,7 @@ import { ApiErr, AjaxErr } from './api/shared/api-error.js';
 import { Attachment } from './core/attachment.js';
 import { Browser } from './browser/browser.js';
 import { Buf } from './core/buf.js';
-import { Catch, SubmitPubKeyError } from './platform/catch.js';
+import { Catch, CompanyLdapKeyMismatchError } from './platform/catch.js';
 import { Env } from './browser/env.js';
 import { Gmail } from './api/email-provider/gmail/gmail.js';
 import { GoogleAuth } from './api/email-provider/gmail/google-auth.js';
@@ -262,7 +262,7 @@ export class Settings {
     if (lastErr instanceof AjaxErr && (lastErr.status === 400 || lastErr.status === 405)) {
       // this will make reason for err 400 obvious to user - eg on EKM 405 error
       errorMsg = lastErr.resMsg ?? '';
-    } else if (lastErr instanceof SubmitPubKeyError) {
+    } else if (lastErr instanceof CompanyLdapKeyMismatchError) {
       errorMsg = lastErr.message;
     } else {
       errorMsg = ApiErr.eli5(lastErr);

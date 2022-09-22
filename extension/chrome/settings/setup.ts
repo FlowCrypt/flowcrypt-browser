@@ -6,7 +6,7 @@ import { Bm, BrowserMsg } from '../../js/common/browser/browser-msg.js';
 import { asyncSome, Url } from '../../js/common/core/common.js';
 import { ApiErr } from '../../js/common/api/shared/api-error.js';
 import { Assert } from '../../js/common/assert.js';
-import { Catch, SubmitPubKeyError } from '../../js/common/platform/catch.js';
+import { Catch, CompanyLdapKeyMismatchError } from '../../js/common/platform/catch.js';
 import { KeyInfoWithIdentity, KeyUtil } from '../../js/common/core/crypto/key.js';
 import { Gmail } from '../../js/common/api/email-provider/gmail/gmail.js';
 import { Google } from '../../js/common/api/email-provider/gmail/google.js';
@@ -236,7 +236,7 @@ export class SetupView extends View {
     } catch (e) {
       return await Settings.promptToRetry(
         e,
-        e instanceof SubmitPubKeyError ? Lang.setup.failedToImportUnknownKey : Lang.setup.failedToSubmitToAttester,
+        e instanceof CompanyLdapKeyMismatchError ? Lang.setup.failedToImportUnknownKey : Lang.setup.failedToSubmitToAttester,
         () => this.submitPublicKeys({ submit_main, submit_all }),
         Lang.general.contactIfNeedAssistance(this.isFesUsed())
       );
@@ -341,11 +341,11 @@ export class SetupView extends View {
         }));
         if (!hasMatchingKey) {
           // eslint-disable-next-line max-len
-          throw new SubmitPubKeyError(`Imported private key with ids ${prvs.map(prv => prv.key.id).join(', ')} does not match public keys on company LDAP server with ids ${parsedPubKeys.map(pub => pub.id).join(', ')} for ${this.acctEmail}. Please ask your help desk.`);
+          throw new CompanyLdapKeyMismatchError(`Imported private key with ids ${prvs.map(prv => prv.key.id).join(', ')} does not match public keys on company LDAP server with ids ${parsedPubKeys.map(pub => pub.id).join(', ')} for ${this.acctEmail}. Please ask your help desk.`);
         }
       } else {
         // eslint-disable-next-line max-len
-        throw new SubmitPubKeyError(`Your organization requires public keys to be present on company LDAP server, but no public key was found for ${this.acctEmail}. Please ask your internal help desk.`);
+        throw new CompanyLdapKeyMismatchError(`Your organization requires public keys to be present on company LDAP server, but no public key was found for ${this.acctEmail}. Please ask your internal help desk.`);
       }
     } else {
       // this will actually replace the submitted public key if there was a conflict, better ux
