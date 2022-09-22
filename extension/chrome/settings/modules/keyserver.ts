@@ -18,6 +18,8 @@ import { KeyStore } from '../../../js/common/platform/store/key-store.js';
 import { KeyStoreUtil } from "../../../js/common/core/crypto/key-store-util.js";
 import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
 import { KeyUtil } from '../../../js/common/core/crypto/key.js';
+import { InMemoryStore } from '../../../js/common/platform/store/in-memory-store.js';
+import { InMemoryStoreKeys } from '../../../js/common/core/const.js';
 
 type AttesterKeyserverDiagnosis = { hasPubkeyMissing: boolean, hasPubkeyMismatch: boolean, results: Dict<{ pubkeys: string[], match: boolean }> };
 
@@ -96,7 +98,14 @@ View.run(class KeyserverView extends View {
       return;
     }
     try {
-      await this.pubLookup.attester.initialLegacySubmit(String($(target).attr('email')), mostUsefulPrv.keyInfo.public);
+      const email = String($(target).attr('email'));
+      // Use submitPrimaryEmailPubkey if email is primary email
+      if (email === this.acctEmail) {
+        const idToken = await InMemoryStore.get(this.acctEmail, InMemoryStoreKeys.ID_TOKEN);
+        await this.pubLookup.attester.submitPrimaryEmailPubkey(email, mostUsefulPrv.keyInfo.public, idToken!);
+      } else { // If email is alias email
+        await this.pubLookup.attester.submitPubkeyWithConditionalEmailVerification(email, mostUsefulPrv.keyInfo.public);
+      }
     } catch (e) {
       ApiErr.reportIfSignificant(e);
       await Ui.modal.error(ApiErr.eli5(e));
@@ -118,7 +127,7 @@ View.run(class KeyserverView extends View {
       return;
     }
     try {
-      const responseText = await this.pubLookup.attester.replacePubkey(String($(target).attr('email')), mostUsefulPrv.keyInfo.public);
+      const responseText = await this.pubLookup.attester.submitPubkeyWithConditionalEmailVerification(String($(target).attr('email')), mostUsefulPrv.keyInfo.public);
       await Ui.modal.info(responseText);
       BrowserMsg.send.closePage(this.parentTabId);
     } catch (e) {

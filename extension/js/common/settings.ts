@@ -8,7 +8,7 @@ import { ApiErr, AjaxErr } from './api/shared/api-error.js';
 import { Attachment } from './core/attachment.js';
 import { Browser } from './browser/browser.js';
 import { Buf } from './core/buf.js';
-import { Catch } from './platform/catch.js';
+import { Catch, CompanyLdapKeyMismatchError } from './platform/catch.js';
 import { Env } from './browser/env.js';
 import { Gmail } from './api/email-provider/gmail/gmail.js';
 import { GoogleAuth } from './api/email-provider/gmail/google-auth.js';
@@ -258,11 +258,16 @@ export class Settings {
    * todo - could probably replace most usages of this method with retryPromptUntilSuccessful which is more intuitive
    */
   public static promptToRetry = async (lastErr: unknown, userMsg: string, retryCb: () => Promise<void>, contactSentence: string): Promise<void> => {
-    let userErrMsg = `${userMsg} ${ApiErr.eli5(lastErr)}`;
+    let errorMsg!: string;
     if (lastErr instanceof AjaxErr && (lastErr.status === 400 || lastErr.status === 405)) {
       // this will make reason for err 400 obvious to user - eg on EKM 405 error
-      userErrMsg = `${userMsg}, ${lastErr.resMsg}`;
+      errorMsg = lastErr.resMsg ?? '';
+    } else if (lastErr instanceof CompanyLdapKeyMismatchError) {
+      errorMsg = lastErr.message;
+    } else {
+      errorMsg = ApiErr.eli5(lastErr);
     }
+    const userErrMsg = `${userMsg}, ${errorMsg}`;
     while (await Ui.renderOverlayPromptAwaitUserChoice({ retry: {} }, userErrMsg, ApiErr.detailsAsHtmlWithNewlines(lastErr), contactSentence) === 'retry') {
       try {
         return await retryCb();

@@ -88,7 +88,7 @@ export class BackendData {
           "NO_PRV_BACKUP",
           "HIDE_ARMOR_META",
           "ENFORCE_ATTESTER_SUBMIT",
-          "USE_LEGACY_ATTESTER_SUBMIT",
+          "SETUP_ENSURE_IMPORTED_PRV_MATCH_LDAP_PUB",
         ]
       };
     }
