@@ -937,7 +937,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         'cryptup_userpassphrasesessionlengthclientconfigurationflowcrypttest_rules'
       ]);
       let savedPassphrase = await BrowserRecipe.getPassphraseFromInMemoryStore(settingsPage, acctEmail, longid);
-      expect((rules as { in_memory_pass_phrase_session_length: number }).in_memory_pass_phrase_session_length).to.be.equal(3);
+      expect((rules as { in_memory_pass_phrase_session_length: number }).in_memory_pass_phrase_session_length).to.be.equal(10);
       expect(savedPassphrase).to.be.equal(passphrase);
       // wait 1 minute because we delete expired passphrase every 1 minute
       await Util.sleep(3);
