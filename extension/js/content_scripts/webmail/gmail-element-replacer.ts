@@ -65,7 +65,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     settingsBtnContainer: 'div.aeH > div > .fY',
     standardComposeRecipient: 'div.az9 span[email][data-hovercard-id]',
     numberOfAttachments: '.aVW',
-    numberOfAttachmentsDigit: '.aVW span',
+    numberOfAttachmentsDigit: '.aVW span:first-child',
     attachmentsButtons: '.aZi',
     draftsList: '.ae4',
   };
@@ -438,6 +438,8 @@ export class GmailElementReplacer implements WebmailElementReplacer {
         }
       }
     }
+    console.log(attachmentsContainerInner);
+    console.log(attachmentsContainerInner.parent().find(this.sel.numberOfAttachmentsDigit));
     if (nRenderedAttachments >= 2) { // Aligned with Gmail, the label is shown only if there are 2 or more attachments
       attachmentsContainerInner.parent().find(this.sel.numberOfAttachmentsDigit).text(nRenderedAttachments);
       attachmentsContainerInner.parent().find(this.sel.numberOfAttachments).show();
