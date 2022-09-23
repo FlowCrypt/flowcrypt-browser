@@ -7,7 +7,6 @@ import { BrowserHandle, BrowserPool } from './browser';
 import { Config, Util, getParsedCliParams } from './util';
 
 import { BrowserRecipe } from './tests/tooling/browser-recipe';
-// import { FlowCryptApi } from './tests/tooling/api';
 import { defineComposeTests } from './tests/compose';
 import { defineDecryptTests } from './tests/decrypt';
 import { defineElementTests } from './tests/elements';
@@ -170,7 +169,6 @@ ava.default.after.always('send debug info if any', async t => {
     mkdirSync(debugArtifactDir);
     for (let i = 0; i < debugHtmlAttachments.length; i++) {
       // const subject = `${testId} ${i + 1}/${debugHtmlAttachments.length}`;
-      // await FlowCryptApi.hookCiDebugEmail(subject, debugHtmlAttachments[i]);
       const fileName = `debugHtmlAttachment-${i}.html`;
       const filePath = `${debugArtifactDir}/${fileName}`;
       console.info(`Writing debug file ${fileName}`);
