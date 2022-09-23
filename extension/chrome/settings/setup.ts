@@ -321,7 +321,7 @@ export class SetupView extends View {
     const pub = await KeyUtil.parse(armoredPubkey);
     if (pub.usableForEncryption) {
       const idToken = await InMemoryStore.get(this.acctEmail, InMemoryStoreKeys.ID_TOKEN);
-      this.pubLookup.attester.testWelcome(this.acctEmail, armoredPubkey, idToken).catch(ApiErr.reportIfSignificant);
+      this.pubLookup.attester.welcomeMessage(this.acctEmail, armoredPubkey, idToken).catch(ApiErr.reportIfSignificant);
     }
     let addresses;
     if (this.submitKeyForAddrs.length && options.submit_all) {

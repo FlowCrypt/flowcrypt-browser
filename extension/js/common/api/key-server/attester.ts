@@ -91,19 +91,7 @@ export class Attester extends Api {
     return r.responseText;
   };
 
-  /**
-   * Update pubkey with a newer version of the same pubkey
-   * Does not need email verification, fingerprints compared, last signatures compared
-   */
-  public updatePubkey = async (longid: string, pubkey: string): Promise<string> => {
-    if (!this.clientConfiguration.canSubmitPubToAttester()) {
-      throw new Error('Cannot update pubkey at attester because your organisation rules forbid it');
-    }
-    const r = await this.pubCall(`pub/${longid}`, 'PUT', pubkey);
-    return r.responseText;
-  };
-
-  public testWelcome = async (email: string, pubkey: string, idToken: string | undefined): Promise<{ sent: boolean }> => {
+  public welcomeMessage = async (email: string, pubkey: string, idToken: string | undefined): Promise<{ sent: boolean }> => {
     const headers = idToken ? { authorization: `Bearer ${idToken!}` } : undefined;
     return await this.jsonCall<{ sent: boolean }>('welcome-message', { email, pubkey }, 'POST', headers);
   };
