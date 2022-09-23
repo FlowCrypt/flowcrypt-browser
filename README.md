@@ -11,14 +11,6 @@ Mock tests: ![Mock tests](https://flowcrypt.semaphoreci.com/badges/flowcrypt-bro
 
 Live tests: [![Live Tests](https://semaphoreci.com/api/v1/flowcrypt/flowcrypt-browser/branches/master/badge.svg)](https://semaphoreci.com/flowcrypt/flowcrypt-browser)
 
-```js
-let you = new TeamMember();
-
-if(you.know(TS | SWIFT) && you.write(READABLE_CODE) && you.hate('9-5') && you.areFrom(EARTH)) {
-  await you.email('tom@flowcrypt.com');
-}
-```
-
 This project is written in TypeScript. Browsers only understand JavaScript, so the project needs to be transpiled. You need to build the project the first time you download it, and build it after each change you make to see the result in the browser. First, install tooling:
 
 ```bash
