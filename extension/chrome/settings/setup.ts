@@ -32,6 +32,8 @@ import { SetupWithEmailKeyManagerModule } from './setup/setup-key-manager-autoge
 import { shouldPassPhraseBeHidden } from '../../js/common/ui/passphrase-ui.js';
 import Swal from 'sweetalert2';
 import { BackupUi } from '../../js/common/ui/backup-ui/backup-ui.js';
+import { InMemoryStoreKeys } from '../../js/common/core/const.js';
+import { InMemoryStore } from '../../js/common/platform/store/in-memory-store.js';
 
 export interface PassphraseOptions {
   passphrase: string;
@@ -318,7 +320,8 @@ export class SetupView extends View {
     }
     const pub = await KeyUtil.parse(armoredPubkey);
     if (pub.usableForEncryption) {
-      this.pubLookup.attester.testWelcome(this.acctEmail, armoredPubkey).catch(ApiErr.reportIfSignificant);
+      const idToken = await InMemoryStore.get(this.acctEmail, InMemoryStoreKeys.ID_TOKEN);
+      this.pubLookup.attester.testWelcome(this.acctEmail, armoredPubkey, idToken).catch(ApiErr.reportIfSignificant);
     }
     let addresses;
     if (this.submitKeyForAddrs.length && options.submit_all) {
