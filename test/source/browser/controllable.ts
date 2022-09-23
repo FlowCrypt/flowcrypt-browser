@@ -54,17 +54,34 @@ abstract class ControllableBase {
     const selectors = this.selsAsProcessedArr(selector);
     this.log(`wait_all:1:${selectors.join(',')}`);
     for (const selector of selectors) {
-      await this.waitAny(selector, { timeout, visible });
+      // ignore visibility for at this stage as we don't care if this element is scrolled to
+      this.log(`wait_all:2:${selector}`);
+      if (this.isXpath(selector)) {
+        this.log(`wait_all:3:${selector}`);
+        await this.target.waitForXPath(selector, { timeout: timeout * 1000 });
+        this.log(`wait_all:4:${selector}`);
+      } else {
+        this.log(`wait_all:5:${selector}`);
+        await this.target.waitForSelector(selector, { timeout: timeout * 1000 });
+        this.log(`wait_all:6:${selector}`);
+      }
+    }
+    if (visible) {
+      await Promise.all(selectors.map(selector => this.waitAnyInternal([selector], { timeout, visible })));
     }
     this.log(`wait_all:7:${selectors.join(',')}`);
   };
 
   public waitAny = async (selector: string | string[], { timeout = TIMEOUT_ELEMENT_APPEAR, visible = true }: { timeout?: number, visible?: boolean } = {}): Promise<ElementHandle> => {
-    timeout = Math.max(timeout, 1);
-    const selectors = this.selsAsProcessedArr(selector);
+    return await this.waitAnyInternal(this.selsAsProcessedArr(selector), { timeout, visible });
+  };
+
+  private waitAnyInternal = async (processedSelectors: string[], { timeout = 1, visible }: { timeout?: number, visible?: boolean } = {}): Promise<ElementHandle> => {
+    const attemptsPerSecond = 20;
+    timeout = Math.max(timeout * attemptsPerSecond, 1);
     while (timeout-- > 0) {
       try {
-        for (const selector of selectors) {
+        for (const selector of processedSelectors) {
           const elements = await (this.isXpath(selector) ? this.target.$x(selector) : this.target.$$(selector));
           for (const element of elements) {
             if ((await element.boundingBox()) !== null || !visible) { // element is visible
@@ -77,9 +94,9 @@ abstract class ControllableBase {
           throw e;
         }
       }
-      await Util.sleep(0.05);
+      await Util.sleep(1 / attemptsPerSecond);
     }
-    throw Error(`waiting failed: Elements did not appear: ${selectors.join(',')}`);
+    throw Error(`waiting failed: Elements did not appear: ${processedSelectors.join(',')}`);
   };
 
   public waitTillGone = async (selector: string | string[], { timeout = TIMEOUT_ELEMENT_GONE }: { timeout?: number } = {}) => {
