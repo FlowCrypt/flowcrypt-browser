@@ -410,7 +410,7 @@ abstract class ControllableBase {
     let passes = Math.max(2, Math.round(timeout)); // 1 second per pass, 2 pass minimum
     while (passes--) {
       let frames: Frame[];
-      if (this.target.constructor.name === 'CDPPage') {
+      if (this.target.constructor.name.endsWith('Page')) {
         frames = (this.target as Page).frames();
       } else if (this.target.constructor.name === 'Frame') {
         frames = (this.target as Frame).childFrames();
