@@ -39,12 +39,12 @@ abstract class ControllableBase {
   };
 
   public waitForSelTestState = async (state: 'ready' | 'working' | 'waiting' | 'closed', timeout = TIMEOUT_TEST_STATE_SATISFY) => {
-    await this.waitAll(`[data-test-state="${state}"]`, { timeout, visible: false });
+    await this.waitAll(`[data-test-state="${state}"]`, { timeout, visible: undefined });
   };
 
   public waitUntilViewLoaded = async (timeout = TIMEOUT_PAGE_LOAD) => {
     try {
-      await this.waitAll(`[data-test-view-state="loaded"]`, { timeout, visible: false });
+      await this.waitAll(`[data-test-view-state="loaded"]`, { timeout, visible: undefined });
     } catch (e) {
       throw new Error(`View didn't load within ${timeout}s at ${this.target.url()}`);
     }
@@ -65,8 +65,11 @@ abstract class ControllableBase {
         await this.target.waitForSelector(selector, { timeout: timeout * 1000 });
         this.log(`wait_all:6:${selector}`);
       }
+      if (visible === false && await this.isElementVisibleInternal(selector)) {
+        throw Error(`waiting failed: Element was expected to be hidden: ${selector}`);
+      }
     }
-    if (visible) {
+    if (visible === true) {
       await Promise.all(selectors.map(selector => this.waitAnyInternal([selector], { timeout, visible })));
     }
     this.log(`wait_all:7:${selectors.join(',')}`);
@@ -527,6 +530,13 @@ abstract class ControllableBase {
       await Util.sleep(1 / attemptsPerSecond);
     }
     throw Error(`waiting failed: Elements did not appear: ${processedSelectors.join(',')}`);
+  };
+
+  private isElementVisibleInternal = async (processedSelector: string) => {
+    // check element visibility by checking `display` property and element offset height
+    return await this.target.$eval(processedSelector, (elem) => {
+      return window.getComputedStyle(elem).getPropertyValue('display') !== 'none' && (elem as HTMLElement).offsetHeight > 0;
+    });
   };
 
   private getFramesUrlsInThisMoment = async (urlMatchables: string[]) => {
