@@ -76,29 +76,6 @@ abstract class ControllableBase {
     return await this.waitAnyInternal(this.selsAsProcessedArr(selector), { timeout, visible });
   };
 
-  private waitAnyInternal = async (processedSelectors: string[], { timeout = 1, visible }: { timeout?: number, visible?: boolean } = {}): Promise<ElementHandle> => {
-    const attemptsPerSecond = 20;
-    timeout = Math.max(timeout * attemptsPerSecond, 1);
-    while (timeout-- > 0) {
-      try {
-        for (const selector of processedSelectors) {
-          const elements = await (this.isXpath(selector) ? this.target.$x(selector) : this.target.$$(selector));
-          for (const element of elements) {
-            if ((await element.boundingBox()) !== null || !visible) { // element is visible
-              return element as ElementHandle<Element>;
-            }
-          }
-        }
-      } catch (e) {
-        if (e instanceof Error && e.message.indexOf('Cannot find context with specified id undefined') === -1) {
-          throw e;
-        }
-      }
-      await Util.sleep(1 / attemptsPerSecond);
-    }
-    throw Error(`waiting failed: Elements did not appear: ${processedSelectors.join(',')}`);
-  };
-
   public waitTillGone = async (selector: string | string[], { timeout = TIMEOUT_ELEMENT_GONE }: { timeout?: number } = {}) => {
     let secondsLeft = typeof timeout !== 'undefined' ? timeout : TIMEOUT_ELEMENT_GONE;
     const selectors = Array.isArray(selector) ? selector : [selector];
@@ -527,6 +504,29 @@ abstract class ControllableBase {
 
   protected selsAsProcessedArr = (selector: string | string[]): string[] => {
     return (Array.isArray(selector) ? selector : [selector]).map(this.selector);
+  };
+
+  private waitAnyInternal = async (processedSelectors: string[], { timeout = 1, visible }: { timeout?: number, visible?: boolean } = {}): Promise<ElementHandle> => {
+    const attemptsPerSecond = 20;
+    timeout = Math.max(timeout * attemptsPerSecond, 1);
+    while (timeout-- > 0) {
+      try {
+        for (const selector of processedSelectors) {
+          const elements = await (this.isXpath(selector) ? this.target.$x(selector) : this.target.$$(selector));
+          for (const element of elements) {
+            if ((await element.boundingBox()) !== null || !visible) { // element is visible
+              return element as ElementHandle<Element>;
+            }
+          }
+        }
+      } catch (e) {
+        if (e instanceof Error && e.message.indexOf('Cannot find context with specified id undefined') === -1) {
+          throw e;
+        }
+      }
+      await Util.sleep(1 / attemptsPerSecond);
+    }
+    throw Error(`waiting failed: Elements did not appear: ${processedSelectors.join(',')}`);
   };
 
   private getFramesUrlsInThisMoment = async (urlMatchables: string[]) => {
