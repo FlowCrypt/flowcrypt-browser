@@ -433,10 +433,10 @@ abstract class ControllableBase {
     let passes = Math.max(2, Math.round(timeout)); // 1 second per pass, 2 pass minimum
     while (passes--) {
       let frames: Frame[];
-      if (this.target.constructor.name === 'Page') {
-        frames = await (this.target as Page).frames();
+      if (this.target.constructor.name === 'CDPPage') {
+        frames = (this.target as Page).frames();
       } else if (this.target.constructor.name === 'Frame') {
-        frames = await (this.target as Frame).childFrames();
+        frames = (this.target as Frame).childFrames();
       } else {
         throw Error(`Unknown this.target.constructor.name: ${this.target.constructor.name}`);
       }
