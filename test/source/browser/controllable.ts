@@ -39,12 +39,12 @@ abstract class ControllableBase {
   };
 
   public waitForSelTestState = async (state: 'ready' | 'working' | 'waiting' | 'closed', timeout = TIMEOUT_TEST_STATE_SATISFY) => {
-    await this.waitAll(`[data-test-state="${state}"]`, { timeout, visible: false });
+    await this.waitAll(`[data-test-state="${state}"]`, { timeout, visible: undefined });
   };
 
   public waitUntilViewLoaded = async (timeout = TIMEOUT_PAGE_LOAD) => {
     try {
-      await this.waitAll(`[data-test-view-state="loaded"]`, { timeout, visible: false });
+      await this.waitAll(`[data-test-view-state="loaded"]`, { timeout, visible: undefined });
     } catch (e) {
       throw new Error(`View didn't load within ${timeout}s at ${this.target.url()}`);
     }
@@ -54,41 +54,29 @@ abstract class ControllableBase {
     const selectors = this.selsAsProcessedArr(selector);
     this.log(`wait_all:1:${selectors.join(',')}`);
     for (const selector of selectors) {
+      // ignore visibility for at this stage as we don't care if this element is scrolled to
       this.log(`wait_all:2:${selector}`);
       if (this.isXpath(selector)) {
         this.log(`wait_all:3:${selector}`);
-        await this.target.waitForXPath(selector, { timeout: timeout * 1000, visible });
+        await this.target.waitForXPath(selector, { timeout: timeout * 1000 });
         this.log(`wait_all:4:${selector}`);
       } else {
         this.log(`wait_all:5:${selector}`);
-        await this.target.waitForSelector(selector, { timeout: timeout * 1000, visible });
+        await this.target.waitForSelector(selector, { timeout: timeout * 1000 });
         this.log(`wait_all:6:${selector}`);
       }
+      if (visible === false && await this.isElementVisibleInternal(selector)) {
+        throw Error(`waiting failed: Element was expected to be hidden: ${selector}`);
+      }
+    }
+    if (visible === true) {
+      await Promise.all(selectors.map(selector => this.waitAnyInternal([selector], { timeout, visible })));
     }
     this.log(`wait_all:7:${selectors.join(',')}`);
   };
 
   public waitAny = async (selector: string | string[], { timeout = TIMEOUT_ELEMENT_APPEAR, visible = true }: { timeout?: number, visible?: boolean } = {}): Promise<ElementHandle> => {
-    timeout = Math.max(timeout, 1);
-    const selectors = this.selsAsProcessedArr(selector);
-    while (timeout-- > 0) {
-      try {
-        for (const selector of selectors) {
-          const elements = await (this.isXpath(selector) ? this.target.$x(selector) : this.target.$$(selector));
-          for (const element of elements) {
-            if ((await element.boundingBox()) !== null || !visible) { // element is visible
-              return element as ElementHandle<Element>;
-            }
-          }
-        }
-      } catch (e) {
-        if (e instanceof Error && e.message.indexOf('Cannot find context with specified id undefined') === -1) {
-          throw e;
-        }
-      }
-      await Util.sleep(0.05);
-    }
-    throw Error(`waiting failed: Elements did not appear: ${selectors.join(',')}`);
+    return await this.waitAnyInternal(this.selsAsProcessedArr(selector), { timeout, visible });
   };
 
   public waitTillGone = async (selector: string | string[], { timeout = TIMEOUT_ELEMENT_GONE }: { timeout?: number } = {}) => {
@@ -425,10 +413,10 @@ abstract class ControllableBase {
     let passes = Math.max(2, Math.round(timeout)); // 1 second per pass, 2 pass minimum
     while (passes--) {
       let frames: Frame[];
-      if (this.target.constructor.name === 'Page') {
-        frames = await (this.target as Page).frames();
+      if (this.target.constructor.name.endsWith('Page')) {
+        frames = (this.target as Page).frames();
       } else if (this.target.constructor.name === 'Frame') {
-        frames = await (this.target as Frame).childFrames();
+        frames = (this.target as Frame).childFrames();
       } else {
         throw Error(`Unknown this.target.constructor.name: ${this.target.constructor.name}`);
       }
@@ -519,6 +507,36 @@ abstract class ControllableBase {
 
   protected selsAsProcessedArr = (selector: string | string[]): string[] => {
     return (Array.isArray(selector) ? selector : [selector]).map(this.selector);
+  };
+
+  private waitAnyInternal = async (processedSelectors: string[], { timeout = 1, visible }: { timeout?: number, visible?: boolean } = {}): Promise<ElementHandle> => {
+    const attemptsPerSecond = 20;
+    timeout = Math.max(timeout * attemptsPerSecond, 1);
+    while (timeout-- > 0) {
+      try {
+        for (const selector of processedSelectors) {
+          const elements = await (this.isXpath(selector) ? this.target.$x(selector) : this.target.$$(selector));
+          for (const element of elements) {
+            if ((await element.boundingBox()) !== null || !visible) { // element is visible
+              return element as ElementHandle<Element>;
+            }
+          }
+        }
+      } catch (e) {
+        if (e instanceof Error && e.message.indexOf('Cannot find context with specified id undefined') === -1) {
+          throw e;
+        }
+      }
+      await Util.sleep(1 / attemptsPerSecond);
+    }
+    throw Error(`waiting failed: Elements did not appear: ${processedSelectors.join(',')}`);
+  };
+
+  private isElementVisibleInternal = async (processedSelector: string) => {
+    // check element visibility by checking `display` property and element offset height
+    return await this.target.$eval(processedSelector, (elem) => {
+      return window.getComputedStyle(elem).getPropertyValue('display') !== 'none' && (elem as HTMLElement).offsetHeight > 0;
+    });
   };
 
   private getFramesUrlsInThisMoment = async (urlMatchables: string[]) => {
