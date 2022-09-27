@@ -488,7 +488,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         await passphraseDialog.waitForContent('@passphrase-text', 'Enter FlowCrypt pass phrase to sign email');
         await ComposePageRecipe.cancelPassphraseDialog(inboxPage, inputMethod);
         await Util.sleep(0.5);
-        expect(await composeFrame.read('@action-send')).to.eq('Sign and Send');
+        await composeFrame.waitForContent('@action-send', 'Sign and Send');
       }));
 
       ava.default(`compose - non-primary pass phrase dialog - dialog cancel (${inputMethod})`, testWithBrowser('ci.tests.gmail', async (t, browser) => {
