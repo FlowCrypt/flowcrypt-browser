@@ -21,6 +21,7 @@ import { ViewModule } from '../../../js/common/view-module.js';
 import { ComposeView } from '../compose.js';
 import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
 import { ContactPreview, ContactStore } from '../../../js/common/platform/store/contact-store.js';
+import { FLOWCRYPT_REPLY_EMAIL_ADDRESSES } from '../../../js/common/api/email-provider/gmail/gmail-parser.js';
 
 /**
  * todo - this class is getting too big
@@ -194,7 +195,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     // reply only to the sender if the message is not from the same account
     const from = this.view.replyParams?.from;
     const myEmail = this.view.replyParams?.myEmail;
-    if (from !== myEmail) {
+    if (from !== myEmail && !FLOWCRYPT_REPLY_EMAIL_ADDRESSES.includes(from ?? '')) {
       for (const recipient of this.addedRecipients.filter(r => r.email !== from)) {
         this.removeRecipient(recipient.element);
       }
