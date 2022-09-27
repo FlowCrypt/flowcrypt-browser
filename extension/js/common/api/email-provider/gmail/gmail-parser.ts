@@ -10,6 +10,8 @@ import { Buf } from '../../../core/buf.js';
 import { RecipientType } from '../../shared/api.js';
 import { ReplyParams } from '../email-provider-api.js';
 
+export const FLOWCRYPT_REPLY_EMAIL_ADDRESSES = ['replies@flowcrypt.com', 'robot@flowcrypt.com'];
+
 export namespace GmailRes { // responses
 
   export type GmailMsg$header = { name: string, value: string };
@@ -157,7 +159,7 @@ export class GmailParser {
       subject: Mime.subjectWithoutPrefixes(subject),
     };
     let to = Value.arr.unique([...headers.to, ...headers.replyTo]);
-    if (headers.from && !to.includes(headers.from)) {
+    if (headers.from && !to.includes(headers.from) && !FLOWCRYPT_REPLY_EMAIL_ADDRESSES.includes(headers.from)) {
       to.unshift(headers.from);
     }
     const acctEmailAliasesInMsg = [...to, ...headers.cc, ...headers.bcc].filter(e => addresses.includes(e));
