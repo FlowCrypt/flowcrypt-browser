@@ -891,6 +891,14 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
     ava.default.todo('DEFAULT_REMEMBER_PASS_PHRASE with auto-generation when all keys are removed by EKM');
     // should we re-use the known passphrase or delete it from the storage in this scenario?
 
+    ava.default('user@no-flags-client-configuration.flowcrypt.test - should show error when no flags is present', testWithBrowser(undefined, async (t, browser) => {
+      const acctEmail = 'user@no-flags-client-configuration.flowcrypt.test';
+      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
+      await Util.sleep(1);
+      await settingsPage.waitForContent('@container-err-title', 'FlowCrypt encountered an error with unknown cause.');
+      await settingsPage.waitForContent('@container-err-text', 'Error: Missing client configuration flags.');
+    }));
+
     ava.default('get.key@key-manager-choose-passphrase.flowcrypt.test - passphrase chosen by user with key found on key manager', testWithBrowser(undefined, async (t, browser) => {
       const acct = 'get.key@key-manager-choose-passphrase.flowcrypt.test';
       const passphrase = 'Long and complicated pass PHRASE';

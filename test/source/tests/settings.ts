@@ -561,7 +561,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
     }));
 
     ava.default('settings - error modal when page parameter invalid', testWithBrowser('ci.tests.gmail', async (t, browser) => {
-      const invalidParamModalPage = await browser.newPage(t, TestUrls.extension(`chrome/settings/index.htm?acctEmail=ci.tests.gmail@gmail.com&page=invalid`));
+      const invalidParamModalPage = await browser.newPage(t, TestUrls.extension(`chrome/settings/index.htm?acctEmail=ci.tests.gmail@flowcrypt.test&page=invalid`));
       await Util.sleep(3);
       await invalidParamModalPage.waitForContent('.swal2-html-container', 'An unexpected value was found for the page parameter');
     }));

@@ -873,7 +873,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
     }));
 
     ava.default('compose - enforce message signing when encrypting', testWithBrowser('compatibility', async (t, browser) => {
-      const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
+      const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
       await ComposePageRecipe.setPopoverToggle(composePage, 'sign', false);
       // Should still encryptSignSend because we enfore message signing when encrypting
       expect(await composePage.read('@action-send')).to.eq('Encrypt, Sign and Send');
