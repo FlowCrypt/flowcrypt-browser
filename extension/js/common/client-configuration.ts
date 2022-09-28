@@ -27,15 +27,16 @@ export type ClientConfigurationJson = {
  */
 export class ClientConfiguration {
 
-  private static readonly default = { flags: [] };
-
   public static newInstance = async (acctEmail: string): Promise<ClientConfiguration> => {
     const email = Str.parseEmail(acctEmail).email;
     if (!email) {
       throw new Error(`Not a valid email`);
     }
     const storage = await AcctStore.get(email, ['rules']);
-    return new ClientConfiguration(storage.rules || ClientConfiguration.default, Str.getDomainFromEmailAddress(acctEmail));
+    if (!storage.rules?.flags) {
+      throw new Error(`Flags is required for client configuration`);
+    }
+    return new ClientConfiguration(storage.rules!, Str.getDomainFromEmailAddress(acctEmail));
   };
 
   protected constructor(
