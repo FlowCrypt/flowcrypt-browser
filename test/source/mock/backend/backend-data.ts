@@ -100,6 +100,10 @@ export class BackendData {
         "in_memory_pass_phrase_session_length": 10
       };
     }
+    if (domain === 'no-flags-client-configuration.flowcrypt.test') {
+      return {
+      };
+    }
     if (domain === 'no-submit-client-configuration.flowcrypt.test') {
       return {
         "flags": [

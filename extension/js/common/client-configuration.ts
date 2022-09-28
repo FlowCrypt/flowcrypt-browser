@@ -34,7 +34,7 @@ export class ClientConfiguration {
     }
     const storage = await AcctStore.get(email, ['rules']);
     if (!storage.rules?.flags) {
-      throw new Error(`Flags is required for client configuration`);
+      throw new Error('Flags is required for client configuration.');
     }
     return new ClientConfiguration(storage.rules!, Str.getDomainFromEmailAddress(acctEmail));
   };
