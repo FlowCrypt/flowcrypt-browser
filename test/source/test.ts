@@ -128,8 +128,6 @@ ava.default.after.always('evaluate Catch.reportErr errors', async t => {
     ].includes(e.message))
     // below for test "user4@standardsubdomainfes.test:8001 - PWD encrypted message with FES web portal - a send fails with gateway update error"
     .filter(e => !e.message.includes('Test error'))
-    // below for test "user@no-flags-client-configuration.flowcrypt.test - should show error when no flags is present"
-    .filter(e => !e.message.includes('Flags is required for client configuration.'))
     // below for test "no.fes@example.com - skip FES on consumer, show friendly message on enterprise"
     .filter(e => !e.trace.includes('-1 when GET-ing https://fes.example.com'))
     // todo - ideally mock tests would never call this. But we do tests with human@flowcrypt.com so it's calling here

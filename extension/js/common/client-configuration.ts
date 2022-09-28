@@ -5,6 +5,7 @@
 import { Str } from './core/common.js';
 import { AcctStore } from './platform/store/acct-store.js';
 import { KeyAlgo } from './core/crypto/key.js';
+import { UnreportableError } from './platform/catch.js';
 
 type ClientConfiguration$flag = 'NO_PRV_CREATE' | 'NO_PRV_BACKUP' | 'PRV_AUTOIMPORT_OR_AUTOGEN' | 'PASS_PHRASE_QUIET_AUTOGEN' |
   'ENFORCE_ATTESTER_SUBMIT' | 'NO_ATTESTER_SUBMIT' | 'SETUP_ENSURE_IMPORTED_PRV_MATCH_LDAP_PUB' |
@@ -34,7 +35,7 @@ export class ClientConfiguration {
     }
     const storage = await AcctStore.get(email, ['rules']);
     if (!storage.rules?.flags) {
-      throw new Error('Flags is required for client configuration.');
+      throw new UnreportableError('Missing client configuration flags.');
     }
     return new ClientConfiguration(storage.rules!, Str.getDomainFromEmailAddress(acctEmail));
   };

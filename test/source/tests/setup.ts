@@ -896,7 +896,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
       await Util.sleep(1);
       await settingsPage.waitForContent('@container-err-title', 'FlowCrypt encountered an error with unknown cause.');
-      await settingsPage.waitForContent('@container-err-text', 'Error: Flags is required for client configuration.');
+      await settingsPage.waitForContent('@container-err-text', 'Error: Missing client configuration flags.');
     }));
 
     ava.default('get.key@key-manager-choose-passphrase.flowcrypt.test - passphrase chosen by user with key found on key manager', testWithBrowser(undefined, async (t, browser) => {
