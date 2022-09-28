@@ -75,7 +75,7 @@ abstract class ControllableBase {
     this.log(`wait_all:7:${selectors.join(',')}`);
   };
 
-  public waitAny = async (selector: string | string[], { timeout = TIMEOUT_ELEMENT_APPEAR, visible = true }: { timeout?: number, visible?: boolean } = {}): Promise<ElementHandle> => {
+  public waitAny = async (selector: string | string[], { timeout = TIMEOUT_ELEMENT_APPEAR, visible = true }: { timeout?: number, visible?: true } = {}): Promise<ElementHandle> => {
     return await this.waitAnyInternal(this.selsAsProcessedArr(selector), { timeout, visible });
   };
 
@@ -509,7 +509,7 @@ abstract class ControllableBase {
     return (Array.isArray(selector) ? selector : [selector]).map(this.selector);
   };
 
-  private waitAnyInternal = async (processedSelectors: string[], { timeout = 1, visible }: { timeout?: number, visible?: boolean } = {}): Promise<ElementHandle> => {
+  private waitAnyInternal = async (processedSelectors: string[], { timeout = 1, visible }: { timeout?: number, visible?: true } = {}): Promise<ElementHandle> => {
     const attemptsPerSecond = 20;
     timeout = Math.max(timeout * attemptsPerSecond, 1);
     while (timeout-- > 0) {
