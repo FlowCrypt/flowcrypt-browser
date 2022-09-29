@@ -488,7 +488,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         await passphraseDialog.waitForContent('@passphrase-text', 'Enter FlowCrypt pass phrase to sign email');
         await ComposePageRecipe.cancelPassphraseDialog(inboxPage, inputMethod);
         await Util.sleep(0.5);
-        expect(await composeFrame.read('@action-send')).to.eq('Sign and Send');
+        await composeFrame.waitForContent('@action-send', 'Sign and Send');
       }));
 
       ava.default(`compose - non-primary pass phrase dialog - dialog cancel (${inputMethod})`, testWithBrowser('ci.tests.gmail', async (t, browser) => {
@@ -1661,6 +1661,13 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         to: [{ email: 'flowcrypt.compatibility@gmail.com', name: 'First Last' }, { email: 'vladimir@flowcrypt.com' }],
         cc: [], bcc: []
       });
+    }));
+
+    ava.default('compose - check reply for web portal messsage', testWithBrowser('compatibility', async (t, browser) => {
+      const appendUrl = 'threadId=1837a67086636d0c&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___&replyMsgId=1837a67803bad3ea&acctEmail=flowcrypt.compatibility%40gmail.com';
+      const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl, hasReplyPrompt: true });
+      await composePage.waitAndClick('@encrypted-reply', { delay: 1 });
+      await expectRecipientElements(composePage, { to: [{ email: 'ioanmo226@gmail.com' }] });
     }));
 
     ava.default('compose - reply - subject starts with Re:', testWithBrowser('compatibility', async (t, browser) => {

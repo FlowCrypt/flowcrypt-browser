@@ -188,7 +188,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
     ava.default('mail.google.com - rendering attachmnents', testWithBrowser('ci.tests.gmail', async (t, browser) => {
       const gmailPage = await openGmailPage(t, browser);
       await gotoGmailPage(gmailPage, '/FMfcgzGkbDXBWBWBfVKHssLtMqvDQSWN');
-      await gmailPage.waitForContent('.aVW', '36 Attachments');
+      await gmailPage.waitForContent('.aVW span:first-child', '36');
       const urls = await gmailPage.getFramesUrls(['/chrome/elements/attachment.htm']);
       expect(urls.length).to.equal(36);
     }));

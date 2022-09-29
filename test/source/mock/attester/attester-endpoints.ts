@@ -142,7 +142,7 @@ export const mockAttesterEndpoints: HandlersDefinition = {
       throw new HttpClientErr(`Not implemented: ${req.method}`);
     }
   },
-  '/attester/test/welcome': async ({ body }, req) => {
+  '/attester/welcome-message': async ({ body }, req) => {
     if (!isPost(req)) {
       throw new HttpClientErr(`Wrong method: ${req.method}`);
     }
