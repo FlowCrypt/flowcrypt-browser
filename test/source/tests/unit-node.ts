@@ -53,7 +53,7 @@ export const defineUnitNodeTests = (testVariant: TestVariant) => {
         ...(await PgpArmor.dearmor(testConstants.flowcryptcompatibilityPublicKey7FDE685548AEA788)).data,
         ...(await PgpArmor.dearmor(testConstants.pubkey2864E326A5BE488A)).data
       ]);
-      const armoredKeys = PgpArmor.armor(opgp.enums.armor.public_key, unarmoredKeys);
+      const armoredKeys = PgpArmor.armor(opgp.enums.armor.publicKey, unarmoredKeys);
       expect((await KeyUtil.parseMany(armoredKeys)).length).to.equal(2);
       await t.throwsAsync(() => OpenPGPKey.parse(armoredKeys), { instanceOf: Error, message: 'Found 2 OpenPGP keys, expected one' });
       await t.throwsAsync(() => KeyUtil.parse(armoredKeys), { instanceOf: Error, message: 'Found 2 keys, expected one' });
@@ -897,7 +897,7 @@ jSB6A93JmnQGIkAem/kzGkKclmfAdGfc4FS+3Cn+6Q==Xmrz
       const pub2 = await KeyUtil.parse(key2.public);
       // only encrypt with pub1
       const { data } = await MsgUtil.encryptMessage({ pubkeys: [pub1], data: Buf.fromUtfStr('anything'), armor: true }) as PgpMsgMethod.EncryptPgpArmorResult;
-      const m = await opgp.message.readArmored(Buf.fromUint8(data).toUtfStr());
+      const m = await opgp.readMessage({ armoredMessage: Buf.fromUint8(data).toUtfStr() });
       const parsed1 = await KeyUtil.parse(key1.private);
       const parsed2 = await KeyUtil.parse(key2.private);
       const kisWithPp: KeyInfoWithIdentityAndOptionalPp[] = [ // supply both key1 and key2 for decrypt
@@ -991,8 +991,8 @@ jSB6A93JmnQGIkAem/kzGkKclmfAdGfc4FS+3Cn+6Q==Xmrz
       await KeyUtil.encrypt(tmpPrv, passphrase);
       expect(tmpPrv.fullyEncrypted).to.equal(true);
       const prvEncryptForSubkeyOnlyProtected = KeyUtil.armor(tmpPrv);
-      const { keys: [tmpPub] } = await opgp.key.readArmored(pubEncryptForPrimaryIsFine);
-      tmpPub.subKeys = [];
+      const tmpPub = await opgp.readKey({ armoredKey: pubEncryptForPrimaryIsFine });
+      tmpPub.subkeys = [];
       // removed subkey from the pubkey, which makes the structure into this - forcing opgp to encrypt for the primary
       // sec  rsa2048/F90C76AE611AFDEE
       //      created: 2020-10-15  expires: never       usage: SCE

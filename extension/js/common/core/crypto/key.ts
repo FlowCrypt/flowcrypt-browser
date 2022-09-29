@@ -8,6 +8,7 @@ import { MsgBlockParser } from '../msg-block-parser.js';
 import { PgpArmor } from './pgp/pgp-armor.js';
 import { opgp } from './pgp/openpgpjs-custom.js';
 import { OpenPGPKey } from './pgp/openpgp-key.js';
+import type * as OpenPGP from 'openpgp';
 import { SmimeKey } from './smime/smime-key.js';
 import { MsgBlock } from '../msg-block.js';
 import { EmailParts } from '../common.js';
@@ -96,7 +97,7 @@ export interface KeyInfoWithIdentityAndOptionalPp extends KeyInfoWithIdentity {
 
 export type KeyAlgo = 'curve25519' | 'rsa2048' | 'rsa3072' | 'rsa4096';
 
-export type PrvPacket = (OpenPGP.packet.SecretKey | OpenPGP.packet.SecretSubkey);
+export type PrvPacket = (OpenPGP.SecretKeyPacket | OpenPGP.SecretSubkeyPacket);
 
 export class UnexpectedKeyTypeError extends Error { }
 
@@ -204,7 +205,7 @@ export class KeyUtil {
     const allKeys: Key[] = [], allErr: Error[] = [];
     let uncheckedOpgpKeyCount = 0;
     try {
-      const { keys, err } = await opgp.key.read(key);
+      const keys = await opgp.readKeys({ binaryKeys: key }); // todo: opgp.readKey ?
       uncheckedOpgpKeyCount = keys.length;
       for (const key of keys) {
         try {
@@ -222,9 +223,9 @@ export class KeyUtil {
           allErr.push(e as Error);
         }
       }
-      if (err) {
+      /* todo: re-throw? if (err) {
         allErr.push(...err);
-      }
+      } */
     } catch (e) {
       allErr.push(e as Error);
     }
@@ -304,16 +305,16 @@ export class KeyUtil {
   };
 
   // todo - this should be made to tolerate smime keys
-  public static normalize = async (armored: string): Promise<{ normalized: string, keys: OpenPGP.key.Key[] }> => {
+  public static normalize = async (armored: string): Promise<{ normalized: string, keys: OpenPGP.Key[] }> => {
     try {
-      let keys: OpenPGP.key.Key[] = [];
+      let keys: OpenPGP.Key[] = [];
       armored = PgpArmor.normalize(armored, 'key');
       if (RegExp(PgpArmor.headers('publicKey', 're').begin).test(armored)) {
-        keys = (await opgp.key.readArmored(armored)).keys;
+        keys = await opgp.readKeys({ armoredKeys: armored });
       } else if (RegExp(PgpArmor.headers('privateKey', 're').begin).test(armored)) {
-        keys = (await opgp.key.readArmored(armored)).keys;
+        keys = await opgp.readKeys({ armoredKeys: armored });
       } else if (RegExp(PgpArmor.headers('encryptedMsg', 're').begin).test(armored)) {
-        keys = [new opgp.key.Key((await opgp.message.readArmored(armored)).packets)];
+        keys = [new opgp.PrivateKey((await opgp.readMessage({ armoredMessage: armored })).packets)]; // todo: or PublicKey
       }
       for (const k of keys) {
         for (const u of k.users) {
@@ -348,7 +349,7 @@ export class KeyUtil {
     }
   };
 
-  public static decrypt = async (key: Key, passphrase: string, optionalKeyid?: OpenPGP.Keyid, optionalBehaviorFlag?: 'OK-IF-ALREADY-DECRYPTED'): Promise<boolean> => {
+  public static decrypt = async (key: Key, passphrase: string, optionalKeyid?: OpenPGP.KeyID, optionalBehaviorFlag?: 'OK-IF-ALREADY-DECRYPTED'): Promise<boolean> => {
     if (key.family === 'openpgp') {
       return await OpenPGPKey.decryptKey(key, passphrase, optionalKeyid, optionalBehaviorFlag);
     } else if (key.family === 'x509') {

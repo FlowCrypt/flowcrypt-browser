@@ -1,7 +1,5 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
-/// <reference path="../core/types/openpgp.d.ts" />
-
 'use strict';
 
 /**
@@ -24,6 +22,7 @@
  */
 
 import { MimeParser } from '../core/types/emailjs.js';
+import type * as OpenPGP from 'openpgp';
 
 type Codec = { encode: (text: string, mode: 'fatal' | 'html') => string, decode: (text: string) => string, labels: string[], version: string };
 
@@ -32,8 +31,8 @@ export const requireOpenpgp = (): typeof OpenPGP => {
   if (!openpgpLocal) {
     return openpgpLocal; // in some environments, openpgp is indeed undefined, eg pgp_block.htm or content script (for now)
   }
-  openpgpLocal.config.versionstring = `FlowCrypt Gmail Encryption`;
-  openpgpLocal.config.commentstring = 'Seamlessly send and receive encrypted email';
+  // todo: openpgpLocal.config.versionstring = `FlowCrypt Gmail Encryption`;
+  // todo: openpgpLocal.config.commentstring = 'Seamlessly send and receive encrypted email';
   // openpgpLocal.config.require_uid_self_cert = false;
   return openpgpLocal;
 };

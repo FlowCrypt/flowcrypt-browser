@@ -6,7 +6,6 @@ import { GoogleAuth } from '../common/api/email-provider/gmail/google-auth.js';
 import { Bm, BrowserMsg } from '../common/browser/browser-msg.js';
 import { emailKeyIndex } from '../common/core/common.js';
 import { VERSION } from '../common/core/const.js';
-import { opgp } from '../common/core/crypto/pgp/openpgpjs-custom.js';
 import { ExpirationCache } from '../common/core/expiration-cache.js';
 import { processAndStoreKeysFromEkmLocally } from '../common/helpers.js';
 import { Catch } from '../common/platform/catch.js';
@@ -20,7 +19,7 @@ import { migrateGlobal, moveContactsToEmailsAndPubkeys, updateOpgpRevocations, u
 
 console.info('background_process.js starting');
 
-opgp.initWorker({ path: '/lib/openpgp.worker.js' });
+// todo: opgp.initWorker({ path: '/lib/openpgp.worker.js' });
 
 (async () => {
 

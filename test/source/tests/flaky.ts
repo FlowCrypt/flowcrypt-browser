@@ -10,7 +10,7 @@ import { ComposePageRecipe } from './page-recipe/compose-page-recipe';
 import { PageRecipe } from './page-recipe/abstract-page-recipe';
 import { SettingsPageRecipe } from './page-recipe/settings-page-recipe';
 import { TestWithBrowser } from './../test';
-import { Stream } from '../core/stream';
+import * as streams from '@openpgp/web-stream-tools';
 import { InboxPageRecipe } from './page-recipe/inbox-page-recipe';
 import { TestUrls } from '../browser/test-urls';
 import { OauthPageRecipe } from './page-recipe/oauth-page-recipe';
@@ -259,7 +259,7 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
       ]);
     }));
 
-    ava.default(`[unit][Stream.readToEnd] efficiently handles multiple chunks`, async t => {
+    ava.default(`[unit][streams.readToEnd] efficiently handles multiple chunks`, async t => {
       const stream = new ReadableStream<Uint8Array>({
         start(controller) {
           for (let i = 0; i < 10; i++) {
@@ -268,7 +268,7 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
           controller.close();
         }
       });
-      const result = await Stream.readToEnd(stream);
+      const result = await streams.readToEnd(stream);
       expect(result.length).to.equal(40000000);
       t.pass();
     });

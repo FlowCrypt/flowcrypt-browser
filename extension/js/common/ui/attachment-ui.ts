@@ -90,8 +90,8 @@ export class AttachmentUI {
       if (pubs.find(pub => pub.pubkey.family === 'x509')) {
         throw new UnreportableError('Attachments are not yet supported when sending to recipients using S/MIME x509 certificates.');
       }
-      const encrypted = await MsgUtil.encryptMessage({ pubkeys: pubsForEncryption, data, filename: file.name, armor: false }) as OpenPGP.EncryptBinaryResult;
-      attachments.push(new Attachment({ name: Attachment.sanitizeName(file.name) + '.pgp', type: file.type, data: encrypted.message.packets.write() }));
+      const encrypted = await MsgUtil.encryptMessage({ pubkeys: pubsForEncryption, data, filename: file.name, armor: false }) as Uint8Array;
+      attachments.push(new Attachment({ name: Attachment.sanitizeName(file.name) + '.pgp', type: file.type, data: encrypted }));
     }
     return attachments;
   };

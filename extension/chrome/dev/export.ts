@@ -111,8 +111,8 @@ Catch.try(async () => {
     const pwd = prompt('Please enter encryption password');
     if (pwd) {
       print('encrypting..');
-      const encrypted = await opgp.encrypt({ armor: false, message: opgp.message.fromBinary(data), passwords: [pwd] });
-      save(encrypted.message.packets.write());
+      const encrypted = await opgp.encrypt({ format: 'binary', message: await opgp.createMessage({ binary: data }), passwords: [pwd] });
+      save(encrypted); // todo: test
     } else {
       save(data);
     }

@@ -1,6 +1,6 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
-/// <reference path="../../../extension/js/common/core/types/openpgp.d.ts" />
+import type OpenPGP from 'openpgp';
 
 'use strict';
 

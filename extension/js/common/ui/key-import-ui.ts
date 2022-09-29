@@ -16,6 +16,7 @@ import { Url, Str } from '../core/common.js';
 import { opgp } from '../core/crypto/pgp/openpgpjs-custom.js';
 import { KeyStore } from '../platform/store/key-store.js';
 import { isFesUsed } from '../helpers.js';
+import { OpenPGPKey } from '../core/crypto/pgp/openpgp-key.js';
 
 type KeyImportUiCheckResult = { normalized: string; passphrase: string; fingerprint: string; decrypted: Key; encrypted: Key; };
 
@@ -91,13 +92,13 @@ export class KeyImportUi {
     $('.input_private_key').on('keyup paste change', Ui.event.handle(async target => {
       $('.action_add_private_key').addClass('btn_disabled').attr('disabled');
       $('.input_email_alias').prop('checked', false);
-      const { keys: [prv] } = await opgp.key.readArmored(String($(target).val()));
+      const prv = await opgp.readKey({ armoredKey: String($(target).val()) });
       if (prv !== undefined) {
         $('.action_add_private_key').removeClass('btn_disabled').removeAttr('disabled');
         if (submitKeyForAddrs !== undefined) {
           const users = prv.users;
           for (const user of users) {
-            const userId = user.userId;
+            const userId = user.userID;
             for (const inputCheckboxesWithEmail of $('.input_email_alias')) {
               if (String($(inputCheckboxesWithEmail).data('email')) === userId!.email) {
                 KeyImportUi.addAliasForSubmission(userId!.email, submitKeyForAddrs!);
@@ -109,12 +110,12 @@ export class KeyImportUi {
       }
     }));
     $('.input_private_key').change(Ui.event.handle(async target => {
-      const { keys: [prv] } = await opgp.key.readArmored(String($(target).val()));
+      const prv = await opgp.readKey({ armoredKey: String($(target).val()) });
       if (!prv || !prv.isPrivate()) {
         $('.line.unprotected_key_create_pass_phrase').hide();
         return;
       }
-      if (prv.isFullyDecrypted()) {
+      if (OpenPGPKey.isFullyDecrypted(prv)) {
         $('.line.unprotected_key_create_pass_phrase').show();
         const { passwordResultElement, removeValidationElements } = this.renderPassPhraseStrengthValidationInput($('.input_passphrase'), $('.action_add_private_key'));
         passwordResultElement.addClass('left');
@@ -123,7 +124,7 @@ export class KeyImportUi {
           $('.input_private_key').off('change', removeValidationElementsWhenKeyChanged);
         });
         $('.input_private_key').change(removeValidationElementsWhenKeyChanged);
-      } else if (prv.isFullyEncrypted()) {
+      } else if (OpenPGPKey.isFullyEncrypted(prv)) {
         $('.line.unprotected_key_create_pass_phrase').hide();
       } else {
         await Ui.modal.error(Lang.setup.partiallyEncryptedKeyUnsupported);
@@ -241,8 +242,8 @@ export class KeyImportUi {
 
   private normalize = async (type: KeyBlockType, armored: string): Promise<{ normalized: string }> => {
     // non-OpenPGP keys are considered to be always normalized
-    // TODO: PgpKey.normalize depends on OpenPGP.key.Key objects, when this is resolved
-    // this check for key family should be moved to PgpKey.normalize function.
+    // TODO: KeyUtil.normalize depends on OpenPGP.Key objects, when this is resolved
+    // this check for key family should be moved to KeyUtil.normalize function.
     if (KeyUtil.getKeyFamily(armored) !== 'openpgp') {
       return { normalized: armored };
     }

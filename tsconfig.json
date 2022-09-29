@@ -25,7 +25,12 @@
         "COMMENT"
       ],
       "openpgp": [
+        "../node_modules/openpgp/openpgp.d.js",
         "lib/openpgp.js",
+        "COMMENT"
+      ],
+      "@openpgp/web-stream-tools": [
+        "../node_modules/@openpgp/web-stream-tools/web-stream-tools.d.ts",
         "COMMENT"
       ],
       "dompurify": [
@@ -73,7 +78,8 @@
   },
   "include": [
     "./extension/**/*.ts",
-    "./node_modules/sweetalert2/sweetalert2.d.ts"
+    "./node_modules/sweetalert2/sweetalert2.d.ts",
+    "./node_modules/@openpgp/web-stream-tools/web-stream-tools.d.ts"
   ],
   "exclude": [
     "./extension/js/content_scripts/**/*",

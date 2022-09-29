@@ -7,12 +7,13 @@ import * as forge from 'node-forge';
 import { Buf } from '../../buf.js';
 import { ReplaceableMsgBlockType } from '../../msg-block.js';
 import { Str } from '../../common.js';
+import type * as OpenPGP from 'openpgp';
 import { opgp } from './openpgpjs-custom.js';
-import { Stream } from '../../stream.js';
+import * as streams from '@openpgp/web-stream-tools';
 import { SmimeKey, ENVELOPED_DATA_OID } from '../smime/smime-key.js';
 
-export type PreparedForDecrypt = { isArmored: boolean, isCleartext: true, isPkcs7: false, message: OpenPGP.cleartext.CleartextMessage | OpenPGP.message.Message }
-  | { isArmored: boolean, isCleartext: false, isPkcs7: false, message: OpenPGP.message.Message }
+export type PreparedForDecrypt = { isArmored: boolean, isCleartext: true, isPkcs7: false, message: OpenPGP.CleartextMessage | OpenPGP.Message<OpenPGP.Data> }
+  | { isArmored: boolean, isCleartext: false, isPkcs7: false, message: OpenPGP.Message<OpenPGP.Data> }
   | { isArmored: boolean, isCleartext: false, isPkcs7: true, message: forge.pkcs7.PkcsEnvelopedData }
   ;
 
@@ -106,24 +107,24 @@ export class PgpArmor {
     const isArmoredSignedOnly = utfChunk.includes(PgpArmor.headers('signedMsg').begin);
     const isArmored = isArmoredEncrypted || isArmoredSignedOnly;
     if (isArmoredSignedOnly) {
-      return { isArmored, isCleartext: true, isPkcs7: false, message: await opgp.cleartext.readArmored(new Buf(encrypted).toUtfStr()) };
+      return { isArmored, isCleartext: true, isPkcs7: false, message: await opgp.readCleartextMessage({ cleartextMessage: new Buf(encrypted).toUtfStr() }) };
     } else if (isArmoredEncrypted) {
-      const message = await opgp.message.readArmored(new Buf(encrypted).toUtfStr());
-      const isCleartext = !!message.getLiteralData() && !!message.getSigningKeyIds().length && !message.getEncryptionKeyIds().length;
+      const message = await opgp.readMessage({ armoredMessage: new Buf(encrypted).toUtfStr() });
+      const isCleartext = !!message.getLiteralData() && !!message.getSigningKeyIDs().length && !message.getEncryptionKeyIDs().length;
       return { isArmored: true, isCleartext, isPkcs7: false, message };
     } else if (encrypted instanceof Uint8Array) {
-      return { isArmored, isCleartext: false, isPkcs7: false, message: await opgp.message.read(encrypted) };
+      return { isArmored, isCleartext: false, isPkcs7: false, message: await opgp.readMessage({ binaryMessage: encrypted }) };
     }
     throw new Error('Message does not have armor headers');
   };
 
   public static dearmor = async (text: string): Promise<{ type: OpenPGP.enums.armor, data: Uint8Array }> => {
-    const decoded = await opgp.armor.decode(text);
-    const data = await Stream.readToEnd(decoded.data);
+    const decoded = await opgp.unarmor(text);
+    const data = await streams.readToEnd(decoded.data);
     return { type: decoded.type, data };
   };
 
   public static armor = (messagetype: OpenPGP.enums.armor, body: object, partindex?: number, parttotal?: number, customComment?: string): string => {
-    return opgp.armor.encode(messagetype, body, partindex, parttotal, customComment);
+    return opgp.armor(messagetype, body, partindex || 0, parttotal || 1, customComment ? { commentString: customComment } as OpenPGP.Config : undefined); // todo: versionString ?
   };
 }

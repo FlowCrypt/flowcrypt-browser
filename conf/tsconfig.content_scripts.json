@@ -18,6 +18,12 @@
     "paths": {
       "dompurify": [
         "types/purify.d.ts"
+      ],
+      "openpgp": [
+        "../node_modules/openpgp/openpgp.d.ts"
+      ],
+      "@openpgp/web-stream-tools": [
+        "../node_modules/@openpgp/web-stream-tools/web-stream-tools.d.ts"
       ]
     },
     "typeRoots": [
