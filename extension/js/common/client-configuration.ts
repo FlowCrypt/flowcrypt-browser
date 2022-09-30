@@ -34,10 +34,10 @@ export class ClientConfiguration {
       throw new Error(`Not a valid email`);
     }
     const storage = await AcctStore.get(email, ['rules']);
-    if (!storage.rules?.flags) {
+    if (storage.rules && !storage.rules.flags) {
       throw new UnreportableError('Missing client configuration flags.');
     }
-    return new ClientConfiguration(storage.rules!, Str.getDomainFromEmailAddress(acctEmail));
+    return new ClientConfiguration(storage.rules ?? {}, Str.getDomainFromEmailAddress(acctEmail));
   };
 
   protected constructor(
