@@ -104,6 +104,9 @@ export class BackendData {
       return {
       };
     }
+    if (domain === 'null-client-configuration.flowcrypt.test') {
+      return null;
+    }
     if (domain === 'no-submit-client-configuration.flowcrypt.test') {
       return {
         "flags": [

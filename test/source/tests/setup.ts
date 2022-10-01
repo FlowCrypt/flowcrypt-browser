@@ -899,6 +899,14 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       await settingsPage.waitForContent('@container-err-text', 'Error: Missing client configuration flags.');
     }));
 
+    ava.default('null-setting@null-client-configuration.flowcrypt.test - should not show error when no setting is present', testWithBrowser(undefined, async (t, browser) => {
+      const acctEmail = 'null-setting@null-client-configuration.flowcrypt.test';
+      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
+      await Util.sleep(1);
+      await settingsPage.notPresent('@container-err-title');
+      await settingsPage.notPresent('@container-err-text',);
+    }));
+
     ava.default('get.key@key-manager-choose-passphrase.flowcrypt.test - passphrase chosen by user with key found on key manager', testWithBrowser(undefined, async (t, browser) => {
       const acct = 'get.key@key-manager-choose-passphrase.flowcrypt.test';
       const passphrase = 'Long and complicated pass PHRASE';
