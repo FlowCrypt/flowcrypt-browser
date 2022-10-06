@@ -16,7 +16,8 @@
     "skipLibCheck": true,
     "paths": {
       "@openpgp/web-stream-tools": [
-        "build/test/streams.js"
+        "../node_modules/@openpgp/web-stream-tools/web-stream-tools.d.ts",
+        "../build/streams/streams.js"
       ]
     }
   },

@@ -27,7 +27,7 @@ for (const moduleName of Object.keys(compilerOptions.paths)) {
   }
 }
 
-const namedImportLineRegEx = /^(import (?:.+ from )?['"])([^.][^'"/]+)(['"];)\r{0,1}$$/g;
+const namedImportLineRegEx = /^(const (?:.+require\()?['"])([^.][^'"/]+)(['"]\)+;)\r{0,1}$$/g;
 const importLineNotEndingWithJs = /import (?:.+ from )?['"]\.[^'"]+[^.][^j][^s]['"];/g;
 const importLineEndingWithJsNotStartingWithDot = /import (?:.+ from )?['"][^.][^'"]+\.js['"];/g;
 
@@ -35,12 +35,10 @@ const resolveLineImports = (line: string, path: string) => line.replace(namedImp
   if (moduleMap[libname] === null) {
     return `// ${prefix}${libname}${suffix} // commented during build process: imported with script tag`;
   } else if (!moduleMap[libname]) {
-    console.error(`Unknown path for module: ${libname} in ${path}`);
-    process.exit(1);
-    return '';
+    return found;
   } else {
     const resolved = `${prefix}${moduleMap[libname]}${suffix}`;
-    // console.info(`${path}: ${found} -> ${resolved}`);
+    console.info(`${path}: ${found} -> ${resolved}`);
     return resolved;
   }
 });
