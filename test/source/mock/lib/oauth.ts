@@ -60,16 +60,17 @@ export class OauthMock {
     }
   };
 
-  public checkAuthorizationHeaderWithAccessToken = (authorization: string | undefined) => {
+  public checkAuthorizationHeaderWithAccessToken = (authorization: string | undefined, checkAutorization = true) => {
     if (!authorization) {
       throw new HttpClientErr('Missing mock bearer authorization header', Status.UNAUTHORIZED);
     }
     const accessToken = authorization.replace(/^Bearer /, '');
     const acct = this.acctByAccessToken[accessToken];
-    if (!acct) {
+    if (!acct && checkAutorization) {
       throw new HttpClientErr('Invalid mock auth token', Status.UNAUTHORIZED);
     }
-    return acct;
+    // Return flowcrypt.compatibility@gmail.com when authorization is not needed
+    return acct ?? 'flowcrypt.compatibility@gmail.com';
   };
 
   /**

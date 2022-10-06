@@ -97,7 +97,7 @@ export const mockGoogleEndpoints: HandlersDefinition = {
   },
   '/gmail': async (_parsedReq, req) => {
     if (isGet(req)) {
-      const acct = oauth.checkAuthorizationHeaderWithAccessToken(req.headers.authorization);
+      const acct = oauth.checkAuthorizationHeaderWithAccessToken(req.headers.authorization, false);
       return GoogleData.getMockGmailPage(acct);
     }
     throw new HttpClientErr(`Method not implemented for ${req.url}: ${req.method}`);
