@@ -483,7 +483,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       const gmailPage = await browser.newPage(t, TestUrls.mockGmailUrl(), undefined, await getAuthorizationHeader(t, browser, acct));
       await gmailPage.waitAll(['@webmail-notification', '@notification-setup-action-open-settings', '@notification-setup-action-dismiss', '@notification-setup-action-close']);
       await gmailPage.waitAndClick('@notification-setup-action-close', { confirmGone: true });
-      gmailPage.page.reload();
+      await gmailPage.page.reload();
       await gmailPage.waitAll(['@webmail-notification', '@notification-setup-action-open-settings', '@notification-setup-action-dismiss', '@notification-setup-action-close']);
       const newSettingsPage = await browser.newPageTriggeredBy(t, () => gmailPage.waitAndClick('@notification-setup-action-open-settings'));
       await newSettingsPage.waitAll('@action-connect-to-gmail');
