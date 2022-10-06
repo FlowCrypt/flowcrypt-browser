@@ -1,0 +1,27 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "lib": [
+      "es6",
+      "dom"
+    ],
+    "allowJs": true,
+    "alwaysStrict": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "module": "commonjs",
+    "sourceMap": true,
+    "outDir": "../build/streams",
+    "skipLibCheck": true
+  },
+  "files": [
+    "./node_modules/@openpgp/web-stream-tools/web-stream-tools.d.ts",
+    "./node_modules/@openpgp/web-stream-tools/lib/node-conversions.js",
+    "./node_modules/@openpgp/web-stream-tools/lib/reader.js",
+    "./node_modules/@openpgp/web-stream-tools/lib/streams.js",
+    "./node_modules/@openpgp/web-stream-tools/lib/util.js",
+    "./node_modules/@openpgp/web-stream-tools/lib/writer.js"
+  ]
+}
