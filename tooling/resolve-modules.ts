@@ -7,7 +7,15 @@
 import { readFileSync, writeFileSync } from 'fs';
 import { getFilesInDir } from './utils/tooling-utils';
 
-const { compilerOptions } = JSON.parse(readFileSync('./tsconfig.json').toString());
+let tsconfigPath: string | undefined;
+for (let i = 0; i < process.argv.length; i++) {
+  if (process.argv[i] === '-p' || process.argv[i] === '--project') {
+    tsconfigPath = process.argv[i + 1];
+    break;
+  }
+}
+
+const { compilerOptions } = JSON.parse(readFileSync(tsconfigPath || './tsconfig.json').toString());
 const moduleMap: { [name: string]: string | null } = {};
 for (const moduleName of Object.keys(compilerOptions.paths)) {
   if (compilerOptions.paths[moduleName].indexOf('COMMENT') !== -1) {

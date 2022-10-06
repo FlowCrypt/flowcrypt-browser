@@ -73,7 +73,7 @@ cp node_modules/bootstrap/dist/css/bootstrap.min.css $OUTDIR/lib/bootstrap/boots
 
 # remaining build steps sequentially
 ( cd $SRCDIR && cp -r --parents ./**/*.{js,htm,css,woff2,png,svg,txt} ./{.web-extension-id,manifest.json} ../$OUTDIR )
-node ./build/tooling/resolve-modules
+node ./build/tooling/resolve-modules --project ./tsconfig.json
 node ./build/tooling/fill-values
 node ./build/tooling/bundle-content-scripts
 cp -r $OUTDIR ./build/chrome-enterprise

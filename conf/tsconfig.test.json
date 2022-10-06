@@ -13,7 +13,12 @@
     "module": "commonjs",
     "sourceMap": true,
     "outDir": "../build/test",
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "paths": {
+      "@openpgp/web-stream-tools": [
+        "build/test/streams.js"
+      ]
+    }
   },
   "files": [
     "../extension/types/node-forge.d.ts",
