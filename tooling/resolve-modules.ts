@@ -5,6 +5,7 @@
 // tslint:disable:no-unsafe-any
 
 import { readFileSync, writeFileSync } from 'fs';
+import { sep } from 'path';
 import { getFilesInDir } from './utils/tooling-utils';
 
 let tsconfigPath: string | undefined;
@@ -23,11 +24,11 @@ for (const moduleName of Object.keys(compilerOptions.paths)) {
     moduleMap[moduleName] = null; // tslint:disable-line:no-null-keyword
   } else {
     // replace import with full path from config
-    moduleMap[moduleName] = `/${compilerOptions.paths[moduleName].find((x: string) => x.match(/\.js$/) !== null)}`;
+    moduleMap[moduleName] = `${compilerOptions.paths[moduleName].find((x: string) => x.match(/\.js$/) !== null)}`;
   }
 }
 
-const namedImportLineRegEx = /^(const (?:.+require\()?['"])([^.][^'"/]+)(['"]\)+;)\r{0,1}$$/g;
+const namedImportLineRegEx = /^(const (?:.+require\()?['"])([^.][^'"]+)(['"]\)+;)\r{0,1}$$/g;
 const importLineNotEndingWithJs = /import (?:.+ from )?['"]\.[^'"]+[^.][^j][^s]['"];/g;
 const importLineEndingWithJsNotStartingWithDot = /import (?:.+ from )?['"][^.][^'"]+\.js['"];/g;
 
@@ -37,7 +38,9 @@ const resolveLineImports = (line: string, path: string) => line.replace(namedImp
   } else if (!moduleMap[libname]) {
     return found;
   } else {
-    const resolved = `${prefix}${moduleMap[libname]}${suffix}`;
+    const depth = path.split(sep).length;
+    const prePath = '../'.repeat(depth - 3); // todo:
+    const resolved = `${prefix}${prePath}${moduleMap[libname]}${suffix}`;
     console.info(`${path}: ${found} -> ${resolved}`);
     return resolved;
   }
