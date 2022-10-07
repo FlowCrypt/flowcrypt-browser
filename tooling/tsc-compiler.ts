@@ -98,7 +98,11 @@ const compile = (): void => {
   const { options, errors } = ts.convertCompilerOptionsFromJson(compilerOptions, tsconfigAbsDir); // , tsconfigAbsPath!
   printErrsAndExitIfPresent(errors);
   const compilerHost = ts.createCompilerHost(options);
-  const fileList = files && files.length ? files : compilerHost.readDirectory!(tsconfigAbsDir, ['.ts', '.tsx', '.d.ts'], exclude, include);
+  const extensions = ['.ts', '.tsx', '.d.ts'];
+  if (options.allowJs) {
+    extensions.push('.js');
+  }
+  const fileList = files && files.length ? files : compilerHost.readDirectory!(tsconfigAbsDir, extensions, exclude, include);
   if (!fileList.length) {
     console.error(`fileList empty for ${tsconfigAbsPath}\ninclude:\n${(include || []).join('\n')}\n\nexclude:\n${(exclude || []).join('\n')}\nfiles:\n${(files || []).join('\n')}`);
     process.exit(1);
