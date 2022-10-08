@@ -39,7 +39,7 @@ export const requireOpenpgp = (): typeof OpenPGP => {
 };
 
 export const requireStreams = (): typeof Streams => {
-  return (window as any).streams;
+  return (window as any).streams as typeof Streams;
 };
 
 export const requireMimeParser = (): typeof MimeParser => {

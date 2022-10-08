@@ -73,32 +73,6 @@ export class OpenPGPKey {
     return true;
   };
 
-  private static decryptPrivateKey = async (prv: OpenPGP.PrivateKey, passphrase: string, optionalKeyid?: OpenPGP.KeyID, optionalBehaviorFlag?: 'OK-IF-ALREADY-DECRYPTED') => {
-    const chosenPrvPackets = prv.getKeys(optionalKeyid).map(k => k.keyPacket).filter(OpenPGPKey.isPacketPrivate) as PrvPacket[];
-    if (!chosenPrvPackets.length) {
-      throw new Error(`No private key packets selected of ${prv.getKeys().map(k => k.keyPacket).filter(OpenPGPKey.isPacketPrivate).length} prv packets available`);
-    }
-    for (const prvPacket of chosenPrvPackets) {
-      if (prvPacket.isDecrypted()) {
-        if (optionalBehaviorFlag === 'OK-IF-ALREADY-DECRYPTED') {
-          continue;
-        } else {
-          throw new Error("Decryption failed - key packet was already decrypted");
-        }
-      }
-      try {
-        await prvPacket.decrypt(passphrase); // throws on password mismatch
-        await prvPacket.validate(); // throws
-      } catch (e) {
-        if (e instanceof Error && e.message.toLowerCase().includes('incorrect key passphrase')) {
-          return false;
-        }
-        throw e;
-      }
-    }
-    return true;
-  };
-
   public static encryptKey = async (key: Key, passphrase: string) => {
     const prv = OpenPGPKey.extractExternalLibraryObjFromKey(key);
     if (!passphrase || passphrase === 'undefined' || passphrase === 'null') {
@@ -144,23 +118,9 @@ export class OpenPGPKey {
       }
     }
     if (armor) {
-      return await opgp.encrypt({
-        format: 'armored',
-        message,
-        date,
-        encryptionKeys,
-        passwords: pwd ? [pwd] : undefined,
-        signingKeys
-      });
+      return await opgp.encrypt({ format: 'armored', message, date, encryptionKeys, passwords: pwd ? [pwd] : undefined, signingKeys });
     } else {
-      return await opgp.encrypt({
-        format: 'binary',
-        message,
-        date,
-        encryptionKeys,
-        passwords: pwd ? [pwd] : undefined,
-        signingKeys
-      });
+      return await opgp.encrypt({ format: 'binary', message, date, encryptionKeys, passwords: pwd ? [pwd] : undefined, signingKeys });
     }
   };
 
@@ -220,12 +180,8 @@ export class OpenPGPKey {
     }
     const algoInfo = keyWithoutWeakPackets.keyPacket.getAlgorithmInfo();
     // tslint:disable-next-line:no-unnecessary-initializer
-    const {
-      encryptionKey = undefined,
-      encryptionKeyIgnoringExpiration = undefined,
-      signingKey = undefined,
-      signingKeyIgnoringExpiration = undefined
-    } = isPrimaryKeyStrong ? await OpenPGPKey.getSigningAndEncryptionKeys(keyWithoutWeakPackets, encryptionKeyExp, signingKeyExp) : {};
+    const { encryptionKey = undefined, encryptionKeyIgnoringExpiration = undefined, signingKey = undefined, signingKeyIgnoringExpiration = undefined }
+      = isPrimaryKeyStrong ? await OpenPGPKey.getSigningAndEncryptionKeys(keyWithoutWeakPackets, encryptionKeyExp, signingKeyExp) : {};
     const missingPrivateKeyForSigning = signingKeyIgnoringExpiration?.keyPacket
       ? OpenPGPKey.arePrivateParamsMissing(signingKeyIgnoringExpiration.keyPacket)
       : false;
@@ -428,20 +384,6 @@ export class OpenPGPKey {
     return nonDummyPrvPackets.every(p => p.isDecrypted() === false);
   };
 
-  private static getPrvPackets = (k: OpenPGP.Key): PrvPacket[] => {
-    if (!k.isPrivate()) {
-      throw new Error("Cannot check encryption status of secret keys in a Public Key");
-    }
-    const prvPackets = k.getKeys().map(k => k.keyPacket).filter(OpenPGPKey.isPacketPrivate) as PrvPacket[];
-    if (!prvPackets.length) {
-      throw new Error("This key has no private packets. Is it a Private Key?");
-    }
-    const nonDummyPrvPackets = prvPackets.filter(p => !p.isDummy());
-    if (!nonDummyPrvPackets.length) {
-      throw new Error("This key only has a gnu-dummy private packet, with no actual secret keys.");
-    }
-    return nonDummyPrvPackets;
-  };
   /**
    * todo - could return a Key
    */
@@ -883,6 +825,47 @@ export class OpenPGPKey {
     return `${date.getTime() / 1000} + ${expiresInSecondsFromDate} seconds, which is: ${expDate.getTime() / 1000} or ${expDate.toISOString()}`;
   };
 
+  private static decryptPrivateKey = async (prv: OpenPGP.PrivateKey, passphrase: string, optionalKeyid?: OpenPGP.KeyID, optionalBehaviorFlag?: 'OK-IF-ALREADY-DECRYPTED') => {
+    const chosenPrvPackets = prv.getKeys(optionalKeyid).map(k => k.keyPacket).filter(OpenPGPKey.isPacketPrivate) as PrvPacket[];
+    if (!chosenPrvPackets.length) {
+      throw new Error(`No private key packets selected of ${prv.getKeys().map(k => k.keyPacket).filter(OpenPGPKey.isPacketPrivate).length} prv packets available`);
+    }
+    for (const prvPacket of chosenPrvPackets) {
+      if (prvPacket.isDecrypted()) {
+        if (optionalBehaviorFlag === 'OK-IF-ALREADY-DECRYPTED') {
+          continue;
+        } else {
+          throw new Error("Decryption failed - key packet was already decrypted");
+        }
+      }
+      try {
+        await prvPacket.decrypt(passphrase); // throws on password mismatch
+        await prvPacket.validate(); // throws
+      } catch (e) {
+        if (e instanceof Error && e.message.toLowerCase().includes('incorrect key passphrase')) {
+          return false;
+        }
+        throw e;
+      }
+    }
+    return true;
+  };
+
+  private static getPrvPackets = (k: OpenPGP.Key): PrvPacket[] => {
+    if (!k.isPrivate()) {
+      throw new Error("Cannot check encryption status of secret keys in a Public Key");
+    }
+    const prvPackets = k.getKeys().map(k => k.keyPacket).filter(OpenPGPKey.isPacketPrivate) as PrvPacket[];
+    if (!prvPackets.length) {
+      throw new Error("This key has no private packets. Is it a Private Key?");
+    }
+    const nonDummyPrvPackets = prvPackets.filter(p => !p.isDummy());
+    if (!nonDummyPrvPackets.length) {
+      throw new Error("This key only has a gnu-dummy private packet, with no actual secret keys.");
+    }
+    return nonDummyPrvPackets;
+  };
+
   private static getKeyUsersWithPrimaryUserFirst = async (key: OpenPGP.Key) => {
     const primaryUser = await key.getPrimaryUser();
     if (primaryUser.index > 0) {
@@ -919,7 +902,6 @@ export class OpenPGPKey {
     keyId?: OpenPGP.KeyID | undefined,
     userId?: OpenPGP.UserID | undefined
   ): Promise<Date | null | typeof Infinity> => {
-
     const primaryUser = await key.getPrimaryUser(undefined, userId, undefined);
     if (!primaryUser) throw new Error('Could not find primary user');
     const keyExpiry = await key.getExpirationTime(userId);
