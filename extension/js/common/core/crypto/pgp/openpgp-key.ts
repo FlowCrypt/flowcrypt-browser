@@ -1,11 +1,10 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 import { Key, PrvPacket, KeyAlgo, KeyUtil, UnexpectedKeyTypeError, PubkeyInfo } from '../key.js';
-import { opgp } from './openpgpjs-custom.js';
+import { opgp, streams } from './openpgpjs-custom.js';
 import { Catch } from '../../../platform/catch.js';
 import { Str, Value } from '../../common.js';
 import { Buf } from '../../buf.js';
 import type * as OpenPGP from 'openpgp';
-import * as streams from '@openpgp/web-stream-tools';
 import { PgpMsgMethod, VerifyRes } from './msg-util.js';
 
 const internal = Symbol('internal openpgpjs library format key');

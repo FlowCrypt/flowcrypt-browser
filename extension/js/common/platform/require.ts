@@ -23,6 +23,7 @@
 
 import { MimeParser } from '../core/types/emailjs.js';
 import type * as OpenPGP from 'openpgp';
+import type * as Streams from '@openpgp/web-stream-tools';
 
 type Codec = { encode: (text: string, mode: 'fatal' | 'html') => string, decode: (text: string) => string, labels: string[], version: string };
 
@@ -35,6 +36,10 @@ export const requireOpenpgp = (): typeof OpenPGP => {
   // todo: openpgpLocal.config.commentstring = 'Seamlessly send and receive encrypted email';
   // openpgpLocal.config.require_uid_self_cert = false;
   return openpgpLocal;
+};
+
+export const requireStreams = (): typeof Streams => {
+  return (window as any).streams;
 };
 
 export const requireMimeParser = (): typeof MimeParser => {

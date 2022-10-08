@@ -8,8 +8,7 @@ import { Buf } from '../../buf.js';
 import { ReplaceableMsgBlockType } from '../../msg-block.js';
 import { Str } from '../../common.js';
 import type * as OpenPGP from 'openpgp';
-import { opgp } from './openpgpjs-custom.js';
-import * as streams from '@openpgp/web-stream-tools';
+import { opgp, streams } from './openpgpjs-custom.js';
 import { SmimeKey, ENVELOPED_DATA_OID } from '../smime/smime-key.js';
 
 export type PreparedForDecrypt = { isArmored: boolean, isCleartext: true, isPkcs7: false, message: OpenPGP.CleartextMessage | OpenPGP.Message<OpenPGP.Data> }

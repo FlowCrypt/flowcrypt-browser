@@ -1,11 +1,16 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
 import type OpenPGP from 'openpgp';
+import type * as Streams from '@openpgp/web-stream-tools';
 
 'use strict';
 
 export const requireOpenpgp = (): typeof OpenPGP => {
   return require('openpgp') as unknown as typeof OpenPGP;
+};
+
+export const requireStreams = (): typeof Streams => {
+  return require('@openpgp/web-stream-tools');
 };
 
 export const requireMimeParser = (): any => {

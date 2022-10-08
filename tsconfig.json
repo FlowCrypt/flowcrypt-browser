@@ -31,7 +31,8 @@
       ],
       "@openpgp/web-stream-tools": [
         "../node_modules/@openpgp/web-stream-tools/web-stream-tools.d.ts",
-        "lib/streams/streams.js"
+        "lib/streams/streams.js",
+        "COMMENT"
       ],
       "dompurify": [
         "types/purify.d.ts",
