@@ -31,7 +31,7 @@
       ],
       "@openpgp/web-stream-tools": [
         "../node_modules/@openpgp/web-stream-tools/web-stream-tools.d.ts",
-        "../build/streams/streams.js"
+        "lib/streams/streams.js"
       ],
       "dompurify": [
         "types/purify.d.ts",
@@ -78,8 +78,7 @@
   },
   "include": [
     "./extension/**/*.ts",
-    "./node_modules/sweetalert2/sweetalert2.d.ts",
-    "./node_modules/@openpgp/web-stream-tools/web-stream-tools.d.ts"
+    "./node_modules/sweetalert2/sweetalert2.d.ts"
   ],
   "exclude": [
     "./extension/js/content_scripts/**/*",

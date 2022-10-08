@@ -28,11 +28,12 @@ for (const moduleName of Object.keys(compilerOptions.paths)) {
   }
 }
 
-const namedImportLineRegEx = /^(const (?:.+require\()?['"])([^.][^'"]+)(['"]\)+;)\r{0,1}$$/g;
+const namedImportLineRegEx = /^(import (?:.+ from )?['"])([^.][^'"]+)(['"];)\r{0,1}$$/g;
+const requireLineRegEx = /^(const (?:.+require\()?['"])([^.][^'"]+)(['"]\)+;)\r{0,1}$$/g;
 const importLineNotEndingWithJs = /import (?:.+ from )?['"]\.[^'"]+[^.][^j][^s]['"];/g;
 const importLineEndingWithJsNotStartingWithDot = /import (?:.+ from )?['"][^.][^'"]+\.js['"];/g;
 
-const resolveLineImports = (line: string, path: string) => line.replace(namedImportLineRegEx, (found, prefix, libname, suffix) => {
+const resolveLineImports = (regex: RegExp, line: string, path: string) => line.replace(regex, (found, prefix, libname, suffix) => {
   if (moduleMap[libname] === null) {
     return `// ${prefix}${libname}${suffix} // commented during build process: imported with script tag`;
   } else if (!moduleMap[libname]) {
@@ -66,7 +67,9 @@ const srcFilePaths = getFilesInDir(compilerOptions.outDir, /\.js$/);
 
 for (const srcFilePath of srcFilePaths) {
   const original = readFileSync(srcFilePath).toString();
-  const resolved = original.split('\n').map(l => resolveLineImports(l, srcFilePath)).join('\n');
+  const resolved = original.split('\n').map(
+    l => resolveLineImports(requireLineRegEx, resolveLineImports(namedImportLineRegEx, l, srcFilePath), srcFilePath)
+  ).join('\n');
   if (resolved !== original) {
     writeFileSync(srcFilePath, resolved);
   }

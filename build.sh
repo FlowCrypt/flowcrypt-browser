@@ -66,6 +66,9 @@ mkdir -p $OUTDIR/lib/bootstrap
 cp node_modules/bootstrap/dist/js/bootstrap.min.js $OUTDIR/lib/bootstrap/bootstrap.min.js
 cp node_modules/bootstrap/dist/css/bootstrap.min.css $OUTDIR/lib/bootstrap/bootstrap.min.css
 
+mkdir -p $OUTDIR/lib/streams
+cp ./build/streams/*.js $OUTDIR/lib/streams
+
 # to update node-forge library, which is missing the non-minified version in dist, we have to build it manually
 # cd ~/git && rm -rf ./forge && git clone https://github.com/digitalbazaar/forge.git && cd ./forge && npm install && npm run-script build
 # cp dist/forge.js ../flowcrypt-browser/extension/lib/forge.js
