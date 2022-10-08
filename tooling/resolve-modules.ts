@@ -29,7 +29,7 @@ for (const moduleName of Object.keys(compilerOptions.paths)) {
 }
 
 const namedImportLineRegEx = /^(import (?:.+ from )?['"])([^.][^'"]+)(['"];)\r{0,1}$$/g;
-const requireLineRegEx = /^(const (?:.+require\()?['"])([^.][^'"]+)(['"]\)+;)\r{0,1}$$/g;
+const requireLineRegEx = /^(.+require\(['"])([^.][^'"]+)(['"]\)+;)\r{0,1}$$/g;
 const importLineNotEndingWithJs = /import (?:.+ from )?['"]\.[^'"]+[^.][^j][^s]['"];/g;
 const importLineEndingWithJsNotStartingWithDot = /import (?:.+ from )?['"][^.][^'"]+\.js['"];/g;
 
