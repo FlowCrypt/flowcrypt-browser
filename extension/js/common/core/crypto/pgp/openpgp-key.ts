@@ -453,9 +453,9 @@ export class OpenPGPKey {
     // todo: expired?
     try {
       const signerLongids = msg.getSigningKeyIDs().map(kid => OpenPGPKey.bytesToLongid(kid.bytes));
-      const text = msg instanceof opgp.CleartextMessage ? msg.getText() : msg.getLiteralData();
+      const text = msg instanceof opgp.CleartextMessage ? msg.getText() : msg.getLiteralData(); // todo: is this important?
       if (text) { // encrypted message
-        verifyRes.content = typeof (text) === 'string' ? Buf.fromUtfStr(text) : Buf.fromUint8(text); // todo: is this important?
+        verifyRes.content = typeof (text) === 'string' ? Buf.fromUtfStr(text) : Buf.fromUint8(text);
       }
       // is there an intersection?
       if (signerLongids.some(longid => verifyRes.suppliedLongids.includes(longid))) {
@@ -485,7 +485,7 @@ export class OpenPGPKey {
       } else if (verifyErr instanceof Error && verifyErr.message === 'Signature is expired') {
         verifyRes.error = verifyErr.message;
         verifyRes.isErrFatal = true; // don't try to re-fetch the message from API
-      } else if (verifyErr instanceof Error && verifyErr.message === 'Message digest did not match') {
+      } else if (verifyErr instanceof Error && verifyErr.message.endsWith('digest did not match')) {
         verifyRes.error = verifyErr.message;
         verifyRes.match = false;
       } else {
