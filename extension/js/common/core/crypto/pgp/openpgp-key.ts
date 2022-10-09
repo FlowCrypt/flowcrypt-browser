@@ -452,29 +452,28 @@ export class OpenPGPKey {
     const opgpKeys = validKeys.map(x => OpenPGPKey.extractExternalLibraryObjFromKey(x));
     // todo: expired?
     try {
-      // this is here to ensure execution order when 1) verify, 2) read data, 3) processing signatures
-      // Else it will hang trying to read a stream: https://github.com/openpgpjs/openpgpjs/issues/916#issuecomment-510620625
-      const verifications = await msg.verify(opgpKeys); // first step
-      const stream = msg.getText();
-      if (stream) { // encrypted message
-        const data = await streams.readToEnd(msg.getText()!); // second step
-        verifyRes.content = Buf.fromUtfStr(data); // todo: check! can it be Uint8Array?
+      const signerLongids = msg.getSigningKeyIDs().map(kid => OpenPGPKey.bytesToLongid(kid.bytes));
+      const text = msg instanceof opgp.CleartextMessage ? msg.getText() : msg.getLiteralData();
+      if (text) { // encrypted message
+        verifyRes.content = typeof (text) === 'string' ? Buf.fromUtfStr(text) : Buf.fromUint8(text); // todo: is this important?
       }
-      // third step below
-      const signerLongids: string[] = [];
-      const fingerprints: string[] = [];
-      for (const verification of verifications) {
-        // todo - a valid signature is a valid signature, and should be surfaced. Currently, if any of the signatures are not valid, it's showing all as invalid
-        // .. as it is now this could allow an attacker to append bogus signatures to validly signed messages, making otherwise correct messages seem incorrect
-        // .. which is not really an issue - an attacker that can append signatures could have also just slightly changed the message, causing the same experience
-        // .. so for now #wontfix unless a reasonable usecase surfaces
-        verifyRes.match = (verifyRes.match === true || verifyRes.match === null) && await verification.verified;
-        const signature = await verification.signature;
-        fingerprints.push(...signature.packets.filter(s => s.issuerFingerprint).map(s => Buf.fromUint8(s.issuerFingerprint!).toHexStr()));
-        signerLongids.push(OpenPGPKey.bytesToLongid(verification.keyID.bytes));
+      // is there an intersection?
+      if (signerLongids.some(longid => verifyRes.suppliedLongids.includes(longid))) {
+        const fingerprints: string[] = [];
+        const verifications = await msg.verify(opgpKeys);
+        for (const verification of verifications) {
+          // todo - a valid signature is a valid signature, and should be surfaced. Currently, if any of the signatures are not valid, it's showing all as invalid
+          // .. as it is now this could allow an attacker to append bogus signatures to validly signed messages, making otherwise correct messages seem incorrect
+          // .. which is not really an issue - an attacker that can append signatures could have also just slightly changed the message, causing the same experience
+          // .. so for now #wontfix unless a reasonable usecase surfaces
+          verifyRes.match = (verifyRes.match === true || verifyRes.match === null) && await verification.verified;
+          const signature = await verification.signature;
+          fingerprints.push(...signature.packets.filter(s => s.issuerFingerprint).map(s => Buf.fromUint8(s.issuerFingerprint!).toHexStr()));
+          // signerLongids.push(OpenPGPKey.bytesToLongid(verification.keyID.bytes));
+        }
+        verifyRes.signerFingerprints = Value.arr.unique(fingerprints);
       }
       verifyRes.signerLongids = Value.arr.unique(signerLongids);
-      verifyRes.signerFingerprints = Value.arr.unique(fingerprints);
     } catch (verifyErr) {
       verifyRes.match = null; // tslint:disable-line:no-null-keyword
       if (verifyErr instanceof Error && verifyErr.message === 'Can only verify message with one literal data packet.') {
