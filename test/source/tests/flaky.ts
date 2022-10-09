@@ -137,7 +137,7 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
       const fileName = `flowcrypt-backup-usernosubmitclientconfigurationflowcrypttest-0x${longid}.asc`;
       const key = await KeyUtil.parse(downloadedFiles[fileName]!.toString());
       expect(key.algo.bits).to.equal(3072);
-      expect(key.algo.algorithm).to.equal('rsa_encrypt_sign');
+      expect(key.algo.algorithm).to.equal('rsaEncryptSign');
       await myKeyFrame.close();
       await settingsPage.close();
     }));

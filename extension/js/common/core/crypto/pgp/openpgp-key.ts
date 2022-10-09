@@ -280,7 +280,6 @@ export class OpenPGPKey {
     return '[' + strs.join(', ') + ']';
   };
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   public static diagnose = async (pubkey: Key, passphrase: string): Promise<Map<string, string>> => {
     const key = OpenPGPKey.extractExternalLibraryObjFromKey(pubkey);
     const result = new Map<string, string>();
@@ -294,21 +293,12 @@ export class OpenPGPKey {
     // take subkeys from original key so we show subkeys disabled by #2715 too
     const subKeys = OpenPGPKey.extractStrengthUncheckedExternalLibraryObjFromKey(pubkey)?.subkeys ?? key.subkeys;
     result.set(`Subkeys`, KeyUtil.formatResult(subKeys ? subKeys.length : subKeys));
-    result.set(`Primary key algo`, KeyUtil.formatResult(key.keyPacket.algorithm));
+    result.set(`Primary key algo`, KeyUtil.formatResult(opgp.enums.read(opgp.enums.publicKey, key.keyPacket.algorithm)));
     const flags = await OpenPGPKey.getPrimaryKeyFlags(key);
     result.set(`Usage flags`, KeyUtil.formatResult(OpenPGPKey.keyFlagsToString(flags)));
     if (key.isPrivate() && !OpenPGPKey.isFullyDecrypted(key)) {
       result.set(`key decrypt`, await KeyUtil.formatResultAsync(async () => {
-        try {
-          await OpenPGPKey.decryptPrivateKey(key, passphrase); // throws on password mismatch
-          return 'success';
-        } catch (e) {
-          if (e instanceof Error && e.message.toLowerCase().includes('incorrect key passphrase')) {
-            return 'INCORRECT PASSPHRASE';
-          } else {
-            throw e;
-          }
-        }
+        return (await OpenPGPKey.decryptPrivateKey(key, passphrase)) ? 'success' : 'INCORRECT PASSPHRASE';
       }));
       result.set(`isFullyDecrypted`, KeyUtil.formatResult(OpenPGPKey.isFullyDecrypted(key)));
       result.set(`isFullyEncrypted`, KeyUtil.formatResult(OpenPGPKey.isFullyEncrypted(key)));
@@ -317,7 +307,7 @@ export class OpenPGPKey {
       await key.verifyPrimaryKey(); // throws
       return `valid`;
     }));
-    result.set(`Primary key creation?`, await KeyUtil.formatResultAsync(async () => OpenPGPKey.formatDate(await key.getCreationTime())));
+    result.set(`Primary key creation?`, await KeyUtil.formatResultAsync(async () => OpenPGPKey.formatDate(key.getCreationTime())));
     result.set(`Primary key expiration?`, await KeyUtil.formatResultAsync(async () => OpenPGPKey.formatDate(await key.getExpirationTime())));
     const encryptResult = await OpenPGPKey.testEncryptDecrypt(key);
     await Promise.all(encryptResult.map(msg => result.set(`Encrypt/Decrypt test: ${msg}`, '')));
@@ -336,7 +326,8 @@ export class OpenPGPKey {
         await subKey.verify();
         return 'OK';
       }));
-      // todo: result.set(`${skn} Subkey tag`, await KeyUtil.formatResultAsync(async () => subKey.keyPacket.tag));
+      result.set(`${skn} Subkey object type`, await KeyUtil.formatResultAsync(async () =>
+        subKey.keyPacket instanceof opgp.SecretSubkeyPacket ? 'SecretSubkeyPacket' : 'PublicSubkeyPacket'));
       result.set(`${skn} Subkey getBitSize`, await KeyUtil.formatResultAsync(async () => subKey.getAlgorithmInfo().bits)); // No longer exists on object
       result.set(`${skn} Subkey decrypted`, KeyUtil.formatResult(subKey.isDecrypted()));
       result.set(`${skn} Binding signature length`, await KeyUtil.formatResultAsync(async () => subKey.bindingSignatures.length));
@@ -344,7 +335,6 @@ export class OpenPGPKey {
         const sig = subKey.bindingSignatures[sigIndex];
         const sgn = `${skn} SIG ${sigIndex} >`;
         result.set(`${sgn} Key flags`, await KeyUtil.formatResultAsync(async () => sig.keyFlags));
-        // todo: result.set(`${sgn} Tag`, await KeyUtil.formatResultAsync(async () => sig.tag));
         result.set(`${sgn} Version`, await KeyUtil.formatResultAsync(async () => sig.version));
         result.set(`${sgn} Public key algorithm`, await KeyUtil.formatResultAsync(async () => sig.publicKeyAlgorithm));
         result.set(`${sgn} Sig creation time`, KeyUtil.formatResult(OpenPGPKey.formatDate(sig.created)));
@@ -354,7 +344,11 @@ export class OpenPGPKey {
           }
           return OpenPGPKey.formatDate(subKey.keyPacket.created, sig.keyExpirationTime);
         }));
-        // todo: result.set(`${sgn} Verified`, KeyUtil.formatResult(sig.verified));
+        result.set(`${sgn} Verify`, await KeyUtil.formatResultAsync(async () => {
+          const dataToVerify = { key: key.keyPacket, bind: subKey.keyPacket };
+          await sig.verify(key.keyPacket, opgp.enums.signature.subkeyBinding, dataToVerify); // throws
+          return `valid`;
+        }));
       }
     }
     return result;
