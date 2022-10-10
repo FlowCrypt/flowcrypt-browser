@@ -423,10 +423,9 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
 
     ava.default('test re-auth after updating chrome extension', testWithBrowser('compatibility', async (t, browser) => {
       const acctEmail = 'flowcrypt.compatibility@gmail.com';
-      const extraAuthHeaders = await getAuthorizationHeader(t, browser, acctEmail);
       // Wipe google tokens to test re-auth popup
       await Util.wipeGoogleTokensUsingExperimentalSettingsPage(t, browser, acctEmail);
-      const gmailPage = await browser.newPage(t, TestUrls.mockGmailUrl(), undefined, extraAuthHeaders);
+      const gmailPage = await openMockGmailPage(t, browser, acctEmail);
       await gmailPage.waitAndClick('@action-secure-compose');
       // Check reconnect auth notification
       await gmailPage.waitForContent('@webmail-notification', 'Please reconnect FlowCrypt to your Gmail Account.');
@@ -448,7 +447,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
 
     ava.default('mail.google.com - success notif after setup, click hides it, does not re-appear + offers to reauth', testWithBrowser('compatibility', async (t, browser) => {
       const acct = 'flowcrypt.compatibility@gmail.com';
-      const gmailPage = await browser.newPage(t, TestUrls.mockGmailUrl(), undefined, await getAuthorizationHeader(t, browser, acct));
+      const gmailPage = await openMockGmailPage(t, browser, acct);
       await gmailPage.waitAll(['@webmail-notification', '@notification-successfully-setup-action-close']);
       await gmailPage.waitAndClick('@notification-successfully-setup-action-close', { confirmGone: true });
       await gmailPage.page.reload();
@@ -478,9 +477,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
 
     ava.default('mail.google.com - setup prompt notif + hides when close clicked + reappears + setup link opens settings', testWithBrowser(undefined, async (t, browser) => {
       const acct = 'flowcrypt.compatibility@gmail.com';
-      const settingsPage = await openMockGmailPage(t, browser, acct);
-      await settingsPage.close();
-      const gmailPage = await browser.newPage(t, TestUrls.mockGmailUrl(), undefined, await getAuthorizationHeader(t, browser, acct));
+      const gmailPage = await openMockGmailPage(t, browser, acct);
       await gmailPage.waitAll(['@webmail-notification', '@notification-setup-action-open-settings', '@notification-setup-action-dismiss', '@notification-setup-action-close']);
       await gmailPage.waitAndClick('@notification-setup-action-close', { confirmGone: true });
       await gmailPage.page.reload();
@@ -491,8 +488,6 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
 
     ava.default('mail.google.com - setup prompt notification shows up + dismiss hides it + does not reappear if dismissed', testWithBrowser(undefined, async (t, browser) => {
       const acct = 'flowcrypt.compatibility@gmail.com';
-      const settingsPage = await BrowserRecipe.openSettingsLoginButCloseOauthWindowBeforeGrantingPermission(t, browser, acct);
-      await settingsPage.close();
       const gmailPage = await openMockGmailPage(t, browser, acct);
       await gmailPage.waitAll(['@webmail-notification', '@notification-setup-action-open-settings', '@notification-setup-action-dismiss', '@notification-setup-action-close']);
       await gmailPage.waitAndClick('@notification-setup-action-dismiss', { confirmGone: true });
