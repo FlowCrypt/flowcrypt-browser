@@ -33,8 +33,9 @@ const getAuthorizationHeader = async (t: AvaContext, browser: BrowserHandle, acc
   return { Authorization: `Bearer ${accessToken}` };
 };
 
-const openMockGmailPage = async (t: AvaContext, browser: BrowserHandle, acctEmail: string) => {
-  return await browser.newPage(t, TestUrls.mockGmailUrl(), undefined, await getAuthorizationHeader(t, browser, acctEmail));
+const openMockGmailPage = async (t: AvaContext, browser: BrowserHandle, acctEmail: string, hasPermission: boolean = true) => {
+  const authorizationHeader = hasPermission ? await getAuthorizationHeader(t, browser, acctEmail) : { Authorization: 'Bearer emulating-not-properly-set-up-extension' };
+  return await browser.newPage(t, TestUrls.mockGmailUrl(), undefined, authorizationHeader);
 };
 
 export const defineSetupTests = (testVariant: TestVariant, testWithBrowser: TestWithBrowser) => {
@@ -477,7 +478,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
 
     ava.default('mail.google.com - setup prompt notif + hides when close clicked + reappears + setup link opens settings', testWithBrowser(undefined, async (t, browser) => {
       const acct = 'flowcrypt.compatibility@gmail.com';
-      const gmailPage = await openMockGmailPage(t, browser, acct);
+      const gmailPage = await openMockGmailPage(t, browser, acct, false);
       await gmailPage.waitAll(['@webmail-notification', '@notification-setup-action-open-settings', '@notification-setup-action-dismiss', '@notification-setup-action-close']);
       await gmailPage.waitAndClick('@notification-setup-action-close', { confirmGone: true });
       await gmailPage.page.reload();
@@ -488,7 +489,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
 
     ava.default('mail.google.com - setup prompt notification shows up + dismiss hides it + does not reappear if dismissed', testWithBrowser(undefined, async (t, browser) => {
       const acct = 'flowcrypt.compatibility@gmail.com';
-      const gmailPage = await openMockGmailPage(t, browser, acct);
+      const gmailPage = await openMockGmailPage(t, browser, acct, false);
       await gmailPage.waitAll(['@webmail-notification', '@notification-setup-action-open-settings', '@notification-setup-action-dismiss', '@notification-setup-action-close']);
       await gmailPage.waitAndClick('@notification-setup-action-dismiss', { confirmGone: true });
       await gmailPage.page.reload();
