@@ -952,7 +952,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       await settingsPage.close();
     }));
 
-    ava.default('settings - client configuration gets updated on settings and content script reloads', testWithBrowser(undefined, async (t, browser) => {
+    ava.default.only('settings - client configuration gets updated on settings and content script reloads', testWithBrowser(undefined, async (t, browser) => {
       const acct = 'settings@settings.flowcrypt.test';
       // set up the client configuration returned for the account
       mockBackendData.clientConfigurationByAcctEmail[acct] = {
@@ -1061,7 +1061,8 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       gmailPage = await browser.newPage(t, TestUrls.mockGmailUrl(), undefined, extraAuthHeaders);
       await PageRecipe.waitForToastToAppearAndDisappear(gmailPage,
         'Failed to update FlowCrypt Client Configuration: ' +
-        'BrowserMsg(ajax) Bad Request: 400 when POST-ing https://localhost:8001/api/account/get string: account,uuid -> Test error (AjaxErr)');
+        'BrowserMsg(ajax) Bad Request: 400 when POST-ing https://localhost:8001/api/account/get string: -> Test error (AjaxErr)'
+      );
       await gmailPage.close();
       // check that the configuration hasn't changed
       const {
