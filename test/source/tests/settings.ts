@@ -952,7 +952,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       await settingsPage.close();
     }));
 
-    ava.default.only('settings - client configuration gets updated on settings and content script reloads', testWithBrowser(undefined, async (t, browser) => {
+    ava.default('settings - client configuration gets updated on settings and content script reloads', testWithBrowser(undefined, async (t, browser) => {
       const acct = 'settings@settings.flowcrypt.test';
       // set up the client configuration returned for the account
       mockBackendData.clientConfigurationByAcctEmail[acct] = {
