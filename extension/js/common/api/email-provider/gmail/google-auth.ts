@@ -133,7 +133,6 @@ export class GoogleAuth {
         return { result: 'Error', error: 'Grant was successful but missing acctEmail', acctEmail: authRes.acctEmail, id_token: undefined };
       }
       try {
-        const uuid = Api.randomFortyHexChars(); // for flowcrypt.com, if used. When FES is used, the access token is given to client.
         const potentialFes = new EnterpriseServer(authRes.acctEmail);
         if (await potentialFes.isFesInstalledAndAvailable()) {
           // on FES, pulling ClientConfiguration is not authenticated, and it contains info about how to
@@ -141,18 +140,17 @@ export class GoogleAuth {
           await AcctStore.set(authRes.acctEmail, { fesUrl: potentialFes.url });
           const acctServer = new AccountServer(authRes.acctEmail);
           // fetch and store ClientConfiguration (not authenticated)
-          await acctServer.accountGetAndUpdateLocalStore({ account: authRes.acctEmail, uuid });
-          // this is a no-op if FES is used. uuid is generated / stored if flowcrypt.com/api is used
-          await acctServer.loginWithOpenid(authRes.acctEmail, uuid, authRes.id_token);
+          await acctServer.accountGetAndUpdateLocalStore(authRes.id_token);
+          await acctServer.loginWithOpenid(authRes.id_token);
         } else {
           // eventually this branch will be dropped once a public FES instance is run for these customers
           // when using flowcrypt.com/api, pulling ClientConfiguration is authenticated, therefore have
           //   to retrieve access token first (which is the only way to authenticate other calls)
           const acctServer = new AccountServer(authRes.acctEmail);
           // get access token from flowcrypt.com/api
-          await acctServer.loginWithOpenid(authRes.acctEmail, uuid, authRes.id_token);
+          await acctServer.loginWithOpenid(authRes.id_token);
           // fetch and store ClientConfiguration (authenticated)
-          await acctServer.accountGetAndUpdateLocalStore({ account: authRes.acctEmail, uuid }); // stores ClientConfiguration
+          await acctServer.accountGetAndUpdateLocalStore(authRes.id_token); // stores ClientConfiguration
         }
       } catch (e) {
         if (GoogleAuth.isFesUnreachableErr(e, authRes.acctEmail)) {

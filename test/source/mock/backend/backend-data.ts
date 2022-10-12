@@ -2,7 +2,6 @@
 
 import { Dict } from '../../core/common';
 import { HttpAuthErr, HttpClientErr } from '../lib/api';
-import { OauthMock } from '../lib/oauth';
 
 // tslint:disable:no-null-keyword
 // tslint:disable:oneliner-object-literal
@@ -36,26 +35,6 @@ export class BackendData {
   public reportedErrors: { name: string, message: string, url: string, line: number, col: number, trace: string, version: string, environmane: string }[] = [];
 
   public clientConfigurationByAcctEmail: Dict<ClientConfiguration | HttpClientErr> = {};
-
-  private uuidsByAcctEmail: Dict<string[]> = {};
-
-  constructor(private oauth: OauthMock) { }
-
-  public registerOrThrow = (acct: string, uuid: string, idToken: string) => {
-    if (!this.oauth.isIdTokenValid(idToken)) {
-      throw new HttpAuthErr(`Could not verify mock idToken: ${idToken}`);
-    }
-    if (!this.uuidsByAcctEmail[acct]) {
-      this.uuidsByAcctEmail[acct] = [];
-    }
-    this.uuidsByAcctEmail[acct].push(uuid);
-  };
-
-  public checkUuidOrThrow = (acct: string, uuid: string) => {
-    if (!(this.uuidsByAcctEmail[acct] || []).includes(uuid)) {
-      throw new HttpAuthErr(`Wrong mock uuid ${uuid} for acct ${acct}`);
-    }
-  };
 
   public getAcctRow = (acct: string) => {
     return {

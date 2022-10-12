@@ -9,28 +9,25 @@ import { IncomingMessage } from 'http';
 import { isPost } from '../lib/mock-util';
 import { oauth } from '../lib/oauth';
 import { expect } from 'chai';
+import { Buf } from '../../core/buf';
 
-export const mockBackendData = new BackendData(oauth);
+export const mockBackendData = new BackendData();
 
 export const mockBackendEndpoints: HandlersDefinition = {
-  '/api/account/login': async ({ body }, req) => {
-    const parsed = throwIfNotPostWithAuth(body, req);
-    const idToken = req.headers.authorization?.replace(/^Bearer /, '');
-    if (!idToken) {
-      throw new HttpClientErr('backend mock: Missing id_token');
-    }
-    mockBackendData.registerOrThrow(parsed.account, parsed.uuid, idToken);
+  '/api/account/login': async ({ }, req) => {
+    throwIfNotPost(req);
+    throwIfIdTokenIsInvalid(req);
     return JSON.stringify({
       registered: true,
       verified: true
     });
   },
-  '/api/account/get': async ({ body }, req) => {
-    const parsed = throwIfNotPostWithAuth(body, req);
-    mockBackendData.checkUuidOrThrow(parsed.account, parsed.uuid);
+  '/api/account/get': async ({ }, req) => {
+    throwIfNotPost(req);
+    const { email } = throwIfIdTokenIsInvalid(req);
     return JSON.stringify({
-      account: mockBackendData.getAcctRow(parsed.account),
-      domain_org_rules: mockBackendData.getClientConfiguration(parsed.account),
+      account: mockBackendData.getAcctRow(email!),
+      domain_org_rules: mockBackendData.getClientConfiguration(email!),
     });
   },
   '/api/account/update': async ({ }, req) => {
@@ -58,16 +55,36 @@ export const mockBackendEndpoints: HandlersDefinition = {
   },
 };
 
-const throwIfNotPostWithAuth = (body: unknown, req: IncomingMessage) => {
-  const parsed = body as Dict<any>;
+interface OpenId {
+  name: string;
+  email?: string;
+  email_verified?: boolean;
+}
+
+const throwIfNotPost = (req: IncomingMessage) => {
   if (!isPost(req)) {
     throw new HttpClientErr('Backend mock calls must use POST method');
   }
-  if (!parsed.account) {
-    throw new HttpAuthErr('Backend mock call missing value: account');
+};
+
+const throwIfIdTokenIsInvalid = (req: IncomingMessage) => {
+  const idToken = req.headers.authorization?.replace(/^Bearer /, '');
+  if (!idToken) {
+    throw new HttpClientErr('backend mock: Missing id_token');
   }
-  if (!parsed.uuid) {
-    throw new HttpAuthErr('Backend mock call missing value: uuid');
+  if (!oauth.isIdTokenValid(idToken)) {
+    throw new HttpAuthErr(`Could not verify mock idToken: ${idToken}`);
   }
-  return parsed;
+  return parseIdToken(idToken);
+};
+
+const parseIdToken = (idToken: string): OpenId => {
+  const claims = JSON.parse(Buf.fromBase64UrlStr(idToken.split(/\./g)[1]).toUtfStr()) as OpenId;
+  if (claims.email) {
+    claims.email = claims.email.toLowerCase();
+    if (!claims.email_verified) {
+      throw new Error(`id_token email_verified is false for email ${claims.email}`);
+    }
+  }
+  return claims;
 };

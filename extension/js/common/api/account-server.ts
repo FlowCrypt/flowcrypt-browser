@@ -2,10 +2,13 @@
 
 'use strict';
 
+import { InMemoryStoreKeys } from '../core/const.js';
 import { isFesUsed } from '../helpers.js';
+import { InMemoryStore } from '../platform/store/in-memory-store.js';
 import { EnterpriseServer } from './account-servers/enterprise-server.js';
-import { BackendRes, FcUuidAuth, FlowCryptComApi, ProfileUpdate } from './account-servers/flowcrypt-com-api.js';
+import { BackendRes, FlowCryptComApi, ProfileUpdate } from './account-servers/flowcrypt-com-api.js';
 import { ParsedRecipients } from './email-provider/email-provider-api.js';
+import { BackendAuthErr } from './shared/api-error.js';
 import { Api, ProgressCb } from './shared/api.js';
 
 export type UploadedMessageData = {
@@ -24,15 +27,24 @@ export class AccountServer extends Api {
     super();
   }
 
-  public loginWithOpenid = async (acctEmail: string, uuid: string, idToken: string): Promise<void> => {
+  private getIdToken = async (): Promise<string> => {
+    const idToken = await InMemoryStore.get(this.acctEmail, InMemoryStoreKeys.ID_TOKEN);
+    if (!idToken) {
+      // user will not actually see this message, they'll see a generic login prompt
+      throw new BackendAuthErr('Missing id token, please re-authenticate');
+    }
+    return idToken;
+  };
+
+  public loginWithOpenid = async (): Promise<void> => {
     if (await this.isFesUsed()) {
       // FES doesn't issue any access tokens
     } else {
-      await FlowCryptComApi.loginWithOpenid(acctEmail, uuid, idToken);
+      await FlowCryptComApi.loginWithOpenid(await this.getIdToken());
     }
   };
 
-  public accountGetAndUpdateLocalStore = async (fcAuth: FcUuidAuth): Promise<BackendRes.FcAccountGet> => {
+  public accountGetAndUpdateLocalStore = async (): Promise<BackendRes.FcAccountGet> => {
     if (await this.isFesUsed()) {
       const fes = new EnterpriseServer(this.acctEmail);
       const fetchedClientConfiguration = await fes.fetchAndSaveClientConfiguration();
@@ -44,21 +56,20 @@ export class AccountServer extends Api {
         account: { default_message_expire: 180 }
       };
     } else {
-      return await FlowCryptComApi.accountGetAndUpdateLocalStore(fcAuth);
+      return await FlowCryptComApi.accountGetAndUpdateLocalStore(await this.getIdToken());
     }
   };
 
-  public accountUpdate = async (fcAuth: FcUuidAuth, profileUpdate: ProfileUpdate): Promise<void> => {
+  public accountUpdate = async (profileUpdate: ProfileUpdate): Promise<void> => {
     if (await this.isFesUsed()) {
       const fes = new EnterpriseServer(this.acctEmail);
       await fes.accountUpdate(profileUpdate);
     } else {
-      await FlowCryptComApi.accountUpdate(fcAuth, profileUpdate);
+      await FlowCryptComApi.accountUpdate(await this.getIdToken(), profileUpdate);
     }
   };
 
   public messageUpload = async (
-    fcAuth: FcUuidAuth | undefined,
     encrypted: Uint8Array,
     replyToken: string,
     from: string,
@@ -72,7 +83,7 @@ export class AccountServer extends Api {
       //   Message is uploaded and a link is retrieved which is sent through Gmail.
       return await fes.webPortalMessageUpload(encrypted, replyToken, from, recipients, progressCb);
     } else {
-      return await FlowCryptComApi.messageUpload(fcAuth, encrypted, progressCb);
+      return await FlowCryptComApi.messageUpload(await this.getIdToken(), encrypted, progressCb);
     }
   };
 
@@ -83,12 +94,12 @@ export class AccountServer extends Api {
     }
   };
 
-  public messageToken = async (fcAuth: FcUuidAuth): Promise<{ replyToken: string }> => {
+  public messageToken = async (): Promise<{ replyToken: string }> => {
     if (await this.isFesUsed()) {
       const fes = new EnterpriseServer(this.acctEmail);
       return await fes.webPortalMessageNewReplyToken();
     } else {
-      const res = await FlowCryptComApi.messageToken(fcAuth);
+      const res = await FlowCryptComApi.messageToken(await this.getIdToken());
       return { replyToken: res.token };
     }
   };

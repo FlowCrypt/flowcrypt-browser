@@ -917,25 +917,6 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       await settingsPage.close();
     }));
 
-    ava.default('settings - reauth after uuid change', testWithBrowser('ci.tests.gmail', async (t, browser) => {
-      const acct = 'ci.tests.gmail@flowcrypt.test';
-      const settingsPage = await browser.newPage(t, TestUrls.extensionSettings(acct));
-      await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
-      const experimentalFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-module-experimental', ['experimental.htm']);
-      await experimentalFrame.waitAndClick('@action-regenerate-uuid');
-      await Util.sleep(2);
-      const oauthPopup = await browser.newPageTriggeredBy(t, () => PageRecipe.waitForModalAndRespond(settingsPage, 'confirm',
-        { contentToCheck: 'Please log in with FlowCrypt to continue', clickOn: 'confirm' }));
-      await OauthPageRecipe.google(t, oauthPopup, acct, 'approve');
-      await Util.sleep(5);
-      await settingsPage.close();
-
-      const settingsPage1 = await browser.newPage(t, TestUrls.extensionSettings(acct));
-      await Util.sleep(10);
-      await settingsPage1.notPresent('.swal2-container');
-      await settingsPage1.close();
-    }));
-
     ava.default('settings - email change', testWithBrowser('ci.tests.gmail', async (t, browser) => {
       const acct1 = 'ci.tests.gmail@flowcrypt.test';
       const acct2 = 'user@default-remember-passphrase-client-configuration.flowcrypt.test';
