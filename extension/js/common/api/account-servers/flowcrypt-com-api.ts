@@ -33,15 +33,6 @@ export namespace BackendRes {
 
 export class FlowCryptComApi extends Api {
 
-  public static loginWithOpenid = async (idToken: string): Promise<void> => {
-    const response = await FlowCryptComApi.request<BackendRes.FcAccountLogin>('account/login', {
-      token: null, // tslint:disable-line:no-null-keyword
-    }, undefined, this.getAuthorizationHeader(idToken));
-    if (response.verified !== true) {
-      throw new Error('account_login with id_token did not result in successful verificaion');
-    }
-  };
-
   public static accountUpdate = async (idToken: string, profileUpdate: ProfileUpdate): Promise<BackendRes.FcAccountUpdate> => {
     return await FlowCryptComApi.request<BackendRes.FcAccountUpdate>('account/update', {
       ...profileUpdate
