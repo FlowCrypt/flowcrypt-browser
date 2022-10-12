@@ -40,7 +40,7 @@ export class FlowCryptComApi extends Api {
   };
 
   public static accountGetAndUpdateLocalStore = async (idToken: string): Promise<BackendRes.FcAccountGet> => {
-    const r = await FlowCryptComApi.request<BackendRes.FcAccountGet>('account/get', {}, undefined, this.getAuthorizationHeader(idToken));
+    const r = await FlowCryptComApi.request<BackendRes.FcAccountGet>('account/get', {}, undefined, FlowCryptComApi.getAuthorizationHeader(idToken));
     const { email } = GoogleAuth.parseIdToken(idToken);
     if (!email) {
       throw new Error('Id token is invalid');
@@ -51,7 +51,15 @@ export class FlowCryptComApi extends Api {
 
   public static messageUpload = async (idToken: string, encryptedDataBinary: Uint8Array, progressCb: ProgressCb): Promise<BackendRes.FcMsgUpload> => {
     const content = new Attachment({ name: 'cryptup_encrypted_message.asc', type: 'text/plain', data: encryptedDataBinary });
-    const rawResponse = await FlowCryptComApi.request<{ short: string }>('message/upload', { content }, 'FORM', undefined, { upload: progressCb, ...this.getAuthorizationHeader(idToken) });
+    const rawResponse = await FlowCryptComApi.request<{ short: string }>(
+      'message/upload',
+      { content },
+      'FORM',
+      undefined,
+      {
+        upload: progressCb, ...FlowCryptComApi.getAuthorizationHeader(idToken)
+      }
+    );
     if (!rawResponse.short) {
       throw new Error('Unexpectedly missing message upload short id');
     }
@@ -61,7 +69,7 @@ export class FlowCryptComApi extends Api {
   };
 
   public static messageToken = async (idToken: string): Promise<BackendRes.FcMsgToken> => {
-    return await FlowCryptComApi.request<BackendRes.FcMsgToken>('message/token', {}, undefined, this.getAuthorizationHeader(idToken));
+    return await FlowCryptComApi.request<BackendRes.FcMsgToken>('message/token', {}, undefined, FlowCryptComApi.getAuthorizationHeader(idToken));
   };
 
   private static request = async <RT>(path: string, vals: Dict<any>, fmt: ReqFmt = 'JSON', addHeaders: Dict<string> = {}, progressCbs?: ProgressCbs): Promise<RT> => {
