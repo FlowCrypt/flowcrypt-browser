@@ -27,15 +27,6 @@ export class AccountServer extends Api {
     super();
   }
 
-  private getIdToken = async (): Promise<string> => {
-    const idToken = await InMemoryStore.get(this.acctEmail, InMemoryStoreKeys.ID_TOKEN);
-    if (!idToken) {
-      // user will not actually see this message, they'll see a generic login prompt
-      throw new BackendAuthErr('Missing id token, please re-authenticate');
-    }
-    return idToken;
-  };
-
   public loginWithOpenid = async (): Promise<void> => {
     if (await this.isFesUsed()) {
       // FES doesn't issue any access tokens
@@ -106,5 +97,14 @@ export class AccountServer extends Api {
 
   public isFesUsed = async (): Promise<boolean> => {
     return await isFesUsed(this.acctEmail);
+  };
+
+  private getIdToken = async (): Promise<string> => {
+    const idToken = await InMemoryStore.get(this.acctEmail, InMemoryStoreKeys.ID_TOKEN);
+    if (!idToken) {
+      // user will not actually see this message, they'll see a generic login prompt
+      throw new BackendAuthErr('Missing id token, please re-authenticate');
+    }
+    return idToken;
   };
 }

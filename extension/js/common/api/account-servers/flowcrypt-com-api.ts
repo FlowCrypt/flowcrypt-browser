@@ -11,6 +11,7 @@ import { Attachment } from '../../core/attachment.js';
 import { ClientConfigurationJson } from '../../client-configuration.js';
 import { AcctStore } from '../../platform/store/acct-store.js';
 import { FlowCryptWebsite } from '../flowcrypt-website.js';
+import { GoogleAuth } from '../email-provider/gmail/google-auth.js';
 
 export type ProfileUpdate = { alias?: string, name?: string, photo?: string, intro?: string, web?: string, phone?: string, default_message_expire?: number };
 
@@ -32,10 +33,6 @@ export namespace BackendRes {
 
 export class FlowCryptComApi extends Api {
 
-  private static getAuthorizationHeader = (idToken: string) => {
-    return { Authorization: `Bearer ${idToken}` };
-  };
-
   public static loginWithOpenid = async (idToken: string): Promise<void> => {
     const response = await FlowCryptComApi.request<BackendRes.FcAccountLogin>('account/login', {
       token: null, // tslint:disable-line:no-null-keyword
@@ -53,7 +50,11 @@ export class FlowCryptComApi extends Api {
 
   public static accountGetAndUpdateLocalStore = async (idToken: string): Promise<BackendRes.FcAccountGet> => {
     const r = await FlowCryptComApi.request<BackendRes.FcAccountGet>('account/get', {}, undefined, this.getAuthorizationHeader(idToken));
-    await AcctStore.set(fcAuth.account, { rules: r.domain_org_rules });
+    const { email } = GoogleAuth.parseIdToken(idToken);
+    if (!email) {
+      throw new Error('Id token is invalid');
+    }
+    await AcctStore.set(email, { rules: r.domain_org_rules });
     return r;
   };
 
@@ -74,6 +75,10 @@ export class FlowCryptComApi extends Api {
 
   private static request = async <RT>(path: string, vals: Dict<any>, fmt: ReqFmt = 'JSON', addHeaders: Dict<string> = {}, progressCbs?: ProgressCbs): Promise<RT> => {
     return await FlowCryptComApi.apiCall(FlowCryptWebsite.url('api'), path, vals, fmt, progressCbs, { 'api-version': '3', ...addHeaders });
+  };
+
+  private static getAuthorizationHeader = (idToken: string) => {
+    return { Authorization: `Bearer ${idToken}` };
   };
 
 }

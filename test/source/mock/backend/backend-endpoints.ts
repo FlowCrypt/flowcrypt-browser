@@ -3,7 +3,6 @@
 import { HttpAuthErr, HttpClientErr } from '../lib/api';
 
 import { BackendData } from './backend-data';
-import { Dict } from '../../core/common';
 import { HandlersDefinition } from '../all-apis-mock';
 import { IncomingMessage } from 'http';
 import { isPost } from '../lib/mock-util';
@@ -14,14 +13,6 @@ import { Buf } from '../../core/buf';
 export const mockBackendData = new BackendData();
 
 export const mockBackendEndpoints: HandlersDefinition = {
-  '/api/account/login': async ({ }, req) => {
-    throwIfNotPost(req);
-    throwIfIdTokenIsInvalid(req);
-    return JSON.stringify({
-      registered: true,
-      verified: true
-    });
-  },
   '/api/account/get': async ({ }, req) => {
     throwIfNotPost(req);
     const { email } = throwIfIdTokenIsInvalid(req);

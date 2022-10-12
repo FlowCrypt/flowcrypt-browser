@@ -140,17 +140,14 @@ export class GoogleAuth {
           await AcctStore.set(authRes.acctEmail, { fesUrl: potentialFes.url });
           const acctServer = new AccountServer(authRes.acctEmail);
           // fetch and store ClientConfiguration (not authenticated)
-          await acctServer.accountGetAndUpdateLocalStore(authRes.id_token);
-          await acctServer.loginWithOpenid(authRes.id_token);
+          await acctServer.accountGetAndUpdateLocalStore();
         } else {
           // eventually this branch will be dropped once a public FES instance is run for these customers
           // when using flowcrypt.com/api, pulling ClientConfiguration is authenticated, therefore have
           //   to retrieve access token first (which is the only way to authenticate other calls)
           const acctServer = new AccountServer(authRes.acctEmail);
-          // get access token from flowcrypt.com/api
-          await acctServer.loginWithOpenid(authRes.id_token);
           // fetch and store ClientConfiguration (authenticated)
-          await acctServer.accountGetAndUpdateLocalStore(authRes.id_token); // stores ClientConfiguration
+          await acctServer.accountGetAndUpdateLocalStore(); // stores ClientConfiguration
         }
       } catch (e) {
         if (GoogleAuth.isFesUnreachableErr(e, authRes.acctEmail)) {
@@ -177,6 +174,19 @@ export class GoogleAuth {
 
   public static newOpenidAuthPopup = async ({ acctEmail }: { acctEmail?: string }): Promise<AuthRes> => {
     return await GoogleAuth.newAuthPopup({ acctEmail, scopes: GoogleAuth.defaultScopes('openid'), save: false });
+  };
+
+  // todo - would be better to use a TS type guard instead of the type cast when checking OpenId
+  // check for things we actually use: photo/name/locale
+  public static parseIdToken = (idToken: string): GmailRes.OpenId => {
+    const claims = JSON.parse(Buf.fromBase64UrlStr(idToken.split(/\./g)[1]).toUtfStr()) as GmailRes.OpenId;
+    if (claims.email) {
+      claims.email = claims.email.toLowerCase();
+      if (!claims.email_verified) {
+        throw new Error(`id_token email_verified is false for email ${claims.email}`);
+      }
+    }
+    return claims;
   };
 
   private static getAuthRes = async ({ acctEmail, save, requestedScopes, expectedState, authWindowResult }:
@@ -295,19 +305,6 @@ export class GoogleAuth {
       crossDomain: true,
       async: true,
     }, Catch.stackTrace()) as unknown as GoogleAuthTokensResponse;
-  };
-
-  // todo - would be better to use a TS type guard instead of the type cast when checking OpenId
-  // check for things we actually use: photo/name/locale
-  private static parseIdToken = (idToken: string): GmailRes.OpenId => {
-    const claims = JSON.parse(Buf.fromBase64UrlStr(idToken.split(/\./g)[1]).toUtfStr()) as GmailRes.OpenId;
-    if (claims.email) {
-      claims.email = claims.email.toLowerCase();
-      if (!claims.email_verified) {
-        throw new Error(`id_token email_verified is false for email ${claims.email}`);
-      }
-    }
-    return claims;
   };
 
   private static retrieveAndSaveAuthToken = async (authCode: string, scopes: string[]): Promise<{ id_token: string }> => {

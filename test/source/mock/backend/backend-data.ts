@@ -1,7 +1,7 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
 import { Dict } from '../../core/common';
-import { HttpAuthErr, HttpClientErr } from '../lib/api';
+import { HttpClientErr } from '../lib/api';
 
 // tslint:disable:no-null-keyword
 // tslint:disable:oneliner-object-literal
