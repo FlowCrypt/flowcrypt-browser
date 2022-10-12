@@ -303,7 +303,7 @@ View.run(class SettingsView extends View {
 
   private checkFcAcctAndContactPage = async () => {
     const statusContainer = $('.public_profile_indicator_container');
-    if (this.acctEmail) { // have auth email set
+    if (this.acctEmail) { // have auth email set lgtm [js/user-controlled-bypass]
       try {
         const acctRes = await this.acctServer!.accountGetAndUpdateLocalStore();
         $('#status-row #status_flowcrypt').text(`fc:ok`);
