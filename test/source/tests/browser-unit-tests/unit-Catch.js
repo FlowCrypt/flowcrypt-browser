@@ -48,3 +48,16 @@ BROWSER_UNIT_TEST_NAME(`Catcher does report on consumer`).consumer;
   }
   return "pass";
 })();
+
+BROWSER_UNIT_TEST_NAME(`Catcher does report sensitive infos`).consumer;
+(async () => {
+  const url = 'chrome://extension-id/pgp_block.htm?frameId=id&message=blahblah&senderEmail=blahblah&acctEmail=blahblah';
+  const censoredUrl = Catch.censoredUrl(url);
+  const urlParams = Url.parse(['message', 'senderEmail', 'acctEmail'], censoredUrl);
+  for (const [key, value] of Object.entries(urlParams)) {
+    if (value !== '[SCRUBBED]') {
+      throw new Error(`${key} param didn't get scrubbed`);
+    }
+  }
+  return "pass";
+})();

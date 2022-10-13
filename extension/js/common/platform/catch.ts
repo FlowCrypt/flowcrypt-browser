@@ -2,6 +2,7 @@
 
 'use strict';
 
+import { Url } from '../core/common.js';
 import { FLAVOR, VERSION } from '../core/const.js';
 
 export class UnreportableError extends Error { }
@@ -198,6 +199,9 @@ export class Catch {
     if (!url) {
       return '(unknown url)';
     }
+    url = Url.replaceUrlParam(url, 'message', '[SCRUBBED]');
+    url = Url.replaceUrlParam(url, 'senderEmail', '[SCRUBBED]');
+    url = Url.replaceUrlParam(url, 'acctEmail', '[SCRUBBED]');
     if (url.indexOf('refreshToken=') !== -1) {
       return `${url.split('?')[0]}~censored:refreshToken`;
     }
