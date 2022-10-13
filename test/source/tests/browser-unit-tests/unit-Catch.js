@@ -49,7 +49,7 @@ BROWSER_UNIT_TEST_NAME(`Catcher does report on consumer`).consumer;
   return "pass";
 })();
 
-BROWSER_UNIT_TEST_NAME(`Catcher does report sensitive infos`).consumer;
+BROWSER_UNIT_TEST_NAME(`Catcher does report sensitive infos`);
 (async () => {
   const url = 'chrome://extension-id/pgp_block.htm?frameId=id&message=blahblah&senderEmail=blahblah&acctEmail=blahblah';
   const censoredUrl = Catch.censoredUrl(url);
