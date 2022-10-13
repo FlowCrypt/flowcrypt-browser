@@ -10,7 +10,6 @@ import { TestWithBrowser } from './../test';
 import { TestVariant, Util } from './../util';
 import { ComposePageRecipe } from './page-recipe/compose-page-recipe';
 import { GmailPageRecipe } from './page-recipe/gmail-page-recipe';
-import { OauthPageRecipe } from './page-recipe/oauth-page-recipe';
 import { SetupPageRecipe } from './page-recipe/setup-page-recipe';
 import { AvaContext } from './tooling';
 import { BrowserRecipe } from './tooling/browser-recipe';
@@ -90,67 +89,11 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       await gmailPage.goto(url);
     };
 
-    ava.default('mail.google.com - setup prompt notif + hides when close clicked + reappears + setup link opens settings', testWithBrowser(undefined, async (t, browser) => {
-      const settingsPage = await BrowserRecipe.openSettingsLoginButCloseOauthWindowBeforeGrantingPermission(t, browser, 'ci.tests.gmail@flowcrypt.dev');
-      await settingsPage.close();
-      let gmailPage = await BrowserRecipe.openGmailPage(t, browser, undefined, false);
-      await gmailPage.waitAll(['@webmail-notification', '@notification-setup-action-open-settings', '@notification-setup-action-dismiss', '@notification-setup-action-close']);
-      await gmailPage.waitAndClick('@notification-setup-action-close', { confirmGone: true });
-      await gmailPage.close();
-      gmailPage = await BrowserRecipe.openGmailPage(t, browser, undefined, false);
-      await gmailPage.waitAll(['@webmail-notification', '@notification-setup-action-open-settings', '@notification-setup-action-dismiss', '@notification-setup-action-close']);
-      const newSettingsPage = await browser.newPageTriggeredBy(t, () => gmailPage.waitAndClick('@notification-setup-action-open-settings'));
-      await newSettingsPage.waitAll('@action-connect-to-gmail');
-    }));
-
     ava.default('mail.google.com/chat', testWithBrowser(undefined, async (t, browser) => {
       const settingsPage = await BrowserRecipe.openSettingsLoginButCloseOauthWindowBeforeGrantingPermission(t, browser, 'ci.tests.gmail@flowcrypt.dev');
       await settingsPage.close();
       const googleChatPage = await BrowserRecipe.openGoogleChatPage(t, browser);
       await googleChatPage.notPresent(BrowserRecipe.oldAndNewComposeButtonSelectors); // compose button should not be injected
-    }));
-
-    ava.default('mail.google.com - success notif after setup, click hides it, does not re-appear + offers to reauth', testWithBrowser('ci.tests.gmail', async (t, browser) => {
-      const acct = 'ci.tests.gmail@flowcrypt.dev';
-      let gmailPage = await BrowserRecipe.openGmailPage(t, browser);
-      await gmailPage.waitAll(['@webmail-notification', '@notification-successfully-setup-action-close']);
-      await gmailPage.waitAndClick('@notification-successfully-setup-action-close', { confirmGone: true });
-      await gmailPage.close();
-      gmailPage = await BrowserRecipe.openGmailPage(t, browser);
-      await gmailPage.notPresent(['@webmail-notification', '@notification-setup-action-close', '@notification-successfully-setup-action-close']);
-      await gmailPage.close();
-      // below test that can re-auth after lost access (simulating situation when user changed password on google)
-      await Util.wipeGoogleTokensUsingExperimentalSettingsPage(t, browser, acct);
-      const settingsPage = await browser.newPage(t, TestUrls.extensionSettings(acct));
-      await settingsPage.waitAndRespondToModal('confirm', 'cancel', 'FlowCrypt must be re-connected to your Google account.');
-      // *** these tests below are very flaky in CI environment, Google will want to re-authenticate the user for whatever reason
-      // // opening secure compose should trigger an api call which causes a reconnect notification
-      gmailPage = await BrowserRecipe.openGmailPage(t, browser);
-      await gmailPage.waitAndClick('@action-secure-compose');
-      await gmailPage.waitAll(['@webmail-notification', '@action-reconnect-account']);
-      await Util.sleep(1);
-      expect(await gmailPage.read('@webmail-notification')).to.contain('Please reconnect FlowCrypt to your Gmail Account.');
-      const oauthPopup = await browser.newPageTriggeredBy(t, () => gmailPage.waitAndClick('@action-reconnect-account'));
-      await OauthPageRecipe.google(t, oauthPopup, acct, 'approve');
-      await gmailPage.waitAll(['@webmail-notification']);
-      await Util.sleep(10);
-      expect(await gmailPage.read('@webmail-notification')).to.contain('Connected successfully. You may need to reload the tab.');
-      await gmailPage.close();
-      // reload and test that it has no more notifications
-      gmailPage = await BrowserRecipe.openGmailPage(t, browser);
-      await gmailPage.waitAndClick('@action-secure-compose');
-      await Util.sleep(10);
-      await gmailPage.notPresent(['@webmail-notification']);
-    }));
-
-    ava.default('mail.google.com - setup prompt notification shows up + dismiss hides it + does not reappear if dismissed', testWithBrowser(undefined, async (t, browser) => {
-      await BrowserRecipe.openSettingsLoginButCloseOauthWindowBeforeGrantingPermission(t, browser, 'ci.tests.gmail@flowcrypt.dev');
-      let gmailPage = await BrowserRecipe.openGmailPage(t, browser, undefined, false);
-      await gmailPage.waitAll(['@webmail-notification', '@notification-setup-action-open-settings', '@notification-setup-action-dismiss', '@notification-setup-action-close']);
-      await gmailPage.waitAndClick('@notification-setup-action-dismiss', { confirmGone: true });
-      await gmailPage.close();
-      gmailPage = await BrowserRecipe.openGmailPage(t, browser, undefined, false);
-      await gmailPage.notPresent(['@webmail-notification', '@notification-setup-action-open-settings', '@notification-setup-action-dismiss', '@notification-setup-action-close']);
     }));
 
     ava.default('mail.google.com - send rich-text encrypted message', testWithBrowser('ci.tests.gmail', async (t, browser) => {

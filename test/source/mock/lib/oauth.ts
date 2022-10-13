@@ -60,12 +60,12 @@ export class OauthMock {
     }
   };
 
-  public checkAuthorizationHeaderWithAccessToken = (authorization: string | undefined) => {
+  public checkAuthorizationHeaderWithAccessToken = (authorization: string | undefined, fallbackAcct?: string) => {
     if (!authorization) {
       throw new HttpClientErr('Missing mock bearer authorization header', Status.UNAUTHORIZED);
     }
     const accessToken = authorization.replace(/^Bearer /, '');
-    const acct = this.acctByAccessToken[accessToken];
+    const acct = this.acctByAccessToken[accessToken] ?? fallbackAcct;
     if (!acct) {
       throw new HttpClientErr('Invalid mock auth token', Status.UNAUTHORIZED);
     }
