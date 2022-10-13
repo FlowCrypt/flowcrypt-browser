@@ -36,7 +36,7 @@ export class FlowCryptComApi extends Api {
   public static accountUpdate = async (idToken: string, profileUpdate: ProfileUpdate): Promise<BackendRes.FcAccountUpdate> => {
     return await FlowCryptComApi.request<BackendRes.FcAccountUpdate>('account/update', {
       ...profileUpdate
-    }, undefined,);
+    }, undefined, this.getAuthorizationHeader(idToken));
   };
 
   public static accountGetAndUpdateLocalStore = async (idToken: string): Promise<BackendRes.FcAccountGet> => {
