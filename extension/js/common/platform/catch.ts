@@ -199,9 +199,10 @@ export class Catch {
     if (!url) {
       return '(unknown url)';
     }
-    url = Url.replaceUrlParam(url, 'message', '[SCRUBBED]');
-    url = Url.replaceUrlParam(url, 'senderEmail', '[SCRUBBED]');
-    url = Url.replaceUrlParam(url, 'acctEmail', '[SCRUBBED]');
+    const sensitiveFields = ['message', 'senderEmail', 'acctEmail'];
+    for (const field of sensitiveFields) {
+      url = Url.replaceUrlParam(url, field, '[SCRUBBED]');
+    }
     if (url.indexOf('refreshToken=') !== -1) {
       return `${url.split('?')[0]}~censored:refreshToken`;
     }
