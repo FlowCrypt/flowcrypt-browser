@@ -51,13 +51,11 @@ BROWSER_UNIT_TEST_NAME(`Catcher does report on consumer`).consumer;
 
 BROWSER_UNIT_TEST_NAME(`Catcher does report sensitive infos`);
 (async () => {
-  const url = 'chrome://extension-id/pgp_block.htm?frameId=id&message=blahblah&senderEmail=blahblah&acctEmail=blahblah';
+  const url = 'chrome://extension-id/pgp_block.htm?frameId=id&message=blahblah&some=1&senderEmail=blahblah&acctEmail=123&prefixedacctEmail=blah';
   const censoredUrl = Catch.censoredUrl(url);
-  const urlParams = Url.parse(['message', 'senderEmail', 'acctEmail'], censoredUrl);
-  for (const [key, value] of Object.entries(urlParams)) {
-    if (value !== '[SCRUBBED]') {
-      throw new Error(`${key} param didn't get scrubbed`);
-    }
+  const expectedCensoredUrl = 'chrome://extension-id/pgp_block.htm?frameId=id&message=[SCRUBBED]&some=1&senderEmail=[SCRUBBED]&acctEmail=[SCRUBBED]&prefixedacctEmail=blah';
+  if (censoredUrl !== expectedCensoredUrl) {
+    throw new Error(`Error while scrubbing url parameters. expecting ${expectedCensoredUrl} but got ${censoredUrl}`);
   }
   return "pass";
 })();

@@ -316,7 +316,7 @@ export class Url {
   };
 
   public static replaceUrlParam = (url: string, key: string, value: string) => {
-    const regex = new RegExp(`(${key}=).*?(&|$)`);
+    const regex = new RegExp(`([?:\?|&]${key}=).*?(&|$)`, 'i');
     return url.replace(regex, '$1' + value + '$2');
   };
 
