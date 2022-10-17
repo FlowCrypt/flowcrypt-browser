@@ -107,10 +107,14 @@ export class OauthMock {
     }
   };
 
-  public isIdTokenValid = (idToken: string) => { // we verify mock idToken by checking if we ever issued it
+  public extractEmailFromIdToken = (idToken: string): string => {
     const [, data,] = idToken.split('.');
     const claims = JSON.parse(Buf.fromBase64UrlStr(data).toUtfStr());
-    return (this.issuedIdTokensByAcct[claims.email] || []).includes(idToken);
+    return claims.email;
+  };
+
+  public isIdTokenValid = (idToken: string, email: string): boolean => { // we verify mock idToken by checking if we ever issued it
+    return (this.issuedIdTokensByAcct[email] || []).includes(idToken);
   };
 
   // -- private
