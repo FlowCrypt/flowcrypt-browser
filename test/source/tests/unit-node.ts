@@ -1758,9 +1758,10 @@ PBcqDCjq5jgMhU1oyVclRK7jJdmu0Azvwo2lleLAFLdCzHEXWXUz
     ava.default('[unit][KeyUtil.decrypt] correctly handles signing/encryption detection for PKSK with private keys', async t => {
       const dsakey = await KeyUtil.parse(dsaPrimaryKeyAndSubkeyBothHavePrivateKey);
       expect(await KeyUtil.decrypt(dsakey, '1234')).to.be.true;
-      expect(dsakey.usableForSigning).to.be.true;
+      // DSA keys are no longer allowed
+      expect(dsakey.usableForSigning).to.be.false;
       expect(dsakey.missingPrivateKeyForSigning).to.be.false;
-      expect(dsakey.usableForEncryption).to.be.true;
+      expect(dsakey.usableForEncryption).to.be.false;
       expect(dsakey.missingPrivateKeyForDecryption).to.be.false;
       const rsakey = await KeyUtil.parse(rsaPrimaryKeyAndSubkeyBothHavePrivateKey);
       expect(await KeyUtil.decrypt(rsakey, '1234')).to.be.true;
@@ -1792,9 +1793,10 @@ PBcqDCjq5jgMhU1oyVclRK7jJdmu0Azvwo2lleLAFLdCzHEXWXUz
     ava.default('[unit][KeyUtil.decrypt] determines PK missing private key for signing', async t => {
       const dsakey = await KeyUtil.parse(dsaPrimaryKeyIsMissingPrivateKey);
       expect(await KeyUtil.decrypt(dsakey, '1234')).to.be.true;
-      expect(dsakey.usableForSigning).to.be.true;
-      expect(dsakey.missingPrivateKeyForSigning).to.be.true;
-      expect(dsakey.usableForEncryption).to.be.true;
+      // DSA keys are no longer allowed
+      expect(dsakey.usableForSigning).to.be.false;
+      expect(dsakey.missingPrivateKeyForSigning).to.be.false;
+      expect(dsakey.usableForEncryption).to.be.false;
       expect(dsakey.missingPrivateKeyForDecryption).to.be.false;
       const rsakey = await KeyUtil.parse(rsaPrimaryKeyIsMissingPrivateKey);
       expect(await KeyUtil.decrypt(rsakey, '1234')).to.be.true;
@@ -1807,12 +1809,13 @@ PBcqDCjq5jgMhU1oyVclRK7jJdmu0Azvwo2lleLAFLdCzHEXWXUz
 
     ava.default('[unit][KeyUtil.parse] determines missing private key for encryption in expired key', async t => {
       const dsakey = await KeyUtil.parse(dsaExpiredPubkeysOnly);
-      expect(dsakey.usableForEncryptionButExpired).to.be.true;
-      expect(dsakey.usableForSigningButExpired).to.be.true;
+      // DSA keys are no longer allowed
+      expect(dsakey.usableForEncryptionButExpired).to.be.false;
+      expect(dsakey.usableForSigningButExpired).to.be.false;
       expect(dsakey.usableForSigning).to.be.false;
       expect(dsakey.usableForEncryption).to.be.false;
-      expect(dsakey.missingPrivateKeyForSigning).to.be.true;
-      expect(dsakey.missingPrivateKeyForDecryption).to.be.true;
+      expect(dsakey.missingPrivateKeyForSigning).to.be.false;
+      expect(dsakey.missingPrivateKeyForDecryption).to.be.false;
       const rsakey = await KeyUtil.parse(rsaExpiredPubkeysOnly);
       expect(rsakey.usableForEncryptionButExpired).to.be.true;
       expect(rsakey.usableForSigningButExpired).to.be.true;
@@ -1826,11 +1829,12 @@ PBcqDCjq5jgMhU1oyVclRK7jJdmu0Azvwo2lleLAFLdCzHEXWXUz
     ava.default('[unit][KeyUtil.decrypt] handles PK missing private key for signing in expired key', async t => {
       const dsakey = await KeyUtil.parse(dsaExpiredPrimaryKeyIsMissingPrivateKey);
       expect(await KeyUtil.decrypt(dsakey, '1234')).to.be.true;
-      expect(dsakey.usableForEncryptionButExpired).to.be.true;
-      expect(dsakey.usableForSigningButExpired).to.be.true;
+      // DSA keys are no longer allowed
+      expect(dsakey.usableForEncryptionButExpired).to.be.false;
+      expect(dsakey.usableForSigningButExpired).to.be.false;
       expect(dsakey.usableForSigning).to.be.false;
       expect(dsakey.usableForEncryption).to.be.false;
-      expect(dsakey.missingPrivateKeyForSigning).to.be.true;
+      expect(dsakey.missingPrivateKeyForSigning).to.be.false;
       expect(dsakey.missingPrivateKeyForDecryption).to.be.false;
       const rsakey = await KeyUtil.parse(rsaExpiredPrimaryKeyIsMissingPrivateKey);
       expect(await KeyUtil.decrypt(rsakey, '1234')).to.be.true;
