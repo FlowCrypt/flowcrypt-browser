@@ -8,13 +8,12 @@
 import { Api, ProgressCb, ProgressCbs, ReqFmt } from '../shared/api.js';
 import { Dict } from '../../core/common.js';
 import { Attachment } from '../../core/attachment.js';
-import { BackendAuthErr } from '../shared/api-error.js';
 import { ClientConfigurationJson } from '../../client-configuration.js';
 import { AcctStore } from '../../platform/store/acct-store.js';
 import { FlowCryptWebsite } from '../flowcrypt-website.js';
+import { GoogleAuth } from '../email-provider/gmail/google-auth.js';
 
 export type ProfileUpdate = { alias?: string, name?: string, photo?: string, intro?: string, web?: string, phone?: string, default_message_expire?: number };
-export type FcUuidAuth = { account: string, uuid: string | undefined };
 
 export namespace BackendRes {
   export type FcAccountLogin = { registered: boolean, verified: boolean };
@@ -34,36 +33,34 @@ export namespace BackendRes {
 
 export class FlowCryptComApi extends Api {
 
-  public static loginWithOpenid = async (acctEmail: string, uuid: string, idToken: string): Promise<void> => {
-    const response = await FlowCryptComApi.request<BackendRes.FcAccountLogin>('account/login', {
-      account: acctEmail,
-      uuid,
-      token: null, // tslint:disable-line:no-null-keyword
-    }, undefined, { Authorization: `Bearer ${idToken}` });
-    if (response.verified !== true) {
-      throw new Error('account_login with id_token did not result in successful verificaion');
-    }
-    await AcctStore.set(acctEmail, { uuid });
-  };
-
-  public static accountUpdate = async (fcAuth: FcUuidAuth, profileUpdate: ProfileUpdate): Promise<BackendRes.FcAccountUpdate> => {
-    FlowCryptComApi.throwIfMissingUuid(fcAuth);
+  public static accountUpdate = async (idToken: string, profileUpdate: ProfileUpdate): Promise<BackendRes.FcAccountUpdate> => {
     return await FlowCryptComApi.request<BackendRes.FcAccountUpdate>('account/update', {
-      ...fcAuth,
       ...profileUpdate
-    });
+    }, undefined, this.getAuthorizationHeader(idToken));
   };
 
-  public static accountGetAndUpdateLocalStore = async (fcAuth: FcUuidAuth): Promise<BackendRes.FcAccountGet> => {
-    FlowCryptComApi.throwIfMissingUuid(fcAuth);
-    const r = await FlowCryptComApi.request<BackendRes.FcAccountGet>('account/get', fcAuth);
-    await AcctStore.set(fcAuth.account, { rules: r.domain_org_rules });
+  public static accountGetAndUpdateLocalStore = async (idToken: string): Promise<BackendRes.FcAccountGet> => {
+    const r = await FlowCryptComApi.request<BackendRes.FcAccountGet>('account/get', {}, undefined, FlowCryptComApi.getAuthorizationHeader(idToken));
+    const { email } = GoogleAuth.parseIdToken(idToken);
+    if (!email) {
+      throw new Error('Id token is invalid');
+    }
+    await AcctStore.set(email, { rules: r.domain_org_rules });
     return r;
   };
 
-  public static messageUpload = async (fcAuth: FcUuidAuth | undefined, encryptedDataBinary: Uint8Array, progressCb: ProgressCb): Promise<BackendRes.FcMsgUpload> => {
+  public static messageUpload = async (idToken: string, encryptedDataBinary: Uint8Array, progressCb: ProgressCb): Promise<BackendRes.FcMsgUpload> => {
     const content = new Attachment({ name: 'cryptup_encrypted_message.asc', type: 'text/plain', data: encryptedDataBinary });
-    const rawResponse = await FlowCryptComApi.request<{ short: string }>('message/upload', { content, ...(fcAuth || {}) }, 'FORM', undefined, { upload: progressCb });
+    const rawResponse = await FlowCryptComApi.request<{ short: string }>(
+      'message/upload',
+      { content },
+      'FORM',
+      undefined,
+      {
+        ...FlowCryptComApi.getAuthorizationHeader(idToken),
+        upload: progressCb
+      }
+    );
     if (!rawResponse.short) {
       throw new Error('Unexpectedly missing message upload short id');
     }
@@ -72,19 +69,16 @@ export class FlowCryptComApi extends Api {
     return { url: `https://flowcrypt.com/${rawResponse.short}` };
   };
 
-  public static messageToken = async (fcAuth: FcUuidAuth): Promise<BackendRes.FcMsgToken> => {
-    FlowCryptComApi.throwIfMissingUuid(fcAuth);
-    return await FlowCryptComApi.request<BackendRes.FcMsgToken>('message/token', { ...fcAuth });
+  public static messageToken = async (idToken: string): Promise<BackendRes.FcMsgToken> => {
+    return await FlowCryptComApi.request<BackendRes.FcMsgToken>('message/token', {}, undefined, FlowCryptComApi.getAuthorizationHeader(idToken));
   };
 
   private static request = async <RT>(path: string, vals: Dict<any>, fmt: ReqFmt = 'JSON', addHeaders: Dict<string> = {}, progressCbs?: ProgressCbs): Promise<RT> => {
     return await FlowCryptComApi.apiCall(FlowCryptWebsite.url('api'), path, vals, fmt, progressCbs, { 'api-version': '3', ...addHeaders });
   };
 
-  private static throwIfMissingUuid = (fcAuth: FcUuidAuth) => {
-    if (!fcAuth.uuid) {
-      throw new BackendAuthErr('Please log into FlowCrypt account first');
-    }
+  private static getAuthorizationHeader = (idToken: string) => {
+    return { Authorization: `Bearer ${idToken}` };
   };
 
 }
