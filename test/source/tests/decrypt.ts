@@ -624,7 +624,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
       const threadId = '17918a9d7ca2fbac';
       const acctEmail = 'flowcrypt.compatibility@gmail.com';
       const inboxPage = await browser.newPage(t, TestUrls.extension(`chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`));
-      await inboxPage.waitAll('iframe', { timeout: 2 });
+      await inboxPage.waitAll('iframe');
       const urls = await inboxPage.getFramesUrls(['/chrome/elements/pgp_block.htm'], { sleep: 3 });
       expect(urls.length).to.equal(1);
       const url = urls[0].split('/chrome/elements/pgp_block.htm')[1];

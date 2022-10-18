@@ -315,6 +315,11 @@ export class Url {
     return `${urlParts[0]}?${params.toString()}`;
   };
 
+  public static replaceUrlParam = (url: string, key: string, value: string) => {
+    const regex = new RegExp(`([?|&]${key}=).*?(&|$)`, 'i');
+    return url.replace(regex, '$1' + value + '$2');
+  };
+
   private static snakeCaseToCamelCase = (s: string) => {
     return s.replace(/_[a-z]/g, boundary => boundary[1].toUpperCase());
   };
