@@ -2,6 +2,7 @@
 
 'use strict';
 
+import { Url } from '../core/common.js';
 import { FLAVOR, VERSION } from '../core/const.js';
 
 export class UnreportableError extends Error { }
@@ -197,6 +198,10 @@ export class Catch {
   public static censoredUrl = (url: string | undefined): string => {
     if (!url) {
       return '(unknown url)';
+    }
+    const sensitiveFields = ['message', 'senderEmail', 'acctEmail'];
+    for (const field of sensitiveFields) {
+      url = Url.replaceUrlParam(url, field, '[SCRUBBED]');
     }
     if (url.indexOf('refreshToken=') !== -1) {
       return `${url.split('?')[0]}~censored:refreshToken`;
