@@ -848,8 +848,8 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     this.view.errModule.debug(`renderPubkeyResult.email(${recipient.email || recipient.invalid})`);
     // this.view.errModule.debug(`renderPubkeyResult.contact(${JSON.stringify(info)})`);
     $(el).children('img, i').remove();
-    const contentHtml = `<img src="/img/svgs/close-icon.svg" alt="close" class="close-icon svg" data-test="action-remove-${emailId}-recipient"/>
-      <img src="/img/svgs/close-icon-black.svg" alt="close" class="close-icon svg display_when_sign" />`;
+    const contentHtml = `<img src="/img/svgs/close-icon.svg" alt="close" class="close-icon svg" data-test="action-remove-${emailId}-recipient"/>` +
+      `<img src="/img/svgs/close-icon-black.svg" alt="close" class="close-icon svg display_when_sign" />`;
     Xss.sanitizeAppend(el, contentHtml)
       .find('img.close-icon')
       .click(this.view.setHandler(target => this.removeRecipient(target.parentElement!), this.view.errModule.handle('remove recipient')));
