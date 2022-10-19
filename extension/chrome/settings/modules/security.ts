@@ -18,14 +18,12 @@ import { KeyStoreUtil, ParsedKeyInfo } from "../../../js/common/core/crypto/key-
 import { PassphraseStore } from '../../../js/common/platform/store/passphrase-store.js';
 import { ClientConfiguration } from '../../../js/common/client-configuration.js';
 import { AccountServer } from '../../../js/common/api/account-server.js';
-import { FcUuidAuth } from '../../../js/common/api/account-servers/flowcrypt-com-api.js';
 
 View.run(class SecurityView extends View {
 
   private readonly acctEmail: string;
   private readonly parentTabId: string;
   private prvs!: ParsedKeyInfo[];
-  private authInfo: FcUuidAuth | undefined;
   private clientConfiguration!: ClientConfiguration;
   private acctServer: AccountServer;
 
@@ -40,7 +38,6 @@ View.run(class SecurityView extends View {
   public render = async () => {
     await initPassphraseToggle(['passphrase_entry']);
     this.prvs = await KeyStoreUtil.parse(await KeyStore.getRequired(this.acctEmail));
-    this.authInfo = await AcctStore.authInfo(this.acctEmail);
     const storage = await AcctStore.get(this.acctEmail, ['hide_message_password', 'outgoing_language']);
     this.clientConfiguration = await ClientConfiguration.newInstance(this.acctEmail);
     $('#hide_message_password').prop('checked', storage.hide_message_password === true);
@@ -88,7 +85,7 @@ View.run(class SecurityView extends View {
   private loadAndRenderPwdEncryptedMsgSettings = async () => {
     Xss.sanitizeRender('.select_loader_container', Ui.spinner('green'));
     try {
-      const response = await this.acctServer.accountGetAndUpdateLocalStore(this.authInfo!);
+      const response = await this.acctServer.accountGetAndUpdateLocalStore();
       $('.select_loader_container').text('');
       $('.default_message_expire').val(Number(response.account.default_message_expire).toString()).prop('disabled', false).css('display', 'inline-block');
       $('.default_message_expire').change(this.setHandler(() => this.onDefaultExpireUserChange()));
@@ -107,7 +104,7 @@ View.run(class SecurityView extends View {
   private onDefaultExpireUserChange = async () => {
     Xss.sanitizeRender('.select_loader_container', Ui.spinner('green'));
     $('.default_message_expire').css('display', 'none');
-    await this.acctServer.accountUpdate(this.authInfo!, { default_message_expire: Number($('.default_message_expire').val()) });
+    await this.acctServer.accountUpdate({ default_message_expire: Number($('.default_message_expire').val()) });
     window.location.reload();
   };
 

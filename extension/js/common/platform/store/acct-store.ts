@@ -10,7 +10,6 @@ import { Ui } from '../../browser/ui.js';
 import { storageLocalGet, storageLocalSet, storageLocalRemove } from '../../browser/chrome.js';
 import { AbstractStore } from './abstract-store.js';
 import { RawStore } from './abstract-store.js';
-import { FcUuidAuth } from '../../api/account-servers/flowcrypt-com-api.js';
 
 export type EmailProvider = 'gmail';
 type GoogleAuthScopesNames = [keyof typeof GoogleAuth.OAUTH.scopes, keyof typeof GoogleAuth.OAUTH.legacy_scopes][number];
@@ -30,7 +29,7 @@ export type AccountIndex = 'keys' | 'notification_setup_needed_dismissed' | 'ema
   'google_token_refresh' | 'hide_message_password' | 'sendAs' |
   'pubkey_sent_to' | 'full_name' | 'cryptup_enabled' | 'setup_done' |
   'successfully_received_at_leat_one_message' | 'notification_setup_done_seen' | 'picture' |
-  'outgoing_language' | 'setup_date' | 'uuid' | 'use_rich_text' | 'rules' | 'fesUrl';
+  'outgoing_language' | 'setup_date' | 'use_rich_text' | 'rules' | 'fesUrl';
 
 export type SendAsAlias = {
   isPrimary: boolean;
@@ -58,7 +57,6 @@ export type AcctStoreDict = {
   outgoing_language?: 'EN' | 'DE';
   setup_date?: number;
   use_rich_text?: boolean;
-  uuid?: string;
   rules?: ClientConfigurationJson;
   fesUrl?: string; // url where FlowCrypt Enterprise Server is deployed
 };
@@ -120,11 +118,6 @@ export class AcctStore extends AbstractStore {
     if (indexedRemoveFields.length) {
       await storageLocalRemove(indexedRemoveFields);
     }
-  };
-
-  public static authInfo = async (acctEmail: string): Promise<FcUuidAuth> => {
-    const { uuid } = await AcctStore.get(acctEmail, ['uuid']);
-    return { account: acctEmail, uuid };
   };
 
   public static remove = async (acctEmail: string, keys: AccountIndex[]) => {
