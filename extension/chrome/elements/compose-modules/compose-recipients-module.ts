@@ -844,11 +844,12 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
   ) => {
     // console.log(`>>>> renderPubkeyResult: ${JSON.stringify(info)}`);
     const el = recipient.element;
+    const emailId = recipient.email?.replace(/[^a-z0-9]+/g, '') ?? '';
     this.view.errModule.debug(`renderPubkeyResult.email(${recipient.email || recipient.invalid})`);
     // this.view.errModule.debug(`renderPubkeyResult.contact(${JSON.stringify(info)})`);
     $(el).children('img, i').remove();
-    const contentHtml = '<img src="/img/svgs/close-icon.svg" alt="close" class="close-icon svg" />' +
-      '<img src="/img/svgs/close-icon-black.svg" alt="close" class="close-icon svg display_when_sign" />';
+    const contentHtml = `<img src="/img/svgs/close-icon.svg" alt="close" class="close-icon svg" data-test="action-remove-${emailId}-recipient"/>
+      <img src="/img/svgs/close-icon-black.svg" alt="close" class="close-icon svg display_when_sign" />`;
     Xss.sanitizeAppend(el, contentHtml)
       .find('img.close-icon')
       .click(this.view.setHandler(target => this.removeRecipient(target.parentElement!), this.view.errModule.handle('remove recipient')));
@@ -866,7 +867,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
         `
           <img
             src="/img/svgs/repeat-icon.svg"
-            data-test="action-retry-${recipient.email?.replace(/[^a-z0-9]+/g, '')}-pubkey-fetch"
+            data-test="action-retry-${emailId}-pubkey-fetch"
             class="repeat-icon action_retry_pubkey_fetch"
           >
           <img src="/img/svgs/close-icon-black.svg" class="close-icon-black svg remove-reciepient">
@@ -921,7 +922,9 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     const changedIndex = this.addedRecipients.findIndex(
       (addedRecipient) => (!recipient.email || addedRecipient.email === recipient.email) && addedRecipient.id === recipient.id
     );
-    this.addedRecipients.splice(changedIndex, 1, recipient);
+    if (changedIndex > -1) {
+      this.addedRecipients.splice(changedIndex, 1, recipient);
+    }
     this.view.pwdOrPubkeyContainerModule.showHideContainerAndColorSendBtn(); // tslint:disable-line:no-floating-promises
     this.view.myPubkeyModule.reevaluateShouldAttachOrNot();
   };
