@@ -13,7 +13,6 @@ import { Ui } from '../../../js/common/browser/ui.js';
 import { Url } from '../../../js/common/core/common.js';
 import { View } from '../../../js/common/view.js';
 import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
-import { Api } from '../../../js/common/api/shared/api.js';
 import { InMemoryStore } from '../../../js/common/platform/store/in-memory-store.js';
 import { InMemoryStoreKeys } from '../../../js/common/core/const.js';
 
@@ -47,8 +46,6 @@ View.run(class ExperimentalView extends View {
     $('.action_throw_err').click(this.setHandler((el, e) => { e.preventDefault(); Catch.test('error'); }));
     $('.action_throw_obj').click(this.setHandler((el, e) => { e.preventDefault(); Catch.test('object'); }));
     $('.action_reset_account').click(this.setHandler(async (el, e) => { e.preventDefault(); await this.acctResetHandler(); }));
-    $('.action_reset_fc_auth').click(this.setHandler(async (el, e) => { e.preventDefault(); await this.resetFlowCryptAuthHandler(); }));
-    $('.action_regenerate_uuid').click(this.setHandler(async (el, e) => { e.preventDefault(); await this.regenerateUuidHandler(); }));
     $('.action_make_google_auth_token_unusable').click(this.setHandler(async (el, e) => { e.preventDefault(); await this.makeGoogleAuthTokenUnusableHandler(); }));
     $('.action_make_google_refresh_token_unusable').click(this.setHandler(async (el, e) => { e.preventDefault(); await this.makeGoogleRefreshTokenUnusableHandler(); }));
     $('.action_account_email_changed').click(this.setHandler(async (el, e) => { e.preventDefault(); await this.acctEmailChangedHandler(); }));
@@ -94,16 +91,6 @@ View.run(class ExperimentalView extends View {
 
   private makeGoogleRefreshTokenUnusableHandler = async () => {
     await AcctStore.set(this.acctEmail, { google_token_refresh: 'flowcrypt_test_bad_refresh_token' });
-    BrowserMsg.send.reload(this.parentTabId, {});
-  };
-
-  private regenerateUuidHandler = async () => {
-    await AcctStore.set(this.acctEmail, { uuid: Api.randomFortyHexChars() });
-    BrowserMsg.send.reload(this.parentTabId, {});
-  };
-
-  private resetFlowCryptAuthHandler = async () => {
-    await AcctStore.set(this.acctEmail, { uuid: undefined });
     BrowserMsg.send.reload(this.parentTabId, {});
   };
 
