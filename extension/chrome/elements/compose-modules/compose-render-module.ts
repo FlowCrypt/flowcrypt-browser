@@ -30,7 +30,7 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
     if (this.view.isReplyBox) {
       this.responseMethod = 'reply';
     }
-    await this.view.replyPopoverModule.render();
+    await this.view.replyPopoverModule.render(this.view.isReplyBox);
     this.initComposeBoxStyles();
     if (!this.view.draftId && await this.view.draftModule.localDraftGet()) {
       this.view.draftId = this.view.draftModule.getLocalDraftId();
@@ -199,7 +199,7 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
     if (!this.view.replyParams) {
       return;
     }
-    await this.view.recipientsModule.clearRecipients();
+    this.view.recipientsModule.clearRecipients();
     if (option === 'a_forward') {
       await this.view.quoteModule.addTripleDotQuoteExpandFooterAndQuoteBtn(this.view.replyMsgId, 'forward');
     } else {

@@ -21,7 +21,10 @@ export class ComposeReplyBtnPopoverModule extends ViewModule<ComposeView> {
     this.view.S.cached('toggle_reply_options').click(this.view.setHandler((el, ev) => this.toggleVisible(ev)));
   };
 
-  public render = async () => {
+  public render = async (isReply = true) => {
+    if (!isReply) {
+      $('.reply-container').hide();
+    }
     for (const key of Object.keys(this.popoverItems)) {
       const option = key as ReplyOptions;
       const item = this.popoverItems[option];
@@ -39,8 +42,8 @@ export class ComposeReplyBtnPopoverModule extends ViewModule<ComposeView> {
     $('.reply-options-icon').attr('src', this.popoverItems[option].iconPath);
   };
 
-  private didOptionClick = (option: ReplyOptions) => {
-    this.view.renderModule.changeReplyOption(option);
+  private didOptionClick = async (option: ReplyOptions) => {
+    await this.view.renderModule.changeReplyOption(option);
     this.changeOptionImage(option);
   };
 
