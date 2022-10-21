@@ -816,11 +816,11 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       await expectRecipientElements(composePage, { to: [] });
     }));
 
-    ava.default.only('compose - change reply option while composing', testWithBrowser('compatibility', async (t, browser) => {
+    ava.default('compose - change reply option while composing', testWithBrowser('compatibility', async (t, browser) => {
       const appendUrl = 'threadId=183ec175f060b2c2&skipClickPrompt=___cu_false___&replyMsgId=183ec175f060b2c2';
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl, hasReplyPrompt: true });
       await composePage.waitAndClick('@action-accept-reply-all-prompt');
-      await composePage.waitForContent('@recipients-preview', 'sender@domain.comtest@gmail.comtest2@gmail.comtest3@gmail.comtest4@gmail.comtest5@gmail.comtest6@gmail.comtest7@gmail.com1 more');
+      await composePage.waitForContent('@recipients-preview', 'sender@domain.comtest@gmail.comtest2@gmail.comtest3@gmail.comtest4@gmail.comtest5@gmail.com');
       await composePage.waitAndClick('@action-show-reply-options-popover');
       await composePage.waitAndClick('@action-toggle-a_reply');
       await composePage.waitForContent('@recipients-preview', 'sender@domain.com');
