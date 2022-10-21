@@ -805,6 +805,17 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       await settingsPage.close();
     }));
 
+    ava.default('compose - check reply to multiple recipients issue', testWithBrowser('compatibility', async (t, browser) => {
+      const appendUrl = 'threadId=183ec175f060b2c2&skipClickPrompt=___cu_false___&replyMsgId=183ec175f060b2c2';
+      const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl, hasReplyPrompt: true, skipClickPropt: true });
+      await composePage.waitAndClick('@encrypted-reply');
+      await composePage.waitForContent('@recipients-preview', 'sender@domain.com');
+      await composePage.waitAndClick('@action-show-container-cc-bcc-buttons');
+      await expectRecipientElements(composePage, { to: [{ email: 'sender@domain.com' }] });
+      await composePage.waitAndClick('@action-remove-senderdomaincom-recipient');
+      await expectRecipientElements(composePage, { to: [] });
+    }));
+
     // todo: load a draft encrypted by non-first key, enetering passphrase for it
     ava.default('compose - loading drafts - reply', testWithBrowser('compatibility', async (t, browser) => {
       const appendUrl = 'threadId=16cfa9001baaac0a&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___&replyMsgId=16cfa9001baaac0a&draftId=draft-3';
