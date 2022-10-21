@@ -208,6 +208,9 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
       if (option === 'a_reply') {
         await this.view.recipientsModule.clearRecipientsForReply();
       }
+      Catch.setHandledTimeout(() => { // Chrome needs async focus: https://github.com/FlowCrypt/flowcrypt-browser/issues/2056
+        document.getElementById('input_text')!.focus(); // jQuery no longer worked as of 3.6.0
+      }, 10);
     }
   };
 
