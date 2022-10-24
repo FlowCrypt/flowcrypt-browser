@@ -635,7 +635,10 @@ export class GmailElementReplacer implements WebmailElementReplacer {
             const isReplyButtonView = replyBoxEl.className.includes('nr');
             const secureReplyBoxXssSafe = `<div class="remove_borders reply_message_iframe_container">${this.factory.embeddedReply(replyParams, this.shouldShowEditableSecureReply)}</div>`;
             this.shouldShowEditableSecureReply = !isReplyButtonView;
-            if (isReplyButtonView) {
+            if (hasDraft) {
+              replyBox.addClass('reply_message_evaluated remove_borders').parent().append(secureReplyBoxXssSafe);
+              replyBox.hide();
+            } else if (isReplyButtonView) {
               replyBox.replaceWith(secureReplyBoxXssSafe); // xss-safe-factory
             } else {
               const deleteReplyEl = document.querySelector('.oh.J-Z-I.J-J5-Ji.T-I-ax7');
