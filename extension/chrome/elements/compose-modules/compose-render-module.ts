@@ -20,6 +20,7 @@ import { KeyStore } from '../../../js/common/platform/store/key-store.js';
 import { KeyStoreUtil } from "../../../js/common/core/crypto/key-store-util.js";
 import { ContactStore } from '../../../js/common/platform/store/contact-store.js';
 import { KeyUtil } from '../../../js/common/core/crypto/key.js';
+import { ReplyOptions } from './compose-reply-btn-popover-module.js';
 
 export class ComposeRenderModule extends ViewModule<ComposeView> {
 
@@ -29,6 +30,7 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
     if (this.view.isReplyBox) {
       this.responseMethod = 'reply';
     }
+    await this.view.replyPopoverModule.render(this.view.isReplyBox);
     this.initComposeBoxStyles();
     if (!this.view.draftId && await this.view.draftModule.localDraftGet()) {
       this.view.draftId = this.view.draftModule.getLocalDraftId();
@@ -111,6 +113,8 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
       const recipientsNumber = this.view.replyParams.to.length + this.view.replyParams.cc.length + this.view.replyParams.bcc.length;
       if (recipientsNumber > 1) {
         $('#a_reply_all').css('display', 'inline-flex');
+      } else {
+        $('#popover_a_reply_all_option').addClass('hidden');
       }
     }
   };
@@ -191,6 +195,24 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
     }
   };
 
+  public changeReplyOption = async (option: ReplyOptions) => {
+    if (!this.view.replyParams) {
+      return;
+    }
+    this.view.recipientsModule.clearRecipients();
+    if (option === 'a_forward') {
+      await this.view.quoteModule.addTripleDotQuoteExpandFooterAndQuoteBtn(this.view.replyMsgId, 'forward');
+    } else {
+      this.view.recipientsModule.addRecipients(this.view.replyParams, false).catch(Catch.reportErr);
+      if (option === 'a_reply') {
+        await this.view.recipientsModule.clearRecipientsForReply();
+      }
+      Catch.setHandledTimeout(() => { // Chrome needs async focus: https://github.com/FlowCrypt/flowcrypt-browser/issues/2056
+        document.getElementById('input_text')!.focus(); // jQuery no longer worked as of 3.6.0
+      }, 10);
+    }
+  };
+
   private initComposeBoxStyles = () => {
     if (this.view.isReplyBox) {
       this.view.S.cached('body').addClass('reply_box');
@@ -208,7 +230,8 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
   };
 
   private actionActivateReplyBoxHandler = async (target: HTMLElement) => {
-    const method = $(target).attr('id');
+    const method = $(target).attr('id') as ReplyOptions;
+    this.view.replyPopoverModule.changeOptionImage(method);
     if (method === 'a_forward') {
       this.responseMethod = 'forward';
       this.view.recipientsModule.clearRecipients();

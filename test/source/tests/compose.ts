@@ -816,6 +816,31 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       await expectRecipientElements(composePage, { to: [] });
     }));
 
+    ava.default('compose - change reply option while composing', testWithBrowser('compatibility', async (t, browser) => {
+      const appendUrl = 'threadId=183ec175f060b2c2&skipClickPrompt=___cu_false___&replyMsgId=183ec175f060b2c2';
+      const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl, hasReplyPrompt: true });
+      await composePage.waitAndClick('@action-accept-reply-all-prompt');
+      await composePage.waitForContent('@recipients-preview', 'sender@domain.comtest@gmail.comtest2@gmail.comtest3@gmail.comtest4@gmail.comtest5@gmail.com');
+      await composePage.waitAndClick('@action-show-reply-options-popover');
+      await composePage.waitAndClick('@action-toggle-a_reply');
+      await composePage.waitForContent('@recipients-preview', 'sender@domain.com');
+      await composePage.waitAndClick('@action-show-reply-options-popover');
+      await composePage.waitAndClick('@action-toggle-a_forward');
+      await composePage.waitUntilFocused('@input-to');
+      await expectRecipientElements(composePage, { to: [], cc: [], bcc: [] });
+      await composePage.waitAndClick('@action-show-reply-options-popover');
+      await composePage.waitAndClick('@action-toggle-a_reply_all');
+      await composePage.waitForContent('@recipients-preview', 'sender@domain.comtest@gmail.comtest2@gmail.comtest3@gmail.comtest4@gmail.comtest5@gmail.com');
+    }));
+
+    ava.default('compose - hide reply all option button for signle recipient', testWithBrowser('compatibility', async (t, browser) => {
+      const appendUrl = 'threadId=182263bf9f105adf&skipClickPrompt=___cu_false___&replyMsgId=182263bf9f105adf';
+      const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl, hasReplyPrompt: true });
+      await composePage.waitAndClick('@encrypted-reply');
+      await composePage.waitAndClick('@action-show-reply-options-popover');
+      await composePage.notPresent('@action-toggle-a_reply_all');
+    }));
+
     // todo: load a draft encrypted by non-first key, enetering passphrase for it
     ava.default('compose - loading drafts - reply', testWithBrowser('compatibility', async (t, browser) => {
       const appendUrl = 'threadId=16cfa9001baaac0a&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___&replyMsgId=16cfa9001baaac0a&draftId=draft-3';
