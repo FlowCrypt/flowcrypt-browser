@@ -203,8 +203,7 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
     if (option === 'a_forward') {
       await this.view.quoteModule.addTripleDotQuoteExpandFooterAndQuoteBtn(this.view.replyMsgId, 'forward');
     } else {
-      const recipients: Recipients = { to: this.view.replyParams.to, cc: this.view.replyParams.cc, bcc: this.view.replyParams.bcc };
-      this.view.recipientsModule.addRecipients(recipients, false).catch(Catch.reportErr);
+      this.view.recipientsModule.addRecipients(this.view.replyParams, false).catch(Catch.reportErr);
       if (option === 'a_reply') {
         await this.view.recipientsModule.clearRecipientsForReply();
       }
