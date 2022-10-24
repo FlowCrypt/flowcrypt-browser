@@ -95,7 +95,7 @@ Catch.try(async () => {
         storage.sendAs[acctEmail] = { name: storage.full_name, isPrimary: true };
       }
       injector.btns();
-      replacer = new GmailElementReplacer(factory, clientConfiguration, acctEmail, storage.sendAs, injector, notifications, hostPageInfo.gmailVariant);
+      replacer = new GmailElementReplacer(factory, clientConfiguration, acctEmail, storage.sendAs, injector, notifications);
       await notifications.showInitial(acctEmail);
       const intervaliFunctions = replacer.getIntervalFunctions();
       for (const intervalFunction of intervaliFunctions) {
