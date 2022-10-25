@@ -277,7 +277,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       await gmailPage.waitForContent('.brb', 'Yes');
     }));
 
-    ava.default('mail.google.com - plain reply to encrypted and signed messages', testWithBrowser('ci.tests.gmail', async (t, browser) => {
+    ava.default.only('mail.google.com - plain reply to encrypted and signed messages', testWithBrowser('ci.tests.gmail', async (t, browser) => {
       const gmailPage = await openGmailPage(t, browser);
       await gotoGmailPage(gmailPage, '/FMfcgzGkbDRNgcQxLmkhBCKVSFwkfdvV'); // plain convo
       await gmailPage.waitAndClick('[data-tooltip="Reply"]', { delay: 1 });
@@ -288,7 +288,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       await gmailPage.waitForContent('.reply_message_evaluated .error_notification', 'The last message was encrypted, but you are composing a reply without encryption.');
       await gmailPage.waitAndClick('[data-tooltip="Secure Reply"]'); // Switch to encrypted reply
       await gmailPage.waitAll('.reply_message');
-      await pageHasSecureReplyContainer(t, browser, gmailPage, { isReplyPromptAccepted: false });
+      await pageHasSecureReplyContainer(t, browser, gmailPage, { isReplyPromptAccepted: true });
       await gotoGmailPage(gmailPage, '/FMfcgzGkbDRNpjDdNvCrwzqvXspZZxvh'); // go to signed convo
       await gmailPage.waitAndClick('[data-tooltip="Reply"]', { delay: 1 });
       await gmailPage.waitTillGone('.reply_message');
@@ -310,7 +310,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       await gmailPage.waitForContent('.reply_message_evaluated .error_notification', 'The last message was encrypted, but you are composing a reply without encryption.');
       await gmailPage.waitAndClick('[data-tooltip="Secure Reply"]'); // Switch to encrypted reply
       await gmailPage.waitAll('.reply_message');
-      await pageHasSecureReplyContainer(t, browser, gmailPage, { isReplyPromptAccepted: false });
+      await pageHasSecureReplyContainer(t, browser, gmailPage, { isReplyPromptAccepted: true });
     }));
 
     ava.default('mail.google.com - plain reply draft', testWithBrowser('ci.tests.gmail', async (t, browser) => {
