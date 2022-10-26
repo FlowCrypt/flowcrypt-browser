@@ -118,7 +118,7 @@ export class Catch {
   };
 
   public static isPromise = (v: unknown): v is Promise<unknown> => {
-    return !!v && typeof v === 'object' // tslint:disable-line:no-unsafe-any
+    return !!v && typeof v === 'object'
       && typeof (v as Promise<unknown>).then === 'function' // tslint:disable-line:no-unbound-method - only testing if exists
       && typeof (v as Promise<unknown>).catch === 'function'; // tslint:disable-line:no-unbound-method - only testing if exists
   };
