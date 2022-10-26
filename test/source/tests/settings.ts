@@ -561,7 +561,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
     }));
 
     ava.default('settings - error modal when page parameter invalid', testWithBrowser('ci.tests.gmail', async (t, browser) => {
-      const invalidParamModalPage = await browser.newPage(t, TestUrls.extension(`chrome/settings/index.htm?acctEmail=ci.tests.gmail@gmail.com&page=invalid`));
+      const invalidParamModalPage = await browser.newPage(t, TestUrls.extension(`chrome/settings/index.htm?acctEmail=ci.tests.gmail@flowcrypt.test&page=invalid`));
       await Util.sleep(3);
       await invalidParamModalPage.waitForContent('.swal2-html-container', 'An unexpected value was found for the page parameter');
     }));
@@ -917,25 +917,6 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       await settingsPage.close();
     }));
 
-    ava.default('settings - reauth after uuid change', testWithBrowser('ci.tests.gmail', async (t, browser) => {
-      const acct = 'ci.tests.gmail@flowcrypt.test';
-      const settingsPage = await browser.newPage(t, TestUrls.extensionSettings(acct));
-      await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
-      const experimentalFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-module-experimental', ['experimental.htm']);
-      await experimentalFrame.waitAndClick('@action-regenerate-uuid');
-      await Util.sleep(2);
-      const oauthPopup = await browser.newPageTriggeredBy(t, () => PageRecipe.waitForModalAndRespond(settingsPage, 'confirm',
-        { contentToCheck: 'Please log in with FlowCrypt to continue', clickOn: 'confirm' }));
-      await OauthPageRecipe.google(t, oauthPopup, acct, 'approve');
-      await Util.sleep(5);
-      await settingsPage.close();
-
-      const settingsPage1 = await browser.newPage(t, TestUrls.extensionSettings(acct));
-      await Util.sleep(10);
-      await settingsPage1.notPresent('.swal2-container');
-      await settingsPage1.close();
-    }));
-
     ava.default('settings - email change', testWithBrowser('ci.tests.gmail', async (t, browser) => {
       const acct1 = 'ci.tests.gmail@flowcrypt.test';
       const acct2 = 'user@default-remember-passphrase-client-configuration.flowcrypt.test';
@@ -1080,7 +1061,8 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       gmailPage = await browser.newPage(t, TestUrls.mockGmailUrl(), undefined, extraAuthHeaders);
       await PageRecipe.waitForToastToAppearAndDisappear(gmailPage,
         'Failed to update FlowCrypt Client Configuration: ' +
-        'BrowserMsg(ajax) Bad Request: 400 when POST-ing https://localhost:8001/api/account/get string: account,uuid -> Test error (AjaxErr)');
+        'BrowserMsg(ajax) Bad Request: 400 when POST-ing https://localhost:8001/api/account/get string: -> Test error (AjaxErr)'
+      );
       await gmailPage.close();
       // check that the configuration hasn't changed
       const {

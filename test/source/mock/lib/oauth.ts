@@ -60,12 +60,12 @@ export class OauthMock {
     }
   };
 
-  public checkAuthorizationHeaderWithAccessToken = (authorization: string | undefined) => {
+  public checkAuthorizationHeaderWithAccessToken = (authorization: string | undefined, fallbackAcct?: string) => {
     if (!authorization) {
       throw new HttpClientErr('Missing mock bearer authorization header', Status.UNAUTHORIZED);
     }
     const accessToken = authorization.replace(/^Bearer /, '');
-    const acct = this.acctByAccessToken[accessToken];
+    const acct = this.acctByAccessToken[accessToken] ?? fallbackAcct;
     if (!acct) {
       throw new HttpClientErr('Invalid mock auth token', Status.UNAUTHORIZED);
     }
@@ -107,10 +107,14 @@ export class OauthMock {
     }
   };
 
-  public isIdTokenValid = (idToken: string) => { // we verify mock idToken by checking if we ever issued it
+  public extractEmailFromIdToken = (idToken: string): string => {
     const [, data,] = idToken.split('.');
     const claims = JSON.parse(Buf.fromBase64UrlStr(data).toUtfStr());
-    return (this.issuedIdTokensByAcct[claims.email] || []).includes(idToken);
+    return claims.email;
+  };
+
+  public isIdTokenValid = (idToken: string, email: string): boolean => { // we verify mock idToken by checking if we ever issued it
+    return (this.issuedIdTokensByAcct[email] || []).includes(idToken);
   };
 
   // -- private

@@ -805,6 +805,42 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       await settingsPage.close();
     }));
 
+    ava.default('compose - check reply to multiple recipients issue', testWithBrowser('compatibility', async (t, browser) => {
+      const appendUrl = 'threadId=183ec175f060b2c2&skipClickPrompt=___cu_false___&replyMsgId=183ec175f060b2c2';
+      const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl, hasReplyPrompt: true, skipClickPropt: true });
+      await composePage.waitAndClick('@encrypted-reply');
+      await composePage.waitForContent('@recipients-preview', 'sender@domain.com');
+      await composePage.waitAndClick('@action-show-container-cc-bcc-buttons');
+      await expectRecipientElements(composePage, { to: [{ email: 'sender@domain.com' }] });
+      await composePage.waitAndClick('@action-remove-senderdomaincom-recipient');
+      await expectRecipientElements(composePage, { to: [] });
+    }));
+
+    ava.default('compose - change reply option while composing', testWithBrowser('compatibility', async (t, browser) => {
+      const appendUrl = 'threadId=183ec175f060b2c2&skipClickPrompt=___cu_false___&replyMsgId=183ec175f060b2c2';
+      const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl, hasReplyPrompt: true });
+      await composePage.waitAndClick('@action-accept-reply-all-prompt');
+      await composePage.waitForContent('@recipients-preview', 'sender@domain.comtest@gmail.comtest2@gmail.comtest3@gmail.comtest4@gmail.comtest5@gmail.com');
+      await composePage.waitAndClick('@action-show-reply-options-popover');
+      await composePage.waitAndClick('@action-toggle-a_reply');
+      await composePage.waitForContent('@recipients-preview', 'sender@domain.com');
+      await composePage.waitAndClick('@action-show-reply-options-popover');
+      await composePage.waitAndClick('@action-toggle-a_forward');
+      await composePage.waitUntilFocused('@input-to');
+      await expectRecipientElements(composePage, { to: [], cc: [], bcc: [] });
+      await composePage.waitAndClick('@action-show-reply-options-popover');
+      await composePage.waitAndClick('@action-toggle-a_reply_all');
+      await composePage.waitForContent('@recipients-preview', 'sender@domain.comtest@gmail.comtest2@gmail.comtest3@gmail.comtest4@gmail.comtest5@gmail.com');
+    }));
+
+    ava.default('compose - hide reply all option button for signle recipient', testWithBrowser('compatibility', async (t, browser) => {
+      const appendUrl = 'threadId=182263bf9f105adf&skipClickPrompt=___cu_false___&replyMsgId=182263bf9f105adf';
+      const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl, hasReplyPrompt: true });
+      await composePage.waitAndClick('@encrypted-reply');
+      await composePage.waitAndClick('@action-show-reply-options-popover');
+      await composePage.notPresent('@action-toggle-a_reply_all');
+    }));
+
     // todo: load a draft encrypted by non-first key, enetering passphrase for it
     ava.default('compose - loading drafts - reply', testWithBrowser('compatibility', async (t, browser) => {
       const appendUrl = 'threadId=16cfa9001baaac0a&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___&replyMsgId=16cfa9001baaac0a&draftId=draft-3';
@@ -873,7 +909,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
     }));
 
     ava.default('compose - enforce message signing when encrypting', testWithBrowser('compatibility', async (t, browser) => {
-      const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
+      const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
       await ComposePageRecipe.setPopoverToggle(composePage, 'sign', false);
       // Should still encryptSignSend because we enfore message signing when encrypting
       expect(await composePage.read('@action-send')).to.eq('Encrypt, Sign and Send');
@@ -1804,88 +1840,6 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       const sentMsgs = (await GoogleData.withInitializedData(acct)).searchMessagesBySubject(subject);
       expect(sentMsgs.length).to.equal(2);
       // this test is using PwdEncryptedMessageWithFesPubkeyRecipientInBccTestStrategy to check sent result based on subject "PWD encrypted message with FES - pubkey recipient in bcc"
-      // also see '/api/v1/message' in fes-endpoints.ts mock
-    }));
-
-    /**
-     * You need the following lines in /etc/hosts:
-     * 127.0.0.1    standardsubdomainfes.test
-     * 127.0.0.1    fes.standardsubdomainfes.test
-     */
-    ava.default('user4@standardsubdomainfes.test:8001 - PWD encrypted message with FES web portal - some sends fail with BadRequest error', testWithBrowser(undefined, async (t, browser) => {
-      const acct = 'user4@standardsubdomainfes.test:8001'; // added port to trick extension into calling the mock
-      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
-      await SetupPageRecipe.manualEnter(settingsPage, 'flowcrypt.test.key.used.pgp', { submitPubkey: false, usedPgpBefore: false },
-        { isSavePassphraseChecked: false, isSavePassphraseHidden: false });
-      // add a name to one of the contacts
-      const dbPage = await browser.newPage(t, TestUrls.extension('chrome/dev/ci_unit_test.htm'));
-      await dbPage.page.evaluate(async () => {
-        const db = await (window as any).ContactStore.dbOpen();
-        await (window as any).ContactStore.update(db, 'cc@example.com', { name: 'Mr Cc' });
-      });
-      await dbPage.close();
-      const subject = 'PWD encrypted message with FES web portal - some sends fail with BadRequest error - ' + testVariant;
-      let expectedNumberOfPassedMessages = (await GoogleData.withInitializedData(acct)).searchMessagesBySubject(subject).length;
-      // 1. vague Gmail error with partial success
-      let composePage = await ComposePageRecipe.openStandalone(t, browser, 'user4@standardsubdomainfes.test:8001');
-      await ComposePageRecipe.fillMsg(composePage, { to: 'to@example.com', cc: 'cc@example.com', bcc: 'flowcrypt.compatibility@gmail.com' }, subject);
-      await composePage.waitAndType('@input-password', 'gO0d-pwd');
-      await composePage.waitAndClick('@action-send', { delay: 1 });
-      await composePage.waitAndRespondToModal('confirm', 'cancel',
-        'Messages to some recipients were sent successfully, while messages to flowcrypt.compatibility@gmail.com, Mr Cc <cc@example.com> ' +
-        'encountered error(s) from Gmail. Please help us improve FlowCrypt by reporting the error to us.');
-      await composePage.close();
-      expect((await GoogleData.withInitializedData(acct)).searchMessagesBySubject(subject).length).to.equal(++expectedNumberOfPassedMessages);
-      // 2. vague Gmail error with all failures
-      composePage = await ComposePageRecipe.openStandalone(t, browser, 'user4@standardsubdomainfes.test:8001');
-      await ComposePageRecipe.fillMsg(composePage, { cc: 'cc@example.com', bcc: 'flowcrypt.compatibility@gmail.com' }, subject);
-      await composePage.waitAndType('@input-password', 'gO0d-pwd');
-      await composePage.waitAndClick('@action-send', { delay: 1 });
-      await composePage.waitAndRespondToModal('confirm', 'cancel',
-        'Google returned an error when sending message. ' +
-        'Please help us improve FlowCrypt by reporting the error to us.');
-      await composePage.close();
-      expect((await GoogleData.withInitializedData(acct)).searchMessagesBySubject(subject).length).to.equal(expectedNumberOfPassedMessages); // + 0 messages
-      // 3. "invalid To" Gmail error with partial success
-      composePage = await ComposePageRecipe.openStandalone(t, browser, 'user4@standardsubdomainfes.test:8001');
-      await ComposePageRecipe.fillMsg(composePage, { to: 'invalid@example.com', cc: 'to@example.com' }, subject);
-      await composePage.waitAndType('@input-password', 'gO0d-pwd');
-      await composePage.waitAndClick('@action-send', { delay: 1 });
-      await composePage.waitAndRespondToModal('error', 'confirm',
-        'Messages to some recipients were sent successfully, while messages to invalid@example.com ' +
-        'encountered error(s) from Gmail: Invalid recipients\n\nPlease remove recipients, add them back and re-send the message.');
-      await composePage.close();
-      expect((await GoogleData.withInitializedData(acct)).searchMessagesBySubject(subject).length).to.equal(++expectedNumberOfPassedMessages);
-      // 4. "invalid To" Gmail error with all failures
-      composePage = await ComposePageRecipe.openStandalone(t, browser, 'user4@standardsubdomainfes.test:8001');
-      await ComposePageRecipe.fillMsg(composePage, { to: 'invalid@example.com', cc: 'cc@example.com' }, subject);
-      await composePage.waitAndType('@input-password', 'gO0d-pwd');
-      await composePage.waitAndClick('@action-send', { delay: 1 });
-      await composePage.waitAndRespondToModal('error', 'confirm',
-        'Error from google: Invalid recipients\n\nPlease remove recipients, add them back and re-send the message.');
-      await composePage.close();
-      expect((await GoogleData.withInitializedData(acct)).searchMessagesBySubject(subject).length).to.equal(expectedNumberOfPassedMessages); // + 0 messages
-      // 5. "RequestTimeout" error with partial success
-      composePage = await ComposePageRecipe.openStandalone(t, browser, 'user4@standardsubdomainfes.test:8001');
-      await ComposePageRecipe.fillMsg(composePage, { to: 'timeout@example.com', cc: 'to@example.com' }, subject);
-      await composePage.waitAndType('@input-password', 'gO0d-pwd');
-      await composePage.waitAndClick('@action-send', { delay: 1 });
-      await composePage.waitAndRespondToModal('error', 'confirm',
-        'Messages to some recipients were sent successfully, while messages to timeout@example.com ' +
-        'encountered network errors. Please check your internet connection and try again.');
-      await composePage.close();
-      expect((await GoogleData.withInitializedData(acct)).searchMessagesBySubject(subject).length).to.equal(++expectedNumberOfPassedMessages);
-      // 6. "RequestTimeout" error with all failures
-      composePage = await ComposePageRecipe.openStandalone(t, browser, 'user4@standardsubdomainfes.test:8001');
-      await ComposePageRecipe.fillMsg(composePage, { to: 'timeout@example.com', cc: 'cc@example.com' }, subject);
-      await composePage.waitAndType('@input-password', 'gO0d-pwd');
-      await composePage.waitAndClick('@action-send', { delay: 1 });
-      await composePage.waitAndRespondToModal('error', 'confirm',
-        'Could not send message due to network error. Please check your internet connection and try again. ' +
-        '(This may also be caused by missing extension permissions).');
-      await composePage.close();
-      expect((await GoogleData.withInitializedData(acct)).searchMessagesBySubject(subject).length).to.equal(expectedNumberOfPassedMessages); // + 0 messages
-      // this test is using PwdEncryptedMessageWithFesReplyBadRequestTestStrategy to check sent result based on subject "PWD encrypted message with FES web portal - some sends fail with BadRequest error"
       // also see '/api/v1/message' in fes-endpoints.ts mock
     }));
 
