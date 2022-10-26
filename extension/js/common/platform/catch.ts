@@ -63,7 +63,7 @@ export class Catch {
   };
 
   public static hasStack = (e: unknown): e is ObjWithStack => {
-    return !!e && typeof e === 'object' && typeof (e as ObjWithStack).stack === 'string' && Boolean((e as ObjWithStack).stack); // tslint:disable-line:no-unsafe-any
+    return !!e && typeof e === 'object' && typeof (e as ObjWithStack).stack === 'string' && Boolean((e as ObjWithStack).stack);
   };
 
   /**
