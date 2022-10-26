@@ -62,8 +62,8 @@ export class Catch {
     }
   };
 
-  public static hasStack = (e: any): e is ObjWithStack => {
-    return e && typeof e === 'object' && typeof (e as ObjWithStack).stack === 'string' && Boolean((e as ObjWithStack).stack); // tslint:disable-line:no-unsafe-any
+  public static hasStack = (e: unknown): e is ObjWithStack => {
+    return !!e && typeof e === 'object' && typeof (e as ObjWithStack).stack === 'string' && Boolean((e as ObjWithStack).stack);
   };
 
   /**
@@ -117,10 +117,10 @@ export class Catch {
     return Catch.reportErr(Catch.nameAndDetailsAsException(name, details));
   };
 
-  public static isPromise = (v: any): v is Promise<unknown> => {
-    return v && typeof v === 'object' // tslint:disable-line:no-unsafe-any
-      && typeof (v as Promise<any>).then === 'function' // tslint:disable-line:no-unbound-method - only testing if exists
-      && typeof (v as Promise<any>).catch === 'function'; // tslint:disable-line:no-unbound-method - only testing if exists
+  public static isPromise = (v: unknown): v is Promise<unknown> => {
+    return !!v && typeof v === 'object'
+      && typeof (v as Promise<unknown>).then === 'function' // tslint:disable-line:no-unbound-method - only testing if exists
+      && typeof (v as Promise<unknown>).catch === 'function'; // tslint:disable-line:no-unbound-method - only testing if exists
   };
 
   public static try = (code: () => void | Promise<void>) => {
@@ -269,7 +269,7 @@ export class Catch {
     if (thrown instanceof Error) { // reporting stack may differ from the stack of the actual error, both may be interesting
       thrown.stack += Catch.formattedStackBlock('Catch.reportErr calling stack', Catch.stackTrace());
       if (thrown.hasOwnProperty('workerStack')) { // https://github.com/openpgpjs/openpgpjs/issues/656#event-1498323188
-        thrown.stack += Catch.formattedStackBlock('openpgp.js worker stack', String((thrown as any).workerStack));
+        thrown.stack += Catch.formattedStackBlock('openpgp.js worker stack', String((thrown as Error & { workerStack: string }).workerStack));
       }
     }
     const exception = Catch.formExceptionFromThrown(thrown);
@@ -321,7 +321,7 @@ export class Catch {
     } else if (thrown instanceof Error) {
       exception = thrown;
       if (thrown.hasOwnProperty('thrown')) { // this is created by custom async stack reporting in tooling/tsc-compiler.ts
-        exception.stack += `\n\ne.thrown:\n${Catch.stringify((thrown as any).thrown)}`;
+        exception.stack += `\n\ne.thrown:\n${Catch.stringify((thrown as Error & { thrown: string }).thrown)}`;
       }
     } else {
       exception = new Error(`THROWN_OBJECT: ${errMsg}`);
@@ -333,11 +333,11 @@ export class Catch {
     return exception;
   };
 
-  private static getErrorLineAndCol = (e: any) => {
+  private static getErrorLineAndCol = (e: unknown) => {
     try {
-      const callerLine = e.stack!.split('\n')[1]; // tslint:disable-line:no-unsafe-any
-      const matched = callerLine.match(/\.js:([0-9]+):([0-9]+)\)?/); // tslint:disable-line:no-unsafe-any
-      return { line: Number(matched![1]), col: Number(matched![2]) }; // tslint:disable-line:no-unsafe-any
+      const callerLine = (e as { stack: string }).stack.split('\n')[1];
+      const matched = callerLine.match(/\.js:([0-9]+):([0-9]+)\)?/);
+      return { line: Number(matched![1]), col: Number(matched![2]) };
     } catch (lineErr) {
       return { line: 0, col: 0 };
     }

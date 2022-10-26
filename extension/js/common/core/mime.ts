@@ -320,6 +320,7 @@ export class Mime {
     return undefined;
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private static createAttachmentNode = (attachment: Attachment): any => { // todo: MimeBuilder types
     const type = `${attachment.type}; name="${attachment.name}"`;
     const id = attachment.cid || Attachment.attachmentId();
@@ -412,7 +413,7 @@ export class Mime {
   };
 
   // tslint:disable-next-line:variable-name
-  private static newContentNode = (MimeBuilder: any, type: string, content: string): MimeParserNode => {
+  private static newContentNode = (MimeBuilder: any, type: string, content: string): MimeParserNode => { // eslint-disable-line @typescript-eslint/no-explicit-any
     const node: MimeParserNode = new MimeBuilder(type).setContent(content); // tslint:disable-line:no-unsafe-any
     if (type === 'text/plain') {
       // gmail likes this

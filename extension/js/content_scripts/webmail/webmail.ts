@@ -101,6 +101,7 @@ Catch.try(async () => {
       for (const intervalFunction of intervaliFunctions) {
         intervalFunction.handler();
         replacePgpElsInterval = (window as unknown as ContentScriptWindow).TrySetDestroyableInterval(() => {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           if (typeof (window as any).$ === 'function') {
             intervalFunction.handler();
           } else { // firefox will unload jquery when extension is restarted or updated

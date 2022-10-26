@@ -6,8 +6,6 @@ import { Str, Value } from '../../common.js';
 import { Buf } from '../../buf.js';
 import { PgpMsgMethod, VerifyRes } from './msg-util.js';
 
-const internal = Symbol('internal openpgpjs library format key');
-
 type OpenpgpMsgOrCleartext = OpenPGP.message.Message | OpenPGP.cleartext.CleartextMessage;
 
 export class OpenPGPKey {
@@ -239,14 +237,14 @@ export class OpenPGPKey {
       algo: {
         algorithm: algoInfo.algorithm,
         bits: algoInfo.bits,
-        curve: (algoInfo as any).curve as string | undefined,
+        curve: (algoInfo as unknown as { curve: string | undefined }).curve,
         algorithmId: opgp.enums.publicKey[algoInfo.algorithm]
       },
       revoked: keyWithoutWeakPackets.revocationSignatures.length > 0
     } as Key);
-    (key as any)[internal] = keyWithoutWeakPackets;
-    (key as any).rawKey = opgpKey;
-    (key as any).rawArmored = opgpKey.armor();
+    (key as Key & { internal: OpenPGP.key.Key }).internal = keyWithoutWeakPackets;
+    (key as Key & { rawKey: OpenPGP.key.Key }).rawKey = opgpKey;
+    (key as Key & { rawArmored: string }).rawArmored = opgpKey.armor();
     return key;
   };
 
@@ -634,7 +632,7 @@ export class OpenPGPKey {
     if (pubkey.family !== 'openpgp') {
       throw new UnexpectedKeyTypeError(`Key type is ${pubkey.family}, expecting OpenPGP`);
     }
-    const opgpKey = (pubkey as unknown as { [internal]: OpenPGP.key.Key })[internal];
+    const opgpKey = (pubkey as unknown as { internal: OpenPGP.key.Key }).internal;
     if (!opgpKey) {
       throw new Error('Object has type == "openpgp" but no internal key.');
     }

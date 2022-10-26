@@ -156,7 +156,9 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
       // add a name to one of the contacts
       const dbPage = await browser.newPage(t, TestUrls.extension('chrome/dev/ci_unit_test.htm'));
       await dbPage.page.evaluate(async () => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const db = await (window as any).ContactStore.dbOpen();
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         await (window as any).ContactStore.update(db, 'cc@example.com', { name: 'Mr Cc' });
       });
       await dbPage.close();

@@ -12,6 +12,7 @@ import * as path from 'path';
 import * as mkdirp from 'mkdirp';
 import { Dict } from '../core/common';
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 declare const jQuery: any;
 
 abstract class ControllableBase {
@@ -447,6 +448,7 @@ abstract class ControllableBase {
     const resolvePromise: Promise<void> = (async () => {
       const downloadPath = path.resolve(__dirname, 'download', Util.lousyRandom());
       mkdirp.sync(downloadPath);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       await (this.target as any)._client().send('Page.setDownloadBehavior', { behavior: 'allow', downloadPath });
       if (typeof selector === 'string') {
         await this.waitAndClick(selector);

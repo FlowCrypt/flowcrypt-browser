@@ -23,19 +23,19 @@ export class Xss {
   private static FORBID_CSS_STYLE = /z-index:[^;]+;|position:[^;]+;|background[^;]+;/g;
 
   public static sanitizeRender = (selector: string | HTMLElement | JQuery<HTMLElement>, dirtyHtml: string) => { // browser-only (not on node)
-    return $(selector as any).html(Xss.htmlSanitize(dirtyHtml)); // xss-sanitized
+    return $(selector as HTMLElement).html(Xss.htmlSanitize(dirtyHtml)); // xss-sanitized
   };
 
   public static sanitizeAppend = (selector: string | HTMLElement | JQuery<HTMLElement>, dirtyHtml: string) => { // browser-only (not on node)
-    return $(selector as any).append(Xss.htmlSanitize(dirtyHtml)); // xss-sanitized
+    return $(selector as HTMLElement).append(Xss.htmlSanitize(dirtyHtml)); // xss-sanitized
   };
 
   public static sanitizePrepend = (selector: string | HTMLElement | JQuery<HTMLElement>, dirtyHtml: string) => { // browser-only (not on node)
-    return $(selector as any).prepend(Xss.htmlSanitize(dirtyHtml)); // xss-sanitized
+    return $(selector as HTMLElement).prepend(Xss.htmlSanitize(dirtyHtml)); // xss-sanitized
   };
 
   public static sanitizeReplace = (selector: string | HTMLElement | JQuery<HTMLElement>, dirtyHtml: string) => { // browser-only (not on node)
-    return $(selector as any).replaceWith(Xss.htmlSanitize(dirtyHtml)); // xss-sanitized
+    return $(selector as HTMLElement).replaceWith(Xss.htmlSanitize(dirtyHtml)); // xss-sanitized
   };
 
   /**
@@ -111,7 +111,7 @@ export class Xss {
         }
       }
       if ('target' in node) { // open links in new window
-        (node as Element).setAttribute('target','_blank');
+        (node as Element).setAttribute('target', '_blank');
         // prevents https://www.owasp.org/index.php/Reverse_Tabnabbing
         (node as Element).setAttribute('rel', 'noopener noreferrer');
       }

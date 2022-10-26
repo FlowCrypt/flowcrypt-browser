@@ -49,7 +49,7 @@ export class FlowCryptWebsite extends Api {
     return posts.slice(0, 5);
   };
 
-  private static request = async <RT>(path: string, vals: Dict<any>, fmt: ReqFmt = 'JSON', addHeaders: Dict<string> = {}, progressCbs?: ProgressCbs): Promise<RT> => {
+  private static request = async <RT>(path: string, vals: Dict<unknown>, fmt: ReqFmt = 'JSON', addHeaders: Dict<string> = {}, progressCbs?: ProgressCbs): Promise<RT> => {
     return await FlowCryptWebsite.apiCall(FlowCryptWebsite.url('api'), path, vals, fmt, progressCbs, { 'api-version': '3', ...addHeaders });
   };
 

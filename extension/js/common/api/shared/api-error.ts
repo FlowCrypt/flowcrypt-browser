@@ -31,7 +31,7 @@ abstract class ApiCallErr extends Error {
   private static getPayloadStructure = (req: JQueryAjaxSettings): string => {
     if (typeof req.data === 'string') {
       try {
-        return Object.keys(JSON.parse(req.data) as any).join(',');
+        return Object.keys(JSON.parse(req.data) as string).join(',');
       } catch (e) {
         return 'not-a-json';
       }
@@ -83,15 +83,15 @@ export class AjaxErr extends ApiCallErr { // no static props, else will get seri
       return {};
     }
     try { // JSON[error][message,code,internal]
-      const resMsg = ((parsedRes as any).error as any).message as string; // catching all errs below
+      const resMsg = ((parsedRes as { error: Error }).error).message as string; // catching all errs below
       if (typeof resMsg === 'string') {
         returnable.resMsg = Str.truncate(resMsg, 300);
       }
-      const resDetails = ((parsedRes as any).error as any).internal as string; // catching all errs below
+      const resDetails = ((parsedRes as { error: { internal: string } }).error).internal as string; // catching all errs below
       if (typeof resDetails === 'string') {
         returnable.resDetails = Str.truncate(resDetails, 300);
       }
-      const resCode = ((parsedRes as any).error as any).code as number; // catching all errs below
+      const resCode = ((parsedRes as { error: { code: number } }).error).code as number; // catching all errs below
       if (typeof resCode === 'number') {
         returnable.resCode = resCode;
       }
@@ -99,15 +99,15 @@ export class AjaxErr extends ApiCallErr { // no static props, else will get seri
       // skip
     }
     try { // JSON[message,code,details]
-      const resMsg = (parsedRes as any).message as string; // catching all errs below
+      const resMsg = (parsedRes as { message: string }).message; // catching all errs below
       if (typeof resMsg === 'string') {
         returnable.resMsg = Str.truncate(resMsg, 300);
       }
-      const resDetails = (parsedRes as any).details as string; // catching all errs below
+      const resDetails = (parsedRes as { details: string }).details; // catching all errs below
       if (typeof resDetails === 'string') {
         returnable.resDetails = Str.truncate(resDetails, 300);
       }
-      const resCode = (parsedRes as any).code as number; // catching all errs below
+      const resCode = (parsedRes as { code: number }).code; // catching all errs below
       if (typeof resCode === 'number') {
         returnable.resCode = resCode;
       }
@@ -203,8 +203,8 @@ export class ApiErr {
     if (e instanceof AjaxErr && e.status === 400 && typeof e.responseText === 'string') {
       try {
         const json = JSON.parse(e.responseText);
-        if (json && (json as any).error === 'invalid_grant') {
-          const jsonErrorDesc = (json as any).error_description;
+        if (json && (json as { error: string }).error === 'invalid_grant') {
+          const jsonErrorDesc = (json as { error_description: string }).error_description;
           return jsonErrorDesc === 'Bad Request' || jsonErrorDesc === 'Token has been expired or revoked.';
         }
       } catch (e) {

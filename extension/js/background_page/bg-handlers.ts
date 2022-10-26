@@ -20,8 +20,10 @@ export class BgHandlers {
       console.info(`db corrupted, skipping: ${request.f}`);
       return await new Promise(() => undefined); // never resolve, error was already shown
     }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const dbFunc = (ContactStore as any)[request.f] as (db: IDBDatabase, ...args: any[]) => Promise<Bm.Res.Db>; // due to https://github.com/Microsoft/TypeScript/issues/6480
     if (request.f === 'obj') {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       return await dbFunc(request.args[0] as any); // db not needed, it goes through background because openpgp.js may not be available in the frame
     }
     return await dbFunc(db, ...request.args);

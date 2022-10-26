@@ -28,6 +28,7 @@ import { MimeParser } from '../core/types/emailjs.js';
 type Codec = { encode: (text: string, mode: 'fatal' | 'html') => string, decode: (text: string) => string, labels: string[], version: string };
 
 export const requireOpenpgp = (): typeof OpenPGP => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const openpgpLocal = (window as any).openpgp as typeof OpenPGP;
   if (!openpgpLocal) {
     return openpgpLocal; // in some environments, openpgp is indeed undefined, eg pgp_block.htm or content script (for now)
@@ -39,13 +40,17 @@ export const requireOpenpgp = (): typeof OpenPGP => {
 };
 
 export const requireMimeParser = (): typeof MimeParser => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return (window as any)['emailjs-mime-parser']; // tslint:disable-line:no-unsafe-any
 };
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const requireMimeBuilder = (): any => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return (window as any)['emailjs-mime-builder'];
 };
 
 export const requireIso88592 = (): Codec => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return (window as any).iso88592 as Codec;
 };
