@@ -74,6 +74,7 @@ export abstract class AbstractStore {
     for (const k of Object.keys(storageObj)) {
       const fixedKey = k.replace(AbstractStore.singleScopeRawIndex(scope, ''), '');
       if (fixedKey !== k) { // the scope matches and was thus removed from the raw index
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         accountStore[fixedKey as AccountIndex] = storageObj[k] as any;
       }
     }

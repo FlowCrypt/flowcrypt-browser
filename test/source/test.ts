@@ -76,6 +76,7 @@ const testWithBrowser = (acct: CommonAcct | undefined, cb: (t: AvaContext, brows
       if (DEBUG_BROWSER_LOG) {
         try {
           const page = await browser.newPage(t, TestUrls.extension('chrome/dev/ci_unit_test.htm'));
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const items = await page.target.evaluate(() => (window as any).Debug.readDatabase()) as { input: unknown, output: unknown }[];
           for (let i = 0; i < items.length; i++) {
             const item = items[i];

@@ -61,7 +61,7 @@ export class Api {
     });
   };
 
-  public static ajax = async (req: JQueryAjaxSettings, stack: string): Promise<any | JQuery.jqXHR<any>> => {
+  public static ajax = async (req: JQueryAjaxSettings, stack: string): Promise<unknown | JQuery.jqXHR<unknown>> => {
     if (Env.isContentScript()) {
       // content script CORS not allowed anymore, have to drag it through background page
       // https://www.chromestatus.com/feature/5629709824032768
@@ -76,7 +76,7 @@ export class Api {
             xhr.then = xhr.promise = undefined;
             resolve(xhr);
           } else {
-            resolve(data as any);
+            resolve(data as unknown);
           }
         }).catch(reject);
       });
@@ -150,7 +150,7 @@ export class Api {
   protected static apiCall = async <RT>(
     url: string,
     path: string,
-    fields?: Dict<any> | string,
+    fields?: Dict<unknown> | string,
     fmt?: ReqFmt,
     progress?: ProgressCbs,
     headers?: Dict<string>,
@@ -169,7 +169,7 @@ export class Api {
     } else if (fmt === 'FORM' && fields && typeof fields !== 'string') {
       formattedData = new FormData();
       for (const formFieldName of Object.keys(fields)) {
-        const a: Attachment | string = fields[formFieldName]; // tslint:disable-line:no-unsafe-any
+        const a: Attachment | string = fields[formFieldName] as Attachment | string;
         if (a instanceof Attachment) {
           formattedData.append(formFieldName, new Blob([a.getData()], { type: a.type }), a.name); // xss-none
         } else {
@@ -200,8 +200,8 @@ export class Api {
     return res as RT;
   };
 
-  private static isRawAjaxErr = (e: any): e is RawAjaxErr => {
-    return e && typeof e === 'object' && typeof (e as RawAjaxErr).readyState === 'number'; // tslint:disable-line:no-unsafe-any
+  private static isRawAjaxErr = (e: unknown): e is RawAjaxErr => {
+    return !!e && typeof e === 'object' && typeof (e as RawAjaxErr).readyState === 'number';
   };
 
   /**

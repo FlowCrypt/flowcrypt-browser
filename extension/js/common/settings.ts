@@ -149,8 +149,8 @@ export class Settings {
         }
       }
     }
-    const oldAcctStorage = await AcctStore.get(oldAcctEmail, storageIndexesToKeepOld as any);
-    const newAcctStorage = await AcctStore.get(newAcctEmail, storageIndexesToKeepNew as any);
+    const oldAcctStorage = await AcctStore.get(oldAcctEmail, storageIndexesToKeepOld as unknown as AccountIndex[]);
+    const newAcctStorage = await AcctStore.get(newAcctEmail, storageIndexesToKeepNew as unknown as AccountIndex[]);
     await AcctStore.set(newAcctEmail, oldAcctStorage); // save 'fallback' and 'keep' values
     await AcctStore.set(newAcctEmail, newAcctStorage); // save 'forget' and overwrite 'fallback'
     for (const sessionStorageIndex of Object.keys(sessionStorage)) {
@@ -212,6 +212,7 @@ export class Settings {
     }));
     return await new Promise((resolve, reject) => {
       container.find('.action_fix_compatibility').click(Ui.event.handle(async target => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const expireYears = String($(target).parents(container as any).find('select.input_fix_expire_years').val()); // JQuery quirk
         if (!expireYears) {
           await Ui.modal.warning('Please select key expiration');

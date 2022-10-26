@@ -85,7 +85,9 @@ export namespace Bm {
     export type _tab_ = { tabId: string | null | undefined };
     export type SaveFetchedPubkeys = boolean;
     export type ProcessAndStoreKeysFromEkmLocally = { needPassphrase?: boolean, updateCount?: number, noKeysSetup?: boolean };
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     export type Db = any; // not included in Any below
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     export type Ajax = any; // not included in Any below
 
     export type Any = GetActiveTabInfo | _tab_ | ReconnectAcctAuthPopup
@@ -370,7 +372,7 @@ export class BrowserMsg {
     return false; // sending to a parent that is an extension frame (do not relay, browser does send directly)
   };
 
-  private static sendCatch = (dest: Bm.Dest | undefined, name: string, bm: Dict<any>) => {
+  private static sendCatch = (dest: Bm.Dest | undefined, name: string, bm: Dict<unknown>) => {
     BrowserMsg.sendAwait(dest, name, bm).catch(Catch.reportErr);
   };
 
@@ -445,10 +447,10 @@ export class BrowserMsg {
     const objUrls: Dict<string> = {};
     if (requestOrResponse && typeof requestOrResponse === 'object' && requestOrResponse !== null) { // lgtm [js/comparison-between-incompatible-types]
       for (const possibleBufName of Object.keys(requestOrResponse)) {
-        const possibleBufs = (requestOrResponse as any)[possibleBufName];
+        const possibleBufs = (requestOrResponse as Record<string, unknown>)[possibleBufName];
         if (possibleBufs instanceof Uint8Array) {
           objUrls[possibleBufName] = Browser.objUrlCreate(possibleBufs);
-          (requestOrResponse as any)[possibleBufName] = undefined;
+          (requestOrResponse as Record<string, unknown>)[possibleBufName] = undefined;
         }
       }
     }
@@ -462,7 +464,7 @@ export class BrowserMsg {
   private static replaceObjUrlWithBuf = async <T>(requestOrResponse: T, objUrls: Dict<string>): Promise<T> => {
     if (requestOrResponse && typeof requestOrResponse === 'object' && requestOrResponse !== null && objUrls) { // lgtm [js/comparison-between-incompatible-types]
       for (const consumableObjUrlName of Object.keys(objUrls)) {
-        (requestOrResponse as any)[consumableObjUrlName] = await Browser.objUrlConsume(objUrls[consumableObjUrlName]);
+        (requestOrResponse as Record<string, Buf>)[consumableObjUrlName] = await Browser.objUrlConsume(objUrls[consumableObjUrlName]);
       }
     }
     return requestOrResponse;

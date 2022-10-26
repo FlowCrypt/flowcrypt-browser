@@ -27,6 +27,7 @@ export const defineUnitBrowserTests = (testVariant: TestVariant, testWithBrowser
         // update host page h1
         await hostPage.target.evaluate((title) => { window.document.getElementsByTagName('h1')[0].textContent = title; }, title);
         // inject testConstants
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         await hostPage.target.evaluate((object) => { (window as any).testConstants = object; }, testConstants);
         // prepare code to run
         const runThisCodeInBrowser = `

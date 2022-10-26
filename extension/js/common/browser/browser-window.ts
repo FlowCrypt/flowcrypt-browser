@@ -2,6 +2,7 @@
 
 'use strict';
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type AnyThirdPartyLibrary = any;
 export type AddrParserResult = { name?: string, address?: string };
 

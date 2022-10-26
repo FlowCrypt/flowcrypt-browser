@@ -39,9 +39,9 @@ export class ComposeErrModule extends ViewModule<ComposeView> {
       other: async (e: unknown) => {
         if (e instanceof Error) {
           e.stack = (e.stack || '') + `\n\n[compose action: ${couldNotDoWhat}]`;
-        } else if (typeof e === 'object' && e && typeof (e as any).stack === 'undefined') {
+        } else if (typeof e === 'object' && e && typeof (e as { stack: string }).stack === 'undefined') {
           try {
-            (e as any).stack = `[compose action: ${couldNotDoWhat}]`;
+            (e as { stack: string }).stack = `[compose action: ${couldNotDoWhat}]`;
           } catch (e) {
             // no need
           }
