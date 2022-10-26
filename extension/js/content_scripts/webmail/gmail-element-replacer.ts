@@ -3,7 +3,7 @@
 'use strict';
 
 import { Dict, Str } from '../../common/core/common.js';
-import { FactoryReplyParams, WebmailVariantString, XssSafeFactory } from '../../common/xss-safe-factory.js';
+import { FactoryReplyParams, XssSafeFactory } from '../../common/xss-safe-factory.js';
 import { GmailParser, GmailRes } from '../../common/api/email-provider/gmail/gmail-parser.js';
 import { IntervalFunction, WebmailElementReplacer } from './setup-webmail-content-script.js';
 import { AjaxErr } from '../../common/api/shared/api-error.js';
@@ -40,14 +40,12 @@ export class GmailElementReplacer implements WebmailElementReplacer {
   private acctEmail: string;
   private injector: Injector;
   private notifications: Notifications;
-  private gmailVariant: WebmailVariantString;
   private webmailCommon: WebmailCommon;
-  private cssHidden = `opacity: 0 !important; height: 1px !important; width: 1px !important; max-height: 1px !important;
-  max-width: 1px !important; position: absolute !important; z-index: -1000 !important`;
   private currentlyEvaluatingStandardComposeBoxRecipients = false;
   private currentlyReplacingAttachments = false;
   private switchToEncryptedReply = false;
   private removeNextReplyBoxBorders = false;
+  private shouldShowEditableSecureReply = false;
 
   private sel = { // gmail_variant=standard|new
     convoRoot: 'div.if',
@@ -71,12 +69,11 @@ export class GmailElementReplacer implements WebmailElementReplacer {
   };
 
   constructor(factory: XssSafeFactory, clientConfiguration: ClientConfiguration, acctEmail: string, sendAs: Dict<SendAsAlias>,
-    injector: Injector, notifications: Notifications, gmailVariant: WebmailVariantString) {
+    injector: Injector, notifications: Notifications) {
     this.factory = factory;
     this.acctEmail = acctEmail;
     this.sendAs = sendAs;
     this.injector = injector;
-    this.gmailVariant = gmailVariant;
     this.notifications = notifications;
     this.webmailCommon = new WebmailCommon(acctEmail, injector);
     this.gmail = new Gmail(acctEmail);
@@ -243,7 +240,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
       if (this.isEncrypted()) {
         await this.setReplyBoxEditable();
       } else {
-        await this.replaceStandardReplyBox(undefined, true, true);
+        await this.replaceStandardReplyBox(undefined, true);
       }
     } else {
       this.insertEncryptedReplyBox(messageContainer);
@@ -598,7 +595,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     messageContainer.find('.adn.ads').parent().append(secureReplyBoxXssSafe); // xss-safe-factory
   };
 
-  private replaceStandardReplyBox = async (msgId?: string, editable: boolean = false, force: boolean = false) => {
+  private replaceStandardReplyBox = async (msgId?: string, force: boolean = false) => {
     const draftReplyRegex = new RegExp(/\[(flowcrypt|cryptup):link:draft_reply:([0-9a-fr\-]+)]/);
     const newReplyBoxes = $('div.nr.tMHS5d, td.amr > div.nr, div.gA td.I5').not('.reply_message_evaluated').filter(':visible').get();
     if (newReplyBoxes.length) {
@@ -612,7 +609,6 @@ export class GmailElementReplacer implements WebmailElementReplacer {
       const doReplace = Boolean(convoRootEl.find('iframe.pgp_block').filter(':visible').closest('.h7').is(':last-child')
         || (convoRootEl.is(':visible') && force)
         || hasDraft);
-      const alreadyHasEncryptedReplyBox = Boolean(convoRootEl.find('div.reply_message_iframe_container').filter(':visible').length);
       let midConvoDraft = false;
       if (doReplace) {
         for (const replyBoxEl of newReplyBoxes.reverse()) { // looping in reverse
@@ -635,18 +631,20 @@ export class GmailElementReplacer implements WebmailElementReplacer {
             replyBox.addClass('remove_borders');
             this.removeNextReplyBoxBorders = false;
           }
-          if (!midConvoDraft && !alreadyHasEncryptedReplyBox) { // either is a draft in the middle, or the convo already had (last) box replaced: should also be useless draft
-            const secureReplyBoxXssSafe = `<div class="remove_borders reply_message_iframe_container">${this.factory.embeddedReply(replyParams, editable)}</div>`;
-            if (replyBox.hasClass('I5')) { // activated standard reply box: cannot remove because would cause issues / gmail freezing
-              const origChildren = replyBox.children();
-              replyBox.addClass('reply_message_evaluated remove_borders').append(secureReplyBoxXssSafe); // xss-safe-factory
-              if (this.gmailVariant === 'new') { // even hiding causes issues in new gmail (encrypted -> see original -> reply -> archive)
-                origChildren.attr('style', this.cssHidden);
-              } else { // in old gmail, we can safely hide it without causing freezes navigating away
-                origChildren.hide();
-              }
-            } else { // non-activated reply box: replaced so that originally bound events would go with it (prevents inbox freezing)
+          if (!midConvoDraft) { // either is a draft in the middle, or the convo already had (last) box replaced: should also be useless draft
+            const isReplyButtonView = replyBoxEl.className.includes('nr');
+            const secureReplyBoxXssSafe = `<div class="remove_borders reply_message_iframe_container">${this.factory.embeddedReply(replyParams, this.shouldShowEditableSecureReply)}</div>`;
+            this.shouldShowEditableSecureReply = !isReplyButtonView;
+            if (hasDraft) {
+              replyBox.addClass('reply_message_evaluated remove_borders').parent().append(secureReplyBoxXssSafe); // xss-safe-factory
+              replyBox.hide();
+            } else if (isReplyButtonView) {
               replyBox.replaceWith(secureReplyBoxXssSafe); // xss-safe-factory
+            } else {
+              const deleteReplyEl = document.querySelector('.oh.J-Z-I.J-J5-Ji.T-I-ax7');
+              if (deleteReplyEl) { // Remove standard reply by clicking `delete` button
+                (deleteReplyEl as HTMLElement).click();
+              }
             }
             midConvoDraft = true; // last box was processed first (looping in reverse), and all the rest must be drafts
           }
