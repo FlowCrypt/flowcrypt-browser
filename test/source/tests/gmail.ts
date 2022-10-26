@@ -104,7 +104,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       await ComposePageRecipe.sendAndClose(composePage);
       await gmailPage.waitAndClick('[aria-label^="Inbox"]');
       await gmailPage.waitAndClick('[role="row"]'); // click the first message
-      await gmailPage.waitForContent('.nH.if h2', `Automated puppeteer test: ${subject}`);
+      await gmailPage.waitForContent('.nH h2.hP', `Automated puppeteer test: ${subject}`);
       const urls = await gmailPage.getFramesUrls(['/chrome/elements/pgp_block.htm'], { sleep: 1 });
       await GmailPageRecipe.deleteThread(gmailPage);
       expect(urls.length).to.eq(1);
@@ -231,7 +231,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
         await gmailPage.click('//*[text()="delete forever"]');
       }
       await gmailPage.waitAndClick('@secure-reply-button');
-      let replyBox = await gmailPage.getFrame(['/chrome/elements/compose.htm'], { sleep: 3 });
+      let replyBox = await gmailPage.getFrame(['/chrome/elements/compose.htm'], { sleep: 5 });
       await Util.sleep(3);
       expect(await replyBox.read('@recipients-preview')).to.equal('e2e.enterprise.test@flowcrypt.com');
       await createSecureDraft(t, browser, gmailPage, 'reply draft');
