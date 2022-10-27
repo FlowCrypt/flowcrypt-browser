@@ -35,10 +35,10 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       {
         isReplyPromptAccepted?: boolean,
         composeCount?: number
-      } = { composeCount: 1 }
+      }
     ) => {
       const urls = await gmailPage.getFramesUrls(['/chrome/elements/compose.htm'], { sleep: 0 });
-      expect(urls.length).to.equal(composeCount);
+      expect(urls.length).to.equal(composeCount ?? 1);
       if (typeof isReplyPromptAccepted !== 'undefined') {
         const replyBox = await browser.newPage(t, urls[0]);
         if (isReplyPromptAccepted) {
