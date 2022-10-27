@@ -24,8 +24,19 @@ export type GmailCategory = 'inbox' | 'sent' | 'drafts' | 'spam' | 'trash';
 export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: TestWithBrowser) => {
 
   if (testVariant === 'CONSUMER-LIVE-GMAIL') {
-    const pageHasSecureReplyContainer = async (t: AvaContext, browser: BrowserHandle, gmailPage: ControllablePage, { isReplyPromptAccepted, composeCount = 1}: { isReplyPromptAccepted?: boolean, composeCount?: number } = {}) => {
-
+    const pageHasSecureReplyContainer = async (
+      t: AvaContext,
+      browser: BrowserHandle,
+      gmailPage: ControllablePage,
+      {
+        isReplyPromptAccepted,
+        composeCount
+      }:
+      {
+        isReplyPromptAccepted?: boolean,
+        composeCount?: number
+      } = { composeCount: 1 }
+    ) => {
       const urls = await gmailPage.getFramesUrls(['/chrome/elements/compose.htm'], { sleep: 0 });
       expect(urls.length).to.equal(composeCount);
       if (typeof isReplyPromptAccepted !== 'undefined') {
