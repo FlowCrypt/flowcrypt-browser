@@ -635,8 +635,6 @@ export class GmailElementReplacer implements WebmailElementReplacer {
             const isReplyButtonView = replyBoxEl.className.includes('nr');
             const replyBoxes = document.querySelectorAll('iframe.reply_message');
             const alreadyHasSecureReplyBox = replyBoxes.length > 0;
-            console.log(`alreadyHasSecureReplyBox: ${alreadyHasSecureReplyBox}`);
-            console.log(`this.shouldShowEditableSecureReply: ${this.shouldShowEditableSecureReply}`);
             const secureReplyBoxXssSafe = `
               <div class="remove_borders reply_message_iframe_container">
                 ${this.factory.embeddedReply(replyParams, this.shouldShowEditableSecureReply || alreadyHasSecureReplyBox)}
