@@ -76,7 +76,7 @@ abstract class ControllableBase {
     this.log(`wait_all:7:${selectors.join(',')}`);
   };
 
-  public waitAny = async (selector: string | string[], properties: { timeout?: number, visible: true } | { timeout?: number } = {}): Promise<ElementHandle> => {
+  public waitAny = async (selector: string | string[], properties: { timeout?: number, visible: true | undefined } | { timeout?: number } = {}): Promise<ElementHandle> => {
     const visible = 'visible' in properties ? properties.visible : true;
     return await this.waitAnyInternal(this.selsAsProcessedArr(selector), { timeout: properties.timeout ?? TIMEOUT_ELEMENT_APPEAR, visible });
   };
