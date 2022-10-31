@@ -643,9 +643,9 @@ export class ControllablePage extends ControllableBase {
     return await dialogPromise;
   };
 
-  public waitForNavigationIfAny = async (seconds: number = 5) => {
+  public waitForNavigationIfAny = async (triggeringAction: () => Promise<void>, seconds: number = 5) => {
     try {
-      await this.page.waitForNavigation({ timeout: seconds * 1000 });
+      await Promise.all([this.page.waitForNavigation({ timeout: seconds * 1000 }), triggeringAction()]);
     } catch (e) {
       // can be "Navigation Timeout Exceeded" or "Navigation timeout of 5000 ms exceeded"
       if (new RegExp('^Navigation timeout .*xceeded$').test(e.message)) {
