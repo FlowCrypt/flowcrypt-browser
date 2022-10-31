@@ -29,18 +29,23 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       browser: BrowserHandle,
       gmailPage: ControllablePage,
       {
+        // Check if compose frame(secure reply frame) has reply prompt
         isReplyPromptAccepted,
-        composeCount
+        // Compose Frame(Secure reply container) index. Default is 0 because "secure reply compose container" is located higher than the other "reply or forward buttons" container
+        composeFrameIndex,
+        // Total compose frame count
+        composeFrameCount
       }:
       {
         isReplyPromptAccepted?: boolean,
-        composeCount?: number
+        composeFrameIndex?: number,
+        composeFrameCount?: number
       } = {}
     ) => {
       const urls = await gmailPage.getFramesUrls(['/chrome/elements/compose.htm'], { sleep: 0 });
-      expect(urls.length).to.equal(composeCount ?? 1);
+      expect(urls.length).to.equal(composeFrameCount ?? 1);
       if (typeof isReplyPromptAccepted !== 'undefined') {
-        const replyBox = await browser.newPage(t, urls[0]);
+        const replyBox = await browser.newPage(t, urls[composeFrameIndex ?? 0]);
         if (isReplyPromptAccepted) {
           await replyBox.waitAll('@action-send');
           await replyBox.notPresent('@action-accept-reply-prompt');
@@ -317,7 +322,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       await gmailPage.waitForContent('.reply_message_evaluated .error_notification', 'The last message was encrypted, but you are composing a reply without encryption.');
       await gmailPage.waitAndClick('[data-tooltip="Secure Reply"]'); // Switch to encrypted reply
       await gmailPage.waitAll('.reply_message');
-      await pageHasSecureReplyContainer(t, browser, gmailPage, { isReplyPromptAccepted: true, composeCount: 2 });
+      await pageHasSecureReplyContainer(t, browser, gmailPage, { isReplyPromptAccepted: true, composeFrameCount: 2 });
     }));
 
     ava.default('mail.google.com - plain reply with dot menu', testWithBrowser('ci.tests.gmail', async (t, browser) => {
