@@ -65,8 +65,9 @@ export class OauthPageRecipe extends PageRecipe {
       if (await oauthPage.target.$(selectors.googleEmailInput) !== null) { // 2017-style login
         await oauthPage.waitAll(selectors.googleEmailInput, { timeout: OauthPageRecipe.longTimeout });
         await oauthPage.waitAndType(selectors.googleEmailInput, acctEmail, { delay: 2 });
-        await oauthPage.waitAndClick(selectors.googleEmailConfirmBtn, { delay: 2 });  // confirm email
-        await oauthPage.waitForNavigationIfAny();
+        await oauthPage.waitAll(selectors.googleEmailConfirmBtn);
+        await Util.sleep(2);
+        await oauthPage.waitForNavigationIfAny(() => oauthPage.waitAndClick(selectors.googleEmailConfirmBtn));
       } else if (await oauthPage.target.$(`.wLBAL[data-email="${acctEmail}"]`) !== null) { // already logged in - just choose an account
         await oauthPage.waitAndClick(`.wLBAL[data-email="${acctEmail}"]`, { delay: 1 });
       } else if (await oauthPage.target.$(alreadyLoggedSelector) !== null) { // select from accounts where already logged in
@@ -92,8 +93,7 @@ export class OauthPageRecipe extends PageRecipe {
         if (acctPassword) {
           await oauthPage.waitAndType(selectors.auth0password, acctPassword);
         }
-        await oauthPage.waitAndClick(selectors.auth0loginBtn);
-        await oauthPage.waitForNavigationIfAny();
+        await oauthPage.waitForNavigationIfAny(() => oauthPage.waitAndClick(selectors.auth0loginBtn));
       }
       await Util.sleep(1);
       await oauthPage.waitAll(selectors.googleApproveBtn); // if succeeds, we are logged in and presented with approve/deny choice
@@ -104,7 +104,7 @@ export class OauthPageRecipe extends PageRecipe {
       } else if (action === 'deny') {
         throw new Error('tests.handle_gmail_oauth options.deny.true not implemented');
       } else {
-        await oauthPage.waitAndClick('#submit_approve_access', { delay: 1 });
+        await oauthPage.waitAndClick(selectors.googleApproveBtn, { delay: 1 });
       }
     } catch (e) {
       const eStr = String(e);
