@@ -202,10 +202,12 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
     ava.default('settings - import revoked key fails but the revocation info is saved', testWithBrowser('ci.tests.gmail', async (t, browser) => {
       const dbPage = await browser.newPage(t, TestUrls.extension('chrome/dev/ci_unit_test.htm'));
       const revocationBefore = await dbPage.page.evaluate(async () => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const db = await (window as any).ContactStore.dbOpen();
         const revocation: { fingerprint: string } = await new Promise((resolve, reject) => {
           const tx = db.transaction(['revocations'], 'readonly');
           const req = tx.objectStore('revocations').get('A5CFC8E8EA4AE69989FE2631097EEBF354259A5E');
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           (window as any).ContactStore.setReqPipe(req, resolve, reject);
         });
         return revocation;
@@ -224,10 +226,12 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       await pubkeyFrame.notPresent('@manual-import-warning');
       expect((await pubkeyFrame.read('#pgp_block.pgp_pubkey')).toLowerCase()).to.include('not usable');
       const revocationAfter = await dbPage.page.evaluate(async () => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const db = await (window as any).ContactStore.dbOpen();
         const revocation: { fingerprint: string } = await new Promise((resolve, reject) => {
           const tx = db.transaction(['revocations'], 'readonly');
           const req = tx.objectStore('revocations').get('A5CFC8E8EA4AE69989FE2631097EEBF354259A5E');
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           (window as any).ContactStore.setReqPipe(req, resolve, reject);
         });
         return revocation;
@@ -238,21 +242,27 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
     ava.default('settings - remove public keys from contact', testWithBrowser('compatibility', async (t, browser) => {
       const dbPage = await browser.newPage(t, TestUrls.extension('chrome/dev/ci_unit_test.htm'));
       const foundKeys = await dbPage.page.evaluate(async () => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const db = await (window as any).ContactStore.dbOpen();
         // first, unlink pubkeys from `flowcrypt.compatibility@gmail.com',
         // so they remain linked only to `flowcryptcompatibility@gmail.com'
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         await (window as any).ContactStore.unlinkPubkey(db, 'flowcrypt.compatibility@gmail.com', { id: '5520CACE2CB61EA713E5B0057FDE685548AEA788', type: 'openpgp ' });
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         await (window as any).ContactStore.unlinkPubkey(db, 'flowcrypt.compatibility@gmail.com', { id: 'E8F0517BA6D7DAB6081C96E4ADAC279C95093207', type: 'openpgp ' });
         const pubkey7FDE685548AEA788: { fingerprint: string } = await new Promise((resolve, reject) => {
           const tx = db.transaction(['pubkeys'], 'readonly');
           const req = tx.objectStore('pubkeys').get('5520CACE2CB61EA713E5B0057FDE685548AEA788');
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           (window as any).ContactStore.setReqPipe(req, resolve, reject);
         });
         const pubkeyADAC279C95093207: { fingerprint: string } = await new Promise((resolve, reject) => {
           const tx = db.transaction(['pubkeys'], 'readonly');
           const req = tx.objectStore('pubkeys').get('E8F0517BA6D7DAB6081C96E4ADAC279C95093207');
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           (window as any).ContactStore.setReqPipe(req, resolve, reject);
         });
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const contactsSize: number = (await (window as any).ContactStore.search(db, { hasPgp: true, substring: 'flowcrypt' })).length;
         return { pubkey7FDE685548AEA788, pubkeyADAC279C95093207, contactsSize };
       });
@@ -273,17 +283,21 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       await contactsFrame.waitAll('@page-contacts');
       await Util.sleep(1);
       const foundKeys1 = await dbPage.page.evaluate(async () => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const db = await (window as any).ContactStore.dbOpen();
         const pubkey7FDE685548AEA788: { fingerprint: string } = await new Promise((resolve, reject) => {
           const tx = db.transaction(['pubkeys'], 'readonly');
           const req = tx.objectStore('pubkeys').get('5520CACE2CB61EA713E5B0057FDE685548AEA788');
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           (window as any).ContactStore.setReqPipe(req, resolve, reject);
         });
         const pubkeyADAC279C95093207: { fingerprint: string } = await new Promise((resolve, reject) => {
           const tx = db.transaction(['pubkeys'], 'readonly');
           const req = tx.objectStore('pubkeys').get('E8F0517BA6D7DAB6081C96E4ADAC279C95093207');
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           (window as any).ContactStore.setReqPipe(req, resolve, reject);
         });
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const contactsSize: number = (await (window as any).ContactStore.search(db, { hasPgp: true, substring: 'flowcrypt' })).length;
         return { pubkey7FDE685548AEA788, pubkeyADAC279C95093207, contactsSize };
       });
@@ -299,17 +313,21 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       await contactsFrame.waitAll('@page-contacts');
       await Util.sleep(1);
       const foundKeys2 = await dbPage.page.evaluate(async () => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const db = await (window as any).ContactStore.dbOpen();
         const pubkey7FDE685548AEA788: { fingerprint: string } = await new Promise((resolve, reject) => {
           const tx = db.transaction(['pubkeys'], 'readonly');
           const req = tx.objectStore('pubkeys').get('5520CACE2CB61EA713E5B0057FDE685548AEA788');
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           (window as any).ContactStore.setReqPipe(req, resolve, reject);
         });
         const pubkeyADAC279C95093207: { fingerprint: string } = await new Promise((resolve, reject) => {
           const tx = db.transaction(['pubkeys'], 'readonly');
           const req = tx.objectStore('pubkeys').get('E8F0517BA6D7DAB6081C96E4ADAC279C95093207');
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           (window as any).ContactStore.setReqPipe(req, resolve, reject);
         });
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const contactsSize: number = (await (window as any).ContactStore.search(db, { hasPgp: true, substring: 'flowcrypt' })).length;
         return { pubkey7FDE685548AEA788, pubkeyADAC279C95093207, contactsSize };
       });

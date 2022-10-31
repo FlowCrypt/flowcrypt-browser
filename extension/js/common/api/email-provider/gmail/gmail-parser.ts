@@ -126,10 +126,9 @@ export class GmailParser {
   };
 
   public static findBodies = (gmailMsg: GmailRes.GmailMsg | GmailRes.GmailMsg$payload | GmailRes.GmailMsg$payload$part, internalResults: SendableMsgBody = {}): SendableMsgBody => {
-    const isGmailMsgWithPayload = (v: any): v is GmailRes.GmailMsg => v && typeof (v as GmailRes.GmailMsg).payload !== 'undefined'; // tslint:disable-line:no-unsafe-any
-    const isGmailMsgPayload = (v: any): v is GmailRes.GmailMsg$payload => v && typeof (v as GmailRes.GmailMsg$payload).parts !== 'undefined'; // tslint:disable-line:no-unsafe-any
-    // tslint:disable-next-line:no-unsafe-any
-    const isGmailMsgPayloadPart = (v: any): v is GmailRes.GmailMsg$payload$part => v && typeof (v as GmailRes.GmailMsg$payload$part).body !== 'undefined';
+    const isGmailMsgWithPayload = (v: unknown): v is GmailRes.GmailMsg => !!v && typeof (v as GmailRes.GmailMsg).payload !== 'undefined';
+    const isGmailMsgPayload = (v: unknown): v is GmailRes.GmailMsg$payload => !!v && typeof (v as GmailRes.GmailMsg$payload).parts !== 'undefined';
+    const isGmailMsgPayloadPart = (v: unknown): v is GmailRes.GmailMsg$payload$part => !!v && typeof (v as GmailRes.GmailMsg$payload$part).body !== 'undefined';
     if (isGmailMsgWithPayload(gmailMsg)) {
       GmailParser.findBodies(gmailMsg.payload!, internalResults);
     }

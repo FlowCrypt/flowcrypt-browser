@@ -31,8 +31,19 @@ export type ClientConfiguration = {
   in_memory_pass_phrase_session_length?: number
 };
 
+export interface ReportedError {
+  name: string;
+  message: string;
+  url: string;
+  line: number;
+  col: number;
+  trace: string;
+  version: string;
+  environmane: string;
+}
+
 export class BackendData {
-  public reportedErrors: { name: string, message: string, url: string, line: number, col: number, trace: string, version: string, environmane: string }[] = [];
+  public reportedErrors: ReportedError[] = [];
 
   public clientConfigurationByAcctEmail: Dict<ClientConfiguration | HttpClientErr> = {};
 
