@@ -1547,7 +1547,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       await Util.sleep(1);
       await pubkeyFrame.close();
       await composePage.waitForContent('.email_address.has_pgp:not(.no_pgp)', recipientEmail);
-      await composePage.waitAny('@password-or-pubkey-container', { visible: false });
+      await composePage.waitAll('@password-or-pubkey-container', { visible: false });
     }));
 
     ava.default('attester client should understand more than one pub key', testWithBrowser('ci.tests.gmail', async (t, browser) => {
@@ -2005,7 +2005,7 @@ export const expectRecipientElements = async (controllable: ControllablePage, ex
   for (const type of ['to', 'cc', 'bcc']) {
     const expectedEmails: EmailParts[] | undefined = (expected as Dict<EmailParts[]>)[type] || undefined; // tslint:disable-line:no-unsafe-any
     if (expectedEmails) {
-      const container = await controllable.waitAny(`@container-${type}`, { visible: false });
+      const container = await controllable.waitAny(`@container-${type}`, { visible: undefined });
       const recipientElements = await container.$$('.recipients > span');
       expect(recipientElements.length).to.equal(expectedEmails.length);
       for (const recipientElement of recipientElements) {

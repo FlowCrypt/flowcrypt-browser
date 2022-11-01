@@ -76,8 +76,9 @@ abstract class ControllableBase {
     this.log(`wait_all:7:${selectors.join(',')}`);
   };
 
-  public waitAny = async (selector: string | string[], { timeout = TIMEOUT_ELEMENT_APPEAR, visible = true }: { timeout?: number, visible?: boolean } = {}): Promise<ElementHandle> => {
-    return await this.waitAnyInternal(this.selsAsProcessedArr(selector), { timeout, visible });
+  public waitAny = async (selector: string | string[], properties: { timeout?: number, visible: true | undefined } | { timeout?: number } = {}): Promise<ElementHandle> => {
+    const visible = 'visible' in properties ? properties.visible : true;
+    return await this.waitAnyInternal(this.selsAsProcessedArr(selector), { timeout: properties.timeout ?? TIMEOUT_ELEMENT_APPEAR, visible });
   };
 
   public waitTillGone = async (selector: string | string[], { timeout = TIMEOUT_ELEMENT_GONE }: { timeout?: number } = {}) => {
@@ -511,7 +512,7 @@ abstract class ControllableBase {
     return (Array.isArray(selector) ? selector : [selector]).map(this.selector);
   };
 
-  private waitAnyInternal = async (processedSelectors: string[], { timeout = 1, visible }: { timeout?: number, visible?: boolean } = {}): Promise<ElementHandle> => {
+  private waitAnyInternal = async (processedSelectors: string[], { timeout, visible }: { timeout: number, visible?: true }): Promise<ElementHandle> => {
     const attemptsPerSecond = 20;
     timeout = Math.max(timeout * attemptsPerSecond, 1);
     while (timeout-- > 0) {
