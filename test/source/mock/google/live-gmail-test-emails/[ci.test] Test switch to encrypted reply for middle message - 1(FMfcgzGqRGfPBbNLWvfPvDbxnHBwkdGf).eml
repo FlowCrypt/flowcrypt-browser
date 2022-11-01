@@ -1,0 +1,95 @@
+Delivered-To: ci.tests.gmail@flowcrypt.dev
+Received: by 2002:a05:7108:7043:0:0:0:0 with SMTP id v3csp437571gdd;
+        Thu, 27 Oct 2022 05:32:40 -0700 (PDT)
+X-Received: by 2002:a17:907:1ca2:b0:78d:ec49:9c2f with SMTP id nb34-20020a1709071ca200b0078dec499c2fmr41458587ejc.308.1666873960344;
+        Thu, 27 Oct 2022 05:32:40 -0700 (PDT)
+ARC-Seal: i=1; a=rsa-sha256; t=1666873960; cv=none;
+        d=google.com; s=arc-20160816;
+        b=Ju0iQl6VYX2kU7PH33nQDpoQY52vcSiqmoMgKDjtY+BMEcdiXAxrqGeEVATGKAUQfi
+         +/sqe/W/MUIBwQaWCNgt9f8oBTNSVE0ncXl2Dz7QGvGse9frr2/r2eFPI3qQbE795rEN
+         yoWeB75/U0NL8BYUOHYZGmWQe4aHcJGyk1Dugy8Oz9nwdCeZCm3uwHI5RMZwJE6+1vOP
+         4gY+PznZVFUXSDyIYUyxieqo7kYcQGAX/sXDPRJbVzCUWdYcgiunwxTSfkaEtJ5BmD5O
+         omiGAmB/ojvlADryxLW/IhqY3sq2d92uXp+oDwao97+FHrqVqqkD/ijPLsf2q677vhLd
+         R0Dw==
+ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=google.com; s=arc-20160816;
+        h=to:subject:message-id:date:mime-version:from:references:in-reply-to
+         :openpgp:dkim-signature;
+        bh=/QSYF3a8WJ5/wubPD5HdHOOhxDRMuGqUXZdYb3TzNc4=;
+        b=dZA2RZTM5bcwXkz6pgJCr7MU10txwFTiz3OEPyRwGNL98A9FDhj3C8O5Riz6pwsGHE
+         db8zuXW33+j1vYAQLFbbfTShr/tzjoUYm+dD/+RcGIQE/e8mGaXdn2XEK9XEXQTPgwEY
+         2DOGK9AOt6rpZdSqAn6PuXyUHlgPox5Ml1eAtgDCv3QbGRlcv1/vMqsQGUWWuzqnVbeF
+         7onSZEXci+4+DDnN+na+qJrhnZvEQFEQI5ylhLbqBD+OUPbjYHnL5dmfkODWTuhurahG
+         xHo01o72374FVsFUk8wTCbhAW4eQazE3lJpXJsmZH5KujYoByzm7AxKvdh2X6eAsRbqi
+         RUlg==
+ARC-Authentication-Results: i=1; mx.google.com;
+       dkim=pass header.i=@flowcrypt.com header.s=google header.b=XLchPEOe;
+       spf=pass (google.com: domain of ioan@flowcrypt.com designates 209.85.220.41 as permitted sender) smtp.mailfrom=ioan@flowcrypt.com;
+       dmarc=pass (p=REJECT sp=REJECT dis=NONE) header.from=flowcrypt.com
+Return-Path: <ioan@flowcrypt.com>
+Received: from mail-sor-f41.google.com (mail-sor-f41.google.com. [209.85.220.41])
+        by mx.google.com with SMTPS id t16-20020a170906179000b0073156e6c642sor672538eje.11.2022.10.27.05.32.40
+        for <ci.tests.gmail@flowcrypt.dev>
+        (Google Transport Security);
+        Thu, 27 Oct 2022 05:32:40 -0700 (PDT)
+Received-SPF: pass (google.com: domain of ioan@flowcrypt.com designates 209.85.220.41 as permitted sender) client-ip=209.85.220.41;
+Authentication-Results: mx.google.com;
+       dkim=pass header.i=@flowcrypt.com header.s=google header.b=XLchPEOe;
+       spf=pass (google.com: domain of ioan@flowcrypt.com designates 209.85.220.41 as permitted sender) smtp.mailfrom=ioan@flowcrypt.com;
+       dmarc=pass (p=REJECT sp=REJECT dis=NONE) header.from=flowcrypt.com
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=flowcrypt.com; s=google;
+        h=to:subject:message-id:date:mime-version:from:references:in-reply-to
+         :openpgp:from:to:cc:subject:date:message-id:reply-to;
+        bh=/QSYF3a8WJ5/wubPD5HdHOOhxDRMuGqUXZdYb3TzNc4=;
+        b=XLchPEOeMnunob+1kuBDeWUvX68qJ2coFX4W/lgrThk3d762d7RK7YobruTOQNjzlx
+         ev1iITE7Xv+Lnt5jb8TqmYzftUlPsE59RNR3zM3Dmn42aZvCUuCAlqmS+0+JPT9Son5u
+         Mscj1HpUihbSnOX4NE6U0s36jGXbALHM7857o=
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20210112;
+        h=to:subject:message-id:date:mime-version:from:references:in-reply-to
+         :openpgp:x-gm-message-state:from:to:cc:subject:date:message-id
+         :reply-to;
+        bh=/QSYF3a8WJ5/wubPD5HdHOOhxDRMuGqUXZdYb3TzNc4=;
+        b=R09MXKX9QK9zKh2zeia8e44VQuyozrzoBWibL8wKf/z7nQ15QhrTYBLxW44kRUxtx5
+         8Mz43KcwoDAldSbISDs6+DUJu5VLgxYiMFzFe6LbgmRgGi2tw887GRAL2NfBFEHx/dUM
+         09L4xl9jEbsLztVHUYm+leKW+oP6pE6fJU+Gt7f4Y/7n9FgYPrJjsjyIVaWXQijOizBk
+         lGGHp7oFwE0yj7nfSlVctV2ecUGyfbEGGvI20A8yZBlicAmm3DHB+YrGygEFEGo8J1Um
+         OokabZra2bxIdPA+EEDXMx6fZ83mXHSj2PcAiSRueqyxrmhoh0TSmImIzjJyC8R8IqBJ
+         yHZw==
+X-Gm-Message-State: ACrzQf3jV1uS/d1RHaClBvRp2JxYdYsYMz+KggJQNE1Yr0houoVdzPYk
+	P705a8u/3QlF9azMeW2/B+qJf62CrlG/GKE98+tuCVnG6pc=
+X-Google-Smtp-Source: AMsMyM6Lhp1wCpv8BkYq2ALUlAbSVuATxKQa0VRZq6yD/BBMtEropBnIKTubDN0xJ200WwG2s8WjrS3imv0sGBlikkQ=
+X-Received: by 2002:a17:906:5dcc:b0:78d:fb98:6f85 with SMTP id
+ p12-20020a1709065dcc00b0078dfb986f85mr42928280ejv.123.1666873959407; Thu, 27
+ Oct 2022 05:32:39 -0700 (PDT)
+Received: from 717284730244 named unknown by gmailapi.google.com with
+ HTTPREST; Thu, 27 Oct 2022 05:32:38 -0700
+Openpgp: id=F78199EC3D3FE74B7C897AA79B390120D7FB8D51
+In-Reply-To: <CAO9FY9s4yM5-m9eoMtjFiq00FR7TiOnGOsXS=L4aPrLmj0RxyA@mail.gmail.com>
+References: <CAO9FY9s4yM5-m9eoMtjFiq00FR7TiOnGOsXS=L4aPrLmj0RxyA@mail.gmail.com>
+From: Ioan at FlowCrypt <ioan@flowcrypt.com>
+MIME-Version: 1.0
+Date: Thu, 27 Oct 2022 05:32:38 -0700
+Message-ID: <CAPC3khDSFFDx_+TDyqfmeEEjejNTsmThPqmKrfMYEtY9RXCkjw@mail.gmail.com>
+Subject: Re: Test switch to encrypted reply for middle message
+To: ci.tests.gmail@flowcrypt.dev
+Content-Type: text/plain; charset="UTF-8"
+
+-----BEGIN PGP MESSAGE-----
+Version: FlowCrypt Email Encryption 8.3.8
+Comment: Seamlessly send and receive encrypted email
+
+wV4DeWfgCtVtdnoSAQdAkxBFQCKlratvhhRZ1OLJQXYNmvqBLucRgPN8/vU9
+5hswPRujLKpAcCV+g19tmFHIg9+1EQmVUmAl3zcz9gfU4kNUAbkjYtJFC3fl
+KlHT3aU2wV4DilmfrU+kpo8SAQdAVFMlvBUe4UHyPFbgGlMlAGHSZveBjsFG
+FCX5HVLaXQMwHlhUcB5jYmqVfHJdTGWBxS2QBnWGM2U6ourY4I41BuOgCkbt
+vw4sw4YUMRnYD47V0sB/AYB8MjeDKpObyGUnK2u0lHNA42hlFCBahVTOSBXb
+i8q0Gg7WP/aICkDWwne4GA8ZdaVZKAklVZiMshvsPS4xhon5fLYEK4QIWQHI
+Zg4QadaN8wNbaJUM+QN3nFYvpVFu255xoMenJo4VT9MTRjLnrbQGHVbpr1mF
+0dEEMm45doWZHkbX8jSIrDr3ctIRUbcq4+XlmGQ5LzQSACwiOwHJ0p45zObY
+om6m4qOD1gvmw96HN4uZbKw+pmWG5jmncx1pdzuXoSqNIC8vLl5gIxSRde1x
+uPee6Z14fwEZanT7BVoz1Tsku373z4iS4WHkmNoZkZuq0U0BSE4EHLdSqr0S
+UbsaDGoAYsG5/QHXMcpWugiq16wUCXH9UUyu3zFzYpdE19LijQJBRWGoL2x3
+Ym7zHSZYlESWe+5lu3iWmw2cMw==
+=JdXp
+-----END PGP MESSAGE-----
