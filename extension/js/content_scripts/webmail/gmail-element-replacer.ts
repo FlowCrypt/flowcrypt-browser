@@ -633,9 +633,15 @@ export class GmailElementReplacer implements WebmailElementReplacer {
           }
           if (!midConvoDraft) { // either is a draft in the middle, or the convo already had (last) box replaced: should also be useless draft
             const isReplyButtonView = replyBoxEl.className.includes('nr');
-            const secureReplyBoxXssSafe = `<div class="remove_borders reply_message_iframe_container">${this.factory.embeddedReply(replyParams, this.shouldShowEditableSecureReply)}</div>`;
+            const replyBoxes = document.querySelectorAll('iframe.reply_message');
+            const alreadyHasSecureReplyBox = replyBoxes.length > 0;
+            const secureReplyBoxXssSafe = `
+              <div class="remove_borders reply_message_iframe_container">
+                ${this.factory.embeddedReply(replyParams, this.shouldShowEditableSecureReply || alreadyHasSecureReplyBox)}
+              </div>
+            `;
             this.shouldShowEditableSecureReply = !isReplyButtonView;
-            if (hasDraft) {
+            if (hasDraft || alreadyHasSecureReplyBox) {
               replyBox.addClass('reply_message_evaluated remove_borders').parent().append(secureReplyBoxXssSafe); // xss-safe-factory
               replyBox.hide();
             } else if (isReplyButtonView) {
