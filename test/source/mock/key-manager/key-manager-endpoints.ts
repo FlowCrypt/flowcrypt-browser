@@ -8,6 +8,7 @@ import { Dict } from '../../core/common';
 import { expect } from 'chai';
 import { KeyUtil } from '../../core/crypto/key';
 import { testConstants } from '../../tests/tooling/consts';
+import { opgp } from '../../core/crypto/pgp/openpgpjs-custom';
 
 // tslint:disable:max-line-length
 /* eslint-disable max-len */
@@ -227,6 +228,10 @@ export const mockKeyManagerEndpoints: HandlersDefinition = {
       }
       if (acctEmail === 'get.key@no-submit-client-configuration.key-manager-autogen.flowcrypt.test') {
         return { privateKeys: [{ decryptedPrivateKey: prvNoSubmit }] };
+      }
+      if (acctEmail === 'flowcrypt.notify.expiring.keys@gmail.com') {
+        const key = await opgp.generateKey({ curve: 'curve25519', userIds: [{ email: acctEmail }], keyExpirationTime: 20 * 24 * 60 * 60});
+        return { privateKeys: [{ decryptedPrivateKey:  key.privateKeyArmored }] };
       }
       if (acctEmail === 'two.keys@key-manager-autogen.flowcrypt.test') {
         return { privateKeys: [{ decryptedPrivateKey: twoKeys1 }, { decryptedPrivateKey: twoKeys2 }] };

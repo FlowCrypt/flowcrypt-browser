@@ -2,26 +2,26 @@
 
 'use strict';
 
-import { Bm, BrowserMsg, TabIdRequiredError } from '../../common/browser/browser-msg.js';
-import { Env, WebMailName } from '../../common/browser/env.js';
-import { WebmailVariantString, XssSafeFactory } from '../../common/xss-safe-factory.js';
-import { BrowserMsgCommonHandlers } from '../../common/browser/browser-msg-common-handlers.js';
-import { Catch } from '../../common/platform/catch.js';
-import { ContentScriptWindow } from '../../common/browser/browser-window.js';
-import { Injector } from '../../common/inject.js';
-import { Notifications } from '../../common/notifications.js';
 import Swal from 'sweetalert2';
+import { AccountServer } from '../../common/api/account-server.js';
+import { KeyManager } from '../../common/api/key-server/key-manager.js';
+import { ApiErr, BackendAuthErr } from '../../common/api/shared/api-error.js';
+import { BrowserMsgCommonHandlers } from '../../common/browser/browser-msg-common-handlers.js';
+import { Bm, BrowserMsg, TabIdRequiredError } from '../../common/browser/browser-msg.js';
+import { ContentScriptWindow } from '../../common/browser/browser-window.js';
+import { Env, WebMailName } from '../../common/browser/env.js';
 import { Ui } from '../../common/browser/ui.js';
+import { ClientConfiguration } from '../../common/client-configuration.js';
+import { Url } from '../../common/core/common.js';
 import { InMemoryStoreKeys, VERSION } from '../../common/core/const.js';
+import { Injector } from '../../common/inject.js';
+import { Lang } from '../../common/lang.js';
+import { Notifications } from '../../common/notifications.js';
+import { Catch } from '../../common/platform/catch.js';
 import { AcctStore } from '../../common/platform/store/acct-store.js';
 import { GlobalStore } from '../../common/platform/store/global-store.js';
-import { ClientConfiguration } from '../../common/client-configuration.js';
-import { KeyManager } from '../../common/api/key-server/key-manager.js';
 import { InMemoryStore } from '../../common/platform/store/in-memory-store.js';
-import { AccountServer } from '../../common/api/account-server.js';
-import { ApiErr, BackendAuthErr } from '../../common/api/shared/api-error.js';
-import { Url } from '../../common/core/common.js';
-import { Lang } from '../../common/lang.js';
+import { WebmailVariantString, XssSafeFactory } from '../../common/xss-safe-factory.js';
 
 export type WebmailVariantObject = { newDataLayer: undefined | boolean, newUi: undefined | boolean, email: undefined | string, gmailVariant: WebmailVariantString };
 export type IntervalFunction = { interval: number, handler: () => void };
@@ -318,6 +318,29 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
 
   };
 
+  const notifyExpiringKeys = async (acctEmail: string, clientConfiguration: ClientConfiguration, notifications: Notifications) => {
+    const expiration = await BrowserMsg.send.bg.await.getLocalKeyExpiration({acctEmail});
+    if (expiration === undefined) {
+      return;
+    }
+    const expireInDays = Math.ceil((expiration - Date.now()) / 1000 / 60 / 60 / 24);
+    console.log(`expireInDays: ${expireInDays}`);
+    if (expireInDays > 30) {
+      return;
+    }
+    let warningMsg;
+    if (clientConfiguration.usesKeyManager()) {
+      warningMsg = `Your local keys expire in ${expireInDays} days.<br/>To receive the latest keys, please ensure that you can connect to your corporate network either through VPN or in person and reload Gmail.<br/>` + 
+      `If this notification still shows after that, please contact your Help Desk.`;
+    } else {
+      warningMsg = `Your keys are expiring in ${expireInDays} days. Please import a newer set of keys to use.`;
+    }
+    warningMsg += `<a href="#" class="close" data-test="notification-close-expiration-popup">close</a>`;
+    console.log(warningMsg);
+    notifications.clear();
+    notifications.show(warningMsg);
+  };
+
   const entrypoint = async () => {
     try {
       const acctEmail = await waitForAcctEmail();
@@ -329,6 +352,7 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
       const clientConfiguration = await ClientConfiguration.newInstance(acctEmail);
       await startPullingKeysFromEkm(acctEmail, clientConfiguration, factory, ppEvent);
       await webmailSpecific.start(acctEmail, clientConfiguration, inject, notifications, factory, notifyMurdered);
+      await notifyExpiringKeys(acctEmail, clientConfiguration, notifications);
     } catch (e) {
       if (e instanceof TabIdRequiredError) {
         console.error(`FlowCrypt cannot start: ${String(e)}`);

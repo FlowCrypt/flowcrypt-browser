@@ -20,6 +20,7 @@ import { TestUrls } from '../browser/test-urls';
 import { BrowserHandle, ControllablePage } from '../browser';
 import { OauthPageRecipe } from './page-recipe/oauth-page-recipe';
 import { AvaContext } from './tooling';
+import { opgp } from '../core/crypto/pgp/openpgpjs-custom';
 
 // tslint:disable:no-blank-lines-func
 // tslint:disable:no-unused-expression
@@ -496,6 +497,63 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       await gmailPage.notPresent(['@webmail-notification', '@notification-setup-action-open-settings', '@notification-setup-action-dismiss', '@notification-setup-action-close']);
     }));
 
+    ava.default.only('setup [not using key manager] - notify users when their keys expire soon', testWithBrowser(undefined, async (t, browser) => {
+      const acctEmail = 'flowcrypt.notify.expiring.keys@gmail.com';
+      const passphrase = '1234';
+      const warningMsg = 'Your keys are expiring in 18 days. Please import a newer set of keys to use.';
+      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
+      // Generate key that expires in 20 days
+      const key = await opgp.generateKey({
+        curve: 'curve25519',
+        userIds: [{ email: acctEmail }],
+        keyExpirationTime: 20 * 24 * 60 * 60,
+        passphrase,
+        date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000)
+      });
+      // Setup with above key
+      await SetupPageRecipe.manualEnter(settingsPage, 'unused', {
+        submitPubkey: false,
+        usedPgpBefore: false,
+        key: {
+          title: '?',
+          armored: key.privateKeyArmored,
+          passphrase,
+          longid: '1b383d0334e38b28',
+        }
+      }, { isSavePassphraseChecked: false, isSavePassphraseHidden: false });
+      const gmailPage = await openMockGmailPage(t, browser, acctEmail);
+      // Check if notification presents
+      await gmailPage.waitForContent('@webmail-notification', warningMsg);
+      // Add updated key that expires in 100 days
+      await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
+      const addKeyPopup = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-add-key-page', ['add_key.htm']);
+      await addKeyPopup.waitAndClick('@source-paste');
+      const updatedKey = await opgp.generateKey({
+        curve: 'curve25519',
+        userIds: [{ email: acctEmail }],
+        passphrase,
+        keyExpirationTime: 100 * 24 * 60 * 60
+      });
+      await addKeyPopup.waitAndType('@input-armored-key', updatedKey.privateKeyArmored);
+      await addKeyPopup.waitAndType('#input_passphrase', passphrase);
+      await addKeyPopup.waitAndClick('.action_add_private_key', { delay: 1});
+      await gmailPage.page.reload();
+      await gmailPage.notPresent('@webmail-notification');
+      // remove added key and observe warning appears again
+      await settingsPage.waitAndClick('@action-remove-key-1');
+      await gmailPage.page.reload();
+      await gmailPage.waitForContent('@webmail-notification', warningMsg);
+      await Util.sleep(100000);
+    }));
+
+    ava.default('setup [using key manager] - notify users when their keys expire soon', testWithBrowser(undefined, async (t, browser) => {
+      const acct = 'flowcrypt.notify.expiring.keys@gmail.com';
+      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
+      await SetupPageRecipe.autoSetupWithEKM(settingsPage);
+      
+    }));
+
+    
     ava.default.todo('setup - recover with a pass phrase - 1pp1 then wrong, then skip');
     // ava.default('setup - recover with a pass phrase - 1pp1 then wrong, then skip', test_with_browser(async (t, browser) => {
     //   const settingsPage = await BrowserRecipe.open_settings_login_approve(t, browser,'flowcrypt.compatibility@gmail.com');
