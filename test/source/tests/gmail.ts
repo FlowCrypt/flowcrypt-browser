@@ -24,12 +24,28 @@ export type GmailCategory = 'inbox' | 'sent' | 'drafts' | 'spam' | 'trash';
 export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: TestWithBrowser) => {
 
   if (testVariant === 'CONSUMER-LIVE-GMAIL') {
-
-    const pageHasSecureReplyContainer = async (t: AvaContext, browser: BrowserHandle, gmailPage: ControllablePage, { isReplyPromptAccepted }: { isReplyPromptAccepted?: boolean } = {}) => {
+    const pageHasSecureReplyContainer = async (
+      t: AvaContext,
+      browser: BrowserHandle,
+      gmailPage: ControllablePage,
+      {
+        // Check if compose frame(secure reply frame) has reply prompt
+        isReplyPromptAccepted,
+        // Compose Frame(Secure reply container) index. Default is 0 because "secure reply compose container" is located higher than the other "reply or forward buttons" container
+        composeFrameIndex,
+        // Total compose frame count
+        composeFrameCount
+      }:
+      {
+        isReplyPromptAccepted?: boolean,
+        composeFrameIndex?: number,
+        composeFrameCount?: number
+      } = {}
+    ) => {
       const urls = await gmailPage.getFramesUrls(['/chrome/elements/compose.htm'], { sleep: 0 });
-      expect(urls.length).to.equal(1);
+      expect(urls.length).to.equal(composeFrameCount ?? 1);
       if (typeof isReplyPromptAccepted !== 'undefined') {
-        const replyBox = await browser.newPage(t, urls[0]);
+        const replyBox = await browser.newPage(t, urls[composeFrameIndex ?? 0]);
         if (isReplyPromptAccepted) {
           await replyBox.waitAll('@action-send');
           await replyBox.notPresent('@action-accept-reply-prompt');
@@ -104,7 +120,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       await ComposePageRecipe.sendAndClose(composePage);
       await gmailPage.waitAndClick('[aria-label^="Inbox"]');
       await gmailPage.waitAndClick('[role="row"]'); // click the first message
-      await gmailPage.waitForContent('.nH.if h2', `Automated puppeteer test: ${subject}`);
+      await gmailPage.waitForContent('.nH h2.hP', `Automated puppeteer test: ${subject}`);
       const urls = await gmailPage.getFramesUrls(['/chrome/elements/pgp_block.htm'], { sleep: 1 });
       await GmailPageRecipe.deleteThread(gmailPage);
       expect(urls.length).to.eq(1);
@@ -231,7 +247,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
         await gmailPage.click('//*[text()="delete forever"]');
       }
       await gmailPage.waitAndClick('@secure-reply-button');
-      let replyBox = await gmailPage.getFrame(['/chrome/elements/compose.htm'], { sleep: 3 });
+      let replyBox = await gmailPage.getFrame(['/chrome/elements/compose.htm'], { sleep: 5 });
       await Util.sleep(3);
       expect(await replyBox.read('@recipients-preview')).to.equal('e2e.enterprise.test@flowcrypt.com');
       await createSecureDraft(t, browser, gmailPage, 'reply draft');
@@ -288,12 +304,25 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       await gmailPage.waitForContent('.reply_message_evaluated .error_notification', 'The last message was encrypted, but you are composing a reply without encryption.');
       await gmailPage.waitAndClick('[data-tooltip="Secure Reply"]'); // Switch to encrypted reply
       await gmailPage.waitAll('.reply_message');
-      await pageHasSecureReplyContainer(t, browser, gmailPage, { isReplyPromptAccepted: false });
+      await pageHasSecureReplyContainer(t, browser, gmailPage, { isReplyPromptAccepted: true });
       await gotoGmailPage(gmailPage, '/FMfcgzGkbDRNpjDdNvCrwzqvXspZZxvh'); // go to signed convo
       await gmailPage.waitAndClick('[data-tooltip="Reply"]', { delay: 1 });
       await gmailPage.waitTillGone('.reply_message');
       await gmailPage.waitAll('[data-tooltip^="Send"]'); // The Send button from the Standard reply box
       await gmailPage.notPresent('.reply_message_evaluated .error_notification'); // should not show the warning about switching to encrypted reply
+    }));
+
+    ava.default('mail.google.com - switch to encrypted reply for middle message', testWithBrowser('ci.tests.gmail', async (t, browser) => {
+      const gmailPage = await openGmailPage(t, browser);
+      await gotoGmailPage(gmailPage, '/FMfcgzGqRGfPBbNLWvfPvDbxnHBwkdGf'); // plain convo
+      await gmailPage.waitAndClick('[role="listitem"] .adf.ads', { delay: 1 }); // click first message of thread
+      await Util.sleep(3);
+      await gmailPage.waitAndClick('[data-tooltip="Reply"]', { delay: 1 });
+      await gmailPage.waitAll('[data-tooltip^="Send"]'); // The Send button from the Standard reply box
+      await gmailPage.waitForContent('.reply_message_evaluated .error_notification', 'The last message was encrypted, but you are composing a reply without encryption.');
+      await gmailPage.waitAndClick('[data-tooltip="Secure Reply"]'); // Switch to encrypted reply
+      await gmailPage.waitAll('.reply_message');
+      await pageHasSecureReplyContainer(t, browser, gmailPage, { isReplyPromptAccepted: true, composeFrameCount: 2 });
     }));
 
     ava.default('mail.google.com - plain reply with dot menu', testWithBrowser('ci.tests.gmail', async (t, browser) => {
@@ -310,7 +339,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       await gmailPage.waitForContent('.reply_message_evaluated .error_notification', 'The last message was encrypted, but you are composing a reply without encryption.');
       await gmailPage.waitAndClick('[data-tooltip="Secure Reply"]'); // Switch to encrypted reply
       await gmailPage.waitAll('.reply_message');
-      await pageHasSecureReplyContainer(t, browser, gmailPage, { isReplyPromptAccepted: false });
+      await pageHasSecureReplyContainer(t, browser, gmailPage, { isReplyPromptAccepted: true });
     }));
 
     ava.default('mail.google.com - plain reply draft', testWithBrowser('ci.tests.gmail', async (t, browser) => {

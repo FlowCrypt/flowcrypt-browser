@@ -288,7 +288,9 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       // add a contact containing 2 pubkeys to the storage
       await dbPage.page.evaluate(async (pubkeys: string[]) => {
         for (const pubkey of pubkeys) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const key = await (window as any).KeyUtil.parse(pubkey);
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           await (window as any).ContactStore.update(undefined, 'tocopyfrom@example.test', { pubkey: key });
         }
       }, [testConstants.abcddfTestComPubkey, testConstants.abcdefTestComPubkey]);
@@ -313,6 +315,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       await inboxPage.close();
       // test the pubkeys we copied
       const contact = await dbPage.page.evaluate(async () => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         return await (window as any).ContactStore.getOneWithAllPubkeys(undefined, 'manualcopypgp@flowcrypt.com');
       });
       expect(contact.sortedPubkeys.length).to.equal(2);
@@ -637,8 +640,11 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
     ava.default('compose - revoked OpenPGP key', testWithBrowser('ci.tests.gmail', async (t, browser) => {
       const dbPage = await browser.newPage(t, TestUrls.extension('chrome/dev/ci_unit_test.htm'));
       await dbPage.page.evaluate(async (pubkey: string) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const db = await (window as any).ContactStore.dbOpen();
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const opgpKeyRevoked = await (window as any).KeyUtil.parse(pubkey);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         await (window as any).ContactStore.update(db, 'revoked.pubkey@flowcrypt.com', { pubkey: opgpKeyRevoked });
       }, testConstants.somerevokedValidNowRevoked);
       await dbPage.close();
@@ -653,11 +659,15 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
     ava.default('compose - externally revoked key', testWithBrowser('ci.tests.gmail', async (t, browser) => {
       const dbPage = await browser.newPage(t, TestUrls.extension('chrome/dev/ci_unit_test.htm'));
       await dbPage.page.evaluate(async (pubkey: string) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const db = await (window as any).ContactStore.dbOpen();
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const opgpKeyOldAndValid = await (window as any).KeyUtil.parse(pubkey);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         await (window as any).ContactStore.update(db, 'not.revoked.pubkey@flowcrypt.com', { pubkey: opgpKeyOldAndValid });
         await new Promise((resolve, reject) => {
           const tx = db.transaction(['revocations'], 'readwrite');
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           (window as any).ContactStore.setTxHandlers(tx, resolve, reject);
           tx.objectStore('revocations').put({ fingerprint: opgpKeyOldAndValid.id + '-X509' });
         });
@@ -674,8 +684,11 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
     ava.default('compose - nogpg and revoked recipients trigger both warnings', testWithBrowser('ci.tests.gmail', async (t, browser) => {
       const dbPage = await browser.newPage(t, TestUrls.extension('chrome/dev/ci_unit_test.htm'));
       await dbPage.page.evaluate(async (pubkey: string) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const db = await (window as any).ContactStore.dbOpen();
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const opgpKeyRevoked = await (window as any).KeyUtil.parse(pubkey);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         await (window as any).ContactStore.update(db, 'revoked.pubkey@flowcrypt.com', { pubkey: opgpKeyRevoked });
       }, testConstants.somerevokedValidNowRevoked);
       await dbPage.close();
@@ -688,8 +701,11 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
     ava.default('compose - nogpg and non-revoked recipients trigger nopgp warning only', testWithBrowser('ci.tests.gmail', async (t, browser) => {
       const dbPage = await browser.newPage(t, TestUrls.extension('chrome/dev/ci_unit_test.htm'));
       await dbPage.page.evaluate(async (pubkey: string) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const db = await (window as any).ContactStore.dbOpen();
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const opgpKeyValid = await (window as any).KeyUtil.parse(pubkey);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         await (window as any).ContactStore.update(db, 'not.revoked.pubkey@flowcrypt.com', { pubkey: opgpKeyValid });
       }, testConstants.somerevokedValid);
       await dbPage.close();
@@ -703,8 +719,11 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
     ava.default('compose - revoked recipients trigger revoked warning', testWithBrowser('ci.tests.gmail', async (t, browser) => {
       const dbPage = await browser.newPage(t, TestUrls.extension('chrome/dev/ci_unit_test.htm'));
       await dbPage.page.evaluate(async (pubkey: string) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const db = await (window as any).ContactStore.dbOpen();
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const opgpKeyRevoked = await (window as any).KeyUtil.parse(pubkey);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         await (window as any).ContactStore.update(db, 'revoked.pubkey@flowcrypt.com', { pubkey: opgpKeyRevoked });
       }, testConstants.somerevokedValidNowRevoked);
       await dbPage.close();
@@ -718,8 +737,11 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
     ava.default('compose - good recipients trigger no warning', testWithBrowser('ci.tests.gmail', async (t, browser) => {
       const dbPage = await browser.newPage(t, TestUrls.extension('chrome/dev/ci_unit_test.htm'));
       await dbPage.page.evaluate(async (pubkey: string) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const db = await (window as any).ContactStore.dbOpen();
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const opgpKeyValid = await (window as any).KeyUtil.parse(pubkey);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         await (window as any).ContactStore.update(db, 'not.revoked.pubkey@flowcrypt.com', { pubkey: opgpKeyValid });
       }, testConstants.somerevokedValid);
       await dbPage.close();
@@ -803,6 +825,42 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       await composeFrame.waitForContent('@input-body', 'test text');
       await inboxPage.close();
       await settingsPage.close();
+    }));
+
+    ava.default('compose - check reply to multiple recipients issue', testWithBrowser('compatibility', async (t, browser) => {
+      const appendUrl = 'threadId=183ec175f060b2c2&skipClickPrompt=___cu_false___&replyMsgId=183ec175f060b2c2';
+      const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl, hasReplyPrompt: true, skipClickPropt: true });
+      await composePage.waitAndClick('@encrypted-reply');
+      await composePage.waitForContent('@recipients-preview', 'sender@domain.com');
+      await composePage.waitAndClick('@action-show-container-cc-bcc-buttons');
+      await expectRecipientElements(composePage, { to: [{ email: 'sender@domain.com' }] });
+      await composePage.waitAndClick('@action-remove-senderdomaincom-recipient');
+      await expectRecipientElements(composePage, { to: [] });
+    }));
+
+    ava.default('compose - change reply option while composing', testWithBrowser('compatibility', async (t, browser) => {
+      const appendUrl = 'threadId=183ec175f060b2c2&skipClickPrompt=___cu_false___&replyMsgId=183ec175f060b2c2';
+      const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl, hasReplyPrompt: true });
+      await composePage.waitAndClick('@action-accept-reply-all-prompt');
+      await composePage.waitForContent('@recipients-preview', 'sender@domain.comtest@gmail.comtest2@gmail.comtest3@gmail.comtest4@gmail.comtest5@gmail.com');
+      await composePage.waitAndClick('@action-show-reply-options-popover');
+      await composePage.waitAndClick('@action-toggle-a_reply');
+      await composePage.waitForContent('@recipients-preview', 'sender@domain.com');
+      await composePage.waitAndClick('@action-show-reply-options-popover');
+      await composePage.waitAndClick('@action-toggle-a_forward');
+      await composePage.waitUntilFocused('@input-to');
+      await expectRecipientElements(composePage, { to: [], cc: [], bcc: [] });
+      await composePage.waitAndClick('@action-show-reply-options-popover');
+      await composePage.waitAndClick('@action-toggle-a_reply_all');
+      await composePage.waitForContent('@recipients-preview', 'sender@domain.comtest@gmail.comtest2@gmail.comtest3@gmail.comtest4@gmail.comtest5@gmail.com');
+    }));
+
+    ava.default('compose - hide reply all option button for signle recipient', testWithBrowser('compatibility', async (t, browser) => {
+      const appendUrl = 'threadId=182263bf9f105adf&skipClickPrompt=___cu_false___&replyMsgId=182263bf9f105adf';
+      const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl, hasReplyPrompt: true });
+      await composePage.waitAndClick('@encrypted-reply');
+      await composePage.waitAndClick('@action-show-reply-options-popover');
+      await composePage.notPresent('@action-toggle-a_reply_all');
     }));
 
     // todo: load a draft encrypted by non-first key, enetering passphrase for it
@@ -1489,7 +1547,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       await Util.sleep(1);
       await pubkeyFrame.close();
       await composePage.waitForContent('.email_address.has_pgp:not(.no_pgp)', recipientEmail);
-      await composePage.waitAny('@password-or-pubkey-container', { visible: false });
+      await composePage.waitAll('@password-or-pubkey-container', { visible: false });
     }));
 
     ava.default('attester client should understand more than one pub key', testWithBrowser('ci.tests.gmail', async (t, browser) => {
@@ -1707,8 +1765,11 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       // add names to contacts
       const dbPage = await browser.newPage(t, TestUrls.extension('chrome/dev/ci_unit_test.htm'));
       await dbPage.page.evaluate(async () => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const db = await (window as any).ContactStore.dbOpen();
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         await (window as any).ContactStore.update(db, 'to@example.com', { name: 'Mr To' });
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         await (window as any).ContactStore.update(db, 'bcc@example.com', { name: 'Mr Bcc' });
       });
       await dbPage.close();
@@ -1944,7 +2005,7 @@ export const expectRecipientElements = async (controllable: ControllablePage, ex
   for (const type of ['to', 'cc', 'bcc']) {
     const expectedEmails: EmailParts[] | undefined = (expected as Dict<EmailParts[]>)[type] || undefined; // tslint:disable-line:no-unsafe-any
     if (expectedEmails) {
-      const container = await controllable.waitAny(`@container-${type}`, { visible: false });
+      const container = await controllable.waitAny(`@container-${type}`, { visible: undefined });
       const recipientElements = await container.$$('.recipients > span');
       expect(recipientElements.length).to.equal(expectedEmails.length);
       for (const recipientElement of recipientElements) {

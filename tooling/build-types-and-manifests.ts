@@ -16,6 +16,7 @@ import { execSync as exec } from 'child_process';
 const DIR = './build';
 const version: string = JSON.parse(readFileSync('./package.json').toString()).version;
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const addManifest = (toBuildType: string, transform: (manifest: { [k: string]: any }) => void) => {
   const manifest = JSON.parse(readFileSync(`${DIR}/generic-extension-wip/manifest.json`).toString());
   transform(manifest);

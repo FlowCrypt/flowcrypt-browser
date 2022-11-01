@@ -96,7 +96,7 @@ export class Attester extends Api {
     return await this.jsonCall<{ sent: boolean }>('welcome-message', { email, pubkey }, 'POST', headers);
   };
 
-  private jsonCall = async <RT>(path: string, values?: Dict<any>, method: ReqMethod = 'POST', hdrs?: Dict<string>): Promise<RT> => {
+  private jsonCall = async <RT>(path: string, values?: Dict<unknown>, method: ReqMethod = 'POST', hdrs?: Dict<string>): Promise<RT> => {
     return await Api.apiCall(ATTESTER_API_HOST, path, values, 'JSON', undefined, { 'api-version': '3', ...hdrs ?? {} }, 'json', method) as RT;
   };
 

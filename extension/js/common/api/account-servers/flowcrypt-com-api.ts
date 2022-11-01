@@ -73,7 +73,7 @@ export class FlowCryptComApi extends Api {
     return await FlowCryptComApi.request<BackendRes.FcMsgToken>('message/token', {}, undefined, FlowCryptComApi.getAuthorizationHeader(idToken));
   };
 
-  private static request = async <RT>(path: string, vals: Dict<any>, fmt: ReqFmt = 'JSON', addHeaders: Dict<string> = {}, progressCbs?: ProgressCbs): Promise<RT> => {
+  private static request = async <RT>(path: string, vals: Dict<unknown>, fmt: ReqFmt = 'JSON', addHeaders: Dict<string> = {}, progressCbs?: ProgressCbs): Promise<RT> => {
     return await FlowCryptComApi.apiCall(FlowCryptWebsite.url('api'), path, vals, fmt, progressCbs, { 'api-version': '3', ...addHeaders });
   };
 

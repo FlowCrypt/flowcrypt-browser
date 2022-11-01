@@ -9,6 +9,7 @@ import { MsgUtil } from '../core/crypto/pgp/msg-util.js';
 import { Ui } from '../browser/ui.js';
 import { PubkeyResult } from '../core/crypto/key.js';
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 declare const qq: any;
 
 export type AttachmentLimits = { count?: number, size?: number, sizeMb?: number, oversize?: (newFileSize: number) => Promise<void> };
@@ -24,6 +25,7 @@ export class AttachmentUI {
   private templatePath = '/chrome/elements/shared/attach.template.htm';
   private getLimits: () => Promise<AttachmentLimits>;
   private attachedFiles: Dict<File> = {};
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private uploader: any = undefined;
   private callbacks: AttachmentUICallbacks = {};
 

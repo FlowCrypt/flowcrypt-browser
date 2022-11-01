@@ -58,9 +58,11 @@ const preserveAsyncStackTracesTransformerFactory = () => {
             const catchClause = ts.factory.createCatchClause('t', ts.factory.createBlock(createStackTracePreservingCatchBlockStatements(node), true));
             if ((node.body as ts.FunctionBody).statements && (node.body as ts.FunctionBody).statements.length) {
               const origFuncContent = ts.factory.createBlock((node.body as ts.FunctionBody).statements, true);
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
               (node.body as any).statements = ts.factory.createNodeArray([ts.factory.createTryStatement(origFuncContent, catchClause, undefined)]);
             } else if (ts.isCallExpression(node.body) || ts.isAwaitExpression(node.body)) { // eg: `x.click(async () => whatever())` or `x.click(async () => await whatever())`
               const origFuncContent = ts.factory.createBlock([ts.factory.createReturnStatement(node.body)], true);
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
               (node.body as any) = ts.factory.createBlock([ts.factory.createTryStatement(origFuncContent, catchClause, undefined)], true);
             }
           }

@@ -6,7 +6,7 @@ import { expect } from 'chai';
 import { IncomingMessage } from 'http';
 import { HandlersDefinition } from '../all-apis-mock';
 import { isPost } from '../lib/mock-util';
-import { BackendData } from './backend-data';
+import { BackendData, ReportedError } from './backend-data';
 import { oauth } from '../lib/oauth';
 
 export const mockBackendData = new BackendData();
@@ -34,11 +34,11 @@ export const mockBackendEndpoints: HandlersDefinition = {
     return { token: 'MT_xMOCKTOKEN' };
   },
   '/api/help/error': async ({ body }) => {
-    mockBackendData.reportedErrors.push(body as any);
+    mockBackendData.reportedErrors.push(body as ReportedError);
     return { saved: true };
   },
   '/api/help/feedback': async ({ body }) => {
-    expect((body as any).email).to.equal('flowcrypt.compatibility@gmail.com');
+    expect((body as { email: string }).email).to.equal('flowcrypt.compatibility@gmail.com');
     return { sent: true, text: 'Feedback sent' };
   },
   '/api/message/upload': async ({ }) => {

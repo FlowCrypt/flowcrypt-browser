@@ -281,7 +281,7 @@ export const mockGoogleEndpoints: HandlersDefinition = {
       }
       throw new HttpClientErr(`MOCK draft not found for ${acct} (draftId: ${id})`, Status.NOT_FOUND);
     } else if (isPut(req)) {
-      const raw = (parsedReq.body as any)?.message?.raw as string; // tslint:disable-line: no-unsafe-any
+      const raw = (parsedReq.body as { message?: { raw: string } })?.message?.raw as string;
       if (!raw) {
         throw new Error('mock Draft PUT without raw data');
       }

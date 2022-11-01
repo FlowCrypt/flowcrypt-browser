@@ -95,12 +95,13 @@ Catch.try(async () => {
         storage.sendAs[acctEmail] = { name: storage.full_name, isPrimary: true };
       }
       injector.btns();
-      replacer = new GmailElementReplacer(factory, clientConfiguration, acctEmail, storage.sendAs, injector, notifications, hostPageInfo.gmailVariant);
+      replacer = new GmailElementReplacer(factory, clientConfiguration, acctEmail, storage.sendAs, injector, notifications);
       await notifications.showInitial(acctEmail);
       const intervaliFunctions = replacer.getIntervalFunctions();
       for (const intervalFunction of intervaliFunctions) {
         intervalFunction.handler();
         replacePgpElsInterval = (window as unknown as ContentScriptWindow).TrySetDestroyableInterval(() => {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           if (typeof (window as any).$ === 'function') {
             intervalFunction.handler();
           } else { // firefox will unload jquery when extension is restarted or updated

@@ -90,8 +90,8 @@
             process.exit(1);
           }
         }
-        if (type === 'object' && JSON.stringify((e as any).thrown) !== '{"nonsense":"yes"}') {
-          console.error(`Unexpected e.throw for type ${type}:\n${JSON.stringify((e as any).thrown)}`);
+        if (type === 'object' && JSON.stringify((e as Error & { thrown: string }).thrown) !== '{"nonsense":"yes"}') {
+          console.error(`Unexpected e.throw for type ${type}:\n${JSON.stringify((e as Error & { thrown: string }).thrown)}`);
           process.exit(1);
         }
         return;

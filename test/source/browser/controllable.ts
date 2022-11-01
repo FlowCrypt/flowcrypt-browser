@@ -12,6 +12,7 @@ import * as path from 'path';
 import * as mkdirp from 'mkdirp';
 import { Dict } from '../core/common';
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 declare const jQuery: any;
 
 abstract class ControllableBase {
@@ -75,8 +76,9 @@ abstract class ControllableBase {
     this.log(`wait_all:7:${selectors.join(',')}`);
   };
 
-  public waitAny = async (selector: string | string[], { timeout = TIMEOUT_ELEMENT_APPEAR, visible = true }: { timeout?: number, visible?: boolean } = {}): Promise<ElementHandle> => {
-    return await this.waitAnyInternal(this.selsAsProcessedArr(selector), { timeout, visible });
+  public waitAny = async (selector: string | string[], properties: { timeout?: number, visible: true | undefined } | { timeout?: number } = {}): Promise<ElementHandle> => {
+    const visible = 'visible' in properties ? properties.visible : true;
+    return await this.waitAnyInternal(this.selsAsProcessedArr(selector), { timeout: properties.timeout ?? TIMEOUT_ELEMENT_APPEAR, visible });
   };
 
   public waitTillGone = async (selector: string | string[], { timeout = TIMEOUT_ELEMENT_GONE }: { timeout?: number } = {}) => {
@@ -447,6 +449,7 @@ abstract class ControllableBase {
     const resolvePromise: Promise<void> = (async () => {
       const downloadPath = path.resolve(__dirname, 'download', Util.lousyRandom());
       mkdirp.sync(downloadPath);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       await (this.target as any)._client().send('Page.setDownloadBehavior', { behavior: 'allow', downloadPath });
       if (typeof selector === 'string') {
         await this.waitAndClick(selector);
@@ -509,7 +512,7 @@ abstract class ControllableBase {
     return (Array.isArray(selector) ? selector : [selector]).map(this.selector);
   };
 
-  private waitAnyInternal = async (processedSelectors: string[], { timeout = 1, visible }: { timeout?: number, visible?: boolean } = {}): Promise<ElementHandle> => {
+  private waitAnyInternal = async (processedSelectors: string[], { timeout, visible }: { timeout: number, visible?: true }): Promise<ElementHandle> => {
     const attemptsPerSecond = 20;
     timeout = Math.max(timeout * attemptsPerSecond, 1);
     while (timeout-- > 0) {
@@ -641,9 +644,9 @@ export class ControllablePage extends ControllableBase {
     return await dialogPromise;
   };
 
-  public waitForNavigationIfAny = async (seconds: number = 5) => {
+  public waitForNavigationIfAny = async (triggeringAction: () => Promise<void>, seconds: number = 5) => {
     try {
-      await this.page.waitForNavigation({ timeout: seconds * 1000 });
+      await Promise.all([this.page.waitForNavigation({ timeout: seconds * 1000 }), triggeringAction()]);
     } catch (e) {
       // can be "Navigation Timeout Exceeded" or "Navigation timeout of 5000 ms exceeded"
       if (new RegExp('^Navigation timeout .*xceeded$').test(e.message)) {

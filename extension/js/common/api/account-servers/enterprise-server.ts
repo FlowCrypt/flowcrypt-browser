@@ -157,7 +157,7 @@ export class EnterpriseServer extends Api {
     throw new BackendAuthErr('Missing id token, please re-authenticate');
   };
 
-  private request = async <RT>(method: ReqMethod, path: string, headers: Dict<string> = {}, vals?: Dict<any>): Promise<RT> => {
+  private request = async <RT>(method: ReqMethod, path: string, headers: Dict<string> = {}, vals?: Dict<unknown>): Promise<RT> => {
     return await EnterpriseServer.apiCall(this.url, path, vals, method === 'GET' ? undefined : 'JSON', undefined, headers, 'json', method);
   };
 

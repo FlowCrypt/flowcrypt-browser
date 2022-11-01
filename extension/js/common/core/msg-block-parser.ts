@@ -112,7 +112,7 @@ export class MsgBlockParser {
     return normalized;
   };
 
-  public static extractFcReplyToken = (decryptedContent: string): undefined | any => {
+  public static extractFcReplyToken = (decryptedContent: string): unknown | undefined => {
     const fcTokenElement = $(`<div>${decryptedContent}</div>`).find('.cryptup_reply');
     if (fcTokenElement.length) {
       const fcData = fcTokenElement.attr('cryptup-data');
@@ -120,14 +120,15 @@ export class MsgBlockParser {
         return Str.htmlAttrDecode(fcData);
       }
     }
+    return undefined;
   };
 
   public static stripFcTeplyToken = (decryptedContent: string) => {
     return decryptedContent.replace(/<div[^>]+class="cryptup_reply"[^>]+><\/div>/, '');
   };
 
-  private static isFcAttachmentLinkData = (o: any): o is FcAttachmentLinkData => {
-    return o && typeof o === 'object' && typeof (o as FcAttachmentLinkData).name !== 'undefined' // tslint:disable-line:no-unsafe-any
+  private static isFcAttachmentLinkData = (o: unknown): o is FcAttachmentLinkData => {
+    return !!o && typeof o === 'object' && typeof (o as FcAttachmentLinkData).name !== 'undefined'
       && typeof (o as FcAttachmentLinkData).size !== 'undefined' && typeof (o as FcAttachmentLinkData).type !== 'undefined';
   };
 
