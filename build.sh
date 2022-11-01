@@ -58,7 +58,7 @@ cp node_modules/zxcvbn/dist/zxcvbn.js $OUTDIR/lib/zxcvbn.js
 cp node_modules/squire-rte/build/squire-raw.js $OUTDIR/lib/squire-raw.js
 cp node_modules/clipboard/dist/clipboard.js $OUTDIR/lib/clipboard.js
 cp node_modules/@flowcrypt/fine-uploader/fine-uploader/fine-uploader.js $OUTDIR/lib/fine-uploader.js
-cp node_modules/filesize/lib/filesize.js $OUTDIR/lib/filesize.js
+cp node_modules/filesize/dist/filesize.js $OUTDIR/lib/filesize.js
 cp node_modules/pdfjs-dist/build/pdf.js $OUTDIR/lib/pdf.js
 cp node_modules/pdfjs-dist/build/pdf.worker.js $OUTDIR/lib/pdf.worker.js
 mkdir -p $OUTDIR/lib/bootstrap
