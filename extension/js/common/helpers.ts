@@ -172,4 +172,4 @@ export const getLocalKeyExpiration = async ({ acctEmail }: Bm.GetLocalKeyExpirat
   const keyExpiration = keyInfos
     .sort((key1, key2) => (key1.expiration ?? 0) < (key2.expiration ?? 0) ? 1 : -1)[0]?.expiration;
   return keyExpiration;
-}
+};

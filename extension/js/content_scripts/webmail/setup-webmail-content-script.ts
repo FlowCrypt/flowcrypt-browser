@@ -330,13 +330,13 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
     }
     let warningMsg;
     if (clientConfiguration.usesKeyManager()) {
-      warningMsg = `Your local keys expire in ${expireInDays} days.<br/>To receive the latest keys, please ensure that you can connect to your corporate network either through VPN or in person and reload Gmail.<br/>` + 
+      warningMsg = `Your local keys expire in ${expireInDays} days.<br/>` +
+      `To receive the latest keys, please ensure that you can connect to your corporate network either through VPN or in person and reload Gmail.<br/>` +
       `If this notification still shows after that, please contact your Help Desk.`;
     } else {
       warningMsg = `Your keys are expiring in ${expireInDays} days. Please import a newer set of keys to use.`;
     }
     warningMsg += `<a href="#" class="close" data-test="notification-close-expiration-popup">close</a>`;
-    console.log(warningMsg);
     notifications.clear();
     notifications.show(warningMsg);
   };

@@ -8,7 +8,6 @@ import { Dict } from '../../core/common';
 import { expect } from 'chai';
 import { KeyUtil } from '../../core/crypto/key';
 import { testConstants } from '../../tests/tooling/consts';
-import { opgp } from '../../core/crypto/pgp/openpgpjs-custom';
 
 // tslint:disable:max-line-length
 /* eslint-disable max-len */
@@ -205,9 +204,19 @@ yeSm0uVPwODhwX7ezB9jW6uVt0R8S8iM3rQdEMsA/jDep5LNn47K6o8VrDt0zYo6
 -----END PGP PRIVATE KEY BLOCK-----
 `;
 
+interface MockKMKeyRes {
+  [acct: string]: {
+    response?: {
+      privateKeys: {
+        decryptedPrivateKey: string }[]
+      },
+    badRequestError?: string
+  }
+}
+
 export const MOCK_KM_LAST_INSERTED_KEY: { [acct: string]: { privateKey: string } } = {}; // accessed from test runners
 
-export const MOCK_KM_UPDATING_KEY: { [acct: string]: { response?: { privateKeys: { decryptedPrivateKey: string }[] }, badRequestError?: string } } = {};
+export const MOCK_KM_KEYS: MockKMKeyRes = {};
 
 export const mockKeyManagerEndpoints: HandlersDefinition = {
   '/flowcrypt-email-key-manager/v1/keys/private': async ({ body }, req) => {
@@ -219,8 +228,8 @@ export const mockKeyManagerEndpoints: HandlersDefinition = {
       if (acctEmail === 'get.key@key-manager-autogen.flowcrypt.test') {
         return { privateKeys: [{ decryptedPrivateKey: testConstants.existingPrv }] };
       }
-      if (acctEmail.includes('updating.key')) {
-        const { response, badRequestError } = MOCK_KM_UPDATING_KEY[acctEmail];
+      if (acctEmail.includes('updating.key') || acctEmail === 'flowcrypt.notify.expiring.keys@key-manager-autogen.flowcrypt.test') {
+        const { response, badRequestError } = MOCK_KM_KEYS[acctEmail];
         if (response !== undefined && badRequestError === undefined) {
           return response;
         }
@@ -228,10 +237,6 @@ export const mockKeyManagerEndpoints: HandlersDefinition = {
       }
       if (acctEmail === 'get.key@no-submit-client-configuration.key-manager-autogen.flowcrypt.test') {
         return { privateKeys: [{ decryptedPrivateKey: prvNoSubmit }] };
-      }
-      if (acctEmail === 'flowcrypt.notify.expiring.keys@gmail.com') {
-        const key = await opgp.generateKey({ curve: 'curve25519', userIds: [{ email: acctEmail }], keyExpirationTime: 20 * 24 * 60 * 60});
-        return { privateKeys: [{ decryptedPrivateKey:  key.privateKeyArmored }] };
       }
       if (acctEmail === 'two.keys@key-manager-autogen.flowcrypt.test') {
         return { privateKeys: [{ decryptedPrivateKey: twoKeys1 }, { decryptedPrivateKey: twoKeys2 }] };

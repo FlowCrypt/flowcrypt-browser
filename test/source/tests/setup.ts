@@ -9,7 +9,7 @@ import { expect } from 'chai';
 import { SettingsPageRecipe } from './page-recipe/settings-page-recipe';
 import { ComposePageRecipe } from './page-recipe/compose-page-recipe';
 import { Str, emailKeyIndex } from './../core/common';
-import { MOCK_KM_LAST_INSERTED_KEY, MOCK_KM_UPDATING_KEY } from './../mock/key-manager/key-manager-endpoints';
+import { MOCK_KM_LAST_INSERTED_KEY, MOCK_KM_KEYS } from './../mock/key-manager/key-manager-endpoints';
 import { MOCK_ATTESTER_LAST_INSERTED_PUB } from './../mock/attester/attester-endpoints';
 import { BrowserRecipe } from './tooling/browser-recipe';
 import { Key, KeyInfoWithIdentity, KeyUtil } from '../core/crypto/key';
@@ -497,7 +497,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       await gmailPage.notPresent(['@webmail-notification', '@notification-setup-action-open-settings', '@notification-setup-action-dismiss', '@notification-setup-action-close']);
     }));
 
-    ava.default.only('setup [not using key manager] - notify users when their keys expire soon', testWithBrowser(undefined, async (t, browser) => {
+    ava.default('setup [not using key manager] - notify users when their keys expire soon', testWithBrowser(undefined, async (t, browser) => {
       const acctEmail = 'flowcrypt.notify.expiring.keys@gmail.com';
       const passphrase = '1234';
       const warningMsg = 'Your keys are expiring in 18 days. Please import a newer set of keys to use.';
@@ -530,30 +530,51 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       await addKeyPopup.waitAndClick('@source-paste');
       const updatedKey = await opgp.generateKey({
         curve: 'curve25519',
-        userIds: [{ email: acctEmail }],
+        userIds: [{ email: acctEmail }, { email: 'demo@gmail.com', name: 'Demo user'}],
         passphrase,
         keyExpirationTime: 100 * 24 * 60 * 60
       });
       await addKeyPopup.waitAndType('@input-armored-key', updatedKey.privateKeyArmored);
       await addKeyPopup.waitAndType('#input_passphrase', passphrase);
       await addKeyPopup.waitAndClick('.action_add_private_key', { delay: 1});
+      await Util.sleep(1);
       await gmailPage.page.reload();
       await gmailPage.notPresent('@webmail-notification');
       // remove added key and observe warning appears again
       await settingsPage.waitAndClick('@action-remove-key-1');
       await gmailPage.page.reload();
+      await Util.sleep(1);
       await gmailPage.waitForContent('@webmail-notification', warningMsg);
-      await Util.sleep(100000);
     }));
 
     ava.default('setup [using key manager] - notify users when their keys expire soon', testWithBrowser(undefined, async (t, browser) => {
-      const acct = 'flowcrypt.notify.expiring.keys@gmail.com';
-      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
+      const acctEmail = 'flowcrypt.notify.expiring.keys@key-manager-autogen.flowcrypt.test';
+      const key = await opgp.generateKey({
+        curve: 'curve25519',
+        userIds: [{ email: acctEmail }],
+        keyExpirationTime: 20 * 24 * 60 * 60,
+        date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000)
+      });
+      MOCK_KM_KEYS[acctEmail] = {response: { privateKeys: [{ decryptedPrivateKey: key.privateKeyArmored }] }};
+      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
       await SetupPageRecipe.autoSetupWithEKM(settingsPage);
-      
+      const gmailPage = await openMockGmailPage(t, browser, acctEmail);
+      // Check if notification presents
+      const warningMsg = 'Your local keys expire in 18 days.\nTo receive the latest keys, please ensure that you can connect to your corporate network either through VPN or in person and reload Gmail.\nIf this notification still shows after that, please contact your Help Desk.';
+      await gmailPage.waitForContent('@webmail-notification', warningMsg);
+      const updatedKey = await opgp.generateKey({
+        curve: 'curve25519',
+        userIds: [{ email: acctEmail }, { email: 'demo@gmail.com', name: 'Demo user'}],
+        keyExpirationTime: 100 * 24 * 60 * 60
+      });
+      MOCK_KM_KEYS[acctEmail].response = { privateKeys: [{ decryptedPrivateKey: key.privateKeyArmored }, { decryptedPrivateKey: updatedKey.privateKeyArmored }] };
+      console.log('MOCK_KM_KEYS');
+      await gmailPage.page.reload();
+      await PageRecipe.waitForToastToAppearAndDisappear(gmailPage, 'Account keys updated');
+      await gmailPage.page.reload();
+      await gmailPage.notPresent('@webmail-notification');
     }));
 
-    
     ava.default.todo('setup - recover with a pass phrase - 1pp1 then wrong, then skip');
     // ava.default('setup - recover with a pass phrase - 1pp1 then wrong, then skip', test_with_browser(async (t, browser) => {
     //   const settingsPage = await BrowserRecipe.open_settings_login_approve(t, browser,'flowcrypt.compatibility@gmail.com');
@@ -763,7 +784,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
 
     ava.default('get.updating.key@key-manager-choose-passphrase-forbid-storing.flowcrypt.test - automatic update of key found on key manager', testWithBrowser(undefined, async (t, browser) => {
       const acct = 'get.updating.key@key-manager-choose-passphrase-forbid-storing.flowcrypt.test';
-      MOCK_KM_UPDATING_KEY[acct] = { response: { privateKeys: [{ decryptedPrivateKey: testConstants.updatingPrv }] } };
+      MOCK_KM_KEYS[acct] = { response: { privateKeys: [{ decryptedPrivateKey: testConstants.updatingPrv }] } };
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
       const passphrase = 'long enough to suit requirements';
       await SetupPageRecipe.autoSetupWithEKM(settingsPage, {
@@ -784,7 +805,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       await gmailPage.close();
       // 2. EKM returns a newer version of the existing key
       const someOlderVersion = await updateAndArmorKey(set2[0]);
-      MOCK_KM_UPDATING_KEY[acct].response = { privateKeys: [{ decryptedPrivateKey: someOlderVersion }] };
+      MOCK_KM_KEYS[acct].response = { privateKeys: [{ decryptedPrivateKey: someOlderVersion }] };
       gmailPage = await browser.newPage(t, TestUrls.mockGmailUrl(), undefined, extraAuthHeaders);
       await PageRecipe.waitForToastToAppearAndDisappear(gmailPage, 'Account keys updated');
       const set3 = await retrieveAndCheckKeys(settingsPage, acct, 1);
@@ -806,7 +827,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       expect(set5[0].lastModified).to.equal(set4[0].lastModified); // no update
       await gmailPage.close();
       // 5. EKM returns a newer version of the existing key, canceling passphrase prompt, no update
-      MOCK_KM_UPDATING_KEY[acct].response = { privateKeys: [{ decryptedPrivateKey: await updateAndArmorKey(set5[0]) }] };
+      MOCK_KM_KEYS[acct].response = { privateKeys: [{ decryptedPrivateKey: await updateAndArmorKey(set5[0]) }] };
       gmailPage = await browser.newPage(t, TestUrls.mockGmailUrl(), undefined, extraAuthHeaders);
       await gmailPage.waitAll('@dialog-passphrase');
       await ComposePageRecipe.cancelPassphraseDialog(gmailPage, 'keyboard');
@@ -829,7 +850,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       expect(set7[0].lastModified!).to.be.greaterThan(set6[0].lastModified!); // an update happened
       await gmailPage.close();
       // 7. EKM returns an older version of the existing key, no toast, no update
-      MOCK_KM_UPDATING_KEY[acct].response = { privateKeys: [{ decryptedPrivateKey: someOlderVersion }] };
+      MOCK_KM_KEYS[acct].response = { privateKeys: [{ decryptedPrivateKey: someOlderVersion }] };
       gmailPage = await browser.newPage(t, TestUrls.mockGmailUrl(), undefined, extraAuthHeaders);
       await PageRecipe.noToastAppears(gmailPage);
       await gmailPage.notPresent('@dialog-passphrase');
@@ -837,7 +858,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       expect(set8[0].lastModified).to.equal(set7[0].lastModified); // no update
       await gmailPage.close();
       // 8. EKM returns an older version of the existing key, and a new key, toast, new key gets added encrypted with the same passphrase
-      MOCK_KM_UPDATING_KEY[acct].response = { privateKeys: [{ decryptedPrivateKey: someOlderVersion }, { decryptedPrivateKey: testConstants.existingPrv }] };
+      MOCK_KM_KEYS[acct].response = { privateKeys: [{ decryptedPrivateKey: someOlderVersion }, { decryptedPrivateKey: testConstants.existingPrv }] };
       gmailPage = await browser.newPage(t, TestUrls.mockGmailUrl(), undefined, extraAuthHeaders);
       await PageRecipe.waitForToastToAppearAndDisappear(gmailPage, 'Account keys updated');
       await gmailPage.notPresent('@dialog-passphrase');
@@ -849,7 +870,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       expect(mainKey9[0].lastModified).to.equal(set8[0].lastModified); // no update
       await gmailPage.close();
       // 9. EKM returns a newer version of one key, fully omitting the other one, a toast, an update and removal
-      MOCK_KM_UPDATING_KEY[acct].response = { privateKeys: [{ decryptedPrivateKey: await updateAndArmorKey(mainKey9[0]) }] };
+      MOCK_KM_KEYS[acct].response = { privateKeys: [{ decryptedPrivateKey: await updateAndArmorKey(mainKey9[0]) }] };
       gmailPage = await browser.newPage(t, TestUrls.mockGmailUrl(), undefined, extraAuthHeaders);
       await PageRecipe.waitForToastToAppearAndDisappear(gmailPage, 'Account keys updated');
       await gmailPage.notPresent('@dialog-passphrase');
@@ -861,7 +882,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       // 10. Forget the passphrase, EKM returns a third key, we enter a passphrase that doesn't match any of the existing keys, no update
       await InboxPageRecipe.finishSessionOnInboxPage(gmailPage);
       await gmailPage.close();
-      MOCK_KM_UPDATING_KEY[acct].response = { privateKeys: [{ decryptedPrivateKey: testConstants.unprotectedPrvKey }] };
+      MOCK_KM_KEYS[acct].response = { privateKeys: [{ decryptedPrivateKey: testConstants.unprotectedPrvKey }] };
       gmailPage = await browser.newPage(t, TestUrls.mockGmailUrl(), undefined, extraAuthHeaders);
       await gmailPage.waitAll('@dialog-passphrase');
       {
@@ -896,7 +917,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       // 12. Forget the passphrase, EKM sends a broken key, no passphrase dialog, no updates
       await InboxPageRecipe.finishSessionOnInboxPage(gmailPage);
       await gmailPage.close();
-      MOCK_KM_UPDATING_KEY[acct].response.privateKeys = [
+      MOCK_KM_KEYS[acct].response.privateKeys = [
         { decryptedPrivateKey: await updateAndArmorKey(set2[0]) }, // update the main key
         // only include a half of another armored key
         { decryptedPrivateKey: testConstants.unprotectedPrvKey.substring(0, testConstants.unprotectedPrvKey.length / 2) }
@@ -912,7 +933,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       expect(mainKey13[0].lastModified).to.equal(mainKey12[0].lastModified); // no update
       await gmailPage.close();
       // 13. EKM down, no toast, no passphrase dialog, no updates
-      MOCK_KM_UPDATING_KEY[acct] = { badRequestError: 'RequestTimeout' };
+      MOCK_KM_KEYS[acct] = { badRequestError: 'RequestTimeout' };
       gmailPage = await browser.newPage(t, TestUrls.mockGmailUrl(), undefined, extraAuthHeaders);
       await PageRecipe.noToastAppears(gmailPage);
       await gmailPage.notPresent('@dialog-passphrase');
@@ -927,7 +948,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
     ava.default('put.updating.key@key-manager-choose-passphrase-forbid-storing.flowcrypt.test - updates of key found on key manager via setup page (with passphrase)',
       testWithBrowser(undefined, async (t, browser) => {
         const acct = 'put.updating.key@key-manager-choose-passphrase-forbid-storing.flowcrypt.test';
-        MOCK_KM_UPDATING_KEY[acct] = { response: { privateKeys: [{ decryptedPrivateKey: testConstants.updatingPrv }] } };
+        MOCK_KM_KEYS[acct] = { response: { privateKeys: [{ decryptedPrivateKey: testConstants.updatingPrv }] } };
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
         const passphrase = 'long enough to suit requirements';
         await SetupPageRecipe.autoSetupWithEKM(settingsPage, {
@@ -937,7 +958,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         const extraAuthHeaders = { Authorization: `Bearer ${accessToken}` };
         const set1 = await retrieveAndCheckKeys(settingsPage, acct, 1);
         // 1. EKM returns the empty set, forcing to auto-generate
-        MOCK_KM_UPDATING_KEY[acct].response = { privateKeys: [] };
+        MOCK_KM_KEYS[acct].response = { privateKeys: [] };
         let gmailPage = await browser.newPage(t, TestUrls.mockGmailUrl(), undefined, extraAuthHeaders);
         // The new settingsPage is loaded in place of the existing settings tab (this is by design)
         // However, after a second the newly-activated (old) settings tab loses focus in favour of the gmailPage, why is that?
@@ -956,7 +977,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         expect(set2[0].id).to.not.equal(set1[0].id); // entirely new key was generated
         // 2. Adding a new key from the key manager when there is none in the storage
         // First, erase the keys by supplying an empty set from mock EKM
-        MOCK_KM_UPDATING_KEY[acct].response = { privateKeys: [] };
+        MOCK_KM_KEYS[acct].response = { privateKeys: [] };
         gmailPage = await browser.newPage(t, TestUrls.mockGmailUrl(), undefined, extraAuthHeaders);
         await PageRecipe.noToastAppears(gmailPage);
         await gmailPage.notPresent('@dialog-passphrase');
@@ -965,7 +986,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         expect(await getPassphrase(settingsPage, acct, KeyUtil.getPrimaryLongid(set2[0]))).to.be.an.undefined; // the passphrase for the old key was deleted
         await settingsPage.close();
         // Secondly, configure mock EKM to return a key and re-load the gmail page
-        MOCK_KM_UPDATING_KEY[acct] = { response: { privateKeys: [{ decryptedPrivateKey: testConstants.updatingPrv }] } };
+        MOCK_KM_KEYS[acct] = { response: { privateKeys: [{ decryptedPrivateKey: testConstants.updatingPrv }] } };
         gmailPage = await browser.newPage(t, undefined, undefined, extraAuthHeaders);
         const newSettingsPage = await browser.newPageTriggeredBy(t, () => gmailPage.goto(TestUrls.mockGmailUrl()));
         await SetupPageRecipe.autoSetupWithEKM(newSettingsPage, {
@@ -981,13 +1002,13 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
     ava.default('get.updating.key@key-manager-autoimport-no-prv-create.flowcrypt.test - updates of key found on key manager when NO_PRV_CREATE',
       testWithBrowser(undefined, async (t, browser) => {
         const acct = 'get.updating.key@key-manager-autoimport-no-prv-create.flowcrypt.test';
-        MOCK_KM_UPDATING_KEY[acct] = { response: { privateKeys: [{ decryptedPrivateKey: testConstants.updatingPrv }] } };
+        MOCK_KM_KEYS[acct] = { response: { privateKeys: [{ decryptedPrivateKey: testConstants.updatingPrv }] } };
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
         await SetupPageRecipe.autoSetupWithEKM(settingsPage);
         const accessToken = await BrowserRecipe.getGoogleAccessToken(settingsPage, acct);
         const extraAuthHeaders = { Authorization: `Bearer ${accessToken}` };
         const set1 = await retrieveAndCheckKeys(settingsPage, acct, 1);
-        MOCK_KM_UPDATING_KEY[acct].response = { privateKeys: [] };
+        MOCK_KM_KEYS[acct].response = { privateKeys: [] };
         // 1. EKM returns the empty set, auto-generation is not allowed, hence the error modal
         let gmailPage = await browser.newPage(t, TestUrls.mockGmailUrl(), undefined, extraAuthHeaders);
         await gmailPage.waitAndRespondToModal('error', 'confirm', 'Keys for your account were not set up yet - please ask your systems administrator'); await PageRecipe.noToastAppears(gmailPage);
@@ -996,7 +1017,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         expect(await getPassphrase(settingsPage, acct, KeyUtil.getPrimaryLongid(set1[0]))).to.be.an.undefined; // the passphrase for the old key was deleted
         await settingsPage.close();
         // 2. Adding a new key from the key manager when there is none in the storage
-        MOCK_KM_UPDATING_KEY[acct] = { response: { privateKeys: [{ decryptedPrivateKey: testConstants.updatingPrv }] } };
+        MOCK_KM_KEYS[acct] = { response: { privateKeys: [{ decryptedPrivateKey: testConstants.updatingPrv }] } };
         gmailPage = await browser.newPage(t, TestUrls.mockGmailUrl(), undefined, extraAuthHeaders);
         await PageRecipe.waitForToastToAppearAndDisappear(gmailPage, 'Account keys updated');
         await gmailPage.close();

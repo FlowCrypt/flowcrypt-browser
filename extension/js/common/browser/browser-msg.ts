@@ -156,7 +156,7 @@ export class BrowserMsg {
         saveFetchedPubkeys: (bm: Bm.SaveFetchedPubkeys) => BrowserMsg.sendAwait(undefined, 'saveFetchedPubkeys', bm, true) as Promise<Bm.Res.SaveFetchedPubkeys>,
         processAndStoreKeysFromEkmLocally:
           (bm: Bm.ProcessAndStoreKeysFromEkmLocally) => BrowserMsg.sendAwait(undefined, 'processAndStoreKeysFromEkmLocally', bm, true) as Promise<Bm.Res.ProcessAndStoreKeysFromEkmLocally>,
-          getLocalKeyExpiration: (bm: Bm.GetLocalKeyExpiration) => BrowserMsg.sendAwait(undefined, 'getLocalKeyExpiration', bm, true) as Promise<Bm.Res.GetLocalKeyExpiration>,
+        getLocalKeyExpiration: (bm: Bm.GetLocalKeyExpiration) => BrowserMsg.sendAwait(undefined, 'getLocalKeyExpiration', bm, true) as Promise<Bm.Res.GetLocalKeyExpiration>,
       },
     },
     passphraseEntry: (dest: Bm.Dest, bm: Bm.PassphraseEntry) => BrowserMsg.sendCatch(dest, 'passphrase_entry', bm),
