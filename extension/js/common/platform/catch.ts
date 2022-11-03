@@ -123,15 +123,23 @@ export class Catch {
       && typeof (v as Promise<unknown>).catch === 'function'; // tslint:disable-line:no-unbound-method - only testing if exists
   };
 
-  public static try = (code: () => void | Promise<void>) => {
+  public static try = (code: () => void | Promise<void>, callback?: () => void | Promise<void>) => {
     return () => { // returns a function
+      let isPromise = false;
       try {
         const r = code();
         if (Catch.isPromise(r)) {
+          isPromise = true;
           r.catch(Catch.reportErr);
+          void r.finally(callback);
         }
       } catch (codeErr) {
         Catch.reportErr(codeErr);
+      } finally {
+        // Do not call callback for promise function because it's already called in line 134.
+        if (!isPromise && callback) {
+          callback();
+        }
       }
     };
   };
@@ -236,8 +244,8 @@ export class Catch {
     return window.setInterval(Catch.try(cb), ms); // error-handled: else setInterval will silently swallow errors
   };
 
-  public static setHandledTimeout = (cb: () => void | Promise<void>, ms: number): number => {
-    return window.setTimeout(Catch.try(cb), ms); // error-handled: else setTimeout will silently swallow errors
+  public static setHandledTimeout = (cb: () => void | Promise<void>, ms: number, callback?: () => void | Promise<void>): number => {
+    return window.setTimeout(Catch.try(cb, callback), ms); // error-handled: else setTimeout will silently swallow errors
   };
 
   public static doesReject = async (p: Promise<unknown>, errNeedle?: string[]) => {

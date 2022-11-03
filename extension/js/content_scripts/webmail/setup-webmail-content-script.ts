@@ -286,17 +286,24 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
     }
   };
 
-  const startPullingKeysFromEkm = async (acctEmail: string, clientConfiguration: ClientConfiguration, factory: XssSafeFactory, ppEvent: { entered?: boolean }) => {
-    if (clientConfiguration.usesKeyManager()) {
-      const idToken = await InMemoryStore.get(acctEmail, InMemoryStoreKeys.ID_TOKEN);
-      if (idToken) {
-        const keyManager = new KeyManager(clientConfiguration.getKeyManagerUrlForPrivateKeys()!);
-        Catch.setHandledTimeout(async () => {
-          const { privateKeys } = await keyManager.getPrivateKeys(idToken);
-          await processKeysFromEkm(acctEmail, privateKeys.map(entry => entry.decryptedPrivateKey), clientConfiguration, factory, idToken, ppEvent);
-        }, 0);
+  const startPullingKeysFromEkm = async (acctEmail: string, clientConfiguration: ClientConfiguration, factory: XssSafeFactory, ppEvent: { entered?: boolean }): Promise<void> => {
+    return await new Promise((resolve, reject) => {
+      if (clientConfiguration.usesKeyManager()) {
+        InMemoryStore.get(acctEmail, InMemoryStoreKeys.ID_TOKEN).then((idToken) => {
+          if (idToken) {
+            const keyManager = new KeyManager(clientConfiguration.getKeyManagerUrlForPrivateKeys()!);
+            Catch.setHandledTimeout(async () => {
+              const { privateKeys } = await keyManager.getPrivateKeys(idToken);
+              await processKeysFromEkm(acctEmail, privateKeys.map(entry => entry.decryptedPrivateKey), clientConfiguration, factory, idToken, ppEvent);
+            }, 0, resolve);
+          } else {
+            resolve();
+          }
+        }).catch((err) => reject(err));
+      } else {
+        resolve();
       }
-    }
+    });
   };
 
   const updateClientConfiguration = async (acctEmail: string) => {

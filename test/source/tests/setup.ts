@@ -518,7 +518,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
           title: '?',
           armored: key.privateKeyArmored,
           passphrase,
-          longid: '1b383d0334e38b28',
+          longid: '0000000000000000' // dummy -- not needed
         }
       }, { isSavePassphraseChecked: false, isSavePassphraseHidden: false });
       const gmailPage = await openMockGmailPage(t, browser, acctEmail);
@@ -548,7 +548,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
     }));
 
     ava.default('setup [using key manager] - notify users when their keys expire soon', testWithBrowser(undefined, async (t, browser) => {
-      const acctEmail = 'flowcrypt.notify.expiring.keys@key-manager-autogen.flowcrypt.test';
+      const acctEmail = 'flowcrypt.notify.expiring.keys.updating.key@key-manager-autogen.flowcrypt.test';
       const key = await opgp.generateKey({
         curve: 'curve25519',
         userIds: [{ email: acctEmail }],
@@ -564,11 +564,9 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       await gmailPage.waitForContent('@webmail-notification', warningMsg);
       const updatedKey = await opgp.generateKey({
         curve: 'curve25519',
-        userIds: [{ email: acctEmail }, { email: 'demo@gmail.com', name: 'Demo user'}],
-        keyExpirationTime: 100 * 24 * 60 * 60
+        userIds: [{ email: acctEmail }, { email: 'demo@gmail.com', name: 'Demo user'}]
       });
       MOCK_KM_KEYS[acctEmail].response = { privateKeys: [{ decryptedPrivateKey: key.privateKeyArmored }, { decryptedPrivateKey: updatedKey.privateKeyArmored }] };
-      console.log('MOCK_KM_KEYS');
       await gmailPage.page.reload();
       await PageRecipe.waitForToastToAppearAndDisappear(gmailPage, 'Account keys updated');
       await gmailPage.page.reload();
