@@ -89,7 +89,7 @@ View.run(class PassphraseView extends View {
         $('.passphrase_text').text('Enter FlowCrypt pass phrase to keep your account keys up to date');
         break;
       default:
-        $('.passphrase-text').text('Enter FlowCrypt pass phrase to read encrypted email');
+        $('.passphrase_text').text('Enter FlowCrypt pass phrase to read encrypted email');
         break;
     }
     $('#passphrase').focus();
