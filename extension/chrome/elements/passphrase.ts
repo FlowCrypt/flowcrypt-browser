@@ -63,6 +63,7 @@ View.run(class PassphraseView extends View {
       this.longids.push(...allPrivateKeys.map(ki => ki.longid));
     }
     this.keysWeNeedPassPhraseFor = allPrivateKeys.filter(ki => this.longids.includes(ki.longid));
+    let passphraseText = '';
     switch (this.type) {
       case 'embedded':
         $('.passphrase_text_container').hide();
@@ -71,27 +72,28 @@ View.run(class PassphraseView extends View {
         $('.line.which_key').css({ display: 'none', position: 'absolute', visibility: 'hidden', left: '5000px', });
         break;
       case 'sign':
-        $('.passphrase_text').text('Enter FlowCrypt pass phrase to sign email');
+        passphraseText = 'Enter FlowCrypt pass phrase to sign email';
         break;
       case 'draft':
-        $('.passphrase_text').text('Enter FlowCrypt pass phrase to load a draft');
+        passphraseText = 'Enter FlowCrypt pass phrase to load a draft';
         break;
       case 'attachment':
-        $('.passphrase_text').text('Enter FlowCrypt pass phrase to decrypt a file');
+        passphraseText = 'Enter FlowCrypt pass phrase to decrypt a file';
         break;
       case 'quote':
-        $('.passphrase_text').text('Enter FlowCrypt pass phrase to load quoted content');
+        passphraseText = 'Enter FlowCrypt pass phrase to load quoted content';
         break;
       case 'backup':
-        $('.passphrase_text').text('Enter FlowCrypt pass phrase to back up');
+        passphraseText = 'Enter FlowCrypt pass phrase to back up';
         break;
       case 'update_key':
-        $('.passphrase_text').text('Enter FlowCrypt pass phrase to keep your account keys up to date');
+        passphraseText = 'Enter FlowCrypt pass phrase to keep your account keys up to date';
         break;
       default:
-        $('.passphrase_text').text('Enter FlowCrypt pass phrase to read encrypted email');
+        passphraseText = 'Enter FlowCrypt pass phrase to read encrypted email';
         break;
     }
+    $('.passphrase_text').text(passphraseText);
     $('#passphrase').focus();
     if (allPrivateKeys.length > 1) {
       let html: string;
