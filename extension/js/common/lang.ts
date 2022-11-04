@@ -103,4 +103,13 @@ export const Lang = { // tslint:disable-line:variable-name
     restartBrowserAndTryAgain: (isFesUsed: boolean) => `Unexpected error occured. Please restart your browser and try again. If this persists after a restart, ${contactForSupportSubsentence(isFesUsed)}.`,
     emailAliasChangedAskForReload: 'Your email aliases on Gmail have refreshed since the last time you used FlowCrypt.\nReload the compose window now?'
   },
+  passphraseRequired: {
+    sign: 'Enter FlowCrypt pass phrase to sign email',
+    draft: 'Enter FlowCrypt pass phrase to load a draft',
+    attachment: 'Enter FlowCrypt pass phrase to decrypt a file',
+    quote: 'Enter FlowCrypt pass phrase to load quoted content',
+    backup: 'Enter FlowCrypt pass phrase to back up',
+    updateKey: 'Enter FlowCrypt pass phrase to keep your account keys up to date',
+    email: 'Enter FlowCrypt pass phrase to read encrypted email'
+  }
 };

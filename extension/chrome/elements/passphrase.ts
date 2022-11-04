@@ -72,25 +72,25 @@ View.run(class PassphraseView extends View {
         $('.line.which_key').css({ display: 'none', position: 'absolute', visibility: 'hidden', left: '5000px', });
         break;
       case 'sign':
-        passphraseText = 'Enter FlowCrypt pass phrase to sign email';
+        passphraseText =  Lang.passphraseRequired.sign;
         break;
       case 'draft':
-        passphraseText = 'Enter FlowCrypt pass phrase to load a draft';
+        passphraseText =  Lang.passphraseRequired.draft;
         break;
       case 'attachment':
-        passphraseText = 'Enter FlowCrypt pass phrase to decrypt a file';
+        passphraseText =  Lang.passphraseRequired.attachment;
         break;
       case 'quote':
-        passphraseText = 'Enter FlowCrypt pass phrase to load quoted content';
+        passphraseText =  Lang.passphraseRequired.quote;
         break;
       case 'backup':
-        passphraseText = 'Enter FlowCrypt pass phrase to back up';
+        passphraseText =  Lang.passphraseRequired.backup;
         break;
       case 'update_key':
-        passphraseText = 'Enter FlowCrypt pass phrase to keep your account keys up to date';
+        passphraseText =  Lang.passphraseRequired.updateKey;
         break;
       default:
-        passphraseText = 'Enter FlowCrypt pass phrase to read encrypted email';
+        passphraseText =  Lang.passphraseRequired.email;
         break;
     }
     $('.passphrase_text').text(passphraseText);
