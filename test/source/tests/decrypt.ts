@@ -11,7 +11,6 @@ import { SettingsPageRecipe } from './page-recipe/settings-page-recipe';
 import { TestUrls } from './../browser/test-urls';
 import { TestWithBrowser } from './../test';
 import { expect } from "chai";
-import { ComposePageRecipe } from './page-recipe/compose-page-recipe';
 import { PageRecipe } from './page-recipe/abstract-page-recipe';
 import { Buf } from '../core/buf';
 
@@ -471,39 +470,6 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
       await InboxPageRecipe.checkDecryptMsg(t, browser, { acctEmail, threadId, expectedContent });
       // Finish session and check if it's finished
       await InboxPageRecipe.checkFinishingSession(t, browser, acctEmail, threadId);
-    }));
-
-    ava.default('decrypt - entering pass phrase should unlock all keys that match the pass phrase', testWithBrowser('compatibility', async (t, browser) => {
-      const acctEmail = 'flowcrypt.compatibility@gmail.com';
-      const passphrase = 'pa$$w0rd';
-      await SettingsPageRecipe.addKeyTest(t, browser, acctEmail, testConstants.testkey17AD7D07, passphrase, {}, false);
-      await SettingsPageRecipe.addKeyTest(t, browser, acctEmail, testConstants.testkey0389D3A7, passphrase, {}, false);
-      await SettingsPageRecipe.addKeyTest(t, browser, acctEmail, testConstants.testKeyMultipleSmimeCEA2D53BB9D24871, passphrase, {}, false);
-      const inboxPage = await browser.newPage(t, TestUrls.extensionInbox(acctEmail));
-      await InboxPageRecipe.finishSessionOnInboxPage(inboxPage);
-      await InboxPageRecipe.checkDecryptMsg(t, browser, {
-        acctEmail,
-        threadId: '17c0e50966d7877c',
-        expectedContent: '1st key of of 2 keys with the same passphrase',
-        enterPp: {
-          passphrase,
-          isForgetPpChecked: true,
-          isForgetPpHidden: false
-        }
-      });
-      await InboxPageRecipe.checkDecryptMsg(t, browser, {
-        acctEmail,
-        threadId: '17c0e55caaa4abb3',
-        expectedContent: '2nd key of of 2 keys with the same passphrase',
-        // passphrase for the 2nd key should not be needed because it's the same as for the 1st key
-      });
-      // as decrypted s/mime messages are not rendered yet (#4070), let's test signing instead
-      const composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
-      await ComposePageRecipe.fillMsg(composeFrame, { to: 'smime@recipient.com' }, 'send signed and encrypted S/MIME without attachment');
-      await ComposePageRecipe.pastePublicKeyManually(composeFrame, inboxPage, 'smime@recipient.com',
-        testConstants.testCertificateMultipleSmimeCEA2D53BB9D24871);
-      await composeFrame.waitAndClick('@action-send', { delay: 2 });
-      await inboxPage.waitTillGone('@container-new-message');
     }));
 
     ava.default('decrypt - thunderbird - signedHtml verifyDetached doesn\'t duplicate PGP key section', testWithBrowser('compatibility', async (t, browser) => {
