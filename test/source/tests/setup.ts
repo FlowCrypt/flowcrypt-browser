@@ -522,7 +522,6 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         }
       }, { isSavePassphraseChecked: false, isSavePassphraseHidden: false });
       const gmailPage = await openMockGmailPage(t, browser, acctEmail);
-      await Util.sleep(1000);
       // Check if notification presents
       await gmailPage.waitForContent('@webmail-notification', warningMsg);
       // Add updated key that expires in 100 days
