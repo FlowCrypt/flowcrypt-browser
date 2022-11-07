@@ -36,9 +36,9 @@ export class Notifications {
   public show = (text: string, callbacks: Dict<() => void> = {}, group: NotificationGroupType = 'setup') => {
     const notificationGroupClass = this.getNotificationGroupClass(group);
     if ($(`.${notificationGroupClass}`).length < 1) {
-      Xss.sanitizePrepend('.webmail_notifications', `<div class="${notificationGroupClass}"></div>`);
+      Xss.sanitizePrepend('.webmail_notifications', `<div class="webmail_notification ${notificationGroupClass}" data-test="webmail-notification-${group}"></div>`);
     }
-    Xss.sanitizeRender(`.${notificationGroupClass}`, `<div class="webmail_notification" data-test="webmail-notification-${group}">${text}</div>`);
+    Xss.sanitizeRender(`.${notificationGroupClass}`, text);
     if (typeof callbacks.close !== 'undefined') {
       const origCloseCb = callbacks.close;
       callbacks.close = Catch.try(() => {
