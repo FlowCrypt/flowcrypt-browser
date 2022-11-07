@@ -25,11 +25,11 @@ export class InboxListThreadsModule extends ViewModule<InboxView> {
       }
     } catch (e) {
       if (ApiErr.isNetErr(e)) {
-        this.view.inboxNotificationModule.showNotification(`Connection error trying to get list of messages ${Ui.retryLink()}`);
+        this.view.inboxNotificationModule.showNotification(`Connection error trying to get list of messages ${Ui.retryLink()}`, 'inbox');
       } else if (ApiErr.isAuthErr(e)) {
         this.view.inboxNotificationModule.renderAndHandleAuthPopupNotification();
       } else if (ApiErr.isMailOrAcctDisabledOrPolicy(e)) {
-        this.view.inboxNotificationModule.showNotification(Lang.account.googleAcctDisabledOrPolicy);
+        this.view.inboxNotificationModule.showNotification(Lang.account.googleAcctDisabledOrPolicy, 'inbox');
       } else if (ApiErr.isInsufficientPermission(e)) {
         this.view.inboxNotificationModule.renderAndHandleAuthPopupNotification(true);
       } else {
@@ -73,7 +73,7 @@ export class InboxListThreadsModule extends ViewModule<InboxView> {
       } else if (ApiErr.isAuthErr(e)) {
         this.view.inboxNotificationModule.renderAndHandleAuthPopupNotification();
       } else if (ApiErr.isMailOrAcctDisabledOrPolicy(e)) {
-        this.view.inboxNotificationModule.showNotification(Lang.account.googleAcctDisabledOrPolicy);
+        this.view.inboxNotificationModule.showNotification(Lang.account.googleAcctDisabledOrPolicy, 'inbox');
       } else {
         Catch.reportErr(e);
         threadItem.find('.loading').text('Failed to load');

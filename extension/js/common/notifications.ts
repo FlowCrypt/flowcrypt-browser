@@ -10,6 +10,7 @@ import { Catch } from './platform/catch.js';
 import { AcctStore } from './platform/store/acct-store.js';
 import { Xss } from './platform/xss.js';
 
+export type NotificationGroupType = 'setup' | 'notify_expiring_keys' | 'compose' | 'inbox';
 export class Notifications {
 
   public showInitial = async (acctEmail: string) => {
@@ -28,27 +29,35 @@ export class Notifications {
     });
   };
 
-  public clear = () => {
-    $('.webmail_notifications').text('');
+  public clear = (group: NotificationGroupType) => {
+    $(`.${this.getNotificationGroupClass(group)}`)?.remove();
   };
 
-  public show = (text: string, callbacks: Dict<() => void> = {}) => {
-    Xss.sanitizeRender('.webmail_notifications', `<div class="webmail_notification" data-test="webmail-notification">${text}</div>`);
+  public show = (text: string, callbacks: Dict<() => void> = {}, group: NotificationGroupType = 'setup') => {
+    const notificationGroupClass = this.getNotificationGroupClass(group);
+    if ($(`.${notificationGroupClass}`).length < 1) {
+      Xss.sanitizePrepend('.webmail_notifications', `<div class="${notificationGroupClass}"></div>`);
+    }
+    Xss.sanitizeRender(`.${notificationGroupClass}`, `<div class="webmail_notification" data-test="webmail-notification-${group}">${text}</div>`);
     if (typeof callbacks.close !== 'undefined') {
       const origCloseCb = callbacks.close;
       callbacks.close = Catch.try(() => {
         origCloseCb();
-        this.clear();
+        this.clear(group);
       });
     } else {
-      callbacks.close = Catch.try(this.clear);
+      callbacks.close = Catch.try(() => this.clear(group));
     }
     if (typeof callbacks.reload === 'undefined') {
       callbacks.reload = Catch.try(() => window.location.reload());
     }
     for (const name of Object.keys(callbacks)) {
-      $(`.webmail_notifications .${name}`).click(Ui.event.prevent('double', callbacks[name]));
+      $(`.${notificationGroupClass} .${name}`).click(Ui.event.prevent('double', callbacks[name]));
     }
+  };
+
+  private getNotificationGroupClass = (group: NotificationGroupType) => {
+    return `webmail_notification_${group}_group`;
   };
 
   private reconnectAcctAuthPopup = async (acctEmail: string) => {

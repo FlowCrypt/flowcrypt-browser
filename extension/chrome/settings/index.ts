@@ -114,12 +114,12 @@ View.run(class SettingsView extends View {
       const factory = new XssSafeFactory(this.acctEmail!, this.tabId);
       window.open(factory.srcAddPubkeyDialog(emails, 'settings'), '_blank', 'height=680,left=100,menubar=no,status=no,toolbar=no,top=30,width=660');
     });
-    BrowserMsg.addListener('notification_show', async ({ notification }: Bm.NotificationShow) => {
-      this.notifications!.show(notification);
+    BrowserMsg.addListener('notification_show', async ({ notification, group }: Bm.NotificationShow) => {
+      this.notifications!.show(notification, {}, group);
       let cleared = false;
       const clear = () => {
         if (!cleared) {
-          this.notifications!.clear();
+          this.notifications!.clear(group);
           cleared = true;
         }
       };

@@ -430,30 +430,30 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       const gmailPage = await openMockGmailPage(t, browser, acctEmail);
       await gmailPage.waitAndClick('@action-secure-compose');
       // Check reconnect auth notification
-      await gmailPage.waitForContent('@webmail-notification', 'Please reconnect FlowCrypt to your Gmail Account.');
+      await gmailPage.waitForContent('@webmail-notification-setup', 'Please reconnect FlowCrypt to your Gmail Account.');
       let oauthPopup = await browser.newPageTriggeredBy(t, () => gmailPage.waitAndClick('@action-reconnect-account'));
       // mock api will return missing scopes
       await OauthPageRecipe.mock(t, oauthPopup, acctEmail, 'missing_permission');
       // Check missing permission notification
-      await gmailPage.waitForContent('@webmail-notification', 'Connection successful. Please also add missing permissions');
+      await gmailPage.waitForContent('@webmail-notification-setup', 'Connection successful. Please also add missing permissions');
       oauthPopup = await browser.newPageTriggeredBy(t, () => gmailPage.waitAndClick('@action-add-missing-permission'));
       await OauthPageRecipe.mock(t, oauthPopup, acctEmail, 'approve');
       // after successful reauth, check if connection is successful
-      await gmailPage.waitForContent('@webmail-notification', 'Connected successfully. You may need to reload the tab.');
+      await gmailPage.waitForContent('@webmail-notification-setup', 'Connected successfully. You may need to reload the tab.');
       // reload and test that it has no more notifications
       await gmailPage.page.reload();
       await gmailPage.waitAndClick('@action-secure-compose');
       await Util.sleep(2);
-      await gmailPage.notPresent(['@webmail-notification']);
+      await gmailPage.notPresent(['@webmail-notification-setup']);
     }));
 
     ava.default('mail.google.com - success notif after setup, click hides it, does not re-appear + offers to reauth', testWithBrowser('compatibility', async (t, browser) => {
       const acct = 'flowcrypt.compatibility@gmail.com';
       const gmailPage = await openMockGmailPage(t, browser, acct);
-      await gmailPage.waitAll(['@webmail-notification', '@notification-successfully-setup-action-close']);
+      await gmailPage.waitAll(['@webmail-notification-setup', '@notification-successfully-setup-action-close']);
       await gmailPage.waitAndClick('@notification-successfully-setup-action-close', { confirmGone: true });
       await gmailPage.page.reload();
-      await gmailPage.notPresent(['@webmail-notification', '@notification-setup-action-close', '@notification-successfully-setup-action-close']);
+      await gmailPage.notPresent(['@webmail-notification-setup', '@notification-setup-action-close', '@notification-successfully-setup-action-close']);
       // below test that can re-auth after lost access (simulating situation when user changed password on google)
       await Util.wipeGoogleTokensUsingExperimentalSettingsPage(t, browser, acct);
       const settingsPage = await browser.newPage(t, TestUrls.extensionSettings(acct));
@@ -462,28 +462,28 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       // // opening secure compose should trigger an api call which causes a reconnect notification
       await gmailPage.page.reload();
       await gmailPage.waitAndClick('@action-secure-compose');
-      await gmailPage.waitAll(['@webmail-notification', '@action-reconnect-account']);
+      await gmailPage.waitAll(['@webmail-notification-setup', '@action-reconnect-account']);
       await Util.sleep(1);
-      await gmailPage.waitForContent('@webmail-notification', 'Please reconnect FlowCrypt to your Gmail Account.');
+      await gmailPage.waitForContent('@webmail-notification-setup', 'Please reconnect FlowCrypt to your Gmail Account.');
       const oauthPopup = await browser.newPageTriggeredBy(t, () => gmailPage.waitAndClick('@action-reconnect-account'));
       await OauthPageRecipe.google(t, oauthPopup, acct, 'approve');
-      await gmailPage.waitAll(['@webmail-notification']);
+      await gmailPage.waitAll(['@webmail-notification-setup']);
       await Util.sleep(1);
-      await gmailPage.waitForContent('@webmail-notification', 'Connected successfully. You may need to reload the tab.');
+      await gmailPage.waitForContent('@webmail-notification-setup', 'Connected successfully. You may need to reload the tab.');
       // reload and test that it has no more notifications
       await gmailPage.page.reload();
       await gmailPage.waitAndClick('@action-secure-compose');
       await Util.sleep(1);
-      await gmailPage.notPresent(['@webmail-notification']);
+      await gmailPage.notPresent(['@webmail-notification-setup']);
     }));
 
     ava.default('mail.google.com - setup prompt notif + hides when close clicked + reappears + setup link opens settings', testWithBrowser(undefined, async (t, browser) => {
       const acct = 'flowcrypt.compatibility@gmail.com';
       const gmailPage = await openMockGmailPage(t, browser, acct, false);
-      await gmailPage.waitAll(['@webmail-notification', '@notification-setup-action-open-settings', '@notification-setup-action-dismiss', '@notification-setup-action-close']);
+      await gmailPage.waitAll(['@webmail-notification-setup', '@notification-setup-action-open-settings', '@notification-setup-action-dismiss', '@notification-setup-action-close']);
       await gmailPage.waitAndClick('@notification-setup-action-close', { confirmGone: true });
       await gmailPage.page.reload();
-      await gmailPage.waitAll(['@webmail-notification', '@notification-setup-action-open-settings', '@notification-setup-action-dismiss', '@notification-setup-action-close']);
+      await gmailPage.waitAll(['@webmail-notification-setup', '@notification-setup-action-open-settings', '@notification-setup-action-dismiss', '@notification-setup-action-close']);
       const newSettingsPage = await browser.newPageTriggeredBy(t, () => gmailPage.waitAndClick('@notification-setup-action-open-settings'));
       await newSettingsPage.waitAll('@action-connect-to-gmail');
     }));
@@ -491,10 +491,10 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
     ava.default('mail.google.com - setup prompt notification shows up + dismiss hides it + does not reappear if dismissed', testWithBrowser(undefined, async (t, browser) => {
       const acct = 'flowcrypt.compatibility@gmail.com';
       const gmailPage = await openMockGmailPage(t, browser, acct, false);
-      await gmailPage.waitAll(['@webmail-notification', '@notification-setup-action-open-settings', '@notification-setup-action-dismiss', '@notification-setup-action-close']);
+      await gmailPage.waitAll(['@webmail-notification-setup', '@notification-setup-action-open-settings', '@notification-setup-action-dismiss', '@notification-setup-action-close']);
       await gmailPage.waitAndClick('@notification-setup-action-dismiss', { confirmGone: true });
       await gmailPage.page.reload();
-      await gmailPage.notPresent(['@webmail-notification', '@notification-setup-action-open-settings', '@notification-setup-action-dismiss', '@notification-setup-action-close']);
+      await gmailPage.notPresent(['@webmail-notification-setup', '@notification-setup-action-open-settings', '@notification-setup-action-dismiss', '@notification-setup-action-close']);
     }));
 
     ava.default('setup [not using key manager] - notify users when their keys expire soon', testWithBrowser(undefined, async (t, browser) => {
@@ -523,7 +523,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       }, { isSavePassphraseChecked: false, isSavePassphraseHidden: false });
       const gmailPage = await openMockGmailPage(t, browser, acctEmail);
       // Check if notification presents
-      await gmailPage.waitForContent('@webmail-notification', warningMsg);
+      await gmailPage.waitForContent('@webmail-notification-notify_expiring_keys', warningMsg);
       // Add updated key that expires in 100 days
       await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
       const addKeyPopup = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-add-key-page', ['add_key.htm']);
@@ -539,12 +539,12 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       await addKeyPopup.waitAndClick('.action_add_private_key', { delay: 1 });
       await Util.sleep(1);
       await gmailPage.page.reload();
-      await gmailPage.notPresent('@webmail-notification');
+      await gmailPage.notPresent('@webmail-notification-notify_expiring_keys');
       // remove added key and observe warning appears again
       await settingsPage.waitAndClick('@action-remove-key-1');
       await gmailPage.page.reload();
       await Util.sleep(1);
-      await gmailPage.waitForContent('@webmail-notification', warningMsg);
+      await gmailPage.waitForContent('@webmail-notification-notify_expiring_keys', warningMsg);
     }));
 
     ava.default('setup [using key manager] - notify users when their keys expire soon', testWithBrowser(undefined, async (t, browser) => {
@@ -561,12 +561,12 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       const gmailPage = await openMockGmailPage(t, browser, acctEmail);
       // Check if notification presents
       const warningMsg = 'Your local keys expire in 18 days.\nTo receive the latest keys, please ensure that you can connect to your corporate network either through VPN or in person and reload Gmail.\nIf this notification still shows after that, please contact your Help Desk.';
-      await gmailPage.waitForContent('@webmail-notification', warningMsg);
+      await gmailPage.waitForContent('@webmail-notification-notify_expiring_keys', warningMsg);
       // Check if warning message still presents when EKM returns error
       MOCK_KM_KEYS[acctEmail] = { badRequestError: 'RequestTimeout' };
       await gmailPage.page.reload();
       await Util.sleep(1);
-      await gmailPage.waitForContent('@webmail-notification', warningMsg);
+      await gmailPage.waitForContent('@webmail-notification-notify_expiring_keys', warningMsg);
       const updatedKey = await opgp.generateKey({
         curve: 'curve25519',
         userIds: [{ email: acctEmail }, { email: 'demo@gmail.com', name: 'Demo user' }]
@@ -575,7 +575,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       await gmailPage.page.reload();
       await PageRecipe.waitForToastToAppearAndDisappear(gmailPage, 'Account keys updated');
       await gmailPage.page.reload();
-      await gmailPage.notPresent('@webmail-notification');
+      await gmailPage.notPresent('@webmail-notification-setup');
     }));
 
     ava.default.todo('setup - recover with a pass phrase - 1pp1 then wrong, then skip');

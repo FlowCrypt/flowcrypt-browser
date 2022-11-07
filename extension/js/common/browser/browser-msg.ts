@@ -8,6 +8,7 @@ import { Buf } from '../core/buf.js';
 import { Dict, Str, UrlParams } from '../core/common.js';
 import { ArmoredKeyIdentityWithEmails, KeyUtil } from '../core/crypto/key.js';
 import { DecryptResult, DiagnoseMsgPubkeysResult, MsgUtil, PgpMsgMethod, PgpMsgTypeResult, VerifyRes } from '../core/crypto/pgp/msg-util.js';
+import { NotificationGroupType } from '../notifications.js';
 import { Catch } from '../platform/catch.js';
 import { AccountIndex, AcctStoreDict } from '../platform/store/acct-store.js';
 import { GlobalIndex, GlobalStoreDict } from '../platform/store/global-store.js';
@@ -33,7 +34,7 @@ export namespace Bm {
   export type PassphraseDialog = { type: PassphraseDialogType, longids: string[], initiatorFrameId?: string };
   export type ScrollToReplyBox = { replyMsgId: string };
   export type ScrollToCursorInReplyBox = { replyMsgId: string, cursorOffsetTop: number };
-  export type NotificationShow = { notification: string, callbacks?: Dict<() => void> };
+  export type NotificationShow = { notification: string, group: NotificationGroupType, callbacks?: Dict<() => void> };
   export type NotificationShowAuthPopupNeeded = { acctEmail: string };
   export type RenderPublicKeys = { afterFrameId: string, publicKeys: string[], traverseUp?: number };
   export type SubscribeDialog = { isAuthErr?: boolean };
