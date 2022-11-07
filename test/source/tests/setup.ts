@@ -423,11 +423,12 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       await SetupPageRecipe.recover(settingsPage, 'flowcrypt.compatibility.2pp1', {});
     }));
 
-    ava.default('test re-auth after updating chrome extension', testWithBrowser('compatibility', async (t, browser) => {
+    ava.default.only('test re-auth after updating chrome extension', testWithBrowser('compatibility', async (t, browser) => {
       const acctEmail = 'flowcrypt.compatibility@gmail.com';
       // Wipe google tokens to test re-auth popup
       await Util.wipeGoogleTokensUsingExperimentalSettingsPage(t, browser, acctEmail);
       const gmailPage = await openMockGmailPage(t, browser, acctEmail);
+      await gmailPage.waitAndClick('@notification-successfully-setup-action-close', { confirmGone: true });
       await gmailPage.waitAndClick('@action-secure-compose');
       // Check reconnect auth notification
       await gmailPage.waitForContent('@webmail-notification', 'Please reconnect FlowCrypt to your Gmail Account.');
@@ -523,6 +524,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       }, { isSavePassphraseChecked: false, isSavePassphraseHidden: false });
       const gmailPage = await openMockGmailPage(t, browser, acctEmail);
       // Check if notification presents
+      await gmailPage.waitAndClick('@notification-successfully-setup-action-close', { confirmGone: true });
       await gmailPage.waitForContent('@webmail-notification', warningMsg);
       // Add updated key that expires in 100 days
       await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');

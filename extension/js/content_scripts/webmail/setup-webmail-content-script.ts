@@ -291,16 +291,20 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
     clientConfiguration: ClientConfiguration,
     factory: XssSafeFactory,
     ppEvent: { entered?: boolean },
-    completion: () => void | Promise<void>
+    completion: () => void
   ) => {
     if (clientConfiguration.usesKeyManager()) {
       const idToken = await InMemoryStore.get(acctEmail, InMemoryStoreKeys.ID_TOKEN);
       if (idToken) {
         const keyManager = new KeyManager(clientConfiguration.getKeyManagerUrlForPrivateKeys()!);
         Catch.setHandledTimeout(async () => {
-          const { privateKeys } = await keyManager.getPrivateKeys(idToken);
-          await processKeysFromEkm(acctEmail, privateKeys.map(entry => entry.decryptedPrivateKey), clientConfiguration, factory, idToken, ppEvent);
-        }, 0, completion);
+          try {
+            const { privateKeys } = await keyManager.getPrivateKeys(idToken);
+            await processKeysFromEkm(acctEmail, privateKeys.map(entry => entry.decryptedPrivateKey), clientConfiguration, factory, idToken, ppEvent);
+          } finally {
+            completion();
+          }
+        }, 0);
       } else {
         completion();
       }
@@ -358,8 +362,10 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
       const ppEvent: { entered?: boolean } = {};
       browserMsgListen(acctEmail, tabId, inject, factory, notifications, ppEvent);
       const clientConfiguration = await ClientConfiguration.newInstance(acctEmail);
-      await startPullingKeysFromEkm(acctEmail, clientConfiguration, factory, ppEvent, async () => {
-        await notifyExpiringKeys(acctEmail, clientConfiguration, notifications);
+      await startPullingKeysFromEkm(acctEmail, clientConfiguration, factory, ppEvent, () => {
+        Catch.try(async () => {
+          await notifyExpiringKeys(acctEmail, clientConfiguration, notifications);
+        })
       });
       await webmailSpecific.start(acctEmail, clientConfiguration, inject, notifications, factory, notifyMurdered);
     } catch (e) {

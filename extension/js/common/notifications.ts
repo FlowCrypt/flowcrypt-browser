@@ -21,6 +21,7 @@ export class Notifications {
   };
 
   public showAuthPopupNeeded = (acctEmail: string) => {
+    this.clearAll();
     this.show(`${Lang.compose.pleaseReconnectAccount} <a href="#" class="auth_popup" data-test="action-reconnect-account">Re-connect Account</a>`, {
       auth_popup: async () => {
         await this.reconnectAcctAuthPopup(acctEmail);
@@ -37,6 +38,7 @@ export class Notifications {
   };
 
   public show = (text: string, callbacks: Dict<() => void> = {}) => {
+    console.log(text);
     const className = `webmail_notification_${Str.sloppyRandom(6)}`;
     Xss.sanitizeAppend('.webmail_notifications', `<div class="webmail_notification ${className}" data-test="webmail-notification">${text}</div>`);
     if (typeof callbacks.close !== 'undefined') {
