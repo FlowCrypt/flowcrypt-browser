@@ -1,0 +1,37 @@
+Received: from 717284730244
+	named unknown
+	by gmailapi.google.com
+	with HTTPREST;
+	Thu, 27 Oct 2022 12:32:11 +0000
+Content-Type: multipart/mixed;
+ boundary="----sinikael-?=_1-16668739309260.07901237266370509"
+Openpgp: id=9BA39CE075F0839B30340FC807481C8ACF9D49FE
+From: Gmail CI Test <ci.tests.gmail@flowcrypt.dev>
+To: ioan@flowcrypt.com
+Subject: Test switch to encrypted reply for middle message
+Date: Thu, 27 Oct 2022 12:32:11 +0000
+Message-Id: <CAO9FY9s4yM5-m9eoMtjFiq00FR7TiOnGOsXS=L4aPrLmj0RxyA@mail.gmail.com>
+MIME-Version: 1.0
+
+------sinikael-?=_1-16668739309260.07901237266370509
+Content-Type: text/plain
+Content-Transfer-Encoding: quoted-printable
+
+-----BEGIN PGP MESSAGE-----
+Version: FlowCrypt Email Encryption 8.3.8
+Comment: Seamlessly send and receive encrypted email
+
+wV4DilmfrU+kpo8SAQdArgJXj6OTvdB+BiyaaoCtKe72KMQRpTRqnVum1toJ
+2nswlEpjBdCh3HI2Lfa3rVN9vidQJDz1PCycppiylkG97z63irEsTf++hUyn
+5dlXKU4fwV4DeWfgCtVtdnoSAQdATGynGbXkeOeuQanreGxFnQAgj8AQOSmE
+ZiVI8URSFjYwUYANrP3Oz194x9aXbUoafcOTsG5V3g171T3+sEddGqwPYmNb
+Rqc+fJWQZExXeUEt0sAxAYajDGplP3cOgH63ZsCo7bahL9DRfZkjW6WAVBNv
+v/uXBO+RPGGWaVcvy+3F+b0u4Ej2acBvL5vC963NqV2AT/654qf0uTp1/o+R
+lnGpRjU+4rTaUMhtpi7vEVQ7uxfIVXkuE6uJloxbOU4MhijOSRIg4oorJ3xo
+buBdMmcn2qUBtdQuNd+FX491NOQQ+Ai7DP6qhsRytsFcFy/dvskyEnuWowwO
+V2HS70odbVGGdjH8pqQQBPqZBlAmbr+zLisHHhuoRWEr+vjTZyL6j9RkTUk3
+3hXPCsx2G7mwexqexz04SaTe6SPi0rGbLqcI8baesg=3D=3D
+=3Dd6Wu
+-----END PGP MESSAGE-----
+
+------sinikael-?=_1-16668739309260.07901237266370509--
