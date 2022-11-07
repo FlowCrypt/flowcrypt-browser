@@ -37,8 +37,8 @@ export class InboxNotificationModule extends ViewModule<InboxView> {
   };
 
   public showNotification = (notification: string, callbacks?: Dict<() => void>) => {
-    const className = this.notifications.show(notification, callbacks);
-    $('body').one('click', this.view.setHandler(() => this.notifications.clear(className)));
+    this.notifications.show(notification, callbacks);
+    $('body').one('click', this.view.setHandler(this.notifications.clear));
   };
 
   private setHandlers = () => {

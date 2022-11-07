@@ -115,11 +115,11 @@ View.run(class SettingsView extends View {
       window.open(factory.srcAddPubkeyDialog(emails, 'settings'), '_blank', 'height=680,left=100,menubar=no,status=no,toolbar=no,top=30,width=660');
     });
     BrowserMsg.addListener('notification_show', async ({ notification }: Bm.NotificationShow) => {
-      const className = this.notifications!.show(notification);
+      this.notifications!.show(notification);
       let cleared = false;
       const clear = () => {
         if (!cleared) {
-          this.notifications!.clear(className);
+          this.notifications!.clear();
           cleared = true;
         }
       };

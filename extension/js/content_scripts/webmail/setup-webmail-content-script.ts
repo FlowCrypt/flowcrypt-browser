@@ -105,11 +105,11 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
     while (true) {
       const storage = await AcctStore.get(acctEmail, ['setup_done', 'cryptup_enabled', 'notification_setup_needed_dismissed']);
       if (storage.setup_done === true && storage.cryptup_enabled !== false) { // "not false" is due to cryptup_enabled unfedined in previous versions, which means "true"
-        notifications.clearAll();
+        notifications.clear();
         return;
       } else if (!$("div.webmail_notification").length && !storage.notification_setup_needed_dismissed && showSetupNeededNotificationIfSetupNotDone && storage.cryptup_enabled !== false) {
         notifications.show(setUpNotification, {
-          notification_setup_needed_dismiss: () => AcctStore.set(acctEmail, { notification_setup_needed_dismissed: true }).then(() => notifications.clearAll()).catch(Catch.reportErr),
+          notification_setup_needed_dismiss: () => AcctStore.set(acctEmail, { notification_setup_needed_dismissed: true }).then(() => notifications.clear()).catch(Catch.reportErr),
           action_open_settings: () => BrowserMsg.send.bg.settings({ acctEmail }),
           close: () => {
             showSetupNeededNotificationIfSetupNotDone = false;
@@ -191,8 +191,8 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
       await factory.showAddPubkeyDialog(emails);
     });
     BrowserMsg.addListener('notification_show', async ({ notification, callbacks }: Bm.NotificationShow) => {
-      const className = notifications.show(notification, callbacks);
-      $('body').one('click', Catch.try(() => notifications.clear(className)));
+      notifications.show(notification, callbacks);
+      $('body').one('click', Catch.try(notifications.clear));
     });
     BrowserMsg.addListener('notification_show_auth_popup_needed', async ({ acctEmail }: Bm.NotificationShowAuthPopupNeeded) => {
       notifications.showAuthPopupNeeded(acctEmail);
@@ -362,11 +362,9 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
       const ppEvent: { entered?: boolean } = {};
       browserMsgListen(acctEmail, tabId, inject, factory, notifications, ppEvent);
       const clientConfiguration = await ClientConfiguration.newInstance(acctEmail);
-      await startPullingKeysFromEkm(acctEmail, clientConfiguration, factory, ppEvent, () => {
-        Catch.try(async () => {
-          await notifyExpiringKeys(acctEmail, clientConfiguration, notifications);
-        })
-      });
+      await startPullingKeysFromEkm(acctEmail, clientConfiguration, factory, ppEvent, Catch.try(async () => {
+        await notifyExpiringKeys(acctEmail, clientConfiguration, notifications);
+      }));
       await webmailSpecific.start(acctEmail, clientConfiguration, inject, notifications, factory, notifyMurdered);
     } catch (e) {
       if (e instanceof TabIdRequiredError) {
