@@ -364,6 +364,6 @@ export const asyncSome = async<T>(arr: Array<T>, predicate: (e: T) => Promise<bo
   return false;
 };
 
-export const stringTuple = <T extends [string] | string[]>(...data: T): T => {
+export const stringTuple = <T extends | string[]>(...data: T): T => {
   return data;
 };
