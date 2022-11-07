@@ -208,8 +208,9 @@ interface MockKMKeyRes {
   [acct: string]: {
     response?: {
       privateKeys: {
-        decryptedPrivateKey: string }[]
-      },
+        decryptedPrivateKey: string
+      }[]
+    },
     badRequestError?: string
   }
 }

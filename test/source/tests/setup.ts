@@ -530,13 +530,13 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       await addKeyPopup.waitAndClick('@source-paste');
       const updatedKey = await opgp.generateKey({
         curve: 'curve25519',
-        userIds: [{ email: acctEmail }, { email: 'demo@gmail.com', name: 'Demo user'}],
+        userIds: [{ email: acctEmail }, { email: 'demo@gmail.com', name: 'Demo user' }],
         passphrase,
         keyExpirationTime: 100 * 24 * 60 * 60
       });
       await addKeyPopup.waitAndType('@input-armored-key', updatedKey.privateKeyArmored);
       await addKeyPopup.waitAndType('#input_passphrase', passphrase);
-      await addKeyPopup.waitAndClick('.action_add_private_key', { delay: 1});
+      await addKeyPopup.waitAndClick('.action_add_private_key', { delay: 1 });
       await Util.sleep(1);
       await gmailPage.page.reload();
       await gmailPage.notPresent('@webmail-notification');
@@ -555,18 +555,23 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         keyExpirationTime: 20 * 24 * 60 * 60,
         date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000)
       });
-      MOCK_KM_KEYS[acctEmail] = {response: { privateKeys: [{ decryptedPrivateKey: key.privateKeyArmored }] }};
+      MOCK_KM_KEYS[acctEmail] = { response: { privateKeys: [{ decryptedPrivateKey: key.privateKeyArmored }] } };
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
       await SetupPageRecipe.autoSetupWithEKM(settingsPage);
       const gmailPage = await openMockGmailPage(t, browser, acctEmail);
       // Check if notification presents
       const warningMsg = 'Your local keys expire in 18 days.\nTo receive the latest keys, please ensure that you can connect to your corporate network either through VPN or in person and reload Gmail.\nIf this notification still shows after that, please contact your Help Desk.';
       await gmailPage.waitForContent('@webmail-notification', warningMsg);
+      // Check if warning message still presents when EKM returns error
+      MOCK_KM_KEYS[acctEmail] = { badRequestError: 'RequestTimeout' };
+      await gmailPage.page.reload();
+      await Util.sleep(1);
+      await gmailPage.waitForContent('@webmail-notification', warningMsg);
       const updatedKey = await opgp.generateKey({
         curve: 'curve25519',
-        userIds: [{ email: acctEmail }, { email: 'demo@gmail.com', name: 'Demo user'}]
+        userIds: [{ email: acctEmail }, { email: 'demo@gmail.com', name: 'Demo user' }]
       });
-      MOCK_KM_KEYS[acctEmail].response = { privateKeys: [{ decryptedPrivateKey: key.privateKeyArmored }, { decryptedPrivateKey: updatedKey.privateKeyArmored }] };
+      MOCK_KM_KEYS[acctEmail] = { response: { privateKeys: [{ decryptedPrivateKey: key.privateKeyArmored }, { decryptedPrivateKey: updatedKey.privateKeyArmored }] } };
       await gmailPage.page.reload();
       await PageRecipe.waitForToastToAppearAndDisappear(gmailPage, 'Account keys updated');
       await gmailPage.page.reload();

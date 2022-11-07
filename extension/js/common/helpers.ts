@@ -167,8 +167,6 @@ export const processAndStoreKeysFromEkmLocally = async (
 
 export const getLocalKeyExpiration = async ({ acctEmail }: Bm.GetLocalKeyExpiration): Promise<Bm.Res.GetLocalKeyExpiration> => {
   const kis = await KeyStore.get(acctEmail);
-  const parsedKeys = await Promise.all(kis.map(async (ki) => await KeyUtil.parse(ki.public)));
-  const keyExpiration = parsedKeys
-    .sort((key1, key2) => (key1.expiration ?? Number.MAX_SAFE_INTEGER) < (key2.expiration ?? Number.MAX_SAFE_INTEGER) ? 1 : -1)[0]?.expiration;
-  return keyExpiration;
+  const expirations = await Promise.all(kis.map(async (ki) => (await KeyUtil.parse(ki.public))?.expiration ?? Number.MAX_SAFE_INTEGER));
+  return Math.max(...expirations);
 };

@@ -286,24 +286,27 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
     }
   };
 
-  const startPullingKeysFromEkm = async (acctEmail: string, clientConfiguration: ClientConfiguration, factory: XssSafeFactory, ppEvent: { entered?: boolean }): Promise<void> => {
-    return await new Promise((resolve, reject) => {
-      if (clientConfiguration.usesKeyManager()) {
-        InMemoryStore.get(acctEmail, InMemoryStoreKeys.ID_TOKEN).then((idToken) => {
-          if (idToken) {
-            const keyManager = new KeyManager(clientConfiguration.getKeyManagerUrlForPrivateKeys()!);
-            Catch.setHandledTimeout(async () => {
-              const { privateKeys } = await keyManager.getPrivateKeys(idToken);
-              await processKeysFromEkm(acctEmail, privateKeys.map(entry => entry.decryptedPrivateKey), clientConfiguration, factory, idToken, ppEvent);
-            }, 0, resolve);
-          } else {
-            resolve();
-          }
-        }).catch((err) => reject(err));
+  const startPullingKeysFromEkm = async (
+    acctEmail: string,
+    clientConfiguration: ClientConfiguration,
+    factory: XssSafeFactory,
+    ppEvent: { entered?: boolean },
+    completion: () => void | Promise<void>
+  ) => {
+    if (clientConfiguration.usesKeyManager()) {
+      const idToken = await InMemoryStore.get(acctEmail, InMemoryStoreKeys.ID_TOKEN);
+      if (idToken) {
+        const keyManager = new KeyManager(clientConfiguration.getKeyManagerUrlForPrivateKeys()!);
+        Catch.setHandledTimeout(async () => {
+          const { privateKeys } = await keyManager.getPrivateKeys(idToken);
+          await processKeysFromEkm(acctEmail, privateKeys.map(entry => entry.decryptedPrivateKey), clientConfiguration, factory, idToken, ppEvent);
+        }, 0, completion);
       } else {
-        resolve();
+        completion();
       }
-    });
+    } else {
+      completion();
+    }
   };
 
   const updateClientConfiguration = async (acctEmail: string) => {
@@ -326,7 +329,7 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
   };
 
   const notifyExpiringKeys = async (acctEmail: string, clientConfiguration: ClientConfiguration, notifications: Notifications) => {
-    const expiration = await BrowserMsg.send.bg.await.getLocalKeyExpiration({acctEmail});
+    const expiration = await BrowserMsg.send.bg.await.getLocalKeyExpiration({ acctEmail });
     if (expiration === undefined) {
       return;
     }
@@ -337,8 +340,8 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
     let warningMsg;
     if (clientConfiguration.usesKeyManager()) {
       warningMsg = `Your local keys expire in ${expireInDays} days.<br/>` +
-      `To receive the latest keys, please ensure that you can connect to your corporate network either through VPN or in person and reload Gmail.<br/>` +
-      `If this notification still shows after that, please contact your Help Desk.`;
+        `To receive the latest keys, please ensure that you can connect to your corporate network either through VPN or in person and reload Gmail.<br/>` +
+        `If this notification still shows after that, please contact your Help Desk.`;
     } else {
       warningMsg = `Your keys are expiring in ${expireInDays} days. Please import a newer set of keys to use.`;
     }
@@ -356,9 +359,10 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
       const ppEvent: { entered?: boolean } = {};
       browserMsgListen(acctEmail, tabId, inject, factory, notifications, ppEvent);
       const clientConfiguration = await ClientConfiguration.newInstance(acctEmail);
-      await startPullingKeysFromEkm(acctEmail, clientConfiguration, factory, ppEvent);
+      await startPullingKeysFromEkm(acctEmail, clientConfiguration, factory, ppEvent, async () => {
+        await notifyExpiringKeys(acctEmail, clientConfiguration, notifications);
+      });
       await webmailSpecific.start(acctEmail, clientConfiguration, inject, notifications, factory, notifyMurdered);
-      await notifyExpiringKeys(acctEmail, clientConfiguration, notifications);
     } catch (e) {
       if (e instanceof TabIdRequiredError) {
         console.error(`FlowCrypt cannot start: ${String(e)}`);
