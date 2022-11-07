@@ -447,7 +447,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       await gmailPage.notPresent(['@webmail-notification']);
     }));
 
-    ava.default.only('mail.google.com - success notif after setup, click hides it, does not re-appear + offers to reauth', testWithBrowser('compatibility', async (t, browser) => {
+    ava.default('mail.google.com - success notif after setup, click hides it, does not re-appear + offers to reauth', testWithBrowser('compatibility', async (t, browser) => {
       const acct = 'flowcrypt.compatibility@gmail.com';
       const gmailPage = await openMockGmailPage(t, browser, acct);
       await gmailPage.waitAll(['@webmail-notification', '@notification-successfully-setup-action-close']);
