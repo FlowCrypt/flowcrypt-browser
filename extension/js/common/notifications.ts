@@ -4,7 +4,7 @@
 
 import { BrowserMsg } from './browser/browser-msg.js';
 import { Ui } from './browser/ui.js';
-import { Dict } from './core/common.js';
+import { Dict, Str } from './core/common.js';
 import { Lang } from './lang.js';
 import { Catch } from './platform/catch.js';
 import { AcctStore } from './platform/store/acct-store.js';
@@ -28,27 +28,33 @@ export class Notifications {
     });
   };
 
-  public clear = () => {
+  public clearAll = () => {
     $('.webmail_notifications').text('');
   };
 
+  public clear = (className: string) => {
+    $(`.webmail_notifications .${className}`)?.remove();
+  };
+
   public show = (text: string, callbacks: Dict<() => void> = {}) => {
-    Xss.sanitizeRender('.webmail_notifications', `<div class="webmail_notification" data-test="webmail-notification">${text}</div>`);
+    const className = `webmail_notification_${Str.sloppyRandom(6)}`;
+    Xss.sanitizeAppend('.webmail_notifications', `<div class="webmail_notification ${className}" data-test="webmail-notification">${text}</div>`);
     if (typeof callbacks.close !== 'undefined') {
       const origCloseCb = callbacks.close;
       callbacks.close = Catch.try(() => {
         origCloseCb();
-        this.clear();
+        this.clear(className);
       });
     } else {
-      callbacks.close = Catch.try(this.clear);
+      callbacks.close = Catch.try(() => this.clear(className));
     }
     if (typeof callbacks.reload === 'undefined') {
       callbacks.reload = Catch.try(() => window.location.reload());
     }
     for (const name of Object.keys(callbacks)) {
-      $(`.webmail_notifications .${name}`).click(Ui.event.prevent('double', callbacks[name]));
+      $(`.${className} .${name}`).click(Ui.event.prevent('double', callbacks[name]));
     }
+    return className;
   };
 
   private reconnectAcctAuthPopup = async (acctEmail: string) => {
