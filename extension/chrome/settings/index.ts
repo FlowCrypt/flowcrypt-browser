@@ -193,7 +193,9 @@ View.run(class SettingsView extends View {
       }
     }));
     $('#status-row #status_google').on('click', this.setHandler(async () => await Settings.renderSubPage(this.acctEmail!, this.tabId, 'modules/debug_api.htm', { which: 'google_account' })));
-    $('#status-row #status_local_store').on('click', this.setHandler(async () => await Settings.renderSubPage(this.acctEmail!, this.tabId, 'modules/debug_api.htm', { which: 'local_store' })));
+    $('#status-row #status_local_store').on('click', this.setHandler(
+      async () => await Settings.renderSubPage(this.acctEmail!, this.tabId, 'modules/debug_api.htm', { which: 'local_store' }))
+    );
     Ui.activateModalPageLinkTags();
   };
 

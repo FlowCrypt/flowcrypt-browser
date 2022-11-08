@@ -138,7 +138,7 @@ export class ComposeSendBtnPopoverModule extends ViewModule<ComposeView> {
     } else if (e.key === 'Enter') {
       e.stopPropagation();
       e.preventDefault();
-      currentActive.trigger('click');;
+      currentActive.trigger('click');
     }
   };
 

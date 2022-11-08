@@ -74,7 +74,7 @@ export class KeyImportUi {
         $('.input_private_key').val('').change().prop('disabled', true);
         $('.source_paste_container').css('display', 'none');
         $('.source_paste_container .unprotected_key_create_pass_phrase').hide();
-        $('#fineuploader_button > input').trigger('click');;
+        $('#fineuploader_button > input').trigger('click');
       } else if ((this as HTMLInputElement).value === 'paste') {
         $('.input_private_key').val('').change().prop('disabled', false);
         $('.source_paste_container').css('display', 'block');

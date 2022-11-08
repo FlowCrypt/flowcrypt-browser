@@ -212,7 +212,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
         secureReplyBtn.keydown(event => {
           if (event.key === 'Enter') {
             event.stopImmediatePropagation();
-            $(secureReplyBtn).trigger('click');;
+            $(secureReplyBtn).trigger('click');
           }
         });
       }
@@ -222,7 +222,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
       if (useEncryptionInThisConvo) {
         if (!convoUpperIcons.is('.appended') || convoUpperIcons.find('.use_secure_reply').length) { // either not appended, or appended icon is outdated (convo switched to encrypted)
           this.addfcConvoIcon(convoUpperIcons, this.factory.btnWithoutFc(), '.show_original_conversation', () => {
-            convoUpperIcons.find('.gZ').trigger('click');;
+            convoUpperIcons.find('.gZ').trigger('click');
           });
         }
       }
@@ -232,7 +232,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
   private actionActivateSecureReplyHandler = async (btn: HTMLElement, event: JQuery.Event) => {
     event.stopImmediatePropagation();
     if ($('#switch_to_encrypted_reply').length) {
-      $('#switch_to_encrypted_reply').trigger('click');;
+      $('#switch_to_encrypted_reply').trigger('click');
       return;
     }
     const messageContainer = $(btn.closest('.h7') as HTMLElement);
@@ -649,7 +649,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
             } else {
               const deleteReplyEl = document.querySelector('.oh.J-Z-I.J-J5-Ji.T-I-ax7');
               if (deleteReplyEl) { // Remove standard reply by clicking `delete` button
-                (deleteReplyEl as HTMLElement).trigger('click');;
+                (deleteReplyEl as HTMLElement).click();
               }
             }
             midConvoDraft = true; // last box was processed first (looping in reverse), and all the rest must be drafts

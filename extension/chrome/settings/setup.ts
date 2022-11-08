@@ -165,8 +165,12 @@ export class SetupView extends View {
     $('#lost_pass_phrase').on('click', this.setHandler(() => this.showLostPassPhraseModal()));
     $('.action_account_settings').on('click', this.setHandler(() => { window.location.href = Url.create('index.htm', { acctEmail: this.acctEmail }); }));
     $('.input_submit_key').on('click', this.setHandler(el => this.actionSubmitPublicKeyToggleHandler(el)));
-    $('#step_0_found_key .action_manual_create_key, #step_1_easy_or_manual .action_manual_create_key').on('click', this.setHandler(() => this.setupRender.displayBlock('step_2a_manual_create')));
-    $('#step_0_found_key .action_manual_enter_key, #step_1_easy_or_manual .action_manual_enter_key').on('click', this.setHandler(() => this.setupRender.displayBlock('step_2b_manual_enter')));
+    $('#step_0_found_key .action_manual_create_key, #step_1_easy_or_manual .action_manual_create_key').on('click',
+      this.setHandler(() => this.setupRender.displayBlock('step_2a_manual_create'))
+    );
+    $('#step_0_found_key .action_manual_enter_key, #step_1_easy_or_manual .action_manual_enter_key').on('click',
+      this.setHandler(() => this.setupRender.displayBlock('step_2b_manual_enter'))
+    );
     $('#step_2b_manual_enter .action_add_private_key').on('click', this.setHandler(el => this.setupImportKey.actionImportPrivateKeyHandle(el)));
     $('#step_2a_manual_create .action_proceed_private').on('click', this.setHandlerPrevent('double', () => this.setupCreateKey.actionCreateKeyHandler()));
     $('#step_2a_manual_create .action_show_advanced_create_settings').on('click', this.setHandler(el => this.setupCreateKey.actionShowAdvancedSettingsHandle(el)));

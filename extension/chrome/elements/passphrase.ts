@@ -143,7 +143,7 @@ View.run(class PassphraseView extends View {
     }));
     $('#passphrase').keydown(this.setHandler((el, ev) => {
       if (ev.key === 'Enter') {
-        $('.action_ok').trigger('click');;
+        $('.action_ok').trigger('click');
       }
     }));
     $('body').on('keydown', this.setHandler((el, ev) => {

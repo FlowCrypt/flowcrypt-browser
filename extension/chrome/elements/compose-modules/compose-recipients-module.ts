@@ -493,7 +493,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       }
     } else if (e.key === 'Enter') {
       if (currentActive.length) { // If he pressed enter when contacts popover is shown
-        currentActive.trigger('click');; // select contact
+        currentActive.trigger('click'); // select contact
         currentActive.removeClass('active');
       } else { // We need to force add recipient even it's invalid
         this.parseRenderRecipients($(e.target), true).catch(Catch.reportErr);
@@ -513,7 +513,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     } else if (e.key === 'Tab') {
       e.preventDefault(); // don't switch inputs
       e.stopPropagation(); // don't switch inputs
-      currentActive.trigger('click');; // select contact
+      currentActive.trigger('click'); // select contact
       currentActive.removeClass('active');
       return true;
     } else if (e.key === 'ArrowUp') {

@@ -57,7 +57,7 @@ export abstract class View {
   public setEnterHandlerThatClicks = (selector: string) => {
     return (event: JQuery.Event<HTMLElement, null>) => {
       if (event.which === 13) {
-        $(selector).trigger('click');;
+        $(selector).trigger('click');
       }
     };
   };

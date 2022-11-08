@@ -121,7 +121,7 @@ export class SetupRecoverKeyModule {
       const storedKeys = await KeyStore.get(this.view.acctEmail);
       this.view.importedKeysUniqueLongids = storedKeys.map(ki => ki.longid);
       await this.view.setupRender.renderSetupDone();
-      $('#step_4_more_to_recover .action_recover_remaining').trigger('click');;
+      $('#step_4_more_to_recover .action_recover_remaining').trigger('click');
     } else {
       window.location.href = Url.create('modules/add_key.htm', { acctEmail: this.view.acctEmail, parentTabId: this.view.parentTabId });
     }

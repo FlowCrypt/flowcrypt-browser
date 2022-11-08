@@ -102,7 +102,7 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
     }
     this.view.sizeModule.resizeComposeBox();
     if (this.responseMethod === 'forward') {
-      this.view.S.cached('recipients_placeholder').trigger('click');;
+      this.view.S.cached('recipients_placeholder').trigger('click');
     }
     BrowserMsg.send.scrollToReplyBox(this.view.parentTabId, { replyMsgId: `#${this.view.frameId}` });
   };
@@ -288,7 +288,7 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
       $('.close_compose_window').on('click', this.view.setHandler(() => this.actionCloseHandler(), this.view.errModule.handle(`close compose window`)));
       this.view.S.cached('title').on('click', () => {
         if (this.view.sizeModule.composeWindowIsMinimized) {
-          $('.minimize_compose_window').trigger('click');;
+          $('.minimize_compose_window').trigger('click');
         }
       });
       await this.view.quoteModule.addTripleDotQuoteExpandFooterOnlyBtn();

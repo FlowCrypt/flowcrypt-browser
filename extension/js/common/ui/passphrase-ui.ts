@@ -35,7 +35,7 @@ export const initPassphraseToggle = async (passphraseInputIds: string[], forceIn
     }
     $(`#toggle_${id}`).on('click', Ui.event.handle((target, event) => {
       if (event.originalEvent) {
-        $('.toggle_show_hide_pass_phrase:visible').not(target).trigger('click');; // toggle the visibility of all other visible password fields on the page
+        $('.toggle_show_hide_pass_phrase:visible').not(target).trigger('click'); // toggle the visibility of all other visible password fields on the page
       }
       if (passphraseInput.attr('type') === 'password') {
         $(`#${id}`).attr('type', 'text');
@@ -46,6 +46,6 @@ export const initPassphraseToggle = async (passphraseInputIds: string[], forceIn
         Xss.sanitizeRender(target, buttonShow);
         GlobalStore.set({ hide_pass_phrases: true }).catch(Catch.reportErr);
       }
-    })).trigger('click');.trigger('click');; // double-click the toggle to prevent browser from prefilling values
+    })).trigger('click').trigger('click'); // double-click the toggle to prevent browser from prefilling values
   }
 };
