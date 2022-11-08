@@ -351,11 +351,11 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       await SettingsPageRecipe.ready(settingsPage);
       await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
       await settingsPage.waitAll('@action-open-add-key-page');
-      await settingsPage.waitAndClick('@action-remove-key');
+      await settingsPage.waitAndClick('@action-remove-key-0');
       await settingsPage.page.waitForNavigation({ waitUntil: 'networkidle0' });
       await Util.sleep(1);
       await settingsPage.waitAll('@action-open-add-key-page');
-      await settingsPage.notPresent('@action-remove-key');
+      await settingsPage.notPresent('@action-remove-key-0');
     }));
 
     ava.default('settings - my key page - privileged frames and action buttons should be hidden when using key manager test', testWithBrowser(undefined, async (t, browser) => {
@@ -370,7 +370,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       await myKeyFrame.notPresent('@action-update-prv');
       await myKeyFrame.notPresent('@action-revoke-certificate');
       await myKeyFrame.waitForContent('@label-download-prv', 'THIS PRIVATE KEY IS MANAGED BY EMAIL KEY MANAGER');
-      await settingsPage.notPresent('@action-remove-key');
+      await settingsPage.notPresent('@action-remove-key-0');
       const fingerprint = await myKeyFrame.readHtml('@content-fingerprint');
       // test for direct access at my_key_update.htm
       const myKeyUpdateFrame = await browser.newPage(t, TestUrls.extension(`chrome/settings/modules/my_key_update.htm?placement=settings&acctEmail=${acct}&fingerprint=${fingerprint}`));

@@ -7,7 +7,7 @@ import { Bm, BrowserMsg } from '../../../../js/common/browser/browser-msg.js';
 import { Dict } from '../../../../js/common/core/common.js';
 import { GoogleAuth } from '../../../../js/common/api/email-provider/gmail/google-auth.js';
 import { InboxView } from '../inbox.js';
-import { Notifications } from '../../../../js/common/notifications.js';
+import { NotificationGroupType, Notifications } from '../../../../js/common/notifications.js';
 import { ViewModule } from '../../../../js/common/view-module.js';
 
 export class InboxNotificationModule extends ViewModule<InboxView> {
@@ -33,12 +33,12 @@ export class InboxNotificationModule extends ViewModule<InboxView> {
       await GoogleAuth.newAuthPopup({ acctEmail: this.view.acctEmail });
       window.location.reload();
     };
-    this.showNotification(msg, { action_auth_popup: newAuthPopup, action_add_permission: newAuthPopup });
+    this.showNotification(msg, 'setup', { action_auth_popup: newAuthPopup, action_add_permission: newAuthPopup });
   };
 
-  public showNotification = (notification: string, callbacks?: Dict<() => void>) => {
-    this.notifications.show(notification, callbacks);
-    $('body').one('click', this.view.setHandler(this.notifications.clear));
+  public showNotification = (notification: string, group: NotificationGroupType, callbacks?: Dict<() => void>) => {
+    this.notifications.show(notification, callbacks, group);
+    $('body').one('click', this.view.setHandler(() => this.notifications.clear(group)));
   };
 
   private setHandlers = () => {
@@ -48,8 +48,8 @@ export class InboxNotificationModule extends ViewModule<InboxView> {
     });
   };
 
-  private notificationShowHandler: Bm.AsyncResponselessHandler = async ({ notification, callbacks }: Bm.NotificationShow) => {
-    this.showNotification(notification, callbacks);
+  private notificationShowHandler: Bm.AsyncResponselessHandler = async ({ notification, callbacks, group }: Bm.NotificationShow) => {
+    this.showNotification(notification, group, callbacks);
   };
 
 }

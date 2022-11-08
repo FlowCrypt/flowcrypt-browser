@@ -114,12 +114,12 @@ View.run(class SettingsView extends View {
       const factory = new XssSafeFactory(this.acctEmail!, this.tabId);
       window.open(factory.srcAddPubkeyDialog(emails, 'settings'), '_blank', 'height=680,left=100,menubar=no,status=no,toolbar=no,top=30,width=660');
     });
-    BrowserMsg.addListener('notification_show', async ({ notification }: Bm.NotificationShow) => {
-      this.notifications!.show(notification);
+    BrowserMsg.addListener('notification_show', async ({ notification, group }: Bm.NotificationShow) => {
+      this.notifications!.show(notification, {}, group);
       let cleared = false;
       const clear = () => {
         if (!cleared) {
-          this.notifications!.clear();
+          this.notifications!.clear(group);
           cleared = true;
         }
       };
@@ -408,7 +408,7 @@ View.run(class SettingsView extends View {
       const date = Str.monthName(created.getMonth()) + ' ' + created.getDate() + ', ' + created.getFullYear();
       let removeKeyBtn = '';
       if (canRemoveKey && privateKeys.length > 1) {
-        removeKeyBtn = `(<a href="#" class="action_remove_key" data-test="action-remove-key" data-type="${ki.family}" data-id="${ki.id}" data-longid="${ki.longid}">remove</a>)`;
+        removeKeyBtn = `(<a href="#" class="action_remove_key" data-test="action-remove-key-${i}" data-type="${ki.family}" data-id="${ki.id}" data-longid="${ki.longid}">remove</a>)`;
       }
       const escapedEmail = Xss.escape(prv.emails[0] || '');
       const escapedLink = `<a href="#" data-test="action-show-key-${i}" class="action_show_key" page="modules/my_key.htm" addurltext="&fingerprint=${ki.id}">${escapedEmail}</a>`;

@@ -164,3 +164,9 @@ export const processAndStoreKeysFromEkmLocally = async (
   }
   return { updateCount: encryptedKeys?.keys.length ?? 0 + (existingKeys.length - keysToRetain.length), noKeysSetup: !(encryptedKeys?.keys.length || keysToRetain.length) };
 };
+
+export const getLocalKeyExpiration = async ({ acctEmail }: Bm.GetLocalKeyExpiration): Promise<Bm.Res.GetLocalKeyExpiration> => {
+  const kis = await KeyStore.get(acctEmail);
+  const expirations = await Promise.all(kis.map(async (ki) => (await KeyUtil.parse(ki.public))?.expiration ?? Number.MAX_SAFE_INTEGER));
+  return Math.max(...expirations);
+};

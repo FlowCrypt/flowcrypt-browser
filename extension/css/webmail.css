@@ -104,6 +104,8 @@
 
 /* notifications */
 div.webmail_notifications {
+  display: flex;
+  flex-direction: column;
   position: absolute;
   top: 0;
   left: 0;
@@ -124,10 +126,8 @@ div.webmail_notifications div.webmail_notification {
   line-height: 16px;
   padding: 6px 10px;
   z-index: 999;
-  margin-top: 50px;
-  display: inline-block;
-  margin-right: 50px;
-  margin-left: 50px;
+  margin: 50px auto 0;
+  max-width: 90%;
 }
 
 div.webmail_notifications div.webmail_notification .webmail_notification_buttons {
@@ -143,9 +143,18 @@ div.webmail_notifications div.webmail_notification a {
   padding-left: 6px;
   padding-right: 2px;
 }
-div.webmail_notifications div.webmail_notification a:hover { text-decoration: none; }
-body.cryptup_inbox div.webmail_notifications { position: fixed; }
-body.cryptup_outlook div.webmail_notifications div.webmail_notification { margin-top: 10px; }
+
+div.webmail_notifications div.webmail_notification a:hover {
+  text-decoration: none;
+}
+
+body.cryptup_inbox div.webmail_notifications {
+  position: fixed;
+}
+
+body.cryptup_outlook div.webmail_notifications div.webmail_notification {
+  margin-top: 10px;
+}
 
 .error_notification {
   background: #c53929;
@@ -177,7 +186,12 @@ body.cryptup_inbox div.new_secure_compose_window_button > img {
   padding: 6px;
   padding-top: 10px;
 }
-body.cryptup_inbox .pgp_message_container .nk .tq:first-child { display: none !important; } /* reply, reply all, forward in menu next to encrypted messages */
+
+body.cryptup_inbox .pgp_message_container .nk .tq:first-child {
+  display: none !important;
+}
+
+/* reply, reply all, forward in menu next to encrypted messages */
 
 /* buttons body.cryptup_gmail */
 body.cryptup_gmail .inserted div.reply_message_button {
@@ -190,13 +204,18 @@ body.cryptup_gmail .inserted div.reply_message_button {
   height: auto;
 }
 
-@-moz-document url-prefix('') { /* Firefox specific */
+@-moz-document url-prefix('') {
+  /* Firefox specific */
   body.cryptup_gmail .inserted div.reply_message_button {
     padding-bottom: 4px;
   }
 }
 
-body.cryptup_gmail.firefox .inserted div.reply_message_button { padding-top: 16px; } /* else buttons misaligned vertically on FF */
+body.cryptup_gmail.firefox .inserted div.reply_message_button {
+  padding-top: 16px;
+}
+
+/* else buttons misaligned vertically on FF */
 body.cryptup_gmail .inserted div.reply_message_button:hover {
   opacity: 0.9;
   cursor: pointer;
@@ -210,9 +229,18 @@ body.cryptup_gmail div.reply_message_button > img {
   top: 3px;
   margin: 0 auto;
 }
-body.cryptup_gmail_standard div.new_secure_compose_window_button { background: #31a217; }
-body.cryptup_gmail_standard .z0 .T-I { min-width: 105px; }
-body.cryptup_gmail_new div.new_secure_compose_window_button:hover { background-color: #fafafb; }
+
+body.cryptup_gmail_standard div.new_secure_compose_window_button {
+  background: #31a217;
+}
+
+body.cryptup_gmail_standard .z0 .T-I {
+  min-width: 105px;
+}
+
+body.cryptup_gmail_new div.new_secure_compose_window_button:hover {
+  background-color: #fafafb;
+}
 
 body.cryptup_gmail div.ade.appended span.cryptup_convo_button > img {
   border: 2px solid #31a217;
@@ -235,8 +263,13 @@ body.cryptup_gmail div.ade.appended span.cryptup_convo_button > span {
 }
 
 body.cryptup_gmail div.ade.appended span.cryptup_convo_button:hover > img,
-div.ade.appended span.cryptup_convo_button:hover > span { opacity: 1; }
-body.cryptup_gmail div.ade.appended span.cryptup_convo_button:not(:first-child) { margin-left: 5px; }
+div.ade.appended span.cryptup_convo_button:hover > span {
+  opacity: 1;
+}
+
+body.cryptup_gmail div.ade.appended span.cryptup_convo_button:not(:first-child) {
+  margin-left: 5px;
+}
 
 body.cryptup_gmail.cryptup_gmail_new div.ade.appended span.cryptup_convo_button {
   margin-left: 18px;
@@ -289,7 +322,12 @@ body.cryptup_outlook .cryptup_compose_button_container .new_secure_compose_windo
   height: 19px;
   cursor: pointer;
 }
-body.cryptup_outlook ._fce_i { padding: 0 6px; } /* slightly less horizontal padding on other outlook buttons in the same menu so that it doesn't misbehave */
+
+body.cryptup_outlook ._fce_i {
+  padding: 0 6px;
+}
+
+/* slightly less horizontal padding on other outlook buttons in the same menu so that it doesn't misbehave */
 
 /* elements */
 .secure_compose_window {
@@ -351,18 +389,25 @@ body.cryptup_outlook ._fce_i { padding: 0 6px; } /* slightly less horizontal pad
   margin: 0;
   overflow: hidden;
 }
-.secure_compose_window.full_window iframe { height: 100%; }
+
+.secure_compose_window.full_window iframe {
+  height: 100%;
+}
 
 @media screen and (max-height: 600px) {
   .secure_compose_window,
-  .secure_compose_window iframe { height: 450px; }
+  .secure_compose_window iframe {
+    height: 450px;
+  }
 }
 
 div.evaluated iframe.embedded {
   width: 500px;
   height: 160px;
   border: 1px solid #cacaca;
-}  /* verification results */
+}
+
+/* verification results */
 iframe.pgp_block {
   width: 100%;
   border: none;
@@ -473,7 +518,9 @@ body.cryptup_gmail div.recipients_use_encryption a {
   padding: 0;
 }
 
-.swal2-popup.ui-modal-iframe .swal2-close { color: #999; }
+.swal2-popup.ui-modal-iframe .swal2-close {
+  color: #999;
+}
 
 .swal2-popup.ui-modal-iframe iframe {
   display: flex;
@@ -517,4 +564,6 @@ body.cryptup_gmail div.recipients_use_encryption a {
   margin: 0 0.6em 0.3em;
 }
 
-.swal2-popup.swal2-toast.ui-toast .swal2-timer-progress-bar { background: rgba(255, 255, 255, 0.5); }
+.swal2-popup.swal2-toast.ui-toast .swal2-timer-progress-bar {
+  background: rgba(255, 255, 255, 0.5);
+}

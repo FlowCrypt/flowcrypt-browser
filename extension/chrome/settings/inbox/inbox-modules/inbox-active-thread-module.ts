@@ -59,7 +59,7 @@ export class InboxActiveThreadModule extends ViewModule<InboxView> {
       } else if (ApiErr.isAuthErr(e)) {
         this.view.inboxNotificationModule.renderAndHandleAuthPopupNotification();
       } else if (ApiErr.isMailOrAcctDisabledOrPolicy(e)) {
-        this.view.inboxNotificationModule.showNotification(Lang.account.googleAcctDisabledOrPolicy);
+        this.view.inboxNotificationModule.showNotification(Lang.account.googleAcctDisabledOrPolicy, 'inbox');
       } else {
         Catch.reportErr(e);
         const printable = Xss.escape(e instanceof Error ? e.stack || e.message : JSON.stringify(e, undefined, 2));
@@ -136,7 +136,7 @@ export class InboxActiveThreadModule extends ViewModule<InboxView> {
       } else if (ApiErr.isAuthErr(e)) {
         this.view.inboxNotificationModule.renderAndHandleAuthPopupNotification();
       } else if (ApiErr.isMailOrAcctDisabledOrPolicy(e)) {
-        this.view.inboxNotificationModule.showNotification(Lang.account.googleAcctDisabledOrPolicy);
+        this.view.inboxNotificationModule.showNotification(Lang.account.googleAcctDisabledOrPolicy, 'inbox');
       } else {
         Catch.reportErr(e);
         const printable = Xss.escape(e instanceof Error ? e.stack || e.message : JSON.stringify(e, undefined, 2));
