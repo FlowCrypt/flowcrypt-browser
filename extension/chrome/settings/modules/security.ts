@@ -85,10 +85,13 @@ View.run(class SecurityView extends View {
   private loadAndRenderPwdEncryptedMsgSettings = async () => {
     Xss.sanitizeRender('.select_loader_container', Ui.spinner('green'));
     try {
-      const response = await this.acctServer.accountGetAndUpdateLocalStore();
-      $('.select_loader_container').text('');
-      $('.default_message_expire').val(Number(response.account.default_message_expire).toString()).prop('disabled', false).css('display', 'inline-block');
-      $('.default_message_expire').change(this.setHandler(() => this.onDefaultExpireUserChange()));
+      if (!this.clientConfiguration.usesKeyManager()) {
+        $('.password_messages_expiry_container').show();
+        const response = await this.acctServer.accountGetAndUpdateLocalStore();
+        $('.select_loader_container').text('');
+        $('.default_message_expire').val(Number(response.account.default_message_expire).toString()).prop('disabled', false).css('display', 'inline-block');
+        $('.default_message_expire').change(this.setHandler(() => this.onDefaultExpireUserChange()));
+      }
     } catch (e) {
       if (ApiErr.isAuthErr(e)) {
         Settings.offerToLoginWithPopupShowModalOnErr(this.acctEmail, () => window.location.reload());

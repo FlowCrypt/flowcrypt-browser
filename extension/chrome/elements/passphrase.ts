@@ -8,7 +8,7 @@ import { Assert } from '../../js/common/assert.js';
 import { BrowserMsg } from '../../js/common/browser/browser-msg.js';
 import { Catch } from '../../js/common/platform/catch.js';
 import { Ui } from '../../js/common/browser/ui.js';
-import { Url, Str } from '../../js/common/core/common.js';
+import { Url, Str, stringTuple } from '../../js/common/core/common.js';
 import { View } from '../../js/common/view.js';
 import { Xss } from '../../js/common/platform/xss.js';
 import { initPassphraseToggle } from '../../js/common/ui/passphrase-ui.js';
@@ -19,12 +19,15 @@ import { ClientConfiguration } from '../../js/common/client-configuration.js';
 import { Lang } from '../../js/common/lang.js';
 import { AcctStore } from '../../js/common/platform/store/acct-store.js';
 
+const passPhraseTypes = stringTuple('embedded', 'sign', 'message', 'draft', 'attachment', 'quote', 'backup', 'update_key');
+type PassPhraseType = typeof passPhraseTypes[number];
+
 View.run(class PassphraseView extends View {
   public fesUrl?: string;
   private readonly acctEmail: string;
   private readonly parentTabId: string;
   private readonly longids: string[];
-  private readonly type: string;
+  private readonly type: PassPhraseType;
   private readonly initiatorFrameId?: string;
   private keysWeNeedPassPhraseFor: KeyInfoWithIdentity[] | undefined;
   private clientConfiguration!: ClientConfiguration;
@@ -36,8 +39,7 @@ View.run(class PassphraseView extends View {
     this.parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
     const longidsParam = Assert.urlParamRequire.string(uncheckedUrlParams, 'longids');
     this.longids = longidsParam ? longidsParam.split(',') : [];
-    this.type = Assert.urlParamRequire.oneof(uncheckedUrlParams, 'type',
-      ['embedded', 'sign', 'message', 'draft', 'attachment', 'quote', 'backup', 'update_key']);
+    this.type = Assert.urlParamRequire.oneof(uncheckedUrlParams, 'type', passPhraseTypes);
     this.initiatorFrameId = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'initiatorFrameId');
   }
 
@@ -61,24 +63,37 @@ View.run(class PassphraseView extends View {
       this.longids.push(...allPrivateKeys.map(ki => ki.longid));
     }
     this.keysWeNeedPassPhraseFor = allPrivateKeys.filter(ki => this.longids.includes(ki.longid));
-    if (this.type === 'embedded') {
-      $('h1').parent().css('display', 'none');
-      $('div.separator').css('display', 'none');
-      $('body#settings > div#content.dialog').css({ width: 'inherit', background: '#fafafa', });
-      $('.line.which_key').css({ display: 'none', position: 'absolute', visibility: 'hidden', left: '5000px', });
-    } else if (this.type === 'sign') {
-      $('h1').text('Enter FlowCrypt pass phrase to sign email');
-    } else if (this.type === 'draft') {
-      $('h1').text('Enter FlowCrypt pass phrase to load a draft');
-    } else if (this.type === 'attachment') {
-      $('h1').text('Enter FlowCrypt pass phrase to decrypt a file');
-    } else if (this.type === 'quote') {
-      $('h1').text('Enter FlowCrypt pass phrase to load quoted content');
-    } else if (this.type === 'backup') {
-      $('h1').text('Enter FlowCrypt pass phrase to back up');
-    } else if (this.type === 'update_key') {
-      $('h1').text('Enter FlowCrypt pass phrase to keep your account keys up to date');
+    let passphraseText = '';
+    switch (this.type) {
+      case 'embedded':
+        $('.passphrase_text_container').hide();
+        $('div.separator').hide();
+        $('body#settings > div#content.dialog').css({ width: 'inherit', background: '#fafafa', });
+        $('.line.which_key').css({ display: 'none', position: 'absolute', visibility: 'hidden', left: '5000px', });
+        break;
+      case 'sign':
+        passphraseText =  Lang.passphraseRequired.sign;
+        break;
+      case 'draft':
+        passphraseText =  Lang.passphraseRequired.draft;
+        break;
+      case 'attachment':
+        passphraseText =  Lang.passphraseRequired.attachment;
+        break;
+      case 'quote':
+        passphraseText =  Lang.passphraseRequired.quote;
+        break;
+      case 'backup':
+        passphraseText =  Lang.passphraseRequired.backup;
+        break;
+      case 'update_key':
+        passphraseText =  Lang.passphraseRequired.updateKey;
+        break;
+      default:
+        passphraseText =  Lang.passphraseRequired.email;
+        break;
     }
+    $('.passphrase_text').text(passphraseText);
     $('#passphrase').focus();
     if (allPrivateKeys.length > 1) {
       let html: string;
