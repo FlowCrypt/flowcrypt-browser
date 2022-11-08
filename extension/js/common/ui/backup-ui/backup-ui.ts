@@ -155,7 +155,7 @@ export class BackupUi {
         this.addKeyToBackup({ family: ki.family, id: ki.id });
       }
     }
-    $('.input_prvkey_backup_checkbox').click(Ui.event.handle((target) => {
+    $('.input_prvkey_backup_checkbox').on('click', Ui.event.handle((target) => {
       const family = $(target).data('type') as string;
       if (family === 'openpgp') {
         const id = $(target).data('id') as string;

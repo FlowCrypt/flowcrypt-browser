@@ -41,11 +41,11 @@ export class PgpBlockViewAttachmentsModule {
       $('#attachments').append(attachment); // xss-escaped
     }
     this.view.renderModule.resizePgpBlockFrame();
-    $('#attachments .preview-attachment').click(this.view.setHandlerPrevent('double', async (target) => {
+    $('#attachments .preview-attachment').on('click', this.view.setHandlerPrevent('double', async (target) => {
       const attachment = this.includedAttachments[Number($(target).attr('index'))];
       await this.previewAttachmentClickedHandler(attachment);
     }));
-    $('#attachments .download-attachment').click(this.view.setHandlerPrevent('double', async (target, event) => {
+    $('#attachments .download-attachment').on('click', this.view.setHandlerPrevent('double', async (target, event) => {
       event.stopPropagation();
       const attachment = this.includedAttachments[Number($(target).attr('index'))];
       if (attachment.hasData()) {

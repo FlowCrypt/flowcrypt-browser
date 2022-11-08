@@ -101,9 +101,9 @@ export class AttachmentDownloadView extends View {
   public setHandlers = () => {
     Ui.event.protect();
     if (this.canClickOnAttachment) {
-      this.downloadButton.click(this.setHandlerPrevent('double', () => this.downloadButtonClickedHandler()));
-      this.downloadButton.click((e) => e.stopPropagation());
-      $('body').click(async () => {
+      this.downloadButton.on('click', this.setHandlerPrevent('double', () => this.downloadButtonClickedHandler()));
+      this.downloadButton.on('click', (e) => e.stopPropagation());
+      $('body').on('click', async () => {
         if ($('body').attr('id') !== 'attachment-preview' && !$('body').hasClass('error-occured')) {
           await this.previewAttachmentClickedHandler();
         }
@@ -285,7 +285,7 @@ export class AttachmentDownloadView extends View {
         .html(`<div>Failed to decrypt:</div><a href="#" data-test="decrypt-error-details" class="see-error-details">see error details</a><br><div>Downloading original…`) // xss-escaped
         .addClass('error-occured')
         .attr('title', '');
-      $('.see-error-details').click(async () => {
+      $('.see-error-details').on('click', async () => {
         await this.previewAttachmentClickedHandler(true);
       });
       const name = this.attachment.name;

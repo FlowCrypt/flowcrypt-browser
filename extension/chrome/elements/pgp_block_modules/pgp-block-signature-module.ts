@@ -56,7 +56,7 @@ export class PgpBlockViewSignatureModule {
               Catch.reportErr(e);
               this.view.renderModule.renderSignatureStatus(`error verifying signature: ${e}`);
             } else {
-              this.view.renderModule.renderSignatureStatus('error verifying signature: offline, click to retry').click(
+              this.view.renderModule.renderSignatureStatus('error verifying signature: offline, click to retry').on('click',
                 this.view.setHandler(() => window.location.reload()));
             }
           }

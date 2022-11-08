@@ -211,7 +211,7 @@ export class Settings {
       }
     }));
     return await new Promise((resolve, reject) => {
-      container.find('.action_fix_compatibility').click(Ui.event.handle(async target => {
+      container.find('.action_fix_compatibility').on('click', Ui.event.handle(async target => {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const expireYears = String($(target).parents(container as any).find('select.input_fix_expire_years').val()); // JQuery quirk
         if (!expireYears) {
@@ -356,7 +356,7 @@ export class Settings {
     $('#alt-accounts img.profile-img').on('error', Ui.event.handle(self => {
       $(self).off().attr('src', '/img/svgs/profile-icon.svg');
     }));
-    $('.action_select_account').click(Ui.event.handle((target, event) => {
+    $('.action_select_account').on('click', Ui.event.handle((target, event) => {
       event.preventDefault();
       const acctEmail = $(target).find('.contains_email').text();
       const acctStorage = acctStorages[acctEmail];

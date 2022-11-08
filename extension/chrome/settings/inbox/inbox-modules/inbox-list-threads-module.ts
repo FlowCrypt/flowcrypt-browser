@@ -60,7 +60,7 @@ export class InboxListThreadsModule extends ViewModule<InboxView> {
       }
       threadItem.find('.loading').text('');
       threadItem.find('.date').text(this.formatDate(lastMsg.internalDate));
-      threadItem.addClass('loaded').click(this.view.setHandler(() => this.view.inboxActiveThreadModule.render(thread.id, thread)));
+      threadItem.addClass('loaded').on('click', this.view.setHandler(() => this.view.inboxActiveThreadModule.render(thread.id, thread)));
       if (lastMsg.labelIds?.includes(this.view.inboxMenuModule.LABEL.UNREAD)) {
         threadItem.css({ 'font-weight': 'bold', 'background': 'white' });
       }
@@ -69,7 +69,7 @@ export class InboxListThreadsModule extends ViewModule<InboxView> {
       }
     } catch (e) {
       if (ApiErr.isNetErr(e)) {
-        Xss.sanitizeRender(threadItem.find('.loading'), 'Failed to load (network) <a href="#">retry</a>').find('a').click(this.view.setHandler(() => this.renderInboxItem(threadId)));
+        Xss.sanitizeRender(threadItem.find('.loading'), 'Failed to load (network) <a href="#">retry</a>').find('a').on('click', this.view.setHandler(() => this.renderInboxItem(threadId)));
       } else if (ApiErr.isAuthErr(e)) {
         this.view.inboxNotificationModule.renderAndHandleAuthPopupNotification();
       } else if (ApiErr.isMailOrAcctDisabledOrPolicy(e)) {

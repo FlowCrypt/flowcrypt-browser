@@ -53,7 +53,7 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
           await this.renderReplyMsgComposeTable();
         } else {
           $('#a_reply,#a_reply_all,#a_forward')
-            .click(this.view.setHandler((el) => this.actionActivateReplyBoxHandler(el), this.view.errModule.handle(`activate reply box`)));
+            .on('click', this.view.setHandler((el) => this.actionActivateReplyBoxHandler(el), this.view.errModule.handle(`activate reply box`)));
         }
       }
     }
@@ -102,7 +102,7 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
     }
     this.view.sizeModule.resizeComposeBox();
     if (this.responseMethod === 'forward') {
-      this.view.S.cached('recipients_placeholder').click();
+      this.view.S.cached('recipients_placeholder').trigger('click');
     }
     BrowserMsg.send.scrollToReplyBox(this.view.parentTabId, { replyMsgId: `#${this.view.frameId}` });
   };
@@ -285,10 +285,10 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
         await this.view.recipientsModule.parseRenderRecipients(this.view.S.cached('input_to')); // this will force firefox to render them on load
       }
     } else {
-      $('.close_compose_window').click(this.view.setHandler(() => this.actionCloseHandler(), this.view.errModule.handle(`close compose window`)));
-      this.view.S.cached('title').click(() => {
+      $('.close_compose_window').on('click', this.view.setHandler(() => this.actionCloseHandler(), this.view.errModule.handle(`close compose window`)));
+      this.view.S.cached('title').on('click', () => {
         if (this.view.sizeModule.composeWindowIsMinimized) {
-          $('.minimize_compose_window').click();
+          $('.minimize_compose_window').trigger('click');
         }
       });
       await this.view.quoteModule.addTripleDotQuoteExpandFooterOnlyBtn();
@@ -310,8 +310,8 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
     this.view.S.cached('body').keydown(this.view.setHandler((el, ev) => this.onBodyKeydownHandler(el, ev)));
     this.view.S.cached('input_to').bind('paste', this.view.setHandler((el, ev) => this.onRecipientPasteHandler(el, ev)));
     this.view.inputModule.squire.addEventListener('input', () => this.view.S.cached('send_btn_note').text(''));
-    this.view.S.cached('input_addresses_container_inner').click(this.view.setHandler(() => this.onRecipientsClickHandler(), this.view.errModule.handle(`focus recipients`)));
-    this.view.S.cached('input_addresses_container_inner').children().click(() => false);
+    this.view.S.cached('input_addresses_container_inner').on('click', this.view.setHandler(() => this.onRecipientsClickHandler(), this.view.errModule.handle(`focus recipients`)));
+    this.view.S.cached('input_addresses_container_inner').children().on('click', () => false);
     this.view.S.cached('input_subject').bind('input', this.view.setHandler((el: HTMLInputElement) => this.subjectRTLHandler(el))).trigger('input');
   };
 
@@ -366,7 +366,7 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
     if (this.view.sizeModule.composeWindowIsMinimized) {
       return e.preventDefault();
     }
-    Ui.escape(() => !this.view.isReplyBox && $('.close_compose_window').click())(e);
+    Ui.escape(() => !this.view.isReplyBox && $('.close_compose_window').trigger('click'))(e);
     const focusableEls = this.getFocusableEls();
     const focusIndex = focusableEls.indexOf(e.target);
     if (focusIndex !== -1) { // Focus trap (Tab, Shift+Tab)

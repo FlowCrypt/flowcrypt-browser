@@ -52,7 +52,7 @@ export class Notifications {
       callbacks.reload = Catch.try(() => window.location.reload());
     }
     for (const name of Object.keys(callbacks)) {
-      $(`.${notificationGroupClass} .${name}`).click(Ui.event.prevent('double', callbacks[name]));
+      $(`.${notificationGroupClass} .${name}`).on('click', Ui.event.prevent('double', callbacks[name]));
     }
   };
 

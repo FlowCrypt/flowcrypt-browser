@@ -80,8 +80,8 @@ View.run(class KeyserverView extends View {
   };
 
   public setHandlers = () => {
-    $('.action_submit_key').click(this.setHandlerPrevent('double', this.submitPublicKeyHandler));
-    $('.action_replace_pubkey').click(this.setHandlerPrevent('double', this.replacePublicKeyHandler));
+    $('.action_submit_key').on('click', this.setHandlerPrevent('double', this.submitPublicKeyHandler));
+    $('.action_replace_pubkey').on('click', this.setHandlerPrevent('double', this.replacePublicKeyHandler));
   };
 
   // -- PRIVATE

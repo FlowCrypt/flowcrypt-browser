@@ -65,7 +65,7 @@ View.run(class AddKeyView extends View {
   };
 
   public setHandlers = () => {
-    $('.action_add_private_key').click(this.setHandlerPrevent('double', this.addPrivateKeyHandler));
+    $('.action_add_private_key').on('click', this.setHandlerPrevent('double', this.addPrivateKeyHandler));
     $('#input_passphrase').keydown(this.setEnterHandlerThatClicks('.action_add_private_key'));
   };
 

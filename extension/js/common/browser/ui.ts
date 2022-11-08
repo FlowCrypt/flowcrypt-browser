@@ -303,7 +303,7 @@ export class Ui {
   public static testCompatibilityLink = '<a href="/chrome/settings/modules/compatibility.htm" target="_blank">Test your OpenPGP key compatibility</a>';
 
   public static activateModalPageLinkTags = () => {
-    $('[data-swal-page]').click(Ui.event.handle(async (target) => {
+    $('[data-swal-page]').on('click', Ui.event.handle(async (target) => {
       const jsAllowedSwalPage = $(target).data('swal-page-allow-js') as boolean; // use this flag is the swal-page contains javascript
       const htmlUrl = $(target).data('swal-page') as string;
       if (jsAllowedSwalPage) {

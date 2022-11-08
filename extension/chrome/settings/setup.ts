@@ -157,20 +157,24 @@ export class SetupView extends View {
     BrowserMsg.addListener('notification_show', async ({ notification }: Bm.NotificationShow) => { await Ui.modal.info(notification); });
     BrowserMsg.listen(this.tabId);
     $('.action_send').attr('href', Google.webmailUrl(this.acctEmail));
-    $('.action_show_help').click(this.setHandler(async () => await Settings.renderSubPage(this.acctEmail, this.tabId!, '/chrome/settings/modules/help.htm')));
-    $('#button-go-back').off().click(this.setHandler(() => this.actionBackHandler()));
-    $('#step_2_ekm_choose_pass_phrase .action_proceed_private').click(this.setHandlerPrevent('double', () => this.setupWithEmailKeyManager.continueEkmSetupHandler()));
-    $('#step_2_recovery .action_recover_account').click(this.setHandlerPrevent('double', () => this.setupRecoverKey.actionRecoverAccountHandler()));
-    $('#step_4_more_to_recover .action_recover_remaining').click(this.setHandler(() => this.setupRecoverKey.actionRecoverRemainingKeysHandler()));
-    $('#lost_pass_phrase').click(this.setHandler(() => this.showLostPassPhraseModal()));
-    $('.action_account_settings').click(this.setHandler(() => { window.location.href = Url.create('index.htm', { acctEmail: this.acctEmail }); }));
-    $('.input_submit_key').click(this.setHandler(el => this.actionSubmitPublicKeyToggleHandler(el)));
-    $('#step_0_found_key .action_manual_create_key, #step_1_easy_or_manual .action_manual_create_key').click(this.setHandler(() => this.setupRender.displayBlock('step_2a_manual_create')));
-    $('#step_0_found_key .action_manual_enter_key, #step_1_easy_or_manual .action_manual_enter_key').click(this.setHandler(() => this.setupRender.displayBlock('step_2b_manual_enter')));
-    $('#step_2b_manual_enter .action_add_private_key').click(this.setHandler(el => this.setupImportKey.actionImportPrivateKeyHandle(el)));
-    $('#step_2a_manual_create .action_proceed_private').click(this.setHandlerPrevent('double', () => this.setupCreateKey.actionCreateKeyHandler()));
-    $('#step_2a_manual_create .action_show_advanced_create_settings').click(this.setHandler(el => this.setupCreateKey.actionShowAdvancedSettingsHandle(el)));
-    $('#step_4_close .action_close').click(this.setHandler(() => this.actionCloseHandler())); // only rendered if action=add_key which means parentTabId was used
+    $('.action_show_help').on('click', this.setHandler(async () => await Settings.renderSubPage(this.acctEmail, this.tabId!, '/chrome/settings/modules/help.htm')));
+    $('#button-go-back').off().on('click', this.setHandler(() => this.actionBackHandler()));
+    $('#step_2_ekm_choose_pass_phrase .action_proceed_private').on('click', this.setHandlerPrevent('double', () => this.setupWithEmailKeyManager.continueEkmSetupHandler()));
+    $('#step_2_recovery .action_recover_account').on('click', this.setHandlerPrevent('double', () => this.setupRecoverKey.actionRecoverAccountHandler()));
+    $('#step_4_more_to_recover .action_recover_remaining').on('click', this.setHandler(() => this.setupRecoverKey.actionRecoverRemainingKeysHandler()));
+    $('#lost_pass_phrase').on('click', this.setHandler(() => this.showLostPassPhraseModal()));
+    $('.action_account_settings').on('click', this.setHandler(() => { window.location.href = Url.create('index.htm', { acctEmail: this.acctEmail }); }));
+    $('.input_submit_key').on('click', this.setHandler(el => this.actionSubmitPublicKeyToggleHandler(el)));
+    $('#step_0_found_key .action_manual_create_key, #step_1_easy_or_manual .action_manual_create_key').on('click',
+      this.setHandler(() => this.setupRender.displayBlock('step_2a_manual_create'))
+    );
+    $('#step_0_found_key .action_manual_enter_key, #step_1_easy_or_manual .action_manual_enter_key').on('click',
+      this.setHandler(() => this.setupRender.displayBlock('step_2b_manual_enter'))
+    );
+    $('#step_2b_manual_enter .action_add_private_key').on('click', this.setHandler(el => this.setupImportKey.actionImportPrivateKeyHandle(el)));
+    $('#step_2a_manual_create .action_proceed_private').on('click', this.setHandlerPrevent('double', () => this.setupCreateKey.actionCreateKeyHandler()));
+    $('#step_2a_manual_create .action_show_advanced_create_settings').on('click', this.setHandler(el => this.setupCreateKey.actionShowAdvancedSettingsHandle(el)));
+    $('#step_4_close .action_close').on('click', this.setHandler(() => this.actionCloseHandler())); // only rendered if action=add_key which means parentTabId was used
     $('#step_2a_manual_create .input_password').on('keydown', this.setEnterHandlerThatClicks('#step_2a_manual_create .action_proceed_private'));
     $('#step_2a_manual_create.input_password2').on('keydown', this.setEnterHandlerThatClicks('#step_2a_manual_create .action_proceed_private'));
     $('#step_2_ekm_choose_pass_phrase .input_password').on('keydown', this.setEnterHandlerThatClicks('#step_2_ekm_choose_pass_phrase .action_proceed_private'));
@@ -201,8 +205,8 @@ export class SetupView extends View {
           Your previous encrypted emails will remain unreadable.
         </div>
       `, true).catch(Catch.reportErr);
-    $('.action_skip_recovery').click(this.setHandler(() => this.setupRecoverKey.actionSkipRecoveryHandler()));
-    $('.reload_page').click(this.setHandler(() => window.location.reload()));
+    $('.action_skip_recovery').on('click', this.setHandler(() => this.setupRecoverKey.actionSkipRecoveryHandler()));
+    $('.reload_page').on('click', this.setHandler(() => window.location.reload()));
   };
 
   public actionSubmitPublicKeyToggleHandler = (target: HTMLElement) => {
