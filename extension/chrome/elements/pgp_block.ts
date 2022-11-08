@@ -107,7 +107,7 @@ export class PgpBlockView extends View {
   };
 
   public setHandlers = () => {
-    $('.pgp_print_button').click(this.setHandler(() => this.renderModule.printPGPBlock()));
+    $('.pgp_print_button').on('click', this.setHandler(() => this.renderModule.printPGPBlock()));
   };
 
 }

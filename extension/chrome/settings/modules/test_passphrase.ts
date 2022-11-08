@@ -43,9 +43,9 @@ View.run(class TestPassphrase extends View {
   };
 
   public setHandlers = () => {
-    $('.action_verify').click(this.setHandler(() => this.verifyHandler()));
+    $('.action_verify').on('click', this.setHandler(() => this.verifyHandler()));
     $('#password').keydown(this.setEnterHandlerThatClicks('.action_verify'));
-    $('.action_change_passphrase').click(this.setHandler(() => Settings.redirectSubPage(this.acctEmail, this.parentTabId, '/chrome/settings/modules/change_passphrase.htm')));
+    $('.action_change_passphrase').on('click', this.setHandler(() => Settings.redirectSubPage(this.acctEmail, this.parentTabId, '/chrome/settings/modules/change_passphrase.htm')));
   };
 
   private verifyHandler = async () => {
@@ -54,7 +54,7 @@ View.run(class TestPassphrase extends View {
         <div class="line">${Lang.setup.ppMatchAllSet}</div>
         <div class="line"><button class="button green close" data-test="action-test-passphrase-successful-close">close</button></div>
       `);
-      $('.close').click(Ui.event.handle(() => BrowserMsg.send.closePage(this.parentTabId)));
+      $('.close').on('click', Ui.event.handle(() => BrowserMsg.send.closePage(this.parentTabId)));
     } else {
       await Ui.modal.warning('Pass phrase did not match. Please try again. If you forgot your pass phrase, please change it, so that you don\'t get locked out of your encrypted messages.');
     }

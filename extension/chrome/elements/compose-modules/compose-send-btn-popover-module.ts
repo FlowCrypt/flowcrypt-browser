@@ -16,7 +16,7 @@ export class ComposeSendBtnPopoverModule extends ViewModule<ComposeView> {
   public choices: PopoverChoices = { encrypt: true, sign: true, richtext: false }; // defaults, may be changed by user using the popover
 
   public setHandlers = (): void => {
-    this.view.S.cached('toggle_send_options').click(this.view.setHandler((el, ev) => this.toggleVisible(ev)));
+    this.view.S.cached('toggle_send_options').on('click', this.view.setHandler((el, ev) => this.toggleVisible(ev)));
   };
 
   public render = async () => {
@@ -37,7 +37,7 @@ export class ComposeSendBtnPopoverModule extends ViewModule<ComposeView> {
             <span class="option-name">${Xss.escape(item.text)}</span>
         </div>`);
       this.renderCrossOrTick(elem, popoverOpt, this.choices[popoverOpt]);
-      elem.click(this.view.setHandler(() => this.toggleItemTick(elem, popoverOpt)));
+      elem.on('click', this.view.setHandler(() => this.toggleItemTick(elem, popoverOpt)));
       if (item.iconPath) {
         elem.find('.option-name').prepend(`<img src="${item.iconPath}" />`); // xss-direct
       }
@@ -138,7 +138,7 @@ export class ComposeSendBtnPopoverModule extends ViewModule<ComposeView> {
     } else if (e.key === 'Enter') {
       e.stopPropagation();
       e.preventDefault();
-      currentActive.click();
+      currentActive.trigger('click');;
     }
   };
 

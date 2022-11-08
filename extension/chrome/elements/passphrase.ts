@@ -72,25 +72,25 @@ View.run(class PassphraseView extends View {
         $('.line.which_key').css({ display: 'none', position: 'absolute', visibility: 'hidden', left: '5000px', });
         break;
       case 'sign':
-        passphraseText =  Lang.passphraseRequired.sign;
+        passphraseText = Lang.passphraseRequired.sign;
         break;
       case 'draft':
-        passphraseText =  Lang.passphraseRequired.draft;
+        passphraseText = Lang.passphraseRequired.draft;
         break;
       case 'attachment':
-        passphraseText =  Lang.passphraseRequired.attachment;
+        passphraseText = Lang.passphraseRequired.attachment;
         break;
       case 'quote':
-        passphraseText =  Lang.passphraseRequired.quote;
+        passphraseText = Lang.passphraseRequired.quote;
         break;
       case 'backup':
-        passphraseText =  Lang.passphraseRequired.backup;
+        passphraseText = Lang.passphraseRequired.backup;
         break;
       case 'update_key':
-        passphraseText =  Lang.passphraseRequired.updateKey;
+        passphraseText = Lang.passphraseRequired.updateKey;
         break;
       default:
-        passphraseText =  Lang.passphraseRequired.email;
+        passphraseText = Lang.passphraseRequired.email;
         break;
     }
     $('.passphrase_text').text(passphraseText);
@@ -113,9 +113,9 @@ View.run(class PassphraseView extends View {
 
   public setHandlers = () => {
     $('#passphrase').keyup(this.setHandler(() => this.renderNormalPpPrompt()));
-    $('.action_close').click(this.setHandler(() => this.closeDialog()));
-    $('.action_ok').click(this.setHandler(() => this.submitHandler()));
-    $('#lost-pass-phrase').click(this.setHandler((el, ev) => {
+    $('.action_close').on('click', this.setHandler(() => this.closeDialog()));
+    $('.action_ok').on('click', this.setHandler(() => this.submitHandler()));
+    $('#lost-pass-phrase').on('click', this.setHandler((el, ev) => {
       ev.preventDefault();
       Ui.modal.info(`
         <div style="text-align: initial">
@@ -134,7 +134,7 @@ View.run(class PassphraseView extends View {
           and then click <code>Lost your pass phrase?</code> during recovery step.
         </div>
       `, true).catch(Catch.reportErr);
-      $('.reset-flowcrypt').click(this.setHandler(async (el, ev) => {
+      $('.reset-flowcrypt').on('click', this.setHandler(async (el, ev) => {
         ev.preventDefault();
         if (await Settings.resetAccount(this.acctEmail)) {
           this.closeDialog();
@@ -143,7 +143,7 @@ View.run(class PassphraseView extends View {
     }));
     $('#passphrase').keydown(this.setHandler((el, ev) => {
       if (ev.key === 'Enter') {
-        $('.action_ok').click();
+        $('.action_ok').trigger('click');;
       }
     }));
     $('body').on('keydown', this.setHandler((el, ev) => {

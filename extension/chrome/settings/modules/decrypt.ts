@@ -38,7 +38,7 @@ View.run(class ManualDecryptView extends View {
   };
 
   public setHandlers = () => {
-    $('.action_decrypt_and_download').click(this.setHandlerPrevent('double', el => this.actionDecryptAndDownloadHandler(el)));
+    $('.action_decrypt_and_download').on('click', this.setHandlerPrevent('double', el => this.actionDecryptAndDownloadHandler(el)));
   };
 
   private actionDecryptAndDownloadHandler = async (button: HTMLElement) => {

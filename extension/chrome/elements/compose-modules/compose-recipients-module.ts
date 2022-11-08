@@ -66,22 +66,22 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     inputs.on('dragover', (e) => e.preventDefault());
     inputs.on('drop', this.view.setHandler((target) => this.inputsDropHandler(target)));
     this.view.S.cached('recipients_toggle_elements').on('focus', this.view.setHandler(() => this.collapseInputsIfNeeded()));
-    this.view.S.now('cc').click(this.view.setHandler((target) => {
+    this.view.S.now('cc').on('click', this.view.setHandler((target) => {
       const newContainer = this.view.S.cached('input_addresses_container_outer').find(`#input-container-cc`);
       this.copyCcBccActionsClickHandler(target, newContainer);
     }));
-    this.view.S.now('bcc').click(this.view.setHandler((target) => {
+    this.view.S.now('bcc').on('click', this.view.setHandler((target) => {
       const newContainer = this.view.S.cached('input_addresses_container_outer').find(`#input-container-bcc`);
       this.copyCcBccActionsClickHandler(target, newContainer);
     }));
-    this.view.S.cached('recipients_placeholder').click(this.view.setHandler(() => {
+    this.view.S.cached('recipients_placeholder').on('click', this.view.setHandler(() => {
       this.view.S.cached('input_to').focus();
     }));
     this.view.S.cached('input_to').focus(this.view.setHandler(() => this.focusRecipients()));
     this.view.S.cached('cc').focus(this.view.setHandler(() => this.focusRecipients()));
     this.view.S.cached('bcc').focus(this.view.setHandler(() => this.focusRecipients()));
-    this.view.S.cached('compose_table').click(this.view.setHandler(() => this.hideContacts(), this.view.errModule.handle(`hide contact box`)));
-    this.view.S.cached('add_their_pubkey').click(this.view.setHandler(() => this.addTheirPubkeyClickHandler(), this.view.errModule.handle('add pubkey')));
+    this.view.S.cached('compose_table').on('click', this.view.setHandler(() => this.hideContacts(), this.view.errModule.handle(`hide contact box`)));
+    this.view.S.cached('add_their_pubkey').on('click', this.view.setHandler(() => this.addTheirPubkeyClickHandler(), this.view.errModule.handle('add pubkey')));
     BrowserMsg.addListener('addToContacts', this.checkReciepientsKeys);
     BrowserMsg.addListener('reRenderRecipient', async ({ email }: Bm.ReRenderRecipient) => {
       await this.reRenderRecipientFor(email);
@@ -493,7 +493,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       }
     } else if (e.key === 'Enter') {
       if (currentActive.length) { // If he pressed enter when contacts popover is shown
-        currentActive.click(); // select contact
+        currentActive.trigger('click');; // select contact
         currentActive.removeClass('active');
       } else { // We need to force add recipient even it's invalid
         this.parseRenderRecipients($(e.target), true).catch(Catch.reportErr);
@@ -513,7 +513,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     } else if (e.key === 'Tab') {
       e.preventDefault(); // don't switch inputs
       e.stopPropagation(); // don't switch inputs
-      currentActive.click(); // select contact
+      currentActive.trigger('click');; // select contact
       currentActive.removeClass('active');
       return true;
     } else if (e.key === 'ArrowUp') {
@@ -695,7 +695,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       Xss.sanitizeRender(contactEl.find('ul'), ulHtml);
       const contactItems = contactEl.find('ul li.select_contact');
       contactItems.first().addClass('active');
-      contactItems.click(this.view.setHandlerPrevent('double', async (target: HTMLElement) => {
+      contactItems.on('click', this.view.setHandlerPrevent('double', async (target: HTMLElement) => {
         const email = Str.parseEmail($(target).attr('email') || '').email;
         if (email) {
           await this.selectContact(input, email, query);
@@ -722,7 +722,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     this.view.S.cached('contacts')
       .append('<div class="allow-google-contact-search" data-test="action-auth-with-contacts-scope"><img src="/img/svgs/gmail.svg" />Enable Google Contact Search</div>') // xss-direct
       .find('.allow-google-contact-search')
-      .click(this.view.setHandler(async () => {
+      .on('click', this.view.setHandler(async () => {
         // Need to use BrowserMsg.send.bg because chrome.windows is undefined in gmail page
         const authResult = await BrowserMsg.send.bg.await.reconnectAcctAuthPopup({ acctEmail: this.view.acctEmail, scopes: GoogleAuth.defaultScopes('contacts') });
         if (authResult.result === 'Success') {
@@ -852,7 +852,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       `<img src="/img/svgs/close-icon-black.svg" alt="close" class="close-icon svg display_when_sign" />`;
     Xss.sanitizeAppend(el, contentHtml)
       .find('img.close-icon')
-      .click(this.view.setHandler(target => this.removeRecipient(target.parentElement!), this.view.errModule.handle('remove recipient')));
+      .on('click', this.view.setHandler(target => this.removeRecipient(target.parentElement!), this.view.errModule.handle('remove recipient')));
     $(el).removeClass(['failed', 'wrong', 'has_pgp', 'no_pgp', 'expired']);
     if (recipient.status === RecipientStatus.WRONG) {
       this.view.errModule.debug(`renderPubkeyResult: Setting email to wrong / misspelled in harsh mode: ${recipient.invalid}`);
@@ -873,8 +873,8 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
           <img src="/img/svgs/close-icon-black.svg" class="close-icon-black svg remove-reciepient">
         `
       );
-      $(el).find('.action_retry_pubkey_fetch').click(this.view.setHandler(async () => await this.refreshRecipients(), this.view.errModule.handle('refresh recipient')));
-      $(el).find('.remove-reciepient').click(this.view.setHandler(element => this.removeRecipient(element.parentElement!), this.view.errModule.handle('remove recipient')));
+      $(el).find('.action_retry_pubkey_fetch').on('click', this.view.setHandler(async () => await this.refreshRecipients(), this.view.errModule.handle('refresh recipient')));
+      $(el).find('.remove-reciepient').on('click', this.view.setHandler(element => this.removeRecipient(element.parentElement!), this.view.errModule.handle('remove recipient')));
     } else if (info && info.sortedPubkeys.length) {
       if (info.info.name) {
         recipient.name = info.info.name;

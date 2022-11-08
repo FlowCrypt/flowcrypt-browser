@@ -38,7 +38,7 @@ export class ComposeQuoteModule extends ViewModule<ComposeView> {
     }
     const sanitizedFooter = textFooter && !this.view.draftModule.wasMsgLoadedFromDraft ? this.view.footerModule.createFooterHtml(textFooter) : undefined;
     this.tripleDotSanitizedHtmlContent = { footer: sanitizedFooter, quote: undefined };
-    this.view.S.cached('triple_dot').click(this.view.setHandler(el => this.actionRenderTripleDotContentHandle(el)));
+    this.view.S.cached('triple_dot').on('click', this.view.setHandler(el => this.actionRenderTripleDotContentHandle(el)));
   };
 
   public addTripleDotQuoteExpandFooterAndQuoteBtn = async (msgId: string, method: 'reply' | 'forward') => {
@@ -77,7 +77,7 @@ export class ComposeQuoteModule extends ViewModule<ComposeView> {
     if (method === 'forward') {
       this.actionRenderTripleDotContentHandle(this.view.S.cached('triple_dot')[0]);
     } else {
-      this.view.S.cached('triple_dot').click(this.view.setHandler(el => this.actionRenderTripleDotContentHandle(el)));
+      this.view.S.cached('triple_dot').on('click', this.view.setHandler(el => this.actionRenderTripleDotContentHandle(el)));
     }
   };
 

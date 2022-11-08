@@ -47,7 +47,7 @@ export class Notifications {
       callbacks.reload = Catch.try(() => window.location.reload());
     }
     for (const name of Object.keys(callbacks)) {
-      $(`.webmail_notifications .${name}`).click(Ui.event.prevent('double', callbacks[name]));
+      $(`.webmail_notifications .${name}`).on('click', Ui.event.prevent('double', callbacks[name]));
     }
   };
 

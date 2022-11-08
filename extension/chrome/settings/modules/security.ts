@@ -50,8 +50,8 @@ View.run(class SecurityView extends View {
   };
 
   public setHandlers = () => {
-    $('.action_change_passphrase').click(this.setHandler(() => Settings.redirectSubPage(this.acctEmail, this.parentTabId, '/chrome/settings/modules/change_passphrase.htm')));
-    $('.action_test_passphrase').click(this.setHandler(() => Settings.redirectSubPage(this.acctEmail, this.parentTabId, '/chrome/settings/modules/test_passphrase.htm')));
+    $('.action_change_passphrase').on('click', this.setHandler(() => Settings.redirectSubPage(this.acctEmail, this.parentTabId, '/chrome/settings/modules/change_passphrase.htm')));
+    $('.action_test_passphrase').on('click', this.setHandler(() => Settings.redirectSubPage(this.acctEmail, this.parentTabId, '/chrome/settings/modules/test_passphrase.htm')));
     $('#hide_message_password').change(this.setHandler((el) => this.hideMsgPasswordHandler(el)));
     $('.password_message_language').change(this.setHandler(() => this.onMsgLanguageUserChange()));
   };
@@ -59,11 +59,11 @@ View.run(class SecurityView extends View {
   private renderPassPhraseOptionsIfStoredPermanently = async () => {
     if (await this.isAnyPassPhraseStoredPermanently(this.prvs)) {
       $('.forget_passphrase').css('display', '');
-      $('.action_forget_pp').click(this.setHandler(() => {
+      $('.action_forget_pp').on('click', this.setHandler(() => {
         $('.forget_passphrase').css('display', 'none');
         $('.passphrase_entry_container').css('display', '');
       }));
-      $('.confirm_passphrase_requirement_change').click(this.setHandler(async () => {
+      $('.confirm_passphrase_requirement_change').on('click', this.setHandler(async () => {
         const allPassPhrases = (await Promise.all(this.prvs.map(prv => PassphraseStore.get(this.acctEmail, prv.keyInfo))))
           .filter(pp => !!pp);
         if (allPassPhrases.includes(String($('input#passphrase_entry').val()))) {
@@ -77,7 +77,7 @@ View.run(class SecurityView extends View {
           $('input#passphrase_entry').val('').focus();
         }
       }));
-      $('.cancel_passphrase_requirement_change').click(() => window.location.reload());
+      $('.cancel_passphrase_requirement_change').on('click', () => window.location.reload());
       $('#passphrase_entry').keydown(this.setEnterHandlerThatClicks('.confirm_passphrase_requirement_change'));
     }
   };
@@ -96,10 +96,10 @@ View.run(class SecurityView extends View {
       if (ApiErr.isAuthErr(e)) {
         Settings.offerToLoginWithPopupShowModalOnErr(this.acctEmail, () => window.location.reload());
       } else if (ApiErr.isNetErr(e)) {
-        Xss.sanitizeRender('.expiration_container', '(network error: <a href="#">retry</a>)').find('a').click(() => window.location.reload()); // safe source
+        Xss.sanitizeRender('.expiration_container', '(network error: <a href="#">retry</a>)').find('a').on('click', () => window.location.reload()); // safe source
       } else {
         Catch.reportErr(e);
-        Xss.sanitizeRender('.expiration_container', '(unknown error: <a href="#">retry</a>)').find('a').click(() => window.location.reload()); // safe source
+        Xss.sanitizeRender('.expiration_container', '(unknown error: <a href="#">retry</a>)').find('a').on('click', () => window.location.reload()); // safe source
       }
     }
   };

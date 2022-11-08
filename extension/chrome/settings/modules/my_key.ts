@@ -62,12 +62,12 @@ View.run(class MyKeyView extends View {
   };
 
   public setHandlers = () => {
-    $('.action_download_pubkey').click(this.setHandlerPrevent('double', () => this.downloadPubKeyHandler()));
-    $('.action_download_prv').click(this.setHandlerPrevent('double', () => this.downloadPrvKeyHandler()));
-    $('.action_download_revocation_cert').click(this.setHandlerPrevent('double', () => this.downloadRevocationCert()));
-    $('.action_continue_download').click(this.setHandlerPrevent('double', () => this.downloadRevocationCert(String($('#input_passphrase').val()))));
+    $('.action_download_pubkey').on('click', this.setHandlerPrevent('double', () => this.downloadPubKeyHandler()));
+    $('.action_download_prv').on('click', this.setHandlerPrevent('double', () => this.downloadPrvKeyHandler()));
+    $('.action_download_revocation_cert').on('click', this.setHandlerPrevent('double', () => this.downloadRevocationCert()));
+    $('.action_continue_download').on('click', this.setHandlerPrevent('double', () => this.downloadRevocationCert(String($('#input_passphrase').val()))));
     $('#input_passphrase').on('keydown', this.setEnterHandlerThatClicks('.action_continue_download'));
-    $('.action_cancel_download_cert').click(this.setHandler(() => { $('.enter_pp').hide(); }));
+    $('.action_cancel_download_cert').on('click', this.setHandler(() => { $('.enter_pp').hide(); }));
     const clipboardOpts = { text: () => this.keyInfo.public };
     new ClipboardJS('.action_copy_pubkey', clipboardOpts); // tslint:disable-line:no-unused-expression no-unsafe-any
   };

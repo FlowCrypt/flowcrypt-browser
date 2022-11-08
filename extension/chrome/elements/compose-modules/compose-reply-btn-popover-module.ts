@@ -18,7 +18,7 @@ export class ComposeReplyBtnPopoverModule extends ViewModule<ComposeView> {
   };
 
   public setHandlers = (): void => {
-    this.view.S.cached('toggle_reply_options').click(this.view.setHandler((el, ev) => this.toggleVisible(ev)));
+    this.view.S.cached('toggle_reply_options').on('click', this.view.setHandler((el, ev) => this.toggleVisible(ev)));
   };
 
   public render = async (isReply = true) => {
@@ -32,7 +32,7 @@ export class ComposeReplyBtnPopoverModule extends ViewModule<ComposeView> {
         <div class="action-toggle-key-reply-option reply-option" id="popover_${key}_option" data-test="action-toggle-${Xss.escape(key)}">
             <span class="option-name">${Xss.escape(item.text)}</span>
         </div>`);
-      elem.click(this.view.setHandler(() => this.didOptionClick(option)));
+      elem.on('click', this.view.setHandler(() => this.didOptionClick(option)));
       elem.find('.option-name').prepend(`<img src="${item.iconPath}" />`); // xss-direct
       this.view.S.cached('reply_options_container').append(elem); // xss-safe-factory
     }

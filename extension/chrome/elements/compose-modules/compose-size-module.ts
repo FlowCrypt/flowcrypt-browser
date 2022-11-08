@@ -19,14 +19,14 @@ export class ComposeSizeModule extends ViewModule<ComposeView> {
   private currentWindowSelector = `.secure_compose_window[data-frame-id="${this.view.frameId}"]`;
 
   public setHandlers = () => {
-    $('body').click(event => {
+    $('body').on('click', event => {
       if (this.composeWindowIsMaximized && $(event.target).is($('body'))) {
         this.minimizeComposerWindow();
       }
     });
     if (!this.view.isReplyBox) {
-      $('.minimize_compose_window').click(this.view.setHandler(() => this.minimizeComposerWindow()));
-      $('.popout').click(this.view.setHandler(() => this.popoutClickHandler()));
+      $('.minimize_compose_window').on('click', this.view.setHandler(() => this.minimizeComposerWindow()));
+      $('.popout').on('click', this.view.setHandler(() => this.popoutClickHandler()));
     }
   };
 

@@ -148,7 +148,7 @@ export class SetupRenderModule {
       // eslint-disable-next-line max-len
       $('.addresses').append(`<label><input type="checkbox" class="input_email_alias" data-email="${Xss.escape(e)}" data-test="input-email-alias-${e.replace(/[^a-z0-9]+/g, '')}" />${Xss.escape(e)}</label><br/>`); // xss-escaped
     }
-    $('.input_email_alias').click((event) => {
+    $('.input_email_alias').on('click', (event) => {
       const email = String($(event.target).data('email'));
       if ($(event.target).prop('checked')) {
         if (!this.view.submitKeyForAddrs.includes(email)) {

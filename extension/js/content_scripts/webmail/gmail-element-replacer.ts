@@ -179,7 +179,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
 
   private addfcConvoIcon = (containerSel: JQueryEl, iconHtml: string, iconSel: string, onClick: () => void) => {
     containerSel.addClass('appended').children('.use_secure_reply, .show_original_conversation').remove(); // remove previous FlowCrypt buttons, if any
-    Xss.sanitizeAppend(containerSel, iconHtml).children(iconSel).off().click(Ui.event.prevent('double', Catch.try(onClick)));
+    Xss.sanitizeAppend(containerSel, iconHtml).children(iconSel).off().on('click', Ui.event.prevent('double', Catch.try(onClick)));
   };
 
   private isEncrypted = (): boolean => {
@@ -208,11 +208,11 @@ export class GmailElementReplacer implements WebmailElementReplacer {
         secureReplyBtn.on('focusout', Ui.event.handle((target) => { $(target).removeClass('T-I-JO'); }));
         secureReplyBtn.on('mouseenter', Ui.event.handle((target) => { $(target).addClass('T-I-JW'); }));
         secureReplyBtn.on('mouseleave', Ui.event.handle((target) => { $(target).removeClass('T-I-JW'); }));
-        secureReplyBtn.click(Ui.event.handle((el, ev: JQuery.Event) => this.actionActivateSecureReplyHandler(el, ev)));
+        secureReplyBtn.on('click', Ui.event.handle((el, ev: JQuery.Event) => this.actionActivateSecureReplyHandler(el, ev)));
         secureReplyBtn.keydown(event => {
           if (event.key === 'Enter') {
             event.stopImmediatePropagation();
-            $(secureReplyBtn).click();
+            $(secureReplyBtn).trigger('click');;
           }
         });
       }
@@ -222,7 +222,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
       if (useEncryptionInThisConvo) {
         if (!convoUpperIcons.is('.appended') || convoUpperIcons.find('.use_secure_reply').length) { // either not appended, or appended icon is outdated (convo switched to encrypted)
           this.addfcConvoIcon(convoUpperIcons, this.factory.btnWithoutFc(), '.show_original_conversation', () => {
-            convoUpperIcons.find('.gZ').click();
+            convoUpperIcons.find('.gZ').trigger('click');;
           });
         }
       }
@@ -232,7 +232,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
   private actionActivateSecureReplyHandler = async (btn: HTMLElement, event: JQuery.Event) => {
     event.stopImmediatePropagation();
     if ($('#switch_to_encrypted_reply').length) {
-      $('#switch_to_encrypted_reply').click();
+      $('#switch_to_encrypted_reply').trigger('click');;
       return;
     }
     const messageContainer = $(btn.closest('.h7') as HTMLElement);
@@ -256,7 +256,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
         const [, buttonHrefId] = draftLinkMatch;
         const button = `<a href="#" class="open_draft_${Xss.escape(buttonHrefId)}">Open draft</a>`;
         Xss.sanitizeReplace(contenteditable, button);
-        $(`a.open_draft_${buttonHrefId}`).click(Ui.event.handle((target) => {
+        $(`a.open_draft_${buttonHrefId}`).on('click', Ui.event.handle((target) => {
           if (this.injector.openComposeWin(buttonHrefId)) {
             closeGmailComposeWindow(target);
           }
@@ -267,7 +267,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
           mouseUpEvent.initEvent('mouseup', true, true); // Gmail listens for the mouseup event, not click
           $(target).closest('.dw').find('.Ha')[0].dispatchEvent(mouseUpEvent); // jquery's trigger('mouseup') doesn't work for some reason
         };
-        $('.close_gmail_compose_window').click(Ui.event.handle(closeGmailComposeWindow));
+        $('.close_gmail_compose_window').on('click', Ui.event.handle(closeGmailComposeWindow));
       }
     }
   };
@@ -649,7 +649,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
             } else {
               const deleteReplyEl = document.querySelector('.oh.J-Z-I.J-J5-Ji.T-I-ax7');
               if (deleteReplyEl) { // Remove standard reply by clicking `delete` button
-                (deleteReplyEl as HTMLElement).click();
+                (deleteReplyEl as HTMLElement).trigger('click');;
               }
             }
             midConvoDraft = true; // last box was processed first (looping in reverse), and all the rest must be drafts
@@ -664,7 +664,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     if (showSwitchToEncryptedReplyWarning) {
       const notification = $('<div class="error_notification">The last message was encrypted, but you are composing a reply without encryption. </div>');
       const swithToEncryptedReply = $('<a href id="switch_to_encrypted_reply">Switch to encrypted reply</a>');
-      swithToEncryptedReply.click(Ui.event.handle((el, ev: JQuery.Event) => {
+      swithToEncryptedReply.on('click', Ui.event.handle((el, ev: JQuery.Event) => {
         ev.preventDefault();
         $(el).closest('.reply_message_evaluated').removeClass('reply_message_evaluated');
         this.removeNextReplyBoxBorders = true;
@@ -728,7 +728,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
             if (!standardComposeWin.find('.recipients_use_encryption').length) {
               const prependable = standardComposeWin.find('div.az9 span[email]').first().parents('form').first();
               prependable.prepend(this.factory.btnRecipientsUseEncryption('gmail')); // xss-safe-factory
-              prependable.find('a').click(Ui.event.handle(() => { this.injector.openComposeWin(); }));
+              prependable.find('a').on('click', Ui.event.handle(() => { this.injector.openComposeWin(); }));
             }
           } else {
             standardComposeWin.find('.recipients_use_encryption').remove();
@@ -744,7 +744,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
       const settingsBtnContainer = $(this.sel.settingsBtnContainer);
       if (settingsBtnContainer.length && !settingsBtnContainer.find('#fc_settings_btn').length) {
         settingsBtnContainer.children().last().before(this.factory.btnSettings('gmail')); // xss-safe-factory
-        settingsBtnContainer.find('#fc_settings_btn').click(Ui.event.handle(() => BrowserMsg.send.bg.settings({ acctEmail: this.acctEmail })));
+        settingsBtnContainer.find('#fc_settings_btn').on('click', Ui.event.handle(() => BrowserMsg.send.bg.settings({ acctEmail: this.acctEmail })));
       }
     }
   };

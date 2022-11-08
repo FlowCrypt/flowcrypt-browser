@@ -20,7 +20,7 @@ View.run(class CompatibilityView extends View {
   };
 
   public setHandlers = () => {
-    $('.action_test_key').click(this.setHandlerPrevent('double', this.actionTestKeyHandler));
+    $('.action_test_key').on('click', this.setHandlerPrevent('double', this.actionTestKeyHandler));
     $('#input_passphrase').keydown(this.setEnterHandlerThatClicks('.action_test_key'));
   };
 

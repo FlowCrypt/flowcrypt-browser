@@ -206,7 +206,7 @@ export class ComposeView extends View {
     const setActiveWindow = this.setHandler(async () => { BrowserMsg.send.setActiveWindow(this.parentTabId, { frameId: this.frameId }); });
     this.S.cached('body').on('focusin', setActiveWindow);
     this.S.cached('body').on('click', setActiveWindow);
-    this.S.cached('icon_help').click(this.setHandler(async () => await this.renderModule.openSettingsWithDialog('help'), this.errModule.handle(`help dialog`)));
+    this.S.cached('icon_help').on('click', this.setHandler(async () => await this.renderModule.openSettingsWithDialog('help'), this.errModule.handle(`help dialog`)));
     this.attachmentsModule.setHandlers();
     this.inputModule.setHandlers();
     this.myPubkeyModule.setHandlers();

@@ -27,7 +27,7 @@ export class ComposePwdOrPubkeyContainerModule extends ViewModule<ComposeView> {
     this.view.S.cached('input_password').keyup(this.view.setHandlerPrevent('spree', () => this.showHideContainerAndColorSendBtn()));
     this.view.S.cached('input_password').focus(this.view.setHandlerPrevent('spree', () => this.inputPwdFocusHandler()));
     this.view.S.cached('input_password').blur(this.view.setHandler(() => this.inputPwdBlurHandler()));
-    this.view.S.cached('expiration_note').find('#expiration_note_settings_link').click(this.view.setHandler(async (el, e) => {
+    this.view.S.cached('expiration_note').find('#expiration_note_settings_link').on('click', this.view.setHandler(async (el, e) => {
       e.preventDefault();
       await this.view.renderModule.openSettingsWithDialog('security');
     }, this.view.errModule.handle(`render settings dialog`)));

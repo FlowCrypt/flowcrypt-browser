@@ -42,8 +42,8 @@ export class InboxMenuModule extends ViewModule<InboxView> {
   };
 
   private setHandlers = () => {
-    $('.action_open_secure_compose_window').click(this.view.setHandlerPrevent('double', () => { this.view.injector.openComposeWin(); }));
-    $('.menu > .label').click(this.view.setHandler(this.renderFolder));
+    $('.action_open_secure_compose_window').on('click', this.view.setHandlerPrevent('double', () => { this.view.injector.openComposeWin(); }));
+    $('.menu > .label').on('click', this.view.setHandler(this.renderFolder));
   };
 
   private renderMenuAndLabelStyles = () => {
