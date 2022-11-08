@@ -362,9 +362,7 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
       const ppEvent: { entered?: boolean } = {};
       browserMsgListen(acctEmail, tabId, inject, factory, notifications, ppEvent);
       const clientConfiguration = await ClientConfiguration.newInstance(acctEmail);
-      await startPullingKeysFromEkm(acctEmail, clientConfiguration, factory, ppEvent, Catch.try(async () => {
-        await notifyExpiringKeys(acctEmail, clientConfiguration, notifications);
-      }));
+      await startPullingKeysFromEkm(acctEmail, clientConfiguration, factory, ppEvent, Catch.try(() => notifyExpiringKeys(acctEmail, clientConfiguration, notifications)));
       await webmailSpecific.start(acctEmail, clientConfiguration, inject, notifications, factory, notifyMurdered);
     } catch (e) {
       if (e instanceof TabIdRequiredError) {

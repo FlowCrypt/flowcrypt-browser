@@ -567,11 +567,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       await gmailPage.page.reload();
       await Util.sleep(1);
       await gmailPage.waitForContent('@webmail-notification-notify_expiring_keys', warningMsg);
-      const updatedKey = await opgp.generateKey({
-        curve: 'curve25519',
-        userIds: [{ email: acctEmail }, { email: 'demo@gmail.com', name: 'Demo user' }]
-      });
-      MOCK_KM_KEYS[acctEmail] = { response: { privateKeys: [{ decryptedPrivateKey: key.privateKeyArmored }, { decryptedPrivateKey: updatedKey.privateKeyArmored }] } };
+      MOCK_KM_KEYS[acctEmail] = { response: { privateKeys: [{ decryptedPrivateKey: key.privateKeyArmored }, { decryptedPrivateKey: testConstants.notifyExpiringKeys }] } };
       await gmailPage.page.reload();
       await PageRecipe.waitForToastToAppearAndDisappear(gmailPage, 'Account keys updated');
       await gmailPage.page.reload();
