@@ -204,9 +204,20 @@ yeSm0uVPwODhwX7ezB9jW6uVt0R8S8iM3rQdEMsA/jDep5LNn47K6o8VrDt0zYo6
 -----END PGP PRIVATE KEY BLOCK-----
 `;
 
+interface MockKMKeyRes {
+  [acct: string]: {
+    response?: {
+      privateKeys: {
+        decryptedPrivateKey: string
+      }[]
+    },
+    badRequestError?: string
+  }
+}
+
 export const MOCK_KM_LAST_INSERTED_KEY: { [acct: string]: { privateKey: string } } = {}; // accessed from test runners
 
-export const MOCK_KM_UPDATING_KEY: { [acct: string]: { response?: { privateKeys: { decryptedPrivateKey: string }[] }, badRequestError?: string } } = {};
+export const MOCK_KM_KEYS: MockKMKeyRes = {};
 
 export const mockKeyManagerEndpoints: HandlersDefinition = {
   '/flowcrypt-email-key-manager/v1/keys/private': async ({ body }, req) => {
@@ -219,7 +230,7 @@ export const mockKeyManagerEndpoints: HandlersDefinition = {
         return { privateKeys: [{ decryptedPrivateKey: testConstants.existingPrv }] };
       }
       if (acctEmail.includes('updating.key')) {
-        const { response, badRequestError } = MOCK_KM_UPDATING_KEY[acctEmail];
+        const { response, badRequestError } = MOCK_KM_KEYS[acctEmail];
         if (response !== undefined && badRequestError === undefined) {
           return response;
         }
