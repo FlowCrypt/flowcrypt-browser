@@ -4,7 +4,7 @@ import { Browser, EvaluateFunc, Page, Target } from 'puppeteer';
 import { Util, Config } from '../util';
 import { ControllablePage } from './controllable';
 import { Semaphore } from './browser-pool';
-import { TIMEOUT_ELEMENT_APPEAR } from '.';
+import { TIMEOUT_ELEMENT_APPEAR, TIMEOUT_PAGE_LOAD } from '.';
 import { AvaContext } from '../tests/tooling';
 
 export class BrowserHandle {
@@ -54,6 +54,11 @@ export class BrowserHandle {
       this.pages.push(controllablePage);
       if (url.includes(Config.extensionId)) {
         await controllablePage.waitUntilViewLoaded();
+      } else {
+        await Promise.race([
+          controllablePage.page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: TIMEOUT_PAGE_LOAD * 1000 }),
+          controllablePage.page.waitForNavigation({ waitUntil: 'load', timeout: TIMEOUT_PAGE_LOAD * 1000 })
+        ]);
       }
       return controllablePage;
     } catch (e) {
