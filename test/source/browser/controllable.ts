@@ -526,7 +526,9 @@ abstract class ControllableBase {
           }
         }
       } catch (e) {
-        if (e instanceof Error && (!e.message.includes('Cannot find context with specified id undefined') && !e.message.includes('Argument should belong to the same JavaScript world as target object'))) {
+        if (e instanceof Error && (!e.message.includes('Cannot find context with specified id undefined')
+          && !e.message.includes('Argument should belong to the same JavaScript world as target object'))
+        ) {
           throw e;
         }
       }

@@ -61,7 +61,10 @@ export class OauthPageRecipe extends PageRecipe {
     try {
       const alreadyLoggedSelector = '.w6VTHd, .wLBAL';
       const alreadyLoggedChooseOtherAccountSelector = '.bLzI3e, .BHzsHc';
-      await oauthPage.waitAny(`#Email, ${selectors.googleApproveBtn}, ${selectors.googleEmailInput}, ${alreadyLoggedSelector}, #profileIdentifier, ${selectors.auth0username}`, { timeout: 45 });
+      await oauthPage.waitAny(
+        `#Email, ${selectors.googleApproveBtn}, ${selectors.googleEmailInput}, ${alreadyLoggedSelector}, #profileIdentifier, ${selectors.auth0username}`,
+        { timeout: 45 }
+      );
       if (await oauthPage.target.$(selectors.googleEmailInput) !== null) { // 2017-style login
         await oauthPage.waitAll(selectors.googleEmailInput, { timeout: OauthPageRecipe.longTimeout });
         await oauthPage.waitAndType(selectors.googleEmailInput, acctEmail, { delay: 2 });
