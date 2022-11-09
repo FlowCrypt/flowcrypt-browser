@@ -36,7 +36,7 @@ const getAuthorizationHeader = async (t: AvaContext, browser: BrowserHandle, acc
 
 const openMockGmailPage = async (t: AvaContext, browser: BrowserHandle, acctEmail: string, hasPermission: boolean = true, url = TestUrls.mockGmailUrl()) => {
   const authorizationHeader = hasPermission ? await getAuthorizationHeader(t, browser, acctEmail) : { Authorization: 'Bearer emulating-not-properly-set-up-extension' };
-  return await browser.newPage(t, TestUrls.mockGmailUrl(), undefined, authorizationHeader);
+  return await browser.newPage(t, url, undefined, authorizationHeader);
 };
 
 export const defineSetupTests = (testVariant: TestVariant, testWithBrowser: TestWithBrowser) => {
