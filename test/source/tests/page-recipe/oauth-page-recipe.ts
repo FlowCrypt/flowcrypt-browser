@@ -61,7 +61,7 @@ export class OauthPageRecipe extends PageRecipe {
     try {
       const alreadyLoggedSelector = '.w6VTHd, .wLBAL';
       const alreadyLoggedChooseOtherAccountSelector = '.bLzI3e, .BHzsHc';
-      await oauthPage.waitAny(`#Email, #submit_approve_access, #identifierId, ${alreadyLoggedSelector}, #profileIdentifier`, { timeout: 45 });
+      await oauthPage.waitAny(`#Email, ${selectors.googleApproveBtn}, ${selectors.googleEmailInput}, ${alreadyLoggedSelector}, #profileIdentifier, ${selectors.auth0username}`, { timeout: 45 });
       if (await oauthPage.target.$(selectors.googleEmailInput) !== null) { // 2017-style login
         await oauthPage.waitAll(selectors.googleEmailInput, { timeout: OauthPageRecipe.longTimeout });
         await oauthPage.waitAndType(selectors.googleEmailInput, acctEmail, { delay: 2 });
@@ -94,6 +94,7 @@ export class OauthPageRecipe extends PageRecipe {
           await oauthPage.waitAndType(selectors.auth0password, acctPassword);
         }
         await oauthPage.waitForNavigationIfAny(() => oauthPage.waitAndClick(selectors.auth0loginBtn));
+        await oauthPage.waitAndClick(alreadyLoggedSelector, { delay: 1 });
       }
       await Util.sleep(1);
       await oauthPage.waitAll(selectors.googleApproveBtn); // if succeeds, we are logged in and presented with approve/deny choice
