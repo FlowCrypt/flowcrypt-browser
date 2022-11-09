@@ -105,13 +105,6 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       await gmailPage.goto(url);
     };
 
-    ava.default('mail.google.com/chat', testWithBrowser(undefined, async (t, browser) => {
-      const settingsPage = await BrowserRecipe.openSettingsLoginButCloseOauthWindowBeforeGrantingPermission(t, browser, 'ci.tests.gmail@flowcrypt.dev');
-      await settingsPage.close();
-      const googleChatPage = await BrowserRecipe.openGoogleChatPage(t, browser);
-      await googleChatPage.notPresent(BrowserRecipe.oldAndNewComposeButtonSelectors); // compose button should not be injected
-    }));
-
     ava.default('mail.google.com - send rich-text encrypted message', testWithBrowser('ci.tests.gmail', async (t, browser) => {
       const gmailPage = await BrowserRecipe.openGmailPageAndVerifyComposeBtnPresent(t, browser);
       const composePage = await GmailPageRecipe.openSecureCompose(t, gmailPage, browser);

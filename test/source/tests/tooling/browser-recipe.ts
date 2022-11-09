@@ -3,7 +3,7 @@
 import { Config, Util, TestMessage } from '../../util';
 
 import { AvaContext } from '.';
-import { BrowserHandle, Controllable, ControllablePage } from '../../browser';
+import { BrowserHandle, Controllable, ControllablePage, TIMEOUT_PAGE_LOAD } from '../../browser';
 import { OauthPageRecipe } from './../page-recipe/oauth-page-recipe';
 import { SetupPageRecipe } from './../page-recipe/setup-page-recipe';
 import { TestUrls } from '../../browser/test-urls';
@@ -28,6 +28,10 @@ export class BrowserRecipe {
   public static openSettingsLoginApprove = async (t: AvaContext, browser: BrowserHandle, acctEmail: string) => {
     const settingsPage = await browser.newPage(t, TestUrls.extensionSettings(acctEmail));
     const oauthPopup = await browser.newPageTriggeredBy(t, () => settingsPage.waitAndClick('@action-connect-to-gmail'));
+    await Promise.race([
+      oauthPopup.page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: TIMEOUT_PAGE_LOAD * 1000 }),
+      oauthPopup.page.waitForNavigation({ waitUntil: 'load', timeout: TIMEOUT_PAGE_LOAD * 1000 })
+    ]);
     await OauthPageRecipe.google(t, oauthPopup, acctEmail, 'approve');
     return settingsPage;
   };
@@ -44,8 +48,8 @@ export class BrowserRecipe {
     return gmailPage;
   };
 
-  public static openGoogleChatPage = async (t: AvaContext, browser: BrowserHandle, googleLoginIndex = 0) => {
-    const googleChatPage = await browser.newPage(t, TestUrls.googleChat(googleLoginIndex));
+  public static openMockGoogleChatPage = async (t: AvaContext, browser: BrowserHandle) => {
+    const googleChatPage = await browser.newPage(t, TestUrls.mockGoogleChat(), undefined, { Authorization: 'Bearer emulating-not-properly-set-up-extension' });
     await googleChatPage.waitAll('h1.acY'); // "No conversation selected" placeholder
     return googleChatPage;
   };

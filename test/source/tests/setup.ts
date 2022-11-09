@@ -34,7 +34,7 @@ const getAuthorizationHeader = async (t: AvaContext, browser: BrowserHandle, acc
   return { Authorization: `Bearer ${accessToken}` };
 };
 
-const openMockGmailPage = async (t: AvaContext, browser: BrowserHandle, acctEmail: string, hasPermission: boolean = true) => {
+const openMockGmailPage = async (t: AvaContext, browser: BrowserHandle, acctEmail: string, hasPermission: boolean = true, url = TestUrls.mockGmailUrl()) => {
   const authorizationHeader = hasPermission ? await getAuthorizationHeader(t, browser, acctEmail) : { Authorization: 'Bearer emulating-not-properly-set-up-extension' };
   return await browser.newPage(t, TestUrls.mockGmailUrl(), undefined, authorizationHeader);
 };
@@ -445,6 +445,14 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       await gmailPage.waitAndClick('@action-secure-compose');
       await Util.sleep(2);
       await gmailPage.notPresent(['@webmail-notification-setup']);
+    }));
+
+    ava.default('mail.google.com/chat', testWithBrowser(undefined, async (t, browser) => {
+      const acct = 'ci.tests.gmail@flowcrypt.dev';
+      const settingsPage = await BrowserRecipe.openSettingsLoginButCloseOauthWindowBeforeGrantingPermission(t, browser, acct);
+      await settingsPage.close();
+      const googleChatPage = await openMockGmailPage(t, browser, acct, false, TestUrls.mockGoogleChat());
+      await googleChatPage.notPresent(BrowserRecipe.oldAndNewComposeButtonSelectors); // compose button should not be injected
     }));
 
     ava.default('mail.google.com - success notif after setup, click hides it, does not re-appear + offers to reauth', testWithBrowser('compatibility', async (t, browser) => {
