@@ -104,7 +104,8 @@ blocks:
       epilogue:
         on_fail:
           commands:
-            - 'if [ -f build/test/test/debugArtifacts/debugHtmlAttachment-0.html ]; then'
-            - '  echo "Uploading debug files as job artifacts..."'
-            - '  artifact push job build/test/test/debugArtifacts/debugHtmlAttachment-*.html'
-            - fi
+            - |
+              if [ -f build/test/test/debugArtifacts/debugHtmlAttachment-0.html ]; then
+                echo "Uploading debug files as job artifacts..."
+                artifact push job build/test/test/debugArtifacts/debugHtmlAttachment-*.html
+              fi
