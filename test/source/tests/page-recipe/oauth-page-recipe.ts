@@ -41,6 +41,11 @@ export class OauthPageRecipe extends PageRecipe {
       if (isMock) {
         await OauthPageRecipe.mock(t, oauthPage, acctEmail, action);
         return;
+      } else {
+        await Promise.race([
+          oauthPage.page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: TIMEOUT_PAGE_LOAD * 1000 }),
+          oauthPage.page.waitForNavigation({ waitUntil: 'load', timeout: TIMEOUT_PAGE_LOAD * 1000 })
+        ]);
       }
     } catch (e) {
       if (String(e).includes('page has been closed')) {
