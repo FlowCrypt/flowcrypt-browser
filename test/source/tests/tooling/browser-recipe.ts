@@ -3,7 +3,7 @@
 import { Config, Util, TestMessage } from '../../util';
 
 import { AvaContext } from '.';
-import { BrowserHandle, Controllable, ControllablePage, TIMEOUT_PAGE_LOAD } from '../../browser';
+import { BrowserHandle, Controllable, ControllablePage } from '../../browser';
 import { OauthPageRecipe } from './../page-recipe/oauth-page-recipe';
 import { SetupPageRecipe } from './../page-recipe/setup-page-recipe';
 import { TestUrls } from '../../browser/test-urls';

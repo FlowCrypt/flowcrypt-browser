@@ -2,7 +2,7 @@
 
 import { Config, Util } from '../../util';
 import { AvaContext } from '../tooling/';
-import { ControllablePage } from '../../browser';
+import { ControllablePage, TIMEOUT_PAGE_LOAD } from '../../browser';
 import { PageRecipe } from './abstract-page-recipe';
 import { Url } from '../../core/common';
 
