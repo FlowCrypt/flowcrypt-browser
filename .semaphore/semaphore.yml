@@ -107,5 +107,5 @@ blocks:
             - |
               if [ -f build/test/test/debugArtifacts/debugHtmlAttachment-0.html ]; then
                 echo "Uploading debug files as job artifacts..."
-                artifact push job build/test/test/debugArtifacts/debugHtmlAttachment-*.html
+                artifact push job build/test/test/debugArtifacts/debugHtmlAttachment-0.html
               fi
