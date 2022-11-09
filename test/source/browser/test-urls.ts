@@ -22,7 +22,7 @@ export class TestUrls {
   };
 
   public static googleChat = (acctLoginIndex = 0) => {
-    return `https://mail.google.com/chat/u/${acctLoginIndex}`;
+    return `https://mail.google.com/chat/u/${acctLoginIndex}/#chat/welcome`;
   };
 
   public static mockGmailUrl = () => 'https://gmail.localhost:8001/gmail';
