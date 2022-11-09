@@ -54,7 +54,7 @@ export class BrowserHandle {
       this.pages.push(controllablePage);
       if (url.includes(Config.extensionId)) {
         await controllablePage.waitUntilViewLoaded();
-      } else if (url.includes('google.com')) { // wait until page load event for google.com pages
+      } else if (!url.includes('localhost')) { // wait until page load event for pages which are not localhost (live urls)
         await Promise.race([
           controllablePage.page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: TIMEOUT_PAGE_LOAD * 1000 }),
           controllablePage.page.waitForNavigation({ waitUntil: 'load', timeout: TIMEOUT_PAGE_LOAD * 1000 })
