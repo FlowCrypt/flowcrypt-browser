@@ -176,18 +176,6 @@ export class GoogleData {
   </body></html>
   `;
 
-  public static getMockChatPage = (acct: string) => `<!DOCTYPE HTML><html>
-  <body>
-  <div class="gb_Cb">
-    <div class="gb_Ib">${acct}</div>
-  </div>
-  <div class="gb_hb">
-    <div class="gb_lb">Full Name</div>
-  </div>
-  <h1 class="acY">No conversation selected</h1>
-  </body></html>
-  `;
-
   private static msgSubject = (m: GmailMsg): string => {
     const subjectHeader = m.payload && m.payload.headers && m.payload.headers.find(h => h.name === 'Subject');
     return (subjectHeader && subjectHeader.value) || '';

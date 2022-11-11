@@ -21,7 +21,9 @@ export class TestUrls {
     return `https://mail.google.com/mail/u/${acctLoginIndex}/#${category}${urlEnd}`;
   };
 
-  public static mockGoogleChat = () => `https://gmail.localhost:8001/chat`;
+  public static googleChat = (acctLoginIndex = 0) => {
+    return `https://mail.google.com/chat/u/${acctLoginIndex}`;
+  };
 
   public static mockGmailUrl = () => 'https://gmail.localhost:8001/gmail';
 }

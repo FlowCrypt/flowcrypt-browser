@@ -44,8 +44,8 @@ export class BrowserRecipe {
     return gmailPage;
   };
 
-  public static openMockGoogleChatPage = async (t: AvaContext, browser: BrowserHandle) => {
-    const googleChatPage = await browser.newPage(t, TestUrls.mockGoogleChat(), undefined, { Authorization: 'Bearer emulating-not-properly-set-up-extension' });
+  public static openGoogleChatPage = async (t: AvaContext, browser: BrowserHandle, googleLoginIndex = 0) => {
+    const googleChatPage = await browser.newPage(t, TestUrls.googleChat(googleLoginIndex));
     await googleChatPage.waitAll('h1.acY'); // "No conversation selected" placeholder
     return googleChatPage;
   };

@@ -102,13 +102,6 @@ export const mockGoogleEndpoints: HandlersDefinition = {
     }
     throw new HttpClientErr(`Method not implemented for ${req.url}: ${req.method}`);
   },
-  '/chat': async (_parsedReq, req) => {
-    if (isGet(req)) {
-      const acct = oauth.checkAuthorizationHeaderWithAccessToken(req.headers.authorization, 'flowcrypt.compatibility@gmail.com');
-      return GoogleData.getMockChatPage(acct);
-    }
-    throw new HttpClientErr(`Method not implemented for ${req.url}: ${req.method}`);
-  },
   '/gmail/v1/users/me/settings/sendAs': async (parsedReq, req) => {
     const acct = oauth.checkAuthorizationHeaderWithAccessToken(req.headers.authorization);
     if (isGet(req)) {
