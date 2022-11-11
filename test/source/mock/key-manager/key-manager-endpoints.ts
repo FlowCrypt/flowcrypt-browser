@@ -223,7 +223,7 @@ export const mockKeyManagerEndpoints: HandlersDefinition = {
   '/flowcrypt-email-key-manager/v1/keys/private': async ({ body }, req) => {
     const acctEmail = oauth.checkAuthorizationHeaderWithIdToken(req.headers.authorization);
     if (isGet(req)) {
-      if (acctEmail === 'wkd@google.mock.flowcryptlocal.test:8001') {
+      if (acctEmail === 'wkd@google.mock.localhost:8001') {
         return { privateKeys: [{ decryptedPrivateKey: testConstants.wkdAtgooglemockflowcryptlocalcom8001Private }] };
       }
       if (acctEmail === 'get.key@key-manager-autogen.flowcrypt.test') {
