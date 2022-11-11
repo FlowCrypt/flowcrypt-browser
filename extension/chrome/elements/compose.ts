@@ -202,11 +202,6 @@ export class ComposeView extends View {
     this.S.cached('body').on('focusin', setActiveWindow);
     this.S.cached('body').on('click', setActiveWindow);
     this.S.cached('icon_help').click(this.setHandler(async () => await this.renderModule.openSettingsWithDialog('help'), this.errModule.handle(`help dialog`)));
-    this.S.cached('input_text').on('keypress paste',this.setHandler((el, ev) => {
-      if (this.S.cached('input_text').children('div').text().length >= 10) { // setting 10 as a limit for ease of testing; 50kB is tested to work with low spec pc;
-        ev.preventDefault();
-      }
-    }));
     this.attachmentsModule.setHandlers();
     this.inputModule.setHandlers();
     this.myPubkeyModule.setHandlers();
