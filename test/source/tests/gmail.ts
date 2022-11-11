@@ -36,11 +36,11 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
         // Total compose frame count
         composeFrameCount
       }:
-      {
-        isReplyPromptAccepted?: boolean,
-        composeFrameIndex?: number,
-        composeFrameCount?: number
-      } = {}
+        {
+          isReplyPromptAccepted?: boolean,
+          composeFrameIndex?: number,
+          composeFrameCount?: number
+        } = {}
     ) => {
       const urls = await gmailPage.getFramesUrls(['/chrome/elements/compose.htm'], { sleep: 0 });
       expect(urls.length).to.equal(composeFrameCount ?? 1);
