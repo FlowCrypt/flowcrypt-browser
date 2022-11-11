@@ -184,7 +184,7 @@ export class GoogleData {
   <div class="gb_hb">
     <div class="gb_lb">Full Name</div>
   </div>
-  <h1 class="acY">No converation selected</h1>
+  <h1 class="acY">No conversation selected</h1>
   </body></html>
   `;
 
