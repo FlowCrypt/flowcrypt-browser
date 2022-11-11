@@ -228,7 +228,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
     }));
 
     ava.default(`compose - auto include pubkey is inactive when our key is available on Wkd`, testWithBrowser(undefined, async (t, browser) => {
-      const acct = 'wkd@google.mock.flowcryptlocal.test:8001';
+      const acct = 'wkd@google.mock.localhost:8001';
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
       await SetupPageRecipe.autoSetupWithEKM(settingsPage);
       const composePage = await ComposePageRecipe.openStandalone(t, browser, acct);
@@ -1752,13 +1752,8 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       });
     }));
 
-    /**
-     * You need the following lines in /etc/hosts:
-     * 127.0.0.1    standardsubdomainfes.test
-     * 127.0.0.1    fes.standardsubdomainfes.test
-     */
-    ava.default('user@standardsubdomainfes.test:8001 - PWD encrypted message with FES web portal', testWithBrowser(undefined, async (t, browser) => {
-      const acct = 'user@standardsubdomainfes.test:8001'; // added port to trick extension into calling the mock
+    ava.default('user@standardsubdomainfes.localhost:8001 - PWD encrypted message with FES web portal', testWithBrowser(undefined, async (t, browser) => {
+      const acct = 'user@standardsubdomainfes.localhost:8001'; // added port to trick extension into calling the mock
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
       await SetupPageRecipe.manualEnter(settingsPage, 'flowcrypt.test.key.used.pgp', { submitPubkey: false, usedPgpBefore: false },
         { isSavePassphraseChecked: false, isSavePassphraseHidden: false });
@@ -1774,7 +1769,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       });
       await dbPage.close();
       const subject = 'PWD encrypted message with FES - ID TOKEN';
-      const composePage = await ComposePageRecipe.openStandalone(t, browser, 'user@standardsubdomainfes.test:8001');
+      const composePage = await ComposePageRecipe.openStandalone(t, browser, 'user@standardsubdomainfes.localhost:8001');
       await ComposePageRecipe.fillMsg(composePage, { to: 'to@example.com', bcc: 'bcc@example.com' }, subject);
       const fileInput = await composePage.target.$('input[type=file]') as ElementHandle<HTMLInputElement>;
       await fileInput!.uploadFile('test/samples/small.txt');
@@ -1792,18 +1787,13 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       // also see '/api/v1/message' in fes-endpoints.ts mock
     }));
 
-    /**
-     * You need the following lines in /etc/hosts:
-     * 127.0.0.1    standardsubdomainfes.test
-     * 127.0.0.1    fes.standardsubdomainfes.test
-     */
-    ava.default('user2@standardsubdomainfes.test:8001 - PWD encrypted message with FES - Reply rendering', testWithBrowser(undefined, async (t, browser) => {
-      const acct = 'user2@standardsubdomainfes.test:8001'; // added port to trick extension into calling the mock
+    ava.default('user2@standardsubdomainfes.localhost:8001 - PWD encrypted message with FES - Reply rendering', testWithBrowser(undefined, async (t, browser) => {
+      const acct = 'user2@standardsubdomainfes.localhost:8001'; // added port to trick extension into calling the mock
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
       await SetupPageRecipe.manualEnter(settingsPage, 'flowcrypt.test.key.used.pgp', { submitPubkey: false, usedPgpBefore: false },
         { isSavePassphraseChecked: false, isSavePassphraseHidden: false });
       const appendUrl = 'threadId=1803be2e506153d2&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___&replyMsgId=1803be3182d1937b';
-      const composePage = await ComposePageRecipe.openStandalone(t, browser, 'user2@standardsubdomainfes.test:8001', { appendUrl, hasReplyPrompt: true });
+      const composePage = await ComposePageRecipe.openStandalone(t, browser, 'user2@standardsubdomainfes.localhost:8001', { appendUrl, hasReplyPrompt: true });
       await composePage.waitAndClick('@action-accept-reply-all-prompt', { delay: 2 });
       // we should have 4 recipients, 2 green and 2 gray
       const container = (await composePage.waitAny('@container-to'))!;
@@ -1846,18 +1836,13 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       await composePage.waitForContent('@recipients-preview', ' more');
     }));
 
-    /**
-     * You need the following lines in /etc/hosts:
-     * 127.0.0.1    standardsubdomainfes.test
-     * 127.0.0.1    fes.standardsubdomainfes.test
-     */
-    ava.default('user3@standardsubdomainfes.test:8001 - PWD encrypted message with FES web portal - pubkey recipient in bcc', testWithBrowser(undefined, async (t, browser) => {
-      const acct = 'user3@standardsubdomainfes.test:8001'; // added port to trick extension into calling the mock
+    ava.default('user3@standardsubdomainfes.localhost:8001 - PWD encrypted message with FES web portal - pubkey recipient in bcc', testWithBrowser(undefined, async (t, browser) => {
+      const acct = 'user3@standardsubdomainfes.localhost:8001'; // added port to trick extension into calling the mock
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
       await SetupPageRecipe.manualEnter(settingsPage, 'flowcrypt.test.key.used.pgp', { submitPubkey: false, usedPgpBefore: false },
         { isSavePassphraseChecked: false, isSavePassphraseHidden: false });
       const subject = 'PWD encrypted message with FES - pubkey recipient in bcc';
-      const composePage = await ComposePageRecipe.openStandalone(t, browser, 'user3@standardsubdomainfes.test:8001');
+      const composePage = await ComposePageRecipe.openStandalone(t, browser, 'user3@standardsubdomainfes.localhost:8001');
       await ComposePageRecipe.fillMsg(composePage, { to: 'to@example.com', bcc: 'flowcrypt.compatibility@gmail.com' }, subject);
       await composePage.waitAndType('@input-password', 'gO0d-pwd');
       await composePage.waitAndClick('@action-send', { delay: 1 });
@@ -1868,19 +1853,14 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       // also see '/api/v1/message' in fes-endpoints.ts mock
     }));
 
-    /**
-     * You need the following lines in /etc/hosts:
-     * 127.0.0.1    standardsubdomainfes.test
-     * 127.0.0.1    fes.standardsubdomainfes.test
-     */
-    ava.default('user4@standardsubdomainfes.test:8001 - PWD encrypted message with FES web portal - a send fails with gateway update error', testWithBrowser(undefined, async (t, browser) => {
-      const acct = 'user4@standardsubdomainfes.test:8001'; // added port to trick extension into calling the mock
+    ava.default('user4@standardsubdomainfes.localhost:8001 - PWD encrypted message with FES web portal - a send fails with gateway update error', testWithBrowser(undefined, async (t, browser) => {
+      const acct = 'user4@standardsubdomainfes.localhost:8001'; // added port to trick extension into calling the mock
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
       await SetupPageRecipe.manualEnter(settingsPage, 'flowcrypt.test.key.used.pgp', { submitPubkey: false, usedPgpBefore: false },
         { isSavePassphraseChecked: false, isSavePassphraseHidden: false });
       const subject = 'PWD encrypted message with FES web portal - a send fails with gateway update error - ' + testVariant;
       const expectedNumberOfPassedMessages = (await GoogleData.withInitializedData(acct)).searchMessagesBySubject(subject).length;
-      const composePage = await ComposePageRecipe.openStandalone(t, browser, 'user4@standardsubdomainfes.test:8001');
+      const composePage = await ComposePageRecipe.openStandalone(t, browser, 'user4@standardsubdomainfes.localhost:8001');
       await ComposePageRecipe.fillMsg(composePage, { to: 'gatewayfailure@example.com' }, subject);
       await composePage.waitAndType('@input-password', 'gO0d-pwd');
       await composePage.waitAndClick('@action-send', { delay: 1 });

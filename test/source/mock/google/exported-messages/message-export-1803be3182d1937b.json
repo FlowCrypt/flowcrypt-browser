@@ -1,5 +1,5 @@
 {
-  "acctEmail": "user2@standardsubdomainfes.test:8001",
+  "acctEmail": "user2@standardsubdomainfes.localhost:8001",
   "full": {
     "id": "1803be3182d1937b",
     "threadId": "1803be2e506153d2",
