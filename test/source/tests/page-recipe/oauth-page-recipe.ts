@@ -37,7 +37,7 @@ export class OauthPageRecipe extends PageRecipe {
   public static google = async (t: AvaContext, oauthPage: ControllablePage, acctEmail: string,
     action: "close" | "deny" | "approve" | "login" | "login_with_invalid_state"): Promise<void> => {
     try {
-      const isMock = oauthPage.target.url().includes('localhost') || oauthPage.target.url().includes('google.mock.flowcryptlocal.test');
+      const isMock = oauthPage.target.url().includes('localhost') || oauthPage.target.url().includes('google.mock.localhost');
       if (isMock) {
         await OauthPageRecipe.mock(t, oauthPage, acctEmail, action);
         return;

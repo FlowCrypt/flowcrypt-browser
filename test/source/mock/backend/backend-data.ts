@@ -143,7 +143,7 @@ export class BackendData {
         "allow_attester_search_only_for_domains": []
       };
     }
-    if (domain === 'google.mock.flowcryptlocal.test:8001') {
+    if (domain === 'google.mock.localhost:8001') {
       return { ...keyManagerAutogenRules, flags: [...keyManagerAutogenRules.flags, 'NO_ATTESTER_SUBMIT'] };
     }
     if (domain === 'key-manager-autogen.flowcrypt.test') {
