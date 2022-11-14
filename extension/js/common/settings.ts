@@ -4,12 +4,11 @@
 
 import { Dict, Str, Url, UrlParams } from './core/common.js';
 import { Ui } from './browser/ui.js';
-import { Api } from './api/shared/api.js';
 import { ApiErr, AjaxErr } from './api/shared/api-error.js';
 import { Attachment } from './core/attachment.js';
 import { Browser } from './browser/browser.js';
 import { Buf } from './core/buf.js';
-import { Catch } from './platform/catch.js';
+import { Catch, CompanyLdapKeyMismatchError } from './platform/catch.js';
 import { Env } from './browser/env.js';
 import { Gmail } from './api/email-provider/gmail/gmail.js';
 import { GoogleAuth } from './api/email-provider/gmail/google-auth.js';
@@ -25,6 +24,7 @@ import { AbstractStore } from './platform/store/abstract-store.js';
 import { KeyStore } from './platform/store/key-store.js';
 import { PassphraseStore } from './platform/store/passphrase-store.js';
 import { isFesUsed } from './helpers.js';
+import { Api } from './api/shared/api.js';
 
 declare const zxcvbn: Function; // tslint:disable-line:ban-types
 
@@ -34,8 +34,8 @@ export class Settings {
     return PgpPwd.estimateStrength(zxcvbn(passphrase, PgpPwd.weakWords()).guesses, type); // tslint:disable-line:no-unsafe-any
   };
 
-  public static renderSubPage = async (acctEmail: string | undefined, tabId: string, page: string, addUrlTextOrParams?: string | UrlParams) => {
-    await Ui.modal.iframe(Settings.prepareNewSettingsLocationUrl(acctEmail, tabId, page, addUrlTextOrParams));
+  public static renderSubPage = async (acctEmail: string | undefined, tabId: string, page: string, addUrlTextOrParams?: string | UrlParams, iframeHeight?: number) => {
+    await Ui.modal.iframe(Settings.prepareNewSettingsLocationUrl(acctEmail, tabId, page, addUrlTextOrParams), iframeHeight || undefined);
   };
 
   public static redirectSubPage = (acctEmail: string, parentTabId: string, page: string, addUrlTextOrParams?: string | UrlParams) => {
@@ -149,8 +149,8 @@ export class Settings {
         }
       }
     }
-    const oldAcctStorage = await AcctStore.get(oldAcctEmail, storageIndexesToKeepOld as any);
-    const newAcctStorage = await AcctStore.get(newAcctEmail, storageIndexesToKeepNew as any);
+    const oldAcctStorage = await AcctStore.get(oldAcctEmail, storageIndexesToKeepOld as unknown as AccountIndex[]);
+    const newAcctStorage = await AcctStore.get(newAcctEmail, storageIndexesToKeepNew as unknown as AccountIndex[]);
     await AcctStore.set(newAcctEmail, oldAcctStorage); // save 'fallback' and 'keep' values
     await AcctStore.set(newAcctEmail, newAcctStorage); // save 'forget' and overwrite 'fallback'
     for (const sessionStorageIndex of Object.keys(sessionStorage)) {
@@ -211,7 +211,8 @@ export class Settings {
       }
     }));
     return await new Promise((resolve, reject) => {
-      container.find('.action_fix_compatibility').click(Ui.event.handle(async target => {
+      container.find('.action_fix_compatibility').on('click', Ui.event.handle(async target => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const expireYears = String($(target).parents(container as any).find('select.input_fix_expire_years').val()); // JQuery quirk
         if (!expireYears) {
           await Ui.modal.warning('Please select key expiration');
@@ -258,11 +259,16 @@ export class Settings {
    * todo - could probably replace most usages of this method with retryPromptUntilSuccessful which is more intuitive
    */
   public static promptToRetry = async (lastErr: unknown, userMsg: string, retryCb: () => Promise<void>, contactSentence: string): Promise<void> => {
-    let userErrMsg = `${userMsg} ${ApiErr.eli5(lastErr)}`;
+    let errorMsg!: string;
     if (lastErr instanceof AjaxErr && (lastErr.status === 400 || lastErr.status === 405)) {
       // this will make reason for err 400 obvious to user - eg on EKM 405 error
-      userErrMsg = `${userMsg}, ${lastErr.resMsg}`;
+      errorMsg = lastErr.resMsg ?? '';
+    } else if (lastErr instanceof CompanyLdapKeyMismatchError) {
+      errorMsg = lastErr.message;
+    } else {
+      errorMsg = ApiErr.eli5(lastErr);
     }
+    const userErrMsg = `${userMsg}, ${errorMsg}`;
     while (await Ui.renderOverlayPromptAwaitUserChoice({ retry: {} }, userErrMsg, ApiErr.detailsAsHtmlWithNewlines(lastErr), contactSentence) === 'retry') {
       try {
         return await retryCb();
@@ -306,11 +312,12 @@ export class Settings {
         }
       } else if (response.result === 'Denied' || response.result === 'Closed') {
         const authDeniedHtml = await Api.ajax({ url: '/chrome/settings/modules/auth_denied.htm' }, Catch.stackTrace()) as string; // tslint:disable-line:no-direct-ajax
-        if (await Ui.modal.confirm(authDeniedHtml, true)) {
-          await Settings.newGoogleAcctAuthPromptThenAlertOrForward(settingsTabId, acctEmail, scopes);
-        }
+        await Ui.modal.info(`${authDeniedHtml}\n<div class="line">${Lang.general.contactIfNeedAssistance()}</div>`, true);
       } else {
-        Catch.report('failed to log into google in newGoogleAcctAuthPromptThenAlertOrForward', response);
+        // Do not report error for csrf
+        if (response.error !== 'Wrong oauth CSRF token. Please try again.') {
+          Catch.report('failed to log into google in newGoogleAcctAuthPromptThenAlertOrForward', response);
+        }
         await Ui.modal.error(`Failed to connect to Gmail(new). ${Lang.general.contactIfHappensAgain(acctEmail ?
           await isFesUsed(acctEmail) : false)}\n\n[${response.result}] ${response.error}`);
         await Ui.time.sleep(1000);
@@ -349,7 +356,7 @@ export class Settings {
     $('#alt-accounts img.profile-img').on('error', Ui.event.handle(self => {
       $(self).off().attr('src', '/img/svgs/profile-icon.svg');
     }));
-    $('.action_select_account').click(Ui.event.handle((target, event) => {
+    $('.action_select_account').on('click', Ui.event.handle((target, event) => {
       event.preventDefault();
       const acctEmail = $(target).find('.contains_email').text();
       const acctStorage = acctStorages[acctEmail];
@@ -412,7 +419,7 @@ export class Settings {
     * determines how to treat old values when changing account
     */
   private static getOverwriteMode = (key: string): 'fallback' | 'forget' | 'keep' => {
-    if (key.startsWith('google_token_') || ['uuid', 'rules', 'openid', 'full_name', 'picture', 'sendAs'].includes(key)) { // old value should be used if only a new value is missing
+    if (key.startsWith('google_token_') || ['rules', 'openid', 'full_name', 'picture', 'sendAs'].includes(key)) { // old value should be used if only a new value is missing
       return 'fallback';
     } else if (key.startsWith('passphrase_')) { // force forgetting older values
       return 'forget';

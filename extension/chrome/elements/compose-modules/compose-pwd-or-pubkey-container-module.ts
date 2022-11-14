@@ -9,7 +9,6 @@ import { Str } from '../../../js/common/core/common.js';
 import { ApiErr } from '../../../js/common/api/shared/api-error.js';
 import { ViewModule } from '../../../js/common/view-module.js';
 import { ComposeView } from '../compose.js';
-import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
 import { Lang } from '../../../js/common/lang.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 
@@ -28,7 +27,7 @@ export class ComposePwdOrPubkeyContainerModule extends ViewModule<ComposeView> {
     this.view.S.cached('input_password').keyup(this.view.setHandlerPrevent('spree', () => this.showHideContainerAndColorSendBtn()));
     this.view.S.cached('input_password').focus(this.view.setHandlerPrevent('spree', () => this.inputPwdFocusHandler()));
     this.view.S.cached('input_password').blur(this.view.setHandler(() => this.inputPwdBlurHandler()));
-    this.view.S.cached('expiration_note').find('#expiration_note_settings_link').click(this.view.setHandler(async (el, e) => {
+    this.view.S.cached('expiration_note').find('#expiration_note_settings_link').on('click', this.view.setHandler(async (el, e) => {
       e.preventDefault();
       await this.view.renderModule.openSettingsWithDialog('security');
     }, this.view.errModule.handle(`render settings dialog`)));
@@ -102,15 +101,14 @@ export class ComposePwdOrPubkeyContainerModule extends ViewModule<ComposeView> {
 
   private showMsgPwdUiAndColorBtn = async (anyNopgp: boolean, anyRevoked: boolean) => {
     if (!this.isVisible()) {
-      const authInfo = await AcctStore.authInfo(this.view.acctEmail);
       const expirationTextEl = this.view.S.cached('expiration_note').find('#expiration_note_message_expire');
       const pwdPolicy = this.view.fesUrl ? Lang.compose.enterprisePasswordPolicy : Lang.compose.consumerPasswordPolicy;
       $('#password-policy-container').html(Xss.htmlSanitize(pwdPolicy.split('\n').join('<br />'))); // xss-sanitized
-      if (!authInfo) {
+      if (!this.view.acctEmail) {
         expirationTextEl.text(Str.pluralize(this.MSG_EXPIRE_DAYS_DEFAULT, 'day'));
       } else {
         try {
-          const response = await this.view.acctServer.accountGetAndUpdateLocalStore(authInfo);
+          const response = await this.view.acctServer.accountGetAndUpdateLocalStore();
           expirationTextEl.text(Str.pluralize(response.account.default_message_expire, 'day'));
         } catch (e) {
           ApiErr.reportIfSignificant(e);

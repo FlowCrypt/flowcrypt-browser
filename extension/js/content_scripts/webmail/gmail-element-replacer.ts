@@ -3,7 +3,7 @@
 'use strict';
 
 import { Dict, Str } from '../../common/core/common.js';
-import { FactoryReplyParams, WebmailVariantString, XssSafeFactory } from '../../common/xss-safe-factory.js';
+import { FactoryReplyParams, XssSafeFactory } from '../../common/xss-safe-factory.js';
 import { GmailParser, GmailRes } from '../../common/api/email-provider/gmail/gmail-parser.js';
 import { IntervalFunction, WebmailElementReplacer } from './setup-webmail-content-script.js';
 import { AjaxErr } from '../../common/api/shared/api-error.js';
@@ -40,15 +40,12 @@ export class GmailElementReplacer implements WebmailElementReplacer {
   private acctEmail: string;
   private injector: Injector;
   private notifications: Notifications;
-  private gmailVariant: WebmailVariantString;
   private webmailCommon: WebmailCommon;
-  private cssHidden = `opacity: 0 !important; height: 1px !important; width: 1px !important; max-height: 1px !important;
-  max-width: 1px !important; position: absolute !important; z-index: -1000 !important`;
   private currentlyEvaluatingStandardComposeBoxRecipients = false;
   private currentlyReplacingAttachments = false;
-  private keepNextStandardReplyBox = false;
-  private showSwitchToEncryptedReplyWarning = false;
+  private switchToEncryptedReply = false;
   private removeNextReplyBoxBorders = false;
+  private shouldShowEditableSecureReply = false;
 
   private sel = { // gmail_variant=standard|new
     convoRoot: 'div.if',
@@ -66,18 +63,17 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     settingsBtnContainer: 'div.aeH > div > .fY',
     standardComposeRecipient: 'div.az9 span[email][data-hovercard-id]',
     numberOfAttachments: '.aVW',
-    numberOfAttachmentsDigit: '.aVW span',
+    numberOfAttachmentsDigit: '.aVW span:first-child',
     attachmentsButtons: '.aZi',
     draftsList: '.ae4',
   };
 
   constructor(factory: XssSafeFactory, clientConfiguration: ClientConfiguration, acctEmail: string, sendAs: Dict<SendAsAlias>,
-    injector: Injector, notifications: Notifications, gmailVariant: WebmailVariantString) {
+    injector: Injector, notifications: Notifications) {
     this.factory = factory;
     this.acctEmail = acctEmail;
     this.sendAs = sendAs;
     this.injector = injector;
-    this.gmailVariant = gmailVariant;
     this.notifications = notifications;
     this.webmailCommon = new WebmailCommon(acctEmail, injector);
     this.gmail = new Gmail(acctEmail);
@@ -116,7 +112,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
         const topGap = 80; // so the bottom of the prev message will be visible
         // scroll to the bottom of the element,
         // or to the top of the element if the element's height is bigger than the convoRoot
-        convoRootScrollable.get(0).scrollTop =
+        convoRootScrollable.get(0)!.scrollTop =
           replyMsg.position()!.top + $(replyMsg).height()! -
           Math.max(0, $(replyMsg).height()! - convoRootScrollable.height()! + gmailHeaderHeight + topGap);
       }
@@ -134,12 +130,12 @@ export class GmailElementReplacer implements WebmailElementReplacer {
       // check if cursor went above the visible part of convoRootScrollable
       if (replyMsgOffsetTop + cursorOffsetTop < 0) {
         convoRootScrollable.css('scroll-behavior', '');
-        convoRootScrollable.get(0).scrollTop += replyMsgOffsetTop + cursorOffsetTop;
+        convoRootScrollable.get(0)!.scrollTop += replyMsgOffsetTop + cursorOffsetTop;
       }
       // check if cursor went below the visible part of convoRootScrollable
-      if (replyMsgOffsetTop + cursorOffsetTop > convoRootScrollable.get(0).clientHeight - bottomGap) {
+      if (replyMsgOffsetTop + cursorOffsetTop > convoRootScrollable.get(0)!.clientHeight - bottomGap) {
         convoRootScrollable.css('scroll-behavior', '');
-        convoRootScrollable.get(0).scrollTop += replyMsgOffsetTop + cursorOffsetTop - convoRootScrollable.get(0).clientHeight + bottomGap;
+        convoRootScrollable.get(0)!.scrollTop += replyMsgOffsetTop + cursorOffsetTop - convoRootScrollable.get(0)!.clientHeight + bottomGap;
       }
     }
   };
@@ -183,7 +179,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
 
   private addfcConvoIcon = (containerSel: JQueryEl, iconHtml: string, iconSel: string, onClick: () => void) => {
     containerSel.addClass('appended').children('.use_secure_reply, .show_original_conversation').remove(); // remove previous FlowCrypt buttons, if any
-    Xss.sanitizeAppend(containerSel, iconHtml).children(iconSel).off().click(Ui.event.prevent('double', Catch.try(onClick)));
+    Xss.sanitizeAppend(containerSel, iconHtml).children(iconSel).off().on('click', Ui.event.prevent('double', Catch.try(onClick)));
   };
 
   private isEncrypted = (): boolean => {
@@ -205,7 +201,6 @@ export class GmailElementReplacer implements WebmailElementReplacer {
       for (const elem of convoReplyBtnsArr) {
         $(elem).addClass('inserted');
         const gmailReplyBtn = $(elem).find('[aria-label="Reply"]');
-        const gmailReplyToAllBtn = $(elem).find('[aria-label="Reply to all"]');
         const secureReplyBtn = $(this.factory.btnSecureReply()).insertAfter(gmailReplyBtn);  // xss-safe-factory
         secureReplyBtn.addClass(gmailReplyBtn.attr('class') || '');
         secureReplyBtn.off();
@@ -213,20 +208,13 @@ export class GmailElementReplacer implements WebmailElementReplacer {
         secureReplyBtn.on('focusout', Ui.event.handle((target) => { $(target).removeClass('T-I-JO'); }));
         secureReplyBtn.on('mouseenter', Ui.event.handle((target) => { $(target).addClass('T-I-JW'); }));
         secureReplyBtn.on('mouseleave', Ui.event.handle((target) => { $(target).removeClass('T-I-JW'); }));
-        secureReplyBtn.click(Ui.event.handle((el, ev: JQuery.Event) => this.actionActivateSecureReplyHandler(el, ev)));
+        secureReplyBtn.on('click', Ui.event.handle((el, ev: JQuery.Event) => this.actionActivateSecureReplyHandler(el, ev)));
         secureReplyBtn.keydown(event => {
           if (event.key === 'Enter') {
             event.stopImmediatePropagation();
-            $(secureReplyBtn).click();
+            $(secureReplyBtn).trigger('click');
           }
         });
-        gmailReplyBtn.add(gmailReplyToAllBtn).click(Ui.event.handle((target) => {
-          const replyContainerIframe = $('.reply_message_iframe_container > iframe').last();
-          if (replyContainerIframe.length && !$('#switch_to_encrypted_reply').length) {
-            this.keepNextStandardReplyBox = true;
-            this.showSwitchToEncryptedReplyWarning = $(target).closest(this.sel.msgOuter).find('iframe.pgp_block').hasClass('encryptedMsg');
-          }
-        }));
       }
     }
     // conversation top-right icon buttons
@@ -234,7 +222,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
       if (useEncryptionInThisConvo) {
         if (!convoUpperIcons.is('.appended') || convoUpperIcons.find('.use_secure_reply').length) { // either not appended, or appended icon is outdated (convo switched to encrypted)
           this.addfcConvoIcon(convoUpperIcons, this.factory.btnWithoutFc(), '.show_original_conversation', () => {
-            convoUpperIcons.find('.gZ').click();
+            convoUpperIcons.find('.gZ').trigger('click');
           });
         }
       }
@@ -244,7 +232,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
   private actionActivateSecureReplyHandler = async (btn: HTMLElement, event: JQuery.Event) => {
     event.stopImmediatePropagation();
     if ($('#switch_to_encrypted_reply').length) {
-      $('#switch_to_encrypted_reply').click();
+      $('#switch_to_encrypted_reply').trigger('click');
       return;
     }
     const messageContainer = $(btn.closest('.h7') as HTMLElement);
@@ -252,7 +240,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
       if (this.isEncrypted()) {
         await this.setReplyBoxEditable();
       } else {
-        await this.replaceStandardReplyBox(undefined, true, true);
+        await this.replaceStandardReplyBox(undefined, true);
       }
     } else {
       this.insertEncryptedReplyBox(messageContainer);
@@ -268,7 +256,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
         const [, buttonHrefId] = draftLinkMatch;
         const button = `<a href="#" class="open_draft_${Xss.escape(buttonHrefId)}">Open draft</a>`;
         Xss.sanitizeReplace(contenteditable, button);
-        $(`a.open_draft_${buttonHrefId}`).click(Ui.event.handle((target) => {
+        $(`a.open_draft_${buttonHrefId}`).on('click', Ui.event.handle((target) => {
           if (this.injector.openComposeWin(buttonHrefId)) {
             closeGmailComposeWindow(target);
           }
@@ -279,7 +267,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
           mouseUpEvent.initEvent('mouseup', true, true); // Gmail listens for the mouseup event, not click
           $(target).closest('.dw').find('.Ha')[0].dispatchEvent(mouseUpEvent); // jquery's trigger('mouseup') doesn't work for some reason
         };
-        $('.close_gmail_compose_window').click(Ui.event.handle(closeGmailComposeWindow));
+        $('.close_gmail_compose_window').on('click', Ui.event.handle(closeGmailComposeWindow));
       }
     }
   };
@@ -607,7 +595,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     messageContainer.find('.adn.ads').parent().append(secureReplyBoxXssSafe); // xss-safe-factory
   };
 
-  private replaceStandardReplyBox = async (msgId?: string, editable: boolean = false, force: boolean = false) => {
+  private replaceStandardReplyBox = async (msgId?: string, force: boolean = false) => {
     const draftReplyRegex = new RegExp(/\[(flowcrypt|cryptup):link:draft_reply:([0-9a-fr\-]+)]/);
     const newReplyBoxes = $('div.nr.tMHS5d, td.amr > div.nr, div.gA td.I5').not('.reply_message_evaluated').filter(':visible').get();
     if (newReplyBoxes.length) {
@@ -621,63 +609,70 @@ export class GmailElementReplacer implements WebmailElementReplacer {
       const doReplace = Boolean(convoRootEl.find('iframe.pgp_block').filter(':visible').closest('.h7').is(':last-child')
         || (convoRootEl.is(':visible') && force)
         || hasDraft);
-      const alreadyHasEncryptedReplyBox = Boolean(convoRootEl.find('div.reply_message_iframe_container').filter(':visible').length);
       let midConvoDraft = false;
       if (doReplace) {
-        if (this.keepNextStandardReplyBox) {
-          for (const replyBoxEl of newReplyBoxes) {
-            $(replyBoxEl).addClass('reply_message_evaluated');
-            if (this.showSwitchToEncryptedReplyWarning) {
-              const notification = $('<div class="error_notification">The last message was encrypted, but you are composing a reply without encryption. </div>');
-              const swithToEncryptedReply = $('<a href id="switch_to_encrypted_reply">Switch to encrypted reply</a>');
-              swithToEncryptedReply.click(Ui.event.handle((el, ev: JQuery.Event) => {
-                ev.preventDefault();
-                $(el).closest('.reply_message_evaluated').removeClass('reply_message_evaluated');
-                this.removeNextReplyBoxBorders = true;
-              }));
-              notification.append(swithToEncryptedReply); // xss-direct
-              $(replyBoxEl).prepend(notification); // xss-direct
-            }
-          }
-          this.keepNextStandardReplyBox = false;
-          this.showSwitchToEncryptedReplyWarning = false;
-          return;
-        }
         for (const replyBoxEl of newReplyBoxes.reverse()) { // looping in reverse
           const replyBox = $(replyBoxEl);
           const msgInnerText = replyBox.find(this.sel.msgInnerText);
           if (msgInnerText.length && !msgInnerText.find('[contenteditable]').length) { // div[contenteditable] is not loaded yet (e.g. when refreshing a thread), do nothing
             continue;
           }
-          const replyBoxInnerText = replyBox.find(this.sel.msgInnerText).text().trim();
+          const replyBoxInnerText = msgInnerText.text().trim();
           const draftReplyLinkMatch = replyBoxInnerText.substr(0, 1000).match(draftReplyRegex);
           if (draftReplyLinkMatch) { // reply draft
             replyParams.draftId = draftReplyLinkMatch[2];
-          } else if (replyBoxInnerText) { // plain reply
+          } else if (msgInnerText.length && !this.switchToEncryptedReply) { // plain reply
+            this.showSwitchToEncryptedReplyWarningIfNeeded(replyBox);
             replyBox.addClass('reply_message_evaluated');
             continue;
           }
+          this.switchToEncryptedReply = false;
           if (this.removeNextReplyBoxBorders) {
             replyBox.addClass('remove_borders');
             this.removeNextReplyBoxBorders = false;
           }
-          if (!midConvoDraft && !alreadyHasEncryptedReplyBox) { // either is a draft in the middle, or the convo already had (last) box replaced: should also be useless draft
-            const secureReplyBoxXssSafe = `<div class="remove_borders reply_message_iframe_container">${this.factory.embeddedReply(replyParams, editable)}</div>`;
-            if (replyBox.hasClass('I5')) { // activated standard reply box: cannot remove because would cause issues / gmail freezing
-              const origChildren = replyBox.children();
-              replyBox.addClass('reply_message_evaluated remove_borders').append(secureReplyBoxXssSafe); // xss-safe-factory
-              if (this.gmailVariant === 'new') { // even hiding causes issues in new gmail (encrypted -> see original -> reply -> archive)
-                origChildren.attr('style', this.cssHidden);
-              } else { // in old gmail, we can safely hide it without causing freezes navigating away
-                origChildren.hide();
-              }
-            } else { // non-activated reply box: replaced so that originally bound events would go with it (prevents inbox freezing)
+          if (!midConvoDraft) { // either is a draft in the middle, or the convo already had (last) box replaced: should also be useless draft
+            const isReplyButtonView = replyBoxEl.className.includes('nr');
+            const replyBoxes = document.querySelectorAll('iframe.reply_message');
+            const alreadyHasSecureReplyBox = replyBoxes.length > 0;
+            const secureReplyBoxXssSafe = `
+              <div class="remove_borders reply_message_iframe_container">
+                ${this.factory.embeddedReply(replyParams, this.shouldShowEditableSecureReply || alreadyHasSecureReplyBox)}
+              </div>
+            `;
+            this.shouldShowEditableSecureReply = !isReplyButtonView;
+            if (hasDraft || alreadyHasSecureReplyBox) {
+              replyBox.addClass('reply_message_evaluated remove_borders').parent().append(secureReplyBoxXssSafe); // xss-safe-factory
+              replyBox.hide();
+            } else if (isReplyButtonView) {
               replyBox.replaceWith(secureReplyBoxXssSafe); // xss-safe-factory
+            } else {
+              const deleteReplyEl = document.querySelector('.oh.J-Z-I.J-J5-Ji.T-I-ax7');
+              if (deleteReplyEl) { // Remove standard reply by clicking `delete` button
+                (deleteReplyEl as HTMLElement).click();
+              }
             }
             midConvoDraft = true; // last box was processed first (looping in reverse), and all the rest must be drafts
           }
         }
       }
+    }
+  };
+
+  private showSwitchToEncryptedReplyWarningIfNeeded = (reployBox: JQueryEl) => {
+    const showSwitchToEncryptedReplyWarning = reployBox.closest('div.h7').find(this.sel.msgOuter).find('iframe.pgp_block').hasClass('encryptedMsg');
+    if (showSwitchToEncryptedReplyWarning) {
+      const notification = $('<div class="error_notification">The last message was encrypted, but you are composing a reply without encryption. </div>');
+      const swithToEncryptedReply = $('<a href id="switch_to_encrypted_reply">Switch to encrypted reply</a>');
+      swithToEncryptedReply.on('click', Ui.event.handle((el, ev: JQuery.Event) => {
+        ev.preventDefault();
+        $(el).closest('.reply_message_evaluated').removeClass('reply_message_evaluated');
+        this.removeNextReplyBoxBorders = true;
+        this.switchToEncryptedReply = true;
+        notification.remove();
+      }));
+      notification.append(swithToEncryptedReply); // xss-direct
+      reployBox.prepend(notification); // xss-direct
     }
   };
 
@@ -733,7 +728,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
             if (!standardComposeWin.find('.recipients_use_encryption').length) {
               const prependable = standardComposeWin.find('div.az9 span[email]').first().parents('form').first();
               prependable.prepend(this.factory.btnRecipientsUseEncryption('gmail')); // xss-safe-factory
-              prependable.find('a').click(Ui.event.handle(() => { this.injector.openComposeWin(); }));
+              prependable.find('a').on('click', Ui.event.handle(() => { this.injector.openComposeWin(); }));
             }
           } else {
             standardComposeWin.find('.recipients_use_encryption').remove();
@@ -749,7 +744,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
       const settingsBtnContainer = $(this.sel.settingsBtnContainer);
       if (settingsBtnContainer.length && !settingsBtnContainer.find('#fc_settings_btn').length) {
         settingsBtnContainer.children().last().before(this.factory.btnSettings('gmail')); // xss-safe-factory
-        settingsBtnContainer.find('#fc_settings_btn').click(Ui.event.handle(() => BrowserMsg.send.bg.settings({ acctEmail: this.acctEmail })));
+        settingsBtnContainer.find('#fc_settings_btn').on('click', Ui.event.handle(() => BrowserMsg.send.bg.settings({ acctEmail: this.acctEmail })));
       }
     }
   };

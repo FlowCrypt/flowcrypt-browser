@@ -18,17 +18,18 @@ const allowedRecipients: Array<string> = ['flowcrypt.compatibility@gmail.com', '
   'ci.tests.gmail@flowcrypt.test', 'smime1@recipient.com', 'smime2@recipient.com', 'smime@recipient.com', 'smime.attachment@recipient.com',
   'auto.refresh.expired.key@recipient.com', 'to@example.com', 'cc@example.com', 'bcc@example.com', 'gatewayfailure@example.com',
   'flowcrypt.test.key.multiple.inbox1@gmail.com', 'flowcrypt.test.key.multiple.inbox2@gmail.com', 'mock.only.pubkey@flowcrypt.com',
-  'vladimir@flowcrypt.com', 'limon.monte@gmail.com', 'sweetalert2@gmail.com', 'sender@domain.com', 'invalid@example.com', 'timeout@example.com'];
+  'vladimir@flowcrypt.com', 'limon.monte@gmail.com', 'sweetalert2@gmail.com', 'sender@domain.com', 'invalid@example.com',
+  'timeout@example.com', 'flowcrypt.test.key.new.manual@gmail.com'];
 
 export const mockGoogleEndpoints: HandlersDefinition = {
-  '/o/oauth2/auth': async ({ query: { client_id, response_type, access_type, state, redirect_uri, scope, login_hint, proceed } }, req) => {
-    if (isGet(req) && client_id === oauth.clientId && response_type === 'code' && access_type === 'offline' && state && redirect_uri === oauth.redirectUri && scope) { // auth screen
+  '/o/oauth2/auth': async ({ query: { client_id, response_type, access_type, state, scope, login_hint, proceed } }, req) => {
+    if (isGet(req) && client_id === oauth.clientId && response_type === 'code' && access_type === 'offline' && state && scope) { // auth screen
       if (!login_hint) {
         return oauth.renderText('choose account with login_hint');
       } else if (!proceed) {
         return oauth.renderText('redirect with proceed=true to continue');
       } else {
-        return oauth.successPage(login_hint, state);
+        return oauth.successResult(login_hint, state, scope);
       }
     }
     throw new HttpClientErr(`Method not implemented for ${req.url}: ${req.method}`);
@@ -96,7 +97,7 @@ export const mockGoogleEndpoints: HandlersDefinition = {
   },
   '/gmail': async (_parsedReq, req) => {
     if (isGet(req)) {
-      const acct = oauth.checkAuthorizationHeaderWithAccessToken(req.headers.authorization);
+      const acct = oauth.checkAuthorizationHeaderWithAccessToken(req.headers.authorization, 'flowcrypt.compatibility@gmail.com');
       return GoogleData.getMockGmailPage(acct);
     }
     throw new HttpClientErr(`Method not implemented for ${req.url}: ${req.method}`);
@@ -144,6 +145,18 @@ export const mockGoogleEndpoints: HandlersDefinition = {
           sendAsEmail: alias2,
           displayName: 'An Alias1',
           replyToAddress: alias2,
+          signature: '',
+          isDefault: false,
+          isPrimary: false,
+          treatAsAlias: false,
+          verificationStatus: 'accepted'
+        });
+      } else if (acct === 'test.match.attester.key@gmail.com') {
+        const alias = 'test.mismatch.attester.key@gmail.com';
+        sendAs.push({
+          sendAsEmail: alias,
+          displayName: 'Test mismatch',
+          replyToAddress: alias,
           signature: '',
           isDefault: false,
           isPrimary: false,
@@ -268,7 +281,7 @@ export const mockGoogleEndpoints: HandlersDefinition = {
       }
       throw new HttpClientErr(`MOCK draft not found for ${acct} (draftId: ${id})`, Status.NOT_FOUND);
     } else if (isPut(req)) {
-      const raw = (parsedReq.body as any)?.message?.raw as string; // tslint:disable-line: no-unsafe-any
+      const raw = (parsedReq.body as { message?: { raw: string } })?.message?.raw as string;
       if (!raw) {
         throw new Error('mock Draft PUT without raw data');
       }

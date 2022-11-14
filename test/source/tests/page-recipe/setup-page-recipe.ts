@@ -21,7 +21,7 @@ type ManualEnterOpts = {
   fillOnly?: boolean,
   isInvalidKey?: boolean | undefined,
   checkEmailAliasIfPresent?: boolean,
-  key?: { title: string, passphrase: string, armored: string | null, longid: string | null, filePath?: string }
+  key?: TestKeyInfoWithFilepath
 };
 
 type CreateKeyOpts = {
@@ -74,7 +74,7 @@ export class SetupPageRecipe extends PageRecipe {
       await settingsPage.waitAll('@input-backup-step3manual-no-backup', { timeout: 90 });
       await settingsPage.waitAndClick('@input-backup-step3manual-no-backup');
     } else if (backup === 'email') {
-      throw new Error('tests.setup_manual_create options.backup=email not implemented');
+      // no click, it's default
     } else if (backup === 'file') {
       await settingsPage.waitAndClick('@input-backup-step3manual-file');
     } else if (backup !== 'disabled') {
@@ -191,6 +191,10 @@ export class SetupPageRecipe extends PageRecipe {
         await settingsPage.page.setOfflineMode(true); // offline mode
       }
       await settingsPage.waitAndClick('@input-step2bmanualenter-save', { delay: 1 });
+      if (key.expired) {
+        await settingsPage.waitAndRespondToModal('confirm', 'confirm', 'You are importing a key that is expired.');
+        await Util.sleep(1);
+      }
       if (fixKey) {
         await settingsPage.waitAll('@input-compatibility-fix-expire-years', { timeout: 30 });
         await settingsPage.selectOption('@input-compatibility-fix-expire-years', '1');

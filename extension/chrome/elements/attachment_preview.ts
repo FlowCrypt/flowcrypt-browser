@@ -57,12 +57,12 @@ View.run(class AttachmentPreviewView extends AttachmentDownloadView {
           $('.attachment-preview-unavailable').prepend('No preview available'); // xss-escaped
           $('#attachment-preview-download').appendTo('.attachment-preview-unavailable');
         }
-        $('body').click((e) => {
+        $('body').on('click', (e) => {
           if (e.target === document.body || $('body').children().toArray().indexOf(e.target) !== -1) {
             BrowserMsg.send.closeDialog(this.parentTabId);
           }
         });
-        $('#attachment-preview-download').css('display', 'flex').click((e) => {
+        $('#attachment-preview-download').css('display', 'flex').on('click', (e) => {
           e.stopPropagation();
           Browser.saveToDownloads(attachmentForSave);
         });

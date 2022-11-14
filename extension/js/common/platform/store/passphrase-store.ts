@@ -5,6 +5,7 @@ import { AccountIndex, AcctStore, AcctStoreDict } from './acct-store.js';
 import { PromiseCancellation, Dict } from '../../core/common.js';
 import { Ui } from '../../browser/ui.js';
 import { InMemoryStore } from './in-memory-store.js';
+import { ClientConfiguration } from '../../client-configuration.js';
 
 /**
  * Local or session store of pass phrases
@@ -13,13 +14,22 @@ export class PassphraseStore extends AbstractStore {
 
   // if we implement (and migrate) password storage to use KeyIdentity instead of longid, we'll have `keyInfo: KeyIdentity` here
   public static get = async (acctEmail: string, keyInfo: { longid: string }, ignoreSession: boolean = false): Promise<string | undefined> => {
-    return (await PassphraseStore.getMany(acctEmail, [keyInfo], ignoreSession))[0];
+    return (await PassphraseStore.getMany(acctEmail, [keyInfo], ignoreSession))[0]?.value;
   };
 
   // if we implement (and migrate) password storage to use KeyIdentity instead of longid, we'll have `keyInfo: KeyIdentity` here
-  public static getMany = async (acctEmail: string, keyInfos: { longid: string }[], ignoreSession: boolean = false): Promise<(string | undefined)[]> => {
+  public static getMany = async (acctEmail: string, keyInfos: { longid: string }[], ignoreSession: boolean = false):
+    Promise<({ value: string, source: StorageType } | undefined)[]> => {
     const storageIndexes = keyInfos.map(keyInfo => PassphraseStore.getIndex(keyInfo.longid));
     return await PassphraseStore.getByIndexes(acctEmail, storageIndexes, ignoreSession);
+  };
+
+  public static removeMany = async (acctEmail: string, keyInfos: { longid: string }[]) => {
+    const storageIndexes = keyInfos.map(keyInfo => PassphraseStore.getIndex(keyInfo.longid));
+    await Promise.all([
+      AcctStore.remove(acctEmail, storageIndexes), // remove from local storage
+      ...storageIndexes.map(storageIndex => InMemoryStore.set(acctEmail, storageIndex, undefined)) // remove from session
+    ]);
   };
 
   // if we implement (and migrate) password storage to use KeyIdentity instead of longid, we'll have `keyInfo: KeyIdentity` here
@@ -55,30 +65,36 @@ export class PassphraseStore extends AbstractStore {
     return `passphrase_${longid}` as unknown as AccountIndex;
   };
 
-  private static getByIndexes = async (acctEmail: string, storageIndexes: AccountIndex[], ignoreSession: boolean = false): Promise<(string | undefined)[]> => {
+  private static getByIndexes = async (acctEmail: string, storageIndexes: AccountIndex[], ignoreSession: boolean = false):
+    Promise<({ value: string, source: StorageType } | undefined)[]> => {
     const storage = await AcctStore.get(acctEmail, storageIndexes);
     const results = await Promise.all(storageIndexes.map(async storageIndex => {
       const found = storage[storageIndex];
       if (typeof found === 'string') {
-        return found;
+        return { value: found, source: 'local' as StorageType };
       }
       if (ignoreSession) {
         return undefined;
       }
-      return await InMemoryStore.get(acctEmail, storageIndex) ?? undefined;
+      const value = await InMemoryStore.get(acctEmail, storageIndex);
+      if (typeof value === 'undefined') {
+        return undefined;
+      }
+      return { value, source: 'session' as StorageType };
     }));
     return results;
   };
 
   private static setByIndex = async (storageType: StorageType, acctEmail: string, storageIndex: AccountIndex, passphrase: string | undefined): Promise<void> => {
+    const clientConfiguration = await ClientConfiguration.newInstance(acctEmail);
     if (storageType === 'session') {
-      return await InMemoryStore.set(acctEmail, storageIndex, passphrase);
+      return await InMemoryStore.set(acctEmail, storageIndex, passphrase, Date.now() + clientConfiguration.getInMemoryPassPhraseSessionExpirationMs());
     } else {
       if (typeof passphrase === 'undefined') {
         await AcctStore.remove(acctEmail, [storageIndex]);
       } else {
         const toSave: AcctStoreDict = {};
-        toSave[storageIndex] = passphrase as any;
+        (toSave as Dict<unknown>)[storageIndex] = passphrase;
         await AcctStore.set(acctEmail, toSave);
       }
     }

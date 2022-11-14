@@ -96,12 +96,12 @@ export class InboxView extends View {
     // BrowserMsg.addPgpListeners(); // todo - re-allow when https://github.com/FlowCrypt/flowcrypt-browser/issues/2560 fixed
     BrowserMsg.listen(this.tabId);
     Catch.setHandledInterval(this.webmailCommon.addOrRemoveEndSessionBtnIfNeeded, 30000);
-    $('.action_open_settings').click(this.setHandler(async () => await Browser.openSettingsPage('index.htm', this.acctEmail)));
-    $(".action-toggle-accounts-menu").click(this.setHandler((target, event) => {
+    $('.action_open_settings').on('click', this.setHandler(async () => await Browser.openSettingsPage('index.htm', this.acctEmail)));
+    $(".action-toggle-accounts-menu").on('click', this.setHandler((target, event) => {
       event.stopPropagation();
       $("#alt-accounts").toggleClass("active");
     }));
-    $('.action_add_account').click(this.setHandlerPrevent('double', async () => await Settings.newGoogleAcctAuthPromptThenAlertOrForward(this.tabId)));
+    $('.action_add_account').on('click', this.setHandlerPrevent('double', async () => await Settings.newGoogleAcctAuthPromptThenAlertOrForward(this.tabId)));
     this.addBrowserMsgListeners();
   };
 

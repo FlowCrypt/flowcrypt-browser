@@ -171,7 +171,7 @@ export class Api<REQ, RES> {
     return this.fmtRes(handlerRes);
   };
 
-  protected fmtRes = (response: {} | string): Buffer => {
+  protected fmtRes = (response: {} | RES | string): Buffer => {
     if (response instanceof Buffer) {
       return response;
     } else if (typeof response === 'string') {
@@ -225,12 +225,17 @@ export class Api<REQ, RES> {
   };
 
   private throttledResponse = async (response: http.ServerResponse, data: Buffer) => {
-    const chunkSize = 100 * 1024;
-    for (let i = 0; i < data.length; i += chunkSize) {
-      const chunk = data.slice(i, i + chunkSize);
-      response.write(chunk);
-      if (i > 0) {
-        await Util.sleep(this.throttleChunkMsDownload / 1000);
+    // If google oauth2 login, then redirect to url
+    if (/^https:\/\/google\.localhost:8001\/robots\.txt/.test(data.toString())) {
+      response.writeHead(302, { 'Location': data.toString() });
+    } else {
+      const chunkSize = 100 * 1024;
+      for (let i = 0; i < data.length; i += chunkSize) {
+        const chunk = data.slice(i, i + chunkSize);
+        response.write(chunk);
+        if (i > 0) {
+          await Util.sleep(this.throttleChunkMsDownload / 1000);
+        }
       }
     }
     response.end();

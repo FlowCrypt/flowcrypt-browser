@@ -12,7 +12,7 @@ import { Xss } from '../../../js/common/platform/xss.js';
 import { KeyStore } from '../../../js/common/platform/store/key-store.js';
 import { XssSafeFactory } from '../../../js/common/xss-safe-factory.js';
 
-declare const filesize: Function; // tslint:disable-line:ban-types
+declare const filesize: { filesize: Function }; // tslint:disable-line:ban-types
 
 export class PgpBlockViewAttachmentsModule {
 
@@ -27,7 +27,7 @@ export class PgpBlockViewAttachmentsModule {
     for (const i of attachments.keys()) {
       const name = (attachments[i].name ? attachments[i].name : 'noname').replace(/\.(pgp|gpg)$/, '');
       const nameVisible = name.length > 100 ? name.slice(0, 100) + '…' : name;
-      const size = filesize(attachments[i].length);
+      const size = filesize.filesize(attachments[i].length);
       const htmlContent = `<b>${Xss.escape(nameVisible)}</b>&nbsp;&nbsp;&nbsp;${size}<span class="progress"><span class="percent"></span></span>`;
       const attachment = $(`<a href="#" index="${Number(i)}">`);
       attachment.attr('title', name);
@@ -41,11 +41,11 @@ export class PgpBlockViewAttachmentsModule {
       $('#attachments').append(attachment); // xss-escaped
     }
     this.view.renderModule.resizePgpBlockFrame();
-    $('#attachments .preview-attachment').click(this.view.setHandlerPrevent('double', async (target) => {
+    $('#attachments .preview-attachment').on('click', this.view.setHandlerPrevent('double', async (target) => {
       const attachment = this.includedAttachments[Number($(target).attr('index'))];
       await this.previewAttachmentClickedHandler(attachment);
     }));
-    $('#attachments .download-attachment').click(this.view.setHandlerPrevent('double', async (target, event) => {
+    $('#attachments .download-attachment').on('click', this.view.setHandlerPrevent('double', async (target, event) => {
       event.stopPropagation();
       const attachment = this.includedAttachments[Number($(target).attr('index'))];
       if (attachment.hasData()) {

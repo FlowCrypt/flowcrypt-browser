@@ -1,6 +1,6 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
-import { HttpClientErr } from '../lib/api';
+import { HttpClientErr, Status } from '../lib/api';
 import { Dict } from '../../core/common';
 import { HandlersDefinition } from '../all-apis-mock';
 import { isPost, isGet } from '../lib/mock-util';
@@ -24,7 +24,6 @@ const knownMockEmails = [
 
 let data: GoogleData;
 export const MOCK_ATTESTER_LAST_INSERTED_PUB: { [email: string]: string } = {};
-
 const get203FAE7076005381 = async () => {
   if (!data) {
     data = await GoogleData.withInitializedData('flowcrypt.compatibility@gmail.com');
@@ -48,6 +47,12 @@ export const mockAttesterEndpoints: HandlersDefinition = {
       if (emailOrLongid === 'mock.only.pubkey@flowcrypt.com') {
         return somePubkey;
       }
+      if (emailOrLongid === 'test.match.attester.key@gmail.com') {
+        return testMatchPubKey;
+      }
+      if (emailOrLongid === 'test.mismatch.attester.key@gmail.com') {
+        return somePubkey;
+      }
       if (emailOrLongid === 'mock.only.pubkey@other.com') {
         return somePubkey;
       }
@@ -56,6 +61,9 @@ export const mockAttesterEndpoints: HandlersDefinition = {
       }
       if (emailOrLongid === 'flowcrypt.compatibility@protonmail.com') {
         return protonMailCompatKey;
+      }
+      if (emailOrLongid === 'multiple.pub.key@flowcrypt.com') {
+        return [somePubkey, protonMailCompatKey].join('\n');
       }
       if (emailOrLongid === 'some.sender@test.com') {
         return await get203FAE7076005381();
@@ -79,9 +87,24 @@ export const mockAttesterEndpoints: HandlersDefinition = {
       if (emailOrLongid === '8EC78F043CEB022498AFD4771E62ED6D15A25921'.toLowerCase()) {
         return testConstants.oldHasOlderKeyOnAttester;
       }
+      if (emailOrLongid === 'test.ldap.priority@gmail.com') {
+        return somePubkey;
+      }
+      if (emailOrLongid === 'test.flowcrypt.pubkeyserver.priority@gmail.com') {
+        return somePubkey;
+      }
+      if (emailOrLongid === 'test.ldap.timeout@gmail.com') {
+        return somePubkey;
+      }
+      if (emailOrLongid === 'test.flowcrypt.pubkey.timeout@gmail.com') {
+        throw new HttpClientErr('RequestTimeout', Status.BAD_REQUEST);
+      }
+      if (emailOrLongid === 'attester.return.error@flowcrypt.test') {
+        throw new HttpClientErr('Server error. Please try again', Status.SERVER_ERROR);
+      }
       throw new HttpClientErr('Pubkey not found', 404);
     } else if (isPost(req)) {
-      oauth.checkAuthorizationHeaderWithIdToken(req.headers.authorization);
+      oauth.checkAuthorizationForEmail(req.headers.authorization, emailOrLongid);
       expect(body).to.contain('-----BEGIN PGP PUBLIC KEY BLOCK-----');
       MOCK_ATTESTER_LAST_INSERTED_PUB[emailOrLongid] = body as string;
       return 'Saved'; // 200 OK
@@ -89,20 +112,37 @@ export const mockAttesterEndpoints: HandlersDefinition = {
       throw new HttpClientErr(`Not implemented: ${req.method}`);
     }
   },
-  '/attester/initial/legacy_submit': async ({ body }, req) => {
-    if (!isPost(req)) {
-      throw new HttpClientErr(`Wrong method: ${req.method}`);
+  '/attester/ldap-relay': async (parsedReq, req) => {
+    const server = parsedReq.query.server;
+    const emailOrLongid = parsedReq.query.search;
+    if (isGet(req)) {
+      if (emailOrLongid === 'test.ldap.priority@gmail.com') {
+        return protonMailCompatKey;
+      }
+      if (emailOrLongid === 'test.flowcrypt.pubkeyserver.priority@gmail.com') {
+        return protonMailCompatKey;
+      }
+      if (emailOrLongid === 'has.pub@client-configuration-test.flowcrypt.test') {
+        return hasPubKey;
+      }
+      if (emailOrLongid === 'invalid.pub@client-configuration-test.flowcrypt.test') {
+        return protonMailCompatKey;
+      }
+      if (emailOrLongid === 'test.ldap.keyserver.pgp@gmail.com' && server === 'keyserver.pgp.com') {
+        return [protonMailCompatKey, testMatchPubKey].join('\n');
+      }
+      if (emailOrLongid === 'test.ldap.timeout@gmail.com') {
+        throw new HttpClientErr('RequestTimeout', Status.BAD_REQUEST);
+      }
+      if (emailOrLongid === 'test.flowcrypt.pubkey.timeout@gmail.com') {
+        return somePubkey;
+      }
+      throw new HttpClientErr('No OpenPGP LDAP server on this address.', Status.NOT_FOUND);
+    } else {
+      throw new HttpClientErr(`Not implemented: ${req.method}`);
     }
-    const { email, pubkey } = body as Dict<string>;
-    expect(email).to.contain('@');
-    expect(pubkey).to.contain('-----BEGIN PGP PUBLIC KEY BLOCK-----');
-    if (email === 'no.pub@client-configuration-test.flowcrypt.test') {
-      throw new HttpClientErr(`Could not find LDAP pubkey on a LDAP-only domain for email ${email} on server keys.flowcrypt.test`);
-    }
-    MOCK_ATTESTER_LAST_INSERTED_PUB[email] = pubkey;
-    return { saved: true };
   },
-  '/attester/test/welcome': async ({ body }, req) => {
+  '/attester/welcome-message': async ({ body }, req) => {
     if (!isPost(req)) {
       throw new HttpClientErr(`Wrong method: ${req.method}`);
     }
@@ -133,6 +173,47 @@ A6fEpV8aLaFnAt+zh3cw4A7SNAO9omGAUZeBl4Pz1IlN2lC2grc2zpqoxo8o
 VFI1MhkJ6Xhrug==
 =+de8
 -----END PGP PUBLIC KEY BLOCK-----`;
+
+const testMatchPubKey = `-----BEGIN PGP PUBLIC KEY BLOCK-----
+
+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
+hcNvAZK183w=
+=Ayyi
+-----END PGP PUBLIC KEY BLOCK-----
+`;
 
 const expiredPubkey = `-----BEGIN PGP PUBLIC KEY BLOCK-----
 
@@ -298,4 +379,56 @@ T/X6OnVQdcOI7SvdQI74SxbaHnEeCLDEk7dOhWLJBLuZwK7M3cT6BX+V2v6Fm7SX0hSpDg1HK0KL
 qHJuDNEmMUvx3cMUd5HtsOFO9JapCp1iCVo2p49CIXA4NUrLETNM2ZddknhbFm8bsK48tTJEH6l4
 Wq3aCVXYGg==
 =Ldag
+-----END PGP PUBLIC KEY BLOCK-----`;
+
+const hasPubKey = `-----BEGIN PGP PUBLIC KEY BLOCK-----
+
+mQINBF3H8N8BEADHCZdJnXkMn+asjH6eodMCqIcd4LJdLtOZljWEBsErV2vf+zZl
+sle3lzo/LK5uGThwg0kY7QRFhLS2QII8atYw0E/+WWuWNhm+9UpmuZXpLcfkxKEr
+P+xXJaX8ktSt0KXj0RUdFrkgh5EeqG2sdrflFjp90z9XQzt3BEpfr+9IhIQZDe23
+9Xu0Zde4VzrxuA2WFHnsZiqTF41CGQmFapcroAZ5JmP+zXLrig62LFxkACJq4Fxb
+WX6k1JrFjD+QXs78hB4sVdULDnxI4J8rXvryzW2PMXGr9GFAEmIx7ksOHp51Hyyq
+Br8Zcj/YCmwDvm+9GaNKY1oVBeviphBHNXOBYLYO9py/1OSS9lCW7Ja0YsrPp+wh
+VC+pDk0NmY0HSZPOXwkJBL8VkcYI4ZMFSLqqMpQFN86y61uezUD2gdX+zbEoS+Pn
+dIV5lZUuLEO0trRjg1b1/PJSyi8bBgcoduhEUtGD+n5J3NGyOP9w1jHWaDhjMJ6n
+p/Su8RUC7p4/uXzBxn77jwkYnO4kULuK9K6it5gB8kXgaaQ6tc21p2VyID8fb1nP
+Hi3Jg524NkkqsmRA7Ulmo087B+k3yK/rbI7rVAs5sFQI45hqKyVvTITm9MSMBDFk
++T7VA2NLuM7QhS7hHxhokTzo80HEFdQxbzwFZbzdZf8RdTFDN6exnYRuFwARAQAB
+tDNIYXMgUHViIFRlc3QgPGhhcy5wdWJAb3JnLXJ1bGVzLXRlc3QuZmxvd2NyeXB0
+LmNvbT6JAjUEEAEIAB8FAl3H8N8GCwkHCAMCBBUICgIDFgIBAhkBAhsDAh4BAAoJ
+ELxhT3Bo224jrzUP/0Cfu7gpyzP9y0tAQFTOZfsRrPoxwQZ3uie003dwUJs8+cBn
+WVg6t3iKvDbAxubm6K1vS+OvbaeE8DUa6uP7yIQzblgaFg1rFl5uIxORaBwqbOFl
+BmbndkkWiHUER4GG2a18KC4PLE22xmJRmAd7HJQbAs/JfQ5d4sECFeFjMGMn7RGe
+NWJ8CnoeVFQbXmKjtQvzmmmzalDVm3JyUu1MjDI3y2nuhE7ESTELj8BT4LHHpOIp
+5xhD6YnY56AlOe7mzkY/9PKHck/Qwhuj+622yhVDSUFYtn6nnSCkUo9b2Yn18Npm
+NuVZEZunG6ZecJ9pxa482bzq4aL6QEFBbQ+Ubf82Lh7Ir8g+zuvGfICq6m9rXNMX
+d80UrmiI1vIRjudBJ0c5v/ovgLp+JPESnFVekUVtWjQrcEGndQrRVmPXsaCOqw7g
+nKqzxs+2SntVOpzsSLKfijtQdw6qpQsL0LGi+lDgYMMFrDLaeuzZJ6bx714kN+mP
+oTLk++6bnaWtvXdgcEoUAFaQFaAWrZKDb0UyfZ5ZI7oPIPdhT5Z6EoQGxEofnOnk
+UN73iXY5OGH+X5UUnm2di59g2tftDAmmmU1Mp6Aedn7xJuGmx+yWq3IMLPbm1+zH
+hU0t2iXh4D/33YzPd/3QIo++o0ewKf8lYC5iG2OfSKQAANm01vMti2/sJ/EhuQIN
+BF3H8N8BEAC1zF/bc4+cdSQ1TOhm9k+BpHZa/Tp179Q7zHB5GwfGFNTkdeJffzhX
+Yl/ey4jAnvfAouT+mdsPuLIrPzF0iLqya3SRiLBaxsX77kjrGTIgL29pPL9v3xfb
+iO0kHF/M3RPbNqb+e1iJgxtQ/T/jtJmA9r+BfaoUPMRBrbj5D3EemyXVp1BZGRga
+Bi8s2av97ABlxF9arS5m1sH1AuEsQa81nAX2vvCVF2MexOUViHZVNfoeTEc1B5XU
+9RnlgBnFsDL9NUI6C6M2AT5ZrGCNIerNM4sUWcWTVbrblSJUAooCbM7GX0Tgm3Ir
+5zdVlFo9RRIWJHXn5mVMN3olD2JysUnzYkvhSrVNOzjtyXpTiCjJnGwvjIPcD9U/
+uh7kwNrcitB96cPE0bzOjtkOP47BMb/SeRpPcNx8+gTcB017uW97d1LNNjMbX57D
+m7UIAVOZr0UGwlDAHla8mS4iVC3ztyhmnF8o3T1fLKKAFNiV7tzYSYBwkMWVTIFc
++iWGoq2hU/ysYalpf1ZLsqTmEKNaSG8QXviWOTuSa8IiciE9CpPwyRvo90IJfB13
+xP39kiF6kBSA4LvUihZ+5LN90DYJYKAtilQdaLhO3x3KYdiIKfs0P8ApM44vfZ2u
+ipToxMXCcw/te0Y0o67twzjipTfwF94VmuMmNi/sLNvZhWwuVmoVHQARAQABiQIf
+BBgBCAAJBQJdx/DfAhsMAAoJELxhT3Bo224jmVkP/0ss9UqRFiZaJp5kSI/8FycU
+oN/ZFMQ8nQl/CC7ZiUjA2GvNtRu93rDi7n4jqwDCF8WCUMu5drTWDGizwli2QFLK
+K0nTtDn7JWeblMwDzfQBgV0fkoBkUlsEgcS8+ELsPTEGMyY8IENeCBpuo2FZ61kV
+RXYvbuxLMq6sVFIeYei6ZfhGdrR6sozr0ed5AI07epRsQk1TuxMQuVG5W4L//hUF
+XJQTpaWZhkaWcYx2DWfSfhgnxhU5TQeUCGlOLPOcy2RsY9N8Mz9YLi+rxsXI9TAC
+2EQTyhbZyKWE3n8TYe+wkIQFkn0tHTmY2cmrmckTQs/WPVXvOTQOwkHxaUujfj01
+05hziBbzTeQW5xIX0YFFzOEJGJnm0v2XtaqCUq+cVzYP98NU/fOcDSCG6u6X6UyZ
+AbivCgdNtKkCJS6c0bDmLxnwxqfrXtJBHb//RcKOIt29ULwDDpg7pbyLHPVeHoww
+wAsfVpC/5GYoG5beanFou5ssHr6yUwEo/sSjj8FiLISPb2MewWl6SREpqQf3zuaa
+bHoV/t27o3082KxgFH7zyJ6nOCrP4AT8nmPSu4uypYIanmn97+RdjIeJjN/VDt3p
+NaqFqwp9jMCYEnjfM2VSYFTKFrQYm9zYUTIKnQxNtWC8Z85UKz2eMk/INukzWe7g
+cvQabqad/ZghLSTzo/Kf
+=sshZ
 -----END PGP PUBLIC KEY BLOCK-----`;

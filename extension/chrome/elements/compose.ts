@@ -30,6 +30,7 @@ import { ClientConfiguration } from '../../js/common/client-configuration.js';
 import { PubLookup } from '../../js/common/api/pub-lookup.js';
 import { Scopes, AcctStore } from '../../js/common/platform/store/acct-store.js';
 import { AccountServer } from '../../js/common/api/account-server.js';
+import { ComposeReplyBtnPopoverModule } from './compose-modules/compose-reply-btn-popover-module.js';
 
 export class ComposeView extends View {
 
@@ -60,6 +61,7 @@ export class ComposeView extends View {
 
   public quoteModule!: ComposeQuoteModule;
   public sendBtnModule!: ComposeSendBtnModule;
+  public replyPopoverModule!: ComposeReplyBtnPopoverModule;
   public draftModule!: ComposeDraftModule;
   public recipientsModule!: ComposeRecipientsModule;
   public pwdOrPubkeyContainerModule!: ComposePwdOrPubkeyContainerModule;
@@ -102,6 +104,7 @@ export class ComposeView extends View {
     send_btn: '#send_btn',
     send_btn_text: '#send_btn_text',
     toggle_send_options: '#toggle_send_options',
+    toggle_reply_options: '#toggle_reply_options',
     icon_pubkey: '.icon.action_include_pubkey',
     icon_help: '.action_feedback',
     icon_popout: '.popout img',
@@ -123,7 +126,8 @@ export class ComposeView extends View {
     container_cc_bcc_buttons: '#input_addresses_container .container-cc-bcc-buttons',
     cc: '#cc',
     bcc: '#bcc',
-    sending_options_container: '#sending-options-container'
+    sending_options_container: '#sending-options-container',
+    reply_options_container: '#reply-options-container'
   });
 
   constructor() {
@@ -163,6 +167,7 @@ export class ComposeView extends View {
     this.quoteModule = new ComposeQuoteModule(this);
     this.recipientsModule = new ComposeRecipientsModule(this);
     this.sendBtnModule = new ComposeSendBtnModule(this);
+    this.replyPopoverModule = new ComposeReplyBtnPopoverModule(this);
     this.pwdOrPubkeyContainerModule = new ComposePwdOrPubkeyContainerModule(this, storage.hide_message_password);
     this.fesUrl = storage.fesUrl;
     this.sizeModule = new ComposeSizeModule(this);
@@ -201,7 +206,7 @@ export class ComposeView extends View {
     const setActiveWindow = this.setHandler(async () => { BrowserMsg.send.setActiveWindow(this.parentTabId, { frameId: this.frameId }); });
     this.S.cached('body').on('focusin', setActiveWindow);
     this.S.cached('body').on('click', setActiveWindow);
-    this.S.cached('icon_help').click(this.setHandler(async () => await this.renderModule.openSettingsWithDialog('help'), this.errModule.handle(`help dialog`)));
+    this.S.cached('icon_help').on('click', this.setHandler(async () => await this.renderModule.openSettingsWithDialog('help'), this.errModule.handle(`help dialog`)));
     this.attachmentsModule.setHandlers();
     this.inputModule.setHandlers();
     this.myPubkeyModule.setHandlers();
@@ -209,6 +214,7 @@ export class ComposeView extends View {
     this.sizeModule.setHandlers();
     this.recipientsModule.setHandlers();
     this.sendBtnModule.setHandlers();
+    this.replyPopoverModule.setHandlers();
     this.draftModule.setHandlers(); // must be the last one so that 'onRecipientAdded/draftSave' to works properly
   };
 

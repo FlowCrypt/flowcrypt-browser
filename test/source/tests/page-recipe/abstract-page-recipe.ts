@@ -47,7 +47,7 @@ export abstract class PageRecipe {
     }
   };
 
-  public static sendMessage = async (controllable: Controllable, msg: any) => {
+  public static sendMessage = async (controllable: Controllable, msg: unknown) => {
     return await controllable.target.evaluate(async (msg) => await new Promise((resolve) => {
       chrome.runtime.sendMessage(msg, resolve);
     }), msg);

@@ -16,8 +16,8 @@ import { BackupUiModule } from './backup-ui-module.js';
 export class BackupUiStatusModule extends BackupUiModule<BackupUi> {
 
   public setHandlers = () => { // is run after checkAndRenderBackupStatus, which renders (some of) these fields first
-    $('#module_status .action_go_manual').click(this.ui.setHandler(() => this.actionShowManualBackupHandler()));
-    $('#module_status .action_go_add_key').click(this.ui.setHandler(async () => await this.goTo('add_key.htm')));
+    $('#module_status .action_go_manual').on('click', this.ui.setHandler(() => this.actionShowManualBackupHandler()));
+    $('#module_status .action_go_add_key').on('click', this.ui.setHandler(async () => await this.goTo('add_key.htm')));
   };
 
   public checkAndRenderBackupStatus = async () => {

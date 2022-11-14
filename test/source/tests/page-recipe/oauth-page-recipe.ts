@@ -2,7 +2,7 @@
 
 import { Config, Util } from '../../util';
 import { AvaContext } from '../tooling/';
-import { ControllablePage } from '../../browser';
+import { ControllablePage, TIMEOUT_PAGE_LOAD } from '../../browser';
 import { PageRecipe } from './abstract-page-recipe';
 import { Url } from '../../core/common';
 
@@ -10,11 +10,19 @@ export class OauthPageRecipe extends PageRecipe {
 
   private static longTimeout = 40;
 
-  public static mock = async (t: AvaContext, oauthPage: ControllablePage, acctEmail: string, action: 'close' | 'deny' | 'approve' | 'login' | 'override_acct'): Promise<void> => {
+  public static mock = async (t: AvaContext, oauthPage: ControllablePage, acctEmail: string,
+    action: 'close' | 'deny' | 'approve' | 'login' | 'login_with_invalid_state' | 'override_acct' | 'missing_permission'): Promise<void> => {
     let mockOauthUrl = oauthPage.target.url();
     const { login_hint } = Url.parse(['login_hint'], mockOauthUrl);
     if (action === 'close') {
       await oauthPage.close();
+    } else if (action === 'login_with_invalid_state') {
+      mockOauthUrl = Url.removeParamsFromUrl(mockOauthUrl, ['login_hint']);
+      await oauthPage.target.goto(mockOauthUrl.replace('CRYPTUP_STATE', 'INVALID_CRYPTUP_STATE') + '&login_hint=' + encodeURIComponent(acctEmail) + '&proceed=true');
+    } else if (action === 'missing_permission') {
+      mockOauthUrl = Url.removeParamsFromUrl(mockOauthUrl, ['scope']);
+      mockOauthUrl += '&scope=missing_scope';
+      await oauthPage.target.goto(mockOauthUrl + '&proceed=true');
     } else if (!login_hint) {
       await oauthPage.target.goto(mockOauthUrl + '&login_hint=' + encodeURIComponent(acctEmail) + '&proceed=true');
     } else {
@@ -26,12 +34,18 @@ export class OauthPageRecipe extends PageRecipe {
     }
   };
 
-  public static google = async (t: AvaContext, oauthPage: ControllablePage, acctEmail: string, action: "close" | "deny" | "approve" | 'login'): Promise<void> => {
+  public static google = async (t: AvaContext, oauthPage: ControllablePage, acctEmail: string,
+    action: "close" | "deny" | "approve" | "login" | "login_with_invalid_state"): Promise<void> => {
     try {
-      const isMock = oauthPage.target.url().includes('localhost') || oauthPage.target.url().includes('google.mock.flowcryptlocal.test');
+      const isMock = oauthPage.target.url().includes('localhost') || oauthPage.target.url().includes('google.mock.localhost');
       if (isMock) {
         await OauthPageRecipe.mock(t, oauthPage, acctEmail, action);
         return;
+      } else {
+        await Promise.race([
+          oauthPage.page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: TIMEOUT_PAGE_LOAD * 1000 }),
+          oauthPage.page.waitForNavigation({ waitUntil: 'load', timeout: TIMEOUT_PAGE_LOAD * 1000 })
+        ]);
       }
     } catch (e) {
       if (String(e).includes('page has been closed')) {
@@ -52,12 +66,16 @@ export class OauthPageRecipe extends PageRecipe {
     try {
       const alreadyLoggedSelector = '.w6VTHd, .wLBAL';
       const alreadyLoggedChooseOtherAccountSelector = '.bLzI3e, .BHzsHc';
-      await oauthPage.waitAny(`#Email, #submit_approve_access, #identifierId, ${alreadyLoggedSelector}, #profileIdentifier`, { timeout: 45 });
+      await oauthPage.waitAny(
+        `#Email, ${selectors.googleApproveBtn}, ${selectors.googleEmailInput}, ${alreadyLoggedSelector}, #profileIdentifier, ${selectors.auth0username}`,
+        { timeout: 45 }
+      );
       if (await oauthPage.target.$(selectors.googleEmailInput) !== null) { // 2017-style login
         await oauthPage.waitAll(selectors.googleEmailInput, { timeout: OauthPageRecipe.longTimeout });
         await oauthPage.waitAndType(selectors.googleEmailInput, acctEmail, { delay: 2 });
-        await oauthPage.waitAndClick(selectors.googleEmailConfirmBtn, { delay: 2 });  // confirm email
-        await oauthPage.waitForNavigationIfAny();
+        await oauthPage.waitAll(selectors.googleEmailConfirmBtn);
+        await Util.sleep(2);
+        await oauthPage.waitForNavigationIfAny(() => oauthPage.waitAndClick(selectors.googleEmailConfirmBtn));
       } else if (await oauthPage.target.$(`.wLBAL[data-email="${acctEmail}"]`) !== null) { // already logged in - just choose an account
         await oauthPage.waitAndClick(`.wLBAL[data-email="${acctEmail}"]`, { delay: 1 });
       } else if (await oauthPage.target.$(alreadyLoggedSelector) !== null) { // select from accounts where already logged in
@@ -83,8 +101,8 @@ export class OauthPageRecipe extends PageRecipe {
         if (acctPassword) {
           await oauthPage.waitAndType(selectors.auth0password, acctPassword);
         }
-        await oauthPage.waitAndClick(selectors.auth0loginBtn);
-        await oauthPage.waitForNavigationIfAny();
+        await oauthPage.waitForNavigationIfAny(() => oauthPage.waitAndClick(selectors.auth0loginBtn));
+        await oauthPage.waitAndClick(alreadyLoggedSelector, { delay: 1 });
       }
       await Util.sleep(1);
       await oauthPage.waitAll(selectors.googleApproveBtn); // if succeeds, we are logged in and presented with approve/deny choice
@@ -95,11 +113,11 @@ export class OauthPageRecipe extends PageRecipe {
       } else if (action === 'deny') {
         throw new Error('tests.handle_gmail_oauth options.deny.true not implemented');
       } else {
-        await oauthPage.waitAndClick('#submit_approve_access', { delay: 1 });
+        await oauthPage.waitAndClick(selectors.googleApproveBtn, { delay: 1 });
       }
     } catch (e) {
       const eStr = String(e);
-      if (eStr.indexOf('Execution context was destroyed') === -1 && eStr.indexOf('Cannot find context with specified id') === -1) {
+      if (!eStr.includes('Execution context was destroyed') && !eStr.includes('Cannot find context with specified id')) {
         throw e; // not a known retriable error
       }
       // t.log(`Attempting to retry google auth:${action} on the same window for ${email} because: ${eStr}`);

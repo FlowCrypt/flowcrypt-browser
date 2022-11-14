@@ -2,22 +2,22 @@
 
 'use strict';
 
-import { DecryptResult, DiagnoseMsgPubkeysResult, PgpMsgMethod, VerifyRes, PgpMsgTypeResult } from '../core/crypto/pgp/msg-util.js';
-import { Dict, Str, UrlParams } from '../core/common.js';
-import { AjaxErr } from '../api/shared/api-error.js';
 import { AuthRes } from '../api/email-provider/gmail/google-auth.js';
-import { Browser } from './browser.js';
-import { BrowserMsgCommonHandlers } from './browser-msg-common-handlers.js';
+import { AjaxErr } from '../api/shared/api-error.js';
 import { Buf } from '../core/buf.js';
+import { Dict, Str, UrlParams } from '../core/common.js';
+import { ArmoredKeyIdentityWithEmails, KeyUtil } from '../core/crypto/key.js';
+import { DecryptResult, DiagnoseMsgPubkeysResult, MsgUtil, PgpMsgMethod, PgpMsgTypeResult, VerifyRes } from '../core/crypto/pgp/msg-util.js';
+import { NotificationGroupType } from '../notifications.js';
 import { Catch } from '../platform/catch.js';
-import { Env } from './env.js';
-import { PassphraseDialogType } from '../xss-safe-factory.js';
-import { PgpHash } from '../core/crypto/pgp/pgp-hash.js';
-import { MsgUtil } from '../core/crypto/pgp/msg-util.js';
-import { Ui } from './ui.js';
-import { GlobalStoreDict, GlobalIndex } from '../platform/store/global-store.js';
-import { AcctStoreDict, AccountIndex } from '../platform/store/acct-store.js';
+import { AccountIndex, AcctStoreDict } from '../platform/store/acct-store.js';
+import { GlobalIndex, GlobalStoreDict } from '../platform/store/global-store.js';
 import { saveFetchedPubkeysIfNewerThanInStorage } from '../shared.js';
+import { PassphraseDialogType } from '../xss-safe-factory.js';
+import { BrowserMsgCommonHandlers } from './browser-msg-common-handlers.js';
+import { Browser } from './browser.js';
+import { Env } from './env.js';
+import { Ui } from './ui.js';
 
 export type GoogleAuthWindowResult$result = 'Success' | 'Denied' | 'Error' | 'Closed';
 
@@ -34,7 +34,7 @@ export namespace Bm {
   export type PassphraseDialog = { type: PassphraseDialogType, longids: string[], initiatorFrameId?: string };
   export type ScrollToReplyBox = { replyMsgId: string };
   export type ScrollToCursorInReplyBox = { replyMsgId: string, cursorOffsetTop: number };
-  export type NotificationShow = { notification: string, callbacks?: Dict<() => void> };
+  export type NotificationShow = { notification: string, group: NotificationGroupType, callbacks?: Dict<() => void> };
   export type NotificationShowAuthPopupNeeded = { acctEmail: string };
   export type RenderPublicKeys = { afterFrameId: string, publicKeys: string[], traverseUp?: number };
   export type SubscribeDialog = { isAuthErr?: boolean };
@@ -47,6 +47,7 @@ export namespace Bm {
   export type OpenGoogleAuthDialog = { acctEmail?: string, scopes?: string[] };
   export type OpenPage = { page: string, addUrlText?: string | UrlParams };
   export type PassphraseEntry = { entered: boolean, initiatorFrameId?: string };
+  export type AuthWindowResult = { url?: string, error?: string };
   export type Db = { f: string, args: unknown[] };
   export type InMemoryStoreSet = { acctEmail: string, key: string, value: string | undefined, expiration: number | undefined };
   export type InMemoryStoreGet = { acctEmail: string, key: string };
@@ -58,14 +59,15 @@ export namespace Bm {
   export type PgpMsgDecrypt = PgpMsgMethod.Arg.Decrypt;
   export type PgpMsgDiagnoseMsgPubkeys = PgpMsgMethod.Arg.DiagnosePubkeys;
   export type PgpMsgVerifyDetached = PgpMsgMethod.Arg.VerifyDetached;
-  export type PgpHashChallengeAnswer = { answer: string };
   export type PgpMsgType = PgpMsgMethod.Arg.Type;
+  export type PgpKeyBinaryToArmored = { binaryKeysData: Uint8Array };
   export type Ajax = { req: JQueryAjaxSettings, stack: string };
   export type AjaxGmailAttachmentGetChunk = { acctEmail: string, msgId: string, attachmentId: string };
   export type ShowAttachmentPreview = { iframeUrl: string };
   export type ReRenderRecipient = { email: string };
   export type SaveFetchedPubkeys = { email: string, pubkeys: string[] };
   export type ProcessAndStoreKeysFromEkmLocally = { acctEmail: string, decryptedPrivateKeys: string[] };
+  export type GetLocalKeyExpiration = { acctEmail: string };
 
   export namespace Res {
     export type GetActiveTabInfo = { provider: 'gmail' | undefined, acctEmail: string | undefined, sameWorld: boolean | undefined };
@@ -80,18 +82,22 @@ export namespace Bm {
     export type PgpMsgDiagnoseMsgPubkeys = DiagnoseMsgPubkeysResult;
     export type PgpMsgVerify = VerifyRes;
     export type PgpMsgType = PgpMsgTypeResult;
-    export type PgpHashChallengeAnswer = { hashed: string };
+    export type PgpKeyBinaryToArmored = { keys: ArmoredKeyIdentityWithEmails[] };
     export type AjaxGmailAttachmentGetChunk = { chunk: Buf };
     export type _tab_ = { tabId: string | null | undefined };
     export type SaveFetchedPubkeys = boolean;
-    export type ProcessAndStoreKeysFromEkmLocally = { needPassphrase: boolean, updateCount: number };
+    export type GetLocalKeyExpiration = number | undefined;
+    export type ProcessAndStoreKeysFromEkmLocally = { needPassphrase?: boolean, updateCount?: number, noKeysSetup?: boolean };
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     export type Db = any; // not included in Any below
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     export type Ajax = any; // not included in Any below
 
     export type Any = GetActiveTabInfo | _tab_ | ReconnectAcctAuthPopup
-      | PgpMsgDecrypt | PgpMsgDiagnoseMsgPubkeys | PgpMsgVerify | PgpHashChallengeAnswer | PgpMsgType
+      | PgpMsgDecrypt | PgpMsgDiagnoseMsgPubkeys | PgpMsgVerify | PgpMsgType
       | InMemoryStoreGet | InMemoryStoreSet | StoreAcctGet | StoreAcctSet | StoreGlobalGet | StoreGlobalSet
-      | AjaxGmailAttachmentGetChunk | SaveFetchedPubkeys | ProcessAndStoreKeysFromEkmLocally;
+      | AjaxGmailAttachmentGetChunk | SaveFetchedPubkeys | ProcessAndStoreKeysFromEkmLocally
+      | PgpKeyBinaryToArmored | GetLocalKeyExpiration;
   }
 
   export type AnyRequest = PassphraseEntry | OpenPage | OpenGoogleAuthDialog | Redirect | Reload |
@@ -99,8 +105,9 @@ export namespace Bm {
     RenderPublicKeys | NotificationShowAuthPopupNeeded | ComposeWindowOpenDraft |
     NotificationShow | PassphraseDialog | PassphraseDialog | Settings | SetCss | AddOrRemoveClass | ReconnectAcctAuthPopup |
     Db | InMemoryStoreSet | InMemoryStoreGet | StoreGlobalGet | StoreGlobalSet | StoreAcctGet | StoreAcctSet |
-    PgpMsgDecrypt | PgpMsgDiagnoseMsgPubkeys | PgpMsgVerifyDetached | PgpHashChallengeAnswer | PgpMsgType | Ajax |
-    ShowAttachmentPreview | ReRenderRecipient | SaveFetchedPubkeys | ProcessAndStoreKeysFromEkmLocally;
+    PgpMsgDecrypt | PgpMsgDiagnoseMsgPubkeys | PgpMsgVerifyDetached | PgpMsgType | Ajax |
+    ShowAttachmentPreview | ReRenderRecipient | SaveFetchedPubkeys | ProcessAndStoreKeysFromEkmLocally | GetLocalKeyExpiration |
+    PgpKeyBinaryToArmored | AuthWindowResult;
 
   // export type RawResponselessHandler = (req: AnyRequest) => Promise<void>;
   // export type RawRespoHandler = (req: AnyRequest) => Promise<void>;
@@ -143,13 +150,14 @@ export class BrowserMsg {
         ajaxGmailAttachmentGetChunk: (bm: Bm.AjaxGmailAttachmentGetChunk) => BrowserMsg.sendAwait(undefined, 'ajaxGmailAttachmentGetChunk',
           bm, true) as Promise<Bm.Res.AjaxGmailAttachmentGetChunk>,
         pgpMsgDiagnosePubkeys: (bm: Bm.PgpMsgDiagnoseMsgPubkeys) => BrowserMsg.sendAwait(undefined, 'pgpMsgDiagnosePubkeys', bm, true) as Promise<Bm.Res.PgpMsgDiagnoseMsgPubkeys>,
-        pgpHashChallengeAnswer: (bm: Bm.PgpHashChallengeAnswer) => BrowserMsg.sendAwait(undefined, 'pgpHashChallengeAnswer', bm, true) as Promise<Bm.Res.PgpHashChallengeAnswer>,
         pgpMsgDecrypt: (bm: Bm.PgpMsgDecrypt) => BrowserMsg.sendAwait(undefined, 'pgpMsgDecrypt', bm, true) as Promise<Bm.Res.PgpMsgDecrypt>,
         pgpMsgVerifyDetached: (bm: Bm.PgpMsgVerifyDetached) => BrowserMsg.sendAwait(undefined, 'pgpMsgVerifyDetached', bm, true) as Promise<Bm.Res.PgpMsgVerify>,
         pgpMsgType: (bm: Bm.PgpMsgType) => BrowserMsg.sendAwait(undefined, 'pgpMsgType', bm, true) as Promise<Bm.Res.PgpMsgType>,
+        pgpKeyBinaryToArmored: (bm: Bm.PgpKeyBinaryToArmored) => BrowserMsg.sendAwait(undefined, 'pgpKeyBinaryToArmored', bm, true) as Promise<Bm.Res.PgpKeyBinaryToArmored>,
         saveFetchedPubkeys: (bm: Bm.SaveFetchedPubkeys) => BrowserMsg.sendAwait(undefined, 'saveFetchedPubkeys', bm, true) as Promise<Bm.Res.SaveFetchedPubkeys>,
         processAndStoreKeysFromEkmLocally:
           (bm: Bm.ProcessAndStoreKeysFromEkmLocally) => BrowserMsg.sendAwait(undefined, 'processAndStoreKeysFromEkmLocally', bm, true) as Promise<Bm.Res.ProcessAndStoreKeysFromEkmLocally>,
+        getLocalKeyExpiration: (bm: Bm.GetLocalKeyExpiration) => BrowserMsg.sendAwait(undefined, 'getLocalKeyExpiration', bm, true) as Promise<Bm.Res.GetLocalKeyExpiration>,
       },
     },
     passphraseEntry: (dest: Bm.Dest, bm: Bm.PassphraseEntry) => BrowserMsg.sendCatch(dest, 'passphrase_entry', bm),
@@ -159,6 +167,7 @@ export class BrowserMsg {
     addClass: (dest: Bm.Dest, bm: Bm.AddOrRemoveClass) => BrowserMsg.sendCatch(dest, 'add_class', bm),
     removeClass: (dest: Bm.Dest, bm: Bm.AddOrRemoveClass) => BrowserMsg.sendCatch(dest, 'remove_class', bm),
     closeDialog: (dest: Bm.Dest) => BrowserMsg.sendCatch(dest, 'close_dialog', {}),
+    authWindowResult: (dest: Bm.Dest, bm: Bm.AuthWindowResult) => BrowserMsg.sendCatch(dest, 'auth_window_result', bm),
     closePage: (dest: Bm.Dest) => BrowserMsg.sendCatch(dest, 'close_page', {}),
     setActiveWindow: (dest: Bm.Dest, bm: Bm.ComposeWindow) => BrowserMsg.sendCatch(dest, 'set_active_window', bm),
     focusPreviousActiveWindow: (dest: Bm.Dest, bm: Bm.ComposeWindow) => BrowserMsg.sendCatch(dest, 'focus_previous_active_window', bm),
@@ -240,12 +249,12 @@ export class BrowserMsg {
   };
 
   public static addPgpListeners = () => {
-    BrowserMsg.bgAddListener('pgpHashChallengeAnswer', async (r: Bm.PgpHashChallengeAnswer) => ({ hashed: await PgpHash.challengeAnswer(r.answer) }));
     BrowserMsg.bgAddListener('pgpMsgDiagnosePubkeys', MsgUtil.diagnosePubkeys);
     BrowserMsg.bgAddListener('pgpMsgDecrypt', MsgUtil.decryptMessage);
     BrowserMsg.bgAddListener('pgpMsgVerifyDetached', MsgUtil.verifyDetached);
     BrowserMsg.bgAddListener('pgpMsgType', MsgUtil.type);
     BrowserMsg.bgAddListener('saveFetchedPubkeys', saveFetchedPubkeysIfNewerThanInStorage);
+    BrowserMsg.bgAddListener('pgpKeyBinaryToArmored', async (r: Bm.PgpKeyBinaryToArmored) => ({ keys: await KeyUtil.parseAndArmorKeys(r.binaryKeysData) }));
   };
 
   public static addListener = (name: string, handler: Handler) => {
@@ -315,7 +324,7 @@ export class BrowserMsg {
         if (BrowserMsg.shouldRelayMsgToOtherPage(sender, msg.to)) { // message that has to be relayed through bg
           if (msg.to === 'broadcast' && sender.tab?.id) {
             // bounce the broadcast message back to the sender tab to make it reach all the frames (in Firefox), fixes #4072
-            chrome.tabs.sendMessage(sender.tab.id, msg);
+            void chrome.tabs.sendMessage(sender.tab.id, msg);
             return true;
           }
           const { tab, frame } = BrowserMsg.browserMsgDestParse(msg.to);
@@ -367,7 +376,7 @@ export class BrowserMsg {
     return false; // sending to a parent that is an extension frame (do not relay, browser does send directly)
   };
 
-  private static sendCatch = (dest: Bm.Dest | undefined, name: string, bm: Dict<any>) => {
+  private static sendCatch = (dest: Bm.Dest | undefined, name: string, bm: Dict<unknown>) => {
     BrowserMsg.sendAwait(dest, name, bm).catch(Catch.reportErr);
   };
 
@@ -442,10 +451,10 @@ export class BrowserMsg {
     const objUrls: Dict<string> = {};
     if (requestOrResponse && typeof requestOrResponse === 'object' && requestOrResponse !== null) { // lgtm [js/comparison-between-incompatible-types]
       for (const possibleBufName of Object.keys(requestOrResponse)) {
-        const possibleBufs = (requestOrResponse as any)[possibleBufName];
+        const possibleBufs = (requestOrResponse as Record<string, unknown>)[possibleBufName];
         if (possibleBufs instanceof Uint8Array) {
           objUrls[possibleBufName] = Browser.objUrlCreate(possibleBufs);
-          (requestOrResponse as any)[possibleBufName] = undefined;
+          (requestOrResponse as Record<string, unknown>)[possibleBufName] = undefined;
         }
       }
     }
@@ -459,7 +468,7 @@ export class BrowserMsg {
   private static replaceObjUrlWithBuf = async <T>(requestOrResponse: T, objUrls: Dict<string>): Promise<T> => {
     if (requestOrResponse && typeof requestOrResponse === 'object' && requestOrResponse !== null && objUrls) { // lgtm [js/comparison-between-incompatible-types]
       for (const consumableObjUrlName of Object.keys(objUrls)) {
-        (requestOrResponse as any)[consumableObjUrlName] = await Browser.objUrlConsume(objUrls[consumableObjUrlName]);
+        (requestOrResponse as Record<string, Buf>)[consumableObjUrlName] = await Browser.objUrlConsume(objUrls[consumableObjUrlName]);
       }
     }
     return requestOrResponse;

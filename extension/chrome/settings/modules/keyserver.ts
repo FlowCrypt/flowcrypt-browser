@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { Dict, Url } from '../../../js/common/core/common.js';
+import { asyncSome, Dict, Url } from '../../../js/common/core/common.js';
 
 import { ApiErr } from '../../../js/common/api/shared/api-error.js';
 import { Assert } from '../../../js/common/assert.js';
@@ -18,8 +18,10 @@ import { KeyStore } from '../../../js/common/platform/store/key-store.js';
 import { KeyStoreUtil } from "../../../js/common/core/crypto/key-store-util.js";
 import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
 import { KeyUtil } from '../../../js/common/core/crypto/key.js';
+import { InMemoryStore } from '../../../js/common/platform/store/in-memory-store.js';
+import { InMemoryStoreKeys } from '../../../js/common/core/const.js';
 
-type AttesterKeyserverDiagnosis = { hasPubkeyMissing: boolean, hasPubkeyMismatch: boolean, results: Dict<{ pubkey?: string, match: boolean }> };
+type AttesterKeyserverDiagnosis = { hasPubkeyMissing: boolean, hasPubkeyMismatch: boolean, results: Dict<{ pubkeys: string[], match: boolean }> };
 
 View.run(class KeyserverView extends View {
 
@@ -51,7 +53,7 @@ View.run(class KeyserverView extends View {
     for (const email of Object.keys(diagnosis.results)) {
       const result = diagnosis.results[email];
       let note, action, color;
-      if (!result.pubkey) {
+      if (!result.pubkeys.length) {
         note = 'Missing record. Your contacts will not know you have encryption set up.';
         action = `<button class="button gray2 small action_submit_key" data-test="action-submit-pub" email="${Xss.escape(email)}">Submit public key</button>`;
         color = 'orange';
@@ -65,13 +67,21 @@ View.run(class KeyserverView extends View {
         action = `<button class="button gray2 small action_replace_pubkey" email="${Xss.escape(email)}">Correct public records</button>`;
         color = 'red';
       }
-      Xss.sanitizeAppend('#content', `<div class="line left">${Xss.escape(email)}: <span class="${color}">${note}</span> ${action}</div>`);
+      Xss.sanitizeAppend('#content', `
+        <div class="line left">
+          ${Xss.escape(email)}:
+          <span data-test="attester-${email.replace(/[^a-z0-9]+/g, '')}-pubkey-result" class="${color}">
+            ${note}
+          </span>
+          ${action}
+        </div>
+      `);
     }
   };
 
   public setHandlers = () => {
-    $('.action_submit_key').click(this.setHandlerPrevent('double', this.submitPublicKeyHandler));
-    $('.action_replace_pubkey').click(this.setHandlerPrevent('double', this.replacePublicKeyHandler));
+    $('.action_submit_key').on('click', this.setHandlerPrevent('double', this.submitPublicKeyHandler));
+    $('.action_replace_pubkey').on('click', this.setHandlerPrevent('double', this.replacePublicKeyHandler));
   };
 
   // -- PRIVATE
@@ -88,7 +98,14 @@ View.run(class KeyserverView extends View {
       return;
     }
     try {
-      await this.pubLookup.attester.initialLegacySubmit(String($(target).attr('email')), mostUsefulPrv.keyInfo.public);
+      const email = String($(target).attr('email'));
+      // Use submitPrimaryEmailPubkey if email is primary email
+      if (email === this.acctEmail) {
+        const idToken = await InMemoryStore.get(this.acctEmail, InMemoryStoreKeys.ID_TOKEN);
+        await this.pubLookup.attester.submitPrimaryEmailPubkey(email, mostUsefulPrv.keyInfo.public, idToken!);
+      } else { // If email is alias email
+        await this.pubLookup.attester.submitPubkeyWithConditionalEmailVerification(email, mostUsefulPrv.keyInfo.public);
+      }
     } catch (e) {
       ApiErr.reportIfSignificant(e);
       await Ui.modal.error(ApiErr.eli5(e));
@@ -110,7 +127,7 @@ View.run(class KeyserverView extends View {
       return;
     }
     try {
-      const responseText = await this.pubLookup.attester.replacePubkey(String($(target).attr('email')), mostUsefulPrv.keyInfo.public);
+      const responseText = await this.pubLookup.attester.submitPubkeyWithConditionalEmailVerification(String($(target).attr('email')), mostUsefulPrv.keyInfo.public);
       await Ui.modal.info(responseText);
       BrowserMsg.send.closePage(this.parentTabId);
     } catch (e) {
@@ -128,18 +145,11 @@ View.run(class KeyserverView extends View {
     const results = await this.pubLookup.attester.lookupEmails(sendAs ? Object.keys(sendAs) : [this.acctEmail]);
     for (const email of Object.keys(results)) {
       const pubkeySearchResult = results[email];
-      if (!pubkeySearchResult.pubkey) {
-        diagnosis.hasPubkeyMissing = true;
-        diagnosis.results[email] = { pubkey: undefined, match: false };
-      } else {
-        const pub = await KeyUtil.parse(pubkeySearchResult.pubkey);
-        let match = true;
-        if (!storedKeysIds.includes(pub.id)) {
-          diagnosis.hasPubkeyMismatch = true;
-          match = false;
-        }
-        diagnosis.results[email] = { pubkey: pubkeySearchResult.pubkey, match };
-      }
+      const hasMatchingKey = await asyncSome(pubkeySearchResult.pubkeys, (async (pubkey) =>
+        storedKeysIds.includes((await KeyUtil.parse(pubkey)).id))
+      );
+      diagnosis.hasPubkeyMismatch = !hasMatchingKey;
+      diagnosis.results[email] = { pubkeys: pubkeySearchResult.pubkeys, match: hasMatchingKey };
     }
     return diagnosis;
   };

@@ -138,7 +138,7 @@ export class Ui {
   public static modal = {
     info: async (text: string, isHTML: boolean = false): Promise<void> => {
       text = isHTML ? Xss.htmlSanitize(text) : Xss.escape(text).replace(/\n/g, '<br>');
-      await Ui.swal().fire({
+      const userResponsePromise = Ui.swal().fire({
         html: text,
         allowOutsideClick: false,
         customClass: {
@@ -147,9 +147,10 @@ export class Ui {
         },
       });
       Ui.activateModalPageLinkTags(); // in case the page itself has data-swal-page links
+      await userResponsePromise;
     },
     warning: async (text: string, footer?: string): Promise<void> => {
-      await Ui.swal().fire({
+      const userResponsePromise = Ui.swal().fire({
         html: `<span class="orange">${Xss.escape(text).replace(/\n/g, '<br>')}</span>`,
         footer: footer ? Xss.htmlSanitize(footer) : '',
         allowOutsideClick: false,
@@ -159,11 +160,12 @@ export class Ui {
         },
       });
       Ui.activateModalPageLinkTags(); // in case the page itself has data-swal-page links
+      await userResponsePromise;
     },
     error: async (text: string, isHTML: boolean = false, footer?: string): Promise<void> => {
       text = isHTML ? Xss.htmlSanitize(text) : Xss.escape(text).replace(/\n/g, '<br>');
-      await Ui.swal().fire({
-        html: `<span class="red">${text}</span>`,
+      const userResponsePromise = Ui.swal().fire({
+        html: `<span class="red" data-test="container-error-modal-text">${text}</span>`,
         footer: footer ? Xss.htmlSanitize(footer) : '',
         allowOutsideClick: false,
         customClass: {
@@ -172,6 +174,7 @@ export class Ui {
         },
       });
       Ui.activateModalPageLinkTags(); // in case the page itself has data-swal-page links
+      await userResponsePromise;
     },
     /**
      * Presents a modal where user can respond with confirm or cancel.
@@ -225,7 +228,7 @@ export class Ui {
       if (replaceNewlines) {
         html = html.replace(/\n/g, '<br>');
       }
-      await Ui.swal().fire({
+      const userResponsePromise = Ui.swal().fire({
         didOpen: () => {
           Swal.getCloseButton()!.blur();
         },
@@ -240,6 +243,7 @@ export class Ui {
         }
       });
       Ui.activateModalPageLinkTags(); // in case the page itself has data-swal-page links
+      await userResponsePromise;
     },
     iframe: async (iframeUrl: string, iframeHeight?: number, dataTest?: string): Promise<SweetAlertResult> => {
       const iframeWidth = Math.min(800, $('body').width()! - 200);
@@ -299,8 +303,14 @@ export class Ui {
   public static testCompatibilityLink = '<a href="/chrome/settings/modules/compatibility.htm" target="_blank">Test your OpenPGP key compatibility</a>';
 
   public static activateModalPageLinkTags = () => {
-    $('[data-swal-page]').click(Ui.event.handle(async (target) => {
-      await Ui.modal.page($(target).data('swal-page') as string);
+    $('[data-swal-page]').on('click', Ui.event.handle(async (target) => {
+      const jsAllowedSwalPage = $(target).data('swal-page-allow-js') as boolean; // use this flag is the swal-page contains javascript
+      const htmlUrl = $(target).data('swal-page') as string;
+      if (jsAllowedSwalPage) {
+        await Ui.modal.iframe(htmlUrl);
+      } else {
+        await Ui.modal.page(htmlUrl);
+      }
     }));
   };
 

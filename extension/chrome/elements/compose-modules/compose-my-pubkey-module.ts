@@ -9,6 +9,7 @@ import { ViewModule } from '../../../js/common/view-module.js';
 import { ComposeView } from '../compose.js';
 import { Str } from '../../../js/common/core/common.js';
 import { KeyStoreUtil } from "../../../js/common/core/crypto/key-store-util.js";
+import { KeyUtil } from '../../../js/common/core/crypto/key.js';
 
 export class ComposeMyPubkeyModule extends ViewModule<ComposeView> {
 
@@ -17,7 +18,7 @@ export class ComposeMyPubkeyModule extends ViewModule<ComposeView> {
 
   public setHandlers = () => {
     this.view.S.cached('icon_pubkey').attr('title', Lang.compose.includePubkeyIconTitle);
-    this.view.S.cached('icon_pubkey').click(this.view.setHandler((el) => this.iconPubkeyClickHandler(el), this.view.errModule.handle(`set/unset pub attachment`)));
+    this.view.S.cached('icon_pubkey').on('click', this.view.setHandler((el) => this.iconPubkeyClickHandler(el), this.view.errModule.handle(`set/unset pub attachment`)));
   };
 
   public iconPubkeyClickHandler = (target: HTMLElement) => {
@@ -38,10 +39,10 @@ export class ComposeMyPubkeyModule extends ViewModule<ComposeView> {
     (async () => {
       const senderEmail = this.view.senderModule.getSender();
       // todo: disable attaching S/MIME certificate #4075
-      const parsedPrvs = await KeyStoreUtil.parse(await this.view.storageModule.getAccountKeys(senderEmail));
+      const parsedStoredPrvs = await KeyStoreUtil.parse(await this.view.storageModule.getAccountKeys(senderEmail));
       // if we have cashed this fingerprint, setAttachPreference(false) rightaway and return
       const cached = this.wkdFingerprints[senderEmail];
-      for (const parsedPrv of parsedPrvs.filter(prv => prv.key.usableForEncryption || prv.key.usableForSigning)) {
+      for (const parsedPrv of parsedStoredPrvs.filter(prv => prv.key.usableForEncryption || prv.key.usableForSigning)) {
         if (cached && cached.includes(parsedPrv.key.id)) {
           this.setAttachPreference(false); // at least one of our valid keys is on WKD: no need to attach
           return;
@@ -53,13 +54,14 @@ export class ComposeMyPubkeyModule extends ViewModule<ComposeView> {
       if (foreignRecipients.length > 0) {
         if (!Array.isArray(cached)) {
           // slow operation -- test WKD for our own key and cache the result
-          const { keys } = await this.view.pubLookup.wkd.rawLookupEmail(senderEmail);
-          const fingerprints = keys.map(key => key.id);
-          this.wkdFingerprints[senderEmail] = fingerprints;
-          for (const parsedPrv of parsedPrvs) {
-            if (fingerprints.includes(parsedPrv.key.id)) {
-              this.setAttachPreference(false);
-              return;
+          const fetchedPubKeys = await this.view.pubLookup.wkd.rawLookupEmail(senderEmail);
+          this.wkdFingerprints[senderEmail] = fetchedPubKeys.map(k => k.id);
+          for (const parsedStoredPrv of parsedStoredPrvs) {
+            for (const fetchedPubKey of fetchedPubKeys) {
+              if (KeyUtil.identityEquals(fetchedPubKey, parsedStoredPrv.keyInfo)) {
+                this.setAttachPreference(false);
+                return;
+              }
             }
           }
         }

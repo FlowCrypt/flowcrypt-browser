@@ -98,14 +98,14 @@ PpJG1Q0sBBPaI99PZXA+G5CTf6AnPmEEAKEC3UWLV9rbyg3A4Mj1cIEbk1MAWQP+
 w1KtygVExvSk6UfRB2wKcdhuN1TS+d45on0NVmMEap9YRiImrSB91id8b7EsQOho
 uroNxxCp0V88f+cVy508R0rd5DOXfoKETbV1Jk6da+O3T8gcjHEEG9D7JEnLfbbi
 GTBHpPTk58rNNla0KnR3by5rZXlzQGtleS1tYW5hZ2VyLWF1dG9nZW4uZmxvd2Ny
-eXB0LmNvbYkBVAQTAQgAPhYhBAL8C+vIeq0NqgdoBhPp2CWLC9nUBQJfkrz5AhsD
-BQkDwmcABQsJCAcCBhUKCQgLAgQWAgMBAh4BAheAAAoJEBPp2CWLC9nUjqAH/izq
-pg4KdpKU7Q36eczfaYZy35IKrbXnBY1qFLsa6dCpEypnbGwiJeh+Tm5e/RuQXYNe
-LQ6iSFDKtDZF5zn00qTOPbQSIr+rjHyDohiZScKOnVbpNt0uQWjID0oBzP3OZD2V
-TqGovbb74APBBeZ1+jIOMXQ53kkh66A7rOy/EFZ6uBTt2SwdpNBOEevUTNpjeawW
-l/NGCVJbYbdDBF3ftZCi99sYMfjmR319OsAnfL/ckKh2NL0HhGJCYqTNDkl1XwNc
-wOkElUgj1uGSYqljTq6MPisIkj/j+EewvphwyHzMu06sA9aLQCpJi5LL5OuExz+Q
-ZV7zGPEPDK2D4n7Bi2WdA5gEX5K8+QEIAML5UQrE8hACFpO1ddxdmjuuspCOPXS5
+eXB0LmNvbYkBVAQTAQgAPgIbAwULCQgHAgYVCgkICwIEFgIDAQIeAQIXgBYhBAL8
+C+vIeq0NqgdoBhPp2CWLC9nUBQJjVsfzBQkHhnH6AAoJEBPp2CWLC9nUsScIAIr2
+CedsZxZoTY0q7MvU8MzcvoRJ8dXA1RT4l5XuBhNzGcVA0mZFKmxIKim9MB/ohAgT
+xyDl5v2bVHps7CQ1iL4r4v82lBID3GKTizq4BKAMA4+0KBqhus4CZxzw3Jew8AF3
+KtPgYHLo4lWStifZjCrTQbaXG8kjQhF7C+GJgWQXEb8DDC8NhmJhfxtc3Bvq0att
+326Ja3yRFZOdKJvQg2IEdu5r5hsKSVclJECs8NXSfX2oCgfIQXZ8e/sVDafNv1Zz
+wYHGXDLHBAuYm+KCKmWMkzuvkMe6ilejN8ePTkzxl1CtgBSAu3ZW0LNZyeIWsPi+
+BtQrPnxn89Ur7HUpa4OdA5gEX5K8+QEIAML5UQrE8hACFpO1ddxdmjuuspCOPXS5
 KtiLmrX6E4hj786K3Yk9WbUC5T7Jh06asisFcos5UsIwWdNLdVHcaBPThWTq0CNy
 o2lDmgW+xL9BYVOiPRroEGkTP7ZZWKxK0qxmSxl++FD/95EOxn3UW8RIev1o/GdI
 1ZqA81Ojwxw0kyYDTnLbWjcvaee6XquOLyZhfUXM5vkBrgK4dLECDS7IX7KSy6B8
@@ -124,15 +124,15 @@ eSJNNJdCucToVws947hdx/Sf2Lgs+WDHhUZZiICK5HgBuQgHK0LdDG8NZ8LjlmuU
 VvnJI1RxnqLC5uGIsKDu15LPFbzBlsvh8QVp5eqlblU0kGirbQP7BTLmhaOIgUUm
 9P1F1gHoXJfZIT4aqODemi6ogOc2tq3sFhC1mGn1q3UlDqPUeqwylrmp3iIZXxEc
 /pR+xgsaXyvtl0oVnfK0qmF0lB07d5Xdt+bE0sBB7m+cgkOOT7ZuctG8zYWRMxLK
-KPuJX0MVyXRlUCVQ3tH33Fv0JZhxp5RBfIkBPAQYAQgAJhYhBAL8C+vIeq0Nqgdo
-BhPp2CWLC9nUBQJfkrz5AhsMBQkDwmcAAAoJEBPp2CWLC9nUhJoIAK4GeuSM88B+
-sJtqUHH8wDlw/oBKz+n703inUAhw9l8TOLToZOz12qJ8dtWjewIDyGpB0ekV5SQI
-ajnOwAo9ZLNqxjJqpKWSp0DJGBNwO1yGxqpfWFBMkw8huyX6Iq2nr3+mTIUng9Tn
-kXlM3TUiFiORkX8lNo99MbDj51g3tKQ9AnmN//ptyeL2FduI5t0zN+/qv2KH7JlA
-YwauCsEGEDwD4HDnaAoDKm8DGlWKvs/H2n5drTqznv1ryZ/+cgxn5MC3T3hU3LlM
-QjvqdlgALvu62szoJsQM+qcwbq+zOfwChsu+WB1ht29i1XcB99z2ljxCBUvhI1xl
-rplQXs015ts=
-=lGnP
+KPuJX0MVyXRlUCVQ3tH33Fv0JZhxp5RBfIkBPAQYAQgAJgIbDBYhBAL8C+vIeq0N
+qgdoBhPp2CWLC9nUBQJjVsfzBQkHhnH6AAoJEBPp2CWLC9nUgIcH/2wlq6jlgij5
++Mqn75Isapq6B5sGO2lCNFHIfuXn8xuklaQ6dE0EMAkwELFMDdOX3TZvtRvtoljy
+ybJ1ML3yvO1klSGyaURLLKoX7KVfT9QIJ/rGKDKGVn5WLZZNzobwtaxGOHpoSiVD
+uZQujai5VDkmvSrODkOeP0c1+3bBb8lB4Acbn83NbwzhnWNzO9BHBHv3uP6x+dU6
+PIEXeOqAqs826/8NQVw0Cjg7SxW6sAZzXfxnkelVrKsXRjqo5qhQY9pkSEYYTR14
+GlXYwQlgte640vmWKjqmyPQWapQJQrOrSVJuCF496QqURUWHMPYfin0zUREr1svi
+sGi90ctjmDQ=
+=d1jo
 -----END PGP PRIVATE KEY BLOCK-----`;
 
 const prvNoSubmit = `-----BEGIN PGP PRIVATE KEY BLOCK-----
@@ -204,25 +204,37 @@ yeSm0uVPwODhwX7ezB9jW6uVt0R8S8iM3rQdEMsA/jDep5LNn47K6o8VrDt0zYo6
 -----END PGP PRIVATE KEY BLOCK-----
 `;
 
+interface MockKMKeyRes {
+  [acct: string]: {
+    response?: {
+      privateKeys: {
+        decryptedPrivateKey: string
+      }[]
+    },
+    badRequestError?: string
+  }
+}
+
 export const MOCK_KM_LAST_INSERTED_KEY: { [acct: string]: { privateKey: string } } = {}; // accessed from test runners
 
-export const MOCK_KM_UPDATING_KEY: { response?: { privateKeys: { decryptedPrivateKey: string }[] }, badRequestError?: string } = {};
+export const MOCK_KM_KEYS: MockKMKeyRes = {};
 
 export const mockKeyManagerEndpoints: HandlersDefinition = {
   '/flowcrypt-email-key-manager/v1/keys/private': async ({ body }, req) => {
     const acctEmail = oauth.checkAuthorizationHeaderWithIdToken(req.headers.authorization);
     if (isGet(req)) {
-      if (acctEmail === 'wkd@google.mock.flowcryptlocal.test:8001') {
+      if (acctEmail === 'wkd@google.mock.localhost:8001') {
         return { privateKeys: [{ decryptedPrivateKey: testConstants.wkdAtgooglemockflowcryptlocalcom8001Private }] };
       }
       if (acctEmail === 'get.key@key-manager-autogen.flowcrypt.test') {
         return { privateKeys: [{ decryptedPrivateKey: testConstants.existingPrv }] };
       }
-      if (acctEmail === 'get.updating.key@key-manager-choose-passphrase-forbid-storing.flowcrypt.test') {
-        if (MOCK_KM_UPDATING_KEY.response !== undefined && MOCK_KM_UPDATING_KEY.badRequestError === undefined) {
-          return MOCK_KM_UPDATING_KEY.response;
+      if (acctEmail.includes('updating.key')) {
+        const { response, badRequestError } = MOCK_KM_KEYS[acctEmail];
+        if (response !== undefined && badRequestError === undefined) {
+          return response;
         }
-        throw new HttpClientErr(MOCK_KM_UPDATING_KEY.badRequestError || 'Vague error', Status.BAD_REQUEST);
+        throw new HttpClientErr(badRequestError || 'Vague error', Status.BAD_REQUEST);
       }
       if (acctEmail === 'get.key@no-submit-client-configuration.key-manager-autogen.flowcrypt.test') {
         return { privateKeys: [{ decryptedPrivateKey: prvNoSubmit }] };
@@ -266,6 +278,12 @@ export const mockKeyManagerEndpoints: HandlersDefinition = {
       if (acctEmail === 'get.error@key-manager-autogen.flowcrypt.test') {
         throw new Error('Intentional error for get.error to test client behavior');
       }
+      if (acctEmail === 'settings@key-manager-autogen.flowcrypt.test') {
+        return { privateKeys: [{ decryptedPrivateKey: testConstants.existingPrv }] };
+      }
+      if (acctEmail === 'settings@settings.flowcrypt.test') {
+        return { privateKeys: [{ decryptedPrivateKey: testConstants.existingPrv }] };
+      }
       throw new HttpClientErr(`Unexpectedly calling mockKeyManagerEndpoints:/v1/keys/private GET with acct ${acctEmail}`);
     }
     if (isPut(req)) {
@@ -297,6 +315,17 @@ export const mockKeyManagerEndpoints: HandlersDefinition = {
         expect(prv[0].isPrivate).to.be.true;
         expect(prv[0].fullyDecrypted).to.be.true;
         expect(prv[0].expiration).to.exist;
+        MOCK_KM_LAST_INSERTED_KEY[acctEmail] = { privateKey };
+        return {};
+      }
+      if (acctEmail.includes('updating.key')) {
+        const prv = await KeyUtil.parseMany(privateKey);
+        expect(prv).to.have.length(1);
+        expect(prv[0].algo.bits).to.equal(2048);
+        expect(prv[0].identities).to.have.length(1);
+        expect(prv[0].isPrivate).to.be.true;
+        expect(prv[0].fullyDecrypted).to.be.true;
+        expect(prv[0].expiration).to.not.exist;
         MOCK_KM_LAST_INSERTED_KEY[acctEmail] = { privateKey };
         return {};
       }

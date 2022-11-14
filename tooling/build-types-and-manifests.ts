@@ -16,6 +16,7 @@ import { execSync as exec } from 'child_process';
 const DIR = './build';
 const version: string = JSON.parse(readFileSync('./package.json').toString()).version;
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const addManifest = (toBuildType: string, transform: (manifest: { [k: string]: any }) => void) => {
   const manifest = JSON.parse(readFileSync(`${DIR}/generic-extension-wip/manifest.json`).toString());
   transform(manifest);
@@ -55,7 +56,7 @@ addManifest('chrome-enterprise', manifest => {
     "unlimitedStorage"
   ];
   for (const csDef of manifest.content_scripts) {
-    csDef.matches = csDef.matches.filter((host: string) => host === 'https://mail.google.com/*');
+    csDef.matches = csDef.matches.filter((host: string) => host === 'https://mail.google.com/*' || host === 'https://www.google.com/robots.txt*');
   }
   manifest.content_scripts = manifest.content_scripts.filter((csDef: { matches: string[] }) => csDef.matches.length); // remove empty defs
   if (!manifest.content_scripts.length) {
@@ -71,7 +72,7 @@ const CHROME_CONSUMER = 'chrome-consumer';
 const CHROME_ENTERPRISE = 'chrome-enterprise';
 const MOCK_HOST: { [buildType: string]: string } = {
   'chrome-consumer': 'https://localhost:8001',
-  'chrome-enterprise': 'https://google.mock.flowcryptlocal.test:8001',
+  'chrome-enterprise': 'https://google.mock.localhost:8001',
 };
 
 const buildDir = (buildType: string) => `./build/${buildType}`;
@@ -118,13 +119,15 @@ const makeMockBuild = (sourceBuildType: string) => {
       .replace(/const (OAUTH_GOOGLE_API_HOST|GMAIL_GOOGLE_API_HOST|PEOPLE_GOOGLE_API_HOST|GOOGLE_OAUTH_SCREEN_HOST) = [^;]+;/g, `const $1 = '${MOCK_HOST[sourceBuildType]}';`)
       .replace(/const (BACKEND_API_HOST) = [^;]+;/g, `const $1 = 'https://localhost:8001/api/';`)
       .replace(/const (ATTESTER_API_HOST) = [^;]+;/g, `const $1 = 'https://localhost:8001/attester/';`)
-      .replace(/https:\/\/flowcrypt\.com\/api\/help\/error/g, 'https://localhost:8001/api/help/error');
+      .replace(/https:\/\/flowcrypt\.com\/api\/help\/error/g, 'https://localhost:8001/api/help/error')
+      .replace(/const (WKD_API_HOST) = '';/g, `const $1 = 'https://localhost:8001';`);
   };
   edit(`${buildDir(mockBuildType)}/js/common/core/const.js`, editor);
   edit(`${buildDir(mockBuildType)}/js/common/platform/catch.js`, editor);
   edit(`${buildDir(mockBuildType)}/js/content_scripts/webmail_bundle.js`, editor);
   edit(`${buildDir(mockBuildType)}/manifest.json`, (code) =>
     code.replace(/https:\/\/mail\.google\.com/g, 'https://gmail.localhost:8001')
+      .replace(/https:\/\/www\.google\.com/g, 'https://google.localhost:8001')
   );
 };
 

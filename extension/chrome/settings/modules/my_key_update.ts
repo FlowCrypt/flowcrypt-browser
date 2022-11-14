@@ -17,6 +17,8 @@ import { PubLookup } from '../../../js/common/api/pub-lookup.js';
 import { KeyStore } from '../../../js/common/platform/store/key-store.js';
 import { PassphraseStore } from '../../../js/common/platform/store/passphrase-store.js';
 import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
+import { InMemoryStore } from '../../../js/common/platform/store/in-memory-store.js';
+import { InMemoryStoreKeys } from '../../../js/common/core/const.js';
 
 View.run(class MyKeyUpdateView extends View {
 
@@ -63,7 +65,7 @@ View.run(class MyKeyUpdateView extends View {
   };
 
   public setHandlers = () => {
-    $('.action_update_private_key').click(this.setHandlerPrevent('double', () => this.updatePrivateKeyHandler()));
+    $('.action_update_private_key').on('click', this.setHandlerPrevent('double', () => this.updatePrivateKeyHandler()));
     $('.input_passphrase').keydown(this.setEnterHandlerThatClicks('.action_update_private_key'));
   };
 
@@ -75,8 +77,9 @@ View.run(class MyKeyUpdateView extends View {
     await PassphraseStore.set('session', this.acctEmail, this.ki!, shouldSavePassphraseInStorage ? undefined : updatedPrvPassphrase);
     if (this.clientConfiguration.canSubmitPubToAttester() && await Ui.modal.confirm('Public and private key updated locally.\n\nUpdate public records with new Public Key?')) {
       try {
-        // todo: make sure this is never called for x509 keys
-        await Ui.modal.info(await this.pubLookup.attester.updatePubkey(this.ki!.longid, KeyUtil.armor(await KeyUtil.asPublicKey(updatedPrv))));
+        const pubkey = KeyUtil.armor(await KeyUtil.asPublicKey(updatedPrv));
+        const idToken = await InMemoryStore.get(this.acctEmail, InMemoryStoreKeys.ID_TOKEN);
+        await this.pubLookup.attester.submitPrimaryEmailPubkey(this.acctEmail, pubkey, idToken!);
       } catch (e) {
         ApiErr.reportIfSignificant(e);
         await Ui.modal.error(`Error updating public records:\n\n${ApiErr.eli5(e)}\n\n(but local update was successful)`);

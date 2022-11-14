@@ -15,8 +15,11 @@ export class PgpBlockViewSignatureModule {
   constructor(private view: PgpBlockView) {
   }
 
-  public renderPgpSignatureCheckResult = async (verifyRes: VerifyRes | undefined, verificationPubs: string[],
-    retryVerification?: (verificationPubs: string[]) => Promise<VerifyRes | undefined>) => {
+  public renderPgpSignatureCheckResult = async (
+    verifyRes: VerifyRes | undefined,
+    verificationPubs: string[],
+    retryVerification?: (verificationPubs: string[]) => Promise<VerifyRes | undefined>
+  ) => {
     this.view.renderModule.doNotSetStateAsReadyYet = true; // so that body state is not marked as ready too soon - automated tests need to know when to check results
     if (verifyRes?.error) {
       if (this.view.signature && !verifyRes.isErrFatal && this.view.decryptModule.canAndShouldFetchFromApi()) {
@@ -53,7 +56,7 @@ export class PgpBlockViewSignatureModule {
               Catch.reportErr(e);
               this.view.renderModule.renderSignatureStatus(`error verifying signature: ${e}`);
             } else {
-              this.view.renderModule.renderSignatureStatus('error verifying signature: offline, click to retry').click(
+              this.view.renderModule.renderSignatureStatus('error verifying signature: offline, click to retry').on('click',
                 this.view.setHandler(() => window.location.reload()));
             }
           }

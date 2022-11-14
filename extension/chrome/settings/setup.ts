@@ -3,10 +3,10 @@
 'use strict';
 
 import { Bm, BrowserMsg } from '../../js/common/browser/browser-msg.js';
-import { Url } from '../../js/common/core/common.js';
+import { asyncSome, Url } from '../../js/common/core/common.js';
 import { ApiErr } from '../../js/common/api/shared/api-error.js';
 import { Assert } from '../../js/common/assert.js';
-import { Catch } from '../../js/common/platform/catch.js';
+import { Catch, CompanyLdapKeyMismatchError } from '../../js/common/platform/catch.js';
 import { KeyInfoWithIdentity, KeyUtil } from '../../js/common/core/crypto/key.js';
 import { Gmail } from '../../js/common/api/email-provider/gmail/gmail.js';
 import { Google } from '../../js/common/api/email-provider/gmail/google.js';
@@ -32,6 +32,8 @@ import { SetupWithEmailKeyManagerModule } from './setup/setup-key-manager-autoge
 import { shouldPassPhraseBeHidden } from '../../js/common/ui/passphrase-ui.js';
 import Swal from 'sweetalert2';
 import { BackupUi } from '../../js/common/ui/backup-ui/backup-ui.js';
+import { InMemoryStoreKeys } from '../../js/common/core/const.js';
+import { InMemoryStore } from '../../js/common/platform/store/in-memory-store.js';
 
 export interface PassphraseOptions {
   passphrase: string;
@@ -48,7 +50,7 @@ export class SetupView extends View {
 
   public readonly acctEmail: string;
   public readonly parentTabId: string | undefined;
-  public readonly action: 'add_key' | undefined;
+  public readonly action: 'add_key' | 'update_from_ekm' | undefined;
   public readonly idToken: string | undefined; // only needed for initial setup, not for add_key
 
   public readonly keyImportUi = new KeyImportUi({ checkEncryption: true });
@@ -77,7 +79,7 @@ export class SetupView extends View {
     super();
     const uncheckedUrlParams = Url.parse(['acctEmail', 'action', 'idToken', 'parentTabId']);
     this.acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
-    this.action = Assert.urlParamRequire.oneof(uncheckedUrlParams, 'action', ['add_key', undefined]) as 'add_key' | undefined;
+    this.action = Assert.urlParamRequire.oneof(uncheckedUrlParams, 'action', ['add_key', 'update_from_ekm', undefined]) as 'add_key' | 'update_from_ekm' | undefined;
     if (this.action === 'add_key') {
       this.parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
     } else {
@@ -155,20 +157,24 @@ export class SetupView extends View {
     BrowserMsg.addListener('notification_show', async ({ notification }: Bm.NotificationShow) => { await Ui.modal.info(notification); });
     BrowserMsg.listen(this.tabId);
     $('.action_send').attr('href', Google.webmailUrl(this.acctEmail));
-    $('.action_show_help').click(this.setHandler(async () => await Settings.renderSubPage(this.acctEmail, this.tabId!, '/chrome/settings/modules/help.htm')));
-    $('#button-go-back').off().click(this.setHandler(() => this.actionBackHandler()));
-    $('#step_2_ekm_choose_pass_phrase .action_proceed_private').click(this.setHandlerPrevent('double', () => this.setupWithEmailKeyManager.continueEkmSetupHandler()));
-    $('#step_2_recovery .action_recover_account').click(this.setHandlerPrevent('double', () => this.setupRecoverKey.actionRecoverAccountHandler()));
-    $('#step_4_more_to_recover .action_recover_remaining').click(this.setHandler(() => this.setupRecoverKey.actionRecoverRemainingKeysHandler()));
-    $('#lost_pass_phrase').click(this.setHandler(() => this.showLostPassPhraseModal()));
-    $('.action_account_settings').click(this.setHandler(() => { window.location.href = Url.create('index.htm', { acctEmail: this.acctEmail }); }));
-    $('.input_submit_key').click(this.setHandler(el => this.actionSubmitPublicKeyToggleHandler(el)));
-    $('#step_0_found_key .action_manual_create_key, #step_1_easy_or_manual .action_manual_create_key').click(this.setHandler(() => this.setupRender.displayBlock('step_2a_manual_create')));
-    $('#step_0_found_key .action_manual_enter_key, #step_1_easy_or_manual .action_manual_enter_key').click(this.setHandler(() => this.setupRender.displayBlock('step_2b_manual_enter')));
-    $('#step_2b_manual_enter .action_add_private_key').click(this.setHandler(el => this.setupImportKey.actionImportPrivateKeyHandle(el)));
-    $('#step_2a_manual_create .action_proceed_private').click(this.setHandlerPrevent('double', () => this.setupCreateKey.actionCreateKeyHandler()));
-    $('#step_2a_manual_create .action_show_advanced_create_settings').click(this.setHandler(el => this.setupCreateKey.actionShowAdvancedSettingsHandle(el)));
-    $('#step_4_close .action_close').click(this.setHandler(() => this.actionCloseHandler())); // only rendered if action=add_key which means parentTabId was used
+    $('.action_show_help').on('click', this.setHandler(async () => await Settings.renderSubPage(this.acctEmail, this.tabId!, '/chrome/settings/modules/help.htm')));
+    $('#button-go-back').off().on('click', this.setHandler(() => this.actionBackHandler()));
+    $('#step_2_ekm_choose_pass_phrase .action_proceed_private').on('click', this.setHandlerPrevent('double', () => this.setupWithEmailKeyManager.continueEkmSetupHandler()));
+    $('#step_2_recovery .action_recover_account').on('click', this.setHandlerPrevent('double', () => this.setupRecoverKey.actionRecoverAccountHandler()));
+    $('#step_4_more_to_recover .action_recover_remaining').on('click', this.setHandler(() => this.setupRecoverKey.actionRecoverRemainingKeysHandler()));
+    $('#lost_pass_phrase').on('click', this.setHandler(() => this.showLostPassPhraseModal()));
+    $('.action_account_settings').on('click', this.setHandler(() => { window.location.href = Url.create('index.htm', { acctEmail: this.acctEmail }); }));
+    $('.input_submit_key').on('click', this.setHandler(el => this.actionSubmitPublicKeyToggleHandler(el)));
+    $('#step_0_found_key .action_manual_create_key, #step_1_easy_or_manual .action_manual_create_key').on('click',
+      this.setHandler(() => this.setupRender.displayBlock('step_2a_manual_create'))
+    );
+    $('#step_0_found_key .action_manual_enter_key, #step_1_easy_or_manual .action_manual_enter_key').on('click',
+      this.setHandler(() => this.setupRender.displayBlock('step_2b_manual_enter'))
+    );
+    $('#step_2b_manual_enter .action_add_private_key').on('click', this.setHandler(el => this.setupImportKey.actionImportPrivateKeyHandle(el)));
+    $('#step_2a_manual_create .action_proceed_private').on('click', this.setHandlerPrevent('double', () => this.setupCreateKey.actionCreateKeyHandler()));
+    $('#step_2a_manual_create .action_show_advanced_create_settings').on('click', this.setHandler(el => this.setupCreateKey.actionShowAdvancedSettingsHandle(el)));
+    $('#step_4_close .action_close').on('click', this.setHandler(() => this.actionCloseHandler())); // only rendered if action=add_key which means parentTabId was used
     $('#step_2a_manual_create .input_password').on('keydown', this.setEnterHandlerThatClicks('#step_2a_manual_create .action_proceed_private'));
     $('#step_2a_manual_create.input_password2').on('keydown', this.setEnterHandlerThatClicks('#step_2a_manual_create .action_proceed_private'));
     $('#step_2_ekm_choose_pass_phrase .input_password').on('keydown', this.setEnterHandlerThatClicks('#step_2_ekm_choose_pass_phrase .action_proceed_private'));
@@ -199,8 +205,8 @@ export class SetupView extends View {
           Your previous encrypted emails will remain unreadable.
         </div>
       `, true).catch(Catch.reportErr);
-    $('.action_skip_recovery').click(this.setHandler(() => this.setupRecoverKey.actionSkipRecoveryHandler()));
-    $('.reload_page').click(this.setHandler(() => window.location.reload()));
+    $('.action_skip_recovery').on('click', this.setHandler(() => this.setupRecoverKey.actionSkipRecoveryHandler()));
+    $('.reload_page').on('click', this.setHandler(() => window.location.reload()));
   };
 
   public actionSubmitPublicKeyToggleHandler = (target: HTMLElement) => {
@@ -236,7 +242,7 @@ export class SetupView extends View {
     } catch (e) {
       return await Settings.promptToRetry(
         e,
-        Lang.setup.failedToSubmitToAttester,
+        e instanceof CompanyLdapKeyMismatchError ? Lang.setup.failedToImportUnknownKey : Lang.setup.failedToSubmitToAttester,
         () => this.submitPublicKeys({ submit_main, submit_all }),
         Lang.general.contactIfNeedAssistance(this.isFesUsed())
       );
@@ -318,7 +324,8 @@ export class SetupView extends View {
     }
     const pub = await KeyUtil.parse(armoredPubkey);
     if (pub.usableForEncryption) {
-      this.pubLookup.attester.testWelcome(this.acctEmail, armoredPubkey).catch(ApiErr.reportIfSignificant);
+      const idToken = await InMemoryStore.get(this.acctEmail, InMemoryStoreKeys.ID_TOKEN);
+      this.pubLookup.attester.welcomeMessage(this.acctEmail, armoredPubkey, idToken).catch(ApiErr.reportIfSignificant);
     }
     let addresses;
     if (this.submitKeyForAddrs.length && options.submit_all) {
@@ -330,16 +337,30 @@ export class SetupView extends View {
   };
 
   private submitPubkeys = async (addresses: string[], pubkey: string) => {
-    if (this.clientConfiguration.useLegacyAttesterSubmit()) {
+    if (this.clientConfiguration.setupEnsureImportedPrvMatchLdapPub()) {
       // this will generally ignore errors if conflicting key already exists, except for certain orgs
-      await this.pubLookup.attester.initialLegacySubmit(this.acctEmail, pubkey);
+      const result = await this.pubLookup.attester.doLookupLdap(this.acctEmail);
+      if (result.pubkeys.length) {
+        const prvs = await KeyStoreUtil.parse(await KeyStore.getRequired(this.acctEmail));
+        const parsedPubKeys = await KeyUtil.parseMany(result.pubkeys.join('\n'));
+        const hasMatchingKey = await asyncSome(prvs, (async (privateKey) => {
+          return parsedPubKeys.some((parsedPubKey) => privateKey.key.id === parsedPubKey.id);
+        }));
+        if (!hasMatchingKey) {
+          // eslint-disable-next-line max-len
+          throw new CompanyLdapKeyMismatchError(`Imported private key with ids ${prvs.map(prv => prv.key.id).join(', ')} does not match public keys on company LDAP server with ids ${parsedPubKeys.map(pub => pub.id).join(', ')} for ${this.acctEmail}. Please ask your help desk.`);
+        }
+      } else {
+        // eslint-disable-next-line max-len
+        throw new CompanyLdapKeyMismatchError(`Your organization requires public keys to be present on company LDAP server, but no public key was found for ${this.acctEmail}. Please ask your internal help desk.`);
+      }
     } else {
       // this will actually replace the submitted public key if there was a conflict, better ux
       await this.pubLookup.attester.submitPrimaryEmailPubkey(this.acctEmail, pubkey, this.idToken!);
     }
     const aliases = addresses.filter(a => a !== this.acctEmail);
     if (aliases.length) {
-      await Promise.all(aliases.map(a => this.pubLookup.attester.initialLegacySubmit(a, pubkey)));
+      await Promise.all(aliases.map(a => this.pubLookup.attester.submitPubkeyWithConditionalEmailVerification(a, pubkey)));
     }
   };
 

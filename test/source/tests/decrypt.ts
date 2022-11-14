@@ -11,7 +11,6 @@ import { SettingsPageRecipe } from './page-recipe/settings-page-recipe';
 import { TestUrls } from './../browser/test-urls';
 import { TestWithBrowser } from './../test';
 import { expect } from "chai";
-import { ComposePageRecipe } from './page-recipe/compose-page-recipe';
 import { PageRecipe } from './page-recipe/abstract-page-recipe';
 import { Buf } from '../core/buf';
 
@@ -248,6 +247,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
       await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
         content: ["Your current key cannot open this message."],
         params: "?account_email=flowcrypt.compatibility%40gmail.com&frame_id=frame_yVMKFLRDiY&message=&message_id=162275c819bcbf9b&senderEmail=&is_outgoing=___cu_false___",
+        error: "decrypt error",
         expectPercentageProgress: true,
       });
     }));
@@ -347,6 +347,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
 
     ava.default(`decrypt - [security] mdc - missing - error`, testWithBrowser('compatibility', async (t, browser) => {
       await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
+        error: "decrypt error",
         content: ["Security threat!", "MDC", "Display the message at your own risk."],
         params: "?frame_id=frame_obvAUTGAJU&message=-----BEGIN%20PGP%20MESSAGE-----%0AVersion%3A%20FlowCrypt%205.5.9%20Gmail%20Encryption%20flowcrypt.com%0AComment%3A%20Seamlessly%20send%2C%20receive%20and%20search%20encrypted%20email%0A%0AwcFMA0taL%2FzmLZUBAQ%2F7Bwida5vvhXv5Zi%2BqJbG%2FQPst11jWfljDQlw1VLzF%0Aou8ofoIEHpvoFgXegZUnoQXBmlHGD%2BXLs9jG%2FTV1mtE2RWq4hDtqiTQ6rEIa%0AbrN3Nx77Yr%2B4EN1aKI20aTLEPTIjVU2GH2i9DAmjHteBU3nkL9Z3yecB8Pn8%0AEdhpCRY6cj2yrhJ5MPwmXrus9OFv39wA2DqYpqW5Be%2BKD8mipZ2CtJo5xtin%0AaeEhpWSDsdg26rjx1nz4dA0NcFzZK2p%2FBPfPIFzRvmoXoWFigpUnwryEoCqX%0A%2Ftgmcrv7PqiYT5oziPmMuBc1lb7icI%2FAq69uXz2z6%2B4MJHOlcTEFygV36J%2B1%0A1opcjoX%2BJKJNn1nvHovBxuemcMwriJdmDj4Hmfo4zkd6ryUtGVrMVn8DbRp6%0ATWB%2F0MSE8cmfuiA5DgzdGbrevdL6RxnQDmalTHJ5oxurFQVoLwpmbgd36C4Q%0AxMfG1xEqFn5zvrCTGHg2OfS2cynal8CQDG0ZQCoWwdb0kT5D6bx7QKcuyy1%2F%0A1TXKnp1NamD5Uhu1%2BXuxD7EbvDYUWYh3bkqgslsoX%2BOUl%2BONdtMD5PswArd5%0AKisD9UJuddJShL4clBUPoXeNrRxrU6HqjP5T4fapK684MeizicHIRpAww7fu%0AZ8YtaySZ%2FhoOAKWsx0rV4grgJV7pryj4ARBRa1pLL9rBwUwDS1ov%2FOYtlQEB%0AD%2F47fyD%2F6BvepqWmZXj7VLl2y63eE0b%2F6hf5K%2BIzv5A%2F%2B5l%2FEnjFx0rq%2BqeX%0A6hftYZBUAbbBvKfxq9D5xsWg3tnhFv2sYIE3YpkCSzZpWJmahHwQOVNT0ASw%0AgbO25OiTPlYPqfSkGYe0palbL%2B4T5dLOwVilmrZ2bQf%2FrLePwA4RQpWDPYio%0ANDU0Xfi7TQcHQrZTpwFbVzNPXgCHnQkqF%2Bs0v8RDJHnt9vVs2KEpi49V%2FYgN%0A%2BgZnZOeADL0rbre%2FPrIck1YSjZLbrWtQVk4%2BsCf0TjvixJ7MNjA4NgdZPo0M%0AHke%2F9XBFie3NiZaW%2FcEIVZ7WnjB3IbhkmOMJd4LgdHKgmswJwCYm%2BXvpOI19%0AFzU1vzZmfOA1nEJSuuCDNVUoKYIQA5UEYJrVJeGnVN5sU5jkdlX9xPtYceww%0AYFmLisuf9Ev0HC7v27KwYQRDPNYRA8GeK%2FjY6aZdg%2BVccsnzEigdYL5Tm4JI%0AZrxp%2FG807bZvt0yZwWh0gpWOFgbVgrm4Hpji5ilDyulZSW%2B8nJxB5tDoPzL4%0Aj4w9malje0c60GWNtiyCPLURyN63C2q144UpQjSU5r66oP1yF2A97aXKbf4p%0AqO7cSNWEOTpqJkJrNFVKQdWvXZ%2BmvW1PQFmkkwish2HiQIXmWb04uV1pI8hR%0A6YWk2ox9aZiJ664MpncgyJ5uIMlzVfYrX%2BAZRtBW36RgCTprIv6l1M5NcHMy%0AzEscTaSY%2Fe%2BpM5HzQKSzX%2BzHLa5kk5L7veX%2B1G33saiqSJ%2FfK13%2Bk7qDNZQD%0Anbtaebfh2JS0Pdbub6FUFjPHR5PydU9ltuppGEeYrOe1SxwiZ6BZfIXO2%2F8M%0AhA%3D%3D%0A%3DB%2FNE%0A-----END%20PGP%20MESSAGE-----&message_id=166b194b21a0997c&senderEmail=&is_outgoing=___cu_false___&account_email=flowcrypt.compatibility%40gmail.com"
       });
@@ -354,6 +355,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
 
     ava.default(`decrypt - [security] mdc - modification detected - error`, testWithBrowser('compatibility', async (t, browser) => {
       await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
+        error: "decrypt error",
         content: ["Security threat - opening this message is dangerous because it was modified in transit."],
         params: "?frame_id=frame_obvAUTGAJU&message=-----BEGIN%20PGP%20MESSAGE-----%0AVersion%3A%20FlowCrypt%205.5.9%20Gmail%20Encryption%20flowcrypt.com%0AComment%3A%20Seamlessly%20send%2C%20receive%20and%20search%20encrypted%20email%0A%0AwcFMA0taL%2FzmLZUBAQ%2F%2BKvSED2vb9fJMQd6lRTh0idC7srhg4ESSf4ggCXFE%0AdeOq2IkV5dNhgWGGawFVVUTewMh3L3JklDoONlatBthc2OGNu%2BFyu5No7hhG%0A3Jq1GkNwCqex0%2BG%2BGVhlZfN2LOAx855H9m%2FAGxYo6KLU%2BROmPZV8PZo5YJPr%0Ar8TrhhfHF%2FPG4ZmQIcuvPI1e0ivgF74wP4cG0qaPEacvSxQ1ZuDwzdqC1kGv%0AseOTJEhpBG%2FD8YfbzUXVrX4GiOzIu2OhnlKfU6c0BJCTz%2BqmQRqYOZXLvKgd%0AnU0RzfLgMsd7Sy1lCpld1syY3bT4l0FIRWUtVx1NrJ7cluicEPDiqJsEZntS%0AYy1ViiRZlnk2Xvx1Qpsh7fifUS8e9gfwPevYFhZ%2Fb6SeqpRFRDFGa0uP9L5C%0A%2FCcWqiUaLUL8nF51CYzfIMeIEGBk0TiVUAn19mkQTFbtbIB9K3uQHjFzgnrL%0AnLaJ08Eme5NugtJMUIW7bgo4CAddRjj0isFsoesUv75%2FmEsHJ7JRPICnWx4b%0ALPKOyP0anN6TYDgTC6IqvMOoNi0ZPEIpmGmf7ZOWjR4eUT%2B9uBmBHEPwGbLQ%0A85Mcjy1C7X%2B0uUkIPsqXgF7Ya%2FpwTuZ8mDtF%2FFU3kR87y3jlDZ%2B3ltq%2BY%2B5A%0ABJyMGXGf24%2BSquE1Q%2BONIzBwBqwXuYvRJwqA9vOtZ1PBwUwDS1ov%2FOYtlQEB%0AD%2F0R6LMWFQHZQCIFkvXcB5r4X3J68tcLffAIVs%2BJnoyR6JECUuCZJdKLc4Aa%0AF%2BA15GKiOnf5Z8RIg3Fn3nXuyN5rlWOu0yOO%2FXrnCSMHiYErTLUO6%2B6V6%2Bby%0Ai%2BPOAtAWptnJ7rGSAy17ZgIYD9WNPdX8Bv1fWEOJII2rj%2B5CVyBsOZWrnlnP%0AHjHOQ6gHop7bnQlrpmpA95PLhyoW1LkEIoC0jgrGF%2B0QXRqEfdwpQBCklZyL%0A%2FWAsG2GJLrHUgQALgpTys6%2F5P7VP%2BVSOaEnOJJExIZPkRVRFzWlYq1avgJWw%0AEFGmKeg335%2FiThKBFQ8JsH9U22G5DD1BcfX%2Bqtm4n640zC5pHRpLJO6ggiCJ%0AZA1SCtq6TBSF1FTa158ZNgjkiGZfS%2BoZvrMW%2BS1691vMmJrwqiRlPg9PXCA%2B%0AouGrU%2F1FVyRKGx1%2FUki%2Fh9SaxDX%2F3uHOOwJzytNxGMJP%2F4Y1Y6hbDwDzcrCM%0AFlFHXiNbfB3uxiHD9wWHE44z91MkqOb7%2FajoLXA8J8U3KJGFa%2B8JkZleRVnq%0Ar%2FUT8ppv0%2FozWzV59mTulYzRdIPSy6r4V0bH16XGwZtHVrljOi4TrkExB9cS%0ATdcX96RMMYpJ7p7dGcxoHaRBY120BD%2BsJ51jGi%2FYupoZBdbg7KcOAEelD2%2FF%0ALM1LzR9f3HUaYyKvdPL%2BC0OwINKCAZBPShfECZOiqrNWgHLWddAdXqexZFLH%0A0y7td11E7UNcCZegIlwOYksW7yuuCZ2ZLLnfx%2Fu1G18nKBCealqNkaow%2FPj7%0A4q%2B0UYxfZnAl%2FrFuTK9ndd8tWMSm%2F6xzWEbqe%2F8NKJrCwk%2Fnu%2BpvF%2BMuRvf5%0A9DuzZFiNRQSjSxSYvkyLuw%3D%3D%0A%3DvxOj%0A-----END%20PGP%20MESSAGE-----&message_id=166b194b21a0997c&senderEmail=&is_outgoing=___cu_false___&account_email=flowcrypt.compatibility%40gmail.com"
       });
@@ -470,39 +472,6 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
       await InboxPageRecipe.checkFinishingSession(t, browser, acctEmail, threadId);
     }));
 
-    ava.default('decrypt - entering pass phrase should unlock all keys that match the pass phrase', testWithBrowser('compatibility', async (t, browser) => {
-      const acctEmail = 'flowcrypt.compatibility@gmail.com';
-      const passphrase = 'pa$$w0rd';
-      await SettingsPageRecipe.addKeyTest(t, browser, acctEmail, testConstants.testkey17AD7D07, passphrase, {}, false);
-      await SettingsPageRecipe.addKeyTest(t, browser, acctEmail, testConstants.testkey0389D3A7, passphrase, {}, false);
-      await SettingsPageRecipe.addKeyTest(t, browser, acctEmail, testConstants.testKeyMultipleSmimeCEA2D53BB9D24871, passphrase, {}, false);
-      const inboxPage = await browser.newPage(t, TestUrls.extensionInbox(acctEmail));
-      await InboxPageRecipe.finishSessionOnInboxPage(inboxPage);
-      await InboxPageRecipe.checkDecryptMsg(t, browser, {
-        acctEmail,
-        threadId: '17c0e50966d7877c',
-        expectedContent: '1st key of of 2 keys with the same passphrase',
-        enterPp: {
-          passphrase,
-          isForgetPpChecked: true,
-          isForgetPpHidden: false
-        }
-      });
-      await InboxPageRecipe.checkDecryptMsg(t, browser, {
-        acctEmail,
-        threadId: '17c0e55caaa4abb3',
-        expectedContent: '2nd key of of 2 keys with the same passphrase',
-        // passphrase for the 2nd key should not be needed because it's the same as for the 1st key
-      });
-      // as decrypted s/mime messages are not rendered yet (#4070), let's test signing instead
-      const composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
-      await ComposePageRecipe.fillMsg(composeFrame, { to: 'smime@recipient.com' }, 'send signed and encrypted S/MIME without attachment');
-      await ComposePageRecipe.pastePublicKeyManually(composeFrame, inboxPage, 'smime@recipient.com',
-        testConstants.testCertificateMultipleSmimeCEA2D53BB9D24871);
-      await composeFrame.waitAndClick('@action-send', { delay: 2 });
-      await inboxPage.waitTillGone('@container-new-message');
-    }));
-
     ava.default('decrypt - thunderbird - signedHtml verifyDetached doesn\'t duplicate PGP key section', testWithBrowser('compatibility', async (t, browser) => {
       const threadId = '17daefa0eb077da6';
       const acctEmail = 'flowcrypt.compatibility@gmail.com';
@@ -512,6 +481,22 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
       await pgpBlock.waitForSelTestState('ready');
       const urls = await inboxPage.getFramesUrls(['pgp_pubkey.htm'], { sleep: 3 });
       expect(urls.length).to.be.lessThan(2);
+    }));
+
+    ava.default('decrypt - print feature in pgp block', testWithBrowser('compatibility', async (t, browser) => {
+      const threadId = '182917712be838e1';
+      const acctEmail = 'flowcrypt.compatibility@gmail.com';
+      const inboxPage = await browser.newPage(t, TestUrls.extension(`chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`));
+      await inboxPage.waitAll('iframe');
+      const pgpBlock = await inboxPage.getFrame(['pgp_block.htm']);
+      await pgpBlock.waitForSelTestState('ready');
+      const printPage = await browser.newPageTriggeredBy(t, () => pgpBlock.click('@action-print'));
+      await printPage.waitForContent('@print-user-email', 'First Last <flowcrypt.compatibility@gmail.com>');
+      await printPage.waitForContent('@print-subject', 'Test print dialog');
+      await printPage.waitForContent('@print-from', 'From: sender@domain.com');
+      await printPage.waitForContent('@print-to', 'To: flowcrypt.compatibility@gmail.com');
+      await printPage.waitForContent('@print-cc', 'ci.tests.gmail@flowcrypt.dev');
+      await printPage.waitForContent('@print-content', 'Test print message');
     }));
 
     ava.default('decrypt - thunderbird - signedMsg verifyDetached doesn\'t duplicate PGP key section', testWithBrowser('compatibility', async (t, browser) => {
@@ -559,6 +544,17 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
       await pgpBlockPage.waitForContent('@pgp-signature', 'signed', 10, 10);
     }));
 
+    ava.default('verification - public key fetched from WKD', testWithBrowser('compatibility', async (t, browser) => {
+      const senderEmail = 'only.on.wkd@signing.test';
+      const message = encodeURIComponent('\r\n-----BEGIN PGP SIGNED MESSAGE-----\r\nHash: SHA512\r\n\r\ntest signed msg\r\n-----BEGIN PGP SIGNATURE-----\r\nVersion: FlowCrypt Email Encryption 8.3.2\r\nComment: Seamlessly send and receive encrypted email\r\n\r\nwnUEARYKAAYFAmMEtG8AIQkQ+1x3UHaDHFEWIQQvI5Sm4OisrFQgXUP7XHdQ\r\ndoMcUf2WAP0RJ7mXIPJUWSKIi3OCfddHlDX/y3rv+Kwabyjm5/dZMQD/TcUa\r\nrqxUmshPoZbQBgFPwpS0V/8nHTNj0b2ugcvnIQ4=\r\n=eCak\r\n-----END PGP SIGNATURE-----\r\n');
+      await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
+        content: ["test signed msg"],
+        encryption: 'not encrypted',
+        signature: 'signed',
+        params: `?frameId=none&acctEmail=flowcrypt.compatibility@gmail.com&message=${message}&msgId=&signature=___cu_true___&senderEmail=${senderEmail}`
+      });
+    }));
+
     ava.default('decrypt - fetched pubkey is automatically saved to contacts', testWithBrowser('compatibility', async (t, browser) => {
       const msgId = '17dad75e63e47f97';
       const acctEmail = 'flowcrypt.compatibility@gmail.com';
@@ -594,7 +590,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
       const threadId = '17918a9d7ca2fbac';
       const acctEmail = 'flowcrypt.compatibility@gmail.com';
       const inboxPage = await browser.newPage(t, TestUrls.extension(`chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`));
-      await inboxPage.waitAll('iframe', { timeout: 2 });
+      await inboxPage.waitAll('iframe');
       const urls = await inboxPage.getFramesUrls(['/chrome/elements/pgp_block.htm'], { sleep: 3 });
       expect(urls.length).to.equal(1);
       const url = urls[0].split('/chrome/elements/pgp_block.htm')[1];
@@ -756,7 +752,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
       await inboxPage.waitAll('iframe.pgp_block');
       const pgpBlock = await inboxPage.getFrame(['pgp_block.htm']);
       await pgpBlock.waitForSelTestState('ready');
-      await pgpBlock.click('a');
+      await pgpBlock.click('#pgp_block a');
       await Util.sleep(5);
       const flowcryptTab = (await browser.browser.pages()).find(p => p.url() === 'https://flowcrypt.com/');
       await flowcryptTab!.waitForSelector("body");

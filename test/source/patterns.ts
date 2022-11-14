@@ -93,7 +93,7 @@ for (const buildType of ['chrome-consumer', 'chrome-enterprise', 'firefox-consum
       }
     }
   }
-  const gmailCs = manifest.content_scripts.find((cs: any) => cs.matches.includes('https://mail.google.com/*'));
+  const gmailCs = manifest.content_scripts.find((cs: { matches: string }) => cs.matches.includes('https://mail.google.com/*'));
   if (!gmailCs || !gmailCs.css.length || !gmailCs.js.length) {
     console.error(`Missing content_scripts declaration for Gmail in ${buildType}/manifest.json`);
     errsFound++;

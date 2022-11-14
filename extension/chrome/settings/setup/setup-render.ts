@@ -32,7 +32,7 @@ export class SetupRenderModule {
         return await Settings.promptToRetry(e, Lang.setup.failedToLoadEmailAliases, () => this.renderInitial(), Lang.general.contactIfNeedAssistance(this.view.isFesUsed()));
       }
     }
-    if (this.view.storage!.setup_done) {
+    if (this.view.storage!.setup_done && this.view.action !== 'update_from_ekm') {
       if (this.view.action !== 'add_key') {
         await this.renderSetupDone();
       } else if (this.view.clientConfiguration.mustAutoImportOrAutogenPrvWithKeyManager()) {
@@ -66,8 +66,13 @@ export class SetupRenderModule {
       $('.private_key_count').text(storedKeys.length);
       $('.backups_count').text(this.view.fetchedKeyBackupsUniqueLongids.length);
     } else { // successful and complete setup
-      this.displayBlock(this.view.action !== 'add_key' ? 'step_4_done' : 'step_4_close');
-      $('h1').text(this.view.action !== 'add_key' ? 'You\'re all set!' : 'Recovered all keys!');
+      if (this.view.action === 'add_key') {
+        this.displayBlock('step_4_close');
+        $('h1').text('Recovered all keys!');
+      } else {
+        this.displayBlock('step_4_done');
+        $('h1').text('You\'re all set!');
+      }
       $('.email').text(this.view.acctEmail);
     }
   };
@@ -143,7 +148,7 @@ export class SetupRenderModule {
       // eslint-disable-next-line max-len
       $('.addresses').append(`<label><input type="checkbox" class="input_email_alias" data-email="${Xss.escape(e)}" data-test="input-email-alias-${e.replace(/[^a-z0-9]+/g, '')}" />${Xss.escape(e)}</label><br/>`); // xss-escaped
     }
-    $('.input_email_alias').click((event) => {
+    $('.input_email_alias').on('click', (event) => {
       const email = String($(event.target).data('email'));
       if ($(event.target).prop('checked')) {
         if (!this.view.submitKeyForAddrs.includes(email)) {

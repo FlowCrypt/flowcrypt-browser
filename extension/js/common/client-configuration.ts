@@ -5,9 +5,10 @@
 import { Str } from './core/common.js';
 import { AcctStore } from './platform/store/acct-store.js';
 import { KeyAlgo } from './core/crypto/key.js';
+import { UnreportableError } from './platform/catch.js';
 
 type ClientConfiguration$flag = 'NO_PRV_CREATE' | 'NO_PRV_BACKUP' | 'PRV_AUTOIMPORT_OR_AUTOGEN' | 'PASS_PHRASE_QUIET_AUTOGEN' |
-  'ENFORCE_ATTESTER_SUBMIT' | 'NO_ATTESTER_SUBMIT' | 'USE_LEGACY_ATTESTER_SUBMIT' |
+  'ENFORCE_ATTESTER_SUBMIT' | 'NO_ATTESTER_SUBMIT' | 'SETUP_ENSURE_IMPORTED_PRV_MATCH_LDAP_PUB' |
   'DEFAULT_REMEMBER_PASS_PHRASE' | 'HIDE_ARMOR_META' | 'FORBID_STORING_PASS_PHRASE';
 
 export type ClientConfigurationJson = {
@@ -18,6 +19,7 @@ export type ClientConfigurationJson = {
   disallow_attester_search_for_domains?: string[],
   enforce_keygen_algo?: string,
   enforce_keygen_expire_months?: number,
+  in_memory_pass_phrase_session_length?: number;
 };
 
 /**
@@ -26,15 +28,16 @@ export type ClientConfigurationJson = {
  */
 export class ClientConfiguration {
 
-  private static readonly default = { flags: [] };
-
   public static newInstance = async (acctEmail: string): Promise<ClientConfiguration> => {
     const email = Str.parseEmail(acctEmail).email;
     if (!email) {
       throw new Error(`Not a valid email`);
     }
     const storage = await AcctStore.get(email, ['rules']);
-    return new ClientConfiguration(storage.rules || ClientConfiguration.default, Str.getDomainFromEmailAddress(acctEmail));
+    if (storage.rules && !storage.rules.flags) {
+      throw new UnreportableError('Missing client configuration flags.');
+    }
+    return new ClientConfiguration(storage.rules ?? {}, Str.getDomainFromEmailAddress(acctEmail));
   };
 
   protected constructor(
@@ -81,6 +84,19 @@ export class ClientConfiguration {
    */
   public getEnforcedKeygenExpirationMonths = (): number | undefined => {
     return this.clientConfigurationJson.enforce_keygen_expire_months;
+  };
+
+  /**
+   * pass phrase session length to be configurable with client configuraiton
+   * default 4 hours
+   */
+  public getInMemoryPassPhraseSessionExpirationMs = (): number => {
+    let expireIn = 4 * 60 * 60;
+    if (this.clientConfigurationJson.in_memory_pass_phrase_session_length) {
+      // in_memory_pass_phrase_session_length min: 1, max: Int max value
+      expireIn = Math.max(1, Math.min(this.clientConfigurationJson.in_memory_pass_phrase_session_length, Number.MAX_VALUE));
+    }
+    return expireIn * 1000;
   };
 
   // bools
@@ -178,12 +194,10 @@ export class ClientConfiguration {
   };
 
   /**
-   * Some orgs use flows that are only implemented in POST /initial/legacy_submit and not in POST /pub/email@corp.co:
-   *  -> enforcing that submitted keys match customer key server
-   * Until the newer endpoint is ready, this flag will point users in those orgs to the original endpoint
+   * Some orgs will require user's imported private key to match their LDAP pub key result
    */
-  public useLegacyAttesterSubmit = (): boolean => {
-    return (this.clientConfigurationJson.flags || []).includes('USE_LEGACY_ATTESTER_SUBMIT');
+  public setupEnsureImportedPrvMatchLdapPub = (): boolean => {
+    return (this.clientConfigurationJson.flags || []).includes('SETUP_ENSURE_IMPORTED_PRV_MATCH_LDAP_PUB');
   };
 
   /**

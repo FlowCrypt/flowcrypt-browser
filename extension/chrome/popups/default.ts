@@ -58,14 +58,14 @@ View.run(class DefaultPopupView extends View {
 
   private renderChooseEmailOrSettingsPopup = (activeAcctEmail?: string) => {
     $('#email_or_settings').css('display', 'block');
-    $('.action_open_settings').click(this.setHandler(async () => {
+    $('.action_open_settings').on('click', this.setHandler(async () => {
       if (activeAcctEmail) {
         await this.redirectToInitSetup(activeAcctEmail);
       } else {
         window.location.href = 'select_account.htm?action=settings';
       }
     }));
-    $('.action_open_encrypted_inbox').click(this.setHandler(async () => {
+    $('.action_open_encrypted_inbox').on('click', this.setHandler(async () => {
       if (activeAcctEmail) {
         await Browser.openSettingsPage('inbox/inbox.htm', activeAcctEmail);
         await Ui.time.sleep(100);
@@ -79,7 +79,7 @@ View.run(class DefaultPopupView extends View {
   private renderSetupAcctPromptPopup = (activeAcctEmail: string) => {
     $('#set_up_account').css('display', 'block');
     $('.email').text(activeAcctEmail);
-    $('.action_set_up_account').click(this.setHandlerPrevent('double', () => { this.redirectToInitSetup(activeAcctEmail).catch(Catch.reportErr); }));
+    $('.action_set_up_account').on('click', this.setHandlerPrevent('double', () => { this.redirectToInitSetup(activeAcctEmail).catch(Catch.reportErr); }));
   };
 
 });

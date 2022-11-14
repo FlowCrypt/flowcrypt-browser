@@ -21,7 +21,7 @@ const dbCorruptedHtml = `
       and remove FlowCrypt from your browser. After that, go to <a href="https://flowcrypt.com">flowcrypt.com</a> to install it again.</li>
     <li>If this didn't help either, you may need to re-install your browser.</li>
   </ol>
-  <p>Email human@flowcrypt.com if you need any help.</p>
+  <p>${Lang.general.contactForSupportSentence()}</p>
 `;
 
 const checkFfSettings = `If you are on Firefox, check that <b>indexedDB.enabled</b> is set to <b>true</b> in browser about:config
@@ -40,7 +40,7 @@ if (reason === 'db_corrupted') {
   title.text('FlowCrypt cannot function because browser storage is disabled or missing');
   Xss.sanitizeRender(details, `<p>browser.storage is undefined</p><p>If you are on Firefox, check for any special browser settings, or use a clean Firefox Profile.</p>`);
 } else {
-  details.text('Unknown reason. Write human@flowcrypt.com if you need help.');
+  details.text(`Unknown reason. ${Lang.general.contactForSupportSentence()}`);
 }
 
 if (stack) {

@@ -39,7 +39,7 @@ export class ComposeSendBtnModule extends ViewModule<ComposeView> {
   public setHandlers = (): void => {
     const ctrlEnterHandler = Ui.ctrlEnter(() => !this.view.sizeModule.composeWindowIsMinimized && this.extractProcessSendMsg());
     this.view.S.cached('subject').add(this.view.S.cached('compose')).keydown(ctrlEnterHandler);
-    this.view.S.cached('send_btn').click(this.view.setHandlerPrevent('double', () => this.extractProcessSendMsg()));
+    this.view.S.cached('send_btn').on('click', this.view.setHandlerPrevent('double', () => this.extractProcessSendMsg()));
     this.popover.setHandlers();
   };
 
@@ -125,7 +125,10 @@ export class ComposeSendBtnModule extends ViewModule<ComposeView> {
             Ui.toast(result.supplementaryOperationsErrors[0] as string);
           }, 0);
         }
-        BrowserMsg.send.notificationShow(this.view.parentTabId, { notification: `Your ${this.view.isReplyBox ? 'reply' : 'message'} has been sent.` });
+        BrowserMsg.send.notificationShow(this.view.parentTabId, {
+          notification: `Your ${this.view.isReplyBox ? 'reply' : 'message'} has been sent.`,
+          group: 'compose'
+        });
         BrowserMsg.send.focusBody(this.view.parentTabId); // Bring focus back to body so Gmails shortcuts will work
         if (this.view.isReplyBox) {
           this.view.renderModule.renderReplySuccess(msgObj.renderSentMessage.attachments, msgObj.renderSentMessage.recipients, result.sentIds[0]);

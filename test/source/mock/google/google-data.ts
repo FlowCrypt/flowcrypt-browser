@@ -2,8 +2,8 @@
 
 import { AddressObject, ParsedMail, StructuredHeader } from 'mailparser';
 
+import { readdir, readFile } from 'fs';
 import { Util } from '../../util/index';
-import { readFile, readdir } from 'fs';
 import { ParseMsgResult } from '../../util/parse';
 
 type GmailMsg$header = { name: string, value: string };
@@ -171,6 +171,8 @@ export class GoogleData {
   <div class="gb_hb">
     <div class="gb_lb">Full Name</div>
   </div>
+  <!-- Compose Button Selector -->
+  <div class="aeN" style="width: 180px; height: 800px"></div>
   </body></html>
   `;
 

@@ -47,7 +47,7 @@ View.run(class AddPubkeyView extends View {
       Xss.sanitizeAppend('select.copy_from_email', `<option value="${escapedEmail}">${escapedEmail}</option>`);
     }
     this.fetchKeyUi.handleOnPaste($('.pubkey'));
-    $('.action_settings').click(this.setHandler(async () => await Browser.openSettingsPage('index.htm', this.acctEmail, '/chrome/settings/modules/contacts.htm')));
+    $('.action_settings').on('click', this.setHandler(async () => await Browser.openSettingsPage('index.htm', this.acctEmail, '/chrome/settings/modules/contacts.htm')));
   };
 
   public setHandlers = () => {
@@ -68,8 +68,8 @@ View.run(class AddPubkeyView extends View {
       }
     });
     $('select.copy_from_email').change(this.setHandler((el) => this.copyFromEmailHandler(el)));
-    $('.action_ok').click(this.setHandler(() => this.submitHandler()));
-    $('.action_close').click(this.setHandler(() => this.closeDialog()));
+    $('.action_ok').on('click', this.setHandler(() => this.submitHandler()));
+    $('.action_close').on('click', this.setHandler(() => this.closeDialog()));
   };
 
   private closeDialog = () => {

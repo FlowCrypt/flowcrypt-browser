@@ -10,6 +10,8 @@ import { Buf } from '../../../core/buf.js';
 import { RecipientType } from '../../shared/api.js';
 import { ReplyParams } from '../email-provider-api.js';
 
+export const FLOWCRYPT_REPLY_EMAIL_ADDRESSES = ['replies@flowcrypt.com', 'robot@flowcrypt.com'];
+
 export namespace GmailRes { // responses
 
   export type GmailMsg$header = { name: string, value: string };
@@ -124,10 +126,9 @@ export class GmailParser {
   };
 
   public static findBodies = (gmailMsg: GmailRes.GmailMsg | GmailRes.GmailMsg$payload | GmailRes.GmailMsg$payload$part, internalResults: SendableMsgBody = {}): SendableMsgBody => {
-    const isGmailMsgWithPayload = (v: any): v is GmailRes.GmailMsg => v && typeof (v as GmailRes.GmailMsg).payload !== 'undefined'; // tslint:disable-line:no-unsafe-any
-    const isGmailMsgPayload = (v: any): v is GmailRes.GmailMsg$payload => v && typeof (v as GmailRes.GmailMsg$payload).parts !== 'undefined'; // tslint:disable-line:no-unsafe-any
-    // tslint:disable-next-line:no-unsafe-any
-    const isGmailMsgPayloadPart = (v: any): v is GmailRes.GmailMsg$payload$part => v && typeof (v as GmailRes.GmailMsg$payload$part).body !== 'undefined';
+    const isGmailMsgWithPayload = (v: unknown): v is GmailRes.GmailMsg => !!v && typeof (v as GmailRes.GmailMsg).payload !== 'undefined';
+    const isGmailMsgPayload = (v: unknown): v is GmailRes.GmailMsg$payload => !!v && typeof (v as GmailRes.GmailMsg$payload).parts !== 'undefined';
+    const isGmailMsgPayloadPart = (v: unknown): v is GmailRes.GmailMsg$payload$part => !!v && typeof (v as GmailRes.GmailMsg$payload$part).body !== 'undefined';
     if (isGmailMsgWithPayload(gmailMsg)) {
       GmailParser.findBodies(gmailMsg.payload!, internalResults);
     }
@@ -157,7 +158,7 @@ export class GmailParser {
       subject: Mime.subjectWithoutPrefixes(subject),
     };
     let to = Value.arr.unique([...headers.to, ...headers.replyTo]);
-    if (headers.from && !to.includes(headers.from)) {
+    if (headers.from && !to.includes(headers.from) && !FLOWCRYPT_REPLY_EMAIL_ADDRESSES.includes(headers.from)) {
       to.unshift(headers.from);
     }
     const acctEmailAliasesInMsg = [...to, ...headers.cc, ...headers.bcc].filter(e => addresses.includes(e));

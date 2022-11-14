@@ -20,6 +20,7 @@ import { KeyStore } from '../../../js/common/platform/store/key-store.js';
 import { KeyStoreUtil } from "../../../js/common/core/crypto/key-store-util.js";
 import { ContactStore } from '../../../js/common/platform/store/contact-store.js';
 import { KeyUtil } from '../../../js/common/core/crypto/key.js';
+import { ReplyOptions } from './compose-reply-btn-popover-module.js';
 
 export class ComposeRenderModule extends ViewModule<ComposeView> {
 
@@ -29,6 +30,7 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
     if (this.view.isReplyBox) {
       this.responseMethod = 'reply';
     }
+    await this.view.replyPopoverModule.render(this.view.isReplyBox);
     this.initComposeBoxStyles();
     if (!this.view.draftId && await this.view.draftModule.localDraftGet()) {
       this.view.draftId = this.view.draftModule.getLocalDraftId();
@@ -51,7 +53,7 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
           await this.renderReplyMsgComposeTable();
         } else {
           $('#a_reply,#a_reply_all,#a_forward')
-            .click(this.view.setHandler((el) => this.actionActivateReplyBoxHandler(el), this.view.errModule.handle(`activate reply box`)));
+            .on('click', this.view.setHandler((el) => this.actionActivateReplyBoxHandler(el), this.view.errModule.handle(`activate reply box`)));
         }
       }
     }
@@ -100,7 +102,7 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
     }
     this.view.sizeModule.resizeComposeBox();
     if (this.responseMethod === 'forward') {
-      this.view.S.cached('recipients_placeholder').click();
+      this.view.S.cached('recipients_placeholder').trigger('click');
     }
     BrowserMsg.send.scrollToReplyBox(this.view.parentTabId, { replyMsgId: `#${this.view.frameId}` });
   };
@@ -111,6 +113,8 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
       const recipientsNumber = this.view.replyParams.to.length + this.view.replyParams.cc.length + this.view.replyParams.bcc.length;
       if (recipientsNumber > 1) {
         $('#a_reply_all').css('display', 'inline-flex');
+      } else {
+        $('#popover_a_reply_all_option').addClass('hidden');
       }
     }
   };
@@ -191,6 +195,24 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
     }
   };
 
+  public changeReplyOption = async (option: ReplyOptions) => {
+    if (!this.view.replyParams) {
+      return;
+    }
+    this.view.recipientsModule.clearRecipients();
+    if (option === 'a_forward') {
+      await this.view.quoteModule.addTripleDotQuoteExpandFooterAndQuoteBtn(this.view.replyMsgId, 'forward');
+    } else {
+      this.view.recipientsModule.addRecipients(this.view.replyParams, false).catch(Catch.reportErr);
+      if (option === 'a_reply') {
+        await this.view.recipientsModule.clearRecipientsForReply();
+      }
+      Catch.setHandledTimeout(() => { // Chrome needs async focus: https://github.com/FlowCrypt/flowcrypt-browser/issues/2056
+        document.getElementById('input_text')!.focus(); // jQuery no longer worked as of 3.6.0
+      }, 10);
+    }
+  };
+
   private initComposeBoxStyles = () => {
     if (this.view.isReplyBox) {
       this.view.S.cached('body').addClass('reply_box');
@@ -208,7 +230,8 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
   };
 
   private actionActivateReplyBoxHandler = async (target: HTMLElement) => {
-    const method = $(target).attr('id');
+    const method = $(target).attr('id') as ReplyOptions;
+    this.view.replyPopoverModule.changeOptionImage(method);
     if (method === 'a_forward') {
       this.responseMethod = 'forward';
       this.view.recipientsModule.clearRecipients();
@@ -262,10 +285,10 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
         await this.view.recipientsModule.parseRenderRecipients(this.view.S.cached('input_to')); // this will force firefox to render them on load
       }
     } else {
-      $('.close_compose_window').click(this.view.setHandler(() => this.actionCloseHandler(), this.view.errModule.handle(`close compose window`)));
-      this.view.S.cached('title').click(() => {
+      $('.close_compose_window').on('click', this.view.setHandler(() => this.actionCloseHandler(), this.view.errModule.handle(`close compose window`)));
+      this.view.S.cached('title').on('click', () => {
         if (this.view.sizeModule.composeWindowIsMinimized) {
-          $('.minimize_compose_window').click();
+          $('.minimize_compose_window').trigger('click');
         }
       });
       await this.view.quoteModule.addTripleDotQuoteExpandFooterOnlyBtn();
@@ -287,8 +310,8 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
     this.view.S.cached('body').keydown(this.view.setHandler((el, ev) => this.onBodyKeydownHandler(el, ev)));
     this.view.S.cached('input_to').bind('paste', this.view.setHandler((el, ev) => this.onRecipientPasteHandler(el, ev)));
     this.view.inputModule.squire.addEventListener('input', () => this.view.S.cached('send_btn_note').text(''));
-    this.view.S.cached('input_addresses_container_inner').click(this.view.setHandler(() => this.onRecipientsClickHandler(), this.view.errModule.handle(`focus recipients`)));
-    this.view.S.cached('input_addresses_container_inner').children().click(() => false);
+    this.view.S.cached('input_addresses_container_inner').on('click', this.view.setHandler(() => this.onRecipientsClickHandler(), this.view.errModule.handle(`focus recipients`)));
+    this.view.S.cached('input_addresses_container_inner').children().on('click', () => false);
     this.view.S.cached('input_subject').bind('input', this.view.setHandler((el: HTMLInputElement) => this.subjectRTLHandler(el))).trigger('input');
   };
 
@@ -343,7 +366,7 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
     if (this.view.sizeModule.composeWindowIsMinimized) {
       return e.preventDefault();
     }
-    Ui.escape(() => !this.view.isReplyBox && $('.close_compose_window').click())(e);
+    Ui.escape(() => !this.view.isReplyBox && $('.close_compose_window').trigger('click'))(e);
     const focusableEls = this.getFocusableEls();
     const focusIndex = focusableEls.indexOf(e.target);
     if (focusIndex !== -1) { // Focus trap (Tab, Shift+Tab)

@@ -72,15 +72,15 @@ class PwdEncryptedMessageWithFlowCryptComApiTestStrategy implements ITestMsgStra
 class PwdEncryptedMessageWithFesIdTokenTestStrategy implements ITestMsgStrategy {
   public test = async (parseResult: ParseMsgResult, id: string) => {
     const mimeMsg = parseResult.mimeMsg;
-    const expectedSenderEmail = 'user@standardsubdomainfes.test:8001';
+    const expectedSenderEmail = 'user@standardsubdomainfes.localhost:8001';
     expect(mimeMsg.from!.text).to.equal(`First Last <${expectedSenderEmail}>`);
-    if (mimeMsg.text?.includes('http://fes.standardsubdomainfes.test:8001/message/FES-MOCK-MESSAGE-FOR-TO@EXAMPLE.COM-ID')) {
+    if (mimeMsg.text?.includes('http://fes.standardsubdomainfes.localhost:8001/message/FES-MOCK-MESSAGE-FOR-TO@EXAMPLE.COM-ID')) {
       expect((mimeMsg.to as AddressObject).text).to.equal('Mr To <to@example.com>');
       // tslint:disable-next-line:no-unused-expression
       expect(mimeMsg.cc).to.be.an.undefined; // eslint-disable-line no-unused-expressions
       // tslint:disable-next-line:no-unused-expression
       expect(mimeMsg.bcc).to.be.an.undefined; // eslint-disable-line no-unused-expressions
-    } else if (mimeMsg.text?.includes('http://fes.standardsubdomainfes.test:8001/message/FES-MOCK-MESSAGE-FOR-BCC@EXAMPLE.COM-ID')) {
+    } else if (mimeMsg.text?.includes('http://fes.standardsubdomainfes.localhost:8001/message/FES-MOCK-MESSAGE-FOR-BCC@EXAMPLE.COM-ID')) {
       expect((mimeMsg.to as AddressObject).text).to.equal('Mr Bcc <bcc@example.com>');
       // tslint:disable-next-line:no-unused-expression
       expect(mimeMsg.cc).to.be.an.undefined; // eslint-disable-line no-unused-expressions
@@ -99,9 +99,9 @@ class PwdEncryptedMessageWithFesIdTokenTestStrategy implements ITestMsgStrategy 
 class PwdEncryptedMessageWithFesPubkeyRecipientInBccTestStrategy implements ITestMsgStrategy {
   public test = async (parseResult: ParseMsgResult, id: string) => {
     const mimeMsg = parseResult.mimeMsg;
-    const expectedSenderEmail = 'user3@standardsubdomainfes.test:8001';
+    const expectedSenderEmail = 'user3@standardsubdomainfes.localhost:8001';
     expect(mimeMsg.from!.text).to.equal(`First Last <${expectedSenderEmail}>`);
-    if (mimeMsg.text?.includes('http://fes.standardsubdomainfes.test:8001/message/FES-MOCK-MESSAGE-FOR-TO@EXAMPLE.COM-ID')) {
+    if (mimeMsg.text?.includes('http://fes.standardsubdomainfes.localhost:8001/message/FES-MOCK-MESSAGE-FOR-TO@EXAMPLE.COM-ID')) {
       expect(mimeMsg.text!).to.include(`${expectedSenderEmail} has sent you a password-encrypted email`);
       expect(mimeMsg.text!).to.include('Follow this link to open it');
       expect((mimeMsg.to as AddressObject).text).to.equal('to@example.com');
@@ -126,7 +126,7 @@ class PwdEncryptedMessageWithFesPubkeyRecipientInBccTestStrategy implements ITes
       expect(mimeMsg.cc).to.be.an.undefined; // eslint-disable-line no-unused-expressions
       // tslint:disable-next-line:no-unused-expression
       expect(mimeMsg.to).to.be.an.undefined; // eslint-disable-line no-unused-expressions
-      expect((mimeMsg.headers.get('reply-to') as AddressObject).text).to.equal('First Last <user3@standardsubdomainfes.test:8001>, to@example.com');
+      expect((mimeMsg.headers.get('reply-to') as AddressObject).text).to.equal('First Last <user3@standardsubdomainfes.localhost:8001>, to@example.com');
     }
     await new SaveMessageInStorageStrategy().test(parseResult, id);
   };
@@ -135,7 +135,7 @@ class PwdEncryptedMessageWithFesPubkeyRecipientInBccTestStrategy implements ITes
 class PwdEncryptedMessageWithFesReplyBadRequestTestStrategy implements ITestMsgStrategy {
   public test = async (parseResult: ParseMsgResult, id: string) => {
     const mimeMsg = parseResult.mimeMsg;
-    const expectedSenderEmail = 'user4@standardsubdomainfes.test:8001';
+    const expectedSenderEmail = 'user4@standardsubdomainfes.localhost:8001';
     expect(mimeMsg.from!.text).to.equal(`First Last <${expectedSenderEmail}>`);
     const to = parsedMailAddressObjectAsArray(mimeMsg.to).concat(parsedMailAddressObjectAsArray(mimeMsg.cc)).concat(parsedMailAddressObjectAsArray(mimeMsg.bcc));
     expect(to.length).to.equal(1);
@@ -157,9 +157,9 @@ class PwdEncryptedMessageWithFesReplyBadRequestTestStrategy implements ITestMsgS
 class PwdEncryptedMessageWithFesReplyRenderingTestStrategy implements ITestMsgStrategy {
   public test = async (parseResult: ParseMsgResult, id: string) => {
     const mimeMsg = parseResult.mimeMsg;
-    const expectedSenderEmail = 'user2@standardsubdomainfes.test:8001';
+    const expectedSenderEmail = 'user2@standardsubdomainfes.localhost:8001';
     expect(mimeMsg.from!.text).to.equal(`First Last <${expectedSenderEmail}>`);
-    if (mimeMsg.text?.includes('http://fes.standardsubdomainfes.test:8001/message/FES-MOCK-MESSAGE-FOR-SENDER@DOMAIN.COM-ID')) {
+    if (mimeMsg.text?.includes('http://fes.standardsubdomainfes.localhost:8001/message/FES-MOCK-MESSAGE-FOR-SENDER@DOMAIN.COM-ID')) {
       expect(mimeMsg.text!).to.include(`${expectedSenderEmail} has sent you a password-encrypted email`);
       expect(mimeMsg.text!).to.include('Follow this link to open it');
       expect((mimeMsg.to as AddressObject).text).to.equal('sender@domain.com');
@@ -169,7 +169,7 @@ class PwdEncryptedMessageWithFesReplyRenderingTestStrategy implements ITestMsgSt
       expect(mimeMsg.bcc).to.be.an.undefined; // eslint-disable-line no-unused-expressions
       // tslint:disable-next-line:no-unused-expression
       expect(mimeMsg.headers.get('reply-to')).to.be.an.undefined; // eslint-disable-line no-unused-expressions
-    } else if (mimeMsg.text?.includes('http://fes.standardsubdomainfes.test:8001/message/FES-MOCK-MESSAGE-FOR-TO@EXAMPLE.COM-ID')) {
+    } else if (mimeMsg.text?.includes('http://fes.standardsubdomainfes.localhost:8001/message/FES-MOCK-MESSAGE-FOR-TO@EXAMPLE.COM-ID')) {
       expect(mimeMsg.text!).to.include(`${expectedSenderEmail} has sent you a password-encrypted email`);
       expect(mimeMsg.text!).to.include('Follow this link to open it');
       expect((mimeMsg.to as AddressObject).text).to.equal('to@example.com');
@@ -194,7 +194,7 @@ class PwdEncryptedMessageWithFesReplyRenderingTestStrategy implements ITestMsgSt
       expect(mimeMsg.cc).to.be.an.undefined; // eslint-disable-line no-unused-expressions
       // tslint:disable-next-line:no-unused-expression
       expect(mimeMsg.bcc).to.be.an.undefined; // eslint-disable-line no-unused-expressions
-      expect((mimeMsg.headers.get('reply-to') as AddressObject).text).to.equal('First Last <user2@standardsubdomainfes.test:8001>, sender@domain.com, to@example.com');
+      expect((mimeMsg.headers.get('reply-to') as AddressObject).text).to.equal('First Last <user2@standardsubdomainfes.localhost:8001>, sender@domain.com, to@example.com');
     }
     await new SaveMessageInStorageStrategy().test(parseResult, id);
   };

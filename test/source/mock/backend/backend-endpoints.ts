@@ -1,36 +1,27 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
-import { HttpAuthErr, HttpClientErr } from '../lib/api';
+import { HttpClientErr } from '../lib/api';
 
-import { BackendData } from './backend-data';
-import { Dict } from '../../core/common';
-import { HandlersDefinition } from '../all-apis-mock';
-import { IncomingMessage } from 'http';
-import { isPost } from '../lib/mock-util';
-import { oauth } from '../lib/oauth';
 import { expect } from 'chai';
+import { IncomingMessage } from 'http';
+import { HandlersDefinition } from '../all-apis-mock';
+import { isPost } from '../lib/mock-util';
+import { BackendData, ReportedError } from './backend-data';
+import { oauth } from '../lib/oauth';
 
-export const mockBackendData = new BackendData(oauth);
+export const mockBackendData = new BackendData();
 
 export const mockBackendEndpoints: HandlersDefinition = {
-  '/api/account/login': async ({ body }, req) => {
-    const parsed = throwIfNotPostWithAuth(body, req);
+  '/api/account/get': async ({ }, req) => {
+    throwIfNotPost(req);
     const idToken = req.headers.authorization?.replace(/^Bearer /, '');
     if (!idToken) {
       throw new HttpClientErr('backend mock: Missing id_token');
     }
-    mockBackendData.registerOrThrow(parsed.account, parsed.uuid, idToken);
+    const email = oauth.extractEmailFromIdToken(idToken);
     return JSON.stringify({
-      registered: true,
-      verified: true
-    });
-  },
-  '/api/account/get': async ({ body }, req) => {
-    const parsed = throwIfNotPostWithAuth(body, req);
-    mockBackendData.checkUuidOrThrow(parsed.account, parsed.uuid);
-    return JSON.stringify({
-      account: mockBackendData.getAcctRow(parsed.account),
-      domain_org_rules: mockBackendData.getClientConfiguration(parsed.account),
+      account: mockBackendData.getAcctRow(email!),
+      domain_org_rules: mockBackendData.getClientConfiguration(email!),
     });
   },
   '/api/account/update': async ({ }, req) => {
@@ -43,11 +34,11 @@ export const mockBackendEndpoints: HandlersDefinition = {
     return { token: 'MT_xMOCKTOKEN' };
   },
   '/api/help/error': async ({ body }) => {
-    mockBackendData.reportedErrors.push(body as any);
+    mockBackendData.reportedErrors.push(body as ReportedError);
     return { saved: true };
   },
   '/api/help/feedback': async ({ body }) => {
-    expect((body as any).email).to.equal('flowcrypt.compatibility@gmail.com');
+    expect((body as { email: string }).email).to.equal('flowcrypt.compatibility@gmail.com');
     return { sent: true, text: 'Feedback sent' };
   },
   '/api/message/upload': async ({ }) => {
@@ -58,16 +49,8 @@ export const mockBackendEndpoints: HandlersDefinition = {
   },
 };
 
-const throwIfNotPostWithAuth = (body: unknown, req: IncomingMessage) => {
-  const parsed = body as Dict<any>;
+const throwIfNotPost = (req: IncomingMessage) => {
   if (!isPost(req)) {
     throw new HttpClientErr('Backend mock calls must use POST method');
   }
-  if (!parsed.account) {
-    throw new HttpAuthErr('Backend mock call missing value: account');
-  }
-  if (!parsed.uuid) {
-    throw new HttpAuthErr('Backend mock call missing value: uuid');
-  }
-  return parsed;
 };

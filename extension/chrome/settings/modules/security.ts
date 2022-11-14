@@ -18,14 +18,12 @@ import { KeyStoreUtil, ParsedKeyInfo } from "../../../js/common/core/crypto/key-
 import { PassphraseStore } from '../../../js/common/platform/store/passphrase-store.js';
 import { ClientConfiguration } from '../../../js/common/client-configuration.js';
 import { AccountServer } from '../../../js/common/api/account-server.js';
-import { FcUuidAuth } from '../../../js/common/api/account-servers/flowcrypt-com-api.js';
 
 View.run(class SecurityView extends View {
 
   private readonly acctEmail: string;
   private readonly parentTabId: string;
   private prvs!: ParsedKeyInfo[];
-  private authInfo: FcUuidAuth | undefined;
   private clientConfiguration!: ClientConfiguration;
   private acctServer: AccountServer;
 
@@ -40,7 +38,6 @@ View.run(class SecurityView extends View {
   public render = async () => {
     await initPassphraseToggle(['passphrase_entry']);
     this.prvs = await KeyStoreUtil.parse(await KeyStore.getRequired(this.acctEmail));
-    this.authInfo = await AcctStore.authInfo(this.acctEmail);
     const storage = await AcctStore.get(this.acctEmail, ['hide_message_password', 'outgoing_language']);
     this.clientConfiguration = await ClientConfiguration.newInstance(this.acctEmail);
     $('#hide_message_password').prop('checked', storage.hide_message_password === true);
@@ -53,8 +50,8 @@ View.run(class SecurityView extends View {
   };
 
   public setHandlers = () => {
-    $('.action_change_passphrase').click(this.setHandler(() => Settings.redirectSubPage(this.acctEmail, this.parentTabId, '/chrome/settings/modules/change_passphrase.htm')));
-    $('.action_test_passphrase').click(this.setHandler(() => Settings.redirectSubPage(this.acctEmail, this.parentTabId, '/chrome/settings/modules/test_passphrase.htm')));
+    $('.action_change_passphrase').on('click', this.setHandler(() => Settings.redirectSubPage(this.acctEmail, this.parentTabId, '/chrome/settings/modules/change_passphrase.htm')));
+    $('.action_test_passphrase').on('click', this.setHandler(() => Settings.redirectSubPage(this.acctEmail, this.parentTabId, '/chrome/settings/modules/test_passphrase.htm')));
     $('#hide_message_password').change(this.setHandler((el) => this.hideMsgPasswordHandler(el)));
     $('.password_message_language').change(this.setHandler(() => this.onMsgLanguageUserChange()));
   };
@@ -62,11 +59,11 @@ View.run(class SecurityView extends View {
   private renderPassPhraseOptionsIfStoredPermanently = async () => {
     if (await this.isAnyPassPhraseStoredPermanently(this.prvs)) {
       $('.forget_passphrase').css('display', '');
-      $('.action_forget_pp').click(this.setHandler(() => {
+      $('.action_forget_pp').on('click', this.setHandler(() => {
         $('.forget_passphrase').css('display', 'none');
         $('.passphrase_entry_container').css('display', '');
       }));
-      $('.confirm_passphrase_requirement_change').click(this.setHandler(async () => {
+      $('.confirm_passphrase_requirement_change').on('click', this.setHandler(async () => {
         const allPassPhrases = (await Promise.all(this.prvs.map(prv => PassphraseStore.get(this.acctEmail, prv.keyInfo))))
           .filter(pp => !!pp);
         if (allPassPhrases.includes(String($('input#passphrase_entry').val()))) {
@@ -80,7 +77,7 @@ View.run(class SecurityView extends View {
           $('input#passphrase_entry').val('').focus();
         }
       }));
-      $('.cancel_passphrase_requirement_change').click(() => window.location.reload());
+      $('.cancel_passphrase_requirement_change').on('click', () => window.location.reload());
       $('#passphrase_entry').keydown(this.setEnterHandlerThatClicks('.confirm_passphrase_requirement_change'));
     }
   };
@@ -88,18 +85,21 @@ View.run(class SecurityView extends View {
   private loadAndRenderPwdEncryptedMsgSettings = async () => {
     Xss.sanitizeRender('.select_loader_container', Ui.spinner('green'));
     try {
-      const response = await this.acctServer.accountGetAndUpdateLocalStore(this.authInfo!);
-      $('.select_loader_container').text('');
-      $('.default_message_expire').val(Number(response.account.default_message_expire).toString()).prop('disabled', false).css('display', 'inline-block');
-      $('.default_message_expire').change(this.setHandler(() => this.onDefaultExpireUserChange()));
+      if (!this.clientConfiguration.usesKeyManager()) {
+        $('.password_messages_expiry_container').show();
+        const response = await this.acctServer.accountGetAndUpdateLocalStore();
+        $('.select_loader_container').text('');
+        $('.default_message_expire').val(Number(response.account.default_message_expire).toString()).prop('disabled', false).css('display', 'inline-block');
+        $('.default_message_expire').change(this.setHandler(() => this.onDefaultExpireUserChange()));
+      }
     } catch (e) {
       if (ApiErr.isAuthErr(e)) {
         Settings.offerToLoginWithPopupShowModalOnErr(this.acctEmail, () => window.location.reload());
       } else if (ApiErr.isNetErr(e)) {
-        Xss.sanitizeRender('.expiration_container', '(network error: <a href="#">retry</a>)').find('a').click(() => window.location.reload()); // safe source
+        Xss.sanitizeRender('.expiration_container', '(network error: <a href="#">retry</a>)').find('a').on('click', () => window.location.reload()); // safe source
       } else {
         Catch.reportErr(e);
-        Xss.sanitizeRender('.expiration_container', '(unknown error: <a href="#">retry</a>)').find('a').click(() => window.location.reload()); // safe source
+        Xss.sanitizeRender('.expiration_container', '(unknown error: <a href="#">retry</a>)').find('a').on('click', () => window.location.reload()); // safe source
       }
     }
   };
@@ -107,7 +107,7 @@ View.run(class SecurityView extends View {
   private onDefaultExpireUserChange = async () => {
     Xss.sanitizeRender('.select_loader_container', Ui.spinner('green'));
     $('.default_message_expire').css('display', 'none');
-    await this.acctServer.accountUpdate(this.authInfo!, { default_message_expire: Number($('.default_message_expire').val()) });
+    await this.acctServer.accountUpdate({ default_message_expire: Number($('.default_message_expire').val()) });
     window.location.reload();
   };
 

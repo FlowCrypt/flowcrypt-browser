@@ -2,11 +2,15 @@
 
 'use strict';
 
+import { FLAVOR } from './core/const.js';
+
 /* eslint-disable max-len */
 
-const contactMinimalSubsentence = (isFesUsed: boolean) => isFesUsed ? 'contact your Help Desk' : 'write us at human@flowcrypt.com';
+const isEnterpriseBuildUsed = FLAVOR === 'enterprise';
+
+const contactMinimalSubsentence = (isFesUsed: boolean) => isFesUsed || isEnterpriseBuildUsed ? 'contact your Help Desk' : 'write us at human@flowcrypt.com';
 const contactIfHappensAgain = (isFesUsed: boolean) => `If this happens again, please ${contactMinimalSubsentence(isFesUsed)}. `;
-const contactForSupportSubsentence = (isFesUsed: boolean) => isFesUsed ? 'please contact your Help Desk for support' : 'please write us at human@flowcrypt.com to fix it';
+const contactForSupportSubsentence = (isFesUsed: boolean, reason: string = '') => isFesUsed || isEnterpriseBuildUsed ? `Please contact your Help Desk ${reason}` : `Please write us at human@flowcrypt.com ${reason}`;
 
 export const Lang = { // tslint:disable-line:variable-name
   error: {
@@ -21,6 +25,7 @@ export const Lang = { // tslint:disable-line:variable-name
     failedToCheckIfAcctUsesEncryption: 'Failed to check if encryption is already set up on your account. ',
     failedToCheckAccountBackups: 'Failed to check for account backups. ',
     failedToSubmitToAttester: 'Failed to submit to Attester. ',
+    failedToImportUnknownKey: 'Attempting to import unknown key. ',
     failedToBackUpKey: 'Failed to back up your key. ',
     failedToLoadEmailAliases: 'Failed to load your email aliases. ',
     cannotLocateBackupPasteManually: 'FlowCrypt can\'t locate your backup automatically.</div><div class="line">Find "Your FlowCrypt Backup" email, open the attachment, copy all text and paste it below.',
@@ -31,6 +36,7 @@ export const Lang = { // tslint:disable-line:variable-name
     keyBackupsNotAllowed: 'Key backups are not allowed on this domain.',
     prvHasFixableCompatIssue: 'This key has minor usability issues that can be fixed. This commonly happens when importing keys from Symantec&trade; PGP Desktop or other legacy software. It may be missing User IDs, or it may be missing a self-signature. It is also possible that the key is simply expired.',
     ppMatchAllSet: 'Your pass phrase matches. Good job! You\'re all set.',
+    noKeys: 'Keys for your account were not set up yet - please ask your systems administrator.',
   },
   account: {
     googleAcctDisabledOrPolicy: `Your Google Account or Google Email seems to be disabled, or access to this app is disabled by your organisation admin policy. Contact your email administrator.`,
@@ -89,12 +95,21 @@ export const Lang = { // tslint:disable-line:variable-name
   general: {
     contactMinimalSubsentence,
     contactIfHappensAgain,
-    contactIfNeedAssistance: (isFesUsed: boolean) => isFesUsed ? 'Contact your Help Desk if you need assistance.' : 'Email human@flowcrypt.com if you need assistance.',
+    contactIfNeedAssistance: (isFesUsed = false) => contactForSupportSubsentence(isFesUsed, 'if you need an assistance.'),
     somethingWentWrongTryAgain: (isFesUsed: boolean) => `Something went wrong, please try again. ${contactIfHappensAgain(isFesUsed)}`,
     contactForSupportSubsentence,
-    contactForSupportSentence: (isFesUsed: boolean) => isFesUsed ? 'Please contact your Help Desk for support.' : 'Please write us at human@flowcrypt.com to fix it.',
-    writeMeToFixIt: (isFesUsed: boolean) => isFesUsed ? 'Please contact your Help Desk for support.' : 'Please write us at human@flowcrypt.com to get this resolved.',
+    contactForSupportSentence: (isFesUsed = false) => contactForSupportSubsentence(isFesUsed, 'for support.'),
+    writeMeToFixIt: (isFesUsed: boolean) => contactForSupportSubsentence(isFesUsed, 'to fix it.'),
     restartBrowserAndTryAgain: (isFesUsed: boolean) => `Unexpected error occured. Please restart your browser and try again. If this persists after a restart, ${contactForSupportSubsentence(isFesUsed)}.`,
     emailAliasChangedAskForReload: 'Your email aliases on Gmail have refreshed since the last time you used FlowCrypt.\nReload the compose window now?'
   },
+  passphraseRequired: {
+    sign: 'Enter FlowCrypt pass phrase to sign email',
+    draft: 'Enter FlowCrypt pass phrase to load a draft',
+    attachment: 'Enter FlowCrypt pass phrase to decrypt a file',
+    quote: 'Enter FlowCrypt pass phrase to load quoted content',
+    backup: 'Enter FlowCrypt pass phrase to back up',
+    updateKey: 'Enter FlowCrypt pass phrase to keep your account keys up to date',
+    email: 'Enter FlowCrypt pass phrase to read encrypted email'
+  }
 };

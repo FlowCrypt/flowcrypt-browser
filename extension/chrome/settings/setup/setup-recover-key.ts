@@ -88,7 +88,7 @@ export class SetupRecoverKeyModule {
     if (this.view.action !== 'add_key') {
       Xss.sanitizeRender('#step_2_recovery .recovery_status', Lang.setup.nBackupsAlreadyRecoveredOrLeft(nImported, nFetched, txtKeysTeft));
       Xss.sanitizeReplace('#step_2_recovery .line_skip_recovery', Ui.e('div', { class: 'line', html: Ui.e('a', { href: '#', class: 'skip_recover_remaining', html: 'Skip this step' }) }));
-      $('#step_2_recovery .skip_recover_remaining').click(this.view.setHandler(() => { window.location.href = Url.create('index.htm', { acctEmail: this.view.acctEmail }); }));
+      $('#step_2_recovery .skip_recover_remaining').on('click', this.view.setHandler(() => { window.location.href = Url.create('index.htm', { acctEmail: this.view.acctEmail }); }));
     } else {
       Xss.sanitizeRender('#step_2_recovery .recovery_status', `There ${txtKeysTeft} left to recover.<br><br>Try different pass phrases to unlock all backups.`);
       $('#step_2_recovery .line_skip_recovery').css('display', 'none');
@@ -121,7 +121,7 @@ export class SetupRecoverKeyModule {
       const storedKeys = await KeyStore.get(this.view.acctEmail);
       this.view.importedKeysUniqueLongids = storedKeys.map(ki => ki.longid);
       await this.view.setupRender.renderSetupDone();
-      $('#step_4_more_to_recover .action_recover_remaining').click();
+      $('#step_4_more_to_recover .action_recover_remaining').trigger('click');
     } else {
       window.location.href = Url.create('modules/add_key.htm', { acctEmail: this.view.acctEmail, parentTabId: this.view.parentTabId });
     }

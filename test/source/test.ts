@@ -7,7 +7,6 @@ import { BrowserHandle, BrowserPool } from './browser';
 import { Config, Util, getParsedCliParams } from './util';
 
 import { BrowserRecipe } from './tests/tooling/browser-recipe';
-// import { FlowCryptApi } from './tests/tooling/api';
 import { defineComposeTests } from './tests/compose';
 import { defineDecryptTests } from './tests/decrypt';
 import { defineElementTests } from './tests/elements';
@@ -77,6 +76,7 @@ const testWithBrowser = (acct: CommonAcct | undefined, cb: (t: AvaContext, brows
       if (DEBUG_BROWSER_LOG) {
         try {
           const page = await browser.newPage(t, TestUrls.extension('chrome/dev/ci_unit_test.htm'));
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const items = await page.target.evaluate(() => (window as any).Debug.readDatabase()) as { input: unknown, output: unknown }[];
           for (let i = 0; i < items.length; i++) {
             const item = items[i];
@@ -127,12 +127,14 @@ ava.default.after.always('evaluate Catch.reportErr errors', async t => {
       'BrowserMsg(processAndStoreKeysFromEkmLocally) sendRawResponse::Error: Some keys could not be parsed',
       'BrowserMsg(ajax) Bad Request: 400 when GET-ing https://localhost:8001/flowcrypt-email-key-manager/v1/keys/private (no body):  -> RequestTimeout'
     ].includes(e.message))
-    // below for test "user4@standardsubdomainfes.test:8001 - PWD encrypted message with FES web portal - a send fails with gateway update error"
+    // below for test "user4@standardsubdomainfes.localhost:8001 - PWD encrypted message with FES web portal - a send fails with gateway update error"
     .filter(e => !e.message.includes('Test error'))
     // below for test "no.fes@example.com - skip FES on consumer, show friendly message on enterprise"
     .filter(e => !e.trace.includes('-1 when GET-ing https://fes.example.com'))
     // todo - ideally mock tests would never call this. But we do tests with human@flowcrypt.com so it's calling here
-    .filter(e => !e.trace.includes('-1 when GET-ing https://openpgpkey.flowcrypt.com'));
+    .filter(e => !e.trace.includes('-1 when GET-ing https://openpgpkey.flowcrypt.com'))
+    // below for "test allows to retry public key search when attester returns error"
+    .filter(e => !e.message.includes('Error: Internal Server Error: 500 when GET-ing https://localhost:8001/attester/pub/attester.return.error@flowcrypt.test'));
   const foundExpectedErr = usefulErrors.find(re => re.message === `intentional error for debugging`);
   const foundUnwantedErrs = usefulErrors.filter(re => re.message !== `intentional error for debugging` && !re.message.includes('traversal forbidden'));
   if (testVariant === 'CONSUMER-MOCK' && internalTestState.expectIntentionalErrReport && !foundExpectedErr) {
@@ -168,7 +170,6 @@ ava.default.after.always('send debug info if any', async t => {
     mkdirSync(debugArtifactDir);
     for (let i = 0; i < debugHtmlAttachments.length; i++) {
       // const subject = `${testId} ${i + 1}/${debugHtmlAttachments.length}`;
-      // await FlowCryptApi.hookCiDebugEmail(subject, debugHtmlAttachments[i]);
       const fileName = `debugHtmlAttachment-${i}.html`;
       const filePath = `${debugArtifactDir}/${fileName}`;
       console.info(`Writing debug file ${fileName}`);

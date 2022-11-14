@@ -4,17 +4,14 @@ agent:
   machine:
     type: e1-standard-8
     os_image: ubuntu1804
-
-auto_cancel: # cancel running CI for older commits on same branch if new commits are added
+auto_cancel:
   running:
-    when: "branch != 'master'"
-
+    when: branch != 'master'
 blocks:
-
   - name: Tests
     dependencies: []
     execution_time_limit:
-      minutes: 20
+      minutes: 25
     task:
       secrets:
         - name: flowcrypt-browser-ci-secrets
@@ -28,53 +25,37 @@ blocks:
           - mkdir ~/git && checkout && mv ~/test-secrets.json ~/git/flowcrypt-browser/test/test-secrets.json
           - cd ~/git/flowcrypt-browser
           - npm install
-          - echo "NODE=$(node --version), NPM=$(npm --version), TSC=$( ./node_modules/typescript/bin/tsc --version)"
+          - 'echo "NODE=$(node --version), NPM=$(npm --version), TSC=$( ./node_modules/typescript/bin/tsc --version)"'
           - npm run-script pretest
-          - sudo sh -c "echo '209.250.232.81 cron.flowcrypt.com' >> /etc/hosts"
-          - sudo sh -c "echo '127.0.0.1 fes.google.mock.flowcryptlocal.test' >> /etc/hosts"
-          - sudo sh -c "echo '127.0.0.1 google.mock.flowcryptlocal.test' >> /etc/hosts"
-          - sudo sh -c "echo '127.0.0.1 fes.standardsubdomainfes.test' >> /etc/hosts"
-          - sudo sh -c "echo '127.0.0.1 standardsubdomainfes.test' >> /etc/hosts"
-          - sudo sh -c "echo '127.0.0.1 fes.disablefesaccesstoken.test' >> /etc/hosts"
-
       jobs:
-
         - name: code quality
           commands:
             - npm run-script test_tslint
             - npm run-script test_eslint
             - npm run-script test_stylelint
             - npm run-script test_patterns
-
         - name: internals
           commands:
             - npm run-script test_async_stack
             - npm run-script test_buf
-
         - name: consumer mock - unit tests
           commands:
             - npm run-script test_local_unit_consumer
-
         - name: consumer mock - standard test group
           commands:
             - npm -v
             - node -v
             - npm run-script test_ci_chrome_consumer
-
         - name: consumer mock - flaky test group
           commands:
             - npm run-script test_ci_chrome_consumer_flaky
-
         - name: enterprise mock - unit tests
           commands:
             - npm run-script test_local_unit_enterprise
-
         - name: enterprise mock - standard test group
           commands:
             - npm run-script test_ci_chrome_enterprise
             - cd ./build && zip -r ~/chrome-enterprise.zip ./chrome-enterprise/* && cd ~
-#            - if [ "$SEMAPHORE_GIT_BRANCH" = master ]; artifact push project chrome-enterprise.zip --force; fi
-
       epilogue:
         on_fail:
           commands:
@@ -86,7 +67,7 @@ blocks:
   - name: Live Gmail tests
     dependencies: []
     run:
-      when: "branch = 'master' OR branch =~ 'live-test'  OR branch =~ 'gmail-test'"
+      when: branch = 'master' OR branch =~ 'live-test'  OR branch =~ 'gmail-test'
     execution_time_limit:
       minutes: 20
     task:
@@ -102,15 +83,17 @@ blocks:
           - npm install -g npm@8.11.0 && mkdir ~/git && checkout && mv ~/test-secrets.json ~/git/flowcrypt-browser/test/test-secrets.json
           - cd ~/git/flowcrypt-browser
           - npm install
-          - echo "NODE=$(node --version), NPM=$(npm --version), TSC=$( ./node_modules/typescript/bin/tsc --version)"
+          - 'echo "NODE=$(node --version), NPM=$(npm --version), TSC=$( ./node_modules/typescript/bin/tsc --version)"'
           - npm run-script pretest
-          - sudo sh -c "echo '209.250.232.81 cron.flowcrypt.com' >> /etc/hosts"
-          - sudo sh -c "echo '127.0.0.1 fes.google.mock.flowcryptlocal.test' >> /etc/hosts"
-          - sudo sh -c "echo '127.0.0.1 google.mock.flowcryptlocal.test' >> /etc/hosts"
-          - sudo sh -c "echo '127.0.0.1 fes.standardsubdomainfes.test' >> /etc/hosts"
-          - sudo sh -c "echo '127.0.0.1 standardsubdomainfes.test' >> /etc/hosts"
-          - sudo sh -c "echo '127.0.0.1 fes.disablefesaccesstoken.test' >> /etc/hosts"
       jobs:
         - name: Live Gmail tests
           commands:
             - npm run-script test_ci_chrome_consumer_live_gmail
+      epilogue:
+        on_fail:
+          commands:
+            - |
+              if [ -f build/test/test/debugArtifacts/debugHtmlAttachment-0.html ]; then
+                echo "Uploading debug files as job artifacts..."
+                artifact push job build/test/test/debugArtifacts/debugHtmlAttachment-0.html
+              fi

@@ -24,8 +24,12 @@ import Parse from './../util/parse';
 import { OpenPGPKey } from '../core/crypto/pgp/openpgp-key';
 import { BrowserHandle } from '../browser';
 import { AvaContext } from './tooling';
+import { mockBackendData } from '../mock/backend/backend-endpoints';
+import { ClientConfiguration } from '../mock/backend/backend-data';
+import { HttpClientErr, Status } from '../mock/lib/api';
 
 // tslint:disable:no-blank-lines-func
+// tslint:disable:no-unused-expression
 
 export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: TestWithBrowser) => {
 
@@ -54,6 +58,26 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       await attesterFrame.waitForContent('@page-attester', 'flowcryptcompatibility@gmail.com');
       await SettingsPageRecipe.closeDialog(settingsPage);
       await SettingsPageRecipe.toggleScreen(settingsPage, 'basic');
+    }));
+
+    ava.default('settings - attester diagnostics page shows mismatch information correctly', testWithBrowser(undefined, async (t, browser) => {
+      const email = 'test.match.attester.key@gmail.com';
+      const mismatchEmail = 'test.mismatch.attester.key@gmail.com';
+      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, email);
+      await SetupPageRecipe.manualEnter(settingsPage, 'test.match.attester.key', { submitPubkey: false, usedPgpBefore: true },
+        { isSavePassphraseChecked: false, isSavePassphraseHidden: false });
+      await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
+      const attesterFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-attester-page', ['keyserver.htm', 'placement=settings']);
+      await attesterFrame.waitAll('@page-attester');
+      await attesterFrame.waitTillGone('@spinner');
+      await attesterFrame.waitForContent(
+        `@attester-${email.replace(/[^a-z0-9]+/g, '')}-pubkey-result`,
+        'Submitted correctly, can receive encrypted email.'
+      );
+      await attesterFrame.waitForContent(
+        `@attester-${mismatchEmail.replace(/[^a-z0-9]+/g, '')}-pubkey-result`,
+        'Wrong public key recorded. Your incoming email may be unreadable when encrypted.'
+      );
     }));
 
     ava.default('settings - verify key presense 1pp1', testWithBrowser('compatibility', async (t, browser) => {
@@ -178,10 +202,12 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
     ava.default('settings - import revoked key fails but the revocation info is saved', testWithBrowser('ci.tests.gmail', async (t, browser) => {
       const dbPage = await browser.newPage(t, TestUrls.extension('chrome/dev/ci_unit_test.htm'));
       const revocationBefore = await dbPage.page.evaluate(async () => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const db = await (window as any).ContactStore.dbOpen();
         const revocation: { fingerprint: string } = await new Promise((resolve, reject) => {
           const tx = db.transaction(['revocations'], 'readonly');
           const req = tx.objectStore('revocations').get('A5CFC8E8EA4AE69989FE2631097EEBF354259A5E');
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           (window as any).ContactStore.setReqPipe(req, resolve, reject);
         });
         return revocation;
@@ -200,10 +226,12 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       await pubkeyFrame.notPresent('@manual-import-warning');
       expect((await pubkeyFrame.read('#pgp_block.pgp_pubkey')).toLowerCase()).to.include('not usable');
       const revocationAfter = await dbPage.page.evaluate(async () => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const db = await (window as any).ContactStore.dbOpen();
         const revocation: { fingerprint: string } = await new Promise((resolve, reject) => {
           const tx = db.transaction(['revocations'], 'readonly');
           const req = tx.objectStore('revocations').get('A5CFC8E8EA4AE69989FE2631097EEBF354259A5E');
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           (window as any).ContactStore.setReqPipe(req, resolve, reject);
         });
         return revocation;
@@ -214,21 +242,27 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
     ava.default('settings - remove public keys from contact', testWithBrowser('compatibility', async (t, browser) => {
       const dbPage = await browser.newPage(t, TestUrls.extension('chrome/dev/ci_unit_test.htm'));
       const foundKeys = await dbPage.page.evaluate(async () => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const db = await (window as any).ContactStore.dbOpen();
         // first, unlink pubkeys from `flowcrypt.compatibility@gmail.com',
         // so they remain linked only to `flowcryptcompatibility@gmail.com'
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         await (window as any).ContactStore.unlinkPubkey(db, 'flowcrypt.compatibility@gmail.com', { id: '5520CACE2CB61EA713E5B0057FDE685548AEA788', type: 'openpgp ' });
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         await (window as any).ContactStore.unlinkPubkey(db, 'flowcrypt.compatibility@gmail.com', { id: 'E8F0517BA6D7DAB6081C96E4ADAC279C95093207', type: 'openpgp ' });
         const pubkey7FDE685548AEA788: { fingerprint: string } = await new Promise((resolve, reject) => {
           const tx = db.transaction(['pubkeys'], 'readonly');
           const req = tx.objectStore('pubkeys').get('5520CACE2CB61EA713E5B0057FDE685548AEA788');
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           (window as any).ContactStore.setReqPipe(req, resolve, reject);
         });
         const pubkeyADAC279C95093207: { fingerprint: string } = await new Promise((resolve, reject) => {
           const tx = db.transaction(['pubkeys'], 'readonly');
           const req = tx.objectStore('pubkeys').get('E8F0517BA6D7DAB6081C96E4ADAC279C95093207');
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           (window as any).ContactStore.setReqPipe(req, resolve, reject);
         });
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const contactsSize: number = (await (window as any).ContactStore.search(db, { hasPgp: true, substring: 'flowcrypt' })).length;
         return { pubkey7FDE685548AEA788, pubkeyADAC279C95093207, contactsSize };
       });
@@ -249,17 +283,21 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       await contactsFrame.waitAll('@page-contacts');
       await Util.sleep(1);
       const foundKeys1 = await dbPage.page.evaluate(async () => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const db = await (window as any).ContactStore.dbOpen();
         const pubkey7FDE685548AEA788: { fingerprint: string } = await new Promise((resolve, reject) => {
           const tx = db.transaction(['pubkeys'], 'readonly');
           const req = tx.objectStore('pubkeys').get('5520CACE2CB61EA713E5B0057FDE685548AEA788');
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           (window as any).ContactStore.setReqPipe(req, resolve, reject);
         });
         const pubkeyADAC279C95093207: { fingerprint: string } = await new Promise((resolve, reject) => {
           const tx = db.transaction(['pubkeys'], 'readonly');
           const req = tx.objectStore('pubkeys').get('E8F0517BA6D7DAB6081C96E4ADAC279C95093207');
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           (window as any).ContactStore.setReqPipe(req, resolve, reject);
         });
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const contactsSize: number = (await (window as any).ContactStore.search(db, { hasPgp: true, substring: 'flowcrypt' })).length;
         return { pubkey7FDE685548AEA788, pubkeyADAC279C95093207, contactsSize };
       });
@@ -275,17 +313,21 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       await contactsFrame.waitAll('@page-contacts');
       await Util.sleep(1);
       const foundKeys2 = await dbPage.page.evaluate(async () => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const db = await (window as any).ContactStore.dbOpen();
         const pubkey7FDE685548AEA788: { fingerprint: string } = await new Promise((resolve, reject) => {
           const tx = db.transaction(['pubkeys'], 'readonly');
           const req = tx.objectStore('pubkeys').get('5520CACE2CB61EA713E5B0057FDE685548AEA788');
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           (window as any).ContactStore.setReqPipe(req, resolve, reject);
         });
         const pubkeyADAC279C95093207: { fingerprint: string } = await new Promise((resolve, reject) => {
           const tx = db.transaction(['pubkeys'], 'readonly');
           const req = tx.objectStore('pubkeys').get('E8F0517BA6D7DAB6081C96E4ADAC279C95093207');
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           (window as any).ContactStore.setReqPipe(req, resolve, reject);
         });
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const contactsSize: number = (await (window as any).ContactStore.search(db, { hasPgp: true, substring: 'flowcrypt' })).length;
         return { pubkey7FDE685548AEA788, pubkeyADAC279C95093207, contactsSize };
       });
@@ -309,11 +351,11 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       await SettingsPageRecipe.ready(settingsPage);
       await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
       await settingsPage.waitAll('@action-open-add-key-page');
-      await settingsPage.waitAndClick('@action-remove-key');
+      await settingsPage.waitAndClick('@action-remove-key-0');
       await settingsPage.page.waitForNavigation({ waitUntil: 'networkidle0' });
       await Util.sleep(1);
       await settingsPage.waitAll('@action-open-add-key-page');
-      await settingsPage.notPresent('@action-remove-key');
+      await settingsPage.notPresent('@action-remove-key-0');
     }));
 
     ava.default('settings - my key page - privileged frames and action buttons should be hidden when using key manager test', testWithBrowser(undefined, async (t, browser) => {
@@ -328,7 +370,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       await myKeyFrame.notPresent('@action-update-prv');
       await myKeyFrame.notPresent('@action-revoke-certificate');
       await myKeyFrame.waitForContent('@label-download-prv', 'THIS PRIVATE KEY IS MANAGED BY EMAIL KEY MANAGER');
-      await settingsPage.notPresent('@action-remove-key');
+      await settingsPage.notPresent('@action-remove-key-0');
       const fingerprint = await myKeyFrame.readHtml('@content-fingerprint');
       // test for direct access at my_key_update.htm
       const myKeyUpdateFrame = await browser.newPage(t, TestUrls.extension(`chrome/settings/modules/my_key_update.htm?placement=settings&acctEmail=${acct}&fingerprint=${fingerprint}`));
@@ -537,7 +579,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
     }));
 
     ava.default('settings - error modal when page parameter invalid', testWithBrowser('ci.tests.gmail', async (t, browser) => {
-      const invalidParamModalPage = await browser.newPage(t, TestUrls.extension(`chrome/settings/index.htm?acctEmail=ci.tests.gmail@gmail.com&page=invalid`));
+      const invalidParamModalPage = await browser.newPage(t, TestUrls.extension(`chrome/settings/index.htm?acctEmail=ci.tests.gmail@flowcrypt.test&page=invalid`));
       await Util.sleep(3);
       await invalidParamModalPage.waitForContent('.swal2-html-container', 'An unexpected value was found for the page parameter');
     }));
@@ -893,25 +935,6 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       await settingsPage.close();
     }));
 
-    ava.default('settings - reauth after uuid change', testWithBrowser('ci.tests.gmail', async (t, browser) => {
-      const acct = 'ci.tests.gmail@flowcrypt.test';
-      const settingsPage = await browser.newPage(t, TestUrls.extensionSettings(acct));
-      await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
-      const experimentalFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-module-experimental', ['experimental.htm']);
-      await experimentalFrame.waitAndClick('@action-regenerate-uuid');
-      await Util.sleep(2);
-      const oauthPopup = await browser.newPageTriggeredBy(t, () => PageRecipe.waitForModalAndRespond(settingsPage, 'confirm',
-        { contentToCheck: 'Please log in with FlowCrypt to continue', clickOn: 'confirm' }));
-      await OauthPageRecipe.google(t, oauthPopup, acct, 'approve');
-      await Util.sleep(5);
-      await settingsPage.close();
-
-      const settingsPage1 = await browser.newPage(t, TestUrls.extensionSettings(acct));
-      await Util.sleep(10);
-      await settingsPage1.notPresent('.swal2-container');
-      await settingsPage1.close();
-    }));
-
     ava.default('settings - email change', testWithBrowser('ci.tests.gmail', async (t, browser) => {
       const acct1 = 'ci.tests.gmail@flowcrypt.test';
       const acct2 = 'user@default-remember-passphrase-client-configuration.flowcrypt.test';
@@ -944,6 +967,139 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       expect((keys as KeyInfoWithIdentity[])[0].longid).to.equal('07481C8ACF9D49FE');
       expect(savedPassphrase2).not.to.be.an('undefined');
       await newSettingsPage.close();
+      await settingsPage.close();
+    }));
+
+    ava.default('settings - client configuration gets updated on settings and content script reloads', testWithBrowser(undefined, async (t, browser) => {
+      const acct = 'settings@settings.flowcrypt.test';
+      // set up the client configuration returned for the account
+      mockBackendData.clientConfigurationByAcctEmail[acct] = {
+        flags: [
+          'NO_PRV_BACKUP',
+          'ENFORCE_ATTESTER_SUBMIT',
+          'PRV_AUTOIMPORT_OR_AUTOGEN',
+          'PASS_PHRASE_QUIET_AUTOGEN',
+          'DEFAULT_REMEMBER_PASS_PHRASE'
+        ],
+        // custom_keyserver_url: undefined,
+        key_manager_url: 'https://localhost:8001/flowcrypt-email-key-manager',
+        // allow_attester_search_only_for_domains: undefined,
+        disallow_attester_search_for_domains: ['disallowed_domain1.test', 'disallowed_domain2.test'],
+        enforce_keygen_algo: 'rsa2048',
+        // enforce_keygen_expire_months: undefined
+      };
+      const setupPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
+      await SetupPageRecipe.autoSetupWithEKM(setupPage);
+      const {
+        cryptup_settingssettingsflowcrypttest_rules: rules1
+      } = await setupPage.getFromLocalStorage([
+        'cryptup_settingssettingsflowcrypttest_rules'
+      ]);
+      const clientConfiguration1 = rules1 as ClientConfiguration;
+      expect(clientConfiguration1.flags).to.eql([
+        'NO_PRV_BACKUP',
+        'ENFORCE_ATTESTER_SUBMIT',
+        'PRV_AUTOIMPORT_OR_AUTOGEN',
+        'PASS_PHRASE_QUIET_AUTOGEN',
+        'DEFAULT_REMEMBER_PASS_PHRASE']);
+      expect(clientConfiguration1.allow_attester_search_only_for_domains).to.be.an.undefined; // eslint-disable-line no-unused-expressions
+      expect(clientConfiguration1.disallow_attester_search_for_domains).to.eql(['disallowed_domain1.test', 'disallowed_domain2.test']);
+      expect(clientConfiguration1.enforce_keygen_algo).to.equal('rsa2048');
+      expect(clientConfiguration1.enforce_keygen_expire_months).to.be.an.undefined; // eslint-disable-line no-unused-expressions
+      expect(clientConfiguration1.custom_keyserver_url).to.be.an.undefined; // eslint-disable-line no-unused-expressions
+      expect(clientConfiguration1.key_manager_url).to.equal('https://localhost:8001/flowcrypt-email-key-manager');
+      await setupPage.close();
+
+      // modify the setup
+      mockBackendData.clientConfigurationByAcctEmail[acct] = {
+        flags: ['NO_ATTESTER_SUBMIT', 'HIDE_ARMOR_META', 'DEFAULT_REMEMBER_PASS_PHRASE'],
+        custom_keyserver_url: 'https://localhost:8001',
+        // key_manager_url: undefined,
+        allow_attester_search_only_for_domains: ['allowed_domain1.test', 'allowed_domain2.test'],
+        // disallow_attester_search_for_domains: undefined
+        // enforce_keygen_algo: undefined
+        enforce_keygen_expire_months: 12
+      };
+      // open the settings page
+      const settingsPage = await browser.newPage(t, TestUrls.extensionSettings(acct));
+      const {
+        cryptup_settingssettingsflowcrypttest_rules: rules2
+      } = await settingsPage.getFromLocalStorage(['cryptup_settingssettingsflowcrypttest_rules']);
+      // check that the configuration in the storage has been updated
+      const clientConfiguration2 = rules2 as ClientConfiguration;
+      expect(clientConfiguration2.flags).to.eql(['NO_ATTESTER_SUBMIT', 'HIDE_ARMOR_META', 'DEFAULT_REMEMBER_PASS_PHRASE']);
+      expect(clientConfiguration2.custom_keyserver_url).to.equal('https://localhost:8001');
+      expect(clientConfiguration2.key_manager_url).to.be.an.undefined; // eslint-disable-line no-unused-expressions
+      expect(clientConfiguration2.allow_attester_search_only_for_domains).to.eql(['allowed_domain1.test', 'allowed_domain2.test']);
+      expect(clientConfiguration2.disallow_attester_search_for_domains).to.be.an.undefined; // eslint-disable-line no-unused-expressions
+      expect(clientConfiguration2.enforce_keygen_algo).to.be.an.undefined; // eslint-disable-line no-unused-expressions
+      expect(clientConfiguration2.enforce_keygen_expire_months).to.equal(12);
+      const accessToken = await BrowserRecipe.getGoogleAccessToken(settingsPage, acct);
+      // keep settingsPage open to re-read the storage later via it
+      // re-configure the setup again
+      mockBackendData.clientConfigurationByAcctEmail[acct] = {
+        flags: [
+          'NO_PRV_BACKUP',
+          'ENFORCE_ATTESTER_SUBMIT',
+          'PRV_AUTOIMPORT_OR_AUTOGEN',
+          'PASS_PHRASE_QUIET_AUTOGEN',
+          'DEFAULT_REMEMBER_PASS_PHRASE'
+        ],
+        // custom_keyserver_url: undefined,
+        key_manager_url: 'https://localhost:8001/flowcrypt-email-key-manager',
+        // allow_attester_search_only_for_domains: undefined,
+        disallow_attester_search_for_domains: [],
+        enforce_keygen_algo: 'rsa3072',
+        // enforce_keygen_expire_months: undefined
+      };
+      const extraAuthHeaders = { Authorization: `Bearer ${accessToken}` };
+      let gmailPage = await browser.newPage(t, TestUrls.mockGmailUrl(), undefined, extraAuthHeaders);
+      await Util.sleep(3);
+      // read the local storage from via the extension's own page (settings)
+      const {
+        cryptup_settingssettingsflowcrypttest_rules: rules3
+      } = await settingsPage.getFromLocalStorage(['cryptup_settingssettingsflowcrypttest_rules']);
+      // check that the configuration in the storage has been updated
+      const clientConfiguration3 = rules3 as ClientConfiguration;
+      expect(clientConfiguration3.flags).to.eql([
+        'NO_PRV_BACKUP',
+        'ENFORCE_ATTESTER_SUBMIT',
+        'PRV_AUTOIMPORT_OR_AUTOGEN',
+        'PASS_PHRASE_QUIET_AUTOGEN',
+        'DEFAULT_REMEMBER_PASS_PHRASE']);
+      expect(clientConfiguration3.allow_attester_search_only_for_domains).to.be.an.undefined; // eslint-disable-line no-unused-expressions
+      expect(clientConfiguration3.disallow_attester_search_for_domains).to.eql([]);
+      expect(clientConfiguration3.enforce_keygen_algo).to.equal('rsa3072');
+      expect(clientConfiguration3.enforce_keygen_expire_months).to.be.an.undefined; // eslint-disable-line no-unused-expressions
+      expect(clientConfiguration3.custom_keyserver_url).to.be.an.undefined; // eslint-disable-line no-unused-expressions
+      expect(clientConfiguration3.key_manager_url).to.equal('https://localhost:8001/flowcrypt-email-key-manager');
+      await gmailPage.close();
+      // configure an error
+      mockBackendData.clientConfigurationByAcctEmail[acct] = new HttpClientErr('Test error', Status.BAD_REQUEST);
+      gmailPage = await browser.newPage(t, TestUrls.mockGmailUrl(), undefined, extraAuthHeaders);
+      await PageRecipe.waitForToastToAppearAndDisappear(gmailPage,
+        'Failed to update FlowCrypt Client Configuration: ' +
+        'BrowserMsg(ajax) Bad Request: 400 when POST-ing https://localhost:8001/api/account/get string: -> Test error (AjaxErr)'
+      );
+      await gmailPage.close();
+      // check that the configuration hasn't changed
+      const {
+        cryptup_settingssettingsflowcrypttest_rules: rules4
+      } = await settingsPage.getFromLocalStorage(['cryptup_settingssettingsflowcrypttest_rules']);
+      // check that the configuration in the storage has been updated
+      const clientConfiguration4 = rules4 as ClientConfiguration;
+      expect(clientConfiguration4.flags).to.eql([
+        'NO_PRV_BACKUP',
+        'ENFORCE_ATTESTER_SUBMIT',
+        'PRV_AUTOIMPORT_OR_AUTOGEN',
+        'PASS_PHRASE_QUIET_AUTOGEN',
+        'DEFAULT_REMEMBER_PASS_PHRASE']);
+      expect(clientConfiguration4.allow_attester_search_only_for_domains).to.be.an.undefined; // eslint-disable-line no-unused-expressions
+      expect(clientConfiguration4.disallow_attester_search_for_domains).to.eql([]);
+      expect(clientConfiguration4.enforce_keygen_algo).to.equal('rsa3072');
+      expect(clientConfiguration4.enforce_keygen_expire_months).to.be.an.undefined; // eslint-disable-line no-unused-expressions
+      expect(clientConfiguration4.custom_keyserver_url).to.be.an.undefined; // eslint-disable-line no-unused-expressions
+      expect(clientConfiguration4.key_manager_url).to.equal('https://localhost:8001/flowcrypt-email-key-manager');
       await settingsPage.close();
     }));
 
@@ -997,6 +1153,26 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
           'cryptup_userforbidstoringpassphraseclientconfigurationflowcrypttest_keys']);
       expect((keys2 as KeyInfoWithIdentity[]).map(ki => ki.longid)).to.include.members(['B8F687BCDE14435A', '98ACFA1EADAB5B92']);
       expect(savedPassphrase2).to.be.an('undefined');
+    }));
+
+    ava.default('settings - password messages\' expiry settings shouldn\'t be available for FES users', testWithBrowser('compatibility', async (t, browser) => {
+      const acct1 = 'flowcrypt.compatibility@gmail.com';
+      const settingsPage = await browser.newPage(t, TestUrls.extensionSettings('flowcrypt.compatibility@gmail.com'));
+      const securitySettingsFrame1 = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-security-page', ['security.htm']);
+      expect(await securitySettingsFrame1.isElementVisible('@container-password-messages-expiry')).to.equal(true);
+      await SettingsPageRecipe.closeDialog(settingsPage);
+      await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
+      const experimentalFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-module-experimental', ['experimental.htm']);
+      await experimentalFrame.waitAndClick('@action-reset-account');
+      await experimentalFrame.waitAndRespondToModal('confirm', 'confirm', `This will remove all your FlowCrypt settings for ${acct1}`);
+      await experimentalFrame.waitAndRespondToModal('confirm', 'confirm', 'Proceed to reset? Don\'t come back telling me I didn\'t warn you.');
+      await settingsPage.close();
+      const acct2 = 'settings@key-manager-autogen.flowcrypt.test';
+      const settingsPage1 = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct2);
+      await SetupPageRecipe.autoSetupWithEKM(settingsPage1);
+      const securitySettingsFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage1, '@action-open-security-page', ['security.htm']);
+      expect(await securitySettingsFrame.isElementVisible('@container-password-messages-expiry')).to.equal(false);
+      await settingsPage1.close();
     }));
 
     ava.default.todo('settings - change passphrase - mismatch curent pp');
