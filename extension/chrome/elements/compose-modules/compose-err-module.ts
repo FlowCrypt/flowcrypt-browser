@@ -81,7 +81,7 @@ export class ComposeErrModule extends ViewModule<ComposeView> {
       await Ui.modal.error(netErrMsg, true);
     } else if (ApiErr.isAuthErr(e)) {
       BrowserMsg.send.notificationShowAuthPopupNeeded(this.view.parentTabId, { acctEmail: this.view.acctEmail });
-      Settings.offerToLoginWithPopupShowModalOnErr(this.view.acctEmail);
+      Settings.offerToLoginWithPopupShowModalOnErr(this.view.acctEmail, () => this.view.sendBtnModule.extractProcessSendMsg());
     } else if (ApiErr.isReqTooLarge(e)) {
       await Ui.modal.error(`Could not send: message or attachments too large.`);
     } else if (ApiErr.isBadReq(e)) {

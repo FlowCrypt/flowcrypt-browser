@@ -25,6 +25,7 @@ import { KeyStore } from './platform/store/key-store.js';
 import { PassphraseStore } from './platform/store/passphrase-store.js';
 import { isFesUsed } from './helpers.js';
 import { Api } from './api/shared/api.js';
+import { BrowserMsg } from './browser/browser-msg.js';
 
 declare const zxcvbn: Function; // tslint:disable-line:ban-types
 
@@ -380,7 +381,7 @@ export class Settings {
       await Ui.modal.info(`Reload after logging in.`);
       return window.location.reload();
     }
-    const authRes = await GoogleAuth.newOpenidAuthPopup({ acctEmail });
+    const authRes = await BrowserMsg.send.bg.await.reconnectAcctAuthPopup({ acctEmail });
     if (authRes.result === 'Success' && authRes.acctEmail && authRes.id_token) {
       then();
     } else {

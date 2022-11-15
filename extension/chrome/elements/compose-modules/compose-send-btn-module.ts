@@ -96,7 +96,7 @@ export class ComposeSendBtnModule extends ViewModule<ComposeView> {
     }
   };
 
-  private extractProcessSendMsg = async () => {
+  public extractProcessSendMsg = async () => {
     if (this.view.S.cached('reply_msg_successful').is(':visible')) {
       return;
     }
