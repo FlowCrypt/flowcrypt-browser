@@ -86,16 +86,6 @@ export class ComposeSendBtnModule extends ViewModule<ComposeView> {
     }
   };
 
-  private btnText = (): string => {
-    if (this.popover.choices.encrypt && this.popover.choices.sign) {
-      return SendBtnTexts.BTN_ENCRYPT_SIGN_AND_SEND;
-    } else if (this.popover.choices.sign) {
-      return SendBtnTexts.BTN_SIGN_AND_SEND;
-    } else {
-      return SendBtnTexts.BTN_PLAIN_SEND;
-    }
-  };
-
   public extractProcessSendMsg = async () => {
     if (this.view.S.cached('reply_msg_successful').is(':visible')) {
       return;
@@ -144,6 +134,16 @@ export class ComposeSendBtnModule extends ViewModule<ComposeView> {
       this.isSendMessageInProgress = false;
       this.view.sendBtnModule.enableBtn();
       this.view.S.cached('toggle_send_options').show();
+    }
+  };
+
+  private btnText = (): string => {
+    if (this.popover.choices.encrypt && this.popover.choices.sign) {
+      return SendBtnTexts.BTN_ENCRYPT_SIGN_AND_SEND;
+    } else if (this.popover.choices.sign) {
+      return SendBtnTexts.BTN_SIGN_AND_SEND;
+    } else {
+      return SendBtnTexts.BTN_PLAIN_SEND;
     }
   };
 
