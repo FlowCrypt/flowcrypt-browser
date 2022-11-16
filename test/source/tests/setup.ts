@@ -453,9 +453,8 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       await Util.sleep(1);
       const myKeyFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, `@action-show-key-2`, ['my_key.htm', 'placement=settings']);
       await Util.sleep(1);
-      const curDate = new Date();
-      // getFullYear() + 1 because we set expiration as 1 year
-      const expiration = `${curDate.getFullYear() + 1}-${curDate.getMonth() + 1}-${curDate.getDate()}`;
+      const expirationDate = new Date(new Date().setFullYear(new Date().getFullYear() + 1));
+      const expiration = Str.datetimeToDate(Str.fromDate(expirationDate));
       expect(await myKeyFrame.read('@content-key-expiration')).to.equal(expiration);
     }));
 
