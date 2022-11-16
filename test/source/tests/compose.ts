@@ -441,6 +441,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       const oauthPopup = await browser.newPageTriggeredBy(t, () => composePage.waitAndRespondToModal('confirm', 'confirm', 'Please log in with FlowCrypt to continue'));
       await OauthPageRecipe.google(t, oauthPopup, acct, 'approve');
       await ComposePageRecipe.closed(composePage);
+      expect((await GoogleData.withInitializedData(acct)).searchMessagesBySubject(subject).length).to.equal(1);
     }));
 
     for (const inputMethod of ['mouse', 'keyboard']) {
