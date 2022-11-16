@@ -18,7 +18,7 @@ import { ClientConfiguration } from '../../../js/common/client-configuration.js'
 import { Lang } from '../../../js/common/lang.js';
 import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
 import { saveKeysAndPassPhrase, setPassphraseForPrvs } from '../../../js/common/helpers.js';
-import { Settings } from 'js/common/settings.js';
+import { Settings } from '../../../js/common/settings.js';
 
 View.run(class AddKeyView extends View {
 
@@ -129,17 +129,27 @@ View.run(class AddKeyView extends View {
     }
   };
 
+  private toggleCompatibilityView = (visible: boolean) => {
+    if (visible) {
+      $('#add_key_container').hide();
+      $('#compatibility_fix').show();
+    } else {
+      $('#add_key_container').show();
+      $('#compatibility_fix').hide();
+    }
+  };
+
   private renderCompatibilityFixBlockAndFinalizeSetup = async (origPrv: Key) => {
     let fixedPrv;
     try {
+      this.toggleCompatibilityView(true);
       fixedPrv = await Settings.renderPrvCompatFixUiAndWaitTilSubmittedByUser(
-        this.acctEmail, '#step_3_compatibility_fix', origPrv, String($('.input_passphrase').val()), window.location.href.replace(/#$/, ''));
+        this.acctEmail, '#compatibility_fix', origPrv, String($('.input_passphrase').val()), window.location.href.replace(/#$/, ''));
+      await this.saveKeyAndContinue(fixedPrv);
     } catch (e) {
       Catch.reportErr(e);
       await Ui.modal.error(`Failed to fix key (${String(e)}). ${Lang.general.writeMeToFixIt(this.isFesUsed())}`, false, Ui.testCompatibilityLink);
-      // this.setupRender.displayBlock('step_2b_manual_enter');
-      return;
+      this.toggleCompatibilityView(false);
     }
-    await this.saveKeyAndContinue(fixedPrv);
   };
 });
