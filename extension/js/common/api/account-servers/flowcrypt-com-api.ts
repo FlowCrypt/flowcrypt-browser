@@ -51,7 +51,6 @@ export class FlowCryptComApi extends Api {
 
   public static messageUpload = async (idToken: string, encryptedDataBinary: Uint8Array, progressCb: ProgressCb): Promise<BackendRes.FcMsgUpload> => {
     const content = new Attachment({ name: 'cryptup_encrypted_message.asc', type: 'text/plain', data: encryptedDataBinary });
-    console.log(FlowCryptComApi.getAuthorizationHeader(idToken));
     const rawResponse = await FlowCryptComApi.request<{ short: string }>(
       'message/upload',
       { content },
