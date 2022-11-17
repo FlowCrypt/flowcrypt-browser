@@ -2,7 +2,7 @@
 
 import * as ava from 'ava';
 
-import { TestVariant, Util } from './../util';
+import { Config, TestVariant, Util } from './../util';
 import { SetupPageRecipe } from './page-recipe/setup-page-recipe';
 import { TestWithBrowser } from './../test';
 import { expect } from 'chai';
@@ -158,67 +158,7 @@ export const defineSetupTests = (testVariant: TestVariant, testWithBrowser: Test
     // `!this.users.length` condition is removed from the Key constructor.
     ava.default.failing('setup - import key - fix uids', testWithBrowser(undefined, async (t, browser) => {
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.test.key.imported@gmail.com');
-      await SetupPageRecipe.manualEnter(settingsPage, 'unused', {
-        submitPubkey: false, fixKey: true,
-        key: {
-          title: 'UIDless key',
-          armored: `-----BEGIN PGP PRIVATE KEY BLOCK-----
-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
-CciXuhqnLwoVF5/uXMYffVtfl/OU+w==
-=EqcV
------END PGP PRIVATE KEY BLOCK-----`,
-          passphrase: 'correct horse battery staple',
-          longid: '123',
-        }
-      });
+      await SetupPageRecipe.manualEnter(settingsPage, 'uid.less.key', { submitPubkey: false, fixKey: true });
     }, 'FAILING'));
 
     ava.default('setup - import key - warning on primary has no secret', testWithBrowser(undefined, async (t, browser) => {
@@ -495,6 +435,32 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       await gmailPage.waitAndClick('@notification-setup-action-dismiss', { confirmGone: true });
       await gmailPage.page.reload();
       await gmailPage.notPresent(['@webmail-notification-setup', '@notification-setup-action-open-settings', '@notification-setup-action-dismiss', '@notification-setup-action-close']);
+    }));
+
+    ava.default('setup - test adding missing self-signature key issue', testWithBrowser('compatibility', async (t, browser) => {
+      const acctEmail = 'flowcrypt.compatibility@gmail.com';
+      const settingsPage = await browser.newPage(t, TestUrls.extensionSettings(acctEmail));
+      await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
+      const addKeyPopup = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-add-key-page', ['add_key.htm']);
+      await addKeyPopup.waitAndClick('@source-paste');
+      const key = Config.key('missing.self.signatures');
+      await addKeyPopup.waitAndType('@input-armored-key', key?.armored ?? '');
+      await addKeyPopup.waitAndType('#input_passphrase', key?.passphrase ?? '');
+      await addKeyPopup.waitAndClick('.action_add_private_key', { delay: 1 });
+      await addKeyPopup.waitAll('@input-compatibility-fix-expire-years', { timeout: 30 });
+      await addKeyPopup.selectOption('@input-compatibility-fix-expire-years', '1');
+      await addKeyPopup.waitAndClick('@action-fix-and-import-key');
+      await Util.sleep(1);
+      const myKeyFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, `@action-show-key-2`, ['my_key.htm', 'placement=settings']);
+      await Util.sleep(1);
+      const curDate = new Date(), year = curDate.getFullYear(), month = curDate.getMonth(), date = curDate.getDate();
+      const expirationDate = new Date(year + 1, month, date);
+      // Had to add this because if test runs at 23:59:59 it might cause assertion error
+      // https://github.com/FlowCrypt/flowcrypt-browser/pull/4796#discussion_r1025150001
+      const oneDayBeforeExpirationDate = new Date(year + 1, month, date - 1);
+      const expiration = Str.datetimeToDate(Str.fromDate(expirationDate));
+      const oneDayBeforeExpiration = Str.datetimeToDate(Str.fromDate(oneDayBeforeExpirationDate));
+      expect(await myKeyFrame.read('@content-key-expiration')).to.be.oneOf([expiration, oneDayBeforeExpiration]);
     }));
 
     ava.default('setup [not using key manager] - notify users when their keys expire soon', testWithBrowser(undefined, async (t, browser) => {
