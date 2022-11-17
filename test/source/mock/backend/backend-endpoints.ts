@@ -14,7 +14,7 @@ export const mockBackendData = new BackendData();
 export const mockBackendEndpoints: HandlersDefinition = {
   '/api/account/get': async ({ }, req) => {
     throwIfNotPost(req);
-    const email = throwIfInvalidOrMissingIdToken(req);
+    const email = getEmailFromIdTokenOrThrow(req);
     return JSON.stringify({
       account: mockBackendData.getAcctRow(email!),
       domain_org_rules: mockBackendData.getClientConfiguration(email!),
@@ -38,7 +38,7 @@ export const mockBackendEndpoints: HandlersDefinition = {
     return { sent: true, text: 'Feedback sent' };
   },
   '/api/message/upload': async ({ }, req) => {
-    throwIfInvalidOrMissingIdToken(req);
+    getEmailFromIdTokenOrThrow(req);
     return { short: 'mockmsg000' };
   },
   '/api/link/me': async ({ }, req) => {
@@ -52,7 +52,7 @@ const throwIfNotPost = (req: IncomingMessage) => {
   }
 };
 
-const throwIfInvalidOrMissingIdToken = (req: IncomingMessage) => {
+const getEmailFromIdTokenOrThrow = (req: IncomingMessage) => {
   const idToken = req.headers.authorization?.replace(/^Bearer /, '');
   if (!idToken) {
     throw new HttpClientErr('backend mock: Missing id_token');
