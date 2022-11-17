@@ -457,10 +457,10 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       const expirationDate = new Date(year + 1, month, date);
       // Had to add this because if test runs at 23:59:59 it might cause assertion error
       // https://github.com/FlowCrypt/flowcrypt-browser/pull/4796#discussion_r1025150001
-      const oneDayAfterExpirationDate = new Date(year + 1, month, date + 1);
+      const oneDayBeforeExpirationDate = new Date(year + 1, month, date - 1);
       const expiration = Str.datetimeToDate(Str.fromDate(expirationDate));
-      const oneDayAfterExpiration = Str.datetimeToDate(Str.fromDate(oneDayAfterExpirationDate));
-      expect(await myKeyFrame.read('@content-key-expiration')).to.be.oneOf([expiration, oneDayAfterExpiration]);
+      const oneDayBeforeExpiration = Str.datetimeToDate(Str.fromDate(oneDayBeforeExpirationDate));
+      expect(await myKeyFrame.read('@content-key-expiration')).to.be.oneOf([expiration, oneDayBeforeExpiration]);
     }));
 
     ava.default('setup [not using key manager] - notify users when their keys expire soon', testWithBrowser(undefined, async (t, browser) => {
