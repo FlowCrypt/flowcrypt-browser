@@ -453,9 +453,14 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       await Util.sleep(1);
       const myKeyFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, `@action-show-key-2`, ['my_key.htm', 'placement=settings']);
       await Util.sleep(1);
-      const expirationDate = new Date(new Date().setFullYear(new Date().getFullYear() + 1));
+      const curDate = new Date(), year = curDate.getFullYear(), month = curDate.getMonth(), date = curDate.getDate();
+      const expirationDate = new Date(year + 1, month, date);
+      // Had to add this because if test runs at 23:59:59 it might cause assertion error
+      // https://github.com/FlowCrypt/flowcrypt-browser/pull/4796#discussion_r1025150001
+      const oneDayAfterExpirationDate = new Date(year + 1, month, date + 1);
       const expiration = Str.datetimeToDate(Str.fromDate(expirationDate));
-      expect(await myKeyFrame.read('@content-key-expiration')).to.equal(expiration);
+      const oneDayAfterExpiration = Str.datetimeToDate(Str.fromDate(oneDayAfterExpirationDate));
+      expect(await myKeyFrame.read('@content-key-expiration')).to.be.oneOf([expiration, oneDayAfterExpiration]);
     }));
 
     ava.default('setup [not using key manager] - notify users when their keys expire soon', testWithBrowser(undefined, async (t, browser) => {
