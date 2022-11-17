@@ -14,11 +14,7 @@ export const mockBackendData = new BackendData();
 export const mockBackendEndpoints: HandlersDefinition = {
   '/api/account/get': async ({ }, req) => {
     throwIfNotPost(req);
-    const idToken = req.headers.authorization?.replace(/^Bearer /, '');
-    if (!idToken) {
-      throw new HttpClientErr('backend mock: Missing id_token');
-    }
-    const email = oauth.extractEmailFromIdToken(idToken);
+    const email = throwIfInvalidOrMissingIdToken(req);
     return JSON.stringify({
       account: mockBackendData.getAcctRow(email!),
       domain_org_rules: mockBackendData.getClientConfiguration(email!),
@@ -41,7 +37,8 @@ export const mockBackendEndpoints: HandlersDefinition = {
     expect((body as { email: string }).email).to.equal('flowcrypt.compatibility@gmail.com');
     return { sent: true, text: 'Feedback sent' };
   },
-  '/api/message/upload': async ({ }) => {
+  '/api/message/upload': async ({ }, req) => {
+    throwIfInvalidOrMissingIdToken(req);
     return { short: 'mockmsg000' };
   },
   '/api/link/me': async ({ }, req) => {
@@ -53,4 +50,16 @@ const throwIfNotPost = (req: IncomingMessage) => {
   if (!isPost(req)) {
     throw new HttpClientErr('Backend mock calls must use POST method');
   }
+};
+
+const throwIfInvalidOrMissingIdToken = (req: IncomingMessage) => {
+  const idToken = req.headers.authorization?.replace(/^Bearer /, '');
+  if (!idToken) {
+    throw new HttpClientErr('backend mock: Missing id_token');
+  }
+  const email = oauth.extractEmailFromIdToken(idToken);
+  if (!email) {
+    throw new HttpClientErr('Invalid Id token. Missing email.');
+  }
+  return email;
 };

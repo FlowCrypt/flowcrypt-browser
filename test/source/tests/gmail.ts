@@ -126,14 +126,6 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       expect(urls.length).to.eq(1);
     }));
 
-    ava.default('mail.google.com - send password protected message', testWithBrowser('ci.tests.gmail', async (t, browser) => {
-      const gmailPage = await BrowserRecipe.openGmailPageAndVerifyComposeBtnPresent(t, browser);
-      const composePage = await GmailPageRecipe.openSecureCompose(t, gmailPage, browser);
-      const subject = `New Password Protected Message ${Util.lousyRandom()}`;
-      await ComposePageRecipe.fillMsg(composePage, { to: 'test@email.com' }, subject, 'Test');
-      await ComposePageRecipe.sendAndClose(composePage, { password: 'gO0d-pwd' });
-    }));
-
     ava.default('mail.google.com - decrypt message in offline mode', testWithBrowser('ci.tests.gmail', async (t, browser) => {
       const gmailPage = await openGmailPage(t, browser);
       /*
