@@ -55,9 +55,8 @@ export class FlowCryptComApi extends Api {
       'message/upload',
       { content },
       'FORM',
-      undefined,
+      FlowCryptComApi.getAuthorizationHeader(idToken),
       {
-        ...FlowCryptComApi.getAuthorizationHeader(idToken),
         upload: progressCb
       }
     );
