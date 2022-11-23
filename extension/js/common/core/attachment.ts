@@ -105,7 +105,7 @@ export class Attachment {
     throw new Error('Attachment has no data set');
   };
 
-  public treatAs = (): Attachment$treatAs => {
+  public treatAs = (isBodyEmpty = false): Attachment$treatAs => {
     if (this.treatAsValue) { // pre-set
       return this.treatAsValue;
     } else if (['PGPexch.htm.pgp', 'PGPMIME version identification', 'Version.txt', 'PGPMIME Versions Identification'].includes(this.name)) {
@@ -118,7 +118,7 @@ export class Attachment {
       return 'hidden'; // mail.ch does this - although it looks like encrypted msg, it will just contain PGP version eg "Version: 1"
     } else if (Attachment.encryptedMsgNames.includes(this.name)) {
       return 'encryptedMsg';
-    } else if (this.name === 'message' && (this.type === 'application/pgp-encrypted')) {
+    } else if (this.name === 'message' && (this.type === 'application/pgp-encrypted' || isBodyEmpty)) {
       // treat message as encryptedMsg when type=application/pgp-encrypted or empty body for the 'message' attachment
       return 'encryptedMsg';
     } else if (this.name.match(/(\.pgp$)|(\.gpg$)|(\.[a-zA-Z0-9]{3,4}\.asc$)/g)) { // ends with one of .gpg, .pgp, .???.asc, .????.asc
