@@ -66,6 +66,9 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
       await inboxPage.waitAll('iframe');
       expect(await inboxPage.isElementPresent('@container-attachments')).to.equal(true);
       await inboxPage.waitForContent('.message.line', 'Plain message');
+      // expect no pgp blocks
+      const urls = await inboxPage.getFramesUrls(['/chrome/elements/pgp_block.htm']);
+      expect(urls.length).to.equal(0);
       await inboxPage.close();
     }));
 
