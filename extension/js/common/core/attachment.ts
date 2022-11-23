@@ -118,8 +118,8 @@ export class Attachment {
       return 'hidden'; // mail.ch does this - although it looks like encrypted msg, it will just contain PGP version eg "Version: 1"
     } else if (Attachment.encryptedMsgNames.includes(this.name)) {
       return 'encryptedMsg';
-    } else if (this.name === 'message' && (this.type === 'application/pgp-encrypted' || isBodyEmpty)) {
-      // treat message as encryptedMsg when type=application/pgp-encrypted or empty body for the 'message' attachment
+    } else if (this.name === 'message' && isBodyEmpty) {
+      // treat message as encryptedMsg when empty body for the 'message' attachment
       return 'encryptedMsg';
     } else if (this.name.match(/(\.pgp$)|(\.gpg$)|(\.[a-zA-Z0-9]{3,4}\.asc$)/g)) { // ends with one of .gpg, .pgp, .???.asc, .????.asc
       return 'encryptedFile';

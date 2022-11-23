@@ -361,13 +361,14 @@ export class GmailElementReplacer implements WebmailElementReplacer {
       console.debug('processAttachments()', attachmentMetas);
     }
     let msgEl = this.getMsgBodyEl(msgId); // not a constant because sometimes elements get replaced, then returned by the function that replaced them
+    const isBodyEmpty = msgEl.text() === '' || msgEl.text() === '\n';
     const senderEmail = this.getSenderEmail(msgEl);
     const isOutgoing = !!this.sendAs[senderEmail];
     attachmentsContainerInner = $(attachmentsContainerInner);
     attachmentsContainerInner.parent().find(this.sel.numberOfAttachments).hide();
     let nRenderedAttachments = attachmentMetas.length;
     for (const a of attachmentMetas) {
-      const treatAs = a.treatAs();
+      const treatAs = a.treatAs(isBodyEmpty);
       // todo - [same name + not processed].first() ... What if attachment metas are out of order compared to how gmail shows it? And have the same name?
       const attachmentSel = this.filterAttachments(attachmentsContainerInner.children().not('.attachment_processed'), new RegExp(`^${Str.regexEscape(a.name || 'noname')}$`)).first();
       if (this.debug) {
