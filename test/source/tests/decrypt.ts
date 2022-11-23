@@ -13,6 +13,7 @@ import { TestWithBrowser } from './../test';
 import { expect } from "chai";
 import { PageRecipe } from './page-recipe/abstract-page-recipe';
 import { Buf } from '../core/buf';
+import { SetupPageRecipe } from './page-recipe/setup-page-recipe';
 
 // tslint:disable:no-blank-lines-func
 // tslint:disable:max-line-length
@@ -45,6 +46,17 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
       await inboxPage.waitAll('iframe');
       expect(await inboxPage.isElementPresent('@container-attachments')).to.equal(false);
       await inboxPage.close();
+    }));
+
+    ava.default('decrypt - encrypted text inside "message" attachment is correctly decrypted', testWithBrowser('ci.tests.gmail', async (t, browser) => {
+      const acctEmail = 'ci.tests.gmail@flowcrypt.test';
+      const key = Config.key('flowcrypt.compatibility.1pp1')!;
+      await SettingsPageRecipe.addKeyTest(t, browser, acctEmail, key.armored!, key.passphrase, {}, false);
+      await InboxPageRecipe.checkDecryptMsg(t, browser, {
+        acctEmail,
+        threadId: '184a474fc1bd59b8',
+        expectedContent: 'This message contained the actual encrypted text inside a "message" attachment.'
+      });
     }));
 
     ava.default(`decrypt - outlook message with ATTxxxx encrypted email is correctly decrypted`, testWithBrowser('compatibility', async (t, browser) => {
