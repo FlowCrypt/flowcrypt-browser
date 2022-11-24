@@ -52,12 +52,7 @@ export class OauthMock {
   };
 
   public getTokenInfo = (token: string) => {
-    return {
-      scope: this.scopesByAccessToken[token],
-      email: this.acctByAccessToken[token],
-      expires_in: 3600,
-      token_type: "Bearer"
-    };
+    return { scope: this.scopesByAccessToken[token], email: this.acctByAccessToken[token], expires_in: 3600, token_type: "Bearer" };
   };
 
   public getTokenResponse = (refreshToken: string) => {

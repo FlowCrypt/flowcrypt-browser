@@ -49,11 +49,6 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     void this.initScopes();
   }
 
-  private initScopes = async () => {
-    const scopes = await AcctStore.getScopes(this.view.acctEmail);
-    this.googleContactsSearchEnabled = scopes.readContacts && scopes.readOtherContacts;
-  };
-
   public setHandlers = (): void => {
     let preventSearchContacts = false;
     const inputs = this.view.S.cached('recipients_inputs');
@@ -386,6 +381,11 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     }
     this.showHideCcAndBccInputsIfNeeded();
     this.setEmailsPreview();
+  };
+
+  private initScopes = async () => {
+    const scopes = await AcctStore.getScopes(this.view.acctEmail);
+    this.googleContactsSearchEnabled = scopes.readContacts && scopes.readOtherContacts;
   };
 
   private inputsBlurHandler = async (target: HTMLElement, e: JQuery.Event<HTMLElement, null>) => {

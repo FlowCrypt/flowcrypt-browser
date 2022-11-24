@@ -1,20 +1,17 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
-import { Env } from '../../browser/env.js';
 import { GoogleAuth } from '../../api/email-provider/gmail/google-auth.js';
-import { KeyInfoWithIdentity, StoredKeyInfo } from '../../core/crypto/key.js';
-import { Dict } from '../../core/common.js';
-import { ClientConfigurationJson } from '../../client-configuration.js';
-import { BrowserMsg, BgNotReadyErr } from '../../browser/browser-msg.js';
-import { Ui } from '../../browser/ui.js';
-import { storageLocalGet, storageLocalSet, storageLocalRemove } from '../../browser/chrome.js';
-import { AbstractStore } from './abstract-store.js';
-import { RawStore } from './abstract-store.js';
-import { Api } from '../../api/shared/api.js';
-import { InMemoryStore } from './in-memory-store.js';
-import { GMAIL_GOOGLE_API_HOST, InMemoryStoreKeys } from '../../core/const.js';
-import { Catch } from '../catch.js';
 import { ApiErr } from '../../api/shared/api-error.js';
+import { BgNotReadyErr, BrowserMsg } from '../../browser/browser-msg.js';
+import { storageLocalGet, storageLocalRemove, storageLocalSet } from '../../browser/chrome.js';
+import { Env } from '../../browser/env.js';
+import { Ui } from '../../browser/ui.js';
+import { ClientConfigurationJson } from '../../client-configuration.js';
+import { Dict } from '../../core/common.js';
+import { InMemoryStoreKeys } from '../../core/const.js';
+import { KeyInfoWithIdentity, StoredKeyInfo } from '../../core/crypto/key.js';
+import { AbstractStore, RawStore } from './abstract-store.js';
+import { InMemoryStore } from './in-memory-store.js';
 
 export type EmailProvider = 'gmail';
 type GoogleAuthScopesNames = [keyof typeof GoogleAuth.OAUTH.scopes, keyof typeof GoogleAuth.OAUTH.legacy_scopes][number];
@@ -140,7 +137,7 @@ export class AcctStore extends AbstractStore {
     }
     let allowedScopes: string[] = [];
     try {
-      const { scope } = await Api.ajax({ url: `${GMAIL_GOOGLE_API_HOST}/oauth2/v1/tokeninfo?access_token=${accessToken}` }, Catch.stackTrace()) as { scope: string };
+      const { scope } = await GoogleAuth.getTokenInfo(accessToken);
       allowedScopes = scope.split(' ');
     } catch (e) {
       if (ApiErr.isAuthErr(e)) {

@@ -6,7 +6,7 @@
 // tslint:disable:oneliner-object-literal
 
 import { Str, Url } from '../../../core/common.js';
-import { FLAVOR, GOOGLE_OAUTH_SCREEN_HOST, OAUTH_GOOGLE_API_HOST } from '../../../core/const.js';
+import { FLAVOR, GMAIL_GOOGLE_API_HOST, GOOGLE_OAUTH_SCREEN_HOST, OAUTH_GOOGLE_API_HOST } from '../../../core/const.js';
 import { ApiErr } from '../../shared/api-error.js';
 import { Api } from './../../shared/api.js';
 
@@ -28,6 +28,7 @@ type AuthResultSuccess = { result: 'Success', acctEmail: string, id_token: strin
 type AuthResultError = { result: GoogleAuthWindowResult$result, acctEmail?: string, error?: string, id_token: undefined };
 
 type AuthReq = { acctEmail?: string, scopes: string[], messageId?: string, expectedState: string };
+type GoogleTokenInfo = { email: string, scope: string, expires_in: number, token_type: string };
 export type AuthRes = AuthResultSuccess | AuthResultError;
 
 export class GoogleAuth {
@@ -71,6 +72,10 @@ export class GoogleAuth {
     } else {
       throw new Error(`Unknown scope group ${group}`);
     }
+  };
+
+  public static getTokenInfo = async (accessToken: string): Promise<GoogleTokenInfo> => {
+    return await Api.ajax({ url: `${GMAIL_GOOGLE_API_HOST}/oauth2/v1/tokeninfo?access_token=${accessToken}` }, Catch.stackTrace()) as unknown as GoogleTokenInfo;
   };
 
   public static googleApiAuthHeader = async (acctEmail: string, forceRefresh = false): Promise<string> => {
