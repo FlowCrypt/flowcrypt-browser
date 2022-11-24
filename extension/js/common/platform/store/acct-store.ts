@@ -12,7 +12,7 @@ import { AbstractStore } from './abstract-store.js';
 import { RawStore } from './abstract-store.js';
 import { Api } from '../../api/shared/api.js';
 import { InMemoryStore } from './in-memory-store.js';
-import { InMemoryStoreKeys } from '../../core/const.js';
+import { GMAIL_GOOGLE_API_HOST, InMemoryStoreKeys } from '../../core/const.js';
 import { Catch } from '../catch.js';
 import { ApiErr } from '../../api/shared/api-error.js';
 
@@ -140,7 +140,7 @@ export class AcctStore extends AbstractStore {
     }
     let allowedScopes: string[] = [];
     try {
-      const { scope } = await Api.ajax({ url: `https://www.googleapis.com/oauth2/v1/tokeninfo?access_token=${accessToken}` }, Catch.stackTrace()) as { scope: string };
+      const { scope } = await Api.ajax({ url: `${GMAIL_GOOGLE_API_HOST}/oauth2/v1/tokeninfo?access_token=${accessToken}` }, Catch.stackTrace()) as { scope: string };
       allowedScopes = scope.split(' ');
     } catch (e) {
       if (ApiErr.isAuthErr(e)) {
