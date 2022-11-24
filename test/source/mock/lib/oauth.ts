@@ -34,7 +34,7 @@ export class OauthMock {
     this.refreshTokenByAuthCode[authCode] = refreshToken;
     this.accessTokenByRefreshToken[refreshToken] = accessToken;
     this.acctByAccessToken[accessToken] = acct;
-    this.scopesByAccessToken[accessToken] = scope;
+    this.scopesByAccessToken[accessToken] = (this.scopesByAccessToken[accessToken] ?? '') + scope;
     const url = new URL(this.redirectUri);
     url.searchParams.set('code', authCode);
     url.searchParams.set('scope', scope);
