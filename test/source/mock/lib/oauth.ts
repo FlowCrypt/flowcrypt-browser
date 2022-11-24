@@ -27,9 +27,9 @@ export class OauthMock {
   };
 
   public successResult = (acct: string, state: string, scope: string) => {
-    const authCode = `mock-auth-code-${acct.replace(/[^a-z0-9]+/g, '')}`;
-    const refreshToken = `mock-refresh-token-${acct.replace(/[^a-z0-9]+/g, '')}`;
-    const accessToken = `mock-access-token-${acct.replace(/[^a-z0-9]+/g, '')}`;
+    const authCode = `mock-auth-code-${Str.sloppyRandom(4)}-${acct.replace(/[^a-z0-9]+/g, '')}`;
+    const refreshToken = `mock-refresh-token-${Str.sloppyRandom(4)}-${acct.replace(/[^a-z0-9]+/g, '')}`;
+    const accessToken = `mock-access-token-${Str.sloppyRandom(4)}-${acct.replace(/[^a-z0-9]+/g, '')}`;
     this.authCodesByAcct[acct] = authCode;
     this.refreshTokenByAuthCode[authCode] = refreshToken;
     this.accessTokenByRefreshToken[refreshToken] = accessToken;
