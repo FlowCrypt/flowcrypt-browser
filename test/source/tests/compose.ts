@@ -592,7 +592,6 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       await ComposePageRecipe.showRecipientInput(composePage);
       const noContactSelectors = ['@no-contact-found'];
       if (testVariant === 'CONSUMER-MOCK') {
-        await Util.sleep(2);
         noContactSelectors.push('@action-auth-with-contacts-scope'); // also check for "Enable..." button
       }
       await composePage.waitAndType('@input-to', 'ci.tests.gmail');

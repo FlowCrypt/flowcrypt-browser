@@ -550,6 +550,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
   private searchContacts = async (input: JQuery<HTMLElement>): Promise<void> => {
     try {
       this.view.errModule.debug(`searchContacts`);
+      this.view.errModule.debug(`googleContactsSearchEnabled: ${await this.googleContactsSearchEnabled}`);
       const substring = Str.parseEmail(String(input.val()), 'DO-NOT-VALIDATE').email;
       this.view.errModule.debug(`searchContacts.query.substring(${JSON.stringify(substring)})`);
       if (!substring) {
