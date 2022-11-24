@@ -392,6 +392,17 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       await gmailPage.close();
     }));
 
+    ava.default(`mail.google.com - render plain text for "message" attachment (which has plain text)`, testWithBrowser('ci.tests.gmail', async (t, browser) => {
+      const gmailPage = await openGmailPage(t, browser);
+      await gotoGmailPage(gmailPage, '/184a87a7b32dd009');
+      await Util.sleep(5);
+      await gmailPage.waitForContent('.a3s', 'Plain message');
+      expect(await gmailPage.isElementPresent('div.aQH')).to.equal(true); // gmail attachment container
+      // expect no pgp blocks
+      const urls = await gmailPage.getFramesUrls(['/chrome/elements/pgp_block.htm']);
+      expect(urls.length).to.equal(0);
+    }));
+
     ava.default('mail.google.com - pubkey file gets rendered', testWithBrowser('ci.tests.gmail', async (t, browser) => {
       const gmailPage = await openGmailPage(t, browser);
       await gotoGmailPage(gmailPage, '/FMfcgzGkbDXBWCgTcMJlmBtfNxrbzTTn');
