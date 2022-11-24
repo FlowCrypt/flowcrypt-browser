@@ -42,11 +42,11 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
 
   private dragged: Element | undefined = undefined;
 
-  private googleContactsSearchEnabled = false;
+  private googleContactsSearchEnabled: boolean | Promise<boolean>;
 
   constructor(view: ComposeView) {
     super(view);
-    void this.initScopes();
+    this.googleContactsSearchEnabled = this.queryIfGoogleSearchEnabled();
   }
 
   public setHandlers = (): void => {
@@ -383,9 +383,9 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     this.setEmailsPreview();
   };
 
-  private initScopes = async () => {
+  private queryIfGoogleSearchEnabled = async () => {
     const scopes = await AcctStore.getScopes(this.view.acctEmail);
-    this.googleContactsSearchEnabled = scopes.readContacts && scopes.readOtherContacts;
+    return scopes.readContacts && scopes.readOtherContacts;
   };
 
   private inputsBlurHandler = async (target: HTMLElement, e: JQuery.Event<HTMLElement, null>) => {
@@ -560,19 +560,19 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       const contacts: ContactPreview[] = await ContactStore.search(undefined, { substring });
       this.view.errModule.debug(`searchContacts substring: ${substring}`);
       this.view.errModule.debug(`searchContacts db count: ${contacts.length}`);
-      this.renderSearchRes(input, contacts, { substring });
+      await this.renderSearchRes(input, contacts, { substring });
       if (contacts.length >= this.MAX_CONTACTS_LENGTH) {
         this.view.errModule.debug(`searchContacts 2, count: ${contacts.length}`);
         return;
       }
       let foundOnGoogle: EmailProviderContact[] = [];
-      if (this.googleContactsSearchEnabled) {
+      if (await this.googleContactsSearchEnabled) {
         this.view.errModule.debug(`searchContacts 3`);
         foundOnGoogle = await this.searchContactsOnGoogle(substring, contacts);
         await this.addApiLoadedContactsToDb(foundOnGoogle);
         this.view.errModule.debug(`searchContacts foundOnGoogle, count: ${foundOnGoogle.length}`);
         contacts.push(...foundOnGoogle.map(c => ContactStore.previewObj({ email: c.email, name: c.name })));
-        this.renderSearchRes(input, contacts, { substring });
+        await this.renderSearchRes(input, contacts, { substring });
         if (contacts.length >= this.MAX_CONTACTS_LENGTH) {
           this.view.errModule.debug(`searchContacts 3.b, count: ${contacts.length}`);
           return;
@@ -585,7 +585,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
           await this.addApiLoadedContactsToDb(guessed.new);
           this.view.errModule.debug(`searchContacts (Gmail Sent Messages), count: ${guessed.new.length}`);
           contacts.push(...guessed.new.map(c => ContactStore.previewObj({ email: c.email, name: c.name })));
-          this.renderSearchRes(input, contacts, { substring });
+          await this.renderSearchRes(input, contacts, { substring });
         });
       }
     } catch (e) {
@@ -615,7 +615,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
   };
 
   private searchContactsOnGoogle = async (query: string, knownContacts: ContactPreview[]): Promise<EmailProviderContact[]> => {
-    if (this.googleContactsSearchEnabled) {
+    if (await this.googleContactsSearchEnabled) {
       this.view.errModule.debug(`searchContacts (Google API) 5`);
       const contactsGoogle = await Google.contactsGet(this.view.acctEmail, query, undefined, this.MAX_CONTACTS_LENGTH);
       if (contactsGoogle && contactsGoogle.length) {
@@ -646,7 +646,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     });
   };
 
-  private renderSearchRes = (input: JQuery<HTMLElement>, contacts: ContactPreview[], query: ProviderContactsQuery) => {
+  private renderSearchRes = async (input: JQuery<HTMLElement>, contacts: ContactPreview[], query: ProviderContactsQuery) => {
     if (!input.is(':focus')) { // focus was moved away from input
       return;
     }
@@ -714,7 +714,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     } else {
       this.setContactPopupStyle(input);
       contactEl.find('ul').html('<li data-test="no-contact-found">No Contacts Found</li>'); // xss-direct
-      if (!this.googleContactsSearchEnabled) {
+      if (!(await this.googleContactsSearchEnabled)) {
         this.addBtnToAllowSearchContactsFromGoogle(input);
       }
     }
