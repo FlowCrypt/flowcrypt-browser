@@ -13,7 +13,6 @@ import { TestWithBrowser } from './../test';
 import { expect } from "chai";
 import { PageRecipe } from './page-recipe/abstract-page-recipe';
 import { Buf } from '../core/buf';
-import { SetupPageRecipe } from './page-recipe/setup-page-recipe';
 
 // tslint:disable:no-blank-lines-func
 // tslint:disable:max-line-length
@@ -57,6 +56,17 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
         threadId: '184a474fc1bd59b8',
         expectedContent: 'This message contained the actual encrypted text inside a "message" attachment.'
       });
+    }));
+
+    ava.default(`decrypt - render plain text for "message" attachment (which has plain text)`, testWithBrowser('ci.tests.gmail', async (t, browser) => {
+      const threadId = '184a87a7b32dd009';
+      const acctEmail = 'ci.tests.gmail@flowcrypt.test';
+      const inboxPage = await browser.newPage(t, TestUrls.extension(`chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`));
+      await inboxPage.waitForSelTestState('ready');
+      await inboxPage.waitAll('iframe');
+      expect(await inboxPage.isElementPresent('@container-attachments')).to.equal(true);
+      await inboxPage.waitForContent('.message.line', 'Plain message');
+      await inboxPage.close();
     }));
 
     ava.default(`decrypt - outlook message with ATTxxxx encrypted email is correctly decrypted`, testWithBrowser('compatibility', async (t, browser) => {
