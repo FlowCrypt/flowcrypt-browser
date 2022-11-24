@@ -10,6 +10,11 @@ import { Ui } from '../../browser/ui.js';
 import { storageLocalGet, storageLocalSet, storageLocalRemove } from '../../browser/chrome.js';
 import { AbstractStore } from './abstract-store.js';
 import { RawStore } from './abstract-store.js';
+import { Api } from '../../api/shared/api.js';
+import { InMemoryStore } from './in-memory-store.js';
+import { InMemoryStoreKeys } from '../../core/const.js';
+import { Catch } from '../catch.js';
+import { ApiErr } from '../../api/shared/api-error.js';
 
 export type EmailProvider = 'gmail';
 type GoogleAuthScopesNames = [keyof typeof GoogleAuth.OAUTH.scopes, keyof typeof GoogleAuth.OAUTH.legacy_scopes][number];
@@ -25,7 +30,7 @@ export type Scopes = {
   gmail: boolean;
 };
 
-export type AccountIndex = 'keys' | 'notification_setup_needed_dismissed' | 'email_provider' | 'google_token_scopes' |
+export type AccountIndex = 'keys' | 'notification_setup_needed_dismissed' | 'email_provider' |
   'google_token_refresh' | 'hide_message_password' | 'sendAs' |
   'pubkey_sent_to' | 'full_name' | 'cryptup_enabled' | 'setup_done' |
   'successfully_received_at_leat_one_message' | 'notification_setup_done_seen' | 'picture' |
@@ -42,7 +47,6 @@ export type AcctStoreDict = {
   keys?: (StoredKeyInfo | KeyInfoWithIdentity)[]; // todo - migrate to KeyInfoWithIdentity only
   notification_setup_needed_dismissed?: boolean;
   email_provider?: EmailProvider;
-  google_token_scopes?: string[]; // these are actuall scope urls the way the provider expects them
   google_token_refresh?: string;
   hide_message_password?: boolean; // is global?
   sendAs?: Dict<SendAsAlias>;
@@ -125,19 +129,30 @@ export class AcctStore extends AbstractStore {
   };
 
   public static getScopes = async (acctEmail: string): Promise<Scopes> => {
-    const { google_token_scopes } = await AcctStore.get(acctEmail, ['google_token_scopes']);
+    const accessToken = await InMemoryStore.get(acctEmail, InMemoryStoreKeys.GOOGLE_TOKEN_ACCESS);
+    // const { google_token_scopes } = await AcctStore.get(acctEmail, ['google_token_scopes']);
     const result: { [key in GoogleAuthScopesNames]: boolean } = {
       email: false, openid: false, profile: false, compose: false,
       modify: false, readContacts: false, readOtherContacts: false, gmail: false
     };
-    if (google_token_scopes) {
-      for (const key of Object.keys({ ...GoogleAuth.OAUTH.scopes, ...GoogleAuth.OAUTH.legacy_scopes })) {
-        const scopeName = key as GoogleAuthScopesNames;
-        if (scopeName in GoogleAuth.OAUTH.scopes) {
-          result[scopeName] = google_token_scopes.includes(GoogleAuth.OAUTH.scopes[scopeName as keyof typeof GoogleAuth.OAUTH.scopes]);
-        } else if (scopeName in GoogleAuth.OAUTH.legacy_scopes) {
-          result[scopeName] = google_token_scopes.includes(GoogleAuth.OAUTH.legacy_scopes[scopeName as keyof typeof GoogleAuth.OAUTH.legacy_scopes]);
-        }
+    if (!accessToken) {
+      return result;
+    }
+    let allowedScopes: string[] = [];
+    try {
+      const { scope } = await Api.ajax({ url: `https://www.googleapis.com/oauth2/v1/tokeninfo?access_token=${accessToken}` }, Catch.stackTrace()) as { scope: string };
+      allowedScopes = scope.split(' ');
+    } catch (e) {
+      if (ApiErr.isAuthErr(e)) {
+        BrowserMsg.send.notificationShowAuthPopupNeeded('broadcast', { acctEmail });
+      }
+    }
+    for (const key of Object.keys({ ...GoogleAuth.OAUTH.scopes, ...GoogleAuth.OAUTH.legacy_scopes })) {
+      const scopeName = key as GoogleAuthScopesNames;
+      if (scopeName in GoogleAuth.OAUTH.scopes) {
+        result[scopeName] = allowedScopes.includes(GoogleAuth.OAUTH.scopes[scopeName as keyof typeof GoogleAuth.OAUTH.scopes]);
+      } else if (scopeName in GoogleAuth.OAUTH.legacy_scopes) {
+        result[scopeName] = allowedScopes.includes(GoogleAuth.OAUTH.legacy_scopes[scopeName as keyof typeof GoogleAuth.OAUTH.legacy_scopes]);
       }
     }
     return result;

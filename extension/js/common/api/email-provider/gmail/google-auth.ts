@@ -5,7 +5,7 @@
 // tslint:disable:no-direct-ajax
 // tslint:disable:oneliner-object-literal
 
-import { Str, Url, Value } from '../../../core/common.js';
+import { Str, Url } from '../../../core/common.js';
 import { FLAVOR, GOOGLE_OAUTH_SCREEN_HOST, OAUTH_GOOGLE_API_HOST } from '../../../core/const.js';
 import { ApiErr } from '../../shared/api-error.js';
 import { Api } from './../../shared/api.js';
@@ -77,8 +77,8 @@ export class GoogleAuth {
     if (!acctEmail) {
       throw new Error('missing account_email in api_gmail_call');
     }
-    const storage = await AcctStore.get(acctEmail, ['google_token_scopes', 'google_token_refresh']);
-    if (!storage.google_token_refresh) {
+    const { google_token_refresh } = await AcctStore.get(acctEmail, ['google_token_refresh']);
+    if (!google_token_refresh) {
       throw new GoogleAuthErr(`Account ${acctEmail} not connected to FlowCrypt Browser Extension`);
     }
     if (!forceRefresh) {
@@ -88,9 +88,9 @@ export class GoogleAuth {
       }
     }
     // refresh token
-    const refreshTokenRes = await GoogleAuth.googleAuthRefreshToken(storage.google_token_refresh);
+    const refreshTokenRes = await GoogleAuth.googleAuthRefreshToken(google_token_refresh);
     if (refreshTokenRes.access_token) {
-      await GoogleAuth.googleAuthSaveTokens(acctEmail, refreshTokenRes, storage.google_token_scopes || []);
+      await GoogleAuth.googleAuthSaveTokens(acctEmail, refreshTokenRes);
       const googleAccessToken = await InMemoryStore.get(acctEmail, InMemoryStoreKeys.GOOGLE_TOKEN_ACCESS);
       if (googleAccessToken) {
         return `Bearer ${googleAccessToken}`;
@@ -119,7 +119,7 @@ export class GoogleAuth {
       save = true;
     }
     if (save || !scopes) { // if tokens will be saved (meaning also scopes should be pulled from storage) or if no scopes supplied
-      scopes = await GoogleAuth.apiGoogleAuthPopupPrepareAuthReqScopes(acctEmail, scopes || GoogleAuth.defaultScopes());
+      scopes = await GoogleAuth.apiGoogleAuthPopupPrepareAuthReqScopes(scopes || GoogleAuth.defaultScopes());
     }
     const authRequest = GoogleAuth.newAuthRequest(acctEmail, scopes);
     const authUrl = GoogleAuth.apiGoogleAuthCodeUrl(authRequest);
@@ -219,7 +219,7 @@ export class GoogleAuth {
       if (receivedState !== expectedState) {
         return { acctEmail, result: 'Error', error: `Wrong oauth CSRF token. Please try again.`, id_token: undefined };
       }
-      const { id_token } = save ? await GoogleAuth.retrieveAndSaveAuthToken(code, allowedScopes?.replace(/\+/g, ' ')?.split(' ') ?? []) : await GoogleAuth.googleAuthGetTokens(code);
+      const { id_token } = save ? await GoogleAuth.retrieveAndSaveAuthToken(code) : await GoogleAuth.googleAuthGetTokens(code);
       const { email } = GoogleAuth.parseIdToken(id_token);
       if (!email) {
         throw new Error('Missing email address in id_token');
@@ -258,12 +258,11 @@ export class GoogleAuth {
     });
   };
 
-  private static googleAuthSaveTokens = async (acctEmail: string, tokensObj: GoogleAuthTokensResponse, scopes: string[]) => {
+  private static googleAuthSaveTokens = async (acctEmail: string, tokensObj: GoogleAuthTokensResponse) => {
     const parsedOpenId = GoogleAuth.parseIdToken(tokensObj.id_token);
     const { full_name, picture } = await AcctStore.get(acctEmail, ['full_name', 'picture']);
     const googleTokenExpires = new Date().getTime() + (tokensObj.expires_in as number - 120) * 1000; // let our copy expire 2 minutes beforehand
     const toSave: AcctStoreDict = {
-      google_token_scopes: scopes,
       full_name: full_name || parsedOpenId.name,
       picture: picture || parsedOpenId.picture,
     };
@@ -307,22 +306,17 @@ export class GoogleAuth {
     }, Catch.stackTrace()) as unknown as GoogleAuthTokensResponse;
   };
 
-  private static retrieveAndSaveAuthToken = async (authCode: string, scopes: string[]): Promise<{ id_token: string }> => {
+  private static retrieveAndSaveAuthToken = async (authCode: string): Promise<{ id_token: string }> => {
     const tokensObj = await GoogleAuth.googleAuthGetTokens(authCode);
     const claims = GoogleAuth.parseIdToken(tokensObj.id_token);
     if (!claims.email) {
       throw new Error('Missing email address in id_token');
     }
-    await GoogleAuth.googleAuthSaveTokens(claims.email, tokensObj, scopes);
+    await GoogleAuth.googleAuthSaveTokens(claims.email, tokensObj);
     return { id_token: tokensObj.id_token };
   };
 
-  private static apiGoogleAuthPopupPrepareAuthReqScopes = async (acctEmail: string | undefined, addScopes: string[]): Promise<string[]> => {
-    if (acctEmail) {
-      const { google_token_scopes } = await AcctStore.get(acctEmail, ['google_token_scopes']);
-      addScopes.push(...(google_token_scopes || []));
-    }
-    addScopes = Value.arr.unique(addScopes);
+  private static apiGoogleAuthPopupPrepareAuthReqScopes = async (addScopes: string[]): Promise<string[]> => {
     if (!addScopes.includes(GoogleAuth.OAUTH.scopes.email)) {
       addScopes.push(GoogleAuth.OAUTH.scopes.email);
     }

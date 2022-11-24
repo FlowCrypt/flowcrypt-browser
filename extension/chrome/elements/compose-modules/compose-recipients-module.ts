@@ -42,12 +42,17 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
 
   private dragged: Element | undefined = undefined;
 
-  private googleContactsSearchEnabled: boolean;
+  private googleContactsSearchEnabled = false;
 
   constructor(view: ComposeView) {
     super(view);
-    this.googleContactsSearchEnabled = this.view.scopes.readContacts && this.view.scopes.readOtherContacts;
+    void this.initScopes();
   }
+
+  private initScopes = async () => {
+    const scopes = await AcctStore.getScopes(this.view.acctEmail);
+    this.googleContactsSearchEnabled = scopes.readContacts && scopes.readOtherContacts;
+  };
 
   public setHandlers = (): void => {
     let preventSearchContacts = false;

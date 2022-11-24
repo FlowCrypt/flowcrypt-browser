@@ -107,11 +107,12 @@ export class SetupRenderModule {
       return await Settings.promptToRetry(e, Lang.setup.failedToCheckIfAcctUsesEncryption, () => this.renderSetupDialog(),
         Lang.general.contactIfNeedAssistance(this.view.isFesUsed()));
     }
+    const scopes = await AcctStore.getScopes(this.view.acctEmail);
     if (keyserverRes.pubkeys.length) {
       if (!this.view.clientConfiguration.canBackupKeys()) {
         // they already have a key recorded on attester, but no backups allowed on the domain. They should enter their prv manually
         this.displayBlock('step_2b_manual_enter');
-      } else if (this.view.storage!.email_provider === 'gmail' && this.view.scopes!.modify) {
+      } else if (this.view.storage!.email_provider === 'gmail' && scopes.modify) {
         try {
           const backups = await this.view.gmail.fetchKeyBackups();
           this.view.fetchedKeyBackups = backups.keyinfos.backups;
