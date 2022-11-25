@@ -18,7 +18,7 @@ export class Attachment {
 
   // eslint-disable-next-line max-len
   public static readonly webmailNamePattern = /^(((cryptup|flowcrypt)-backup-[a-z0-9]+\.(key|asc))|(.+\.pgp)|(.+\.gpg)|(.+\.asc)|(noname)|(message)|(PGPMIME version identification)|(ATT[0-9]{5})|())$/m;
-  public static readonly encryptedMsgNames = ['message', 'msg.asc', 'message.asc', 'encrypted.asc', 'encrypted.eml.pgp', 'Message.pgp', 'openpgp-encrypted-message.asc'];
+  public static readonly encryptedMsgNames = ['msg.asc', 'message.asc', 'encrypted.asc', 'encrypted.eml.pgp', 'Message.pgp', 'openpgp-encrypted-message.asc'];
 
   public length: number = NaN;
   public type: string;
@@ -105,7 +105,7 @@ export class Attachment {
     throw new Error('Attachment has no data set');
   };
 
-  public treatAs = (): Attachment$treatAs => {
+  public treatAs = (isBodyEmpty = false): Attachment$treatAs => {
     if (this.treatAsValue) { // pre-set
       return this.treatAsValue;
     } else if (['PGPexch.htm.pgp', 'PGPMIME version identification', 'Version.txt', 'PGPMIME Versions Identification'].includes(this.name)) {
@@ -117,6 +117,9 @@ export class Attachment {
     } else if (this.name === 'msg.asc' && this.length < 100 && this.type === 'application/pgp-encrypted') {
       return 'hidden'; // mail.ch does this - although it looks like encrypted msg, it will just contain PGP version eg "Version: 1"
     } else if (Attachment.encryptedMsgNames.includes(this.name)) {
+      return 'encryptedMsg';
+    } else if (this.name === 'message' && isBodyEmpty) {
+      // treat message as encryptedMsg when empty body for the 'message' attachment
       return 'encryptedMsg';
     } else if (this.name.match(/(\.pgp$)|(\.gpg$)|(\.[a-zA-Z0-9]{3,4}\.asc$)/g)) { // ends with one of .gpg, .pgp, .???.asc, .????.asc
       return 'encryptedFile';
