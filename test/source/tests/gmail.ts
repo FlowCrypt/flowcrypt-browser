@@ -394,7 +394,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
 
     ava.default(`mail.google.com - render plain text for "message" attachment (which has plain text)`, testWithBrowser('ci.tests.gmail', async (t, browser) => {
       const gmailPage = await openGmailPage(t, browser);
-      await gotoGmailPage(gmailPage, '/184a87a7b32dd009');
+      await gotoGmailPage(gmailPage, '/FMfcgzGrbHrBdFGBXqpFZvSkcQpKkvrM');
       await Util.sleep(5);
       await gmailPage.waitForContent('.a3s', 'Plain message');
       expect(await gmailPage.isElementPresent('div.aQH')).to.equal(true); // gmail attachment container

@@ -1,0 +1,125 @@
+Delivered-To: ci.tests.gmail@flowcrypt.dev
+Received: by 2002:a05:7108:6881:0:0:0:0 with SMTP id m1csp3501320gdd;
+        Wed, 23 Nov 2022 23:11:50 -0800 (PST)
+X-Received: by 2002:a05:6512:1698:b0:4a2:4b43:9aad with SMTP id bu24-20020a056512169800b004a24b439aadmr11542664lfb.213.1669273909922;
+        Wed, 23 Nov 2022 23:11:49 -0800 (PST)
+ARC-Seal: i=1; a=rsa-sha256; t=1669273909; cv=none;
+        d=google.com; s=arc-20160816;
+        b=TFPMRNAu49RHwFnH9jL9V4ui+8StMCbGoibhf7Ft6OxpXFnjlaQ4qqimygdXYDJVDY
+         XZJkE0D8mZM6zWdXMB9GJYPjk11Av2gLaIGPIe5TR13S6MJyQ+HT/p+PTEoIWJ5Ro631
+         M2AWU7X0TgwS8zahXjWFjUUeoC/7HyDwfUMbMZKm8kZkwU8KAnOT+l5rPqc3ZQh6Rjes
+         TGAJs+85RcqCwclIEophQlSjy/5sy150rn6ws6E5EPWMFtTYs37TbxyUEvqITOoHn9VS
+         rua6eUmNlCavI/YP0q1MJewnEoUA+ZjijeHRxWy2COxVpyu9dI6ir1CAsv6rlNLJquTZ
+         s2Vg==
+ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=google.com; s=arc-20160816;
+        h=to:subject:message-id:date:from:mime-version:dkim-signature;
+        bh=F/XlgPHNbrVFxDOCZb9zpwnSEs+8Rxm+pY2MbpmFLYY=;
+        b=gsFW8p+wi0hvIZSnvRYdmka17uQiNX81CndJlSc5rj3OgIj4NKEN3hPKT+uHU8JZMv
+         9C3soOoGHSyl7lOGtFUAlY4uDojMMM0GnrJ/JJN5Ky5uI/hY21Z3PbIDABQM3c1b1cXI
+         jqX2T5wFBj2haHx1HzJCLF1f70pH8A2hQNZI5sWSr1V7ErdMoDsNg9y7sT48ReTRFuiQ
+         wJ5oD0JWm6ifM6tyqEhcoqZ74gj/RGQpTNxbsXXhA2T0yGS82Sz1hccIp1RVl1Vu8/uy
+         6LQn+7lxbuTR2hwoLIXFZ2jfhaJVMyc+JliAtLF841hN2c9IOkZWCAZ/MC1j3nwkFEyB
+         8zcg==
+ARC-Authentication-Results: i=1; mx.google.com;
+       dkim=pass header.i=@flowcrypt.com header.s=google header.b=gx5j2Rhu;
+       spf=pass (google.com: domain of ioan@flowcrypt.com designates 209.85.220.41 as permitted sender) smtp.mailfrom=ioan@flowcrypt.com;
+       dmarc=pass (p=REJECT sp=REJECT dis=NONE) header.from=flowcrypt.com
+Return-Path: <ioan@flowcrypt.com>
+Received: from mail-sor-f41.google.com (mail-sor-f41.google.com. [209.85.220.41])
+        by mx.google.com with SMTPS id a21-20020a194f55000000b0049f53f2e88fsor64225lfk.14.2022.11.23.23.11.49
+        for <ci.tests.gmail@flowcrypt.dev>
+        (Google Transport Security);
+        Wed, 23 Nov 2022 23:11:49 -0800 (PST)
+Received-SPF: pass (google.com: domain of ioan@flowcrypt.com designates 209.85.220.41 as permitted sender) client-ip=209.85.220.41;
+Authentication-Results: mx.google.com;
+       dkim=pass header.i=@flowcrypt.com header.s=google header.b=gx5j2Rhu;
+       spf=pass (google.com: domain of ioan@flowcrypt.com designates 209.85.220.41 as permitted sender) smtp.mailfrom=ioan@flowcrypt.com;
+       dmarc=pass (p=REJECT sp=REJECT dis=NONE) header.from=flowcrypt.com
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=flowcrypt.com; s=google;
+        h=to:subject:message-id:date:from:mime-version:from:to:cc:subject
+         :date:message-id:reply-to;
+        bh=F/XlgPHNbrVFxDOCZb9zpwnSEs+8Rxm+pY2MbpmFLYY=;
+        b=gx5j2RhucfA5vtfOIT8ay0fgGruWr7pnS36WjRn+pysCUhKNmj9qYNJeCEYL0jrugr
+         zuhE7WhcKPrsd12kx8GWKCfAsTY2N8WrSfmpJtNuzEqJBmT1BTK8nQglQzF1JckxDbiK
+         P+kT2UKkmNqPO2B/o24uv09z5Aqy8VNjYh1+8=
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20210112;
+        h=to:subject:message-id:date:from:mime-version:x-gm-message-state
+         :from:to:cc:subject:date:message-id:reply-to;
+        bh=F/XlgPHNbrVFxDOCZb9zpwnSEs+8Rxm+pY2MbpmFLYY=;
+        b=fydWxQ0Bw3Ljs+Rx/+dhNTxMYY29ZnLaPgmwIZs9WT0LulvsTkYR005yA8j+P+3/5+
+         +PzvLD6kQ41LEfRZEvcFKm09tn9fryX39776TrHQSROkdl1pyMHfHdvPhIQi/cQNI+R+
+         jQnW5aEGkP+x4wtZeyZTf5YCOMu0PEsD8scJXU9Mv7bi1EiTghAbJFD1mYDgt9Ztu6Ms
+         1Rp/nyWAkWZZqP7pluRDQ9oKb8CJ/swHLAs8WhcWZ2NpN5C+G8Ul/snsNQlA/LmqCaHw
+         l3f8C9sc1MCkpVJ0fMHhHw9L2E4sxaXebvAy06LF7uVnl6EsS9EdoYzgRiTTouMC30sk
+         MJEg==
+X-Gm-Message-State: ANoB5pkz8Ib9pqSD/x3au0unFaDyBYh0kP+CVoe72ZzT8HYaJq7OfTOh
+	wMLtr2zVFIPcDjC+fuqdaFuKTWzdK59x+CCl1XYzQFQ+QNrQDw==
+X-Google-Smtp-Source: AA0mqf6D5LB4JBdOMPbJkksIBdxMLpfJaqXgxBbck/qqswHVuut81WuUNCRNOZ4Sj4wbcU1K8muv0z97aNQh/DtWbQw=
+X-Received: by 2002:a05:6512:2c85:b0:4a2:5937:e9b with SMTP id
+ dw5-20020a0565122c8500b004a259370e9bmr9997612lfb.11.1669273908939; Wed, 23
+ Nov 2022 23:11:48 -0800 (PST)
+MIME-Version: 1.0
+From: Ioan at FlowCrypt <ioan@flowcrypt.com>
+Date: Thu, 24 Nov 2022 03:11:36 -0400
+Message-ID: <CAPC3khAeVZ3FdSKKEBHaqLZaFZQE3M8ri5fTDFoJnho9cJUurA@mail.gmail.com>
+Subject: Message attachment with plain text
+To: ci.tests.gmail@flowcrypt.dev
+Content-Type: multipart/mixed; boundary="00000000000062238205ee321e74"
+
+--00000000000062238205ee321e74
+Content-Type: multipart/alternative; boundary="00000000000062238005ee321e72"
+
+--00000000000062238005ee321e72
+Content-Type: text/plain; charset="UTF-8"
+
+Plain message
+
+--00000000000062238005ee321e72
+Content-Type: text/html; charset="UTF-8"
+
+<div dir="ltr">Plain message</div>
+
+--00000000000062238005ee321e72--
+--00000000000062238205ee321e74
+Content-Type: application/octet-stream; name=message
+Content-Disposition: attachment; filename=message
+Content-Transfer-Encoding: base64
+Content-ID: <f_lauqkou20>
+X-Attachment-Id: f_lauqkou20
+
+LS0tLS1CRUdJTiBQR1AgTUVTU0FHRS0tLS0tClZlcnNpb246IEZsb3dDcnlwdCA1LjAuNCBHbWFp
+bCBFbmNyeXB0aW9uIGZsb3djcnlwdC5jb20KQ29tbWVudDogU2VhbWxlc3NseSBzZW5kLCByZWNl
+aXZlIGFuZCBzZWFyY2ggZW5jcnlwdGVkIGVtYWlsCgp3Y0ZNQStBRHYvNXY0UmdLQVEvOEN2Z2xK
+dzNTeTB1TkpkMGhNcVh3RHBtb3g2bzRwZys1NW8xOEpGOXMKeTdPVFNacUVvYUtXbERLYm9mN3lk
+VjhMSVF4V2gyNTBCRk8wVy9JQ1dySlNkOFErcE0zdGtZcWEyVVpZCkZ1UmpGZ0ROeUZvT2c0TGFa
+OVJGbzRnSDIrR1krL0V6a1NzNGFBdmlYQzRtNVZvaEFnVnlMTEZVeWpLNgpsRS8wSWlxelJSZkMv
+ME9mMGJPSmJ6QzRmKzZCMmIwSnFZTjNTOERFMEc1NVlHWDFFbjEva0hPY0lQWlgKekxLa2NBZWZO
+OWtqYTQxa2JkaUJDU244V0hUK1JEalcxc2R4WCs4bTJSUi9FWDFoT25uem4xSlNGZmVyCmR2M3Fo
+SElvaWxqZXh3Y0ZROEFrQldPZkRTM2R2anhCa24zSjY4blNqZGs0azA4VERCNmR6b1hiZFpkWAoy
+eUMzMWo3ZDI3YW1ZL2lvM0x2Zm9TTzNIRGVUMDZmT0xkRDNXaWhTRXNrbVNSd0cvaWF6UmZCZ09S
+TlEKNVJwa1I1SGs2bE5qVlp1ZnU3bXVJM2VETjNvOHpwSUdmQUh5N01VcFlaNkE3VzJRNm8yRkFx
+cmxsQVpwCnNBR2g1VUJ3ZERsOThybDBJOVZwUmZndVZWR0xxYzJwV3ozUlIzaEdLZzhQRE9ZMTU1
+anJzYW01QlN6ZAp6VFg0Njd3UXoxWFc1MlZ0ellXd3IwYTVZSUtkRzRRdmtKOVc5OU5IMlQ3clk0
+NCtFNHB3eHJVQ2MzcUMKeEVjV09sYitRbGEvK3k5eUczNEtGbCtKQkZXQ1hPUHl2ZmVxeTVmNUdj
+dDl5amtyUlY4YUJ3RFdDQThvClBkajJnaXFkNG5NajI0Y29NWi9mSTdWbG0rWnU2MDhxUjVVMGJE
+b3lDWDdCd1V3RFMxb3YvT1l0bFFFQgpFQUNBSk52bHFKTXExNDFtbDB4TzBubEc2UitlSzhLQnA4
+emllWVhWWndpbUdXZnhqeThDV0xyamJIcjQKMWh5SkJ3TWliV0hRRVpjaEJOM1VXK3ArYjNHTFVO
+aDBrOUsrYnRrOGd1dFVnTUk2aTdpOE5GaWVVcDNnCm9wZk1UNnI3UFNteGN2Yk9lRmlObmc3OExL
+aWUxRTVtNmxmMC9zYWhCWUtvRmJFbGhCRFljWnZ4SGFMZApWNStNMFY4TmJLNTFMbVlIeEc5SFFF
+WlNyeWJHWDljd2w2TjZLWGRFcG5JYThKWGdHT0MrdkVFS0JtNTcKQ3dWVkdPb3EvYjBwSWR5RjlG
+RGM5T1hxbEVTN21BZ3M4cUROZld5M1pJbGhFak5FZlIwS2dhT2xLay82Cms1eTNLbmhhb0thSlU5
+UVY4SWhMVFprckMzNnpRdFlJdENOcDFYeU9tYm9MTnBDUEo4NjBFa3VIanhwUwo3MnF0SjFocVI0
+clk2emY3Y3FsUkt5SkNXRmNILzJyOG9oSTZQSFNKNGVWckZBUWljL2RDWHJWVkVUSE8KVnE3ZUJr
+LzFTV2FLSllUVStWazF0S0RKUlpYV2ZLUDhrSEdtOG94bmd3amNPV2ZBRWlzUUFieWJ0cW5ZCkN4
+WC9nK2VFMFFlVjBNVDAzQnBNbWFTS29IOFYvYmdTTTRJMTkzTHR2UWpuS1hVb3NLMnlnRU00MjM3
+SQozd0lkUm5zRkQ5bGEzR0doZmZKTUd0YlNJZFozb0tVbmVycXpDdlN3elM1K0J3TG4xQ0QwWUN6
+bHVOTjQKb0F2Z2pHSVkyNklGaE9EOHhxREUzZFZvdUlYSVptMkluUEg0cUNvQlVEYjJ0N3dYSjVM
+WER2OVd3LzI5ClNzZmdHaS9ORzVtV1BQaXZwQmJudmJNMU50SzBBWDF6Y2JTZGNkU1NJNjkvcUdC
+ZkY5VWtMSHRHZTZ4ZQprVVY5aVphejR6NVpFK050V0FUd1EvaG42eVF4WDBEMWFUay9JLzNzdCtQ
+U25OVjJMT3RHMEQyRGJ2WUYKMnNOZURucithSXRHWkdNNDh6dHNhdnU1YTN4TUx4ZytEUG91RlJt
+aituSEhCcFFlNDYzREFIYURqM0lICmJhS1lWUWRXZllEWUJVc09lQmF6Z1hMaThnVW9PeE42azkr
+RWNQeUh1cHk4S1VZRE5uaUdvY2xISGwzYwpBdW5TUXpyMlByU21KK2tyeHdOZFVjamxPZkpwCj1Z
+VDJBCi0tLS0tRU5EIFBHUCBNRVNTQUdFLS0tLS0=
+--00000000000062238205ee321e74--
