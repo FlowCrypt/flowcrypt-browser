@@ -550,7 +550,6 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
   private searchContacts = async (input: JQuery<HTMLElement>): Promise<void> => {
     try {
       this.view.errModule.debug(`searchContacts`);
-      this.view.errModule.debug(`googleContactsSearchEnabled: ${await this.googleContactsSearchEnabled}`);
       const substring = Str.parseEmail(String(input.val()), 'DO-NOT-VALIDATE').email;
       this.view.errModule.debug(`searchContacts.query.substring(${JSON.stringify(substring)})`);
       if (!substring) {
@@ -616,12 +615,10 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
   };
 
   private searchContactsOnGoogle = async (query: string, knownContacts: ContactPreview[]): Promise<EmailProviderContact[]> => {
-    if (await this.googleContactsSearchEnabled) {
-      this.view.errModule.debug(`searchContacts (Google API) 5`);
-      const contactsGoogle = await Google.contactsGet(this.view.acctEmail, query, undefined, this.MAX_CONTACTS_LENGTH);
-      if (contactsGoogle && contactsGoogle.length) {
-        return contactsGoogle.filter(cGmail => !knownContacts.find(c => c.email === cGmail.email));
-      }
+    this.view.errModule.debug(`searchContacts (Google API) 5`);
+    const contactsGoogle = await Google.contactsGet(this.view.acctEmail, query, undefined, this.MAX_CONTACTS_LENGTH);
+    if (contactsGoogle && contactsGoogle.length) {
+      return contactsGoogle.filter(cGmail => !knownContacts.find(c => c.email === cGmail.email));
     }
     return [];
   };
