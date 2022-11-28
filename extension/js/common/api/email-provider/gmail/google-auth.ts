@@ -75,7 +75,13 @@ export class GoogleAuth {
   };
 
   public static getTokenInfo = async (accessToken: string): Promise<GoogleTokenInfo> => {
-    return await Api.ajax({ url: `${GMAIL_GOOGLE_API_HOST}/oauth2/v1/tokeninfo?access_token=${accessToken}` }, Catch.stackTrace()) as unknown as GoogleTokenInfo;
+    return await Api.ajax(
+      {
+        url: `${GMAIL_GOOGLE_API_HOST}/oauth2/v1/tokeninfo?access_token=${accessToken}`,
+        timeout: 10000
+      },
+      Catch.stackTrace()
+    ) as unknown as GoogleTokenInfo;
   };
 
   public static googleApiAuthHeader = async (acctEmail: string, forceRefresh = false): Promise<string> => {

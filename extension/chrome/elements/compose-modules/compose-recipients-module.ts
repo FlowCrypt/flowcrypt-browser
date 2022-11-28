@@ -42,7 +42,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
 
   private dragged: Element | undefined = undefined;
 
-  private googleContactsSearchEnabled: boolean | Promise<boolean>;
+  private googleContactsSearchEnabled: boolean | Promise<boolean | undefined>;
 
   constructor(view: ComposeView) {
     super(view);
@@ -384,8 +384,12 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
   };
 
   private queryIfGoogleSearchEnabled = async () => {
-    const scopes = await AcctStore.getScopes(this.view.acctEmail);
-    return scopes.readContacts && scopes.readOtherContacts;
+    try {
+      const scopes = await AcctStore.getScopes(this.view.acctEmail);
+      return scopes.readContacts && scopes.readOtherContacts;
+    } catch {
+      return undefined;
+    }
   };
 
   private inputsBlurHandler = async (target: HTMLElement, e: JQuery.Event<HTMLElement, null>) => {
