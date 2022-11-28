@@ -55,11 +55,9 @@ export class GoogleAuth {
     }
   };
 
-  public static defaultScopes = (group: 'default' | 'contacts' | 'openid' = 'default') => {
+  public static defaultScopes = (group: 'default' | 'contacts' = 'default') => {
     const { readContacts, readOtherContacts, compose, modify, openid, email, profile } = GoogleAuth.OAUTH.scopes;
-    if (group === 'openid') {
-      return [openid, email, profile];
-    } else if (group === 'default') {
+    if (group === 'default') {
       if (FLAVOR === 'consumer') {
         return [openid, email, profile, compose, modify]; // consumer may freak out that extension asks for their contacts early on
       } else if (FLAVOR === 'enterprise') {
@@ -181,10 +179,6 @@ export class GoogleAuth {
       return true; // err trying to reach FES itself at a predictable URL
     }
     return false;
-  };
-
-  public static newOpenidAuthPopup = async ({ acctEmail }: { acctEmail?: string }): Promise<AuthRes> => {
-    return await GoogleAuth.newAuthPopup({ acctEmail, scopes: GoogleAuth.defaultScopes('openid'), save: false });
   };
 
   // todo - would be better to use a TS type guard instead of the type cast when checking OpenId
