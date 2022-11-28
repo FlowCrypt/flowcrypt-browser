@@ -387,7 +387,8 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     try {
       const scopes = await AcctStore.getScopes(this.view.acctEmail);
       return scopes.readContacts && scopes.readOtherContacts;
-    } catch {
+    } catch (e) {
+      this.view.errModule.debug(`googleContactsSearchEnabled: Error occurred while fetching result: ${e}`);
       return undefined;
     }
   };
@@ -570,7 +571,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
         return;
       }
       let foundOnGoogle: EmailProviderContact[] = [];
-      if (await this.googleContactsSearchEnabled) {
+      if (await this.googleContactsSearchEnabled || await this.googleContactsSearchEnabled === undefined) {
         this.view.errModule.debug(`searchContacts 3`);
         foundOnGoogle = await this.searchContactsOnGoogle(substring, contacts);
         await this.addApiLoadedContactsToDb(foundOnGoogle);
