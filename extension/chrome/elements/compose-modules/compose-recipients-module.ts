@@ -717,7 +717,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     } else {
       this.setContactPopupStyle(input);
       contactEl.find('ul').html('<li data-test="no-contact-found">No Contacts Found</li>'); // xss-direct
-      if (!(await this.googleContactsSearchEnabled)) {
+      if ((await this.googleContactsSearchEnabled) === false) {
         this.addBtnToAllowSearchContactsFromGoogle(input);
       }
     }
