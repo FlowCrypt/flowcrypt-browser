@@ -571,7 +571,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
         return;
       }
       let foundOnGoogle: EmailProviderContact[] = [];
-      if (await this.googleContactsSearchEnabled || await this.googleContactsSearchEnabled === undefined) {
+      if ((await this.googleContactsSearchEnabled) !== false) {
         this.view.errModule.debug(`searchContacts 3`);
         foundOnGoogle = await this.searchContactsOnGoogle(substring, contacts);
         await this.addApiLoadedContactsToDb(foundOnGoogle);
