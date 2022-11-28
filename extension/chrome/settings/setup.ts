@@ -24,7 +24,7 @@ import { View } from '../../js/common/view.js';
 import { Xss } from '../../js/common/platform/xss.js';
 import { initPassphraseToggle } from '../../js/common/ui/passphrase-ui.js';
 import { PubLookup } from '../../js/common/api/pub-lookup.js';
-import { Scopes, AcctStoreDict, AcctStore } from '../../js/common/platform/store/acct-store.js';
+import { AcctStoreDict, AcctStore } from '../../js/common/platform/store/acct-store.js';
 import { KeyStore } from '../../js/common/platform/store/key-store.js';
 import { KeyStoreUtil } from "../../js/common/core/crypto/key-store-util.js";
 import { KeyManager } from '../../js/common/api/key-server/key-manager.js';
@@ -63,7 +63,6 @@ export class SetupView extends View {
   public readonly backupUi: BackupUi;
 
   public tabId!: string;
-  public scopes!: Scopes;
   public storage!: AcctStoreDict;
   public clientConfiguration!: ClientConfiguration;
   public pubLookup!: PubLookup;
@@ -114,7 +113,6 @@ export class SetupView extends View {
       'step_2_ekm_input_password', 'step_2_ekm_input_password2',
       'recovery_password']);
     this.storage = await AcctStore.get(this.acctEmail, ['setup_done', 'email_provider', 'fesUrl']);
-    this.scopes = await AcctStore.getScopes(this.acctEmail);
     this.storage.email_provider = this.storage.email_provider || 'gmail';
     this.clientConfiguration = await ClientConfiguration.newInstance(this.acctEmail);
     if (this.clientConfiguration.shouldHideArmorMeta() && typeof opgp !== 'undefined') {
