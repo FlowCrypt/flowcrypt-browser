@@ -243,7 +243,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
       };
     } catch (msgTokenErr) {
       if (ApiErr.isAuthErr(msgTokenErr)) {
-        Settings.offerToLoginWithPopupShowModalOnErr(this.acctEmail);
+        Settings.offerToLoginWithPopupShowModalOnErr(this.acctEmail, () => this.view.sendBtnModule.extractProcessSendMsg());
         throw new ComposerResetBtnTrigger();
       } else if (ApiErr.isNetErr(msgTokenErr)) {
         throw msgTokenErr;

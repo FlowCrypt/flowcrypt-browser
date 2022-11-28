@@ -47,6 +47,31 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
       await inboxPage.close();
     }));
 
+    ava.default('decrypt - encrypted text inside "message" attachment is correctly decrypted', testWithBrowser('ci.tests.gmail', async (t, browser) => {
+      const acctEmail = 'ci.tests.gmail@flowcrypt.test';
+      const key = Config.key('flowcrypt.compatibility.1pp1')!;
+      await SettingsPageRecipe.addKeyTest(t, browser, acctEmail, key.armored!, key.passphrase, {}, false);
+      await InboxPageRecipe.checkDecryptMsg(t, browser, {
+        acctEmail,
+        threadId: '184a474fc1bd59b8',
+        expectedContent: 'This message contained the actual encrypted text inside a "message" attachment.'
+      });
+    }));
+
+    ava.default(`decrypt - render plain text for "message" attachment (which has plain text)`, testWithBrowser('ci.tests.gmail', async (t, browser) => {
+      const threadId = '184a87a7b32dd009';
+      const acctEmail = 'ci.tests.gmail@flowcrypt.test';
+      const inboxPage = await browser.newPage(t, TestUrls.extension(`chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`));
+      await inboxPage.waitForSelTestState('ready');
+      await inboxPage.waitAll('iframe');
+      expect(await inboxPage.isElementPresent('@container-attachments')).to.equal(true);
+      await inboxPage.waitForContent('.message.line', 'Plain message');
+      // expect no pgp blocks
+      const urls = await inboxPage.getFramesUrls(['/chrome/elements/pgp_block.htm']);
+      expect(urls.length).to.equal(0);
+      await inboxPage.close();
+    }));
+
     ava.default(`decrypt - outlook message with ATTxxxx encrypted email is correctly decrypted`, testWithBrowser('compatibility', async (t, browser) => {
       const acctEmail = 'flowcrypt.compatibility@gmail.com';
       await InboxPageRecipe.checkDecryptMsg(t, browser, {

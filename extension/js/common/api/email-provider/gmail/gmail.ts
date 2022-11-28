@@ -291,7 +291,7 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
         return { armored: fromHtmlBody, subject, isPwdMsg };
       }
       for (const attachment of attachments) {
-        if (attachment.treatAs() === 'encryptedMsg') {
+        if (attachment.treatAs(!!textBody) === 'encryptedMsg') {
           await this.fetchAttachments([attachment], progressCb);
           const armoredMsg = PgpArmor.clip(attachment.getData().toUtfStr());
           if (!armoredMsg) {

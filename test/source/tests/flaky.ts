@@ -256,6 +256,21 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
       await ComposePageRecipe.sendAndClose(composePage);
     }));
 
+    ava.default('compose - test compose after reconnect account', testWithBrowser('ci.tests.gmail', async (t, browser) => {
+      const acct = 'ci.tests.gmail@flowcrypt.test';
+      const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
+      await Util.wipeGoogleTokensUsingExperimentalSettingsPage(t, browser, acct);
+      await ComposePageRecipe.showRecipientInput(composePage);
+      const subject = 'PWD encrypted message after reconnect account';
+      await ComposePageRecipe.fillMsg(composePage, { to: 'test@email.com' }, subject);
+      await composePage.waitAndType('@input-password', 'gO0d-pwd');
+      await composePage.waitAndClick('@action-send', { delay: 1 });
+      const oauthPopup = await browser.newPageTriggeredBy(t, () => composePage.waitAndRespondToModal('confirm', 'confirm', 'Please log in with FlowCrypt to continue'));
+      await OauthPageRecipe.google(t, oauthPopup, acct, 'approve');
+      await ComposePageRecipe.closed(composePage);
+      expect((await GoogleData.withInitializedData(acct)).searchMessagesBySubject(subject).length).to.equal(1);
+    }));
+
     ava.default('with attachments + shows progress %', testWithBrowser('compatibility', async (t, browser) => {
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
       await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, 'with files');
