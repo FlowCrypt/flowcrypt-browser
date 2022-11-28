@@ -43,6 +43,10 @@ export class PgpBlockViewAttachmentsModule {
     this.view.renderModule.resizePgpBlockFrame();
     $('#attachments .preview-attachment').on('click', this.view.setHandlerPrevent('double', async (target) => {
       const attachment = this.includedAttachments[Number($(target).attr('index'))];
+      if (this.isAttachmentURLInvalid(attachment)) {
+        await Ui.modal.error('Cannot show file preview. The file attachment URL seemed modified.');
+        return;
+      }
       await this.previewAttachmentClickedHandler(attachment);
     }));
     $('#attachments .download-attachment').on('click', this.view.setHandlerPrevent('double', async (target, event) => {
@@ -52,6 +56,10 @@ export class PgpBlockViewAttachmentsModule {
         Browser.saveToDownloads(attachment);
         this.view.renderModule.resizePgpBlockFrame();
       } else {
+        if (this.isAttachmentURLInvalid(attachment)) {
+          await Ui.modal.error('File cannot be downloaded. The file attachment URL seemed modified.');
+          return;
+        }
         Xss.sanitizePrepend($(target).find('.progress'), Ui.spinner('green'));
         attachment.setData(await Api.download(attachment.url!, (perc, load, total) => this.renderProgress($(target).find('.progress .percent'), perc, load, total || attachment.length)));
         await Ui.delay(100); // give browser time to render
@@ -89,6 +97,10 @@ export class PgpBlockViewAttachmentsModule {
     } else if (size && received) {
       element.text(Math.floor(((received * 0.75) / size) * 100) + '%');
     }
+  };
+
+  private isAttachmentURLInvalid = (attachment: Attachment): boolean => {
+    return new URL(String(attachment.url)).host !== 'flowcrypt.s3.amazonaws.com';
   };
 
 }
