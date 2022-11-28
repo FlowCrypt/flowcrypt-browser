@@ -100,7 +100,7 @@ export class PgpBlockViewAttachmentsModule {
   };
 
   private isAttachmentURLInvalid = (attachment: Attachment): boolean => {
-    return attachment.url !== undefined && new URL(attachment.url).host !== 'flowcrypt.s3.amazonaws.com';
+    return !!attachment.url && new URL(attachment.url).host !== 'flowcrypt.s3.amazonaws.com';
   };
 
 }
