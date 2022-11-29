@@ -12,7 +12,7 @@ import { PgpArmor } from './crypto/pgp/pgp-armor.js';
 import { Str } from './common.js';
 import { FcAttachmentLinkData } from './attachment.js';
 import { KeyUtil } from './crypto/key.js';
-import { Ui } from '../browser/ui.js';
+import { Ui } from '../../../../extension/js/common/browser/ui.js';
 
 type SanitizedBlocks = { blocks: MsgBlock[], subject: string | undefined, isRichText: boolean, webReplyToken: unknown | undefined };
 
@@ -97,7 +97,7 @@ export class MsgBlockParser {
           const fileAttachmentDomain = new URL(String(url)).host;
           const isFileAttchmentDomainInvalid = !!fileAttachmentDomain && fileAttachmentDomain !== 'flowcrypt.s3.amazonaws.com';
           if (isFileAttchmentDomainInvalid) {
-            error = 'Invalid file attachment Url found';
+            error = 'An  invalid file attachment Url found. We\'re skipping that attachment from rendering.';
             return '';
           }
           blocks.push(MsgBlock.fromAttachment('encryptedAttachmentLink', '', { type: a.type, name: a.name, length: a.size, url: String(url) }));
