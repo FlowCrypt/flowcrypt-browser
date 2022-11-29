@@ -47,7 +47,6 @@ export class MsgBlockParser {
     if (!Mime.resemblesMsg(decryptedContent)) {
       let plain = Buf.fromUint8(decryptedContent).toUtfStr();
       const extractedFcAttachmentsResult = await MsgBlockParser.extractFcAttachments(plain, blocks);
-      // needs to show a warning modal similar on pgp-block-render-modules.ts#LN231-234.
       plain = extractedFcAttachmentsResult.decryptedContent;
       webReplyToken = MsgBlockParser.extractFcReplyToken(plain);
       if (webReplyToken) {
