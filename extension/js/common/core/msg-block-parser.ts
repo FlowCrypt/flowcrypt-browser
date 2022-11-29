@@ -12,7 +12,6 @@ import { PgpArmor } from './crypto/pgp/pgp-armor.js';
 import { Str } from './common.js';
 import { FcAttachmentLinkData } from './attachment.js';
 import { KeyUtil } from './crypto/key.js';
-import { Ui } from '../../../../extension/js/common/browser/ui.js';
 
 type SanitizedBlocks = { blocks: MsgBlock[], subject: string | undefined, isRichText: boolean, webReplyToken: unknown | undefined };
 
@@ -47,7 +46,9 @@ export class MsgBlockParser {
     let webReplyToken: unknown | undefined;
     if (!Mime.resemblesMsg(decryptedContent)) {
       let plain = Buf.fromUint8(decryptedContent).toUtfStr();
-      plain = await MsgBlockParser.extractFcAttachments(plain, blocks);
+      const extractedFcAttachmentsResult = await MsgBlockParser.extractFcAttachments(plain, blocks);
+      // needs to show a warning modal similar on pgp-block-render-modules.ts#LN231-234.
+      plain = extractedFcAttachmentsResult.decryptedContent;
       webReplyToken = MsgBlockParser.extractFcReplyToken(plain);
       if (webReplyToken) {
         plain = MsgBlockParser.stripFcTeplyToken(plain);
@@ -90,14 +91,16 @@ export class MsgBlockParser {
     // `<a href="${attachment.url}" class="cryptup_file" cryptup-data="${fcData}">${linkText}</a>\n`
     // thus we use RegEx so that it works on both browser and node
     let error = '';
+    const fcAttachmentsPattern = /<a\s+href="([^"]+)"\s+class="cryptup_file"\s+cryptup-data="([^"]+)"\s*>[^<]+<\/a>\n?/gm;
     if (decryptedContent.includes('class="cryptup_file"')) {
-      decryptedContent = decryptedContent.replace(/<a\s+href="([^"]+)"\s+class="cryptup_file"\s+cryptup-data="([^"]+)"\s*>[^<]+<\/a>\n?/gm, (_, url, fcData) => {
+      decryptedContent = decryptedContent.replace(fcAttachmentsPattern, (_, url, fcData) => {
         const a = Str.htmlAttrDecode(String(fcData));
         if (MsgBlockParser.isFcAttachmentLinkData(a)) {
           const fileAttachmentDomain = new URL(String(url)).host;
           const isFileAttchmentDomainInvalid = !!fileAttachmentDomain && fileAttachmentDomain !== 'flowcrypt.s3.amazonaws.com';
           if (isFileAttchmentDomainInvalid) {
             error = 'An  invalid file attachment Url found. We\'re skipping that attachment from rendering.';
+            decryptedContent.replace(fcAttachmentsPattern, '');
             return '';
           }
           blocks.push(MsgBlock.fromAttachment('encryptedAttachmentLink', '', { type: a.type, name: a.name, length: a.size, url: String(url) }));
@@ -105,11 +108,7 @@ export class MsgBlockParser {
         return '';
       });
     }
-    if (error) {
-      await Ui.modal.warning(error);
-      return '';
-    }
-    return decryptedContent;
+    return { decryptedContent, error };
   };
 
   public static stripPublicKeys = (decryptedContent: string, foundPublicKeys: string[]) => {
