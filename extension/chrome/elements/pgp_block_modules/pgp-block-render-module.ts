@@ -228,7 +228,7 @@ export class PgpBlockViewRenderModule {
     // todo - replace with MsgBlockParser.fmtDecryptedAsSanitizedHtmlBlocks, then the extract/strip methods could be private?
     if (!Mime.resemblesMsg(decryptedBytes)) {
       const fcAttachmentBlocks: MsgBlock[] = [];
-      decryptedContent = MsgBlockParser.extractFcAttachments(decryptedContent, fcAttachmentBlocks);
+      decryptedContent = await MsgBlockParser.extractFcAttachments(decryptedContent, fcAttachmentBlocks);
       decryptedContent = MsgBlockParser.stripFcTeplyToken(decryptedContent);
       decryptedContent = MsgBlockParser.stripPublicKeys(decryptedContent, publicKeys);
       if (fcAttachmentBlocks.length) {
