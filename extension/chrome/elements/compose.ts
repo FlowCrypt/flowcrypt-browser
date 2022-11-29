@@ -28,7 +28,7 @@ import { ComposeStorageModule } from './compose-modules/compose-storage-module.j
 import { Catch } from '../../js/common/platform/catch.js';
 import { ClientConfiguration } from '../../js/common/client-configuration.js';
 import { PubLookup } from '../../js/common/api/pub-lookup.js';
-import { Scopes, AcctStore } from '../../js/common/platform/store/acct-store.js';
+import { AcctStore } from '../../js/common/platform/store/acct-store.js';
 import { AccountServer } from '../../js/common/api/account-server.js';
 import { ComposeReplyBtnPopoverModule } from './compose-modules/compose-reply-btn-popover-module.js';
 
@@ -50,7 +50,6 @@ export class ComposeView extends View {
   public threadId: string = '';
   public ppChangedPromiseCancellation: PromiseCancellation = { cancel: false };
 
-  public scopes!: Scopes;
   public tabId!: string;
   public factory!: XssSafeFactory;
   public replyParams: ReplyParams | undefined;
@@ -162,7 +161,6 @@ export class ComposeView extends View {
     this.pubLookup = new PubLookup(this.clientConfiguration);
     this.tabId = await BrowserMsg.requiredTabId();
     this.factory = new XssSafeFactory(this.acctEmail, this.tabId);
-    this.scopes = await AcctStore.getScopes(this.acctEmail);
     this.draftModule = new ComposeDraftModule(this);
     this.quoteModule = new ComposeQuoteModule(this);
     this.recipientsModule = new ComposeRecipientsModule(this);
