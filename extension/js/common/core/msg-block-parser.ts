@@ -98,7 +98,7 @@ export class MsgBlockParser {
           const fileAttachmentDomain = new URL(String(url)).host;
           const isFileAttchmentDomainInvalid = !!fileAttachmentDomain && fileAttachmentDomain !== 'flowcrypt.s3.amazonaws.com';
           if (isFileAttchmentDomainInvalid) {
-            error = 'An  invalid file attachment Url found. We\'re skipping that attachment from rendering.';
+            error = 'An invalid file attachment Url found. We\'re skipping that attachment from rendering.';
             decryptedContent.replace(fcAttachmentsPattern, '');
             return '';
           }
