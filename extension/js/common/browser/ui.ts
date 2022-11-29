@@ -151,7 +151,7 @@ export class Ui {
     },
     warning: async (text: string, footer?: string): Promise<void> => {
       const userResponsePromise = Ui.swal().fire({
-        html: `<span class="orange">${Xss.escape(text).replace(/\n/g, '<br>')}</span>`,
+        html: `<span class="orange" data-test="container-warning-modal-text">${Xss.escape(text).replace(/\n/g, '<br>')}</span>`,
         footer: footer ? Xss.htmlSanitize(footer) : '',
         allowOutsideClick: false,
         customClass: {

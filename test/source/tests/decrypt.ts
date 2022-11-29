@@ -800,6 +800,24 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
       await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, { params, content: [], encryption: '', signature: '', error: 'parse error' });
     }));
 
+    ava.default('decrypt - prevent rendering of attachments from domain sources other than flowcrypt.s3.amazonaws.com', testWithBrowser('compatibility', async (t, browser) => {
+      const threadId1 = '184c26fec9a59091';
+      const threadId2 = '184c2878e0690c50';
+      const acctEmail = 'flowcrypt.compatibility@gmail.com';
+      const inboxPage = await browser.newPage(t, TestUrls.extension(`chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId1}`));
+      await inboxPage.waitAll('iframe');
+      const pgpBlock = await inboxPage.getFrame(['pgp_block.htm']);
+      const expectedErrMsg = 'An invalid file attachment Url found. We\'re skipping that attachment from rendering.';
+      await pgpBlock.waitForContent('@container-warning-modal-text', expectedErrMsg);
+      await pgpBlock.waitAndRespondToModal('warning', 'confirm', expectedErrMsg);
+      const inboxPage2 = await browser.newPage(t, TestUrls.extension(`chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId2}`));
+      await inboxPage.waitAll('iframe');
+      const pgpBlock2 = await inboxPage2.getFrame(['pgp_block.htm']);
+      await pgpBlock2.waitForContent('@container-warning-modal-text', expectedErrMsg);
+      await pgpBlock2.waitAndRespondToModal('warning', 'confirm', expectedErrMsg);
+      await pgpBlock2.waitForContent('@pgp-block-content', 'This one has a message before the attachment - this should remain.');
+    }));
+
     ava.default(`decrypt - try path traversal forward slash workaround`, testWithBrowser('compatibility', async (t, browser) => {
       const params = "?frame_id=frame_TWloVRhvZE&message=&message_id=..\\test&senderEmail=&is_outgoing=___cu_false___&account_email=flowcrypt.compatibility%40gmail.com";
       const pgpHostPage = await browser.newPage(t, `chrome/dev/ci_pgp_host_page.htm${params}`);
@@ -816,7 +834,7 @@ sjAwMjEoiymyhJfeapohyXRUYeazxTBjWJkSeOtDWJnBRnFxCsDEv33mYDjmdsuGPyx68g7tMwe3
 tqlevvUo5EIap+wmZm6mRXcOGBplvJy1mfuq1plrt08qs97Y2ztB+/XbuyG3Ir48u7I3pmD+TWae
 WSd5d26QYXcuusauc0Xy/fS1/FXbPJaYHlCeMCfnhrF9d2jyH33V+er6r3lS5i/mchOKffpglktT
 d6Z36//MsmczN00Wd60t9T+qyLz0T4/UG2Y9lgf367f3d+kYPE0LS7mXuFmjlPXfw0nKyVsSeFiu
-3duz+VfzU3HVZ65L4xc5PBYwWLlshdcG94VTt2oK3cuLC5zuy/3ks0sw1+MGzmKtjMeJrqXph+8p
+3duz  +VfzU3HVZ65L4xc5PBYwWLlshdcG94VTt2oK3cuLC5zuy/3ks0sw1+MGzmKtjMeJrqXph+8p
 5W5JmHL28qarbQvv+71V3ni6odk8Z2NDban2y1kA
 =Ruyn
 -----END PGP MESSAGE-----`;
