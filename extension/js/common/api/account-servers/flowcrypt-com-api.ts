@@ -45,7 +45,7 @@ export class FlowCryptComApi extends Api {
     if (!email) {
       throw new Error('Id token is invalid');
     }
-    if (!r.domain_org_rules.flags) {
+    if (r.domain_org_rules && !r.domain_org_rules.flags) {
       throw new ClientConfigurationError('missing_flags');
     }
     await AcctStore.set(email, { rules: r.domain_org_rules });
