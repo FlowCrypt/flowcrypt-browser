@@ -90,7 +90,7 @@ export class EnterpriseServer extends Api {
 
   public fetchAndSaveClientConfiguration = async (): Promise<ClientConfigurationJson> => {
     const r = await this.request<FesRes.ClientConfiguration>('GET', `/api/${this.apiVersion}/client-configuration?domain=${this.domain}`);
-    if (!r.clientConfiguration.flags) {
+    if (r.clientConfiguration && !r.clientConfiguration.flags) {
       throw new ClientConfigurationError('missing_flags');
     }
     await AcctStore.set(this.acctEmail, { rules: r.clientConfiguration });
