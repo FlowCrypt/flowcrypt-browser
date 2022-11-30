@@ -25,7 +25,7 @@ import { OpenPGPKey } from '../core/crypto/pgp/openpgp-key';
 import { BrowserHandle } from '../browser';
 import { AvaContext } from './tooling';
 import { mockBackendData } from '../mock/backend/backend-endpoints';
-import { ClientConfiguration } from '../mock/backend/backend-data';
+import { ClientConfiguration, keyManagerAutogenRules } from '../mock/backend/backend-data';
 import { HttpClientErr, Status } from '../mock/lib/api';
 
 // tslint:disable:no-blank-lines-func
@@ -968,6 +968,26 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       expect(savedPassphrase2).not.to.be.an('undefined');
       await newSettingsPage.close();
       await settingsPage.close();
+    }));
+
+    ava.default('settings - ensure gracious behavior & ui should remain functional when updating client configuration', testWithBrowser(undefined, async (t, browser) => {
+      const acct = 'settings@settings.flowcrypt.test';
+      mockBackendData.clientConfigurationByAcctEmail[acct] = keyManagerAutogenRules;
+      const setupPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
+      await SetupPageRecipe.autoSetupWithEKM(setupPage);
+      await setupPage.close();
+      // Set invalid client configuration and check if it ensures gracious behavior & ui remain functional
+      mockBackendData.clientConfigurationByAcctEmail[acct] = {
+        // flags is required but don't return it (to mock invalid client configuration)
+        key_manager_url: 'https://localhost:8001/flowcrypt-email-key-manager'
+      };
+      // open the settings page
+      const settingsPage = await browser.newPage(t, TestUrls.extensionSettings(acct));
+      const accessToken = await BrowserRecipe.getGoogleAccessToken(settingsPage, acct);
+      const extraAuthHeaders = { Authorization: `Bearer ${accessToken}` };
+      // const gmailPage =
+      const gmailPage = await browser.newPage(t, TestUrls.mockGmailUrl(), undefined, extraAuthHeaders);
+      await PageRecipe.waitForToastToAppearAndDisappear(gmailPage, 'Failed to update FlowCrypt Client Configuration: Missing client configuration flags.');
     }));
 
     ava.default('settings - client configuration gets updated on settings and content script reloads', testWithBrowser(undefined, async (t, browser) => {
