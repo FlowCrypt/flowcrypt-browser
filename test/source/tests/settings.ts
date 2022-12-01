@@ -971,14 +971,14 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
     }));
 
     ava.default('settings - ensure gracious behavior & ui should remain functional when updating client configuration', testWithBrowser(undefined, async (t, browser) => {
-      const acct = 'settings@settings.flowcrypt.test';
+      const acct = 'test-update@settings.flowcrypt.test';
       mockBackendData.clientConfigurationByAcctEmail[acct] = keyManagerAutogenRules;
       const setupPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
       await SetupPageRecipe.autoSetupWithEKM(setupPage);
       const {
-        cryptup_settingssettingsflowcrypttest_rules: rules1
+        cryptup_testupdatesettingsflowcrypttest_rules: rules1
       } = await setupPage.getFromLocalStorage([
-        'cryptup_settingssettingsflowcrypttest_rules'
+        'cryptup_testupdatesettingsflowcrypttest_rules'
       ]);
       const clientConfiguration1 = rules1 as ClientConfiguration;
       expect(clientConfiguration1.flags).to.eql([
@@ -990,7 +990,6 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       expect(clientConfiguration1.disallow_attester_search_for_domains).to.eql([]);
       expect(clientConfiguration1.enforce_keygen_algo).to.equal('rsa2048');
       expect(clientConfiguration1.key_manager_url).to.equal('https://localhost:8001/flowcrypt-email-key-manager');
-      // open the settings page
       const accessToken = await BrowserRecipe.getGoogleAccessToken(setupPage, acct);
       await setupPage.close();
       // Set invalid client configuration and check if it ensures gracious behavior & ui remain functional
@@ -1004,9 +1003,9 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       // Ensure previous client configuration remains same
       const settingsPage = await browser.newPage(t, TestUrls.extensionSettings(acct));
       const {
-        cryptup_settingssettingsflowcrypttest_rules: rules2
+        cryptup_testupdatesettingsflowcrypttest_rules: rules2
       } = await settingsPage.getFromLocalStorage([
-        'cryptup_settingssettingsflowcrypttest_rules'
+        'cryptup_testupdatesettingsflowcrypttest_rules'
       ]);
       const clientConfiguration2 = rules2 as ClientConfiguration;
       expect(clientConfiguration2.flags).to.eql([
