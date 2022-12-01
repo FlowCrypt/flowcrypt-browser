@@ -975,15 +975,14 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       mockBackendData.clientConfigurationByAcctEmail[acct] = keyManagerAutogenRules;
       const setupPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
       await SetupPageRecipe.autoSetupWithEKM(setupPage);
+      // open the settings page
+      const accessToken = await BrowserRecipe.getGoogleAccessToken(setupPage, acct);
       await setupPage.close();
       // Set invalid client configuration and check if it ensures gracious behavior & ui remain functional
       mockBackendData.clientConfigurationByAcctEmail[acct] = {
         // flags is required but don't return it (to mock invalid client configuration)
         key_manager_url: 'https://localhost:8001/flowcrypt-email-key-manager'
       };
-      // open the settings page
-      const settingsPage = await browser.newPage(t, TestUrls.extensionSettings(acct));
-      const accessToken = await BrowserRecipe.getGoogleAccessToken(settingsPage, acct);
       const extraAuthHeaders = { Authorization: `Bearer ${accessToken}` };
       // const gmailPage =
       const gmailPage = await browser.newPage(t, TestUrls.mockGmailUrl(), undefined, extraAuthHeaders);
