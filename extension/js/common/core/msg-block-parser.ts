@@ -92,11 +92,11 @@ export class MsgBlockParser {
     // `<a href="${attachment.url}" class="cryptup_file" cryptup-data="${fcData}">${linkText}</a>\n`
     // thus we use RegEx so that it works on both browser and node
     let error = '';
-    if (!decryptedContent.match(/<a\s+href="(https?:\/\/flowcrypt\.s3\.amazonaws\.com\/[^"]+)"\s+class="cryptup_file"\s+cryptup-data="([^"]+)"\s*>[^<]+<\/a>\n?/gm)) {
-      error = 'Skipping attachment rendering and show original content because attachment url is modified/invalid.';
-      return { decryptedContent, error };
-    }
     if (decryptedContent.includes('class="cryptup_file"')) {
+      if (!decryptedContent.match(/<a\s+href="(https?:\/\/flowcrypt\.s3\.amazonaws\.com\/[^"]+)"\s+class="cryptup_file"\s+cryptup-data="([^"]+)"\s*>[^<]+<\/a>\n?/gm)) {
+        error = 'Skipping attachment rendering and show original content because attachment url is modified/invalid.';
+        return { decryptedContent, error };
+      }
       decryptedContent = decryptedContent.replace(/<a\s+href="([^"]+)"\s+class="cryptup_file"\s+cryptup-data="([^"]+)"\s*>[^<]+<\/a>\n?/gm, (_, url, fcData) => {
         const a = Str.htmlAttrDecode(String(fcData));
         if (MsgBlockParser.isFcAttachmentLinkData(a)) {
