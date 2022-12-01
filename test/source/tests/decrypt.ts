@@ -801,21 +801,15 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
     }));
 
     ava.default('decrypt - prevent rendering of attachments from domain sources other than flowcrypt.s3.amazonaws.com', testWithBrowser('compatibility', async (t, browser) => {
-      const threadId1 = '184c26fec9a59091';
-      const threadId2 = '184c2878e0690c50';
+      const threadId1 = '184cc6aa8e884397';
       const acctEmail = 'flowcrypt.compatibility@gmail.com';
       const inboxPage = await browser.newPage(t, TestUrls.extension(`chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId1}`));
       await inboxPage.waitAll('iframe');
       const pgpBlock = await inboxPage.getFrame(['pgp_block.htm']);
-      const expectedErrMsg = 'An invalid file attachment Url found. We\'re skipping that attachment from rendering.';
+      const expectedErrMsg = 'Skipping attachment rendering and show original content because attachment url is modified/invalid.';
       await pgpBlock.waitForContent('@container-warning-modal-text', expectedErrMsg);
       await pgpBlock.waitAndRespondToModal('warning', 'confirm', expectedErrMsg);
-      const inboxPage2 = await browser.newPage(t, TestUrls.extension(`chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId2}`));
-      await inboxPage.waitAll('iframe');
-      const pgpBlock2 = await inboxPage2.getFrame(['pgp_block.htm']);
-      await pgpBlock2.waitForContent('@container-warning-modal-text', expectedErrMsg);
-      await pgpBlock2.waitAndRespondToModal('warning', 'confirm', expectedErrMsg);
-      await pgpBlock2.waitForContent('@pgp-block-content', 'This one has a message before the attachment - this should remain.');
+      await pgpBlock.waitForContent('@pgp-block-content', 'This email contains a parsable attachment with invalid/modified URL.');
     }));
 
     ava.default(`decrypt - try path traversal forward slash workaround`, testWithBrowser('compatibility', async (t, browser) => {
