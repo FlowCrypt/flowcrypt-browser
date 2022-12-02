@@ -999,9 +999,11 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       };
       const extraAuthHeaders = { Authorization: `Bearer ${accessToken}` };
       const gmailPage = await browser.newPage(t, TestUrls.mockGmailUrl(), undefined, extraAuthHeaders);
-      await PageRecipe.waitForToastToAppearAndDisappear(gmailPage, 'Failed to update FlowCrypt Client Configuration: Missing client configuration flags.');
+      const errorMsg = 'Failed to update FlowCrypt Client Configuration: Missing client configuration flags.';
+      await PageRecipe.waitForToastToAppearAndDisappear(gmailPage, errorMsg);
       // Ensure previous client configuration remains same
       const settingsPage = await browser.newPage(t, TestUrls.extensionSettings(acct));
+      await PageRecipe.waitForToastToAppearAndDisappear(settingsPage, errorMsg);
       const {
         cryptup_testupdatesettingsflowcrypttest_rules: rules2
       } = await settingsPage.getFromLocalStorage([
