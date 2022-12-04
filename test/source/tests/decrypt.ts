@@ -28,7 +28,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
       const threadId = '17d7a32a0613071d';
       const acctEmail = 'flowcrypt.compatibility@gmail.com';
       const inboxPage = await browser.newPage(t, TestUrls.extension(`chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`));
-      await inboxPage.waitForSelTestState('ready', 100);
+      await inboxPage.waitForSelTestState('ready');
       await inboxPage.waitAll('iframe');
       const pgpBlock = await inboxPage.getFrame(['pgp_block.htm']);
       await pgpBlock.waitForContent('@pgp-encryption', 'not encrypted');
@@ -806,8 +806,9 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
       const inboxPage = await browser.newPage(t, TestUrls.extension(`chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId1}`));
       await inboxPage.waitAll('iframe');
       const pgpBlock = await inboxPage.getFrame(['pgp_block.htm']);
-      await pgpBlock.waitForSelTestState('ready', 100);
+      await pgpBlock.waitForSelTestState('ready');
       await pgpBlock.waitForContent('@pgp-block-content', '[skipped attachment due to invalid url]');
+      await pgpBlock.notPresent(['.preview-attachment', '@download-attachment-0']);
     }));
 
     ava.default(`decrypt - try path traversal forward slash workaround`, testWithBrowser('compatibility', async (t, browser) => {
