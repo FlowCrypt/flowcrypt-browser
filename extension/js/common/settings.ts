@@ -316,7 +316,7 @@ export class Settings {
         await Ui.modal.info(`${authDeniedHtml}\n<div class="line">${Lang.general.contactIfNeedAssistance()}</div>`, true);
       } else {
         // Do not report error for csrf
-        if (response.error !== 'Wrong oauth CSRF token. Please try again.') {
+        if (response.error !== 'Wrong oauth CSRF token. Please try again.' && !response.error?.includes('Missing client configuration flags')) {
           Catch.report('failed to log into google in newGoogleAcctAuthPromptThenAlertOrForward', response);
         }
         await Ui.modal.error(`Failed to connect to Gmail(new). ${Lang.general.contactIfHappensAgain(acctEmail ?

@@ -22,6 +22,17 @@ export type ClientConfigurationJson = {
   in_memory_pass_phrase_session_length?: number;
 };
 
+type ClientConfigurationErrorType = 'missing_flags';
+export class ClientConfigurationError extends UnreportableError {
+  constructor(errorType: ClientConfigurationErrorType) {
+    let errorMsg = '';
+    if (errorType === 'missing_flags') {
+      errorMsg = 'Missing client configuration flags.';
+    }
+    super(errorMsg);
+  }
+}
+
 /**
  * Organisational rules, set domain-wide, and delivered from FlowCrypt Backend
  * These either enforce, alter or forbid various behavior to fit customer needs
@@ -35,7 +46,7 @@ export class ClientConfiguration {
     }
     const storage = await AcctStore.get(email, ['rules']);
     if (storage.rules && !storage.rules.flags) {
-      throw new UnreportableError('Missing client configuration flags.');
+      throw new ClientConfigurationError('missing_flags');
     }
     return new ClientConfiguration(storage.rules ?? {}, Str.getDomainFromEmailAddress(acctEmail));
   };

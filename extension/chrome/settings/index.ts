@@ -14,7 +14,7 @@ import { Env } from '../../js/common/browser/env.js';
 import { Gmail } from '../../js/common/api/email-provider/gmail/gmail.js';
 import { Lang } from '../../js/common/lang.js';
 import { Notifications } from '../../js/common/notifications.js';
-import { ClientConfiguration } from '../../js/common/client-configuration.js';
+import { ClientConfiguration, ClientConfigurationError } from '../../js/common/client-configuration.js';
 import { Settings } from '../../js/common/settings.js';
 import { VERSION } from '../../js/common/core/const.js';
 import { View } from '../../js/common/view.js';
@@ -328,6 +328,8 @@ View.run(class SettingsView extends View {
           Xss.sanitizeRender(statusContainer, '<a href="#">Network Error - Retry</a>')
             .find('a').one('click', this.setHandler(() => this.checkFcAcctAndContactPage()));
           $('#status-row #status_flowcrypt').text(`fc:offline`);
+        } else if (e instanceof ClientConfigurationError) {
+          Ui.toast(`Failed to update FlowCrypt Client Configuration: ${e.message}`, false, 5);
         } else {
           statusContainer.text('ecp error');
           $('#status-row #status_flowcrypt').text(`fc:error`).attr('title', `FlowCrypt Account Error: ${Xss.escape(String(e))}`);
