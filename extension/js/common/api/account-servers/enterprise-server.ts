@@ -15,7 +15,7 @@ import { FLAVOR, InMemoryStoreKeys } from '../../core/const.js';
 import { Attachment } from '../../core/attachment.js';
 import { ParsedRecipients } from '../email-provider/email-provider-api.js';
 import { Buf } from '../../core/buf.js';
-import { ClientConfigurationJson } from '../../client-configuration.js';
+import { ClientConfigurationError, ClientConfigurationJson } from '../../client-configuration.js';
 import { InMemoryStore } from '../../platform/store/in-memory-store.js';
 
 // todo - decide which tags to use
@@ -90,6 +90,9 @@ export class EnterpriseServer extends Api {
 
   public fetchAndSaveClientConfiguration = async (): Promise<ClientConfigurationJson> => {
     const r = await this.request<FesRes.ClientConfiguration>('GET', `/api/${this.apiVersion}/client-configuration?domain=${this.domain}`);
+    if (r.clientConfiguration && !r.clientConfiguration.flags) {
+      throw new ClientConfigurationError('missing_flags');
+    }
     await AcctStore.set(this.acctEmail, { rules: r.clientConfiguration });
     return r.clientConfiguration;
   };

@@ -25,7 +25,7 @@ import { OpenPGPKey } from '../core/crypto/pgp/openpgp-key';
 import { BrowserHandle } from '../browser';
 import { AvaContext } from './tooling';
 import { mockBackendData } from '../mock/backend/backend-endpoints';
-import { ClientConfiguration } from '../mock/backend/backend-data';
+import { ClientConfiguration, keyManagerAutogenRules } from '../mock/backend/backend-data';
 import { HttpClientErr, Status } from '../mock/lib/api';
 
 // tslint:disable:no-blank-lines-func
@@ -968,6 +968,57 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       expect(savedPassphrase2).not.to.be.an('undefined');
       await newSettingsPage.close();
       await settingsPage.close();
+    }));
+
+    ava.default('settings - ensure gracious behavior & ui should remain functional when updating client configuration', testWithBrowser(undefined, async (t, browser) => {
+      const acct = 'test-update@settings.flowcrypt.test';
+      mockBackendData.clientConfigurationByAcctEmail[acct] = keyManagerAutogenRules;
+      const setupPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
+      await SetupPageRecipe.autoSetupWithEKM(setupPage);
+      const {
+        cryptup_testupdatesettingsflowcrypttest_rules: rules1
+      } = await setupPage.getFromLocalStorage([
+        'cryptup_testupdatesettingsflowcrypttest_rules'
+      ]);
+      const clientConfiguration1 = rules1 as ClientConfiguration;
+      expect(clientConfiguration1.flags).to.eql([
+        'NO_PRV_BACKUP',
+        'ENFORCE_ATTESTER_SUBMIT',
+        'PRV_AUTOIMPORT_OR_AUTOGEN',
+        'PASS_PHRASE_QUIET_AUTOGEN',
+        'DEFAULT_REMEMBER_PASS_PHRASE']);
+      expect(clientConfiguration1.disallow_attester_search_for_domains).to.eql([]);
+      expect(clientConfiguration1.enforce_keygen_algo).to.equal('rsa2048');
+      expect(clientConfiguration1.key_manager_url).to.equal('https://localhost:8001/flowcrypt-email-key-manager');
+      const accessToken = await BrowserRecipe.getGoogleAccessToken(setupPage, acct);
+      await setupPage.close();
+      // Set invalid client configuration and check if it ensures gracious behavior & ui remain functional
+      mockBackendData.clientConfigurationByAcctEmail[acct] = {
+        // flags is required but don't return it (to mock invalid client configuration)
+        key_manager_url: 'https://localhost:8001/flowcrypt-email-key-manager'
+      };
+      const extraAuthHeaders = { Authorization: `Bearer ${accessToken}` };
+      const gmailPage = await browser.newPage(t, TestUrls.mockGmailUrl(), undefined, extraAuthHeaders);
+      const errorMsg = 'Failed to update FlowCrypt Client Configuration: Missing client configuration flags.';
+      await PageRecipe.waitForToastToAppearAndDisappear(gmailPage, errorMsg);
+      // Ensure previous client configuration remains same
+      const settingsPage = await browser.newPage(t, TestUrls.extensionSettings(acct));
+      await PageRecipe.waitForToastToAppearAndDisappear(settingsPage, errorMsg);
+      const {
+        cryptup_testupdatesettingsflowcrypttest_rules: rules2
+      } = await settingsPage.getFromLocalStorage([
+        'cryptup_testupdatesettingsflowcrypttest_rules'
+      ]);
+      const clientConfiguration2 = rules2 as ClientConfiguration;
+      expect(clientConfiguration2.flags).to.eql([
+        'NO_PRV_BACKUP',
+        'ENFORCE_ATTESTER_SUBMIT',
+        'PRV_AUTOIMPORT_OR_AUTOGEN',
+        'PASS_PHRASE_QUIET_AUTOGEN',
+        'DEFAULT_REMEMBER_PASS_PHRASE']);
+      expect(clientConfiguration2.disallow_attester_search_for_domains).to.eql([]);
+      expect(clientConfiguration2.enforce_keygen_algo).to.equal('rsa2048');
+      expect(clientConfiguration2.key_manager_url).to.equal('https://localhost:8001/flowcrypt-email-key-manager');
     }));
 
     ava.default('settings - client configuration gets updated on settings and content script reloads', testWithBrowser(undefined, async (t, browser) => {

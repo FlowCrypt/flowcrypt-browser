@@ -11,7 +11,7 @@ import { Bm, BrowserMsg, TabIdRequiredError } from '../../common/browser/browser
 import { ContentScriptWindow } from '../../common/browser/browser-window.js';
 import { Env, WebMailName } from '../../common/browser/env.js';
 import { Ui } from '../../common/browser/ui.js';
-import { ClientConfiguration } from '../../common/client-configuration.js';
+import { ClientConfiguration, ClientConfigurationError } from '../../common/client-configuration.js';
 import { Url } from '../../common/core/common.js';
 import { InMemoryStoreKeys, VERSION } from '../../common/core/const.js';
 import { Injector } from '../../common/inject.js';
@@ -322,6 +322,8 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
         // at which point the update will happen next time user loads the page
       } else if (ApiErr.isNetErr(e)) {
         // ignore
+      } else if (e instanceof ClientConfigurationError) {
+        Ui.toast(`Failed to update FlowCrypt Client Configuration: ${e.message}`, false, 5);
       } else {
         Catch.reportErr(e);
         // tslint:disable-next-line:no-unsafe-any

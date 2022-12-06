@@ -284,6 +284,9 @@ export const mockKeyManagerEndpoints: HandlersDefinition = {
       if (acctEmail === 'settings@settings.flowcrypt.test') {
         return { privateKeys: [{ decryptedPrivateKey: testConstants.existingPrv }] };
       }
+      if (acctEmail === 'test-update@settings.flowcrypt.test') {
+        return { privateKeys: [{ decryptedPrivateKey: testConstants.existingPrv }] };
+      }
       throw new HttpClientErr(`Unexpectedly calling mockKeyManagerEndpoints:/v1/keys/private GET with acct ${acctEmail}`);
     }
     if (isPut(req)) {
