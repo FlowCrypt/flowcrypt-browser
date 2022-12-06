@@ -15,8 +15,6 @@ import { KeyUtil } from './crypto/key.js';
 
 type SanitizedBlocks = { blocks: MsgBlock[], subject: string | undefined, isRichText: boolean, webReplyToken: unknown | undefined };
 
-type ExtractedFcAttachmentsResult = { decryptedContent: string, error?: string };
-
 export class MsgBlockParser {
 
   private static ARMOR_HEADER_MAX_LENGTH = 50;
@@ -48,8 +46,7 @@ export class MsgBlockParser {
     let webReplyToken: unknown | undefined;
     if (!Mime.resemblesMsg(decryptedContent)) {
       let plain = Buf.fromUint8(decryptedContent).toUtfStr();
-      const extractedFcAttachmentsResult = MsgBlockParser.extractFcAttachments(plain, blocks);
-      plain = extractedFcAttachmentsResult.decryptedContent;
+      plain = MsgBlockParser.extractFcAttachments(plain, blocks);
       webReplyToken = MsgBlockParser.extractFcReplyToken(plain);
       if (webReplyToken) {
         plain = MsgBlockParser.stripFcTeplyToken(plain);
@@ -87,17 +84,16 @@ export class MsgBlockParser {
     return { blocks, subject: decoded.subject, isRichText, webReplyToken };
   };
 
-  public static extractFcAttachments = (decryptedContent: string, blocks: MsgBlock[]): ExtractedFcAttachmentsResult => {
+  public static extractFcAttachments = (decryptedContent: string, blocks: MsgBlock[]) => {
     // these tags were created by FlowCrypt exclusively, so the structure is rigid (not arbitrary html)
     // `<a href="${attachment.url}" class="cryptup_file" cryptup-data="${fcData}">${linkText}</a>\n`
     // thus we use RegEx so that it works on both browser and node
-    let error = '';
+    const fcAttachmentPattern = /<a\s+href="([^"]+)"\s+class="cryptup_file"\s+cryptup-data="([^"]+)"\s*>[^<]+<\/a>\n?/gm;
     if (decryptedContent.includes('class="cryptup_file"')) {
-      if (!decryptedContent.match(/<a\s+href="(https?:\/\/flowcrypt\.s3\.amazonaws\.com\/[^"]+)"\s+class="cryptup_file"\s+cryptup-data="([^"]+)"\s*>[^<]+<\/a>\n?/gm)) {
-        error = 'Skipping attachment rendering and show original content because attachment url is modified/invalid.';
-        return { decryptedContent, error };
-      }
-      decryptedContent = decryptedContent.replace(/<a\s+href="([^"]+)"\s+class="cryptup_file"\s+cryptup-data="([^"]+)"\s*>[^<]+<\/a>\n?/gm, (_, url, fcData) => {
+      decryptedContent = decryptedContent.replace(fcAttachmentPattern, (_, url, fcData) => {
+        if (!decryptedContent.match(/<a\s+href="(https?:\/\/flowcrypt\.s3\.amazonaws\.com\/[^"]+)"\s+class="cryptup_file"\s+cryptup-data="([^"]+)"\s*>[^<]+<\/a>\n?/gm)) {
+          return '[skipped attachment due to invalid url]';
+        }
         const a = Str.htmlAttrDecode(String(fcData));
         if (MsgBlockParser.isFcAttachmentLinkData(a)) {
           blocks.push(MsgBlock.fromAttachment('encryptedAttachmentLink', '', { type: a.type, name: a.name, length: a.size, url: String(url) }));
@@ -105,7 +101,7 @@ export class MsgBlockParser {
         return '';
       });
     }
-    return { decryptedContent };
+    return decryptedContent;
   };
 
   public static stripPublicKeys = (decryptedContent: string, foundPublicKeys: string[]) => {
