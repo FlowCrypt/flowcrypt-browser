@@ -88,9 +88,8 @@ export class MsgBlockParser {
     // these tags were created by FlowCrypt exclusively, so the structure is rigid (not arbitrary html)
     // `<a href="${attachment.url}" class="cryptup_file" cryptup-data="${fcData}">${linkText}</a>\n`
     // thus we use RegEx so that it works on both browser and node
-    const fcAttachmentPattern = /<a\s+href="([^"]+)"\s+class="cryptup_file"\s+cryptup-data="([^"]+)"\s*>[^<]+<\/a>\n?/gm;
     if (decryptedContent.includes('class="cryptup_file"')) {
-      decryptedContent = decryptedContent.replace(fcAttachmentPattern, (_, url, fcData) => {
+      decryptedContent = decryptedContent.replace(/<a\s+href="([^"]+)"\s+class="cryptup_file"\s+cryptup-data="([^"]+)"\s*>[^<]+<\/a>\n?/gm, (_, url, fcData) => {
         if (!decryptedContent.match(/<a\s+href="(https?:\/\/flowcrypt\.s3\.amazonaws\.com\/[^"]+)"\s+class="cryptup_file"\s+cryptup-data="([^"]+)"\s*>[^<]+<\/a>\n?/gm)) {
           return '[skipped attachment due to invalid url]';
         }
