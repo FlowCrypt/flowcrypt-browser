@@ -2260,6 +2260,8 @@ table#compose tr#password_or_pubkey_container td {
 }
 table#compose tr#password_or_pubkey_container td input#input_password::placeholder { color: #d14836; }
 
+table#compose tr#password_or_pubkey_container td input#input_password:focus::placeholder { color: transparent; }
+
 table#compose tr#password_or_pubkey_container td input {
   padding-left: 3px;
   padding-right: 3px;

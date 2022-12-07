@@ -24,27 +24,27 @@ export class ComposePwdOrPubkeyContainerModule extends ViewModule<ComposeView> {
   }
 
   public setHandlers = () => {
-    this.view.S.cached('input_password').keyup(this.view.setHandlerPrevent('spree', () => this.showHideContainerAndColorSendBtn()));
-    this.view.S.cached('input_password').focus(this.view.setHandlerPrevent('spree', () => this.inputPwdFocusHandler()));
-    this.view.S.cached('input_password').blur(this.view.setHandler(() => this.inputPwdBlurHandler()));
-    this.view.S.cached('expiration_note').find('#expiration_note_settings_link').on('click', this.view.setHandler(async (el, e) => {
-      e.preventDefault();
-      await this.view.renderModule.openSettingsWithDialog('security');
-    }, this.view.errModule.handle(`render settings dialog`)));
+    this.view.S.cached('input_password').on('focus', this.view.setHandlerPrevent('spree', () => this.inputPwdFocusHandler()));
+    this.view.S.cached('input_password').on('blur', this.view.setHandler(() => this.inputPwdBlurHandler()));
+    this.view.S.cached('expiration_note').find('#expiration_note_settings_link').on(
+      'click',
+      this.view.setHandler(async (el, e) => {
+        e.preventDefault();
+        await this.view.renderModule.openSettingsWithDialog('security');
+      }, this.view.errModule.handle(`render settings dialog`))
+    );
   };
 
   public inputPwdFocusHandler = () => {
     const passwordContainerHeight = this.view.S.cached('password_or_pubkey').outerHeight() || 0;
     this.view.S.cached('expiration_note').css({ bottom: passwordContainerHeight });
     this.view.S.cached('expiration_note').fadeIn();
-    this.showHideContainerAndColorSendBtn(); // tslint:disable-line:no-floating-promises
   };
 
   public inputPwdBlurHandler = () => {
     Catch.setHandledTimeout(() => { // timeout here is needed so <a> will be visible once clicked
       this.view.S.cached('expiration_note').fadeOut();
     }, 100);
-    this.showHideContainerAndColorSendBtn(); // tslint:disable-line:no-floating-promises
   };
 
   public showHideContainerAndColorSendBtn = async () => {
@@ -122,11 +122,6 @@ export class ComposePwdOrPubkeyContainerModule extends ViewModule<ComposeView> {
     if (!this.isVisible()) {
       await this.initExpirationText();
       this.view.S.cached('password_or_pubkey').css('display', 'table-row');
-    }
-    if (this.view.S.cached('input_password').val() || this.view.S.cached('input_password').is(':focus')) {
-      this.view.S.cached('input_password').attr('placeholder', '');
-    } else {
-      this.view.S.cached('input_password').attr('placeholder', 'message password');
     }
     if (isPasswordMessageDisabled) {
       this.view.S.cached('password_input_container').hide();
