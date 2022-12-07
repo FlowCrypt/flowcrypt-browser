@@ -25,7 +25,7 @@
     "eslint-plugin-no-only-tests": "3.1.0",
     "fc-node-requests": "git+https://git@github.com/FlowCrypt/node-requests.git",
     "googleapis": "109.0.1",
-    "husky": "^8.0.1",
+    "husky": "^8.0.2",
     "lint-staged": "^13.0.4",
     "mailparser": "3.5.0",
     "mkdirp": "1.0.4",
