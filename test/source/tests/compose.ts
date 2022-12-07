@@ -124,6 +124,20 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       });
     }));
 
+    ava.default('user@key-manager-disabled-password-message.flowcrypt.test - disabled flowcrypt hosted password protected messages', testWithBrowser(undefined, async (t, browser) => {
+      const acct = 'user@key-manager-disabled-password-message.flowcrypt.test';
+      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
+      await SetupPageRecipe.autoSetupWithEKM(settingsPage);
+      const composePage = await ComposePageRecipe.openStandalone(t, browser, acct);
+      await ComposePageRecipe.fillMsg(composePage, { to: 'test@gmail.com' }, 'should disable flowcrypt hosted password protected message');
+      await composePage.notPresent('@password-input-container');
+      await composePage.waitAndClick('@action-send', { delay: 1 });
+      await PageRecipe.waitForModalAndRespond(composePage, 'error', {
+        contentToCheck: `Some recipients don't have encryption set up. Please import their public keys or ask them to install Flowcrypt.`,
+        clickOn: 'confirm'
+      });
+    }));
+
     ava.default('compose - signed with entered pass phrase + will remember pass phrase in session', testWithBrowser('ci.tests.gmail', async (t, browser) => {
       const k = Config.key('ci.tests.gmail');
       const settingsPage = await browser.newPage(t, TestUrls.extensionSettings('ci.tests.gmail@flowcrypt.test'));

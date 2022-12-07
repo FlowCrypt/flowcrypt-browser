@@ -9,7 +9,7 @@ import { UnreportableError } from './platform/catch.js';
 
 type ClientConfiguration$flag = 'NO_PRV_CREATE' | 'NO_PRV_BACKUP' | 'PRV_AUTOIMPORT_OR_AUTOGEN' | 'PASS_PHRASE_QUIET_AUTOGEN' |
   'ENFORCE_ATTESTER_SUBMIT' | 'NO_ATTESTER_SUBMIT' | 'SETUP_ENSURE_IMPORTED_PRV_MATCH_LDAP_PUB' |
-  'DEFAULT_REMEMBER_PASS_PHRASE' | 'HIDE_ARMOR_META' | 'FORBID_STORING_PASS_PHRASE';
+  'DEFAULT_REMEMBER_PASS_PHRASE' | 'HIDE_ARMOR_META' | 'FORBID_STORING_PASS_PHRASE' | 'DISABLE_FLOWCRYPT_HOSTED_PASSWORD_MESSAGES';
 
 export type ClientConfigurationJson = {
   flags?: ClientConfiguration$flag[],
@@ -216,6 +216,14 @@ export class ClientConfiguration {
    */
   public shouldHideArmorMeta = (): boolean => {
     return (this.clientConfigurationJson.flags || []).includes('HIDE_ARMOR_META');
+  };
+
+  /**
+   * with this option and recipients are missing a public key, and the user is using flowcrypt.com/api (not FES)
+   * it will not give the user option to enter a message password, as if that functionality didn't exist.
+   */
+  public shouldDisablePasswordMessages = (): boolean => {
+    return (this.clientConfigurationJson.flags || []).includes('DISABLE_FLOWCRYPT_HOSTED_PASSWORD_MESSAGES');
   };
 
 }
