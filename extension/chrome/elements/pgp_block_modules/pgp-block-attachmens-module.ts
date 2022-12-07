@@ -34,7 +34,9 @@ export class PgpBlockViewAttachmentsModule {
       Xss.sanitizeAppend(attachment, htmlContent);
       if (isEncrypted) {
         attachment.addClass('preview-attachment');
-        attachment.append(`<button class="download-attachment" index="${Number(i)}" title="DOWNLOAD"><img src="/img/svgs/download-link-green.svg"></button>`); // xss-escaped
+        attachment.append(
+          `<button class="download-attachment" data-test="download-attachment-${Number(i)}" index="${Number(i)}" title="DOWNLOAD"><img src="/img/svgs/download-link-green.svg"></button>`
+        ); // xss-escaped
       } else {
         attachment.addClass('download-attachment');
       }
