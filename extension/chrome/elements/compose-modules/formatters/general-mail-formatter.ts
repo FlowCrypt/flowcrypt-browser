@@ -44,7 +44,7 @@ export class GeneralMailFormatter {
     // encrypt (optionally sign)
     const singleFamilyKeys = await view.storageModule.collectSingleFamilyKeys(recipientsEmails, newMsgData.from.email, choices.sign);
     if (singleFamilyKeys.emailsWithoutPubkeys.length) {
-      await view.errModule.throwIfEncryptionPasswordInvalid(newMsgData);
+      await view.errModule.throwIfEncryptionPasswordInvalidOrDisabled(newMsgData);
     }
     let signingKey: ParsedKeyInfo | undefined;
     if (choices.sign) {
