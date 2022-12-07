@@ -95,7 +95,7 @@ export class ComposeView extends View {
     add_their_pubkey: '.add_pubkey',
     intro_container: '.intro_container',
     password_or_pubkey: '#password_or_pubkey_container',
-    password_label: '.label_password',
+    password_input_container: '.password_input_container',
     warning_nopgp: '.warning_nopgp',
     warning_revoked: '.warning_revoked',
     send_btn_note: '#send_btn_note',

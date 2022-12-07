@@ -130,7 +130,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       await SetupPageRecipe.autoSetupWithEKM(settingsPage);
       const composePage = await ComposePageRecipe.openStandalone(t, browser, acct);
       await ComposePageRecipe.fillMsg(composePage, { to: 'test@gmail.com' }, 'should disable flowcrypt hosted password protected message');
-      await composePage.notPresent('@password-or-pubkey-container');
+      await composePage.notPresent('@password-input-container');
       await composePage.waitAndClick('@action-send', { delay: 1 });
       await PageRecipe.waitForModalAndRespond(composePage, 'error', {
         contentToCheck: `Some recipients don't have encryption set up. Please import their public keys or ask them to install Flowcrypt.`,

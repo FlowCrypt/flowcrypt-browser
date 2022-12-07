@@ -55,9 +55,7 @@ export class ComposePwdOrPubkeyContainerModule extends ViewModule<ComposeView> {
     if (!this.view.recipientsModule.getRecipients().length || !this.view.sendBtnModule.popover.choices.encrypt) {
       this.hideMsgPwdUi(); // Hide 'Add Pasword' prompt if there are no recipients or message is not encrypted
       this.view.sendBtnModule.enableBtn();
-    } else if (this.view.recipientsModule.getRecipients().find(r => [RecipientStatus.NO_PGP, RecipientStatus.REVOKED].includes(r.status))
-      && !(this.view.clientConfiguration.shouldDisablePasswordMessages() && !this.view.isFesUsed())
-    ) {
+    } else if (this.view.recipientsModule.getRecipients().find(r => [RecipientStatus.NO_PGP, RecipientStatus.REVOKED].includes(r.status))) {
       await this.showMsgPwdUiAndColorBtn(
         this.view.recipientsModule.getRecipients().some(r => r.status === RecipientStatus.NO_PGP),
         this.view.recipientsModule.getRecipients().some(r => r.status === RecipientStatus.REVOKED),
@@ -101,35 +99,39 @@ export class ComposePwdOrPubkeyContainerModule extends ViewModule<ComposeView> {
     return true;
   };
 
-  private showMsgPwdUiAndColorBtn = async (anyNopgp: boolean, anyRevoked: boolean) => {
-    if (!this.isVisible()) {
-      const expirationTextEl = this.view.S.cached('expiration_note').find('#expiration_note_message_expire');
-      const pwdPolicy = this.view.fesUrl ? Lang.compose.enterprisePasswordPolicy : Lang.compose.consumerPasswordPolicy;
-      $('#password-policy-container').html(Xss.htmlSanitize(pwdPolicy.split('\n').join('<br />'))); // xss-sanitized
-      if (!this.view.acctEmail) {
-        expirationTextEl.text(Str.pluralize(this.MSG_EXPIRE_DAYS_DEFAULT, 'day'));
-      } else {
-        try {
-          const response = await this.view.acctServer.accountGetAndUpdateLocalStore();
-          expirationTextEl.text(Str.pluralize(response.account.default_message_expire, 'day'));
-        } catch (e) {
-          ApiErr.reportIfSignificant(e);
-          expirationTextEl.text(`(unknown days: ${ApiErr.eli5(e)})`);
-        }
+  private initExpirationText = async () => {
+    // Init expiration text element
+    const expirationTextEl = this.view.S.cached('expiration_note').find('#expiration_note_message_expire');
+    const pwdPolicy = this.view.fesUrl ? Lang.compose.enterprisePasswordPolicy : Lang.compose.consumerPasswordPolicy;
+    $('#password-policy-container').html(Xss.htmlSanitize(pwdPolicy.split('\n').join('<br />'))); // xss-sanitized
+    if (!this.view.acctEmail) {
+      expirationTextEl.text(Str.pluralize(this.MSG_EXPIRE_DAYS_DEFAULT, 'day'));
+    } else {
+      try {
+        const response = await this.view.acctServer.accountGetAndUpdateLocalStore();
+        expirationTextEl.text(Str.pluralize(response.account.default_message_expire, 'day'));
+      } catch (e) {
+        ApiErr.reportIfSignificant(e);
+        expirationTextEl.text(`(unknown days: ${ApiErr.eli5(e)})`);
       }
+    }
+  };
+
+  private showMsgPwdUiAndColorBtn = async (anyNopgp: boolean, anyRevoked: boolean) => {
+    const isPasswordMessageDisabled = this.view.clientConfiguration.shouldDisablePasswordMessages() && !this.view.isFesUsed();
+    if (!this.isVisible()) {
+      await this.initExpirationText();
       this.view.S.cached('password_or_pubkey').css('display', 'table-row');
     }
     if (this.view.S.cached('input_password').val() || this.view.S.cached('input_password').is(':focus')) {
-      this.view.S.cached('password_label').css('display', 'inline-block');
       this.view.S.cached('input_password').attr('placeholder', '');
     } else {
-      this.view.S.cached('password_label').css('display', 'none');
       this.view.S.cached('input_password').attr('placeholder', 'message password');
     }
-    if (this.view.S.cached('input_intro').is(':visible')) {
-      this.view.S.cached('add_intro').css('display', 'none');
+    if (isPasswordMessageDisabled) {
+      this.view.S.cached('password_input_container').hide();
     } else {
-      this.view.S.cached('add_intro').css('display', 'block');
+      this.view.S.cached('add_intro').show();
     }
     this.view.S.cached('warning_nopgp').css('display', anyNopgp ? 'inline-block' : 'none');
     this.view.S.cached('warning_revoked').css('display', anyRevoked ? 'inline-block' : 'none');
@@ -137,11 +139,11 @@ export class ComposePwdOrPubkeyContainerModule extends ViewModule<ComposeView> {
   };
 
   private hideMsgPwdUi = () => {
-    this.view.S.cached('password_or_pubkey').css('display', 'none');
+    this.view.S.cached('password_or_pubkey').hide();
     this.view.S.cached('input_password').val('');
-    this.view.S.cached('add_intro').css('display', 'none');
+    this.view.S.cached('add_intro').hide();
     this.view.S.cached('input_intro').text('');
-    this.view.S.cached('intro_container').css('display', 'none');
+    this.view.S.cached('intro_container').hide();
     this.view.sizeModule.setInputTextHeightManuallyIfNeeded();
   };
 
