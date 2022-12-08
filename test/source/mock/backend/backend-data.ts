@@ -104,6 +104,12 @@ export class BackendData {
         ]
       };
     }
+    if (domain === 'custom-sks.flowcrypt.test') {
+      return {
+        ...keyManagerAutogenRules,
+        custom_keyserver_url: 'https://localhost:8001'
+      };
+    }
     if (domain === 'forbid-storing-passphrase-client-configuration.flowcrypt.test') {
       return {
         "flags": [

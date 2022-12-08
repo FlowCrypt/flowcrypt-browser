@@ -232,6 +232,9 @@ export const mockKeyManagerEndpoints: HandlersDefinition = {
       if (acctEmail === 'user@key-manager-disabled-password-message.flowcrypt.test') {
         return { privateKeys: [{ decryptedPrivateKey: testConstants.existingPrv }] };
       }
+      if (acctEmail === 'user@custom-sks.flowcrypt.test') {
+        return { privateKeys: [{ decryptedPrivateKey: testConstants.existingPrv }] };
+      }
       if (acctEmail.includes('updating.key')) {
         const { response, badRequestError } = MOCK_KM_KEYS[acctEmail];
         if (response !== undefined && badRequestError === undefined) {

@@ -3,6 +3,38 @@
 import { HandlersDefinition } from '../all-apis-mock';
 import { HttpClientErr } from '../lib/api';
 
+const testSksKey = `-----BEGIN PGP PUBLIC KEY BLOCK-----
+
+mQENBGORiLoBCACf/uwJSX00H6sIrquo3bIrPnn0svWhF9NKQnS3b6DljP2tw6w7
+oHuEMhBXObJVD18rcucIcBHIeMdGybHGtKftUMqnMsEbI7HS0Chp8PSJwalGWkUY
+7djEWrg7guGFTVtgkC+f/VYGjr9WZ/Z4qvhj74jo3S42xZqhK2Uo55cc9K1FeW9o
+r+Q+WGUNY29vr6m8cKNkB8A+vFbai1bgq3AHZuQ4NxOsC5oU/d3yA5uFDIQVlwit
+oRedKpSW5aUr6fb+pnMQzMWPVJ3xURC4QU8ZKNqZfL4TSw0TIln12Y5rAzFct9fI
+cwvVFDNm7cj6ivV96mA7/BZu7dfokYv1o8C1ABEBAAG0LlRlc3QgU0tTIHVzZXIg
+PHRlc3RAY3VzdG9tLXNrcy5mbG93Y3J5cHQudGVzdD6JAU4EEwEIADgWIQS3uYUU
+G5E+/xcfykDnSIDoh98vAgUCY5GIugIbAwULCQgHAgYVCgkICwIEFgIDAQIeAQIX
+gAAKCRDnSIDoh98vAlpYB/0YZTUwq4gOjdGIBy3hy7bf4YC1Djg8uXG/fMrXTqzN
+uomi4OW7TBU/ud/TPN9Pm2Ac1OhPotft8z6sVrei94ZDRE++w8XwnPN4+wez1nAz
+Ho+4mbJ08/Vgrw+I5lysCXJosFJdnex6WNqxSwhutiTE6scn/JZSVyTP6z4e3/kI
+gzi5OMZlZt5OOijjw2XSE49mjfGkU9vLpJtFHNmurZ1md8c8YBV+2eA85PTZHw8v
+wJpWOfHF3TjVNKlrpvPAfqVsvUqFrvEd1gm/SS/0aWmjLXPlSUXbB4yUhqLzatnX
+XQVNZJ+X6n2/wHqiIypAY+VccNcNqzWdpz9i8ENmQV8+uQENBGORiLoBCADQrtb5
+5qOGz6SojFjQIYaKNhuYt7vOFWeTrkQz+0WGDku7VuWQ+kThM419cmO41ut6VOxt
+yfVLmyT10hQVy44gB4GIHv2z+MNDRa4HO6gk/6i4jd1sKsbtaB1RQtwU/e0PA/aD
+VPdWsAbxJM7V2/m8OFv0WIqoGfcyuC6T8bM6bNisXzVLtR003i2vgavz/8UzAWWp
+57Vcmy9iTTfExIrMFjCieZpIGeAjcPl6Vod4My0TzMcBy/Vjqx+oJ2mm001F21hW
+oEDPhk39h8OHf6oDh5iQ1RdtmrucCfD9z9Ub3mGhLjd4jXXPlWG1XeG6aSwfyQhk
+3/HtTw8Uj5pl+Cy1ABEBAAGJATYEGAEIACAWIQS3uYUUG5E+/xcfykDnSIDoh98v
+AgUCY5GIugIbDAAKCRDnSIDoh98vAjEWB/9kQIUfv8COF/8lIBYdIrT926WkmiT7
+8vrwltWXjj29QxFzpGdUpcq0rYnlpbUWY1v8fEbRk8yLJ3Ov3LN7V2gd/jKIJ3Dq
+Q8OZp8W+rG/dPNEDgJ1DtBEJ0P+FB4wOLrq8ln3A3YL9HEIkdBGI7FFc1yyDl/Mk
+dSXOtf/5FWSvXjM8KzhLypvvPlIzgcwCI/zApIpuBp7PplOgEkMJP07j+596D3aL
+TX/4oIoeRrXu4csAJhSXUnDzkYi4L0SUALWyCa6xhmeCelrNXRx6d1jWoB+1imDQ
+pEEgWM8skofFtmXLcWu29li9yf1V6w7C+A8Dp8cMStJ0OWglF2J0Luas
+=PhzD
+-----END PGP PUBLIC KEY BLOCK-----
+`;
+
 const johnDoeExampleCom = `-----BEGIN PGP PUBLIC KEY BLOCK-----
 
 xsFNBF9fF2MBEADD688NUzgftfhtKyVmjdbFt6oUgOYm2EpivkqhnufeB0En09hi
@@ -101,5 +133,11 @@ export const mockSksEndpoints: HandlersDefinition = {
   },
   '/pks/lookup?search=nobody%40example.com&fingerprint=on&exact=on&options=mr&op=index': async () => { // by email
     throw new HttpClientErr('Pubkey not found', 404);
+  },
+  '/pks/lookup?search=test%40custom-sks.flowcrypt.test&fingerprint=on&exact=on&options=mr&op=index': async () => { // by email
+    return `info:1:10\npub:57631589DB543FB10B765C2F5F0CEF862479A17C:1:2048:1600067427::\nuid:Test <test@custom-sks.flowcrypt.test>:1600067427::`;
+  },
+  '/pks/lookup?op=get&search=0x5F0CEF862479A17C&options=mr': async () => { // by fp
+    return testSksKey; // for test@custom-sks.flowcrypt.test
   },
 };
