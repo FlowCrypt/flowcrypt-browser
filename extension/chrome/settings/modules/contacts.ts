@@ -68,7 +68,8 @@ View.run(class ContactsView extends View {
     let lineActionsHtml = '&nbsp;&nbsp;<a href="#" class="action_export_all">export all</a>&nbsp;&nbsp;' +
       '&nbsp;&nbsp;<a href="#" class="action_view_bulk_import" data-test="action-show-import-public-keys-form">import public keys</a>&nbsp;&nbsp;';
     if (this.clientConfiguration.getCustomSksPubkeyServer()) {
-      lineActionsHtml += `&nbsp;&nbsp;<br><br><b class="bad">using custom SKS pubkeyserver: ${Xss.escape(this.clientConfiguration!.getCustomSksPubkeyServer()!)}</b>`;
+      lineActionsHtml += `&nbsp;&nbsp;<br><br><b class="bad" data-test="custom-key-server-description">` +
+        `using custom SKS pubkeyserver: ${Xss.escape(this.clientConfiguration!.getCustomSksPubkeyServer()!)}</b>`;
     } else {
       lineActionsHtml += '&nbsp;&nbsp;<a href="https://flowcrypt.com/docs/technical/keyserver-integration.html" target="_blank">use custom keyserver</a>&nbsp;&nbsp;';
     }

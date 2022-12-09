@@ -992,6 +992,19 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         await dbPage.close();
       }));
 
+    ava.default('user@custom-sks.flowcrypt.test - Respect custom key server url', testWithBrowser(undefined, async (t, browser) => {
+      const acct = 'user@custom-sks.flowcrypt.test';
+      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
+      await SetupPageRecipe.autoSetupWithEKM(settingsPage);
+      const composePage = await ComposePageRecipe.openStandalone(t, browser, acct);
+      await ComposePageRecipe.fillMsg(composePage, { to: 'test@custom-sks.flowcrypt.test' }, 'Respect custom key server url');
+      await composePage.waitForContent('.email_address.has_pgp', 'test@custom-sks.flowcrypt.test');
+      await composePage.close();
+      await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
+      const contactsFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-contacts-page', ['contacts.htm', 'placement=settings']);
+      await contactsFrame.waitForContent('@custom-key-server-description', 'using custom SKS pubkeyserver: https://localhost:8001');
+    }));
+
     ava.default.todo('DEFAULT_REMEMBER_PASS_PHRASE with auto-generation when all keys are removed by EKM');
     // should we re-use the known passphrase or delete it from the storage in this scenario?
 
