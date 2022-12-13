@@ -112,7 +112,6 @@ export class Xss {
           } else {
             Xss.replaceElementDANGEROUSLY(img, `<span>[Remote images are blocked due to security]</span>`); // xss-safe-value
           }
-
         }
       }
       if ('target' in node) { // open links in new window
