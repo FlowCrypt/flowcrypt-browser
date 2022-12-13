@@ -37,6 +37,17 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
       await inboxPage.close();
     }));
 
+    ava.default(`decrypt - show warning for remote images`, testWithBrowser('compatibility', async (t, browser) => {
+      const threadId = '1850b93d7772173c';
+      const acctEmail = 'flowcrypt.compatibility@gmail.com';
+      const inboxPage = await browser.newPage(t, TestUrls.extension(`chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`));
+      await inboxPage.waitForSelTestState('ready');
+      await inboxPage.waitAll('iframe');
+      const pgpBlock = await inboxPage.getFrame(['pgp_block.htm']);
+      await pgpBlock.waitForContent('@pgp-block-content', '[Remote images are blocked due to security]');
+      await inboxPage.close();
+    }));
+
     ava.default(`decrypt - outlook message with ATTxxxx encrypted email doesn't show empty attachment`, testWithBrowser('compatibility', async (t, browser) => {
       const threadId = '17dbdf2425ac0f29';
       const acctEmail = 'flowcrypt.compatibility@gmail.com';
