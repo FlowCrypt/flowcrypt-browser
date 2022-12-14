@@ -108,6 +108,7 @@ export class Xss {
             a.innerText = title || 'show image';
             const heightWidth = `height: ${img.clientHeight ? `${Number(img.clientHeight)}px` : 'auto'}; width: ${img.clientWidth ? `${Number(img.clientWidth)}px` : 'auto'};max-width:98%;`;
             a.setAttribute('style', `text-decoration: none; background: #FAFAFA; padding: 4px; border: 1px dotted #CACACA; display: inline-block; ${heightWidth}`);
+            a.setAttribute('data-test', 'show-inline-image');
             Xss.replaceElementDANGEROUSLY(img, a.outerHTML); // xss-safe-value - "a" was build using dom node api
           } else {
             Xss.replaceElementDANGEROUSLY(img, `<span>[Remote images are blocked due to security]</span>`); // xss-safe-value

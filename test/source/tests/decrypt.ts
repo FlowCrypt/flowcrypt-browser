@@ -48,6 +48,18 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
       await inboxPage.close();
     }));
 
+    ava.default(`decrypt - show inline image when user clicks show image`, testWithBrowser('compatibility', async (t, browser) => {
+      const threadId = '1850f9608240f758';
+      const acctEmail = 'flowcrypt.compatibility@gmail.com';
+      const inboxPage = await browser.newPage(t, TestUrls.extension(`chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`));
+      await inboxPage.waitForSelTestState('ready');
+      await inboxPage.waitAll('iframe');
+      const pgpBlock = await inboxPage.getFrame(['pgp_block.htm']);
+      await pgpBlock.waitForContent('@pgp-block-content', 'This message contains inline base64 image');
+      await pgpBlock.waitAndClick('@show-inline-image');
+      await inboxPage.close();
+    }));
+
     ava.default(`decrypt - outlook message with ATTxxxx encrypted email doesn't show empty attachment`, testWithBrowser('compatibility', async (t, browser) => {
       const threadId = '17dbdf2425ac0f29';
       const acctEmail = 'flowcrypt.compatibility@gmail.com';
