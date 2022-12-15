@@ -222,10 +222,14 @@ export class PgpBlockViewRenderModule {
       this.setFrameColor('gray');
     }
     const publicKeys: string[] = [];
+    const maxDecryptedContentLength = 50000;
     let renderableAttachments: Attachment[] = [];
     let decryptedContent = decryptedBytes.toUtfStr();
     let isHtml: boolean = false;
     // todo - replace with MsgBlockParser.fmtDecryptedAsSanitizedHtmlBlocks, then the extract/strip methods could be private?
+    if (decryptedContent.length > maxDecryptedContentLength) {
+      decryptedContent = decryptedContent.substring(0, maxDecryptedContentLength) + ' [clipped - message too large]';
+    }
     if (!Mime.resemblesMsg(decryptedBytes)) {
       const fcAttachmentBlocks: MsgBlock[] = [];
       decryptedContent = MsgBlockParser.extractFcAttachments(decryptedContent, fcAttachmentBlocks);
