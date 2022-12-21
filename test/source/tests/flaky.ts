@@ -357,20 +357,6 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
       ]);
     }));
 
-    ava.default(`[unit][streams.readToEnd] efficiently handles multiple chunks`, async t => {
-      const stream = new ReadableStream<Uint8Array>({
-        start(controller) {
-          for (let i = 0; i < 10; i++) {
-            controller.enqueue(Buffer.from('test'.repeat(1000000)));
-          }
-          controller.close();
-        }
-      });
-      const result = await streams.readToEnd(stream);
-      expect(result.length).to.equal(40000000);
-      t.pass();
-    });
-
     ava.default('decrypt - entering pass phrase should unlock all keys that match the pass phrase', testWithBrowser('compatibility', async (t, browser) => {
       const acctEmail = 'flowcrypt.compatibility@gmail.com';
       const passphrase = 'pa$$w0rd';
