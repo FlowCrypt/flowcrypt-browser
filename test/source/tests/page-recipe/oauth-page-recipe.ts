@@ -2,7 +2,7 @@
 
 import { Config, Util } from '../../util';
 import { AvaContext } from '../tooling/';
-import { ControllablePage } from '../../browser';
+import { ControllablePage, TIMEOUT_PAGE_LOAD } from '../../browser';
 import { PageRecipe } from './abstract-page-recipe';
 import { Url } from '../../core/common';
 
@@ -37,10 +37,15 @@ export class OauthPageRecipe extends PageRecipe {
   public static google = async (t: AvaContext, oauthPage: ControllablePage, acctEmail: string,
     action: "close" | "deny" | "approve" | "login" | "login_with_invalid_state"): Promise<void> => {
     try {
-      const isMock = oauthPage.target.url().includes('localhost') || oauthPage.target.url().includes('google.mock.flowcryptlocal.test');
+      const isMock = oauthPage.target.url().includes('localhost') || oauthPage.target.url().includes('google.mock.localhost');
       if (isMock) {
         await OauthPageRecipe.mock(t, oauthPage, acctEmail, action);
         return;
+      } else {
+        await Promise.race([
+          oauthPage.page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: TIMEOUT_PAGE_LOAD * 1000 }),
+          oauthPage.page.waitForNavigation({ waitUntil: 'load', timeout: TIMEOUT_PAGE_LOAD * 1000 })
+        ]);
       }
     } catch (e) {
       if (String(e).includes('page has been closed')) {
@@ -61,7 +66,10 @@ export class OauthPageRecipe extends PageRecipe {
     try {
       const alreadyLoggedSelector = '.w6VTHd, .wLBAL';
       const alreadyLoggedChooseOtherAccountSelector = '.bLzI3e, .BHzsHc';
-      await oauthPage.waitAny(`#Email, #submit_approve_access, #identifierId, ${alreadyLoggedSelector}, #profileIdentifier`, { timeout: 45 });
+      await oauthPage.waitAny(
+        `#Email, ${selectors.googleApproveBtn}, ${selectors.googleEmailInput}, ${alreadyLoggedSelector}, #profileIdentifier, ${selectors.auth0username}`,
+        { timeout: 45 }
+      );
       if (await oauthPage.target.$(selectors.googleEmailInput) !== null) { // 2017-style login
         await oauthPage.waitAll(selectors.googleEmailInput, { timeout: OauthPageRecipe.longTimeout });
         await oauthPage.waitAndType(selectors.googleEmailInput, acctEmail, { delay: 2 });
@@ -94,6 +102,7 @@ export class OauthPageRecipe extends PageRecipe {
           await oauthPage.waitAndType(selectors.auth0password, acctPassword);
         }
         await oauthPage.waitForNavigationIfAny(() => oauthPage.waitAndClick(selectors.auth0loginBtn));
+        await oauthPage.waitAndClick(alreadyLoggedSelector, { delay: 1 });
       }
       await Util.sleep(1);
       await oauthPage.waitAll(selectors.googleApproveBtn); // if succeeds, we are logged in and presented with approve/deny choice

@@ -74,6 +74,7 @@ export const Lang = { // tslint:disable-line:variable-name
   },
   compose: {
     abortSending: 'A message is currently being sent. Closing the compose window may abort sending the message.\nAbort sending?',
+    addMissingRecipientPubkeys: `Some recipients don't have encryption set up. Please import their public keys or ask them to install Flowcrypt.`,
     pleaseReconnectAccount: 'Please reconnect FlowCrypt to your Gmail Account. This is typically needed after a long time of no use, a password change, or similar account changes. ',
     msgEncryptedHtml: (lang: string, senderEmail: string) => (lang === 'DE') ? `${senderEmail}&nbsp;hat&nbsp;Ihnen&nbsp;eine&nbsp;passwortverschlüsselte&nbsp;E-Mail&nbsp;gesendet ` : `${senderEmail}&nbsp;has&nbsp;sent&nbsp;you&nbsp;a&nbsp;password-encrypted&nbsp;email `,
     msgEncryptedText: (lang: string, senderEmail: string) => (lang === 'DE') ? `${senderEmail} hat Ihnen eine passwortverschlüsselte E-Mail gesendet. Folgen Sie diesem Link, um es zu öffnen: ` : `${senderEmail} has sent you a password-encrypted email. Follow this link to open it: `,
@@ -103,4 +104,13 @@ export const Lang = { // tslint:disable-line:variable-name
     restartBrowserAndTryAgain: (isFesUsed: boolean) => `Unexpected error occured. Please restart your browser and try again. If this persists after a restart, ${contactForSupportSubsentence(isFesUsed)}.`,
     emailAliasChangedAskForReload: 'Your email aliases on Gmail have refreshed since the last time you used FlowCrypt.\nReload the compose window now?'
   },
+  passphraseRequired: {
+    sign: 'Enter FlowCrypt pass phrase to sign email',
+    draft: 'Enter FlowCrypt pass phrase to load a draft',
+    attachment: 'Enter FlowCrypt pass phrase to decrypt a file',
+    quote: 'Enter FlowCrypt pass phrase to load quoted content',
+    backup: 'Enter FlowCrypt pass phrase to back up',
+    updateKey: 'Enter FlowCrypt pass phrase to keep your account keys up to date',
+    email: 'Enter FlowCrypt pass phrase to read encrypted email'
+  }
 };

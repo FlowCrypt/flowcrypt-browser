@@ -12,6 +12,7 @@ import { testVariant } from '../../test';
 import { testConstants } from './consts';
 import { PageRecipe } from '../page-recipe/abstract-page-recipe';
 import { InMemoryStoreKeys } from '../../core/const';
+import { GmailPageRecipe } from '../page-recipe/gmail-page-recipe';
 
 export class BrowserRecipe {
   public static oldAndNewComposeButtonSelectors = ['div.z0[class*="_destroyable"]', '.new_secure_compose_window_button'];
@@ -25,7 +26,7 @@ export class BrowserRecipe {
   };
 
   public static openSettingsLoginApprove = async (t: AvaContext, browser: BrowserHandle, acctEmail: string) => {
-    const settingsPage = await browser.newPage(t, TestUrls.extensionSettings());
+    const settingsPage = await browser.newPage(t, TestUrls.extensionSettings(acctEmail));
     const oauthPopup = await browser.newPageTriggeredBy(t, () => settingsPage.waitAndClick('@action-connect-to-gmail'));
     await OauthPageRecipe.google(t, oauthPopup, acctEmail, 'approve');
     return settingsPage;
@@ -52,6 +53,7 @@ export class BrowserRecipe {
   public static openGmailPageAndVerifyComposeBtnPresent = async (t: AvaContext, browser: BrowserHandle, googleLoginIndex = 0) => {
     const gmailPage = await BrowserRecipe.openGmailPage(t, browser, googleLoginIndex);
     await gmailPage.waitAll('@action-secure-compose');
+    await GmailPageRecipe.closeInitialSetupNotif(gmailPage);
     return gmailPage;
   };
 

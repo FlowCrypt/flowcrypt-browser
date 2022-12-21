@@ -8,7 +8,7 @@
 import { Api, ProgressCb, ProgressCbs, ReqFmt } from '../shared/api.js';
 import { Dict } from '../../core/common.js';
 import { Attachment } from '../../core/attachment.js';
-import { ClientConfigurationJson } from '../../client-configuration.js';
+import { ClientConfigurationError, ClientConfigurationJson } from '../../client-configuration.js';
 import { AcctStore } from '../../platform/store/acct-store.js';
 import { FlowCryptWebsite } from '../flowcrypt-website.js';
 import { GoogleAuth } from '../email-provider/gmail/google-auth.js';
@@ -45,6 +45,9 @@ export class FlowCryptComApi extends Api {
     if (!email) {
       throw new Error('Id token is invalid');
     }
+    if (r.domain_org_rules && !r.domain_org_rules.flags) {
+      throw new ClientConfigurationError('missing_flags');
+    }
     await AcctStore.set(email, { rules: r.domain_org_rules });
     return r;
   };
@@ -55,9 +58,8 @@ export class FlowCryptComApi extends Api {
       'message/upload',
       { content },
       'FORM',
-      undefined,
+      FlowCryptComApi.getAuthorizationHeader(idToken),
       {
-        ...FlowCryptComApi.getAuthorizationHeader(idToken),
         upload: progressCb
       }
     );

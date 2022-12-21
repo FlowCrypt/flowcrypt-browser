@@ -8,6 +8,7 @@ import { Buf } from '../core/buf.js';
 import { Dict, Str, UrlParams } from '../core/common.js';
 import { ArmoredKeyIdentityWithEmails, KeyUtil } from '../core/crypto/key.js';
 import { DecryptResult, DiagnoseMsgPubkeysResult, MsgUtil, PgpMsgMethod, PgpMsgTypeResult, VerifyRes } from '../core/crypto/pgp/msg-util.js';
+import { NotificationGroupType } from '../notifications.js';
 import { Catch } from '../platform/catch.js';
 import { AccountIndex, AcctStoreDict } from '../platform/store/acct-store.js';
 import { GlobalIndex, GlobalStoreDict } from '../platform/store/global-store.js';
@@ -33,7 +34,7 @@ export namespace Bm {
   export type PassphraseDialog = { type: PassphraseDialogType, longids: string[], initiatorFrameId?: string };
   export type ScrollToReplyBox = { replyMsgId: string };
   export type ScrollToCursorInReplyBox = { replyMsgId: string, cursorOffsetTop: number };
-  export type NotificationShow = { notification: string, callbacks?: Dict<() => void> };
+  export type NotificationShow = { notification: string, group: NotificationGroupType, callbacks?: Dict<() => void> };
   export type NotificationShowAuthPopupNeeded = { acctEmail: string };
   export type RenderPublicKeys = { afterFrameId: string, publicKeys: string[], traverseUp?: number };
   export type SubscribeDialog = { isAuthErr?: boolean };
@@ -66,6 +67,7 @@ export namespace Bm {
   export type ReRenderRecipient = { email: string };
   export type SaveFetchedPubkeys = { email: string, pubkeys: string[] };
   export type ProcessAndStoreKeysFromEkmLocally = { acctEmail: string, decryptedPrivateKeys: string[] };
+  export type GetLocalKeyExpiration = { acctEmail: string };
 
   export namespace Res {
     export type GetActiveTabInfo = { provider: 'gmail' | undefined, acctEmail: string | undefined, sameWorld: boolean | undefined };
@@ -84,6 +86,7 @@ export namespace Bm {
     export type AjaxGmailAttachmentGetChunk = { chunk: Buf };
     export type _tab_ = { tabId: string | null | undefined };
     export type SaveFetchedPubkeys = boolean;
+    export type GetLocalKeyExpiration = number | undefined;
     export type ProcessAndStoreKeysFromEkmLocally = { needPassphrase?: boolean, updateCount?: number, noKeysSetup?: boolean };
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     export type Db = any; // not included in Any below
@@ -94,7 +97,7 @@ export namespace Bm {
       | PgpMsgDecrypt | PgpMsgDiagnoseMsgPubkeys | PgpMsgVerify | PgpMsgType
       | InMemoryStoreGet | InMemoryStoreSet | StoreAcctGet | StoreAcctSet | StoreGlobalGet | StoreGlobalSet
       | AjaxGmailAttachmentGetChunk | SaveFetchedPubkeys | ProcessAndStoreKeysFromEkmLocally
-      | PgpKeyBinaryToArmored;
+      | PgpKeyBinaryToArmored | GetLocalKeyExpiration;
   }
 
   export type AnyRequest = PassphraseEntry | OpenPage | OpenGoogleAuthDialog | Redirect | Reload |
@@ -103,7 +106,7 @@ export namespace Bm {
     NotificationShow | PassphraseDialog | PassphraseDialog | Settings | SetCss | AddOrRemoveClass | ReconnectAcctAuthPopup |
     Db | InMemoryStoreSet | InMemoryStoreGet | StoreGlobalGet | StoreGlobalSet | StoreAcctGet | StoreAcctSet |
     PgpMsgDecrypt | PgpMsgDiagnoseMsgPubkeys | PgpMsgVerifyDetached | PgpMsgType | Ajax |
-    ShowAttachmentPreview | ReRenderRecipient | SaveFetchedPubkeys | ProcessAndStoreKeysFromEkmLocally |
+    ShowAttachmentPreview | ReRenderRecipient | SaveFetchedPubkeys | ProcessAndStoreKeysFromEkmLocally | GetLocalKeyExpiration |
     PgpKeyBinaryToArmored | AuthWindowResult;
 
   // export type RawResponselessHandler = (req: AnyRequest) => Promise<void>;
@@ -154,6 +157,7 @@ export class BrowserMsg {
         saveFetchedPubkeys: (bm: Bm.SaveFetchedPubkeys) => BrowserMsg.sendAwait(undefined, 'saveFetchedPubkeys', bm, true) as Promise<Bm.Res.SaveFetchedPubkeys>,
         processAndStoreKeysFromEkmLocally:
           (bm: Bm.ProcessAndStoreKeysFromEkmLocally) => BrowserMsg.sendAwait(undefined, 'processAndStoreKeysFromEkmLocally', bm, true) as Promise<Bm.Res.ProcessAndStoreKeysFromEkmLocally>,
+        getLocalKeyExpiration: (bm: Bm.GetLocalKeyExpiration) => BrowserMsg.sendAwait(undefined, 'getLocalKeyExpiration', bm, true) as Promise<Bm.Res.GetLocalKeyExpiration>,
       },
     },
     passphraseEntry: (dest: Bm.Dest, bm: Bm.PassphraseEntry) => BrowserMsg.sendCatch(dest, 'passphrase_entry', bm),

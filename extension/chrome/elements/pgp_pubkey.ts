@@ -105,9 +105,9 @@ View.run(class PgpPubkeyView extends View {
   };
 
   public setHandlers = () => {
-    $('.action_add_contact').click(this.setHandler(btn => this.addContactHandler(btn)));
+    $('.action_add_contact').on('click', this.setHandler(btn => this.addContactHandler(btn)));
     $('.input_email').keyup(this.setHandler(() => this.setBtnText()));
-    $('.action_show_full').click(this.setHandler(btn => this.showFullKeyHandler(btn)));
+    $('.action_show_full').on('click', this.setHandler(btn => this.showFullKeyHandler(btn)));
   };
 
   private sendResizeMsg = () => {

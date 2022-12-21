@@ -37,8 +37,8 @@ export class BackupUiManualActionModule extends BackupUiModule<BackupUi> {
   }
 
   public setHandlers = () => {
-    $('#module_manual input[name=input_backup_choice]').click(this.ui.setHandler(el => this.actionSelectBackupMethodHandler(el)));
-    this.proceedBtn.click(this.ui.setHandlerPrevent('double', () => this.actionManualBackupHandler()));
+    $('#module_manual input[name=input_backup_choice]').on('click', this.ui.setHandler(el => this.actionSelectBackupMethodHandler(el)));
+    this.proceedBtn.on('click', this.ui.setHandlerPrevent('double', () => this.actionManualBackupHandler()));
   };
 
   public doBackupOnEmailProvider = async (encryptedPrvs: KeyInfoWithIdentity[]) => {

@@ -94,7 +94,7 @@ export class PgpBlockViewDecryptModule {
       } else if (result.longids.needPassphrase.length) {
         const enterPp = `<a href="#" class="enter_passphrase" data-test="action-show-passphrase-dialog">${Lang.pgpBlock.enterPassphrase}</a> ${Lang.pgpBlock.toOpenMsg}`;
         await this.view.errorModule.renderErr(enterPp, undefined, 'pass phrase needed');
-        $('.enter_passphrase').click(this.view.setHandler(() => {
+        $('.enter_passphrase').on('click', this.view.setHandler(() => {
           Ui.setTestState('waiting');
           BrowserMsg.send.passphraseDialog(this.view.parentTabId, { type: 'message', longids: result.longids.needPassphrase });
         }));

@@ -32,8 +32,8 @@ process.setMaxListeners(60);
 const consts = { // higher concurrency can cause 429 google errs when composing
   TIMEOUT_SHORT: minutes(1),
   TIMEOUT_EACH_RETRY: minutes(3),
-  TIMEOUT_ALL_RETRIES: minutes(18), // this has to suffer waiting for semaphore between retries, thus almost the same as below
-  TIMEOUT_OVERALL: minutes(19),
+  TIMEOUT_ALL_RETRIES: minutes(25), // this has to suffer waiting for semaphore between retries, thus almost the same as below
+  TIMEOUT_OVERALL: minutes(20),
   ATTEMPTS: testGroup === 'STANDARD-GROUP' ? oneIfNotPooled(3) : process.argv.includes('--retry=false') ? 1 : 3,
   POOL_SIZE: oneIfNotPooled(isMock ? 20 : 3),
   PROMISE_TIMEOUT_OVERALL: undefined as unknown as Promise<never>, // will be set right below
@@ -127,7 +127,7 @@ ava.default.after.always('evaluate Catch.reportErr errors', async t => {
       'BrowserMsg(processAndStoreKeysFromEkmLocally) sendRawResponse::Error: Some keys could not be parsed',
       'BrowserMsg(ajax) Bad Request: 400 when GET-ing https://localhost:8001/flowcrypt-email-key-manager/v1/keys/private (no body):  -> RequestTimeout'
     ].includes(e.message))
-    // below for test "user4@standardsubdomainfes.test:8001 - PWD encrypted message with FES web portal - a send fails with gateway update error"
+    // below for test "user4@standardsubdomainfes.localhost:8001 - PWD encrypted message with FES web portal - a send fails with gateway update error"
     .filter(e => !e.message.includes('Test error'))
     // below for test "no.fes@example.com - skip FES on consumer, show friendly message on enterprise"
     .filter(e => !e.trace.includes('-1 when GET-ing https://fes.example.com'))

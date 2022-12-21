@@ -104,6 +104,12 @@ export class BackendData {
         ]
       };
     }
+    if (domain === 'custom-sks.flowcrypt.test') {
+      return {
+        ...keyManagerAutogenRules,
+        custom_keyserver_url: 'https://localhost:8001'
+      };
+    }
     if (domain === 'forbid-storing-passphrase-client-configuration.flowcrypt.test') {
       return {
         "flags": [
@@ -143,7 +149,7 @@ export class BackendData {
         "allow_attester_search_only_for_domains": []
       };
     }
-    if (domain === 'google.mock.flowcryptlocal.test:8001') {
+    if (domain === 'google.mock.localhost:8001') {
       return { ...keyManagerAutogenRules, flags: [...keyManagerAutogenRules.flags, 'NO_ATTESTER_SUBMIT'] };
     }
     if (domain === 'key-manager-autogen.flowcrypt.test') {
@@ -151,6 +157,9 @@ export class BackendData {
     }
     if (domain === 'key-manager-autoimport-no-prv-create.flowcrypt.test') {
       return { ...keyManagerAutogenRules, flags: [...keyManagerAutogenRules.flags, 'NO_PRV_CREATE'] };
+    }
+    if (domain === 'key-manager-disabled-password-message.flowcrypt.test') {
+      return { ...keyManagerAutogenRules, flags: [...keyManagerAutogenRules.flags, 'DISABLE_FLOWCRYPT_HOSTED_PASSWORD_MESSAGES'] };
     }
     if (domain === 'key-manager-autoimport-no-prv-create-no-attester-submit.flowcrypt.test') {
       return { ...keyManagerAutogenRules, flags: [...keyManagerAutogenRules.flags, 'NO_PRV_CREATE', 'NO_ATTESTER_SUBMIT'] };

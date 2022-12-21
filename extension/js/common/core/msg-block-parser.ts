@@ -90,6 +90,10 @@ export class MsgBlockParser {
     // thus we use RegEx so that it works on both browser and node
     if (decryptedContent.includes('class="cryptup_file"')) {
       decryptedContent = decryptedContent.replace(/<a\s+href="([^"]+)"\s+class="cryptup_file"\s+cryptup-data="([^"]+)"\s*>[^<]+<\/a>\n?/gm, (_, url, fcData) => {
+        const fcAttachmentHost = new URL(String(url)).host;
+        if (fcAttachmentHost !== 'flowcrypt.s3.amazonaws.com') {
+          return '[skipped attachment due to invalid url]';
+        }
         const a = Str.htmlAttrDecode(String(fcData));
         if (MsgBlockParser.isFcAttachmentLinkData(a)) {
           blocks.push(MsgBlock.fromAttachment('encryptedAttachmentLink', '', { type: a.type, name: a.name, length: a.size, url: String(url) }));

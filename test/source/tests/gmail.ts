@@ -36,11 +36,11 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
         // Total compose frame count
         composeFrameCount
       }:
-      {
-        isReplyPromptAccepted?: boolean,
-        composeFrameIndex?: number,
-        composeFrameCount?: number
-      } = {}
+        {
+          isReplyPromptAccepted?: boolean,
+          composeFrameIndex?: number,
+          composeFrameCount?: number
+        } = {}
     ) => {
       const urls = await gmailPage.getFramesUrls(['/chrome/elements/compose.htm'], { sleep: 0 });
       expect(urls.length).to.equal(composeFrameCount ?? 1);
@@ -377,6 +377,30 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       await gmailPage.waitAll('iframe');
       await gmailPage.waitAll(['.aZi'], { visible: true });
       await gmailPage.close();
+    }));
+
+    ava.default(`mail.google.com - encrypted text inside "message" attachment`, testWithBrowser(undefined, async (t, browser) => {
+      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'ci.tests.gmail@flowcrypt.dev');
+      await SetupPageRecipe.manualEnter(settingsPage, 'flowcrypt.compatibility.1pp1', { submitPubkey: false, usedPgpBefore: true, },
+        { isSavePassphraseChecked: false, isSavePassphraseHidden: false });
+      const gmailPage = await openGmailPage(t, browser);
+      await gotoGmailPage(gmailPage, '/FMfcgzGrbHprlHvtTJscCJQpZcqrKQbg');
+      await Util.sleep(5);
+      await gmailPage.waitAll('iframe');
+      expect(await gmailPage.isElementPresent('@container-attachments')).to.equal(false);
+      await gmailPage.waitAll(['.aZi'], { visible: false });
+      await gmailPage.close();
+    }));
+
+    ava.default(`mail.google.com - render plain text for "message" attachment (which has plain text)`, testWithBrowser('ci.tests.gmail', async (t, browser) => {
+      const gmailPage = await openGmailPage(t, browser);
+      await gotoGmailPage(gmailPage, '/FMfcgzGrbHrBdFGBXqpFZvSkcQpKkvrM');
+      await Util.sleep(5);
+      await gmailPage.waitForContent('.a3s', 'Plain message');
+      expect(await gmailPage.isElementPresent('div.aQH')).to.equal(true); // gmail attachment container
+      // expect no pgp blocks
+      const urls = await gmailPage.getFramesUrls(['/chrome/elements/pgp_block.htm']);
+      expect(urls.length).to.equal(0);
     }));
 
     ava.default('mail.google.com - pubkey file gets rendered', testWithBrowser('ci.tests.gmail', async (t, browser) => {

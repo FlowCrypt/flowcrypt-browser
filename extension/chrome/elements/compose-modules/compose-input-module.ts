@@ -17,7 +17,7 @@ export class ComposeInputModule extends ViewModule<ComposeView> {
   public squire = new window.Squire(this.view.S.cached('input_text').get(0));
 
   public setHandlers = () => {
-    this.view.S.cached('add_intro').click(this.view.setHandler(el => this.actionAddIntroHandler(el), this.view.errModule.handle(`add intro`)));
+    this.view.S.cached('add_intro').on('click', this.view.setHandler(el => this.actionAddIntroHandler(el), this.view.errModule.handle(`add intro`)));
     this.handlePaste();
     this.handlePasteImages();
     this.initShortcuts();

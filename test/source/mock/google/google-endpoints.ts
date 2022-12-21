@@ -42,6 +42,12 @@ export const mockGoogleEndpoints: HandlersDefinition = {
     }
     throw new Error(`Method not implemented for ${req.url}: ${req.method}`);
   },
+  '/oauth2/v1/tokeninfo': async ({ query: { access_token } }, req) => {
+    if (isGet(req)) {
+      return oauth.getTokenInfo(access_token);
+    }
+    throw new Error(`Method not implemented for ${req.url}: ${req.method}`);
+  },
   '/v1/people:searchContacts': async ({ query: { query } }, req) => {
     if (!isGet(req)) {
       throw new HttpClientErr(`Method not implemented for ${req.url}: ${req.method}`);

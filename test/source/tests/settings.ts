@@ -25,7 +25,7 @@ import { OpenPGPKey } from '../core/crypto/pgp/openpgp-key';
 import { BrowserHandle } from '../browser';
 import { AvaContext } from './tooling';
 import { mockBackendData } from '../mock/backend/backend-endpoints';
-import { ClientConfiguration } from '../mock/backend/backend-data';
+import { ClientConfiguration, keyManagerAutogenRules } from '../mock/backend/backend-data';
 import { HttpClientErr, Status } from '../mock/lib/api';
 
 // tslint:disable:no-blank-lines-func
@@ -351,11 +351,11 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       await SettingsPageRecipe.ready(settingsPage);
       await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
       await settingsPage.waitAll('@action-open-add-key-page');
-      await settingsPage.waitAndClick('@action-remove-key');
+      await settingsPage.waitAndClick('@action-remove-key-0');
       await settingsPage.page.waitForNavigation({ waitUntil: 'networkidle0' });
       await Util.sleep(1);
       await settingsPage.waitAll('@action-open-add-key-page');
-      await settingsPage.notPresent('@action-remove-key');
+      await settingsPage.notPresent('@action-remove-key-0');
     }));
 
     ava.default('settings - my key page - privileged frames and action buttons should be hidden when using key manager test', testWithBrowser(undefined, async (t, browser) => {
@@ -370,7 +370,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       await myKeyFrame.notPresent('@action-update-prv');
       await myKeyFrame.notPresent('@action-revoke-certificate');
       await myKeyFrame.waitForContent('@label-download-prv', 'THIS PRIVATE KEY IS MANAGED BY EMAIL KEY MANAGER');
-      await settingsPage.notPresent('@action-remove-key');
+      await settingsPage.notPresent('@action-remove-key-0');
       const fingerprint = await myKeyFrame.readHtml('@content-fingerprint');
       // test for direct access at my_key_update.htm
       const myKeyUpdateFrame = await browser.newPage(t, TestUrls.extension(`chrome/settings/modules/my_key_update.htm?placement=settings&acctEmail=${acct}&fingerprint=${fingerprint}`));
@@ -970,6 +970,57 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       await settingsPage.close();
     }));
 
+    ava.default('settings - ensure gracious behavior & ui should remain functional when updating client configuration', testWithBrowser(undefined, async (t, browser) => {
+      const acct = 'test-update@settings.flowcrypt.test';
+      mockBackendData.clientConfigurationByAcctEmail[acct] = keyManagerAutogenRules;
+      const setupPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
+      await SetupPageRecipe.autoSetupWithEKM(setupPage);
+      const {
+        cryptup_testupdatesettingsflowcrypttest_rules: rules1
+      } = await setupPage.getFromLocalStorage([
+        'cryptup_testupdatesettingsflowcrypttest_rules'
+      ]);
+      const clientConfiguration1 = rules1 as ClientConfiguration;
+      expect(clientConfiguration1.flags).to.eql([
+        'NO_PRV_BACKUP',
+        'ENFORCE_ATTESTER_SUBMIT',
+        'PRV_AUTOIMPORT_OR_AUTOGEN',
+        'PASS_PHRASE_QUIET_AUTOGEN',
+        'DEFAULT_REMEMBER_PASS_PHRASE']);
+      expect(clientConfiguration1.disallow_attester_search_for_domains).to.eql([]);
+      expect(clientConfiguration1.enforce_keygen_algo).to.equal('rsa2048');
+      expect(clientConfiguration1.key_manager_url).to.equal('https://localhost:8001/flowcrypt-email-key-manager');
+      const accessToken = await BrowserRecipe.getGoogleAccessToken(setupPage, acct);
+      await setupPage.close();
+      // Set invalid client configuration and check if it ensures gracious behavior & ui remain functional
+      mockBackendData.clientConfigurationByAcctEmail[acct] = {
+        // flags is required but don't return it (to mock invalid client configuration)
+        key_manager_url: 'https://localhost:8001/flowcrypt-email-key-manager'
+      };
+      const extraAuthHeaders = { Authorization: `Bearer ${accessToken}` };
+      const gmailPage = await browser.newPage(t, TestUrls.mockGmailUrl(), undefined, extraAuthHeaders);
+      const errorMsg = 'Failed to update FlowCrypt Client Configuration: Missing client configuration flags.';
+      await PageRecipe.waitForToastToAppearAndDisappear(gmailPage, errorMsg);
+      // Ensure previous client configuration remains same
+      const settingsPage = await browser.newPage(t, TestUrls.extensionSettings(acct));
+      await PageRecipe.waitForToastToAppearAndDisappear(settingsPage, errorMsg);
+      const {
+        cryptup_testupdatesettingsflowcrypttest_rules: rules2
+      } = await settingsPage.getFromLocalStorage([
+        'cryptup_testupdatesettingsflowcrypttest_rules'
+      ]);
+      const clientConfiguration2 = rules2 as ClientConfiguration;
+      expect(clientConfiguration2.flags).to.eql([
+        'NO_PRV_BACKUP',
+        'ENFORCE_ATTESTER_SUBMIT',
+        'PRV_AUTOIMPORT_OR_AUTOGEN',
+        'PASS_PHRASE_QUIET_AUTOGEN',
+        'DEFAULT_REMEMBER_PASS_PHRASE']);
+      expect(clientConfiguration2.disallow_attester_search_for_domains).to.eql([]);
+      expect(clientConfiguration2.enforce_keygen_algo).to.equal('rsa2048');
+      expect(clientConfiguration2.key_manager_url).to.equal('https://localhost:8001/flowcrypt-email-key-manager');
+    }));
+
     ava.default('settings - client configuration gets updated on settings and content script reloads', testWithBrowser(undefined, async (t, browser) => {
       const acct = 'settings@settings.flowcrypt.test';
       // set up the client configuration returned for the account
@@ -1153,6 +1204,26 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
           'cryptup_userforbidstoringpassphraseclientconfigurationflowcrypttest_keys']);
       expect((keys2 as KeyInfoWithIdentity[]).map(ki => ki.longid)).to.include.members(['B8F687BCDE14435A', '98ACFA1EADAB5B92']);
       expect(savedPassphrase2).to.be.an('undefined');
+    }));
+
+    ava.default('settings - password messages\' expiry settings shouldn\'t be available for FES users', testWithBrowser('compatibility', async (t, browser) => {
+      const acct1 = 'flowcrypt.compatibility@gmail.com';
+      const settingsPage = await browser.newPage(t, TestUrls.extensionSettings('flowcrypt.compatibility@gmail.com'));
+      const securitySettingsFrame1 = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-security-page', ['security.htm']);
+      expect(await securitySettingsFrame1.isElementVisible('@container-password-messages-expiry')).to.equal(true);
+      await SettingsPageRecipe.closeDialog(settingsPage);
+      await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
+      const experimentalFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-module-experimental', ['experimental.htm']);
+      await experimentalFrame.waitAndClick('@action-reset-account');
+      await experimentalFrame.waitAndRespondToModal('confirm', 'confirm', `This will remove all your FlowCrypt settings for ${acct1}`);
+      await experimentalFrame.waitAndRespondToModal('confirm', 'confirm', 'Proceed to reset? Don\'t come back telling me I didn\'t warn you.');
+      await settingsPage.close();
+      const acct2 = 'settings@key-manager-autogen.flowcrypt.test';
+      const settingsPage1 = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct2);
+      await SetupPageRecipe.autoSetupWithEKM(settingsPage1);
+      const securitySettingsFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage1, '@action-open-security-page', ['security.htm']);
+      expect(await securitySettingsFrame.isElementVisible('@container-password-messages-expiry')).to.equal(false);
+      await settingsPage1.close();
     }));
 
     ava.default.todo('settings - change passphrase - mismatch curent pp');

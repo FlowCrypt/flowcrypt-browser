@@ -15,6 +15,7 @@ export class OauthMock {
   public redirectUri = 'https://google.localhost:8001/robots.txt';
 
   private authCodesByAcct: { [acct: string]: string } = {};
+  private scopesByAccessToken: { [token: string]: string } = {};
   private refreshTokenByAuthCode: { [authCode: string]: string } = {};
   private accessTokenByRefreshToken: { [refreshToken: string]: string } = {};
   private acctByAccessToken: { [acct: string]: string } = {};
@@ -26,13 +27,14 @@ export class OauthMock {
   };
 
   public successResult = (acct: string, state: string, scope: string) => {
-    const authCode = `mock-auth-code-${acct.replace(/[^a-z0-9]+/g, '')}`;
-    const refreshToken = `mock-refresh-token-${acct.replace(/[^a-z0-9]+/g, '')}`;
-    const accessToken = `mock-access-token-${acct.replace(/[^a-z0-9]+/g, '')}`;
+    const authCode = `mock-auth-code-${Str.sloppyRandom(4)}-${acct.replace(/[^a-z0-9]+/g, '')}`;
+    const refreshToken = `mock-refresh-token-${Str.sloppyRandom(4)}-${acct.replace(/[^a-z0-9]+/g, '')}`;
+    const accessToken = `mock-access-token-${Str.sloppyRandom(4)}-${acct.replace(/[^a-z0-9]+/g, '')}`;
     this.authCodesByAcct[acct] = authCode;
     this.refreshTokenByAuthCode[authCode] = refreshToken;
     this.accessTokenByRefreshToken[refreshToken] = accessToken;
     this.acctByAccessToken[accessToken] = acct;
+    this.scopesByAccessToken[accessToken] = `${(this.scopesByAccessToken[accessToken] ?? '')} ${scope}`;
     const url = new URL(this.redirectUri);
     url.searchParams.set('code', authCode);
     url.searchParams.set('scope', scope);
@@ -47,6 +49,10 @@ export class OauthMock {
     const acct = this.acctByAccessToken[access_token];
     const id_token = this.generateIdToken(acct);
     return { access_token, refresh_token, expires_in: this.expiresIn, id_token, token_type: 'refresh_token' }; // guessed the token_type
+  };
+
+  public getTokenInfo = (token: string) => {
+    return { scope: this.scopesByAccessToken[token], email: this.acctByAccessToken[token], expires_in: 3600, token_type: "Bearer" };
   };
 
   public getTokenResponse = (refreshToken: string) => {

@@ -7,7 +7,7 @@ import { Bm, BrowserMsg } from '../common/browser/browser-msg.js';
 import { emailKeyIndex } from '../common/core/common.js';
 import { VERSION } from '../common/core/const.js';
 import { ExpirationCache } from '../common/core/expiration-cache.js';
-import { processAndStoreKeysFromEkmLocally } from '../common/helpers.js';
+import { processAndStoreKeysFromEkmLocally, getLocalKeyExpiration } from '../common/helpers.js';
 import { Catch } from '../common/platform/catch.js';
 import { AcctStore } from '../common/platform/store/acct-store.js';
 import { ContactStore } from '../common/platform/store/contact-store.js';
@@ -62,6 +62,7 @@ console.info('background_process.js starting');
   BrowserMsg.bgAddListener('storeAcctGet', (r: Bm.StoreAcctGet) => AcctStore.get(r.acctEmail, r.keys));
   BrowserMsg.bgAddListener('storeAcctSet', (r: Bm.StoreAcctSet) => AcctStore.set(r.acctEmail, r.values));
   BrowserMsg.bgAddListener('processAndStoreKeysFromEkmLocally', processAndStoreKeysFromEkmLocally);
+  BrowserMsg.bgAddListener('getLocalKeyExpiration', getLocalKeyExpiration);
 
   // todo - when https://github.com/FlowCrypt/flowcrypt-browser/issues/2560
   //   is fixed, this can be moved to the gmail content script, and some may be removed

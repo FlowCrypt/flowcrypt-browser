@@ -204,22 +204,39 @@ yeSm0uVPwODhwX7ezB9jW6uVt0R8S8iM3rQdEMsA/jDep5LNn47K6o8VrDt0zYo6
 -----END PGP PRIVATE KEY BLOCK-----
 `;
 
+interface MockKMKeyRes {
+  [acct: string]: {
+    response?: {
+      privateKeys: {
+        decryptedPrivateKey: string
+      }[]
+    },
+    badRequestError?: string
+  }
+}
+
 export const MOCK_KM_LAST_INSERTED_KEY: { [acct: string]: { privateKey: string } } = {}; // accessed from test runners
 
-export const MOCK_KM_UPDATING_KEY: { [acct: string]: { response?: { privateKeys: { decryptedPrivateKey: string }[] }, badRequestError?: string } } = {};
+export const MOCK_KM_KEYS: MockKMKeyRes = {};
 
 export const mockKeyManagerEndpoints: HandlersDefinition = {
   '/flowcrypt-email-key-manager/v1/keys/private': async ({ body }, req) => {
     const acctEmail = oauth.checkAuthorizationHeaderWithIdToken(req.headers.authorization);
     if (isGet(req)) {
-      if (acctEmail === 'wkd@google.mock.flowcryptlocal.test:8001') {
+      if (acctEmail === 'wkd@google.mock.localhost:8001') {
         return { privateKeys: [{ decryptedPrivateKey: testConstants.wkdAtgooglemockflowcryptlocalcom8001Private }] };
       }
       if (acctEmail === 'get.key@key-manager-autogen.flowcrypt.test') {
         return { privateKeys: [{ decryptedPrivateKey: testConstants.existingPrv }] };
       }
+      if (acctEmail === 'user@key-manager-disabled-password-message.flowcrypt.test') {
+        return { privateKeys: [{ decryptedPrivateKey: testConstants.existingPrv }] };
+      }
+      if (acctEmail === 'user@custom-sks.flowcrypt.test') {
+        return { privateKeys: [{ decryptedPrivateKey: testConstants.existingPrv }] };
+      }
       if (acctEmail.includes('updating.key')) {
-        const { response, badRequestError } = MOCK_KM_UPDATING_KEY[acctEmail];
+        const { response, badRequestError } = MOCK_KM_KEYS[acctEmail];
         if (response !== undefined && badRequestError === undefined) {
           return response;
         }
@@ -267,7 +284,13 @@ export const mockKeyManagerEndpoints: HandlersDefinition = {
       if (acctEmail === 'get.error@key-manager-autogen.flowcrypt.test') {
         throw new Error('Intentional error for get.error to test client behavior');
       }
+      if (acctEmail === 'settings@key-manager-autogen.flowcrypt.test') {
+        return { privateKeys: [{ decryptedPrivateKey: testConstants.existingPrv }] };
+      }
       if (acctEmail === 'settings@settings.flowcrypt.test') {
+        return { privateKeys: [{ decryptedPrivateKey: testConstants.existingPrv }] };
+      }
+      if (acctEmail === 'test-update@settings.flowcrypt.test') {
         return { privateKeys: [{ decryptedPrivateKey: testConstants.existingPrv }] };
       }
       throw new HttpClientErr(`Unexpectedly calling mockKeyManagerEndpoints:/v1/keys/private GET with acct ${acctEmail}`);

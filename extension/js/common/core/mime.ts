@@ -69,7 +69,8 @@ export class Mime {
       blocks.push(MsgBlock.fromContent('plainHtml', decoded.html));
     }
     for (const file of decoded.attachments) {
-      const treatAs = file.treatAs();
+      const isBodyEmpty = decoded.text === '' || decoded.text === '\n';
+      const treatAs = file.treatAs(isBodyEmpty);
       if (treatAs === 'encryptedMsg') {
         const armored = PgpArmor.clip(file.getData().toUtfStr());
         if (armored) {

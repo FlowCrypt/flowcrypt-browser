@@ -59,7 +59,7 @@ export class InboxActiveThreadModule extends ViewModule<InboxView> {
       } else if (ApiErr.isAuthErr(e)) {
         this.view.inboxNotificationModule.renderAndHandleAuthPopupNotification();
       } else if (ApiErr.isMailOrAcctDisabledOrPolicy(e)) {
-        this.view.inboxNotificationModule.showNotification(Lang.account.googleAcctDisabledOrPolicy);
+        this.view.inboxNotificationModule.showNotification(Lang.account.googleAcctDisabledOrPolicy, 'inbox');
       } else {
         Catch.reportErr(e);
         const printable = Xss.escape(e instanceof Error ? e.stack || e.message : JSON.stringify(e, undefined, 2));
@@ -70,7 +70,7 @@ export class InboxActiveThreadModule extends ViewModule<InboxView> {
 
   public setHandlers = () => {
     if (this.threadHasPgpBlock) {
-      $(".action_see_original_message").click(this.view.setHandler(() => this.view.redirectToUrl({
+      $(".action_see_original_message").on('click', this.view.setHandler(() => this.view.redirectToUrl({
         acctEmail: this.view.acctEmail, threadId: this.threadId, showOriginal: !this.view.showOriginal
       })));
     }
@@ -128,7 +128,7 @@ export class InboxActiveThreadModule extends ViewModule<InboxView> {
       r = `<p class="message_header" data-test="container-msg-header">From: ${Xss.escape(from)} <span style="float:right;">${headers.date} ${exportBtn}</p>` + r;
       $('.thread').append(this.wrapMsg(htmlId, r)); // xss-safe-factory
       if (exportBtn) {
-        $('.action-export').click(this.view.setHandler(() => this.exportMsgForDebug(message.id)));
+        $('.action-export').on('click', this.view.setHandler(() => this.exportMsgForDebug(message.id)));
       }
     } catch (e) {
       if (ApiErr.isNetErr(e)) {
@@ -136,7 +136,7 @@ export class InboxActiveThreadModule extends ViewModule<InboxView> {
       } else if (ApiErr.isAuthErr(e)) {
         this.view.inboxNotificationModule.renderAndHandleAuthPopupNotification();
       } else if (ApiErr.isMailOrAcctDisabledOrPolicy(e)) {
-        this.view.inboxNotificationModule.showNotification(Lang.account.googleAcctDisabledOrPolicy);
+        this.view.inboxNotificationModule.showNotification(Lang.account.googleAcctDisabledOrPolicy, 'inbox');
       } else {
         Catch.reportErr(e);
         const printable = Xss.escape(e instanceof Error ? e.stack || e.message : JSON.stringify(e, undefined, 2));

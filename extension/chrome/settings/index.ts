@@ -14,7 +14,7 @@ import { Env } from '../../js/common/browser/env.js';
 import { Gmail } from '../../js/common/api/email-provider/gmail/gmail.js';
 import { Lang } from '../../js/common/lang.js';
 import { Notifications } from '../../js/common/notifications.js';
-import { ClientConfiguration } from '../../js/common/client-configuration.js';
+import { ClientConfiguration, ClientConfigurationError } from '../../js/common/client-configuration.js';
 import { Settings } from '../../js/common/settings.js';
 import { VERSION } from '../../js/common/core/const.js';
 import { View } from '../../js/common/view.js';
@@ -83,7 +83,7 @@ View.run(class SettingsView extends View {
     if (this.clientConfiguration && this.clientConfiguration.usesKeyManager()) {
       $(".add_key").hide(); // users which a key manager should not be adding keys manually
     }
-    $('#status-row #status_version').click(this.setHandler(async () => {
+    $('#status-row #status_version').on('click', this.setHandler(async () => {
       await Ui.modal.page('/changelog.txt', true);
     }));
     await this.initialize();
@@ -114,12 +114,12 @@ View.run(class SettingsView extends View {
       const factory = new XssSafeFactory(this.acctEmail!, this.tabId);
       window.open(factory.srcAddPubkeyDialog(emails, 'settings'), '_blank', 'height=680,left=100,menubar=no,status=no,toolbar=no,top=30,width=660');
     });
-    BrowserMsg.addListener('notification_show', async ({ notification }: Bm.NotificationShow) => {
-      this.notifications!.show(notification);
+    BrowserMsg.addListener('notification_show', async ({ notification, group }: Bm.NotificationShow) => {
+      this.notifications!.show(notification, {}, group);
       let cleared = false;
       const clear = () => {
         if (!cleared) {
-          this.notifications!.clear();
+          this.notifications!.clear(group);
           cleared = true;
         }
       };
@@ -140,7 +140,7 @@ View.run(class SettingsView extends View {
       Swal.close();
     });
     BrowserMsg.listen(this.tabId);
-    $('.show_settings_page').click(this.setHandler(async target => {
+    $('.show_settings_page').on('click', this.setHandler(async target => {
       const page = $(target).attr('page');
       if (page) {
         await Settings.renderSubPage(this.acctEmail!, this.tabId, page, $(target).attr('addurltext') || '');
@@ -148,30 +148,30 @@ View.run(class SettingsView extends View {
         Catch.report(`Unknown target page in element: ${target.outerHTML}`);
       }
     }));
-    $('.action_open_public_key_page').click(this.setHandler(async () => {
+    $('.action_open_public_key_page').on('click', this.setHandler(async () => {
       const prvs = await KeyStoreUtil.parse(await KeyStore.getRequired(this.acctEmail!));
       const mostUsefulPrv = KeyStoreUtil.chooseMostUseful(prvs, 'EVEN-IF-UNUSABLE');
       const escapedFp = Xss.escape(mostUsefulPrv!.key.id);
       await Settings.renderSubPage(this.acctEmail!, this.tabId, 'modules/my_key.htm', `&fingerprint=${escapedFp}`);
     }));
-    $('.action_show_encrypted_inbox').click(this.setHandler(() => {
+    $('.action_show_encrypted_inbox').on('click', this.setHandler(() => {
       window.location.href = Url.create('/chrome/settings/inbox/inbox.htm', { acctEmail: this.acctEmail! });
     }));
-    $('.action_add_account').click(this.setHandlerPrevent('double', async () => await Settings.newGoogleAcctAuthPromptThenAlertOrForward(this.tabId)));
-    $('.action_google_auth').click(this.setHandlerPrevent('double', async () => await Settings.newGoogleAcctAuthPromptThenAlertOrForward(this.tabId, this.acctEmail)));
-    // $('.action_microsoft_auth').click(this.setHandlerPrevent('double', function() {
+    $('.action_add_account').on('click', this.setHandlerPrevent('double', async () => await Settings.newGoogleAcctAuthPromptThenAlertOrForward(this.tabId)));
+    $('.action_google_auth').on('click', this.setHandlerPrevent('double', async () => await Settings.newGoogleAcctAuthPromptThenAlertOrForward(this.tabId, this.acctEmail)));
+    // $('.action_microsoft_auth').on('click', this.setHandlerPrevent('double', function() {
     //   new_microsoft_account_authentication_prompt(account_email);
     // }));
-    $('body').click(this.setHandler(() => {
+    $('body').on('click', this.setHandler(() => {
       this.altAccounts.removeClass('visible');
       $(".ion-ios-arrow-down").removeClass("up");
       $(".add-account").removeClass("hidden");
     }));
-    $(".toggle-settings").click(this.setHandler(() => {
+    $(".toggle-settings").on('click', this.setHandler(() => {
       $("#settings").toggleClass("advanced");
     }));
     let preventAccountsMenuMouseenter = false;
-    $(".action-toggle-accounts-menu").click(this.setHandler((target, event) => {
+    $(".action-toggle-accounts-menu").on('click', this.setHandler((target, event) => {
       event.stopPropagation();
       if (this.altAccounts.hasClass('visible')) {
         this.altAccounts.removeClass('visible');
@@ -192,8 +192,10 @@ View.run(class SettingsView extends View {
         $(target).focus();
       }
     }));
-    $('#status-row #status_google').click(this.setHandler(async () => await Settings.renderSubPage(this.acctEmail!, this.tabId, 'modules/debug_api.htm', { which: 'google_account' })));
-    $('#status-row #status_local_store').click(this.setHandler(async () => await Settings.renderSubPage(this.acctEmail!, this.tabId, 'modules/debug_api.htm', { which: 'local_store' })));
+    $('#status-row #status_google').on('click', this.setHandler(async () => await Settings.renderSubPage(this.acctEmail!, this.tabId, 'modules/debug_api.htm', { which: 'google_account' })));
+    $('#status-row #status_local_store').on('click', this.setHandler(
+      async () => await Settings.renderSubPage(this.acctEmail!, this.tabId, 'modules/debug_api.htm', { which: 'local_store' }))
+    );
     Ui.activateModalPageLinkTags();
   };
 
@@ -295,7 +297,7 @@ View.run(class SettingsView extends View {
       // and doesn't use custom key manager, because backups are then taken care of
       $('.install_app_notification').removeClass('hidden');
     }
-    $('.dismiss_install_app_notification').click(this.setHandler(async () => {
+    $('.dismiss_install_app_notification').on('click', this.setHandler(async () => {
       await GlobalStore.set({ install_mobile_app_notification_dismissed: true });
       $('.install_app_notification').remove();
     }));
@@ -316,7 +318,7 @@ View.run(class SettingsView extends View {
       } catch (e) {
         if (ApiErr.isAuthErr(e)) {
           const authNeededLink = $('<a class="bad" href="#">Auth Needed</a>');
-          authNeededLink.click(this.setHandler(async () => {
+          authNeededLink.on('click', this.setHandler(async () => {
             await Settings.loginWithPopupShowModalOnErr(this.acctEmail!, () => window.location.reload());
           }));
           statusContainer.empty().append(authNeededLink); // xss-direct
@@ -326,6 +328,8 @@ View.run(class SettingsView extends View {
           Xss.sanitizeRender(statusContainer, '<a href="#">Network Error - Retry</a>')
             .find('a').one('click', this.setHandler(() => this.checkFcAcctAndContactPage()));
           $('#status-row #status_flowcrypt').text(`fc:offline`);
+        } else if (e instanceof ClientConfigurationError) {
+          Ui.toast(`Failed to update FlowCrypt Client Configuration: ${e.message}`, false, 5);
         } else {
           statusContainer.text('ecp error');
           $('#status-row #status_flowcrypt').text(`fc:error`).attr('title', `FlowCrypt Account Error: ${Xss.escape(String(e))}`);
@@ -406,7 +410,7 @@ View.run(class SettingsView extends View {
       const date = Str.monthName(created.getMonth()) + ' ' + created.getDate() + ', ' + created.getFullYear();
       let removeKeyBtn = '';
       if (canRemoveKey && privateKeys.length > 1) {
-        removeKeyBtn = `(<a href="#" class="action_remove_key" data-test="action-remove-key" data-type="${ki.family}" data-id="${ki.id}" data-longid="${ki.longid}">remove</a>)`;
+        removeKeyBtn = `(<a href="#" class="action_remove_key" data-test="action-remove-key-${i}" data-type="${ki.family}" data-id="${ki.id}" data-longid="${ki.longid}">remove</a>)`;
       }
       const escapedEmail = Xss.escape(prv.emails[0] || '');
       const escapedLink = `<a href="#" data-test="action-show-key-${i}" class="action_show_key" page="modules/my_key.htm" addurltext="&fingerprint=${ki.id}">${escapedEmail}</a>`;
@@ -417,12 +421,12 @@ View.run(class SettingsView extends View {
       html += `</div>`;
     }
     Xss.sanitizeAppend('.key_list', html);
-    $('.action_show_key').click(this.setHandler(async target => {
+    $('.action_show_key').on('click', this.setHandler(async target => {
       // the UI below only gets rendered when account_email is available
       await Settings.renderSubPage(this.acctEmail!, this.tabId, $(target).attr('page')!, $(target).attr('addurltext') || ''); // all such elements do have page attr
     }));
     if (canRemoveKey) {
-      $('.action_remove_key').click(this.setHandler(async target => {
+      $('.action_remove_key').on('click', this.setHandler(async target => {
         // the UI below only gets rendered when account_email is available
         const family = $(target).data('type') as string;
         const id = $(target).data('id') as string;

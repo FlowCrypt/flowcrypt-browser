@@ -65,7 +65,7 @@ View.run(class MyKeyUpdateView extends View {
   };
 
   public setHandlers = () => {
-    $('.action_update_private_key').click(this.setHandlerPrevent('double', () => this.updatePrivateKeyHandler()));
+    $('.action_update_private_key').on('click', this.setHandlerPrevent('double', () => this.updatePrivateKeyHandler()));
     $('.input_passphrase').keydown(this.setEnterHandlerThatClicks('.action_update_private_key'));
   };
 

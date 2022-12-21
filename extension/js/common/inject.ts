@@ -77,7 +77,7 @@ export class Injector {
         const secureComposeButton = $(this.factory.btnCompose(this.webmailName, this.determineWebmailVersion()));
         const insertBtnOnTopOf = this.S.now('compose_button_container').first();
         const container = insertBtnOnTopOf.prepend(secureComposeButton); // xss-safe-factory
-        container.find(this.S.sel('compose_button')).click(Ui.event.prevent('double', () => { this.openComposeWin(); }));
+        container.find(this.S.sel('compose_button')).on('click', Ui.event.prevent('double', () => { this.openComposeWin(); }));
       }
     }
   };
@@ -94,7 +94,7 @@ export class Injector {
       }
     }
     prependToElem.prepend(this.factory.btnEndPPSession(this.webmailName)) // xss-safe-factory
-      .find('.action_finish_session').click(Ui.event.prevent('double', async (el) => {
+      .find('.action_finish_session').on('click', Ui.event.prevent('double', async (el) => {
         for (const kinfo of await KeyStore.getKeyInfosThatCurrentlyHavePassPhraseInSession(acctEmail)) {
           await PassphraseStore.set('session', acctEmail, kinfo, undefined);
         }

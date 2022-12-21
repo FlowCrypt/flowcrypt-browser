@@ -39,7 +39,7 @@ export class ComposeSendBtnModule extends ViewModule<ComposeView> {
   public setHandlers = (): void => {
     const ctrlEnterHandler = Ui.ctrlEnter(() => !this.view.sizeModule.composeWindowIsMinimized && this.extractProcessSendMsg());
     this.view.S.cached('subject').add(this.view.S.cached('compose')).keydown(ctrlEnterHandler);
-    this.view.S.cached('send_btn').click(this.view.setHandlerPrevent('double', () => this.extractProcessSendMsg()));
+    this.view.S.cached('send_btn').on('click', this.view.setHandlerPrevent('double', () => this.extractProcessSendMsg()));
     this.popover.setHandlers();
   };
 
@@ -86,17 +86,7 @@ export class ComposeSendBtnModule extends ViewModule<ComposeView> {
     }
   };
 
-  private btnText = (): string => {
-    if (this.popover.choices.encrypt && this.popover.choices.sign) {
-      return SendBtnTexts.BTN_ENCRYPT_SIGN_AND_SEND;
-    } else if (this.popover.choices.sign) {
-      return SendBtnTexts.BTN_SIGN_AND_SEND;
-    } else {
-      return SendBtnTexts.BTN_PLAIN_SEND;
-    }
-  };
-
-  private extractProcessSendMsg = async () => {
+  public extractProcessSendMsg = async () => {
     if (this.view.S.cached('reply_msg_successful').is(':visible')) {
       return;
     }
@@ -125,7 +115,10 @@ export class ComposeSendBtnModule extends ViewModule<ComposeView> {
             Ui.toast(result.supplementaryOperationsErrors[0] as string);
           }, 0);
         }
-        BrowserMsg.send.notificationShow(this.view.parentTabId, { notification: `Your ${this.view.isReplyBox ? 'reply' : 'message'} has been sent.` });
+        BrowserMsg.send.notificationShow(this.view.parentTabId, {
+          notification: `Your ${this.view.isReplyBox ? 'reply' : 'message'} has been sent.`,
+          group: 'compose'
+        });
         BrowserMsg.send.focusBody(this.view.parentTabId); // Bring focus back to body so Gmails shortcuts will work
         if (this.view.isReplyBox) {
           this.view.renderModule.renderReplySuccess(msgObj.renderSentMessage.attachments, msgObj.renderSentMessage.recipients, result.sentIds[0]);
@@ -141,6 +134,16 @@ export class ComposeSendBtnModule extends ViewModule<ComposeView> {
       this.isSendMessageInProgress = false;
       this.view.sendBtnModule.enableBtn();
       this.view.S.cached('toggle_send_options').show();
+    }
+  };
+
+  private btnText = (): string => {
+    if (this.popover.choices.encrypt && this.popover.choices.sign) {
+      return SendBtnTexts.BTN_ENCRYPT_SIGN_AND_SEND;
+    } else if (this.popover.choices.sign) {
+      return SendBtnTexts.BTN_SIGN_AND_SEND;
+    } else {
+      return SendBtnTexts.BTN_PLAIN_SEND;
     }
   };
 

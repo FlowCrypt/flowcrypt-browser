@@ -72,7 +72,7 @@ const CHROME_CONSUMER = 'chrome-consumer';
 const CHROME_ENTERPRISE = 'chrome-enterprise';
 const MOCK_HOST: { [buildType: string]: string } = {
   'chrome-consumer': 'https://localhost:8001',
-  'chrome-enterprise': 'https://google.mock.flowcryptlocal.test:8001',
+  'chrome-enterprise': 'https://google.mock.localhost:8001',
 };
 
 const buildDir = (buildType: string) => `./build/${buildType}`;

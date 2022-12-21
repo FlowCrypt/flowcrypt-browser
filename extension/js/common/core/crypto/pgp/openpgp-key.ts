@@ -226,8 +226,8 @@ export class OpenPGPKey {
       },
       revoked: keyWithoutWeakPackets.revocationSignatures.length > 0
     } as Key);
-    (key as Key & { internal: OpenPGP.key.Key }).internal = keyWithoutWeakPackets;
-    (key as Key & { rawKey: OpenPGP.key.Key }).rawKey = opgpKey;
+    (key as Key & { internal: OpenPGP.Key }).internal = keyWithoutWeakPackets;
+    (key as Key & { rawKey: OpenPGP.Key }).rawKey = opgpKey;
     (key as Key & { rawArmored: string }).rawArmored = opgpKey.armor();
     return key;
   };

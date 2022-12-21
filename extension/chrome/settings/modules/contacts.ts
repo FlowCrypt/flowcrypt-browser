@@ -53,11 +53,11 @@ View.run(class ContactsView extends View {
   };
 
   public setHandlers = () => {
-    $('.action_show_pubkey_list').off().click(this.setHandlerPrevent('double', this.actionRenderListPublicKeyHandler));
-    $('#edit_contact .action_save_edited_pubkey').off().click(this.setHandlerPrevent('double', this.actionSaveEditedPublicKeyHandler));
-    $('#bulk_import .action_process').off().click(this.setHandlerPrevent('double', this.actionProcessBulkImportTextInput));
-    $('.action_export_all').off().click(this.setHandlerPrevent('double', this.actionExportAllKeysHandler));
-    $('.action_view_bulk_import').off().click(this.setHandlerPrevent('double', this.actionRenderBulkImportPageHandler));
+    $('.action_show_pubkey_list').off().on('click', this.setHandlerPrevent('double', this.actionRenderListPublicKeyHandler));
+    $('#edit_contact .action_save_edited_pubkey').off().on('click', this.setHandlerPrevent('double', this.actionSaveEditedPublicKeyHandler));
+    $('#bulk_import .action_process').off().on('click', this.setHandlerPrevent('double', this.actionProcessBulkImportTextInput));
+    $('.action_export_all').off().on('click', this.setHandlerPrevent('double', this.actionExportAllKeysHandler));
+    $('.action_view_bulk_import').off().on('click', this.setHandlerPrevent('double', this.actionRenderBulkImportPageHandler));
     $('.input-search-contacts').off().keyup(this.setHandlerPrevent('double', this.loadAndRenderContactList));
   };
 
@@ -68,7 +68,8 @@ View.run(class ContactsView extends View {
     let lineActionsHtml = '&nbsp;&nbsp;<a href="#" class="action_export_all">export all</a>&nbsp;&nbsp;' +
       '&nbsp;&nbsp;<a href="#" class="action_view_bulk_import" data-test="action-show-import-public-keys-form">import public keys</a>&nbsp;&nbsp;';
     if (this.clientConfiguration.getCustomSksPubkeyServer()) {
-      lineActionsHtml += `&nbsp;&nbsp;<br><br><b class="bad">using custom SKS pubkeyserver: ${Xss.escape(this.clientConfiguration!.getCustomSksPubkeyServer()!)}</b>`;
+      lineActionsHtml += `&nbsp;&nbsp;<br><br><b class="bad" data-test="custom-key-server-description">` +
+        `using custom SKS pubkeyserver: ${Xss.escape(this.clientConfiguration!.getCustomSksPubkeyServer()!)}</b>`;
     } else {
       lineActionsHtml += '&nbsp;&nbsp;<a href="https://flowcrypt.com/docs/technical/keyserver-integration.html" target="_blank">use custom keyserver</a>&nbsp;&nbsp;';
     }
@@ -144,9 +145,9 @@ View.run(class ContactsView extends View {
       // remove all listeners from the old link by creating a new element
       const newElement = emailRow.cloneNode(true);
       emailRow!.parentNode!.replaceChild(newElement, emailRow);
-      $('.action_remove').off().click(this.setHandlerPrevent('double', this.actionRemovePublicKey));
-      $('.action_show').off().click(this.setHandlerPrevent('double', this.actionRenderViewPublicKeyHandler));
-      $('.action_change').off().click(this.setHandlerPrevent('double', this.actionRenderChangePublicKeyHandler));
+      $('.action_remove').off().on('click', this.setHandlerPrevent('double', this.actionRemovePublicKey));
+      $('.action_show').off().on('click', this.setHandlerPrevent('double', this.actionRenderViewPublicKeyHandler));
+      $('.action_change').off().on('click', this.setHandlerPrevent('double', this.actionRenderChangePublicKeyHandler));
     }
   };
 
@@ -176,7 +177,7 @@ View.run(class ContactsView extends View {
       `Usable for signing: ${key.usableForSigning}`,
     ].join('\n'));
     $('#view_contact').css('display', 'block');
-    $('#page_back_button').click(this.setHandler(() => this.loadAndRenderContactList()));
+    $('#page_back_button').on('click', this.setHandler(() => this.loadAndRenderContactList()));
   };
 
   private actionRenderChangePublicKeyHandler = (changePubkeyButton: HTMLElement) => {
@@ -185,7 +186,7 @@ View.run(class ContactsView extends View {
     Xss.sanitizeRender('h1', `${this.backBtn}${this.space}${Xss.escape(email)}${this.space}(edit)`);
     $('#edit_contact').css('display', 'block');
     $('#edit_contact .input_pubkey').val('').attr('email', email);
-    $('#page_back_button').click(this.setHandler(() => this.loadAndRenderContactList()));
+    $('#page_back_button').on('click', this.setHandler(() => this.loadAndRenderContactList()));
   };
 
   private actionSaveEditedPublicKeyHandler = async () => {
@@ -224,7 +225,7 @@ View.run(class ContactsView extends View {
     $('#bulk_import #processed').text('').css('display', 'none');
     $('#file_import').show();
     $('#file_import #fineuploader_button').css('display', 'inline-block');
-    $('#page_back_button').click(this.setHandler(() => this.loadAndRenderContactList()));
+    $('#page_back_button').on('click', this.setHandler(() => this.loadAndRenderContactList()));
   };
 
   private actionProcessBulkImportTextInput = async () => {

@@ -169,7 +169,7 @@ export class PgpBlockViewRenderModule {
       Xss.sanitizeRender('#pgp_block', htmlContent);
     }
     if (isErr) {
-      $('.action_show_raw_pgp_block').click(this.view.setHandler(target => {
+      $('.action_show_raw_pgp_block').on('click', this.view.setHandler(target => {
         $('.raw_pgp_block').css('display', 'block');
         $(target).css('display', 'none');
         this.resizePgpBlockFrame();

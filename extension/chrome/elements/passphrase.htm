@@ -17,13 +17,13 @@
 <body id="settings" class="whitebg">
 
   <div id="content" class="passphrase dialog">
-    <div class="line">
-      <h1 data-test="passphrase-text">Enter FlowCrypt pass phrase to read encrypted email</h1>
+    <div class="line passphrase_text_container">
+      <h1 class="passphrase_text" data-test="passphrase-text"></h1>
     </div>
     <div class="separator"></div>
     <div class="line which_key" data-test="which-key" style="display: none;"></div>
     <div class="line">
-      <input type="text" placeholder="Enter Pass Phrase" id="passphrase" data-test="input-pass-phrase">
+      <input type="text" placeholder="Enter Pass Phrase" id="passphrase" data-test="input-pass-phrase" maxlength="256">
     </div>
     <div class="line">
       <button class="button long green action_ok" data-test="action-confirm-pass-phrase-entry">OK</button>

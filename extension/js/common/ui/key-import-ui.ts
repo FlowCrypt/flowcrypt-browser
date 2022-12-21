@@ -75,7 +75,7 @@ export class KeyImportUi {
         $('.input_private_key').val('').change().prop('disabled', true);
         $('.source_paste_container').css('display', 'none');
         $('.source_paste_container .unprotected_key_create_pass_phrase').hide();
-        $('#fineuploader_button > input').click();
+        $('#fineuploader_button > input').trigger('click');
       } else if ((this as HTMLInputElement).value === 'paste') {
         $('.input_private_key').val('').change().prop('disabled', false);
         $('.source_paste_container').css('display', 'block');
@@ -84,7 +84,7 @@ export class KeyImportUi {
         window.location.href = Url.create('/chrome/settings/setup.htm', { acctEmail, parentTabId, action: 'add_key' });
       }
     });
-    $('.line.unprotected_key_create_pass_phrase .action_use_random_pass_phrase').click(Ui.event.handle(() => {
+    $('.line.unprotected_key_create_pass_phrase .action_use_random_pass_phrase').on('click', Ui.event.handle(() => {
       $('.source_paste_container .input_passphrase').val(PgpPwd.random()).trigger('input');
       $('.input_passphrase').attr('type', 'text');
       $('#e_rememberPassphrase').prop('checked', true);

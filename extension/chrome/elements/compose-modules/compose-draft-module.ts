@@ -45,7 +45,7 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
   }
 
   public setHandlers = () => {
-    $('.delete_draft').click(this.view.setHandler(() => this.deleteDraftClickHandler(), this.view.errModule.handle('delete draft')));
+    $('.delete_draft').on('click', this.view.setHandler(() => this.deleteDraftClickHandler(), this.view.errModule.handle('delete draft')));
     this.view.recipientsModule.onRecipientAdded(async () => await this.draftSave(true));
   };
 
@@ -363,10 +363,10 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
       `).css({ display: 'flex', height: '100%' });
       BrowserMsg.send.setActiveWindow(this.view.parentTabId, { frameId: this.view.frameId });
     }
-    this.view.S.cached('prompt').find('.action_open_passphrase_dialog').click(this.view.setHandler(async () => {
+    this.view.S.cached('prompt').find('.action_open_passphrase_dialog').on('click', this.view.setHandler(async () => {
       BrowserMsg.send.passphraseDialog(this.view.parentTabId, { type: 'draft', longids });
     })).focus();
-    this.view.S.cached('prompt').find('.action_close').click(this.view.setHandler(() => this.view.renderModule.closeMsg()));
+    this.view.S.cached('prompt').find('.action_close').on('click', this.view.setHandler(() => this.view.renderModule.closeMsg()));
     const setActiveWindow = this.view.setHandler(async () => { BrowserMsg.send.setActiveWindow(this.view.parentTabId, { frameId: this.view.frameId }); });
     this.view.S.cached('prompt').on('click', setActiveWindow).trigger('click');
     await PassphraseStore.waitUntilPassphraseChanged(this.view.acctEmail, longids, 1000, this.view.ppChangedPromiseCancellation);

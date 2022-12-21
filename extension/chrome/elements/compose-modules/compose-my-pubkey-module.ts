@@ -18,7 +18,7 @@ export class ComposeMyPubkeyModule extends ViewModule<ComposeView> {
 
   public setHandlers = () => {
     this.view.S.cached('icon_pubkey').attr('title', Lang.compose.includePubkeyIconTitle);
-    this.view.S.cached('icon_pubkey').click(this.view.setHandler((el) => this.iconPubkeyClickHandler(el), this.view.errModule.handle(`set/unset pub attachment`)));
+    this.view.S.cached('icon_pubkey').on('click', this.view.setHandler((el) => this.iconPubkeyClickHandler(el), this.view.errModule.handle(`set/unset pub attachment`)));
   };
 
   public iconPubkeyClickHandler = (target: HTMLElement) => {
