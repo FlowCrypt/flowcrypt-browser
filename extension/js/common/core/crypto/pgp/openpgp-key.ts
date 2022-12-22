@@ -7,8 +7,6 @@ import { Buf } from '../../buf.js';
 import type * as OpenPGP from 'openpgp';
 import { PgpMsgMethod, VerifyRes } from './msg-util.js';
 
-const internal = Symbol('internal openpgpjs library format key');
-
 type OpenpgpMsgOrCleartext = OpenPGP.Message<OpenPGP.Data> | OpenPGP.CleartextMessage;
 
 export class OpenPGPKey {
@@ -625,7 +623,7 @@ export class OpenPGPKey {
     if (pubkey.family !== 'openpgp') {
       throw new UnexpectedKeyTypeError(`Key type is ${pubkey.family}, expecting OpenPGP`);
     }
-    const opgpKey = (pubkey as unknown as { [internal]: OpenPGP.PrivateKey | OpenPGP.PublicKey })[internal];
+    const opgpKey = (pubkey as unknown as { internal: OpenPGP.PrivateKey | OpenPGP.PublicKey }).internal;
     if (!opgpKey) {
       throw new Error('Object has type == "openpgp" but no internal key.');
     }
