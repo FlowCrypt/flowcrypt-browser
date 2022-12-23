@@ -13,7 +13,6 @@ import { Mime, SendableMsgBody } from '../../../../js/common/core/mime.js';
 import { ContactStore } from '../../../../js/common/platform/store/contact-store.js';
 
 export class SignedMsgMailFormatter extends BaseMailFormatter {
-
   public sendableMsg = async (newMsg: NewMsgData, signingPrv: Key): Promise<SendableMsg> => {
     this.view.errModule.debug(`SignedMsgMailFormatter.sendableMsg signing with key: ${signingPrv.id}`);
     const attachments = this.isDraft ? [] : await this.view.attachmentsModule.attachment.collectAttachments();
@@ -22,7 +21,9 @@ export class SignedMsgMailFormatter extends BaseMailFormatter {
       if (this.isDraft) {
         throw new Error('signed-only PKCS#7 drafts are not supported');
       }
-      const msgBody = this.richtext ? { 'text/plain': newMsg.plaintext, 'text/html': newMsg.plainhtml } : { 'text/plain': newMsg.plaintext };
+      const msgBody = this.richtext
+        ? { 'text/plain': newMsg.plaintext, 'text/html': newMsg.plainhtml }
+        : { 'text/plain': newMsg.plaintext };
       const mimeEncodedPlainMessage = await Mime.encode(msgBody, { Subject: newMsg.subject }, attachments);
       return await this.signMimeMessage(signingPrv, mimeEncodedPlainMessage, newMsg);
     }
@@ -35,10 +36,18 @@ export class SignedMsgMailFormatter extends BaseMailFormatter {
       //  - don't require text to be sent as an attachment
       //  - don't require all other clients to support PGP/MIME
       // then please const me know. Eagerly waiting! In the meanwhile..
-      newMsg.plaintext = (window as unknown as BrowserWindow)['emailjs-mime-codec'].foldLines(newMsg.plaintext, 76, true); // eslint-disable-line 
+      newMsg.plaintext = (window as unknown as BrowserWindow)['emailjs-mime-codec'].foldLines(
+        newMsg.plaintext,
+        76,
+        true
+      );
       // Gmail will also remove trailing spaces on the end of each line in transit, causing signatures that don't match
       // Removing them here will prevent Gmail from screwing up the signature
-      newMsg.plaintext = newMsg.plaintext.split('\n').map(l => l.replace(/\s+$/g, '')).join('\n').trim();
+      newMsg.plaintext = newMsg.plaintext
+        .split('\n')
+        .map(l => l.replace(/\s+$/g, ''))
+        .join('\n')
+        .trim();
       const signedData = await MsgUtil.sign(signingPrv, newMsg.plaintext);
       const recipients = getUniqueRecipientEmails(newMsg.recipients);
       ContactStore.update(undefined, recipients, { lastUse: Date.now() }).catch(Catch.reportErr);
@@ -50,5 +59,4 @@ export class SignedMsgMailFormatter extends BaseMailFormatter {
     const signMethod = (signable: string) => MsgUtil.sign(signingPrv, signable, true);
     return await SendableMsg.createPgpMimeSigned(this.acctEmail, this.headers(newMsg), body, attachments, signMethod);
   };
-
 }

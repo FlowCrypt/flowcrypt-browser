@@ -550,7 +550,7 @@ abstract class ControllableBase {
     const resolvePromise: Promise<void> = (async () => {
       const downloadPath = path.resolve(__dirname, 'download', Util.lousyRandom());
       mkdirp.sync(downloadPath);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any, no-underscore-dangle
       await (this.target as any)._client().send('Page.setDownloadBehavior', { behavior: 'allow', downloadPath });
       if (typeof selector === 'string') {
         await this.waitAndClick(selector);
@@ -576,7 +576,7 @@ abstract class ControllableBase {
   };
 
   protected isXpath = (selector: string): boolean => {
-    return selector.match(/^\/\//) !== null;
+    return selector.match(/^\/\//) !== null; // eslint-disable-line no-null/no-null
   };
 
   protected selector = (customSelLanguageQuery: string): string => {
@@ -621,6 +621,7 @@ abstract class ControllableBase {
         for (const selector of processedSelectors) {
           const elements = await (this.isXpath(selector) ? this.target.$x(selector) : this.target.$$(selector));
           for (const element of elements) {
+            // eslint-disable-next-line no-null/no-null
             if ((await element.boundingBox()) !== null || !visible) {
               // element is visible
               return element as ElementHandle<Element>;

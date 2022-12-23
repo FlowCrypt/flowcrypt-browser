@@ -7,18 +7,26 @@ import { PageRecipe } from './abstract-page-recipe';
 import { Url } from '../../core/common';
 
 export class OauthPageRecipe extends PageRecipe {
-
   private static longTimeout = 40;
 
-  public static mock = async (t: AvaContext, oauthPage: ControllablePage, acctEmail: string,
-    action: 'close' | 'deny' | 'approve' | 'login' | 'login_with_invalid_state' | 'override_acct' | 'missing_permission'): Promise<void> => {
+  public static mock = async (
+    t: AvaContext,
+    oauthPage: ControllablePage,
+    acctEmail: string,
+    action: 'close' | 'deny' | 'approve' | 'login' | 'login_with_invalid_state' | 'override_acct' | 'missing_permission'
+  ): Promise<void> => {
     let mockOauthUrl = oauthPage.target.url();
-    const { login_hint } = Url.parse(['login_hint'], mockOauthUrl);
+    const { login_hint } = Url.parse(['login_hint'], mockOauthUrl); // eslint-disable-line @typescript-eslint/naming-convention
     if (action === 'close') {
       await oauthPage.close();
     } else if (action === 'login_with_invalid_state') {
       mockOauthUrl = Url.removeParamsFromUrl(mockOauthUrl, ['login_hint']);
-      await oauthPage.target.goto(mockOauthUrl.replace('CRYPTUP_STATE', 'INVALID_CRYPTUP_STATE') + '&login_hint=' + encodeURIComponent(acctEmail) + '&proceed=true');
+      await oauthPage.target.goto(
+        mockOauthUrl.replace('CRYPTUP_STATE', 'INVALID_CRYPTUP_STATE') +
+          '&login_hint=' +
+          encodeURIComponent(acctEmail) +
+          '&proceed=true'
+      );
     } else if (action === 'missing_permission') {
       mockOauthUrl = Url.removeParamsFromUrl(mockOauthUrl, ['scope']);
       mockOauthUrl += '&scope=missing_scope';
@@ -34,10 +42,15 @@ export class OauthPageRecipe extends PageRecipe {
     }
   };
 
-  public static google = async (t: AvaContext, oauthPage: ControllablePage, acctEmail: string,
-    action: "close" | "deny" | "approve" | "login" | "login_with_invalid_state"): Promise<void> => {
+  public static google = async (
+    t: AvaContext,
+    oauthPage: ControllablePage,
+    acctEmail: string,
+    action: 'close' | 'deny' | 'approve' | 'login' | 'login_with_invalid_state'
+  ): Promise<void> => {
     try {
-      const isMock = oauthPage.target.url().includes('localhost') || oauthPage.target.url().includes('google.mock.localhost');
+      const isMock =
+        oauthPage.target.url().includes('localhost') || oauthPage.target.url().includes('google.mock.localhost');
       if (isMock) {
         await OauthPageRecipe.mock(t, oauthPage, acctEmail, action);
         return;
@@ -61,7 +74,7 @@ export class OauthPageRecipe extends PageRecipe {
       auth0username: '#username',
       auth0password: '#password',
       auth0loginBtn: 'button[type=submit][name=action][value=default]',
-      googleApproveBtn: '#submit_approve_access',
+      googleApproveBtn: '#submit_approve_access'
     };
     try {
       const alreadyLoggedSelector = '.w6VTHd, .wLBAL';
@@ -70,21 +83,28 @@ export class OauthPageRecipe extends PageRecipe {
         `#Email, ${selectors.googleApproveBtn}, ${selectors.googleEmailInput}, ${alreadyLoggedSelector}, #profileIdentifier, ${selectors.auth0username}`,
         { timeout: 45 }
       );
-      if (await oauthPage.target.$(selectors.googleEmailInput) !== null) { // 2017-style login
+      // eslint-disable-next-line no-null/no-null
+      if ((await oauthPage.target.$(selectors.googleEmailInput)) !== null) {
+        // 2017-style login
         await oauthPage.waitAll(selectors.googleEmailInput, { timeout: OauthPageRecipe.longTimeout });
         await oauthPage.waitAndType(selectors.googleEmailInput, acctEmail, { delay: 2 });
         await oauthPage.waitAll(selectors.googleEmailConfirmBtn);
         await Util.sleep(2);
         await oauthPage.waitForNavigationIfAny(() => oauthPage.waitAndClick(selectors.googleEmailConfirmBtn));
-      } else if (await oauthPage.target.$(`.wLBAL[data-email="${acctEmail}"]`) !== null) { // already logged in - just choose an account
+        // eslint-disable-next-line no-null/no-null
+      } else if ((await oauthPage.target.$(`.wLBAL[data-email="${acctEmail}"]`)) !== null) {
+        // already logged in - just choose an account
         await oauthPage.waitAndClick(`.wLBAL[data-email="${acctEmail}"]`, { delay: 1 });
-      } else if (await oauthPage.target.$(alreadyLoggedSelector) !== null) { // select from accounts where already logged in
+        // eslint-disable-next-line no-null/no-null
+      } else if ((await oauthPage.target.$(alreadyLoggedSelector)) !== null) {
+        // select from accounts where already logged in
         await oauthPage.waitAndClick(alreadyLoggedChooseOtherAccountSelector, { delay: 1 }); // choose other account, also try .TnvOCe .k6Zj8d .XraQ3b
         await Util.sleep(2);
         return await OauthPageRecipe.google(t, oauthPage, acctEmail, action); // start from beginning after clicking "other email acct"
-      } else if (await oauthPage.target.$('.wLBAL[data-email="dummy"]') !== null) {
+        // eslint-disable-next-line no-null/no-null
+      } else if ((await oauthPage.target.$('.wLBAL[data-email="dummy"]')) !== null) {
         // let any e-mail pass
-        const href = await oauthPage.attr('.wLBAL', 'href') + acctEmail;
+        const href = (await oauthPage.attr('.wLBAL', 'href')) + acctEmail;
         await oauthPage.goto(href);
       }
       await Util.sleep(2);
@@ -117,12 +137,14 @@ export class OauthPageRecipe extends PageRecipe {
       }
     } catch (e) {
       const eStr = String(e);
-      if (!eStr.includes('Execution context was destroyed') && !eStr.includes('Cannot find context with specified id')) {
+      if (
+        !eStr.includes('Execution context was destroyed') &&
+        !eStr.includes('Cannot find context with specified id')
+      ) {
         throw e; // not a known retriable error
       }
       // t.log(`Attempting to retry google auth:${action} on the same window for ${email} because: ${eStr}`);
       return await OauthPageRecipe.google(t, oauthPage, acctEmail, action); // retry, it should pick up where it left off
     }
   };
-
 }

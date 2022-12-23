@@ -11,20 +11,34 @@ import { Xss } from '../platform/xss.js';
 type NamedSels = Dict<JQuery<HTMLElement>>;
 type ProvidedEventHandler = (e: HTMLElement, event: JQuery.Event<HTMLElement, null>) => void | Promise<void>;
 
-export type SelCache = { cached: (name: string) => JQuery<HTMLElement>; now: (name: string) => JQuery<HTMLElement>; sel: (name: string) => string; };
+export type SelCache = {
+  cached: (name: string) => JQuery<HTMLElement>;
+  now: (name: string) => JQuery<HTMLElement>;
+  sel: (name: string) => string;
+};
 export type PreventableEventName = 'double' | 'parallel' | 'spree' | 'slowspree' | 'veryslowspree';
-export type BrowserEventErrHandler = { auth?: () => Promise<void>, authPopup?: () => Promise<void>, network?: () => Promise<void>, other?: (e: unknown) => Promise<void> };
+export type BrowserEventErrHandler = {
+  auth?: () => Promise<void>;
+  authPopup?: () => Promise<void>;
+  network?: () => Promise<void>;
+  other?: (e: unknown) => Promise<void>;
+};
 
 export class Ui {
-
   public static EVENT_DOUBLE_MS = 1000;
   public static EVENT_SPREE_MS = 50;
   public static EVENT_SLOW_SPREE_MS = 200;
   public static EVENT_VERY_SLOW_SPREE_MS = 500;
 
   public static event = {
-    clicked: (selector: string | JQuery<HTMLElement>): Promise<HTMLElement> => new Promise(resolve => $(selector as string).one('click', function () { resolve(this); })),
-    stop: () => (e: JQuery.Event) => { // returns a function
+    clicked: (selector: string | JQuery<HTMLElement>): Promise<HTMLElement> =>
+      new Promise(resolve =>
+        $(selector as string).one('click', function () {
+          resolve(this);
+        })
+      ),
+    stop: () => (e: JQuery.Event) => {
+      // returns a function
       e.preventDefault();
       e.stopPropagation();
       return false;
@@ -44,8 +58,9 @@ export class Ui {
     handle: (cb: ProvidedEventHandler, errHandlers?: BrowserEventErrHandler, originalThis?: unknown) => {
       return function uiEventHandle(this: HTMLElement, event: JQuery.Event<HTMLElement, null>) {
         try {
-          const r = cb.bind(originalThis)(this, event) as void | Promise<void>; // eslint-disable-line 
-          if (typeof r === 'object' && typeof r.catch === 'function') { // eslint-disable-line @typescript-eslint/unbound-method, , , , , 
+          const r = cb.bind(originalThis)(this, event) as void | Promise<void>;
+          if (typeof r === 'object' && typeof r.catch === 'function') {
+            // eslint-disable-line @typescript-eslint/unbound-method
             r.catch(e => Ui.event._dispatchErr(e, errHandlers));
           }
         } catch (e) {
@@ -78,8 +93,8 @@ export class Ui {
       };
       const cbWithErrsHandled = (el: HTMLElement) => {
         try {
-          const r = cb.bind(originalThis)(el, event, cbResetTimer) as void | Promise<void>; // eslint-disable-line 
-          if (typeof r === 'object' && typeof r.catch === 'function') { // eslint-disable-line @typescript-eslint/unbound-method
+          const r = cb.bind(originalThis)(el, event, cbResetTimer) as void | Promise<void>; // eslint-disable-line
+          if (typeof r === 'object' && typeof r.catch === 'function') {
             r.catch(e => Ui.event._dispatchErr(e, errHandler));
           }
         } catch (e) {
@@ -95,7 +110,10 @@ export class Ui {
           eventTimer = Catch.setHandledTimeout(() => cbWithErrsHandled(this as HTMLElement), Ui.EVENT_SLOW_SPREE_MS);
         } else if (evName === 'veryslowspree') {
           clearTimeout(eventTimer);
-          eventTimer = Catch.setHandledTimeout(() => cbWithErrsHandled(this as HTMLElement), Ui.EVENT_VERY_SLOW_SPREE_MS);
+          eventTimer = Catch.setHandledTimeout(
+            () => cbWithErrsHandled(this as HTMLElement),
+            Ui.EVENT_VERY_SLOW_SPREE_MS
+          );
         } else {
           if (eventFiredOn) {
             if (evName === 'parallel') {
@@ -116,23 +134,27 @@ export class Ui {
   };
 
   public static time = {
-    wait: (untilThisFunctionEvalsTrue: () => boolean | undefined): Promise<void> => new Promise((success, error) => {
-      const interval = Catch.setHandledInterval(() => {
-        const result = untilThisFunctionEvalsTrue();
-        if (result === true) {
-          clearInterval(interval);
-          if (success) {
-            success();
+    wait: (untilThisFunctionEvalsTrue: () => boolean | undefined): Promise<void> =>
+      new Promise((success, error) => {
+        const interval = Catch.setHandledInterval(() => {
+          const result = untilThisFunctionEvalsTrue();
+          if (result === true) {
+            clearInterval(interval);
+            if (success) {
+              success();
+            }
+          } else if (result === false) {
+            clearInterval(interval);
+            if (error) {
+              error();
+            }
           }
-        } else if (result === false) {
-          clearInterval(interval);
-          if (error) {
-            error();
-          }
-        }
-      }, 50);
-    }),
-    sleep: (ms: number, setCustomTimeout: (code: () => void, t: number) => void = Catch.setHandledTimeout): Promise<void> => new Promise(resolve => setCustomTimeout(resolve, ms)),
+        }, 50);
+      }),
+    sleep: (
+      ms: number,
+      setCustomTimeout: (code: () => void, t: number) => void = Catch.setHandledTimeout
+    ): Promise<void> => new Promise(resolve => setCustomTimeout(resolve, ms))
   };
 
   public static modal = {
@@ -143,8 +165,8 @@ export class Ui {
         allowOutsideClick: false,
         customClass: {
           popup: 'ui-modal-info',
-          confirmButton: 'ui-modal-info-confirm',
-        },
+          confirmButton: 'ui-modal-info-confirm'
+        }
       });
       Ui.activateModalPageLinkTags(); // in case the page itself has data-swal-page links
       await userResponsePromise;
@@ -156,8 +178,8 @@ export class Ui {
         allowOutsideClick: false,
         customClass: {
           popup: 'ui-modal-warning',
-          confirmButton: 'ui-modal-warning-confirm',
-        },
+          confirmButton: 'ui-modal-warning-confirm'
+        }
       });
       Ui.activateModalPageLinkTags(); // in case the page itself has data-swal-page links
       await userResponsePromise;
@@ -170,8 +192,8 @@ export class Ui {
         allowOutsideClick: false,
         customClass: {
           popup: 'ui-modal-error',
-          confirmButton: 'ui-modal-error-confirm',
-        },
+          confirmButton: 'ui-modal-error-confirm'
+        }
       });
       Ui.activateModalPageLinkTags(); // in case the page itself has data-swal-page links
       await userResponsePromise;
@@ -190,8 +212,8 @@ export class Ui {
         customClass: {
           popup: 'ui-modal-confirm',
           confirmButton: 'ui-modal-confirm-confirm',
-          cancelButton: 'ui-modal-confirm-cancel',
-        },
+          cancelButton: 'ui-modal-confirm-cancel'
+        }
       });
       Ui.activateModalPageLinkTags(); // in case the page itself has data-swal-page links
       const { dismiss } = await userResponsePromise;
@@ -207,7 +229,7 @@ export class Ui {
           popup: 'ui-modal-confirm-checkbox',
           confirmButton: 'ui-modal-confirm-checkbox-confirm',
           cancelButton: 'ui-modal-confirm-checkbox-cancel',
-          input: 'ui-modal-confirm-checkbox-input',
+          input: 'ui-modal-confirm-checkbox-input'
         },
         didOpen: () => {
           const input = Swal.getInput()!;
@@ -258,7 +280,9 @@ export class Ui {
           window.history.pushState('', '', urlWithoutPageParam);
         },
         keydownListenerCapture: true,
-        html: `<iframe src="${Xss.escape(iframeUrl)}" width="${iframeWidth}" height="${iframeHeight}" style="border: 0"></iframe>`,
+        html: `<iframe src="${Xss.escape(
+          iframeUrl
+        )}" width="${iframeWidth}" height="${iframeHeight}" style="border: 0"></iframe>`,
         width: 'auto',
         backdrop: 'rgba(0, 0, 0, 0.6)',
         showCloseButton: true,
@@ -288,7 +312,9 @@ export class Ui {
           $(Swal.getPopup()!).attr('data-test', 'attachment-dialog');
           $(Swal.getCloseButton()!).attr('data-test', 'dialog-close');
         },
-        html: `<iframe src="${Xss.escape(iframeUrl)}" style="border: 0" sandbox="allow-scripts allow-same-origin allow-downloads"></iframe>`,
+        html: `<iframe src="${Xss.escape(
+          iframeUrl
+        )}" style="border: 0" sandbox="allow-scripts allow-same-origin allow-downloads"></iframe>`,
         showConfirmButton: false,
         showCloseButton: true,
         grow: 'fullscreen',
@@ -296,45 +322,57 @@ export class Ui {
           container: 'ui-modal-attachment'
         }
       });
-    },
+    }
   };
 
-
-  public static testCompatibilityLink = '<a href="/chrome/settings/modules/compatibility.htm" target="_blank">Test your OpenPGP key compatibility</a>';
+  public static testCompatibilityLink =
+    '<a href="/chrome/settings/modules/compatibility.htm" target="_blank">Test your OpenPGP key compatibility</a>';
 
   public static activateModalPageLinkTags = () => {
-    $('[data-swal-page]').on('click', Ui.event.handle(async (target) => {
-      const jsAllowedSwalPage = $(target).data('swal-page-allow-js') as boolean; // use this flag is the swal-page contains javascript
-      const htmlUrl = $(target).data('swal-page') as string;
-      if (jsAllowedSwalPage) {
-        await Ui.modal.iframe(htmlUrl);
-      } else {
-        await Ui.modal.page(htmlUrl);
-      }
-    }));
+    $('[data-swal-page]').on(
+      'click',
+      Ui.event.handle(async target => {
+        const jsAllowedSwalPage = $(target).data('swal-page-allow-js') as boolean; // use this flag is the swal-page contains javascript
+        const htmlUrl = $(target).data('swal-page') as string;
+        if (jsAllowedSwalPage) {
+          await Ui.modal.iframe(htmlUrl);
+        } else {
+          await Ui.modal.page(htmlUrl);
+        }
+      })
+    );
   };
 
   public static retryLink = (caption = 'retry') => {
-    return `<a href="${Xss.escape(window.location.href)}" data-test="action-retry-by-reloading">${Xss.escape(caption)}</a>`;
+    return `<a href="${Xss.escape(window.location.href)}" data-test="action-retry-by-reloading">${Xss.escape(
+      caption
+    )}</a>`;
   };
 
   public static delay = async (ms: number): Promise<void> => {
     return await new Promise(resolve => Catch.setHandledTimeout(resolve, ms));
   };
 
-  public static spinner = (color: string, placeholderCls: "small_spinner" | "large_spinner" = 'small_spinner') => {
+  public static spinner = (color: string, placeholderCls: 'small_spinner' | 'large_spinner' = 'small_spinner') => {
     const path = `/img/svgs/spinner-${color}-small.svg`;
-    const url = typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.getURL ? chrome.runtime.getURL(path) : path;
+    const url =
+      typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.getURL ? chrome.runtime.getURL(path) : path;
     return `<i class="${placeholderCls}" data-test="spinner"><img src="${url}" /></i>`;
   };
 
-  public static renderOverlayPromptAwaitUserChoice = async (btns: Dict<{ title?: string, color?: string }>, prompt: string, details: string | undefined,
-    contactSentence: string): Promise<string> => {
+  public static renderOverlayPromptAwaitUserChoice = async (
+    btns: Dict<{ title?: string; color?: string }>,
+    prompt: string,
+    details: string | undefined,
+    contactSentence: string
+  ): Promise<string> => {
     return await new Promise(resolve => {
       const getEscapedColor = (id: string) => Xss.escape(btns[id].color || 'green');
       const getEscapedTitle = (id: string) => Xss.escape(btns[id].title || id.replace(/_/g, ' '));
       const formatBtn = (id: string) => {
-        return `<button class="button ${getEscapedColor(id)} overlay_action_${Xss.escape(id)}" data-test="action-overlay-${Xss.escape(id)}">${getEscapedTitle(id)}</button>`;
+        return `<button class="button ${getEscapedColor(id)} overlay_action_${Xss.escape(
+          id
+        )}" data-test="action-overlay-${Xss.escape(id)}">${getEscapedTitle(id)}</button>`;
       };
       const formattedBtns = Object.keys(btns).map(formatBtn).join('&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;');
       if (details) {
@@ -353,20 +391,27 @@ export class Ui {
         <div class="line">${contactSentence}</div>
       `);
       const overlay = $(Swal.getHtmlContainer()!);
-      overlay.find('.action-show-overlay-details').one('click', Ui.event.handle(target => {
-        $(target).hide().siblings('pre').show();
-      }));
+      overlay.find('.action-show-overlay-details').one(
+        'click',
+        Ui.event.handle(target => {
+          $(target).hide().siblings('pre').show();
+        })
+      );
       for (const id of Object.keys(btns)) {
-        overlay.find(`.overlay_action_${id}`).one('click', Ui.event.handle(() => {
-          Swal.close();
-          resolve(id);
-        }));
+        overlay.find(`.overlay_action_${id}`).one(
+          'click',
+          Ui.event.handle(() => {
+            Swal.close();
+            resolve(id);
+          })
+        );
       }
     });
   };
 
   public static escape = (callback: () => void) => {
-    return (e: JQuery.Event<HTMLElement, null>) => { // returns a function
+    return (e: JQuery.Event<HTMLElement, null>) => {
+      // returns a function
       if (!e.metaKey && !e.ctrlKey && e.key === 'Escape') {
         callback();
       }
@@ -374,7 +419,8 @@ export class Ui {
   };
 
   public static tab = (callback: (e: JQuery.Event<HTMLElement>) => void) => {
-    return (e: JQuery.Event<HTMLElement>) => { // returns a function
+    return (e: JQuery.Event<HTMLElement>) => {
+      // returns a function
       if (!e.metaKey && !e.ctrlKey && !e.shiftKey && e.key === 'Tab') {
         callback(e);
       }
@@ -382,7 +428,8 @@ export class Ui {
   };
 
   public static shiftTab = (callback: (e: JQuery.Event<HTMLElement>) => void) => {
-    return (e: JQuery.Event<HTMLElement>) => { // returns a function
+    return (e: JQuery.Event<HTMLElement>) => {
+      // returns a function
       if (!e.metaKey && !e.ctrlKey && e.shiftKey && e.key === 'Tab') {
         callback(e);
       }
@@ -390,7 +437,8 @@ export class Ui {
   };
 
   public static enter = (callback: () => void) => {
-    return (e: JQuery.Event<HTMLElement, null>) => { // returns a function
+    return (e: JQuery.Event<HTMLElement, null>) => {
+      // returns a function
       if (!e.metaKey && !e.ctrlKey && e.key === 'Enter') {
         callback();
       }
@@ -398,7 +446,8 @@ export class Ui {
   };
 
   public static ctrlEnter = (callback: () => void) => {
-    return (e: JQuery.Event<HTMLElement, null>) => { // returns a function
+    return (e: JQuery.Event<HTMLElement, null>) => {
+      // returns a function
       if (
         (e.metaKey || e.ctrlKey) &&
         (e.key === 'Enter' || e.keyCode === 10) // https://bugs.chromium.org/p/chromium/issues/detail?id=79407
@@ -443,7 +492,8 @@ export class Ui {
     const el = $(sel as string).first()[0]; // as string due to JQuery TS quirk. Do not convert to String() as this may actually be JQuery<HTMLElement>
     if (el) {
       el.scrollIntoView();
-      for (const delay of repeat) { // useful if mobile keyboard is about to show up
+      for (const delay of repeat) {
+        // useful if mobile keyboard is about to show up
         Catch.setHandledTimeout(() => el.scrollIntoView(), delay);
       }
     }
@@ -453,7 +503,13 @@ export class Ui {
     return $(`<${name}/>`, attrs)[0].outerHTML; // xss-tested: jquery escapes attributes
   }
 
-  public static toast = (text: string, isHTML = false, seconds = 2, position: SweetAlertPosition = 'bottom', icon?: SweetAlertIcon) => {
+  public static toast = (
+    text: string,
+    isHTML = false,
+    seconds = 2,
+    position: SweetAlertPosition = 'bottom',
+    icon?: SweetAlertIcon
+  ) => {
     text = isHTML ? Xss.htmlSanitize(text) : Xss.escape(text).replace(/\n/g, '<br>');
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
     Ui.swal().fire({
@@ -469,15 +525,16 @@ export class Ui {
         popup: 'ui-toast',
         title: 'ui-toast-title'
       },
-      didOpen: (toast) => {
+      didOpen: toast => {
         toast.addEventListener('mouseenter', Swal.stopTimer);
         toast.addEventListener('mouseleave', Swal.resumeTimer);
       }
     });
   };
 
-  private static swal = () => Swal.mixin({
-    showClass: { popup: 'swal2-noanimation', backdrop: 'swal2-noanimation' },
-    hideClass: { popup: '', backdrop: '' },
-  });
+  private static swal = () =>
+    Swal.mixin({
+      showClass: { popup: 'swal2-noanimation', backdrop: 'swal2-noanimation' },
+      hideClass: { popup: '', backdrop: '' }
+    });
 }

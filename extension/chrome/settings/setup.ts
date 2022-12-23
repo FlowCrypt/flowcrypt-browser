@@ -26,7 +26,7 @@ import { initPassphraseToggle } from '../../js/common/ui/passphrase-ui.js';
 import { PubLookup } from '../../js/common/api/pub-lookup.js';
 import { AcctStoreDict, AcctStore } from '../../js/common/platform/store/acct-store.js';
 import { KeyStore } from '../../js/common/platform/store/key-store.js';
-import { KeyStoreUtil } from "../../js/common/core/crypto/key-store-util.js";
+import { KeyStoreUtil } from '../../js/common/core/crypto/key-store-util.js';
 import { KeyManager } from '../../js/common/api/key-server/key-manager.js';
 import { SetupWithEmailKeyManagerModule } from './setup/setup-key-manager-autogen.js';
 import { shouldPassPhraseBeHidden } from '../../js/common/ui/passphrase-ui.js';
@@ -35,6 +35,7 @@ import { BackupUi } from '../../js/common/ui/backup-ui/backup-ui.js';
 import { InMemoryStoreKeys } from '../../js/common/core/const.js';
 import { InMemoryStore } from '../../js/common/platform/store/in-memory-store.js';
 
+/* eslint-disable @typescript-eslint/naming-convention */
 export interface PassphraseOptions {
   passphrase: string;
   passphrase_save: boolean;
@@ -45,9 +46,9 @@ export interface SetupOptions extends PassphraseOptions {
   submit_all: boolean;
   recovered?: boolean;
 }
+/* eslint-enable @typescript-eslint/naming-convention */
 
 export class SetupView extends View {
-
   public readonly acctEmail: string;
   public readonly parentTabId: string | undefined;
   public readonly action: 'add_key' | 'update_from_ekm' | undefined;
@@ -74,11 +75,15 @@ export class SetupView extends View {
   public mathingPassphrases: string[] = [];
   public submitKeyForAddrs: string[];
 
-  constructor() {
+  public constructor() {
     super();
     const uncheckedUrlParams = Url.parse(['acctEmail', 'action', 'idToken', 'parentTabId']);
     this.acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
-    this.action = Assert.urlParamRequire.oneof(uncheckedUrlParams, 'action', ['add_key', 'update_from_ekm', undefined]) as 'add_key' | 'update_from_ekm' | undefined;
+    this.action = Assert.urlParamRequire.oneof(uncheckedUrlParams, 'action', [
+      'add_key',
+      'update_from_ekm',
+      undefined
+    ]) as 'add_key' | 'update_from_ekm' | undefined;
     if (this.action === 'add_key') {
       this.parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
     } else {
@@ -92,8 +97,14 @@ export class SetupView extends View {
     this.submitKeyForAddrs = [];
     this.keyImportUi.initPrvImportSrcForm(this.acctEmail, this.parentTabId, this.submitKeyForAddrs); // for step_2b_manual_enter, if user chooses so
     this.keyImportUi.onBadPassphrase = () => $('#step_2b_manual_enter .input_passphrase').val('').focus();
-    this.keyImportUi.renderPassPhraseStrengthValidationInput($('#step_2a_manual_create .input_password'), $('#step_2a_manual_create .action_proceed_private'));
-    this.keyImportUi.renderPassPhraseStrengthValidationInput($('#step_2_ekm_choose_pass_phrase .input_password'), $('#step_2_ekm_choose_pass_phrase .action_proceed_private'));
+    this.keyImportUi.renderPassPhraseStrengthValidationInput(
+      $('#step_2a_manual_create .input_password'),
+      $('#step_2a_manual_create .action_proceed_private')
+    );
+    this.keyImportUi.renderPassPhraseStrengthValidationInput(
+      $('#step_2_ekm_choose_pass_phrase .input_password'),
+      $('#step_2_ekm_choose_pass_phrase .action_proceed_private')
+    );
     this.gmail = new Gmail(this.acctEmail);
     // modules
     this.setupRecoverKey = new SetupRecoverKeyModule(this);
@@ -109,9 +120,12 @@ export class SetupView extends View {
   public render = async () => {
     await initPassphraseToggle(['step_2b_manual_enter_passphrase'], 'hide');
     await initPassphraseToggle([
-      'step_2a_manual_create_input_password', 'step_2a_manual_create_input_password2',
-      'step_2_ekm_input_password', 'step_2_ekm_input_password2',
-      'recovery_password']);
+      'step_2a_manual_create_input_password',
+      'step_2a_manual_create_input_password2',
+      'step_2_ekm_input_password',
+      'step_2_ekm_input_password2',
+      'recovery_password'
+    ]);
     this.storage = await AcctStore.get(this.acctEmail, ['setup_done', 'email_provider', 'fesUrl']);
     this.storage.email_provider = this.storage.email_provider || 'gmail';
     this.clientConfiguration = await ClientConfiguration.newInstance(this.acctEmail);
@@ -124,8 +138,13 @@ export class SetupView extends View {
       this.keyManager = new KeyManager(this.clientConfiguration.getKeyManagerUrlForPrivateKeys()!);
     }
     if (!this.clientConfiguration.canCreateKeys()) {
-      const forbidden = `${Lang.setup.creatingKeysNotAllowedPleaseImport} <a href="${Xss.escape(window.location.href)}">Back</a>`;
-      Xss.sanitizeRender('#step_2a_manual_create, #step_2_easy_generating', `<div class="aligncenter"><div class="line">${forbidden}</div></div>`);
+      const forbidden = `${Lang.setup.creatingKeysNotAllowedPleaseImport} <a href="${Xss.escape(
+        window.location.href
+      )}">Back</a>`;
+      Xss.sanitizeRender(
+        '#step_2a_manual_create, #step_2_easy_generating',
+        `<div class="aligncenter"><div class="line">${forbidden}</div></div>`
+      );
       $('#button-go-back').remove(); // back button would allow users to choose other options (eg create - not allowed)
     }
     if (this.clientConfiguration.mustSubmitToAttester() || !this.clientConfiguration.canSubmitPubToAttester()) {
@@ -151,33 +170,93 @@ export class SetupView extends View {
   };
 
   public setHandlers = () => {
-    BrowserMsg.addListener('close_page', async () => { Swal.close(); });
-    BrowserMsg.addListener('notification_show', async ({ notification }: Bm.NotificationShow) => { await Ui.modal.info(notification); });
+    BrowserMsg.addListener('close_page', async () => {
+      Swal.close();
+    });
+    BrowserMsg.addListener('notification_show', async ({ notification }: Bm.NotificationShow) => {
+      await Ui.modal.info(notification);
+    });
     BrowserMsg.listen(this.tabId);
     $('.action_send').attr('href', Google.webmailUrl(this.acctEmail));
-    $('.action_show_help').on('click', this.setHandler(async () => await Settings.renderSubPage(this.acctEmail, this.tabId!, '/chrome/settings/modules/help.htm')));
-    $('#button-go-back').off().on('click', this.setHandler(() => this.actionBackHandler()));
-    $('#step_2_ekm_choose_pass_phrase .action_proceed_private').on('click', this.setHandlerPrevent('double', () => this.setupWithEmailKeyManager.continueEkmSetupHandler()));
-    $('#step_2_recovery .action_recover_account').on('click', this.setHandlerPrevent('double', () => this.setupRecoverKey.actionRecoverAccountHandler()));
-    $('#step_4_more_to_recover .action_recover_remaining').on('click', this.setHandler(() => this.setupRecoverKey.actionRecoverRemainingKeysHandler()));
-    $('#lost_pass_phrase').on('click', this.setHandler(() => this.showLostPassPhraseModal()));
-    $('.action_account_settings').on('click', this.setHandler(() => { window.location.href = Url.create('index.htm', { acctEmail: this.acctEmail }); }));
-    $('.input_submit_key').on('click', this.setHandler(el => this.actionSubmitPublicKeyToggleHandler(el)));
-    $('#step_0_found_key .action_manual_create_key, #step_1_easy_or_manual .action_manual_create_key').on('click',
+    $('.action_show_help').on(
+      'click',
+      this.setHandler(
+        async () => await Settings.renderSubPage(this.acctEmail, this.tabId!, '/chrome/settings/modules/help.htm')
+      )
+    );
+    $('#button-go-back')
+      .off()
+      .on(
+        'click',
+        this.setHandler(() => this.actionBackHandler())
+      );
+    $('#step_2_ekm_choose_pass_phrase .action_proceed_private').on(
+      'click',
+      this.setHandlerPrevent('double', () => this.setupWithEmailKeyManager.continueEkmSetupHandler())
+    );
+    $('#step_2_recovery .action_recover_account').on(
+      'click',
+      this.setHandlerPrevent('double', () => this.setupRecoverKey.actionRecoverAccountHandler())
+    );
+    $('#step_4_more_to_recover .action_recover_remaining').on(
+      'click',
+      this.setHandler(() => this.setupRecoverKey.actionRecoverRemainingKeysHandler())
+    );
+    $('#lost_pass_phrase').on(
+      'click',
+      this.setHandler(() => this.showLostPassPhraseModal())
+    );
+    $('.action_account_settings').on(
+      'click',
+      this.setHandler(() => {
+        window.location.href = Url.create('index.htm', { acctEmail: this.acctEmail });
+      })
+    );
+    $('.input_submit_key').on(
+      'click',
+      this.setHandler(el => this.actionSubmitPublicKeyToggleHandler(el))
+    );
+    $('#step_0_found_key .action_manual_create_key, #step_1_easy_or_manual .action_manual_create_key').on(
+      'click',
       this.setHandler(() => this.setupRender.displayBlock('step_2a_manual_create'))
     );
-    $('#step_0_found_key .action_manual_enter_key, #step_1_easy_or_manual .action_manual_enter_key').on('click',
+    $('#step_0_found_key .action_manual_enter_key, #step_1_easy_or_manual .action_manual_enter_key').on(
+      'click',
       this.setHandler(() => this.setupRender.displayBlock('step_2b_manual_enter'))
     );
-    $('#step_2b_manual_enter .action_add_private_key').on('click', this.setHandler(el => this.setupImportKey.actionImportPrivateKeyHandle(el)));
-    $('#step_2a_manual_create .action_proceed_private').on('click', this.setHandlerPrevent('double', () => this.setupCreateKey.actionCreateKeyHandler()));
-    $('#step_2a_manual_create .action_show_advanced_create_settings').on('click', this.setHandler(el => this.setupCreateKey.actionShowAdvancedSettingsHandle(el)));
-    $('#step_4_close .action_close').on('click', this.setHandler(() => this.actionCloseHandler())); // only rendered if action=add_key which means parentTabId was used
-    $('#step_2a_manual_create .input_password').on('keydown', this.setEnterHandlerThatClicks('#step_2a_manual_create .action_proceed_private'));
-    $('#step_2a_manual_create.input_password2').on('keydown', this.setEnterHandlerThatClicks('#step_2a_manual_create .action_proceed_private'));
-    $('#step_2_ekm_choose_pass_phrase .input_password').on('keydown', this.setEnterHandlerThatClicks('#step_2_ekm_choose_pass_phrase .action_proceed_private'));
-    $('#step_2_ekm_choose_pass_phrase .input_password2').on('keydown', this.setEnterHandlerThatClicks('#step_2_ekm_choose_pass_phrase .action_proceed_private'));
-    $("#recovery_password").on('keydown', this.setEnterHandlerThatClicks('#step_2_recovery .action_recover_account'));
+    $('#step_2b_manual_enter .action_add_private_key').on(
+      'click',
+      this.setHandler(el => this.setupImportKey.actionImportPrivateKeyHandle(el))
+    );
+    $('#step_2a_manual_create .action_proceed_private').on(
+      'click',
+      this.setHandlerPrevent('double', () => this.setupCreateKey.actionCreateKeyHandler())
+    );
+    $('#step_2a_manual_create .action_show_advanced_create_settings').on(
+      'click',
+      this.setHandler(el => this.setupCreateKey.actionShowAdvancedSettingsHandle(el))
+    );
+    $('#step_4_close .action_close').on(
+      'click',
+      this.setHandler(() => this.actionCloseHandler())
+    ); // only rendered if action=add_key which means parentTabId was used
+    $('#step_2a_manual_create .input_password').on(
+      'keydown',
+      this.setEnterHandlerThatClicks('#step_2a_manual_create .action_proceed_private')
+    );
+    $('#step_2a_manual_create.input_password2').on(
+      'keydown',
+      this.setEnterHandlerThatClicks('#step_2a_manual_create .action_proceed_private')
+    );
+    $('#step_2_ekm_choose_pass_phrase .input_password').on(
+      'keydown',
+      this.setEnterHandlerThatClicks('#step_2_ekm_choose_pass_phrase .action_proceed_private')
+    );
+    $('#step_2_ekm_choose_pass_phrase .input_password2').on(
+      'keydown',
+      this.setEnterHandlerThatClicks('#step_2_ekm_choose_pass_phrase .action_proceed_private')
+    );
+    $('#recovery_password').on('keydown', this.setEnterHandlerThatClicks('#step_2_recovery .action_recover_account'));
   };
 
   public actionBackHandler = () => {
@@ -186,7 +265,9 @@ export class SetupView extends View {
   };
 
   public showLostPassPhraseModal = () => {
-    Ui.modal.info(`
+    Ui.modal
+      .info(
+        `
         <div style="text-align: initial">
           <p><strong>Do you have at least one working device where you can
           still read your encrypted email?</strong></p>
@@ -202,9 +283,18 @@ export class SetupView extends View {
           and create a new key instead</a>.
           Your previous encrypted emails will remain unreadable.
         </div>
-      `, true).catch(Catch.reportErr);
-    $('.action_skip_recovery').on('click', this.setHandler(() => this.setupRecoverKey.actionSkipRecoveryHandler()));
-    $('.reload_page').on('click', this.setHandler(() => window.location.reload()));
+      `,
+        true
+      )
+      .catch(Catch.reportErr);
+    $('.action_skip_recovery').on(
+      'click',
+      this.setHandler(() => this.setupRecoverKey.actionSkipRecoveryHandler())
+    );
+    $('.reload_page').on(
+      'click',
+      this.setHandler(() => window.location.reload())
+    );
   };
 
   public actionSubmitPublicKeyToggleHandler = (target: HTMLElement) => {
@@ -222,15 +312,21 @@ export class SetupView extends View {
 
   public actionCloseHandler = () => {
     if (this.parentTabId) {
-      BrowserMsg.send.redirect(this.parentTabId, { location: Url.create('index.htm', { acctEmail: this.acctEmail, advanced: true }) });
+      BrowserMsg.send.redirect(this.parentTabId, {
+        location: Url.create('index.htm', { acctEmail: this.acctEmail, advanced: true })
+      });
     } else {
       Catch.report('setup.ts missing parentTabId');
     }
   };
 
-  public submitPublicKeys = async (
-    { submit_main, submit_all }: { submit_main: boolean, submit_all: boolean }
-  ): Promise<void> => {
+  public submitPublicKeys = async ({
+    submit_main,
+    submit_all
+  }: {
+    submit_main: boolean;
+    submit_all: boolean;
+  }): Promise<void> => {
     const mostUsefulPrv = KeyStoreUtil.chooseMostUseful(
       await KeyStoreUtil.parse(await KeyStore.getRequired(this.acctEmail)),
       'ONLY-FULLY-USABLE'
@@ -240,7 +336,9 @@ export class SetupView extends View {
     } catch (e) {
       return await Settings.promptToRetry(
         e,
-        e instanceof CompanyLdapKeyMismatchError ? Lang.setup.failedToImportUnknownKey : Lang.setup.failedToSubmitToAttester,
+        e instanceof CompanyLdapKeyMismatchError
+          ? Lang.setup.failedToImportUnknownKey
+          : Lang.setup.failedToSubmitToAttester,
         () => this.submitPublicKeys({ submit_main, submit_all }),
         Lang.general.contactIfNeedAssistance(this.isFesUsed())
       );
@@ -253,7 +351,9 @@ export class SetupView extends View {
 
   public shouldSubmitPubkey = (checkboxSelector: string) => {
     if (this.clientConfiguration.mustSubmitToAttester() && !this.clientConfiguration.canSubmitPubToAttester()) {
-      throw new Error('Organisation rules are misconfigured: ENFORCE_ATTESTER_SUBMIT not compatible with NO_ATTESTER_SUBMIT');
+      throw new Error(
+        'Organisation rules are misconfigured: ENFORCE_ATTESTER_SUBMIT not compatible with NO_ATTESTER_SUBMIT'
+      );
     }
     if (!this.clientConfiguration.canSubmitPubToAttester()) {
       return false;
@@ -284,7 +384,10 @@ export class SetupView extends View {
     }
     let notePp = String(password1.val());
     if (await shouldPassPhraseBeHidden()) {
-      notePp = notePp.substring(0, 2) + notePp.substring(2, notePp.length - 2).replace(/[^ ]/g, '*') + notePp.substring(notePp.length - 2, notePp.length);
+      notePp =
+        notePp.substring(0, 2) +
+        notePp.substring(2, notePp.length - 2).replace(/[^ ]/g, '*') +
+        notePp.substring(notePp.length - 2, notePp.length);
     }
     if (!this.clientConfiguration.usesKeyManager()) {
       const paperPassPhraseStickyNote = `
@@ -304,13 +407,14 @@ export class SetupView extends View {
    */
   private submitPublicKeyIfNeeded = async (
     armoredPubkey: string | undefined,
-    options: { submit_main: boolean, submit_all: boolean }
+    options: { submit_main: boolean; submit_all: boolean }
   ) => {
     if (!options.submit_main) {
       return;
     }
     if (!this.clientConfiguration.canSubmitPubToAttester()) {
-      if (!this.clientConfiguration.usesKeyManager) { // users who use EKM get their setup automated - no need to inform them of this
+      if (!this.clientConfiguration.usesKeyManager) {
+        // users who use EKM get their setup automated - no need to inform them of this
         // other users chose this manually - let them know it's not allowed
         await Ui.modal.error('Not submitting public key to Attester - disabled for your org');
       }
@@ -341,16 +445,22 @@ export class SetupView extends View {
       if (result.pubkeys.length) {
         const prvs = await KeyStoreUtil.parse(await KeyStore.getRequired(this.acctEmail));
         const parsedPubKeys = await KeyUtil.parseMany(result.pubkeys.join('\n'));
-        const hasMatchingKey = await asyncSome(prvs, (async (privateKey) => {
-          return parsedPubKeys.some((parsedPubKey) => privateKey.key.id === parsedPubKey.id);
-        }));
+        const hasMatchingKey = await asyncSome(prvs, async privateKey => {
+          return parsedPubKeys.some(parsedPubKey => privateKey.key.id === parsedPubKey.id);
+        });
         if (!hasMatchingKey) {
-          // eslint-disable-next-line max-len
-          throw new CompanyLdapKeyMismatchError(`Imported private key with ids ${prvs.map(prv => prv.key.id).join(', ')} does not match public keys on company LDAP server with ids ${parsedPubKeys.map(pub => pub.id).join(', ')} for ${this.acctEmail}. Please ask your help desk.`);
+          throw new CompanyLdapKeyMismatchError(
+            `Imported private key with ids ${prvs
+              .map(prv => prv.key.id)
+              .join(', ')} does not match public keys on company LDAP server with ids ${parsedPubKeys
+              .map(pub => pub.id)
+              .join(', ')} for ${this.acctEmail}. Please ask your help desk.`
+          );
         }
       } else {
-        // eslint-disable-next-line max-len
-        throw new CompanyLdapKeyMismatchError(`Your organization requires public keys to be present on company LDAP server, but no public key was found for ${this.acctEmail}. Please ask your internal help desk.`);
+        throw new CompanyLdapKeyMismatchError(
+          `Your organization requires public keys to be present on company LDAP server, but no public key was found for ${this.acctEmail}. Please ask your internal help desk.`
+        );
       }
     } else {
       // this will actually replace the submitted public key if there was a conflict, better ux
@@ -358,10 +468,11 @@ export class SetupView extends View {
     }
     const aliases = addresses.filter(a => a !== this.acctEmail);
     if (aliases.length) {
-      await Promise.all(aliases.map(a => this.pubLookup.attester.submitPubkeyWithConditionalEmailVerification(a, pubkey)));
+      await Promise.all(
+        aliases.map(a => this.pubLookup.attester.submitPubkeyWithConditionalEmailVerification(a, pubkey))
+      );
     }
   };
-
 }
 
 View.run(SetupView);

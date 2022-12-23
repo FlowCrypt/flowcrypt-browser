@@ -24,47 +24,54 @@ export const getParsedCliParams = () => {
   } else {
     throw new Error('Unknown test type: specify CONSUMER-MOCK or ENTERPRISE-MOCK CONSUMER-LIVE-GMAIL');
   }
-  const testGroup = (process.argv.includes('UNIT-TESTS') ? 'UNIT-TESTS'
-    : process.argv.includes('FLAKY-GROUP') ? 'FLAKY-GROUP' : 'STANDARD-GROUP') as
-    'FLAKY-GROUP' | 'STANDARD-GROUP' | 'UNIT-TESTS';
+  const testGroup = (
+    process.argv.includes('UNIT-TESTS')
+      ? 'UNIT-TESTS'
+      : process.argv.includes('FLAKY-GROUP')
+      ? 'FLAKY-GROUP'
+      : 'STANDARD-GROUP'
+  ) as 'FLAKY-GROUP' | 'STANDARD-GROUP' | 'UNIT-TESTS';
   const buildDir = `build/chrome-${(testVariant === 'CONSUMER-LIVE-GMAIL' ? 'CONSUMER' : testVariant).toLowerCase()}`;
   const poolSizeOne = process.argv.includes('--pool-size=1') || testGroup === 'FLAKY-GROUP';
-  const oneIfNotPooled = (suggestedPoolSize: number) => poolSizeOne ? Math.min(1, suggestedPoolSize) : suggestedPoolSize;
+  const oneIfNotPooled = (suggestedPoolSize: number) =>
+    poolSizeOne ? Math.min(1, suggestedPoolSize) : suggestedPoolSize;
   console.info(`TEST_VARIANT: ${testVariant}:${testGroup}, (build dir: ${buildDir}, poolSizeOne: ${poolSizeOne})`);
   return { testVariant, testGroup, oneIfNotPooled, buildDir, isMock: testVariant.includes('-MOCK') };
 };
 
 export type TestMessage = {
-  name?: string,
-  content: string[],
-  unexpectedContent?: string[],
-  password?: string,
-  params: string,
-  quoted?: boolean,
-  expectPercentageProgress?: boolean,
-  signature?: string,
-  encryption?: string,
-  error?: string
+  name?: string;
+  content: string[];
+  unexpectedContent?: string[];
+  password?: string;
+  params: string;
+  quoted?: boolean;
+  expectPercentageProgress?: boolean;
+  signature?: string;
+  encryption?: string;
+  error?: string;
 };
 
 export type TestKeyInfo = {
-  title: string, passphrase: string, armored: string | null, longid: string | null
+  title: string;
+  passphrase: string;
+  armored: string | null;
+  longid: string | null;
 };
 
-export type TestKeyInfoWithFilepath = TestKeyInfo & { filePath?: string, expired?: boolean };
+export type TestKeyInfoWithFilepath = TestKeyInfo & { filePath?: string; expired?: boolean };
 
 /* eslint-disable @typescript-eslint/naming-convention */
 interface TestSecretsInterface {
-  ci_admin_token: string; 
-  auth: { google: { email: string, password?: string, secret_2fa?: string }[] };
+  ci_admin_token: string;
+  auth: { google: { email: string; password?: string; secret_2fa?: string }[] };
 }
 /* eslint-enable @typescript-eslint/naming-convention */
 
 export class Config {
-
   public static extensionId = '';
 
-  private static _secrets: TestSecretsInterface;
+  private static _secrets: TestSecretsInterface; // eslint-disable-line no-underscore-dangle
 
   public static secrets = (): TestSecretsInterface => {
     /* eslint-disable no-underscore-dangle */
@@ -73,7 +80,7 @@ export class Config {
         Config._secrets = JSON.parse(fs.readFileSync('test/test-secrets.json', 'utf8'));
       } catch (e) {
         console.error(`skipping loading test secrets because ${e}`);
-        Config._secrets = { ci_admin_token: "", auth: { google: [] } }; // eslint-disable-line @typescript-eslint/naming-convention
+        Config._secrets = { ci_admin_token: '', auth: { google: [] } }; // eslint-disable-line @typescript-eslint/naming-convention
       }
     }
     return Config._secrets;
@@ -85,17 +92,18 @@ export class Config {
   };
 
   public static getKeyInfo = async (titles: string[]): Promise<KeyInfoWithIdentityAndOptionalPp[]> => {
-    return await Promise.all(testKeyConstants.keys
-      .filter(key => key.armored && titles.includes(key.title)).map(async key => {
-        const parsed = await KeyUtil.parse(key.armored!);
-        return { ...await KeyUtil.keyInfoObj(parsed), passphrase: key.passphrase };
-      }));
+    return await Promise.all(
+      testKeyConstants.keys
+        .filter(key => key.armored && titles.includes(key.title))
+        .map(async key => {
+          const parsed = await KeyUtil.parse(key.armored!);
+          return { ...(await KeyUtil.keyInfoObj(parsed)), passphrase: key.passphrase };
+        })
+    );
   };
-
 }
 
 export class Util {
-
   public static sleep = async (seconds: number) => {
     return await new Promise(resolve => setTimeout(resolve, seconds * 1000));
   };
@@ -111,7 +119,13 @@ export class Util {
   };
 
   public static htmlEscape = (str: string) => {
-    return str.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\//g, '&#x2F;');
+    return str
+      .replace(/&/g, '&amp;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/\//g, '&#x2F;');
   };
 
   public static deleteFileIfExists = (filename: string) => {
@@ -122,15 +136,22 @@ export class Util {
     }
   };
 
-  public static wipeGoogleTokensUsingExperimentalSettingsPage = async (t: AvaContext, browser: BrowserHandle, acct: string) => {
+  public static wipeGoogleTokensUsingExperimentalSettingsPage = async (
+    t: AvaContext,
+    browser: BrowserHandle,
+    acct: string
+  ) => {
     for (const wipeTokenBtnSelector of ['@action-wipe-google-refresh-token', '@action-wipe-google-access-token']) {
       const settingsPage = await browser.newPage(t, TestUrls.extensionSettings(acct));
       await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
-      const experimentalFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-module-experimental', ['experimental.htm']);
+      const experimentalFrame = await SettingsPageRecipe.awaitNewPageFrame(
+        settingsPage,
+        '@action-open-module-experimental',
+        ['experimental.htm']
+      );
       await experimentalFrame.waitAndClick(wipeTokenBtnSelector);
       await Util.sleep(2);
       await settingsPage.close();
     }
   };
-
 }

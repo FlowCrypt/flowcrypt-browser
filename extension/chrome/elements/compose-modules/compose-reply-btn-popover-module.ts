@@ -2,7 +2,6 @@
 
 'use strict';
 
-
 import { Xss } from '../../../js/common/platform/xss.js';
 import { ViewModule } from '../../../js/common/view-module.js';
 import { ComposeView } from '../compose.js';
@@ -10,15 +9,19 @@ import { ComposeView } from '../compose.js';
 export type ReplyOptions = 'a_reply' | 'a_reply_all' | 'a_forward';
 
 export class ComposeReplyBtnPopoverModule extends ViewModule<ComposeView> {
-
-  private popoverItems: Record<ReplyOptions, { text: string, iconPath: string }> = {
+  /* eslint-disable @typescript-eslint/naming-convention */
+  private popoverItems: Record<ReplyOptions, { text: string; iconPath: string }> = {
     a_reply: { text: 'Reply', iconPath: '/img/reply-icon.png' },
     a_reply_all: { text: 'Reply All', iconPath: '/img/reply-all-icon.png' },
-    a_forward: { text: 'Forward', iconPath: '/img/forward-icon.png' },
+    a_forward: { text: 'Forward', iconPath: '/img/forward-icon.png' }
   };
+  /* eslint-enable @typescript-eslint/naming-convention */
 
   public setHandlers = (): void => {
-    this.view.S.cached('toggle_reply_options').on('click', this.view.setHandler((el, ev) => this.toggleVisible(ev)));
+    this.view.S.cached('toggle_reply_options').on(
+      'click',
+      this.view.setHandler((el, ev) => this.toggleVisible(ev))
+    );
   };
 
   public render = async (isReply = true) => {
@@ -29,10 +32,15 @@ export class ComposeReplyBtnPopoverModule extends ViewModule<ComposeView> {
       const option = key as ReplyOptions;
       const item = this.popoverItems[option];
       const elem = $(`
-        <div class="action-toggle-key-reply-option reply-option" id="popover_${key}_option" data-test="action-toggle-${Xss.escape(key)}">
+        <div class="action-toggle-key-reply-option reply-option" id="popover_${key}_option" data-test="action-toggle-${Xss.escape(
+        key
+      )}">
             <span class="option-name">${Xss.escape(item.text)}</span>
         </div>`);
-      elem.on('click', this.view.setHandler(() => this.didOptionClick(option)));
+      elem.on(
+        'click',
+        this.view.setHandler(() => this.didOptionClick(option))
+      );
       elem.find('.option-name').prepend(`<img src="${item.iconPath}" />`); // xss-direct
       this.view.S.cached('reply_options_container').append(elem); // xss-safe-factory
     }

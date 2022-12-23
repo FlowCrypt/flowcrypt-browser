@@ -15,11 +15,9 @@ import { XssSafeFactory } from '../../../js/common/xss-safe-factory.js';
 declare const filesize: { filesize: Function }; // eslint-disable-line @typescript-eslint/ban-types
 
 export class PgpBlockViewAttachmentsModule {
-
   public includedAttachments: Attachment[] = [];
 
-  constructor(private view: PgpBlockView) {
-  }
+  public constructor(private view: PgpBlockView) {} // eslint-disable-line no-empty-function
 
   public renderInnerAttachments = (attachments: Attachment[], isEncrypted: boolean) => {
     Xss.sanitizeAppend('#pgp_block', '<div id="attachments"></div>');
@@ -28,14 +26,18 @@ export class PgpBlockViewAttachmentsModule {
       const name = (attachments[i].name ? attachments[i].name : 'noname').replace(/\.(pgp|gpg)$/, '');
       const nameVisible = name.length > 100 ? name.slice(0, 100) + '…' : name;
       const size = filesize.filesize(attachments[i].length);
-      const htmlContent = `<b>${Xss.escape(nameVisible)}</b>&nbsp;&nbsp;&nbsp;${size}<span class="progress"><span class="percent"></span></span>`;
+      const htmlContent = `<b>${Xss.escape(
+        nameVisible
+      )}</b>&nbsp;&nbsp;&nbsp;${size}<span class="progress"><span class="percent"></span></span>`;
       const attachment = $(`<a href="#" index="${Number(i)}">`);
       attachment.attr('title', name);
       Xss.sanitizeAppend(attachment, htmlContent);
       if (isEncrypted) {
         attachment.addClass('preview-attachment');
         attachment.append(
-          `<button class="download-attachment" data-test="download-attachment-${Number(i)}" index="${Number(i)}" title="DOWNLOAD"><img src="/img/svgs/download-link-green.svg"></button>`
+          `<button class="download-attachment" data-test="download-attachment-${Number(i)}" index="${Number(
+            i
+          )}" title="DOWNLOAD"><img src="/img/svgs/download-link-green.svg"></button>`
         ); // xss-escaped
       } else {
         attachment.addClass('download-attachment');
@@ -43,54 +45,83 @@ export class PgpBlockViewAttachmentsModule {
       $('#attachments').append(attachment); // xss-escaped
     }
     this.view.renderModule.resizePgpBlockFrame();
-    $('#attachments .preview-attachment').on('click', this.view.setHandlerPrevent('double', async (target) => {
-      const attachment = this.includedAttachments[Number($(target).attr('index'))];
-      await this.previewAttachmentClickedHandler(attachment);
-    }));
-    $('#attachments .download-attachment').on('click', this.view.setHandlerPrevent('double', async (target, event) => {
-      event.stopPropagation();
-      const attachment = this.includedAttachments[Number($(target).attr('index'))];
-      if (attachment.hasData()) {
-        Browser.saveToDownloads(attachment);
-        this.view.renderModule.resizePgpBlockFrame();
-      } else {
-        Xss.sanitizePrepend($(target).find('.progress'), Ui.spinner('green'));
-        attachment.setData(await Api.download(attachment.url!, (perc, load, total) => this.renderProgress($(target).find('.progress .percent'), perc, load, total || attachment.length)));
-        await Ui.delay(100); // give browser time to render
-        $(target).find('.progress').text('');
-        await this.decryptAndSaveAttachmentToDownloads(attachment);
-      }
-    }));
+    $('#attachments .preview-attachment').on(
+      'click',
+      this.view.setHandlerPrevent('double', async target => {
+        const attachment = this.includedAttachments[Number($(target).attr('index'))];
+        await this.previewAttachmentClickedHandler(attachment);
+      })
+    );
+    $('#attachments .download-attachment').on(
+      'click',
+      this.view.setHandlerPrevent('double', async (target, event) => {
+        event.stopPropagation();
+        const attachment = this.includedAttachments[Number($(target).attr('index'))];
+        if (attachment.hasData()) {
+          Browser.saveToDownloads(attachment);
+          this.view.renderModule.resizePgpBlockFrame();
+        } else {
+          Xss.sanitizePrepend($(target).find('.progress'), Ui.spinner('green'));
+          attachment.setData(
+            await Api.download(attachment.url!, (perc, load, total) =>
+              this.renderProgress($(target).find('.progress .percent'), perc, load, total || attachment.length)
+            )
+          );
+          await Ui.delay(100); // give browser time to render
+          $(target).find('.progress').text('');
+          await this.decryptAndSaveAttachmentToDownloads(attachment);
+        }
+      })
+    );
   };
 
   private previewAttachmentClickedHandler = async (attachment: Attachment) => {
     const factory = new XssSafeFactory(this.view.acctEmail, this.view.parentTabId);
-    const iframeUrl = factory.srcPgpAttachmentIframe(attachment, false, undefined, 'chrome/elements/attachment_preview.htm');
+    const iframeUrl = factory.srcPgpAttachmentIframe(
+      attachment,
+      false,
+      undefined,
+      'chrome/elements/attachment_preview.htm'
+    );
     BrowserMsg.send.showAttachmentPreview(this.view.parentTabId, { iframeUrl });
   };
 
   private decryptAndSaveAttachmentToDownloads = async (encrypted: Attachment) => {
     const kisWithPp = await KeyStore.getAllWithOptionalPassPhrase(this.view.acctEmail);
     // todo: #4158 signature verification of attachments
-    const decrypted = await BrowserMsg.send.bg.await.pgpMsgDecrypt({ kisWithPp, encryptedData: encrypted.getData(), verificationPubs: [] });
+    const decrypted = await BrowserMsg.send.bg.await.pgpMsgDecrypt({
+      kisWithPp,
+      encryptedData: encrypted.getData(),
+      verificationPubs: []
+    });
     if (decrypted.success) {
-      const attachment = new Attachment({ name: encrypted.name.replace(/\.(pgp|gpg)$/, ''), type: encrypted.type, data: decrypted.content });
+      const attachment = new Attachment({
+        name: encrypted.name.replace(/\.(pgp|gpg)$/, ''),
+        type: encrypted.type,
+        data: decrypted.content
+      });
       Browser.saveToDownloads(attachment);
       this.view.renderModule.resizePgpBlockFrame();
     } else {
       console.info(decrypted);
-      await Ui.modal.error(`There was a problem decrypting this file (${decrypted.error.type}: ${decrypted.error.message}). Downloading encrypted original.`);
+      await Ui.modal.error(
+        `There was a problem decrypting this file (${decrypted.error.type}: ${decrypted.error.message}). Downloading encrypted original.`
+      );
       Browser.saveToDownloads(encrypted);
       this.view.renderModule.resizePgpBlockFrame();
     }
   };
 
-  private renderProgress = (element: JQuery<HTMLElement>, percent: number | undefined, received: number | undefined, size: number) => {
+  private renderProgress = (
+    element: JQuery<HTMLElement>,
+    percent: number | undefined,
+    received: number | undefined,
+    size: number
+  ) => {
     if (percent) {
       element.text(percent + '%');
     } else if (size && received) {
       element.text(Math.floor(((received * 0.75) / size) * 100) + '%');
     }
   };
-
 }

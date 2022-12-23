@@ -139,7 +139,6 @@ CAD/VjKYjwJ4MYpcKZ7G3qYvrb3l7m2NTJLAi1yVTm1e5wU=
 
 // todo - add a not found test with: throw new HttpClientErr('Pubkey not found', 404);
 
-/* eslint-disable @typescript-eslint/naming-convention */
 export const mockWkdEndpoints: HandlersDefinition = {
   '/.well-known/openpgpkey/hu/st5or5guodbnsiqbzp6i34xw59h1sgmw?l=wkd': async () => {
     // direct for wkd@google.mock.localhost:8001
@@ -183,4 +182,3 @@ export const mockWkdEndpoints: HandlersDefinition = {
     return ''; // allow direct for all
   }
 };
-/* eslint-enable @typescript-eslint/naming-convention */

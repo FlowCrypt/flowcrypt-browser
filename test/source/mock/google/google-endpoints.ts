@@ -43,9 +43,9 @@ const allowedRecipients: Array<string> = [
   'flowcrypt.test.key.new.manual@gmail.com'
 ];
 
-/* eslint-disable @typescript-eslint/naming-convention */
 export const mockGoogleEndpoints: HandlersDefinition = {
   '/o/oauth2/auth': async (
+    // eslint-disable-next-line @typescript-eslint/naming-convention
     { query: { client_id, response_type, access_type, state, scope, login_hint, proceed } },
     req
   ) => {
@@ -68,6 +68,7 @@ export const mockGoogleEndpoints: HandlersDefinition = {
     }
     throw new HttpClientErr(`Method not implemented for ${req.url}: ${req.method}`);
   },
+  // eslint-disable-next-line @typescript-eslint/naming-convention
   '/token': async ({ query: { grant_type, refreshToken, client_id, code } }, req) => {
     if (isPost(req) && grant_type === 'authorization_code' && code && client_id === oauth.clientId) {
       // auth code from auth screen gets exchanged for access and refresh tokens
@@ -78,6 +79,7 @@ export const mockGoogleEndpoints: HandlersDefinition = {
     }
     throw new Error(`Method not implemented for ${req.url}: ${req.method}`);
   },
+  // eslint-disable-next-line @typescript-eslint/naming-convention
   '/oauth2/v1/tokeninfo': async ({ query: { access_token } }, req) => {
     if (isGet(req)) {
       return oauth.getTokenInfo(access_token);
@@ -163,7 +165,6 @@ export const mockGoogleEndpoints: HandlersDefinition = {
         }
       ];
       if (acct === 'flowcrypt.compatibility@gmail.com') {
-        // eslint-disable-next-line max-len
         sendAs[0].signature =
           '<div dir="ltr">flowcrypt.compatibility test footer with an img<br><img src="https://flowcrypt.com/assets/imgs/svgs/flowcrypt-logo.svg" alt="Image result for small image"><br></div>';
         const alias = 'flowcryptcompatibility@gmail.com';
@@ -451,7 +452,6 @@ const validateMimeMsg = async (acct: string, mimeMsg: ParsedMail, threadId?: str
     throw new HttpClientErr("You can't send a message from unexisting email address(es)");
   }
 };
-/* eslint-enable @typescript-eslint/naming-convention */
 
 export const parsedMailAddressObjectAsArray = (
   header: AddressObject | AddressObject[] | undefined

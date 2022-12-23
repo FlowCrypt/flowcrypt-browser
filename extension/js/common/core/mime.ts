@@ -262,9 +262,9 @@ export class Mime {
   ): Promise<string> => {
     const rootContentType =
       type !== 'pgpMimeEncrypted' ? 'multipart/mixed' : `multipart/encrypted; protocol="application/pgp-encrypted";`;
-    const rootNode = new MimeBuilder(rootContentType, { includeBccInHeader: true }); // eslint-disable-line
+    const rootNode = new MimeBuilder(rootContentType, { includeBccInHeader: true });
     for (const key of Object.keys(headers)) {
-      rootNode.addHeader(key, headers[key]); // eslint-disable-line
+      rootNode.addHeader(key, headers[key]);
     }
     if (Object.keys(body).length) {
       let contentNode: MimeParserNode;
@@ -275,17 +275,17 @@ export class Mime {
           body[Object.keys(body)[0] as 'text/plain' | 'text/html'] || ''
         );
       } else {
-        contentNode = new MimeBuilder('multipart/alternative'); // eslint-disable-line
+        contentNode = new MimeBuilder('multipart/alternative');
         for (const type of Object.keys(body)) {
           contentNode.appendChild(Mime.newContentNode(MimeBuilder, type, body[type]!.toString())); // already present, that's why part of for loop
         }
       }
-      rootNode.appendChild(contentNode); // eslint-disable-line
+      rootNode.appendChild(contentNode);
     }
     for (const attachment of attachments) {
-      rootNode.appendChild(Mime.createAttachmentNode(attachment)); // eslint-disable-line
+      rootNode.appendChild(Mime.createAttachmentNode(attachment));
     }
-    return rootNode.build(); // eslint-disable-line
+    return rootNode.build(); // eslint-disable-line @typescript-eslint/no-unsafe-return
   };
 
   public static encodeSmime = async (
@@ -294,19 +294,19 @@ export class Mime {
     type: 'enveloped-data' | 'signed-data'
   ): Promise<string> => {
     const rootContentType = `application/pkcs7-mime; name="smime.p7m"; smime-type=${type}`;
-    const rootNode = new MimeBuilder(rootContentType, { includeBccInHeader: true }); // eslint-disable-line
+    const rootNode = new MimeBuilder(rootContentType, { includeBccInHeader: true });
     for (const key of Object.keys(headers)) {
-      rootNode.addHeader(key, headers[key]); // eslint-disable-line
+      rootNode.addHeader(key, headers[key]);
     }
-    rootNode.setContent(body); // eslint-disable-line
-    rootNode.addHeader('Content-Transfer-Encoding', 'base64'); // eslint-disable-line
-    rootNode.addHeader('Content-Disposition', 'attachment; filename="smime.p7m"'); // eslint-disable-line
+    rootNode.setContent(body);
+    rootNode.addHeader('Content-Transfer-Encoding', 'base64');
+    rootNode.addHeader('Content-Disposition', 'attachment; filename="smime.p7m"');
     let contentDescription = 'S/MIME Encrypted Message';
     if (type === 'signed-data') {
       contentDescription = 'S/MIME Signed Message';
     }
-    rootNode.addHeader('Content-Description', contentDescription); // eslint-disable-line
-    return rootNode.build(); // eslint-disable-line
+    rootNode.addHeader('Content-Description', contentDescription);
+    return rootNode.build(); // eslint-disable-line @typescript-eslint/no-unsafe-return
   };
 
   public static subjectWithoutPrefixes = (subject: string): string => {
@@ -322,35 +322,35 @@ export class Mime {
     const sigPlaceholder = `SIG_PLACEHOLDER_${Str.sloppyRandom(10)}`;
     const rootNode = new MimeBuilder(`multipart/signed; protocol="application/pgp-signature";`, {
       includeBccInHeader: true
-    }); // eslint-disable-line
+    });
     for (const key of Object.keys(headers)) {
-      rootNode.addHeader(key, headers[key]); // eslint-disable-line
+      rootNode.addHeader(key, headers[key]);
     }
-    const bodyNodes = new MimeBuilder('multipart/alternative'); // eslint-disable-line
+    const bodyNodes = new MimeBuilder('multipart/alternative');
     for (const type of Object.keys(body)) {
-      bodyNodes.appendChild(Mime.newContentNode(MimeBuilder, type, body[type]!.toString())); // eslint-disable-line
+      bodyNodes.appendChild(Mime.newContentNode(MimeBuilder, type, body[type]!.toString()));
     }
-    const signedContentNode = new MimeBuilder('multipart/mixed'); // eslint-disable-line
-    signedContentNode.appendChild(bodyNodes); // eslint-disable-line
+    const signedContentNode = new MimeBuilder('multipart/mixed');
+    signedContentNode.appendChild(bodyNodes);
     for (const attachment of attachments) {
-      signedContentNode.appendChild(Mime.createAttachmentNode(attachment)); // eslint-disable-line
+      signedContentNode.appendChild(Mime.createAttachmentNode(attachment));
     }
     const sigAttachmentPlaceholder = new Attachment({
       data: Buf.fromUtfStr(sigPlaceholder),
       type: 'application/pgp-signature',
       name: 'signature.asc'
     });
-    const sigAttachmentPlaceholderNode = Mime.createAttachmentNode(sigAttachmentPlaceholder); // eslint-disable-line
+    const sigAttachmentPlaceholderNode = Mime.createAttachmentNode(sigAttachmentPlaceholder);
     // https://tools.ietf.org/html/rfc3156#section-5 - signed content first, signature after
-    rootNode.appendChild(signedContentNode); // eslint-disable-line
-    rootNode.appendChild(sigAttachmentPlaceholderNode); // eslint-disable-line
-    const mimeStrWithPlaceholderSig = rootNode.build() as string; // eslint-disable-line
+    rootNode.appendChild(signedContentNode);
+    rootNode.appendChild(sigAttachmentPlaceholderNode);
+    const mimeStrWithPlaceholderSig = rootNode.build() as string;
     const { rawSignedContent } = await Mime.decode(Buf.fromUtfStr(mimeStrWithPlaceholderSig));
     if (!rawSignedContent) {
       console.log(`mimeStrWithPlaceholderSig(placeholder:${sigPlaceholder}):\n${mimeStrWithPlaceholderSig}`);
       throw new Error('Could not find raw signed content immediately after mime-encoding a signed message');
     }
-    const realSignature = await sign(rawSignedContent); // eslint-disable-line
+    const realSignature = await sign(rawSignedContent);
     const pgpMimeSigned = mimeStrWithPlaceholderSig.replace(
       Buf.fromUtfStr(sigPlaceholder).toBase64Str(),
       Buf.fromUtfStr(realSignature).toBase64Str()
@@ -424,7 +424,7 @@ export class Mime {
     header['X-Attachment-Id'] = id;
     header['Content-ID'] = `<${id}>`;
     header['Content-Transfer-Encoding'] = 'base64';
-    return new MimeBuilder(type, { filename: attachment.name }).setHeader(header).setContent(attachment.getData()); // eslint-disable-line
+    return new MimeBuilder(type, { filename: attachment.name }).setHeader(header).setContent(attachment.getData());
   };
 
   private static getNodeType = (node: MimeParserNode, type: 'value' | 'initial' = 'value') => {

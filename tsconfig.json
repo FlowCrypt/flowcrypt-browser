@@ -15,6 +15,7 @@
     "sourceMap": false,
     "checkJs": false,
     "strict": true,
+    "useUnknownInCatchVariables": false,
     "outDir": "build/generic-extension-wip",
     "baseUrl": "./extension",
     "paths": {

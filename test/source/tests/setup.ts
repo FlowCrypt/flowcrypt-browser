@@ -26,13 +26,14 @@ const getAuthorizationHeader = async (t: AvaContext, browser: BrowserHandle, acc
   const settingsPage = await browser.newPage(t, TestUrls.extensionSettings(acctEmail));
   const accessToken = await BrowserRecipe.getGoogleAccessToken(settingsPage, acctEmail);
   await settingsPage.close();
+  // eslint-disable-next-line @typescript-eslint/naming-convention
   return { Authorization: `Bearer ${accessToken}` };
 };
 
 const openMockGmailPage = async (t: AvaContext, browser: BrowserHandle, acctEmail: string, hasPermission = true) => {
   const authorizationHeader = hasPermission
     ? await getAuthorizationHeader(t, browser, acctEmail)
-    : { Authorization: 'Bearer emulating-not-properly-set-up-extension' };
+    : { Authorization: 'Bearer emulating-not-properly-set-up-extension' }; // eslint-disable-line @typescript-eslint/naming-convention
   return await browser.newPage(t, TestUrls.mockGmailUrl(), undefined, authorizationHeader);
 };
 
@@ -1160,7 +1161,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       const passphrase =
         (await page.getFromLocalStorage([key]))[key] ||
         (await BrowserRecipe.getPassphraseFromInMemoryStore(page, acctEmail, longid));
-      expect(passphrase).to.be.a.string;
+      expect(passphrase).to.be.a.string; // eslint-disable-line @typescript-eslint/unbound-method
       return passphrase as string;
     };
 
@@ -1199,6 +1200,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
           enterPp: { passphrase, checks: { isSavePassphraseChecked: false, isSavePassphraseHidden: true } }
         });
         const accessToken = await BrowserRecipe.getGoogleAccessToken(settingsPage, acct);
+        // eslint-disable-next-line @typescript-eslint/naming-convention
         const extraAuthHeaders = { Authorization: `Bearer ${accessToken}` };
         const updateAndArmorKey = async (prv: Key) => {
           return KeyUtil.armor(await KeyUtil.reformatKey(prv, undefined, [{ name: 'Full Name', email: acct }], 6000));
@@ -1391,6 +1393,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
           enterPp: { passphrase, checks: { isSavePassphraseChecked: false, isSavePassphraseHidden: true } }
         });
         const accessToken = await BrowserRecipe.getGoogleAccessToken(settingsPage, acct);
+        // eslint-disable-next-line @typescript-eslint/naming-convention
         const extraAuthHeaders = { Authorization: `Bearer ${accessToken}` };
         const set1 = await retrieveAndCheckKeys(settingsPage, acct, 1);
         // 1. EKM returns the empty set, forcing to auto-generate
@@ -1444,6 +1447,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
         await SetupPageRecipe.autoSetupWithEKM(settingsPage);
         const accessToken = await BrowserRecipe.getGoogleAccessToken(settingsPage, acct);
+        // eslint-disable-next-line @typescript-eslint/naming-convention
         const extraAuthHeaders = { Authorization: `Bearer ${accessToken}` };
         const set1 = await retrieveAndCheckKeys(settingsPage, acct, 1);
         MOCK_KM_KEYS[acct].response = { privateKeys: [] };
@@ -1596,6 +1600,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
           ]);
         let savedPassphrase = await BrowserRecipe.getPassphraseFromInMemoryStore(settingsPage, acctEmail, longid);
         expect(
+          // eslint-disable-next-line @typescript-eslint/naming-convention
           (rules as { in_memory_pass_phrase_session_length: number }).in_memory_pass_phrase_session_length
         ).to.be.equal(10);
         expect(savedPassphrase).to.be.equal(passphrase);

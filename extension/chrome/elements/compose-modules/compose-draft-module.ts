@@ -24,7 +24,6 @@ import { SendableMsg, InvalidRecipientError } from '../../../js/common/api/email
 import { PassphraseStore } from '../../../js/common/platform/store/passphrase-store.js';
 
 export class ComposeDraftModule extends ViewModule<ComposeView> {
-
   public wasMsgLoadedFromDraft = false;
 
   private currentlySavingDraft = false;
@@ -32,7 +31,7 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
   private saveDraftInterval?: number;
   private lastDraftBody?: string;
   private lastDraftSubject = '';
-  private SAVE_DRAFT_FREQUENCY = 3000; // eslint-disable-line @typescript-eslint/naming-convention
+  private SAVE_DRAFT_FREQUENCY = 3000;
   private localDraftPrefix = 'local-draft-';
   private localComposeDraftPrefix = 'compose-';
   private localComposeDraftId = Str.sloppyRandom(10);
@@ -45,7 +44,10 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
   }
 
   public setHandlers = () => {
-    $('.delete_draft').on('click', this.view.setHandler(() => this.deleteDraftClickHandler(), this.view.errModule.handle('delete draft')));
+    $('.delete_draft').on(
+      'click',
+      this.view.setHandler(() => this.deleteDraftClickHandler(), this.view.errModule.handle('delete draft'))
+    );
     this.view.recipientsModule.onRecipientAdded(async () => await this.draftSave(true));
   };
 
@@ -58,7 +60,8 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
     }
     try {
       let draftGetRes = await this.localDraftGet();
-      if (!draftGetRes && !this.isLocalDraftId(this.view.draftId)) { // local draft not found, try to load from cloud
+      if (!draftGetRes && !this.isLocalDraftId(this.view.draftId)) {
+        // local draft not found, try to load from cloud
         draftGetRes = await this.view.emailProvider.draftGet(this.view.draftId, 'raw');
       }
       if (!draftGetRes) {
@@ -75,7 +78,10 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
         Xss.sanitizeRender('body', `Failed to load draft. ${Ui.retryLink()}`);
       } else if (ApiErr.isAuthErr(e)) {
         BrowserMsg.send.notificationShowAuthPopupNeeded(this.view.parentTabId, { acctEmail: this.view.acctEmail });
-        Xss.sanitizeRender('body', `Failed to load draft - FlowCrypt needs to be re-connected to Gmail. ${Ui.retryLink()}`);
+        Xss.sanitizeRender(
+          'body',
+          `Failed to load draft - FlowCrypt needs to be re-connected to Gmail. ${Ui.retryLink()}`
+        );
       } else if (this.view.isReplyBox && ApiErr.isNotFound(e)) {
         console.info('about to reload reply_message automatically: get draft 404', this.view.acctEmail);
         await Ui.time.sleep(500);
@@ -92,7 +98,7 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
 
   public draftDelete = async () => {
     clearInterval(this.saveDraftInterval);
-    await Ui.time.wait(() => !this.currentlySavingDraft ? true : undefined);
+    await Ui.time.wait(() => (!this.currentlySavingDraft ? true : undefined));
     if (this.view.draftId) {
       try {
         if (!this.isLocalDraftId(this.view.draftId)) {
@@ -116,7 +122,11 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
     if (this.disableSendingDrafts) {
       return;
     }
-    if (this.hasBodyChanged(this.view.inputModule.squire.getHTML()) || this.hasSubjectChanged(String(this.view.S.cached('input_subject').val())) || forceSave) {
+    if (
+      this.hasBodyChanged(this.view.inputModule.squire.getHTML()) ||
+      this.hasSubjectChanged(String(this.view.S.cached('input_subject').val())) ||
+      forceSave
+    ) {
       this.currentlySavingDraft = true;
       try {
         const msgData = await this.view.inputModule.extractAll();
@@ -152,9 +162,16 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
         if (ApiErr.isAuthErr(e)) {
           BrowserMsg.send.notificationShowAuthPopupNeeded(this.view.parentTabId, { acctEmail: this.view.acctEmail });
           this.view.S.cached('send_btn_note').text('Not saved (reconnect)');
-        } else if (e instanceof Error && e.message.indexOf('Could not find valid key packet for encryption in key') !== -1) {
+        } else if (
+          e instanceof Error &&
+          e.message.indexOf('Could not find valid key packet for encryption in key') !== -1
+        ) {
           this.view.S.cached('send_btn_note').text('Not saved (bad key)');
-        } else if (this.view.draftId && (ApiErr.isNotFound(e) || (e instanceof AjaxErr && e.status === 400 && e.responseText.indexOf('Message not a draft') !== -1))) {
+        } else if (
+          this.view.draftId &&
+          (ApiErr.isNotFound(e) ||
+            (e instanceof AjaxErr && e.status === 400 && e.responseText.indexOf('Message not a draft') !== -1))
+        ) {
           // not found - updating draft that was since deleted
           // not a draft - updating draft that was since sent as a message (in another window), and is not a draft anymore
           this.view.draftId = ''; // forget there was a draftId - next step will create a new draftId
@@ -210,9 +227,11 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
 
   private draftSetPrefixIntoBody = (sendable: SendableMsg) => {
     let prefix: string;
-    if (this.view.threadId) { // reply draft
+    if (this.view.threadId) {
+      // reply draft
       prefix = `[flowcrypt:link:draft_reply:${this.view.draftId}]\n\n`;
-    } else if (this.view.draftId) { // new message compose draft with known draftId
+    } else if (this.view.draftId) {
+      // new message compose draft with known draftId
       prefix = `[flowcrypt:link:draft_compose:${this.view.draftId}]\n\n`;
     } else {
       prefix = `(saving of this draft was interrupted - to decrypt it, send it to yourself)\n\n`;
@@ -274,10 +293,12 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
 
   private deleteDraftClickHandler = async () => {
     await this.draftDelete();
-    if (this.view.isReplyBox && !this.view.removeAfterClose) { // reload iframe so we don't leave users without a reply UI
+    if (this.view.isReplyBox && !this.view.removeAfterClose) {
+      // reload iframe so we don't leave users without a reply UI
       this.view.skipClickPrompt = false;
       window.location.href = Url.create(Env.getUrlNoParams(), this.urlParams());
-    } else { // close new msg
+    } else {
+      // close new msg
       this.view.renderModule.closeMsg();
     }
   };
@@ -313,7 +334,10 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
     }
     this.wasMsgLoadedFromDraft = true;
     this.view.S.cached('prompt').css({ display: 'none' });
-    const { blocks, isRichText } = await MsgBlockParser.fmtDecryptedAsSanitizedHtmlBlocks(decrypted.content, 'IMG-KEEP');
+    const { blocks, isRichText } = await MsgBlockParser.fmtDecryptedAsSanitizedHtmlBlocks(
+      decrypted.content,
+      'IMG-KEEP'
+    );
     const sanitizedContent = blocks.find(b => b.type === 'decryptedHtml')?.content;
     if (!sanitizedContent) {
       return await this.abortAndRenderReplyMsgComposeTableIfIsReplyBox('!sanitizedContent');
@@ -326,7 +350,8 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
   };
 
   private hasBodyChanged = (msgBody: string) => {
-    if (this.lastDraftBody === undefined) { // first check
+    if (this.lastDraftBody === undefined) {
+      // first check
       this.lastDraftBody = msgBody;
       return false;
     }
@@ -338,7 +363,8 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
   };
 
   private hasSubjectChanged = (subject: string) => {
-    if (this.view.isReplyBox) { // user cannot change reply subject
+    if (this.view.isReplyBox) {
+      // user cannot change reply subject
       return false; // this helps prevent unwanted empty drafts
     }
     if (subject && subject !== this.lastDraftSubject) {
@@ -354,22 +380,43 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
       Xss.sanitizeRender(this.view.S.cached('prompt'), promptText).css({ display: 'block' });
       this.view.sizeModule.resizeComposeBox();
     } else {
-      Xss.sanitizeRender(this.view.S.cached('prompt'), `
+      Xss.sanitizeRender(
+        this.view.S.cached('prompt'),
+        `
         ${promptText}
         <div class="mt-20">
           <button href="#" data-test="action-open-passphrase-dialog" class="button long green action_open_passphrase_dialog">Enter pass phrase</button>
           <button href="#" class="button gray action_close">close</button>
         </div>
-      `).css({ display: 'flex', height: '100%' });
+      `
+      ).css({ display: 'flex', height: '100%' });
       BrowserMsg.send.setActiveWindow(this.view.parentTabId, { frameId: this.view.frameId });
     }
-    this.view.S.cached('prompt').find('.action_open_passphrase_dialog').on('click', this.view.setHandler(async () => {
-      BrowserMsg.send.passphraseDialog(this.view.parentTabId, { type: 'draft', longids });
-    })).focus();
-    this.view.S.cached('prompt').find('.action_close').on('click', this.view.setHandler(() => this.view.renderModule.closeMsg()));
-    const setActiveWindow = this.view.setHandler(async () => { BrowserMsg.send.setActiveWindow(this.view.parentTabId, { frameId: this.view.frameId }); });
+    this.view.S.cached('prompt')
+      .find('.action_open_passphrase_dialog')
+      .on(
+        'click',
+        this.view.setHandler(async () => {
+          BrowserMsg.send.passphraseDialog(this.view.parentTabId, { type: 'draft', longids });
+        })
+      )
+      .focus();
+    this.view.S.cached('prompt')
+      .find('.action_close')
+      .on(
+        'click',
+        this.view.setHandler(() => this.view.renderModule.closeMsg())
+      );
+    const setActiveWindow = this.view.setHandler(async () => {
+      BrowserMsg.send.setActiveWindow(this.view.parentTabId, { frameId: this.view.frameId });
+    });
     this.view.S.cached('prompt').on('click', setActiveWindow).trigger('click');
-    await PassphraseStore.waitUntilPassphraseChanged(this.view.acctEmail, longids, 1000, this.view.ppChangedPromiseCancellation);
+    await PassphraseStore.waitUntilPassphraseChanged(
+      this.view.acctEmail,
+      longids,
+      1000,
+      this.view.ppChangedPromiseCancellation
+    );
   };
 
   private abortAndRenderReplyMsgComposeTableIfIsReplyBox = async (reason: string) => {
@@ -379,13 +426,23 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
     }
   };
 
-  private urlParams = () => { // used to reload the frame with updated params
+  private urlParams = () => {
+    // used to reload the frame with updated params
     return {
-      acctEmail: this.view.acctEmail, draftId: this.view.draftId, threadId: this.view.threadId, replyMsgId: this.view.replyMsgId,
-      ...this.view.replyParams, frameId: this.view.frameId, tabId: this.view.tabId, isReplyBox: this.view.isReplyBox,
-      skipClickPrompt: this.view.skipClickPrompt, parentTabId: this.view.parentTabId, disableDraftSaving: this.view.disableDraftSaving,
-      debug: this.view.debug, removeAfterClose: this.view.removeAfterClose, replyPubkeyMismatch: this.view.replyPubkeyMismatch,
+      acctEmail: this.view.acctEmail,
+      draftId: this.view.draftId,
+      threadId: this.view.threadId,
+      replyMsgId: this.view.replyMsgId,
+      ...this.view.replyParams,
+      frameId: this.view.frameId,
+      tabId: this.view.tabId,
+      isReplyBox: this.view.isReplyBox,
+      skipClickPrompt: this.view.skipClickPrompt,
+      parentTabId: this.view.parentTabId,
+      disableDraftSaving: this.view.disableDraftSaving,
+      debug: this.view.debug,
+      removeAfterClose: this.view.removeAfterClose,
+      replyPubkeyMismatch: this.view.replyPubkeyMismatch
     };
   };
-
 }

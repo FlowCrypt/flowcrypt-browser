@@ -196,7 +196,6 @@ const processMessageFromUser4 = async (body: string) => {
   return response;
 };
 
-/* eslint-disable @typescript-eslint/naming-convention */
 export const mockFesEndpoints: HandlersDefinition = {
   // standard fes location at https://fes.domain.com
   '/api/': async ({}, req) => {
@@ -307,7 +306,6 @@ export const mockFesEndpoints: HandlersDefinition = {
     throw new HttpClientErr(`Test error`, Status.BAD_REQUEST);
   }
 };
-/* eslint-enable @typescript-eslint/naming-convention */
 
 const authenticate = (req: IncomingMessage, type: 'oidc' | 'fes'): string => {
   const jwt = (req.headers.authorization || '').replace('Bearer ', '');

@@ -40,7 +40,44 @@ module.exports = {
     ],
     '@typescript-eslint/explicit-module-boundary-types': 'off',
     '@typescript-eslint/member-ordering': 'error',
-    '@typescript-eslint/naming-convention': 'error',
+    '@typescript-eslint/naming-convention': [
+      'error',
+      {
+        selector: 'default',
+        format: ['camelCase'],
+        leadingUnderscore: 'allow',
+        trailingUnderscore: 'allow'
+      },
+      {
+        selector: 'variable',
+        format: ['camelCase', 'UPPER_CASE'],
+        leadingUnderscore: 'allow',
+        trailingUnderscore: 'allow'
+      },
+      {
+        selector: 'typeLike',
+        format: ['PascalCase']
+      },
+      {
+        selector: [
+          'classProperty',
+          'objectLiteralProperty',
+          'typeProperty',
+          'classMethod',
+          'objectLiteralMethod',
+          'typeMethod',
+          'accessor',
+          'enumMember'
+        ],
+        format: null,
+        modifiers: ['requiresQuotes']
+      },
+      {
+        selector: ['classProperty'],
+        format: ['camelCase', 'UPPER_CASE'],
+        leadingUnderscore: 'allow'
+      }
+    ],
     '@typescript-eslint/no-empty-function': 'error',
     '@typescript-eslint/no-empty-interface': 'off',
     '@typescript-eslint/no-explicit-any': ['warn'],
@@ -101,7 +138,7 @@ module.exports = {
     'no-undef-init': 'error',
     'no-underscore-dangle': 'error',
     'no-unsafe-finally': 'error',
-    'no-unused-expressions': 'error',
+    'no-unused-expressions': 'off',
     'no-unused-labels': 'error',
     'no-unused-vars': 0,
     'no-use-before-define': 'off',
@@ -132,8 +169,7 @@ module.exports = {
     {
       files: './test/**/*.ts',
       rules: {
-        '@typescript-eslint/no-unused-expressions': 'off',
-        'no-unused-expressions': 'off'
+        '@typescript-eslint/no-unused-expressions': 'off'
       }
     }
   ]

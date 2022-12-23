@@ -77,8 +77,8 @@ addManifest('chrome-enterprise', manifest => {
 const CHROME_CONSUMER = 'chrome-consumer';
 const CHROME_ENTERPRISE = 'chrome-enterprise';
 const MOCK_HOST: { [buildType: string]: string } = {
-  'chrome-consumer': 'https://localhost:8001', // eslint-disable-line @typescript-eslint/naming-convention
-  'chrome-enterprise': 'https://google.mock.localhost:8001' // eslint-disable-line @typescript-eslint/naming-convention
+  'chrome-consumer': 'https://localhost:8001',
+  'chrome-enterprise': 'https://google.mock.localhost:8001'
 };
 
 const buildDir = (buildType: string) => `./build/${buildType}`;

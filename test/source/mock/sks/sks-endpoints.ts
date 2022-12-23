@@ -120,7 +120,6 @@ dD1jkCFszePzosEk95yGu8z682IRN4bGNLQzCEqWAf0jTB4DvcI=
 =+zWD
 -----END PGP PUBLIC KEY BLOCK-----`;
 
-/* eslint-disable @typescript-eslint/naming-convention */
 export const mockSksEndpoints: HandlersDefinition = {
   '/pks/lookup?search=john.doe%40example.com&fingerprint=on&exact=on&options=mr&op=index': async () => {
     // by email
@@ -147,4 +146,3 @@ export const mockSksEndpoints: HandlersDefinition = {
     return testSksKey; // for test@custom-sks.flowcrypt.test
   }
 };
-/* eslint-enable @typescript-eslint/naming-convention */

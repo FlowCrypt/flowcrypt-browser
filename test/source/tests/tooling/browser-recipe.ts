@@ -158,11 +158,13 @@ export class BrowserRecipe {
   public static deleteAllDraftsInGmailAccount = async (settingsPage: ControllablePage): Promise<void> => {
     const accessToken = await BrowserRecipe.getGoogleAccessToken(settingsPage, 'ci.tests.gmail@flowcrypt.dev');
     const gmail = google.gmail({ version: 'v1' });
+    // eslint-disable-next-line @typescript-eslint/naming-convention
     const list = await gmail.users.drafts.list({ userId: 'me', access_token: accessToken });
     if (list.data.drafts) {
       await Promise.all(
         list.data
           .drafts!.filter(draft => draft.id)
+          // eslint-disable-next-line @typescript-eslint/naming-convention
           .map(draft => gmail.users.drafts.delete({ id: draft.id!, userId: 'me', access_token: accessToken }))
       );
     }

@@ -1042,7 +1042,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
     ava.default(
       'decrypt - verify encrypted+signed message',
       testWithBrowser('compatibility', async (t, browser) => {
-        const params = `?frameId=none&message=&msgId=1617429dc55600db&senderEmail=martin%40politick.ca&isOutgoing=___cu_false___&acctEmail=flowcrypt.compatibility%40gmail.com`; // eslint-disable-line max-len
+        const params = `?frameId=none&message=&msgId=1617429dc55600db&senderEmail=martin%40politick.ca&isOutgoing=___cu_false___&acctEmail=flowcrypt.compatibility%40gmail.com`;
         await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
           params,
           content: ['4) signed + encrypted email if supported'],

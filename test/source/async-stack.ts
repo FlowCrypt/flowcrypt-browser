@@ -1,20 +1,22 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
 (() => {
-
   type Type = 'error' | 'object';
 
   const wait = (): Promise<void> => new Promise(resolve => setTimeout(resolve, 100));
 
-  const acceptCb = (cb: () => Promise<number | void>) => { // eslint-disable-line @typescript-eslint/no-unused-vars
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const acceptCb = (cb: () => Promise<number | void>) => {
     // nothing
   };
 
-  acceptCb(async () => { // test if will get replaced
+  acceptCb(async () => {
+    // test if will get replaced
     await wait();
   });
 
-  acceptCb(async () => { // test if will get replaced
+  acceptCb(async () => {
+    // test if will get replaced
     Math.random();
   });
 
@@ -58,7 +60,7 @@
   const obj = {
     paramFunc: async (type: Type) => {
       await asyncFunc(type);
-    },
+    }
   };
 
   class ClassAsync {
@@ -75,7 +77,6 @@
   }
 
   (async () => {
-
     const doTestWith = async (type: Type, expectedStackStatements: string[]) => {
       try {
         await ClassAsync.staticAsyncFunc(type);
@@ -86,12 +87,18 @@
         }
         for (const statement of expectedStackStatements) {
           if ((e.stack || '').indexOf(statement) === -1) {
-            console.error(`Unexpected stack format for type ${type}:\n${e.stack}\n\n\nExpected to include:\n${expectedStackStatements.join('\n')}`);
+            console.error(
+              `Unexpected stack format for type ${type}:\n${
+                e.stack
+              }\n\n\nExpected to include:\n${expectedStackStatements.join('\n')}`
+            );
             process.exit(1);
           }
         }
         if (type === 'object' && JSON.stringify((e as Error & { thrown: string }).thrown) !== '{"nonsense":"yes"}') {
-          console.error(`Unexpected e.throw for type ${type}:\n${JSON.stringify((e as Error & { thrown: string }).thrown)}`);
+          console.error(
+            `Unexpected e.throw for type ${type}:\n${JSON.stringify((e as Error & { thrown: string }).thrown)}`
+          );
           process.exit(1);
         }
         return;
@@ -112,7 +119,7 @@
         ' at <async> asyncFunc ',
         ' at <async> paramFunc ',
         ' at <async> staticConstAttrAsync ',
-        ' at <async> staticAsyncFunc ',
+        ' at <async> staticAsyncFunc '
       ]);
       await doTestWith('object', [
         'Error: Thrown[object][object Object]',
@@ -120,17 +127,15 @@
         ' at <async> asyncFunc ',
         ' at <async> paramFunc ',
         ' at <async> staticConstAttrAsync ',
-        ' at <async> staticAsyncFunc ',
+        ' at <async> staticAsyncFunc '
       ]);
       process.exit(0);
     } catch (e) {
       console.error(e);
       return process.exit(1);
     }
-
   })().catch(e => {
     console.error(e);
     process.exit(1);
   });
-
 })();
