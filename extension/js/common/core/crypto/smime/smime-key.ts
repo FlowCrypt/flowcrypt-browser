@@ -306,7 +306,7 @@ export class SmimeKey {
             forge.asn1.oidToDer(attr.type).getBytes()),
           // AttributeValue
           forge.asn1.create(forge.asn1.Class.UNIVERSAL, attr.valueTagClass, false,
-            (valueTagClass === forge.asn1.Type.UTF8) ? forge.util.encodeUtf8(attr.value) : attr.value)]) // tslint:disable-line:no-unsafe-any
+            (valueTagClass === forge.asn1.Type.UTF8) ? forge.util.encodeUtf8(attr.value) : attr.value)]) // eslint-disable-line 
       ]);
     }));
   };

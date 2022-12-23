@@ -45,7 +45,7 @@ export class ComposeSizeModule extends ViewModule<ComposeView> {
     }, 1000);
   };
 
-  public resizeComposeBox = (addExtra: number = 0, cursorOffsetTop?: number) => {
+  public resizeComposeBox = (addExtra = 0, cursorOffsetTop?: number) => {
     if (this.view.isReplyBox) {
       this.view.S.cached('input_text').css('max-width', (this.view.S.cached('body').width()! - 20) + 'px'); // body should always be present
       let minHeight = 0;
@@ -82,7 +82,7 @@ export class ComposeSizeModule extends ViewModule<ComposeView> {
    *
    * @param updateRefBodyHeight - set to true to take a new snapshot of intended html body height
    */
-  public setInputTextHeightManuallyIfNeeded = (updateRefBodyHeight: boolean = false) => {
+  public setInputTextHeightManuallyIfNeeded = (updateRefBodyHeight = false) => {
     if (!this.view.isReplyBox && Catch.browser().name === 'firefox') {
       this.view.S.cached('input_text').css('height', '0');
       let cellHeightExceptText = 0;

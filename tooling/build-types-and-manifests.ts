@@ -1,8 +1,6 @@
+/* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 import { readFileSync, writeFileSync } from 'fs';
 import { execSync as exec } from 'child_process';
-
-// tslint:disable:no-unsafe-any
-// tslint:disable:oneliner-object-literal
 
 /**
  * This file was originally two files: one that edited manifests, and one that copied build folders and edited mock versions
@@ -29,7 +27,13 @@ addManifest('chrome-consumer', manifest => {
 
 addManifest('firefox-consumer', manifest => {
   manifest.version = version;
-  manifest.applications = { gecko: { id: 'firefox@cryptup.io', update_url: 'https://flowcrypt.com/api/update/firefox', strict_min_version: '60.0' } };
+  manifest.applications = {
+    gecko: {
+      id: 'firefox@cryptup.io',
+      update_url: 'https://flowcrypt.com/api/update/firefox', // eslint-disable-line @typescript-eslint/naming-convention
+      strict_min_version: '60.0' // eslint-disable-line @typescript-eslint/naming-convention
+    }
+  };
   manifest.permissions = manifest.permissions.filter((p: string) => p !== 'unlimitedStorage');
   delete manifest.minimum_chrome_version;
 });
@@ -40,9 +44,9 @@ addManifest('chrome-enterprise', manifest => {
   manifest.description = 'FlowCrypt Chrome Extension for Enterprise clients (stable)';
   // careful - changing this will likely cause all extensions to be disabled in their user's browsers
   manifest.permissions = [
-    "storage",
-    "tabs",
-    "https://*.google.com/*",
+    'storage',
+    'tabs',
+    'https://*.google.com/*',
     // customer enterprise environments use people,gmail,oauth2 subdomains of googleapis.com
     // instead of the generic www.googleapis.com subdomain as used by consumer extension
     // consumer extension could eventually start using subdomains as well,
@@ -51,12 +55,14 @@ addManifest('chrome-enterprise', manifest => {
     //        https://partnerissuetracker.corp.google.com/issues/157312473#comment17
     //   - working around the CORS issue by adding *.googleapis.com which
     //        disables installed extensions / asks user to re-enable
-    "https://*.googleapis.com/*",
-    "https://flowcrypt.com/*",
-    "unlimitedStorage"
+    'https://*.googleapis.com/*',
+    'https://flowcrypt.com/*',
+    'unlimitedStorage'
   ];
   for (const csDef of manifest.content_scripts) {
-    csDef.matches = csDef.matches.filter((host: string) => host === 'https://mail.google.com/*' || host === 'https://www.google.com/robots.txt*');
+    csDef.matches = csDef.matches.filter(
+      (host: string) => host === 'https://mail.google.com/*' || host === 'https://www.google.com/robots.txt*'
+    );
   }
   manifest.content_scripts = manifest.content_scripts.filter((csDef: { matches: string[] }) => csDef.matches.length); // remove empty defs
   if (!manifest.content_scripts.length) {
@@ -71,8 +77,8 @@ addManifest('chrome-enterprise', manifest => {
 const CHROME_CONSUMER = 'chrome-consumer';
 const CHROME_ENTERPRISE = 'chrome-enterprise';
 const MOCK_HOST: { [buildType: string]: string } = {
-  'chrome-consumer': 'https://localhost:8001',
-  'chrome-enterprise': 'https://google.mock.localhost:8001',
+  'chrome-consumer': 'https://localhost:8001', // eslint-disable-line @typescript-eslint/naming-convention
+  'chrome-enterprise': 'https://google.mock.localhost:8001' // eslint-disable-line @typescript-eslint/naming-convention
 };
 
 const buildDir = (buildType: string) => `./build/${buildType}`;
@@ -82,7 +88,7 @@ const edit = (filepath: string, editor: (content: string) => string) => {
 };
 
 const updateEnterpriseBuild = () => {
-  const replaceConstsInEnterpriseBuild: { pattern: RegExp, replacement: string }[] = [
+  const replaceConstsInEnterpriseBuild: { pattern: RegExp; replacement: string }[] = [
     {
       pattern: /const FLAVOR = 'consumer';/g,
       replacement: `const FLAVOR = 'enterprise';`
@@ -116,7 +122,10 @@ const makeMockBuild = (sourceBuildType: string) => {
   exec(`cp -r ${buildDir(sourceBuildType)} ${buildDir(mockBuildType)}`);
   const editor = (code: string) => {
     return code
-      .replace(/const (OAUTH_GOOGLE_API_HOST|GMAIL_GOOGLE_API_HOST|PEOPLE_GOOGLE_API_HOST|GOOGLE_OAUTH_SCREEN_HOST) = [^;]+;/g, `const $1 = '${MOCK_HOST[sourceBuildType]}';`)
+      .replace(
+        /const (OAUTH_GOOGLE_API_HOST|GMAIL_GOOGLE_API_HOST|PEOPLE_GOOGLE_API_HOST|GOOGLE_OAUTH_SCREEN_HOST) = [^;]+;/g,
+        `const $1 = '${MOCK_HOST[sourceBuildType]}';`
+      )
       .replace(/const (BACKEND_API_HOST) = [^;]+;/g, `const $1 = 'https://localhost:8001/api/';`)
       .replace(/const (ATTESTER_API_HOST) = [^;]+;/g, `const $1 = 'https://localhost:8001/attester/';`)
       .replace(/https:\/\/flowcrypt\.com\/api\/help\/error/g, 'https://localhost:8001/api/help/error')
@@ -125,8 +134,9 @@ const makeMockBuild = (sourceBuildType: string) => {
   edit(`${buildDir(mockBuildType)}/js/common/core/const.js`, editor);
   edit(`${buildDir(mockBuildType)}/js/common/platform/catch.js`, editor);
   edit(`${buildDir(mockBuildType)}/js/content_scripts/webmail_bundle.js`, editor);
-  edit(`${buildDir(mockBuildType)}/manifest.json`, (code) =>
-    code.replace(/https:\/\/mail\.google\.com/g, 'https://gmail.localhost:8001')
+  edit(`${buildDir(mockBuildType)}/manifest.json`, code =>
+    code
+      .replace(/https:\/\/mail\.google\.com/g, 'https://gmail.localhost:8001')
       .replace(/https:\/\/www\.google\.com/g, 'https://google.localhost:8001')
   );
 };
@@ -134,8 +144,8 @@ const makeMockBuild = (sourceBuildType: string) => {
 const makeLocalFesBuild = (sourceBuildType: string) => {
   const localFesBuildType = `${sourceBuildType}-local-fes`;
   exec(`cp -r ${buildDir(sourceBuildType)} ${buildDir(localFesBuildType)}`);
-  edit(`${buildDir(localFesBuildType)}/js/common/api/account-servers/enterprise-server.js`,
-    code => code.replace('https://fes.${this.domain}', 'http://localhost:32337')
+  edit(`${buildDir(localFesBuildType)}/js/common/api/account-servers/enterprise-server.js`, code =>
+    code.replace('https://fes.${this.domain}', 'http://localhost:32337')
   );
 };
 

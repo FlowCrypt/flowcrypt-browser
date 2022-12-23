@@ -61,7 +61,7 @@ export class Assert {
     }
   };
 
-  public static abortAndRenderErrorIfKeyinfoEmpty = (kis: KeyInfoWithIdentity[], doThrow: boolean = true) => {
+  public static abortAndRenderErrorIfKeyinfoEmpty = (kis: KeyInfoWithIdentity[], doThrow = true) => {
     if (!kis.length) {
       const msg = `Cannot find any account key. Is FlowCrypt not set up yet? ${Ui.retryLink()}`;
       const target = $($('#content').length ? '#content' : 'body');

@@ -5,13 +5,10 @@
     "javascript.preferences.quoteStyle": "single",
     "typescript.preferences.importModuleSpecifier": "relative",
     "typescript.preferences.quoteStyle": "single",
-    "tslint.configFile": "conf/tslint.yaml",
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
     "editor.formatOnSave": true,
     "editor.formatOnPaste": true,
-    "eslint.validate": [
-      "javascript",
-      "typescript",
-    ],
+    "eslint.validate": ["javascript", "typescript"],
     "html.format.enable": false,
     "htmlhint.options": {
       "doctype-first": false
@@ -19,40 +16,29 @@
     "files.exclude": {
       "**/node_modules/**": true
     },
-    "errorLens.enabledDiagnosticLevels": [
-      "error"
-    ],
+    "errorLens.enabledDiagnosticLevels": ["error"],
     "errorLens.errorColor": "#FF00000A",
     "errorLens.errorTextColor": "#FF000066",
     "editor.tabSize": 2,
     "editor.codeActionsOnSave": {
       "source.fixAll.eslint": true,
-      "source.fixAll.tslint": true,
       "source.fixAll.stylelint": true
     },
-    "tslint.exclude": [
-      "test/**/*.ts"
-    ],
     "diffEditor.wordWrap": "on",
-    "editor.rulers": [
-      160
-    ]
+    "editor.rulers": [160]
   },
   "folders": [
     {
       "path": "."
-    },
-    {
-      "path": "../flowcrypt-script"
     }
   ],
   "extensions": {
     "recommendations": [
       "dbaeumer.vscode-eslint",
+      "esbenp.prettier-vscode",
       "stylelint.vscode-stylelint",
-      "ms-vscode.vscode-typescript-tslint-plugin",
-      "mkaufman.htmlhint",
-      "philhindle.errorlens"
+      "htmlhint.vscode-htmlhint",
+      "usernamehw.errorlens"
     ]
   }
 }

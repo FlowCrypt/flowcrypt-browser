@@ -166,7 +166,7 @@ View.run(class PassphraseView extends View {
     $('#passphrase').attr('placeholder', 'Please try again');
   };
 
-  private closeDialog = (entered: boolean = false, initiatorFrameId?: string) => {
+  private closeDialog = (entered = false, initiatorFrameId?: string) => {
     BrowserMsg.send.closeDialog(this.parentTabId);
     BrowserMsg.send.passphraseEntry('broadcast', { entered, initiatorFrameId });
   };

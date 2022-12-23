@@ -30,7 +30,7 @@ export class BgHandlers {
   };
 
   public static ajaxHandler = async (r: Bm.Ajax): Promise<Bm.Res.Ajax> => {
-    return await Api.ajax(r.req, r.stack); // tslint:disable-line:no-direct-ajax
+    return await Api.ajax(r.req, r.stack); // eslint-disable-line
   };
 
   public static ajaxGmailAttachmentGetChunkHandler = async (r: Bm.AjaxGmailAttachmentGetChunk): Promise<Bm.Res.AjaxGmailAttachmentGetChunk> => {
@@ -41,7 +41,7 @@ export class BgHandlers {
     const acctEmails = await GlobalStore.acctEmailsGet();
     if (typeof chrome.runtime.setUninstallURL !== 'undefined') {
       const email = acctEmails?.length ? acctEmails[0] : undefined;
-      chrome.runtime.setUninstallURL(`https://flowcrypt.com/leaving.htm#${JSON.stringify({ email, metrics: null })}`); // tslint:disable-line:no-null-keyword
+      chrome.runtime.setUninstallURL(`https://flowcrypt.com/leaving.htm#${JSON.stringify({ email, metrics: null })}`); // eslint-disable-line no-null/no-null
     }
   };
 
@@ -64,14 +64,14 @@ export class BgHandlers {
 
   public static respondWithSenderTabId = async (r: unknown, sender: Bm.Sender): Promise<Bm.Res._tab_> => {
     if (sender === 'background') {
-      return { tabId: null };  // tslint:disable-line:no-null-keyword
+      return { tabId: null };  // eslint-disable-line no-null/no-null
     } else if (sender.tab) {
       return { tabId: `${sender.tab.id}:${sender.frameId}` };
     } else {
       // sender.tab: "This property will only be present when the connection was opened from a tab (including content scripts)"
       // https://developers.chrome.com/extensions/runtime#type-MessageSender
       // MDN says the same - thus this is most likely a background script, through browser message passing
-      return { tabId: null }; // tslint:disable-line:no-null-keyword
+      return { tabId: null }; // eslint-disable-line no-null/no-null
     }
   };
 

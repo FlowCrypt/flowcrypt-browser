@@ -139,10 +139,13 @@ CAD/VjKYjwJ4MYpcKZ7G3qYvrb3l7m2NTJLAi1yVTm1e5wU=
 
 // todo - add a not found test with: throw new HttpClientErr('Pubkey not found', 404);
 
+/* eslint-disable @typescript-eslint/naming-convention */
 export const mockWkdEndpoints: HandlersDefinition = {
   '/.well-known/openpgpkey/hu/st5or5guodbnsiqbzp6i34xw59h1sgmw?l=wkd': async () => {
     // direct for wkd@google.mock.localhost:8001
-    const pub = await KeyUtil.asPublicKey(await KeyUtil.parse(testConstants.wkdAtgooglemockflowcryptlocalcom8001Private));
+    const pub = await KeyUtil.asPublicKey(
+      await KeyUtil.parse(testConstants.wkdAtgooglemockflowcryptlocalcom8001Private)
+    );
     return Buffer.from((await PgpArmor.dearmor(KeyUtil.armor(pub))).data);
   },
   '/.well-known/openpgpkey/hu/n4qtbfz8ussx74ofsd1cbowqnaeoig3f?l=only.on.wkd': async () => {
@@ -170,7 +173,7 @@ export const mockWkdEndpoints: HandlersDefinition = {
     return Buffer.from([
       ...(await PgpArmor.dearmor(testConstants.somerevokedRevoked1)).data,
       ...(await PgpArmor.dearmor(testConstants.somerevokedValid)).data,
-      ...(await PgpArmor.dearmor(testConstants.somerevokedRevoked2)).data,
+      ...(await PgpArmor.dearmor(testConstants.somerevokedRevoked2)).data
     ]);
   },
   '/.well-known/openpgpkey/localhost/policy': async () => {
@@ -178,5 +181,6 @@ export const mockWkdEndpoints: HandlersDefinition = {
   },
   '/.well-known/openpgpkey/policy': async () => {
     return ''; // allow direct for all
-  },
+  }
 };
+/* eslint-enable @typescript-eslint/naming-convention */

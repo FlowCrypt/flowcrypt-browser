@@ -89,7 +89,7 @@ export class ComposeQuoteModule extends ViewModule<ComposeView> {
       const headers = {
         date: String(decoded.headers.date), from: decoded.from,
         references: String(decoded.headers.references || ''),
-        'message-id': String(decoded.headers['message-id'] || ''),
+        'message-id': String(decoded.headers['message-id'] || ''), // eslint-disable-line @typescript-eslint/naming-convention
       };
       const message = decoded.rawSignedContent ? await Mime.process(Buf.fromUtfStr(decoded.rawSignedContent)) : Mime.processDecoded(decoded);
       const readableBlockTypes = ['encryptedMsg', 'plainText', 'plainHtml', 'signedMsg'];

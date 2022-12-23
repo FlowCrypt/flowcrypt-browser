@@ -12,7 +12,7 @@ export class ComposeAttachmentsModule extends ViewModule<ComposeView> {
 
   public attachment: AttachmentUI;
 
-  constructor(view: ComposeView) {
+  public constructor(view: ComposeView) {
     super(view);
     this.attachment = new AttachmentUI(() => this.getMaxAttachmentSizeAndOversizeNotice());
   }

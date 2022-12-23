@@ -92,7 +92,7 @@ export class Str {
     return ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'][monthIndex];
   };
 
-  public static sloppyRandom = (length: number = 5) => {
+  public static sloppyRandom = (length = 5) => {
     let id = '';
     const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
     for (let i = 0; i < length; i++) {
@@ -150,11 +150,11 @@ export class Str {
     return string.trim().split(' ').map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(' ');
   };
 
-  public static pluralize = (count: number, noun: string, suffix: string = 's'): string => {
+  public static pluralize = (count: number, noun: string, suffix = 's'): string => {
     return `${count} ${noun}${count > 1 ? suffix : ''}`;
   };
 
-  public static toUtcTimestamp = (datetimeStr: string, asStr: boolean = false) => {
+  public static toUtcTimestamp = (datetimeStr: string, asStr = false) => {
     return asStr ? String(Date.parse(datetimeStr)) : Date.parse(datetimeStr);
   };
 
@@ -193,7 +193,7 @@ export class Str {
     if (typeof str === 'undefined') {
       return str;
     }
-    // tslint:disable-next-line:no-unsafe-any
+    // eslint-disable-next-line 
     return decodeURIComponent(Array.prototype.map.call(base64decode(str.replace(/-/g, '+').replace(/_/g, '/')), (c: string) => {
       return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
     }).join(''));
@@ -202,12 +202,12 @@ export class Str {
 }
 
 export class DateUtility {
-  // tslint:disable-next-line:no-null-keyword
+  // eslint-disable-next-line no-null/no-null
   public static asNumber = (date: number | null | undefined): number | null => {
     if (typeof date === 'number') {
       return date;
     } else if (!date) {
-      return null; // tslint:disable-line:no-null-keyword
+      return null; // eslint-disable-line no-null/no-null
     } else {
       return new Date(date).getTime();
     }
@@ -267,7 +267,7 @@ export class Value {
 
 export class Url {
 
-  private static URL_PARAM_DICT: Dict<boolean | null> = { '___cu_true___': true, '___cu_false___': false, '___cu_null___': null }; // tslint:disable-line:no-null-keyword
+  private static URL_PARAM_DICT: Dict<boolean | null> = { '___cu_true___': true, '___cu_false___': false, '___cu_null___': null }; // eslint-disable-line no-null/no-null
 
   /**
    * will convert result to desired format: camelCase or snake_case, based on what was supplied in expectedKeys

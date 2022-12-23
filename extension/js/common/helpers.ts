@@ -28,7 +28,7 @@ export const setPassphraseForPrvs = async (clientConfiguration: ClientConfigurat
 // note: for `replaceKeys = true` need to make sure that `prvs` don't have duplicate identities,
 // they is currently guaranteed by filterKeysToSave()
 // todo: perhaps split into two different functions for add or replace as part of #4545?
-const addOrReplaceKeysAndPassPhrase = async (acctEmail: string, prvs: Key[], ppOptions?: PassphraseOptions, replaceKeys: boolean = false) => {
+const addOrReplaceKeysAndPassPhrase = async (acctEmail: string, prvs: Key[], ppOptions?: PassphraseOptions, replaceKeys = false) => {
   if (replaceKeys) {
     // track longids to remove related passhprases
     const existingKeys = await KeyStore.get(acctEmail);

@@ -53,10 +53,12 @@ export type TestKeyInfo = {
 
 export type TestKeyInfoWithFilepath = TestKeyInfo & { filePath?: string, expired?: boolean };
 
+/* eslint-disable @typescript-eslint/naming-convention */
 interface TestSecretsInterface {
-  ci_admin_token: string;
+  ci_admin_token: string; 
   auth: { google: { email: string, password?: string, secret_2fa?: string }[] };
 }
+/* eslint-enable @typescript-eslint/naming-convention */
 
 export class Config {
 
@@ -65,15 +67,17 @@ export class Config {
   private static _secrets: TestSecretsInterface;
 
   public static secrets = (): TestSecretsInterface => {
+    /* eslint-disable no-underscore-dangle */
     if (!Config._secrets) {
       try {
         Config._secrets = JSON.parse(fs.readFileSync('test/test-secrets.json', 'utf8'));
       } catch (e) {
         console.error(`skipping loading test secrets because ${e}`);
-        Config._secrets = { ci_admin_token: "", auth: { google: [] } };
+        Config._secrets = { ci_admin_token: "", auth: { google: [] } }; // eslint-disable-line @typescript-eslint/naming-convention
       }
     }
     return Config._secrets;
+    /* eslint-enable no-underscore-dangle */
   };
 
   public static key = (title: string) => {

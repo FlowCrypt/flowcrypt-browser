@@ -6,7 +6,7 @@ import { BrowserMsg } from '../../browser/browser-msg.js';
 import { DateUtility, EmailParts, Str, Value } from '../../core/common.js';
 import { Key, KeyUtil, PubkeyInfo, ContactInfoWithSortedPubkeys, KeyIdentity } from '../../core/crypto/key.js';
 
-// tslint:disable:no-null-keyword
+/* eslint-disable no-null/no-null */
 
 export type Email = {
   email: string;
@@ -543,7 +543,7 @@ export class ContactStore extends AbstractStore {
   public static getOneWithAllPubkeys = async (db: IDBDatabase | undefined, email: string):
     Promise<ContactInfoWithSortedPubkeys | undefined> => {
     if (!db) { // relay op through background process
-      // tslint:disable-next-line:no-unsafe-any
+      // eslint-disable-next-line 
       return await BrowserMsg.send.bg.await.db({ f: 'getOneWithAllPubkeys', args: [email] });
     }
     const tx = db.transaction(['emails', 'pubkeys', 'revocations'], 'readonly');
@@ -909,7 +909,7 @@ export class ContactStore extends AbstractStore {
           if (!cursor) {
             resolve(found);
           } else {
-            found.push(cursor.value); // tslint:disable-line:no-unsafe-any
+            found.push(cursor.value); // eslint-disable-line 
             if (query.limit && found.length >= query.limit) {
               resolve(found);
             } else {

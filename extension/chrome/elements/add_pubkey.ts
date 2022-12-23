@@ -22,9 +22,9 @@ View.run(class AddPubkeyView extends View {
   private readonly parentTabId: string;
   private readonly missingPubkeyEmails: string[];
   private readonly fetchKeyUi = new FetchKeyUI();
-  private readonly attachmentUI = new AttachmentUI(() => Promise.resolve({ size_mb: 5, size: 5 * 1024 * 1024, count: 1 }));
+  private readonly attachmentUI = new AttachmentUI(() => Promise.resolve({ size_mb: 5, size: 5 * 1024 * 1024, count: 1 })); // eslint-disable-line @typescript-eslint/naming-convention
 
-  constructor() {
+  public constructor() {
     super();
     const uncheckedUrlParams = Url.parse(['acctEmail', 'parentTabId', 'emails']);
     this.acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');

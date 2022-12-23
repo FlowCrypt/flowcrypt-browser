@@ -31,7 +31,7 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
   private readonly GMAIL_USELESS_CONTACTS_FILTER = '-to:txt.voice.google.com -to:craigslist.org';
   private readonly GMAIL_SEARCH_QUERY_LENGTH_LIMIT = 1400;
 
-  public privatebuildSearchQueryOr = (arr: string[], quoted: boolean = false) => {
+  public privatebuildSearchQueryOr = (arr: string[], quoted = false) => {
     if (quoted) {
       return '("' + arr.join('") OR ("') + '")';
     } else {
@@ -92,7 +92,7 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
     return await Google.gmailCall<GmailRes.GmailMsgSend>(this.acctEmail, 'POST', 'messages/send', request.body, cbs, request.contentType);
   };
 
-  public msgList = async (q: string, includeDeleted: boolean = false, pageToken?: string): Promise<GmailRes.GmailMsgList> => {
+  public msgList = async (q: string, includeDeleted = false, pageToken?: string): Promise<GmailRes.GmailMsgList> => {
     return await Google.gmailCall<GmailRes.GmailMsgList>(this.acctEmail, 'GET', 'messages', { q, includeSpamTrash: includeDeleted, pageToken });
   };
 
@@ -146,7 +146,7 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
           }
           let parsedJsonDataField;
           try {
-            parsedJsonDataField = JSON.parse(chunk).data; // tslint:disable-line:no-unsafe-any
+            parsedJsonDataField = JSON.parse(chunk).data; // eslint-disable-line 
           } catch (e) {
             console.info(e);
             reject(new Error("Chunk response could not be parsed"));
@@ -154,12 +154,12 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
           }
           for (let i = 0; parsedJsonDataField && i < 50; i++) {
             try {
-              resolve(Buf.fromBase64UrlStr(parsedJsonDataField)); // tslint:disable-line:no-unsafe-any
+              resolve(Buf.fromBase64UrlStr(parsedJsonDataField)); // eslint-disable-line 
               return;
             } catch (e) {
               // the chunk of data may have been cut at an inconvenient index
               // shave off up to 50 trailing characters until it can be decoded
-              parsedJsonDataField = parsedJsonDataField.slice(0, -1); // tslint:disable-line:no-unsafe-any
+              parsedJsonDataField = parsedJsonDataField.slice(0, -1); // eslint-disable-line 
             }
           }
           reject(new Error("Chunk response could not be decoded"));

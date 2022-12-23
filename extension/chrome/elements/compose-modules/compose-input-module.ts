@@ -147,9 +147,9 @@ export class ComposeInputModule extends ViewModule<ComposeView> {
             }
             const range = self.getSelection();
             if (self.hasFormat(tag)) {
-              self.changeFormat(null, { tag }, range); // tslint:disable-line:no-null-keyword
+              self.changeFormat(null, { tag }, range); // eslint-disable-line no-null/no-null
             } else {
-              self.changeFormat({ tag }, null, range); // tslint:disable-line:no-null-keyword
+              self.changeFormat({ tag }, null, range); // eslint-disable-line no-null/no-null
             }
           } catch (e) {
             Catch.reportErr(e);

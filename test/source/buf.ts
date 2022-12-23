@@ -4,10 +4,8 @@ import * as ava from 'ava';
 import { Buf } from '../../extension/js/common/core/buf.js';
 import { equals } from './tests/unit-node.js';
 
-// @ts-ignore
-global['btoa'] = (binary: string): string => Buffer.from(binary, 'binary').toString('base64'); // tslint:disable-line:no-string-literal
-// @ts-ignore
-global['atob'] = (b64tr: string): string => Buffer.from(b64tr, 'base64').toString('binary'); // tslint:disable-line:no-string-literal
+global.btoa = (binary: string): string => Buffer.from(binary, 'binary').toString('base64');
+global.atob = (b64tr: string): string => Buffer.from(b64tr, 'base64').toString('binary');
 
 const lousyRandomBytes = (len = 30): Uint8Array => {
   const a = new Uint8Array(len);

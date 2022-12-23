@@ -42,11 +42,11 @@ export class AttachmentDownloadView extends View {
   private downloadButton = $('#download');
   private header = $('#header');
   private originalButtonHTML: string | undefined;
-  private canClickOnAttachment: boolean = false;
+  private canClickOnAttachment = false;
   private downloadInProgress = false;
   private tabId!: string;
 
-  constructor() {
+  public constructor() {
     super();
     const uncheckedUrlParams = Url.parse([
       'acctEmail', 'msgId', 'attachmentId', 'name', 'type', 'size', 'url', 'parentTabId', 'content', 'decrypted', 'frameId', 'isEncrypted', 'errorDetailsOpened'
@@ -195,7 +195,7 @@ export class AttachmentDownloadView extends View {
       xhr.onreadystatechange = function () {
         if (this.readyState === this.DONE) {
           const contentLength = xhr.getResponseHeader('Content-Length');
-          if (contentLength !== null) {
+          if (contentLength !== null) { // eslint-disable-line no-null/no-null
             resolve(parseInt(contentLength));
           } else {
             console.info('was not able to find out file size');

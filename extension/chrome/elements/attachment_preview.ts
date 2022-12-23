@@ -18,13 +18,13 @@ import { Url } from '../../js/common/core/common.js';
 
 type AttachmentType = 'img' | 'txt' | 'pdf';
 
-declare const pdfjsLib: { getDocument: Function }; // tslint:disable-line:ban-types
+declare const pdfjsLib: { getDocument: Function }; // eslint-disable-line @typescript-eslint/ban-types
 
 View.run(class AttachmentPreviewView extends AttachmentDownloadView {
   protected readonly initiatorFrameId?: string;
   private attachmentPreviewContainer = $('#attachment-preview-container');
 
-  constructor() {
+  public constructor() {
     super();
     const uncheckedUrlParams = Url.parse(['initiatorFrameId']);
     this.initiatorFrameId = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'initiatorFrameId');
@@ -47,7 +47,7 @@ View.run(class AttachmentPreviewView extends AttachmentDownloadView {
           } else if (attachmentType === 'txt') { // text
             this.attachmentPreviewContainer.html(`<div class="attachment-preview-txt">${Xss.escape(result.toString()).replace(/\n/g, '<br>')}</div>`); // xss-escaped
           } else if (attachmentType === 'pdf') { // PDF
-            pdfjsLib.getDocument({ data: result }).promise.then(async (pdf: PDFDocumentProxy) => { // tslint:disable-line:no-unsafe-any
+            pdfjsLib.getDocument({ data: result }).promise.then(async (pdf: PDFDocumentProxy) => { // eslint-disable-line
               const previewPdf = new AttachmentPreviewPdf(this.attachmentPreviewContainer, pdf);
               await previewPdf.render();
             });

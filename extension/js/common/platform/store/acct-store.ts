@@ -14,7 +14,10 @@ import { AbstractStore, RawStore } from './abstract-store.js';
 import { InMemoryStore } from './in-memory-store.js';
 
 export type EmailProvider = 'gmail';
-type GoogleAuthScopesNames = [keyof typeof GoogleAuth.OAUTH.scopes, keyof typeof GoogleAuth.OAUTH.legacy_scopes][number];
+type GoogleAuthScopesNames = [
+  keyof typeof GoogleAuth.OAUTH.scopes,
+  keyof typeof GoogleAuth.OAUTH.legacy_scopes
+][number];
 
 export type Scopes = {
   openid: boolean;
@@ -27,11 +30,25 @@ export type Scopes = {
   gmail: boolean;
 };
 
-export type AccountIndex = 'keys' | 'notification_setup_needed_dismissed' | 'email_provider' |
-  'google_token_refresh' | 'hide_message_password' | 'sendAs' |
-  'pubkey_sent_to' | 'full_name' | 'cryptup_enabled' | 'setup_done' |
-  'successfully_received_at_leat_one_message' | 'notification_setup_done_seen' | 'picture' |
-  'outgoing_language' | 'setup_date' | 'use_rich_text' | 'rules' | 'fesUrl';
+export type AccountIndex =
+  | 'keys'
+  | 'notification_setup_needed_dismissed'
+  | 'email_provider'
+  | 'google_token_refresh'
+  | 'hide_message_password'
+  | 'sendAs'
+  | 'pubkey_sent_to'
+  | 'full_name'
+  | 'cryptup_enabled'
+  | 'setup_done'
+  | 'successfully_received_at_leat_one_message'
+  | 'notification_setup_done_seen'
+  | 'picture'
+  | 'outgoing_language'
+  | 'setup_date'
+  | 'use_rich_text'
+  | 'rules'
+  | 'fesUrl';
 
 export type SendAsAlias = {
   isPrimary: boolean;
@@ -40,6 +57,7 @@ export type SendAsAlias = {
   footer?: string | null;
 };
 
+/* eslint-disable @typescript-eslint/naming-convention */
 export type AcctStoreDict = {
   keys?: (StoredKeyInfo | KeyInfoWithIdentity)[]; // todo - migrate to KeyInfoWithIdentity only
   notification_setup_needed_dismissed?: boolean;
@@ -47,7 +65,7 @@ export type AcctStoreDict = {
   google_token_refresh?: string;
   hide_message_password?: boolean; // is global?
   sendAs?: Dict<SendAsAlias>;
-  addresses?: string[],
+  addresses?: string[];
   pubkey_sent_to?: string[];
   full_name?: string;
   cryptup_enabled?: boolean;
@@ -61,17 +79,18 @@ export type AcctStoreDict = {
   rules?: ClientConfigurationJson;
   fesUrl?: string; // url where FlowCrypt Enterprise Server is deployed
 };
+/* eslint-enable @typescript-eslint/naming-convention */
 
 /**
  * Local storage of data related to a particular email account
  */
 export class AcctStore extends AbstractStore {
-
   public static get = async (acctEmail: string, keys: AccountIndex[]): Promise<AcctStoreDict> => {
     if (Env.isContentScript()) {
       // extension storage can be disallowed in rare cases for content scripts throwing 'Error: Access to extension API denied.'
       // go through bg script to avoid such errors
-      for (let i = 0; i < 10; i++) { // however backend may not be immediately ready to respond - retry
+      for (let i = 0; i < 10; i++) {
+        // however backend may not be immediately ready to respond - retry
         try {
           return await BrowserMsg.send.bg.await.storeAcctGet({ acctEmail, keys });
         } catch (e) {
@@ -83,13 +102,13 @@ export class AcctStore extends AbstractStore {
       }
       throw new BgNotReadyErr('this should never happen');
     }
-    const storageObj = await storageLocalGet(AcctStore.singleScopeRawIndexArr(acctEmail, keys)) as RawStore;
+    const storageObj = (await storageLocalGet(AcctStore.singleScopeRawIndexArr(acctEmail, keys))) as RawStore;
     const result = AcctStore.buildSingleAccountStoreFromRawResults(acctEmail, storageObj) as AcctStoreDict;
     return AcctStore.fixAcctStorageResult(acctEmail, result, keys);
   };
 
   public static getAccounts = async (acctEmails: string[], keys: string[]): Promise<Dict<AcctStoreDict>> => {
-    const storageObj = await storageLocalGet(AcctStore.manyScopesRawIndexArr(acctEmails, keys)) as RawStore;
+    const storageObj = (await storageLocalGet(AcctStore.manyScopesRawIndexArr(acctEmails, keys))) as RawStore;
     const resultsByAcct: Dict<AcctStoreDict> = {};
     for (const account of acctEmails) {
       resultsByAcct[account] = AcctStore.buildSingleAccountStoreFromRawResults(account, storageObj);
@@ -129,8 +148,14 @@ export class AcctStore extends AbstractStore {
     const accessToken = await InMemoryStore.get(acctEmail, InMemoryStoreKeys.GOOGLE_TOKEN_ACCESS);
     // const { google_token_scopes } = await AcctStore.get(acctEmail, ['google_token_scopes']);
     const result: { [key in GoogleAuthScopesNames]: boolean } = {
-      email: false, openid: false, profile: false, compose: false,
-      modify: false, readContacts: false, readOtherContacts: false, gmail: false
+      email: false,
+      openid: false,
+      profile: false,
+      compose: false,
+      modify: false,
+      readContacts: false,
+      readOtherContacts: false,
+      gmail: false
     };
     if (!accessToken) {
       return result;
@@ -147,19 +172,26 @@ export class AcctStore extends AbstractStore {
     for (const key of Object.keys({ ...GoogleAuth.OAUTH.scopes, ...GoogleAuth.OAUTH.legacy_scopes })) {
       const scopeName = key as GoogleAuthScopesNames;
       if (scopeName in GoogleAuth.OAUTH.scopes) {
-        result[scopeName] = allowedScopes.includes(GoogleAuth.OAUTH.scopes[scopeName as keyof typeof GoogleAuth.OAUTH.scopes]);
+        result[scopeName] = allowedScopes.includes(
+          GoogleAuth.OAUTH.scopes[scopeName as keyof typeof GoogleAuth.OAUTH.scopes]
+        );
       } else if (scopeName in GoogleAuth.OAUTH.legacy_scopes) {
-        result[scopeName] = allowedScopes.includes(GoogleAuth.OAUTH.legacy_scopes[scopeName as keyof typeof GoogleAuth.OAUTH.legacy_scopes]);
+        result[scopeName] = allowedScopes.includes(
+          GoogleAuth.OAUTH.legacy_scopes[scopeName as keyof typeof GoogleAuth.OAUTH.legacy_scopes]
+        );
       }
     }
     return result;
   };
 
-  private static fixAcctStorageResult = (acctEmail: string, acctStore: AcctStoreDict, keys: AccountIndex[]): AcctStoreDict => {
+  private static fixAcctStorageResult = (
+    acctEmail: string,
+    acctStore: AcctStoreDict,
+    keys: AccountIndex[]
+  ): AcctStoreDict => {
     if (keys.includes('sendAs') && !acctStore.sendAs) {
       acctStore.sendAs = { [acctEmail]: { isPrimary: true, isDefault: true } };
     }
     return acctStore;
   };
-
 }

@@ -119,8 +119,8 @@ export class Catch {
 
   public static isPromise = (v: unknown): v is Promise<unknown> => {
     return !!v && typeof v === 'object'
-      && typeof (v as Promise<unknown>).then === 'function' // tslint:disable-line:no-unbound-method - only testing if exists
-      && typeof (v as Promise<unknown>).catch === 'function'; // tslint:disable-line:no-unbound-method - only testing if exists
+      && typeof (v as Promise<unknown>).then === 'function' // eslint-disable-line @typescript-eslint/unbound-method, , , , , 
+      && typeof (v as Promise<unknown>).catch === 'function'; // eslint-disable-line @typescript-eslint/unbound-method, , , , , 
   };
 
   public static try = (code: () => void | Promise<void>) => {
@@ -287,7 +287,7 @@ export class Catch {
 
   private static doSendErrorToFlowCryptComBackend = (errorReport: ErrorReport) => {
     try {
-      $.ajax({ // tslint:disable-line:no-direct-ajax
+      $.ajax({ // eslint-disable-line 
         url: 'https://flowcrypt.com/api/help/error',
         method: 'POST',
         data: JSON.stringify(errorReport),

@@ -47,7 +47,7 @@ export class ComposeView extends View {
   public fesUrl?: string;
   public skipClickPrompt: boolean;
   public draftId: string;
-  public threadId: string = '';
+  public threadId = '';
   public ppChangedPromiseCancellation: PromiseCancellation = { cancel: false };
 
   public tabId!: string;

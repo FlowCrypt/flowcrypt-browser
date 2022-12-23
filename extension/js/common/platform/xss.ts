@@ -47,7 +47,7 @@ export class Xss {
    */
   public static htmlSanitize = (dirtyHtml: string): string => {
     Xss.throwIfNotSupported();
-    return DOMPurify.sanitize(dirtyHtml, { // tslint:disable-line:oneliner-object-literal
+    return DOMPurify.sanitize(dirtyHtml, { // eslint-disable-line 
       ADD_ATTR: Xss.ADD_ATTR,
       FORBID_ATTR: Xss.FORBID_ATTR,
       ALLOWED_URI_REGEXP: Xss.sanitizeHrefRegexp(),

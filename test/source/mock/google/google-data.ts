@@ -6,18 +6,47 @@ import { readdir, readFile } from 'fs';
 import { Util } from '../../util/index';
 import { ParseMsgResult } from '../../util/parse';
 
-type GmailMsg$header = { name: string, value: string };
-type GmailMsg$payload$body = { attachmentId?: string, size: number, data?: string };
-type GmailMsg$payload$part = { partId?: string, body?: GmailMsg$payload$body, filename?: string, mimeType?: string, headers?: GmailMsg$header[], parts?: GmailMsg$payload$part[] };
-type GmailMsg$payload = { partId?: string, filename?: string, parts?: GmailMsg$payload$part[], headers?: GmailMsg$header[], mimeType?: string, body?: GmailMsg$payload$body };
+type GmailMsg$header = { name: string; value: string };
+type GmailMsg$payload$body = { attachmentId?: string; size: number; data?: string };
+type GmailMsg$payload$part = {
+  partId?: string;
+  body?: GmailMsg$payload$body;
+  filename?: string;
+  mimeType?: string;
+  headers?: GmailMsg$header[];
+  parts?: GmailMsg$payload$part[];
+};
+type GmailMsg$payload = {
+  partId?: string;
+  filename?: string;
+  parts?: GmailMsg$payload$part[];
+  headers?: GmailMsg$header[];
+  mimeType?: string;
+  body?: GmailMsg$payload$body;
+};
 type GmailMsg$labelId = 'INBOX' | 'UNREAD' | 'CATEGORY_PERSONAL' | 'IMPORTANT' | 'SENT' | 'CATEGORY_UPDATES' | 'DRAFT';
-type GmailThread = { historyId: string; id: string; snippet: string; };
-type Label = { id: string, name: string, messageListVisibility: 'show' | 'hide', labelListVisibility: 'labelShow' | 'labelHide', type: 'system' };
-type AcctDataFile = { messages: GmailMsg[]; drafts: GmailMsg[], attachments: { [id: string]: { data: string, size: number, filename?: string } }, labels: Label[] };
-type ExportedMsg = { acctEmail: string, full: GmailMsg, raw: GmailMsg, attachments: { [id: string]: { data: string, size: number } } };
+type GmailThread = { historyId: string; id: string; snippet: string };
+type Label = {
+  id: string;
+  name: string;
+  messageListVisibility: 'show' | 'hide';
+  labelListVisibility: 'labelShow' | 'labelHide';
+  type: 'system';
+};
+type AcctDataFile = {
+  messages: GmailMsg[];
+  drafts: GmailMsg[];
+  attachments: { [id: string]: { data: string; size: number; filename?: string } };
+  labels: Label[];
+};
+type ExportedMsg = {
+  acctEmail: string;
+  full: GmailMsg;
+  raw: GmailMsg;
+  attachments: { [id: string]: { data: string; size: number } };
+};
 
 export class GmailMsg {
-
   public id: string;
   public historyId: string;
   public sizeEstimate?: number;
@@ -28,7 +57,7 @@ export class GmailMsg {
   public snippet?: string;
   public raw?: string;
 
-  constructor(msg: { id: string, labelId: GmailMsg$labelId, raw: string, mimeMsg: ParsedMail }) {
+  constructor(msg: { id: string; labelId: GmailMsg$labelId; raw: string; mimeMsg: ParsedMail }) {
     this.id = msg.id;
     this.historyId = msg.id;
     this.threadId = msg.id;
@@ -52,9 +81,12 @@ export class GmailMsg {
     this.payload = {
       mimeType: contentTypeHeader.value,
       headers: [
-        { name: "Content-Type", value: `${contentTypeHeader.value}; boundary=\"${contentTypeHeader.params.boundary}\"` },
-        { name: "Message-Id", value: messageIdHeader },
-        { name: "Mime-Version", value: mimeVersionHeader }
+        {
+          name: 'Content-Type',
+          value: `${contentTypeHeader.value}; boundary=\"${contentTypeHeader.params.boundary}\"`
+        },
+        { name: 'Message-Id', value: messageIdHeader },
+        { name: 'Mime-Version', value: mimeVersionHeader }
       ],
       body
     };
@@ -74,9 +106,10 @@ export class GmailMsg {
 }
 
 export class GmailParser {
-
   public static findHeader = (apiGmailMsgObj: GmailMsg | GmailMsg$payload, headerName: string) => {
-    const node: GmailMsg$payload = apiGmailMsgObj.hasOwnProperty('payload') ? (apiGmailMsgObj as GmailMsg).payload! : apiGmailMsgObj as GmailMsg$payload;
+    const node: GmailMsg$payload = apiGmailMsgObj.hasOwnProperty('payload')
+      ? (apiGmailMsgObj as GmailMsg).payload!
+      : (apiGmailMsgObj as GmailMsg$payload);
     if (typeof node.headers !== 'undefined') {
       for (const header of node.headers) {
         if (header.name.toLowerCase() === headerName.toLowerCase()) {
@@ -86,7 +119,6 @@ export class GmailParser {
     }
     return undefined;
   };
-
 }
 
 const DATA: { [acct: string]: AcctDataFile } = {};
@@ -97,7 +129,6 @@ const DATA: { [acct: string]: AcctDataFile } = {};
  *   Either that, or have each instance hold data independently (unless it turns out there are memory issues)
  */
 export class GoogleData {
-
   /**
    * This is the proper way to add messages to mock api for testing:
    *   1) log into flowcrypt.compatibility@gmail.com
@@ -113,16 +144,32 @@ export class GoogleData {
   public static withInitializedData = async (acct: string): Promise<GoogleData> => {
     if (typeof DATA[acct] === 'undefined') {
       const acctData: AcctDataFile = {
-        drafts: [], messages: [], attachments: {}, labels:
-          [
-            { id: 'INBOX', name: 'Inbox', messageListVisibility: 'show', labelListVisibility: 'labelShow', type: 'system' },
-            { id: 'DRAFT', name: 'Drafts', messageListVisibility: 'show', labelListVisibility: 'labelShow', type: 'system' }
-          ]
+        drafts: [],
+        messages: [],
+        attachments: {},
+        labels: [
+          {
+            id: 'INBOX',
+            name: 'Inbox',
+            messageListVisibility: 'show',
+            labelListVisibility: 'labelShow',
+            type: 'system'
+          },
+          {
+            id: 'DRAFT',
+            name: 'Drafts',
+            messageListVisibility: 'show',
+            labelListVisibility: 'labelShow',
+            type: 'system'
+          }
+        ]
       };
       const dir = GoogleData.exportedMsgsPath;
-      const filenames: string[] = await new Promise((res, rej) => readdir(dir, (e, f) => e ? rej(e) : res(f)));
-      const filePromises = filenames.map(f => new Promise((res, rej) => readFile(dir + f, (e, d) => e ? rej(e) : res(d))));
-      const files = await Promise.all(filePromises) as Uint8Array[];
+      const filenames: string[] = await new Promise((res, rej) => readdir(dir, (e, f) => (e ? rej(e) : res(f))));
+      const filePromises = filenames.map(
+        f => new Promise((res, rej) => readFile(dir + f, (e, d) => (e ? rej(e) : res(d))))
+      );
+      const files = (await Promise.all(filePromises)) as Uint8Array[];
       for (const file of files) {
         const utfStr = new TextDecoder().decode(file);
         const json = JSON.parse(utfStr) as ExportedMsg;
@@ -149,7 +196,9 @@ export class GoogleData {
     const msgCopy = JSON.parse(JSON.stringify(m)) as GmailMsg;
     if (format === 'raw') {
       if (!msgCopy.raw) {
-        throw new Error(`MOCK: format=raw missing data for message id ${m.id}. Solution: add them to ./test/source/mock/data/google/exported-messages`);
+        throw new Error(
+          `MOCK: format=raw missing data for message id ${m.id}. Solution: add them to ./test/source/mock/data/google/exported-messages`
+        );
       }
     } else {
       msgCopy.raw = undefined;
@@ -182,7 +231,15 @@ export class GoogleData {
   };
 
   private static msgPeople = (m: GmailMsg): string => {
-    return String(m.payload && m.payload.headers && m.payload.headers.filter(h => h.name === 'To' || h.name === 'From').map(h => h.value!).filter(h => !!h).join(','));
+    return String(
+      m.payload &&
+        m.payload.headers &&
+        m.payload.headers
+          .filter(h => h.name === 'To' || h.name === 'From')
+          .map(h => h.value!)
+          .filter(h => !!h)
+          .join(',')
+    );
   };
 
   constructor(private acct: string) {
@@ -196,7 +253,12 @@ export class GoogleData {
     const parsedMail = parseResult.mimeMsg;
     for (const attachment of parsedMail.attachments || []) {
       const attId = Util.lousyRandom();
-      const gmailAtt = { data: attachment.content.toString('base64'), size: attachment.size, filename: attachment.filename, id: attId };
+      const gmailAtt = {
+        data: attachment.content.toString('base64'),
+        size: attachment.size,
+        filename: attachment.filename,
+        id: attId
+      };
       DATA[this.acct].attachments[attId] = gmailAtt;
       if (attachment.filename === 'encrypted.asc') {
         bodyContentAtt = gmailAtt;
@@ -211,9 +273,10 @@ export class GoogleData {
     } else {
       throw new Error('MOCK storeSentMessage: no parsedMail body, no appropriate bodyContentAtt');
     }
-    const barebonesGmailMsg: GmailMsg = { // todo - could be improved - very barebones
+    const barebonesGmailMsg: GmailMsg = {
+      // todo - could be improved - very barebones
       id,
-      threadId: parseResult.threadId ?? null, // tslint:disable-line:no-null-keyword
+      threadId: parseResult.threadId ?? null, // eslint-disable-line no-null/no-null
       historyId: '',
       labelIds: ['SENT' as GmailMsg$labelId],
       payload: {
@@ -248,9 +311,13 @@ export class GoogleData {
       // messages just filtered by subject
       return this.searchMessagesBySubject(subject);
     }
-    const excludePeople = (q.match(this.exludePplSearchQuery) || []).map(e => e.replace(/^(-from|-to):/, '').replace(/"/g, ''));
+    const excludePeople = (q.match(this.exludePplSearchQuery) || []).map(e =>
+      e.replace(/^(-from|-to):/, '').replace(/"/g, '')
+    );
     q = q.replace(this.exludePplSearchQuery, ' ');
-    const includePeople = (q.match(this.includePplSearchQuery) || []).map(e => e.replace(/^(from|to):/, '').replace(/"/g, ''));
+    const includePeople = (q.match(this.includePplSearchQuery) || []).map(e =>
+      e.replace(/^(from|to):/, '').replace(/"/g, '')
+    );
     if (includePeople.length || excludePeople.length) {
       // if any to,from query found, all such queries are collected
       // no distinction made between to and from, just searches headers
@@ -286,9 +353,9 @@ export class GoogleData {
 
   public getThreads = (labelIds: string[] = []) => {
     const threads: GmailThread[] = [];
-    for (const thread of this.getMessagesAndDrafts().
-      filter(m => labelIds.length ? (m.labelIds || []).some(l => labelIds.includes(l)) : true).
-      map(m => ({ historyId: m.historyId, id: m.threadId!, snippet: `MOCK SNIPPET: ${GoogleData.msgSubject(m)}` }))) {
+    for (const thread of this.getMessagesAndDrafts()
+      .filter(m => (labelIds.length ? (m.labelIds || []).some(l => labelIds.includes(l)) : true))
+      .map(m => ({ historyId: m.historyId, id: m.threadId!, snippet: `MOCK SNIPPET: ${GoogleData.msgSubject(m)}` }))) {
       if (thread.id && !threads.map(t => t.id).includes(thread.id)) {
         threads.push(thread);
       }
@@ -314,28 +381,31 @@ export class GoogleData {
       const msgPeople = GoogleData.msgPeople(m).toLowerCase();
       let shouldInclude = false;
       let shouldExclude = false;
-      if (includePeople.length) { // filter who to include
+      if (includePeople.length) {
+        // filter who to include
         for (const includePerson of includePeople) {
           if (msgPeople.includes(includePerson)) {
             shouldInclude = true;
             break;
           }
         }
-      } else { // do not filter who to include - include any
+      } else {
+        // do not filter who to include - include any
         shouldInclude = true;
       }
-      if (excludePeople.length) { // filter who to exclude
+      if (excludePeople.length) {
+        // filter who to exclude
         for (const excludePerson of excludePeople) {
           if (msgPeople.includes(excludePerson)) {
             shouldExclude = true;
             break;
           }
         }
-      } else { // don't exclude anyone
+      } else {
+        // don't exclude anyone
         shouldExclude = false;
       }
       return shouldInclude && !shouldExclude;
     });
   };
-
 }

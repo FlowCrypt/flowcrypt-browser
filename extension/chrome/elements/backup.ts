@@ -20,7 +20,7 @@ View.run(class BackupView extends View {
   private readonly armoredPrvBackup: string;
   private storedPrvWithMatchingLongid: KeyInfoWithIdentity | undefined;
 
-  constructor() {
+  public constructor() {
     super();
     const uncheckedUrlParams = Url.parse(['acctEmail', 'armoredPrvBackup', 'parentTabId', 'frameId']);
     this.acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');

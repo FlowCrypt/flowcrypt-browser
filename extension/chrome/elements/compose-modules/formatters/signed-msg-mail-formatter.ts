@@ -35,7 +35,7 @@ export class SignedMsgMailFormatter extends BaseMailFormatter {
       //  - don't require text to be sent as an attachment
       //  - don't require all other clients to support PGP/MIME
       // then please const me know. Eagerly waiting! In the meanwhile..
-      newMsg.plaintext = (window as unknown as BrowserWindow)['emailjs-mime-codec'].foldLines(newMsg.plaintext, 76, true); // tslint:disable-line:no-unsafe-any
+      newMsg.plaintext = (window as unknown as BrowserWindow)['emailjs-mime-codec'].foldLines(newMsg.plaintext, 76, true); // eslint-disable-line 
       // Gmail will also remove trailing spaces on the end of each line in transit, causing signatures that don't match
       // Removing them here will prevent Gmail from screwing up the signature
       newMsg.plaintext = newMsg.plaintext.split('\n').map(l => l.replace(/\s+$/g, '')).join('\n').trim();

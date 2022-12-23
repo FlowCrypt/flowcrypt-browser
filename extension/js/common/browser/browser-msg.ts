@@ -7,7 +7,14 @@ import { AjaxErr } from '../api/shared/api-error.js';
 import { Buf } from '../core/buf.js';
 import { Dict, Str, UrlParams } from '../core/common.js';
 import { ArmoredKeyIdentityWithEmails, KeyUtil } from '../core/crypto/key.js';
-import { DecryptResult, DiagnoseMsgPubkeysResult, MsgUtil, PgpMsgMethod, PgpMsgTypeResult, VerifyRes } from '../core/crypto/pgp/msg-util.js';
+import {
+  DecryptResult,
+  DiagnoseMsgPubkeysResult,
+  MsgUtil,
+  PgpMsgMethod,
+  PgpMsgTypeResult,
+  VerifyRes
+} from '../core/crypto/pgp/msg-util.js';
 import { NotificationGroupType } from '../notifications.js';
 import { Catch } from '../platform/catch.js';
 import { AccountIndex, AcctStoreDict } from '../platform/store/acct-store.js';
@@ -25,18 +32,30 @@ export namespace Bm {
   export type Dest = string;
   export type Sender = chrome.runtime.MessageSender | 'background';
   export type Response = unknown;
-  export type RawResponse = { result: unknown, objUrls: { [name: string]: string }, exception?: Bm.ErrAsJson };
-  export type Raw = { name: string; data: { bm: AnyRequest | {}, objUrls: Dict<string> }; to: Dest | null; uid: string; stack: string };
+  export type RawResponse = { result: unknown; objUrls: { [name: string]: string }; exception?: Bm.ErrAsJson };
+  export type Raw = {
+    name: string;
+    data: { bm: AnyRequest | object; objUrls: Dict<string> };
+    to: Dest | null;
+    uid: string;
+    stack: string;
+  };
 
-  export type SetCss = { css: Dict<string>, traverseUp?: number, selector: string; };
-  export type AddOrRemoveClass = { class: string, selector: string; };
-  export type Settings = { path?: string, page?: string, acctEmail?: string, pageUrlParams?: UrlParams, addNewAcct?: boolean };
-  export type PassphraseDialog = { type: PassphraseDialogType, longids: string[], initiatorFrameId?: string };
+  export type SetCss = { css: Dict<string>; traverseUp?: number; selector: string };
+  export type AddOrRemoveClass = { class: string; selector: string };
+  export type Settings = {
+    path?: string;
+    page?: string;
+    acctEmail?: string;
+    pageUrlParams?: UrlParams;
+    addNewAcct?: boolean;
+  };
+  export type PassphraseDialog = { type: PassphraseDialogType; longids: string[]; initiatorFrameId?: string };
   export type ScrollToReplyBox = { replyMsgId: string };
-  export type ScrollToCursorInReplyBox = { replyMsgId: string, cursorOffsetTop: number };
-  export type NotificationShow = { notification: string, group: NotificationGroupType, callbacks?: Dict<() => void> };
+  export type ScrollToCursorInReplyBox = { replyMsgId: string; cursorOffsetTop: number };
+  export type NotificationShow = { notification: string; group: NotificationGroupType; callbacks?: Dict<() => void> };
   export type NotificationShowAuthPopupNeeded = { acctEmail: string };
-  export type RenderPublicKeys = { afterFrameId: string, publicKeys: string[], traverseUp?: number };
+  export type RenderPublicKeys = { afterFrameId: string; publicKeys: string[]; traverseUp?: number };
   export type SubscribeDialog = { isAuthErr?: boolean };
   export type ComposeWindow = { frameId: string };
   export type ComposeWindowOpenDraft = { draftId: string };
@@ -44,33 +63,42 @@ export namespace Bm {
   export type AddPubkeyDialog = { emails: string[] };
   export type Reload = { advanced?: boolean };
   export type Redirect = { location: string };
-  export type OpenGoogleAuthDialog = { acctEmail?: string, scopes?: string[] };
-  export type OpenPage = { page: string, addUrlText?: string | UrlParams };
-  export type PassphraseEntry = { entered: boolean, initiatorFrameId?: string };
-  export type AuthWindowResult = { url?: string, error?: string };
-  export type Db = { f: string, args: unknown[] };
-  export type InMemoryStoreSet = { acctEmail: string, key: string, value: string | undefined, expiration: number | undefined };
-  export type InMemoryStoreGet = { acctEmail: string, key: string };
-  export type StoreGlobalGet = { keys: GlobalIndex[]; };
-  export type StoreGlobalSet = { values: GlobalStoreDict; };
-  export type StoreAcctGet = { acctEmail: string, keys: AccountIndex[]; };
-  export type StoreAcctSet = { acctEmail: string, values: AcctStoreDict; };
-  export type ReconnectAcctAuthPopup = { acctEmail: string, scopes?: string[] };
+  export type OpenGoogleAuthDialog = { acctEmail?: string; scopes?: string[] };
+  export type OpenPage = { page: string; addUrlText?: string | UrlParams };
+  export type PassphraseEntry = { entered: boolean; initiatorFrameId?: string };
+  export type AuthWindowResult = { url?: string; error?: string };
+  export type Db = { f: string; args: unknown[] };
+  export type InMemoryStoreSet = {
+    acctEmail: string;
+    key: string;
+    value: string | undefined;
+    expiration: number | undefined;
+  };
+  export type InMemoryStoreGet = { acctEmail: string; key: string };
+  export type StoreGlobalGet = { keys: GlobalIndex[] };
+  export type StoreGlobalSet = { values: GlobalStoreDict };
+  export type StoreAcctGet = { acctEmail: string; keys: AccountIndex[] };
+  export type StoreAcctSet = { acctEmail: string; values: AcctStoreDict };
+  export type ReconnectAcctAuthPopup = { acctEmail: string; scopes?: string[] };
   export type PgpMsgDecrypt = PgpMsgMethod.Arg.Decrypt;
   export type PgpMsgDiagnoseMsgPubkeys = PgpMsgMethod.Arg.DiagnosePubkeys;
   export type PgpMsgVerifyDetached = PgpMsgMethod.Arg.VerifyDetached;
   export type PgpMsgType = PgpMsgMethod.Arg.Type;
   export type PgpKeyBinaryToArmored = { binaryKeysData: Uint8Array };
-  export type Ajax = { req: JQueryAjaxSettings, stack: string };
-  export type AjaxGmailAttachmentGetChunk = { acctEmail: string, msgId: string, attachmentId: string };
+  export type Ajax = { req: JQueryAjaxSettings; stack: string };
+  export type AjaxGmailAttachmentGetChunk = { acctEmail: string; msgId: string; attachmentId: string };
   export type ShowAttachmentPreview = { iframeUrl: string };
   export type ReRenderRecipient = { email: string };
-  export type SaveFetchedPubkeys = { email: string, pubkeys: string[] };
-  export type ProcessAndStoreKeysFromEkmLocally = { acctEmail: string, decryptedPrivateKeys: string[] };
+  export type SaveFetchedPubkeys = { email: string; pubkeys: string[] };
+  export type ProcessAndStoreKeysFromEkmLocally = { acctEmail: string; decryptedPrivateKeys: string[] };
   export type GetLocalKeyExpiration = { acctEmail: string };
 
   export namespace Res {
-    export type GetActiveTabInfo = { provider: 'gmail' | undefined, acctEmail: string | undefined, sameWorld: boolean | undefined };
+    export type GetActiveTabInfo = {
+      provider: 'gmail' | undefined;
+      acctEmail: string | undefined;
+      sameWorld: boolean | undefined;
+    };
     export type InMemoryStoreGet = string | null;
     export type InMemoryStoreSet = void;
     export type StoreGlobalGet = GlobalStoreDict;
@@ -84,30 +112,81 @@ export namespace Bm {
     export type PgpMsgType = PgpMsgTypeResult;
     export type PgpKeyBinaryToArmored = { keys: ArmoredKeyIdentityWithEmails[] };
     export type AjaxGmailAttachmentGetChunk = { chunk: Buf };
-    export type _tab_ = { tabId: string | null | undefined };
+    export type _tab_ = { tabId: string | null | undefined }; // eslint-disable-line @typescript-eslint/naming-convention
     export type SaveFetchedPubkeys = boolean;
     export type GetLocalKeyExpiration = number | undefined;
-    export type ProcessAndStoreKeysFromEkmLocally = { needPassphrase?: boolean, updateCount?: number, noKeysSetup?: boolean };
+    export type ProcessAndStoreKeysFromEkmLocally = {
+      needPassphrase?: boolean;
+      updateCount?: number;
+      noKeysSetup?: boolean;
+    };
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     export type Db = any; // not included in Any below
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     export type Ajax = any; // not included in Any below
 
-    export type Any = GetActiveTabInfo | _tab_ | ReconnectAcctAuthPopup
-      | PgpMsgDecrypt | PgpMsgDiagnoseMsgPubkeys | PgpMsgVerify | PgpMsgType
-      | InMemoryStoreGet | InMemoryStoreSet | StoreAcctGet | StoreAcctSet | StoreGlobalGet | StoreGlobalSet
-      | AjaxGmailAttachmentGetChunk | SaveFetchedPubkeys | ProcessAndStoreKeysFromEkmLocally
-      | PgpKeyBinaryToArmored | GetLocalKeyExpiration;
+    export type Any =
+      | GetActiveTabInfo
+      | _tab_
+      | ReconnectAcctAuthPopup
+      | PgpMsgDecrypt
+      | PgpMsgDiagnoseMsgPubkeys
+      | PgpMsgVerify
+      | PgpMsgType
+      | InMemoryStoreGet
+      | InMemoryStoreSet
+      | StoreAcctGet
+      | StoreAcctSet
+      | StoreGlobalGet
+      | StoreGlobalSet
+      | AjaxGmailAttachmentGetChunk
+      | SaveFetchedPubkeys
+      | ProcessAndStoreKeysFromEkmLocally
+      | PgpKeyBinaryToArmored
+      | GetLocalKeyExpiration;
   }
 
-  export type AnyRequest = PassphraseEntry | OpenPage | OpenGoogleAuthDialog | Redirect | Reload |
-    AddPubkeyDialog | ReinsertReplyBox | ComposeWindow | ScrollToReplyBox | ScrollToCursorInReplyBox | SubscribeDialog |
-    RenderPublicKeys | NotificationShowAuthPopupNeeded | ComposeWindowOpenDraft |
-    NotificationShow | PassphraseDialog | PassphraseDialog | Settings | SetCss | AddOrRemoveClass | ReconnectAcctAuthPopup |
-    Db | InMemoryStoreSet | InMemoryStoreGet | StoreGlobalGet | StoreGlobalSet | StoreAcctGet | StoreAcctSet |
-    PgpMsgDecrypt | PgpMsgDiagnoseMsgPubkeys | PgpMsgVerifyDetached | PgpMsgType | Ajax |
-    ShowAttachmentPreview | ReRenderRecipient | SaveFetchedPubkeys | ProcessAndStoreKeysFromEkmLocally | GetLocalKeyExpiration |
-    PgpKeyBinaryToArmored | AuthWindowResult;
+  export type AnyRequest =
+    | PassphraseEntry
+    | OpenPage
+    | OpenGoogleAuthDialog
+    | Redirect
+    | Reload
+    | AddPubkeyDialog
+    | ReinsertReplyBox
+    | ComposeWindow
+    | ScrollToReplyBox
+    | ScrollToCursorInReplyBox
+    | SubscribeDialog
+    | RenderPublicKeys
+    | NotificationShowAuthPopupNeeded
+    | ComposeWindowOpenDraft
+    | NotificationShow
+    | PassphraseDialog
+    | PassphraseDialog
+    | Settings
+    | SetCss
+    | AddOrRemoveClass
+    | ReconnectAcctAuthPopup
+    | Db
+    | InMemoryStoreSet
+    | InMemoryStoreGet
+    | StoreGlobalGet
+    | StoreGlobalSet
+    | StoreAcctGet
+    | StoreAcctSet
+    | PgpMsgDecrypt
+    | PgpMsgDiagnoseMsgPubkeys
+    | PgpMsgVerifyDetached
+    | PgpMsgType
+    | Ajax
+    | ShowAttachmentPreview
+    | ReRenderRecipient
+    | SaveFetchedPubkeys
+    | ProcessAndStoreKeysFromEkmLocally
+    | GetLocalKeyExpiration
+    | PgpKeyBinaryToArmored
+    | AuthWindowResult;
 
   // export type RawResponselessHandler = (req: AnyRequest) => Promise<void>;
   // export type RawRespoHandler = (req: AnyRequest) => Promise<void>;
@@ -115,50 +194,99 @@ export namespace Bm {
   export type AsyncRespondingHandler = (req: AnyRequest, sender: Sender) => Promise<Res.Any>;
   export type AsyncResponselessHandler = (req: AnyRequest, sender: Sender) => Promise<void>;
 
-  type StandardErrAsJson = { stack?: string; message: string, errorConstructor: 'Error' };
-  type AjaxErrDetails = { status: number, url: string, responseText: string, statusText: string, resMsg?: string, resDetails?: string };
-  type AjaxErrAsJson = { stack?: string; message: string, errorConstructor: 'AjaxErr', ajaxErrorDetails: AjaxErrDetails };
+  type StandardErrAsJson = { stack?: string; message: string; errorConstructor: 'Error' };
+  type AjaxErrDetails = {
+    status: number;
+    url: string;
+    responseText: string;
+    statusText: string;
+    resMsg?: string;
+    resDetails?: string;
+  };
+  type AjaxErrAsJson = {
+    stack?: string;
+    message: string;
+    errorConstructor: 'AjaxErr';
+    ajaxErrorDetails: AjaxErrDetails;
+  };
   export type ErrAsJson = StandardErrAsJson | AjaxErrAsJson;
 }
 
 type Handler = Bm.AsyncRespondingHandler | Bm.AsyncResponselessHandler;
 type Handlers = Dict<Handler>;
 
-export class BgNotReadyErr extends Error { }
+export class BgNotReadyErr extends Error {}
 // ts-prune-ignore-next
-export class TabIdRequiredError extends Error { }
+export class TabIdRequiredError extends Error {}
 
 export class BrowserMsg {
-
+  // eslint-disable-next-line @typescript-eslint/naming-convention
   public static MAX_SIZE = 1024 * 1024; // 1MB
 
-  public static send = { // todo - may want to organise this differently, seems to always confuse me when sending a message
+  public static send = {
+    // todo - may want to organise this differently, seems to always confuse me when sending a message
     bg: {
       settings: (bm: Bm.Settings) => BrowserMsg.sendCatch(undefined, 'settings', bm),
       updateUninstallUrl: () => BrowserMsg.sendCatch(undefined, 'update_uninstall_url', {}),
       await: {
-        reconnectAcctAuthPopup: (bm: Bm.ReconnectAcctAuthPopup) => BrowserMsg.sendAwait(undefined, 'reconnect_acct_auth_popup', bm, true) as Promise<Bm.Res.ReconnectAcctAuthPopup>,
-        getActiveTabInfo: () => BrowserMsg.sendAwait(undefined, 'get_active_tab_info', undefined, true) as Promise<Bm.Res.GetActiveTabInfo>,
-        inMemoryStoreGet: (bm: Bm.InMemoryStoreGet) => BrowserMsg.sendAwait(undefined, 'inMemoryStoreGet', bm, true) as Promise<Bm.Res.InMemoryStoreGet>,
-        inMemoryStoreSet: (bm: Bm.InMemoryStoreSet) => BrowserMsg.sendAwait(undefined, 'inMemoryStoreSet', bm, true) as Promise<Bm.Res.InMemoryStoreSet>,
-        storeGlobalGet: (bm: Bm.StoreGlobalGet) => BrowserMsg.sendAwait(undefined, 'storeGlobalGet', bm, true) as Promise<Bm.Res.StoreGlobalGet>,
-        storeGlobalSet: (bm: Bm.StoreGlobalSet) => BrowserMsg.sendAwait(undefined, 'storeGlobalSet', bm, true) as Promise<Bm.Res.StoreGlobalSet>,
-        storeAcctGet: (bm: Bm.StoreAcctGet) => BrowserMsg.sendAwait(undefined, 'storeAcctGet', bm, true) as Promise<Bm.Res.StoreAcctGet>,
-        storeAcctSet: (bm: Bm.StoreAcctSet) => BrowserMsg.sendAwait(undefined, 'storeAcctSet', bm, true) as Promise<Bm.Res.StoreAcctSet>,
+        reconnectAcctAuthPopup: (bm: Bm.ReconnectAcctAuthPopup) =>
+          BrowserMsg.sendAwait(
+            undefined,
+            'reconnect_acct_auth_popup',
+            bm,
+            true
+          ) as Promise<Bm.Res.ReconnectAcctAuthPopup>,
+        getActiveTabInfo: () =>
+          BrowserMsg.sendAwait(undefined, 'get_active_tab_info', undefined, true) as Promise<Bm.Res.GetActiveTabInfo>,
+        inMemoryStoreGet: (bm: Bm.InMemoryStoreGet) =>
+          BrowserMsg.sendAwait(undefined, 'inMemoryStoreGet', bm, true) as Promise<Bm.Res.InMemoryStoreGet>,
+        inMemoryStoreSet: (bm: Bm.InMemoryStoreSet) =>
+          BrowserMsg.sendAwait(undefined, 'inMemoryStoreSet', bm, true) as Promise<Bm.Res.InMemoryStoreSet>,
+        storeGlobalGet: (bm: Bm.StoreGlobalGet) =>
+          BrowserMsg.sendAwait(undefined, 'storeGlobalGet', bm, true) as Promise<Bm.Res.StoreGlobalGet>,
+        storeGlobalSet: (bm: Bm.StoreGlobalSet) =>
+          BrowserMsg.sendAwait(undefined, 'storeGlobalSet', bm, true) as Promise<Bm.Res.StoreGlobalSet>,
+        storeAcctGet: (bm: Bm.StoreAcctGet) =>
+          BrowserMsg.sendAwait(undefined, 'storeAcctGet', bm, true) as Promise<Bm.Res.StoreAcctGet>,
+        storeAcctSet: (bm: Bm.StoreAcctSet) =>
+          BrowserMsg.sendAwait(undefined, 'storeAcctSet', bm, true) as Promise<Bm.Res.StoreAcctSet>,
         db: (bm: Bm.Db): Promise<Bm.Res.Db> => BrowserMsg.sendAwait(undefined, 'db', bm, true) as Promise<Bm.Res.Db>,
-        ajax: (bm: Bm.Ajax): Promise<Bm.Res.Ajax> => BrowserMsg.sendAwait(undefined, 'ajax', bm, true) as Promise<Bm.Res.Ajax>,
-        ajaxGmailAttachmentGetChunk: (bm: Bm.AjaxGmailAttachmentGetChunk) => BrowserMsg.sendAwait(undefined, 'ajaxGmailAttachmentGetChunk',
-          bm, true) as Promise<Bm.Res.AjaxGmailAttachmentGetChunk>,
-        pgpMsgDiagnosePubkeys: (bm: Bm.PgpMsgDiagnoseMsgPubkeys) => BrowserMsg.sendAwait(undefined, 'pgpMsgDiagnosePubkeys', bm, true) as Promise<Bm.Res.PgpMsgDiagnoseMsgPubkeys>,
-        pgpMsgDecrypt: (bm: Bm.PgpMsgDecrypt) => BrowserMsg.sendAwait(undefined, 'pgpMsgDecrypt', bm, true) as Promise<Bm.Res.PgpMsgDecrypt>,
-        pgpMsgVerifyDetached: (bm: Bm.PgpMsgVerifyDetached) => BrowserMsg.sendAwait(undefined, 'pgpMsgVerifyDetached', bm, true) as Promise<Bm.Res.PgpMsgVerify>,
-        pgpMsgType: (bm: Bm.PgpMsgType) => BrowserMsg.sendAwait(undefined, 'pgpMsgType', bm, true) as Promise<Bm.Res.PgpMsgType>,
-        pgpKeyBinaryToArmored: (bm: Bm.PgpKeyBinaryToArmored) => BrowserMsg.sendAwait(undefined, 'pgpKeyBinaryToArmored', bm, true) as Promise<Bm.Res.PgpKeyBinaryToArmored>,
-        saveFetchedPubkeys: (bm: Bm.SaveFetchedPubkeys) => BrowserMsg.sendAwait(undefined, 'saveFetchedPubkeys', bm, true) as Promise<Bm.Res.SaveFetchedPubkeys>,
-        processAndStoreKeysFromEkmLocally:
-          (bm: Bm.ProcessAndStoreKeysFromEkmLocally) => BrowserMsg.sendAwait(undefined, 'processAndStoreKeysFromEkmLocally', bm, true) as Promise<Bm.Res.ProcessAndStoreKeysFromEkmLocally>,
-        getLocalKeyExpiration: (bm: Bm.GetLocalKeyExpiration) => BrowserMsg.sendAwait(undefined, 'getLocalKeyExpiration', bm, true) as Promise<Bm.Res.GetLocalKeyExpiration>,
-      },
+        ajax: (bm: Bm.Ajax): Promise<Bm.Res.Ajax> =>
+          BrowserMsg.sendAwait(undefined, 'ajax', bm, true) as Promise<Bm.Res.Ajax>,
+        ajaxGmailAttachmentGetChunk: (bm: Bm.AjaxGmailAttachmentGetChunk) =>
+          BrowserMsg.sendAwait(
+            undefined,
+            'ajaxGmailAttachmentGetChunk',
+            bm,
+            true
+          ) as Promise<Bm.Res.AjaxGmailAttachmentGetChunk>,
+        pgpMsgDiagnosePubkeys: (bm: Bm.PgpMsgDiagnoseMsgPubkeys) =>
+          BrowserMsg.sendAwait(
+            undefined,
+            'pgpMsgDiagnosePubkeys',
+            bm,
+            true
+          ) as Promise<Bm.Res.PgpMsgDiagnoseMsgPubkeys>,
+        pgpMsgDecrypt: (bm: Bm.PgpMsgDecrypt) =>
+          BrowserMsg.sendAwait(undefined, 'pgpMsgDecrypt', bm, true) as Promise<Bm.Res.PgpMsgDecrypt>,
+        pgpMsgVerifyDetached: (bm: Bm.PgpMsgVerifyDetached) =>
+          BrowserMsg.sendAwait(undefined, 'pgpMsgVerifyDetached', bm, true) as Promise<Bm.Res.PgpMsgVerify>,
+        pgpMsgType: (bm: Bm.PgpMsgType) =>
+          BrowserMsg.sendAwait(undefined, 'pgpMsgType', bm, true) as Promise<Bm.Res.PgpMsgType>,
+        pgpKeyBinaryToArmored: (bm: Bm.PgpKeyBinaryToArmored) =>
+          BrowserMsg.sendAwait(undefined, 'pgpKeyBinaryToArmored', bm, true) as Promise<Bm.Res.PgpKeyBinaryToArmored>,
+        saveFetchedPubkeys: (bm: Bm.SaveFetchedPubkeys) =>
+          BrowserMsg.sendAwait(undefined, 'saveFetchedPubkeys', bm, true) as Promise<Bm.Res.SaveFetchedPubkeys>,
+        processAndStoreKeysFromEkmLocally: (bm: Bm.ProcessAndStoreKeysFromEkmLocally) =>
+          BrowserMsg.sendAwait(
+            undefined,
+            'processAndStoreKeysFromEkmLocally',
+            bm,
+            true
+          ) as Promise<Bm.Res.ProcessAndStoreKeysFromEkmLocally>,
+        getLocalKeyExpiration: (bm: Bm.GetLocalKeyExpiration) =>
+          BrowserMsg.sendAwait(undefined, 'getLocalKeyExpiration', bm, true) as Promise<Bm.Res.GetLocalKeyExpiration>
+      }
     },
     passphraseEntry: (dest: Bm.Dest, bm: Bm.PassphraseEntry) => BrowserMsg.sendCatch(dest, 'passphrase_entry', bm),
     addEndSessionBtn: (dest: Bm.Dest) => BrowserMsg.sendCatch(dest, 'add_end_session_btn', {}),
@@ -170,33 +298,40 @@ export class BrowserMsg {
     authWindowResult: (dest: Bm.Dest, bm: Bm.AuthWindowResult) => BrowserMsg.sendCatch(dest, 'auth_window_result', bm),
     closePage: (dest: Bm.Dest) => BrowserMsg.sendCatch(dest, 'close_page', {}),
     setActiveWindow: (dest: Bm.Dest, bm: Bm.ComposeWindow) => BrowserMsg.sendCatch(dest, 'set_active_window', bm),
-    focusPreviousActiveWindow: (dest: Bm.Dest, bm: Bm.ComposeWindow) => BrowserMsg.sendCatch(dest, 'focus_previous_active_window', bm),
+    focusPreviousActiveWindow: (dest: Bm.Dest, bm: Bm.ComposeWindow) =>
+      BrowserMsg.sendCatch(dest, 'focus_previous_active_window', bm),
     closeComposeWindow: (dest: Bm.Dest, bm: Bm.ComposeWindow) => BrowserMsg.sendCatch(dest, 'close_compose_window', bm),
     focusBody: (dest: Bm.Dest) => BrowserMsg.sendCatch(dest, 'focus_body', {}),
     focusFrame: (dest: Bm.Dest, bm: Bm.ComposeWindow) => BrowserMsg.sendCatch(dest, 'focus_frame', bm),
     closeReplyMessage: (dest: Bm.Dest, bm: Bm.ComposeWindow) => BrowserMsg.sendCatch(dest, 'close_reply_message', bm),
     scrollToReplyBox: (dest: Bm.Dest, bm: Bm.ScrollToReplyBox) => BrowserMsg.sendCatch(dest, 'scroll_to_reply_box', bm),
-    scrollToCursorInReplyBox: (dest: Bm.Dest, bm: Bm.ScrollToCursorInReplyBox) => BrowserMsg.sendCatch(dest, 'scroll_to_cursor_in_reply_box', bm),
+    scrollToCursorInReplyBox: (dest: Bm.Dest, bm: Bm.ScrollToCursorInReplyBox) =>
+      BrowserMsg.sendCatch(dest, 'scroll_to_cursor_in_reply_box', bm),
     reinsertReplyBox: (dest: Bm.Dest, bm: Bm.ReinsertReplyBox) => BrowserMsg.sendCatch(dest, 'reinsert_reply_box', bm),
     passphraseDialog: (dest: Bm.Dest, bm: Bm.PassphraseDialog) => BrowserMsg.sendCatch(dest, 'passphrase_dialog', bm),
     notificationShow: (dest: Bm.Dest, bm: Bm.NotificationShow) => BrowserMsg.sendCatch(dest, 'notification_show', bm),
-    notificationShowAuthPopupNeeded: (dest: Bm.Dest, bm: Bm.NotificationShowAuthPopupNeeded) => BrowserMsg.sendCatch(dest, 'notification_show_auth_popup_needed', bm),
+    notificationShowAuthPopupNeeded: (dest: Bm.Dest, bm: Bm.NotificationShowAuthPopupNeeded) =>
+      BrowserMsg.sendCatch(dest, 'notification_show_auth_popup_needed', bm),
     renderPublicKeys: (dest: Bm.Dest, bm: Bm.RenderPublicKeys) => BrowserMsg.sendCatch(dest, 'render_public_keys', bm),
     replyPubkeyMismatch: (dest: Bm.Dest) => BrowserMsg.sendCatch(dest, 'reply_pubkey_mismatch', {}),
     addPubkeyDialog: (dest: Bm.Dest, bm: Bm.AddPubkeyDialog) => BrowserMsg.sendCatch(dest, 'add_pubkey_dialog', bm),
     reload: (dest: Bm.Dest, bm: Bm.Reload) => BrowserMsg.sendCatch(dest, 'reload', bm),
     redirect: (dest: Bm.Dest, bm: Bm.Redirect) => BrowserMsg.sendCatch(dest, 'redirect', bm),
-    openGoogleAuthDialog: (dest: Bm.Dest, bm: Bm.OpenGoogleAuthDialog) => BrowserMsg.sendCatch(dest, 'open_google_auth_dialog', bm),
+    openGoogleAuthDialog: (dest: Bm.Dest, bm: Bm.OpenGoogleAuthDialog) =>
+      BrowserMsg.sendCatch(dest, 'open_google_auth_dialog', bm),
     addToContacts: (dest: Bm.Dest) => BrowserMsg.sendCatch(dest, 'addToContacts', {}),
     reRenderRecipient: (dest: Bm.Dest, bm: Bm.ReRenderRecipient) => BrowserMsg.sendCatch(dest, 'reRenderRecipient', bm),
-    showAttachmentPreview: (dest: Bm.Dest, bm: Bm.ShowAttachmentPreview) => BrowserMsg.sendCatch(dest, 'show_attachment_preview', bm),
+    showAttachmentPreview: (dest: Bm.Dest, bm: Bm.ShowAttachmentPreview) =>
+      BrowserMsg.sendCatch(dest, 'show_attachment_preview', bm)
   };
+  /* eslint-disable @typescript-eslint/naming-convention */
   private static HANDLERS_REGISTERED_BACKGROUND: Handlers = {};
   private static HANDLERS_REGISTERED_FRAME: Handlers = {
     set_css: BrowserMsgCommonHandlers.setCss,
     add_class: BrowserMsgCommonHandlers.addClass,
-    remove_class: BrowserMsgCommonHandlers.removeClass,
+    remove_class: BrowserMsgCommonHandlers.removeClass
   };
+  /* eslint-enable @typescript-eslint/naming-convention */
 
   public static renderFatalErrCorner = (message: string, style: 'GREEN-NOTIFICATION' | 'RED-RELOAD-PROMPT') => {
     const div = document.createElement('div');
@@ -226,7 +361,7 @@ export class BrowserMsg {
 
   public static tabId = async (): Promise<string | null | undefined> => {
     try {
-      const { tabId } = await BrowserMsg.sendAwait(undefined, '_tab_', undefined, true) as Bm.Res._tab_;
+      const { tabId } = (await BrowserMsg.sendAwait(undefined, '_tab_', undefined, true)) as Bm.Res._tab_;
       return tabId;
     } catch (e) {
       if (e instanceof BgNotReadyErr) {
@@ -238,7 +373,8 @@ export class BrowserMsg {
 
   public static requiredTabId = async (attempts = 10, delay = 200): Promise<string> => {
     let tabId;
-    for (let i = 0; i < attempts; i++) { // sometimes returns undefined right after browser start due to BgNotReadyErr
+    for (let i = 0; i < attempts; i++) {
+      // sometimes returns undefined right after browser start due to BgNotReadyErr
       tabId = await BrowserMsg.tabId();
       if (tabId) {
         return tabId;
@@ -254,7 +390,9 @@ export class BrowserMsg {
     BrowserMsg.bgAddListener('pgpMsgVerifyDetached', MsgUtil.verifyDetached);
     BrowserMsg.bgAddListener('pgpMsgType', MsgUtil.type);
     BrowserMsg.bgAddListener('saveFetchedPubkeys', saveFetchedPubkeysIfNewerThanInStorage);
-    BrowserMsg.bgAddListener('pgpKeyBinaryToArmored', async (r: Bm.PgpKeyBinaryToArmored) => ({ keys: await KeyUtil.parseAndArmorKeys(r.binaryKeysData) }));
+    BrowserMsg.bgAddListener('pgpKeyBinaryToArmored', async (r: Bm.PgpKeyBinaryToArmored) => ({
+      keys: await KeyUtil.parseAndArmorKeys(r.binaryKeysData)
+    }));
   };
 
   public static addListener = (name: string, handler: Handler) => {
@@ -276,7 +414,10 @@ export class BrowserMsg {
                 .catch(e => BrowserMsg.sendRawResponse(Promise.reject(e), rawRespond));
               return true; // will respond
             } else if (msg.name !== '_tab_' && msg.to !== 'broadcast') {
-              BrowserMsg.sendRawResponse(Promise.reject(new Error(`BrowserMsg.listen error: handler "${msg.name}" not set`)), rawRespond);
+              BrowserMsg.sendRawResponse(
+                Promise.reject(new Error(`BrowserMsg.listen error: handler "${msg.name}" not set`)),
+                rawRespond
+              );
               return true; // will respond
             }
           } else {
@@ -306,22 +447,29 @@ export class BrowserMsg {
   public static bgListen = () => {
     chrome.runtime.onMessage.addListener((msg: Bm.Raw, sender, rawRespond: (rawRes: Bm.RawResponse) => void) => {
       const respondIfPageStillOpen = (response: Bm.RawResponse) => {
-        try { // avoiding unnecessary errors when target tab gets closed
+        try {
+          // avoiding unnecessary errors when target tab gets closed
           rawRespond(response);
         } catch (cannotRespondErr) {
-          if (cannotRespondErr instanceof Error && cannotRespondErr.message === 'Attempting to use a disconnected port object') {
+          if (
+            cannotRespondErr instanceof Error &&
+            cannotRespondErr.message === 'Attempting to use a disconnected port object'
+          ) {
             // the page we're responding to is closed - ec when closing secure compose
           } else {
             if (cannotRespondErr instanceof Error) {
               cannotRespondErr.stack += `\n\nOriginal msg sender stack: ${msg.stack}`;
             }
-            Catch.reportErr(Catch.rewrapErr(cannotRespondErr, `BrowserMsg.bgListen.respondIfPageStillOpen:${msg.name}`));
+            Catch.reportErr(
+              Catch.rewrapErr(cannotRespondErr, `BrowserMsg.bgListen.respondIfPageStillOpen:${msg.name}`)
+            );
           }
         }
       };
       try {
         // console.debug(`bgListen: ${msg.name} from ${sender.tab?.id}:${sender.tab?.index} to ${msg.to}`);
-        if (BrowserMsg.shouldRelayMsgToOtherPage(sender, msg.to)) { // message that has to be relayed through bg
+        if (BrowserMsg.shouldRelayMsgToOtherPage(sender, msg.to)) {
+          // message that has to be relayed through bg
           if (msg.to === 'broadcast' && sender.tab?.id) {
             // bounce the broadcast message back to the sender tab to make it reach all the frames (in Firefox), fixes #4072
             void chrome.tabs.sendMessage(sender.tab.id, msg);
@@ -329,21 +477,30 @@ export class BrowserMsg {
           }
           const { tab, frame } = BrowserMsg.browserMsgDestParse(msg.to);
           if (!tab) {
-            BrowserMsg.sendRawResponse(Promise.reject(new Error(`BrowserMsg.bgListen:${msg.name}:cannot parse destination tab in ${msg.to}`)), respondIfPageStillOpen);
+            BrowserMsg.sendRawResponse(
+              Promise.reject(new Error(`BrowserMsg.bgListen:${msg.name}:cannot parse destination tab in ${msg.to}`)),
+              respondIfPageStillOpen
+            );
           } else {
             chrome.tabs.sendMessage(tab, msg, { frameId: frame }, respondIfPageStillOpen);
           }
           return true; // will respond
-        } else if (Object.keys(BrowserMsg.HANDLERS_REGISTERED_BACKGROUND).includes(msg.name)) { // standard or broadcast message
+        } else if (Object.keys(BrowserMsg.HANDLERS_REGISTERED_BACKGROUND).includes(msg.name)) {
+          // standard or broadcast message
           const handler: Bm.AsyncRespondingHandler = BrowserMsg.HANDLERS_REGISTERED_BACKGROUND[msg.name];
           BrowserMsg.replaceObjUrlWithBuf(msg.data.bm, msg.data.objUrls)
             .then(bm => BrowserMsg.sendRawResponse(handler(bm, sender), respondIfPageStillOpen))
             .catch(e => BrowserMsg.sendRawResponse(Promise.reject(e), respondIfPageStillOpen));
           return true; // will respond
-        } else if (!msg.to) { // message meant for bg that we don't have a handler for
-          BrowserMsg.sendRawResponse(Promise.reject(new Error(`BrowserMsg.bgListen:${msg.name}:no such handler`)), respondIfPageStillOpen);
+        } else if (!msg.to) {
+          // message meant for bg that we don't have a handler for
+          BrowserMsg.sendRawResponse(
+            Promise.reject(new Error(`BrowserMsg.bgListen:${msg.name}:no such handler`)),
+            respondIfPageStillOpen
+          );
           return true; // will respond
-        } else { // broadcast message that backend does not have a handler for - ignored
+        } else {
+          // broadcast message that backend does not have a handler for - ignored
           return false; // no plans to respond
         }
       } catch (exception) {
@@ -367,7 +524,8 @@ export class BrowserMsg {
     if (Catch.browser().name !== 'chrome') {
       return true; // only chrome sends messages directly to extension frame parent (in addition to sending to bg)
     }
-    if (destination !== `${sender.tab.id}:0`) { // zero mains the main frame in a tab, the parent frame
+    if (destination !== `${sender.tab.id}:0`) {
+      // zero mains the main frame in a tab, the parent frame
       return true; // not sending to a parent (must relay, browser does not send directly)
     }
     if (sender.url?.includes(chrome.runtime.id) && sender.tab.url?.startsWith('https://')) {
@@ -380,27 +538,46 @@ export class BrowserMsg {
     BrowserMsg.sendAwait(dest, name, bm).catch(Catch.reportErr);
   };
 
-  private static sendAwait = async (destString: string | undefined, name: string, bm?: Dict<unknown>, awaitRes = false): Promise<Bm.Response> => {
+  private static sendAwait = async (
+    destString: string | undefined,
+    name: string,
+    bm?: Dict<unknown>,
+    awaitRes = false
+  ): Promise<Bm.Response> => {
     bm = bm || {};
     // console.debug(`sendAwait ${name} to ${destString || 'bg'}`, bm);
     const isBackgroundPage = Env.isBackgroundPage();
-    if (isBackgroundPage && BrowserMsg.HANDLERS_REGISTERED_BACKGROUND && typeof destString === 'undefined') { // calling from bg script to bg script: skip messaging
+    if (isBackgroundPage && BrowserMsg.HANDLERS_REGISTERED_BACKGROUND && typeof destString === 'undefined') {
+      // calling from bg script to bg script: skip messaging
       const handler: Bm.AsyncRespondingHandler = BrowserMsg.HANDLERS_REGISTERED_BACKGROUND[name];
       return await handler(bm, 'background');
     }
-    return await new Promise((resolve, reject) => { // here browser messaging is used - msg has to be serializable - Buf instances need to be converted to object urls, and back upon receipt
+    return await new Promise((resolve, reject) => {
+      // here browser messaging is used - msg has to be serializable - Buf instances need to be converted to object urls, and back upon receipt
       const objUrls = BrowserMsg.replaceBufWithObjUrlInplace(bm);
-      const msg: Bm.Raw = { name, data: { bm: bm!, objUrls }, to: destString || null, uid: Str.sloppyRandom(10), stack: Catch.stackTrace() }; // tslint:disable-line:no-null-keyword
+      const msg: Bm.Raw = {
+        name,
+        data: { bm: bm!, objUrls },
+        to: destString || null, // eslint-disable-line no-null/no-null
+        uid: Str.sloppyRandom(10),
+        stack: Catch.stackTrace()
+      }; // eslint-disable-line no-null/no-null
       const processRawMsgResponse = (r: Bm.RawResponse) => {
         if (!awaitRes) {
           resolve(undefined);
-        } else if (!r || typeof r !== 'object') { // r can be null if we sent a message to a non-existent window id
-          const lastError = chrome.runtime.lastError ? chrome.runtime.lastError.message || '(empty lastError)' : '(no lastError)';
+        } else if (!r || typeof r !== 'object') {
+          // r can be null if we sent a message to a non-existent window id
+          const lastError = chrome.runtime.lastError
+            ? chrome.runtime.lastError.message || '(empty lastError)'
+            : '(no lastError)';
           let e: Error;
           if (typeof destString === 'undefined' && typeof r === 'undefined') {
             if (lastError === 'The object could not be cloned.') {
               e = new Error(`BrowserMsg.sendAwait(${name}) failed with lastError: ${lastError}`);
-            } else if (lastError === 'Could not establish connection. Receiving end does not exist.' || lastError === 'The message port closed before a response was received.') {
+            } else if (
+              lastError === 'Could not establish connection. Receiving end does not exist.' ||
+              lastError === 'The message port closed before a response was received.'
+            ) {
               // "The message port closed before a response was received." could also happen for otherwise working extension, if bg script
               //    did not return `true` (indicating async response). That would be our own coding error in BrowserMsg.
               e = new BgNotReadyErr(`BgNotReadyErr: BrowserMsg.sendAwait(${name}) failed with lastError: ${lastError}`);
@@ -449,7 +626,9 @@ export class BrowserMsg {
    */
   private static replaceBufWithObjUrlInplace = (requestOrResponse: unknown): Dict<string> => {
     const objUrls: Dict<string> = {};
-    if (requestOrResponse && typeof requestOrResponse === 'object' && requestOrResponse !== null) { // lgtm [js/comparison-between-incompatible-types]
+    // eslint-disable-next-line no-null/no-null
+    if (requestOrResponse && typeof requestOrResponse === 'object' && requestOrResponse !== null) {
+      // lgtm [js/comparison-between-incompatible-types]
       for (const possibleBufName of Object.keys(requestOrResponse)) {
         const possibleBufs = (requestOrResponse as Record<string, unknown>)[possibleBufName];
         if (possibleBufs instanceof Uint8Array) {
@@ -466,9 +645,13 @@ export class BrowserMsg {
    * Be careful when editting - the type system won't help you here and you'll likely make mistakes
    */
   private static replaceObjUrlWithBuf = async <T>(requestOrResponse: T, objUrls: Dict<string>): Promise<T> => {
-    if (requestOrResponse && typeof requestOrResponse === 'object' && requestOrResponse !== null && objUrls) { // lgtm [js/comparison-between-incompatible-types]
+    // eslint-disable-next-line no-null/no-null
+    if (requestOrResponse && typeof requestOrResponse === 'object' && requestOrResponse !== null && objUrls) {
+      // lgtm [js/comparison-between-incompatible-types]
       for (const consumableObjUrlName of Object.keys(objUrls)) {
-        (requestOrResponse as Record<string, Buf>)[consumableObjUrlName] = await Browser.objUrlConsume(objUrls[consumableObjUrlName]);
+        (requestOrResponse as Record<string, Buf>)[consumableObjUrlName] = await Browser.objUrlConsume(
+          objUrls[consumableObjUrlName]
+        );
       }
     }
     return requestOrResponse;
@@ -477,7 +660,12 @@ export class BrowserMsg {
   private static errToJson = (e: unknown): Bm.ErrAsJson => {
     if (e instanceof AjaxErr) {
       const { message, stack, status, url, responseText, statusText, resMsg, resDetails } = e;
-      return { stack, message, errorConstructor: 'AjaxErr', ajaxErrorDetails: { status, url, responseText, statusText, resMsg, resDetails } };
+      return {
+        stack,
+        message,
+        errorConstructor: 'AjaxErr',
+        ajaxErrorDetails: { status, url, responseText, statusText, resMsg, resDetails }
+      };
     }
     const { stack, message } = Catch.rewrapErr(e, 'sendRawResponse');
     return { stack, message, errorConstructor: 'Error' };
@@ -487,21 +675,35 @@ export class BrowserMsg {
     const stackInfo = `\n\n[callerStack]\n${msg.stack}\n[/callerStack]\n\n[responderStack]\n${errAsJson.stack}\n[/responderStack]\n`;
     if (errAsJson.errorConstructor === 'AjaxErr') {
       const { status, url, responseText, statusText, resMsg, resDetails } = errAsJson.ajaxErrorDetails;
-      return new AjaxErr(`BrowserMsg(${msg.name}) ${errAsJson.message}`, stackInfo, status, url, responseText, statusText, resMsg, resDetails);
+      return new AjaxErr(
+        `BrowserMsg(${msg.name}) ${errAsJson.message}`,
+        stackInfo,
+        status,
+        url,
+        responseText,
+        statusText,
+        resMsg,
+        resDetails
+      );
     }
     const e = new Error(`BrowserMsg(${msg.name}) ${errAsJson.message}`);
     e.stack += stackInfo;
     return e;
   };
 
-  private static sendRawResponse = (handlerPromise: Promise<Bm.Res.Any>, rawRespond: (rawResponse: Bm.RawResponse) => void) => {
+  private static sendRawResponse = (
+    handlerPromise: Promise<Bm.Res.Any>,
+    rawRespond: (rawResponse: Bm.RawResponse) => void
+  ) => {
     try {
-      handlerPromise.then(result => {
-        const objUrls = BrowserMsg.replaceBufWithObjUrlInplace(result); // this actually changes the result object
-        rawRespond({ result, exception: undefined, objUrls });
-      }).catch(e => {
-        rawRespond({ result: undefined, exception: BrowserMsg.errToJson(e), objUrls: {} });
-      });
+      handlerPromise
+        .then(result => {
+          const objUrls = BrowserMsg.replaceBufWithObjUrlInplace(result); // this actually changes the result object
+          rawRespond({ result, exception: undefined, objUrls });
+        })
+        .catch(e => {
+          rawRespond({ result: undefined, exception: BrowserMsg.errToJson(e), objUrls: {} });
+        });
     } catch (e) {
       rawRespond({ result: undefined, exception: BrowserMsg.errToJson(e), objUrls: {} });
     }
@@ -516,5 +718,4 @@ export class BrowserMsg {
     }
     return parsed;
   };
-
 }

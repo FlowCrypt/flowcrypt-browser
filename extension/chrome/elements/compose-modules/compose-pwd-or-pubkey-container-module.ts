@@ -14,9 +14,10 @@ import { Xss } from '../../../js/common/platform/xss.js';
 
 export class ComposePwdOrPubkeyContainerModule extends ViewModule<ComposeView> {
 
+  // eslint-disable-next-line @typescript-eslint/naming-convention
   private MSG_EXPIRE_DAYS_DEFAULT = 3; // todo - update to 7 (needs backend work)
 
-  constructor(view: ComposeView, hideMsgPwd: boolean | undefined) {
+  public constructor(view: ComposeView, hideMsgPwd: boolean | undefined) {
     super(view);
     if (hideMsgPwd) {
       this.view.S.cached('input_password').attr('type', 'password');

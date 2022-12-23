@@ -11,15 +11,13 @@ import { Buf } from '../../core/buf';
 import { testConstants } from '../../tests/tooling/consts';
 import { Util } from '../../util';
 
-// tslint:disable:no-blank-lines-func
-
 const knownMockEmails = [
   'ci.tests.gmail@flowcrypt.test',
   'flowcrypt.compatibility@gmail.com',
   'human@flowcrypt.com',
   'flowcrypt.test.key.new.manual@gmail.com',
   'flowcrypt.test.key.used.pgp@gmail.com',
-  'flowcrypt.test.key.recovered@gmail.com',
+  'flowcrypt.test.key.recovered@gmail.com'
 ];
 
 let data: GoogleData;
@@ -32,7 +30,8 @@ const get203FAE7076005381 = async () => {
   const msgText = Buf.fromBase64Str(msg!.raw!).toUtfStr();
   return msgText
     .match(/\-\-\-\-\-BEGIN PGP PUBLIC KEY BLOCK\-\-\-\-\-.*\-\-\-\-\-END PGP PUBLIC KEY BLOCK\-\-\-\-\-/s)![0]
-    .replace(/=\r\n/g, '').replace(/=3D/g, '=');
+    .replace(/=\r\n/g, '')
+    .replace(/=3D/g, '=');
 };
 
 export const mockAttesterEndpoints: HandlersDefinition = {
@@ -81,7 +80,8 @@ export const mockAttesterEndpoints: HandlersDefinition = {
       if (emailOrLongid === 'sha1@sign.com') {
         return sha1signpubkey;
       }
-      if (emailOrLongid === 'auto.refresh.expired.key@recipient.com') { // newer version of expired pubkey
+      if (emailOrLongid === 'auto.refresh.expired.key@recipient.com') {
+        // newer version of expired pubkey
         return newerVersionOfExpiredPubkey;
       }
       if (emailOrLongid === '8EC78F043CEB022498AFD4771E62ED6D15A25921'.toLowerCase()) {
@@ -150,7 +150,7 @@ export const mockAttesterEndpoints: HandlersDefinition = {
     expect(email).to.contain('@');
     expect(pubkey).to.contain('-----BEGIN PGP PUBLIC KEY BLOCK-----');
     return { sent: true };
-  },
+  }
 };
 
 export const somePubkey = `-----BEGIN PGP PUBLIC KEY BLOCK-----

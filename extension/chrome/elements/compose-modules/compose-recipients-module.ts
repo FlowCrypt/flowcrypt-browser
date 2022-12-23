@@ -32,9 +32,9 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
   private readonly failedLookupEmails: string[] = [];
 
   private addedRecipients: RecipientElement[] = [];
-  private BTN_LOADING = 'Loading..';
+  private BTN_LOADING = 'Loading..'; // eslint-disable-line @typescript-eslint/naming-convention
 
-  private readonly MAX_CONTACTS_LENGTH = 8;
+  private readonly MAX_CONTACTS_LENGTH = 8; // eslint-disable-line @typescript-eslint/naming-convention
 
   private addedPubkeyDbLookupInterval?: number;
 
@@ -44,7 +44,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
 
   private googleContactsSearchEnabled: boolean | Promise<boolean | undefined>;
 
-  constructor(view: ComposeView) {
+  public constructor(view: ComposeView) {
     super(view);
     this.googleContactsSearchEnabled = this.queryIfGoogleSearchEnabled();
   }
@@ -157,7 +157,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     }
   };
 
-  public addRecipients = async (recipients: Recipients, triggerCallback: boolean = true) => {
+  public addRecipients = async (recipients: Recipients, triggerCallback = true) => {
     const newRecipients: ValidRecipientElement[] = [];
     for (const [sendingType, value] of Object.entries(recipients)) {
       if (Api.isRecipientHeaderNameType(sendingType)) {
@@ -226,7 +226,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     await this.evaluateRecipients(recipients);
   };
 
-  public evaluateRecipients = async (recipientEls: ValidRecipientElement[], triggerCallback: boolean = true) => {
+  public evaluateRecipients = async (recipientEls: ValidRecipientElement[], triggerCallback = true) => {
     this.view.errModule.debug(`evaluateRecipients`);
     $('body').attr('data-test-state', 'working');
     for (const recipientEl of recipientEls) {
@@ -354,7 +354,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     try {
       const response = await this.view.emailProvider.msgList(`(${qSentPubkey}) OR (${qReceivedMsg})`, true);
       if (response.messages && response.messages.length > 0) {
-        await AcctStore.set(this.view.acctEmail, { pubkey_sent_to: (storage.pubkey_sent_to || []).concat(theirEmail) });
+        await AcctStore.set(this.view.acctEmail, { pubkey_sent_to: (storage.pubkey_sent_to || []).concat(theirEmail) }); // eslint-disable-line @typescript-eslint/naming-convention
         return true;
       } else {
         return false;
@@ -933,7 +933,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     if (changedIndex > -1) {
       this.addedRecipients.splice(changedIndex, 1, recipient);
     }
-    this.view.pwdOrPubkeyContainerModule.showHideContainerAndColorSendBtn(); // tslint:disable-line:no-floating-promises
+    this.view.pwdOrPubkeyContainerModule.showHideContainerAndColorSendBtn(); // eslint-disable-line @typescript-eslint/no-floating-promises
     this.view.myPubkeyModule.reevaluateShouldAttachOrNot();
   };
 
@@ -970,7 +970,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     }
     this.view.S.cached('input_addresses_container_outer').find(`#input-container-${this.addedRecipients[index].sendingType} input`).focus();
     this.addedRecipients.splice(index, 1);
-    this.view.pwdOrPubkeyContainerModule.showHideContainerAndColorSendBtn(); // tslint:disable-line:no-floating-promises
+    this.view.pwdOrPubkeyContainerModule.showHideContainerAndColorSendBtn(); // eslint-disable-line @typescript-eslint/no-floating-promises
     this.view.myPubkeyModule.reevaluateShouldAttachOrNot();
   };
 

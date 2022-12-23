@@ -82,7 +82,7 @@ export class ComposeSendBtnPopoverModule extends ViewModule<ComposeView> {
     }
     this.choices.richtext ? this.view.inputModule.addRichTextFormatting() : this.view.inputModule.removeRichTextFormatting();
     this.view.sendBtnModule.resetSendBtn();
-    this.view.pwdOrPubkeyContainerModule.showHideContainerAndColorSendBtn(); // tslint:disable-line:no-floating-promises
+    this.view.pwdOrPubkeyContainerModule.showHideContainerAndColorSendBtn(); // eslint-disable-line @typescript-eslint/no-floating-promises
     if (typeof machineForceStateTo === 'undefined' && popoverOpt === 'richtext') { // human-input choice of rich text
       this.richTextUserChoiceStore(newToggleTicked).catch(Catch.reportErr);
     }

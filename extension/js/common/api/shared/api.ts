@@ -2,8 +2,6 @@
 
 'use strict';
 
-// tslint:disable:no-direct-ajax
-
 import { Attachment } from '../../core/attachment.js';
 import { BrowserMsg } from '../../browser/browser-msg.js';
 import { Buf } from '../../core/buf.js';
@@ -18,22 +16,21 @@ export type RecipientType = 'to' | 'cc' | 'bcc';
 type ResFmt = 'json' | 'xhr';
 export type ReqMethod = 'POST' | 'GET' | 'DELETE' | 'PUT';
 export type EmailProviderContact = EmailParts;
-type ProviderContactsResults = { new: EmailProviderContact[], all: EmailProviderContact[] };
+type ProviderContactsResults = { new: EmailProviderContact[]; all: EmailProviderContact[] };
 type RawAjaxErr = {
   // getAllResponseHeaders?: () => any,
   // getResponseHeader?: (e: string) => any,
-  readyState: number,
-  responseText?: string,
-  status?: number,
-  statusText?: string,
+  readyState: number;
+  responseText?: string;
+  status?: number;
+  statusText?: string;
 };
 
 export type ChunkedCb = (r: ProviderContactsResults) => Promise<void>;
 export type ProgressCb = (percent: number | undefined, loaded: number, total: number) => void;
-export type ProgressCbs = { upload?: ProgressCb | null, download?: ProgressCb | null };
+export type ProgressCbs = { upload?: ProgressCb | null; download?: ProgressCb | null };
 
 export class Api {
-
   public static download = async (url: string, progress?: ProgressCb, timeout?: number): Promise<Buf> => {
     return await new Promise((resolve, reject) => {
       Api.throwIfApiPathTraversalAttempted(url);
@@ -44,7 +41,12 @@ export class Api {
       request.open('GET', url, true);
       request.responseType = 'arraybuffer';
       if (typeof progress === 'function') {
-        request.onprogress = (evt) => progress(evt.lengthComputable ? Math.floor((evt.loaded / evt.total) * 100) : undefined, evt.loaded, evt.total);
+        request.onprogress = evt =>
+          progress(
+            evt.lengthComputable ? Math.floor((evt.loaded / evt.total) * 100) : undefined,
+            evt.loaded,
+            evt.total
+          );
       }
       const errHandler = (progressEvent: ProgressEvent<EventTarget>) => {
         if (!progressEvent.target) {
@@ -56,7 +58,7 @@ export class Api {
       };
       request.onerror = errHandler;
       request.ontimeout = errHandler;
-      request.onload = e => request.status <= 299 ? resolve(new Buf(request.response as ArrayBuffer)) : errHandler(e);
+      request.onload = e => (request.status <= 299 ? resolve(new Buf(request.response as ArrayBuffer)) : errHandler(e));
       request.send();
     });
   };
@@ -70,15 +72,17 @@ export class Api {
     try {
       return await new Promise((resolve, reject) => {
         Api.throwIfApiPathTraversalAttempted(req.url || '');
-        $.ajax({ ...req, dataType: req.dataType === 'xhr' ? undefined : req.dataType }).then((data, s, xhr) => {
-          if (req.dataType === 'xhr') {
-            // @ts-ignore -> prevent the xhr object from getting further "resolved" and processed by jQuery, below
-            xhr.then = xhr.promise = undefined;
-            resolve(xhr);
-          } else {
-            resolve(data as unknown);
-          }
-        }).catch(reject);
+        $.ajax({ ...req, dataType: req.dataType === 'xhr' ? undefined : req.dataType })
+          .then((data, s, xhr) => {
+            if (req.dataType === 'xhr') {
+              // @ts-ignore -> prevent the xhr object from getting further "resolved" and processed by jQuery, below
+              xhr.then = xhr.promise = undefined;
+              resolve(xhr);
+            } else {
+              resolve(data as unknown);
+            }
+          })
+          .catch(reject);
       });
     } catch (e) {
       if (e instanceof Error) {
@@ -110,17 +114,22 @@ export class Api {
       // additionally no need to create this if there are no progressCbs defined
       return undefined;
     }
-    return () => { // returning a factory
+    return () => {
+      // returning a factory
       let lastProgressPercent = -1;
       const progressPeportingXhr = new XMLHttpRequest();
       if (progressCbs && typeof progressCbs.upload === 'function') {
-        progressPeportingXhr.upload.addEventListener('progress', (evt: ProgressEvent) => {
-          const newProgressPercent = evt.lengthComputable ? Math.round((evt.loaded / evt.total) * 100) : undefined;
-          if (newProgressPercent && newProgressPercent !== lastProgressPercent) {
-            lastProgressPercent = newProgressPercent;
-            progressCbs.upload!(newProgressPercent, evt.loaded, evt.total); // checked ===function above
-          }
-        }, false);
+        progressPeportingXhr.upload.addEventListener(
+          'progress',
+          (evt: ProgressEvent) => {
+            const newProgressPercent = evt.lengthComputable ? Math.round((evt.loaded / evt.total) * 100) : undefined;
+            if (newProgressPercent && newProgressPercent !== lastProgressPercent) {
+              lastProgressPercent = newProgressPercent;
+              progressCbs.upload!(newProgressPercent, evt.loaded, evt.total); // checked ===function above
+            }
+          },
+          false
+        );
       }
       if (progressCbs && typeof progressCbs.download === 'function') {
         progressPeportingXhr.addEventListener('progress', (evt: ProgressEvent) => {
@@ -140,10 +149,10 @@ export class Api {
 
   public static randomFortyHexChars = (): string => {
     const bytes = Array.from(secureRandomBytes(20));
-    return bytes.map(b => ('0' + (b & 0xFF).toString(16)).slice(-2)).join('');
+    return bytes.map(b => ('0' + (b & 0xff).toString(16)).slice(-2)).join('');
   };
 
-  public static isRecipientHeaderNameType = (value: string): value is "to" | "cc" | "bcc" => {
+  public static isRecipientHeaderNameType = (value: string): value is 'to' | 'cc' | 'bcc' => {
     return ['to', 'cc', 'bcc'].includes(value);
   };
 
@@ -157,7 +166,7 @@ export class Api {
     resFmt: ResFmt = 'json',
     method: ReqMethod = 'POST'
   ): Promise<RT> => {
-    progress = progress || {} as ProgressCbs;
+    progress = progress || ({} as ProgressCbs);
     let formattedData: FormData | string | undefined;
     let contentType: string | false;
     if (fmt === 'JSON' && fields) {
@@ -194,7 +203,7 @@ export class Api {
       processData: false,
       contentType,
       async: true,
-      timeout: typeof progress!.upload === 'function' || typeof progress!.download === 'function' ? undefined : 20000, // substituted with {} above
+      timeout: typeof progress!.upload === 'function' || typeof progress!.download === 'function' ? undefined : 20000 // substituted with {} above
     };
     const res = await Api.ajax(req, Catch.stackTrace());
     return res as RT;
@@ -213,5 +222,4 @@ export class Api {
       throw new Error(`API path traversal forbidden: ${requestUrl}`);
     }
   };
-
 }

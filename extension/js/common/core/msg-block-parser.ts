@@ -163,7 +163,7 @@ export class MsgBlockParser {
                 result.found.push(MsgBlock.fromContent('plainText', potentialTextBeforeBlockBegun));
               }
             }
-            let endIndex: number = -1;
+            let endIndex = -1;
             let foundBlockEndHeaderLength = 0;
             if (typeof blockHeaderDef.end === 'string') {
               endIndex = origText.indexOf(blockHeaderDef.end, begin + blockHeaderDef.begin.length);

@@ -2,10 +2,8 @@
 
 'use strict';
 
-// tslint:disable:no-unsafe-any
-
 import * as path from 'path';
-import * as ts from 'typescript';
+import ts from 'typescript';
 
 import { readFileSync } from 'fs';
 
@@ -24,12 +22,14 @@ const getNameAndPos = (f: ts.FunctionLike) => {
   const { line, character } = sf.getLineAndCharacterOfPosition(f.pos);
   let name = f.name && f.name.getText();
   if (!name && ts.isArrowFunction(f)) {
-    if (ts.isVariableDeclaration(f.parent) || ts.isPropertyDeclaration(f.parent)) { // get the variable or property name anon f is assigned to
+    if (ts.isVariableDeclaration(f.parent) || ts.isPropertyDeclaration(f.parent)) {
+      // get the variable or property name anon f is assigned to
       const firstIdentifier = f.parent.getChildren(sf).find(ts.isIdentifier);
       if (firstIdentifier && firstIdentifier.getText()) {
         name = firstIdentifier.getText();
       }
-    } else if (ts.isPropertyAssignment(f.parent)) { // get property name anon f is assigned to
+    } else if (ts.isPropertyAssignment(f.parent)) {
+      // get property name anon f is assigned to
       name = f.parent.name && f.parent.name.getText();
     }
   }
@@ -52,18 +52,32 @@ const preserveAsyncStackTracesTransformerFactory = () => {
   };
   const visitor = (ctx: ts.TransformationContext) => {
     const recursiveVisitor: ts.Visitor = (node: ts.Node): ts.VisitResult<ts.Node> => {
-      if (ts.isFunctionDeclaration(node) || ts.isArrowFunction(node) || ts.isMethodDeclaration(node) || ts.isFunctionExpression(node)) {
+      if (
+        ts.isFunctionDeclaration(node) ||
+        ts.isArrowFunction(node) ||
+        ts.isMethodDeclaration(node) ||
+        ts.isFunctionExpression(node)
+      ) {
         if (node.modifiers && node.modifiers.filter(modifier => modifier.kind === ts.SyntaxKind.AsyncKeyword).length) {
           if (node.body) {
-            const catchClause = ts.factory.createCatchClause('t', ts.factory.createBlock(createStackTracePreservingCatchBlockStatements(node), true));
+            const catchClause = ts.factory.createCatchClause(
+              't',
+              ts.factory.createBlock(createStackTracePreservingCatchBlockStatements(node), true)
+            );
             if ((node.body as ts.FunctionBody).statements && (node.body as ts.FunctionBody).statements.length) {
               const origFuncContent = ts.factory.createBlock((node.body as ts.FunctionBody).statements, true);
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              (node.body as any).statements = ts.factory.createNodeArray([ts.factory.createTryStatement(origFuncContent, catchClause, undefined)]);
-            } else if (ts.isCallExpression(node.body) || ts.isAwaitExpression(node.body)) { // eg: `x.click(async () => whatever())` or `x.click(async () => await whatever())`
+              (node.body as any).statements = ts.factory.createNodeArray([
+                ts.factory.createTryStatement(origFuncContent, catchClause, undefined)
+              ]);
+            } else if (ts.isCallExpression(node.body) || ts.isAwaitExpression(node.body)) {
+              // eg: `x.click(async () => whatever())` or `x.click(async () => await whatever())`
               const origFuncContent = ts.factory.createBlock([ts.factory.createReturnStatement(node.body)], true);
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              (node.body as any) = ts.factory.createBlock([ts.factory.createTryStatement(origFuncContent, catchClause, undefined)], true);
+              (node.body as any) = ts.factory.createBlock(
+                [ts.factory.createTryStatement(origFuncContent, catchClause, undefined)],
+                true
+              );
             }
           }
         }
@@ -81,10 +95,10 @@ const printErrsAndExitIfPresent = (allDiagnostics: ts.Diagnostic[]) => {
   for (const diag of allDiagnostics) {
     if (diag.file) {
       const { line, character } = diag.file.getLineAndCharacterOfPosition(diag.start!);
-      const message = ts.flattenDiagnosticMessageText(diag.messageText, "\n");
+      const message = ts.flattenDiagnosticMessageText(diag.messageText, '\n');
       console.error(`${diag.file.fileName} (${line + 1},${character + 1}): ${message}`);
     } else {
-      console.error(`${ts.flattenDiagnosticMessageText(diag.messageText, "\n")}`);
+      console.error(`${ts.flattenDiagnosticMessageText(diag.messageText, '\n')}`);
     }
   }
   if (allDiagnostics.length) {
@@ -100,13 +114,22 @@ const compile = (): void => {
   const { options, errors } = ts.convertCompilerOptionsFromJson(compilerOptions, tsconfigAbsDir); // , tsconfigAbsPath!
   printErrsAndExitIfPresent(errors);
   const compilerHost = ts.createCompilerHost(options);
-  const fileList = files && files.length ? files : compilerHost.readDirectory!(tsconfigAbsDir, ['.ts', '.tsx', '.d.ts'], exclude, include);
+  const fileList =
+    files && files.length
+      ? files
+      : compilerHost.readDirectory!(tsconfigAbsDir, ['.ts', '.tsx', '.d.ts'], exclude, include);
   if (!fileList.length) {
-    console.error(`fileList empty for ${tsconfigAbsPath}\ninclude:\n${(include || []).join('\n')}\n\nexclude:\n${(exclude || []).join('\n')}\nfiles:\n${(files || []).join('\n')}`);
+    console.error(
+      `fileList empty for ${tsconfigAbsPath}\ninclude:\n${(include || []).join('\n')}\n\nexclude:\n${(
+        exclude || []
+      ).join('\n')}\nfiles:\n${(files || []).join('\n')}`
+    );
     process.exit(1);
   }
   const program = ts.createProgram(fileList, options, compilerHost);
-  const emitResult = program.emit(undefined, undefined, undefined, undefined, { before: [preserveAsyncStackTracesTransformerFactory()] });
+  const emitResult = program.emit(undefined, undefined, undefined, undefined, {
+    before: [preserveAsyncStackTracesTransformerFactory()]
+  });
   printErrsAndExitIfPresent(ts.getPreEmitDiagnostics(program).concat(emitResult.diagnostics));
   if (emitResult.emitSkipped) {
     console.error(`Building ${tsconfigAbsPath} emitResult.emitSkipped`);

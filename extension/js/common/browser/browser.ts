@@ -27,7 +27,7 @@ export class Browser {
     const a = window.document.createElement('a');
     a.href = window.URL.createObjectURL(blob);
     a.download = attachment.name;
-    if (typeof a.click === 'function') { // tslint:disable-line:no-unbound-method - only testing if exists
+    if (typeof a.click === 'function') { // eslint-disable-line @typescript-eslint/unbound-method, , , , , 
       a.click();
     } else { // safari
       const ev = document.createEvent('MouseEvents');
@@ -56,7 +56,7 @@ export class Browser {
     return array;
   };
 
-  public static openSettingsPage = async (path: string = 'index.htm', acctEmail?: string, page: string = '', rawPageUrlParams?: Dict<UrlParam>, addNewAcct = false) => {
+  public static openSettingsPage = async (path = 'index.htm', acctEmail?: string, page = '', rawPageUrlParams?: Dict<UrlParam>, addNewAcct = false) => {
     const basePath = chrome.runtime.getURL(`chrome/settings/${path}`);
     const pageUrlParams = rawPageUrlParams ? JSON.stringify(rawPageUrlParams) : undefined;
     if (acctEmail || path === 'fatal.htm') {

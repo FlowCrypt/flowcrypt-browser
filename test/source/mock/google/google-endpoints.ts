@@ -11,19 +11,53 @@ import { UnsuportableStrategyError } from './strategies/strategy-base';
 import { oauth } from '../lib/oauth';
 import { Util } from '../../util';
 
-type DraftSaveModel = { message: { raw: string, threadId: string } };
+type DraftSaveModel = { message: { raw: string; threadId: string } };
 
-const allowedRecipients: Array<string> = ['flowcrypt.compatibility@gmail.com', 'manualcopypgp@flowcrypt.com',
-  'censored@email.com', 'test@email.com', 'human@flowcrypt.com', 'human+nopgp@flowcrypt.com', 'expired.on.attester@domain.com',
-  'ci.tests.gmail@flowcrypt.test', 'smime1@recipient.com', 'smime2@recipient.com', 'smime@recipient.com', 'smime.attachment@recipient.com',
-  'auto.refresh.expired.key@recipient.com', 'to@example.com', 'cc@example.com', 'bcc@example.com', 'gatewayfailure@example.com',
-  'flowcrypt.test.key.multiple.inbox1@gmail.com', 'flowcrypt.test.key.multiple.inbox2@gmail.com', 'mock.only.pubkey@flowcrypt.com',
-  'vladimir@flowcrypt.com', 'limon.monte@gmail.com', 'sweetalert2@gmail.com', 'sender@domain.com', 'invalid@example.com',
-  'timeout@example.com', 'flowcrypt.test.key.new.manual@gmail.com'];
+const allowedRecipients: Array<string> = [
+  'flowcrypt.compatibility@gmail.com',
+  'manualcopypgp@flowcrypt.com',
+  'censored@email.com',
+  'test@email.com',
+  'human@flowcrypt.com',
+  'human+nopgp@flowcrypt.com',
+  'expired.on.attester@domain.com',
+  'ci.tests.gmail@flowcrypt.test',
+  'smime1@recipient.com',
+  'smime2@recipient.com',
+  'smime@recipient.com',
+  'smime.attachment@recipient.com',
+  'auto.refresh.expired.key@recipient.com',
+  'to@example.com',
+  'cc@example.com',
+  'bcc@example.com',
+  'gatewayfailure@example.com',
+  'flowcrypt.test.key.multiple.inbox1@gmail.com',
+  'flowcrypt.test.key.multiple.inbox2@gmail.com',
+  'mock.only.pubkey@flowcrypt.com',
+  'vladimir@flowcrypt.com',
+  'limon.monte@gmail.com',
+  'sweetalert2@gmail.com',
+  'sender@domain.com',
+  'invalid@example.com',
+  'timeout@example.com',
+  'flowcrypt.test.key.new.manual@gmail.com'
+];
 
+/* eslint-disable @typescript-eslint/naming-convention */
 export const mockGoogleEndpoints: HandlersDefinition = {
-  '/o/oauth2/auth': async ({ query: { client_id, response_type, access_type, state, scope, login_hint, proceed } }, req) => {
-    if (isGet(req) && client_id === oauth.clientId && response_type === 'code' && access_type === 'offline' && state && scope) { // auth screen
+  '/o/oauth2/auth': async (
+    { query: { client_id, response_type, access_type, state, scope, login_hint, proceed } },
+    req
+  ) => {
+    if (
+      isGet(req) &&
+      client_id === oauth.clientId &&
+      response_type === 'code' &&
+      access_type === 'offline' &&
+      state &&
+      scope
+    ) {
+      // auth screen
       if (!login_hint) {
         return oauth.renderText('choose account with login_hint');
       } else if (!proceed) {
@@ -35,9 +69,11 @@ export const mockGoogleEndpoints: HandlersDefinition = {
     throw new HttpClientErr(`Method not implemented for ${req.url}: ${req.method}`);
   },
   '/token': async ({ query: { grant_type, refreshToken, client_id, code } }, req) => {
-    if (isPost(req) && grant_type === 'authorization_code' && code && client_id === oauth.clientId) { // auth code from auth screen gets exchanged for access and refresh tokens
+    if (isPost(req) && grant_type === 'authorization_code' && code && client_id === oauth.clientId) {
+      // auth code from auth screen gets exchanged for access and refresh tokens
       return oauth.getRefreshTokenResponse(code);
-    } else if (isPost(req) && grant_type === 'refresh_token' && refreshToken && client_id === oauth.clientId) { // here also later refresh token gets exchanged for access token
+    } else if (isPost(req) && grant_type === 'refresh_token' && refreshToken && client_id === oauth.clientId) {
+      // here also later refresh token gets exchanged for access token
       return oauth.getTokenResponse(refreshToken);
     }
     throw new Error(`Method not implemented for ${req.url}: ${req.method}`);
@@ -58,7 +94,7 @@ export const mockGoogleEndpoints: HandlersDefinition = {
       if (query === 'contact') {
         return {
           results: [
-            { person: { emailAddresses: [{ metadata: { primary: true }, value: 'contact.test@flowcrypt.com' }] } },
+            { person: { emailAddresses: [{ metadata: { primary: true }, value: 'contact.test@flowcrypt.com' }] } }
           ]
         };
       } else if (query === 'testsearchorder') {
@@ -69,7 +105,7 @@ export const mockGoogleEndpoints: HandlersDefinition = {
             { person: { emailAddresses: [{ metadata: { primary: true }, value: 'testsearchorder3@flowcrypt.com' }] } },
             { person: { emailAddresses: [{ metadata: { primary: true }, value: 'testsearchorder4@flowcrypt.com' }] } },
             { person: { emailAddresses: [{ metadata: { primary: true }, value: 'testsearchorder5@flowcrypt.com' }] } },
-            { person: { emailAddresses: [{ metadata: { primary: true }, value: 'testsearchorder6@flowcrypt.com' }] } },
+            { person: { emailAddresses: [{ metadata: { primary: true }, value: 'testsearchorder6@flowcrypt.com' }] } }
           ]
         };
       } else {
@@ -91,7 +127,7 @@ export const mockGoogleEndpoints: HandlersDefinition = {
           results: [
             { person: { emailAddresses: [{ metadata: { primary: true }, value: 'testsearchorder7@flowcrypt.com' }] } },
             { person: { emailAddresses: [{ metadata: { primary: true }, value: 'testsearchorder8@flowcrypt.com' }] } },
-            { person: { emailAddresses: [{ metadata: { primary: true }, value: 'testsearchorder9@flowcrypt.com' }] } },
+            { person: { emailAddresses: [{ metadata: { primary: true }, value: 'testsearchorder9@flowcrypt.com' }] } }
           ]
         };
       } else {
@@ -103,7 +139,10 @@ export const mockGoogleEndpoints: HandlersDefinition = {
   },
   '/gmail': async (_parsedReq, req) => {
     if (isGet(req)) {
-      const acct = oauth.checkAuthorizationHeaderWithAccessToken(req.headers.authorization, 'flowcrypt.compatibility@gmail.com');
+      const acct = oauth.checkAuthorizationHeaderWithAccessToken(
+        req.headers.authorization,
+        'flowcrypt.compatibility@gmail.com'
+      );
       return GoogleData.getMockGmailPage(acct);
     }
     throw new HttpClientErr(`Method not implemented for ${req.url}: ${req.method}`);
@@ -111,19 +150,22 @@ export const mockGoogleEndpoints: HandlersDefinition = {
   '/gmail/v1/users/me/settings/sendAs': async (parsedReq, req) => {
     const acct = oauth.checkAuthorizationHeaderWithAccessToken(req.headers.authorization);
     if (isGet(req)) {
-      const sendAs = [{
-        sendAsEmail: acct,
-        displayName: 'First Last',
-        replyToAddress: acct,
-        signature: '',
-        isDefault: true,
-        isPrimary: true,
-        treatAsAlias: false,
-        verificationStatus: 'accepted'
-      }];
+      const sendAs = [
+        {
+          sendAsEmail: acct,
+          displayName: 'First Last',
+          replyToAddress: acct,
+          signature: '',
+          isDefault: true,
+          isPrimary: true,
+          treatAsAlias: false,
+          verificationStatus: 'accepted'
+        }
+      ];
       if (acct === 'flowcrypt.compatibility@gmail.com') {
         // eslint-disable-next-line max-len
-        sendAs[0].signature = '<div dir="ltr">flowcrypt.compatibility test footer with an img<br><img src="https://flowcrypt.com/assets/imgs/svgs/flowcrypt-logo.svg" alt="Image result for small image"><br></div>';
+        sendAs[0].signature =
+          '<div dir="ltr">flowcrypt.compatibility test footer with an img<br><img src="https://flowcrypt.com/assets/imgs/svgs/flowcrypt-logo.svg" alt="Image result for small image"><br></div>';
         const alias = 'flowcryptcompatibility@gmail.com';
         sendAs.push({
           sendAsEmail: alias,
@@ -138,25 +180,28 @@ export const mockGoogleEndpoints: HandlersDefinition = {
       } else if (acct === 'multi.aliased.user@example.com') {
         const alias1 = 'alias1@example.com';
         const alias2 = 'alias2@example.com';
-        sendAs.push({
-          sendAsEmail: alias1,
-          displayName: 'An Alias1',
-          replyToAddress: alias1,
-          signature: '',
-          isDefault: false,
-          isPrimary: false,
-          treatAsAlias: false,
-          verificationStatus: 'accepted'
-        }, {
-          sendAsEmail: alias2,
-          displayName: 'An Alias1',
-          replyToAddress: alias2,
-          signature: '',
-          isDefault: false,
-          isPrimary: false,
-          treatAsAlias: false,
-          verificationStatus: 'accepted'
-        });
+        sendAs.push(
+          {
+            sendAsEmail: alias1,
+            displayName: 'An Alias1',
+            replyToAddress: alias1,
+            signature: '',
+            isDefault: false,
+            isPrimary: false,
+            treatAsAlias: false,
+            verificationStatus: 'accepted'
+          },
+          {
+            sendAsEmail: alias2,
+            displayName: 'An Alias1',
+            replyToAddress: alias2,
+            signature: '',
+            isDefault: false,
+            isPrimary: false,
+            treatAsAlias: false,
+            verificationStatus: 'accepted'
+          }
+        );
       } else if (acct === 'test.match.attester.key@gmail.com') {
         const alias = 'test.mismatch.attester.key@gmail.com';
         sendAs.push({
@@ -174,7 +219,8 @@ export const mockGoogleEndpoints: HandlersDefinition = {
     }
     throw new HttpClientErr(`Method not implemented for ${req.url}: ${req.method}`);
   },
-  '/gmail/v1/users/me/messages': async ({ query: { q } }, req) => { // search messages
+  '/gmail/v1/users/me/messages': async ({ query: { q } }, req) => {
+    // search messages
     const acct = oauth.checkAuthorizationHeaderWithAccessToken(req.headers.authorization);
     if (isGet(req) && q) {
       const msgs = (await GoogleData.withInitializedData(acct)).searchMessages(q);
@@ -182,7 +228,8 @@ export const mockGoogleEndpoints: HandlersDefinition = {
     }
     throw new HttpClientErr(`Method not implemented for ${req.url}: ${req.method}`);
   },
-  '/gmail/v1/users/me/messages/?': async ({ query: { format } }, req) => { // get msg or attachment
+  '/gmail/v1/users/me/messages/?': async ({ query: { format } }, req) => {
+    // get msg or attachment
     const acct = oauth.checkAuthorizationHeaderWithAccessToken(req.headers.authorization);
     if (isGet(req)) {
       const id = parseResourceId(req.url!);
@@ -243,7 +290,8 @@ export const mockGoogleEndpoints: HandlersDefinition = {
           const testingStrategyContext = new TestBySubjectStrategyContext(parseResult.mimeMsg.subject || '');
           await testingStrategyContext.test(parseResult, id);
         } catch (e) {
-          if (!(e instanceof UnsuportableStrategyError)) { // No such strategy for test
+          if (!(e instanceof UnsuportableStrategyError)) {
+            // No such strategy for test
             throw e; // todo - should start throwing unsupported test strategies too, else changing subject will cause incomplete testing
             // todo - should stop calling it "strategy", better just "SentMessageTest" or similar
           }
@@ -258,15 +306,27 @@ export const mockGoogleEndpoints: HandlersDefinition = {
       const acct = oauth.checkAuthorizationHeaderWithAccessToken(req.headers.authorization);
       const body = parsedReq.body as DraftSaveModel;
       if (body && body.message && body.message.raw && typeof body.message.raw === 'string') {
-        if (body.message.threadId && !(await GoogleData.withInitializedData(acct)).getThreads().find(t => t.id === body.message.threadId)) {
+        if (
+          body.message.threadId &&
+          !(await GoogleData.withInitializedData(acct)).getThreads().find(t => t.id === body.message.threadId)
+        ) {
           throw new HttpClientErr('The thread you are replying to not found', 404);
         }
         const decoded = await Parse.convertBase64ToMimeMsg(body.message.raw);
-        if (!decoded.text?.startsWith('[flowcrypt:') && !decoded.text?.startsWith('(saving of this draft was interrupted - to decrypt it, send it to yourself)')) {
-          throw new Error(`The "flowcrypt" draft prefix was not found in the draft. Instead starts with: ${decoded.text?.substr(0, 100)}`);
+        if (
+          !decoded.text?.startsWith('[flowcrypt:') &&
+          !decoded.text?.startsWith('(saving of this draft was interrupted - to decrypt it, send it to yourself)')
+        ) {
+          throw new Error(
+            `The "flowcrypt" draft prefix was not found in the draft. Instead starts with: ${decoded.text?.substr(
+              0,
+              100
+            )}`
+          );
         }
         return {
-          id: 'mockfakedraftsave', message: {
+          id: 'mockfakedraftsave',
+          message: {
             id: 'mockfakedmessageraftsave',
             labelIds: ['DRAFT'],
             threadId: body.message.threadId
@@ -280,7 +340,7 @@ export const mockGoogleEndpoints: HandlersDefinition = {
     const acct = oauth.checkAuthorizationHeaderWithAccessToken(req.headers.authorization);
     if (isGet(req)) {
       const id = parseResourceId(req.url!);
-      const data = (await GoogleData.withInitializedData(acct));
+      const data = await GoogleData.withInitializedData(acct);
       const draft = data.getDraft(id);
       if (draft) {
         return { id: draft.id, message: draft };
@@ -293,11 +353,11 @@ export const mockGoogleEndpoints: HandlersDefinition = {
       }
       const mimeMsg = await Parse.convertBase64ToMimeMsg(raw);
       if ((mimeMsg.subject || '').includes('saving and rendering a draft with image')) {
-        const data = (await GoogleData.withInitializedData(acct));
+        const data = await GoogleData.withInitializedData(acct);
         data.addDraft('draft_with_image', raw, mimeMsg);
       }
       if ((mimeMsg.subject || '').includes('RTL')) {
-        const data = (await GoogleData.withInitializedData(acct));
+        const data = await GoogleData.withInitializedData(acct);
         data.addDraft(`draft_with_rtl_text_${mimeMsg.subject?.includes('rich text') ? 'rich' : 'plain'}`, raw, mimeMsg);
       }
       return {};
@@ -305,7 +365,7 @@ export const mockGoogleEndpoints: HandlersDefinition = {
       return {};
     }
     throw new HttpClientErr(`Method not implemented for ${req.url}: ${req.method}`);
-  },
+  }
 };
 
 const parseMultipartDataAsMimeMsg = async (multipartData: string): Promise<ParseMsgResult> => {
@@ -340,7 +400,10 @@ const validateMimeMsg = async (acct: string, mimeMsg: ParsedMail, threadId?: str
         }
       }
       if (!isMessageExists) {
-        throw new HttpClientErr(`Error: suplied In-Reply-To header (${inReplyToMessageId}) does not match any messages present in the mock data for thread ${threadId}`, 400);
+        throw new HttpClientErr(
+          `Error: suplied In-Reply-To header (${inReplyToMessageId}) does not match any messages present in the mock data for thread ${threadId}`,
+          400
+        );
       }
     } else {
       throw new HttpClientErr(`Error: 'In-Reply-To' must not be empty if there is 'threadId'(${threadId})`, 400);
@@ -350,33 +413,49 @@ const validateMimeMsg = async (acct: string, mimeMsg: ParsedMail, threadId?: str
     throw new HttpClientErr('Error: Subject line is required', 400);
   } else {
     if (['Re: ', 'Fwd: '].some(e => mimeMsg.subject?.startsWith(e)) && (!threadId || !inReplyToMessageId)) {
-      throw new HttpClientErr(`Error: Incorrect subject. Subject can't start from 'Re:' or 'Fwd:'. Current subject is '${mimeMsg.subject}'`, 400);
+      throw new HttpClientErr(
+        `Error: Incorrect subject. Subject can't start from 'Re:' or 'Fwd:'. Current subject is '${mimeMsg.subject}'`,
+        400
+      );
     } else if ((threadId || inReplyToMessageId) && !['Re: ', 'Fwd: '].some(e => mimeMsg.subject?.startsWith(e))) {
-      throw new HttpClientErr("Error: Incorrect subject. Subject must start from 'Re:' or 'Fwd:' " +
-        `if the message has threaId or 'In-Reply-To' header. Current subject is '${mimeMsg.subject}'`, 400);
+      throw new HttpClientErr(
+        "Error: Incorrect subject. Subject must start from 'Re:' or 'Fwd:' " +
+          `if the message has threaId or 'In-Reply-To' header. Current subject is '${mimeMsg.subject}'`,
+        400
+      );
     }
     // Special check for 'from alias' test
-    if (mimeMsg.subject.endsWith('from alias') && mimeMsg.from?.value[0].address !== 'flowcryptcompatibility@gmail.com') {
-      throw new HttpClientErr(`Error: Incorrect Email Alias. Should be 'flowcryptcompatibility@gmail.com'. Current '${mimeMsg.from?.value[0].address}'`);
+    if (
+      mimeMsg.subject.endsWith('from alias') &&
+      mimeMsg.from?.value[0].address !== 'flowcryptcompatibility@gmail.com'
+    ) {
+      throw new HttpClientErr(
+        `Error: Incorrect Email Alias. Should be 'flowcryptcompatibility@gmail.com'. Current '${mimeMsg.from?.value[0].address}'`
+      );
     }
   }
   if (!mimeMsg.text && !mimeMsg.attachments?.length) {
     throw new HttpClientErr('Error: Message body cannot be empty', 400);
   }
-  const recipients = parsedMailAddressObjectAsArray(mimeMsg.to).concat(parsedMailAddressObjectAsArray(mimeMsg.cc)).concat(parsedMailAddressObjectAsArray(mimeMsg.bcc));
+  const recipients = parsedMailAddressObjectAsArray(mimeMsg.to)
+    .concat(parsedMailAddressObjectAsArray(mimeMsg.cc))
+    .concat(parsedMailAddressObjectAsArray(mimeMsg.bcc));
   if (!recipients.length || recipients.some(addr => addr.value.some(em => !allowedRecipients.includes(em.address!)))) {
-    throw new HttpClientErr('Error: You can\'t send a message to unexisting email address(es)');
+    throw new HttpClientErr("Error: You can't send a message to unexisting email address(es)");
   }
   const aliases = [acct];
   if (acct === 'flowcrypt.compatibility@gmail.com') {
     aliases.push('flowcryptcompatibility@gmail.com');
   }
   if (!mimeMsg.from?.value.length || mimeMsg.from?.value.find(em => !aliases.includes(em.address!))) {
-    throw new HttpClientErr('You can\'t send a message from unexisting email address(es)');
+    throw new HttpClientErr("You can't send a message from unexisting email address(es)");
   }
 };
+/* eslint-enable @typescript-eslint/naming-convention */
 
-export const parsedMailAddressObjectAsArray = (header: AddressObject | AddressObject[] | undefined): AddressObject[] => {
+export const parsedMailAddressObjectAsArray = (
+  header: AddressObject | AddressObject[] | undefined
+): AddressObject[] => {
   if (!header) {
     return [];
   }

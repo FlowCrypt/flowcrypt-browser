@@ -12,7 +12,7 @@ import { Xss } from '../../../js/common/platform/xss.js';
 import { KeyStore } from '../../../js/common/platform/store/key-store.js';
 import { XssSafeFactory } from '../../../js/common/xss-safe-factory.js';
 
-declare const filesize: { filesize: Function }; // tslint:disable-line:ban-types
+declare const filesize: { filesize: Function }; // eslint-disable-line @typescript-eslint/ban-types
 
 export class PgpBlockViewAttachmentsModule {
 

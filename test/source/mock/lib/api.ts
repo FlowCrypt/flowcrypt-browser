@@ -4,15 +4,15 @@ import * as https from 'https';
 import * as http from 'http';
 import { Util } from '../../util';
 import { readFileSync } from 'fs';
-// tslint:disable:await-returned-promise
 
-export class HttpAuthErr extends Error { }
+export class HttpAuthErr extends Error {}
 export class HttpClientErr extends Error {
-  constructor(message: string, public statusCode = 400) {
+  public constructor(message: string, public statusCode = 400) {
     super(message);
   }
 }
 
+/* eslint-disable @typescript-eslint/naming-convention */
 export enum Status {
   OK = 200,
   CREATED = 201,
@@ -22,14 +22,14 @@ export enum Status {
   NOT_FOUND = 404,
   CONFLICT = 409, // conflicts with key on record - request needs to be verified
   SERVER_ERROR = 500,
-  NOT_IMPLEMENTED = 501,
+  NOT_IMPLEMENTED = 501
 }
+/* eslint-enable @typescript-eslint/naming-convention */
 
 export type RequestHandler<REQ, RES> = (parsedReqBody: REQ, req: http.IncomingMessage) => Promise<RES>;
 export type Handlers<REQ, RES> = { [request: string]: RequestHandler<REQ, RES> };
 
 export class Api<REQ, RES> {
-
   public server: https.Server;
   protected apiName: string;
   protected maxRequestSizeMb = 0;
@@ -37,44 +37,50 @@ export class Api<REQ, RES> {
   protected throttleChunkMsUpload = 0;
   protected throttleChunkMsDownload = 0;
 
-  constructor(apiName: string, protected handlers: Handlers<REQ, RES>, protected urlPrefix = '') {
+  public constructor(apiName: string, protected handlers: Handlers<REQ, RES>, protected urlPrefix = '') {
     this.apiName = apiName;
-    const opt = { key: readFileSync(`./test/mock_cert/key.pem.mock`), cert: readFileSync(`./test/mock_cert/cert.pem.mock`) };
+    const opt = {
+      key: readFileSync(`./test/mock_cert/key.pem.mock`),
+      cert: readFileSync(`./test/mock_cert/cert.pem.mock`)
+    };
     this.server = https.createServer(opt, (request, response) => {
       const start = Date.now();
-      this.handleReq(request, response).then(data => this.throttledResponse(response, data)).then(() => {
-        try {
-          this.log(Date.now() - start, request, response);
-        } catch (e) {
-          console.error(e);
-          process.exit(1);
-        }
-      }).catch((e) => {
-        if (e instanceof HttpAuthErr) {
-          response.statusCode = Status.UNAUTHORIZED;
-          response.setHeader('WWW-Authenticate', `Basic realm="${this.apiName}"`);
-          e.stack = undefined;
-        } else if (e instanceof HttpClientErr) {
-          response.statusCode = e.statusCode;
-          e.stack = undefined;
-        } else {
-          response.statusCode = Status.SERVER_ERROR;
-          if (e instanceof Error && e.message.toLowerCase().includes('intentional error')) {
-            // don't log this, intentional error
-          } else {
-            console.error(`url:${request.method}:${request.url}`, e);
+      this.handleReq(request, response)
+        .then(data => this.throttledResponse(response, data))
+        .then(() => {
+          try {
+            this.log(Date.now() - start, request, response);
+          } catch (e) {
+            console.error(e);
+            process.exit(1);
           }
-        }
-        response.setHeader('Access-Control-Allow-Origin', '*');
-        response.setHeader('content-type', 'application/json');
-        const formattedErr = this.fmtErr(e);
-        response.end(formattedErr);
-        try {
-          this.log(Date.now() - start, request, response, formattedErr);
-        } catch (e) {
-          console.error('error logging req', e);
-        }
-      });
+        })
+        .catch(e => {
+          if (e instanceof HttpAuthErr) {
+            response.statusCode = Status.UNAUTHORIZED;
+            response.setHeader('WWW-Authenticate', `Basic realm="${this.apiName}"`);
+            e.stack = undefined;
+          } else if (e instanceof HttpClientErr) {
+            response.statusCode = e.statusCode;
+            e.stack = undefined;
+          } else {
+            response.statusCode = Status.SERVER_ERROR;
+            if (e instanceof Error && e.message.toLowerCase().includes('intentional error')) {
+              // don't log this, intentional error
+            } else {
+              console.error(`url:${request.method}:${request.url}`, e);
+            }
+          }
+          response.setHeader('Access-Control-Allow-Origin', '*');
+          response.setHeader('content-type', 'application/json');
+          const formattedErr = this.fmtErr(e);
+          response.end(formattedErr);
+          try {
+            this.log(Date.now() - start, request, response, formattedErr);
+          } catch (e) {
+            console.error('error logging req', e);
+          }
+        });
     });
   }
 
@@ -90,7 +96,7 @@ export class Api<REQ, RES> {
           console.log(msg);
           resolve();
         });
-        this.server.on('error', (e) => {
+        this.server.on('error', e => {
           console.error('failed to start mock server', e);
           reject(e);
         });
@@ -102,10 +108,11 @@ export class Api<REQ, RES> {
   };
 
   public close = (): Promise<void> => {
-    return new Promise((resolve, reject) => this.server.close((err: unknown) => err ? reject(err) : resolve()));
+    return new Promise((resolve, reject) => this.server.close((err: unknown) => (err ? reject(err) : resolve())));
   };
 
-  protected log = (ms: number, req: http.IncomingMessage, res: http.ServerResponse, errRes?: Buffer) => { // eslint-disable-line @typescript-eslint/no-unused-vars
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  protected log = (ms: number, req: http.IncomingMessage, res: http.ServerResponse, errRes?: Buffer) => {
     return undefined as void;
   };
 
@@ -122,9 +129,12 @@ export class Api<REQ, RES> {
     }
     if ((req.url === '/' || req.url === `${this.urlPrefix}/`) && (req.method === 'GET' || req.method === 'HEAD')) {
       res.setHeader('content-type', 'application/json');
-      return this.fmtRes({ app_name: this.apiName });
+      return this.fmtRes({ app_name: this.apiName }); // eslint-disable-line @typescript-eslint/naming-convention
     }
-    if ((req.url === '/alive' || req.url === `${this.urlPrefix}/alive`) && (req.method === 'GET' || req.method === 'HEAD')) {
+    if (
+      (req.url === '/alive' || req.url === `${this.urlPrefix}/alive`) &&
+      (req.method === 'GET' || req.method === 'HEAD')
+    ) {
       res.setHeader('content-type', 'application/json');
       return this.fmtRes({ alive: true });
     }
@@ -135,11 +145,13 @@ export class Api<REQ, RES> {
     if (!req.url) {
       throw new Error('no url');
     }
-    if (this.handlers[req.url]) { // direct handler name match
+    if (this.handlers[req.url]) {
+      // direct handler name match
       return this.handlers[req.url];
     }
     const url = req.url.split('?')[0];
-    if (this.handlers[url]) { // direct handler name match - ignoring query
+    if (this.handlers[url]) {
+      // direct handler name match - ignoring query
       return this.handlers[url];
     }
     // handler match where definition url ends with "/?" - incomplete path definition
@@ -152,15 +164,22 @@ export class Api<REQ, RES> {
 
   protected fmtErr = (e: unknown): Buffer => {
     if (String(e).includes('invalid_grant')) {
-      return Buffer.from(JSON.stringify({ "error": "invalid_grant", "error_description": "Bad Request" }));
+      return Buffer.from(JSON.stringify({ error: 'invalid_grant', error_description: 'Bad Request' })); // eslint-disable-line @typescript-eslint/naming-convention
     }
-    return Buffer.from(JSON.stringify({ "error": { "message": e instanceof Error ? e.message : String(e), stack: e instanceof Error ? e.stack : '' } }));
+    return Buffer.from(
+      JSON.stringify({
+        error: { message: e instanceof Error ? e.message : String(e), stack: e instanceof Error ? e.stack : '' }
+      })
+    );
   };
 
   protected fmtHandlerRes = (handlerRes: RES, serverRes: http.ServerResponse): Buffer => {
     if (typeof handlerRes === 'string' && handlerRes.match(/^<!DOCTYPE HTML><html>/)) {
       serverRes.setHeader('content-type', 'text/html');
-    } else if (typeof handlerRes === 'object' || (typeof handlerRes === 'string' && handlerRes.match(/^\{/) && handlerRes.match(/\}$/))) {
+    } else if (
+      typeof handlerRes === 'object' ||
+      (typeof handlerRes === 'string' && handlerRes.match(/^\{/) && handlerRes.match(/\}$/))
+    ) {
       serverRes.setHeader('content-type', 'application/json');
     } else if (typeof handlerRes === 'string') {
       serverRes.setHeader('content-type', 'text/plain');
@@ -171,7 +190,7 @@ export class Api<REQ, RES> {
     return this.fmtRes(handlerRes);
   };
 
-  protected fmtRes = (response: {} | RES | string): Buffer => {
+  protected fmtRes = (response: object | RES | string): Buffer => {
     if (response instanceof Buffer) {
       return response;
     } else if (typeof response === 'string') {
@@ -227,7 +246,7 @@ export class Api<REQ, RES> {
   private throttledResponse = async (response: http.ServerResponse, data: Buffer) => {
     // If google oauth2 login, then redirect to url
     if (/^https:\/\/google\.localhost:8001\/robots\.txt/.test(data.toString())) {
-      response.writeHead(302, { 'Location': data.toString() });
+      response.writeHead(302, { Location: data.toString() }); // eslint-disable-line @typescript-eslint/naming-convention
     } else {
       const chunkSize = 100 * 1024;
       for (let i = 0; i < data.length; i += chunkSize) {
@@ -257,5 +276,4 @@ export class Api<REQ, RES> {
     }
     return params;
   };
-
 }

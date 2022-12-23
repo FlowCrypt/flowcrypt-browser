@@ -120,24 +120,31 @@ dD1jkCFszePzosEk95yGu8z682IRN4bGNLQzCEqWAf0jTB4DvcI=
 =+zWD
 -----END PGP PUBLIC KEY BLOCK-----`;
 
-
+/* eslint-disable @typescript-eslint/naming-convention */
 export const mockSksEndpoints: HandlersDefinition = {
-  '/pks/lookup?search=john.doe%40example.com&fingerprint=on&exact=on&options=mr&op=index': async () => { // by email
+  '/pks/lookup?search=john.doe%40example.com&fingerprint=on&exact=on&options=mr&op=index': async () => {
+    // by email
     return `info:1:10\npub:094C3CBA696FA009F6015C473B635D858A1DB5E0:1:4096:1600067427::\nuid:John Doe <john.doe@example.com>:1600067427::`;
   },
-  '/pks/lookup?op=get&search=0x3B635D858A1DB5E0&options=mr': async () => { // by longid
+  '/pks/lookup?op=get&search=0x3B635D858A1DB5E0&options=mr': async () => {
+    // by longid
     return johnDoeExampleCom; // for john.doe@example.com
   },
-  '/pks/lookup?op=get&search=0x094C3CBA696FA009F6015C473B635D858A1DB5E0&options=mr': async () => { // by fp
+  '/pks/lookup?op=get&search=0x094C3CBA696FA009F6015C473B635D858A1DB5E0&options=mr': async () => {
+    // by fp
     return johnDoeExampleCom; // for john.doe@example.com
   },
-  '/pks/lookup?search=nobody%40example.com&fingerprint=on&exact=on&options=mr&op=index': async () => { // by email
+  '/pks/lookup?search=nobody%40example.com&fingerprint=on&exact=on&options=mr&op=index': async () => {
+    // by email
     throw new HttpClientErr('Pubkey not found', 404);
   },
-  '/pks/lookup?search=test%40custom-sks.flowcrypt.test&fingerprint=on&exact=on&options=mr&op=index': async () => { // by email
+  '/pks/lookup?search=test%40custom-sks.flowcrypt.test&fingerprint=on&exact=on&options=mr&op=index': async () => {
+    // by email
     return `info:1:10\npub:57631589DB543FB10B765C2F5F0CEF862479A17C:1:2048:1600067427::\nuid:Test <test@custom-sks.flowcrypt.test>:1600067427::`;
   },
-  '/pks/lookup?op=get&search=0x5F0CEF862479A17C&options=mr': async () => { // by fp
+  '/pks/lookup?op=get&search=0x5F0CEF862479A17C&options=mr': async () => {
+    // by fp
     return testSksKey; // for test@custom-sks.flowcrypt.test
-  },
+  }
 };
+/* eslint-enable @typescript-eslint/naming-convention */

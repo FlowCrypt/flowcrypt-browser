@@ -69,7 +69,7 @@ View.run(class MyKeyView extends View {
     $('#input_passphrase').on('keydown', this.setEnterHandlerThatClicks('.action_continue_download'));
     $('.action_cancel_download_cert').on('click', this.setHandler(() => { $('.enter_pp').hide(); }));
     const clipboardOpts = { text: () => this.keyInfo.public };
-    new ClipboardJS('.action_copy_pubkey', clipboardOpts); // tslint:disable-line:no-unused-expression no-unsafe-any
+    new ClipboardJS('.action_copy_pubkey', clipboardOpts); // eslint-disable-line no-unused-expressions, @typescript-eslint/no-unused-expressions, 
   };
 
   private renderPubkeyShareableLink = async () => {

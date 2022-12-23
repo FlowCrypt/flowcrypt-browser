@@ -44,8 +44,8 @@ export class Ui {
     handle: (cb: ProvidedEventHandler, errHandlers?: BrowserEventErrHandler, originalThis?: unknown) => {
       return function uiEventHandle(this: HTMLElement, event: JQuery.Event<HTMLElement, null>) {
         try {
-          const r = cb.bind(originalThis)(this, event) as void | Promise<void>; // tslint:disable-line:no-unsafe-any
-          if (typeof r === 'object' && typeof r.catch === 'function') { // tslint:disable-line:no-unbound-method - only testing if exists
+          const r = cb.bind(originalThis)(this, event) as void | Promise<void>; // eslint-disable-line 
+          if (typeof r === 'object' && typeof r.catch === 'function') { // eslint-disable-line @typescript-eslint/unbound-method, , , , , 
             r.catch(e => Ui.event._dispatchErr(e, errHandlers));
           }
         } catch (e) {
@@ -78,8 +78,8 @@ export class Ui {
       };
       const cbWithErrsHandled = (el: HTMLElement) => {
         try {
-          const r = cb.bind(originalThis)(el, event, cbResetTimer) as void | Promise<void>; // tslint:disable-line:no-unsafe-any
-          if (typeof r === 'object' && typeof r.catch === 'function') { // tslint:disable-line:no-unbound-method - only testing if exists
+          const r = cb.bind(originalThis)(el, event, cbResetTimer) as void | Promise<void>; // eslint-disable-line 
+          if (typeof r === 'object' && typeof r.catch === 'function') { // eslint-disable-line @typescript-eslint/unbound-method
             r.catch(e => Ui.event._dispatchErr(e, errHandler));
           }
         } catch (e) {
@@ -136,7 +136,7 @@ export class Ui {
   };
 
   public static modal = {
-    info: async (text: string, isHTML: boolean = false): Promise<void> => {
+    info: async (text: string, isHTML = false): Promise<void> => {
       text = isHTML ? Xss.htmlSanitize(text) : Xss.escape(text).replace(/\n/g, '<br>');
       const userResponsePromise = Ui.swal().fire({
         html: text,
@@ -162,7 +162,7 @@ export class Ui {
       Ui.activateModalPageLinkTags(); // in case the page itself has data-swal-page links
       await userResponsePromise;
     },
-    error: async (text: string, isHTML: boolean = false, footer?: string): Promise<void> => {
+    error: async (text: string, isHTML = false, footer?: string): Promise<void> => {
       text = isHTML ? Xss.htmlSanitize(text) : Xss.escape(text).replace(/\n/g, '<br>');
       const userResponsePromise = Ui.swal().fire({
         html: `<span class="red" data-test="container-error-modal-text">${text}</span>`,
@@ -180,7 +180,7 @@ export class Ui {
      * Presents a modal where user can respond with confirm or cancel.
      * Awaiting this will give you the users choice as a boolean.
      */
-    confirm: async (text: string, isHTML: boolean = false, footer?: string): Promise<boolean> => {
+    confirm: async (text: string, isHTML = false, footer?: string): Promise<boolean> => {
       const html = isHTML ? Xss.htmlSanitize(text) : Xss.escape(text).replace(/\n/g, '<br>');
       const userResponsePromise = Ui.swal().fire({
         html,
@@ -197,7 +197,7 @@ export class Ui {
       const { dismiss } = await userResponsePromise;
       return typeof dismiss === 'undefined';
     },
-    confirmWithCheckbox: async (label: string, html: string = ''): Promise<boolean> => {
+    confirmWithCheckbox: async (label: string, html = ''): Promise<boolean> => {
       const userResponsePromise = Ui.swal().fire({
         html,
         input: 'checkbox',
@@ -314,7 +314,7 @@ export class Ui {
     }));
   };
 
-  public static retryLink = (caption: string = 'retry') => {
+  public static retryLink = (caption = 'retry') => {
     return `<a href="${Xss.escape(window.location.href)}" data-test="action-retry-by-reloading">${Xss.escape(caption)}</a>`;
   };
 
@@ -343,7 +343,7 @@ export class Ui {
           ${details.replace(/\n/g, '<br>')}
         </pre>`;
       }
-      // tslint:disable-next-line:no-floating-promises
+      // eslint-disable-next-line @typescript-eslint/no-floating-promises
       Ui.modal.fullscreen(`
         <div class="line" data-test="container-overlay-prompt-text">${prompt.replace(/\n/g, '<br>')}</div>
         <div class="line">${formattedBtns}</div>
@@ -453,9 +453,9 @@ export class Ui {
     return $(`<${name}/>`, attrs)[0].outerHTML; // xss-tested: jquery escapes attributes
   }
 
-  public static toast = (text: string, isHTML: boolean = false, seconds = 2, position: SweetAlertPosition = 'bottom', icon?: SweetAlertIcon) => {
+  public static toast = (text: string, isHTML = false, seconds = 2, position: SweetAlertPosition = 'bottom', icon?: SweetAlertIcon) => {
     text = isHTML ? Xss.htmlSanitize(text) : Xss.escape(text).replace(/\n/g, '<br>');
-    // tslint:disable-next-line:no-floating-promises
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
     Ui.swal().fire({
       toast: true,
       title: text,

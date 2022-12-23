@@ -98,7 +98,7 @@ export class XssSafeFactory {
     return r;
   };
 
-  constructor(acctEmail: string, parentTabId: string, reloadableCls: string = '', destroyableCls: string = '', setParams: UrlParams = {}) {
+  constructor(acctEmail: string, parentTabId: string, reloadableCls = '', destroyableCls = '', setParams: UrlParams = {}) {
     this.reloadableCls = Xss.escape(reloadableCls);
     this.destroyableCls = Xss.escape(destroyableCls);
     this.setParams = setParams;
@@ -208,7 +208,7 @@ export class XssSafeFactory {
     return this.iframe(this.srcBackupIframe(armoredPrvBackup), ['backup_block']);
   };
 
-  public embeddedReply = (convoParams: FactoryReplyParams, skipClickPrompt: boolean, ignoreDraft: boolean = false) => {
+  public embeddedReply = (convoParams: FactoryReplyParams, skipClickPrompt: boolean, ignoreDraft = false) => {
     return this.iframe(this.srcReplyMsgIframe(convoParams, skipClickPrompt, ignoreDraft), ['reply_message']);
   };
 

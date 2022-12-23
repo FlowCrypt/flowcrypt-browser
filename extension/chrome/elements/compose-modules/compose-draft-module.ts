@@ -32,12 +32,12 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
   private saveDraftInterval?: number;
   private lastDraftBody?: string;
   private lastDraftSubject = '';
-  private SAVE_DRAFT_FREQUENCY = 3000;
+  private SAVE_DRAFT_FREQUENCY = 3000; // eslint-disable-line @typescript-eslint/naming-convention
   private localDraftPrefix = 'local-draft-';
   private localComposeDraftPrefix = 'compose-';
   private localComposeDraftId = Str.sloppyRandom(10);
 
-  constructor(composer: ComposeView) {
+  public constructor(composer: ComposeView) {
     super(composer);
     if (!this.view.disableDraftSaving) {
       this.saveDraftInterval = Catch.setHandledInterval(() => this.draftSave(), this.SAVE_DRAFT_FREQUENCY);
@@ -112,7 +112,7 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
     }
   };
 
-  public draftSave = async (forceSave: boolean = false): Promise<void> => {
+  public draftSave = async (forceSave = false): Promise<void> => {
     if (this.disableSendingDrafts) {
       return;
     }

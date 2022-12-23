@@ -1,8 +1,4 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
-
-// tslint:disable:oneliner-object-literal
-// tslint:disable:no-null-keyword
-
 'use strict';
 
 import { Api, ProgressCb, ReqMethod } from '../shared/api.js';
@@ -24,11 +20,11 @@ type EventTag = 'compose' | 'decrypt' | 'setup' | 'settings' | 'import-pub' | 'i
 export namespace FesRes {
   export type ReplyToken = { replyToken: string };
   export type MessageUpload = {
-    url: string, // LEGACY
-    externalId: string, // LEGACY
-    emailToExternalIdAndUrl?: { [email: string]: { url: string, externalId: string } }
+    url: string; // LEGACY
+    externalId: string; // LEGACY
+    emailToExternalIdAndUrl?: { [email: string]: { url: string; externalId: string } };
   };
-  export type ServiceInfo = { vendor: string, service: string, orgId: string, version: string, apiVersion: string };
+  export type ServiceInfo = { vendor: string; service: string; orgId: string; version: string; apiVersion: string };
   export type ClientConfiguration = { clientConfiguration: ClientConfigurationJson };
 }
 
@@ -39,14 +35,13 @@ export namespace FesRes {
  */
 // ts-prune-ignore-next
 export class EnterpriseServer extends Api {
-
   public url: string;
 
   private domain: string;
   private apiVersion = 'v1';
   private domainsThatUseLaxFesCheckEvenOnEnterprise = ['dmFsZW8uY29t'];
 
-  constructor(private acctEmail: string) {
+  public constructor(private acctEmail: string) {
     super();
     this.domain = acctEmail.toLowerCase().split('@').pop()!;
     this.url = `https://fes.${this.domain}`;
@@ -63,7 +58,8 @@ export class EnterpriseServer extends Api {
     try {
       // regardless if this is enterprise or consumer flavor, if FES is available, return yes
       return (await this.getServiceInfo()).service === 'enterprise-server';
-    } catch (e) { // FES not available
+    } catch (e) {
+      // FES not available
       if (ApiErr.isNotFound(e)) {
         return false; // a 404 returned where FES should be is an affirmative no - FES will not be used
       }
@@ -89,7 +85,10 @@ export class EnterpriseServer extends Api {
   };
 
   public fetchAndSaveClientConfiguration = async (): Promise<ClientConfigurationJson> => {
-    const r = await this.request<FesRes.ClientConfiguration>('GET', `/api/${this.apiVersion}/client-configuration?domain=${this.domain}`);
+    const r = await this.request<FesRes.ClientConfiguration>(
+      'GET',
+      `/api/${this.apiVersion}/client-configuration?domain=${this.domain}`
+    );
     if (r.clientConfiguration && !r.clientConfiguration.flags) {
       throw new ClientConfigurationError('missing_flags');
     }
@@ -98,17 +97,30 @@ export class EnterpriseServer extends Api {
   };
 
   public reportException = async (errorReport: ErrorReport): Promise<void> => {
-    await this.request<void>('POST', `/api/${this.apiVersion}/log-collector/exception`, await this.authHdr(), errorReport);
+    await this.request<void>(
+      'POST',
+      `/api/${this.apiVersion}/log-collector/exception`,
+      await this.authHdr(),
+      errorReport
+    );
   };
 
   public reportEvent = async (tags: EventTag[], message: string, details?: string): Promise<void> => {
-    await this.request<void>('POST', `/api/${this.apiVersion}/log-collector/exception`,
-      await this.authHdr(), { tags, message, details });
+    await this.request<void>('POST', `/api/${this.apiVersion}/log-collector/exception`, await this.authHdr(), {
+      tags,
+      message,
+      details
+    });
   };
 
   public webPortalMessageNewReplyToken = async (): Promise<FesRes.ReplyToken> => {
     const authHdr = await this.authHdr();
-    return await this.request<FesRes.ReplyToken>('POST', `/api/${this.apiVersion}/message/new-reply-token`, authHdr, {});
+    return await this.request<FesRes.ReplyToken>(
+      'POST',
+      `/api/${this.apiVersion}/message/new-reply-token`,
+      authHdr,
+      {}
+    );
   };
 
   public webPortalMessageUpload = async (
@@ -126,24 +138,34 @@ export class EnterpriseServer extends Api {
     const details = new Attachment({
       name: 'details.json',
       type: 'application/json',
-      data: Buf.fromUtfStr(JSON.stringify({
-        associateReplyToken,
-        from,
-        to: (recipients.to || []).map(Str.formatEmailWithOptionalName),
-        cc: (recipients.cc || []).map(Str.formatEmailWithOptionalName),
-        bcc: (recipients.bcc || []).map(Str.formatEmailWithOptionalName)
-      }))
+      data: Buf.fromUtfStr(
+        JSON.stringify({
+          associateReplyToken,
+          from,
+          to: (recipients.to || []).map(Str.formatEmailWithOptionalName),
+          cc: (recipients.cc || []).map(Str.formatEmailWithOptionalName),
+          bcc: (recipients.bcc || []).map(Str.formatEmailWithOptionalName)
+        })
+      )
     });
     const multipartBody = { content, details };
     const authHdr = await this.authHdr();
     return await EnterpriseServer.apiCall<FesRes.MessageUpload>(
-      this.url, `/api/${this.apiVersion}/message`, multipartBody, 'FORM',
-      { upload: progressCb }, authHdr, 'json', 'POST'
+      this.url,
+      `/api/${this.apiVersion}/message`,
+      multipartBody,
+      'FORM',
+      { upload: progressCb },
+      authHdr,
+      'json',
+      'POST'
     );
   };
 
   public messageGatewayUpdate = async (externalId: string, emailGatewayMessageId: string) => {
-    await this.request<void>('POST', `/api/${this.apiVersion}/message/${externalId}/gateway`, await this.authHdr(), { emailGatewayMessageId });
+    await this.request<void>('POST', `/api/${this.apiVersion}/message/${externalId}/gateway`, await this.authHdr(), {
+      emailGatewayMessageId
+    });
   };
 
   public accountUpdate = async (profileUpdate: ProfileUpdate): Promise<BackendRes.FcAccountUpdate> => {
@@ -154,14 +176,27 @@ export class EnterpriseServer extends Api {
   private authHdr = async (): Promise<Dict<string>> => {
     const idToken = await InMemoryStore.get(this.acctEmail, InMemoryStoreKeys.ID_TOKEN);
     if (idToken) {
-      return { Authorization: `Bearer ${idToken}` };
+      return { Authorization: `Bearer ${idToken}` }; // eslint-disable-line @typescript-eslint/naming-convention
     }
     // user will not actually see this message, they'll see a generic login prompt
     throw new BackendAuthErr('Missing id token, please re-authenticate');
   };
 
-  private request = async <RT>(method: ReqMethod, path: string, headers: Dict<string> = {}, vals?: Dict<unknown>): Promise<RT> => {
-    return await EnterpriseServer.apiCall(this.url, path, vals, method === 'GET' ? undefined : 'JSON', undefined, headers, 'json', method);
+  private request = async <RT>(
+    method: ReqMethod,
+    path: string,
+    headers: Dict<string> = {},
+    vals?: Dict<unknown>
+  ): Promise<RT> => {
+    return await EnterpriseServer.apiCall(
+      this.url,
+      path,
+      vals,
+      method === 'GET' ? undefined : 'JSON',
+      undefined,
+      headers,
+      'json',
+      method
+    );
   };
-
 }
