@@ -116,9 +116,15 @@ export class OpenPGPKey {
       }
     }
     if (armor) {
-      return await opgp.encrypt({ format: 'armored', message, date, encryptionKeys, passwords: pwd ? [pwd] : undefined, signingKeys });
+      return {
+        type: 'openpgp',
+        data: Buf.fromRawBytesStr(await opgp.encrypt({ format: 'armored', message, date, encryptionKeys, passwords: pwd ? [pwd] : undefined, signingKeys }))
+      };
     } else {
-      return await opgp.encrypt({ format: 'binary', message, date, encryptionKeys, passwords: pwd ? [pwd] : undefined, signingKeys });
+      return {
+        type: 'openpgp',
+        data: await opgp.encrypt({ format: 'binary', message, date, encryptionKeys, passwords: pwd ? [pwd] : undefined, signingKeys })
+      };
     }
   };
 

@@ -11,7 +11,7 @@ import { KeyUtil, KeyInfoWithIdentityAndOptionalPp } from '../core/crypto/key';
 import { UnreportableError } from '../platform/catch.js';
 import { Buf } from '../core/buf';
 import { OpenPGPKey } from '../core/crypto/pgp/openpgp-key';
-import { DecryptError, DecryptSuccess, MsgUtil, PgpMsgMethod } from '../core/crypto/pgp/msg-util';
+import { DecryptError, DecryptSuccess, MsgUtil } from '../core/crypto/pgp/msg-util';
 import { opgp } from '../core/crypto/pgp/openpgpjs-custom';
 import { Attachment } from '../core/attachment.js';
 import { GoogleData, GmailMsg } from '../mock/google/google-data';
@@ -627,8 +627,7 @@ ${testConstants.smimeCert}`), { instanceOf: Error, message: `Invalid PEM formatt
 
     ava.default('[unit][KeyUtil.parse] issuerAndSerialNumber of S/MIME certificate is constructed according to PKCS#7', async t => {
       const key = await KeyUtil.parse(testConstants.smimeCert);
-      const buf = Buf.with((await MsgUtil.encryptMessage(
-        { pubkeys: [key], data: Buf.fromUtfStr('anything'), armor: false }) as PgpMsgMethod.EncryptX509Result).data);
+      const buf = Buf.with((await MsgUtil.encryptMessage({ pubkeys: [key], data: Buf.fromUtfStr('anything'), armor: false })).data);
       const raw = buf.toRawBytesStr();
       expect(raw).to.include(key.issuerAndSerialNumber);
       t.pass();
@@ -636,8 +635,7 @@ ${testConstants.smimeCert}`), { instanceOf: Error, message: `Invalid PEM formatt
 
     ava.default('[unit][MsgUtil.encryptMessage] duplicate S/MIME recipients are collapsed into one', async t => {
       const key = await KeyUtil.parse(testConstants.smimeCert);
-      const buf = Buf.with((await MsgUtil.encryptMessage(
-        { pubkeys: [key, key, key], data: Buf.fromUtfStr('anything'), armor: false }) as PgpMsgMethod.EncryptX509Result).data);
+      const buf = Buf.with((await MsgUtil.encryptMessage({ pubkeys: [key, key, key], data: Buf.fromUtfStr('anything'), armor: false })).data);
       const msg = buf.toRawBytesStr();
       const p7 = forge.pkcs7.messageFromAsn1(forge.asn1.fromDer(msg));
       expect(p7.type).to.equal(ENVELOPED_DATA_OID);
@@ -915,7 +913,7 @@ jSB6A93JmnQGIkAem/kzGkKclmfAdGfc4FS+3Cn+6Q==Xmrz
       const pub1 = await KeyUtil.parse(key1.public);
       const pub2 = await KeyUtil.parse(key2.public);
       // only encrypt with pub1
-      const { data } = await MsgUtil.encryptMessage({ pubkeys: [pub1], data: Buf.fromUtfStr('anything'), armor: true }) as PgpMsgMethod.EncryptPgpArmorResult;
+      const { data } = await MsgUtil.encryptMessage({ pubkeys: [pub1], data: Buf.fromUtfStr('anything'), armor: true });
       const m = await opgp.readMessage({ armoredMessage: Buf.fromUint8(data).toUtfStr() });
       const parsed1 = await KeyUtil.parse(key1.private);
       const parsed2 = await KeyUtil.parse(key2.private);
@@ -1018,7 +1016,7 @@ jSB6A93JmnQGIkAem/kzGkKclmfAdGfc4FS+3Cn+6Q==Xmrz
       //      trust: ultimate      validity: ultimate
       const justPrimaryPub = tmpPub.armor();
       const pubkeys = [await KeyUtil.parse(justPrimaryPub)];
-      const encrypted = await MsgUtil.encryptMessage({ pubkeys, data, armor: true }) as PgpMsgMethod.EncryptPgpArmorResult;
+      const encrypted = await MsgUtil.encryptMessage({ pubkeys, data, armor: true });
       const parsed = await KeyUtil.parse(prvEncryptForSubkeyOnlyProtected);
       const kisWithPp: KeyInfoWithIdentityAndOptionalPp[] = [{ ... await KeyUtil.keyInfoObj(parsed), family: parsed.family, passphrase }];
       const decrypted = await MsgUtil.decryptMessage({ kisWithPp, encryptedData: encrypted.data, verificationPubs: [] });
@@ -1988,8 +1986,7 @@ PBcqDCjq5jgMhU1oyVclRK7jJdmu0Azvwo2lleLAFLdCzHEXWXUz
       const privateSmimeKey = await KeyUtil.parse(p8);
       const publicSmimeKey = await KeyUtil.asPublicKey(privateSmimeKey);
       const text = 'this is a text to be encrypted';
-      const buf = Buf.with((await MsgUtil.encryptMessage(
-        { pubkeys: [publicSmimeKey], data: Buf.fromUtfStr(text), armor: true }) as PgpMsgMethod.EncryptX509Result).data);
+      const buf = Buf.with((await MsgUtil.encryptMessage({ pubkeys: [publicSmimeKey], data: Buf.fromUtfStr(text), armor: true })).data);
       const encryptedMessage = buf.toRawBytesStr();
       expect(encryptedMessage).to.include(PgpArmor.headers('pkcs7').begin);
       const p7 = SmimeKey.readArmoredPkcs7Message(buf);
