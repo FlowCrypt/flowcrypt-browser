@@ -88,7 +88,7 @@ export class OpenPGPKey {
       throw new Error(`Cannot encrypt a key that has ${encryptedPacketCount} of ${secretPackets.length} private packets still encrypted`);
     }
     const encryptedPrv = await opgp.encryptKey({ privateKey: prv, passphrase });
-    if (!OpenPGPKey.isFullyEncrypted(prv)) {
+    if (!OpenPGPKey.isFullyEncrypted(encryptedPrv)) {
       throw new Error('Expected key to be fully encrypted after prv.encrypt');
     }
     await OpenPGPKey.convertExternalLibraryObjToKey(encryptedPrv, key);
