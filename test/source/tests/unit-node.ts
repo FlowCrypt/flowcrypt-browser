@@ -4,7 +4,7 @@ import * as ava from 'ava';
 
 import { MsgBlock } from '../core/msg-block';
 import { MsgBlockParser } from '../core/msg-block-parser';
-import { TestVariant, Util } from '../util';
+import { Config, TestVariant, Util } from '../util';
 import chai = require('chai');
 import chaiAsPromised = require('chai-as-promised');
 import { KeyUtil, KeyInfoWithIdentityAndOptionalPp } from '../core/crypto/key';
@@ -752,6 +752,25 @@ jLwe8W9IMt765T5x5oux9MmPDXF05xHfm4qfH/BMO3a802x5u2gJjJjuknrFdgXY
       expect(parsed?.usableForEncryption).to.equal(false);
       expect(parsed?.expiration).to.equal(1594890073000);
       expect(parsed?.usableForEncryptionButExpired).to.equal(false); // because last signature was created as already expired, no intersection
+      t.pass();
+    });
+
+    ava.default('[unit][MsgUtil.decryptMessage] decrypts a pubkey-encrypted OpenPGP message', async t => {
+      const data = await GoogleData.withInitializedData('flowcrypt.compatibility@gmail.com');
+      const msg: GmailMsg = data.getMessage('166147ea9bb6669d')!;
+      const enc = Buf.fromBase64Str(msg!.raw!).toUtfStr()
+        .match(/-----BEGIN PGP MESSAGE-----.*-----END PGP MESSAGE-----/s)![0];
+      const encryptedData = Buf.fromUtfStr(enc);
+      const compatibilityKey1 = Config.key('flowcrypt.compatibility.1pp1')!;
+      const kisWithPp = [
+        {
+          ...await KeyUtil.keyInfoObj(await KeyUtil.parse(compatibilityKey1.armored!)), passphrase: compatibilityKey1.passphrase
+        },
+      ];
+      const decrypted1 = await MsgUtil.decryptMessage({ kisWithPp, encryptedData, verificationPubs: [] });
+      expect(decrypted1.success).to.equal(true);
+      const verifyRes1 = (decrypted1 as DecryptSuccess).signature!;
+      expect(verifyRes1.match).to.be.null;
       t.pass();
     });
 
