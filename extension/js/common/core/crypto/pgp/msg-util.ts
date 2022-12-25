@@ -61,7 +61,6 @@ export type DecryptError = { success: false; error: DecryptError$error; longids:
 
 export type VerifyRes = {
   signerLongids: string[]; // signers longids from the message
-  signerFingerprints: string[]; // "issuerFingerprints" from signature subpackets
   suppliedLongids: string[]; // longids from keys supplied to verify the message
   match: boolean | null; // we can return some pubkey information here
   error?: string;

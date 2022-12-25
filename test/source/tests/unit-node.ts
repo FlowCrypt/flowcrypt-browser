@@ -2322,14 +2322,14 @@ AAAAAAAAAAAAAAAAzzzzzzzzzzzzzzzzzzzzzzzzzzzz.....`)).to.eventually.be.rejectedWi
       t.pass();
     });
 
-    ava.default(`[unit][MsgUtil.verifyDetached] VerifyRes contains signer fingerprints`, async t => {
+    ava.default(`[unit][MsgUtil.verifyDetached] VerifyRes contains signer longids`, async t => {
       const prv = await KeyUtil.parse(rsaPrimaryKeyAndSubkeyBothHavePrivateKey);
       await KeyUtil.decrypt(prv, '1234');
       const plaintext = 'data to sign';
       const sigText = await MsgUtil.sign(prv, plaintext, true);
       const verifyRes = await MsgUtil.verifyDetached({ plaintext: Buf.fromRawBytesStr(plaintext), sigText: Buf.fromRawBytesStr(sigText), verificationPubs: [] });
-      expect(verifyRes.signerFingerprints.length).to.equal(1);
-      expect(verifyRes.signerFingerprints[0]).to.equal(prv.id);
+      expect(verifyRes.signerLongids.length).to.equal(1);
+      expect(verifyRes.signerLongids[0]).to.equal(KeyUtil.getPrimaryLongid(prv));
       t.pass();
     });
 

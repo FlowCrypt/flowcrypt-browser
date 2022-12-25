@@ -444,7 +444,6 @@ export class OpenPGPKey {
     const verifyRes: VerifyRes = {
       match: null,  // tslint:disable-line:no-null-keyword
       signerLongids: [],
-      signerFingerprints: [],
       suppliedLongids: validKeys.map(x => x.allIds.map(fp => OpenPGPKey.fingerprintToLongid(fp))).reduce((a, b) => a.concat(b), [])
     };
     const opgpKeys = validKeys.map(x => OpenPGPKey.extractExternalLibraryObjFromKey(x));
@@ -469,7 +468,6 @@ export class OpenPGPKey {
           fingerprints.push(...signature.packets.filter(s => s.issuerFingerprint).map(s => Buf.fromUint8(s.issuerFingerprint!).toHexStr()));
           // signerLongids.push(OpenPGPKey.bytesToLongid(verification.keyID.bytes));
         }
-        verifyRes.signerFingerprints = Value.arr.unique(fingerprints);
       }
       verifyRes.signerLongids = Value.arr.unique(signerLongids);
     } catch (verifyErr) {
