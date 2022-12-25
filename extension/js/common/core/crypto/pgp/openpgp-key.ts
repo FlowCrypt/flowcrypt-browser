@@ -456,18 +456,13 @@ export class OpenPGPKey {
       }
       // is there an intersection?
       if (signerLongids.some(longid => verifyRes.suppliedLongids.includes(longid))) {
-        const fingerprints: string[] = [];
         const verifications = await msg.verify(opgpKeys);
-        for (const verification of verifications) {
-          // todo - a valid signature is a valid signature, and should be surfaced. Currently, if any of the signatures are not valid, it's showing all as invalid
-          // .. as it is now this could allow an attacker to append bogus signatures to validly signed messages, making otherwise correct messages seem incorrect
-          // .. which is not really an issue - an attacker that can append signatures could have also just slightly changed the message, causing the same experience
-          // .. so for now #wontfix unless a reasonable usecase surfaces
-          verifyRes.match = (verifyRes.match === true || verifyRes.match === null) && await verification.verified;
-          const signature = await verification.signature;
-          fingerprints.push(...signature.packets.filter(s => s.issuerFingerprint).map(s => Buf.fromUint8(s.issuerFingerprint!).toHexStr()));
-          // signerLongids.push(OpenPGPKey.bytesToLongid(verification.keyID.bytes));
-        }
+        await Promise.all(verifications.map(verification => verification.verified)); // throws on invalid signature
+        // todo - a valid signature is a valid signature, and should be surfaced. Currently, if any of the signatures are not valid, it's showing all as invalid
+        // .. as it is now this could allow an attacker to append bogus signatures to validly signed messages, making otherwise correct messages seem incorrect
+        // .. which is not really an issue - an attacker that can append signatures could have also just slightly changed the message, causing the same experience
+        // .. so for now #wontfix unless a reasonable usecase surfaces
+        verifyRes.match = verifications.length > 0;
       }
       verifyRes.signerLongids = Value.arr.unique(signerLongids);
     } catch (verifyErr) {
