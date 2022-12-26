@@ -3,7 +3,7 @@
 'use strict';
 
 import * as path from 'path';
-import ts from 'typescript';
+import * as ts from 'typescript';
 
 import { readFileSync } from 'fs';
 
