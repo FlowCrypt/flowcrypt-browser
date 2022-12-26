@@ -160,6 +160,7 @@ export class Api<REQ, RES> {
         return this.handlers[handlerPathDefinition];
       }
     }
+    throw new Error(`no handler found for url ${req.url}`);
   };
 
   protected fmtErr = (e: unknown): Buffer => {

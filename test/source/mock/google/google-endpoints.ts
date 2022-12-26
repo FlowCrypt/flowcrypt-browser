@@ -279,6 +279,7 @@ export const mockGoogleEndpoints: HandlersDefinition = {
       }
       return { id, historyId: msgs[0].historyId, messages: msgs.map(m => GoogleData.fmtMsg(m, format)) };
     }
+    throw new HttpClientErr(`Method not implemented for ${req.url}: ${req.method}`);
   },
   '/upload/gmail/v1/users/me/messages/send?uploadType=multipart': async (parsedReq, req) => {
     const acct = oauth.checkAuthorizationHeaderWithAccessToken(req.headers.authorization);

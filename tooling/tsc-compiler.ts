@@ -43,11 +43,11 @@ const getNameAndPos = (f: ts.FunctionLike) => {
  * This transformer will wrap content of all async functions with a try/catch that helps preserve proper async stack traces
  */
 const preserveAsyncStackTracesTransformerFactory = () => {
-  const createStackTracePreservingCatchBlockStatements = (f: ts.FunctionLike): ts.Statement[] => {
+  const createStackTracePreservingCatchBlockStatements = (f: ts.SignatureDeclaration): ts.Statement[] => {
     const statements: ts.Statement[] = [];
     const addStackLine = `\\n    at <async> ${getNameAndPos(f)}`;
     const code = `if(t instanceof Error){t.stack+="${addStackLine}";throw t}const e=new Error("Thrown["+typeof t+"]"+t);e.thrown=t;throw e`;
-    statements.push(ts.createStatement(ts.factory.createIdentifier(code)));
+    statements.push(ts.factory.createExpressionStatement(ts.factory.createIdentifier(code)));
     return statements;
   };
   const visitor = (ctx: ts.TransformationContext) => {

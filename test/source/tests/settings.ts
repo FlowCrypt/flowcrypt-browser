@@ -2,7 +2,6 @@
 
 import * as fs from 'fs';
 import * as ava from 'ava';
-import { Page } from 'puppeteer';
 
 import { Config, Util } from './../util';
 import { TestWithBrowser, internalTestState } from './../test';
@@ -748,8 +747,8 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         await pgpBlockFrame.waitAndClick('.preview-attachment');
         const attachmentPreviewImage = await inboxPage.getFrame(['attachment_preview.htm']);
         await attachmentPreviewImage.waitAll('#attachment-preview-container img.attachment-preview-img');
-        await (inboxPage.target as Page) // eslint-disable-line no-underscore-dangle
-          ._client() // eslint-disable-line no-underscore-dangle
+        await (inboxPage.target as any) // eslint-disable-line no-underscore-dangle
+          ._client()
           .send('Page.setDownloadBehavior', { behavior: 'allow', downloadPath: __dirname });
         await attachmentPreviewImage.waitAndClick('@attachment-preview-download');
         await Util.sleep(1);

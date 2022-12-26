@@ -5,8 +5,8 @@ import * as ava from 'ava';
 import { MsgBlock } from '../core/msg-block';
 import { MsgBlockParser } from '../core/msg-block-parser';
 import { TestVariant, Util } from '../util';
-import chai = require('chai');
-import chaiAsPromised = require('chai-as-promised');
+import { use, expect } from 'chai';
+import chaiAsPromised from 'chai-as-promised';
 import { KeyUtil, KeyInfoWithIdentityAndOptionalPp } from '../core/crypto/key';
 import { UnreportableError } from '../platform/catch.js';
 import { Buf } from '../core/buf';
@@ -23,8 +23,7 @@ import * as forge from 'node-forge';
 import { ENVELOPED_DATA_OID, SmimeKey } from '../core/crypto/smime/smime-key';
 import { Str } from '../core/common';
 
-chai.use(chaiAsPromised);
-const expect = chai.expect;
+use(chaiAsPromised);
 
 export const equals = (a: string | Uint8Array, b: string | Uint8Array) => {
   expect(typeof a).to.equal(typeof b, `types dont match`);
