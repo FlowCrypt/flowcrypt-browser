@@ -50,7 +50,7 @@ export const defineUnitBrowserTests = (testVariant: TestVariant, testWithBrowser
 
     const parseTestFile = (filename: string): UnitTest[] => {
       const unitTestCodes = Buf.fromUint8(readFileSync(browserUnitTestsFolder + filename)).toUtfStr().trim();
-      const testCasesInFile = unitTestCodes.split('\nBROWSER_UNIT_TEST_NAME(`');
+      const testCasesInFile = unitTestCodes.split('\nBROWSER_UNIT_TEST_NAME(');
       const header = testCasesInFile.shift()!;
       if (!header.startsWith('/* ©️ 2016')) {
         throw Error(`Expecting ${browserUnitTestsFolder}/${filename} to start with '/* ©️ 2016'`);
@@ -64,6 +64,10 @@ export const defineUnitBrowserTests = (testVariant: TestVariant, testWithBrowser
           throw Error(`Block comments such as /* are not allowed in test definitions. Use line comments eg //`);
         }
         code = code.trim();
+        if (!code.startsWith('`')) {
+          console.error(code);
+          throw Error(`Test case name should be in backticks`);
+        }
         if (!code.endsWith('})();')) {
           console.error(code);
           throw Error(`Test case does not end with '})();'. Did you put code outside of the async functions? (forbidden)`);
@@ -105,7 +109,7 @@ export const defineUnitBrowserTests = (testVariant: TestVariant, testWithBrowser
         if (consumerOnly && testVariant === 'ENTERPRISE-MOCK') {
           continue;
         }
-        thisUnitTestTitle = thisUnitTestTitle.replace(/`.+$/, '');
+        thisUnitTestTitle = thisUnitTestTitle.slice(1).replace(/`.+$/, '');
         code = testCodeLines.join('\n'); // without the title, just code
         const title = `[${filename}] ${thisUnitTestTitle}`;
         unitTests.push({ title, code, only, acct });
