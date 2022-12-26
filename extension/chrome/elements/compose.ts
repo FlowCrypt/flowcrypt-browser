@@ -150,6 +150,16 @@ export class ComposeView extends View {
     this.acctServer = new AccountServer(this.acctEmail);
   }
 
+  private setInputLimit(el: HTMLElement, ev: JQuery.Event, limit: number) {
+    const clipboardEvent = ev.originalEvent as ClipboardEvent;
+    if (clipboardEvent.clipboardData) {
+      const clipboardLength = clipboardEvent.clipboardData.getData('text').length;
+      if (clipboardLength > limit) {
+        ev.preventDefault(); // this works
+      }
+    }
+  }
+
   public render = async () => {
     const storage = await AcctStore.get(this.acctEmail, ['sendAs', 'hide_message_password', 'fesUrl']);
     this.clientConfiguration = await ClientConfiguration.newInstance(this.acctEmail);
@@ -205,28 +215,11 @@ export class ComposeView extends View {
     this.S.cached('body').on('focusin', setActiveWindow);
     this.S.cached('body').on('click', setActiveWindow);
     this.S.cached('icon_help').on('click', this.setHandler(async () => await this.renderModule.openSettingsWithDialog('help'), this.errModule.handle(`help dialog`)));
-    this.S.cached('input_intro').on('paste', this.setHandler(async (el, ev: JQuery.Event) => {
-      const clipboardEvent = ev.originalEvent as ClipboardEvent;
-      const maxPlainTextLength = 10;
-      if (clipboardEvent.clipboardData) {
-        const clipboardLength = clipboardEvent.clipboardData.getData('text').length;
-        if (clipboardLength > maxPlainTextLength) {
-          ev.preventDefault(); // this works
-        }
-      }
-    }));
     this.S.cached('input_text').on('paste', this.setHandler(async (el, ev: JQuery.Event) => {
-      const clipboardEvent = ev.originalEvent as ClipboardEvent;
-      const maxPlainTextLength = 10;
-      if (clipboardEvent.clipboardData) {
-        const clipboardLength = clipboardEvent.clipboardData.getData('text').length;
-        console.log(clipboardLength);
-        console.log(clipboardLength, maxPlainTextLength);
-        console.log(clipboardLength > maxPlainTextLength);
-        if (clipboardLength > maxPlainTextLength) {
-          ev.preventDefault(); // this doesn't work
-        }
-      }
+      this.setInputLimit(el, ev, 10); // this works
+    }));
+    this.S.cached('input_intro').on('paste', this.setHandler(async (el, ev: JQuery.Event) => {
+      this.setInputLimit(el, ev, 10); // this doesn't work
     }));
     this.attachmentsModule.setHandlers();
     this.inputModule.setHandlers();
