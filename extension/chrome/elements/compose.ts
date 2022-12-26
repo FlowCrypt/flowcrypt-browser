@@ -155,7 +155,7 @@ export class ComposeView extends View {
     if (clipboardEvent.clipboardData) {
       const clipboardLength = clipboardEvent.clipboardData.getData('text').length;
       if (clipboardLength > limit) {
-        ev.preventDefault(); // this works
+        ev.preventDefault();
       }
     }
   }
