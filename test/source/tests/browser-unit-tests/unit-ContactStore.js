@@ -90,7 +90,7 @@ BROWSER_UNIT_TEST_NAME(`ContactStore is able to search by a chunk spanning acros
   return 'pass';
 })();
 
-BROWSER_UNIT_TEST_NAME('ContactStore.search ignores top-level domains and common domains');
+BROWSER_UNIT_TEST_NAME(`ContactStore.search ignores top-level domains and common domains`);
 (async () => {
   await ContactStore.update(undefined, 'abcdef.com@abcdef.com', { pubkey: testConstants.abcdefTestComPubkey });
   await ContactStore.update(undefined, 'abcdef@test.com', { pubkey: testConstants.abcdefTestComPubkey });
@@ -117,7 +117,7 @@ BROWSER_UNIT_TEST_NAME('ContactStore.search ignores top-level domains and common
 })();
 
 BROWSER_UNIT_TEST_NAME(
-  'ContactStore.search allows searching for name parts that look like top-level domains and common domains'
+  `ContactStore.search allows searching for name parts that look like top-level domains and common domains`
 );
 (async () => {
   await ContactStore.update(undefined, 'abcdef.com@abcdef.com', {
@@ -351,7 +351,7 @@ BROWSER_UNIT_TEST_NAME(`ContactStore saves and returns dates as numbers`);
   return 'pass';
 })();
 
-BROWSER_UNIT_TEST_NAME('ContactStore.getOneWithAllPubkeys() returns all pubkeys with non-revoked placed first');
+BROWSER_UNIT_TEST_NAME(`ContactStore.getOneWithAllPubkeys() returns all pubkeys with non-revoked placed first`);
 (async () => {
   // Note 1: email differs from pubkey id
   await ContactStore.update(undefined, 'some.revoked@otherhost.com', {
