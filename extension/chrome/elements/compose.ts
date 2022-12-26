@@ -205,14 +205,26 @@ export class ComposeView extends View {
     this.S.cached('body').on('focusin', setActiveWindow);
     this.S.cached('body').on('click', setActiveWindow);
     this.S.cached('icon_help').on('click', this.setHandler(async () => await this.renderModule.openSettingsWithDialog('help'), this.errModule.handle(`help dialog`)));
-    this.S.cached('input_text').on('paste', this.setHandler(async (el, ev) => {
+    this.S.cached('input_intro').on('paste', this.setHandler(async (el, ev: JQuery.Event) => {
       const clipboardEvent = ev.originalEvent as ClipboardEvent;
       const maxPlainTextLength = 10;
       if (clipboardEvent.clipboardData) {
         const clipboardLength = clipboardEvent.clipboardData.getData('text').length;
         if (clipboardLength > maxPlainTextLength) {
-          console.log(clipboardLength);
-          ev.preventDefault();
+          ev.preventDefault(); // this works
+        }
+      }
+    }));
+    this.S.cached('input_text').on('paste', this.setHandler(async (el, ev: JQuery.Event) => {
+      const clipboardEvent = ev.originalEvent as ClipboardEvent;
+      const maxPlainTextLength = 10;
+      if (clipboardEvent.clipboardData) {
+        const clipboardLength = clipboardEvent.clipboardData.getData('text').length;
+        console.log(clipboardLength);
+        console.log(clipboardLength, maxPlainTextLength);
+        console.log(clipboardLength > maxPlainTextLength);
+        if (clipboardLength > maxPlainTextLength) {
+          ev.preventDefault(); // this doesn't work
         }
       }
     }));
