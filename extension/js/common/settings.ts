@@ -30,16 +30,29 @@ import { BrowserMsg } from './browser/browser-msg.js';
 declare const zxcvbn: Function; // eslint-disable-line @typescript-eslint/ban-types
 
 export class Settings {
-
   public static evalPasswordStrength = (passphrase: string, type: 'passphrase' | 'pwd' = 'passphrase') => {
-    return PgpPwd.estimateStrength(zxcvbn(passphrase, PgpPwd.weakWords()).guesses, type); // eslint-disable-line 
+    return PgpPwd.estimateStrength(zxcvbn(passphrase, PgpPwd.weakWords()).guesses, type); // eslint-disable-line
   };
 
-  public static renderSubPage = async (acctEmail: string | undefined, tabId: string, page: string, addUrlTextOrParams?: string | UrlParams, iframeHeight?: number) => {
-    await Ui.modal.iframe(Settings.prepareNewSettingsLocationUrl(acctEmail, tabId, page, addUrlTextOrParams), iframeHeight || undefined);
+  public static renderSubPage = async (
+    acctEmail: string | undefined,
+    tabId: string,
+    page: string,
+    addUrlTextOrParams?: string | UrlParams,
+    iframeHeight?: number
+  ) => {
+    await Ui.modal.iframe(
+      Settings.prepareNewSettingsLocationUrl(acctEmail, tabId, page, addUrlTextOrParams),
+      iframeHeight || undefined
+    );
   };
 
-  public static redirectSubPage = (acctEmail: string, parentTabId: string, page: string, addUrlTextOrParams?: string | UrlParams) => {
+  public static redirectSubPage = (
+    acctEmail: string,
+    parentTabId: string,
+    page: string,
+    addUrlTextOrParams?: string | UrlParams
+  ) => {
     window.location.href = Settings.prepareNewSettingsLocationUrl(acctEmail, parentTabId, page, addUrlTextOrParams);
   };
 
@@ -48,7 +61,8 @@ export class Settings {
     const result = { defaultEmailChanged: false, aliasesChanged: false, footerChanged: false, sendAs: fetchedSendAs };
     const { sendAs: storedSendAs } = await AcctStore.get(acctEmail, ['sendAs']);
     await AcctStore.set(acctEmail, { sendAs: fetchedSendAs });
-    if (!storedSendAs) { // Aliases changed (it was previously undefined)
+    if (!storedSendAs) {
+      // Aliases changed (it was previously undefined)
       result.aliasesChanged = true;
       return result;
     }
@@ -58,8 +72,14 @@ export class Settings {
     if (Object.keys(fetchedSendAs).sort().join(',') !== Object.keys(storedSendAs).sort().join(',')) {
       result.aliasesChanged = true;
     }
-    const fetchedFooters = Object.keys(fetchedSendAs).sort().map(email => fetchedSendAs[email].footer).join('|');
-    const storedFooters = Object.keys(storedSendAs).sort().map(email => storedSendAs[email].footer).join('|');
+    const fetchedFooters = Object.keys(fetchedSendAs)
+      .sort()
+      .map(email => fetchedSendAs[email].footer)
+      .join('|');
+    const storedFooters = Object.keys(storedSendAs)
+      .sort()
+      .map(email => storedSendAs[email].footer)
+      .join('|');
     if (fetchedFooters !== storedFooters) {
       result.footerChanged = true;
     }
@@ -178,77 +198,112 @@ export class Settings {
   };
 
   public static renderPrvCompatFixUiAndWaitTilSubmittedByUser = async (
-    acctEmail: string, containerStr: string | JQuery<HTMLElement>, origPrv: Key, passphrase: string, backUrl: string
+    acctEmail: string,
+    containerStr: string | JQuery<HTMLElement>,
+    origPrv: Key,
+    passphrase: string,
+    backUrl: string
   ): Promise<Key> => {
     const uids = origPrv.identities;
     if (!uids.length) {
       uids.push(acctEmail);
     }
     const container = $(containerStr as JQuery<HTMLElement>); // due to JQuery TS quirk
-    Xss.sanitizeRender(container, [
-      `<div class="line">${Lang.setup.prvHasFixableCompatIssue}</div>`,
-      '<div class="line compatibility_fix_user_ids">' + uids.map(uid => '<div>' + Xss.escape(uid) + '</div>').join('') + '</div>',
-      '<div class="line">',
-      '  Choose expiration of updated key',
-      '  <select class="input_fix_expire_years" data-test="input-compatibility-fix-expire-years">',
-      '    <option  value="" disabled selected>please choose expiration</option>',
-      '    <option value="never">no expiration</option>',
-      '    <option value="1">1 year</option>',
-      '    <option value="2">2 years</option>',
-      '    <option value="3">3 years</option>',
-      '    <option value="5">5 years</option>',
-      '  </select>',
-      '</div>',
-      '<div class="line">FlowCrypt will attempt to update the key before importing.</div>',
-      '<div class="line">',
-      '  <button class="button long gray action_fix_compatibility" data-test="action-fix-and-import-key">UPDATE AND IMPORT KEY</button>',
-      '</div>',
-    ].join('\n'));
-    container.find('select.input_fix_expire_years').change(Ui.event.handle(target => {
-      if ($(target).val()) {
-        (container as JQuery<HTMLElement>).find('.action_fix_compatibility').removeClass('gray').addClass('green');
-      } else {
-        (container as JQuery<HTMLElement>).find('.action_fix_compatibility').removeClass('green').addClass('gray');
-      }
-    }));
-    return await new Promise((resolve, reject) => {
-      container.find('.action_fix_compatibility').on('click', Ui.event.handle(async target => {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const expireYears = String($(target).parents(container as any).find('select.input_fix_expire_years').val()); // JQuery quirk
-        if (!expireYears) {
-          await Ui.modal.warning('Please select key expiration');
+    Xss.sanitizeRender(
+      container,
+      [
+        `<div class="line">${Lang.setup.prvHasFixableCompatIssue}</div>`,
+        '<div class="line compatibility_fix_user_ids">' +
+          uids.map(uid => '<div>' + Xss.escape(uid) + '</div>').join('') +
+          '</div>',
+        '<div class="line">',
+        '  Choose expiration of updated key',
+        '  <select class="input_fix_expire_years" data-test="input-compatibility-fix-expire-years">',
+        '    <option  value="" disabled selected>please choose expiration</option>',
+        '    <option value="never">no expiration</option>',
+        '    <option value="1">1 year</option>',
+        '    <option value="2">2 years</option>',
+        '    <option value="3">3 years</option>',
+        '    <option value="5">5 years</option>',
+        '  </select>',
+        '</div>',
+        '<div class="line">FlowCrypt will attempt to update the key before importing.</div>',
+        '<div class="line">',
+        '  <button class="button long gray action_fix_compatibility" data-test="action-fix-and-import-key">UPDATE AND IMPORT KEY</button>',
+        '</div>'
+      ].join('\n')
+    );
+    container.find('select.input_fix_expire_years').change(
+      Ui.event.handle(target => {
+        if ($(target).val()) {
+          (container as JQuery<HTMLElement>).find('.action_fix_compatibility').removeClass('gray').addClass('green');
         } else {
-          $(target).off();
-          Xss.sanitizeRender(target, Ui.spinner('white'));
-          const expireSeconds = (expireYears === 'never') ? 0 : Math.floor((Date.now() - origPrv.created) / 1000) + (60 * 60 * 24 * 365 * Number(expireYears));
-          await KeyUtil.decrypt(origPrv, passphrase);
-          let reformatted;
-          const userIds = uids.map(uid => Str.parseEmail(uid)).map(u => ({ email: u.email, name: u.name || '' }));
-          try {
-            reformatted = await KeyUtil.reformatKey(origPrv, passphrase, userIds, expireSeconds);
-          } catch (e) {
-            reject(e);
-            return;
-          }
-          if (!reformatted.fullyEncrypted) { // this is a security precaution, in case OpenPGP.js library changes in the future
-            Catch.report(`Key update: Key not fully encrypted after update`, { isFullyEncrypted: reformatted.fullyEncrypted, isFullyDecrypted: reformatted.fullyDecrypted });
-            await Ui.modal.error('Key update:Key not fully encrypted after update. ' + Lang.general.contactForSupportSentence(await isFesUsed(acctEmail)));
-            Xss.sanitizeReplace(target, Ui.e('a', { href: backUrl, text: 'Go back and try something else' }));
-            return;
-          }
-          if (reformatted.usableForEncryption) {
-            resolve(reformatted);
-          } else {
-            await Ui.modal.error('Key update: Key still cannot be used for encryption. This looks like a compatibility issue.\n\n' +
-              Lang.general.contactForSupportSentence(await isFesUsed(acctEmail)));
-            Xss.sanitizeReplace(target, Ui.e('a', { href: backUrl, text: 'Go back and try something else' }));
-          }
+          (container as JQuery<HTMLElement>).find('.action_fix_compatibility').removeClass('green').addClass('gray');
         }
-      }));
+      })
+    );
+    return await new Promise((resolve, reject) => {
+      container.find('.action_fix_compatibility').on(
+        'click',
+        Ui.event.handle(async target => {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const expireYears = String(
+            $(target)
+              .parents(container as any)
+              .find('select.input_fix_expire_years')
+              .val()
+          ); // JQuery quirk
+          if (!expireYears) {
+            await Ui.modal.warning('Please select key expiration');
+          } else {
+            $(target).off();
+            Xss.sanitizeRender(target, Ui.spinner('white'));
+            const expireSeconds =
+              expireYears === 'never'
+                ? 0
+                : Math.floor((Date.now() - origPrv.created) / 1000) + 60 * 60 * 24 * 365 * Number(expireYears);
+            await KeyUtil.decrypt(origPrv, passphrase);
+            let reformatted;
+            const userIds = uids.map(uid => Str.parseEmail(uid)).map(u => ({ email: u.email, name: u.name || '' }));
+            try {
+              reformatted = await KeyUtil.reformatKey(origPrv, passphrase, userIds, expireSeconds);
+            } catch (e) {
+              reject(e);
+              return;
+            }
+            if (!reformatted.fullyEncrypted) {
+              // this is a security precaution, in case OpenPGP.js library changes in the future
+              Catch.report(`Key update: Key not fully encrypted after update`, {
+                isFullyEncrypted: reformatted.fullyEncrypted,
+                isFullyDecrypted: reformatted.fullyDecrypted
+              });
+              await Ui.modal.error(
+                'Key update:Key not fully encrypted after update. ' +
+                  Lang.general.contactForSupportSentence(await isFesUsed(acctEmail))
+              );
+              Xss.sanitizeReplace(target, Ui.e('a', { href: backUrl, text: 'Go back and try something else' }));
+              return;
+            }
+            if (reformatted.usableForEncryption) {
+              resolve(reformatted);
+            } else {
+              await Ui.modal.error(
+                'Key update: Key still cannot be used for encryption. This looks like a compatibility issue.\n\n' +
+                  Lang.general.contactForSupportSentence(await isFesUsed(acctEmail))
+              );
+              Xss.sanitizeReplace(target, Ui.e('a', { href: backUrl, text: 'Go back and try something else' }));
+            }
+          }
+        })
+      );
     });
   };
 
-  public static retryUntilSuccessful = async (action: () => Promise<void>, errTitle: string, contactSentence: string) => {
+  public static retryUntilSuccessful = async (
+    action: () => Promise<void>,
+    errTitle: string,
+    contactSentence: string
+  ) => {
     try {
       await action();
     } catch (e) {
@@ -259,7 +314,12 @@ export class Settings {
   /**
    * todo - could probably replace most usages of this method with retryPromptUntilSuccessful which is more intuitive
    */
-  public static promptToRetry = async (lastErr: unknown, userMsg: string, retryCb: () => Promise<void>, contactSentence: string): Promise<void> => {
+  public static promptToRetry = async (
+    lastErr: unknown,
+    userMsg: string,
+    retryCb: () => Promise<void>,
+    contactSentence: string
+  ): Promise<void> => {
     let errorMsg!: string;
     if (lastErr instanceof AjaxErr && (lastErr.status === 400 || lastErr.status === 405)) {
       // this will make reason for err 400 obvious to user - eg on EKM 405 error
@@ -270,7 +330,14 @@ export class Settings {
       errorMsg = ApiErr.eli5(lastErr);
     }
     const userErrMsg = `${userMsg}, ${errorMsg}`;
-    while (await Ui.renderOverlayPromptAwaitUserChoice({ retry: {} }, userErrMsg, ApiErr.detailsAsHtmlWithNewlines(lastErr), contactSentence) === 'retry') {
+    while (
+      (await Ui.renderOverlayPromptAwaitUserChoice(
+        { retry: {} },
+        userErrMsg,
+        ApiErr.detailsAsHtmlWithNewlines(lastErr),
+        contactSentence
+      )) === 'retry'
+    ) {
       try {
         return await retryCb();
       } catch (e2) {
@@ -286,7 +353,10 @@ export class Settings {
     return await retryCb();
   };
 
-  public static forbidAndRefreshPageIfCannot = async (action: 'CREATE_KEYS' | 'BACKUP_KEYS', clientConfiguration: ClientConfiguration) => {
+  public static forbidAndRefreshPageIfCannot = async (
+    action: 'CREATE_KEYS' | 'BACKUP_KEYS',
+    clientConfiguration: ClientConfiguration
+  ) => {
     if (action === 'CREATE_KEYS' && !clientConfiguration.canCreateKeys()) {
       await Ui.modal.error(Lang.setup.creatingKeysNotAllowedPleaseImport);
       window.location.reload();
@@ -298,29 +368,49 @@ export class Settings {
     }
   };
 
-  public static newGoogleAcctAuthPromptThenAlertOrForward = async (settingsTabId: string | undefined, acctEmail?: string, scopes?: string[]) => {
+  public static newGoogleAcctAuthPromptThenAlertOrForward = async (
+    settingsTabId: string | undefined,
+    acctEmail?: string,
+    scopes?: string[]
+  ) => {
     try {
       const response = await GoogleAuth.newAuthPopup({ acctEmail, scopes });
       if (response.result === 'Success' && response.acctEmail) {
         await GlobalStore.acctEmailsAdd(response.acctEmail);
         const storage = await AcctStore.get(response.acctEmail, ['setup_done']);
-        if (storage.setup_done) { // this was just an additional permission
-          await Ui.modal.info('You\'re all set.');
+        if (storage.setup_done) {
+          // this was just an additional permission
+          await Ui.modal.info("You're all set.");
           window.location.href = Url.create('/chrome/settings/index.htm', { acctEmail: response.acctEmail });
         } else {
-          await AcctStore.set(response.acctEmail, { email_provider: 'gmail' });
-          window.location.href = Url.create('/chrome/settings/setup.htm', { acctEmail: response.acctEmail, idToken: response.id_token });
+          await AcctStore.set(response.acctEmail, { email_provider: 'gmail' }); // eslint-disable-line @typescript-eslint/naming-convention
+          window.location.href = Url.create('/chrome/settings/setup.htm', {
+            acctEmail: response.acctEmail,
+            idToken: response.id_token
+          });
         }
       } else if (response.result === 'Denied' || response.result === 'Closed') {
-        const authDeniedHtml = await Api.ajax({ url: '/chrome/settings/modules/auth_denied.htm' }, Catch.stackTrace()) as string; // eslint-disable-line 
-        await Ui.modal.info(`${authDeniedHtml}\n<div class="line">${Lang.general.contactIfNeedAssistance()}</div>`, true);
+        const authDeniedHtml = (await Api.ajax(
+          { url: '/chrome/settings/modules/auth_denied.htm' },
+          Catch.stackTrace()
+        )) as string; // eslint-disable-line
+        await Ui.modal.info(
+          `${authDeniedHtml}\n<div class="line">${Lang.general.contactIfNeedAssistance()}</div>`,
+          true
+        );
       } else {
         // Do not report error for csrf
-        if (response.error !== 'Wrong oauth CSRF token. Please try again.' && !response.error?.includes('Missing client configuration flags')) {
+        if (
+          response.error !== 'Wrong oauth CSRF token. Please try again.' &&
+          !response.error?.includes('Missing client configuration flags')
+        ) {
           Catch.report('failed to log into google in newGoogleAcctAuthPromptThenAlertOrForward', response);
         }
-        await Ui.modal.error(`Failed to connect to Gmail(new). ${Lang.general.contactIfHappensAgain(acctEmail ?
-          await isFesUsed(acctEmail) : false)}\n\n[${response.result}] ${response.error}`);
+        await Ui.modal.error(
+          `Failed to connect to Gmail(new). ${Lang.general.contactIfHappensAgain(
+            acctEmail ? await isFesUsed(acctEmail) : false
+          )}\n\n[${response.result}] ${response.error}`
+        );
         await Ui.time.sleep(1000);
         window.location.reload();
       }
@@ -328,7 +418,9 @@ export class Settings {
       if (ApiErr.isNetErr(e)) {
         await Ui.modal.error('Could not complete due to network error. Please try again.');
       } else if (ApiErr.isMailOrAcctDisabledOrPolicy(e)) {
-        await Ui.modal.error('Your Google account or Gmail service is disabled. Please check your Google account settings.');
+        await Ui.modal.error(
+          'Your Google account or Gmail service is disabled. Please check your Google account settings.'
+        );
       } else {
         Catch.reportErr(e);
         await Ui.modal.error(`Unknown error happened when connecting to Google: ${String(e)}`);
@@ -346,7 +438,7 @@ export class Settings {
         '  <div class="col-10 text-left">',
         `    <div class="contains_email" data-test="action-switch-to-account">${Xss.escape(email)}</div>`,
         '  </div>',
-        '</a>',
+        '</a>'
       ].join('');
     };
     const acctEmails = await GlobalStore.acctEmailsGet();
@@ -354,20 +446,30 @@ export class Settings {
     for (const email of acctEmails) {
       Xss.sanitizePrepend('#alt-accounts', menuAcctHtml(email, acctStorages[email].picture, page === 'inbox.htm'));
     }
-    $('#alt-accounts img.profile-img').on('error', Ui.event.handle(self => {
-      $(self).off().attr('src', '/img/svgs/profile-icon.svg');
-    }));
-    $('.action_select_account').on('click', Ui.event.handle((target, event) => {
-      event.preventDefault();
-      const acctEmail = $(target).find('.contains_email').text();
-      const acctStorage = acctStorages[acctEmail];
-      window.location.href = acctStorage.setup_done
-        ? Url.create(page, { acctEmail })
-        : Url.create(Env.getBaseUrl() + '/chrome/settings/index.htm', { acctEmail });
-    }));
+    $('#alt-accounts img.profile-img').on(
+      'error',
+      Ui.event.handle(self => {
+        $(self).off().attr('src', '/img/svgs/profile-icon.svg');
+      })
+    );
+    $('.action_select_account').on(
+      'click',
+      Ui.event.handle((target, event) => {
+        event.preventDefault();
+        const acctEmail = $(target).find('.contains_email').text();
+        const acctStorage = acctStorages[acctEmail];
+        window.location.href = acctStorage.setup_done
+          ? Url.create(page, { acctEmail })
+          : Url.create(Env.getBaseUrl() + '/chrome/settings/index.htm', { acctEmail });
+      })
+    );
   };
 
-  public static offerToLoginWithPopupShowModalOnErr = (acctEmail: string, then: (() => void) = () => undefined, prepend = '') => {
+  public static offerToLoginWithPopupShowModalOnErr = (
+    acctEmail: string,
+    then: () => void = () => undefined,
+    prepend = ''
+  ) => {
     (async () => {
       if (await Ui.modal.confirm(`${prepend}Please log in with FlowCrypt to continue.`)) {
         await Settings.loginWithPopupShowModalOnErr(acctEmail, then);
@@ -375,8 +477,9 @@ export class Settings {
     })().catch(Catch.reportErr);
   };
 
-  public static loginWithPopupShowModalOnErr = async (acctEmail: string, then: (() => void) = () => undefined) => {
-    if (window !== window.top && !chrome.windows) { // Firefox, chrome.windows isn't available in iframes
+  public static loginWithPopupShowModalOnErr = async (acctEmail: string, then: () => void = () => undefined) => {
+    if (window !== window.top && !chrome.windows) {
+      // Firefox, chrome.windows isn't available in iframes
       Browser.openExtensionTab(Url.create(chrome.runtime.getURL(`chrome/settings/index.htm`), { acctEmail }));
       await Ui.modal.info(`Reload after logging in.`);
       return window.location.reload();
@@ -400,7 +503,7 @@ export class Settings {
     } else {
       if (await Ui.modal.confirm(Lang.setup.confirmResetAcct(acctEmail))) {
         await Settings.collectInfoAndDownloadBackupFile(acctEmail);
-        if (await Ui.modal.confirm('Proceed to reset? Don\'t come back telling me I didn\'t warn you.')) {
+        if (await Ui.modal.confirm("Proceed to reset? Don't come back telling me I didn't warn you.")) {
           await Settings.acctStorageReset(acctEmail);
           return true;
         }
@@ -417,14 +520,17 @@ export class Settings {
   };
 
   /**
-    * determines how to treat old values when changing account
-    */
+   * determines how to treat old values when changing account
+   */
   private static getOverwriteMode = (key: string): 'fallback' | 'forget' | 'keep' => {
-    if (key.startsWith('google_token_') || ['rules', 'openid', 'full_name', 'picture', 'sendAs'].includes(key)) { // old value should be used if only a new value is missing
+    if (key.startsWith('google_token_') || ['rules', 'openid', 'full_name', 'picture', 'sendAs'].includes(key)) {
+      // old value should be used if only a new value is missing
       return 'fallback';
-    } else if (key.startsWith('passphrase_')) { // force forgetting older values
+    } else if (key.startsWith('passphrase_')) {
+      // force forgetting older values
       return 'forget';
-    } else { // keep old values if any, 'keys' will later be merged with whatever is in the new account
+    } else {
+      // keep old values if any, 'keys' will later be merged with whatever is in the new account
       return 'keep';
     }
   };
@@ -440,7 +546,7 @@ export class Settings {
       'If this key was registered on a keyserver (typically they are), you will need this same key (and pass phrase!) to replace it.',
       'In other words, losing this key or pass phrase may cause people to have trouble writing you encrypted emails, even if you use another key (on FlowCrypt or elsewhere) later on!',
       '',
-      'acctEmail: ' + acctEmail,
+      'acctEmail: ' + acctEmail
     ];
     const globalStorage = await GlobalStore.get(['version']);
     const acctStorage = await AcctStore.get(acctEmail, ['setup_date', 'full_name']);
@@ -457,12 +563,18 @@ export class Settings {
     return text.join('\n');
   };
 
-  private static prepareNewSettingsLocationUrl = (acctEmail: string | undefined, parentTabId: string, page: string, addUrlTextOrParams?: string | UrlParams): string => {
+  private static prepareNewSettingsLocationUrl = (
+    acctEmail: string | undefined,
+    parentTabId: string,
+    page: string,
+    addUrlTextOrParams?: string | UrlParams
+  ): string => {
     const pageParams: UrlParams = { placement: 'settings', parentTabId };
     if (acctEmail) {
       pageParams.acctEmail = acctEmail;
     }
-    if (typeof addUrlTextOrParams === 'object' && addUrlTextOrParams) { // it's a list of params - add them. It could also be a text - then it will be added the end of url below
+    if (typeof addUrlTextOrParams === 'object' && addUrlTextOrParams) {
+      // it's a list of params - add them. It could also be a text - then it will be added the end of url below
       for (const k of Object.keys(addUrlTextOrParams)) {
         pageParams[k] = addUrlTextOrParams[k];
       }
@@ -485,9 +597,13 @@ export class Settings {
     const validAliases = response.sendAs.filter(alias => alias.isPrimary || alias.verificationStatus === 'accepted');
     const result: Dict<SendAsAlias> = {};
     for (const a of validAliases) {
-      result[a.sendAsEmail.toLowerCase()] = { name: a.displayName, isPrimary: !!a.isPrimary, isDefault: a.isDefault, footer: a.signature };
+      result[a.sendAsEmail.toLowerCase()] = {
+        name: a.displayName,
+        isPrimary: !!a.isPrimary,
+        isDefault: a.isDefault,
+        footer: a.signature
+      };
     }
     return result;
   };
-
 }

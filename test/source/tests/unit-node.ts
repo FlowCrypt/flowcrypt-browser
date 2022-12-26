@@ -814,6 +814,7 @@ jLwe8W9IMt765T5x5oux9MmPDXF05xHfm4qfH/BMO3a802x5u2gJjJjuknrFdgXY
       t.pass();
     });
 
+    /* eslint-disable @typescript-eslint/no-non-null-assertion */
     ava.default('[unit][MsgUtil.decryptMessage] finds correct key to verify signature', async t => {
       const data = await GoogleData.withInitializedData('ci.tests.gmail@flowcrypt.test');
       const msg: GmailMsg = data.getMessage('1766644f13510f58')!;
@@ -979,6 +980,7 @@ jSB6A93JmnQGIkAem/kzGkKclmfAdGfc4FS+3Cn+6Q==Xmrz
       }
       t.pass();
     });
+    /* eslint-enable @typescript-eslint/no-non-null-assertion */
 
     ava.default('[unit][MsgUtil.getSortedKeys,matchingKeyids] must be able to find matching keys', async t => {
       const passphrase = 'some pass for testing';
@@ -1002,6 +1004,7 @@ jSB6A93JmnQGIkAem/kzGkKclmfAdGfc4FS+3Cn+6Q==Xmrz
       ];
       // we are testing a private method here because the outcome of this method is not directly testable from the
       //   public method that uses it. It only makes the public method faster, which is hard to test.
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore - accessing private method
       const sortedKeys = await MsgUtil.getSortedKeys(kisWithPp, m);
       // point is that only one of the private keys should be used for decrypting, not two
@@ -1013,9 +1016,11 @@ jSB6A93JmnQGIkAem/kzGkKclmfAdGfc4FS+3Cn+6Q==Xmrz
       // specifically the pub1
       expect(sortedKeys.prvForDecryptDecrypted[0].ki.longid).to.equal(OpenPGPKey.fingerprintToLongid(pub1.id));
       // also test MsgUtil.matchingKeyids
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore
       const matching1 = MsgUtil.matchingKeyids(KeyUtil.getPubkeyLongids(pub1), m.getEncryptionKeyIds());
       expect(matching1.length).to.equal(1);
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore
       const matching2 = MsgUtil.matchingKeyids(KeyUtil.getPubkeyLongids(pub2), m.getEncryptionKeyIds());
       expect(matching2.length).to.equal(0);
@@ -1131,6 +1136,7 @@ jSB6A93JmnQGIkAem/kzGkKclmfAdGfc4FS+3Cn+6Q==Xmrz
 
     ava.default('[KeyUtil.diagnose] displays PK and SK usage', async t => {
       const usageRegex = /\[\-\] \[(.*)\]/;
+      /* eslint-disable @typescript-eslint/no-non-null-assertion */
       const result1 = await KeyUtil.diagnose(await KeyUtil.parse(pubEncryptForPrimaryIsFine), '');
       {
         const pk0UsageStr = result1.get('Usage flags')!;
@@ -1161,6 +1167,7 @@ jSB6A93JmnQGIkAem/kzGkKclmfAdGfc4FS+3Cn+6Q==Xmrz
         expect(sk0Usage).to.include('encrypt_storage');
         expect(sk0Usage).to.include('encrypt_communication');
       }
+      /* eslint-enable @typescript-eslint/no-non-null-assertion */
       t.pass();
     });
 

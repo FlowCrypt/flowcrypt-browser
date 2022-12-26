@@ -26,8 +26,8 @@ export const defineUnitBrowserTests = (testVariant: TestVariant, testWithBrowser
             window.document.getElementsByTagName('h1')[0].textContent = title;
           }, title);
           // inject testConstants
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           await hostPage.target.evaluate(object => {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             (window as any).testConstants = object;
           }, testConstants);
           // prepare code to run
@@ -55,6 +55,7 @@ export const defineUnitBrowserTests = (testVariant: TestVariant, testWithBrowser
         .toUtfStr()
         .trim();
       const testCasesInFile = unitTestCodes.split('\nBROWSER_UNIT_TEST_NAME(`');
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const header = testCasesInFile.shift()!;
       if (!header.startsWith('/* ©️ 2016')) {
         throw Error(`Expecting ${browserUnitTestsFolder}/${filename} to start with '/* ©️ 2016'`);
@@ -77,6 +78,7 @@ export const defineUnitBrowserTests = (testVariant: TestVariant, testWithBrowser
           );
         }
         const testCodeLines = code.split('\n');
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         let thisUnitTestTitle = testCodeLines.shift()!.trim();
         if (thisUnitTestTitle.endsWith(';')) {
           thisUnitTestTitle = thisUnitTestTitle.slice(0, -1);

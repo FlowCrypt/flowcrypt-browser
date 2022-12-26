@@ -1,20 +1,19 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
-import { Util } from "../util";
+import { Util } from '../util';
 import { BrowserHandle } from './browser-handle';
 import { Consts } from '../test';
 import { TIMEOUT_DESTROY_UNEXPECTED_ALERT } from '.';
-import puppeteer from "puppeteer";
+import puppeteer from 'puppeteer';
 import { addDebugHtml, AvaContext, newWithTimeoutsFunc } from '../tests/tooling';
 
-class TimeoutError extends Error { }
+class TimeoutError extends Error {}
 
 export class BrowserPool {
-
   private semaphore: Semaphore;
   private browsersForReuse: BrowserHandle[] = [];
 
-  constructor(
+  public constructor(
     public poolSize: number,
     public name: string,
     private reuse: boolean,
@@ -22,7 +21,7 @@ export class BrowserPool {
     private isMock: boolean,
     private width = 1280,
     private height = 850,
-    private debug = false,
+    private debug = false
   ) {
     this.semaphore = new Semaphore(poolSize, name);
   }
@@ -37,14 +36,20 @@ export class BrowserPool {
       '--disable-features=site-per-process',
       `--disable-extensions-except=${this.extensionBuildDir}`,
       `--load-extension=${this.extensionBuildDir}`,
-      `--window-size=${this.width + 10},${this.height + 132}`,
+      `--window-size=${this.width + 10},${this.height + 132}`
     ];
     if (this.isMock) {
       args.push('--ignore-certificate-errors');
       args.push('--allow-insecure-localhost');
     }
     const slowMo = this.isMock ? 60 : 60;
-    const browser = await puppeteer.launch({ args, ignoreHTTPSErrors: this.isMock, headless: false, devtools: false, slowMo });
+    const browser = await puppeteer.launch({
+      args,
+      ignoreHTTPSErrors: this.isMock,
+      headless: false,
+      devtools: false,
+      slowMo
+    });
     const handle = new BrowserHandle(browser, this.semaphore, this.height, this.width);
     if (closeInitialPage) {
       try {
@@ -52,7 +57,8 @@ export class BrowserPool {
         await initialPage.waitAll('@initial-page'); // first page opened by flowcrypt
         await initialPage.close();
       } catch (e) {
-        if (String(e).includes('Action did not trigger a new page within timeout period')) { // could have opened before we had a chance to add a handler above
+        if (String(e).includes('Action did not trigger a new page within timeout period')) {
+          // could have opened before we had a chance to add a handler above
           const pages = await handle.browser.pages();
           const initialPage = pages.find(p => p.url().includes('chrome/settings/initial.htm'));
           if (!initialPage) {
@@ -76,6 +82,7 @@ export class BrowserPool {
       const extensionUrl = urls.find(url => url !== 'about:blank');
       if (extensionUrl) {
         const match = extensionUrl.match(/[a-z]{32}/);
+        // eslint-disable-next-line no-null/no-null
         if (match !== null) {
           await browser.close();
           return match[0];
@@ -131,7 +138,12 @@ export class BrowserPool {
     });
   };
 
-  public withNewBrowserTimeoutAndRetry = async (cb: (t: AvaContext, browser: BrowserHandle) => void, t: AvaContext, consts: Consts, flag?: 'FAILING') => {
+  public withNewBrowserTimeoutAndRetry = async (
+    cb: (t: AvaContext, browser: BrowserHandle) => void,
+    t: AvaContext,
+    consts: Consts,
+    flag?: 'FAILING'
+  ) => {
     const withTimeouts = newWithTimeoutsFunc(consts);
     const attemptDebugHtmls: string[] = [];
     t.totalAttempts = flag === 'FAILING' ? 1 : consts.ATTEMPTS;
@@ -143,7 +155,8 @@ export class BrowserPool {
         try {
           await withTimeouts(this.cbWithTimeout(async () => await cb(t, browser), consts.TIMEOUT_EACH_RETRY));
           await this.throwOnRetryFlagAndReset(t);
-          if (attemptDebugHtmls.length && flag !== 'FAILING') { // don't debug known failures
+          if (attemptDebugHtmls.length && flag !== 'FAILING') {
+            // don't debug known failures
             addDebugHtml(`<h1>Test (later succeeded): ${Util.htmlEscape(t.title)}</h1>${attemptDebugHtmls.join('')}`);
           }
           return;
@@ -165,7 +178,8 @@ export class BrowserPool {
     if (t.attemptNumber! < t.totalAttempts!) {
       t.log(`${t.attemptText} Retrying: ${String(err)}`);
     } else {
-      if (flag !== 'FAILING') { // don't debug known failures
+      if (flag !== 'FAILING') {
+        // don't debug known failures
         addDebugHtml(`<h1>Test: ${Util.htmlEscape(t.title)}</h1>${attemptHtmls.join('')}`);
       }
       t.log(`${t.attemptText} Failed:   ${err instanceof Error ? err.stack : String(err)}`);
@@ -173,7 +187,11 @@ export class BrowserPool {
     }
   };
 
-  private testFailSingleAttemptDebugHtml = async (t: AvaContext, browser: BrowserHandle, err: unknown): Promise<string> => {
+  private testFailSingleAttemptDebugHtml = async (
+    t: AvaContext,
+    browser: BrowserHandle,
+    err: unknown
+  ): Promise<string> => {
     return `
     <div class="attempt">
       <div style="display:none;">
@@ -194,16 +212,14 @@ export class BrowserPool {
       throw e;
     }
   };
-
 }
 
 export class Semaphore {
-
   private availableLocks: number;
   private name: string;
   private debug = false;
 
-  constructor(poolSize: number, name = 'semaphore') {
+  public constructor(poolSize: number, name = 'semaphore') {
     this.availableLocks = poolSize;
     this.name = name;
   }
@@ -238,5 +254,4 @@ export class Semaphore {
   private wait = () => {
     return new Promise(resolve => setTimeout(resolve, 1000 + Math.round(Math.random() * 2000))); // wait 1-3s
   };
-
 }

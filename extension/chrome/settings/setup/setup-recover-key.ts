@@ -15,9 +15,8 @@ import { KeyStore } from '../../../js/common/platform/store/key-store.js';
 import { saveKeysAndPassPhrase } from '../../../js/common/helpers.js';
 
 export class SetupRecoverKeyModule {
-
-  constructor(private view: SetupView) {
-  }
+  // eslint-disable-next-line no-empty-function
+  public constructor(private view: SetupView) {}
 
   public actionRecoverAccountHandler = async () => {
     try {
@@ -28,12 +27,14 @@ export class SetupRecoverKeyModule {
         return;
       }
       if (!passphrase) {
-        await Ui.modal.warning('Please enter the pass phrase you used when you first set up FlowCrypt, so that we can recover your original keys.');
+        await Ui.modal.warning(
+          'Please enter the pass phrase you used when you first set up FlowCrypt, so that we can recover your original keys.'
+        );
         return;
       }
       let matchedPreviouslyRecoveredKey = false;
       for (const fetchedKey of this.view.fetchedKeyBackups) {
-        if (await KeyUtil.checkPassPhrase(fetchedKey.private, passphrase) === true) {
+        if ((await KeyUtil.checkPassPhrase(fetchedKey.private, passphrase)) === true) {
           if (!this.view.mathingPassphrases.includes(passphrase)) {
             this.view.mathingPassphrases.push(passphrase);
           }
@@ -49,33 +50,45 @@ export class SetupRecoverKeyModule {
       if (!newlyMatchingKeys.length) {
         if (matchedPreviouslyRecoveredKey) {
           $('#recovery_password').val('');
-          await Ui.modal.warning('This is a correct pass phrase, but it matches a key that was already recovered. Please try another pass phrase.');
+          await Ui.modal.warning(
+            'This is a correct pass phrase, but it matches a key that was already recovered. Please try another pass phrase.'
+          );
         } else if (this.view.fetchedKeyBackupsUniqueLongids.length > 1) {
-          await Ui.modal.warning(`This pass phrase did not match any of your ${this.view.fetchedKeyBackupsUniqueLongids.length} backed up keys. Please try again.`);
+          await Ui.modal.warning(
+            `This pass phrase did not match any of your ${this.view.fetchedKeyBackupsUniqueLongids.length} backed up keys. Please try again.`
+          );
         } else {
           await Ui.modal.warning('This pass phrase did not match your original setup. Please try again.');
         }
         return;
       }
+      /* eslint-disable @typescript-eslint/naming-convention */
       const options: SetupOptions = {
         submit_main: false, // todo - reevaluate submitting when recovering
         submit_all: false,
         passphrase,
         passphrase_save: true, // todo - reevaluate saving passphrase when recovering
-        recovered: true,
+        recovered: true
       };
       await saveKeysAndPassPhrase(this.view.acctEmail, newlyMatchingKeys, options);
       const { setup_done } = await AcctStore.get(this.view.acctEmail, ['setup_done']);
-      if (!setup_done) { // normal situation - fresh setup
+      /* eslint-enable @typescript-eslint/naming-convention */
+      if (!setup_done) {
+        // normal situation - fresh setup
         await this.view.submitPublicKeys(options);
         await this.view.finalizeSetup();
         await this.view.setupRender.renderSetupDone();
-      } else { // setup was finished before, just added more keys now
+      } else {
+        // setup was finished before, just added more keys now
         await this.view.setupRender.renderSetupDone();
       }
     } catch (e) {
       ApiErr.reportIfSignificant(e);
-      await Ui.modal.error(`Error setting up FlowCrypt:\n\n${ApiErr.eli5(e)} (${String(e)})\n\n${Lang.general.contactIfHappensAgain(this.view.isFesUsed())}`);
+      await Ui.modal.error(
+        `Error setting up FlowCrypt:\n\n${ApiErr.eli5(e)} (${String(e)})\n\n${Lang.general.contactIfHappensAgain(
+          this.view.isFesUsed()
+        )}`
+      );
     }
   };
 
@@ -84,13 +97,30 @@ export class SetupRecoverKeyModule {
     $('#recovery_password').val('');
     const nImported = (await KeyStore.get(this.view.acctEmail)).length;
     const nFetched = this.view.fetchedKeyBackupsUniqueLongids.length;
-    const txtKeysTeft = (nFetched - nImported > 1) ? `are ${nFetched - nImported} backups` : 'is one backup';
+    const txtKeysTeft = nFetched - nImported > 1 ? `are ${nFetched - nImported} backups` : 'is one backup';
     if (this.view.action !== 'add_key') {
-      Xss.sanitizeRender('#step_2_recovery .recovery_status', Lang.setup.nBackupsAlreadyRecoveredOrLeft(nImported, nFetched, txtKeysTeft));
-      Xss.sanitizeReplace('#step_2_recovery .line_skip_recovery', Ui.e('div', { class: 'line', html: Ui.e('a', { href: '#', class: 'skip_recover_remaining', html: 'Skip this step' }) }));
-      $('#step_2_recovery .skip_recover_remaining').on('click', this.view.setHandler(() => { window.location.href = Url.create('index.htm', { acctEmail: this.view.acctEmail }); }));
+      Xss.sanitizeRender(
+        '#step_2_recovery .recovery_status',
+        Lang.setup.nBackupsAlreadyRecoveredOrLeft(nImported, nFetched, txtKeysTeft)
+      );
+      Xss.sanitizeReplace(
+        '#step_2_recovery .line_skip_recovery',
+        Ui.e('div', {
+          class: 'line',
+          html: Ui.e('a', { href: '#', class: 'skip_recover_remaining', html: 'Skip this step' })
+        })
+      );
+      $('#step_2_recovery .skip_recover_remaining').on(
+        'click',
+        this.view.setHandler(() => {
+          window.location.href = Url.create('index.htm', { acctEmail: this.view.acctEmail });
+        })
+      );
     } else {
-      Xss.sanitizeRender('#step_2_recovery .recovery_status', `There ${txtKeysTeft} left to recover.<br><br>Try different pass phrases to unlock all backups.`);
+      Xss.sanitizeRender(
+        '#step_2_recovery .recovery_status',
+        `There ${txtKeysTeft} left to recover.<br><br>Try different pass phrases to unlock all backups.`
+      );
       $('#step_2_recovery .line_skip_recovery').css('display', 'none');
     }
   };
@@ -105,8 +135,13 @@ export class SetupRecoverKeyModule {
     }
   };
 
-  public renderAddKeyFromBackup = async () => { // at this point, account is already set up, and this page is showing in a lightbox after selecting "from backup" in add_key.htm
-    $('.profile-row, .skip_recover_remaining, .action_send, .action_account_settings, #lost_pass_phrase').css({ display: 'none', visibility: 'hidden', opacity: 0 });
+  public renderAddKeyFromBackup = async () => {
+    // at this point, account is already set up, and this page is showing in a lightbox after selecting "from backup" in add_key.htm
+    $('.profile-row, .skip_recover_remaining, .action_send, .action_account_settings, #lost_pass_phrase').css({
+      display: 'none',
+      visibility: 'hidden',
+      opacity: 0
+    });
     Xss.sanitizeRender($('h1').parent(), '<h1>Recover key from backup</h1>');
     $('.action_recover_account').text('load key from backup');
     try {
@@ -114,7 +149,10 @@ export class SetupRecoverKeyModule {
       this.view.fetchedKeyBackups = backups.keyinfos.backups;
       this.view.fetchedKeyBackupsUniqueLongids = backups.longids.backups;
     } catch (e) {
-      window.location.href = Url.create('modules/add_key.htm', { acctEmail: this.view.acctEmail, parentTabId: this.view.parentTabId });
+      window.location.href = Url.create('modules/add_key.htm', {
+        acctEmail: this.view.acctEmail,
+        parentTabId: this.view.parentTabId
+      });
       return;
     }
     if (this.view.fetchedKeyBackupsUniqueLongids.length) {
@@ -123,8 +161,10 @@ export class SetupRecoverKeyModule {
       await this.view.setupRender.renderSetupDone();
       $('#step_4_more_to_recover .action_recover_remaining').trigger('click');
     } else {
-      window.location.href = Url.create('modules/add_key.htm', { acctEmail: this.view.acctEmail, parentTabId: this.view.parentTabId });
+      window.location.href = Url.create('modules/add_key.htm', {
+        acctEmail: this.view.acctEmail,
+        parentTabId: this.view.parentTabId
+      });
     }
   };
-
 }

@@ -230,7 +230,7 @@ export const mockFesEndpoints: HandlersDefinition = {
       req.url === `/api/v1/client-configuration?domain=standardsubdomainfes.localhost:8001`
     ) {
       return {
-        clientConfiguration: { flags: [], disallow_attester_search_for_domains: ['got.this@fromstandardfes.com'] }
+        clientConfiguration: { flags: [], disallow_attester_search_for_domains: ['got.this@fromstandardfes.com'] } // eslint-disable-line @typescript-eslint/naming-convention
       };
     }
     throw new HttpClientErr(`Unexpected FES domain "${req.headers.host}" and url "${req.url}"`);

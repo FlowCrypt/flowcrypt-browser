@@ -951,6 +951,7 @@ export class OpenPGPKey {
       const verifyResult = await OpenPGPKey.verify(signedMessage, [
         { pubkey: await OpenPGPKey.convertExternalLibraryObjToKey(key), revoked: false }
       ]);
+      // eslint-disable-next-line no-null/no-null
       if (verifyResult.error !== null && typeof verifyResult.error !== 'undefined') {
         output.push(`verify failed: ${verifyResult.error}`);
       } else {

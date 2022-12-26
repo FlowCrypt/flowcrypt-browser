@@ -352,7 +352,6 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             (window as any).ContactStore.setReqPipe(req, resolve, reject);
           });
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const contactsSize: number = (
             await (window as any).ContactStore.search(db, { hasPgp: true, substring: 'flowcrypt' })
           ).length;
@@ -380,24 +379,23 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         await contactsFrame.waitAll('@page-contacts');
         await Util.sleep(1);
         const foundKeys1 = await dbPage.page.evaluate(async () => {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          /* eslint-disable @typescript-eslint/no-explicit-any */
           const db = await (window as any).ContactStore.dbOpen();
           const pubkey7FDE685548AEA788: { fingerprint: string } = await new Promise((resolve, reject) => {
             const tx = db.transaction(['pubkeys'], 'readonly');
             const req = tx.objectStore('pubkeys').get('5520CACE2CB61EA713E5B0057FDE685548AEA788');
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             (window as any).ContactStore.setReqPipe(req, resolve, reject);
           });
           const pubkeyADAC279C95093207: { fingerprint: string } = await new Promise((resolve, reject) => {
             const tx = db.transaction(['pubkeys'], 'readonly');
             const req = tx.objectStore('pubkeys').get('E8F0517BA6D7DAB6081C96E4ADAC279C95093207');
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             (window as any).ContactStore.setReqPipe(req, resolve, reject);
           });
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const contactsSize: number = (
-            await (window as any).ContactStore.search(db, { hasPgp: true, substring: 'flowcrypt' })
-          ).length;
+          const contactsSize: number = await (window as any).ContactStore.search(db, {
+            hasPgp: true,
+            substring: 'flowcrypt'
+          }).length;
+          /* eslint-enable @typescript-eslint/no-explicit-any */
           return { pubkey7FDE685548AEA788, pubkeyADAC279C95093207, contactsSize };
         });
         expect(foundKeys1.contactsSize).to.equal(1);
@@ -414,24 +412,23 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         await contactsFrame.waitAll('@page-contacts');
         await Util.sleep(1);
         const foundKeys2 = await dbPage.page.evaluate(async () => {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          /* eslint-disable @typescript-eslint/no-explicit-any */
           const db = await (window as any).ContactStore.dbOpen();
           const pubkey7FDE685548AEA788: { fingerprint: string } = await new Promise((resolve, reject) => {
             const tx = db.transaction(['pubkeys'], 'readonly');
             const req = tx.objectStore('pubkeys').get('5520CACE2CB61EA713E5B0057FDE685548AEA788');
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             (window as any).ContactStore.setReqPipe(req, resolve, reject);
           });
           const pubkeyADAC279C95093207: { fingerprint: string } = await new Promise((resolve, reject) => {
             const tx = db.transaction(['pubkeys'], 'readonly');
             const req = tx.objectStore('pubkeys').get('E8F0517BA6D7DAB6081C96E4ADAC279C95093207');
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             (window as any).ContactStore.setReqPipe(req, resolve, reject);
           });
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const contactsSize: number = (
-            await (window as any).ContactStore.search(db, { hasPgp: true, substring: 'flowcrypt' })
-          ).length;
+          const contactsSize: number = await (window as any).ContactStore.search(db, {
+            hasPgp: true,
+            substring: 'flowcrypt'
+          }).length;
+          /* eslint-disable @typescript-eslint/no-explicit-any */
           return { pubkey7FDE685548AEA788, pubkeyADAC279C95093207, contactsSize };
         });
         expect(foundKeys2.contactsSize).to.equal(0);
@@ -1027,6 +1024,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         const sentMsg = (await GoogleData.withInitializedData(acctEmail)).searchMessagesBySubject(
           'Your FlowCrypt Backup'
         )[0]!;
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const mimeMsg = await Parse.convertBase64ToMimeMsg(sentMsg.raw!);
         const { keys } = await KeyUtil.readMany(Buf.concat(mimeMsg.attachments.map(a => a.content)));
         expect(keys.length).to.equal(2);
@@ -1531,9 +1529,9 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         // Set invalid client configuration and check if it ensures gracious behavior & ui remain functional
         mockBackendData.clientConfigurationByAcctEmail[acct] = {
           // flags is required but don't return it (to mock invalid client configuration)
-          key_manager_url: 'https://localhost:8001/flowcrypt-email-key-manager'
+          key_manager_url: 'https://localhost:8001/flowcrypt-email-key-manager' // eslint-disable-line @typescript-eslint/naming-convention
         };
-        const extraAuthHeaders = { Authorization: `Bearer ${accessToken}` };
+        const extraAuthHeaders = { Authorization: `Bearer ${accessToken}` }; // eslint-disable-line @typescript-eslint/naming-convention
         const gmailPage = await browser.newPage(t, TestUrls.mockGmailUrl(), undefined, extraAuthHeaders);
         const errorMsg = 'Failed to update FlowCrypt Client Configuration: Missing client configuration flags.';
         await PageRecipe.waitForToastToAppearAndDisappear(gmailPage, errorMsg);
@@ -1561,6 +1559,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       'settings - client configuration gets updated on settings and content script reloads',
       testWithBrowser(undefined, async (t, browser) => {
         const acct = 'settings@settings.flowcrypt.test';
+        /* eslint-disable @typescript-eslint/naming-convention */
         // set up the client configuration returned for the account
         mockBackendData.clientConfigurationByAcctEmail[acct] = {
           flags: [
@@ -1577,6 +1576,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
           enforce_keygen_algo: 'rsa2048'
           // enforce_keygen_expire_months: undefined
         };
+        /* eslint-enable @typescript-eslint/naming-convention */
         const setupPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
         await SetupPageRecipe.autoSetupWithEKM(setupPage);
         const { cryptup_settingssettingsflowcrypttest_rules: rules1 } = await setupPage.getFromLocalStorage([

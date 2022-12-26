@@ -6,17 +6,14 @@ import { Api, ReqMethod } from './../shared/api.js';
 import { Dict, Str } from '../../core/common.js';
 import { PubkeysSearchResult } from './../pub-lookup.js';
 import { AjaxErr, ApiErr } from '../shared/api-error.js';
-import { ClientConfiguration } from "../../client-configuration";
+import { ClientConfiguration } from '../../client-configuration';
 import { ATTESTER_API_HOST } from '../../core/const.js';
 import { MsgBlockParser } from '../../core/msg-block-parser.js';
 
-type PubCallRes = { responseText: string, getResponseHeader: (n: string) => string | null };
+type PubCallRes = { responseText: string; getResponseHeader: (n: string) => string | null };
 
 export class Attester extends Api {
-
-  constructor(
-    private clientConfiguration: ClientConfiguration
-  ) {
+  public constructor(private clientConfiguration: ClientConfiguration) {
     super();
   }
 
@@ -26,9 +23,9 @@ export class Attester extends Api {
       return { pubkeys: [] };
     }
     const results = await Promise.allSettled([
-      this.doLookupLdap(email),  // get from recipient-specific LDAP server, if any, relayed through flowcrypt.com
-      this.doLookup(email),  // get from flowcrypt.com public keyserver database
-      this.doLookupLdap(email, 'keyserver.pgp.com'), // get from keyserver.pgp.com, relayed through flowcrypt.com
+      this.doLookupLdap(email), // get from recipient-specific LDAP server, if any, relayed through flowcrypt.com
+      this.doLookup(email), // get from flowcrypt.com public keyserver database
+      this.doLookupLdap(email, 'keyserver.pgp.com') // get from keyserver.pgp.com, relayed through flowcrypt.com
     ]);
     const validResults = results.filter(result => result.status === 'fulfilled');
     for (const result of validResults) {
@@ -38,6 +35,7 @@ export class Attester extends Api {
       }
     }
     if (results[1].status === 'rejected') {
+      // eslint-disable-next-line no-throw-literal
       throw results[1].reason as unknown;
     }
     return { pubkeys: [] };
@@ -60,9 +58,11 @@ export class Attester extends Api {
 
   public lookupEmails = async (emails: string[]): Promise<Dict<PubkeysSearchResult>> => {
     const results: Dict<PubkeysSearchResult> = {};
-    await Promise.all(emails.map(async (email: string) => {
-      results[email] = await this.lookupEmail(email);
-    }));
+    await Promise.all(
+      emails.map(async (email: string) => {
+        results[email] = await this.lookupEmail(email);
+      })
+    );
     return results;
   };
 
@@ -91,22 +91,54 @@ export class Attester extends Api {
     return r.responseText;
   };
 
-  public welcomeMessage = async (email: string, pubkey: string, idToken: string | undefined): Promise<{ sent: boolean }> => {
+  public welcomeMessage = async (
+    email: string,
+    pubkey: string,
+    idToken: string | undefined
+  ): Promise<{ sent: boolean }> => {
     const headers = idToken ? { authorization: `Bearer ${idToken!}` } : undefined;
     return await this.jsonCall<{ sent: boolean }>('welcome-message', { email, pubkey }, 'POST', headers);
   };
 
-  private jsonCall = async <RT>(path: string, values?: Dict<unknown>, method: ReqMethod = 'POST', hdrs?: Dict<string>): Promise<RT> => {
-    return await Api.apiCall(ATTESTER_API_HOST, path, values, 'JSON', undefined, { 'api-version': '3', ...hdrs ?? {} }, 'json', method) as RT;
+  private jsonCall = async <RT>(
+    path: string,
+    values?: Dict<unknown>,
+    method: ReqMethod = 'POST',
+    hdrs?: Dict<string>
+  ): Promise<RT> => {
+    return (await Api.apiCall(
+      ATTESTER_API_HOST,
+      path,
+      values,
+      'JSON',
+      undefined,
+      { 'api-version': '3', ...(hdrs ?? {}) },
+      'json',
+      method
+    )) as RT;
   };
 
-  private pubCall = async (resource: string, method: ReqMethod = 'GET', data?: string | undefined, hdrs?: Dict<string>): Promise<PubCallRes> => {
-    return await Api.apiCall(ATTESTER_API_HOST, resource, data, typeof data === 'string' ? 'TEXT' : undefined, undefined, hdrs, 'xhr', method);
+  private pubCall = async (
+    resource: string,
+    method: ReqMethod = 'GET',
+    data?: string | undefined,
+    hdrs?: Dict<string>
+  ): Promise<PubCallRes> => {
+    return await Api.apiCall(
+      ATTESTER_API_HOST,
+      resource,
+      data,
+      typeof data === 'string' ? 'TEXT' : undefined,
+      undefined,
+      hdrs,
+      'xhr',
+      method
+    );
   };
 
   private getPubKeysSearchResult = async (r: PubCallRes): Promise<PubkeysSearchResult> => {
     const { blocks } = MsgBlockParser.detectBlocks(r.responseText);
-    const pubkeys = blocks.filter((block) => block.type === 'publicKey').map((block) => block.content.toString());
+    const pubkeys = blocks.filter(block => block.type === 'publicKey').map(block => block.content.toString());
     return { pubkeys };
   };
 
@@ -121,5 +153,4 @@ export class Attester extends Api {
       throw e;
     }
   };
-
 }

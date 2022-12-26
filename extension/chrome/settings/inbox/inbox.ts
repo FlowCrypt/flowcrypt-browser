@@ -18,13 +18,12 @@ import { Injector } from '../../../js/common/inject.js';
 import { Settings } from '../../../js/common/settings.js';
 import Swal from 'sweetalert2';
 import { View } from '../../../js/common/view.js';
-import { WebmailCommon } from "../../../js/common/webmail.js";
+import { WebmailCommon } from '../../../js/common/webmail.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { XssSafeFactory } from '../../../js/common/xss-safe-factory.js';
 import { AcctStore, AcctStoreDict } from '../../../js/common/platform/store/acct-store.js';
 
 export class InboxView extends View {
-
   public readonly inboxMenuModule: InboxMenuModule;
   public readonly inboxNotificationModule: InboxNotificationModule;
   public readonly inboxActiveThreadModule: InboxActiveThreadModule;
@@ -44,7 +43,7 @@ export class InboxView extends View {
   public storage!: AcctStoreDict;
   public tabId!: string;
 
-  constructor() {
+  public constructor() {
     super();
     const uncheckedUrlParams = Url.parse(['acctEmail', 'labelId', 'threadId', 'showOriginal', 'debug']);
     this.acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
@@ -96,12 +95,21 @@ export class InboxView extends View {
     // BrowserMsg.addPgpListeners(); // todo - re-allow when https://github.com/FlowCrypt/flowcrypt-browser/issues/2560 fixed
     BrowserMsg.listen(this.tabId);
     Catch.setHandledInterval(this.webmailCommon.addOrRemoveEndSessionBtnIfNeeded, 30000);
-    $('.action_open_settings').on('click', this.setHandler(async () => await Browser.openSettingsPage('index.htm', this.acctEmail)));
-    $(".action-toggle-accounts-menu").on('click', this.setHandler((target, event) => {
-      event.stopPropagation();
-      $("#alt-accounts").toggleClass("active");
-    }));
-    $('.action_add_account').on('click', this.setHandlerPrevent('double', async () => await Settings.newGoogleAcctAuthPromptThenAlertOrForward(this.tabId)));
+    $('.action_open_settings').on(
+      'click',
+      this.setHandler(async () => await Browser.openSettingsPage('index.htm', this.acctEmail))
+    );
+    $('.action-toggle-accounts-menu').on(
+      'click',
+      this.setHandler((target, event) => {
+        event.stopPropagation();
+        $('#alt-accounts').toggleClass('active');
+      })
+    );
+    $('.action_add_account').on(
+      'click',
+      this.setHandlerPrevent('double', async () => await Settings.newGoogleAcctAuthPromptThenAlertOrForward(this.tabId))
+    );
     this.addBrowserMsgListeners();
   };
 
@@ -133,9 +141,13 @@ export class InboxView extends View {
     BrowserMsg.addListener('close_compose_window', async ({ frameId }: Bm.ComposeWindow) => {
       $(`.secure_compose_window[data-frame-id="${frameId}"]`).remove();
       if ($('.secure_compose_window.previous_active:not(.minimized)').length) {
-        BrowserMsg.send.focusPreviousActiveWindow(this.tabId, { frameId: $('.secure_compose_window.previous_active:not(.minimized)').data('frame-id') as string });
+        BrowserMsg.send.focusPreviousActiveWindow(this.tabId, {
+          frameId: $('.secure_compose_window.previous_active:not(.minimized)').data('frame-id') as string
+        });
       } else if ($('.secure_compose_window:not(.minimized)').length) {
-        BrowserMsg.send.focusPreviousActiveWindow(this.tabId, { frameId: $('.secure_compose_window:not(.minimized)').data('frame-id') as string });
+        BrowserMsg.send.focusPreviousActiveWindow(this.tabId, {
+          frameId: $('.secure_compose_window:not(.minimized)').data('frame-id') as string
+        });
       }
       // reposition the rest of the compose windows
       if (!$(`.secure_compose_window[data-order="1"]`).length) {
@@ -164,7 +176,6 @@ export class InboxView extends View {
       });
     }
   };
-
 }
 
 View.run(InboxView);

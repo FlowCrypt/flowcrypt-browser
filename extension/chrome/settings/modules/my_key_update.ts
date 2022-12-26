@@ -20,105 +20,150 @@ import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
 import { InMemoryStore } from '../../../js/common/platform/store/in-memory-store.js';
 import { InMemoryStoreKeys } from '../../../js/common/core/const.js';
 
-View.run(class MyKeyUpdateView extends View {
+View.run(
+  class MyKeyUpdateView extends View {
+    protected fesUrl?: string;
+    private readonly acctEmail: string;
+    private readonly fingerprint: string;
+    private readonly showKeyUrl: string;
+    private readonly inputPrivateKey = $('.input_private_key');
+    private readonly prvHeaders = PgpArmor.headers('privateKey');
+    private ki: KeyInfoWithIdentity | undefined;
+    private clientConfiguration!: ClientConfiguration;
+    private pubLookup!: PubLookup;
 
-  protected fesUrl?: string;
-  private readonly acctEmail: string;
-  private readonly fingerprint: string;
-  private readonly showKeyUrl: string;
-  private readonly inputPrivateKey = $('.input_private_key');
-  private readonly prvHeaders = PgpArmor.headers('privateKey');
-  private ki: KeyInfoWithIdentity | undefined;
-  private clientConfiguration!: ClientConfiguration;
-  private pubLookup!: PubLookup;
+    public constructor() {
+      super();
+      const uncheckedUrlParams = Url.parse(['acctEmail', 'fingerprint', 'parentTabId']);
+      this.acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
+      this.fingerprint = Assert.urlParamRequire.string(uncheckedUrlParams, 'fingerprint');
+      this.showKeyUrl = Url.create('my_key.htm', uncheckedUrlParams);
+    }
 
-  constructor() {
-    super();
-    const uncheckedUrlParams = Url.parse(['acctEmail', 'fingerprint', 'parentTabId']);
-    this.acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
-    this.fingerprint = Assert.urlParamRequire.string(uncheckedUrlParams, 'fingerprint');
-    this.showKeyUrl = Url.create('my_key.htm', uncheckedUrlParams);
-  }
-
-  public render = async () => {
-    const storage = await AcctStore.get(this.acctEmail, ['fesUrl']);
-    this.fesUrl = storage.fesUrl;
-    this.clientConfiguration = await ClientConfiguration.newInstance(this.acctEmail);
-    if (this.clientConfiguration.usesKeyManager()) {
-      Xss.sanitizeRender('body', `
+    public render = async () => {
+      const storage = await AcctStore.get(this.acctEmail, ['fesUrl']);
+      this.fesUrl = storage.fesUrl;
+      this.clientConfiguration = await ClientConfiguration.newInstance(this.acctEmail);
+      if (this.clientConfiguration.usesKeyManager()) {
+        Xss.sanitizeRender(
+          'body',
+          `
       <br>
       <div data-test="container-err-title">Error: Insufficient Permission</div>
       <br><br>
       <div data-test="container-err-text">Please contact your IT staff if you wish to update your keys.</div>
       <br><br>
-      `);
-    } else {
-      $('#content').show();
-      this.pubLookup = new PubLookup(this.clientConfiguration);
-      [this.ki] = await KeyStore.get(this.acctEmail, [this.fingerprint]);
-      Assert.abortAndRenderErrorIfKeyinfoEmpty(this.ki ? [this.ki] : []);
-      $('.action_show_public_key').attr('href', this.showKeyUrl);
-      $('.email').text(this.acctEmail);
-      $('.fingerprint').text(Str.spaced(this.ki.fingerprints[0]));
-      this.inputPrivateKey.attr('placeholder', this.inputPrivateKey.attr('placeholder') + ' (' + this.ki.fingerprints[0] + ')');
-    }
-  };
-
-  public setHandlers = () => {
-    $('.action_update_private_key').on('click', this.setHandlerPrevent('double', () => this.updatePrivateKeyHandler()));
-    $('.input_passphrase').keydown(this.setEnterHandlerThatClicks('.action_update_private_key'));
-  };
-
-  private storeUpdatedKeyAndPassphrase = async (updatedPrv: Key, updatedPrvPassphrase: string) => {
-    const shouldSavePassphraseInStorage = !this.clientConfiguration.forbidStoringPassPhrase() &&
-      !!(await PassphraseStore.get(this.acctEmail, this.ki!, true));
-    await KeyStore.add(this.acctEmail, updatedPrv);
-    await PassphraseStore.set('local', this.acctEmail, this.ki!, shouldSavePassphraseInStorage ? updatedPrvPassphrase : undefined);
-    await PassphraseStore.set('session', this.acctEmail, this.ki!, shouldSavePassphraseInStorage ? undefined : updatedPrvPassphrase);
-    if (this.clientConfiguration.canSubmitPubToAttester() && await Ui.modal.confirm('Public and private key updated locally.\n\nUpdate public records with new Public Key?')) {
-      try {
-        const pubkey = KeyUtil.armor(await KeyUtil.asPublicKey(updatedPrv));
-        const idToken = await InMemoryStore.get(this.acctEmail, InMemoryStoreKeys.ID_TOKEN);
-        await this.pubLookup.attester.submitPrimaryEmailPubkey(this.acctEmail, pubkey, idToken!);
-      } catch (e) {
-        ApiErr.reportIfSignificant(e);
-        await Ui.modal.error(`Error updating public records:\n\n${ApiErr.eli5(e)}\n\n(but local update was successful)`);
-      }
-    }
-    window.location.href = this.showKeyUrl;
-  };
-
-  private updatePrivateKeyHandler = async () => {
-    const updatedKey = await KeyUtil.parse(String(this.inputPrivateKey.val()));
-    const updatedKeyEncrypted = await KeyUtil.parse(String(this.inputPrivateKey.val()));
-    const updatedKeyPassphrase = String($('.input_passphrase').val());
-    if (typeof updatedKey === 'undefined') {
-      await Ui.modal.warning(Lang.setup.keyFormattedWell(this.prvHeaders.begin, String(this.prvHeaders.end)), Ui.testCompatibilityLink);
-    } else if (updatedKey.isPublic) {
-      await Ui.modal.warning('This was a public key. Please insert a private key instead. It\'s a block of text starting with "' + this.prvHeaders.begin + '"');
-    } else if (updatedKey.id !== (await KeyUtil.parse(this.ki!.public)).id) {
-      await Ui.modal.warning(`This key ${Str.spaced(updatedKey.id || 'err')} does not match your current key ${Str.spaced(this.ki!.fingerprints[0])}`);
-    } else if (await KeyUtil.decrypt(updatedKey, updatedKeyPassphrase) !== true) {
-      await Ui.modal.error('The pass phrase does not match.\n\nPlease enter pass phrase of the newly updated key.');
-    } else {
-      if (updatedKey.usableForEncryption) {
-        await this.storeUpdatedKeyAndPassphrase(updatedKeyEncrypted, updatedKeyPassphrase);
-        return;
-      }
-      // cannot get a valid encryption key packet
-      if (await KeyUtil.isWithoutSelfCertifications(updatedKey) || updatedKey.usableForEncryptionButExpired) { // known issues - key can be fixed
-        const fixedEncryptedPrv = await Settings.renderPrvCompatFixUiAndWaitTilSubmittedByUser(
-          this.acctEmail, '.compatibility_fix_container', updatedKeyEncrypted, updatedKeyPassphrase, this.showKeyUrl
+      `
         );
-        await this.storeUpdatedKeyAndPassphrase(fixedEncryptedPrv, updatedKeyPassphrase);
       } else {
+        $('#content').show();
+        this.pubLookup = new PubLookup(this.clientConfiguration);
+        [this.ki] = await KeyStore.get(this.acctEmail, [this.fingerprint]);
+        Assert.abortAndRenderErrorIfKeyinfoEmpty(this.ki ? [this.ki] : []);
+        $('.action_show_public_key').attr('href', this.showKeyUrl);
+        $('.email').text(this.acctEmail);
+        $('.fingerprint').text(Str.spaced(this.ki.fingerprints[0]));
+        this.inputPrivateKey.attr(
+          'placeholder',
+          this.inputPrivateKey.attr('placeholder') + ' (' + this.ki.fingerprints[0] + ')'
+        );
+      }
+    };
+
+    public setHandlers = () => {
+      $('.action_update_private_key').on(
+        'click',
+        this.setHandlerPrevent('double', () => this.updatePrivateKeyHandler())
+      );
+      $('.input_passphrase').keydown(this.setEnterHandlerThatClicks('.action_update_private_key'));
+    };
+
+    private storeUpdatedKeyAndPassphrase = async (updatedPrv: Key, updatedPrvPassphrase: string) => {
+      const shouldSavePassphraseInStorage =
+        !this.clientConfiguration.forbidStoringPassPhrase() &&
+        !!(await PassphraseStore.get(this.acctEmail, this.ki!, true));
+      await KeyStore.add(this.acctEmail, updatedPrv);
+      await PassphraseStore.set(
+        'local',
+        this.acctEmail,
+        this.ki!,
+        shouldSavePassphraseInStorage ? updatedPrvPassphrase : undefined
+      );
+      await PassphraseStore.set(
+        'session',
+        this.acctEmail,
+        this.ki!,
+        shouldSavePassphraseInStorage ? undefined : updatedPrvPassphrase
+      );
+      if (
+        this.clientConfiguration.canSubmitPubToAttester() &&
+        (await Ui.modal.confirm(
+          'Public and private key updated locally.\n\nUpdate public records with new Public Key?'
+        ))
+      ) {
+        try {
+          const pubkey = KeyUtil.armor(await KeyUtil.asPublicKey(updatedPrv));
+          const idToken = await InMemoryStore.get(this.acctEmail, InMemoryStoreKeys.ID_TOKEN);
+          await this.pubLookup.attester.submitPrimaryEmailPubkey(this.acctEmail, pubkey, idToken!);
+        } catch (e) {
+          ApiErr.reportIfSignificant(e);
+          await Ui.modal.error(
+            `Error updating public records:\n\n${ApiErr.eli5(e)}\n\n(but local update was successful)`
+          );
+        }
+      }
+      window.location.href = this.showKeyUrl;
+    };
+
+    private updatePrivateKeyHandler = async () => {
+      const updatedKey = await KeyUtil.parse(String(this.inputPrivateKey.val()));
+      const updatedKeyEncrypted = await KeyUtil.parse(String(this.inputPrivateKey.val()));
+      const updatedKeyPassphrase = String($('.input_passphrase').val());
+      if (typeof updatedKey === 'undefined') {
         await Ui.modal.warning(
-          `Key update: This looks like a valid key but it cannot be used for encryption. Please ${Lang.general.contactMinimalSubsentence(!!this.fesUrl)} to see why is that.`,
+          Lang.setup.keyFormattedWell(this.prvHeaders.begin, String(this.prvHeaders.end)),
           Ui.testCompatibilityLink
         );
-        window.location.href = this.showKeyUrl;
+      } else if (updatedKey.isPublic) {
+        await Ui.modal.warning(
+          'This was a public key. Please insert a private key instead. It\'s a block of text starting with "' +
+            this.prvHeaders.begin +
+            '"'
+        );
+      } else if (updatedKey.id !== (await KeyUtil.parse(this.ki!.public)).id) {
+        await Ui.modal.warning(
+          `This key ${Str.spaced(updatedKey.id || 'err')} does not match your current key ${Str.spaced(
+            this.ki!.fingerprints[0]
+          )}`
+        );
+      } else if ((await KeyUtil.decrypt(updatedKey, updatedKeyPassphrase)) !== true) {
+        await Ui.modal.error('The pass phrase does not match.\n\nPlease enter pass phrase of the newly updated key.');
+      } else {
+        if (updatedKey.usableForEncryption) {
+          await this.storeUpdatedKeyAndPassphrase(updatedKeyEncrypted, updatedKeyPassphrase);
+          return;
+        }
+        // cannot get a valid encryption key packet
+        if ((await KeyUtil.isWithoutSelfCertifications(updatedKey)) || updatedKey.usableForEncryptionButExpired) {
+          // known issues - key can be fixed
+          const fixedEncryptedPrv = await Settings.renderPrvCompatFixUiAndWaitTilSubmittedByUser(
+            this.acctEmail,
+            '.compatibility_fix_container',
+            updatedKeyEncrypted,
+            updatedKeyPassphrase,
+            this.showKeyUrl
+          );
+          await this.storeUpdatedKeyAndPassphrase(fixedEncryptedPrv, updatedKeyPassphrase);
+        } else {
+          await Ui.modal.warning(
+            `Key update: This looks like a valid key but it cannot be used for encryption. Please ${Lang.general.contactMinimalSubsentence(
+              !!this.fesUrl
+            )} to see why is that.`,
+            Ui.testCompatibilityLink
+          );
+          window.location.href = this.showKeyUrl;
+        }
       }
-    }
-  };
-
-});
+    };
+  }
+);

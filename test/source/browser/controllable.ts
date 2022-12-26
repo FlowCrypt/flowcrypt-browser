@@ -277,10 +277,12 @@ abstract class ControllableBase {
   public read = async (selector: string, onlyVisible = false): Promise<string> => {
     selector = this.selector(selector);
     if (onlyVisible) {
+      /* eslint-disable @typescript-eslint/no-unsafe-return */
       return await this.target.evaluate(
         s => [].slice.call(document.querySelectorAll(s)).find((el: HTMLElement) => el.offsetParent !== null).innerText,
         selector
       );
+      /* eslint-enable @typescript-eslint/no-unsafe-return */
     } else {
       return await this.target.evaluate(s => (document.querySelector(s) as HTMLElement).innerText, selector);
     }
@@ -295,6 +297,7 @@ abstract class ControllableBase {
 
   public selectOption = async (selector: string, choice: string) => {
     await this.waitAll(selector, { visible: true });
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     await this.target.evaluate((s, v) => jQuery(s).val(v).trigger('change'), this.selector(selector), choice);
   };
 
@@ -690,6 +693,7 @@ export class ControllableAlert {
 }
 
 class ConsoleEvent {
+  // eslint-disable-next-line no-empty-function
   public constructor(public type: string, public text: string) {}
 }
 

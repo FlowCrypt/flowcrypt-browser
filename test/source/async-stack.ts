@@ -28,7 +28,7 @@
     if (type === 'error') {
       throw new Error('this failed');
     } else if (type === 'object') {
-      throw { nonsense: 'yes' };
+      throw { nonsense: 'yes' }; // eslint-disable-line no-throw-literal
     }
   };
 

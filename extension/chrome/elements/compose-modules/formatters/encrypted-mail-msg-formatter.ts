@@ -78,7 +78,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
     const textToEncrypt = this.richtext
       ? await Mime.encode(
           { 'text/plain': newMsg.plaintext, 'text/html': newMsg.plainhtml },
-          { Subject: newMsg.subject },
+          { Subject: newMsg.subject }, // eslint-disable-line @typescript-eslint/naming-convention
           this.isDraft ? [] : await this.view.attachmentsModule.attachment.collectAttachments()
         )
       : newMsg.plaintext;

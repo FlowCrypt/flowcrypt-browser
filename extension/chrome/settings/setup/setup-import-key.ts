@@ -14,28 +14,37 @@ import { Lang } from '../../../js/common/lang.js';
 import { saveKeysAndPassPhrase } from '../../../js/common/helpers.js';
 
 export class SetupImportKeyModule {
-
-  constructor(private view: SetupView) {
-  }
+  // eslint-disable-next-line no-empty-function
+  public constructor(private view: SetupView) {}
 
   public actionImportPrivateKeyHandle = async (button: HTMLElement) => {
     if (button.className.includes('gray')) {
       await Ui.modal.warning('Please double check the pass phrase input field for any issues.');
       return;
     }
+    /* eslint-disable @typescript-eslint/naming-convention */
     const options: SetupOptions = {
       passphrase: String($('#step_2b_manual_enter .input_passphrase').val()),
       submit_main: this.view.shouldSubmitPubkey('#step_2b_manual_enter .input_submit_key'),
       submit_all: this.view.shouldSubmitPubkey('#step_2b_manual_enter .input_submit_all'),
       passphrase_save: Boolean($('#step_2b_manual_enter .input_passphrase_save').prop('checked')),
-      recovered: false,
+      recovered: false
     };
+    /* eslint-enable @typescript-eslint/naming-convention */
     try {
-      const checked = await this.view.keyImportUi.checkPrv(this.view.acctEmail, String($('#step_2b_manual_enter .input_private_key').val()), options.passphrase);
+      const checked = await this.view.keyImportUi.checkPrv(
+        this.view.acctEmail,
+        String($('#step_2b_manual_enter .input_private_key').val()),
+        options.passphrase
+      );
       if (checked.decrypted.family === 'x509') {
-        if (!await Ui.modal.confirm('Using S/MIME as the only key on account is experimental. '
-          + 'You should instead import an OpenPGP key here, and then add S/MIME keys as additional keys in FlowCrypt Settings.' +
-          '\n\nContinue anyway? (not recommented).')) {
+        if (
+          !(await Ui.modal.confirm(
+            'Using S/MIME as the only key on account is experimental. ' +
+              'You should instead import an OpenPGP key here, and then add S/MIME keys as additional keys in FlowCrypt Settings.' +
+              '\n\nContinue anyway? (not recommented).'
+          ))
+        ) {
           return;
         }
       }
@@ -53,8 +62,13 @@ export class SetupImportKeyModule {
         return await Ui.modal.warning(`This does not appear to be a validly formatted key.\n\n${e.message}`);
       } else {
         Catch.reportErr(e);
-        return await Ui.modal.error(`An error happened when processing the key: ${String(e)}\n${Lang.general.contactForSupportSentence(this.view.isFesUsed())}`,
-          false, Ui.testCompatibilityLink);
+        return await Ui.modal.error(
+          `An error happened when processing the key: ${String(e)}\n${Lang.general.contactForSupportSentence(
+            this.view.isFesUsed()
+          )}`,
+          false,
+          Ui.testCompatibilityLink
+        );
       }
     }
   };
@@ -65,10 +79,19 @@ export class SetupImportKeyModule {
     let fixedPrv;
     try {
       fixedPrv = await Settings.renderPrvCompatFixUiAndWaitTilSubmittedByUser(
-        this.view.acctEmail, '#step_3_compatibility_fix', origPrv, options.passphrase, window.location.href.replace(/#$/, ''));
+        this.view.acctEmail,
+        '#step_3_compatibility_fix',
+        origPrv,
+        options.passphrase,
+        window.location.href.replace(/#$/, '')
+      );
     } catch (e) {
       Catch.reportErr(e);
-      await Ui.modal.error(`Failed to fix key (${String(e)}). ${Lang.general.writeMeToFixIt(this.view.isFesUsed())}`, false, Ui.testCompatibilityLink);
+      await Ui.modal.error(
+        `Failed to fix key (${String(e)}). ${Lang.general.writeMeToFixIt(this.view.isFesUsed())}`,
+        false,
+        Ui.testCompatibilityLink
+      );
       this.view.setupRender.displayBlock('step_2b_manual_enter');
       return;
     }

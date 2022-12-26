@@ -12,10 +12,9 @@ import { BackupUi, BackupUiActionType } from '../../../js/common/ui/backup-ui/ba
 import { View } from '../../../js/common/view.js';
 
 export class BackupView extends View {
-
   private readonly backupUi: BackupUi;
 
-  constructor() {
+  public constructor() {
     super();
     const uncheckedUrlParams = Url.parse(['acctEmail', 'parentTabId', 'action', 'idToken', 'id', 'type']);
     const acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
@@ -35,7 +34,7 @@ export class BackupView extends View {
       keyIdentity,
       onBackedUpFinished: async (backedUpCount: number) => {
         if (backedUpCount > 0) {
-          const pluralOrSingle = backedUpCount > 1 ? "keys have" : "key has";
+          const pluralOrSingle = backedUpCount > 1 ? 'keys have' : 'key has';
           await Ui.modal.info(`Your private ${pluralOrSingle} been successfully backed up`);
           BrowserMsg.send.closePage(parentTabId);
         } else {

@@ -463,7 +463,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         await inboxPage.close();
         // test the pubkeys we copied
         const contact = await dbPage.page.evaluate(async () => {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-return
           return await (window as any).ContactStore.getOneWithAllPubkeys(undefined, 'manualcopypgp@flowcrypt.com');
         });
         expect(contact.sortedPubkeys.length).to.equal(2);
@@ -942,6 +942,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         await ComposePageRecipe.fillMsg(composePage, { to: 'expired.on.attester@domain.com' }, 'Test Expired Email');
         const expandContainer = await composePage.waitAny('@action-show-container-cc-bcc-buttons');
         const recipient = await expandContainer.$('.email_preview span');
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         expect(await PageRecipe.getElementPropertyJson(recipient!, 'className')).to.include('expired');
         await composePage.waitAndClick('@action-send');
         await PageRecipe.waitForModalAndRespond(composePage, 'confirm', {
@@ -959,18 +960,18 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
         const dbPage = await browser.newPage(t, TestUrls.extension('chrome/dev/ci_unit_test.htm'));
         await dbPage.page.evaluate(async (pubkey: string) => {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          /* eslint-disable @typescript-eslint/no-explicit-any */
           const db = await (window as any).ContactStore.dbOpen();
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const opgpKeyRevoked = await (window as any).KeyUtil.parse(pubkey);
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           await (window as any).ContactStore.update(db, 'revoked.pubkey@flowcrypt.com', { pubkey: opgpKeyRevoked });
+          /* eslint-enable @typescript-eslint/no-explicit-any */
         }, testConstants.somerevokedValidNowRevoked);
         await dbPage.close();
         const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
         await ComposePageRecipe.fillMsg(composePage, { to: 'revoked.pubkey@flowcrypt.com' }, 'Test Revoked');
         const expandContainer = await composePage.waitAny('@action-show-container-cc-bcc-buttons');
         const recipient = await expandContainer.$('.email_preview span');
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         expect(await PageRecipe.getElementPropertyJson(recipient!, 'className')).to.include('revoked');
         await composePage.close();
       })
@@ -981,26 +982,25 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
         const dbPage = await browser.newPage(t, TestUrls.extension('chrome/dev/ci_unit_test.htm'));
         await dbPage.page.evaluate(async (pubkey: string) => {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          /* eslint-disable @typescript-eslint/no-explicit-any */
           const db = await (window as any).ContactStore.dbOpen();
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const opgpKeyOldAndValid = await (window as any).KeyUtil.parse(pubkey);
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           await (window as any).ContactStore.update(db, 'not.revoked.pubkey@flowcrypt.com', {
             pubkey: opgpKeyOldAndValid
           });
           await new Promise((resolve, reject) => {
             const tx = db.transaction(['revocations'], 'readwrite');
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             (window as any).ContactStore.setTxHandlers(tx, resolve, reject);
             tx.objectStore('revocations').put({ fingerprint: opgpKeyOldAndValid.id + '-X509' });
           });
+          /* eslint-enable @typescript-eslint/no-explicit-any */
         }, testConstants.somerevokedValid);
         await dbPage.close();
         const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
         await ComposePageRecipe.fillMsg(composePage, { to: 'not.revoked.pubkey@flowcrypt.com' }, 'Test Revoked');
         const expandContainer = await composePage.waitAny('@action-show-container-cc-bcc-buttons');
         const recipient = await expandContainer.$('.email_preview span');
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         expect(await PageRecipe.getElementPropertyJson(recipient!, 'className')).to.include('revoked');
         await composePage.close();
       })
@@ -1011,12 +1011,11 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
         const dbPage = await browser.newPage(t, TestUrls.extension('chrome/dev/ci_unit_test.htm'));
         await dbPage.page.evaluate(async (pubkey: string) => {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          /* eslint-disable @typescript-eslint/no-explicit-any */
           const db = await (window as any).ContactStore.dbOpen();
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const opgpKeyRevoked = await (window as any).KeyUtil.parse(pubkey);
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           await (window as any).ContactStore.update(db, 'revoked.pubkey@flowcrypt.com', { pubkey: opgpKeyRevoked });
+          /* eslint-enable @typescript-eslint/no-explicit-any */
         }, testConstants.somerevokedValidNowRevoked);
         await dbPage.close();
         const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
@@ -1035,12 +1034,11 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
         const dbPage = await browser.newPage(t, TestUrls.extension('chrome/dev/ci_unit_test.htm'));
         await dbPage.page.evaluate(async (pubkey: string) => {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          /* eslint-disable @typescript-eslint/no-explicit-any */
           const db = await (window as any).ContactStore.dbOpen();
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const opgpKeyValid = await (window as any).KeyUtil.parse(pubkey);
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           await (window as any).ContactStore.update(db, 'not.revoked.pubkey@flowcrypt.com', { pubkey: opgpKeyValid });
+          /* eslint-enable @typescript-eslint/no-explicit-any */
         }, testConstants.somerevokedValid);
         await dbPage.close();
         const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
@@ -1060,12 +1058,11 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
         const dbPage = await browser.newPage(t, TestUrls.extension('chrome/dev/ci_unit_test.htm'));
         await dbPage.page.evaluate(async (pubkey: string) => {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          /* eslint-disable @typescript-eslint/no-explicit-any */
           const db = await (window as any).ContactStore.dbOpen();
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const opgpKeyRevoked = await (window as any).KeyUtil.parse(pubkey);
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           await (window as any).ContactStore.update(db, 'revoked.pubkey@flowcrypt.com', { pubkey: opgpKeyRevoked });
+          /* eslint-enable @typescript-eslint/no-explicit-any */
         }, testConstants.somerevokedValidNowRevoked);
         await dbPage.close();
         const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
@@ -1693,7 +1690,9 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         const sentMsg = (
           await GoogleData.withInitializedData('flowcrypt.compatibility@gmail.com')
         ).searchMessagesBySubject(subject)[0]!;
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const message = sentMsg.payload!.body!.data!;
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const encrypted = message.match(
           /\-\-\-\-\-BEGIN PGP MESSAGE\-\-\-\-\-.*\-\-\-\-\-END PGP MESSAGE\-\-\-\-\-/s
         )![0];
@@ -1745,6 +1744,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         await ComposePageRecipe.sendAndClose(composePage);
         // get sent msg from mock
         const sentMsg = (await GoogleData.withInitializedData(acct)).searchMessagesBySubject(subject)[0]!;
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const message = sentMsg.payload!.body!.data!;
         expect(message).to.include('-----BEGIN PGP MESSAGE-----');
         expect(message).to.include('-----END PGP MESSAGE-----');
@@ -1804,7 +1804,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         // big file will get canceled
         const fileInput = (await composePage.target.$('input[type=file]')) as ElementHandle<HTMLInputElement>;
         const localpath = 'test/samples/oversize.txt';
-        await writeFileSync(localpath, 'x'.repeat(30 * 1024 * 1024));
+        writeFileSync(localpath, 'x'.repeat(30 * 1024 * 1024));
         await fileInput!.uploadFile(localpath); // 30mb
         await composePage.waitAndRespondToModal(
           'confirm',
@@ -2318,6 +2318,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         await ComposePageRecipe.fillMsg(composePage, { to: recipientEmail }, t.title);
         const expandContainer = await composePage.waitAny('@action-show-container-cc-bcc-buttons');
         const recipient = await expandContainer.$('.email_preview span');
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         expect(await PageRecipe.getElementPropertyJson(recipient!, 'className')).to.not.include('expired'); // because auto-reloaded
         await ComposePageRecipe.sendAndClose(composePage);
         // make sure that the contact itself got updated
@@ -2349,6 +2350,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         await ComposePageRecipe.fillMsg(composePage, { to: recipientEmail }, t.title);
         const expandContainer = await composePage.waitAny('@action-show-container-cc-bcc-buttons');
         const recipient = await expandContainer.$('.email_preview span');
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         expect(await PageRecipe.getElementPropertyJson(recipient!, 'className')).to.include('expired'); // should not auto-reload
       })
     );
@@ -2533,6 +2535,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         await ComposePageRecipe.fillMsg(composePage, { to: recipientEmail }, t.title);
         const expandContainer = await composePage.waitAny('@action-show-container-cc-bcc-buttons');
         const recipient = await expandContainer.$('.email_preview span');
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         expect(await PageRecipe.getElementPropertyJson(recipient!, 'className')).to.include('expired');
         await composePage.close();
         // make sure that the contact itself did NOT get updated, because the one on Attester is an older key
@@ -3006,6 +3009,7 @@ const sendTextAndVerifyPresentInSentMsg = async (
   const sentMsg = (await GoogleData.withInitializedData('flowcrypt.compatibility@gmail.com')).searchMessagesBySubject(
     subject
   )[0]!;
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   const message = encodeURIComponent(sentMsg.payload!.body!.data!);
   await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
     content: [text],

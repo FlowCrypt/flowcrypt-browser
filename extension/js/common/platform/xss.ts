@@ -81,11 +81,13 @@ export class Xss {
    */
   public static htmlSanitize = (dirtyHtml: string): string => {
     Xss.throwIfNotSupported();
+    /* eslint-disable @typescript-eslint/naming-convention */
     return DOMPurify.sanitize(dirtyHtml, {
       ADD_ATTR: Xss.ADD_ATTR,
       FORBID_ATTR: Xss.FORBID_ATTR,
       ALLOWED_URI_REGEXP: Xss.sanitizeHrefRegexp()
     });
+    /* eslint-enable @typescript-eslint/naming-convention */
   };
 
   /**
@@ -162,12 +164,14 @@ export class Xss {
         (node as Element).setAttribute('rel', 'noopener noreferrer');
       }
     });
+    /* eslint-disable @typescript-eslint/naming-convention */
     const cleanHtml = DOMPurify.sanitize(dirtyHtml, {
       ADD_ATTR: Xss.ADD_ATTR,
       FORBID_ATTR: Xss.FORBID_ATTR,
       ALLOWED_TAGS: Xss.ALLOWED_HTML_TAGS,
       ALLOWED_URI_REGEXP: Xss.sanitizeHrefRegexp()
     });
+    /* eslint-enable @typescript-eslint/naming-convention */
     DOMPurify.removeAllHooks();
     return cleanHtml;
   };
@@ -214,6 +218,7 @@ export class Xss {
       .join('\n');
     text = text.replace(/\n{2,}/g, '\n\n');
     // not all tags were removed above. Remove all remaining tags
+    // eslint-disable-next-line @typescript-eslint/naming-convention
     text = DOMPurify.sanitize(text, { ALLOWED_TAGS: [] });
     if (trim) {
       text = text.trim();

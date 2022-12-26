@@ -57,7 +57,7 @@ export class GmailMsg {
   public snippet?: string;
   public raw?: string;
 
-  constructor(msg: { id: string; labelId: GmailMsg$labelId; raw: string; mimeMsg: ParsedMail }) {
+  public constructor(msg: { id: string; labelId: GmailMsg$labelId; raw: string; mimeMsg: ParsedMail }) {
     this.id = msg.id;
     this.historyId = msg.id;
     this.threadId = msg.id;
@@ -140,6 +140,12 @@ export class GoogleData {
 
   private exludePplSearchQuery = /(?:-from|-to):"?([a-zA-Z0-9@.\-_]+)"?/g;
   private includePplSearchQuery = /(?:from|to):"?([a-zA-Z0-9@.\-_]+)"?/g;
+
+  public constructor(private acct: string) {
+    if (!DATA[acct]) {
+      throw new Error('Missing DATA: use withInitializedData instead of direct constructor');
+    }
+  }
 
   public static withInitializedData = async (acct: string): Promise<GoogleData> => {
     if (typeof DATA[acct] === 'undefined') {
@@ -241,12 +247,6 @@ export class GoogleData {
           .join(',')
     );
   };
-
-  constructor(private acct: string) {
-    if (!DATA[acct]) {
-      throw new Error('Missing DATA: use withInitializedData instead of direct constructor');
-    }
-  }
 
   public storeSentMessage = (parseResult: ParseMsgResult, id: string): string => {
     let bodyContentAtt: { data: string; size: number; filename?: string; id: string } | undefined;

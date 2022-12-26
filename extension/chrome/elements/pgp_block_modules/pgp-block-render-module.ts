@@ -23,8 +23,8 @@ export class PgpBlockViewRenderModule {
   private heightHist: number[] = [];
   private printMailInfoHtml!: string;
 
-  constructor(private view: PgpBlockView) {
-  }
+  // eslint-disable-next-line no-empty-function
+  public constructor(private view: PgpBlockView) {}
 
   public initPrintView = async () => {
     const fullName = await AcctStore.get(this.view.acctEmail, ['full_name']);
@@ -35,11 +35,17 @@ export class PgpBlockViewRenderModule {
       const sentDateStr = Str.fromDate(sentDate).replace(' ', ' at ');
       const from = Str.parseEmail(GmailParser.findHeader(gmailMsg, 'from') ?? '');
       const fromHtml = from.name ? `<b>${Xss.htmlSanitize(from.name)}</b> &lt;${from.email}&gt;` : from.email;
-      const ccString = GmailParser.findHeader(gmailMsg, 'cc') ? `Cc: <span data-test="print-cc">${Xss.escape(GmailParser.findHeader(gmailMsg, 'cc')!)}</span><br/>` : '';
-      const bccString = GmailParser.findHeader(gmailMsg, 'bcc') ? `Bcc: <span>${Xss.escape(GmailParser.findHeader(gmailMsg, 'bcc')!)}</span><br/>` : '';
+      const ccString = GmailParser.findHeader(gmailMsg, 'cc')
+        ? `Cc: <span data-test="print-cc">${Xss.escape(GmailParser.findHeader(gmailMsg, 'cc')!)}</span><br/>`
+        : '';
+      const bccString = GmailParser.findHeader(gmailMsg, 'bcc')
+        ? `Bcc: <span>${Xss.escape(GmailParser.findHeader(gmailMsg, 'bcc')!)}</span><br/>`
+        : '';
       this.printMailInfoHtml = `
       <hr>
-      <p class="subject-label" data-test="print-subject">${Xss.htmlSanitize(GmailParser.findHeader(gmailMsg, 'subject') ?? '')}</p>
+      <p class="subject-label" data-test="print-subject">${Xss.htmlSanitize(
+        GmailParser.findHeader(gmailMsg, 'subject') ?? ''
+      )}</p>
       <hr>
       <br/>
       <div>
@@ -123,7 +129,7 @@ export class PgpBlockViewRenderModule {
         ${Xss.htmlSanitize(this.printMailInfoHtml)}
         <br>
         <div data-test="print-content">
-          ${Xss.htmlSanitize($("#pgp_block").html())}
+          ${Xss.htmlSanitize($('#pgp_block').html())}
         </div>
       </body>
       </html>
@@ -142,7 +148,8 @@ export class PgpBlockViewRenderModule {
 
   public resizePgpBlockFrame = () => {
     const origHeight = $('#pgp_block').height();
-    if (!origHeight) { // https://github.com/FlowCrypt/flowcrypt-browser/issues/3519
+    if (!origHeight) {
+      // https://github.com/FlowCrypt/flowcrypt-browser/issues/3519
       // unsure why this happens. Sometimes height will come in as exactly 0 after the iframe was already properly sized
       // that then causes to default to 20 + 40 = 60px for height, hiding contents of the message if it in fact is taller
       return;
@@ -150,33 +157,55 @@ export class PgpBlockViewRenderModule {
     let height = Math.max(origHeight, 20) + 40 + 17 + 3 + 13; // pgp_badge has 17px height + 3px padding + 1em (13px) bottom margin
     this.heightHist.push(height);
     const len = this.heightHist.length;
-    if (len >= 4 && this.heightHist[len - 1] === this.heightHist[len - 3] && this.heightHist[len - 2] === this.heightHist[len - 4] && this.heightHist[len - 1] !== this.heightHist[len - 2]) {
+    if (
+      len >= 4 &&
+      this.heightHist[len - 1] === this.heightHist[len - 3] &&
+      this.heightHist[len - 2] === this.heightHist[len - 4] &&
+      this.heightHist[len - 1] !== this.heightHist[len - 2]
+    ) {
       console.info('pgp_block.js: repetitive resize loop prevented'); // got repetitive, eg [70, 80, 200, 250, 200, 250]
       height = Math.max(this.heightHist[len - 1], this.heightHist[len - 2]); // pick the larger number to stop if from oscillating
     }
-    BrowserMsg.send.setCss(this.view.parentTabId, { selector: `iframe#${this.view.frameId}`, css: { height: `${height}px` } });
+    BrowserMsg.send.setCss(this.view.parentTabId, {
+      selector: `iframe#${this.view.frameId}`,
+      css: { height: `${height}px` }
+    });
   };
 
   public renderContent = async (htmlContent: string, isErr: boolean) => {
-    if (!isErr && !this.view.isOutgoing) { // successfully opened incoming message
+    if (!isErr && !this.view.isOutgoing) {
+      // successfully opened incoming message
+      // eslint-disable-next-line @typescript-eslint/naming-convention
       await AcctStore.set(this.view.acctEmail, { successfully_received_at_leat_one_message: true });
     }
-    if (!isErr) { // rendering message content
+    if (!isErr) {
+      // rendering message content
       $('.pgp_print_button').show();
       const pgpBlock = $('#pgp_block').html(Xss.htmlSanitizeKeepBasicTags(htmlContent, 'IMG-TO-LINK')); // xss-sanitized
-      pgpBlock.find('a.image_src_link').one('click', this.view.setHandler((el, ev) => this.displayImageSrcLinkAsImg(el as HTMLAnchorElement, ev as JQuery.Event<HTMLAnchorElement, null>)));
-    } else { // rendering our own ui
+      pgpBlock.find('a.image_src_link').one(
+        'click',
+        this.view.setHandler((el, ev) =>
+          this.displayImageSrcLinkAsImg(el as HTMLAnchorElement, ev as JQuery.Event<HTMLAnchorElement, null>)
+        )
+      );
+    } else {
+      // rendering our own ui
       Xss.sanitizeRender('#pgp_block', htmlContent);
     }
     if (isErr) {
-      $('.action_show_raw_pgp_block').on('click', this.view.setHandler(target => {
-        $('.raw_pgp_block').css('display', 'block');
-        $(target).css('display', 'none');
-        this.resizePgpBlockFrame();
-      }));
+      $('.action_show_raw_pgp_block').on(
+        'click',
+        this.view.setHandler(target => {
+          $('.raw_pgp_block').css('display', 'block');
+          $(target).css('display', 'none');
+          this.resizePgpBlockFrame();
+        })
+      );
     }
     this.resizePgpBlockFrame(); // resize window now
-    Catch.setHandledTimeout(() => { $(window).resize(this.view.setHandlerPrevent('spree', () => this.resizePgpBlockFrame())); }, 1000); // start auto-resizing the window after 1s
+    Catch.setHandledTimeout(() => {
+      $(window).resize(this.view.setHandlerPrevent('spree', () => this.resizePgpBlockFrame()));
+    }, 1000); // start auto-resizing the window after 1s
   };
 
   public setFrameColor = (color: 'red' | 'green' | 'gray') => {
@@ -205,15 +234,25 @@ export class PgpBlockViewRenderModule {
   };
 
   public renderEncryptionStatus = (status: string): JQuery<HTMLElement> => {
-    return $('#pgp_encryption').addClass(status === 'encrypted' ? 'green_label' : 'red_label').text(status);
+    return $('#pgp_encryption')
+      .addClass(status === 'encrypted' ? 'green_label' : 'red_label')
+      .text(status);
   };
 
   public renderSignatureStatus = (status: string): JQuery<HTMLElement> => {
-    return $('#pgp_signature').addClass(status === 'signed' ? 'green_label' : 'red_label').text(status);
+    return $('#pgp_signature')
+      .addClass(status === 'signed' ? 'green_label' : 'red_label')
+      .text(status);
   };
 
-  public decideDecryptedContentFormattingAndRender = async (decryptedBytes: Buf, isEncrypted: boolean, sigResult: VerifyRes | undefined,
-    verificationPubs: string[], retryVerification: (verificationPubs: string[]) => Promise<VerifyRes | undefined>, plainSubject?: string) => {
+  public decideDecryptedContentFormattingAndRender = async (
+    decryptedBytes: Buf,
+    isEncrypted: boolean,
+    sigResult: VerifyRes | undefined,
+    verificationPubs: string[],
+    retryVerification: (verificationPubs: string[]) => Promise<VerifyRes | undefined>,
+    plainSubject?: string
+  ) => {
     if (isEncrypted) {
       this.renderEncryptionStatus('encrypted');
       this.setFrameColor('green');
@@ -232,7 +271,9 @@ export class PgpBlockViewRenderModule {
       decryptedContent = MsgBlockParser.stripFcTeplyToken(decryptedContent);
       decryptedContent = MsgBlockParser.stripPublicKeys(decryptedContent, publicKeys);
       if (fcAttachmentBlocks.length) {
-        renderableAttachments = fcAttachmentBlocks.map(attachmentBlock => new Attachment(attachmentBlock.attachmentMeta!));
+        renderableAttachments = fcAttachmentBlocks.map(
+          attachmentBlock => new Attachment(attachmentBlock.attachmentMeta!)
+        );
       }
     } else {
       this.renderText('Formatting...');
@@ -245,7 +286,12 @@ export class PgpBlockViewRenderModule {
       } else {
         decryptedContent = '';
       }
-      if (decoded.subject && isEncrypted && (!plainSubject || !Mime.subjectWithoutPrefixes(plainSubject).includes(Mime.subjectWithoutPrefixes(decoded.subject)))) {
+      if (
+        decoded.subject &&
+        isEncrypted &&
+        (!plainSubject ||
+          !Mime.subjectWithoutPrefixes(plainSubject).includes(Mime.subjectWithoutPrefixes(decoded.subject)))
+      ) {
         // there is an encrypted subject + (either there is no plain subject or the plain subject does not contain what's in the encrypted subject)
         decryptedContent = this.getEncryptedSubjectText(decoded.subject, isHtml) + decryptedContent; // render encrypted subject in message
       }
@@ -266,7 +312,8 @@ export class PgpBlockViewRenderModule {
       this.view.attachmentsModule.renderInnerAttachments(renderableAttachments, isEncrypted);
     }
     this.resizePgpBlockFrame();
-    if (!this.doNotSetStateAsReadyYet) { // in case async tasks are still being worked at
+    if (!this.doNotSetStateAsReadyYet) {
+      // in case async tasks are still being worked at
       Ui.setTestState('ready');
     }
   };
@@ -277,19 +324,24 @@ export class PgpBlockViewRenderModule {
     img.style.background = 'none';
     img.style.border = 'none';
     img.addEventListener('load', () => this.resizePgpBlockFrame());
-    if (a.href.startsWith('cid:')) { // image included in the email
+    if (a.href.startsWith('cid:')) {
+      // image included in the email
       const contentId = a.href.replace(/^cid:/g, '');
-      const content = this.view.attachmentsModule.includedAttachments.filter(a => a.type.indexOf('image/') === 0 && a.cid === `<${contentId}>`)[0];
+      const content = this.view.attachmentsModule.includedAttachments.filter(
+        a => a.type.indexOf('image/') === 0 && a.cid === `<${contentId}>`
+      )[0];
       if (content) {
         img.src = `data:${a.type};base64,${content.getData().toBase64Str()}`;
         Xss.replaceElementDANGEROUSLY(a, img.outerHTML); // xss-safe-value - img.outerHTML was built using dom node api
       } else {
         Xss.replaceElementDANGEROUSLY(a, Xss.escape(`[broken link: ${a.href}]`)); // xss-escaped
       }
-    } else if (a.href.startsWith('https://') || a.href.startsWith('http://')) { // image referenced as url
+    } else if (a.href.startsWith('https://') || a.href.startsWith('http://')) {
+      // image referenced as url
       img.src = a.href;
       Xss.replaceElementDANGEROUSLY(a, img.outerHTML); // xss-safe-value - img.outerHTML was built using dom node api
-    } else if (a.href.startsWith('data:image/')) { // image directly inlined
+    } else if (a.href.startsWith('data:image/')) {
+      // image directly inlined
       img.src = a.href;
       Xss.replaceElementDANGEROUSLY(a, img.outerHTML); // xss-safe-value - img.outerHTML was built using dom node api
     } else {
@@ -310,5 +362,4 @@ export class PgpBlockViewRenderModule {
       return `Encrypted Subject: ${subject}\n----------------------------------------------------------------------------------------------------\n`;
     }
   };
-
 }

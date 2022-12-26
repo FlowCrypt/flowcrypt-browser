@@ -24,6 +24,7 @@ export class SignedMsgMailFormatter extends BaseMailFormatter {
       const msgBody = this.richtext
         ? { 'text/plain': newMsg.plaintext, 'text/html': newMsg.plainhtml }
         : { 'text/plain': newMsg.plaintext };
+      // eslint-disable-next-line @typescript-eslint/naming-convention
       const mimeEncodedPlainMessage = await Mime.encode(msgBody, { Subject: newMsg.subject }, attachments);
       return await this.signMimeMessage(signingPrv, mimeEncodedPlainMessage, newMsg);
     }

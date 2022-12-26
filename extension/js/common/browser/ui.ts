@@ -60,10 +60,11 @@ export class Ui {
         try {
           const r = cb.bind(originalThis)(this, event) as void | Promise<void>;
           if (typeof r === 'object' && typeof r.catch === 'function') {
-            // eslint-disable-line @typescript-eslint/unbound-method
+            // eslint-disable-next-line no-underscore-dangle
             r.catch(e => Ui.event._dispatchErr(e, errHandlers));
           }
         } catch (e) {
+          // eslint-disable-next-line no-underscore-dangle
           Ui.event._dispatchErr(e, errHandlers);
         }
       };
@@ -93,11 +94,13 @@ export class Ui {
       };
       const cbWithErrsHandled = (el: HTMLElement) => {
         try {
-          const r = cb.bind(originalThis)(el, event, cbResetTimer) as void | Promise<void>; // eslint-disable-line
+          const r = cb.bind(originalThis)(el, event, cbResetTimer) as void | Promise<void>;
           if (typeof r === 'object' && typeof r.catch === 'function') {
+            // eslint-disable-next-line no-underscore-dangle
             r.catch(e => Ui.event._dispatchErr(e, errHandler));
           }
         } catch (e) {
+          // eslint-disable-next-line no-underscore-dangle
           Ui.event._dispatchErr(e, errHandler);
         }
       };

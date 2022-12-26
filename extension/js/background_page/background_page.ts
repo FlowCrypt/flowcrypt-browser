@@ -16,14 +16,19 @@ import { GlobalStore, GlobalStoreDict } from '../common/platform/store/global-st
 import { BgHandlers } from './bg-handlers.js';
 import { BgUtils } from './bgutils.js';
 import { injectFcIntoWebmail } from './inject.js';
-import { migrateGlobal, moveContactsToEmailsAndPubkeys, updateOpgpRevocations, updateSearchables, updateX509FingerprintsAndLongids } from './migrations.js';
+import {
+  migrateGlobal,
+  moveContactsToEmailsAndPubkeys,
+  updateOpgpRevocations,
+  updateSearchables,
+  updateX509FingerprintsAndLongids
+} from './migrations.js';
 
 console.info('background_process.js starting');
 
 opgp.initWorker({ path: '/lib/openpgp.worker.js' });
 
 (async () => {
-
   let db: IDBDatabase;
   let storage: GlobalStoreDict;
   const inMemoryStore = new ExpirationCache(4 * 60 * 60 * 1000); // 4 hours
@@ -40,6 +45,7 @@ opgp.initWorker({ path: '/lib/openpgp.worker.js' });
 
   if (!storage.settings_seen) {
     await BgUtils.openSettingsPage('initial.htm'); // called after the very first installation of the plugin
+    // eslint-disable-next-line @typescript-eslint/naming-convention
     await GlobalStore.set({ settings_seen: true });
   }
 
@@ -55,9 +61,14 @@ opgp.initWorker({ path: '/lib/openpgp.worker.js' });
   }
 
   // storage related handlers
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-return
   BrowserMsg.bgAddListener('db', (r: Bm.Db) => BgHandlers.dbOperationHandler(db, r));
-  BrowserMsg.bgAddListener('inMemoryStoreSet', async (r: Bm.InMemoryStoreSet) => inMemoryStore.set(emailKeyIndex(r.acctEmail, r.key), r.value, r.expiration));
-  BrowserMsg.bgAddListener('inMemoryStoreGet', async (r: Bm.InMemoryStoreGet) => inMemoryStore.get(emailKeyIndex(r.acctEmail, r.key)));
+  BrowserMsg.bgAddListener('inMemoryStoreSet', async (r: Bm.InMemoryStoreSet) =>
+    inMemoryStore.set(emailKeyIndex(r.acctEmail, r.key), r.value, r.expiration)
+  );
+  BrowserMsg.bgAddListener('inMemoryStoreGet', async (r: Bm.InMemoryStoreGet) =>
+    inMemoryStore.get(emailKeyIndex(r.acctEmail, r.key))
+  );
   BrowserMsg.bgAddListener('storeGlobalGet', (r: Bm.StoreGlobalGet) => GlobalStore.get(r.keys));
   BrowserMsg.bgAddListener('storeGlobalSet', (r: Bm.StoreGlobalSet) => GlobalStore.set(r.values));
   BrowserMsg.bgAddListener('storeAcctGet', (r: Bm.StoreAcctGet) => AcctStore.get(r.acctEmail, r.keys));
@@ -80,5 +91,4 @@ opgp.initWorker({ path: '/lib/openpgp.worker.js' });
 
   await BgHandlers.updateUninstallUrl({}, {});
   injectFcIntoWebmail();
-
 })().catch(Catch.reportErr);

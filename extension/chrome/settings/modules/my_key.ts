@@ -20,7 +20,8 @@ import { Xss } from '../../../js/common/platform/xss.js';
 import { FlowCryptWebsite } from '../../../js/common/api/flowcrypt-website.js';
 
 declare class ClipboardJS {
-  constructor(selector: string, options: {});
+  // eslint-disable-next-line @typescript-eslint/ban-types
+  public constructor(selector: string, options: {});
 }
 
 View.run(
@@ -34,7 +35,7 @@ View.run(
     private clientConfiguration!: ClientConfiguration;
     private pubLookup!: PubLookup;
 
-    constructor() {
+    public constructor() {
       super();
       // todo: refactor this and other pages to use 'type' and 'id' instead of 'fingerprint'
       const uncheckedUrlParams = Url.parse(['acctEmail', 'fingerprint', 'parentTabId']);

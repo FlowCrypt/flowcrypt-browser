@@ -94,6 +94,7 @@ const preserveAsyncStackTracesTransformerFactory = () => {
 const printErrsAndExitIfPresent = (allDiagnostics: ts.Diagnostic[]) => {
   for (const diag of allDiagnostics) {
     if (diag.file) {
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const { line, character } = diag.file.getLineAndCharacterOfPosition(diag.start!);
       const message = ts.flattenDiagnosticMessageText(diag.messageText, '\n');
       console.error(`${diag.file.fileName} (${line + 1},${character + 1}): ${message}`);
@@ -110,6 +111,7 @@ const printErrsAndExitIfPresent = (allDiagnostics: ts.Diagnostic[]) => {
  * Compile using the transformer above
  */
 const compile = (): void => {
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   const { compilerOptions, include, exclude, files } = JSON.parse(readFileSync(tsconfigAbsPath!).toString());
   const { options, errors } = ts.convertCompilerOptionsFromJson(compilerOptions, tsconfigAbsDir); // , tsconfigAbsPath!
   printErrsAndExitIfPresent(errors);
@@ -117,7 +119,7 @@ const compile = (): void => {
   const fileList =
     files && files.length
       ? files
-      : compilerHost.readDirectory!(tsconfigAbsDir, ['.ts', '.tsx', '.d.ts'], exclude, include);
+      : compilerHost.readDirectory!(tsconfigAbsDir, ['.ts', '.tsx', '.d.ts'], exclude, include); // eslint-disable-line @typescript-eslint/no-non-null-assertion
   if (!fileList.length) {
     console.error(
       `fileList empty for ${tsconfigAbsPath}\ninclude:\n${(include || []).join('\n')}\n\nexclude:\n${(

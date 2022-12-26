@@ -320,6 +320,7 @@ export class SetupView extends View {
     }
   };
 
+  /* eslint-disable @typescript-eslint/naming-convention */
   public submitPublicKeys = async ({
     submit_main,
     submit_all
@@ -348,6 +349,7 @@ export class SetupView extends View {
   public finalizeSetup = async (): Promise<void> => {
     await AcctStore.set(this.acctEmail, { setup_date: Date.now(), setup_done: true, cryptup_enabled: true });
   };
+  /* eslint-enable @typescript-eslint/naming-convention */
 
   public shouldSubmitPubkey = (checkboxSelector: string) => {
     if (this.clientConfiguration.mustSubmitToAttester() && !this.clientConfiguration.canSubmitPubToAttester()) {
@@ -407,7 +409,7 @@ export class SetupView extends View {
    */
   private submitPublicKeyIfNeeded = async (
     armoredPubkey: string | undefined,
-    options: { submit_main: boolean; submit_all: boolean }
+    options: { submit_main: boolean; submit_all: boolean } // eslint-disable-line @typescript-eslint/naming-convention
   ) => {
     if (!options.submit_main) {
       return;

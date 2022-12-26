@@ -164,7 +164,7 @@ export class BrowserRecipe {
       await Promise.all(
         list.data
           .drafts!.filter(draft => draft.id)
-          // eslint-disable-next-line @typescript-eslint/naming-convention
+          // eslint-disable-next-line @typescript-eslint/naming-convention, @typescript-eslint/no-non-null-assertion
           .map(draft => gmail.users.drafts.delete({ id: draft.id!, userId: 'me', access_token: accessToken }))
       );
     }

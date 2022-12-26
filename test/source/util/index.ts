@@ -96,7 +96,7 @@ export class Config {
       testKeyConstants.keys
         .filter(key => key.armored && titles.includes(key.title))
         .map(async key => {
-          const parsed = await KeyUtil.parse(key.armored!);
+          const parsed = await KeyUtil.parse(key.armored!); // eslint-disable-line @typescript-eslint/no-non-null-assertion
           return { ...(await KeyUtil.keyInfoObj(parsed)), passphrase: key.passphrase };
         })
     );

@@ -33,7 +33,6 @@ import { AccountServer } from '../../js/common/api/account-server.js';
 import { ComposeReplyBtnPopoverModule } from './compose-modules/compose-reply-btn-popover-module.js';
 
 export class ComposeView extends View {
-
   public readonly acctEmail: string;
   public readonly parentTabId: string;
   public readonly frameId: string;
@@ -74,6 +73,7 @@ export class ComposeView extends View {
   public myPubkeyModule!: ComposeMyPubkeyModule;
   public storageModule!: ComposeStorageModule;
 
+  /* eslint-disable @typescript-eslint/naming-convention */
   public S = Ui.buildJquerySels({
     body: 'body',
     compose_table: 'table#compose',
@@ -128,12 +128,23 @@ export class ComposeView extends View {
     sending_options_container: '#sending-options-container',
     reply_options_container: '#reply-options-container'
   });
+  /* eslint-enable @typescript-eslint/naming-convention */
 
-  constructor() {
+  public constructor() {
     super();
     Ui.event.protect();
-    const uncheckedUrlParams = Url.parse(['acctEmail', 'parentTabId', 'draftId', 'frameId',
-      'replyMsgId', 'skipClickPrompt', 'ignoreDraft', 'debug', 'removeAfterClose', 'replyPubkeyMismatch']);
+    const uncheckedUrlParams = Url.parse([
+      'acctEmail',
+      'parentTabId',
+      'draftId',
+      'frameId',
+      'replyMsgId',
+      'skipClickPrompt',
+      'ignoreDraft',
+      'debug',
+      'removeAfterClose',
+      'replyPubkeyMismatch'
+    ]);
     this.acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
     this.parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
     this.frameId = Assert.urlParamRequire.string(uncheckedUrlParams, 'frameId');
@@ -181,8 +192,10 @@ export class ComposeView extends View {
       await Assert.abortAndRenderErrOnUnprotectedKey(this.acctEmail);
     }
     if (this.replyMsgId) {
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       await this.renderModule.fetchReplyMeta(Object.keys(storage.sendAs!));
     }
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     BrowserMsg.listen(this.tabId!);
     await this.renderModule.initComposeBox();
     this.senderModule.checkEmailAliases().catch(Catch.reportErr);
@@ -201,10 +214,18 @@ export class ComposeView extends View {
       }
     });
     BrowserMsg.listen(this.parentTabId);
-    const setActiveWindow = this.setHandler(async () => { BrowserMsg.send.setActiveWindow(this.parentTabId, { frameId: this.frameId }); });
+    const setActiveWindow = this.setHandler(async () => {
+      BrowserMsg.send.setActiveWindow(this.parentTabId, { frameId: this.frameId });
+    });
     this.S.cached('body').on('focusin', setActiveWindow);
     this.S.cached('body').on('click', setActiveWindow);
-    this.S.cached('icon_help').on('click', this.setHandler(async () => await this.renderModule.openSettingsWithDialog('help'), this.errModule.handle(`help dialog`)));
+    this.S.cached('icon_help').on(
+      'click',
+      this.setHandler(
+        async () => await this.renderModule.openSettingsWithDialog('help'),
+        this.errModule.handle(`help dialog`)
+      )
+    );
     this.attachmentsModule.setHandlers();
     this.inputModule.setHandlers();
     this.myPubkeyModule.setHandlers();
