@@ -220,7 +220,7 @@ export class BgNotReadyErr extends Error {}
 export class TabIdRequiredError extends Error {}
 
 export class BrowserMsg {
-  // eslint-disable-next-line @typescript-eslint/naming-convention
+   
   public static MAX_SIZE = 1024 * 1024; // 1MB
 
   public static send = {
@@ -561,7 +561,7 @@ export class BrowserMsg {
         to: destString || null, // eslint-disable-line no-null/no-null
         uid: Str.sloppyRandom(10),
         stack: Catch.stackTrace()
-      }; // eslint-disable-line no-null/no-null
+      };  
       const processRawMsgResponse = (r: Bm.RawResponse) => {
         if (!awaitRes) {
           resolve(undefined);

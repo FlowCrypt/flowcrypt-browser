@@ -50,7 +50,7 @@ export class GeneralMailFormatter {
         msgs: [msg],
         renderSentMessage: { recipients: msg.recipients, attachments: msg.attachments }
       };
-      /* eslint-disable @typescript-eslint/no-non-null-assertion */
+       
     }
     // encrypt (optionally sign)
     const singleFamilyKeys = await view.storageModule.collectSingleFamilyKeys(

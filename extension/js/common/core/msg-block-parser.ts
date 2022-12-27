@@ -23,7 +23,7 @@ export class MsgBlockParser {
     const blocks: MsgBlock[] = [];
     const normalized = Str.normalize(origText);
     let startAt = 0;
-    while (true) { // eslint-disable-line no-constant-condition
+    while (true) {  
       const { found, continueAt } = MsgBlockParser.detectBlockNext(normalized, startAt);
       if (found) {
         blocks.push(...found);

@@ -14,7 +14,7 @@ export type SanitizeImgHandling = 'IMG-DEL' | 'IMG-KEEP' | 'IMG-TO-LINK';
  *  - in node it uses sanitize-html
  */
 export class Xss {
-  /* eslint-disable @typescript-eslint/naming-convention */
+   
   private static ALLOWED_HTML_TAGS = [
     'p',
     'div',
