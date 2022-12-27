@@ -154,7 +154,7 @@ export class ComposeView extends View {
     const clipboardEvent = ev.originalEvent as ClipboardEvent;
     if (clipboardEvent.clipboardData) {
       const clipboardLength = clipboardEvent.clipboardData.getData('text').length;
-      if (clipboardLength > limit) {
+      if (clipboardLength + el.innerText.length > limit) {
         ev.preventDefault();
       }
     }
@@ -215,11 +215,11 @@ export class ComposeView extends View {
     this.S.cached('body').on('focusin', setActiveWindow);
     this.S.cached('body').on('click', setActiveWindow);
     this.S.cached('icon_help').on('click', this.setHandler(async () => await this.renderModule.openSettingsWithDialog('help'), this.errModule.handle(`help dialog`)));
-    this.S.cached('input_text').on('paste', this.setHandler(async (el, ev: JQuery.Event) => {
-      this.setInputLimit(el, ev, 10); // this works
+    this.S.cached('input_text').on('paste', this.setHandler((el, ev: JQuery.Event) => {
+      this.setInputLimit(el, ev, 10); // doesn't prevent pasting
     }));
-    this.S.cached('input_intro').on('paste', this.setHandler(async (el, ev: JQuery.Event) => {
-      this.setInputLimit(el, ev, 10); // this doesn't work
+    this.S.cached('input_intro').on('paste', this.setHandler((el, ev: JQuery.Event) => {
+      this.setInputLimit(el, ev, 10); // does work
     }));
     this.attachmentsModule.setHandlers();
     this.inputModule.setHandlers();
