@@ -1,7 +1,6 @@
 {
   "compilerOptions": {
     "target": "ES2020",
-    "moduleResolution": "node",
     "forceConsistentCasingInFileNames": true,
     "allowSyntheticDefaultImports": true,
     "noImplicitReturns": true,
@@ -34,11 +33,6 @@
     },
     "typeRoots": ["./extension/js/common/core/types", "./extension/types"]
   },
-  "include": [
-    "./extension/**/*.ts",
-    "./test/**/*.ts",
-    "./tooling/**/*.ts",
-    "./node_modules/sweetalert2/sweetalert2.d.ts"
-  ],
+  "include": ["./extension/**/*.ts", "./node_modules/sweetalert2/sweetalert2.d.ts"],
   "exclude": ["./extension/js/content_scripts/**/*", "**/build/**"]
 }
