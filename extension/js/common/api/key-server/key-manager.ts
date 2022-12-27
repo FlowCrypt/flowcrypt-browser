@@ -35,7 +35,7 @@ export class KeyManager extends Api {
       vals,
       vals ? 'JSON' : undefined,
       undefined,
-      idToken ? { Authorization: `Bearer ${idToken}` } : undefined,
+      idToken ? { Authorization: `Bearer ${idToken}` } : undefined, // eslint-disable-line @typescript-eslint/naming-convention
       undefined,
       method
     );

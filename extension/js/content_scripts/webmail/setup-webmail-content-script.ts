@@ -129,11 +129,13 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
         storage.cryptup_enabled !== false
       ) {
         notifications.show(setUpNotification, {
+          /* eslint-disable @typescript-eslint/naming-convention */
           notification_setup_needed_dismiss: () =>
             AcctStore.set(acctEmail, { notification_setup_needed_dismissed: true })
               .then(() => notifications.clear('setup'))
               .catch(Catch.reportErr),
           action_open_settings: () => BrowserMsg.send.bg.settings({ acctEmail }),
+          /* eslint-enable @typescript-eslint/naming-convention */
           close: () => {
             showSetupNeededNotificationIfSetupNotDone = false;
           }
@@ -260,7 +262,7 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
       while (true) {
         const fullName = webmailSpecific.getUserFullName();
         if (fullName) {
-          await AcctStore.set(acctEmail, { full_name: fullName });
+          await AcctStore.set(acctEmail, { full_name: fullName }); // eslint-disable-line @typescript-eslint/naming-convention
           return;
         }
         await Ui.time.sleep(timeout, win.TrySetDestroyableTimeout);
@@ -349,6 +351,7 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
     if (clientConfiguration.usesKeyManager()) {
       const idToken = await InMemoryStore.get(acctEmail, InMemoryStoreKeys.ID_TOKEN);
       if (idToken) {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const keyManager = new KeyManager(clientConfiguration.getKeyManagerUrlForPrivateKeys()!);
         Catch.setHandledTimeout(async () => {
           try {
@@ -478,6 +481,7 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
           clearTimeout(id);
         }
         $('.' + win.destroyable_class).remove();
+        // eslint-disable-next-line local-rules/standard-loops
         $('.' + win.reloadable_class).each((i, reloadableEl) => {
           $(reloadableEl).replaceWith($(reloadableEl)[0].outerHTML); // xss-reinsert - inserting code that was already present should not be dangerous
         });

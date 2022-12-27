@@ -163,8 +163,10 @@ View.run(
     };
 
     private setBtnText = async () => {
+      /* eslint-disable @typescript-eslint/no-non-null-assertion */
       if (this.parsedPublicKeys!.length > 1) {
         $('.action_add_contact').text('import ' + this.parsedPublicKeys!.length + ' public keys');
+        /* eslint-enable @typescript-eslint/no-non-null-assertion */
       } else {
         const contactWithPubKeys = await ContactStore.getOneWithAllPubkeys(undefined, String($('.input_email').val()));
         $('.action_add_contact')
@@ -184,9 +186,11 @@ View.run(
     };
 
     private addContactHandler = async (addContactBtn: HTMLElement) => {
+      /* eslint-disable @typescript-eslint/no-non-null-assertion */
       if (this.parsedPublicKeys!.length > 1) {
         const emails = new Set<string>();
         for (const pubkey of this.parsedPublicKeys!) {
+          /* eslint-enable @typescript-eslint/no-non-null-assertion */
           const email = pubkey.emails[0];
           if (email) {
             await ContactStore.update(undefined, email, { pubkey: KeyUtil.armor(pubkey) });
@@ -199,10 +203,12 @@ View.run(
           BrowserMsg.send.reRenderRecipient('broadcast', { email });
         }
         $('.input_email').remove();
+        /* eslint-disable @typescript-eslint/no-non-null-assertion */
       } else if (this.parsedPublicKeys!.length) {
         if (Str.isEmailValid(String($('.input_email').val()))) {
           const email = String($('.input_email').val());
           await ContactStore.update(undefined, email, { pubkey: KeyUtil.armor(this.parsedPublicKeys![0]) });
+          /* eslint-enable @typescript-eslint/no-non-null-assertion */
           BrowserMsg.send.addToContacts(this.parentTabId);
           Xss.sanitizeReplace(
             addContactBtn,

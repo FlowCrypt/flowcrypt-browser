@@ -30,17 +30,20 @@ export class PgpBlockViewRenderModule {
     const fullName = await AcctStore.get(this.view.acctEmail, ['full_name']);
     Xss.sanitizeRender('.print_user_email', `<b>${fullName.full_name}</b> &lt;${this.view.acctEmail}&gt;`);
     try {
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const gmailMsg = await this.view.gmail.msgGet(this.view.msgId!, 'metadata', undefined);
       const sentDate = new Date(GmailParser.findHeader(gmailMsg, 'date') ?? '');
       const sentDateStr = Str.fromDate(sentDate).replace(' ', ' at ');
       const from = Str.parseEmail(GmailParser.findHeader(gmailMsg, 'from') ?? '');
       const fromHtml = from.name ? `<b>${Xss.htmlSanitize(from.name)}</b> &lt;${from.email}&gt;` : from.email;
+      /* eslint-disable @typescript-eslint/no-non-null-assertion */
       const ccString = GmailParser.findHeader(gmailMsg, 'cc')
         ? `Cc: <span data-test="print-cc">${Xss.escape(GmailParser.findHeader(gmailMsg, 'cc')!)}</span><br/>`
         : '';
       const bccString = GmailParser.findHeader(gmailMsg, 'bcc')
         ? `Bcc: <span>${Xss.escape(GmailParser.findHeader(gmailMsg, 'bcc')!)}</span><br/>`
         : '';
+      /* eslint-enable @typescript-eslint/no-non-null-assertion */
       this.printMailInfoHtml = `
       <hr>
       <p class="subject-label" data-test="print-subject">${Xss.htmlSanitize(
@@ -134,15 +137,18 @@ export class PgpBlockViewRenderModule {
       </body>
       </html>
     `;
+    /* eslint-disable @typescript-eslint/no-non-null-assertion */
     w!.document.write(html);
     // Give some time for above dom to load in print dialog
     // https://stackoverflow.com/questions/31725373/google-chrome-not-showing-image-in-print-preview
     await Ui.time.sleep(250);
     w!.window.print();
     w!.document.close();
+    /* eslint-enable @typescript-eslint/no-non-null-assertion */
   };
 
   public renderText = (text: string) => {
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     document.getElementById('pgp_block')!.innerText = text;
   };
 
@@ -272,7 +278,7 @@ export class PgpBlockViewRenderModule {
       decryptedContent = MsgBlockParser.stripPublicKeys(decryptedContent, publicKeys);
       if (fcAttachmentBlocks.length) {
         renderableAttachments = fcAttachmentBlocks.map(
-          attachmentBlock => new Attachment(attachmentBlock.attachmentMeta!)
+          attachmentBlock => new Attachment(attachmentBlock.attachmentMeta!) // eslint-disable-line @typescript-eslint/no-non-null-assertion
         );
       }
     } else {

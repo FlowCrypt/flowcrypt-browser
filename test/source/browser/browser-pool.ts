@@ -99,7 +99,7 @@ export class BrowserPool {
 
   public close = async () => {
     while (this.browsersForReuse.length) {
-      await this.browsersForReuse.pop()!.close();
+      await this.browsersForReuse.pop()!.close(); // eslint-disable-line @typescript-eslint/no-non-null-assertion
     }
   };
 
@@ -108,7 +108,7 @@ export class BrowserPool {
       return await this.newBrowserHandle(t);
     }
     await this.semaphore.acquire();
-    return this.browsersForReuse.pop()!;
+    return this.browsersForReuse.pop()!; // eslint-disable-line @typescript-eslint/no-non-null-assertion
   };
 
   public doneUsingBrowser = async (browser: BrowserHandle) => {
@@ -175,6 +175,7 @@ export class BrowserPool {
 
   private processTestError = (err: unknown, t: AvaContext, attemptHtmls: string[], flag?: 'FAILING') => {
     t.retry = undefined;
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     if (t.attemptNumber! < t.totalAttempts!) {
       t.log(`${t.attemptText} Retrying: ${String(err)}`);
     } else {

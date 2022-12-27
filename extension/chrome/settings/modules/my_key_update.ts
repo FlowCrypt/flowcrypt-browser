@@ -79,6 +79,7 @@ View.run(
     };
 
     private storeUpdatedKeyAndPassphrase = async (updatedPrv: Key, updatedPrvPassphrase: string) => {
+      /* eslint-disable @typescript-eslint/no-non-null-assertion */
       const shouldSavePassphraseInStorage =
         !this.clientConfiguration.forbidStoringPassPhrase() &&
         !!(await PassphraseStore.get(this.acctEmail, this.ki!, true));
@@ -95,6 +96,7 @@ View.run(
         this.ki!,
         shouldSavePassphraseInStorage ? undefined : updatedPrvPassphrase
       );
+      /* eslint-enable @typescript-eslint/no-non-null-assertion */
       if (
         this.clientConfiguration.canSubmitPubToAttester() &&
         (await Ui.modal.confirm(
@@ -104,6 +106,7 @@ View.run(
         try {
           const pubkey = KeyUtil.armor(await KeyUtil.asPublicKey(updatedPrv));
           const idToken = await InMemoryStore.get(this.acctEmail, InMemoryStoreKeys.ID_TOKEN);
+          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
           await this.pubLookup.attester.submitPrimaryEmailPubkey(this.acctEmail, pubkey, idToken!);
         } catch (e) {
           ApiErr.reportIfSignificant(e);
@@ -130,12 +133,14 @@ View.run(
             this.prvHeaders.begin +
             '"'
         );
+        /* eslint-disable @typescript-eslint/no-non-null-assertion */
       } else if (updatedKey.id !== (await KeyUtil.parse(this.ki!.public)).id) {
         await Ui.modal.warning(
           `This key ${Str.spaced(updatedKey.id || 'err')} does not match your current key ${Str.spaced(
             this.ki!.fingerprints[0]
           )}`
         );
+        /* eslint-enable @typescript-eslint/no-non-null-assertion */
       } else if ((await KeyUtil.decrypt(updatedKey, updatedKeyPassphrase)) !== true) {
         await Ui.modal.error('The pass phrase does not match.\n\nPlease enter pass phrase of the newly updated key.');
       } else {

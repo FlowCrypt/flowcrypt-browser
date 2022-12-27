@@ -16,12 +16,15 @@ import { Url } from '../../js/common/core/common.js';
 import { opgp } from '../../js/common/core/crypto/pgp/openpgpjs-custom.js';
 
 Catch.try(async () => {
-
   const uncheckedUrlParams = Url.parse(['acctEmail']);
   const acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
   const gmail = new Gmail(acctEmail);
 
-  if (!confirm('This is page is meant for debugging. It will download messages from your inbox and save them to your device. Continue?')) {
+  if (
+    !confirm(
+      'This is page is meant for debugging. It will download messages from your inbox and save them to your device. Continue?'
+    )
+  ) {
     window.close();
     return;
   }
@@ -40,7 +43,9 @@ Catch.try(async () => {
   };
 
   const save = (data: Uint8Array) => {
-    Browser.saveToDownloads(new Attachment({ data, name: `${acctEmail.replace(/[^a-z0-9+]/g, '')}.json`, type: 'application/pgp-encrypted' }));
+    Browser.saveToDownloads(
+      new Attachment({ data, name: `${acctEmail.replace(/[^a-z0-9+]/g, '')}.json`, type: 'application/pgp-encrypted' })
+    );
   };
 
   try {
@@ -48,8 +53,16 @@ Catch.try(async () => {
     const msgMetas: GmailRes.GmailMsgList$message[] = [];
     let nextCyclePageToken: string | undefined;
     while (true) {
-      const { messages, resultSizeEstimate, nextPageToken } = await gmail.msgList('is:inbox OR is:sent', false, nextCyclePageToken);
-      print(`msgList: ${(messages || []).length} msgs, resultSizeEstimate:${resultSizeEstimate}, nextPageToken: ${nextPageToken}`);
+      const { messages, resultSizeEstimate, nextPageToken } = await gmail.msgList(
+        'is:inbox OR is:sent',
+        false,
+        nextCyclePageToken
+      );
+      print(
+        `msgList: ${
+          (messages || []).length
+        } msgs, resultSizeEstimate:${resultSizeEstimate}, nextPageToken: ${nextPageToken}`
+      );
       msgMetas.push(...(messages || []));
       if (!messages || !messages.length || !nextPageToken) {
         break;
@@ -68,11 +81,13 @@ Catch.try(async () => {
     for (const msg of msgsFull) {
       for (const msgRaw of msgsRaw) {
         if (msgRaw.id === msg.id) {
+          /* eslint-disable @typescript-eslint/no-non-null-assertion */
           if (msgRaw.raw!.length < 1024 * 1024 * 7) {
             msg.raw = msgRaw.raw!;
           } else {
             print(`skipping message ${msg.id} raw because too big: ${msgRaw.raw!.length}`);
           }
+          /* eslint-enable @typescript-eslint/no-non-null-assertion */
           break;
         }
       }
@@ -87,21 +102,32 @@ Catch.try(async () => {
     const skippedAttachments: Attachment[] = [];
     for (const msg of messages) {
       for (const attachment of GmailParser.findAttachments(msg)) {
-        if (attachment.length > 1024 * 1024 * 7) { // over 7 mb - attachment too big
-          skippedAttachments.push(new Attachment({ data: Buf.fromUtfStr(`MOCK: ATTACHMENT STRIPPED - ORIGINAL SIZE ${attachment.length}`), id: attachment.id, msgId: msg.id }));
+        if (attachment.length > 1024 * 1024 * 7) {
+          // over 7 mb - attachment too big
+          skippedAttachments.push(
+            new Attachment({
+              data: Buf.fromUtfStr(`MOCK: ATTACHMENT STRIPPED - ORIGINAL SIZE ${attachment.length}`),
+              id: attachment.id,
+              msgId: msg.id
+            })
+          );
         } else {
           fetchableAttachments.push(attachment);
         }
       }
     }
     await gmail.fetchAttachments(fetchableAttachments, percent => print(`Percent attachments done: ${percent}`));
-    const attachments: { [id: string]: { data: string, size: number } } = {};
+    const attachments: { [id: string]: { data: string; size: number } } = {};
     for (const attachment of fetchableAttachments.concat(skippedAttachments)) {
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       attachments[attachment.id!] = { data: attachment.getData().toBase64UrlStr(), size: attachment.getData().length };
     }
-    print(`done. found ${messages.length} messages, ${fetchableAttachments.length} downloaded and ${skippedAttachments.length} skipped attachments, ${labels.length} labels`);
+    print(
+      `done. found ${messages.length} messages, ${fetchableAttachments.length} downloaded and ${skippedAttachments.length} skipped attachments, ${labels.length} labels`
+    );
     print('censoring..');
     for (const msg of messages) {
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       for (const h of msg.payload!.headers!) {
         h.value = censor(h.value);
       }
@@ -123,5 +149,4 @@ Catch.try(async () => {
       print(e.stack || 'no stack');
     }
   }
-
 })();

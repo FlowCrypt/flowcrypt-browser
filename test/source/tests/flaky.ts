@@ -568,6 +568,7 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
 
     ava.default(`[unit][Stream.readToEnd] efficiently handles multiple chunks`, async t => {
       const stream = new ReadableStream<Uint8Array>({
+        // eslint-disable-next-line prefer-arrow/prefer-arrow-functions
         start(controller) {
           for (let i = 0; i < 10; i++) {
             controller.enqueue(Buffer.from('test'.repeat(1000000)));

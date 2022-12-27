@@ -557,7 +557,7 @@ export class BrowserMsg {
       const objUrls = BrowserMsg.replaceBufWithObjUrlInplace(bm);
       const msg: Bm.Raw = {
         name,
-        data: { bm: bm!, objUrls },
+        data: { bm: bm!, objUrls }, // eslint-disable-line @typescript-eslint/no-non-null-assertion
         to: destString || null, // eslint-disable-line no-null/no-null
         uid: Str.sloppyRandom(10),
         stack: Catch.stackTrace()

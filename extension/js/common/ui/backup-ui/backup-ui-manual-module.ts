@@ -128,6 +128,7 @@ export class BackupUiManualActionModule extends BackupUiModule<BackupUi> {
         return { ...ki, mismatch, passphrase: mismatch ? undefined : passphrase };
       })
     );
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const distinctPassphrases = Value.arr.unique(kisWithPp.filter(ki => ki.passphrase).map(ki => ki.passphrase!));
     if (distinctPassphrases.length > 1) {
       await Ui.modal.error(differentPassphrasesError);

@@ -77,6 +77,7 @@ View.run(
         });
         Browser.saveToDownloads(attachment);
       } else if (result.error.type === DecryptErrTypes.needPassphrase) {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         $('.passphrase_dialog').html(this.factory!.embeddedPassphrase(result.longids.needPassphrase)); // xss-safe-factory
       } else {
         console.info(result);

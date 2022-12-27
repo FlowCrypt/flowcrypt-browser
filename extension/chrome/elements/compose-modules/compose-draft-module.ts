@@ -68,6 +68,7 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
         await this.abortAndRenderReplyMsgComposeTableIfIsReplyBox('!draftGetRes');
         return false;
       }
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const decoded = await Mime.decode(Buf.fromBase64UrlStr(draftGetRes.message.raw!));
       const processed = Mime.processDecoded(decoded);
       await this.fillAndRenderDraftHeaders(decoded);

@@ -150,6 +150,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
     }
     // adding individual messages for each recipient that doesn't have a pubkey
     for (const recipientEmail of individualPwdRecipients) {
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const { url, externalId } = uploadedMessageData.emailToExternalIdAndUrl![recipientEmail];
       const foundParsedRecipient = (newMsg.recipients.to ?? [])
         .concat(newMsg.recipients.cc ?? [])

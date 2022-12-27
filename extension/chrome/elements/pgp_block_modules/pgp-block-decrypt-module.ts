@@ -27,6 +27,7 @@ export class PgpBlockViewDecryptModule {
         this.view.renderModule.renderText('Loading signed message...');
         const { raw } = await this.view.gmail.msgGet(this.view.msgId, 'raw');
         this.msgFetchedFromApi = 'raw';
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const mimeMsg = Buf.fromBase64UrlStr(raw!); // used 'raw' above
         const parsed = await Mime.decode(mimeMsg);
         if (parsed && typeof parsed.rawSignedContent === 'string' && parsed.signature) {
@@ -151,6 +152,7 @@ export class PgpBlockViewDecryptModule {
         ) {
           await this.view.errorModule.renderErr(Lang.pgpBlock.pwdMsgAskSenderUsePubkey, undefined);
         } else if (result.error.type === DecryptErrTypes.noMdc) {
+          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
           await this.view.errorModule.renderErr(result.error.message, result.content!.toUtfStr()); // missing mdc - only render the result after user confirmation
         } else if (result.error) {
           await this.view.errorModule.renderErr(

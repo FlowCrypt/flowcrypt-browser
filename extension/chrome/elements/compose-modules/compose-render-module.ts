@@ -103,7 +103,7 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
         // not awaited because can take a long time & blocks rendering
         await this.view.quoteModule.addTripleDotQuoteExpandFooterAndQuoteBtn(
           this.view.replyMsgId,
-          this.responseMethod!
+          this.responseMethod! // eslint-disable-line @typescript-eslint/no-non-null-assertion
         );
         if (this.view.quoteModule.messageToReplyOrForward) {
           const msgId = this.view.quoteModule.messageToReplyOrForward.headers['message-id'];
@@ -220,6 +220,7 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
       Ui.e('div', { id: 'loader', html: `Loading secure reply box..${Ui.spinner('green')}` })
     );
     try {
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const gmailMsg = await this.view.emailProvider.msgGet(this.view.replyMsgId!, 'metadata');
       this.view.replyParams = GmailParser.determineReplyMeta(this.view.acctEmail, aliases, gmailMsg);
       this.view.threadId = gmailMsg.threadId || '';
@@ -250,6 +251,7 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
       }
       Catch.setHandledTimeout(() => {
         // Chrome needs async focus: https://github.com/FlowCrypt/flowcrypt-browser/issues/2056
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         document.getElementById('input_text')!.focus(); // jQuery no longer worked as of 3.6.0
       }, 10);
     }
@@ -358,6 +360,7 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
       this.view.errModule.debug(
         `renderComposeTable: focusing ${focusId} isReplyBox=${this.view.isReplyBox},responseMethod=${this.responseMethod},toCount=${toCount}`
       );
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       document.getElementById(focusId)!.focus(); // jQuery no longer worked as of 3.6.0
     }, 100);
     this.view.sizeModule.onComposeTableRender();
@@ -483,6 +486,7 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
             .map(attachment => {
               // xss-safe-factory
               attachment.msgId = msgId;
+              // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
               return this.view.factory!.embeddedAttachment(attachment, isEncrypted, this.view.parentTabId);
             })
             .join('')

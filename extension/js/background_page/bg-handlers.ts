@@ -62,7 +62,7 @@ export class BgHandlers {
             if (activeTabs[0].id !== undefined) {
               type ScriptRes = { acctEmail: string | undefined; sameWorld: boolean | undefined }[];
               chrome.tabs.executeScript(
-                activeTabs[0].id!,
+                activeTabs[0].id!, // eslint-disable-line @typescript-eslint/no-non-null-assertion
                 { code: 'var r = {acctEmail: window.account_email_global, sameWorld: window.same_world_global}; r' },
                 (result: ScriptRes) => {
                   resolve({

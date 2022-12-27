@@ -641,7 +641,7 @@ export class OpenPGPKey {
     return data
       .map(x => x.userid)
       .filter(Boolean)
-      .map(y => y!);
+      .map(y => y!); // eslint-disable-line @typescript-eslint/no-non-null-assertion
   };
 
   // mimicks OpenPGP.helper.getLatestValidSignature

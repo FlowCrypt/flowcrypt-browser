@@ -98,6 +98,7 @@ export class Catch {
       Catch.ORIG_ONERROR &&
       Catch.ORIG_ONERROR !== (Catch.onErrorInternalHandler as OnErrorEventHandler)
     ) {
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore
       Catch.ORIG_ONERROR.apply(undefined, arguments); // Call any previously assigned handler
     }
@@ -213,6 +214,7 @@ export class Catch {
     if (type === 'error') {
       throw new Error('intentional error for debugging');
     } else {
+      // eslint-disable-next-line no-throw-literal
       throw { what: 'intentional thrown object for debugging' };
     }
   };
@@ -331,7 +333,7 @@ export class Catch {
 
   private static doSendErrorToFlowCryptComBackend = (errorReport: ErrorReport) => {
     try {
-      $.ajax({
+      void $.ajax({
         url: 'https://flowcrypt.com/api/help/error',
         method: 'POST',
         data: JSON.stringify(errorReport),
@@ -389,6 +391,7 @@ export class Catch {
     try {
       const callerLine = (e as { stack: string }).stack.split('\n')[1];
       const matched = callerLine.match(/\.js:([0-9]+):([0-9]+)\)?/);
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       return { line: Number(matched![1]), col: Number(matched![2]) };
     } catch (lineErr) {
       return { line: 0, col: 0 };
@@ -410,10 +413,12 @@ export class Catch {
 
   private static isPromiseRejectionEvent = (ev: unknown): ev is PromiseRejectionEvent => {
     if (ev && typeof ev === 'object') {
+      /* eslint-disable @typescript-eslint/ban-types */
       const eHasReason =
         (ev as {}).hasOwnProperty('reason') && typeof (ev as PromiseRejectionEvent).reason === 'object';
       const eHasPromise =
         (ev as {}).hasOwnProperty('promise') && Catch.isPromise((ev as PromiseRejectionEvent).promise);
+      /* eslint-enable @typescript-eslint/ban-types */
       return eHasReason && eHasPromise;
     }
     return false;

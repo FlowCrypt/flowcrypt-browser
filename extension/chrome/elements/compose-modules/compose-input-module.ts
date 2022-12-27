@@ -13,11 +13,13 @@ import { ViewModule } from '../../../js/common/view-module.js';
 import { ComposeView } from '../compose.js';
 
 export class ComposeInputModule extends ViewModule<ComposeView> {
-
   public squire = new window.Squire(this.view.S.cached('input_text').get(0));
 
   public setHandlers = () => {
-    this.view.S.cached('add_intro').on('click', this.view.setHandler(el => this.actionAddIntroHandler(el), this.view.errModule.handle(`add intro`)));
+    this.view.S.cached('add_intro').on(
+      'click',
+      this.view.setHandler(el => this.actionAddIntroHandler(el), this.view.errModule.handle(`add intro`))
+    );
     this.handlePaste();
     this.handlePasteImages();
     this.initShortcuts();
@@ -40,9 +42,7 @@ export class ComposeInputModule extends ViewModule<ComposeView> {
   };
 
   public inputTextHtmlSetSafely = (html: string) => {
-    this.squire.setHTML(
-      Xss.htmlSanitize(Xss.htmlSanitizeKeepBasicTags(html, 'IMG-KEEP'))
-    );
+    this.squire.setHTML(Xss.htmlSanitize(Xss.htmlSanitizeKeepBasicTags(html, 'IMG-KEEP')));
   };
 
   public extract = (type: 'text' | 'html', elSel: 'input_text' | 'input_intro', flag?: 'SKIP-ADDONS') => {
@@ -57,12 +57,18 @@ export class ComposeInputModule extends ViewModule<ComposeView> {
   };
 
   public extractAttachments = () => {
-    return this.view.S.cached('fineuploader').find('.qq-upload-file').toArray().map((el) => $(el).text().trim());
+    return this.view.S.cached('fineuploader')
+      .find('.qq-upload-file')
+      .toArray()
+      .map(el => $(el).text().trim());
   };
 
   public extractAll = async (): Promise<NewMsgData> => {
     const recipients = this.mapRecipients(this.view.recipientsModule.getValidRecipients());
-    const subject = this.view.isReplyBox && this.view.replyParams ? this.view.replyParams.subject : String($('#input_subject').val() || '');
+    const subject =
+      this.view.isReplyBox && this.view.replyParams
+        ? this.view.replyParams.subject
+        : String($('#input_subject').val() || '');
     const plaintext = this.view.inputModule.extract('text', 'input_text');
     const plainhtml = this.view.inputModule.extract('html', 'input_text');
     const password = this.view.S.cached('input_password').val();
@@ -80,7 +86,9 @@ export class ComposeInputModule extends ViewModule<ComposeView> {
       const div = document.createElement('div');
       div.appendChild(e.fragment);
       const html = div.innerHTML;
-      const sanitized = this.isRichText() ? Xss.htmlSanitizeKeepBasicTags(html, 'IMG-KEEP') : Xss.htmlSanitizeAndStripAllTags(html, '<br>', false);
+      const sanitized = this.isRichText()
+        ? Xss.htmlSanitizeKeepBasicTags(html, 'IMG-KEEP')
+        : Xss.htmlSanitizeAndStripAllTags(html, '<br>', false);
       Xss.setElementContentDANGEROUSLY(div, sanitized); // xss-sanitized
       e.fragment.appendChild(div);
     });
@@ -118,14 +126,17 @@ export class ComposeInputModule extends ViewModule<ComposeView> {
   private handleRTL = () => {
     const checkRTL = () => {
       let container = $(this.squire.getSelection().commonAncestorContainer);
-      if (container.prop('tagName') !== 'DIV') { // commonAncestorContainer might be a text node
+      if (container.prop('tagName') !== 'DIV') {
+        // commonAncestorContainer might be a text node
         container = container.closest('div');
       }
       const ltrCheck = new RegExp('^[' + Str.ltrChars + ']');
       const rtlCheck = new RegExp('^[' + Str.rtlChars + ']');
-      if (ltrCheck.test(container.text()) && container.attr('dir') !== 'ltr') { // Switch to LTR
+      if (ltrCheck.test(container.text()) && container.attr('dir') !== 'ltr') {
+        // Switch to LTR
         container.attr('dir', 'ltr');
-      } else if (rtlCheck.test(container.text()) && container.attr('dir') !== 'rtl') { // Switch to RTL
+      } else if (rtlCheck.test(container.text()) && container.attr('dir') !== 'rtl') {
+        // Switch to RTL
         container.attr('dir', 'rtl');
       } else {
         // keep the previous direction for digits, punctuation marks, and other characters
@@ -214,17 +225,19 @@ export class ComposeInputModule extends ViewModule<ComposeView> {
   private mapRecipients = (recipients: ValidRecipientElement[]): ParsedRecipients => {
     const result: ParsedRecipients = { to: [], cc: [], bcc: [] };
     for (const recipient of recipients) {
+      /* eslint-disable @typescript-eslint/no-non-null-assertion */
       switch (recipient.sendingType) {
-        case "to":
+        case 'to':
           result.to!.push({ email: recipient.email, name: recipient.name });
           break;
-        case "cc":
+        case 'cc':
           result.cc!.push({ email: recipient.email, name: recipient.name });
           break;
-        case "bcc":
+        case 'bcc':
           result.bcc!.push({ email: recipient.email, name: recipient.name });
           break;
       }
+      /* eslint-enable @typescript-eslint/no-non-null-assertion */
     }
     return result;
   };
@@ -232,9 +245,12 @@ export class ComposeInputModule extends ViewModule<ComposeView> {
   // We need this method to test images in drafts because we can't paste them dirctly in tests.
   private insertDebugElements = () => {
     this.view.S.cached('body').append('<input type="hidden" id="test_insertImage" data-test="action-insert-image" />'); // xss-direct
-    $('#test_insertImage').on('click', this.view.setHandler(async (input) => {
-      this.squire.insertImage(String($(input).val()), {});
-      await this.view.draftModule.draftSave();
-    }));
+    $('#test_insertImage').on(
+      'click',
+      this.view.setHandler(async input => {
+        this.squire.insertImage(String($(input).val()), {});
+        await this.view.draftModule.draftSave();
+      })
+    );
   };
 }

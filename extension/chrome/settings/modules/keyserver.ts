@@ -117,6 +117,7 @@ View.run(
         // Use submitPrimaryEmailPubkey if email is primary email
         if (email === this.acctEmail) {
           const idToken = await InMemoryStore.get(this.acctEmail, InMemoryStoreKeys.ID_TOKEN);
+          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
           await this.pubLookup.attester.submitPrimaryEmailPubkey(email, mostUsefulPrv.keyInfo.public, idToken!);
         } else {
           // If email is alias email

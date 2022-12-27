@@ -61,6 +61,7 @@ export class ComposeSizeModule extends ViewModule<ComposeView> {
 
   public resizeComposeBox = (addExtra = 0, cursorOffsetTop?: number) => {
     if (this.view.isReplyBox) {
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       this.view.S.cached('input_text').css('max-width', this.view.S.cached('body').width()! - 20 + 'px'); // body should always be present
       let minHeight = 0;
       let currentHeight = 0;
@@ -92,6 +93,7 @@ export class ComposeSizeModule extends ViewModule<ComposeView> {
     } else {
       this.view.S.cached('input_text').css('max-width', '');
       this.resizeInput();
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       this.view.S.cached('input_text').css('max-width', $('.text_container').width()! - 8 + 'px');
     }
   };
@@ -136,6 +138,7 @@ export class ComposeSizeModule extends ViewModule<ComposeView> {
     inputs.css('width', '100%'); // this indeed seems to effect the line below (noticeable when maximizing / back to default)
     for (const inputElement of inputs) {
       const jqueryElem = $(inputElement);
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const containerWidth = Math.floor(jqueryElem.parent().innerWidth()!);
       let additionalWidth = Math.ceil(
         Number(jqueryElem.css('padding-left').replace('px', '')) +
@@ -144,13 +147,16 @@ export class ComposeSizeModule extends ViewModule<ComposeView> {
       const minInputWidth = 150;
       let offset = 0;
       if (jqueryElem.next().length) {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         additionalWidth += Math.ceil(jqueryElem.next().outerWidth()!);
       }
       const lastRecipient = jqueryElem.siblings('.recipients').children().last();
       if (
         lastRecipient.length &&
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         lastRecipient.position().left + lastRecipient.outerWidth()! + minInputWidth + additionalWidth < containerWidth
       ) {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         offset = Math.ceil(lastRecipient.position().left + lastRecipient.outerWidth()!);
       }
       jqueryElem.css('width', containerWidth - offset - additionalWidth - 11 + 'px');

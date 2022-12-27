@@ -35,6 +35,7 @@ export class PgpBlockViewErrorModule {
         // this may contain content missing MDC
         this.view.renderModule.renderEncryptionStatus('decrypt error: security hazard');
         this.view.renderModule.renderSignatureStatus('not signed');
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         Xss.sanitizeAppend('#pgp_block', `<div class="raw_pgp_block">${Xss.escape(renderRawMsg!)}</div>`); // therefore the .escape is crucial
       })
     );

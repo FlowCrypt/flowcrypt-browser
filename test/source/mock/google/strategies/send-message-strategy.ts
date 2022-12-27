@@ -299,11 +299,13 @@ class IncludeQuotedPartTestStrategy implements ITestMsgStrategy {
 
   public test = async (parseResult: ParseMsgResult) => {
     const keyInfo = await Config.getKeyInfo(['flowcrypt.compatibility.1pp1', 'flowcrypt.compatibility.2pp1']);
+    /* eslint-disable @typescript-eslint/no-non-null-assertion */
     const decrypted = await MsgUtil.decryptMessage({
       kisWithPp: keyInfo!,
       encryptedData: Buf.fromUtfStr(parseResult.mimeMsg.text!),
       verificationPubs: []
     });
+    /* eslint-enable @typescript-eslint/no-non-null-assertion */
     if (!decrypted.success) {
       throw new HttpClientErr(`Error: can't decrypt message`);
     }
@@ -348,9 +350,7 @@ class SmimeEncryptedMessageStrategy implements ITestMsgStrategy {
     expect(mimeMsg.attachments!.length).to.equal(1);
     expect(mimeMsg.attachments![0].contentType).to.equal('application/pkcs7-mime');
     expect(mimeMsg.attachments![0].filename).to.equal('smime.p7m');
-    /* eslint-enable @typescript-eslint/no-non-null-assertion */
     const withAttachments = mimeMsg.subject?.includes(' with attachment');
-    /* eslint-disable @typescript-eslint/no-non-null-assertion */
     expect(mimeMsg.attachments![0].size).to.be.greaterThan(withAttachments ? 20000 : 300);
     const msg = new Buf(mimeMsg.attachments![0].content).toRawBytesStr();
     /* eslint-enable @typescript-eslint/no-non-null-assertion */
@@ -368,10 +368,12 @@ class SmimeEncryptedMessageStrategy implements ITestMsgStrategy {
         expect(decryptedMessage).to.contain('This text should be encrypted into PKCS#7 data');
         if (withAttachments) {
           const nestedMimeMsg = await Parse.parseMixed(decryptedMessage);
+          /* eslint-disable @typescript-eslint/no-non-null-assertion */
           expect(nestedMimeMsg.attachments!.length).to.equal(3);
           expect(nestedMimeMsg.attachments![0].content.toString()).to.equal(
             `small text file\nnot much here\nthis worked\n`
           );
+          /* eslint-enable @typescript-eslint/no-non-null-assertion */
         }
       }
     }

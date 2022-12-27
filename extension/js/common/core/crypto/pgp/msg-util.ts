@@ -248,6 +248,7 @@ export class MsgUtil {
         decrypted,
         await ContactStore.getPubkeyInfos(undefined, verificationPubs)
       );
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const content = signature?.content || new Buf(await opgp.stream.readToEnd(decrypted.getLiteralData()!));
       if (signature?.content) {
         signature.content = undefined; // already passed as "content" on the response object, don't need it duplicated

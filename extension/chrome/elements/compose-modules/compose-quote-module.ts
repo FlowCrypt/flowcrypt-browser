@@ -108,6 +108,7 @@ export class ComposeQuoteModule extends ViewModule<ComposeView> {
         this.setQuoteLoaderProgress(progress)
       );
       this.setQuoteLoaderProgress('processing...');
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const decoded = await Mime.decode(Buf.fromBase64UrlStr(raw!));
       const headers = {
         date: String(decoded.headers.date),

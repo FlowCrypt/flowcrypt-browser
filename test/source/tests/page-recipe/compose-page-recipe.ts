@@ -180,8 +180,8 @@ export class ComposePageRecipe extends PageRecipe {
     await Util.sleep(5);
     const contacts = await composePage.waitAny('@container-contacts');
     const contactsList = await contacts.$$('li');
+    // eslint-disable-next-line guard-for-in
     for (const index in contactsList) {
-      // tslint:disable-line:forin
       expect(await PageRecipe.getElementPropertyJson(contactsList[index], 'textContent')).to.equal(emails[index]);
     }
   };

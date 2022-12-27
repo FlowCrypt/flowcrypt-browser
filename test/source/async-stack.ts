@@ -32,6 +32,7 @@
     }
   };
 
+  // eslint-disable-next-line prefer-arrow/prefer-arrow-functions
   function func(type: Type) {
     thisWillFail(type);
   }
@@ -51,6 +52,7 @@
     await wait();
   };
 
+  // eslint-disable-next-line prefer-arrow/prefer-arrow-functions
   async function asyncFunc(type: Type) {
     await wait();
     await asyncArrowConst(type);

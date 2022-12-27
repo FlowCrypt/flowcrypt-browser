@@ -132,6 +132,7 @@ export class GoogleAuth {
     } catch (firstAttemptErr) {
       if (ApiErr.isAuthErr(firstAttemptErr)) {
         // force refresh token
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         request.headers!.Authorization = await GoogleAuth.googleApiAuthHeader(acctEmail, true);
         return await Api.ajax(request, Catch.stackTrace());
       }
@@ -267,6 +268,7 @@ export class GoogleAuth {
       if (authWindowResult.error) {
         return { acctEmail, result: 'Denied', error: authWindowResult.error, id_token: undefined };
       }
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const uncheckedUrlParams = Url.parse(['scope', 'code', 'state'], authWindowResult.url!);
       const allowedScopes = Assert.urlParamRequire.string(uncheckedUrlParams, 'scope');
       const code = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'code');

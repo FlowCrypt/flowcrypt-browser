@@ -37,6 +37,7 @@ export class Google {
       }
     }
     contentType = contentType || 'application/json; charset=UTF-8';
+    // eslint-disable-next-line @typescript-eslint/naming-convention
     const headers = { Authorization: await GoogleAuth.googleApiAuthHeader(acctEmail) };
     const xhr = Api.getAjaxProgressXhrFactory(progress);
     const request = { xhr, url, method, data, headers, crossDomain: true, contentType, async: true };
@@ -51,6 +52,7 @@ export class Google {
     const searchOtherContactsUrl = `${PEOPLE_GOOGLE_API_HOST}/v1/otherContacts:search`;
     const data = { query, readMask: 'names,emailAddresses', pageSize: max };
     const xhr = Api.getAjaxProgressXhrFactory(progress);
+    // eslint-disable-next-line @typescript-eslint/naming-convention
     const headers = { Authorization: await GoogleAuth.googleApiAuthHeader(acctEmail) };
     const contacts = await Promise.all([
       GoogleAuth.apiGoogleCallRetryAuthErrorOneTime(acctEmail, {
@@ -80,6 +82,7 @@ export class Google {
     return contactsMerged
       .filter(entry => !!(entry.person?.emailAddresses || []).find(email => email.metadata.primary === true)) // find all entries that have primary email
       .map(entry => {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const email = (entry.person?.emailAddresses || []).find(email => email.metadata.primary === true)!.value;
         const name = (entry.person?.names || []).find(name => name.metadata.primary === true)?.displayName;
         return { email, name };

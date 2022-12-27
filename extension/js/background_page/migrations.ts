@@ -90,6 +90,7 @@ const processSmimeKey = (pubkey: Pubkey, tx: IDBTransaction, data: PubkeyMigrati
   const key = SmimeKey.parse(pubkey.armoredKey);
   const newPubkeyEntity = ContactStore.pubkeyObj(key, pubkey.lastCheck);
   data.pubkeysToDelete.push(pubkey.fingerprint);
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   const req = tx.objectStore('emails').index('index_fingerprints').getAll(pubkey.fingerprint!);
   ContactStore.setReqPipe(req, (emailEntities: Email[]) => {
     if (emailEntities.length) {

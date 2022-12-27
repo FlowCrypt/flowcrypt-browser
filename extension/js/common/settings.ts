@@ -177,6 +177,7 @@ export class Settings {
     for (const sessionStorageIndex of Object.keys(sessionStorage)) {
       if (sessionStorageIndex.indexOf(oldAcctEmailIndexPrefix) === 0) {
         const v = sessionStorage.getItem(sessionStorageIndex);
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         sessionStorage.setItem(sessionStorageIndex.replace(oldAcctEmailIndexPrefix, newAcctEmailIndexPrefix), v!);
         sessionStorage.removeItem(sessionStorageIndex);
       }
@@ -246,10 +247,9 @@ export class Settings {
       container.find('.action_fix_compatibility').on(
         'click',
         Ui.event.handle(async target => {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const expireYears = String(
             $(target)
-              .parents(container as any)
+              .parents(container as any) // eslint-disable-line @typescript-eslint/no-explicit-any
               .find('select.input_fix_expire_years')
               .val()
           ); // JQuery quirk

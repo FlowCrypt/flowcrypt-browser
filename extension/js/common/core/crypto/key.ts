@@ -38,15 +38,15 @@ export interface Key extends KeyIdentity {
   isPublic: boolean; // isPublic and isPrivate are mutually exclusive
   isPrivate: boolean; // only one should be set to true
   algo: {
-    algorithm: string,
-    curve?: string,
-    bits?: number,
-    algorithmId: number
+    algorithm: string;
+    curve?: string;
+    bits?: number;
+    algorithmId: number;
   };
   issuerAndSerialNumber?: string | undefined; // DER-encoded IssuerAndSerialNumber of X.509 Certificate as raw string
 }
 
-export type PubkeyResult = { pubkey: Key, email: string, isMine: boolean };
+export type PubkeyResult = { pubkey: Key; email: string; isMine: boolean };
 
 export interface StoredKeyInfo {
   private: string;
@@ -72,8 +72,8 @@ export interface PubkeyInfo {
 export type ContactInfo = EmailParts;
 
 export interface ContactInfoWithSortedPubkeys {
-  info: ContactInfo,
-  sortedPubkeys: PubkeyInfoWithLastCheck[]
+  info: ContactInfo;
+  sortedPubkeys: PubkeyInfoWithLastCheck[];
 }
 
 export interface PubkeyInfoWithLastCheck extends PubkeyInfo {
@@ -83,12 +83,11 @@ export interface PubkeyInfoWithLastCheck extends PubkeyInfo {
 export type KeyFamily = 'openpgp' | 'x509';
 
 export interface KeyIdentity {
-  id: string, // a fingerprint of the primary key in OpenPGP, and similarly a fingerprint of the actual cryptographic key (eg RSA fingerprint) in S/MIME
+  id: string; // a fingerprint of the primary key in OpenPGP, and similarly a fingerprint of the actual cryptographic key (eg RSA fingerprint) in S/MIME
   family: KeyFamily;
 }
 
-export interface KeyInfoWithIdentity extends StoredKeyInfo, KeyIdentity {
-}
+export interface KeyInfoWithIdentity extends StoredKeyInfo, KeyIdentity {}
 
 export interface KeyInfoWithIdentityAndOptionalPp extends KeyInfoWithIdentity {
   passphrase?: string;
@@ -96,9 +95,9 @@ export interface KeyInfoWithIdentityAndOptionalPp extends KeyInfoWithIdentity {
 
 export type KeyAlgo = 'curve25519' | 'rsa2048' | 'rsa3072' | 'rsa4096';
 
-export type PrvPacket = (OpenPGP.packet.SecretKey | OpenPGP.packet.SecretSubkey);
+export type PrvPacket = OpenPGP.packet.SecretKey | OpenPGP.packet.SecretSubkey;
 
-export class UnexpectedKeyTypeError extends Error { }
+export class UnexpectedKeyTypeError extends Error {}
 
 export interface ArmoredKeyIdentityWithEmails extends KeyIdentity {
   armored: string;
@@ -106,7 +105,6 @@ export interface ArmoredKeyIdentityWithEmails extends KeyIdentity {
 }
 
 export class KeyUtil {
-
   public static identityEquals = (keyIdentity1: KeyIdentity, keyIdentity2: KeyIdentity) => {
     return keyIdentity1.id === keyIdentity2.id && keyIdentity1.family === keyIdentity2.family;
   };
@@ -115,7 +113,11 @@ export class KeyUtil {
     return kis.filter(ki => ids.some(i => KeyUtil.identityEquals(i, ki)));
   }
 
-  public static filterKeysByTypeAndSenderEmail = (keys: KeyInfoWithIdentity[], email: string, type: 'openpgp' | 'x509' | undefined): KeyInfoWithIdentity[] => {
+  public static filterKeysByTypeAndSenderEmail = (
+    keys: KeyInfoWithIdentity[],
+    email: string,
+    type: 'openpgp' | 'x509' | undefined
+  ): KeyInfoWithIdentity[] => {
     let foundKeys: KeyInfoWithIdentity[] = [];
     if (type) {
       foundKeys = keys.filter(key => key.emails?.includes(email.toLowerCase()) && key.family === type);
@@ -150,16 +152,17 @@ export class KeyUtil {
   /**
    * Read many keys, could be armored or binary, in single armor or separately, useful for importing keychains of various formats
    */
-  public static readMany = async (fileData: Buf): Promise<{ keys: Key[], errs: Error[] }> => {
+  public static readMany = async (fileData: Buf): Promise<{ keys: Key[]; errs: Error[] }> => {
     const allKeys: Key[] = [];
     const allErrs: Error[] = [];
     const { blocks } = MsgBlockParser.detectBlocks(fileData.toUtfStr('ignore'));
-    const isImportable = (block: MsgBlock) => block.type === 'publicKey' || block.type === 'privateKey' || block.type === 'certificate';
+    const isImportable = (block: MsgBlock) =>
+      block.type === 'publicKey' || block.type === 'privateKey' || block.type === 'certificate';
     const armoredPublicKeyBlocks = blocks.filter(isImportable);
     const pushKeysAndErrs = async (content: string | Buf, isArmored: boolean) => {
       try {
         if (isArmored) {
-          allKeys.push(...await KeyUtil.parseMany(content.toString()));
+          allKeys.push(...(await KeyUtil.parseMany(content.toString())));
         } else {
           const buf = typeof content === 'string' ? Buf.fromUtfStr(content) : content;
           const { keys, err } = await KeyUtil.readBinary(buf);
@@ -200,8 +203,12 @@ export class KeyUtil {
     throw new UnexpectedKeyTypeError(`Key type is ${keyType}, expecting OpenPGP or x509 S/MIME`);
   };
 
-  public static readBinary = async (key: Uint8Array, passPhrase?: string | undefined): Promise<{ keys: Key[], err: Error[] }> => {
-    const allKeys: Key[] = [], allErr: Error[] = [];
+  public static readBinary = async (
+    key: Uint8Array,
+    passPhrase?: string | undefined
+  ): Promise<{ keys: Key[]; err: Error[] }> => {
+    const allKeys: Key[] = [],
+      allErr: Error[] = [];
     let uncheckedOpgpKeyCount = 0;
     try {
       const { keys, err } = await opgp.key.read(key);
@@ -244,7 +251,9 @@ export class KeyUtil {
     if (keys.length > 0) {
       return keys;
     }
-    throw new Error(err.length ? err.map((e, i) => (i + 1) + '. ' + e.message).join('\n') : 'Should not happen: no keys and no errors.');
+    throw new Error(
+      err.length ? err.map((e, i) => i + 1 + '. ' + e.message).join('\n') : 'Should not happen: no keys and no errors.'
+    );
   };
 
   public static armor = (pubkey: Key): string => {
@@ -263,7 +272,10 @@ export class KeyUtil {
       result = new Map<string, string>([...result, ...opgpresult]);
     }
     result.set(`expiration`, KeyUtil.formatResult(key.expiration));
-    result.set(`internal dateBeforeExpiration`, await KeyUtil.formatResultAsync(async () => KeyUtil.dateBeforeExpirationIfAlreadyExpired(key)));
+    result.set(
+      `internal dateBeforeExpiration`,
+      await KeyUtil.formatResultAsync(async () => KeyUtil.dateBeforeExpirationIfAlreadyExpired(key))
+    );
     result.set(`internal usableForEncryptionButExpired`, KeyUtil.formatResult(key.usableForEncryptionButExpired));
     result.set(`internal usableForSigningButExpired`, KeyUtil.formatResult(key.usableForSigningButExpired));
     return result;
@@ -304,7 +316,7 @@ export class KeyUtil {
   };
 
   // todo - this should be made to tolerate smime keys
-  public static normalize = async (armored: string): Promise<{ normalized: string, keys: OpenPGP.key.Key[] }> => {
+  public static normalize = async (armored: string): Promise<{ normalized: string; keys: OpenPGP.key.Key[] }> => {
     try {
       let keys: OpenPGP.key.Key[] = [];
       armored = PgpArmor.normalize(armored, 'key');
@@ -348,7 +360,12 @@ export class KeyUtil {
     }
   };
 
-  public static decrypt = async (key: Key, passphrase: string, optionalKeyid?: OpenPGP.Keyid, optionalBehaviorFlag?: 'OK-IF-ALREADY-DECRYPTED'): Promise<boolean> => {
+  public static decrypt = async (
+    key: Key,
+    passphrase: string,
+    optionalKeyid?: OpenPGP.Keyid,
+    optionalBehaviorFlag?: 'OK-IF-ALREADY-DECRYPTED'
+  ): Promise<boolean> => {
     if (key.family === 'openpgp') {
       return await OpenPGPKey.decryptKey(key, passphrase, optionalKeyid, optionalBehaviorFlag);
     } else if (key.family === 'x509') {
@@ -368,7 +385,12 @@ export class KeyUtil {
     }
   };
 
-  public static reformatKey = async (privateKey: Key, passphrase: string | undefined, userIds: { email: string | undefined; name: string }[], expireSeconds: number) => {
+  public static reformatKey = async (
+    privateKey: Key,
+    passphrase: string | undefined,
+    userIds: { email: string | undefined; name: string }[],
+    expireSeconds: number
+  ) => {
     if (privateKey.family === 'openpgp') {
       return await OpenPGPKey.reformatKey(privateKey, passphrase, userIds, expireSeconds);
     } else {
@@ -425,7 +447,7 @@ export class KeyUtil {
    * Used for comparing public keys that were fetched vs the stored ones
    * Soon also for private keys: https://github.com/FlowCrypt/flowcrypt-browser/issues/2602
    */
-  public static isFetchedNewer = ({ stored, fetched }: { stored: Key, fetched: Key }) => {
+  public static isFetchedNewer = ({ stored, fetched }: { stored: Key; fetched: Key }) => {
     if (!stored.lastModified) {
       return !!fetched.lastModified;
     }
@@ -445,8 +467,9 @@ export class KeyUtil {
   };
 
   private static getSortValue = (pubinfo: PubkeyInfo): number => {
-    const expirationSortValue = (typeof pubinfo.pubkey.expiration === 'undefined') ? Infinity : pubinfo.pubkey.expiration!;
+    const expirationSortValue =
+      typeof pubinfo.pubkey.expiration === 'undefined' ? Infinity : pubinfo.pubkey.expiration!; // eslint-disable-line @typescript-eslint/no-non-null-assertion
     // sort non-revoked first, then non-expired
-    return (pubinfo.revoked || pubinfo.pubkey.revoked) ? -Infinity : expirationSortValue;
+    return pubinfo.revoked || pubinfo.pubkey.revoked ? -Infinity : expirationSortValue;
   };
 }

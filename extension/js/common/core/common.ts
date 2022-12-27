@@ -315,6 +315,7 @@ export class Url {
    */
   public static parse = (expectedKeys: string[], parseThisUrl?: string) => {
     const url = parseThisUrl || window.location.search.replace('?', '');
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const valuePairs = url.split('?').pop()!.split('&'); // str.split('?') string[].length will always be >= 1
     const rawParams: Dict<string> = {};
     const rawParamNameDict: Dict<string> = {};

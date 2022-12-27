@@ -96,6 +96,7 @@ export class Attester extends Api {
     pubkey: string,
     idToken: string | undefined
   ): Promise<{ sent: boolean }> => {
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const headers = idToken ? { authorization: `Bearer ${idToken!}` } : undefined;
     return await this.jsonCall<{ sent: boolean }>('welcome-message', { email, pubkey }, 'POST', headers);
   };

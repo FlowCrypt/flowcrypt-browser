@@ -118,6 +118,7 @@ export class Injector {
             await PassphraseStore.set('session', acctEmail, kinfo, undefined);
           }
           if (this.webmailName === 'gmail') {
+            // eslint-disable-next-line local-rules/standard-loops
             $('.' + (window as unknown as ContentScriptWindow).reloadable_class).each((i, reloadableEl) => {
               $(reloadableEl).replaceWith($(reloadableEl)[0].outerHTML); // xss-reinsert - inserting code that was already present should not be dangerous
             });

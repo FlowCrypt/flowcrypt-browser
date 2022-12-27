@@ -273,6 +273,7 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
     const total = attachments.map(x => x.length).reduce((a, b) => a + b) * 1.33;
     const responses = await Promise.all(
       attachments.map((a, index) =>
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         this.attachmentGet(a.msgId!, a.id!, (_, loaded) => {
           if (progressCb) {
             loadedAr[index] = loaded || 0;
@@ -378,6 +379,7 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
       throw new FormatError('Armored message not found', textBody || htmlBody);
     } else {
       // format === raw
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const mimeMsg = Buf.fromBase64UrlStr(gmailMsg.raw!);
       const decoded = await Mime.decode(mimeMsg);
       if (decoded.text !== undefined) {
@@ -478,7 +480,7 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
     const rawValidEmails = rawParsedResults.filter(r => r.address && Str.isEmailValid(r.address));
     const newValidResults: EmailProviderContact[] = await Promise.all(
       rawValidEmails.map(a => {
-        return { email: a.address!, name: a.name };
+        return { email: a.address!, name: a.name }; // eslint-disable-line @typescript-eslint/no-non-null-assertion
       })
     );
     const uniqueNewValidResults: EmailProviderContact[] = [];

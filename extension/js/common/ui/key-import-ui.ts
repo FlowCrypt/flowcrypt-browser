@@ -125,10 +125,12 @@ export class KeyImportUi {
             for (const user of users) {
               const userId = user.userId;
               for (const inputCheckboxesWithEmail of $('.input_email_alias')) {
+                /* eslint-disable @typescript-eslint/no-non-null-assertion */
                 if (String($(inputCheckboxesWithEmail).data('email')) === userId!.email) {
                   KeyImportUi.addAliasForSubmission(userId!.email, submitKeyForAddrs!);
                   $(inputCheckboxesWithEmail).prop('checked', true);
                 }
+                /* eslint-enable @typescript-eslint/no-non-null-assertion */
               }
             }
           }

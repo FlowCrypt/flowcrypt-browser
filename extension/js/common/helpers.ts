@@ -57,6 +57,7 @@ const addOrReplaceKeysAndPassPhrase = async (
     await setPassphraseForPrvs(await ClientConfiguration.newInstance(acctEmail), acctEmail, prvs, ppOptions);
   }
   const { sendAs, full_name: name } = await AcctStore.get(acctEmail, ['sendAs', 'full_name']);
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   const myOwnEmailsAddrs: string[] = [acctEmail].concat(Object.keys(sendAs!));
   for (const email of myOwnEmailsAddrs) {
     if (ppOptions !== undefined) {

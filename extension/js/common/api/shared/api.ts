@@ -127,6 +127,7 @@ export class Api {
             const newProgressPercent = evt.lengthComputable ? Math.round((evt.loaded / evt.total) * 100) : undefined;
             if (newProgressPercent && newProgressPercent !== lastProgressPercent) {
               lastProgressPercent = newProgressPercent;
+              // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
               progressCbs.upload!(newProgressPercent, evt.loaded, evt.total); // checked ===function above
             }
           },
@@ -141,6 +142,7 @@ export class Api {
             if (newProgressPercent) {
               lastProgressPercent = newProgressPercent;
             }
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             progressCbs.download!(newProgressPercent, evt.loaded, evt.total); // checked ===function above
           }
         });
@@ -205,6 +207,7 @@ export class Api {
       processData: false,
       contentType,
       async: true,
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       timeout: typeof progress!.upload === 'function' || typeof progress!.download === 'function' ? undefined : 20000 // substituted with {} above
     };
     const res = await Api.ajax(req, Catch.stackTrace());

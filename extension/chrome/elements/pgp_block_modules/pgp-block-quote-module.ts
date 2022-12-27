@@ -7,8 +7,7 @@ import { Str } from '../../../js/common/core/common.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 
 export class PgpBlockViewQuoteModule {
-  // eslint-disable-next-line no-empty-function
-  public constructor(private view: PgpBlockView) {}
+  public constructor(private view: PgpBlockView) {} // eslint-disable-line no-empty-function
 
   public separateQuotedContentAndRenderText = async (decryptedContent: string, isHtml: boolean) => {
     if (isHtml) {
@@ -42,6 +41,7 @@ export class PgpBlockViewQuoteModule {
       const lines = decryptedContent.split(/\r?\n/);
       const linesQuotedPart: string[] = [];
       while (lines.length) {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const lastLine = lines.pop()!; // lines.length above ensures there is a line
         if (lastLine[0] === '>' || !lastLine.length) {
           // look for lines starting with '>' or empty lines, from last line up (sometimes quoted content may have empty lines in it)
