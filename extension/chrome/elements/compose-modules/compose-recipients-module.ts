@@ -353,9 +353,11 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     }
     container.find('r_loader').remove();
     Xss.sanitizeRender(container, '<span class="rest"><span id="rest_number"></span> more</span>');
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const maxWidth = container.parent().width()! - this.view.S.cached('container_cc_bcc_buttons').width()!;
     const rest = container.find('.rest');
     let processed = 0;
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     while (container.width()! <= maxWidth && orderedRecipients.length >= processed + 1) {
       const recipient = orderedRecipients[processed];
       const escapedTitle = Xss.escape(recipient.element.getAttribute('title') || '');
@@ -366,6 +368,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       $(emailHtml).insertBefore(rest); // xss-escaped
       processed++;
     }
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     if (container.width()! > maxWidth) {
       container.find('.email_address').last().remove();
       const restRecipients = orderedRecipients.slice(processed - 1);
@@ -498,6 +501,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
 
   private inputsDragEnterHandler = (target: HTMLElement) => {
     if (Catch.browser().name === 'firefox') {
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       this.insertCursorBefore(target.previousElementSibling!, true);
     } else {
       target.focus();
@@ -506,6 +510,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
 
   private inputsDragLeaveHandler = (target: HTMLElement) => {
     if (Catch.browser().name === 'firefox') {
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       this.removeCursor(target.previousElementSibling! as HTMLElement);
     } else {
       target.blur();
@@ -517,8 +522,10 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       this.removeCursor(target.previousElementSibling as HTMLElement);
     }
     if (this.dragged) {
+      /* eslint-disable @typescript-eslint/no-non-null-assertion */
       const previousInput = this.dragged.parentElement!.nextElementSibling!;
       this.dragged.parentElement!.removeChild(this.dragged);
+      /* eslint-enable @typescript-eslint/no-non-null-assertion */
       const sendingType = target.getAttribute('data-sending-type') as RecipientType;
       const jqueryTarget = $(target);
       jqueryTarget.siblings('.recipients').append(this.dragged); // xss-safe-value
@@ -535,8 +542,10 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
   };
 
   private copyCcBccActionsClickHandler = (target: HTMLElement, newContainer: JQuery<HTMLElement>) => {
+    /* eslint-disable @typescript-eslint/no-non-null-assertion */
     const buttonsContainer = target.parentElement!;
     const curentContainer = buttonsContainer.parentElement!;
+    /* eslint-enable @typescript-eslint/no-non-null-assertion */
     const input = newContainer.find('input');
     curentContainer.removeChild(buttonsContainer);
     newContainer.append(buttonsContainer); // xss-safe-value
@@ -739,6 +748,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
 
   private setContactPopupStyle = (input: JQuery<HTMLElement>) => {
     const contactEl = this.view.S.cached('contacts');
+    /* eslint-disable @typescript-eslint/no-non-null-assertion */
     const offset = input.offset()!;
     const offsetTop = input.outerHeight()! + offset.top; // both are in the template
     const bottomGap = 10;
@@ -750,6 +760,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     } else {
       leftOffset = offset.left + inputToPadding;
     }
+    /* eslint-enable @typescript-eslint/no-non-null-assertion */
     this.view.S.cached('contacts').css({
       display: 'block',
       top: offsetTop,
@@ -1023,6 +1034,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       .on(
         'click',
         this.view.setHandler(
+          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
           target => this.removeRecipient(target.parentElement!),
           this.view.errModule.handle('remove recipient')
         )
@@ -1063,6 +1075,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
         .on(
           'click',
           this.view.setHandler(
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             element => this.removeRecipient(element.parentElement!),
             this.view.errModule.handle('remove recipient')
           )
@@ -1188,6 +1201,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
 
   private addDraggableEvents = (element: HTMLElement) => {
     element.draggable = true;
+    /* eslint-disable @typescript-eslint/no-non-null-assertion */
     element.ondragstart = event => {
       event.dataTransfer!.setData('text/plain', 'FlowCrypt Drag&Drop'); // Firefox requires to run the dataTransfer.setData function in the event.
       this.dragged = element;
@@ -1217,6 +1231,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       element.parentElement!.insertBefore(this.dragged, element); // xss-reinsert
       const draggableElementIndex = this.addedRecipients.findIndex(r => r.element === this.dragged);
       const sendingType = this.addedRecipients.find(r => r.element === element)!.sendingType;
+      /* eslint-enable @typescript-eslint/no-non-null-assertion */
       this.addedRecipients[draggableElementIndex].sendingType = sendingType;
       // Sync the Recipients array with HTML
       this.addedRecipients = moveElementInArray(
@@ -1241,6 +1256,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       if (!element.parentElement) {
         return false;
       }
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       element.parentElement!.insertBefore(cursor, element); // xss-reinsert
     } else {
       element.appendChild(cursor);
@@ -1251,6 +1267,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
   private removeCursor = (element: HTMLElement) => {
     for (const child of element.children) {
       if (child.classList.contains('drag-cursor')) {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         child.parentElement!.removeChild(child);
         break;
       }

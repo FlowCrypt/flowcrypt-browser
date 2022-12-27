@@ -22,11 +22,13 @@ export class SetupRenderModule {
   public renderInitial = async (): Promise<void> => {
     $('.email-address').text(this.view.acctEmail);
     $('#button-go-back').css('visibility', 'hidden');
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     if (this.view.storage!.email_provider === 'gmail') {
       // show alternative account addresses in setup form + save them for later
       try {
         await Settings.refreshSendAs(this.view.acctEmail);
         const { sendAs } = await AcctStore.get(this.view.acctEmail, ['sendAs']);
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         this.saveAndFillSubmitPubkeysOption(Object.keys(sendAs!));
       } catch (e) {
         return await Settings.promptToRetry(
@@ -37,6 +39,7 @@ export class SetupRenderModule {
         );
       }
     }
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     if (this.view.storage!.setup_done && this.view.action !== 'update_from_ekm') {
       if (this.view.action !== 'add_key') {
         await this.renderSetupDone();
@@ -137,6 +140,7 @@ export class SetupRenderModule {
       if (!this.view.clientConfiguration.canBackupKeys()) {
         // they already have a key recorded on attester, but no backups allowed on the domain. They should enter their prv manually
         this.displayBlock('step_2b_manual_enter');
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       } else if (this.view.storage!.email_provider === 'gmail') {
         try {
           const backups = await this.view.gmail.fetchKeyBackups();

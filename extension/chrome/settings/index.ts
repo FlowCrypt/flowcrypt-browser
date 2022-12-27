@@ -50,6 +50,7 @@ View.run(
       const uncheckedUrlParams = Url.parse(['acctEmail', 'page', 'pageUrlParams', 'advanced', 'addNewAcct']);
       this.acctEmail = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'acctEmail');
       this.page = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'page');
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       if (this.page && !/^(\/chrome|modules)/.test!(this.page as string)) {
         Ui.modal.error('An unexpected value was found for the page parameter').catch(err => console.log(err));
         this.page = undefined;
@@ -114,6 +115,7 @@ View.run(
         Swal.close();
         this.reload(advanced);
       });
+      /* eslint-disable @typescript-eslint/no-non-null-assertion */
       BrowserMsg.addListener('add_pubkey_dialog', async ({ emails }: Bm.AddPubkeyDialog) => {
         // todo: use Ui.modal.iframe just like passphrase_dialog does
         const factory = new XssSafeFactory(this.acctEmail!, this.tabId);
@@ -178,6 +180,7 @@ View.run(
           window.location.href = Url.create('/chrome/settings/inbox/inbox.htm', { acctEmail: this.acctEmail! });
         })
       );
+      /* eslint-enable @typescript-eslint/no-non-null-assertion */
       $('.action_add_account').on(
         'click',
         this.setHandlerPrevent(
@@ -241,6 +244,7 @@ View.run(
         'click',
         this.setHandler(
           async () =>
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             await Settings.renderSubPage(this.acctEmail!, this.tabId, 'modules/debug_api.htm', {
               which: 'google_account'
             })
@@ -250,6 +254,7 @@ View.run(
         'click',
         this.setHandler(
           async () =>
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             await Settings.renderSubPage(this.acctEmail!, this.tabId, 'modules/debug_api.htm', { which: 'local_store' })
         )
       );
@@ -372,6 +377,7 @@ View.run(
       $('.dismiss_install_app_notification').on(
         'click',
         this.setHandler(async () => {
+          // eslint-disable-next-line @typescript-eslint/naming-convention
           await GlobalStore.set({ install_mobile_app_notification_dismissed: true });
           $('.install_app_notification').remove();
         })
@@ -383,6 +389,7 @@ View.run(
       if (this.acctEmail) {
         // have auth email set lgtm [js/user-controlled-bypass]
         try {
+          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
           const acctRes = await this.acctServer!.accountGetAndUpdateLocalStore();
           $('#status-row #status_flowcrypt').text(`fc:ok`);
           if (acctRes?.account?.alias) {
@@ -397,11 +404,13 @@ View.run(
             authNeededLink.on(
               'click',
               this.setHandler(async () => {
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                 await Settings.loginWithPopupShowModalOnErr(this.acctEmail!, () => window.location.reload());
               })
             );
             statusContainer.empty().append(authNeededLink); // xss-direct
             $('#status-row #status_flowcrypt').text(`fc:auth`).addClass('bad');
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             Settings.offerToLoginWithPopupShowModalOnErr(this.acctEmail!, () => window.location.reload());
           } else if (ApiErr.isNetErr(e)) {
             Xss.sanitizeRender(statusContainer, '<a href="#">Network Error - Retry</a>')
@@ -431,8 +440,10 @@ View.run(
 
     private resolveChangedGoogleAcct = async (newAcctEmail: string) => {
       try {
+        /* eslint-disable @typescript-eslint/no-non-null-assertion */
         await Settings.refreshSendAs(this.acctEmail!);
         await Settings.acctStorageChangeEmail(this.acctEmail!, newAcctEmail);
+        /* eslint-enable @typescript-eslint/no-non-null-assertion */
         await Ui.modal.info(
           `Email address changed to ${newAcctEmail}. You should now check that your public key is properly submitted.`
         );
@@ -462,6 +473,7 @@ View.run(
 
     private checkGoogleAcct = async () => {
       try {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const { sendAs } = await this.gmail!.fetchAcctAliases();
         const primarySendAs = sendAs.find(addr => addr.isPrimary === true);
         if (!primarySendAs) {
@@ -528,6 +540,7 @@ View.run(
       $('.action_show_key').on(
         'click',
         this.setHandler(async target => {
+          /* eslint-disable @typescript-eslint/no-non-null-assertion */
           // the UI below only gets rendered when account_email is available
           await Settings.renderSubPage(
             this.acctEmail!,
@@ -535,6 +548,7 @@ View.run(
             $(target).attr('page')!,
             $(target).attr('addurltext') || ''
           ); // all such elements do have page attr
+          /* eslint-enable @typescript-eslint/no-non-null-assertion */
         })
       );
       if (canRemoveKey) {
@@ -546,9 +560,11 @@ View.run(
             const id = $(target).data('id') as string;
             const longid = $(target).data('longid') as string;
             if (family === 'openpgp' || family === 'x509') {
+              /* eslint-disable @typescript-eslint/no-non-null-assertion */
               await KeyStore.remove(this.acctEmail!, { family, id });
               await PassphraseStore.set('local', this.acctEmail!, { longid }, undefined);
               await PassphraseStore.set('session', this.acctEmail!, { longid }, undefined);
+              /* eslint-enable @typescript-eslint/no-non-null-assertion */
               this.reload(true);
             } else {
               Catch.report(`unexpected key family: ${family}`);

@@ -366,6 +366,7 @@ export class OpenPGPKey {
     }
     result.set(`Is Private?`, KeyUtil.formatResult(key.isPrivate()));
     for (let i = 0; i < key.users.length; i++) {
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       result.set(`User id ${i}`, key.users[i].userId!.userid);
     }
     const user = await key.getPrimaryUser();
@@ -580,6 +581,7 @@ export class OpenPGPKey {
         verifyRes.match = (verifyRes.match === true || verifyRes.match === null) && (await verification.verified);
         const signature = await verification.signature;
         fingerprints.push(
+          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
           ...signature.packets.filter(s => s.issuerFingerprint).map(s => Buf.fromUint8(s.issuerFingerprint!).toHexStr())
         );
         signerLongids.push(OpenPGPKey.bytesToLongid(verification.keyid.bytes));
@@ -626,8 +628,10 @@ export class OpenPGPKey {
     ).filter(x => x.selfCertification);
     // sort the same way as OpenPGP.js does
     data.sort((a, b) => {
+      /* eslint-disable @typescript-eslint/no-non-null-assertion */
       const A = a.selfCertification!;
       const B = b.selfCertification!;
+      /* eslint-enable @typescript-eslint/no-non-null-assertion */
       return (
         Number(A.revoked) - Number(B.revoked) ||
         Number(B.isPrimaryUserID) - Number(A.isPrimaryUserID) ||

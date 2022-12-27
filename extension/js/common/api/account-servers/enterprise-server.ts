@@ -43,7 +43,7 @@ export class EnterpriseServer extends Api {
 
   public constructor(private acctEmail: string) {
     super();
-    this.domain = acctEmail.toLowerCase().split('@').pop()!;
+    this.domain = acctEmail.toLowerCase().split('@').pop()!; // eslint-disable-line @typescript-eslint/no-non-null-assertion
     this.url = `https://fes.${this.domain}`;
   }
 

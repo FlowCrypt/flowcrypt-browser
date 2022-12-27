@@ -134,7 +134,7 @@ export namespace GmailRes {
 export class GmailParser {
   public static findHeader = (apiGmailMsgObj: GmailRes.GmailMsg | GmailRes.GmailMsg$payload, headerName: string) => {
     const node: GmailRes.GmailMsg$payload = apiGmailMsgObj.hasOwnProperty('payload')
-      ? (apiGmailMsgObj as GmailRes.GmailMsg).payload!
+      ? (apiGmailMsgObj as GmailRes.GmailMsg).payload! // eslint-disable-line @typescript-eslint/no-non-null-assertion
       : (apiGmailMsgObj as GmailRes.GmailMsg$payload);
     if (typeof node.headers !== 'undefined') {
       for (const header of node.headers) {
@@ -154,12 +154,13 @@ export class GmailParser {
   ) => {
     if (msgOrPayloadOrPart.hasOwnProperty('payload')) {
       internalMsgId = (msgOrPayloadOrPart as GmailRes.GmailMsg).id;
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       GmailParser.findAttachments((msgOrPayloadOrPart as GmailRes.GmailMsg).payload!, internalResults, internalMsgId);
     }
     if (msgOrPayloadOrPart.hasOwnProperty('parts')) {
       const payload = msgOrPayloadOrPart as GmailRes.GmailMsg$payload;
       const contentType = payload.headers?.find(x => x.name.toLowerCase() === 'content-type');
-      const parts = payload.parts!;
+      const parts = payload.parts!; // eslint-disable-line @typescript-eslint/no-non-null-assertion
       // are we dealing with a PGP/MIME encrypted message?
       const pgpEncrypted = Boolean(
         parts.length === 2 &&
@@ -172,6 +173,7 @@ export class GmailParser {
         });
       }
     }
+    /* eslint-disable @typescript-eslint/no-non-null-assertion */
     if (
       msgOrPayloadOrPart.hasOwnProperty('body') &&
       (msgOrPayloadOrPart as GmailRes.GmailMsg$payload$part).body!.hasOwnProperty('attachmentId')
@@ -192,6 +194,7 @@ export class GmailParser {
               .indexOf('inline') === 0
         })
       );
+      /* eslint-enable @typescript-eslint/no-non-null-assertion */
     }
     return internalResults;
   };
@@ -207,6 +210,7 @@ export class GmailParser {
     const isGmailMsgPayloadPart = (v: unknown): v is GmailRes.GmailMsg$payload$part =>
       !!v && typeof (v as GmailRes.GmailMsg$payload$part).body !== 'undefined';
     if (isGmailMsgWithPayload(gmailMsg)) {
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       GmailParser.findBodies(gmailMsg.payload!, internalResults);
     }
     if (isGmailMsgPayload(gmailMsg) && gmailMsg.parts) {
@@ -267,7 +271,7 @@ export class GmailParser {
     return Value.arr.unique(
       (GmailParser.findHeader(gmailMsg, headerName) || '')
         .split(',')
-        .map(e => Str.parseEmail(e).email!)
+        .map(e => Str.parseEmail(e).email!) // eslint-disable-line @typescript-eslint/no-non-null-assertion
         .filter(e => !!e)
     );
   };

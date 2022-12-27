@@ -220,6 +220,7 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
         // const longid = OpenPGPKey.fingerprintToLongid(fingerprint);
         const longid = fingerprint.substring(fingerprint.length - 16);
         const fileName = `flowcrypt-backup-usernosubmitclientconfigurationflowcrypttest-0x${longid}.asc`;
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const key = await KeyUtil.parse(downloadedFiles[fileName]!.toString());
         expect(key.algo.bits).to.equal(3072);
         expect(key.algo.algorithm).to.equal('rsa_encrypt_sign');
@@ -242,10 +243,10 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
         // add a name to one of the contacts
         const dbPage = await browser.newPage(t, TestUrls.extension('chrome/dev/ci_unit_test.htm'));
         await dbPage.page.evaluate(async () => {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          /* eslint-disable @typescript-eslint/no-explicit-any */
           const db = await (window as any).ContactStore.dbOpen();
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           await (window as any).ContactStore.update(db, 'cc@example.com', { name: 'Mr Cc' });
+          /* eslint-enable @typescript-eslint/no-explicit-any */
         });
         await dbPage.close();
         const subject =
@@ -406,8 +407,8 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
           t,
           browser,
           'flowcrypt.compatibility@gmail.com',
-          key.armored!,
-          key.passphrase!,
+          key.armored!, // eslint-disable-line @typescript-eslint/no-non-null-assertion
+          key.passphrase!, // eslint-disable-line @typescript-eslint/no-non-null-assertion
           { isSavePassphraseChecked: true, isSavePassphraseHidden: false }
         );
         const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
@@ -449,6 +450,7 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
         const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
         await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, 'with files');
         const fileInput = (await composePage.target.$('input[type=file]')) as ElementHandle<HTMLInputElement>;
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         await fileInput!.uploadFile(
           'test/samples/small.txt',
           'test/samples/small.png',
@@ -469,6 +471,7 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
           'a large file test (gmail account)'
         );
         const fileInput = (await composePage.target.$('input[type=file]')) as ElementHandle<HTMLInputElement>;
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         await fileInput!.uploadFile('test/samples/large.jpg');
         await Util.sleep(2);
         await ComposePageRecipe.sendAndClose(composePage, { timeout: 60, expectProgress: true });
@@ -483,6 +486,7 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
         const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
         await ComposePageRecipe.fillMsg(composePage, { to: 'test@email.com' }, subject);
         const fileInput = (await composePage.target.$('input[type=file]')) as ElementHandle<HTMLInputElement>;
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         await fileInput!.uploadFile('test/samples/small.txt');
         await ComposePageRecipe.sendAndClose(composePage, { password: msgPwd });
         // this test is using PwdEncryptedMessageWithFlowCryptComApiTestStrategy to check sent result based on subject "PWD encrypted message with flowcrypt.com/api"

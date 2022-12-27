@@ -55,6 +55,7 @@ export class SetupWithEmailKeyManagerModule {
     };
     /* eslint-enable @typescript-eslint/naming-convention */
     try {
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const { privateKeys } = await this.view.keyManager!.getPrivateKeys(this.view.idToken!);
       if (privateKeys.length) {
         // keys already exist on keyserver, auto-import
@@ -110,6 +111,7 @@ export class SetupWithEmailKeyManagerModule {
       throw new Error('Unexpectedly cannot decrypt newly generated key');
     }
     const storePrvOnKm = async () =>
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       this.view.keyManager!.storePrivateKey(this.view.idToken!, KeyUtil.armor(decryptablePrv));
     await Settings.retryUntilSuccessful(
       storePrvOnKm,

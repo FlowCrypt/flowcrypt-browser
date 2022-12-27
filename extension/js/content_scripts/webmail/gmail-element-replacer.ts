@@ -68,7 +68,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     draftsList: '.ae4'
   };
 
-  constructor(
+  public constructor(
     factory: XssSafeFactory,
     clientConfiguration: ClientConfiguration,
     acctEmail: string,
@@ -120,10 +120,12 @@ export class GmailElementReplacer implements WebmailElementReplacer {
         const topGap = 80; // so the bottom of the prev message will be visible
         // scroll to the bottom of the element,
         // or to the top of the element if the element's height is bigger than the convoRoot
+        /* eslint-disable @typescript-eslint/no-non-null-assertion */
         convoRootScrollable.get(0)!.scrollTop =
           replyMsg.position()!.top +
           $(replyMsg).height()! -
           Math.max(0, $(replyMsg).height()! - convoRootScrollable.height()! + gmailHeaderHeight + topGap);
+        /* eslint-enable @typescript-eslint/no-non-null-assertion */
       }
     } else if (window.location.hash.match(/^#inbox\/[a-zA-Z]+$/)) {
       // is a conversation view, but no scrollable conversation element
@@ -135,6 +137,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     const convoRootScrollable = $(this.sel.convoRootScrollable);
     if (convoRootScrollable) {
       const replyMsg = $(replyMsgId);
+      /* eslint-disable @typescript-eslint/no-non-null-assertion */
       const replyMsgOffsetTop = replyMsg.offset()!.top - convoRootScrollable.offset()!.top;
       const bottomGap = 150;
       // check if cursor went above the visible part of convoRootScrollable
@@ -148,6 +151,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
         convoRootScrollable.get(0)!.scrollTop +=
           replyMsgOffsetTop + cursorOffsetTop - convoRootScrollable.get(0)!.clientHeight + bottomGap;
       }
+      /* eslint-enable @typescript-eslint/no-non-null-assertion */
     }
   };
 
@@ -458,6 +462,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
               if (this.debug) {
                 console.debug('processAttachments() try -> awaiting chunk + awaiting type');
               }
+              // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
               const data = await this.gmail.attachmentGetChunk(msgId, a.id!); // .id is present when fetched from api
               const openpgpType = await BrowserMsg.send.bg.await.pgpMsgType({ data: data.toBase64Str() }); // base64 for FF, see #2587
               if (openpgpType && openpgpType.type === 'publicKey' && openpgpType.armored) {
@@ -514,6 +519,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
           }
         } else if (treatAs === 'plainFile' && a.name.substr(-4) === '.asc') {
           // normal looking attachment ending with .asc
+          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
           const data = await this.gmail.attachmentGetChunk(msgId, a.id!); // .id is present when fetched from api
           const openpgpType = await BrowserMsg.send.bg.await.pgpMsgType({ data: data.toBase64Str() }); // base64 for FF, see #2587
           if (openpgpType && openpgpType.type === 'publicKey' && openpgpType.armored) {
@@ -602,6 +608,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
   ) => {
     let downloadedAttachment: GmailRes.GmailAttachment;
     try {
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       downloadedAttachment = await this.gmail.attachmentGet(attachmentMeta.msgId!, attachmentMeta.id!); // .id! is present when fetched from api
     } catch (e) {
       attachmentsContainerInner
@@ -641,6 +648,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
   ) => {
     let downloadedAttachment: GmailRes.GmailAttachment;
     try {
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       downloadedAttachment = await this.gmail.attachmentGet(attachmentMeta.msgId!, attachmentMeta.id!); // .id! is present when fetched from api
     } catch (e) {
       attachmentsContainerInner
@@ -694,6 +702,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     return '<div class="message_inner_body evaluated">' + htmlContent + '</div>';
   };
 
+  /* eslint-disable @typescript-eslint/naming-convention */
   /**
    * XSS WARNING
    *
@@ -704,6 +713,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     method: 'set' | 'append' | 'after',
     newHtmlContent_MUST_BE_XSS_SAFE: string
   ): JQueryEl {
+    /* eslint-enable @typescript-eslint/naming-convention */
     // xss-dangerous-function
     // Messages in Gmail UI have to be replaced in a very particular way
     // The first time we update element, it should be completely replaced so that Gmail JS will lose reference to the original element and stop re-rendering it
@@ -778,6 +788,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     if (newReplyBoxes.length) {
       // cache for subseqent loop runs
       const convoRootEl = this.getGonvoRootEl(newReplyBoxes[0]);
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const replyParams = this.getLastMsgReplyParams(convoRootEl!);
       if (msgId) {
         replyParams.replyMsgId = msgId;
@@ -883,7 +894,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
         const recipients = standardComposeWin
           .find(this.sel.standardComposeRecipient)
           .get()
-          .map(e => $(e).attr('email')!)
+          .map(e => $(e).attr('email')!) // eslint-disable-line @typescript-eslint/no-non-null-assertion
           .filter(e => !!e);
         if (!recipients.length || $(this.sel.standardComposeWin).find('.close_gmail_compose_window').length === 1) {
           // draft, but not the secure one

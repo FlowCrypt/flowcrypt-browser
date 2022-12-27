@@ -233,8 +233,9 @@ export const mockGoogleEndpoints: HandlersDefinition = {
     // get msg or attachment
     const acct = oauth.checkAuthorizationHeaderWithAccessToken(req.headers.authorization);
     if (isGet(req)) {
-      const id = parseResourceId(req.url!);
+      const id = parseResourceId(req.url!); // eslint-disable-line @typescript-eslint/no-non-null-assertion
       const data = await GoogleData.withInitializedData(acct);
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       if (req.url!.includes('/attachments/')) {
         const attachment = data.getAttachment(id);
         if (attachment) {
@@ -266,11 +267,13 @@ export const mockGoogleEndpoints: HandlersDefinition = {
     throw new HttpClientErr(`Method not implemented for ${req.url}: ${req.method}`);
   },
   '/gmail/v1/users/me/threads/?': async ({ query: { format } }, req) => {
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     if (req.url!.match(/\/modify$/)) {
       return {};
     }
     const acct = oauth.checkAuthorizationHeaderWithAccessToken(req.headers.authorization);
     if (isGet(req) && (format === 'metadata' || format === 'full')) {
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const id = parseResourceId(req.url!);
       const msgs = (await GoogleData.withInitializedData(acct)).getMessagesAndDraftsByThread(id);
       if (!msgs.length) {
@@ -341,6 +344,7 @@ export const mockGoogleEndpoints: HandlersDefinition = {
   '/gmail/v1/users/me/drafts/?': async (parsedReq, req) => {
     const acct = oauth.checkAuthorizationHeaderWithAccessToken(req.headers.authorization);
     if (isGet(req)) {
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const id = parseResourceId(req.url!);
       const data = await GoogleData.withInitializedData(acct);
       const draft = data.getDraft(id);
@@ -384,6 +388,7 @@ const parseMultipartDataAsMimeMsg = async (multipartData: string): Promise<Parse
 };
 
 const validateMimeMsg = async (acct: string, mimeMsg: ParsedMail, threadId?: string) => {
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   const inReplyToMessageId = mimeMsg.headers.get('in-reply-to') ? mimeMsg.headers.get('in-reply-to')!.toString() : '';
   if (threadId) {
     const messages = (await GoogleData.withInitializedData(acct)).getMessagesByThread(threadId);
@@ -442,6 +447,7 @@ const validateMimeMsg = async (acct: string, mimeMsg: ParsedMail, threadId?: str
   const recipients = parsedMailAddressObjectAsArray(mimeMsg.to)
     .concat(parsedMailAddressObjectAsArray(mimeMsg.cc))
     .concat(parsedMailAddressObjectAsArray(mimeMsg.bcc));
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   if (!recipients.length || recipients.some(addr => addr.value.some(em => !allowedRecipients.includes(em.address!)))) {
     throw new HttpClientErr("Error: You can't send a message to unexisting email address(es)");
   }
@@ -449,6 +455,7 @@ const validateMimeMsg = async (acct: string, mimeMsg: ParsedMail, threadId?: str
   if (acct === 'flowcrypt.compatibility@gmail.com') {
     aliases.push('flowcryptcompatibility@gmail.com');
   }
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   if (!mimeMsg.from?.value.length || mimeMsg.from?.value.find(em => !aliases.includes(em.address!))) {
     throw new HttpClientErr("You can't send a message from unexisting email address(es)");
   }

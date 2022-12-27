@@ -16,6 +16,7 @@ import { GMAIL_RECOVERY_EMAIL_SUBJECTS } from '../../../core/const.js';
 import { ENVELOPED_DATA_OID, SIGNED_DATA_OID, SmimeKey } from '../../../core/crypto/smime/smime-key.js';
 import { testConstants } from '../../../tests/tooling/consts.js';
 
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 // TODO: Make a better structure of ITestMsgStrategy. Because this class doesn't test anything, it only saves message in the Mock
 class SaveMessageInStorageStrategy implements ITestMsgStrategy {
   public test = async (parseResult: ParseMsgResult, id: string) => {
@@ -210,6 +211,7 @@ class PwdEncryptedMessageWithFesReplyRenderingTestStrategy implements ITestMsgSt
     await new SaveMessageInStorageStrategy().test(parseResult, id);
   };
 }
+/* eslint-enable @typescript-eslint/no-non-null-assertion */
 
 class MessageWithFooterTestStrategy implements ITestMsgStrategy {
   private readonly footer = 'flowcrypt.compatibility test footer with an img';
@@ -218,7 +220,7 @@ class MessageWithFooterTestStrategy implements ITestMsgStrategy {
     const mimeMsg = parseResult.mimeMsg;
     const keyInfo = await Config.getKeyInfo(['flowcrypt.compatibility.1pp1', 'flowcrypt.compatibility.2pp1']);
     const decrypted = await MsgUtil.decryptMessage({
-      kisWithPp: keyInfo!,
+      kisWithPp: keyInfo!, // eslint-disable-line @typescript-eslint/no-non-null-assertion
       encryptedData: Buf.fromUtfStr(mimeMsg.text || ''),
       verificationPubs: []
     });
@@ -242,8 +244,8 @@ class SignedMessageTestStrategy implements ITestMsgStrategy {
     const mimeMsg = parseResult.mimeMsg;
     const keyInfo = await Config.getKeyInfo(['flowcrypt.compatibility.1pp1', 'flowcrypt.compatibility.2pp1']);
     const decrypted = await MsgUtil.decryptMessage({
-      kisWithPp: keyInfo!,
-      encryptedData: Buf.fromUtfStr(mimeMsg.text!),
+      kisWithPp: keyInfo!, // eslint-disable-line @typescript-eslint/no-non-null-assertion
+      encryptedData: Buf.fromUtfStr(mimeMsg.text!), // eslint-disable-line @typescript-eslint/no-non-null-assertion
       verificationPubs: []
     });
     if (!decrypted.success) {
@@ -342,12 +344,16 @@ class SmimeEncryptedMessageStrategy implements ITestMsgStrategy {
     expect((mimeMsg.headers.get('content-disposition') as StructuredHeader).value).to.equal('attachment');
     expect((mimeMsg.headers.get('content-disposition') as StructuredHeader).params.filename).to.equal('smime.p7m');
     expect(mimeMsg.headers.get('content-description')).to.equal('S/MIME Encrypted Message');
+    /* eslint-disable @typescript-eslint/no-non-null-assertion */
     expect(mimeMsg.attachments!.length).to.equal(1);
     expect(mimeMsg.attachments![0].contentType).to.equal('application/pkcs7-mime');
     expect(mimeMsg.attachments![0].filename).to.equal('smime.p7m');
+    /* eslint-enable @typescript-eslint/no-non-null-assertion */
     const withAttachments = mimeMsg.subject?.includes(' with attachment');
+    /* eslint-disable @typescript-eslint/no-non-null-assertion */
     expect(mimeMsg.attachments![0].size).to.be.greaterThan(withAttachments ? 20000 : 300);
     const msg = new Buf(mimeMsg.attachments![0].content).toRawBytesStr();
+    /* eslint-enable @typescript-eslint/no-non-null-assertion */
     const p7 = forge.pkcs7.messageFromAsn1(forge.asn1.fromDer(msg));
     expect(p7.type).to.equal(ENVELOPED_DATA_OID);
     if (p7.type === ENVELOPED_DATA_OID) {
@@ -382,11 +388,13 @@ class SmimeSignedMessageStrategy implements ITestMsgStrategy {
     expect((mimeMsg.headers.get('content-disposition') as StructuredHeader).value).to.equal('attachment');
     expect((mimeMsg.headers.get('content-disposition') as StructuredHeader).params.filename).to.equal('smime.p7m');
     expect(mimeMsg.headers.get('content-description')).to.equal('S/MIME Signed Message');
+    /* eslint-disable @typescript-eslint/no-non-null-assertion */
     expect(mimeMsg.attachments!.length).to.equal(1);
     expect(mimeMsg.attachments![0].contentType).to.equal('application/pkcs7-mime');
     expect(mimeMsg.attachments![0].filename).to.equal('smime.p7m');
     expect(mimeMsg.attachments![0].size).to.be.greaterThan(300);
     const msg = new Buf(mimeMsg.attachments![0].content).toRawBytesStr();
+    /* eslint-enable @typescript-eslint/no-non-null-assertion */
     const p7 = forge.pkcs7.messageFromAsn1(forge.asn1.fromDer(msg));
     expect(p7.type).to.equal(SIGNED_DATA_OID);
   };

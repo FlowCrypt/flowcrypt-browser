@@ -53,9 +53,11 @@ View.run(
         await KeyStoreUtil.parse(await KeyStore.getRequired(this.acctEmail)),
         'EVEN-IF-UNUSABLE'
       );
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const storedOrSessionPp = await PassphraseStore.get(this.acctEmail, this.mostUsefulPrv!.keyInfo);
       if (
         this.mostUsefulPrv?.key.fullyDecrypted ||
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         (storedOrSessionPp && (await KeyUtil.decrypt(this.mostUsefulPrv!.key, storedOrSessionPp)))
       ) {
         this.displayBlock('step_1_enter_new'); // current pp is already known
@@ -93,9 +95,10 @@ View.run(
     };
 
     private actionTestCurrentPassPhraseHandler = async () => {
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const prv = await KeyUtil.parse(this.mostUsefulPrv!.keyInfo.private);
       if ((await KeyUtil.decrypt(prv, String($('#current_pass_phrase').val()))) === true) {
-        this.mostUsefulPrv!.key = prv;
+        this.mostUsefulPrv!.key = prv; // eslint-disable-line @typescript-eslint/no-non-null-assertion
         this.displayBlock('step_1_enter_new');
         $('#new_pass_phrase').focus();
       } else {
@@ -131,6 +134,7 @@ View.run(
         return;
       }
       try {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         await KeyUtil.encrypt(this.mostUsefulPrv!.key, newPp);
       } catch (e) {
         Catch.reportErr(e);
@@ -141,6 +145,7 @@ View.run(
         );
         return;
       }
+      /* eslint-disable @typescript-eslint/no-non-null-assertion */
       await KeyStore.add(this.acctEmail, this.mostUsefulPrv!.key);
       const shouldSavePassphraseInStorage =
         !this.clientConfiguration.forbidStoringPassPhrase() &&
@@ -157,6 +162,7 @@ View.run(
         this.mostUsefulPrv!.keyInfo,
         shouldSavePassphraseInStorage ? undefined : newPp
       );
+      /* eslint-enable @typescript-eslint/no-non-null-assertion */
       if (this.clientConfiguration.canBackupKeys()) {
         await Ui.modal.info(
           'Now that you changed your pass phrase, you should back up your key. New backup will be protected with new passphrase.'

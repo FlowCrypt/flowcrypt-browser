@@ -93,8 +93,10 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
       'decrypt - encrypted text inside "message" attachment is correctly decrypted',
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
         const acctEmail = 'ci.tests.gmail@flowcrypt.test';
+        /* eslint-disable @typescript-eslint/no-non-null-assertion */
         const key = Config.key('flowcrypt.compatibility.1pp1')!;
         await SettingsPageRecipe.addKeyTest(t, browser, acctEmail, key.armored!, key.passphrase, {}, false);
+        /* eslint-enable @typescript-eslint/no-non-null-assertion */
         await InboxPageRecipe.checkDecryptMsg(t, browser, {
           acctEmail,
           threadId: '184a474fc1bd59b8',
@@ -946,10 +948,12 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
         const acctEmail = 'ci.tests.gmail@flowcrypt.test';
         const signerEmail = 'sender.for.refetch@domain.com';
         const data = await GoogleData.withInitializedData(acctEmail);
+        /* eslint-disable @typescript-eslint/no-non-null-assertion */
         const msg = data.getMessage(msgId)!;
         const signature = Buf.fromBase64Str(msg!.raw!)
           .toUtfStr()
           .match(/\-\-\-\-\-BEGIN PGP SIGNATURE\-\-\-\-\-.*\-\-\-\-\-END PGP SIGNATURE\-\-\-\-\-/s)![0];
+        /* eslint-enable @typescript-eslint/no-non-null-assertion */
         const params = `?frameId=none&account_email=${acctEmail}&senderEmail=${signerEmail}&msgId=${msgId}&message=Some%20corrupted%20message&signature=${encodeURIComponent(
           signature
         )}`;
@@ -970,10 +974,12 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
         const acctEmail = 'flowcrypt.compatibility@gmail.com';
         const signerEmail = 'some.sender@test.com';
         const data = await GoogleData.withInitializedData(acctEmail);
+        /* eslint-disable @typescript-eslint/no-non-null-assertion */
         const msg = data.getMessage(msgId)!;
         const signature = Buf.fromBase64Str(msg!.raw!)
           .toUtfStr()
           .match(/\-\-\-\-\-BEGIN PGP SIGNATURE\-\-\-\-\-.*\-\-\-\-\-END PGP SIGNATURE\-\-\-\-\-/s)![0];
+        /* eslint-enable @typescript-eslint/no-non-null-assertion */
         const params = `?frameId=none&account_email=${acctEmail}&senderEmail=${signerEmail}&msgId=${msgId}&message=Some%20corrupted%20message&signature=${encodeURIComponent(
           signature
         )}`;
@@ -1142,9 +1148,9 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
         await pgpBlock.click('#pgp_block a');
         await Util.sleep(5);
         const flowcryptTab = (await browser.browser.pages()).find(p => p.url() === 'https://flowcrypt.com/');
-        await flowcryptTab!.waitForSelector('body');
+        await flowcryptTab!.waitForSelector('body'); // eslint-disable-line @typescript-eslint/no-non-null-assertion
         await Util.sleep(3);
-        expect(await flowcryptTab!.evaluate(() => `Opener: ${JSON.stringify(window.opener)}`)).to.equal('Opener: null');
+        expect(await flowcryptTab!.evaluate(() => `Opener: ${JSON.stringify(window.opener)}`)).to.equal('Opener: null'); // eslint-disable-line @typescript-eslint/no-non-null-assertion
       })
     );
 

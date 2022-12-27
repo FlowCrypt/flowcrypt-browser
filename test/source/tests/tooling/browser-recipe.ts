@@ -161,12 +161,14 @@ export class BrowserRecipe {
     // eslint-disable-next-line @typescript-eslint/naming-convention
     const list = await gmail.users.drafts.list({ userId: 'me', access_token: accessToken });
     if (list.data.drafts) {
+      /* eslint-disable @typescript-eslint/no-non-null-assertion */
       await Promise.all(
         list.data
           .drafts!.filter(draft => draft.id)
-          // eslint-disable-next-line @typescript-eslint/naming-convention, @typescript-eslint/no-non-null-assertion
+          // eslint-disable-next-line @typescript-eslint/naming-convention
           .map(draft => gmail.users.drafts.delete({ id: draft.id!, userId: 'me', access_token: accessToken }))
       );
+      /* eslint-enable @typescript-eslint/no-non-null-assertion */
     }
   };
 

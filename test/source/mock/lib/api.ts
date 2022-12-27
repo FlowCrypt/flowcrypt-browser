@@ -229,6 +229,7 @@ export class Api<REQ, RES> {
 
   protected parseReqBody = (body: Buffer, req: http.IncomingMessage): REQ => {
     let parsedBody: string | undefined;
+    /* eslint-disable @typescript-eslint/no-non-null-assertion */
     if (body.length) {
       if (
         req.url!.startsWith('/upload/') || // gmail message send
@@ -242,6 +243,7 @@ export class Api<REQ, RES> {
       }
     }
     return { query: this.parseUrlQuery(req.url!), body: parsedBody } as unknown as REQ;
+    /* eslint-enable @typescript-eslint/no-non-null-assertion */
   };
 
   private throttledResponse = async (response: http.ServerResponse, data: Buffer) => {
@@ -272,6 +274,7 @@ export class Api<REQ, RES> {
     for (const valuePair of valuePairs) {
       if (valuePair) {
         const equalSignSeparatedParts = valuePair.split('=');
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         params[equalSignSeparatedParts.shift()!] = decodeURIComponent(equalSignSeparatedParts.join('='));
       }
     }

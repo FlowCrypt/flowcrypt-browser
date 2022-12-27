@@ -235,8 +235,10 @@ export class Ui {
           input: 'ui-modal-confirm-checkbox-input'
         },
         didOpen: () => {
+          /* eslint-disable @typescript-eslint/no-non-null-assertion */
           const input = Swal.getInput()!;
           const confirmButton = Swal.getConfirmButton()!;
+          /* eslint-enable @typescript-eslint/no-non-null-assertion */
           $(confirmButton).prop('disabled', true);
           $(input).on('change', () => {
             $(confirmButton).prop('disabled', !input.checked);
@@ -255,7 +257,7 @@ export class Ui {
       }
       const userResponsePromise = Ui.swal().fire({
         didOpen: () => {
-          Swal.getCloseButton()!.blur();
+          Swal.getCloseButton()!.blur(); // eslint-disable-line @typescript-eslint/no-non-null-assertion
         },
         html,
         width: 750,
@@ -271,6 +273,7 @@ export class Ui {
       await userResponsePromise;
     },
     iframe: async (iframeUrl: string, iframeHeight?: number, dataTest?: string): Promise<SweetAlertResult> => {
+      /* eslint-disable @typescript-eslint/no-non-null-assertion */
       const iframeWidth = Math.min(800, $('body').width()! - 200);
       iframeHeight = iframeHeight || $('body').height()! - ($('body').height()! > 800 ? 150 : 75);
       return await Ui.swal().fire({
@@ -278,6 +281,7 @@ export class Ui {
           $(Swal.getPopup()!).attr('data-test', dataTest || 'dialog');
           $(Swal.getCloseButton()!).attr('data-test', 'dialog-close').blur();
         },
+        /* eslint-enable @typescript-eslint/no-non-null-assertion */
         willClose: () => {
           const urlWithoutPageParam = Url.removeParamsFromUrl(window.location.href, ['page']);
           window.history.pushState('', '', urlWithoutPageParam);
@@ -299,6 +303,7 @@ export class Ui {
     fullscreen: async (html: string): Promise<void> => {
       await Ui.swal().fire({
         didOpen: () => {
+          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
           $(Swal.getPopup()!).attr('data-test', 'dialog');
         },
         html: Xss.htmlSanitize(html),
@@ -312,8 +317,10 @@ export class Ui {
     attachmentPreview: async (iframeUrl: string): Promise<void> => {
       await Ui.swal().fire({
         didOpen: () => {
+          /* eslint-disable @typescript-eslint/no-non-null-assertion */
           $(Swal.getPopup()!).attr('data-test', 'attachment-dialog');
           $(Swal.getCloseButton()!).attr('data-test', 'dialog-close');
+          /* eslint-enable @typescript-eslint/no-non-null-assertion */
         },
         html: `<iframe src="${Xss.escape(
           iframeUrl
@@ -393,7 +400,7 @@ export class Ui {
         <div class="line">&nbsp;</div>
         <div class="line">${contactSentence}</div>
       `);
-      const overlay = $(Swal.getHtmlContainer()!);
+      const overlay = $(Swal.getHtmlContainer()!); // eslint-disable-line @typescript-eslint/no-non-null-assertion
       overlay.find('.action-show-overlay-details').one(
         'click',
         Ui.event.handle(target => {

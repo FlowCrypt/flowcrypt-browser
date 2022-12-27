@@ -277,6 +277,7 @@ export class Mime {
       } else {
         contentNode = new MimeBuilder('multipart/alternative');
         for (const type of Object.keys(body)) {
+          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
           contentNode.appendChild(Mime.newContentNode(MimeBuilder, type, body[type]!.toString())); // already present, that's why part of for loop
         }
       }
@@ -328,6 +329,7 @@ export class Mime {
     }
     const bodyNodes = new MimeBuilder('multipart/alternative');
     for (const type of Object.keys(body)) {
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       bodyNodes.appendChild(Mime.newContentNode(MimeBuilder, type, body[type]!.toString()));
     }
     const signedContentNode = new MimeBuilder('multipart/mixed');
@@ -497,13 +499,14 @@ export class Mime {
       type: Mime.getNodeType(node),
       data:
         node.contentTransferEncoding.value === 'quoted-printable'
-          ? Mime.fromEqualSignNotationAsBuf(node.rawContent!)
+          ? Mime.fromEqualSignNotationAsBuf(node.rawContent!) // eslint-disable-line @typescript-eslint/no-non-null-assertion
           : node.content,
       cid: Mime.getNodeContentId(node)
     });
   };
 
   private static getNodeContentAsUtfStr = (node: MimeParserNode): string => {
+    /* eslint-disable @typescript-eslint/no-non-null-assertion */
     if (node.charset && Iso88592.labels.includes(node.charset)) {
       return Iso88592.decode(node.rawContent!); // eslint-disable-line @typescript-eslint/no-unsafe-return
     }
@@ -515,6 +518,7 @@ export class Mime {
     } else {
       resultBuf = Buf.fromRawBytesStr(node.rawContent!);
     }
+    /* eslint-enable @typescript-eslint/no-non-null-assertion */
     if (
       node.charset?.toUpperCase() === 'ISO-2022-JP' ||
       (node.charset === 'utf-8' && Mime.getNodeType(node, 'initial')?.includes('ISO-2022-JP'))
@@ -524,7 +528,7 @@ export class Mime {
     return resultBuf.toUtfStr();
   };
 
-  // eslint-disable-next-line @typescript-eslint/naming-convention
+  // eslint-disable-next-line @typescript-eslint/naming-convention, @typescript-eslint/no-explicit-any
   private static newContentNode = (MimeBuilder: any, type: string, content: string): MimeParserNode => {
     const node: MimeParserNode = new MimeBuilder(type).setContent(content);
     if (type === 'text/plain') {

@@ -410,6 +410,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
         await ComposePageRecipe.fillMsg(composePage, { to: 'human+nopgp@flowcrypt.com' }, 'with files + nonppg');
         const fileInput = (await composePage.target.$('input[type=file]')) as ElementHandle<HTMLInputElement>;
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         await fileInput!.uploadFile('test/samples/small.txt', 'test/samples/small.png', 'test/samples/small.pdf');
         await ComposePageRecipe.sendAndClose(composePage, { password: 'test-pass', timeout: 90 });
       })
@@ -1315,6 +1316,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         await composePage.waitForSelTestState('ready'); // continue when all recipients get evaluated
         await composePage.waitAndClick('@action-show-container-cc-bcc-buttons');
         for (const type of ['to', 'cc', 'bcc']) {
+          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
           const container = (await composePage.waitAny(`@container-${type}`))!;
           const recipients = await container.$$('.recipients > span');
           expect(recipients.length).to.equal(2);
@@ -1356,6 +1358,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         await composePage.waitAll(['@action-toggle-sign', '@action-toggle-encrypt', '@icon-toggle-sign-tick']);
         await composePage.notPresent(['@icon-toggle-encrypt-tick']); // response to signed message should not be auto-encrypted
         const fileInput = (await composePage.target.$('input[type=file]')) as ElementHandle<HTMLInputElement>;
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         await fileInput!.uploadFile(`test/samples/${attachmentFilename}`);
         await composePage.waitAndClick('@action-send', { delay: 1 });
         await composePage.waitForContent('@replied-to', 'to: censored@email.com');
@@ -1364,6 +1367,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         const downloadedFiles = await composePage.awaitDownloadTriggeredByClicking(async () => {
           await attachment.click('#download');
         });
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         expect(downloadedFiles[attachmentFilename]!.toString()).to.equal(
           `small text file\nnot much here\nthis worked\n`
         );
@@ -1686,16 +1690,16 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
           encrypt: true
         });
         await ComposePageRecipe.sendAndClose(composePage);
+        /* eslint-disable @typescript-eslint/no-non-null-assertion */
         // get sent msg from mock
         const sentMsg = (
           await GoogleData.withInitializedData('flowcrypt.compatibility@gmail.com')
         ).searchMessagesBySubject(subject)[0]!;
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const message = sentMsg.payload!.body!.data!;
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const encrypted = message.match(
           /\-\-\-\-\-BEGIN PGP MESSAGE\-\-\-\-\-.*\-\-\-\-\-END PGP MESSAGE\-\-\-\-\-/s
         )![0];
+        /* eslint-enable @typescript-eslint/no-non-null-assertion */
         const encryptedData = Buf.fromUtfStr(encrypted);
         const decrypted0 = await MsgUtil.decryptMessage({ kisWithPp: [], encryptedData, verificationPubs: [] });
         // decryption without a ki should fail
@@ -1742,10 +1746,11 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         const composePage = await ComposePageRecipe.openStandalone(t, browser, acct);
         await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, subject, undefined, { sign: true });
         await ComposePageRecipe.sendAndClose(composePage);
+        /* eslint-disable @typescript-eslint/no-non-null-assertion */
         // get sent msg from mock
         const sentMsg = (await GoogleData.withInitializedData(acct)).searchMessagesBySubject(subject)[0]!;
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const message = sentMsg.payload!.body!.data!;
+        /* eslint-enable @typescript-eslint/no-non-null-assertion */
         expect(message).to.include('-----BEGIN PGP MESSAGE-----');
         expect(message).to.include('-----END PGP MESSAGE-----');
         expect(message).to.not.include('Version');
@@ -1805,6 +1810,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         const fileInput = (await composePage.target.$('input[type=file]')) as ElementHandle<HTMLInputElement>;
         const localpath = 'test/samples/oversize.txt';
         writeFileSync(localpath, 'x'.repeat(30 * 1024 * 1024));
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         await fileInput!.uploadFile(localpath); // 30mb
         await composePage.waitAndRespondToModal(
           'confirm',
@@ -1814,6 +1820,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         await Util.sleep(1);
         await composePage.notPresent('.qq-upload-file-selector');
         // small file will get accepted
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         await fileInput!.uploadFile('test/samples/small.png');
         await composePage.waitForContent('.qq-upload-file-selector', 'small.png');
       })
@@ -1832,6 +1839,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         const replyFrame = await inboxPage.getFrame(['compose.htm']);
         await replyFrame.waitAndClick('@encrypted-reply');
         const fileInput = (await replyFrame.target.$('input[type=file]')) as ElementHandle<HTMLInputElement>;
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         await fileInput!.uploadFile('test/samples/small.png');
         await replyFrame.waitAndClick('@action-send');
         const attachment = await replyFrame.getFrame(['attachment.htm', 'name=small.png']);
@@ -2048,11 +2056,13 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
           testConstants.testCertificateMultipleSmimeCEA2D53BB9D24871
         );
         const fileInput = (await composeFrame.target.$('input[type=file]')) as ElementHandle<HTMLInputElement>;
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         await fileInput!.uploadFile('test/samples/small.txt', 'test/samples/small.png', 'test/samples/small.pdf');
         // attachments in composer can be downloaded
         const downloadedFiles = await inboxPage.awaitDownloadTriggeredByClicking(async () => {
           await composeFrame.click('.qq-file-id-0');
         });
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         expect(downloadedFiles['small.txt']!.toString()).to.equal(`small text file\nnot much here\nthis worked\n`);
         await composeFrame.waitAndClick('@action-send', { delay: 2 });
         await inboxPage.waitTillGone('@container-new-message');
@@ -2084,11 +2094,13 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
           testConstants.testCertificateMultipleSmimeCEA2D53BB9D24871
         );
         const fileInput = (await composeFrame.target.$('input[type=file]')) as ElementHandle<HTMLInputElement>;
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         await fileInput!.uploadFile('test/samples/small.txt', 'test/samples/small.png', 'test/samples/small.pdf');
         // attachments in composer can be downloaded
         const downloadedFiles = await inboxPage.awaitDownloadTriggeredByClicking(async () => {
           await composeFrame.click('.qq-file-id-0');
         });
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         expect(downloadedFiles['small.txt']!.toString()).to.equal(`small text file\nnot much here\nthis worked\n`);
         await composeFrame.waitAndClick('@action-send', { delay: 2 });
         await inboxPage.waitTillGone('@container-new-message');
@@ -2726,6 +2738,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         );
         await ComposePageRecipe.fillMsg(composePage, { to: 'to@example.com', bcc: 'bcc@example.com' }, subject);
         const fileInput = (await composePage.target.$('input[type=file]')) as ElementHandle<HTMLInputElement>;
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         await fileInput!.uploadFile('test/samples/small.txt');
         // lousy pwd
         await composePage.waitAndType('@input-password', 'lousy pwd');
@@ -2767,6 +2780,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         );
         await composePage.waitAndClick('@action-accept-reply-all-prompt', { delay: 2 });
         // we should have 4 recipients, 2 green and 2 gray
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const container = (await composePage.waitAny('@container-to'))!;
         const recipients = await container.$$('.recipients > span');
         expect(recipients.length).to.equal(4);
@@ -2783,6 +2797,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         );
         expect(await PageRecipe.getElementPropertyJson(recipients[3], 'className')).to.equal('has_pgp');
         const fileInput = (await composePage.target.$('input[type=file]')) as ElementHandle<HTMLInputElement>;
+        /* eslint-disable @typescript-eslint/no-non-null-assertion */
         await fileInput!.uploadFile('test/samples/small.txt');
         await fileInput!.uploadFile('test/samples/small.pdf');
         await composePage.waitAndType('@input-password', 'gO0d-pwd');
@@ -2790,6 +2805,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         // this test is using PwdEncryptedMessageWithFesReplyRenderingTestStrategy to check sent result based on subject "PWD encrypted message with FES - Reply rendering"
         // also see '/api/v1/message' in fes-endpoints.ts mock
         const attachmentsContainer = (await composePage.waitAny('@replied-attachments'))!;
+        /* eslint-enable @typescript-eslint/no-non-null-assertion */
         const attachments = await attachmentsContainer.$$('.pgp_attachment');
         expect(attachments.length).to.equal(2);
         await composePage.waitForContent(
@@ -2967,6 +2983,7 @@ const sendImgAndVerifyPresentInSentMsg = async (
   }, imgBase64);
   await ComposePageRecipe.sendAndClose(composePage);
   // get sent msg id from mock
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   const sentMsg = (await GoogleData.withInitializedData('flowcrypt.compatibility@gmail.com')).searchMessagesBySubject(
     subject
   )[0]!;
@@ -3005,12 +3022,13 @@ const sendTextAndVerifyPresentInSentMsg = async (
   const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
   await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, subject, text, sendingOpt);
   await ComposePageRecipe.sendAndClose(composePage);
+  /* eslint-disable @typescript-eslint/no-non-null-assertion */
   // get sent msg from mock
   const sentMsg = (await GoogleData.withInitializedData('flowcrypt.compatibility@gmail.com')).searchMessagesBySubject(
     subject
   )[0]!;
-  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   const message = encodeURIComponent(sentMsg.payload!.body!.data!);
+  /* eslint-enable @typescript-eslint/no-non-null-assertion */
   await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
     content: [text],
     unexpectedContent: [],

@@ -63,6 +63,7 @@ export class GmailMsg {
     this.threadId = msg.id;
     this.labelIds = [msg.labelId];
     this.raw = msg.raw;
+    /* eslint-disable @typescript-eslint/no-non-null-assertion */
     const contentTypeHeader = msg.mimeMsg.headers.get('content-type')! as StructuredHeader;
     const toHeader = msg.mimeMsg.headers.get('to')! as AddressObject;
     const fromHeader = msg.mimeMsg.headers.get('from')! as AddressObject;
@@ -70,7 +71,8 @@ export class GmailMsg {
     const dateHeader = msg.mimeMsg.headers.get('date')! as Date;
     const messageIdHeader = msg.mimeMsg.headers.get('message-id')! as string;
     const mimeVersionHeader = msg.mimeMsg.headers.get('mime-version')! as string;
-    let body;
+    /* eslint-enable @typescript-eslint/no-non-null-assertion */
+    let body: GmailMsg$payload$body | undefined;
     if (msg.mimeMsg.text) {
       const textBase64 = Buffer.from(msg.mimeMsg.text, 'utf-8').toString('base64');
       body = { attachmentId: '', size: textBase64.length, data: textBase64 };
@@ -90,6 +92,7 @@ export class GmailMsg {
       ],
       body
     };
+    /* eslint-disable @typescript-eslint/no-non-null-assertion */
     if (toHeader) {
       this.payload.headers!.push({ name: 'To', value: toHeader.value.map(a => a.address).join(',') });
     }
@@ -102,13 +105,14 @@ export class GmailMsg {
     if (dateHeader) {
       this.payload.headers!.push({ name: 'Date', value: dateHeader.toString() });
     }
+    /* eslint-enable @typescript-eslint/no-non-null-assertion */
   }
 }
 
 export class GmailParser {
   public static findHeader = (apiGmailMsgObj: GmailMsg | GmailMsg$payload, headerName: string) => {
     const node: GmailMsg$payload = apiGmailMsgObj.hasOwnProperty('payload')
-      ? (apiGmailMsgObj as GmailMsg).payload!
+      ? (apiGmailMsgObj as GmailMsg).payload! // eslint-disable-line @typescript-eslint/no-non-null-assertion
       : (apiGmailMsgObj as GmailMsg$payload);
     if (typeof node.headers !== 'undefined') {
       for (const header of node.headers) {
@@ -242,7 +246,7 @@ export class GoogleData {
         m.payload.headers &&
         m.payload.headers
           .filter(h => h.name === 'To' || h.name === 'From')
-          .map(h => h.value!)
+          .map(h => h.value!) // eslint-disable-line @typescript-eslint/no-non-null-assertion
           .filter(h => !!h)
           .join(',')
     );
@@ -355,6 +359,7 @@ export class GoogleData {
     const threads: GmailThread[] = [];
     for (const thread of this.getMessagesAndDrafts()
       .filter(m => (labelIds.length ? (m.labelIds || []).some(l => labelIds.includes(l)) : true))
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       .map(m => ({ historyId: m.historyId, id: m.threadId!, snippet: `MOCK SNIPPET: ${GoogleData.msgSubject(m)}` }))) {
       if (thread.id && !threads.map(t => t.id).includes(thread.id)) {
         threads.push(thread);

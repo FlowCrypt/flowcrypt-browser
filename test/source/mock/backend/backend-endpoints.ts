@@ -16,8 +16,8 @@ export const mockBackendEndpoints: HandlersDefinition = {
     throwIfNotPost(req);
     const email = getEmailFromIdTokenOrThrow(req);
     return JSON.stringify({
-      account: mockBackendData.getAcctRow(email!),
-      domain_org_rules: mockBackendData.getClientConfiguration(email!) // eslint-disable-line @typescript-eslint/naming-convention
+      account: mockBackendData.getAcctRow(email!), // eslint-disable-line @typescript-eslint/no-non-null-assertion
+      domain_org_rules: mockBackendData.getClientConfiguration(email!) // eslint-disable-line @typescript-eslint/naming-convention, @typescript-eslint/no-non-null-assertion
     });
   },
   '/api/account/update': async ({}, req) => {

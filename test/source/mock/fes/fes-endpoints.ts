@@ -17,6 +17,7 @@ const processMessageFromUser = async (body: string) => {
   expect(body).to.contain('"to":["Mr To <to@example.com>"]');
   expect(body).to.contain('"cc":[]');
   expect(body).to.contain('"bcc":["Mr Bcc <bcc@example.com>"]');
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   const encryptedData = Buf.fromUtfStr(body.match(/-----BEGIN PGP MESSAGE-----.*-----END PGP MESSAGE-----/s)![0]);
   const decrypted = await MsgUtil.decryptMessage({
     kisWithPp: [],
@@ -25,6 +26,7 @@ const processMessageFromUser = async (body: string) => {
     verificationPubs: []
   });
   expect(decrypted.success).to.equal(true);
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   const decryptedMimeMsg = decrypted.content!.toUtfStr();
   expect(decryptedMimeMsg).to.contain(
     'Content-Type: text/plain\r\n' +
@@ -63,6 +65,7 @@ const processMessageFromUser2 = async (body: string) => {
   );
   expect(body).to.contain('"cc":[]');
   expect(body).to.contain('"bcc":[]');
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   const encryptedData = Buf.fromUtfStr(body.match(/-----BEGIN PGP MESSAGE-----.*-----END PGP MESSAGE-----/s)![0]);
   const decrypted = await MsgUtil.decryptMessage({
     kisWithPp: [],
@@ -71,6 +74,7 @@ const processMessageFromUser2 = async (body: string) => {
     verificationPubs: []
   });
   expect(decrypted.success).to.equal(true);
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   const decryptedMimeMsg = decrypted.content!.toUtfStr();
   // small.txt
   expect(decryptedMimeMsg).to.contain(
@@ -118,6 +122,7 @@ const processMessageFromUser3 = async (body: string) => {
   expect(body).to.contain('"to":["to@example.com"]');
   expect(body).to.contain('"cc":[]');
   expect(body).to.contain('"bcc":["flowcrypt.compatibility@gmail.com"]');
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   const encryptedData = Buf.fromUtfStr(body.match(/-----BEGIN PGP MESSAGE-----.*-----END PGP MESSAGE-----/s)![0]);
   const decrypted = await MsgUtil.decryptMessage({
     kisWithPp: [],
@@ -126,6 +131,7 @@ const processMessageFromUser3 = async (body: string) => {
     verificationPubs: []
   });
   expect(decrypted.success).to.equal(true);
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   const decryptedMimeMsg = decrypted.content!.toUtfStr();
   // small.txt
   expect(decryptedMimeMsg).to.contain(

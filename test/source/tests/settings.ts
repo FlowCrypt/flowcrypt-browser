@@ -325,16 +325,14 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       testWithBrowser('compatibility', async (t, browser) => {
         const dbPage = await browser.newPage(t, TestUrls.extension('chrome/dev/ci_unit_test.htm'));
         const foundKeys = await dbPage.page.evaluate(async () => {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          /* eslint-disable @typescript-eslint/no-explicit-any */
           const db = await (window as any).ContactStore.dbOpen();
           // first, unlink pubkeys from `flowcrypt.compatibility@gmail.com',
           // so they remain linked only to `flowcryptcompatibility@gmail.com'
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           await (window as any).ContactStore.unlinkPubkey(db, 'flowcrypt.compatibility@gmail.com', {
             id: '5520CACE2CB61EA713E5B0057FDE685548AEA788',
             type: 'openpgp '
           });
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           await (window as any).ContactStore.unlinkPubkey(db, 'flowcrypt.compatibility@gmail.com', {
             id: 'E8F0517BA6D7DAB6081C96E4ADAC279C95093207',
             type: 'openpgp '
@@ -342,18 +340,18 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
           const pubkey7FDE685548AEA788: { fingerprint: string } = await new Promise((resolve, reject) => {
             const tx = db.transaction(['pubkeys'], 'readonly');
             const req = tx.objectStore('pubkeys').get('5520CACE2CB61EA713E5B0057FDE685548AEA788');
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             (window as any).ContactStore.setReqPipe(req, resolve, reject);
           });
           const pubkeyADAC279C95093207: { fingerprint: string } = await new Promise((resolve, reject) => {
             const tx = db.transaction(['pubkeys'], 'readonly');
             const req = tx.objectStore('pubkeys').get('E8F0517BA6D7DAB6081C96E4ADAC279C95093207');
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             (window as any).ContactStore.setReqPipe(req, resolve, reject);
           });
-          const contactsSize: number = (
-            await (window as any).ContactStore.search(db, { hasPgp: true, substring: 'flowcrypt' })
-          ).length;
+          const contactsSize: number = await (window as any).ContactStore.search(db, {
+            hasPgp: true,
+            substring: 'flowcrypt'
+          }).length;
+          /* eslint-enable @typescript-eslint/no-explicit-any */
           return { pubkey7FDE685548AEA788, pubkeyADAC279C95093207, contactsSize };
         });
         expect(foundKeys.contactsSize).to.equal(1);
@@ -958,6 +956,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         );
         const { keys: keys1 } = await KeyUtil.readMany(
           Buf.fromUtfStr(
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             backupFileRawData1[
               'flowcrypt-backup-flowcrypttestkeymultiplegmailcom-515431151DDD3EA232B37A4C98ACFA1EADAB5B92.asc'
             ]!.toString()
@@ -1020,6 +1019,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         expect(await backupPage.isDisabled('[data-id="515431151DDD3EA232B37A4C98ACFA1EADAB5B92"]')).to.equal(false);
         await backupPage.waitAndClick('@action-backup-step3manual-continue');
         await backupPage.waitAndRespondToModal('info', 'confirm', 'Your private keys have been successfully backed up');
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const sentMsg = (await GoogleData.withInitializedData(acctEmail)).searchMessagesBySubject(
           'Your FlowCrypt Backup'
         )[0]!;
@@ -1083,6 +1083,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
           2
         );
         expect(Object.keys(downloadedFiles).length).to.equal(2);
+        /* eslint-disable @typescript-eslint/no-non-null-assertion */
         const { keys: keys1 } = await KeyUtil.readMany(
           Buf.fromUtfStr(
             downloadedFiles[
@@ -1098,6 +1099,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
             ]!.toString()
           )
         );
+        /* eslint-enable @typescript-eslint/no-non-null-assertion */
         expect(keys2.length).to.equal(1);
         await backupPage.close();
       })
@@ -1288,6 +1290,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         );
         const { keys } = await KeyUtil.readMany(
           Buf.fromUtfStr(
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             downloadedFiles[
               'flowcrypt-backup-flowcrypttestkeymultiplegmailcom-515431151DDD3EA232B37A4C98ACFA1EADAB5B92.asc'
             ]!.toString()
@@ -1338,11 +1341,13 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         );
         await backupPage.waitAndClick('@action-backup-step3manual-continue');
         await backupPage.waitAndRespondToModal('info', 'confirm', 'Your private key has been successfully backed up');
+        /* eslint-disable @typescript-eslint/no-non-null-assertion */
         const sentMsg = (await GoogleData.withInitializedData(acctEmail)).searchMessagesBySubject(
           'Your FlowCrypt Backup'
         )[0]!;
         const mimeMsg = await Parse.convertBase64ToMimeMsg(sentMsg.raw!);
         const { keys } = await KeyUtil.readMany(new Buf(mimeMsg.attachments[0]!.content!));
+        /* eslint-enable @typescript-eslint/no-non-null-assertion */
         expect(keys.length).to.equal(1);
         expect(
           KeyUtil.identityEquals(keys[0], { id: '515431151DDD3EA232B37A4C98ACFA1EADAB5B92', family: 'openpgp' })

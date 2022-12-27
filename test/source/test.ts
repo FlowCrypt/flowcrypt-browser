@@ -95,7 +95,7 @@ const testWithBrowser = (
         if (DEBUG_BROWSER_LOG) {
           try {
             const page = await browser.newPage(t, TestUrls.extension('chrome/dev/ci_unit_test.htm'));
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-return
             const items = (await page.target.evaluate(() => (window as any).Debug.readDatabase())) as {
               input: unknown;
               output: unknown;

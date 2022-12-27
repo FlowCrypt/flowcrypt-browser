@@ -135,6 +135,7 @@ export class SetupView extends View {
     }
     this.pubLookup = new PubLookup(this.clientConfiguration);
     if (this.clientConfiguration.usesKeyManager() && this.idToken) {
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       this.keyManager = new KeyManager(this.clientConfiguration.getKeyManagerUrlForPrivateKeys()!);
     }
     if (!this.clientConfiguration.canCreateKeys()) {
@@ -159,6 +160,7 @@ export class SetupView extends View {
       }
     }
     if (this.clientConfiguration.getEnforcedKeygenAlgo()) {
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       $('.key_type').val(this.clientConfiguration.getEnforcedKeygenAlgo()!).prop('disabled', true);
     }
     if (!this.clientConfiguration.canBackupKeys()) {
@@ -181,6 +183,7 @@ export class SetupView extends View {
     $('.action_show_help').on(
       'click',
       this.setHandler(
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         async () => await Settings.renderSubPage(this.acctEmail, this.tabId!, '/chrome/settings/modules/help.htm')
       )
     );
@@ -466,6 +469,7 @@ export class SetupView extends View {
       }
     } else {
       // this will actually replace the submitted public key if there was a conflict, better ux
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       await this.pubLookup.attester.submitPrimaryEmailPubkey(this.acctEmail, pubkey, this.idToken!);
     }
     const aliases = addresses.filter(a => a !== this.acctEmail);
