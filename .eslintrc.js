@@ -12,6 +12,7 @@ module.exports = {
     OpenPGP: false
   },
   extends: ['eslint:recommended', 'plugin:@typescript-eslint/recommended', 'prettier'],
+  ignorePatterns: ['.eslintrc.js'],
   parserOptions: {
     project: 'tsconfig.json',
     sourceType: 'module'

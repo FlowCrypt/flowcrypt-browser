@@ -206,7 +206,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     return !!$('iframe.pgp_block').filter(':visible').length;
   };
 
-  private replaceConvoBtns = (force: boolean = false) => {
+  private replaceConvoBtns = (force = false) => {
     const convoUpperIcons = $('div.ade:visible');
     const useEncryptionInThisConvo = this.isEncrypted() || force;
     // reply buttons
@@ -769,7 +769,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     messageContainer.find('.adn.ads').parent().append(secureReplyBoxXssSafe); // xss-safe-factory
   };
 
-  private replaceStandardReplyBox = async (msgId?: string, force: boolean = false) => {
+  private replaceStandardReplyBox = async (msgId?: string, force = false) => {
     const draftReplyRegex = new RegExp(/\[(flowcrypt|cryptup):link:draft_reply:([0-9a-fr\-]+)]/);
     const newReplyBoxes = $('div.nr.tMHS5d, td.amr > div.nr, div.gA td.I5')
       .not('.reply_message_evaluated')
