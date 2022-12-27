@@ -150,16 +150,6 @@ export class ComposeView extends View {
     this.acctServer = new AccountServer(this.acctEmail);
   }
 
-  private setInputLimit(el: HTMLElement, ev: JQuery.Event, limit: number) {
-    const clipboardEvent = ev.originalEvent as ClipboardEvent;
-    if (clipboardEvent.clipboardData) {
-      const clipboardLength = clipboardEvent.clipboardData.getData('text').length;
-      if (clipboardLength + el.innerText.length > limit) {
-        ev.preventDefault();
-      }
-    }
-  }
-
   public render = async () => {
     const storage = await AcctStore.get(this.acctEmail, ['sendAs', 'hide_message_password', 'fesUrl']);
     this.clientConfiguration = await ClientConfiguration.newInstance(this.acctEmail);
@@ -233,6 +223,16 @@ export class ComposeView extends View {
   };
 
   public isFesUsed = () => Boolean(this.fesUrl);
+
+  private setInputLimit(el: HTMLElement, ev: JQuery.Event, limit: number) {
+    const clipboardEvent = ev.originalEvent as ClipboardEvent;
+    if (clipboardEvent.clipboardData) {
+      const clipboardLength = clipboardEvent.clipboardData.getData('text').length;
+      if (clipboardLength + el.innerText.length > limit) {
+        ev.preventDefault();
+      }
+    }
+  }
 }
 
 View.run(ComposeView);
