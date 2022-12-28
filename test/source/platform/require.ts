@@ -10,21 +10,20 @@ export const requireOpenpgp = (): typeof OpenPGP => {
   return require('openpgp') as unknown as typeof OpenPGP;
 };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+/* eslint-disable @typescript-eslint/no-explicit-any */
 export const requireMimeParser = (): any => {
   // const MimeParser = (window as any)['emailjs-mime-parser']();
   // return require('../../../../../extension/lib/emailjs/emailjs-mime-parser'); // todo
   return undefined; // the above does not work, would have to import directly from npm, but we have made custom edits to the lib so not feasible now
 };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const requireMimeBuilder = (): any => {
   // const MimeBuilder = (window as any)['emailjs-mime-builder'];
   return undefined; // todo
 };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const requireIso88592 = (): any => {
   // (window as any).iso88592
   return undefined; // todo
 };
+/* eslint-enable @typescript-eslint/no-explicit-any */

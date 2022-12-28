@@ -3,21 +3,21 @@
 import { Key } from '../core/crypto/key';
 
 export class KeyCache {
-
-  public static setDecrypted = (k: Key) => { // eslint-disable-line @typescript-eslint/no-unused-vars
+  /* eslint-disable @typescript-eslint/no-unused-vars */
+  public static setDecrypted = (k: Key) => {
     // tests don't need this
   };
 
-  public static getDecrypted = (longid: string): Key | undefined => { // eslint-disable-line @typescript-eslint/no-unused-vars
+  public static getDecrypted = (longid: string): Key | undefined => {
     return undefined; // tests don't need this
   };
 
-  public static setArmored = (armored: string, k: Key) => { // eslint-disable-line @typescript-eslint/no-unused-vars
+  public static setArmored = (armored: string, k: Key) => {
     // tests don't need this
   };
 
-  public static getArmored = (armored: string): Key | undefined => { // eslint-disable-line @typescript-eslint/no-unused-vars
+  public static getArmored = (armored: string): Key | undefined => {
     return undefined; // tests don't need this
   };
-
+  /* eslint-enable @typescript-eslint/no-unused-vars */
 }
