@@ -476,11 +476,8 @@ export class GmailElementReplacer implements WebmailElementReplacer {
                   nRenderedAttachments
                 );
               } else if (openpgpType && ['encryptedMsg', 'signedMsg'].includes(openpgpType.type)) {
-                msgEl = this.updateMsgBodyEl_DANGEROUSLY(
-                  msgEl,
-                  'append',
-                  this.factory.embeddedMsg(openpgpType.type, '', msgId, false, senderEmail)
-                ); // xss-safe-factory
+                // prettier-ignore
+                msgEl = this.updateMsgBodyEl_DANGEROUSLY(msgEl, 'append', this.factory.embeddedMsg(openpgpType.type, '', msgId, false, senderEmail)); // xss-safe-factory
               } else {
                 attachmentSel.show().children('.attachment_loader').text('Unknown OpenPGP format');
                 nRenderedAttachments++;
@@ -489,11 +486,8 @@ export class GmailElementReplacer implements WebmailElementReplacer {
                 console.debug('processAttachments() try -> awaiting done and processed');
               }
             } else {
-              msgEl = this.updateMsgBodyEl_DANGEROUSLY(
-                msgEl,
-                'set',
-                this.factory.embeddedMsg('encryptedMsg', '', msgId, false, senderEmail)
-              ); // xss-safe-factory
+              // prettier-ignore
+              msgEl = this.updateMsgBodyEl_DANGEROUSLY(msgEl, 'set', this.factory.embeddedMsg('encryptedMsg', '', msgId, false, senderEmail)); // xss-safe-factory
             }
           } else if (treatAs === 'publicKey') {
             // todo - pubkey should be fetched in pgp_pubkey.js
@@ -623,11 +617,8 @@ export class GmailElementReplacer implements WebmailElementReplacer {
       data: Buf.fromUint8(downloadedAttachment.data.subarray(0, 1000)).toBase64Str()
     }); // base64 for FF, see #2587
     if (openpgpType && openpgpType.type === 'publicKey') {
-      this.updateMsgBodyEl_DANGEROUSLY(
-        msgEl,
-        'after',
-        this.factory.embeddedPubkey(downloadedAttachment.data.toUtfStr(), isOutgoing)
-      ); // xss-safe-factory
+      // prettier-ignore
+      this.updateMsgBodyEl_DANGEROUSLY(msgEl, 'after', this.factory.embeddedPubkey(downloadedAttachment.data.toUtfStr(), isOutgoing)); // xss-safe-factory
     } else {
       attachmentSel
         .show()
@@ -659,11 +650,8 @@ export class GmailElementReplacer implements WebmailElementReplacer {
       nRenderedAttachments++;
       return nRenderedAttachments;
     }
-    this.updateMsgBodyEl_DANGEROUSLY(
-      msgEl,
-      'append',
-      this.factory.embeddedBackup(downloadedAttachment.data.toUtfStr())
-    ); // xss-safe-factory
+    // prettier-ignore
+    this.updateMsgBodyEl_DANGEROUSLY(msgEl, 'append', this.factory.embeddedBackup(downloadedAttachment.data.toUtfStr())); // xss-safe-factory
     return nRenderedAttachments;
   };
 
@@ -708,13 +696,9 @@ export class GmailElementReplacer implements WebmailElementReplacer {
    *
    * new_html_content must be XSS safe
    */
-  private updateMsgBodyEl_DANGEROUSLY(
-    el: HTMLElement | JQueryEl,
-    method: 'set' | 'append' | 'after',
-    newHtmlContent_MUST_BE_XSS_SAFE: string
-  ): JQueryEl {
+  // prettier-ignore
+  private updateMsgBodyEl_DANGEROUSLY(el: HTMLElement | JQueryEl, method: 'set' | 'append' | 'after', newHtmlContent_MUST_BE_XSS_SAFE: string): JQueryEl { // xss-dangerous-function
     /* eslint-enable @typescript-eslint/naming-convention */
-    // xss-dangerous-function
     // Messages in Gmail UI have to be replaced in a very particular way
     // The first time we update element, it should be completely replaced so that Gmail JS will lose reference to the original element and stop re-rendering it
     // Gmail message re-rendering causes the PGP message to flash back and forth, confusing the user and wasting cpu time

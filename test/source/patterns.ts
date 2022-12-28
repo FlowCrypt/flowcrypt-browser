@@ -26,7 +26,9 @@ const getAllFilesInDir = (dir: string, filePattern: RegExp): string[] => {
 };
 
 const hasXssComment = (line: string) => {
-  return /\/\/ xss-(known-source|direct|escaped|safe-factory|safe-value|sanitized|none|reinsert|dangerous-function)/.test(line);
+  return /\/\/ xss-(known-source|direct|escaped|safe-factory|safe-value|sanitized|none|reinsert|dangerous-function)/.test(
+    line
+  );
 };
 
 const hasErrHandledComment = (line: string) => {
@@ -47,19 +49,29 @@ const validateTypeScriptLine = (line: string, location: string) => {
     errsFound++;
   }
   if (line.match(/setInterval|setTimeout/) && !hasErrHandledComment(line)) {
-    console.error(`errors not handled in ${location} (make sure to use Catch.setHandledTimeout or Catch.setHandledInterval):\n${line}\n`);
+    console.error(
+      `errors not handled in ${location} (make sure to use Catch.setHandledTimeout or Catch.setHandledInterval):\n${line}\n`
+    );
     errsFound++;
   }
-  if (line.match(/^ {2}(public |private |protected |static |async )*((?!constructor)[a-z][a-zA-Z0-9]+)\([^;]+[^>] \{$/)) {
-    console.error(`wrongly using class method, which can cause binding loss (use fat arrow method properties instead) #1:\n${line}\n`);
+  if (
+    line.match(/^ {2}(public |private |protected |static |async )*((?!constructor)[a-z][a-zA-Z0-9]+)\([^;]+[^>] \{$/)
+  ) {
+    console.error(
+      `wrongly using class method, which can cause binding loss (use fat arrow method properties instead) #1:\n${line}\n`
+    );
     errsFound++;
   }
   if (line.match(/^ {2}(public |private |protected |static )+?[a-z][a-zA-Z0-9]+ = (async )?\(.+\)(: .+)? => .+;$/)) {
-    console.error(`don't use single-line "method = (arg) => result" class methods, give them a method body and a return statement "method = (arg) => { return result; }":\n${line}\n`);
+    console.error(
+      `don't use single-line "method = (arg) => result" class methods, give them a method body and a return statement "method = (arg) => { return result; }":\n${line}\n`
+    );
     errsFound++;
   }
   if (line.match(/^ {2}(public |private |protected |static |async )*((?!constructor)[a-z][a-zA-Z0-9]+)\([^)]*\) \{$/)) {
-    console.error(`wrongly using class method, which can cause binding loss (use fat arrow method properties instead) #2:\n${line}\n`);
+    console.error(
+      `wrongly using class method, which can cause binding loss (use fat arrow method properties instead) #2:\n${line}\n`
+    );
     errsFound++;
   }
 };
@@ -78,8 +90,22 @@ for (const srcFilePath of getAllFilesInDir('./extension', /\.ts$/)) {
  * check for problems in manifest file (because dynamically generated)
  * https://github.com/FlowCrypt/flowcrypt-browser/issues/2934
  */
-const expectedConsumerPermissions = ["storage", "tabs", "https://*.google.com/*", "https://www.googleapis.com/*", "https://flowcrypt.com/*", "unlimitedStorage"];
-const expectedEnterprisePermissions = ["storage", "tabs", "https://*.google.com/*", "https://*.googleapis.com/*", "https://flowcrypt.com/*", "unlimitedStorage"];
+const expectedConsumerPermissions = [
+  'storage',
+  'tabs',
+  'https://*.google.com/*',
+  'https://www.googleapis.com/*',
+  'https://flowcrypt.com/*',
+  'unlimitedStorage'
+];
+const expectedEnterprisePermissions = [
+  'storage',
+  'tabs',
+  'https://*.google.com/*',
+  'https://*.googleapis.com/*',
+  'https://flowcrypt.com/*',
+  'unlimitedStorage'
+];
 for (const buildType of ['chrome-consumer', 'chrome-enterprise', 'firefox-consumer']) {
   const manifest = JSON.parse(readFileSync(`./build/${buildType}/manifest.json`).toString());
   const expectedPermissions = buildType.includes('consumer')
@@ -93,7 +119,9 @@ for (const buildType of ['chrome-consumer', 'chrome-enterprise', 'firefox-consum
       }
     }
   }
-  const gmailCs = manifest.content_scripts.find((cs: { matches: string }) => cs.matches.includes('https://mail.google.com/*'));
+  const gmailCs = manifest.content_scripts.find((cs: { matches: string }) =>
+    cs.matches.includes('https://mail.google.com/*')
+  );
   if (!gmailCs || !gmailCs.css.length || !gmailCs.js.length) {
     console.error(`Missing content_scripts declaration for Gmail in ${buildType}/manifest.json`);
     errsFound++;

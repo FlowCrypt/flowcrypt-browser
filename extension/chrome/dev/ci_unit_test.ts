@@ -50,4 +50,4 @@ for (const lib of libs) {
   (window as any)[(lib as any).name] = lib;
 }
 (window as any).forge = forge;
-/* eslint-enable */
+/* eslint-enable @typescript-eslint/no-explicit-any */

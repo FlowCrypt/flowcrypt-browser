@@ -14,7 +14,6 @@ export type SanitizeImgHandling = 'IMG-DEL' | 'IMG-KEEP' | 'IMG-TO-LINK';
  *  - in node it uses sanitize-html
  */
 export class Xss {
-   
   private static ALLOWED_HTML_TAGS = [
     'p',
     'div',
@@ -50,7 +49,6 @@ export class Xss {
   private static FORBID_ATTR = ['background'];
   private static HREF_REGEX_CACHE: RegExp | undefined;
   private static FORBID_CSS_STYLE = /z-index:[^;]+;|position:[^;]+;|background[^;]+;/g;
-  /* eslint-enable @typescript-eslint/naming-convention */
 
   public static sanitizeRender = (selector: string | HTMLElement | JQuery<HTMLElement>, dirtyHtml: string) => {
     // browser-only (not on node)
@@ -251,13 +249,13 @@ export class Xss {
       .replace(/&amp;/g, '&');
   };
 
-  public static replaceElementDANGEROUSLY = (el: Element, safeHtml: string) => {
-    // xss-dangerous-function - must pass a sanitized value
+  // prettier-ignore
+  public static replaceElementDANGEROUSLY = (el: Element, safeHtml: string) => { // xss-dangerous-function - must pass a sanitized value
     el.outerHTML = safeHtml; // xss-dangerous-function - must pass a sanitized value
   };
 
-  public static setElementContentDANGEROUSLY = (el: Element, safeHtml: string) => {
-    // xss-dangerous-function - must pass a sanitized value
+  // prettier-ignore
+  public static setElementContentDANGEROUSLY = (el: Element, safeHtml: string) => { // xss-dangerous-function - must pass a sanitized value
     el.innerHTML = safeHtml; // xss-dangerous-function - must pass a sanitized value
   };
 
