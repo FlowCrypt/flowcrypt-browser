@@ -25,7 +25,7 @@
       "source.fixAll.stylelint": true
     },
     "diffEditor.wordWrap": "on",
-    "editor.rulers": [120]
+    "editor.rulers": [140]
   },
   "folders": [
     {

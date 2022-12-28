@@ -129,7 +129,9 @@ export const defineUnitBrowserTests = (testVariant: TestVariant, testWithBrowser
 
     const allUnitTests: UnitTest[] = [];
     for (const filename of readdirSync(browserUnitTestsFolder)) {
-      allUnitTests.push(...parseTestFile(filename));
+      if (!filename.startsWith('.')) {
+        allUnitTests.push(...parseTestFile(filename));
+      }
     }
     const markedAsOnly: UnitTest[] = allUnitTests.filter(unitTest => unitTest.only);
     if (!markedAsOnly.length) {
