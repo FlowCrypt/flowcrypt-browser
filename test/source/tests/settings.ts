@@ -46,7 +46,6 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         await SettingsPageRecipe.toggleScreen(settingsPage, 'basic');
       })
     );
-
     ava.default(
       'settings - attester shows my emails',
       testWithBrowser('compatibility', async (t, browser) => {
@@ -65,7 +64,6 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         await SettingsPageRecipe.toggleScreen(settingsPage, 'basic');
       })
     );
-
     ava.default(
       'settings - attester diagnostics page shows mismatch information correctly',
       testWithBrowser(undefined, async (t, browser) => {
@@ -95,7 +93,6 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         );
       })
     );
-
     ava.default(
       'settings - verify key presense 1pp1',
       testWithBrowser('compatibility', async (t, browser) => {
@@ -103,24 +100,14 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         await SettingsPageRecipe.verifyMyKeyPage(settingsPage, 'flowcrypt.compatibility.1pp1', 'button');
       })
     );
-
     ava.default(
       'settings - test pass phrase',
       testWithBrowser('compatibility', async (t, browser) => {
         const settingsPage = await browser.newPage(t, TestUrls.extensionSettings('flowcrypt.compatibility@gmail.com'));
-        await SettingsPageRecipe.passphraseTest(
-          settingsPage,
-          Config.key('flowcrypt.wrong.passphrase').passphrase,
-          false
-        );
-        await SettingsPageRecipe.passphraseTest(
-          settingsPage,
-          Config.key('flowcrypt.compatibility.1pp1').passphrase,
-          true
-        );
+        await SettingsPageRecipe.passphraseTest(settingsPage, Config.key('flowcrypt.wrong.passphrase').passphrase, false);
+        await SettingsPageRecipe.passphraseTest(settingsPage, Config.key('flowcrypt.compatibility.1pp1').passphrase, true);
       })
     );
-
     ava.default(
       'settings - clarify passphrase prompt text',
       testWithBrowser('compatibility', async (t, browser) => {
@@ -137,9 +124,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         await passphrasePage.close();
         passphrasePage = await browser.newPage(t, baseUrl.concat('&type=message'));
         await passphrasePage.waitForSelTestState('ready');
-        expect(await passphrasePage.read('@passphrase-text')).to.equal(
-          'Enter FlowCrypt pass phrase to read encrypted email'
-        );
+        expect(await passphrasePage.read('@passphrase-text')).to.equal('Enter FlowCrypt pass phrase to read encrypted email');
         await passphrasePage.close();
         passphrasePage = await browser.newPage(t, baseUrl.concat('&type=draft'));
         await passphrasePage.waitForSelTestState('ready');
@@ -151,9 +136,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         await passphrasePage.close();
         passphrasePage = await browser.newPage(t, baseUrl.concat('&type=quote'));
         await passphrasePage.waitForSelTestState('ready');
-        expect(await passphrasePage.read('@passphrase-text')).to.equal(
-          'Enter FlowCrypt pass phrase to load quoted content'
-        );
+        expect(await passphrasePage.read('@passphrase-text')).to.equal('Enter FlowCrypt pass phrase to load quoted content');
         await passphrasePage.close();
         passphrasePage = await browser.newPage(t, baseUrl.concat('&type=backup'));
         await passphrasePage.waitForSelTestState('ready');
@@ -161,10 +144,8 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         await passphrasePage.close();
       })
     );
-
     ava.default.todo('settings - verify 2pp1 key presense');
     // await tests.settings_my_key_tests(settingsPage, 'flowcrypt.compatibility.2pp1', 'link');
-
     ava.default(
       'settings - feedback form',
       testWithBrowser('compatibility', async (t, browser) => {
@@ -172,15 +153,11 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         await settingsPage.waitAndClick('@action-open-modules-help');
         await settingsPage.waitAll('@dialog');
         const helpFrame = await settingsPage.getFrame(['help.htm']);
-        await helpFrame.waitAndType(
-          '@input-feedback-message',
-          'automated puppeteer test: help form from settings footer'
-        );
+        await helpFrame.waitAndType('@input-feedback-message', 'automated puppeteer test: help form from settings footer');
         await helpFrame.waitAndClick('@action-feedback-send');
         await helpFrame.waitAndRespondToModal('info', 'confirm', 'Message sent!');
       })
     );
-
     ava.default(
       'settings - view contact public key',
       testWithBrowser('compatibility', async (t, browser) => {
@@ -212,7 +189,6 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         await SettingsPageRecipe.toggleScreen(settingsPage, 'basic');
       })
     );
-
     ava.default(
       'settings - update contact public key',
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
@@ -235,17 +211,11 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         await pubkeyFrame.waitForContent('@container-pgp-pubkey', `${recipientEmail} added`);
         await contactsFrame.waitAndClick('@action-back-to-contact-list', { confirmGone: true });
         await contactsFrame.waitAndClick(`@action-show-email-${recipientEmail.replace(/[^a-z0-9]+/g, '')}`);
-        await contactsFrame.waitForContent(
-          '@page-contacts',
-          'openpgp - expired - 8EC7 8F04 3CEB 0224 98AF D477 1E62 ED6D 15A2 5921'
-        );
+        await contactsFrame.waitForContent('@page-contacts', 'openpgp - expired - 8EC7 8F04 3CEB 0224 98AF D477 1E62 ED6D 15A2 5921');
         await contactsFrame.waitAndClick(`@action-show-pubkey-8EC78F043CEB022498AFD4771E62ED6D15A25921-openpgp`, {
           confirmGone: true
         });
-        await contactsFrame.waitForContent(
-          '@container-pubkey-details',
-          'Fingerprint: 8EC7 8F04 3CEB 0224 98AF D477 1E62 ED6D 15A2 5921'
-        );
+        await contactsFrame.waitForContent('@container-pubkey-details', 'Fingerprint: 8EC7 8F04 3CEB 0224 98AF D477 1E62 ED6D 15A2 5921');
         await contactsFrame.waitForContent('@container-pubkey-details', 'Created on: Thu Jul 16 2020 09:56:40');
         await contactsFrame.waitForContent('@container-pubkey-details', 'Expiration: Thu Jul 16 2020 09:56:42');
         await contactsFrame.waitForContent('@container-pubkey-details', 'Expired: yes');
@@ -257,23 +227,16 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         await contactsFrame.waitAndType('@input-public-key', testConstants.newHasOlderKeyOnAttester);
         await contactsFrame.waitAndClick('@action-save-public-key', { confirmGone: true });
         await contactsFrame.waitAndClick(`@action-show-email-${recipientEmail.replace(/[^a-z0-9]+/g, '')}`);
-        await contactsFrame.waitForContent(
-          '@page-contacts',
-          'openpgp - expired - 8EC7 8F04 3CEB 0224 98AF D477 1E62 ED6D 15A2 5921'
-        );
+        await contactsFrame.waitForContent('@page-contacts', 'openpgp - expired - 8EC7 8F04 3CEB 0224 98AF D477 1E62 ED6D 15A2 5921');
         await contactsFrame.waitAndClick(`@action-show-pubkey-8EC78F043CEB022498AFD4771E62ED6D15A25921-openpgp`, {
           confirmGone: true
         });
-        await contactsFrame.waitForContent(
-          '@container-pubkey-details',
-          'Fingerprint: 8EC7 8F04 3CEB 0224 98AF D477 1E62 ED6D 15A2 5921'
-        );
+        await contactsFrame.waitForContent('@container-pubkey-details', 'Fingerprint: 8EC7 8F04 3CEB 0224 98AF D477 1E62 ED6D 15A2 5921');
         await contactsFrame.waitForContent('@container-pubkey-details', 'Created on: Thu Jul 16 2020 09:56:40');
         await contactsFrame.waitForContent('@container-pubkey-details', 'Expiration: Thu Jul 16 2020 09:57:40');
         await contactsFrame.waitForContent('@container-pubkey-details', 'Expired: yes');
       })
     );
-
     ava.default(
       'settings - import revoked key fails but the revocation info is saved',
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
@@ -319,7 +282,6 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         expect(revocationAfter).not.to.be.an('undefined'); // revocation is saved in the database
       })
     );
-
     ava.default(
       'settings - remove public keys from contact',
       testWithBrowser('compatibility', async (t, browser) => {
@@ -347,13 +309,16 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
             const req = tx.objectStore('pubkeys').get('E8F0517BA6D7DAB6081C96E4ADAC279C95093207');
             (window as any).ContactStore.setReqPipe(req, resolve, reject);
           });
-          const contactsSize: number = await (window as any).ContactStore.search(db, {
-            hasPgp: true,
-            substring: 'flowcrypt'
-          }).length;
+          const contactsSize = (
+            await (window as any).ContactStore.search(db, {
+              hasPgp: true,
+              substring: 'flowcrypt'
+            })
+          ).length;
           /* eslint-enable @typescript-eslint/no-explicit-any */
           return { pubkey7FDE685548AEA788, pubkeyADAC279C95093207, contactsSize };
         });
+        console.log('got contacts size ' + foundKeys.contactsSize);
         expect(foundKeys.contactsSize).to.equal(1);
         expect(foundKeys.pubkey7FDE685548AEA788.fingerprint).to.equal('5520CACE2CB61EA713E5B0057FDE685548AEA788');
         expect(foundKeys.pubkeyADAC279C95093207.fingerprint).to.equal('E8F0517BA6D7DAB6081C96E4ADAC279C95093207');
@@ -388,10 +353,12 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
             const req = tx.objectStore('pubkeys').get('E8F0517BA6D7DAB6081C96E4ADAC279C95093207');
             (window as any).ContactStore.setReqPipe(req, resolve, reject);
           });
-          const contactsSize: number = await (window as any).ContactStore.search(db, {
-            hasPgp: true,
-            substring: 'flowcrypt'
-          }).length;
+          const contactsSize = (
+            await (window as any).ContactStore.search(db, {
+              hasPgp: true,
+              substring: 'flowcrypt'
+            })
+          ).length;
           /* eslint-enable @typescript-eslint/no-explicit-any */
           return { pubkey7FDE685548AEA788, pubkeyADAC279C95093207, contactsSize };
         });
@@ -421,10 +388,12 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
             const req = tx.objectStore('pubkeys').get('E8F0517BA6D7DAB6081C96E4ADAC279C95093207');
             (window as any).ContactStore.setReqPipe(req, resolve, reject);
           });
-          const contactsSize: number = await (window as any).ContactStore.search(db, {
-            hasPgp: true,
-            substring: 'flowcrypt'
-          }).length;
+          const contactsSize = (
+            await (window as any).ContactStore.search(db, {
+              hasPgp: true,
+              substring: 'flowcrypt'
+            })
+          ).length;
           /* eslint-disable @typescript-eslint/no-explicit-any */
           return { pubkey7FDE685548AEA788, pubkeyADAC279C95093207, contactsSize };
         });
@@ -437,7 +406,6 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         await dbPage.close();
       })
     );
-
     ava.default(
       'settings - my key page - primary + secondary',
       testWithBrowser('compatibility', async (t, browser) => {
@@ -446,7 +414,6 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         await SettingsPageRecipe.verifyMyKeyPage(settingsPage, 'flowcrypt.compatibility.2pp1', 'link', 1);
       })
     );
-
     ava.default(
       'settings - my key page - remove key',
       testWithBrowser('compatibility', async (t, browser) => {
@@ -461,7 +428,6 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         await settingsPage.notPresent('@action-remove-key-0');
       })
     );
-
     ava.default(
       'settings - my key page - privileged frames and action buttons should be hidden when using key manager test',
       testWithBrowser(undefined, async (t, browser) => {
@@ -484,9 +450,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         // test for direct access at my_key_update.htm
         const myKeyUpdateFrame = await browser.newPage(
           t,
-          TestUrls.extension(
-            `chrome/settings/modules/my_key_update.htm?placement=settings&acctEmail=${acct}&fingerprint=${fingerprint}`
-          )
+          TestUrls.extension(`chrome/settings/modules/my_key_update.htm?placement=settings&acctEmail=${acct}&fingerprint=${fingerprint}`)
         );
         await myKeyUpdateFrame.waitForContent('@container-err-title', 'Error: Insufficient Permission');
         // test for direct access at my add_key.htm
@@ -494,15 +458,10 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
           t,
           TestUrls.extension(`chrome/settings/modules/add_key.htm?placement=settings&acctEmail=${acct}&parentTabId=1`)
         );
-        await addKeyFrame.waitForContent(
-          '@container-err-text',
-          'Please contact your IT staff if you wish to update your keys'
-        );
+        await addKeyFrame.waitForContent('@container-err-text', 'Please contact your IT staff if you wish to update your keys');
       })
     );
-
     ava.default.todo('settings - edit contact public key');
-
     ava.default(
       'settings - change passphrase - current in local storage',
       testWithBrowser(undefined, async (t, browser) => {
@@ -516,7 +475,6 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         });
       })
     );
-
     ava.default(
       'settings - change passphrase - current in session known',
       testWithBrowser(undefined, async (t, browser) => {
@@ -556,15 +514,13 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         });
       })
     );
-
     ava.default(
       'settings - change passphrase honoring FORBID_STORING_PASS_PHRASE ClientConfiguration',
       testWithBrowser(undefined, async (t, browser) => {
         const acctEmail = 'user@forbid-storing-passphrase-client-configuration.flowcrypt.test';
         const { settingsPage, passphrase } = await BrowserRecipe.setUpFcForbidPpStoringAcct(t, browser);
         const {
-          cryptup_userforbidstoringpassphraseclientconfigurationflowcrypttest_passphrase_B8F687BCDE14435A:
-            savedPassphrase1,
+          cryptup_userforbidstoringpassphraseclientconfigurationflowcrypttest_passphrase_B8F687BCDE14435A: savedPassphrase1,
           cryptup_userforbidstoringpassphraseclientconfigurationflowcrypttest_keys: keys
         } = await settingsPage.getFromLocalStorage([
           'cryptup_userforbidstoringpassphraseclientconfigurationflowcrypttest_passphrase_B8F687BCDE14435A',
@@ -581,21 +537,17 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
           enterPp: { passphrase, isForgetPpHidden: true, isForgetPpChecked: true },
           expectedContent: 'changed correctly if this can be decrypted'
         });
-        const {
-          cryptup_userforbidstoringpassphraseclientconfigurationflowcrypttest_passphrase_B8F687BCDE14435A:
-            savedPassphrase2
-        } = await settingsPage.getFromLocalStorage([
-          'cryptup_userforbidstoringpassphraseclientconfigurationflowcrypttest_passphrase_B8F687BCDE14435A'
-        ]);
+        const { cryptup_userforbidstoringpassphraseclientconfigurationflowcrypttest_passphrase_B8F687BCDE14435A: savedPassphrase2 } =
+          await settingsPage.getFromLocalStorage([
+            'cryptup_userforbidstoringpassphraseclientconfigurationflowcrypttest_passphrase_B8F687BCDE14435A'
+          ]);
         expect(savedPassphrase2).to.be.an('undefined');
         // change pp - should not ask for pp because already in session
         await SettingsPageRecipe.changePassphrase(settingsPage, undefined, newPp);
-        const {
-          cryptup_userforbidstoringpassphraseclientconfigurationflowcrypttest_passphrase_B8F687BCDE14435A:
-            savedPassphrase3
-        } = await settingsPage.getFromLocalStorage([
-          'cryptup_userforbidstoringpassphraseclientconfigurationflowcrypttest_passphrase_B8F687BCDE14435A'
-        ]);
+        const { cryptup_userforbidstoringpassphraseclientconfigurationflowcrypttest_passphrase_B8F687BCDE14435A: savedPassphrase3 } =
+          await settingsPage.getFromLocalStorage([
+            'cryptup_userforbidstoringpassphraseclientconfigurationflowcrypttest_passphrase_B8F687BCDE14435A'
+          ]);
         expect(savedPassphrase3).to.be.an('undefined');
         // test decrypt - should not ask for pp because already in session
         await InboxPageRecipe.checkDecryptMsg(t, browser, {
@@ -613,7 +565,6 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         });
       })
     );
-
     ava.default(
       'settings - change passphrase - current in session unknown',
       testWithBrowser(undefined, async (t, browser) => {
@@ -638,30 +589,24 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         });
       })
     );
-
     ava.default(
       'settings - Catch.reportErr reports an error',
       testWithBrowser('compatibility', async (t, browser) => {
         const settingsPage = await browser.newPage(t, TestUrls.extensionSettings('flowcrypt.compatibility@gmail.com'));
         await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
-        const experimentalFrame = await SettingsPageRecipe.awaitNewPageFrame(
-          settingsPage,
-          '@action-open-module-experimental',
-          ['experimental.htm']
-        );
+        const experimentalFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-module-experimental', [
+          'experimental.htm'
+        ]);
         await experimentalFrame.waitAndClick('@action-throw-err'); // mock tests will verify that err was reported to mock backend in `test.ts`
         internalTestState.expectIntentionalErrReport = true;
       })
     );
-
     ava.default(
       'settings - attachment previews are rendered according to their types',
       testWithBrowser('compatibility', async (t, browser) => {
         const inboxPage = await browser.newPage(
           t,
-          TestUrls.extension(
-            `chrome/settings/inbox/inbox.htm?acctEmail=flowcrypt.compatibility@gmail.com&threadId=174ab0ba9643b4fa`
-          )
+          TestUrls.extension(`chrome/settings/inbox/inbox.htm?acctEmail=flowcrypt.compatibility@gmail.com&threadId=174ab0ba9643b4fa`)
         );
         // image
         const attachmentImage = await inboxPage.getFrame(['attachment.htm', 'name=tiny-face.png']);
@@ -675,19 +620,14 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         await attachmentText.waitForSelTestState('ready');
         await attachmentText.click('body');
         const attachmentPreviewText = await inboxPage.getFrame(['attachment_preview.htm']);
-        await attachmentPreviewText.waitForContent(
-          '#attachment-preview-container .attachment-preview-txt',
-          'small text file'
-        );
+        await attachmentPreviewText.waitForContent('#attachment-preview-container .attachment-preview-txt', 'small text file');
         await inboxPage.press('Escape');
         // pdf
         const attachmentPdf = await inboxPage.getFrame(['attachment.htm', 'name=small.pdf']);
         await attachmentPdf.waitForSelTestState('ready');
         await attachmentPdf.click('body');
         const attachmentPreviewPdf = await inboxPage.getFrame(['attachment_preview.htm']);
-        await attachmentPreviewPdf.waitAll(
-          '#attachment-preview-container.attachment-preview-pdf .attachment-preview-pdf-page'
-        );
+        await attachmentPreviewPdf.waitAll('#attachment-preview-container.attachment-preview-pdf .attachment-preview-pdf-page');
         await inboxPage.press('Escape');
         // no preview
         const attachmentOther = await inboxPage.getFrame(['attachment.htm', 'name=unknown']);
@@ -698,12 +638,9 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
           '#attachment-preview-container .attachment-preview-unavailable',
           'No preview available'
         );
-        await attachmentPreviewOther.waitAll(
-          '#attachment-preview-container .attachment-preview-unavailable #attachment-preview-download'
-        );
+        await attachmentPreviewOther.waitAll('#attachment-preview-container .attachment-preview-unavailable #attachment-preview-download');
       })
     );
-
     ava.default(
       'settings - attachment previews with entering pass phrase',
       testWithBrowser('compatibility', async (t, browser) => {
@@ -712,9 +649,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         await SettingsPageRecipe.forgetAllPassPhrasesInStorage(settingsPage, k.passphrase);
         const inboxPage = await browser.newPage(
           t,
-          TestUrls.extension(
-            `chrome/settings/inbox/inbox.htm?acctEmail=flowcrypt.compatibility@gmail.com&threadId=174ab0ba9643b4fa`
-          )
+          TestUrls.extension(`chrome/settings/inbox/inbox.htm?acctEmail=flowcrypt.compatibility@gmail.com&threadId=174ab0ba9643b4fa`)
         );
         const attachmentImage = await inboxPage.getFrame(['attachment.htm', 'name=tiny-face.png']);
         await attachmentImage.waitForSelTestState('ready');
@@ -726,7 +661,6 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         await attachmentPreviewImage.waitAll('#attachment-preview-container img.attachment-preview-img');
       })
     );
-
     ava.default(
       'settings - pgp/mime preview and download attachment',
       testWithBrowser('compatibility', async (t, browser) => {
@@ -734,9 +668,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         Util.deleteFileIfExists(downloadedAttachmentFilename);
         const inboxPage = await browser.newPage(
           t,
-          TestUrls.extension(
-            `chrome/settings/inbox/inbox.htm?acctEmail=flowcrypt.compatibility@gmail.com&threadId=16e8b01f136c3d28`
-          )
+          TestUrls.extension(`chrome/settings/inbox/inbox.htm?acctEmail=flowcrypt.compatibility@gmail.com&threadId=16e8b01f136c3d28`)
         );
         const pgpBlockFrame = await inboxPage.getFrame(['pgp_block.htm']);
         // check if download is awailable
@@ -754,18 +686,10 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         Util.deleteFileIfExists(downloadedAttachmentFilename);
       })
     );
-
-    const checkIfFileDownloadsCorrectly = async (
-      t: AvaContext,
-      browser: BrowserHandle,
-      threadId: string,
-      fileName: string
-    ) => {
+    const checkIfFileDownloadsCorrectly = async (t: AvaContext, browser: BrowserHandle, threadId: string, fileName: string) => {
       const inboxPage = await browser.newPage(
         t,
-        TestUrls.extension(
-          `chrome/settings/inbox/inbox.htm?acctEmail=flowcrypt.compatibility@gmail.com&threadId=${threadId}`
-        )
+        TestUrls.extension(`chrome/settings/inbox/inbox.htm?acctEmail=flowcrypt.compatibility@gmail.com&threadId=${threadId}`)
       );
       const attachment = await inboxPage.getFrame(['attachment.htm']);
       const downloadedFiles = await inboxPage.awaitDownloadTriggeredByClicking(async () => {
@@ -774,7 +698,6 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       expect(Object.keys(downloadedFiles)).contains(fileName);
       await inboxPage.close();
     };
-
     ava.default(
       'settings - check if downloaded attachment name is correct',
       testWithBrowser('compatibility', async (t, browser) => {
@@ -784,7 +707,6 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         await checkIfFileDownloadsCorrectly(t, browser, '182263bf9f105adf', "what's_up%253F.txt");
       })
     );
-
     ava.default(
       'settings - add unprotected key',
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
@@ -798,7 +720,6 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         );
       })
     );
-
     ava.default(
       'settings - add unprotected s/mime key',
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
@@ -813,7 +734,6 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         );
       })
     );
-
     ava.default(
       'settings - error modal when page parameter invalid',
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
@@ -822,13 +742,9 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
           TestUrls.extension(`chrome/settings/index.htm?acctEmail=ci.tests.gmail@flowcrypt.test&page=invalid`)
         );
         await Util.sleep(3);
-        await invalidParamModalPage.waitForContent(
-          '.swal2-html-container',
-          'An unexpected value was found for the page parameter'
-        );
+        await invalidParamModalPage.waitForContent('.swal2-html-container', 'An unexpected value was found for the page parameter');
       })
     );
-
     ava.default(
       'settings - my key page - update non-first private key',
       testWithBrowser(undefined, async (t, browser) => {
@@ -850,16 +766,10 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
           { isSavePassphraseChecked: false, isSavePassphraseHidden: false }
         );
         await settingsPage1.close();
-
-        await SettingsPageRecipe.addKeyTest(
-          t,
-          browser,
-          acctEmail,
-          testConstants.testKeyMultiple98acfa1eadab5b92,
-          '1234',
-          { isSavePassphraseChecked: true, isSavePassphraseHidden: false }
-        );
-
+        await SettingsPageRecipe.addKeyTest(t, browser, acctEmail, testConstants.testKeyMultiple98acfa1eadab5b92, '1234', {
+          isSavePassphraseChecked: true,
+          isSavePassphraseHidden: false
+        });
         const settingsPage = await browser.newPage(t, TestUrls.extensionSettings(acctEmail));
         await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
         // open key at index 1
@@ -878,14 +788,11 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
           clickOn: 'cancel'
         });
         const { cryptup_flowcrypttestkeymultiplegmailcom_passphrase_98ACFA1EADAB5B92: savedPassphrase } =
-          await settingsPage.getFromLocalStorage([
-            'cryptup_flowcrypttestkeymultiplegmailcom_passphrase_98ACFA1EADAB5B92'
-          ]);
+          await settingsPage.getFromLocalStorage(['cryptup_flowcrypttestkeymultiplegmailcom_passphrase_98ACFA1EADAB5B92']);
         expect(savedPassphrase).to.equal('1234');
         await settingsPage.close();
       })
     );
-
     ava.default(
       'settings - manual backup several keys to file with the same pass phrase',
       testWithBrowser(undefined, async (t, browser) => {
@@ -907,36 +814,22 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
           { isSavePassphraseChecked: false, isSavePassphraseHidden: false }
         );
         await settingsPage1.close();
-        await SettingsPageRecipe.addKeyTest(
-          t,
-          browser,
-          acctEmail,
-          testConstants.testKeyMultiple98acfa1eadab5b92,
-          '1234',
-          { isSavePassphraseChecked: true, isSavePassphraseHidden: false }
-        );
-        await SettingsPageRecipe.addKeyTest(
-          t,
-          browser,
-          acctEmail,
-          testConstants.testKeyMultipleSmimeCEA2D53BB9D24871,
-          '1234',
-          { isSavePassphraseChecked: true, isSavePassphraseHidden: false }
-        );
-        await SettingsPageRecipe.addKeyTest(
-          t,
-          browser,
-          acctEmail,
-          testConstants.testKeyMultipleSmimeA35068FD4E037879,
-          '1234',
-          { isSavePassphraseChecked: true, isSavePassphraseHidden: false }
-        );
+        await SettingsPageRecipe.addKeyTest(t, browser, acctEmail, testConstants.testKeyMultiple98acfa1eadab5b92, '1234', {
+          isSavePassphraseChecked: true,
+          isSavePassphraseHidden: false
+        });
+        await SettingsPageRecipe.addKeyTest(t, browser, acctEmail, testConstants.testKeyMultipleSmimeCEA2D53BB9D24871, '1234', {
+          isSavePassphraseChecked: true,
+          isSavePassphraseHidden: false
+        });
+        await SettingsPageRecipe.addKeyTest(t, browser, acctEmail, testConstants.testKeyMultipleSmimeA35068FD4E037879, '1234', {
+          isSavePassphraseChecked: true,
+          isSavePassphraseHidden: false
+        });
         // opening backup.htm independently of settings/index.htm page limits functionality but sufficient for this test
         const backupPage = await browser.newPage(
           t,
-          TestUrls.extension(
-            `/chrome/settings/modules/backup.htm?acctEmail=${acctEmail}&action=backup_manual&parentTabId=1%3A0`
-          )
+          TestUrls.extension(`/chrome/settings/modules/backup.htm?acctEmail=${acctEmail}&action=backup_manual&parentTabId=1%3A0`)
         );
         // OpenPGP keys are checked, x509 keys are unchecked
         expect(await backupPage.isChecked('[data-id="47FB03183E03A8ED44E3BBFCCEA2D53BB9D24871"]')).to.equal(false);
@@ -951,15 +844,11 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         await backupPage.waitAndClick('@input-backup-step3manual-file');
         await backupPage.waitAndClick('[data-id="CB0485FE44FC22FF09AF0DB31B383D0334E38B28"]'); // uncheck
         // backing up to file when only one key is checked
-        const backupFileRawData1 = await backupPage.awaitDownloadTriggeredByClicking(
-          '@action-backup-step3manual-continue'
-        );
+        const backupFileRawData1 = await backupPage.awaitDownloadTriggeredByClicking('@action-backup-step3manual-continue');
         const { keys: keys1 } = await KeyUtil.readMany(
           Buf.fromUtfStr(
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            backupFileRawData1[
-              'flowcrypt-backup-flowcrypttestkeymultiplegmailcom-515431151DDD3EA232B37A4C98ACFA1EADAB5B92.asc'
-            ]!.toString()
+            backupFileRawData1['flowcrypt-backup-flowcrypttestkeymultiplegmailcom-515431151DDD3EA232B37A4C98ACFA1EADAB5B92.asc']!.toString()
           )
         );
         expect(keys1.length).to.equal(1);
@@ -968,18 +857,12 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         await backupPage.waitAndRespondToModal('info', 'confirm', 'Your private key has been successfully backed up');
         await backupPage.waitAndClick('[data-id="CB0485FE44FC22FF09AF0DB31B383D0334E38B28"]'); // check
         // backing up to file when two keys are checked
-        const backupFileRawData2 = await backupPage.awaitDownloadTriggeredByClicking(
-          '@action-backup-step3manual-continue',
-          2
-        );
-        const { keys: keys2 } = await KeyUtil.readMany(
-          Buf.fromUtfStr(Buf.concat(Object.values(backupFileRawData2)).toString())
-        );
+        const backupFileRawData2 = await backupPage.awaitDownloadTriggeredByClicking('@action-backup-step3manual-continue', 2);
+        const { keys: keys2 } = await KeyUtil.readMany(Buf.fromUtfStr(Buf.concat(Object.values(backupFileRawData2)).toString()));
         expect(keys2.length).to.equal(2);
         await backupPage.close();
       })
     );
-
     ava.default(
       'settings - manual backup several keys to inbox with the same strong pass phrase',
       testWithBrowser(undefined, async (t, browser) => {
@@ -1009,9 +892,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         // opening backup.htm independently of settings/index.htm page limits functionality but sufficient for this test
         const backupPage = await browser.newPage(
           t,
-          TestUrls.extension(
-            `/chrome/settings/modules/backup.htm?acctEmail=${acctEmail}&action=backup_manual&parentTabId=1%3A0`
-          )
+          TestUrls.extension(`/chrome/settings/modules/backup.htm?acctEmail=${acctEmail}&action=backup_manual&parentTabId=1%3A0`)
         );
         expect(await backupPage.isChecked('[data-id="CB0485FE44FC22FF09AF0DB31B383D0334E38B28"]')).to.equal(true);
         expect(await backupPage.isChecked('[data-id="515431151DDD3EA232B37A4C98ACFA1EADAB5B92"]')).to.equal(true);
@@ -1020,9 +901,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         await backupPage.waitAndClick('@action-backup-step3manual-continue');
         await backupPage.waitAndRespondToModal('info', 'confirm', 'Your private keys have been successfully backed up');
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const sentMsg = (await GoogleData.withInitializedData(acctEmail)).searchMessagesBySubject(
-          'Your FlowCrypt Backup'
-        )[0]!;
+        const sentMsg = (await GoogleData.withInitializedData(acctEmail)).searchMessagesBySubject('Your FlowCrypt Backup')[0]!;
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const mimeMsg = await Parse.convertBase64ToMimeMsg(sentMsg.raw!);
         const { keys } = await KeyUtil.readMany(Buf.concat(mimeMsg.attachments.map(a => a.content)));
@@ -1030,7 +909,6 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         await backupPage.close();
       })
     );
-
     ava.default(
       'settings - manual backup several keys to file with a missing but guessed pass phrase',
       testWithBrowser(undefined, async (t, browser) => {
@@ -1052,25 +930,16 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
           { isSavePassphraseChecked: false, isSavePassphraseHidden: false }
         );
         await settingsPage.close();
-        const inboxPage = await browser.newPage(
-          t,
-          TestUrls.extension(`chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}`)
-        );
+        const inboxPage = await browser.newPage(t, TestUrls.extension(`chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}`));
         await InboxPageRecipe.finishSessionOnInboxPage(inboxPage);
-        await SettingsPageRecipe.addKeyTest(
-          t,
-          browser,
-          acctEmail,
-          testConstants.testKeyMultiple98acfa1eadab5b92,
-          '1234',
-          { isSavePassphraseChecked: true, isSavePassphraseHidden: false }
-        );
+        await SettingsPageRecipe.addKeyTest(t, browser, acctEmail, testConstants.testKeyMultiple98acfa1eadab5b92, '1234', {
+          isSavePassphraseChecked: true,
+          isSavePassphraseHidden: false
+        });
         // opening backup.htm independently of settings/index.htm page limits functionality but sufficient for this test
         const backupPage = await browser.newPage(
           t,
-          TestUrls.extension(
-            `/chrome/settings/modules/backup.htm?acctEmail=${acctEmail}` + `&action=backup_manual&parentTabId=1%3A0`
-          )
+          TestUrls.extension(`/chrome/settings/modules/backup.htm?acctEmail=${acctEmail}` + `&action=backup_manual&parentTabId=1%3A0`)
         );
         expect(await backupPage.isChecked('[data-id="CB0485FE44FC22FF09AF0DB31B383D0334E38B28"]')).to.equal(true);
         expect(await backupPage.isChecked('[data-id="515431151DDD3EA232B37A4C98ACFA1EADAB5B92"]')).to.equal(true);
@@ -1078,25 +947,18 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         expect(await backupPage.isDisabled('[data-id="515431151DDD3EA232B37A4C98ACFA1EADAB5B92"]')).to.equal(false);
         await backupPage.waitAndClick('@input-backup-step3manual-file');
         // one passphrase is not known but successfully guessed
-        const downloadedFiles = await backupPage.awaitDownloadTriggeredByClicking(
-          '@action-backup-step3manual-continue',
-          2
-        );
+        const downloadedFiles = await backupPage.awaitDownloadTriggeredByClicking('@action-backup-step3manual-continue', 2);
         expect(Object.keys(downloadedFiles).length).to.equal(2);
         /* eslint-disable @typescript-eslint/no-non-null-assertion */
         const { keys: keys1 } = await KeyUtil.readMany(
           Buf.fromUtfStr(
-            downloadedFiles[
-              'flowcrypt-backup-flowcrypttestkeymultiplegmailcom-515431151DDD3EA232B37A4C98ACFA1EADAB5B92.asc'
-            ]!.toString()
+            downloadedFiles['flowcrypt-backup-flowcrypttestkeymultiplegmailcom-515431151DDD3EA232B37A4C98ACFA1EADAB5B92.asc']!.toString()
           )
         );
         expect(keys1.length).to.equal(1);
         const { keys: keys2 } = await KeyUtil.readMany(
           Buf.fromUtfStr(
-            downloadedFiles[
-              'flowcrypt-backup-flowcrypttestkeymultiplegmailcom-515431151DDD3EA232B37A4C98ACFA1EADAB5B92.asc'
-            ]!.toString()
+            downloadedFiles['flowcrypt-backup-flowcrypttestkeymultiplegmailcom-515431151DDD3EA232B37A4C98ACFA1EADAB5B92.asc']!.toString()
           )
         );
         /* eslint-enable @typescript-eslint/no-non-null-assertion */
@@ -1104,7 +966,6 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         await backupPage.close();
       })
     );
-
     ava.default(
       'settings - manual backup several keys to inbox with a missing pass phrase',
       testWithBrowser(undefined, async (t, browser) => {
@@ -1125,22 +986,15 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
           },
           { isSavePassphraseChecked: false, isSavePassphraseHidden: false }
         );
-        const inboxPage = await browser.newPage(
-          t,
-          TestUrls.extension(`chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}`)
-        );
+        const inboxPage = await browser.newPage(t, TestUrls.extension(`chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}`));
         await InboxPageRecipe.finishSessionOnInboxPage(inboxPage);
         await inboxPage.close();
         const key98acfa1eadab5b92 = await KeyUtil.parse(testConstants.testKeyMultiple98acfa1eadab5b92);
         expect(await KeyUtil.decrypt(key98acfa1eadab5b92, '1234')).to.equal(true);
-        await SettingsPageRecipe.addKeyTest(
-          t,
-          browser,
-          acctEmail,
-          KeyUtil.armor(key98acfa1eadab5b92),
-          'new passphrase strong enough',
-          { isSavePassphraseChecked: true, isSavePassphraseHidden: false }
-        );
+        await SettingsPageRecipe.addKeyTest(t, browser, acctEmail, KeyUtil.armor(key98acfa1eadab5b92), 'new passphrase strong enough', {
+          isSavePassphraseChecked: true,
+          isSavePassphraseHidden: false
+        });
         await settingsPage.waitAndClick('@action-open-backup-page');
         const backupFrame = await settingsPage.getFrame(['backup.htm']);
         await backupFrame.waitAndClick('@action-go-manual');
@@ -1149,15 +1003,10 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         expect(await backupFrame.isDisabled('[data-id="CB0485FE44FC22FF09AF0DB31B383D0334E38B28"]')).to.equal(false);
         expect(await backupFrame.isDisabled('[data-id="515431151DDD3EA232B37A4C98ACFA1EADAB5B92"]')).to.equal(false);
         await backupFrame.waitAndClick('@action-backup-step3manual-continue');
-        await backupFrame.waitAndRespondToModal(
-          'error',
-          'confirm',
-          'Your keys are protected with different pass phrases'
-        );
+        await backupFrame.waitAndRespondToModal('error', 'confirm', 'Your keys are protected with different pass phrases');
         await settingsPage.close();
       })
     );
-
     ava.default(
       'settings - manual backup a key with a missing pass phrase',
       testWithBrowser(undefined, async (t, browser) => {
@@ -1175,10 +1024,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
           { submitPubkey: false, usedPgpBefore: false, key },
           { isSavePassphraseChecked: false, isSavePassphraseHidden: false }
         );
-        const inboxPage = await browser.newPage(
-          t,
-          TestUrls.extension(`chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}`)
-        );
+        const inboxPage = await browser.newPage(t, TestUrls.extension(`chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}`));
         await InboxPageRecipe.finishSessionOnInboxPage(inboxPage);
         await inboxPage.close();
         await settingsPage.waitAndClick('@action-open-backup-page');
@@ -1194,7 +1040,6 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         await settingsPage.close();
       })
     );
-
     ava.default(
       'settings - manual backup several keys to file with different pass phrases',
       testWithBrowser(undefined, async (t, browser) => {
@@ -1218,20 +1063,14 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         await settingsPage1.close();
         const key98acfa1eadab5b92 = await KeyUtil.parse(testConstants.testKeyMultiple98acfa1eadab5b92);
         expect(await KeyUtil.decrypt(key98acfa1eadab5b92, '1234')).to.equal(true);
-        await SettingsPageRecipe.addKeyTest(
-          t,
-          browser,
-          acctEmail,
-          KeyUtil.armor(key98acfa1eadab5b92),
-          'new passphrase strong enough',
-          { isSavePassphraseChecked: true, isSavePassphraseHidden: false }
-        );
+        await SettingsPageRecipe.addKeyTest(t, browser, acctEmail, KeyUtil.armor(key98acfa1eadab5b92), 'new passphrase strong enough', {
+          isSavePassphraseChecked: true,
+          isSavePassphraseHidden: false
+        });
         // opening backup.htm independently of settings/index.htm page limits functionality but sufficient for this test
         const backupPage = await browser.newPage(
           t,
-          TestUrls.extension(
-            `/chrome/settings/modules/backup.htm?acctEmail=${acctEmail}&action=backup_manual&parentTabId=1%3A0`
-          )
+          TestUrls.extension(`/chrome/settings/modules/backup.htm?acctEmail=${acctEmail}&action=backup_manual&parentTabId=1%3A0`)
         );
         expect(await backupPage.isChecked('[data-id="CB0485FE44FC22FF09AF0DB31B383D0334E38B28"]')).to.equal(true);
         expect(await backupPage.isChecked('[data-id="515431151DDD3EA232B37A4C98ACFA1EADAB5B92"]')).to.equal(true);
@@ -1239,15 +1078,10 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         expect(await backupPage.isDisabled('[data-id="515431151DDD3EA232B37A4C98ACFA1EADAB5B92"]')).to.equal(false);
         await backupPage.waitAndClick('@input-backup-step3manual-file');
         await backupPage.waitAndClick('@action-backup-step3manual-continue');
-        await backupPage.waitAndRespondToModal(
-          'error',
-          'confirm',
-          'Your keys are protected with different pass phrases'
-        );
+        await backupPage.waitAndRespondToModal('error', 'confirm', 'Your keys are protected with different pass phrases');
         await backupPage.close();
       })
     );
-
     ava.default(
       'settings - setup_manual only backs up supplied key to file',
       testWithBrowser(undefined, async (t, browser) => {
@@ -1269,14 +1103,10 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
           { isSavePassphraseChecked: false, isSavePassphraseHidden: false }
         );
         await settingsPage1.close();
-        await SettingsPageRecipe.addKeyTest(
-          t,
-          browser,
-          acctEmail,
-          testConstants.testKeyMultiple98acfa1eadab5b92,
-          '1234',
-          { isSavePassphraseChecked: true, isSavePassphraseHidden: false }
-        );
+        await SettingsPageRecipe.addKeyTest(t, browser, acctEmail, testConstants.testKeyMultiple98acfa1eadab5b92, '1234', {
+          isSavePassphraseChecked: true,
+          isSavePassphraseHidden: false
+        });
         const backupPage = await browser.newPage(
           t,
           TestUrls.extension(
@@ -1285,15 +1115,11 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
           )
         );
         await backupPage.waitAndClick('@input-backup-step3manual-file');
-        const downloadedFiles = await backupPage.awaitDownloadTriggeredByClicking(
-          '@action-backup-step3manual-continue'
-        );
+        const downloadedFiles = await backupPage.awaitDownloadTriggeredByClicking('@action-backup-step3manual-continue');
         const { keys } = await KeyUtil.readMany(
           Buf.fromUtfStr(
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            downloadedFiles[
-              'flowcrypt-backup-flowcrypttestkeymultiplegmailcom-515431151DDD3EA232B37A4C98ACFA1EADAB5B92.asc'
-            ]!.toString()
+            downloadedFiles['flowcrypt-backup-flowcrypttestkeymultiplegmailcom-515431151DDD3EA232B37A4C98ACFA1EADAB5B92.asc']!.toString()
           )
         );
         expect(keys.length).to.equal(1);
@@ -1302,7 +1128,6 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         await backupPage.close();
       })
     );
-
     ava.default(
       'settings - setup_manual only backs up supplied key to inbox',
       testWithBrowser(undefined, async (t, browser) => {
@@ -1342,20 +1167,15 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         await backupPage.waitAndClick('@action-backup-step3manual-continue');
         await backupPage.waitAndRespondToModal('info', 'confirm', 'Your private key has been successfully backed up');
         /* eslint-disable @typescript-eslint/no-non-null-assertion */
-        const sentMsg = (await GoogleData.withInitializedData(acctEmail)).searchMessagesBySubject(
-          'Your FlowCrypt Backup'
-        )[0]!;
+        const sentMsg = (await GoogleData.withInitializedData(acctEmail)).searchMessagesBySubject('Your FlowCrypt Backup')[0]!;
         const mimeMsg = await Parse.convertBase64ToMimeMsg(sentMsg.raw!);
         const { keys } = await KeyUtil.readMany(new Buf(mimeMsg.attachments[0]!.content!));
         /* eslint-enable @typescript-eslint/no-non-null-assertion */
         expect(keys.length).to.equal(1);
-        expect(
-          KeyUtil.identityEquals(keys[0], { id: '515431151DDD3EA232B37A4C98ACFA1EADAB5B92', family: 'openpgp' })
-        ).to.equal(true);
+        expect(KeyUtil.identityEquals(keys[0], { id: '515431151DDD3EA232B37A4C98ACFA1EADAB5B92', family: 'openpgp' })).to.equal(true);
         await backupPage.close();
       })
     );
-
     ava.default(
       'settings - manual backup to inbox keys with weak pass phrases results in error',
       testWithBrowser(undefined, async (t, browser) => {
@@ -1377,20 +1197,14 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
           { isSavePassphraseChecked: false, isSavePassphraseHidden: false }
         );
         await settingsPage1.close();
-        await SettingsPageRecipe.addKeyTest(
-          t,
-          browser,
-          acctEmail,
-          testConstants.testKeyMultiple98acfa1eadab5b92,
-          '1234',
-          { isSavePassphraseChecked: true, isSavePassphraseHidden: false }
-        );
+        await SettingsPageRecipe.addKeyTest(t, browser, acctEmail, testConstants.testKeyMultiple98acfa1eadab5b92, '1234', {
+          isSavePassphraseChecked: true,
+          isSavePassphraseHidden: false
+        });
         // opening backup.htm independently of settings/index.htm page limits functionality but sufficient for this test
         const backupPage = await browser.newPage(
           t,
-          TestUrls.extension(
-            `/chrome/settings/modules/backup.htm?acctEmail=${acctEmail}&action=backup_manual&parentTabId=1%3A0`
-          )
+          TestUrls.extension(`/chrome/settings/modules/backup.htm?acctEmail=${acctEmail}&action=backup_manual&parentTabId=1%3A0`)
         );
         expect(await backupPage.isChecked('[data-id="CB0485FE44FC22FF09AF0DB31B383D0334E38B28"]')).to.equal(true);
         expect(await backupPage.isChecked('[data-id="515431151DDD3EA232B37A4C98ACFA1EADAB5B92"]')).to.equal(true);
@@ -1403,14 +1217,12 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         await backupPage.close();
       })
     );
-
     ava.default(
       'settings - manual enter and key update honor FORBID_STORING_PASS_PHRASE ClientConfiguration',
       testWithBrowser(undefined, async (t, browser) => {
         const { settingsPage, passphrase } = await BrowserRecipe.setUpFcForbidPpStoringAcct(t, browser);
         const {
-          cryptup_userforbidstoringpassphraseclientconfigurationflowcrypttest_passphrase_B8F687BCDE14435A:
-            savedPassphrase1,
+          cryptup_userforbidstoringpassphraseclientconfigurationflowcrypttest_passphrase_B8F687BCDE14435A: savedPassphrase1,
           cryptup_userforbidstoringpassphraseclientconfigurationflowcrypttest_keys: keys
         } = await settingsPage.getFromLocalStorage([
           'cryptup_userforbidstoringpassphraseclientconfigurationflowcrypttest_passphrase_B8F687BCDE14435A',
@@ -1434,17 +1246,14 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
           contentToCheck: 'Public and private key updated locally',
           clickOn: 'cancel'
         });
-        const {
-          cryptup_userforbidstoringpassphraseclientconfigurationflowcrypttest_passphrase_B8F687BCDE14435A:
-            savedPassphrase2
-        } = await settingsPage.getFromLocalStorage([
-          'cryptup_userforbidstoringpassphraseclientconfigurationflowcrypttest_passphrase_B8F687BCDE14435A'
-        ]);
+        const { cryptup_userforbidstoringpassphraseclientconfigurationflowcrypttest_passphrase_B8F687BCDE14435A: savedPassphrase2 } =
+          await settingsPage.getFromLocalStorage([
+            'cryptup_userforbidstoringpassphraseclientconfigurationflowcrypttest_passphrase_B8F687BCDE14435A'
+          ]);
         expect(savedPassphrase2).to.be.an('undefined');
         await settingsPage.close();
       })
     );
-
     ava.default(
       'settings - email change',
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
@@ -1461,11 +1270,9 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         expect(savedPassphrase1).not.to.be.an('undefined');
         expect((oldRules as { flags: string[] }).flags).not.to.include('DEFAULT_REMEMBER_PASS_PHRASE');
         await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
-        const experimentalFrame = await SettingsPageRecipe.awaitNewPageFrame(
-          settingsPage,
-          '@action-open-module-experimental',
-          ['experimental.htm']
-        );
+        const experimentalFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-module-experimental', [
+          'experimental.htm'
+        ]);
         await experimentalFrame.waitAndClick('@action-change-email');
         const oauthPopup1 = await browser.newPageTriggeredBy(t, () =>
           PageRecipe.waitForModalAndRespond(experimentalFrame, 'confirm', {
@@ -1481,8 +1288,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         });
         const newSettingsPage = await browser.newPageTriggeredBy(t, () =>
           PageRecipe.waitForModalAndRespond(experimentalFrame, 'info', {
-            contentToCheck:
-              'Email address changed to user@default-remember-passphrase-client-configuration.flowcrypt.test',
+            contentToCheck: 'Email address changed to user@default-remember-passphrase-client-configuration.flowcrypt.test',
             clickOn: 'confirm'
           })
         );
@@ -1491,8 +1297,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         //   { contentToCheck: 'Your email aliases on Gmail have refreshed since the last time you used FlowCrypt', clickOn: 'confirm' });
         const {
           cryptup_userdefaultrememberpassphraseclientconfigurationflowcrypttest_rules: newRules,
-          cryptup_userdefaultrememberpassphraseclientconfigurationflowcrypttest_passphrase_07481C8ACF9D49FE:
-            savedPassphrase2,
+          cryptup_userdefaultrememberpassphraseclientconfigurationflowcrypttest_passphrase_07481C8ACF9D49FE: savedPassphrase2,
           cryptup_userdefaultrememberpassphraseclientconfigurationflowcrypttest_keys: keys
         } = await settingsPage.getFromLocalStorage([
           'cryptup_userdefaultrememberpassphraseclientconfigurationflowcrypttest_rules',
@@ -1506,7 +1311,6 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         await settingsPage.close();
       })
     );
-
     ava.default(
       'settings - ensure gracious behavior & ui should remain functional when updating client configuration',
       testWithBrowser(undefined, async (t, browser) => {
@@ -1558,7 +1362,6 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         expect(clientConfiguration2.key_manager_url).to.equal('https://localhost:8001/flowcrypt-email-key-manager');
       })
     );
-
     ava.default(
       'settings - client configuration gets updated on settings and content script reloads',
       testWithBrowser(undefined, async (t, browser) => {
@@ -1595,16 +1398,12 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
           'DEFAULT_REMEMBER_PASS_PHRASE'
         ]);
         expect(clientConfiguration1.allow_attester_search_only_for_domains).to.be.an.undefined;
-        expect(clientConfiguration1.disallow_attester_search_for_domains).to.eql([
-          'disallowed_domain1.test',
-          'disallowed_domain2.test'
-        ]);
+        expect(clientConfiguration1.disallow_attester_search_for_domains).to.eql(['disallowed_domain1.test', 'disallowed_domain2.test']);
         expect(clientConfiguration1.enforce_keygen_algo).to.equal('rsa2048');
         expect(clientConfiguration1.enforce_keygen_expire_months).to.be.an.undefined;
         expect(clientConfiguration1.custom_keyserver_url).to.be.an.undefined;
         expect(clientConfiguration1.key_manager_url).to.equal('https://localhost:8001/flowcrypt-email-key-manager');
         await setupPage.close();
-
         // modify the setup
         /* eslint-disable @typescript-eslint/naming-convention */
         mockBackendData.clientConfigurationByAcctEmail[acct] = {
@@ -1624,17 +1423,10 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         ]);
         // check that the configuration in the storage has been updated
         const clientConfiguration2 = rules2 as ClientConfiguration;
-        expect(clientConfiguration2.flags).to.eql([
-          'NO_ATTESTER_SUBMIT',
-          'HIDE_ARMOR_META',
-          'DEFAULT_REMEMBER_PASS_PHRASE'
-        ]);
+        expect(clientConfiguration2.flags).to.eql(['NO_ATTESTER_SUBMIT', 'HIDE_ARMOR_META', 'DEFAULT_REMEMBER_PASS_PHRASE']);
         expect(clientConfiguration2.custom_keyserver_url).to.equal('https://localhost:8001');
         expect(clientConfiguration2.key_manager_url).to.be.an.undefined;
-        expect(clientConfiguration2.allow_attester_search_only_for_domains).to.eql([
-          'allowed_domain1.test',
-          'allowed_domain2.test'
-        ]);
+        expect(clientConfiguration2.allow_attester_search_only_for_domains).to.eql(['allowed_domain1.test', 'allowed_domain2.test']);
         expect(clientConfiguration2.disallow_attester_search_for_domains).to.be.an.undefined;
         expect(clientConfiguration2.enforce_keygen_algo).to.be.an.undefined;
         expect(clientConfiguration2.enforce_keygen_expire_months).to.equal(12);
@@ -1712,7 +1504,6 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         await settingsPage.close();
       })
     );
-
     ava.default(
       'settings - email change to account that has FORBID_STORING_PASS_PHRASE',
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
@@ -1729,11 +1520,9 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         expect(savedPassphrase1).not.to.be.an('undefined');
         expect((oldRules as { flags: string[] }).flags).not.to.include('FORBID_STORING_PASS_PHRASE');
         await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
-        const experimentalFrame = await SettingsPageRecipe.awaitNewPageFrame(
-          settingsPage,
-          '@action-open-module-experimental',
-          ['experimental.htm']
-        );
+        const experimentalFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-module-experimental', [
+          'experimental.htm'
+        ]);
         await experimentalFrame.waitAndClick('@action-change-email');
         const oauthPopup1 = await browser.newPageTriggeredBy(t, () =>
           PageRecipe.waitForModalAndRespond(experimentalFrame, 'confirm', {
@@ -1743,14 +1532,12 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         );
         await OauthPageRecipe.mock(t, oauthPopup1, acct2, 'override_acct');
         await PageRecipe.waitForModalAndRespond(experimentalFrame, 'confirm', {
-          contentToCheck:
-            'email from ci.tests.gmail@flowcrypt.test to user@forbid-storing-passphrase-client-configuration.flowcrypt.test',
+          contentToCheck: 'email from ci.tests.gmail@flowcrypt.test to user@forbid-storing-passphrase-client-configuration.flowcrypt.test',
           clickOn: 'confirm'
         });
         const newSettingsPage = await browser.newPageTriggeredBy(t, () =>
           PageRecipe.waitForModalAndRespond(experimentalFrame, 'info', {
-            contentToCheck:
-              'Email address changed to user@forbid-storing-passphrase-client-configuration.flowcrypt.test',
+            contentToCheck: 'Email address changed to user@forbid-storing-passphrase-client-configuration.flowcrypt.test',
             clickOn: 'confirm'
           })
         );
@@ -1760,8 +1547,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         const {
           cryptup_userforbidstoringpassphraseclientconfigurationflowcrypttest_rules: newRules,
           cryptup_userforbidstoringpassphraseclientconfigurationflowcrypttest_keys: keys,
-          cryptup_userforbidstoringpassphraseclientconfigurationflowcrypttest_passphrase_07481C8ACF9D49FE:
-            savedPassphrase2
+          cryptup_userforbidstoringpassphraseclientconfigurationflowcrypttest_passphrase_07481C8ACF9D49FE: savedPassphrase2
         } = await settingsPage.getFromLocalStorage([
           'cryptup_userforbidstoringpassphraseclientconfigurationflowcrypttest_rules',
           'cryptup_userforbidstoringpassphraseclientconfigurationflowcrypttest_keys',
@@ -1774,14 +1560,12 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         await settingsPage.close();
       })
     );
-
     ava.default(
       'settings - adding a key honors FORBID_STORING_PASS_PHRASE ClientConfiguration',
       testWithBrowser(undefined, async (t, browser) => {
         const { acctEmail, settingsPage } = await BrowserRecipe.setUpFcForbidPpStoringAcct(t, browser);
         const {
-          cryptup_userforbidstoringpassphraseclientconfigurationflowcrypttest_passphrase_B8F687BCDE14435A:
-            savedPassphrase1,
+          cryptup_userforbidstoringpassphraseclientconfigurationflowcrypttest_passphrase_B8F687BCDE14435A: savedPassphrase1,
           cryptup_userforbidstoringpassphraseclientconfigurationflowcrypttest_keys: keys1
         } = await settingsPage.getFromLocalStorage([
           'cryptup_userforbidstoringpassphraseclientconfigurationflowcrypttest_passphrase_B8F687BCDE14435A',
@@ -1789,54 +1573,37 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         ]);
         expect((keys1 as KeyInfoWithIdentity[])[0].longid).to.equal('B8F687BCDE14435A');
         expect(savedPassphrase1).to.be.an('undefined');
-        await SettingsPageRecipe.addKeyTest(
-          t,
-          browser,
-          acctEmail,
-          testConstants.testKeyMultiple98acfa1eadab5b92,
-          '1234',
-          { isSavePassphraseChecked: false, isSavePassphraseHidden: true }
-        );
+        await SettingsPageRecipe.addKeyTest(t, browser, acctEmail, testConstants.testKeyMultiple98acfa1eadab5b92, '1234', {
+          isSavePassphraseChecked: false,
+          isSavePassphraseHidden: true
+        });
         const {
-          cryptup_userforbidstoringpassphraseclientconfigurationflowcrypttest_passphrase_98ACFA1EADAB5B92:
-            savedPassphrase2,
+          cryptup_userforbidstoringpassphraseclientconfigurationflowcrypttest_passphrase_98ACFA1EADAB5B92: savedPassphrase2,
           cryptup_userforbidstoringpassphraseclientconfigurationflowcrypttest_keys: keys2
         } = await settingsPage.getFromLocalStorage([
           'cryptup_userforbidstoringpassphraseclientconfigurationflowcrypttest_passphrase_98ACFA1EADAB5B92',
           'cryptup_userforbidstoringpassphraseclientconfigurationflowcrypttest_keys'
         ]);
-        expect((keys2 as KeyInfoWithIdentity[]).map(ki => ki.longid)).to.include.members([
-          'B8F687BCDE14435A',
-          '98ACFA1EADAB5B92'
-        ]);
+        expect((keys2 as KeyInfoWithIdentity[]).map(ki => ki.longid)).to.include.members(['B8F687BCDE14435A', '98ACFA1EADAB5B92']);
         expect(savedPassphrase2).to.be.an('undefined');
       })
     );
-
     ava.default(
       "settings - password messages' expiry settings shouldn't be available for FES users",
       testWithBrowser('compatibility', async (t, browser) => {
         const acct1 = 'flowcrypt.compatibility@gmail.com';
         const settingsPage = await browser.newPage(t, TestUrls.extensionSettings('flowcrypt.compatibility@gmail.com'));
-        const securitySettingsFrame1 = await SettingsPageRecipe.awaitNewPageFrame(
-          settingsPage,
-          '@action-open-security-page',
-          ['security.htm']
-        );
+        const securitySettingsFrame1 = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-security-page', [
+          'security.htm'
+        ]);
         expect(await securitySettingsFrame1.isElementVisible('@container-password-messages-expiry')).to.equal(true);
         await SettingsPageRecipe.closeDialog(settingsPage);
         await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
-        const experimentalFrame = await SettingsPageRecipe.awaitNewPageFrame(
-          settingsPage,
-          '@action-open-module-experimental',
-          ['experimental.htm']
-        );
+        const experimentalFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-module-experimental', [
+          'experimental.htm'
+        ]);
         await experimentalFrame.waitAndClick('@action-reset-account');
-        await experimentalFrame.waitAndRespondToModal(
-          'confirm',
-          'confirm',
-          `This will remove all your FlowCrypt settings for ${acct1}`
-        );
+        await experimentalFrame.waitAndRespondToModal('confirm', 'confirm', `This will remove all your FlowCrypt settings for ${acct1}`);
         await experimentalFrame.waitAndRespondToModal(
           'confirm',
           'confirm',
@@ -1846,18 +1613,14 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         const acct2 = 'settings@key-manager-autogen.flowcrypt.test';
         const settingsPage1 = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct2);
         await SetupPageRecipe.autoSetupWithEKM(settingsPage1);
-        const securitySettingsFrame = await SettingsPageRecipe.awaitNewPageFrame(
-          settingsPage1,
-          '@action-open-security-page',
-          ['security.htm']
-        );
+        const securitySettingsFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage1, '@action-open-security-page', [
+          'security.htm'
+        ]);
         expect(await securitySettingsFrame.isElementVisible('@container-password-messages-expiry')).to.equal(false);
         await settingsPage1.close();
       })
     );
-
     ava.default.todo('settings - change passphrase - mismatch curent pp');
-
     ava.default.todo('settings - change passphrase - mismatch new pp');
   }
 };
