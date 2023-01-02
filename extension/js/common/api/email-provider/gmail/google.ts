@@ -63,7 +63,7 @@ export class Google {
         headers,
         contentType,
         crossDomain: true,
-        async: true
+        async: true,
       }) as Promise<GmailRes.GoogleContacts>,
       GoogleAuth.apiGoogleCallRetryAuthErrorOneTime(acctEmail, {
         xhr,
@@ -73,8 +73,8 @@ export class Google {
         headers,
         contentType,
         crossDomain: true,
-        async: true
-      }) as Promise<GmailRes.GoogleContacts>
+        async: true,
+      }) as Promise<GmailRes.GoogleContacts>,
     ]);
     const userContacts = contacts[0].results || [];
     const otherContacts = contacts[1].results || [];

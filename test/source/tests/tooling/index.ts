@@ -71,7 +71,7 @@ export const newWithTimeoutsFunc = (consts: Consts): (<T>(actionPromise: Promise
     Promise.race([
       actionPromise, // the actual action being performed
       timeoutAllRetries, // timeout for all test retries
-      consts.PROMISE_TIMEOUT_OVERALL // overall timeout for the whole test process / sequence
+      consts.PROMISE_TIMEOUT_OVERALL, // overall timeout for the whole test process / sequence
     ]);
 };
 

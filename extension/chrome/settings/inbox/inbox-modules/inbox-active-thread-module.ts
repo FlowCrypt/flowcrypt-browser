@@ -26,7 +26,7 @@ export class InboxActiveThreadModule extends ViewModule<InboxView> {
   private debugEmails = [
     'flowcrypt.compatibility@gmail.com',
     'ci.tests.gmail@flowcrypt.dev',
-    'e2e.enterprise.test@flowcrypt.com'
+    'e2e.enterprise.test@flowcrypt.com',
   ]; // adds debugging ui, useful for creating automated tests
 
   public render = async (threadId: string, thread?: GmailRes.GmailThread) => {
@@ -79,7 +79,7 @@ export class InboxActiveThreadModule extends ViewModule<InboxView> {
           this.view.redirectToUrl({
             acctEmail: this.view.acctEmail,
             threadId: this.threadId,
-            showOriginal: !this.view.showOriginal
+            showOriginal: !this.view.showOriginal,
           })
         )
       );
@@ -222,7 +222,7 @@ export class InboxActiveThreadModule extends ViewModule<InboxView> {
       'google',
       'delivered',
       'precedence',
-      'message-id'
+      'message-id',
     ];
     if (msg.payload) {
       msg.payload.headers = msg.payload.headers?.filter(h => {

@@ -123,14 +123,14 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         await composePage.waitAndClick('@action-send', { delay: 1 });
         await PageRecipe.waitForModalAndRespond(composePage, 'error', {
           contentToCheck: 'Please do not use your private key pass phrase as a password for this message',
-          clickOn: 'confirm'
+          clickOn: 'confirm',
         });
         // changing case should result in this error too
         await composePage.waitAndType('@input-password', msgPwd.toUpperCase());
         await composePage.waitAndClick('@action-send', { delay: 1 });
         await PageRecipe.waitForModalAndRespond(composePage, 'error', {
           contentToCheck: 'Please do not use your private key pass phrase as a password for this message',
-          clickOn: 'confirm'
+          clickOn: 'confirm',
         });
         const forgottenPassphrase = 'this passphrase is forgotten';
         await SettingsPageRecipe.addKeyTest(
@@ -149,7 +149,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         await composePage.waitAndClick('@action-send', { delay: 1 });
         await PageRecipe.waitForModalAndRespond(composePage, 'error', {
           contentToCheck: 'Please do not use your private key pass phrase as a password for this message',
-          clickOn: 'confirm'
+          clickOn: 'confirm',
         });
       })
     );
@@ -170,7 +170,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         await composePage.waitAndClick('@action-send', { delay: 1 });
         await PageRecipe.waitForModalAndRespond(composePage, 'error', {
           contentToCheck: `Some recipients don't have encryption set up. Please import their public keys or ask them to install Flowcrypt.`,
-          clickOn: 'confirm'
+          clickOn: 'confirm',
         });
       })
     );
@@ -189,7 +189,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
           'sign with entered pass phrase',
           undefined,
           {
-            encrypt: false
+            encrypt: false,
           }
         );
         await composeFrame.waitAndClick('@action-send');
@@ -208,7 +208,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
           'signed message pp in session',
           undefined,
           {
-            encrypt: false
+            encrypt: false,
           }
         );
         await ComposePageRecipe.sendAndClose(composePage);
@@ -241,14 +241,14 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         await composePage1.type('@input-to', 'FirstName'); // test guessing of contacts when the name is not included in email address
         await composePage1.waitAll([
           '@container-contacts',
-          '@action-select-contact-email(therecipient@theirdomain.com)'
+          '@action-select-contact-email(therecipient@theirdomain.com)',
         ]);
         // works on subsequent search
         const composePage2 = await ComposePageRecipe.openStandalone(t, browser, 'compose');
         await composePage2.type('@input-to', 'FirstName'); // test guessing of contacts when the name is not included in email address
         await composePage2.waitAll([
           '@container-contacts',
-          '@action-select-contact-email(therecipient@theirdomain.com)'
+          '@action-select-contact-email(therecipient@theirdomain.com)',
         ]);
       })
     );
@@ -261,7 +261,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         await composePage.type('@input-to', 'FirstName'); // test guessing of contacts when the name is not included in email address
         await composePage.waitAll([
           '@container-contacts',
-          '@action-select-contact-email(therecipient@theirdomain.com)'
+          '@action-select-contact-email(therecipient@theirdomain.com)',
         ]);
         // submit the first contact by Enter
         await composePage.page.keyboard.press('Enter');
@@ -282,12 +282,12 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         // composePage.enableDebugging('choose-contact');
         await composePage.type('@input-to', 'human'); // test loading of contacts
         await composePage.waitAll(['@container-contacts', '@action-select-contact-email(human@flowcrypt.com)'], {
-          timeout: 30
+          timeout: 30,
         });
         await composePage.waitAndClick('@action-select-contact-email(human@flowcrypt.com)', {
           retryErrs: true,
           confirmGone: true,
-          delay: 0
+          delay: 0,
         });
         // todo - verify that the contact/pubkey is showing in green once clicked
         await composePage.waitAndClick('@input-subject');
@@ -425,7 +425,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
         const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
         await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, 'signed message', undefined, {
-          encrypt: false
+          encrypt: false,
         });
         await ComposePageRecipe.sendAndClose(composePage);
       })
@@ -474,7 +474,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         expect(contact.sortedPubkeys.length).to.equal(2);
         expect((contact.sortedPubkeys as PubkeyInfoWithLastCheck[]).map(pub => pub.pubkey.id)).to.include.members([
           '6CF53D2329C2A80828F499D375AA44AB8930F7E9',
-          '3155F118B6E732B3638A1CE1608BCD797A23FB91'
+          '3155F118B6E732B3638A1CE1608BCD797A23FB91',
         ]);
         await dbPage.close();
       })
@@ -528,7 +528,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
           'skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___&threadId=16841ce0ce5cb74d&replyMsgId=16841ce0ce5cb74d';
         const replyFrame = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', {
           appendUrl,
-          skipValidation: true
+          skipValidation: true,
         });
         await replyFrame.waitAll(['#new_message', '@action-retry-by-reloading']);
         expect(await replyFrame.read('#new_message')).to.include(
@@ -545,7 +545,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
           'skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___&threadId=16804894591b3a4b&replyMsgId=16804894591b3a4b';
         const replyFrame = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', {
           appendUrl,
-          skipValidation: true
+          skipValidation: true,
         });
         await replyFrame.waitAll(['#new_message', '@action-retry-by-reloading']);
         expect(await replyFrame.read('#new_message')).to.include(
@@ -562,7 +562,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
           'threadId=16b584ed95837510&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___&replyMsgId=16b584ed95837510';
         const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', {
           appendUrl,
-          hasReplyPrompt: true
+          hasReplyPrompt: true,
         });
         await composePage.waitAndClick('@encrypted-reply', { delay: 5 });
         await clickTripleDotAndExpectQuoteToLoad(
@@ -577,7 +577,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
             '> > still the quote',
             '> > third line',
             '> >> double quote',
-            '> >> again double quote'
+            '> >> again double quote',
           ].join('\n')
         );
         await ComposePageRecipe.sendAndClose(composePage);
@@ -592,7 +592,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
           '&replyMsgId=16402d6dc4342e7f';
         const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', {
           appendUrl,
-          hasReplyPrompt: true
+          hasReplyPrompt: true,
         });
         await composePage.waitAndClick('@encrypted-reply', { delay: 1 });
         await clickTripleDotAndExpectQuoteToLoad(
@@ -610,7 +610,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
           '&ignoreDraft=___cu_false___&replyMsgId=16b36861a890bb26';
         const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', {
           appendUrl,
-          hasReplyPrompt: true
+          hasReplyPrompt: true,
         });
         await composePage.waitAndClick('@encrypted-reply', { delay: 1 });
         expect(await composePage.read('@input-body')).to.not.include('flowcrypt.compatibility test footer with an img');
@@ -624,7 +624,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
             '> From: Mozilla <Mozilla@e.mozilla.org>',
             '> Date: Thu, 6 Jun 2019, 17:22',
             '> Subject: Your misinformation questions ... answered.',
-            '> To:  <tom@cryptup.org>'
+            '> To:  <tom@cryptup.org>',
           ].join('\n')
         );
       })
@@ -637,7 +637,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
           'threadId=1663a65bbd73ce1a&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___&replyMsgId=1663a65bbd73ce1a';
         const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', {
           appendUrl,
-          hasReplyPrompt: true
+          hasReplyPrompt: true,
         });
         await composePage.waitAndClick('@encrypted-reply', { delay: 1 });
         await clickTripleDotAndExpectQuoteToLoad(
@@ -647,7 +647,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
             '>',
             '> The following text is bold: this is bold',
             '>',
-            '> The following text is red: this text is        red'
+            '> The following text is red: this text is        red',
           ].join('\n')
         );
       })
@@ -682,7 +682,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
               '> > still the quote',
               '> > third line',
               '> >> double quote',
-              '> >> again double quote'
+              '> >> again double quote',
             ].join('\n')
           );
         })
@@ -704,7 +704,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
             [
               'On 2019-06-14 at 23:24, flowcrypt.compatibility@gmail.com wrote:',
               '>',
-              '> (Skipping previous message quote)'
+              '> (Skipping previous message quote)',
             ].join('\n')
           );
         })
@@ -725,7 +725,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
             'send signed-only message',
             undefined,
             {
-              encrypt: false
+              encrypt: false,
             }
           );
           await composeFrame.waitAndClick('@action-send', { delay: 2 });
@@ -822,7 +822,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
           'threadId=15f7f5face7101db&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___&replyMsgId=15f7f5face7101db';
         const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', {
           appendUrl,
-          hasReplyPrompt: true
+          hasReplyPrompt: true,
         });
         await composePage.notPresent('@action-accept-reply-all-prompt');
         await composePage.waitAndClick('@encrypted-reply', { delay: 1 });
@@ -844,7 +844,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
           'threadId=15f7fc2919788f03&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___&replyMsgId=15f7fc2919788f03';
         const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', {
           appendUrl,
-          hasReplyPrompt: true
+          hasReplyPrompt: true,
         });
         await composePage.waitAndClick('@action-forward');
         await ComposePageRecipe.fillRecipients(composePage, { to: 'human@flowcrypt.com' });
@@ -860,7 +860,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
         const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
         await ComposePageRecipe.fillMsg(composePage, { to: 'test.no.pgp@test.com' }, 'Signed Message', undefined, {
-          encrypt: false
+          encrypt: false,
         });
         expect(await composePage.isElementPresent('@add-intro')).to.be.true;
         expect(await composePage.isElementPresent('@password-or-pubkey-container')).to.be.true;
@@ -928,14 +928,14 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
           'threadId=16ce2c965c75e5a6&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___&replyMsgId=16ce2c965c75e5a6';
         const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', {
           appendUrl,
-          hasReplyPrompt: true
+          hasReplyPrompt: true,
         });
         await composePage.waitAndClick('@action-accept-reply-all-prompt', { delay: 2 });
         await ComposePageRecipe.fillMsg(composePage, { bcc: 'test@email.com' }, undefined, undefined, undefined);
         await expectRecipientElements(composePage, {
           to: [{ email: 'censored@email.com' }],
           cc: [{ email: 'censored@email.com' }],
-          bcc: [{ email: 'test@email.com' }]
+          bcc: [{ email: 'test@email.com' }],
         });
         await Util.sleep(3);
         await ComposePageRecipe.sendAndClose(composePage, { password: 'test-pass' });
@@ -955,7 +955,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         await PageRecipe.waitForModalAndRespond(composePage, 'confirm', {
           contentToCheck: 'The public key of one of your recipients is expired.',
           clickOn: 'confirm',
-          timeout: 40
+          timeout: 40,
         });
         await composePage.waitForSelTestState('closed', 20); // succesfully sent
         await composePage.close();
@@ -993,7 +993,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
           const db = await (window as any).ContactStore.dbOpen();
           const opgpKeyOldAndValid = await (window as any).KeyUtil.parse(pubkey);
           await (window as any).ContactStore.update(db, 'not.revoked.pubkey@flowcrypt.com', {
-            pubkey: opgpKeyOldAndValid
+            pubkey: opgpKeyOldAndValid,
           });
           await new Promise((resolve, reject) => {
             const tx = db.transaction(['revocations'], 'readwrite');
@@ -1112,7 +1112,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         await expectRecipientElements(composePage, {
           to: [{ email: 'flowcryptcompatibility@gmail.com', name: 'First Last' }],
           cc: [{ email: 'flowcrypt.compatibility@gmail.com', name: 'First Last' }],
-          bcc: [{ email: 'human@flowcrypt.com' }]
+          bcc: [{ email: 'human@flowcrypt.com' }],
         });
         const subjectElem = await composePage.waitAny('@input-subject');
         expect(await PageRecipe.getElementPropertyJson(subjectElem, 'value')).to.equal('Test Draft - New Message');
@@ -1134,7 +1134,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
           filePath: 'test/samples/smime/human-unprotected-PKCS12.p12',
           armored: null, // eslint-disable-line no-null/no-null
           passphrase: 'test pp to encrypt unprotected key',
-          longid: null // eslint-disable-line no-null/no-null
+          longid: null, // eslint-disable-line no-null/no-null
         });
         await settingsPage.close();
         const appendUrl = 'draftId=17c041fd27858466';
@@ -1161,8 +1161,8 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
               title: '?',
               armored: testConstants.testKeyMultiple1b383d0334e38b28,
               passphrase: '1234',
-              longid: '1b383d0334e38b28'
-            }
+              longid: '1b383d0334e38b28',
+            },
           },
           { isSavePassphraseChecked: false, isSavePassphraseHidden: false }
         );
@@ -1187,7 +1187,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
           name: 'open_compose_window',
           data: { bm: { draftId: '17c041fd27858466' }, objUrls: {} },
           to: inboxTabId,
-          uid: '2'
+          uid: '2',
         });
         await inboxPage.waitAll('@container-new-message');
         await Util.sleep(0.5);
@@ -1214,7 +1214,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', {
           appendUrl,
           hasReplyPrompt: true,
-          skipClickPropt: true
+          skipClickPropt: true,
         });
         await composePage.waitAndClick('@encrypted-reply');
         await composePage.waitForContent('@recipients-preview', 'sender@domain.com');
@@ -1231,7 +1231,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         const appendUrl = 'threadId=183ec175f060b2c2&skipClickPrompt=___cu_false___&replyMsgId=183ec175f060b2c2';
         const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', {
           appendUrl,
-          hasReplyPrompt: true
+          hasReplyPrompt: true,
         });
         await composePage.waitAndClick('@action-accept-reply-all-prompt');
         await composePage.waitForContent(
@@ -1260,7 +1260,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         const appendUrl = 'threadId=182263bf9f105adf&skipClickPrompt=___cu_false___&replyMsgId=182263bf9f105adf';
         const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', {
           appendUrl,
-          hasReplyPrompt: true
+          hasReplyPrompt: true,
         });
         await composePage.waitAndClick('@encrypted-reply');
         await composePage.waitAndClick('@action-show-reply-options-popover');
@@ -1277,11 +1277,11 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', {
           appendUrl,
           hasReplyPrompt: true,
-          skipClickPropt: true
+          skipClickPropt: true,
         });
         await composePage.waitAndClick('@action-show-container-cc-bcc-buttons');
         await expectRecipientElements(composePage, {
-          to: [{ email: 'flowcryptcompatibility@gmail.com', name: 'First Last' }]
+          to: [{ email: 'flowcryptcompatibility@gmail.com', name: 'First Last' }],
         });
         expect(await composePage.read('@input-body')).to.include(
           'Test Draft Reply (Do not delete, tests is using this draft)'
@@ -1316,7 +1316,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         const appendUrl = `threadId=16d6a6c2d6ae618f&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___&replyMsgId=16d6a6c2d6ae618f`;
         const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', {
           appendUrl,
-          hasReplyPrompt: true
+          hasReplyPrompt: true,
         });
         await composePage.waitAndClick('@action-accept-reply-all-prompt');
         await composePage.waitForSelTestState('ready'); // continue when all recipients get evaluated
@@ -1340,7 +1340,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
         await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, 'New Plain Message', undefined, {
           encrypt: false,
-          sign: false
+          sign: false,
         });
         await ComposePageRecipe.sendAndClose(composePage);
       })
@@ -1354,7 +1354,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         const attachmentFilename = 'small.txt';
         const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', {
           appendUrl,
-          hasReplyPrompt: true
+          hasReplyPrompt: true,
         });
         await composePage.waitAndClick('@encrypted-reply', { delay: 1 });
         await composePage.waitAll('@action-send');
@@ -1450,12 +1450,12 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         await composePage.waitAndType(`@input-to`, 'human3@flowcrypt.com');
         await composePage.press('Enter');
         await expectRecipientElements(composePage, {
-          to: [{ email: 'human1@flowcrypt.com' }, { email: 'human2@flowcrypt.com' }, { email: 'human3@flowcrypt.com' }]
+          to: [{ email: 'human1@flowcrypt.com' }, { email: 'human2@flowcrypt.com' }, { email: 'human3@flowcrypt.com' }],
         });
         // delete recipient with Backspace when #input_to is focued
         await composePage.press('Backspace');
         await expectRecipientElements(composePage, {
-          to: [{ email: 'human1@flowcrypt.com' }, { email: 'human2@flowcrypt.com' }]
+          to: [{ email: 'human1@flowcrypt.com' }, { email: 'human2@flowcrypt.com' }],
         });
         // delete recipient with Delete when it's focused
         await composePage.waitAndFocus('@recipient_0');
@@ -1582,7 +1582,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         let composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
         const subject = `saving and rendering a draft with image ${Util.lousyRandom()}`;
         await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, subject, undefined, {
-          richtext: true
+          richtext: true,
         });
         await composePage.page.evaluate((src: string) => {
           $('[data-test=action-insert-image]').val(src).click();
@@ -1590,7 +1590,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         await ComposePageRecipe.waitWhenDraftIsSaved(composePage);
         await composePage.close();
         composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', {
-          appendUrl: 'draftId=draft_with_image'
+          appendUrl: 'draftId=draft_with_image',
         });
         const body = await composePage.waitAny('@input-body');
         await composePage.waitAll('#input_text img');
@@ -1605,7 +1605,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
           'threadId=16b584ed95837510&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___&replyMsgId=16b584ed95837510';
         const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', {
           appendUrl,
-          hasReplyPrompt: true
+          hasReplyPrompt: true,
         });
         await composePage.waitAndClick('@encrypted-reply', { delay: 5 });
         const bodyWithLeadingTabs = '\tline 1\n\t\tline 2';
@@ -1635,12 +1635,12 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         let composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
         const subject = `مرحبا RTL plain text`;
         await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, subject, 'مرحبا', {
-          richtext: false
+          richtext: false,
         });
         await ComposePageRecipe.waitWhenDraftIsSaved(composePage);
         await composePage.close();
         composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', {
-          appendUrl: 'draftId=draft_with_rtl_text_plain'
+          appendUrl: 'draftId=draft_with_rtl_text_plain',
         });
         expect(await composePage.attr('@input-subject', 'dir')).to.eq('rtl');
         expect(await composePage.readHtml('@input-body')).to.include('<div dir="rtl">مرحبا<br></div>');
@@ -1653,12 +1653,12 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         let composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
         const subject = `مرحبا RTL rich text`;
         await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, subject, 'مرحبا', {
-          richtext: true
+          richtext: true,
         });
         await ComposePageRecipe.waitWhenDraftIsSaved(composePage);
         await composePage.close();
         composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', {
-          appendUrl: 'draftId=draft_with_rtl_text_rich'
+          appendUrl: 'draftId=draft_with_rtl_text_rich',
         });
         expect(await composePage.readHtml('@input-body')).to.include('<div dir="rtl">مرحبا<br></div>');
       })
@@ -1693,7 +1693,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
         await ComposePageRecipe.fillMsg(composePage, { to: 'flowcrypt.compatibility@gmail.com' }, subject, text, {
           sign: true,
-          encrypt: true
+          encrypt: true,
         });
         await ComposePageRecipe.sendAndClose(composePage);
         /* eslint-disable @typescript-eslint/no-non-null-assertion */
@@ -1714,14 +1714,14 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         const decrypted1 = await MsgUtil.decryptMessage({
           kisWithPp: await Config.getKeyInfo(['flowcrypt.compatibility.1pp1']),
           encryptedData,
-          verificationPubs: []
+          verificationPubs: [],
         });
         expect(decrypted1.success).to.equal(true);
         // decryption with ki 2 should succeed
         const decrypted2 = await MsgUtil.decryptMessage({
           kisWithPp: await Config.getKeyInfo(['flowcrypt.compatibility.2pp1']),
           encryptedData,
-          verificationPubs: []
+          verificationPubs: [],
         });
         expect(decrypted2.success).to.equal(true);
       })
@@ -1903,7 +1903,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
           filePath: 'test/samples/smime/test-unprotected-PKCS12.p12',
           armored: null, // eslint-disable-line no-null/no-null
           passphrase: 'test pp to encrypt unprotected key',
-          longid: null // eslint-disable-line no-null/no-null
+          longid: null, // eslint-disable-line no-null/no-null
         });
         await settingsPage.close();
         const composePage = await ComposePageRecipe.openStandalone(t, browser, acctEmail);
@@ -1914,7 +1914,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
           undefined,
           {
             encrypt: false,
-            sign: true
+            sign: true,
           }
         );
         await composePage.waitAndClick('@action-send', { delay: 2 });
@@ -2136,7 +2136,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         await PageRecipe.waitForModalAndRespond(composeFrame, 'error', {
           contentToCheck:
             'Failed to send message due to: Error: Cannot use mixed OpenPGP (human@flowcrypt.com) and S/MIME (smime@recipient.com) public keys yet.If you need to email S/MIME recipient, do not add any OpenPGP recipient at the same time.',
-          timeout: 40
+          timeout: 40,
         });
       })
     );
@@ -2164,7 +2164,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
           contentToCheck:
             'Failed to send message due to: Error: Cannot use mixed OpenPGP (human@flowcrypt.com) and S/MIME (smime@recipient.com) public keys yet.If you need to email S/MIME recipient, do not add any OpenPGP recipient at the same time.',
           timeout: 40,
-          clickOn: 'confirm'
+          clickOn: 'confirm',
         });
         // adding an S/MIME certificate for human@flowcrypt.com will allow sending an S/MIME message
         await PageRecipe.addPubkey(t, browser, acctEmail, testConstants.smimeCert, 'human@flowcrypt.com');
@@ -2196,7 +2196,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
           contentToCheck:
             'Failed to send message due to: Error: Cannot use mixed OpenPGP (human@flowcrypt.com) and S/MIME (smime@recipient.com) public keys yet.If you need to email S/MIME recipient, do not add any OpenPGP recipient at the same time.',
           timeout: 40,
-          clickOn: 'confirm'
+          clickOn: 'confirm',
         });
         // adding an OpenPGP pubkey for smime@recipient.com will allow sending an OpenPGP message
         await PageRecipe.addPubkey(t, browser, acctEmail, testConstants.pubkey2864E326A5BE488A, 'smime@recipient.com');
@@ -2287,7 +2287,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
           'openpgp - active - AB8C F86E 3715 7C3F 290D 7200 7ED4 3D79 E961 7655'
         );
         await contactsFrame.waitAndClick(`@action-show-pubkey-AB8CF86E37157C3F290D72007ED43D79E9617655-openpgp`, {
-          confirmGone: true
+          confirmGone: true,
         });
         await contactsFrame.waitForContent(
           '@container-pubkey-details',
@@ -2317,7 +2317,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
           'openpgp - active - 8B8A 05A2 216E E6E4 C5EE 3D54 0D56 88EB F310 2BE7'
         );
         await contactsFrame.waitAndClick(`@action-show-pubkey-8B8A05A2216EE6E4C5EE3D540D5688EBF3102BE7-openpgp`, {
-          confirmGone: true
+          confirmGone: true,
         });
         await contactsFrame.waitForContent(
           '@container-pubkey-details',
@@ -2350,7 +2350,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
           'openpgp - active - 6D3E 0986 7544 EE62 7F2E 928F BEE3 A42D 9A9C 8AC9'
         );
         await contactsFrame.waitAndClick(`@action-show-pubkey-6D3E09867544EE627F2E928FBEE3A42D9A9C8AC9-openpgp`, {
-          confirmGone: true
+          confirmGone: true,
         });
         await contactsFrame.waitForContent('@container-pubkey-details', 'Expired: no');
         await contactsFrame.waitForContent('@container-pubkey-details', 'Usable for encryption: true');
@@ -2412,13 +2412,13 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
         const contactsFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-contacts-page', [
           'contacts.htm',
-          'placement=settings'
+          'placement=settings',
         ]);
         await contactsFrame.waitAll('@page-contacts');
         await contactsFrame.waitAndClick(`@action-show-email-${recipientEmail.replace(/[^a-z0-9]+/g, '')}`);
         // Check protonMailCompatKey key
         await contactsFrame.waitAndClick(`@action-show-pubkey-8B8A05A2216EE6E4C5EE3D540D5688EBF3102BE7-openpgp`, {
-          confirmGone: true
+          confirmGone: true,
         });
         await contactsFrame.waitForContent(
           '@container-pubkey-details',
@@ -2429,7 +2429,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         await contactsFrame.waitAndClick('@action-back-to-contact-list', { confirmGone: true });
         await contactsFrame.waitAndClick(`@action-show-email-${recipientEmail.replace(/[^a-z0-9]+/g, '')}`);
         await contactsFrame.waitAndClick(`@action-show-pubkey-AB8CF86E37157C3F290D72007ED43D79E9617655-openpgp`, {
-          confirmGone: true
+          confirmGone: true,
         });
         await contactsFrame.waitForContent(
           '@container-pubkey-details',
@@ -2452,7 +2452,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
           // And check if it can handle multiple keys
           cc: 'test.ldap.keyserver.pgp@gmail.com',
           // check if flowcrypt keyserver results are priotized than keyserver.pgp.com results
-          bcc: 'test.flowcrypt.pubkeyserver.priority@gmail.com'
+          bcc: 'test.flowcrypt.pubkeyserver.priority@gmail.com',
         };
         await ComposePageRecipe.fillMsg(composePage, recipients, t.title);
         await composePage.close();
@@ -2460,7 +2460,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
         const contactsFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-contacts-page', [
           'contacts.htm',
-          'placement=settings'
+          'placement=settings',
         ]);
         await contactsFrame.waitAll('@page-contacts');
         // Check test.ldap.priority@gmail.com
@@ -2487,7 +2487,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
         const contactsFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-contacts-page', [
           'contacts.htm',
-          'placement=settings'
+          'placement=settings',
         ]);
         await contactsFrame.waitAll('@page-contacts');
         // Check test.ldap.timeout@gmail.com
@@ -2519,7 +2519,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
         const contactsFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-contacts-page', [
           'contacts.htm',
-          'placement=settings'
+          'placement=settings',
         ]);
         await contactsFrame.waitAll('@page-contacts');
         await contactsFrame.waitAndClick('@action-show-import-public-keys-form', { confirmGone: true });
@@ -2537,7 +2537,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
           'openpgp - expired - 8EC7 8F04 3CEB 0224 98AF D477 1E62 ED6D 15A2 5921'
         );
         await contactsFrame.waitAndClick(`@action-show-pubkey-8EC78F043CEB022498AFD4771E62ED6D15A25921-openpgp`, {
-          confirmGone: true
+          confirmGone: true,
         });
         await contactsFrame.waitForContent('@container-pubkey-details', 'Type: openpgp');
         await contactsFrame.waitForContent(
@@ -2567,7 +2567,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
           'openpgp - expired - 8EC7 8F04 3CEB 0224 98AF D477 1E62 ED6D 15A2 5921'
         );
         await contactsFrame.waitAndClick(`@action-show-pubkey-8EC78F043CEB022498AFD4771E62ED6D15A25921-openpgp`, {
-          confirmGone: true
+          confirmGone: true,
         });
         await contactsFrame.waitForContent(
           '@container-pubkey-details',
@@ -2589,7 +2589,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
         const contactsFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-contacts-page', [
           'contacts.htm',
-          'placement=settings'
+          'placement=settings',
         ]);
         await contactsFrame.waitAll('@page-contacts');
         await contactsFrame.waitAndClick('@action-show-import-public-keys-form', { confirmGone: true });
@@ -2607,7 +2607,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
           'x509 - expired - 16BB 4074 03A3 ADC5 5E1E 0E4A F93E EC8F B187 C923'
         );
         await contactsFrame.waitAndClick(`@action-show-pubkey-16BB407403A3ADC55E1E0E4AF93EEC8FB187C923-x509`, {
-          confirmGone: true
+          confirmGone: true,
         });
         await contactsFrame.waitForContent('@container-pubkey-details', 'Type: x509');
         await contactsFrame.waitForContent(
@@ -2630,7 +2630,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
           'threadId=16ce2c965c75e5a6&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___&replyMsgId=16ce2c965c75e5a6';
         const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', {
           appendUrl,
-          hasReplyPrompt: true
+          hasReplyPrompt: true,
         });
         await composePage.waitAndClick('@action-forward', { delay: 2 });
         await composePage.waitAny('@input-to');
@@ -2646,13 +2646,13 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
           'threadId=17d02296bccd4c5c&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___&replyMsgId=17d02296bccd4c5c';
         const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', {
           appendUrl,
-          hasReplyPrompt: true
+          hasReplyPrompt: true,
         });
         await composePage.waitAndClick('@encrypted-reply', { delay: 1 });
         await expectRecipientElements(composePage, {
           to: [{ email: 'flowcrypt.compatibility@gmail.com', name: 'First Last' }, { email: 'vladimir@flowcrypt.com' }],
           cc: [],
-          bcc: []
+          bcc: [],
         });
       })
     );
@@ -2664,7 +2664,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
           'threadId=1837a67086636d0c&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___&replyMsgId=1837a67803bad3ea&acctEmail=flowcrypt.compatibility%40gmail.com';
         const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', {
           appendUrl,
-          hasReplyPrompt: true
+          hasReplyPrompt: true,
         });
         await composePage.waitAndClick('@encrypted-reply', { delay: 1 });
         await expectRecipientElements(composePage, { to: [{ email: 'ioanmo226@gmail.com' }] });
@@ -2678,7 +2678,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
           'threadId=17d02296bccd4c5d&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___&replyMsgId=17d02296bccd4c5d';
         const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', {
           appendUrl,
-          hasReplyPrompt: true
+          hasReplyPrompt: true,
         });
         await composePage.waitAndClick('@encrypted-reply', { delay: 1 });
         await expectRecipientElements(composePage, { to: [{ email: 'vladimir@flowcrypt.com' }], cc: [], bcc: [] });
@@ -2692,7 +2692,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
           'threadId=17d02268f01c7e40&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___&replyMsgId=17d02268f01c7e40';
         const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', {
           appendUrl,
-          hasReplyPrompt: true
+          hasReplyPrompt: true,
         });
         await composePage.waitAndClick('@encrypted-reply', { delay: 1 });
         await expectRecipientElements(composePage, { to: [{ email: 'limon.monte@gmail.com' }], cc: [], bcc: [] });
@@ -2706,13 +2706,13 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
           'threadId=17d02268f01c7e40&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___&replyMsgId=17d02268f01c7e40';
         const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', {
           appendUrl,
-          hasReplyPrompt: true
+          hasReplyPrompt: true,
         });
         await composePage.waitAndClick('@action-accept-reply-all-prompt', { delay: 1 });
         await expectRecipientElements(composePage, {
           to: [{ email: 'limon.monte@gmail.com' }, { email: 'vladimir@flowcrypt.com' }],
           cc: [{ email: 'limon.monte@gmail.com' }],
-          bcc: []
+          bcc: [],
         });
       })
     );
@@ -2787,7 +2787,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
           'user2@standardsubdomainfes.localhost:8001',
           {
             appendUrl,
-            hasReplyPrompt: true
+            hasReplyPrompt: true,
           }
         );
         await composePage.waitAndClick('@action-accept-reply-all-prompt', { delay: 2 });
@@ -2852,7 +2852,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         const appendUrl = `threadId=${msgId}&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___&replyMsgId=${msgId}`;
         const composePage = await ComposePageRecipe.openStandalone(t, browser, acct, {
           appendUrl,
-          hasReplyPrompt: true
+          hasReplyPrompt: true,
         });
         await composePage.waitAndClick('@action-accept-reply-all-prompt', { delay: 2 });
         await composePage.waitForContent('@recipients-preview', ' more');
@@ -2944,7 +2944,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         const acct = 'revoked@key-manager-autoimport-no-prv-create.flowcrypt.test';
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
         await SetupPageRecipe.autoSetupWithEKM(settingsPage, {
-          expectWarnModal: 'Public key not usable - not sumbitting to Attester'
+          expectWarnModal: 'Public key not usable - not sumbitting to Attester',
         });
       })
     );
@@ -2964,7 +2964,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         await composePage.waitAndClick('@action-send', { delay: 1 });
         await PageRecipe.waitForModalAndRespond(composePage, 'warning', {
           contentToCheck: 'Failed to send message due to: Error: Your account keys are revoked',
-          clickOn: 'confirm'
+          clickOn: 'confirm',
         });
       })
     );
@@ -2986,7 +2986,7 @@ const sendImgAndVerifyPresentInSentMsg = async (
   await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, subject, body, {
     richtext: true,
     sign: sendingType === 'sign',
-    encrypt: sendingType === 'encrypt'
+    encrypt: sendingType === 'encrypt',
   });
   // the following is a temporary hack - currently not able to directly paste an image with puppeteer
   // instead we should find a way to load the image into clipboard, and paste it into textbox
@@ -3046,7 +3046,7 @@ const sendTextAndVerifyPresentInSentMsg = async (
     unexpectedContent: [],
     params: `?frameId=none&msgId=${encodeURIComponent(
       sentMsg.id
-    )}&senderEmail=flowcrypt.compatibility%40gmail.com&isOutgoing=___cu_false___&acctEmail=flowcrypt.compatibility%40gmail.com&message=${message}`
+    )}&senderEmail=flowcrypt.compatibility%40gmail.com&isOutgoing=___cu_false___&acctEmail=flowcrypt.compatibility%40gmail.com&message=${message}`,
   });
 };
 
@@ -3107,7 +3107,7 @@ const importKeyManuallyAndViewTheNewContact = async (
   await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
   const contactsFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-contacts-page', [
     'contacts.htm',
-    'placement=settings'
+    'placement=settings',
   ]);
   await contactsFrame.waitAll('@page-contacts');
   await contactsFrame.waitAndClick('@action-show-import-public-keys-form', { confirmGone: true });
@@ -3139,7 +3139,7 @@ const importExpiredKeyForAutoRefresh = async (settingsPage: ControllablePage) =>
     'openpgp - expired - 6D3E 0986 7544 EE62 7F2E 928F BEE3 A42D 9A9C 8AC9'
   );
   await contactsFrame.waitAndClick(`@action-show-pubkey-6D3E09867544EE627F2E928FBEE3A42D9A9C8AC9-openpgp`, {
-    confirmGone: true
+    confirmGone: true,
   });
   await contactsFrame.waitForContent('@container-pubkey-details', 'Type: openpgp');
   await contactsFrame.waitForContent(

@@ -92,7 +92,7 @@ export const defineSetupTests = (testVariant: TestVariant, testWithBrowser: Test
             expect(await settingsPage.isChecked('@input-email-alias-flowcryptcompatibilitygmailcom')).to.equal(false); // unchecked by default
             await settingsPage.clickIfPresent('@input-email-alias-flowcryptcompatibilitygmailcom'); // include by the user (simulated)
             await settingsPage.waitAndClick('@input-step2bmanualcreate-create-and-save');
-          }
+          },
         });
         expect(MOCK_ATTESTER_LAST_INSERTED_PUB['flowcrypt.compatibility@gmail.com']).not.to.be.an('undefined');
         expect(MOCK_ATTESTER_LAST_INSERTED_PUB['flowcryptcompatibility@gmail.com']).not.to.be.an('undefined');
@@ -130,7 +130,7 @@ export const defineSetupTests = (testVariant: TestVariant, testWithBrowser: Test
           filePath: 'test/samples/openpgp/flowcrypttestkeyimportedgmailcom-0x825B8AE8B14CFC0E.key',
           armored: null, // eslint-disable-line no-null/no-null
           passphrase: 'will recognize i used pgp',
-          longid: null // eslint-disable-line no-null/no-null
+          longid: null, // eslint-disable-line no-null/no-null
         };
         await SetupPageRecipe.manualEnter(settingsPage, key.title, { submitPubkey: false, usedPgpBefore: false, key });
       })
@@ -149,7 +149,7 @@ export const defineSetupTests = (testVariant: TestVariant, testWithBrowser: Test
           filePath: 'test/samples/small.txt',
           armored: null, // eslint-disable-line no-null/no-null
           passphrase: '',
-          longid: null // eslint-disable-line no-null/no-null
+          longid: null, // eslint-disable-line no-null/no-null
         };
         await SetupPageRecipe.manualEnter(settingsPage, key.title, { key, isInvalidKey: true });
       })
@@ -343,8 +343,8 @@ ZAvn6PBX7vsaReOVa2zsnuY5g70xCxvzHIwR94POu5cENwRtCkrppFnISALpQ1kA
 =OeNi
 -----END PGP PRIVATE KEY BLOCK-----`,
               passphrase: '1234',
-              longid: '8B3BB9CFC476EE16'
-            }
+              longid: '8B3BB9CFC476EE16',
+            },
           },
           { isSavePassphraseChecked: false, isSavePassphraseHidden: false }
         );
@@ -442,15 +442,15 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
 -----END PGP PRIVATE KEY BLOCK-----`,
               passphrase: 'correct horse battery staple',
               longid: '123',
-              expired: true
-            }
+              expired: true,
+            },
           },
           { isSavePassphraseChecked: false, isSavePassphraseHidden: false }
         );
         await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
         const myKeyFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, `@action-show-key-0`, [
           'my_key.htm',
-          'placement=settings'
+          'placement=settings',
         ]);
         await Util.sleep(1);
         await myKeyFrame.waitAll('@content-fingerprint');
@@ -470,7 +470,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         );
         await SetupPageRecipe.recover(settingsPage, 'flowcrypt.compatibility.1pp1', {
           hasRecoverMore: true,
-          clickRecoverMore: false
+          clickRecoverMore: false,
         });
       })
     );
@@ -485,7 +485,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         );
         await SetupPageRecipe.recover(settingsPage, 'flowcrypt.compatibility.1pp1', {
           hasRecoverMore: true,
-          clickRecoverMore: true
+          clickRecoverMore: true,
         });
         await SetupPageRecipe.recover(settingsPage, 'flowcrypt.compatibility.2pp1');
       })
@@ -501,7 +501,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         );
         await SetupPageRecipe.recover(settingsPage, 'flowcrypt.compatibility.1pp2', {
           hasRecoverMore: true,
-          clickRecoverMore: true
+          clickRecoverMore: true,
         });
         await SetupPageRecipe.recover(settingsPage, 'flowcrypt.compatibility.2pp1');
       })
@@ -517,7 +517,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         );
         await SetupPageRecipe.recover(settingsPage, 'flowcrypt.compatibility.2pp1', {
           hasRecoverMore: true,
-          clickRecoverMore: true
+          clickRecoverMore: true,
         });
         await SetupPageRecipe.recover(settingsPage, 'flowcrypt.compatibility.1pp1');
       })
@@ -533,7 +533,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         );
         await SetupPageRecipe.recover(settingsPage, 'flowcrypt.compatibility.2pp1', {
           hasRecoverMore: true,
-          clickRecoverMore: true
+          clickRecoverMore: true,
         });
         await SetupPageRecipe.recover(settingsPage, 'flowcrypt.compatibility.1pp2');
       })
@@ -549,7 +549,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         );
         await SetupPageRecipe.recover(settingsPage, 'flowcrypt.compatibility.1pp1', {
           hasRecoverMore: true,
-          clickRecoverMore: true
+          clickRecoverMore: true,
         });
         await SetupPageRecipe.recover(settingsPage, 'flowcrypt.compatibility.1pp2', { alreadyRecovered: true });
         await SetupPageRecipe.recover(settingsPage, 'flowcrypt.compatibility.2pp1', {});
@@ -605,7 +605,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         await gmailPage.notPresent([
           '@webmail-notification-setup',
           '@notification-setup-action-close',
-          '@notification-successfully-setup-action-close'
+          '@notification-successfully-setup-action-close',
         ]);
         // below test that can re-auth after lost access (simulating situation when user changed password on google)
         await Util.wipeGoogleTokensUsingExperimentalSettingsPage(t, browser, acct);
@@ -652,7 +652,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
           '@webmail-notification-setup',
           '@notification-setup-action-open-settings',
           '@notification-setup-action-dismiss',
-          '@notification-setup-action-close'
+          '@notification-setup-action-close',
         ]);
         await gmailPage.waitAndClick('@notification-setup-action-close', { confirmGone: true });
         await gmailPage.page.reload();
@@ -660,7 +660,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
           '@webmail-notification-setup',
           '@notification-setup-action-open-settings',
           '@notification-setup-action-dismiss',
-          '@notification-setup-action-close'
+          '@notification-setup-action-close',
         ]);
         const newSettingsPage = await browser.newPageTriggeredBy(t, () =>
           gmailPage.waitAndClick('@notification-setup-action-open-settings')
@@ -678,7 +678,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
           '@webmail-notification-setup',
           '@notification-setup-action-open-settings',
           '@notification-setup-action-dismiss',
-          '@notification-setup-action-close'
+          '@notification-setup-action-close',
         ]);
         await gmailPage.waitAndClick('@notification-setup-action-dismiss', { confirmGone: true });
         await gmailPage.page.reload();
@@ -686,7 +686,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
           '@webmail-notification-setup',
           '@notification-setup-action-open-settings',
           '@notification-setup-action-dismiss',
-          '@notification-setup-action-close'
+          '@notification-setup-action-close',
         ]);
       })
     );
@@ -698,7 +698,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         const settingsPage = await browser.newPage(t, TestUrls.extensionSettings(acctEmail));
         await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
         const addKeyPopup = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-add-key-page', [
-          'add_key.htm'
+          'add_key.htm',
         ]);
         await addKeyPopup.waitAndClick('@source-paste');
         const key = Config.key('missing.self.signatures');
@@ -711,7 +711,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         await Util.sleep(1);
         const myKeyFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, `@action-show-key-2`, [
           'my_key.htm',
-          'placement=settings'
+          'placement=settings',
         ]);
         await Util.sleep(1);
         const curDate = new Date(),
@@ -741,7 +741,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
           userIds: [{ email: acctEmail }],
           keyExpirationTime: 20 * 24 * 60 * 60,
           passphrase,
-          date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000)
+          date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
         });
         // Setup with above key
         await SetupPageRecipe.manualEnter(
@@ -754,8 +754,8 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
               title: '?',
               armored: key.privateKeyArmored,
               passphrase,
-              longid: '0000000000000000' // dummy -- not needed
-            }
+              longid: '0000000000000000', // dummy -- not needed
+            },
           },
           { isSavePassphraseChecked: false, isSavePassphraseHidden: false }
         );
@@ -765,14 +765,14 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         // Add updated key that expires in 100 days
         await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
         const addKeyPopup = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-add-key-page', [
-          'add_key.htm'
+          'add_key.htm',
         ]);
         await addKeyPopup.waitAndClick('@source-paste');
         const updatedKey = await opgp.generateKey({
           curve: 'curve25519',
           userIds: [{ email: acctEmail }, { email: 'demo@gmail.com', name: 'Demo user' }],
           passphrase,
-          keyExpirationTime: 100 * 24 * 60 * 60
+          keyExpirationTime: 100 * 24 * 60 * 60,
         });
         await addKeyPopup.waitAndType('@input-armored-key', updatedKey.privateKeyArmored);
         await addKeyPopup.waitAndType('#input_passphrase', passphrase);
@@ -796,7 +796,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
           curve: 'curve25519',
           userIds: [{ email: acctEmail }],
           keyExpirationTime: 20 * 24 * 60 * 60,
-          date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000)
+          date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
         });
         MOCK_KM_KEYS[acctEmail] = { response: { privateKeys: [{ decryptedPrivateKey: key.privateKeyArmored }] } };
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
@@ -815,9 +815,9 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
           response: {
             privateKeys: [
               { decryptedPrivateKey: key.privateKeyArmored },
-              { decryptedPrivateKey: testConstants.notifyExpiringKeys }
-            ]
-          }
+              { decryptedPrivateKey: testConstants.notifyExpiringKeys },
+            ],
+          },
         };
         await gmailPage.page.reload();
         await PageRecipe.waitForToastToAppearAndDisappear(gmailPage, 'Account keys updated');
@@ -856,7 +856,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         );
         await SetupPageRecipe.recover(settingsPage, 'flowcrypt.wrong.passphrase', {
           hasRecoverMore: false,
-          wrongPp: true
+          wrongPp: true,
         });
       })
     );
@@ -1007,7 +1007,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         );
         await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
         const attesterFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-attester-page', [
-          'keyserver.htm'
+          'keyserver.htm',
         ]);
         await attesterFrame.waitAndClick('@action-submit-pub');
         await attesterFrame.waitAndRespondToModal('error', 'confirm', 'Disallowed by your organisation rules');
@@ -1029,16 +1029,16 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
               title: '?',
               armored: testConstants.testkey715EDCDC7939A8F7,
               passphrase: '1234',
-              longid: '715EDCDC7939A8F7'
-            }
+              longid: '715EDCDC7939A8F7',
+            },
           },
           { isSavePassphraseChecked: true, isSavePassphraseHidden: false }
         );
         const {
           cryptup_userdefaultrememberpassphraseclientconfigurationflowcrypttest_passphrase_715EDCDC7939A8F7:
-            savedPassphrase
+            savedPassphrase,
         } = await settingsPage.getFromLocalStorage([
-          'cryptup_userdefaultrememberpassphraseclientconfigurationflowcrypttest_passphrase_715EDCDC7939A8F7'
+          'cryptup_userdefaultrememberpassphraseclientconfigurationflowcrypttest_passphrase_715EDCDC7939A8F7',
         ]);
         expect(savedPassphrase).to.equal('1234');
         await settingsPage.close();
@@ -1134,7 +1134,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         // check imported key
         const myKeyFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, `@action-show-key-0`, [
           'my_key.htm',
-          'placement=settings'
+          'placement=settings',
         ]);
         await Util.sleep(1);
         await myKeyFrame.waitAll('@content-fingerprint');
@@ -1145,13 +1145,13 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         await SettingsPageRecipe.toggleScreen(settingsPage, 'basic');
         const securityFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-security-page', [
           'security.htm',
-          'placement=settings'
+          'placement=settings',
         ]);
         await Util.sleep(1);
         await securityFrame.notPresent([
           '@action-change-passphrase-begin',
           '@action-test-passphrase-begin',
-          '@action-forget-pp'
+          '@action-forget-pp',
         ]);
       })
     );
@@ -1197,7 +1197,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
         const passphrase = 'long enough to suit requirements';
         await SetupPageRecipe.autoSetupWithEKM(settingsPage, {
-          enterPp: { passphrase, checks: { isSavePassphraseChecked: false, isSavePassphraseHidden: true } }
+          enterPp: { passphrase, checks: { isSavePassphraseChecked: false, isSavePassphraseHidden: true } },
         });
         const accessToken = await BrowserRecipe.getGoogleAccessToken(settingsPage, acct);
         // eslint-disable-next-line @typescript-eslint/naming-convention
@@ -1274,18 +1274,18 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         await gmailPage.close();
         // 8. EKM returns an older version of the existing key, and a new key, toast, new key gets added encrypted with the same passphrase
         MOCK_KM_KEYS[acct].response = {
-          privateKeys: [{ decryptedPrivateKey: someOlderVersion }, { decryptedPrivateKey: testConstants.existingPrv }]
+          privateKeys: [{ decryptedPrivateKey: someOlderVersion }, { decryptedPrivateKey: testConstants.existingPrv }],
         };
         gmailPage = await browser.newPage(t, TestUrls.mockGmailUrl(), undefined, extraAuthHeaders);
         await PageRecipe.waitForToastToAppearAndDisappear(gmailPage, 'Account keys updated');
         await gmailPage.notPresent('@dialog-passphrase');
         const set9 = await retrieveAndCheckKeys(settingsPage, acct, 2);
         const mainKey9 = KeyUtil.filterKeysByIdentity(set9, [
-          { family: 'openpgp', id: '392FB1E9FF4184659AB6A246835C0141B9ECF536' }
+          { family: 'openpgp', id: '392FB1E9FF4184659AB6A246835C0141B9ECF536' },
         ]);
         expect(mainKey9.length).to.equal(1);
         const secondaryKey9 = KeyUtil.filterKeysByIdentity(set9, [
-          { family: 'openpgp', id: 'FAFB7D675AC74E87F84D169F00B0115807969D75' }
+          { family: 'openpgp', id: 'FAFB7D675AC74E87F84D169F00B0115807969D75' },
         ]);
         expect(secondaryKey9.length).to.equal(1);
         expect(mainKey9[0].lastModified).to.equal(set8[0].lastModified); // no update
@@ -1338,7 +1338,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         expect(await getPassphrase(settingsPage, acct, KeyUtil.getPrimaryLongid(set11[0]))).to.be.an.undefined; // the passphrase for the old key was deleted
         expect(set12.map(entry => entry.id)).to.eql(['277D1ADA213881F4ABE0415395E783DC0289E2E2']);
         const mainKey12 = KeyUtil.filterKeysByIdentity(set12, [
-          { family: 'openpgp', id: '277D1ADA213881F4ABE0415395E783DC0289E2E2' }
+          { family: 'openpgp', id: '277D1ADA213881F4ABE0415395E783DC0289E2E2' },
         ]);
         expect(mainKey12.length).to.equal(1);
         // 12. Forget the passphrase, EKM sends a broken key, no passphrase dialog, no updates
@@ -1351,8 +1351,8 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
             decryptedPrivateKey: testConstants.unprotectedPrvKey.substring(
               0,
               testConstants.unprotectedPrvKey.length / 2
-            )
-          }
+            ),
+          },
         ];
         gmailPage = await browser.newPage(t, TestUrls.mockGmailUrl(), undefined, extraAuthHeaders);
         await PageRecipe.waitForToastToAppearAndDisappear(
@@ -1363,7 +1363,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         const set13 = await retrieveAndCheckKeys(settingsPage, acct, 1, passphrase);
         expect(set13.map(entry => entry.id)).to.eql(['277D1ADA213881F4ABE0415395E783DC0289E2E2']);
         const mainKey13 = KeyUtil.filterKeysByIdentity(set13, [
-          { family: 'openpgp', id: '277D1ADA213881F4ABE0415395E783DC0289E2E2' }
+          { family: 'openpgp', id: '277D1ADA213881F4ABE0415395E783DC0289E2E2' },
         ]);
         expect(mainKey13.length).to.equal(1);
         expect(mainKey13[0].lastModified).to.equal(mainKey12[0].lastModified); // no update
@@ -1393,7 +1393,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
         const passphrase = 'long enough to suit requirements';
         await SetupPageRecipe.autoSetupWithEKM(settingsPage, {
-          enterPp: { passphrase, checks: { isSavePassphraseChecked: false, isSavePassphraseHidden: true } }
+          enterPp: { passphrase, checks: { isSavePassphraseChecked: false, isSavePassphraseHidden: true } },
         });
         const accessToken = await BrowserRecipe.getGoogleAccessToken(settingsPage, acct);
         // eslint-disable-next-line @typescript-eslint/naming-convention
@@ -1412,7 +1412,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         expect(await getPassphrase(settingsPage, acct, KeyUtil.getPrimaryLongid(set1[0]))).to.be.an.undefined; // the passphrase for the old key was deleted
         delete MOCK_KM_LAST_INSERTED_KEY[acct];
         await SetupPageRecipe.autoSetupWithEKM(settingsPage, {
-          enterPp: { passphrase, checks: { isSavePassphraseChecked: false, isSavePassphraseHidden: true } }
+          enterPp: { passphrase, checks: { isSavePassphraseChecked: false, isSavePassphraseHidden: true } },
         });
         expect(MOCK_KM_LAST_INSERTED_KEY[acct]).to.exist;
         const set2 = await retrieveAndCheckKeys(settingsPage, acct, 1);
@@ -1432,7 +1432,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         gmailPage = await browser.newPage(t, undefined, undefined, extraAuthHeaders);
         const newSettingsPage = await browser.newPageTriggeredBy(t, () => gmailPage.goto(TestUrls.mockGmailUrl()));
         await SetupPageRecipe.autoSetupWithEKM(newSettingsPage, {
-          enterPp: { passphrase, checks: { isSavePassphraseChecked: false, isSavePassphraseHidden: true } }
+          enterPp: { passphrase, checks: { isSavePassphraseChecked: false, isSavePassphraseHidden: true } },
         });
         expect(MOCK_KM_LAST_INSERTED_KEY[acct]).to.exist;
         const set3 = await retrieveAndCheckKeys(newSettingsPage, acct, 1);
@@ -1495,7 +1495,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
         const contactsFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-contacts-page', [
           'contacts.htm',
-          'placement=settings'
+          'placement=settings',
         ]);
         await contactsFrame.waitForContent(
           '@custom-key-server-description',
@@ -1534,16 +1534,16 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         const passphrase = 'Long and complicated pass PHRASE';
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
         await SetupPageRecipe.autoSetupWithEKM(settingsPage, {
-          enterPp: { passphrase, checks: { isSavePassphraseChecked: true, isSavePassphraseHidden: false } }
+          enterPp: { passphrase, checks: { isSavePassphraseChecked: true, isSavePassphraseHidden: false } },
         });
         const {
           cryptup_getkeykeymanagerchoosepassphraseflowcrypttest_keys: keys,
           cryptup_getkeykeymanagerchoosepassphraseflowcrypttest_rules: rules,
-          cryptup_getkeykeymanagerchoosepassphraseflowcrypttest_passphrase_00B0115807969D75: savedPassphrase
+          cryptup_getkeykeymanagerchoosepassphraseflowcrypttest_passphrase_00B0115807969D75: savedPassphrase,
         } = await settingsPage.getFromLocalStorage([
           'cryptup_getkeykeymanagerchoosepassphraseflowcrypttest_keys',
           'cryptup_getkeykeymanagerchoosepassphraseflowcrypttest_rules',
-          'cryptup_getkeykeymanagerchoosepassphraseflowcrypttest_passphrase_00B0115807969D75'
+          'cryptup_getkeykeymanagerchoosepassphraseflowcrypttest_passphrase_00B0115807969D75',
         ]);
         expect((rules as { flags: string[] }).flags).not.to.include('FORBID_STORING_PASS_PHRASE');
         expect((rules as { flags: string[] }).flags).to.include('DEFAULT_REMEMBER_PASS_PHRASE');
@@ -1560,18 +1560,18 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         await SetupPageRecipe.autoSetupWithEKM(settingsPage, {
           enterPp: {
             passphrase: 'long enough to suit requirements',
-            checks: { isSavePassphraseChecked: false, isSavePassphraseHidden: true }
-          }
+            checks: { isSavePassphraseChecked: false, isSavePassphraseHidden: true },
+          },
         });
         const {
           cryptup_getkeykeymanagerchoosepassphraseforbidstoringflowcrypttest_keys: keys,
           cryptup_getkeykeymanagerchoosepassphraseforbidstoringflowcrypttest_rules: rules,
           cryptup_getkeykeymanagerchoosepassphraseforbidstoringflowcrypttest_passphrase_00B0115807969D75:
-            savedPassphrase
+            savedPassphrase,
         } = await settingsPage.getFromLocalStorage([
           'cryptup_getkeykeymanagerchoosepassphraseforbidstoringflowcrypttest_keys',
           'cryptup_getkeykeymanagerchoosepassphraseforbidstoringflowcrypttest_rules',
-          'cryptup_getkeykeymanagerchoosepassphraseforbidstoringflowcrypttest_passphrase_00B0115807969D75'
+          'cryptup_getkeykeymanagerchoosepassphraseforbidstoringflowcrypttest_passphrase_00B0115807969D75',
         ]);
         expect((rules as { flags: string[] }).flags).to.include('FORBID_STORING_PASS_PHRASE');
         expect((rules as { flags: string[] }).flags).not.to.include('DEFAULT_REMEMBER_PASS_PHRASE');
@@ -1594,12 +1594,12 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
             title: 'my key',
             armored: testConstants.testkey715EDCDC7939A8F7,
             passphrase,
-            longid
-          }
+            longid,
+          },
         });
         const { cryptup_userpassphrasesessionlengthclientconfigurationflowcrypttest_rules: rules } =
           await settingsPage.getFromLocalStorage([
-            'cryptup_userpassphrasesessionlengthclientconfigurationflowcrypttest_rules'
+            'cryptup_userpassphrasesessionlengthclientconfigurationflowcrypttest_rules',
           ]);
         let savedPassphrase = await BrowserRecipe.getPassphraseFromInMemoryStore(settingsPage, acctEmail, longid);
         expect(
@@ -1638,7 +1638,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         // check imported key
         const myKeyFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, `@action-show-key-0`, [
           'my_key.htm',
-          'placement=settings'
+          'placement=settings',
         ]);
         await Util.sleep(1);
         await myKeyFrame.waitAll('@content-fingerprint');
@@ -1661,7 +1661,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         // check imported key
         const myKeyFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, `@action-show-key-0`, [
           'my_key.htm',
-          'placement=settings'
+          'placement=settings',
         ]);
         await Util.sleep(1);
         await myKeyFrame.waitAll('@content-fingerprint');
@@ -1676,13 +1676,13 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         await SettingsPageRecipe.toggleScreen(settingsPage, 'basic');
         const securityFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-security-page', [
           'security.htm',
-          'placement=settings'
+          'placement=settings',
         ]);
         await Util.sleep(1);
         await securityFrame.notPresent([
           '@action-change-passphrase-begin',
           '@action-test-passphrase-begin',
-          '@action-forget-pp'
+          '@action-forget-pp',
         ]);
       })
     );
@@ -1695,8 +1695,8 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         await SetupPageRecipe.autoSetupWithEKM(settingsPage, {
           expectErrView: {
             title: 'Server responded with an unexpected error.',
-            text: '500 when GET-ing https://localhost:8001/flowcrypt-email-key-manager/v1/keys/private (no body): -> Intentional error for get.error to test client behavior'
-          }
+            text: '500 when GET-ing https://localhost:8001/flowcrypt-email-key-manager/v1/keys/private (no body): -> Intentional error for get.error to test client behavior',
+          },
         });
       })
     );
@@ -1709,7 +1709,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         await settingsPage.waitAll([
           '@action-overlay-retry',
           '@container-overlay-prompt-text',
-          '@action-show-overlay-details'
+          '@action-show-overlay-details',
         ]);
         await Util.sleep(0.5);
         expect(await settingsPage.read('@container-overlay-prompt-text')).to.contain(
@@ -1735,8 +1735,8 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         await SetupPageRecipe.autoSetupWithEKM(settingsPage, {
           expectErrView: {
             title: 'Network connection issue.',
-            text: 'FlowCrypt Email Key Manager at https://localhost:1230/intentionally-wrong cannot be reached. If your organization requires a VPN, please connect to it. Else, please inform your network admin.'
-          }
+            text: 'FlowCrypt Email Key Manager at https://localhost:1230/intentionally-wrong cannot be reached. If your organization requires a VPN, please connect to it. Else, please inform your network admin.',
+          },
         });
       })
     );
@@ -1749,7 +1749,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         await SetupPageRecipe.autoSetupWithEKM(settingsPage, {
           enterPp: { passphrase: 'l3o3kqSa:;[]Leppaanz' },
           expectErrModal:
-            'FlowCrypt Email Key Manager at https://localhost:1230/intentionally-wrong cannot be reached. If your organization requires a VPN, please connect to it. Else, please inform your network admin.'
+            'FlowCrypt Email Key Manager at https://localhost:1230/intentionally-wrong cannot be reached. If your organization requires a VPN, please connect to it. Else, please inform your network admin.',
         });
       })
     );
@@ -1763,7 +1763,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
         const myKeyFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, `@action-show-key-0`, [
           'my_key.htm',
-          'placement=settings'
+          'placement=settings',
         ]);
         await Util.sleep(1);
         await myKeyFrame.waitAll('@content-fingerprint');
@@ -1787,7 +1787,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         await settingsPage.waitAll([
           '@action-overlay-retry',
           '@container-overlay-prompt-text',
-          '@action-show-overlay-details'
+          '@action-show-overlay-details',
         ]);
         await Util.sleep(0.5);
         const title = await settingsPage.read('@container-overlay-prompt-text');
@@ -1872,7 +1872,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
           filePath: 'test/samples/smime/test-unprotected-PKCS12.p12',
           armored: null, // eslint-disable-line no-null/no-null
           passphrase: 'test pp to encrypt unprotected key',
-          longid: null // eslint-disable-line no-null/no-null
+          longid: null, // eslint-disable-line no-null/no-null
         });
       })
     );
@@ -1895,8 +1895,8 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
               title: 'multi.aliased.user@example.com',
               passphrase: '1basic passphrase to use',
               armored: testConstants.keyMultiAliasedUser,
-              longid: null // eslint-disable-line no-null/no-null
-            }
+              longid: null, // eslint-disable-line no-null/no-null
+            },
           },
           { isSavePassphraseChecked: false, isSavePassphraseHidden: false }
         );
@@ -1919,7 +1919,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
           filePath: 'test/samples/openpgp/multialiaseduserexamplecom-0x357B908F62498DF8.key',
           armored: null, // eslint-disable-line no-null/no-null
           passphrase: '1basic passphrase to use',
-          longid: null // eslint-disable-line no-null/no-null
+          longid: null, // eslint-disable-line no-null/no-null
         };
         await SetupPageRecipe.manualEnter(settingsPage, key.title, { submitPubkey: true, fillOnly: true, key });
         expect(

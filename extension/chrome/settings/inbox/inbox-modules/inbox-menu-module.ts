@@ -18,7 +18,7 @@ export class InboxMenuModule extends ViewModule<InboxView> {
     CATEGORY_PERSONAL: 'CATEGORY_PERSONAL',
     IMPORTANT: 'IMPORTANT',
     SENT: 'SENT',
-    CATEGORY_UPDATES: 'CATEGORY_UPDATES'
+    CATEGORY_UPDATES: 'CATEGORY_UPDATES',
   };
   /* eslint-enable @typescript-eslint/naming-convention */
 

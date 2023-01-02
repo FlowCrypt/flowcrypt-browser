@@ -104,7 +104,7 @@ export class SetupRenderModule {
       'step_3_compatibility_fix',
       'step_4_more_to_recover',
       'step_4_done',
-      'step_4_close'
+      'step_4_close',
     ];
     if (name) {
       $('#' + blocks.join(', #')).css('display', 'none');

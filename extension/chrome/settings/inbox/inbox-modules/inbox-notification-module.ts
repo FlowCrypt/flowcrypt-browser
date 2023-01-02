@@ -57,7 +57,7 @@ export class InboxNotificationModule extends ViewModule<InboxView> {
   private notificationShowHandler: Bm.AsyncResponselessHandler = async ({
     notification,
     callbacks,
-    group
+    group,
   }: Bm.NotificationShow) => {
     this.showNotification(notification, group, callbacks);
   };

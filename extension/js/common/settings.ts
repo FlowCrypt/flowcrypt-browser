@@ -231,7 +231,7 @@ export class Settings {
         '<div class="line">FlowCrypt will attempt to update the key before importing.</div>',
         '<div class="line">',
         '  <button class="button long gray action_fix_compatibility" data-test="action-fix-and-import-key">UPDATE AND IMPORT KEY</button>',
-        '</div>'
+        '</div>',
       ].join('\n')
     );
     container.find('select.input_fix_expire_years').change(
@@ -275,7 +275,7 @@ export class Settings {
               // this is a security precaution, in case OpenPGP.js library changes in the future
               Catch.report(`Key update: Key not fully encrypted after update`, {
                 isFullyEncrypted: reformatted.fullyEncrypted,
-                isFullyDecrypted: reformatted.fullyDecrypted
+                isFullyDecrypted: reformatted.fullyDecrypted,
               });
               await Ui.modal.error(
                 'Key update:Key not fully encrypted after update. ' +
@@ -386,7 +386,7 @@ export class Settings {
           await AcctStore.set(response.acctEmail, { email_provider: 'gmail' }); // eslint-disable-line @typescript-eslint/naming-convention
           window.location.href = Url.create('/chrome/settings/setup.htm', {
             acctEmail: response.acctEmail,
-            idToken: response.id_token
+            idToken: response.id_token,
           });
         }
       } else if (response.result === 'Denied' || response.result === 'Closed') {
@@ -438,7 +438,7 @@ export class Settings {
         '  <div class="col-10 text-left">',
         `    <div class="contains_email" data-test="action-switch-to-account">${Xss.escape(email)}</div>`,
         '  </div>',
-        '</a>'
+        '</a>',
       ].join('');
     };
     const acctEmails = await GlobalStore.acctEmailsGet();
@@ -546,7 +546,7 @@ export class Settings {
       'If this key was registered on a keyserver (typically they are), you will need this same key (and pass phrase!) to replace it.',
       'In other words, losing this key or pass phrase may cause people to have trouble writing you encrypted emails, even if you use another key (on FlowCrypt or elsewhere) later on!',
       '',
-      'acctEmail: ' + acctEmail
+      'acctEmail: ' + acctEmail,
     ];
     const globalStorage = await GlobalStore.get(['version']);
     const acctStorage = await AcctStore.get(acctEmail, ['setup_date', 'full_name']);
@@ -601,7 +601,7 @@ export class Settings {
         name: a.displayName,
         isPrimary: !!a.isPrimary,
         isDefault: a.isDefault,
-        footer: a.signature
+        footer: a.signature,
       };
     }
     return result;

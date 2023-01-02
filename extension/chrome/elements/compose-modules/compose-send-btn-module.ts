@@ -124,7 +124,7 @@ export class ComposeSendBtnModule extends ViewModule<ComposeView> {
         }
         BrowserMsg.send.notificationShow(this.view.parentTabId, {
           notification: `Your ${this.view.isReplyBox ? 'reply' : 'message'} has been sent.`,
-          group: 'compose'
+          group: 'compose',
         });
         BrowserMsg.send.focusBody(this.view.parentTabId); // Bring focus back to body so Gmails shortcuts will work
         if (this.view.isReplyBox) {
@@ -160,7 +160,7 @@ export class ComposeSendBtnModule extends ViewModule<ComposeView> {
 
   private finalizeSendableMsg = async ({
     msg,
-    senderKi
+    senderKi,
   }: {
     msg: SendableMsg;
     senderKi: KeyInfoWithIdentity | undefined;
@@ -203,7 +203,7 @@ export class ComposeSendBtnModule extends ViewModule<ComposeView> {
             name: img.getAttribute('name') || '',
             type: mimeType,
             data: Buf.fromBase64Str(data),
-            inline: true
+            inline: true,
           });
           img.setAttribute('src', `cid:${imgAttachment.cid}`);
           imgAttachments.push(imgAttachment);

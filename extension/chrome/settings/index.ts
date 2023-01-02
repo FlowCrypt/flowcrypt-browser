@@ -246,7 +246,7 @@ View.run(
           async () =>
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             await Settings.renderSubPage(this.acctEmail!, this.tabId, 'modules/debug_api.htm', {
-              which: 'google_account'
+              which: 'google_account',
             })
         )
       );
@@ -448,7 +448,7 @@ View.run(
         );
         window.location.href = Url.create('index.htm', {
           acctEmail: newAcctEmail,
-          page: '/chrome/settings/modules/keyserver.htm'
+          page: '/chrome/settings/modules/keyserver.htm',
         });
       } catch (e) {
         if (ApiErr.isNetErr(e)) {

@@ -56,8 +56,8 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
         msgs: [msg],
         renderSentMessage: {
           recipients: msg.recipients,
-          attachments: msg.attachments // todo: perhaps, we should hide technical attachments, like `encrypted.asc` and use collectedAttachments too?
-        }
+          attachments: msg.attachments, // todo: perhaps, we should hide technical attachments, like `encrypted.asc` and use collectedAttachments too?
+        },
       };
     }
   };
@@ -101,7 +101,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
     // rich text: PGP/MIME - https://tools.ietf.org/html/rfc3156#section-4
     const attachments = this.formatEncryptedMimeDataAsPgpMimeMetaAttachments(encrypted);
     return await SendableMsg.createPgpMime(this.acctEmail, this.headers(newMsg), attachments, {
-      isDraft: this.isDraft
+      isDraft: this.isDraft,
     });
   };
 
@@ -144,7 +144,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
         // brackets are required for test emails like '@test:8001'
         replyTo: replyToForMessageSentToPubkeyRecipients.length
           ? `${Str.formatEmailList([newMsg.from, ...replyToForMessageSentToPubkeyRecipients], true)}`
-          : undefined
+          : undefined,
       };
       msgs.push(await this.sendableNonPwdMsg(pubkeyMsgData, pubkeys, signingKey?.key));
     }
@@ -169,7 +169,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
     return {
       senderKi: signingKey?.keyInfo,
       msgs,
-      renderSentMessage: { recipients: newMsg.recipients, attachments: encryptedAttachments }
+      renderSentMessage: { recipients: newMsg.recipients, attachments: encryptedAttachments },
     };
   };
 
@@ -266,7 +266,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
     }
     const encryptedMessage = await SmimeKey.encryptMessage({ pubkeys: x509certs, data: mimeData, armor: false });
     return await SendableMsg.createSMimeEncrypted(this.acctEmail, this.headers(newMsg), encryptedMessage.data, {
-      isDraft: this.isDraft
+      isDraft: this.isDraft,
     });
   };
 
@@ -276,7 +276,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
       new Attachment({
         data: Buf.fromUtfStr('Version: 1'),
         type: 'application/pgp-encrypted',
-        contentDescription: 'PGP/MIME version identification'
+        contentDescription: 'PGP/MIME version identification',
       })
     );
     attachments.push(
@@ -285,7 +285,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
         type: 'application/octet-stream',
         contentDescription: 'OpenPGP encrypted message',
         name: 'encrypted.asc',
-        inline: true
+        inline: true,
       })
     );
     return attachments;
@@ -306,7 +306,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
       pwd,
       data,
       armor: true,
-      date: encryptAsOfDate
+      date: encryptAsOfDate,
     })) as PgpMsgMethod.EncryptAnyArmorResult;
   };
 
@@ -320,19 +320,19 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
         sender: newMsgData.from.email,
         recipient: Value.arr.withoutVal(Value.arr.withoutVal(recipients, newMsgData.from.email), this.acctEmail),
         subject: newMsgData.subject,
-        token: response.replyToken
+        token: response.replyToken,
       };
       const replyInfoDiv = Ui.e('div', {
         style: 'display: none;',
         class: 'cryptup_reply',
-        'cryptup-data': Str.htmlAttrEncode(replyInfoRaw)
+        'cryptup-data': Str.htmlAttrEncode(replyInfoRaw),
       });
       return {
         bodyWithReplyToken: {
           'text/plain': newMsgData.plaintext + '\n\n' + replyInfoDiv,
-          'text/html': newMsgData.plainhtml + '<br /><br />' + replyInfoDiv
+          'text/html': newMsgData.plainhtml + '<br /><br />' + replyInfoDiv,
         },
-        replyToken: response.replyToken
+        replyToken: response.replyToken,
       };
     } catch (msgTokenErr) {
       if (ApiErr.isAuthErr(msgTokenErr)) {

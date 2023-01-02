@@ -42,7 +42,7 @@ const libs: unknown[] = [
   Debug,
   Catch,
   Gmail,
-  PgpHash
+  PgpHash,
 ];
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // add them to global scope so ci can use them

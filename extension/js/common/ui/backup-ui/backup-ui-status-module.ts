@@ -86,7 +86,7 @@ export class BackupUiStatusModule extends BackupUiModule<BackupUi> {
   private renderBackupDetailsText = (backups: Backups) => {
     const detailLines = [
       `Backups total: ${this.describeBackupCounts(backups.longids.backups, backups.keyinfos.backups)}`,
-      `Backups imported: ${backups.longids.backupsImported.length}`
+      `Backups imported: ${backups.longids.backupsImported.length}`,
     ];
     if (backups.keyinfos.backupsNotImported.length) {
       detailLines.push(

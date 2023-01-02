@@ -155,7 +155,7 @@ export class AcctStore extends AbstractStore {
       modify: false,
       readContacts: false,
       readOtherContacts: false,
-      gmail: false
+      gmail: false,
     };
     if (!accessToken) {
       return result;

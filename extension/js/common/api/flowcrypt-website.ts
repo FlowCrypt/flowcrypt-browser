@@ -19,7 +19,7 @@ export class FlowCryptWebsite extends Api {
         api: BACKEND_API_HOST,
         me: `https://flowcrypt.com/me/${resource}`,
         pubkey: `https://flowcrypt.com/pub/${resource}`,
-        web: 'https://flowcrypt.com/'
+        web: 'https://flowcrypt.com/',
       } as Dict<string>
     )[type];
   };
@@ -30,7 +30,7 @@ export class FlowCryptWebsite extends Api {
   ): Promise<FlowCryptWebsiteRes.FcHelpFeedback> => {
     return await FlowCryptWebsite.request<FlowCryptWebsiteRes.FcHelpFeedback>('help/feedback', {
       email: acctEmail,
-      message
+      message,
     });
   };
 
@@ -61,7 +61,7 @@ export class FlowCryptWebsite extends Api {
   ): Promise<RT> => {
     return await FlowCryptWebsite.apiCall(FlowCryptWebsite.url('api'), path, vals, fmt, progressCbs, {
       'api-version': '3',
-      ...addHeaders
+      ...addHeaders,
     });
   };
 }

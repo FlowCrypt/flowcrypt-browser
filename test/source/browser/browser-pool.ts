@@ -36,7 +36,7 @@ export class BrowserPool {
       '--disable-features=site-per-process',
       `--disable-extensions-except=${this.extensionBuildDir}`,
       `--load-extension=${this.extensionBuildDir}`,
-      `--window-size=${this.width + 10},${this.height + 132}`
+      `--window-size=${this.width + 10},${this.height + 132}`,
     ];
     if (this.isMock) {
       args.push('--ignore-certificate-errors');
@@ -48,7 +48,7 @@ export class BrowserPool {
       ignoreHTTPSErrors: this.isMock,
       headless: false,
       devtools: false,
-      slowMo
+      slowMo,
     });
     const handle = new BrowserHandle(browser, this.semaphore, this.height, this.width);
     if (closeInitialPage) {

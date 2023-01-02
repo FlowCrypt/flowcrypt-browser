@@ -142,11 +142,11 @@ export class InboxView extends View {
       $(`.secure_compose_window[data-frame-id="${frameId}"]`).remove();
       if ($('.secure_compose_window.previous_active:not(.minimized)').length) {
         BrowserMsg.send.focusPreviousActiveWindow(this.tabId, {
-          frameId: $('.secure_compose_window.previous_active:not(.minimized)').data('frame-id') as string
+          frameId: $('.secure_compose_window.previous_active:not(.minimized)').data('frame-id') as string,
         });
       } else if ($('.secure_compose_window:not(.minimized)').length) {
         BrowserMsg.send.focusPreviousActiveWindow(this.tabId, {
-          frameId: $('.secure_compose_window:not(.minimized)').data('frame-id') as string
+          frameId: $('.secure_compose_window:not(.minimized)').data('frame-id') as string,
         });
       }
       // reposition the rest of the compose windows

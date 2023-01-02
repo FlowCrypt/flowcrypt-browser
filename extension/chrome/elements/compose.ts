@@ -126,7 +126,7 @@ export class ComposeView extends View {
     cc: '#cc',
     bcc: '#bcc',
     sending_options_container: '#sending-options-container',
-    reply_options_container: '#reply-options-container'
+    reply_options_container: '#reply-options-container',
   });
   /* eslint-enable @typescript-eslint/naming-convention */
 
@@ -143,7 +143,7 @@ export class ComposeView extends View {
       'ignoreDraft',
       'debug',
       'removeAfterClose',
-      'replyPubkeyMismatch'
+      'replyPubkeyMismatch',
     ]);
     this.acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
     this.parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');

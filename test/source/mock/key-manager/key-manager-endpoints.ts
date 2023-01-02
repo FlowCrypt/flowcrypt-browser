@@ -340,5 +340,5 @@ export const mockKeyManagerEndpoints: HandlersDefinition = {
       );
     }
     throw new HttpClientErr(`Unknown method: ${req.method}`);
-  }
+  },
 };

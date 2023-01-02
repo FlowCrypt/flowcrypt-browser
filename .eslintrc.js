@@ -4,18 +4,18 @@ module.exports = {
     browser: true,
     node: true,
     commonjs: true,
-    es6: true
+    es6: true,
   },
   globals: {
     $: false,
     chrome: false,
-    OpenPGP: false
+    OpenPGP: false,
   },
   extends: ['eslint:recommended', 'plugin:@typescript-eslint/recommended', 'prettier'],
   ignorePatterns: ['.eslintrc.js'],
   parserOptions: {
     project: 'tsconfig.json',
-    sourceType: 'module'
+    sourceType: 'module',
   },
   plugins: [
     'no-only-tests',
@@ -25,7 +25,7 @@ module.exports = {
     'eslint-plugin-import',
     'eslint-plugin-no-null',
     'eslint-plugin-local-rules',
-    '@typescript-eslint'
+    '@typescript-eslint',
   ],
   root: true,
   rules: {
@@ -36,8 +36,8 @@ module.exports = {
     '@typescript-eslint/explicit-member-accessibility': [
       'error',
       {
-        accessibility: 'explicit'
-      }
+        accessibility: 'explicit',
+      },
     ],
     '@typescript-eslint/explicit-module-boundary-types': 'off',
     '@typescript-eslint/member-ordering': 'error',
@@ -47,17 +47,17 @@ module.exports = {
         selector: 'default',
         format: ['camelCase'],
         leadingUnderscore: 'allow',
-        trailingUnderscore: 'allow'
+        trailingUnderscore: 'allow',
       },
       {
         selector: 'variable',
         format: ['camelCase', 'UPPER_CASE'],
         leadingUnderscore: 'allow',
-        trailingUnderscore: 'allow'
+        trailingUnderscore: 'allow',
       },
       {
         selector: 'typeLike',
-        format: ['PascalCase']
+        format: ['PascalCase'],
       },
       {
         selector: [
@@ -68,16 +68,16 @@ module.exports = {
           'objectLiteralMethod',
           'typeMethod',
           'accessor',
-          'enumMember'
+          'enumMember',
         ],
         format: null,
-        modifiers: ['requiresQuotes']
+        modifiers: ['requiresQuotes'],
       },
       {
         selector: ['classProperty'],
         format: ['camelCase', 'UPPER_CASE'],
-        leadingUnderscore: 'allow'
-      }
+        leadingUnderscore: 'allow',
+      },
     ],
     '@typescript-eslint/no-empty-function': 'error',
     '@typescript-eslint/no-empty-interface': 'off',
@@ -107,7 +107,7 @@ module.exports = {
     'header/header': [
       'error',
       'block',
-      ' ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com '
+      ' ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com ',
     ],
     'id-denylist': 'error',
     'id-match': 'error',
@@ -151,8 +151,8 @@ module.exports = {
     'prefer-const': [
       'error',
       {
-        destructuring: 'all'
-      }
+        destructuring: 'all',
+      },
     ],
     radix: 'off',
     'require-atomic-updates': 0,
@@ -161,17 +161,17 @@ module.exports = {
       'error',
       'always',
       {
-        markers: ['/']
-      }
+        markers: ['/'],
+      },
     ],
-    'local-rules/standard-loops': 'error'
+    'local-rules/standard-loops': 'error',
   },
   overrides: [
     {
       files: './test/**/*.ts',
       rules: {
-        '@typescript-eslint/no-unused-expressions': 'off'
-      }
-    }
-  ]
+        '@typescript-eslint/no-unused-expressions': 'off',
+      },
+    },
+  ],
 };

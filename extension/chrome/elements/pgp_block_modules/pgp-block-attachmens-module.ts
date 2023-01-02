@@ -93,13 +93,13 @@ export class PgpBlockViewAttachmentsModule {
     const decrypted = await BrowserMsg.send.bg.await.pgpMsgDecrypt({
       kisWithPp,
       encryptedData: encrypted.getData(),
-      verificationPubs: []
+      verificationPubs: [],
     });
     if (decrypted.success) {
       const attachment = new Attachment({
         name: encrypted.name.replace(/\.(pgp|gpg)$/, ''),
         type: encrypted.type,
-        data: decrypted.content
+        data: decrypted.content,
       });
       Browser.saveToDownloads(attachment);
       this.view.renderModule.resizePgpBlockFrame();

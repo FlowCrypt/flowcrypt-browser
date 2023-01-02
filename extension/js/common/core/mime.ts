@@ -95,7 +95,7 @@ export class Mime {
             name: file.name,
             type: file.type,
             length: file.getData().length,
-            data: file.getData()
+            data: file.getData(),
           })
         );
       } else if (treatAs === 'plainFile') {
@@ -106,7 +106,7 @@ export class Mime {
             length: file.getData().length,
             data: file.getData(),
             inline: file.inline,
-            cid: file.cid
+            cid: file.cid,
           })
         );
       }
@@ -133,7 +133,7 @@ export class Mime {
       blocks,
       from: decoded.from,
       to: decoded.to,
-      rawSignedContent: decoded.rawSignedContent
+      rawSignedContent: decoded.rawSignedContent,
     };
   };
 
@@ -193,7 +193,7 @@ export class Mime {
       from: undefined,
       to: [],
       cc: [],
-      bcc: []
+      bcc: [],
     };
     const parser = new MimeParser();
     const leafNodes: { [key: string]: MimeParserNode } = {};
@@ -322,7 +322,7 @@ export class Mime {
   ): Promise<string> => {
     const sigPlaceholder = `SIG_PLACEHOLDER_${Str.sloppyRandom(10)}`;
     const rootNode = new MimeBuilder(`multipart/signed; protocol="application/pgp-signature";`, {
-      includeBccInHeader: true
+      includeBccInHeader: true,
     });
     for (const key of Object.keys(headers)) {
       rootNode.addHeader(key, headers[key]);
@@ -340,7 +340,7 @@ export class Mime {
     const sigAttachmentPlaceholder = new Attachment({
       data: Buf.fromUtfStr(sigPlaceholder),
       type: 'application/pgp-signature',
-      name: 'signature.asc'
+      name: 'signature.asc',
     });
     const sigAttachmentPlaceholderNode = Mime.createAttachmentNode(sigAttachmentPlaceholder);
     // https://tools.ietf.org/html/rfc3156#section-5 - signed content first, signature after
@@ -501,7 +501,7 @@ export class Mime {
         node.contentTransferEncoding.value === 'quoted-printable'
           ? Mime.fromEqualSignNotationAsBuf(node.rawContent!) // eslint-disable-line @typescript-eslint/no-non-null-assertion
           : node.content,
-      cid: Mime.getNodeContentId(node)
+      cid: Mime.getNodeContentId(node),
     });
   };
 

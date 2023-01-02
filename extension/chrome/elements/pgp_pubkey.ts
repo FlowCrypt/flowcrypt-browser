@@ -35,7 +35,7 @@ View.run(
         'parentTabId',
         'minimized',
         'compact',
-        'frameId'
+        'frameId',
       ]);
       this.acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
       this.parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
@@ -126,7 +126,7 @@ View.run(
             minimized: true,
             acctEmail: this.acctEmail,
             parentTabId: this.parentTabId,
-            frameId: this.frameId
+            frameId: this.frameId,
           });
         } else {
           this.showKeyNotUsableError();
@@ -158,7 +158,7 @@ View.run(
       const desiredHeight = origHeight + (this.compact ? 10 : 30);
       BrowserMsg.send.setCss(this.parentTabId, {
         selector: `iframe#${this.frameId}`,
-        css: { height: `${desiredHeight}px` }
+        css: { height: `${desiredHeight}px` },
       });
     };
 

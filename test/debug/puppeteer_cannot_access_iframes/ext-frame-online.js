@@ -7,10 +7,10 @@ let browser;
     args: [
       '--disable-features=site-per-process',
       '--disable-extensions-except=add_iframe',
-      '--load-extension=add_iframe'
+      '--load-extension=add_iframe',
     ],
     headless: false,
-    slowMo: 50
+    slowMo: 50,
   });
 
   let page = await browser.newPage();

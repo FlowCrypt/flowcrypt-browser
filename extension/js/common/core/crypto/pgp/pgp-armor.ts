@@ -33,35 +33,35 @@ export class PgpArmor {
     publicKey: {
       begin: '-----BEGIN PGP PUBLIC KEY BLOCK-----',
       end: '-----END PGP PUBLIC KEY BLOCK-----',
-      replace: true
+      replace: true,
     },
     privateKey: {
       begin: '-----BEGIN PGP PRIVATE KEY BLOCK-----',
       end: '-----END PGP PRIVATE KEY BLOCK-----',
-      replace: true
+      replace: true,
     },
     pkcs12: { begin: '-----BEGIN PKCS12 FILE-----', end: '-----END PKCS12 FILE-----', replace: true }, // custom format - Base64 dump of pkcs12 file bytes
     pkcs7: { begin: '-----BEGIN PKCS7-----', end: '-----END PKCS7-----', replace: true }, // PEM-formatted pkcs7 message
     pkcs8EncryptedPrivateKey: {
       begin: '-----BEGIN ENCRYPTED PRIVATE KEY-----',
       end: '-----END ENCRYPTED PRIVATE KEY-----',
-      replace: true
+      replace: true,
     },
     pkcs8PrivateKey: { begin: '-----BEGIN PRIVATE KEY-----', end: '-----END PRIVATE KEY-----', replace: true },
     pkcs8RsaPrivateKey: {
       begin: '-----BEGIN RSA PRIVATE KEY-----',
       end: '-----END RSA PRIVATE KEY-----',
-      replace: true
+      replace: true,
     },
     certificate: { begin: '-----BEGIN CERTIFICATE-----', end: '-----END CERTIFICATE-----', replace: true },
     signedMsg: {
       begin: '-----BEGIN PGP SIGNED MESSAGE-----',
       middle: '-----BEGIN PGP SIGNATURE-----',
       end: '-----END PGP SIGNATURE-----',
-      replace: true
+      replace: true,
     },
     signature: { begin: '-----BEGIN PGP SIGNATURE-----', end: '-----END PGP SIGNATURE-----', replace: false },
-    encryptedMsg: { begin: '-----BEGIN PGP MESSAGE-----', end: '-----END PGP MESSAGE-----', replace: true }
+    encryptedMsg: { begin: '-----BEGIN PGP MESSAGE-----', end: '-----END PGP MESSAGE-----', replace: true },
   };
 
   public static clipIncomplete = (text: string): string | undefined => {
@@ -90,7 +90,7 @@ export class PgpArmor {
     return {
       begin: typeof h.begin === 'string' && format === 're' ? h.begin.replace(/ /g, '\\s') : h.begin,
       end: typeof h.end === 'string' && format === 're' ? h.end.replace(/ /g, '\\s') : h.end,
-      replace: h.replace
+      replace: h.replace,
     };
   };
 
@@ -152,7 +152,7 @@ export class PgpArmor {
         isArmored,
         isCleartext: true,
         isPkcs7: false,
-        message: await opgp.cleartext.readArmored(new Buf(encrypted).toUtfStr())
+        message: await opgp.cleartext.readArmored(new Buf(encrypted).toUtfStr()),
       };
     } else if (isArmoredEncrypted) {
       const message = await opgp.message.readArmored(new Buf(encrypted).toUtfStr());

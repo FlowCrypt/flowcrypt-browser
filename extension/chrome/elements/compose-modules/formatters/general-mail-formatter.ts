@@ -32,7 +32,7 @@ export class GeneralMailFormatter {
       return {
         senderKi: undefined,
         msgs: [msg],
-        renderSentMessage: { recipients: msg.recipients, attachments: msg.attachments }
+        renderSentMessage: { recipients: msg.recipients, attachments: msg.attachments },
       };
     }
     if (!choices.encrypt && choices.sign) {
@@ -48,7 +48,7 @@ export class GeneralMailFormatter {
       return {
         senderKi: signingKey!.keyInfo,
         msgs: [msg],
-        renderSentMessage: { recipients: msg.recipients, attachments: msg.attachments }
+        renderSentMessage: { recipients: msg.recipients, attachments: msg.attachments },
       };
     }
     // encrypt (optionally sign)

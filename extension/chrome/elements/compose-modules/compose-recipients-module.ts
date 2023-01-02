@@ -765,7 +765,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       display: 'block',
       top: offsetTop,
       left: leftOffset,
-      maxHeight: `calc(100% - ${offsetTop + bottomGap}px)`
+      maxHeight: `calc(100% - ${offsetTop + bottomGap}px)`,
     });
   };
 
@@ -878,7 +878,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
           // Need to use BrowserMsg.send.bg because chrome.windows is undefined in gmail page
           const authResult = await BrowserMsg.send.bg.await.reconnectAcctAuthPopup({
             acctEmail: this.view.acctEmail,
-            scopes: GoogleAuth.defaultScopes('contacts')
+            scopes: GoogleAuth.defaultScopes('contacts'),
           });
           if (authResult.result === 'Success') {
             this.googleContactsSearchEnabled = true;
@@ -948,7 +948,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
           element,
           id: recipientId,
           sendingType,
-          status: email ? status : RecipientStatus.WRONG
+          status: email ? status : RecipientStatus.WRONG,
         };
         this.addedRecipients.push(recipient);
         if (recipient.status === RecipientStatus.WRONG) {
@@ -1160,7 +1160,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     return [
       { groupName: 'Valid public key fingerprints:', pubkeyInfos: valid },
       { groupName: 'Expired public key fingerprints:', pubkeyInfos: expired },
-      { groupName: 'Revoked public key fingerprints:', pubkeyInfos: revoked }
+      { groupName: 'Revoked public key fingerprints:', pubkeyInfos: revoked },
     ]
       .filter(g => g.pubkeyInfos.length)
       .map(g => this.formatKeyGroup(g.groupName, g.pubkeyInfos))

@@ -39,7 +39,7 @@ const consts = {
   ATTEMPTS: testGroup === 'STANDARD-GROUP' ? oneIfNotPooled(3) : process.argv.includes('--retry=false') ? 1 : 3,
   POOL_SIZE: oneIfNotPooled(isMock ? 20 : 3),
   PROMISE_TIMEOUT_OVERALL: undefined as unknown as Promise<never>, // will be set right below
-  IS_LOCAL_DEBUG: process.argv.includes('--debug') ? true : false // run locally by developer, not in ci
+  IS_LOCAL_DEBUG: process.argv.includes('--debug') ? true : false, // run locally by developer, not in ci
 };
 /* eslint-enable @typescript-eslint/naming-convention */
 console.info('consts: ', JSON.stringify(consts), '\n');
@@ -154,7 +154,7 @@ ava.default.after.always('evaluate Catch.reportErr errors', async t => {
       e =>
         ![
           'BrowserMsg(processAndStoreKeysFromEkmLocally) sendRawResponse::Error: Some keys could not be parsed',
-          'BrowserMsg(ajax) Bad Request: 400 when GET-ing https://localhost:8001/flowcrypt-email-key-manager/v1/keys/private (no body):  -> RequestTimeout'
+          'BrowserMsg(ajax) Bad Request: 400 when GET-ing https://localhost:8001/flowcrypt-email-key-manager/v1/keys/private (no body):  -> RequestTimeout',
         ].includes(e.message)
     )
     // below for test "user4@standardsubdomainfes.localhost:8001 - PWD encrypted message with FES web portal - a send fails with gateway update error"

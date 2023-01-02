@@ -51,7 +51,7 @@ export class SetupWithEmailKeyManagerModule {
         Boolean($('#step_2_ekm_choose_pass_phrase .input_passphrase_save').prop('checked')),
       submit_main: this.view.clientConfiguration.canSubmitPubToAttester(),
       submit_all: false,
-      passphrase
+      passphrase,
     };
     /* eslint-enable @typescript-eslint/naming-convention */
     try {
@@ -63,7 +63,7 @@ export class SetupWithEmailKeyManagerModule {
           await processAndStoreKeysFromEkmLocally({
             acctEmail: this.view.acctEmail,
             decryptedPrivateKeys: privateKeys.map(entry => entry.decryptedPrivateKey),
-            ppOptions: setupOptions
+            ppOptions: setupOptions,
           });
         } catch (e) {
           throw new Error(`Could not store keys from EKM due to error: ${e instanceof Error ? e.message : String(e)}`);

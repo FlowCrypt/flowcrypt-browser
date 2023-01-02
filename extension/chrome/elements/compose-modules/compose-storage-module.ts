@@ -9,7 +9,7 @@ import {
   PubkeyInfo,
   PubkeyResult,
   ContactInfoWithSortedPubkeys,
-  KeyInfoWithIdentity
+  KeyInfoWithIdentity,
 } from '../../../js/common/core/crypto/key.js';
 import { ApiErr } from '../../../js/common/api/shared/api-error.js';
 import { Assert } from '../../../js/common/assert.js';

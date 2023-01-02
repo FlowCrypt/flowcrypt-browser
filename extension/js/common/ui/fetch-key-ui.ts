@@ -31,7 +31,7 @@ export class FetchKeyUI {
     try {
       const result = (await BrowserMsg.send.bg.await.ajax({
         req: { url, type: 'GET', dataType: 'text', async: true },
-        stack: Catch.stackTrace()
+        stack: Catch.stackTrace(),
       })) as string;
       const keyImportUi = new KeyImportUi({ checkEncryption: true });
       return await keyImportUi.checkPub(result);

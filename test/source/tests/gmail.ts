@@ -32,7 +32,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
         // Compose Frame(Secure reply container) index. Default is 0 because "secure reply compose container" is located higher than the other "reply or forward buttons" container
         composeFrameIndex,
         // Total compose frame count
-        composeFrameCount
+        composeFrameCount,
       }: {
         isReplyPromptAccepted?: boolean;
         composeFrameIndex?: number;
@@ -129,7 +129,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
         const composePage = await GmailPageRecipe.openSecureCompose(t, gmailPage, browser);
         const subject = `New Rich Text Message ${Util.lousyRandom()}`;
         await ComposePageRecipe.fillMsg(composePage, { to: 'ci.tests.gmail@flowcrypt.dev' }, subject, undefined, {
-          richtext: true
+          richtext: true,
         });
         await ComposePageRecipe.sendAndClose(composePage);
         await gmailPage.waitAndClick('[aria-label^="Inbox"]');
@@ -153,7 +153,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
         await gotoGmailPage(gmailPage, '/FMfcgzGkbDWztBnnCgRHzjrvmFqLtcJD');
         const pgpBlockUrls = await gmailPage.getFramesUrls(['/chrome/elements/pgp_block.htm'], {
           sleep: 10,
-          appearIn: 25
+          appearIn: 25,
         });
         expect(pgpBlockUrls.length).to.equal(1);
         await gmailPage.page.setOfflineMode(true); // go offline mode
@@ -188,7 +188,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
           params,
           content: ['test that content from msg.asc renders'],
           encryption: 'encrypted',
-          signature: 'not signed'
+          signature: 'not signed',
         });
         await pageHasSecureReplyContainer(t, browser, gmailPage);
       })
@@ -202,7 +202,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
         // validate pgp_block.htm is rendered
         const pgpBlockUrls = await gmailPage.getFramesUrls(['/chrome/elements/pgp_block.htm'], {
           sleep: 10,
-          appearIn: 25
+          appearIn: 25,
         });
         expect(pgpBlockUrls.length).to.equal(1);
         const url = pgpBlockUrls[0].split('/chrome/elements/pgp_block.htm')[1];
@@ -210,7 +210,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
           params: url,
           content: ['1234'],
           encryption: 'not encrypted',
-          signature: 'signed'
+          signature: 'signed',
         });
         await pageHasSecureReplyContainer(t, browser, gmailPage);
         await testMinimumElementHeight(gmailPage, '.pgp_block.signedMsg', 80);
@@ -231,7 +231,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
         // validate pgp_block.htm is rendered
         const pgpBlockUrls = await gmailPage.getFramesUrls(['/chrome/elements/pgp_block.htm'], {
           sleep: 10,
-          appearIn: 25
+          appearIn: 25,
         });
         expect(pgpBlockUrls.length).to.equal(1);
         await testMinimumElementHeight(gmailPage, '.pgp_block.signedMsg', 80);
@@ -241,7 +241,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
           params: url,
           content: ['1234'],
           encryption: 'not encrypted',
-          signature: 'signed'
+          signature: 'signed',
         });
         await pageHasSecureReplyContainer(t, browser, gmailPage);
         const pubkeyPage = await gmailPage.getFrame(['/chrome/elements/pgp_pubkey.htm']);
@@ -259,14 +259,14 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
         await gotoGmailPage(gmailPage, '/FMfcgzGkbDZKPLBqWFzbgWqCrplTQdNz');
         const pgpBlockUrls = await gmailPage.getFramesUrls(['/chrome/elements/pgp_block.htm'], {
           sleep: 10,
-          appearIn: 25
+          appearIn: 25,
         });
         const url = pgpBlockUrls[0].split('/chrome/elements/pgp_block.htm')[1];
         await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
           params: url,
           content: ['Encrypted Subject: [ci.test] Thunderbird html signed + encrypted', '1234'],
           encryption: 'encrypted',
-          signature: 'not signed'
+          signature: 'not signed',
         });
         await pageHasSecureReplyContainer(t, browser, gmailPage);
         const pubkeyPage = await gmailPage.getFrame(['/chrome/elements/pgp_pubkey.htm']);

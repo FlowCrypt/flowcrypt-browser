@@ -96,7 +96,7 @@ const expectedConsumerPermissions = [
   'https://*.google.com/*',
   'https://www.googleapis.com/*',
   'https://flowcrypt.com/*',
-  'unlimitedStorage'
+  'unlimitedStorage',
 ];
 const expectedEnterprisePermissions = [
   'storage',
@@ -104,7 +104,7 @@ const expectedEnterprisePermissions = [
   'https://*.google.com/*',
   'https://*.googleapis.com/*',
   'https://flowcrypt.com/*',
-  'unlimitedStorage'
+  'unlimitedStorage',
 ];
 for (const buildType of ['chrome-consumer', 'chrome-enterprise', 'firefox-consumer']) {
   const manifest = JSON.parse(readFileSync(`./build/${buildType}/manifest.json`).toString());

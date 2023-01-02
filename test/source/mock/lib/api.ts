@@ -22,7 +22,7 @@ export enum Status {
   NOT_FOUND = 404,
   CONFLICT = 409, // conflicts with key on record - request needs to be verified
   SERVER_ERROR = 500,
-  NOT_IMPLEMENTED = 501
+  NOT_IMPLEMENTED = 501,
 }
 /* eslint-enable @typescript-eslint/naming-convention */
 
@@ -41,7 +41,7 @@ export class Api<REQ, RES> {
     this.apiName = apiName;
     const opt = {
       key: readFileSync(`./test/mock_cert/key.pem.mock`),
-      cert: readFileSync(`./test/mock_cert/cert.pem.mock`)
+      cert: readFileSync(`./test/mock_cert/cert.pem.mock`),
     };
     this.server = https.createServer(opt, (request, response) => {
       const start = Date.now();
@@ -168,7 +168,7 @@ export class Api<REQ, RES> {
     }
     return Buffer.from(
       JSON.stringify({
-        error: { message: e instanceof Error ? e.message : String(e), stack: e instanceof Error ? e.stack : '' }
+        error: { message: e instanceof Error ? e.message : String(e), stack: e instanceof Error ? e.stack : '' },
       })
     );
   };

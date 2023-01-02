@@ -49,7 +49,7 @@ Catch.try(async () => {
         newDataLayer: undefined,
         newUi: undefined,
         email: undefined,
-        gmailVariant: undefined
+        gmailVariant: undefined,
       };
       $('body').append(
         [
@@ -61,7 +61,7 @@ Catch.try(async () => {
           '    if (!e) {e = document.createElement("div");e.style="display:none";e.id="FC_VAR_PASS";document.body.appendChild(e)}',
           '    e.innerText=payload;',
           '  })();',
-          '</script>'
+          '</script>',
         ].join('')
       ); // executed synchronously - we can read the vars below
       try {
@@ -161,7 +161,7 @@ Catch.try(async () => {
       getUserAccountEmail,
       getUserFullName: () => $('div.gb_hb div.gb_lb').text() || $('div.gb_Fb.gb_Hb').text(),
       getReplacer: () => replacer,
-      start
+      start,
     });
 
     // BrowserMsg.addPgpListeners(); // todo - re-allow when https://github.com/FlowCrypt/flowcrypt-browser/issues/2560 fixed

@@ -32,7 +32,7 @@ export class PgpPwd {
     { match: 'day', word: 'reasonable', bar: 40, color: 'darkorange', pass: true },
     { match: 'hour', word: 'bare minimum', bar: 20, color: 'darkred', pass: true },
     { match: 'minute', word: 'poor', bar: 15, color: 'red', pass: false },
-    { match: '', word: 'weak', bar: 10, color: 'red', pass: false }
+    { match: '', word: 'weak', bar: 10, color: 'red', pass: false },
   ];
 
   private static CRACK_TIME_WORDS_PASS_PHRASE = [
@@ -43,7 +43,7 @@ export class PgpPwd {
     { match: 'month', word: 'reasonable', bar: 40, color: 'darkorange', pass: true },
     { match: 'week', word: 'poor', bar: 30, color: 'darkred', pass: false },
     { match: 'day', word: 'poor', bar: 20, color: 'darkred', pass: false },
-    { match: '', word: 'weak', bar: 10, color: 'red', pass: false }
+    { match: '', word: 'weak', bar: 10, color: 'red', pass: false },
   ];
 
   public static estimateStrength = (
@@ -104,7 +104,7 @@ export class PgpPwd {
       'set pass word',
       'setpassphrase',
       'set pass phrase',
-      'set passphrase'
+      'set passphrase',
     ];
   };
 

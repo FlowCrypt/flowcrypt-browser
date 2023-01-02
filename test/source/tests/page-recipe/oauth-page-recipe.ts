@@ -57,7 +57,7 @@ export class OauthPageRecipe extends PageRecipe {
       } else {
         await Promise.race([
           oauthPage.page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: TIMEOUT_PAGE_LOAD * 1000 }),
-          oauthPage.page.waitForNavigation({ waitUntil: 'load', timeout: TIMEOUT_PAGE_LOAD * 1000 })
+          oauthPage.page.waitForNavigation({ waitUntil: 'load', timeout: TIMEOUT_PAGE_LOAD * 1000 }),
         ]);
       }
     } catch (e) {
@@ -74,7 +74,7 @@ export class OauthPageRecipe extends PageRecipe {
       auth0username: '#username',
       auth0password: '#password',
       auth0loginBtn: 'button[type=submit][name=action][value=default]',
-      googleApproveBtn: '#submit_approve_access'
+      googleApproveBtn: '#submit_approve_access',
     };
     try {
       const alreadyLoggedSelector = '.w6VTHd, .wLBAL';

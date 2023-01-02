@@ -9,7 +9,7 @@ import {
   TIMEOUT_ELEMENT_GONE,
   TIMEOUT_PAGE_LOAD,
   TIMEOUT_TEST_STATE_SATISFY,
-  TIMEOUT_FOCUS
+  TIMEOUT_FOCUS,
 } from '.';
 import { TestUrls } from './test-urls';
 import { Util } from '../util';
@@ -97,7 +97,7 @@ abstract class ControllableBase {
     const visible = 'visible' in properties ? properties.visible : true;
     return await this.waitAnyInternal(this.selsAsProcessedArr(selector), {
       timeout: properties.timeout ?? TIMEOUT_ELEMENT_APPEAR,
-      visible
+      visible,
     });
   };
 
@@ -338,7 +338,7 @@ abstract class ControllableBase {
       timeout = TIMEOUT_ELEMENT_APPEAR,
       confirmGone = false,
       retryErrs = false,
-      sleepWhenDone
+      sleepWhenDone,
     }: { delay?: number; timeout?: number; confirmGone?: boolean; retryErrs?: boolean; sleepWhenDone?: number } = {}
   ) => {
     for (const i of [1, 2, 3]) {
@@ -776,7 +776,7 @@ export class ControllablePage extends ControllableBase {
     this.page.goto(url).catch(e => this.t.log(`goto: ${e.message}: ${url}`));
     await Promise.race([
       this.page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: TIMEOUT_PAGE_LOAD * 1000 }),
-      this.page.waitForNavigation({ waitUntil: 'load', timeout: TIMEOUT_PAGE_LOAD * 1000 })
+      this.page.waitForNavigation({ waitUntil: 'load', timeout: TIMEOUT_PAGE_LOAD * 1000 }),
     ]);
   };
 
@@ -801,7 +801,7 @@ export class ControllablePage extends ControllableBase {
     await this.dismissActiveAlerts();
     return await Promise.race([
       this.page.screenshot({ encoding: 'base64' }) as Promise<string>,
-      newTimeoutPromise('screenshot', 20)
+      newTimeoutPromise('screenshot', 20),
     ]);
   };
 
@@ -834,7 +834,7 @@ export class ControllablePage extends ControllableBase {
             const r = JSON.stringify(
               await Promise.race([
                 arg.jsonValue(),
-                new Promise(resolve => setTimeout(() => resolve('test.ts: log fetch timeout'), 3000))
+                new Promise(resolve => setTimeout(() => resolve('test.ts: log fetch timeout'), 3000)),
               ])
             );
             if (r !== '{}' && r && r !== JSON.stringify(msg.text())) {

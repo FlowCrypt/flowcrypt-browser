@@ -46,11 +46,11 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
         await settingsPage.waitAndClick('@input-step2bmanualenter-save');
         await SettingsPageRecipe.waitForModalAndRespond(settingsPage, 'confirm', {
           contentToCheck: 'You are importing a key that is expired.',
-          clickOn: 'confirm'
+          clickOn: 'confirm',
         });
         await SettingsPageRecipe.waitForModalAndRespond(settingsPage, 'warning', {
           contentToCheck: 'Public key not usable - not sumbitting to Attester',
-          clickOn: 'confirm'
+          clickOn: 'confirm',
         });
         await settingsPage.waitAndClick('@action-step4done-account-settings');
         // Try To send message with expired key
@@ -60,7 +60,7 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
         await ComposePageRecipe.waitForModalAndRespond(composePage, 'warning', {
           contentToCheck: 'Failed to send message due to: Error: Your account keys are expired',
           timeout: 45,
-          clickOn: 'confirm'
+          clickOn: 'confirm',
         });
         await composePage.close();
         await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
@@ -161,13 +161,13 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
           'threadId=17d02296bccd4c5c&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___&replyMsgId=17d02296bccd4c5c';
         const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', {
           appendUrl,
-          hasReplyPrompt: true
+          hasReplyPrompt: true,
         });
         await composePage.waitAndClick('@action-accept-reply-all-prompt', { delay: 1 });
         await expectRecipientElements(composePage, {
           to: [{ email: 'flowcrypt.compatibility@gmail.com', name: 'First Last' }, { email: 'vladimir@flowcrypt.com' }],
           cc: [{ email: 'limon.monte@gmail.com' }],
-          bcc: [{ email: 'sweetalert2@gmail.com' }]
+          bcc: [{ email: 'sweetalert2@gmail.com' }],
         });
         await composePage.waitAndType('@input-password', 'gO0d-pwd');
         await composePage.waitAndClick('@action-send', { delay: 1 });
@@ -208,7 +208,7 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
         await SetupPageRecipe.createKey(settingsPage, 'unused', 'none', {
           selectKeyAlgo: 'rsa3072',
-          key: { passphrase: 'long enough to suit requirements' }
+          key: { passphrase: 'long enough to suit requirements' },
         });
         await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
         const fingerprint = (await settingsPage.read('.good', true)).split(' ').join('');
@@ -419,7 +419,7 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
           'New Signed Message (Mock Test)',
           undefined,
           {
-            encrypt: false
+            encrypt: false,
           }
         );
         await ComposePageRecipe.sendAndClose(composePage);
@@ -516,7 +516,7 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
           'testsearchorder5@flowcrypt.com',
           'testsearchorder6@flowcrypt.com',
           'testsearchorder7@flowcrypt.com',
-          'testsearchorder8@flowcrypt.com'
+          'testsearchorder8@flowcrypt.com',
         ]);
         await composeFrame.waitAndClick('@action-close-new-message');
         await inboxPage.waitTillGone('@container-new-message');
@@ -563,7 +563,7 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
           'testsearchorder2@flowcrypt.com',
           'testsearchorder4@flowcrypt.com',
           'testsearchorder6@flowcrypt.com',
-          'testsearchorder7@flowcrypt.com'
+          'testsearchorder7@flowcrypt.com',
         ]);
       })
     );
@@ -576,7 +576,7 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
             controller.enqueue(Buffer.from('test'.repeat(1000000)));
           }
           controller.close();
-        }
+        },
       });
       const result = await Stream.readToEnd(stream);
       expect(result.length).to.equal(40000000);
@@ -624,13 +624,13 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
           enterPp: {
             passphrase,
             isForgetPpChecked: true,
-            isForgetPpHidden: false
-          }
+            isForgetPpHidden: false,
+          },
         });
         await InboxPageRecipe.checkDecryptMsg(t, browser, {
           acctEmail,
           threadId: '17c0e55caaa4abb3',
-          expectedContent: '2nd key of of 2 keys with the same passphrase'
+          expectedContent: '2nd key of of 2 keys with the same passphrase',
           // passphrase for the 2nd key should not be needed because it's the same as for the 1st key
         });
         // as decrypted s/mime messages are not rendered yet (#4070), let's test signing instead

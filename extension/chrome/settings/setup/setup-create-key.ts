@@ -30,7 +30,7 @@ export class SetupCreateKeyModule {
         passphrase_save: Boolean($('#step_2a_manual_create .input_passphrase_save').prop('checked')),
         submit_main: this.view.shouldSubmitPubkey('#step_2a_manual_create .input_submit_key'),
         submit_all: this.view.shouldSubmitPubkey('#step_2a_manual_create .input_submit_all'),
-        recovered: false
+        recovered: false,
       };
       /* eslint-enable @typescript-eslint/naming-convention */
       const keyAlgo =
@@ -52,7 +52,7 @@ export class SetupCreateKeyModule {
             $('#backup-template-container').remove();
             await this.view.finalizeSetup();
             await this.view.setupRender.renderSetupDone();
-          }
+          },
         });
       } else {
         await this.view.submitPublicKeys(opts);

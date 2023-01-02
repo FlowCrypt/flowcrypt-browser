@@ -28,9 +28,9 @@ module.exports = {
       docs: {
         description: 'disallow identifiers',
         category: 'Possible Errors',
-        recommended: false
+        recommended: false,
       },
-      schema: []
+      schema: [],
     },
     create: context => {
       return {
@@ -48,8 +48,8 @@ module.exports = {
               }
             }
           }
-        }
+        },
       };
-    }
-  }
+    },
+  },
 };

@@ -62,7 +62,7 @@
   const obj = {
     paramFunc: async (type: Type) => {
       await asyncFunc(type);
-    }
+    },
   };
 
   class ClassAsync {
@@ -121,7 +121,7 @@
         ' at <async> asyncFunc ',
         ' at <async> paramFunc ',
         ' at <async> staticConstAttrAsync ',
-        ' at <async> staticAsyncFunc '
+        ' at <async> staticAsyncFunc ',
       ]);
       await doTestWith('object', [
         'Error: Thrown[object][object Object]',
@@ -129,7 +129,7 @@
         ' at <async> asyncFunc ',
         ' at <async> paramFunc ',
         ' at <async> staticConstAttrAsync ',
-        ' at <async> staticAsyncFunc '
+        ' at <async> staticAsyncFunc ',
       ]);
       process.exit(0);
     } catch (e) {

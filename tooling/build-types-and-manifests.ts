@@ -31,8 +31,8 @@ addManifest('firefox-consumer', manifest => {
     gecko: {
       id: 'firefox@cryptup.io',
       update_url: 'https://flowcrypt.com/api/update/firefox', // eslint-disable-line @typescript-eslint/naming-convention
-      strict_min_version: '60.0' // eslint-disable-line @typescript-eslint/naming-convention
-    }
+      strict_min_version: '60.0', // eslint-disable-line @typescript-eslint/naming-convention
+    },
   };
   manifest.permissions = manifest.permissions.filter((p: string) => p !== 'unlimitedStorage');
   delete manifest.minimum_chrome_version;
@@ -57,7 +57,7 @@ addManifest('chrome-enterprise', manifest => {
     //        disables installed extensions / asks user to re-enable
     'https://*.googleapis.com/*',
     'https://flowcrypt.com/*',
-    'unlimitedStorage'
+    'unlimitedStorage',
   ];
   for (const csDef of manifest.content_scripts) {
     csDef.matches = csDef.matches.filter(
@@ -78,7 +78,7 @@ const CHROME_CONSUMER = 'chrome-consumer';
 const CHROME_ENTERPRISE = 'chrome-enterprise';
 const MOCK_HOST: { [buildType: string]: string } = {
   'chrome-consumer': 'https://localhost:8001',
-  'chrome-enterprise': 'https://google.mock.localhost:8001'
+  'chrome-enterprise': 'https://google.mock.localhost:8001',
 };
 
 const buildDir = (buildType: string) => `./build/${buildType}`;
@@ -91,18 +91,18 @@ const updateEnterpriseBuild = () => {
   const replaceConstsInEnterpriseBuild: { pattern: RegExp; replacement: string }[] = [
     {
       pattern: /const FLAVOR = 'consumer';/g,
-      replacement: `const FLAVOR = 'enterprise';`
+      replacement: `const FLAVOR = 'enterprise';`,
     },
     {
       // for now we use www.googleapis.com on consumer until CORS resolved to use gmail.googleapis.com
       // (on enterprise we already use gmail.googleapis.com)
       pattern: /const GMAIL_GOOGLE_API_HOST = '[^']+';/g,
-      replacement: `const GMAIL_GOOGLE_API_HOST = 'https://gmail.googleapis.com';`
-    }
+      replacement: `const GMAIL_GOOGLE_API_HOST = 'https://gmail.googleapis.com';`,
+    },
   ];
   const constFilepaths = [
     `${buildDir(CHROME_ENTERPRISE)}/js/common/core/const.js`,
-    `${buildDir(CHROME_ENTERPRISE)}/js/content_scripts/webmail_bundle.js`
+    `${buildDir(CHROME_ENTERPRISE)}/js/content_scripts/webmail_bundle.js`,
   ];
   for (const constFilepath of constFilepaths) {
     edit(constFilepath, (code: string) => {

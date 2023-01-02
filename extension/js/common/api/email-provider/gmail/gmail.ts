@@ -55,7 +55,7 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
   public threadList = async (labelId: string): Promise<GmailRes.GmailThreadList> => {
     return await Google.gmailCall<GmailRes.GmailThreadList>(this.acctEmail, 'GET', `threads`, {
       labelIds: labelId !== 'ALL' ? labelId : undefined,
-      includeSpamTrash: Boolean(labelId === 'SPAM' || labelId === 'TRASH')
+      includeSpamTrash: Boolean(labelId === 'SPAM' || labelId === 'TRASH'),
       // pageToken: page_token,
       // q,
       // maxResults
@@ -65,13 +65,13 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
   public threadModify = async (id: string, rmLabels: string[], addLabels: string[]): Promise<GmailRes.GmailThread> => {
     return await Google.gmailCall<GmailRes.GmailThread>(this.acctEmail, 'POST', `threads/${id}/modify`, {
       removeLabelIds: rmLabels || [], // todo - insufficient permission - need https://github.com/FlowCrypt/flowcrypt-browser/issues/1304
-      addLabelIds: addLabels || []
+      addLabelIds: addLabels || [],
     });
   };
 
   public draftCreate = async (mimeMsg: string, threadId: string): Promise<GmailRes.GmailDraftCreate> => {
     return await Google.gmailCall<GmailRes.GmailDraftCreate>(this.acctEmail, 'POST', 'drafts', {
-      message: { raw: Buf.fromUtfStr(mimeMsg).toBase64UrlStr(), threadId }
+      message: { raw: Buf.fromUtfStr(mimeMsg).toBase64UrlStr(), threadId },
     });
   };
 
@@ -81,7 +81,7 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
 
   public draftUpdate = async (id: string, mimeMsg: string, threadId: string): Promise<GmailRes.GmailDraftUpdate> => {
     return await Google.gmailCall<GmailRes.GmailDraftUpdate>(this.acctEmail, 'PUT', `drafts/${id}`, {
-      message: { raw: Buf.fromUtfStr(mimeMsg).toBase64UrlStr(), threadId }
+      message: { raw: Buf.fromUtfStr(mimeMsg).toBase64UrlStr(), threadId },
     });
   };
 
@@ -103,7 +103,7 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
     const mimeMsg = await sendableMsg.toMime();
     const request = Google.encodeAsMultipartRelated({
       'application/json; charset=UTF-8': jsonPart,
-      'message/rfc822': mimeMsg
+      'message/rfc822': mimeMsg,
     });
     return await Google.gmailCall<GmailRes.GmailMsgSend>(
       this.acctEmail,
@@ -119,7 +119,7 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
     return await Google.gmailCall<GmailRes.GmailMsgList>(this.acctEmail, 'GET', 'messages', {
       q,
       includeSpamTrash: includeDeleted,
-      pageToken
+      pageToken,
     });
   };
 
@@ -173,7 +173,7 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
       const { chunk } = await BrowserMsg.send.bg.await.ajaxGmailAttachmentGetChunk({
         acctEmail: this.acctEmail,
         msgId,
-        attachmentId
+        attachmentId,
       });
       return chunk;
     }
@@ -437,13 +437,13 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
       backups,
       backupsImported: backups.filter(backupKi => importedLongids.includes(backupKi.longid)),
       backupsNotImported: backups.filter(backupKi => !importedLongids.includes(backupKi.longid)),
-      importedNotBackedUp: imported.filter(importedKi => !backedUpLongids.includes(importedKi.longid))
+      importedNotBackedUp: imported.filter(importedKi => !backedUpLongids.includes(importedKi.longid)),
     };
     const longids = {
       backups: Value.arr.unique(keyinfos.backups.map(ki => ki.longid)),
       backupsImported: Value.arr.unique(keyinfos.backupsImported.map(ki => ki.longid)),
       backupsNotImported: Value.arr.unique(keyinfos.backupsNotImported.map(ki => ki.longid)),
-      importedNotBackedUp: Value.arr.unique(keyinfos.importedNotBackedUp.map(ki => ki.longid))
+      importedNotBackedUp: Value.arr.unique(keyinfos.importedNotBackedUp.map(ki => ki.longid)),
     };
     return { keyinfos, longids };
   };

@@ -756,7 +756,7 @@ declare namespace OpenPGP {
       message = 3,
       public_key = 4,
       private_key = 5,
-      signature = 6
+      signature = 6,
     }
 
     enum reasonForRevocation {
@@ -764,7 +764,7 @@ declare namespace OpenPGP {
       key_superseded = 1, // Key is superseded (key revocations)
       key_compromised = 2, // Key material has been compromised (key revocations)
       key_retired = 3, // Key is retired and no longer used (key revocations)
-      userid_invalid = 32 // User ID information is no longer valid (cert revocations)
+      userid_invalid = 32, // User ID information is no longer valid (cert revocations)
     }
 
     export type compressionNames = 'uncompressed' | 'zip' | 'zlib' | 'bzip2';
@@ -772,7 +772,7 @@ declare namespace OpenPGP {
       uncompressed = 0,
       zip = 1,
       zlib = 2,
-      bzip2 = 3
+      bzip2 = 3,
     }
 
     export type hashNames = 'md5' | 'sha1' | 'ripemd' | 'sha256' | 'sha384' | 'sha512' | 'sha224';
@@ -783,7 +783,7 @@ declare namespace OpenPGP {
       sha256 = 8,
       sha384 = 9,
       sha512 = 10,
-      sha224 = 11
+      sha224 = 11,
     }
 
     export type packetNames =
@@ -823,7 +823,7 @@ declare namespace OpenPGP {
       userAttribute = 17,
       symEncryptedIntegrityProtected = 18,
       modificationDetectionCode = 19,
-      symEncryptedAEADProtected = 20
+      symEncryptedAEADProtected = 20,
     }
 
     export type signatureNames =
@@ -857,7 +857,7 @@ declare namespace OpenPGP {
       key_revocation = 32,
       subkey_revocation = 40,
       timestamp = 64,
-      third_party = 80
+      third_party = 80,
     }
 
     export type publicKeyNames =
@@ -881,7 +881,7 @@ declare namespace OpenPGP {
       ecdsa = 19,
       eddsa = 22,
       aedh = 23,
-      aedsa = 24
+      aedsa = 24,
     }
 
     export type symmetricNames =
@@ -903,7 +903,7 @@ declare namespace OpenPGP {
       aes128 = 7,
       aes192 = 8,
       aes256 = 9,
-      twofish = 10
+      twofish = 10,
     }
 
     export type keyStatusNames = 'invalid' | 'expired' | 'revoked' | 'valid' | 'no_self_cert';
@@ -912,7 +912,7 @@ declare namespace OpenPGP {
       expired = 1,
       revoked = 2,
       valid = 3,
-      no_self_cert = 4
+      no_self_cert = 4,
     }
 
     export type keyFlagsNames =
@@ -930,7 +930,7 @@ declare namespace OpenPGP {
       encrypt_storage = 8,
       split_private_key = 16,
       authentication = 32,
-      shared_private_key = 128
+      shared_private_key = 128,
     }
   }
 

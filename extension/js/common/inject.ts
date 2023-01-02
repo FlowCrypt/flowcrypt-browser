@@ -27,13 +27,13 @@ export class Injector {
     composeBtnSel: {
       gmail: 'div.aeN, div.aBO', // .aeN for normal look, .aBO for new look https://github.com/FlowCrypt/flowcrypt-browser/issues/4099
       outlook: 'div._fce_b',
-      settings: '#does_not_have'
+      settings: '#does_not_have',
     },
     finishSesionBtnSel: {
       gmail: 'body',
       outlook: '#does_not_have',
-      settings: '#settings > div.header'
-    }
+      settings: '#settings > div.header',
+    },
   };
 
   private missingElSelectorReported: Dict<boolean> = {};
@@ -48,7 +48,7 @@ export class Injector {
       body: 'body',
       compose_button_container: this.container.composeBtnSel[this.webmailName],
       compose_button: '#flowcrypt_secure_compose_button',
-      secure_compose_window: '.secure_compose_window'
+      secure_compose_window: '.secure_compose_window',
     });
     /* eslint-enable @typescript-eslint/naming-convention */
   }

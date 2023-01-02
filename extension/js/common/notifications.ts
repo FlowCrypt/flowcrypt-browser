@@ -30,7 +30,7 @@ export class Notifications {
         // eslint-disable-next-line @typescript-eslint/naming-convention
         auth_popup: async () => {
           await this.reconnectAcctAuthPopup(acctEmail);
-        }
+        },
       }
     );
   };
@@ -80,7 +80,7 @@ export class Notifications {
           // eslint-disable-next-line @typescript-eslint/naming-convention
           add_missing_permission: async () => {
             await this.reconnectAcctAuthPopup(acctEmail);
-          }
+          },
         }
       );
     } else {

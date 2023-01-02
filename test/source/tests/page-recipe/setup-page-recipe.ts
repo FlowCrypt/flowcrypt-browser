@@ -46,7 +46,7 @@ export class SetupPageRecipe extends PageRecipe {
       selectKeyAlgo = '',
       skipForPassphrase = false,
       pageEvaluator,
-      key
+      key,
     }: CreateKeyOpts = {},
     checks: SavePassphraseChecks = {}
   ) => {
@@ -122,7 +122,7 @@ export class SetupPageRecipe extends PageRecipe {
       fillOnly = false,
       noPubSubmitRule = false,
       key,
-      isInvalidKey = false
+      isInvalidKey = false,
     }: ManualEnterOpts = {},
     checks: SavePassphraseChecks = {}
   ) {
@@ -132,7 +132,7 @@ export class SetupPageRecipe extends PageRecipe {
       } else {
         await settingsPage.waitAndClick('@action-step1easyormanual-choose-manual-enter', {
           timeout: 30,
-          retryErrs: true
+          retryErrs: true,
         });
       }
     }
@@ -147,7 +147,7 @@ export class SetupPageRecipe extends PageRecipe {
       // inputted as a file
       const [fileChooser] = await Promise.all([
         settingsPage.page.waitForFileChooser(),
-        settingsPage.waitAndClick('@input-step2bmanualenter-file', { retryErrs: true })
+        settingsPage.waitAndClick('@input-step2bmanualenter-file', { retryErrs: true }),
       ]);
       await fileChooser.accept([key.filePath]);
       await Util.sleep(1);
@@ -235,7 +235,7 @@ export class SetupPageRecipe extends PageRecipe {
         await settingsPage.waitAll(
           ['@action-overlay-retry', '@container-overlay-prompt-text', '@action-show-overlay-details'],
           {
-            timeout: fixKey ? 45 : 20
+            timeout: fixKey ? 45 : 20,
           }
         );
         await Util.sleep(0.5);
@@ -264,7 +264,7 @@ export class SetupPageRecipe extends PageRecipe {
       wrongPp = false,
       clickRecoverMore = false,
       hasRecoverMore = false,
-      alreadyRecovered = false
+      alreadyRecovered = false,
     }: { wrongPp?: boolean; clickRecoverMore?: boolean; hasRecoverMore?: boolean; alreadyRecovered?: boolean } = {}
   ) => {
     const k = Config.key(keyTitle);
@@ -278,7 +278,7 @@ export class SetupPageRecipe extends PageRecipe {
       await settingsPage.waitAndRespondToModal('warning', 'confirm', 'matches a key that was already recovered');
     } else {
       await settingsPage.waitAny(['@action-step4more-account-settings', '@action-step4done-account-settings'], {
-        timeout: 60
+        timeout: 60,
       });
       if (hasRecoverMore) {
         await settingsPage.waitAll(['@action-step4more-account-settings', '@action-step4more-recover-remaining']);
@@ -306,7 +306,7 @@ export class SetupPageRecipe extends PageRecipe {
       expectErrView,
       expectErrModal,
       expectWarnModal,
-      enterPp
+      enterPp,
     }: {
       expectErrView?: { title: string; text: string };
       expectErrModal?: string;
@@ -356,7 +356,7 @@ export class SetupPageRecipe extends PageRecipe {
       fillOnly: true,
       submitPubkey: false,
       usedPgpBefore: false,
-      key
+      key,
     });
     await settingsPage.waitAndClick('@input-step2bmanualenter-save', { delay: 1 });
     await Util.sleep(1);
@@ -379,7 +379,7 @@ export class SetupPageRecipe extends PageRecipe {
     {
       key,
       usedPgpBefore = false,
-      skipForPassphrase = false
+      skipForPassphrase = false,
     }: { key?: { passphrase: string }; usedPgpBefore?: boolean; skipForPassphrase?: boolean } = {}
   ) => {
     const k = key || Config.key(keyTitle);
@@ -396,12 +396,12 @@ export class SetupPageRecipe extends PageRecipe {
         );
         await settingsPage.waitAndClick('@action-step1easyormanual-choose-manual-create', {
           timeout: 30,
-          retryErrs: true
+          retryErrs: true,
         });
       } else {
         await settingsPage.waitAndClick('@action-step1easyormanual-choose-manual-create', {
           timeout: 30,
-          retryErrs: true
+          retryErrs: true,
         });
       }
     }

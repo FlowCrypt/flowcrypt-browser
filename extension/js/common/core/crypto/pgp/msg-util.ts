@@ -105,7 +105,7 @@ export enum DecryptErrTypes {
   badMdc = 'bad_mdc',
   needPassphrase = 'need_passphrase',
   format = 'format',
-  other = 'other'
+  other = 'other',
 }
 
 export class FormatError extends Error {
@@ -150,7 +150,7 @@ export class MsgUtil {
           t.modificationDetectionCode,
           t.symEncryptedAEADProtected,
           t.symmetricallyEncrypted,
-          t.compressed
+          t.compressed,
         ];
         return { armored: false, type: msgTpes.includes(tagNumber) ? 'encryptedMsg' : 'publicKey' };
       }
@@ -184,7 +184,7 @@ export class MsgUtil {
     kisWithPp,
     encryptedData,
     msgPwd,
-    verificationPubs
+    verificationPubs,
   }) => {
     const longids: DecryptError$longids = { message: [], matching: [], chosen: [], needPassphrase: [] };
     let prepared: PreparedForDecrypt;
@@ -220,7 +220,7 @@ export class MsgUtil {
         success: false,
         error: { type: DecryptErrTypes.needPassphrase, message: 'Missing pass phrase' },
         longids,
-        isEncrypted
+        isEncrypted,
       };
     }
     try {
@@ -238,7 +238,7 @@ export class MsgUtil {
           success: false,
           error: { type: DecryptErrTypes.usePassword, message: 'Use message password' },
           longids,
-          isEncrypted
+          isEncrypted,
         };
       }
       const passwords = msgPwd ? [msgPwd] : undefined;
@@ -262,7 +262,7 @@ export class MsgUtil {
           content,
           error: { type: DecryptErrTypes.noMdc, message: noMdc },
           longids,
-          isEncrypted
+          isEncrypted,
         };
       }
       return { success: true, content, isEncrypted, filename: decrypted.getFilename() || undefined, signature };
@@ -278,7 +278,7 @@ export class MsgUtil {
     data,
     filename,
     armor,
-    date
+    date,
   }) => {
     const keyFamilies = new Set(pubkeys.map(k => k.family));
     if (keyFamilies.has('openpgp') && keyFamilies.has('x509')) {
@@ -321,7 +321,7 @@ export class MsgUtil {
       prvMatching: [],
       prvForDecrypt: [],
       prvForDecryptDecrypted: [],
-      prvForDecryptWithoutPassphrases: []
+      prvForDecryptWithoutPassphrases: [],
     };
     const encryptionKeyids = msg.getEncryptionKeyIds();
     keys.encryptedFor = encryptionKeyids.map(kid => OpenPGPKey.bytesToLongid(kid.bytes));
@@ -368,7 +368,7 @@ export class MsgUtil {
       prvMatching: [],
       prvForDecrypt: [],
       prvForDecryptDecrypted: [],
-      prvForDecryptWithoutPassphrases: []
+      prvForDecryptWithoutPassphrases: [],
     };
     keys.encryptedFor = SmimeKey.getMessageLongids(msg);
     if (keys.encryptedFor.length) {
@@ -439,7 +439,7 @@ export class MsgUtil {
       'privateKeyPacket is null',
       'TypeprivateKeyPacket is null',
       'Session key decryption failed.',
-      'Invalid session key for decryption.'
+      'Invalid session key for decryption.',
     ];
     if (keyMismatchErrStrings.includes(e) && !msgPwd) {
       return { type: DecryptErrTypes.keyMismatch, message: e };
@@ -458,7 +458,7 @@ export class MsgUtil {
     } else if (e === 'Modification detected.') {
       return {
         type: DecryptErrTypes.badMdc,
-        message: `Security threat - opening this message is dangerous because it was modified in transit.`
+        message: `Security threat - opening this message is dangerous because it was modified in transit.`,
       };
     } else {
       return { type: DecryptErrTypes.other, message: e };

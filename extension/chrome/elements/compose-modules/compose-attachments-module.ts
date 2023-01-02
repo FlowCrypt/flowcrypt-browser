@@ -22,7 +22,7 @@ export class ComposeAttachmentsModule extends ViewModule<ComposeView> {
       uiChanged: () => {
         this.view.sizeModule.setInputTextHeightManuallyIfNeeded();
         this.view.sizeModule.resizeComposeBox();
-      }
+      },
     });
     this.view.S.cached('body').on('click', '#attachment_list li', async (e: JQuery.Event) => {
       const fileId = $(e.currentTarget).attr('qq-file-id') as string;
@@ -43,7 +43,7 @@ export class ComposeAttachmentsModule extends ViewModule<ComposeView> {
             Math.ceil(combinedSize / (1024 * 1024)) +
             ' MB.'
         );
-      }
+      },
     };
   };
 }

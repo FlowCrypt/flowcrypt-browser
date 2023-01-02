@@ -285,7 +285,7 @@ BROWSER_UNIT_TEST_NAME(`Mime attachment file names`);
       ' filename*1*=%D0%96%D0%97%D0%98%D0%99%D0%9A%D0%9B%D0%9C%D0%9D;\r\n' +
       ' filename*2*=%D0%9E%D0%9F%D0%A0%D0%A1%D0%A2%D0%A3%D0%A4%D0%A5;\r\n' +
       ' filename*3*=%D0%A6%D0%A7%D0%A8%D0%A9%D0%AA%D0%AB%D0%AC%D0%AD;\r\n' +
-      ' filename*4*=%D0%AE%D0%AF'
+      ' filename*4*=%D0%AE%D0%AF',
   ];
   // 1..31
   var filenames = [...Array(31).keys()].map(i => String.fromCharCode(i + 1));
@@ -298,7 +298,7 @@ BROWSER_UNIT_TEST_NAME(`Mime attachment file names`);
   );
   const encoded = await Mime.encode({ 'text/plain': 'text' }, { Subject: 'subject' }, attachments);
   const encodedFilenames = [
-    ...encoded.matchAll(/Content\-Disposition: attachment; ?\r?\n?(.+?)\r\nX\-Attachment\-Id/gs)
+    ...encoded.matchAll(/Content\-Disposition: attachment; ?\r?\n?(.+?)\r\nX\-Attachment\-Id/gs),
   ];
   if (encodedFilenames.length !== expectedEncodedFilenames.length) {
     throw Error(

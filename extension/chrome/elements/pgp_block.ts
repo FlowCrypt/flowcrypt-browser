@@ -60,7 +60,7 @@ export class PgpBlockView extends View {
       'isOutgoing',
       'senderEmail',
       'signature',
-      'debug'
+      'debug',
     ]);
     this.acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
     this.parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');

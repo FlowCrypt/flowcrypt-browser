@@ -33,7 +33,7 @@ export const compareAndSavePubkeysToStorage = async (
  */
 export const saveFetchedPubkeysIfNewerThanInStorage = async ({
   email,
-  pubkeys
+  pubkeys,
 }: {
   email: string;
   pubkeys: string[];

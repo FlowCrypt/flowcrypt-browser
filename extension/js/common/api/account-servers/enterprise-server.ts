@@ -109,7 +109,7 @@ export class EnterpriseServer extends Api {
     await this.request<void>('POST', `/api/${this.apiVersion}/log-collector/exception`, await this.authHdr(), {
       tags,
       message,
-      details
+      details,
     });
   };
 
@@ -133,7 +133,7 @@ export class EnterpriseServer extends Api {
     const content = new Attachment({
       name: 'encrypted.asc',
       type: 'text/plain',
-      data: encrypted
+      data: encrypted,
     });
     const details = new Attachment({
       name: 'details.json',
@@ -144,9 +144,9 @@ export class EnterpriseServer extends Api {
           from,
           to: (recipients.to || []).map(Str.formatEmailWithOptionalName),
           cc: (recipients.cc || []).map(Str.formatEmailWithOptionalName),
-          bcc: (recipients.bcc || []).map(Str.formatEmailWithOptionalName)
+          bcc: (recipients.bcc || []).map(Str.formatEmailWithOptionalName),
         })
-      )
+      ),
     });
     const multipartBody = { content, details };
     const authHdr = await this.authHdr();
@@ -164,7 +164,7 @@ export class EnterpriseServer extends Api {
 
   public messageGatewayUpdate = async (externalId: string, emailGatewayMessageId: string) => {
     await this.request<void>('POST', `/api/${this.apiVersion}/message/${externalId}/gateway`, await this.authHdr(), {
-      emailGatewayMessageId
+      emailGatewayMessageId,
     });
   };
 

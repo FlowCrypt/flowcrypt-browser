@@ -56,7 +56,7 @@ export class OauthMock {
       scope: this.scopesByAccessToken[token],
       email: this.acctByAccessToken[token],
       expires_in: 3600, // eslint-disable-line @typescript-eslint/naming-convention
-      token_type: 'Bearer' // eslint-disable-line @typescript-eslint/naming-convention
+      token_type: 'Bearer', // eslint-disable-line @typescript-eslint/naming-convention
     };
   };
 
@@ -172,7 +172,7 @@ export class MockJwt {
       family_name: 'Last',
       given_name: 'First',
       email,
-      email_verified: true
+      email_verified: true,
     };
     /* eslint-enable @typescript-eslint/naming-convention */
     const newIdToken = `fakeheader.${Buf.fromUtfStr(JSON.stringify(data)).toBase64UrlStr()}.${Str.sloppyRandom(30)}`;

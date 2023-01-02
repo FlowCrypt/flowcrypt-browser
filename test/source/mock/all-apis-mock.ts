@@ -32,7 +32,7 @@ export const startAllApisMock = async (logger: (line: string) => void) => {
     ...mockWkdEndpoints,
     ...mockSksEndpoints,
     ...mockFesEndpoints,
-    '/favicon.ico': async () => ''
+    '/favicon.ico': async () => '',
   });
   await api.listen(8001);
   return api;

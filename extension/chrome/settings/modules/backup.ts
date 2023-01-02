@@ -40,7 +40,7 @@ export class BackupView extends View {
         } else {
           Settings.redirectSubPage(acctEmail, parentTabId, '/chrome/settings/modules/backup.htm');
         }
-      }
+      },
     });
   }
 

@@ -85,12 +85,12 @@ export class GmailMsg {
       headers: [
         {
           name: 'Content-Type',
-          value: `${contentTypeHeader.value}; boundary=\"${contentTypeHeader.params.boundary}\"`
+          value: `${contentTypeHeader.value}; boundary=\"${contentTypeHeader.params.boundary}\"`,
         },
         { name: 'Message-Id', value: messageIdHeader },
-        { name: 'Mime-Version', value: mimeVersionHeader }
+        { name: 'Mime-Version', value: mimeVersionHeader },
       ],
-      body
+      body,
     };
     /* eslint-disable @typescript-eslint/no-non-null-assertion */
     if (toHeader) {
@@ -163,16 +163,16 @@ export class GoogleData {
             name: 'Inbox',
             messageListVisibility: 'show',
             labelListVisibility: 'labelShow',
-            type: 'system'
+            type: 'system',
           },
           {
             id: 'DRAFT',
             name: 'Drafts',
             messageListVisibility: 'show',
             labelListVisibility: 'labelShow',
-            type: 'system'
-          }
-        ]
+            type: 'system',
+          },
+        ],
       };
       const dir = GoogleData.exportedMsgsPath;
       const filenames: string[] = await new Promise((res, rej) => readdir(dir, (e, f) => (e ? rej(e) : res(f))));
@@ -261,7 +261,7 @@ export class GoogleData {
         data: attachment.content.toString('base64'),
         size: attachment.size,
         filename: attachment.filename,
-        id: attId
+        id: attId,
       };
       DATA[this.acct].attachments[attId] = gmailAtt;
       if (attachment.filename === 'encrypted.asc') {
@@ -286,11 +286,11 @@ export class GoogleData {
       payload: {
         headers: [
           { name: 'Subject', value: parsedMail.subject || '' },
-          { name: 'Message-ID', value: parsedMail.messageId || '' }
+          { name: 'Message-ID', value: parsedMail.messageId || '' },
         ],
-        body
+        body,
       },
-      raw: parseResult.base64
+      raw: parseResult.base64,
     };
     DATA[this.acct].messages.push(barebonesGmailMsg);
     return barebonesGmailMsg.id;

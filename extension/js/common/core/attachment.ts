@@ -38,7 +38,7 @@ export class Attachment {
     'encrypted.asc',
     'encrypted.eml.pgp',
     'Message.pgp',
-    'openpgp-encrypted-message.asc'
+    'openpgp-encrypted-message.asc',
   ];
 
   public length = NaN;
@@ -65,7 +65,7 @@ export class Attachment {
     msgId,
     treatAs,
     cid,
-    contentDescription
+    contentDescription,
   }: AttachmentMeta) {
     if (typeof data === 'undefined' && typeof url === 'undefined' && typeof id === 'undefined') {
       throw new Error('Attachment: one of data|url|id has to be set');
@@ -108,7 +108,7 @@ export class Attachment {
     return new Attachment({
       data: Buf.fromUtfStr(ki.public),
       type: 'application/pgp-keys',
-      name: `0x${ki.longid}.asc`
+      name: `0x${ki.longid}.asc`,
     });
   };
 

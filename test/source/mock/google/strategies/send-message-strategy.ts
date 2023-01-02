@@ -222,7 +222,7 @@ class MessageWithFooterTestStrategy implements ITestMsgStrategy {
     const decrypted = await MsgUtil.decryptMessage({
       kisWithPp: keyInfo!, // eslint-disable-line @typescript-eslint/no-non-null-assertion
       encryptedData: Buf.fromUtfStr(mimeMsg.text || ''),
-      verificationPubs: []
+      verificationPubs: [],
     });
     if (!decrypted.success) {
       throw new HttpClientErr(`Error: can't decrypt message`);
@@ -246,7 +246,7 @@ class SignedMessageTestStrategy implements ITestMsgStrategy {
     const decrypted = await MsgUtil.decryptMessage({
       kisWithPp: keyInfo!, // eslint-disable-line @typescript-eslint/no-non-null-assertion
       encryptedData: Buf.fromUtfStr(mimeMsg.text!), // eslint-disable-line @typescript-eslint/no-non-null-assertion
-      verificationPubs: []
+      verificationPubs: [],
     });
     if (!decrypted.success) {
       throw new HttpClientErr(`Error: Could not successfully verify signed message`);
@@ -294,7 +294,7 @@ class IncludeQuotedPartTestStrategy implements ITestMsgStrategy {
     '> > still the quote',
     '> > third line',
     '> >> double quote',
-    '> >> again double quote'
+    '> >> again double quote',
   ].join('\n');
 
   public test = async (parseResult: ParseMsgResult) => {
@@ -303,7 +303,7 @@ class IncludeQuotedPartTestStrategy implements ITestMsgStrategy {
     const decrypted = await MsgUtil.decryptMessage({
       kisWithPp: keyInfo!,
       encryptedData: Buf.fromUtfStr(parseResult.mimeMsg.text!),
-      verificationPubs: []
+      verificationPubs: [],
     });
     /* eslint-enable @typescript-eslint/no-non-null-assertion */
     if (!decrypted.success) {

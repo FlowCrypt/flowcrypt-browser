@@ -17,7 +17,7 @@ import { GmailPageRecipe } from '../page-recipe/gmail-page-recipe';
 export class BrowserRecipe {
   public static oldAndNewComposeButtonSelectors = [
     'div.z0[class*="_destroyable"]',
-    '.new_secure_compose_window_button'
+    '.new_secure_compose_window_button',
   ];
 
   public static openSettingsLoginButCloseOauthWindowBeforeGrantingPermission = async (
@@ -97,7 +97,7 @@ export class BrowserRecipe {
       );
       await SetupPageRecipe.recover(settingsPage, 'flowcrypt.compatibility.1pp1', {
         hasRecoverMore: true,
-        clickRecoverMore: true
+        clickRecoverMore: true,
       });
       await SetupPageRecipe.recover(settingsPage, 'flowcrypt.compatibility.2pp1');
       await settingsPage.close();
@@ -130,7 +130,7 @@ export class BrowserRecipe {
       name: 'inMemoryStoreGet',
       data: { bm: { acctEmail, key: InMemoryStoreKeys.GOOGLE_TOKEN_ACCESS }, objUrls: {} },
       to: null, // eslint-disable-line no-null/no-null
-      uid: '2'
+      uid: '2',
     });
     return (result as { result: string }).result;
   };
@@ -144,7 +144,7 @@ export class BrowserRecipe {
       name: 'inMemoryStoreGet',
       data: { bm: { acctEmail, key }, objUrls: {} },
       to: null, // eslint-disable-line no-null/no-null
-      uid: '2' // todo: random uid?
+      uid: '2', // todo: random uid?
     });
     return (result as { result: string }).result;
   };
@@ -193,7 +193,7 @@ export class BrowserRecipe {
       title: '',
       armored: testConstants.testKeyB8F687BCDE14435A,
       passphrase: 'donotstore',
-      longid: 'B8F687BCDE14435A'
+      longid: 'B8F687BCDE14435A',
     };
     await SetupPageRecipe.manualEnter(
       settingsPage,

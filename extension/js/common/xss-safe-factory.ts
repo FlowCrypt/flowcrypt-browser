@@ -181,7 +181,7 @@ export class XssSafeFactory {
         url: a.url,
         isEncrypted,
         errorDetailsOpened,
-        initiatorFrameId
+        initiatorFrameId,
       },
       parentTabId
     );
@@ -200,7 +200,7 @@ export class XssSafeFactory {
       msgId,
       senderEmail,
       isOutgoing,
-      signature
+      signature,
     });
   };
 
@@ -208,7 +208,7 @@ export class XssSafeFactory {
     return this.frameSrc(this.extUrl('chrome/elements/pgp_pubkey.htm'), {
       frameId: this.newId(),
       armoredPubkey,
-      minimized: Boolean(isOutgoing)
+      minimized: Boolean(isOutgoing),
     });
   };
 
@@ -224,7 +224,7 @@ export class XssSafeFactory {
       ignoreDraft: Boolean(ignoreDraft),
       replyMsgId: convoParams.replyMsgId,
       draftId: convoParams.draftId,
-      removeAfterClose: convoParams.removeAfterClose
+      removeAfterClose: convoParams.removeAfterClose,
     };
     return this.frameSrc(this.extUrl('chrome/elements/compose.htm'), params);
   };
@@ -259,14 +259,14 @@ export class XssSafeFactory {
       class: 'secure_compose_window',
       html: this.iframe(srcComposeMsg, [], { scrolling: 'no' }),
       'data-frame-id': String(Url.parse(['frameId'], srcComposeMsg).frameId),
-      'data-test': 'container-new-message'
+      'data-test': 'container-new-message',
     });
   };
 
   public embeddedAttachment = (meta: Attachment, isEncrypted: boolean, parentTabId?: string) => {
     return Ui.e('span', {
       class: 'pgp_attachment',
-      html: this.iframe(this.srcPgpAttachmentIframe(meta, isEncrypted, parentTabId))
+      html: this.iframe(this.srcPgpAttachmentIframe(meta, isEncrypted, parentTabId)),
     });
   };
 

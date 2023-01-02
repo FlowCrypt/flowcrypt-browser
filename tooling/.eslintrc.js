@@ -1,5 +1,5 @@
 module.exports = {
   parserOptions: {
-    project: './conf/tsconfig.tooling.json'
-  }
+    project: './conf/tsconfig.tooling.json',
+  },
 };

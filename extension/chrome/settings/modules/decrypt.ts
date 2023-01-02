@@ -67,13 +67,13 @@ View.run(
       const result = await MsgUtil.decryptMessage({
         kisWithPp: await KeyStore.getAllWithOptionalPassPhrase(this.acctEmail),
         encryptedData: encrypted.getData(),
-        verificationPubs: []
+        verificationPubs: [],
       });
       if (result.success) {
         const attachment = new Attachment({
           name: encrypted.name.replace(/\.(pgp|gpg|asc)$/i, ''),
           type: encrypted.type,
-          data: result.content
+          data: result.content,
         });
         Browser.saveToDownloads(attachment);
       } else if (result.error.type === DecryptErrTypes.needPassphrase) {

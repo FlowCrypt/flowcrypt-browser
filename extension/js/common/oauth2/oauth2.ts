@@ -22,7 +22,7 @@ export class OAuth2 {
       top: topOffset,
       height: adaptiveHeight,
       width: adaptiveWidth,
-      type: 'popup'
+      type: 'popup',
     });
     if (!oauthWin || !oauthWin.tabs || !oauthWin.tabs.length || !oauthWin.id) {
       return { error: 'No oauth window returned after initiating it' };

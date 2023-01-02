@@ -53,7 +53,7 @@ export class BackupUiManualActionModule extends BackupUiModule<BackupUi> {
     const headers = {
       from: this.ui.acctEmail,
       recipients: { to: [{ email: this.ui.acctEmail }] },
-      subject: GMAIL_RECOVERY_EMAIL_SUBJECTS[0]
+      subject: GMAIL_RECOVERY_EMAIL_SUBJECTS[0],
     };
     const msg = await SendableMsg.createPlain(this.ui.acctEmail, headers, { 'text/html': emailMsg }, emailAttachments);
     if (this.ui.emailProvider === 'gmail') {
@@ -112,7 +112,7 @@ export class BackupUiManualActionModule extends BackupUiModule<BackupUi> {
     return new Attachment({
       name: `flowcrypt-backup-${this.ui.acctEmail.replace(/[^A-Za-z0-9]+/g, '')}-${prv.id}.asc`,
       type: 'application/pgp-keys',
-      data: Buf.fromUtfStr(prv.private)
+      data: Buf.fromUtfStr(prv.private),
     });
   };
 

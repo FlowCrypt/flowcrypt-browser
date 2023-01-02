@@ -6,7 +6,7 @@ import {
   KeyInfoWithIdentityAndOptionalPp,
   KeyUtil,
   Key,
-  KeyIdentity
+  KeyIdentity,
 } from '../../core/crypto/key.js';
 import { AcctStore } from './acct-store.js';
 import { PassphraseStore } from './passphrase-store.js';

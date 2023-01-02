@@ -50,7 +50,7 @@ export class FlowCryptComApi extends Api {
     return await FlowCryptComApi.request<BackendRes.FcAccountUpdate>(
       'account/update',
       {
-        ...profileUpdate
+        ...profileUpdate,
       },
       undefined,
       this.getAuthorizationHeader(idToken)
@@ -83,7 +83,7 @@ export class FlowCryptComApi extends Api {
     const content = new Attachment({
       name: 'cryptup_encrypted_message.asc',
       type: 'text/plain',
-      data: encryptedDataBinary
+      data: encryptedDataBinary,
     });
     const rawResponse = await FlowCryptComApi.request<{ short: string }>(
       'message/upload',
@@ -91,7 +91,7 @@ export class FlowCryptComApi extends Api {
       'FORM',
       FlowCryptComApi.getAuthorizationHeader(idToken),
       {
-        upload: progressCb
+        upload: progressCb,
       }
     );
     if (!rawResponse.short) {
@@ -120,7 +120,7 @@ export class FlowCryptComApi extends Api {
   ): Promise<RT> => {
     return await FlowCryptComApi.apiCall(FlowCryptWebsite.url('api'), path, vals, fmt, progressCbs, {
       'api-version': '3',
-      ...addHeaders
+      ...addHeaders,
     });
   };
 

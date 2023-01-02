@@ -13,7 +13,7 @@ import {
   MsgUtil,
   PgpMsgMethod,
   PgpMsgTypeResult,
-  VerifyRes
+  VerifyRes,
 } from '../core/crypto/pgp/msg-util.js';
 import { NotificationGroupType } from '../notifications.js';
 import { Catch } from '../platform/catch.js';
@@ -284,8 +284,8 @@ export class BrowserMsg {
             true
           ) as Promise<Bm.Res.ProcessAndStoreKeysFromEkmLocally>,
         getLocalKeyExpiration: (bm: Bm.GetLocalKeyExpiration) =>
-          BrowserMsg.sendAwait(undefined, 'getLocalKeyExpiration', bm, true) as Promise<Bm.Res.GetLocalKeyExpiration>
-      }
+          BrowserMsg.sendAwait(undefined, 'getLocalKeyExpiration', bm, true) as Promise<Bm.Res.GetLocalKeyExpiration>,
+      },
     },
     passphraseEntry: (dest: Bm.Dest, bm: Bm.PassphraseEntry) => BrowserMsg.sendCatch(dest, 'passphrase_entry', bm),
     addEndSessionBtn: (dest: Bm.Dest) => BrowserMsg.sendCatch(dest, 'add_end_session_btn', {}),
@@ -321,14 +321,14 @@ export class BrowserMsg {
     addToContacts: (dest: Bm.Dest) => BrowserMsg.sendCatch(dest, 'addToContacts', {}),
     reRenderRecipient: (dest: Bm.Dest, bm: Bm.ReRenderRecipient) => BrowserMsg.sendCatch(dest, 'reRenderRecipient', bm),
     showAttachmentPreview: (dest: Bm.Dest, bm: Bm.ShowAttachmentPreview) =>
-      BrowserMsg.sendCatch(dest, 'show_attachment_preview', bm)
+      BrowserMsg.sendCatch(dest, 'show_attachment_preview', bm),
   };
   /* eslint-disable @typescript-eslint/naming-convention */
   private static HANDLERS_REGISTERED_BACKGROUND: Handlers = {};
   private static HANDLERS_REGISTERED_FRAME: Handlers = {
     set_css: BrowserMsgCommonHandlers.setCss,
     add_class: BrowserMsgCommonHandlers.addClass,
-    remove_class: BrowserMsgCommonHandlers.removeClass
+    remove_class: BrowserMsgCommonHandlers.removeClass,
   };
   /* eslint-enable @typescript-eslint/naming-convention */
 
@@ -390,7 +390,7 @@ export class BrowserMsg {
     BrowserMsg.bgAddListener('pgpMsgType', MsgUtil.type);
     BrowserMsg.bgAddListener('saveFetchedPubkeys', saveFetchedPubkeysIfNewerThanInStorage);
     BrowserMsg.bgAddListener('pgpKeyBinaryToArmored', async (r: Bm.PgpKeyBinaryToArmored) => ({
-      keys: await KeyUtil.parseAndArmorKeys(r.binaryKeysData)
+      keys: await KeyUtil.parseAndArmorKeys(r.binaryKeysData),
     }));
   };
 
@@ -559,7 +559,7 @@ export class BrowserMsg {
         data: { bm: bm!, objUrls }, // eslint-disable-line @typescript-eslint/no-non-null-assertion
         to: destString || null, // eslint-disable-line no-null/no-null
         uid: Str.sloppyRandom(10),
-        stack: Catch.stackTrace()
+        stack: Catch.stackTrace(),
       };
       const processRawMsgResponse = (r: Bm.RawResponse) => {
         if (!awaitRes) {
@@ -663,7 +663,7 @@ export class BrowserMsg {
         stack,
         message,
         errorConstructor: 'AjaxErr',
-        ajaxErrorDetails: { status, url, responseText, statusText, resMsg, resDetails }
+        ajaxErrorDetails: { status, url, responseText, statusText, resMsg, resDetails },
       };
     }
     const { stack, message } = Catch.rewrapErr(e, 'sendRawResponse');

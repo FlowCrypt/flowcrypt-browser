@@ -15,7 +15,7 @@ export class BgHandlers {
     path,
     pageUrlParams,
     addNewAcct,
-    acctEmail
+    acctEmail,
   }: Bm.Settings) => {
     await BgUtils.openSettingsPage(path, acctEmail, page, pageUrlParams, addNewAcct === true);
   };
@@ -68,7 +68,7 @@ export class BgHandlers {
                   resolve({
                     provider: 'gmail',
                     acctEmail: result[0].acctEmail,
-                    sameWorld: result[0].sameWorld === true
+                    sameWorld: result[0].sameWorld === true,
                   });
                 }
               );

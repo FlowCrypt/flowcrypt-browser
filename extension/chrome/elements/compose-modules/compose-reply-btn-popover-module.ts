@@ -13,7 +13,7 @@ export class ComposeReplyBtnPopoverModule extends ViewModule<ComposeView> {
   private popoverItems: Record<ReplyOptions, { text: string; iconPath: string }> = {
     a_reply: { text: 'Reply', iconPath: '/img/reply-icon.png' },
     a_reply_all: { text: 'Reply All', iconPath: '/img/reply-all-icon.png' },
-    a_forward: { text: 'Forward', iconPath: '/img/forward-icon.png' }
+    a_forward: { text: 'Forward', iconPath: '/img/forward-icon.png' },
   };
   /* eslint-enable @typescript-eslint/naming-convention */
 

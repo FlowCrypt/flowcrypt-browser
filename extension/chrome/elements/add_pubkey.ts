@@ -80,7 +80,7 @@ View.run(
           } else if (errs.length) {
             await Ui.modal.error(`error processing public keys:\n${errs.map(e => `-> ${e.message}\n`).join('')}`);
           }
-        }
+        },
       });
       $('select.copy_from_email').change(this.setHandler(el => this.copyFromEmailHandler(el)));
       $('.action_ok').on(

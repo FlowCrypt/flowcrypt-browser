@@ -68,7 +68,7 @@ export class SetupRecoverKeyModule {
         submit_all: false,
         passphrase,
         passphrase_save: true, // todo - reevaluate saving passphrase when recovering
-        recovered: true
+        recovered: true,
       };
       await saveKeysAndPassPhrase(this.view.acctEmail, newlyMatchingKeys, options);
       const { setup_done } = await AcctStore.get(this.view.acctEmail, ['setup_done']);
@@ -107,7 +107,7 @@ export class SetupRecoverKeyModule {
         '#step_2_recovery .line_skip_recovery',
         Ui.e('div', {
           class: 'line',
-          html: Ui.e('a', { href: '#', class: 'skip_recover_remaining', html: 'Skip this step' })
+          html: Ui.e('a', { href: '#', class: 'skip_recover_remaining', html: 'Skip this step' }),
         })
       );
       $('#step_2_recovery .skip_recover_remaining').on(
@@ -140,7 +140,7 @@ export class SetupRecoverKeyModule {
     $('.profile-row, .skip_recover_remaining, .action_send, .action_account_settings, #lost_pass_phrase').css({
       display: 'none',
       visibility: 'hidden',
-      opacity: 0
+      opacity: 0,
     });
     Xss.sanitizeRender($('h1').parent(), '<h1>Recover key from backup</h1>');
     $('.action_recover_account').text('load key from backup');
@@ -151,7 +151,7 @@ export class SetupRecoverKeyModule {
     } catch (e) {
       window.location.href = Url.create('modules/add_key.htm', {
         acctEmail: this.view.acctEmail,
-        parentTabId: this.view.parentTabId
+        parentTabId: this.view.parentTabId,
       });
       return;
     }
@@ -163,7 +163,7 @@ export class SetupRecoverKeyModule {
     } else {
       window.location.href = Url.create('modules/add_key.htm', {
         acctEmail: this.view.acctEmail,
-        parentTabId: this.view.parentTabId
+        parentTabId: this.view.parentTabId,
       });
     }
   };

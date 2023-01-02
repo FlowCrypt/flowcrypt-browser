@@ -36,7 +36,7 @@ export class AccountServer extends Api {
         // todo - rethink this. On FES, expiration is handled with S3 bucket policy regardless of this number
         //  which is set to 180 days on buckets we manage. This number below may still be rendered somewhere
         //  when composing, which should be evaluated.
-        account: { default_message_expire: 180 }
+        account: { default_message_expire: 180 },
       };
       /* eslint-enable @typescript-eslint/naming-convention */
     } else {

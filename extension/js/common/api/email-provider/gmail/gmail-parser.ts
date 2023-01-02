@@ -169,7 +169,7 @@ export class GmailParser {
       );
       for (const [i, part] of parts.entries()) {
         GmailParser.findAttachments(part, internalResults, internalMsgId, {
-          pgpEncryptedIndex: pgpEncrypted ? i : undefined
+          pgpEncryptedIndex: pgpEncrypted ? i : undefined,
         });
       }
     }
@@ -191,7 +191,7 @@ export class GmailParser {
           inline:
             (GmailParser.findHeader(msgOrPayloadOrPart, 'content-disposition') || '')
               .toLowerCase()
-              .indexOf('inline') === 0
+              .indexOf('inline') === 0,
         })
       );
       /* eslint-enable @typescript-eslint/no-non-null-assertion */
@@ -245,7 +245,7 @@ export class GmailParser {
       cc: GmailParser.getAddressesHeader(lastGmailMsg, 'cc').filter(e => !addresses.includes(e)),
       bcc: GmailParser.getAddressesHeader(lastGmailMsg, 'bcc').filter(e => !addresses.includes(e)),
       replyTo: GmailParser.getAddressesHeader(lastGmailMsg, 'reply-to').filter(e => !addresses.includes(e)),
-      subject: Mime.subjectWithoutPrefixes(subject)
+      subject: Mime.subjectWithoutPrefixes(subject),
     };
     let to = Value.arr.unique([...headers.to, ...headers.replyTo]);
     if (headers.from && !to.includes(headers.from) && !FLOWCRYPT_REPLY_EMAIL_ADDRESSES.includes(headers.from)) {

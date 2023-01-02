@@ -55,7 +55,7 @@ export class ComposeErrModule extends ViewModule<ComposeView> {
             !!this.view.fesUrl
           )}\n\n(${String(e)})`
         );
-      }
+      },
     };
   };
 
@@ -121,7 +121,7 @@ export class ComposeErrModule extends ViewModule<ComposeView> {
         ) {
           const page = '/chrome/settings/modules/help.htm';
           const pageUrlParams = {
-            bugReport: BrowserExtension.prepareBugReport(`composer: send: bad request (errMsg: ${e.resMsg})`, {}, e)
+            bugReport: BrowserExtension.prepareBugReport(`composer: send: bad request (errMsg: ${e.resMsg})`, {}, e),
           };
           await Browser.openSettingsPage('index.htm', this.view.acctEmail, page, pageUrlParams);
         }
@@ -150,7 +150,7 @@ export class ComposeErrModule extends ViewModule<ComposeView> {
     const btnReadyTexts = [
       SendBtnTexts.BTN_SIGN_AND_SEND,
       SendBtnTexts.BTN_ENCRYPT_SIGN_AND_SEND,
-      SendBtnTexts.BTN_PLAIN_SEND
+      SendBtnTexts.BTN_PLAIN_SEND,
     ];
     const recipients = this.view.recipientsModule.getRecipients();
     if (btnReadyTexts.includes(this.view.S.now('send_btn_text').text().trim()) && recipients.length) {

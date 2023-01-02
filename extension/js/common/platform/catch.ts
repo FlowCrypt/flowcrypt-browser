@@ -38,7 +38,7 @@ export class Catch {
     // errors on other domains: https://bugzilla.mozilla.org/show_bug.cgi?id=363897
     'Script error.',
     // benign error https://github.com/WICG/ResizeObserver/issues/38#issuecomment-422126006 https://stackoverflow.com/questions/49384120/resizeobserver-loop-limit-exceeded
-    'ResizeObserver loop limit exceeded'
+    'ResizeObserver loop limit exceeded',
   ];
 
   public static rewrapErr = (e: unknown, message: string): Error => {
@@ -327,7 +327,7 @@ export class Catch {
       col: col || 0,
       trace: exception.stack || '',
       version: VERSION,
-      environment: Catch.RUNTIME_ENVIRONMENT
+      environment: Catch.RUNTIME_ENVIRONMENT,
     };
   };
 
@@ -350,7 +350,7 @@ export class Catch {
         },
         error: () => {
           console.error('%cFlowCrypt FAILED:' + Catch.CONSOLE_MSG, 'font-weight: bold;');
-        }
+        },
       });
     } catch (ajaxErr) {
       console.error(ajaxErr);

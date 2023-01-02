@@ -98,7 +98,7 @@ export class KeyImportUi {
           window.location.href = Url.create('/chrome/settings/setup.htm', {
             acctEmail,
             parentTabId,
-            action: 'add_key'
+            action: 'add_key',
           });
         }
       });
@@ -116,7 +116,7 @@ export class KeyImportUi {
         $('.action_add_private_key').addClass('btn_disabled').attr('disabled');
         $('.input_email_alias').prop('checked', false);
         const {
-          keys: [prv]
+          keys: [prv],
         } = await opgp.key.readArmored(String($(target).val()));
         if (prv !== undefined) {
           $('.action_add_private_key').removeClass('btn_disabled').removeAttr('disabled');
@@ -140,7 +140,7 @@ export class KeyImportUi {
     $('.input_private_key').change(
       Ui.event.handle(async target => {
         const {
-          keys: [prv]
+          keys: [prv],
         } = await opgp.key.readArmored(String($(target).val()));
         if (!prv || !prv.isPrivate()) {
           $('.line.unprotected_key_create_pass_phrase').hide();
@@ -198,7 +198,7 @@ export class KeyImportUi {
           );
           $('input[type=radio][name=source]').removeAttr('checked');
         }
-      }
+      },
     });
   };
 

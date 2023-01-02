@@ -143,7 +143,7 @@ View.run(
       const prvKeyAttachment = new Attachment({
         data: Buf.fromUtfStr(revokedArmored),
         type: 'application/pgp-keys',
-        name
+        name,
       });
       Browser.saveToDownloads(prvKeyAttachment);
     };
@@ -157,7 +157,7 @@ View.run(
       const prvKeyAttachment = new Attachment({
         data: Buf.fromUtfStr(this.keyInfo.private),
         type: 'application/pgp-keys',
-        name
+        name,
       });
       Browser.saveToDownloads(prvKeyAttachment);
     };

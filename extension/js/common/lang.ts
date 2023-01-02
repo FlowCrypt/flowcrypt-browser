@@ -19,7 +19,7 @@ const contactForSupportSubsentence = (isFesUsed: boolean, reason = '') =>
 export const Lang = {
   error: {
     dbFailed:
-      "Try restarting your browser first. If that doesn't help, this will have something to do with your browser settings. Try to install FlowCrypt on a brand new browser profile (both Firefox and Chrome allow you to have several different user profiles). If you leave the new profile on default settings, FlowCrypt should work without issues. Then you can compare your old profile settings to the new one to find out which settings are giving FlowCrypt trouble. Once you find out, please contact us know at human@flowcrypt.com and we will include it below to help other users."
+      "Try restarting your browser first. If that doesn't help, this will have something to do with your browser settings. Try to install FlowCrypt on a brand new browser profile (both Firefox and Chrome allow you to have several different user profiles). If you leave the new profile on default settings, FlowCrypt should work without issues. Then you can compare your old profile settings to the new one to find out which settings are giving FlowCrypt trouble. Once you find out, please contact us know at human@flowcrypt.com and we will include it below to help other users.",
   },
   setup: {
     partiallyEncryptedKeyUnsupported:
@@ -50,10 +50,10 @@ export const Lang = {
     prvHasFixableCompatIssue:
       'This key has minor usability issues that can be fixed. This commonly happens when importing keys from Symantec&trade; PGP Desktop or other legacy software. It may be missing User IDs, or it may be missing a self-signature. It is also possible that the key is simply expired.',
     ppMatchAllSet: "Your pass phrase matches. Good job! You're all set.",
-    noKeys: 'Keys for your account were not set up yet - please ask your systems administrator.'
+    noKeys: 'Keys for your account were not set up yet - please ask your systems administrator.',
   },
   account: {
-    googleAcctDisabledOrPolicy: `Your Google Account or Google Email seems to be disabled, or access to this app is disabled by your organisation admin policy. Contact your email administrator.`
+    googleAcctDisabledOrPolicy: `Your Google Account or Google Email seems to be disabled, or access to this app is disabled by your organisation admin policy. Contact your email administrator.`,
   },
   pgpBlock: {
     cantOpen: 'Could not open this message with FlowCrypt.\n\n',
@@ -93,7 +93,7 @@ export const Lang = {
     cannotLocate: 'Could not locate this message.',
     brokenLink: 'It seems it contains a broken link.',
     pwdMsgAskSenderUsePubkey:
-      'This appears to be a password-protected message. Please ask the sender to encrypt messages for your Public Key instead.'
+      'This appears to be a password-protected message. Please ask the sender to encrypt messages for your Public Key instead.',
   },
   compose: {
     abortSending:
@@ -111,7 +111,7 @@ export const Lang = {
         : `${senderEmail} has sent you a password-encrypted email. Follow this link to open it: `,
     alternativelyCopyPaste: {
       EN: 'Alternatively copy and paste the following link: ', // eslint-disable-line @typescript-eslint/naming-convention
-      DE: 'Alternativ kopieren Sie folgenden Link und fügen ihn in die Adresszeile Ihres Browsers ein: ' // eslint-disable-line @typescript-eslint/naming-convention
+      DE: 'Alternativ kopieren Sie folgenden Link und fügen ihn in die Adresszeile Ihres Browsers ein: ', // eslint-disable-line @typescript-eslint/naming-convention
     },
     openMsg: { EN: 'Click here to Open Message', DE: 'Klicken Sie hier, um die Nachricht zu öffnen' }, // eslint-disable-line @typescript-eslint/naming-convention
     includePubkeyIconTitle:
@@ -120,7 +120,7 @@ export const Lang = {
       encrypted: 'New Secure Message',
       encryptedAndSigned: 'New Signed Secure Message',
       signed: 'New Signed Message (not encrypted)',
-      plain: 'New Plain Message (not encrypted)'
+      plain: 'New Plain Message (not encrypted)',
     },
     pubkeyExpiredConfirmCompose:
       'The public key of one of your recipients is expired.\n\nThe right thing to do is to ask the recipient to send you an updated Public Key.\n\nAre you sure you want to encrypt this message for an expired public key? (NOT RECOMMENDED)',
@@ -129,7 +129,7 @@ export const Lang = {
     addMissingPermission: 'Add missing permission',
     enterprisePasswordPolicy:
       'Please use password with the following properties:\n - one uppercase\n - one lowercase\n - one number\n - one special character eg &"#-\'_%-@,;:!*()\n - 8 characters length',
-    consumerPasswordPolicy: 'Please use a password at least 8 characters long'
+    consumerPasswordPolicy: 'Please use a password at least 8 characters long',
   },
   general: {
     contactMinimalSubsentence,
@@ -146,7 +146,7 @@ export const Lang = {
         isFesUsed
       )}.`,
     emailAliasChangedAskForReload:
-      'Your email aliases on Gmail have refreshed since the last time you used FlowCrypt.\nReload the compose window now?'
+      'Your email aliases on Gmail have refreshed since the last time you used FlowCrypt.\nReload the compose window now?',
   },
   passphraseRequired: {
     sign: 'Enter FlowCrypt pass phrase to sign email',
@@ -155,6 +155,6 @@ export const Lang = {
     quote: 'Enter FlowCrypt pass phrase to load quoted content',
     backup: 'Enter FlowCrypt pass phrase to back up',
     updateKey: 'Enter FlowCrypt pass phrase to keep your account keys up to date',
-    email: 'Enter FlowCrypt pass phrase to read encrypted email'
-  }
+    email: 'Enter FlowCrypt pass phrase to read encrypted email',
+  },
 };

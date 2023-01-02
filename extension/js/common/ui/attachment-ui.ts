@@ -46,12 +46,12 @@ export class AttachmentUI {
         element: $('#' + elId).get(0),
         button: $('#' + btnId).get(0),
         dragAndDrop: {
-          extraDropzones: $('#input_text')
+          extraDropzones: $('#input_text'),
         },
         callbacks: {
           onSubmit: (uploadFileId: string) => this.processNewAttachment(uploadFileId),
-          onCancel: (uploadFileId: string) => this.cancelAttachment(uploadFileId)
-        }
+          onCancel: (uploadFileId: string) => this.cancelAttachment(uploadFileId),
+        },
       };
       this.uploader = new qq.FineUploader(config);
       this.setInputAttributes();
@@ -79,7 +79,7 @@ export class AttachmentUI {
     return new Attachment({
       name: this.attachedFiles[uploadFileId].name,
       type: this.attachedFiles[uploadFileId].type,
-      data: fileData
+      data: fileData,
     });
   };
 
@@ -106,13 +106,13 @@ export class AttachmentUI {
         pubkeys: pubsForEncryption,
         data,
         filename: file.name,
-        armor: false
+        armor: false,
       })) as OpenPGP.EncryptBinaryResult;
       attachments.push(
         new Attachment({
           name: Attachment.sanitizeName(file.name) + '.pgp',
           type: file.type,
-          data: encrypted.message.packets.write()
+          data: encrypted.message.packets.write(),
         })
       );
     }

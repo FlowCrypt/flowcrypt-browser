@@ -81,13 +81,13 @@ export class ComposeSizeModule extends ViewModule<ComposeView> {
         this.lastReplyBoxTableHeight = currentHeight;
         BrowserMsg.send.setCss(this.view.parentTabId, {
           selector: `iframe#${this.view.frameId}`,
-          css: { height: `${Math.max(minHeight, currentHeight) + addExtra}px` }
+          css: { height: `${Math.max(minHeight, currentHeight) + addExtra}px` },
         });
       }
       if (cursorOffsetTop) {
         BrowserMsg.send.scrollToCursorInReplyBox(this.view.parentTabId, {
           replyMsgId: `#${this.view.frameId}`,
-          cursorOffsetTop
+          cursorOffsetTop,
         });
       }
     } else {
@@ -177,18 +177,18 @@ export class ComposeSizeModule extends ViewModule<ComposeView> {
     }
     BrowserMsg.send.setCss(this.view.parentTabId, {
       selector: `iframe#${this.view.frameId}, ${this.currentWindowSelector}`,
-      css: { height: this.composeWindowIsMinimized ? '' : this.view.S.cached('header').css('height') }
+      css: { height: this.composeWindowIsMinimized ? '' : this.view.S.cached('header').css('height') },
     });
     this.composeWindowIsMinimized = !this.composeWindowIsMinimized;
     if (this.composeWindowIsMinimized) {
       BrowserMsg.send.addClass(this.view.parentTabId, {
         selector: this.currentWindowSelector,
-        class: this.MINIMIZED_CLASS
+        class: this.MINIMIZED_CLASS,
       });
     } else {
       BrowserMsg.send.removeClass(this.view.parentTabId, {
         selector: this.currentWindowSelector,
-        class: this.MINIMIZED_CLASS
+        class: this.MINIMIZED_CLASS,
       });
     }
   };
@@ -214,13 +214,13 @@ export class ComposeSizeModule extends ViewModule<ComposeView> {
       this.view.S.cached('body').addClass(this.FULL_WINDOW_CLASS);
       BrowserMsg.send.addClass(this.view.parentTabId, {
         class: this.FULL_WINDOW_CLASS,
-        selector: this.currentWindowSelector
+        selector: this.currentWindowSelector,
       });
     } else {
       this.view.S.cached('body').removeClass(this.FULL_WINDOW_CLASS);
       BrowserMsg.send.removeClass(this.view.parentTabId, {
         class: this.FULL_WINDOW_CLASS,
-        selector: this.currentWindowSelector
+        selector: this.currentWindowSelector,
       });
     }
   };

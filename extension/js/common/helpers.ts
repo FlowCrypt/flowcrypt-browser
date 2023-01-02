@@ -124,7 +124,7 @@ const filterKeysToSave = async (candidateKeys: Key[], existingKeys: KeyInfoWithI
 export const processAndStoreKeysFromEkmLocally = async ({
   acctEmail,
   decryptedPrivateKeys,
-  ppOptions: originalOptions
+  ppOptions: originalOptions,
 }: Bm.ProcessAndStoreKeysFromEkmLocally & {
   ppOptions?: PassphraseOptions;
 }): Promise<Bm.Res.ProcessAndStoreKeysFromEkmLocally> => {
@@ -193,12 +193,12 @@ export const processAndStoreKeysFromEkmLocally = async ({
   }
   return {
     updateCount: encryptedKeys?.keys.length ?? 0 + (existingKeys.length - keysToRetain.length),
-    noKeysSetup: !(encryptedKeys?.keys.length || keysToRetain.length)
+    noKeysSetup: !(encryptedKeys?.keys.length || keysToRetain.length),
   };
 };
 
 export const getLocalKeyExpiration = async ({
-  acctEmail
+  acctEmail,
 }: Bm.GetLocalKeyExpiration): Promise<Bm.Res.GetLocalKeyExpiration> => {
   const kis = await KeyStore.get(acctEmail);
   const expirations = await Promise.all(

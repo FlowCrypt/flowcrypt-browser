@@ -73,7 +73,7 @@ export class SendableMsg {
   ): Promise<SendableMsg> => {
     return await SendableMsg.createSendableMsg(acctEmail, headers, { 'pkcs7/buf': Buf.fromUint8(data) }, [], {
       type: 'smimeEncrypted',
-      isDraft: options.isDraft
+      isDraft: options.isDraft,
     });
   };
 
@@ -83,7 +83,7 @@ export class SendableMsg {
     data: Uint8Array
   ): Promise<SendableMsg> => {
     return await SendableMsg.createSendableMsg(acctEmail, headers, { 'pkcs7/buf': Buf.fromUint8(data) }, [], {
-      type: 'smimeSigned'
+      type: 'smimeSigned',
     });
   };
 
@@ -95,7 +95,7 @@ export class SendableMsg {
   ): Promise<SendableMsg> => {
     return await SendableMsg.createSendableMsg(acctEmail, headers, body, attachments, {
       type: undefined,
-      isDraft: undefined
+      isDraft: undefined,
     });
   };
 
@@ -125,7 +125,7 @@ export class SendableMsg {
     return await SendableMsg.createSendableMsg(acctEmail, headers, body, attachments, {
       type: undefined,
       isDraft: options.isDraft,
-      externalId: options.externalId
+      externalId: options.externalId,
     });
   };
 
@@ -137,7 +137,7 @@ export class SendableMsg {
   ): Promise<SendableMsg> => {
     return await SendableMsg.createSendableMsg(acctEmail, headers, {}, attachments, {
       type: options ? 'pgpMimeEncrypted' : undefined,
-      isDraft: options ? options.isDraft : undefined
+      isDraft: options ? options.isDraft : undefined,
     });
   };
 
@@ -150,7 +150,7 @@ export class SendableMsg {
   ): Promise<SendableMsg> => {
     const sendableMsg = await SendableMsg.createSendableMsg(acctEmail, headers, body, attachments, {
       type: 'pgpMimeSigned',
-      isDraft: undefined
+      isDraft: undefined,
     });
     sendableMsg.sign = signMethod;
     return sendableMsg;
@@ -175,7 +175,7 @@ export class SendableMsg {
       attachments,
       type,
       isDraft,
-      externalId
+      externalId,
     });
   };
 
@@ -210,7 +210,7 @@ export class SendableMsg {
   public getAllRecipients = () => [
     ...(this.recipients.to || []),
     ...(this.recipients.cc || []),
-    ...(this.recipients.bcc || [])
+    ...(this.recipients.bcc || []),
   ];
 
   public toMime = async () => {

@@ -35,14 +35,14 @@ export class BrowserMsgCommonHandlers {
         'disableDraftSaving',
         'draftId',
         'replyPubkeyMismatch',
-        'skipClickPrompt'
+        'skipClickPrompt',
       ]);
       replyIframe.src = Url.create(bareSrc, {
         replyPubkeyMismatch: true,
         ignoreDraft: true,
         disableDraftSaving: true,
         draftId: '',
-        skipClickPrompt: true
+        skipClickPrompt: true,
       });
     }
   };

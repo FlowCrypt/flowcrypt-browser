@@ -25,7 +25,7 @@ export class Attester extends Api {
     const results = await Promise.allSettled([
       this.doLookupLdap(email), // get from recipient-specific LDAP server, if any, relayed through flowcrypt.com
       this.doLookup(email), // get from flowcrypt.com public keyserver database
-      this.doLookupLdap(email, 'keyserver.pgp.com') // get from keyserver.pgp.com, relayed through flowcrypt.com
+      this.doLookupLdap(email, 'keyserver.pgp.com'), // get from keyserver.pgp.com, relayed through flowcrypt.com
     ]);
     const validResults = results.filter(result => result.status === 'fulfilled');
     for (const result of validResults) {

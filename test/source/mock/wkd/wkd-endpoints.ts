@@ -172,7 +172,7 @@ export const mockWkdEndpoints: HandlersDefinition = {
     return Buffer.from([
       ...(await PgpArmor.dearmor(testConstants.somerevokedRevoked1)).data,
       ...(await PgpArmor.dearmor(testConstants.somerevokedValid)).data,
-      ...(await PgpArmor.dearmor(testConstants.somerevokedRevoked2)).data
+      ...(await PgpArmor.dearmor(testConstants.somerevokedRevoked2)).data,
     ]);
   },
   '/.well-known/openpgpkey/localhost/policy': async () => {
@@ -180,5 +180,5 @@ export const mockWkdEndpoints: HandlersDefinition = {
   },
   '/.well-known/openpgpkey/policy': async () => {
     return ''; // allow direct for all
-  }
+  },
 };

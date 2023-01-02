@@ -34,7 +34,7 @@ export class PassphraseStore extends AbstractStore {
     const storageIndexes = keyInfos.map(keyInfo => PassphraseStore.getIndex(keyInfo.longid));
     await Promise.all([
       AcctStore.remove(acctEmail, storageIndexes), // remove from local storage
-      ...storageIndexes.map(storageIndex => InMemoryStore.set(acctEmail, storageIndex, undefined)) // remove from session
+      ...storageIndexes.map(storageIndex => InMemoryStore.set(acctEmail, storageIndex, undefined)), // remove from session
     ]);
   };
 

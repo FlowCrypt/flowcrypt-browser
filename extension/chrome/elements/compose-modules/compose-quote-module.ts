@@ -114,7 +114,7 @@ export class ComposeQuoteModule extends ViewModule<ComposeView> {
         date: String(decoded.headers.date),
         from: decoded.from,
         references: String(decoded.headers.references || ''),
-        'message-id': String(decoded.headers['message-id'] || '')
+        'message-id': String(decoded.headers['message-id'] || ''),
       };
       const message = decoded.rawSignedContent
         ? await Mime.process(Buf.fromUtfStr(decoded.rawSignedContent))
@@ -159,7 +159,7 @@ export class ComposeQuoteModule extends ViewModule<ComposeView> {
               const result = await MsgUtil.decryptMessage({
                 kisWithPp: await KeyStore.getAllWithOptionalPassPhrase(this.view.acctEmail),
                 encryptedData: block.attachmentMeta.data,
-                verificationPubs: [] // todo: #4158 signature verification of attachments
+                verificationPubs: [], // todo: #4158 signature verification of attachments
               });
               if (result.success) {
                 attachmentMeta = { content: result.content, filename: result.filename };
@@ -167,7 +167,7 @@ export class ComposeQuoteModule extends ViewModule<ComposeView> {
             } else {
               attachmentMeta = {
                 content: Buf.fromUint8(block.attachmentMeta.data),
-                filename: block.attachmentMeta.name
+                filename: block.attachmentMeta.name,
               };
             }
             if (attachmentMeta) {
@@ -186,7 +186,7 @@ export class ComposeQuoteModule extends ViewModule<ComposeView> {
           decoded.rawSignedContent ||
           (message.blocks.length > 0 && message.blocks[0].type === 'signedMsg')
         ),
-        decryptedFiles
+        decryptedFiles,
       };
     } catch (e) {
       if (e instanceof FormatError) {
@@ -206,14 +206,14 @@ export class ComposeQuoteModule extends ViewModule<ComposeView> {
     const decryptRes = await MsgUtil.decryptMessage({
       kisWithPp: await KeyStore.getAllWithOptionalPassPhrase(this.view.acctEmail),
       encryptedData,
-      verificationPubs: []
+      verificationPubs: [],
     });
     if (decryptRes.success) {
       return decryptRes.content.toUtfStr();
     } else if (decryptRes.error && decryptRes.error.type === DecryptErrTypes.needPassphrase) {
       BrowserMsg.send.passphraseDialog(this.view.parentTabId, {
         type: 'quote',
-        longids: decryptRes.longids.needPassphrase
+        longids: decryptRes.longids.needPassphrase,
       });
       const wasPpEntered: boolean = await new Promise(resolve => {
         BrowserMsg.addListener('passphrase_entry', async (response: Bm.PassphraseEntry) => resolve(response.entered));

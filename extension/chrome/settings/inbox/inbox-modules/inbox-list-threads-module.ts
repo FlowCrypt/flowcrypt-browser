@@ -107,7 +107,7 @@ export class InboxListThreadsModule extends ViewModule<InboxView> {
       Ui.e('div', {
         class: 'line',
         id: this.threadListItemId(threadId),
-        html: `<span class="loading">${Ui.spinner('green')}loading..</span>${content}`
+        html: `<span class="loading">${Ui.spinner('green')}loading..</span>${content}`,
       })
     );
   };

@@ -65,7 +65,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     numberOfAttachments: '.aVW',
     numberOfAttachmentsDigit: '.aVW span:first-child',
     attachmentsButtons: '.aZi',
-    draftsList: '.ae4'
+    draftsList: '.ae4',
   };
 
   public constructor(
@@ -90,7 +90,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
   public getIntervalFunctions = (): Array<IntervalFunction> => {
     return [
       { interval: 1000, handler: () => this.everything() },
-      { interval: 30000, handler: () => this.webmailCommon.addOrRemoveEndSessionBtnIfNeeded() }
+      { interval: 30000, handler: () => this.webmailCommon.addOrRemoveEndSessionBtnIfNeeded() },
     ];
   };
 
@@ -581,7 +581,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
               name: meta[1],
               type: meta[0],
               url: `${meta[2]}:${meta[3]}`,
-              treatAs: 'encryptedFile'
+              treatAs: 'encryptedFile',
             })
           );
         } else {
@@ -614,7 +614,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
       return nRenderedAttachments;
     }
     const openpgpType = await BrowserMsg.send.bg.await.pgpMsgType({
-      data: Buf.fromUint8(downloadedAttachment.data.subarray(0, 1000)).toBase64Str()
+      data: Buf.fromUint8(downloadedAttachment.data.subarray(0, 1000)).toBase64Str(),
     }); // base64 for FF, see #2587
     if (openpgpType && openpgpType.type === 'publicKey') {
       // prettier-ignore

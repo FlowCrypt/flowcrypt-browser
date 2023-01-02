@@ -25,7 +25,7 @@ export const GMAIL_RECOVERY_EMAIL_SUBJECTS = [
   'Your FlowCrypt Backup',
   'Your CryptUp Backup',
   'All you need to know about CryptUP (contains a backup)',
-  'CryptUP Account Backup'
+  'CryptUP Account Backup',
 ];
 
 export const gmailBackupSearchQuery = (acctEmail: string) => {
@@ -34,7 +34,7 @@ export const gmailBackupSearchQuery = (acctEmail: string) => {
     'to:' + acctEmail,
     '(subject:"' + GMAIL_RECOVERY_EMAIL_SUBJECTS.join('" OR subject: "') + '")',
     '-is:spam',
-    '-is:trash'
+    '-is:trash',
   ].join(' ');
 };
 

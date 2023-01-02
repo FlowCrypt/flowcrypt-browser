@@ -174,7 +174,7 @@ export class PgpBlockViewRenderModule {
     }
     BrowserMsg.send.setCss(this.view.parentTabId, {
       selector: `iframe#${this.view.frameId}`,
-      css: { height: `${height}px` }
+      css: { height: `${height}px` },
     });
   };
 

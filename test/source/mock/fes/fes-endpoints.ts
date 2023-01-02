@@ -23,7 +23,7 @@ const processMessageFromUser = async (body: string) => {
     kisWithPp: [],
     msgPwd: 'lousy pwdgO0d-pwd',
     encryptedData,
-    verificationPubs: []
+    verificationPubs: [],
   });
   expect(decrypted.success).to.equal(true);
   // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -44,15 +44,15 @@ const processMessageFromUser = async (body: string) => {
     // this url is required for pubkey encrypted message
     url: `http://${standardFesUrl}/message/FES-MOCK-MESSAGE-ID`,
     externalId: 'FES-MOCK-EXTERNAL-ID',
-    emailToExternalIdAndUrl: {} as { [email: string]: { url: string; externalId: string } }
+    emailToExternalIdAndUrl: {} as { [email: string]: { url: string; externalId: string } },
   };
   response.emailToExternalIdAndUrl['to@example.com'] = {
     url: `http://${standardFesUrl}/message/FES-MOCK-MESSAGE-FOR-TO@EXAMPLE.COM-ID`,
-    externalId: 'FES-MOCK-EXTERNAL-FOR-TO@EXAMPLE.COM-ID'
+    externalId: 'FES-MOCK-EXTERNAL-FOR-TO@EXAMPLE.COM-ID',
   };
   response.emailToExternalIdAndUrl['bcc@example.com'] = {
     url: `http://${standardFesUrl}/message/FES-MOCK-MESSAGE-FOR-BCC@EXAMPLE.COM-ID`,
-    externalId: 'FES-MOCK-EXTERNAL-FOR-BCC@EXAMPLE.COM-ID'
+    externalId: 'FES-MOCK-EXTERNAL-FOR-BCC@EXAMPLE.COM-ID',
   };
   return response;
 };
@@ -71,7 +71,7 @@ const processMessageFromUser2 = async (body: string) => {
     kisWithPp: [],
     msgPwd: 'gO0d-pwd',
     encryptedData,
-    verificationPubs: []
+    verificationPubs: [],
   });
   expect(decrypted.success).to.equal(true);
   // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -95,23 +95,23 @@ const processMessageFromUser2 = async (body: string) => {
     // this url is required for pubkey encrypted message
     url: `http://${standardFesUrl}/message/FES-MOCK-MESSAGE-ID`,
     externalId: 'FES-MOCK-EXTERNAL-ID',
-    emailToExternalIdAndUrl: {} as { [email: string]: { url: string; externalId: string } }
+    emailToExternalIdAndUrl: {} as { [email: string]: { url: string; externalId: string } },
   };
   response.emailToExternalIdAndUrl['to@example.com'] = {
     url: `http://${standardFesUrl}/message/FES-MOCK-MESSAGE-FOR-TO@EXAMPLE.COM-ID`,
-    externalId: 'FES-MOCK-EXTERNAL-FOR-TO@EXAMPLE.COM-ID'
+    externalId: 'FES-MOCK-EXTERNAL-FOR-TO@EXAMPLE.COM-ID',
   };
   response.emailToExternalIdAndUrl['sender@domain.com'] = {
     url: `http://${standardFesUrl}/message/FES-MOCK-MESSAGE-FOR-SENDER@DOMAIN.COM-ID`,
-    externalId: 'FES-MOCK-EXTERNAL-FOR-SENDER@DOMAIN.COM-ID'
+    externalId: 'FES-MOCK-EXTERNAL-FOR-SENDER@DOMAIN.COM-ID',
   };
   response.emailToExternalIdAndUrl['flowcrypt.compatibility@gmail.com'] = {
     url: `http://${standardFesUrl}/message/FES-MOCK-MESSAGE-FOR-FLOWCRYPT.COMPATIBILITY@GMAIL.COM-ID`,
-    externalId: 'FES-MOCK-EXTERNAL-FOR-FLOWCRYPT.COMPATIBILITY@GMAIL.COM-ID'
+    externalId: 'FES-MOCK-EXTERNAL-FOR-FLOWCRYPT.COMPATIBILITY@GMAIL.COM-ID',
   };
   response.emailToExternalIdAndUrl['mock.only.pubkey@flowcrypt.com'] = {
     url: `http://${standardFesUrl}/message/FES-MOCK-MESSAGE-FOR-MOCK.ONLY.PUBKEY@FLOWCRYPT.COM-ID`,
-    externalId: 'FES-MOCK-EXTERNAL-FOR-MOCK.ONLY.PUBKEY@FLOWCRYPT.COM-ID'
+    externalId: 'FES-MOCK-EXTERNAL-FOR-MOCK.ONLY.PUBKEY@FLOWCRYPT.COM-ID',
   };
   return response;
 };
@@ -128,7 +128,7 @@ const processMessageFromUser3 = async (body: string) => {
     kisWithPp: [],
     msgPwd: 'gO0d-pwd',
     encryptedData,
-    verificationPubs: []
+    verificationPubs: [],
   });
   expect(decrypted.success).to.equal(true);
   // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -143,15 +143,15 @@ const processMessageFromUser3 = async (body: string) => {
     // this url is required for pubkey encrypted message
     url: `http://${standardFesUrl}/message/FES-MOCK-MESSAGE-ID`,
     externalId: 'FES-MOCK-EXTERNAL-ID',
-    emailToExternalIdAndUrl: {} as { [email: string]: { url: string; externalId: string } }
+    emailToExternalIdAndUrl: {} as { [email: string]: { url: string; externalId: string } },
   };
   response.emailToExternalIdAndUrl['to@example.com'] = {
     url: `http://${standardFesUrl}/message/FES-MOCK-MESSAGE-FOR-TO@EXAMPLE.COM-ID`,
-    externalId: 'FES-MOCK-EXTERNAL-FOR-TO@EXAMPLE.COM-ID'
+    externalId: 'FES-MOCK-EXTERNAL-FOR-TO@EXAMPLE.COM-ID',
   };
   response.emailToExternalIdAndUrl['flowcrypt.compatibility@gmail.com'] = {
     url: `http://${standardFesUrl}/message/FES-MOCK-MESSAGE-FOR-FLOWCRYPT.COMPATIBILITY@GMAIL.COM-ID`,
-    externalId: 'FES-MOCK-EXTERNAL-FOR-FLOWCRYPT.COMPATIBILITY@GMAIL.COM-ID'
+    externalId: 'FES-MOCK-EXTERNAL-FOR-FLOWCRYPT.COMPATIBILITY@GMAIL.COM-ID',
   };
   return response;
 };
@@ -161,42 +161,42 @@ const processMessageFromUser4 = async (body: string) => {
     // this url is required for pubkey encrypted message
     url: `http://${standardFesUrl}/message/FES-MOCK-MESSAGE-ID`,
     externalId: 'FES-MOCK-EXTERNAL-ID',
-    emailToExternalIdAndUrl: {} as { [email: string]: { url: string; externalId: string } }
+    emailToExternalIdAndUrl: {} as { [email: string]: { url: string; externalId: string } },
   };
   if (body.includes('to@example.com')) {
     response.emailToExternalIdAndUrl['to@example.com'] = {
       url: `http://${standardFesUrl}/message/FES-MOCK-MESSAGE-FOR-TO@EXAMPLE.COM-ID`,
-      externalId: 'FES-MOCK-EXTERNAL-FOR-TO@EXAMPLE.COM-ID'
+      externalId: 'FES-MOCK-EXTERNAL-FOR-TO@EXAMPLE.COM-ID',
     };
   }
   if (body.includes('invalid@example.com')) {
     response.emailToExternalIdAndUrl['invalid@example.com'] = {
       url: `http://${standardFesUrl}/message/FES-MOCK-MESSAGE-FOR-INVALID@EXAMPLE.COM-ID`,
-      externalId: 'FES-MOCK-EXTERNAL-FOR-INVALID@EXAMPLE.COM-ID'
+      externalId: 'FES-MOCK-EXTERNAL-FOR-INVALID@EXAMPLE.COM-ID',
     };
   }
   if (body.includes('timeout@example.com')) {
     response.emailToExternalIdAndUrl['timeout@example.com'] = {
       url: `http://${standardFesUrl}/message/FES-MOCK-MESSAGE-FOR-TIMEOUT@EXAMPLE.COM-ID`,
-      externalId: 'FES-MOCK-EXTERNAL-FOR-TIMEOUT@EXAMPLE.COM-ID'
+      externalId: 'FES-MOCK-EXTERNAL-FOR-TIMEOUT@EXAMPLE.COM-ID',
     };
   }
   if (body.includes('Mr Cc <cc@example.com>')) {
     response.emailToExternalIdAndUrl['cc@example.com'] = {
       url: `http://${standardFesUrl}/message/FES-MOCK-MESSAGE-FOR-CC@EXAMPLE.COM-ID`,
-      externalId: 'FES-MOCK-EXTERNAL-FOR-CC@EXAMPLE.COM-ID'
+      externalId: 'FES-MOCK-EXTERNAL-FOR-CC@EXAMPLE.COM-ID',
     };
   }
   if (body.includes('First Last <flowcrypt.compatibility@gmail.com>')) {
     response.emailToExternalIdAndUrl['flowcrypt.compatibility@gmail.com'] = {
       url: `http://${standardFesUrl}/message/FES-MOCK-MESSAGE-FOR-FLOWCRYPT.COMPATIBILITY@GMAIL.COM-ID`,
-      externalId: 'FES-MOCK-EXTERNAL-FOR-FLOWCRYPT.COMPATIBILITY@GMAIL.COM-ID'
+      externalId: 'FES-MOCK-EXTERNAL-FOR-FLOWCRYPT.COMPATIBILITY@GMAIL.COM-ID',
     };
   }
   if (body.includes('gatewayfailure@example.com')) {
     response.emailToExternalIdAndUrl['gatewayfailure@example.com'] = {
       url: `http://${standardFesUrl}/message/FES-MOCK-MESSAGE-FOR-GATEWAYFAILURE@EXAMPLE.COM-ID`,
-      externalId: 'FES-MOCK-EXTERNAL-FOR-GATEWAYFAILURE@EXAMPLE.COM-ID'
+      externalId: 'FES-MOCK-EXTERNAL-FOR-GATEWAYFAILURE@EXAMPLE.COM-ID',
     };
   }
   return response;
@@ -211,7 +211,7 @@ export const mockFesEndpoints: HandlersDefinition = {
         service: 'enterprise-server',
         orgId: 'standardsubdomainfes.test',
         version: 'MOCK',
-        apiVersion: 'v1'
+        apiVersion: 'v1',
       };
     }
     if (req.headers.host === 'fes.localhost:8001') {
@@ -236,7 +236,7 @@ export const mockFesEndpoints: HandlersDefinition = {
       req.url === `/api/v1/client-configuration?domain=standardsubdomainfes.localhost:8001`
     ) {
       return {
-        clientConfiguration: { flags: [], disallow_attester_search_for_domains: ['got.this@fromstandardfes.com'] } // eslint-disable-line @typescript-eslint/naming-convention
+        clientConfiguration: { flags: [], disallow_attester_search_for_domains: ['got.this@fromstandardfes.com'] }, // eslint-disable-line @typescript-eslint/naming-convention
       };
     }
     throw new HttpClientErr(`Unexpected FES domain "${req.headers.host}" and url "${req.url}"`);
@@ -310,7 +310,7 @@ export const mockFesEndpoints: HandlersDefinition = {
   '/api/v1/message/FES-MOCK-EXTERNAL-FOR-GATEWAYFAILURE@EXAMPLE.COM-ID/gateway': async () => {
     // test: `user4@standardsubdomainfes.localhost:8001 - PWD encrypted message with FES web portal - a send fails with gateway update error`
     throw new HttpClientErr(`Test error`, Status.BAD_REQUEST);
-  }
+  },
 };
 
 const authenticate = (req: IncomingMessage, type: 'oidc' | 'fes'): string => {

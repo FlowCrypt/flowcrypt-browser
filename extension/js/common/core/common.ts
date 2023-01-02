@@ -109,7 +109,7 @@ export class Str {
       'September',
       'October',
       'November',
-      'December'
+      'December',
     ][monthIndex];
   };
 
@@ -276,7 +276,7 @@ export class Value {
     hasIntersection: <T>(array1: T[], array2: T[]): boolean => array1.some(value => array2.includes(value)),
     sum: (arr: number[]) => arr.reduce((a, b) => a + b, 0),
     average: (arr: number[]) => Value.arr.sum(arr) / arr.length,
-    zeroes: (length: number): number[] => new Array(length).map(() => 0)
+    zeroes: (length: number): number[] => new Array(length).map(() => 0),
   };
 
   public static obj = {
@@ -287,13 +287,13 @@ export class Value {
         }
       }
       return undefined;
-    }
+    },
   };
 
   public static int = {
     lousyRandom: (minVal: number, maxVal: number) => minVal + Math.round(Math.random() * (maxVal - minVal)),
     getFutureTimestampInMonths: (monthsToAdd: number) => new Date().getTime() + 1000 * 3600 * 24 * 30 * monthsToAdd,
-    hoursAsMiliseconds: (h: number) => h * 1000 * 60 * 60
+    hoursAsMiliseconds: (h: number) => h * 1000 * 60 * 60,
   };
 
   public static noop = (): void => undefined;
@@ -304,7 +304,7 @@ export class Url {
   private static URL_PARAM_DICT: Dict<boolean | null> = {
     ___cu_true___: true,
     ___cu_false___: false,
-    ___cu_null___: null // eslint-disable-line no-null/no-null
+    ___cu_null___: null, // eslint-disable-line no-null/no-null
   };
 
   /**

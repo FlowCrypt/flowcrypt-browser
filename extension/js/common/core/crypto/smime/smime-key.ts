@@ -82,7 +82,7 @@ export class SmimeKey {
   public static encryptMessage = async ({
     pubkeys,
     data: input,
-    armor
+    armor,
   }: {
     pubkeys: Key[];
     data: Uint8Array;
@@ -141,7 +141,7 @@ export class SmimeKey {
     const p7 = forge.pkcs7.createSignedData();
     p7.addSigner({
       certificate: SmimeKey.getCertificate(signingPrivate),
-      key: SmimeKey.getArmoredPrivateKey(signingPrivate)
+      key: SmimeKey.getArmoredPrivateKey(signingPrivate),
       // digestAlgorithm: forge.pki.oids.sha1,
       /*
       authenticatedAttributes: [{
@@ -325,7 +325,7 @@ export class SmimeKey {
       isPublic: !privateKey,
       isPrivate: !!privateKey,
       revoked: false,
-      issuerAndSerialNumber: forge.asn1.toDer(issuerAndSerialNumberAsn1).getBytes()
+      issuerAndSerialNumber: forge.asn1.toDer(issuerAndSerialNumberAsn1).getBytes(),
     } as Key;
     SmimeKey.saveArmored(key, certificateOrText, privateKey);
     return key;
@@ -353,8 +353,8 @@ export class SmimeKey {
               attr.valueTagClass,
               false,
               valueTagClass === forge.asn1.Type.UTF8 ? forge.util.encodeUtf8(attr.value) : attr.value
-            )
-          ])
+            ),
+          ]),
         ]);
       })
     );
@@ -370,7 +370,7 @@ export class SmimeKey {
         forge.asn1.Type.INTEGER,
         false,
         forge.util.hexToBytes(serialNumberHex)
-      )
+      ),
     ]);
   };
 

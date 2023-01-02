@@ -133,7 +133,7 @@ export class Ui {
           }
         }
       };
-    }
+    },
   };
 
   public static time = {
@@ -157,7 +157,7 @@ export class Ui {
     sleep: (
       ms: number,
       setCustomTimeout: (code: () => void, t: number) => void = Catch.setHandledTimeout
-    ): Promise<void> => new Promise(resolve => setCustomTimeout(resolve, ms))
+    ): Promise<void> => new Promise(resolve => setCustomTimeout(resolve, ms)),
   };
 
   public static modal = {
@@ -168,8 +168,8 @@ export class Ui {
         allowOutsideClick: false,
         customClass: {
           popup: 'ui-modal-info',
-          confirmButton: 'ui-modal-info-confirm'
-        }
+          confirmButton: 'ui-modal-info-confirm',
+        },
       });
       Ui.activateModalPageLinkTags(); // in case the page itself has data-swal-page links
       await userResponsePromise;
@@ -181,8 +181,8 @@ export class Ui {
         allowOutsideClick: false,
         customClass: {
           popup: 'ui-modal-warning',
-          confirmButton: 'ui-modal-warning-confirm'
-        }
+          confirmButton: 'ui-modal-warning-confirm',
+        },
       });
       Ui.activateModalPageLinkTags(); // in case the page itself has data-swal-page links
       await userResponsePromise;
@@ -195,8 +195,8 @@ export class Ui {
         allowOutsideClick: false,
         customClass: {
           popup: 'ui-modal-error',
-          confirmButton: 'ui-modal-error-confirm'
-        }
+          confirmButton: 'ui-modal-error-confirm',
+        },
       });
       Ui.activateModalPageLinkTags(); // in case the page itself has data-swal-page links
       await userResponsePromise;
@@ -215,8 +215,8 @@ export class Ui {
         customClass: {
           popup: 'ui-modal-confirm',
           confirmButton: 'ui-modal-confirm-confirm',
-          cancelButton: 'ui-modal-confirm-cancel'
-        }
+          cancelButton: 'ui-modal-confirm-cancel',
+        },
       });
       Ui.activateModalPageLinkTags(); // in case the page itself has data-swal-page links
       const { dismiss } = await userResponsePromise;
@@ -232,7 +232,7 @@ export class Ui {
           popup: 'ui-modal-confirm-checkbox',
           confirmButton: 'ui-modal-confirm-checkbox-confirm',
           cancelButton: 'ui-modal-confirm-checkbox-cancel',
-          input: 'ui-modal-confirm-checkbox-input'
+          input: 'ui-modal-confirm-checkbox-input',
         },
         didOpen: () => {
           /* eslint-disable @typescript-eslint/no-non-null-assertion */
@@ -243,7 +243,7 @@ export class Ui {
           $(input).on('change', () => {
             $(confirmButton).prop('disabled', !input.checked);
           });
-        }
+        },
       });
       Ui.activateModalPageLinkTags(); // in case the page itself has data-swal-page links
       const { dismiss } = await userResponsePromise;
@@ -266,8 +266,8 @@ export class Ui {
         showConfirmButton: false,
         customClass: {
           container: 'ui-modal-page',
-          popup: 'ui-modal-iframe'
-        }
+          popup: 'ui-modal-iframe',
+        },
       });
       Ui.activateModalPageLinkTags(); // in case the page itself has data-swal-page links
       await userResponsePromise;
@@ -296,8 +296,8 @@ export class Ui {
         scrollbarPadding: true,
         showConfirmButton: false,
         customClass: {
-          popup: 'ui-modal-iframe'
-        }
+          popup: 'ui-modal-iframe',
+        },
       });
     },
     fullscreen: async (html: string): Promise<void> => {
@@ -310,8 +310,8 @@ export class Ui {
         grow: 'fullscreen',
         showConfirmButton: false,
         customClass: {
-          container: 'ui-modal-fullscreen'
-        }
+          container: 'ui-modal-fullscreen',
+        },
       });
     },
     attachmentPreview: async (iframeUrl: string): Promise<void> => {
@@ -329,10 +329,10 @@ export class Ui {
         showCloseButton: true,
         grow: 'fullscreen',
         customClass: {
-          container: 'ui-modal-attachment'
-        }
+          container: 'ui-modal-attachment',
+        },
       });
-    }
+    },
   };
 
   public static testCompatibilityLink =
@@ -494,7 +494,7 @@ export class Ui {
           Catch.report('unknown selector name: ' + name);
         }
         return sels[name];
-      }
+      },
     };
   };
 
@@ -533,18 +533,18 @@ export class Ui {
       customClass: {
         container: 'ui-toast-container',
         popup: 'ui-toast',
-        title: 'ui-toast-title'
+        title: 'ui-toast-title',
       },
       didOpen: toast => {
         toast.addEventListener('mouseenter', Swal.stopTimer);
         toast.addEventListener('mouseleave', Swal.resumeTimer);
-      }
+      },
     });
   };
 
   private static swal = () =>
     Swal.mixin({
       showClass: { popup: 'swal2-noanimation', backdrop: 'swal2-noanimation' },
-      hideClass: { popup: '', backdrop: '' }
+      hideClass: { popup: '', backdrop: '' },
     });
 }

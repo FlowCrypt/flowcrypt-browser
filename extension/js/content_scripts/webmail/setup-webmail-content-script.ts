@@ -116,7 +116,7 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
       const storage = await AcctStore.get(acctEmail, [
         'setup_done',
         'cryptup_enabled',
-        'notification_setup_needed_dismissed'
+        'notification_setup_needed_dismissed',
       ]);
       if (storage.setup_done === true && storage.cryptup_enabled !== false) {
         // "not false" is due to cryptup_enabled unfedined in previous versions, which means "true"
@@ -138,7 +138,7 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
           /* eslint-enable @typescript-eslint/naming-convention */
           close: () => {
             showSetupNeededNotificationIfSetupNotDone = false;
-          }
+          },
         });
       }
       await Ui.time.sleep(3000, win.TrySetDestroyableTimeout);
@@ -168,11 +168,11 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
       $(`.secure_compose_window[data-frame-id="${frameId}"]`).remove();
       if ($('.secure_compose_window.previous_active:not(.minimized)').length) {
         BrowserMsg.send.focusPreviousActiveWindow(tabId, {
-          frameId: $('.secure_compose_window.previous_active:not(.minimized)').data('frame-id') as string
+          frameId: $('.secure_compose_window.previous_active:not(.minimized)').data('frame-id') as string,
         });
       } else if ($('.secure_compose_window:not(.minimized)').length) {
         BrowserMsg.send.focusPreviousActiveWindow(tabId, {
-          frameId: $('.secure_compose_window:not(.minimized)').data('frame-id') as string
+          frameId: $('.secure_compose_window:not(.minimized)').data('frame-id') as string,
         });
       }
       // reposition the rest of the compose windows
@@ -310,7 +310,7 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
       const { needPassphrase, updateCount, noKeysSetup } =
         await BrowserMsg.send.bg.await.processAndStoreKeysFromEkmLocally({
           acctEmail,
-          decryptedPrivateKeys
+          decryptedPrivateKeys,
         });
       if (noKeysSetup) {
         if (!needPassphrase && !clientConfiguration.canCreateKeys()) {
@@ -319,7 +319,7 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
         } else {
           BrowserMsg.send.bg.settings({
             acctEmail,
-            path: Url.create('setup.htm', { idToken, action: 'update_from_ekm' })
+            path: Url.create('setup.htm', { idToken, action: 'update_from_ekm' }),
           });
         }
         return;

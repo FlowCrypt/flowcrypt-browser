@@ -47,7 +47,7 @@ View.run(
       this.factory = new XssSafeFactory(this.acctEmail, tabId, undefined, undefined, { compact: true });
       this.clientConfiguration = await ClientConfiguration.newInstance(this.acctEmail);
       this.attachmentUI.initAttachmentDialog('fineuploader', 'fineuploader_button', {
-        attachmentAdded: this.fileAddedHandler
+        attachmentAdded: this.fileAddedHandler,
       });
       const fetchKeyUI = new FetchKeyUI();
       fetchKeyUI.handleOnPaste($('.input_pubkey'));
@@ -77,7 +77,7 @@ View.run(
       const contacts = await ContactStore.search(undefined, {
         hasPgp: true,
         limit: 500,
-        substring: String($('.input-search-contacts').val())
+        substring: String($('.input-search-contacts').val()),
       });
       let lineActionsHtml =
         '&nbsp;&nbsp;<a href="#" class="action_export_all">export all</a>&nbsp;&nbsp;' +
@@ -137,7 +137,7 @@ View.run(
       const exportFile = new Attachment({
         name: 'public-keys-export.asc',
         type: 'application/pgp-keys',
-        data: Buf.fromUtfStr(allArmoredPublicKeys)
+        data: Buf.fromUtfStr(allArmoredPublicKeys),
       });
       Browser.saveToDownloads(exportFile);
     };
@@ -210,7 +210,7 @@ View.run(
           `Last signature: ${key.lastModified ? new Date(key.lastModified) : ''}`,
           `Expired: ${key.expiration && key.expiration < Date.now() ? 'yes' : 'no'}`,
           `Usable for encryption: ${key.usableForEncryption}`,
-          `Usable for signing: ${key.usableForSigning}`
+          `Usable for signing: ${key.usableForSigning}`,
         ].join('\n')
       );
       $('#view_contact').css('display', 'block');

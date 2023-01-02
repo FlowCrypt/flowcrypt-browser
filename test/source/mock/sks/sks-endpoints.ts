@@ -144,5 +144,5 @@ export const mockSksEndpoints: HandlersDefinition = {
   '/pks/lookup?op=get&search=0x5F0CEF862479A17C&options=mr': async () => {
     // by fp
     return testSksKey; // for test@custom-sks.flowcrypt.test
-  }
+  },
 };

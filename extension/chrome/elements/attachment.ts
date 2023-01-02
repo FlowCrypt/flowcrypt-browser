@@ -61,7 +61,7 @@ export class AttachmentDownloadView extends View {
       'decrypted',
       'frameId',
       'isEncrypted',
-      'errorDetailsOpened'
+      'errorDetailsOpened',
     ]);
     this.acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
     this.parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
@@ -91,7 +91,7 @@ export class AttachmentDownloadView extends View {
         type: this.type,
         msgId: this.msgId,
         id: this.id,
-        url: this.url
+        url: this.url,
       });
     } catch (e) {
       Catch.reportErr(e);
@@ -252,7 +252,7 @@ export class AttachmentDownloadView extends View {
       const decrRes = await MsgUtil.decryptMessage({
         kisWithPp: await KeyStore.getAllWithOptionalPassPhrase(this.acctEmail),
         encryptedData: data,
-        verificationPubs: [] // no need to worry about the public key signature, as public key exchange is inherently unsafe
+        verificationPubs: [], // no need to worry about the public key signature, as public key exchange is inherently unsafe
       });
       if (decrRes.success && decrRes.content) {
         const openpgpType = await MsgUtil.type({ data: decrRes.content });
@@ -261,12 +261,12 @@ export class AttachmentDownloadView extends View {
           BrowserMsg.send.renderPublicKeys(this.parentTabId, {
             afterFrameId: this.frameId,
             traverseUp: 2,
-            publicKeys: [decrRes.content.toUtfStr()]
+            publicKeys: [decrRes.content.toUtfStr()],
           }); // render pubkey
           BrowserMsg.send.setCss(this.parentTabId, {
             selector: `#${this.frameId}`,
             traverseUp: 1,
-            css: { display: 'none' }
+            css: { display: 'none' },
           }); // hide attachment
           $('body').text('');
           return true;
@@ -322,7 +322,7 @@ export class AttachmentDownloadView extends View {
     const result = await MsgUtil.decryptMessage({
       kisWithPp: await KeyStore.getAllWithOptionalPassPhrase(this.acctEmail),
       encryptedData: this.attachment.getData(),
-      verificationPubs: [] // todo: #4158 signature verification of attachments
+      verificationPubs: [], // todo: #4158 signature verification of attachments
     });
     Xss.sanitizeRender(this.downloadButton, this.originalButtonHTML || '');
     if (result.success) {
@@ -335,7 +335,7 @@ export class AttachmentDownloadView extends View {
     } else if (result.error.type === DecryptErrTypes.needPassphrase) {
       BrowserMsg.send.passphraseDialog(this.parentTabId, {
         type: 'attachment',
-        longids: result.longids.needPassphrase
+        longids: result.longids.needPassphrase,
       });
       if (
         !(await PassphraseStore.waitUntilPassphraseChanged(

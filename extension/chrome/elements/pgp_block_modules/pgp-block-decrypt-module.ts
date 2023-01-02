@@ -126,7 +126,7 @@ export class PgpBlockViewDecryptModule {
             Ui.setTestState('waiting');
             BrowserMsg.send.passphraseDialog(this.view.parentTabId, {
               type: 'message',
-              longids: result.longids.needPassphrase
+              longids: result.longids.needPassphrase,
             });
           })
         );

@@ -36,7 +36,7 @@ export class Assert {
         name,
         allowed as unknown as UrlParam[]
       ) as unknown as T; // todo - there should be a better way
-    }
+    },
   };
 
   public static abortAndRenderErrOnUnprotectedKey = async (acctEmail?: string, tabId?: string) => {

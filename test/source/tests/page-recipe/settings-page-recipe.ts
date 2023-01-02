@@ -64,7 +64,7 @@ export class SettingsPageRecipe extends PageRecipe {
     await SettingsPageRecipe.ready(settingsPage);
     const securityFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-security-page', [
       'security.htm',
-      'placement=settings'
+      'placement=settings',
     ]);
     await securityFrame.waitAndClick('@action-change-passphrase-begin', { delay: 1 });
     if (currentPp) {
@@ -91,7 +91,7 @@ export class SettingsPageRecipe extends PageRecipe {
     await SettingsPageRecipe.ready(settingsPage);
     const securityFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-security-page', [
       'security.htm',
-      'placement=settings'
+      'placement=settings',
     ]);
     await securityFrame.waitAndClick('@action-forget-pp');
     await securityFrame.waitAndType('@input-confirm-pass-phrase', passphrase);
@@ -127,7 +127,7 @@ export class SettingsPageRecipe extends PageRecipe {
     await SettingsPageRecipe.ready(settingsPage);
     const securityFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-security-page', [
       'security.htm',
-      'placement=settings'
+      'placement=settings',
     ]);
     await securityFrame.waitAndClick('@action-test-passphrase-begin');
     await securityFrame.waitAndType('@input-test-passphrase', passphrase);
@@ -182,7 +182,7 @@ export class SettingsPageRecipe extends PageRecipe {
     } else if (prvKey.filePath) {
       const [fileChooser] = await Promise.all([
         addPrvPage.page.waitForFileChooser(),
-        addPrvPage.waitAndClick('@source-file', { retryErrs: true })
+        addPrvPage.waitAndClick('@source-file', { retryErrs: true }),
       ]);
       await fileChooser.accept([prvKey.filePath]);
       [key] = (await KeyUtil.readBinary(readFileSync(prvKey.filePath))).keys;

@@ -85,7 +85,7 @@ View.run(
       const desiredHeight = $('#backup_block').height()!;
       BrowserMsg.send.setCss(this.parentTabId, {
         selector: `iframe#${this.frameId}`,
-        css: { height: `${desiredHeight}px` }
+        css: { height: `${desiredHeight}px` },
       });
     };
 

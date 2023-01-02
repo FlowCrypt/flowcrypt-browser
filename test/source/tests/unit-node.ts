@@ -47,17 +47,17 @@ export const defineUnitNodeTests = (testVariant: TestVariant) => {
       async t => {
         const unarmoredKeys = Buffer.from([
           ...(await PgpArmor.dearmor(testConstants.flowcryptcompatibilityPublicKey7FDE685548AEA788)).data,
-          ...(await PgpArmor.dearmor(testConstants.pubkey2864E326A5BE488A)).data
+          ...(await PgpArmor.dearmor(testConstants.pubkey2864E326A5BE488A)).data,
         ]);
         const armoredKeys = PgpArmor.armor(opgp.enums.armor.public_key, unarmoredKeys);
         expect((await KeyUtil.parseMany(armoredKeys)).length).to.equal(2);
         await t.throwsAsync(() => OpenPGPKey.parse(armoredKeys), {
           instanceOf: Error,
-          message: 'Found 2 OpenPGP keys, expected one'
+          message: 'Found 2 OpenPGP keys, expected one',
         });
         await t.throwsAsync(() => KeyUtil.parse(armoredKeys), {
           instanceOf: Error,
-          message: 'Found 2 keys, expected one'
+          message: 'Found 2 keys, expected one',
         });
         t.pass();
       }
@@ -73,10 +73,10 @@ export const defineUnitNodeTests = (testVariant: TestVariant) => {
           MsgBlock.fromContent(
             'plainText',
             "This text breaks email and Gmail web app.\n\n-----BEGIN FOO-----\n\nEven though it's not a vaild PGP m\n\nMuhahah"
-          )
+          ),
         ],
         normalized:
-          "This text breaks email and Gmail web app.\n\n-----BEGIN FOO-----\n\nEven though it's not a vaild PGP m\n\nMuhahah"
+          "This text breaks email and Gmail web app.\n\n-----BEGIN FOO-----\n\nEven though it's not a vaild PGP m\n\nMuhahah",
       });
       t.pass();
     });
@@ -234,14 +234,14 @@ WeNYP84Yjw6OFSHdi2W0VojRGhxm7PZCMqswN/XaBg==
       // address
       await t.throwsAsync(() => KeyUtil.parse(httpsCert), {
         instanceOf: UnreportableError,
-        message: 'This S/MIME x.509 certificate has an invalid recipient email: news.ycombinator.com'
+        message: 'This S/MIME x.509 certificate has an invalid recipient email: news.ycombinator.com',
       });
     });
 
     ava.default('[unit][KeyUtil.parse] Unknown key family parsing fails', async t => {
       await t.throwsAsync(() => KeyUtil.parse('dummy string for unknown key'), {
         instanceOf: Error,
-        message: 'Key type is unknown, expecting OpenPGP or x509 S/MIME'
+        message: 'Key type is unknown, expecting OpenPGP or x509 S/MIME',
       });
     });
 
@@ -584,7 +584,7 @@ ${testConstants.smimeCert}`),
 ${testConstants.smimeCert}`);
       await t.throwsAsync(() => KeyUtil.decrypt(encryptedKey, 'AHbxhwquX5pc'), {
         instanceOf: UnreportableError,
-        message: `Certificate doesn't match the private key`
+        message: `Certificate doesn't match the private key`,
       });
       t.pass();
     });
@@ -597,7 +597,7 @@ AAAAAAAAAAAAAAAAzzzzzzzzzzzzzzzzzzzzzzzzzzzz.....
 ${testConstants.smimeCert}`);
       await t.throwsAsync(() => KeyUtil.decrypt(encryptedKey, '123'), {
         instanceOf: Error,
-        message: `Invalid PEM formatted message.`
+        message: `Invalid PEM formatted message.`,
       });
       t.pass();
     });
@@ -671,7 +671,7 @@ ${testConstants.smimeCert}`),
             (await MsgUtil.encryptMessage({
               pubkeys: [key],
               data: Buf.fromUtfStr('anything'),
-              armor: false
+              armor: false,
             })) as PgpMsgMethod.EncryptX509Result
           ).data
         );
@@ -688,7 +688,7 @@ ${testConstants.smimeCert}`),
           (await MsgUtil.encryptMessage({
             pubkeys: [key, key, key],
             data: Buf.fromUtfStr('anything'),
-            armor: false
+            armor: false,
           })) as PgpMsgMethod.EncryptX509Result
         ).data
       );
@@ -830,7 +830,7 @@ jLwe8W9IMt765T5x5oux9MmPDXF05xHfm4qfH/BMO3a802x5u2gJjJjuknrFdgXY
         const decrypted1 = await MsgUtil.decryptMessage({
           kisWithPp: [],
           encryptedData,
-          verificationPubs: [signerPubkey, wrongPubkey]
+          verificationPubs: [signerPubkey, wrongPubkey],
         });
         expect(decrypted1.success).to.equal(true);
         const verifyRes1 = (decrypted1 as DecryptSuccess).signature!;
@@ -840,7 +840,7 @@ jLwe8W9IMt765T5x5oux9MmPDXF05xHfm4qfH/BMO3a802x5u2gJjJjuknrFdgXY
         const decrypted2 = await MsgUtil.decryptMessage({
           kisWithPp: [],
           encryptedData,
-          verificationPubs: [wrongPubkey, signerPubkey]
+          verificationPubs: [wrongPubkey, signerPubkey],
         });
         expect(decrypted2.success).to.equal(true);
         const verifyRes2 = (decrypted2 as DecryptSuccess).signature!;
@@ -850,7 +850,7 @@ jLwe8W9IMt765T5x5oux9MmPDXF05xHfm4qfH/BMO3a802x5u2gJjJjuknrFdgXY
         const decrypted3 = await MsgUtil.decryptMessage({
           kisWithPp: [],
           encryptedData,
-          verificationPubs: [signerPubkey]
+          verificationPubs: [signerPubkey],
         });
         expect(decrypted3.success).to.equal(true);
         const verifyRes3 = (decrypted3 as DecryptSuccess).signature!;
@@ -860,7 +860,7 @@ jLwe8W9IMt765T5x5oux9MmPDXF05xHfm4qfH/BMO3a802x5u2gJjJjuknrFdgXY
         const decrypted4 = await MsgUtil.decryptMessage({
           kisWithPp: [],
           encryptedData,
-          verificationPubs: [wrongPubkey]
+          verificationPubs: [wrongPubkey],
         });
         expect(decrypted4.success).to.equal(true);
         const verifyRes4 = (decrypted4 as DecryptSuccess).signature!;
@@ -889,7 +889,7 @@ jLwe8W9IMt765T5x5oux9MmPDXF05xHfm4qfH/BMO3a802x5u2gJjJjuknrFdgXY
       const result = await MsgUtil.verifyDetached({
         plaintext: Buf.fromUtfStr(plaintext),
         sigText: Buf.fromUtfStr(sigText),
-        verificationPubs: [pubkey]
+        verificationPubs: [pubkey],
       });
       expect(result.match).to.be.true;
       t.pass();
@@ -915,7 +915,7 @@ jLwe8W9IMt765T5x5oux9MmPDXF05xHfm4qfH/BMO3a802x5u2gJjJjuknrFdgXY
       const result = await MsgUtil.verifyDetached({
         plaintext: Buf.fromUtfStr(plaintext),
         sigText: Buf.fromUtfStr(sigText),
-        verificationPubs: [pubkey]
+        verificationPubs: [pubkey],
       });
       expect(result.match).to.be.true;
       t.pass();
@@ -935,7 +935,7 @@ jLwe8W9IMt765T5x5oux9MmPDXF05xHfm4qfH/BMO3a802x5u2gJjJjuknrFdgXY
       const result = await MsgUtil.verifyDetached({
         plaintext: Buf.fromUtfStr(plaintext),
         sigText,
-        verificationPubs: [testConstants.flowcryptcompatibilityPublicKey7FDE685548AEA788]
+        verificationPubs: [testConstants.flowcryptcompatibilityPublicKey7FDE685548AEA788],
       });
       expect(result.match).to.be.true;
       t.pass();
@@ -962,7 +962,7 @@ jSB6A93JmnQGIkAem/kzGkKclmfAdGfc4FS+3Cn+6Q==Xmrz
         const resultRightKey = await MsgUtil.verifyDetached({
           plaintext: Buf.fromUtfStr('some irrelevant text'),
           sigText,
-          verificationPubs: [pubkey]
+          verificationPubs: [pubkey],
         });
         expect(resultRightKey.match).to.be.false;
         expect(resultRightKey.error).to.not.be.undefined;
@@ -972,7 +972,7 @@ jSB6A93JmnQGIkAem/kzGkKclmfAdGfc4FS+3Cn+6Q==Xmrz
         const resultWrongKey = await MsgUtil.verifyDetached({
           plaintext: Buf.fromUtfStr('some irrelevant text'),
           sigText,
-          verificationPubs: [testConstants.flowcryptcompatibilityPublicKey7FDE685548AEA788]
+          verificationPubs: [testConstants.flowcryptcompatibilityPublicKey7FDE685548AEA788],
         });
         expect(resultWrongKey.match).to.be.null;
         expect(resultWrongKey.error).to.be.undefined;
@@ -991,7 +991,7 @@ jSB6A93JmnQGIkAem/kzGkKclmfAdGfc4FS+3Cn+6Q==Xmrz
       const { data } = (await MsgUtil.encryptMessage({
         pubkeys: [pub1],
         data: Buf.fromUtfStr('anything'),
-        armor: true
+        armor: true,
       })) as PgpMsgMethod.EncryptPgpArmorResult;
       const m = await opgp.message.readArmored(Buf.fromUint8(data).toUtfStr());
       const parsed1 = await KeyUtil.parse(key1.private);
@@ -999,7 +999,7 @@ jSB6A93JmnQGIkAem/kzGkKclmfAdGfc4FS+3Cn+6Q==Xmrz
       const kisWithPp: KeyInfoWithIdentityAndOptionalPp[] = [
         // supply both key1 and key2 for decrypt
         { ...(await KeyUtil.keyInfoObj(parsed1)), passphrase },
-        { ...(await KeyUtil.keyInfoObj(parsed2)), passphrase }
+        { ...(await KeyUtil.keyInfoObj(parsed2)), passphrase },
       ];
       // we are testing a private method here because the outcome of this method is not directly testable from the
       //   public method that uses it. It only makes the public method faster, which is hard to test.
@@ -1031,7 +1031,7 @@ jSB6A93JmnQGIkAem/kzGkKclmfAdGfc4FS+3Cn+6Q==Xmrz
       const key = await OpenPGPKey.create(
         [
           { name: 'Key1', email: 'key1@test.com' },
-          { name: 'Key2', email: 'key2@test.com' }
+          { name: 'Key2', email: 'key2@test.com' },
         ],
         'curve25519',
         passphrase,
@@ -1101,7 +1101,7 @@ jSB6A93JmnQGIkAem/kzGkKclmfAdGfc4FS+3Cn+6Q==Xmrz
         expect(tmpPrv.fullyEncrypted).to.equal(true);
         const prvEncryptForSubkeyOnlyProtected = KeyUtil.armor(tmpPrv);
         const {
-          keys: [tmpPub]
+          keys: [tmpPub],
         } = await opgp.key.readArmored(pubEncryptForPrimaryIsFine);
         tmpPub.subKeys = [];
         // removed subkey from the pubkey, which makes the structure into this - forcing opgp to encrypt for the primary
@@ -1113,16 +1113,16 @@ jSB6A93JmnQGIkAem/kzGkKclmfAdGfc4FS+3Cn+6Q==Xmrz
         const encrypted = (await MsgUtil.encryptMessage({
           pubkeys,
           data,
-          armor: true
+          armor: true,
         })) as PgpMsgMethod.EncryptPgpArmorResult;
         const parsed = await KeyUtil.parse(prvEncryptForSubkeyOnlyProtected);
         const kisWithPp: KeyInfoWithIdentityAndOptionalPp[] = [
-          { ...(await KeyUtil.keyInfoObj(parsed)), family: parsed.family, passphrase }
+          { ...(await KeyUtil.keyInfoObj(parsed)), family: parsed.family, passphrase },
         ];
         const decrypted = await MsgUtil.decryptMessage({
           kisWithPp,
           encryptedData: encrypted.data,
-          verificationPubs: []
+          verificationPubs: [],
         });
         // todo - later we'll have an org rule for ignoring this, and then it will be expected to pass as follows:
         // expect(decrypted.success).to.equal(true);
@@ -1812,7 +1812,7 @@ j+w8FyoMKOrmOAyFTWjJVyVEruMl2a7QDO/CjaWV4sAUt0LMcRdZdTM=
 -----END PGP PRIVATE KEY BLOCK-----`);
       await t.throwsAsync(() => KeyUtil.decrypt(corruptedRsaKey, '123'), {
         instanceOf: Error,
-        message: 'Key is invalid'
+        message: 'Key is invalid',
       });
       t.pass();
     });
@@ -1883,7 +1883,7 @@ PBcqDCjq5jgMhU1oyVclRK7jJdmu0Azvwo2lleLAFLdCzHEXWXUz
     ava.default('[unit][KeyUtil.parse] validates the private key if it is not encrypted', async t => {
       await t.throwsAsync(() => KeyUtil.parse(unencryptedCorruptedRsaKey), {
         instanceOf: Error,
-        message: 'Key is invalid'
+        message: 'Key is invalid',
       });
       t.pass();
     });
@@ -2121,7 +2121,7 @@ PBcqDCjq5jgMhU1oyVclRK7jJdmu0Azvwo2lleLAFLdCzHEXWXUz
           (await MsgUtil.encryptMessage({
             pubkeys: [publicSmimeKey],
             data: Buf.fromUtfStr(text),
-            armor: true
+            armor: true,
           })) as PgpMsgMethod.EncryptX509Result
         ).data
       );
@@ -2472,7 +2472,7 @@ AAAAAAAAAAAAAAAAzzzzzzzzzzzzzzzzzzzzzzzzzzzz.....`)
           'part1.part2@part3.part4',
           'part2@part3.part4',
           'part3.part4',
-          'part4'
+          'part4',
         ]);
         t.pass();
       }
@@ -2486,7 +2486,7 @@ AAAAAAAAAAAAAAAAzzzzzzzzzzzzzzzzzzzzzzzzzzzz.....`)
       const verifyRes = await MsgUtil.verifyDetached({
         plaintext: Buf.fromRawBytesStr(plaintext),
         sigText: Buf.fromRawBytesStr(sigText),
-        verificationPubs: []
+        verificationPubs: [],
       });
       expect(verifyRes.signerFingerprints.length).to.equal(1);
       expect(verifyRes.signerFingerprints[0]).to.equal(prv.id);

@@ -8,7 +8,7 @@ import { getFilesInDir } from './utils/tooling-utils';
 
 const OUT_DIR = `./build/generic-extension-wip/js/content_scripts`;
 let {
-  compilerOptions: { outDir: sourceDir }
+  compilerOptions: { outDir: sourceDir },
 } = JSON.parse(readFileSync('./conf/tsconfig.content_scripts.json').toString());
 sourceDir = `./build/${sourceDir}`;
 

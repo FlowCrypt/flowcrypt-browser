@@ -40,7 +40,7 @@ const allowedRecipients: Array<string> = [
   'sender@domain.com',
   'invalid@example.com',
   'timeout@example.com',
-  'flowcrypt.test.key.new.manual@gmail.com'
+  'flowcrypt.test.key.new.manual@gmail.com',
 ];
 
 export const mockGoogleEndpoints: HandlersDefinition = {
@@ -96,8 +96,8 @@ export const mockGoogleEndpoints: HandlersDefinition = {
       if (query === 'contact') {
         return {
           results: [
-            { person: { emailAddresses: [{ metadata: { primary: true }, value: 'contact.test@flowcrypt.com' }] } }
-          ]
+            { person: { emailAddresses: [{ metadata: { primary: true }, value: 'contact.test@flowcrypt.com' }] } },
+          ],
         };
       } else if (query === 'testsearchorder') {
         return {
@@ -107,8 +107,8 @@ export const mockGoogleEndpoints: HandlersDefinition = {
             { person: { emailAddresses: [{ metadata: { primary: true }, value: 'testsearchorder3@flowcrypt.com' }] } },
             { person: { emailAddresses: [{ metadata: { primary: true }, value: 'testsearchorder4@flowcrypt.com' }] } },
             { person: { emailAddresses: [{ metadata: { primary: true }, value: 'testsearchorder5@flowcrypt.com' }] } },
-            { person: { emailAddresses: [{ metadata: { primary: true }, value: 'testsearchorder6@flowcrypt.com' }] } }
-          ]
+            { person: { emailAddresses: [{ metadata: { primary: true }, value: 'testsearchorder6@flowcrypt.com' }] } },
+          ],
         };
       } else {
         return empty;
@@ -129,8 +129,8 @@ export const mockGoogleEndpoints: HandlersDefinition = {
           results: [
             { person: { emailAddresses: [{ metadata: { primary: true }, value: 'testsearchorder7@flowcrypt.com' }] } },
             { person: { emailAddresses: [{ metadata: { primary: true }, value: 'testsearchorder8@flowcrypt.com' }] } },
-            { person: { emailAddresses: [{ metadata: { primary: true }, value: 'testsearchorder9@flowcrypt.com' }] } }
-          ]
+            { person: { emailAddresses: [{ metadata: { primary: true }, value: 'testsearchorder9@flowcrypt.com' }] } },
+          ],
         };
       } else {
         return empty;
@@ -161,8 +161,8 @@ export const mockGoogleEndpoints: HandlersDefinition = {
           isDefault: true,
           isPrimary: true,
           treatAsAlias: false,
-          verificationStatus: 'accepted'
-        }
+          verificationStatus: 'accepted',
+        },
       ];
       if (acct === 'flowcrypt.compatibility@gmail.com') {
         sendAs[0].signature =
@@ -176,7 +176,7 @@ export const mockGoogleEndpoints: HandlersDefinition = {
           isDefault: false,
           isPrimary: false,
           treatAsAlias: false,
-          verificationStatus: 'accepted'
+          verificationStatus: 'accepted',
         });
       } else if (acct === 'multi.aliased.user@example.com') {
         const alias1 = 'alias1@example.com';
@@ -190,7 +190,7 @@ export const mockGoogleEndpoints: HandlersDefinition = {
             isDefault: false,
             isPrimary: false,
             treatAsAlias: false,
-            verificationStatus: 'accepted'
+            verificationStatus: 'accepted',
           },
           {
             sendAsEmail: alias2,
@@ -200,7 +200,7 @@ export const mockGoogleEndpoints: HandlersDefinition = {
             isDefault: false,
             isPrimary: false,
             treatAsAlias: false,
-            verificationStatus: 'accepted'
+            verificationStatus: 'accepted',
           }
         );
       } else if (acct === 'test.match.attester.key@gmail.com') {
@@ -213,7 +213,7 @@ export const mockGoogleEndpoints: HandlersDefinition = {
           isDefault: false,
           isPrimary: false,
           treatAsAlias: false,
-          verificationStatus: 'accepted'
+          verificationStatus: 'accepted',
         });
       }
       return { sendAs };
@@ -334,8 +334,8 @@ export const mockGoogleEndpoints: HandlersDefinition = {
           message: {
             id: 'mockfakedmessageraftsave',
             labelIds: ['DRAFT'],
-            threadId: body.message.threadId
-          }
+            threadId: body.message.threadId,
+          },
         };
       }
     }
@@ -371,7 +371,7 @@ export const mockGoogleEndpoints: HandlersDefinition = {
       return {};
     }
     throw new HttpClientErr(`Method not implemented for ${req.url}: ${req.method}`);
-  }
+  },
 };
 
 const parseMultipartDataAsMimeMsg = async (multipartData: string): Promise<ParseMsgResult> => {

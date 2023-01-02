@@ -39,7 +39,7 @@ View.run(
       if (!this.mostUsefulPrv?.key.fullyEncrypted) {
         const setUpPpUrl = Url.create('change_passphrase.htm', {
           acctEmail: this.acctEmail,
-          parentTabId: this.parentTabId
+          parentTabId: this.parentTabId,
         });
         Xss.sanitizeRender(
           '#content',

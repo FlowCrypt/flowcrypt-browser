@@ -428,7 +428,7 @@ export class ContactStore extends AbstractStore {
     'home.ro',
     'vnn.vn',
     'yopmail.com',
-    'ymail.com'
+    'ymail.com',
   ]);
 
   public static dbOpen = async (): Promise<IDBDatabase> => {
@@ -538,8 +538,8 @@ export class ContactStore extends AbstractStore {
           email,
           keys: (contact?.sortedPubkeys || [])
             .filter(k => !k.revoked && (k.pubkey.usableForEncryption || k.pubkey.usableForEncryptionButExpired))
-            .map(k => k.pubkey)
-        }
+            .map(k => k.pubkey),
+        },
       ];
     } else {
       return (await Promise.all(emails.map(email => ContactStore.getEncryptionKeys(db, [email])))).reduce((a, b) =>
@@ -606,7 +606,7 @@ export class ContactStore extends AbstractStore {
     return emailEntity
       ? {
           info: { email: emailEntity.email, name: emailEntity.name || undefined },
-          sortedPubkeys: await ContactStore.sortKeys(pubkeys, revocations)
+          sortedPubkeys: await ContactStore.sortKeys(pubkeys, revocations),
         }
       : undefined;
   };
@@ -702,7 +702,7 @@ export class ContactStore extends AbstractStore {
       lastCheck: DateUtility.asNumber(lastCheck),
       expiresOn: keyAttrs.expiresOn,
       longids: KeyUtil.getPubkeyLongids(pubkey),
-      armoredKey: KeyUtil.armor(pubkey)
+      armoredKey: KeyUtil.armor(pubkey),
     };
   };
 
@@ -760,7 +760,7 @@ export class ContactStore extends AbstractStore {
     return parsedKeys.map(key => {
       return {
         pubkey: key,
-        revoked: key.revoked || revocations.some(r => ContactStore.equalFingerprints(key.id, r.fingerprint))
+        revoked: key.revoked || revocations.some(r => ContactStore.equalFingerprints(key.id, r.fingerprint)),
       };
     });
   };
@@ -948,7 +948,7 @@ export class ContactStore extends AbstractStore {
       const resultsWithPgp = await ContactStore.rawSearch(db, {
         substring: query.substring,
         limit: query.limit,
-        hasPgp: true
+        hasPgp: true,
       });
       if (query.limit && resultsWithPgp.length === query.limit) {
         return resultsWithPgp;
@@ -957,7 +957,7 @@ export class ContactStore extends AbstractStore {
         const resultsWithoutPgp = await ContactStore.rawSearch(db, {
           substring: query.substring,
           limit,
-          hasPgp: false
+          hasPgp: false,
         });
         return resultsWithPgp.concat(resultsWithoutPgp);
       }
@@ -1038,7 +1038,7 @@ export class ContactStore extends AbstractStore {
       email: result.email,
       name: result.name || undefined,
       hasPgp: result.fingerprints.length > 0 ? 1 : 0,
-      lastUse: result.lastUse
+      lastUse: result.lastUse,
     };
   };
 }

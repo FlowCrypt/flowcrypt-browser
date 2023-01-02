@@ -94,7 +94,7 @@ export class MsgBlockParser {
             name: attachment.name,
             data: attachment.getData(),
             length: attachment.length,
-            type: attachment.type
+            type: attachment.type,
           })
         );
       }
@@ -121,7 +121,7 @@ export class MsgBlockParser {
                 type: a.type,
                 name: a.name,
                 length: a.size,
-                url: String(url)
+                url: String(url),
               })
             );
           }

@@ -91,7 +91,7 @@ export class BrowserHandle {
       const cPage = this.pages[i];
       const url = await Promise.race([
         cPage.page.url(),
-        new Promise(resolve => setTimeout(() => resolve('(url get timeout)'), 10 * 1000)) as Promise<string>
+        new Promise(resolve => setTimeout(() => resolve('(url get timeout)'), 10 * 1000)) as Promise<string>,
       ]);
       const consoleMsgs = await cPage.console(t, alsoLogToConsole);
       const alerts = cPage.alerts

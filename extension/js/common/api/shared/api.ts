@@ -208,7 +208,7 @@ export class Api {
       contentType,
       async: true,
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      timeout: typeof progress!.upload === 'function' || typeof progress!.download === 'function' ? undefined : 20000 // substituted with {} above
+      timeout: typeof progress!.upload === 'function' || typeof progress!.download === 'function' ? undefined : 20000, // substituted with {} above
     };
     const res = await Api.ajax(req, Catch.stackTrace());
     return res as RT;

@@ -75,7 +75,7 @@ export abstract class PageRecipe {
       name: '_tab_',
       data: { bm: {}, objUrls: {} },
       to: null, // eslint-disable-line no-null/no-null
-      uid: '1'
+      uid: '1',
     });
     return (result as { result: { tabId: string } }).result.tabId;
   };

@@ -15,7 +15,7 @@ export enum RecipientStatus {
   EXPIRED,
   REVOKED,
   WRONG,
-  FAILED
+  FAILED,
 }
 /* eslint-enable @typescript-eslint/naming-convention */
 

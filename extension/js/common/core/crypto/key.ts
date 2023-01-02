@@ -418,7 +418,7 @@ export class KeyUtil {
       emails: prv.emails,
       fingerprints: prv.allIds,
       id: prv.id,
-      family: prv.family
+      family: prv.family,
     };
   };
 

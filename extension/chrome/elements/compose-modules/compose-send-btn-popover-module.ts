@@ -25,7 +25,7 @@ export class ComposeSendBtnPopoverModule extends ViewModule<ComposeView> {
     const popoverItems = {
       richtext: { text: 'Rich text (PGP/MIME) - experimental', iconPath: undefined },
       encrypt: { text: 'Encrypt message', iconPath: '/img/svgs/locked-icon-green.svg' },
-      sign: { text: 'Sign message', iconPath: '/img/svgs/signature-gray.svg' }
+      sign: { text: 'Sign message', iconPath: '/img/svgs/signature-gray.svg' },
     };
     this.choices.richtext = await this.richTextUserChoiceRetrieve();
     for (const key of Object.keys(popoverItems)) {
@@ -159,7 +159,7 @@ export class ComposeSendBtnPopoverModule extends ViewModule<ComposeView> {
 
   private richTextUserChoiceStore = async (isTicked: boolean) => {
     await AcctStore.set(this.view.acctEmail, {
-      use_rich_text: isTicked // eslint-disable-line @typescript-eslint/naming-convention
+      use_rich_text: isTicked, // eslint-disable-line @typescript-eslint/naming-convention
     });
   };
 

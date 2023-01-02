@@ -273,7 +273,7 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
       id: '',
       timestamp: new Date().getTime(),
       acctEmail: this.view.acctEmail,
-      message: { id: '', historyId: '', raw: Buf.fromUtfStr(mimeMsg).toBase64UrlStr(), threadId }
+      message: { id: '', historyId: '', raw: Buf.fromUtfStr(mimeMsg).toBase64UrlStr(), threadId },
     };
     await GlobalStore.set(storage);
     return draftId;
@@ -323,7 +323,7 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
     const decrypted = await MsgUtil.decryptMessage({
       kisWithPp: await KeyStore.getAllWithOptionalPassPhrase(this.view.acctEmail),
       encryptedData,
-      verificationPubs: []
+      verificationPubs: [],
     });
     if (!decrypted.success) {
       if (decrypted.error.type === DecryptErrTypes.needPassphrase) {
@@ -443,7 +443,7 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
       disableDraftSaving: this.view.disableDraftSaving,
       debug: this.view.debug,
       removeAfterClose: this.view.removeAfterClose,
-      replyPubkeyMismatch: this.view.replyPubkeyMismatch
+      replyPubkeyMismatch: this.view.replyPubkeyMismatch,
     };
   };
 }

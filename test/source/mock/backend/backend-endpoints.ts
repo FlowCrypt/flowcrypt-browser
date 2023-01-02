@@ -17,7 +17,7 @@ export const mockBackendEndpoints: HandlersDefinition = {
     const email = getEmailFromIdTokenOrThrow(req);
     return JSON.stringify({
       account: mockBackendData.getAcctRow(email!), // eslint-disable-line @typescript-eslint/no-non-null-assertion
-      domain_org_rules: mockBackendData.getClientConfiguration(email!) // eslint-disable-line @typescript-eslint/naming-convention, @typescript-eslint/no-non-null-assertion
+      domain_org_rules: mockBackendData.getClientConfiguration(email!), // eslint-disable-line @typescript-eslint/naming-convention, @typescript-eslint/no-non-null-assertion
     });
   },
   '/api/account/update': async ({}, req) => {
@@ -43,7 +43,7 @@ export const mockBackendEndpoints: HandlersDefinition = {
   },
   '/api/link/me': async ({}, req) => {
     throw new Error(`${req.url} mock not implemented`);
-  }
+  },
 };
 
 const throwIfNotPost = (req: IncomingMessage) => {

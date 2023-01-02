@@ -15,7 +15,7 @@ import {
   DecryptError,
   DecryptErrTypes,
   DecryptSuccess,
-  DecryptionError
+  DecryptionError,
 } from '../../js/common/core/crypto/pgp/msg-util.js';
 import { View } from '../../js/common/view.js';
 import { Xss } from '../../js/common/platform/xss.js';
@@ -48,7 +48,7 @@ View.run(
           type: this.type,
           msgId: this.msgId,
           id: this.id,
-          url: this.url
+          url: this.url,
         });
         await this.downloadDataIfNeeded();
         const result = this.isEncrypted ? await this.decrypt() : this.attachment.getData();
@@ -59,7 +59,7 @@ View.run(
           const attachmentForSave = new Attachment({
             name: this.origNameBasedOnFilename,
             type: this.type,
-            data: result
+            data: result,
           });
           if (attachmentType) {
             if (attachmentType === 'img') {
@@ -120,7 +120,7 @@ View.run(
       const result = await MsgUtil.decryptMessage({
         kisWithPp: await KeyStore.getAllWithOptionalPassPhrase(this.acctEmail),
         encryptedData: this.attachment.getData(),
-        verificationPubs: [] // todo: #4158 signature verification of attachments
+        verificationPubs: [], // todo: #4158 signature verification of attachments
       });
       if ((result as DecryptSuccess).content) {
         return result.content;
@@ -128,7 +128,7 @@ View.run(
         return BrowserMsg.send.passphraseDialog(this.parentTabId, {
           type: 'attachment',
           longids: (result as DecryptError).longids.needPassphrase,
-          initiatorFrameId: this.initiatorFrameId
+          initiatorFrameId: this.initiatorFrameId,
         });
       }
       throw new DecryptionError(result as DecryptError);

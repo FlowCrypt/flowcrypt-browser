@@ -21,7 +21,7 @@ import {
   moveContactsToEmailsAndPubkeys,
   updateOpgpRevocations,
   updateSearchables,
-  updateX509FingerprintsAndLongids
+  updateX509FingerprintsAndLongids,
 } from './migrations.js';
 
 console.info('background_process.js starting');

@@ -17,7 +17,7 @@ const knownMockEmails = [
   'human@flowcrypt.com',
   'flowcrypt.test.key.new.manual@gmail.com',
   'flowcrypt.test.key.used.pgp@gmail.com',
-  'flowcrypt.test.key.recovered@gmail.com'
+  'flowcrypt.test.key.recovered@gmail.com',
 ];
 
 let data: GoogleData;
@@ -153,7 +153,7 @@ export const mockAttesterEndpoints: HandlersDefinition = {
     expect(email).to.contain('@');
     expect(pubkey).to.contain('-----BEGIN PGP PUBLIC KEY BLOCK-----');
     return { sent: true };
-  }
+  },
 };
 
 export const somePubkey = `-----BEGIN PGP PUBLIC KEY BLOCK-----

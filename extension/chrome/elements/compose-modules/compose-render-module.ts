@@ -47,7 +47,7 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
         const recipients: Recipients = {
           to: this.view.replyParams.to,
           cc: this.view.replyParams.cc,
-          bcc: this.view.replyParams.bcc
+          bcc: this.view.replyParams.bcc,
         };
         this.view.recipientsModule.addRecipients(recipients, false).catch(Catch.reportErr);
         // await this.view.composerContacts.addRecipientsAndShowPreview(recipients);
@@ -265,7 +265,7 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
       this.view.S.cached('contacts').css('top', '39px');
       this.view.S.cached('compose_table').css({
         'border-bottom': '1px solid #cfcfcf',
-        'border-top': '1px solid #cfcfcf'
+        'border-top': '1px solid #cfcfcf',
       });
       this.view.S.cached('input_text').css('overflow-y', 'hidden');
       if (!this.view.skipClickPrompt && !this.view.draftId) {
@@ -435,7 +435,7 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
       await ContactStore.update(undefined, key.emails[0], {
         name: Str.parseEmail(key.identities[0]).name,
         pubkey: normalizedPub,
-        pubkeyLastCheck: Date.now()
+        pubkeyLastCheck: Date.now(),
       });
       this.view.S.cached('input_to').val(key.emails[0]);
       await this.view.recipientsModule.parseRenderRecipients(this.view.S.cached('input_to'));

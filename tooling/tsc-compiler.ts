@@ -68,7 +68,7 @@ const preserveAsyncStackTracesTransformerFactory = () => {
               const origFuncContent = ts.factory.createBlock((node.body as ts.FunctionBody).statements, true);
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
               (node.body as any).statements = ts.factory.createNodeArray([
-                ts.factory.createTryStatement(origFuncContent, catchClause, undefined)
+                ts.factory.createTryStatement(origFuncContent, catchClause, undefined),
               ]);
             } else if (ts.isCallExpression(node.body) || ts.isAwaitExpression(node.body)) {
               // eg: `x.click(async () => whatever())` or `x.click(async () => await whatever())`
@@ -130,7 +130,7 @@ const compile = (): void => {
   }
   const program = ts.createProgram(fileList, options, compilerHost);
   const emitResult = program.emit(undefined, undefined, undefined, undefined, {
-    before: [preserveAsyncStackTracesTransformerFactory()]
+    before: [preserveAsyncStackTracesTransformerFactory()],
   });
   printErrsAndExitIfPresent(ts.getPreEmitDiagnostics(program).concat(emitResult.diagnostics));
   if (emitResult.emitSkipped) {

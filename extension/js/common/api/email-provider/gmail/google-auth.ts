@@ -58,11 +58,11 @@ export class GoogleAuth {
       compose: 'https://www.googleapis.com/auth/gmail.compose',
       modify: 'https://www.googleapis.com/auth/gmail.modify',
       readContacts: 'https://www.googleapis.com/auth/contacts.readonly',
-      readOtherContacts: 'https://www.googleapis.com/auth/contacts.other.readonly'
+      readOtherContacts: 'https://www.googleapis.com/auth/contacts.other.readonly',
     },
     legacy_scopes: {
-      gmail: 'https://mail.google.com/' // causes a freakish oauth warn: "can permannently delete all your email" ...
-    }
+      gmail: 'https://mail.google.com/', // causes a freakish oauth warn: "can permannently delete all your email" ...
+    },
   };
   /* eslint-enable @typescript-eslint/naming-convention */
 
@@ -87,7 +87,7 @@ export class GoogleAuth {
     return (await Api.ajax(
       {
         url: `${GMAIL_GOOGLE_API_HOST}/oauth2/v1/tokeninfo?access_token=${accessToken}`,
-        timeout: 10000
+        timeout: 10000,
       },
       Catch.stackTrace()
     )) as unknown as GoogleTokenInfo;
@@ -143,7 +143,7 @@ export class GoogleAuth {
   public static newAuthPopup = async ({
     acctEmail,
     scopes,
-    save
+    save,
   }: {
     acctEmail?: string;
     scopes?: string[];
@@ -167,7 +167,7 @@ export class GoogleAuth {
       save,
       requestedScopes: scopes,
       expectedState: authRequest.expectedState,
-      authWindowResult
+      authWindowResult,
     });
     if (authRes.result === 'Success') {
       if (!authRes.id_token) {
@@ -175,7 +175,7 @@ export class GoogleAuth {
           result: 'Error',
           error: 'Grant was successful but missing id_token',
           acctEmail: authRes.acctEmail,
-          id_token: undefined // eslint-disable-line @typescript-eslint/naming-convention
+          id_token: undefined, // eslint-disable-line @typescript-eslint/naming-convention
         };
       }
       if (!authRes.acctEmail) {
@@ -183,7 +183,7 @@ export class GoogleAuth {
           result: 'Error',
           error: 'Grant was successful but missing acctEmail',
           acctEmail: authRes.acctEmail,
-          id_token: undefined // eslint-disable-line @typescript-eslint/naming-convention
+          id_token: undefined, // eslint-disable-line @typescript-eslint/naming-convention
         };
       }
       try {
@@ -214,7 +214,7 @@ export class GoogleAuth {
           result: 'Error',
           error: `Grant successful but error accessing fc account: ${String(e)}`,
           acctEmail: authRes.acctEmail,
-          id_token: undefined // eslint-disable-line @typescript-eslint/naming-convention
+          id_token: undefined, // eslint-disable-line @typescript-eslint/naming-convention
         };
       }
     }
@@ -252,7 +252,7 @@ export class GoogleAuth {
     save,
     requestedScopes,
     expectedState,
-    authWindowResult
+    authWindowResult,
   }: {
     acctEmail?: string;
     save: boolean;
@@ -277,7 +277,7 @@ export class GoogleAuth {
         this.OAUTH.scopes.compose,
         this.OAUTH.scopes.modify,
         this.OAUTH.scopes.readContacts,
-        this.OAUTH.scopes.readOtherContacts
+        this.OAUTH.scopes.readOtherContacts,
       ];
       for (const scopeToCheck of scopesToCheck) {
         if (requestedScopes.includes(scopeToCheck) && !allowedScopes?.includes(scopeToCheck)) {
@@ -289,7 +289,7 @@ export class GoogleAuth {
           acctEmail,
           result: 'Denied',
           error: "Google auth result was 'Success' but no auth code",
-          id_token: undefined
+          id_token: undefined,
         };
       }
       if (receivedState !== expectedState) {
@@ -316,11 +316,11 @@ export class GoogleAuth {
     const authReq = {
       acctEmail,
       scopes,
-      csrfToken: `csrf-${Api.randomFortyHexChars()}`
+      csrfToken: `csrf-${Api.randomFortyHexChars()}`,
     };
     return {
       ...authReq,
-      expectedState: GoogleAuth.OAUTH.state_header + JSON.stringify(authReq)
+      expectedState: GoogleAuth.OAUTH.state_header + JSON.stringify(authReq),
     };
   };
 
@@ -334,7 +334,7 @@ export class GoogleAuth {
       state: authReq.expectedState,
       redirect_uri: GoogleAuth.OAUTH.redirect_uri,
       scope: (authReq.scopes || []).join(' '),
-      login_hint: authReq.acctEmail
+      login_hint: authReq.acctEmail,
     });
     /* eslint-enable @typescript-eslint/naming-convention */
   };
@@ -345,7 +345,7 @@ export class GoogleAuth {
     const googleTokenExpires = new Date().getTime() + ((tokensObj.expires_in as number) - 120) * 1000; // let our copy expire 2 minutes beforehand
     const toSave: AcctStoreDict = {
       full_name: full_name || parsedOpenId.name, // eslint-disable-line @typescript-eslint/naming-convention
-      picture: picture || parsedOpenId.picture
+      picture: picture || parsedOpenId.picture,
     };
     if (typeof tokensObj.refresh_token !== 'undefined') {
       toSave.google_token_refresh = tokensObj.refresh_token;
@@ -369,12 +369,12 @@ export class GoogleAuth {
           code,
           client_id: GoogleAuth.OAUTH.client_id,
           client_secret: GoogleAuth.OAUTH.client_secret,
-          redirect_uri: GoogleAuth.OAUTH.redirect_uri
+          redirect_uri: GoogleAuth.OAUTH.redirect_uri,
         }),
         /* eslint-enable @typescript-eslint/naming-convention */
         method: 'POST',
         crossDomain: true,
-        async: true
+        async: true,
       },
       Catch.stackTrace()
     )) as unknown as GoogleAuthTokensResponse;
@@ -388,12 +388,12 @@ export class GoogleAuth {
           grant_type: 'refresh_token',
           refreshToken,
           client_id: GoogleAuth.OAUTH.client_id,
-          client_secret: GoogleAuth.OAUTH.client_secret
+          client_secret: GoogleAuth.OAUTH.client_secret,
         }),
         /* eslint-enable @typescript-eslint/naming-convention */
         method: 'POST',
         crossDomain: true,
-        async: true
+        async: true,
       },
       Catch.stackTrace()
     )) as unknown as GoogleAuthTokensResponse;

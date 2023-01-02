@@ -27,7 +27,7 @@ export class BaseMailFormatter {
       replyTo: newMsg.replyTo,
       recipients: newMsg.recipients,
       subject: newMsg.subject,
-      thread: this.view.threadId
+      thread: this.view.threadId,
     };
   };
 

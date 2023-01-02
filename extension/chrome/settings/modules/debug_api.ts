@@ -22,7 +22,7 @@ View.run(
       this.which = Assert.urlParamRequire.oneof(uncheckedUrlParams, 'which', [
         'google_account',
         'flowcrypt_account',
-        'local_store'
+        'local_store',
       ]);
       this.gmail = new Gmail(this.acctEmail);
     }
@@ -51,7 +51,7 @@ View.run(
           'notification_setup_done_seen',
           'rules',
           'use_rich_text',
-          'fesUrl'
+          'fesUrl',
         ]);
         this.renderCallRes('Local account storage', { acctEmail: this.acctEmail }, storage);
       } else {

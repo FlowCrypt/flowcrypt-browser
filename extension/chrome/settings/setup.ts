@@ -82,7 +82,7 @@ export class SetupView extends View {
     this.action = Assert.urlParamRequire.oneof(uncheckedUrlParams, 'action', [
       'add_key',
       'update_from_ekm',
-      undefined
+      undefined,
     ]) as 'add_key' | 'update_from_ekm' | undefined;
     if (this.action === 'add_key') {
       this.parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
@@ -124,7 +124,7 @@ export class SetupView extends View {
       'step_2a_manual_create_input_password2',
       'step_2_ekm_input_password',
       'step_2_ekm_input_password2',
-      'recovery_password'
+      'recovery_password',
     ]);
     this.storage = await AcctStore.get(this.acctEmail, ['setup_done', 'email_provider', 'fesUrl']);
     this.storage.email_provider = this.storage.email_provider || 'gmail';
@@ -316,7 +316,7 @@ export class SetupView extends View {
   public actionCloseHandler = () => {
     if (this.parentTabId) {
       BrowserMsg.send.redirect(this.parentTabId, {
-        location: Url.create('index.htm', { acctEmail: this.acctEmail, advanced: true })
+        location: Url.create('index.htm', { acctEmail: this.acctEmail, advanced: true }),
       });
     } else {
       Catch.report('setup.ts missing parentTabId');
@@ -326,7 +326,7 @@ export class SetupView extends View {
   /* eslint-disable @typescript-eslint/naming-convention */
   public submitPublicKeys = async ({
     submit_main,
-    submit_all
+    submit_all,
   }: {
     submit_main: boolean;
     submit_all: boolean;

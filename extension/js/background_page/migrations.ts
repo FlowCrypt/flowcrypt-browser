@@ -251,8 +251,8 @@ const moveContactsBatchToEmailsAndPubkeys = async (db: IDBDatabase, count?: numb
           name: entry.name,
           pubkey,
           lastUse: entry.last_use,
-          pubkeyLastCheck: pubkey ? entry.pubkey_last_check : undefined
-        }
+          pubkeyLastCheck: pubkey ? entry.pubkey_last_check : undefined,
+        },
       };
     })
   );

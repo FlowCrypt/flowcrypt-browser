@@ -108,7 +108,7 @@ Catch.try(async () => {
             new Attachment({
               data: Buf.fromUtfStr(`MOCK: ATTACHMENT STRIPPED - ORIGINAL SIZE ${attachment.length}`),
               id: attachment.id,
-              msgId: msg.id
+              msgId: msg.id,
             })
           );
         } else {

@@ -10,11 +10,11 @@ export const keyManagerAutogenRules = {
     'ENFORCE_ATTESTER_SUBMIT',
     'PRV_AUTOIMPORT_OR_AUTOGEN',
     'PASS_PHRASE_QUIET_AUTOGEN',
-    'DEFAULT_REMEMBER_PASS_PHRASE'
+    'DEFAULT_REMEMBER_PASS_PHRASE',
   ],
   key_manager_url: 'https://localhost:8001/flowcrypt-email-key-manager',
   enforce_keygen_algo: 'rsa2048',
-  disallow_attester_search_for_domains: []
+  disallow_attester_search_for_domains: [],
 };
 
 export type ClientConfiguration = {
@@ -58,7 +58,7 @@ export class BackendData {
       phone: null,
       intro: null,
       default_message_expire: 3, // eslint-disable-line @typescript-eslint/naming-convention
-      token: '1234-mock-acct-token'
+      token: '1234-mock-acct-token',
     };
   };
   /* eslint-disable no-null/no-null */
@@ -80,14 +80,14 @@ export class BackendData {
           'NO_PRV_BACKUP',
           'HIDE_ARMOR_META',
           'ENFORCE_ATTESTER_SUBMIT',
-          'SETUP_ENSURE_IMPORTED_PRV_MATCH_LDAP_PUB'
-        ]
+          'SETUP_ENSURE_IMPORTED_PRV_MATCH_LDAP_PUB',
+        ],
       };
     }
     if (domain === 'passphrase-session-length-client-configuration.flowcrypt.test') {
       return {
         flags: ['FORBID_STORING_PASS_PHRASE'],
-        in_memory_pass_phrase_session_length: 10
+        in_memory_pass_phrase_session_length: 10,
       };
     }
     if (domain === 'no-flags-client-configuration.flowcrypt.test') {
@@ -98,48 +98,48 @@ export class BackendData {
     }
     if (domain === 'no-submit-client-configuration.flowcrypt.test') {
       return {
-        flags: ['NO_ATTESTER_SUBMIT']
+        flags: ['NO_ATTESTER_SUBMIT'],
       };
     }
     if (domain === 'custom-sks.flowcrypt.test') {
       return {
         ...keyManagerAutogenRules,
-        custom_keyserver_url: 'https://localhost:8001'
+        custom_keyserver_url: 'https://localhost:8001',
       };
     }
     if (domain === 'forbid-storing-passphrase-client-configuration.flowcrypt.test') {
       return {
-        flags: ['FORBID_STORING_PASS_PHRASE']
+        flags: ['FORBID_STORING_PASS_PHRASE'],
       };
     }
     if (domain === 'default-remember-passphrase-client-configuration.flowcrypt.test') {
       return {
-        flags: ['DEFAULT_REMEMBER_PASS_PHRASE']
+        flags: ['DEFAULT_REMEMBER_PASS_PHRASE'],
       };
     }
     if (domain === 'no-search-domains-client-configuration.flowcrypt.test') {
       return {
         flags: [],
-        disallow_attester_search_for_domains: ['flowcrypt.com']
+        disallow_attester_search_for_domains: ['flowcrypt.com'],
       };
     }
     if (domain === 'no-search-wildcard-domains-client-configuration.flowcrypt.test') {
       return {
         flags: [],
-        disallow_attester_search_for_domains: ['*']
+        disallow_attester_search_for_domains: ['*'],
       };
     }
     if (domain === 'only-allow-some-domains-client-configuration.flowcrypt.test') {
       return {
         flags: [],
         allow_attester_search_only_for_domains: ['flowcrypt.com'],
-        disallow_attester_search_for_domains: ['*']
+        disallow_attester_search_for_domains: ['*'],
       };
     }
     if (domain === 'no-allow-domains-client-configuration.flowcrypt.test') {
       return {
         flags: [],
-        allow_attester_search_only_for_domains: []
+        allow_attester_search_only_for_domains: [],
       };
     }
     if (domain === 'google.mock.localhost:8001') {
@@ -154,25 +154,25 @@ export class BackendData {
     if (domain === 'key-manager-disabled-password-message.flowcrypt.test') {
       return {
         ...keyManagerAutogenRules,
-        flags: [...keyManagerAutogenRules.flags, 'DISABLE_FLOWCRYPT_HOSTED_PASSWORD_MESSAGES']
+        flags: [...keyManagerAutogenRules.flags, 'DISABLE_FLOWCRYPT_HOSTED_PASSWORD_MESSAGES'],
       };
     }
     if (domain === 'key-manager-autoimport-no-prv-create-no-attester-submit.flowcrypt.test') {
       return {
         ...keyManagerAutogenRules,
-        flags: [...keyManagerAutogenRules.flags, 'NO_PRV_CREATE', 'NO_ATTESTER_SUBMIT']
+        flags: [...keyManagerAutogenRules.flags, 'NO_PRV_CREATE', 'NO_ATTESTER_SUBMIT'],
       };
     }
     if (domain === 'key-manager-choose-passphrase.flowcrypt.test') {
       return {
         ...keyManagerAutogenRules,
-        flags: ['NO_PRV_BACKUP', 'PRV_AUTOIMPORT_OR_AUTOGEN', 'NO_ATTESTER_SUBMIT', 'DEFAULT_REMEMBER_PASS_PHRASE']
+        flags: ['NO_PRV_BACKUP', 'PRV_AUTOIMPORT_OR_AUTOGEN', 'NO_ATTESTER_SUBMIT', 'DEFAULT_REMEMBER_PASS_PHRASE'],
       };
     }
     if (domain === 'key-manager-choose-passphrase-forbid-storing.flowcrypt.test') {
       return {
         ...keyManagerAutogenRules,
-        flags: ['NO_PRV_BACKUP', 'PRV_AUTOIMPORT_OR_AUTOGEN', 'NO_ATTESTER_SUBMIT', 'FORBID_STORING_PASS_PHRASE']
+        flags: ['NO_PRV_BACKUP', 'PRV_AUTOIMPORT_OR_AUTOGEN', 'NO_ATTESTER_SUBMIT', 'FORBID_STORING_PASS_PHRASE'],
       };
     }
     if (domain === 'key-manager-server-offline.flowcrypt.test') {
@@ -183,7 +183,7 @@ export class BackendData {
       return {
         // EKM offline during key retrieval from EKM flow
         flags: ['NO_PRV_CREATE', 'NO_PRV_BACKUP', 'NO_ATTESTER_SUBMIT', 'PRV_AUTOIMPORT_OR_AUTOGEN'],
-        key_manager_url: 'https://localhost:1230/intentionally-wrong'
+        key_manager_url: 'https://localhost:1230/intentionally-wrong',
       };
     }
     if (domain === 'key-manager-keygen-expiration.flowcrypt.test') {
@@ -198,7 +198,7 @@ export class BackendData {
       return { flags: ['NO_PRV_BACKUP'], enforce_keygen_algo: 'rsa2048' };
     }
     return {
-      flags: []
+      flags: [],
     };
   };
   /* eslint-enable @typescript-eslint/naming-convention */

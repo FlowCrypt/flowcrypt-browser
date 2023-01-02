@@ -103,7 +103,7 @@ export class GlobalStore extends AbstractStore {
     if (!acctEmails.includes(acctEmail) && acctEmail) {
       acctEmails.push(acctEmail);
       await GlobalStore.set({
-        account_emails: JSON.stringify(acctEmails) // eslint-disable-line @typescript-eslint/naming-convention
+        account_emails: JSON.stringify(acctEmails), // eslint-disable-line @typescript-eslint/naming-convention
       });
       BrowserMsg.send.bg.updateUninstallUrl();
     }
