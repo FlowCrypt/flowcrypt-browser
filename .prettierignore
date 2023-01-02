@@ -1,1 +1,4 @@
 /build/*
+*.css
+*.htm
+*.html
