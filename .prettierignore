@@ -1,4 +1,6 @@
-/build/*
+build/*
+extension/lib
+extension/types
 *.css
 *.htm
 *.html

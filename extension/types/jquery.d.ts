@@ -24,6 +24,8 @@
 // Definitions: https://github.com/DefinitelyTyped/DefinitelyTyped
 // TypeScript Version: 2.3
 
+/* tslint:disable */
+
 declare module 'jquery' {
   export = jQuery;
 }
@@ -130,11 +132,8 @@ interface JQueryStatic {
    * @since 1.0
    * @since 1.4
    */
-  // eslint-disable-next-line
-  <TElement extends HTMLElement = HTMLElement>(
-    html: JQuery.htmlString,
-    ownerDocument_attributes?: Document | JQuery.PlainObject
-  ): JQuery<TElement>;
+  // tslint:disable-next-line:no-unnecessary-generics
+  <TElement extends HTMLElement = HTMLElement>(html: JQuery.htmlString, ownerDocument_attributes?: Document | JQuery.PlainObject): JQuery<TElement>;
   /**
    * Accepts a string containing a CSS selector which is then used to match a set of elements.
    *
@@ -143,11 +142,8 @@ interface JQueryStatic {
    * @see \`{@link https://api.jquery.com/jQuery/ }\`
    * @since 1.0
    */
-  // eslint-disable-next-line
-  <TElement extends Element = HTMLElement>(
-    selector: JQuery.Selector,
-    context?: Element | Document | JQuery
-  ): JQuery<TElement>;
+  // tslint:disable-next-line:no-unnecessary-generics
+  <TElement extends Element = HTMLElement>(selector: JQuery.Selector, context?: Element | Document | JQuery): JQuery<TElement>;
   /**
    * Return a collection of matched elements either found in the DOM based on passed argument(s) or created
    * by passing an HTML string.
@@ -174,8 +170,8 @@ interface JQueryStatic {
    * @see \`{@link https://api.jquery.com/jQuery/ }\`
    * @since 1.0
    */
-  // eslint-disable-next-line , @typescript-eslint/unified-signatures
-  <TElement = HTMLElement>(callback: (this: Document, $: JQueryStatic) => void): JQuery<TElement>;
+  // tslint:disable-next-line:no-unnecessary-generics unified-signatures
+  <TElement = HTMLElement>(callback: ((this: Document, $: JQueryStatic) => void)): JQuery<TElement>;
   /**
    * Return a collection of matched elements either found in the DOM based on passed argument(s) or created by passing an HTML string.
    *
@@ -190,7 +186,7 @@ interface JQueryStatic {
    * @see \`{@link https://api.jquery.com/jQuery/ }\`
    * @since 1.4
    */
-  // eslint-disable-next-line
+  // tslint:disable-next-line:no-unnecessary-generics
   <TElement = HTMLElement>(): JQuery<TElement>;
   /**
    * A multi-purpose callbacks list object that provides a powerful way to manage callback lists.
@@ -199,7 +195,7 @@ interface JQueryStatic {
    * @see \`{@link https://api.jquery.com/jQuery.Callbacks/ }\`
    * @since 1.7
    */
-  // eslint-disable-next-line @typescript-eslint/ban-types,
+  // tslint:disable-next-line:ban-types no-unnecessary-generics
   Callbacks<T extends Function>(flags?: string): JQuery.Callbacks<T>;
   /**
    * Perform an asynchronous HTTP (Ajax) request.
@@ -229,10 +225,8 @@ interface JQueryStatic {
    * @see \`{@link https://api.jquery.com/jQuery.ajaxPrefilter/ }\`
    * @since 1.5
    */
-  ajaxPrefilter(
-    dataTypes: string,
-    handler: (options: JQuery.AjaxSettings, originalOptions: JQuery.AjaxSettings, jqXHR: JQuery.jqXHR) => string | void
-  ): void;
+  ajaxPrefilter(dataTypes: string,
+    handler: (options: JQuery.AjaxSettings, originalOptions: JQuery.AjaxSettings, jqXHR: JQuery.jqXHR) => string | void): void;
   /**
    * Handle custom Ajax options or modify existing options before each request is sent and before they
    * are processed by $.ajax().
@@ -241,9 +235,7 @@ interface JQueryStatic {
    * @see \`{@link https://api.jquery.com/jQuery.ajaxPrefilter/ }\`
    * @since 1.5
    */
-  ajaxPrefilter(
-    handler: (options: JQuery.AjaxSettings, originalOptions: JQuery.AjaxSettings, jqXHR: JQuery.jqXHR) => string | void
-  ): void;
+  ajaxPrefilter(handler: (options: JQuery.AjaxSettings, originalOptions: JQuery.AjaxSettings, jqXHR: JQuery.jqXHR) => string | void): void;
   /**
    * Set default values for future Ajax requests. Its use is not recommended.
    *
@@ -260,14 +252,8 @@ interface JQueryStatic {
    * @see \`{@link https://api.jquery.com/jQuery.ajaxTransport/ }\`
    * @since 1.5
    */
-  ajaxTransport(
-    dataType: string,
-    handler: (
-      options: JQuery.AjaxSettings,
-      originalOptions: JQuery.AjaxSettings,
-      jqXHR: JQuery.jqXHR
-    ) => JQuery.Transport | void
-  ): void;
+  ajaxTransport(dataType: string,
+    handler: (options: JQuery.AjaxSettings, originalOptions: JQuery.AjaxSettings, jqXHR: JQuery.jqXHR) => JQuery.Transport | void): void;
   /**
    * @deprecated Deprecated since 3.3. Internal. See \`{@link https://github.com/jquery/jquery/issues/3384 }\`.
    */
@@ -291,7 +277,7 @@ interface JQueryStatic {
    * @see \`{@link https://api.jquery.com/jQuery.data/ }\`
    * @since 1.2.3
    */
-  data(element: Element, key: string, undefined: undefined): any; // eslint-disable-line @typescript-eslint/unified-signatures
+  data(element: Element, key: string, undefined: undefined): any; // tslint:disable-line:unified-signatures
   /**
    * Store arbitrary data associated with the specified element. Returns the value that was set.
    *
@@ -368,16 +354,7 @@ interface JQueryStatic {
    * @see \`{@link https://api.jquery.com/jQuery.extend/ }\`
    * @since 1.1.4
    */
-  extend<T, U, V, W, X, Y, Z>(
-    deep: true,
-    target: T,
-    object1: U,
-    object2: V,
-    object3: W,
-    object4: X,
-    object5: Y,
-    object6: Z
-  ): T & U & V & W & X & Y & Z;
+  extend<T, U, V, W, X, Y, Z>(deep: true, target: T, object1: U, object2: V, object3: W, object4: X, object5: Y, object6: Z): T & U & V & W & X & Y & Z;
   /**
    * Merge the contents of two or more objects together into the first object.
    *
@@ -386,15 +363,7 @@ interface JQueryStatic {
    * @see \`{@link https://api.jquery.com/jQuery.extend/ }\`
    * @since 1.1.4
    */
-  extend<T, U, V, W, X, Y>(
-    deep: true,
-    target: T,
-    object1: U,
-    object2: V,
-    object3: W,
-    object4: X,
-    object5: Y
-  ): T & U & V & W & X & Y;
+  extend<T, U, V, W, X, Y>(deep: true, target: T, object1: U, object2: V, object3: W, object4: X, object5: Y): T & U & V & W & X & Y;
   /**
    * Merge the contents of two or more objects together into the first object.
    *
@@ -448,15 +417,7 @@ interface JQueryStatic {
    * @see \`{@link https://api.jquery.com/jQuery.extend/ }\`
    * @since 1.0
    */
-  extend<T, U, V, W, X, Y, Z>(
-    target: T,
-    object1: U,
-    object2: V,
-    object3: W,
-    object4: X,
-    object5: Y,
-    object6: Z
-  ): T & U & V & W & X & Y & Z;
+  extend<T, U, V, W, X, Y, Z>(target: T, object1: U, object2: V, object3: W, object4: X, object5: Y, object6: Z): T & U & V & W & X & Y & Z;
   /**
    * Merge the contents of two or more objects together into the first object.
    *
@@ -465,14 +426,7 @@ interface JQueryStatic {
    * @see \`{@link https://api.jquery.com/jQuery.extend/ }\`
    * @since 1.0
    */
-  extend<T, U, V, W, X, Y>(
-    target: T,
-    object1: U,
-    object2: V,
-    object3: W,
-    object4: X,
-    object5: Y
-  ): T & U & V & W & X & Y;
+  extend<T, U, V, W, X, Y>(target: T, object1: U, object2: V, object3: W, object4: X, object5: Y): T & U & V & W & X & Y;
   /**
    * Merge the contents of two or more objects together into the first object.
    *
@@ -529,12 +483,10 @@ interface JQueryStatic {
    * @see \`{@link https://api.jquery.com/jQuery.get/ }\`
    * @since 1.0
    */
-  get(
-    url: string,
+  get(url: string,
     data: JQuery.PlainObject | string,
     success: JQuery.jqXHR.DoneCallback | null,
-    dataType?: string
-  ): JQuery.jqXHR;
+    dataType?: string): JQuery.jqXHR;
   /**
    * Load data from the server using a HTTP GET request.
    *
@@ -545,7 +497,9 @@ interface JQueryStatic {
    * @see \`{@link https://api.jquery.com/jQuery.get/ }\`
    * @since 1.0
    */
-  get(url: string, success: JQuery.jqXHR.DoneCallback | null, dataType: string): JQuery.jqXHR;
+  get(url: string,
+    success: JQuery.jqXHR.DoneCallback | null,
+    dataType: string): JQuery.jqXHR;
   /**
    * Load data from the server using a HTTP GET request.
    *
@@ -556,7 +510,8 @@ interface JQueryStatic {
    * @see \`{@link https://api.jquery.com/jQuery.get/ }\`
    * @since 1.0
    */
-  get(url: string, success_data: JQuery.jqXHR.DoneCallback | JQuery.PlainObject | string): JQuery.jqXHR;
+  get(url: string,
+    success_data: JQuery.jqXHR.DoneCallback | JQuery.PlainObject | string): JQuery.jqXHR;
   /**
    * Load data from the server using a HTTP GET request.
    *
@@ -579,7 +534,9 @@ interface JQueryStatic {
    * @see \`{@link https://api.jquery.com/jQuery.getJSON/ }\`
    * @since 1.0
    */
-  getJSON(url: string, data: JQuery.PlainObject | string, success: JQuery.jqXHR.DoneCallback): JQuery.jqXHR;
+  getJSON(url: string,
+    data: JQuery.PlainObject | string,
+    success: JQuery.jqXHR.DoneCallback): JQuery.jqXHR;
   /**
    * Load JSON-encoded data from the server using a GET HTTP request.
    *
@@ -589,7 +546,8 @@ interface JQueryStatic {
    * @see \`{@link https://api.jquery.com/jQuery.getJSON/ }\`
    * @since 1.0
    */
-  getJSON(url: string, success_data?: JQuery.jqXHR.DoneCallback | JQuery.PlainObject | string): JQuery.jqXHR;
+  getJSON(url: string,
+    success_data?: JQuery.jqXHR.DoneCallback | JQuery.PlainObject | string): JQuery.jqXHR;
   /**
    * Load a JavaScript file from the server using a GET HTTP request, then execute it.
    *
@@ -598,7 +556,8 @@ interface JQueryStatic {
    * @see \`{@link https://api.jquery.com/jQuery.getScript/ }\`
    * @since 1.0
    */
-  getScript(url: string, success?: JQuery.jqXHR.DoneCallback<string | undefined>): JQuery.jqXHR<string | undefined>;
+  getScript(url: string,
+    success?: JQuery.jqXHR.DoneCallback<string | undefined>): JQuery.jqXHR<string | undefined>;
   /**
    * Execute some JavaScript code globally.
    *
@@ -619,7 +578,9 @@ interface JQueryStatic {
    * @see \`{@link https://api.jquery.com/jQuery.grep/ }\`
    * @since 1.0
    */
-  grep<T>(array: ArrayLike<T>, fn: (elementOfArray: T, indexInArray: number) => boolean, invert?: boolean): T[];
+  grep<T>(array: ArrayLike<T>,
+    fn: (elementOfArray: T, indexInArray: number) => boolean,
+    invert?: boolean): T[];
   /**
    * Determine whether an element has any jQuery data associated with it.
    *
@@ -683,7 +644,7 @@ interface JQueryStatic {
    *
    * @deprecated Deprecated since 3.3. Use `typeof x === "function"`.
    */
-  // eslint-disable-next-line @typescript-eslint/ban-types
+  // tslint:disable-next-line:ban-types
   isFunction(obj: any): obj is Function;
   /**
    * Determines whether its argument represents a JavaScript number.
@@ -739,10 +700,7 @@ interface JQueryStatic {
    * @see \`{@link https://api.jquery.com/jQuery.map/ }\`
    * @since 1.0
    */
-  map<T, TReturn>(
-    array: T[],
-    callback: (this: Window, elementOfArray: T, indexInArray: number) => JQuery.TypeOrArray<TReturn> | null | undefined
-  ): TReturn[];
+  map<T, TReturn>(array: T[], callback: (this: Window, elementOfArray: T, indexInArray: number) => JQuery.TypeOrArray<TReturn> | null | undefined): TReturn[];
   /**
    * Translate all items in an array or object to new array of items.
    *
@@ -754,10 +712,7 @@ interface JQueryStatic {
    * @see \`{@link https://api.jquery.com/jQuery.map/ }\`
    * @since 1.6
    */
-  map<T, K extends keyof T, TReturn>(
-    obj: T,
-    callback: (this: Window, propertyOfObject: T[K], key: K) => JQuery.TypeOrArray<TReturn> | null | undefined
-  ): TReturn[];
+  map<T, K extends keyof T, TReturn>(obj: T, callback: (this: Window, propertyOfObject: T[K], key: K) => JQuery.TypeOrArray<TReturn> | null | undefined): TReturn[];
   /**
    * Merge the contents of two arrays together into the first array.
    *
@@ -852,12 +807,10 @@ interface JQueryStatic {
    * @see \`{@link https://api.jquery.com/jQuery.post/ }\`
    * @since 1.0
    */
-  post(
-    url: string,
+  post(url: string,
     data: JQuery.PlainObject | string,
     success: JQuery.jqXHR.DoneCallback | null,
-    dataType?: string
-  ): JQuery.jqXHR;
+    dataType?: string): JQuery.jqXHR;
   /**
    * Load data from the server using a HTTP POST request.
    *
@@ -868,7 +821,9 @@ interface JQueryStatic {
    * @see \`{@link https://api.jquery.com/jQuery.post/ }\`
    * @since 1.0
    */
-  post(url: string, success: JQuery.jqXHR.DoneCallback | null, dataType: string): JQuery.jqXHR;
+  post(url: string,
+    success: JQuery.jqXHR.DoneCallback | null,
+    dataType: string): JQuery.jqXHR;
   /**
    * Load data from the server using a HTTP POST request.
    *
@@ -879,7 +834,8 @@ interface JQueryStatic {
    * @see \`{@link https://api.jquery.com/jQuery.post/ }\`
    * @since 1.0
    */
-  post(url: string, success_data: JQuery.jqXHR.DoneCallback | JQuery.PlainObject | string): JQuery.jqXHR;
+  post(url: string,
+    success_data: JQuery.jqXHR.DoneCallback | JQuery.PlainObject | string): JQuery.jqXHR;
   /**
    * Load data from the server using a HTTP POST request.
    *
@@ -912,17 +868,10 @@ interface JQueryStatic {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link Function.bind }\`.
    */
-  proxy<TReturn, A, B, C, D, E, F, G>(
-    fn: (a: A, b: B, c: C, d: D, e: E, f: F, g: G) => TReturn,
-    context: null | undefined,
-    a: A,
-    b: B,
-    c: C,
-    d: D,
-    e: E,
-    f: F,
-    g: G
-  ): () => TReturn;
+  proxy<TReturn,
+    A, B, C, D, E, F, G>(fn: (a: A, b: B, c: C, d: D, e: E, f: F, g: G) => TReturn,
+      context: null | undefined,
+      a: A, b: B, c: C, d: D, e: E, f: F, g: G): () => TReturn;
   /**
    * Takes a function and returns a new one that will always have a particular context.
    *
@@ -933,16 +882,10 @@ interface JQueryStatic {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link Function.bind }\`.
    */
-  proxy<TReturn, A, B, C, D, E, F>(
-    fn: (a: A, b: B, c: C, d: D, e: E, f: F) => TReturn,
-    context: null | undefined,
-    a: A,
-    b: B,
-    c: C,
-    d: D,
-    e: E,
-    f: F
-  ): () => TReturn;
+  proxy<TReturn,
+    A, B, C, D, E, F>(fn: (a: A, b: B, c: C, d: D, e: E, f: F) => TReturn,
+      context: null | undefined,
+      a: A, b: B, c: C, d: D, e: E, f: F): () => TReturn;
   /**
    * Takes a function and returns a new one that will always have a particular context.
    *
@@ -953,15 +896,10 @@ interface JQueryStatic {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link Function.bind }\`.
    */
-  proxy<TReturn, A, B, C, D, E>(
-    fn: (a: A, b: B, c: C, d: D, e: E) => TReturn,
-    context: null | undefined,
-    a: A,
-    b: B,
-    c: C,
-    d: D,
-    e: E
-  ): () => TReturn;
+  proxy<TReturn,
+    A, B, C, D, E>(fn: (a: A, b: B, c: C, d: D, e: E) => TReturn,
+      context: null | undefined,
+      a: A, b: B, c: C, d: D, e: E): () => TReturn;
   /**
    * Takes a function and returns a new one that will always have a particular context.
    *
@@ -972,14 +910,10 @@ interface JQueryStatic {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link Function.bind }\`.
    */
-  proxy<TReturn, A, B, C, D>(
-    fn: (a: A, b: B, c: C, d: D) => TReturn,
-    context: null | undefined,
-    a: A,
-    b: B,
-    c: C,
-    d: D
-  ): () => TReturn;
+  proxy<TReturn,
+    A, B, C, D>(fn: (a: A, b: B, c: C, d: D) => TReturn,
+      context: null | undefined,
+      a: A, b: B, c: C, d: D): () => TReturn;
   /**
    * Takes a function and returns a new one that will always have a particular context.
    *
@@ -990,13 +924,10 @@ interface JQueryStatic {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link Function.bind }\`.
    */
-  proxy<TReturn, A, B, C>(
-    fn: (a: A, b: B, c: C) => TReturn,
-    context: null | undefined,
-    a: A,
-    b: B,
-    c: C
-  ): () => TReturn;
+  proxy<TReturn,
+    A, B, C>(fn: (a: A, b: B, c: C) => TReturn,
+      context: null | undefined,
+      a: A, b: B, c: C): () => TReturn;
   /**
    * Takes a function and returns a new one that will always have a particular context.
    *
@@ -1007,7 +938,10 @@ interface JQueryStatic {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link Function.bind }\`.
    */
-  proxy<TReturn, A, B>(fn: (a: A, b: B) => TReturn, context: null | undefined, a: A, b: B): () => TReturn;
+  proxy<TReturn,
+    A, B>(fn: (a: A, b: B) => TReturn,
+      context: null | undefined,
+      a: A, b: B): () => TReturn;
   /**
    * Takes a function and returns a new one that will always have a particular context.
    *
@@ -1019,7 +953,10 @@ interface JQueryStatic {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link Function.bind }\`.
    */
-  proxy<TReturn, A>(fn: (a: A) => TReturn, context: null | undefined, a: A): () => TReturn;
+  proxy<TReturn,
+    A>(fn: (a: A) => TReturn,
+      context: null | undefined,
+      a: A): () => TReturn;
   /**
    * Takes a function and returns a new one that will always have a particular context.
    *
@@ -1030,7 +967,8 @@ interface JQueryStatic {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link Function.bind }\`.
    */
-  proxy<TReturn>(fn: () => TReturn, context: null | undefined): () => TReturn;
+  proxy<TReturn>(fn: () => TReturn,
+    context: null | undefined): () => TReturn;
 
   // endregion
 
@@ -1046,17 +984,12 @@ interface JQueryStatic {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link Function.bind }\`.
    */
-  proxy<TReturn, A, B, C, D, E, F, G, T>(
-    fn: (a: A, b: B, c: C, d: D, e: E, f: F, g: G, t: T) => TReturn,
-    context: null | undefined,
-    a: A,
-    b: B,
-    c: C,
-    d: D,
-    e: E,
-    f: F,
-    g: G
-  ): (t: T) => TReturn;
+  proxy<TReturn,
+    A, B, C, D, E, F, G,
+    T>(fn: (a: A, b: B, c: C, d: D, e: E, f: F, g: G,
+      t: T) => TReturn,
+      context: null | undefined,
+      a: A, b: B, c: C, d: D, e: E, f: F, g: G): (t: T) => TReturn;
   /**
    * Takes a function and returns a new one that will always have a particular context.
    *
@@ -1067,16 +1000,12 @@ interface JQueryStatic {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link Function.bind }\`.
    */
-  proxy<TReturn, A, B, C, D, E, F, T>(
-    fn: (a: A, b: B, c: C, d: D, e: E, f: F, t: T) => TReturn,
-    context: null | undefined,
-    a: A,
-    b: B,
-    c: C,
-    d: D,
-    e: E,
-    f: F
-  ): (t: T) => TReturn;
+  proxy<TReturn,
+    A, B, C, D, E, F,
+    T>(fn: (a: A, b: B, c: C, d: D, e: E, f: F,
+      t: T) => TReturn,
+      context: null | undefined,
+      a: A, b: B, c: C, d: D, e: E, f: F): (t: T) => TReturn;
   /**
    * Takes a function and returns a new one that will always have a particular context.
    *
@@ -1087,15 +1016,12 @@ interface JQueryStatic {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link Function.bind }\`.
    */
-  proxy<TReturn, A, B, C, D, E, T>(
-    fn: (a: A, b: B, c: C, d: D, e: E, t: T) => TReturn,
-    context: null | undefined,
-    a: A,
-    b: B,
-    c: C,
-    d: D,
-    e: E
-  ): (t: T) => TReturn;
+  proxy<TReturn,
+    A, B, C, D, E,
+    T>(fn: (a: A, b: B, c: C, d: D, e: E,
+      t: T) => TReturn,
+      context: null | undefined,
+      a: A, b: B, c: C, d: D, e: E): (t: T) => TReturn;
   /**
    * Takes a function and returns a new one that will always have a particular context.
    *
@@ -1106,14 +1032,12 @@ interface JQueryStatic {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link Function.bind }\`.
    */
-  proxy<TReturn, A, B, C, D, T>(
-    fn: (a: A, b: B, c: C, d: D, t: T) => TReturn,
-    context: null | undefined,
-    a: A,
-    b: B,
-    c: C,
-    d: D
-  ): (t: T) => TReturn;
+  proxy<TReturn,
+    A, B, C, D,
+    T>(fn: (a: A, b: B, c: C, d: D,
+      t: T) => TReturn,
+      context: null | undefined,
+      a: A, b: B, c: C, d: D): (t: T) => TReturn;
   /**
    * Takes a function and returns a new one that will always have a particular context.
    *
@@ -1124,13 +1048,12 @@ interface JQueryStatic {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link Function.bind }\`.
    */
-  proxy<TReturn, A, B, C, T>(
-    fn: (a: A, b: B, c: C, t: T) => TReturn,
-    context: null | undefined,
-    a: A,
-    b: B,
-    c: C
-  ): (t: T) => TReturn;
+  proxy<TReturn,
+    A, B, C,
+    T>(fn: (a: A, b: B, c: C,
+      t: T) => TReturn,
+      context: null | undefined,
+      a: A, b: B, c: C): (t: T) => TReturn;
   /**
    * Takes a function and returns a new one that will always have a particular context.
    *
@@ -1141,7 +1064,12 @@ interface JQueryStatic {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link Function.bind }\`.
    */
-  proxy<TReturn, A, B, T>(fn: (a: A, b: B, t: T) => TReturn, context: null | undefined, a: A, b: B): (t: T) => TReturn;
+  proxy<TReturn,
+    A, B,
+    T>(fn: (a: A, b: B,
+      t: T) => TReturn,
+      context: null | undefined,
+      a: A, b: B): (t: T) => TReturn;
   /**
    * Takes a function and returns a new one that will always have a particular context.
    *
@@ -1152,7 +1080,12 @@ interface JQueryStatic {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link Function.bind }\`.
    */
-  proxy<TReturn, A, T>(fn: (a: A, t: T) => TReturn, context: null | undefined, a: A): (t: T) => TReturn;
+  proxy<TReturn,
+    A,
+    T>(fn: (a: A,
+      t: T) => TReturn,
+      context: null | undefined,
+      a: A): (t: T) => TReturn;
   /**
    * Takes a function and returns a new one that will always have a particular context.
    *
@@ -1163,7 +1096,9 @@ interface JQueryStatic {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link Function.bind }\`.
    */
-  proxy<TReturn, T>(fn: (t: T) => TReturn, context: null | undefined): (t: T) => TReturn;
+  proxy<TReturn,
+    T>(fn: (t: T) => TReturn,
+      context: null | undefined): (t: T) => TReturn;
 
   // endregion
 
@@ -1179,17 +1114,12 @@ interface JQueryStatic {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link Function.bind }\`.
    */
-  proxy<TReturn, A, B, C, D, E, F, G, T, U>(
-    fn: (a: A, b: B, c: C, d: D, e: E, f: F, g: G, t: T, u: U) => TReturn,
-    context: null | undefined,
-    a: A,
-    b: B,
-    c: C,
-    d: D,
-    e: E,
-    f: F,
-    g: G
-  ): (t: T, u: U) => TReturn;
+  proxy<TReturn,
+    A, B, C, D, E, F, G,
+    T, U>(fn: (a: A, b: B, c: C, d: D, e: E, f: F, g: G,
+      t: T, u: U) => TReturn,
+      context: null | undefined,
+      a: A, b: B, c: C, d: D, e: E, f: F, g: G): (t: T, u: U) => TReturn;
   /**
    * Takes a function and returns a new one that will always have a particular context.
    *
@@ -1200,16 +1130,12 @@ interface JQueryStatic {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link Function.bind }\`.
    */
-  proxy<TReturn, A, B, C, D, E, F, T, U>(
-    fn: (a: A, b: B, c: C, d: D, e: E, f: F, t: T, u: U) => TReturn,
-    context: null | undefined,
-    a: A,
-    b: B,
-    c: C,
-    d: D,
-    e: E,
-    f: F
-  ): (t: T, u: U) => TReturn;
+  proxy<TReturn,
+    A, B, C, D, E, F,
+    T, U>(fn: (a: A, b: B, c: C, d: D, e: E, f: F,
+      t: T, u: U) => TReturn,
+      context: null | undefined,
+      a: A, b: B, c: C, d: D, e: E, f: F): (t: T, u: U) => TReturn;
   /**
    * Takes a function and returns a new one that will always have a particular context.
    *
@@ -1220,15 +1146,12 @@ interface JQueryStatic {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link Function.bind }\`.
    */
-  proxy<TReturn, A, B, C, D, E, T, U>(
-    fn: (a: A, b: B, c: C, d: D, e: E, t: T, u: U) => TReturn,
-    context: null | undefined,
-    a: A,
-    b: B,
-    c: C,
-    d: D,
-    e: E
-  ): (t: T, u: U) => TReturn;
+  proxy<TReturn,
+    A, B, C, D, E,
+    T, U>(fn: (a: A, b: B, c: C, d: D, e: E,
+      t: T, u: U) => TReturn,
+      context: null | undefined,
+      a: A, b: B, c: C, d: D, e: E): (t: T, u: U) => TReturn;
   /**
    * Takes a function and returns a new one that will always have a particular context.
    *
@@ -1239,14 +1162,12 @@ interface JQueryStatic {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link Function.bind }\`.
    */
-  proxy<TReturn, A, B, C, D, T, U>(
-    fn: (a: A, b: B, c: C, d: D, t: T, u: U) => TReturn,
-    context: null | undefined,
-    a: A,
-    b: B,
-    c: C,
-    d: D
-  ): (t: T, u: U) => TReturn;
+  proxy<TReturn,
+    A, B, C, D,
+    T, U>(fn: (a: A, b: B, c: C, d: D,
+      t: T, u: U) => TReturn,
+      context: null | undefined,
+      a: A, b: B, c: C, d: D): (t: T, u: U) => TReturn;
   /**
    * Takes a function and returns a new one that will always have a particular context.
    *
@@ -1257,13 +1178,12 @@ interface JQueryStatic {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link Function.bind }\`.
    */
-  proxy<TReturn, A, B, C, T, U>(
-    fn: (a: A, b: B, c: C, t: T, u: U) => TReturn,
-    context: null | undefined,
-    a: A,
-    b: B,
-    c: C
-  ): (t: T, u: U) => TReturn;
+  proxy<TReturn,
+    A, B, C,
+    T, U>(fn: (a: A, b: B, c: C,
+      t: T, u: U) => TReturn,
+      context: null | undefined,
+      a: A, b: B, c: C): (t: T, u: U) => TReturn;
   /**
    * Takes a function and returns a new one that will always have a particular context.
    *
@@ -1274,12 +1194,12 @@ interface JQueryStatic {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link Function.bind }\`.
    */
-  proxy<TReturn, A, B, T, U>(
-    fn: (a: A, b: B, t: T, u: U) => TReturn,
-    context: null | undefined,
-    a: A,
-    b: B
-  ): (t: T, u: U) => TReturn;
+  proxy<TReturn,
+    A, B,
+    T, U>(fn: (a: A, b: B,
+      t: T, u: U) => TReturn,
+      context: null | undefined,
+      a: A, b: B): (t: T, u: U) => TReturn;
   /**
    * Takes a function and returns a new one that will always have a particular context.
    *
@@ -1290,7 +1210,12 @@ interface JQueryStatic {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link Function.bind }\`.
    */
-  proxy<TReturn, A, T, U>(fn: (a: A, t: T, u: U) => TReturn, context: null | undefined, a: A): (t: T, u: U) => TReturn;
+  proxy<TReturn,
+    A,
+    T, U>(fn: (a: A,
+      t: T, u: U) => TReturn,
+      context: null | undefined,
+      a: A): (t: T, u: U) => TReturn;
   /**
    * Takes a function and returns a new one that will always have a particular context.
    *
@@ -1301,7 +1226,9 @@ interface JQueryStatic {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link Function.bind }\`.
    */
-  proxy<TReturn, T, U>(fn: (t: T, u: U) => TReturn, context: null | undefined): (t: T, u: U) => TReturn;
+  proxy<TReturn,
+    T, U>(fn: (t: T, u: U) => TReturn,
+      context: null | undefined): (t: T, u: U) => TReturn;
 
   // endregion
 
@@ -1317,17 +1244,12 @@ interface JQueryStatic {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link Function.bind }\`.
    */
-  proxy<TReturn, A, B, C, D, E, F, G, T, U, V>(
-    fn: (a: A, b: B, c: C, d: D, e: E, f: F, g: G, t: T, u: U, v: V) => TReturn,
-    context: null | undefined,
-    a: A,
-    b: B,
-    c: C,
-    d: D,
-    e: E,
-    f: F,
-    g: G
-  ): (t: T, u: U, v: V) => TReturn;
+  proxy<TReturn,
+    A, B, C, D, E, F, G,
+    T, U, V>(fn: (a: A, b: B, c: C, d: D, e: E, f: F, g: G,
+      t: T, u: U, v: V) => TReturn,
+      context: null | undefined,
+      a: A, b: B, c: C, d: D, e: E, f: F, g: G): (t: T, u: U, v: V) => TReturn;
   /**
    * Takes a function and returns a new one that will always have a particular context.
    *
@@ -1338,16 +1260,12 @@ interface JQueryStatic {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link Function.bind }\`.
    */
-  proxy<TReturn, A, B, C, D, E, F, T, U, V>(
-    fn: (a: A, b: B, c: C, d: D, e: E, f: F, t: T, u: U, v: V) => TReturn,
-    context: null | undefined,
-    a: A,
-    b: B,
-    c: C,
-    d: D,
-    e: E,
-    f: F
-  ): (t: T, u: U, v: V) => TReturn;
+  proxy<TReturn,
+    A, B, C, D, E, F,
+    T, U, V>(fn: (a: A, b: B, c: C, d: D, e: E, f: F,
+      t: T, u: U, v: V) => TReturn,
+      context: null | undefined,
+      a: A, b: B, c: C, d: D, e: E, f: F): (t: T, u: U, v: V) => TReturn;
   /**
    * Takes a function and returns a new one that will always have a particular context.
    *
@@ -1358,15 +1276,12 @@ interface JQueryStatic {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link Function.bind }\`.
    */
-  proxy<TReturn, A, B, C, D, E, T, U, V>(
-    fn: (a: A, b: B, c: C, d: D, e: E, t: T, u: U, v: V) => TReturn,
-    context: null | undefined,
-    a: A,
-    b: B,
-    c: C,
-    d: D,
-    e: E
-  ): (t: T, u: U, v: V) => TReturn;
+  proxy<TReturn,
+    A, B, C, D, E,
+    T, U, V>(fn: (a: A, b: B, c: C, d: D, e: E,
+      t: T, u: U, v: V) => TReturn,
+      context: null | undefined,
+      a: A, b: B, c: C, d: D, e: E): (t: T, u: U, v: V) => TReturn;
   /**
    * Takes a function and returns a new one that will always have a particular context.
    *
@@ -1377,14 +1292,12 @@ interface JQueryStatic {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link Function.bind }\`.
    */
-  proxy<TReturn, A, B, C, D, T, U, V>(
-    fn: (a: A, b: B, c: C, d: D, t: T, u: U, v: V) => TReturn,
-    context: null | undefined,
-    a: A,
-    b: B,
-    c: C,
-    d: D
-  ): (t: T, u: U, v: V) => TReturn;
+  proxy<TReturn,
+    A, B, C, D,
+    T, U, V>(fn: (a: A, b: B, c: C, d: D,
+      t: T, u: U, v: V) => TReturn,
+      context: null | undefined,
+      a: A, b: B, c: C, d: D): (t: T, u: U, v: V) => TReturn;
   /**
    * Takes a function and returns a new one that will always have a particular context.
    *
@@ -1395,13 +1308,12 @@ interface JQueryStatic {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link Function.bind }\`.
    */
-  proxy<TReturn, A, B, C, T, U, V>(
-    fn: (a: A, b: B, c: C, t: T, u: U, v: V) => TReturn,
-    context: null | undefined,
-    a: A,
-    b: B,
-    c: C
-  ): (t: T, u: U, v: V) => TReturn;
+  proxy<TReturn,
+    A, B, C,
+    T, U, V>(fn: (a: A, b: B, c: C,
+      t: T, u: U, v: V) => TReturn,
+      context: null | undefined,
+      a: A, b: B, c: C): (t: T, u: U, v: V) => TReturn;
   /**
    * Takes a function and returns a new one that will always have a particular context.
    *
@@ -1412,12 +1324,12 @@ interface JQueryStatic {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link Function.bind }\`.
    */
-  proxy<TReturn, A, B, T, U, V>(
-    fn: (a: A, b: B, t: T, u: U, v: V) => TReturn,
-    context: null | undefined,
-    a: A,
-    b: B
-  ): (t: T, u: U, v: V) => TReturn;
+  proxy<TReturn,
+    A, B,
+    T, U, V>(fn: (a: A, b: B,
+      t: T, u: U, v: V) => TReturn,
+      context: null | undefined,
+      a: A, b: B): (t: T, u: U, v: V) => TReturn;
   /**
    * Takes a function and returns a new one that will always have a particular context.
    *
@@ -1428,11 +1340,12 @@ interface JQueryStatic {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link Function.bind }\`.
    */
-  proxy<TReturn, A, T, U, V>(
-    fn: (a: A, t: T, u: U, v: V) => TReturn,
-    context: null | undefined,
-    a: A
-  ): (t: T, u: U, v: V) => TReturn;
+  proxy<TReturn,
+    A,
+    T, U, V>(fn: (a: A,
+      t: T, u: U, v: V) => TReturn,
+      context: null | undefined,
+      a: A): (t: T, u: U, v: V) => TReturn;
   /**
    * Takes a function and returns a new one that will always have a particular context.
    *
@@ -1443,7 +1356,9 @@ interface JQueryStatic {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link Function.bind }\`.
    */
-  proxy<TReturn, T, U, V>(fn: (t: T, u: U, v: V) => TReturn, context: null | undefined): (t: T, u: U, v: V) => TReturn;
+  proxy<TReturn,
+    T, U, V>(fn: (t: T, u: U, v: V) => TReturn,
+      context: null | undefined): (t: T, u: U, v: V) => TReturn;
 
   // endregion
 
@@ -1459,17 +1374,12 @@ interface JQueryStatic {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link Function.bind }\`.
    */
-  proxy<TReturn, A, B, C, D, E, F, G, T, U, V, W>(
-    fn: (a: A, b: B, c: C, d: D, e: E, f: F, g: G, t: T, u: U, v: V, w: W) => TReturn,
-    context: null | undefined,
-    a: A,
-    b: B,
-    c: C,
-    d: D,
-    e: E,
-    f: F,
-    g: G
-  ): (t: T, u: U, v: V, w: W) => TReturn;
+  proxy<TReturn,
+    A, B, C, D, E, F, G,
+    T, U, V, W>(fn: (a: A, b: B, c: C, d: D, e: E, f: F, g: G,
+      t: T, u: U, v: V, w: W) => TReturn,
+      context: null | undefined,
+      a: A, b: B, c: C, d: D, e: E, f: F, g: G): (t: T, u: U, v: V, w: W) => TReturn;
   /**
    * Takes a function and returns a new one that will always have a particular context.
    *
@@ -1480,16 +1390,12 @@ interface JQueryStatic {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link Function.bind }\`.
    */
-  proxy<TReturn, A, B, C, D, E, F, T, U, V, W>(
-    fn: (a: A, b: B, c: C, d: D, e: E, f: F, t: T, u: U, v: V, w: W) => TReturn,
-    context: null | undefined,
-    a: A,
-    b: B,
-    c: C,
-    d: D,
-    e: E,
-    f: F
-  ): (t: T, u: U, v: V, w: W) => TReturn;
+  proxy<TReturn,
+    A, B, C, D, E, F,
+    T, U, V, W>(fn: (a: A, b: B, c: C, d: D, e: E, f: F,
+      t: T, u: U, v: V, w: W) => TReturn,
+      context: null | undefined,
+      a: A, b: B, c: C, d: D, e: E, f: F): (t: T, u: U, v: V, w: W) => TReturn;
   /**
    * Takes a function and returns a new one that will always have a particular context.
    *
@@ -1500,15 +1406,12 @@ interface JQueryStatic {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link Function.bind }\`.
    */
-  proxy<TReturn, A, B, C, D, E, T, U, V, W>(
-    fn: (a: A, b: B, c: C, d: D, e: E, t: T, u: U, v: V, w: W) => TReturn,
-    context: null | undefined,
-    a: A,
-    b: B,
-    c: C,
-    d: D,
-    e: E
-  ): (t: T, u: U, v: V, w: W) => TReturn;
+  proxy<TReturn,
+    A, B, C, D, E,
+    T, U, V, W>(fn: (a: A, b: B, c: C, d: D, e: E,
+      t: T, u: U, v: V, w: W) => TReturn,
+      context: null | undefined,
+      a: A, b: B, c: C, d: D, e: E): (t: T, u: U, v: V, w: W) => TReturn;
   /**
    * Takes a function and returns a new one that will always have a particular context.
    *
@@ -1519,14 +1422,12 @@ interface JQueryStatic {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link Function.bind }\`.
    */
-  proxy<TReturn, A, B, C, D, T, U, V, W>(
-    fn: (a: A, b: B, c: C, d: D, t: T, u: U, v: V, w: W) => TReturn,
-    context: null | undefined,
-    a: A,
-    b: B,
-    c: C,
-    d: D
-  ): (t: T, u: U, v: V, w: W) => TReturn;
+  proxy<TReturn,
+    A, B, C, D,
+    T, U, V, W>(fn: (a: A, b: B, c: C, d: D,
+      t: T, u: U, v: V, w: W) => TReturn,
+      context: null | undefined,
+      a: A, b: B, c: C, d: D): (t: T, u: U, v: V, w: W) => TReturn;
   /**
    * Takes a function and returns a new one that will always have a particular context.
    *
@@ -1537,13 +1438,12 @@ interface JQueryStatic {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link Function.bind }\`.
    */
-  proxy<TReturn, A, B, C, T, U, V, W>(
-    fn: (a: A, b: B, c: C, t: T, u: U, v: V, w: W) => TReturn,
-    context: null | undefined,
-    a: A,
-    b: B,
-    c: C
-  ): (t: T, u: U, v: V, w: W) => TReturn;
+  proxy<TReturn,
+    A, B, C,
+    T, U, V, W>(fn: (a: A, b: B, c: C,
+      t: T, u: U, v: V, w: W) => TReturn,
+      context: null | undefined,
+      a: A, b: B, c: C): (t: T, u: U, v: V, w: W) => TReturn;
   /**
    * Takes a function and returns a new one that will always have a particular context.
    *
@@ -1554,12 +1454,12 @@ interface JQueryStatic {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link Function.bind }\`.
    */
-  proxy<TReturn, A, B, T, U, V, W>(
-    fn: (a: A, b: B, t: T, u: U, v: V, w: W) => TReturn,
-    context: null | undefined,
-    a: A,
-    b: B
-  ): (t: T, u: U, v: V, w: W) => TReturn;
+  proxy<TReturn,
+    A, B,
+    T, U, V, W>(fn: (a: A, b: B,
+      t: T, u: U, v: V, w: W) => TReturn,
+      context: null | undefined,
+      a: A, b: B): (t: T, u: U, v: V, w: W) => TReturn;
   /**
    * Takes a function and returns a new one that will always have a particular context.
    *
@@ -1570,11 +1470,12 @@ interface JQueryStatic {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link Function.bind }\`.
    */
-  proxy<TReturn, A, T, U, V, W>(
-    fn: (a: A, t: T, u: U, v: V, w: W) => TReturn,
-    context: null | undefined,
-    a: A
-  ): (t: T, u: U, v: V, w: W) => TReturn;
+  proxy<TReturn,
+    A,
+    T, U, V, W>(fn: (a: A,
+      t: T, u: U, v: V, w: W) => TReturn,
+      context: null | undefined,
+      a: A): (t: T, u: U, v: V, w: W) => TReturn;
   /**
    * Takes a function and returns a new one that will always have a particular context.
    *
@@ -1585,10 +1486,9 @@ interface JQueryStatic {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link Function.bind }\`.
    */
-  proxy<TReturn, T, U, V, W>(
-    fn: (t: T, u: U, v: V, w: W) => TReturn,
-    context: null | undefined
-  ): (t: T, u: U, v: V, w: W) => TReturn;
+  proxy<TReturn,
+    T, U, V, W>(fn: (t: T, u: U, v: V, w: W) => TReturn,
+      context: null | undefined): (t: T, u: U, v: V, w: W) => TReturn;
 
   // endregion
 
@@ -1604,17 +1504,12 @@ interface JQueryStatic {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link Function.bind }\`.
    */
-  proxy<TReturn, A, B, C, D, E, F, G, T, U, V, W, X>(
-    fn: (a: A, b: B, c: C, d: D, e: E, f: F, g: G, t: T, u: U, v: V, w: W, x: X) => TReturn,
-    context: null | undefined,
-    a: A,
-    b: B,
-    c: C,
-    d: D,
-    e: E,
-    f: F,
-    g: G
-  ): (t: T, u: U, v: V, w: W, x: X) => TReturn;
+  proxy<TReturn,
+    A, B, C, D, E, F, G,
+    T, U, V, W, X>(fn: (a: A, b: B, c: C, d: D, e: E, f: F, g: G,
+      t: T, u: U, v: V, w: W, x: X) => TReturn,
+      context: null | undefined,
+      a: A, b: B, c: C, d: D, e: E, f: F, g: G): (t: T, u: U, v: V, w: W, x: X) => TReturn;
   /**
    * Takes a function and returns a new one that will always have a particular context.
    *
@@ -1625,16 +1520,12 @@ interface JQueryStatic {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link Function.bind }\`.
    */
-  proxy<TReturn, A, B, C, D, E, F, T, U, V, W, X>(
-    fn: (a: A, b: B, c: C, d: D, e: E, f: F, t: T, u: U, v: V, w: W, x: X) => TReturn,
-    context: null | undefined,
-    a: A,
-    b: B,
-    c: C,
-    d: D,
-    e: E,
-    f: F
-  ): (t: T, u: U, v: V, w: W, x: X) => TReturn;
+  proxy<TReturn,
+    A, B, C, D, E, F,
+    T, U, V, W, X>(fn: (a: A, b: B, c: C, d: D, e: E, f: F,
+      t: T, u: U, v: V, w: W, x: X) => TReturn,
+      context: null | undefined,
+      a: A, b: B, c: C, d: D, e: E, f: F): (t: T, u: U, v: V, w: W, x: X) => TReturn;
   /**
    * Takes a function and returns a new one that will always have a particular context.
    *
@@ -1645,15 +1536,12 @@ interface JQueryStatic {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link Function.bind }\`.
    */
-  proxy<TReturn, A, B, C, D, E, T, U, V, W, X>(
-    fn: (a: A, b: B, c: C, d: D, e: E, t: T, u: U, v: V, w: W, x: X) => TReturn,
-    context: null | undefined,
-    a: A,
-    b: B,
-    c: C,
-    d: D,
-    e: E
-  ): (t: T, u: U, v: V, w: W, x: X) => TReturn;
+  proxy<TReturn,
+    A, B, C, D, E,
+    T, U, V, W, X>(fn: (a: A, b: B, c: C, d: D, e: E,
+      t: T, u: U, v: V, w: W, x: X) => TReturn,
+      context: null | undefined,
+      a: A, b: B, c: C, d: D, e: E): (t: T, u: U, v: V, w: W, x: X) => TReturn;
   /**
    * Takes a function and returns a new one that will always have a particular context.
    *
@@ -1664,14 +1552,12 @@ interface JQueryStatic {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link Function.bind }\`.
    */
-  proxy<TReturn, A, B, C, D, T, U, V, W, X>(
-    fn: (a: A, b: B, c: C, d: D, t: T, u: U, v: V, w: W, x: X) => TReturn,
-    context: null | undefined,
-    a: A,
-    b: B,
-    c: C,
-    d: D
-  ): (t: T, u: U, v: V, w: W, x: X) => TReturn;
+  proxy<TReturn,
+    A, B, C, D,
+    T, U, V, W, X>(fn: (a: A, b: B, c: C, d: D,
+      t: T, u: U, v: V, w: W, x: X) => TReturn,
+      context: null | undefined,
+      a: A, b: B, c: C, d: D): (t: T, u: U, v: V, w: W, x: X) => TReturn;
   /**
    * Takes a function and returns a new one that will always have a particular context.
    *
@@ -1682,13 +1568,12 @@ interface JQueryStatic {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link Function.bind }\`.
    */
-  proxy<TReturn, A, B, C, T, U, V, W, X>(
-    fn: (a: A, b: B, c: C, t: T, u: U, v: V, w: W, x: X) => TReturn,
-    context: null | undefined,
-    a: A,
-    b: B,
-    c: C
-  ): (t: T, u: U, v: V, w: W, x: X) => TReturn;
+  proxy<TReturn,
+    A, B, C,
+    T, U, V, W, X>(fn: (a: A, b: B, c: C,
+      t: T, u: U, v: V, w: W, x: X) => TReturn,
+      context: null | undefined,
+      a: A, b: B, c: C): (t: T, u: U, v: V, w: W, x: X) => TReturn;
   /**
    * Takes a function and returns a new one that will always have a particular context.
    *
@@ -1699,12 +1584,12 @@ interface JQueryStatic {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link Function.bind }\`.
    */
-  proxy<TReturn, A, B, T, U, V, W, X>(
-    fn: (a: A, b: B, t: T, u: U, v: V, w: W, x: X) => TReturn,
-    context: null | undefined,
-    a: A,
-    b: B
-  ): (t: T, u: U, v: V, w: W, x: X) => TReturn;
+  proxy<TReturn,
+    A, B,
+    T, U, V, W, X>(fn: (a: A, b: B,
+      t: T, u: U, v: V, w: W, x: X) => TReturn,
+      context: null | undefined,
+      a: A, b: B): (t: T, u: U, v: V, w: W, x: X) => TReturn;
   /**
    * Takes a function and returns a new one that will always have a particular context.
    *
@@ -1715,11 +1600,12 @@ interface JQueryStatic {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link Function.bind }\`.
    */
-  proxy<TReturn, A, T, U, V, W, X>(
-    fn: (a: A, t: T, u: U, v: V, w: W, x: X) => TReturn,
-    context: null | undefined,
-    a: A
-  ): (t: T, u: U, v: V, w: W, x: X) => TReturn;
+  proxy<TReturn,
+    A,
+    T, U, V, W, X>(fn: (a: A,
+      t: T, u: U, v: V, w: W, x: X) => TReturn,
+      context: null | undefined,
+      a: A): (t: T, u: U, v: V, w: W, x: X) => TReturn;
   /**
    * Takes a function and returns a new one that will always have a particular context.
    *
@@ -1730,10 +1616,9 @@ interface JQueryStatic {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link Function.bind }\`.
    */
-  proxy<TReturn, T, U, V, W, X>(
-    fn: (t: T, u: U, v: V, w: W, x: X) => TReturn,
-    context: null | undefined
-  ): (t: T, u: U, v: V, w: W, x: X) => TReturn;
+  proxy<TReturn,
+    T, U, V, W, X>(fn: (t: T, u: U, v: V, w: W, x: X) => TReturn,
+      context: null | undefined): (t: T, u: U, v: V, w: W, x: X) => TReturn;
 
   // endregion
 
@@ -1749,17 +1634,12 @@ interface JQueryStatic {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link Function.bind }\`.
    */
-  proxy<TReturn, A, B, C, D, E, F, G, T, U, V, W, X, Y>(
-    fn: (a: A, b: B, c: C, d: D, e: E, f: F, g: G, t: T, u: U, v: V, w: W, x: X, y: Y) => TReturn,
-    context: null | undefined,
-    a: A,
-    b: B,
-    c: C,
-    d: D,
-    e: E,
-    f: F,
-    g: G
-  ): (t: T, u: U, v: V, w: W, x: X, y: Y) => TReturn;
+  proxy<TReturn,
+    A, B, C, D, E, F, G,
+    T, U, V, W, X, Y>(fn: (a: A, b: B, c: C, d: D, e: E, f: F, g: G,
+      t: T, u: U, v: V, w: W, x: X, y: Y) => TReturn,
+      context: null | undefined,
+      a: A, b: B, c: C, d: D, e: E, f: F, g: G): (t: T, u: U, v: V, w: W, x: X, y: Y) => TReturn;
   /**
    * Takes a function and returns a new one that will always have a particular context.
    *
@@ -1770,16 +1650,12 @@ interface JQueryStatic {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link Function.bind }\`.
    */
-  proxy<TReturn, A, B, C, D, E, F, T, U, V, W, X, Y>(
-    fn: (a: A, b: B, c: C, d: D, e: E, f: F, t: T, u: U, v: V, w: W, x: X, y: Y) => TReturn,
-    context: null | undefined,
-    a: A,
-    b: B,
-    c: C,
-    d: D,
-    e: E,
-    f: F
-  ): (t: T, u: U, v: V, w: W, x: X, y: Y) => TReturn;
+  proxy<TReturn,
+    A, B, C, D, E, F,
+    T, U, V, W, X, Y>(fn: (a: A, b: B, c: C, d: D, e: E, f: F,
+      t: T, u: U, v: V, w: W, x: X, y: Y) => TReturn,
+      context: null | undefined,
+      a: A, b: B, c: C, d: D, e: E, f: F): (t: T, u: U, v: V, w: W, x: X, y: Y) => TReturn;
   /**
    * Takes a function and returns a new one that will always have a particular context.
    *
@@ -1790,15 +1666,12 @@ interface JQueryStatic {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link Function.bind }\`.
    */
-  proxy<TReturn, A, B, C, D, E, T, U, V, W, X, Y>(
-    fn: (a: A, b: B, c: C, d: D, e: E, t: T, u: U, v: V, w: W, x: X, y: Y) => TReturn,
-    context: null | undefined,
-    a: A,
-    b: B,
-    c: C,
-    d: D,
-    e: E
-  ): (t: T, u: U, v: V, w: W, x: X, y: Y) => TReturn;
+  proxy<TReturn,
+    A, B, C, D, E,
+    T, U, V, W, X, Y>(fn: (a: A, b: B, c: C, d: D, e: E,
+      t: T, u: U, v: V, w: W, x: X, y: Y) => TReturn,
+      context: null | undefined,
+      a: A, b: B, c: C, d: D, e: E): (t: T, u: U, v: V, w: W, x: X, y: Y) => TReturn;
   /**
    * Takes a function and returns a new one that will always have a particular context.
    *
@@ -1809,14 +1682,12 @@ interface JQueryStatic {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link Function.bind }\`.
    */
-  proxy<TReturn, A, B, C, D, T, U, V, W, X, Y>(
-    fn: (a: A, b: B, c: C, d: D, t: T, u: U, v: V, w: W, x: X, y: Y) => TReturn,
-    context: null | undefined,
-    a: A,
-    b: B,
-    c: C,
-    d: D
-  ): (t: T, u: U, v: V, w: W, x: X, y: Y) => TReturn;
+  proxy<TReturn,
+    A, B, C, D,
+    T, U, V, W, X, Y>(fn: (a: A, b: B, c: C, d: D,
+      t: T, u: U, v: V, w: W, x: X, y: Y) => TReturn,
+      context: null | undefined,
+      a: A, b: B, c: C, d: D): (t: T, u: U, v: V, w: W, x: X, y: Y) => TReturn;
   /**
    * Takes a function and returns a new one that will always have a particular context.
    *
@@ -1827,13 +1698,12 @@ interface JQueryStatic {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link Function.bind }\`.
    */
-  proxy<TReturn, A, B, C, T, U, V, W, X, Y>(
-    fn: (a: A, b: B, c: C, t: T, u: U, v: V, w: W, x: X, y: Y) => TReturn,
-    context: null | undefined,
-    a: A,
-    b: B,
-    c: C
-  ): (t: T, u: U, v: V, w: W, x: X, y: Y) => TReturn;
+  proxy<TReturn,
+    A, B, C,
+    T, U, V, W, X, Y>(fn: (a: A, b: B, c: C,
+      t: T, u: U, v: V, w: W, x: X, y: Y) => TReturn,
+      context: null | undefined,
+      a: A, b: B, c: C): (t: T, u: U, v: V, w: W, x: X, y: Y) => TReturn;
   /**
    * Takes a function and returns a new one that will always have a particular context.
    *
@@ -1844,12 +1714,12 @@ interface JQueryStatic {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link Function.bind }\`.
    */
-  proxy<TReturn, A, B, T, U, V, W, X, Y>(
-    fn: (a: A, b: B, t: T, u: U, v: V, w: W, x: X, y: Y) => TReturn,
-    context: null | undefined,
-    a: A,
-    b: B
-  ): (t: T, u: U, v: V, w: W, x: X, y: Y) => TReturn;
+  proxy<TReturn,
+    A, B,
+    T, U, V, W, X, Y>(fn: (a: A, b: B,
+      t: T, u: U, v: V, w: W, x: X, y: Y) => TReturn,
+      context: null | undefined,
+      a: A, b: B): (t: T, u: U, v: V, w: W, x: X, y: Y) => TReturn;
   /**
    * Takes a function and returns a new one that will always have a particular context.
    *
@@ -1860,11 +1730,12 @@ interface JQueryStatic {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link Function.bind }\`.
    */
-  proxy<TReturn, A, T, U, V, W, X, Y>(
-    fn: (a: A, t: T, u: U, v: V, w: W, x: X, y: Y) => TReturn,
-    context: null | undefined,
-    a: A
-  ): (t: T, u: U, v: V, w: W, x: X, y: Y) => TReturn;
+  proxy<TReturn,
+    A,
+    T, U, V, W, X, Y>(fn: (a: A,
+      t: T, u: U, v: V, w: W, x: X, y: Y) => TReturn,
+      context: null | undefined,
+      a: A): (t: T, u: U, v: V, w: W, x: X, y: Y) => TReturn;
   /**
    * Takes a function and returns a new one that will always have a particular context.
    *
@@ -1875,10 +1746,9 @@ interface JQueryStatic {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link Function.bind }\`.
    */
-  proxy<TReturn, T, U, V, W, X, Y>(
-    fn: (t: T, u: U, v: V, w: W, x: X, y: Y) => TReturn,
-    context: null | undefined
-  ): (t: T, u: U, v: V, w: W, x: X, y: Y) => TReturn;
+  proxy<TReturn,
+    T, U, V, W, X, Y>(fn: (t: T, u: U, v: V, w: W, x: X, y: Y) => TReturn,
+      context: null | undefined): (t: T, u: U, v: V, w: W, x: X, y: Y) => TReturn;
 
   // endregion
 
@@ -1894,17 +1764,12 @@ interface JQueryStatic {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link Function.bind }\`.
    */
-  proxy<TReturn, A, B, C, D, E, F, G, T, U, V, W, X, Y, Z>(
-    fn: (a: A, b: B, c: C, d: D, e: E, f: F, g: G, t: T, u: U, v: V, w: W, x: X, y: Y, z: Z, ...args: any[]) => TReturn,
-    context: null | undefined,
-    a: A,
-    b: B,
-    c: C,
-    d: D,
-    e: E,
-    f: F,
-    g: G
-  ): (t: T, u: U, v: V, w: W, x: X, y: Y, z: Z, ...args: any[]) => TReturn;
+  proxy<TReturn,
+    A, B, C, D, E, F, G,
+    T, U, V, W, X, Y, Z>(fn: (a: A, b: B, c: C, d: D, e: E, f: F, g: G,
+      t: T, u: U, v: V, w: W, x: X, y: Y, z: Z, ...args: any[]) => TReturn,
+      context: null | undefined,
+      a: A, b: B, c: C, d: D, e: E, f: F, g: G): (t: T, u: U, v: V, w: W, x: X, y: Y, z: Z, ...args: any[]) => TReturn;
   /**
    * Takes a function and returns a new one that will always have a particular context.
    *
@@ -1915,16 +1780,12 @@ interface JQueryStatic {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link Function.bind }\`.
    */
-  proxy<TReturn, A, B, C, D, E, F, T, U, V, W, X, Y, Z>(
-    fn: (a: A, b: B, c: C, d: D, e: E, f: F, t: T, u: U, v: V, w: W, x: X, y: Y, z: Z, ...args: any[]) => TReturn,
-    context: null | undefined,
-    a: A,
-    b: B,
-    c: C,
-    d: D,
-    e: E,
-    f: F
-  ): (t: T, u: U, v: V, w: W, x: X, y: Y, z: Z, ...args: any[]) => TReturn;
+  proxy<TReturn,
+    A, B, C, D, E, F,
+    T, U, V, W, X, Y, Z>(fn: (a: A, b: B, c: C, d: D, e: E, f: F,
+      t: T, u: U, v: V, w: W, x: X, y: Y, z: Z, ...args: any[]) => TReturn,
+      context: null | undefined,
+      a: A, b: B, c: C, d: D, e: E, f: F): (t: T, u: U, v: V, w: W, x: X, y: Y, z: Z, ...args: any[]) => TReturn;
   /**
    * Takes a function and returns a new one that will always have a particular context.
    *
@@ -1935,15 +1796,12 @@ interface JQueryStatic {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link Function.bind }\`.
    */
-  proxy<TReturn, A, B, C, D, E, T, U, V, W, X, Y, Z>(
-    fn: (a: A, b: B, c: C, d: D, e: E, t: T, u: U, v: V, w: W, x: X, y: Y, z: Z, ...args: any[]) => TReturn,
-    context: null | undefined,
-    a: A,
-    b: B,
-    c: C,
-    d: D,
-    e: E
-  ): (t: T, u: U, v: V, w: W, x: X, y: Y, z: Z, ...args: any[]) => TReturn;
+  proxy<TReturn,
+    A, B, C, D, E,
+    T, U, V, W, X, Y, Z>(fn: (a: A, b: B, c: C, d: D, e: E,
+      t: T, u: U, v: V, w: W, x: X, y: Y, z: Z, ...args: any[]) => TReturn,
+      context: null | undefined,
+      a: A, b: B, c: C, d: D, e: E): (t: T, u: U, v: V, w: W, x: X, y: Y, z: Z, ...args: any[]) => TReturn;
   /**
    * Takes a function and returns a new one that will always have a particular context.
    *
@@ -1954,14 +1812,12 @@ interface JQueryStatic {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link Function.bind }\`.
    */
-  proxy<TReturn, A, B, C, D, T, U, V, W, X, Y, Z>(
-    fn: (a: A, b: B, c: C, d: D, t: T, u: U, v: V, w: W, x: X, y: Y, z: Z, ...args: any[]) => TReturn,
-    context: null | undefined,
-    a: A,
-    b: B,
-    c: C,
-    d: D
-  ): (t: T, u: U, v: V, w: W, x: X, y: Y, z: Z, ...args: any[]) => TReturn;
+  proxy<TReturn,
+    A, B, C, D,
+    T, U, V, W, X, Y, Z>(fn: (a: A, b: B, c: C, d: D,
+      t: T, u: U, v: V, w: W, x: X, y: Y, z: Z, ...args: any[]) => TReturn,
+      context: null | undefined,
+      a: A, b: B, c: C, d: D): (t: T, u: U, v: V, w: W, x: X, y: Y, z: Z, ...args: any[]) => TReturn;
   /**
    * Takes a function and returns a new one that will always have a particular context.
    *
@@ -1972,13 +1828,12 @@ interface JQueryStatic {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link Function.bind }\`.
    */
-  proxy<TReturn, A, B, C, T, U, V, W, X, Y, Z>(
-    fn: (a: A, b: B, c: C, t: T, u: U, v: V, w: W, x: X, y: Y, z: Z, ...args: any[]) => TReturn,
-    context: null | undefined,
-    a: A,
-    b: B,
-    c: C
-  ): (t: T, u: U, v: V, w: W, x: X, y: Y, z: Z, ...args: any[]) => TReturn;
+  proxy<TReturn,
+    A, B, C,
+    T, U, V, W, X, Y, Z>(fn: (a: A, b: B, c: C,
+      t: T, u: U, v: V, w: W, x: X, y: Y, z: Z, ...args: any[]) => TReturn,
+      context: null | undefined,
+      a: A, b: B, c: C): (t: T, u: U, v: V, w: W, x: X, y: Y, z: Z, ...args: any[]) => TReturn;
   /**
    * Takes a function and returns a new one that will always have a particular context.
    *
@@ -1989,12 +1844,12 @@ interface JQueryStatic {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link Function.bind }\`.
    */
-  proxy<TReturn, A, B, T, U, V, W, X, Y, Z>(
-    fn: (a: A, b: B, t: T, u: U, v: V, w: W, x: X, y: Y, z: Z, ...args: any[]) => TReturn,
-    context: null | undefined,
-    a: A,
-    b: B
-  ): (t: T, u: U, v: V, w: W, x: X, y: Y, z: Z, ...args: any[]) => TReturn;
+  proxy<TReturn,
+    A, B,
+    T, U, V, W, X, Y, Z>(fn: (a: A, b: B,
+      t: T, u: U, v: V, w: W, x: X, y: Y, z: Z, ...args: any[]) => TReturn,
+      context: null | undefined,
+      a: A, b: B): (t: T, u: U, v: V, w: W, x: X, y: Y, z: Z, ...args: any[]) => TReturn;
   /**
    * Takes a function and returns a new one that will always have a particular context.
    *
@@ -2005,11 +1860,12 @@ interface JQueryStatic {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link Function.bind }\`.
    */
-  proxy<TReturn, A, T, U, V, W, X, Y, Z>(
-    fn: (a: A, t: T, u: U, v: V, w: W, x: X, y: Y, z: Z, ...args: any[]) => TReturn,
-    context: null | undefined,
-    a: A
-  ): (t: T, u: U, v: V, w: W, x: X, y: Y, z: Z, ...args: any[]) => TReturn;
+  proxy<TReturn,
+    A,
+    T, U, V, W, X, Y, Z>(fn: (a: A,
+      t: T, u: U, v: V, w: W, x: X, y: Y, z: Z, ...args: any[]) => TReturn,
+      context: null | undefined,
+      a: A): (t: T, u: U, v: V, w: W, x: X, y: Y, z: Z, ...args: any[]) => TReturn;
   /**
    * Takes a function and returns a new one that will always have a particular context.
    *
@@ -2020,10 +1876,9 @@ interface JQueryStatic {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link Function.bind }\`.
    */
-  proxy<TReturn, T, U, V, W, X, Y, Z>(
-    fn: (t: T, u: U, v: V, w: W, x: X, y: Y, z: Z, ...args: any[]) => TReturn,
-    context: null | undefined
-  ): (t: T, u: U, v: V, w: W, x: X, y: Y, z: Z, ...args: any[]) => TReturn;
+  proxy<TReturn,
+    T, U, V, W, X, Y, Z>(fn: (t: T, u: U, v: V, w: W, x: X, y: Y, z: Z, ...args: any[]) => TReturn,
+      context: null | undefined): (t: T, u: U, v: V, w: W, x: X, y: Y, z: Z, ...args: any[]) => TReturn;
 
   // endregion
 
@@ -2042,11 +1897,9 @@ interface JQueryStatic {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link Function.bind }\`.
    */
-  proxy<TReturn>(
-    fn: (...args: any[]) => TReturn,
+  proxy<TReturn>(fn: (...args: any[]) => TReturn,
     context: null | undefined,
-    ...additionalArguments: any[]
-  ): (...args: any[]) => TReturn;
+    ...additionalArguments: any[]): (...args: any[]) => TReturn;
 
   // endregion
 
@@ -2069,17 +1922,11 @@ interface JQueryStatic {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link Function.bind }\`.
    */
-  proxy<TContext extends object, TReturn, A, B, C, D, E, F, G>(
-    fn: (a: A, b: B, c: C, d: D, e: E, f: F, g: G) => TReturn,
-    context: TContext,
-    a: A,
-    b: B,
-    c: C,
-    d: D,
-    e: E,
-    f: F,
-    g: G
-  ): (this: TContext) => TReturn;
+  proxy<TContext extends object,
+    TReturn,
+    A, B, C, D, E, F, G>(fn: (a: A, b: B, c: C, d: D, e: E, f: F, g: G) => TReturn,
+      context: TContext,
+      a: A, b: B, c: C, d: D, e: E, f: F, g: G): (this: TContext) => TReturn;
   /**
    * Takes a function and returns a new one that will always have a particular context.
    *
@@ -2091,16 +1938,11 @@ interface JQueryStatic {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link Function.bind }\`.
    */
-  proxy<TContext extends object, TReturn, A, B, C, D, E, F>(
-    fn: (a: A, b: B, c: C, d: D, e: E, f: F) => TReturn,
-    context: TContext,
-    a: A,
-    b: B,
-    c: C,
-    d: D,
-    e: E,
-    f: F
-  ): (this: TContext) => TReturn;
+  proxy<TContext extends object,
+    TReturn,
+    A, B, C, D, E, F>(fn: (a: A, b: B, c: C, d: D, e: E, f: F) => TReturn,
+      context: TContext,
+      a: A, b: B, c: C, d: D, e: E, f: F): (this: TContext) => TReturn;
   /**
    * Takes a function and returns a new one that will always have a particular context.
    *
@@ -2112,15 +1954,11 @@ interface JQueryStatic {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link Function.bind }\`.
    */
-  proxy<TContext extends object, TReturn, A, B, C, D, E>(
-    fn: (a: A, b: B, c: C, d: D, e: E) => TReturn,
-    context: TContext,
-    a: A,
-    b: B,
-    c: C,
-    d: D,
-    e: E
-  ): (this: TContext) => TReturn;
+  proxy<TContext extends object,
+    TReturn,
+    A, B, C, D, E>(fn: (a: A, b: B, c: C, d: D, e: E) => TReturn,
+      context: TContext,
+      a: A, b: B, c: C, d: D, e: E): (this: TContext) => TReturn;
   /**
    * Takes a function and returns a new one that will always have a particular context.
    *
@@ -2132,14 +1970,11 @@ interface JQueryStatic {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link Function.bind }\`.
    */
-  proxy<TContext extends object, TReturn, A, B, C, D>(
-    fn: (a: A, b: B, c: C, d: D) => TReturn,
-    context: TContext,
-    a: A,
-    b: B,
-    c: C,
-    d: D
-  ): (this: TContext) => TReturn;
+  proxy<TContext extends object,
+    TReturn,
+    A, B, C, D>(fn: (a: A, b: B, c: C, d: D) => TReturn,
+      context: TContext,
+      a: A, b: B, c: C, d: D): (this: TContext) => TReturn;
   /**
    * Takes a function and returns a new one that will always have a particular context.
    *
@@ -2151,13 +1986,11 @@ interface JQueryStatic {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link Function.bind }\`.
    */
-  proxy<TContext extends object, TReturn, A, B, C>(
-    fn: (a: A, b: B, c: C) => TReturn,
-    context: TContext,
-    a: A,
-    b: B,
-    c: C
-  ): (this: TContext) => TReturn;
+  proxy<TContext extends object,
+    TReturn,
+    A, B, C>(fn: (a: A, b: B, c: C) => TReturn,
+      context: TContext,
+      a: A, b: B, c: C): (this: TContext) => TReturn;
   /**
    * Takes a function and returns a new one that will always have a particular context.
    *
@@ -2169,12 +2002,11 @@ interface JQueryStatic {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link Function.bind }\`.
    */
-  proxy<TContext extends object, TReturn, A, B>(
-    fn: (a: A, b: B) => TReturn,
-    context: TContext,
-    a: A,
-    b: B
-  ): (this: TContext) => TReturn;
+  proxy<TContext extends object,
+    TReturn,
+    A, B>(fn: (a: A, b: B) => TReturn,
+      context: TContext,
+      a: A, b: B): (this: TContext) => TReturn;
   /**
    * Takes a function and returns a new one that will always have a particular context.
    *
@@ -2186,11 +2018,11 @@ interface JQueryStatic {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link Function.bind }\`.
    */
-  proxy<TContext extends object, TReturn, A>(
-    fn: (a: A) => TReturn,
-    context: TContext,
-    a: A
-  ): (this: TContext) => TReturn;
+  proxy<TContext extends object,
+    TReturn,
+    A>(fn: (a: A) => TReturn,
+      context: TContext,
+      a: A): (this: TContext) => TReturn;
   /**
    * Takes a function and returns a new one that will always have a particular context.
    *
@@ -2202,7 +2034,9 @@ interface JQueryStatic {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link Function.bind }\`.
    */
-  proxy<TContext extends object, TReturn>(fn: () => TReturn, context: TContext): (this: TContext) => TReturn;
+  proxy<TContext extends object,
+    TReturn>(fn: () => TReturn,
+      context: TContext): (this: TContext) => TReturn;
 
   // endregion
 
@@ -2219,17 +2053,13 @@ interface JQueryStatic {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link Function.bind }\`.
    */
-  proxy<TContext extends object, TReturn, A, B, C, D, E, F, G, T>(
-    fn: (a: A, b: B, c: C, d: D, e: E, f: F, g: G, t: T) => TReturn,
-    context: TContext,
-    a: A,
-    b: B,
-    c: C,
-    d: D,
-    e: E,
-    f: F,
-    g: G
-  ): (this: TContext, t: T) => TReturn;
+  proxy<TContext extends object,
+    TReturn,
+    A, B, C, D, E, F, G,
+    T>(fn: (a: A, b: B, c: C, d: D, e: E, f: F, g: G,
+      t: T) => TReturn,
+      context: TContext,
+      a: A, b: B, c: C, d: D, e: E, f: F, g: G): (this: TContext, t: T) => TReturn;
   /**
    * Takes a function and returns a new one that will always have a particular context.
    *
@@ -2241,16 +2071,13 @@ interface JQueryStatic {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link Function.bind }\`.
    */
-  proxy<TContext extends object, TReturn, A, B, C, D, E, F, T>(
-    fn: (a: A, b: B, c: C, d: D, e: E, f: F, t: T) => TReturn,
-    context: TContext,
-    a: A,
-    b: B,
-    c: C,
-    d: D,
-    e: E,
-    f: F
-  ): (this: TContext, t: T) => TReturn;
+  proxy<TContext extends object,
+    TReturn,
+    A, B, C, D, E, F,
+    T>(fn: (a: A, b: B, c: C, d: D, e: E, f: F,
+      t: T) => TReturn,
+      context: TContext,
+      a: A, b: B, c: C, d: D, e: E, f: F): (this: TContext, t: T) => TReturn;
   /**
    * Takes a function and returns a new one that will always have a particular context.
    *
@@ -2262,15 +2089,13 @@ interface JQueryStatic {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link Function.bind }\`.
    */
-  proxy<TContext extends object, TReturn, A, B, C, D, E, T>(
-    fn: (a: A, b: B, c: C, d: D, e: E, t: T) => TReturn,
-    context: TContext,
-    a: A,
-    b: B,
-    c: C,
-    d: D,
-    e: E
-  ): (this: TContext, t: T) => TReturn;
+  proxy<TContext extends object,
+    TReturn,
+    A, B, C, D, E,
+    T>(fn: (a: A, b: B, c: C, d: D, e: E,
+      t: T) => TReturn,
+      context: TContext,
+      a: A, b: B, c: C, d: D, e: E): (this: TContext, t: T) => TReturn;
   /**
    * Takes a function and returns a new one that will always have a particular context.
    *
@@ -2282,14 +2107,13 @@ interface JQueryStatic {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link Function.bind }\`.
    */
-  proxy<TContext extends object, TReturn, A, B, C, D, T>(
-    fn: (a: A, b: B, c: C, d: D, t: T) => TReturn,
-    context: TContext,
-    a: A,
-    b: B,
-    c: C,
-    d: D
-  ): (this: TContext, t: T) => TReturn;
+  proxy<TContext extends object,
+    TReturn,
+    A, B, C, D,
+    T>(fn: (a: A, b: B, c: C, d: D,
+      t: T) => TReturn,
+      context: TContext,
+      a: A, b: B, c: C, d: D): (this: TContext, t: T) => TReturn;
   /**
    * Takes a function and returns a new one that will always have a particular context.
    *
@@ -2301,13 +2125,13 @@ interface JQueryStatic {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link Function.bind }\`.
    */
-  proxy<TContext extends object, TReturn, A, B, C, T>(
-    fn: (a: A, b: B, c: C, t: T) => TReturn,
-    context: TContext,
-    a: A,
-    b: B,
-    c: C
-  ): (this: TContext, t: T) => TReturn;
+  proxy<TContext extends object,
+    TReturn,
+    A, B, C,
+    T>(fn: (a: A, b: B, c: C,
+      t: T) => TReturn,
+      context: TContext,
+      a: A, b: B, c: C): (this: TContext, t: T) => TReturn;
   /**
    * Takes a function and returns a new one that will always have a particular context.
    *
@@ -2319,12 +2143,13 @@ interface JQueryStatic {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link Function.bind }\`.
    */
-  proxy<TContext extends object, TReturn, A, B, T>(
-    fn: (a: A, b: B, t: T) => TReturn,
-    context: TContext,
-    a: A,
-    b: B
-  ): (this: TContext, t: T) => TReturn;
+  proxy<TContext extends object,
+    TReturn,
+    A, B,
+    T>(fn: (a: A, b: B,
+      t: T) => TReturn,
+      context: TContext,
+      a: A, b: B): (this: TContext, t: T) => TReturn;
   /**
    * Takes a function and returns a new one that will always have a particular context.
    *
@@ -2336,11 +2161,13 @@ interface JQueryStatic {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link Function.bind }\`.
    */
-  proxy<TContext extends object, TReturn, A, T>(
-    fn: (a: A, t: T) => TReturn,
-    context: TContext,
-    a: A
-  ): (this: TContext, t: T) => TReturn;
+  proxy<TContext extends object,
+    TReturn,
+    A,
+    T>(fn: (a: A,
+      t: T) => TReturn,
+      context: TContext,
+      a: A): (this: TContext, t: T) => TReturn;
   /**
    * Takes a function and returns a new one that will always have a particular context.
    *
@@ -2352,10 +2179,10 @@ interface JQueryStatic {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link Function.bind }\`.
    */
-  proxy<TContext extends object, TReturn, T>(
-    fn: (t: T) => TReturn,
-    context: TContext
-  ): (this: TContext, t: T) => TReturn;
+  proxy<TContext extends object,
+    TReturn,
+    T>(fn: (t: T) => TReturn,
+      context: TContext): (this: TContext, t: T) => TReturn;
 
   // endregion
 
@@ -2372,17 +2199,13 @@ interface JQueryStatic {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link Function.bind }\`.
    */
-  proxy<TContext extends object, TReturn, A, B, C, D, E, F, G, T, U>(
-    fn: (a: A, b: B, c: C, d: D, e: E, f: F, g: G, t: T, u: U) => TReturn,
-    context: TContext,
-    a: A,
-    b: B,
-    c: C,
-    d: D,
-    e: E,
-    f: F,
-    g: G
-  ): (this: TContext, t: T, u: U) => TReturn;
+  proxy<TContext extends object,
+    TReturn,
+    A, B, C, D, E, F, G,
+    T, U>(fn: (a: A, b: B, c: C, d: D, e: E, f: F, g: G,
+      t: T, u: U) => TReturn,
+      context: TContext,
+      a: A, b: B, c: C, d: D, e: E, f: F, g: G): (this: TContext, t: T, u: U) => TReturn;
   /**
    * Takes a function and returns a new one that will always have a particular context.
    *
@@ -2394,16 +2217,13 @@ interface JQueryStatic {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link Function.bind }\`.
    */
-  proxy<TContext extends object, TReturn, A, B, C, D, E, F, T, U>(
-    fn: (a: A, b: B, c: C, d: D, e: E, f: F, t: T, u: U) => TReturn,
-    context: TContext,
-    a: A,
-    b: B,
-    c: C,
-    d: D,
-    e: E,
-    f: F
-  ): (this: TContext, t: T, u: U) => TReturn;
+  proxy<TContext extends object,
+    TReturn,
+    A, B, C, D, E, F,
+    T, U>(fn: (a: A, b: B, c: C, d: D, e: E, f: F,
+      t: T, u: U) => TReturn,
+      context: TContext,
+      a: A, b: B, c: C, d: D, e: E, f: F): (this: TContext, t: T, u: U) => TReturn;
   /**
    * Takes a function and returns a new one that will always have a particular context.
    *
@@ -2415,15 +2235,13 @@ interface JQueryStatic {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link Function.bind }\`.
    */
-  proxy<TContext extends object, TReturn, A, B, C, D, E, T, U>(
-    fn: (a: A, b: B, c: C, d: D, e: E, t: T, u: U) => TReturn,
-    context: TContext,
-    a: A,
-    b: B,
-    c: C,
-    d: D,
-    e: E
-  ): (this: TContext, t: T, u: U) => TReturn;
+  proxy<TContext extends object,
+    TReturn,
+    A, B, C, D, E,
+    T, U>(fn: (a: A, b: B, c: C, d: D, e: E,
+      t: T, u: U) => TReturn,
+      context: TContext,
+      a: A, b: B, c: C, d: D, e: E): (this: TContext, t: T, u: U) => TReturn;
   /**
    * Takes a function and returns a new one that will always have a particular context.
    *
@@ -2435,14 +2253,13 @@ interface JQueryStatic {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link Function.bind }\`.
    */
-  proxy<TContext extends object, TReturn, A, B, C, D, T, U>(
-    fn: (a: A, b: B, c: C, d: D, t: T, u: U) => TReturn,
-    context: TContext,
-    a: A,
-    b: B,
-    c: C,
-    d: D
-  ): (this: TContext, t: T, u: U) => TReturn;
+  proxy<TContext extends object,
+    TReturn,
+    A, B, C, D,
+    T, U>(fn: (a: A, b: B, c: C, d: D,
+      t: T, u: U) => TReturn,
+      context: TContext,
+      a: A, b: B, c: C, d: D): (this: TContext, t: T, u: U) => TReturn;
   /**
    * Takes a function and returns a new one that will always have a particular context.
    *
@@ -2454,13 +2271,13 @@ interface JQueryStatic {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link Function.bind }\`.
    */
-  proxy<TContext extends object, TReturn, A, B, C, T, U>(
-    fn: (a: A, b: B, c: C, t: T, u: U) => TReturn,
-    context: TContext,
-    a: A,
-    b: B,
-    c: C
-  ): (this: TContext, t: T, u: U) => TReturn;
+  proxy<TContext extends object,
+    TReturn,
+    A, B, C,
+    T, U>(fn: (a: A, b: B, c: C,
+      t: T, u: U) => TReturn,
+      context: TContext,
+      a: A, b: B, c: C): (this: TContext, t: T, u: U) => TReturn;
   /**
    * Takes a function and returns a new one that will always have a particular context.
    *
@@ -2472,12 +2289,13 @@ interface JQueryStatic {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link Function.bind }\`.
    */
-  proxy<TContext extends object, TReturn, A, B, T, U>(
-    fn: (a: A, b: B, t: T, u: U) => TReturn,
-    context: TContext,
-    a: A,
-    b: B
-  ): (this: TContext, t: T, u: U) => TReturn;
+  proxy<TContext extends object,
+    TReturn,
+    A, B,
+    T, U>(fn: (a: A, b: B,
+      t: T, u: U) => TReturn,
+      context: TContext,
+      a: A, b: B): (this: TContext, t: T, u: U) => TReturn;
   /**
    * Takes a function and returns a new one that will always have a particular context.
    *
@@ -2489,11 +2307,13 @@ interface JQueryStatic {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link Function.bind }\`.
    */
-  proxy<TContext extends object, TReturn, A, T, U>(
-    fn: (a: A, t: T, u: U) => TReturn,
-    context: TContext,
-    a: A
-  ): (this: TContext, t: T, u: U) => TReturn;
+  proxy<TContext extends object,
+    TReturn,
+    A,
+    T, U>(fn: (a: A,
+      t: T, u: U) => TReturn,
+      context: TContext,
+      a: A): (this: TContext, t: T, u: U) => TReturn;
   /**
    * Takes a function and returns a new one that will always have a particular context.
    *
@@ -2505,10 +2325,10 @@ interface JQueryStatic {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link Function.bind }\`.
    */
-  proxy<TContext extends object, TReturn, T, U>(
-    fn: (t: T, u: U) => TReturn,
-    context: TContext
-  ): (this: TContext, t: T, u: U) => TReturn;
+  proxy<TContext extends object,
+    TReturn,
+    T, U>(fn: (t: T, u: U) => TReturn,
+      context: TContext): (this: TContext, t: T, u: U) => TReturn;
 
   // endregion
 
@@ -2525,17 +2345,13 @@ interface JQueryStatic {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link Function.bind }\`.
    */
-  proxy<TContext extends object, TReturn, A, B, C, D, E, F, G, T, U, V>(
-    fn: (a: A, b: B, c: C, d: D, e: E, f: F, g: G, t: T, u: U, v: V) => TReturn,
-    context: TContext,
-    a: A,
-    b: B,
-    c: C,
-    d: D,
-    e: E,
-    f: F,
-    g: G
-  ): (this: TContext, t: T, u: U, v: V) => TReturn;
+  proxy<TContext extends object,
+    TReturn,
+    A, B, C, D, E, F, G,
+    T, U, V>(fn: (a: A, b: B, c: C, d: D, e: E, f: F, g: G,
+      t: T, u: U, v: V) => TReturn,
+      context: TContext,
+      a: A, b: B, c: C, d: D, e: E, f: F, g: G): (this: TContext, t: T, u: U, v: V) => TReturn;
   /**
    * Takes a function and returns a new one that will always have a particular context.
    *
@@ -2547,16 +2363,13 @@ interface JQueryStatic {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link Function.bind }\`.
    */
-  proxy<TContext extends object, TReturn, A, B, C, D, E, F, T, U, V>(
-    fn: (a: A, b: B, c: C, d: D, e: E, f: F, t: T, u: U, v: V) => TReturn,
-    context: TContext,
-    a: A,
-    b: B,
-    c: C,
-    d: D,
-    e: E,
-    f: F
-  ): (this: TContext, t: T, u: U, v: V) => TReturn;
+  proxy<TContext extends object,
+    TReturn,
+    A, B, C, D, E, F,
+    T, U, V>(fn: (a: A, b: B, c: C, d: D, e: E, f: F,
+      t: T, u: U, v: V) => TReturn,
+      context: TContext,
+      a: A, b: B, c: C, d: D, e: E, f: F): (this: TContext, t: T, u: U, v: V) => TReturn;
   /**
    * Takes a function and returns a new one that will always have a particular context.
    *
@@ -2568,15 +2381,13 @@ interface JQueryStatic {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link Function.bind }\`.
    */
-  proxy<TContext extends object, TReturn, A, B, C, D, E, T, U, V>(
-    fn: (a: A, b: B, c: C, d: D, e: E, t: T, u: U, v: V) => TReturn,
-    context: TContext,
-    a: A,
-    b: B,
-    c: C,
-    d: D,
-    e: E
-  ): (this: TContext, t: T, u: U, v: V) => TReturn;
+  proxy<TContext extends object,
+    TReturn,
+    A, B, C, D, E,
+    T, U, V>(fn: (a: A, b: B, c: C, d: D, e: E,
+      t: T, u: U, v: V) => TReturn,
+      context: TContext,
+      a: A, b: B, c: C, d: D, e: E): (this: TContext, t: T, u: U, v: V) => TReturn;
   /**
    * Takes a function and returns a new one that will always have a particular context.
    *
@@ -2588,14 +2399,13 @@ interface JQueryStatic {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link Function.bind }\`.
    */
-  proxy<TContext extends object, TReturn, A, B, C, D, T, U, V>(
-    fn: (a: A, b: B, c: C, d: D, t: T, u: U, v: V) => TReturn,
-    context: TContext,
-    a: A,
-    b: B,
-    c: C,
-    d: D
-  ): (this: TContext, t: T, u: U, v: V) => TReturn;
+  proxy<TContext extends object,
+    TReturn,
+    A, B, C, D,
+    T, U, V>(fn: (a: A, b: B, c: C, d: D,
+      t: T, u: U, v: V) => TReturn,
+      context: TContext,
+      a: A, b: B, c: C, d: D): (this: TContext, t: T, u: U, v: V) => TReturn;
   /**
    * Takes a function and returns a new one that will always have a particular context.
    *
@@ -2607,13 +2417,13 @@ interface JQueryStatic {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link Function.bind }\`.
    */
-  proxy<TContext extends object, TReturn, A, B, C, T, U, V>(
-    fn: (a: A, b: B, c: C, t: T, u: U, v: V) => TReturn,
-    context: TContext,
-    a: A,
-    b: B,
-    c: C
-  ): (this: TContext, t: T, u: U, v: V) => TReturn;
+  proxy<TContext extends object,
+    TReturn,
+    A, B, C,
+    T, U, V>(fn: (a: A, b: B, c: C,
+      t: T, u: U, v: V) => TReturn,
+      context: TContext,
+      a: A, b: B, c: C): (this: TContext, t: T, u: U, v: V) => TReturn;
   /**
    * Takes a function and returns a new one that will always have a particular context.
    *
@@ -2625,12 +2435,13 @@ interface JQueryStatic {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link Function.bind }\`.
    */
-  proxy<TContext extends object, TReturn, A, B, T, U, V>(
-    fn: (a: A, b: B, t: T, u: U, v: V) => TReturn,
-    context: TContext,
-    a: A,
-    b: B
-  ): (this: TContext, t: T, u: U, v: V) => TReturn;
+  proxy<TContext extends object,
+    TReturn,
+    A, B,
+    T, U, V>(fn: (a: A, b: B,
+      t: T, u: U, v: V) => TReturn,
+      context: TContext,
+      a: A, b: B): (this: TContext, t: T, u: U, v: V) => TReturn;
   /**
    * Takes a function and returns a new one that will always have a particular context.
    *
@@ -2642,11 +2453,13 @@ interface JQueryStatic {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link Function.bind }\`.
    */
-  proxy<TContext extends object, TReturn, A, T, U, V>(
-    fn: (a: A, t: T, u: U, v: V) => TReturn,
-    context: TContext,
-    a: A
-  ): (this: TContext, t: T, u: U, v: V) => TReturn;
+  proxy<TContext extends object,
+    TReturn,
+    A,
+    T, U, V>(fn: (a: A,
+      t: T, u: U, v: V) => TReturn,
+      context: TContext,
+      a: A): (this: TContext, t: T, u: U, v: V) => TReturn;
   /**
    * Takes a function and returns a new one that will always have a particular context.
    *
@@ -2658,10 +2471,10 @@ interface JQueryStatic {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link Function.bind }\`.
    */
-  proxy<TContext extends object, TReturn, T, U, V>(
-    fn: (t: T, u: U, v: V) => TReturn,
-    context: TContext
-  ): (this: TContext, t: T, u: U, v: V) => TReturn;
+  proxy<TContext extends object,
+    TReturn,
+    T, U, V>(fn: (t: T, u: U, v: V) => TReturn,
+      context: TContext): (this: TContext, t: T, u: U, v: V) => TReturn;
 
   // endregion
 
@@ -2678,17 +2491,13 @@ interface JQueryStatic {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link Function.bind }\`.
    */
-  proxy<TContext extends object, TReturn, A, B, C, D, E, F, G, T, U, V, W>(
-    fn: (a: A, b: B, c: C, d: D, e: E, f: F, g: G, t: T, u: U, v: V, w: W) => TReturn,
-    context: TContext,
-    a: A,
-    b: B,
-    c: C,
-    d: D,
-    e: E,
-    f: F,
-    g: G
-  ): (this: TContext, t: T, u: U, v: V, w: W) => TReturn;
+  proxy<TContext extends object,
+    TReturn,
+    A, B, C, D, E, F, G,
+    T, U, V, W>(fn: (a: A, b: B, c: C, d: D, e: E, f: F, g: G,
+      t: T, u: U, v: V, w: W) => TReturn,
+      context: TContext,
+      a: A, b: B, c: C, d: D, e: E, f: F, g: G): (this: TContext, t: T, u: U, v: V, w: W) => TReturn;
   /**
    * Takes a function and returns a new one that will always have a particular context.
    *
@@ -2700,16 +2509,13 @@ interface JQueryStatic {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link Function.bind }\`.
    */
-  proxy<TContext extends object, TReturn, A, B, C, D, E, F, T, U, V, W>(
-    fn: (a: A, b: B, c: C, d: D, e: E, f: F, t: T, u: U, v: V, w: W) => TReturn,
-    context: TContext,
-    a: A,
-    b: B,
-    c: C,
-    d: D,
-    e: E,
-    f: F
-  ): (this: TContext, t: T, u: U, v: V, w: W) => TReturn;
+  proxy<TContext extends object,
+    TReturn,
+    A, B, C, D, E, F,
+    T, U, V, W>(fn: (a: A, b: B, c: C, d: D, e: E, f: F,
+      t: T, u: U, v: V, w: W) => TReturn,
+      context: TContext,
+      a: A, b: B, c: C, d: D, e: E, f: F): (this: TContext, t: T, u: U, v: V, w: W) => TReturn;
   /**
    * Takes a function and returns a new one that will always have a particular context.
    *
@@ -2721,15 +2527,13 @@ interface JQueryStatic {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link Function.bind }\`.
    */
-  proxy<TContext extends object, TReturn, A, B, C, D, E, T, U, V, W>(
-    fn: (a: A, b: B, c: C, d: D, e: E, t: T, u: U, v: V, w: W) => TReturn,
-    context: TContext,
-    a: A,
-    b: B,
-    c: C,
-    d: D,
-    e: E
-  ): (this: TContext, t: T, u: U, v: V, w: W) => TReturn;
+  proxy<TContext extends object,
+    TReturn,
+    A, B, C, D, E,
+    T, U, V, W>(fn: (a: A, b: B, c: C, d: D, e: E,
+      t: T, u: U, v: V, w: W) => TReturn,
+      context: TContext,
+      a: A, b: B, c: C, d: D, e: E): (this: TContext, t: T, u: U, v: V, w: W) => TReturn;
   /**
    * Takes a function and returns a new one that will always have a particular context.
    *
@@ -2741,14 +2545,13 @@ interface JQueryStatic {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link Function.bind }\`.
    */
-  proxy<TContext extends object, TReturn, A, B, C, D, T, U, V, W>(
-    fn: (a: A, b: B, c: C, d: D, t: T, u: U, v: V, w: W) => TReturn,
-    context: TContext,
-    a: A,
-    b: B,
-    c: C,
-    d: D
-  ): (this: TContext, t: T, u: U, v: V, w: W) => TReturn;
+  proxy<TContext extends object,
+    TReturn,
+    A, B, C, D,
+    T, U, V, W>(fn: (a: A, b: B, c: C, d: D,
+      t: T, u: U, v: V, w: W) => TReturn,
+      context: TContext,
+      a: A, b: B, c: C, d: D): (this: TContext, t: T, u: U, v: V, w: W) => TReturn;
   /**
    * Takes a function and returns a new one that will always have a particular context.
    *
@@ -2760,13 +2563,13 @@ interface JQueryStatic {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link Function.bind }\`.
    */
-  proxy<TContext extends object, TReturn, A, B, C, T, U, V, W>(
-    fn: (a: A, b: B, c: C, t: T, u: U, v: V, w: W) => TReturn,
-    context: TContext,
-    a: A,
-    b: B,
-    c: C
-  ): (this: TContext, t: T, u: U, v: V, w: W) => TReturn;
+  proxy<TContext extends object,
+    TReturn,
+    A, B, C,
+    T, U, V, W>(fn: (a: A, b: B, c: C,
+      t: T, u: U, v: V, w: W) => TReturn,
+      context: TContext,
+      a: A, b: B, c: C): (this: TContext, t: T, u: U, v: V, w: W) => TReturn;
   /**
    * Takes a function and returns a new one that will always have a particular context.
    *
@@ -2778,12 +2581,13 @@ interface JQueryStatic {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link Function.bind }\`.
    */
-  proxy<TContext extends object, TReturn, A, B, T, U, V, W>(
-    fn: (a: A, b: B, t: T, u: U, v: V, w: W) => TReturn,
-    context: TContext,
-    a: A,
-    b: B
-  ): (this: TContext, t: T, u: U, v: V, w: W) => TReturn;
+  proxy<TContext extends object,
+    TReturn,
+    A, B,
+    T, U, V, W>(fn: (a: A, b: B,
+      t: T, u: U, v: V, w: W) => TReturn,
+      context: TContext,
+      a: A, b: B): (this: TContext, t: T, u: U, v: V, w: W) => TReturn;
   /**
    * Takes a function and returns a new one that will always have a particular context.
    *
@@ -2795,11 +2599,13 @@ interface JQueryStatic {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link Function.bind }\`.
    */
-  proxy<TContext extends object, TReturn, A, T, U, V, W>(
-    fn: (a: A, t: T, u: U, v: V, w: W) => TReturn,
-    context: TContext,
-    a: A
-  ): (this: TContext, t: T, u: U, v: V, w: W) => TReturn;
+  proxy<TContext extends object,
+    TReturn,
+    A,
+    T, U, V, W>(fn: (a: A,
+      t: T, u: U, v: V, w: W) => TReturn,
+      context: TContext,
+      a: A): (this: TContext, t: T, u: U, v: V, w: W) => TReturn;
   /**
    * Takes a function and returns a new one that will always have a particular context.
    *
@@ -2811,10 +2617,10 @@ interface JQueryStatic {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link Function.bind }\`.
    */
-  proxy<TContext extends object, TReturn, T, U, V, W>(
-    fn: (t: T, u: U, v: V, w: W) => TReturn,
-    context: TContext
-  ): (this: TContext, t: T, u: U, v: V, w: W) => TReturn;
+  proxy<TContext extends object,
+    TReturn,
+    T, U, V, W>(fn: (t: T, u: U, v: V, w: W) => TReturn,
+      context: TContext): (this: TContext, t: T, u: U, v: V, w: W) => TReturn;
 
   // endregion
 
@@ -2831,17 +2637,13 @@ interface JQueryStatic {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link Function.bind }\`.
    */
-  proxy<TContext extends object, TReturn, A, B, C, D, E, F, G, T, U, V, W, X>(
-    fn: (a: A, b: B, c: C, d: D, e: E, f: F, g: G, t: T, u: U, v: V, w: W, x: X) => TReturn,
-    context: TContext,
-    a: A,
-    b: B,
-    c: C,
-    d: D,
-    e: E,
-    f: F,
-    g: G
-  ): (this: TContext, t: T, u: U, v: V, w: W, x: X) => TReturn;
+  proxy<TContext extends object,
+    TReturn,
+    A, B, C, D, E, F, G,
+    T, U, V, W, X>(fn: (a: A, b: B, c: C, d: D, e: E, f: F, g: G,
+      t: T, u: U, v: V, w: W, x: X) => TReturn,
+      context: TContext,
+      a: A, b: B, c: C, d: D, e: E, f: F, g: G): (this: TContext, t: T, u: U, v: V, w: W, x: X) => TReturn;
   /**
    * Takes a function and returns a new one that will always have a particular context.
    *
@@ -2853,16 +2655,13 @@ interface JQueryStatic {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link Function.bind }\`.
    */
-  proxy<TContext extends object, TReturn, A, B, C, D, E, F, T, U, V, W, X>(
-    fn: (a: A, b: B, c: C, d: D, e: E, f: F, t: T, u: U, v: V, w: W, x: X) => TReturn,
-    context: TContext,
-    a: A,
-    b: B,
-    c: C,
-    d: D,
-    e: E,
-    f: F
-  ): (this: TContext, t: T, u: U, v: V, w: W, x: X) => TReturn;
+  proxy<TContext extends object,
+    TReturn,
+    A, B, C, D, E, F,
+    T, U, V, W, X>(fn: (a: A, b: B, c: C, d: D, e: E, f: F,
+      t: T, u: U, v: V, w: W, x: X) => TReturn,
+      context: TContext,
+      a: A, b: B, c: C, d: D, e: E, f: F): (this: TContext, t: T, u: U, v: V, w: W, x: X) => TReturn;
   /**
    * Takes a function and returns a new one that will always have a particular context.
    *
@@ -2874,15 +2673,13 @@ interface JQueryStatic {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link Function.bind }\`.
    */
-  proxy<TContext extends object, TReturn, A, B, C, D, E, T, U, V, W, X>(
-    fn: (a: A, b: B, c: C, d: D, e: E, t: T, u: U, v: V, w: W, x: X) => TReturn,
-    context: TContext,
-    a: A,
-    b: B,
-    c: C,
-    d: D,
-    e: E
-  ): (this: TContext, t: T, u: U, v: V, w: W, x: X) => TReturn;
+  proxy<TContext extends object,
+    TReturn,
+    A, B, C, D, E,
+    T, U, V, W, X>(fn: (a: A, b: B, c: C, d: D, e: E,
+      t: T, u: U, v: V, w: W, x: X) => TReturn,
+      context: TContext,
+      a: A, b: B, c: C, d: D, e: E): (this: TContext, t: T, u: U, v: V, w: W, x: X) => TReturn;
   /**
    * Takes a function and returns a new one that will always have a particular context.
    *
@@ -2894,14 +2691,13 @@ interface JQueryStatic {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link Function.bind }\`.
    */
-  proxy<TContext extends object, TReturn, A, B, C, D, T, U, V, W, X>(
-    fn: (a: A, b: B, c: C, d: D, t: T, u: U, v: V, w: W, x: X) => TReturn,
-    context: TContext,
-    a: A,
-    b: B,
-    c: C,
-    d: D
-  ): (this: TContext, t: T, u: U, v: V, w: W, x: X) => TReturn;
+  proxy<TContext extends object,
+    TReturn,
+    A, B, C, D,
+    T, U, V, W, X>(fn: (a: A, b: B, c: C, d: D,
+      t: T, u: U, v: V, w: W, x: X) => TReturn,
+      context: TContext,
+      a: A, b: B, c: C, d: D): (this: TContext, t: T, u: U, v: V, w: W, x: X) => TReturn;
   /**
    * Takes a function and returns a new one that will always have a particular context.
    *
@@ -2913,13 +2709,13 @@ interface JQueryStatic {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link Function.bind }\`.
    */
-  proxy<TContext extends object, TReturn, A, B, C, T, U, V, W, X>(
-    fn: (a: A, b: B, c: C, t: T, u: U, v: V, w: W, x: X) => TReturn,
-    context: TContext,
-    a: A,
-    b: B,
-    c: C
-  ): (this: TContext, t: T, u: U, v: V, w: W, x: X) => TReturn;
+  proxy<TContext extends object,
+    TReturn,
+    A, B, C,
+    T, U, V, W, X>(fn: (a: A, b: B, c: C,
+      t: T, u: U, v: V, w: W, x: X) => TReturn,
+      context: TContext,
+      a: A, b: B, c: C): (this: TContext, t: T, u: U, v: V, w: W, x: X) => TReturn;
   /**
    * Takes a function and returns a new one that will always have a particular context.
    *
@@ -2931,12 +2727,13 @@ interface JQueryStatic {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link Function.bind }\`.
    */
-  proxy<TContext extends object, TReturn, A, B, T, U, V, W, X>(
-    fn: (a: A, b: B, t: T, u: U, v: V, w: W, x: X) => TReturn,
-    context: TContext,
-    a: A,
-    b: B
-  ): (this: TContext, t: T, u: U, v: V, w: W, x: X) => TReturn;
+  proxy<TContext extends object,
+    TReturn,
+    A, B,
+    T, U, V, W, X>(fn: (a: A, b: B,
+      t: T, u: U, v: V, w: W, x: X) => TReturn,
+      context: TContext,
+      a: A, b: B): (this: TContext, t: T, u: U, v: V, w: W, x: X) => TReturn;
   /**
    * Takes a function and returns a new one that will always have a particular context.
    *
@@ -2948,11 +2745,13 @@ interface JQueryStatic {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link Function.bind }\`.
    */
-  proxy<TContext extends object, TReturn, A, T, U, V, W, X>(
-    fn: (a: A, t: T, u: U, v: V, w: W, x: X) => TReturn,
-    context: TContext,
-    a: A
-  ): (this: TContext, t: T, u: U, v: V, w: W, x: X) => TReturn;
+  proxy<TContext extends object,
+    TReturn,
+    A,
+    T, U, V, W, X>(fn: (a: A,
+      t: T, u: U, v: V, w: W, x: X) => TReturn,
+      context: TContext,
+      a: A): (this: TContext, t: T, u: U, v: V, w: W, x: X) => TReturn;
   /**
    * Takes a function and returns a new one that will always have a particular context.
    *
@@ -2964,10 +2763,10 @@ interface JQueryStatic {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link Function.bind }\`.
    */
-  proxy<TContext extends object, TReturn, T, U, V, W, X>(
-    fn: (t: T, u: U, v: V, w: W, x: X) => TReturn,
-    context: TContext
-  ): (this: TContext, t: T, u: U, v: V, w: W, x: X) => TReturn;
+  proxy<TContext extends object,
+    TReturn,
+    T, U, V, W, X>(fn: (t: T, u: U, v: V, w: W, x: X) => TReturn,
+      context: TContext): (this: TContext, t: T, u: U, v: V, w: W, x: X) => TReturn;
 
   // endregion
 
@@ -2984,17 +2783,13 @@ interface JQueryStatic {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link Function.bind }\`.
    */
-  proxy<TContext extends object, TReturn, A, B, C, D, E, F, G, T, U, V, W, X, Y>(
-    fn: (a: A, b: B, c: C, d: D, e: E, f: F, g: G, t: T, u: U, v: V, w: W, x: X, y: Y) => TReturn,
-    context: TContext,
-    a: A,
-    b: B,
-    c: C,
-    d: D,
-    e: E,
-    f: F,
-    g: G
-  ): (this: TContext, t: T, u: U, v: V, w: W, x: X, y: Y) => TReturn;
+  proxy<TContext extends object,
+    TReturn,
+    A, B, C, D, E, F, G,
+    T, U, V, W, X, Y>(fn: (a: A, b: B, c: C, d: D, e: E, f: F, g: G,
+      t: T, u: U, v: V, w: W, x: X, y: Y) => TReturn,
+      context: TContext,
+      a: A, b: B, c: C, d: D, e: E, f: F, g: G): (this: TContext, t: T, u: U, v: V, w: W, x: X, y: Y) => TReturn;
   /**
    * Takes a function and returns a new one that will always have a particular context.
    *
@@ -3006,16 +2801,13 @@ interface JQueryStatic {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link Function.bind }\`.
    */
-  proxy<TContext extends object, TReturn, A, B, C, D, E, F, T, U, V, W, X, Y>(
-    fn: (a: A, b: B, c: C, d: D, e: E, f: F, t: T, u: U, v: V, w: W, x: X, y: Y) => TReturn,
-    context: TContext,
-    a: A,
-    b: B,
-    c: C,
-    d: D,
-    e: E,
-    f: F
-  ): (this: TContext, t: T, u: U, v: V, w: W, x: X, y: Y) => TReturn;
+  proxy<TContext extends object,
+    TReturn,
+    A, B, C, D, E, F,
+    T, U, V, W, X, Y>(fn: (a: A, b: B, c: C, d: D, e: E, f: F,
+      t: T, u: U, v: V, w: W, x: X, y: Y) => TReturn,
+      context: TContext,
+      a: A, b: B, c: C, d: D, e: E, f: F): (this: TContext, t: T, u: U, v: V, w: W, x: X, y: Y) => TReturn;
   /**
    * Takes a function and returns a new one that will always have a particular context.
    *
@@ -3027,15 +2819,13 @@ interface JQueryStatic {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link Function.bind }\`.
    */
-  proxy<TContext extends object, TReturn, A, B, C, D, E, T, U, V, W, X, Y>(
-    fn: (a: A, b: B, c: C, d: D, e: E, t: T, u: U, v: V, w: W, x: X, y: Y) => TReturn,
-    context: TContext,
-    a: A,
-    b: B,
-    c: C,
-    d: D,
-    e: E
-  ): (this: TContext, t: T, u: U, v: V, w: W, x: X, y: Y) => TReturn;
+  proxy<TContext extends object,
+    TReturn,
+    A, B, C, D, E,
+    T, U, V, W, X, Y>(fn: (a: A, b: B, c: C, d: D, e: E,
+      t: T, u: U, v: V, w: W, x: X, y: Y) => TReturn,
+      context: TContext,
+      a: A, b: B, c: C, d: D, e: E): (this: TContext, t: T, u: U, v: V, w: W, x: X, y: Y) => TReturn;
   /**
    * Takes a function and returns a new one that will always have a particular context.
    *
@@ -3047,14 +2837,13 @@ interface JQueryStatic {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link Function.bind }\`.
    */
-  proxy<TContext extends object, TReturn, A, B, C, D, T, U, V, W, X, Y>(
-    fn: (a: A, b: B, c: C, d: D, t: T, u: U, v: V, w: W, x: X, y: Y) => TReturn,
-    context: TContext,
-    a: A,
-    b: B,
-    c: C,
-    d: D
-  ): (this: TContext, t: T, u: U, v: V, w: W, x: X, y: Y) => TReturn;
+  proxy<TContext extends object,
+    TReturn,
+    A, B, C, D,
+    T, U, V, W, X, Y>(fn: (a: A, b: B, c: C, d: D,
+      t: T, u: U, v: V, w: W, x: X, y: Y) => TReturn,
+      context: TContext,
+      a: A, b: B, c: C, d: D): (this: TContext, t: T, u: U, v: V, w: W, x: X, y: Y) => TReturn;
   /**
    * Takes a function and returns a new one that will always have a particular context.
    *
@@ -3066,13 +2855,13 @@ interface JQueryStatic {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link Function.bind }\`.
    */
-  proxy<TContext extends object, TReturn, A, B, C, T, U, V, W, X, Y>(
-    fn: (a: A, b: B, c: C, t: T, u: U, v: V, w: W, x: X, y: Y) => TReturn,
-    context: TContext,
-    a: A,
-    b: B,
-    c: C
-  ): (this: TContext, t: T, u: U, v: V, w: W, x: X, y: Y) => TReturn;
+  proxy<TContext extends object,
+    TReturn,
+    A, B, C,
+    T, U, V, W, X, Y>(fn: (a: A, b: B, c: C,
+      t: T, u: U, v: V, w: W, x: X, y: Y) => TReturn,
+      context: TContext,
+      a: A, b: B, c: C): (this: TContext, t: T, u: U, v: V, w: W, x: X, y: Y) => TReturn;
   /**
    * Takes a function and returns a new one that will always have a particular context.
    *
@@ -3084,12 +2873,13 @@ interface JQueryStatic {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link Function.bind }\`.
    */
-  proxy<TContext extends object, TReturn, A, B, T, U, V, W, X, Y>(
-    fn: (a: A, b: B, t: T, u: U, v: V, w: W, x: X, y: Y) => TReturn,
-    context: TContext,
-    a: A,
-    b: B
-  ): (this: TContext, t: T, u: U, v: V, w: W, x: X, y: Y) => TReturn;
+  proxy<TContext extends object,
+    TReturn,
+    A, B,
+    T, U, V, W, X, Y>(fn: (a: A, b: B,
+      t: T, u: U, v: V, w: W, x: X, y: Y) => TReturn,
+      context: TContext,
+      a: A, b: B): (this: TContext, t: T, u: U, v: V, w: W, x: X, y: Y) => TReturn;
   /**
    * Takes a function and returns a new one that will always have a particular context.
    *
@@ -3101,11 +2891,13 @@ interface JQueryStatic {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link Function.bind }\`.
    */
-  proxy<TContext extends object, TReturn, A, T, U, V, W, X, Y>(
-    fn: (a: A, t: T, u: U, v: V, w: W, x: X, y: Y) => TReturn,
-    context: TContext,
-    a: A
-  ): (this: TContext, t: T, u: U, v: V, w: W, x: X, y: Y) => TReturn;
+  proxy<TContext extends object,
+    TReturn,
+    A,
+    T, U, V, W, X, Y>(fn: (a: A,
+      t: T, u: U, v: V, w: W, x: X, y: Y) => TReturn,
+      context: TContext,
+      a: A): (this: TContext, t: T, u: U, v: V, w: W, x: X, y: Y) => TReturn;
   /**
    * Takes a function and returns a new one that will always have a particular context.
    *
@@ -3117,10 +2909,10 @@ interface JQueryStatic {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link Function.bind }\`.
    */
-  proxy<TContext extends object, TReturn, T, U, V, W, X, Y>(
-    fn: (t: T, u: U, v: V, w: W, x: X, y: Y) => TReturn,
-    context: TContext
-  ): (this: TContext, t: T, u: U, v: V, w: W, x: X, y: Y) => TReturn;
+  proxy<TContext extends object,
+    TReturn,
+    T, U, V, W, X, Y>(fn: (t: T, u: U, v: V, w: W, x: X, y: Y) => TReturn,
+      context: TContext): (this: TContext, t: T, u: U, v: V, w: W, x: X, y: Y) => TReturn;
 
   // endregion
 
@@ -3137,17 +2929,13 @@ interface JQueryStatic {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link Function.bind }\`.
    */
-  proxy<TContext extends object, TReturn, A, B, C, D, E, F, G, T, U, V, W, X, Y, Z>(
-    fn: (a: A, b: B, c: C, d: D, e: E, f: F, g: G, t: T, u: U, v: V, w: W, x: X, y: Y, z: Z, ...args: any[]) => TReturn,
-    context: TContext,
-    a: A,
-    b: B,
-    c: C,
-    d: D,
-    e: E,
-    f: F,
-    g: G
-  ): (this: TContext, t: T, u: U, v: V, w: W, x: X, y: Y, z: Z, ...args: any[]) => TReturn;
+  proxy<TContext extends object,
+    TReturn,
+    A, B, C, D, E, F, G,
+    T, U, V, W, X, Y, Z>(fn: (a: A, b: B, c: C, d: D, e: E, f: F, g: G,
+      t: T, u: U, v: V, w: W, x: X, y: Y, z: Z, ...args: any[]) => TReturn,
+      context: TContext,
+      a: A, b: B, c: C, d: D, e: E, f: F, g: G): (this: TContext, t: T, u: U, v: V, w: W, x: X, y: Y, z: Z, ...args: any[]) => TReturn;
   /**
    * Takes a function and returns a new one that will always have a particular context.
    *
@@ -3159,16 +2947,13 @@ interface JQueryStatic {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link Function.bind }\`.
    */
-  proxy<TContext extends object, TReturn, A, B, C, D, E, F, T, U, V, W, X, Y, Z>(
-    fn: (a: A, b: B, c: C, d: D, e: E, f: F, t: T, u: U, v: V, w: W, x: X, y: Y, z: Z, ...args: any[]) => TReturn,
-    context: TContext,
-    a: A,
-    b: B,
-    c: C,
-    d: D,
-    e: E,
-    f: F
-  ): (this: TContext, t: T, u: U, v: V, w: W, x: X, y: Y, z: Z, ...args: any[]) => TReturn;
+  proxy<TContext extends object,
+    TReturn,
+    A, B, C, D, E, F,
+    T, U, V, W, X, Y, Z>(fn: (a: A, b: B, c: C, d: D, e: E, f: F,
+      t: T, u: U, v: V, w: W, x: X, y: Y, z: Z, ...args: any[]) => TReturn,
+      context: TContext,
+      a: A, b: B, c: C, d: D, e: E, f: F): (this: TContext, t: T, u: U, v: V, w: W, x: X, y: Y, z: Z, ...args: any[]) => TReturn;
   /**
    * Takes a function and returns a new one that will always have a particular context.
    *
@@ -3180,15 +2965,13 @@ interface JQueryStatic {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link Function.bind }\`.
    */
-  proxy<TContext extends object, TReturn, A, B, C, D, E, T, U, V, W, X, Y, Z>(
-    fn: (a: A, b: B, c: C, d: D, e: E, t: T, u: U, v: V, w: W, x: X, y: Y, z: Z, ...args: any[]) => TReturn,
-    context: TContext,
-    a: A,
-    b: B,
-    c: C,
-    d: D,
-    e: E
-  ): (this: TContext, t: T, u: U, v: V, w: W, x: X, y: Y, z: Z, ...args: any[]) => TReturn;
+  proxy<TContext extends object,
+    TReturn,
+    A, B, C, D, E,
+    T, U, V, W, X, Y, Z>(fn: (a: A, b: B, c: C, d: D, e: E,
+      t: T, u: U, v: V, w: W, x: X, y: Y, z: Z, ...args: any[]) => TReturn,
+      context: TContext,
+      a: A, b: B, c: C, d: D, e: E): (this: TContext, t: T, u: U, v: V, w: W, x: X, y: Y, z: Z, ...args: any[]) => TReturn;
   /**
    * Takes a function and returns a new one that will always have a particular context.
    *
@@ -3200,14 +2983,13 @@ interface JQueryStatic {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link Function.bind }\`.
    */
-  proxy<TContext extends object, TReturn, A, B, C, D, T, U, V, W, X, Y, Z>(
-    fn: (a: A, b: B, c: C, d: D, t: T, u: U, v: V, w: W, x: X, y: Y, z: Z, ...args: any[]) => TReturn,
-    context: TContext,
-    a: A,
-    b: B,
-    c: C,
-    d: D
-  ): (this: TContext, t: T, u: U, v: V, w: W, x: X, y: Y, z: Z, ...args: any[]) => TReturn;
+  proxy<TContext extends object,
+    TReturn,
+    A, B, C, D,
+    T, U, V, W, X, Y, Z>(fn: (a: A, b: B, c: C, d: D,
+      t: T, u: U, v: V, w: W, x: X, y: Y, z: Z, ...args: any[]) => TReturn,
+      context: TContext,
+      a: A, b: B, c: C, d: D): (this: TContext, t: T, u: U, v: V, w: W, x: X, y: Y, z: Z, ...args: any[]) => TReturn;
   /**
    * Takes a function and returns a new one that will always have a particular context.
    *
@@ -3219,13 +3001,13 @@ interface JQueryStatic {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link Function.bind }\`.
    */
-  proxy<TContext extends object, TReturn, A, B, C, T, U, V, W, X, Y, Z>(
-    fn: (a: A, b: B, c: C, t: T, u: U, v: V, w: W, x: X, y: Y, z: Z, ...args: any[]) => TReturn,
-    context: TContext,
-    a: A,
-    b: B,
-    c: C
-  ): (this: TContext, t: T, u: U, v: V, w: W, x: X, y: Y, z: Z, ...args: any[]) => TReturn;
+  proxy<TContext extends object,
+    TReturn,
+    A, B, C,
+    T, U, V, W, X, Y, Z>(fn: (a: A, b: B, c: C,
+      t: T, u: U, v: V, w: W, x: X, y: Y, z: Z, ...args: any[]) => TReturn,
+      context: TContext,
+      a: A, b: B, c: C): (this: TContext, t: T, u: U, v: V, w: W, x: X, y: Y, z: Z, ...args: any[]) => TReturn;
   /**
    * Takes a function and returns a new one that will always have a particular context.
    *
@@ -3237,12 +3019,13 @@ interface JQueryStatic {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link Function.bind }\`.
    */
-  proxy<TContext extends object, TReturn, A, B, T, U, V, W, X, Y, Z>(
-    fn: (a: A, b: B, t: T, u: U, v: V, w: W, x: X, y: Y, z: Z, ...args: any[]) => TReturn,
-    context: TContext,
-    a: A,
-    b: B
-  ): (this: TContext, t: T, u: U, v: V, w: W, x: X, y: Y, z: Z, ...args: any[]) => TReturn;
+  proxy<TContext extends object,
+    TReturn,
+    A, B,
+    T, U, V, W, X, Y, Z>(fn: (a: A, b: B,
+      t: T, u: U, v: V, w: W, x: X, y: Y, z: Z, ...args: any[]) => TReturn,
+      context: TContext,
+      a: A, b: B): (this: TContext, t: T, u: U, v: V, w: W, x: X, y: Y, z: Z, ...args: any[]) => TReturn;
   /**
    * Takes a function and returns a new one that will always have a particular context.
    *
@@ -3254,11 +3037,13 @@ interface JQueryStatic {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link Function.bind }\`.
    */
-  proxy<TContext extends object, TReturn, A, T, U, V, W, X, Y, Z>(
-    fn: (a: A, t: T, u: U, v: V, w: W, x: X, y: Y, z: Z, ...args: any[]) => TReturn,
-    context: TContext,
-    a: A
-  ): (this: TContext, t: T, u: U, v: V, w: W, x: X, y: Y, z: Z, ...args: any[]) => TReturn;
+  proxy<TContext extends object,
+    TReturn,
+    A,
+    T, U, V, W, X, Y, Z>(fn: (a: A,
+      t: T, u: U, v: V, w: W, x: X, y: Y, z: Z, ...args: any[]) => TReturn,
+      context: TContext,
+      a: A): (this: TContext, t: T, u: U, v: V, w: W, x: X, y: Y, z: Z, ...args: any[]) => TReturn;
   /**
    * Takes a function and returns a new one that will always have a particular context.
    *
@@ -3270,10 +3055,10 @@ interface JQueryStatic {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link Function.bind }\`.
    */
-  proxy<TContext extends object, TReturn, T, U, V, W, X, Y, Z>(
-    fn: (t: T, u: U, v: V, w: W, x: X, y: Y, z: Z, ...args: any[]) => TReturn,
-    context: TContext
-  ): (this: TContext, t: T, u: U, v: V, w: W, x: X, y: Y, z: Z, ...args: any[]) => TReturn;
+  proxy<TContext extends object,
+    TReturn,
+    T, U, V, W, X, Y, Z>(fn: (t: T, u: U, v: V, w: W, x: X, y: Y, z: Z, ...args: any[]) => TReturn,
+      context: TContext): (this: TContext, t: T, u: U, v: V, w: W, x: X, y: Y, z: Z, ...args: any[]) => TReturn;
 
   // endregion
 
@@ -3293,11 +3078,10 @@ interface JQueryStatic {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link Function.bind }\`.
    */
-  proxy<TContext extends object, TReturn>(
-    fn: (...args: any[]) => TReturn,
-    context: TContext,
-    ...additionalArguments: any[]
-  ): (this: TContext, ...args: any[]) => TReturn;
+  proxy<TContext extends object,
+    TReturn>(fn: (...args: any[]) => TReturn,
+      context: TContext,
+      ...additionalArguments: any[]): (this: TContext, ...args: any[]) => TReturn;
 
   // endregion
 
@@ -3317,11 +3101,9 @@ interface JQueryStatic {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link Function.bind }\`.
    */
-  proxy<TContext extends object>(
-    context: TContext,
+  proxy<TContext extends object>(context: TContext,
     name: keyof TContext,
-    ...additionalArguments: any[]
-  ): (this: TContext, ...args: any[]) => any;
+    ...additionalArguments: any[]): (this: TContext, ...args: any[]) => any;
 
   // endregion
 
@@ -3337,11 +3119,7 @@ interface JQueryStatic {
    * @see \`{@link https://api.jquery.com/jQuery.queue/ }\`
    * @since 1.3
    */
-  queue<T extends Element>(
-    element: T,
-    queueName?: string,
-    newQueue?: JQuery.TypeOrArray<JQuery.QueueFunction<T>>
-  ): JQuery.Queue<T>;
+  queue<T extends Element>(element: T, queueName?: string, newQueue?: JQuery.TypeOrArray<JQuery.QueueFunction<T>>): JQuery.Queue<T>;
   /**
    * Handles errors thrown synchronously in functions wrapped in jQuery().
    *
@@ -3368,11 +3146,7 @@ interface JQueryStatic {
    * @see \`{@link https://api.jquery.com/jQuery.speed/ }\`
    * @since 1.1
    */
-  speed<TElement extends Element = HTMLElement>(
-    duration: JQuery.Duration,
-    easing: string,
-    complete: (this: TElement) => void
-  ): JQuery.EffectsOptions<TElement>;
+  speed<TElement extends Element = HTMLElement>(duration: JQuery.Duration, easing: string, complete: (this: TElement) => void): JQuery.EffectsOptions<TElement>;
   /**
    * Creates an object containing a set of properties ready to be used in the definition of custom animations.
    *
@@ -3383,10 +3157,8 @@ interface JQueryStatic {
    * @since 1.0
    * @since 1.1
    */
-  speed<TElement extends Element = HTMLElement>(
-    duration: JQuery.Duration,
-    easing_complete: string | ((this: TElement) => void)
-  ): JQuery.EffectsOptions<TElement>;
+  speed<TElement extends Element = HTMLElement>(duration: JQuery.Duration,
+    easing_complete: string | ((this: TElement) => void)): JQuery.EffectsOptions<TElement>;
   /**
    * Creates an object containing a set of properties ready to be used in the definition of custom animations.
    *
@@ -3396,9 +3168,7 @@ interface JQueryStatic {
    * @since 1.0
    * @since 1.1
    */
-  speed<TElement extends Element = HTMLElement>(
-    duration_complete_settings?: JQuery.Duration | ((this: TElement) => void) | JQuery.SpeedSettings<TElement>
-  ): JQuery.EffectsOptions<TElement>;
+  speed<TElement extends Element = HTMLElement>(duration_complete_settings?: JQuery.Duration | ((this: TElement) => void) | JQuery.SpeedSettings<TElement>): JQuery.EffectsOptions<TElement>;
   /**
    * Remove the whitespace from the beginning and end of a string.
    *
@@ -3416,21 +3186,7 @@ interface JQueryStatic {
    *
    * @deprecated Deprecated since 3.3. See \`{@link https://github.com/jquery/jquery/issues/3605 }`.
    */
-  type(
-    obj: any
-  ):
-    | 'array'
-    | 'boolean'
-    | 'date'
-    | 'error'
-    | 'function'
-    | 'null'
-    | 'number'
-    | 'object'
-    | 'regexp'
-    | 'string'
-    | 'symbol'
-    | 'undefined';
+  type(obj: any): 'array' | 'boolean' | 'date' | 'error' | 'function' | 'null' | 'number' | 'object' | 'regexp' | 'string' | 'symbol' | 'undefined';
   /**
    * @description Sorts an array of DOM elements, in place, with the duplicates removed. Note that this only works on
    * arrays of DOM elements, not strings or numbers.
@@ -3459,21 +3215,13 @@ interface JQueryStatic {
    * @see \`{@link https://api.jquery.com/jQuery.when/ }\`
    * @since 1.5
    */
-  when<TR1, UR1, VR1, TJ1 = any, UJ1 = any, VJ1 = any>(
-    deferredT: JQuery.Promise<TR1, TJ1, any> | JQuery.Thenable<TR1> | TR1, // eslint-disable-line @typescript-eslint/no-unnecessary-type-arguments
-    deferredU: JQuery.Promise<UR1, UJ1, any> | JQuery.Thenable<UR1> | UR1, // eslint-disable-line @typescript-eslint/no-unnecessary-type-arguments
-    deferredV: JQuery.Promise<VR1, VJ1, any> | JQuery.Thenable<VR1> | VR1
-  ): JQuery.Promise3<
-    TR1,
-    TJ1,
-    never, // eslint-disable-line @typescript-eslint/no-unnecessary-type-arguments
-    UR1,
-    UJ1,
-    never,
-    VR1,
-    VJ1,
-    never
-  >;
+  when<TR1, UR1, VR1,
+    TJ1 = any, UJ1 = any, VJ1 = any>(
+      deferredT: JQuery.Promise<TR1, TJ1, any> | JQuery.Thenable<TR1> | TR1, // tslint:disable-line:use-default-type-parameter
+      deferredU: JQuery.Promise<UR1, UJ1, any> | JQuery.Thenable<UR1> | UR1, // tslint:disable-line:use-default-type-parameter
+      deferredV: JQuery.Promise<VR1, VJ1, any> | JQuery.Thenable<VR1> | VR1): JQuery.Promise3<TR1, TJ1, never,  // tslint:disable-line:use-default-type-parameter
+        UR1, UJ1, never,
+        VR1, VJ1, never>;
   /**
    * Provides a way to execute callback functions based on zero or more Thenable objects, usually
    * Deferred objects that represent asynchronous events.
@@ -3481,17 +3229,11 @@ interface JQueryStatic {
    * @see \`{@link https://api.jquery.com/jQuery.when/ }\`
    * @since 1.5
    */
-  when<TR1, UR1, TJ1 = any, UJ1 = any>(
-    deferredT: JQuery.Promise<TR1, TJ1, any> | JQuery.Thenable<TR1> | TR1, // eslint-disable-line @typescript-eslint/no-unnecessary-type-arguments
-    deferredU: JQuery.Promise<UR1, UJ1, any> | JQuery.Thenable<UR1> | UR1
-  ): JQuery.Promise2<
-    TR1,
-    TJ1,
-    never, // eslint-disable-line @typescript-eslint/no-unnecessary-type-arguments
-    UR1,
-    UJ1,
-    never
-  >;
+  when<TR1, UR1,
+    TJ1 = any, UJ1 = any>(
+      deferredT: JQuery.Promise<TR1, TJ1, any> | JQuery.Thenable<TR1> | TR1, // tslint:disable-line:use-default-type-parameter
+      deferredU: JQuery.Promise<UR1, UJ1, any> | JQuery.Thenable<UR1> | UR1): JQuery.Promise2<TR1, TJ1, never, // tslint:disable-line:use-default-type-parameter
+        UR1, UJ1, never>;
   /**
    * Provides a way to execute callback functions based on zero or more Thenable objects, usually
    * Deferred objects that represent asynchronous events.
@@ -3499,11 +3241,11 @@ interface JQueryStatic {
    * @see \`{@link https://api.jquery.com/jQuery.when/ }\`
    * @since 1.5
    */
-  when<TR1, TJ1, TR2, TJ2, TR3 = never, TJ3 = never>(
-    deferredT:
-      | JQuery.Promise3<TR1, TJ1, any, TR2, TJ2, any, TR3, TJ3, any>
-      | JQuery.Promise2<TR1, TJ1, any, TR2, TJ2, any>
-  ): JQuery.Promise3<TR1, TJ1, never, TR2, TJ2, never, TR3, TJ3, never>;
+  when<TR1, TJ1,
+    TR2, TJ2,
+    TR3 = never, TJ3 = never>(
+      deferredT: JQuery.Promise3<TR1, TJ1, any, TR2, TJ2, any, TR3, TJ3, any> |
+        JQuery.Promise2<TR1, TJ1, any, TR2, TJ2, any>): JQuery.Promise3<TR1, TJ1, never, TR2, TJ2, never, TR3, TJ3, never>;
   /**
    * Provides a way to execute callback functions based on zero or more Thenable objects, usually
    * Deferred objects that represent asynchronous events.
@@ -3511,9 +3253,7 @@ interface JQueryStatic {
    * @see \`{@link https://api.jquery.com/jQuery.when/ }\`
    * @since 1.5
    */
-  when<TR1, TJ1 = any>(
-    deferred: JQuery.Promise<TR1, TJ1, any> | JQuery.Thenable<TR1> | TR1
-  ): JQuery.Promise<TR1, TJ1, never>; // eslint-disable-line @typescript-eslint/no-unnecessary-type-arguments
+  when<TR1, TJ1 = any>(deferred: JQuery.Promise<TR1, TJ1, any> | JQuery.Thenable<TR1> | TR1): JQuery.Promise<TR1, TJ1, never>; // tslint:disable-line:use-default-type-parameter
   /**
    * Provides a way to execute callback functions based on zero or more Thenable objects, usually
    * Deferred objects that represent asynchronous events.
@@ -3522,9 +3262,7 @@ interface JQueryStatic {
    * @see \`{@link https://api.jquery.com/jQuery.when/ }\`
    * @since 1.5
    */
-  when<TR1 = never, TJ1 = never>(
-    ...deferreds: Array<JQuery.Promise<TR1, TJ1, any> | JQuery.Thenable<TR1> | TR1>
-  ): JQuery.Promise<TR1, TJ1, never>; // eslint-disable-line @typescript-eslint/no-unnecessary-type-arguments
+  when<TR1 = never, TJ1 = never>(...deferreds: Array<JQuery.Promise<TR1, TJ1, any> | JQuery.Thenable<TR1> | TR1>): JQuery.Promise<TR1, TJ1, never>; // tslint:disable-line:use-default-type-parameter
   /**
    * Provides a way to execute callback functions based on zero or more Thenable objects, usually
    * Deferred objects that represent asynchronous events.
@@ -3594,9 +3332,7 @@ interface JQuery<TElement = HTMLElement> extends Iterable<TElement> {
    * @since 1.4
    * @since 3.3
    */
-  addClass(
-    className: JQuery.TypeOrArray<string> | ((this: TElement, index: number, currentClassName: string) => string)
-  ): this;
+  addClass(className: JQuery.TypeOrArray<string> | ((this: TElement, index: number, currentClassName: string) => string)): this;
   /**
    * Insert content, specified by the parameter, after each element in the set of matched elements.
    *
@@ -3617,13 +3353,7 @@ interface JQuery<TElement = HTMLElement> extends Iterable<TElement> {
    * @since 1.4
    * @since 1.10
    */
-  after(
-    fn: (
-      this: TElement,
-      index: number,
-      html: string
-    ) => JQuery.htmlString | JQuery.TypeOrArray<JQuery.Node | JQuery<JQuery.Node>>
-  ): this;
+  after(fn: (this: TElement, index: number, html: string) => JQuery.htmlString | JQuery.TypeOrArray<JQuery.Node | JQuery<JQuery.Node>>): this;
   /**
    * Register a handler to be called when Ajax requests complete. This is an AjaxEvent.
    *
@@ -3631,14 +3361,7 @@ interface JQuery<TElement = HTMLElement> extends Iterable<TElement> {
    * @see \`{@link https://api.jquery.com/ajaxComplete/ }\`
    * @since 1.0
    */
-  ajaxComplete(
-    handler: (
-      this: Document,
-      event: JQuery.Event<Document>,
-      jqXHR: JQuery.jqXHR,
-      ajaxOptions: JQuery.AjaxSettings
-    ) => void | false
-  ): this;
+  ajaxComplete(handler: (this: Document, event: JQuery.Event<Document>, jqXHR: JQuery.jqXHR, ajaxOptions: JQuery.AjaxSettings) => void | false): this;
   /**
    * Register a handler to be called when Ajax requests complete with an error. This is an Ajax Event.
    *
@@ -3646,15 +3369,7 @@ interface JQuery<TElement = HTMLElement> extends Iterable<TElement> {
    * @see \`{@link https://api.jquery.com/ajaxError/ }\`
    * @since 1.0
    */
-  ajaxError(
-    handler: (
-      this: Document,
-      event: JQuery.Event<Document>,
-      jqXHR: JQuery.jqXHR,
-      ajaxSettings: JQuery.AjaxSettings,
-      thrownError: string
-    ) => void | false
-  ): this;
+  ajaxError(handler: (this: Document, event: JQuery.Event<Document>, jqXHR: JQuery.jqXHR, ajaxSettings: JQuery.AjaxSettings, thrownError: string) => void | false): this;
   /**
    * Attach a function to be executed before an Ajax request is sent. This is an Ajax Event.
    *
@@ -3662,14 +3377,7 @@ interface JQuery<TElement = HTMLElement> extends Iterable<TElement> {
    * @see \`{@link https://api.jquery.com/ajaxSend/ }\`
    * @since 1.0
    */
-  ajaxSend(
-    handler: (
-      this: Document,
-      event: JQuery.Event<Document>,
-      jqXHR: JQuery.jqXHR,
-      ajaxOptions: JQuery.AjaxSettings
-    ) => void | false
-  ): this;
+  ajaxSend(handler: (this: Document, event: JQuery.Event<Document>, jqXHR: JQuery.jqXHR, ajaxOptions: JQuery.AjaxSettings) => void | false): this;
   /**
    * Register a handler to be called when the first Ajax request begins. This is an Ajax Event.
    *
@@ -3693,15 +3401,7 @@ interface JQuery<TElement = HTMLElement> extends Iterable<TElement> {
    * @see \`{@link https://api.jquery.com/ajaxSuccess/ }\`
    * @since 1.0
    */
-  ajaxSuccess(
-    handler: (
-      this: Document,
-      event: JQuery.Event<Document>,
-      jqXHR: JQuery.jqXHR,
-      ajaxOptions: JQuery.AjaxSettings,
-      data: JQuery.PlainObject
-    ) => void | false
-  ): this;
+  ajaxSuccess(handler: (this: Document, event: JQuery.Event<Document>, jqXHR: JQuery.jqXHR, ajaxOptions: JQuery.AjaxSettings, data: JQuery.PlainObject) => void | false): this;
   /**
    * Perform a custom animation of a set of CSS properties.
    *
@@ -3712,12 +3412,10 @@ interface JQuery<TElement = HTMLElement> extends Iterable<TElement> {
    * @see \`{@link https://api.jquery.com/animate/ }\`
    * @since 1.0
    */
-  animate(
-    properties: JQuery.PlainObject,
+  animate(properties: JQuery.PlainObject,
     duration: JQuery.Duration,
     easing: string,
-    complete?: (this: TElement) => void
-  ): this;
+    complete?: (this: TElement) => void): this;
   /**
    * Perform a custom animation of a set of CSS properties.
    *
@@ -3728,11 +3426,9 @@ interface JQuery<TElement = HTMLElement> extends Iterable<TElement> {
    * @see \`{@link https://api.jquery.com/animate/ }\`
    * @since 1.0
    */
-  animate(
-    properties: JQuery.PlainObject,
+  animate(properties: JQuery.PlainObject,
     duration_easing: JQuery.Duration | string,
-    complete?: (this: TElement) => void
-  ): this;
+    complete?: (this: TElement) => void): this;
   /**
    * Perform a custom animation of a set of CSS properties.
    *
@@ -3741,7 +3437,8 @@ interface JQuery<TElement = HTMLElement> extends Iterable<TElement> {
    * @see \`{@link https://api.jquery.com/animate/ }\`
    * @since 1.0
    */
-  animate(properties: JQuery.PlainObject, options: JQuery.EffectsOptions<TElement>): this;
+  animate(properties: JQuery.PlainObject,
+    options: JQuery.EffectsOptions<TElement>): this;
   /**
    * Perform a custom animation of a set of CSS properties.
    *
@@ -3750,7 +3447,8 @@ interface JQuery<TElement = HTMLElement> extends Iterable<TElement> {
    * @see \`{@link https://api.jquery.com/animate/ }\`
    * @since 1.0
    */
-  animate(properties: JQuery.PlainObject, complete?: (this: TElement) => void): this;
+  animate(properties: JQuery.PlainObject,
+    complete?: (this: TElement) => void): this;
   /**
    * Insert content, specified by the parameter, to the end of each element in the set of matched elements.
    *
@@ -3770,13 +3468,7 @@ interface JQuery<TElement = HTMLElement> extends Iterable<TElement> {
    * @see \`{@link https://api.jquery.com/append/ }\`
    * @since 1.4
    */
-  append(
-    fn: (
-      this: TElement,
-      index: number,
-      html: string
-    ) => JQuery.htmlString | JQuery.TypeOrArray<JQuery.Node | JQuery<JQuery.Node>>
-  ): this;
+  append(fn: (this: TElement, index: number, html: string) => JQuery.htmlString | JQuery.TypeOrArray<JQuery.Node | JQuery<JQuery.Node>>): this;
   /**
    * Insert every element in the set of matched elements to the end of the target.
    *
@@ -3797,14 +3489,8 @@ interface JQuery<TElement = HTMLElement> extends Iterable<TElement> {
    * @since 1.0
    * @since 1.1
    */
-  attr(
-    attributeName: string,
-    value:
-      | string
-      | number
-      | null
-      | ((this: TElement, index: number, attr: string) => string | number | void | undefined)
-  ): this;
+  attr(attributeName: string,
+    value: string | number | null | ((this: TElement, index: number, attr: string) => string | number | void | undefined)): this;
   /**
    * Set one or more attributes for the set of matched elements.
    *
@@ -3841,13 +3527,7 @@ interface JQuery<TElement = HTMLElement> extends Iterable<TElement> {
    * @since 1.4
    * @since 1.10
    */
-  before(
-    fn: (
-      this: TElement,
-      index: number,
-      html: string
-    ) => JQuery.htmlString | JQuery.TypeOrArray<JQuery.Node | JQuery<JQuery.Node>>
-  ): this;
+  before(fn: (this: TElement, index: number, html: string) => JQuery.htmlString | JQuery.TypeOrArray<JQuery.Node | JQuery<JQuery.Node>>): this;
   // [bind() overloads] https://github.com/jquery/api.jquery.com/issues/1048
   /**
    * Attach a handler to an event for the elements.
@@ -3861,11 +3541,9 @@ interface JQuery<TElement = HTMLElement> extends Iterable<TElement> {
    *
    * @deprecated Deprecated since 3.0. Use \`{@link JQuery.on }\`.
    */
-  bind<TData>(
-    eventType: string,
+  bind<TData>(eventType: string,
     eventData: TData,
-    handler: JQuery.EventHandler<TElement, TData> | JQuery.EventHandlerBase<any, JQuery.Event<TElement, TData>>
-  ): this;
+    handler: JQuery.EventHandler<TElement, TData> | JQuery.EventHandlerBase<any, JQuery.Event<TElement, TData>>): this;
   /**
    * Attach a handler to an event for the elements.
    *
@@ -3879,15 +3557,8 @@ interface JQuery<TElement = HTMLElement> extends Iterable<TElement> {
    *
    * @deprecated Deprecated since 3.0. Use \`{@link JQuery.on }\`.
    */
-  bind(
-    eventType: string,
-    handler:
-      | JQuery.EventHandler<TElement>
-      | JQuery.EventHandlerBase<any, JQuery.Event<TElement>>
-      | false
-      | null
-      | undefined
-  ): this;
+  bind(eventType: string,
+    handler: JQuery.EventHandler<TElement> | JQuery.EventHandlerBase<any, JQuery.Event<TElement>> | false | null | undefined): this;
   /**
    * Attach a handler to an event for the elements.
    *
@@ -3897,11 +3568,7 @@ interface JQuery<TElement = HTMLElement> extends Iterable<TElement> {
    *
    * @deprecated Deprecated since 3.0. Use \`{@link JQuery.on }\`.
    */
-  bind(
-    events: JQuery.PlainObject<
-      JQuery.EventHandler<TElement> | JQuery.EventHandlerBase<any, JQuery.Event<TElement>> | false
-    >
-  ): this;
+  bind(events: JQuery.PlainObject<JQuery.EventHandler<TElement> | JQuery.EventHandlerBase<any, JQuery.Event<TElement>> | false>): this;
   /**
    * Bind an event handler to the "blur" JavaScript event, or trigger that event on an element.
    *
@@ -3912,10 +3579,8 @@ interface JQuery<TElement = HTMLElement> extends Iterable<TElement> {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link JQuery.on }\` or \`{@link JQuery.trigger }\`.
    */
-  blur<TData>(
-    eventData: TData,
-    handler: JQuery.EventHandler<TElement, TData> | JQuery.EventHandlerBase<any, JQuery.Event<TElement, TData>>
-  ): this;
+  blur<TData>(eventData: TData,
+    handler: JQuery.EventHandler<TElement, TData> | JQuery.EventHandlerBase<any, JQuery.Event<TElement, TData>>): this;
   /**
    * Bind an event handler to the "blur" JavaScript event, or trigger that event on an element.
    *
@@ -3936,10 +3601,8 @@ interface JQuery<TElement = HTMLElement> extends Iterable<TElement> {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link JQuery.on }\` or \`{@link JQuery.trigger }\`.
    */
-  change<TData>(
-    eventData: TData,
-    handler: JQuery.EventHandler<TElement, TData> | JQuery.EventHandlerBase<any, JQuery.Event<TElement, TData>>
-  ): this;
+  change<TData>(eventData: TData,
+    handler: JQuery.EventHandler<TElement, TData> | JQuery.EventHandlerBase<any, JQuery.Event<TElement, TData>>): this;
   /**
    * Bind an event handler to the "change" JavaScript event, or trigger that event on an element.
    *
@@ -3976,10 +3639,8 @@ interface JQuery<TElement = HTMLElement> extends Iterable<TElement> {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link JQuery.on }\` or \`{@link JQuery.trigger }\`.
    */
-  click<TData>(
-    eventData: TData,
-    handler: JQuery.EventHandler<TElement, TData> | JQuery.EventHandlerBase<any, JQuery.Event<TElement, TData>>
-  ): this;
+  click<TData>(eventData: TData,
+    handler: JQuery.EventHandler<TElement, TData> | JQuery.EventHandlerBase<any, JQuery.Event<TElement, TData>>): this;
   /**
    * Bind an event handler to the "click" JavaScript event, or trigger that event on an element.
    *
@@ -4042,10 +3703,8 @@ interface JQuery<TElement = HTMLElement> extends Iterable<TElement> {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link JQuery.on }\` or \`{@link JQuery.trigger }\`.
    */
-  contextmenu<TData>(
-    eventData: TData,
-    handler: JQuery.EventHandler<TElement, TData> | JQuery.EventHandlerBase<any, JQuery.Event<TElement, TData>>
-  ): this;
+  contextmenu<TData>(eventData: TData,
+    handler: JQuery.EventHandler<TElement, TData> | JQuery.EventHandlerBase<any, JQuery.Event<TElement, TData>>): this;
   /**
    * Bind an event handler to the "contextmenu" JavaScript event, or trigger that event on an element.
    *
@@ -4055,9 +3714,7 @@ interface JQuery<TElement = HTMLElement> extends Iterable<TElement> {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link JQuery.on }\` or \`{@link JQuery.trigger }\`.
    */
-  contextmenu(
-    handler?: JQuery.EventHandler<TElement> | JQuery.EventHandlerBase<any, JQuery.Event<TElement>> | false
-  ): this;
+  contextmenu(handler?: JQuery.EventHandler<TElement> | JQuery.EventHandlerBase<any, JQuery.Event<TElement>> | false): this;
   /**
    * Set one or more CSS properties for the set of matched elements.
    *
@@ -4069,10 +3726,8 @@ interface JQuery<TElement = HTMLElement> extends Iterable<TElement> {
    * @since 1.0
    * @since 1.4
    */
-  css(
-    propertyName: string,
-    value: string | number | ((this: TElement, index: number, value: string) => string | number | void | undefined)
-  ): this;
+  css(propertyName: string,
+    value: string | number | ((this: TElement, index: number, value: string) => string | number | void | undefined)): this;
   /**
    * Set one or more CSS properties for the set of matched elements.
    *
@@ -4080,11 +3735,7 @@ interface JQuery<TElement = HTMLElement> extends Iterable<TElement> {
    * @see \`{@link https://api.jquery.com/css/ }\`
    * @since 1.0
    */
-  css(
-    properties: JQuery.PlainObject<
-      string | number | ((this: TElement, index: number, value: string) => string | number | void | undefined)
-    >
-  ): this;
+  css(properties: JQuery.PlainObject<string | number | ((this: TElement, index: number, value: string) => string | number | void | undefined)>): this;
   /**
    * Get the computed style properties for the first element in the set of matched elements.
    *
@@ -4110,7 +3761,7 @@ interface JQuery<TElement = HTMLElement> extends Iterable<TElement> {
    * @see \`{@link https://api.jquery.com/data/ }\`
    * @since 1.2.3
    */
-  data(key: string, undefined: undefined): any; // eslint-disable-line @typescript-eslint/unified-signatures
+  data(key: string, undefined: undefined): any; // tslint:disable-line:unified-signatures
   /**
    * Store arbitrary data associated with the matched elements.
    *
@@ -4155,10 +3806,8 @@ interface JQuery<TElement = HTMLElement> extends Iterable<TElement> {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link JQuery.on }\` or \`{@link JQuery.trigger }\`.
    */
-  dblclick<TData>(
-    eventData: TData,
-    handler: JQuery.EventHandler<TElement, TData> | JQuery.EventHandlerBase<any, JQuery.Event<TElement, TData>>
-  ): this;
+  dblclick<TData>(eventData: TData,
+    handler: JQuery.EventHandler<TElement, TData> | JQuery.EventHandlerBase<any, JQuery.Event<TElement, TData>>): this;
   /**
    * Bind an event handler to the "dblclick" JavaScript event, or trigger that event on an element.
    *
@@ -4168,9 +3817,7 @@ interface JQuery<TElement = HTMLElement> extends Iterable<TElement> {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link JQuery.on }\` or \`{@link JQuery.trigger }\`.
    */
-  dblclick(
-    handler?: JQuery.EventHandler<TElement> | JQuery.EventHandlerBase<any, JQuery.Event<TElement>> | false
-  ): this;
+  dblclick(handler?: JQuery.EventHandler<TElement> | JQuery.EventHandlerBase<any, JQuery.Event<TElement>> | false): this;
   /**
    * Set a timer to delay execution of subsequent items in the queue.
    *
@@ -4194,12 +3841,10 @@ interface JQuery<TElement = HTMLElement> extends Iterable<TElement> {
    *
    * @deprecated Deprecated since 3.0. Use \`{@link JQuery.on }\`.
    */
-  delegate<TData>(
-    selector: JQuery.Selector,
+  delegate<TData>(selector: JQuery.Selector,
     eventType: string,
     eventData: TData,
-    handler: JQuery.EventHandler<TElement, TData> | JQuery.EventHandlerBase<any, JQuery.Event<TElement, TData>>
-  ): this;
+    handler: JQuery.EventHandler<TElement, TData> | JQuery.EventHandlerBase<any, JQuery.Event<TElement, TData>>): this;
   /**
    * Attach a handler to one or more events for all elements that match the selector, now or in the
    * future, based on a specific set of root elements.
@@ -4213,11 +3858,9 @@ interface JQuery<TElement = HTMLElement> extends Iterable<TElement> {
    *
    * @deprecated Deprecated since 3.0. Use \`{@link JQuery.on }\`.
    */
-  delegate(
-    selector: JQuery.Selector,
+  delegate(selector: JQuery.Selector,
     eventType: string,
-    handler: JQuery.EventHandler<TElement> | JQuery.EventHandlerBase<any, JQuery.Event<TElement>> | false
-  ): this;
+    handler: JQuery.EventHandler<TElement> | JQuery.EventHandlerBase<any, JQuery.Event<TElement>> | false): this;
   /**
    * Attach a handler to one or more events for all elements that match the selector, now or in the
    * future, based on a specific set of root elements.
@@ -4229,12 +3872,8 @@ interface JQuery<TElement = HTMLElement> extends Iterable<TElement> {
    *
    * @deprecated Deprecated since 3.0. Use \`{@link JQuery.on }\`.
    */
-  delegate(
-    selector: JQuery.Selector,
-    events: JQuery.PlainObject<
-      JQuery.EventHandler<TElement> | JQuery.EventHandlerBase<any, JQuery.Event<TElement>> | false
-    >
-  ): this;
+  delegate(selector: JQuery.Selector,
+    events: JQuery.PlainObject<JQuery.EventHandler<TElement> | JQuery.EventHandlerBase<any, JQuery.Event<TElement>> | false>): this;
   /**
    * Execute the next function on the queue for the matched elements.
    *
@@ -4324,13 +3963,7 @@ interface JQuery<TElement = HTMLElement> extends Iterable<TElement> {
    * @since 1.0
    * @since 1.4.3
    */
-  fadeIn(
-    duration_easing_complete_options?:
-      | JQuery.Duration
-      | string
-      | ((this: TElement) => void)
-      | JQuery.EffectsOptions<TElement>
-  ): this;
+  fadeIn(duration_easing_complete_options?: JQuery.Duration | string | ((this: TElement) => void) | JQuery.EffectsOptions<TElement>): this;
   /**
    * Hide the matched elements by fading them to transparent.
    *
@@ -4363,13 +3996,7 @@ interface JQuery<TElement = HTMLElement> extends Iterable<TElement> {
    * @since 1.0
    * @since 1.4.3
    */
-  fadeOut(
-    duration_easing_complete_options?:
-      | JQuery.Duration
-      | string
-      | ((this: TElement) => void)
-      | JQuery.EffectsOptions<TElement>
-  ): this;
+  fadeOut(duration_easing_complete_options?: JQuery.Duration | string | ((this: TElement) => void) | JQuery.EffectsOptions<TElement>): this;
   /**
    * Adjust the opacity of the matched elements.
    *
@@ -4423,13 +4050,7 @@ interface JQuery<TElement = HTMLElement> extends Iterable<TElement> {
    * @since 1.0
    * @since 1.4.3
    */
-  fadeToggle(
-    duration_easing_complete_options?:
-      | JQuery.Duration
-      | string
-      | ((this: TElement) => void)
-      | JQuery.EffectsOptions<TElement>
-  ): this;
+  fadeToggle(duration_easing_complete_options?: JQuery.Duration | string | ((this: TElement) => void) | JQuery.EffectsOptions<TElement>): this;
   /**
    * Reduce the set of matched elements to those that match the selector or pass the function's test.
    *
@@ -4441,13 +4062,7 @@ interface JQuery<TElement = HTMLElement> extends Iterable<TElement> {
    * @since 1.0
    * @since 1.4
    */
-  filter(
-    selector:
-      | JQuery.Selector
-      | JQuery.TypeOrArray<Element>
-      | JQuery
-      | ((this: TElement, index: number, element: TElement) => boolean)
-  ): this;
+  filter(selector: JQuery.Selector | JQuery.TypeOrArray<Element> | JQuery | ((this: TElement, index: number, element: TElement) => boolean)): this;
   /**
    * Get the descendants of each element in the current set of matched elements, filtered by a selector,
    * jQuery object, or element.
@@ -4485,10 +4100,8 @@ interface JQuery<TElement = HTMLElement> extends Iterable<TElement> {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link JQuery.on }\` or \`{@link JQuery.trigger }\`.
    */
-  focus<TData>(
-    eventData: TData,
-    handler: JQuery.EventHandler<TElement, TData> | JQuery.EventHandlerBase<any, JQuery.Event<TElement, TData>>
-  ): this;
+  focus<TData>(eventData: TData,
+    handler: JQuery.EventHandler<TElement, TData> | JQuery.EventHandlerBase<any, JQuery.Event<TElement, TData>>): this;
   /**
    * Bind an event handler to the "focus" JavaScript event, or trigger that event on an element.
    *
@@ -4509,10 +4122,8 @@ interface JQuery<TElement = HTMLElement> extends Iterable<TElement> {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link JQuery.on }\` or \`{@link JQuery.trigger }\`.
    */
-  focusin<TData>(
-    eventData: TData,
-    handler: JQuery.EventHandler<TElement, TData> | JQuery.EventHandlerBase<any, JQuery.Event<TElement, TData>>
-  ): this;
+  focusin<TData>(eventData: TData,
+    handler: JQuery.EventHandler<TElement, TData> | JQuery.EventHandlerBase<any, JQuery.Event<TElement, TData>>): this;
   /**
    * Bind an event handler to the "focusin" event.
    *
@@ -4533,10 +4144,8 @@ interface JQuery<TElement = HTMLElement> extends Iterable<TElement> {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link JQuery.on }\` or \`{@link JQuery.trigger }\`.
    */
-  focusout<TData>(
-    eventData: TData,
-    handler: JQuery.EventHandler<TElement, TData> | JQuery.EventHandlerBase<any, JQuery.Event<TElement, TData>>
-  ): this;
+  focusout<TData>(eventData: TData,
+    handler: JQuery.EventHandler<TElement, TData> | JQuery.EventHandlerBase<any, JQuery.Event<TElement, TData>>): this;
   /**
    * Bind an event handler to the "focusout" JavaScript event.
    *
@@ -4546,9 +4155,7 @@ interface JQuery<TElement = HTMLElement> extends Iterable<TElement> {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link JQuery.on }\` or \`{@link JQuery.trigger }\`.
    */
-  focusout(
-    handler?: JQuery.EventHandler<TElement> | JQuery.EventHandlerBase<any, JQuery.Event<TElement>> | false
-  ): this;
+  focusout(handler?: JQuery.EventHandler<TElement> | JQuery.EventHandlerBase<any, JQuery.Event<TElement>> | false): this;
   /**
    * Retrieve one of the elements matched by the jQuery object.
    *
@@ -4630,9 +4237,7 @@ interface JQuery<TElement = HTMLElement> extends Iterable<TElement> {
    * @see \`{@link https://api.jquery.com/hide/ }\`
    * @since 1.0
    */
-  hide(
-    duration_complete_options?: JQuery.Duration | ((this: TElement) => void) | JQuery.EffectsOptions<TElement>
-  ): this;
+  hide(duration_complete_options?: JQuery.Duration | ((this: TElement) => void) | JQuery.EffectsOptions<TElement>): this;
   /**
    * Bind one or two handlers to the matched elements, to be executed when the mouse pointer enters and
    * leaves the elements.
@@ -4644,11 +4249,9 @@ interface JQuery<TElement = HTMLElement> extends Iterable<TElement> {
    * @since 1.4
    */
   // HACK: The type parameter T is not used but ensures the 'event' callback parameter is typed correctly.
-  // eslint-disable-next-line
-  hover<T>(
-    handlerInOut: JQuery.EventHandler<TElement> | JQuery.EventHandlerBase<any, JQuery.Event<TElement>> | false,
-    handlerOut?: JQuery.EventHandler<TElement> | JQuery.EventHandlerBase<any, JQuery.Event<TElement>> | false
-  ): this;
+  // tslint:disable-next-line:no-unnecessary-generics
+  hover<T>(handlerInOut: JQuery.EventHandler<TElement> | JQuery.EventHandlerBase<any, JQuery.Event<TElement>> | false,
+    handlerOut?: JQuery.EventHandler<TElement> | JQuery.EventHandlerBase<any, JQuery.Event<TElement>> | false): this;
   /**
    * Set the HTML contents of each element in the set of matched elements.
    *
@@ -4660,9 +4263,7 @@ interface JQuery<TElement = HTMLElement> extends Iterable<TElement> {
    * @since 1.0
    * @since 1.4
    */
-  html(
-    htmlString: JQuery.htmlString | ((this: TElement, index: number, oldhtml: JQuery.htmlString) => JQuery.htmlString)
-  ): this;
+  html(htmlString: JQuery.htmlString | ((this: TElement, index: number, oldhtml: JQuery.htmlString) => JQuery.htmlString)): this;
   /**
    * Get the HTML contents of the first element in the set of matched elements.
    *
@@ -4752,13 +4353,7 @@ interface JQuery<TElement = HTMLElement> extends Iterable<TElement> {
    * @since 1.0
    * @since 1.6
    */
-  is(
-    selector:
-      | JQuery.Selector
-      | JQuery.TypeOrArray<Element>
-      | JQuery
-      | ((this: TElement, index: number, element: TElement) => boolean)
-  ): boolean;
+  is(selector: JQuery.Selector | JQuery.TypeOrArray<Element> | JQuery | ((this: TElement, index: number, element: TElement) => boolean)): boolean;
   /**
    * Bind an event handler to the "keydown" JavaScript event, or trigger that event on an element.
    *
@@ -4769,10 +4364,8 @@ interface JQuery<TElement = HTMLElement> extends Iterable<TElement> {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link JQuery.on }\` or \`{@link JQuery.trigger }\`.
    */
-  keydown<TData>(
-    eventData: TData,
-    handler: JQuery.EventHandler<TElement, TData> | JQuery.EventHandlerBase<any, JQuery.Event<TElement, TData>>
-  ): this;
+  keydown<TData>(eventData: TData,
+    handler: JQuery.EventHandler<TElement, TData> | JQuery.EventHandlerBase<any, JQuery.Event<TElement, TData>>): this;
   /**
    * Bind an event handler to the "keydown" JavaScript event, or trigger that event on an element.
    *
@@ -4793,10 +4386,8 @@ interface JQuery<TElement = HTMLElement> extends Iterable<TElement> {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link JQuery.on }\` or \`{@link JQuery.trigger }\`.
    */
-  keypress<TData>(
-    eventData: TData,
-    handler: JQuery.EventHandler<TElement, TData> | JQuery.EventHandlerBase<any, JQuery.Event<TElement, TData>>
-  ): this;
+  keypress<TData>(eventData: TData,
+    handler: JQuery.EventHandler<TElement, TData> | JQuery.EventHandlerBase<any, JQuery.Event<TElement, TData>>): this;
   /**
    * Bind an event handler to the "keypress" JavaScript event, or trigger that event on an element.
    *
@@ -4806,9 +4397,7 @@ interface JQuery<TElement = HTMLElement> extends Iterable<TElement> {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link JQuery.on }\` or \`{@link JQuery.trigger }\`.
    */
-  keypress(
-    handler?: JQuery.EventHandler<TElement> | JQuery.EventHandlerBase<any, JQuery.Event<TElement>> | false
-  ): this;
+  keypress(handler?: JQuery.EventHandler<TElement> | JQuery.EventHandlerBase<any, JQuery.Event<TElement>> | false): this;
   /**
    * Bind an event handler to the "keyup" JavaScript event, or trigger that event on an element.
    *
@@ -4819,10 +4408,8 @@ interface JQuery<TElement = HTMLElement> extends Iterable<TElement> {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link JQuery.on }\` or \`{@link JQuery.trigger }\`.
    */
-  keyup<TData>(
-    eventData: TData,
-    handler: JQuery.EventHandler<TElement, TData> | JQuery.EventHandlerBase<any, JQuery.Event<TElement, TData>>
-  ): this;
+  keyup<TData>(eventData: TData,
+    handler: JQuery.EventHandler<TElement, TData> | JQuery.EventHandlerBase<any, JQuery.Event<TElement, TData>>): this;
   /**
    * Bind an event handler to the "keyup" JavaScript event, or trigger that event on an element.
    *
@@ -4849,11 +4436,9 @@ interface JQuery<TElement = HTMLElement> extends Iterable<TElement> {
    * @see \`{@link https://api.jquery.com/load/ }\`
    * @since 1.0
    */
-  load(
-    url: string,
+  load(url: string,
     data: string | JQuery.PlainObject,
-    complete: (this: TElement, responseText: string, textStatus: JQuery.Ajax.TextStatus, jqXHR: JQuery.jqXHR) => void
-  ): this;
+    complete: (this: TElement, responseText: string, textStatus: JQuery.Ajax.TextStatus, jqXHR: JQuery.jqXHR) => void): this;
   /**
    * Load data from the server and place the returned HTML into the matched element.
    *
@@ -4863,13 +4448,8 @@ interface JQuery<TElement = HTMLElement> extends Iterable<TElement> {
    * @see \`{@link https://api.jquery.com/load/ }\`
    * @since 1.0
    */
-  load(
-    url: string,
-    complete_data?:
-      | ((this: TElement, responseText: string, textStatus: JQuery.Ajax.TextStatus, jqXHR: JQuery.jqXHR) => void)
-      | string
-      | JQuery.PlainObject
-  ): this;
+  load(url: string,
+    complete_data?: ((this: TElement, responseText: string, textStatus: JQuery.Ajax.TextStatus, jqXHR: JQuery.jqXHR) => void) | string | JQuery.PlainObject): this;
   /**
    * Pass each element in the current matched set through a function, producing a new jQuery object
    * containing the return values.
@@ -4878,9 +4458,7 @@ interface JQuery<TElement = HTMLElement> extends Iterable<TElement> {
    * @see \`{@link https://api.jquery.com/map/ }\`
    * @since 1.2
    */
-  map<TReturn>(
-    callback: (this: TElement, index: number, domElement: TElement) => JQuery.TypeOrArray<TReturn> | null | undefined
-  ): JQuery<TReturn>;
+  map<TReturn>(callback: (this: TElement, index: number, domElement: TElement) => JQuery.TypeOrArray<TReturn> | null | undefined): JQuery<TReturn>;
   /**
    * Bind an event handler to the "mousedown" JavaScript event, or trigger that event on an element.
    *
@@ -4891,10 +4469,8 @@ interface JQuery<TElement = HTMLElement> extends Iterable<TElement> {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link JQuery.on }\` or \`{@link JQuery.trigger }\`.
    */
-  mousedown<TData>(
-    eventData: TData,
-    handler: JQuery.EventHandler<TElement, TData> | JQuery.EventHandlerBase<any, JQuery.Event<TElement, TData>>
-  ): this;
+  mousedown<TData>(eventData: TData,
+    handler: JQuery.EventHandler<TElement, TData> | JQuery.EventHandlerBase<any, JQuery.Event<TElement, TData>>): this;
   /**
    * Bind an event handler to the "mousedown" JavaScript event, or trigger that event on an element.
    *
@@ -4904,9 +4480,7 @@ interface JQuery<TElement = HTMLElement> extends Iterable<TElement> {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link JQuery.on }\` or \`{@link JQuery.trigger }\`.
    */
-  mousedown(
-    handler?: JQuery.EventHandler<TElement> | JQuery.EventHandlerBase<any, JQuery.Event<TElement>> | false
-  ): this;
+  mousedown(handler?: JQuery.EventHandler<TElement> | JQuery.EventHandlerBase<any, JQuery.Event<TElement>> | false): this;
   /**
    * Bind an event handler to be fired when the mouse enters an element, or trigger that handler on an element.
    *
@@ -4917,10 +4491,8 @@ interface JQuery<TElement = HTMLElement> extends Iterable<TElement> {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link JQuery.on }\` or \`{@link JQuery.trigger }\`.
    */
-  mouseenter<TData>(
-    eventData: TData,
-    handler: JQuery.EventHandler<TElement, TData> | JQuery.EventHandlerBase<any, JQuery.Event<TElement, TData>>
-  ): this;
+  mouseenter<TData>(eventData: TData,
+    handler: JQuery.EventHandler<TElement, TData> | JQuery.EventHandlerBase<any, JQuery.Event<TElement, TData>>): this;
   /**
    * Bind an event handler to be fired when the mouse enters an element, or trigger that handler on an element.
    *
@@ -4930,9 +4502,7 @@ interface JQuery<TElement = HTMLElement> extends Iterable<TElement> {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link JQuery.on }\` or \`{@link JQuery.trigger }\`.
    */
-  mouseenter(
-    handler?: JQuery.EventHandler<TElement> | JQuery.EventHandlerBase<any, JQuery.Event<TElement>> | false
-  ): this;
+  mouseenter(handler?: JQuery.EventHandler<TElement> | JQuery.EventHandlerBase<any, JQuery.Event<TElement>> | false): this;
   /**
    * Bind an event handler to be fired when the mouse leaves an element, or trigger that handler on an element.
    *
@@ -4943,10 +4513,8 @@ interface JQuery<TElement = HTMLElement> extends Iterable<TElement> {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link JQuery.on }\` or \`{@link JQuery.trigger }\`.
    */
-  mouseleave<TData>(
-    eventData: TData,
-    handler: JQuery.EventHandler<TElement, TData> | JQuery.EventHandlerBase<any, JQuery.Event<TElement, TData>>
-  ): this;
+  mouseleave<TData>(eventData: TData,
+    handler: JQuery.EventHandler<TElement, TData> | JQuery.EventHandlerBase<any, JQuery.Event<TElement, TData>>): this;
   /**
    * Bind an event handler to be fired when the mouse leaves an element, or trigger that handler on an element.
    *
@@ -4956,9 +4524,7 @@ interface JQuery<TElement = HTMLElement> extends Iterable<TElement> {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link JQuery.on }\` or \`{@link JQuery.trigger }\`.
    */
-  mouseleave(
-    handler?: JQuery.EventHandler<TElement> | JQuery.EventHandlerBase<any, JQuery.Event<TElement>> | false
-  ): this;
+  mouseleave(handler?: JQuery.EventHandler<TElement> | JQuery.EventHandlerBase<any, JQuery.Event<TElement>> | false): this;
   /**
    * Bind an event handler to the "mousemove" JavaScript event, or trigger that event on an element.
    *
@@ -4969,10 +4535,8 @@ interface JQuery<TElement = HTMLElement> extends Iterable<TElement> {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link JQuery.on }\` or \`{@link JQuery.trigger }\`.
    */
-  mousemove<TData>(
-    eventData: TData,
-    handler: JQuery.EventHandler<TElement, TData> | JQuery.EventHandlerBase<any, JQuery.Event<TElement, TData>>
-  ): this;
+  mousemove<TData>(eventData: TData,
+    handler: JQuery.EventHandler<TElement, TData> | JQuery.EventHandlerBase<any, JQuery.Event<TElement, TData>>): this;
   /**
    * Bind an event handler to the "mousemove" JavaScript event, or trigger that event on an element.
    *
@@ -4982,9 +4546,7 @@ interface JQuery<TElement = HTMLElement> extends Iterable<TElement> {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link JQuery.on }\` or \`{@link JQuery.trigger }\`.
    */
-  mousemove(
-    handler?: JQuery.EventHandler<TElement> | JQuery.EventHandlerBase<any, JQuery.Event<TElement>> | false
-  ): this;
+  mousemove(handler?: JQuery.EventHandler<TElement> | JQuery.EventHandlerBase<any, JQuery.Event<TElement>> | false): this;
   /**
    * Bind an event handler to the "mouseout" JavaScript event, or trigger that event on an element.
    *
@@ -4995,10 +4557,8 @@ interface JQuery<TElement = HTMLElement> extends Iterable<TElement> {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link JQuery.on }\` or \`{@link JQuery.trigger }\`.
    */
-  mouseout<TData>(
-    eventData: TData,
-    handler: JQuery.EventHandler<TElement, TData> | JQuery.EventHandlerBase<any, JQuery.Event<TElement, TData>>
-  ): this;
+  mouseout<TData>(eventData: TData,
+    handler: JQuery.EventHandler<TElement, TData> | JQuery.EventHandlerBase<any, JQuery.Event<TElement, TData>>): this;
   /**
    * Bind an event handler to the "mouseout" JavaScript event, or trigger that event on an element.
    *
@@ -5008,9 +4568,7 @@ interface JQuery<TElement = HTMLElement> extends Iterable<TElement> {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link JQuery.on }\` or \`{@link JQuery.trigger }\`.
    */
-  mouseout(
-    handler?: JQuery.EventHandler<TElement> | JQuery.EventHandlerBase<any, JQuery.Event<TElement>> | false
-  ): this;
+  mouseout(handler?: JQuery.EventHandler<TElement> | JQuery.EventHandlerBase<any, JQuery.Event<TElement>> | false): this;
   /**
    * Bind an event handler to the "mouseover" JavaScript event, or trigger that event on an element.
    *
@@ -5021,10 +4579,8 @@ interface JQuery<TElement = HTMLElement> extends Iterable<TElement> {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link JQuery.on }\` or \`{@link JQuery.trigger }\`.
    */
-  mouseover<TData>(
-    eventData: TData,
-    handler: JQuery.EventHandler<TElement, TData> | JQuery.EventHandlerBase<any, JQuery.Event<TElement, TData>>
-  ): this;
+  mouseover<TData>(eventData: TData,
+    handler: JQuery.EventHandler<TElement, TData> | JQuery.EventHandlerBase<any, JQuery.Event<TElement, TData>>): this;
   /**
    * Bind an event handler to the "mouseover" JavaScript event, or trigger that event on an element.
    *
@@ -5034,9 +4590,7 @@ interface JQuery<TElement = HTMLElement> extends Iterable<TElement> {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link JQuery.on }\` or \`{@link JQuery.trigger }\`.
    */
-  mouseover(
-    handler?: JQuery.EventHandler<TElement> | JQuery.EventHandlerBase<any, JQuery.Event<TElement>> | false
-  ): this;
+  mouseover(handler?: JQuery.EventHandler<TElement> | JQuery.EventHandlerBase<any, JQuery.Event<TElement>> | false): this;
   /**
    * Bind an event handler to the "mouseup" JavaScript event, or trigger that event on an element.
    *
@@ -5047,10 +4601,8 @@ interface JQuery<TElement = HTMLElement> extends Iterable<TElement> {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link JQuery.on }\` or \`{@link JQuery.trigger }\`.
    */
-  mouseup<TData>(
-    eventData: TData,
-    handler: JQuery.EventHandler<TElement, TData> | JQuery.EventHandlerBase<any, JQuery.Event<TElement, TData>>
-  ): this;
+  mouseup<TData>(eventData: TData,
+    handler: JQuery.EventHandler<TElement, TData> | JQuery.EventHandlerBase<any, JQuery.Event<TElement, TData>>): this;
   /**
    * Bind an event handler to the "mouseup" JavaScript event, or trigger that event on an element.
    *
@@ -5102,13 +4654,7 @@ interface JQuery<TElement = HTMLElement> extends Iterable<TElement> {
    * @since 1.0
    * @since 1.4
    */
-  not(
-    selector:
-      | JQuery.Selector
-      | JQuery.TypeOrArray<Element>
-      | JQuery
-      | ((this: TElement, index: number, element: TElement) => boolean)
-  ): this;
+  not(selector: JQuery.Selector | JQuery.TypeOrArray<Element> | JQuery | ((this: TElement, index: number, element: TElement) => boolean)): this;
   /**
    * Remove an event handler.
    *
@@ -5119,11 +4665,7 @@ interface JQuery<TElement = HTMLElement> extends Iterable<TElement> {
    * @see \`{@link https://api.jquery.com/off/ }\`
    * @since 1.7
    */
-  off(
-    events: string,
-    selector: JQuery.Selector,
-    handler: JQuery.EventHandlerBase<any, JQuery.Event<TElement, any>> | false
-  ): this;
+  off(events: string, selector: JQuery.Selector, handler: JQuery.EventHandlerBase<any, JQuery.Event<TElement, any>> | false): this;
   /**
    * Remove an event handler.
    *
@@ -5134,10 +4676,7 @@ interface JQuery<TElement = HTMLElement> extends Iterable<TElement> {
    * @see \`{@link https://api.jquery.com/off/ }\`
    * @since 1.7
    */
-  off(
-    events: string,
-    selector_handler?: JQuery.Selector | JQuery.EventHandlerBase<any, JQuery.Event<TElement, any>> | false
-  ): this;
+  off(events: string, selector_handler?: JQuery.Selector | JQuery.EventHandlerBase<any, JQuery.Event<TElement, any>> | false): this;
   /**
    * Remove an event handler.
    *
@@ -5147,10 +4686,7 @@ interface JQuery<TElement = HTMLElement> extends Iterable<TElement> {
    * @see \`{@link https://api.jquery.com/off/ }\`
    * @since 1.7
    */
-  off(
-    events: JQuery.PlainObject<JQuery.EventHandlerBase<any, JQuery.Event<TElement, any>> | false>,
-    selector?: JQuery.Selector
-  ): this;
+  off(events: JQuery.PlainObject<JQuery.EventHandlerBase<any, JQuery.Event<TElement, any>> | false>, selector?: JQuery.Selector): this;
   /**
    * Remove an event handler.
    *
@@ -5170,11 +4706,7 @@ interface JQuery<TElement = HTMLElement> extends Iterable<TElement> {
    * @see \`{@link https://api.jquery.com/offset/ }\`
    * @since 1.4
    */
-  offset(
-    coordinates:
-      | JQuery.CoordinatesPartial
-      | ((this: TElement, index: number, coords: JQuery.Coordinates) => JQuery.CoordinatesPartial)
-  ): this;
+  offset(coordinates: JQuery.CoordinatesPartial | ((this: TElement, index: number, coords: JQuery.Coordinates) => JQuery.CoordinatesPartial)): this;
   /**
    * Get the current coordinates of the first element in the set of matched elements, relative to the document.
    *
@@ -5200,12 +4732,10 @@ interface JQuery<TElement = HTMLElement> extends Iterable<TElement> {
    * @see \`{@link https://api.jquery.com/on/ }\`
    * @since 1.7
    */
-  on<TData>(
-    events: string,
+  on<TData>(events: string,
     selector: JQuery.Selector | null,
     data: TData,
-    handler: JQuery.EventHandler<TElement, TData> | JQuery.EventHandlerBase<any, JQuery.Event<TElement, TData>>
-  ): this;
+    handler: JQuery.EventHandler<TElement, TData> | JQuery.EventHandlerBase<any, JQuery.Event<TElement, TData>>): this;
   /**
    * Attach an event handler function for one or more events to the selected elements.
    *
@@ -5217,7 +4747,10 @@ interface JQuery<TElement = HTMLElement> extends Iterable<TElement> {
    * @see \`{@link https://api.jquery.com/on/ }\`
    * @since 1.7
    */
-  on(events: string, selector: JQuery.Selector | null, data: any, handler: (event: JQueryEventObject) => void): this; // eslint-disable-line @typescript-eslint/unified-signatures
+  on(events: string,
+    selector: JQuery.Selector | null,
+    data: any,
+    handler: ((event: JQueryEventObject) => void)): this; // tslint:disable-line:unified-signatures
   /**
    * Attach an event handler function for one or more events to the selected elements.
    *
@@ -5229,11 +4762,9 @@ interface JQuery<TElement = HTMLElement> extends Iterable<TElement> {
    * @see \`{@link https://api.jquery.com/on/ }\`
    * @since 1.7
    */
-  on(
-    events: string,
+  on(events: string,
     selector: JQuery.Selector,
-    handler: JQuery.EventHandler<TElement> | JQuery.EventHandlerBase<any, JQuery.Event<TElement>> | false
-  ): this;
+    handler: JQuery.EventHandler<TElement> | JQuery.EventHandlerBase<any, JQuery.Event<TElement>> | false): this;
   /**
    * Attach an event handler function for one or more events to the selected elements.
    *
@@ -5244,152 +4775,129 @@ interface JQuery<TElement = HTMLElement> extends Iterable<TElement> {
    * @see \`{@link https://api.jquery.com/on/ }\`
    * @since 1.7
    */
-  on(events: string, selector: JQuery.Selector, handler: (event: JQueryEventObject) => void): this; // eslint-disable-line @typescript-eslint/unified-signatures
-  /**
-   * Attach an event handler function for one or more events to the selected elements.
-   *
-   * @param events One or more space-separated event types and optional namespaces, such as "click" or "keydown.myPlugin".
-   * @param data Data to be passed to the handler in event.data when an event is triggered.
-   * @param handler A function to execute when the event is triggered.
-   * @see \`{@link https://api.jquery.com/on/ }\`
-   * @since 1.7
-   */
-  on<TData>(
-    events: string,
-    data: TData,
-    handler: JQuery.EventHandler<TElement, TData> | JQuery.EventHandlerBase<any, JQuery.Event<TElement, TData>>
-  ): this;
-  /**
-   * Attach an event handler function for one or more events to the selected elements.
-   *
-   * @param events One or more space-separated event types and optional namespaces, such as "click" or "keydown.myPlugin".
-   * @param data Data to be passed to the handler in event.data when an event is triggered.
-   * @param handler A function to execute when the event is triggered.
-   * @see \`{@link https://api.jquery.com/on/ }\`
-   * @since 1.7
-   */
-  on(
-    events: string,
-    data: any, // eslint-disable-line @typescript-eslint/unified-signatures
-    handler: (event: JQueryEventObject) => void
-  ): this;
-  /**
-   * Attach an event handler function for one or more events to the selected elements.
-   *
-   * @param events One or more space-separated event types and optional namespaces, such as "click" or "keydown.myPlugin".
-   * @param handler A function to execute when the event is triggered. The value false is also allowed as a shorthand
-   *                for a function that simply does return false.
-   * @see \`{@link https://api.jquery.com/on/ }\`
-   * @since 1.7
-   */
-  on(
-    events: string,
-    handler: JQuery.EventHandler<TElement> | JQuery.EventHandlerBase<any, JQuery.Event<TElement>> | false
-  ): this;
-  /**
-   * Attach an event handler function for one or more events to the selected elements.
-   *
-   * @param events One or more space-separated event types and optional namespaces, such as "click" or "keydown.myPlugin".
-   * @param handler A function to execute when the event is triggered.
-   * @see \`{@link https://api.jquery.com/on/ }\`
-   * @since 1.7
-   */
-  on(events: string, handler: (event: JQueryEventObject) => void): this; // eslint-disable-line @typescript-eslint/unified-signatures
-  /**
-   * Attach an event handler function for one or more events to the selected elements.
-   *
-   * @param events An object in which the string keys represent one or more space-separated event types and optional
-   *               namespaces, and the values represent a handler function to be called for the event(s).
-   * @param selector A selector string to filter the descendants of the selected elements that will call the handler. If
-   *                 the selector is null or omitted, the handler is always called when it reaches the selected element.
-   * @param data Data to be passed to the handler in event.data when an event occurs.
-   * @see \`{@link https://api.jquery.com/on/ }\`
-   * @since 1.7
-   */
-  on<TData>(
-    events: JQuery.PlainObject<
-      JQuery.EventHandler<TElement, TData> | JQuery.EventHandlerBase<any, JQuery.Event<TElement, TData>> | false
-    >,
-    selector: JQuery.Selector | null,
-    data: TData
-  ): this;
-  /**
-   * Attach an event handler function for one or more events to the selected elements.
-   *
-   * @param events An object in which the string keys represent one or more space-separated event types and optional
-   *               namespaces, and the values represent a handler function to be called for the event(s).
-   * @param selector A selector string to filter the descendants of the selected elements that will call the handler. If
-   *                 the selector is null or omitted, the handler is always called when it reaches the selected element.
-   * @see \`{@link https://api.jquery.com/on/ }\`
-   * @since 1.7
-   */
-  on(
-    events: JQuery.PlainObject<
-      JQuery.EventHandler<TElement> | JQuery.EventHandlerBase<any, JQuery.Event<TElement>> | false
-    >,
-    selector: JQuery.Selector
-  ): this; // eslint-disable-line @typescript-eslint/unified-signatures
-  /**
-   * Attach an event handler function for one or more events to the selected elements.
-   *
-   * @param events An object in which the string keys represent one or more space-separated event types and optional
-   *               namespaces, and the values represent a handler function to be called for the event(s).
-   * @param data Data to be passed to the handler in event.data when an event occurs.
-   * @see \`{@link https://api.jquery.com/on/ }\`
-   * @since 1.7
-   */
-  on<TData>(
-    events: JQuery.PlainObject<
-      JQuery.EventHandler<TElement, TData> | JQuery.EventHandlerBase<any, JQuery.Event<TElement, TData>> | false
-    >,
-    data: TData
-  ): this;
-  /**
-   * Attach an event handler function for one or more events to the selected elements.
-   *
-   * @param events An object in which the string keys represent one or more space-separated event types and optional
-   *               namespaces, and the values represent a handler function to be called for the event(s).
-   * @see \`{@link https://api.jquery.com/on/ }\`
-   * @since 1.7
-   */
-  on(
-    events: JQuery.PlainObject<
-      JQuery.EventHandler<TElement> | JQuery.EventHandlerBase<any, JQuery.Event<TElement>> | false
-    >
-  ): this;
-  /**
-   * Attach a handler to an event for the elements. The handler is executed at most once per element per event type.
-   *
-   * @param events One or more space-separated event types and optional namespaces, such as "click" or "keydown.myPlugin".
-   * @param selector A selector string to filter the descendants of the selected elements that trigger the event. If the
-   *                 selector is null or omitted, the event is always triggered when it reaches the selected element.
-   * @param data Data to be passed to the handler in event.data when an event is triggered.
-   * @param handler A function to execute when the event is triggered.
-   * @see \`{@link https://api.jquery.com/one/ }\`
-   * @since 1.7
-   */
-  one<TData>(
-    events: string,
-    selector: JQuery.Selector | null,
-    data: TData,
-    handler: JQuery.EventHandler<TElement, TData> | JQuery.EventHandlerBase<any, JQuery.Event<TElement, TData>>
-  ): this;
-  /**
-   * Attach a handler to an event for the elements. The handler is executed at most once per element per event type.
-   *
-   * @param events One or more space-separated event types and optional namespaces, such as "click" or "keydown.myPlugin".
-   * @param selector A selector string to filter the descendants of the selected elements that trigger the event. If the
-   *                 selector is null or omitted, the event is always triggered when it reaches the selected element.
-   * @param handler A function to execute when the event is triggered. The value false is also allowed as a shorthand
-   *                for a function that simply does return false.
-   * @see \`{@link https://api.jquery.com/one/ }\`
-   * @since 1.7
-   */
-  one(
-    events: string,
+  on(events: string,
     selector: JQuery.Selector,
-    handler: JQuery.EventHandler<TElement> | JQuery.EventHandlerBase<any, JQuery.Event<TElement>> | false
-  ): this;
+    handler: ((event: JQueryEventObject) => void)): this; // tslint:disable-line:unified-signatures
+  /**
+   * Attach an event handler function for one or more events to the selected elements.
+   *
+   * @param events One or more space-separated event types and optional namespaces, such as "click" or "keydown.myPlugin".
+   * @param data Data to be passed to the handler in event.data when an event is triggered.
+   * @param handler A function to execute when the event is triggered.
+   * @see \`{@link https://api.jquery.com/on/ }\`
+   * @since 1.7
+   */
+  on<TData>(events: string,
+    data: TData,
+    handler: JQuery.EventHandler<TElement, TData> | JQuery.EventHandlerBase<any, JQuery.Event<TElement, TData>>): this;
+  /**
+   * Attach an event handler function for one or more events to the selected elements.
+   *
+   * @param events One or more space-separated event types and optional namespaces, such as "click" or "keydown.myPlugin".
+   * @param data Data to be passed to the handler in event.data when an event is triggered.
+   * @param handler A function to execute when the event is triggered.
+   * @see \`{@link https://api.jquery.com/on/ }\`
+   * @since 1.7
+   */
+  on(events: string,
+    data: any, // tslint:disable-line:unified-signatures
+    handler: ((event: JQueryEventObject) => void)): this;
+  /**
+   * Attach an event handler function for one or more events to the selected elements.
+   *
+   * @param events One or more space-separated event types and optional namespaces, such as "click" or "keydown.myPlugin".
+   * @param handler A function to execute when the event is triggered. The value false is also allowed as a shorthand
+   *                for a function that simply does return false.
+   * @see \`{@link https://api.jquery.com/on/ }\`
+   * @since 1.7
+   */
+  on(events: string,
+    handler: JQuery.EventHandler<TElement> | JQuery.EventHandlerBase<any, JQuery.Event<TElement>> | false): this;
+  /**
+   * Attach an event handler function for one or more events to the selected elements.
+   *
+   * @param events One or more space-separated event types and optional namespaces, such as "click" or "keydown.myPlugin".
+   * @param handler A function to execute when the event is triggered.
+   * @see \`{@link https://api.jquery.com/on/ }\`
+   * @since 1.7
+   */
+  on(events: string,
+    handler: ((event: JQueryEventObject) => void)): this; // tslint:disable-line:unified-signatures
+  /**
+   * Attach an event handler function for one or more events to the selected elements.
+   *
+   * @param events An object in which the string keys represent one or more space-separated event types and optional
+   *               namespaces, and the values represent a handler function to be called for the event(s).
+   * @param selector A selector string to filter the descendants of the selected elements that will call the handler. If
+   *                 the selector is null or omitted, the handler is always called when it reaches the selected element.
+   * @param data Data to be passed to the handler in event.data when an event occurs.
+   * @see \`{@link https://api.jquery.com/on/ }\`
+   * @since 1.7
+   */
+  on<TData>(events: JQuery.PlainObject<JQuery.EventHandler<TElement, TData> | JQuery.EventHandlerBase<any, JQuery.Event<TElement, TData>> | false>,
+    selector: JQuery.Selector | null,
+    data: TData): this;
+  /**
+   * Attach an event handler function for one or more events to the selected elements.
+   *
+   * @param events An object in which the string keys represent one or more space-separated event types and optional
+   *               namespaces, and the values represent a handler function to be called for the event(s).
+   * @param selector A selector string to filter the descendants of the selected elements that will call the handler. If
+   *                 the selector is null or omitted, the handler is always called when it reaches the selected element.
+   * @see \`{@link https://api.jquery.com/on/ }\`
+   * @since 1.7
+   */
+  on(events: JQuery.PlainObject<JQuery.EventHandler<TElement> | JQuery.EventHandlerBase<any, JQuery.Event<TElement>> | false>,
+    selector: JQuery.Selector): this; // tslint:disable-line:unified-signatures
+  /**
+   * Attach an event handler function for one or more events to the selected elements.
+   *
+   * @param events An object in which the string keys represent one or more space-separated event types and optional
+   *               namespaces, and the values represent a handler function to be called for the event(s).
+   * @param data Data to be passed to the handler in event.data when an event occurs.
+   * @see \`{@link https://api.jquery.com/on/ }\`
+   * @since 1.7
+   */
+  on<TData>(events: JQuery.PlainObject<JQuery.EventHandler<TElement, TData> | JQuery.EventHandlerBase<any, JQuery.Event<TElement, TData>> | false>,
+    data: TData): this;
+  /**
+   * Attach an event handler function for one or more events to the selected elements.
+   *
+   * @param events An object in which the string keys represent one or more space-separated event types and optional
+   *               namespaces, and the values represent a handler function to be called for the event(s).
+   * @see \`{@link https://api.jquery.com/on/ }\`
+   * @since 1.7
+   */
+  on(events: JQuery.PlainObject<JQuery.EventHandler<TElement> | JQuery.EventHandlerBase<any, JQuery.Event<TElement>> | false>): this;
+  /**
+   * Attach a handler to an event for the elements. The handler is executed at most once per element per event type.
+   *
+   * @param events One or more space-separated event types and optional namespaces, such as "click" or "keydown.myPlugin".
+   * @param selector A selector string to filter the descendants of the selected elements that trigger the event. If the
+   *                 selector is null or omitted, the event is always triggered when it reaches the selected element.
+   * @param data Data to be passed to the handler in event.data when an event is triggered.
+   * @param handler A function to execute when the event is triggered.
+   * @see \`{@link https://api.jquery.com/one/ }\`
+   * @since 1.7
+   */
+  one<TData>(events: string,
+    selector: JQuery.Selector | null,
+    data: TData,
+    handler: JQuery.EventHandler<TElement, TData> | JQuery.EventHandlerBase<any, JQuery.Event<TElement, TData>>): this;
+  /**
+   * Attach a handler to an event for the elements. The handler is executed at most once per element per event type.
+   *
+   * @param events One or more space-separated event types and optional namespaces, such as "click" or "keydown.myPlugin".
+   * @param selector A selector string to filter the descendants of the selected elements that trigger the event. If the
+   *                 selector is null or omitted, the event is always triggered when it reaches the selected element.
+   * @param handler A function to execute when the event is triggered. The value false is also allowed as a shorthand
+   *                for a function that simply does return false.
+   * @see \`{@link https://api.jquery.com/one/ }\`
+   * @since 1.7
+   */
+  one(events: string,
+    selector: JQuery.Selector,
+    handler: JQuery.EventHandler<TElement> | JQuery.EventHandlerBase<any, JQuery.Event<TElement>> | false): this;
   /**
    * Attach a handler to an event for the elements. The handler is executed at most once per element per event type.
    *
@@ -5399,11 +4907,9 @@ interface JQuery<TElement = HTMLElement> extends Iterable<TElement> {
    * @see \`{@link https://api.jquery.com/one/ }\`
    * @since 1.7
    */
-  one<TData>(
-    events: string,
+  one<TData>(events: string,
     data: TData,
-    handler: JQuery.EventHandler<TElement, TData> | JQuery.EventHandlerBase<any, JQuery.Event<TElement, TData>>
-  ): this;
+    handler: JQuery.EventHandler<TElement, TData> | JQuery.EventHandlerBase<any, JQuery.Event<TElement, TData>>): this;
   /**
    * Attach a handler to an event for the elements. The handler is executed at most once per element per event type.
    *
@@ -5413,10 +4919,8 @@ interface JQuery<TElement = HTMLElement> extends Iterable<TElement> {
    * @see \`{@link https://api.jquery.com/one/ }\`
    * @since 1.7
    */
-  one(
-    events: string,
-    handler: JQuery.EventHandler<TElement> | JQuery.EventHandlerBase<any, JQuery.Event<TElement>> | false
-  ): this;
+  one(events: string,
+    handler: JQuery.EventHandler<TElement> | JQuery.EventHandlerBase<any, JQuery.Event<TElement>> | false): this;
   /**
    * Attach a handler to an event for the elements. The handler is executed at most once per element per event type.
    *
@@ -5428,13 +4932,9 @@ interface JQuery<TElement = HTMLElement> extends Iterable<TElement> {
    * @see \`{@link https://api.jquery.com/one/ }\`
    * @since 1.7
    */
-  one<TData>(
-    events: JQuery.PlainObject<
-      JQuery.EventHandler<TElement, TData> | JQuery.EventHandlerBase<any, JQuery.Event<TElement, TData>> | false
-    >,
+  one<TData>(events: JQuery.PlainObject<JQuery.EventHandler<TElement, TData> | JQuery.EventHandlerBase<any, JQuery.Event<TElement, TData>> | false>,
     selector: JQuery.Selector | null,
-    data: TData
-  ): this;
+    data: TData): this;
   /**
    * Attach a handler to an event for the elements. The handler is executed at most once per element per event type.
    *
@@ -5445,12 +4945,8 @@ interface JQuery<TElement = HTMLElement> extends Iterable<TElement> {
    * @see \`{@link https://api.jquery.com/one/ }\`
    * @since 1.7
    */
-  one(
-    events: JQuery.PlainObject<
-      JQuery.EventHandler<TElement> | JQuery.EventHandlerBase<any, JQuery.Event<TElement>> | false
-    >,
-    selector: JQuery.Selector
-  ): this; // eslint-disable-line @typescript-eslint/unified-signatures
+  one(events: JQuery.PlainObject<JQuery.EventHandler<TElement> | JQuery.EventHandlerBase<any, JQuery.Event<TElement>> | false>,
+    selector: JQuery.Selector): this; // tslint:disable-line:unified-signatures
   /**
    * Attach a handler to an event for the elements. The handler is executed at most once per element per event type.
    *
@@ -5460,12 +4956,8 @@ interface JQuery<TElement = HTMLElement> extends Iterable<TElement> {
    * @see \`{@link https://api.jquery.com/one/ }\`
    * @since 1.7
    */
-  one<TData>(
-    events: JQuery.PlainObject<
-      JQuery.EventHandler<TElement, TData> | JQuery.EventHandlerBase<any, JQuery.Event<TElement, TData>> | false
-    >,
-    data: TData
-  ): this;
+  one<TData>(events: JQuery.PlainObject<JQuery.EventHandler<TElement, TData> | JQuery.EventHandlerBase<any, JQuery.Event<TElement, TData>> | false>,
+    data: TData): this;
   /**
    * Attach a handler to an event for the elements. The handler is executed at most once per element per event type.
    *
@@ -5474,11 +4966,7 @@ interface JQuery<TElement = HTMLElement> extends Iterable<TElement> {
    * @see \`{@link https://api.jquery.com/one/ }\`
    * @since 1.7
    */
-  one(
-    events: JQuery.PlainObject<
-      JQuery.EventHandler<TElement> | JQuery.EventHandlerBase<any, JQuery.Event<TElement>> | false
-    >
-  ): this;
+  one(events: JQuery.PlainObject<JQuery.EventHandler<TElement> | JQuery.EventHandlerBase<any, JQuery.Event<TElement>> | false>): this;
   /**
    * Set the CSS outer height of each element in the set of matched elements.
    *
@@ -5571,13 +5059,7 @@ interface JQuery<TElement = HTMLElement> extends Iterable<TElement> {
    * @see \`{@link https://api.jquery.com/prepend/ }\`
    * @since 1.4
    */
-  prepend(
-    fn: (
-      this: TElement,
-      index: number,
-      html: string
-    ) => JQuery.htmlString | JQuery.TypeOrArray<JQuery.Node | JQuery<JQuery.Node>>
-  ): this;
+  prepend(fn: (this: TElement, index: number, html: string) => JQuery.htmlString | JQuery.TypeOrArray<JQuery.Node | JQuery<JQuery.Node>>): this;
   /**
    * Insert every element in the set of matched elements to the beginning of the target.
    *
@@ -5662,7 +5144,7 @@ interface JQuery<TElement = HTMLElement> extends Iterable<TElement> {
    * @see \`{@link https://api.jquery.com/prop/ }\`
    * @since 1.6
    */
-  prop(propertyName: string, value: any): this; // eslint-disable-line @typescript-eslint/unified-signatures
+  prop(propertyName: string, value: any): this; // tslint:disable-line:unified-signatures
   /**
    * Set one or more properties for the set of matched elements.
    *
@@ -5762,9 +5244,7 @@ interface JQuery<TElement = HTMLElement> extends Iterable<TElement> {
    * @since 1.4
    * @since 3.3
    */
-  removeClass(
-    className?: JQuery.TypeOrArray<string> | ((this: TElement, index: number, className: string) => string)
-  ): this;
+  removeClass(className?: JQuery.TypeOrArray<string> | ((this: TElement, index: number, className: string) => string)): this;
   /**
    * Remove a previously-stored piece of data.
    *
@@ -5812,10 +5292,8 @@ interface JQuery<TElement = HTMLElement> extends Iterable<TElement> {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link JQuery.on }\` or \`{@link JQuery.trigger }\`.
    */
-  resize<TData>(
-    eventData: TData,
-    handler: JQuery.EventHandler<TElement, TData> | JQuery.EventHandlerBase<any, JQuery.Event<TElement, TData>>
-  ): this;
+  resize<TData>(eventData: TData,
+    handler: JQuery.EventHandler<TElement, TData> | JQuery.EventHandlerBase<any, JQuery.Event<TElement, TData>>): this;
   /**
    * Bind an event handler to the "resize" JavaScript event, or trigger that event on an element.
    *
@@ -5836,10 +5314,8 @@ interface JQuery<TElement = HTMLElement> extends Iterable<TElement> {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link JQuery.on }\` or \`{@link JQuery.trigger }\`.
    */
-  scroll<TData>(
-    eventData: TData,
-    handler: JQuery.EventHandler<TElement, TData> | JQuery.EventHandlerBase<any, JQuery.Event<TElement, TData>>
-  ): this;
+  scroll<TData>(eventData: TData,
+    handler: JQuery.EventHandler<TElement, TData> | JQuery.EventHandlerBase<any, JQuery.Event<TElement, TData>>): this;
   /**
    * Bind an event handler to the "scroll" JavaScript event, or trigger that event on an element.
    *
@@ -5891,10 +5367,8 @@ interface JQuery<TElement = HTMLElement> extends Iterable<TElement> {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link JQuery.on }\` or \`{@link JQuery.trigger }\`.
    */
-  select<TData>(
-    eventData: TData,
-    handler: JQuery.EventHandler<TElement, TData> | JQuery.EventHandlerBase<any, JQuery.Event<TElement, TData>>
-  ): this;
+  select<TData>(eventData: TData,
+    handler: JQuery.EventHandler<TElement, TData> | JQuery.EventHandlerBase<any, JQuery.Event<TElement, TData>>): this;
   /**
    * Bind an event handler to the "select" JavaScript event, or trigger that event on an element.
    *
@@ -5949,9 +5423,7 @@ interface JQuery<TElement = HTMLElement> extends Iterable<TElement> {
    * @see \`{@link https://api.jquery.com/show/ }\`
    * @since 1.0
    */
-  show(
-    duration_complete_options?: JQuery.Duration | ((this: TElement) => void) | JQuery.EffectsOptions<TElement>
-  ): this;
+  show(duration_complete_options?: JQuery.Duration | ((this: TElement) => void) | JQuery.EffectsOptions<TElement>): this;
   /**
    * Get the siblings of each element in the set of matched elements, optionally filtered by a selector.
    *
@@ -6003,13 +5475,7 @@ interface JQuery<TElement = HTMLElement> extends Iterable<TElement> {
    * @since 1.0
    * @since 1.4.3
    */
-  slideDown(
-    duration_easing_complete_options?:
-      | JQuery.Duration
-      | string
-      | ((this: TElement) => void)
-      | JQuery.EffectsOptions<TElement>
-  ): this;
+  slideDown(duration_easing_complete_options?: JQuery.Duration | string | ((this: TElement) => void) | JQuery.EffectsOptions<TElement>): this;
   /**
    * Display or hide the matched elements with a sliding motion.
    *
@@ -6042,13 +5508,7 @@ interface JQuery<TElement = HTMLElement> extends Iterable<TElement> {
    * @since 1.0
    * @since 1.4.3
    */
-  slideToggle(
-    duration_easing_complete_options?:
-      | JQuery.Duration
-      | string
-      | ((this: TElement) => void)
-      | JQuery.EffectsOptions<TElement>
-  ): this;
+  slideToggle(duration_easing_complete_options?: JQuery.Duration | string | ((this: TElement) => void) | JQuery.EffectsOptions<TElement>): this;
   /**
    * Hide the matched elements with a sliding motion.
    *
@@ -6081,13 +5541,7 @@ interface JQuery<TElement = HTMLElement> extends Iterable<TElement> {
    * @since 1.0
    * @since 1.4.3
    */
-  slideUp(
-    duration_easing_complete_options?:
-      | JQuery.Duration
-      | string
-      | ((this: TElement) => void)
-      | JQuery.EffectsOptions<TElement>
-  ): this;
+  slideUp(duration_easing_complete_options?: JQuery.Duration | string | ((this: TElement) => void) | JQuery.EffectsOptions<TElement>): this;
   /**
    * Stop the currently-running animation on the matched elements.
    *
@@ -6117,10 +5571,8 @@ interface JQuery<TElement = HTMLElement> extends Iterable<TElement> {
    *
    * @deprecated Deprecated since 3.3. Use \`{@link JQuery.on }\` or \`{@link JQuery.trigger }\`.
    */
-  submit<TData>(
-    eventData: TData,
-    handler: JQuery.EventHandler<TElement, TData> | JQuery.EventHandlerBase<any, JQuery.Event<TElement, TData>>
-  ): this;
+  submit<TData>(eventData: TData,
+    handler: JQuery.EventHandler<TElement, TData> | JQuery.EventHandlerBase<any, JQuery.Event<TElement, TData>>): this;
   /**
    * Bind an event handler to the "submit" JavaScript event, or trigger that event on an element.
    *
@@ -6142,9 +5594,7 @@ interface JQuery<TElement = HTMLElement> extends Iterable<TElement> {
    * @since 1.0
    * @since 1.4
    */
-  text(
-    text: string | number | boolean | ((this: TElement, index: number, text: string) => string | number | boolean)
-  ): this;
+  text(text: string | number | boolean | ((this: TElement, index: number, text: string) => string | number | boolean)): this;
   /**
    * Get the combined text contents of each element in the set of matched elements, including their descendants.
    *
@@ -6189,13 +5639,7 @@ interface JQuery<TElement = HTMLElement> extends Iterable<TElement> {
    * @since 1.0
    * @since 1.3
    */
-  toggle(
-    duration_complete_options_display?:
-      | JQuery.Duration
-      | ((this: TElement) => void)
-      | JQuery.EffectsOptions<TElement>
-      | boolean
-  ): this;
+  toggle(duration_complete_options_display?: JQuery.Duration | ((this: TElement) => void) | JQuery.EffectsOptions<TElement> | boolean): this;
   /**
    * Add or remove one or more classes from each element in the set of matched elements, depending on
    * either the class's presence or the value of the state argument.
@@ -6211,12 +5655,8 @@ interface JQuery<TElement = HTMLElement> extends Iterable<TElement> {
    * @since 1.4
    * @since 3.3
    */
-  toggleClass<TState extends boolean>(
-    className:
-      | JQuery.TypeOrArray<string>
-      | ((this: TElement, index: number, className: string, state: TState) => string),
-    state?: TState
-  ): this;
+  toggleClass<TState extends boolean>(className: JQuery.TypeOrArray<string> | ((this: TElement, index: number, className: string, state: TState) => string),
+    state?: TState): this;
   /**
    * Add or remove one or more classes from each element in the set of matched elements, depending on
    * either the class's presence or the value of the state argument.
@@ -6238,10 +5678,7 @@ interface JQuery<TElement = HTMLElement> extends Iterable<TElement> {
    * @since 1.0
    * @since 1.3
    */
-  trigger(
-    eventType: string | JQuery.Event<TElement>,
-    extraParameters?: any[] | JQuery.PlainObject | string | number
-  ): this;
+  trigger(eventType: string | JQuery.Event<TElement>, extraParameters?: any[] | JQuery.PlainObject | string | number): this;
   /**
    * Execute all handlers attached to an element for an event.
    *
@@ -6252,10 +5689,7 @@ interface JQuery<TElement = HTMLElement> extends Iterable<TElement> {
    * @since 1.2
    * @since 1.3
    */
-  triggerHandler(
-    eventType: string | JQuery.Event<TElement>,
-    extraParameters?: any[] | JQuery.PlainObject | string | number
-  ): undefined | any;
+  triggerHandler(eventType: string | JQuery.Event<TElement>, extraParameters?: any[] | JQuery.PlainObject | string | number): undefined | any;
   /**
    * Remove a previously-attached event handler from the elements.
    *
@@ -6291,11 +5725,7 @@ interface JQuery<TElement = HTMLElement> extends Iterable<TElement> {
    *
    * @deprecated Deprecated since 3.0. Use \`{@link JQuery.off }\`.
    */
-  undelegate(
-    selector: JQuery.Selector,
-    eventType: string,
-    handler: JQuery.EventHandlerBase<any, JQuery.Event<TElement, any>> | false
-  ): this;
+  undelegate(selector: JQuery.Selector, eventType: string, handler: JQuery.EventHandlerBase<any, JQuery.Event<TElement, any>> | false): this;
   /**
    * Remove a handler from the event for all elements which match the current selector, based upon a
    * specific set of root elements.
@@ -6309,10 +5739,7 @@ interface JQuery<TElement = HTMLElement> extends Iterable<TElement> {
    *
    * @deprecated Deprecated since 3.0. Use \`{@link JQuery.off }\`.
    */
-  undelegate(
-    selector: JQuery.Selector,
-    eventTypes: string | JQuery.PlainObject<JQuery.EventHandlerBase<any, JQuery.Event<TElement, any>> | false>
-  ): this;
+  undelegate(selector: JQuery.Selector, eventTypes: string | JQuery.PlainObject<JQuery.EventHandlerBase<any, JQuery.Event<TElement, any>> | false>): this;
   /**
    * Remove a handler from the event for all elements which match the current selector, based upon a
    * specific set of root elements.
@@ -6386,14 +5813,7 @@ interface JQuery<TElement = HTMLElement> extends Iterable<TElement> {
    * @since 1.0
    * @since 1.4
    */
-  wrap(
-    wrappingElement:
-      | JQuery.Selector
-      | JQuery.htmlString
-      | Element
-      | JQuery
-      | ((this: TElement, index: number) => string | JQuery)
-  ): this;
+  wrap(wrappingElement: JQuery.Selector | JQuery.htmlString | Element | JQuery | ((this: TElement, index: number) => string | JQuery)): this;
   /**
    * Wrap an HTML structure around all elements in the set of matched elements.
    *
@@ -6406,9 +5826,7 @@ interface JQuery<TElement = HTMLElement> extends Iterable<TElement> {
    * @since 1.2
    * @since 1.4
    */
-  wrapAll(
-    wrappingElement: JQuery.Selector | JQuery.htmlString | Element | JQuery | ((this: TElement) => string | JQuery)
-  ): this;
+  wrapAll(wrappingElement: JQuery.Selector | JQuery.htmlString | Element | JQuery | ((this: TElement) => string | JQuery)): this;
   /**
    * Wrap an HTML structure around the content of each element in the set of matched elements.
    *
@@ -6421,21 +5839,14 @@ interface JQuery<TElement = HTMLElement> extends Iterable<TElement> {
    * @since 1.2
    * @since 1.4
    */
-  wrapInner(
-    wrappingElement:
-      | JQuery.Selector
-      | JQuery.htmlString
-      | Element
-      | JQuery
-      | ((this: TElement, index: number) => string | JQuery | Element)
-  ): this;
+  wrapInner(wrappingElement: JQuery.Selector | JQuery.htmlString | Element | JQuery | ((this: TElement, index: number) => string | JQuery | Element)): this;
 
   [n: number]: TElement;
 }
 
 // ES5 compatibility
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
-interface Iterable<T> {}
+// tslint:disable-next-line:no-empty-interface
+interface Iterable<T> { }
 
 declare namespace JQuery {
   type TypeOrArray<T> = T | T[];
@@ -7187,8 +6598,7 @@ declare namespace JQuery {
     };
 
     // Writable properties on XMLHttpRequest
-    interface XHRFields
-      extends Partial<Pick<XMLHttpRequest, 'onreadystatechange' | 'responseType' | 'timeout' | 'withCredentials'>> {
+    interface XHRFields extends Partial<Pick<XMLHttpRequest, 'onreadystatechange' | 'responseType' | 'timeout' | 'withCredentials'>> {
       msCaching?: string;
     }
   }
@@ -7207,31 +6617,12 @@ declare namespace JQuery {
   /**
    * @see \`{@link http://api.jquery.com/jquery.ajax/#jqXHR }\`
    */
-  interface jqXHR<TResolve = any>
-    extends Promise3<
-        TResolve,
-        jqXHR<TResolve>,
-        never,
-        Ajax.SuccessTextStatus,
-        Ajax.ErrorTextStatus,
-        never,
-        jqXHR<TResolve>,
-        string,
-        never
-      >,
-      Pick<
-        XMLHttpRequest,
-        | 'abort'
-        | 'getAllResponseHeaders'
-        | 'getResponseHeader'
-        | 'overrideMimeType'
-        | 'readyState'
-        | 'responseText'
-        | 'setRequestHeader'
-        | 'status'
-        | 'statusText'
-      >,
-      Partial<Pick<XMLHttpRequest, 'responseXML'>> {
+  interface jqXHR<TResolve = any> extends Promise3<TResolve, jqXHR<TResolve>, never,
+    Ajax.SuccessTextStatus, Ajax.ErrorTextStatus, never,
+    jqXHR<TResolve>, string, never>,
+    Pick<XMLHttpRequest, 'abort' | 'getAllResponseHeaders' | 'getResponseHeader' | 'overrideMimeType' | 'readyState' | 'responseText' |
+    'setRequestHeader' | 'status' | 'statusText'>,
+    Partial<Pick<XMLHttpRequest, 'responseXML'>> {
     responseJSON?: any;
 
     /**
@@ -7245,20 +6636,18 @@ declare namespace JQuery {
   }
 
   namespace jqXHR {
-    interface DoneCallback<TResolve = any, TjqXHR = jqXHR<TResolve>>
-      extends Deferred.Callback3<TResolve, Ajax.SuccessTextStatus, TjqXHR> {}
+    interface DoneCallback<TResolve = any, TjqXHR = jqXHR<TResolve>> extends Deferred.Callback3<TResolve, Ajax.SuccessTextStatus, TjqXHR> { }
 
-    interface FailCallback<TjqXHR> extends Deferred.Callback3<TjqXHR, Ajax.ErrorTextStatus, string> {}
+    interface FailCallback<TjqXHR> extends Deferred.Callback3<TjqXHR, Ajax.ErrorTextStatus, string> { }
 
-    interface AlwaysCallback<TResolve = any, TjqXHR = jqXHR<TResolve>>
-      extends Deferred.Callback3<TResolve | TjqXHR, Ajax.TextStatus, TjqXHR | string> {}
+    interface AlwaysCallback<TResolve = any, TjqXHR = jqXHR<TResolve>> extends Deferred.Callback3<TResolve | TjqXHR, Ajax.TextStatus, TjqXHR | string> { }
   }
 
   // endregion
 
   // region Callbacks
 
-  // eslint-disable-next-line @typescript-eslint/ban-types
+  // tslint:disable-next-line:ban-types
   interface Callbacks<T extends Function = Function> {
     /**
      * Add a callback or a collection of callbacks to a callback list.
@@ -7363,7 +6752,7 @@ declare namespace JQuery {
   /**
    * Any object that has a then method.
    */
-  interface Thenable<T> extends PromiseLike<T> {}
+  interface Thenable<T> extends PromiseLike<T> { }
 
   // NOTE: This is a private copy of the global Promise interface. It is used by JQuery.PromiseBase to indicate compatibility with other Promise implementations.
   //       The global Promise interface cannot be used directly as it may be modified, as in the case of @types/bluebird-global.
@@ -7377,18 +6766,14 @@ declare namespace JQuery {
      * @param onrejected The callback to execute when the Promise is rejected.
      * @returns A Promise for the completion of which ever callback is executed.
      */
-    then<TResult1 = T, TResult2 = never>(
-      onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | null,
-      onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | null
-    ): _Promise<TResult1 | TResult2>;
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | null,
+      onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | null): _Promise<TResult1 | TResult2>;
     /**
      * Attaches a callback for only the rejection of the Promise.
      * @param onrejected The callback to execute when the Promise is rejected.
      * @returns A Promise for the completion of the callback.
      */
-    catch<TResult = never>(
-      onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | null
-    ): _Promise<T | TResult>;
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | null): _Promise<T | TResult>;
   }
 
   // Type parameter guide
@@ -7412,7 +6797,10 @@ declare namespace JQuery {
    *
    * @see \`{@link http://api.jquery.com/Types/#Promise }\`
    */
-  interface PromiseBase<TR, TJ, TN, UR, UJ, UN, VR, VJ, VN, SR, SJ, SN> extends _Promise<TR>, PromiseLike<TR> {
+  interface PromiseBase<TR, TJ, TN,
+    UR, UJ, UN,
+    VR, VJ, VN,
+    SR, SJ, SN> extends _Promise<TR>, PromiseLike<TR> {
     /**
      * Add handlers to be called when the Deferred object is either resolved or rejected.
      *
@@ -7421,10 +6809,8 @@ declare namespace JQuery {
      * @see \`{@link https://api.jquery.com/deferred.always/ }\`
      * @since 1.6
      */
-    always(
-      alwaysCallback: TypeOrArray<Deferred.CallbackBase<TR | TJ, UR | UJ, VR | VJ, SR | SJ>>,
-      ...alwaysCallbacks: Array<TypeOrArray<Deferred.CallbackBase<TR | TJ, UR | UJ, VR | VJ, SR | SJ>>>
-    ): this;
+    always(alwaysCallback: TypeOrArray<Deferred.CallbackBase<TR | TJ, UR | UJ, VR | VJ, SR | SJ>>,
+      ...alwaysCallbacks: Array<TypeOrArray<Deferred.CallbackBase<TR | TJ, UR | UJ, VR | VJ, SR | SJ>>>): this;
     /**
      * Add handlers to be called when the Deferred object is resolved.
      *
@@ -7433,10 +6819,8 @@ declare namespace JQuery {
      * @see \`{@link https://api.jquery.com/deferred.done/ }\`
      * @since 1.5
      */
-    done(
-      doneCallback: TypeOrArray<Deferred.CallbackBase<TR, UR, VR, SR>>,
-      ...doneCallbacks: Array<TypeOrArray<Deferred.CallbackBase<TR, UR, VR, SR>>>
-    ): this;
+    done(doneCallback: TypeOrArray<Deferred.CallbackBase<TR, UR, VR, SR>>,
+      ...doneCallbacks: Array<TypeOrArray<Deferred.CallbackBase<TR, UR, VR, SR>>>): this;
     /**
      * Add handlers to be called when the Deferred object is rejected.
      *
@@ -7445,10 +6829,8 @@ declare namespace JQuery {
      * @see \`{@link https://api.jquery.com/deferred.fail/ }\`
      * @since 1.5
      */
-    fail(
-      failCallback: TypeOrArray<Deferred.CallbackBase<TJ, UJ, VJ, SJ>>,
-      ...failCallbacks: Array<TypeOrArray<Deferred.CallbackBase<TJ, UJ, VJ, SJ>>>
-    ): this;
+    fail(failCallback: TypeOrArray<Deferred.CallbackBase<TJ, UJ, VJ, SJ>>,
+      ...failCallbacks: Array<TypeOrArray<Deferred.CallbackBase<TJ, UJ, VJ, SJ>>>): this;
     /**
      * Add handlers to be called when the Deferred object generates progress notifications.
      *
@@ -7458,10 +6840,8 @@ declare namespace JQuery {
      * @see \`{@link https://api.jquery.com/deferred.progress/ }\`
      * @since 1.7
      */
-    progress(
-      progressCallback: TypeOrArray<Deferred.CallbackBase<TN, UN, VN, SN>>,
-      ...progressCallbacks: Array<TypeOrArray<Deferred.CallbackBase<TN, UN, VN, SN>>>
-    ): this;
+    progress(progressCallback: TypeOrArray<Deferred.CallbackBase<TN, UN, VN, SN>>,
+      ...progressCallbacks: Array<TypeOrArray<Deferred.CallbackBase<TN, UN, VN, SN>>>): this;
     /**
      * Return a Deferred's Promise object.
      *
@@ -7499,76 +6879,33 @@ declare namespace JQuery {
      *
      * @deprecated Deprecated since 1.8. Use \`{@link then JQuery.PromiseBase.then }\`.
      */
-    pipe<
-      ARD = never,
-      AJD = never,
-      AND = never,
-      BRD = never,
-      BJD = never,
-      BND = never,
-      CRD = never,
-      CJD = never,
-      CND = never,
-      RRD = never,
-      RJD = never,
-      RND = never,
-      ARF = never,
-      AJF = never,
-      ANF = never,
-      BRF = never,
-      BJF = never,
-      BNF = never,
-      CRF = never,
-      CJF = never,
-      CNF = never,
-      RRF = never,
-      RJF = never,
-      RNF = never,
-      ARP = never,
-      AJP = never,
-      ANP = never,
-      BRP = never,
-      BJP = never,
-      BNP = never,
-      CRP = never,
-      CJP = never,
-      CNP = never,
-      RRP = never,
-      RJP = never,
-      RNP = never
-    >(
-      doneFilter: (
-        t: TR,
-        u: UR,
-        v: VR,
-        ...s: SR[]
-      ) => PromiseBase<ARD, AJD, AND, BRD, BJD, BND, CRD, CJD, CND, RRD, RJD, RND> | Thenable<ARD> | ARD,
-      failFilter: (
-        t: TJ,
-        u: UJ,
-        v: VJ,
-        ...s: SJ[]
-      ) => PromiseBase<ARF, AJF, ANF, BRF, BJF, BNF, CRF, CJF, CNF, RRF, RJF, RNF> | Thenable<AJF> | AJF,
-      progressFilter: (
-        t: TN,
-        u: UN,
-        v: VN,
-        ...s: SN[]
-      ) => PromiseBase<ARP, AJP, ANP, BRP, BJP, BNP, CRP, CJP, CNP, RRP, RJP, RNP> | Thenable<ANP> | ANP
-    ): PromiseBase<
-      ARD | ARF | ARP,
-      AJD | AJF | AJP,
-      AND | ANF | ANP,
-      BRD | BRF | BRP,
-      BJD | BJF | BJP,
-      BND | BNF | BNP,
-      CRD | CRF | CRP,
-      CJD | CJF | CJP,
-      CND | CNF | CNP,
-      RRD | RRF | RRP,
-      RJD | RJF | RJP,
-      RND | RNF | RNP
-    >;
+    pipe<ARD = never, AJD = never, AND = never,
+      BRD = never, BJD = never, BND = never,
+      CRD = never, CJD = never, CND = never,
+      RRD = never, RJD = never, RND = never,
+      ARF = never, AJF = never, ANF = never,
+      BRF = never, BJF = never, BNF = never,
+      CRF = never, CJF = never, CNF = never,
+      RRF = never, RJF = never, RNF = never,
+      ARP = never, AJP = never, ANP = never,
+      BRP = never, BJP = never, BNP = never,
+      CRP = never, CJP = never, CNP = never,
+      RRP = never, RJP = never, RNP = never>(
+        doneFilter: (t: TR, u: UR, v: VR, ...s: SR[]) => PromiseBase<ARD, AJD, AND,
+          BRD, BJD, BND,
+          CRD, CJD, CND,
+          RRD, RJD, RND> | Thenable<ARD> | ARD,
+        failFilter: (t: TJ, u: UJ, v: VJ, ...s: SJ[]) => PromiseBase<ARF, AJF, ANF,
+          BRF, BJF, BNF,
+          CRF, CJF, CNF,
+          RRF, RJF, RNF> | Thenable<AJF> | AJF,
+        progressFilter: (t: TN, u: UN, v: VN, ...s: SN[]) => PromiseBase<ARP, AJP, ANP,
+          BRP, BJP, BNP,
+          CRP, CJP, CNP,
+          RRP, RJP, RNP> | Thenable<ANP> | ANP): PromiseBase<ARD | ARF | ARP, AJD | AJF | AJP, AND | ANF | ANP,
+            BRD | BRF | BRP, BJD | BJF | BJP, BND | BNF | BNP,
+            CRD | CRF | CRP, CJD | CJF | CJP, CND | CNF | CNP,
+            RRD | RRF | RRP, RJD | RJF | RJP, RND | RNF | RNP>;
     /**
      * Utility method to filter and/or chain Deferreds.
      *
@@ -7581,59 +6918,26 @@ declare namespace JQuery {
      *
      * @deprecated Deprecated since 1.8. Use \`{@link then JQuery.PromiseBase.then }\`.
      */
-    pipe<
-      ARF = never,
-      AJF = never,
-      ANF = never,
-      BRF = never,
-      BJF = never,
-      BNF = never,
-      CRF = never,
-      CJF = never,
-      CNF = never,
-      RRF = never,
-      RJF = never,
-      RNF = never,
-      ARP = never,
-      AJP = never,
-      ANP = never,
-      BRP = never,
-      BJP = never,
-      BNP = never,
-      CRP = never,
-      CJP = never,
-      CNP = never,
-      RRP = never,
-      RJP = never,
-      RNP = never
-    >(
-      doneFilter: null,
-      failFilter: (
-        t: TJ,
-        u: UJ,
-        v: VJ,
-        ...s: SJ[]
-      ) => PromiseBase<ARF, AJF, ANF, BRF, BJF, BNF, CRF, CJF, CNF, RRF, RJF, RNF> | Thenable<AJF> | AJF,
-      progressFilter: (
-        t: TN,
-        u: UN,
-        v: VN,
-        ...s: SN[]
-      ) => PromiseBase<ARP, AJP, ANP, BRP, BJP, BNP, CRP, CJP, CNP, RRP, RJP, RNP> | Thenable<ANP> | ANP
-    ): PromiseBase<
-      ARF | ARP,
-      AJF | AJP,
-      ANF | ANP,
-      BRF | BRP,
-      BJF | BJP,
-      BNF | BNP,
-      CRF | CRP,
-      CJF | CJP,
-      CNF | CNP,
-      RRF | RRP,
-      RJF | RJP,
-      RNF | RNP
-    >;
+    pipe<ARF = never, AJF = never, ANF = never,
+      BRF = never, BJF = never, BNF = never,
+      CRF = never, CJF = never, CNF = never,
+      RRF = never, RJF = never, RNF = never,
+      ARP = never, AJP = never, ANP = never,
+      BRP = never, BJP = never, BNP = never,
+      CRP = never, CJP = never, CNP = never,
+      RRP = never, RJP = never, RNP = never>(
+        doneFilter: null,
+        failFilter: (t: TJ, u: UJ, v: VJ, ...s: SJ[]) => PromiseBase<ARF, AJF, ANF,
+          BRF, BJF, BNF,
+          CRF, CJF, CNF,
+          RRF, RJF, RNF> | Thenable<AJF> | AJF,
+        progressFilter: (t: TN, u: UN, v: VN, ...s: SN[]) => PromiseBase<ARP, AJP, ANP,
+          BRP, BJP, BNP,
+          CRP, CJP, CNP,
+          RRP, RJP, RNP> | Thenable<ANP> | ANP): PromiseBase<ARF | ARP, AJF | AJP, ANF | ANP,
+            BRF | BRP, BJF | BJP, BNF | BNP,
+            CRF | CRP, CJF | CJP, CNF | CNP,
+            RRF | RRP, RJF | RJP, RNF | RNP>;
     /**
      * Utility method to filter and/or chain Deferreds.
      *
@@ -7646,59 +6950,26 @@ declare namespace JQuery {
      *
      * @deprecated Deprecated since 1.8. Use \`{@link then JQuery.PromiseBase.then }\`.
      */
-    pipe<
-      ARD = never,
-      AJD = never,
-      AND = never,
-      BRD = never,
-      BJD = never,
-      BND = never,
-      CRD = never,
-      CJD = never,
-      CND = never,
-      RRD = never,
-      RJD = never,
-      RND = never,
-      ARP = never,
-      AJP = never,
-      ANP = never,
-      BRP = never,
-      BJP = never,
-      BNP = never,
-      CRP = never,
-      CJP = never,
-      CNP = never,
-      RRP = never,
-      RJP = never,
-      RNP = never
-    >(
-      doneFilter: (
-        t: TR,
-        u: UR,
-        v: VR,
-        ...s: SR[]
-      ) => PromiseBase<ARD, AJD, AND, BRD, BJD, BND, CRD, CJD, CND, RRD, RJD, RND> | Thenable<ARD> | ARD,
-      failFilter: null,
-      progressFilter: (
-        t: TN,
-        u: UN,
-        v: VN,
-        ...s: SN[]
-      ) => PromiseBase<ARP, AJP, ANP, BRP, BJP, BNP, CRP, CJP, CNP, RRP, RJP, RNP> | Thenable<ANP> | ANP
-    ): PromiseBase<
-      ARD | ARP,
-      AJD | AJP,
-      AND | ANP,
-      BRD | BRP,
-      BJD | BJP,
-      BND | BNP,
-      CRD | CRP,
-      CJD | CJP,
-      CND | CNP,
-      RRD | RRP,
-      RJD | RJP,
-      RND | RNP
-    >;
+    pipe<ARD = never, AJD = never, AND = never,
+      BRD = never, BJD = never, BND = never,
+      CRD = never, CJD = never, CND = never,
+      RRD = never, RJD = never, RND = never,
+      ARP = never, AJP = never, ANP = never,
+      BRP = never, BJP = never, BNP = never,
+      CRP = never, CJP = never, CNP = never,
+      RRP = never, RJP = never, RNP = never>(
+        doneFilter: (t: TR, u: UR, v: VR, ...s: SR[]) => PromiseBase<ARD, AJD, AND,
+          BRD, BJD, BND,
+          CRD, CJD, CND,
+          RRD, RJD, RND> | Thenable<ARD> | ARD,
+        failFilter: null,
+        progressFilter: (t: TN, u: UN, v: VN, ...s: SN[]) => PromiseBase<ARP, AJP, ANP,
+          BRP, BJP, BNP,
+          CRP, CJP, CNP,
+          RRP, RJP, RNP> | Thenable<ANP> | ANP): PromiseBase<ARD | ARP, AJD | AJP, AND | ANP,
+            BRD | BRP, BJD | BJP, BND | BNP,
+            CRD | CRP, CJD | CJP, CND | CNP,
+            RRD | RRP, RJD | RJP, RND | RNP>;
     /**
      * Utility method to filter and/or chain Deferreds.
      *
@@ -7711,29 +6982,19 @@ declare namespace JQuery {
      *
      * @deprecated Deprecated since 1.8. Use \`{@link then JQuery.PromiseBase.then }\`.
      */
-    pipe<
-      ARP = never,
-      AJP = never,
-      ANP = never,
-      BRP = never,
-      BJP = never,
-      BNP = never,
-      CRP = never,
-      CJP = never,
-      CNP = never,
-      RRP = never,
-      RJP = never,
-      RNP = never
-    >(
-      doneFilter: null,
-      failFilter: null,
-      progressFilter?: (
-        t: TN,
-        u: UN,
-        v: VN,
-        ...s: SN[]
-      ) => PromiseBase<ARP, AJP, ANP, BRP, BJP, BNP, CRP, CJP, CNP, RRP, RJP, RNP> | Thenable<ANP> | ANP
-    ): PromiseBase<ARP, AJP, ANP, BRP, BJP, BNP, CRP, CJP, CNP, RRP, RJP, RNP>;
+    pipe<ARP = never, AJP = never, ANP = never,
+      BRP = never, BJP = never, BNP = never,
+      CRP = never, CJP = never, CNP = never,
+      RRP = never, RJP = never, RNP = never>(
+        doneFilter: null,
+        failFilter: null,
+        progressFilter?: (t: TN, u: UN, v: VN, ...s: SN[]) => PromiseBase<ARP, AJP, ANP,
+          BRP, BJP, BNP,
+          CRP, CJP, CNP,
+          RRP, RJP, RNP> | Thenable<ANP> | ANP): PromiseBase<ARP, AJP, ANP,
+            BRP, BJP, BNP,
+            CRP, CJP, CNP,
+            RRP, RJP, RNP>;
     /**
      * Utility method to filter and/or chain Deferreds.
      *
@@ -7746,59 +7007,26 @@ declare namespace JQuery {
      *
      * @deprecated Deprecated since 1.8. Use \`{@link then JQuery.PromiseBase.then }\`.
      */
-    pipe<
-      ARD = never,
-      AJD = never,
-      AND = never,
-      BRD = never,
-      BJD = never,
-      BND = never,
-      CRD = never,
-      CJD = never,
-      CND = never,
-      RRD = never,
-      RJD = never,
-      RND = never,
-      ARF = never,
-      AJF = never,
-      ANF = never,
-      BRF = never,
-      BJF = never,
-      BNF = never,
-      CRF = never,
-      CJF = never,
-      CNF = never,
-      RRF = never,
-      RJF = never,
-      RNF = never
-    >(
-      doneFilter: (
-        t: TR,
-        u: UR,
-        v: VR,
-        ...s: SR[]
-      ) => PromiseBase<ARD, AJD, AND, BRD, BJD, BND, CRD, CJD, CND, RRD, RJD, RND> | Thenable<ARD> | ARD,
-      failFilter: (
-        t: TJ,
-        u: UJ,
-        v: VJ,
-        ...s: SJ[]
-      ) => PromiseBase<ARF, AJF, ANF, BRF, BJF, BNF, CRF, CJF, CNF, RRF, RJF, RNF> | Thenable<AJF> | AJF,
-      progressFilter?: null
-    ): PromiseBase<
-      ARD | ARF,
-      AJD | AJF,
-      AND | ANF,
-      BRD | BRF,
-      BJD | BJF,
-      BND | BNF,
-      CRD | CRF,
-      CJD | CJF,
-      CND | CNF,
-      RRD | RRF,
-      RJD | RJF,
-      RND | RNF
-    >;
+    pipe<ARD = never, AJD = never, AND = never,
+      BRD = never, BJD = never, BND = never,
+      CRD = never, CJD = never, CND = never,
+      RRD = never, RJD = never, RND = never,
+      ARF = never, AJF = never, ANF = never,
+      BRF = never, BJF = never, BNF = never,
+      CRF = never, CJF = never, CNF = never,
+      RRF = never, RJF = never, RNF = never>(
+        doneFilter: (t: TR, u: UR, v: VR, ...s: SR[]) => PromiseBase<ARD, AJD, AND,
+          BRD, BJD, BND,
+          CRD, CJD, CND,
+          RRD, RJD, RND> | Thenable<ARD> | ARD,
+        failFilter: (t: TJ, u: UJ, v: VJ, ...s: SJ[]) => PromiseBase<ARF, AJF, ANF,
+          BRF, BJF, BNF,
+          CRF, CJF, CNF,
+          RRF, RJF, RNF> | Thenable<AJF> | AJF,
+        progressFilter?: null): PromiseBase<ARD | ARF, AJD | AJF, AND | ANF,
+          BRD | BRF, BJD | BJF, BND | BNF,
+          CRD | CRF, CJD | CJF, CND | CNF,
+          RRD | RRF, RJD | RJF, RND | RNF>;
     /**
      * Utility method to filter and/or chain Deferreds.
      *
@@ -7811,29 +7039,19 @@ declare namespace JQuery {
      *
      * @deprecated Deprecated since 1.8. Use \`{@link then JQuery.PromiseBase.then }\`.
      */
-    pipe<
-      ARF = never,
-      AJF = never,
-      ANF = never,
-      BRF = never,
-      BJF = never,
-      BNF = never,
-      CRF = never,
-      CJF = never,
-      CNF = never,
-      RRF = never,
-      RJF = never,
-      RNF = never
-    >(
-      doneFilter: null,
-      failFilter: (
-        t: TJ,
-        u: UJ,
-        v: VJ,
-        ...s: SJ[]
-      ) => PromiseBase<ARF, AJF, ANF, BRF, BJF, BNF, CRF, CJF, CNF, RRF, RJF, RNF> | Thenable<AJF> | AJF,
-      progressFilter?: null
-    ): PromiseBase<ARF, AJF, ANF, BRF, BJF, BNF, CRF, CJF, CNF, RRF, RJF, RNF>;
+    pipe<ARF = never, AJF = never, ANF = never,
+      BRF = never, BJF = never, BNF = never,
+      CRF = never, CJF = never, CNF = never,
+      RRF = never, RJF = never, RNF = never>(
+        doneFilter: null,
+        failFilter: (t: TJ, u: UJ, v: VJ, ...s: SJ[]) => PromiseBase<ARF, AJF, ANF,
+          BRF, BJF, BNF,
+          CRF, CJF, CNF,
+          RRF, RJF, RNF> | Thenable<AJF> | AJF,
+        progressFilter?: null): PromiseBase<ARF, AJF, ANF,
+          BRF, BJF, BNF,
+          CRF, CJF, CNF,
+          RRF, RJF, RNF>;
     /**
      * Utility method to filter and/or chain Deferreds.
      *
@@ -7846,29 +7064,19 @@ declare namespace JQuery {
      *
      * @deprecated Deprecated since 1.8. Use \`{@link then JQuery.PromiseBase.then }\`.
      */
-    pipe<
-      ARD = never,
-      AJD = never,
-      AND = never,
-      BRD = never,
-      BJD = never,
-      BND = never,
-      CRD = never,
-      CJD = never,
-      CND = never,
-      RRD = never,
-      RJD = never,
-      RND = never
-    >(
-      doneFilter: (
-        t: TR,
-        u: UR,
-        v: VR,
-        ...s: SR[]
-      ) => PromiseBase<ARD, AJD, AND, BRD, BJD, BND, CRD, CJD, CND, RRD, RJD, RND> | Thenable<ARD> | ARD,
-      failFilter?: null,
-      progressFilter?: null
-    ): PromiseBase<ARD, AJD, AND, BRD, BJD, BND, CRD, CJD, CND, RRD, RJD, RND>;
+    pipe<ARD = never, AJD = never, AND = never,
+      BRD = never, BJD = never, BND = never,
+      CRD = never, CJD = never, CND = never,
+      RRD = never, RJD = never, RND = never>(
+        doneFilter: (t: TR, u: UR, v: VR, ...s: SR[]) => PromiseBase<ARD, AJD, AND,
+          BRD, BJD, BND,
+          CRD, CJD, CND,
+          RRD, RJD, RND> | Thenable<ARD> | ARD,
+        failFilter?: null,
+        progressFilter?: null): PromiseBase<ARD, AJD, AND,
+          BRD, BJD, BND,
+          CRD, CJD, CND,
+          RRD, RJD, RND>;
 
     // endregion
 
@@ -7883,76 +7091,33 @@ declare namespace JQuery {
      * @see \`{@link https://api.jquery.com/deferred.then/ }\`
      * @since 1.8
      */
-    then<
-      ARD = never,
-      AJD = never,
-      AND = never,
-      BRD = never,
-      BJD = never,
-      BND = never,
-      CRD = never,
-      CJD = never,
-      CND = never,
-      RRD = never,
-      RJD = never,
-      RND = never,
-      ARF = never,
-      AJF = never,
-      ANF = never,
-      BRF = never,
-      BJF = never,
-      BNF = never,
-      CRF = never,
-      CJF = never,
-      CNF = never,
-      RRF = never,
-      RJF = never,
-      RNF = never,
-      ARP = never,
-      AJP = never,
-      ANP = never,
-      BRP = never,
-      BJP = never,
-      BNP = never,
-      CRP = never,
-      CJP = never,
-      CNP = never,
-      RRP = never,
-      RJP = never,
-      RNP = never
-    >(
-      doneFilter: (
-        t: TR,
-        u: UR,
-        v: VR,
-        ...s: SR[]
-      ) => PromiseBase<ARD, AJD, AND, BRD, BJD, BND, CRD, CJD, CND, RRD, RJD, RND> | Thenable<ARD> | ARD,
-      failFilter: (
-        t: TJ,
-        u: UJ,
-        v: VJ,
-        ...s: SJ[]
-      ) => PromiseBase<ARF, AJF, ANF, BRF, BJF, BNF, CRF, CJF, CNF, RRF, RJF, RNF> | Thenable<ARF> | ARF,
-      progressFilter: (
-        t: TN,
-        u: UN,
-        v: VN,
-        ...s: SN[]
-      ) => PromiseBase<ARP, AJP, ANP, BRP, BJP, BNP, CRP, CJP, CNP, RRP, RJP, RNP> | Thenable<ANP> | ANP
-    ): PromiseBase<
-      ARD | ARF | ARP,
-      AJD | AJF | AJP,
-      AND | ANF | ANP,
-      BRD | BRF | BRP,
-      BJD | BJF | BJP,
-      BND | BNF | BNP,
-      CRD | CRF | CRP,
-      CJD | CJF | CJP,
-      CND | CNF | CNP,
-      RRD | RRF | RRP,
-      RJD | RJF | RJP,
-      RND | RNF | RNP
-    >;
+    then<ARD = never, AJD = never, AND = never,
+      BRD = never, BJD = never, BND = never,
+      CRD = never, CJD = never, CND = never,
+      RRD = never, RJD = never, RND = never,
+      ARF = never, AJF = never, ANF = never,
+      BRF = never, BJF = never, BNF = never,
+      CRF = never, CJF = never, CNF = never,
+      RRF = never, RJF = never, RNF = never,
+      ARP = never, AJP = never, ANP = never,
+      BRP = never, BJP = never, BNP = never,
+      CRP = never, CJP = never, CNP = never,
+      RRP = never, RJP = never, RNP = never>(
+        doneFilter: (t: TR, u: UR, v: VR, ...s: SR[]) => PromiseBase<ARD, AJD, AND,
+          BRD, BJD, BND,
+          CRD, CJD, CND,
+          RRD, RJD, RND> | Thenable<ARD> | ARD,
+        failFilter: (t: TJ, u: UJ, v: VJ, ...s: SJ[]) => PromiseBase<ARF, AJF, ANF,
+          BRF, BJF, BNF,
+          CRF, CJF, CNF,
+          RRF, RJF, RNF> | Thenable<ARF> | ARF,
+        progressFilter: (t: TN, u: UN, v: VN, ...s: SN[]) => PromiseBase<ARP, AJP, ANP,
+          BRP, BJP, BNP,
+          CRP, CJP, CNP,
+          RRP, RJP, RNP> | Thenable<ANP> | ANP): PromiseBase<ARD | ARF | ARP, AJD | AJF | AJP, AND | ANF | ANP,
+            BRD | BRF | BRP, BJD | BJF | BJP, BND | BNF | BNP,
+            CRD | CRF | CRP, CJD | CJF | CJP, CND | CNF | CNP,
+            RRD | RRF | RRP, RJD | RJF | RJP, RND | RNF | RNP>;
     /**
      * Add handlers to be called when the Deferred object is resolved, rejected, or still in progress.
      *
@@ -7962,59 +7127,26 @@ declare namespace JQuery {
      * @see \`{@link https://api.jquery.com/deferred.then/ }\`
      * @since 1.8
      */
-    then<
-      ARF = never,
-      AJF = never,
-      ANF = never,
-      BRF = never,
-      BJF = never,
-      BNF = never,
-      CRF = never,
-      CJF = never,
-      CNF = never,
-      RRF = never,
-      RJF = never,
-      RNF = never,
-      ARP = never,
-      AJP = never,
-      ANP = never,
-      BRP = never,
-      BJP = never,
-      BNP = never,
-      CRP = never,
-      CJP = never,
-      CNP = never,
-      RRP = never,
-      RJP = never,
-      RNP = never
-    >(
-      doneFilter: null,
-      failFilter: (
-        t: TJ,
-        u: UJ,
-        v: VJ,
-        ...s: SJ[]
-      ) => PromiseBase<ARF, AJF, ANF, BRF, BJF, BNF, CRF, CJF, CNF, RRF, RJF, RNF> | Thenable<ARF> | ARF,
-      progressFilter: (
-        t: TN,
-        u: UN,
-        v: VN,
-        ...s: SN[]
-      ) => PromiseBase<ARP, AJP, ANP, BRP, BJP, BNP, CRP, CJP, CNP, RRP, RJP, RNP> | Thenable<ANP> | ANP
-    ): PromiseBase<
-      ARF | ARP,
-      AJF | AJP,
-      ANF | ANP,
-      BRF | BRP,
-      BJF | BJP,
-      BNF | BNP,
-      CRF | CRP,
-      CJF | CJP,
-      CNF | CNP,
-      RRF | RRP,
-      RJF | RJP,
-      RNF | RNP
-    >;
+    then<ARF = never, AJF = never, ANF = never,
+      BRF = never, BJF = never, BNF = never,
+      CRF = never, CJF = never, CNF = never,
+      RRF = never, RJF = never, RNF = never,
+      ARP = never, AJP = never, ANP = never,
+      BRP = never, BJP = never, BNP = never,
+      CRP = never, CJP = never, CNP = never,
+      RRP = never, RJP = never, RNP = never>(
+        doneFilter: null,
+        failFilter: (t: TJ, u: UJ, v: VJ, ...s: SJ[]) => PromiseBase<ARF, AJF, ANF,
+          BRF, BJF, BNF,
+          CRF, CJF, CNF,
+          RRF, RJF, RNF> | Thenable<ARF> | ARF,
+        progressFilter: (t: TN, u: UN, v: VN, ...s: SN[]) => PromiseBase<ARP, AJP, ANP,
+          BRP, BJP, BNP,
+          CRP, CJP, CNP,
+          RRP, RJP, RNP> | Thenable<ANP> | ANP): PromiseBase<ARF | ARP, AJF | AJP, ANF | ANP,
+            BRF | BRP, BJF | BJP, BNF | BNP,
+            CRF | CRP, CJF | CJP, CNF | CNP,
+            RRF | RRP, RJF | RJP, RNF | RNP>;
     /**
      * Add handlers to be called when the Deferred object is resolved, rejected, or still in progress.
      *
@@ -8024,59 +7156,26 @@ declare namespace JQuery {
      * @see \`{@link https://api.jquery.com/deferred.then/ }\`
      * @since 1.8
      */
-    then<
-      ARD = never,
-      AJD = never,
-      AND = never,
-      BRD = never,
-      BJD = never,
-      BND = never,
-      CRD = never,
-      CJD = never,
-      CND = never,
-      RRD = never,
-      RJD = never,
-      RND = never,
-      ARP = never,
-      AJP = never,
-      ANP = never,
-      BRP = never,
-      BJP = never,
-      BNP = never,
-      CRP = never,
-      CJP = never,
-      CNP = never,
-      RRP = never,
-      RJP = never,
-      RNP = never
-    >(
-      doneFilter: (
-        t: TR,
-        u: UR,
-        v: VR,
-        ...s: SR[]
-      ) => PromiseBase<ARD, AJD, AND, BRD, BJD, BND, CRD, CJD, CND, RRD, RJD, RND> | Thenable<ARD> | ARD,
-      failFilter: null,
-      progressFilter: (
-        t: TN,
-        u: UN,
-        v: VN,
-        ...s: SN[]
-      ) => PromiseBase<ARP, AJP, ANP, BRP, BJP, BNP, CRP, CJP, CNP, RRP, RJP, RNP> | Thenable<ANP> | ANP
-    ): PromiseBase<
-      ARD | ARP,
-      AJD | AJP,
-      AND | ANP,
-      BRD | BRP,
-      BJD | BJP,
-      BND | BNP,
-      CRD | CRP,
-      CJD | CJP,
-      CND | CNP,
-      RRD | RRP,
-      RJD | RJP,
-      RND | RNP
-    >;
+    then<ARD = never, AJD = never, AND = never,
+      BRD = never, BJD = never, BND = never,
+      CRD = never, CJD = never, CND = never,
+      RRD = never, RJD = never, RND = never,
+      ARP = never, AJP = never, ANP = never,
+      BRP = never, BJP = never, BNP = never,
+      CRP = never, CJP = never, CNP = never,
+      RRP = never, RJP = never, RNP = never>(
+        doneFilter: (t: TR, u: UR, v: VR, ...s: SR[]) => PromiseBase<ARD, AJD, AND,
+          BRD, BJD, BND,
+          CRD, CJD, CND,
+          RRD, RJD, RND> | Thenable<ARD> | ARD,
+        failFilter: null,
+        progressFilter: (t: TN, u: UN, v: VN, ...s: SN[]) => PromiseBase<ARP, AJP, ANP,
+          BRP, BJP, BNP,
+          CRP, CJP, CNP,
+          RRP, RJP, RNP> | Thenable<ANP> | ANP): PromiseBase<ARD | ARP, AJD | AJP, AND | ANP,
+            BRD | BRP, BJD | BJP, BND | BNP,
+            CRD | CRP, CJD | CJP, CND | CNP,
+            RRD | RRP, RJD | RJP, RND | RNP>;
     /**
      * Add handlers to be called when the Deferred object is resolved, rejected, or still in progress.
      *
@@ -8086,29 +7185,19 @@ declare namespace JQuery {
      * @see \`{@link https://api.jquery.com/deferred.then/ }\`
      * @since 1.8
      */
-    then<
-      ARP = never,
-      AJP = never,
-      ANP = never,
-      BRP = never,
-      BJP = never,
-      BNP = never,
-      CRP = never,
-      CJP = never,
-      CNP = never,
-      RRP = never,
-      RJP = never,
-      RNP = never
-    >(
-      doneFilter: null,
-      failFilter: null,
-      progressFilter?: (
-        t: TN,
-        u: UN,
-        v: VN,
-        ...s: SN[]
-      ) => PromiseBase<ARP, AJP, ANP, BRP, BJP, BNP, CRP, CJP, CNP, RRP, RJP, RNP> | Thenable<ANP> | ANP
-    ): PromiseBase<ARP, AJP, ANP, BRP, BJP, BNP, CRP, CJP, CNP, RRP, RJP, RNP>;
+    then<ARP = never, AJP = never, ANP = never,
+      BRP = never, BJP = never, BNP = never,
+      CRP = never, CJP = never, CNP = never,
+      RRP = never, RJP = never, RNP = never>(
+        doneFilter: null,
+        failFilter: null,
+        progressFilter?: (t: TN, u: UN, v: VN, ...s: SN[]) => PromiseBase<ARP, AJP, ANP,
+          BRP, BJP, BNP,
+          CRP, CJP, CNP,
+          RRP, RJP, RNP> | Thenable<ANP> | ANP): PromiseBase<ARP, AJP, ANP,
+            BRP, BJP, BNP,
+            CRP, CJP, CNP,
+            RRP, RJP, RNP>;
     /**
      * Add handlers to be called when the Deferred object is resolved, rejected, or still in progress.
      *
@@ -8118,59 +7207,26 @@ declare namespace JQuery {
      * @see \`{@link https://api.jquery.com/deferred.then/ }\`
      * @since 1.8
      */
-    then<
-      ARD = never,
-      AJD = never,
-      AND = never,
-      BRD = never,
-      BJD = never,
-      BND = never,
-      CRD = never,
-      CJD = never,
-      CND = never,
-      RRD = never,
-      RJD = never,
-      RND = never,
-      ARF = never,
-      AJF = never,
-      ANF = never,
-      BRF = never,
-      BJF = never,
-      BNF = never,
-      CRF = never,
-      CJF = never,
-      CNF = never,
-      RRF = never,
-      RJF = never,
-      RNF = never
-    >(
-      doneFilter: (
-        t: TR,
-        u: UR,
-        v: VR,
-        ...s: SR[]
-      ) => PromiseBase<ARD, AJD, AND, BRD, BJD, BND, CRD, CJD, CND, RRD, RJD, RND> | Thenable<ARD> | ARD,
-      failFilter: (
-        t: TJ,
-        u: UJ,
-        v: VJ,
-        ...s: SJ[]
-      ) => PromiseBase<ARF, AJF, ANF, BRF, BJF, BNF, CRF, CJF, CNF, RRF, RJF, RNF> | Thenable<ARF> | ARF,
-      progressFilter?: null
-    ): PromiseBase<
-      ARD | ARF,
-      AJD | AJF,
-      AND | ANF,
-      BRD | BRF,
-      BJD | BJF,
-      BND | BNF,
-      CRD | CRF,
-      CJD | CJF,
-      CND | CNF,
-      RRD | RRF,
-      RJD | RJF,
-      RND | RNF
-    >;
+    then<ARD = never, AJD = never, AND = never,
+      BRD = never, BJD = never, BND = never,
+      CRD = never, CJD = never, CND = never,
+      RRD = never, RJD = never, RND = never,
+      ARF = never, AJF = never, ANF = never,
+      BRF = never, BJF = never, BNF = never,
+      CRF = never, CJF = never, CNF = never,
+      RRF = never, RJF = never, RNF = never>(
+        doneFilter: (t: TR, u: UR, v: VR, ...s: SR[]) => PromiseBase<ARD, AJD, AND,
+          BRD, BJD, BND,
+          CRD, CJD, CND,
+          RRD, RJD, RND> | Thenable<ARD> | ARD,
+        failFilter: (t: TJ, u: UJ, v: VJ, ...s: SJ[]) => PromiseBase<ARF, AJF, ANF,
+          BRF, BJF, BNF,
+          CRF, CJF, CNF,
+          RRF, RJF, RNF> | Thenable<ARF> | ARF,
+        progressFilter?: null): PromiseBase<ARD | ARF, AJD | AJF, AND | ANF,
+          BRD | BRF, BJD | BJF, BND | BNF,
+          CRD | CRF, CJD | CJF, CND | CNF,
+          RRD | RRF, RJD | RJF, RND | RNF>;
     /**
      * Add handlers to be called when the Deferred object is resolved, rejected, or still in progress.
      *
@@ -8180,29 +7236,19 @@ declare namespace JQuery {
      * @see \`{@link https://api.jquery.com/deferred.then/ }\`
      * @since 1.8
      */
-    then<
-      ARF = never,
-      AJF = never,
-      ANF = never,
-      BRF = never,
-      BJF = never,
-      BNF = never,
-      CRF = never,
-      CJF = never,
-      CNF = never,
-      RRF = never,
-      RJF = never,
-      RNF = never
-    >(
-      doneFilter: null,
-      failFilter: (
-        t: TJ,
-        u: UJ,
-        v: VJ,
-        ...s: SJ[]
-      ) => PromiseBase<ARF, AJF, ANF, BRF, BJF, BNF, CRF, CJF, CNF, RRF, RJF, RNF> | Thenable<ARF> | ARF,
-      progressFilter?: null
-    ): PromiseBase<ARF, AJF, ANF, BRF, BJF, BNF, CRF, CJF, CNF, RRF, RJF, RNF>;
+    then<ARF = never, AJF = never, ANF = never,
+      BRF = never, BJF = never, BNF = never,
+      CRF = never, CJF = never, CNF = never,
+      RRF = never, RJF = never, RNF = never>(
+        doneFilter: null,
+        failFilter: (t: TJ, u: UJ, v: VJ, ...s: SJ[]) => PromiseBase<ARF, AJF, ANF,
+          BRF, BJF, BNF,
+          CRF, CJF, CNF,
+          RRF, RJF, RNF> | Thenable<ARF> | ARF,
+        progressFilter?: null): PromiseBase<ARF, AJF, ANF,
+          BRF, BJF, BNF,
+          CRF, CJF, CNF,
+          RRF, RJF, RNF>;
     /**
      * Add handlers to be called when the Deferred object is resolved, rejected, or still in progress.
      *
@@ -8212,29 +7258,19 @@ declare namespace JQuery {
      * @see \`{@link https://api.jquery.com/deferred.then/ }\`
      * @since 1.8
      */
-    then<
-      ARD = never,
-      AJD = never,
-      AND = never,
-      BRD = never,
-      BJD = never,
-      BND = never,
-      CRD = never,
-      CJD = never,
-      CND = never,
-      RRD = never,
-      RJD = never,
-      RND = never
-    >(
-      doneFilter: (
-        t: TR,
-        u: UR,
-        v: VR,
-        ...s: SR[]
-      ) => PromiseBase<ARD, AJD, AND, BRD, BJD, BND, CRD, CJD, CND, RRD, RJD, RND> | Thenable<ARD> | ARD,
-      failFilter?: null,
-      progressFilter?: null
-    ): PromiseBase<ARD, AJD, AND, BRD, BJD, BND, CRD, CJD, CND, RRD, RJD, RND>;
+    then<ARD = never, AJD = never, AND = never,
+      BRD = never, BJD = never, BND = never,
+      CRD = never, CJD = never, CND = never,
+      RRD = never, RJD = never, RND = never>(
+        doneFilter: (t: TR, u: UR, v: VR, ...s: SR[]) => PromiseBase<ARD, AJD, AND,
+          BRD, BJD, BND,
+          CRD, CJD, CND,
+          RRD, RJD, RND> | Thenable<ARD> | ARD,
+        failFilter?: null,
+        progressFilter?: null): PromiseBase<ARD, AJD, AND,
+          BRD, BJD, BND,
+          CRD, CJD, CND,
+          RRD, RJD, RND>;
 
     // endregion
 
@@ -8245,29 +7281,17 @@ declare namespace JQuery {
      * @see \`{@link https://api.jquery.com/deferred.catch/ }\`
      * @since 3.0
      */
-    catch<
-      ARF = never,
-      AJF = never,
-      ANF = never,
-      BRF = never,
-      BJF = never,
-      BNF = never,
-      CRF = never,
-      CJF = never,
-      CNF = never,
-      RRF = never,
-      RJF = never,
-      RNF = never
-    >(
-      failFilter?:
-        | ((
-            t: TJ,
-            u: UJ,
-            v: VJ,
-            ...s: SJ[]
-          ) => PromiseBase<ARF, AJF, ANF, BRF, BJF, BNF, CRF, CJF, CNF, RRF, RJF, RNF> | Thenable<ARF> | ARF)
-        | null
-    ): PromiseBase<ARF, AJF, ANF, BRF, BJF, BNF, CRF, CJF, CNF, RRF, RJF, RNF>;
+    catch<ARF = never, AJF = never, ANF = never,
+      BRF = never, BJF = never, BNF = never,
+      CRF = never, CJF = never, CNF = never,
+      RRF = never, RJF = never, RNF = never>(
+        failFilter?: ((t: TJ, u: UJ, v: VJ, ...s: SJ[]) => PromiseBase<ARF, AJF, ANF,
+          BRF, BJF, BNF,
+          CRF, CJF, CNF,
+          RRF, RJF, RNF> | Thenable<ARF> | ARF) | null): PromiseBase<ARF, AJF, ANF,
+            BRF, BJF, BNF,
+            CRF, CJF, CNF,
+            RRF, RJF, RNF>;
   }
 
   /**
@@ -8276,8 +7300,12 @@ declare namespace JQuery {
    *
    * @see \`{@link http://api.jquery.com/Types/#Promise }\`
    */
-  interface Promise3<TR, TJ, TN, UR, UJ, UN, VR, VJ, VN>
-    extends PromiseBase<TR, TJ, TN, UR, UJ, UN, VR, VJ, VN, never, never, never> {}
+  interface Promise3<TR, TJ, TN,
+    UR, UJ, UN,
+    VR, VJ, VN> extends PromiseBase<TR, TJ, TN,
+    UR, UJ, UN,
+    VR, VJ, VN,
+    never, never, never> { }
 
   /**
    * This object provides a subset of the methods of the Deferred object (then, done, fail, always,
@@ -8285,8 +7313,11 @@ declare namespace JQuery {
    *
    * @see \`{@link http://api.jquery.com/Types/#Promise }\`
    */
-  interface Promise2<TR, TJ, TN, UR, UJ, UN>
-    extends PromiseBase<TR, TJ, TN, UR, UJ, UN, never, never, never, never, never, never> {}
+  interface Promise2<TR, TJ, TN,
+    UR, UJ, UN> extends PromiseBase<TR, TJ, TN,
+    UR, UJ, UN,
+    never, never, never,
+    never, never, never> { }
 
   /**
    * This object provides a subset of the methods of the Deferred object (then, done, fail, always,
@@ -8294,14 +7325,15 @@ declare namespace JQuery {
    *
    * @see \`{@link http://api.jquery.com/Types/#Promise }\`
    */
-  interface Promise<TR, TJ = any, TN = any> extends PromiseBase<TR, TJ, TN, TR, TJ, TN, TR, TJ, TN, TR, TJ, TN> {}
+  interface Promise<TR, TJ = any, TN = any> extends PromiseBase<TR, TJ, TN,
+    TR, TJ, TN,
+    TR, TJ, TN,
+    TR, TJ, TN> { }
 
   interface DeferredStatic {
     // https://jquery.com/upgrade-guide/3.0/#callback-exit
     exceptionHook: any;
-    <TR = any, TJ = any, TN = any>(
-      beforeStart?: (this: Deferred<TR, TJ, TN>, deferred: Deferred<TR, TJ, TN>) => void
-    ): Deferred<TR, TJ, TN>;
+    <TR = any, TJ = any, TN = any>(beforeStart?: (this: Deferred<TR, TJ, TN>, deferred: Deferred<TR, TJ, TN>) => void): Deferred<TR, TJ, TN>;
   }
 
   interface Deferred<TR, TJ = any, TN = any> {
@@ -8365,10 +7397,8 @@ declare namespace JQuery {
      * @see \`{@link https://api.jquery.com/deferred.always/ }\`
      * @since 1.6
      */
-    always(
-      alwaysCallback: TypeOrArray<Deferred.Callback<TR | TJ>>,
-      ...alwaysCallbacks: Array<TypeOrArray<Deferred.Callback<TR | TJ>>>
-    ): this;
+    always(alwaysCallback: TypeOrArray<Deferred.Callback<TR | TJ>>,
+      ...alwaysCallbacks: Array<TypeOrArray<Deferred.Callback<TR | TJ>>>): this;
     /**
      * Add handlers to be called when the Deferred object is resolved.
      *
@@ -8377,10 +7407,8 @@ declare namespace JQuery {
      * @see \`{@link https://api.jquery.com/deferred.done/ }\`
      * @since 1.5
      */
-    done(
-      doneCallback: TypeOrArray<Deferred.Callback<TR>>,
-      ...doneCallbacks: Array<TypeOrArray<Deferred.Callback<TR>>>
-    ): this;
+    done(doneCallback: TypeOrArray<Deferred.Callback<TR>>,
+      ...doneCallbacks: Array<TypeOrArray<Deferred.Callback<TR>>>): this;
     /**
      * Add handlers to be called when the Deferred object is rejected.
      *
@@ -8389,10 +7417,8 @@ declare namespace JQuery {
      * @see \`{@link https://api.jquery.com/deferred.fail/ }\`
      * @since 1.5
      */
-    fail(
-      failCallback: TypeOrArray<Deferred.Callback<TJ>>,
-      ...failCallbacks: Array<TypeOrArray<Deferred.Callback<TJ>>>
-    ): this;
+    fail(failCallback: TypeOrArray<Deferred.Callback<TJ>>,
+      ...failCallbacks: Array<TypeOrArray<Deferred.Callback<TJ>>>): this;
     /**
      * Add handlers to be called when the Deferred object generates progress notifications.
      *
@@ -8402,10 +7428,8 @@ declare namespace JQuery {
      * @see \`{@link https://api.jquery.com/deferred.progress/ }\`
      * @since 1.7
      */
-    progress(
-      progressCallback: TypeOrArray<Deferred.Callback<TN>>,
-      ...progressCallbacks: Array<TypeOrArray<Deferred.Callback<TN>>>
-    ): this;
+    progress(progressCallback: TypeOrArray<Deferred.Callback<TN>>,
+      ...progressCallbacks: Array<TypeOrArray<Deferred.Callback<TN>>>): this;
     /**
      * Return a Deferred's Promise object.
      *
@@ -8443,67 +7467,33 @@ declare namespace JQuery {
      *
      * @deprecated Deprecated since 1.8. Use \`{@link JQuery.Deferred.then }\`.
      */
-    pipe<
-      ARD = never,
-      AJD = never,
-      AND = never,
-      BRD = never,
-      BJD = never,
-      BND = never,
-      CRD = never,
-      CJD = never,
-      CND = never,
-      RRD = never,
-      RJD = never,
-      RND = never,
-      ARF = never,
-      AJF = never,
-      ANF = never,
-      BRF = never,
-      BJF = never,
-      BNF = never,
-      CRF = never,
-      CJF = never,
-      CNF = never,
-      RRF = never,
-      RJF = never,
-      RNF = never,
-      ARP = never,
-      AJP = never,
-      ANP = never,
-      BRP = never,
-      BJP = never,
-      BNP = never,
-      CRP = never,
-      CJP = never,
-      CNP = never,
-      RRP = never,
-      RJP = never,
-      RNP = never
-    >(
-      doneFilter: (
-        ...t: TR[]
-      ) => PromiseBase<ARD, AJD, AND, BRD, BJD, BND, CRD, CJD, CND, RRD, RJD, RND> | Thenable<ARD> | ARD,
-      failFilter: (
-        ...t: TJ[]
-      ) => PromiseBase<ARF, AJF, ANF, BRF, BJF, BNF, CRF, CJF, CNF, RRF, RJF, RNF> | Thenable<AJF> | AJF,
-      progressFilter: (
-        ...t: TN[]
-      ) => PromiseBase<ARP, AJP, ANP, BRP, BJP, BNP, CRP, CJP, CNP, RRP, RJP, RNP> | Thenable<ANP> | ANP
-    ): PromiseBase<
-      ARD | ARF | ARP,
-      AJD | AJF | AJP,
-      AND | ANF | ANP,
-      BRD | BRF | BRP,
-      BJD | BJF | BJP,
-      BND | BNF | BNP,
-      CRD | CRF | CRP,
-      CJD | CJF | CJP,
-      CND | CNF | CNP,
-      RRD | RRF | RRP,
-      RJD | RJF | RJP,
-      RND | RNF | RNP
-    >;
+    pipe<ARD = never, AJD = never, AND = never,
+      BRD = never, BJD = never, BND = never,
+      CRD = never, CJD = never, CND = never,
+      RRD = never, RJD = never, RND = never,
+      ARF = never, AJF = never, ANF = never,
+      BRF = never, BJF = never, BNF = never,
+      CRF = never, CJF = never, CNF = never,
+      RRF = never, RJF = never, RNF = never,
+      ARP = never, AJP = never, ANP = never,
+      BRP = never, BJP = never, BNP = never,
+      CRP = never, CJP = never, CNP = never,
+      RRP = never, RJP = never, RNP = never>(
+        doneFilter: (...t: TR[]) => PromiseBase<ARD, AJD, AND,
+          BRD, BJD, BND,
+          CRD, CJD, CND,
+          RRD, RJD, RND> | Thenable<ARD> | ARD,
+        failFilter: (...t: TJ[]) => PromiseBase<ARF, AJF, ANF,
+          BRF, BJF, BNF,
+          CRF, CJF, CNF,
+          RRF, RJF, RNF> | Thenable<AJF> | AJF,
+        progressFilter: (...t: TN[]) => PromiseBase<ARP, AJP, ANP,
+          BRP, BJP, BNP,
+          CRP, CJP, CNP,
+          RRP, RJP, RNP> | Thenable<ANP> | ANP): PromiseBase<ARD | ARF | ARP, AJD | AJF | AJP, AND | ANF | ANP,
+            BRD | BRF | BRP, BJD | BJF | BJP, BND | BNF | BNP,
+            CRD | CRF | CRP, CJD | CJF | CJP, CND | CNF | CNP,
+            RRD | RRF | RRP, RJD | RJF | RJP, RND | RNF | RNP>;
     /**
      * Utility method to filter and/or chain Deferreds.
      *
@@ -8516,53 +7506,26 @@ declare namespace JQuery {
      *
      * @deprecated Deprecated since 1.8. Use \`{@link JQuery.Deferred.then }\`.
      */
-    pipe<
-      ARF = never,
-      AJF = never,
-      ANF = never,
-      BRF = never,
-      BJF = never,
-      BNF = never,
-      CRF = never,
-      CJF = never,
-      CNF = never,
-      RRF = never,
-      RJF = never,
-      RNF = never,
-      ARP = never,
-      AJP = never,
-      ANP = never,
-      BRP = never,
-      BJP = never,
-      BNP = never,
-      CRP = never,
-      CJP = never,
-      CNP = never,
-      RRP = never,
-      RJP = never,
-      RNP = never
-    >(
-      doneFilter: null,
-      failFilter: (
-        ...t: TJ[]
-      ) => PromiseBase<ARF, AJF, ANF, BRF, BJF, BNF, CRF, CJF, CNF, RRF, RJF, RNF> | Thenable<AJF> | AJF,
-      progressFilter: (
-        ...t: TN[]
-      ) => PromiseBase<ARP, AJP, ANP, BRP, BJP, BNP, CRP, CJP, CNP, RRP, RJP, RNP> | Thenable<ANP> | ANP
-    ): PromiseBase<
-      ARF | ARP,
-      AJF | AJP,
-      ANF | ANP,
-      BRF | BRP,
-      BJF | BJP,
-      BNF | BNP,
-      CRF | CRP,
-      CJF | CJP,
-      CNF | CNP,
-      RRF | RRP,
-      RJF | RJP,
-      RNF | RNP
-    >;
+    pipe<ARF = never, AJF = never, ANF = never,
+      BRF = never, BJF = never, BNF = never,
+      CRF = never, CJF = never, CNF = never,
+      RRF = never, RJF = never, RNF = never,
+      ARP = never, AJP = never, ANP = never,
+      BRP = never, BJP = never, BNP = never,
+      CRP = never, CJP = never, CNP = never,
+      RRP = never, RJP = never, RNP = never>(
+        doneFilter: null,
+        failFilter: (...t: TJ[]) => PromiseBase<ARF, AJF, ANF,
+          BRF, BJF, BNF,
+          CRF, CJF, CNF,
+          RRF, RJF, RNF> | Thenable<AJF> | AJF,
+        progressFilter: (...t: TN[]) => PromiseBase<ARP, AJP, ANP,
+          BRP, BJP, BNP,
+          CRP, CJP, CNP,
+          RRP, RJP, RNP> | Thenable<ANP> | ANP): PromiseBase<ARF | ARP, AJF | AJP, ANF | ANP,
+            BRF | BRP, BJF | BJP, BNF | BNP,
+            CRF | CRP, CJF | CJP, CNF | CNP,
+            RRF | RRP, RJF | RJP, RNF | RNP>;
     /**
      * Utility method to filter and/or chain Deferreds.
      *
@@ -8575,53 +7538,26 @@ declare namespace JQuery {
      *
      * @deprecated Deprecated since 1.8. Use \`{@link JQuery.Deferred.then }\`.
      */
-    pipe<
-      ARD = never,
-      AJD = never,
-      AND = never,
-      BRD = never,
-      BJD = never,
-      BND = never,
-      CRD = never,
-      CJD = never,
-      CND = never,
-      RRD = never,
-      RJD = never,
-      RND = never,
-      ARP = never,
-      AJP = never,
-      ANP = never,
-      BRP = never,
-      BJP = never,
-      BNP = never,
-      CRP = never,
-      CJP = never,
-      CNP = never,
-      RRP = never,
-      RJP = never,
-      RNP = never
-    >(
-      doneFilter: (
-        ...t: TR[]
-      ) => PromiseBase<ARD, AJD, AND, BRD, BJD, BND, CRD, CJD, CND, RRD, RJD, RND> | Thenable<ARD> | ARD,
-      failFilter: null,
-      progressFilter: (
-        ...t: TN[]
-      ) => PromiseBase<ARP, AJP, ANP, BRP, BJP, BNP, CRP, CJP, CNP, RRP, RJP, RNP> | Thenable<ANP> | ANP
-    ): PromiseBase<
-      ARD | ARP,
-      AJD | AJP,
-      AND | ANP,
-      BRD | BRP,
-      BJD | BJP,
-      BND | BNP,
-      CRD | CRP,
-      CJD | CJP,
-      CND | CNP,
-      RRD | RRP,
-      RJD | RJP,
-      RND | RNP
-    >;
+    pipe<ARD = never, AJD = never, AND = never,
+      BRD = never, BJD = never, BND = never,
+      CRD = never, CJD = never, CND = never,
+      RRD = never, RJD = never, RND = never,
+      ARP = never, AJP = never, ANP = never,
+      BRP = never, BJP = never, BNP = never,
+      CRP = never, CJP = never, CNP = never,
+      RRP = never, RJP = never, RNP = never>(
+        doneFilter: (...t: TR[]) => PromiseBase<ARD, AJD, AND,
+          BRD, BJD, BND,
+          CRD, CJD, CND,
+          RRD, RJD, RND> | Thenable<ARD> | ARD,
+        failFilter: null,
+        progressFilter: (...t: TN[]) => PromiseBase<ARP, AJP, ANP,
+          BRP, BJP, BNP,
+          CRP, CJP, CNP,
+          RRP, RJP, RNP> | Thenable<ANP> | ANP): PromiseBase<ARD | ARP, AJD | AJP, AND | ANP,
+            BRD | BRP, BJD | BJP, BND | BNP,
+            CRD | CRP, CJD | CJP, CND | CNP,
+            RRD | RRP, RJD | RJP, RND | RNP>;
     /**
      * Utility method to filter and/or chain Deferreds.
      *
@@ -8634,26 +7570,19 @@ declare namespace JQuery {
      *
      * @deprecated Deprecated since 1.8. Use \`{@link JQuery.Deferred.then }\`.
      */
-    pipe<
-      ARP = never,
-      AJP = never,
-      ANP = never,
-      BRP = never,
-      BJP = never,
-      BNP = never,
-      CRP = never,
-      CJP = never,
-      CNP = never,
-      RRP = never,
-      RJP = never,
-      RNP = never
-    >(
-      doneFilter: null,
-      failFilter: null,
-      progressFilter?: (
-        ...t: TN[]
-      ) => PromiseBase<ARP, AJP, ANP, BRP, BJP, BNP, CRP, CJP, CNP, RRP, RJP, RNP> | Thenable<ANP> | ANP
-    ): PromiseBase<ARP, AJP, ANP, BRP, BJP, BNP, CRP, CJP, CNP, RRP, RJP, RNP>;
+    pipe<ARP = never, AJP = never, ANP = never,
+      BRP = never, BJP = never, BNP = never,
+      CRP = never, CJP = never, CNP = never,
+      RRP = never, RJP = never, RNP = never>(
+        doneFilter: null,
+        failFilter: null,
+        progressFilter?: (...t: TN[]) => PromiseBase<ARP, AJP, ANP,
+          BRP, BJP, BNP,
+          CRP, CJP, CNP,
+          RRP, RJP, RNP> | Thenable<ANP> | ANP): PromiseBase<ARP, AJP, ANP,
+            BRP, BJP, BNP,
+            CRP, CJP, CNP,
+            RRP, RJP, RNP>;
     /**
      * Utility method to filter and/or chain Deferreds.
      *
@@ -8666,53 +7595,26 @@ declare namespace JQuery {
      *
      * @deprecated Deprecated since 1.8. Use \`{@link JQuery.Deferred.then }\`.
      */
-    pipe<
-      ARD = never,
-      AJD = never,
-      AND = never,
-      BRD = never,
-      BJD = never,
-      BND = never,
-      CRD = never,
-      CJD = never,
-      CND = never,
-      RRD = never,
-      RJD = never,
-      RND = never,
-      ARF = never,
-      AJF = never,
-      ANF = never,
-      BRF = never,
-      BJF = never,
-      BNF = never,
-      CRF = never,
-      CJF = never,
-      CNF = never,
-      RRF = never,
-      RJF = never,
-      RNF = never
-    >(
-      doneFilter: (
-        ...t: TR[]
-      ) => PromiseBase<ARD, AJD, AND, BRD, BJD, BND, CRD, CJD, CND, RRD, RJD, RND> | Thenable<ARD> | ARD,
-      failFilter: (
-        ...t: TJ[]
-      ) => PromiseBase<ARF, AJF, ANF, BRF, BJF, BNF, CRF, CJF, CNF, RRF, RJF, RNF> | Thenable<AJF> | AJF,
-      progressFilter?: null
-    ): PromiseBase<
-      ARD | ARF,
-      AJD | AJF,
-      AND | ANF,
-      BRD | BRF,
-      BJD | BJF,
-      BND | BNF,
-      CRD | CRF,
-      CJD | CJF,
-      CND | CNF,
-      RRD | RRF,
-      RJD | RJF,
-      RND | RNF
-    >;
+    pipe<ARD = never, AJD = never, AND = never,
+      BRD = never, BJD = never, BND = never,
+      CRD = never, CJD = never, CND = never,
+      RRD = never, RJD = never, RND = never,
+      ARF = never, AJF = never, ANF = never,
+      BRF = never, BJF = never, BNF = never,
+      CRF = never, CJF = never, CNF = never,
+      RRF = never, RJF = never, RNF = never>(
+        doneFilter: (...t: TR[]) => PromiseBase<ARD, AJD, AND,
+          BRD, BJD, BND,
+          CRD, CJD, CND,
+          RRD, RJD, RND> | Thenable<ARD> | ARD,
+        failFilter: (...t: TJ[]) => PromiseBase<ARF, AJF, ANF,
+          BRF, BJF, BNF,
+          CRF, CJF, CNF,
+          RRF, RJF, RNF> | Thenable<AJF> | AJF,
+        progressFilter?: null): PromiseBase<ARD | ARF, AJD | AJF, AND | ANF,
+          BRD | BRF, BJD | BJF, BND | BNF,
+          CRD | CRF, CJD | CJF, CND | CNF,
+          RRD | RRF, RJD | RJF, RND | RNF>;
     /**
      * Utility method to filter and/or chain Deferreds.
      *
@@ -8725,26 +7627,19 @@ declare namespace JQuery {
      *
      * @deprecated Deprecated since 1.8. Use \`{@link JQuery.Deferred.then }\`.
      */
-    pipe<
-      ARF = never,
-      AJF = never,
-      ANF = never,
-      BRF = never,
-      BJF = never,
-      BNF = never,
-      CRF = never,
-      CJF = never,
-      CNF = never,
-      RRF = never,
-      RJF = never,
-      RNF = never
-    >(
-      doneFilter: null,
-      failFilter: (
-        ...t: TJ[]
-      ) => PromiseBase<ARF, AJF, ANF, BRF, BJF, BNF, CRF, CJF, CNF, RRF, RJF, RNF> | Thenable<AJF> | AJF,
-      progressFilter?: null
-    ): PromiseBase<ARF, AJF, ANF, BRF, BJF, BNF, CRF, CJF, CNF, RRF, RJF, RNF>;
+    pipe<ARF = never, AJF = never, ANF = never,
+      BRF = never, BJF = never, BNF = never,
+      CRF = never, CJF = never, CNF = never,
+      RRF = never, RJF = never, RNF = never>(
+        doneFilter: null,
+        failFilter: (...t: TJ[]) => PromiseBase<ARF, AJF, ANF,
+          BRF, BJF, BNF,
+          CRF, CJF, CNF,
+          RRF, RJF, RNF> | Thenable<AJF> | AJF,
+        progressFilter?: null): PromiseBase<ARF, AJF, ANF,
+          BRF, BJF, BNF,
+          CRF, CJF, CNF,
+          RRF, RJF, RNF>;
     /**
      * Utility method to filter and/or chain Deferreds.
      *
@@ -8757,26 +7652,19 @@ declare namespace JQuery {
      *
      * @deprecated Deprecated since 1.8. Use \`{@link JQuery.Deferred.then }\`.
      */
-    pipe<
-      ARD = never,
-      AJD = never,
-      AND = never,
-      BRD = never,
-      BJD = never,
-      BND = never,
-      CRD = never,
-      CJD = never,
-      CND = never,
-      RRD = never,
-      RJD = never,
-      RND = never
-    >(
-      doneFilter: (
-        ...t: TR[]
-      ) => PromiseBase<ARD, AJD, AND, BRD, BJD, BND, CRD, CJD, CND, RRD, RJD, RND> | Thenable<ARD> | ARD,
-      failFilter?: null,
-      progressFilter?: null
-    ): PromiseBase<ARD, AJD, AND, BRD, BJD, BND, CRD, CJD, CND, RRD, RJD, RND>;
+    pipe<ARD = never, AJD = never, AND = never,
+      BRD = never, BJD = never, BND = never,
+      CRD = never, CJD = never, CND = never,
+      RRD = never, RJD = never, RND = never>(
+        doneFilter: (...t: TR[]) => PromiseBase<ARD, AJD, AND,
+          BRD, BJD, BND,
+          CRD, CJD, CND,
+          RRD, RJD, RND> | Thenable<ARD> | ARD,
+        failFilter?: null,
+        progressFilter?: null): PromiseBase<ARD, AJD, AND,
+          BRD, BJD, BND,
+          CRD, CJD, CND,
+          RRD, RJD, RND>;
 
     // endregion
 
@@ -8791,67 +7679,33 @@ declare namespace JQuery {
      * @see \`{@link https://api.jquery.com/deferred.then/ }\`
      * @since 1.8
      */
-    then<
-      ARD = never,
-      AJD = never,
-      AND = never,
-      BRD = never,
-      BJD = never,
-      BND = never,
-      CRD = never,
-      CJD = never,
-      CND = never,
-      RRD = never,
-      RJD = never,
-      RND = never,
-      ARF = never,
-      AJF = never,
-      ANF = never,
-      BRF = never,
-      BJF = never,
-      BNF = never,
-      CRF = never,
-      CJF = never,
-      CNF = never,
-      RRF = never,
-      RJF = never,
-      RNF = never,
-      ARP = never,
-      AJP = never,
-      ANP = never,
-      BRP = never,
-      BJP = never,
-      BNP = never,
-      CRP = never,
-      CJP = never,
-      CNP = never,
-      RRP = never,
-      RJP = never,
-      RNP = never
-    >(
-      doneFilter: (
-        ...t: TR[]
-      ) => PromiseBase<ARD, AJD, AND, BRD, BJD, BND, CRD, CJD, CND, RRD, RJD, RND> | Thenable<ARD> | ARD,
-      failFilter: (
-        ...t: TJ[]
-      ) => PromiseBase<ARF, AJF, ANF, BRF, BJF, BNF, CRF, CJF, CNF, RRF, RJF, RNF> | Thenable<ARF> | ARF,
-      progressFilter: (
-        ...t: TN[]
-      ) => PromiseBase<ARP, AJP, ANP, BRP, BJP, BNP, CRP, CJP, CNP, RRP, RJP, RNP> | Thenable<ANP> | ANP
-    ): PromiseBase<
-      ARD | ARF | ARP,
-      AJD | AJF | AJP,
-      AND | ANF | ANP,
-      BRD | BRF | BRP,
-      BJD | BJF | BJP,
-      BND | BNF | BNP,
-      CRD | CRF | CRP,
-      CJD | CJF | CJP,
-      CND | CNF | CNP,
-      RRD | RRF | RRP,
-      RJD | RJF | RJP,
-      RND | RNF | RNP
-    >;
+    then<ARD = never, AJD = never, AND = never,
+      BRD = never, BJD = never, BND = never,
+      CRD = never, CJD = never, CND = never,
+      RRD = never, RJD = never, RND = never,
+      ARF = never, AJF = never, ANF = never,
+      BRF = never, BJF = never, BNF = never,
+      CRF = never, CJF = never, CNF = never,
+      RRF = never, RJF = never, RNF = never,
+      ARP = never, AJP = never, ANP = never,
+      BRP = never, BJP = never, BNP = never,
+      CRP = never, CJP = never, CNP = never,
+      RRP = never, RJP = never, RNP = never>(
+        doneFilter: (...t: TR[]) => PromiseBase<ARD, AJD, AND,
+          BRD, BJD, BND,
+          CRD, CJD, CND,
+          RRD, RJD, RND> | Thenable<ARD> | ARD,
+        failFilter: (...t: TJ[]) => PromiseBase<ARF, AJF, ANF,
+          BRF, BJF, BNF,
+          CRF, CJF, CNF,
+          RRF, RJF, RNF> | Thenable<ARF> | ARF,
+        progressFilter: (...t: TN[]) => PromiseBase<ARP, AJP, ANP,
+          BRP, BJP, BNP,
+          CRP, CJP, CNP,
+          RRP, RJP, RNP> | Thenable<ANP> | ANP): PromiseBase<ARD | ARF | ARP, AJD | AJF | AJP, AND | ANF | ANP,
+            BRD | BRF | BRP, BJD | BJF | BJP, BND | BNF | BNP,
+            CRD | CRF | CRP, CJD | CJF | CJP, CND | CNF | CNP,
+            RRD | RRF | RRP, RJD | RJF | RJP, RND | RNF | RNP>;
     /**
      * Add handlers to be called when the Deferred object is resolved, rejected, or still in progress.
      *
@@ -8861,53 +7715,26 @@ declare namespace JQuery {
      * @see \`{@link https://api.jquery.com/deferred.then/ }\`
      * @since 1.8
      */
-    then<
-      ARF = never,
-      AJF = never,
-      ANF = never,
-      BRF = never,
-      BJF = never,
-      BNF = never,
-      CRF = never,
-      CJF = never,
-      CNF = never,
-      RRF = never,
-      RJF = never,
-      RNF = never,
-      ARP = never,
-      AJP = never,
-      ANP = never,
-      BRP = never,
-      BJP = never,
-      BNP = never,
-      CRP = never,
-      CJP = never,
-      CNP = never,
-      RRP = never,
-      RJP = never,
-      RNP = never
-    >(
-      doneFilter: null,
-      failFilter: (
-        ...t: TJ[]
-      ) => PromiseBase<ARF, AJF, ANF, BRF, BJF, BNF, CRF, CJF, CNF, RRF, RJF, RNF> | Thenable<ARF> | ARF,
-      progressFilter: (
-        ...t: TN[]
-      ) => PromiseBase<ARP, AJP, ANP, BRP, BJP, BNP, CRP, CJP, CNP, RRP, RJP, RNP> | Thenable<ANP> | ANP
-    ): PromiseBase<
-      ARF | ARP,
-      AJF | AJP,
-      ANF | ANP,
-      BRF | BRP,
-      BJF | BJP,
-      BNF | BNP,
-      CRF | CRP,
-      CJF | CJP,
-      CNF | CNP,
-      RRF | RRP,
-      RJF | RJP,
-      RNF | RNP
-    >;
+    then<ARF = never, AJF = never, ANF = never,
+      BRF = never, BJF = never, BNF = never,
+      CRF = never, CJF = never, CNF = never,
+      RRF = never, RJF = never, RNF = never,
+      ARP = never, AJP = never, ANP = never,
+      BRP = never, BJP = never, BNP = never,
+      CRP = never, CJP = never, CNP = never,
+      RRP = never, RJP = never, RNP = never>(
+        doneFilter: null,
+        failFilter: (...t: TJ[]) => PromiseBase<ARF, AJF, ANF,
+          BRF, BJF, BNF,
+          CRF, CJF, CNF,
+          RRF, RJF, RNF> | Thenable<ARF> | ARF,
+        progressFilter: (...t: TN[]) => PromiseBase<ARP, AJP, ANP,
+          BRP, BJP, BNP,
+          CRP, CJP, CNP,
+          RRP, RJP, RNP> | Thenable<ANP> | ANP): PromiseBase<ARF | ARP, AJF | AJP, ANF | ANP,
+            BRF | BRP, BJF | BJP, BNF | BNP,
+            CRF | CRP, CJF | CJP, CNF | CNP,
+            RRF | RRP, RJF | RJP, RNF | RNP>;
     /**
      * Add handlers to be called when the Deferred object is resolved, rejected, or still in progress.
      *
@@ -8917,53 +7744,26 @@ declare namespace JQuery {
      * @see \`{@link https://api.jquery.com/deferred.then/ }\`
      * @since 1.8
      */
-    then<
-      ARD = never,
-      AJD = never,
-      AND = never,
-      BRD = never,
-      BJD = never,
-      BND = never,
-      CRD = never,
-      CJD = never,
-      CND = never,
-      RRD = never,
-      RJD = never,
-      RND = never,
-      ARP = never,
-      AJP = never,
-      ANP = never,
-      BRP = never,
-      BJP = never,
-      BNP = never,
-      CRP = never,
-      CJP = never,
-      CNP = never,
-      RRP = never,
-      RJP = never,
-      RNP = never
-    >(
-      doneFilter: (
-        ...t: TR[]
-      ) => PromiseBase<ARD, AJD, AND, BRD, BJD, BND, CRD, CJD, CND, RRD, RJD, RND> | Thenable<ARD> | ARD,
-      failFilter: null,
-      progressFilter: (
-        ...t: TN[]
-      ) => PromiseBase<ARP, AJP, ANP, BRP, BJP, BNP, CRP, CJP, CNP, RRP, RJP, RNP> | Thenable<ANP> | ANP
-    ): PromiseBase<
-      ARD | ARP,
-      AJD | AJP,
-      AND | ANP,
-      BRD | BRP,
-      BJD | BJP,
-      BND | BNP,
-      CRD | CRP,
-      CJD | CJP,
-      CND | CNP,
-      RRD | RRP,
-      RJD | RJP,
-      RND | RNP
-    >;
+    then<ARD = never, AJD = never, AND = never,
+      BRD = never, BJD = never, BND = never,
+      CRD = never, CJD = never, CND = never,
+      RRD = never, RJD = never, RND = never,
+      ARP = never, AJP = never, ANP = never,
+      BRP = never, BJP = never, BNP = never,
+      CRP = never, CJP = never, CNP = never,
+      RRP = never, RJP = never, RNP = never>(
+        doneFilter: (...t: TR[]) => PromiseBase<ARD, AJD, AND,
+          BRD, BJD, BND,
+          CRD, CJD, CND,
+          RRD, RJD, RND> | Thenable<ARD> | ARD,
+        failFilter: null,
+        progressFilter: (...t: TN[]) => PromiseBase<ARP, AJP, ANP,
+          BRP, BJP, BNP,
+          CRP, CJP, CNP,
+          RRP, RJP, RNP> | Thenable<ANP> | ANP): PromiseBase<ARD | ARP, AJD | AJP, AND | ANP,
+            BRD | BRP, BJD | BJP, BND | BNP,
+            CRD | CRP, CJD | CJP, CND | CNP,
+            RRD | RRP, RJD | RJP, RND | RNP>;
     /**
      * Add handlers to be called when the Deferred object is resolved, rejected, or still in progress.
      *
@@ -8973,26 +7773,19 @@ declare namespace JQuery {
      * @see \`{@link https://api.jquery.com/deferred.then/ }\`
      * @since 1.8
      */
-    then<
-      ARP = never,
-      AJP = never,
-      ANP = never,
-      BRP = never,
-      BJP = never,
-      BNP = never,
-      CRP = never,
-      CJP = never,
-      CNP = never,
-      RRP = never,
-      RJP = never,
-      RNP = never
-    >(
-      doneFilter: null,
-      failFilter: null,
-      progressFilter?: (
-        ...t: TN[]
-      ) => PromiseBase<ARP, AJP, ANP, BRP, BJP, BNP, CRP, CJP, CNP, RRP, RJP, RNP> | Thenable<ANP> | ANP
-    ): PromiseBase<ARP, AJP, ANP, BRP, BJP, BNP, CRP, CJP, CNP, RRP, RJP, RNP>;
+    then<ARP = never, AJP = never, ANP = never,
+      BRP = never, BJP = never, BNP = never,
+      CRP = never, CJP = never, CNP = never,
+      RRP = never, RJP = never, RNP = never>(
+        doneFilter: null,
+        failFilter: null,
+        progressFilter?: (...t: TN[]) => PromiseBase<ARP, AJP, ANP,
+          BRP, BJP, BNP,
+          CRP, CJP, CNP,
+          RRP, RJP, RNP> | Thenable<ANP> | ANP): PromiseBase<ARP, AJP, ANP,
+            BRP, BJP, BNP,
+            CRP, CJP, CNP,
+            RRP, RJP, RNP>;
     /**
      * Add handlers to be called when the Deferred object is resolved, rejected, or still in progress.
      *
@@ -9002,53 +7795,26 @@ declare namespace JQuery {
      * @see \`{@link https://api.jquery.com/deferred.then/ }\`
      * @since 1.8
      */
-    then<
-      ARD = never,
-      AJD = never,
-      AND = never,
-      BRD = never,
-      BJD = never,
-      BND = never,
-      CRD = never,
-      CJD = never,
-      CND = never,
-      RRD = never,
-      RJD = never,
-      RND = never,
-      ARF = never,
-      AJF = never,
-      ANF = never,
-      BRF = never,
-      BJF = never,
-      BNF = never,
-      CRF = never,
-      CJF = never,
-      CNF = never,
-      RRF = never,
-      RJF = never,
-      RNF = never
-    >(
-      doneFilter: (
-        ...t: TR[]
-      ) => PromiseBase<ARD, AJD, AND, BRD, BJD, BND, CRD, CJD, CND, RRD, RJD, RND> | Thenable<ARD> | ARD,
-      failFilter: (
-        ...t: TJ[]
-      ) => PromiseBase<ARF, AJF, ANF, BRF, BJF, BNF, CRF, CJF, CNF, RRF, RJF, RNF> | Thenable<ARF> | ARF,
-      progressFilter?: null
-    ): PromiseBase<
-      ARD | ARF,
-      AJD | AJF,
-      AND | ANF,
-      BRD | BRF,
-      BJD | BJF,
-      BND | BNF,
-      CRD | CRF,
-      CJD | CJF,
-      CND | CNF,
-      RRD | RRF,
-      RJD | RJF,
-      RND | RNF
-    >;
+    then<ARD = never, AJD = never, AND = never,
+      BRD = never, BJD = never, BND = never,
+      CRD = never, CJD = never, CND = never,
+      RRD = never, RJD = never, RND = never,
+      ARF = never, AJF = never, ANF = never,
+      BRF = never, BJF = never, BNF = never,
+      CRF = never, CJF = never, CNF = never,
+      RRF = never, RJF = never, RNF = never>(
+        doneFilter: (...t: TR[]) => PromiseBase<ARD, AJD, AND,
+          BRD, BJD, BND,
+          CRD, CJD, CND,
+          RRD, RJD, RND> | Thenable<ARD> | ARD,
+        failFilter: (...t: TJ[]) => PromiseBase<ARF, AJF, ANF,
+          BRF, BJF, BNF,
+          CRF, CJF, CNF,
+          RRF, RJF, RNF> | Thenable<ARF> | ARF,
+        progressFilter?: null): PromiseBase<ARD | ARF, AJD | AJF, AND | ANF,
+          BRD | BRF, BJD | BJF, BND | BNF,
+          CRD | CRF, CJD | CJF, CND | CNF,
+          RRD | RRF, RJD | RJF, RND | RNF>;
     /**
      * Add handlers to be called when the Deferred object is resolved, rejected, or still in progress.
      *
@@ -9058,26 +7824,19 @@ declare namespace JQuery {
      * @see \`{@link https://api.jquery.com/deferred.then/ }\`
      * @since 1.8
      */
-    then<
-      ARF = never,
-      AJF = never,
-      ANF = never,
-      BRF = never,
-      BJF = never,
-      BNF = never,
-      CRF = never,
-      CJF = never,
-      CNF = never,
-      RRF = never,
-      RJF = never,
-      RNF = never
-    >(
-      doneFilter: null,
-      failFilter: (
-        ...t: TJ[]
-      ) => PromiseBase<ARF, AJF, ANF, BRF, BJF, BNF, CRF, CJF, CNF, RRF, RJF, RNF> | Thenable<ARF> | ARF,
-      progressFilter?: null
-    ): PromiseBase<ARF, AJF, ANF, BRF, BJF, BNF, CRF, CJF, CNF, RRF, RJF, RNF>;
+    then<ARF = never, AJF = never, ANF = never,
+      BRF = never, BJF = never, BNF = never,
+      CRF = never, CJF = never, CNF = never,
+      RRF = never, RJF = never, RNF = never>(
+        doneFilter: null,
+        failFilter: (...t: TJ[]) => PromiseBase<ARF, AJF, ANF,
+          BRF, BJF, BNF,
+          CRF, CJF, CNF,
+          RRF, RJF, RNF> | Thenable<ARF> | ARF,
+        progressFilter?: null): PromiseBase<ARF, AJF, ANF,
+          BRF, BJF, BNF,
+          CRF, CJF, CNF,
+          RRF, RJF, RNF>;
     /**
      * Add handlers to be called when the Deferred object is resolved, rejected, or still in progress.
      *
@@ -9087,26 +7846,19 @@ declare namespace JQuery {
      * @see \`{@link https://api.jquery.com/deferred.then/ }\`
      * @since 1.8
      */
-    then<
-      ARD = never,
-      AJD = never,
-      AND = never,
-      BRD = never,
-      BJD = never,
-      BND = never,
-      CRD = never,
-      CJD = never,
-      CND = never,
-      RRD = never,
-      RJD = never,
-      RND = never
-    >(
-      doneFilter: (
-        ...t: TR[]
-      ) => PromiseBase<ARD, AJD, AND, BRD, BJD, BND, CRD, CJD, CND, RRD, RJD, RND> | Thenable<ARD> | ARD,
-      failFilter?: null,
-      progressFilter?: null
-    ): PromiseBase<ARD, AJD, AND, BRD, BJD, BND, CRD, CJD, CND, RRD, RJD, RND>;
+    then<ARD = never, AJD = never, AND = never,
+      BRD = never, BJD = never, BND = never,
+      CRD = never, CJD = never, CND = never,
+      RRD = never, RJD = never, RND = never>(
+        doneFilter: (...t: TR[]) => PromiseBase<ARD, AJD, AND,
+          BRD, BJD, BND,
+          CRD, CJD, CND,
+          RRD, RJD, RND> | Thenable<ARD> | ARD,
+        failFilter?: null,
+        progressFilter?: null): PromiseBase<ARD, AJD, AND,
+          BRD, BJD, BND,
+          CRD, CJD, CND,
+          RRD, RJD, RND>;
 
     // endregion
 
@@ -9117,26 +7869,17 @@ declare namespace JQuery {
      * @see \`{@link https://api.jquery.com/deferred.catch/ }\`
      * @since 3.0
      */
-    catch<
-      ARF = never,
-      AJF = never,
-      ANF = never,
-      BRF = never,
-      BJF = never,
-      BNF = never,
-      CRF = never,
-      CJF = never,
-      CNF = never,
-      RRF = never,
-      RJF = never,
-      RNF = never
-    >(
-      failFilter?:
-        | ((
-            ...t: TJ[]
-          ) => PromiseBase<ARF, AJF, ANF, BRF, BJF, BNF, CRF, CJF, CNF, RRF, RJF, RNF> | Thenable<ARF> | ARF)
-        | null
-    ): PromiseBase<ARF, AJF, ANF, BRF, BJF, BNF, CRF, CJF, CNF, RRF, RJF, RNF>;
+    catch<ARF = never, AJF = never, ANF = never,
+      BRF = never, BJF = never, BNF = never,
+      CRF = never, CJF = never, CNF = never,
+      RRF = never, RJF = never, RNF = never>(
+        failFilter?: ((...t: TJ[]) => PromiseBase<ARF, AJF, ANF,
+          BRF, BJF, BNF,
+          CRF, CJF, CNF,
+          RRF, RJF, RNF> | Thenable<ARF> | ARF) | null): PromiseBase<ARF, AJF, ANF,
+            BRF, BJF, BNF,
+            CRF, CJF, CNF,
+            RRF, RJF, RNF>;
   }
 
   namespace Deferred {
@@ -9144,7 +7887,7 @@ declare namespace JQuery {
       (t: T, u: U, v: V, ...r: R[]): void;
     }
 
-    interface Callback3<T, U, V> extends CallbackBase<T, U, V, never> {}
+    interface Callback3<T, U, V> extends CallbackBase<T, U, V, never> { }
 
     interface Callback<T> {
       (...args: T[]): void;
@@ -9153,22 +7896,22 @@ declare namespace JQuery {
     /**
      * @deprecated Use \`{@link JQuery.Deferred.Callback }\`.
      */
-    interface DoneCallback<TResolve> extends Callback<TResolve> {}
+    interface DoneCallback<TResolve> extends Callback<TResolve> { }
 
     /**
      * @deprecated Use \`{@link JQuery.Deferred.Callback }\`.
      */
-    interface FailCallback<TReject> extends Callback<TReject> {}
+    interface FailCallback<TReject> extends Callback<TReject> { }
 
     /**
      * @deprecated Use \`{@link JQuery.Deferred.Callback }\`.
      */
-    interface AlwaysCallback<TResolve, TReject> extends Callback<TResolve | TReject> {}
+    interface AlwaysCallback<TResolve, TReject> extends Callback<TResolve | TReject> { }
 
     /**
      * @deprecated Use \`{@link JQuery.Deferred.Callback }\`.
      */
-    interface ProgressCallback<TNotify> extends Callback<TNotify> {}
+    interface ProgressCallback<TNotify> extends Callback<TNotify> { }
   }
 
   // endregion
@@ -9177,7 +7920,7 @@ declare namespace JQuery {
 
   type Duration = number | 'fast' | 'slow';
   // TODO: Is the first element always a string or is that specific to the 'fx' queue?
-  type Queue<TElement> = { 0: string } & Array<QueueFunction<TElement>>;
+  type Queue<TElement> = { 0: string; } & Array<QueueFunction<TElement>>;
 
   interface QueueFunction<TElement> {
     (this: TElement, next: () => void): void;
@@ -9285,14 +8028,13 @@ declare namespace JQuery {
 
   // Static members
   interface EventStatic {
-    // eslint-disable-next-line
+    // tslint:disable-next-line:no-unnecessary-generics
     <T extends object, TTarget extends EventTarget = HTMLElement>(event: string, properties?: T): Event<TTarget> & T;
-    // eslint-disable-next-line
+    // tslint:disable-next-line:no-unnecessary-generics
     <T extends EventLike, TTarget extends EventTarget = HTMLElement>(properties: T): Event<TTarget> & T;
-    // eslint-disable-next-line
-    new <T extends object, TTarget extends EventTarget = HTMLElement>(event: string, properties?: T): Event<TTarget> &
-      T;
-    // eslint-disable-next-line
+    // tslint:disable-next-line:no-unnecessary-generics
+    new <T extends object, TTarget extends EventTarget = HTMLElement>(event: string, properties?: T): Event<TTarget> & T;
+    // tslint:disable-next-line:no-unnecessary-generics
     new <T extends EventLike, TTarget extends EventTarget = HTMLElement>(properties: T): Event<TTarget> & T;
   }
 
@@ -9399,39 +8141,11 @@ declare namespace JQuery {
   }
 
   // Generic members
-  interface Event<TTarget = EventTarget, TData = null>
-    extends Partial<
-      Pick<
-        PointerEvent & KeyboardEvent & TouchEvent,
-        | 'altKey'
-        | 'bubbles'
-        | 'cancelable'
-        | 'changedTouches'
-        | 'ctrlKey'
-        | 'detail'
-        | 'eventPhase'
-        | 'metaKey'
-        | 'pageX'
-        | 'pageY'
-        | 'shiftKey'
-        | 'view'
-        | 'charCode'
-        | 'key'
-        | 'keyCode'
-        | 'button'
-        | 'buttons'
-        | 'clientX'
-        | 'clientY'
-        | 'offsetX'
-        | 'offsetY'
-        | 'pointerId'
-        | 'pointerType'
-        | 'screenX'
-        | 'screenY'
-        | 'targetTouches'
-        | 'touches'
-      >
-    > {
+  interface Event<TTarget = EventTarget,
+    TData = null> extends Partial<Pick<PointerEvent & KeyboardEvent & TouchEvent, 'altKey' | 'bubbles' | 'cancelable' |
+      'changedTouches' | 'ctrlKey' | 'detail' | 'eventPhase' | 'metaKey' | 'pageX' | 'pageY' | 'shiftKey' | 'view' |
+      'charCode' | 'key' | 'keyCode' | 'button' | 'buttons' | 'clientX' | 'clientY' | 'offsetX' | 'offsetY' |
+      'pointerId' | 'pointerType' | 'screenX' | 'screenY' | 'targetTouches' | 'touches'>> {
     /**
      * The current DOM element within the event bubbling phase.
      *
@@ -9476,8 +8190,7 @@ declare namespace JQuery {
 
   // endregion
 
-  interface EventHandler<TCurrentTarget, TData = null>
-    extends EventHandlerBase<TCurrentTarget, Event<TCurrentTarget, TData>> {}
+  interface EventHandler<TCurrentTarget, TData = null> extends EventHandlerBase<TCurrentTarget, Event<TCurrentTarget, TData>> { }
 
   interface EventHandlerBase<TContext, T> {
     // Extra parameters can be passed from trigger()
@@ -9485,7 +8198,7 @@ declare namespace JQuery {
   }
 
   // Provided for convenience for use with jQuery.Event.which
-  // eslint-disable-next-line
+  // tslint:disable-next-line:no-const-enum
   const enum Mouse {
     None = 0,
     Left = 1,
@@ -9494,7 +8207,7 @@ declare namespace JQuery {
   }
 
   // Provided for convenience for use with jQuery.Event.which
-  // eslint-disable-next-line
+  // tslint:disable-next-line:no-const-enum
   const enum Key {
     Backspace = 8,
     Tab = 9,
@@ -9624,7 +8337,10 @@ declare namespace JQuery {
   }
 
   // Workaround for TypeScript 2.3 which does not have support for weak types handling.
-  type CoordinatesPartial = Pick<Coordinates, 'left'> | Pick<Coordinates, 'top'> | { [key: string]: never };
+  type CoordinatesPartial =
+    Pick<Coordinates, 'left'> |
+    Pick<Coordinates, 'top'> |
+    { [key: string]: never; };
 
   interface ValHook<TElement> {
     get?(elem: TElement): any;
@@ -9634,29 +8350,29 @@ declare namespace JQuery {
 
 // region Legacy types
 
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
-interface JQueryCallback extends JQuery.Callbacks {}
-interface JQueryDeferred<T> extends JQuery.Deferred<T> {}
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
-interface JQueryEventConstructor extends JQuery.EventStatic {}
-interface JQueryDeferred<T> extends JQuery.Deferred<T> {}
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
-interface JQueryAjaxSettings extends JQuery.AjaxSettings {}
-interface JQueryAnimationOptions extends JQuery.EffectsOptions<Element> {}
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
-interface JQueryCoordinates extends JQuery.Coordinates {}
-interface JQueryGenericPromise<T> extends JQuery.Thenable<T> {}
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
-interface JQueryXHR extends JQuery.jqXHR {}
-interface JQueryPromise<T> extends JQuery.Promise<T> {}
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
-interface JQuerySerializeArrayElement extends JQuery.NameValuePair {}
+// tslint:disable-next-line:no-empty-interface
+interface JQueryCallback extends JQuery.Callbacks { }
+interface JQueryDeferred<T> extends JQuery.Deferred<T> { }
+// tslint:disable-next-line:no-empty-interface
+interface JQueryEventConstructor extends JQuery.EventStatic { }
+interface JQueryDeferred<T> extends JQuery.Deferred<T> { }
+// tslint:disable-next-line:no-empty-interface
+interface JQueryAjaxSettings extends JQuery.AjaxSettings { }
+interface JQueryAnimationOptions extends JQuery.EffectsOptions<Element> { }
+// tslint:disable-next-line:no-empty-interface
+interface JQueryCoordinates extends JQuery.Coordinates { }
+interface JQueryGenericPromise<T> extends JQuery.Thenable<T> { }
+// tslint:disable-next-line:no-empty-interface
+interface JQueryXHR extends JQuery.jqXHR { }
+interface JQueryPromise<T> extends JQuery.Promise<T> { }
+// tslint:disable-next-line:no-empty-interface
+interface JQuerySerializeArrayElement extends JQuery.NameValuePair { }
 
 /**
  * @deprecated Deprecated since 1.9. See \`{@link https://api.jquery.com/jQuery.support/ }\`.
  */
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
-interface JQuerySupport extends JQuery.PlainObject {}
+// tslint:disable-next-line:no-empty-interface
+interface JQuerySupport extends JQuery.PlainObject { }
 
 // Legacy types that are not represented in the current type definitions are marked deprecated.
 
@@ -9808,19 +8524,13 @@ interface JQueryKeyEventObject extends JQueryInputEventObject {
 /**
  * @deprecated Use \`{@link JQuery.Event }\`.
  */
-interface JQueryEventObject
-  extends BaseJQueryEventObject,
-    JQueryInputEventObject,
-    JQueryMouseEventObject,
-    JQueryKeyEventObject {}
+interface JQueryEventObject extends BaseJQueryEventObject, JQueryInputEventObject, JQueryMouseEventObject, JQueryKeyEventObject { }
 /**
  * @deprecated
  */
 interface JQueryPromiseOperator<T, U> {
-  (
-    callback1: JQuery.TypeOrArray<JQueryPromiseCallback<T>>,
-    ...callbacksN: Array<JQuery.TypeOrArray<JQueryPromiseCallback<any>>>
-  ): JQueryPromise<U>;
+  (callback1: JQuery.TypeOrArray<JQueryPromiseCallback<T>>,
+    ...callbacksN: Array<JQuery.TypeOrArray<JQueryPromiseCallback<any>>>): JQueryPromise<U>;
 }
 /**
  * @deprecated Internal. See \`{@link https://github.com/jquery/api.jquery.com/issues/912 }\`.
