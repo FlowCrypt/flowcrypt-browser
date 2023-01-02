@@ -248,12 +248,19 @@ export class KeyUtil {
     throw new Error(err.length ? err.map((e, i) => (i + 1) + '. ' + e.message).join('\n') : 'Should not happen: no keys and no errors.');
   };
 
-  public static armor = (pubkey: Key): string => {
-    const armored = (pubkey as unknown as { rawArmored: string }).rawArmored;
+  public static armor = (key: Key): string => {
+    const armored = (key as unknown as { rawArmored: string }).rawArmored;
     if (!armored) {
       throw new Error('The Key object has no rawArmored field.');
     }
     return armored;
+  };
+
+  // remove crypto-library objects (useful when sending the object to/from background)
+  public static pack = (key: Key): void => {
+    if (key.family === 'openpgp') {
+      OpenPGPKey.pack(key);
+    }
   };
 
   public static diagnose = async (key: Key, passphrase: string): Promise<Map<string, string>> => {

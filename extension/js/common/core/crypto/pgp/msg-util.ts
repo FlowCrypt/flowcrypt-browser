@@ -261,7 +261,7 @@ export class MsgUtil {
     for (const ki of keys.prvForDecrypt) {
       const matchingKeyids = MsgUtil.matchingKeyids(KeyUtil.getKeyInfoLongids(ki), encryptionKeyids);
       const cachedKey = KeyCache.getDecrypted(ki.longid);
-      if (cachedKey && MsgUtil.isKeyDecryptedFor(cachedKey, matchingKeyids)) {
+      if (cachedKey && await MsgUtil.isKeyDecryptedFor(cachedKey, matchingKeyids)) {
         keys.prvForDecryptDecrypted.push({ ki, decrypted: cachedKey });
         continue;
       }
@@ -269,7 +269,7 @@ export class MsgUtil {
       // todo - the `ki.passphrase || ''` used to be `ki.passphrase!` which could have actually allowed an undefined to be passed
       // as fixed currently it appears better, but it may be best to instead check `ki.passphrase && await MsgUtil.decryptKeyFor(...)`
       // but that is a larger change that would require separate PR and testing
-      if (MsgUtil.isKeyDecryptedFor(parsed, matchingKeyids) || await MsgUtil.decryptKeyFor(parsed, ki.passphrase || '', matchingKeyids) === true) {
+      if (await MsgUtil.isKeyDecryptedFor(parsed, matchingKeyids) || await MsgUtil.decryptKeyFor(parsed, ki.passphrase || '', matchingKeyids) === true) {
         KeyCache.setDecrypted(parsed);
         keys.prvForDecryptDecrypted.push({ ki, decrypted: parsed });
       } else {
@@ -329,7 +329,7 @@ export class MsgUtil {
     return true;
   };
 
-  private static isKeyDecryptedFor = (prv: Key, msgKeyIds: OpenPGP.KeyID[]): boolean => {
+  private static isKeyDecryptedFor = async (prv: Key, msgKeyIds: OpenPGP.KeyID[]): Promise<boolean> => {
     if (prv.fullyDecrypted) {
       return true; // primary k + all subkeys decrypted, therefore it must be decrypted for any/every particular keyid
     }
@@ -339,7 +339,7 @@ export class MsgUtil {
     if (!msgKeyIds.length) {
       return false; // we don't know which keyId to decrypt - must decrypt all (but key is only partially decrypted)
     }
-    return msgKeyIds.filter(kid => OpenPGPKey.isPacketDecrypted(prv, kid)).length === msgKeyIds.length; // test if all needed key packets are decrypted
+    return (await Promise.all(msgKeyIds.map(kid => OpenPGPKey.isPacketDecrypted(prv, kid)))).every(Boolean); // test if all needed key packets are decrypted
   };
 
   private static cryptoMsgDecryptCategorizeErr = (decryptErr: unknown, msgPwd?: string): DecryptError$error => {
