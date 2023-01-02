@@ -587,10 +587,7 @@ export class ContactStore extends AbstractStore {
     for (const pubkeyInfo of sortedPubkeys) {
       KeyUtil.pack(pubkeyInfo.pubkey);
     }
-    return emailEntity ? {
-      info: { email: emailEntity.email, name: emailEntity.name || undefined },
-      sortedPubkeys
-    } : undefined;
+    return emailEntity ? { info: { email: emailEntity.email, name: emailEntity.name || undefined }, sortedPubkeys } : undefined;
   };
 
   // todo: return parsed and with applied revocation
