@@ -1140,7 +1140,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     if (changedIndex > -1) {
       this.addedRecipients.splice(changedIndex, 1, recipient);
     }
-    this.view.pwdOrPubkeyContainerModule.showHideContainerAndColorSendBtn(); // eslint-disable-line @typescript-eslint/no-floating-promises
+    this.view.pwdOrPubkeyContainerModule.showHideContainerAndColorSendBtn().catch(Catch.reportErr);
     this.view.myPubkeyModule.reevaluateShouldAttachOrNot();
   };
 
@@ -1182,7 +1182,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       .find(`#input-container-${this.addedRecipients[index].sendingType} input`)
       .focus();
     this.addedRecipients.splice(index, 1);
-    this.view.pwdOrPubkeyContainerModule.showHideContainerAndColorSendBtn(); // eslint-disable-line @typescript-eslint/no-floating-promises
+    this.view.pwdOrPubkeyContainerModule.showHideContainerAndColorSendBtn().catch(Catch.reportErr);
     this.view.myPubkeyModule.reevaluateShouldAttachOrNot();
   };
 

@@ -40,10 +40,11 @@ export class OpenPGPKey {
   };
 
   public static validateAllDecryptedPackets = async (key: OpenPGP.key.Key): Promise<void> => {
-    for (const prvPacket of key
+    const decryptedPackets = key
       .toPacketlist()
       .filter(OpenPGPKey.isPacketPrivate)
-      .filter(packet => packet.isDecrypted())) {
+      .filter(packet => packet.isDecrypted());
+    for (const prvPacket of decryptedPackets) {
       await prvPacket.validate(); // gnu-dummy never raises an exception, invalid keys raise exceptions
     }
   };
@@ -75,14 +76,11 @@ export class OpenPGPKey {
       .map(k => k.keyPacket)
       .filter(OpenPGPKey.isPacketPrivate) as PrvPacket[];
     if (!chosenPrvPackets.length) {
-      throw new Error(
-        `No private key packets selected of ${
-          prv
-            .getKeys()
-            .map(k => k.keyPacket)
-            .filter(OpenPGPKey.isPacketPrivate).length
-        } prv packets available`
-      );
+      const availablePackets = prv
+        .getKeys()
+        .map(k => k.keyPacket)
+        .filter(OpenPGPKey.isPacketPrivate);
+      throw new Error(`No private key packets selected of ${availablePackets.length} prv packets available`);
     }
     for (const prvPacket of chosenPrvPackets) {
       if (prvPacket.isDecrypted()) {

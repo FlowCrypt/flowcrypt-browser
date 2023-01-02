@@ -454,12 +454,10 @@ export class SetupView extends View {
           return parsedPubKeys.some(parsedPubKey => privateKey.key.id === parsedPubKey.id);
         });
         if (!hasMatchingKey) {
+          const keyIds = prvs.map(prv => prv.key.id).join(', ');
+          const pubKeyIds = parsedPubKeys.map(pub => pub.id).join(', ');
           throw new CompanyLdapKeyMismatchError(
-            `Imported private key with ids ${prvs
-              .map(prv => prv.key.id)
-              .join(', ')} does not match public keys on company LDAP server with ids ${parsedPubKeys
-              .map(pub => pub.id)
-              .join(', ')} for ${this.acctEmail}. Please ask your help desk.`
+            `Imported private key with ids ${keyIds} does not match public keys on company LDAP server with ids ${pubKeyIds} for ${this.acctEmail}. Please ask your help desk.`
           );
         }
       } else {
