@@ -38,7 +38,7 @@ export class FlowCryptWebsite extends Api {
     const xml = (await Api.ajax(
       { url: 'https://flowcrypt.com/blog/feed.xml', dataType: 'xml' },
       Catch.stackTrace()
-    )) as XMLDocument;  
+    )) as XMLDocument;
     const posts: FlowCryptWebsiteRes.FcBlogPost[] = [];
     for (const post of Browser.arrFromDomNodeList(xml.querySelectorAll('entry'))) {
       const children = Browser.arrFromDomNodeList(post.childNodes);
@@ -60,7 +60,7 @@ export class FlowCryptWebsite extends Api {
     progressCbs?: ProgressCbs
   ): Promise<RT> => {
     return await FlowCryptWebsite.apiCall(FlowCryptWebsite.url('api'), path, vals, fmt, progressCbs, {
-      'api-version': '3',  
+      'api-version': '3',
       ...addHeaders
     });
   };

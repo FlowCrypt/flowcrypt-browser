@@ -12,7 +12,7 @@ import { mockWkdEndpoints } from './wkd/wkd-endpoints';
 import { mockSksEndpoints } from './sks/sks-endpoints';
 import { mockFesEndpoints } from './fes/fes-endpoints';
 
-export type HandlersDefinition = Handlers<{ query: { [k: string]: string; }; body?: unknown; }, unknown>;
+export type HandlersDefinition = Handlers<{ query: { [k: string]: string }; body?: unknown }, unknown>;
 
 export const startAllApisMock = async (logger: (line: string) => void) => {
   class LoggedApi<REQ, RES> extends Api<REQ, RES> {
@@ -24,7 +24,7 @@ export const startAllApisMock = async (logger: (line: string) => void) => {
       }
     };
   }
-  const api = new LoggedApi<{ query: { [k: string]: string }, body?: unknown }, unknown>('google-mock', {
+  const api = new LoggedApi<{ query: { [k: string]: string }; body?: unknown }, unknown>('google-mock', {
     ...mockGoogleEndpoints,
     ...mockBackendEndpoints,
     ...mockAttesterEndpoints,
@@ -32,7 +32,7 @@ export const startAllApisMock = async (logger: (line: string) => void) => {
     ...mockWkdEndpoints,
     ...mockSksEndpoints,
     ...mockFesEndpoints,
-    '/favicon.ico': async () => '',
+    '/favicon.ico': async () => ''
   });
   await api.listen(8001);
   return api;

@@ -3,11 +3,7 @@
   "full": {
     "id": "1803be3182d1937b",
     "threadId": "1803be2e506153d2",
-    "labelIds": [
-      "IMPORTANT",
-      "SENT",
-      "INBOX"
-    ],
+    "labelIds": ["IMPORTANT", "SENT", "INBOX"],
     "snippet": "some dummy text",
     "payload": {
       "partId": "",
@@ -83,11 +79,7 @@
   "raw": {
     "id": "1803be3182d1937b",
     "threadId": "1803be2e506153d2",
-    "labelIds": [
-      "IMPORTANT",
-      "SENT",
-      "INBOX"
-    ],
+    "labelIds": ["IMPORTANT", "SENT", "INBOX"],
     "snippet": "some dummy text",
     "sizeEstimate": 595,
     "raw": "TUlNRS1WZXJzaW9uOiAxLjANCkRhdGU6IE1vbiwgMTggQXByIDIwMjIgMTE6NTY6MTggKzAzMDANCk1lc3NhZ2UtSUQ6IDxDQU85Rlk5dnE5ejRqVXE3WnAzUUFuRWtNdC04Y05yQmlxS0hSQngxMTRWYmNMcHN5ZVFAbWFpbC5nbWFpbC5jb20-DQpTdWJqZWN0OiBzb21lIGR1bW15IG1lc3NhZ2UNCkZyb206IEdtYWlsIENJIFRlc3QgPGNpLnRlc3RzLmdtYWlsQGZsb3djcnlwdC5kZXY-DQpUbzogR21haWwgQ0kgVGVzdCA8Y2kudGVzdHMuZ21haWxAZmxvd2NyeXB0LmRldj4NCkNvbnRlbnQtVHlwZTogbXVsdGlwYXJ0L2FsdGVybmF0aXZlOyBib3VuZGFyeT0iMDAwMDAwMDAwMDAwMWMzODkxMDVkY2U5ZWYyMyINCg0KLS0wMDAwMDAwMDAwMDAxYzM4OTEwNWRjZTllZjIzDQpDb250ZW50LVR5cGU6IHRleHQvcGxhaW47IGNoYXJzZXQ9IlVURi04Ig0KDQpzb21lIGR1bW15IHRleHQNCg0KLS0wMDAwMDAwMDAwMDAxYzM4OTEwNWRjZTllZjIzDQpDb250ZW50LVR5cGU6IHRleHQvaHRtbDsgY2hhcnNldD0iVVRGLTgiDQoNCjxkaXYgZGlyPSJsdHIiPnNvbWUgZHVtbXkgdGV4dDwvZGl2Pg0KDQotLTAwMDAwMDAwMDAwMDFjMzg5MTA1ZGNlOWVmMjMtLQ==",

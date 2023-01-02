@@ -1,18 +1,16 @@
-
 const puppeteer = require('../node_modules/puppeteer');
 
 let browser;
 
 (async () => {
-
   browser = await puppeteer.launch({
     args: [
       '--disable-features=site-per-process',
       '--disable-extensions-except=add_iframe',
-      '--load-extension=add_iframe',
+      '--load-extension=add_iframe'
     ],
     headless: false,
-    slowMo: 50,
+    slowMo: 50
   });
 
   let page = await browser.newPage();
@@ -28,5 +26,4 @@ let browser;
   console.info(`parsed iframe src: ${iframeSrc}`);
   console.info(`page.frames() url: ${JSON.stringify(urls)}`);
   console.info(urls.indexOf(iframeSrc) === -1 ? 'FAIL' : 'PASS');
-
 })();

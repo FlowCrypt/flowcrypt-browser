@@ -234,7 +234,9 @@ export class SetupPageRecipe extends PageRecipe {
       if (simulateRetryOffline) {
         await settingsPage.waitAll(
           ['@action-overlay-retry', '@container-overlay-prompt-text', '@action-show-overlay-details'],
-          { timeout: fixKey ? 45 : 20 }
+          {
+            timeout: fixKey ? 45 : 20
+          }
         );
         await Util.sleep(0.5);
         expect(await settingsPage.read('@container-overlay-prompt-text')).to.contain('Network connection issue');

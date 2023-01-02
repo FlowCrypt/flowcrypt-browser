@@ -9,16 +9,31 @@ import { Util } from '../../util';
 import { expect } from 'chai';
 
 type CheckDecryptMsg$opt = {
-  acctEmail: string, threadId: string, expectedContent: string, finishCurrentSession?: boolean,
-  enterPp?: { passphrase: string, isForgetPpHidden?: boolean, isForgetPpChecked?: boolean }
+  acctEmail: string;
+  threadId: string;
+  expectedContent: string;
+  finishCurrentSession?: boolean;
+  enterPp?: { passphrase: string; isForgetPpHidden?: boolean; isForgetPpChecked?: boolean };
 };
-type CheckSentMsg$opt = { acctEmail: string, subject: string, expectedContent?: string, isEncrypted?: boolean, isSigned?: boolean, sender?: string };
+type CheckSentMsg$opt = {
+  acctEmail: string;
+  subject: string;
+  expectedContent?: string;
+  isEncrypted?: boolean;
+  isSigned?: boolean;
+  sender?: string;
+};
 
 export class InboxPageRecipe extends PageRecipe {
-
-  public static checkDecryptMsg = async (t: AvaContext, browser: BrowserHandle,
-    { acctEmail, threadId, enterPp, expectedContent, finishCurrentSession }: CheckDecryptMsg$opt) => {
-    const inboxPage = await browser.newPage(t, TestUrls.extension(`chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`));
+  public static checkDecryptMsg = async (
+    t: AvaContext,
+    browser: BrowserHandle,
+    { acctEmail, threadId, enterPp, expectedContent, finishCurrentSession }: CheckDecryptMsg$opt
+  ) => {
+    const inboxPage = await browser.newPage(
+      t,
+      TestUrls.extension(`chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`)
+    );
     await inboxPage.waitAll('iframe');
     if (finishCurrentSession) {
       await InboxPageRecipe.finishSessionOnInboxPage(inboxPage);
@@ -28,7 +43,7 @@ export class InboxPageRecipe extends PageRecipe {
     await pgpBlockFrame.waitAll('@pgp-block-content');
     await pgpBlockFrame.waitForSelTestState('ready');
     if (enterPp) {
-      await inboxPage.notPresent("@action-finish-session");
+      await inboxPage.notPresent('@action-finish-session');
       const errBadgeContent = await pgpBlockFrame.read('@pgp-error');
       expect(errBadgeContent).to.equal('pass phrase needed');
       await pgpBlockFrame.notPresent('@action-print');
@@ -48,7 +63,7 @@ export class InboxPageRecipe extends PageRecipe {
       await Util.sleep(1);
     }
     await pgpBlockFrame.waitAll('@pgp-error', { visible: false });
-    if (!await pgpBlockFrame.isElementVisible('@action-print')) {
+    if (!(await pgpBlockFrame.isElementVisible('@action-print'))) {
       throw new Error(`Print button is invisible`);
     }
     const content = await pgpBlockFrame.read('@pgp-block-content');
@@ -64,8 +79,16 @@ export class InboxPageRecipe extends PageRecipe {
     await Util.sleep(3); // give frames time to reload, else we will be manipulating them while reloading -> Error: waitForFunction failed: frame got detached.
   };
 
-  public static checkFinishingSession = async (t: AvaContext, browser: BrowserHandle, acctEmail: string, threadId: string) => {
-    const inboxPage = await browser.newPage(t, TestUrls.extension(`chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`));
+  public static checkFinishingSession = async (
+    t: AvaContext,
+    browser: BrowserHandle,
+    acctEmail: string,
+    threadId: string
+  ) => {
+    const inboxPage = await browser.newPage(
+      t,
+      TestUrls.extension(`chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`)
+    );
     await InboxPageRecipe.finishSessionOnInboxPage(inboxPage);
     await inboxPage.waitAll('iframe');
     const pgpBlockFrame = await inboxPage.getFrame(['pgp_block.htm']);
@@ -75,7 +98,11 @@ export class InboxPageRecipe extends PageRecipe {
     await inboxPage.waitAll('@dialog-passphrase');
   };
 
-  public static checkSentMsg = async (t: AvaContext, browser: BrowserHandle, { acctEmail, subject, expectedContent, isEncrypted, isSigned, sender }: CheckSentMsg$opt) => {
+  public static checkSentMsg = async (
+    t: AvaContext,
+    browser: BrowserHandle,
+    { acctEmail, subject, expectedContent, isEncrypted, isSigned, sender }: CheckSentMsg$opt
+  ) => {
     if (typeof isSigned !== 'undefined') {
       throw new Error('checkSentMsg.isSigned not implemented');
     }
@@ -85,9 +112,13 @@ export class InboxPageRecipe extends PageRecipe {
     if (typeof isEncrypted !== 'undefined') {
       throw new Error('checkSentMsg.isEncrypted not implemented');
     }
-    const inboxPage = await browser.newPage(t, TestUrls.extension(`chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&labelId=SENT`));
+    const inboxPage = await browser.newPage(
+      t,
+      TestUrls.extension(`chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&labelId=SENT`)
+    );
     await inboxPage.waitAndClick(`@container-subject(${subject})`, { delay: 1 });
-    if (sender) { // make sure it was sent from intended addr
+    if (sender) {
+      // make sure it was sent from intended addr
       await inboxPage.waitAll(`@container-msg-header(${sender})`);
     }
     await inboxPage.close();
@@ -102,5 +133,4 @@ export class InboxPageRecipe extends PageRecipe {
     await composeFrame.waitForSelTestState('ready');
     return composeFrame;
   };
-
 }

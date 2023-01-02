@@ -8,8 +8,13 @@ import { StoreCorruptedError, StoreDeniedError, StoreFailedError } from '../comm
 import { GlobalStore } from '../common/platform/store/global-store.js';
 
 export class BgUtils {
-
-  public static openSettingsPage = async (path = 'index.htm', acctEmail?: string, page = '', rawPageUrlParams?: Dict<UrlParam>, addNewAcct = false) => {
+  public static openSettingsPage = async (
+    path = 'index.htm',
+    acctEmail?: string,
+    page = '',
+    rawPageUrlParams?: Dict<UrlParam>,
+    addNewAcct = false
+  ) => {
     const basePath = chrome.runtime.getURL(`chrome/settings/${path}`);
     const pageUrlParams = rawPageUrlParams ? JSON.stringify(rawPageUrlParams) : undefined;
     if (acctEmail || path === 'fatal.htm') {
@@ -46,7 +51,10 @@ export class BgUtils {
     });
   };
 
-  public static handleStoreErr = async (e: unknown, reason?: 'storage_undefined' | 'db_corrupted' | 'db_denied' | 'db_failed') => {
+  public static handleStoreErr = async (
+    e: unknown,
+    reason?: 'storage_undefined' | 'db_corrupted' | 'db_denied' | 'db_failed'
+  ) => {
     if (!reason) {
       if (e instanceof StoreCorruptedError) {
         reason = 'db_corrupted';
@@ -59,8 +67,9 @@ export class BgUtils {
         reason = 'db_failed';
       }
     }
-    await BgUtils.openSettingsPage(Url.create('fatal.htm', { reason, stack: e instanceof Error ? e.stack : Catch.stackTrace() }));
+    await BgUtils.openSettingsPage(
+      Url.create('fatal.htm', { reason, stack: e instanceof Error ? e.stack : Catch.stackTrace() })
+    );
     throw new UnreportableError();
   };
-
 }

@@ -71,7 +71,7 @@ interface TestSecretsInterface {
 export class Config {
   public static extensionId = '';
 
-  private static _secrets: TestSecretsInterface;  
+  private static _secrets: TestSecretsInterface;
 
   public static secrets = (): TestSecretsInterface => {
     /* eslint-disable no-underscore-dangle */

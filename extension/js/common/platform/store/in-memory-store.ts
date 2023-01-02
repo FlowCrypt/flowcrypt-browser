@@ -8,13 +8,11 @@ import { BrowserMsg } from '../../browser/browser-msg.js';
  * see background_page.ts for the other end, also ExpirationCache class
  */
 export class InMemoryStore extends AbstractStore {
-
   public static set = async (acctEmail: string, key: string, value?: string, expiration?: number) => {
     return await BrowserMsg.send.bg.await.inMemoryStoreSet({ acctEmail, key, value, expiration });
   };
 
   public static get = async (acctEmail: string, key: string): Promise<string | undefined> => {
-    return await BrowserMsg.send.bg.await.inMemoryStoreGet({ acctEmail, key }) ?? undefined;
+    return (await BrowserMsg.send.bg.await.inMemoryStoreGet({ acctEmail, key })) ?? undefined;
   };
-
 }

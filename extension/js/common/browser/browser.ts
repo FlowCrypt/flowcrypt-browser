@@ -28,7 +28,6 @@ export class Browser {
     a.href = window.URL.createObjectURL(blob);
     a.download = attachment.name;
     if (typeof a.click === 'function') {
-       
       a.click();
     } else {
       // safari

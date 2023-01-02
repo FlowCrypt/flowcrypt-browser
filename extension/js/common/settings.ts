@@ -31,7 +31,7 @@ declare const zxcvbn: Function; // eslint-disable-line @typescript-eslint/ban-ty
 
 export class Settings {
   public static evalPasswordStrength = (passphrase: string, type: 'passphrase' | 'pwd' = 'passphrase') => {
-    return PgpPwd.estimateStrength(zxcvbn(passphrase, PgpPwd.weakWords()).guesses, type);  
+    return PgpPwd.estimateStrength(zxcvbn(passphrase, PgpPwd.weakWords()).guesses, type);
   };
 
   public static renderSubPage = async (
@@ -393,7 +393,7 @@ export class Settings {
         const authDeniedHtml = (await Api.ajax(
           { url: '/chrome/settings/modules/auth_denied.htm' },
           Catch.stackTrace()
-        )) as string;  
+        )) as string;
         await Ui.modal.info(
           `${authDeniedHtml}\n<div class="line">${Lang.general.contactIfNeedAssistance()}</div>`,
           true

@@ -46,7 +46,6 @@ export const requireOpenpgp = (): typeof OpenPGP => {
 };
 
 export const requireMimeParser = (): typeof MimeParser => {
-   
   return (window as any)['emailjs-mime-parser']; // eslint-disable-line
 };
 

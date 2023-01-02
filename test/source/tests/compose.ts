@@ -188,7 +188,9 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
           { to: 'human@flowcrypt.com' },
           'sign with entered pass phrase',
           undefined,
-          { encrypt: false }
+          {
+            encrypt: false
+          }
         );
         await composeFrame.waitAndClick('@action-send');
         await inboxPage.waitAll('@dialog-passphrase');
@@ -205,7 +207,9 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
           { to: 'human@flowcrypt.com' },
           'signed message pp in session',
           undefined,
-          { encrypt: false }
+          {
+            encrypt: false
+          }
         );
         await ComposePageRecipe.sendAndClose(composePage);
         await settingsPage.close();
@@ -720,7 +724,9 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
             { to: 'anyone@recipient.com' },
             'send signed-only message',
             undefined,
-            { encrypt: false }
+            {
+              encrypt: false
+            }
           );
           await composeFrame.waitAndClick('@action-send', { delay: 2 });
           const passphraseDialog = await inboxPage.getFrame(['passphrase.htm']);
@@ -1906,7 +1912,10 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
           { to: 'smime@recipient.com' },
           'send signed S/MIME without attachment',
           undefined,
-          { encrypt: false, sign: true }
+          {
+            encrypt: false,
+            sign: true
+          }
         );
         await composePage.waitAndClick('@action-send', { delay: 2 });
         await composePage.waitForSelTestState('closed', 20); // succesfully sent
@@ -2776,7 +2785,10 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
           t,
           browser,
           'user2@standardsubdomainfes.localhost:8001',
-          { appendUrl, hasReplyPrompt: true }
+          {
+            appendUrl,
+            hasReplyPrompt: true
+          }
         );
         await composePage.waitAndClick('@action-accept-reply-all-prompt', { delay: 2 });
         // we should have 4 recipients, 2 green and 2 gray

@@ -170,7 +170,6 @@ export class OpenPGPKey {
     if (signingPrv) {
       const openPgpPrv = OpenPGPKey.extractExternalLibraryObjFromKey(signingPrv);
       if (typeof openPgpPrv.isPrivate !== 'undefined' && openPgpPrv.isPrivate()) {
-         
         options.privateKeys = [openPgpPrv];
       }
     }
@@ -255,7 +254,7 @@ export class OpenPGPKey {
     }
     const algoInfo = keyWithoutWeakPackets.primaryKey.getAlgorithmInfo();
     const key = keyToUpdate || ({} as Key); // if no key to update, use empty object, will get props assigned below
-     
+
     const {
       encryptionKey = undefined,
       encryptionKeyIgnoringExpiration = undefined,
@@ -281,7 +280,7 @@ export class OpenPGPKey {
       // valid emails extracted from uids
       emails,
       // full uids that have valid emails in them
-       
+
       identities,
       lastModified,
       expiration: exp instanceof Date ? exp.getTime() : undefined,

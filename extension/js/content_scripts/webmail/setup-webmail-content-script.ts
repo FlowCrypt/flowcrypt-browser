@@ -308,7 +308,10 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
   ) => {
     try {
       const { needPassphrase, updateCount, noKeysSetup } =
-        await BrowserMsg.send.bg.await.processAndStoreKeysFromEkmLocally({ acctEmail, decryptedPrivateKeys });
+        await BrowserMsg.send.bg.await.processAndStoreKeysFromEkmLocally({
+          acctEmail,
+          decryptedPrivateKeys
+        });
       if (noKeysSetup) {
         if (!needPassphrase && !clientConfiguration.canCreateKeys()) {
           await Ui.modal.error(Lang.setup.noKeys);

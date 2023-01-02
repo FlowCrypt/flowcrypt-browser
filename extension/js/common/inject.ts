@@ -22,7 +22,7 @@ export class Injector {
   private factory: XssSafeFactory;
   private webmailName: WebMailName;
   private webmailVariant: WebmailVariantString;
-  private S: SelCache;  
+  private S: SelCache;
   private container: { [key: string]: Host } = {
     composeBtnSel: {
       gmail: 'div.aeN, div.aBO', // .aeN for normal look, .aBO for new look https://github.com/FlowCrypt/flowcrypt-browser/issues/4099

@@ -418,7 +418,9 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
           { to: 'human@flowcrypt.com' },
           'New Signed Message (Mock Test)',
           undefined,
-          { encrypt: false }
+          {
+            encrypt: false
+          }
         );
         await ComposePageRecipe.sendAndClose(composePage);
       })

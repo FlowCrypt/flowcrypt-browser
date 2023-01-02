@@ -226,7 +226,7 @@ export class Str {
     if (typeof str === 'undefined') {
       return str;
     }
-     
+
     return decodeURIComponent(
       Array.prototype.map
         .call(base64decode(str.replace(/-/g, '+').replace(/_/g, '/')), (c: string) => {
@@ -238,7 +238,6 @@ export class Str {
 }
 
 export class DateUtility {
-   
   public static asNumber = (date: number | null | undefined): number | null => {
     if (typeof date === 'number') {
       return date;
@@ -307,7 +306,6 @@ export class Url {
     ___cu_false___: false,
     ___cu_null___: null // eslint-disable-line no-null/no-null
   };
-   
 
   /**
    * will convert result to desired format: camelCase or snake_case, based on what was supplied in expectedKeys

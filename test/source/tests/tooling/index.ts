@@ -4,7 +4,12 @@ import * as ava from 'ava';
 
 import { Consts } from '../../test';
 
-export type AvaContext = ava.ExecutionContext<unknown> & { retry?: true, attemptNumber?: number, totalAttempts?: number, attemptText?: string };
+export type AvaContext = ava.ExecutionContext<unknown> & {
+  retry?: true;
+  attemptNumber?: number;
+  totalAttempts?: number;
+  attemptText?: string;
+};
 
 const MAX_ATT_SIZE = 5 * 1024 * 1024;
 
@@ -52,15 +57,22 @@ export const getDebugHtmlAtts = (testId: string, mockApiLogs: string[]): string[
   return formattedDebugAtts;
 };
 
-export const standaloneTestTimeout = (t: AvaContext, ms: number, name: string) => setTimeout(() => { t.fail(`Standalone timeout exceeded (${name})`); }, ms);
+export const standaloneTestTimeout = (t: AvaContext, ms: number, name: string) =>
+  setTimeout(() => {
+    t.fail(`Standalone timeout exceeded (${name})`);
+  }, ms);
 
-export const newWithTimeoutsFunc = (consts: Consts): <T>(actionPromise: Promise<T>) => Promise<T> => { // returns a function
-  const timeoutAllRetries = new Promise((_, reject) => setTimeout(() => reject(new Error(`TIMEOUT_ALL_RETRIES`)), consts.TIMEOUT_ALL_RETRIES)) as Promise<never>;
-  return <T>(actionPromise: Promise<T>) => Promise.race([
-    actionPromise, // the actual action being performed
-    timeoutAllRetries, // timeout for all test retries
-    consts.PROMISE_TIMEOUT_OVERALL, // overall timeout for the whole test process / sequence
-  ]);
+export const newWithTimeoutsFunc = (consts: Consts): (<T>(actionPromise: Promise<T>) => Promise<T>) => {
+  // returns a function
+  const timeoutAllRetries = new Promise((_, reject) =>
+    setTimeout(() => reject(new Error(`TIMEOUT_ALL_RETRIES`)), consts.TIMEOUT_ALL_RETRIES)
+  ) as Promise<never>;
+  return <T>(actionPromise: Promise<T>) =>
+    Promise.race([
+      actionPromise, // the actual action being performed
+      timeoutAllRetries, // timeout for all test retries
+      consts.PROMISE_TIMEOUT_OVERALL // overall timeout for the whole test process / sequence
+    ]);
 };
 
 export const newTimeoutPromise = (name: string, seconds = 20): Promise<never> => {

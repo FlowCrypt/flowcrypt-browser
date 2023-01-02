@@ -28,99 +28,65 @@ const UTF8_AS_RAW_STRING = Buffer.from(UTF8).toString('binary');
 
 ava.default(`1000x Buf.fromUint8(data).toBase64Str() = Buffer.from(data).toString('base64')`, async t => {
   withThousandRandomInputs(data => {
-    equals(
-      Buf.fromUint8(data).toBase64Str(),
-      Buffer.from(data).toString('base64'),
-    );
+    equals(Buf.fromUint8(data).toBase64Str(), Buffer.from(data).toString('base64'));
   });
   t.pass();
 });
 
 ava.default(`1000x Buf.fromUint8(data).toRawBytesStr() = Buffer.from(data).toString('binary')`, async t => {
   withThousandRandomInputs(data => {
-    equals(
-      Buf.fromUint8(data).toRawBytesStr(),
-      Buffer.from(data).toString('binary'),
-    );
+    equals(Buf.fromUint8(data).toRawBytesStr(), Buffer.from(data).toString('binary'));
   });
   t.pass();
 });
 
 ava.default('1000x Buf.fromBase64UrlStr(Buf.fromUint8(data).toBase64UrlStr()) = data', async t => {
   withThousandRandomInputs(data => {
-    equals(
-      Buf.fromBase64UrlStr(Buf.fromUint8(data).toBase64UrlStr()),
-      data,
-    );
+    equals(Buf.fromBase64UrlStr(Buf.fromUint8(data).toBase64UrlStr()), data);
   });
   t.pass();
 });
 
 ava.default('1000x Buf.fromRawBytesStr(Buf.fromUint8(data).toRawBytesStr()) = data', async t => {
   withThousandRandomInputs(data => {
-    equals(
-      Buf.fromRawBytesStr(Buf.fromUint8(data).toRawBytesStr()),
-      data,
-    );
+    equals(Buf.fromRawBytesStr(Buf.fromUint8(data).toRawBytesStr()), data);
   });
   t.pass();
 });
 
 ava.default('1000x Buf.fromBase64Str(Buf.fromUint8(data).toBase64Str()) = data', async t => {
   withThousandRandomInputs(data => {
-    equals(
-      Buf.fromBase64Str(Buf.fromUint8(data).toBase64Str()),
-      data,
-    );
+    equals(Buf.fromBase64Str(Buf.fromUint8(data).toBase64Str()), data);
   });
   t.pass();
 });
 
 ava.default('Buf.fromUtfStr(UTF8) = UTF8_AS_BYTES', async t => {
-  equals(
-    Buf.fromUtfStr(UTF8),
-    UTF8_AS_BYTES,
-  );
+  equals(Buf.fromUtfStr(UTF8), UTF8_AS_BYTES);
   t.pass();
 });
 
 ava.default('Buf.fromUint8(UTF8_AS_BYTES).toUtfStr() = UTF8', async t => {
-  equals(
-    Buf.fromUint8(UTF8_AS_BYTES).toUtfStr(),
-    UTF8,
-  );
+  equals(Buf.fromUint8(UTF8_AS_BYTES).toUtfStr(), UTF8);
   t.pass();
 });
 
 ava.default('Buf.fromRawBytesStr(UTF8_AS_RAW_STRING).toUtfStr() = UTF8', async t => {
-  equals(
-    Buf.fromRawBytesStr(UTF8_AS_RAW_STRING).toUtfStr(),
-    UTF8,
-  );
+  equals(Buf.fromRawBytesStr(UTF8_AS_RAW_STRING).toUtfStr(), UTF8);
   t.pass();
 });
 
 ava.default('Buf.fromUtfStr(UTF8).toRawBytesStr() = UTF8_AS_RAW_STRING', async t => {
-  equals(
-    Buf.fromUtfStr(UTF8).toRawBytesStr(),
-    UTF8_AS_RAW_STRING,
-  );
+  equals(Buf.fromUtfStr(UTF8).toRawBytesStr(), UTF8_AS_RAW_STRING);
   t.pass();
 });
 
 ava.default('Buf.fromRawBytesStr(UTF8_AS_RAW_STRING) = UTF8_AS_BYTES', async t => {
-  equals(
-    Buf.fromRawBytesStr(UTF8_AS_RAW_STRING),
-    UTF8_AS_BYTES,
-  );
+  equals(Buf.fromRawBytesStr(UTF8_AS_RAW_STRING), UTF8_AS_BYTES);
   t.pass();
 });
 
 ava.default('Buf.fromUint8(UTF8_AS_BYTES) = UTF8_AS_RAW_STRING', async t => {
-  equals(
-    Buf.fromUint8(UTF8_AS_BYTES).toRawBytesStr(),
-    UTF8_AS_RAW_STRING,
-  );
+  equals(Buf.fromUint8(UTF8_AS_BYTES).toRawBytesStr(), UTF8_AS_RAW_STRING);
   t.pass();
 });
-

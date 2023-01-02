@@ -17,25 +17,28 @@ import { ComposeView } from '../compose.js';
 import { AjaxErrMsgs } from '../../../js/common/api/shared/api-error.js';
 import { Lang } from '../../../js/common/lang.js';
 
-export class ComposerUserError extends Error { }
-class ComposerNotReadyError extends ComposerUserError { }
-export class ComposerResetBtnTrigger extends Error { }
+export class ComposerUserError extends Error {}
+class ComposerNotReadyError extends ComposerUserError {}
+export class ComposerResetBtnTrigger extends Error {}
 
 export const PUBKEY_LOOKUP_RESULT_FAIL = 'fail' as const;
 
 export class ComposeErrModule extends ViewModule<ComposeView> {
-
   private debugId = Str.sloppyRandom();
 
   private static getErrSayingSomeMessagesHaveBeenSent = (sendMsgsResult: SendMsgsResult) => {
-    return 'Messages to some recipients were sent successfully, while messages to ' +
-      Str.formatEmailList(sendMsgsResult.failures.map(el => el.recipient)) + ' encountered ';
+    return (
+      'Messages to some recipients were sent successfully, while messages to ' +
+      Str.formatEmailList(sendMsgsResult.failures.map(el => el.recipient)) +
+      ' encountered '
+    );
   };
 
   public handle = (couldNotDoWhat: string): BrowserEventErrHandler => {
     return {
       network: async () => await Ui.modal.info(`Could not ${couldNotDoWhat} (network error). Please try again.`),
-      auth: async () => Settings.offerToLoginWithPopupShowModalOnErr(this.view.acctEmail, undefined, `Could not ${couldNotDoWhat}.\n`),
+      auth: async () =>
+        Settings.offerToLoginWithPopupShowModalOnErr(this.view.acctEmail, undefined, `Could not ${couldNotDoWhat}.\n`),
       other: async (e: unknown) => {
         if (e instanceof Error) {
           e.stack = (e.stack || '') + `\n\n[compose action: ${couldNotDoWhat}]`;
@@ -47,16 +50,24 @@ export class ComposeErrModule extends ViewModule<ComposeView> {
           }
         }
         Catch.reportErr(e);
-        await Ui.modal.info(`Could not ${couldNotDoWhat} (unknown error). ${Lang.general.contactIfHappensAgain(!!this.view.fesUrl)}\n\n(${String(e)})`);
-      },
+        await Ui.modal.info(
+          `Could not ${couldNotDoWhat} (unknown error). ${Lang.general.contactIfHappensAgain(
+            !!this.view.fesUrl
+          )}\n\n(${String(e)})`
+        );
+      }
     };
   };
 
   public debugFocusEvents = (...selNames: string[]) => {
     for (const selName of selNames) {
       this.view.S.cached(selName)
-        .focusin(e => this.debug(`** ${selName} receiving focus from(${e.relatedTarget ? e.relatedTarget.outerHTML : undefined})`))
-        .focusout(e => this.debug(`** ${selName} giving focus to(${e.relatedTarget ? e.relatedTarget.outerHTML : undefined})`));
+        .focusin(e =>
+          this.debug(`** ${selName} receiving focus from(${e.relatedTarget ? e.relatedTarget.outerHTML : undefined})`)
+        )
+        .focusout(e =>
+          this.debug(`** ${selName} giving focus to(${e.relatedTarget ? e.relatedTarget.outerHTML : undefined})`)
+        );
     }
   };
 
@@ -72,16 +83,20 @@ export class ComposeErrModule extends ViewModule<ComposeView> {
       let netErrMsg: string | undefined;
       if (sendMsgsResult?.success.length) {
         // there were some successful sends
-        netErrMsg = ComposeErrModule.getErrSayingSomeMessagesHaveBeenSent(sendMsgsResult) +
+        netErrMsg =
+          ComposeErrModule.getErrSayingSomeMessagesHaveBeenSent(sendMsgsResult) +
           'network errors. Please check your internet connection and try again.';
       } else {
-        netErrMsg = 'Could not send message due to network error. Please check your internet connection and try again.\n' +
+        netErrMsg =
+          'Could not send message due to network error. Please check your internet connection and try again.\n' +
           '(This may also be caused by <a href="https://flowcrypt.com/docs/help/network-error.html" target="_blank">missing extension permissions</a>).';
       }
       await Ui.modal.error(netErrMsg, true);
     } else if (ApiErr.isAuthErr(e)) {
       BrowserMsg.send.notificationShowAuthPopupNeeded(this.view.parentTabId, { acctEmail: this.view.acctEmail });
-      Settings.offerToLoginWithPopupShowModalOnErr(this.view.acctEmail, () => this.view.sendBtnModule.extractProcessSendMsg());
+      Settings.offerToLoginWithPopupShowModalOnErr(this.view.acctEmail, () =>
+        this.view.sendBtnModule.extractProcessSendMsg()
+      );
     } else if (ApiErr.isReqTooLarge(e)) {
       await Ui.modal.error(`Could not send: message or attachments too large.`);
     } else if (ApiErr.isBadReq(e)) {
@@ -89,13 +104,25 @@ export class ComposeErrModule extends ViewModule<ComposeView> {
       if (sendMsgsResult?.success.length) {
         gmailErrMsg = ComposeErrModule.getErrSayingSomeMessagesHaveBeenSent(sendMsgsResult) + 'error(s) from Gmail';
       }
-      if (e.resMsg === AjaxErrMsgs.GOOGLE_INVALID_TO_HEADER || e.resMsg === AjaxErrMsgs.GOOGLE_RECIPIENT_ADDRESS_REQUIRED) {
-        await Ui.modal.error((gmailErrMsg || 'Error from google') + ': Invalid recipients\n\nPlease remove recipients, add them back and re-send the message.');
+      if (
+        e.resMsg === AjaxErrMsgs.GOOGLE_INVALID_TO_HEADER ||
+        e.resMsg === AjaxErrMsgs.GOOGLE_RECIPIENT_ADDRESS_REQUIRED
+      ) {
+        await Ui.modal.error(
+          (gmailErrMsg || 'Error from google') +
+            ': Invalid recipients\n\nPlease remove recipients, add them back and re-send the message.'
+        );
       } else {
-        if (await Ui.modal.confirm((gmailErrMsg || 'Google returned an error when sending message') +
-          `. Please help us improve FlowCrypt by reporting the error to us.`)) {
+        if (
+          await Ui.modal.confirm(
+            (gmailErrMsg || 'Google returned an error when sending message') +
+              `. Please help us improve FlowCrypt by reporting the error to us.`
+          )
+        ) {
           const page = '/chrome/settings/modules/help.htm';
-          const pageUrlParams = { bugReport: BrowserExtension.prepareBugReport(`composer: send: bad request (errMsg: ${e.resMsg})`, {}, e) };
+          const pageUrlParams = {
+            bugReport: BrowserExtension.prepareBugReport(`composer: send: bad request (errMsg: ${e.resMsg})`, {}, e)
+          };
           await Browser.openSettingsPage('index.htm', this.view.acctEmail, page, pageUrlParams);
         }
       }
@@ -139,47 +166,62 @@ export class ComposeErrModule extends ViewModule<ComposeView> {
   };
 
   public throwIfFormValsInvalid = async ({ subject, plaintext, from }: NewMsgData) => {
-    if (!subject && ! await Ui.modal.confirm('Send without a subject?')) {
+    if (!subject && !(await Ui.modal.confirm('Send without a subject?'))) {
       throw new ComposerResetBtnTrigger();
     }
     let footer = await this.view.footerModule.getFooterFromStorage(from.email);
-    if (footer) { // format footer the way it would be in outgoing plaintext
-      footer = Xss.htmlUnescape(Xss.htmlSanitizeAndStripAllTags(this.view.footerModule.createFooterHtml(footer), '\n')).trim();
+    if (footer) {
+      // format footer the way it would be in outgoing plaintext
+      footer = Xss.htmlUnescape(
+        Xss.htmlSanitizeAndStripAllTags(this.view.footerModule.createFooterHtml(footer), '\n')
+      ).trim();
     }
-    if ((!plaintext.trim() || (footer && plaintext.trim() === footer.trim())) && ! await Ui.modal.confirm('Send empty message?')) {
+    if (
+      (!plaintext.trim() || (footer && plaintext.trim() === footer.trim())) &&
+      !(await Ui.modal.confirm('Send empty message?'))
+    ) {
       throw new ComposerResetBtnTrigger();
     }
   };
 
-  public throwIfEncryptionPasswordInvalidOrDisabled = async ({ subject, pwd }: { subject: string, pwd?: string }) => {
+  public throwIfEncryptionPasswordInvalidOrDisabled = async ({ subject, pwd }: { subject: string; pwd?: string }) => {
     // When DISABLE_FLOWCRYPT_HOSTED_PASSWORD_MESSAGES present, and recipients are missing a public key, and the user is using flowcrypt.com/api (not FES)
     if (this.view.clientConfiguration.shouldDisablePasswordMessages() && !this.view.isFesUsed()) {
       throw new ComposerUserError(Lang.compose.addMissingRecipientPubkeys);
     }
     if (pwd) {
       if (await this.view.storageModule.isPwdMatchingPassphrase(pwd)) {
-        throw new ComposerUserError('Please do not use your private key pass phrase as a password for this message.\n\n' +
-          'You should come up with some other unique password that you can share with recipient.');
+        throw new ComposerUserError(
+          'Please do not use your private key pass phrase as a password for this message.\n\n' +
+            'You should come up with some other unique password that you can share with recipient.'
+        );
       }
       if (subject.toLowerCase().includes(pwd.toLowerCase())) {
-        throw new ComposerUserError(`Please do not include the password in the email subject. ` +
-          `Sharing password over email undermines password based encryption.\n\n` +
-          `You can ask the recipient to also install FlowCrypt, messages between FlowCrypt users don't need a password.`);
+        throw new ComposerUserError(
+          `Please do not include the password in the email subject. ` +
+            `Sharing password over email undermines password based encryption.\n\n` +
+            `You can ask the recipient to also install FlowCrypt, messages between FlowCrypt users don't need a password.`
+        );
       }
-      const intro = this.view.S.cached('input_intro').length ? this.view.inputModule.extract('text', 'input_intro') : '';
+      const intro = this.view.S.cached('input_intro').length
+        ? this.view.inputModule.extract('text', 'input_intro')
+        : '';
       if (intro.toLowerCase().includes(pwd.toLowerCase())) {
-        throw new ComposerUserError('Please do not include the password in the email intro. ' +
-          `Sharing password over email undermines password based encryption.\n\n` +
-          `You can ask the recipient to also install FlowCrypt, messages between FlowCrypt users don't need a password.`);
+        throw new ComposerUserError(
+          'Please do not include the password in the email intro. ' +
+            `Sharing password over email undermines password based encryption.\n\n` +
+            `You can ask the recipient to also install FlowCrypt, messages between FlowCrypt users don't need a password.`
+        );
       }
       if (!this.view.pwdOrPubkeyContainerModule.isMessagePasswordStrong(pwd)) {
-        const pwdErrText = this.view.fesUrl ? Lang.compose.enterprisePasswordPolicy : Lang.compose.consumerPasswordPolicy;
+        const pwdErrText = this.view.fesUrl
+          ? Lang.compose.enterprisePasswordPolicy
+          : Lang.compose.consumerPasswordPolicy;
         throw new ComposerUserError(pwdErrText.split('\n').join('<br />'));
       }
     } else {
       this.view.S.cached('input_password').focus();
-      throw new ComposerUserError('Some recipients don\'t have encryption set up. Please add a password.');
+      throw new ComposerUserError("Some recipients don't have encryption set up. Please add a password.");
     }
   };
-
 }

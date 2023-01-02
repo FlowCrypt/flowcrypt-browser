@@ -1,5 +1,5 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
- 
+
 import { Bm, BrowserMsg } from '../browser/browser-msg.js';
 import { windowsCreate } from '../browser/chrome.js';
 

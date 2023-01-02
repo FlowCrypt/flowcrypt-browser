@@ -17,8 +17,11 @@ const handleFatalErr = (reason: 'storage_undefined', error: Error) => {
       console.error('Incomplete extension environment in content script', error);
     } else if (!chrome.runtime) {
       console.error('Chrome.runtime missing, cannot continue', error);
-    } else { // extension pages
-      window.location.href = chrome.runtime.getURL(Url.create(`chrome/settings/fatal.htm`, { reason, stack: error.stack }));
+    } else {
+      // extension pages
+      window.location.href = chrome.runtime.getURL(
+        Url.create(`chrome/settings/fatal.htm`, { reason, stack: error.stack })
+      );
     }
   } catch (e) {
     if (e && e instanceof Error && e.message === 'Extension context invalidated.') {
@@ -39,7 +42,9 @@ export const windowsCreate = async (q: chrome.windows.CreateData): Promise<chrom
     if (typeof chrome.windows !== 'undefined') {
       chrome.windows.create(q, resolve);
     } else {
-      Ui.modal.error('Your platform is not supported: browser does not support extension windows').catch(Catch.reportErr);
+      Ui.modal
+        .error('Your platform is not supported: browser does not support extension windows')
+        .catch(Catch.reportErr);
     }
   });
 };
@@ -63,7 +68,7 @@ export const storageLocalGet = async (keys: string[]): Promise<Dict<unknown>> =>
 };
 
 export const storageLocalGetAll = async (): Promise<{ [key: string]: unknown }> => {
-  return await new Promise((resolve) => {
+  return await new Promise(resolve => {
     if (typeof chrome.storage === 'undefined') {
       handleFatalErr('storage_undefined', new Error('storage is undefined'));
     } else {
@@ -73,7 +78,7 @@ export const storageLocalGetAll = async (): Promise<{ [key: string]: unknown }> 
 };
 
 export const storageLocalSet = async (values: Dict<unknown>): Promise<void> => {
-  return await new Promise((resolve) => {
+  return await new Promise(resolve => {
     if (typeof chrome.storage === 'undefined') {
       handleFatalErr('storage_undefined', new Error('storage is undefined'));
     } else {
@@ -83,7 +88,7 @@ export const storageLocalSet = async (values: Dict<unknown>): Promise<void> => {
 };
 
 export const storageLocalRemove = async (keys: string[]): Promise<void> => {
-  return await new Promise((resolve) => {
+  return await new Promise(resolve => {
     if (typeof chrome.storage === 'undefined') {
       handleFatalErr('storage_undefined', new Error('storage is undefined'));
     } else {

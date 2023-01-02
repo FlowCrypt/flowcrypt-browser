@@ -119,7 +119,7 @@ export class FlowCryptComApi extends Api {
     progressCbs?: ProgressCbs
   ): Promise<RT> => {
     return await FlowCryptComApi.apiCall(FlowCryptWebsite.url('api'), path, vals, fmt, progressCbs, {
-      'api-version': '3',  
+      'api-version': '3',
       ...addHeaders
     });
   };

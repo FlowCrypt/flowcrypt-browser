@@ -3,9 +3,7 @@
   "full": {
     "id": "draft-0",
     "threadId": "16eec6ebc087faa7",
-    "labelIds": [
-      "DRAFT"
-    ],
+    "labelIds": ["DRAFT"],
     "snippet": "[flowcrypt:link:draft_compose:r304765387393056602] -----BEGIN PGP MESSAGE----- Version: FlowCrypt 7.3.6 Gmail Encryption Comment: Seamlessly send and receive encrypted email wcFMA0taL/zmLZUBAQ//",
     "historyId": "1105694",
     "internalDate": "1575924710000",
@@ -70,9 +68,7 @@
   "raw": {
     "id": "draft-0",
     "threadId": "16eec6ebc087faa7",
-    "labelIds": [
-      "DRAFT"
-    ],
+    "labelIds": ["DRAFT"],
     "snippet": "[flowcrypt:link:draft_compose:r304765387393056602] -----BEGIN PGP MESSAGE----- Version: FlowCrypt 7.3.6 Gmail Encryption Comment: Seamlessly send and receive encrypted email wcFMA0taL/zmLZUBAQ//",
     "historyId": "1105694",
     "internalDate": "1575924710000",

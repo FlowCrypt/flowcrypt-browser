@@ -8,7 +8,7 @@ declare global {
 }
 
 declare interface SquireClass {
-  new(obj: HTMLElement): SquireEditor;
+  new (obj: HTMLElement): SquireEditor;
 }
 
 declare interface FontInfo {
@@ -18,7 +18,20 @@ declare interface FontInfo {
   backgroundColor: string;
 }
 
-declare type SquireEvent = 'focus' | 'blur' | 'keydown' | 'keypress' | 'keyup' | 'input' | 'pathChange' | 'select' | 'cursor' | 'undoStateChange' | 'willPaste' | 'drop' | 'dragover';
+declare type SquireEvent =
+  | 'focus'
+  | 'blur'
+  | 'keydown'
+  | 'keypress'
+  | 'keyup'
+  | 'input'
+  | 'pathChange'
+  | 'select'
+  | 'cursor'
+  | 'undoStateChange'
+  | 'willPaste'
+  | 'drop'
+  | 'dragover';
 
 export declare class SquireEditor {
   addEventListener(event: SquireEvent, callback: (e: any) => void): SquireEditor;

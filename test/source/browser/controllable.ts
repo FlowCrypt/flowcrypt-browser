@@ -280,8 +280,8 @@ abstract class ControllableBase {
       /* eslint-disable @typescript-eslint/no-unsafe-return */
       return await this.target.evaluate(
         s =>
-          ([].slice.call(document.querySelectorAll(s))!.find((el: HTMLElement) => el.offsetParent !== null) as any) // eslint-disable-line @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-explicit-any, no-null/no-null
-            .innerText,
+          ([].slice.call(document.querySelectorAll(s))!.find((el: HTMLElement) => el.offsetParent !== null) as any)
+            .innerText, // eslint-disable-line @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-explicit-any, no-null/no-null
         selector
       );
       /* eslint-enable @typescript-eslint/no-unsafe-return */

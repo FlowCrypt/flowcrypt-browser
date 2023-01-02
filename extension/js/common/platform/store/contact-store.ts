@@ -986,7 +986,7 @@ export class ContactStore extends AbstractStore {
           if (!cursor) {
             resolve(found);
           } else {
-            found.push(cursor.value);  
+            found.push(cursor.value);
             if (query.limit && found.length >= query.limit) {
               resolve(found);
             } else {

@@ -9,8 +9,8 @@ let KEY_CACHE: { [longidOrArmoredKey: string]: Key } = {};
 let KEY_CACHE_WIPE_TIMEOUT: number;
 
 export class KeyCache {
-
-  public static setDecrypted = (k: Key) => { // eslint-disable-line @typescript-eslint/no-unused-vars
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  public static setDecrypted = (k: Key) => {
     // todo - not yet used in browser extension, but planned to be enabled soon
     // Store.extendExpiry();
     // KEY_CACHE[keyLongid(k)] = k;
@@ -21,7 +21,8 @@ export class KeyCache {
     return KEY_CACHE[longid];
   };
 
-  public static setArmored = (armored: string, k: Key) => { // eslint-disable-line @typescript-eslint/no-unused-vars
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  public static setArmored = (armored: string, k: Key) => {
     // todo - not yet used in browser extension, but planned to be enabled soon
     // Store.extendExpiry();
     // KEY_CACHE[armored] = k;
@@ -42,5 +43,4 @@ export class KeyCache {
     }
     KEY_CACHE_WIPE_TIMEOUT = Catch.setHandledTimeout(KeyCache.wipe, 2 * 60 * 1000);
   };
-
 }

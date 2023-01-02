@@ -14,7 +14,7 @@ path_classifiers:
 #########################################################################################
 
 queries:
-  - include: "*"
+  - include: '*'
   - exclude: js/jsdoc/malformed-param-tag
   - exclude: js/jsdoc/missing-parameter
   - exclude: js/jsdoc/unknown-parameter

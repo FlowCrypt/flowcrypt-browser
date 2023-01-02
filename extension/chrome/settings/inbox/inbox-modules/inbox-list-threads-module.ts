@@ -13,7 +13,6 @@ import { ViewModule } from '../../../../js/common/view-module.js';
 import { Xss } from '../../../../js/common/platform/xss.js';
 
 export class InboxListThreadsModule extends ViewModule<InboxView> {
-
   public render = async (labelId: string) => {
     this.view.displayBlock('inbox', `Messages in ${Xss.escape(this.view.inboxMenuModule.getLabelName(labelId))}`);
     try {
@@ -25,7 +24,10 @@ export class InboxListThreadsModule extends ViewModule<InboxView> {
       }
     } catch (e) {
       if (ApiErr.isNetErr(e)) {
-        this.view.inboxNotificationModule.showNotification(`Connection error trying to get list of messages ${Ui.retryLink()}`, 'inbox');
+        this.view.inboxNotificationModule.showNotification(
+          `Connection error trying to get list of messages ${Ui.retryLink()}`,
+          'inbox'
+        );
       } else if (ApiErr.isAuthErr(e)) {
         this.view.inboxNotificationModule.renderAndHandleAuthPopupNotification();
       } else if (ApiErr.isMailOrAcctDisabledOrPolicy(e)) {
@@ -52,7 +54,10 @@ export class InboxListThreadsModule extends ViewModule<InboxView> {
       const firstMsg = thread.messages[0];
       const lastMsg = thread.messages[thread.messages.length - 1];
       threadItem.find('.subject').text(GmailParser.findHeader(firstMsg, 'subject') || '(no subject)');
-      Xss.sanitizeAppend(threadItem.find('.subject'), this.view.inboxMenuModule.renderableLabels(firstMsg.labelIds || [], 'messages'));
+      Xss.sanitizeAppend(
+        threadItem.find('.subject'),
+        this.view.inboxMenuModule.renderableLabels(firstMsg.labelIds || [], 'messages')
+      );
       const fromHeaderVal = GmailParser.findHeader(firstMsg, 'from');
       if (fromHeaderVal) {
         const from = Str.parseEmail(fromHeaderVal);
@@ -60,16 +65,24 @@ export class InboxListThreadsModule extends ViewModule<InboxView> {
       }
       threadItem.find('.loading').text('');
       threadItem.find('.date').text(this.formatDate(lastMsg.internalDate));
-      threadItem.addClass('loaded').on('click', this.view.setHandler(() => this.view.inboxActiveThreadModule.render(thread.id, thread)));
+      threadItem.addClass('loaded').on(
+        'click',
+        this.view.setHandler(() => this.view.inboxActiveThreadModule.render(thread.id, thread))
+      );
       if (lastMsg.labelIds?.includes(this.view.inboxMenuModule.LABEL.UNREAD)) {
-        threadItem.css({ 'font-weight': 'bold', 'background': 'white' });
+        threadItem.css({ 'font-weight': 'bold', background: 'white' });
       }
       if (thread.messages.length > 1) {
         threadItem.find('.msg_count').text(`(${thread.messages.length})`);
       }
     } catch (e) {
       if (ApiErr.isNetErr(e)) {
-        Xss.sanitizeRender(threadItem.find('.loading'), 'Failed to load (network) <a href="#">retry</a>').find('a').on('click', this.view.setHandler(() => this.renderInboxItem(threadId)));
+        Xss.sanitizeRender(threadItem.find('.loading'), 'Failed to load (network) <a href="#">retry</a>')
+          .find('a')
+          .on(
+            'click',
+            this.view.setHandler(() => this.renderInboxItem(threadId))
+          );
       } else if (ApiErr.isAuthErr(e)) {
         this.view.inboxNotificationModule.renderAndHandleAuthPopupNotification();
       } else if (ApiErr.isMailOrAcctDisabledOrPolicy(e)) {
@@ -89,11 +102,14 @@ export class InboxListThreadsModule extends ViewModule<InboxView> {
       <span class="subject" data-test="container-subject"></span>
       <span class="date"></span>
     `;
-    Xss.sanitizeAppend(this.view.S.cached('threads'), Ui.e('div', {
-      class: 'line',
-      id: this.threadListItemId(threadId),
-      html: `<span class="loading">${Ui.spinner('green')}loading..</span>${content}`,
-    }));
+    Xss.sanitizeAppend(
+      this.view.S.cached('threads'),
+      Ui.e('div', {
+        class: 'line',
+        id: this.threadListItemId(threadId),
+        html: `<span class="loading">${Ui.spinner('green')}loading..</span>${content}`
+      })
+    );
   };
 
   private threadListItemId = (threadId: string) => {
@@ -107,5 +123,4 @@ export class InboxListThreadsModule extends ViewModule<InboxView> {
     }
     return date.toLocaleDateString();
   };
-
 }

@@ -50,7 +50,6 @@ export class GeneralMailFormatter {
         msgs: [msg],
         renderSentMessage: { recipients: msg.recipients, attachments: msg.attachments }
       };
-       
     }
     // encrypt (optionally sign)
     const singleFamilyKeys = await view.storageModule.collectSingleFamilyKeys(

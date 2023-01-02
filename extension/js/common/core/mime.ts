@@ -38,7 +38,7 @@ export type MimeContent = {
 
 export type MimeEncodeType = 'pgpMimeEncrypted' | 'pgpMimeSigned' | 'smimeEncrypted' | 'smimeSigned' | undefined;
 export type RichHeaders = Dict<string | string[]>;
- 
+
 export type SendableMsgBody = {
   [key: string]: string | Buf | undefined;
   'text/plain'?: string;
