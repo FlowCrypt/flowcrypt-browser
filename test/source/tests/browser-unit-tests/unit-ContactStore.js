@@ -116,8 +116,7 @@ BROWSER_UNIT_TEST_NAME(`ContactStore.search ignores top-level domains and common
   return 'pass';
 })();
 
-// prettier-ignore
-BROWSER_UNIT_TEST_NAME(`ContactStore.search allows searching for name parts that look like top-level domains and common domains`);
+BROWSER_UNIT_TEST_NAME(`ContactStore.search allows searching for name parts that look like top-level domains and common domains`); // prettier-ignore
 (async () => {
   await ContactStore.update(undefined, 'abcdef.com@abcdef.com', {
     name: 'com',
@@ -178,8 +177,7 @@ BROWSER_UNIT_TEST_NAME(`ContactStore doesn't store duplicates in searchable`);
   return 'pass';
 })();
 
-// prettier-ignore
-BROWSER_UNIT_TEST_NAME(`ContactStore doesn't store smaller words in searchable when there is a bigger one that starts with it`);
+BROWSER_UNIT_TEST_NAME(`ContactStore doesn't store smaller words in searchable when there is a bigger one that starts with it`); // prettier-ignore
 (async () => {
   const db = await ContactStore.dbOpen();
   const email = 'com@big.com';
