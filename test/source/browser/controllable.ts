@@ -277,14 +277,14 @@ abstract class ControllableBase {
   public read = async (selector: string, onlyVisible = false): Promise<string> => {
     selector = this.selector(selector);
     if (onlyVisible) {
-      /* eslint-disable @typescript-eslint/no-unsafe-return */
+      /* eslint-disable @typescript-eslint/no-unsafe-return, @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-explicit-any, no-null/no-null */
       return await this.target.evaluate(
         s =>
           ([].slice.call(document.querySelectorAll(s))!.find((el: HTMLElement) => el.offsetParent !== null) as any)
-            .innerText, // eslint-disable-line @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-explicit-any, no-null/no-null
+            .innerText,
         selector
       );
-      /* eslint-enable @typescript-eslint/no-unsafe-return */
+      /* eslint-enable */
     } else {
       return await this.target.evaluate(s => (document.querySelector(s) as HTMLElement).innerText, selector);
     }
