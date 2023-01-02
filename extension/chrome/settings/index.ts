@@ -57,9 +57,7 @@ View.run(
       }
       this.page = this.page === 'undefined' ? undefined : this.page; // in case an "undefined" string slipped in
       this.pageUrlParams =
-        typeof uncheckedUrlParams.pageUrlParams === 'string'
-          ? (JSON.parse(uncheckedUrlParams.pageUrlParams) as UrlParams)
-          : undefined;
+        typeof uncheckedUrlParams.pageUrlParams === 'string' ? (JSON.parse(uncheckedUrlParams.pageUrlParams) as UrlParams) : undefined;
       this.addNewAcct = uncheckedUrlParams.addNewAcct === true;
       this.advanced = uncheckedUrlParams.advanced === true;
       if (this.acctEmail) {
@@ -144,12 +142,9 @@ View.run(
         const factory = new XssSafeFactory(this.acctEmail!, this.tabId);
         await factory.showPassphraseDialog(longids, type, initiatorFrameId);
       });
-      BrowserMsg.addListener(
-        'notification_show_auth_popup_needed',
-        async ({ acctEmail }: Bm.NotificationShowAuthPopupNeeded) => {
-          this.notifications!.showAuthPopupNeeded(acctEmail);
-        }
-      );
+      BrowserMsg.addListener('notification_show_auth_popup_needed', async ({ acctEmail }: Bm.NotificationShowAuthPopupNeeded) => {
+        this.notifications!.showAuthPopupNeeded(acctEmail);
+      });
       BrowserMsg.addListener('close_dialog', async () => {
         Swal.close();
       });
@@ -183,17 +178,11 @@ View.run(
       /* eslint-enable @typescript-eslint/no-non-null-assertion */
       $('.action_add_account').on(
         'click',
-        this.setHandlerPrevent(
-          'double',
-          async () => await Settings.newGoogleAcctAuthPromptThenAlertOrForward(this.tabId)
-        )
+        this.setHandlerPrevent('double', async () => await Settings.newGoogleAcctAuthPromptThenAlertOrForward(this.tabId))
       );
       $('.action_google_auth').on(
         'click',
-        this.setHandlerPrevent(
-          'double',
-          async () => await Settings.newGoogleAcctAuthPromptThenAlertOrForward(this.tabId, this.acctEmail)
-        )
+        this.setHandlerPrevent('double', async () => await Settings.newGoogleAcctAuthPromptThenAlertOrForward(this.tabId, this.acctEmail))
       );
       // $('.action_microsoft_auth').on('click', this.setHandlerPrevent('double', function() {
       //   new_microsoft_account_authentication_prompt(account_email);
@@ -252,11 +241,10 @@ View.run(
       );
       $('#status-row #status_local_store').on(
         'click',
-        this.setHandler(
-          async () =>
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            await Settings.renderSubPage(this.acctEmail!, this.tabId, 'modules/debug_api.htm', { which: 'local_store' })
-        )
+        this.setHandler(async () => {
+          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+          await Settings.renderSubPage(this.acctEmail!, this.tabId, 'modules/debug_api.htm', { which: 'local_store' });
+        })
       );
       Ui.activateModalPageLinkTags();
     };
@@ -348,9 +336,9 @@ View.run(
         .then(posts => {
           // do not await because may take a while
           for (const post of posts) {
-            const html = `<div class="line"><a href="https://flowcrypt.com${Xss.escape(
-              post.url
-            )}" target="_blank">${Xss.escape(post.title.trim())}</a> ${Xss.escape(post.date.trim())}</div>`;
+            const html = `<div class="line"><a href="https://flowcrypt.com${Xss.escape(post.url)}" target="_blank">${Xss.escape(
+              post.title.trim()
+            )}</a> ${Xss.escape(post.date.trim())}</div>`;
             Xss.sanitizeAppend('.blog_post_list', html);
           }
         })
@@ -444,9 +432,7 @@ View.run(
         await Settings.refreshSendAs(this.acctEmail!);
         await Settings.acctStorageChangeEmail(this.acctEmail!, newAcctEmail);
         /* eslint-enable @typescript-eslint/no-non-null-assertion */
-        await Ui.modal.info(
-          `Email address changed to ${newAcctEmail}. You should now check that your public key is properly submitted.`
-        );
+        await Ui.modal.info(`Email address changed to ${newAcctEmail}. You should now check that your public key is properly submitted.`);
         window.location.href = Url.create('index.htm', {
           acctEmail: newAcctEmail,
           page: '/chrome/settings/modules/keyserver.htm'
@@ -531,9 +517,7 @@ View.run(
         const fpHtml = `fingerprint:&nbsp;<span class="good">${Str.spaced(Xss.escape(ki.fingerprints[0]))}</span>`;
         const space = `&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`;
         html += `<div class="row key-content-row">`;
-        html += `  <div class="col-12">${escapedLink} from ${Xss.escape(
-          date
-        )}${space}${fpHtml}${space}${removeKeyBtn}</div>`;
+        html += `  <div class="col-12">${escapedLink} from ${Xss.escape(date)}${space}${fpHtml}${space}${removeKeyBtn}</div>`;
         html += `</div>`;
       }
       Xss.sanitizeAppend('.key_list', html);
@@ -542,12 +526,7 @@ View.run(
         this.setHandler(async target => {
           /* eslint-disable @typescript-eslint/no-non-null-assertion */
           // the UI below only gets rendered when account_email is available
-          await Settings.renderSubPage(
-            this.acctEmail!,
-            this.tabId,
-            $(target).attr('page')!,
-            $(target).attr('addurltext') || ''
-          ); // all such elements do have page attr
+          await Settings.renderSubPage(this.acctEmail!, this.tabId, $(target).attr('page')!, $(target).attr('addurltext') || ''); // all such elements do have page attr
           /* eslint-enable @typescript-eslint/no-non-null-assertion */
         })
       );
