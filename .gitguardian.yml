@@ -1,0 +1,5 @@
+version: 2
+
+secret:
+  ignored-paths:
+    - 'extension/js/common/api/email-provider/gmail/google-auth.ts'
