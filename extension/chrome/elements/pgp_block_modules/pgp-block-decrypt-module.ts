@@ -47,21 +47,14 @@ export class PgpBlockViewDecryptModule {
       } else {
         // need to fetch the inline signed + armored or encrypted +armored message block from gmail api
         if (!this.view.msgId) {
-          Xss.sanitizeRender(
-            '#pgp_block',
-            'Missing msgId to fetch message in pgp_block. ' + Lang.general.contactIfHappensAgain(!!this.view.fesUrl)
-          );
+          Xss.sanitizeRender('#pgp_block', 'Missing msgId to fetch message in pgp_block. ' + Lang.general.contactIfHappensAgain(!!this.view.fesUrl));
           this.view.renderModule.resizePgpBlockFrame();
         } else {
           this.view.renderModule.renderText('Retrieving message...');
           const format: GmailResponseFormat = !this.msgFetchedFromApi ? 'full' : 'raw';
-          const { armored, plaintext, subject, isPwdMsg } = await this.view.gmail.extractArmoredBlock(
-            this.view.msgId,
-            format,
-            progress => {
-              this.view.renderModule.renderText(`Retrieving message... ${progress}%`);
-            }
-          );
+          const { armored, plaintext, subject, isPwdMsg } = await this.view.gmail.extractArmoredBlock(this.view.msgId, format, progress => {
+            this.view.renderModule.renderText(`Retrieving message... ${progress}%`);
+          });
           this.isPwdMsgBasedOnMsgSnippet = isPwdMsg;
           this.view.renderModule.renderText('Decrypting...');
           this.msgFetchedFromApi = format;
@@ -82,8 +75,7 @@ export class PgpBlockViewDecryptModule {
   private decryptAndRender = async (encryptedData: Buf, verificationPubs: string[], plainSubject?: string) => {
     if (!this.view.signature?.parsedSignature) {
       const kisWithPp = await KeyStore.getAllWithOptionalPassPhrase(this.view.acctEmail);
-      const decrypt = async (verificationPubs: string[]) =>
-        await BrowserMsg.send.bg.await.pgpMsgDecrypt({ kisWithPp, encryptedData, verificationPubs });
+      const decrypt = async (verificationPubs: string[]) => await BrowserMsg.send.bg.await.pgpMsgDecrypt({ kisWithPp, encryptedData, verificationPubs });
       const result = await decrypt(verificationPubs);
       if (typeof result === 'undefined') {
         await this.view.errorModule.renderErr(Lang.general.restartBrowserAndTryAgain(!!this.view.fesUrl), undefined);
@@ -105,17 +97,10 @@ export class PgpBlockViewDecryptModule {
         );
       } else if (result.error.type === DecryptErrTypes.format) {
         if (this.canAndShouldFetchFromApi()) {
-          console.info(
-            `re-fetching message ${this.view.msgId} from api because looks like bad formatting: ${
-              !this.msgFetchedFromApi ? 'full' : 'raw'
-            }`
-          );
+          console.info(`re-fetching message ${this.view.msgId} from api because looks like bad formatting: ${!this.msgFetchedFromApi ? 'full' : 'raw'}`);
           await this.initialize(verificationPubs, true);
         } else {
-          await this.view.errorModule.renderErr(
-            Lang.pgpBlock.badFormat + '\n\n' + result.error.message,
-            encryptedData.toUtfStr()
-          );
+          await this.view.errorModule.renderErr(Lang.pgpBlock.badFormat + '\n\n' + result.error.message, encryptedData.toUtfStr());
         }
       } else if (result.longids.needPassphrase.length) {
         const enterPp = `<a href="#" class="enter_passphrase" data-test="action-show-passphrase-dialog">${Lang.pgpBlock.enterPassphrase}</a> ${Lang.pgpBlock.toOpenMsg}`;
@@ -146,10 +131,7 @@ export class PgpBlockViewDecryptModule {
             encryptedData,
             this.isPwdMsgBasedOnMsgSnippet === true
           );
-        } else if (
-          result.error.type === DecryptErrTypes.wrongPwd ||
-          result.error.type === DecryptErrTypes.usePassword
-        ) {
+        } else if (result.error.type === DecryptErrTypes.wrongPwd || result.error.type === DecryptErrTypes.usePassword) {
           await this.view.errorModule.renderErr(Lang.pgpBlock.pwdMsgAskSenderUsePubkey, undefined);
         } else if (result.error.type === DecryptErrTypes.noMdc) {
           // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -162,11 +144,7 @@ export class PgpBlockViewDecryptModule {
         } else {
           // should generally not happen
           await this.view.errorModule.renderErr(
-            Lang.pgpBlock.cantOpen +
-              Lang.general.writeMeToFixIt(!!this.view.fesUrl) +
-              '\n\nDiagnostic info: "' +
-              JSON.stringify(result) +
-              '"',
+            Lang.pgpBlock.cantOpen + Lang.general.writeMeToFixIt(!!this.view.fesUrl) + '\n\nDiagnostic info: "' + JSON.stringify(result) + '"',
             encryptedData.toUtfStr()
           );
         }
@@ -178,13 +156,7 @@ export class PgpBlockViewDecryptModule {
       const verify = async (verificationPubs: string[]) =>
         await BrowserMsg.send.bg.await.pgpMsgVerifyDetached({ plaintext: encryptedData, sigText, verificationPubs });
       const signatureResult = await verify(verificationPubs);
-      await this.view.renderModule.decideDecryptedContentFormattingAndRender(
-        encryptedData,
-        false,
-        signatureResult,
-        verificationPubs,
-        verify
-      );
+      await this.view.renderModule.decideDecryptedContentFormattingAndRender(encryptedData, false, signatureResult, verificationPubs, verify);
     }
   };
 }

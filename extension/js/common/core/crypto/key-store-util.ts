@@ -27,9 +27,7 @@ export class KeyStoreUtil {
     }
     const usableExpiredPrv =
       prvs.find(
-        prv =>
-          (prv.key.usableForEncryption || prv.key.usableForEncryptionButExpired) &&
-          (prv.key.usableForSigning || prv.key.usableForSigningButExpired)
+        prv => (prv.key.usableForEncryption || prv.key.usableForEncryptionButExpired) && (prv.key.usableForSigning || prv.key.usableForSigningButExpired)
       ) ||
       prvs.find(prv => prv.key.usableForEncryption || prv.key.usableForEncryptionButExpired) ||
       prvs.find(prv => prv.key.usableForSigning || prv.key.usableForSigningButExpired);

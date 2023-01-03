@@ -85,10 +85,7 @@ export class EnterpriseServer extends Api {
   };
 
   public fetchAndSaveClientConfiguration = async (): Promise<ClientConfigurationJson> => {
-    const r = await this.request<FesRes.ClientConfiguration>(
-      'GET',
-      `/api/${this.apiVersion}/client-configuration?domain=${this.domain}`
-    );
+    const r = await this.request<FesRes.ClientConfiguration>('GET', `/api/${this.apiVersion}/client-configuration?domain=${this.domain}`);
     if (r.clientConfiguration && !r.clientConfiguration.flags) {
       throw new ClientConfigurationError('missing_flags');
     }
@@ -97,12 +94,7 @@ export class EnterpriseServer extends Api {
   };
 
   public reportException = async (errorReport: ErrorReport): Promise<void> => {
-    await this.request<void>(
-      'POST',
-      `/api/${this.apiVersion}/log-collector/exception`,
-      await this.authHdr(),
-      errorReport
-    );
+    await this.request<void>('POST', `/api/${this.apiVersion}/log-collector/exception`, await this.authHdr(), errorReport);
   };
 
   public reportEvent = async (tags: EventTag[], message: string, details?: string): Promise<void> => {
@@ -115,12 +107,7 @@ export class EnterpriseServer extends Api {
 
   public webPortalMessageNewReplyToken = async (): Promise<FesRes.ReplyToken> => {
     const authHdr = await this.authHdr();
-    return await this.request<FesRes.ReplyToken>(
-      'POST',
-      `/api/${this.apiVersion}/message/new-reply-token`,
-      authHdr,
-      {}
-    );
+    return await this.request<FesRes.ReplyToken>('POST', `/api/${this.apiVersion}/message/new-reply-token`, authHdr, {});
   };
 
   public webPortalMessageUpload = async (
@@ -182,21 +169,7 @@ export class EnterpriseServer extends Api {
     throw new BackendAuthErr('Missing id token, please re-authenticate');
   };
 
-  private request = async <RT>(
-    method: ReqMethod,
-    path: string,
-    headers: Dict<string> = {},
-    vals?: Dict<unknown>
-  ): Promise<RT> => {
-    return await EnterpriseServer.apiCall(
-      this.url,
-      path,
-      vals,
-      method === 'GET' ? undefined : 'JSON',
-      undefined,
-      headers,
-      'json',
-      method
-    );
+  private request = async <RT>(method: ReqMethod, path: string, headers: Dict<string> = {}, vals?: Dict<unknown>): Promise<RT> => {
+    return await EnterpriseServer.apiCall(this.url, path, vals, method === 'GET' ? undefined : 'JSON', undefined, headers, 'json', method);
   };
 }

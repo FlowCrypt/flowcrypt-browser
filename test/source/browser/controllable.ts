@@ -41,16 +41,11 @@ abstract class ControllableBase {
   public isElementVisible = async (selector: string) => {
     // check element visibility by checking `display` property and element offset height
     return await this.target.$eval(this.selector(selector), elem => {
-      return (
-        window.getComputedStyle(elem).getPropertyValue('display') !== 'none' && (elem as HTMLElement).offsetHeight > 0
-      );
+      return window.getComputedStyle(elem).getPropertyValue('display') !== 'none' && (elem as HTMLElement).offsetHeight > 0;
     });
   };
 
-  public waitForSelTestState = async (
-    state: 'ready' | 'working' | 'waiting' | 'closed',
-    timeout = TIMEOUT_TEST_STATE_SATISFY
-  ) => {
+  public waitForSelTestState = async (state: 'ready' | 'working' | 'waiting' | 'closed', timeout = TIMEOUT_TEST_STATE_SATISFY) => {
     await this.waitAll(`[data-test-state="${state}"]`, { timeout, visible: undefined });
   };
 
@@ -62,10 +57,7 @@ abstract class ControllableBase {
     }
   };
 
-  public waitAll = async (
-    selector: string | string[],
-    { timeout = TIMEOUT_ELEMENT_APPEAR, visible = true }: { timeout?: number; visible?: boolean } = {}
-  ) => {
+  public waitAll = async (selector: string | string[], { timeout = TIMEOUT_ELEMENT_APPEAR, visible = true }: { timeout?: number; visible?: boolean } = {}) => {
     const selectors = this.selsAsProcessedArr(selector);
     this.log(`wait_all:1:${selectors.join(',')}`);
     for (const selector of selectors) {
@@ -101,10 +93,7 @@ abstract class ControllableBase {
     });
   };
 
-  public waitTillGone = async (
-    selector: string | string[],
-    { timeout = TIMEOUT_ELEMENT_GONE }: { timeout?: number } = {}
-  ) => {
+  public waitTillGone = async (selector: string | string[], { timeout = TIMEOUT_ELEMENT_GONE }: { timeout?: number } = {}) => {
     let secondsLeft = typeof timeout !== 'undefined' ? timeout : TIMEOUT_ELEMENT_GONE;
     const selectors = Array.isArray(selector) ? selector : [selector];
     while (secondsLeft-- >= 0) {
@@ -238,24 +227,15 @@ abstract class ControllableBase {
   };
 
   public isDisabled = async (selector: string): Promise<boolean> => {
-    return await this.target.evaluate(
-      s => (document.querySelector(s) as HTMLInputElement).disabled,
-      this.selector(selector)
-    );
+    return await this.target.evaluate(s => (document.querySelector(s) as HTMLInputElement).disabled, this.selector(selector));
   };
 
   public isChecked = async (selector: string): Promise<boolean> => {
-    return await this.target.evaluate(
-      s => (document.querySelector(s) as HTMLInputElement).checked,
-      this.selector(selector)
-    );
+    return await this.target.evaluate(s => (document.querySelector(s) as HTMLInputElement).checked, this.selector(selector));
   };
 
   public hasClass = async (selector: string, className: string): Promise<boolean> => {
-    const classList = await this.target.evaluate(
-      s => (document.querySelector(s) as HTMLElement).classList,
-      this.selector(selector)
-    );
+    const classList = await this.target.evaluate(s => (document.querySelector(s) as HTMLElement).classList, this.selector(selector));
     return Object.values(classList).includes(className);
   };
 
@@ -263,12 +243,8 @@ abstract class ControllableBase {
   public getOuterHeight = async (selector: string): Promise<string> => {
     return await this.target.evaluate(s => {
       const computedStyle = getComputedStyle(document.querySelector(s) as HTMLElement);
-      const paddings =
-        parseInt(computedStyle.getPropertyValue('padding-top')) +
-        parseInt(computedStyle.getPropertyValue('padding-bottom'));
-      const border =
-        parseInt(computedStyle.getPropertyValue('border-top-width')) +
-        parseInt(computedStyle.getPropertyValue('border-bottom-width'));
+      const paddings = parseInt(computedStyle.getPropertyValue('padding-top')) + parseInt(computedStyle.getPropertyValue('padding-bottom'));
+      const border = parseInt(computedStyle.getPropertyValue('border-top-width')) + parseInt(computedStyle.getPropertyValue('border-bottom-width'));
       const outerHeight = parseInt(computedStyle.getPropertyValue('height')) + paddings + border;
       return outerHeight.toString();
     }, this.selector(selector));
@@ -279,9 +255,7 @@ abstract class ControllableBase {
     if (onlyVisible) {
       /* eslint-disable @typescript-eslint/no-unsafe-return, @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-explicit-any, no-null/no-null */
       return await this.target.evaluate(
-        s =>
-          ([].slice.call(document.querySelectorAll(s))!.find((el: HTMLElement) => el.offsetParent !== null) as any)
-            .innerText,
+        s => ([].slice.call(document.querySelectorAll(s))!.find((el: HTMLElement) => el.offsetParent !== null) as any).innerText,
         selector
       );
       /* eslint-enable */
@@ -291,10 +265,7 @@ abstract class ControllableBase {
   };
 
   public readHtml = async (selector: string): Promise<string> => {
-    return await this.target.evaluate(
-      s => (document.querySelector(s) as HTMLElement).innerHTML,
-      this.selector(selector)
-    );
+    return await this.target.evaluate(s => (document.querySelector(s) as HTMLElement).innerHTML, this.selector(selector));
   };
 
   public selectOption = async (selector: string, choice: string) => {
@@ -321,10 +292,7 @@ abstract class ControllableBase {
   ) => {
     await this.waitAll([`@ui-modal-${type}`, `@ui-modal-${type}:message`]);
     await Util.sleep(0.5);
-    expect(await this.read(`@ui-modal-${type}:message`)).to.contain(
-      message,
-      `ui-modal-${type}:message does not contain expected text`
-    );
+    expect(await this.read(`@ui-modal-${type}:message`)).to.contain(message, `ui-modal-${type}:message does not contain expected text`);
     if (type === 'confirm-checkbox') {
       await this.waitAndClick(`@ui-modal-${type}-input`);
     }
@@ -361,9 +329,7 @@ abstract class ControllableBase {
         ) {
           // maybe the node just re-rendered?
           if (!retryErrs || i === 3) {
-            e.stack =
-              `[clicking(${selector}) failed because element quickly disappeared, consider adding retryErrs]\n` +
-              e.stack;
+            e.stack = `[clicking(${selector}) failed because element quickly disappeared, consider adding retryErrs]\n` + e.stack;
             throw e;
           }
           this.log(`wait_and_click(i${i}):retrying`);
@@ -385,12 +351,7 @@ abstract class ControllableBase {
     this.log(`wait_and_click:10:${selector}`);
   };
 
-  public waitForContent = async (
-    selector: string,
-    needle: string | RegExp,
-    timeoutSec = 20,
-    testLoopLengthMs = 100
-  ) => {
+  public waitForContent = async (selector: string, needle: string | RegExp, timeoutSec = 20, testLoopLengthMs = 100) => {
     await this.waitAny(selector);
     const start = Date.now();
     const observedContentHistory: string[] = [];
@@ -419,12 +380,7 @@ abstract class ControllableBase {
     );
   };
 
-  public waitForInputValue = async (
-    selector: string,
-    needle: string | RegExp,
-    timeoutSec = 20,
-    testLoopLengthMs = 100
-  ) => {
+  public waitForInputValue = async (selector: string, needle: string | RegExp, timeoutSec = 20, testLoopLengthMs = 100) => {
     selector = this.selector(selector);
     await this.waitAny(selector);
     const start = Date.now();
@@ -446,20 +402,11 @@ abstract class ControllableBase {
       await Util.sleep(testLoopLengthMs / 1000);
     }
     throw new Error(
-      `Selector ${selector} was found but did not have value "${needle}" within ${timeoutSec}s. Last values: "${JSON.stringify(
-        values,
-        undefined,
-        2
-      )}"`
+      `Selector ${selector} was found but did not have value "${needle}" within ${timeoutSec}s. Last values: "${JSON.stringify(values, undefined, 2)}"`
     );
   };
 
-  public verifyContentIsPresentContinuously = async (
-    selector: string,
-    expectedText: string,
-    expectPresentForMs = 3000,
-    timeoutSec = 30
-  ) => {
+  public verifyContentIsPresentContinuously = async (selector: string, expectedText: string, expectPresentForMs = 3000, timeoutSec = 30) => {
     await this.waitAll(selector);
     const start = Date.now();
     const sleepMs = 250;
@@ -486,10 +433,7 @@ abstract class ControllableBase {
     );
   };
 
-  public getFramesUrls = async (
-    urlMatchables: string[],
-    { sleep, appearIn }: { sleep?: number; appearIn?: number } = { sleep: 3 }
-  ): Promise<string[]> => {
+  public getFramesUrls = async (urlMatchables: string[], { sleep, appearIn }: { sleep?: number; appearIn?: number } = { sleep: 3 }): Promise<string[]> => {
     if (sleep) {
       await Util.sleep(sleep);
     }
@@ -511,10 +455,7 @@ abstract class ControllableBase {
     expect(elements.length).to.equal(count);
   };
 
-  public getFrame = async (
-    urlMatchables: string[],
-    { sleep = 1, timeout = 10 } = { sleep: 1, timeout: 10 }
-  ): Promise<ControllableFrame> => {
+  public getFrame = async (urlMatchables: string[], { sleep = 1, timeout = 10 } = { sleep: 1, timeout: 10 }): Promise<ControllableFrame> => {
     if (sleep) {
       await Util.sleep(sleep);
     }
@@ -547,10 +488,7 @@ abstract class ControllableBase {
   /**
    * when downloading several files, only notices files with unique names
    */
-  public awaitDownloadTriggeredByClicking = async (
-    selector: string | (() => Promise<void>),
-    expectFileCount = 1
-  ): Promise<Dict<Buffer>> => {
+  public awaitDownloadTriggeredByClicking = async (selector: string | (() => Promise<void>), expectFileCount = 1): Promise<Dict<Buffer>> => {
     const files: Dict<Buffer> = {};
     const resolvePromise: Promise<void> = (async () => {
       const downloadPath = path.resolve(__dirname, 'download', Util.lousyRandom());
@@ -615,10 +553,7 @@ abstract class ControllableBase {
     return (Array.isArray(selector) ? selector : [selector]).map(this.selector);
   };
 
-  private waitAnyInternal = async (
-    processedSelectors: string[],
-    { timeout, visible }: { timeout: number; visible?: true }
-  ): Promise<ElementHandle> => {
+  private waitAnyInternal = async (processedSelectors: string[], { timeout, visible }: { timeout: number; visible?: true }): Promise<ElementHandle> => {
     const attemptsPerSecond = 20;
     timeout = Math.max(timeout * attemptsPerSecond, 1);
     while (timeout-- > 0) {
@@ -646,9 +581,7 @@ abstract class ControllableBase {
   private isElementVisibleInternal = async (processedSelector: string) => {
     // check element visibility by checking `display` property and element offset height
     return await this.target.$eval(processedSelector, elem => {
-      return (
-        window.getComputedStyle(elem).getPropertyValue('display') !== 'none' && (elem as HTMLElement).offsetHeight > 0
-      );
+      return window.getComputedStyle(elem).getPropertyValue('display') !== 'none' && (elem as HTMLElement).offsetHeight > 0;
     });
   };
 
@@ -715,12 +648,7 @@ export class ControllablePage extends ControllableBase {
       const url = r.url();
       if (url.indexOf(TestUrls.extension('')) !== 0 || fail) {
         // not an extension url, or a fail
-        this.consoleMsgs.push(
-          new ConsoleEvent(
-            'request',
-            `${response ? response.status() : '-1'} ${r.method()} ${url}: ${fail ? fail.errorText : 'ok'}`
-          )
-        );
+        this.consoleMsgs.push(new ConsoleEvent('request', `${response ? response.status() : '-1'} ${r.method()} ${url}: ${fail ? fail.errorText : 'ok'}`));
       }
     });
     page.on('dialog', alert => {
@@ -782,9 +710,7 @@ export class ControllablePage extends ControllableBase {
 
   public close = async () => {
     if (this.preventclose) {
-      this.t.log(
-        'page.close() was called but closing was prevented because we want to evaluate earlier errors (cannot screenshot a closed page)'
-      );
+      this.t.log('page.close() was called but closing was prevented because we want to evaluate earlier errors (cannot screenshot a closed page)');
       this.preventclose = false;
     } else {
       await this.page.close();
@@ -799,10 +725,7 @@ export class ControllablePage extends ControllableBase {
 
   public screenshot = async (): Promise<string> => {
     await this.dismissActiveAlerts();
-    return await Promise.race([
-      this.page.screenshot({ encoding: 'base64' }) as Promise<string>,
-      newTimeoutPromise('screenshot', 20),
-    ]);
+    return await Promise.race([this.page.screenshot({ encoding: 'base64' }) as Promise<string>, newTimeoutPromise('screenshot', 20)]);
   };
 
   public html = async (): Promise<string> => {
@@ -815,16 +738,12 @@ export class ControllablePage extends ControllableBase {
     let html = '';
     for (const msg of this.consoleMsgs) {
       if (msg instanceof ConsoleEvent) {
-        html += `<span class="c-${Util.htmlEscape(msg.type)}">${Util.htmlEscape(msg.type)}: ${Util.htmlEscape(
-          msg.text
-        )}</span>\n`;
+        html += `<span class="c-${Util.htmlEscape(msg.type)}">${Util.htmlEscape(msg.type)}: ${Util.htmlEscape(msg.text)}</span>\n`;
         if (alsoLogDirectly) {
           console.log(`[${t.title}] console-${msg.type}: ${msg.text}`);
         }
       } else {
-        html += `<div class="c-${Util.htmlEscape(msg.type())}">${Util.htmlEscape(msg.type())}: ${Util.htmlEscape(
-          msg.text()
-        )}`;
+        html += `<div class="c-${Util.htmlEscape(msg.type())}">${Util.htmlEscape(msg.type())}: ${Util.htmlEscape(msg.text())}`;
         if (alsoLogDirectly) {
           console.log(`[${t.title}] console-${msg.type()}: ${msg.text()}`);
         }
@@ -832,10 +751,7 @@ export class ControllablePage extends ControllableBase {
         for (const arg of msg.args()) {
           try {
             const r = JSON.stringify(
-              await Promise.race([
-                arg.jsonValue(),
-                new Promise(resolve => setTimeout(() => resolve('test.ts: log fetch timeout'), 3000)),
-              ])
+              await Promise.race([arg.jsonValue(), new Promise(resolve => setTimeout(() => resolve('test.ts: log fetch timeout'), 3000))])
             );
             if (r !== '{}' && r && r !== JSON.stringify(msg.text())) {
               args.push(r);

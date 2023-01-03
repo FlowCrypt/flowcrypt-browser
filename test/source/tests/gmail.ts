@@ -111,11 +111,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
     ava.default(
       'mail.google.com/chat',
       testWithBrowser(undefined, async (t, browser) => {
-        const settingsPage = await BrowserRecipe.openSettingsLoginButCloseOauthWindowBeforeGrantingPermission(
-          t,
-          browser,
-          'ci.tests.gmail@flowcrypt.dev'
-        );
+        const settingsPage = await BrowserRecipe.openSettingsLoginButCloseOauthWindowBeforeGrantingPermission(t, browser, 'ci.tests.gmail@flowcrypt.dev');
         await settingsPage.close();
         const googleChatPage = await BrowserRecipe.openGoogleChatPage(t, browser);
         await googleChatPage.notPresent(BrowserRecipe.oldAndNewComposeButtonSelectors); // compose button should not be injected
@@ -216,10 +212,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
         await testMinimumElementHeight(gmailPage, '.pgp_block.signedMsg', 80);
         await testMinimumElementHeight(gmailPage, '.pgp_block.publicKey', 120);
         const pubkeyPage = await gmailPage.getFrame(['/chrome/elements/pgp_pubkey.htm']);
-        await pubkeyPage.waitForContent(
-          '@container-pgp-pubkey',
-          'Fingerprint: 50B7 A032 B5E1 FBAB 24BA B205 B362 45FD AC2F BF3D'
-        );
+        await pubkeyPage.waitForContent('@container-pgp-pubkey', 'Fingerprint: 50B7 A032 B5E1 FBAB 24BA B205 B362 45FD AC2F BF3D');
       })
     );
 
@@ -245,10 +238,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
         });
         await pageHasSecureReplyContainer(t, browser, gmailPage);
         const pubkeyPage = await gmailPage.getFrame(['/chrome/elements/pgp_pubkey.htm']);
-        await pubkeyPage.waitForContent(
-          '@container-pgp-pubkey',
-          'Fingerprint: 50B7 A032 B5E1 FBAB 24BA B205 B362 45FD AC2F BF3D'
-        );
+        await pubkeyPage.waitForContent('@container-pgp-pubkey', 'Fingerprint: 50B7 A032 B5E1 FBAB 24BA B205 B362 45FD AC2F BF3D');
       })
     );
 
@@ -270,10 +260,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
         });
         await pageHasSecureReplyContainer(t, browser, gmailPage);
         const pubkeyPage = await gmailPage.getFrame(['/chrome/elements/pgp_pubkey.htm']);
-        await pubkeyPage.waitForContent(
-          '@container-pgp-pubkey',
-          'Fingerprint: 50B7 A032 B5E1 FBAB 24BA B205 B362 45FD AC2F BF3D'
-        );
+        await pubkeyPage.waitForContent('@container-pgp-pubkey', 'Fingerprint: 50B7 A032 B5E1 FBAB 24BA B205 B362 45FD AC2F BF3D');
       })
     );
 
@@ -536,15 +523,9 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       'can lookup public key from WKD directly',
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
         const composePage = await ComposePageRecipe.openStandalone(t, browser, 'ci.tests.gmail@flowcrypt.dev');
-        await ComposePageRecipe.fillMsg(
-          composePage,
-          { to: 'demo@flowcrypt.com' },
-          'should find pubkey from WKD directly'
-        );
+        await ComposePageRecipe.fillMsg(composePage, { to: 'demo@flowcrypt.com' }, 'should find pubkey from WKD directly');
         await composePage.waitForContent('.email_address.has_pgp', 'demo@flowcrypt.com');
-        expect(await composePage.attr('.email_address.has_pgp', 'title')).to.contain(
-          '0997 7F6F 512C A5AD 76F0 C210 248B 60EB 6D04 4DF8 (openpgp)'
-        );
+        expect(await composePage.attr('.email_address.has_pgp', 'title')).to.contain('0997 7F6F 512C A5AD 76F0 C210 248B 60EB 6D04 4DF8 (openpgp)');
       })
     );
 
@@ -567,10 +548,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       if (isNaN(elHeight)) {
         throw Error(`msgIframeHeight iNaN`);
       }
-      expect(elHeight).to.be.above(
-        min,
-        'Expected iframe height above 80px (in particular not expecting 60 or 30 which are defaults suggesting failure)'
-      );
+      expect(elHeight).to.be.above(min, 'Expected iframe height above 80px (in particular not expecting 60 or 30 which are defaults suggesting failure)');
     };
   }
 };

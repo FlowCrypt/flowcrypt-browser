@@ -23,11 +23,7 @@ export abstract class PageRecipe {
     return await elem.evaluate((el, attribute) => el.getAttribute(attribute), attribute);
   };
 
-  public static waitForModalAndRespond = async (
-    controllable: Controllable,
-    type: ModalType,
-    { contentToCheck, clickOn, timeout }: ModalOpts
-  ) => {
+  public static waitForModalAndRespond = async (controllable: Controllable, type: ModalType, { contentToCheck, clickOn, timeout }: ModalOpts) => {
     const modalContainer = await controllable.waitAny(`.ui-modal-${type}`, { timeout });
     if (typeof contentToCheck !== 'undefined') {
       const contentElement = await modalContainer.$('.swal2-html-container');
@@ -44,10 +40,7 @@ export abstract class PageRecipe {
     }
   };
 
-  public static waitForToastToAppearAndDisappear = async (
-    controllable: Controllable,
-    containsText: string | RegExp
-  ): Promise<void> => {
+  public static waitForToastToAppearAndDisappear = async (controllable: Controllable, containsText: string | RegExp): Promise<void> => {
     await controllable.waitForContent('.ui-toast-title', containsText);
     await controllable.waitTillGone('.ui-toast-title');
   };
@@ -80,16 +73,10 @@ export abstract class PageRecipe {
     return (result as { result: { tabId: string } }).result.tabId;
   };
 
-  public static addPubkey = async (
-    t: AvaContext,
-    browser: BrowserHandle,
-    acctEmail: string,
-    pubkey: string,
-    email?: string
-  ) => {
-    const pubFrameUrl = `chrome/elements/pgp_pubkey.htm?frameId=none&armoredPubkey=${encodeURIComponent(
-      pubkey
-    )}&acctEmail=${encodeURIComponent(acctEmail)}&parentTabId=0`;
+  public static addPubkey = async (t: AvaContext, browser: BrowserHandle, acctEmail: string, pubkey: string, email?: string) => {
+    const pubFrameUrl = `chrome/elements/pgp_pubkey.htm?frameId=none&armoredPubkey=${encodeURIComponent(pubkey)}&acctEmail=${encodeURIComponent(
+      acctEmail
+    )}&parentTabId=0`;
     const pubFrame = await browser.newPage(t, pubFrameUrl);
     if (email) {
       await pubFrame.waitAndType('@input-email', email);

@@ -31,11 +31,7 @@ export class Assert {
       throw new Error(`urlParamRequire.optionalString: type of ${name} unexpectedly ${typeof r}`);
     },
     oneof: <T>(values: UrlParams, name: string, allowed: T[]): T => {
-      return Assert.abortAndRenderErrOnUrlParamValMismatch(
-        values,
-        name,
-        allowed as unknown as UrlParam[]
-      ) as unknown as T; // todo - there should be a better way
+      return Assert.abortAndRenderErrOnUrlParamValMismatch(values, name, allowed as unknown as UrlParam[]) as unknown as T; // todo - there should be a better way
     },
   };
 
@@ -81,11 +77,7 @@ export class Assert {
     }
   };
 
-  public static abortAndRenderErrOnUrlParamTypeMismatch = (
-    values: UrlParams,
-    name: string,
-    expectedType: string
-  ): UrlParam => {
+  public static abortAndRenderErrOnUrlParamTypeMismatch = (values: UrlParams, name: string, expectedType: string): UrlParam => {
     // eslint-disable-next-line no-null/no-null
     const actualType = values[name] === null ? 'null' : typeof values[name];
     if (actualType === expectedType.replace(/\?$/, '')) {
@@ -97,9 +89,7 @@ export class Assert {
       return values[name];
     }
     console.info(values[name]); // for local debugging
-    const msg = `Cannot render page (expected ${Xss.escape(name)} to be of type ${Xss.escape(
-      expectedType
-    )} but got ${Xss.escape(actualType)})`;
+    const msg = `Cannot render page (expected ${Xss.escape(name)} to be of type ${Xss.escape(expectedType)} but got ${Xss.escape(actualType)})`;
     const renderMsg = `${msg}<br><br><button class="button green long action_report_issue">report issue</button>`;
     Xss.sanitizeRender('body', renderMsg).addClass('bad').css({ padding: '20px', 'font-size': '16px' });
     $('.action_report_issue').on(
@@ -114,12 +104,8 @@ export class Assert {
 
   public static abortAndRenderErrOnUrlParamValMismatch = <T>(values: Dict<T>, name: string, expectedVals: T[]): T => {
     if (expectedVals.indexOf(values[name]) === -1) {
-      const msg = `Cannot render page (expected ${Xss.escape(name)} to be one of ${Xss.escape(
-        expectedVals.map(String).join(',')
-      )}
-        but got ${Xss.escape(
-          String(values[name])
-        )}<br><br>Was the URL editted manually? Please write human@flowcrypt.com for help.`;
+      const msg = `Cannot render page (expected ${Xss.escape(name)} to be one of ${Xss.escape(expectedVals.map(String).join(','))}
+        but got ${Xss.escape(String(values[name]))}<br><br>Was the URL editted manually? Please write human@flowcrypt.com for help.`;
       Xss.sanitizeRender('body', msg).addClass('bad').css({ padding: '20px', 'font-size': '16px' });
       throw new AssertError(msg);
     }

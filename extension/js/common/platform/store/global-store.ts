@@ -67,9 +67,7 @@ export class GlobalStore extends AbstractStore {
       // always go through bg script to avoid such errors
       return await BrowserMsg.send.bg.await.storeGlobalGet({ keys });
     }
-    const storageObj = (await storageLocalGet(
-      GlobalStore.singleScopeRawIndexArr(GlobalStore.globalStorageScope, keys)
-    )) as RawStore;
+    const storageObj = (await storageLocalGet(GlobalStore.singleScopeRawIndexArr(GlobalStore.globalStorageScope, keys))) as RawStore;
     return GlobalStore.buildSingleAccountStoreFromRawResults(GlobalStore.globalStorageScope, storageObj) as GlobalStore;
   };
 

@@ -43,10 +43,7 @@ export class InboxMenuModule extends ViewModule<InboxView> {
     return `UNKNOWN LABEL: ${labelId}`;
   };
 
-  public renderableLabels = (
-    labelIds: (GmailRes.GmailMsg$labelId | string)[],
-    placement: 'messages' | 'menu' | 'labels'
-  ) => {
+  public renderableLabels = (labelIds: (GmailRes.GmailMsg$labelId | string)[], placement: 'messages' | 'menu' | 'labels') => {
     return labelIds.map(id => this.renderableLabel(id, placement)).join('');
   };
 
@@ -62,13 +59,7 @@ export class InboxMenuModule extends ViewModule<InboxView> {
 
   private renderMenuAndLabelStyles = () => {
     this.addLabelStyles(this.allLabels);
-    Xss.sanitizeAppend(
-      '.menu',
-      `<br>${this.renderableLabels(
-        this.FOLDERS,
-        'menu'
-      )}<button class="button gray2 label label_ALL">ALL MAIL</button><br>`
-    );
+    Xss.sanitizeAppend('.menu', `<br>${this.renderableLabels(this.FOLDERS, 'menu')}<button class="button gray2 label label_ALL">ALL MAIL</button><br>`);
     Xss.sanitizeAppend(
       '.menu',
       '<br>' +
@@ -117,9 +108,7 @@ export class InboxMenuModule extends ViewModule<InboxView> {
     const name = Xss.escape(label.name);
     if (placement === 'menu') {
       const unread = Number(label.messagesUnread);
-      return `<button class="button gray2 label label_${id}" ${unread ? 'style="font-weight: bold;"' : ''}>${name}${
-        unread ? ` (${unread})` : ''
-      }</button><br>`;
+      return `<button class="button gray2 label label_${id}" ${unread ? 'style="font-weight: bold;"' : ''}>${name}${unread ? ` (${unread})` : ''}</button><br>`;
     } else if (placement === 'labels') {
       return `<span class="label label_${id}">${name}</span><br>`;
     } else {

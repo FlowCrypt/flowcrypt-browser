@@ -40,12 +40,7 @@ View.run(
     };
 
     private appendResult = (str: string, err?: Error) => {
-      Xss.sanitizeAppend(
-        'pre',
-        `(${Xss.escape(`${this.testIndex++}`)}) ${Xss.escape(str)} ${
-          err ? Xss.escape(` !! ${err.message}`) : Xss.escape('')
-        } \n`
-      );
+      Xss.sanitizeAppend('pre', `(${Xss.escape(`${this.testIndex++}`)}) ${Xss.escape(str)} ${err ? Xss.escape(` !! ${err.message}`) : Xss.escape('')} \n`);
     };
 
     private outputKeyResults = async (keys: Key[]) => {

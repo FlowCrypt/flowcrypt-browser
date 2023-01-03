@@ -46,10 +46,7 @@ export class PgpPwd {
     { match: '', word: 'weak', bar: 10, color: 'red', pass: false },
   ];
 
-  public static estimateStrength = (
-    zxcvbnResultGuesses: number,
-    type: 'passphrase' | 'pwd' = 'passphrase'
-  ): PwdStrengthResult => {
+  public static estimateStrength = (zxcvbnResultGuesses: number, type: 'passphrase' | 'pwd' = 'passphrase'): PwdStrengthResult => {
     const timeToCrack = zxcvbnResultGuesses / PgpPwd.CRACK_GUESSES_PER_SECOND;
     for (const word of type === 'pwd' ? PgpPwd.CRACK_TIME_WORDS_PWD : PgpPwd.CRACK_TIME_WORDS_PASS_PHRASE) {
       const readableTime = PgpPwd.readableCrackTime(timeToCrack);

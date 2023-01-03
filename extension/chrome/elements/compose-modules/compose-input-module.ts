@@ -65,10 +65,7 @@ export class ComposeInputModule extends ViewModule<ComposeView> {
 
   public extractAll = async (): Promise<NewMsgData> => {
     const recipients = this.mapRecipients(this.view.recipientsModule.getValidRecipients());
-    const subject =
-      this.view.isReplyBox && this.view.replyParams
-        ? this.view.replyParams.subject
-        : String($('#input_subject').val() || '');
+    const subject = this.view.isReplyBox && this.view.replyParams ? this.view.replyParams.subject : String($('#input_subject').val() || '');
     const plaintext = this.view.inputModule.extract('text', 'input_text');
     const plainhtml = this.view.inputModule.extract('html', 'input_text');
     const password = this.view.S.cached('input_password').val();
@@ -86,9 +83,7 @@ export class ComposeInputModule extends ViewModule<ComposeView> {
       const div = document.createElement('div');
       div.appendChild(e.fragment);
       const html = div.innerHTML;
-      const sanitized = this.isRichText()
-        ? Xss.htmlSanitizeKeepBasicTags(html, 'IMG-KEEP')
-        : Xss.htmlSanitizeAndStripAllTags(html, '<br>', false);
+      const sanitized = this.isRichText() ? Xss.htmlSanitizeKeepBasicTags(html, 'IMG-KEEP') : Xss.htmlSanitizeAndStripAllTags(html, '<br>', false);
       Xss.setElementContentDANGEROUSLY(div, sanitized); // xss-sanitized
       e.fragment.appendChild(div);
     });

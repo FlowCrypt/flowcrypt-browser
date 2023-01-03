@@ -5,14 +5,7 @@
 import { Buf } from './buf.js';
 import { Str } from './common.js';
 
-type Attachment$treatAs =
-  | 'publicKey'
-  | 'privateKey'
-  | 'encryptedMsg'
-  | 'hidden'
-  | 'signature'
-  | 'encryptedFile'
-  | 'plainFile';
+type Attachment$treatAs = 'publicKey' | 'privateKey' | 'encryptedMsg' | 'hidden' | 'signature' | 'encryptedFile' | 'plainFile';
 export type AttachmentMeta = {
   data?: Uint8Array;
   type?: string;
@@ -32,14 +25,7 @@ export type FcAttachmentLinkData = { name: string; type: string; size: number };
 export class Attachment {
   public static readonly webmailNamePattern =
     /^(((cryptup|flowcrypt)-backup-[a-z0-9]+\.(key|asc))|(.+\.pgp)|(.+\.gpg)|(.+\.asc)|(noname)|(message)|(PGPMIME version identification)|(ATT[0-9]{5})|())$/m;
-  public static readonly encryptedMsgNames = [
-    'msg.asc',
-    'message.asc',
-    'encrypted.asc',
-    'encrypted.eml.pgp',
-    'Message.pgp',
-    'openpgp-encrypted-message.asc',
-  ];
+  public static readonly encryptedMsgNames = ['msg.asc', 'message.asc', 'encrypted.asc', 'encrypted.eml.pgp', 'Message.pgp', 'openpgp-encrypted-message.asc'];
 
   public length = NaN;
   public type: string;
@@ -54,19 +40,7 @@ export class Attachment {
   private bytes: Uint8Array | undefined;
   private treatAsValue: Attachment$treatAs | undefined;
 
-  public constructor({
-    data,
-    type,
-    name,
-    length,
-    url,
-    inline,
-    id,
-    msgId,
-    treatAs,
-    cid,
-    contentDescription,
-  }: AttachmentMeta) {
+  public constructor({ data, type, name, length, url, inline, id, msgId, treatAs, cid, contentDescription }: AttachmentMeta) {
     if (typeof data === 'undefined' && typeof url === 'undefined' && typeof id === 'undefined') {
       throw new Error('Attachment: one of data|url|id has to be set');
     }
@@ -90,10 +64,7 @@ export class Attachment {
     this.contentDescription = contentDescription || undefined;
   }
 
-  public static treatAsForPgpEncryptedAttachments = (
-    mimeType: string | undefined,
-    pgpEncryptedIndex: number | undefined
-  ) => {
+  public static treatAsForPgpEncryptedAttachments = (mimeType: string | undefined, pgpEncryptedIndex: number | undefined) => {
     let treatAs: 'hidden' | 'encryptedMsg' | undefined;
     if (mimeType === 'application/pgp-encrypted' && pgpEncryptedIndex === 0) {
       treatAs = 'hidden';
@@ -149,11 +120,7 @@ export class Attachment {
     if (this.treatAsValue) {
       // pre-set
       return this.treatAsValue;
-    } else if (
-      ['PGPexch.htm.pgp', 'PGPMIME version identification', 'Version.txt', 'PGPMIME Versions Identification'].includes(
-        this.name
-      )
-    ) {
+    } else if (['PGPexch.htm.pgp', 'PGPMIME version identification', 'Version.txt', 'PGPMIME Versions Identification'].includes(this.name)) {
       return 'hidden'; // PGPexch.htm.pgp is html alternative of textual body content produced by PGP Desktop and GPG4o
     } else if (this.name === 'signature.asc' || this.type === 'application/pgp-signature') {
       return 'signature';

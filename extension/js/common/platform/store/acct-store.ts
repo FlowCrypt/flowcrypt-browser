@@ -14,10 +14,7 @@ import { AbstractStore, RawStore } from './abstract-store.js';
 import { InMemoryStore } from './in-memory-store.js';
 
 export type EmailProvider = 'gmail';
-type GoogleAuthScopesNames = [
-  keyof typeof GoogleAuth.OAUTH.scopes,
-  keyof typeof GoogleAuth.OAUTH.legacy_scopes
-][number];
+type GoogleAuthScopesNames = [keyof typeof GoogleAuth.OAUTH.scopes, keyof typeof GoogleAuth.OAUTH.legacy_scopes][number];
 
 export type Scopes = {
   openid: boolean;
@@ -172,23 +169,15 @@ export class AcctStore extends AbstractStore {
     for (const key of Object.keys({ ...GoogleAuth.OAUTH.scopes, ...GoogleAuth.OAUTH.legacy_scopes })) {
       const scopeName = key as GoogleAuthScopesNames;
       if (scopeName in GoogleAuth.OAUTH.scopes) {
-        result[scopeName] = allowedScopes.includes(
-          GoogleAuth.OAUTH.scopes[scopeName as keyof typeof GoogleAuth.OAUTH.scopes]
-        );
+        result[scopeName] = allowedScopes.includes(GoogleAuth.OAUTH.scopes[scopeName as keyof typeof GoogleAuth.OAUTH.scopes]);
       } else if (scopeName in GoogleAuth.OAUTH.legacy_scopes) {
-        result[scopeName] = allowedScopes.includes(
-          GoogleAuth.OAUTH.legacy_scopes[scopeName as keyof typeof GoogleAuth.OAUTH.legacy_scopes]
-        );
+        result[scopeName] = allowedScopes.includes(GoogleAuth.OAUTH.legacy_scopes[scopeName as keyof typeof GoogleAuth.OAUTH.legacy_scopes]);
       }
     }
     return result;
   };
 
-  private static fixAcctStorageResult = (
-    acctEmail: string,
-    acctStore: AcctStoreDict,
-    keys: AccountIndex[]
-  ): AcctStoreDict => {
+  private static fixAcctStorageResult = (acctEmail: string, acctStore: AcctStoreDict, keys: AccountIndex[]): AcctStoreDict => {
     if (keys.includes('sendAs') && !acctStore.sendAs) {
       acctStore.sendAs = { [acctEmail]: { isPrimary: true, isDefault: true } };
     }

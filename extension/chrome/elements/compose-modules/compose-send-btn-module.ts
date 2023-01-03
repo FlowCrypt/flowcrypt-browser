@@ -36,9 +36,7 @@ export class ComposeSendBtnModule extends ViewModule<ComposeView> {
   }
 
   public setHandlers = (): void => {
-    const ctrlEnterHandler = Ui.ctrlEnter(
-      () => !this.view.sizeModule.composeWindowIsMinimized && this.extractProcessSendMsg()
-    );
+    const ctrlEnterHandler = Ui.ctrlEnter(() => !this.view.sizeModule.composeWindowIsMinimized && this.extractProcessSendMsg());
     this.view.S.cached('subject').add(this.view.S.cached('compose')).keydown(ctrlEnterHandler);
     this.view.S.cached('send_btn').on(
       'click',
@@ -77,10 +75,7 @@ export class ComposeSendBtnModule extends ViewModule<ComposeView> {
     this.view.S.cached('toggle_send_options').removeClass('gray').addClass('green').prop('disabled', false);
   };
 
-  public renderUploadProgress = (
-    progress: number | undefined,
-    progressRepresents: 'FIRST-HALF' | 'SECOND-HALF' | 'EVERYTHING'
-  ) => {
+  public renderUploadProgress = (progress: number | undefined, progressRepresents: 'FIRST-HALF' | 'SECOND-HALF' | 'EVERYTHING') => {
     if (progress && this.view.attachmentsModule.attachment.hasAttachment()) {
       if (progressRepresents === 'FIRST-HALF') {
         progress = Math.floor(progress / 2); // show 0-50% instead of 0-100%
@@ -128,11 +123,7 @@ export class ComposeSendBtnModule extends ViewModule<ComposeView> {
         });
         BrowserMsg.send.focusBody(this.view.parentTabId); // Bring focus back to body so Gmails shortcuts will work
         if (this.view.isReplyBox) {
-          this.view.renderModule.renderReplySuccess(
-            msgObj.renderSentMessage.attachments,
-            msgObj.renderSentMessage.recipients,
-            result.sentIds[0]
-          );
+          this.view.renderModule.renderReplySuccess(msgObj.renderSentMessage.attachments, msgObj.renderSentMessage.recipients, result.sentIds[0]);
         } else {
           this.view.renderModule.closeMsg();
         }
@@ -158,13 +149,7 @@ export class ComposeSendBtnModule extends ViewModule<ComposeView> {
     }
   };
 
-  private finalizeSendableMsg = async ({
-    msg,
-    senderKi,
-  }: {
-    msg: SendableMsg;
-    senderKi: KeyInfoWithIdentity | undefined;
-  }) => {
+  private finalizeSendableMsg = async ({ msg, senderKi }: { msg: SendableMsg; senderKi: KeyInfoWithIdentity | undefined }) => {
     const choices = this.view.sendBtnModule.popover.choices;
     for (const k of Object.keys(this.additionalMsgHeaders)) {
       msg.headers[k] = this.additionalMsgHeaders[k];
@@ -281,9 +266,7 @@ export class ComposeSendBtnModule extends ViewModule<ComposeView> {
         success.push(...msgRecipients);
         sentIds.push(msgSentRes.id);
         if (msg.externalId) {
-          supplementaryOperations.push(
-            this.bindMessageId(msg.externalId, msgSentRes.id, supplementaryOperationsErrors)
-          );
+          supplementaryOperations.push(this.bindMessageId(msg.externalId, msgSentRes.id, supplementaryOperationsErrors));
         }
       } catch (e) {
         failures.push(

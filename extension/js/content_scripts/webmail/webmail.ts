@@ -79,11 +79,7 @@ Catch.try(async () => {
         if (Str.isEmailValid(extracted[2])) {
           insights.email = extracted[2].trim().toLowerCase();
         }
-        if (
-          typeof insights.newDataLayer === 'undefined' &&
-          typeof insights.newUi === 'undefined' &&
-          typeof insights.email === 'undefined'
-        ) {
+        if (typeof insights.newDataLayer === 'undefined' && typeof insights.newUi === 'undefined' && typeof insights.email === 'undefined') {
           insights.gmailVariant = 'html';
         } else if (insights.newUi === false) {
           insights.gmailVariant = 'standard';
@@ -111,14 +107,7 @@ Catch.try(async () => {
         storage.sendAs[acctEmail] = { name: storage.full_name, isPrimary: true };
       }
       injector.btns();
-      replacer = new GmailElementReplacer(
-        factory,
-        clientConfiguration,
-        acctEmail,
-        storage.sendAs,
-        injector,
-        notifications
-      );
+      replacer = new GmailElementReplacer(factory, clientConfiguration, acctEmail, storage.sendAs, injector, notifications);
       await notifications.showInitial(acctEmail);
       const intervaliFunctions = replacer.getIntervalFunctions();
       for (const intervalFunction of intervaliFunctions) {

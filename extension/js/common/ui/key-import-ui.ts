@@ -77,11 +77,7 @@ export class KeyImportUi {
 
   public onBadPassphrase: VoidCallback = () => undefined;
 
-  public initPrvImportSrcForm = (
-    acctEmail: string,
-    parentTabId: string | undefined,
-    submitKeyForAddrs?: string[] | undefined
-  ) => {
+  public initPrvImportSrcForm = (acctEmail: string, parentTabId: string | undefined, submitKeyForAddrs?: string[] | undefined) => {
     $('input[type=radio][name=source]')
       .off()
       .change(function () {
@@ -191,11 +187,7 @@ export class KeyImportUi {
           $('.source_paste_container').css('display', 'block');
         } else {
           $('.input_private_key').val('').change().prop('disabled', false);
-          await Ui.modal.error(
-            'Not able to read this key. Make sure it is a valid PGP private key.',
-            false,
-            Ui.testCompatibilityLink
-          );
+          await Ui.modal.error('Not able to read this key. Make sure it is a valid PGP private key.', false, Ui.testCompatibilityLink);
           $('input[type=radio][name=source]').removeAttr('checked');
         }
       },
@@ -311,9 +303,9 @@ export class KeyImportUi {
     const k = await KeyUtil.parse(normalized);
     if (typeof k === 'undefined') {
       throw new UserAlert(
-        `${
-          type === 'privateKey' ? 'Private' : 'Public'
-        } key is not correctly formatted. Please insert complete key, including "${headers.begin}" and "${headers.end}"`
+        `${type === 'privateKey' ? 'Private' : 'Public'} key is not correctly formatted. Please insert complete key, including "${headers.begin}" and "${
+          headers.end
+        }"`
       );
     }
     return k;
@@ -322,18 +314,10 @@ export class KeyImportUi {
   private rejectIfNot = (type: KeyBlockType, k: Key) => {
     const headers = PgpArmor.headers(type);
     if (type === 'privateKey' && k.isPublic) {
-      throw new UserAlert(
-        'This was a public key. Please insert a private key instead. It\'s a block of text starting with "' +
-          headers.begin +
-          '"'
-      );
+      throw new UserAlert('This was a public key. Please insert a private key instead. It\'s a block of text starting with "' + headers.begin + '"');
     }
     if (type === 'publicKey' && !k.isPublic) {
-      throw new UserAlert(
-        'This was a public key. Please insert a private key instead. It\'s a block of text starting with "' +
-          headers.begin +
-          '"'
-      );
+      throw new UserAlert('This was a public key. Please insert a private key instead. It\'s a block of text starting with "' + headers.begin + '"');
     }
   };
 
@@ -347,12 +331,7 @@ export class KeyImportUi {
     }
   };
 
-  private decryptAndEncryptAsNeeded = async (
-    toDecrypt: Key,
-    toEncrypt: Key,
-    passphrase: string,
-    contactSubsentence: string
-  ): Promise<void> => {
+  private decryptAndEncryptAsNeeded = async (toDecrypt: Key, toEncrypt: Key, passphrase: string, contactSubsentence: string): Promise<void> => {
     if (!passphrase) {
       throw new UserAlert('Please enter a pass phrase to use with this key');
     }
@@ -380,11 +359,7 @@ export class KeyImportUi {
       if (e instanceof UserAlert) {
         throw e;
       }
-      throw new UserAlert(
-        `This key is not supported by FlowCrypt yet. Please ${contactSubsentence} to add support soon. (decrypt error: ${String(
-          e
-        )})`
-      );
+      throw new UserAlert(`This key is not supported by FlowCrypt yet. Please ${contactSubsentence} to add support soon. (decrypt error: ${String(e)})`);
     }
   };
 
@@ -412,9 +387,7 @@ export class KeyImportUi {
           );
         }
       } else {
-        throw new UserAlert(
-          `This looks like a valid key but it cannot be used for encryption. Please ${contactSubsentence} to see why is that.`
-        );
+        throw new UserAlert(`This looks like a valid key but it cannot be used for encryption. Please ${contactSubsentence} to see why is that.`);
       }
     }
   };
@@ -424,11 +397,8 @@ export class KeyImportUi {
     if (this.checkEncryption && !key.usableForEncryption) {
       let msg = 'This public key is correctly formatted, but it cannot be used for encryption';
       if (key.expiration && key.expiration < Date.now()) {
-        msg += ` because it expired on ${Str.fromDate(
-          new Date(key.expiration)
-        )}.\n\nAsk the recipient to provide you with an updated Public Key.`;
-        msg +=
-          '\n\nIf you need to use this particular expired key, click the "SETTINGS" button below and import it there.';
+        msg += ` because it expired on ${Str.fromDate(new Date(key.expiration))}.\n\nAsk the recipient to provide you with an updated Public Key.`;
+        msg += '\n\nIf you need to use this particular expired key, click the "SETTINGS" button below and import it there.';
       } else {
         msg += '.';
       }
@@ -444,9 +414,7 @@ export class KeyImportUi {
             'Please export the key with --export-secret-key option.'
         );
       } else {
-        throw new UserAlert(
-          `This looks like a valid key but it cannot be used for signing. Please ${contactSubsentence} to see why is that.`
-        );
+        throw new UserAlert(`This looks like a valid key but it cannot be used for signing. Please ${contactSubsentence} to see why is that.`);
       }
     }
   };

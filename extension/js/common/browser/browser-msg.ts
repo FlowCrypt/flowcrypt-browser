@@ -7,14 +7,7 @@ import { AjaxErr } from '../api/shared/api-error.js';
 import { Buf } from '../core/buf.js';
 import { Dict, Str, UrlParams } from '../core/common.js';
 import { ArmoredKeyIdentityWithEmails, KeyUtil } from '../core/crypto/key.js';
-import {
-  DecryptResult,
-  DiagnoseMsgPubkeysResult,
-  MsgUtil,
-  PgpMsgMethod,
-  PgpMsgTypeResult,
-  VerifyRes,
-} from '../core/crypto/pgp/msg-util.js';
+import { DecryptResult, DiagnoseMsgPubkeysResult, MsgUtil, PgpMsgMethod, PgpMsgTypeResult, VerifyRes } from '../core/crypto/pgp/msg-util.js';
 import { NotificationGroupType } from '../notifications.js';
 import { Catch } from '../platform/catch.js';
 import { AccountIndex, AcctStoreDict } from '../platform/store/acct-store.js';
@@ -229,60 +222,30 @@ export class BrowserMsg {
       updateUninstallUrl: () => BrowserMsg.sendCatch(undefined, 'update_uninstall_url', {}),
       await: {
         reconnectAcctAuthPopup: (bm: Bm.ReconnectAcctAuthPopup) =>
-          BrowserMsg.sendAwait(
-            undefined,
-            'reconnect_acct_auth_popup',
-            bm,
-            true
-          ) as Promise<Bm.Res.ReconnectAcctAuthPopup>,
-        getActiveTabInfo: () =>
-          BrowserMsg.sendAwait(undefined, 'get_active_tab_info', undefined, true) as Promise<Bm.Res.GetActiveTabInfo>,
-        inMemoryStoreGet: (bm: Bm.InMemoryStoreGet) =>
-          BrowserMsg.sendAwait(undefined, 'inMemoryStoreGet', bm, true) as Promise<Bm.Res.InMemoryStoreGet>,
-        inMemoryStoreSet: (bm: Bm.InMemoryStoreSet) =>
-          BrowserMsg.sendAwait(undefined, 'inMemoryStoreSet', bm, true) as Promise<Bm.Res.InMemoryStoreSet>,
-        storeGlobalGet: (bm: Bm.StoreGlobalGet) =>
-          BrowserMsg.sendAwait(undefined, 'storeGlobalGet', bm, true) as Promise<Bm.Res.StoreGlobalGet>,
-        storeGlobalSet: (bm: Bm.StoreGlobalSet) =>
-          BrowserMsg.sendAwait(undefined, 'storeGlobalSet', bm, true) as Promise<Bm.Res.StoreGlobalSet>,
-        storeAcctGet: (bm: Bm.StoreAcctGet) =>
-          BrowserMsg.sendAwait(undefined, 'storeAcctGet', bm, true) as Promise<Bm.Res.StoreAcctGet>,
-        storeAcctSet: (bm: Bm.StoreAcctSet) =>
-          BrowserMsg.sendAwait(undefined, 'storeAcctSet', bm, true) as Promise<Bm.Res.StoreAcctSet>,
+          BrowserMsg.sendAwait(undefined, 'reconnect_acct_auth_popup', bm, true) as Promise<Bm.Res.ReconnectAcctAuthPopup>,
+        getActiveTabInfo: () => BrowserMsg.sendAwait(undefined, 'get_active_tab_info', undefined, true) as Promise<Bm.Res.GetActiveTabInfo>,
+        inMemoryStoreGet: (bm: Bm.InMemoryStoreGet) => BrowserMsg.sendAwait(undefined, 'inMemoryStoreGet', bm, true) as Promise<Bm.Res.InMemoryStoreGet>,
+        inMemoryStoreSet: (bm: Bm.InMemoryStoreSet) => BrowserMsg.sendAwait(undefined, 'inMemoryStoreSet', bm, true) as Promise<Bm.Res.InMemoryStoreSet>,
+        storeGlobalGet: (bm: Bm.StoreGlobalGet) => BrowserMsg.sendAwait(undefined, 'storeGlobalGet', bm, true) as Promise<Bm.Res.StoreGlobalGet>,
+        storeGlobalSet: (bm: Bm.StoreGlobalSet) => BrowserMsg.sendAwait(undefined, 'storeGlobalSet', bm, true) as Promise<Bm.Res.StoreGlobalSet>,
+        storeAcctGet: (bm: Bm.StoreAcctGet) => BrowserMsg.sendAwait(undefined, 'storeAcctGet', bm, true) as Promise<Bm.Res.StoreAcctGet>,
+        storeAcctSet: (bm: Bm.StoreAcctSet) => BrowserMsg.sendAwait(undefined, 'storeAcctSet', bm, true) as Promise<Bm.Res.StoreAcctSet>,
         db: (bm: Bm.Db): Promise<Bm.Res.Db> => BrowserMsg.sendAwait(undefined, 'db', bm, true) as Promise<Bm.Res.Db>,
-        ajax: (bm: Bm.Ajax): Promise<Bm.Res.Ajax> =>
-          BrowserMsg.sendAwait(undefined, 'ajax', bm, true) as Promise<Bm.Res.Ajax>,
+        ajax: (bm: Bm.Ajax): Promise<Bm.Res.Ajax> => BrowserMsg.sendAwait(undefined, 'ajax', bm, true) as Promise<Bm.Res.Ajax>,
         ajaxGmailAttachmentGetChunk: (bm: Bm.AjaxGmailAttachmentGetChunk) =>
-          BrowserMsg.sendAwait(
-            undefined,
-            'ajaxGmailAttachmentGetChunk',
-            bm,
-            true
-          ) as Promise<Bm.Res.AjaxGmailAttachmentGetChunk>,
+          BrowserMsg.sendAwait(undefined, 'ajaxGmailAttachmentGetChunk', bm, true) as Promise<Bm.Res.AjaxGmailAttachmentGetChunk>,
         pgpMsgDiagnosePubkeys: (bm: Bm.PgpMsgDiagnoseMsgPubkeys) =>
-          BrowserMsg.sendAwait(
-            undefined,
-            'pgpMsgDiagnosePubkeys',
-            bm,
-            true
-          ) as Promise<Bm.Res.PgpMsgDiagnoseMsgPubkeys>,
-        pgpMsgDecrypt: (bm: Bm.PgpMsgDecrypt) =>
-          BrowserMsg.sendAwait(undefined, 'pgpMsgDecrypt', bm, true) as Promise<Bm.Res.PgpMsgDecrypt>,
+          BrowserMsg.sendAwait(undefined, 'pgpMsgDiagnosePubkeys', bm, true) as Promise<Bm.Res.PgpMsgDiagnoseMsgPubkeys>,
+        pgpMsgDecrypt: (bm: Bm.PgpMsgDecrypt) => BrowserMsg.sendAwait(undefined, 'pgpMsgDecrypt', bm, true) as Promise<Bm.Res.PgpMsgDecrypt>,
         pgpMsgVerifyDetached: (bm: Bm.PgpMsgVerifyDetached) =>
           BrowserMsg.sendAwait(undefined, 'pgpMsgVerifyDetached', bm, true) as Promise<Bm.Res.PgpMsgVerify>,
-        pgpMsgType: (bm: Bm.PgpMsgType) =>
-          BrowserMsg.sendAwait(undefined, 'pgpMsgType', bm, true) as Promise<Bm.Res.PgpMsgType>,
+        pgpMsgType: (bm: Bm.PgpMsgType) => BrowserMsg.sendAwait(undefined, 'pgpMsgType', bm, true) as Promise<Bm.Res.PgpMsgType>,
         pgpKeyBinaryToArmored: (bm: Bm.PgpKeyBinaryToArmored) =>
           BrowserMsg.sendAwait(undefined, 'pgpKeyBinaryToArmored', bm, true) as Promise<Bm.Res.PgpKeyBinaryToArmored>,
         saveFetchedPubkeys: (bm: Bm.SaveFetchedPubkeys) =>
           BrowserMsg.sendAwait(undefined, 'saveFetchedPubkeys', bm, true) as Promise<Bm.Res.SaveFetchedPubkeys>,
         processAndStoreKeysFromEkmLocally: (bm: Bm.ProcessAndStoreKeysFromEkmLocally) =>
-          BrowserMsg.sendAwait(
-            undefined,
-            'processAndStoreKeysFromEkmLocally',
-            bm,
-            true
-          ) as Promise<Bm.Res.ProcessAndStoreKeysFromEkmLocally>,
+          BrowserMsg.sendAwait(undefined, 'processAndStoreKeysFromEkmLocally', bm, true) as Promise<Bm.Res.ProcessAndStoreKeysFromEkmLocally>,
         getLocalKeyExpiration: (bm: Bm.GetLocalKeyExpiration) =>
           BrowserMsg.sendAwait(undefined, 'getLocalKeyExpiration', bm, true) as Promise<Bm.Res.GetLocalKeyExpiration>,
       },
@@ -297,15 +260,13 @@ export class BrowserMsg {
     authWindowResult: (dest: Bm.Dest, bm: Bm.AuthWindowResult) => BrowserMsg.sendCatch(dest, 'auth_window_result', bm),
     closePage: (dest: Bm.Dest) => BrowserMsg.sendCatch(dest, 'close_page', {}),
     setActiveWindow: (dest: Bm.Dest, bm: Bm.ComposeWindow) => BrowserMsg.sendCatch(dest, 'set_active_window', bm),
-    focusPreviousActiveWindow: (dest: Bm.Dest, bm: Bm.ComposeWindow) =>
-      BrowserMsg.sendCatch(dest, 'focus_previous_active_window', bm),
+    focusPreviousActiveWindow: (dest: Bm.Dest, bm: Bm.ComposeWindow) => BrowserMsg.sendCatch(dest, 'focus_previous_active_window', bm),
     closeComposeWindow: (dest: Bm.Dest, bm: Bm.ComposeWindow) => BrowserMsg.sendCatch(dest, 'close_compose_window', bm),
     focusBody: (dest: Bm.Dest) => BrowserMsg.sendCatch(dest, 'focus_body', {}),
     focusFrame: (dest: Bm.Dest, bm: Bm.ComposeWindow) => BrowserMsg.sendCatch(dest, 'focus_frame', bm),
     closeReplyMessage: (dest: Bm.Dest, bm: Bm.ComposeWindow) => BrowserMsg.sendCatch(dest, 'close_reply_message', bm),
     scrollToReplyBox: (dest: Bm.Dest, bm: Bm.ScrollToReplyBox) => BrowserMsg.sendCatch(dest, 'scroll_to_reply_box', bm),
-    scrollToCursorInReplyBox: (dest: Bm.Dest, bm: Bm.ScrollToCursorInReplyBox) =>
-      BrowserMsg.sendCatch(dest, 'scroll_to_cursor_in_reply_box', bm),
+    scrollToCursorInReplyBox: (dest: Bm.Dest, bm: Bm.ScrollToCursorInReplyBox) => BrowserMsg.sendCatch(dest, 'scroll_to_cursor_in_reply_box', bm),
     reinsertReplyBox: (dest: Bm.Dest, bm: Bm.ReinsertReplyBox) => BrowserMsg.sendCatch(dest, 'reinsert_reply_box', bm),
     passphraseDialog: (dest: Bm.Dest, bm: Bm.PassphraseDialog) => BrowserMsg.sendCatch(dest, 'passphrase_dialog', bm),
     notificationShow: (dest: Bm.Dest, bm: Bm.NotificationShow) => BrowserMsg.sendCatch(dest, 'notification_show', bm),
@@ -316,12 +277,10 @@ export class BrowserMsg {
     addPubkeyDialog: (dest: Bm.Dest, bm: Bm.AddPubkeyDialog) => BrowserMsg.sendCatch(dest, 'add_pubkey_dialog', bm),
     reload: (dest: Bm.Dest, bm: Bm.Reload) => BrowserMsg.sendCatch(dest, 'reload', bm),
     redirect: (dest: Bm.Dest, bm: Bm.Redirect) => BrowserMsg.sendCatch(dest, 'redirect', bm),
-    openGoogleAuthDialog: (dest: Bm.Dest, bm: Bm.OpenGoogleAuthDialog) =>
-      BrowserMsg.sendCatch(dest, 'open_google_auth_dialog', bm),
+    openGoogleAuthDialog: (dest: Bm.Dest, bm: Bm.OpenGoogleAuthDialog) => BrowserMsg.sendCatch(dest, 'open_google_auth_dialog', bm),
     addToContacts: (dest: Bm.Dest) => BrowserMsg.sendCatch(dest, 'addToContacts', {}),
     reRenderRecipient: (dest: Bm.Dest, bm: Bm.ReRenderRecipient) => BrowserMsg.sendCatch(dest, 'reRenderRecipient', bm),
-    showAttachmentPreview: (dest: Bm.Dest, bm: Bm.ShowAttachmentPreview) =>
-      BrowserMsg.sendCatch(dest, 'show_attachment_preview', bm),
+    showAttachmentPreview: (dest: Bm.Dest, bm: Bm.ShowAttachmentPreview) => BrowserMsg.sendCatch(dest, 'show_attachment_preview', bm),
   };
   /* eslint-disable @typescript-eslint/naming-convention */
   private static HANDLERS_REGISTERED_BACKGROUND: Handlers = {};
@@ -413,10 +372,7 @@ export class BrowserMsg {
                 .catch(e => BrowserMsg.sendRawResponse(Promise.reject(e), rawRespond));
               return true; // will respond
             } else if (msg.name !== '_tab_' && msg.to !== 'broadcast') {
-              BrowserMsg.sendRawResponse(
-                Promise.reject(new Error(`BrowserMsg.listen error: handler "${msg.name}" not set`)),
-                rawRespond
-              );
+              BrowserMsg.sendRawResponse(Promise.reject(new Error(`BrowserMsg.listen error: handler "${msg.name}" not set`)), rawRespond);
               return true; // will respond
             }
           } else {
@@ -450,18 +406,13 @@ export class BrowserMsg {
           // avoiding unnecessary errors when target tab gets closed
           rawRespond(response);
         } catch (cannotRespondErr) {
-          if (
-            cannotRespondErr instanceof Error &&
-            cannotRespondErr.message === 'Attempting to use a disconnected port object'
-          ) {
+          if (cannotRespondErr instanceof Error && cannotRespondErr.message === 'Attempting to use a disconnected port object') {
             // the page we're responding to is closed - ec when closing secure compose
           } else {
             if (cannotRespondErr instanceof Error) {
               cannotRespondErr.stack += `\n\nOriginal msg sender stack: ${msg.stack}`;
             }
-            Catch.reportErr(
-              Catch.rewrapErr(cannotRespondErr, `BrowserMsg.bgListen.respondIfPageStillOpen:${msg.name}`)
-            );
+            Catch.reportErr(Catch.rewrapErr(cannotRespondErr, `BrowserMsg.bgListen.respondIfPageStillOpen:${msg.name}`));
           }
         }
       };
@@ -493,10 +444,7 @@ export class BrowserMsg {
           return true; // will respond
         } else if (!msg.to) {
           // message meant for bg that we don't have a handler for
-          BrowserMsg.sendRawResponse(
-            Promise.reject(new Error(`BrowserMsg.bgListen:${msg.name}:no such handler`)),
-            respondIfPageStillOpen
-          );
+          BrowserMsg.sendRawResponse(Promise.reject(new Error(`BrowserMsg.bgListen:${msg.name}:no such handler`)), respondIfPageStillOpen);
           return true; // will respond
         } else {
           // broadcast message that backend does not have a handler for - ignored
@@ -537,12 +485,7 @@ export class BrowserMsg {
     BrowserMsg.sendAwait(dest, name, bm).catch(Catch.reportErr);
   };
 
-  private static sendAwait = async (
-    destString: string | undefined,
-    name: string,
-    bm?: Dict<unknown>,
-    awaitRes = false
-  ): Promise<Bm.Response> => {
+  private static sendAwait = async (destString: string | undefined, name: string, bm?: Dict<unknown>, awaitRes = false): Promise<Bm.Response> => {
     bm = bm || {};
     // console.debug(`sendAwait ${name} to ${destString || 'bg'}`, bm);
     const isBackgroundPage = Env.isBackgroundPage();
@@ -566,9 +509,7 @@ export class BrowserMsg {
           resolve(undefined);
         } else if (!r || typeof r !== 'object') {
           // r can be null if we sent a message to a non-existent window id
-          const lastError = chrome.runtime.lastError
-            ? chrome.runtime.lastError.message || '(empty lastError)'
-            : '(no lastError)';
+          const lastError = chrome.runtime.lastError ? chrome.runtime.lastError.message || '(empty lastError)' : '(no lastError)';
           let e: Error;
           if (typeof destString === 'undefined' && typeof r === 'undefined') {
             if (lastError === 'The object could not be cloned.') {
@@ -648,9 +589,7 @@ export class BrowserMsg {
     if (requestOrResponse && typeof requestOrResponse === 'object' && requestOrResponse !== null && objUrls) {
       // lgtm [js/comparison-between-incompatible-types]
       for (const consumableObjUrlName of Object.keys(objUrls)) {
-        (requestOrResponse as Record<string, Buf>)[consumableObjUrlName] = await Browser.objUrlConsume(
-          objUrls[consumableObjUrlName]
-        );
+        (requestOrResponse as Record<string, Buf>)[consumableObjUrlName] = await Browser.objUrlConsume(objUrls[consumableObjUrlName]);
       }
     }
     return requestOrResponse;
@@ -674,26 +613,14 @@ export class BrowserMsg {
     const stackInfo = `\n\n[callerStack]\n${msg.stack}\n[/callerStack]\n\n[responderStack]\n${errAsJson.stack}\n[/responderStack]\n`;
     if (errAsJson.errorConstructor === 'AjaxErr') {
       const { status, url, responseText, statusText, resMsg, resDetails } = errAsJson.ajaxErrorDetails;
-      return new AjaxErr(
-        `BrowserMsg(${msg.name}) ${errAsJson.message}`,
-        stackInfo,
-        status,
-        url,
-        responseText,
-        statusText,
-        resMsg,
-        resDetails
-      );
+      return new AjaxErr(`BrowserMsg(${msg.name}) ${errAsJson.message}`, stackInfo, status, url, responseText, statusText, resMsg, resDetails);
     }
     const e = new Error(`BrowserMsg(${msg.name}) ${errAsJson.message}`);
     e.stack += stackInfo;
     return e;
   };
 
-  private static sendRawResponse = (
-    handlerPromise: Promise<Bm.Res.Any>,
-    rawRespond: (rawResponse: Bm.RawResponse) => void
-  ) => {
+  private static sendRawResponse = (handlerPromise: Promise<Bm.Res.Any>, rawRespond: (rawResponse: Bm.RawResponse) => void) => {
     try {
       handlerPromise
         .then(result => {

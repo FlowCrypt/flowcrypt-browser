@@ -20,15 +20,7 @@ import { SendAsAlias } from './platform/store/acct-store.js';
 
 type Placement = 'settings' | 'settings_compose' | 'default' | 'dialog' | 'gmail' | 'embedded' | 'compose';
 export type WebmailVariantString = undefined | 'html' | 'standard' | 'new';
-export type PassphraseDialogType =
-  | 'embedded'
-  | 'message'
-  | 'attachment'
-  | 'draft'
-  | 'sign'
-  | `quote`
-  | `backup`
-  | 'update_key';
+export type PassphraseDialogType = 'embedded' | 'message' | 'attachment' | 'draft' | 'sign' | `quote` | `backup` | 'update_key';
 export type FactoryReplyParams = {
   replyMsgId?: string;
   draftId?: string;
@@ -51,16 +43,9 @@ export class XssSafeFactory {
   private setParams: UrlParams;
   private reloadableCls: string;
   private destroyableCls: string;
-  private hideGmailNewMsgInThreadNotification =
-    '<style>.ata-asE { display: none !important; visibility: hidden !important; }</style>';
+  private hideGmailNewMsgInThreadNotification = '<style>.ata-asE { display: none !important; visibility: hidden !important; }</style>';
 
-  public constructor(
-    acctEmail: string,
-    parentTabId: string,
-    reloadableCls = '',
-    destroyableCls = '',
-    setParams: UrlParams = {}
-  ) {
+  public constructor(acctEmail: string, parentTabId: string, reloadableCls = '', destroyableCls = '', setParams: UrlParams = {}) {
     this.reloadableCls = Xss.escape(reloadableCls);
     this.destroyableCls = Xss.escape(destroyableCls);
     this.setParams = setParams;
@@ -75,13 +60,7 @@ export class XssSafeFactory {
    *
    * When edited, REQUEST A SECOND SET OF EYES TO REVIEW CHANGES
    */
-  public static renderableMsgBlock = (
-    factory: XssSafeFactory,
-    block: MsgBlock,
-    msgId: string,
-    senderEmail: string,
-    isOutgoing?: boolean
-  ) => {
+  public static renderableMsgBlock = (factory: XssSafeFactory, block: MsgBlock, msgId: string, senderEmail: string, isOutgoing?: boolean) => {
     if (block.type === 'plainText') {
       return Xss.escape(block.content.toString()).replace(/\n/g, '<br>') + '<br><br>';
     } else if (block.type === 'plainHtml') {
@@ -123,13 +102,7 @@ export class XssSafeFactory {
    *
    * When edited, REQUEST A SECOND SET OF EYES TO REVIEW CHANGES
    */
-  public static replaceRenderableMsgBlocks = (
-    factory: XssSafeFactory,
-    origText: string,
-    msgId: string,
-    senderEmail: string,
-    isOutgoing?: boolean
-  ) => {
+  public static replaceRenderableMsgBlocks = (factory: XssSafeFactory, origText: string, msgId: string, senderEmail: string, isOutgoing?: boolean) => {
     const { blocks } = MsgBlockParser.detectBlocks(origText);
     if (blocks.length === 1 && blocks[0].type === 'plainText') {
       return undefined; // only has single block which is plain text - meaning
@@ -187,13 +160,7 @@ export class XssSafeFactory {
     );
   };
 
-  public srcPgpBlockIframe = (
-    message: string,
-    msgId?: string,
-    isOutgoing?: boolean,
-    senderEmail?: string,
-    signature?: string | boolean
-  ) => {
+  public srcPgpBlockIframe = (message: string, msgId?: string, isOutgoing?: boolean, senderEmail?: string, signature?: string | boolean) => {
     return this.frameSrc(this.extUrl('chrome/elements/pgp_block.htm'), {
       frameId: this.newId(),
       message,
@@ -238,11 +205,7 @@ export class XssSafeFactory {
   };
 
   public showPassphraseDialog = async (longids: string[], type: PassphraseDialogType, initiatorFrameId?: string) => {
-    const result = await Ui.modal.iframe(
-      this.srcPassphraseDialog(longids, type, initiatorFrameId),
-      500,
-      'dialog-passphrase'
-    );
+    const result = await Ui.modal.iframe(this.srcPassphraseDialog(longids, type, initiatorFrameId), 500, 'dialog-passphrase');
     if (result.dismiss) {
       // dialog is dismissed by user interaction, not by closeDialog()
       BrowserMsg.send.passphraseEntry('broadcast', { entered: false });
@@ -270,18 +233,8 @@ export class XssSafeFactory {
     });
   };
 
-  public embeddedMsg = (
-    type: MsgBlockType,
-    armored: string,
-    msgId?: string,
-    isOutgoing?: boolean,
-    sender?: string,
-    signature?: string | boolean
-  ) => {
-    return (
-      this.iframe(this.srcPgpBlockIframe(armored, msgId, isOutgoing, sender, signature), ['pgp_block', type]) +
-      this.hideGmailNewMsgInThreadNotification
-    );
+  public embeddedMsg = (type: MsgBlockType, armored: string, msgId?: string, isOutgoing?: boolean, sender?: string, signature?: string | boolean) => {
+    return this.iframe(this.srcPgpBlockIframe(armored, msgId, isOutgoing, sender, signature), ['pgp_block', type]) + this.hideGmailNewMsgInThreadNotification;
   };
 
   public embeddedPubkey = (armoredPubkey: string, isOutgoing?: boolean) => {

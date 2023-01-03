@@ -35,9 +35,7 @@ export class ComposeSendBtnPopoverModule extends ViewModule<ComposeView> {
       }
       const item = popoverItems[popoverOpt];
       const elem = $(`
-        <div class="action-toggle-${Xss.escape(
-          popoverOpt
-        )}-sending-option sending-option" data-test="action-toggle-${Xss.escape(popoverOpt)}">
+        <div class="action-toggle-${Xss.escape(popoverOpt)}-sending-option sending-option" data-test="action-toggle-${Xss.escape(popoverOpt)}">
             <span class="option-name">${Xss.escape(item.text)}</span>
         </div>`);
       this.renderCrossOrTick(elem, popoverOpt, this.choices[popoverOpt]);
@@ -88,9 +86,7 @@ export class ComposeSendBtnPopoverModule extends ViewModule<ComposeView> {
       this.view.S.now('attached_files').addClass('not-encrypted');
     }
     /* eslint-disable @typescript-eslint/no-unused-expressions */
-    this.choices.richtext
-      ? this.view.inputModule.addRichTextFormatting()
-      : this.view.inputModule.removeRichTextFormatting();
+    this.choices.richtext ? this.view.inputModule.addRichTextFormatting() : this.view.inputModule.removeRichTextFormatting();
     /* eslint-enable @typescript-eslint/no-unused-expressions */
     this.view.sendBtnModule.resetSendBtn();
     this.view.pwdOrPubkeyContainerModule.showHideContainerAndColorSendBtn().catch(Catch.reportErr);
@@ -171,17 +167,11 @@ export class ComposeSendBtnPopoverModule extends ViewModule<ComposeView> {
   private renderCrossOrTick = (elem: JQuery<HTMLElement>, popoverOpt: PopoverOpt, renderTick: boolean) => {
     if (renderTick) {
       elem.find('img.icon-tick,img.icon-cross').remove();
-      elem.append(
-        `<img class="icon-tick" src="/img/svgs/tick.svg" data-test="icon-toggle-${Xss.escape(popoverOpt)}-tick" />`
-      ); // xss-escaped
+      elem.append(`<img class="icon-tick" src="/img/svgs/tick.svg" data-test="icon-toggle-${Xss.escape(popoverOpt)}-tick" />`); // xss-escaped
       elem.css('opacity', '1');
     } else {
       elem.find('img.icon-tick,img.icon-cross').remove();
-      elem.append(
-        `<img class="icon-cross" src="/img/red-cross-mark.png" data-test="icon-toggle-${Xss.escape(
-          popoverOpt
-        )}-cross" />`
-      ); // xss-escaped
+      elem.append(`<img class="icon-cross" src="/img/red-cross-mark.png" data-test="icon-toggle-${Xss.escape(popoverOpt)}-cross" />`); // xss-escaped
       elem.css('opacity', '0.5');
     }
   };

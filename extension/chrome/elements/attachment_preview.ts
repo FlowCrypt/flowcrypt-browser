@@ -10,13 +10,7 @@ import { Browser } from '../../js/common/browser/browser.js';
 import { BrowserMsg } from '../../js/common/browser/browser-msg.js';
 import { KeyStore } from '../../js/common/platform/store/key-store.js';
 import { PDFDocumentProxy } from '../../types/pdf.js';
-import {
-  MsgUtil,
-  DecryptError,
-  DecryptErrTypes,
-  DecryptSuccess,
-  DecryptionError,
-} from '../../js/common/core/crypto/pgp/msg-util.js';
+import { MsgUtil, DecryptError, DecryptErrTypes, DecryptSuccess, DecryptionError } from '../../js/common/core/crypto/pgp/msg-util.js';
 import { View } from '../../js/common/view.js';
 import { Xss } from '../../js/common/platform/xss.js';
 import { Ui } from '../../js/common/browser/ui.js';
@@ -39,10 +33,7 @@ View.run(
 
     public render = async () => {
       try {
-        Xss.sanitizeRender(
-          this.attachmentPreviewContainer,
-          `${Ui.spinner('green', 'large_spinner')}<span class="download_progress"></span>`
-        );
+        Xss.sanitizeRender(this.attachmentPreviewContainer, `${Ui.spinner('green', 'large_spinner')}<span class="download_progress"></span>`);
         this.attachment = new Attachment({
           name: this.origNameBasedOnFilename,
           type: this.type,
@@ -64,14 +55,10 @@ View.run(
           if (attachmentType) {
             if (attachmentType === 'img') {
               // image
-              this.attachmentPreviewContainer.html(
-                `<img src="${url}" class="attachment-preview-img" alt="${Xss.escape(this.origNameBasedOnFilename)}">`
-              ); // xss-escaped
+              this.attachmentPreviewContainer.html(`<img src="${url}" class="attachment-preview-img" alt="${Xss.escape(this.origNameBasedOnFilename)}">`); // xss-escaped
             } else if (attachmentType === 'txt') {
               // text
-              this.attachmentPreviewContainer.html(
-                `<div class="attachment-preview-txt">${Xss.escape(result.toString()).replace(/\n/g, '<br>')}</div>`
-              ); // xss-escaped
+              this.attachmentPreviewContainer.html(`<div class="attachment-preview-txt">${Xss.escape(result.toString()).replace(/\n/g, '<br>')}</div>`); // xss-escaped
             } else if (attachmentType === 'pdf') {
               // PDF
               pdfjsLib.getDocument({ data: result }).promise.then(async (pdf: PDFDocumentProxy) => {

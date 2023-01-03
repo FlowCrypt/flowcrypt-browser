@@ -72,14 +72,10 @@ export class SetupPageRecipe extends PageRecipe {
       pageEvaluator();
     }
     if (checks.isSavePassphraseHidden !== undefined) {
-      expect(await settingsPage.hasClass('@input-step2bmanualcreate-save-passphrase-label', 'hidden')).to.equal(
-        checks.isSavePassphraseHidden
-      );
+      expect(await settingsPage.hasClass('@input-step2bmanualcreate-save-passphrase-label', 'hidden')).to.equal(checks.isSavePassphraseHidden);
     }
     if (checks.isSavePassphraseChecked !== undefined) {
-      expect(await settingsPage.isChecked('@input-step2bmanualcreate-save-passphrase')).to.equal(
-        checks.isSavePassphraseChecked
-      );
+      expect(await settingsPage.isChecked('@input-step2bmanualcreate-save-passphrase')).to.equal(checks.isSavePassphraseChecked);
     }
     await settingsPage.waitAndClick('@input-step2bmanualcreate-create-and-save');
     await settingsPage.waitAndRespondToModal('confirm-checkbox', 'confirm', 'Please write down your pass phrase');
@@ -152,11 +148,7 @@ export class SetupPageRecipe extends PageRecipe {
       await fileChooser.accept([key.filePath]);
       await Util.sleep(1);
       if (isInvalidKey) {
-        await settingsPage.waitAndRespondToModal(
-          'error',
-          'confirm',
-          'Not able to read this key. Make sure it is a valid PGP private key.'
-        );
+        await settingsPage.waitAndRespondToModal('error', 'confirm', 'Not able to read this key. Make sure it is a valid PGP private key.');
         return;
       }
     } else {
@@ -168,16 +160,12 @@ export class SetupPageRecipe extends PageRecipe {
       await settingsPage.notPresent('@action-setup-go-back');
     }
     if (checks.isSavePassphraseHidden !== undefined) {
-      expect(await settingsPage.hasClass('@input-step2bmanualenter-save-passphrase-label', 'hidden')).to.equal(
-        checks.isSavePassphraseHidden
-      );
+      expect(await settingsPage.hasClass('@input-step2bmanualenter-save-passphrase-label', 'hidden')).to.equal(checks.isSavePassphraseHidden);
     }
     if (savePassphrase) {
       await settingsPage.waitAndClick('@input-step2bmanualenter-save-passphrase');
     } else if (checks.isSavePassphraseChecked !== undefined) {
-      expect(await settingsPage.isChecked('@input-step2bmanualenter-save-passphrase')).to.equal(
-        checks.isSavePassphraseChecked
-      );
+      expect(await settingsPage.isChecked('@input-step2bmanualenter-save-passphrase')).to.equal(checks.isSavePassphraseChecked);
     }
     if (!naked) {
       await Util.sleep(1);
@@ -197,9 +185,7 @@ export class SetupPageRecipe extends PageRecipe {
         const ppValidationExpect = 'GREAT (time to crack: centuries)';
         const ppValidationResult = await settingsPage.read('@container-password-feedback', true);
         if (!ppValidationResult.includes(ppValidationExpect)) {
-          throw new Error(
-            `Incorrect Passphrase validation result, expected '${ppValidationExpect}' but got ${ppValidationResult}`
-          );
+          throw new Error(`Incorrect Passphrase validation result, expected '${ppValidationExpect}' but got ${ppValidationResult}`);
         }
       } else {
         await settingsPage.waitAndType('@input-step2bmanualenter-passphrase', key.passphrase);
@@ -232,12 +218,9 @@ export class SetupPageRecipe extends PageRecipe {
         await settingsPage.waitAndClick('@action-fix-and-import-key');
       }
       if (simulateRetryOffline) {
-        await settingsPage.waitAll(
-          ['@action-overlay-retry', '@container-overlay-prompt-text', '@action-show-overlay-details'],
-          {
-            timeout: fixKey ? 45 : 20,
-          }
-        );
+        await settingsPage.waitAll(['@action-overlay-retry', '@container-overlay-prompt-text', '@action-show-overlay-details'], {
+          timeout: fixKey ? 45 : 20,
+        });
         await Util.sleep(0.5);
         expect(await settingsPage.read('@container-overlay-prompt-text')).to.contain('Network connection issue');
         await settingsPage.click('@action-show-overlay-details');
@@ -318,19 +301,12 @@ export class SetupPageRecipe extends PageRecipe {
       await Util.sleep(3);
       await settingsPage.waitAndType('@input-step2ekm-passphrase-1', enterPp.passphrase);
       await settingsPage.waitAndType('@input-step2ekm-passphrase-2', enterPp.passphrase);
-      await settingsPage.waitForContent(
-        '@ekm-setup-user-notify',
-        "Your keys are managed with your organization's Email Key Manager."
-      );
+      await settingsPage.waitForContent('@ekm-setup-user-notify', "Your keys are managed with your organization's Email Key Manager.");
       if (enterPp.checks?.isSavePassphraseHidden !== undefined) {
-        expect(await settingsPage.hasClass('@input-step2ekm-save-passphrase-label', 'hidden')).to.equal(
-          enterPp.checks.isSavePassphraseHidden
-        );
+        expect(await settingsPage.hasClass('@input-step2ekm-save-passphrase-label', 'hidden')).to.equal(enterPp.checks.isSavePassphraseHidden);
       }
       if (enterPp.checks?.isSavePassphraseChecked !== undefined) {
-        expect(await settingsPage.isChecked('@input-step2ekm-save-passphrase')).to.equal(
-          enterPp.checks.isSavePassphraseChecked
-        );
+        expect(await settingsPage.isChecked('@input-step2ekm-save-passphrase')).to.equal(enterPp.checks.isSavePassphraseChecked);
       }
       await settingsPage.waitAndClick('@input-step2ekm-continue');
     }
@@ -364,11 +340,7 @@ export class SetupPageRecipe extends PageRecipe {
       await settingsPage.waitAndRespondToModal('confirm', 'confirm', 'You are importing a key that is expired.');
       await Util.sleep(1);
     }
-    await settingsPage.waitAndRespondToModal(
-      'confirm',
-      'confirm',
-      'Using S/MIME as the only key on account is experimental.'
-    );
+    await settingsPage.waitAndRespondToModal('confirm', 'confirm', 'Using S/MIME as the only key on account is experimental.');
     await settingsPage.waitAndClick('@action-step4done-account-settings', { delay: 1 });
     await SettingsPageRecipe.ready(settingsPage);
   };
@@ -376,11 +348,7 @@ export class SetupPageRecipe extends PageRecipe {
   private static createBegin = async (
     settingsPage: ControllablePage,
     keyTitle: string,
-    {
-      key,
-      usedPgpBefore = false,
-      skipForPassphrase = false,
-    }: { key?: { passphrase: string }; usedPgpBefore?: boolean; skipForPassphrase?: boolean } = {}
+    { key, usedPgpBefore = false, skipForPassphrase = false }: { key?: { passphrase: string }; usedPgpBefore?: boolean; skipForPassphrase?: boolean } = {}
   ) => {
     const k = key || Config.key(keyTitle);
     if (usedPgpBefore) {

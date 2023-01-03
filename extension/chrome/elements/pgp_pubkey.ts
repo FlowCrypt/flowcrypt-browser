@@ -29,20 +29,10 @@ View.run(
 
     public constructor() {
       super();
-      const uncheckedUrlParams = Url.parse([
-        'acctEmail',
-        'armoredPubkey',
-        'parentTabId',
-        'minimized',
-        'compact',
-        'frameId',
-      ]);
+      const uncheckedUrlParams = Url.parse(['acctEmail', 'armoredPubkey', 'parentTabId', 'minimized', 'compact', 'frameId']);
       this.acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
       this.parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
-      this.armoredPubkey = PgpArmor.normalize(
-        Assert.urlParamRequire.string(uncheckedUrlParams, 'armoredPubkey'),
-        'publicKey'
-      );
+      this.armoredPubkey = PgpArmor.normalize(Assert.urlParamRequire.string(uncheckedUrlParams, 'armoredPubkey'), 'publicKey');
       this.frameId = Assert.urlParamRequire.string(uncheckedUrlParams, 'frameId');
       this.compact = uncheckedUrlParams.compact === true;
       this.minimized = uncheckedUrlParams.minimized === true;
@@ -210,10 +200,7 @@ View.run(
           await ContactStore.update(undefined, email, { pubkey: KeyUtil.armor(this.parsedPublicKeys![0]) });
           /* eslint-enable @typescript-eslint/no-non-null-assertion */
           BrowserMsg.send.addToContacts(this.parentTabId);
-          Xss.sanitizeReplace(
-            addContactBtn,
-            `<span class="good">${Xss.escape(String($('.input_email').val()))} added</span>`
-          );
+          Xss.sanitizeReplace(addContactBtn, `<span class="good">${Xss.escape(String($('.input_email').val()))} added</span>`);
           $('.input_email').remove();
           BrowserMsg.send.reRenderRecipient('broadcast', { email });
         } else {

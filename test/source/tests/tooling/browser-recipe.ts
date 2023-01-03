@@ -15,16 +15,9 @@ import { InMemoryStoreKeys } from '../../core/const';
 import { GmailPageRecipe } from '../page-recipe/gmail-page-recipe';
 
 export class BrowserRecipe {
-  public static oldAndNewComposeButtonSelectors = [
-    'div.z0[class*="_destroyable"]',
-    '.new_secure_compose_window_button',
-  ];
+  public static oldAndNewComposeButtonSelectors = ['div.z0[class*="_destroyable"]', '.new_secure_compose_window_button'];
 
-  public static openSettingsLoginButCloseOauthWindowBeforeGrantingPermission = async (
-    t: AvaContext,
-    browser: BrowserHandle,
-    acctEmail: string
-  ) => {
+  public static openSettingsLoginButCloseOauthWindowBeforeGrantingPermission = async (t: AvaContext, browser: BrowserHandle, acctEmail: string) => {
     const settingsPage = await browser.newPage(t, TestUrls.extensionSettings());
     const oauthPopup = await browser.newPageTriggeredBy(t, () => settingsPage.waitAndClick('@action-connect-to-gmail'));
     await OauthPageRecipe.google(t, oauthPopup, acctEmail, 'close');
@@ -39,12 +32,7 @@ export class BrowserRecipe {
     return settingsPage;
   };
 
-  public static openGmailPage = async (
-    t: AvaContext,
-    browser: BrowserHandle,
-    googleLoginIndex = 0,
-    expectComposeButton = true
-  ) => {
+  public static openGmailPage = async (t: AvaContext, browser: BrowserHandle, googleLoginIndex = 0, expectComposeButton = true) => {
     const gmailPage = await browser.newPage(t, TestUrls.gmail(googleLoginIndex));
     if (expectComposeButton) {
       await gmailPage.waitAny(BrowserRecipe.oldAndNewComposeButtonSelectors); // compose button container visible
@@ -62,39 +50,23 @@ export class BrowserRecipe {
     return googleChatPage;
   };
 
-  public static openGmailPageAndVerifyComposeBtnPresent = async (
-    t: AvaContext,
-    browser: BrowserHandle,
-    googleLoginIndex = 0
-  ) => {
+  public static openGmailPageAndVerifyComposeBtnPresent = async (t: AvaContext, browser: BrowserHandle, googleLoginIndex = 0) => {
     const gmailPage = await BrowserRecipe.openGmailPage(t, browser, googleLoginIndex);
     await gmailPage.waitAll('@action-secure-compose');
     await GmailPageRecipe.closeInitialSetupNotif(gmailPage);
     return gmailPage;
   };
 
-  public static openGmailPageAndVerifyComposeBtnNotPresent = async (
-    t: AvaContext,
-    browser: BrowserHandle,
-    googleLoginIndex = 0
-  ) => {
+  public static openGmailPageAndVerifyComposeBtnNotPresent = async (t: AvaContext, browser: BrowserHandle, googleLoginIndex = 0) => {
     const gmailPage = await BrowserRecipe.openGmailPage(t, browser, googleLoginIndex);
     await Util.sleep(3);
     await gmailPage.notPresent('@action-secure-compose');
     return gmailPage;
   };
 
-  public static setUpCommonAcct = async (
-    t: AvaContext,
-    browser: BrowserHandle,
-    acct: 'compatibility' | 'compose' | 'ci.tests.gmail'
-  ) => {
+  public static setUpCommonAcct = async (t: AvaContext, browser: BrowserHandle, acct: 'compatibility' | 'compose' | 'ci.tests.gmail') => {
     if (acct === 'compatibility') {
-      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(
-        t,
-        browser,
-        'flowcrypt.compatibility@gmail.com'
-      );
+      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.compatibility@gmail.com');
       await SetupPageRecipe.recover(settingsPage, 'flowcrypt.compatibility.1pp1', {
         hasRecoverMore: true,
         clickRecoverMore: true,
@@ -103,8 +75,7 @@ export class BrowserRecipe {
       await settingsPage.close();
     } else if (acct === 'ci.tests.gmail') {
       // live gmail uses ".dev" (real account on real domain). Mock uses "".test".
-      const acctEmail =
-        testVariant === 'CONSUMER-LIVE-GMAIL' ? 'ci.tests.gmail@flowcrypt.dev' : 'ci.tests.gmail@flowcrypt.test';
+      const acctEmail = testVariant === 'CONSUMER-LIVE-GMAIL' ? 'ci.tests.gmail@flowcrypt.dev' : 'ci.tests.gmail@flowcrypt.test';
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
       if (testVariant === 'CONSUMER-LIVE-GMAIL') {
         // using import manually so that we don't rely on email server state, like relying on backup emails being present
@@ -135,11 +106,7 @@ export class BrowserRecipe {
     return (result as { result: string }).result;
   };
 
-  public static getFromInMemoryStore = async (
-    controllable: Controllable,
-    acctEmail: string,
-    key: string
-  ): Promise<string> => {
+  public static getFromInMemoryStore = async (controllable: Controllable, acctEmail: string, key: string): Promise<string> => {
     const result = await PageRecipe.sendMessage(controllable, {
       name: 'inMemoryStoreGet',
       data: { bm: { acctEmail, key }, objUrls: {} },
@@ -149,11 +116,8 @@ export class BrowserRecipe {
     return (result as { result: string }).result;
   };
 
-  public static getPassphraseFromInMemoryStore = (
-    controllable: Controllable,
-    acctEmail: string,
-    longid: string
-  ): Promise<string> => BrowserRecipe.getFromInMemoryStore(controllable, acctEmail, `passphrase_${longid}`);
+  public static getPassphraseFromInMemoryStore = (controllable: Controllable, acctEmail: string, longid: string): Promise<string> =>
+    BrowserRecipe.getFromInMemoryStore(controllable, acctEmail, `passphrase_${longid}`);
 
   public static deleteAllDraftsInGmailAccount = async (settingsPage: ControllablePage): Promise<void> => {
     const accessToken = await BrowserRecipe.getGoogleAccessToken(settingsPage, 'ci.tests.gmail@flowcrypt.dev');
@@ -223,10 +187,7 @@ export class BrowserRecipe {
     const content = await pgpBlockPage.read('@pgp-block-content');
     for (const expectedContent of m.content) {
       if (content.indexOf(expectedContent) === -1) {
-        throw new Error(
-          `pgp_block_verify_decrypted_content:missing expected content: ${expectedContent}` +
-            `\nactual content: ${content}`
-        );
+        throw new Error(`pgp_block_verify_decrypted_content:missing expected content: ${expectedContent}` + `\nactual content: ${content}`);
       }
     }
     if (m.unexpectedContent) {
@@ -240,9 +201,7 @@ export class BrowserRecipe {
       const sigBadgeContent = await pgpBlockPage.read('@pgp-signature');
       if (sigBadgeContent !== m.signature) {
         t.log(`found sig content:${sigBadgeContent}`);
-        throw new Error(
-          `pgp_block_verify_decrypted_content:missing expected signature content:${m.signature}\nactual sig content:${sigBadgeContent}`
-        );
+        throw new Error(`pgp_block_verify_decrypted_content:missing expected signature content:${m.signature}\nactual sig content:${sigBadgeContent}`);
       }
     }
     if (m.encryption) {

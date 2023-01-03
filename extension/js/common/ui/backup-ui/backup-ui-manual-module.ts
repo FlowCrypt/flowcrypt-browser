@@ -69,14 +69,9 @@ export class BackupUiManualActionModule extends BackupUiModule<BackupUi> {
       await Ui.modal.error('No keys are selected to back up! Please select a key to continue.');
       return;
     }
-    const keyInfosToBackup = KeyUtil.filterKeysByIdentity(
-      await KeyStore.get(this.ui.acctEmail),
-      this.ui.identityOfKeysToManuallyBackup
-    );
+    const keyInfosToBackup = KeyUtil.filterKeysByIdentity(await KeyStore.get(this.ui.acctEmail), this.ui.identityOfKeysToManuallyBackup);
     if (!keyInfosToBackup.length) {
-      await Ui.modal.error(
-        'Sorry, could not extract these keys from storage. Please restart your browser and try again.'
-      );
+      await Ui.modal.error('Sorry, could not extract these keys from storage. Please restart your browser and try again.');
       return;
     }
     if (selected === 'inbox' || selected === 'file') {
@@ -116,10 +111,7 @@ export class BackupUiManualActionModule extends BackupUiModule<BackupUi> {
     });
   };
 
-  private encryptForBackup = async (
-    keyInfos: KeyInfoWithIdentity[],
-    checks: { checkStrength: boolean }
-  ): Promise<KeyInfoWithIdentity[] | undefined> => {
+  private encryptForBackup = async (keyInfos: KeyInfoWithIdentity[], checks: { checkStrength: boolean }): Promise<KeyInfoWithIdentity[] | undefined> => {
     const kisWithPp = await Promise.all(
       keyInfos.map(async ki => {
         const passphrase = await PassphraseStore.get(this.ui.acctEmail, ki);
@@ -134,19 +126,11 @@ export class BackupUiManualActionModule extends BackupUiModule<BackupUi> {
       await Ui.modal.error(differentPassphrasesError);
       return undefined;
     }
-    if (
-      checks.checkStrength &&
-      distinctPassphrases[0] &&
-      !Settings.evalPasswordStrength(distinctPassphrases[0]).word.pass
-    ) {
+    if (checks.checkStrength && distinctPassphrases[0] && !Settings.evalPasswordStrength(distinctPassphrases[0]).word.pass) {
       await Ui.modal.warning("Please change your pass phrase first.\n\nIt's too weak for this backup method.");
       // Actually, until #956 is resolved, we can only modify the pass phrase of the first key
       if (this.ui.parentTabId && kisWithPp[0].passphrase === distinctPassphrases[0]) {
-        Settings.redirectSubPage(
-          this.ui.acctEmail,
-          this.ui.parentTabId,
-          '/chrome/settings/modules/change_passphrase.htm'
-        );
+        Settings.redirectSubPage(this.ui.acctEmail, this.ui.parentTabId, '/chrome/settings/modules/change_passphrase.htm');
       }
       return undefined;
     }
@@ -168,20 +152,11 @@ export class BackupUiManualActionModule extends BackupUiModule<BackupUi> {
       const longids = kisMissingPp.map(ki => ki.longid);
       if (this.ui.parentTabId) {
         BrowserMsg.send.passphraseDialog(this.ui.parentTabId, { type: 'backup', longids });
-        if (
-          !(await PassphraseStore.waitUntilPassphraseChanged(
-            this.ui.acctEmail,
-            longids,
-            1000,
-            this.ppChangedPromiseCancellation
-          ))
-        ) {
+        if (!(await PassphraseStore.waitUntilPassphraseChanged(this.ui.acctEmail, longids, 1000, this.ppChangedPromiseCancellation))) {
           return undefined;
         }
       } else {
-        await Ui.modal.error(
-          `Sorry, can't back up private key because its pass phrase can't be extracted. Please restart your browser and try again.`
-        );
+        await Ui.modal.error(`Sorry, can't back up private key because its pass phrase can't be extracted. Please restart your browser and try again.`);
         return undefined;
       }
       // re-start the function recursively with newly discovered pass phrases

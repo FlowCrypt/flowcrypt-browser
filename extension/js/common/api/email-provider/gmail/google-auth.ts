@@ -123,10 +123,7 @@ export class GoogleAuth {
     );
   };
 
-  public static apiGoogleCallRetryAuthErrorOneTime = async (
-    acctEmail: string,
-    request: JQuery.AjaxSettings
-  ): Promise<unknown> => {
+  public static apiGoogleCallRetryAuthErrorOneTime = async (acctEmail: string, request: JQuery.AjaxSettings): Promise<unknown> => {
     try {
       return await Api.ajax(request, Catch.stackTrace());
     } catch (firstAttemptErr) {
@@ -140,15 +137,7 @@ export class GoogleAuth {
     }
   };
 
-  public static newAuthPopup = async ({
-    acctEmail,
-    scopes,
-    save,
-  }: {
-    acctEmail?: string;
-    scopes?: string[];
-    save?: boolean;
-  }): Promise<AuthRes> => {
+  public static newAuthPopup = async ({ acctEmail, scopes, save }: { acctEmail?: string; scopes?: string[]; save?: boolean }): Promise<AuthRes> => {
     if (acctEmail) {
       acctEmail = acctEmail.toLowerCase();
     }
@@ -205,9 +194,7 @@ export class GoogleAuth {
         }
       } catch (e) {
         if (GoogleAuth.isFesUnreachableErr(e, authRes.acctEmail)) {
-          const error = `Cannot reach your company's FlowCrypt Enterprise Server (FES). Contact your Help Desk when unsure. (${String(
-            e
-          )})`;
+          const error = `Cannot reach your company's FlowCrypt Enterprise Server (FES). Contact your Help Desk when unsure. (${String(e)})`;
           return { result: 'Error', error, acctEmail: authRes.acctEmail, id_token: undefined }; // eslint-disable-line @typescript-eslint/naming-convention
         }
         return {
@@ -273,12 +260,7 @@ export class GoogleAuth {
       const allowedScopes = Assert.urlParamRequire.string(uncheckedUrlParams, 'scope');
       const code = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'code');
       const receivedState = Assert.urlParamRequire.string(uncheckedUrlParams, 'state');
-      const scopesToCheck = [
-        this.OAUTH.scopes.compose,
-        this.OAUTH.scopes.modify,
-        this.OAUTH.scopes.readContacts,
-        this.OAUTH.scopes.readOtherContacts,
-      ];
+      const scopesToCheck = [this.OAUTH.scopes.compose, this.OAUTH.scopes.modify, this.OAUTH.scopes.readContacts, this.OAUTH.scopes.readOtherContacts];
       for (const scopeToCheck of scopesToCheck) {
         if (requestedScopes.includes(scopeToCheck) && !allowedScopes?.includes(scopeToCheck)) {
           return { acctEmail, result: 'Denied', error: 'Missing permissions', id_token: undefined };
@@ -295,9 +277,7 @@ export class GoogleAuth {
       if (receivedState !== expectedState) {
         return { acctEmail, result: 'Error', error: `Wrong oauth CSRF token. Please try again.`, id_token: undefined };
       }
-      const { id_token } = save
-        ? await GoogleAuth.retrieveAndSaveAuthToken(code)
-        : await GoogleAuth.googleAuthGetTokens(code);
+      const { id_token } = save ? await GoogleAuth.retrieveAndSaveAuthToken(code) : await GoogleAuth.googleAuthGetTokens(code);
       const { email } = GoogleAuth.parseIdToken(id_token);
       if (!email) {
         throw new Error('Missing email address in id_token');
@@ -352,12 +332,7 @@ export class GoogleAuth {
     }
     await AcctStore.set(acctEmail, toSave);
     await InMemoryStore.set(acctEmail, InMemoryStoreKeys.ID_TOKEN, tokensObj.id_token);
-    await InMemoryStore.set(
-      acctEmail,
-      InMemoryStoreKeys.GOOGLE_TOKEN_ACCESS,
-      tokensObj.access_token,
-      googleTokenExpires
-    );
+    await InMemoryStore.set(acctEmail, InMemoryStoreKeys.GOOGLE_TOKEN_ACCESS, tokensObj.access_token, googleTokenExpires);
   };
 
   private static googleAuthGetTokens = async (code: string) => {

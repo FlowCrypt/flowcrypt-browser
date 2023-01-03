@@ -288,9 +288,7 @@ export const mockKeyManagerEndpoints: HandlersDefinition = {
       if (acctEmail === 'test-update@settings.flowcrypt.test') {
         return { privateKeys: [{ decryptedPrivateKey: testConstants.existingPrv }] };
       }
-      throw new HttpClientErr(
-        `Unexpectedly calling mockKeyManagerEndpoints:/v1/keys/private GET with acct ${acctEmail}`
-      );
+      throw new HttpClientErr(`Unexpectedly calling mockKeyManagerEndpoints:/v1/keys/private GET with acct ${acctEmail}`);
     }
     if (isPut(req)) {
       const { privateKey } = body as Dict<string>;
@@ -335,9 +333,7 @@ export const mockKeyManagerEndpoints: HandlersDefinition = {
         MOCK_KM_LAST_INSERTED_KEY[acctEmail] = { privateKey };
         return {};
       }
-      throw new HttpClientErr(
-        `Unexpectedly calling mockKeyManagerEndpoints:/v1/keys/private PUT with acct ${acctEmail}`
-      );
+      throw new HttpClientErr(`Unexpectedly calling mockKeyManagerEndpoints:/v1/keys/private PUT with acct ${acctEmail}`);
     }
     throw new HttpClientErr(`Unknown method: ${req.method}`);
   },

@@ -19,11 +19,7 @@ View.run(
       super();
       const uncheckedUrlParams = Url.parse(['acctEmail', 'parentTabId', 'which']);
       this.acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
-      this.which = Assert.urlParamRequire.oneof(uncheckedUrlParams, 'which', [
-        'google_account',
-        'flowcrypt_account',
-        'local_store',
-      ]);
+      this.which = Assert.urlParamRequire.oneof(uncheckedUrlParams, 'which', ['google_account', 'flowcrypt_account', 'local_store']);
       this.gmail = new Gmail(this.acctEmail);
     }
 
@@ -64,11 +60,9 @@ View.run(
     };
 
     private renderCallRes = (api: string, variables: Dict<unknown>, result: unknown, error?: unknown) => {
-      const r = `<b>${api} ${JSON.stringify(variables)}</b><pre data-test="container-pre">${JSON.stringify(
-        result,
-        undefined,
-        2
-      )} (${error ? JSON.stringify(error) : 'no err'})</pre>`;
+      const r = `<b>${api} ${JSON.stringify(variables)}</b><pre data-test="container-pre">${JSON.stringify(result, undefined, 2)} (${
+        error ? JSON.stringify(error) : 'no err'
+      })</pre>`;
       Xss.sanitizeAppend('#content', r);
     };
   }

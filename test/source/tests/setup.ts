@@ -66,9 +66,7 @@ export const defineSetupTests = (testVariant: TestVariant, testWithBrowser: Test
       'setup - invalid csrf token returns error on gmail login',
       testWithBrowser(undefined, async (t, browser) => {
         const settingsPage = await browser.newPage(t, TestUrls.extensionSettings());
-        const oauthPopup = await browser.newPageTriggeredBy(t, () =>
-          settingsPage.waitAndClick('@action-connect-to-gmail')
-        );
+        const oauthPopup = await browser.newPageTriggeredBy(t, () => settingsPage.waitAndClick('@action-connect-to-gmail'));
         await OauthPageRecipe.mock(t, oauthPopup, 'test.invalid.csrf@gmail.com', 'login');
         await settingsPage.waitAndRespondToModal('error', 'confirm', 'Wrong oauth CSRF token. Please try again.');
       })
@@ -77,11 +75,7 @@ export const defineSetupTests = (testVariant: TestVariant, testWithBrowser: Test
     ava.default(
       'setup - optional checkbox for each email aliases',
       testWithBrowser(undefined, async (t, browser) => {
-        const settingsPage = await BrowserRecipe.openSettingsLoginApprove(
-          t,
-          browser,
-          'flowcrypt.compatibility@gmail.com'
-        );
+        const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.compatibility@gmail.com');
         await Util.sleep(5);
         await SetupPageRecipe.createKey(settingsPage, 'unused', 'none', {
           key: { passphrase: 'long enough to suit requirements' },
@@ -103,11 +97,7 @@ export const defineSetupTests = (testVariant: TestVariant, testWithBrowser: Test
     ava.default(
       'setup - import key - do not submit - did not use before',
       testWithBrowser(undefined, async (t, browser) => {
-        const settingsPage = await BrowserRecipe.openSettingsLoginApprove(
-          t,
-          browser,
-          'flowcrypt.test.key.imported@gmail.com'
-        );
+        const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.test.key.imported@gmail.com');
         await SetupPageRecipe.manualEnter(
           settingsPage,
           'flowcrypt.test.key.used.pgp',
@@ -120,11 +110,7 @@ export const defineSetupTests = (testVariant: TestVariant, testWithBrowser: Test
     ava.default(
       'setup - import unarmored key from file',
       testWithBrowser(undefined, async (t, browser) => {
-        const settingsPage = await BrowserRecipe.openSettingsLoginApprove(
-          t,
-          browser,
-          'flowcrypt.test.key.imported@gmail.com'
-        );
+        const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.test.key.imported@gmail.com');
         const key = {
           title: 'unarmored OpenPGP key',
           filePath: 'test/samples/openpgp/flowcrypttestkeyimportedgmailcom-0x825B8AE8B14CFC0E.key',
@@ -139,11 +125,7 @@ export const defineSetupTests = (testVariant: TestVariant, testWithBrowser: Test
     ava.default(
       'setup - import invalid key file',
       testWithBrowser(undefined, async (t, browser) => {
-        const settingsPage = await BrowserRecipe.openSettingsLoginApprove(
-          t,
-          browser,
-          'flowcrypt.test.key.imported@gmail.com'
-        );
+        const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.test.key.imported@gmail.com');
         const key = {
           title: 'invalid key',
           filePath: 'test/samples/small.txt',
@@ -158,11 +140,7 @@ export const defineSetupTests = (testVariant: TestVariant, testWithBrowser: Test
     ava.default(
       'setup - import key - submit - used before',
       testWithBrowser(undefined, async (t, browser) => {
-        const settingsPage = await BrowserRecipe.openSettingsLoginApprove(
-          t,
-          browser,
-          'flowcrypt.test.key.used.pgp@gmail.com'
-        );
+        const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.test.key.used.pgp@gmail.com');
         await SetupPageRecipe.manualEnter(
           settingsPage,
           'flowcrypt.test.key.used.pgp',
@@ -175,11 +153,7 @@ export const defineSetupTests = (testVariant: TestVariant, testWithBrowser: Test
     ava.default(
       'setup - import key - naked - choose my own pass phrase',
       testWithBrowser(undefined, async (t, browser) => {
-        const settingsPage = await BrowserRecipe.openSettingsLoginApprove(
-          t,
-          browser,
-          'flowcrypt.test.key.import.naked@gmail.com'
-        );
+        const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.test.key.import.naked@gmail.com');
         await SetupPageRecipe.manualEnter(
           settingsPage,
           'flowcrypt.test.key.naked',
@@ -192,11 +166,7 @@ export const defineSetupTests = (testVariant: TestVariant, testWithBrowser: Test
     ava.default(
       'setup - import key - naked - auto-generate a pass phrase',
       testWithBrowser(undefined, async (t, browser) => {
-        const settingsPage = await BrowserRecipe.openSettingsLoginApprove(
-          t,
-          browser,
-          'flowcrypt.test.key.import.naked@gmail.com'
-        );
+        const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.test.key.import.naked@gmail.com');
         await SetupPageRecipe.manualEnter(
           settingsPage,
           'flowcrypt.test.key.naked',
@@ -211,11 +181,7 @@ export const defineSetupTests = (testVariant: TestVariant, testWithBrowser: Test
     ava.default(
       'setup - import key - fix key self signatures',
       testWithBrowser(undefined, async (t, browser) => {
-        const settingsPage = await BrowserRecipe.openSettingsLoginApprove(
-          t,
-          browser,
-          'flowcrypt.test.key.imported@gmail.com'
-        );
+        const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.test.key.imported@gmail.com');
         await SetupPageRecipe.manualEnter(
           settingsPage,
           'missing.self.signatures',
@@ -228,11 +194,7 @@ export const defineSetupTests = (testVariant: TestVariant, testWithBrowser: Test
     ava.default(
       'setup - import key - fix key self signatures - skip invalid uid',
       testWithBrowser(undefined, async (t, browser) => {
-        const settingsPage = await BrowserRecipe.openSettingsLoginApprove(
-          t,
-          browser,
-          'flowcrypt.test.key.imported@gmail.com'
-        );
+        const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.test.key.imported@gmail.com');
         await SetupPageRecipe.manualEnter(
           settingsPage,
           'missing.self.signatures.invalid.uid',
@@ -252,11 +214,7 @@ export const defineSetupTests = (testVariant: TestVariant, testWithBrowser: Test
       testWithBrowser(
         undefined,
         async (t, browser) => {
-          const settingsPage = await BrowserRecipe.openSettingsLoginApprove(
-            t,
-            browser,
-            'flowcrypt.test.key.imported@gmail.com'
-          );
+          const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.test.key.imported@gmail.com');
           await SetupPageRecipe.manualEnter(settingsPage, 'uid.less.key', { submitPubkey: false, fixKey: true });
         },
         'FAILING'
@@ -266,11 +224,7 @@ export const defineSetupTests = (testVariant: TestVariant, testWithBrowser: Test
     ava.default(
       'setup - import key - warning on primary has no secret',
       testWithBrowser(undefined, async (t, browser) => {
-        const settingsPage = await BrowserRecipe.openSettingsLoginApprove(
-          t,
-          browser,
-          'flowcrypt.test.key.imported@gmail.com'
-        );
+        const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.test.key.imported@gmail.com');
         await SetupPageRecipe.manualEnter(
           settingsPage,
           'unused',
@@ -361,11 +315,7 @@ ZAvn6PBX7vsaReOVa2zsnuY5g70xCxvzHIwR94POu5cENwRtCkrppFnISALpQ1kA
     ava.default(
       'setup - import key - two e-mails on the screen',
       testWithBrowser(undefined, async (t, browser) => {
-        const settingsPage = await BrowserRecipe.openSettingsLoginApprove(
-          t,
-          browser,
-          'flowcrypt.test.key.imported@gmail.com'
-        );
+        const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.test.key.imported@gmail.com');
         await SetupPageRecipe.manualEnter(
           settingsPage,
           'unused',
@@ -448,10 +398,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
           { isSavePassphraseChecked: false, isSavePassphraseHidden: false }
         );
         await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
-        const myKeyFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, `@action-show-key-0`, [
-          'my_key.htm',
-          'placement=settings',
-        ]);
+        const myKeyFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, `@action-show-key-0`, ['my_key.htm', 'placement=settings']);
         await Util.sleep(1);
         await myKeyFrame.waitAll('@content-fingerprint');
         expect(await myKeyFrame.read('@content-fingerprint')).to.contain('61E8 C603 67CD B0EB');
@@ -463,11 +410,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
     ava.default(
       'setup - recover with a pass phrase - skip remaining',
       testWithBrowser(undefined, async (t, browser) => {
-        const settingsPage = await BrowserRecipe.openSettingsLoginApprove(
-          t,
-          browser,
-          'flowcrypt.compatibility@gmail.com'
-        );
+        const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.compatibility@gmail.com');
         await SetupPageRecipe.recover(settingsPage, 'flowcrypt.compatibility.1pp1', {
           hasRecoverMore: true,
           clickRecoverMore: false,
@@ -478,11 +421,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
     ava.default(
       'setup - recover with a pass phrase - 1pp1 then 2pp1',
       testWithBrowser(undefined, async (t, browser) => {
-        const settingsPage = await BrowserRecipe.openSettingsLoginApprove(
-          t,
-          browser,
-          'flowcrypt.compatibility@gmail.com'
-        );
+        const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.compatibility@gmail.com');
         await SetupPageRecipe.recover(settingsPage, 'flowcrypt.compatibility.1pp1', {
           hasRecoverMore: true,
           clickRecoverMore: true,
@@ -494,11 +433,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
     ava.default(
       'setup - recover with a pass phrase - 1pp2 then 2pp1',
       testWithBrowser(undefined, async (t, browser) => {
-        const settingsPage = await BrowserRecipe.openSettingsLoginApprove(
-          t,
-          browser,
-          'flowcrypt.compatibility@gmail.com'
-        );
+        const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.compatibility@gmail.com');
         await SetupPageRecipe.recover(settingsPage, 'flowcrypt.compatibility.1pp2', {
           hasRecoverMore: true,
           clickRecoverMore: true,
@@ -510,11 +445,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
     ava.default(
       'setup - recover with a pass phrase - 2pp1 then 1pp1',
       testWithBrowser(undefined, async (t, browser) => {
-        const settingsPage = await BrowserRecipe.openSettingsLoginApprove(
-          t,
-          browser,
-          'flowcrypt.compatibility@gmail.com'
-        );
+        const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.compatibility@gmail.com');
         await SetupPageRecipe.recover(settingsPage, 'flowcrypt.compatibility.2pp1', {
           hasRecoverMore: true,
           clickRecoverMore: true,
@@ -526,11 +457,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
     ava.default(
       'setup - recover with a pass phrase - 2pp1 then 1pp2',
       testWithBrowser(undefined, async (t, browser) => {
-        const settingsPage = await BrowserRecipe.openSettingsLoginApprove(
-          t,
-          browser,
-          'flowcrypt.compatibility@gmail.com'
-        );
+        const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.compatibility@gmail.com');
         await SetupPageRecipe.recover(settingsPage, 'flowcrypt.compatibility.2pp1', {
           hasRecoverMore: true,
           clickRecoverMore: true,
@@ -542,11 +469,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
     ava.default(
       'setup - recover with a pass phrase - 1pp1 then 1pp2 (shows already recovered), then 2pp1',
       testWithBrowser(undefined, async (t, browser) => {
-        const settingsPage = await BrowserRecipe.openSettingsLoginApprove(
-          t,
-          browser,
-          'flowcrypt.compatibility@gmail.com'
-        );
+        const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.compatibility@gmail.com');
         await SetupPageRecipe.recover(settingsPage, 'flowcrypt.compatibility.1pp1', {
           hasRecoverMore: true,
           clickRecoverMore: true,
@@ -565,27 +488,16 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         const gmailPage = await openMockGmailPage(t, browser, acctEmail);
         await gmailPage.waitAndClick('@action-secure-compose');
         // Check reconnect auth notification
-        await gmailPage.waitForContent(
-          '@webmail-notification-setup',
-          'Please reconnect FlowCrypt to your Gmail Account.'
-        );
+        await gmailPage.waitForContent('@webmail-notification-setup', 'Please reconnect FlowCrypt to your Gmail Account.');
         let oauthPopup = await browser.newPageTriggeredBy(t, () => gmailPage.waitAndClick('@action-reconnect-account'));
         // mock api will return missing scopes
         await OauthPageRecipe.mock(t, oauthPopup, acctEmail, 'missing_permission');
         // Check missing permission notification
-        await gmailPage.waitForContent(
-          '@webmail-notification-setup',
-          'Connection successful. Please also add missing permissions'
-        );
-        oauthPopup = await browser.newPageTriggeredBy(t, () =>
-          gmailPage.waitAndClick('@action-add-missing-permission')
-        );
+        await gmailPage.waitForContent('@webmail-notification-setup', 'Connection successful. Please also add missing permissions');
+        oauthPopup = await browser.newPageTriggeredBy(t, () => gmailPage.waitAndClick('@action-add-missing-permission'));
         await OauthPageRecipe.mock(t, oauthPopup, acctEmail, 'approve');
         // after successful reauth, check if connection is successful
-        await gmailPage.waitForContent(
-          '@webmail-notification-setup',
-          'Connected successfully. You may need to reload the tab.'
-        );
+        await gmailPage.waitForContent('@webmail-notification-setup', 'Connected successfully. You may need to reload the tab.');
         // reload and test that it has no more notifications
         await gmailPage.page.reload();
         await gmailPage.waitAndClick('@action-secure-compose');
@@ -602,39 +514,23 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         await gmailPage.waitAll(['@webmail-notification-setup', '@notification-successfully-setup-action-close']);
         await gmailPage.waitAndClick('@notification-successfully-setup-action-close', { confirmGone: true });
         await gmailPage.page.reload();
-        await gmailPage.notPresent([
-          '@webmail-notification-setup',
-          '@notification-setup-action-close',
-          '@notification-successfully-setup-action-close',
-        ]);
+        await gmailPage.notPresent(['@webmail-notification-setup', '@notification-setup-action-close', '@notification-successfully-setup-action-close']);
         // below test that can re-auth after lost access (simulating situation when user changed password on google)
         await Util.wipeGoogleTokensUsingExperimentalSettingsPage(t, browser, acct);
         const settingsPage = await browser.newPage(t, TestUrls.extensionSettings(acct));
-        await settingsPage.waitAndRespondToModal(
-          'confirm',
-          'cancel',
-          'FlowCrypt must be re-connected to your Google account.'
-        );
+        await settingsPage.waitAndRespondToModal('confirm', 'cancel', 'FlowCrypt must be re-connected to your Google account.');
         // *** these tests below are very flaky in CI environment, Google will want to re-authenticate the user for whatever reason
         // // opening secure compose should trigger an api call which causes a reconnect notification
         await gmailPage.page.reload();
         await gmailPage.waitAndClick('@action-secure-compose');
         await gmailPage.waitAll(['@webmail-notification-setup', '@action-reconnect-account']);
         await Util.sleep(1);
-        await gmailPage.waitForContent(
-          '@webmail-notification-setup',
-          'Please reconnect FlowCrypt to your Gmail Account.'
-        );
-        const oauthPopup = await browser.newPageTriggeredBy(t, () =>
-          gmailPage.waitAndClick('@action-reconnect-account')
-        );
+        await gmailPage.waitForContent('@webmail-notification-setup', 'Please reconnect FlowCrypt to your Gmail Account.');
+        const oauthPopup = await browser.newPageTriggeredBy(t, () => gmailPage.waitAndClick('@action-reconnect-account'));
         await OauthPageRecipe.google(t, oauthPopup, acct, 'approve');
         await gmailPage.waitAll(['@webmail-notification-setup']);
         await Util.sleep(1);
-        await gmailPage.waitForContent(
-          '@webmail-notification-setup',
-          'Connected successfully. You may need to reload the tab.'
-        );
+        await gmailPage.waitForContent('@webmail-notification-setup', 'Connected successfully. You may need to reload the tab.');
         // reload and test that it has no more notifications
         await gmailPage.page.reload();
         await gmailPage.waitAndClick('@action-secure-compose');
@@ -662,9 +558,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
           '@notification-setup-action-dismiss',
           '@notification-setup-action-close',
         ]);
-        const newSettingsPage = await browser.newPageTriggeredBy(t, () =>
-          gmailPage.waitAndClick('@notification-setup-action-open-settings')
-        );
+        const newSettingsPage = await browser.newPageTriggeredBy(t, () => gmailPage.waitAndClick('@notification-setup-action-open-settings'));
         await newSettingsPage.waitAll('@action-connect-to-gmail');
       })
     );
@@ -697,9 +591,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         const acctEmail = 'flowcrypt.compatibility@gmail.com';
         const settingsPage = await browser.newPage(t, TestUrls.extensionSettings(acctEmail));
         await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
-        const addKeyPopup = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-add-key-page', [
-          'add_key.htm',
-        ]);
+        const addKeyPopup = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-add-key-page', ['add_key.htm']);
         await addKeyPopup.waitAndClick('@source-paste');
         const key = Config.key('missing.self.signatures');
         await addKeyPopup.waitAndType('@input-armored-key', key?.armored ?? '');
@@ -709,10 +601,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         await addKeyPopup.selectOption('@input-compatibility-fix-expire-years', '1');
         await addKeyPopup.waitAndClick('@action-fix-and-import-key');
         await Util.sleep(1);
-        const myKeyFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, `@action-show-key-2`, [
-          'my_key.htm',
-          'placement=settings',
-        ]);
+        const myKeyFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, `@action-show-key-2`, ['my_key.htm', 'placement=settings']);
         await Util.sleep(1);
         const curDate = new Date(),
           year = curDate.getFullYear(),
@@ -764,9 +653,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         await gmailPage.waitForContent('@webmail-notification-notify_expiring_keys', warningMsg);
         // Add updated key that expires in 100 days
         await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
-        const addKeyPopup = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-add-key-page', [
-          'add_key.htm',
-        ]);
+        const addKeyPopup = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-add-key-page', ['add_key.htm']);
         await addKeyPopup.waitAndClick('@source-paste');
         const updatedKey = await opgp.generateKey({
           curve: 'curve25519',
@@ -813,10 +700,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         await gmailPage.waitForContent('@webmail-notification-notify_expiring_keys', warningMsg);
         MOCK_KM_KEYS[acctEmail] = {
           response: {
-            privateKeys: [
-              { decryptedPrivateKey: key.privateKeyArmored },
-              { decryptedPrivateKey: testConstants.notifyExpiringKeys },
-            ],
+            privateKeys: [{ decryptedPrivateKey: key.privateKeyArmored }, { decryptedPrivateKey: testConstants.notifyExpiringKeys }],
           },
         };
         await gmailPage.page.reload();
@@ -837,11 +721,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
     ava.default(
       'setup - recover with a pass phrase - no remaining',
       testWithBrowser(undefined, async (t, browser) => {
-        const settingsPage = await BrowserRecipe.openSettingsLoginApprove(
-          t,
-          browser,
-          'flowcrypt.test.key.recovered@gmail.com'
-        );
+        const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.test.key.recovered@gmail.com');
         await SetupPageRecipe.recover(settingsPage, 'flowcrypt.test.key.recovered', { hasRecoverMore: false });
       })
     );
@@ -849,11 +729,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
     ava.default(
       'setup - fail to recover with a wrong pass phrase',
       testWithBrowser(undefined, async (t, browser) => {
-        const settingsPage = await BrowserRecipe.openSettingsLoginApprove(
-          t,
-          browser,
-          'flowcrypt.test.key.recovered@gmail.com'
-        );
+        const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.test.key.recovered@gmail.com');
         await SetupPageRecipe.recover(settingsPage, 'flowcrypt.wrong.passphrase', {
           hasRecoverMore: false,
           wrongPp: true,
@@ -864,11 +740,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
     ava.default(
       'setup - fail to recover with a wrong pass phrase at first, then recover with good pass phrase',
       testWithBrowser(undefined, async (t, browser) => {
-        const settingsPage = await BrowserRecipe.openSettingsLoginApprove(
-          t,
-          browser,
-          'flowcrypt.test.key.recovered@gmail.com'
-        );
+        const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.test.key.recovered@gmail.com');
         await SetupPageRecipe.recover(settingsPage, 'flowcrypt.wrong.passphrase', { wrongPp: true });
         await SetupPageRecipe.recover(settingsPage, 'flowcrypt.test.key.recovered');
       })
@@ -877,11 +749,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
     ava.default(
       'setup - import key - submit - offline - retry',
       testWithBrowser(undefined, async (t, browser) => {
-        const settingsPage = await BrowserRecipe.openSettingsLoginApprove(
-          t,
-          browser,
-          'flowcrypt.test.key.used.pgp@gmail.com'
-        );
+        const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.test.key.used.pgp@gmail.com');
         await SetupPageRecipe.manualEnter(
           settingsPage,
           'flowcrypt.test.key.used.pgp',
@@ -897,16 +765,12 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         const acctEmail = 'flowcrypt.compatibility@gmail.com';
         if (testVariant === 'ENTERPRISE-MOCK') {
           const settingsPage = await browser.newPage(t, TestUrls.extensionSettings());
-          const oauthPopup = await browser.newPageTriggeredBy(t, () =>
-            settingsPage.waitAndClick('@action-connect-to-gmail')
-          );
+          const oauthPopup = await browser.newPageTriggeredBy(t, () => settingsPage.waitAndClick('@action-connect-to-gmail'));
           await OauthPageRecipe.mock(t, oauthPopup, acctEmail, 'login_with_invalid_state');
           await settingsPage.waitForContent('@container-error-modal-text', 'please contact your Help Desk');
         } else if (testVariant === 'CONSUMER-MOCK') {
           const settingsPage = await browser.newPage(t, TestUrls.extensionSettings());
-          const oauthPopup = await browser.newPageTriggeredBy(t, () =>
-            settingsPage.waitAndClick('@action-connect-to-gmail')
-          );
+          const oauthPopup = await browser.newPageTriggeredBy(t, () => settingsPage.waitAndClick('@action-connect-to-gmail'));
           await OauthPageRecipe.mock(t, oauthPopup, acctEmail, 'login_with_invalid_state');
           await settingsPage.waitForContent('@container-error-modal-text', 'write us at human@flowcrypt.com');
         }
@@ -916,11 +780,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
     ava.default(
       'has.pub@client-configuration-test.flowcrypt.test - no backup, no keygen',
       testWithBrowser(undefined, async (t, browser) => {
-        const settingsPage = await BrowserRecipe.openSettingsLoginApprove(
-          t,
-          browser,
-          'has.pub@client-configuration-test.flowcrypt.test'
-        );
+        const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'has.pub@client-configuration-test.flowcrypt.test');
         await SetupPageRecipe.manualEnter(
           settingsPage,
           'has.pub.client.configuration.test',
@@ -930,8 +790,9 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         await settingsPage.waitAll(['@action-show-encrypted-inbox', '@action-open-security-page']);
         await Util.sleep(1);
         await settingsPage.notPresent(['@action-open-backup-page']);
-        const { cryptup_haspubclientconfigurationtestflowcrypttest_keys: keys } =
-          await settingsPage.getFromLocalStorage(['cryptup_haspubclientconfigurationtestflowcrypttest_keys']);
+        const { cryptup_haspubclientconfigurationtestflowcrypttest_keys: keys } = await settingsPage.getFromLocalStorage([
+          'cryptup_haspubclientconfigurationtestflowcrypttest_keys',
+        ]);
         const ki = keys as KeyInfoWithIdentity[];
         expect(ki.length).to.equal(1);
         expect(ki[0].private).to.include('PGP PRIVATE KEY');
@@ -946,11 +807,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
     ava.default(
       'invalid.pub@client-configuration-test.flowcrypt.test - no backup, no keygen',
       testWithBrowser(undefined, async (t, browser) => {
-        const settingsPage = await BrowserRecipe.openSettingsLoginApprove(
-          t,
-          browser,
-          'invalid.pub@client-configuration-test.flowcrypt.test'
-        );
+        const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'invalid.pub@client-configuration-test.flowcrypt.test');
         await SetupPageRecipe.manualEnter(
           settingsPage,
           'has.pub.client.configuration.test',
@@ -970,11 +827,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
     ava.default(
       'no.pub@client-configurations-test - no backup, no keygen, enforce attester submit with submit err',
       testWithBrowser(undefined, async (t, browser) => {
-        const settingsPage = await BrowserRecipe.openSettingsLoginApprove(
-          t,
-          browser,
-          'no.pub@client-configuration-test.flowcrypt.test'
-        );
+        const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'no.pub@client-configuration-test.flowcrypt.test');
         await SetupPageRecipe.manualEnter(
           settingsPage,
           'no.pub.client.configuration',
@@ -994,11 +847,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
     ava.default(
       'user@no-submit-client-configuration.flowcrypt.test - do not submit to attester',
       testWithBrowser(undefined, async (t, browser) => {
-        const settingsPage = await BrowserRecipe.openSettingsLoginApprove(
-          t,
-          browser,
-          'user@no-submit-client-configuration.flowcrypt.test'
-        );
+        const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'user@no-submit-client-configuration.flowcrypt.test');
         await SetupPageRecipe.manualEnter(
           settingsPage,
           'flowcrypt.test.key.used.pgp',
@@ -1006,9 +855,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
           { isSavePassphraseChecked: false, isSavePassphraseHidden: false }
         );
         await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
-        const attesterFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-attester-page', [
-          'keyserver.htm',
-        ]);
+        const attesterFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-attester-page', ['keyserver.htm']);
         await attesterFrame.waitAndClick('@action-submit-pub');
         await attesterFrame.waitAndRespondToModal('error', 'confirm', 'Disallowed by your organisation rules');
       })
@@ -1034,12 +881,8 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
           },
           { isSavePassphraseChecked: true, isSavePassphraseHidden: false }
         );
-        const {
-          cryptup_userdefaultrememberpassphraseclientconfigurationflowcrypttest_passphrase_715EDCDC7939A8F7:
-            savedPassphrase,
-        } = await settingsPage.getFromLocalStorage([
-          'cryptup_userdefaultrememberpassphraseclientconfigurationflowcrypttest_passphrase_715EDCDC7939A8F7',
-        ]);
+        const { cryptup_userdefaultrememberpassphraseclientconfigurationflowcrypttest_passphrase_715EDCDC7939A8F7: savedPassphrase } =
+          await settingsPage.getFromLocalStorage(['cryptup_userdefaultrememberpassphraseclientconfigurationflowcrypttest_passphrase_715EDCDC7939A8F7']);
         expect(savedPassphrase).to.equal('1234');
         await settingsPage.close();
       })
@@ -1093,11 +936,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
         await SetupPageRecipe.manualEnter(settingsPage, 'flowcrypt.test.key.used.pgp');
         const composePage = await ComposePageRecipe.openStandalone(t, browser, acct);
-        await ComposePageRecipe.fillMsg(
-          composePage,
-          { to: 'mock.only.pubkey@flowcrypt.com' },
-          'all domains should not be found'
-        );
+        await ComposePageRecipe.fillMsg(composePage, { to: 'mock.only.pubkey@flowcrypt.com' }, 'all domains should not be found');
         await composePage.waitForContent('.email_address.no_pgp', 'mock.only.pubkey@flowcrypt.com');
         await composePage.waitAll('@input-password');
       })
@@ -1112,11 +951,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
         await SetupPageRecipe.manualEnter(settingsPage, 'flowcrypt.test.key.used.pgp');
         const composePage = await ComposePageRecipe.openStandalone(t, browser, acct);
-        await ComposePageRecipe.fillMsg(
-          composePage,
-          { to: 'mock.only.pubkey@other.com' },
-          'other.com domain should not be found'
-        );
+        await ComposePageRecipe.fillMsg(composePage, { to: 'mock.only.pubkey@other.com' }, 'other.com domain should not be found');
         await composePage.waitForContent('.email_address.no_pgp', 'mock.only.pubkey@other.com');
         await composePage.waitAll('@input-password');
       })
@@ -1132,10 +967,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         // check no "add key"
         await settingsPage.notPresent('@action-open-add-key-page');
         // check imported key
-        const myKeyFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, `@action-show-key-0`, [
-          'my_key.htm',
-          'placement=settings',
-        ]);
+        const myKeyFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, `@action-show-key-0`, ['my_key.htm', 'placement=settings']);
         await Util.sleep(1);
         await myKeyFrame.waitAll('@content-fingerprint');
         expect(await myKeyFrame.read('@content-fingerprint')).to.contain('00B0 1158 0796 9D75');
@@ -1143,34 +975,20 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         await Util.sleep(2);
         // check that it does not offer any pass phrase options
         await SettingsPageRecipe.toggleScreen(settingsPage, 'basic');
-        const securityFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-security-page', [
-          'security.htm',
-          'placement=settings',
-        ]);
+        const securityFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-security-page', ['security.htm', 'placement=settings']);
         await Util.sleep(1);
-        await securityFrame.notPresent([
-          '@action-change-passphrase-begin',
-          '@action-test-passphrase-begin',
-          '@action-forget-pp',
-        ]);
+        await securityFrame.notPresent(['@action-change-passphrase-begin', '@action-test-passphrase-begin', '@action-forget-pp']);
       })
     );
 
     const getPassphrase = async (page: ControllablePage, acctEmail: string, longid: string) => {
       const key = `cryptup_${emailKeyIndex(acctEmail, 'passphrase')}_${longid}`;
-      const passphrase =
-        (await page.getFromLocalStorage([key]))[key] ||
-        (await BrowserRecipe.getPassphraseFromInMemoryStore(page, acctEmail, longid));
+      const passphrase = (await page.getFromLocalStorage([key]))[key] || (await BrowserRecipe.getPassphraseFromInMemoryStore(page, acctEmail, longid));
       expect(passphrase).to.be.a.string; // eslint-disable-line @typescript-eslint/unbound-method
       return passphrase as string;
     };
 
-    const retrieveAndCheckKeys = async (
-      page: ControllablePage,
-      acctEmail: string,
-      expectedKeyCount: number,
-      passphrase?: string
-    ) => {
+    const retrieveAndCheckKeys = async (page: ControllablePage, acctEmail: string, expectedKeyCount: number, passphrase?: string) => {
       const key = `cryptup_${emailKeyIndex(acctEmail, 'keys')}`;
       const keyset = (await page.getFromLocalStorage([key]))[key];
       const kis = keyset as KeyInfoWithIdentity[];
@@ -1179,8 +997,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         kis.map(async ki => {
           const prv = await KeyUtil.parse(ki.private);
           expect(prv.fullyEncrypted).to.be.true;
-          const passphraseToDecrypt =
-            passphrase || (await getPassphrase(page, acctEmail, KeyUtil.getPrimaryLongid(prv)));
+          const passphraseToDecrypt = passphrase || (await getPassphrase(page, acctEmail, KeyUtil.getPrimaryLongid(prv)));
           expect(passphraseToDecrypt).to.be.not.empty;
           expect(await KeyUtil.decrypt(prv, passphraseToDecrypt, undefined, undefined)).to.be.true;
           expect(prv.lastModified).to.not.be.an.undefined;
@@ -1251,10 +1068,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         await gmailPage.waitAll('@dialog-passphrase');
         {
           const passphraseDialog = await gmailPage.getFrame(['passphrase.htm']);
-          await passphraseDialog.waitForContent(
-            '@passphrase-text',
-            'Enter FlowCrypt pass phrase to keep your account keys up to date'
-          );
+          await passphraseDialog.waitForContent('@passphrase-text', 'Enter FlowCrypt pass phrase to keep your account keys up to date');
           await passphraseDialog.waitAndType('@input-pass-phrase', passphrase);
           await passphraseDialog.waitAndClick('@action-confirm-pass-phrase-entry');
         }
@@ -1280,13 +1094,9 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         await PageRecipe.waitForToastToAppearAndDisappear(gmailPage, 'Account keys updated');
         await gmailPage.notPresent('@dialog-passphrase');
         const set9 = await retrieveAndCheckKeys(settingsPage, acct, 2);
-        const mainKey9 = KeyUtil.filterKeysByIdentity(set9, [
-          { family: 'openpgp', id: '392FB1E9FF4184659AB6A246835C0141B9ECF536' },
-        ]);
+        const mainKey9 = KeyUtil.filterKeysByIdentity(set9, [{ family: 'openpgp', id: '392FB1E9FF4184659AB6A246835C0141B9ECF536' }]);
         expect(mainKey9.length).to.equal(1);
-        const secondaryKey9 = KeyUtil.filterKeysByIdentity(set9, [
-          { family: 'openpgp', id: 'FAFB7D675AC74E87F84D169F00B0115807969D75' },
-        ]);
+        const secondaryKey9 = KeyUtil.filterKeysByIdentity(set9, [{ family: 'openpgp', id: 'FAFB7D675AC74E87F84D169F00B0115807969D75' }]);
         expect(secondaryKey9.length).to.equal(1);
         expect(mainKey9[0].lastModified).to.equal(set8[0].lastModified); // no update
         await gmailPage.close();
@@ -1325,10 +1135,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         await gmailPage.waitAll('@dialog-passphrase');
         {
           const passphraseDialog = await gmailPage.getFrame(['passphrase.htm']);
-          await passphraseDialog.waitForContent(
-            '@passphrase-text',
-            'Enter FlowCrypt pass phrase to keep your account keys up to date'
-          );
+          await passphraseDialog.waitForContent('@passphrase-text', 'Enter FlowCrypt pass phrase to keep your account keys up to date');
           await passphraseDialog.waitAndType('@input-pass-phrase', passphrase);
           await passphraseDialog.waitAndClick('@action-confirm-pass-phrase-entry');
         }
@@ -1337,9 +1144,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         const set12 = await retrieveAndCheckKeys(settingsPage, acct, 1);
         expect(await getPassphrase(settingsPage, acct, KeyUtil.getPrimaryLongid(set11[0]))).to.be.an.undefined; // the passphrase for the old key was deleted
         expect(set12.map(entry => entry.id)).to.eql(['277D1ADA213881F4ABE0415395E783DC0289E2E2']);
-        const mainKey12 = KeyUtil.filterKeysByIdentity(set12, [
-          { family: 'openpgp', id: '277D1ADA213881F4ABE0415395E783DC0289E2E2' },
-        ]);
+        const mainKey12 = KeyUtil.filterKeysByIdentity(set12, [{ family: 'openpgp', id: '277D1ADA213881F4ABE0415395E783DC0289E2E2' }]);
         expect(mainKey12.length).to.equal(1);
         // 12. Forget the passphrase, EKM sends a broken key, no passphrase dialog, no updates
         await InboxPageRecipe.finishSessionOnInboxPage(gmailPage);
@@ -1348,10 +1153,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
           { decryptedPrivateKey: await updateAndArmorKey(set2[0]) }, // update the main key
           // only include a half of another armored key
           {
-            decryptedPrivateKey: testConstants.unprotectedPrvKey.substring(
-              0,
-              testConstants.unprotectedPrvKey.length / 2
-            ),
+            decryptedPrivateKey: testConstants.unprotectedPrvKey.substring(0, testConstants.unprotectedPrvKey.length / 2),
           },
         ];
         gmailPage = await browser.newPage(t, TestUrls.mockGmailUrl(), undefined, extraAuthHeaders);
@@ -1362,9 +1164,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         await gmailPage.notPresent('@dialog-passphrase');
         const set13 = await retrieveAndCheckKeys(settingsPage, acct, 1, passphrase);
         expect(set13.map(entry => entry.id)).to.eql(['277D1ADA213881F4ABE0415395E783DC0289E2E2']);
-        const mainKey13 = KeyUtil.filterKeysByIdentity(set13, [
-          { family: 'openpgp', id: '277D1ADA213881F4ABE0415395E783DC0289E2E2' },
-        ]);
+        const mainKey13 = KeyUtil.filterKeysByIdentity(set13, [{ family: 'openpgp', id: '277D1ADA213881F4ABE0415395E783DC0289E2E2' }]);
         expect(mainKey13.length).to.equal(1);
         expect(mainKey13[0].lastModified).to.equal(mainKey12[0].lastModified); // no update
         await gmailPage.close();
@@ -1456,11 +1256,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         MOCK_KM_KEYS[acct].response = { privateKeys: [] };
         // 1. EKM returns the empty set, auto-generation is not allowed, hence the error modal
         let gmailPage = await browser.newPage(t, TestUrls.mockGmailUrl(), undefined, extraAuthHeaders);
-        await gmailPage.waitAndRespondToModal(
-          'error',
-          'confirm',
-          'Keys for your account were not set up yet - please ask your systems administrator'
-        );
+        await gmailPage.waitAndRespondToModal('error', 'confirm', 'Keys for your account were not set up yet - please ask your systems administrator');
         await PageRecipe.noToastAppears(gmailPage);
         await gmailPage.close();
         await retrieveAndCheckKeys(settingsPage, acct, 0); // no keys
@@ -1485,22 +1281,12 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
         await SetupPageRecipe.autoSetupWithEKM(settingsPage);
         const composePage = await ComposePageRecipe.openStandalone(t, browser, acct);
-        await ComposePageRecipe.fillMsg(
-          composePage,
-          { to: 'test@custom-sks.flowcrypt.test' },
-          'Respect custom key server url'
-        );
+        await ComposePageRecipe.fillMsg(composePage, { to: 'test@custom-sks.flowcrypt.test' }, 'Respect custom key server url');
         await composePage.waitForContent('.email_address.has_pgp', 'test@custom-sks.flowcrypt.test');
         await composePage.close();
         await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
-        const contactsFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-contacts-page', [
-          'contacts.htm',
-          'placement=settings',
-        ]);
-        await contactsFrame.waitForContent(
-          '@custom-key-server-description',
-          'using custom SKS pubkeyserver: https://localhost:8001'
-        );
+        const contactsFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-contacts-page', ['contacts.htm', 'placement=settings']);
+        await contactsFrame.waitForContent('@custom-key-server-description', 'using custom SKS pubkeyserver: https://localhost:8001');
       })
     );
 
@@ -1566,8 +1352,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         const {
           cryptup_getkeykeymanagerchoosepassphraseforbidstoringflowcrypttest_keys: keys,
           cryptup_getkeykeymanagerchoosepassphraseforbidstoringflowcrypttest_rules: rules,
-          cryptup_getkeykeymanagerchoosepassphraseforbidstoringflowcrypttest_passphrase_00B0115807969D75:
-            savedPassphrase,
+          cryptup_getkeykeymanagerchoosepassphraseforbidstoringflowcrypttest_passphrase_00B0115807969D75: savedPassphrase,
         } = await settingsPage.getFromLocalStorage([
           'cryptup_getkeykeymanagerchoosepassphraseforbidstoringflowcrypttest_keys',
           'cryptup_getkeykeymanagerchoosepassphraseforbidstoringflowcrypttest_rules',
@@ -1597,10 +1382,9 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
             longid,
           },
         });
-        const { cryptup_userpassphrasesessionlengthclientconfigurationflowcrypttest_rules: rules } =
-          await settingsPage.getFromLocalStorage([
-            'cryptup_userpassphrasesessionlengthclientconfigurationflowcrypttest_rules',
-          ]);
+        const { cryptup_userpassphrasesessionlengthclientconfigurationflowcrypttest_rules: rules } = await settingsPage.getFromLocalStorage([
+          'cryptup_userpassphrasesessionlengthclientconfigurationflowcrypttest_rules',
+        ]);
         let savedPassphrase = await BrowserRecipe.getPassphraseFromInMemoryStore(settingsPage, acctEmail, longid);
         expect(
           // eslint-disable-next-line @typescript-eslint/naming-convention
@@ -1618,11 +1402,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       testWithBrowser(undefined, async (t, browser) => {
         const acct = 'get.key@key-manager-autoimport-no-prv-create.flowcrypt.test';
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
-        await settingsPage.waitAndRespondToModal(
-          'error',
-          'confirm',
-          'Keys for your account were not set up yet - please ask your systems administrator'
-        );
+        await settingsPage.waitAndRespondToModal('error', 'confirm', 'Keys for your account were not set up yet - please ask your systems administrator');
       })
     );
 
@@ -1636,15 +1416,10 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         // check no "add key"
         await settingsPage.notPresent('@action-open-add-key-page');
         // check imported key
-        const myKeyFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, `@action-show-key-0`, [
-          'my_key.htm',
-          'placement=settings',
-        ]);
+        const myKeyFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, `@action-show-key-0`, ['my_key.htm', 'placement=settings']);
         await Util.sleep(1);
         await myKeyFrame.waitAll('@content-fingerprint');
-        expect(await myKeyFrame.read('@content-fingerprint')).to.contain(
-          '9C64 3D82 783E 291A 2AD2 611B 499E 84DB 185F 0359'
-        );
+        expect(await myKeyFrame.read('@content-fingerprint')).to.contain('9C64 3D82 783E 291A 2AD2 611B 499E 84DB 185F 0359');
         await SettingsPageRecipe.closeDialog(settingsPage);
       })
     );
@@ -1659,10 +1434,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         // check no "add key"
         await settingsPage.notPresent('@action-open-add-key-page');
         // check imported key
-        const myKeyFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, `@action-show-key-0`, [
-          'my_key.htm',
-          'placement=settings',
-        ]);
+        const myKeyFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, `@action-show-key-0`, ['my_key.htm', 'placement=settings']);
         await Util.sleep(1);
         await myKeyFrame.waitAll('@content-fingerprint');
         const fromKm = MOCK_KM_LAST_INSERTED_KEY[acct];
@@ -1674,16 +1446,9 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         await Util.sleep(2);
         // check that it does not offer any pass phrase options
         await SettingsPageRecipe.toggleScreen(settingsPage, 'basic');
-        const securityFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-security-page', [
-          'security.htm',
-          'placement=settings',
-        ]);
+        const securityFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-security-page', ['security.htm', 'placement=settings']);
         await Util.sleep(1);
-        await securityFrame.notPresent([
-          '@action-change-passphrase-begin',
-          '@action-test-passphrase-begin',
-          '@action-forget-pp',
-        ]);
+        await securityFrame.notPresent(['@action-change-passphrase-begin', '@action-test-passphrase-begin', '@action-forget-pp']);
       })
     );
 
@@ -1706,15 +1471,9 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       testWithBrowser(undefined, async (t, browser) => {
         const acct = 'put.error@key-manager-autogen.flowcrypt.test';
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
-        await settingsPage.waitAll([
-          '@action-overlay-retry',
-          '@container-overlay-prompt-text',
-          '@action-show-overlay-details',
-        ]);
+        await settingsPage.waitAll(['@action-overlay-retry', '@container-overlay-prompt-text', '@action-show-overlay-details']);
         await Util.sleep(0.5);
-        expect(await settingsPage.read('@container-overlay-prompt-text')).to.contain(
-          'Server responded with an unexpected error.'
-        );
+        expect(await settingsPage.read('@container-overlay-prompt-text')).to.contain('Server responded with an unexpected error.');
         await settingsPage.click('@action-show-overlay-details');
         await settingsPage.waitAll('@container-overlay-details');
         await Util.sleep(0.5);
@@ -1761,19 +1520,14 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
         await SetupPageRecipe.autoSetupWithEKM(settingsPage);
         await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
-        const myKeyFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, `@action-show-key-0`, [
-          'my_key.htm',
-          'placement=settings',
-        ]);
+        const myKeyFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, `@action-show-key-0`, ['my_key.htm', 'placement=settings']);
         await Util.sleep(1);
         await myKeyFrame.waitAll('@content-fingerprint');
         const fromKm = MOCK_KM_LAST_INSERTED_KEY[acct];
         expect(fromKm).to.exist;
         const k = await KeyUtil.parse(fromKm.privateKey);
         expect(await myKeyFrame.read('@content-fingerprint')).to.equal(Str.spaced(k.id));
-        const approxMonth = [29, 30, 31].map(days =>
-          Str.datetimeToDate(Str.fromDate(new Date(Date.now() + 1000 * 60 * 60 * 24 * days)))
-        );
+        const approxMonth = [29, 30, 31].map(days => Str.datetimeToDate(Str.fromDate(new Date(Date.now() + 1000 * 60 * 60 * 24 * days))));
         expect(await myKeyFrame.read('@content-key-expiration')).to.be.oneOf(approxMonth);
         await SettingsPageRecipe.closeDialog(settingsPage);
       })
@@ -1784,11 +1538,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       testWithBrowser(undefined, async (t, browser) => {
         const acct = 'reject.client.keypair@key-manager-autogen.flowcrypt.test';
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
-        await settingsPage.waitAll([
-          '@action-overlay-retry',
-          '@container-overlay-prompt-text',
-          '@action-show-overlay-details',
-        ]);
+        await settingsPage.waitAll(['@action-overlay-retry', '@container-overlay-prompt-text', '@action-show-overlay-details']);
         await Util.sleep(0.5);
         const title = await settingsPage.read('@container-overlay-prompt-text');
         expect(title).to.contain(
@@ -1818,11 +1568,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
           { submitPubkey: false, usedPgpBefore: false },
           { isSavePassphraseChecked: false, isSavePassphraseHidden: false }
         );
-        const debugFrame = await SettingsPageRecipe.awaitNewPageFrame(
-          settingsPage,
-          '@action-show-local-store-contents',
-          ['debug_api.htm']
-        );
+        const debugFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-show-local-store-contents', ['debug_api.htm']);
         await debugFrame.waitForContent('@container-pre', 'fes.standardsubdomainfes.localhost:8001'); // FES url on standard subdomain
         await debugFrame.waitForContent('@container-pre', 'got.this@fromstandardfes.com'); // org rules from FES
       })
@@ -1862,11 +1608,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
     ava.default(
       'setup - s/mime private key',
       testWithBrowser(undefined, async (t, browser) => {
-        const settingsPage = await BrowserRecipe.openSettingsLoginApprove(
-          t,
-          browser,
-          'flowcrypt.test.key.imported@gmail.com'
-        );
+        const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.test.key.imported@gmail.com');
         await SetupPageRecipe.setupSmimeAccount(settingsPage, {
           title: 's/mime pkcs12 unprotected key',
           filePath: 'test/samples/smime/test-unprotected-PKCS12.p12',
@@ -1900,12 +1642,8 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
           },
           { isSavePassphraseChecked: false, isSavePassphraseHidden: false }
         );
-        expect(
-          await settingsPage.isChecked('.container_for_import_key_email_alias @input-email-alias-alias1examplecom')
-        ).to.equal(true);
-        expect(
-          await settingsPage.isChecked('.container_for_import_key_email_alias @input-email-alias-alias2examplecom')
-        ).to.equal(true);
+        expect(await settingsPage.isChecked('.container_for_import_key_email_alias @input-email-alias-alias1examplecom')).to.equal(true);
+        expect(await settingsPage.isChecked('.container_for_import_key_email_alias @input-email-alias-alias2examplecom')).to.equal(true);
         await settingsPage.close();
       })
     );
@@ -1922,12 +1660,8 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
           longid: null, // eslint-disable-line no-null/no-null
         };
         await SetupPageRecipe.manualEnter(settingsPage, key.title, { submitPubkey: true, fillOnly: true, key });
-        expect(
-          await settingsPage.isChecked('.container_for_import_key_email_alias @input-email-alias-alias1examplecom')
-        ).to.equal(true);
-        expect(
-          await settingsPage.isChecked('.container_for_import_key_email_alias @input-email-alias-alias2examplecom')
-        ).to.equal(true);
+        expect(await settingsPage.isChecked('.container_for_import_key_email_alias @input-email-alias-alias1examplecom')).to.equal(true);
+        expect(await settingsPage.isChecked('.container_for_import_key_email_alias @input-email-alias-alias2examplecom')).to.equal(true);
         /* simulate several clicks then exclude alias2@example.com from submitting key from the attester */
         await settingsPage.waitAndClick('.container_for_import_key_email_alias @input-email-alias-alias1examplecom'); // uncheck
         await settingsPage.waitAndClick('.container_for_import_key_email_alias @input-email-alias-alias1examplecom'); // check

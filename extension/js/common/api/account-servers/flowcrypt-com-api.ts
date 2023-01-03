@@ -43,10 +43,7 @@ export namespace BackendRes {
 }
 
 export class FlowCryptComApi extends Api {
-  public static accountUpdate = async (
-    idToken: string,
-    profileUpdate: ProfileUpdate
-  ): Promise<BackendRes.FcAccountUpdate> => {
+  public static accountUpdate = async (idToken: string, profileUpdate: ProfileUpdate): Promise<BackendRes.FcAccountUpdate> => {
     return await FlowCryptComApi.request<BackendRes.FcAccountUpdate>(
       'account/update',
       {
@@ -58,12 +55,7 @@ export class FlowCryptComApi extends Api {
   };
 
   public static accountGetAndUpdateLocalStore = async (idToken: string): Promise<BackendRes.FcAccountGet> => {
-    const r = await FlowCryptComApi.request<BackendRes.FcAccountGet>(
-      'account/get',
-      {},
-      undefined,
-      FlowCryptComApi.getAuthorizationHeader(idToken)
-    );
+    const r = await FlowCryptComApi.request<BackendRes.FcAccountGet>('account/get', {}, undefined, FlowCryptComApi.getAuthorizationHeader(idToken));
     const { email } = GoogleAuth.parseIdToken(idToken);
     if (!email) {
       throw new Error('Id token is invalid');
@@ -75,11 +67,7 @@ export class FlowCryptComApi extends Api {
     return r;
   };
 
-  public static messageUpload = async (
-    idToken: string,
-    encryptedDataBinary: Uint8Array,
-    progressCb: ProgressCb
-  ): Promise<BackendRes.FcMsgUpload> => {
+  public static messageUpload = async (idToken: string, encryptedDataBinary: Uint8Array, progressCb: ProgressCb): Promise<BackendRes.FcMsgUpload> => {
     const content = new Attachment({
       name: 'cryptup_encrypted_message.asc',
       type: 'text/plain',
@@ -103,12 +91,7 @@ export class FlowCryptComApi extends Api {
   };
 
   public static messageToken = async (idToken: string): Promise<BackendRes.FcMsgToken> => {
-    return await FlowCryptComApi.request<BackendRes.FcMsgToken>(
-      'message/token',
-      {},
-      undefined,
-      FlowCryptComApi.getAuthorizationHeader(idToken)
-    );
+    return await FlowCryptComApi.request<BackendRes.FcMsgToken>('message/token', {}, undefined, FlowCryptComApi.getAuthorizationHeader(idToken));
   };
 
   private static request = async <RT>(

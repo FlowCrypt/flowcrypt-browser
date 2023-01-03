@@ -51,17 +51,7 @@ export class PgpBlockView extends View {
   public constructor() {
     super();
     Ui.event.protect();
-    const uncheckedUrlParams = Url.parse([
-      'acctEmail',
-      'frameId',
-      'message',
-      'parentTabId',
-      'msgId',
-      'isOutgoing',
-      'senderEmail',
-      'signature',
-      'debug',
-    ]);
+    const uncheckedUrlParams = Url.parse(['acctEmail', 'frameId', 'message', 'parentTabId', 'msgId', 'isOutgoing', 'senderEmail', 'signature', 'debug']);
     this.acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
     this.parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
     this.frameId = Assert.urlParamRequire.string(uncheckedUrlParams, 'frameId');
@@ -73,9 +63,7 @@ export class PgpBlockView extends View {
     if (/\.\.|\\|\//.test(decodeURI(this.msgId || ''))) {
       throw new Error('API path traversal forbidden');
     }
-    this.encryptedMsgUrlParam = uncheckedUrlParams.message
-      ? Buf.fromUtfStr(Assert.urlParamRequire.string(uncheckedUrlParams, 'message'))
-      : undefined;
+    this.encryptedMsgUrlParam = uncheckedUrlParams.message ? Buf.fromUtfStr(Assert.urlParamRequire.string(uncheckedUrlParams, 'message')) : undefined;
     if (uncheckedUrlParams.signature === true) {
       this.signature = { parsedSignature: undefined }; // decryptModule will try to fetch the message
     } else if (uncheckedUrlParams.signature) {
@@ -107,17 +95,13 @@ export class PgpBlockView extends View {
     this.pubLookup = new PubLookup(this.clientConfiguration);
     await this.renderModule.initPrintView();
     if (storage.setup_done) {
-      const parsedPubs =
-        (await ContactStore.getOneWithAllPubkeys(undefined, this.getExpectedSignerEmail()))?.sortedPubkeys ?? [];
+      const parsedPubs = (await ContactStore.getOneWithAllPubkeys(undefined, this.getExpectedSignerEmail()))?.sortedPubkeys ?? [];
       // todo: we don't actually need parsed pubs here because we're going to pass them to the backgorund page
       // maybe we can have a method in ContactStore to extract armored keys
       const verificationPubs = parsedPubs.map(key => KeyUtil.armor(key.pubkey));
       await this.decryptModule.initialize(verificationPubs, false);
     } else {
-      await this.errorModule.renderErr(
-        Lang.pgpBlock.refreshWindow,
-        this.encryptedMsgUrlParam ? this.encryptedMsgUrlParam.toUtfStr() : undefined
-      );
+      await this.errorModule.renderErr(Lang.pgpBlock.refreshWindow, this.encryptedMsgUrlParam ? this.encryptedMsgUrlParam.toUtfStr() : undefined);
     }
   };
 

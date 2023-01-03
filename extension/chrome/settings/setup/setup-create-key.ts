@@ -33,15 +33,11 @@ export class SetupCreateKeyModule {
         recovered: false,
       };
       /* eslint-enable @typescript-eslint/naming-convention */
-      const keyAlgo =
-        this.view.clientConfiguration.getEnforcedKeygenAlgo() ||
-        ($('#step_2a_manual_create .key_type').val() as KeyAlgo);
+      const keyAlgo = this.view.clientConfiguration.getEnforcedKeygenAlgo() || ($('#step_2a_manual_create .key_type').val() as KeyAlgo);
       const keyIdentity = await this.createSaveKeyPair(opts, keyAlgo);
       if (this.view.clientConfiguration.canBackupKeys()) {
         await this.view.submitPublicKeys(opts);
-        const action = $('#step_2a_manual_create .input_backup_inbox').prop('checked')
-          ? 'setup_automatic'
-          : 'setup_manual';
+        const action = $('#step_2a_manual_create .input_backup_inbox').prop('checked') ? 'setup_automatic' : 'setup_manual';
         // only finalize after backup is done.
         $('#step_2a_manual_create').hide();
         await this.view.backupUi.initialize({

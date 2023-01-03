@@ -59,9 +59,7 @@ export class SendableMsg {
     const invalidEmails = allEmails.filter(email => !Str.isEmailValid(email.email));
     // todo: distinguish To:, Cc: and Bcc: in error report?
     if (invalidEmails.length) {
-      throw new InvalidRecipientError(
-        `The To: field contains invalid emails: ${invalidEmails.join(', ')}\n\nPlease check recipients and try again.`
-      );
+      throw new InvalidRecipientError(`The To: field contains invalid emails: ${invalidEmails.join(', ')}\n\nPlease check recipients and try again.`);
     }
   }
 
@@ -77,11 +75,7 @@ export class SendableMsg {
     });
   };
 
-  public static createSMimeSigned = async (
-    acctEmail: string,
-    headers: SendableMsgHeaders,
-    data: Uint8Array
-  ): Promise<SendableMsg> => {
+  public static createSMimeSigned = async (acctEmail: string, headers: SendableMsgHeaders, data: Uint8Array): Promise<SendableMsg> => {
     return await SendableMsg.createSendableMsg(acctEmail, headers, { 'pkcs7/buf': Buf.fromUint8(data) }, [], {
       type: 'smimeSigned',
     });
@@ -183,35 +177,15 @@ export class SendableMsg {
     acctEmail: string,
     { from, replyTo, recipients, subject, thread, body, attachments, type, isDraft, externalId }: SendableMsgDefinition
   ): Promise<SendableMsg> => {
-    const mostUsefulPrv = KeyStoreUtil.chooseMostUseful(
-      await KeyStoreUtil.parse(await KeyStore.getRequired(acctEmail)),
-      'EVEN-IF-UNUSABLE'
-    );
+    const mostUsefulPrv = KeyStoreUtil.chooseMostUseful(await KeyStoreUtil.parse(await KeyStore.getRequired(acctEmail)), 'EVEN-IF-UNUSABLE');
     const headers: Dict<string> = {};
     if (mostUsefulPrv && mostUsefulPrv.key.family === 'openpgp') {
       headers.Openpgp = `id=${mostUsefulPrv.key.id}`; // todo - use autocrypt format
     }
-    return new SendableMsg(
-      acctEmail,
-      headers,
-      isDraft === true,
-      from,
-      replyTo,
-      recipients,
-      subject,
-      body || {},
-      attachments || [],
-      thread,
-      type,
-      externalId
-    );
+    return new SendableMsg(acctEmail, headers, isDraft === true, from, replyTo, recipients, subject, body || {}, attachments || [], thread, type, externalId);
   };
 
-  public getAllRecipients = () => [
-    ...(this.recipients.to || []),
-    ...(this.recipients.cc || []),
-    ...(this.recipients.bcc || []),
-  ];
+  public getAllRecipients = () => [...(this.recipients.to || []), ...(this.recipients.cc || []), ...(this.recipients.bcc || [])];
 
   public toMime = async () => {
     this.headers.From = this.from;
@@ -229,11 +203,7 @@ export class SendableMsg {
     }
     this.headers.Subject = this.subject;
     if (this.body['pkcs7/buf']) {
-      return await Mime.encodeSmime(
-        this.body['pkcs7/buf'],
-        this.headers,
-        this.type === 'smimeSigned' ? 'signed-data' : 'enveloped-data'
-      );
+      return await Mime.encodeSmime(this.body['pkcs7/buf'], this.headers, this.type === 'smimeSigned' ? 'signed-data' : 'enveloped-data');
     } else if (this.type === 'pgpMimeSigned' && this.sign) {
       return await Mime.encodePgpMimeSigned(this.body, this.headers, this.attachments, this.sign);
     } else {

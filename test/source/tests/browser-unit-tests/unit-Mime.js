@@ -293,23 +293,15 @@ BROWSER_UNIT_TEST_NAME(`Mime attachment file names`);
   filenames = filenames.concat([...Array(223).keys()].map(i => String.fromCharCode(i + 33)));
   // capital Cyrillic letters
   filenames.push('\u0401' + String.fromCharCode(...[...Array(32).keys()].map(i => i + 0x410)));
-  const attachments = filenames.map(
-    name => new Attachment({ name: name, type: 'text/plain', data: new Uint8Array([80, 81]) })
-  );
+  const attachments = filenames.map(name => new Attachment({ name: name, type: 'text/plain', data: new Uint8Array([80, 81]) }));
   const encoded = await Mime.encode({ 'text/plain': 'text' }, { Subject: 'subject' }, attachments);
-  const encodedFilenames = [
-    ...encoded.matchAll(/Content\-Disposition: attachment; ?\r?\n?(.+?)\r\nX\-Attachment\-Id/gs),
-  ];
+  const encodedFilenames = [...encoded.matchAll(/Content\-Disposition: attachment; ?\r?\n?(.+?)\r\nX\-Attachment\-Id/gs)];
   if (encodedFilenames.length !== expectedEncodedFilenames.length) {
-    throw Error(
-      `Found ${encodedFilenames.length} encoded filenames, while ${expectedEncodedFilenames.length} were expected`
-    );
+    throw Error(`Found ${encodedFilenames.length} encoded filenames, while ${expectedEncodedFilenames.length} were expected`);
   }
   const mismatchIndex = encodedFilenames.findIndex((value, index) => value[1] !== expectedEncodedFilenames[index]);
   if (mismatchIndex !== -1) {
-    throw Error(
-      `Mismatch at index ${mismatchIndex}, found: ${encodedFilenames[mismatchIndex][1]}, expected: ${expectedEncodedFilenames[mismatchIndex]}`
-    );
+    throw Error(`Mismatch at index ${mismatchIndex}, found: ${encodedFilenames[mismatchIndex][1]}, expected: ${expectedEncodedFilenames[mismatchIndex]}`);
   }
   const decoded = await Mime.decode(encoded);
   for (var i = 0; i < filenames.length; i++) {

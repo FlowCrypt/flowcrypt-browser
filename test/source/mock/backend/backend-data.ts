@@ -5,13 +5,7 @@ import { HttpClientErr } from '../lib/api';
 
 /* eslint-disable @typescript-eslint/naming-convention */
 export const keyManagerAutogenRules = {
-  flags: [
-    'NO_PRV_BACKUP',
-    'ENFORCE_ATTESTER_SUBMIT',
-    'PRV_AUTOIMPORT_OR_AUTOGEN',
-    'PASS_PHRASE_QUIET_AUTOGEN',
-    'DEFAULT_REMEMBER_PASS_PHRASE',
-  ],
+  flags: ['NO_PRV_BACKUP', 'ENFORCE_ATTESTER_SUBMIT', 'PRV_AUTOIMPORT_OR_AUTOGEN', 'PASS_PHRASE_QUIET_AUTOGEN', 'DEFAULT_REMEMBER_PASS_PHRASE'],
   key_manager_url: 'https://localhost:8001/flowcrypt-email-key-manager',
   enforce_keygen_algo: 'rsa2048',
   disallow_attester_search_for_domains: [],
@@ -75,13 +69,7 @@ export class BackendData {
     const domain = acct.split('@')[1];
     if (domain === 'client-configuration-test.flowcrypt.test') {
       return {
-        flags: [
-          'NO_PRV_CREATE',
-          'NO_PRV_BACKUP',
-          'HIDE_ARMOR_META',
-          'ENFORCE_ATTESTER_SUBMIT',
-          'SETUP_ENSURE_IMPORTED_PRV_MATCH_LDAP_PUB',
-        ],
+        flags: ['NO_PRV_CREATE', 'NO_PRV_BACKUP', 'HIDE_ARMOR_META', 'ENFORCE_ATTESTER_SUBMIT', 'SETUP_ENSURE_IMPORTED_PRV_MATCH_LDAP_PUB'],
       };
     }
     if (domain === 'passphrase-session-length-client-configuration.flowcrypt.test') {

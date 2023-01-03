@@ -42,15 +42,11 @@ View.run(
     public setHandlers = () => {
       $('.action_open_compatibility').on(
         'click',
-        this.setHandler(() =>
-          Settings.redirectSubPage(this.acctEmail, this.parentTabId, '/chrome/settings/modules/compatibility.htm')
-        )
+        this.setHandler(() => Settings.redirectSubPage(this.acctEmail, this.parentTabId, '/chrome/settings/modules/compatibility.htm'))
       );
       $('.action_open_decrypt').on(
         'click',
-        this.setHandler(() =>
-          Settings.redirectSubPage(this.acctEmail, this.parentTabId, '/chrome/settings/modules/decrypt.htm')
-        )
+        this.setHandler(() => Settings.redirectSubPage(this.acctEmail, this.parentTabId, '/chrome/settings/modules/decrypt.htm'))
       );
       $('.action_throw_unchecked').on('click', e => {
         e.preventDefault();
@@ -109,43 +105,25 @@ View.run(
           if (response.acctEmail === this.acctEmail) {
             await Ui.modal.info(`Account email address seems to be the same, nothing to update: ${this.acctEmail}`);
           } else if (response.acctEmail) {
-            if (
-              await Ui.modal.confirm(
-                `Change your Google Account email from ${this.acctEmail} to ${response.acctEmail}?`
-              )
-            ) {
+            if (await Ui.modal.confirm(`Change your Google Account email from ${this.acctEmail} to ${response.acctEmail}?`)) {
               try {
                 await Settings.acctStorageChangeEmail(this.acctEmail, response.acctEmail);
-                await Ui.modal.info(
-                  `Email address changed to ${response.acctEmail}. You should now check that your public key is properly submitted.`
-                );
-                await Browser.openSettingsPage(
-                  'index.htm',
-                  response.acctEmail,
-                  '/chrome/settings/modules/keyserver.htm'
-                );
+                await Ui.modal.info(`Email address changed to ${response.acctEmail}. You should now check that your public key is properly submitted.`);
+                await Browser.openSettingsPage('index.htm', response.acctEmail, '/chrome/settings/modules/keyserver.htm');
               } catch (e) {
                 Catch.reportErr(e);
-                await Ui.modal.error(
-                  `There was an error changing google account, please ${Lang.general.contactMinimalSubsentence(
-                    !!this.fesUrl
-                  )}`
-                );
+                await Ui.modal.error(`There was an error changing google account, please ${Lang.general.contactMinimalSubsentence(!!this.fesUrl)}`);
               }
             }
           } else {
-            await Ui.modal.error(
-              `Not able to retrieve new account email, please ${Lang.general.contactMinimalSubsentence(!!this.fesUrl)}`
-            );
+            await Ui.modal.error(`Not able to retrieve new account email, please ${Lang.general.contactMinimalSubsentence(!!this.fesUrl)}`);
           }
         } else if (response.result === 'Denied' || response.result === 'Closed') {
           await Ui.modal.info('Canceled by user, skipping.');
         } else {
           Catch.report('failed to log into google in action_account_email_changed', response);
           await Ui.modal.error(
-            'Failed to connect to Gmail (change). ' +
-              Lang.general.contactIfHappensAgain(!!this.fesUrl) +
-              `\n\n[${response.result}] ${response.error}`
+            'Failed to connect to Gmail (change). ' + Lang.general.contactIfHappensAgain(!!this.fesUrl) + `\n\n[${response.result}] ${response.error}`
           );
           window.location.reload();
         }

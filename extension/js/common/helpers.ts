@@ -18,12 +18,7 @@ export const isFesUsed = async (acctEmail: string) => {
   return Boolean(fesUrl);
 };
 
-export const setPassphraseForPrvs = async (
-  clientConfiguration: ClientConfiguration,
-  acctEmail: string,
-  prvs: Key[],
-  ppOptions: PassphraseOptions
-) => {
+export const setPassphraseForPrvs = async (clientConfiguration: ClientConfiguration, acctEmail: string, prvs: Key[], ppOptions: PassphraseOptions) => {
   const storageType = ppOptions.passphrase_save && !clientConfiguration.forbidStoringPassPhrase() ? 'local' : 'session';
   for (const prv of prvs) {
     await PassphraseStore.set(storageType, acctEmail, { longid: KeyUtil.getPrimaryLongid(prv) }, ppOptions.passphrase);
@@ -33,12 +28,7 @@ export const setPassphraseForPrvs = async (
 // note: for `replaceKeys = true` need to make sure that `prvs` don't have duplicate identities,
 // they is currently guaranteed by filterKeysToSave()
 // todo: perhaps split into two different functions for add or replace as part of #4545?
-const addOrReplaceKeysAndPassPhrase = async (
-  acctEmail: string,
-  prvs: Key[],
-  ppOptions?: PassphraseOptions,
-  replaceKeys = false
-) => {
+const addOrReplaceKeysAndPassPhrase = async (acctEmail: string, prvs: Key[], ppOptions?: PassphraseOptions, replaceKeys = false) => {
   if (replaceKeys) {
     // track longids to remove related passhprases
     const existingKeys = await KeyStore.get(acctEmail);
@@ -70,8 +60,7 @@ const addOrReplaceKeysAndPassPhrase = async (
   }
 };
 
-export const saveKeysAndPassPhrase: (acctEmail: string, prvs: Key[], ppOptions?: PassphraseOptions) => Promise<void> =
-  addOrReplaceKeysAndPassPhrase;
+export const saveKeysAndPassPhrase: (acctEmail: string, prvs: Key[], ppOptions?: PassphraseOptions) => Promise<void> = addOrReplaceKeysAndPassPhrase;
 
 const parseAndCheckPrivateKeys = async (decryptedPrivateKeys: string[]) => {
   const unencryptedPrvs: Key[] = [];
@@ -108,10 +97,7 @@ const filterKeysToSave = async (candidateKeys: Key[], existingKeys: KeyInfoWithI
     const existingKey = existingKeys.find(ki => KeyUtil.identityEquals(ki, candidateKey));
     if (existingKey) {
       const parsedExistingKey = await KeyUtil.parse(existingKey.private);
-      if (
-        !candidateKey.lastModified ||
-        (parsedExistingKey.lastModified && parsedExistingKey.lastModified >= candidateKey.lastModified)
-      ) {
+      if (!candidateKey.lastModified || (parsedExistingKey.lastModified && parsedExistingKey.lastModified >= candidateKey.lastModified)) {
         keysToRetain.push(parsedExistingKey);
         continue;
       }
@@ -136,10 +122,7 @@ export const processAndStoreKeysFromEkmLocally = async ({
     return { needPassphrase: false, noKeysSetup: !existingKeys.length };
   }
   let ppOptions: PassphraseOptions | undefined; // the options to pass to saveKeysAndPassPhrase
-  if (
-    !originalOptions?.passphrase &&
-    (await ClientConfiguration.newInstance(acctEmail)).mustAutogenPassPhraseQuietly()
-  ) {
+  if (!originalOptions?.passphrase && (await ClientConfiguration.newInstance(acctEmail)).mustAutogenPassPhraseQuietly()) {
     // eslint-disable-next-line @typescript-eslint/naming-convention
     ppOptions = { passphrase: PgpPwd.random(), passphrase_save: true };
   } else {
@@ -183,12 +166,7 @@ export const processAndStoreKeysFromEkmLocally = async ({
     // ppOptions have special meaning in saveKeysAndPassPhrase(), they trigger `name` updates, todo: refactor in #4545
     await saveKeysAndPassPhrase(acctEmail, encryptedKeys.keys, ppOptions ? effectivePpOptions : undefined);
     if (!ppOptions) {
-      await setPassphraseForPrvs(
-        await ClientConfiguration.newInstance(acctEmail),
-        acctEmail,
-        encryptedKeys.keys,
-        effectivePpOptions
-      );
+      await setPassphraseForPrvs(await ClientConfiguration.newInstance(acctEmail), acctEmail, encryptedKeys.keys, effectivePpOptions);
     }
   }
   return {
@@ -197,12 +175,8 @@ export const processAndStoreKeysFromEkmLocally = async ({
   };
 };
 
-export const getLocalKeyExpiration = async ({
-  acctEmail,
-}: Bm.GetLocalKeyExpiration): Promise<Bm.Res.GetLocalKeyExpiration> => {
+export const getLocalKeyExpiration = async ({ acctEmail }: Bm.GetLocalKeyExpiration): Promise<Bm.Res.GetLocalKeyExpiration> => {
   const kis = await KeyStore.get(acctEmail);
-  const expirations = await Promise.all(
-    kis.map(async ki => (await KeyUtil.parse(ki.public))?.expiration ?? Number.MAX_SAFE_INTEGER)
-  );
+  const expirations = await Promise.all(kis.map(async ki => (await KeyUtil.parse(ki.public))?.expiration ?? Number.MAX_SAFE_INTEGER));
   return Math.max(...expirations);
 };

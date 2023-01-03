@@ -62,25 +62,14 @@ export class ComposePwdOrPubkeyContainerModule extends ViewModule<ComposeView> {
     if (!this.view.recipientsModule.getRecipients().length || !this.view.sendBtnModule.popover.choices.encrypt) {
       this.hideMsgPwdUi(); // Hide 'Add Pasword' prompt if there are no recipients or message is not encrypted
       this.view.sendBtnModule.enableBtn();
-    } else if (
-      this.view.recipientsModule
-        .getRecipients()
-        .find(r => [RecipientStatus.NO_PGP, RecipientStatus.REVOKED].includes(r.status))
-    ) {
+    } else if (this.view.recipientsModule.getRecipients().find(r => [RecipientStatus.NO_PGP, RecipientStatus.REVOKED].includes(r.status))) {
       await this.showMsgPwdUiAndColorBtn(
         this.view.recipientsModule.getRecipients().some(r => r.status === RecipientStatus.NO_PGP),
         this.view.recipientsModule.getRecipients().some(r => r.status === RecipientStatus.REVOKED)
       ).catch(Catch.reportErr);
-    } else if (
-      this.view.recipientsModule
-        .getRecipients()
-        .find(r => [RecipientStatus.FAILED, RecipientStatus.WRONG].includes(r.status))
-    ) {
+    } else if (this.view.recipientsModule.getRecipients().find(r => [RecipientStatus.FAILED, RecipientStatus.WRONG].includes(r.status))) {
       this.view.S.now('send_btn_text').text(SendBtnTexts.BTN_WRONG_ENTRY);
-      this.view.S.cached('send_btn').attr(
-        'title',
-        'Notice the recipients marked in red: please remove them and try to enter them egain.'
-      );
+      this.view.S.cached('send_btn').attr('title', 'Notice the recipients marked in red: please remove them and try to enter them egain.');
       this.view.sendBtnModule.disableBtn();
     } else {
       this.hideMsgPwdUi();
@@ -138,8 +127,7 @@ export class ComposePwdOrPubkeyContainerModule extends ViewModule<ComposeView> {
   };
 
   private showMsgPwdUiAndColorBtn = async (anyNopgp: boolean, anyRevoked: boolean) => {
-    const isPasswordMessageDisabled =
-      this.view.clientConfiguration.shouldDisablePasswordMessages() && !this.view.isFesUsed();
+    const isPasswordMessageDisabled = this.view.clientConfiguration.shouldDisablePasswordMessages() && !this.view.isFesUsed();
     if (!this.isVisible()) {
       await this.initExpirationText();
       this.view.S.cached('password_or_pubkey').css('display', 'table-row');

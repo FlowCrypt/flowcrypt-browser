@@ -189,14 +189,8 @@ export class Xss {
     const blockEnd = `CU_BE_${random}`;
     html = html.replace(/<br[^>]*>/gi, br);
     html = html.replace(/\n/g, '');
-    html = html.replace(
-      /<\/(p|h1|h2|h3|h4|h5|h6|ol|ul|pre|address|blockquote|dl|div|fieldset|form|hr|table)[^>]*>/gi,
-      blockEnd
-    );
-    html = html.replace(
-      /<(p|h1|h2|h3|h4|h5|h6|ol|ul|pre|address|blockquote|dl|div|fieldset|form|hr|table)[^>]*>/gi,
-      blockStart
-    );
+    html = html.replace(/<\/(p|h1|h2|h3|h4|h5|h6|ol|ul|pre|address|blockquote|dl|div|fieldset|form|hr|table)[^>]*>/gi, blockEnd);
+    html = html.replace(/<(p|h1|h2|h3|h4|h5|h6|ol|ul|pre|address|blockquote|dl|div|fieldset|form|hr|table)[^>]*>/gi, blockStart);
     html = html.replace(RegExp(`(${blockStart})+`, 'g'), blockStart).replace(RegExp(`(${blockEnd})+`, 'g'), blockEnd);
     html = html
       .split(br + blockEnd + blockStart)
@@ -228,13 +222,7 @@ export class Xss {
   };
 
   public static escape = (str: string) => {
-    return str
-      .replace(/&/g, '&amp;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#39;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/\//g, '&#x2F;');
+    return str.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\//g, '&#x2F;');
   };
 
   public static htmlUnescape = (str: string) => {
@@ -270,14 +258,9 @@ export class Xss {
    */
   private static sanitizeHrefRegexp = () => {
     if (typeof Xss.HREF_REGEX_CACHE === 'undefined') {
-      if (
-        window?.location?.origin &&
-        window.location.origin.match(/^(?:chrome-extension|moz-extension):\/\/[a-z0-9\-]+$/g)
-      ) {
+      if (window?.location?.origin && window.location.origin.match(/^(?:chrome-extension|moz-extension):\/\/[a-z0-9\-]+$/g)) {
         Xss.HREF_REGEX_CACHE = new RegExp(
-          `^(?:(http|https|cid):|data:image/|${Str.regexEscape(
-            window.location.origin
-          )}|[^a-z]|[a-z+.\\-]+(?:[^a-z+.\\-:]|$))`,
+          `^(?:(http|https|cid):|data:image/|${Str.regexEscape(window.location.origin)}|[^a-z]|[a-z+.\\-]+(?:[^a-z+.\\-:]|$))`,
           'i'
         );
       } else {

@@ -64,11 +64,7 @@ export class Wkd extends Api {
     return { pubkeys: filtered.map(pubkey => pubkey.armored) };
   };
 
-  private urlLookup = async (
-    methodUrlBase: string,
-    userPart: string,
-    timeout: number
-  ): Promise<{ hasPolicy: boolean; buf?: Buf }> => {
+  private urlLookup = async (methodUrlBase: string, userPart: string, timeout: number): Promise<{ hasPolicy: boolean; buf?: Buf }> => {
     try {
       await Wkd.download(`${methodUrlBase}/policy`, undefined, timeout);
     } catch (e) {

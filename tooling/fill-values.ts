@@ -25,10 +25,7 @@ const replaceables: { needle: RegExp; val: string }[] = [
   { needle: /\[BUILD_REPLACEABLE_ATTESTER_API_HOST\]/g, val: 'https://flowcrypt.com/attester/' },
 ];
 
-const paths = [
-  `${targetDirExtension}/js/common/core/const.js`,
-  `./build/${targetDirContentScripts}/js/common/core/const.js`,
-];
+const paths = [`${targetDirExtension}/js/common/core/const.js`, `./build/${targetDirContentScripts}/js/common/core/const.js`];
 
 for (const path of paths) {
   let source = readFileSync(path).toString();

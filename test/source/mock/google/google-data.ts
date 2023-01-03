@@ -176,9 +176,7 @@ export class GoogleData {
       };
       const dir = GoogleData.exportedMsgsPath;
       const filenames: string[] = await new Promise((res, rej) => readdir(dir, (e, f) => (e ? rej(e) : res(f))));
-      const filePromises = filenames.map(
-        f => new Promise((res, rej) => readFile(dir + f, (e, d) => (e ? rej(e) : res(d))))
-      );
+      const filePromises = filenames.map(f => new Promise((res, rej) => readFile(dir + f, (e, d) => (e ? rej(e) : res(d)))));
       const files = (await Promise.all(filePromises)) as Uint8Array[];
       for (const file of files) {
         const utfStr = new TextDecoder().decode(file);
@@ -206,9 +204,7 @@ export class GoogleData {
     const msgCopy = JSON.parse(JSON.stringify(m)) as GmailMsg;
     if (format === 'raw') {
       if (!msgCopy.raw) {
-        throw new Error(
-          `MOCK: format=raw missing data for message id ${m.id}. Solution: add them to ./test/source/mock/data/google/exported-messages`
-        );
+        throw new Error(`MOCK: format=raw missing data for message id ${m.id}. Solution: add them to ./test/source/mock/data/google/exported-messages`);
       }
     } else {
       msgCopy.raw = undefined;
@@ -315,13 +311,9 @@ export class GoogleData {
       // messages just filtered by subject
       return this.searchMessagesBySubject(subject);
     }
-    const excludePeople = (q.match(this.exludePplSearchQuery) || []).map(e =>
-      e.replace(/^(-from|-to):/, '').replace(/"/g, '')
-    );
+    const excludePeople = (q.match(this.exludePplSearchQuery) || []).map(e => e.replace(/^(-from|-to):/, '').replace(/"/g, ''));
     q = q.replace(this.exludePplSearchQuery, ' ');
-    const includePeople = (q.match(this.includePplSearchQuery) || []).map(e =>
-      e.replace(/^(from|to):/, '').replace(/"/g, '')
-    );
+    const includePeople = (q.match(this.includePplSearchQuery) || []).map(e => e.replace(/^(from|to):/, '').replace(/"/g, ''));
     if (includePeople.length || excludePeople.length) {
       // if any to,from query found, all such queries are collected
       // no distinction made between to and from, just searches headers

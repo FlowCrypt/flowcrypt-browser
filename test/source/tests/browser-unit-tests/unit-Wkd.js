@@ -58,9 +58,7 @@ BROWSER_UNIT_TEST_NAME(`Wkd client returns all keys`);
   if (!pubkeys.length) {
     throw Error(`Wkd for ${email} didn't return a pubkey`);
   }
-  const ids = (await Promise.all(pubkeys.map(async pubkey => await KeyUtil.parse(pubkey)))).map(key =>
-    key.id.toUpperCase()
-  );
+  const ids = (await Promise.all(pubkeys.map(async pubkey => await KeyUtil.parse(pubkey)))).map(key => key.id.toUpperCase());
   if (
     ids.length === 3 &&
     ids.includes('D6662C5FB9BDE9DA01F3994AAA1EF832D8CCA4F2') &&

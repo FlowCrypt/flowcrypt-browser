@@ -49,10 +49,7 @@ View.run(
       }
       // todo - should be working across all keys. Existing keys may be encrypted for various pass phrases,
       //  which will complicate UI once implemented
-      this.mostUsefulPrv = KeyStoreUtil.chooseMostUseful(
-        await KeyStoreUtil.parse(await KeyStore.getRequired(this.acctEmail)),
-        'EVEN-IF-UNUSABLE'
-      );
+      this.mostUsefulPrv = KeyStoreUtil.chooseMostUseful(await KeyStoreUtil.parse(await KeyStore.getRequired(this.acctEmail)), 'EVEN-IF-UNUSABLE');
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const storedOrSessionPp = await PassphraseStore.get(this.acctEmail, this.mostUsefulPrv!.keyInfo);
       if (
@@ -86,10 +83,7 @@ View.run(
         'click',
         this.setHandlerPrevent('double', () => this.actionDoChangePassPhraseHandler())
       );
-      $('#current_pass_phrase').on(
-        'keydown',
-        this.setEnterHandlerThatClicks('#step_0_enter_current .action_test_current_passphrase')
-      );
+      $('#current_pass_phrase').on('keydown', this.setEnterHandlerThatClicks('#step_0_enter_current .action_test_current_passphrase'));
       $('#new_pass_phrase').on('keydown', this.setEnterHandlerThatClicks('#step_1_enter_new .action_set_pass_phrase'));
       $('#new_pass_phrase_confirm').on('keydown', this.setEnterHandlerThatClicks('#step_2_confirm_new .action_change'));
     };
@@ -112,9 +106,7 @@ View.run(
         this.displayBlock('step_2_confirm_new');
         $('#new_pass_phrase_confirm').focus();
       } else {
-        await Ui.modal.warning(
-          'Please select a stronger pass phrase. Combinations of 4 to 5 uncommon words are the best.'
-        );
+        await Ui.modal.warning('Please select a stronger pass phrase. Combinations of 4 to 5 uncommon words are the best.');
       }
     };
 
@@ -139,40 +131,20 @@ View.run(
       } catch (e) {
         Catch.reportErr(e);
         await Ui.modal.error(
-          `There was an unexpected error. ${Lang.general.contactForSupportSentence(!!this.fesUrl)}\n\n${
-            e instanceof Error ? e.stack : String(e)
-          }`
+          `There was an unexpected error. ${Lang.general.contactForSupportSentence(!!this.fesUrl)}\n\n${e instanceof Error ? e.stack : String(e)}`
         );
         return;
       }
       /* eslint-disable @typescript-eslint/no-non-null-assertion */
       await KeyStore.add(this.acctEmail, this.mostUsefulPrv!.key);
       const shouldSavePassphraseInStorage =
-        !this.clientConfiguration.forbidStoringPassPhrase() &&
-        !!(await PassphraseStore.get(this.acctEmail, this.mostUsefulPrv!.keyInfo, true));
-      await PassphraseStore.set(
-        'local',
-        this.acctEmail,
-        this.mostUsefulPrv!.keyInfo,
-        shouldSavePassphraseInStorage ? newPp : undefined
-      );
-      await PassphraseStore.set(
-        'session',
-        this.acctEmail,
-        this.mostUsefulPrv!.keyInfo,
-        shouldSavePassphraseInStorage ? undefined : newPp
-      );
+        !this.clientConfiguration.forbidStoringPassPhrase() && !!(await PassphraseStore.get(this.acctEmail, this.mostUsefulPrv!.keyInfo, true));
+      await PassphraseStore.set('local', this.acctEmail, this.mostUsefulPrv!.keyInfo, shouldSavePassphraseInStorage ? newPp : undefined);
+      await PassphraseStore.set('session', this.acctEmail, this.mostUsefulPrv!.keyInfo, shouldSavePassphraseInStorage ? undefined : newPp);
       /* eslint-enable @typescript-eslint/no-non-null-assertion */
       if (this.clientConfiguration.canBackupKeys()) {
-        await Ui.modal.info(
-          'Now that you changed your pass phrase, you should back up your key. New backup will be protected with new passphrase.'
-        );
-        Settings.redirectSubPage(
-          this.acctEmail,
-          this.parentTabId,
-          '/chrome/settings/modules/backup.htm',
-          '&action=backup_manual'
-        );
+        await Ui.modal.info('Now that you changed your pass phrase, you should back up your key. New backup will be protected with new passphrase.');
+        Settings.redirectSubPage(this.acctEmail, this.parentTabId, '/chrome/settings/modules/backup.htm', '&action=backup_manual');
       } else {
         await Ui.modal.info('Pass phrase changed for this device');
         BrowserMsg.send.closePage(this.parentTabId);

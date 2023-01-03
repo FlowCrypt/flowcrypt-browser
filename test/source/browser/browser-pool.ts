@@ -138,12 +138,7 @@ export class BrowserPool {
     });
   };
 
-  public withNewBrowserTimeoutAndRetry = async (
-    cb: (t: AvaContext, browser: BrowserHandle) => void,
-    t: AvaContext,
-    consts: Consts,
-    flag?: 'FAILING'
-  ) => {
+  public withNewBrowserTimeoutAndRetry = async (cb: (t: AvaContext, browser: BrowserHandle) => void, t: AvaContext, consts: Consts, flag?: 'FAILING') => {
     const withTimeouts = newWithTimeoutsFunc(consts);
     const attemptDebugHtmls: string[] = [];
     t.totalAttempts = flag === 'FAILING' ? 1 : consts.ATTEMPTS;
@@ -188,11 +183,7 @@ export class BrowserPool {
     }
   };
 
-  private testFailSingleAttemptDebugHtml = async (
-    t: AvaContext,
-    browser: BrowserHandle,
-    err: unknown
-  ): Promise<string> => {
+  private testFailSingleAttemptDebugHtml = async (t: AvaContext, browser: BrowserHandle, err: unknown): Promise<string> => {
     return `
     <div class="attempt">
       <div style="display:none;">

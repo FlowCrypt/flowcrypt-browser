@@ -40,10 +40,7 @@ View.run(
       Ui.event.protect();
       for (const missingPubkeyEmail of this.missingPubkeyEmails) {
         const escapedMissingPubkeyEmail = Xss.escape(missingPubkeyEmail);
-        Xss.sanitizeAppend(
-          'select.email',
-          `<option value="${escapedMissingPubkeyEmail}">${escapedMissingPubkeyEmail}</option>`
-        );
+        Xss.sanitizeAppend('select.email', `<option value="${escapedMissingPubkeyEmail}">${escapedMissingPubkeyEmail}</option>`);
       }
       const uniqueEmails = new Set<string>();
       for (const contact of await ContactStore.search(undefined, { hasPgp: true })) {
@@ -56,10 +53,7 @@ View.run(
       this.fetchKeyUi.handleOnPaste($('.pubkey'));
       $('.action_settings').on(
         'click',
-        this.setHandler(
-          async () =>
-            await Browser.openSettingsPage('index.htm', this.acctEmail, '/chrome/settings/modules/contacts.htm')
-        )
+        this.setHandler(async () => await Browser.openSettingsPage('index.htm', this.acctEmail, '/chrome/settings/modules/contacts.htm'))
       );
     };
 
@@ -70,9 +64,7 @@ View.run(
           const { keys, errs } = await KeyUtil.readMany(file.getData());
           if (keys.length) {
             if (errs.length) {
-              await Ui.modal.warning(
-                `some keys could not be processed due to errors:\n${errs.map(e => `-> ${e.message}\n`).join('')}`
-              );
+              await Ui.modal.warning(`some keys could not be processed due to errors:\n${errs.map(e => `-> ${e.message}\n`).join('')}`);
             }
             $('.copy_from_email').val('');
             $('.pubkey').val(String(KeyUtil.armor(keys[0])));
@@ -135,9 +127,7 @@ View.run(
           await Ui.modal.warning(e.message);
         } else {
           Catch.reportErr(e);
-          await Ui.modal.error(
-            `Error happened when processing the public key: ${e instanceof Error ? e.message : String(e)}`
-          );
+          await Ui.modal.error(`Error happened when processing the public key: ${e instanceof Error ? e.message : String(e)}`);
         }
       }
     };

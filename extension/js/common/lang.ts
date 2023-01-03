@@ -6,14 +6,10 @@ import { FLAVOR } from './core/const.js';
 
 const isEnterpriseBuildUsed = FLAVOR === 'enterprise';
 
-const contactMinimalSubsentence = (isFesUsed: boolean) =>
-  isFesUsed || isEnterpriseBuildUsed ? 'contact your Help Desk' : 'write us at human@flowcrypt.com';
-const contactIfHappensAgain = (isFesUsed: boolean) =>
-  `If this happens again, please ${contactMinimalSubsentence(isFesUsed)}. `;
+const contactMinimalSubsentence = (isFesUsed: boolean) => (isFesUsed || isEnterpriseBuildUsed ? 'contact your Help Desk' : 'write us at human@flowcrypt.com');
+const contactIfHappensAgain = (isFesUsed: boolean) => `If this happens again, please ${contactMinimalSubsentence(isFesUsed)}. `;
 const contactForSupportSubsentence = (isFesUsed: boolean, reason = '') =>
-  isFesUsed || isEnterpriseBuildUsed
-    ? `Please contact your Help Desk ${reason}`
-    : `Please write us at human@flowcrypt.com ${reason}`;
+  isFesUsed || isEnterpriseBuildUsed ? `Please contact your Help Desk ${reason}` : `Please write us at human@flowcrypt.com ${reason}`;
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export const Lang = {
@@ -60,10 +56,8 @@ export const Lang = {
     details: 'Details: ',
     pwdMsgOnlyReadableOnWeb:
       'This password-encrypted message (received before installing FlowCrypt?) is only readable on the web.\n\nPlease click "Open Message" above and enter sender-provided message password to open it.\n\nAlternatively, ask sender to re-send it - newly received messages will be readable in inbox.\n\n',
-    yourKeyCantOpenImportIfHave:
-      'Your current key cannot open this message. If you have any other keys available, you should import them now.\n',
-    encryptedCorrectlyFileBug:
-      "It's correctly encrypted for you. Please file a bug report if you see this on multiple messages. ",
+    yourKeyCantOpenImportIfHave: 'Your current key cannot open this message. If you have any other keys available, you should import them now.\n',
+    encryptedCorrectlyFileBug: "It's correctly encrypted for you. Please file a bug report if you see this on multiple messages. ",
     singleSender:
       'Normally, messages are encrypted for at least two people (sender and the receiver). It seems the sender encrypted this message manually for themselves, and forgot to add you as a receiver. This sometimes happens when the sender is using OpenPGP software other than FlowCrypt, because they have to configure encryption manually, and mistakes can happen. ',
     accountInfoOutdated: 'Some of your account information is incorrect. Update it to prevent future errors. ',
@@ -78,9 +72,7 @@ export const Lang = {
     decryptPasswordPrompt: 'Please enter password to decrypt the message',
     connError: 'Could not connect to email provider to open the message, please refresh the page to try again. ',
     dontKnowHowOpen: (isFesUsed: boolean) =>
-      `Please ${contactMinimalSubsentence(
-        isFesUsed
-      )} to submit a bug report, and mention what software was used to send this message to you. `,
+      `Please ${contactMinimalSubsentence(isFesUsed)} to submit a bug report, and mention what software was used to send this message to you. `,
     enterPassphrase: 'Enter passphrase',
     toOpenMsg: 'to open this message.',
     refreshWindow: 'Please refresh your web mail window to read encrypted messages. ',
@@ -92,12 +84,10 @@ export const Lang = {
     askSenderRenew: 'Please ask the sender to renew the message if you still need the contents',
     cannotLocate: 'Could not locate this message.',
     brokenLink: 'It seems it contains a broken link.',
-    pwdMsgAskSenderUsePubkey:
-      'This appears to be a password-protected message. Please ask the sender to encrypt messages for your Public Key instead.',
+    pwdMsgAskSenderUsePubkey: 'This appears to be a password-protected message. Please ask the sender to encrypt messages for your Public Key instead.',
   },
   compose: {
-    abortSending:
-      'A message is currently being sent. Closing the compose window may abort sending the message.\nAbort sending?',
+    abortSending: 'A message is currently being sent. Closing the compose window may abort sending the message.\nAbort sending?',
     addMissingRecipientPubkeys: `Some recipients don't have encryption set up. Please import their public keys or ask them to install Flowcrypt.`,
     pleaseReconnectAccount:
       'Please reconnect FlowCrypt to your Gmail Account. This is typically needed after a long time of no use, a password change, or similar account changes. ',
@@ -124,8 +114,7 @@ export const Lang = {
     },
     pubkeyExpiredConfirmCompose:
       'The public key of one of your recipients is expired.\n\nThe right thing to do is to ask the recipient to send you an updated Public Key.\n\nAre you sure you want to encrypt this message for an expired public key? (NOT RECOMMENDED)',
-    needReadAccessToReply:
-      'FlowCrypt has limited functionality. Your browser needs to access this conversation to reply.',
+    needReadAccessToReply: 'FlowCrypt has limited functionality. Your browser needs to access this conversation to reply.',
     addMissingPermission: 'Add missing permission',
     enterprisePasswordPolicy:
       'Please use password with the following properties:\n - one uppercase\n - one lowercase\n - one number\n - one special character eg &"#-\'_%-@,;:!*()\n - 8 characters length',
@@ -134,19 +123,14 @@ export const Lang = {
   general: {
     contactMinimalSubsentence,
     contactIfHappensAgain,
-    contactIfNeedAssistance: (isFesUsed = false) =>
-      contactForSupportSubsentence(isFesUsed, 'if you need an assistance.'),
-    somethingWentWrongTryAgain: (isFesUsed: boolean) =>
-      `Something went wrong, please try again. ${contactIfHappensAgain(isFesUsed)}`,
+    contactIfNeedAssistance: (isFesUsed = false) => contactForSupportSubsentence(isFesUsed, 'if you need an assistance.'),
+    somethingWentWrongTryAgain: (isFesUsed: boolean) => `Something went wrong, please try again. ${contactIfHappensAgain(isFesUsed)}`,
     contactForSupportSubsentence,
     contactForSupportSentence: (isFesUsed = false) => contactForSupportSubsentence(isFesUsed, 'for support.'),
     writeMeToFixIt: (isFesUsed: boolean) => contactForSupportSubsentence(isFesUsed, 'to fix it.'),
     restartBrowserAndTryAgain: (isFesUsed: boolean) =>
-      `Unexpected error occured. Please restart your browser and try again. If this persists after a restart, ${contactForSupportSubsentence(
-        isFesUsed
-      )}.`,
-    emailAliasChangedAskForReload:
-      'Your email aliases on Gmail have refreshed since the last time you used FlowCrypt.\nReload the compose window now?',
+      `Unexpected error occured. Please restart your browser and try again. If this persists after a restart, ${contactForSupportSubsentence(isFesUsed)}.`,
+    emailAliasChangedAskForReload: 'Your email aliases on Gmail have refreshed since the last time you used FlowCrypt.\nReload the compose window now?',
   },
   passphraseRequired: {
     sign: 'Enter FlowCrypt pass phrase to sign email',

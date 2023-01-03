@@ -23,12 +23,7 @@ export class KeyManager extends Api {
     return await this.request('PUT', '/v1/keys/private', { privateKey }, idToken);
   };
 
-  private request = async <RT>(
-    method: ReqMethod,
-    path: string,
-    vals?: Dict<unknown> | undefined,
-    idToken?: string
-  ): Promise<RT> => {
+  private request = async <RT>(method: ReqMethod, path: string, vals?: Dict<unknown> | undefined, idToken?: string): Promise<RT> => {
     return await Api.apiCall(
       this.url,
       path,

@@ -55,9 +55,7 @@ export class Injector {
 
   public meta = () => {
     this.S.cached('body')
-      .addClass(
-        `cryptup_${this.webmailName} cryptup_${this.webmailName}_${this.webmailVariant} ${Catch.browser().name}`
-      )
+      .addClass(`cryptup_${this.webmailName} cryptup_${this.webmailName}_${this.webmailVariant} ${Catch.browser().name}`)
       .append(this.factory.metaStylesheet('webmail') + this.factory.metaNotificationContainer()); // xss-safe-factory
   };
 
@@ -101,9 +99,7 @@ export class Injector {
     if (!prependToElem.length) {
       if (!this.missingElSelectorReported[this.container.finishSesionBtnSel[this.webmailName]]) {
         Catch.report(
-          `Selector for locking session container not found: '${
-            this.container.finishSesionBtnSel[this.webmailName]
-          }' (add .children().last() if Gmail)`
+          `Selector for locking session container not found: '${this.container.finishSesionBtnSel[this.webmailName]}' (add .children().last() if Gmail)`
         );
         this.missingElSelectorReported[this.container.finishSesionBtnSel[this.webmailName]] = true;
       }

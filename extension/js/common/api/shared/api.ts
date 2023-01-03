@@ -41,12 +41,7 @@ export class Api {
       request.open('GET', url, true);
       request.responseType = 'arraybuffer';
       if (typeof progress === 'function') {
-        request.onprogress = evt =>
-          progress(
-            evt.lengthComputable ? Math.floor((evt.loaded / evt.total) * 100) : undefined,
-            evt.loaded,
-            evt.total
-          );
+        request.onprogress = evt => progress(evt.lengthComputable ? Math.floor((evt.loaded / evt.total) * 100) : undefined, evt.loaded, evt.total);
       }
       const errHandler = (progressEvent: ProgressEvent<EventTarget>) => {
         if (!progressEvent.target) {

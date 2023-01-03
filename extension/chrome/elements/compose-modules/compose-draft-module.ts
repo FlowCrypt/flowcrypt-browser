@@ -79,10 +79,7 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
         Xss.sanitizeRender('body', `Failed to load draft. ${Ui.retryLink()}`);
       } else if (ApiErr.isAuthErr(e)) {
         BrowserMsg.send.notificationShowAuthPopupNeeded(this.view.parentTabId, { acctEmail: this.view.acctEmail });
-        Xss.sanitizeRender(
-          'body',
-          `Failed to load draft - FlowCrypt needs to be re-connected to Gmail. ${Ui.retryLink()}`
-        );
+        Xss.sanitizeRender('body', `Failed to load draft - FlowCrypt needs to be re-connected to Gmail. ${Ui.retryLink()}`);
       } else if (this.view.isReplyBox && ApiErr.isNotFound(e)) {
         console.info('about to reload reply_message automatically: get draft 404', this.view.acctEmail);
         await Ui.time.sleep(500);
@@ -123,11 +120,7 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
     if (this.disableSendingDrafts) {
       return;
     }
-    if (
-      this.hasBodyChanged(this.view.inputModule.squire.getHTML()) ||
-      this.hasSubjectChanged(String(this.view.S.cached('input_subject').val())) ||
-      forceSave
-    ) {
+    if (this.hasBodyChanged(this.view.inputModule.squire.getHTML()) || this.hasSubjectChanged(String(this.view.S.cached('input_subject').val())) || forceSave) {
       this.currentlySavingDraft = true;
       try {
         const msgData = await this.view.inputModule.extractAll();
@@ -163,15 +156,11 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
         if (ApiErr.isAuthErr(e)) {
           BrowserMsg.send.notificationShowAuthPopupNeeded(this.view.parentTabId, { acctEmail: this.view.acctEmail });
           this.view.S.cached('send_btn_note').text('Not saved (reconnect)');
-        } else if (
-          e instanceof Error &&
-          e.message.indexOf('Could not find valid key packet for encryption in key') !== -1
-        ) {
+        } else if (e instanceof Error && e.message.indexOf('Could not find valid key packet for encryption in key') !== -1) {
           this.view.S.cached('send_btn_note').text('Not saved (bad key)');
         } else if (
           this.view.draftId &&
-          (ApiErr.isNotFound(e) ||
-            (e instanceof AjaxErr && e.status === 400 && e.responseText.indexOf('Message not a draft') !== -1))
+          (ApiErr.isNotFound(e) || (e instanceof AjaxErr && e.status === 400 && e.responseText.indexOf('Message not a draft') !== -1))
         ) {
           // not found - updating draft that was since deleted
           // not a draft - updating draft that was since sent as a message (in another window), and is not a draft anymore
@@ -335,10 +324,7 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
     }
     this.wasMsgLoadedFromDraft = true;
     this.view.S.cached('prompt').css({ display: 'none' });
-    const { blocks, isRichText } = await MsgBlockParser.fmtDecryptedAsSanitizedHtmlBlocks(
-      decrypted.content,
-      'IMG-KEEP'
-    );
+    const { blocks, isRichText } = await MsgBlockParser.fmtDecryptedAsSanitizedHtmlBlocks(decrypted.content, 'IMG-KEEP');
     const sanitizedContent = blocks.find(b => b.type === 'decryptedHtml')?.content;
     if (!sanitizedContent) {
       return await this.abortAndRenderReplyMsgComposeTableIfIsReplyBox('!sanitizedContent');
@@ -412,12 +398,7 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
       BrowserMsg.send.setActiveWindow(this.view.parentTabId, { frameId: this.view.frameId });
     });
     this.view.S.cached('prompt').on('click', setActiveWindow).trigger('click');
-    await PassphraseStore.waitUntilPassphraseChanged(
-      this.view.acctEmail,
-      longids,
-      1000,
-      this.view.ppChangedPromiseCancellation
-    );
+    await PassphraseStore.waitUntilPassphraseChanged(this.view.acctEmail, longids, 1000, this.view.ppChangedPromiseCancellation);
   };
 
   private abortAndRenderReplyMsgComposeTableIfIsReplyBox = async (reason: string) => {

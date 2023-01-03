@@ -77,9 +77,7 @@ export const defineUnitBrowserTests = (testVariant: TestVariant, testWithBrowser
         }
         if (!code.endsWith('})();')) {
           console.error(code);
-          throw Error(
-            `Test case does not end with '})();'. Did you put code outside of the async functions? (forbidden)`
-          );
+          throw Error(`Test case does not end with '})();'. Did you put code outside of the async functions? (forbidden)`);
         }
         const testCodeLines = code.split('\n');
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion

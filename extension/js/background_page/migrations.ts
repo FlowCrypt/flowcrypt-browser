@@ -102,9 +102,7 @@ const processSmimeKey = (pubkey: Pubkey, tx: IDBTransaction, data: PubkeyMigrati
         data.emailsToUpdate[emailEntity.email] = emailEntity;
       }
       const entityToUpdate = cachedEmail ?? emailEntity;
-      entityToUpdate.fingerprints = entityToUpdate.fingerprints.filter(
-        fp => fp !== pubkey.fingerprint && fp !== newPubkeyEntity.fingerprint
-      );
+      entityToUpdate.fingerprints = entityToUpdate.fingerprints.filter(fp => fp !== pubkey.fingerprint && fp !== newPubkeyEntity.fingerprint);
       entityToUpdate.fingerprints.push(newPubkeyEntity.fingerprint);
     }
     next();
@@ -185,9 +183,7 @@ export const updateOpgpRevocations = async (db: IDBDatabase): Promise<void> => {
   });
   const revokedKeys = (
     await Promise.all(
-      pubkeys
-        .filter(entity => KeyUtil.getKeyFamily(entity.armoredKey) === 'openpgp')
-        .map(async entity => await KeyUtil.parse(entity.armoredKey))
+      pubkeys.filter(entity => KeyUtil.getKeyFamily(entity.armoredKey) === 'openpgp').map(async entity => await KeyUtil.parse(entity.armoredKey))
     )
   ).filter(k => k.revoked);
   const txUpdate = db.transaction(['revocations'], 'readwrite');
@@ -239,10 +235,7 @@ const moveContactsBatchToEmailsAndPubkeys = async (db: IDBDatabase, count?: numb
   // transform
   const converted = await Promise.all(
     entries.map(async entry => {
-      const armoredPubkey =
-        entry.pubkey && typeof entry.pubkey === 'object'
-          ? entry.pubkey.rawArmored ?? entry.pubkey.raw
-          : (entry.pubkey as string);
+      const armoredPubkey = entry.pubkey && typeof entry.pubkey === 'object' ? entry.pubkey.rawArmored ?? entry.pubkey.raw : (entry.pubkey as string);
       // parse again to re-calculate expiration-related fields etc.
       const pubkey = armoredPubkey ? await KeyUtil.parse(armoredPubkey) : undefined;
       return {

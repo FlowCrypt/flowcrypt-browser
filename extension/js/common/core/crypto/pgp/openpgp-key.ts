@@ -54,9 +54,7 @@ export class OpenPGPKey {
       throw new UnexpectedKeyTypeError(`Key type is ${pubkey.family}, expecting OpenPGP`);
     }
     if (pubkey.isPrivate) {
-      return await OpenPGPKey.convertExternalLibraryObjToKey(
-        OpenPGPKey.extractStrengthUncheckedExternalLibraryObjFromKey(pubkey).toPublic()
-      );
+      return await OpenPGPKey.convertExternalLibraryObjToKey(OpenPGPKey.extractStrengthUncheckedExternalLibraryObjFromKey(pubkey).toPublic());
     }
     return pubkey;
   };
@@ -118,9 +116,7 @@ export class OpenPGPKey {
       throw new Error(`No private key packets in key to encrypt. Is this a private key?`);
     }
     if (encryptedPacketCount) {
-      throw new Error(
-        `Cannot encrypt a key that has ${encryptedPacketCount} of ${secretPackets.length} private packets still encrypted`
-      );
+      throw new Error(`Cannot encrypt a key that has ${encryptedPacketCount} of ${secretPackets.length} private packets still encrypted`);
     }
     await prv.encrypt(passphrase);
     if (!prv.isFullyEncrypted()) {
@@ -138,15 +134,7 @@ export class OpenPGPKey {
     );
   };
 
-  public static encryptMessage: PgpMsgMethod.Encrypt = async ({
-    pubkeys,
-    signingPrv,
-    pwd,
-    data,
-    filename,
-    armor,
-    date,
-  }) => {
+  public static encryptMessage: PgpMsgMethod.Encrypt = async ({ pubkeys, signingPrv, pwd, data, filename, armor, date }) => {
     const message = opgp.message.fromBinary(data, filename, date);
     const options: OpenPGP.EncryptOptions = { armor, message, date };
     if (pubkeys) {
@@ -283,12 +271,8 @@ export class OpenPGPKey {
       lastModified,
       expiration: exp instanceof Date ? exp.getTime() : undefined,
       created: keyWithoutWeakPackets.getCreationTime().getTime(),
-      fullyDecrypted: keyWithoutWeakPackets.isPublic()
-        ? true /* public keys are always decrypted */
-        : keyWithoutWeakPackets.isFullyDecrypted(),
-      fullyEncrypted: keyWithoutWeakPackets.isPublic()
-        ? false /* public keys are never encrypted */
-        : keyWithoutWeakPackets.isFullyEncrypted(),
+      fullyDecrypted: keyWithoutWeakPackets.isPublic() ? true /* public keys are always decrypted */ : keyWithoutWeakPackets.isFullyDecrypted(),
+      fullyEncrypted: keyWithoutWeakPackets.isPublic() ? false /* public keys are never encrypted */ : keyWithoutWeakPackets.isFullyEncrypted(),
       isPublic: keyWithoutWeakPackets.isPublic(),
       isPrivate: keyWithoutWeakPackets.isPrivate(),
       algo: {
@@ -401,14 +385,8 @@ export class OpenPGPKey {
         return `valid`;
       })
     );
-    result.set(
-      `Primary key creation?`,
-      await KeyUtil.formatResultAsync(async () => OpenPGPKey.formatDate(await key.getCreationTime()))
-    );
-    result.set(
-      `Primary key expiration?`,
-      await KeyUtil.formatResultAsync(async () => OpenPGPKey.formatDate(await key.getExpirationTime()))
-    );
+    result.set(`Primary key creation?`, await KeyUtil.formatResultAsync(async () => OpenPGPKey.formatDate(await key.getCreationTime())));
+    result.set(`Primary key expiration?`, await KeyUtil.formatResultAsync(async () => OpenPGPKey.formatDate(await key.getExpirationTime())));
     const encryptResult = await OpenPGPKey.testEncryptDecrypt(key);
     await Promise.all(encryptResult.map(msg => result.set(`Encrypt/Decrypt test: ${msg}`, '')));
     if (key.isPrivate()) {
@@ -417,18 +395,10 @@ export class OpenPGPKey {
     for (let subKeyIndex = 0; subKeyIndex < subKeys.length; subKeyIndex++) {
       const subKey = subKeys[subKeyIndex];
       const skn = `SK ${subKeyIndex} >`;
-      result.set(
-        `${skn} LongId`,
-        await KeyUtil.formatResultAsync(async () => OpenPGPKey.bytesToLongid(subKey.getKeyId().bytes))
-      );
-      result.set(
-        `${skn} Created`,
-        await KeyUtil.formatResultAsync(async () => OpenPGPKey.formatDate(subKey.keyPacket.created))
-      );
+      result.set(`${skn} LongId`, await KeyUtil.formatResultAsync(async () => OpenPGPKey.bytesToLongid(subKey.getKeyId().bytes)));
+      result.set(`${skn} Created`, await KeyUtil.formatResultAsync(async () => OpenPGPKey.formatDate(subKey.keyPacket.created)));
       result.set(`${skn} Algo`, await KeyUtil.formatResultAsync(async () => `${subKey.getAlgorithmInfo().algorithm}`));
-      const flags =
-        (await OpenPGPKey.getSubKeySigningFlags(key, subKey)) |
-        (await OpenPGPKey.getSubKeyEncryptionFlags(key, subKey));
+      const flags = (await OpenPGPKey.getSubKeySigningFlags(key, subKey)) | (await OpenPGPKey.getSubKeyEncryptionFlags(key, subKey));
       result.set(`${skn} Usage flags`, KeyUtil.formatResult(OpenPGPKey.keyFlagsToString(flags)));
       result.set(
         `${skn} Verify`,
@@ -438,15 +408,9 @@ export class OpenPGPKey {
         })
       );
       result.set(`${skn} Subkey tag`, await KeyUtil.formatResultAsync(async () => subKey.keyPacket.tag));
-      result.set(
-        `${skn} Subkey getBitSize`,
-        await KeyUtil.formatResultAsync(async () => subKey.getAlgorithmInfo().bits)
-      ); // No longer exists on object
+      result.set(`${skn} Subkey getBitSize`, await KeyUtil.formatResultAsync(async () => subKey.getAlgorithmInfo().bits)); // No longer exists on object
       result.set(`${skn} Subkey decrypted`, KeyUtil.formatResult(subKey.isDecrypted()));
-      result.set(
-        `${skn} Binding signature length`,
-        await KeyUtil.formatResultAsync(async () => subKey.bindingSignatures.length)
-      );
+      result.set(`${skn} Binding signature length`, await KeyUtil.formatResultAsync(async () => subKey.bindingSignatures.length));
       for (let sigIndex = 0; sigIndex < subKey.bindingSignatures.length; sigIndex++) {
         const sig = subKey.bindingSignatures[sigIndex];
         const sgn = `${skn} SIG ${sigIndex} >`;
@@ -516,22 +480,14 @@ export class OpenPGPKey {
   };
 
   public static isBaseKeyPacket = (p: OpenPGP.packet.BasePacket): p is OpenPGP.packet.BaseKeyPacket => {
-    return [
-      opgp.enums.packet.secretKey,
-      opgp.enums.packet.secretSubkey,
-      opgp.enums.packet.publicKey,
-      opgp.enums.packet.publicSubkey,
-    ].includes(p.tag);
+    return [opgp.enums.packet.secretKey, opgp.enums.packet.secretSubkey, opgp.enums.packet.publicKey, opgp.enums.packet.publicSubkey].includes(p.tag);
   };
 
   public static isPacketDecrypted = (pubkey: Key, keyid: OpenPGP.Keyid) => {
     return OpenPGPKey.extractExternalLibraryObjFromKey(pubkey).isPacketDecrypted(keyid);
   };
 
-  public static getPrimaryUserId = async (
-    pubs: OpenPGP.key.Key[],
-    keyid: OpenPGP.Keyid
-  ): Promise<string | undefined> => {
+  public static getPrimaryUserId = async (pubs: OpenPGP.key.Key[], keyid: OpenPGP.Keyid): Promise<string | undefined> => {
     for (const opgpkey of pubs) {
       const matchingKeys = await opgpkey.getKeys(keyid);
       if (matchingKeys.length > 0) {
@@ -550,9 +506,7 @@ export class OpenPGPKey {
       match: null, // eslint-disable-line no-null/no-null
       signerLongids: [],
       signerFingerprints: [],
-      suppliedLongids: validKeys
-        .map(x => x.allIds.map(fp => OpenPGPKey.fingerprintToLongid(fp)))
-        .reduce((a, b) => a.concat(b), []),
+      suppliedLongids: validKeys.map(x => x.allIds.map(fp => OpenPGPKey.fingerprintToLongid(fp))).reduce((a, b) => a.concat(b), []),
     };
     const opgpKeys = validKeys.map(x => OpenPGPKey.extractExternalLibraryObjFromKey(x));
     // todo: expired?
@@ -629,11 +583,7 @@ export class OpenPGPKey {
       const A = a.selfCertification!;
       const B = b.selfCertification!;
       /* eslint-enable @typescript-eslint/no-non-null-assertion */
-      return (
-        Number(A.revoked) - Number(B.revoked) ||
-        Number(B.isPrimaryUserID) - Number(A.isPrimaryUserID) ||
-        Number(B.created) - Number(A.created)
-      );
+      return Number(A.revoked) - Number(B.revoked) || Number(B.isPrimaryUserID) - Number(A.isPrimaryUserID) || Number(B.created) - Number(A.created);
     });
     return data
       .map(x => x.userid)
@@ -676,14 +626,7 @@ export class OpenPGPKey {
       // Sanity check
       return 0;
     }
-    if (
-      [
-        opgp.enums.publicKey.dsa,
-        opgp.enums.publicKey.rsa_sign,
-        opgp.enums.publicKey.ecdsa,
-        opgp.enums.publicKey.eddsa,
-      ].includes(keyPacket.algorithm)
-    ) {
+    if ([opgp.enums.publicKey.dsa, opgp.enums.publicKey.rsa_sign, opgp.enums.publicKey.ecdsa, opgp.enums.publicKey.eddsa].includes(keyPacket.algorithm)) {
       return 0; // disallow encryption for these algorithms
     }
     return signature.keyFlags[0] & (opgp.enums.keyFlags.encrypt_communication | opgp.enums.keyFlags.encrypt_storage);
@@ -697,20 +640,13 @@ export class OpenPGPKey {
       // Sanity check
       return 0;
     }
-    if (
-      [opgp.enums.publicKey.rsa_encrypt, opgp.enums.publicKey.elgamal, opgp.enums.publicKey.ecdh].includes(
-        keyPacket.algorithm
-      )
-    ) {
+    if ([opgp.enums.publicKey.rsa_encrypt, opgp.enums.publicKey.elgamal, opgp.enums.publicKey.ecdh].includes(keyPacket.algorithm)) {
       return 0; // disallow signing for these algorithms
     }
     return signature.keyFlags[0] & (opgp.enums.keyFlags.sign_data | opgp.enums.keyFlags.certify_keys);
   };
 
-  private static getSubKeySigningFlags = async (
-    key: OpenPGP.key.Key,
-    subKey: OpenPGP.key.SubKey
-  ): Promise<OpenPGP.enums.keyFlags> => {
+  private static getSubKeySigningFlags = async (key: OpenPGP.key.Key, subKey: OpenPGP.key.SubKey): Promise<OpenPGP.enums.keyFlags> => {
     const primaryKey = key.keyPacket;
     // await subKey.verify(primaryKey);
     const dataToVerify = { key: primaryKey, bind: subKey.keyPacket };
@@ -725,23 +661,14 @@ export class OpenPGPKey {
     if (
       bindingSignature &&
       bindingSignature.embeddedSignature &&
-      (await OpenPGPKey.getLatestValidSignature(
-        [bindingSignature.embeddedSignature],
-        subKey.keyPacket,
-        opgp.enums.signature.key_binding,
-        dataToVerify,
-        date
-      ))
+      (await OpenPGPKey.getLatestValidSignature([bindingSignature.embeddedSignature], subKey.keyPacket, opgp.enums.signature.key_binding, dataToVerify, date))
     ) {
       return OpenPGPKey.getValidSigningKeyPacketFlags(subKey.keyPacket, bindingSignature);
     }
     return 0;
   };
 
-  private static getSubKeyEncryptionFlags = async (
-    key: OpenPGP.key.Key,
-    subKey: OpenPGP.key.SubKey
-  ): Promise<OpenPGP.enums.keyFlags> => {
+  private static getSubKeyEncryptionFlags = async (key: OpenPGP.key.Key, subKey: OpenPGP.key.SubKey): Promise<OpenPGP.enums.keyFlags> => {
     const primaryKey = key.keyPacket;
     // await subKey.verify(primaryKey);
     const dataToVerify = { key: primaryKey, bind: subKey.keyPacket };
@@ -808,11 +735,7 @@ export class OpenPGPKey {
   };
 
   private static getKeyIgnoringExpiration = async (
-    getter: (
-      keyid?: OpenPGP.Keyid | null,
-      date?: Date,
-      userId?: OpenPGP.UserId | null
-    ) => Promise<OpenPGP.key.Key | OpenPGP.key.SubKey | null>,
+    getter: (keyid?: OpenPGP.Keyid | null, date?: Date, userId?: OpenPGP.UserId | null) => Promise<OpenPGP.key.Key | OpenPGP.key.SubKey | null>,
     exp: Date | number | null,
     expired: () => boolean
   ): Promise<OpenPGP.key.Key | OpenPGP.key.SubKey | null> => {
@@ -833,23 +756,13 @@ export class OpenPGPKey {
     return secondTry ? secondTry : null; // eslint-disable-line no-null/no-null
   };
 
-  private static getSigningAndEncryptionKeys = async (
-    key: OpenPGP.key.Key,
-    exp: number | Date | null,
-    expired: () => boolean
-  ) => {
-    const getEncryptionKey = (keyid?: OpenPGP.Keyid | null, date?: Date, userId?: OpenPGP.UserId | null) =>
-      key.getEncryptionKey(keyid, date, userId);
+  private static getSigningAndEncryptionKeys = async (key: OpenPGP.key.Key, exp: number | Date | null, expired: () => boolean) => {
+    const getEncryptionKey = (keyid?: OpenPGP.Keyid | null, date?: Date, userId?: OpenPGP.UserId | null) => key.getEncryptionKey(keyid, date, userId);
     const encryptionKey = await Catch.undefinedOnException(getEncryptionKey());
-    const encryptionKeyIgnoringExpiration = encryptionKey
-      ? encryptionKey
-      : await OpenPGPKey.getKeyIgnoringExpiration(getEncryptionKey, exp, expired);
-    const getSigningKey = (keyid?: OpenPGP.Keyid | null, date?: Date, userId?: OpenPGP.UserId | null) =>
-      key.getSigningKey(keyid, date, userId);
+    const encryptionKeyIgnoringExpiration = encryptionKey ? encryptionKey : await OpenPGPKey.getKeyIgnoringExpiration(getEncryptionKey, exp, expired);
+    const getSigningKey = (keyid?: OpenPGP.Keyid | null, date?: Date, userId?: OpenPGP.UserId | null) => key.getSigningKey(keyid, date, userId);
     const signingKey = await Catch.undefinedOnException(getSigningKey());
-    const signingKeyIgnoringExpiration = signingKey
-      ? signingKey
-      : await OpenPGPKey.getKeyIgnoringExpiration(getSigningKey, exp, expired);
+    const signingKeyIgnoringExpiration = signingKey ? signingKey : await OpenPGPKey.getKeyIgnoringExpiration(getSigningKey, exp, expired);
     return { encryptionKey, encryptionKeyIgnoringExpiration, signingKey, signingKeyIgnoringExpiration };
   };
 
@@ -860,9 +773,7 @@ export class OpenPGPKey {
    * @return isPrimaryKeyStrong - true, if primary key is safe to use
    *         keyWithoutWeakPackets - key with weak subkets removed
    */
-  private static removeWeakKeyPackets = (
-    opgpKey: OpenPGP.key.Key
-  ): { isPrimaryKeyStrong: boolean; keyWithoutWeakPackets: OpenPGP.key.Key } => {
+  private static removeWeakKeyPackets = (opgpKey: OpenPGP.key.Key): { isPrimaryKeyStrong: boolean; keyWithoutWeakPackets: OpenPGP.key.Key } => {
     let isPrimaryKeyStrong = true;
     const packets = opgpKey.toPacketlist();
     const newPacketList = new opgp.packet.List<OpenPGP.packet.BasePacket>();
@@ -931,9 +842,7 @@ export class OpenPGPKey {
         });
         output.push(`Decryption with key ${decryptedMsg.data === OpenPGPKey.encryptionText ? 'succeeded' : 'failed!'}`);
       } else {
-        output.push(
-          `Skipping decryption because isPrivate:${key.isPrivate()} isFullyDecrypted:${key.isFullyDecrypted()}`
-        );
+        output.push(`Skipping decryption because isPrivate:${key.isPrivate()} isFullyDecrypted:${key.isFullyDecrypted()}`);
       }
     } catch (err) {
       output.push(`Got error performing encryption/decryption test: ${err}`);
@@ -949,9 +858,7 @@ export class OpenPGPKey {
       }
       const signedMessage = await opgp.message.fromText(OpenPGPKey.encryptionText).sign([key]);
       output.push('sign msg ok');
-      const verifyResult = await OpenPGPKey.verify(signedMessage, [
-        { pubkey: await OpenPGPKey.convertExternalLibraryObjToKey(key), revoked: false },
-      ]);
+      const verifyResult = await OpenPGPKey.verify(signedMessage, [{ pubkey: await OpenPGPKey.convertExternalLibraryObjToKey(key), revoked: false }]);
       // eslint-disable-next-line no-null/no-null
       if (verifyResult.error !== null && typeof verifyResult.error !== 'undefined') {
         output.push(`verify failed: ${verifyResult.error}`);
@@ -987,8 +894,6 @@ export class OpenPGPKey {
       return '-'; // no expiration
     }
     const expDate = new Date(date.getTime() + expiresInSecondsFromDate * 1000);
-    return `${date.getTime() / 1000} + ${expiresInSecondsFromDate} seconds, which is: ${
-      expDate.getTime() / 1000
-    } or ${expDate.toISOString()}`;
+    return `${date.getTime() / 1000} + ${expiresInSecondsFromDate} seconds, which is: ${expDate.getTime() / 1000} or ${expDate.toISOString()}`;
   };
 }

@@ -19,16 +19,7 @@ import { ClientConfiguration } from '../../js/common/client-configuration.js';
 import { Lang } from '../../js/common/lang.js';
 import { AcctStore } from '../../js/common/platform/store/acct-store.js';
 
-const passPhraseTypes = stringTuple(
-  'embedded',
-  'sign',
-  'message',
-  'draft',
-  'attachment',
-  'quote',
-  'backup',
-  'update_key'
-);
+const passPhraseTypes = stringTuple('embedded', 'sign', 'message', 'draft', 'attachment', 'quote', 'backup', 'update_key');
 type PassPhraseType = typeof passPhraseTypes[number];
 
 View.run(
@@ -108,9 +99,7 @@ View.run(
       if (allPrivateKeys.length > 1) {
         let html: string;
         if (this.keysWeNeedPassPhraseFor.length === 1) {
-          html = `For key Fingerprint: <span class="good">${Xss.escape(
-            Str.spaced(this.keysWeNeedPassPhraseFor[0].fingerprints[0] || '')
-          )}</span>`;
+          html = `For key Fingerprint: <span class="good">${Xss.escape(Str.spaced(this.keysWeNeedPassPhraseFor[0].fingerprints[0] || ''))}</span>`;
         } else {
           html = 'Pass phrase needed for any of the following keys:';
           for (const i of this.keysWeNeedPassPhraseFor.keys()) {
@@ -210,9 +199,7 @@ View.run(
     private submitHandler = async () => {
       const pass = String($('#passphrase').val());
       const storageType: StorageType =
-        $('.forget-pass-phrase-checkbox').prop('checked') || this.clientConfiguration.forbidStoringPassPhrase()
-          ? 'session'
-          : 'local';
+        $('.forget-pass-phrase-checkbox').prop('checked') || this.clientConfiguration.forbidStoringPassPhrase() ? 'session' : 'local';
       let atLeastOneMatched = false;
       let unlockCount = 0; // may include non-matching keys
       const allPrivateKeys = await KeyStore.get(this.acctEmail);
@@ -234,9 +221,7 @@ View.run(
         } catch (e) {
           if (e instanceof Error && e.message === 'Unknown s2k type.') {
             let msg = `Your key with fingerprint ${keyinfo.fingerprints[0]} is not supported yet (${String(e)}).`;
-            msg += `\n\nPlease ${Lang.general.contactMinimalSubsentence(
-              !!this.fesUrl
-            )} with details about how this key was created.`;
+            msg += `\n\nPlease ${Lang.general.contactMinimalSubsentence(!!this.fesUrl)} with details about how this key was created.`;
             await Ui.modal.error(msg);
           } else {
             throw e;
@@ -244,11 +229,7 @@ View.run(
         }
       }
       if (unlockCount && allPrivateKeys.length > 1) {
-        Ui.toast(
-          `${unlockCount} of ${allPrivateKeys.length} keys ${
-            unlockCount > 1 ? 'were' : 'was'
-          } unlocked by this pass phrase`
-        );
+        Ui.toast(`${unlockCount} of ${allPrivateKeys.length} keys ${unlockCount > 1 ? 'were' : 'was'} unlocked by this pass phrase`);
       }
       if (atLeastOneMatched) {
         this.closeDialog(true, this.initiatorFrameId);

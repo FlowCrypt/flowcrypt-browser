@@ -40,15 +40,11 @@ export class PgpBlockViewRenderModule {
       const ccString = GmailParser.findHeader(gmailMsg, 'cc')
         ? `Cc: <span data-test="print-cc">${Xss.escape(GmailParser.findHeader(gmailMsg, 'cc')!)}</span><br/>`
         : '';
-      const bccString = GmailParser.findHeader(gmailMsg, 'bcc')
-        ? `Bcc: <span>${Xss.escape(GmailParser.findHeader(gmailMsg, 'bcc')!)}</span><br/>`
-        : '';
+      const bccString = GmailParser.findHeader(gmailMsg, 'bcc') ? `Bcc: <span>${Xss.escape(GmailParser.findHeader(gmailMsg, 'bcc')!)}</span><br/>` : '';
       /* eslint-enable @typescript-eslint/no-non-null-assertion */
       this.printMailInfoHtml = `
       <hr>
-      <p class="subject-label" data-test="print-subject">${Xss.htmlSanitize(
-        GmailParser.findHeader(gmailMsg, 'subject') ?? ''
-      )}</p>
+      <p class="subject-label" data-test="print-subject">${Xss.htmlSanitize(GmailParser.findHeader(gmailMsg, 'subject') ?? '')}</p>
       <hr>
       <br/>
       <div>
@@ -190,9 +186,7 @@ export class PgpBlockViewRenderModule {
       const pgpBlock = $('#pgp_block').html(Xss.htmlSanitizeKeepBasicTags(htmlContent, 'IMG-TO-LINK')); // xss-sanitized
       pgpBlock.find('a.image_src_link').one(
         'click',
-        this.view.setHandler((el, ev) =>
-          this.displayImageSrcLinkAsImg(el as HTMLAnchorElement, ev as JQuery.Event<HTMLAnchorElement, null>)
-        )
+        this.view.setHandler((el, ev) => this.displayImageSrcLinkAsImg(el as HTMLAnchorElement, ev as JQuery.Event<HTMLAnchorElement, null>))
       );
     } else {
       // rendering our own ui
@@ -295,8 +289,7 @@ export class PgpBlockViewRenderModule {
       if (
         decoded.subject &&
         isEncrypted &&
-        (!plainSubject ||
-          !Mime.subjectWithoutPrefixes(plainSubject).includes(Mime.subjectWithoutPrefixes(decoded.subject)))
+        (!plainSubject || !Mime.subjectWithoutPrefixes(plainSubject).includes(Mime.subjectWithoutPrefixes(decoded.subject)))
       ) {
         // there is an encrypted subject + (either there is no plain subject or the plain subject does not contain what's in the encrypted subject)
         decryptedContent = this.getEncryptedSubjectText(decoded.subject, isHtml) + decryptedContent; // render encrypted subject in message
@@ -333,9 +326,7 @@ export class PgpBlockViewRenderModule {
     if (a.href.startsWith('cid:')) {
       // image included in the email
       const contentId = a.href.replace(/^cid:/g, '');
-      const content = this.view.attachmentsModule.includedAttachments.filter(
-        a => a.type.indexOf('image/') === 0 && a.cid === `<${contentId}>`
-      )[0];
+      const content = this.view.attachmentsModule.includedAttachments.filter(a => a.type.indexOf('image/') === 0 && a.cid === `<${contentId}>`)[0];
       if (content) {
         img.src = `data:${a.type};base64,${content.getData().toBase64Str()}`;
         Xss.replaceElementDANGEROUSLY(a, img.outerHTML); // xss-safe-value - img.outerHTML was built using dom node api

@@ -26,9 +26,7 @@ export class PgpBlockViewAttachmentsModule {
       const name = (attachments[i].name ? attachments[i].name : 'noname').replace(/\.(pgp|gpg)$/, '');
       const nameVisible = name.length > 100 ? name.slice(0, 100) + '…' : name;
       const size = filesize.filesize(attachments[i].length);
-      const htmlContent = `<b>${Xss.escape(
-        nameVisible
-      )}</b>&nbsp;&nbsp;&nbsp;${size}<span class="progress"><span class="percent"></span></span>`;
+      const htmlContent = `<b>${Xss.escape(nameVisible)}</b>&nbsp;&nbsp;&nbsp;${size}<span class="progress"><span class="percent"></span></span>`;
       const attachment = $(`<a href="#" index="${Number(i)}">`);
       attachment.attr('title', name);
       Xss.sanitizeAppend(attachment, htmlContent);
@@ -78,12 +76,7 @@ export class PgpBlockViewAttachmentsModule {
 
   private previewAttachmentClickedHandler = async (attachment: Attachment) => {
     const factory = new XssSafeFactory(this.view.acctEmail, this.view.parentTabId);
-    const iframeUrl = factory.srcPgpAttachmentIframe(
-      attachment,
-      false,
-      undefined,
-      'chrome/elements/attachment_preview.htm'
-    );
+    const iframeUrl = factory.srcPgpAttachmentIframe(attachment, false, undefined, 'chrome/elements/attachment_preview.htm');
     BrowserMsg.send.showAttachmentPreview(this.view.parentTabId, { iframeUrl });
   };
 
@@ -105,20 +98,13 @@ export class PgpBlockViewAttachmentsModule {
       this.view.renderModule.resizePgpBlockFrame();
     } else {
       console.info(decrypted);
-      await Ui.modal.error(
-        `There was a problem decrypting this file (${decrypted.error.type}: ${decrypted.error.message}). Downloading encrypted original.`
-      );
+      await Ui.modal.error(`There was a problem decrypting this file (${decrypted.error.type}: ${decrypted.error.message}). Downloading encrypted original.`);
       Browser.saveToDownloads(encrypted);
       this.view.renderModule.resizePgpBlockFrame();
     }
   };
 
-  private renderProgress = (
-    element: JQuery<HTMLElement>,
-    percent: number | undefined,
-    received: number | undefined,
-    size: number
-  ) => {
+  private renderProgress = (element: JQuery<HTMLElement>, percent: number | undefined, received: number | undefined, size: number) => {
     if (percent) {
       element.text(percent + '%');
     } else if (size && received) {

@@ -51,15 +51,11 @@ View.run(
     public setHandlers = () => {
       $('.action_change_passphrase').on(
         'click',
-        this.setHandler(() =>
-          Settings.redirectSubPage(this.acctEmail, this.parentTabId, '/chrome/settings/modules/change_passphrase.htm')
-        )
+        this.setHandler(() => Settings.redirectSubPage(this.acctEmail, this.parentTabId, '/chrome/settings/modules/change_passphrase.htm'))
       );
       $('.action_test_passphrase').on(
         'click',
-        this.setHandler(() =>
-          Settings.redirectSubPage(this.acctEmail, this.parentTabId, '/chrome/settings/modules/test_passphrase.htm')
-        )
+        this.setHandler(() => Settings.redirectSubPage(this.acctEmail, this.parentTabId, '/chrome/settings/modules/test_passphrase.htm'))
       );
       $('#hide_message_password').change(this.setHandler(el => this.hideMsgPasswordHandler(el)));
       $('.password_message_language').change(this.setHandler(() => this.onMsgLanguageUserChange()));
@@ -78,9 +74,7 @@ View.run(
         $('.confirm_passphrase_requirement_change').on(
           'click',
           this.setHandler(async () => {
-            const allPassPhrases = (
-              await Promise.all(this.prvs.map(prv => PassphraseStore.get(this.acctEmail, prv.keyInfo)))
-            ).filter(pp => !!pp);
+            const allPassPhrases = (await Promise.all(this.prvs.map(prv => PassphraseStore.get(this.acctEmail, prv.keyInfo)))).filter(pp => !!pp);
             if (allPassPhrases.includes(String($('input#passphrase_entry').val()))) {
               for (const key of this.prvs) {
                 await PassphraseStore.set('local', this.acctEmail, key.keyInfo, undefined);
@@ -105,10 +99,7 @@ View.run(
           $('.password_messages_expiry_container').show();
           const response = await this.acctServer.accountGetAndUpdateLocalStore();
           $('.select_loader_container').text('');
-          $('.default_message_expire')
-            .val(Number(response.account.default_message_expire).toString())
-            .prop('disabled', false)
-            .css('display', 'inline-block');
+          $('.default_message_expire').val(Number(response.account.default_message_expire).toString()).prop('disabled', false).css('display', 'inline-block');
           $('.default_message_expire').change(this.setHandler(() => this.onDefaultExpireUserChange()));
         }
       } catch (e) {

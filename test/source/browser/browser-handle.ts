@@ -44,10 +44,7 @@ export class BrowserHandle {
     return controllablePage;
   };
 
-  public newPageTriggeredBy = async (
-    t: AvaContext,
-    triggeringAction: () => Promise<void>
-  ): Promise<ControllablePage> => {
+  public newPageTriggeredBy = async (t: AvaContext, triggeringAction: () => Promise<void>): Promise<ControllablePage> => {
     const page = (await this.doAwaitTriggeredPage(triggeringAction)) as Page;
     const url = page.url();
     const controllablePage = new ControllablePage(t, page);
@@ -89,21 +86,13 @@ export class BrowserHandle {
     let html = '';
     for (let i = 0; i < this.pages.length; i++) {
       const cPage = this.pages[i];
-      const url = await Promise.race([
-        cPage.page.url(),
-        new Promise(resolve => setTimeout(() => resolve('(url get timeout)'), 10 * 1000)) as Promise<string>,
-      ]);
+      const url = await Promise.race([cPage.page.url(), new Promise(resolve => setTimeout(() => resolve('(url get timeout)'), 10 * 1000)) as Promise<string>]);
       const consoleMsgs = await cPage.console(t, alsoLogToConsole);
       const alerts = cPage.alerts
-        .map(
-          a =>
-            `${a.active ? `<b class="c-error">ACTIVE ${a.target.type()}</b>` : a.target.type()}: ${a.target.message()}`
-        )
+        .map(a => `${a.active ? `<b class="c-error">ACTIVE ${a.target.type()}</b>` : a.target.type()}: ${a.target.message()}`)
         .join('\n');
       html += '<div class="page">';
-      html += `<pre title="url">Page ${i} (${cPage.page.isClosed() ? 'closed' : 'active'}) ${Util.htmlEscape(
-        url
-      )}</pre>`;
+      html += `<pre title="url">Page ${i} (${cPage.page.isClosed() ? 'closed' : 'active'}) ${Util.htmlEscape(url)}</pre>`;
       html += `<pre title="console">${consoleMsgs || '(no console messages)'}</pre>`;
       html += `<pre title="alerts">${alerts || '(no alerts)'}</pre>`;
       if (url !== 'about:blank' && !cPage.page.isClosed()) {
@@ -117,9 +106,7 @@ export class BrowserHandle {
         try {
           html += `<pre style="height:300px;overflow:auto;">${Util.htmlEscape(await cPage.html())}</pre>`;
         } catch (e) {
-          html += `<pre>Could not get page HTML: ${Util.htmlEscape(
-            e instanceof Error ? e.stack || String(e) : String(e)
-          )}</pre>`;
+          html += `<pre>Could not get page HTML: ${Util.htmlEscape(e instanceof Error ? e.stack || String(e) : String(e))}</pre>`;
         }
       }
       html += '</div>';
@@ -129,10 +116,7 @@ export class BrowserHandle {
 
   private doAwaitTriggeredPage = (triggeringAction: () => Promise<void>): Promise<Page | null> => {
     return new Promise((resolve, reject) => {
-      setTimeout(
-        () => reject(new Error('Action did not trigger a new page within timeout period')),
-        TIMEOUT_ELEMENT_APPEAR * 1000
-      );
+      setTimeout(() => reject(new Error('Action did not trigger a new page within timeout period')), TIMEOUT_ELEMENT_APPEAR * 1000);
       let resolved = 0;
       const listener = async (target: Target) => {
         if (target.type() === 'page') {

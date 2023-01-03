@@ -37,8 +37,7 @@ export class ComposeErrModule extends ViewModule<ComposeView> {
   public handle = (couldNotDoWhat: string): BrowserEventErrHandler => {
     return {
       network: async () => await Ui.modal.info(`Could not ${couldNotDoWhat} (network error). Please try again.`),
-      auth: async () =>
-        Settings.offerToLoginWithPopupShowModalOnErr(this.view.acctEmail, undefined, `Could not ${couldNotDoWhat}.\n`),
+      auth: async () => Settings.offerToLoginWithPopupShowModalOnErr(this.view.acctEmail, undefined, `Could not ${couldNotDoWhat}.\n`),
       other: async (e: unknown) => {
         if (e instanceof Error) {
           e.stack = (e.stack || '') + `\n\n[compose action: ${couldNotDoWhat}]`;
@@ -50,11 +49,7 @@ export class ComposeErrModule extends ViewModule<ComposeView> {
           }
         }
         Catch.reportErr(e);
-        await Ui.modal.info(
-          `Could not ${couldNotDoWhat} (unknown error). ${Lang.general.contactIfHappensAgain(
-            !!this.view.fesUrl
-          )}\n\n(${String(e)})`
-        );
+        await Ui.modal.info(`Could not ${couldNotDoWhat} (unknown error). ${Lang.general.contactIfHappensAgain(!!this.view.fesUrl)}\n\n(${String(e)})`);
       },
     };
   };
@@ -62,12 +57,8 @@ export class ComposeErrModule extends ViewModule<ComposeView> {
   public debugFocusEvents = (...selNames: string[]) => {
     for (const selName of selNames) {
       this.view.S.cached(selName)
-        .focusin(e =>
-          this.debug(`** ${selName} receiving focus from(${e.relatedTarget ? e.relatedTarget.outerHTML : undefined})`)
-        )
-        .focusout(e =>
-          this.debug(`** ${selName} giving focus to(${e.relatedTarget ? e.relatedTarget.outerHTML : undefined})`)
-        );
+        .focusin(e => this.debug(`** ${selName} receiving focus from(${e.relatedTarget ? e.relatedTarget.outerHTML : undefined})`))
+        .focusout(e => this.debug(`** ${selName} giving focus to(${e.relatedTarget ? e.relatedTarget.outerHTML : undefined})`));
     }
   };
 
@@ -84,8 +75,7 @@ export class ComposeErrModule extends ViewModule<ComposeView> {
       if (sendMsgsResult?.success.length) {
         // there were some successful sends
         netErrMsg =
-          ComposeErrModule.getErrSayingSomeMessagesHaveBeenSent(sendMsgsResult) +
-          'network errors. Please check your internet connection and try again.';
+          ComposeErrModule.getErrSayingSomeMessagesHaveBeenSent(sendMsgsResult) + 'network errors. Please check your internet connection and try again.';
       } else {
         netErrMsg =
           'Could not send message due to network error. Please check your internet connection and try again.\n' +
@@ -94,9 +84,7 @@ export class ComposeErrModule extends ViewModule<ComposeView> {
       await Ui.modal.error(netErrMsg, true);
     } else if (ApiErr.isAuthErr(e)) {
       BrowserMsg.send.notificationShowAuthPopupNeeded(this.view.parentTabId, { acctEmail: this.view.acctEmail });
-      Settings.offerToLoginWithPopupShowModalOnErr(this.view.acctEmail, () =>
-        this.view.sendBtnModule.extractProcessSendMsg()
-      );
+      Settings.offerToLoginWithPopupShowModalOnErr(this.view.acctEmail, () => this.view.sendBtnModule.extractProcessSendMsg());
     } else if (ApiErr.isReqTooLarge(e)) {
       await Ui.modal.error(`Could not send: message or attachments too large.`);
     } else if (ApiErr.isBadReq(e)) {
@@ -104,19 +92,12 @@ export class ComposeErrModule extends ViewModule<ComposeView> {
       if (sendMsgsResult?.success.length) {
         gmailErrMsg = ComposeErrModule.getErrSayingSomeMessagesHaveBeenSent(sendMsgsResult) + 'error(s) from Gmail';
       }
-      if (
-        e.resMsg === AjaxErrMsgs.GOOGLE_INVALID_TO_HEADER ||
-        e.resMsg === AjaxErrMsgs.GOOGLE_RECIPIENT_ADDRESS_REQUIRED
-      ) {
-        await Ui.modal.error(
-          (gmailErrMsg || 'Error from google') +
-            ': Invalid recipients\n\nPlease remove recipients, add them back and re-send the message.'
-        );
+      if (e.resMsg === AjaxErrMsgs.GOOGLE_INVALID_TO_HEADER || e.resMsg === AjaxErrMsgs.GOOGLE_RECIPIENT_ADDRESS_REQUIRED) {
+        await Ui.modal.error((gmailErrMsg || 'Error from google') + ': Invalid recipients\n\nPlease remove recipients, add them back and re-send the message.');
       } else {
         if (
           await Ui.modal.confirm(
-            (gmailErrMsg || 'Google returned an error when sending message') +
-              `. Please help us improve FlowCrypt by reporting the error to us.`
+            (gmailErrMsg || 'Google returned an error when sending message') + `. Please help us improve FlowCrypt by reporting the error to us.`
           )
         ) {
           const page = '/chrome/settings/modules/help.htm';
@@ -147,11 +128,7 @@ export class ComposeErrModule extends ViewModule<ComposeView> {
     if (this.view.S.cached('triple_dot').hasClass('progress')) {
       throw new ComposerNotReadyError('Retrieving previous message, please wait.');
     }
-    const btnReadyTexts = [
-      SendBtnTexts.BTN_SIGN_AND_SEND,
-      SendBtnTexts.BTN_ENCRYPT_SIGN_AND_SEND,
-      SendBtnTexts.BTN_PLAIN_SEND,
-    ];
+    const btnReadyTexts = [SendBtnTexts.BTN_SIGN_AND_SEND, SendBtnTexts.BTN_ENCRYPT_SIGN_AND_SEND, SendBtnTexts.BTN_PLAIN_SEND];
     const recipients = this.view.recipientsModule.getRecipients();
     if (btnReadyTexts.includes(this.view.S.now('send_btn_text').text().trim()) && recipients.length) {
       return; // all good
@@ -172,14 +149,9 @@ export class ComposeErrModule extends ViewModule<ComposeView> {
     let footer = await this.view.footerModule.getFooterFromStorage(from.email);
     if (footer) {
       // format footer the way it would be in outgoing plaintext
-      footer = Xss.htmlUnescape(
-        Xss.htmlSanitizeAndStripAllTags(this.view.footerModule.createFooterHtml(footer), '\n')
-      ).trim();
+      footer = Xss.htmlUnescape(Xss.htmlSanitizeAndStripAllTags(this.view.footerModule.createFooterHtml(footer), '\n')).trim();
     }
-    if (
-      (!plaintext.trim() || (footer && plaintext.trim() === footer.trim())) &&
-      !(await Ui.modal.confirm('Send empty message?'))
-    ) {
+    if ((!plaintext.trim() || (footer && plaintext.trim() === footer.trim())) && !(await Ui.modal.confirm('Send empty message?'))) {
       throw new ComposerResetBtnTrigger();
     }
   };
@@ -203,9 +175,7 @@ export class ComposeErrModule extends ViewModule<ComposeView> {
             `You can ask the recipient to also install FlowCrypt, messages between FlowCrypt users don't need a password.`
         );
       }
-      const intro = this.view.S.cached('input_intro').length
-        ? this.view.inputModule.extract('text', 'input_intro')
-        : '';
+      const intro = this.view.S.cached('input_intro').length ? this.view.inputModule.extract('text', 'input_intro') : '';
       if (intro.toLowerCase().includes(pwd.toLowerCase())) {
         throw new ComposerUserError(
           'Please do not include the password in the email intro. ' +
@@ -214,9 +184,7 @@ export class ComposeErrModule extends ViewModule<ComposeView> {
         );
       }
       if (!this.view.pwdOrPubkeyContainerModule.isMessagePasswordStrong(pwd)) {
-        const pwdErrText = this.view.fesUrl
-          ? Lang.compose.enterprisePasswordPolicy
-          : Lang.compose.consumerPasswordPolicy;
+        const pwdErrText = this.view.fesUrl ? Lang.compose.enterprisePasswordPolicy : Lang.compose.consumerPasswordPolicy;
         throw new ComposerUserError(pwdErrText.split('\n').join('<br />'));
       }
     } else {

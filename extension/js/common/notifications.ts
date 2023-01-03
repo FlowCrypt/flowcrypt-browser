@@ -24,15 +24,12 @@ export class Notifications {
   };
 
   public showAuthPopupNeeded = (acctEmail: string) => {
-    this.show(
-      `${Lang.compose.pleaseReconnectAccount} <a href="#" class="auth_popup" data-test="action-reconnect-account">Re-connect Account</a>`,
-      {
-        // eslint-disable-next-line @typescript-eslint/naming-convention
-        auth_popup: async () => {
-          await this.reconnectAcctAuthPopup(acctEmail);
-        },
-      }
-    );
+    this.show(`${Lang.compose.pleaseReconnectAccount} <a href="#" class="auth_popup" data-test="action-reconnect-account">Re-connect Account</a>`, {
+      // eslint-disable-next-line @typescript-eslint/naming-convention
+      auth_popup: async () => {
+        await this.reconnectAcctAuthPopup(acctEmail);
+      },
+    });
   };
 
   public clear = (group: NotificationGroupType) => {

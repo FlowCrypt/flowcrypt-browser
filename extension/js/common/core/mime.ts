@@ -61,9 +61,7 @@ export class Mime {
     if (decoded.text) {
       const blocksFromTextPart = MsgBlockParser.detectBlocks(Str.normalize(decoded.text)).blocks;
       // if there are some encryption-related blocks found in the text section, which we can use, and not look at the html section
-      if (
-        blocksFromTextPart.find(b => ['pkcs7', 'encryptedMsg', 'signedMsg', 'publicKey', 'privateKey'].includes(b.type))
-      ) {
+      if (blocksFromTextPart.find(b => ['pkcs7', 'encryptedMsg', 'signedMsg', 'publicKey', 'privateKey'].includes(b.type))) {
         blocks.push(...blocksFromTextPart); // because the html most likely containt the same thing, just harder to parse pgp sections cause it's html
       } else if (decoded.html) {
         // if no pgp blocks found in text part and there is html part, prefer html
@@ -121,9 +119,7 @@ export class Mime {
           block.signature = decoded.signature;
         }
       }
-      if (
-        !blocks.find(block => ['plainText', 'plainHtml', 'signedMsg', 'signedHtml', 'signedText'].includes(block.type))
-      ) {
+      if (!blocks.find(block => ['plainText', 'plainHtml', 'signedMsg', 'signedHtml', 'signedText'].includes(block.type))) {
         // signed an empty message
         blocks.push(new MsgBlock('signedMsg', '', true, decoded.signature));
       }
@@ -173,10 +169,7 @@ export class Mime {
     if (!headers.match(/boundary=/)) {
       return false;
     }
-    if (
-      chunk.match(/\ncontent-transfer-encoding: +[0-9a-z\-\/]+/) ||
-      chunk.match(/\ncontent-disposition: +[0-9a-z\-\/]+/)
-    ) {
+    if (chunk.match(/\ncontent-transfer-encoding: +[0-9a-z\-\/]+/) || chunk.match(/\ncontent-disposition: +[0-9a-z\-\/]+/)) {
       return true; // these tend to be inside body-part headers, after the first `\n\n` which we test above
     }
     return contentType.index === 0;
@@ -224,8 +217,7 @@ export class Mime {
                 // AppleMail does this with inline attachments
                 mimeContent.html = (mimeContent.html || '') + Mime.getNodeContentAsUtfStr(node);
               } else if (nodeType === 'text/plain' && (!Mime.getNodeFilename(node) || Mime.isNodeInline(node))) {
-                mimeContent.text =
-                  (mimeContent.text ? `${mimeContent.text}\n\n` : '') + Mime.getNodeContentAsUtfStr(node);
+                mimeContent.text = (mimeContent.text ? `${mimeContent.text}\n\n` : '') + Mime.getNodeContentAsUtfStr(node);
               } else if (nodeType === 'text/rfc822-headers') {
                 /* eslint-disable no-underscore-dangle */
                 if (node._parentNode && node._parentNode.headers.subject) {
@@ -254,14 +246,8 @@ export class Mime {
     });
   };
 
-  public static encode = async (
-    body: SendableMsgBody,
-    headers: RichHeaders,
-    attachments: Attachment[] = [],
-    type?: MimeEncodeType
-  ): Promise<string> => {
-    const rootContentType =
-      type !== 'pgpMimeEncrypted' ? 'multipart/mixed' : `multipart/encrypted; protocol="application/pgp-encrypted";`;
+  public static encode = async (body: SendableMsgBody, headers: RichHeaders, attachments: Attachment[] = [], type?: MimeEncodeType): Promise<string> => {
+    const rootContentType = type !== 'pgpMimeEncrypted' ? 'multipart/mixed' : `multipart/encrypted; protocol="application/pgp-encrypted";`;
     const rootNode = new MimeBuilder(rootContentType, { includeBccInHeader: true });
     for (const key of Object.keys(headers)) {
       rootNode.addHeader(key, headers[key]);
@@ -269,11 +255,7 @@ export class Mime {
     if (Object.keys(body).length) {
       let contentNode: MimeParserNode;
       if (Object.keys(body).length === 1) {
-        contentNode = Mime.newContentNode(
-          MimeBuilder,
-          Object.keys(body)[0],
-          body[Object.keys(body)[0] as 'text/plain' | 'text/html'] || ''
-        );
+        contentNode = Mime.newContentNode(MimeBuilder, Object.keys(body)[0], body[Object.keys(body)[0] as 'text/plain' | 'text/html'] || '');
       } else {
         contentNode = new MimeBuilder('multipart/alternative');
         for (const type of Object.keys(body)) {
@@ -289,11 +271,7 @@ export class Mime {
     return rootNode.build(); // eslint-disable-line @typescript-eslint/no-unsafe-return
   };
 
-  public static encodeSmime = async (
-    body: Uint8Array,
-    headers: RichHeaders,
-    type: 'enveloped-data' | 'signed-data'
-  ): Promise<string> => {
+  public static encodeSmime = async (body: Uint8Array, headers: RichHeaders, type: 'enveloped-data' | 'signed-data'): Promise<string> => {
     const rootContentType = `application/pkcs7-mime; name="smime.p7m"; smime-type=${type}`;
     const rootNode = new MimeBuilder(rootContentType, { includeBccInHeader: true });
     for (const key of Object.keys(headers)) {
@@ -353,10 +331,7 @@ export class Mime {
       throw new Error('Could not find raw signed content immediately after mime-encoding a signed message');
     }
     const realSignature = await sign(rawSignedContent);
-    const pgpMimeSigned = mimeStrWithPlaceholderSig.replace(
-      Buf.fromUtfStr(sigPlaceholder).toBase64Str(),
-      Buf.fromUtfStr(realSignature).toBase64Str()
-    );
+    const pgpMimeSigned = mimeStrWithPlaceholderSig.replace(Buf.fromUtfStr(sigPlaceholder).toBase64Str(), Buf.fromUtfStr(realSignature).toBase64Str());
     if (pgpMimeSigned === mimeStrWithPlaceholderSig) {
       console.log(`pgpMimeSigned(placeholder:${sigPlaceholder}):\n${pgpMimeSigned}`);
       throw new Error('Replaced sigPlaceholder with realSignature but mime stayed the same');
@@ -368,11 +343,8 @@ export class Mime {
     const result: { to: string[]; cc: string[]; bcc: string[] } = { to: [], cc: [], bcc: [] };
     let from: string | undefined;
     const getHdrValAsArr = (hdr: MimeContentHeader) =>
-      typeof hdr === 'string'
-        ? ([hdr].map(h => Str.parseEmail(h).email).filter(e => !!e) as string[])
-        : hdr.map(h => h.address);
-    const getHdrValAsStr = (hdr: MimeContentHeader) =>
-      Str.parseEmail((Array.isArray(hdr) ? (hdr[0] || {}).address : String(hdr || '')) || '').email;
+      typeof hdr === 'string' ? ([hdr].map(h => Str.parseEmail(h).email).filter(e => !!e) as string[]) : hdr.map(h => h.address);
+    const getHdrValAsStr = (hdr: MimeContentHeader) => Str.parseEmail((Array.isArray(hdr) ? (hdr[0] || {}).address : String(hdr || '')) || '').email;
     for (const hdrName of headersNames) {
       const header = parsedMimeMsg.headers[hdrName];
       if (header) {
@@ -394,9 +366,7 @@ export class Mime {
       }
       const isSigned = node._isMultipart === 'signed';
       const isMixedWithSig =
-        node._isMultipart === 'mixed' &&
-        node._childNodes.length === 2 &&
-        Mime.getNodeType(node._childNodes[1]) === 'application/pgp-signature';
+        node._isMultipart === 'mixed' && node._childNodes.length === 2 && Mime.getNodeType(node._childNodes[1]) === 'application/pgp-signature';
       if (isSigned || isMixedWithSig) {
         // PGP/MIME signed content uses <CR><LF> as in // use CR-LF https://tools.ietf.org/html/rfc3156#section-5
         // however emailjs parser will replace it to <LF>, so we fix it here
@@ -487,10 +457,7 @@ export class Mime {
       node._parentNode.contentType.params?.protocol === 'application/pgp-encrypted' &&
       node._parentNode.contentType.value === 'multipart/encrypted'
     ) {
-      treatAs = Attachment.treatAsForPgpEncryptedAttachments(
-        node.contentType?.value,
-        node._parentNode?._childNodes.indexOf(node)
-      );
+      treatAs = Attachment.treatAsForPgpEncryptedAttachments(node.contentType?.value, node._parentNode?._childNodes.indexOf(node));
       /* eslint-enable no-underscore-dangle */
     }
     return new Attachment({
@@ -519,10 +486,7 @@ export class Mime {
       resultBuf = Buf.fromRawBytesStr(node.rawContent!);
     }
     /* eslint-enable @typescript-eslint/no-non-null-assertion */
-    if (
-      node.charset?.toUpperCase() === 'ISO-2022-JP' ||
-      (node.charset === 'utf-8' && Mime.getNodeType(node, 'initial')?.includes('ISO-2022-JP'))
-    ) {
+    if (node.charset?.toUpperCase() === 'ISO-2022-JP' || (node.charset === 'utf-8' && Mime.getNodeType(node, 'initial')?.includes('ISO-2022-JP'))) {
       return iso2022jpToUtf(resultBuf);
     }
     return resultBuf.toUtfStr();

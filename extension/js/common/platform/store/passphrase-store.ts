@@ -12,11 +12,7 @@ import { ClientConfiguration } from '../../client-configuration.js';
  */
 export class PassphraseStore extends AbstractStore {
   // if we implement (and migrate) password storage to use KeyIdentity instead of longid, we'll have `keyInfo: KeyIdentity` here
-  public static get = async (
-    acctEmail: string,
-    keyInfo: { longid: string },
-    ignoreSession = false
-  ): Promise<string | undefined> => {
+  public static get = async (acctEmail: string, keyInfo: { longid: string }, ignoreSession = false): Promise<string | undefined> => {
     return (await PassphraseStore.getMany(acctEmail, [keyInfo], ignoreSession))[0]?.value;
   };
 
@@ -39,12 +35,7 @@ export class PassphraseStore extends AbstractStore {
   };
 
   // if we implement (and migrate) password storage to use KeyIdentity instead of longid, we'll have `keyInfo: KeyIdentity` here
-  public static set = async (
-    storageType: StorageType,
-    acctEmail: string,
-    keyInfo: { longid: string },
-    passphrase: string | undefined
-  ): Promise<void> => {
+  public static set = async (storageType: StorageType, acctEmail: string, keyInfo: { longid: string }, passphrase: string | undefined): Promise<void> => {
     const storageIndex = PassphraseStore.getIndex(keyInfo.longid);
     await PassphraseStore.setByIndex(storageType, acctEmail, storageIndex, passphrase);
   };
@@ -56,18 +47,14 @@ export class PassphraseStore extends AbstractStore {
     cancellation: PromiseCancellation = { cancel: false }
   ): Promise<boolean> => {
     const missingOrWrongPassprases: Dict<string | undefined> = {};
-    const passphrases = await Promise.all(
-      missingOrWrongPpKeyLongids.map(longid => PassphraseStore.get(acctEmail, { longid }))
-    );
+    const passphrases = await Promise.all(missingOrWrongPpKeyLongids.map(longid => PassphraseStore.get(acctEmail, { longid })));
     for (const i of missingOrWrongPpKeyLongids.keys()) {
       missingOrWrongPassprases[missingOrWrongPpKeyLongids[i]] = passphrases[i];
     }
     while (!cancellation.cancel) {
       await Ui.time.sleep(interval);
       const longidsMissingPp = Object.keys(missingOrWrongPassprases);
-      const updatedPpArr = await Promise.all(
-        longidsMissingPp.map(longid => PassphraseStore.get(acctEmail, { longid }))
-      );
+      const updatedPpArr = await Promise.all(longidsMissingPp.map(longid => PassphraseStore.get(acctEmail, { longid })));
       for (let i = 0; i < longidsMissingPp.length; i++) {
         const missingOrWrongPp = missingOrWrongPassprases[longidsMissingPp[i]];
         const updatedPp = updatedPpArr[i];
@@ -116,12 +103,7 @@ export class PassphraseStore extends AbstractStore {
   ): Promise<void> => {
     const clientConfiguration = await ClientConfiguration.newInstance(acctEmail);
     if (storageType === 'session') {
-      return await InMemoryStore.set(
-        acctEmail,
-        storageIndex,
-        passphrase,
-        Date.now() + clientConfiguration.getInMemoryPassPhraseSessionExpirationMs()
-      );
+      return await InMemoryStore.set(acctEmail, storageIndex, passphrase, Date.now() + clientConfiguration.getInMemoryPassPhraseSessionExpirationMs());
     } else {
       if (typeof passphrase === 'undefined') {
         await AcctStore.remove(acctEmail, [storageIndex]);

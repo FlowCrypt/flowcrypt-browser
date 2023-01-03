@@ -29,17 +29,11 @@ const processMessageFromUser = async (body: string) => {
   // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   const decryptedMimeMsg = decrypted.content!.toUtfStr();
   expect(decryptedMimeMsg).to.contain(
-    'Content-Type: text/plain\r\n' +
-      'Content-Transfer-Encoding: quoted-printable\r\n\r\n' +
-      'PWD encrypted message with FES - ID TOKEN'
+    'Content-Type: text/plain\r\n' + 'Content-Transfer-Encoding: quoted-printable\r\n\r\n' + 'PWD encrypted message with FES - ID TOKEN'
   );
   // small.txt
-  expect(decryptedMimeMsg).to.contain(
-    'Content-Type: text/plain; name=small.txt\r\n' + 'Content-Disposition: attachment; filename=small.txt'
-  );
-  expect(decryptedMimeMsg).to.contain(
-    'Content-Transfer-Encoding: base64\r\n\r\n' + 'c21hbGwgdGV4dCBmaWxlCm5vdCBtdWNoIGhlcmUKdGhpcyB3b3JrZWQK'
-  );
+  expect(decryptedMimeMsg).to.contain('Content-Type: text/plain; name=small.txt\r\n' + 'Content-Disposition: attachment; filename=small.txt');
+  expect(decryptedMimeMsg).to.contain('Content-Transfer-Encoding: base64\r\n\r\n' + 'c21hbGwgdGV4dCBmaWxlCm5vdCBtdWNoIGhlcmUKdGhpcyB3b3JrZWQK');
   const response = {
     // this url is required for pubkey encrypted message
     url: `http://${standardFesUrl}/message/FES-MOCK-MESSAGE-ID`,
@@ -60,9 +54,7 @@ const processMessageFromUser = async (body: string) => {
 const processMessageFromUser2 = async (body: string) => {
   expect(body).to.contain('-----BEGIN PGP MESSAGE-----');
   expect(body).to.contain('"associateReplyToken":"mock-fes-reply-token"');
-  expect(body).to.contain(
-    '"to":["sender@domain.com","flowcrypt.compatibility@gmail.com","to@example.com","mock.only.pubkey@flowcrypt.com"]'
-  );
+  expect(body).to.contain('"to":["sender@domain.com","flowcrypt.compatibility@gmail.com","to@example.com","mock.only.pubkey@flowcrypt.com"]');
   expect(body).to.contain('"cc":[]');
   expect(body).to.contain('"bcc":[]');
   // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -77,19 +69,12 @@ const processMessageFromUser2 = async (body: string) => {
   // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   const decryptedMimeMsg = decrypted.content!.toUtfStr();
   // small.txt
-  expect(decryptedMimeMsg).to.contain(
-    'Content-Type: text/plain; name=small.txt\r\n' + 'Content-Disposition: attachment; filename=small.txt'
-  );
-  expect(decryptedMimeMsg).to.contain(
-    'Content-Transfer-Encoding: base64\r\n\r\n' + 'c21hbGwgdGV4dCBmaWxlCm5vdCBtdWNoIGhlcmUKdGhpcyB3b3JrZWQK'
-  );
+  expect(decryptedMimeMsg).to.contain('Content-Type: text/plain; name=small.txt\r\n' + 'Content-Disposition: attachment; filename=small.txt');
+  expect(decryptedMimeMsg).to.contain('Content-Transfer-Encoding: base64\r\n\r\n' + 'c21hbGwgdGV4dCBmaWxlCm5vdCBtdWNoIGhlcmUKdGhpcyB3b3JrZWQK');
   // small.pdf
+  expect(decryptedMimeMsg).to.contain('Content-Type: application/pdf; name=small.pdf\r\n' + 'Content-Disposition: attachment; filename=small.pdf');
   expect(decryptedMimeMsg).to.contain(
-    'Content-Type: application/pdf; name=small.pdf\r\n' + 'Content-Disposition: attachment; filename=small.pdf'
-  );
-  expect(decryptedMimeMsg).to.contain(
-    'Content-Transfer-Encoding: base64\r\n\r\n' +
-      'JVBERi0xLjQKJcOkw7zDtsOfCjIgMCBvYmoKPDwvTGVuZ3RoIDMgMCBSL0ZpbHRlci9GbGF0ZURl'
+    'Content-Transfer-Encoding: base64\r\n\r\n' + 'JVBERi0xLjQKJcOkw7zDtsOfCjIgMCBvYmoKPDwvTGVuZ3RoIDMgMCBSL0ZpbHRlci9GbGF0ZURl'
   );
   const response = {
     // this url is required for pubkey encrypted message
@@ -135,9 +120,7 @@ const processMessageFromUser3 = async (body: string) => {
   const decryptedMimeMsg = decrypted.content!.toUtfStr();
   // small.txt
   expect(decryptedMimeMsg).to.contain(
-    'Content-Type: text/plain\r\n' +
-      'Content-Transfer-Encoding: quoted-printable\r\n\r\n' +
-      'PWD encrypted message with FES - pubkey recipient in bcc'
+    'Content-Type: text/plain\r\n' + 'Content-Transfer-Encoding: quoted-printable\r\n\r\n' + 'PWD encrypted message with FES - pubkey recipient in bcc'
   );
   const response = {
     // this url is required for pubkey encrypted message
@@ -231,10 +214,7 @@ export const mockFesEndpoints: HandlersDefinition = {
     if (req.method !== 'GET') {
       throw new HttpClientErr('Unsupported method');
     }
-    if (
-      req.headers.host === standardFesUrl &&
-      req.url === `/api/v1/client-configuration?domain=standardsubdomainfes.localhost:8001`
-    ) {
+    if (req.headers.host === standardFesUrl && req.url === `/api/v1/client-configuration?domain=standardsubdomainfes.localhost:8001`) {
       return {
         clientConfiguration: { flags: [], disallow_attester_search_for_domains: ['got.this@fromstandardfes.com'] }, // eslint-disable-line @typescript-eslint/naming-convention
       };

@@ -56,11 +56,7 @@ View.run(
       $('.fingerprint').text(Str.spaced(this.keyInfo.fingerprints[0]));
       Xss.sanitizeRender('.email', this.pubKey.emails.map(email => `<span>${Xss.escape(email)}</span>`).join(', '));
       const expiration = this.pubKey.expiration;
-      $('.key_expiration').text(
-        expiration && expiration !== Infinity
-          ? Str.datetimeToDate(Str.fromDate(new Date(expiration)))
-          : 'Key does not expire'
-      );
+      $('.key_expiration').text(expiration && expiration !== Infinity ? Str.datetimeToDate(Str.fromDate(new Date(expiration))) : 'Key does not expire');
       await this.renderPrivateKeyLink();
       await this.renderPubkeyShareableLink();
       await initPassphraseToggle(['input_passphrase']);
@@ -98,9 +94,7 @@ View.run(
       try {
         const result = await this.pubLookup.attester.lookupEmail(this.acctEmail);
         const url = FlowCryptWebsite.url('pubkey', this.acctEmail);
-        const doesContainKey = await asyncSome(result.pubkeys, async pubkey =>
-          KeyUtil.identityEquals(await KeyUtil.parse(pubkey), this.keyInfo)
-        );
+        const doesContainKey = await asyncSome(result.pubkeys, async pubkey => KeyUtil.identityEquals(await KeyUtil.parse(pubkey), this.keyInfo));
         if (doesContainKey) {
           $('.pubkey_link_container a').text(url.replace('https://', '')).attr('href', url).parent().css('display', '');
         } else {

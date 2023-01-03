@@ -39,9 +39,7 @@ export class PgpBlockViewSignatureModule {
         const signerEmail = this.view.getExpectedSignerEmail();
         if (!signerEmail) {
           // in some tests we load the block without sender information
-          this.view.renderModule.renderSignatureStatus(
-            'could not verify signature: missing pubkey, missing sender info'
-          );
+          this.view.renderModule.renderSignatureStatus('could not verify signature: missing pubkey, missing sender info');
         } else {
           $('#pgp_signature').addClass('gray_label').text('verifying signature...');
           try {

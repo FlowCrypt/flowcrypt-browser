@@ -489,11 +489,7 @@ export class ContactStore extends AbstractStore {
    * @async
    * @static
    */
-  public static update = async (
-    db: IDBDatabase | undefined,
-    email: string | string[],
-    update: ContactUpdate
-  ): Promise<void> => {
+  public static update = async (db: IDBDatabase | undefined, email: string | string[], update: ContactUpdate): Promise<void> => {
     if (!db) {
       // relay op through background process
       await BrowserMsg.send.bg.await.db({ f: 'update', args: [email, update] });
@@ -519,10 +515,7 @@ export class ContactStore extends AbstractStore {
     });
   };
 
-  public static getEncryptionKeys = async (
-    db: undefined | IDBDatabase,
-    emails: string[]
-  ): Promise<{ email: string; keys: Key[] }[]> => {
+  public static getEncryptionKeys = async (db: undefined | IDBDatabase, emails: string[]): Promise<{ email: string; keys: Key[] }[]> => {
     if (!db) {
       // relay op through background process
       return (await BrowserMsg.send.bg.await.db({ f: 'getEncryptionKeys', args: [emails] })) as {
@@ -542,9 +535,7 @@ export class ContactStore extends AbstractStore {
         },
       ];
     } else {
-      return (await Promise.all(emails.map(email => ContactStore.getEncryptionKeys(db, [email])))).reduce((a, b) =>
-        a.concat(b)
-      );
+      return (await Promise.all(emails.map(email => ContactStore.getEncryptionKeys(db, [email])))).reduce((a, b) => a.concat(b));
     }
   };
 
@@ -560,10 +551,7 @@ export class ContactStore extends AbstractStore {
     return (await ContactStore.extractPubkeys(db, fingerprints)).map(pubkey => pubkey?.armoredKey).filter(Boolean);
   };
 
-  public static getOneWithAllPubkeys = async (
-    db: IDBDatabase | undefined,
-    email: string
-  ): Promise<ContactInfoWithSortedPubkeys | undefined> => {
+  public static getOneWithAllPubkeys = async (db: IDBDatabase | undefined, email: string): Promise<ContactInfoWithSortedPubkeys | undefined> => {
     if (!db) {
       // relay op through background process
       // eslint-disable-next-line
@@ -612,10 +600,7 @@ export class ContactStore extends AbstractStore {
   };
 
   // todo: return parsed and with applied revocation
-  public static getPubkey = async (
-    db: IDBDatabase | undefined,
-    { id, family }: KeyIdentity
-  ): Promise<string | undefined> => {
+  public static getPubkey = async (db: IDBDatabase | undefined, { id, family }: KeyIdentity): Promise<string | undefined> => {
     if (!db) {
       // relay op through background process
       return (await BrowserMsg.send.bg.await.db({ f: 'getPubkey', args: [{ id, family }] })) as string | undefined;
@@ -629,11 +614,7 @@ export class ContactStore extends AbstractStore {
     return pubkeyEntity?.armoredKey;
   };
 
-  public static unlinkPubkey = async (
-    db: IDBDatabase | undefined,
-    email: string,
-    { id, family }: KeyIdentity
-  ): Promise<void> => {
+  public static unlinkPubkey = async (db: IDBDatabase | undefined, email: string, { id, family }: KeyIdentity): Promise<void> => {
     if (!db) {
       // relay op through background process
       await BrowserMsg.send.bg.await.db({ f: 'unlinkPubkey', args: [email, { id, family }] });
@@ -673,11 +654,7 @@ export class ContactStore extends AbstractStore {
     }
   };
 
-  public static setReqPipe<T>(
-    req: IDBRequest,
-    pipe: (value?: T) => void,
-    reject?: ((reason?: unknown) => void) | undefined
-  ) {
+  public static setReqPipe<T>(req: IDBRequest, pipe: (value?: T) => void, reject?: ((reason?: unknown) => void) | undefined) {
     req.onsuccess = () => {
       try {
         pipe(req.result as T);
@@ -744,9 +721,7 @@ export class ContactStore extends AbstractStore {
       // relay op through background process
       return (await BrowserMsg.send.bg.await.db({ f: 'getPubkeyInfos', args: [keys] })) as PubkeyInfo[];
     }
-    const parsedKeys = await Promise.all(
-      keys.map(async key => await KeyUtil.asPublicKey(typeof key === 'string' ? await KeyUtil.parse(key) : key))
-    );
+    const parsedKeys = await Promise.all(keys.map(async key => await KeyUtil.asPublicKey(typeof key === 'string' ? await KeyUtil.parse(key) : key)));
     const unrevokedIds = parsedKeys.filter(key => !key.revoked).map(key => key.id);
     const revocations: Revocation[] = [];
     if (unrevokedIds.length) {
@@ -805,9 +780,7 @@ export class ContactStore extends AbstractStore {
   };
 
   private static equalFingerprints = (fp1: string, fp2: string): boolean => {
-    return (
-      (fp1.endsWith(x509postfix) ? fp1 : fp1 + x509postfix) === (fp2.endsWith(x509postfix) ? fp2 : fp2 + x509postfix)
-    );
+    return (fp1.endsWith(x509postfix) ? fp1 : fp1 + x509postfix) === (fp2.endsWith(x509postfix) ? fp2 : fp2 + x509postfix);
   };
 
   private static createFingerprintRange = (fp: string): IDBKeyRange => {
@@ -837,11 +810,7 @@ export class ContactStore extends AbstractStore {
     if (update.pubkey) {
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const internalFingerprint = ContactStore.getPubkeyId(update.pubkey!);
-      if (
-        update.pubkey.family === 'openpgp' &&
-        !update.pubkey.revoked &&
-        revocations.some(r => r.fingerprint === internalFingerprint)
-      ) {
+      if (update.pubkey.family === 'openpgp' && !update.pubkey.revoked && revocations.some(r => r.fingerprint === internalFingerprint)) {
         // we have this fingerprint revoked but the supplied key isn't
         // so let's not save it
         // pubkeyEntity = undefined
@@ -886,11 +855,7 @@ export class ContactStore extends AbstractStore {
     });
   };
 
-  private static chainExtraction<T>(
-    store: IDBObjectStore,
-    setup: { keys: IDBValidKey[]; values: T[] },
-    req?: IDBRequest | undefined
-  ): void {
+  private static chainExtraction<T>(store: IDBObjectStore, setup: { keys: IDBValidKey[]; values: T[] }, req?: IDBRequest | undefined): void {
     if (req) {
       ContactStore.setReqPipe(req, (value: T) => {
         if (value) {
@@ -905,12 +870,7 @@ export class ContactStore extends AbstractStore {
     }
   }
 
-  private static async extractKeyset<T>(
-    db: IDBDatabase,
-    storeName: string,
-    keys: IDBValidKey[],
-    poolSize: number
-  ): Promise<T[]> {
+  private static async extractKeyset<T>(db: IDBDatabase, storeName: string, keys: IDBValidKey[], poolSize: number): Promise<T[]> {
     const tx = db.transaction([storeName], 'readonly');
     const setup = { keys, values: [] as T[] };
     await new Promise((resolve, reject) => {

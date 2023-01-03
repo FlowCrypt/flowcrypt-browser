@@ -113,11 +113,7 @@ export class KeyUtil {
     return kis.filter(ki => ids.some(i => KeyUtil.identityEquals(i, ki)));
   }
 
-  public static filterKeysByTypeAndSenderEmail = (
-    keys: KeyInfoWithIdentity[],
-    email: string,
-    type: 'openpgp' | 'x509' | undefined
-  ): KeyInfoWithIdentity[] => {
+  public static filterKeysByTypeAndSenderEmail = (keys: KeyInfoWithIdentity[], email: string, type: 'openpgp' | 'x509' | undefined): KeyInfoWithIdentity[] => {
     let foundKeys: KeyInfoWithIdentity[] = [];
     if (type) {
       foundKeys = keys.filter(key => key.emails?.includes(email.toLowerCase()) && key.family === type);
@@ -156,8 +152,7 @@ export class KeyUtil {
     const allKeys: Key[] = [];
     const allErrs: Error[] = [];
     const { blocks } = MsgBlockParser.detectBlocks(fileData.toUtfStr('ignore'));
-    const isImportable = (block: MsgBlock) =>
-      block.type === 'publicKey' || block.type === 'privateKey' || block.type === 'certificate';
+    const isImportable = (block: MsgBlock) => block.type === 'publicKey' || block.type === 'privateKey' || block.type === 'certificate';
     const armoredPublicKeyBlocks = blocks.filter(isImportable);
     const pushKeysAndErrs = async (content: string | Buf, isArmored: boolean) => {
       try {
@@ -203,10 +198,7 @@ export class KeyUtil {
     throw new UnexpectedKeyTypeError(`Key type is ${keyType}, expecting OpenPGP or x509 S/MIME`);
   };
 
-  public static readBinary = async (
-    key: Uint8Array,
-    passPhrase?: string | undefined
-  ): Promise<{ keys: Key[]; err: Error[] }> => {
+  public static readBinary = async (key: Uint8Array, passPhrase?: string | undefined): Promise<{ keys: Key[]; err: Error[] }> => {
     const allKeys: Key[] = [],
       allErr: Error[] = [];
     let uncheckedOpgpKeyCount = 0;
@@ -251,9 +243,7 @@ export class KeyUtil {
     if (keys.length > 0) {
       return keys;
     }
-    throw new Error(
-      err.length ? err.map((e, i) => i + 1 + '. ' + e.message).join('\n') : 'Should not happen: no keys and no errors.'
-    );
+    throw new Error(err.length ? err.map((e, i) => i + 1 + '. ' + e.message).join('\n') : 'Should not happen: no keys and no errors.');
   };
 
   public static armor = (pubkey: Key): string => {
@@ -272,10 +262,7 @@ export class KeyUtil {
       result = new Map<string, string>([...result, ...opgpresult]);
     }
     result.set(`expiration`, KeyUtil.formatResult(key.expiration));
-    result.set(
-      `internal dateBeforeExpiration`,
-      await KeyUtil.formatResultAsync(async () => KeyUtil.dateBeforeExpirationIfAlreadyExpired(key))
-    );
+    result.set(`internal dateBeforeExpiration`, await KeyUtil.formatResultAsync(async () => KeyUtil.dateBeforeExpirationIfAlreadyExpired(key)));
     result.set(`internal usableForEncryptionButExpired`, KeyUtil.formatResult(key.usableForEncryptionButExpired));
     result.set(`internal usableForSigningButExpired`, KeyUtil.formatResult(key.usableForSigningButExpired));
     return result;
@@ -467,8 +454,7 @@ export class KeyUtil {
   };
 
   private static getSortValue = (pubinfo: PubkeyInfo): number => {
-    const expirationSortValue =
-      typeof pubinfo.pubkey.expiration === 'undefined' ? Infinity : pubinfo.pubkey.expiration!; // eslint-disable-line @typescript-eslint/no-non-null-assertion
+    const expirationSortValue = typeof pubinfo.pubkey.expiration === 'undefined' ? Infinity : pubinfo.pubkey.expiration!; // eslint-disable-line @typescript-eslint/no-non-null-assertion
     // sort non-revoked first, then non-expired
     return pubinfo.revoked || pubinfo.pubkey.revoked ? -Infinity : expirationSortValue;
   };

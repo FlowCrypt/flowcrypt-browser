@@ -43,23 +43,12 @@ const consts = {
 };
 /* eslint-enable @typescript-eslint/naming-convention */
 console.info('consts: ', JSON.stringify(consts), '\n');
-consts.PROMISE_TIMEOUT_OVERALL = new Promise((resolve, reject) =>
-  setTimeout(() => reject(new Error(`TIMEOUT_OVERALL`)), consts.TIMEOUT_OVERALL)
-);
+consts.PROMISE_TIMEOUT_OVERALL = new Promise((resolve, reject) => setTimeout(() => reject(new Error(`TIMEOUT_OVERALL`)), consts.TIMEOUT_OVERALL));
 
 export type Consts = typeof consts;
 export type CommonAcct = 'compatibility' | 'compose' | 'ci.tests.gmail';
 
-const browserPool = new BrowserPool(
-  consts.POOL_SIZE,
-  'browserPool',
-  false,
-  buildDir,
-  isMock,
-  undefined,
-  undefined,
-  consts.IS_LOCAL_DEBUG
-);
+const browserPool = new BrowserPool(consts.POOL_SIZE, 'browserPool', false, buildDir, isMock, undefined, undefined, consts.IS_LOCAL_DEBUG);
 let closeMockApi: () => Promise<void>;
 const mockApiLogs: string[] = [];
 
@@ -165,15 +154,10 @@ ava.default.after.always('evaluate Catch.reportErr errors', async t => {
     .filter(e => !e.trace.includes('-1 when GET-ing https://openpgpkey.flowcrypt.com'))
     // below for "test allows to retry public key search when attester returns error"
     .filter(
-      e =>
-        !e.message.includes(
-          'Error: Internal Server Error: 500 when GET-ing https://localhost:8001/attester/pub/attester.return.error@flowcrypt.test'
-        )
+      e => !e.message.includes('Error: Internal Server Error: 500 when GET-ing https://localhost:8001/attester/pub/attester.return.error@flowcrypt.test')
     );
   const foundExpectedErr = usefulErrors.find(re => re.message === `intentional error for debugging`);
-  const foundUnwantedErrs = usefulErrors.filter(
-    re => re.message !== `intentional error for debugging` && !re.message.includes('traversal forbidden')
-  );
+  const foundUnwantedErrs = usefulErrors.filter(re => re.message !== `intentional error for debugging` && !re.message.includes('traversal forbidden'));
   if (testVariant === 'CONSUMER-MOCK' && internalTestState.expectIntentionalErrReport && !foundExpectedErr) {
     // on consumer flavor app, we submit errors to flowcrypt.com backend
     t.fail(`Catch.reportErr errors: missing intentional error report on consumer flavor`);
@@ -186,9 +170,7 @@ ava.default.after.always('evaluate Catch.reportErr errors', async t => {
   }
   if (foundUnwantedErrs.length) {
     for (const e of foundUnwantedErrs) {
-      console.info(
-        `----- mockBackendData Catch.reportErr -----\nname: ${e.name}\nmessage: ${e.message}\nurl: ${e.url}\ntrace: ${e.trace}`
-      );
+      console.info(`----- mockBackendData Catch.reportErr -----\nname: ${e.name}\nmessage: ${e.message}\nurl: ${e.url}\ntrace: ${e.trace}`);
     }
     t.fail(`Catch.reportErr errors: ${foundUnwantedErrs.length}`);
   } else {

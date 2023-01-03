@@ -47,8 +47,7 @@ export class SetupWithEmailKeyManagerModule {
     /* eslint-disable @typescript-eslint/naming-convention */
     const setupOptions: SetupOptions = {
       passphrase_save:
-        this.view.clientConfiguration.mustAutogenPassPhraseQuietly() ||
-        Boolean($('#step_2_ekm_choose_pass_phrase .input_passphrase_save').prop('checked')),
+        this.view.clientConfiguration.mustAutogenPassPhraseQuietly() || Boolean($('#step_2_ekm_choose_pass_phrase .input_passphrase_save').prop('checked')),
       submit_main: this.view.clientConfiguration.canSubmitPubToAttester(),
       submit_all: false,
       passphrase,
@@ -93,11 +92,8 @@ export class SetupWithEmailKeyManagerModule {
   private autoGenerateKeyAndStoreBothLocallyAndToEkm = async (setupOptions: SetupOptions) => {
     const keygenAlgo = this.view.clientConfiguration.getEnforcedKeygenAlgo();
     if (!keygenAlgo) {
-      const notSupportedErr =
-        'Combination of org rules not yet supported: PRV_AUTOIMPORT_OR_AUTOGEN cannot yet be used without enforce_keygen_algo.';
-      await Ui.modal.error(
-        `${notSupportedErr}\n\nPlease ${Lang.general.contactMinimalSubsentence(this.view.isFesUsed())} to add support.`
-      );
+      const notSupportedErr = 'Combination of org rules not yet supported: PRV_AUTOIMPORT_OR_AUTOGEN cannot yet be used without enforce_keygen_algo.';
+      await Ui.modal.error(`${notSupportedErr}\n\nPlease ${Lang.general.contactMinimalSubsentence(this.view.isFesUsed())} to add support.`);
       window.location.href = Url.create('index.htm', { acctEmail: this.view.acctEmail });
       return;
     }

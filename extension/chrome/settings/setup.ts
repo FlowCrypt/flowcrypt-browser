@@ -79,11 +79,10 @@ export class SetupView extends View {
     super();
     const uncheckedUrlParams = Url.parse(['acctEmail', 'action', 'idToken', 'parentTabId']);
     this.acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
-    this.action = Assert.urlParamRequire.oneof(uncheckedUrlParams, 'action', [
-      'add_key',
-      'update_from_ekm',
-      undefined,
-    ]) as 'add_key' | 'update_from_ekm' | undefined;
+    this.action = Assert.urlParamRequire.oneof(uncheckedUrlParams, 'action', ['add_key', 'update_from_ekm', undefined]) as
+      | 'add_key'
+      | 'update_from_ekm'
+      | undefined;
     if (this.action === 'add_key') {
       this.parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
     } else {
@@ -97,10 +96,7 @@ export class SetupView extends View {
     this.submitKeyForAddrs = [];
     this.keyImportUi.initPrvImportSrcForm(this.acctEmail, this.parentTabId, this.submitKeyForAddrs); // for step_2b_manual_enter, if user chooses so
     this.keyImportUi.onBadPassphrase = () => $('#step_2b_manual_enter .input_passphrase').val('').focus();
-    this.keyImportUi.renderPassPhraseStrengthValidationInput(
-      $('#step_2a_manual_create .input_password'),
-      $('#step_2a_manual_create .action_proceed_private')
-    );
+    this.keyImportUi.renderPassPhraseStrengthValidationInput($('#step_2a_manual_create .input_password'), $('#step_2a_manual_create .action_proceed_private'));
     this.keyImportUi.renderPassPhraseStrengthValidationInput(
       $('#step_2_ekm_choose_pass_phrase .input_password'),
       $('#step_2_ekm_choose_pass_phrase .action_proceed_private')
@@ -139,13 +135,8 @@ export class SetupView extends View {
       this.keyManager = new KeyManager(this.clientConfiguration.getKeyManagerUrlForPrivateKeys()!);
     }
     if (!this.clientConfiguration.canCreateKeys()) {
-      const forbidden = `${Lang.setup.creatingKeysNotAllowedPleaseImport} <a href="${Xss.escape(
-        window.location.href
-      )}">Back</a>`;
-      Xss.sanitizeRender(
-        '#step_2a_manual_create, #step_2_easy_generating',
-        `<div class="aligncenter"><div class="line">${forbidden}</div></div>`
-      );
+      const forbidden = `${Lang.setup.creatingKeysNotAllowedPleaseImport} <a href="${Xss.escape(window.location.href)}">Back</a>`;
+      Xss.sanitizeRender('#step_2a_manual_create, #step_2_easy_generating', `<div class="aligncenter"><div class="line">${forbidden}</div></div>`);
       $('#button-go-back').remove(); // back button would allow users to choose other options (eg create - not allowed)
     }
     if (this.clientConfiguration.mustSubmitToAttester() || !this.clientConfiguration.canSubmitPubToAttester()) {
@@ -243,18 +234,9 @@ export class SetupView extends View {
       'click',
       this.setHandler(() => this.actionCloseHandler())
     ); // only rendered if action=add_key which means parentTabId was used
-    $('#step_2a_manual_create .input_password').on(
-      'keydown',
-      this.setEnterHandlerThatClicks('#step_2a_manual_create .action_proceed_private')
-    );
-    $('#step_2a_manual_create.input_password2').on(
-      'keydown',
-      this.setEnterHandlerThatClicks('#step_2a_manual_create .action_proceed_private')
-    );
-    $('#step_2_ekm_choose_pass_phrase .input_password').on(
-      'keydown',
-      this.setEnterHandlerThatClicks('#step_2_ekm_choose_pass_phrase .action_proceed_private')
-    );
+    $('#step_2a_manual_create .input_password').on('keydown', this.setEnterHandlerThatClicks('#step_2a_manual_create .action_proceed_private'));
+    $('#step_2a_manual_create.input_password2').on('keydown', this.setEnterHandlerThatClicks('#step_2a_manual_create .action_proceed_private'));
+    $('#step_2_ekm_choose_pass_phrase .input_password').on('keydown', this.setEnterHandlerThatClicks('#step_2_ekm_choose_pass_phrase .action_proceed_private'));
     $('#step_2_ekm_choose_pass_phrase .input_password2').on(
       'keydown',
       this.setEnterHandlerThatClicks('#step_2_ekm_choose_pass_phrase .action_proceed_private')
@@ -324,25 +306,14 @@ export class SetupView extends View {
   };
 
   /* eslint-disable @typescript-eslint/naming-convention */
-  public submitPublicKeys = async ({
-    submit_main,
-    submit_all,
-  }: {
-    submit_main: boolean;
-    submit_all: boolean;
-  }): Promise<void> => {
-    const mostUsefulPrv = KeyStoreUtil.chooseMostUseful(
-      await KeyStoreUtil.parse(await KeyStore.getRequired(this.acctEmail)),
-      'ONLY-FULLY-USABLE'
-    );
+  public submitPublicKeys = async ({ submit_main, submit_all }: { submit_main: boolean; submit_all: boolean }): Promise<void> => {
+    const mostUsefulPrv = KeyStoreUtil.chooseMostUseful(await KeyStoreUtil.parse(await KeyStore.getRequired(this.acctEmail)), 'ONLY-FULLY-USABLE');
     try {
       await this.submitPublicKeyIfNeeded(mostUsefulPrv?.keyInfo.public, { submit_main, submit_all });
     } catch (e) {
       return await Settings.promptToRetry(
         e,
-        e instanceof CompanyLdapKeyMismatchError
-          ? Lang.setup.failedToImportUnknownKey
-          : Lang.setup.failedToSubmitToAttester,
+        e instanceof CompanyLdapKeyMismatchError ? Lang.setup.failedToImportUnknownKey : Lang.setup.failedToSubmitToAttester,
         () => this.submitPublicKeys({ submit_main, submit_all }),
         Lang.general.contactIfNeedAssistance(this.isFesUsed())
       );
@@ -356,9 +327,7 @@ export class SetupView extends View {
 
   public shouldSubmitPubkey = (checkboxSelector: string) => {
     if (this.clientConfiguration.mustSubmitToAttester() && !this.clientConfiguration.canSubmitPubToAttester()) {
-      throw new Error(
-        'Organisation rules are misconfigured: ENFORCE_ATTESTER_SUBMIT not compatible with NO_ATTESTER_SUBMIT'
-      );
+      throw new Error('Organisation rules are misconfigured: ENFORCE_ATTESTER_SUBMIT not compatible with NO_ATTESTER_SUBMIT');
     }
     if (!this.clientConfiguration.canSubmitPubToAttester()) {
       return false;
@@ -389,10 +358,7 @@ export class SetupView extends View {
     }
     let notePp = String(password1.val());
     if (await shouldPassPhraseBeHidden()) {
-      notePp =
-        notePp.substring(0, 2) +
-        notePp.substring(2, notePp.length - 2).replace(/[^ ]/g, '*') +
-        notePp.substring(notePp.length - 2, notePp.length);
+      notePp = notePp.substring(0, 2) + notePp.substring(2, notePp.length - 2).replace(/[^ ]/g, '*') + notePp.substring(notePp.length - 2, notePp.length);
     }
     if (!this.clientConfiguration.usesKeyManager()) {
       const paperPassPhraseStickyNote = `
@@ -472,9 +438,7 @@ export class SetupView extends View {
     }
     const aliases = addresses.filter(a => a !== this.acctEmail);
     if (aliases.length) {
-      await Promise.all(
-        aliases.map(a => this.pubLookup.attester.submitPubkeyWithConditionalEmailVerification(a, pubkey))
-      );
+      await Promise.all(aliases.map(a => this.pubLookup.attester.submitPubkeyWithConditionalEmailVerification(a, pubkey)));
     }
   };
 }

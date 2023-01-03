@@ -170,9 +170,7 @@ BROWSER_UNIT_TEST_NAME(`ContactStore doesn't store duplicates in searchable`);
     !entity.searchable.includes('f:this.word') ||
     !entity.searchable.includes('f:word')
   ) {
-    throw Error(
-      `Expected ["at@this.word", "this.word", "word"] entries in 'searchable' but got "${entity?.searchable}"`
-    );
+    throw Error(`Expected ["at@this.word", "this.word", "word"] entries in 'searchable' but got "${entity?.searchable}"`);
   }
   return 'pass';
 })();
@@ -340,9 +338,7 @@ BROWSER_UNIT_TEST_NAME(`ContactStore saves and returns dates as numbers`);
     throw Error("Contact doesn't have pubkeys");
   }
   if (typeof loaded.sortedPubkeys[0].lastCheck !== 'number') {
-    throw Error(
-      'pubkeyLastCheck was expected to be a number, ' + `but got ${typeof loaded.sortedPubkeys[0].lastCheck}`
-    );
+    throw Error('pubkeyLastCheck was expected to be a number, ' + `but got ${typeof loaded.sortedPubkeys[0].lastCheck}`);
   }
   return 'pass';
 })();
@@ -362,9 +358,7 @@ BROWSER_UNIT_TEST_NAME(`ContactStore.getOneWithAllPubkeys() returns all pubkeys 
 
   const { sortedPubkeys: pubs } = await ContactStore.getOneWithAllPubkeys(undefined, 'some.revoked@otherhost.com');
   if (pubs[0].pubkey.id !== 'D6662C5FB9BDE9DA01F3994AAA1EF832D8CCA4F2') {
-    throw Error(
-      `Expected to get the key fingerprint D6662C5FB9BDE9DA01F3994AAA1EF832D8CCA4F2 but got ${pubs[0].pubkey.id}`
-    );
+    throw Error(`Expected to get the key fingerprint D6662C5FB9BDE9DA01F3994AAA1EF832D8CCA4F2 but got ${pubs[0].pubkey.id}`);
   }
   if (pubs.length !== 3) {
     throw new Error(`3 pubkeys were expected to be retrieved from the storage but got ${pubs.length}`);
@@ -409,9 +403,7 @@ BROWSER_UNIT_TEST_NAME(`ContactStore: X-509 revocation affects OpenPGP key`);
   const opgpKeyOldAndValid = await KeyUtil.parse(testConstants.somerevokedValid);
   const fingerprint = 'D6662C5FB9BDE9DA01F3994AAA1EF832D8CCA4F2';
   if (opgpKeyOldAndValid.id !== fingerprint) {
-    throw new Error(
-      `Valid OpenPGP Key is expected to have fingerprint ${fingerprint} but actually is ${opgpKeyOldAndValid.id}`
-    );
+    throw new Error(`Valid OpenPGP Key is expected to have fingerprint ${fingerprint} but actually is ${opgpKeyOldAndValid.id}`);
   }
   await ContactStore.update(db, 'some.revoked@localhost.com', { pubkey: opgpKeyOldAndValid });
   const { sortedPubkeys: pubkeys1 } = await ContactStore.getOneWithAllPubkeys(db, `some.revoked@localhost.com`);
@@ -461,15 +453,11 @@ BROWSER_UNIT_TEST_NAME(`ContactStore doesn't replace revoked key with older vers
   const opgpKeyOldAndValid = await KeyUtil.parse(testConstants.somerevokedValid);
   const fingerprint = 'D6662C5FB9BDE9DA01F3994AAA1EF832D8CCA4F2';
   if (opgpKeyOldAndValid.id !== fingerprint) {
-    throw new Error(
-      `Valid OpenPGP Key is expected to have fingerprint ${fingerprint} but actually is ${opgpKeyOldAndValid.id}`
-    );
+    throw new Error(`Valid OpenPGP Key is expected to have fingerprint ${fingerprint} but actually is ${opgpKeyOldAndValid.id}`);
   }
   const opgpKeyRevoked = await KeyUtil.parse(testConstants.somerevokedValidNowRevoked);
   if (opgpKeyRevoked.id !== fingerprint) {
-    throw new Error(
-      `RevokedOpenPGP Key is expected to have fingerprint ${fingerprint} but actually is ${opgpKeyRevoked.id}`
-    );
+    throw new Error(`RevokedOpenPGP Key is expected to have fingerprint ${fingerprint} but actually is ${opgpKeyRevoked.id}`);
   }
   await ContactStore.update(db, 'some.revoked@localhost.com', { pubkey: opgpKeyOldAndValid });
   const loadedOpgpKey1 = await ContactStore.getOneWithAllPubkeys(db, 'some.revoked@localhost.com');

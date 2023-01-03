@@ -15,8 +15,7 @@ export class Str {
   // ranges are taken from https://stackoverflow.com/a/14824756
   // with the '\u0300' -> '\u0370' modification, because from '\u0300' to '\u0370' there are only punctuation marks
   // see https://www.utf8-chartable.de/unicode-utf8-table.pl
-  public static readonly ltrChars =
-    'A-Za-z\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u02B8\u0370-\u0590\u0800-\u1FFF\u2C00-\uFB1C\uFDFE-\uFE6F\uFEFD-\uFFFF';
+  public static readonly ltrChars = 'A-Za-z\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u02B8\u0370-\u0590\u0800-\u1FFF\u2C00-\uFB1C\uFDFE-\uFE6F\uFEFD-\uFFFF';
   public static readonly rtlChars = '\u0591-\u07FF\uFB1D-\uFDFD\uFE70-\uFEFC';
 
   public static parseEmail = (full: string, flag: 'VALIDATE' | 'DO-NOT-VALIDATE' = 'VALIDATE') => {
@@ -61,9 +60,7 @@ export class Str {
   };
 
   public static prettyPrint = (obj: unknown) => {
-    return typeof obj === 'object'
-      ? JSON.stringify(obj, undefined, 2).replace(/ /g, '&nbsp;').replace(/\n/g, '<br />')
-      : String(obj);
+    return typeof obj === 'object' ? JSON.stringify(obj, undefined, 2).replace(/ /g, '&nbsp;').replace(/\n/g, '<br />') : String(obj);
   };
 
   public static normalizeSpaces = (str: string) => {
@@ -97,20 +94,7 @@ export class Str {
   };
 
   public static monthName = (monthIndex: number) => {
-    return [
-      'January',
-      'February',
-      'March',
-      'April',
-      'May',
-      'June',
-      'July',
-      'August',
-      'September',
-      'October',
-      'November',
-      'December',
-    ][monthIndex];
+    return ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'][monthIndex];
   };
 
   public static sloppyRandom = (length = 5) => {
@@ -213,9 +197,7 @@ export class Str {
     if (typeof str === 'undefined') {
       return str;
     }
-    return base64encode(
-      encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, (match, p1) => String.fromCharCode(parseInt(String(p1), 16)))
-    )
+    return base64encode(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, (match, p1) => String.fromCharCode(parseInt(String(p1), 16))))
       .replace(/\+/g, '-')
       .replace(/\//g, '_')
       .replace(/=+$/, '');
@@ -270,8 +252,7 @@ export class Value {
       }
       return result;
     },
-    contains: <T>(arr: T[] | string, value: T): boolean =>
-      Boolean(arr && typeof arr.indexOf === 'function' && (arr as unknown[]).indexOf(value) !== -1),
+    contains: <T>(arr: T[] | string, value: T): boolean => Boolean(arr && typeof arr.indexOf === 'function' && (arr as unknown[]).indexOf(value) !== -1),
     intersection: <T>(array1: T[], array2: T[]): T[] => array1.filter(value => array2.includes(value)),
     hasIntersection: <T>(array1: T[], array2: T[]): boolean => array1.some(value => array2.includes(value)),
     sum: (arr: number[]) => arr.reduce((a, b) => a + b, 0),
@@ -372,11 +353,7 @@ export class Url {
     return s.replace(/[a-z][A-Z]/g, boundary => `${boundary[0]}_${boundary[1].toLowerCase()}`);
   };
 
-  private static findAndProcessUrlParam = (
-    expectedParamName: string,
-    rawParamNameDict: Dict<string>,
-    rawParms: Dict<string>
-  ): UrlParam => {
+  private static findAndProcessUrlParam = (expectedParamName: string, rawParamNameDict: Dict<string>, rawParms: Dict<string>): UrlParam => {
     if (typeof rawParamNameDict[expectedParamName] === 'undefined') {
       return undefined; // param name not found in param name dict
     }

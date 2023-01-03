@@ -59,9 +59,7 @@ View.run(
         let note, action, color;
         if (!result.pubkeys.length) {
           note = 'Missing record. Your contacts will not know you have encryption set up.';
-          action = `<button class="button gray2 small action_submit_key" data-test="action-submit-pub" email="${Xss.escape(
-            email
-          )}">Submit public key</button>`;
+          action = `<button class="button gray2 small action_submit_key" data-test="action-submit-pub" email="${Xss.escape(email)}">Submit public key</button>`;
           color = 'orange';
         } else if (result.match) {
           note = 'Submitted correctly, can receive encrypted email.';
@@ -70,9 +68,7 @@ View.run(
         } else {
           note = 'Wrong public key recorded. Your incoming email may be unreadable when encrypted.';
           // todo - pass public key and email in
-          action = `<button class="button gray2 small action_replace_pubkey" email="${Xss.escape(
-            email
-          )}">Correct public records</button>`;
+          action = `<button class="button gray2 small action_replace_pubkey" email="${Xss.escape(email)}">Correct public records</button>`;
           color = 'red';
         }
         Xss.sanitizeAppend(
@@ -102,14 +98,9 @@ View.run(
         return await Ui.modal.error('Disallowed by your organisation rules');
       }
       Xss.sanitizeRender(target, Ui.spinner('white'));
-      const mostUsefulPrv = await KeyStoreUtil.chooseMostUseful(
-        await KeyStoreUtil.parse(await KeyStore.getRequired(this.acctEmail)),
-        'ONLY-FULLY-USABLE'
-      );
+      const mostUsefulPrv = await KeyStoreUtil.chooseMostUseful(await KeyStoreUtil.parse(await KeyStore.getRequired(this.acctEmail)), 'ONLY-FULLY-USABLE');
       if (!mostUsefulPrv) {
-        await Ui.modal.warning(
-          'This account has no usable key set up (may be expired or revoked). Check Additional Settings -> My Keys'
-        );
+        await Ui.modal.warning('This account has no usable key set up (may be expired or revoked). Check Additional Settings -> My Keys');
         return;
       }
       try {
@@ -121,10 +112,7 @@ View.run(
           await this.pubLookup.attester.submitPrimaryEmailPubkey(email, mostUsefulPrv.keyInfo.public, idToken!);
         } else {
           // If email is alias email
-          await this.pubLookup.attester.submitPubkeyWithConditionalEmailVerification(
-            email,
-            mostUsefulPrv.keyInfo.public
-          );
+          await this.pubLookup.attester.submitPubkeyWithConditionalEmailVerification(email, mostUsefulPrv.keyInfo.public);
         }
       } catch (e) {
         ApiErr.reportIfSignificant(e);
@@ -143,9 +131,7 @@ View.run(
       const openpgpPrvs = prvs.filter(prv => prv.key.family === 'openpgp'); // attester doesn't support x509
       const mostUsefulPrv = KeyStoreUtil.chooseMostUseful(openpgpPrvs, 'ONLY-FULLY-USABLE');
       if (!mostUsefulPrv) {
-        await Ui.modal.warning(
-          'This account has no usable key set up (may be expired or revoked). Check Additional Settings -> My Keys'
-        );
+        await Ui.modal.warning('This account has no usable key set up (may be expired or revoked). Check Additional Settings -> My Keys');
         return;
       }
       try {
@@ -170,9 +156,7 @@ View.run(
       const results = await this.pubLookup.attester.lookupEmails(sendAs ? Object.keys(sendAs) : [this.acctEmail]);
       for (const email of Object.keys(results)) {
         const pubkeySearchResult = results[email];
-        const hasMatchingKey = await asyncSome(pubkeySearchResult.pubkeys, async pubkey =>
-          storedKeysIds.includes((await KeyUtil.parse(pubkey)).id)
-        );
+        const hasMatchingKey = await asyncSome(pubkeySearchResult.pubkeys, async pubkey => storedKeysIds.includes((await KeyUtil.parse(pubkey)).id));
         diagnosis.hasPubkeyMismatch = !hasMatchingKey;
         diagnosis.results[email] = { pubkeys: pubkeySearchResult.pubkeys, match: hasMatchingKey };
       }

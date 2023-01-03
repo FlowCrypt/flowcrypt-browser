@@ -70,10 +70,7 @@ export class PgpArmor {
   };
 
   public static clip = (text: string): string | undefined => {
-    if (
-      text?.includes(PgpArmor.ARMOR_HEADER_DICT.null.begin) &&
-      text.includes(String(PgpArmor.ARMOR_HEADER_DICT.null.end))
-    ) {
+    if (text?.includes(PgpArmor.ARMOR_HEADER_DICT.null.begin) && text.includes(String(PgpArmor.ARMOR_HEADER_DICT.null.end))) {
       const match = text.match(
         /(-----BEGIN PGP (MESSAGE|SIGNED MESSAGE|SIGNATURE|PUBLIC KEY BLOCK)-----[^]+-----END PGP (MESSAGE|SIGNATURE|PUBLIC KEY BLOCK)-----)/gm
       );
@@ -82,10 +79,7 @@ export class PgpArmor {
     return undefined;
   };
 
-  public static headers = (
-    blockType: ReplaceableMsgBlockType | 'null',
-    format = 'string'
-  ): CryptoArmorHeaderDefinition => {
+  public static headers = (blockType: ReplaceableMsgBlockType | 'null', format = 'string'): CryptoArmorHeaderDefinition => {
     const h = PgpArmor.ARMOR_HEADER_DICT[blockType];
     return {
       begin: typeof h.begin === 'string' && format === 're' ? h.begin.replace(/ /g, '\\s') : h.begin,
@@ -111,12 +105,7 @@ export class PgpArmor {
     const lines = armored.split('\n');
     const h = PgpArmor.headers(type === 'key' ? 'null' : type);
     // check for and fix missing a mandatory empty line
-    if (
-      lines.length > 5 &&
-      lines[0].includes(h.begin) &&
-      lines[lines.length - 1].includes(String(h.end)) &&
-      !lines.includes('')
-    ) {
+    if (lines.length > 5 && lines[0].includes(h.begin) && lines[lines.length - 1].includes(String(h.end)) && !lines.includes('')) {
       for (let i = 1; i < 5; i++) {
         if (lines[i].match(/^[a-zA-Z0-9\-_. ]+: .+$/)) {
           continue; // skip comment lines, looking for first data line
@@ -156,8 +145,7 @@ export class PgpArmor {
       };
     } else if (isArmoredEncrypted) {
       const message = await opgp.message.readArmored(new Buf(encrypted).toUtfStr());
-      const isCleartext =
-        !!message.getLiteralData() && !!message.getSigningKeyIds().length && !message.getEncryptionKeyIds().length;
+      const isCleartext = !!message.getLiteralData() && !!message.getSigningKeyIds().length && !message.getEncryptionKeyIds().length;
       return { isArmored: true, isCleartext, isPkcs7: false, message };
     } else if (encrypted instanceof Uint8Array) {
       return { isArmored, isCleartext: false, isPkcs7: false, message: await opgp.message.read(encrypted) };
@@ -171,13 +159,7 @@ export class PgpArmor {
     return { type: decoded.type, data };
   };
 
-  public static armor = (
-    messagetype: OpenPGP.enums.armor,
-    body: object,
-    partindex?: number,
-    parttotal?: number,
-    customComment?: string
-  ): string => {
+  public static armor = (messagetype: OpenPGP.enums.armor, body: object, partindex?: number, parttotal?: number, customComment?: string): string => {
     return opgp.armor.encode(messagetype, body, partindex, parttotal, customComment);
   };
 }

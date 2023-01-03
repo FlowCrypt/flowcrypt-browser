@@ -26,9 +26,7 @@ const getAllFilesInDir = (dir: string, filePattern: RegExp): string[] => {
 };
 
 const hasXssComment = (line: string) => {
-  return /\/\/ xss-(known-source|direct|escaped|safe-factory|safe-value|sanitized|none|reinsert|dangerous-function)/.test(
-    line
-  );
+  return /\/\/ xss-(known-source|direct|escaped|safe-factory|safe-value|sanitized|none|reinsert|dangerous-function)/.test(line);
 };
 
 const hasErrHandledComment = (line: string) => {
@@ -49,17 +47,11 @@ const validateTypeScriptLine = (line: string, location: string) => {
     errsFound++;
   }
   if (line.match(/setInterval|setTimeout/) && !hasErrHandledComment(line)) {
-    console.error(
-      `errors not handled in ${location} (make sure to use Catch.setHandledTimeout or Catch.setHandledInterval):\n${line}\n`
-    );
+    console.error(`errors not handled in ${location} (make sure to use Catch.setHandledTimeout or Catch.setHandledInterval):\n${line}\n`);
     errsFound++;
   }
-  if (
-    line.match(/^ {2}(public |private |protected |static |async )*((?!constructor)[a-z][a-zA-Z0-9]+)\([^;]+[^>] \{$/)
-  ) {
-    console.error(
-      `wrongly using class method, which can cause binding loss (use fat arrow method properties instead) #1:\n${line}\n`
-    );
+  if (line.match(/^ {2}(public |private |protected |static |async )*((?!constructor)[a-z][a-zA-Z0-9]+)\([^;]+[^>] \{$/)) {
+    console.error(`wrongly using class method, which can cause binding loss (use fat arrow method properties instead) #1:\n${line}\n`);
     errsFound++;
   }
   if (line.match(/^ {2}(public |private |protected |static )+?[a-z][a-zA-Z0-9]+ = (async )?\(.+\)(: .+)? => .+;$/)) {
@@ -69,9 +61,7 @@ const validateTypeScriptLine = (line: string, location: string) => {
     errsFound++;
   }
   if (line.match(/^ {2}(public |private |protected |static |async )*((?!constructor)[a-z][a-zA-Z0-9]+)\([^)]*\) \{$/)) {
-    console.error(
-      `wrongly using class method, which can cause binding loss (use fat arrow method properties instead) #2:\n${line}\n`
-    );
+    console.error(`wrongly using class method, which can cause binding loss (use fat arrow method properties instead) #2:\n${line}\n`);
     errsFound++;
   }
 };
@@ -108,9 +98,7 @@ const expectedEnterprisePermissions = [
 ];
 for (const buildType of ['chrome-consumer', 'chrome-enterprise', 'firefox-consumer']) {
   const manifest = JSON.parse(readFileSync(`./build/${buildType}/manifest.json`).toString());
-  const expectedPermissions = buildType.includes('consumer')
-    ? expectedConsumerPermissions
-    : expectedEnterprisePermissions;
+  const expectedPermissions = buildType.includes('consumer') ? expectedConsumerPermissions : expectedEnterprisePermissions;
   for (const expectedPermission of expectedPermissions) {
     if (!manifest.permissions.includes(expectedPermission)) {
       if (!(expectedPermission === 'unlimitedStorage' && buildType === 'firefox-consumer')) {
@@ -119,9 +107,7 @@ for (const buildType of ['chrome-consumer', 'chrome-enterprise', 'firefox-consum
       }
     }
   }
-  const gmailCs = manifest.content_scripts.find((cs: { matches: string }) =>
-    cs.matches.includes('https://mail.google.com/*')
-  );
+  const gmailCs = manifest.content_scripts.find((cs: { matches: string }) => cs.matches.includes('https://mail.google.com/*'));
   if (!gmailCs || !gmailCs.css.length || !gmailCs.js.length) {
     console.error(`Missing content_scripts declaration for Gmail in ${buildType}/manifest.json`);
     errsFound++;

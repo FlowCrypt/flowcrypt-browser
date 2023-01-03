@@ -131,10 +131,7 @@ export class Api<REQ, RES> {
       res.setHeader('content-type', 'application/json');
       return this.fmtRes({ app_name: this.apiName }); // eslint-disable-line @typescript-eslint/naming-convention
     }
-    if (
-      (req.url === '/alive' || req.url === `${this.urlPrefix}/alive`) &&
-      (req.method === 'GET' || req.method === 'HEAD')
-    ) {
+    if ((req.url === '/alive' || req.url === `${this.urlPrefix}/alive`) && (req.method === 'GET' || req.method === 'HEAD')) {
       res.setHeader('content-type', 'application/json');
       return this.fmtRes({ alive: true });
     }
@@ -176,10 +173,7 @@ export class Api<REQ, RES> {
   protected fmtHandlerRes = (handlerRes: RES, serverRes: http.ServerResponse): Buffer => {
     if (typeof handlerRes === 'string' && handlerRes.match(/^<!DOCTYPE HTML><html>/)) {
       serverRes.setHeader('content-type', 'text/html');
-    } else if (
-      typeof handlerRes === 'object' ||
-      (typeof handlerRes === 'string' && handlerRes.match(/^\{/) && handlerRes.match(/\}$/))
-    ) {
+    } else if (typeof handlerRes === 'object' || (typeof handlerRes === 'string' && handlerRes.match(/^\{/) && handlerRes.match(/\}$/))) {
       serverRes.setHeader('content-type', 'application/json');
     } else if (typeof handlerRes === 'string') {
       serverRes.setHeader('content-type', 'text/plain');

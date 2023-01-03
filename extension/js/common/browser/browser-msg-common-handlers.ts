@@ -30,13 +30,7 @@ export class BrowserMsgCommonHandlers {
   public static replyPubkeyMismatch = async () => {
     const replyIframe = $('iframe.reply_message').get(0) as HTMLIFrameElement | undefined;
     if (replyIframe) {
-      const bareSrc = Url.removeParamsFromUrl(replyIframe.src, [
-        'ignoreDraft',
-        'disableDraftSaving',
-        'draftId',
-        'replyPubkeyMismatch',
-        'skipClickPrompt',
-      ]);
+      const bareSrc = Url.removeParamsFromUrl(replyIframe.src, ['ignoreDraft', 'disableDraftSaving', 'draftId', 'replyPubkeyMismatch', 'skipClickPrompt']);
       replyIframe.src = Url.create(bareSrc, {
         replyPubkeyMismatch: true,
         ignoreDraft: true,

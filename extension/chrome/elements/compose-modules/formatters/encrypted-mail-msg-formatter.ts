@@ -42,11 +42,7 @@ type ReplyInfoRaw = {
 };
 
 export class EncryptedMsgMailFormatter extends BaseMailFormatter {
-  public sendableMsgs = async (
-    newMsg: NewMsgData,
-    pubkeys: PubkeyResult[],
-    signingKey?: ParsedKeyInfo
-  ): Promise<MultipleMessages> => {
+  public sendableMsgs = async (newMsg: NewMsgData, pubkeys: PubkeyResult[], signingKey?: ParsedKeyInfo): Promise<MultipleMessages> => {
     if (newMsg.pwd && !this.isDraft) {
       return await this.formatSendablePwdMsgs(newMsg, pubkeys, signingKey);
     } else {
@@ -62,11 +58,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
     }
   };
 
-  public sendableNonPwdMsg = async (
-    newMsg: NewMsgData,
-    pubkeys: PubkeyResult[],
-    signingPrv?: Key
-  ): Promise<SendableMsg> => {
+  public sendableNonPwdMsg = async (newMsg: NewMsgData, pubkeys: PubkeyResult[], signingPrv?: Key): Promise<SendableMsg> => {
     if (!this.isDraft) {
       // S/MIME drafts are currently formatted with inline armored data
       const x509certs = pubkeys.map(entry => entry.pubkey).filter(pub => pub.family === 'x509');
@@ -82,12 +74,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
           this.isDraft ? [] : await this.view.attachmentsModule.attachment.collectAttachments()
         )
       : newMsg.plaintext;
-    const { data: encrypted } = await this.encryptDataArmor(
-      Buf.fromUtfStr(textToEncrypt),
-      undefined,
-      pubkeys,
-      signingPrv
-    );
+    const { data: encrypted } = await this.encryptDataArmor(Buf.fromUtfStr(textToEncrypt), undefined, pubkeys, signingPrv);
     if (!this.richtext || this.isDraft) {
       // draft richtext messages go inline as gmail makes it hard (or impossible) to render messages saved as https://tools.ietf.org/html/rfc3156
       return await SendableMsg.createInlineArmored(
@@ -112,9 +99,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
     //    It will be served to recipient through web
     const uploadedMessageData = await this.prepareAndUploadPwdEncryptedMsg(newMsg); // encrypted for pwd only, pubkeys ignored
     // pwdRecipients that have their personal link
-    const individualPwdRecipients = Object.keys(uploadedMessageData.emailToExternalIdAndUrl ?? {}).filter(
-      email => !pubkeys.some(p => p.email === email)
-    );
+    const individualPwdRecipients = Object.keys(uploadedMessageData.emailToExternalIdAndUrl ?? {}).filter(email => !pubkeys.some(p => p.email === email));
     const legacyPwdRecipients: { [type in RecipientType]?: EmailParts[] } = {};
     newMsg.pwd = undefined;
     const encryptedAttachments = await this.view.attachmentsModule.attachment.collectEncryptAttachments(pubkeys);
@@ -123,8 +108,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
       if (Api.isRecipientHeaderNameType(sendingType)) {
         pubkeyRecipients[sendingType] = value?.filter(emailPart => pubkeys.some(p => p.email === emailPart.email));
         legacyPwdRecipients[sendingType] = value?.filter(
-          emailPart =>
-            !pubkeys.some(p => p.email === emailPart.email) && !individualPwdRecipients.includes(emailPart.email)
+          emailPart => !pubkeys.some(p => p.email === emailPart.email) && !individualPwdRecipients.includes(emailPart.email)
         );
       }
     }
@@ -162,9 +146,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
     }
     if (legacyPwdRecipients.to?.length || legacyPwdRecipients.cc?.length || legacyPwdRecipients.bcc?.length) {
       const legacyPwdMsgData = { ...newMsg, recipients: legacyPwdRecipients };
-      msgs.push(
-        await this.sendablePwdMsg(legacyPwdMsgData, pubkeys, { msgUrl: uploadedMessageData.url }, signingKey?.key)
-      );
+      msgs.push(await this.sendablePwdMsg(legacyPwdMsgData, pubkeys, { msgUrl: uploadedMessageData.url }, signingKey?.key));
     }
     return {
       senderKi: signingKey?.keyInfo,
@@ -210,11 +192,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
       { Subject: newMsg.subject }, // eslint-disable-line @typescript-eslint/naming-convention
       await this.view.attachmentsModule.attachment.collectAttachments()
     );
-    const { data: pwdEncryptedWithAttachments } = await this.encryptDataArmor(
-      Buf.fromUtfStr(pgpMimeWithAttachments),
-      newMsg.pwd,
-      []
-    ); // encrypted only for pwd, not signed
+    const { data: pwdEncryptedWithAttachments } = await this.encryptDataArmor(Buf.fromUtfStr(pgpMimeWithAttachments), newMsg.pwd, []); // encrypted only for pwd, not signed
     return await this.view.acctServer.messageUpload(
       pwdEncryptedWithAttachments,
       replyToken,
@@ -231,17 +209,10 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
     signingPrv?: Key
   ) => {
     // encoded as: PGP/MIME-like structure but with attachments as external files due to email size limit (encrypted for pubkeys only)
-    const msgBody = this.richtext
-      ? { 'text/plain': newMsg.plaintext, 'text/html': newMsg.plainhtml }
-      : { 'text/plain': newMsg.plaintext };
+    const msgBody = this.richtext ? { 'text/plain': newMsg.plaintext, 'text/html': newMsg.plainhtml } : { 'text/plain': newMsg.plaintext };
     // eslint-disable-next-line @typescript-eslint/naming-convention
     const pgpMimeNoAttachments = await Mime.encode(msgBody, { Subject: newMsg.subject }, []); // no attachments, attached to email separately
-    const { data: pubEncryptedNoAttachments } = await this.encryptDataArmor(
-      Buf.fromUtfStr(pgpMimeNoAttachments),
-      undefined,
-      pubs,
-      signingPrv
-    ); // encrypted only for pubs
+    const { data: pubEncryptedNoAttachments } = await this.encryptDataArmor(Buf.fromUtfStr(pgpMimeNoAttachments), undefined, pubs, signingPrv); // encrypted only for pubs
     const emailIntroAndLinkBody = await this.formatPwdEncryptedMsgBodyLink(msgUrl);
     return await SendableMsg.createPwdMsg(
       this.acctEmail,
@@ -253,9 +224,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
   };
 
   private sendableSmimeMsg = async (newMsg: NewMsgData, x509certs: Key[], signingPrv?: Key): Promise<SendableMsg> => {
-    const plainAttachments: Attachment[] = this.isDraft
-      ? []
-      : await this.view.attachmentsModule.attachment.collectAttachments();
+    const plainAttachments: Attachment[] = this.isDraft ? [] : await this.view.attachmentsModule.attachment.collectAttachments();
     const msgBody = { 'text/plain': newMsg.plaintext }; // todo: richtext #4047
     // eslint-disable-next-line @typescript-eslint/naming-convention
     const mimeEncodedPlainMessage = await Mime.encode(msgBody, { Subject: newMsg.subject }, plainAttachments);
@@ -336,24 +305,19 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
       };
     } catch (msgTokenErr) {
       if (ApiErr.isAuthErr(msgTokenErr)) {
-        Settings.offerToLoginWithPopupShowModalOnErr(this.acctEmail, () =>
-          this.view.sendBtnModule.extractProcessSendMsg()
-        );
+        Settings.offerToLoginWithPopupShowModalOnErr(this.acctEmail, () => this.view.sendBtnModule.extractProcessSendMsg());
         throw new ComposerResetBtnTrigger();
       } else if (ApiErr.isNetErr(msgTokenErr)) {
         throw msgTokenErr;
       }
       throw Catch.rewrapErr(
         msgTokenErr,
-        'There was a token error sending this message. Please try again. ' +
-          Lang.general.contactIfHappensAgain(!!this.view.fesUrl)
+        'There was a token error sending this message. Please try again. ' + Lang.general.contactIfHappensAgain(!!this.view.fesUrl)
       );
     }
   };
 
-  private encryptMsgAsOfDateIfSomeAreExpiredAndUserConfirmedModal = async (
-    pubs: PubkeyResult[]
-  ): Promise<Date | undefined> => {
+  private encryptMsgAsOfDateIfSomeAreExpiredAndUserConfirmedModal = async (pubs: PubkeyResult[]): Promise<Date | undefined> => {
     if (!pubs.length) {
       return undefined;
     }
@@ -395,9 +359,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
     const lang = storage.outgoing_language || 'EN';
     const aStyle = `padding: 2px 6px; background: #2199e8; color: #fff; display: inline-block; text-decoration: none;`;
     const a = `<a href="${Xss.escape(msgUrl)}" style="${aStyle}">${Lang.compose.openMsg[lang]}</a>`;
-    const intro = this.view.S.cached('input_intro').length
-      ? this.view.inputModule.extract('text', 'input_intro')
-      : undefined;
+    const intro = this.view.S.cached('input_intro').length ? this.view.inputModule.extract('text', 'input_intro') : undefined;
     const text = [];
     const html = [];
     if (intro) {
@@ -406,11 +368,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
     }
     const senderEmail = Xss.escape(this.view.senderModule.getSender());
     text.push(Lang.compose.msgEncryptedText(lang, senderEmail) + msgUrl + '\n\n');
-    html.push(
-      `${Lang.compose.msgEncryptedHtml(lang, senderEmail) + a}<br/><br/>${
-        Lang.compose.alternativelyCopyPaste[lang] + Xss.escape(msgUrl)
-      }<br/><br/>`
-    );
+    html.push(`${Lang.compose.msgEncryptedHtml(lang, senderEmail) + a}<br/><br/>${Lang.compose.alternativelyCopyPaste[lang] + Xss.escape(msgUrl)}<br/><br/>`);
     return { 'text/plain': text.join('\n'), 'text/html': html.join('\n') };
   };
 }

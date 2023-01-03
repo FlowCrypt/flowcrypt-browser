@@ -22,10 +22,7 @@ export class OauthPageRecipe extends PageRecipe {
     } else if (action === 'login_with_invalid_state') {
       mockOauthUrl = Url.removeParamsFromUrl(mockOauthUrl, ['login_hint']);
       await oauthPage.target.goto(
-        mockOauthUrl.replace('CRYPTUP_STATE', 'INVALID_CRYPTUP_STATE') +
-          '&login_hint=' +
-          encodeURIComponent(acctEmail) +
-          '&proceed=true'
+        mockOauthUrl.replace('CRYPTUP_STATE', 'INVALID_CRYPTUP_STATE') + '&login_hint=' + encodeURIComponent(acctEmail) + '&proceed=true'
       );
     } else if (action === 'missing_permission') {
       mockOauthUrl = Url.removeParamsFromUrl(mockOauthUrl, ['scope']);
@@ -49,8 +46,7 @@ export class OauthPageRecipe extends PageRecipe {
     action: 'close' | 'deny' | 'approve' | 'login' | 'login_with_invalid_state'
   ): Promise<void> => {
     try {
-      const isMock =
-        oauthPage.target.url().includes('localhost') || oauthPage.target.url().includes('google.mock.localhost');
+      const isMock = oauthPage.target.url().includes('localhost') || oauthPage.target.url().includes('google.mock.localhost');
       if (isMock) {
         await OauthPageRecipe.mock(t, oauthPage, acctEmail, action);
         return;
@@ -137,10 +133,7 @@ export class OauthPageRecipe extends PageRecipe {
       }
     } catch (e) {
       const eStr = String(e);
-      if (
-        !eStr.includes('Execution context was destroyed') &&
-        !eStr.includes('Cannot find context with specified id')
-      ) {
+      if (!eStr.includes('Execution context was destroyed') && !eStr.includes('Cannot find context with specified id')) {
         throw e; // not a known retriable error
       }
       // t.log(`Attempting to retry google auth:${action} on the same window for ${email} because: ${eStr}`);

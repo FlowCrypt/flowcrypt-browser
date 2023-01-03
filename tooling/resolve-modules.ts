@@ -48,9 +48,7 @@ const errIfSrcMissingJsExtensionInImport = (src: string, path: string) => {
 const errIfRelativeSrcDoesNotBeginWithDot = (src: string, path: string) => {
   const matched = src.match(importLineEndingWithJsNotStartingWithDot);
   if (matched) {
-    console.error(
-      `\nresolve-modules ERROR: Relative import should start with a dot in ${path}:\n--\n${matched[0]}\n--\n`
-    );
+    console.error(`\nresolve-modules ERROR: Relative import should start with a dot in ${path}:\n--\n${matched[0]}\n--\n`);
     process.exit(1);
   }
 };

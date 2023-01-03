@@ -3,14 +3,7 @@
 'use strict';
 
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
-import {
-  KeyUtil,
-  Key,
-  PubkeyInfo,
-  PubkeyResult,
-  ContactInfoWithSortedPubkeys,
-  KeyInfoWithIdentity,
-} from '../../../js/common/core/crypto/key.js';
+import { KeyUtil, Key, PubkeyInfo, PubkeyResult, ContactInfoWithSortedPubkeys, KeyInfoWithIdentity } from '../../../js/common/core/crypto/key.js';
 import { ApiErr } from '../../../js/common/api/shared/api-error.js';
 import { Assert } from '../../../js/common/assert.js';
 import { Catch, UnreportableError } from '../../../js/common/platform/catch.js';
@@ -28,10 +21,7 @@ import { EmailParts, Str } from '../../../js/common/core/common.js';
 import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
 
 export class ComposeStorageModule extends ViewModule<ComposeView> {
-  public getAccountKeys = async (
-    senderEmail: string | undefined,
-    family?: 'openpgp' | 'x509' | undefined
-  ): Promise<KeyInfoWithIdentity[]> => {
+  public getAccountKeys = async (senderEmail: string | undefined, family?: 'openpgp' | 'x509' | undefined): Promise<KeyInfoWithIdentity[]> => {
     const unfilteredKeys = await KeyStore.get(this.view.acctEmail);
     Assert.abortAndRenderErrorIfKeyinfoEmpty(unfilteredKeys);
     const matchingFamily = unfilteredKeys.filter(ki => !family || ki.family === family);
@@ -49,11 +39,7 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
 
   // used when encryption is needed
   // returns a set of keys of a single family ('openpgp' or 'x509')
-  public collectSingleFamilyKeys = async (
-    recipients: string[],
-    senderEmail: string,
-    needSigning: boolean
-  ): Promise<CollectKeysResult> => {
+  public collectSingleFamilyKeys = async (recipients: string[], senderEmail: string, needSigning: boolean): Promise<CollectKeysResult> => {
     const resultsPerFamily: { [type: string]: CollectKeysResult } = {};
     const OPENPGP = 'openpgp';
     const X509 = 'x509';
@@ -68,12 +54,8 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
     // per discussion https://github.com/FlowCrypt/flowcrypt-browser/issues/4069#issuecomment-957313631
     // if one emailsWithoutPubkeys isn't subset of the other, throw an error
     if (
-      !resultsPerFamily[OPENPGP].emailsWithoutPubkeys.every(email =>
-        resultsPerFamily[X509].emailsWithoutPubkeys.includes(email)
-      ) &&
-      !resultsPerFamily[X509].emailsWithoutPubkeys.every(email =>
-        resultsPerFamily[OPENPGP].emailsWithoutPubkeys.includes(email)
-      )
+      !resultsPerFamily[OPENPGP].emailsWithoutPubkeys.every(email => resultsPerFamily[X509].emailsWithoutPubkeys.includes(email)) &&
+      !resultsPerFamily[X509].emailsWithoutPubkeys.every(email => resultsPerFamily[OPENPGP].emailsWithoutPubkeys.includes(email))
     ) {
       let err =
         `Cannot use mixed OpenPGP (${resultsPerFamily[OPENPGP].pubkeys
@@ -106,14 +88,7 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
     if (typeof passphrase === 'undefined' && !parsedKey.key.fullyDecrypted) {
       const longids = [parsedKey.keyInfo.longid];
       BrowserMsg.send.passphraseDialog(this.view.parentTabId, { type: 'sign', longids });
-      if (
-        await PassphraseStore.waitUntilPassphraseChanged(
-          this.view.acctEmail,
-          longids,
-          1000,
-          this.view.ppChangedPromiseCancellation
-        )
-      ) {
+      if (await PassphraseStore.waitUntilPassphraseChanged(this.view.acctEmail, longids, 1000, this.view.ppChangedPromiseCancellation)) {
         return await this.decryptSenderKey(parsedKey);
       } else {
         // reset - no passphrase entered
@@ -151,9 +126,7 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
   public getUpToDatePubkeys = async (email: string): Promise<ContactInfoWithSortedPubkeys | 'fail' | undefined> => {
     this.view.errModule.debug(`getUpToDatePubkeys.email(${email})`);
     const storedContact = await ContactStore.getOneWithAllPubkeys(undefined, email);
-    this.view.errModule.debug(
-      `getUpToDatePubkeys.storedContact.sortedPubkeys.length(${storedContact?.sortedPubkeys.length})`
-    );
+    this.view.errModule.debug(`getUpToDatePubkeys.storedContact.sortedPubkeys.length(${storedContact?.sortedPubkeys.length})`);
     const bestKey = storedContact?.sortedPubkeys[0]?.pubkey;
     this.view.errModule.debug(`getUpToDatePubkeys.bestKey(${JSON.stringify(bestKey)})`);
     if (storedContact && bestKey?.usableForEncryption) {
@@ -172,9 +145,7 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
     }
     // re-query the storage, which is now updated
     const updatedContact = await ContactStore.getOneWithAllPubkeys(undefined, email);
-    this.view.errModule.debug(
-      `getUpToDatePubkeys.updatedContact.sortedPubkeys.length(${updatedContact?.sortedPubkeys.length})`
-    );
+    this.view.errModule.debug(`getUpToDatePubkeys.updatedContact.sortedPubkeys.length(${updatedContact?.sortedPubkeys.length})`);
     this.view.errModule.debug(`getUpToDatePubkeys.updatedContact(${updatedContact})`);
     return updatedContact;
   };
@@ -186,11 +157,7 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
    *    newer versions of public keys we already have (compared by fingerprint), then we
    *    update the public keys we already have.
    */
-  public updateLocalPubkeysFromRemote = async (
-    storedPubkeys: PubkeyInfo[],
-    email: string,
-    name?: string
-  ): Promise<void> => {
+  public updateLocalPubkeysFromRemote = async (storedPubkeys: PubkeyInfo[], email: string, name?: string): Promise<void> => {
     if (!email) {
       throw Error('Empty email');
     }

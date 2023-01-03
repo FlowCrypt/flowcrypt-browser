@@ -73,10 +73,7 @@ export class ComposeSizeModule extends ViewModule<ComposeView> {
       } else {
         currentHeight = this.view.S.cached('prompt').outerHeight() || 0;
       }
-      if (
-        currentHeight !== this.lastReplyBoxTableHeight &&
-        Math.abs(currentHeight - this.lastReplyBoxTableHeight) > 2
-      ) {
+      if (currentHeight !== this.lastReplyBoxTableHeight && Math.abs(currentHeight - this.lastReplyBoxTableHeight) > 2) {
         // more then two pixel difference compared to last time
         this.lastReplyBoxTableHeight = currentHeight;
         BrowserMsg.send.setCss(this.view.parentTabId, {
@@ -117,16 +114,11 @@ export class ComposeSizeModule extends ViewModule<ComposeView> {
       }
       const attachmentListHeight = this.view.S.cached('fineuploader').height() || 0;
       const inputTextVerticalPadding =
-        parseInt(this.view.S.cached('input_text').css('padding-top')) +
-        parseInt(this.view.S.cached('input_text').css('padding-bottom'));
+        parseInt(this.view.S.cached('input_text').css('padding-top')) + parseInt(this.view.S.cached('input_text').css('padding-bottom'));
       const iconShowPrevMsgHeight = this.view.S.cached('triple_dot').outerHeight(true) || 0;
       this.view.S.cached('input_text').css(
         'height',
-        this.refBodyHeight -
-          cellHeightExceptText -
-          attachmentListHeight -
-          inputTextVerticalPadding -
-          iconShowPrevMsgHeight
+        this.refBodyHeight - cellHeightExceptText - attachmentListHeight - inputTextVerticalPadding - iconShowPrevMsgHeight
       );
     }
   };
@@ -140,10 +132,7 @@ export class ComposeSizeModule extends ViewModule<ComposeView> {
       const jqueryElem = $(inputElement);
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const containerWidth = Math.floor(jqueryElem.parent().innerWidth()!);
-      let additionalWidth = Math.ceil(
-        Number(jqueryElem.css('padding-left').replace('px', '')) +
-          Number(jqueryElem.css('padding-right').replace('px', ''))
-      );
+      let additionalWidth = Math.ceil(Number(jqueryElem.css('padding-left').replace('px', '')) + Number(jqueryElem.css('padding-right').replace('px', '')));
       const minInputWidth = 150;
       let offset = 0;
       if (jqueryElem.next().length) {

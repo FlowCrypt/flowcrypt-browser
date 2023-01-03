@@ -38,9 +38,7 @@ export class ComposePageRecipe extends PageRecipe {
     const email = encodeURIComponent(group);
     const composePage = await browser.newPage(
       t,
-      `chrome/elements/compose.htm?account_email=${email}&parent_tab_id=0&debug=___cu_true___&frameId=none&${
-        options.appendUrl || ''
-      }`,
+      `chrome/elements/compose.htm?account_email=${email}&parent_tab_id=0&debug=___cu_true___&frameId=none&${options.appendUrl || ''}`,
       options.initialScript
     );
     // await composePage.page.on('console', msg => console.log(`compose-dbg:${msg.text()}`));
@@ -85,10 +83,7 @@ export class ComposePageRecipe extends PageRecipe {
     if (subject) {
       await composePageOrFrame.click('@input-subject');
       await Util.sleep(1);
-      await composePageOrFrame.type(
-        '@input-subject',
-        subject?.match(/RTL/) ? subject : `Automated puppeteer test: ${subject}`
-      );
+      await composePageOrFrame.type('@input-subject', subject?.match(/RTL/) ? subject : `Automated puppeteer test: ${subject}`);
     }
     const sendingOpts = sendingOpt as { [key: string]: boolean | undefined };
     const keys = ['richtext', 'encrypt', 'sign'];
@@ -102,11 +97,7 @@ export class ComposePageRecipe extends PageRecipe {
     return { subject, body };
   }
 
-  public static setPopoverToggle = async (
-    composePageOrFrame: Controllable,
-    opt: PopoverOpt,
-    shouldBeTicked: boolean
-  ) => {
+  public static setPopoverToggle = async (composePageOrFrame: Controllable, opt: PopoverOpt, shouldBeTicked: boolean) => {
     await composePageOrFrame.waitAndClick('@action-show-options-popover');
     await composePageOrFrame.waitAll('@container-sending-options');
     const isCurrentlyTicked = await composePageOrFrame.isElementPresent(`@icon-toggle-${opt}-tick`);
@@ -173,10 +164,7 @@ export class ComposePageRecipe extends PageRecipe {
     await composePage.close();
   };
 
-  public static expectContactsResultEqual = async (
-    composePage: ControllablePage | ControllableFrame,
-    emails: string[]
-  ) => {
+  public static expectContactsResultEqual = async (composePage: ControllablePage | ControllableFrame, emails: string[]) => {
     await Util.sleep(5);
     const contacts = await composePage.waitAny('@container-contacts');
     const contactsList = await contacts.$$('li');
@@ -186,12 +174,7 @@ export class ComposePageRecipe extends PageRecipe {
     }
   };
 
-  public static pastePublicKeyManuallyNoClose = async (
-    composeFrame: ControllableFrame,
-    inboxPage: ControllablePage,
-    recipient: string,
-    pub: string
-  ) => {
+  public static pastePublicKeyManuallyNoClose = async (composeFrame: ControllableFrame, inboxPage: ControllablePage, recipient: string, pub: string) => {
     await Util.sleep(1); // todo: should wait until recipient actually loaded
     // await Util.sleep(6000); // >>>> debug
     await composeFrame.waitForContent('.email_address.no_pgp', recipient);
@@ -204,12 +187,7 @@ export class ComposePageRecipe extends PageRecipe {
     return addPubkeyDialog;
   };
 
-  public static pastePublicKeyManually = async (
-    composeFrame: ControllableFrame,
-    inboxPage: ControllablePage,
-    recipient: string,
-    pub: string
-  ) => {
+  public static pastePublicKeyManually = async (composeFrame: ControllableFrame, inboxPage: ControllablePage, recipient: string, pub: string) => {
     await ComposePageRecipe.pastePublicKeyManuallyNoClose(composeFrame, inboxPage, recipient, pub);
     await inboxPage.waitTillGone('@dialog-add-pubkey');
   };

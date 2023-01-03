@@ -25,9 +25,7 @@ export class ComposeQuoteModule extends ViewModule<ComposeView> {
   public getTripleDotSanitizedFormattedHtmlContent = (): string => {
     // email content order: [myMsg, myFooter, theirQuote]
     if (this.tripleDotSanitizedHtmlContent) {
-      return (
-        '<br />' + (this.tripleDotSanitizedHtmlContent.footer || '') + (this.tripleDotSanitizedHtmlContent.quote || '')
-      );
+      return '<br />' + (this.tripleDotSanitizedHtmlContent.footer || '') + (this.tripleDotSanitizedHtmlContent.quote || '');
     }
     return '';
   };
@@ -38,10 +36,7 @@ export class ComposeQuoteModule extends ViewModule<ComposeView> {
       this.view.S.cached('triple_dot').hide();
       return;
     }
-    const sanitizedFooter =
-      textFooter && !this.view.draftModule.wasMsgLoadedFromDraft
-        ? this.view.footerModule.createFooterHtml(textFooter)
-        : undefined;
+    const sanitizedFooter = textFooter && !this.view.draftModule.wasMsgLoadedFromDraft ? this.view.footerModule.createFooterHtml(textFooter) : undefined;
     this.tripleDotSanitizedHtmlContent = { footer: sanitizedFooter, quote: undefined };
     this.view.S.cached('triple_dot').on(
       'click',
@@ -80,10 +75,7 @@ export class ComposeQuoteModule extends ViewModule<ComposeView> {
       }
     }
     const textFooter = await this.view.footerModule.getFooterFromStorage(this.view.senderModule.getSender());
-    const sanitizedFooter =
-      textFooter && !this.view.draftModule.wasMsgLoadedFromDraft
-        ? this.view.footerModule.createFooterHtml(textFooter)
-        : undefined;
+    const sanitizedFooter = textFooter && !this.view.draftModule.wasMsgLoadedFromDraft ? this.view.footerModule.createFooterHtml(textFooter) : undefined;
     if (!sanitizedQuote && !sanitizedFooter) {
       this.view.S.cached('triple_dot').hide();
       return;
@@ -99,14 +91,9 @@ export class ComposeQuoteModule extends ViewModule<ComposeView> {
     }
   };
 
-  private getAndDecryptMessage = async (
-    msgId: string,
-    method: 'reply' | 'forward'
-  ): Promise<MessageToReplyOrForward | undefined> => {
+  private getAndDecryptMessage = async (msgId: string, method: 'reply' | 'forward'): Promise<MessageToReplyOrForward | undefined> => {
     try {
-      const { raw } = await this.view.emailProvider.msgGet(msgId, 'raw', progress =>
-        this.setQuoteLoaderProgress(progress)
-      );
+      const { raw } = await this.view.emailProvider.msgGet(msgId, 'raw', progress => this.setQuoteLoaderProgress(progress));
       this.setQuoteLoaderProgress('processing...');
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const decoded = await Mime.decode(Buf.fromBase64UrlStr(raw!));
@@ -116,9 +103,7 @@ export class ComposeQuoteModule extends ViewModule<ComposeView> {
         references: String(decoded.headers.references || ''),
         'message-id': String(decoded.headers['message-id'] || ''),
       };
-      const message = decoded.rawSignedContent
-        ? await Mime.process(Buf.fromUtfStr(decoded.rawSignedContent))
-        : Mime.processDecoded(decoded);
+      const message = decoded.rawSignedContent ? await Mime.process(Buf.fromUtfStr(decoded.rawSignedContent)) : Mime.processDecoded(decoded);
       const readableBlockTypes = ['encryptedMsg', 'plainText', 'plainHtml', 'signedMsg'];
       const decryptedBlockTypes = ['decryptedHtml'];
       if (method === 'forward') {
@@ -141,16 +126,10 @@ export class ComposeQuoteModule extends ViewModule<ComposeView> {
       for (const block of readableBlocks) {
         const stringContent = block.content.toString();
         if (block.type === 'decryptedHtml') {
-          const htmlParsed = Xss.htmlSanitizeAndStripAllTags(
-            block ? block.content.toString() : 'No Content',
-            '\n',
-            false
-          );
+          const htmlParsed = Xss.htmlSanitizeAndStripAllTags(block ? block.content.toString() : 'No Content', '\n', false);
           decryptedAndFormatedContent.push(Xss.htmlUnescape(htmlParsed));
         } else if (block.type === 'plainHtml') {
-          decryptedAndFormatedContent.push(
-            Xss.htmlUnescape(Xss.htmlSanitizeAndStripAllTags(stringContent, '\n', false))
-          );
+          decryptedAndFormatedContent.push(Xss.htmlUnescape(Xss.htmlSanitizeAndStripAllTags(stringContent, '\n', false)));
         } else if (['encryptedAttachment', 'decryptedAttachment', 'plainAttachment'].includes(block.type)) {
           if (block.attachmentMeta?.data) {
             let attachmentMeta: { content: Buf; filename?: string } | undefined;
@@ -182,10 +161,7 @@ export class ComposeQuoteModule extends ViewModule<ComposeView> {
       return {
         headers,
         text: decryptedAndFormatedContent.join('\n'),
-        isOnlySigned: !!(
-          decoded.rawSignedContent ||
-          (message.blocks.length > 0 && message.blocks[0].type === 'signedMsg')
-        ),
+        isOnlySigned: !!(decoded.rawSignedContent || (message.blocks.length > 0 && message.blocks[0].type === 'signedMsg')),
         decryptedFiles,
       };
     } catch (e) {

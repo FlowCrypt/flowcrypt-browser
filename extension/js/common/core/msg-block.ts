@@ -7,14 +7,7 @@ import { DecryptError, VerifyRes } from './crypto/pgp/msg-util.js';
 import { AttachmentMeta } from './attachment.js';
 import { Buf } from './buf.js';
 
-export type KeyBlockType =
-  | 'publicKey'
-  | 'privateKey'
-  | 'certificate'
-  | 'pkcs12'
-  | 'pkcs8EncryptedPrivateKey'
-  | 'pkcs8PrivateKey'
-  | 'pkcs8RsaPrivateKey';
+export type KeyBlockType = 'publicKey' | 'privateKey' | 'certificate' | 'pkcs12' | 'pkcs8EncryptedPrivateKey' | 'pkcs8PrivateKey' | 'pkcs8RsaPrivateKey';
 export type ReplaceableMsgBlockType = KeyBlockType | 'signedMsg' | 'encryptedMsg' | 'pkcs7';
 export type MsgBlockType =
   | ReplaceableMsgBlockType

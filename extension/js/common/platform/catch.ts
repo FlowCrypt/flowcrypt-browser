@@ -62,12 +62,7 @@ export class Catch {
   };
 
   public static hasStack = (e: unknown): e is ObjWithStack => {
-    return (
-      !!e &&
-      typeof e === 'object' &&
-      typeof (e as ObjWithStack).stack === 'string' &&
-      Boolean((e as ObjWithStack).stack)
-    );
+    return !!e && typeof e === 'object' && typeof (e as ObjWithStack).stack === 'string' && Boolean((e as ObjWithStack).stack);
   };
 
   /**
@@ -82,10 +77,7 @@ export class Catch {
     isManuallyCalled: boolean
   ): boolean => {
     const exception = Catch.formExceptionFromThrown(originalErr, errMsg, url, line, col, isManuallyCalled);
-    if (
-      Catch.IGNORE_ERR_MSG.indexOf(exception.message) !== -1 ||
-      (errMsg && Catch.IGNORE_ERR_MSG.indexOf(errMsg) !== -1)
-    ) {
+    if (Catch.IGNORE_ERR_MSG.indexOf(exception.message) !== -1 || (errMsg && Catch.IGNORE_ERR_MSG.indexOf(errMsg) !== -1)) {
       return false;
     }
     console.error(originalErr);
@@ -93,11 +85,7 @@ export class Catch {
       console.error(exception);
     }
     console.error(exception.message + '\n' + exception.stack);
-    if (
-      isManuallyCalled !== true &&
-      Catch.ORIG_ONERROR &&
-      Catch.ORIG_ONERROR !== (Catch.onErrorInternalHandler as OnErrorEventHandler)
-    ) {
+    if (isManuallyCalled !== true && Catch.ORIG_ONERROR && Catch.ORIG_ONERROR !== (Catch.onErrorInternalHandler as OnErrorEventHandler)) {
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore
       Catch.ORIG_ONERROR.apply(undefined, arguments); // Call any previously assigned handler
@@ -126,14 +114,7 @@ export class Catch {
    */
   public static reportErr = (e: unknown): boolean => {
     const { line, col } = Catch.getErrorLineAndCol(e);
-    return Catch.onErrorInternalHandler(
-      e instanceof Error ? e.message : String(e),
-      window.location.href,
-      line,
-      col,
-      e,
-      true
-    );
+    return Catch.onErrorInternalHandler(e instanceof Error ? e.message : String(e), window.location.href, line, col, e, true);
   };
 
   /**
@@ -144,12 +125,7 @@ export class Catch {
   };
 
   public static isPromise = (v: unknown): v is Promise<unknown> => {
-    return (
-      !!v &&
-      typeof v === 'object' &&
-      typeof (v as Promise<unknown>).then === 'function' &&
-      typeof (v as Promise<unknown>).catch === 'function'
-    );
+    return !!v && typeof v === 'object' && typeof (v as Promise<unknown>).then === 'function' && typeof (v as Promise<unknown>).catch === 'function';
   };
 
   public static try = (code: () => void | Promise<void>) => {
@@ -224,9 +200,7 @@ export class Catch {
       Catch.test();
     } catch (e) {
       // return stack after removing first 3 lines plus url
-      return `${((e as Error).stack || '').split('\n').splice(3).join('\n')}\n\nurl: ${Catch.censoredUrl(
-        window.location.href
-      )}\n`;
+      return `${((e as Error).stack || '').split('\n').splice(3).join('\n')}\n\nurl: ${Catch.censoredUrl(window.location.href)}\n`;
     }
     return ''; // make ts happy - this will never happen
   };
@@ -259,11 +233,7 @@ export class Catch {
       Catch.reportErr(e.reason);
     } else {
       const str = Catch.stringify(e);
-      if (
-        str.match(
-          /^\[typeof:object:\[object (PromiseRejectionEvent|CustomEvent|ProgressEvent)\]\] \{"isTrusted":(?:true|false)\}$/
-        )
-      ) {
+      if (str.match(/^\[typeof:object:\[object (PromiseRejectionEvent|CustomEvent|ProgressEvent)\]\] \{"isTrusted":(?:true|false)\}$/)) {
         return; // unrelated to FlowCrypt, has to do with JS-initiated clicks/events
       }
       const { line, col } = Catch.getErrorLineAndCol(e);
@@ -312,10 +282,7 @@ export class Catch {
       thrown.stack += Catch.formattedStackBlock('Catch.reportErr calling stack', Catch.stackTrace());
       if (thrown.hasOwnProperty('workerStack')) {
         // https://github.com/openpgpjs/openpgpjs/issues/656#event-1498323188
-        thrown.stack += Catch.formattedStackBlock(
-          'openpgp.js worker stack',
-          String((thrown as Error & { workerStack: string }).workerStack)
-        );
+        thrown.stack += Catch.formattedStackBlock('openpgp.js worker stack', String((thrown as Error & { workerStack: string }).workerStack));
       }
     }
     const exception = Catch.formExceptionFromThrown(thrown);
@@ -358,14 +325,7 @@ export class Catch {
     }
   };
 
-  private static formExceptionFromThrown = (
-    thrown: unknown,
-    errMsg?: string,
-    url?: string,
-    line?: number,
-    col?: number,
-    isManuallyCalled?: boolean
-  ): Error => {
+  private static formExceptionFromThrown = (thrown: unknown, errMsg?: string, url?: string, line?: number, col?: number, isManuallyCalled?: boolean): Error => {
     let exception: Error;
     if (typeof thrown !== 'object') {
       exception = new Error(`THROWN_NON_OBJECT[${typeof thrown}]: ${String(thrown)}`);
@@ -414,10 +374,8 @@ export class Catch {
   private static isPromiseRejectionEvent = (ev: unknown): ev is PromiseRejectionEvent => {
     if (ev && typeof ev === 'object') {
       /* eslint-disable @typescript-eslint/ban-types */
-      const eHasReason =
-        (ev as {}).hasOwnProperty('reason') && typeof (ev as PromiseRejectionEvent).reason === 'object';
-      const eHasPromise =
-        (ev as {}).hasOwnProperty('promise') && Catch.isPromise((ev as PromiseRejectionEvent).promise);
+      const eHasReason = (ev as {}).hasOwnProperty('reason') && typeof (ev as PromiseRejectionEvent).reason === 'object';
+      const eHasPromise = (ev as {}).hasOwnProperty('promise') && Catch.isPromise((ev as PromiseRejectionEvent).promise);
       /* eslint-enable @typescript-eslint/ban-types */
       return eHasReason && eHasPromise;
     }

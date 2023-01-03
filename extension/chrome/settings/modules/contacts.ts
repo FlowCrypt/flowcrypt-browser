@@ -55,19 +55,11 @@ View.run(
     };
 
     public setHandlers = () => {
-      $('.action_show_pubkey_list')
-        .off()
-        .on('click', this.setHandlerPrevent('double', this.actionRenderListPublicKeyHandler));
-      $('#edit_contact .action_save_edited_pubkey')
-        .off()
-        .on('click', this.setHandlerPrevent('double', this.actionSaveEditedPublicKeyHandler));
-      $('#bulk_import .action_process')
-        .off()
-        .on('click', this.setHandlerPrevent('double', this.actionProcessBulkImportTextInput));
+      $('.action_show_pubkey_list').off().on('click', this.setHandlerPrevent('double', this.actionRenderListPublicKeyHandler));
+      $('#edit_contact .action_save_edited_pubkey').off().on('click', this.setHandlerPrevent('double', this.actionSaveEditedPublicKeyHandler));
+      $('#bulk_import .action_process').off().on('click', this.setHandlerPrevent('double', this.actionProcessBulkImportTextInput));
       $('.action_export_all').off().on('click', this.setHandlerPrevent('double', this.actionExportAllKeysHandler));
-      $('.action_view_bulk_import')
-        .off()
-        .on('click', this.setHandlerPrevent('double', this.actionRenderBulkImportPageHandler));
+      $('.action_view_bulk_import').off().on('click', this.setHandlerPrevent('double', this.actionRenderBulkImportPageHandler));
       $('.input-search-contacts').off().keyup(this.setHandlerPrevent('double', this.loadAndRenderContactList));
     };
 
@@ -97,9 +89,7 @@ View.run(
       $('h1').text('Contacts and their Public Keys');
       $('#view_contact, #edit_contact, #bulk_import').css('display', 'none');
       let tableContents = '';
-      for (const email of contacts
-        .map(preview => preview.email)
-        .filter((value, index, self) => !self.slice(0, index).find(el => el === value))) {
+      for (const email of contacts.map(preview => preview.email).filter((value, index, self) => !self.slice(0, index).find(el => el === value))) {
         const e = Xss.escape(email);
         tableContents += `
         <div email="${e}" class="action_show_pubkey_list" data-test="action-show-email-${e.replace(/[^a-z0-9]+/g, '')}">
@@ -118,9 +108,7 @@ View.run(
       const { keys, errs } = await KeyUtil.readMany(file.getData());
       if (keys.length) {
         if (errs.length) {
-          await Ui.modal.warning(
-            `some keys could not be processed due to errors:\n${errs.map(e => `-> ${e.message}\n`).join('')}`
-          );
+          await Ui.modal.warning(`some keys could not be processed due to errors:\n${errs.map(e => `-> ${e.message}\n`).join('')}`);
         }
         $('#bulk_import .input_pubkey').val(keys.map(key => KeyUtil.armor(key)).join('\n\n'));
         $('#bulk_import .action_process').trigger('click');
@@ -178,9 +166,7 @@ View.run(
         emailRow!.parentNode!.replaceChild(newElement, emailRow);
         $('.action_remove').off().on('click', this.setHandlerPrevent('double', this.actionRemovePublicKey));
         $('.action_show').off().on('click', this.setHandlerPrevent('double', this.actionRenderViewPublicKeyHandler));
-        $('.action_change')
-          .off()
-          .on('click', this.setHandlerPrevent('double', this.actionRenderChangePublicKeyHandler));
+        $('.action_change').off().on('click', this.setHandlerPrevent('double', this.actionRenderChangePublicKeyHandler));
       }
     };
 
@@ -245,10 +231,7 @@ View.run(
           await ContactStore.update(undefined, email, { pubkey, lastUse: Date.now() });
           await this.loadAndRenderContactList();
         } catch (e) {
-          await Ui.modal.warning(
-            'Cannot recognize a valid public key, please try again. ' +
-              Lang.general.contactIfNeedAssistance(!!this.fesUrl)
-          );
+          await Ui.modal.warning('Cannot recognize a valid public key, please try again. ' + Lang.general.contactIfNeedAssistance(!!this.fesUrl));
           $('#edit_contact .input_pubkey').val('').focus();
         }
       }
@@ -313,10 +296,7 @@ View.run(
             }
           }
           container.css('display', 'block');
-          $('#bulk_import .input_pubkey, #bulk_import .action_process, #file_import, #fineuploader_button').css(
-            'display',
-            'none'
-          );
+          $('#bulk_import .input_pubkey, #bulk_import .action_process, #file_import, #fineuploader_button').css('display', 'none');
         }
       } catch (e) {
         ApiErr.reportIfSignificant(e);

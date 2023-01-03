@@ -25,15 +25,7 @@ export const defineElementTests = (testVariant: TestVariant, testWithBrowser: Te
       testWithBrowser('compatibility', async (t, browser) => {
         const acctEmail = 'flowcrypt.compatibility@gmail.com';
         const passphrase = 'pa$$w0rd';
-        await SettingsPageRecipe.addKeyTest(
-          t,
-          browser,
-          acctEmail,
-          testConstants.testkey17AD7D07,
-          passphrase,
-          {},
-          false
-        );
+        await SettingsPageRecipe.addKeyTest(t, browser, acctEmail, testConstants.testkey17AD7D07, passphrase, {}, false);
         // opening passphrase.htm independently of settings or inbox page limits functionality but sufficient for this test
         const ppPage = await browser.newPage(
           t,
@@ -42,15 +34,7 @@ export const defineElementTests = (testVariant: TestVariant, testWithBrowser: Te
         await ppPage.waitAndType('@input-pass-phrase', passphrase);
         await ppPage.waitAndClick('@action-confirm-pass-phrase-entry', { delay: 1 });
         await ppPage.waitForContent('.ui-toast-title', '1 of 3 keys was unlocked by this pass phrase');
-        await SettingsPageRecipe.addKeyTest(
-          t,
-          browser,
-          acctEmail,
-          testConstants.testkey0389D3A7,
-          passphrase,
-          {},
-          false
-        );
+        await SettingsPageRecipe.addKeyTest(t, browser, acctEmail, testConstants.testkey0389D3A7, passphrase, {}, false);
         await ppPage.waitAndType('@input-pass-phrase', passphrase);
         await ppPage.waitAndClick('@action-confirm-pass-phrase-entry', { delay: 1 });
         await ppPage.waitForContent('.ui-toast-title', '2 of 4 keys were unlocked by this pass phrase');

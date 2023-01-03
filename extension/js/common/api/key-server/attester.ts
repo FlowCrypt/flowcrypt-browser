@@ -91,50 +91,18 @@ export class Attester extends Api {
     return r.responseText;
   };
 
-  public welcomeMessage = async (
-    email: string,
-    pubkey: string,
-    idToken: string | undefined
-  ): Promise<{ sent: boolean }> => {
+  public welcomeMessage = async (email: string, pubkey: string, idToken: string | undefined): Promise<{ sent: boolean }> => {
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const headers = idToken ? { authorization: `Bearer ${idToken!}` } : undefined;
     return await this.jsonCall<{ sent: boolean }>('welcome-message', { email, pubkey }, 'POST', headers);
   };
 
-  private jsonCall = async <RT>(
-    path: string,
-    values?: Dict<unknown>,
-    method: ReqMethod = 'POST',
-    hdrs?: Dict<string>
-  ): Promise<RT> => {
-    return (await Api.apiCall(
-      ATTESTER_API_HOST,
-      path,
-      values,
-      'JSON',
-      undefined,
-      { 'api-version': '3', ...(hdrs ?? {}) },
-      'json',
-      method
-    )) as RT;
+  private jsonCall = async <RT>(path: string, values?: Dict<unknown>, method: ReqMethod = 'POST', hdrs?: Dict<string>): Promise<RT> => {
+    return (await Api.apiCall(ATTESTER_API_HOST, path, values, 'JSON', undefined, { 'api-version': '3', ...(hdrs ?? {}) }, 'json', method)) as RT;
   };
 
-  private pubCall = async (
-    resource: string,
-    method: ReqMethod = 'GET',
-    data?: string | undefined,
-    hdrs?: Dict<string>
-  ): Promise<PubCallRes> => {
-    return await Api.apiCall(
-      ATTESTER_API_HOST,
-      resource,
-      data,
-      typeof data === 'string' ? 'TEXT' : undefined,
-      undefined,
-      hdrs,
-      'xhr',
-      method
-    );
+  private pubCall = async (resource: string, method: ReqMethod = 'GET', data?: string | undefined, hdrs?: Dict<string>): Promise<PubCallRes> => {
+    return await Api.apiCall(ATTESTER_API_HOST, resource, data, typeof data === 'string' ? 'TEXT' : undefined, undefined, hdrs, 'xhr', method);
   };
 
   private getPubKeysSearchResult = async (r: PubCallRes): Promise<PubkeysSearchResult> => {

@@ -66,9 +66,7 @@ export class AttachmentDownloadView extends View {
     this.acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
     this.parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
     this.frameId = Assert.urlParamRequire.string(uncheckedUrlParams, 'frameId');
-    this.origNameBasedOnFilename = uncheckedUrlParams.name
-      ? String(uncheckedUrlParams.name).replace(/\.(pgp|gpg)$/gi, '')
-      : 'noname';
+    this.origNameBasedOnFilename = uncheckedUrlParams.name ? String(uncheckedUrlParams.name).replace(/\.(pgp|gpg)$/gi, '') : 'noname';
     this.isEncrypted = uncheckedUrlParams.isEncrypted === true;
     this.errorDetailsOpened = uncheckedUrlParams.errorDetailsOpened === true;
     this.size = uncheckedUrlParams.size ? parseInt(String(uncheckedUrlParams.size)) : undefined;
@@ -178,11 +176,7 @@ export class AttachmentDownloadView extends View {
         Failed to decrypt.
         <details ${this.errorDetailsOpened ? 'open' : ''}>
           <summary>see error details</summary>
-          <pre data-test="error-details">${e.stack}\n\nDecryptError:\n${JSON.stringify(
-          e.decryptError,
-          undefined,
-          2
-        )}</pre>
+          <pre data-test="error-details">${e.stack}\n\nDecryptError:\n${JSON.stringify(e.decryptError, undefined, 2)}</pre>
         </details>
       `
       );
@@ -329,22 +323,13 @@ export class AttachmentDownloadView extends View {
       if (!result.filename || ['msg.txt', 'null'].includes(result.filename)) {
         result.filename = this.attachment.name;
       }
-      Browser.saveToDownloads(
-        new Attachment({ name: result.filename, type: this.attachment.type, data: result.content })
-      );
+      Browser.saveToDownloads(new Attachment({ name: result.filename, type: this.attachment.type, data: result.content }));
     } else if (result.error.type === DecryptErrTypes.needPassphrase) {
       BrowserMsg.send.passphraseDialog(this.parentTabId, {
         type: 'attachment',
         longids: result.longids.needPassphrase,
       });
-      if (
-        !(await PassphraseStore.waitUntilPassphraseChanged(
-          this.acctEmail,
-          result.longids.needPassphrase,
-          1000,
-          this.ppChangedPromiseCancellation
-        ))
-      ) {
+      if (!(await PassphraseStore.waitUntilPassphraseChanged(this.acctEmail, result.longids.needPassphrase, 1000, this.ppChangedPromiseCancellation))) {
         return;
       }
       await this.decryptAndSaveAttachmentToDownloads();
@@ -379,12 +364,7 @@ export class AttachmentDownloadView extends View {
       const result = await this.gmail.msgGet(this.attachment.msgId, 'full');
       if (result && result.payload && result.payload.parts) {
         for (const attMeta of result.payload.parts) {
-          if (
-            attMeta.filename === name &&
-            attMeta.body &&
-            attMeta.body.size === this.size &&
-            attMeta.body.attachmentId
-          ) {
+          if (attMeta.filename === name && attMeta.body && attMeta.body.size === this.size && attMeta.body.attachmentId) {
             this.attachment.id = attMeta.body.attachmentId;
             return;
           }

@@ -63,10 +63,7 @@ View.run(
         $('.action_show_public_key').attr('href', this.showKeyUrl);
         $('.email').text(this.acctEmail);
         $('.fingerprint').text(Str.spaced(this.ki.fingerprints[0]));
-        this.inputPrivateKey.attr(
-          'placeholder',
-          this.inputPrivateKey.attr('placeholder') + ' (' + this.ki.fingerprints[0] + ')'
-        );
+        this.inputPrivateKey.attr('placeholder', this.inputPrivateKey.attr('placeholder') + ' (' + this.ki.fingerprints[0] + ')');
       }
     };
 
@@ -81,27 +78,14 @@ View.run(
     private storeUpdatedKeyAndPassphrase = async (updatedPrv: Key, updatedPrvPassphrase: string) => {
       /* eslint-disable @typescript-eslint/no-non-null-assertion */
       const shouldSavePassphraseInStorage =
-        !this.clientConfiguration.forbidStoringPassPhrase() &&
-        !!(await PassphraseStore.get(this.acctEmail, this.ki!, true));
+        !this.clientConfiguration.forbidStoringPassPhrase() && !!(await PassphraseStore.get(this.acctEmail, this.ki!, true));
       await KeyStore.add(this.acctEmail, updatedPrv);
-      await PassphraseStore.set(
-        'local',
-        this.acctEmail,
-        this.ki!,
-        shouldSavePassphraseInStorage ? updatedPrvPassphrase : undefined
-      );
-      await PassphraseStore.set(
-        'session',
-        this.acctEmail,
-        this.ki!,
-        shouldSavePassphraseInStorage ? undefined : updatedPrvPassphrase
-      );
+      await PassphraseStore.set('local', this.acctEmail, this.ki!, shouldSavePassphraseInStorage ? updatedPrvPassphrase : undefined);
+      await PassphraseStore.set('session', this.acctEmail, this.ki!, shouldSavePassphraseInStorage ? undefined : updatedPrvPassphrase);
       /* eslint-enable @typescript-eslint/no-non-null-assertion */
       if (
         this.clientConfiguration.canSubmitPubToAttester() &&
-        (await Ui.modal.confirm(
-          'Public and private key updated locally.\n\nUpdate public records with new Public Key?'
-        ))
+        (await Ui.modal.confirm('Public and private key updated locally.\n\nUpdate public records with new Public Key?'))
       ) {
         try {
           const pubkey = KeyUtil.armor(await KeyUtil.asPublicKey(updatedPrv));
@@ -110,9 +94,7 @@ View.run(
           await this.pubLookup.attester.submitPrimaryEmailPubkey(this.acctEmail, pubkey, idToken!);
         } catch (e) {
           ApiErr.reportIfSignificant(e);
-          await Ui.modal.error(
-            `Error updating public records:\n\n${ApiErr.eli5(e)}\n\n(but local update was successful)`
-          );
+          await Ui.modal.error(`Error updating public records:\n\n${ApiErr.eli5(e)}\n\n(but local update was successful)`);
         }
       }
       window.location.href = this.showKeyUrl;
@@ -123,23 +105,14 @@ View.run(
       const updatedKeyEncrypted = await KeyUtil.parse(String(this.inputPrivateKey.val()));
       const updatedKeyPassphrase = String($('.input_passphrase').val());
       if (typeof updatedKey === 'undefined') {
-        await Ui.modal.warning(
-          Lang.setup.keyFormattedWell(this.prvHeaders.begin, String(this.prvHeaders.end)),
-          Ui.testCompatibilityLink
-        );
+        await Ui.modal.warning(Lang.setup.keyFormattedWell(this.prvHeaders.begin, String(this.prvHeaders.end)), Ui.testCompatibilityLink);
       } else if (updatedKey.isPublic) {
         await Ui.modal.warning(
-          'This was a public key. Please insert a private key instead. It\'s a block of text starting with "' +
-            this.prvHeaders.begin +
-            '"'
+          'This was a public key. Please insert a private key instead. It\'s a block of text starting with "' + this.prvHeaders.begin + '"'
         );
         /* eslint-disable @typescript-eslint/no-non-null-assertion */
       } else if (updatedKey.id !== (await KeyUtil.parse(this.ki!.public)).id) {
-        await Ui.modal.warning(
-          `This key ${Str.spaced(updatedKey.id || 'err')} does not match your current key ${Str.spaced(
-            this.ki!.fingerprints[0]
-          )}`
-        );
+        await Ui.modal.warning(`This key ${Str.spaced(updatedKey.id || 'err')} does not match your current key ${Str.spaced(this.ki!.fingerprints[0])}`);
         /* eslint-enable @typescript-eslint/no-non-null-assertion */
       } else if ((await KeyUtil.decrypt(updatedKey, updatedKeyPassphrase)) !== true) {
         await Ui.modal.error('The pass phrase does not match.\n\nPlease enter pass phrase of the newly updated key.');

@@ -1,13 +1,6 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
-import {
-  StoredKeyInfo,
-  KeyInfoWithIdentity,
-  KeyInfoWithIdentityAndOptionalPp,
-  KeyUtil,
-  Key,
-  KeyIdentity,
-} from '../../core/crypto/key.js';
+import { StoredKeyInfo, KeyInfoWithIdentity, KeyInfoWithIdentityAndOptionalPp, KeyUtil, Key, KeyIdentity } from '../../core/crypto/key.js';
 import { AcctStore } from './acct-store.js';
 import { PassphraseStore } from './passphrase-store.js';
 import { AbstractStore } from './abstract-store.js';
@@ -34,9 +27,7 @@ export class KeyStore extends AbstractStore {
     return keys;
   };
 
-  public static getAllWithOptionalPassPhrase = async (
-    acctEmail: string
-  ): Promise<KeyInfoWithIdentityAndOptionalPp[]> => {
+  public static getAllWithOptionalPassPhrase = async (acctEmail: string): Promise<KeyInfoWithIdentityAndOptionalPp[]> => {
     const keys = await KeyStore.get(acctEmail);
     return await Promise.all(
       keys.map(async ki => {
@@ -75,9 +66,7 @@ export class KeyStore extends AbstractStore {
     await KeyStore.set(acctEmail, filteredPrivateKeys);
   };
 
-  public static getKeyInfosThatCurrentlyHavePassPhraseInSession = async (
-    acctEmail: string
-  ): Promise<KeyInfoWithIdentity[]> => {
+  public static getKeyInfosThatCurrentlyHavePassPhraseInSession = async (acctEmail: string): Promise<KeyInfoWithIdentity[]> => {
     const keys = await KeyStore.get(acctEmail);
     const result: KeyInfoWithIdentity[] = [];
     for (const ki of keys) {

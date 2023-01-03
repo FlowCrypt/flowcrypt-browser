@@ -41,18 +41,10 @@ export class Settings {
     addUrlTextOrParams?: string | UrlParams,
     iframeHeight?: number
   ) => {
-    await Ui.modal.iframe(
-      Settings.prepareNewSettingsLocationUrl(acctEmail, tabId, page, addUrlTextOrParams),
-      iframeHeight || undefined
-    );
+    await Ui.modal.iframe(Settings.prepareNewSettingsLocationUrl(acctEmail, tabId, page, addUrlTextOrParams), iframeHeight || undefined);
   };
 
-  public static redirectSubPage = (
-    acctEmail: string,
-    parentTabId: string,
-    page: string,
-    addUrlTextOrParams?: string | UrlParams
-  ) => {
+  public static redirectSubPage = (acctEmail: string, parentTabId: string, page: string, addUrlTextOrParams?: string | UrlParams) => {
     window.location.href = Settings.prepareNewSettingsLocationUrl(acctEmail, parentTabId, page, addUrlTextOrParams);
   };
 
@@ -214,9 +206,7 @@ export class Settings {
       container,
       [
         `<div class="line">${Lang.setup.prvHasFixableCompatIssue}</div>`,
-        '<div class="line compatibility_fix_user_ids">' +
-          uids.map(uid => '<div>' + Xss.escape(uid) + '</div>').join('') +
-          '</div>',
+        '<div class="line compatibility_fix_user_ids">' + uids.map(uid => '<div>' + Xss.escape(uid) + '</div>').join('') + '</div>',
         '<div class="line">',
         '  Choose expiration of updated key',
         '  <select class="input_fix_expire_years" data-test="input-compatibility-fix-expire-years">',
@@ -258,10 +248,7 @@ export class Settings {
           } else {
             $(target).off();
             Xss.sanitizeRender(target, Ui.spinner('white'));
-            const expireSeconds =
-              expireYears === 'never'
-                ? 0
-                : Math.floor((Date.now() - origPrv.created) / 1000) + 60 * 60 * 24 * 365 * Number(expireYears);
+            const expireSeconds = expireYears === 'never' ? 0 : Math.floor((Date.now() - origPrv.created) / 1000) + 60 * 60 * 24 * 365 * Number(expireYears);
             await KeyUtil.decrypt(origPrv, passphrase);
             let reformatted;
             const userIds = uids.map(uid => Str.parseEmail(uid)).map(u => ({ email: u.email, name: u.name || '' }));
@@ -277,10 +264,7 @@ export class Settings {
                 isFullyEncrypted: reformatted.fullyEncrypted,
                 isFullyDecrypted: reformatted.fullyDecrypted,
               });
-              await Ui.modal.error(
-                'Key update:Key not fully encrypted after update. ' +
-                  Lang.general.contactForSupportSentence(await isFesUsed(acctEmail))
-              );
+              await Ui.modal.error('Key update:Key not fully encrypted after update. ' + Lang.general.contactForSupportSentence(await isFesUsed(acctEmail)));
               Xss.sanitizeReplace(target, Ui.e('a', { href: backUrl, text: 'Go back and try something else' }));
               return;
             }
@@ -299,11 +283,7 @@ export class Settings {
     });
   };
 
-  public static retryUntilSuccessful = async (
-    action: () => Promise<void>,
-    errTitle: string,
-    contactSentence: string
-  ) => {
+  public static retryUntilSuccessful = async (action: () => Promise<void>, errTitle: string, contactSentence: string) => {
     try {
       await action();
     } catch (e) {
@@ -314,12 +294,7 @@ export class Settings {
   /**
    * todo - could probably replace most usages of this method with retryPromptUntilSuccessful which is more intuitive
    */
-  public static promptToRetry = async (
-    lastErr: unknown,
-    userMsg: string,
-    retryCb: () => Promise<void>,
-    contactSentence: string
-  ): Promise<void> => {
+  public static promptToRetry = async (lastErr: unknown, userMsg: string, retryCb: () => Promise<void>, contactSentence: string): Promise<void> => {
     let errorMsg!: string;
     if (lastErr instanceof AjaxErr && (lastErr.status === 400 || lastErr.status === 405)) {
       // this will make reason for err 400 obvious to user - eg on EKM 405 error
@@ -330,14 +305,7 @@ export class Settings {
       errorMsg = ApiErr.eli5(lastErr);
     }
     const userErrMsg = `${userMsg}, ${errorMsg}`;
-    while (
-      (await Ui.renderOverlayPromptAwaitUserChoice(
-        { retry: {} },
-        userErrMsg,
-        ApiErr.detailsAsHtmlWithNewlines(lastErr),
-        contactSentence
-      )) === 'retry'
-    ) {
+    while ((await Ui.renderOverlayPromptAwaitUserChoice({ retry: {} }, userErrMsg, ApiErr.detailsAsHtmlWithNewlines(lastErr), contactSentence)) === 'retry') {
       try {
         return await retryCb();
       } catch (e2) {
@@ -353,10 +321,7 @@ export class Settings {
     return await retryCb();
   };
 
-  public static forbidAndRefreshPageIfCannot = async (
-    action: 'CREATE_KEYS' | 'BACKUP_KEYS',
-    clientConfiguration: ClientConfiguration
-  ) => {
+  public static forbidAndRefreshPageIfCannot = async (action: 'CREATE_KEYS' | 'BACKUP_KEYS', clientConfiguration: ClientConfiguration) => {
     if (action === 'CREATE_KEYS' && !clientConfiguration.canCreateKeys()) {
       await Ui.modal.error(Lang.setup.creatingKeysNotAllowedPleaseImport);
       window.location.reload();
@@ -368,11 +333,7 @@ export class Settings {
     }
   };
 
-  public static newGoogleAcctAuthPromptThenAlertOrForward = async (
-    settingsTabId: string | undefined,
-    acctEmail?: string,
-    scopes?: string[]
-  ) => {
+  public static newGoogleAcctAuthPromptThenAlertOrForward = async (settingsTabId: string | undefined, acctEmail?: string, scopes?: string[]) => {
     try {
       const response = await GoogleAuth.newAuthPopup({ acctEmail, scopes });
       if (response.result === 'Success' && response.acctEmail) {
@@ -390,26 +351,17 @@ export class Settings {
           });
         }
       } else if (response.result === 'Denied' || response.result === 'Closed') {
-        const authDeniedHtml = (await Api.ajax(
-          { url: '/chrome/settings/modules/auth_denied.htm' },
-          Catch.stackTrace()
-        )) as string;
-        await Ui.modal.info(
-          `${authDeniedHtml}\n<div class="line">${Lang.general.contactIfNeedAssistance()}</div>`,
-          true
-        );
+        const authDeniedHtml = (await Api.ajax({ url: '/chrome/settings/modules/auth_denied.htm' }, Catch.stackTrace())) as string;
+        await Ui.modal.info(`${authDeniedHtml}\n<div class="line">${Lang.general.contactIfNeedAssistance()}</div>`, true);
       } else {
         // Do not report error for csrf
-        if (
-          response.error !== 'Wrong oauth CSRF token. Please try again.' &&
-          !response.error?.includes('Missing client configuration flags')
-        ) {
+        if (response.error !== 'Wrong oauth CSRF token. Please try again.' && !response.error?.includes('Missing client configuration flags')) {
           Catch.report('failed to log into google in newGoogleAcctAuthPromptThenAlertOrForward', response);
         }
         await Ui.modal.error(
-          `Failed to connect to Gmail(new). ${Lang.general.contactIfHappensAgain(
-            acctEmail ? await isFesUsed(acctEmail) : false
-          )}\n\n[${response.result}] ${response.error}`
+          `Failed to connect to Gmail(new). ${Lang.general.contactIfHappensAgain(acctEmail ? await isFesUsed(acctEmail) : false)}\n\n[${response.result}] ${
+            response.error
+          }`
         );
         await Ui.time.sleep(1000);
         window.location.reload();
@@ -418,9 +370,7 @@ export class Settings {
       if (ApiErr.isNetErr(e)) {
         await Ui.modal.error('Could not complete due to network error. Please try again.');
       } else if (ApiErr.isMailOrAcctDisabledOrPolicy(e)) {
-        await Ui.modal.error(
-          'Your Google account or Gmail service is disabled. Please check your Google account settings.'
-        );
+        await Ui.modal.error('Your Google account or Gmail service is disabled. Please check your Google account settings.');
       } else {
         Catch.reportErr(e);
         await Ui.modal.error(`Unknown error happened when connecting to Google: ${String(e)}`);
@@ -465,11 +415,7 @@ export class Settings {
     );
   };
 
-  public static offerToLoginWithPopupShowModalOnErr = (
-    acctEmail: string,
-    then: () => void = () => undefined,
-    prepend = ''
-  ) => {
+  public static offerToLoginWithPopupShowModalOnErr = (acctEmail: string, then: () => void = () => undefined, prepend = '') => {
     (async () => {
       if (await Ui.modal.confirm(`${prepend}Please log in with FlowCrypt to continue.`)) {
         await Settings.loginWithPopupShowModalOnErr(acctEmail, then);

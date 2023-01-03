@@ -24,17 +24,13 @@ export const getParsedCliParams = () => {
   } else {
     throw new Error('Unknown test type: specify CONSUMER-MOCK or ENTERPRISE-MOCK CONSUMER-LIVE-GMAIL');
   }
-  const testGroup = (
-    process.argv.includes('UNIT-TESTS')
-      ? 'UNIT-TESTS'
-      : process.argv.includes('FLAKY-GROUP')
-      ? 'FLAKY-GROUP'
-      : 'STANDARD-GROUP'
-  ) as 'FLAKY-GROUP' | 'STANDARD-GROUP' | 'UNIT-TESTS';
+  const testGroup = (process.argv.includes('UNIT-TESTS') ? 'UNIT-TESTS' : process.argv.includes('FLAKY-GROUP') ? 'FLAKY-GROUP' : 'STANDARD-GROUP') as
+    | 'FLAKY-GROUP'
+    | 'STANDARD-GROUP'
+    | 'UNIT-TESTS';
   const buildDir = `build/chrome-${(testVariant === 'CONSUMER-LIVE-GMAIL' ? 'CONSUMER' : testVariant).toLowerCase()}`;
   const poolSizeOne = process.argv.includes('--pool-size=1') || testGroup === 'FLAKY-GROUP';
-  const oneIfNotPooled = (suggestedPoolSize: number) =>
-    poolSizeOne ? Math.min(1, suggestedPoolSize) : suggestedPoolSize;
+  const oneIfNotPooled = (suggestedPoolSize: number) => (poolSizeOne ? Math.min(1, suggestedPoolSize) : suggestedPoolSize);
   console.info(`TEST_VARIANT: ${testVariant}:${testGroup}, (build dir: ${buildDir}, poolSizeOne: ${poolSizeOne})`);
   return { testVariant, testGroup, oneIfNotPooled, buildDir, isMock: testVariant.includes('-MOCK') };
 };
@@ -119,13 +115,7 @@ export class Util {
   };
 
   public static htmlEscape = (str: string) => {
-    return str
-      .replace(/&/g, '&amp;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#39;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/\//g, '&#x2F;');
+    return str.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\//g, '&#x2F;');
   };
 
   public static deleteFileIfExists = (filename: string) => {
@@ -136,19 +126,11 @@ export class Util {
     }
   };
 
-  public static wipeGoogleTokensUsingExperimentalSettingsPage = async (
-    t: AvaContext,
-    browser: BrowserHandle,
-    acct: string
-  ) => {
+  public static wipeGoogleTokensUsingExperimentalSettingsPage = async (t: AvaContext, browser: BrowserHandle, acct: string) => {
     for (const wipeTokenBtnSelector of ['@action-wipe-google-refresh-token', '@action-wipe-google-access-token']) {
       const settingsPage = await browser.newPage(t, TestUrls.extensionSettings(acct));
       await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
-      const experimentalFrame = await SettingsPageRecipe.awaitNewPageFrame(
-        settingsPage,
-        '@action-open-module-experimental',
-        ['experimental.htm']
-      );
+      const experimentalFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-module-experimental', ['experimental.htm']);
       await experimentalFrame.waitAndClick(wipeTokenBtnSelector);
       await Util.sleep(2);
       await settingsPage.close();

@@ -22,13 +22,8 @@ export class PgpBlockViewErrorModule {
   public renderErr = async (errBoxContent: string, renderRawMsg: string | undefined, errMsg?: string) => {
     this.view.renderModule.setFrameColor('red');
     this.view.renderModule.renderErrorStatus(errMsg || 'decrypt error');
-    const showRawMsgPrompt = renderRawMsg
-      ? '<a href="#" class="action_show_raw_pgp_block">show original message</a>'
-      : '';
-    await this.view.renderModule.renderContent(
-      `<div class="error">${errBoxContent.replace(/\n/g, '<br>')}</div>${showRawMsgPrompt}`,
-      true
-    );
+    const showRawMsgPrompt = renderRawMsg ? '<a href="#" class="action_show_raw_pgp_block">show original message</a>' : '';
+    await this.view.renderModule.renderContent(`<div class="error">${errBoxContent.replace(/\n/g, '<br>')}</div>${showRawMsgPrompt}`, true);
     $('.action_show_raw_pgp_block').on(
       'click',
       this.view.setHandler(async () => {
@@ -41,10 +36,7 @@ export class PgpBlockViewErrorModule {
     );
     $('.button.settings_keyserver').on(
       'click',
-      this.view.setHandler(
-        async () =>
-          await Browser.openSettingsPage('index.htm', this.view.acctEmail, '/chrome/settings/modules/keyserver.htm')
-      )
+      this.view.setHandler(async () => await Browser.openSettingsPage('index.htm', this.view.acctEmail, '/chrome/settings/modules/keyserver.htm'))
     );
     $('.button.settings').on(
       'click',
@@ -52,10 +44,7 @@ export class PgpBlockViewErrorModule {
     );
     $('.button.settings_add_key').on(
       'click',
-      this.view.setHandler(
-        async () =>
-          await Browser.openSettingsPage('index.htm', this.view.acctEmail, '/chrome/settings/modules/add_key.htm')
-      )
+      this.view.setHandler(async () => await Browser.openSettingsPage('index.htm', this.view.acctEmail, '/chrome/settings/modules/add_key.htm'))
     );
     $('.button.reply_pubkey_mismatch').on(
       'click',
@@ -76,11 +65,7 @@ export class PgpBlockViewErrorModule {
     if (msgDiagnosis.found_match) {
       await this.renderErr(Lang.pgpBlock.cantOpen + Lang.pgpBlock.encryptedCorrectlyFileBug, undefined);
     } else if (isPwdMsg) {
-      await this.renderErr(
-        Lang.pgpBlock.pwdMsgOnlyReadableOnWeb +
-          this.btnHtml('ask sender to re-send', 'gray2 short reply_pubkey_mismatch'),
-        undefined
-      );
+      await this.renderErr(Lang.pgpBlock.pwdMsgOnlyReadableOnWeb + this.btnHtml('ask sender to re-send', 'gray2 short reply_pubkey_mismatch'), undefined);
     } else {
       const startText =
         msgDiagnosis.receivers === 1
@@ -106,12 +91,7 @@ export class PgpBlockViewErrorModule {
       await this.renderErr(`Could not load message due to missing auth. ${Ui.retryLink()}`, undefined);
     } else if (e instanceof FormatError) {
       await this.renderErr(
-        Lang.pgpBlock.cantOpen +
-          Lang.pgpBlock.badFormat +
-          Lang.pgpBlock.details +
-          e.message +
-          ' ' +
-          Lang.pgpBlock.dontKnowHowOpen(!!this.view.fesUrl),
+        Lang.pgpBlock.cantOpen + Lang.pgpBlock.badFormat + Lang.pgpBlock.details + e.message + ' ' + Lang.pgpBlock.dontKnowHowOpen(!!this.view.fesUrl),
         e.data
       );
     } else if (ApiErr.isInPrivateMode(e)) {
@@ -121,10 +101,7 @@ export class PgpBlockViewErrorModule {
       );
     } else {
       Catch.reportErr(e);
-      await this.renderErr(
-        Xss.escape(String(e)),
-        this.view.encryptedMsgUrlParam ? this.view.encryptedMsgUrlParam.toUtfStr() : undefined
-      );
+      await this.renderErr(Xss.escape(String(e)), this.view.encryptedMsgUrlParam ? this.view.encryptedMsgUrlParam.toUtfStr() : undefined);
     }
   };
 

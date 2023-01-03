@@ -52,11 +52,7 @@ export class GeneralMailFormatter {
       };
     }
     // encrypt (optionally sign)
-    const singleFamilyKeys = await view.storageModule.collectSingleFamilyKeys(
-      recipientsEmails,
-      newMsgData.from.email,
-      choices.sign
-    );
+    const singleFamilyKeys = await view.storageModule.collectSingleFamilyKeys(recipientsEmails, newMsgData.from.email, choices.sign);
     if (singleFamilyKeys.emailsWithoutPubkeys.length) {
       await view.errModule.throwIfEncryptionPasswordInvalidOrDisabled(newMsgData);
     }
@@ -66,19 +62,14 @@ export class GeneralMailFormatter {
       if (!signingKey && singleFamilyKeys.family === 'openpgp') {
         // we are ignoring missing signing keys for x509 family for now. We skip signing when missing
         //   see https://github.com/FlowCrypt/flowcrypt-browser/pull/4372/files#r845012403
-        throw new UnreportableError(
-          `Could not find account's ${singleFamilyKeys.family} key usable for signing this encrypted message`
-        );
+        throw new UnreportableError(`Could not find account's ${singleFamilyKeys.family} key usable for signing this encrypted message`);
       }
     }
     view.S.now('send_btn_text').text('Encrypting...');
     return await new EncryptedMsgMailFormatter(view).sendableMsgs(newMsgData, singleFamilyKeys.pubkeys, signingKey);
   };
 
-  private static chooseSigningKeyAndDecryptIt = async (
-    view: ComposeView,
-    senderKis: KeyInfoWithIdentity[]
-  ): Promise<ParsedKeyInfo | undefined> => {
+  private static chooseSigningKeyAndDecryptIt = async (view: ComposeView, senderKis: KeyInfoWithIdentity[]): Promise<ParsedKeyInfo | undefined> => {
     const parsedSenderPrvs = await KeyStoreUtil.parse(senderKis);
     // to consider - currently we choose first valid key for signing. Should we sign with all?
     //   alternatively we could use most recenlty modified valid key

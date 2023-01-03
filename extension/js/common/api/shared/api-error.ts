@@ -32,9 +32,7 @@ export class BackendAuthErr extends AuthErr {}
 abstract class ApiCallErr extends Error {
   protected static describeApiAction = (req: JQueryAjaxSettings) => {
     const describeBody = typeof req.data === 'undefined' ? '(no body)' : typeof req.data;
-    return `${req.method || 'GET'}-ing ${Catch.censoredUrl(req.url)} ${describeBody}: ${ApiCallErr.getPayloadStructure(
-      req
-    )}`;
+    return `${req.method || 'GET'}-ing ${Catch.censoredUrl(req.url)} ${describeBody}: ${ApiCallErr.getPayloadStructure(req)}`;
   };
 
   private static getPayloadStructure = (req: JQueryAjaxSettings): string => {
@@ -82,19 +80,10 @@ export class AjaxErr extends ApiCallErr {
       const redactedPayload = AjaxErr.redactSensitiveData(Catch.stringify(req.data).substr(0, 1000));
       stack += `\n\nresponseText(0, 1000):\n${redactedRes}\n\npayload(0, 1000):\n${redactedPayload}`;
     }
-    const message = `${String(xhr.statusText || '(no status text)')}: ${String(
-      xhr.status || -1
-    )} when ${ApiCallErr.describeApiAction(req)} -> ${resMsg || '(no standard err msg)'}`;
-    return new AjaxErr(
-      message,
-      stack,
-      status,
-      Catch.censoredUrl(req.url),
-      responseText,
-      xhr.statusText || '(no status text)',
-      resMsg,
-      resDetails
-    );
+    const message = `${String(xhr.statusText || '(no status text)')}: ${String(xhr.status || -1)} when ${ApiCallErr.describeApiAction(req)} -> ${
+      resMsg || '(no standard err msg)'
+    }`;
+    return new AjaxErr(message, stack, status, Catch.censoredUrl(req.url), responseText, xhr.statusText || '(no status text)', resMsg, resDetails);
   };
 
   private static parseResErr = (responseText: string): { resMsg?: string; resDetails?: string; resCode?: number } => {
@@ -193,18 +182,10 @@ export class ApiErr {
     if (e instanceof AjaxErr && e.resDetails === internalType) {
       return true;
     }
-    if (
-      (e as StandardError).hasOwnProperty('internal') &&
-      !!(e as StandardError).message &&
-      (e as StandardError).internal === internalType
-    ) {
+    if ((e as StandardError).hasOwnProperty('internal') && !!(e as StandardError).message && (e as StandardError).internal === internalType) {
       return true;
     }
-    if (
-      (e as StandardErrRes).error &&
-      typeof (e as StandardErrRes).error === 'object' &&
-      (e as StandardErrRes).error.internal === internalType
-    ) {
+    if ((e as StandardErrRes).error && typeof (e as StandardErrRes).error === 'object' && (e as StandardErrRes).error.internal === internalType) {
       return true;
     }
     return false;
@@ -237,16 +218,10 @@ export class ApiErr {
 
   public static isMailOrAcctDisabledOrPolicy = (e: unknown): boolean => {
     if (e instanceof AjaxErr && ApiErr.isBadReq(e) && typeof e.responseText === 'string') {
-      if (
-        e.responseText.indexOf('Mail service not enabled') !== -1 ||
-        e.responseText.indexOf('Account has been deleted') !== -1
-      ) {
+      if (e.responseText.indexOf('Mail service not enabled') !== -1 || e.responseText.indexOf('Account has been deleted') !== -1) {
         return true;
       }
-      if (
-        e.responseText.indexOf('This application is currently blocked') !== -1 ||
-        e.responseText.indexOf('account data is restricted by policies') !== -1
-      ) {
+      if (e.responseText.indexOf('This application is currently blocked') !== -1 || e.responseText.indexOf('account data is restricted by policies') !== -1) {
         return true; // could correctly be a separate type, but it's quite rare
       }
     }
@@ -258,11 +233,7 @@ export class ApiErr {
       return false;
     }
     if (e.status === 200 || e.status === 403) {
-      if (
-        /(site|content|script|internet|web) (is|has been|was|access|filter) (restricted|blocked|disabled|denied|violat)/i.test(
-          e.responseText
-        )
-      ) {
+      if (/(site|content|script|internet|web) (is|has been|was|access|filter) (restricted|blocked|disabled|denied|violat)/i.test(e.responseText)) {
         return true;
       }
       if (/access to the requested site|internet security by|blockedgateway/.test(e.responseText)) {
@@ -273,10 +244,7 @@ export class ApiErr {
   };
 
   public static isNetErr = (e: unknown): e is Error => {
-    if (
-      e instanceof TypeError &&
-      (e.message === 'Failed to fetch' || e.message === 'NetworkError when attempting to fetch resource.')
-    ) {
+    if (e instanceof TypeError && (e.message === 'Failed to fetch' || e.message === 'NetworkError when attempting to fetch resource.')) {
       return true; // openpgp.js uses fetch()... which produces these errors
     }
     if (e instanceof AjaxErr && e.status === 0 && (e.statusText === 'error' || e.statusText === '(no status text)')) {
@@ -285,12 +253,7 @@ export class ApiErr {
     if (e instanceof AjaxErr && (e.statusText === 'timeout' || e.status === -1)) {
       return true;
     }
-    if (
-      e instanceof AjaxErr &&
-      e.status === 400 &&
-      typeof e.responseText === 'string' &&
-      e.responseText.indexOf('RequestTimeout') !== -1
-    ) {
+    if (e instanceof AjaxErr && e.status === 400 && typeof e.responseText === 'string' && e.responseText.indexOf('RequestTimeout') !== -1) {
       return true; // AWS: Your socket connection to the server was not read from or written to within the timeout period. Idle connections will be closed.
     }
     return false;
@@ -344,9 +307,7 @@ export class ApiErr {
   };
 
   public static isInPrivateMode = (e: unknown) => {
-    return (
-      e instanceof Error && e.message.startsWith('BrowserMsg() (no status text): -1 when GET-ing blob:moz-extension://')
-    );
+    return e instanceof Error && e.message.startsWith('BrowserMsg() (no status text): -1 when GET-ing blob:moz-extension://');
   };
 
   public static reportIfSignificant = (e: unknown) => {

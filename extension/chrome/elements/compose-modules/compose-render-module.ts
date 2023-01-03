@@ -58,10 +58,7 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
         } else {
           $('#a_reply,#a_reply_all,#a_forward').on(
             'click',
-            this.view.setHandler(
-              el => this.actionActivateReplyBoxHandler(el),
-              this.view.errModule.handle(`activate reply box`)
-            )
+            this.view.setHandler(el => this.actionActivateReplyBoxHandler(el), this.view.errModule.handle(`activate reply box`))
           );
         }
       }
@@ -89,13 +86,9 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
       const thread = await this.view.emailProvider.threadGet(this.view.threadId, 'metadata');
       const inReplyToMessage = thread.messages?.find(message => message.id === this.view.replyMsgId);
       if (inReplyToMessage) {
-        this.view.replyParams.inReplyTo = inReplyToMessage.payload?.headers?.find(
-          header => header.name === 'Message-Id'
-        )?.value;
+        this.view.replyParams.inReplyTo = inReplyToMessage.payload?.headers?.find(header => header.name === 'Message-Id')?.value;
       }
-      this.view.replyParams.subject = `${this.responseMethod === 'reply' ? 'Re' : 'Fwd'}: ${
-        this.view.replyParams.subject
-      }`;
+      this.view.replyParams.subject = `${this.responseMethod === 'reply' ? 'Re' : 'Fwd'}: ${this.view.replyParams.subject}`;
     }
     if (!this.view.draftModule.wasMsgLoadedFromDraft) {
       // if there is a draft, don't attempt to pull quoted content. It's assumed to be already present in the draft
@@ -108,16 +101,11 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
         if (this.view.quoteModule.messageToReplyOrForward) {
           const msgId = this.view.quoteModule.messageToReplyOrForward.headers['message-id'];
           this.view.sendBtnModule.additionalMsgHeaders['In-Reply-To'] = msgId;
-          this.view.sendBtnModule.additionalMsgHeaders.References =
-            this.view.quoteModule.messageToReplyOrForward.headers.references + ' ' + msgId;
+          this.view.sendBtnModule.additionalMsgHeaders.References = this.view.quoteModule.messageToReplyOrForward.headers.references + ' ' + msgId;
           if (this.view.replyPubkeyMismatch) {
             await this.renderReplyMsgAsReplyPubkeyMismatch();
           } else if (this.view.quoteModule.messageToReplyOrForward.isOnlySigned) {
-            this.view.sendBtnModule.popover.toggleItemTick(
-              $('.action-toggle-encrypt-sending-option'),
-              'encrypt',
-              false
-            ); // don't encrypt
+            this.view.sendBtnModule.popover.toggleItemTick($('.action-toggle-encrypt-sending-option'), 'encrypt', false); // don't encrypt
             this.view.sendBtnModule.popover.toggleItemTick($('.action-toggle-sign-sending-option'), 'sign', true); // do sign
           }
         }
@@ -133,8 +121,7 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
   public renderPrompt = () => {
     this.view.S.cached('prompt').css('display', 'block');
     if (this.view.replyParams) {
-      const recipientsNumber =
-        this.view.replyParams.to.length + this.view.replyParams.cc.length + this.view.replyParams.bcc.length;
+      const recipientsNumber = this.view.replyParams.to.length + this.view.replyParams.cc.length + this.view.replyParams.bcc.length;
       if (recipientsNumber > 1) {
         $('#a_reply_all').css('display', 'inline-flex');
       } else {
@@ -167,17 +154,11 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
     }
     const repliedBodyEl = this.view.S.cached('reply_msg_successful').find('div.replied_body');
     if (this.view.inputModule.isRichText()) {
-      const sanitized = Xss.htmlSanitizeKeepBasicTags(
-        this.view.inputModule.extract('html', 'input_text', 'SKIP-ADDONS'),
-        'IMG-KEEP'
-      );
+      const sanitized = Xss.htmlSanitizeKeepBasicTags(this.view.inputModule.extract('html', 'input_text', 'SKIP-ADDONS'), 'IMG-KEEP');
       Xss.setElementContentDANGEROUSLY(repliedBodyEl.get(0), sanitized); // xss-sanitized
       this.renderReplySuccessMimeAttachments(this.view.inputModule.extractAttachments());
     } else {
-      Xss.sanitizeRender(
-        repliedBodyEl,
-        Str.escapeTextAsRenderableHtml(this.view.inputModule.extract('text', 'input_text', 'SKIP-ADDONS'))
-      );
+      Xss.sanitizeRender(repliedBodyEl, Str.escapeTextAsRenderableHtml(this.view.inputModule.extract('text', 'input_text', 'SKIP-ADDONS')));
       this.renderReplySuccessAttachments(attachments, msgId, this.view.sendBtnModule.popover.choices.encrypt);
     }
     const t = new Date();
@@ -215,10 +196,7 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
   };
 
   public fetchReplyMeta = async (aliases: string[]): Promise<void> => {
-    Xss.sanitizePrepend(
-      '#new_message',
-      Ui.e('div', { id: 'loader', html: `Loading secure reply box..${Ui.spinner('green')}` })
-    );
+    Xss.sanitizePrepend('#new_message', Ui.e('div', { id: 'loader', html: `Loading secure reply box..${Ui.spinner('green')}` }));
     try {
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const gmailMsg = await this.view.emailProvider.msgGet(this.view.replyMsgId!, 'metadata');
@@ -405,11 +383,7 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
 
   private onRecipientsClickHandler = () => {
     if (!this.view.S.cached('input_to').is(':focus')) {
-      this.view.errModule.debug(
-        `input_addresses_container_inner.click -> calling input_to.focus() when input_to.val(${this.view.S.cached(
-          'input_to'
-        ).val()})`
-      );
+      this.view.errModule.debug(`input_addresses_container_inner.click -> calling input_to.focus() when input_to.val(${this.view.S.cached('input_to').val()})`);
       this.view.S.cached('input_to').focus();
     }
   };
@@ -427,9 +401,7 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
       const key = await KeyUtil.parse(normalizedPub);
       if (!key.emails.length) {
         // no users is not desired
-        await Ui.modal.warning(
-          `There are no email addresses listed in this Public Key - don't know who this key belongs to.`
-        );
+        await Ui.modal.warning(`There are no email addresses listed in this Public Key - don't know who this key belongs to.`);
         return;
       }
       await ContactStore.update(undefined, key.emails[0], {
@@ -475,9 +447,7 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
   };
 
   private renderReplySuccessAttachments = (attachments: Attachment[], msgId: string, isEncrypted: boolean) => {
-    const hideAttachmentTypes = this.view.sendBtnModule.popover.choices.richtext
-      ? ['hidden', 'encryptedMsg', 'signature', 'publicKey']
-      : ['publicKey'];
+    const hideAttachmentTypes = this.view.sendBtnModule.popover.choices.richtext ? ['hidden', 'encryptedMsg', 'signature', 'publicKey'] : ['publicKey'];
     const renderableAttachments = attachments.filter(attachment => !hideAttachmentTypes.includes(attachment.treatAs()));
     if (renderableAttachments.length) {
       this.view.S.cached('replied_attachments')
@@ -500,9 +470,7 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
     for (const index in attachmentsFilenames) {
       if (attachmentsFilenames.hasOwnProperty(index)) {
         const filename = Xss.escape(attachmentsFilenames[index]);
-        attachments.append(
-          `<button class="attachment" index="${index}" title="${filename}"><b>${filename}</b></button>`
-        ); // xss-escaped
+        attachments.append(`<button class="attachment" index="${index}" title="${filename}"><b>${filename}</b></button>`); // xss-escaped
       }
     }
     this.view.S.cached('replied_body').append(attachments); // xss-escaped

@@ -82,13 +82,9 @@ View.run(
           $('label[for=source_backup]').text('Load from backup (no backups found)').css('color', '#AAA');
           $('#source_backup').prop('disabled', true);
         } else if (backups.longids.backupsNotImported.length) {
-          $('label[for=source_backup]').text(
-            `Load from backup (${backups.longids.backupsNotImported.length} new to import)`
-          );
+          $('label[for=source_backup]').text(`Load from backup (${backups.longids.backupsNotImported.length} new to import)`);
         } else {
-          $('label[for=source_backup]')
-            .text(`Load from backup (${backups.longids.backups.length} already loaded)`)
-            .css('color', '#AAA');
+          $('label[for=source_backup]').text(`Load from backup (${backups.longids.backups.length} already loaded)`).css('color', '#AAA');
           $('#source_backup').prop('disabled', true);
         }
       } catch (e) {
@@ -115,11 +111,7 @@ View.run(
         return;
       }
       try {
-        const checked = await this.keyImportUi.checkPrv(
-          this.acctEmail,
-          String($('.input_private_key').val()),
-          String($('.input_passphrase').val())
-        );
+        const checked = await this.keyImportUi.checkPrv(this.acctEmail, String($('.input_private_key').val()), String($('.input_passphrase').val()));
         if (checked) {
           await this.saveKeyAndContinue(checked.encrypted);
         }
@@ -133,9 +125,7 @@ View.run(
         } else {
           Catch.reportErr(e);
           return await Ui.modal.error(
-            `An error happened when processing the key: ${String(e)}\n${Lang.general.contactForSupportSentence(
-              this.isFesUsed()
-            )}`,
+            `An error happened when processing the key: ${String(e)}\n${Lang.general.contactForSupportSentence(this.isFesUsed())}`,
             false,
             Ui.testCompatibilityLink
           );
@@ -167,11 +157,7 @@ View.run(
         await this.saveKeyAndContinue(fixedPrv);
       } catch (e) {
         Catch.reportErr(e);
-        await Ui.modal.error(
-          `Failed to fix key (${String(e)}). ${Lang.general.writeMeToFixIt(this.isFesUsed())}`,
-          false,
-          Ui.testCompatibilityLink
-        );
+        await Ui.modal.error(`Failed to fix key (${String(e)}). ${Lang.general.writeMeToFixIt(this.isFesUsed())}`, false, Ui.testCompatibilityLink);
         this.toggleCompatibilityView(false);
       }
     };

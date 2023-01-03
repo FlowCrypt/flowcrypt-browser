@@ -113,10 +113,7 @@ export class Ui {
           eventTimer = Catch.setHandledTimeout(() => cbWithErrsHandled(this as HTMLElement), Ui.EVENT_SLOW_SPREE_MS);
         } else if (evName === 'veryslowspree') {
           clearTimeout(eventTimer);
-          eventTimer = Catch.setHandledTimeout(
-            () => cbWithErrsHandled(this as HTMLElement),
-            Ui.EVENT_VERY_SLOW_SPREE_MS
-          );
+          eventTimer = Catch.setHandledTimeout(() => cbWithErrsHandled(this as HTMLElement), Ui.EVENT_VERY_SLOW_SPREE_MS);
         } else {
           if (eventFiredOn) {
             if (evName === 'parallel') {
@@ -154,10 +151,8 @@ export class Ui {
           }
         }, 50);
       }),
-    sleep: (
-      ms: number,
-      setCustomTimeout: (code: () => void, t: number) => void = Catch.setHandledTimeout
-    ): Promise<void> => new Promise(resolve => setCustomTimeout(resolve, ms)),
+    sleep: (ms: number, setCustomTimeout: (code: () => void, t: number) => void = Catch.setHandledTimeout): Promise<void> =>
+      new Promise(resolve => setCustomTimeout(resolve, ms)),
   };
 
   public static modal = {
@@ -287,9 +282,7 @@ export class Ui {
           window.history.pushState('', '', urlWithoutPageParam);
         },
         keydownListenerCapture: true,
-        html: `<iframe src="${Xss.escape(
-          iframeUrl
-        )}" width="${iframeWidth}" height="${iframeHeight}" style="border: 0"></iframe>`,
+        html: `<iframe src="${Xss.escape(iframeUrl)}" width="${iframeWidth}" height="${iframeHeight}" style="border: 0"></iframe>`,
         width: 'auto',
         backdrop: 'rgba(0, 0, 0, 0.6)',
         showCloseButton: true,
@@ -322,9 +315,7 @@ export class Ui {
           $(Swal.getCloseButton()!).attr('data-test', 'dialog-close');
           /* eslint-enable @typescript-eslint/no-non-null-assertion */
         },
-        html: `<iframe src="${Xss.escape(
-          iframeUrl
-        )}" style="border: 0" sandbox="allow-scripts allow-same-origin allow-downloads"></iframe>`,
+        html: `<iframe src="${Xss.escape(iframeUrl)}" style="border: 0" sandbox="allow-scripts allow-same-origin allow-downloads"></iframe>`,
         showConfirmButton: false,
         showCloseButton: true,
         grow: 'fullscreen',
@@ -335,8 +326,7 @@ export class Ui {
     },
   };
 
-  public static testCompatibilityLink =
-    '<a href="/chrome/settings/modules/compatibility.htm" target="_blank">Test your OpenPGP key compatibility</a>';
+  public static testCompatibilityLink = '<a href="/chrome/settings/modules/compatibility.htm" target="_blank">Test your OpenPGP key compatibility</a>';
 
   public static activateModalPageLinkTags = () => {
     $('[data-swal-page]').on(
@@ -354,9 +344,7 @@ export class Ui {
   };
 
   public static retryLink = (caption = 'retry') => {
-    return `<a href="${Xss.escape(window.location.href)}" data-test="action-retry-by-reloading">${Xss.escape(
-      caption
-    )}</a>`;
+    return `<a href="${Xss.escape(window.location.href)}" data-test="action-retry-by-reloading">${Xss.escape(caption)}</a>`;
   };
 
   public static delay = async (ms: number): Promise<void> => {
@@ -365,8 +353,7 @@ export class Ui {
 
   public static spinner = (color: string, placeholderCls: 'small_spinner' | 'large_spinner' = 'small_spinner') => {
     const path = `/img/svgs/spinner-${color}-small.svg`;
-    const url =
-      typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.getURL ? chrome.runtime.getURL(path) : path;
+    const url = typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.getURL ? chrome.runtime.getURL(path) : path;
     return `<i class="${placeholderCls}" data-test="spinner"><img src="${url}" /></i>`;
   };
 
@@ -380,9 +367,9 @@ export class Ui {
       const getEscapedColor = (id: string) => Xss.escape(btns[id].color || 'green');
       const getEscapedTitle = (id: string) => Xss.escape(btns[id].title || id.replace(/_/g, ' '));
       const formatBtn = (id: string) => {
-        return `<button class="button ${getEscapedColor(id)} overlay_action_${Xss.escape(
+        return `<button class="button ${getEscapedColor(id)} overlay_action_${Xss.escape(id)}" data-test="action-overlay-${Xss.escape(id)}">${getEscapedTitle(
           id
-        )}" data-test="action-overlay-${Xss.escape(id)}">${getEscapedTitle(id)}</button>`;
+        )}</button>`;
       };
       const formattedBtns = Object.keys(btns).map(formatBtn).join('&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;');
       if (details) {
@@ -513,13 +500,7 @@ export class Ui {
     return $(`<${name}/>`, attrs)[0].outerHTML; // xss-tested: jquery escapes attributes
   }
 
-  public static toast = (
-    text: string,
-    isHTML = false,
-    seconds = 2,
-    position: SweetAlertPosition = 'bottom',
-    icon?: SweetAlertIcon
-  ) => {
+  public static toast = (text: string, isHTML = false, seconds = 2, position: SweetAlertPosition = 'bottom', icon?: SweetAlertIcon) => {
     text = isHTML ? Xss.htmlSanitize(text) : Xss.escape(text).replace(/\n/g, '<br>');
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
     Ui.swal().fire({

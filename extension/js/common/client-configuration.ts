@@ -113,10 +113,7 @@ export class ClientConfiguration {
     let expireIn = 4 * 60 * 60;
     if (this.clientConfigurationJson.in_memory_pass_phrase_session_length) {
       // in_memory_pass_phrase_session_length min: 1, max: Int max value
-      expireIn = Math.max(
-        1,
-        Math.min(this.clientConfigurationJson.in_memory_pass_phrase_session_length, Number.MAX_VALUE)
-      );
+      expireIn = Math.max(1, Math.min(this.clientConfigurationJson.in_memory_pass_phrase_session_length, Number.MAX_VALUE));
     }
     return expireIn * 1000;
   };
@@ -152,10 +149,7 @@ export class ClientConfiguration {
    * This behavior is also enabled as a byproduct of PASS_PHRASE_QUIET_AUTOGEN
    */
   public rememberPassPhraseByDefault = (): boolean => {
-    return (
-      (this.clientConfigurationJson.flags || []).includes('DEFAULT_REMEMBER_PASS_PHRASE') ||
-      this.mustAutogenPassPhraseQuietly()
-    );
+    return (this.clientConfigurationJson.flags || []).includes('DEFAULT_REMEMBER_PASS_PHRASE') || this.mustAutogenPassPhraseQuietly();
   };
 
   public forbidStoringPassPhrase = (): boolean => {

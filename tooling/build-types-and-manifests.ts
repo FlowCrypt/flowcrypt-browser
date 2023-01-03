@@ -60,9 +60,7 @@ addManifest('chrome-enterprise', manifest => {
     'unlimitedStorage',
   ];
   for (const csDef of manifest.content_scripts) {
-    csDef.matches = csDef.matches.filter(
-      (host: string) => host === 'https://mail.google.com/*' || host === 'https://www.google.com/robots.txt*'
-    );
+    csDef.matches = csDef.matches.filter((host: string) => host === 'https://mail.google.com/*' || host === 'https://www.google.com/robots.txt*');
   }
   manifest.content_scripts = manifest.content_scripts.filter((csDef: { matches: string[] }) => csDef.matches.length); // remove empty defs
   if (!manifest.content_scripts.length) {
@@ -100,10 +98,7 @@ const updateEnterpriseBuild = () => {
       replacement: `const GMAIL_GOOGLE_API_HOST = 'https://gmail.googleapis.com';`,
     },
   ];
-  const constFilepaths = [
-    `${buildDir(CHROME_ENTERPRISE)}/js/common/core/const.js`,
-    `${buildDir(CHROME_ENTERPRISE)}/js/content_scripts/webmail_bundle.js`,
-  ];
+  const constFilepaths = [`${buildDir(CHROME_ENTERPRISE)}/js/common/core/const.js`, `${buildDir(CHROME_ENTERPRISE)}/js/content_scripts/webmail_bundle.js`];
   for (const constFilepath of constFilepaths) {
     edit(constFilepath, (code: string) => {
       for (const item of replaceConstsInEnterpriseBuild) {
@@ -135,9 +130,7 @@ const makeMockBuild = (sourceBuildType: string) => {
   edit(`${buildDir(mockBuildType)}/js/common/platform/catch.js`, editor);
   edit(`${buildDir(mockBuildType)}/js/content_scripts/webmail_bundle.js`, editor);
   edit(`${buildDir(mockBuildType)}/manifest.json`, code =>
-    code
-      .replace(/https:\/\/mail\.google\.com/g, 'https://gmail.localhost:8001')
-      .replace(/https:\/\/www\.google\.com/g, 'https://google.localhost:8001')
+    code.replace(/https:\/\/mail\.google\.com/g, 'https://gmail.localhost:8001').replace(/https:\/\/www\.google\.com/g, 'https://google.localhost:8001')
   );
 };
 

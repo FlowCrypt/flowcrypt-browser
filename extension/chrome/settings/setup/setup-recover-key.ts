@@ -27,9 +27,7 @@ export class SetupRecoverKeyModule {
         return;
       }
       if (!passphrase) {
-        await Ui.modal.warning(
-          'Please enter the pass phrase you used when you first set up FlowCrypt, so that we can recover your original keys.'
-        );
+        await Ui.modal.warning('Please enter the pass phrase you used when you first set up FlowCrypt, so that we can recover your original keys.');
         return;
       }
       let matchedPreviouslyRecoveredKey = false;
@@ -50,9 +48,7 @@ export class SetupRecoverKeyModule {
       if (!newlyMatchingKeys.length) {
         if (matchedPreviouslyRecoveredKey) {
           $('#recovery_password').val('');
-          await Ui.modal.warning(
-            'This is a correct pass phrase, but it matches a key that was already recovered. Please try another pass phrase.'
-          );
+          await Ui.modal.warning('This is a correct pass phrase, but it matches a key that was already recovered. Please try another pass phrase.');
         } else if (this.view.fetchedKeyBackupsUniqueLongids.length > 1) {
           await Ui.modal.warning(
             `This pass phrase did not match any of your ${this.view.fetchedKeyBackupsUniqueLongids.length} backed up keys. Please try again.`
@@ -84,11 +80,7 @@ export class SetupRecoverKeyModule {
       }
     } catch (e) {
       ApiErr.reportIfSignificant(e);
-      await Ui.modal.error(
-        `Error setting up FlowCrypt:\n\n${ApiErr.eli5(e)} (${String(e)})\n\n${Lang.general.contactIfHappensAgain(
-          this.view.isFesUsed()
-        )}`
-      );
+      await Ui.modal.error(`Error setting up FlowCrypt:\n\n${ApiErr.eli5(e)} (${String(e)})\n\n${Lang.general.contactIfHappensAgain(this.view.isFesUsed())}`);
     }
   };
 
@@ -99,10 +91,7 @@ export class SetupRecoverKeyModule {
     const nFetched = this.view.fetchedKeyBackupsUniqueLongids.length;
     const txtKeysTeft = nFetched - nImported > 1 ? `are ${nFetched - nImported} backups` : 'is one backup';
     if (this.view.action !== 'add_key') {
-      Xss.sanitizeRender(
-        '#step_2_recovery .recovery_status',
-        Lang.setup.nBackupsAlreadyRecoveredOrLeft(nImported, nFetched, txtKeysTeft)
-      );
+      Xss.sanitizeRender('#step_2_recovery .recovery_status', Lang.setup.nBackupsAlreadyRecoveredOrLeft(nImported, nFetched, txtKeysTeft));
       Xss.sanitizeReplace(
         '#step_2_recovery .line_skip_recovery',
         Ui.e('div', {
@@ -117,10 +106,7 @@ export class SetupRecoverKeyModule {
         })
       );
     } else {
-      Xss.sanitizeRender(
-        '#step_2_recovery .recovery_status',
-        `There ${txtKeysTeft} left to recover.<br><br>Try different pass phrases to unlock all backups.`
-      );
+      Xss.sanitizeRender('#step_2_recovery .recovery_status', `There ${txtKeysTeft} left to recover.<br><br>Try different pass phrases to unlock all backups.`);
       $('#step_2_recovery .line_skip_recovery').css('display', 'none');
     }
   };

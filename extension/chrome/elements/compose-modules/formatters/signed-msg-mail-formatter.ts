@@ -21,9 +21,7 @@ export class SignedMsgMailFormatter extends BaseMailFormatter {
       if (this.isDraft) {
         throw new Error('signed-only PKCS#7 drafts are not supported');
       }
-      const msgBody = this.richtext
-        ? { 'text/plain': newMsg.plaintext, 'text/html': newMsg.plainhtml }
-        : { 'text/plain': newMsg.plaintext };
+      const msgBody = this.richtext ? { 'text/plain': newMsg.plaintext, 'text/html': newMsg.plainhtml } : { 'text/plain': newMsg.plaintext };
       // eslint-disable-next-line @typescript-eslint/naming-convention
       const mimeEncodedPlainMessage = await Mime.encode(msgBody, { Subject: newMsg.subject }, attachments);
       return await this.signMimeMessage(signingPrv, mimeEncodedPlainMessage, newMsg);
@@ -37,11 +35,7 @@ export class SignedMsgMailFormatter extends BaseMailFormatter {
       //  - don't require text to be sent as an attachment
       //  - don't require all other clients to support PGP/MIME
       // then please const me know. Eagerly waiting! In the meanwhile..
-      newMsg.plaintext = (window as unknown as BrowserWindow)['emailjs-mime-codec'].foldLines(
-        newMsg.plaintext,
-        76,
-        true
-      );
+      newMsg.plaintext = (window as unknown as BrowserWindow)['emailjs-mime-codec'].foldLines(newMsg.plaintext, 76, true);
       // Gmail will also remove trailing spaces on the end of each line in transit, causing signatures that don't match
       // Removing them here will prevent Gmail from screwing up the signature
       newMsg.plaintext = newMsg.plaintext

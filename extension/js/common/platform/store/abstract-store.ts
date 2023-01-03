@@ -13,19 +13,8 @@ import { StoredAdminCode } from './global-store.js';
 type SerializableTypes = FlatTypes | string[] | number[] | boolean[] | ClientConfigurationJson;
 export type StorageType = 'session' | 'local';
 export type FlatTypes = null | undefined | number | string | boolean;
-type Storable =
-  | FlatTypes
-  | string[]
-  | StoredKeyInfo[]
-  | KeyInfoWithIdentity[]
-  | Dict<StoredAdminCode>
-  | GmailRes.OpenId
-  | ClientConfigurationJson;
-export type Serializable =
-  | SerializableTypes
-  | SerializableTypes[]
-  | Dict<SerializableTypes>
-  | Dict<SerializableTypes>[];
+type Storable = FlatTypes | string[] | StoredKeyInfo[] | KeyInfoWithIdentity[] | Dict<StoredAdminCode> | GmailRes.OpenId | ClientConfigurationJson;
+export type Serializable = SerializableTypes | SerializableTypes[] | Dict<SerializableTypes> | Dict<SerializableTypes>[];
 
 export interface RawStore {
   [key: string]: Storable;
@@ -57,11 +46,7 @@ export abstract class AbstractStore {
       return new StoreCorruptedError(`db: ${message}`);
     } else if (/A mutation operation was attempted on a database that did not allow mutations/.test(message)) {
       return new StoreDeniedError(`db: ${message}`);
-    } else if (
-      /The operation failed for reasons unrelated to the database itself and not covered by any other error code/.test(
-        message
-      )
-    ) {
+    } else if (/The operation failed for reasons unrelated to the database itself and not covered by any other error code/.test(message)) {
       return new StoreFailedError(`db: ${message}`);
     } else if (/IO error: .+: Unable to create sequential file/.test(message)) {
       return new StoreCorruptedError(`storage.local: ${message}`);
@@ -79,11 +64,7 @@ export abstract class AbstractStore {
     req.onerror = () => reject(AbstractStore.errCategorize(req.error || new Error('Unknown db error')));
   };
 
-  public static setTxHandlers = (
-    tx: IDBTransaction,
-    resolve: (value: unknown) => void,
-    reject: (reason?: unknown) => void
-  ) => {
+  public static setTxHandlers = (tx: IDBTransaction, resolve: (value: unknown) => void, reject: (reason?: unknown) => void) => {
     tx.oncomplete = () => resolve(undefined);
     AbstractStore.setReqOnError(tx, reject);
   };

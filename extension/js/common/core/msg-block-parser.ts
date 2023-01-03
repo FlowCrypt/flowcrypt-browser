@@ -36,9 +36,7 @@ export class MsgBlockParser {
         return { blocks, normalized };
       } else {
         if (continueAt <= startAt) {
-          Catch.report(
-            `MsgBlockParser.detectBlocks likely infinite loop: r.continueAt(${continueAt}) <= startAt(${startAt})`
-          );
+          Catch.report(`MsgBlockParser.detectBlocks likely infinite loop: r.continueAt(${continueAt}) <= startAt(${startAt})`);
           return { blocks, normalized }; // prevent infinite loop
         }
         startAt = continueAt;
@@ -81,9 +79,7 @@ export class MsgBlockParser {
       }
       blocks.push(MsgBlock.fromContent('decryptedHtml', Str.escapeTextAsRenderableHtml(decoded.text))); // escaped text as html
     } else {
-      blocks.push(
-        MsgBlock.fromContent('decryptedHtml', Str.escapeTextAsRenderableHtml(Buf.with(decryptedContent).toUtfStr()))
-      ); // escaped mime text as html
+      blocks.push(MsgBlock.fromContent('decryptedHtml', Str.escapeTextAsRenderableHtml(Buf.with(decryptedContent).toUtfStr()))); // escaped mime text as html
     }
     for (const attachment of decoded.attachments) {
       if (attachment.treatAs() === 'publicKey') {
@@ -213,12 +209,7 @@ export class MsgBlockParser {
             }
             if (endIndex !== -1) {
               // identified end of the same block
-              result.found.push(
-                MsgBlock.fromContent(
-                  armorHdrType,
-                  origText.substring(begin, endIndex + foundBlockEndHeaderLength).trim()
-                )
-              );
+              result.found.push(MsgBlock.fromContent(armorHdrType, origText.substring(begin, endIndex + foundBlockEndHeaderLength).trim()));
               result.continueAt = endIndex + foundBlockEndHeaderLength;
             } else {
               // corresponding end not found

@@ -31,14 +31,7 @@ export namespace GmailRes {
     mimeType?: string;
     body?: GmailMsg$payload$body;
   };
-  export type GmailMsg$labelId =
-    | 'INBOX'
-    | 'UNREAD'
-    | 'CATEGORY_PERSONAL'
-    | 'IMPORTANT'
-    | 'SENT'
-    | 'CATEGORY_UPDATES'
-    | 'TRASH';
+  export type GmailMsg$labelId = 'INBOX' | 'UNREAD' | 'CATEGORY_PERSONAL' | 'IMPORTANT' | 'SENT' | 'CATEGORY_UPDATES' | 'TRASH';
   export type GmailMsg = {
     id: string;
     historyId: string;
@@ -163,9 +156,7 @@ export class GmailParser {
       const parts = payload.parts!; // eslint-disable-line @typescript-eslint/no-non-null-assertion
       // are we dealing with a PGP/MIME encrypted message?
       const pgpEncrypted = Boolean(
-        parts.length === 2 &&
-          contentType?.value?.startsWith('multipart/encrypted;') &&
-          contentType.value.includes('protocol="application/pgp-encrypted"')
+        parts.length === 2 && contentType?.value?.startsWith('multipart/encrypted;') && contentType.value.includes('protocol="application/pgp-encrypted"')
       );
       for (const [i, part] of parts.entries()) {
         GmailParser.findAttachments(part, internalResults, internalMsgId, {
@@ -174,10 +165,7 @@ export class GmailParser {
       }
     }
     /* eslint-disable @typescript-eslint/no-non-null-assertion */
-    if (
-      msgOrPayloadOrPart.hasOwnProperty('body') &&
-      (msgOrPayloadOrPart as GmailRes.GmailMsg$payload$part).body!.hasOwnProperty('attachmentId')
-    ) {
+    if (msgOrPayloadOrPart.hasOwnProperty('body') && (msgOrPayloadOrPart as GmailRes.GmailMsg$payload$part).body!.hasOwnProperty('attachmentId')) {
       const payload = msgOrPayloadOrPart as GmailRes.GmailMsg$payload;
       const treatAs = Attachment.treatAsForPgpEncryptedAttachments(payload.mimeType, pgpEncryptedIndex);
       internalResults.push(
@@ -188,10 +176,7 @@ export class GmailParser {
           name: (msgOrPayloadOrPart as GmailRes.GmailMsg$payload$part).filename,
           type: (msgOrPayloadOrPart as GmailRes.GmailMsg$payload$part).mimeType,
           treatAs,
-          inline:
-            (GmailParser.findHeader(msgOrPayloadOrPart, 'content-disposition') || '')
-              .toLowerCase()
-              .indexOf('inline') === 0,
+          inline: (GmailParser.findHeader(msgOrPayloadOrPart, 'content-disposition') || '').toLowerCase().indexOf('inline') === 0,
         })
       );
       /* eslint-enable @typescript-eslint/no-non-null-assertion */
@@ -203,12 +188,9 @@ export class GmailParser {
     gmailMsg: GmailRes.GmailMsg | GmailRes.GmailMsg$payload | GmailRes.GmailMsg$payload$part,
     internalResults: SendableMsgBody = {}
   ): SendableMsgBody => {
-    const isGmailMsgWithPayload = (v: unknown): v is GmailRes.GmailMsg =>
-      !!v && typeof (v as GmailRes.GmailMsg).payload !== 'undefined';
-    const isGmailMsgPayload = (v: unknown): v is GmailRes.GmailMsg$payload =>
-      !!v && typeof (v as GmailRes.GmailMsg$payload).parts !== 'undefined';
-    const isGmailMsgPayloadPart = (v: unknown): v is GmailRes.GmailMsg$payload$part =>
-      !!v && typeof (v as GmailRes.GmailMsg$payload$part).body !== 'undefined';
+    const isGmailMsgWithPayload = (v: unknown): v is GmailRes.GmailMsg => !!v && typeof (v as GmailRes.GmailMsg).payload !== 'undefined';
+    const isGmailMsgPayload = (v: unknown): v is GmailRes.GmailMsg$payload => !!v && typeof (v as GmailRes.GmailMsg$payload).parts !== 'undefined';
+    const isGmailMsgPayloadPart = (v: unknown): v is GmailRes.GmailMsg$payload$part => !!v && typeof (v as GmailRes.GmailMsg$payload$part).body !== 'undefined';
     if (isGmailMsgWithPayload(gmailMsg)) {
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       GmailParser.findBodies(gmailMsg.payload!, internalResults);
@@ -218,12 +200,7 @@ export class GmailParser {
         GmailParser.findBodies(part, internalResults);
       }
     }
-    if (
-      isGmailMsgPayloadPart(gmailMsg) &&
-      gmailMsg.body &&
-      typeof gmailMsg.body.data !== 'undefined' &&
-      gmailMsg.body.size !== 0
-    ) {
+    if (isGmailMsgPayloadPart(gmailMsg) && gmailMsg.body && typeof gmailMsg.body.data !== 'undefined' && gmailMsg.body.size !== 0) {
       if (gmailMsg.mimeType) {
         internalResults[gmailMsg.mimeType] = gmailMsg.body.data;
       }
@@ -231,11 +208,7 @@ export class GmailParser {
     return internalResults;
   };
 
-  public static determineReplyMeta = (
-    acctEmail: string,
-    addresses: string[],
-    lastGmailMsg: GmailRes.GmailMsg
-  ): ReplyParams => {
+  public static determineReplyMeta = (acctEmail: string, addresses: string[], lastGmailMsg: GmailRes.GmailMsg): ReplyParams => {
     const subject = GmailParser.findHeader(lastGmailMsg, 'subject') || '';
     const headers = {
       from: Str.parseEmail(GmailParser.findHeader(lastGmailMsg, 'from') || '').email,

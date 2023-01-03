@@ -32,9 +32,7 @@ export class ComposeReplyBtnPopoverModule extends ViewModule<ComposeView> {
       const option = key as ReplyOptions;
       const item = this.popoverItems[option];
       const elem = $(`
-        <div class="action-toggle-key-reply-option reply-option" id="popover_${key}_option" data-test="action-toggle-${Xss.escape(
-        key
-      )}">
+        <div class="action-toggle-key-reply-option reply-option" id="popover_${key}_option" data-test="action-toggle-${Xss.escape(key)}">
             <span class="option-name">${Xss.escape(item.text)}</span>
         </div>`);
       elem.on(

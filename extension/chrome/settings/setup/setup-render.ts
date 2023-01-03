@@ -49,12 +49,8 @@ export class SetupRenderModule {
         await this.view.setupRecoverKey.renderAddKeyFromBackup();
       }
     } else if (this.view.clientConfiguration.mustAutoImportOrAutogenPrvWithKeyManager()) {
-      if (
-        this.view.clientConfiguration.mustAutogenPassPhraseQuietly() &&
-        this.view.clientConfiguration.forbidStoringPassPhrase()
-      ) {
-        const notSupportedErr =
-          'Combination of org rules not valid: PASS_PHRASE_QUIET_AUTOGEN cannot be used together with FORBID_STORING_PASS_PHRASE.';
+      if (this.view.clientConfiguration.mustAutogenPassPhraseQuietly() && this.view.clientConfiguration.forbidStoringPassPhrase()) {
+        const notSupportedErr = 'Combination of org rules not valid: PASS_PHRASE_QUIET_AUTOGEN cannot be used together with FORBID_STORING_PASS_PHRASE.';
         await Ui.modal.error(notSupportedErr);
         window.location.href = Url.create('index.htm', { acctEmail: this.view.acctEmail });
         return;
@@ -109,15 +105,10 @@ export class SetupRenderModule {
     if (name) {
       $('#' + blocks.join(', #')).css('display', 'none');
       $('#' + name).css('display', 'block');
-      $('#button-go-back').css(
-        'visibility',
-        ['step_2b_manual_enter', 'step_2a_manual_create'].includes(name) ? 'visible' : 'hidden'
-      );
+      $('#button-go-back').css('visibility', ['step_2b_manual_enter', 'step_2a_manual_create'].includes(name) ? 'visible' : 'hidden');
       if (name === 'step_2_recovery') {
         $('.backups_count_words').text(
-          this.view.fetchedKeyBackupsUniqueLongids.length > 1
-            ? `${this.view.fetchedKeyBackupsUniqueLongids.length} backups`
-            : 'a backup'
+          this.view.fetchedKeyBackupsUniqueLongids.length > 1 ? `${this.view.fetchedKeyBackupsUniqueLongids.length} backups` : 'a backup'
         );
         $('#step_2_recovery input').focus();
       }
@@ -182,9 +173,10 @@ export class SetupRenderModule {
     const emailAliases = Value.arr.withoutVal(addresses, this.view.acctEmail);
     for (const e of emailAliases) {
       $('.addresses').append(
-        `<label><input type="checkbox" class="input_email_alias" data-email="${Xss.escape(
-          e
-        )}" data-test="input-email-alias-${e.replace(/[^a-z0-9]+/g, '')}" />${Xss.escape(e)}</label><br/>`
+        `<label><input type="checkbox" class="input_email_alias" data-email="${Xss.escape(e)}" data-test="input-email-alias-${e.replace(
+          /[^a-z0-9]+/g,
+          ''
+        )}" />${Xss.escape(e)}</label><br/>`
       ); // xss-escaped
     }
     $('.input_email_alias').on('click', event => {

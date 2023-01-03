@@ -29,13 +29,9 @@ export const GMAIL_RECOVERY_EMAIL_SUBJECTS = [
 ];
 
 export const gmailBackupSearchQuery = (acctEmail: string) => {
-  return [
-    'from:' + acctEmail,
-    'to:' + acctEmail,
-    '(subject:"' + GMAIL_RECOVERY_EMAIL_SUBJECTS.join('" OR subject: "') + '")',
-    '-is:spam',
-    '-is:trash',
-  ].join(' ');
+  return ['from:' + acctEmail, 'to:' + acctEmail, '(subject:"' + GMAIL_RECOVERY_EMAIL_SUBJECTS.join('" OR subject: "') + '")', '-is:spam', '-is:trash'].join(
+    ' '
+  );
 };
 
 export class InMemoryStoreKeys {

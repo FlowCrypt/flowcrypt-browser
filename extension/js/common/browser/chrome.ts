@@ -19,9 +19,7 @@ const handleFatalErr = (reason: 'storage_undefined', error: Error) => {
       console.error('Chrome.runtime missing, cannot continue', error);
     } else {
       // extension pages
-      window.location.href = chrome.runtime.getURL(
-        Url.create(`chrome/settings/fatal.htm`, { reason, stack: error.stack })
-      );
+      window.location.href = chrome.runtime.getURL(Url.create(`chrome/settings/fatal.htm`, { reason, stack: error.stack }));
     }
   } catch (e) {
     if (e && e instanceof Error && e.message === 'Extension context invalidated.') {
@@ -42,9 +40,7 @@ export const windowsCreate = async (q: chrome.windows.CreateData): Promise<chrom
     if (typeof chrome.windows !== 'undefined') {
       chrome.windows.create(q, resolve);
     } else {
-      Ui.modal
-        .error('Your platform is not supported: browser does not support extension windows')
-        .catch(Catch.reportErr);
+      Ui.modal.error('Your platform is not supported: browser does not support extension windows').catch(Catch.reportErr);
     }
   });
 };

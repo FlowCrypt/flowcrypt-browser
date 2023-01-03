@@ -67,29 +67,20 @@ View.run(
       Xss.sanitizeRender(target, Ui.spinner('white'));
       await Ui.delay(50); // give spinner time to load
       try {
-        const { sent } = await FlowCryptWebsite.helpFeedback(
-          emailVal,
-          `${textVal}\n\n\nFlowCrypt ${Catch.browser().name} ${VERSION}`
-        );
+        const { sent } = await FlowCryptWebsite.helpFeedback(emailVal, `${textVal}\n\n\nFlowCrypt ${Catch.browser().name} ${VERSION}`);
         if (sent) {
           $(target).text('sent!');
           await Ui.modal.info(`Message sent! You will find your response in ${emailVal}, check your email later.`);
           BrowserMsg.send.closePage(this.parentTabId);
         } else {
           $(target).text(origBtnText);
-          await Ui.modal.error(
-            `There was an error sending message. ${Lang.general.contactForSupportSentence(
-              await isFesUsed(this.acctEmail || '')
-            )}`
-          );
+          await Ui.modal.error(`There was an error sending message. ${Lang.general.contactForSupportSentence(await isFesUsed(this.acctEmail || ''))}`);
         }
       } catch (e) {
         ApiErr.reportIfSignificant(e);
         $(target).text(origBtnText);
         await Ui.modal.error(
-          `There was an error sending message. ${Lang.general.contactForSupportSentence(
-            await isFesUsed(this.acctEmail || '')
-          )}\n\n${ApiErr.eli5(e)}`
+          `There was an error sending message. ${Lang.general.contactForSupportSentence(await isFesUsed(this.acctEmail || ''))}\n\n${ApiErr.eli5(e)}`
         );
       }
     };

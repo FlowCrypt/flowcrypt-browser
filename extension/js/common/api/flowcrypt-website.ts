@@ -24,10 +24,7 @@ export class FlowCryptWebsite extends Api {
     )[type];
   };
 
-  public static helpFeedback = async (
-    acctEmail: string,
-    message: string
-  ): Promise<FlowCryptWebsiteRes.FcHelpFeedback> => {
+  public static helpFeedback = async (acctEmail: string, message: string): Promise<FlowCryptWebsiteRes.FcHelpFeedback> => {
     return await FlowCryptWebsite.request<FlowCryptWebsiteRes.FcHelpFeedback>('help/feedback', {
       email: acctEmail,
       message,
@@ -35,10 +32,7 @@ export class FlowCryptWebsite extends Api {
   };
 
   public static retrieveBlogPosts = async (): Promise<FlowCryptWebsiteRes.FcBlogPost[]> => {
-    const xml = (await Api.ajax(
-      { url: 'https://flowcrypt.com/blog/feed.xml', dataType: 'xml' },
-      Catch.stackTrace()
-    )) as XMLDocument;
+    const xml = (await Api.ajax({ url: 'https://flowcrypt.com/blog/feed.xml', dataType: 'xml' }, Catch.stackTrace())) as XMLDocument;
     const posts: FlowCryptWebsiteRes.FcBlogPost[] = [];
     for (const post of Browser.arrFromDomNodeList(xml.querySelectorAll('entry'))) {
       const children = Browser.arrFromDomNodeList(post.childNodes);

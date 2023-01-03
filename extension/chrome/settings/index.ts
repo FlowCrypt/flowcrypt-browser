@@ -56,10 +56,7 @@ View.run(
         this.page = undefined;
       }
       this.page = this.page === 'undefined' ? undefined : this.page; // in case an "undefined" string slipped in
-      this.pageUrlParams =
-        typeof uncheckedUrlParams.pageUrlParams === 'string'
-          ? (JSON.parse(uncheckedUrlParams.pageUrlParams) as UrlParams)
-          : undefined;
+      this.pageUrlParams = typeof uncheckedUrlParams.pageUrlParams === 'string' ? (JSON.parse(uncheckedUrlParams.pageUrlParams) as UrlParams) : undefined;
       this.addNewAcct = uncheckedUrlParams.addNewAcct === true;
       this.advanced = uncheckedUrlParams.advanced === true;
       if (this.acctEmail) {
@@ -119,11 +116,7 @@ View.run(
       BrowserMsg.addListener('add_pubkey_dialog', async ({ emails }: Bm.AddPubkeyDialog) => {
         // todo: use Ui.modal.iframe just like passphrase_dialog does
         const factory = new XssSafeFactory(this.acctEmail!, this.tabId);
-        window.open(
-          factory.srcAddPubkeyDialog(emails, 'settings'),
-          '_blank',
-          'height=680,left=100,menubar=no,status=no,toolbar=no,top=30,width=660'
-        );
+        window.open(factory.srcAddPubkeyDialog(emails, 'settings'), '_blank', 'height=680,left=100,menubar=no,status=no,toolbar=no,top=30,width=660');
       });
       BrowserMsg.addListener('notification_show', async ({ notification, group }: Bm.NotificationShow) => {
         this.notifications!.show(notification, {}, group);
@@ -144,12 +137,9 @@ View.run(
         const factory = new XssSafeFactory(this.acctEmail!, this.tabId);
         await factory.showPassphraseDialog(longids, type, initiatorFrameId);
       });
-      BrowserMsg.addListener(
-        'notification_show_auth_popup_needed',
-        async ({ acctEmail }: Bm.NotificationShowAuthPopupNeeded) => {
-          this.notifications!.showAuthPopupNeeded(acctEmail);
-        }
-      );
+      BrowserMsg.addListener('notification_show_auth_popup_needed', async ({ acctEmail }: Bm.NotificationShowAuthPopupNeeded) => {
+        this.notifications!.showAuthPopupNeeded(acctEmail);
+      });
       BrowserMsg.addListener('close_dialog', async () => {
         Swal.close();
       });
@@ -183,17 +173,11 @@ View.run(
       /* eslint-enable @typescript-eslint/no-non-null-assertion */
       $('.action_add_account').on(
         'click',
-        this.setHandlerPrevent(
-          'double',
-          async () => await Settings.newGoogleAcctAuthPromptThenAlertOrForward(this.tabId)
-        )
+        this.setHandlerPrevent('double', async () => await Settings.newGoogleAcctAuthPromptThenAlertOrForward(this.tabId))
       );
       $('.action_google_auth').on(
         'click',
-        this.setHandlerPrevent(
-          'double',
-          async () => await Settings.newGoogleAcctAuthPromptThenAlertOrForward(this.tabId, this.acctEmail)
-        )
+        this.setHandlerPrevent('double', async () => await Settings.newGoogleAcctAuthPromptThenAlertOrForward(this.tabId, this.acctEmail))
       );
       // $('.action_microsoft_auth').on('click', this.setHandlerPrevent('double', function() {
       //   new_microsoft_account_authentication_prompt(account_email);
@@ -347,9 +331,9 @@ View.run(
         .then(posts => {
           // do not await because may take a while
           for (const post of posts) {
-            const html = `<div class="line"><a href="https://flowcrypt.com${Xss.escape(
-              post.url
-            )}" target="_blank">${Xss.escape(post.title.trim())}</a> ${Xss.escape(post.date.trim())}</div>`;
+            const html = `<div class="line"><a href="https://flowcrypt.com${Xss.escape(post.url)}" target="_blank">${Xss.escape(
+              post.title.trim()
+            )}</a> ${Xss.escape(post.date.trim())}</div>`;
             Xss.sanitizeAppend('.blog_post_list', html);
           }
         })
@@ -361,12 +345,7 @@ View.run(
         return;
       }
       const globalStorage = await GlobalStore.get(['install_mobile_app_notification_dismissed']);
-      if (
-        !globalStorage.install_mobile_app_notification_dismissed &&
-        rules.canBackupKeys() &&
-        rules.canCreateKeys() &&
-        !rules.usesKeyManager()
-      ) {
+      if (!globalStorage.install_mobile_app_notification_dismissed && rules.canBackupKeys() && rules.canCreateKeys() && !rules.usesKeyManager()) {
         // only show this notification if user is allowed to:
         //   - backup keys: when not allowed, company typically has other forms of backup
         //   - create keys: when not allowed, key must have been imported from some other system that already takes care of backups
@@ -443,9 +422,7 @@ View.run(
         await Settings.refreshSendAs(this.acctEmail!);
         await Settings.acctStorageChangeEmail(this.acctEmail!, newAcctEmail);
         /* eslint-enable @typescript-eslint/no-non-null-assertion */
-        await Ui.modal.info(
-          `Email address changed to ${newAcctEmail}. You should now check that your public key is properly submitted.`
-        );
+        await Ui.modal.info(`Email address changed to ${newAcctEmail}. You should now check that your public key is properly submitted.`);
         window.location.href = Url.create('index.htm', {
           acctEmail: newAcctEmail,
           page: '/chrome/settings/modules/keyserver.htm',
@@ -456,9 +433,7 @@ View.run(
         } else if (ApiErr.isMailOrAcctDisabledOrPolicy(e)) {
           await Ui.modal.error(Lang.account.googleAcctDisabledOrPolicy);
         } else if (ApiErr.isAuthErr(e)) {
-          await Ui.modal.warning(
-            'New authorization needed. Please try Additional Settings -> Experimental -> Force Google Account email change'
-          );
+          await Ui.modal.warning('New authorization needed. Please try Additional Settings -> Experimental -> Force Google Account email change');
         } else {
           Catch.reportErr(e);
           await Ui.modal.error(
@@ -482,10 +457,7 @@ View.run(
         const googleAcctEmailAddr = primarySendAs.sendAsEmail;
         $('#status-row #status_google').text(`g:${googleAcctEmailAddr}:ok`);
         if (googleAcctEmailAddr !== this.acctEmail) {
-          $('#status-row #status_google')
-            .text(`g:${googleAcctEmailAddr}:changed`)
-            .addClass('bad')
-            .attr('title', 'Account email address has changed');
+          $('#status-row #status_google').text(`g:${googleAcctEmailAddr}:changed`).addClass('bad').attr('title', 'Account email address has changed');
           if (googleAcctEmailAddr && this.acctEmail) {
             const acctChangedTxt = `Your Google Account address seems to have changed from ${this.acctEmail} to ${googleAcctEmailAddr}. FlowCrypt Settings need to be updated accordingly.`;
             if (await Ui.modal.confirm(acctChangedTxt)) {
@@ -530,9 +502,7 @@ View.run(
         const fpHtml = `fingerprint:&nbsp;<span class="good">${Str.spaced(Xss.escape(ki.fingerprints[0]))}</span>`;
         const space = `&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`;
         html += `<div class="row key-content-row">`;
-        html += `  <div class="col-12">${escapedLink} from ${Xss.escape(
-          date
-        )}${space}${fpHtml}${space}${removeKeyBtn}</div>`;
+        html += `  <div class="col-12">${escapedLink} from ${Xss.escape(date)}${space}${fpHtml}${space}${removeKeyBtn}</div>`;
         html += `</div>`;
       }
       Xss.sanitizeAppend('.key_list', html);
@@ -541,12 +511,7 @@ View.run(
         this.setHandler(async target => {
           /* eslint-disable @typescript-eslint/no-non-null-assertion */
           // the UI below only gets rendered when account_email is available
-          await Settings.renderSubPage(
-            this.acctEmail!,
-            this.tabId,
-            $(target).attr('page')!,
-            $(target).attr('addurltext') || ''
-          ); // all such elements do have page attr
+          await Settings.renderSubPage(this.acctEmail!, this.tabId, $(target).attr('page')!, $(target).attr('addurltext') || ''); // all such elements do have page attr
           /* eslint-enable @typescript-eslint/no-non-null-assertion */
         })
       );

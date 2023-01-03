@@ -20,14 +20,8 @@ const exec = shell_command =>
   });
 
 (async () => {
-  await exec(
-    `cd ./build; rm -f ${releaseZip(CHROME_CONSUMER)}; zip -rq ${releaseZip(CHROME_CONSUMER)} ./${CHROME_CONSUMER}/*`
-  );
-  await exec(
-    `cd ./build; rm -f ${releaseZip(CHROME_ENTERPRISE)}; zip -rq ${releaseZip(
-      CHROME_ENTERPRISE
-    )} ./${CHROME_ENTERPRISE}/*`
-  );
+  await exec(`cd ./build; rm -f ${releaseZip(CHROME_CONSUMER)}; zip -rq ${releaseZip(CHROME_CONSUMER)} ./${CHROME_CONSUMER}/*`);
+  await exec(`cd ./build; rm -f ${releaseZip(CHROME_ENTERPRISE)}; zip -rq ${releaseZip(CHROME_ENTERPRISE)} ./${CHROME_ENTERPRISE}/*`);
   for (const i in [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].reverse()) {
     console.log(`running firefox release in ${i} seconds...`);
     await new Promise(resolve => setTimeout(resolve, 1000));

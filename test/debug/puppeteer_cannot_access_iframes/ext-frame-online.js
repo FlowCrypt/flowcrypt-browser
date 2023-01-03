@@ -4,11 +4,7 @@ let browser;
 
 (async () => {
   browser = await puppeteer.launch({
-    args: [
-      '--disable-features=site-per-process',
-      '--disable-extensions-except=add_iframe',
-      '--load-extension=add_iframe',
-    ],
+    args: ['--disable-features=site-per-process', '--disable-extensions-except=add_iframe', '--load-extension=add_iframe'],
     headless: false,
     slowMo: 50,
   });

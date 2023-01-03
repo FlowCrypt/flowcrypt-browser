@@ -20,11 +20,7 @@ Catch.try(async () => {
   const acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
   const gmail = new Gmail(acctEmail);
 
-  if (
-    !confirm(
-      'This is page is meant for debugging. It will download messages from your inbox and save them to your device. Continue?'
-    )
-  ) {
+  if (!confirm('This is page is meant for debugging. It will download messages from your inbox and save them to your device. Continue?')) {
     window.close();
     return;
   }
@@ -43,9 +39,7 @@ Catch.try(async () => {
   };
 
   const save = (data: Uint8Array) => {
-    Browser.saveToDownloads(
-      new Attachment({ data, name: `${acctEmail.replace(/[^a-z0-9+]/g, '')}.json`, type: 'application/pgp-encrypted' })
-    );
+    Browser.saveToDownloads(new Attachment({ data, name: `${acctEmail.replace(/[^a-z0-9+]/g, '')}.json`, type: 'application/pgp-encrypted' }));
   };
 
   try {
@@ -53,16 +47,8 @@ Catch.try(async () => {
     const msgMetas: GmailRes.GmailMsgList$message[] = [];
     let nextCyclePageToken: string | undefined;
     while (true) {
-      const { messages, resultSizeEstimate, nextPageToken } = await gmail.msgList(
-        'is:inbox OR is:sent',
-        false,
-        nextCyclePageToken
-      );
-      print(
-        `msgList: ${
-          (messages || []).length
-        } msgs, resultSizeEstimate:${resultSizeEstimate}, nextPageToken: ${nextPageToken}`
-      );
+      const { messages, resultSizeEstimate, nextPageToken } = await gmail.msgList('is:inbox OR is:sent', false, nextCyclePageToken);
+      print(`msgList: ${(messages || []).length} msgs, resultSizeEstimate:${resultSizeEstimate}, nextPageToken: ${nextPageToken}`);
       msgMetas.push(...(messages || []));
       if (!messages || !messages.length || !nextPageToken) {
         break;

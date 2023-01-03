@@ -10,13 +10,7 @@ import { GlobalStore } from '../common/platform/store/global-store.js';
 import { ContactStore } from '../common/platform/store/contact-store.js';
 
 export class BgHandlers {
-  public static openSettingsPageHandler: Bm.AsyncResponselessHandler = async ({
-    page,
-    path,
-    pageUrlParams,
-    addNewAcct,
-    acctEmail,
-  }: Bm.Settings) => {
+  public static openSettingsPageHandler: Bm.AsyncResponselessHandler = async ({ page, path, pageUrlParams, addNewAcct, acctEmail }: Bm.Settings) => {
     await BgUtils.openSettingsPage(path, acctEmail, page, pageUrlParams, addNewAcct === true);
   };
 
@@ -39,9 +33,7 @@ export class BgHandlers {
     return await Api.ajax(r.req, r.stack);
   };
 
-  public static ajaxGmailAttachmentGetChunkHandler = async (
-    r: Bm.AjaxGmailAttachmentGetChunk
-  ): Promise<Bm.Res.AjaxGmailAttachmentGetChunk> => {
+  public static ajaxGmailAttachmentGetChunkHandler = async (r: Bm.AjaxGmailAttachmentGetChunk): Promise<Bm.Res.AjaxGmailAttachmentGetChunk> => {
     return { chunk: await new Gmail(r.acctEmail).attachmentGetChunk(r.msgId, r.attachmentId) };
   };
 
@@ -55,31 +47,28 @@ export class BgHandlers {
 
   public static getActiveTabInfo: Bm.AsyncRespondingHandler = () =>
     new Promise((resolve, reject) => {
-      chrome.tabs.query(
-        { active: true, currentWindow: true, url: ['*://mail.google.com/*', '*://inbox.google.com/*'] },
-        activeTabs => {
-          if (activeTabs.length) {
-            if (activeTabs[0].id !== undefined) {
-              type ScriptRes = { acctEmail: string | undefined; sameWorld: boolean | undefined }[];
-              chrome.tabs.executeScript(
-                activeTabs[0].id!, // eslint-disable-line @typescript-eslint/no-non-null-assertion
-                { code: 'var r = {acctEmail: window.account_email_global, sameWorld: window.same_world_global}; r' },
-                (result: ScriptRes) => {
-                  resolve({
-                    provider: 'gmail',
-                    acctEmail: result[0].acctEmail,
-                    sameWorld: result[0].sameWorld === true,
-                  });
-                }
-              );
-            } else {
-              reject(new Error('tabs[0].id is undefined'));
-            }
+      chrome.tabs.query({ active: true, currentWindow: true, url: ['*://mail.google.com/*', '*://inbox.google.com/*'] }, activeTabs => {
+        if (activeTabs.length) {
+          if (activeTabs[0].id !== undefined) {
+            type ScriptRes = { acctEmail: string | undefined; sameWorld: boolean | undefined }[];
+            chrome.tabs.executeScript(
+              activeTabs[0].id!, // eslint-disable-line @typescript-eslint/no-non-null-assertion
+              { code: 'var r = {acctEmail: window.account_email_global, sameWorld: window.same_world_global}; r' },
+              (result: ScriptRes) => {
+                resolve({
+                  provider: 'gmail',
+                  acctEmail: result[0].acctEmail,
+                  sameWorld: result[0].sameWorld === true,
+                });
+              }
+            );
           } else {
-            resolve({ provider: undefined, acctEmail: undefined, sameWorld: undefined });
+            reject(new Error('tabs[0].id is undefined'));
           }
+        } else {
+          resolve({ provider: undefined, acctEmail: undefined, sameWorld: undefined });
         }
-      );
+      });
     });
 
   public static respondWithSenderTabId = async (r: unknown, sender: Bm.Sender): Promise<Bm.Res._tab_> => {

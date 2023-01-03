@@ -89,18 +89,12 @@
         }
         for (const statement of expectedStackStatements) {
           if ((e.stack || '').indexOf(statement) === -1) {
-            console.error(
-              `Unexpected stack format for type ${type}:\n${
-                e.stack
-              }\n\n\nExpected to include:\n${expectedStackStatements.join('\n')}`
-            );
+            console.error(`Unexpected stack format for type ${type}:\n${e.stack}\n\n\nExpected to include:\n${expectedStackStatements.join('\n')}`);
             process.exit(1);
           }
         }
         if (type === 'object' && JSON.stringify((e as Error & { thrown: string }).thrown) !== '{"nonsense":"yes"}') {
-          console.error(
-            `Unexpected e.throw for type ${type}:\n${JSON.stringify((e as Error & { thrown: string }).thrown)}`
-          );
+          console.error(`Unexpected e.throw for type ${type}:\n${JSON.stringify((e as Error & { thrown: string }).thrown)}`);
           process.exit(1);
         }
         return;

@@ -40,9 +40,7 @@ View.run(
       if (prvBackup) {
         $('.line.fingerprints .fingerprint').text(Str.spaced(fingerprint));
         if (prvBackup.usableForEncryption && prvBackup.usableForSigning) {
-          $('.line.add_contact')
-            .addClass('bad')
-            .text('This private key looks correctly formatted, but cannot be used for encryption.');
+          $('.line.add_contact').addClass('bad').text('This private key looks correctly formatted, but cannot be used for encryption.');
           $('.line.fingerprints').css({ display: 'none', visibility: 'hidden' });
         }
       } else {
@@ -53,12 +51,8 @@ View.run(
         $('.line .private_key_status').text('This Private Key is already imported.');
       } else {
         $('.line .private_key_status')
-          .text(
-            'This private key was not imported yet. We suggest to import all backups so that you can read all incoming encrypted emails.'
-          )
-          .after(
-            '<div class="line"><button class="button green" id="action_import_key">Import Missing Private Key</button></div>'
-          );
+          .text('This private key was not imported yet. We suggest to import all backups so that you can read all incoming encrypted emails.')
+          .after('<div class="line"><button class="button green" id="action_import_key">Import Missing Private Key</button></div>');
       }
       this.sendResizeMsg();
     };
@@ -67,10 +61,7 @@ View.run(
       if (!this.storedPrvWithMatchingLongid) {
         $('#action_import_key').on(
           'click',
-          this.setHandler(
-            async () =>
-              await Browser.openSettingsPage('index.htm', this.acctEmail, '/chrome/settings/modules/add_key.htm')
-          )
+          this.setHandler(async () => await Browser.openSettingsPage('index.htm', this.acctEmail, '/chrome/settings/modules/add_key.htm'))
         );
       }
       $('.action_test_pass').on(

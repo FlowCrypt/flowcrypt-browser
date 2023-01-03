@@ -58,10 +58,7 @@ export class BackupUi {
     this.setBackupHandlers();
   };
 
-  public setHandler = (
-    cb: (e: HTMLElement, event: JQuery.Event<HTMLElement, null>) => void | Promise<void>,
-    errHandlers?: BrowserEventErrHandler
-  ) => {
+  public setHandler = (cb: (e: HTMLElement, event: JQuery.Event<HTMLElement, null>) => void | Promise<void>, errHandlers?: BrowserEventErrHandler) => {
     return Ui.event.handle(cb, errHandlers, this);
   };
 
@@ -80,10 +77,7 @@ export class BackupUi {
     this.fesUrl = storage.fesUrl;
     this.emailProvider = storage.email_provider || 'gmail';
     if (!this.clientConfiguration.canBackupKeys()) {
-      Xss.sanitizeRender(
-        'body',
-        `<div class="line" style="margin-top: 100px;">${Lang.setup.keyBackupsNotAllowed}</div>`
-      );
+      Xss.sanitizeRender('body', `<div class="line" style="margin-top: 100px;">${Lang.setup.keyBackupsNotAllowed}</div>`);
       return;
     }
     if (this.action === 'setup_automatic') {

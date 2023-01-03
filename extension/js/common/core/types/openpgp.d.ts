@@ -100,9 +100,7 @@ declare namespace OpenPGP {
       public filter(callback: (packet: PACKET_TYPE, i: number, self: List<PACKET_TYPE>) => void): List<PACKET_TYPE>;
       public filterByTag(...args: enums.packet[]): List<PACKET_TYPE>;
       public forEach(callback: (packet: PACKET_TYPE, i: number, self: List<PACKET_TYPE>) => void): void;
-      public map<RETURN_TYPE>(
-        callback: (packet: PACKET_TYPE, i: number, self: List<PACKET_TYPE>) => RETURN_TYPE
-      ): List<RETURN_TYPE>;
+      public map<RETURN_TYPE>(callback: (packet: PACKET_TYPE, i: number, self: List<PACKET_TYPE>) => RETURN_TYPE): List<RETURN_TYPE>;
       // some()
       // every()
       // findPacket()
@@ -263,13 +261,7 @@ declare namespace OpenPGP {
       public revoked: null | boolean;
       public sign(key: SecretKey | SecretSubkey, data: Uint8Array): true;
       public isExpired(date?: Date): boolean;
-      public verify(
-        key: PublicKey | SecretKey,
-        signatureType: OpenPGP.enums.signature,
-        data: any,
-        detached?: boolean,
-        streaming?: boolean
-      ): Promise<boolean>;
+      public verify(key: PublicKey | SecretKey, signatureType: OpenPGP.enums.signature, data: any, detached?: boolean, streaming?: boolean): Promise<boolean>;
       public getExpirationTime(): Date | typeof Infinity;
     }
 
@@ -535,13 +527,7 @@ declare namespace OpenPGP {
      * @param partindex
      * @param parttotal
      */
-    function encode(
-      messagetype: enums.armor,
-      body: object,
-      partindex?: number,
-      parttotal?: number,
-      customComment?: string
-    ): string;
+    function encode(messagetype: enums.armor, body: object, partindex?: number, parttotal?: number, customComment?: string): string;
 
     /** DeArmor an OpenPGP armored message; verify the checksum and return the encoded bytes
      *
@@ -706,13 +692,7 @@ declare namespace OpenPGP {
           @param secretMPIs Private key multiprecision integers which is used to sign the data
           @param data Data to be signed
       */
-      function sign(
-        hash_algo: enums.hash,
-        algo: enums.publicKey,
-        publicMPIs: Array<Mpi>,
-        secretMPIs: Array<Mpi>,
-        data: string
-      ): Mpi;
+      function sign(hash_algo: enums.hash, algo: enums.publicKey, publicMPIs: Array<Mpi>, secretMPIs: Array<Mpi>, data: string): Mpi;
 
       /**
           @param algo public Key algorithm
@@ -721,13 +701,7 @@ declare namespace OpenPGP {
           @param publickey_MPIs Public key multiprecision integers
           @param data Data on where the signature was computed on
       */
-      function verify(
-        algo: enums.publicKey,
-        hash_algo: enums.hash,
-        msg_MPIs: Array<Mpi>,
-        publickey_MPIs: Array<Mpi>,
-        data: string
-      ): boolean;
+      function verify(algo: enums.publicKey, hash_algo: enums.hash, msg_MPIs: Array<Mpi>, publickey_MPIs: Array<Mpi>, data: string): boolean;
     }
   }
 
@@ -742,13 +716,7 @@ declare namespace OpenPGP {
     function read(type: typeof keyFlags, e: keyFlags): keyFlagsNames | string | any;
     function read(type: typeof signature, e: signature): signatureNames | string | any;
 
-    export type armorNames =
-      | 'multipart_section'
-      | 'multipart_last'
-      | 'signed'
-      | 'message'
-      | 'public_key'
-      | 'private_key';
+    export type armorNames = 'multipart_section' | 'multipart_last' | 'signed' | 'message' | 'public_key' | 'private_key';
     enum armor {
       multipart_section = 0,
       multipart_last = 1,
@@ -860,17 +828,7 @@ declare namespace OpenPGP {
       third_party = 80,
     }
 
-    export type publicKeyNames =
-      | 'rsa_encrypt_sign'
-      | 'rsa_encrypt'
-      | 'rsa_sign'
-      | 'elgamal'
-      | 'dsa'
-      | 'ecdh'
-      | 'ecdsa'
-      | 'eddsa'
-      | 'aedh'
-      | 'aedsa';
+    export type publicKeyNames = 'rsa_encrypt_sign' | 'rsa_encrypt' | 'rsa_sign' | 'elgamal' | 'dsa' | 'ecdh' | 'ecdsa' | 'eddsa' | 'aedh' | 'aedsa';
     enum publicKey {
       rsa_encrypt_sign = 1,
       rsa_encrypt = 2,
@@ -884,16 +842,7 @@ declare namespace OpenPGP {
       aedsa = 24,
     }
 
-    export type symmetricNames =
-      | 'plaintext'
-      | 'idea'
-      | 'tripledes'
-      | 'cast5'
-      | 'blowfish'
-      | 'aes128'
-      | 'aes192'
-      | 'aes256'
-      | 'twofish';
+    export type symmetricNames = 'plaintext' | 'idea' | 'tripledes' | 'cast5' | 'blowfish' | 'aes128' | 'aes192' | 'aes256' | 'twofish';
     enum symmetric {
       plaintext = 0,
       idea = 1,
@@ -938,15 +887,7 @@ declare namespace OpenPGP {
     // callable constructor
     export function Key(this: Key, packetlist: packet.List<packet.BasePacket>): Key;
 
-    export type EllipticCurveName =
-      | 'curve25519'
-      | 'p256'
-      | 'p384'
-      | 'p521'
-      | 'secp256k1'
-      | 'brainpoolP256r1'
-      | 'brainpoolP384r1'
-      | 'brainpoolP512r1';
+    export type EllipticCurveName = 'curve25519' | 'p256' | 'p384' | 'p521' | 'secp256k1' | 'brainpoolP256r1' | 'brainpoolP384r1' | 'brainpoolP512r1';
 
     /** Class that represents an OpenPGP key. Must contain a primary key. Can contain additional subkeys, signatures, user ids, user attributes.
      */
@@ -977,16 +918,8 @@ declare namespace OpenPGP {
       public isRevoked(): Promise<boolean>;
       public revoke(reason: { flag?: enums.reasonForRevocation; string?: string }, date?: Date): Promise<Key>;
       public getRevocationCertificate(): Promise<Stream<string> | string | undefined>;
-      public getEncryptionKey(
-        keyid?: Keyid | null,
-        date?: Date,
-        userId?: UserId | null
-      ): Promise<key.Key | key.SubKey | null>;
-      public getSigningKey(
-        keyid?: Keyid | null,
-        date?: Date,
-        userId?: UserId | null
-      ): Promise<key.Key | key.SubKey | null>;
+      public getEncryptionKey(keyid?: Keyid | null, date?: Date, userId?: UserId | null): Promise<key.Key | key.SubKey | null>;
+      public getSigningKey(keyid?: Keyid | null, date?: Date, userId?: UserId | null): Promise<key.Key | key.SubKey | null>;
       public getKeys(keyId?: Keyid): (Key | SubKey)[];
       public isDecrypted(): boolean;
       public isFullyEncrypted(): boolean;
@@ -1089,12 +1022,7 @@ declare namespace OpenPGP {
       /** Decrypt the message
           @param privateKey private key with decrypted secret data
       */
-      public decrypt(
-        privateKeys?: key.Key[] | null,
-        passwords?: string[] | null,
-        sessionKeys?: SessionKey[] | null,
-        streaming?: boolean
-      ): Promise<Message>;
+      public decrypt(privateKeys?: key.Key[] | null, passwords?: string[] | null, sessionKeys?: SessionKey[] | null, streaming?: boolean): Promise<Message>;
 
       /** Encrypt the message
           @param keys array of keys, used to encrypt the message
@@ -1153,12 +1081,7 @@ declare namespace OpenPGP {
     /** creates new message object from binary data
         @param bytes
     */
-    function fromBinary(
-      bytes: Uint8Array | Stream<Uint8Array>,
-      filename?: string,
-      date?: Date,
-      type?: DataPacketType
-    ): Message;
+    function fromBinary(bytes: Uint8Array | Stream<Uint8Array>, filename?: string, date?: Date, type?: DataPacketType): Message;
 
     /** creates new message object from text
         @param text

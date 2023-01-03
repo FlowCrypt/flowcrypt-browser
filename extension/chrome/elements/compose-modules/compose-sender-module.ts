@@ -48,10 +48,7 @@ export class ComposeSenderModule extends ViewModule<ComposeView> {
     const emailAliases = Object.keys(sendAs!); // eslint-disable-line @typescript-eslint/no-non-null-assertion
     const fromContainer = $('#input-container-from');
     if (emailAliases.length > 1) {
-      const fmtOpt = (addr: string) =>
-        `<option value="${Xss.escape(addr)}" ${this.getSender() === addr ? 'selected' : ''}>${Xss.escape(
-          addr
-        )}</option>`;
+      const fmtOpt = (addr: string) => `<option value="${Xss.escape(addr)}" ${this.getSender() === addr ? 'selected' : ''}>${Xss.escape(addr)}</option>`;
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       emailAliases.sort((a, b) => (sendAs![a].isDefault === sendAs![b].isDefault ? 0 : sendAs![a].isDefault ? -1 : 1));
       Xss.sanitizeRender(fromContainer.find('#input_from'), emailAliases.map(fmtOpt).join('')).change(() =>
@@ -69,8 +66,6 @@ export class ComposeSenderModule extends ViewModule<ComposeView> {
 
   private actionInputFromChangeHanlder = async () => {
     await this.view.recipientsModule.reEvaluateRecipients(this.view.recipientsModule.getValidRecipients());
-    this.view.footerModule.onFooterUpdated(
-      await this.view.footerModule.getFooterFromStorage(this.view.senderModule.getSender())
-    );
+    this.view.footerModule.onFooterUpdated(await this.view.footerModule.getFooterFromStorage(this.view.senderModule.getSender()));
   };
 }

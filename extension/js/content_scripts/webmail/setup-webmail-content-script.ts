@@ -113,11 +113,7 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
   const showNotificationsAndWaitTilAcctSetUp = async (acctEmail: string, notifications: Notifications) => {
     let showSetupNeededNotificationIfSetupNotDone = true;
     while (true) {
-      const storage = await AcctStore.get(acctEmail, [
-        'setup_done',
-        'cryptup_enabled',
-        'notification_setup_needed_dismissed',
-      ]);
+      const storage = await AcctStore.get(acctEmail, ['setup_done', 'cryptup_enabled', 'notification_setup_needed_dismissed']);
       if (storage.setup_done === true && storage.cryptup_enabled !== false) {
         // "not false" is due to cryptup_enabled unfedined in previous versions, which means "true"
         notifications.clear('setup');
@@ -199,31 +195,25 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
     BrowserMsg.addListener('reinsert_reply_box', async ({ replyMsgId }: Bm.ReinsertReplyBox) => {
       webmailSpecific.getReplacer().reinsertReplyBox(replyMsgId);
     });
-    BrowserMsg.addListener(
-      'render_public_keys',
-      async ({ traverseUp, afterFrameId, publicKeys }: Bm.RenderPublicKeys) => {
-        const traverseUpLevels = (traverseUp as number) || 0;
-        let appendAfter = $(`iframe#${afterFrameId}`);
-        for (let i = 0; i < traverseUpLevels; i++) {
-          appendAfter = appendAfter.parent();
-        }
-        for (const armoredPubkey of publicKeys) {
-          appendAfter.after(factory.embeddedPubkey(armoredPubkey, false));
-        }
+    BrowserMsg.addListener('render_public_keys', async ({ traverseUp, afterFrameId, publicKeys }: Bm.RenderPublicKeys) => {
+      const traverseUpLevels = (traverseUp as number) || 0;
+      let appendAfter = $(`iframe#${afterFrameId}`);
+      for (let i = 0; i < traverseUpLevels; i++) {
+        appendAfter = appendAfter.parent();
       }
-    );
+      for (const armoredPubkey of publicKeys) {
+        appendAfter.after(factory.embeddedPubkey(armoredPubkey, false));
+      }
+    });
     BrowserMsg.addListener('close_dialog', async () => {
       Swal.close();
     });
     BrowserMsg.addListener('scroll_to_reply_box', async ({ replyMsgId }: Bm.ScrollToReplyBox) => {
       webmailSpecific.getReplacer().scrollToReplyBox(replyMsgId);
     });
-    BrowserMsg.addListener(
-      'scroll_to_cursor_in_reply_box',
-      async ({ replyMsgId, cursorOffsetTop }: Bm.ScrollToCursorInReplyBox) => {
-        webmailSpecific.getReplacer().scrollToCursorInReplyBox(replyMsgId, cursorOffsetTop);
-      }
-    );
+    BrowserMsg.addListener('scroll_to_cursor_in_reply_box', async ({ replyMsgId, cursorOffsetTop }: Bm.ScrollToCursorInReplyBox) => {
+      webmailSpecific.getReplacer().scrollToCursorInReplyBox(replyMsgId, cursorOffsetTop);
+    });
     BrowserMsg.addListener('passphrase_dialog', async (args: Bm.PassphraseDialog) => {
       await showPassphraseDialog(factory, args);
     });
@@ -240,12 +230,9 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
         Catch.try(() => notifications.clear(group))
       );
     });
-    BrowserMsg.addListener(
-      'notification_show_auth_popup_needed',
-      async ({ acctEmail }: Bm.NotificationShowAuthPopupNeeded) => {
-        notifications.showAuthPopupNeeded(acctEmail);
-      }
-    );
+    BrowserMsg.addListener('notification_show_auth_popup_needed', async ({ acctEmail }: Bm.NotificationShowAuthPopupNeeded) => {
+      notifications.showAuthPopupNeeded(acctEmail);
+    });
     BrowserMsg.addListener('reply_pubkey_mismatch', BrowserMsgCommonHandlers.replyPubkeyMismatch);
     BrowserMsg.addListener('add_end_session_btn', () => inject.insertEndSessionBtn(acctEmail));
     BrowserMsg.addListener('show_attachment_preview', async ({ iframeUrl }: Bm.ShowAttachmentPreview) => {
@@ -291,10 +278,7 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
     notifEl.appendChild(div);
   };
 
-  const showPassphraseDialog = async (
-    factory: XssSafeFactory,
-    { longids, type, initiatorFrameId }: Bm.PassphraseDialog
-  ) => {
+  const showPassphraseDialog = async (factory: XssSafeFactory, { longids, type, initiatorFrameId }: Bm.PassphraseDialog) => {
     await factory.showPassphraseDialog(longids, type, initiatorFrameId);
   };
 
@@ -307,11 +291,10 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
     ppEvent: { entered?: boolean }
   ) => {
     try {
-      const { needPassphrase, updateCount, noKeysSetup } =
-        await BrowserMsg.send.bg.await.processAndStoreKeysFromEkmLocally({
-          acctEmail,
-          decryptedPrivateKeys,
-        });
+      const { needPassphrase, updateCount, noKeysSetup } = await BrowserMsg.send.bg.await.processAndStoreKeysFromEkmLocally({
+        acctEmail,
+        decryptedPrivateKeys,
+      });
       if (noKeysSetup) {
         if (!needPassphrase && !clientConfiguration.canCreateKeys()) {
           await Ui.modal.error(Lang.setup.noKeys);
@@ -393,18 +376,12 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
       } else {
         Catch.reportErr(e);
         const errType = e.constructor?.name || 'Error';
-        Ui.toast(
-          `Failed to update FlowCrypt Client Configuration: ${e instanceof Error ? e.message : String(e)} (${errType})`
-        );
+        Ui.toast(`Failed to update FlowCrypt Client Configuration: ${e instanceof Error ? e.message : String(e)} (${errType})`);
       }
     }
   };
 
-  const notifyExpiringKeys = async (
-    acctEmail: string,
-    clientConfiguration: ClientConfiguration,
-    notifications: Notifications
-  ) => {
+  const notifyExpiringKeys = async (acctEmail: string, clientConfiguration: ClientConfiguration, notifications: Notifications) => {
     const expiration = await BrowserMsg.send.bg.await.getLocalKeyExpiration({ acctEmail });
     if (expiration === undefined) {
       return;

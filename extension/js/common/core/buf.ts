@@ -81,12 +81,7 @@ export class Buf extends Uint8Array {
       } else if (codePoint < 0x10000) {
         bytes.push((codePoint >> 0xc) | 0xe0, ((codePoint >> 0x6) & 0x3f) | 0x80, (codePoint & 0x3f) | 0x80);
       } else if (codePoint < 0x110000) {
-        bytes.push(
-          (codePoint >> 0x12) | 0xf0,
-          ((codePoint >> 0xc) & 0x3f) | 0x80,
-          ((codePoint >> 0x6) & 0x3f) | 0x80,
-          (codePoint & 0x3f) | 0x80
-        );
+        bytes.push((codePoint >> 0x12) | 0xf0, ((codePoint >> 0xc) & 0x3f) | 0x80, ((codePoint >> 0x6) & 0x3f) | 0x80, (codePoint & 0x3f) | 0x80);
       } else {
         throw new Error('Invalid code point');
       }

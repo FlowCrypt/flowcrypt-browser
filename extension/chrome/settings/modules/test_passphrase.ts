@@ -31,20 +31,14 @@ View.run(
     public render = async () => {
       // todo - should test all somehow. But each key may have different pass phrase,
       //   therefore UI will get more complicated
-      this.mostUsefulPrv = KeyStoreUtil.chooseMostUseful(
-        await KeyStoreUtil.parse(await KeyStore.getRequired(this.acctEmail)),
-        'EVEN-IF-UNUSABLE'
-      );
+      this.mostUsefulPrv = KeyStoreUtil.chooseMostUseful(await KeyStoreUtil.parse(await KeyStore.getRequired(this.acctEmail)), 'EVEN-IF-UNUSABLE');
       await initPassphraseToggle(['password']);
       if (!this.mostUsefulPrv?.key.fullyEncrypted) {
         const setUpPpUrl = Url.create('change_passphrase.htm', {
           acctEmail: this.acctEmail,
           parentTabId: this.parentTabId,
         });
-        Xss.sanitizeRender(
-          '#content',
-          `<div class="line">No pass phrase set up yet: <a href="${setUpPpUrl}">set up pass phrase</a></div>`
-        );
+        Xss.sanitizeRender('#content', `<div class="line">No pass phrase set up yet: <a href="${setUpPpUrl}">set up pass phrase</a></div>`);
         return;
       }
     };
@@ -57,9 +51,7 @@ View.run(
       $('#password').keydown(this.setEnterHandlerThatClicks('.action_verify'));
       $('.action_change_passphrase').on(
         'click',
-        this.setHandler(() =>
-          Settings.redirectSubPage(this.acctEmail, this.parentTabId, '/chrome/settings/modules/change_passphrase.htm')
-        )
+        this.setHandler(() => Settings.redirectSubPage(this.acctEmail, this.parentTabId, '/chrome/settings/modules/change_passphrase.htm'))
       );
     };
 
