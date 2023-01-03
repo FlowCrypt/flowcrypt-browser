@@ -19,11 +19,11 @@ import { MessageToReplyOrForward } from './compose-types.js';
 import { KeyStore } from '../../../js/common/platform/store/key-store.js';
 
 export class ComposeQuoteModule extends ViewModule<ComposeView> {
-
-  public tripleDotSanitizedHtmlContent: { quote: string | undefined, footer: string | undefined } | undefined;
+  public tripleDotSanitizedHtmlContent: { quote: string | undefined; footer: string | undefined } | undefined;
   public messageToReplyOrForward: MessageToReplyOrForward | undefined;
 
-  public getTripleDotSanitizedFormattedHtmlContent = (): string => { // email content order: [myMsg, myFooter, theirQuote]
+  public getTripleDotSanitizedFormattedHtmlContent = (): string => {
+    // email content order: [myMsg, myFooter, theirQuote]
     if (this.tripleDotSanitizedHtmlContent) {
       return '<br />' + (this.tripleDotSanitizedHtmlContent.footer || '') + (this.tripleDotSanitizedHtmlContent.quote || '');
     }
@@ -38,7 +38,10 @@ export class ComposeQuoteModule extends ViewModule<ComposeView> {
     }
     const sanitizedFooter = textFooter && !this.view.draftModule.wasMsgLoadedFromDraft ? this.view.footerModule.createFooterHtml(textFooter) : undefined;
     this.tripleDotSanitizedHtmlContent = { footer: sanitizedFooter, quote: undefined };
-    this.view.S.cached('triple_dot').on('click', this.view.setHandler(el => this.actionRenderTripleDotContentHandle(el)));
+    this.view.S.cached('triple_dot').on(
+      'click',
+      this.view.setHandler(el => this.actionRenderTripleDotContentHandle(el))
+    );
   };
 
   public addTripleDotQuoteExpandFooterAndQuoteBtn = async (msgId: string, method: 'reply' | 'forward') => {
@@ -59,7 +62,11 @@ export class ComposeQuoteModule extends ViewModule<ComposeView> {
     if (this.messageToReplyOrForward?.text) {
       const sentDate = new Date(String(this.messageToReplyOrForward.headers.date));
       if (this.messageToReplyOrForward.headers.from && this.messageToReplyOrForward.headers.date) {
-        sanitizedQuote += `<br><br>${this.generateHtmlPreviousMsgQuote(this.messageToReplyOrForward.text, sentDate, this.messageToReplyOrForward.headers.from)}`;
+        sanitizedQuote += `<br><br>${this.generateHtmlPreviousMsgQuote(
+          this.messageToReplyOrForward.text,
+          sentDate,
+          this.messageToReplyOrForward.headers.from
+        )}`;
       }
       if (method === 'forward' && this.messageToReplyOrForward.decryptedFiles.length) {
         for (const file of this.messageToReplyOrForward.decryptedFiles) {
@@ -77,17 +84,22 @@ export class ComposeQuoteModule extends ViewModule<ComposeView> {
     if (method === 'forward') {
       this.actionRenderTripleDotContentHandle(this.view.S.cached('triple_dot')[0]);
     } else {
-      this.view.S.cached('triple_dot').on('click', this.view.setHandler(el => this.actionRenderTripleDotContentHandle(el)));
+      this.view.S.cached('triple_dot').on(
+        'click',
+        this.view.setHandler(el => this.actionRenderTripleDotContentHandle(el))
+      );
     }
   };
 
   private getAndDecryptMessage = async (msgId: string, method: 'reply' | 'forward'): Promise<MessageToReplyOrForward | undefined> => {
     try {
-      const { raw } = await this.view.emailProvider.msgGet(msgId, 'raw', (progress) => this.setQuoteLoaderProgress(progress));
+      const { raw } = await this.view.emailProvider.msgGet(msgId, 'raw', progress => this.setQuoteLoaderProgress(progress));
       this.setQuoteLoaderProgress('processing...');
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const decoded = await Mime.decode(Buf.fromBase64UrlStr(raw!));
       const headers = {
-        date: String(decoded.headers.date), from: decoded.from,
+        date: String(decoded.headers.date),
+        from: decoded.from,
         references: String(decoded.headers.references || ''),
         'message-id': String(decoded.headers['message-id'] || ''),
       };
@@ -120,19 +132,22 @@ export class ComposeQuoteModule extends ViewModule<ComposeView> {
           decryptedAndFormatedContent.push(Xss.htmlUnescape(Xss.htmlSanitizeAndStripAllTags(stringContent, '\n', false)));
         } else if (['encryptedAttachment', 'decryptedAttachment', 'plainAttachment'].includes(block.type)) {
           if (block.attachmentMeta?.data) {
-            let attachmentMeta: { content: Buf, filename?: string } | undefined;
+            let attachmentMeta: { content: Buf; filename?: string } | undefined;
             if (block.type === 'encryptedAttachment') {
               this.setQuoteLoaderProgress('decrypting...');
               const result = await MsgUtil.decryptMessage({
                 kisWithPp: await KeyStore.getAllWithOptionalPassPhrase(this.view.acctEmail),
                 encryptedData: block.attachmentMeta.data,
-                verificationPubs: [] // todo: #4158 signature verification of attachments
+                verificationPubs: [], // todo: #4158 signature verification of attachments
               });
               if (result.success) {
                 attachmentMeta = { content: result.content, filename: result.filename };
               }
             } else {
-              attachmentMeta = { content: Buf.fromUint8(block.attachmentMeta.data), filename: block.attachmentMeta.name };
+              attachmentMeta = {
+                content: Buf.fromUint8(block.attachmentMeta.data),
+                filename: block.attachmentMeta.name,
+              };
             }
             if (attachmentMeta) {
               const file = new File([attachmentMeta.content], attachmentMeta.filename || '');
@@ -147,7 +162,7 @@ export class ComposeQuoteModule extends ViewModule<ComposeView> {
         headers,
         text: decryptedAndFormatedContent.join('\n'),
         isOnlySigned: !!(decoded.rawSignedContent || (message.blocks.length > 0 && message.blocks[0].type === 'signedMsg')),
-        decryptedFiles
+        decryptedFiles,
       };
     } catch (e) {
       if (e instanceof FormatError) {
@@ -164,11 +179,18 @@ export class ComposeQuoteModule extends ViewModule<ComposeView> {
   };
 
   private decryptMessage = async (encryptedData: Buf): Promise<string> => {
-    const decryptRes = await MsgUtil.decryptMessage({ kisWithPp: await KeyStore.getAllWithOptionalPassPhrase(this.view.acctEmail), encryptedData, verificationPubs: [] });
+    const decryptRes = await MsgUtil.decryptMessage({
+      kisWithPp: await KeyStore.getAllWithOptionalPassPhrase(this.view.acctEmail),
+      encryptedData,
+      verificationPubs: [],
+    });
     if (decryptRes.success) {
       return decryptRes.content.toUtfStr();
     } else if (decryptRes.error && decryptRes.error.type === DecryptErrTypes.needPassphrase) {
-      BrowserMsg.send.passphraseDialog(this.view.parentTabId, { type: 'quote', longids: decryptRes.longids.needPassphrase });
+      BrowserMsg.send.passphraseDialog(this.view.parentTabId, {
+        type: 'quote',
+        longids: decryptRes.longids.needPassphrase,
+      });
       const wasPpEntered: boolean = await new Promise(resolve => {
         BrowserMsg.addListener('passphrase_entry', async (response: Bm.PassphraseEntry) => resolve(response.entered));
         BrowserMsg.listen(this.view.parentTabId);
@@ -183,7 +205,10 @@ export class ComposeQuoteModule extends ViewModule<ComposeView> {
   };
 
   private quoteText = (text: string) => {
-    return text.split('\n').map(line => `<br>&gt; ${line}`.trim()).join('');
+    return text
+      .split('\n')
+      .map(line => `<br>&gt; ${line}`.trim())
+      .join('');
   };
 
   private generateHtmlPreviousMsgQuote = (text: string, date: Date, from: string) => {
@@ -205,8 +230,9 @@ export class ComposeQuoteModule extends ViewModule<ComposeView> {
 
   private setQuoteLoaderProgress = (percentOrString: string | number | undefined): void => {
     if (percentOrString) {
-      this.view.S.cached('triple_dot').find('#loader').text(typeof percentOrString === 'number' ? `${percentOrString}%` : percentOrString);
+      this.view.S.cached('triple_dot')
+        .find('#loader')
+        .text(typeof percentOrString === 'number' ? `${percentOrString}%` : percentOrString);
     }
   };
-
 }

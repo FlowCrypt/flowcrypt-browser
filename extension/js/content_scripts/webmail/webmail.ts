@@ -19,18 +19,21 @@ import { ClientConfiguration } from '../../common/client-configuration.js';
 import { AcctStore } from '../../common/platform/store/acct-store.js';
 
 Catch.try(async () => {
-
   const gmailWebmailStartup = async () => {
     let replacePgpElsInterval: number;
     let replacer: GmailElementReplacer;
 
     const getUserAccountEmail = (): undefined | string => {
-      if (window.location.search.indexOf('&view=btop&') === -1) {  // when view=btop present, FlowCrypt should not be activated
+      if (window.location.search.indexOf('&view=btop&') === -1) {
+        // when view=btop present, FlowCrypt should not be activated
         if (hostPageInfo.email) {
           return hostPageInfo.email;
         }
-        const acctEmailLoadingMatch = $("#loading div.msg").text().match(/[a-z0-9._\-]+@[^…< ]+/gi);
-        if (acctEmailLoadingMatch) { // try parse from loading div
+        const acctEmailLoadingMatch = $('#loading div.msg')
+          .text()
+          .match(/[a-z0-9._\-]+@[^…< ]+/gi);
+        if (acctEmailLoadingMatch) {
+          // try parse from loading div
           return acctEmailLoadingMatch[0].trim().toLowerCase();
         }
         const emailFromAccountDropdown = $('div.gb_Cb > div.gb_Ib').text().trim().toLowerCase();
@@ -42,17 +45,25 @@ Catch.try(async () => {
     };
 
     const getInsightsFromHostVariables = () => {
-      const insights: WebmailVariantObject = { newDataLayer: undefined, newUi: undefined, email: undefined, gmailVariant: undefined };
-      $('body').append([ // xss-direct - not sanitized because adding a <script> in intentional here
-        '<script>',
-        '  (function() {',
-        '    const payload = JSON.stringify([String(window.GM_SPT_ENABLED), String(window.GM_RFT_ENABLED), String((window.GLOBALS || [])[10])]);',
-        '    let e = document.getElementById("FC_VAR_PASS");',
-        '    if (!e) {e = document.createElement("div");e.style="display:none";e.id="FC_VAR_PASS";document.body.appendChild(e)}',
-        '    e.innerText=payload;',
-        '  })();',
-        '</script>',
-      ].join('')); // executed synchronously - we can read the vars below
+      const insights: WebmailVariantObject = {
+        newDataLayer: undefined,
+        newUi: undefined,
+        email: undefined,
+        gmailVariant: undefined,
+      };
+      $('body').append(
+        [
+          // xss-direct - not sanitized because adding a <script> in intentional here
+          '<script>',
+          '  (function() {',
+          '    const payload = JSON.stringify([String(window.GM_SPT_ENABLED), String(window.GM_RFT_ENABLED), String((window.GLOBALS || [])[10])]);',
+          '    let e = document.getElementById("FC_VAR_PASS");',
+          '    if (!e) {e = document.createElement("div");e.style="display:none";e.id="FC_VAR_PASS";document.body.appendChild(e)}',
+          '    e.innerText=payload;',
+          '  })();',
+          '</script>',
+        ].join('')
+      ); // executed synchronously - we can read the vars below
       try {
         const extracted = (JSON.parse($('body > div#FC_VAR_PASS').text()) as unknown[]).map(String);
         if (extracted[0] === 'true') {
@@ -81,7 +92,8 @@ Catch.try(async () => {
       return insights;
     };
 
-    const start = async (acctEmail: string,
+    const start = async (
+      acctEmail: string,
       clientConfiguration: ClientConfiguration,
       injector: Injector,
       notifications: Notifications,
@@ -104,13 +116,13 @@ Catch.try(async () => {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           if (typeof (window as any).$ === 'function') {
             intervalFunction.handler();
-          } else { // firefox will unload jquery when extension is restarted or updated
+          } else {
+            // firefox will unload jquery when extension is restarted or updated
             clearInterval(replacePgpElsInterval);
             notifyMurdered();
           }
         }, intervalFunction.interval);
       }
-
     };
 
     const hijackGmailHotkeys = () => {
@@ -119,7 +131,11 @@ Catch.try(async () => {
       $(document).keypress(e => {
         Catch.try(() => {
           const causesUnsecureReply = unsecureReplyKeyShortcuts.includes(e.which);
-          if (causesUnsecureReply && !$(document.activeElement!).is('input, select, textarea, div[contenteditable="true"]') && $('iframe.reply_message').length) {
+          if (
+            causesUnsecureReply &&
+            !$(document.activeElement!).is('input, select, textarea, div[contenteditable="true"]') && // eslint-disable-line @typescript-eslint/no-non-null-assertion
+            $('iframe.reply_message').length
+          ) {
             e.stopImmediatePropagation();
             replacer.setReplyBoxEditable().catch(Catch.reportErr);
           }
@@ -132,7 +148,7 @@ Catch.try(async () => {
       name: 'gmail',
       variant: hostPageInfo.gmailVariant,
       getUserAccountEmail,
-      getUserFullName: () => $("div.gb_hb div.gb_lb").text() || $("div.gb_Fb.gb_Hb").text(),
+      getUserFullName: () => $('div.gb_hb div.gb_lb').text() || $('div.gb_Fb.gb_Hb').text(),
       getReplacer: () => replacer,
       start,
     });
@@ -143,5 +159,4 @@ Catch.try(async () => {
   // when we support more webmails, there will be if/else here to figure out which one to run
   // in which case each *WebmailStartup function should go into its own file
   await gmailWebmailStartup();
-
 })();

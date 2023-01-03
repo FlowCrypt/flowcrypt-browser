@@ -18,15 +18,12 @@ export type PubkeysSearchResult = { pubkeys: string[] };
  * In such cases, results from their own keyserver will be preferred.
  */
 export class PubLookup {
-
   public attester: Attester; // attester is a publicly available public key server
   public wkd: Wkd;
   public keyManager: KeyManager | undefined; // key manager is a flowcrypt-provided internal company private and public key server
   public internalSks: Sks | undefined; // this is an internal company pubkey server that has SKS-like interface
 
-  constructor(
-    private clientConfiguration: ClientConfiguration
-  ) {
+  public constructor(private clientConfiguration: ClientConfiguration) {
     const internalSksUrl = this.clientConfiguration.getCustomSksPubkeyServer();
     this.attester = new Attester(clientConfiguration);
     this.wkd = new Wkd(this.clientConfiguration.domainName, this.clientConfiguration.usesKeyManager());

@@ -4,8 +4,9 @@
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type AnyThirdPartyLibrary = any;
-export type AddrParserResult = { name?: string, address?: string };
+export type AddrParserResult = { name?: string; address?: string };
 
+/* eslint-disable @typescript-eslint/naming-convention */
 export interface BrowserWindow extends Window {
   onunhandledrejection: (e: unknown) => void;
   'emailjs-mime-codec': AnyThirdPartyLibrary;
@@ -30,3 +31,4 @@ export interface ContentScriptWindow extends BrowserWindow {
   destroy: () => void;
   vacant: () => boolean;
 }
+/* eslint-enable @typescript-eslint/naming-convention */

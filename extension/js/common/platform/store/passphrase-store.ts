@@ -11,15 +11,17 @@ import { ClientConfiguration } from '../../client-configuration.js';
  * Local or session store of pass phrases
  */
 export class PassphraseStore extends AbstractStore {
-
   // if we implement (and migrate) password storage to use KeyIdentity instead of longid, we'll have `keyInfo: KeyIdentity` here
-  public static get = async (acctEmail: string, keyInfo: { longid: string }, ignoreSession: boolean = false): Promise<string | undefined> => {
+  public static get = async (acctEmail: string, keyInfo: { longid: string }, ignoreSession = false): Promise<string | undefined> => {
     return (await PassphraseStore.getMany(acctEmail, [keyInfo], ignoreSession))[0]?.value;
   };
 
   // if we implement (and migrate) password storage to use KeyIdentity instead of longid, we'll have `keyInfo: KeyIdentity` here
-  public static getMany = async (acctEmail: string, keyInfos: { longid: string }[], ignoreSession: boolean = false):
-    Promise<({ value: string, source: StorageType } | undefined)[]> => {
+  public static getMany = async (
+    acctEmail: string,
+    keyInfos: { longid: string }[],
+    ignoreSession = false
+  ): Promise<({ value: string; source: StorageType } | undefined)[]> => {
     const storageIndexes = keyInfos.map(keyInfo => PassphraseStore.getIndex(keyInfo.longid));
     return await PassphraseStore.getByIndexes(acctEmail, storageIndexes, ignoreSession);
   };
@@ -28,7 +30,7 @@ export class PassphraseStore extends AbstractStore {
     const storageIndexes = keyInfos.map(keyInfo => PassphraseStore.getIndex(keyInfo.longid));
     await Promise.all([
       AcctStore.remove(acctEmail, storageIndexes), // remove from local storage
-      ...storageIndexes.map(storageIndex => InMemoryStore.set(acctEmail, storageIndex, undefined)) // remove from session
+      ...storageIndexes.map(storageIndex => InMemoryStore.set(acctEmail, storageIndex, undefined)), // remove from session
     ]);
   };
 
@@ -39,7 +41,10 @@ export class PassphraseStore extends AbstractStore {
   };
 
   public static waitUntilPassphraseChanged = async (
-    acctEmail: string, missingOrWrongPpKeyLongids: string[], interval = 1000, cancellation: PromiseCancellation = { cancel: false }
+    acctEmail: string,
+    missingOrWrongPpKeyLongids: string[],
+    interval = 1000,
+    cancellation: PromiseCancellation = { cancel: false }
   ): Promise<boolean> => {
     const missingOrWrongPassprases: Dict<string | undefined> = {};
     const passphrases = await Promise.all(missingOrWrongPpKeyLongids.map(longid => PassphraseStore.get(acctEmail, { longid })));
@@ -65,27 +70,37 @@ export class PassphraseStore extends AbstractStore {
     return `passphrase_${longid}` as unknown as AccountIndex;
   };
 
-  private static getByIndexes = async (acctEmail: string, storageIndexes: AccountIndex[], ignoreSession: boolean = false):
-    Promise<({ value: string, source: StorageType } | undefined)[]> => {
+  private static getByIndexes = async (
+    acctEmail: string,
+    storageIndexes: AccountIndex[],
+    ignoreSession = false
+  ): Promise<({ value: string; source: StorageType } | undefined)[]> => {
     const storage = await AcctStore.get(acctEmail, storageIndexes);
-    const results = await Promise.all(storageIndexes.map(async storageIndex => {
-      const found = storage[storageIndex];
-      if (typeof found === 'string') {
-        return { value: found, source: 'local' as StorageType };
-      }
-      if (ignoreSession) {
-        return undefined;
-      }
-      const value = await InMemoryStore.get(acctEmail, storageIndex);
-      if (typeof value === 'undefined') {
-        return undefined;
-      }
-      return { value, source: 'session' as StorageType };
-    }));
+    const results = await Promise.all(
+      storageIndexes.map(async storageIndex => {
+        const found = storage[storageIndex];
+        if (typeof found === 'string') {
+          return { value: found, source: 'local' as StorageType };
+        }
+        if (ignoreSession) {
+          return undefined;
+        }
+        const value = await InMemoryStore.get(acctEmail, storageIndex);
+        if (typeof value === 'undefined') {
+          return undefined;
+        }
+        return { value, source: 'session' as StorageType };
+      })
+    );
     return results;
   };
 
-  private static setByIndex = async (storageType: StorageType, acctEmail: string, storageIndex: AccountIndex, passphrase: string | undefined): Promise<void> => {
+  private static setByIndex = async (
+    storageType: StorageType,
+    acctEmail: string,
+    storageIndex: AccountIndex,
+    passphrase: string | undefined
+  ): Promise<void> => {
     const clientConfiguration = await ClientConfiguration.newInstance(acctEmail);
     if (storageType === 'session') {
       return await InMemoryStore.set(acctEmail, storageIndex, passphrase, Date.now() + clientConfiguration.getInMemoryPassPhraseSessionExpirationMs());
@@ -99,5 +114,4 @@ export class PassphraseStore extends AbstractStore {
       }
     }
   };
-
 }

@@ -8,7 +8,6 @@ import { ComposeView } from '../compose.js';
 import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
 
 export class ComposeFooterModule extends ViewModule<ComposeView> {
-
   public getFooterFromStorage = async (sender: string): Promise<string | undefined> => {
     const { sendAs } = await AcctStore.get(this.view.acctEmail, ['sendAs']);
     if (!sendAs) {
@@ -23,9 +22,11 @@ export class ComposeFooterModule extends ViewModule<ComposeView> {
    * it does not bother us if old footer stays in the text (eg when user later changes sendFrom address)
    */
   public onFooterUpdated = (newFooter: string | undefined) => {
-    if (this.view.quoteModule.tripleDotSanitizedHtmlContent) { // footer not yet rendered
+    if (this.view.quoteModule.tripleDotSanitizedHtmlContent) {
+      // footer not yet rendered
       this.view.quoteModule.tripleDotSanitizedHtmlContent.footer = newFooter ? this.createFooterHtml(newFooter) : '';
-    } else if (this.view.S.cached('triple_dot')[0] && newFooter) { // ellipsis preset (not yet clicked), but not visible (likely no footer earlier)
+    } else if (this.view.S.cached('triple_dot')[0] && newFooter) {
+      // ellipsis preset (not yet clicked), but not visible (likely no footer earlier)
       this.view.quoteModule.tripleDotSanitizedHtmlContent = { footer: this.createFooterHtml(newFooter), quote: '' };
     }
   };
@@ -38,9 +39,8 @@ export class ComposeFooterModule extends ViewModule<ComposeView> {
       return '';
     }
     if (/^[*\-_=+#~ ]+$/.test(footerFirstLine)) {
-      return sanitizedHtmlFooter;  // first line of footer is already a footer separator, made of special characters
+      return sanitizedHtmlFooter; // first line of footer is already a footer separator, made of special characters
     }
     return `--<br>${sanitizedHtmlFooter}`; // create a custom footer separator
   };
-
 }

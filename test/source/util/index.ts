@@ -24,56 +24,63 @@ export const getParsedCliParams = () => {
   } else {
     throw new Error('Unknown test type: specify CONSUMER-MOCK or ENTERPRISE-MOCK CONSUMER-LIVE-GMAIL');
   }
-  const testGroup = (process.argv.includes('UNIT-TESTS') ? 'UNIT-TESTS'
-    : process.argv.includes('FLAKY-GROUP') ? 'FLAKY-GROUP' : 'STANDARD-GROUP') as
-    'FLAKY-GROUP' | 'STANDARD-GROUP' | 'UNIT-TESTS';
+  const testGroup = (process.argv.includes('UNIT-TESTS') ? 'UNIT-TESTS' : process.argv.includes('FLAKY-GROUP') ? 'FLAKY-GROUP' : 'STANDARD-GROUP') as
+    | 'FLAKY-GROUP'
+    | 'STANDARD-GROUP'
+    | 'UNIT-TESTS';
   const buildDir = `build/chrome-${(testVariant === 'CONSUMER-LIVE-GMAIL' ? 'CONSUMER' : testVariant).toLowerCase()}`;
   const poolSizeOne = process.argv.includes('--pool-size=1') || testGroup === 'FLAKY-GROUP';
-  const oneIfNotPooled = (suggestedPoolSize: number) => poolSizeOne ? Math.min(1, suggestedPoolSize) : suggestedPoolSize;
+  const oneIfNotPooled = (suggestedPoolSize: number) => (poolSizeOne ? Math.min(1, suggestedPoolSize) : suggestedPoolSize);
   console.info(`TEST_VARIANT: ${testVariant}:${testGroup}, (build dir: ${buildDir}, poolSizeOne: ${poolSizeOne})`);
   return { testVariant, testGroup, oneIfNotPooled, buildDir, isMock: testVariant.includes('-MOCK') };
 };
 
 export type TestMessage = {
-  name?: string,
-  content: string[],
-  unexpectedContent?: string[],
-  password?: string,
-  params: string,
-  quoted?: boolean,
-  expectPercentageProgress?: boolean,
-  signature?: string,
-  encryption?: string,
-  error?: string
+  name?: string;
+  content: string[];
+  unexpectedContent?: string[];
+  password?: string;
+  params: string;
+  quoted?: boolean;
+  expectPercentageProgress?: boolean;
+  signature?: string;
+  encryption?: string;
+  error?: string;
 };
 
 export type TestKeyInfo = {
-  title: string, passphrase: string, armored: string | null, longid: string | null
+  title: string;
+  passphrase: string;
+  armored: string | null;
+  longid: string | null;
 };
 
-export type TestKeyInfoWithFilepath = TestKeyInfo & { filePath?: string, expired?: boolean };
+export type TestKeyInfoWithFilepath = TestKeyInfo & { filePath?: string; expired?: boolean };
 
+/* eslint-disable @typescript-eslint/naming-convention */
 interface TestSecretsInterface {
   ci_admin_token: string;
-  auth: { google: { email: string, password?: string, secret_2fa?: string }[] };
+  auth: { google: { email: string; password?: string; secret_2fa?: string }[] };
 }
+/* eslint-enable @typescript-eslint/naming-convention */
 
 export class Config {
-
   public static extensionId = '';
 
   private static _secrets: TestSecretsInterface;
 
   public static secrets = (): TestSecretsInterface => {
+    /* eslint-disable no-underscore-dangle */
     if (!Config._secrets) {
       try {
         Config._secrets = JSON.parse(fs.readFileSync('test/test-secrets.json', 'utf8'));
       } catch (e) {
         console.error(`skipping loading test secrets because ${e}`);
-        Config._secrets = { ci_admin_token: "", auth: { google: [] } };
+        Config._secrets = { ci_admin_token: '', auth: { google: [] } }; // eslint-disable-line @typescript-eslint/naming-convention
       }
     }
     return Config._secrets;
+    /* eslint-enable no-underscore-dangle */
   };
 
   public static key = (title: string) => {
@@ -81,17 +88,18 @@ export class Config {
   };
 
   public static getKeyInfo = async (titles: string[]): Promise<KeyInfoWithIdentityAndOptionalPp[]> => {
-    return await Promise.all(testKeyConstants.keys
-      .filter(key => key.armored && titles.includes(key.title)).map(async key => {
-        const parsed = await KeyUtil.parse(key.armored!);
-        return { ...await KeyUtil.keyInfoObj(parsed), passphrase: key.passphrase };
-      }));
+    return await Promise.all(
+      testKeyConstants.keys
+        .filter(key => key.armored && titles.includes(key.title))
+        .map(async key => {
+          const parsed = await KeyUtil.parse(key.armored!); // eslint-disable-line @typescript-eslint/no-non-null-assertion
+          return { ...(await KeyUtil.keyInfoObj(parsed)), passphrase: key.passphrase };
+        })
+    );
   };
-
 }
 
 export class Util {
-
   public static sleep = async (seconds: number) => {
     return await new Promise(resolve => setTimeout(resolve, seconds * 1000));
   };
@@ -128,5 +136,4 @@ export class Util {
       await settingsPage.close();
     }
   };
-
 }

@@ -8,7 +8,6 @@ import { expect } from 'chai';
 import { Util } from '../../util';
 
 export class GmailPageRecipe extends PageRecipe {
-
   public static openSecureCompose = async (t: AvaContext, gmailPage: ControllablePage, browser: BrowserHandle): Promise<ControllablePage> => {
     await gmailPage.waitAndClick('@action-secure-compose', { delay: 1 });
     await gmailPage.waitAll('@container-new-message');
@@ -39,5 +38,4 @@ export class GmailPageRecipe extends PageRecipe {
     await gmailPage.press('Enter');
     await Util.sleep(3);
   };
-
 }

@@ -10,17 +10,19 @@ import { ContactStore, Email, Pubkey } from '../common/platform/store/contact-st
 import { GlobalStore, LocalDraft } from '../common/platform/store/global-store.js';
 import { KeyStore } from '../common/platform/store/key-store.js';
 
+/* eslint-disable @typescript-eslint/naming-convention */
 // contact entity prior to version 4
 type ContactV3 = {
   email: string;
   name: string | null;
-  pubkey: { rawArmored: string, raw: string } | string | null;
+  pubkey: { rawArmored: string; raw: string } | string | null;
   has_pgp: 0 | 1;
   fingerprint: string | null;
   last_use: number | null;
   pubkey_last_check: number | null;
   expiresOn: number | null;
 };
+/* eslint-enable @typescript-eslint/naming-convention */
 
 type PubkeyMigrationData = {
   emailsToUpdate: { [email: string]: Email };
@@ -44,6 +46,7 @@ export const migrateGlobal = async () => {
   if (!globalStore.key_info_store_fingerprints_added) {
     console.info('migrating KeyStorage to add fingerprints and emails of each key...');
     await addKeyInfoFingerprints();
+    // eslint-disable-next-line @typescript-eslint/naming-convention
     await GlobalStore.set({ key_info_store_fingerprints_added: true });
     console.info('done migrating');
   }
@@ -61,6 +64,7 @@ export const migrateGlobal = async () => {
       }
     }
     if (oldDrafts.length) {
+      // eslint-disable-next-line @typescript-eslint/naming-convention
       await GlobalStore.set({ local_drafts: globalStore.local_drafts });
       await storageLocalRemove(oldDrafts);
     }
@@ -73,6 +77,7 @@ export const migrateGlobal = async () => {
     globalStore.local_drafts[newComposeDraftId] = globalStore.local_drafts['local-draft-'];
     globalStore.local_drafts[newComposeDraftId].timestamp = new Date().getTime();
     delete globalStore.local_drafts['local-draft-'];
+    // eslint-disable-next-line @typescript-eslint/naming-convention
     await GlobalStore.set({ local_drafts: globalStore.local_drafts });
   }
 };
@@ -85,23 +90,23 @@ const processSmimeKey = (pubkey: Pubkey, tx: IDBTransaction, data: PubkeyMigrati
   const key = SmimeKey.parse(pubkey.armoredKey);
   const newPubkeyEntity = ContactStore.pubkeyObj(key, pubkey.lastCheck);
   data.pubkeysToDelete.push(pubkey.fingerprint);
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   const req = tx.objectStore('emails').index('index_fingerprints').getAll(pubkey.fingerprint!);
-  ContactStore.setReqPipe(req,
-    (emailEntities: Email[]) => {
-      if (emailEntities.length) {
-        data.pubkeysToSave.push(newPubkeyEntity);
+  ContactStore.setReqPipe(req, (emailEntities: Email[]) => {
+    if (emailEntities.length) {
+      data.pubkeysToSave.push(newPubkeyEntity);
+    }
+    for (const emailEntity of emailEntities) {
+      const cachedEmail = data.emailsToUpdate[emailEntity.email];
+      if (!cachedEmail) {
+        data.emailsToUpdate[emailEntity.email] = emailEntity;
       }
-      for (const emailEntity of emailEntities) {
-        const cachedEmail = data.emailsToUpdate[emailEntity.email];
-        if (!cachedEmail) {
-          data.emailsToUpdate[emailEntity.email] = emailEntity;
-        }
-        const entityToUpdate = cachedEmail ?? emailEntity;
-        entityToUpdate.fingerprints = entityToUpdate.fingerprints.filter(fp => fp !== pubkey.fingerprint && fp !== newPubkeyEntity.fingerprint);
-        entityToUpdate.fingerprints.push(newPubkeyEntity.fingerprint);
-      }
-      next();
-    });
+      const entityToUpdate = cachedEmail ?? emailEntity;
+      entityToUpdate.fingerprints = entityToUpdate.fingerprints.filter(fp => fp !== pubkey.fingerprint && fp !== newPubkeyEntity.fingerprint);
+      entityToUpdate.fingerprints.push(newPubkeyEntity.fingerprint);
+    }
+    next();
+  });
 };
 
 export const updateX509FingerprintsAndLongids = async (db: IDBDatabase): Promise<void> => {
@@ -115,27 +120,27 @@ export const updateX509FingerprintsAndLongids = async (db: IDBDatabase): Promise
     ContactStore.setTxHandlers(tx, resolve, reject);
     const data: PubkeyMigrationData = { emailsToUpdate: {}, pubkeysToDelete: [], pubkeysToSave: [] };
     const search = tx.objectStore('pubkeys').openCursor();
-    ContactStore.setReqPipe(search,
-      (cursor: IDBCursorWithValue) => {
-        if (!cursor) {
-          // do updates
-          for (const fp of data.pubkeysToDelete.filter(fp => !data.pubkeysToSave.some(x => x.fingerprint === fp))) {
-            // console.log(`Deleting pubkey ${fp}`);
-            tx.objectStore('pubkeys').delete(fp);
-          }
-          for (const pubkey of data.pubkeysToSave) {
-            // console.log(`Updating pubkey ${pubkey.fingerprint}`);
-            tx.objectStore('pubkeys').put(pubkey);
-          }
-          for (const email of Object.values(data.emailsToUpdate)) {
-            // console.log(`Updating email ${email.email}`);
-            tx.objectStore('emails').put(email);
-          }
-        } else {
-          processSmimeKey(cursor.value as Pubkey, tx, data, () => cursor.continue());
+    ContactStore.setReqPipe(search, (cursor: IDBCursorWithValue) => {
+      if (!cursor) {
+        // do updates
+        for (const fp of data.pubkeysToDelete.filter(fp => !data.pubkeysToSave.some(x => x.fingerprint === fp))) {
+          // console.log(`Deleting pubkey ${fp}`);
+          tx.objectStore('pubkeys').delete(fp);
         }
-      });
+        for (const pubkey of data.pubkeysToSave) {
+          // console.log(`Updating pubkey ${pubkey.fingerprint}`);
+          tx.objectStore('pubkeys').put(pubkey);
+        }
+        for (const email of Object.values(data.emailsToUpdate)) {
+          // console.log(`Updating email ${email.email}`);
+          tx.objectStore('emails').put(email);
+        }
+      } else {
+        processSmimeKey(cursor.value as Pubkey, tx, data, () => cursor.continue());
+      }
+    });
   });
+  // eslint-disable-next-line @typescript-eslint/naming-convention
   await GlobalStore.set({ contact_store_x509_fingerprints_and_longids_updated: true });
   console.info('done updating');
 };
@@ -151,16 +156,16 @@ export const updateSearchables = async (db: IDBDatabase): Promise<void> => {
     ContactStore.setTxHandlers(tx, resolve, reject);
     const emailsStore = tx.objectStore('emails');
     const search = emailsStore.openCursor();
-    ContactStore.setReqPipe(search,
-      (cursor: IDBCursorWithValue) => {
-        if (cursor) {
-          const email = cursor.value as Email;
-          ContactStore.updateSearchable(email);
-          cursor.update(email);
-          cursor.continue();
-        }
-      });
+    ContactStore.setReqPipe(search, (cursor: IDBCursorWithValue) => {
+      if (cursor) {
+        const email = cursor.value as Email;
+        ContactStore.updateSearchable(email);
+        cursor.update(email);
+        cursor.continue();
+      }
+    });
   });
+  // eslint-disable-next-line @typescript-eslint/naming-convention
   await GlobalStore.set({ contact_store_searchable_pruned: true });
   console.info('done updating');
 };
@@ -176,9 +181,11 @@ export const updateOpgpRevocations = async (db: IDBDatabase): Promise<void> => {
     const search = tx.objectStore('pubkeys').getAll();
     ContactStore.setReqPipe(search, resolve, reject);
   });
-  const revokedKeys = (await Promise.all(pubkeys.filter(entity => KeyUtil.getKeyFamily(entity.armoredKey) === 'openpgp').
-    map(async (entity) => await KeyUtil.parse(entity.armoredKey)))).
-    filter(k => k.revoked);
+  const revokedKeys = (
+    await Promise.all(
+      pubkeys.filter(entity => KeyUtil.getKeyFamily(entity.armoredKey) === 'openpgp').map(async entity => await KeyUtil.parse(entity.armoredKey))
+    )
+  ).filter(k => k.revoked);
   const txUpdate = db.transaction(['revocations'], 'readwrite');
   await new Promise((resolve, reject) => {
     ContactStore.setTxHandlers(txUpdate, resolve, reject);
@@ -187,6 +194,7 @@ export const updateOpgpRevocations = async (db: IDBDatabase): Promise<void> => {
       revocationsStore.put(ContactStore.revocationObj(revokedKey));
     }
   });
+  // eslint-disable-next-line @typescript-eslint/naming-convention
   await GlobalStore.set({ contact_store_opgp_revoked_flags_updated: true });
   console.info('done updating');
 };
@@ -225,21 +233,22 @@ const moveContactsBatchToEmailsAndPubkeys = async (db: IDBDatabase, count?: numb
   }
   console.info(`Processing a batch of ${entries.length}.`);
   // transform
-  const converted = await Promise.all(entries.map(async (entry) => {
-    const armoredPubkey = (entry.pubkey && typeof entry.pubkey === 'object')
-      ? (entry.pubkey.rawArmored ?? entry.pubkey.raw) : entry.pubkey as string;
-    // parse again to re-calculate expiration-related fields etc.
-    const pubkey = armoredPubkey ? await KeyUtil.parse(armoredPubkey) : undefined;
-    return {
-      email: entry.email,
-      update: {
-        name: entry.name,
-        pubkey,
-        lastUse: entry.last_use,
-        pubkeyLastCheck: pubkey ? entry.pubkey_last_check : undefined
-      }
-    };
-  }));
+  const converted = await Promise.all(
+    entries.map(async entry => {
+      const armoredPubkey = entry.pubkey && typeof entry.pubkey === 'object' ? entry.pubkey.rawArmored ?? entry.pubkey.raw : (entry.pubkey as string);
+      // parse again to re-calculate expiration-related fields etc.
+      const pubkey = armoredPubkey ? await KeyUtil.parse(armoredPubkey) : undefined;
+      return {
+        email: entry.email,
+        update: {
+          name: entry.name,
+          pubkey,
+          lastUse: entry.last_use,
+          pubkeyLastCheck: pubkey ? entry.pubkey_last_check : undefined,
+        },
+      };
+    })
+  );
   {
     const tx = db.transaction(['contacts', 'emails', 'pubkeys', 'revocations'], 'readwrite');
     await new Promise((resolve, reject) => {

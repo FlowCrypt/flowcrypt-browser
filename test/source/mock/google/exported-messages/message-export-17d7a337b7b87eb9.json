@@ -3,13 +3,7 @@
   "full": {
     "id": "17d7a337b7b87eb9",
     "threadId": "17d7a32a0613071d",
-    "labelIds": [
-      "IMPORTANT",
-      "Label_14",
-      "Label_15",
-      "SENT",
-      "INBOX"
-    ],
+    "labelIds": ["IMPORTANT", "Label_14", "Label_15", "SENT", "INBOX"],
     "snippet": "-----BEGIN PGP MESSAGE----- This is not a valid PGP message",
     "payload": {
       "partId": "",
@@ -54,13 +48,7 @@
   "raw": {
     "id": "17d7a337b7b87eb9",
     "threadId": "17d7a32a0613071d",
-    "labelIds": [
-      "IMPORTANT",
-      "Label_14",
-      "Label_15",
-      "SENT",
-      "INBOX"
-    ],
+    "labelIds": ["IMPORTANT", "Label_14", "Label_15", "SENT", "INBOX"],
     "snippet": "-----BEGIN PGP MESSAGE----- This is not a valid PGP message",
     "sizeEstimate": 408,
     "raw": "TUlNRS1WZXJzaW9uOiAxLjANCkRhdGU6IFRodSwgMiBEZWMgMjAyMSAxNjoxMjoxMyArMDgwMA0KTWVzc2FnZS1JRDogPENBS2J1TFRxeXBFZEd5czhzWUtFd0RibTFEYXNkMHR6QUZtcVlOX05iLStjVlJMakZwZ0BtYWlsLmdtYWlsLmNvbT4NClN1YmplY3Q6IEJvZ3VzIFBHUCBNZXNzYWdlDQpGcm9tOiBGbG93Q3J5cHQgQ29tcGF0aWJpbGl0eSA8Zmxvd2NyeXB0LmNvbXBhdGliaWxpdHlAZ21haWwuY29tPg0KVG86IEZsb3dDcnlwdCBDb21wYXRpYmlsaXR5IDxmbG93Y3J5cHQuY29tcGF0aWJpbGl0eUBnbWFpbC5jb20-DQpDb250ZW50LVR5cGU6IHRleHQvcGxhaW47IGNoYXJzZXQ9IlVURi04Ig0KDQotLS0tLUJFR0lOIFBHUCBNRVNTQUdFLS0tLS0NCg0KVGhpcyBpcyBub3QgYSB2YWxpZCBQR1AgbWVzc2FnZQ0K",

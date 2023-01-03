@@ -8,10 +8,11 @@ import { Dict, Value } from '../../core/common.js';
 import { storageLocalSet, storageLocalGet, storageLocalRemove } from '../../browser/chrome.js';
 import { Catch } from '../catch.js';
 
-export type StoredAdminCode = { date: number, codes: string[] };
+export type StoredAdminCode = { date: number; codes: string[] };
 
-export type LocalDraft = GmailRes.GmailDraftGet & { timestamp: number, acctEmail: string };
+export type LocalDraft = GmailRes.GmailDraftGet & { timestamp: number; acctEmail: string };
 
+/* eslint-disable @typescript-eslint/naming-convention */
 export type GlobalStoreDict = {
   version?: number | null;
   account_emails?: string; // stringified array
@@ -25,18 +26,26 @@ export type GlobalStoreDict = {
   contact_store_searchable_pruned?: boolean;
   local_drafts?: Dict<LocalDraft>;
 };
+/* eslint-enable @typescript-eslint/naming-convention */
 
-export type GlobalIndex = 'version' | 'account_emails' | 'settings_seen' | 'hide_pass_phrases' |
-  'dev_outlook_allow' | 'install_mobile_app_notification_dismissed' | 'key_info_store_fingerprints_added' |
-  'contact_store_x509_fingerprints_and_longids_updated' | 'contact_store_opgp_revoked_flags_updated' |
-  'contact_store_searchable_pruned' | 'local_drafts';
+export type GlobalIndex =
+  | 'version'
+  | 'account_emails'
+  | 'settings_seen'
+  | 'hide_pass_phrases'
+  | 'dev_outlook_allow'
+  | 'install_mobile_app_notification_dismissed'
+  | 'key_info_store_fingerprints_added'
+  | 'contact_store_x509_fingerprints_and_longids_updated'
+  | 'contact_store_opgp_revoked_flags_updated'
+  | 'contact_store_searchable_pruned'
+  | 'local_drafts';
 
 /**
  * Locally stored data that is not associated with any email account
  */
 export class GlobalStore extends AbstractStore {
-
-  private static globalStorageScope: 'global' = 'global';
+  private static globalStorageScope = 'global' as const;
 
   public static set = async (values: GlobalStoreDict): Promise<void> => {
     if (Env.isContentScript()) {
@@ -58,7 +67,7 @@ export class GlobalStore extends AbstractStore {
       // always go through bg script to avoid such errors
       return await BrowserMsg.send.bg.await.storeGlobalGet({ keys });
     }
-    const storageObj = await storageLocalGet(GlobalStore.singleScopeRawIndexArr(GlobalStore.globalStorageScope, keys)) as RawStore;
+    const storageObj = (await storageLocalGet(GlobalStore.singleScopeRawIndexArr(GlobalStore.globalStorageScope, keys))) as RawStore;
     return GlobalStore.buildSingleAccountStoreFromRawResults(GlobalStore.globalStorageScope, storageObj) as GlobalStore;
   };
 
@@ -79,7 +88,8 @@ export class GlobalStore extends AbstractStore {
     return acctEmails;
   };
 
-  public static acctEmailsAdd = async (acctEmail: string): Promise<void> => { // todo: concurrency issues with another tab loaded at the same time
+  public static acctEmailsAdd = async (acctEmail: string): Promise<void> => {
+    // todo: concurrency issues with another tab loaded at the same time
     if (!acctEmail) {
       throw new Error(`attempting to save empty acctEmail: ${acctEmail}`);
     }
@@ -90,14 +100,17 @@ export class GlobalStore extends AbstractStore {
     const acctEmails = await GlobalStore.acctEmailsGet();
     if (!acctEmails.includes(acctEmail) && acctEmail) {
       acctEmails.push(acctEmail);
-      await GlobalStore.set({ account_emails: JSON.stringify(acctEmails) });
+      await GlobalStore.set({
+        account_emails: JSON.stringify(acctEmails), // eslint-disable-line @typescript-eslint/naming-convention
+      });
       BrowserMsg.send.bg.updateUninstallUrl();
     }
   };
 
-  public static acctEmailsRemove = async (acctEmail: string): Promise<void> => { // todo: concurrency issues with another tab loaded at the same time
+  public static acctEmailsRemove = async (acctEmail: string): Promise<void> => {
+    // todo: concurrency issues with another tab loaded at the same time
     const acctEmails = await GlobalStore.acctEmailsGet();
-    await GlobalStore.set({ account_emails: JSON.stringify(Value.arr.withoutVal(acctEmails, acctEmail)) });
+    await GlobalStore.set({ account_emails: JSON.stringify(Value.arr.withoutVal(acctEmails, acctEmail)) }); // eslint-disable-line @typescript-eslint/naming-convention
     BrowserMsg.send.bg.updateUninstallUrl();
   };
 }

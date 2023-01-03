@@ -11,10 +11,16 @@ import { ViewModule } from '../../../../js/common/view-module.js';
 import { Xss } from '../../../../js/common/platform/xss.js';
 
 export class InboxMenuModule extends ViewModule<InboxView> {
-
+  /* eslint-disable @typescript-eslint/naming-convention */
   public readonly LABEL: Dict<GmailRes.GmailMsg$labelId> = {
-    INBOX: 'INBOX', UNREAD: 'UNREAD', CATEGORY_PERSONAL: 'CATEGORY_PERSONAL', IMPORTANT: 'IMPORTANT', SENT: 'SENT', CATEGORY_UPDATES: 'CATEGORY_UPDATES'
+    INBOX: 'INBOX',
+    UNREAD: 'UNREAD',
+    CATEGORY_PERSONAL: 'CATEGORY_PERSONAL',
+    IMPORTANT: 'IMPORTANT',
+    SENT: 'SENT',
+    CATEGORY_UPDATES: 'CATEGORY_UPDATES',
   };
+  /* eslint-enable @typescript-eslint/naming-convention */
 
   private readonly FOLDERS = ['INBOX', 'STARRED', 'SENT', 'DRAFT', 'TRASH']; // 'UNREAD', 'SPAM'
   private allLabels!: GmailRes.GmailLabels$label[];
@@ -42,22 +48,36 @@ export class InboxMenuModule extends ViewModule<InboxView> {
   };
 
   private setHandlers = () => {
-    $('.action_open_secure_compose_window').on('click', this.view.setHandlerPrevent('double', () => { this.view.injector.openComposeWin(); }));
+    $('.action_open_secure_compose_window').on(
+      'click',
+      this.view.setHandlerPrevent('double', () => {
+        this.view.injector.openComposeWin();
+      })
+    );
     $('.menu > .label').on('click', this.view.setHandler(this.renderFolder));
   };
 
   private renderMenuAndLabelStyles = () => {
     this.addLabelStyles(this.allLabels);
     Xss.sanitizeAppend('.menu', `<br>${this.renderableLabels(this.FOLDERS, 'menu')}<button class="button gray2 label label_ALL">ALL MAIL</button><br>`);
-    Xss.sanitizeAppend('.menu', '<br>' + this.renderableLabels(this.allLabels.sort((a, b) => {
-      if (a.name > b.name) {
-        return 1;
-      } else if (a.name < b.name) {
-        return -1;
-      } else {
-        return 0;
-      }
-    }).map(l => l.id), 'labels'));
+    Xss.sanitizeAppend(
+      '.menu',
+      '<br>' +
+        this.renderableLabels(
+          this.allLabels
+            .sort((a, b) => {
+              if (a.name > b.name) {
+                return 1;
+              } else if (a.name < b.name) {
+                return -1;
+              } else {
+                return 0;
+              }
+            })
+            .map(l => l.id),
+          'labels'
+        )
+    );
   };
 
   private addLabelStyles = (labels: GmailRes.GmailLabels$label[]) => {
@@ -100,15 +120,28 @@ export class InboxMenuModule extends ViewModule<InboxView> {
     $('.action_open_webmail').attr('href', Google.webmailUrl(this.view.acctEmail));
     $('.action_choose_account').get(0).title = this.view.acctEmail;
     if (this.view.storage.picture) {
-      $('img.main-profile-img').attr('src', this.view.storage.picture).on('error', this.view.setHandler(self => {
-        $(self).off().attr('src', '/img/svgs/profile-icon.svg');
-      }));
+      $('img.main-profile-img')
+        .attr('src', this.view.storage.picture)
+        .on(
+          'error',
+          this.view.setHandler(self => {
+            $(self).off().attr('src', '/img/svgs/profile-icon.svg');
+          })
+        );
     }
     await this.view.webmailCommon.addOrRemoveEndSessionBtnIfNeeded();
-    Catch.setHandledTimeout(() => { $('#banner a').css('color', 'red'); }, 500);
-    Catch.setHandledTimeout(() => { $('#banner a').css('color', ''); }, 1000);
-    Catch.setHandledTimeout(() => { $('#banner a').css('color', 'red'); }, 1500);
-    Catch.setHandledTimeout(() => { $('#banner a').css('color', ''); }, 2000);
+    Catch.setHandledTimeout(() => {
+      $('#banner a').css('color', 'red');
+    }, 500);
+    Catch.setHandledTimeout(() => {
+      $('#banner a').css('color', '');
+    }, 1000);
+    Catch.setHandledTimeout(() => {
+      $('#banner a').css('color', 'red');
+    }, 1500);
+    Catch.setHandledTimeout(() => {
+      $('#banner a').css('color', '');
+    }, 2000);
   };
 
   private renderFolder = (labelEl: HTMLSpanElement) => {
@@ -121,5 +154,4 @@ export class InboxMenuModule extends ViewModule<InboxView> {
     }
     this.view.redirectToUrl({ acctEmail: this.view.acctEmail });
   };
-
 }

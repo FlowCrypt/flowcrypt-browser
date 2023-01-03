@@ -14,24 +14,32 @@ import { Xss } from '../../../js/common/platform/xss.js';
 import { KeyImportUi } from '../../../js/common/ui/key-import-ui.js';
 
 export class SetupRenderModule {
-
   public readonly emailDomainsToSkip = ['yahoo', 'live', 'outlook'];
 
-  constructor(private view: SetupView) {
-  }
+  // eslint-disable-next-line no-empty-function
+  public constructor(private view: SetupView) {}
 
   public renderInitial = async (): Promise<void> => {
     $('.email-address').text(this.view.acctEmail);
     $('#button-go-back').css('visibility', 'hidden');
-    if (this.view.storage!.email_provider === 'gmail') { // show alternative account addresses in setup form + save them for later
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    if (this.view.storage!.email_provider === 'gmail') {
+      // show alternative account addresses in setup form + save them for later
       try {
         await Settings.refreshSendAs(this.view.acctEmail);
         const { sendAs } = await AcctStore.get(this.view.acctEmail, ['sendAs']);
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         this.saveAndFillSubmitPubkeysOption(Object.keys(sendAs!));
       } catch (e) {
-        return await Settings.promptToRetry(e, Lang.setup.failedToLoadEmailAliases, () => this.renderInitial(), Lang.general.contactIfNeedAssistance(this.view.isFesUsed()));
+        return await Settings.promptToRetry(
+          e,
+          Lang.setup.failedToLoadEmailAliases,
+          () => this.renderInitial(),
+          Lang.general.contactIfNeedAssistance(this.view.isFesUsed())
+        );
       }
     }
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     if (this.view.storage!.setup_done && this.view.action !== 'update_from_ekm') {
       if (this.view.action !== 'add_key') {
         await this.renderSetupDone();
@@ -59,19 +67,21 @@ export class SetupRenderModule {
 
   public renderSetupDone = async () => {
     const storedKeys = await KeyStore.get(this.view.acctEmail);
-    if (this.view.fetchedKeyBackupsUniqueLongids.length > storedKeys.length) { // recovery where not all keys were processed: some may have other pass phrase
+    if (this.view.fetchedKeyBackupsUniqueLongids.length > storedKeys.length) {
+      // recovery where not all keys were processed: some may have other pass phrase
       this.displayBlock('step_4_more_to_recover');
       $('h1').text('More keys to recover');
       $('.email').text(this.view.acctEmail);
       $('.private_key_count').text(storedKeys.length);
       $('.backups_count').text(this.view.fetchedKeyBackupsUniqueLongids.length);
-    } else { // successful and complete setup
+    } else {
+      // successful and complete setup
       if (this.view.action === 'add_key') {
         this.displayBlock('step_4_close');
         $('h1').text('Recovered all keys!');
       } else {
         this.displayBlock('step_4_done');
-        $('h1').text('You\'re all set!');
+        $('h1').text("You're all set!");
       }
       $('.email').text(this.view.acctEmail);
     }
@@ -82,7 +92,11 @@ export class SetupRenderModule {
       'loading',
       'step_0_found_key',
       'step_1_easy_or_manual',
-      'step_2a_manual_create', 'step_2b_manual_enter', 'step_2_easy_generating', 'step_2_recovery', 'step_2_ekm_choose_pass_phrase',
+      'step_2a_manual_create',
+      'step_2b_manual_enter',
+      'step_2_easy_generating',
+      'step_2_recovery',
+      'step_2_ekm_choose_pass_phrase',
       'step_3_compatibility_fix',
       'step_4_more_to_recover',
       'step_4_done',
@@ -93,7 +107,9 @@ export class SetupRenderModule {
       $('#' + name).css('display', 'block');
       $('#button-go-back').css('visibility', ['step_2b_manual_enter', 'step_2a_manual_create'].includes(name) ? 'visible' : 'hidden');
       if (name === 'step_2_recovery') {
-        $('.backups_count_words').text(this.view.fetchedKeyBackupsUniqueLongids.length > 1 ? `${this.view.fetchedKeyBackupsUniqueLongids.length} backups` : 'a backup');
+        $('.backups_count_words').text(
+          this.view.fetchedKeyBackupsUniqueLongids.length > 1 ? `${this.view.fetchedKeyBackupsUniqueLongids.length} backups` : 'a backup'
+        );
         $('#step_2_recovery input').focus();
       }
     }
@@ -104,31 +120,42 @@ export class SetupRenderModule {
     try {
       keyserverRes = await this.view.pubLookup.lookupEmail(this.view.acctEmail);
     } catch (e) {
-      return await Settings.promptToRetry(e, Lang.setup.failedToCheckIfAcctUsesEncryption, () => this.renderSetupDialog(),
-        Lang.general.contactIfNeedAssistance(this.view.isFesUsed()));
+      return await Settings.promptToRetry(
+        e,
+        Lang.setup.failedToCheckIfAcctUsesEncryption,
+        () => this.renderSetupDialog(),
+        Lang.general.contactIfNeedAssistance(this.view.isFesUsed())
+      );
     }
     if (keyserverRes.pubkeys.length) {
       if (!this.view.clientConfiguration.canBackupKeys()) {
         // they already have a key recorded on attester, but no backups allowed on the domain. They should enter their prv manually
         this.displayBlock('step_2b_manual_enter');
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       } else if (this.view.storage!.email_provider === 'gmail') {
         try {
           const backups = await this.view.gmail.fetchKeyBackups();
           this.view.fetchedKeyBackups = backups.keyinfos.backups;
           this.view.fetchedKeyBackupsUniqueLongids = backups.longids.backups;
         } catch (e) {
-          return await Settings.promptToRetry(e, Lang.setup.failedToCheckAccountBackups, () => this.renderSetupDialog(),
-            Lang.general.contactIfNeedAssistance(this.view.isFesUsed()));
+          return await Settings.promptToRetry(
+            e,
+            Lang.setup.failedToCheckAccountBackups,
+            () => this.renderSetupDialog(),
+            Lang.general.contactIfNeedAssistance(this.view.isFesUsed())
+          );
         }
         if (this.view.fetchedKeyBackupsUniqueLongids.length) {
           this.displayBlock('step_2_recovery');
         } else {
           this.displayBlock('step_0_found_key');
         }
-      } else { // cannot read gmail to find a backup, or this is outlook
+      } else {
+        // cannot read gmail to find a backup, or this is outlook
         throw new Error('Not able to load backups from inbox due to missing permissions');
       }
-    } else { // no indication that the person used pgp before
+    } else {
+      // no indication that the person used pgp before
       if (this.view.clientConfiguration.canCreateKeys()) {
         this.displayBlock('step_1_easy_or_manual');
       } else {
@@ -145,10 +172,14 @@ export class SetupRenderModule {
     $('.input_submit_all').hide();
     const emailAliases = Value.arr.withoutVal(addresses, this.view.acctEmail);
     for (const e of emailAliases) {
-      // eslint-disable-next-line max-len
-      $('.addresses').append(`<label><input type="checkbox" class="input_email_alias" data-email="${Xss.escape(e)}" data-test="input-email-alias-${e.replace(/[^a-z0-9]+/g, '')}" />${Xss.escape(e)}</label><br/>`); // xss-escaped
+      $('.addresses').append(
+        `<label><input type="checkbox" class="input_email_alias" data-email="${Xss.escape(e)}" data-test="input-email-alias-${e.replace(
+          /[^a-z0-9]+/g,
+          ''
+        )}" />${Xss.escape(e)}</label><br/>`
+      ); // xss-escaped
     }
-    $('.input_email_alias').on('click', (event) => {
+    $('.input_email_alias').on('click', event => {
       const email = String($(event.target).data('email'));
       if ($(event.target).prop('checked')) {
         if (!this.view.submitKeyForAddrs.includes(email)) {
@@ -168,5 +199,4 @@ export class SetupRenderModule {
     const filterAddrRegEx = new RegExp(`@(${this.emailDomainsToSkip.join('|')})`);
     return addresses.filter(e => !filterAddrRegEx.test(e));
   };
-
 }

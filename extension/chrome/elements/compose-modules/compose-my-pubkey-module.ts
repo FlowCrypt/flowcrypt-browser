@@ -8,17 +8,19 @@ import { Ui } from '../../../js/common/browser/ui.js';
 import { ViewModule } from '../../../js/common/view-module.js';
 import { ComposeView } from '../compose.js';
 import { Str } from '../../../js/common/core/common.js';
-import { KeyStoreUtil } from "../../../js/common/core/crypto/key-store-util.js";
+import { KeyStoreUtil } from '../../../js/common/core/crypto/key-store-util.js';
 import { KeyUtil } from '../../../js/common/core/crypto/key.js';
 
 export class ComposeMyPubkeyModule extends ViewModule<ComposeView> {
-
   private toggledManually = false;
   private wkdFingerprints: { [acctEmail: string]: string[] | undefined } = {};
 
   public setHandlers = () => {
     this.view.S.cached('icon_pubkey').attr('title', Lang.compose.includePubkeyIconTitle);
-    this.view.S.cached('icon_pubkey').on('click', this.view.setHandler((el) => this.iconPubkeyClickHandler(el), this.view.errModule.handle(`set/unset pub attachment`)));
+    this.view.S.cached('icon_pubkey').on(
+      'click',
+      this.view.setHandler(el => this.iconPubkeyClickHandler(el), this.view.errModule.handle(`set/unset pub attachment`))
+    );
   };
 
   public iconPubkeyClickHandler = (target: HTMLElement) => {
@@ -33,7 +35,8 @@ export class ComposeMyPubkeyModule extends ViewModule<ComposeView> {
   };
 
   public reevaluateShouldAttachOrNot = () => {
-    if (this.toggledManually) { // leave it as is if toggled manually before
+    if (this.toggledManually) {
+      // leave it as is if toggled manually before
       return;
     }
     (async () => {
@@ -49,7 +52,9 @@ export class ComposeMyPubkeyModule extends ViewModule<ComposeView> {
         }
       }
       const myDomain = Str.getDomainFromEmailAddress(senderEmail);
-      const foreignRecipients = this.view.recipientsModule.getValidRecipients().map(r => r.email)
+      const foreignRecipients = this.view.recipientsModule
+        .getValidRecipients()
+        .map(r => r.email)
         .filter(email => myDomain !== Str.getDomainFromEmailAddress(email));
       if (foreignRecipients.length > 0) {
         if (!Array.isArray(cached)) {
@@ -67,7 +72,7 @@ export class ComposeMyPubkeyModule extends ViewModule<ComposeView> {
         }
         for (const recipient of foreignRecipients) {
           // new message, and my key is not uploaded where the recipient would look for it
-          if (! await this.view.recipientsModule.doesRecipientHaveMyPubkey(recipient)) {
+          if (!(await this.view.recipientsModule.doesRecipientHaveMyPubkey(recipient))) {
             // they do need pubkey
             this.setAttachPreference(true);
             return;
@@ -85,5 +90,4 @@ export class ComposeMyPubkeyModule extends ViewModule<ComposeView> {
       this.view.S.cached('icon_pubkey').removeClass('active');
     }
   };
-
 }

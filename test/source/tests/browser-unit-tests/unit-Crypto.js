@@ -22,7 +22,7 @@
 
 BROWSER_UNIT_TEST_NAME(`[PgpHash.sha256] hello`);
 (async () => {
-  const hashed = await PgpHash.sha256UtfStr("hello");
+  const hashed = await PgpHash.sha256UtfStr('hello');
   if (hashed !== '2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824') {
     throw Error(`Expected hased equal to "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824" but got "${hashed}"`);
   }
@@ -31,7 +31,7 @@ BROWSER_UNIT_TEST_NAME(`[PgpHash.sha256] hello`);
 
 BROWSER_UNIT_TEST_NAME(`[PgpHash.challengeAnswer] hello`);
 (async () => {
-  const pwd = await PgpHash.challengeAnswer("hello");
+  const pwd = await PgpHash.challengeAnswer('hello');
   if (pwd !== '3b2d9ab4b38fe0bc24c1b5f094a45910b9d4539e8963ae8c79c8d76c5fb24978') {
     throw Error(`Expected challengeAnswer equal to "3b2d9ab4b38fe0bc24c1b5f094a45910b9d4539e8963ae8c79c8d76c5fb24978" but got "${pwd}"`);
   }

@@ -3,11 +3,7 @@
   "full": {
     "id": "demo-with-reply-to-10",
     "threadId": "demo-with-reply-to-10",
-    "labelIds": [
-      "IMPORTANT",
-      "SENT",
-      "INBOX"
-    ],
+    "labelIds": ["IMPORTANT", "SENT", "INBOX"],
     "snippet": "some dummy text",
     "payload": {
       "partId": "",
@@ -87,11 +83,7 @@
   "raw": {
     "id": "demo-with-reply-to-10",
     "threadId": "demo-with-reply-to-10",
-    "labelIds": [
-      "IMPORTANT",
-      "SENT",
-      "INBOX"
-    ],
+    "labelIds": ["IMPORTANT", "SENT", "INBOX"],
     "snippet": "some dummy text",
     "sizeEstimate": 595,
     "raw": "TUlNRS1WZXJzaW9uOiAxLjAKRGF0ZTogTW9uLCAxOCBBcHIgMjAyMiAxMTo1NjoxOCArMDMwMApNZXNzYWdlLUlEOiA8Q0FPOUZZOXZxOXo0alVxN1pwM1FBbkVrTXQtOGNOckJpcUtIUkJ4MTE0VmJjTHBzeWVRQG1haWwuZ21haWwuY29tPgpTdWJqZWN0OiBzb21lIGR1bW15IG1lc3NhZ2UKUmVwbHktVG86IFNlbmRlcjEgPHNlbmRlcjFAZXhhbXBsZS50ZXN0PiwgU2VuZGVyMiA8c2VuZGVyMkBleGFtcGxlLnRlc3Q+LCBTZW5kZXIzIDxzZW5kZXIzQGV4YW1wbGUudGVzdD4sIFNlbmRlcjQgPHNlbmRlcjRAZXhhbXBsZS50ZXN0PiwgU2VuZGVyNSA8c2VuZGVyNUBleGFtcGxlLnRlc3Q+LCBTZW5kZXI2IDxzZW5kZXI2QGV4YW1wbGUudGVzdD4sIFNlbmRlcjcgPHNlbmRlcjdAZXhhbXBsZS50ZXN0PiwgU2VuZGVyOCA8c2VuZGVyOEBleGFtcGxlLnRlc3Q+LCBTZW5kZXI5IDxzZW5kZXI5QGV4YW1wbGUudGVzdD4sIFNlbmRlcjEwIDxzZW5kZXIxMEBleGFtcGxlLnRlc3Q+LCBTZW5kZXIxMSA8c2VuZGVyMTFAZXhhbXBsZS50ZXN0PiwgU2VuZGVyMTIgPHNlbmRlcjEyQGV4YW1wbGUudGVzdD4KRnJvbTogR21haWwgQ0kgVGVzdCA8Y2kudGVzdHMuZ21haWxAZmxvd2NyeXB0LmRldj4KVG86IEdtYWlsIENJIFRlc3QgPGNpLnRlc3RzLmdtYWlsQGZsb3djcnlwdC5kZXY+CkNvbnRlbnQtVHlwZTogbXVsdGlwYXJ0L2FsdGVybmF0aXZlOyBib3VuZGFyeT0iMDAwMDAwMDAwMDAwMWMzODkxMDVkY2U5ZWYyMyIKCi0tMDAwMDAwMDAwMDAwMWMzODkxMDVkY2U5ZWYyMwpDb250ZW50LVR5cGU6IHRleHQvcGxhaW47IGNoYXJzZXQ9IlVURi04IgoKc29tZSBkdW1teSB0ZXh0CgotLTAwMDAwMDAwMDAwMDFjMzg5MTA1ZGNlOWVmMjMKQ29udGVudC1UeXBlOiB0ZXh0L2h0bWw7IGNoYXJzZXQ9IlVURi04IgoKPGRpdiBkaXI9Imx0ciI+c29tZSBkdW1teSB0ZXh0PC9kaXY+CgotLTAwMDAwMDAwMDAwMDFjMzg5MTA1ZGNlOWVmMjMtLQ==",

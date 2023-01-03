@@ -13,20 +13,18 @@ import { StoredAdminCode } from './global-store.js';
 type SerializableTypes = FlatTypes | string[] | number[] | boolean[] | ClientConfigurationJson;
 export type StorageType = 'session' | 'local';
 export type FlatTypes = null | undefined | number | string | boolean;
-type Storable = FlatTypes | string[] | StoredKeyInfo[] | KeyInfoWithIdentity[] | Dict<StoredAdminCode>
-  | GmailRes.OpenId | ClientConfigurationJson;
+type Storable = FlatTypes | string[] | StoredKeyInfo[] | KeyInfoWithIdentity[] | Dict<StoredAdminCode> | GmailRes.OpenId | ClientConfigurationJson;
 export type Serializable = SerializableTypes | SerializableTypes[] | Dict<SerializableTypes> | Dict<SerializableTypes>[];
 
 export interface RawStore {
   [key: string]: Storable;
 }
 
-export class StoreCorruptedError extends Error { }
-export class StoreDeniedError extends Error { }
-export class StoreFailedError extends Error { }
+export class StoreCorruptedError extends Error {}
+export class StoreDeniedError extends Error {}
+export class StoreFailedError extends Error {}
 
 export abstract class AbstractStore {
-
   public static singleScopeRawIndex = (scope: string, key: string) => {
     return `cryptup_${emailKeyIndex(scope, key)}`;
   };
@@ -35,9 +33,11 @@ export abstract class AbstractStore {
     let message: string;
     if (err instanceof Error) {
       message = err.message;
-    } else if (err instanceof DOMException) { // db errors
+    } else if (err instanceof DOMException) {
+      // db errors
       message = err.message;
-    } else if (err && typeof err === 'object' && typeof (err as { message: string }).message === 'string') { // chrome.runtime.lastError
+    } else if (err && typeof err === 'object' && typeof (err as { message: string }).message === 'string') {
+      // chrome.runtime.lastError
       message = (err as { message: string }).message;
     } else {
       message = String(err);
@@ -73,7 +73,8 @@ export abstract class AbstractStore {
     const accountStore: AcctStoreDict = {};
     for (const k of Object.keys(storageObj)) {
       const fixedKey = k.replace(AbstractStore.singleScopeRawIndex(scope, ''), '');
-      if (fixedKey !== k) { // the scope matches and was thus removed from the raw index
+      if (fixedKey !== k) {
+        // the scope matches and was thus removed from the raw index
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         accountStore[fixedKey as AccountIndex] = storageObj[k] as any;
       }
@@ -92,5 +93,4 @@ export abstract class AbstractStore {
     }
     return allResults;
   };
-
 }

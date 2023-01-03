@@ -4,7 +4,6 @@ import { Config } from '../util';
 import { GmailCategory } from '../tests/gmail';
 
 export class TestUrls {
-
   public static extension = (path: string) => {
     return `chrome-extension://${Config.extensionId}/${path}`;
   };
