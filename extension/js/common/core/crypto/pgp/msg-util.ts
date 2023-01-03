@@ -185,7 +185,7 @@ export class MsgUtil {
       const packets = msg.packets;
       // todo: remove this patch after openpgpjs/openpgpjs#1583 is resolved
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const isSymEncrypted = packets.filter(p => p instanceof (opgp as any).SymEncryptedSessionKeyPacket).length > 0;
+      const isSymEncrypted = packets.filter(p => p instanceof (opgp as any).SymEncryptedSessionKeyPacket).length > 0; // tslint:disable-line:no-unsafe-any
       const isPubEncrypted = packets.filter(p => p instanceof opgp.PublicKeyEncryptedSessionKeyPacket).length > 0;
       if (isSymEncrypted && !isPubEncrypted && !msgPwd) {
         return { success: false, error: { type: DecryptErrTypes.usePassword, message: 'Use message password' }, longids, isEncrypted };
