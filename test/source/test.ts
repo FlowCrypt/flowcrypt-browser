@@ -29,7 +29,9 @@ const DEBUG_MOCK_LOG = false; // se to true to print mock server logs
 
 process.setMaxListeners(60);
 
-const consts = { // higher concurrency can cause 429 google errs when composing
+/* eslint-disable @typescript-eslint/naming-convention */
+const consts = {
+  // higher concurrency can cause 429 google errs when composing
   TIMEOUT_SHORT: minutes(1),
   TIMEOUT_EACH_RETRY: minutes(3),
   TIMEOUT_ALL_RETRIES: minutes(25), // this has to suffer waiting for semaphore between retries, thus almost the same as below
@@ -39,6 +41,7 @@ const consts = { // higher concurrency can cause 429 google errs when composing
   PROMISE_TIMEOUT_OVERALL: undefined as unknown as Promise<never>, // will be set right below
   IS_LOCAL_DEBUG: process.argv.includes('--debug') ? true : false, // run locally by developer, not in ci
 };
+/* eslint-enable @typescript-eslint/naming-convention */
 console.info('consts: ', JSON.stringify(consts), '\n');
 consts.PROMISE_TIMEOUT_OVERALL = new Promise((resolve, reject) => setTimeout(() => reject(new Error(`TIMEOUT_OVERALL`)), consts.TIMEOUT_OVERALL));
 
@@ -65,33 +68,45 @@ ava.default.before('set config and mock api', async t => {
   t.pass();
 });
 
-const testWithBrowser = (acct: CommonAcct | undefined, cb: (t: AvaContext, browser: BrowserHandle) => Promise<void>, flag?: 'FAILING'): ava.Implementation<unknown[]> => {
+const testWithBrowser = (
+  acct: CommonAcct | undefined,
+  cb: (t: AvaContext, browser: BrowserHandle) => Promise<void>,
+  flag?: 'FAILING'
+): ava.Implementation<unknown[]> => {
   return async (t: AvaContext) => {
-    await browserPool.withNewBrowserTimeoutAndRetry(async (t, browser) => {
-      const start = Date.now();
-      if (acct) {
-        await BrowserRecipe.setUpCommonAcct(t, browser, acct);
-      }
-      await cb(t, browser);
-      if (DEBUG_BROWSER_LOG) {
-        try {
-          const page = await browser.newPage(t, TestUrls.extension('chrome/dev/ci_unit_test.htm'));
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const items = await page.target.evaluate(() => (window as any).Debug.readDatabase()) as { input: unknown, output: unknown }[];
-          for (let i = 0; i < items.length; i++) {
-            const item = items[i];
-            const input = JSON.stringify(item.input);
-            const output = JSON.stringify(item.output, undefined, 2);
-            const file = `./test/tmp/${t.title}-${i}.txt`;
-            writeFileSync(file, `in: ${input}\n\nout: ${output}`);
-            t.log(`browser debug written to file: ${file}`);
-          }
-        } catch (e) {
-          t.log(`Error reading debug messages: ${e}`);
+    await browserPool.withNewBrowserTimeoutAndRetry(
+      async (t, browser) => {
+        const start = Date.now();
+        if (acct) {
+          await BrowserRecipe.setUpCommonAcct(t, browser, acct);
         }
-      }
-      t.log(`run time: ${Math.ceil((Date.now() - start) / 1000)}s`);
-    }, t, consts, flag);
+        await cb(t, browser);
+        if (DEBUG_BROWSER_LOG) {
+          try {
+            const page = await browser.newPage(t, TestUrls.extension('chrome/dev/ci_unit_test.htm'));
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-return
+            const items = (await page.target.evaluate(() => (window as any).Debug.readDatabase())) as {
+              input: unknown;
+              output: unknown;
+            }[];
+            for (let i = 0; i < items.length; i++) {
+              const item = items[i];
+              const input = JSON.stringify(item.input);
+              const output = JSON.stringify(item.output, undefined, 2);
+              const file = `./test/tmp/${t.title}-${i}.txt`;
+              writeFileSync(file, `in: ${input}\n\nout: ${output}`);
+              t.log(`browser debug written to file: ${file}`);
+            }
+          } catch (e) {
+            t.log(`Error reading debug messages: ${e}`);
+          }
+        }
+        t.log(`run time: ${Math.ceil((Date.now() - start) / 1000)}s`);
+      },
+      t,
+      consts,
+      flag
+    );
     t.pass();
   };
 };
@@ -113,7 +128,8 @@ if (isMock) {
 }
 
 ava.default.after.always('evaluate Catch.reportErr errors', async t => {
-  if (!isMock || testGroup !== 'STANDARD-GROUP') { // can only collect reported errs when running with a mocked api
+  if (!isMock || testGroup !== 'STANDARD-GROUP') {
+    // can only collect reported errs when running with a mocked api
     t.pass();
     return;
   }
@@ -123,10 +139,13 @@ ava.default.after.always('evaluate Catch.reportErr errors', async t => {
   const usefulErrors = mockBackendData.reportedErrors
     .filter(e => e.message !== 'Too few bytes to read ASN.1 value.')
     // below for test "get.updating.key@key-manager-choose-passphrase-forbid-storing.flowcrypt.test - automatic update of key found on key manager"
-    .filter(e => ![
-      'BrowserMsg(processAndStoreKeysFromEkmLocally) sendRawResponse::Error: Some keys could not be parsed',
-      'BrowserMsg(ajax) Bad Request: 400 when GET-ing https://localhost:8001/flowcrypt-email-key-manager/v1/keys/private (no body):  -> RequestTimeout'
-    ].includes(e.message))
+    .filter(
+      e =>
+        ![
+          'BrowserMsg(processAndStoreKeysFromEkmLocally) sendRawResponse::Error: Some keys could not be parsed',
+          'BrowserMsg(ajax) Bad Request: 400 when GET-ing https://localhost:8001/flowcrypt-email-key-manager/v1/keys/private (no body):  -> RequestTimeout',
+        ].includes(e.message)
+    )
     // below for test "user4@standardsubdomainfes.localhost:8001 - PWD encrypted message with FES web portal - a send fails with gateway update error"
     .filter(e => !e.message.includes('Test error'))
     // below for test "no.fes@example.com - skip FES on consumer, show friendly message on enterprise"
@@ -134,7 +153,9 @@ ava.default.after.always('evaluate Catch.reportErr errors', async t => {
     // todo - ideally mock tests would never call this. But we do tests with human@flowcrypt.com so it's calling here
     .filter(e => !e.trace.includes('-1 when GET-ing https://openpgpkey.flowcrypt.com'))
     // below for "test allows to retry public key search when attester returns error"
-    .filter(e => !e.message.includes('Error: Internal Server Error: 500 when GET-ing https://localhost:8001/attester/pub/attester.return.error@flowcrypt.test'));
+    .filter(
+      e => !e.message.includes('Error: Internal Server Error: 500 when GET-ing https://localhost:8001/attester/pub/attester.return.error@flowcrypt.test')
+    );
   const foundExpectedErr = usefulErrors.find(re => re.message === `intentional error for debugging`);
   const foundUnwantedErrs = usefulErrors.filter(re => re.message !== `intentional error for debugging` && !re.message.includes('traversal forbidden'));
   if (testVariant === 'CONSUMER-MOCK' && internalTestState.expectIntentionalErrReport && !foundExpectedErr) {
@@ -166,7 +187,7 @@ ava.default.after.always('send debug info if any', async t => {
     console.info(`FAIL ID ${testId}`);
     standaloneTestTimeout(t, consts.TIMEOUT_SHORT, t.title);
     console.info(`There are ${debugHtmlAttachments.length} debug files.`);
-    const debugArtifactDir = realpathSync(`${__dirname}/..`) + "/debugArtifacts";
+    const debugArtifactDir = realpathSync(`${__dirname}/..`) + '/debugArtifacts';
     mkdirSync(debugArtifactDir);
     for (let i = 0; i < debugHtmlAttachments.length; i++) {
       // const subject = `${testId} ${i + 1}/${debugHtmlAttachments.length}`;
@@ -181,7 +202,6 @@ ava.default.after.always('send debug info if any', async t => {
   }
   t.pass();
 });
-
 
 if (testGroup === 'UNIT-TESTS') {
   defineUnitNodeTests(testVariant);

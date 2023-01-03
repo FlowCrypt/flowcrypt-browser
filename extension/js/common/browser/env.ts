@@ -1,5 +1,6 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
+// eslint-disable-next-line @typescript-eslint/triple-slash-reference
 /// <reference path="../../../../node_modules/@types/chrome/index.d.ts" />
 
 'use strict';
@@ -8,7 +9,6 @@ export type WebMailName = 'gmail' | 'outlook' | 'settings';
 export type WebMailVersion = 'generic' | 'gmail2020' | 'gmail2022';
 
 export class Env {
-
   public static runtimeId = (orig = false) => {
     if (chrome?.runtime?.id) {
       if (orig === true) {
@@ -32,8 +32,10 @@ export class Env {
     return typeof Env.runtimeId() !== 'undefined';
   };
 
-  public static keyCodes = () => { // todo - use e.key (string) instead? Keycodes not reliable. https://bugs.chromium.org/p/chromium/issues/detail?id=79407
-    return { a: 97, r: 114, A: 65, R: 82, f: 102, F: 70, backspace: 8, tab: 9, enter: 13, comma: 188, };
+  public static keyCodes = () => {
+    // todo - use e.key (string) instead? Keycodes not reliable. https://bugs.chromium.org/p/chromium/issues/detail?id=79407
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    return { a: 97, r: 114, A: 65, R: 82, f: 102, F: 70, backspace: 8, tab: 9, enter: 13, comma: 188 };
   };
 
   public static webmails = async (): Promise<WebMailName[]> => {
@@ -47,5 +49,4 @@ export class Env {
   public static getUrlNoParams = () => {
     return window.location.protocol + '//' + window.location.hostname + window.location.pathname;
   };
-
 }

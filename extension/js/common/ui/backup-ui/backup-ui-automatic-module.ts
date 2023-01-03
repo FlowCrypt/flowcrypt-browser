@@ -9,18 +9,21 @@ import { Ui } from '../../browser/ui.js';
 import { ApiErr } from '../../api/shared/api-error.js';
 import { GoogleAuth } from '../../api/email-provider/gmail/google-auth.js';
 import { KeyStore } from '../../platform/store/key-store.js';
-import { KeyStoreUtil } from "../../core/crypto/key-store-util.js";
+import { KeyStoreUtil } from '../../core/crypto/key-store-util.js';
 import { BackupUi } from './backup-ui.js';
 import { BackupUiModule } from './backup-ui-module.js';
 
 export class BackupUiAutomaticModule extends BackupUiModule<BackupUi> {
-
   public simpleSetupAutoBackupRetryUntilSuccessful = async () => {
     try {
       await this.setupCreateSimpleAutomaticInboxBackup();
     } catch (e) {
-      return await Settings.promptToRetry(e, Lang.setup.failedToBackUpKey, this.setupCreateSimpleAutomaticInboxBackup,
-        Lang.general.contactIfNeedAssistance(!!this.ui.fesUrl));
+      return await Settings.promptToRetry(
+        e,
+        Lang.setup.failedToBackUpKey,
+        this.setupCreateSimpleAutomaticInboxBackup,
+        Lang.general.contactIfNeedAssistance(!!this.ui.fesUrl)
+      );
     }
   };
 
@@ -35,7 +38,7 @@ export class BackupUiAutomaticModule extends BackupUiModule<BackupUi> {
       await this.ui.onBackedUpFinished();
     } catch (e) {
       if (ApiErr.isAuthErr(e)) {
-        await Ui.modal.info("Authorization Error. FlowCrypt needs to reconnect your Gmail account");
+        await Ui.modal.info('Authorization Error. FlowCrypt needs to reconnect your Gmail account');
         const connectResult = await GoogleAuth.newAuthPopup({ acctEmail: this.ui.acctEmail });
         if (!connectResult.error) {
           await this.setupCreateSimpleAutomaticInboxBackup();
@@ -45,5 +48,4 @@ export class BackupUiAutomaticModule extends BackupUiModule<BackupUi> {
       }
     }
   };
-
 }

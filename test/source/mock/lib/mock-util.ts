@@ -6,4 +6,5 @@ export const isGet = (r: IncomingMessage) => r.method === 'GET' || r.method === 
 export const isPost = (r: IncomingMessage) => r.method === 'POST';
 export const isPut = (r: IncomingMessage) => r.method === 'PUT';
 export const isDelete = (r: IncomingMessage) => r.method === 'DELETE';
+// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 export const parseResourceId = (url: string) => url.match(/\/([a-zA-Z0-9\-_]+)(\?|$)/)![1];

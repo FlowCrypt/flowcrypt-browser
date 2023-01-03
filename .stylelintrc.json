@@ -1,9 +1,6 @@
 {
   "extends": "stylelint-config-standard",
-  "ignoreFiles": [
-    "**/*.js",
-    "**/*.ts"
-  ],
+  "ignoreFiles": ["**/*.js", "**/*.ts"],
   "rules": {
     "alpha-value-notation": null,
     "color-function-notation": null,

@@ -6,7 +6,6 @@ import { Catch } from '../platform/catch.js';
 import { PDFDocumentProxy } from '../../../types/pdf.js';
 
 export class AttachmentPreviewPdf {
-
   private attachmentPreviewContainer: JQuery<HTMLElement>;
   private pdf: PDFDocumentProxy;
   private currentZoomLevel: number;
@@ -14,7 +13,7 @@ export class AttachmentPreviewPdf {
   private fitToWidthZoomLevelDetected: boolean;
   private fitToWidthZoomLevel: number;
 
-  constructor(attachmentPreviewContainer: JQuery<HTMLElement>, pdf: PDFDocumentProxy) {
+  public constructor(attachmentPreviewContainer: JQuery<HTMLElement>, pdf: PDFDocumentProxy) {
     this.attachmentPreviewContainer = attachmentPreviewContainer;
     this.pdf = pdf;
     this.currentZoomLevel = 1;
@@ -159,5 +158,4 @@ export class AttachmentPreviewPdf {
     scrollDiv.remove();
     return scrollbarWidth;
   };
-
 }

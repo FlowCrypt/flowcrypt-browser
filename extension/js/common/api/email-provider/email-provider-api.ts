@@ -1,7 +1,5 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
-// tslint:disable:oneliner-object-literal
-
 'use strict';
 
 import { Api, ChunkedCb, ProgressCb } from '../shared/api.js';
@@ -12,8 +10,8 @@ import { GmailResponseFormat } from './gmail/gmail.js';
 import { SendableMsg } from './sendable-msg.js';
 import { EmailParts } from '../../core/common.js';
 
-export type Recipients = { to?: string[], cc?: string[], bcc?: string[] };
-export type ParsedRecipients = { to?: EmailParts[], cc?: EmailParts[], bcc?: EmailParts[] };
+export type Recipients = { to?: string[]; cc?: string[]; bcc?: string[] };
+export type ParsedRecipients = { to?: EmailParts[]; cc?: EmailParts[]; bcc?: EmailParts[] };
 export type ProviderContactsQuery = { substring: string };
 
 export type ReplyParams = {
@@ -27,8 +25,18 @@ export type ReplyParams = {
 };
 
 export type Backups = {
-  keyinfos: { backups: KeyInfoWithIdentity[], backupsImported: KeyInfoWithIdentity[], backupsNotImported: KeyInfoWithIdentity[], importedNotBackedUp: KeyInfoWithIdentity[] },
-  longids: { backups: string[], backupsImported: string[], backupsNotImported: string[], importedNotBackedUp: string[] },
+  keyinfos: {
+    backups: KeyInfoWithIdentity[];
+    backupsImported: KeyInfoWithIdentity[];
+    backupsNotImported: KeyInfoWithIdentity[];
+    importedNotBackedUp: KeyInfoWithIdentity[];
+  };
+  longids: {
+    backups: string[];
+    backupsImported: string[];
+    backupsNotImported: string[];
+    importedNotBackedUp: string[];
+  };
 };
 
 /**
@@ -47,9 +55,7 @@ export interface EmailProviderInterface {
 }
 
 export class EmailProviderApi extends Api {
-
-  constructor(protected acctEmail: string) {
+  public constructor(protected acctEmail: string) {
     super();
   }
-
 }

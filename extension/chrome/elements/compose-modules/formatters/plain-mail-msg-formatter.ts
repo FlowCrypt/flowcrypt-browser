@@ -8,7 +8,6 @@ import { SendableMsg } from '../../../../js/common/api/email-provider/sendable-m
 import { SendableMsgBody } from '../../../../js/common/core/mime.js';
 
 export class PlainMsgMailFormatter extends BaseMailFormatter {
-
   public sendableMsg = async (newMsg: NewMsgData): Promise<SendableMsg> => {
     this.view.S.now('send_btn_text').text(SendBtnTexts.BTN_SENDING);
     const attachments = this.isDraft ? [] : await this.view.attachmentsModule.attachment.collectAttachments();
@@ -18,5 +17,4 @@ export class PlainMsgMailFormatter extends BaseMailFormatter {
     }
     return await SendableMsg.createPlain(this.acctEmail, this.headers(newMsg), body, attachments);
   };
-
 }

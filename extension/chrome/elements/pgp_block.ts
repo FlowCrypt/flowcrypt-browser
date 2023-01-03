@@ -22,7 +22,6 @@ import { ContactStore } from '../../js/common/platform/store/contact-store.js';
 import { KeyUtil } from '../../js/common/core/crypto/key.js';
 
 export class PgpBlockView extends View {
-
   public readonly acctEmail: string;
   public readonly parentTabId: string;
   public readonly frameId: string;
@@ -32,7 +31,7 @@ export class PgpBlockView extends View {
   public readonly encryptedMsgUrlParam: Buf | undefined;
   public readonly signature?: {
     // when parsedSignature is undefined, decryptModule will try to fetch the message
-    parsedSignature?: string
+    parsedSignature?: string;
   };
 
   public gmail: Gmail;
@@ -49,7 +48,7 @@ export class PgpBlockView extends View {
 
   public fesUrl?: string;
 
-  constructor() {
+  public constructor() {
     super();
     Ui.event.protect();
     const uncheckedUrlParams = Url.parse(['acctEmail', 'frameId', 'message', 'parentTabId', 'msgId', 'isOutgoing', 'senderEmail', 'signature', 'debug']);
@@ -61,7 +60,7 @@ export class PgpBlockView extends View {
     const senderEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'senderEmail');
     this.senderEmail = Str.parseEmail(senderEmail).email || '';
     this.msgId = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'msgId');
-    if (/\.\.|\\|\//.test(decodeURI(this.msgId || ""))) {
+    if (/\.\.|\\|\//.test(decodeURI(this.msgId || ''))) {
       throw new Error('API path traversal forbidden');
     }
     this.encryptedMsgUrlParam = uncheckedUrlParams.message ? Buf.fromUtfStr(Assert.urlParamRequire.string(uncheckedUrlParams, 'message')) : undefined;
@@ -107,9 +106,11 @@ export class PgpBlockView extends View {
   };
 
   public setHandlers = () => {
-    $('.pgp_print_button').on('click', this.setHandler(() => this.renderModule.printPGPBlock()));
+    $('.pgp_print_button').on(
+      'click',
+      this.setHandler(() => this.renderModule.printPGPBlock())
+    );
   };
-
 }
 
 View.run(PgpBlockView);

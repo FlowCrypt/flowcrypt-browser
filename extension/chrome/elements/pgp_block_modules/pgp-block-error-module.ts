@@ -14,26 +14,42 @@ import { Xss } from '../../../js/common/platform/xss.js';
 import { Str } from '../../../js/common/core/common.js';
 
 export class PgpBlockViewErrorModule {
-
   private debugId = Str.sloppyRandom();
 
-  constructor(private view: PgpBlockView) {
-  }
+  // eslint-disable-next-line no-empty-function
+  public constructor(private view: PgpBlockView) {}
 
   public renderErr = async (errBoxContent: string, renderRawMsg: string | undefined, errMsg?: string) => {
     this.view.renderModule.setFrameColor('red');
     this.view.renderModule.renderErrorStatus(errMsg || 'decrypt error');
     const showRawMsgPrompt = renderRawMsg ? '<a href="#" class="action_show_raw_pgp_block">show original message</a>' : '';
     await this.view.renderModule.renderContent(`<div class="error">${errBoxContent.replace(/\n/g, '<br>')}</div>${showRawMsgPrompt}`, true);
-    $('.action_show_raw_pgp_block').on('click', this.view.setHandler(async () => { // this may contain content missing MDC
-      this.view.renderModule.renderEncryptionStatus('decrypt error: security hazard');
-      this.view.renderModule.renderSignatureStatus('not signed');
-      Xss.sanitizeAppend('#pgp_block', `<div class="raw_pgp_block">${Xss.escape(renderRawMsg!)}</div>`); // therefore the .escape is crucial
-    }));
-    $('.button.settings_keyserver').on('click', this.view.setHandler(async () => await Browser.openSettingsPage('index.htm', this.view.acctEmail, '/chrome/settings/modules/keyserver.htm')));
-    $('.button.settings').on('click', this.view.setHandler(async () => await Browser.openSettingsPage('index.htm', this.view.acctEmail)));
-    $('.button.settings_add_key').on('click', this.view.setHandler(async () => await Browser.openSettingsPage('index.htm', this.view.acctEmail, '/chrome/settings/modules/add_key.htm')));
-    $('.button.reply_pubkey_mismatch').on('click', this.view.setHandler(() => BrowserMsg.send.replyPubkeyMismatch(this.view.parentTabId)));
+    $('.action_show_raw_pgp_block').on(
+      'click',
+      this.view.setHandler(async () => {
+        // this may contain content missing MDC
+        this.view.renderModule.renderEncryptionStatus('decrypt error: security hazard');
+        this.view.renderModule.renderSignatureStatus('not signed');
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        Xss.sanitizeAppend('#pgp_block', `<div class="raw_pgp_block">${Xss.escape(renderRawMsg!)}</div>`); // therefore the .escape is crucial
+      })
+    );
+    $('.button.settings_keyserver').on(
+      'click',
+      this.view.setHandler(async () => await Browser.openSettingsPage('index.htm', this.view.acctEmail, '/chrome/settings/modules/keyserver.htm'))
+    );
+    $('.button.settings').on(
+      'click',
+      this.view.setHandler(async () => await Browser.openSettingsPage('index.htm', this.view.acctEmail))
+    );
+    $('.button.settings_add_key').on(
+      'click',
+      this.view.setHandler(async () => await Browser.openSettingsPage('index.htm', this.view.acctEmail, '/chrome/settings/modules/add_key.htm'))
+    );
+    $('.button.reply_pubkey_mismatch').on(
+      'click',
+      this.view.setHandler(() => BrowserMsg.send.replyPubkeyMismatch(this.view.parentTabId))
+    );
     Ui.setTestState('ready');
   };
 
@@ -43,16 +59,27 @@ export class PgpBlockViewErrorModule {
     }
   };
 
-  public handlePrivateKeyMismatch = async (armoredPubs: string[], message: Uint8Array, isPwdMsg: boolean) => { // todo - make it work for multiple stored keys
+  public handlePrivateKeyMismatch = async (armoredPubs: string[], message: Uint8Array, isPwdMsg: boolean) => {
+    // todo - make it work for multiple stored keys
     const msgDiagnosis = await BrowserMsg.send.bg.await.pgpMsgDiagnosePubkeys({ armoredPubs, message });
     if (msgDiagnosis.found_match) {
       await this.renderErr(Lang.pgpBlock.cantOpen + Lang.pgpBlock.encryptedCorrectlyFileBug, undefined);
     } else if (isPwdMsg) {
       await this.renderErr(Lang.pgpBlock.pwdMsgOnlyReadableOnWeb + this.btnHtml('ask sender to re-send', 'gray2 short reply_pubkey_mismatch'), undefined);
     } else {
-      const startText = msgDiagnosis.receivers === 1 ? Lang.pgpBlock.cantOpen + Lang.pgpBlock.singleSender + Lang.pgpBlock.askResend : Lang.pgpBlock.yourKeyCantOpenImportIfHave;
-      await this.renderErr(startText + this.btnHtml('import missing key', 'gray2 settings_add_key') + '&nbsp; &nbsp;'
-        + this.btnHtml('ask sender to update', 'gray2 short reply_pubkey_mismatch') + '&nbsp; &nbsp;' + this.btnHtml('settings', 'gray2 settings_keyserver'), undefined);
+      const startText =
+        msgDiagnosis.receivers === 1
+          ? Lang.pgpBlock.cantOpen + Lang.pgpBlock.singleSender + Lang.pgpBlock.askResend
+          : Lang.pgpBlock.yourKeyCantOpenImportIfHave;
+      await this.renderErr(
+        startText +
+          this.btnHtml('import missing key', 'gray2 settings_add_key') +
+          '&nbsp; &nbsp;' +
+          this.btnHtml('ask sender to update', 'gray2 short reply_pubkey_mismatch') +
+          '&nbsp; &nbsp;' +
+          this.btnHtml('settings', 'gray2 settings_keyserver'),
+        undefined
+      );
     }
   };
 
@@ -63,10 +90,15 @@ export class PgpBlockViewErrorModule {
       BrowserMsg.send.notificationShowAuthPopupNeeded(this.view.parentTabId, { acctEmail: this.view.acctEmail });
       await this.renderErr(`Could not load message due to missing auth. ${Ui.retryLink()}`, undefined);
     } else if (e instanceof FormatError) {
-      await this.renderErr(Lang.pgpBlock.cantOpen + Lang.pgpBlock.badFormat + Lang.pgpBlock.details
-        + e.message + ' ' + Lang.pgpBlock.dontKnowHowOpen(!!this.view.fesUrl), e.data);
+      await this.renderErr(
+        Lang.pgpBlock.cantOpen + Lang.pgpBlock.badFormat + Lang.pgpBlock.details + e.message + ' ' + Lang.pgpBlock.dontKnowHowOpen(!!this.view.fesUrl),
+        e.data
+      );
     } else if (ApiErr.isInPrivateMode(e)) {
-      await this.renderErr(`FlowCrypt does not work in a Firefox Private Window (or when Firefox Containers are used). Please try in a standard window.`, undefined);
+      await this.renderErr(
+        `FlowCrypt does not work in a Firefox Private Window (or when Firefox Containers are used). Please try in a standard window.`,
+        undefined
+      );
     } else {
       Catch.reportErr(e);
       await this.renderErr(Xss.escape(String(e)), this.view.encryptedMsgUrlParam ? this.view.encryptedMsgUrlParam.toUtfStr() : undefined);
@@ -76,5 +108,4 @@ export class PgpBlockViewErrorModule {
   public btnHtml = (text: string, addClasses: string) => {
     return `<button class="button long ${addClasses}" style="margin:30px 0;" target="cryptup">${text}</button>`;
   };
-
 }

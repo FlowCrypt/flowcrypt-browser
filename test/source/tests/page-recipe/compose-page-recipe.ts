@@ -9,7 +9,7 @@ import { PageRecipe } from './abstract-page-recipe';
 import { Util } from '../../util';
 import { expect } from 'chai';
 
-type RecipientType = "to" | "cc" | "bcc";
+type RecipientType = 'to' | 'cc' | 'bcc';
 type Recipients = {
   [key in RecipientType]?: string;
 };
@@ -17,19 +17,30 @@ type Recipients = {
 type PopoverOpt = 'encrypt' | 'sign' | 'richtext';
 
 export class ComposePageRecipe extends PageRecipe {
-
   public static async openStandalone(
-    t: AvaContext, browser: BrowserHandle, group: CommonAcct | string, options:
-      { appendUrl?: string, hasReplyPrompt?: boolean, skipClickPropt?: boolean, skipValidation?: boolean, initialScript?: EvaluateFunc<unknown[]> } = {}
+    t: AvaContext,
+    browser: BrowserHandle,
+    group: CommonAcct | string,
+    options: {
+      appendUrl?: string;
+      hasReplyPrompt?: boolean;
+      skipClickPropt?: boolean;
+      skipValidation?: boolean;
+      initialScript?: EvaluateFunc<unknown[]>;
+    } = {}
   ): Promise<ControllablePage> {
-    if (group === 'compatibility') { // More common accounts
+    if (group === 'compatibility') {
+      // More common accounts
       group = 'flowcrypt.compatibility@gmail.com';
     } else if (group === 'compose') {
       group = 'ci.tests.gmail@flowcrypt.test';
     }
     const email = encodeURIComponent(group);
-    const composePage = await browser.newPage(t, `chrome/elements/compose.htm?account_email=${email}&parent_tab_id=0&debug=___cu_true___&frameId=none&${options.appendUrl || ''}`,
-      options.initialScript);
+    const composePage = await browser.newPage(
+      t,
+      `chrome/elements/compose.htm?account_email=${email}&parent_tab_id=0&debug=___cu_true___&frameId=none&${options.appendUrl || ''}`,
+      options.initialScript
+    );
     // await composePage.page.on('console', msg => console.log(`compose-dbg:${msg.text()}`));
     if (!options.skipValidation) {
       if (!options.hasReplyPrompt) {
@@ -47,10 +58,7 @@ export class ComposePageRecipe extends PageRecipe {
     return composePage;
   }
 
-  public static async selectFromOption(
-    composePageOrFrame: Controllable,
-    choice: string
-  ) {
+  public static async selectFromOption(composePageOrFrame: Controllable, choice: string) {
     // Show recipient input first
     await this.showRecipientInput(composePageOrFrame);
     await composePageOrFrame.selectOption('@input-from', choice);
@@ -68,7 +76,7 @@ export class ComposePageRecipe extends PageRecipe {
     recipients: Recipients,
     subject?: string | undefined,
     body?: string | undefined,
-    sendingOpt: { encrypt?: boolean, sign?: boolean, richtext?: boolean } = {}, // undefined means leave default
+    sendingOpt: { encrypt?: boolean; sign?: boolean; richtext?: boolean } = {} // undefined means leave default
   ) {
     await Util.sleep(0.5);
     await ComposePageRecipe.fillRecipients(composePageOrFrame, recipients);
@@ -93,9 +101,11 @@ export class ComposePageRecipe extends PageRecipe {
     await composePageOrFrame.waitAndClick('@action-show-options-popover');
     await composePageOrFrame.waitAll('@container-sending-options');
     const isCurrentlyTicked = await composePageOrFrame.isElementPresent(`@icon-toggle-${opt}-tick`);
-    if ((!isCurrentlyTicked && shouldBeTicked) || (isCurrentlyTicked && !shouldBeTicked)) { // not in desired state
+    if ((!isCurrentlyTicked && shouldBeTicked) || (isCurrentlyTicked && !shouldBeTicked)) {
+      // not in desired state
       await composePageOrFrame.waitAndClick(`@action-toggle-${opt}`); // toggling should set it to desired state
-    } else { // in desired state
+    } else {
+      // in desired state
       await composePageOrFrame.waitAndClick('@input-body'); // close popover
     }
     await composePageOrFrame.waitTillGone('@container-sending-options');
@@ -108,14 +118,17 @@ export class ComposePageRecipe extends PageRecipe {
       const sendingType = key as RecipientType;
       const email = recipients[sendingType] as string | undefined;
       if (email) {
-        if (sendingType !== 'to') { // input-to is always visible
+        if (sendingType !== 'to') {
+          // input-to is always visible
           await composePageOrFrame.waitAndClick(`@action-show-${sendingType}`);
         }
         await composePageOrFrame.waitAndType(`@input-${sendingType}`, email + '\n');
         await composePageOrFrame.waitTillGone('@spinner');
       }
     }
-    await composePageOrFrame.target.evaluate(() => { $('#input_text').focus(); });
+    await composePageOrFrame.target.evaluate(() => {
+      $('#input_text').focus();
+    });
     await Util.sleep(1);
   };
 
@@ -129,7 +142,9 @@ export class ComposePageRecipe extends PageRecipe {
 
   public static sendAndClose = async (
     composePage: ControllablePage,
-    { password, timeout, expectProgress }: { password?: string, timeout?: number, expectProgress?: boolean } = { timeout: 60 }
+    { password, timeout, expectProgress }: { password?: string; timeout?: number; expectProgress?: boolean } = {
+      timeout: 60,
+    }
   ) => {
     if (password) {
       await composePage.waitAndType('@input-password', password);
@@ -144,7 +159,7 @@ export class ComposePageRecipe extends PageRecipe {
   public static closed = async (composePage: ControllablePage, timeout = 60) => {
     await Promise.race([
       composePage.waitForSelTestState('closed', timeout), // in case this was a new message compose
-      composePage.waitAny('@container-reply-msg-successful', { timeout }) // in case of reply
+      composePage.waitAny('@container-reply-msg-successful', { timeout }), // in case of reply
     ]);
     await composePage.close();
   };
@@ -153,7 +168,8 @@ export class ComposePageRecipe extends PageRecipe {
     await Util.sleep(5);
     const contacts = await composePage.waitAny('@container-contacts');
     const contactsList = await contacts.$$('li');
-    for (const index in contactsList) { // tslint:disable-line:forin
+    // eslint-disable-next-line guard-for-in
+    for (const index in contactsList) {
       expect(await PageRecipe.getElementPropertyJson(contactsList[index], 'textContent')).to.equal(emails[index]);
     }
   };
@@ -171,8 +187,7 @@ export class ComposePageRecipe extends PageRecipe {
     return addPubkeyDialog;
   };
 
-  public static pastePublicKeyManually = async (composeFrame: ControllableFrame, inboxPage: ControllablePage,
-    recipient: string, pub: string) => {
+  public static pastePublicKeyManually = async (composeFrame: ControllableFrame, inboxPage: ControllablePage, recipient: string, pub: string) => {
     await ComposePageRecipe.pastePublicKeyManuallyNoClose(composeFrame, inboxPage, recipient, pub);
     await inboxPage.waitTillGone('@dialog-add-pubkey');
   };

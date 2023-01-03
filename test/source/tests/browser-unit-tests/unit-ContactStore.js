@@ -1,7 +1,5 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
-/* eslint-disable max-len */
-
 /**
  * These tests use JavaScript instead of TypeScript to avoid dealing with types in cross-environment setup.
  * (tests are injected from NodeJS through puppeteer into a browser environment)
@@ -25,19 +23,19 @@
 BROWSER_UNIT_TEST_NAME(`ContactStore is able to search by partial email address`);
 (async () => {
   await ContactStore.update(undefined, 'abbdef@test.com', {
-    pubkey: testConstants.abbdefTestComPubkey
+    pubkey: testConstants.abbdefTestComPubkey,
   });
   await ContactStore.update(undefined, 'abcdef@test.com', {
-    pubkey: testConstants.abcdefTestComPubkey
+    pubkey: testConstants.abcdefTestComPubkey,
   });
   await ContactStore.update(undefined, 'abcddf@test.com', {
-    pubkey: testConstants.abcddfTestComPubkey
+    pubkey: testConstants.abcddfTestComPubkey,
   });
   await ContactStore.update(undefined, 'abddef@test.com', {
-    pubkey: testConstants.abddefTestComPubkey
+    pubkey: testConstants.abddefTestComPubkey,
   });
   await ContactStore.update(undefined, 'abcd.vwxyz@hello.com', {
-    pubkey: testConstants.abcdVwxyzHelloComPubkey
+    pubkey: testConstants.abcdVwxyzHelloComPubkey,
   });
   const contactsABC = await ContactStore.search(undefined, { hasPgp: true, substring: 'abc' });
   if (contactsABC.length !== 3) {
@@ -118,26 +116,38 @@ BROWSER_UNIT_TEST_NAME(`ContactStore.search ignores top-level domains and common
   return 'pass';
 })();
 
-BROWSER_UNIT_TEST_NAME(`ContactStore.search allows searching for name parts that look like top-level domains and common domains`);
+BROWSER_UNIT_TEST_NAME(`ContactStore.search allows searching for name parts that look like top-level domains and common domains`); // prettier-ignore
 (async () => {
-  await ContactStore.update(undefined, 'abcdef.com@abcdef.com', { name: 'com', pubkey: testConstants.abcdefTestComPubkey });
-  await ContactStore.update(undefined, 'abcdef@test.com', { name: 'test.com', pubkey: testConstants.abcdefTestComPubkey });
-  await ContactStore.update(undefined, 'abcdef@abcdef.com', { name: 'test', pubkey: testConstants.abcdefTestComPubkey });
+  await ContactStore.update(undefined, 'abcdef.com@abcdef.com', {
+    name: 'com',
+    pubkey: testConstants.abcdefTestComPubkey,
+  });
+  await ContactStore.update(undefined, 'abcdef@test.com', {
+    name: 'test.com',
+    pubkey: testConstants.abcdefTestComPubkey,
+  });
+  await ContactStore.update(undefined, 'abcdef@abcdef.com', {
+    name: 'test',
+    pubkey: testConstants.abcdefTestComPubkey,
+  });
   {
     const test = await ContactStore.search(undefined, { hasPgp: true, substring: 'test' });
-    if (test.length !== 2) { // test and test.com
+    if (test.length !== 2) {
+      // test and test.com
       throw Error(`Expected 2 contacts to match "test" but got "${test.length}"`);
     }
   }
   {
     const test = await ContactStore.search(undefined, { hasPgp: true, substring: 'com' });
-    if (test.length !== 2) { // com and test.com
+    if (test.length !== 2) {
+      // com and test.com
       throw Error(`Expected 2 contacts to match "com" but got "${test.length}"`);
     }
   }
   {
     const test = await ContactStore.search(undefined, { hasPgp: true, substring: 'test.com' });
-    if (test.length !== 1) { // test.com
+    if (test.length !== 1) {
+      // test.com
       throw Error(`Expected 1 contacts to match "test.com" but got "${test.length}"`);
     }
   }
@@ -154,14 +164,18 @@ BROWSER_UNIT_TEST_NAME(`ContactStore doesn't store duplicates in searchable`);
     const req = db.transaction(['emails'], 'readonly').objectStore('emails').get(email);
     ContactStore.setReqPipe(req, resolve, reject);
   });
-  if (entity?.searchable.length !== 3 || !entity.searchable.includes('f:at@this.word')
-    || !entity.searchable.includes('f:this.word') || !entity.searchable.includes('f:word')) {
+  if (
+    entity?.searchable.length !== 3 ||
+    !entity.searchable.includes('f:at@this.word') ||
+    !entity.searchable.includes('f:this.word') ||
+    !entity.searchable.includes('f:word')
+  ) {
     throw Error(`Expected ["at@this.word", "this.word", "word"] entries in 'searchable' but got "${entity?.searchable}"`);
   }
   return 'pass';
 })();
 
-BROWSER_UNIT_TEST_NAME(`ContactStore doesn't store smaller words in searchable when there is a bigger one that starts with it`);
+BROWSER_UNIT_TEST_NAME(`ContactStore doesn't store smaller words in searchable when there is a bigger one that starts with it`); // prettier-ignore
 (async () => {
   const db = await ContactStore.dbOpen();
   const email = 'com@big.com';
@@ -171,8 +185,12 @@ BROWSER_UNIT_TEST_NAME(`ContactStore doesn't store smaller words in searchable w
     const req = db.transaction(['emails'], 'readonly').objectStore('emails').get(email);
     ContactStore.setReqPipe(req, resolve, reject);
   });
-  if (entity?.searchable.length !== 3 || !entity.searchable.includes('f:com@big.com')
-    || !entity.searchable.includes('f:big.com') || !entity.searchable.includes('f:commander')) {
+  if (
+    entity?.searchable.length !== 3 ||
+    !entity.searchable.includes('f:com@big.com') ||
+    !entity.searchable.includes('f:big.com') ||
+    !entity.searchable.includes('f:commander')
+  ) {
     throw Error(`Expected ["com@big.com", "big.com", "commander"] in 'searchable' but got "${entity?.searchable}"`);
   }
   return 'pass';
@@ -184,16 +202,16 @@ BROWSER_UNIT_TEST_NAME(`ContactStore.update updates correct 'pubkeyLastCheck'`);
   const email = 'flowcrypt.compatibility@gmail.com';
   const date2_0 = Date.now();
   await ContactStore.update(undefined, email, {
-    pubkey: testConstants.flowcryptcompatibilityPublicKey7FDE685548AEA788
+    pubkey: testConstants.flowcryptcompatibilityPublicKey7FDE685548AEA788,
   });
   await ContactStore.update(undefined, email, {
     pubkey: testConstants.flowcryptcompatibilityPublicKeyADAC279C95093207,
-    pubkeyLastCheck: date2_0
+    pubkeyLastCheck: date2_0,
   });
   // extract the entities from the database
   const fp1 = '5520CACE2CB61EA713E5B0057FDE685548AEA788';
   const fp2 = 'E8F0517BA6D7DAB6081C96E4ADAC279C95093207';
-  const getEntity = async (fp) => {
+  const getEntity = async fp => {
     return await new Promise((resolve, reject) => {
       const req = db.transaction(['pubkeys'], 'readonly').objectStore('pubkeys').get(fp);
       ContactStore.setReqPipe(req, resolve, reject);
@@ -264,20 +282,20 @@ BROWSER_UNIT_TEST_NAME(`ContactStore.update tests`);
   const expectedObj1 = {
     email: email1,
     name: undefined,
-    lastUse: undefined
+    lastUse: undefined,
   };
   const expectedObj2 = {
     email: email2,
     name: undefined,
-    lastUse: undefined
+    lastUse: undefined,
   };
-  const getEntity = async (email) => {
+  const getEntity = async email => {
     return await new Promise((resolve, reject) => {
       const req = db.transaction(['emails'], 'readonly').objectStore('emails').get(email);
       ContactStore.setReqPipe(req, resolve, reject);
     });
   };
-  const compareEntity = async (expectedObj) => {
+  const compareEntity = async expectedObj => {
     const loaded = await getEntity(expectedObj.email);
     if (loaded.name != expectedObj.name) {
       throw Error(`name field mismatch, expected ${expectedObj.name} but got ${loaded.name}`);
@@ -317,12 +335,10 @@ BROWSER_UNIT_TEST_NAME(`ContactStore saves and returns dates as numbers`);
     throw Error('Contact not found');
   }
   if (!loaded.sortedPubkeys.length) {
-    throw Error('Contact doesn\'t have pubkeys');
+    throw Error("Contact doesn't have pubkeys");
   }
   if (typeof loaded.sortedPubkeys[0].lastCheck !== 'number') {
-    throw Error(
-      'pubkeyLastCheck was expected to be a number, ' +
-      `but got ${typeof loaded.sortedPubkeys[0].lastCheck}`);
+    throw Error('pubkeyLastCheck was expected to be a number, ' + `but got ${typeof loaded.sortedPubkeys[0].lastCheck}`);
   }
   return 'pass';
 })();
@@ -330,9 +346,15 @@ BROWSER_UNIT_TEST_NAME(`ContactStore saves and returns dates as numbers`);
 BROWSER_UNIT_TEST_NAME(`ContactStore.getOneWithAllPubkeys() returns all pubkeys with non-revoked placed first`);
 (async () => {
   // Note 1: email differs from pubkey id
-  await ContactStore.update(undefined, 'some.revoked@otherhost.com', { pubkey: await KeyUtil.parse(testConstants.somerevokedRevoked1) });
-  await ContactStore.update(undefined, 'some.revoked@otherhost.com', { pubkey: await KeyUtil.parse(testConstants.somerevokedValid) });
-  await ContactStore.update(undefined, 'some.revoked@otherhost.com', { pubkey: await KeyUtil.parse(testConstants.somerevokedRevoked2) });
+  await ContactStore.update(undefined, 'some.revoked@otherhost.com', {
+    pubkey: await KeyUtil.parse(testConstants.somerevokedRevoked1),
+  });
+  await ContactStore.update(undefined, 'some.revoked@otherhost.com', {
+    pubkey: await KeyUtil.parse(testConstants.somerevokedValid),
+  });
+  await ContactStore.update(undefined, 'some.revoked@otherhost.com', {
+    pubkey: await KeyUtil.parse(testConstants.somerevokedRevoked2),
+  });
 
   const { sortedPubkeys: pubs } = await ContactStore.getOneWithAllPubkeys(undefined, 'some.revoked@otherhost.com');
   if (pubs[0].pubkey.id !== 'D6662C5FB9BDE9DA01F3994AAA1EF832D8CCA4F2') {
@@ -392,7 +414,7 @@ BROWSER_UNIT_TEST_NAME(`ContactStore: X-509 revocation affects OpenPGP key`);
   await new Promise((resolve, reject) => {
     const tx = db.transaction(['revocations'], 'readwrite');
     ContactStore.setTxHandlers(tx, resolve, reject);
-    tx.objectStore('revocations').put({ fingerprint: fingerprint + "-X509" });
+    tx.objectStore('revocations').put({ fingerprint: fingerprint + '-X509' });
   });
   // original key should be either revoked or missing
   const { sortedPubkeys: pubkeys2 } = await ContactStore.getOneWithAllPubkeys(db, `some.revoked@localhost.com`);
@@ -459,24 +481,25 @@ BROWSER_UNIT_TEST_NAME(`ContactStore searchPubkeys { hasPgp: true } returns all 
 (async () => {
   const db = await ContactStore.dbOpen();
   await ContactStore.update(db, 'abbdef@test.com', {
-    pubkey: testConstants.abbdefTestComPubkey
+    pubkey: testConstants.abbdefTestComPubkey,
   });
   await ContactStore.update(db, 'abcdef@test.com', {
-    pubkey: testConstants.abcdefTestComPubkey
+    pubkey: testConstants.abcdefTestComPubkey,
   });
   await ContactStore.update(db, 'abcddf@test.com', {
-    pubkey: testConstants.abcddfTestComPubkey
+    pubkey: testConstants.abcddfTestComPubkey,
   });
   await ContactStore.update(db, 'abddef@test.com', {
-    pubkey: testConstants.abddefTestComPubkey
+    pubkey: testConstants.abddefTestComPubkey,
   });
   const foundKeys = await ContactStore.searchPubkeys(db, { hasPgp: true });
-  const fingerprints = (await Promise.all(foundKeys.map(async (key) => await KeyUtil.parse(key)))).
-    map(pk => pk.id);
-  if (!fingerprints.includes('B790AE8F425DC44633A8C086DF63659C3B4A81FB')
-    || !fingerprints.includes('3155F118B6E732B3638A1CE1608BCD797A23FB91')
-    || !fingerprints.includes('6CF53D2329C2A80828F499D375AA44AB8930F7E9')
-    || !fingerprints.includes('9E020D9B752FD3FFF17ED9B65FCC1541CF282951')) {
+  const fingerprints = (await Promise.all(foundKeys.map(async key => await KeyUtil.parse(key)))).map(pk => pk.id);
+  if (
+    !fingerprints.includes('B790AE8F425DC44633A8C086DF63659C3B4A81FB') ||
+    !fingerprints.includes('3155F118B6E732B3638A1CE1608BCD797A23FB91') ||
+    !fingerprints.includes('6CF53D2329C2A80828F499D375AA44AB8930F7E9') ||
+    !fingerprints.includes('9E020D9B752FD3FFF17ED9B65FCC1541CF282951')
+  ) {
     throw new Error('Some keys were not loaded!');
   }
   return 'pass';

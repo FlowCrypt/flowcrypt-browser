@@ -8,13 +8,12 @@ import { TIMEOUT_ELEMENT_APPEAR } from '.';
 import { AvaContext } from '../tests/tooling';
 
 export class BrowserHandle {
-
   public pages: ControllablePage[] = [];
   public browser: Browser;
   private semaphore: Semaphore;
-  private viewport: { height: number, width: number };
+  private viewport: { height: number; width: number };
 
-  constructor(browser: Browser, semaphore: Semaphore, height: number, width: number) {
+  public constructor(browser: Browser, semaphore: Semaphore, height: number, width: number) {
     this.browser = browser;
     this.semaphore = semaphore;
     this.viewport = { height, width };
@@ -46,7 +45,7 @@ export class BrowserHandle {
   };
 
   public newPageTriggeredBy = async (t: AvaContext, triggeringAction: () => Promise<void>): Promise<ControllablePage> => {
-    const page = await this.doAwaitTriggeredPage(triggeringAction) as Page;
+    const page = (await this.doAwaitTriggeredPage(triggeringAction)) as Page;
     const url = page.url();
     const controllablePage = new ControllablePage(t, page);
     try {
@@ -89,7 +88,9 @@ export class BrowserHandle {
       const cPage = this.pages[i];
       const url = await Promise.race([cPage.page.url(), new Promise(resolve => setTimeout(() => resolve('(url get timeout)'), 10 * 1000)) as Promise<string>]);
       const consoleMsgs = await cPage.console(t, alsoLogToConsole);
-      const alerts = cPage.alerts.map(a => `${a.active ? `<b class="c-error">ACTIVE ${a.target.type()}</b>` : a.target.type()}: ${a.target.message()}`).join('\n');
+      const alerts = cPage.alerts
+        .map(a => `${a.active ? `<b class="c-error">ACTIVE ${a.target.type()}</b>` : a.target.type()}: ${a.target.message()}`)
+        .join('\n');
       html += '<div class="page">';
       html += `<pre title="url">Page ${i} (${cPage.page.isClosed() ? 'closed' : 'active'}) ${Util.htmlEscape(url)}</pre>`;
       html += `<pre title="console">${consoleMsgs || '(no console messages)'}</pre>`;
@@ -98,7 +99,9 @@ export class BrowserHandle {
         try {
           html += `<img src="data:image/png;base64,${await cPage.screenshot()}"><br>`;
         } catch (e) {
-          html += `<div style="border:1px solid white;">Could not get screen shot: ${Util.htmlEscape(e instanceof Error ? e.stack || String(e) : String(e))}</div>`;
+          html += `<div style="border:1px solid white;">Could not get screen shot: ${Util.htmlEscape(
+            e instanceof Error ? e.stack || String(e) : String(e)
+          )}</div>`;
         }
         try {
           html += `<pre style="height:300px;overflow:auto;">${Util.htmlEscape(await cPage.html())}</pre>`;
@@ -127,5 +130,4 @@ export class BrowserHandle {
       triggeringAction().catch(console.error);
     });
   };
-
 }

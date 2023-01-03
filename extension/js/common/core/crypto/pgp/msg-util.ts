@@ -14,7 +14,7 @@ import { ContactStore } from '../../../platform/store/contact-store.js';
 export class DecryptionError extends Error {
   public decryptError: DecryptError;
 
-  constructor(decryptError: DecryptError) {
+  public constructor(decryptError: DecryptError) {
     super(decryptError.error.message);
     this.decryptError = decryptError;
   }
@@ -22,11 +22,24 @@ export class DecryptionError extends Error {
 
 export namespace PgpMsgMethod {
   export namespace Arg {
-    export type Encrypt = { pubkeys: Key[], signingPrv?: Key, pwd?: string, data: Uint8Array, filename?: string, armor: boolean, date?: Date };
+    export type Encrypt = {
+      pubkeys: Key[];
+      signingPrv?: Key;
+      pwd?: string;
+      data: Uint8Array;
+      filename?: string;
+      armor: boolean;
+      date?: Date;
+    };
     export type Type = { data: Uint8Array | string };
-    export type Decrypt = { kisWithPp: KeyInfoWithIdentityAndOptionalPp[], encryptedData: Uint8Array, msgPwd?: string, verificationPubs: string[] };
-    export type DiagnosePubkeys = { armoredPubs: string[], message: Uint8Array };
-    export type VerifyDetached = { plaintext: Uint8Array, sigText: Uint8Array, verificationPubs: string[] };
+    export type Decrypt = {
+      kisWithPp: KeyInfoWithIdentityAndOptionalPp[];
+      encryptedData: Uint8Array;
+      msgPwd?: string;
+      verificationPubs: string[];
+    };
+    export type DiagnosePubkeys = { armoredPubs: string[]; message: Uint8Array };
+    export type VerifyDetached = { plaintext: Uint8Array; sigText: Uint8Array; verificationPubs: string[] };
   }
   export type DiagnosePubkeys = (arg: Arg.DiagnosePubkeys) => Promise<DiagnoseMsgPubkeysResult>;
   export type VerifyDetached = (arg: Arg.VerifyDetached) => Promise<VerifyRes>;
@@ -51,14 +64,26 @@ type SortedKeysForDecrypt = {
   signedBy: string[];
   prvMatching: KeyInfoWithIdentityAndOptionalPp[];
   prvForDecrypt: KeyInfoWithIdentityAndOptionalPp[];
-  prvForDecryptDecrypted: { ki: KeyInfoWithIdentityAndOptionalPp, decrypted: Key }[];
+  prvForDecryptDecrypted: { ki: KeyInfoWithIdentityAndOptionalPp; decrypted: Key }[];
   prvForDecryptWithoutPassphrases: KeyInfoWithIdentity[];
 };
 
-export type DecryptSuccess = { success: true; signature?: VerifyRes; isEncrypted?: boolean, filename?: string, content: Buf };
-type DecryptError$error = { type: DecryptErrTypes; message: string; };
-type DecryptError$longids = { message: string[]; matching: string[]; chosen: string[]; needPassphrase: string[]; };
-export type DecryptError = { success: false; error: DecryptError$error; longids: DecryptError$longids; content?: Buf; isEncrypted?: boolean; };
+export type DecryptSuccess = {
+  success: true;
+  signature?: VerifyRes;
+  isEncrypted?: boolean;
+  filename?: string;
+  content: Buf;
+};
+type DecryptError$error = { type: DecryptErrTypes; message: string };
+type DecryptError$longids = { message: string[]; matching: string[]; chosen: string[]; needPassphrase: string[] };
+export type DecryptError = {
+  success: false;
+  error: DecryptError$error;
+  longids: DecryptError$longids;
+  content?: Buf;
+  isEncrypted?: boolean;
+};
 
 export type VerifyRes = {
   signerLongids: string[]; // signers longids from the message
@@ -66,12 +91,12 @@ export type VerifyRes = {
   suppliedLongids: string[]; // longids from keys supplied to verify the message
   match: boolean | null; // we can return some pubkey information here
   error?: string;
-  isErrFatal?: boolean,
-  content?: Buf
+  isErrFatal?: boolean;
+  content?: Buf;
 };
-export type PgpMsgTypeResult = { armored: boolean, type: MsgBlockType } | undefined;
+export type PgpMsgTypeResult = { armored: boolean; type: MsgBlockType } | undefined;
 export type DecryptResult = DecryptSuccess | DecryptError;
-export type DiagnoseMsgPubkeysResult = { found_match: boolean, receivers: number, };
+export type DiagnoseMsgPubkeysResult = { found_match: boolean; receivers: number }; // eslint-disable-line @typescript-eslint/naming-convention
 export enum DecryptErrTypes {
   keyMismatch = 'key_mismatch',
   usePassword = 'use_password',
@@ -85,15 +110,15 @@ export enum DecryptErrTypes {
 
 export class FormatError extends Error {
   public data: string;
-  constructor(message: string, data: string) {
+  public constructor(message: string, data: string) {
     super(message);
     this.data = data;
   }
 }
 
 export class MsgUtil {
-
-  public static type: PgpMsgMethod.Type = async ({ data }) => { // promisified because used through bg script
+  public static type: PgpMsgMethod.Type = async ({ data }) => {
+    // promisified because used through bg script
     if (!data || !data.length) {
       return undefined;
     }
@@ -105,11 +130,14 @@ export class MsgUtil {
     }
     const firstByte = data[0];
     // attempt to understand this as a binary PGP packet: https://tools.ietf.org/html/rfc4880#section-4.2
-    if ((firstByte & 0b10000000) === 0b10000000) { // 1XXX XXXX - potential pgp packet tag
+    if ((firstByte & 0b10000000) === 0b10000000) {
+      // 1XXX XXXX - potential pgp packet tag
       let tagNumber = 0; // zero is a forbidden tag number
-      if ((firstByte & 0b11000000) === 0b11000000) { // 11XX XXXX - potential new pgp packet tag
-        tagNumber = firstByte & 0b00111111;  // 11TTTTTT where T is tag number bit
-      } else { // 10XX XXXX - potential old pgp packet tag
+      if ((firstByte & 0b11000000) === 0b11000000) {
+        // 11XX XXXX - potential new pgp packet tag
+        tagNumber = firstByte & 0b00111111; // 11TTTTTT where T is tag number bit
+      } else {
+        // 10XX XXXX - potential old pgp packet tag
         tagNumber = (firstByte & 0b00111100) / 4; // 10TTTTLL where T is tag number bit. Division by 4 in place of two bit shifts. I hate bit shifts.
       }
       if (Object.values(opgp.enums.packet).includes(tagNumber)) {
@@ -117,10 +145,7 @@ export class MsgUtil {
         // This does not 100% mean it's OpenPGP message
         // But it's a good indication that it may be
         const t = opgp.enums.packet;
-        const msgTpes = [
-          t.symEncryptedIntegrityProtected, t.modificationDetectionCode,
-          t.symEncryptedAEADProtected, t.symmetricallyEncrypted, t.compressed
-        ];
+        const msgTpes = [t.symEncryptedIntegrityProtected, t.modificationDetectionCode, t.symEncryptedAEADProtected, t.symmetricallyEncrypted, t.compressed];
         return { armored: false, type: msgTpes.includes(tagNumber) ? 'encryptedMsg' : 'publicKey' };
       }
     }
@@ -175,7 +200,12 @@ export class MsgUtil {
     longids.chosen = keys.prvForDecryptDecrypted.map(decrypted => decrypted.ki.longid);
     longids.needPassphrase = keys.prvForDecryptWithoutPassphrases.map(ki => ki.longid);
     if (!keys.prvForDecryptDecrypted.length && (!msgPwd || prepared.isPkcs7)) {
-      return { success: false, error: { type: DecryptErrTypes.needPassphrase, message: 'Missing pass phrase' }, longids, isEncrypted };
+      return {
+        success: false,
+        error: { type: DecryptErrTypes.needPassphrase, message: 'Missing pass phrase' },
+        longids,
+        isEncrypted,
+      };
     }
     try {
       if (prepared.isPkcs7) {
@@ -188,20 +218,33 @@ export class MsgUtil {
       const isSymEncrypted = packets.filter(p => p.tag === opgp.enums.packet.symEncryptedSessionKey).length > 0;
       const isPubEncrypted = packets.filter(p => p.tag === opgp.enums.packet.publicKeyEncryptedSessionKey).length > 0;
       if (isSymEncrypted && !isPubEncrypted && !msgPwd) {
-        return { success: false, error: { type: DecryptErrTypes.usePassword, message: 'Use message password' }, longids, isEncrypted };
+        return {
+          success: false,
+          error: { type: DecryptErrTypes.usePassword, message: 'Use message password' },
+          longids,
+          isEncrypted,
+        };
       }
       const passwords = msgPwd ? [msgPwd] : undefined;
       const privateKeys = keys.prvForDecryptDecrypted.map(decrypted => decrypted.decrypted);
       const decrypted = await OpenPGPKey.decryptMessage(msg, privateKeys, passwords);
       const signature = await OpenPGPKey.verify(decrypted, await ContactStore.getPubkeyInfos(undefined, verificationPubs));
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const content = signature?.content || new Buf(await opgp.stream.readToEnd(decrypted.getLiteralData()!));
       if (signature?.content) {
         signature.content = undefined; // already passed as "content" on the response object, don't need it duplicated
       }
       if (msg.packets.filterByTag(opgp.enums.packet.symmetricallyEncrypted).length) {
-        const noMdc = 'Security threat!\n\nMessage is missing integrity checks (MDC). ' +
+        const noMdc =
+          'Security threat!\n\nMessage is missing integrity checks (MDC). ' +
           ' The sender should update their outdated software.\n\nDisplay the message at your own risk.';
-        return { success: false, content, error: { type: DecryptErrTypes.noMdc, message: noMdc }, longids, isEncrypted };
+        return {
+          success: false,
+          content,
+          error: { type: DecryptErrTypes.noMdc, message: noMdc },
+          longids,
+          isEncrypted,
+        };
       }
       return { success: true, content, isEncrypted, filename: decrypted.getFilename() || undefined, signature };
     } catch (e) {
@@ -228,6 +271,7 @@ export class MsgUtil {
     for (const k of await Promise.all(armoredPubs.map(pub => KeyUtil.parse(pub)))) {
       localKeyIds.push(...KeyUtil.getPubkeyLongids(k));
     }
+    // eslint-disable-next-line @typescript-eslint/naming-convention
     const diagnosis = { found_match: false, receivers: msgKeyIds.length };
     for (const msgKeyId of msgKeyIds) {
       for (const localKeyId of localKeyIds) {
@@ -252,10 +296,10 @@ export class MsgUtil {
     const encryptionKeyids = msg.getEncryptionKeyIds();
     keys.encryptedFor = encryptionKeyids.map(kid => OpenPGPKey.bytesToLongid(kid.bytes));
     if (keys.encryptedFor.length) {
-      keys.prvMatching = kiWithPp.filter(ki => KeyUtil.getKeyInfoLongids(ki).some(
-        longid => keys.encryptedFor.includes(longid)));
+      keys.prvMatching = kiWithPp.filter(ki => KeyUtil.getKeyInfoLongids(ki).some(longid => keys.encryptedFor.includes(longid)));
       keys.prvForDecrypt = keys.prvMatching.length ? keys.prvMatching : kiWithPp;
-    } else { // prvs not needed for signed msgs
+    } else {
+      // prvs not needed for signed msgs
       keys.prvForDecrypt = [];
     }
     for (const ki of keys.prvForDecrypt) {
@@ -269,7 +313,7 @@ export class MsgUtil {
       // todo - the `ki.passphrase || ''` used to be `ki.passphrase!` which could have actually allowed an undefined to be passed
       // as fixed currently it appears better, but it may be best to instead check `ki.passphrase && await MsgUtil.decryptKeyFor(...)`
       // but that is a larger change that would require separate PR and testing
-      if (MsgUtil.isKeyDecryptedFor(parsed, matchingKeyids) || await MsgUtil.decryptKeyFor(parsed, ki.passphrase || '', matchingKeyids) === true) {
+      if (MsgUtil.isKeyDecryptedFor(parsed, matchingKeyids) || (await MsgUtil.decryptKeyFor(parsed, ki.passphrase || '', matchingKeyids)) === true) {
         KeyCache.setDecrypted(parsed);
         keys.prvForDecryptDecrypted.push({ ki, decrypted: parsed });
       } else {
@@ -290,10 +334,10 @@ export class MsgUtil {
     };
     keys.encryptedFor = SmimeKey.getMessageLongids(msg);
     if (keys.encryptedFor.length) {
-      keys.prvMatching = kiWithPp.filter(ki => KeyUtil.getKeyInfoLongids(ki).some(
-        longid => keys.encryptedFor.includes(longid)));
+      keys.prvMatching = kiWithPp.filter(ki => KeyUtil.getKeyInfoLongids(ki).some(longid => keys.encryptedFor.includes(longid)));
       keys.prvForDecrypt = keys.prvMatching.length ? keys.prvMatching : kiWithPp;
-    } else { // prvs not needed for signed msgs
+    } else {
+      // prvs not needed for signed msgs
       keys.prvForDecrypt = [];
     }
     for (const ki of keys.prvForDecrypt) {
@@ -303,7 +347,7 @@ export class MsgUtil {
         continue;
       }
       const parsed = await KeyUtil.parse(ki.private);
-      if (parsed.fullyDecrypted || ki.passphrase && await SmimeKey.decryptKey(parsed, ki.passphrase) === true) {
+      if (parsed.fullyDecrypted || (ki.passphrase && (await SmimeKey.decryptKey(parsed, ki.passphrase)) === true)) {
         KeyCache.setDecrypted(parsed);
         keys.prvForDecryptDecrypted.push({ ki, decrypted: parsed });
       } else {
@@ -318,11 +362,13 @@ export class MsgUtil {
   };
 
   private static decryptKeyFor = async (prv: Key, passphrase: string, matchingKeyIds: OpenPGP.Keyid[]): Promise<boolean> => {
-    if (!matchingKeyIds.length) { // we don't know which keyids match, decrypt all key packets
+    if (!matchingKeyIds.length) {
+      // we don't know which keyids match, decrypt all key packets
       return await KeyUtil.decrypt(prv, passphrase, undefined, 'OK-IF-ALREADY-DECRYPTED');
     }
-    for (const matchingKeyId of matchingKeyIds) { // we know which keyids match, decrypt only matching key packets
-      if (! await KeyUtil.decrypt(prv, passphrase, matchingKeyId, 'OK-IF-ALREADY-DECRYPTED')) {
+    for (const matchingKeyId of matchingKeyIds) {
+      // we know which keyids match, decrypt only matching key packets
+      if (!(await KeyUtil.decrypt(prv, passphrase, matchingKeyId, 'OK-IF-ALREADY-DECRYPTED'))) {
         return false; // failed to decrypt a particular needed key packet
       }
     }
@@ -344,8 +390,13 @@ export class MsgUtil {
 
   private static cryptoMsgDecryptCategorizeErr = (decryptErr: unknown, msgPwd?: string): DecryptError$error => {
     const e = String(decryptErr).replace('Error: ', '').replace('Error decrypting message: ', '');
-    const keyMismatchErrStrings = ['Cannot read property \'isDecrypted\' of null', 'privateKeyPacket is null',
-      'TypeprivateKeyPacket is null', 'Session key decryption failed.', 'Invalid session key for decryption.'];
+    const keyMismatchErrStrings = [
+      "Cannot read property 'isDecrypted' of null",
+      'privateKeyPacket is null',
+      'TypeprivateKeyPacket is null',
+      'Session key decryption failed.',
+      'Invalid session key for decryption.',
+    ];
     if (keyMismatchErrStrings.includes(e) && !msgPwd) {
       return { type: DecryptErrTypes.keyMismatch, message: e };
     } else if (msgPwd && ['Invalid enum value.', 'CFB decrypt: invalid key', 'Session key decryption failed.'].includes(e)) {
@@ -355,10 +406,12 @@ export class MsgUtil {
     } else if (e === 'Decryption error') {
       return { type: DecryptErrTypes.format, message: e };
     } else if (e === 'Modification detected.') {
-      return { type: DecryptErrTypes.badMdc, message: `Security threat - opening this message is dangerous because it was modified in transit.` };
+      return {
+        type: DecryptErrTypes.badMdc,
+        message: `Security threat - opening this message is dangerous because it was modified in transit.`,
+      };
     } else {
       return { type: DecryptErrTypes.other, message: e };
     }
   };
-
 }

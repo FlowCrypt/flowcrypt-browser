@@ -44,8 +44,8 @@ export class Debug {
   };
 
   /**
-  * Add an arbitrary message to `debug` database
-  */
+   * Add an arbitrary message to `debug` database
+   */
   public static addMessage = async (message: unknown): Promise<void> => {
     const db = await Debug.openDatabase();
     const tx = db.transaction(['messages'], 'readwrite');
@@ -60,7 +60,7 @@ export class Debug {
   private static openDatabase = async (): Promise<IDBDatabase> => {
     const db = await new Promise((resolve, reject) => {
       const openDbReq = indexedDB.open('debug', 1);
-      openDbReq.onupgradeneeded = (event) => {
+      openDbReq.onupgradeneeded = event => {
         const db = openDbReq.result;
         if (event.oldVersion < 1) {
           db.createObjectStore('messages', { autoIncrement: true });

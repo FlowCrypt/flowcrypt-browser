@@ -24,14 +24,13 @@ import { ContactStore } from '../../../js/common/platform/store/contact-store.js
 import { EmailParts } from '../../../js/common/core/common.js';
 
 export class ComposeSendBtnModule extends ViewModule<ComposeView> {
-
   public additionalMsgHeaders: { [key: string]: string } = {};
   public btnUpdateTimeout?: number;
   public popover: ComposeSendBtnPopoverModule;
 
   private isSendMessageInProgress = false;
 
-  constructor(view: ComposeView) {
+  public constructor(view: ComposeView) {
     super(view);
     this.popover = new ComposeSendBtnPopoverModule(view);
   }
@@ -39,7 +38,10 @@ export class ComposeSendBtnModule extends ViewModule<ComposeView> {
   public setHandlers = (): void => {
     const ctrlEnterHandler = Ui.ctrlEnter(() => !this.view.sizeModule.composeWindowIsMinimized && this.extractProcessSendMsg());
     this.view.S.cached('subject').add(this.view.S.cached('compose')).keydown(ctrlEnterHandler);
-    this.view.S.cached('send_btn').on('click', this.view.setHandlerPrevent('double', () => this.extractProcessSendMsg()));
+    this.view.S.cached('send_btn').on(
+      'click',
+      this.view.setHandlerPrevent('double', () => this.extractProcessSendMsg())
+    );
     this.popover.setHandlers();
   };
 
@@ -117,7 +119,7 @@ export class ComposeSendBtnModule extends ViewModule<ComposeView> {
         }
         BrowserMsg.send.notificationShow(this.view.parentTabId, {
           notification: `Your ${this.view.isReplyBox ? 'reply' : 'message'} has been sent.`,
-          group: 'compose'
+          group: 'compose',
         });
         BrowserMsg.send.focusBody(this.view.parentTabId); // Bring focus back to body so Gmails shortcuts will work
         if (this.view.isReplyBox) {
@@ -147,7 +149,7 @@ export class ComposeSendBtnModule extends ViewModule<ComposeView> {
     }
   };
 
-  private finalizeSendableMsg = async ({ msg, senderKi }: { msg: SendableMsg, senderKi: KeyInfoWithIdentity | undefined }) => {
+  private finalizeSendableMsg = async ({ msg, senderKi }: { msg: SendableMsg; senderKi: KeyInfoWithIdentity | undefined }) => {
     const choices = this.view.sendBtnModule.popover.choices;
     for (const k of Object.keys(this.additionalMsgHeaders)) {
       msg.headers[k] = this.additionalMsgHeaders[k];
@@ -164,14 +166,15 @@ export class ComposeSendBtnModule extends ViewModule<ComposeView> {
       msg.body['text/html'] = htmlWithCidImages;
       msg.attachments.push(...imgAttachments);
     }
-    if (this.view.myPubkeyModule.shouldAttach() && senderKi) { // todo: report on undefined?
+    if (this.view.myPubkeyModule.shouldAttach() && senderKi) {
+      // todo: report on undefined?
       msg.attachments.push(Attachment.keyinfoAsPubkeyAttachment(senderKi));
     }
   };
 
   private extractInlineImagesToAttachments = (html: string) => {
     const imgAttachments: Attachment[] = [];
-    DOMPurify.addHook('afterSanitizeAttributes', (node) => {
+    DOMPurify.addHook('afterSanitizeAttributes', node => {
       if (!node) {
         return;
       }
@@ -185,7 +188,7 @@ export class ComposeSendBtnModule extends ViewModule<ComposeView> {
             name: img.getAttribute('name') || '',
             type: mimeType,
             data: Buf.fromBase64Str(data),
-            inline: true
+            inline: true,
           });
           img.setAttribute('src', `cid:${imgAttachment.cid}`);
           imgAttachments.push(imgAttachment);
@@ -221,9 +224,10 @@ export class ComposeSendBtnModule extends ViewModule<ComposeView> {
     // todo: this isn't correct when we're sending multiple messages
     const progressRepresents = this.view.pwdOrPubkeyContainerModule.isVisible() ? 'SECOND-HALF' : 'EVERYTHING';
     try {
-      return await this.view.emailProvider.msgSend(msg, (p) => this.renderUploadProgress(p, progressRepresents));
+      return await this.view.emailProvider.msgSend(msg, p => this.renderUploadProgress(p, progressRepresents));
     } catch (e) {
-      if (msg.thread && ApiErr.isNotFound(e) && this.view.threadId) { // cannot send msg because threadId not found - eg user since deleted it
+      if (msg.thread && ApiErr.isNotFound(e) && this.view.threadId) {
+        // cannot send msg because threadId not found - eg user since deleted it
         msg.thread = undefined;
         // give it another try, this time without msg.thread
         // todo: progressRepresents?
@@ -254,7 +258,7 @@ export class ComposeSendBtnModule extends ViewModule<ComposeView> {
     const supplementaryOperations: Promise<void>[] = [];
     const supplementaryOperationsErrors: unknown[] = [];
     const success: EmailParts[] = [];
-    const failures: { recipient: EmailParts, e: unknown }[] = [];
+    const failures: { recipient: EmailParts; e: unknown }[] = [];
     for (const msg of msgObj.msgs) {
       const msgRecipients = msg.getAllRecipients();
       try {
@@ -265,7 +269,11 @@ export class ComposeSendBtnModule extends ViewModule<ComposeView> {
           supplementaryOperations.push(this.bindMessageId(msg.externalId, msgSentRes.id, supplementaryOperationsErrors));
         }
       } catch (e) {
-        failures.push(...msgRecipients.map(recipient => { return { recipient, e }; }));
+        failures.push(
+          ...msgRecipients.map(recipient => {
+            return { recipient, e };
+          })
+        );
       }
     }
     try {
@@ -279,5 +287,4 @@ export class ComposeSendBtnModule extends ViewModule<ComposeView> {
     }
     return { success, failures, supplementaryOperationsErrors, sentIds };
   };
-
 }

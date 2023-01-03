@@ -5,14 +5,13 @@
 import { base64decode, base64encode } from '../platform/util.js';
 import { Xss } from '../platform/xss.js';
 
-export type Dict<T> = { [key: string]: T; };
+export type Dict<T> = { [key: string]: T };
 export type UrlParam = string | number | null | undefined | boolean | string[];
 export type UrlParams = Dict<UrlParam>;
 export type PromiseCancellation = { cancel: boolean };
-export type EmailParts = { email: string, name?: string };
+export type EmailParts = { email: string; name?: string };
 
 export class Str {
-
   // ranges are taken from https://stackoverflow.com/a/14824756
   // with the '\u0300' -> '\u0370' modification, because from '\u0300' to '\u0370' there are only punctuation marks
   // see https://www.utf8-chartable.de/unicode-utf8-table.pl
@@ -23,7 +22,11 @@ export class Str {
     let email: string | undefined;
     let name: string | undefined;
     if (full.includes('<') && full.includes('>')) {
-      email = full.substr(full.indexOf('<') + 1, full.indexOf('>') - full.indexOf('<') - 1).replace(/["']/g, '').trim().toLowerCase();
+      email = full
+        .substr(full.indexOf('<') + 1, full.indexOf('>') - full.indexOf('<') - 1)
+        .replace(/["']/g, '')
+        .trim()
+        .toLowerCase();
       name = full.substr(0, full.indexOf('<')).replace(/["']/g, '').trim();
     } else {
       email = full.replace(/["']/g, '').trim().toLowerCase();
@@ -57,7 +60,7 @@ export class Str {
   };
 
   public static prettyPrint = (obj: unknown) => {
-    return (typeof obj === 'object') ? JSON.stringify(obj, undefined, 2).replace(/ /g, '&nbsp;').replace(/\n/g, '<br />') : String(obj);
+    return typeof obj === 'object' ? JSON.stringify(obj, undefined, 2).replace(/ /g, '&nbsp;').replace(/\n/g, '<br />') : String(obj);
   };
 
   public static normalizeSpaces = (str: string) => {
@@ -85,14 +88,16 @@ export class Str {
       return false;
     }
     email = email.replace(/\:8001$/, ''); // for MOCK tests until https://github.com/FlowCrypt/flowcrypt-browser/issues/4631
-    return /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/i.test(email);
+    return /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/i.test(
+      email
+    );
   };
 
   public static monthName = (monthIndex: number) => {
     return ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'][monthIndex];
   };
 
-  public static sloppyRandom = (length: number = 5) => {
+  public static sloppyRandom = (length = 5) => {
     let id = '';
     const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
     for (let i = 0; i < length; i++) {
@@ -107,6 +112,7 @@ export class Str {
     const result: string[] = [];
     while (true) {
       const match = regexp.exec(str);
+      // eslint-disable-next-line no-null/no-null
       if (match === null) {
         break;
       }
@@ -147,14 +153,18 @@ export class Str {
   };
 
   public static capitalize = (string: string): string => {
-    return string.trim().split(' ').map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(' ');
+    return string
+      .trim()
+      .split(' ')
+      .map(s => s.charAt(0).toUpperCase() + s.slice(1))
+      .join(' ');
   };
 
-  public static pluralize = (count: number, noun: string, suffix: string = 's'): string => {
+  public static pluralize = (count: number, noun: string, suffix = 's'): string => {
     return `${count} ${noun}${count > 1 ? suffix : ''}`;
   };
 
-  public static toUtcTimestamp = (datetimeStr: string, asStr: boolean = false) => {
+  public static toUtcTimestamp = (datetimeStr: string, asStr = false) => {
     return asStr ? String(Date.parse(datetimeStr)) : Date.parse(datetimeStr);
   };
 
@@ -163,7 +173,10 @@ export class Str {
   };
 
   public static fromDate = (date: Date) => {
-    return date.toISOString().replace(/T/, ' ').replace(/:[^:]+$/, '');
+    return date
+      .toISOString()
+      .replace(/T/, ' ')
+      .replace(/:[^:]+$/, '');
   };
 
   public static mostlyRTL = (string: string): boolean => {
@@ -185,7 +198,9 @@ export class Str {
       return str;
     }
     return base64encode(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, (match, p1) => String.fromCharCode(parseInt(String(p1), 16))))
-      .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_')
+      .replace(/=+$/, '');
   };
 
   private static base64urlUtfDecode = (str: string) => {
@@ -193,21 +208,23 @@ export class Str {
     if (typeof str === 'undefined') {
       return str;
     }
-    // tslint:disable-next-line:no-unsafe-any
-    return decodeURIComponent(Array.prototype.map.call(base64decode(str.replace(/-/g, '+').replace(/_/g, '/')), (c: string) => {
-      return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-    }).join(''));
-  };
 
+    return decodeURIComponent(
+      Array.prototype.map
+        .call(base64decode(str.replace(/-/g, '+').replace(/_/g, '/')), (c: string) => {
+          return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+        })
+        .join('')
+    );
+  };
 }
 
 export class DateUtility {
-  // tslint:disable-next-line:no-null-keyword
   public static asNumber = (date: number | null | undefined): number | null => {
     if (typeof date === 'number') {
       return date;
     } else if (!date) {
-      return null; // tslint:disable-line:no-null-keyword
+      return null; // eslint-disable-line no-null/no-null
     } else {
       return new Date(date).getTime();
     }
@@ -215,7 +232,6 @@ export class DateUtility {
 }
 
 export class Value {
-
   public static arr = {
     unique: <T>(array: T[]): T[] => {
       const unique: T[] = [];
@@ -241,7 +257,7 @@ export class Value {
     hasIntersection: <T>(array1: T[], array2: T[]): boolean => array1.some(value => array2.includes(value)),
     sum: (arr: number[]) => arr.reduce((a, b) => a + b, 0),
     average: (arr: number[]) => Value.arr.sum(arr) / arr.length,
-    zeroes: (length: number): number[] => new Array(length).map(() => 0)
+    zeroes: (length: number): number[] => new Array(length).map(() => 0),
   };
 
   public static obj = {
@@ -262,19 +278,23 @@ export class Value {
   };
 
   public static noop = (): void => undefined;
-
 }
 
 export class Url {
-
-  private static URL_PARAM_DICT: Dict<boolean | null> = { '___cu_true___': true, '___cu_false___': false, '___cu_null___': null }; // tslint:disable-line:no-null-keyword
+  /* eslint-disable @typescript-eslint/naming-convention */
+  private static URL_PARAM_DICT: Dict<boolean | null> = {
+    ___cu_true___: true,
+    ___cu_false___: false,
+    ___cu_null___: null, // eslint-disable-line no-null/no-null
+  };
 
   /**
    * will convert result to desired format: camelCase or snake_case, based on what was supplied in expectedKeys
    * todo - the camelCase or snake_case functionality can now be removed
    */
   public static parse = (expectedKeys: string[], parseThisUrl?: string) => {
-    const url = (parseThisUrl || window.location.search.replace('?', ''));
+    const url = parseThisUrl || window.location.search.replace('?', '');
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const valuePairs = url.split('?').pop()!.split('&'); // str.split('?') string[].length will always be >= 1
     const rawParams: Dict<string> = {};
     const rawParamNameDict: Dict<string> = {};
@@ -295,7 +315,11 @@ export class Url {
       const value = params[key];
       if (typeof value !== 'undefined') {
         const transformed = Value.obj.keyByValue(Url.URL_PARAM_DICT, value);
-        link += (link.includes('?') ? '&' : '?') + encodeURIComponent(key) + '=' + encodeURIComponent(String(typeof transformed !== 'undefined' ? transformed : value));
+        link +=
+          (link.includes('?') ? '&' : '?') +
+          encodeURIComponent(key) +
+          '=' +
+          encodeURIComponent(String(typeof transformed !== 'undefined' ? transformed : value));
       }
     }
     return link;
@@ -303,7 +327,8 @@ export class Url {
 
   public static removeParamsFromUrl = (url: string, paramsToDelete: string[]) => {
     const urlParts = url.split('?');
-    if (!urlParts[1]) { // Nothing to remove
+    if (!urlParts[1]) {
+      // Nothing to remove
       return url;
     }
     let queryParams = urlParts[1];
@@ -350,20 +375,19 @@ export class Url {
     rawParamNameDict[Url.snakeCaseToCamelCase(shortened)] = urlParamName;
     rawParamNameDict[Url.camelCaseToSnakeCase(shortened)] = urlParamName;
   };
-
 }
 
 export const emailKeyIndex = (scope: string, key: string): string => {
   return `${scope.replace(/[^A-Za-z0-9]+/g, '').toLowerCase()}_${key}`;
 };
 
-export const asyncSome = async<T>(arr: Array<T>, predicate: (e: T) => Promise<boolean>) => {
+export const asyncSome = async <T>(arr: Array<T>, predicate: (e: T) => Promise<boolean>) => {
   for (const e of arr) {
     if (await predicate(e)) return true;
   }
   return false;
 };
 
-export const stringTuple = <T extends | string[]>(...data: T): T => {
+export const stringTuple = <T extends string[]>(...data: T): T => {
   return data;
 };

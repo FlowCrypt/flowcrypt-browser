@@ -21,16 +21,15 @@ import { Browser } from '../../../../js/common/browser/browser.js';
 import { Attachment } from '../../../../js/common/core/attachment.js';
 
 export class InboxActiveThreadModule extends ViewModule<InboxView> {
-
   private threadId: string | undefined;
-  private threadHasPgpBlock: boolean = false;
+  private threadHasPgpBlock = false;
   private debugEmails = ['flowcrypt.compatibility@gmail.com', 'ci.tests.gmail@flowcrypt.dev', 'e2e.enterprise.test@flowcrypt.com']; // adds debugging ui, useful for creating automated tests
 
   public render = async (threadId: string, thread?: GmailRes.GmailThread) => {
     this.threadId = threadId;
     this.view.displayBlock('thread', 'Loading..');
     try {
-      thread = thread || await this.view.gmail.threadGet(threadId, 'metadata');
+      thread = thread || (await this.view.gmail.threadGet(threadId, 'metadata'));
       if (!thread.messages) {
         Xss.sanitizeRender('.thread', `<br>No messages in this thread. ${Ui.retryLink()}`);
         return;
@@ -42,9 +41,9 @@ export class InboxActiveThreadModule extends ViewModule<InboxView> {
         await this.renderMsg(m);
       }
       if (this.threadHasPgpBlock) {
-        $(".action_see_original_message").css('display', 'inline-block');
+        $('.action_see_original_message').css('display', 'inline-block');
         if (this.view.showOriginal) {
-          $(".action_see_original_message").text('See Decrypted');
+          $('.action_see_original_message').text('See Decrypted');
         }
       }
       const lastMsg = thread.messages[thread.messages.length - 1];
@@ -70,9 +69,16 @@ export class InboxActiveThreadModule extends ViewModule<InboxView> {
 
   public setHandlers = () => {
     if (this.threadHasPgpBlock) {
-      $(".action_see_original_message").on('click', this.view.setHandler(() => this.view.redirectToUrl({
-        acctEmail: this.view.acctEmail, threadId: this.threadId, showOriginal: !this.view.showOriginal
-      })));
+      $('.action_see_original_message').on(
+        'click',
+        this.view.setHandler(() =>
+          this.view.redirectToUrl({
+            acctEmail: this.view.acctEmail,
+            threadId: this.threadId,
+            showOriginal: !this.view.showOriginal,
+          })
+        )
+      );
     }
     BrowserMsg.addListener('close_reply_message', async ({ frameId }: Bm.ComposeWindow) => {
       $(`iframe#${frameId}`).remove();
@@ -102,7 +108,7 @@ export class InboxActiveThreadModule extends ViewModule<InboxView> {
     const from = GmailParser.findHeader(message, 'from') || 'unknown';
     try {
       const { raw } = await this.view.gmail.msgGet(message.id, 'raw');
-      const mimeMsg = Buf.fromBase64UrlStr(raw!);
+      const mimeMsg = Buf.fromBase64UrlStr(raw!); // eslint-disable-line @typescript-eslint/no-non-null-assertion
       const { blocks, headers } = await Mime.process(mimeMsg);
       let r = '';
       let renderedAttachments = '';
@@ -114,7 +120,13 @@ export class InboxActiveThreadModule extends ViewModule<InboxView> {
           r += '<br><br>';
         }
         if (['encryptedAttachment', 'plainAttachment'].includes(block.type)) {
-          renderedAttachments += XssSafeFactory.renderableMsgBlock(this.view.factory, block, message.id, from, this.view.storage.sendAs && !!this.view.storage.sendAs[from]);
+          renderedAttachments += XssSafeFactory.renderableMsgBlock(
+            this.view.factory,
+            block,
+            message.id,
+            from,
+            this.view.storage.sendAs && !!this.view.storage.sendAs[from]
+          );
         } else if (this.view.showOriginal) {
           r += Xss.escape(block.content.toString()).replace(/\n/g, '<br>');
         } else {
@@ -125,10 +137,14 @@ export class InboxActiveThreadModule extends ViewModule<InboxView> {
         r += `<div class="attachments" data-test="container-attachments">${renderedAttachments}</div>`;
       }
       const exportBtn = this.debugEmails.includes(this.view.acctEmail) ? '<a href="#" class="action-export">download api export</a>' : '';
-      r = `<p class="message_header" data-test="container-msg-header">From: ${Xss.escape(from)} <span style="float:right;">${headers.date} ${exportBtn}</p>` + r;
+      r =
+        `<p class="message_header" data-test="container-msg-header">From: ${Xss.escape(from)} <span style="float:right;">${headers.date} ${exportBtn}</p>` + r;
       $('.thread').append(this.wrapMsg(htmlId, r)); // xss-safe-factory
       if (exportBtn) {
-        $('.action-export').on('click', this.view.setHandler(() => this.exportMsgForDebug(message.id)));
+        $('.action-export').on(
+          'click',
+          this.view.setHandler(() => this.exportMsgForDebug(message.id))
+        );
       }
     } catch (e) {
       if (ApiErr.isNetErr(e)) {
@@ -152,8 +168,9 @@ export class InboxActiveThreadModule extends ViewModule<InboxView> {
     await this.view.gmail.fetchAttachments(existingAttachments);
     this.redactExportMsgHeaders(full);
     this.redactExportMsgHeaders(raw);
-    const attachments: { [id: string]: { data: string, size: number } } = {};
+    const attachments: { [id: string]: { data: string; size: number } } = {};
     for (const attachment of existingAttachments) {
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       attachments[attachment.id!] = { data: attachment.getData().toBase64UrlStr(), size: attachment.getData().length };
     }
     const combined = { acctEmail: this.view.acctEmail, full, attachments, raw };
@@ -162,8 +179,21 @@ export class InboxActiveThreadModule extends ViewModule<InboxView> {
   };
 
   private redactExportMsgHeaders = (msg: GmailRes.GmailMsg) => {
-    const exclude = ['received', 'dkim', 'authentication', 'feedback', 'ip', 'mailgun', 'unsubscribe', 'return',
-      'arc', 'google', 'delivered', 'precedence', 'message-id'];
+    const exclude = [
+      'received',
+      'dkim',
+      'authentication',
+      'feedback',
+      'ip',
+      'mailgun',
+      'unsubscribe',
+      'return',
+      'arc',
+      'google',
+      'delivered',
+      'precedence',
+      'message-id',
+    ];
     if (msg.payload) {
       msg.payload.headers = msg.payload.headers?.filter(h => {
         const hn = h.name.toLowerCase();
@@ -202,5 +232,4 @@ export class InboxActiveThreadModule extends ViewModule<InboxView> {
   private wrapMsg = (id: string, html: string) => {
     return Ui.e('div', { id, class: 'message line', html });
   };
-
 }

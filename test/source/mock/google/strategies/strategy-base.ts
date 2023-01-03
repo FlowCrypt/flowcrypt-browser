@@ -3,7 +3,7 @@
 import { ParseMsgResult } from '../../../util/parse';
 
 export interface ITestMsgStrategy {
-    test(parseResult: ParseMsgResult, id: string): Promise<void>;
+  test(parseResult: ParseMsgResult, id: string): Promise<void>;
 }
 
-export class UnsuportableStrategyError extends Error { }
+export class UnsuportableStrategyError extends Error {}

@@ -13,7 +13,6 @@ export const DATA_OID = '1.2.840.113549.1.7.1';
 export const SIGNED_DATA_OID = '1.2.840.113549.1.7.2';
 export const ENVELOPED_DATA_OID = '1.2.840.113549.1.7.3';
 export class SmimeKey {
-
   public static parse = (text: string): Key => {
     if (text.includes(PgpArmor.headers('certificate').begin)) {
       const blocks = MsgBlockParser.detectBlocks(text).blocks;
@@ -65,8 +64,9 @@ export class SmimeKey {
     if (!certificate) {
       throw new Error('No user certificate found.');
     }
-    const keyBags = (p12.getBags({ bagType: forge.pki.oids.pkcs8ShroudedKeyBag })[forge.pki.oids.pkcs8ShroudedKeyBag] ?? [])
-      .concat(p12.getBags({ bagType: forge.pki.oids.keyBag })[forge.pki.oids.keyBag] ?? []);
+    const keyBags = (p12.getBags({ bagType: forge.pki.oids.pkcs8ShroudedKeyBag })[forge.pki.oids.pkcs8ShroudedKeyBag] ?? []).concat(
+      p12.getBags({ bagType: forge.pki.oids.keyBag })[forge.pki.oids.keyBag] ?? []
+    );
     const privateKey = keyBags[0]?.key;
     return SmimeKey.getKeyFromCertificate(certificate, privateKey);
   };
@@ -74,8 +74,15 @@ export class SmimeKey {
   /**
    * @param data: an already encoded plain mime message
    */
-  public static encryptMessage = async ({ pubkeys, data: input, armor }: { pubkeys: Key[], data: Uint8Array, armor: boolean }):
-    Promise<{ data: Uint8Array, type: 'smime' }> => {
+  public static encryptMessage = async ({
+    pubkeys,
+    data: input,
+    armor,
+  }: {
+    pubkeys: Key[];
+    data: Uint8Array;
+    armor: boolean;
+  }): Promise<{ data: Uint8Array; type: 'smime' }> => {
     const p7 = forge.pkcs7.createEnvelopedData();
     // collapse duplicate certificates into one
     // check both fingerprints and longids (certificate Serial Number and Issuer)
@@ -106,8 +113,9 @@ export class SmimeKey {
     return { data, type: 'smime' };
   };
 
-  public static readArmoredPkcs7Message = (encrypted: Uint8Array):
-    forge.pkcs7.PkcsEnvelopedData | forge.pkcs7.PkcsEncryptedData | forge.pkcs7.PkcsSignedData => {
+  public static readArmoredPkcs7Message = (
+    encrypted: Uint8Array
+  ): forge.pkcs7.PkcsEnvelopedData | forge.pkcs7.PkcsEncryptedData | forge.pkcs7.PkcsSignedData => {
     return forge.pkcs7.messageFromPem(new Buf(encrypted).toUtfStr());
   };
 
@@ -145,13 +153,13 @@ export class SmimeKey {
 
   public static decryptKey = async (key: Key, passphrase: string, optionalBehaviorFlag?: 'OK-IF-ALREADY-DECRYPTED'): Promise<boolean> => {
     if (!key.isPrivate) {
-      throw new Error("Nothing to decrypt in a public key");
+      throw new Error('Nothing to decrypt in a public key');
     }
     if (key.fullyDecrypted) {
       if (optionalBehaviorFlag === 'OK-IF-ALREADY-DECRYPTED') {
         return true;
       } else {
-        throw new Error("Decryption failed - private key was already decrypted");
+        throw new Error('Decryption failed - private key was already decrypted');
       }
     }
     const encryptedPrivateKey = SmimeKey.getArmoredPrivateKey(key);
@@ -205,9 +213,7 @@ export class SmimeKey {
 
   public static getMessageLongids = (msg: SmimeMsg): string[] => {
     return msg.recipients.map(recipient => {
-      const asn1 = SmimeKey.createIssuerAndSerialNumberAsn1(
-        SmimeKey.attributesToDistinguishedNameAsn1(recipient.issuer),
-        recipient.serialNumber);
+      const asn1 = SmimeKey.createIssuerAndSerialNumberAsn1(SmimeKey.attributesToDistinguishedNameAsn1(recipient.issuer), recipient.serialNumber);
       const der = forge.asn1.toDer(asn1).getBytes();
       return SmimeKey.getLongIdFromDer(der);
     });
@@ -223,8 +229,10 @@ export class SmimeKey {
     return 'X509-' + Buf.fromRawBytesStr(der).toBase64Str();
   };
 
-  private static getLeafCertificates = (msgBlocks: MsgBlock[]): { pem: string, certificate: forge.pki.Certificate }[] => {
-    const parsed = msgBlocks.map(cert => { return { pem: cert.content as string, certificate: forge.pki.certificateFromPem(cert.content as string) }; });
+  private static getLeafCertificates = (msgBlocks: MsgBlock[]): { pem: string; certificate: forge.pki.Certificate }[] => {
+    const parsed = msgBlocks.map(cert => {
+      return { pem: cert.content as string, certificate: forge.pki.certificateFromPem(cert.content as string) };
+    });
     // Note: no signature check is performed.
     return parsed.filter((c, i) => !parsed.some((other, j) => j !== i && other.certificate.isIssuer(c.certificate)));
   };
@@ -234,11 +242,15 @@ export class SmimeKey {
     const normalizedEmail = Str.parseEmail(emailFromSubject).email;
     const emails = normalizedEmail ? [normalizedEmail] : [];
     // search for e-mails in subjectAltName extension
-    const subjectAltName = certificate.getExtension('subjectAltName') as { altNames: { type: number, value: string }[] };
+    const subjectAltName = certificate.getExtension('subjectAltName') as {
+      altNames: { type: number; value: string }[];
+    };
     if (subjectAltName && subjectAltName.altNames) {
-      const emailsFromAltNames = subjectAltName.altNames.filter(entry => entry.type === 1).
-        map(entry => Str.parseEmail(entry.value).email).filter(Boolean);
-      emails.push(...emailsFromAltNames as string[]);
+      const emailsFromAltNames = subjectAltName.altNames
+        .filter(entry => entry.type === 1)
+        .map(entry => Str.parseEmail(entry.value).email)
+        .filter(Boolean);
+      emails.push(...(emailsFromAltNames as string[]));
     }
     if (emails.length) {
       return emails.filter((value, index, self) => self.indexOf(value) === index);
@@ -247,13 +259,13 @@ export class SmimeKey {
   };
 
   private static getKeyFromCertificate = (certificateOrText: forge.pki.Certificate | string, privateKey: forge.pki.PrivateKey | string | undefined): Key => {
-    const certificate = (typeof certificateOrText === 'string') ? forge.pki.certificateFromPem(certificateOrText) : certificateOrText;
+    const certificate = typeof certificateOrText === 'string' ? forge.pki.certificateFromPem(certificateOrText) : certificateOrText;
     if (!certificate.publicKey) {
       throw new UnreportableError(`This S/MIME x.509 certificate doesn't have a public key`);
     }
     let encrypted = false;
     if (typeof privateKey === 'string') {
-      if (privateKey.includes((PgpArmor.headers('pkcs8EncryptedPrivateKey').begin))) {
+      if (privateKey.includes(PgpArmor.headers('pkcs8EncryptedPrivateKey').begin)) {
         encrypted = true;
       } else {
         // test that we can read the unencrypted key
@@ -266,9 +278,8 @@ export class SmimeKey {
     }
     const fingerprint = forge.pki.getPublicKeyFingerprint(certificate.publicKey, { encoding: 'hex' }).toUpperCase();
     const emails = SmimeKey.getNormalizedEmailsFromCertificate(certificate);
-    const issuerAndSerialNumberAsn1 = SmimeKey.createIssuerAndSerialNumberAsn1(
-      forge.pki.distinguishedNameToAsn1(certificate.issuer),
-      certificate.serialNumber);
+    const issuerAndSerialNumberAsn1 = SmimeKey.createIssuerAndSerialNumberAsn1(forge.pki.distinguishedNameToAsn1(certificate.issuer), certificate.serialNumber);
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const expiration = SmimeKey.dateToNumber(certificate.validity.notAfter)!;
     const expired = expiration < Date.now();
     const usableIgnoringExpiration = SmimeKey.isEmailCertificate(certificate) && !SmimeKey.isKeyWeak(certificate);
@@ -290,37 +301,43 @@ export class SmimeKey {
       isPublic: !privateKey,
       isPrivate: !!privateKey,
       revoked: false,
-      issuerAndSerialNumber: forge.asn1.toDer(issuerAndSerialNumberAsn1).getBytes()
+      issuerAndSerialNumber: forge.asn1.toDer(issuerAndSerialNumberAsn1).getBytes(),
     } as Key;
     SmimeKey.saveArmored(key, certificateOrText, privateKey);
     return key;
   };
 
   private static attributesToDistinguishedNameAsn1 = (attributes: forge.pki.Attribute[]): forge.asn1.Asn1 => {
-    return forge.asn1.create(forge.asn1.Class.UNIVERSAL, forge.asn1.Type.SEQUENCE, true, attributes.map(attr => {
-      const valueTagClass = attr.valueTagClass || forge.asn1.Type.PRINTABLESTRING;
-      return forge.asn1.create(forge.asn1.Class.UNIVERSAL, forge.asn1.Type.SET, true, [
-        forge.asn1.create(forge.asn1.Class.UNIVERSAL, forge.asn1.Type.SEQUENCE, true, [
-          // AttributeType
-          forge.asn1.create(forge.asn1.Class.UNIVERSAL, forge.asn1.Type.OID, false,
-            forge.asn1.oidToDer(attr.type).getBytes()),
-          // AttributeValue
-          forge.asn1.create(forge.asn1.Class.UNIVERSAL, attr.valueTagClass, false,
-            (valueTagClass === forge.asn1.Type.UTF8) ? forge.util.encodeUtf8(attr.value) : attr.value)]) // tslint:disable-line:no-unsafe-any
-      ]);
-    }));
+    return forge.asn1.create(
+      forge.asn1.Class.UNIVERSAL,
+      forge.asn1.Type.SEQUENCE,
+      true,
+      attributes.map(attr => {
+        const valueTagClass = attr.valueTagClass || forge.asn1.Type.PRINTABLESTRING;
+        return forge.asn1.create(forge.asn1.Class.UNIVERSAL, forge.asn1.Type.SET, true, [
+          forge.asn1.create(forge.asn1.Class.UNIVERSAL, forge.asn1.Type.SEQUENCE, true, [
+            // AttributeType
+            forge.asn1.create(forge.asn1.Class.UNIVERSAL, forge.asn1.Type.OID, false, forge.asn1.oidToDer(attr.type).getBytes()),
+            // AttributeValue
+            forge.asn1.create(
+              forge.asn1.Class.UNIVERSAL,
+              attr.valueTagClass,
+              false,
+              valueTagClass === forge.asn1.Type.UTF8 ? forge.util.encodeUtf8(attr.value) : attr.value
+            ),
+          ]),
+        ]);
+      })
+    );
   };
 
   private static createIssuerAndSerialNumberAsn1 = (issuerAsn1: forge.asn1.Asn1, serialNumberHex: string) => {
-    return forge.asn1.create(
-      forge.asn1.Class.UNIVERSAL, forge.asn1.Type.SEQUENCE, true,
-      [
-        // Issuer
-        issuerAsn1,
-        // Serial
-        forge.asn1.create(forge.asn1.Class.UNIVERSAL, forge.asn1.Type.INTEGER, false,
-          forge.util.hexToBytes(serialNumberHex))
-      ]);
+    return forge.asn1.create(forge.asn1.Class.UNIVERSAL, forge.asn1.Type.SEQUENCE, true, [
+      // Issuer
+      issuerAsn1,
+      // Serial
+      forge.asn1.create(forge.asn1.Class.UNIVERSAL, forge.asn1.Type.INTEGER, false, forge.util.hexToBytes(serialNumberHex)),
+    ]);
   };
 
   private static getArmoredPrivateKey = (key: Key) => {
@@ -338,14 +355,14 @@ export class SmimeKey {
   private static saveArmored = (key: Key, certificate: forge.pki.Certificate | string, privateKey: forge.pki.PrivateKey | string | undefined) => {
     const armored: string[] = [];
     if (privateKey) {
-      let armoredPrivateKey = (typeof privateKey === 'string') ? privateKey : forge.pki.privateKeyToPem(privateKey);
+      let armoredPrivateKey = typeof privateKey === 'string' ? privateKey : forge.pki.privateKeyToPem(privateKey);
       if (armoredPrivateKey[armoredPrivateKey.length - 1] !== '\n') {
         armoredPrivateKey += '\r\n';
       }
       armored.push(armoredPrivateKey);
       (key as unknown as { privateKeyArmored: string }).privateKeyArmored = armoredPrivateKey;
     }
-    let armoredCertificate = (typeof certificate === 'string') ? certificate : forge.pki.certificateToPem(certificate);
+    let armoredCertificate = typeof certificate === 'string' ? certificate : forge.pki.certificateToPem(certificate);
     if (armoredCertificate[armoredCertificate.length - 1] !== '\n') {
       armoredCertificate += '\r\n';
     }
@@ -374,7 +391,7 @@ export class SmimeKey {
       }
       throw new UnreportableError("Certificate doesn't match the private key");
     }
-    throw new UnreportableError("This key family is not supported");
+    throw new UnreportableError('This key family is not supported');
     /* todo: edwards25519
     const derivedPublicKey = forge.pki.ed25519.publicKeyFromPrivateKey({ privateKey: privateKey as forge.pki.ed25519.BinaryBuffer });
     Buffer.from(derivedPublicKey).compare(Buffer.from(certificate.publicKey as forge.pki.ed25519.NativeBuffer)) === 0;
@@ -395,5 +412,4 @@ export class SmimeKey {
     }
     return date.getTime();
   };
-
 }

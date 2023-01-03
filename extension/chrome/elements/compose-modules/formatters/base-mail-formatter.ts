@@ -11,19 +11,24 @@ import { Buf } from '../../../../js/common/core/buf.js';
 import { Str } from '../../../../js/common/core/common.js';
 
 export class BaseMailFormatter {
-
   protected view: ComposeView;
   protected richtext: boolean;
   protected acctEmail: string;
 
-  constructor(view: ComposeView, protected isDraft = false) {
+  public constructor(view: ComposeView, protected isDraft = false) {
     this.view = view;
     this.richtext = view.sendBtnModule.popover.choices.richtext;
     this.acctEmail = this.view.acctEmail;
   }
 
   protected headers = (newMsg: NewMsgData) => {
-    return { from: Str.formatEmailWithOptionalName(newMsg.from), replyTo: newMsg.replyTo, recipients: newMsg.recipients, subject: newMsg.subject, thread: this.view.threadId };
+    return {
+      from: Str.formatEmailWithOptionalName(newMsg.from),
+      replyTo: newMsg.replyTo,
+      recipients: newMsg.recipients,
+      subject: newMsg.subject,
+      thread: this.view.threadId,
+    };
   };
 
   protected signMimeMessage = async (signingPrv: Key, mimeEncodedMessage: string, newMsg: NewMsgData) => {

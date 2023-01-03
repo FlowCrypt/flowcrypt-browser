@@ -10,7 +10,8 @@ import { OpenPGPKey } from './openpgp-key.js';
 
 export const opgp = requireOpenpgp();
 
-if (typeof opgp !== 'undefined') { // in certain environments, eg pgp_block.htm, openpgp is not included
+if (typeof opgp !== 'undefined') {
+  // in certain environments, eg pgp_block.htm, openpgp is not included
   opgp.config.versionstring = `FlowCrypt Email Encryption ${VERSION}`;
   opgp.config.commentstring = 'Seamlessly send and receive encrypted email';
   opgp.config.ignore_mdc_error = true; // we manually check for missing MDC and show loud warning to user (no auto-decrypt)
@@ -18,18 +19,21 @@ if (typeof opgp !== 'undefined') { // in certain environments, eg pgp_block.htm,
   // openpgp.config.require_uid_self_cert = false;
   const getPrvPackets = (k: OpenPGP.key.Key) => {
     if (!k.isPrivate()) {
-      throw new Error("Cannot check encryption status of secret keys in a Public Key");
+      throw new Error('Cannot check encryption status of secret keys in a Public Key');
     }
-    const prvPackets = k.getKeys().map(k => k.keyPacket).filter(OpenPGPKey.isPacketPrivate) as PrvPacket[];
+    const prvPackets = k
+      .getKeys()
+      .map(k => k.keyPacket)
+      .filter(OpenPGPKey.isPacketPrivate) as PrvPacket[];
     if (!prvPackets.length) {
-      throw new Error("This key has no private packets. Is it a Private Key?");
+      throw new Error('This key has no private packets. Is it a Private Key?');
     }
     // only encrypted keys have s2k (decrypted keys don't needed, already decrypted)
     // if s2k is present and it indicates it's a dummy key, filter it out
     // if s2k is not present, it's a decrypted real key (not dummy)
     const nonDummyPrvPackets = prvPackets.filter(p => !p.s2k || p.s2k.type !== 'gnu-dummy');
     if (!nonDummyPrvPackets.length) {
-      throw new Error("This key only has a gnu-dummy private packet, with no actual secret keys.");
+      throw new Error('This key only has a gnu-dummy private packet, with no actual secret keys.');
     }
     return nonDummyPrvPackets;
   };
@@ -41,14 +45,14 @@ if (typeof opgp !== 'undefined') { // in certain environments, eg pgp_block.htm,
   };
   opgp.key.Key.prototype.isPacketDecrypted = function (keyId: OpenPGP.Keyid) {
     if (!this.isPrivate()) {
-      throw new Error("Cannot check packet encryption status of secret key in a Public Key");
+      throw new Error('Cannot check packet encryption status of secret key in a Public Key');
     }
     if (!keyId) {
-      throw new Error("No Keyid provided to isPacketDecrypted");
+      throw new Error('No Keyid provided to isPacketDecrypted');
     }
     const [key] = this.getKeys(keyId);
     if (!key) {
-      throw new Error("Keyid not found in Private Key");
+      throw new Error('Keyid not found in Private Key');
     }
     return key.keyPacket.isDecrypted() === true;
   };

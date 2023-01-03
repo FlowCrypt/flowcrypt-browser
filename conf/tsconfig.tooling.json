@@ -1,10 +1,7 @@
 {
   "compilerOptions": {
     "target": "ES2020",
-    "lib": [
-      "es6",
-      "dom"
-    ],
+    "lib": ["es6", "dom"],
     "alwaysStrict": true,
     "noImplicitAny": true,
     "strictNullChecks": true,
@@ -18,8 +15,5 @@
     "../tooling/bundle-content-scripts.ts",
     "../tooling/fill-values.ts",
     "../tooling/tsc-compiler.ts"
-  ],
-  "include": [
-    "../tooling/tslint-rules/*.ts"
   ]
 }

@@ -13,17 +13,21 @@ import { Str } from './common.js';
 import { FcAttachmentLinkData } from './attachment.js';
 import { KeyUtil } from './crypto/key.js';
 
-type SanitizedBlocks = { blocks: MsgBlock[], subject: string | undefined, isRichText: boolean, webReplyToken: unknown | undefined };
+type SanitizedBlocks = {
+  blocks: MsgBlock[];
+  subject: string | undefined;
+  isRichText: boolean;
+  webReplyToken: unknown | undefined;
+};
 
 export class MsgBlockParser {
-
   private static ARMOR_HEADER_MAX_LENGTH = 50;
 
   public static detectBlocks = (origText: string) => {
     const blocks: MsgBlock[] = [];
     const normalized = Str.normalize(origText);
     let startAt = 0;
-    while (true) { // eslint-disable-line no-constant-condition
+    while (true) {
       const { found, continueAt } = MsgBlockParser.detectBlockNext(normalized, startAt);
       if (found) {
         blocks.push(...found);
@@ -40,7 +44,10 @@ export class MsgBlockParser {
     }
   };
 
-  public static fmtDecryptedAsSanitizedHtmlBlocks = async (decryptedContent: Uint8Array, imgHandling: SanitizeImgHandling = 'IMG-TO-LINK'): Promise<SanitizedBlocks> => {
+  public static fmtDecryptedAsSanitizedHtmlBlocks = async (
+    decryptedContent: Uint8Array,
+    imgHandling: SanitizeImgHandling = 'IMG-TO-LINK'
+  ): Promise<SanitizedBlocks> => {
     const blocks: MsgBlock[] = [];
     let isRichText = false;
     let webReplyToken: unknown | undefined;
@@ -78,7 +85,14 @@ export class MsgBlockParser {
       if (attachment.treatAs() === 'publicKey') {
         await MsgBlockParser.pushArmoredPubkeysToBlocks([attachment.getData().toUtfStr()], blocks);
       } else {
-        blocks.push(MsgBlock.fromAttachment('decryptedAttachment', '', { name: attachment.name, data: attachment.getData(), length: attachment.length, type: attachment.type }));
+        blocks.push(
+          MsgBlock.fromAttachment('decryptedAttachment', '', {
+            name: attachment.name,
+            data: attachment.getData(),
+            length: attachment.length,
+            type: attachment.type,
+          })
+        );
       }
     }
     return { blocks, subject: decoded.subject, isRichText, webReplyToken };
@@ -89,17 +103,27 @@ export class MsgBlockParser {
     // `<a href="${attachment.url}" class="cryptup_file" cryptup-data="${fcData}">${linkText}</a>\n`
     // thus we use RegEx so that it works on both browser and node
     if (decryptedContent.includes('class="cryptup_file"')) {
-      decryptedContent = decryptedContent.replace(/<a\s+href="([^"]+)"\s+class="cryptup_file"\s+cryptup-data="([^"]+)"\s*>[^<]+<\/a>\n?/gm, (_, url, fcData) => {
-        const fcAttachmentHost = new URL(String(url)).host;
-        if (fcAttachmentHost !== 'flowcrypt.s3.amazonaws.com') {
-          return '[skipped attachment due to invalid url]';
+      decryptedContent = decryptedContent.replace(
+        /<a\s+href="([^"]+)"\s+class="cryptup_file"\s+cryptup-data="([^"]+)"\s*>[^<]+<\/a>\n?/gm,
+        (_, url, fcData) => {
+          const fcAttachmentHost = new URL(String(url)).host;
+          if (fcAttachmentHost !== 'flowcrypt.s3.amazonaws.com') {
+            return '[skipped attachment due to invalid url]';
+          }
+          const a = Str.htmlAttrDecode(String(fcData));
+          if (MsgBlockParser.isFcAttachmentLinkData(a)) {
+            blocks.push(
+              MsgBlock.fromAttachment('encryptedAttachmentLink', '', {
+                type: a.type,
+                name: a.name,
+                length: a.size,
+                url: String(url),
+              })
+            );
+          }
+          return '';
         }
-        const a = Str.htmlAttrDecode(String(fcData));
-        if (MsgBlockParser.isFcAttachmentLinkData(a)) {
-          blocks.push(MsgBlock.fromAttachment('encryptedAttachmentLink', '', { type: a.type, name: a.name, length: a.size, url: String(url) }));
-        }
-        return '';
-      });
+      );
     }
     return decryptedContent;
   };
@@ -132,15 +156,21 @@ export class MsgBlockParser {
   };
 
   private static isFcAttachmentLinkData = (o: unknown): o is FcAttachmentLinkData => {
-    return !!o && typeof o === 'object' && typeof (o as FcAttachmentLinkData).name !== 'undefined'
-      && typeof (o as FcAttachmentLinkData).size !== 'undefined' && typeof (o as FcAttachmentLinkData).type !== 'undefined';
+    return (
+      !!o &&
+      typeof o === 'object' &&
+      typeof (o as FcAttachmentLinkData).name !== 'undefined' &&
+      typeof (o as FcAttachmentLinkData).size !== 'undefined' &&
+      typeof (o as FcAttachmentLinkData).type !== 'undefined'
+    );
   };
 
   private static detectBlockNext = (origText: string, startAt: number) => {
     const armorHdrTypes = Object.keys(PgpArmor.ARMOR_HEADER_DICT) as ReplaceableMsgBlockType[];
-    const result: { found: MsgBlock[], continueAt?: number } = { found: [] as MsgBlock[] };
+    const result: { found: MsgBlock[]; continueAt?: number } = { found: [] as MsgBlock[] };
     const begin = origText.indexOf(PgpArmor.headers('null').begin, startAt);
-    if (begin !== -1) { // found
+    if (begin !== -1) {
+      // found
       const potentialBeginHeader = origText.substr(begin, MsgBlockParser.ARMOR_HEADER_MAX_LENGTH);
       for (const armorHdrType of armorHdrTypes) {
         const blockHeaderDef = PgpArmor.ARMOR_HEADER_DICT[armorHdrType];
@@ -163,12 +193,13 @@ export class MsgBlockParser {
                 result.found.push(MsgBlock.fromContent('plainText', potentialTextBeforeBlockBegun));
               }
             }
-            let endIndex: number = -1;
+            let endIndex = -1;
             let foundBlockEndHeaderLength = 0;
             if (typeof blockHeaderDef.end === 'string') {
               endIndex = origText.indexOf(blockHeaderDef.end, begin + blockHeaderDef.begin.length);
               foundBlockEndHeaderLength = blockHeaderDef.end.length;
-            } else { // regexp
+            } else {
+              // regexp
               const origTextAfterBeginIndex = origText.substring(begin);
               const matchEnd = origTextAfterBeginIndex.match(blockHeaderDef.end);
               if (matchEnd) {
@@ -176,10 +207,12 @@ export class MsgBlockParser {
                 foundBlockEndHeaderLength = matchEnd[0].length;
               }
             }
-            if (endIndex !== -1) { // identified end of the same block
+            if (endIndex !== -1) {
+              // identified end of the same block
               result.found.push(MsgBlock.fromContent(armorHdrType, origText.substring(begin, endIndex + foundBlockEndHeaderLength).trim()));
               result.continueAt = endIndex + foundBlockEndHeaderLength;
-            } else { // corresponding end not found
+            } else {
+              // corresponding end not found
               result.found.push(MsgBlock.fromContent(armorHdrType, origText.substr(begin), true));
             }
             break;
@@ -187,7 +220,8 @@ export class MsgBlockParser {
         }
       }
     }
-    if (origText && !result.found.length) { // didn't find any blocks, but input is non-empty
+    if (origText && !result.found.length) {
+      // didn't find any blocks, but input is non-empty
       const potentialText = origText.substr(startAt).trim();
       if (potentialText) {
         result.found.push(MsgBlock.fromContent('plainText', potentialText));
@@ -205,5 +239,4 @@ export class MsgBlockParser {
       }
     }
   };
-
 }

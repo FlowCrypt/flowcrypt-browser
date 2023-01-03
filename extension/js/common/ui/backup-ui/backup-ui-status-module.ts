@@ -14,10 +14,16 @@ import { BackupUi } from './backup-ui.js';
 import { BackupUiModule } from './backup-ui-module.js';
 
 export class BackupUiStatusModule extends BackupUiModule<BackupUi> {
-
-  public setHandlers = () => { // is run after checkAndRenderBackupStatus, which renders (some of) these fields first
-    $('#module_status .action_go_manual').on('click', this.ui.setHandler(() => this.actionShowManualBackupHandler()));
-    $('#module_status .action_go_add_key').on('click', this.ui.setHandler(async () => await this.goTo('add_key.htm')));
+  public setHandlers = () => {
+    // is run after checkAndRenderBackupStatus, which renders (some of) these fields first
+    $('#module_status .action_go_manual').on(
+      'click',
+      this.ui.setHandler(() => this.actionShowManualBackupHandler())
+    );
+    $('#module_status .action_go_add_key').on(
+      'click',
+      this.ui.setHandler(async () => await this.goTo('add_key.htm'))
+    );
   };
 
   public checkAndRenderBackupStatus = async () => {
@@ -42,12 +48,17 @@ export class BackupUiStatusModule extends BackupUiModule<BackupUi> {
   };
 
   private renderGoManualButton = (htmlEscapedText: string) => {
-    Xss.sanitizeRender('#module_status .container', `<button class="button long green action_go_manual" data-test="action-go-manual">${htmlEscapedText}</button>`);
+    Xss.sanitizeRender(
+      '#module_status .container',
+      `<button class="button long green action_go_manual" data-test="action-go-manual">${htmlEscapedText}</button>`
+    );
   };
 
   private renderBackupSummaryAndActionButtons = (backups: Backups) => {
     if (!backups.longids.backups.length) {
-      $('.status_summary').text('No backups found on this account. If you lose your device, or it stops working, you will not be able to read your encrypted email.');
+      $('.status_summary').text(
+        'No backups found on this account. If you lose your device, or it stops working, you will not be able to read your encrypted email.'
+      );
       this.renderGoManualButton('BACK UP MY KEYS');
     } else if (backups.longids.importedNotBackedUp.length) {
       $('.status_summary').text('Some of your keys have not been backed up.');
@@ -91,5 +102,4 @@ export class BackupUiStatusModule extends BackupUiModule<BackupUi> {
   private goTo = async (page: string) => {
     await Browser.openSettingsPage('index.htm', this.ui.acctEmail, `/chrome/settings/modules/${page}`);
   };
-
 }
