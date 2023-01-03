@@ -178,15 +178,7 @@ export class OpenPGPKey {
       // tslint:disable-next-line: no-null-keyword
       signingKeyExp = null;
     }
-    // OpenPGP.js v5 doesn't put primary user first, so we have to do it manually
-    const users = await OpenPGPKey.getKeyUsersWithPrimaryUserFirst(keyWithoutWeakPackets);
-    const identities = await OpenPGPKey.getSortedUserids(users, keyWithoutWeakPackets.keyPacket);
-    const emails = users.map(user => user.userID)
-      .filter(userId => userId !== null)
-      .map(userId => userId?.email || '')
-      .map(email => email.trim())
-      .filter(email => email)
-      .map(email => email.toLowerCase());
+    const { identities, emails } = await OpenPGPKey.getSortedUserids(keyWithoutWeakPackets);
     let lastModified: undefined | number;
     try {
       lastModified = await OpenPGPKey.getLastSigTime(keyWithoutWeakPackets);
@@ -503,14 +495,12 @@ export class OpenPGPKey {
     return verifyRes;
   };
 
-  private static getSortedUserids = async (
-    keyUsers: OpenPGP.User[],
-    keyPacket: OpenPGP.PublicKeyPacket | OpenPGP.SecretKeyPacket): Promise<string[]> => {
-    const data = (await Promise.all(keyUsers.filter(Boolean).map(async (user) => {
-      const dataToVerify = { userId: user.userID, key: keyPacket };
+  private static getSortedUserids = async (key: OpenPGP.Key): Promise<{ identities: string[], emails: string[] }> => {
+    const data = (await Promise.all(key.users.filter(user => user?.userID).map(async (user) => {
+      const dataToVerify = { userId: user.userID, key: key.keyPacket };
       const selfCertification = await OpenPGPKey.getLatestValidSignature(
-        user.selfCertifications, keyPacket, opgp.enums.signature.certGeneric, dataToVerify);
-      return { userid: user.userID?.userID, selfCertification };
+        user.selfCertifications, key.keyPacket, opgp.enums.signature.certGeneric, dataToVerify);
+      return { userid: user.userID!.userID, email: user.userID!.email, selfCertification };
     }))).filter(x => x.selfCertification);
     // sort the same way as OpenPGP.js does
     data.sort((a, b) => {
@@ -520,8 +510,10 @@ export class OpenPGPKey {
         Number(B.isPrimaryUserID) - Number(A.isPrimaryUserID) ||
         Number(B.created) - Number(A.created);
     });
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    return data.map(x => x.userid).filter(Boolean).map(y => y!);
+    return {
+      identities: data.map(x => x.userid).filter(Boolean),
+      emails: data.map(x => x.email).filter(Boolean) // todo: toLowerCase()?
+    };
   };
 
   // mimicks OpenPGP.helper.getLatestValidSignature
@@ -877,16 +869,6 @@ export class OpenPGPKey {
       throw new Error("This key only has a gnu-dummy private packet, with no actual secret keys.");
     }
     return nonDummyPrvPackets;
-  };
-
-  private static getKeyUsersWithPrimaryUserFirst = async (key: OpenPGP.Key) => {
-    const primaryUser = await key.getPrimaryUser();
-    if (primaryUser.index > 0) {
-      const copyOfUsers = [key.users[primaryUser.index], ...key.users];
-      copyOfUsers.splice(primaryUser.index + 1, 1);
-      return copyOfUsers;
-    }
-    return key.users;
   };
 
   /* tslint:disable:no-null-keyword */

@@ -445,7 +445,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       await addKeyPopup.waitAndClick('@source-paste');
       const key = Config.key('missing.self.signatures');
       await addKeyPopup.waitAndType('@input-armored-key', key?.armored ?? '');
-      await addKeyPopup.waitAndType('#input_passphrase', key?.passphrase ?? '');
+      await addKeyPopup.waitAndType('#input_passphrase', key?.passphrase ?? '', { delay: 1 });
       await addKeyPopup.waitAndClick('.action_add_private_key', { delay: 1 });
       await addKeyPopup.waitAll('@input-compatibility-fix-expire-years', { timeout: 30 });
       await addKeyPopup.selectOption('@input-compatibility-fix-expire-years', '1');

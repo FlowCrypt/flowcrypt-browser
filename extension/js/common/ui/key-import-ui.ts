@@ -92,7 +92,7 @@ export class KeyImportUi {
     $('.input_private_key').on('keyup paste change', Ui.event.handle(async target => {
       $('.action_add_private_key').addClass('btn_disabled').attr('disabled');
       $('.input_email_alias').prop('checked', false);
-      const prv = await opgp.readKey({ armoredKey: String($(target).val()) });
+      const prv = await Catch.undefinedOnException(opgp.readKey({ armoredKey: String($(target).val()) }));
       if (prv !== undefined) {
         $('.action_add_private_key').removeClass('btn_disabled').removeAttr('disabled');
         if (submitKeyForAddrs !== undefined) {
@@ -110,7 +110,7 @@ export class KeyImportUi {
       }
     }));
     $('.input_private_key').change(Ui.event.handle(async target => {
-      const prv = await opgp.readKey({ armoredKey: String($(target).val()) });
+      const prv = await Catch.undefinedOnException(opgp.readKey({ armoredKey: String($(target).val()) }));
       if (!prv || !prv.isPrivate()) {
         $('.line.unprotected_key_create_pass_phrase').hide();
         return;
