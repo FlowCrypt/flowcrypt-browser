@@ -6,7 +6,7 @@ import { KeyInfoWithIdentity, StoredKeyInfo } from '../../core/crypto/key.js';
 import { Dict, emailKeyIndex } from '../../core/common.js';
 import { ClientConfigurationJson } from '../../client-configuration.js';
 import { GmailRes } from '../../api/email-provider/gmail/gmail-parser.js';
-import { AcctStoreDict, AccountIndex } from './acct-store.js';
+import { AcctStoreDict, AccountIndex, SendAsAlias } from './acct-store.js';
 import { UnreportableError, Catch } from '../catch.js';
 import { StoredAdminCode } from './global-store.js';
 
@@ -21,7 +21,7 @@ type Storable =
   | Dict<StoredAdminCode>
   | GmailRes.OpenId
   | ClientConfigurationJson
-  | Map<string, object>;
+  | Map<string, SendAsAlias>;
 export type Serializable = SerializableTypes | SerializableTypes[] | Dict<SerializableTypes> | Dict<SerializableTypes>[];
 
 export interface RawStore {

@@ -5,7 +5,7 @@
 
 'use strict';
 
-import { Dict, Str, Url, UrlParams } from './core/common.js';
+import { Dict, MapDict, Str, Url, UrlParams } from './core/common.js';
 import { Attachment } from './core/attachment.js';
 import { Browser } from './browser/browser.js';
 import { BrowserMsg } from './browser/browser-msg.js';
@@ -24,7 +24,7 @@ export type PassphraseDialogType = 'embedded' | 'message' | 'attachment' | 'draf
 export type FactoryReplyParams = {
   replyMsgId?: string;
   draftId?: string;
-  sendAs?: Dict<SendAsAlias>;
+  sendAs?: MapDict<SendAsAlias>;
   subject?: string;
   removeAfterClose?: boolean;
 };

@@ -16,7 +16,7 @@ import { Notifications } from '../../common/notifications.js';
 import { Str } from '../../common/core/common.js';
 import { XssSafeFactory } from '../../common/xss-safe-factory.js';
 import { ClientConfiguration } from '../../common/client-configuration.js';
-import { AcctStore } from '../../common/platform/store/acct-store.js';
+import { AcctStore, SendAsAlias } from '../../common/platform/store/acct-store.js';
 
 Catch.try(async () => {
   const gmailWebmailStartup = async () => {
@@ -103,8 +103,7 @@ Catch.try(async () => {
       hijackGmailHotkeys();
       const storage = await AcctStore.get(acctEmail, ['sendAs', 'full_name']);
       if (!storage.sendAs) {
-        storage.sendAs = {};
-        storage.sendAs[acctEmail] = { name: storage.full_name, isPrimary: true };
+        storage.sendAs = new Map<string, SendAsAlias>([[acctEmail, { name: storage.full_name, isPrimary: true }]]);
       }
       injector.btns();
       replacer = new GmailElementReplacer(factory, clientConfiguration, acctEmail, storage.sendAs, injector, notifications);

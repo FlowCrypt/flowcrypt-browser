@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { Dict, Str, Url, UrlParams } from './core/common.js';
+import { MapDict, Str, Url, UrlParams } from './core/common.js';
 import { Ui } from './browser/ui.js';
 import { ApiErr, AjaxErr } from './api/shared/api-error.js';
 import { Attachment } from './core/attachment.js';
@@ -66,11 +66,11 @@ export class Settings {
     }
     const fetchedFooters = Object.keys(fetchedSendAs)
       .sort()
-      .map(email => fetchedSendAs[email].footer)
+      .map(email => fetchedSendAs.get(email)?.footer as string)
       .join('|');
     const storedFooters = Object.keys(storedSendAs)
       .sort()
-      .map(email => storedSendAs[email].footer)
+      .map(email => storedSendAs.get(email)?.footer as string)
       .join('|');
     if (fetchedFooters !== storedFooters) {
       result.footerChanged = true;
@@ -529,26 +529,26 @@ export class Settings {
     return Url.create(page, pageParams) + (addUrlTextOrParams || '');
   };
 
-  private static getDefaultEmailAlias = (sendAs: Dict<SendAsAlias>) => {
+  private static getDefaultEmailAlias = (sendAs: MapDict<SendAsAlias>) => {
     for (const key of Object.keys(sendAs)) {
-      if (sendAs[key] && sendAs[key].isDefault) {
+      if (sendAs.get(key)?.isDefault) {
         return key;
       }
     }
     return undefined;
   };
 
-  private static fetchAcctAliasesFromGmail = async (acctEmail: string): Promise<Dict<SendAsAlias>> => {
+  private static fetchAcctAliasesFromGmail = async (acctEmail: string): Promise<MapDict<SendAsAlias>> => {
     const response = await new Gmail(acctEmail).fetchAcctAliases();
     const validAliases = response.sendAs.filter(alias => alias.isPrimary || alias.verificationStatus === 'accepted');
-    const result: Dict<SendAsAlias> = {};
+    const result = new Map<string, SendAsAlias>();
     for (const a of validAliases) {
-      result[a.sendAsEmail.toLowerCase()] = {
+      result.set(a.sendAsEmail.toLowerCase(), {
         name: a.displayName,
         isPrimary: !!a.isPrimary,
         isDefault: a.isDefault,
         footer: a.signature,
-      };
+      });
     }
     return result;
   };

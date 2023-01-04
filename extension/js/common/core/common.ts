@@ -6,6 +6,7 @@ import { base64decode, base64encode } from '../platform/util.js';
 import { Xss } from '../platform/xss.js';
 
 export type Dict<T> = { [key: string]: T };
+export type MapDict<T> = Map<string, T>;
 export type UrlParam = string | number | null | undefined | boolean | string[];
 export type UrlParams = Dict<UrlParam>;
 export type PromiseCancellation = { cancel: boolean };

@@ -7,7 +7,7 @@ import { storageLocalGet, storageLocalRemove, storageLocalSet } from '../../brow
 import { Env } from '../../browser/env.js';
 import { Ui } from '../../browser/ui.js';
 import { ClientConfigurationJson } from '../../client-configuration.js';
-import { Dict } from '../../core/common.js';
+import { Dict, MapDict } from '../../core/common.js';
 import { InMemoryStoreKeys } from '../../core/const.js';
 import { KeyInfoWithIdentity, StoredKeyInfo } from '../../core/crypto/key.js';
 import { AbstractStore, RawStore } from './abstract-store.js';
@@ -61,7 +61,7 @@ export type AcctStoreDict = {
   email_provider?: EmailProvider;
   google_token_refresh?: string;
   hide_message_password?: boolean; // is global?
-  sendAs?: Map<string, object>;
+  sendAs?: MapDict<SendAsAlias>;
   addresses?: string[];
   pubkey_sent_to?: string[];
   full_name?: string;
@@ -179,7 +179,7 @@ export class AcctStore extends AbstractStore {
 
   private static fixAcctStorageResult = (acctEmail: string, acctStore: AcctStoreDict, keys: AccountIndex[]): AcctStoreDict => {
     if (keys.includes('sendAs') && !acctStore.sendAs) {
-      acctStore.sendAs = new Map<string, object>([[acctEmail, { isPrimary: true, isDefault: true }]]);
+      acctStore.sendAs = new Map<string, SendAsAlias>([[acctEmail, { isPrimary: true, isDefault: true }]]);
     }
     return acctStore;
   };
