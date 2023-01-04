@@ -185,8 +185,9 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
     }
     const { sendAs } = await AcctStore.get(this.view.acctEmail, ['sendAs']);
     let name: string | undefined;
-    if (sendAs && sendAs.get(parsedEmail.email)?.name) {
-      name = sendAs.get(parsedEmail.email)?.name || '';
+    if (sendAs && sendAs[parsedEmail.email]?.name) {
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      name = sendAs[parsedEmail.email].name!;
     } else {
       const contactWithPubKeys = await ContactStore.getOneWithAllPubkeys(undefined, parsedEmail.email);
       if (contactWithPubKeys && contactWithPubKeys.info.name) {

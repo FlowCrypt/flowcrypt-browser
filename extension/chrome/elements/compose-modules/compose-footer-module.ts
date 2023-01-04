@@ -13,7 +13,7 @@ export class ComposeFooterModule extends ViewModule<ComposeView> {
     if (!sendAs) {
       return;
     }
-    return (sendAs.get(sender)?.footer as string) || undefined;
+    return sendAs[sender]?.footer || undefined;
   };
 
   /**

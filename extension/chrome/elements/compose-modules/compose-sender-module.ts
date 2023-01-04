@@ -29,7 +29,7 @@ export class ComposeSenderModule extends ViewModule<ComposeView> {
           await this.renderSendFromIfMoreThanOneAlias();
         }
         if (refreshResult.footerChanged && !this.view.draftModule.wasMsgLoadedFromDraft) {
-          const sendAsAlias = refreshResult.sendAs.get(this.getSender());
+          const sendAsAlias = refreshResult.sendAs[this.getSender()];
           if (sendAsAlias && !this.view.isReplyBox) {
             this.view.footerModule.onFooterUpdated(sendAsAlias.footer || undefined);
           }
@@ -50,7 +50,7 @@ export class ComposeSenderModule extends ViewModule<ComposeView> {
     if (emailAliases.length > 1) {
       const fmtOpt = (addr: string) => `<option value="${Xss.escape(addr)}" ${this.getSender() === addr ? 'selected' : ''}>${Xss.escape(addr)}</option>`;
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      emailAliases.sort((a, b) => (sendAs?.get(a)!.isDefault === sendAs?.get(b)!.isDefault ? 0 : sendAs?.get(a)!.isDefault ? -1 : 1));
+      emailAliases.sort((a, b) => (sendAs![a].isDefault === sendAs![b].isDefault ? 0 : sendAs![a].isDefault ? -1 : 1));
       Xss.sanitizeRender(fromContainer.find('#input_from'), emailAliases.map(fmtOpt).join('')).change(() =>
         this.view.myPubkeyModule.reevaluateShouldAttachOrNot()
       );
