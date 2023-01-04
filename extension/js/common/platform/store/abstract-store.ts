@@ -13,7 +13,15 @@ import { StoredAdminCode } from './global-store.js';
 type SerializableTypes = FlatTypes | string[] | number[] | boolean[] | ClientConfigurationJson;
 export type StorageType = 'session' | 'local';
 export type FlatTypes = null | undefined | number | string | boolean;
-type Storable = FlatTypes | string[] | StoredKeyInfo[] | KeyInfoWithIdentity[] | Dict<StoredAdminCode> | GmailRes.OpenId | ClientConfigurationJson;
+type Storable =
+  | FlatTypes
+  | string[]
+  | StoredKeyInfo[]
+  | KeyInfoWithIdentity[]
+  | Dict<StoredAdminCode>
+  | GmailRes.OpenId
+  | ClientConfigurationJson
+  | Map<string, object>;
 export type Serializable = SerializableTypes | SerializableTypes[] | Dict<SerializableTypes> | Dict<SerializableTypes>[];
 
 export interface RawStore {

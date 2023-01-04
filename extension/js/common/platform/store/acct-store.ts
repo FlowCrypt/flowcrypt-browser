@@ -61,7 +61,7 @@ export type AcctStoreDict = {
   email_provider?: EmailProvider;
   google_token_refresh?: string;
   hide_message_password?: boolean; // is global?
-  sendAs?: Dict<SendAsAlias>;
+  sendAs?: Map<string, object>;
   addresses?: string[];
   pubkey_sent_to?: string[];
   full_name?: string;
@@ -179,7 +179,7 @@ export class AcctStore extends AbstractStore {
 
   private static fixAcctStorageResult = (acctEmail: string, acctStore: AcctStoreDict, keys: AccountIndex[]): AcctStoreDict => {
     if (keys.includes('sendAs') && !acctStore.sendAs) {
-      acctStore.sendAs = { [acctEmail]: { isPrimary: true, isDefault: true } };
+      acctStore.sendAs = new Map<string, object>([[acctEmail, { isPrimary: true, isDefault: true }]]);
     }
     return acctStore;
   };
