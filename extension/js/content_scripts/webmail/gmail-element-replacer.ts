@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { Dict, MapDict, Str } from '../../common/core/common.js';
+import { Dict, Str } from '../../common/core/common.js';
 import { FactoryReplyParams, XssSafeFactory } from '../../common/xss-safe-factory.js';
 import { GmailParser, GmailRes } from '../../common/api/email-provider/gmail/gmail-parser.js';
 import { IntervalFunction, WebmailElementReplacer } from './setup-webmail-content-script.js';
@@ -32,7 +32,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
 
   private gmail: Gmail;
   private recipientHasPgpCache: Dict<boolean> = {};
-  private sendAs: MapDict<SendAsAlias>;
+  private sendAs: Dict<SendAsAlias>;
   private factory: XssSafeFactory;
   private clientConfiguration: ClientConfiguration;
   private pubLookup: PubLookup;
@@ -72,7 +72,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     factory: XssSafeFactory,
     clientConfiguration: ClientConfiguration,
     acctEmail: string,
-    sendAs: Map<string, SendAsAlias>,
+    sendAs: Dict<SendAsAlias>,
     injector: Injector,
     notifications: Notifications
   ) {
@@ -172,7 +172,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
         console.debug('replaceArmoredBlocks() for of emailsContainingPgpBlock -> emailContainer added evaluated');
       }
       const senderEmail = this.getSenderEmail(emailContainer);
-      const isOutgoing = !!this.sendAs.get(senderEmail);
+      const isOutgoing = !!this.sendAs[senderEmail];
       const replacementXssSafe = XssSafeFactory.replaceRenderableMsgBlocks(
         this.factory,
         emailContainer.innerText,
@@ -421,7 +421,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     let msgEl = this.getMsgBodyEl(msgId); // not a constant because sometimes elements get replaced, then returned by the function that replaced them
     const isBodyEmpty = msgEl.text() === '' || msgEl.text() === '\n';
     const senderEmail = this.getSenderEmail(msgEl);
-    const isOutgoing = !!this.sendAs.get(senderEmail);
+    const isOutgoing = !!this.sendAs[senderEmail];
     attachmentsContainerInner = $(attachmentsContainerInner);
     attachmentsContainerInner.parent().find(this.sel.numberOfAttachments).hide();
     let nRenderedAttachments = attachmentMetas.length;
