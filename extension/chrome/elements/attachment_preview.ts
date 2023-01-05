@@ -81,6 +81,7 @@ View.run(
             .css('display', 'flex')
             .on('click', e => {
               e.stopPropagation();
+              // insert file extension validation here.
               Browser.saveToDownloads(attachmentForSave);
             });
           $('#attachment-preview-filename').text(this.origNameBasedOnFilename);
