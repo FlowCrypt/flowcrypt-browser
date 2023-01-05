@@ -30,7 +30,7 @@
     "eslint-plugin-prefer-arrow": "^1.2.3",
     "fc-node-requests": "git+https://git@github.com/FlowCrypt/node-requests.git",
     "googleapis": "110.0.0",
-    "husky": "^8.0.2",
+    "husky": "^8.0.3",
     "lint-staged": "^13.1.0",
     "mailparser": "3.6.3",
     "mkdirp": "1.0.4",
