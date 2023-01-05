@@ -35,8 +35,8 @@ export class Wkd extends Api {
     const timeout = this.usesKeyManager && lowerCaseRecipientDomain === this.domainName ? 10 : 4;
     const hashed = await window.crypto.subtle.digest('SHA-1', Buf.fromUtfStr(user.toLowerCase()));
     const hu = this.encodeZBase32(new Uint8Array(hashed));
-    const directHost = WKD_API_HOST || `https://${lowerCaseRecipientDomain}`; // lgtm [js/trivial-conditional]
-    const advancedHost = WKD_API_HOST || `https://openpgpkey.${lowerCaseRecipientDomain}`; // lgtm [js/trivial-conditional]
+    const directHost = WKD_API_HOST || `https://${lowerCaseRecipientDomain}`;
+    const advancedHost = WKD_API_HOST || `https://openpgpkey.${lowerCaseRecipientDomain}`;
     const userPart = `hu/${hu}?l=${encodeURIComponent(user)}`;
     const advancedUrl = `${advancedHost}/.well-known/openpgpkey/${lowerCaseRecipientDomain}`;
     const directUrl = `${directHost}/.well-known/openpgpkey`;

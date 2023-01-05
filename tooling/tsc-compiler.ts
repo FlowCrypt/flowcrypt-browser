@@ -17,7 +17,7 @@ for (let i = 0; i < process.argv.length; i++) {
 tsconfigAbsPath = path.resolve(tsconfigAbsPath || './tsconfig.json');
 const tsconfigAbsDir = path.dirname(tsconfigAbsPath);
 
-const getNameAndPos = (f: ts.FunctionLike) => {
+const getNameAndPos = (f: ts.SignatureDeclaration) => {
   const sf = f.getSourceFile();
   const { line, character } = sf.getLineAndCharacterOfPosition(f.pos);
   let name = f.name && f.name.getText();
