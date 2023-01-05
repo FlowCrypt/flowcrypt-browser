@@ -128,28 +128,23 @@ export class ComposeSizeModule extends ViewModule<ComposeView> {
       inputs = this.view.S.cached('recipients_inputs'); // Resize All Inputs
     }
     inputs.css('width', '100%'); // this indeed seems to effect the line below (noticeable when maximizing / back to default)
+    /* eslint-disable @typescript-eslint/no-non-null-assertion */
     for (const inputElement of inputs) {
       const jqueryElem = $(inputElement);
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const containerWidth = Math.floor(jqueryElem.parent().innerWidth()!);
       let additionalWidth = Math.ceil(Number(jqueryElem.css('padding-left').replace('px', '')) + Number(jqueryElem.css('padding-right').replace('px', '')));
       const minInputWidth = 150;
       let offset = 0;
       if (jqueryElem.next().length) {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         additionalWidth += Math.ceil(jqueryElem.next().outerWidth()!);
       }
       const lastRecipient = jqueryElem.siblings('.recipients').children().last();
-      if (
-        lastRecipient.length &&
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        lastRecipient.position().left + lastRecipient.outerWidth()! + minInputWidth + additionalWidth < containerWidth
-      ) {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      if (lastRecipient.length && lastRecipient.position().left + lastRecipient.outerWidth()! + minInputWidth + additionalWidth < containerWidth) {
         offset = Math.ceil(lastRecipient.position().left + lastRecipient.outerWidth()!);
       }
       jqueryElem.css('width', containerWidth - offset - additionalWidth - 11 + 'px');
     }
+    /* eslint-enable */
   };
 
   private windowResized = async () => {

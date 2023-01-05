@@ -195,8 +195,7 @@ export class ComposeView extends View {
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       await this.renderModule.fetchReplyMeta(Object.keys(storage.sendAs!));
     }
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    BrowserMsg.listen(this.tabId!);
+    BrowserMsg.listen(this.tabId);
     await this.renderModule.initComposeBox();
     this.senderModule.checkEmailAliases().catch(Catch.reportErr);
   };
