@@ -179,7 +179,8 @@ export class AcctStore extends AbstractStore {
 
   private static fixAcctStorageResult = (acctEmail: string, acctStore: AcctStoreDict, keys: AccountIndex[]): AcctStoreDict => {
     if (keys.includes('sendAs') && !acctStore.sendAs) {
-      acctStore.sendAs = { [acctEmail]: { isPrimary: true, isDefault: true } };
+      const sendAs = new Map<string, SendAsAlias>([[acctEmail, { isPrimary: true, isDefault: true }]]);
+      acctStore.sendAs = Object.fromEntries(sendAs);
     }
     return acctStore;
   };

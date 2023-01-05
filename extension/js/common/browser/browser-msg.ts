@@ -568,7 +568,6 @@ export class BrowserMsg {
     const objUrls: Dict<string> = {};
     // eslint-disable-next-line no-null/no-null
     if (requestOrResponse && typeof requestOrResponse === 'object' && requestOrResponse !== null) {
-      // lgtm [js/comparison-between-incompatible-types]
       for (const possibleBufName of Object.keys(requestOrResponse)) {
         const possibleBufs = (requestOrResponse as Record<string, unknown>)[possibleBufName];
         if (possibleBufs instanceof Uint8Array) {
@@ -587,7 +586,6 @@ export class BrowserMsg {
   private static replaceObjUrlWithBuf = async <T>(requestOrResponse: T, objUrls: Dict<string>): Promise<T> => {
     // eslint-disable-next-line no-null/no-null
     if (requestOrResponse && typeof requestOrResponse === 'object' && requestOrResponse !== null && objUrls) {
-      // lgtm [js/comparison-between-incompatible-types]
       for (const consumableObjUrlName of Object.keys(objUrls)) {
         (requestOrResponse as Record<string, Buf>)[consumableObjUrlName] = await Browser.objUrlConsume(objUrls[consumableObjUrlName]);
       }

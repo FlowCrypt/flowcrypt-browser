@@ -1,3 +1,5 @@
 paths-ignore:
   - node_modules
-  - 'test/source/**/*.ts'
+  - extension/lib
+  - extension/types
+  - test/source/**/*.ts
