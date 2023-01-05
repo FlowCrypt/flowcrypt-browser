@@ -296,11 +296,11 @@ export class Url {
     const url = parseThisUrl || window.location.search.replace('?', '');
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const valuePairs = url.split('?').pop()!.split('&'); // str.split('?') string[].length will always be >= 1
-    const rawParams: Dict<string> = {};
-    const rawParamNameDict: Dict<string> = {};
+    const rawParams = new Map<string, string>();
+    const rawParamNameDict = new Map<string, string>();
     for (const valuePair of valuePairs) {
       const pair = valuePair.split('=');
-      rawParams[pair[0]] = pair[1];
+      rawParams.set(pair[0], pair[1]);
       Url.fillPossibleUrlParamNameVariations(pair[0], rawParamNameDict);
     }
     const processedParams: UrlParams = {};
@@ -353,11 +353,12 @@ export class Url {
     return s.replace(/[a-z][A-Z]/g, boundary => `${boundary[0]}_${boundary[1].toLowerCase()}`);
   };
 
-  private static findAndProcessUrlParam = (expectedParamName: string, rawParamNameDict: Dict<string>, rawParms: Dict<string>): UrlParam => {
-    if (typeof rawParamNameDict[expectedParamName] === 'undefined') {
+  private static findAndProcessUrlParam = (expectedParamName: string, rawParamNameDict: Map<string, string>, rawParams: Map<string, string>): UrlParam => {
+    const paramName = rawParamNameDict.get(expectedParamName);
+    if (typeof paramName === 'undefined') {
       return undefined; // param name not found in param name dict
     }
-    const rawValue = rawParms[rawParamNameDict[expectedParamName]];
+    const rawValue = rawParams.get(paramName);
     if (typeof rawValue === 'undefined') {
       return undefined; // original param name not found in raw params
     }
@@ -367,13 +368,13 @@ export class Url {
     return decodeURIComponent(rawValue);
   };
 
-  private static fillPossibleUrlParamNameVariations = (urlParamName: string, rawParamNameDict: Dict<string>) => {
-    rawParamNameDict[urlParamName] = urlParamName;
-    rawParamNameDict[Url.snakeCaseToCamelCase(urlParamName)] = urlParamName;
-    rawParamNameDict[Url.camelCaseToSnakeCase(urlParamName)] = urlParamName;
+  private static fillPossibleUrlParamNameVariations = (urlParamName: string, rawParamNameDict: Map<string, string>) => {
+    rawParamNameDict.set(urlParamName, urlParamName);
+    rawParamNameDict.set(Url.snakeCaseToCamelCase(urlParamName), urlParamName);
+    rawParamNameDict.set(Url.camelCaseToSnakeCase(urlParamName), urlParamName);
     const shortened = urlParamName.replace('account', 'acct').replace('message', 'msg');
-    rawParamNameDict[Url.snakeCaseToCamelCase(shortened)] = urlParamName;
-    rawParamNameDict[Url.camelCaseToSnakeCase(shortened)] = urlParamName;
+    rawParamNameDict.set(Url.snakeCaseToCamelCase(shortened), urlParamName);
+    rawParamNameDict.set(Url.camelCaseToSnakeCase(shortened), urlParamName);
   };
 }
 

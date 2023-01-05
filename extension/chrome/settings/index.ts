@@ -365,7 +365,7 @@ View.run(
     private checkFcAcctAndContactPage = async () => {
       const statusContainer = $('.public_profile_indicator_container');
       if (this.acctEmail) {
-        // have auth email set lgtm [js/user-controlled-bypass]
+        // have auth email set
         try {
           // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
           const acctRes = await this.acctServer!.accountGetAndUpdateLocalStore();

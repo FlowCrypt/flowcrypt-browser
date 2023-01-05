@@ -81,7 +81,7 @@
                 <div class="input-right-container">
                   <span class="recipients recipients-to"></span>
                   <input id="input_to" spellcheck="false" tabindex="1" data-test="input-to" data-sending-type="to"
-                    autocomplete="off" />
+                    autocomplete="off" maxlength="256" />
                   <span class="container-cc-bcc-buttons" data-test="container-cc-bcc-buttons">
                     <button id="cc" class="cc" tabindex="20" data-test="action-show-cc">cc</button>
                     <button id="bcc" class="bcc" tabindex="21" data-test="action-show-bcc">bcc</button>
@@ -95,7 +95,7 @@
                 <div class="input-right-container">
                   <span class="recipients recipients-cc"></span>
                   <input spellcheck="false" tabindex="1" data-test="input-cc" data-sending-type="cc"
-                    autocomplete="off" />
+                    autocomplete="off" maxlength="256" />
                 </div>
               </div>
               <!-- bcc -->
@@ -105,7 +105,7 @@
                 <div class="input-right-container">
                   <span class="recipients recipients-bcc"></span>
                   <input spellcheck="false" tabindex="1" data-test="input-bcc" data-sending-type="bcc"
-                    autocomplete="off" />
+                    autocomplete="off" maxlength="256" />
                 </div>
               </div>
             </div>
@@ -121,7 +121,7 @@
         <td class="input">
           <!-- subject -->
           <input id="input_subject" autocomplete="off" spellcheck="true" tabindex="2" placeholder="Subject"
-            data-test="input-subject" />
+            data-test="input-subject" maxlength="512" />
         </td>
       </tr>
       <tr class="intro_container">
@@ -174,7 +174,7 @@
             <div class="password_input_container" data-test="password-input-container">
               Or send email password protected:
               <input id="input_password" autocomplete="off" placeholder="message password" tabindex="5"
-                data-test="input-password">
+                data-test="input-password" maxlength="256">
             </div>
           </div>
         </td>
