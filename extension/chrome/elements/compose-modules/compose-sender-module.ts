@@ -54,7 +54,7 @@ export class ComposeSenderModule extends ViewModule<ComposeView> {
       Xss.sanitizeRender(fromContainer.find('#input_from'), emailAliases.map(fmtOpt).join('')).change(() =>
         this.view.myPubkeyModule.reevaluateShouldAttachOrNot()
       );
-      this.view.S.now('input_from').change(this.view.setHandler(() => this.actionInputFromChangeHanlder()));
+      this.view.S.now('input_from').change(this.view.setHandler(() => this.actionInputFromChangeHandler()));
       if (this.view.isReplyBox) {
         this.view.sizeModule.resizeComposeBox();
       }
@@ -64,7 +64,7 @@ export class ComposeSenderModule extends ViewModule<ComposeView> {
     }
   };
 
-  private actionInputFromChangeHanlder = async () => {
+  private actionInputFromChangeHandler = async () => {
     await this.view.recipientsModule.reEvaluateRecipients(this.view.recipientsModule.getValidRecipients());
     this.view.footerModule.onFooterUpdated(await this.view.footerModule.getFooterFromStorage(this.view.senderModule.getSender()));
   };

@@ -294,7 +294,8 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
   };
 
   private fillAndRenderDraftHeaders = async (decoded: MimeContent) => {
-    this.view.recipientsModule.addRecipientsAndShowPreview({ to: decoded.to, cc: decoded.cc, bcc: decoded.bcc });
+    this.view.recipientsModule.addRecipients({ to: decoded.to, cc: decoded.cc, bcc: decoded.bcc }).catch(Catch.reportErr);
+    this.view.recipientsModule.showHideCcAndBccInputsIfNeeded();
     if (decoded.from) {
       this.view.S.now('input_from').val(decoded.from);
     }

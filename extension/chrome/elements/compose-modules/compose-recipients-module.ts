@@ -264,12 +264,6 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     this.view.S.cached('contacts').children().not('ul').remove();
   };
 
-  public addRecipientsAndShowPreview = (recipients: Recipients) => {
-    this.view.recipientsModule.addRecipients(recipients).catch(Catch.reportErr);
-    this.view.recipientsModule.showHideCcAndBccInputsIfNeeded();
-    // this.view.recipientsModule.setEmailsPreview();
-  };
-
   public reEvaluateRecipients = async (recipients: ValidRecipientElement[]) => {
     for (const recipient of recipients) {
       $(recipient.element).empty().removeClass();
@@ -304,7 +298,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
         callback(recipientEls);
       }
     }
-    // this.setEmailsPreview();
+    this.setEmailsPreview();
     $('body').attr('data-test-state', 'ready');
     this.view.sizeModule.setInputTextHeightManuallyIfNeeded();
   };
