@@ -2512,6 +2512,8 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         });
         await composePage.waitAndClick('@action-accept-reply-all-prompt', { delay: 2 });
         await composePage.waitForContent('@recipients-preview', ' more');
+        await Util.sleep(0.5);
+        expect(await composePage.hasHorizontalScroll()).to.be.false;
       })
     );
 
