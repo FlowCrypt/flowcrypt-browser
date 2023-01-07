@@ -12,7 +12,7 @@ export const requireOpenpgp = (): typeof OpenPGP => {
 
 export const requireStreams = (): typeof Streams => {
   // eslint-disable-next-line @typescript-eslint/no-var-requires
-  return require('@openpgp/web-stream-tools');
+  return require('@openpgp/web-stream-tools') as unknown as typeof Streams;
 };
 
 /* eslint-disable @typescript-eslint/no-explicit-any */

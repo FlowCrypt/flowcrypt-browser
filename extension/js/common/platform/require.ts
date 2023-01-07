@@ -45,6 +45,7 @@ export const requireOpenpgp = (): typeof OpenPGP => {
 };
 
 export const requireStreams = (): typeof Streams => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return (window as any).streams as typeof Streams;
 };
 

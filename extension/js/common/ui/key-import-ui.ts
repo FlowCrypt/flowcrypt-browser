@@ -79,67 +79,83 @@ export class KeyImportUi {
   public onBadPassphrase: VoidCallback = () => undefined;
 
   public initPrvImportSrcForm = (acctEmail: string, parentTabId: string | undefined, submitKeyForAddrs?: string[] | undefined) => {
-    $('input[type=radio][name=source]').off().change(function () {
-      if ((this as HTMLInputElement).value === 'file') {
-        $('.input_private_key').val('').change().prop('disabled', true);
-        $('.source_paste_container').css('display', 'none');
-        $('.source_paste_container .unprotected_key_create_pass_phrase').hide();
-        $('#fineuploader_button > input').trigger('click');
-      } else if ((this as HTMLInputElement).value === 'paste') {
-        $('.input_private_key').val('').change().prop('disabled', false);
-        $('.source_paste_container').css('display', 'block');
-        $('.source_paste_container .unprotected_key_create_pass_phrase').hide();
-      } else if ((this as HTMLInputElement).value === 'backup') {
-        window.location.href = Url.create('/chrome/settings/setup.htm', { acctEmail, parentTabId, action: 'add_key' });
-      }
-    });
-    $('.line.unprotected_key_create_pass_phrase .action_use_random_pass_phrase').on('click', Ui.event.handle(() => {
-      $('.source_paste_container .input_passphrase').val(PgpPwd.random()).trigger('input');
-      $('.input_passphrase').attr('type', 'text');
-      $('#e_rememberPassphrase').prop('checked', true);
-    }));
-    $('.input_private_key').on('keyup paste change', Ui.event.handle(async target => {
-      $('.action_add_private_key').addClass('btn_disabled').attr('disabled');
-      $('.input_email_alias').prop('checked', false);
-      const prv = await Catch.undefinedOnException(opgp.readKey({ armoredKey: String($(target).val()) }));
-      if (prv !== undefined) {
-        $('.action_add_private_key').removeClass('btn_disabled').removeAttr('disabled');
-        if (submitKeyForAddrs !== undefined) {
-          const users = prv.users;
-          for (const user of users) {
-            const userId = user.userID;
-            for (const inputCheckboxesWithEmail of $('.input_email_alias')) {
-              if (String($(inputCheckboxesWithEmail).data('email')) === userId!.email) {
-                KeyImportUi.addAliasForSubmission(userId!.email, submitKeyForAddrs!);
-                $(inputCheckboxesWithEmail).prop('checked', true);
+    $('input[type=radio][name=source]')
+      .off()
+      .change(function () {
+        if ((this as HTMLInputElement).value === 'file') {
+          $('.input_private_key').val('').change().prop('disabled', true);
+          $('.source_paste_container').css('display', 'none');
+          $('.source_paste_container .unprotected_key_create_pass_phrase').hide();
+          $('#fineuploader_button > input').trigger('click');
+        } else if ((this as HTMLInputElement).value === 'paste') {
+          $('.input_private_key').val('').change().prop('disabled', false);
+          $('.source_paste_container').css('display', 'block');
+          $('.source_paste_container .unprotected_key_create_pass_phrase').hide();
+        } else if ((this as HTMLInputElement).value === 'backup') {
+          window.location.href = Url.create('/chrome/settings/setup.htm', { acctEmail, parentTabId, action: 'add_key' });
+        }
+      });
+    $('.line.unprotected_key_create_pass_phrase .action_use_random_pass_phrase').on(
+      'click',
+      Ui.event.handle(() => {
+        $('.source_paste_container .input_passphrase').val(PgpPwd.random()).trigger('input');
+        $('.input_passphrase').attr('type', 'text');
+        $('#e_rememberPassphrase').prop('checked', true);
+      })
+    );
+    $('.input_private_key').on(
+      'keyup paste change',
+      Ui.event.handle(async target => {
+        $('.action_add_private_key').addClass('btn_disabled').attr('disabled');
+        $('.input_email_alias').prop('checked', false);
+        const prv = await Catch.undefinedOnException(opgp.readKey({ armoredKey: String($(target).val()) }));
+        if (prv !== undefined) {
+          $('.action_add_private_key').removeClass('btn_disabled').removeAttr('disabled');
+          if (submitKeyForAddrs !== undefined) {
+            const users = prv.users;
+            for (const user of users) {
+              const userId = user.userID;
+              if (userId) {
+                for (const inputCheckboxesWithEmail of $('.input_email_alias')) {
+                  if (String($(inputCheckboxesWithEmail).data('email')) === userId.email) {
+                    KeyImportUi.addAliasForSubmission(userId.email, submitKeyForAddrs);
+                    $(inputCheckboxesWithEmail).prop('checked', true);
+                  }
+                }
               }
             }
           }
         }
-      }
-    }));
-    $('.input_private_key').change(Ui.event.handle(async target => {
-      const prv = await Catch.undefinedOnException(opgp.readKey({ armoredKey: String($(target).val()) }));
-      if (!prv || !prv.isPrivate()) {
-        $('.line.unprotected_key_create_pass_phrase').hide();
-        return;
-      }
-      if (OpenPGPKey.isFullyDecrypted(prv)) {
-        $('.line.unprotected_key_create_pass_phrase').show();
-        const { passwordResultElement, removeValidationElements } = this.renderPassPhraseStrengthValidationInput($('.input_passphrase'), $('.action_add_private_key'));
-        passwordResultElement.addClass('left');
-        const removeValidationElementsWhenKeyChanged = Ui.event.handle(() => {
-          removeValidationElements();
-          $('.input_private_key').off('change', removeValidationElementsWhenKeyChanged);
-        });
-        $('.input_private_key').change(removeValidationElementsWhenKeyChanged);
-      } else if (OpenPGPKey.isFullyEncrypted(prv)) {
-        $('.line.unprotected_key_create_pass_phrase').hide();
-      } else {
-        await Ui.modal.error(Lang.setup.partiallyEncryptedKeyUnsupported);
-        $('.line.unprotected_key_create_pass_phrase').hide();
-      }
-    }));
+      })
+    );
+    $('.input_private_key').change(
+      Ui.event.handle(async target => {
+        const prv = await Catch.undefinedOnException(opgp.readKey({ armoredKey: String($(target).val()) }));
+        if (!prv || !prv.isPrivate()) {
+          $('.line.unprotected_key_create_pass_phrase').hide();
+          return;
+        }
+        if (OpenPGPKey.isFullyDecrypted(prv)) {
+          $('.line.unprotected_key_create_pass_phrase').show();
+          const { passwordResultElement, removeValidationElements } = this.renderPassPhraseStrengthValidationInput(
+            $('.input_passphrase'),
+            $('.action_add_private_key')
+          );
+          passwordResultElement.addClass('left');
+          const removeValidationElementsWhenKeyChanged = Ui.event.handle(() => {
+            removeValidationElements();
+            $('.input_private_key').off('change', removeValidationElementsWhenKeyChanged);
+          });
+          $('.input_private_key').change(removeValidationElementsWhenKeyChanged);
+        } else if (OpenPGPKey.isFullyEncrypted(prv)) {
+          $('.line.unprotected_key_create_pass_phrase').hide();
+        } else {
+          await Ui.modal.error(Lang.setup.partiallyEncryptedKeyUnsupported);
+          $('.line.unprotected_key_create_pass_phrase').hide();
+        }
+      })
+    );
+    // eslint-disable-next-line @typescript-eslint/naming-convention
     const attachmentUi = new AttachmentUI(() => Promise.resolve({ count: 100, size: 1024 * 1024, size_mb: 1 }));
     attachmentUi.initAttachmentDialog('fineuploader', 'fineuploader_button', {
       attachmentAdded: async file => {
