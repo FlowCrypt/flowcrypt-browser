@@ -2,8 +2,6 @@
 
 'use strict';
 
-// tslint:disable:no-unsafe-any
-
 import { readFileSync, writeFileSync } from 'fs';
 import { sep } from 'path';
 import { getFilesInDir } from './utils/tooling-utils';
@@ -21,10 +19,10 @@ const moduleMap: { [name: string]: string | null } = {};
 for (const moduleName of Object.keys(compilerOptions.paths)) {
   if (compilerOptions.paths[moduleName].indexOf('COMMENT') !== -1) {
     // COMMENT flag, remove such import statements from the code, because they will be imported with script tags for compatibility
-    moduleMap[moduleName] = null; // tslint:disable-line:no-null-keyword
+    moduleMap[moduleName] = null; // eslint-disable-line no-null/no-null
   } else {
     // replace import with full path from config
-    moduleMap[moduleName] = `${compilerOptions.paths[moduleName].find((x: string) => x.match(/\.js$/) !== null)}`;
+    moduleMap[moduleName] = `${compilerOptions.paths[moduleName].find((x: string) => x.match(/\.js$/) !== null)}`; // eslint-disable-line no-null/no-null
   }
 }
 
@@ -33,19 +31,21 @@ const requireLineRegEx = /^(.+require\(['"])([^.][^'"]+)(['"]\)+;)\r{0,1}$$/g;
 const importLineNotEndingWithJs = /import (?:.+ from )?['"]\.[^'"]+[^.][^j][^s]['"];/g;
 const importLineEndingWithJsNotStartingWithDot = /import (?:.+ from )?['"][^.][^'"]+\.js['"];/g;
 
-const resolveLineImports = (regex: RegExp, line: string, path: string) => line.replace(regex, (found, prefix, libname, suffix) => {
-  if (moduleMap[libname] === null) {
-    return `// ${prefix}${libname}${suffix} // commented during build process: imported with script tag`;
-  } else if (!moduleMap[libname]) {
-    return found;
-  } else {
-    const depth = path.split(sep).length;
-    const prePath = '../'.repeat(depth - 3); // todo:
-    const resolved = `${prefix}${prePath}${moduleMap[libname]}${suffix}`;
-    console.info(`${path}: ${found} -> ${resolved}`);
-    return resolved;
-  }
-});
+const resolveLineImports = (regex: RegExp, line: string, path: string) =>
+  line.replace(regex, (found, prefix, libname, suffix) => {
+    // eslint-disable-next-line no-null/no-null
+    if (moduleMap[libname] === null) {
+      return `// ${prefix}${libname}${suffix} // commented during build process: imported with script tag`;
+    } else if (!moduleMap[libname]) {
+      return found;
+    } else {
+      const depth = path.split(sep).length;
+      const prePath = '../'.repeat(depth - 3); // todo:
+      const resolved = `${prefix}${prePath}${moduleMap[libname]}${suffix}`;
+      // console.info(`${path}: ${found} -> ${resolved}`);
+      return resolved;
+    }
+  });
 
 const errIfSrcMissingJsExtensionInImport = (src: string, path: string) => {
   const matched = src.match(importLineNotEndingWithJs);
@@ -67,8 +67,9 @@ const srcFilePaths = getFilesInDir(compilerOptions.outDir, /\.js$/);
 
 for (const srcFilePath of srcFilePaths) {
   const original = readFileSync(srcFilePath).toString();
-  const resolved = original.split('\n').map(
-    l => resolveLineImports(requireLineRegEx, resolveLineImports(namedImportLineRegEx, l, srcFilePath), srcFilePath)
+  const resolved = original
+    .split('\n')
+    .map(l => resolveLineImports(requireLineRegEx, resolveLineImports(namedImportLineRegEx, l, srcFilePath), srcFilePath)
   ).join('\n');
   if (resolved !== original) {
     writeFileSync(srcFilePath, resolved);

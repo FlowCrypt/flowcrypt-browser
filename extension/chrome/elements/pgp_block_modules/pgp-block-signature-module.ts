@@ -11,9 +11,8 @@ import { Value } from '../../../js/common/core/common.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 
 export class PgpBlockViewSignatureModule {
-
-  constructor(private view: PgpBlockView) {
-  }
+  // eslint-disable-next-line no-empty-function
+  public constructor(private view: PgpBlockView) {}
 
   public renderPgpSignatureCheckResult = async (
     verifyRes: VerifyRes | undefined,
@@ -56,12 +55,15 @@ export class PgpBlockViewSignatureModule {
               Catch.reportErr(e);
               this.view.renderModule.renderSignatureStatus(`error verifying signature: ${e}`);
             } else {
-              this.view.renderModule.renderSignatureStatus('error verifying signature: offline, click to retry').on('click',
-                this.view.setHandler(() => window.location.reload()));
+              this.view.renderModule.renderSignatureStatus('error verifying signature: offline, click to retry').on(
+                'click',
+                this.view.setHandler(() => window.location.reload())
+              );
             }
           }
         }
-      } else { // !retryVerification
+      } else {
+        // !retryVerification
         this.renderMissingPubkeyOrBadSignature(verifyRes);
       }
     }
@@ -79,6 +81,7 @@ export class PgpBlockViewSignatureModule {
   };
 
   private renderMissingPubkeyOrBadSignature = (verifyRes: VerifyRes): void => {
+    // eslint-disable-next-line no-null/no-null
     if (verifyRes.match === null || !Value.arr.hasIntersection(verifyRes.signerLongids, verifyRes.suppliedLongids)) {
       this.renderMissingPubkey(verifyRes.signerLongids[0]);
     } else {

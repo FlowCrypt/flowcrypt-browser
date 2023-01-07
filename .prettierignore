@@ -1,0 +1,8 @@
+build/*
+extension/lib
+extension/types
+*.css
+*.htm
+*.html
+*.md
+*.yml

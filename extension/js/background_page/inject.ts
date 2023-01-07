@@ -5,10 +5,11 @@
 import { Catch } from '../common/platform/catch.js';
 
 export const injectFcIntoWebmail = () => {
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   const contentScriptGroups = chrome.runtime.getManifest().content_scripts!; // we know it's in the manifest
   // one time when extension installed or on browser start - go through all matching tabs and inject
   for (const group of contentScriptGroups) {
-    getContentScriptTabIds(group.matches || [], (tabIds) => {
+    getContentScriptTabIds(group.matches || [], tabIds => {
       for (const tabId of tabIds) {
         injectContentScriptIntoTabIfNeeded(tabId, group.js || []);
       }
@@ -32,17 +33,17 @@ export const injectFcIntoWebmail = () => {
 };
 
 const injectContentScriptIntoTabIfNeeded = (tabId: number, files: string[]) => {
-  isContentScriptInjectionNeeded(tabId, (alreadyInjected) => {
+  isContentScriptInjectionNeeded(tabId, alreadyInjected => {
     if (!alreadyInjected) {
-      console.info("Injecting FlowCrypt into tab " + tabId);
+      console.info('Injecting FlowCrypt into tab ' + tabId);
       injectContentScripts(tabId, files);
     }
   });
 };
 
 const getContentScriptTabIds = (matches: string[], callback: (tabIds: number[]) => void) => {
-  chrome.tabs.query({ 'url': matches }, result => {
-    callback(result.filter(tab => typeof tab.id !== 'undefined').map((tab) => tab.id) as number[]);
+  chrome.tabs.query({ url: matches }, result => {
+    callback(result.filter(tab => typeof tab.id !== 'undefined').map(tab => tab.id) as number[]);
   });
 };
 

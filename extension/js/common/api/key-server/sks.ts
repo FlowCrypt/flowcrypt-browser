@@ -8,13 +8,10 @@ import { PgpArmor } from '../../core/crypto/pgp/pgp-armor.js';
 import { PubkeySearchResult } from './../pub-lookup.js';
 
 export class Sks extends Api {
-
   private static MR_VERSION_1 = 'info:1:';
   private url: string;
 
-  constructor(
-    url: string
-  ) {
+  public constructor(url: string) {
     super();
     this.url = url.replace(/\/$/, ''); // remove trailing space
   }
@@ -27,11 +24,14 @@ export class Sks extends Api {
   public lookupEmail = async (email: string): Promise<PubkeySearchResult> => {
     const index = await this.get(`/pks/lookup?search=${encodeURIComponent(email)}&fingerprint=on&exact=on&options=mr&op=index`);
     if (!index || !index.startsWith(Sks.MR_VERSION_1)) {
-      return { pubkey: null }; // tslint:disable-line:no-null-keyword
+      return { pubkey: null }; // eslint-disable-line no-null/no-null
     }
     const foundUidsByLongid: { [longid: string]: string[] } = {};
     let currentLongid = '';
-    for (const line of index.split('\n').map(l => l.trim()).filter(l => !l.startsWith(Sks.MR_VERSION_1))) {
+    for (const line of index
+      .split('\n')
+      .map(l => l.trim())
+      .filter(l => !l.startsWith(Sks.MR_VERSION_1))) {
       if (line.startsWith('pub:')) {
         const match = line.match(/^pub:[A-F0-9]{24}([A-F0-9]{16}):[0-9:]+:$/); // in particular cannot end with :r, meaning revoked
         if (!match) {
@@ -45,7 +45,7 @@ export class Sks extends Api {
       }
     }
     if (!Object.keys(foundUidsByLongid).length) {
-      return { pubkey: null }; // tslint:disable-line:no-null-keyword
+      return { pubkey: null }; // eslint-disable-line no-null/no-null
     }
     for (const longid of Object.keys(foundUidsByLongid)) {
       for (const uid of foundUidsByLongid[longid]) {
@@ -64,14 +64,14 @@ export class Sks extends Api {
     }
     const pubkey = await this.get(`/pks/lookup?op=get&search=0x${fingerprintOrLongid}&options=mr`);
     if (!pubkey || !pubkey.includes(String(PgpArmor.headers('publicKey').end))) {
-      return { pubkey: null }; // tslint:disable-line:no-null-keyword
+      return { pubkey: null }; // eslint-disable-line no-null/no-null
     }
     return { pubkey };
   };
 
   private get = async (path: string): Promise<string | undefined> => {
     try {
-      const { responseText } = await Api.apiCall(this.url, path, undefined, undefined, undefined, undefined, 'xhr', 'GET') as XMLHttpRequest;
+      const { responseText } = (await Api.apiCall(this.url, path, undefined, undefined, undefined, undefined, 'xhr', 'GET')) as XMLHttpRequest;
       return responseText;
     } catch (e) {
       if (ApiErr.isNotFound(e)) {
@@ -80,5 +80,4 @@ export class Sks extends Api {
       throw e;
     }
   };
-
 }

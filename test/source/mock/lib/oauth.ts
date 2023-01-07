@@ -6,10 +6,8 @@ import { Buf } from '../../core/buf';
 import { Str } from '../../core/common';
 
 const authURL = 'https://localhost:8001';
-// tslint:disable:variable-name
 
 export class OauthMock {
-
   public clientId = '717284730244-5oejn54f10gnrektjdc4fv4rbic1bj1p.apps.googleusercontent.com';
   public expiresIn = 2 * 60 * 60; // 2hrs in seconds
   public redirectUri = 'https://google.localhost:8001/robots.txt';
@@ -34,7 +32,7 @@ export class OauthMock {
     this.refreshTokenByAuthCode[authCode] = refreshToken;
     this.accessTokenByRefreshToken[refreshToken] = accessToken;
     this.acctByAccessToken[accessToken] = acct;
-    this.scopesByAccessToken[accessToken] = `${(this.scopesByAccessToken[accessToken] ?? '')} ${scope}`;
+    this.scopesByAccessToken[accessToken] = `${this.scopesByAccessToken[accessToken] ?? ''} ${scope}`;
     const url = new URL(this.redirectUri);
     url.searchParams.set('code', authCode);
     url.searchParams.set('scope', scope);
@@ -44,23 +42,32 @@ export class OauthMock {
   };
 
   public getRefreshTokenResponse = (code: string) => {
+    /* eslint-disable @typescript-eslint/naming-convention */
     const refresh_token = this.refreshTokenByAuthCode[code];
     const access_token = this.getAccessToken(refresh_token);
     const acct = this.acctByAccessToken[access_token];
     const id_token = this.generateIdToken(acct);
     return { access_token, refresh_token, expires_in: this.expiresIn, id_token, token_type: 'refresh_token' }; // guessed the token_type
+    /* eslint-enable @typescript-eslint/naming-convention */
   };
 
   public getTokenInfo = (token: string) => {
-    return { scope: this.scopesByAccessToken[token], email: this.acctByAccessToken[token], expires_in: 3600, token_type: "Bearer" };
+    return {
+      scope: this.scopesByAccessToken[token],
+      email: this.acctByAccessToken[token],
+      expires_in: 3600, // eslint-disable-line @typescript-eslint/naming-convention
+      token_type: 'Bearer', // eslint-disable-line @typescript-eslint/naming-convention
+    };
   };
 
   public getTokenResponse = (refreshToken: string) => {
     try {
+      /* eslint-disable @typescript-eslint/naming-convention */
       const access_token = this.getAccessToken(refreshToken);
       const acct = this.acctByAccessToken[access_token];
       const id_token = this.generateIdToken(acct);
       return { access_token, expires_in: this.expiresIn, id_token, token_type: 'Bearer' };
+      /* eslint-enable @typescript-eslint/naming-convention */
     } catch (e) {
       throw new HttpClientErr('invalid_grant', Status.BAD_REQUEST);
     }
@@ -114,12 +121,13 @@ export class OauthMock {
   };
 
   public extractEmailFromIdToken = (idToken: string): string => {
-    const [, data,] = idToken.split('.');
+    const [, data] = idToken.split('.');
     const claims = JSON.parse(Buf.fromBase64UrlStr(data).toUtfStr());
-    return claims.email;
+    return claims.email; // eslint-disable-line @typescript-eslint/no-unsafe-return
   };
 
-  public isIdTokenValid = (idToken: string, email: string): boolean => { // we verify mock idToken by checking if we ever issued it
+  public isIdTokenValid = (idToken: string, email: string): boolean => {
+    // we verify mock idToken by checking if we ever issued it
     return (this.issuedIdTokensByAcct[email] || []).includes(idToken);
   };
 
@@ -148,8 +156,8 @@ export class OauthMock {
 }
 
 export class MockJwt {
-
   public static new = (email: string, expiresIn = 1 * 60 * 60): string => {
+    /* eslint-disable @typescript-eslint/naming-convention */
     const data = {
       at_hash: 'at_hash',
       exp: expiresIn,
@@ -166,6 +174,7 @@ export class MockJwt {
       email,
       email_verified: true,
     };
+    /* eslint-enable @typescript-eslint/naming-convention */
     const newIdToken = `fakeheader.${Buf.fromUtfStr(JSON.stringify(data)).toBase64UrlStr()}.${Str.sloppyRandom(30)}`;
     return newIdToken;
   };
@@ -175,9 +184,8 @@ export class MockJwt {
     if (!email) {
       throw new Error(`Missing email in MockJwt ${jwt}`);
     }
-    return email;
+    return email; // eslint-disable-line @typescript-eslint/no-unsafe-return
   };
-
 }
 
 export const oauth = new OauthMock();

@@ -25,7 +25,12 @@ import { MimeParser } from '../core/types/emailjs.js';
 import type * as OpenPGP from 'openpgp';
 import type * as Streams from '@openpgp/web-stream-tools';
 
-type Codec = { encode: (text: string, mode: 'fatal' | 'html') => string, decode: (text: string) => string, labels: string[], version: string };
+type Codec = {
+  encode: (text: string, mode: 'fatal' | 'html') => string;
+  decode: (text: string) => string;
+  labels: string[];
+  version: string;
+};
 
 export const requireOpenpgp = (): typeof OpenPGP => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -44,8 +49,7 @@ export const requireStreams = (): typeof Streams => {
 };
 
 export const requireMimeParser = (): typeof MimeParser => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return (window as any)['emailjs-mime-parser']; // tslint:disable-line:no-unsafe-any
+  return (window as any)['emailjs-mime-parser']; // eslint-disable-line
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

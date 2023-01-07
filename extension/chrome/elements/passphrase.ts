@@ -22,102 +22,115 @@ import { AcctStore } from '../../js/common/platform/store/acct-store.js';
 const passPhraseTypes = stringTuple('embedded', 'sign', 'message', 'draft', 'attachment', 'quote', 'backup', 'update_key');
 type PassPhraseType = typeof passPhraseTypes[number];
 
-View.run(class PassphraseView extends View {
-  public fesUrl?: string;
-  private readonly acctEmail: string;
-  private readonly parentTabId: string;
-  private readonly longids: string[];
-  private readonly type: PassPhraseType;
-  private readonly initiatorFrameId?: string;
-  private keysWeNeedPassPhraseFor: KeyInfoWithIdentity[] | undefined;
-  private clientConfiguration!: ClientConfiguration;
+View.run(
+  class PassphraseView extends View {
+    public fesUrl?: string;
+    private readonly acctEmail: string;
+    private readonly parentTabId: string;
+    private readonly longids: string[];
+    private readonly type: PassPhraseType;
+    private readonly initiatorFrameId?: string;
+    private keysWeNeedPassPhraseFor: KeyInfoWithIdentity[] | undefined;
+    private clientConfiguration!: ClientConfiguration;
 
-  constructor() {
-    super();
-    const uncheckedUrlParams = Url.parse(['acctEmail', 'parentTabId', 'longids', 'type', 'initiatorFrameId']);
-    this.acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
-    this.parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
-    const longidsParam = Assert.urlParamRequire.string(uncheckedUrlParams, 'longids');
-    this.longids = longidsParam ? longidsParam.split(',') : [];
-    this.type = Assert.urlParamRequire.oneof(uncheckedUrlParams, 'type', passPhraseTypes);
-    this.initiatorFrameId = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'initiatorFrameId');
-  }
+    public constructor() {
+      super();
+      const uncheckedUrlParams = Url.parse(['acctEmail', 'parentTabId', 'longids', 'type', 'initiatorFrameId']);
+      this.acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
+      this.parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
+      const longidsParam = Assert.urlParamRequire.string(uncheckedUrlParams, 'longids');
+      this.longids = longidsParam ? longidsParam.split(',') : [];
+      this.type = Assert.urlParamRequire.oneof(uncheckedUrlParams, 'type', passPhraseTypes);
+      this.initiatorFrameId = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'initiatorFrameId');
+    }
 
-  public render = async () => {
-    Ui.event.protect();
-    const storage = await AcctStore.get(this.acctEmail, ['fesUrl']);
-    this.fesUrl = storage.fesUrl;
-    this.clientConfiguration = await ClientConfiguration.newInstance(this.acctEmail);
-    if (!this.clientConfiguration.forbidStoringPassPhrase()) {
-      $('.forget-pass-phrase-label').removeClass('hidden');
-    }
-    if (this.clientConfiguration.usesKeyManager() || this.clientConfiguration.forbidStoringPassPhrase()) {
-      $('#lost-pass-phrase').removeAttr('id').removeAttr('href');
-      $('.lost-pass-phrase-with-ekm').show();
-    } else {
-      $('.lost-pass-phrase').show();
-    }
-    await initPassphraseToggle(['passphrase']);
-    const allPrivateKeys = await KeyStore.get(this.acctEmail);
-    if (this.longids.length === 0) {
-      this.longids.push(...allPrivateKeys.map(ki => ki.longid));
-    }
-    this.keysWeNeedPassPhraseFor = allPrivateKeys.filter(ki => this.longids.includes(ki.longid));
-    let passphraseText = '';
-    switch (this.type) {
-      case 'embedded':
-        $('.passphrase_text_container').hide();
-        $('div.separator').hide();
-        $('body#settings > div#content.dialog').css({ width: 'inherit', background: '#fafafa', });
-        $('.line.which_key').css({ display: 'none', position: 'absolute', visibility: 'hidden', left: '5000px', });
-        break;
-      case 'sign':
-        passphraseText = Lang.passphraseRequired.sign;
-        break;
-      case 'draft':
-        passphraseText = Lang.passphraseRequired.draft;
-        break;
-      case 'attachment':
-        passphraseText = Lang.passphraseRequired.attachment;
-        break;
-      case 'quote':
-        passphraseText = Lang.passphraseRequired.quote;
-        break;
-      case 'backup':
-        passphraseText = Lang.passphraseRequired.backup;
-        break;
-      case 'update_key':
-        passphraseText = Lang.passphraseRequired.updateKey;
-        break;
-      default:
-        passphraseText = Lang.passphraseRequired.email;
-        break;
-    }
-    $('.passphrase_text').text(passphraseText);
-    $('#passphrase').focus();
-    if (allPrivateKeys.length > 1) {
-      let html: string;
-      if (this.keysWeNeedPassPhraseFor.length === 1) {
-        html = `For key Fingerprint: <span class="good">${Xss.escape(Str.spaced(this.keysWeNeedPassPhraseFor[0].fingerprints[0] || ''))}</span>`;
-      } else {
-        html = 'Pass phrase needed for any of the following keys:';
-        for (const i of this.keysWeNeedPassPhraseFor.keys()) {
-          html += `<div>Fingerprint ${String(i + 1)}: <span class="good">${Xss.escape(Str.spaced(this.keysWeNeedPassPhraseFor[i].fingerprints[0]) || '')}</span></div>`;
-        }
+    public render = async () => {
+      Ui.event.protect();
+      const storage = await AcctStore.get(this.acctEmail, ['fesUrl']);
+      this.fesUrl = storage.fesUrl;
+      this.clientConfiguration = await ClientConfiguration.newInstance(this.acctEmail);
+      if (!this.clientConfiguration.forbidStoringPassPhrase()) {
+        $('.forget-pass-phrase-label').removeClass('hidden');
       }
-      Xss.sanitizeRender('.which_key', html);
-      $('.which_key').css('display', 'block');
-    }
-    Ui.setTestState('ready');
-  };
+      if (this.clientConfiguration.usesKeyManager() || this.clientConfiguration.forbidStoringPassPhrase()) {
+        $('#lost-pass-phrase').removeAttr('id').removeAttr('href');
+        $('.lost-pass-phrase-with-ekm').show();
+      } else {
+        $('.lost-pass-phrase').show();
+      }
+      await initPassphraseToggle(['passphrase']);
+      const allPrivateKeys = await KeyStore.get(this.acctEmail);
+      if (this.longids.length === 0) {
+        this.longids.push(...allPrivateKeys.map(ki => ki.longid));
+      }
+      this.keysWeNeedPassPhraseFor = allPrivateKeys.filter(ki => this.longids.includes(ki.longid));
+      let passphraseText = '';
+      switch (this.type) {
+        case 'embedded':
+          $('.passphrase_text_container').hide();
+          $('div.separator').hide();
+          $('body#settings > div#content.dialog').css({ width: 'inherit', background: '#fafafa' });
+          $('.line.which_key').css({ display: 'none', position: 'absolute', visibility: 'hidden', left: '5000px' });
+          break;
+        case 'sign':
+          passphraseText = Lang.passphraseRequired.sign;
+          break;
+        case 'draft':
+          passphraseText = Lang.passphraseRequired.draft;
+          break;
+        case 'attachment':
+          passphraseText = Lang.passphraseRequired.attachment;
+          break;
+        case 'quote':
+          passphraseText = Lang.passphraseRequired.quote;
+          break;
+        case 'backup':
+          passphraseText = Lang.passphraseRequired.backup;
+          break;
+        case 'update_key':
+          passphraseText = Lang.passphraseRequired.updateKey;
+          break;
+        default:
+          passphraseText = Lang.passphraseRequired.email;
+          break;
+      }
+      $('.passphrase_text').text(passphraseText);
+      $('#passphrase').focus();
+      if (allPrivateKeys.length > 1) {
+        let html: string;
+        if (this.keysWeNeedPassPhraseFor.length === 1) {
+          html = `For key Fingerprint: <span class="good">${Xss.escape(Str.spaced(this.keysWeNeedPassPhraseFor[0].fingerprints[0] || ''))}</span>`;
+        } else {
+          html = 'Pass phrase needed for any of the following keys:';
+          for (const i of this.keysWeNeedPassPhraseFor.keys()) {
+            html += `<div>Fingerprint ${String(i + 1)}: <span class="good">${Xss.escape(
+              Str.spaced(this.keysWeNeedPassPhraseFor[i].fingerprints[0]) || ''
+            )}</span></div>`;
+          }
+        }
+        Xss.sanitizeRender('.which_key', html);
+        $('.which_key').css('display', 'block');
+      }
+      Ui.setTestState('ready');
+    };
 
-  public setHandlers = () => {
-    $('#passphrase').keyup(this.setHandler(() => this.renderNormalPpPrompt()));
-    $('.action_close').on('click', this.setHandler(() => this.closeDialog()));
-    $('.action_ok').on('click', this.setHandler(() => this.submitHandler()));
-    $('#lost-pass-phrase').on('click', this.setHandler((el, ev) => {
-      ev.preventDefault();
-      Ui.modal.info(`
+    public setHandlers = () => {
+      $('#passphrase').keyup(this.setHandler(() => this.renderNormalPpPrompt()));
+      $('.action_close').on(
+        'click',
+        this.setHandler(() => this.closeDialog())
+      );
+      $('.action_ok').on(
+        'click',
+        this.setHandler(() => this.submitHandler())
+      );
+      $('#lost-pass-phrase').on(
+        'click',
+        this.setHandler((el, ev) => {
+          ev.preventDefault();
+          Ui.modal
+            .info(
+              `
         <div style="text-align: initial">
           <strong>Do you have at least one other working device where
           you can still read your encrypted email?</strong>
@@ -133,82 +146,97 @@ View.run(class PassphraseView extends View {
           You can <a href class="reset-flowcrypt">reset FlowCrypt on this device</a>
           and then click <code>Lost your pass phrase?</code> during recovery step.
         </div>
-      `, true).catch(Catch.reportErr);
-      $('.reset-flowcrypt').on('click', this.setHandler(async (el, ev) => {
-        ev.preventDefault();
-        if (await Settings.resetAccount(this.acctEmail)) {
-          this.closeDialog();
-        }
-      }));
-    }));
-    $('#passphrase').keydown(this.setHandler((el, ev) => {
-      if (ev.key === 'Enter') {
-        $('.action_ok').trigger('click');
-      }
-    }));
-    $('body').on('keydown', this.setHandler((el, ev) => {
-      if (ev.key === 'Escape') {
-        this.closeDialog();
-      }
-    }));
-  };
-
-  private renderNormalPpPrompt = () => {
-    $('#passphrase').css('border-color', '');
-    $('#passphrase').css('color', 'black');
-    $('#passphrase').focus();
-  };
-
-  private renderFailedEntryPpPrompt = () => {
-    $('#passphrase').val('');
-    $('#passphrase').css('border-color', 'red');
-    $('#passphrase').css('color', 'red');
-    $('#passphrase').attr('placeholder', 'Please try again');
-  };
-
-  private closeDialog = (entered: boolean = false, initiatorFrameId?: string) => {
-    BrowserMsg.send.closeDialog(this.parentTabId);
-    BrowserMsg.send.passphraseEntry('broadcast', { entered, initiatorFrameId });
-  };
-
-  private submitHandler = async () => {
-    const pass = String($('#passphrase').val());
-    const storageType: StorageType = ($('.forget-pass-phrase-checkbox').prop('checked') || this.clientConfiguration.forbidStoringPassPhrase()) ? 'session' : 'local';
-    let atLeastOneMatched = false;
-    let unlockCount = 0; // may include non-matching keys
-    const allPrivateKeys = await KeyStore.get(this.acctEmail);
-    for (const keyinfo of allPrivateKeys) { // if passphrase matches more keys, it will save the pass phrase for all keys
-      const prv = await KeyUtil.parse(keyinfo.private);
-      try {
-        if (await KeyUtil.decrypt(prv, pass) === true) {
-          unlockCount++;
-          await PassphraseStore.set(storageType, this.acctEmail, keyinfo, pass);
-          if (this.longids.includes(keyinfo.longid)) {
-            atLeastOneMatched = true;
+      `,
+              true
+            )
+            .catch(Catch.reportErr);
+          $('.reset-flowcrypt').on(
+            'click',
+            this.setHandler(async (el, ev) => {
+              ev.preventDefault();
+              if (await Settings.resetAccount(this.acctEmail)) {
+                this.closeDialog();
+              }
+            })
+          );
+        })
+      );
+      $('#passphrase').keydown(
+        this.setHandler((el, ev) => {
+          if (ev.key === 'Enter') {
+            $('.action_ok').trigger('click');
           }
-          if (storageType === 'session') {
-            // TODO: change to 'broadcast' when issue with 'broadcast' is fixed
-            BrowserMsg.send.addEndSessionBtn(this.parentTabId);
+        })
+      );
+      $('body').on(
+        'keydown',
+        this.setHandler((el, ev) => {
+          if (ev.key === 'Escape') {
+            this.closeDialog();
+          }
+        })
+      );
+    };
+
+    private renderNormalPpPrompt = () => {
+      $('#passphrase').css('border-color', '');
+      $('#passphrase').css('color', 'black');
+      $('#passphrase').focus();
+    };
+
+    private renderFailedEntryPpPrompt = () => {
+      $('#passphrase').val('');
+      $('#passphrase').css('border-color', 'red');
+      $('#passphrase').css('color', 'red');
+      $('#passphrase').attr('placeholder', 'Please try again');
+    };
+
+    private closeDialog = (entered = false, initiatorFrameId?: string) => {
+      BrowserMsg.send.closeDialog(this.parentTabId);
+      BrowserMsg.send.passphraseEntry('broadcast', { entered, initiatorFrameId });
+    };
+
+    private submitHandler = async () => {
+      const pass = String($('#passphrase').val());
+      const storageType: StorageType =
+        $('.forget-pass-phrase-checkbox').prop('checked') || this.clientConfiguration.forbidStoringPassPhrase() ? 'session' : 'local';
+      let atLeastOneMatched = false;
+      let unlockCount = 0; // may include non-matching keys
+      const allPrivateKeys = await KeyStore.get(this.acctEmail);
+      for (const keyinfo of allPrivateKeys) {
+        // if passphrase matches more keys, it will save the pass phrase for all keys
+        const prv = await KeyUtil.parse(keyinfo.private);
+        try {
+          if ((await KeyUtil.decrypt(prv, pass)) === true) {
+            unlockCount++;
+            await PassphraseStore.set(storageType, this.acctEmail, keyinfo, pass);
+            if (this.longids.includes(keyinfo.longid)) {
+              atLeastOneMatched = true;
+            }
+            if (storageType === 'session') {
+              // TODO: change to 'broadcast' when issue with 'broadcast' is fixed
+              BrowserMsg.send.addEndSessionBtn(this.parentTabId);
+            }
+          }
+        } catch (e) {
+          if (e instanceof Error && e.message === 'Unknown s2k type.') {
+            let msg = `Your key with fingerprint ${keyinfo.fingerprints[0]} is not supported yet (${String(e)}).`;
+            msg += `\n\nPlease ${Lang.general.contactMinimalSubsentence(!!this.fesUrl)} with details about how this key was created.`;
+            await Ui.modal.error(msg);
+          } else {
+            throw e;
           }
         }
-      } catch (e) {
-        if (e instanceof Error && e.message === 'Unknown s2k type.') {
-          let msg = `Your key with fingerprint ${keyinfo.fingerprints[0]} is not supported yet (${String(e)}).`;
-          msg += `\n\nPlease ${Lang.general.contactMinimalSubsentence(!!this.fesUrl)} with details about how this key was created.`;
-          await Ui.modal.error(msg);
-        } else {
-          throw e;
-        }
       }
-    }
-    if (unlockCount && allPrivateKeys.length > 1) {
-      Ui.toast(`${unlockCount} of ${allPrivateKeys.length} keys ${(unlockCount > 1) ? 'were' : 'was'} unlocked by this pass phrase`);
-    }
-    if (atLeastOneMatched) {
-      this.closeDialog(true, this.initiatorFrameId);
-    } else {
-      this.renderFailedEntryPpPrompt();
-      Catch.setHandledTimeout(() => this.renderNormalPpPrompt(), 1500);
-    }
-  };
-});
+      if (unlockCount && allPrivateKeys.length > 1) {
+        Ui.toast(`${unlockCount} of ${allPrivateKeys.length} keys ${unlockCount > 1 ? 'were' : 'was'} unlocked by this pass phrase`);
+      }
+      if (atLeastOneMatched) {
+        this.closeDialog(true, this.initiatorFrameId);
+      } else {
+        this.renderFailedEntryPpPrompt();
+        Catch.setHandledTimeout(() => this.renderNormalPpPrompt(), 1500);
+      }
+    };
+  }
+);

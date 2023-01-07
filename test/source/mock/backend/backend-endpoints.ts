@@ -12,18 +12,18 @@ import { oauth } from '../lib/oauth';
 export const mockBackendData = new BackendData();
 
 export const mockBackendEndpoints: HandlersDefinition = {
-  '/api/account/get': async ({ }, req) => {
+  '/api/account/get': async ({}, req) => {
     throwIfNotPost(req);
     const email = getEmailFromIdTokenOrThrow(req);
     return JSON.stringify({
-      account: mockBackendData.getAcctRow(email!),
-      domain_org_rules: mockBackendData.getClientConfiguration(email!),
+      account: mockBackendData.getAcctRow(email!), // eslint-disable-line @typescript-eslint/no-non-null-assertion
+      domain_org_rules: mockBackendData.getClientConfiguration(email!), // eslint-disable-line @typescript-eslint/naming-convention, @typescript-eslint/no-non-null-assertion
     });
   },
-  '/api/account/update': async ({ }, req) => {
+  '/api/account/update': async ({}, req) => {
     throw new Error(`${req.url} mock not implemented`);
   },
-  '/api/account/subscribe': async ({ }, req) => {
+  '/api/account/subscribe': async ({}, req) => {
     throw new Error(`${req.url} mock not implemented`);
   },
   '/api/message/token': async () => {
@@ -37,11 +37,11 @@ export const mockBackendEndpoints: HandlersDefinition = {
     expect((body as { email: string }).email).to.equal('flowcrypt.compatibility@gmail.com');
     return { sent: true, text: 'Feedback sent' };
   },
-  '/api/message/upload': async ({ }, req) => {
+  '/api/message/upload': async ({}, req) => {
     getEmailFromIdTokenOrThrow(req);
     return { short: 'mockmsg000' };
   },
-  '/api/link/me': async ({ }, req) => {
+  '/api/link/me': async ({}, req) => {
     throw new Error(`${req.url} mock not implemented`);
   },
 };

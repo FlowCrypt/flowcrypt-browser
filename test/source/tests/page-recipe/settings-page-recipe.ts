@@ -13,18 +13,17 @@ import { Key, KeyUtil } from '../../core/crypto/key';
 import { readFileSync } from 'fs';
 
 export type SavePassphraseChecks = {
-  isSavePassphraseHidden?: boolean | undefined,
-  isSavePassphraseChecked?: boolean | undefined
+  isSavePassphraseHidden?: boolean | undefined;
+  isSavePassphraseChecked?: boolean | undefined;
 };
 
 export class SettingsPageRecipe extends PageRecipe {
-
   public static ready = async (settingsPage: ControllablePage) => {
     await settingsPage.waitAll('@page-settings');
     await settingsPage.waitForSelTestState('ready');
   };
 
-  public static toggleScreen = async (settingsPage: ControllablePage, to: "basic" | "additional") => {
+  public static toggleScreen = async (settingsPage: ControllablePage, to: 'basic' | 'additional') => {
     await SettingsPageRecipe.ready(settingsPage);
     await Util.sleep(0.5);
     await settingsPage.waitAndClick(to === 'basic' ? '@action-toggle-screen-basic' : '@action-toggle-screen-additional'); // switch
@@ -80,11 +79,14 @@ export class SettingsPageRecipe extends PageRecipe {
     await SettingsPageRecipe.closeDialog(settingsPage);
   };
 
-  public static verifyMyKeyPage = async (settingsPage: ControllablePage, expectedKeyName: string, trigger: "button" | "link", linkIndex?: number) => {
+  public static verifyMyKeyPage = async (settingsPage: ControllablePage, expectedKeyName: string, trigger: 'button' | 'link', linkIndex?: number) => {
     await SettingsPageRecipe.ready(settingsPage);
     await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
-    const myKeyFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage,
-      trigger === 'button' ? '@action-open-pubkey-page' : `@action-show-key-${linkIndex}`, ['my_key.htm', 'placement=settings']);
+    const myKeyFrame = await SettingsPageRecipe.awaitNewPageFrame(
+      settingsPage,
+      trigger === 'button' ? '@action-open-pubkey-page' : `@action-show-key-${linkIndex}`,
+      ['my_key.htm', 'placement=settings']
+    );
     await Util.sleep(1);
     const k = Config.key(expectedKeyName);
     await myKeyFrame.waitAll('@content-fingerprint');
@@ -127,7 +129,7 @@ export class SettingsPageRecipe extends PageRecipe {
     t: AvaContext,
     browser: BrowserHandle,
     acctEmail: string,
-    prvKey: { armoredPrvKey?: string, filePath?: string },
+    prvKey: { armoredPrvKey?: string; filePath?: string },
     passphrase: string,
     checks: SavePassphraseChecks = {},
     savePassphrase = true
@@ -139,14 +141,13 @@ export class SettingsPageRecipe extends PageRecipe {
       await addPrvPage.waitAndType('@input-armored-key', prvKey.armoredPrvKey);
       key = await KeyUtil.parse(prvKey.armoredPrvKey);
     } else if (prvKey.filePath) {
-      const [fileChooser] = await Promise.all([
-        addPrvPage.page.waitForFileChooser(),
-        addPrvPage.waitAndClick('@source-file', { retryErrs: true })]);
+      const [fileChooser] = await Promise.all([addPrvPage.page.waitForFileChooser(), addPrvPage.waitAndClick('@source-file', { retryErrs: true })]);
       await fileChooser.accept([prvKey.filePath]);
       [key] = (await KeyUtil.readBinary(readFileSync(prvKey.filePath))).keys;
     } else {
       assert(false);
     }
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const fp = Str.spaced(Xss.escape(key!.id));
     await addPrvPage.waitAndClick('#toggle_input_passphrase');
     await addPrvPage.waitAndType('#input_passphrase', passphrase);

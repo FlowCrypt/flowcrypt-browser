@@ -16,6 +16,7 @@ import { GMAIL_RECOVERY_EMAIL_SUBJECTS } from '../../../core/const.js';
 import { ENVELOPED_DATA_OID, SIGNED_DATA_OID, SmimeKey } from '../../../core/crypto/smime/smime-key.js';
 import { testConstants } from '../../../tests/tooling/consts.js';
 
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 // TODO: Make a better structure of ITestMsgStrategy. Because this class doesn't test anything, it only saves message in the Mock
 class SaveMessageInStorageStrategy implements ITestMsgStrategy {
   public test = async (parseResult: ParseMsgResult, id: string) => {
@@ -27,7 +28,7 @@ class PwdAndPubkeyEncryptedMessagesWithFlowCryptComApiTestStrategy implements IT
   public test = async (parseResult: ParseMsgResult, id: string) => {
     const mimeMsg = parseResult.mimeMsg;
     const senderEmail = Str.parseEmail(mimeMsg.from!.text).email;
-    await (new SaveMessageInStorageStrategy()).test(parseResult, id);
+    await new SaveMessageInStorageStrategy().test(parseResult, id);
     if (mimeMsg.cc) {
       // this is a message to the pubkey recipient
       expect((mimeMsg.cc as AddressObject).text!).to.include('flowcrypt.compatibility@gmail.com');
@@ -36,13 +37,10 @@ class PwdAndPubkeyEncryptedMessagesWithFlowCryptComApiTestStrategy implements IT
       const kisWithPp = await Config.getKeyInfo(['flowcrypt.compatibility.1pp1', 'flowcrypt.compatibility.2pp1']);
       const encryptedData = Buf.fromUtfStr(mimeMsg.text!);
       const decrypted = await MsgUtil.decryptMessage({ kisWithPp, encryptedData, verificationPubs: [] });
-      // tslint:disable-next-line:no-unused-expression
-      expect(decrypted.success).to.be.true; // eslint-disable-line no-unused-expressions
+      expect(decrypted.success).to.be.true;
       expect(decrypted.content!.toUtfStr()).to.contain('PWD and pubkey encrypted messages with flowcrypt.com/api');
-      // tslint:disable-next-line:no-unused-expression
-      expect(mimeMsg.bcc).to.be.an.undefined; // eslint-disable-line no-unused-expressions
-      // tslint:disable-next-line:no-unused-expression
-      expect(mimeMsg.to).to.be.an.undefined; // eslint-disable-line no-unused-expressions
+      expect(mimeMsg.bcc).to.be.an.undefined;
+      expect(mimeMsg.to).to.be.an.undefined;
       expect((mimeMsg.headers.get('reply-to') as AddressObject).text).to.equal('First Last <flowcrypt.compatibility@gmail.com>, test@email.com');
     } else {
       expect(mimeMsg.text!).to.contain(`${senderEmail} has sent you a password-encrypted email`);
@@ -76,16 +74,12 @@ class PwdEncryptedMessageWithFesIdTokenTestStrategy implements ITestMsgStrategy 
     expect(mimeMsg.from!.text).to.equal(`First Last <${expectedSenderEmail}>`);
     if (mimeMsg.text?.includes('http://fes.standardsubdomainfes.localhost:8001/message/FES-MOCK-MESSAGE-FOR-TO@EXAMPLE.COM-ID')) {
       expect((mimeMsg.to as AddressObject).text).to.equal('Mr To <to@example.com>');
-      // tslint:disable-next-line:no-unused-expression
-      expect(mimeMsg.cc).to.be.an.undefined; // eslint-disable-line no-unused-expressions
-      // tslint:disable-next-line:no-unused-expression
-      expect(mimeMsg.bcc).to.be.an.undefined; // eslint-disable-line no-unused-expressions
+      expect(mimeMsg.cc).to.be.an.undefined;
+      expect(mimeMsg.bcc).to.be.an.undefined;
     } else if (mimeMsg.text?.includes('http://fes.standardsubdomainfes.localhost:8001/message/FES-MOCK-MESSAGE-FOR-BCC@EXAMPLE.COM-ID')) {
       expect((mimeMsg.to as AddressObject).text).to.equal('Mr Bcc <bcc@example.com>');
-      // tslint:disable-next-line:no-unused-expression
-      expect(mimeMsg.cc).to.be.an.undefined; // eslint-disable-line no-unused-expressions
-      // tslint:disable-next-line:no-unused-expression
-      expect(mimeMsg.bcc).to.be.an.undefined; // eslint-disable-line no-unused-expressions
+      expect(mimeMsg.cc).to.be.an.undefined;
+      expect(mimeMsg.bcc).to.be.an.undefined;
     } else {
       // no pubkey recipients in this test
       throw new HttpClientErr(`Error: cannot find pwd encrypted FES link in:\n\n${mimeMsg.text}`);
@@ -105,12 +99,9 @@ class PwdEncryptedMessageWithFesPubkeyRecipientInBccTestStrategy implements ITes
       expect(mimeMsg.text!).to.include(`${expectedSenderEmail} has sent you a password-encrypted email`);
       expect(mimeMsg.text!).to.include('Follow this link to open it');
       expect((mimeMsg.to as AddressObject).text).to.equal('to@example.com');
-      // tslint:disable-next-line:no-unused-expression
-      expect(mimeMsg.cc).to.be.an.undefined; // eslint-disable-line no-unused-expressions
-      // tslint:disable-next-line:no-unused-expression
-      expect(mimeMsg.bcc).to.be.an.undefined; // eslint-disable-line no-unused-expressions
-      // tslint:disable-next-line:no-unused-expression
-      expect(mimeMsg.headers.get('reply-to')).to.be.an.undefined; // eslint-disable-line no-unused-expressions
+      expect(mimeMsg.cc).to.be.an.undefined;
+      expect(mimeMsg.bcc).to.be.an.undefined;
+      expect(mimeMsg.headers.get('reply-to')).to.be.an.undefined;
     } else {
       // this is a message to pubkey recipients
       expect(mimeMsg.text!).to.not.include('has sent you a password-encrypted email');
@@ -118,14 +109,11 @@ class PwdEncryptedMessageWithFesPubkeyRecipientInBccTestStrategy implements ITes
       const kisWithPp = await Config.getKeyInfo(['flowcrypt.test.key.used.pgp']);
       const encryptedData = Buf.fromUtfStr(mimeMsg.text!);
       const decrypted = await MsgUtil.decryptMessage({ kisWithPp, encryptedData, verificationPubs: [] });
-      // tslint:disable-next-line:no-unused-expression
-      expect(decrypted.success).to.be.true; // eslint-disable-line no-unused-expressions
+      expect(decrypted.success).to.be.true;
       expect(decrypted.content!.toUtfStr()).to.equal('PWD encrypted message with FES - pubkey recipient in bcc');
       expect((mimeMsg.bcc as AddressObject).text).to.equal('flowcrypt.compatibility@gmail.com');
-      // tslint:disable-next-line:no-unused-expression
-      expect(mimeMsg.cc).to.be.an.undefined; // eslint-disable-line no-unused-expressions
-      // tslint:disable-next-line:no-unused-expression
-      expect(mimeMsg.to).to.be.an.undefined; // eslint-disable-line no-unused-expressions
+      expect(mimeMsg.cc).to.be.an.undefined;
+      expect(mimeMsg.to).to.be.an.undefined;
       expect((mimeMsg.headers.get('reply-to') as AddressObject).text).to.equal('First Last <user3@standardsubdomainfes.localhost:8001>, to@example.com');
     }
     await new SaveMessageInStorageStrategy().test(parseResult, id);
@@ -137,7 +125,9 @@ class PwdEncryptedMessageWithFesReplyBadRequestTestStrategy implements ITestMsgS
     const mimeMsg = parseResult.mimeMsg;
     const expectedSenderEmail = 'user4@standardsubdomainfes.localhost:8001';
     expect(mimeMsg.from!.text).to.equal(`First Last <${expectedSenderEmail}>`);
-    const to = parsedMailAddressObjectAsArray(mimeMsg.to).concat(parsedMailAddressObjectAsArray(mimeMsg.cc)).concat(parsedMailAddressObjectAsArray(mimeMsg.bcc));
+    const to = parsedMailAddressObjectAsArray(mimeMsg.to)
+      .concat(parsedMailAddressObjectAsArray(mimeMsg.cc))
+      .concat(parsedMailAddressObjectAsArray(mimeMsg.bcc));
     expect(to.length).to.equal(1);
     const recipientEmail = to[0].text;
     if (recipientEmail === 'to@example.com') {
@@ -163,22 +153,16 @@ class PwdEncryptedMessageWithFesReplyRenderingTestStrategy implements ITestMsgSt
       expect(mimeMsg.text!).to.include(`${expectedSenderEmail} has sent you a password-encrypted email`);
       expect(mimeMsg.text!).to.include('Follow this link to open it');
       expect((mimeMsg.to as AddressObject).text).to.equal('sender@domain.com');
-      // tslint:disable-next-line:no-unused-expression
-      expect(mimeMsg.cc).to.be.an.undefined; // eslint-disable-line no-unused-expressions
-      // tslint:disable-next-line:no-unused-expression
-      expect(mimeMsg.bcc).to.be.an.undefined; // eslint-disable-line no-unused-expressions
-      // tslint:disable-next-line:no-unused-expression
-      expect(mimeMsg.headers.get('reply-to')).to.be.an.undefined; // eslint-disable-line no-unused-expressions
+      expect(mimeMsg.cc).to.be.an.undefined;
+      expect(mimeMsg.bcc).to.be.an.undefined;
+      expect(mimeMsg.headers.get('reply-to')).to.be.an.undefined;
     } else if (mimeMsg.text?.includes('http://fes.standardsubdomainfes.localhost:8001/message/FES-MOCK-MESSAGE-FOR-TO@EXAMPLE.COM-ID')) {
       expect(mimeMsg.text!).to.include(`${expectedSenderEmail} has sent you a password-encrypted email`);
       expect(mimeMsg.text!).to.include('Follow this link to open it');
       expect((mimeMsg.to as AddressObject).text).to.equal('to@example.com');
-      // tslint:disable-next-line:no-unused-expression
-      expect(mimeMsg.cc).to.be.an.undefined; // eslint-disable-line no-unused-expressions
-      // tslint:disable-next-line:no-unused-expression
-      expect(mimeMsg.bcc).to.be.an.undefined; // eslint-disable-line no-unused-expressions
-      // tslint:disable-next-line:no-unused-expression
-      expect(mimeMsg.headers.get('reply-to')).to.be.an.undefined; // eslint-disable-line no-unused-expressions
+      expect(mimeMsg.cc).to.be.an.undefined;
+      expect(mimeMsg.bcc).to.be.an.undefined;
+      expect(mimeMsg.headers.get('reply-to')).to.be.an.undefined;
     } else {
       // this is a message to pubkey recipients
       expect(mimeMsg.text!).to.not.include('has sent you a password-encrypted email');
@@ -186,27 +170,31 @@ class PwdEncryptedMessageWithFesReplyRenderingTestStrategy implements ITestMsgSt
       const kisWithPp = await Config.getKeyInfo(['flowcrypt.test.key.used.pgp']);
       const encryptedData = Buf.fromUtfStr(mimeMsg.text!);
       const decrypted = await MsgUtil.decryptMessage({ kisWithPp, encryptedData, verificationPubs: [] });
-      // tslint:disable-next-line:no-unused-expression
-      expect(decrypted.success).to.be.true; // eslint-disable-line no-unused-expressions
+      expect(decrypted.success).to.be.true;
       expect(decrypted.content!.toUtfStr()).to.include('> some dummy text');
       expect((mimeMsg.to as AddressObject).text).to.equal('flowcrypt.compatibility@gmail.com, mock.only.pubkey@flowcrypt.com');
-      // tslint:disable-next-line:no-unused-expression
-      expect(mimeMsg.cc).to.be.an.undefined; // eslint-disable-line no-unused-expressions
-      // tslint:disable-next-line:no-unused-expression
-      expect(mimeMsg.bcc).to.be.an.undefined; // eslint-disable-line no-unused-expressions
-      expect((mimeMsg.headers.get('reply-to') as AddressObject).text).to.equal('First Last <user2@standardsubdomainfes.localhost:8001>, sender@domain.com, to@example.com');
+      expect(mimeMsg.cc).to.be.an.undefined;
+      expect(mimeMsg.bcc).to.be.an.undefined;
+      expect((mimeMsg.headers.get('reply-to') as AddressObject).text).to.equal(
+        'First Last <user2@standardsubdomainfes.localhost:8001>, sender@domain.com, to@example.com'
+      );
     }
     await new SaveMessageInStorageStrategy().test(parseResult, id);
   };
 }
+/* eslint-enable @typescript-eslint/no-non-null-assertion */
 
 class MessageWithFooterTestStrategy implements ITestMsgStrategy {
   private readonly footer = 'flowcrypt.compatibility test footer with an img';
 
   public test = async (parseResult: ParseMsgResult) => {
     const mimeMsg = parseResult.mimeMsg;
-    const keyInfo = await Config.getKeyInfo(["flowcrypt.compatibility.1pp1", "flowcrypt.compatibility.2pp1"]);
-    const decrypted = await MsgUtil.decryptMessage({ kisWithPp: keyInfo!, encryptedData: Buf.fromUtfStr(mimeMsg.text || ''), verificationPubs: [] });
+    const keyInfo = await Config.getKeyInfo(['flowcrypt.compatibility.1pp1', 'flowcrypt.compatibility.2pp1']);
+    const decrypted = await MsgUtil.decryptMessage({
+      kisWithPp: keyInfo!, // eslint-disable-line @typescript-eslint/no-non-null-assertion
+      encryptedData: Buf.fromUtfStr(mimeMsg.text || ''),
+      verificationPubs: [],
+    });
     if (!decrypted.success) {
       throw new HttpClientErr(`Error: can't decrypt message`);
     }
@@ -223,8 +211,12 @@ class SignedMessageTestStrategy implements ITestMsgStrategy {
 
   public test = async (parseResult: ParseMsgResult) => {
     const mimeMsg = parseResult.mimeMsg;
-    const keyInfo = await Config.getKeyInfo(["flowcrypt.compatibility.1pp1", "flowcrypt.compatibility.2pp1"]);
-    const decrypted = await MsgUtil.decryptMessage({ kisWithPp: keyInfo!, encryptedData: Buf.fromUtfStr(mimeMsg.text!), verificationPubs: [] });
+    const keyInfo = await Config.getKeyInfo(['flowcrypt.compatibility.1pp1', 'flowcrypt.compatibility.2pp1']);
+    const decrypted = await MsgUtil.decryptMessage({
+      kisWithPp: keyInfo!, // eslint-disable-line @typescript-eslint/no-non-null-assertion
+      encryptedData: Buf.fromUtfStr(mimeMsg.text!), // eslint-disable-line @typescript-eslint/no-non-null-assertion
+      verificationPubs: [],
+    });
     if (!decrypted.success) {
       throw new HttpClientErr(`Error: Could not successfully verify signed message`);
     }
@@ -232,7 +224,9 @@ class SignedMessageTestStrategy implements ITestMsgStrategy {
       throw new HttpClientErr(`Error: The message isn't signed.`);
     }
     if (!decrypted.signature.signerLongids.includes(this.signedBy)) {
-      throw new HttpClientErr(`Error: expected message signed by ${this.signedBy} but was actually signed by ${decrypted.signature.signerLongids.length} other signers`);
+      throw new HttpClientErr(
+        `Error: expected message signed by ${this.signedBy} but was actually signed by ${decrypted.signature.signerLongids.length} other signers`
+      );
     }
     const content = decrypted.content.toUtfStr();
     if (!content.includes(this.expectedText)) {
@@ -253,7 +247,7 @@ class PlainTextMessageTestStrategy implements ITestMsgStrategy {
 }
 
 class NoopTestStrategy implements ITestMsgStrategy {
-  public test = async () => { }; // tslint:disable-line:no-empty
+  public test = async () => {}; // eslint-disable-line @typescript-eslint/no-empty-function, no-empty-function
 }
 
 class IncludeQuotedPartTestStrategy implements ITestMsgStrategy {
@@ -267,12 +261,18 @@ class IncludeQuotedPartTestStrategy implements ITestMsgStrategy {
     '> > still the quote',
     '> > third line',
     '> >> double quote',
-    '> >> again double quote'
+    '> >> again double quote',
   ].join('\n');
 
   public test = async (parseResult: ParseMsgResult) => {
-    const keyInfo = await Config.getKeyInfo(["flowcrypt.compatibility.1pp1", "flowcrypt.compatibility.2pp1"]);
-    const decrypted = await MsgUtil.decryptMessage({ kisWithPp: keyInfo!, encryptedData: Buf.fromUtfStr(parseResult.mimeMsg.text!), verificationPubs: [] });
+    const keyInfo = await Config.getKeyInfo(['flowcrypt.compatibility.1pp1', 'flowcrypt.compatibility.2pp1']);
+    /* eslint-disable @typescript-eslint/no-non-null-assertion */
+    const decrypted = await MsgUtil.decryptMessage({
+      kisWithPp: keyInfo!,
+      encryptedData: Buf.fromUtfStr(parseResult.mimeMsg.text!),
+      verificationPubs: [],
+    });
+    /* eslint-enable @typescript-eslint/no-non-null-assertion */
     if (!decrypted.success) {
       throw new HttpClientErr(`Error: can't decrypt message`);
     }
@@ -309,12 +309,14 @@ class SmimeEncryptedMessageStrategy implements ITestMsgStrategy {
     expect((mimeMsg.headers.get('content-disposition') as StructuredHeader).value).to.equal('attachment');
     expect((mimeMsg.headers.get('content-disposition') as StructuredHeader).params.filename).to.equal('smime.p7m');
     expect(mimeMsg.headers.get('content-description')).to.equal('S/MIME Encrypted Message');
+    /* eslint-disable @typescript-eslint/no-non-null-assertion */
     expect(mimeMsg.attachments!.length).to.equal(1);
     expect(mimeMsg.attachments![0].contentType).to.equal('application/pkcs7-mime');
     expect(mimeMsg.attachments![0].filename).to.equal('smime.p7m');
     const withAttachments = mimeMsg.subject?.includes(' with attachment');
     expect(mimeMsg.attachments![0].size).to.be.greaterThan(withAttachments ? 20000 : 300);
     const msg = new Buf(mimeMsg.attachments![0].content).toRawBytesStr();
+    /* eslint-enable @typescript-eslint/no-non-null-assertion */
     const p7 = forge.pkcs7.messageFromAsn1(forge.asn1.fromDer(msg));
     expect(p7.type).to.equal(ENVELOPED_DATA_OID);
     if (p7.type === ENVELOPED_DATA_OID) {
@@ -329,8 +331,10 @@ class SmimeEncryptedMessageStrategy implements ITestMsgStrategy {
         expect(decryptedMessage).to.contain('This text should be encrypted into PKCS#7 data');
         if (withAttachments) {
           const nestedMimeMsg = await Parse.parseMixed(decryptedMessage);
+          /* eslint-disable @typescript-eslint/no-non-null-assertion */
           expect(nestedMimeMsg.attachments!.length).to.equal(3);
           expect(nestedMimeMsg.attachments![0].content.toString()).to.equal(`small text file\nnot much here\nthis worked\n`);
+          /* eslint-enable @typescript-eslint/no-non-null-assertion */
         }
       }
     }
@@ -347,11 +351,13 @@ class SmimeSignedMessageStrategy implements ITestMsgStrategy {
     expect((mimeMsg.headers.get('content-disposition') as StructuredHeader).value).to.equal('attachment');
     expect((mimeMsg.headers.get('content-disposition') as StructuredHeader).params.filename).to.equal('smime.p7m');
     expect(mimeMsg.headers.get('content-description')).to.equal('S/MIME Signed Message');
+    /* eslint-disable @typescript-eslint/no-non-null-assertion */
     expect(mimeMsg.attachments!.length).to.equal(1);
     expect(mimeMsg.attachments![0].contentType).to.equal('application/pkcs7-mime');
     expect(mimeMsg.attachments![0].filename).to.equal('smime.p7m');
     expect(mimeMsg.attachments![0].size).to.be.greaterThan(300);
     const msg = new Buf(mimeMsg.attachments![0].content).toRawBytesStr();
+    /* eslint-enable @typescript-eslint/no-non-null-assertion */
     const p7 = forge.pkcs7.messageFromAsn1(forge.asn1.fromDer(msg));
     expect(p7.type).to.equal(SIGNED_DATA_OID);
   };
@@ -359,7 +365,7 @@ class SmimeSignedMessageStrategy implements ITestMsgStrategy {
 export class TestBySubjectStrategyContext {
   private strategy: ITestMsgStrategy;
 
-  constructor(subject: string) {
+  public constructor(subject: string) {
     if (subject.includes('testing quotes')) {
       this.strategy = new IncludeQuotedPartTestStrategy();
     } else if (subject.includes('Testing CC And BCC')) {

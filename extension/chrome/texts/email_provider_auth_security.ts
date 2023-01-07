@@ -4,17 +4,17 @@
 
 import { Lang } from '../../js/common/lang.js';
 import { View } from '../../js/common/view.js';
-View.run(class EmailProviderAuthSecurityView extends View {
+View.run(
+  class EmailProviderAuthSecurityView extends View {
+    public render = async () => {
+      const contactForSupportContainer = $('.ask_support_assistance_container');
+      const htmlBody = $('body');
+      contactForSupportContainer.text(Lang.general.contactIfNeedAssistance());
+      htmlBody.css('display', 'block');
+    };
 
-  public render = async () => {
-    const contactForSupportContainer = $('.ask_support_assistance_container');
-    const htmlBody = $('body');
-    contactForSupportContainer.text(Lang.general.contactIfNeedAssistance());
-    htmlBody.css('display', 'block');
-  };
-
-  public setHandlers = () => {
-    // no need
-  };
-
-});
+    public setHandlers = () => {
+      // no need
+    };
+  }
+);

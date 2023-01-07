@@ -18,27 +18,41 @@ import { KeyStore } from '../platform/store/key-store.js';
 import { isFesUsed } from '../helpers.js';
 import { OpenPGPKey } from '../core/crypto/pgp/openpgp-key.js';
 
-type KeyImportUiCheckResult = { normalized: string; passphrase: string; fingerprint: string; decrypted: Key; encrypted: Key; };
+type KeyImportUiCheckResult = {
+  normalized: string;
+  passphrase: string;
+  fingerprint: string;
+  decrypted: Key;
+  encrypted: Key;
+};
 
 export class KeyCanBeFixed extends Error {
   public encrypted: Key;
-  constructor(encrypted: Key) {
+  public constructor(encrypted: Key) {
     super();
     this.encrypted = encrypted;
   }
 }
 
-export class UserAlert extends Error { }
+export class UserAlert extends Error {}
 
 export class KeyImportUi {
-
   private expectedLongid?: string;
   private rejectKnown: boolean;
   private checkEncryption: boolean;
   private checkSigning: boolean;
 
+  public constructor(o: { rejectKnown?: boolean; checkEncryption?: boolean; checkSigning?: boolean }) {
+    this.rejectKnown = o.rejectKnown === true;
+    this.checkEncryption = o.checkEncryption === true;
+    this.checkSigning = o.checkSigning === true;
+  }
+
   public static normalizeFingerprintOrLongId = (fingerprintOrLongid: string) => {
-    let result = fingerprintOrLongid.trim().replace(/0x|\s|:|-/g, '').toUpperCase();
+    let result = fingerprintOrLongid
+      .trim()
+      .replace(/0x|\s|:|-/g, '')
+      .toUpperCase();
     if (result.length >= 40) {
       result = result.substring(result.length - 40);
       if (result.match(/[A-F0-9]{40}/g)) {
@@ -62,11 +76,6 @@ export class KeyImportUi {
     submitKeyForAddrs.splice(submitKeyForAddrs.indexOf(email), 1);
   };
 
-  constructor(o: { rejectKnown?: boolean, checkEncryption?: boolean, checkSigning?: boolean }) {
-    this.rejectKnown = o.rejectKnown === true;
-    this.checkEncryption = o.checkEncryption === true;
-    this.checkSigning = o.checkSigning === true;
-  }
   public onBadPassphrase: VoidCallback = () => undefined;
 
   public initPrvImportSrcForm = (acctEmail: string, parentTabId: string | undefined, submitKeyForAddrs?: string[] | undefined) => {
@@ -138,8 +147,9 @@ export class KeyImportUi {
         const utf = file.getData().toUtfStr('ignore'); // ignore utf8 errors because this may be a binary key (in which case we use the bytes directly below)
         if (utf.includes(PgpArmor.headers('privateKey').begin)) {
           const firstPrv = MsgBlockParser.detectBlocks(utf).blocks.filter(b => b.type === 'privateKey')[0];
-          if (firstPrv) { // filter out all content except for the first encountered private key (GPGKeychain compatibility)
-            prv = (await KeyUtil.parse(firstPrv.content.toString()));
+          if (firstPrv) {
+            // filter out all content except for the first encountered private key (GPGKeychain compatibility)
+            prv = await KeyUtil.parse(firstPrv.content.toString());
           }
         } else {
           try {
@@ -157,7 +167,7 @@ export class KeyImportUi {
           await Ui.modal.error('Not able to read this key. Make sure it is a valid PGP private key.', false, Ui.testCompatibilityLink);
           $('input[type=radio][name=source]').removeAttr('checked');
         }
-      }
+      },
     });
   };
 
@@ -183,9 +193,12 @@ export class KeyImportUi {
       if (decrypted.missingPrivateKeyForDecryption) {
         missing.push('decryption');
       }
-      await Ui.modal.warning('Looks like this key was exported with --export-secret-subkeys option and missing private key parameters.\n\n' +
-        'Please export the key with --export-secret-key option if you plan to use it for ' +
-        missing.join(' and ') + '.');
+      await Ui.modal.warning(
+        'Looks like this key was exported with --export-secret-subkeys option and missing private key parameters.\n\n' +
+          'Please export the key with --export-secret-key option if you plan to use it for ' +
+          missing.join(' and ') +
+          '.'
+      );
     }
     return { normalized, passphrase, fingerprint: decrypted.id, decrypted, encrypted }; // will have fp if had longid
   };
@@ -197,10 +210,15 @@ export class KeyImportUi {
     return normalized;
   };
 
-  public renderPassPhraseStrengthValidationInput = (input: JQuery<HTMLElement>, submitButton?: JQuery<HTMLElement>, type: 'passphrase' | 'pwd' = 'passphrase') => {
+  public renderPassPhraseStrengthValidationInput = (
+    input: JQuery<HTMLElement>,
+    submitButton?: JQuery<HTMLElement>,
+    type: 'passphrase' | 'pwd' = 'passphrase'
+  ) => {
     const validationElements = this.getPPValidationElements();
     const setBtnColor = (type: 'gray' | 'green') => {
-      if (submitButton) { // submitButton may be undefined if we don't want password strength to affect color of any action button
+      if (submitButton) {
+        // submitButton may be undefined if we don't want password strength to affect color of any action button
         submitButton.addClass(type === 'gray' ? 'gray' : 'green');
         submitButton.removeClass(type === 'gray' ? 'green' : 'gray');
       }
@@ -220,8 +238,7 @@ export class KeyImportUi {
       validationElements.progressBarElement.find('div').css('background-color', result.word.color);
       setBtnColor(result.word.pass ? 'green' : 'gray');
     };
-    validationElements.progressBarElement
-      .find('input').css('width', input.outerWidth() + 'px');
+    validationElements.progressBarElement.find('input').css('width', input.outerWidth() + 'px');
     input.parent().append(validationElements.progressBarElement); // xss-direct
     input.parent().append(validationElements.passwordResultElement); // xss-direct
     const validation = Ui.event.prevent('spree', validate);
@@ -250,8 +267,10 @@ export class KeyImportUi {
     const normalized = await KeyUtil.normalize(armored);
     if (!normalized) {
       const headers = PgpArmor.headers(type);
-      throw new UserAlert('There was an error processing this key, possibly due to bad formatting.\n' +
-        `Please insert complete key, including "${headers.begin}" and "${headers.end}".`);
+      throw new UserAlert(
+        'There was an error processing this key, possibly due to bad formatting.\n' +
+          `Please insert complete key, including "${headers.begin}" and "${headers.end}".`
+      );
     }
     return normalized;
   };
@@ -260,7 +279,11 @@ export class KeyImportUi {
     const headers = PgpArmor.headers(type);
     const k = await KeyUtil.parse(normalized);
     if (typeof k === 'undefined') {
-      throw new UserAlert(`${type === 'privateKey' ? 'Private' : 'Public'} key is not correctly formatted. Please insert complete key, including "${headers.begin}" and "${headers.end}"`);
+      throw new UserAlert(
+        `${type === 'privateKey' ? 'Private' : 'Public'} key is not correctly formatted. Please insert complete key, including "${headers.begin}" and "${
+          headers.end
+        }"`
+      );
     }
     return k;
   };
@@ -296,9 +319,10 @@ export class KeyImportUi {
         throw new UserAlert(Lang.setup.partiallyEncryptedKeyUnsupported);
       }
       if (toDecrypt.fullyEncrypted) {
-        if (! await KeyUtil.decrypt(toDecrypt, passphrase)) {
+        if (!(await KeyUtil.decrypt(toDecrypt, passphrase))) {
           this.onBadPassphrase();
-          if (this.expectedLongid) { // todo - double check this line, should it not say `this.expectedLongid === PgpKey.longid() ? Or is that checked elsewhere beforehand?
+          if (this.expectedLongid) {
+            // todo - double check this line, should it not say `this.expectedLongid === PgpKey.longid() ? Or is that checked elsewhere beforehand?
             throw new UserAlert(`This is the right key! However, the pass phrase does not match. Please try a different pass phrase.
               Your original pass phrase might have been different then what you use now.`);
           } else {
@@ -319,8 +343,10 @@ export class KeyImportUi {
   private checkEncryptionPrvIfSelected = async (k: Key, encrypted: Key, contactSubsentence: string) => {
     if (this.checkEncryption && (!k.usableForEncryption || k.missingPrivateKeyForDecryption)) {
       if (k.missingPrivateKeyForDecryption) {
-        throw new UserAlert('Looks like this key was exported with --export-secret-subkeys option and missing private key parameters.\n\n' +
-          'Please export the key with --export-secret-key option.');
+        throw new UserAlert(
+          'Looks like this key was exported with --export-secret-subkeys option and missing private key parameters.\n\n' +
+            'Please export the key with --export-secret-key option.'
+        );
       } else if (await KeyUtil.isWithoutSelfCertifications(k)) {
         throw new KeyCanBeFixed(encrypted);
       } else if (k.usableForEncryptionButExpired) {
@@ -328,10 +354,14 @@ export class KeyImportUi {
         // 1) Confirm importing expired key
         // 2) Extend validity of expired key + import
         // 3) Cancel
-        const isConfirmed = await Ui.modal.confirm('You are importing a key that is expired. You can still import it to read messages from the past, ' +
-          'but you will not be able to send new messages using this key. You can add more keys in the settings later.\n\nProceed with expired key?');
+        const isConfirmed = await Ui.modal.confirm(
+          'You are importing a key that is expired. You can still import it to read messages from the past, ' +
+            'but you will not be able to send new messages using this key. You can add more keys in the settings later.\n\nProceed with expired key?'
+        );
         if (!isConfirmed) {
-          throw new UserAlert('You chose to not import expired key.\n\nPlease import another key, or edit the expired key in another OpenPGP software to extend key validity.');
+          throw new UserAlert(
+            'You chose to not import expired key.\n\nPlease import another key, or edit the expired key in another OpenPGP software to extend key validity.'
+          );
         }
       } else {
         throw new UserAlert(`This looks like a valid key but it cannot be used for encryption. Please ${contactSubsentence} to see why is that.`);
@@ -356,8 +386,10 @@ export class KeyImportUi {
   private checkSigningIfSelected = async (k: Key, contactSubsentence: string) => {
     if (this.checkSigning && (!k.usableForSigning || k.missingPrivateKeyForSigning)) {
       if (k.missingPrivateKeyForSigning && !k.usableForSigningButExpired) {
-        throw new UserAlert('Looks like this key was exported with --export-secret-subkeys option and missing private key parameters.\n\n' +
-          'Please export the key with --export-secret-key option.');
+        throw new UserAlert(
+          'Looks like this key was exported with --export-secret-subkeys option and missing private key parameters.\n\n' +
+            'Please export the key with --export-secret-key option.'
+        );
       } else {
         throw new UserAlert(`This looks like a valid key but it cannot be used for signing. Please ${contactSubsentence} to see why is that.`);
       }
@@ -373,5 +405,4 @@ export class KeyImportUi {
               </div>`;
     return { passwordResultElement: $(passwordResultHTML), progressBarElement: $(progressBarHTML) };
   };
-
 }

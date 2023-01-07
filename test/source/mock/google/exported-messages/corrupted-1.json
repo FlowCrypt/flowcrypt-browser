@@ -8,9 +8,7 @@
   "raw": {
     "id": "corrupted-1",
     "threadId": "corrupted-1",
-    "labelIds": [
-      "INBOX"
-    ],
+    "labelIds": ["INBOX"],
     "sizeEstimate": 2,
     "raw": "RSo",
     "historyId": "corrupted-1"

@@ -12,16 +12,20 @@ import { PubkeyResult } from '../core/crypto/key.js';
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 declare const qq: any;
 
-export type AttachmentLimits = { count?: number, size?: number, sizeMb?: number, oversize?: (newFileSize: number) => Promise<void> };
+export type AttachmentLimits = {
+  count?: number;
+  size?: number;
+  sizeMb?: number;
+  oversize?: (newFileSize: number) => Promise<void>;
+};
 type AttachmentUICallbacks = {
-  attachmentAdded?: (r: Attachment) => Promise<void>,
-  uiChanged?: () => void,
+  attachmentAdded?: (r: Attachment) => Promise<void>;
+  uiChanged?: () => void;
 };
 
-class CancelAttachmentSubmit extends Error { }
+class CancelAttachmentSubmit extends Error {}
 
 export class AttachmentUI {
-
   private templatePath = '/chrome/elements/shared/attach.template.htm';
   private getLimits: () => Promise<AttachmentLimits>;
   private attachedFiles: Dict<File> = {};
@@ -29,7 +33,7 @@ export class AttachmentUI {
   private uploader: any = undefined;
   private callbacks: AttachmentUICallbacks = {};
 
-  constructor(getLimits: () => Promise<AttachmentLimits>) {
+  public constructor(getLimits: () => Promise<AttachmentLimits>) {
     this.getLimits = getLimits;
   }
 
@@ -49,13 +53,13 @@ export class AttachmentUI {
           onCancel: (uploadFileId: string) => this.cancelAttachment(uploadFileId),
         },
       };
-      this.uploader = new qq.FineUploader(config); // tslint:disable-line:no-unsafe-any
+      this.uploader = new qq.FineUploader(config);
       this.setInputAttributes();
     });
   };
 
   public setInputAttributes = (): HTMLInputElement => {
-    const input: HTMLInputElement = this.uploader._buttons[0].getInput(); // tslint:disable-line:no-unsafe-any
+    const input: HTMLInputElement = this.uploader._buttons[0].getInput(); // eslint-disable-line
     input.setAttribute('title', 'Attach a file');
     input.setAttribute('tabindex', '8');
     input.setAttribute('data-test', 'action-attach-files');
@@ -72,7 +76,11 @@ export class AttachmentUI {
 
   public collectAttachment = async (uploadFileId: string) => {
     const fileData = await this.readAttachmentDataAsUint8(uploadFileId);
-    return new Attachment({ name: this.attachedFiles[uploadFileId].name, type: this.attachedFiles[uploadFileId].type, data: fileData });
+    return new Attachment({
+      name: this.attachedFiles[uploadFileId].name,
+      type: this.attachedFiles[uploadFileId].type,
+      data: fileData,
+    });
   };
 
   public collectAttachments = async () => {
@@ -92,8 +100,19 @@ export class AttachmentUI {
       if (pubs.find(pub => pub.pubkey.family === 'x509')) {
         throw new UnreportableError('Attachments are not yet supported when sending to recipients using S/MIME x509 certificates.');
       }
-      const encrypted = await MsgUtil.encryptMessage({ pubkeys: pubsForEncryption, data, filename: file.name, armor: false });
-      attachments.push(new Attachment({ name: Attachment.sanitizeName(file.name) + '.pgp', type: file.type, data: encrypted.data }));
+      const encrypted = (await MsgUtil.encryptMessage({
+        pubkeys: pubsForEncryption,
+        data,
+        filename: file.name,
+        armor: false,
+      }));
+      attachments.push(
+        new Attachment({
+          name: Attachment.sanitizeName(file.name) + '.pgp',
+          type: file.type,
+          data: encrypted.data,
+        })
+      );
     }
     return attachments;
   };
@@ -103,7 +122,7 @@ export class AttachmentUI {
   };
 
   public addFile = (file: File) => {
-    this.uploader.addFiles([file]); // tslint:disable-line: no-unsafe-any
+    this.uploader.addFiles([file]);
   };
 
   private cancelAttachment = (uploadFileId: string) => {
@@ -122,7 +141,7 @@ export class AttachmentUI {
       await Ui.modal.warning(msg);
       throw new CancelAttachmentSubmit(msg);
     }
-    const newFile: File = this.uploader.getFile(uploadFileId); // tslint:disable-line:no-unsafe-any
+    const newFile: File = this.uploader.getFile(uploadFileId);
     if (limits.size && this.getFileSizeSum() + newFile.size > limits.size) {
       const msg = `Combined file size is limited to ${limits.sizeMb} MB`;
       if (typeof limits.oversize === 'function') {
@@ -164,5 +183,4 @@ export class AttachmentUI {
       reader.readAsArrayBuffer(this.attachedFiles[uploadFileId]);
     });
   };
-
 }

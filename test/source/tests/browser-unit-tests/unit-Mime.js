@@ -4,16 +4,16 @@
  * These tests use JavaScript instead of TypeScript to avoid dealing with types in cross-environment setup.
  * (tests are injected from NodeJS through puppeteer into a browser environment)
  * While this makes them less convenient to write, the result is more flexible.
- * 
+ *
  * Import your lib to `ci_unit_test.ts` to resolve `ReferenceError: SomeClass is not defined`
- * 
+ *
  * Each test must return "pass" to pass. To reject, throw an Error.
- * 
- * Each test must start with one of (depending on which flavors you want it to run): 
+ *
+ * Each test must start with one of (depending on which flavors you want it to run):
  *  - BROWSER_UNIT_TEST_NAME(`some test name`);
  *  - BROWSER_UNIT_TEST_NAME(`some test name`).enterprise;
  *  - BROWSER_UNIT_TEST_NAME(`some test name`).consumer;
- * 
+ *
  * This is not a JavaScript file. It's a text file that gets parsed, split into chunks, and
  *    parts of it executed as javascript. The structure is very rigid. The only flexible place is inside
  *    the async functions. For the rest, do not change the structure or our parser will get confused.
@@ -55,7 +55,7 @@ BROWSER_UNIT_TEST_NAME(`Mime attachment file names`);
     "filename*0*=utf-8''%1D",
     "filename*0*=utf-8''%1E",
     "filename*0*=utf-8''%1F",
-    // 33..127 
+    // 33..127
     "filename*0*=utf-8''!",
     "filename*0*=utf-8''%22",
     "filename*0*=utf-8''%23",
@@ -68,19 +68,19 @@ BROWSER_UNIT_TEST_NAME(`Mime attachment file names`);
     "filename*0*=utf-8''*",
     "filename*0*=utf-8''%2B",
     "filename*0*=utf-8''%2C",
-    "filename=-",
-    "filename=.",
+    'filename=-',
+    'filename=.',
     "filename*0*=utf-8''%2F",
-    "filename=0",
-    "filename=1",
-    "filename=2",
-    "filename=3",
-    "filename=4",
-    "filename=5",
-    "filename=6",
-    "filename=7",
-    "filename=8",
-    "filename=9",
+    'filename=0',
+    'filename=1',
+    'filename=2',
+    'filename=3',
+    'filename=4',
+    'filename=5',
+    'filename=6',
+    'filename=7',
+    'filename=8',
+    'filename=9',
     "filename*0*=utf-8''%3A",
     "filename*0*=utf-8''%3B",
     "filename*0*=utf-8''%3C",
@@ -88,64 +88,64 @@ BROWSER_UNIT_TEST_NAME(`Mime attachment file names`);
     "filename*0*=utf-8''%3E",
     "filename*0*=utf-8''%3F",
     "filename*0*=utf-8''%40",
-    "filename=A",
-    "filename=B",
-    "filename=C",
-    "filename=D",
-    "filename=E",
-    "filename=F",
-    "filename=G",
-    "filename=H",
-    "filename=I",
-    "filename=J",
-    "filename=K",
-    "filename=L",
-    "filename=M",
-    "filename=N",
-    "filename=O",
-    "filename=P",
-    "filename=Q",
-    "filename=R",
-    "filename=S",
-    "filename=T",
-    "filename=U",
-    "filename=V",
-    "filename=W",
-    "filename=X",
-    "filename=Y",
-    "filename=Z",
+    'filename=A',
+    'filename=B',
+    'filename=C',
+    'filename=D',
+    'filename=E',
+    'filename=F',
+    'filename=G',
+    'filename=H',
+    'filename=I',
+    'filename=J',
+    'filename=K',
+    'filename=L',
+    'filename=M',
+    'filename=N',
+    'filename=O',
+    'filename=P',
+    'filename=Q',
+    'filename=R',
+    'filename=S',
+    'filename=T',
+    'filename=U',
+    'filename=V',
+    'filename=W',
+    'filename=X',
+    'filename=Y',
+    'filename=Z',
     "filename*0*=utf-8''%5B",
     "filename*0*=utf-8''%5C",
     "filename*0*=utf-8''%5D",
     "filename*0*=utf-8''%5E",
-    "filename=_",
+    'filename=_',
     "filename*0*=utf-8''%60",
-    "filename=a",
-    "filename=b",
-    "filename=c",
-    "filename=d",
-    "filename=e",
-    "filename=f",
-    "filename=g",
-    "filename=h",
-    "filename=i",
-    "filename=j",
-    "filename=k",
-    "filename=l",
-    "filename=m",
-    "filename=n",
-    "filename=o",
-    "filename=p",
-    "filename=q",
-    "filename=r",
-    "filename=s",
-    "filename=t",
-    "filename=u",
-    "filename=v",
-    "filename=w",
-    "filename=x",
-    "filename=y",
-    "filename=z",
+    'filename=a',
+    'filename=b',
+    'filename=c',
+    'filename=d',
+    'filename=e',
+    'filename=f',
+    'filename=g',
+    'filename=h',
+    'filename=i',
+    'filename=j',
+    'filename=k',
+    'filename=l',
+    'filename=m',
+    'filename=n',
+    'filename=o',
+    'filename=p',
+    'filename=q',
+    'filename=r',
+    'filename=s',
+    'filename=t',
+    'filename=u',
+    'filename=v',
+    'filename=w',
+    'filename=x',
+    'filename=y',
+    'filename=z',
     "filename*0*=utf-8''%7B",
     "filename*0*=utf-8''%7C",
     "filename*0*=utf-8''%7D",
@@ -282,10 +282,10 @@ BROWSER_UNIT_TEST_NAME(`Mime attachment file names`);
     "filename*0*=utf-8''%C3%BF",
     // capital Cyrillic letters
     " filename*0*=utf-8''%D0%81%D0%90%D0%91%D0%92%D0%93%D0%94%D0%95;\r\n" +
-    " filename*1*=%D0%96%D0%97%D0%98%D0%99%D0%9A%D0%9B%D0%9C%D0%9D;\r\n" +
-    " filename*2*=%D0%9E%D0%9F%D0%A0%D0%A1%D0%A2%D0%A3%D0%A4%D0%A5;\r\n" +
-    " filename*3*=%D0%A6%D0%A7%D0%A8%D0%A9%D0%AA%D0%AB%D0%AC%D0%AD;\r\n" +
-    " filename*4*=%D0%AE%D0%AF"
+      ' filename*1*=%D0%96%D0%97%D0%98%D0%99%D0%9A%D0%9B%D0%9C%D0%9D;\r\n' +
+      ' filename*2*=%D0%9E%D0%9F%D0%A0%D0%A1%D0%A2%D0%A3%D0%A4%D0%A5;\r\n' +
+      ' filename*3*=%D0%A6%D0%A7%D0%A8%D0%A9%D0%AA%D0%AB%D0%AC%D0%AD;\r\n' +
+      ' filename*4*=%D0%AE%D0%AF',
   ];
   // 1..31
   var filenames = [...Array(31).keys()].map(i => String.fromCharCode(i + 1));

@@ -2,8 +2,6 @@
 
 'use strict';
 
-// tslint:disable:no-unsafe-any
-
 import * as path from 'path';
 import * as ts from 'typescript';
 
@@ -19,17 +17,19 @@ for (let i = 0; i < process.argv.length; i++) {
 tsconfigAbsPath = path.resolve(tsconfigAbsPath || './tsconfig.json');
 const tsconfigAbsDir = path.dirname(tsconfigAbsPath);
 
-const getNameAndPos = (f: ts.FunctionLike) => {
+const getNameAndPos = (f: ts.SignatureDeclaration) => {
   const sf = f.getSourceFile();
   const { line, character } = sf.getLineAndCharacterOfPosition(f.pos);
   let name = f.name && f.name.getText();
   if (!name && ts.isArrowFunction(f)) {
-    if (ts.isVariableDeclaration(f.parent) || ts.isPropertyDeclaration(f.parent)) { // get the variable or property name anon f is assigned to
+    if (ts.isVariableDeclaration(f.parent) || ts.isPropertyDeclaration(f.parent)) {
+      // get the variable or property name anon f is assigned to
       const firstIdentifier = f.parent.getChildren(sf).find(ts.isIdentifier);
       if (firstIdentifier && firstIdentifier.getText()) {
         name = firstIdentifier.getText();
       }
-    } else if (ts.isPropertyAssignment(f.parent)) { // get property name anon f is assigned to
+    } else if (ts.isPropertyAssignment(f.parent)) {
+      // get property name anon f is assigned to
       name = f.parent.name && f.parent.name.getText();
     }
   }
@@ -43,11 +43,11 @@ const getNameAndPos = (f: ts.FunctionLike) => {
  * This transformer will wrap content of all async functions with a try/catch that helps preserve proper async stack traces
  */
 const preserveAsyncStackTracesTransformerFactory = () => {
-  const createStackTracePreservingCatchBlockStatements = (f: ts.FunctionLike): ts.Statement[] => {
+  const createStackTracePreservingCatchBlockStatements = (f: ts.SignatureDeclaration): ts.Statement[] => {
     const statements: ts.Statement[] = [];
     const addStackLine = `\\n    at <async> ${getNameAndPos(f)}`;
     const code = `if(t instanceof Error){t.stack+="${addStackLine}";throw t}const e=new Error("Thrown["+typeof t+"]"+t);e.thrown=t;throw e`;
-    statements.push(ts.createStatement(ts.factory.createIdentifier(code)));
+    statements.push(ts.factory.createExpressionStatement(ts.factory.createIdentifier(code)));
     return statements;
   };
   const visitor = (ctx: ts.TransformationContext) => {
@@ -60,7 +60,8 @@ const preserveAsyncStackTracesTransformerFactory = () => {
               const origFuncContent = ts.factory.createBlock((node.body as ts.FunctionBody).statements, true);
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
               (node.body as any).statements = ts.factory.createNodeArray([ts.factory.createTryStatement(origFuncContent, catchClause, undefined)]);
-            } else if (ts.isCallExpression(node.body) || ts.isAwaitExpression(node.body)) { // eg: `x.click(async () => whatever())` or `x.click(async () => await whatever())`
+            } else if (ts.isCallExpression(node.body) || ts.isAwaitExpression(node.body)) {
+              // eg: `x.click(async () => whatever())` or `x.click(async () => await whatever())`
               const origFuncContent = ts.factory.createBlock([ts.factory.createReturnStatement(node.body)], true);
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
               (node.body as any) = ts.factory.createBlock([ts.factory.createTryStatement(origFuncContent, catchClause, undefined)], true);
@@ -80,11 +81,12 @@ const preserveAsyncStackTracesTransformerFactory = () => {
 const printErrsAndExitIfPresent = (allDiagnostics: ts.Diagnostic[]) => {
   for (const diag of allDiagnostics) {
     if (diag.file) {
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const { line, character } = diag.file.getLineAndCharacterOfPosition(diag.start!);
-      const message = ts.flattenDiagnosticMessageText(diag.messageText, "\n");
+      const message = ts.flattenDiagnosticMessageText(diag.messageText, '\n');
       console.error(`${diag.file.fileName} (${line + 1},${character + 1}): ${message}`);
     } else {
-      console.error(`${ts.flattenDiagnosticMessageText(diag.messageText, "\n")}`);
+      console.error(`${ts.flattenDiagnosticMessageText(diag.messageText, '\n')}`);
     }
   }
   if (allDiagnostics.length) {
@@ -96,6 +98,7 @@ const printErrsAndExitIfPresent = (allDiagnostics: ts.Diagnostic[]) => {
  * Compile using the transformer above
  */
 const compile = (): void => {
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   const { compilerOptions, include, exclude, files } = JSON.parse(readFileSync(tsconfigAbsPath!).toString());
   const { options, errors } = ts.convertCompilerOptionsFromJson(compilerOptions, tsconfigAbsDir); // , tsconfigAbsPath!
   printErrsAndExitIfPresent(errors);
@@ -104,13 +107,19 @@ const compile = (): void => {
   if (options.allowJs) {
     extensions.push('.js');
   }
-  const fileList = files && files.length ? files : compilerHost.readDirectory!(tsconfigAbsDir, extensions, exclude, include);
+  const fileList = files && files.length ? files : compilerHost.readDirectory!(tsconfigAbsDir, extensions, exclude, include); // eslint-disable-line @typescript-eslint/no-non-null-assertion
   if (!fileList.length) {
-    console.error(`fileList empty for ${tsconfigAbsPath}\ninclude:\n${(include || []).join('\n')}\n\nexclude:\n${(exclude || []).join('\n')}\nfiles:\n${(files || []).join('\n')}`);
+    console.error(
+      `fileList empty for ${tsconfigAbsPath}\ninclude:\n${(include || []).join('\n')}\n\nexclude:\n${(exclude || []).join('\n')}\nfiles:\n${(files || []).join(
+        '\n'
+      )}`
+    );
     process.exit(1);
   }
   const program = ts.createProgram(fileList, options, compilerHost);
-  const emitResult = program.emit(undefined, undefined, undefined, undefined, { before: [preserveAsyncStackTracesTransformerFactory()] });
+  const emitResult = program.emit(undefined, undefined, undefined, undefined, {
+    before: [preserveAsyncStackTracesTransformerFactory()],
+  });
   printErrsAndExitIfPresent(ts.getPreEmitDiagnostics(program).concat(emitResult.diagnostics));
   if (emitResult.emitSkipped) {
     console.error(`Building ${tsconfigAbsPath} emitResult.emitSkipped`);

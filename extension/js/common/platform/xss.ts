@@ -14,27 +14,59 @@ export type SanitizeImgHandling = 'IMG-DEL' | 'IMG-KEEP' | 'IMG-TO-LINK';
  *  - in node it uses sanitize-html
  */
 export class Xss {
-
-  private static ALLOWED_HTML_TAGS = ['p', 'div', 'br', 'u', 'i', 'em', 'b', 'ol', 'ul', 'pre', 'li', 'table', 'tr', 'td', 'th', 'img', 'h1', 'h2', 'h3', 'h4', 'h5',
-    'h6', 'hr', 'address', 'blockquote', 'dl', 'fieldset', 'a', 'font'];
+  private static ALLOWED_HTML_TAGS = [
+    'p',
+    'div',
+    'br',
+    'u',
+    'i',
+    'em',
+    'b',
+    'ol',
+    'ul',
+    'pre',
+    'li',
+    'table',
+    'tr',
+    'td',
+    'th',
+    'img',
+    'h1',
+    'h2',
+    'h3',
+    'h4',
+    'h5',
+    'h6',
+    'hr',
+    'address',
+    'blockquote',
+    'dl',
+    'fieldset',
+    'a',
+    'font',
+  ];
   private static ADD_ATTR = ['email', 'page', 'addurltext', 'longid', 'index', 'target', 'fingerprint'];
   private static FORBID_ATTR = ['background'];
   private static HREF_REGEX_CACHE: RegExp | undefined;
   private static FORBID_CSS_STYLE = /z-index:[^;]+;|position:[^;]+;|background[^;]+;/g;
 
-  public static sanitizeRender = (selector: string | HTMLElement | JQuery<HTMLElement>, dirtyHtml: string) => { // browser-only (not on node)
+  public static sanitizeRender = (selector: string | HTMLElement | JQuery<HTMLElement>, dirtyHtml: string) => {
+    // browser-only (not on node)
     return $(selector as HTMLElement).html(Xss.htmlSanitize(dirtyHtml)); // xss-sanitized
   };
 
-  public static sanitizeAppend = (selector: string | HTMLElement | JQuery<HTMLElement>, dirtyHtml: string) => { // browser-only (not on node)
+  public static sanitizeAppend = (selector: string | HTMLElement | JQuery<HTMLElement>, dirtyHtml: string) => {
+    // browser-only (not on node)
     return $(selector as HTMLElement).append(Xss.htmlSanitize(dirtyHtml)); // xss-sanitized
   };
 
-  public static sanitizePrepend = (selector: string | HTMLElement | JQuery<HTMLElement>, dirtyHtml: string) => { // browser-only (not on node)
+  public static sanitizePrepend = (selector: string | HTMLElement | JQuery<HTMLElement>, dirtyHtml: string) => {
+    // browser-only (not on node)
     return $(selector as HTMLElement).prepend(Xss.htmlSanitize(dirtyHtml)); // xss-sanitized
   };
 
-  public static sanitizeReplace = (selector: string | HTMLElement | JQuery<HTMLElement>, dirtyHtml: string) => { // browser-only (not on node)
+  public static sanitizeReplace = (selector: string | HTMLElement | JQuery<HTMLElement>, dirtyHtml: string) => {
+    // browser-only (not on node)
     return $(selector as HTMLElement).replaceWith(Xss.htmlSanitize(dirtyHtml)); // xss-sanitized
   };
 
@@ -47,11 +79,13 @@ export class Xss {
    */
   public static htmlSanitize = (dirtyHtml: string): string => {
     Xss.throwIfNotSupported();
-    return DOMPurify.sanitize(dirtyHtml, { // tslint:disable-line:oneliner-object-literal
+    /* eslint-disable @typescript-eslint/naming-convention */
+    return DOMPurify.sanitize(dirtyHtml, {
       ADD_ATTR: Xss.ADD_ATTR,
       FORBID_ATTR: Xss.FORBID_ATTR,
       ALLOWED_URI_REGEXP: Xss.sanitizeHrefRegexp(),
     });
+    /* eslint-enable @typescript-eslint/naming-convention */
   };
 
   /**
@@ -74,7 +108,7 @@ export class Xss {
     Xss.throwIfNotSupported();
     // used whenever untrusted remote content (eg html email) is rendered, but we still want to preserve html
     DOMPurify.removeAllHooks();
-    DOMPurify.addHook('afterSanitizeAttributes', (node) => {
+    DOMPurify.addHook('afterSanitizeAttributes', node => {
       if (!node) {
         return;
       }
@@ -97,7 +131,8 @@ export class Xss {
           img.remove(); // just skip images
         } else if (!src) {
           img.remove(); // src that exists but is null is suspicious
-        } else if (imgHandling === 'IMG-TO-LINK') { // replace images with a link that points to that image
+        } else if (imgHandling === 'IMG-TO-LINK') {
+          // replace images with a link that points to that image
           if (src.startsWith('data:image/')) {
             const title = img.getAttribute('title');
             img.removeAttribute('src');
@@ -106,8 +141,13 @@ export class Xss {
             a.className = 'image_src_link';
             a.target = '_blank';
             a.innerText = title || 'show image';
-            const heightWidth = `height: ${img.clientHeight ? `${Number(img.clientHeight)}px` : 'auto'}; width: ${img.clientWidth ? `${Number(img.clientWidth)}px` : 'auto'};max-width:98%;`;
-            a.setAttribute('style', `text-decoration: none; background: #FAFAFA; padding: 4px; border: 1px dotted #CACACA; display: inline-block; ${heightWidth}`);
+            const heightWidth = `height: ${img.clientHeight ? `${Number(img.clientHeight)}px` : 'auto'}; width: ${
+              img.clientWidth ? `${Number(img.clientWidth)}px` : 'auto'
+            };max-width:98%;`;
+            a.setAttribute(
+              'style',
+              `text-decoration: none; background: #FAFAFA; padding: 4px; border: 1px dotted #CACACA; display: inline-block; ${heightWidth}`
+            );
             a.setAttribute('data-test', 'show-inline-image');
             Xss.replaceElementDANGEROUSLY(img, a.outerHTML); // xss-safe-value - "a" was build using dom node api
           } else {
@@ -115,18 +155,21 @@ export class Xss {
           }
         }
       }
-      if ('target' in node) { // open links in new window
+      if ('target' in node) {
+        // open links in new window
         (node as Element).setAttribute('target', '_blank');
         // prevents https://www.owasp.org/index.php/Reverse_Tabnabbing
         (node as Element).setAttribute('rel', 'noopener noreferrer');
       }
     });
+    /* eslint-disable @typescript-eslint/naming-convention */
     const cleanHtml = DOMPurify.sanitize(dirtyHtml, {
       ADD_ATTR: Xss.ADD_ATTR,
       FORBID_ATTR: Xss.FORBID_ATTR,
       ALLOWED_TAGS: Xss.ALLOWED_HTML_TAGS,
       ALLOWED_URI_REGEXP: Xss.sanitizeHrefRegexp(),
     });
+    /* eslint-enable @typescript-eslint/naming-convention */
     DOMPurify.removeAllHooks();
     return cleanHtml;
   };
@@ -149,10 +192,25 @@ export class Xss {
     html = html.replace(/<\/(p|h1|h2|h3|h4|h5|h6|ol|ul|pre|address|blockquote|dl|div|fieldset|form|hr|table)[^>]*>/gi, blockEnd);
     html = html.replace(/<(p|h1|h2|h3|h4|h5|h6|ol|ul|pre|address|blockquote|dl|div|fieldset|form|hr|table)[^>]*>/gi, blockStart);
     html = html.replace(RegExp(`(${blockStart})+`, 'g'), blockStart).replace(RegExp(`(${blockEnd})+`, 'g'), blockEnd);
-    html = html.split(br + blockEnd + blockStart).join(br).split(blockEnd + blockStart).join(br).split(br + blockEnd).join(br);
-    let text = html.split(br).join('\n').split(blockStart).filter(v => !!v).join('\n').split(blockEnd).filter(v => !!v).join('\n');
+    html = html
+      .split(br + blockEnd + blockStart)
+      .join(br)
+      .split(blockEnd + blockStart)
+      .join(br)
+      .split(br + blockEnd)
+      .join(br);
+    let text = html
+      .split(br)
+      .join('\n')
+      .split(blockStart)
+      .filter(v => !!v)
+      .join('\n')
+      .split(blockEnd)
+      .filter(v => !!v)
+      .join('\n');
     text = text.replace(/\n{2,}/g, '\n\n');
     // not all tags were removed above. Remove all remaining tags
+    // eslint-disable-next-line @typescript-eslint/naming-convention
     text = DOMPurify.sanitize(text, { ALLOWED_TAGS: [] });
     if (trim) {
       text = text.trim();
@@ -169,13 +227,22 @@ export class Xss {
 
   public static htmlUnescape = (str: string) => {
     // the &nbsp; at the end is replaced with an actual NBSP character, not a space character. IDE won't show you the difference. Do not change.
-    return str.replace(/&nbsp;/g, ' ').replace(/&#x2F;/g, '/').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
+    return str
+      .replace(/&nbsp;/g, ' ')
+      .replace(/&#x2F;/g, '/')
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'")
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&amp;/g, '&');
   };
 
+  // prettier-ignore
   public static replaceElementDANGEROUSLY = (el: Element, safeHtml: string) => { // xss-dangerous-function - must pass a sanitized value
     el.outerHTML = safeHtml; // xss-dangerous-function - must pass a sanitized value
   };
 
+  // prettier-ignore
   public static setElementContentDANGEROUSLY = (el: Element, safeHtml: string) => { // xss-dangerous-function - must pass a sanitized value
     el.innerHTML = safeHtml; // xss-dangerous-function - must pass a sanitized value
   };
@@ -192,12 +259,14 @@ export class Xss {
   private static sanitizeHrefRegexp = () => {
     if (typeof Xss.HREF_REGEX_CACHE === 'undefined') {
       if (window?.location?.origin && window.location.origin.match(/^(?:chrome-extension|moz-extension):\/\/[a-z0-9\-]+$/g)) {
-        Xss.HREF_REGEX_CACHE = new RegExp(`^(?:(http|https|cid):|data:image/|${Str.regexEscape(window.location.origin)}|[^a-z]|[a-z+.\\-]+(?:[^a-z+.\\-:]|$))`, 'i');
+        Xss.HREF_REGEX_CACHE = new RegExp(
+          `^(?:(http|https|cid):|data:image/|${Str.regexEscape(window.location.origin)}|[^a-z]|[a-z+.\\-]+(?:[^a-z+.\\-:]|$))`,
+          'i'
+        );
       } else {
         Xss.HREF_REGEX_CACHE = /^(?:(http|https):|[^a-z]|[a-z+.\-]+(?:[^a-z+.\-:]|$))/i;
       }
     }
     return Xss.HREF_REGEX_CACHE;
   };
-
 }

@@ -5,8 +5,8 @@
 import { Url } from '../core/common.js';
 import { FLAVOR, VERSION } from '../core/const.js';
 
-export class UnreportableError extends Error { }
-export class CompanyLdapKeyMismatchError extends UnreportableError { }
+export class UnreportableError extends Error {}
+export class CompanyLdapKeyMismatchError extends UnreportableError {}
 type ObjWithStack = { stack: string };
 export type ErrorReport = {
   name: string;
@@ -20,17 +20,16 @@ export type ErrorReport = {
 };
 
 export class Catch {
-
   public static RUNTIME_ENVIRONMENT = 'undetermined';
   private static ORIG_ONERROR = window.onerror;
   private static CONSOLE_MSG = ' Please report errors above to human@flowcrypt.com. We fix errors VERY promptly.';
   private static IGNORE_ERR_MSG = [
     // happens in gmail window when reloaded extension + now reloading gmail
-    'Invocation of form get(, function) doesn\'t match definition get(optional string or array or object keys, function callback)',
+    "Invocation of form get(, function) doesn't match definition get(optional string or array or object keys, function callback)",
     // happens in gmail window when reloaded extension + now reloading gmail
-    'Invocation of form set(, function) doesn\'t match definition set(object items, optional function callback)',
+    "Invocation of form set(, function) doesn't match definition set(object items, optional function callback)",
     // not sure when this one happens, but likely have to do with extnsion lifecycle as well
-    'Invocation of form runtime.connect(null, ) doesn\'t match definition runtime.connect(optional string extensionId, optional object connectInfo)',
+    "Invocation of form runtime.connect(null, ) doesn't match definition runtime.connect(optional string extensionId, optional object connectInfo)",
     // this is thrown often by gmail and cought by content script
     'TypeError: a is null',
     'TypeError: d is null',
@@ -56,9 +55,9 @@ export class Catch {
       return `[typeof:string] ${e}`;
     }
     try {
-      return `[typeof:${(typeof e)}:${String(e)}] ${JSON.stringify(e)}`;
+      return `[typeof:${typeof e}:${String(e)}] ${JSON.stringify(e)}`;
     } catch (cannotStringify) {
-      return `[unstringifiable typeof:${(typeof e)}:${String(e)}]`;
+      return `[unstringifiable typeof:${typeof e}:${String(e)}]`;
     }
   };
 
@@ -69,9 +68,16 @@ export class Catch {
   /**
    * @returns boolean - whether error was reported remotely or not
    */
-  public static onErrorInternalHandler = (errMsg: string | undefined, url: string, line: number, col: number, originalErr: unknown, isManuallyCalled: boolean): boolean => {
+  public static onErrorInternalHandler = (
+    errMsg: string | undefined,
+    url: string,
+    line: number,
+    col: number,
+    originalErr: unknown,
+    isManuallyCalled: boolean
+  ): boolean => {
     const exception = Catch.formExceptionFromThrown(originalErr, errMsg, url, line, col, isManuallyCalled);
-    if ((Catch.IGNORE_ERR_MSG.indexOf(exception.message) !== -1) || (errMsg && Catch.IGNORE_ERR_MSG.indexOf(errMsg) !== -1)) {
+    if (Catch.IGNORE_ERR_MSG.indexOf(exception.message) !== -1 || (errMsg && Catch.IGNORE_ERR_MSG.indexOf(errMsg) !== -1)) {
       return false;
     }
     console.error(originalErr);
@@ -80,6 +86,7 @@ export class Catch {
     }
     console.error(exception.message + '\n' + exception.stack);
     if (isManuallyCalled !== true && Catch.ORIG_ONERROR && Catch.ORIG_ONERROR !== (Catch.onErrorInternalHandler as OnErrorEventHandler)) {
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore
       Catch.ORIG_ONERROR.apply(undefined, arguments); // Call any previously assigned handler
     }
@@ -118,13 +125,12 @@ export class Catch {
   };
 
   public static isPromise = (v: unknown): v is Promise<unknown> => {
-    return !!v && typeof v === 'object'
-      && typeof (v as Promise<unknown>).then === 'function' // tslint:disable-line:no-unbound-method - only testing if exists
-      && typeof (v as Promise<unknown>).catch === 'function'; // tslint:disable-line:no-unbound-method - only testing if exists
+    return !!v && typeof v === 'object' && typeof (v as Promise<unknown>).then === 'function' && typeof (v as Promise<unknown>).catch === 'function';
   };
 
   public static try = (code: () => void | Promise<void>) => {
-    return () => { // returns a function
+    return () => {
+      // returns a function
       try {
         const r = code();
         if (Catch.isPromise(r)) {
@@ -136,7 +142,10 @@ export class Catch {
     };
   };
 
-  public static browser = (): { name: 'firefox' | 'ie' | 'chrome' | 'opera' | 'safari' | 'unknown', v: number | undefined } => {
+  public static browser = (): {
+    name: 'firefox' | 'ie' | 'chrome' | 'opera' | 'safari' | 'unknown';
+    v: number | undefined;
+  } => {
     // http://stackoverflow.com/questions/4825498/how-can-i-find-out-which-browser-a-user-is-using
     if (/Firefox[\/\s](\d+\.\d+)/.test(navigator.userAgent)) {
       return { name: 'firefox', v: Number(RegExp.$1) };
@@ -181,6 +190,7 @@ export class Catch {
     if (type === 'error') {
       throw new Error('intentional error for debugging');
     } else {
+      // eslint-disable-next-line no-throw-literal
       throw { what: 'intentional thrown object for debugging' };
     }
   };
@@ -245,7 +255,8 @@ export class Catch {
       await p;
       return false;
     } catch (e) {
-      if (!errNeedle) { // no needles to check against
+      if (!errNeedle) {
+        // no needles to check against
         return true;
       }
       return !!errNeedle.find(needle => String(e).includes(needle));
@@ -266,9 +277,11 @@ export class Catch {
       line = parsedLine;
       col = parsedCol;
     }
-    if (thrown instanceof Error) { // reporting stack may differ from the stack of the actual error, both may be interesting
+    if (thrown instanceof Error) {
+      // reporting stack may differ from the stack of the actual error, both may be interesting
       thrown.stack += Catch.formattedStackBlock('Catch.reportErr calling stack', Catch.stackTrace());
-      if (thrown.hasOwnProperty('workerStack')) { // https://github.com/openpgpjs/openpgpjs/issues/656#event-1498323188
+      if (thrown.hasOwnProperty('workerStack')) {
+        // https://github.com/openpgpjs/openpgpjs/issues/656#event-1498323188
         thrown.stack += Catch.formattedStackBlock('openpgp.js worker stack', String((thrown as Error & { workerStack: string }).workerStack));
       }
     }
@@ -287,7 +300,7 @@ export class Catch {
 
   private static doSendErrorToFlowCryptComBackend = (errorReport: ErrorReport) => {
     try {
-      $.ajax({ // tslint:disable-line:no-direct-ajax
+      void $.ajax({
         url: 'https://flowcrypt.com/api/help/error',
         method: 'POST',
         data: JSON.stringify(errorReport),
@@ -320,7 +333,8 @@ export class Catch {
       exception = new Error(`LIMITED_ERROR: ${errMsg}`);
     } else if (thrown instanceof Error) {
       exception = thrown;
-      if (thrown.hasOwnProperty('thrown')) { // this is created by custom async stack reporting in tooling/tsc-compiler.ts
+      if (thrown.hasOwnProperty('thrown')) {
+        // this is created by custom async stack reporting in tooling/tsc-compiler.ts
         exception.stack += `\n\ne.thrown:\n${Catch.stringify((thrown as Error & { thrown: string }).thrown)}`;
       }
     } else {
@@ -337,6 +351,7 @@ export class Catch {
     try {
       const callerLine = (e as { stack: string }).stack.split('\n')[1];
       const matched = callerLine.match(/\.js:([0-9]+):([0-9]+)\)?/);
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       return { line: Number(matched![1]), col: Number(matched![2]) };
     } catch (lineErr) {
       return { line: 0, col: 0 };
@@ -358,15 +373,16 @@ export class Catch {
 
   private static isPromiseRejectionEvent = (ev: unknown): ev is PromiseRejectionEvent => {
     if (ev && typeof ev === 'object') {
+      /* eslint-disable @typescript-eslint/ban-types */
       const eHasReason = (ev as {}).hasOwnProperty('reason') && typeof (ev as PromiseRejectionEvent).reason === 'object';
       const eHasPromise = (ev as {}).hasOwnProperty('promise') && Catch.isPromise((ev as PromiseRejectionEvent).promise);
+      /* eslint-enable @typescript-eslint/ban-types */
       return eHasReason && eHasPromise;
     }
     return false;
   };
-
 }
 
 Catch.RUNTIME_ENVIRONMENT = Catch.environment();
-window.onerror = (Catch.onErrorInternalHandler as OnErrorEventHandler);
+window.onerror = Catch.onErrorInternalHandler as OnErrorEventHandler;
 window.onunhandledrejection = Catch.onUnhandledRejectionInternalHandler;

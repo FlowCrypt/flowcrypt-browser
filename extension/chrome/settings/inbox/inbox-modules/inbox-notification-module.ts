@@ -11,10 +11,9 @@ import { NotificationGroupType, Notifications } from '../../../../js/common/noti
 import { ViewModule } from '../../../../js/common/view-module.js';
 
 export class InboxNotificationModule extends ViewModule<InboxView> {
-
   private readonly notifications: Notifications;
 
-  constructor(view: InboxView) {
+  public constructor(view: InboxView) {
     super(view);
     this.notifications = new Notifications();
   }
@@ -33,12 +32,16 @@ export class InboxNotificationModule extends ViewModule<InboxView> {
       await GoogleAuth.newAuthPopup({ acctEmail: this.view.acctEmail });
       window.location.reload();
     };
+    // eslint-disable-next-line @typescript-eslint/naming-convention
     this.showNotification(msg, 'setup', { action_auth_popup: newAuthPopup, action_add_permission: newAuthPopup });
   };
 
   public showNotification = (notification: string, group: NotificationGroupType, callbacks?: Dict<() => void>) => {
     this.notifications.show(notification, callbacks, group);
-    $('body').one('click', this.view.setHandler(() => this.notifications.clear(group)));
+    $('body').one(
+      'click',
+      this.view.setHandler(() => this.notifications.clear(group))
+    );
   };
 
   private setHandlers = () => {
@@ -51,5 +54,4 @@ export class InboxNotificationModule extends ViewModule<InboxView> {
   private notificationShowHandler: Bm.AsyncResponselessHandler = async ({ notification, callbacks, group }: Bm.NotificationShow) => {
     this.showNotification(notification, group, callbacks);
   };
-
 }

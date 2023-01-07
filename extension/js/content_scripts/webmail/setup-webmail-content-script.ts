@@ -23,15 +23,27 @@ import { GlobalStore } from '../../common/platform/store/global-store.js';
 import { InMemoryStore } from '../../common/platform/store/in-memory-store.js';
 import { WebmailVariantString, XssSafeFactory } from '../../common/xss-safe-factory.js';
 
-export type WebmailVariantObject = { newDataLayer: undefined | boolean, newUi: undefined | boolean, email: undefined | string, gmailVariant: WebmailVariantString };
-export type IntervalFunction = { interval: number, handler: () => void };
+export type WebmailVariantObject = {
+  newDataLayer: undefined | boolean;
+  newUi: undefined | boolean;
+  email: undefined | string;
+  gmailVariant: WebmailVariantString;
+};
+export type IntervalFunction = { interval: number; handler: () => void };
 type WebmailSpecificInfo = {
   name: WebMailName;
   variant: WebmailVariantString;
   getUserAccountEmail: () => string | undefined;
   getUserFullName: () => string | undefined;
   getReplacer: () => WebmailElementReplacer;
-  start: (acctEmail: string, clientConfiguration: ClientConfiguration, inject: Injector, notifications: Notifications, factory: XssSafeFactory, notifyMurdered: () => void) => Promise<void>;
+  start: (
+    acctEmail: string,
+    clientConfiguration: ClientConfiguration,
+    inject: Injector,
+    notifications: Notifications,
+    factory: XssSafeFactory,
+    notifyMurdered: () => void
+  ) => Promise<void>;
 };
 export interface WebmailElementReplacer {
   getIntervalFunctions: () => Array<IntervalFunction>;
@@ -43,9 +55,7 @@ export interface WebmailElementReplacer {
 
 const win = window as unknown as ContentScriptWindow;
 
-// tslint:disable:no-blank-lines-func
 export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecificInfo) => {
-
   const setUpNotification = `
     Set up FlowCrypt now for encrypted email?
     <div class="webmail_notification_buttons">
@@ -61,7 +71,7 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
     </div>
   `;
   let wasDestroyed = false;
-  class DestroyTrigger extends Error { }
+  class DestroyTrigger extends Error {}
 
   const waitForAcctEmail = async (): Promise<string> => {
     let acctEmailInterval = 1000;
@@ -104,13 +114,24 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
     let showSetupNeededNotificationIfSetupNotDone = true;
     while (true) {
       const storage = await AcctStore.get(acctEmail, ['setup_done', 'cryptup_enabled', 'notification_setup_needed_dismissed']);
-      if (storage.setup_done === true && storage.cryptup_enabled !== false) { // "not false" is due to cryptup_enabled unfedined in previous versions, which means "true"
+      if (storage.setup_done === true && storage.cryptup_enabled !== false) {
+        // "not false" is due to cryptup_enabled unfedined in previous versions, which means "true"
         notifications.clear('setup');
         return;
-      } else if (!$("div.webmail_notification").length && !storage.notification_setup_needed_dismissed && showSetupNeededNotificationIfSetupNotDone && storage.cryptup_enabled !== false) {
+      } else if (
+        !$('div.webmail_notification').length &&
+        !storage.notification_setup_needed_dismissed &&
+        showSetupNeededNotificationIfSetupNotDone &&
+        storage.cryptup_enabled !== false
+      ) {
         notifications.show(setUpNotification, {
-          notification_setup_needed_dismiss: () => AcctStore.set(acctEmail, { notification_setup_needed_dismissed: true }).then(() => notifications.clear('setup')).catch(Catch.reportErr),
+          /* eslint-disable @typescript-eslint/naming-convention */
+          notification_setup_needed_dismiss: () =>
+            AcctStore.set(acctEmail, { notification_setup_needed_dismissed: true })
+              .then(() => notifications.clear('setup'))
+              .catch(Catch.reportErr),
           action_open_settings: () => BrowserMsg.send.bg.settings({ acctEmail }),
+          /* eslint-enable @typescript-eslint/naming-convention */
           close: () => {
             showSetupNeededNotificationIfSetupNotDone = false;
           },
@@ -123,7 +144,14 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
     }
   };
 
-  const browserMsgListen = (acctEmail: string, tabId: string, inject: Injector, factory: XssSafeFactory, notifications: Notifications, ppEvent: { entered?: boolean }) => {
+  const browserMsgListen = (
+    acctEmail: string,
+    tabId: string,
+    inject: Injector,
+    factory: XssSafeFactory,
+    notifications: Notifications,
+    ppEvent: { entered?: boolean }
+  ) => {
     BrowserMsg.addListener('set_active_window', async ({ frameId }: Bm.ComposeWindow) => {
       if ($(`.secure_compose_window.active[data-frame-id="${frameId}"]`).length) {
         return; // already active
@@ -135,9 +163,13 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
     BrowserMsg.addListener('close_compose_window', async ({ frameId }: Bm.ComposeWindow) => {
       $(`.secure_compose_window[data-frame-id="${frameId}"]`).remove();
       if ($('.secure_compose_window.previous_active:not(.minimized)').length) {
-        BrowserMsg.send.focusPreviousActiveWindow(tabId, { frameId: $('.secure_compose_window.previous_active:not(.minimized)').data('frame-id') as string });
+        BrowserMsg.send.focusPreviousActiveWindow(tabId, {
+          frameId: $('.secure_compose_window.previous_active:not(.minimized)').data('frame-id') as string,
+        });
       } else if ($('.secure_compose_window:not(.minimized)').length) {
-        BrowserMsg.send.focusPreviousActiveWindow(tabId, { frameId: $('.secure_compose_window:not(.minimized)').data('frame-id') as string });
+        BrowserMsg.send.focusPreviousActiveWindow(tabId, {
+          frameId: $('.secure_compose_window:not(.minimized)').data('frame-id') as string,
+        });
       }
       // reposition the rest of the compose windows
       if (!$(`.secure_compose_window[data-order="1"]`).length) {
@@ -148,7 +180,8 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
       }
     });
     BrowserMsg.addListener('focus_body', async () => {
-      if (document.activeElement instanceof HTMLElement) { // iframe have to be blurred before focusing body
+      if (document.activeElement instanceof HTMLElement) {
+        // iframe have to be blurred before focusing body
         document.activeElement.blur();
       }
       $('body').focus();
@@ -163,7 +196,7 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
       webmailSpecific.getReplacer().reinsertReplyBox(replyMsgId);
     });
     BrowserMsg.addListener('render_public_keys', async ({ traverseUp, afterFrameId, publicKeys }: Bm.RenderPublicKeys) => {
-      const traverseUpLevels = traverseUp as number || 0;
+      const traverseUpLevels = (traverseUp as number) || 0;
       let appendAfter = $(`iframe#${afterFrameId}`);
       for (let i = 0; i < traverseUpLevels; i++) {
         appendAfter = appendAfter.parent();
@@ -192,7 +225,10 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
     });
     BrowserMsg.addListener('notification_show', async ({ notification, callbacks, group }: Bm.NotificationShow) => {
       notifications.show(notification, callbacks, group);
-      $('body').one('click', Catch.try(() => notifications.clear(group)));
+      $('body').one(
+        'click',
+        Catch.try(() => notifications.clear(group))
+      );
     });
     BrowserMsg.addListener('notification_show_auth_popup_needed', async ({ acctEmail }: Bm.NotificationShowAuthPopupNeeded) => {
       notifications.showAuthPopupNeeded(acctEmail);
@@ -213,7 +249,7 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
       while (true) {
         const fullName = webmailSpecific.getUserFullName();
         if (fullName) {
-          await AcctStore.set(acctEmail, { full_name: fullName });
+          await AcctStore.set(acctEmail, { full_name: fullName }); // eslint-disable-line @typescript-eslint/naming-convention
           return;
         }
         await Ui.time.sleep(timeout, win.TrySetDestroyableTimeout);
@@ -255,14 +291,19 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
     ppEvent: { entered?: boolean }
   ) => {
     try {
-      const { needPassphrase, updateCount, noKeysSetup } =
-        await BrowserMsg.send.bg.await.processAndStoreKeysFromEkmLocally({ acctEmail, decryptedPrivateKeys });
+      const { needPassphrase, updateCount, noKeysSetup } = await BrowserMsg.send.bg.await.processAndStoreKeysFromEkmLocally({
+        acctEmail,
+        decryptedPrivateKeys,
+      });
       if (noKeysSetup) {
         if (!needPassphrase && !clientConfiguration.canCreateKeys()) {
           await Ui.modal.error(Lang.setup.noKeys);
           BrowserMsg.send.bg.settings({ acctEmail, path: 'index.htm' });
         } else {
-          BrowserMsg.send.bg.settings({ acctEmail, path: Url.create('setup.htm', { idToken, action: 'update_from_ekm' }) });
+          BrowserMsg.send.bg.settings({
+            acctEmail,
+            path: Url.create('setup.htm', { idToken, action: 'update_from_ekm' }),
+          });
         }
         return;
       }
@@ -296,11 +337,19 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
     if (clientConfiguration.usesKeyManager()) {
       const idToken = await InMemoryStore.get(acctEmail, InMemoryStoreKeys.ID_TOKEN);
       if (idToken) {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const keyManager = new KeyManager(clientConfiguration.getKeyManagerUrlForPrivateKeys()!);
         Catch.setHandledTimeout(async () => {
           try {
             const { privateKeys } = await keyManager.getPrivateKeys(idToken);
-            await processKeysFromEkm(acctEmail, privateKeys.map(entry => entry.decryptedPrivateKey), clientConfiguration, factory, idToken, ppEvent);
+            await processKeysFromEkm(
+              acctEmail,
+              privateKeys.map(entry => entry.decryptedPrivateKey),
+              clientConfiguration,
+              factory,
+              idToken,
+              ppEvent
+            );
           } finally {
             completion();
           }
@@ -315,7 +364,7 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
 
   const updateClientConfiguration = async (acctEmail: string) => {
     try {
-      await (new AccountServer(acctEmail)).accountGetAndUpdateLocalStore();
+      await new AccountServer(acctEmail).accountGetAndUpdateLocalStore();
     } catch (e) {
       if (e instanceof BackendAuthErr) {
         // user will see a prompt to log in during some other actions that involve backend
@@ -326,12 +375,10 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
         Ui.toast(`Failed to update FlowCrypt Client Configuration: ${e.message}`, false, 5);
       } else {
         Catch.reportErr(e);
-        // tslint:disable-next-line:no-unsafe-any
         const errType = e.constructor?.name || 'Error';
         Ui.toast(`Failed to update FlowCrypt Client Configuration: ${e instanceof Error ? e.message : String(e)} (${errType})`);
       }
     }
-
   };
 
   const notifyExpiringKeys = async (acctEmail: string, clientConfiguration: ClientConfiguration, notifications: Notifications) => {
@@ -345,7 +392,8 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
     }
     let warningMsg;
     if (clientConfiguration.usesKeyManager()) {
-      warningMsg = `Your local keys expire in ${expireInDays} days.<br/>` +
+      warningMsg =
+        `Your local keys expire in ${expireInDays} days.<br/>` +
         `To receive the latest keys, please ensure that you can connect to your corporate network either through VPN or in person and reload Gmail.<br/>` +
         `If this notification still shows after that, please contact your Help Desk.`;
     } else {
@@ -364,7 +412,13 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
       const ppEvent: { entered?: boolean } = {};
       browserMsgListen(acctEmail, tabId, inject, factory, notifications, ppEvent);
       const clientConfiguration = await ClientConfiguration.newInstance(acctEmail);
-      await startPullingKeysFromEkm(acctEmail, clientConfiguration, factory, ppEvent, Catch.try(() => notifyExpiringKeys(acctEmail, clientConfiguration, notifications)));
+      await startPullingKeysFromEkm(
+        acctEmail,
+        clientConfiguration,
+        factory,
+        ppEvent,
+        Catch.try(() => notifyExpiringKeys(acctEmail, clientConfiguration, notifications))
+      );
       await webmailSpecific.start(acctEmail, clientConfiguration, inject, notifications, factory, notifyMurdered);
     } catch (e) {
       if (e instanceof TabIdRequiredError) {
@@ -379,7 +433,6 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
   };
 
   if (!win.injected) {
-
     /**
      * This tries to deal with initial environment setup and plugin updtates in a running tab.
      * - vacant: no influence of previous script is apparent in the DOM
@@ -408,6 +461,7 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
           clearTimeout(id);
         }
         $('.' + win.destroyable_class).remove();
+        // eslint-disable-next-line local-rules/standard-loops
         $('.' + win.reloadable_class).each((i, reloadableEl) => {
           $(reloadableEl).replaceWith($(reloadableEl)[0].outerHTML); // xss-reinsert - inserting code that was already present should not be dangerous
         });
@@ -439,7 +493,5 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
     } else if (Catch.browser().name === 'firefox') {
       notifyMurdered();
     }
-
   }
-
 };

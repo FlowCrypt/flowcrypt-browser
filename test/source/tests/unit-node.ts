@@ -5,8 +5,8 @@ import * as ava from 'ava';
 import { MsgBlock } from '../core/msg-block';
 import { MsgBlockParser } from '../core/msg-block-parser';
 import { Config, TestVariant, Util } from '../util';
-import chai = require('chai');
-import chaiAsPromised = require('chai-as-promised');
+import { use, expect } from 'chai';
+import chaiAsPromised from 'chai-as-promised';
 import { KeyUtil, KeyInfoWithIdentityAndOptionalPp } from '../core/crypto/key';
 import { UnreportableError } from '../platform/catch.js';
 import { Buf } from '../core/buf';
@@ -23,12 +23,7 @@ import * as forge from 'node-forge';
 import { ENVELOPED_DATA_OID, SmimeKey } from '../core/crypto/smime/smime-key';
 import { Str } from '../core/common';
 
-chai.use(chaiAsPromised);
-const expect = chai.expect;
-// tslint:disable:no-blank-lines-func
-/* eslint-disable max-len */
-// tslint:disable:no-unused-expression
-/* eslint-disable no-unused-expressions */
+use(chaiAsPromised);
 
 export const equals = (a: string | Uint8Array, b: string | Uint8Array) => {
   expect(typeof a).to.equal(typeof b, `types dont match`);
@@ -43,29 +38,37 @@ export const equals = (a: string | Uint8Array, b: string | Uint8Array) => {
   throw new Error(`unknown test state [${typeof a},${typeof b}] [${a instanceof Uint8Array},${b instanceof Uint8Array}]`);
 };
 
-
 export const defineUnitNodeTests = (testVariant: TestVariant) => {
-
   if (testVariant !== 'CONSUMER-LIVE-GMAIL') {
-
     ava.default(`[unit][KeyUtil.parse] throw if parse methods expecting exactly one key find more than one`, async t => {
       const unarmoredKeys = Buffer.from([
         ...(await PgpArmor.dearmor(testConstants.flowcryptcompatibilityPublicKey7FDE685548AEA788)).data,
-        ...(await PgpArmor.dearmor(testConstants.pubkey2864E326A5BE488A)).data
+        ...(await PgpArmor.dearmor(testConstants.pubkey2864E326A5BE488A)).data,
       ]);
       const armoredKeys = PgpArmor.armor(opgp.enums.armor.publicKey, unarmoredKeys);
       expect((await KeyUtil.parseMany(armoredKeys)).length).to.equal(2);
-      await t.throwsAsync(() => OpenPGPKey.parse(armoredKeys), { instanceOf: Error, message: 'Found 2 OpenPGP keys, expected one' });
-      await t.throwsAsync(() => KeyUtil.parse(armoredKeys), { instanceOf: Error, message: 'Found 2 keys, expected one' });
+      await t.throwsAsync(() => OpenPGPKey.parse(armoredKeys), {
+        instanceOf: Error,
+        message: 'Found 2 OpenPGP keys, expected one',
+      });
+      await t.throwsAsync(() => KeyUtil.parse(armoredKeys), {
+        instanceOf: Error,
+        message: 'Found 2 keys, expected one',
+      });
       t.pass();
     });
 
     ava.default(`[unit][MsgBlockParser.detectBlocks] does not get tripped on blocks with unknown headers`, async t => {
-      expect(MsgBlockParser.detectBlocks("This text breaks email and Gmail web app.\n\n-----BEGIN FOO-----\n\nEven though it's not a vaild PGP m\n\nMuhahah")).to.deep.equal({
-        "blocks": [
-          MsgBlock.fromContent("plainText", "This text breaks email and Gmail web app.\n\n-----BEGIN FOO-----\n\nEven though it's not a vaild PGP m\n\nMuhahah"),
+      expect(
+        MsgBlockParser.detectBlocks("This text breaks email and Gmail web app.\n\n-----BEGIN FOO-----\n\nEven though it's not a vaild PGP m\n\nMuhahah")
+      ).to.deep.equal({
+        blocks: [
+          MsgBlock.fromContent(
+            'plainText',
+            "This text breaks email and Gmail web app.\n\n-----BEGIN FOO-----\n\nEven though it's not a vaild PGP m\n\nMuhahah"
+          ),
         ],
-        "normalized": "This text breaks email and Gmail web app.\n\n-----BEGIN FOO-----\n\nEven though it's not a vaild PGP m\n\nMuhahah"
+        normalized: "This text breaks email and Gmail web app.\n\n-----BEGIN FOO-----\n\nEven though it's not a vaild PGP m\n\nMuhahah",
       });
       t.pass();
     });
@@ -87,7 +90,7 @@ export const defineUnitNodeTests = (testVariant: TestVariant) => {
       const { blocks, normalized } = MsgBlockParser.detectBlocks(input);
       expect(normalized).to.equal(input);
       expect(blocks).to.have.property('length').that.equals(1);
-      expect(blocks[0]).to.deep.equal(MsgBlock.fromContent("plainText", input));
+      expect(blocks[0]).to.deep.equal(MsgBlock.fromContent('plainText', input));
       t.pass();
     });
 
@@ -106,7 +109,8 @@ export const defineUnitNodeTests = (testVariant: TestVariant) => {
     });
 
     ava.default(`[unit][PgpKey.usableForEncryptionButExpired] recognizes usable expired key`, async t => {
-      const armored = "-----BEGIN PGP PRIVATE KEY BLOCK-----\nVersion: FlowCrypt 7.0.1 Gmail Encryption\nComment: Seamlessly send and receive encrypted email\n\n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\n+gib+vSxHvLhC6oDBA==\n=RIPF\n-----END PGP PRIVATE KEY BLOCK-----"; // eslint-disable-line max-len
+      const armored =
+        '-----BEGIN PGP PRIVATE KEY BLOCK-----\nVersion: FlowCrypt 7.0.1 Gmail Encryption\nComment: Seamlessly send and receive encrypted email\n\n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\n+gib+vSxHvLhC6oDBA==\n=RIPF\n-----END PGP PRIVATE KEY BLOCK-----';
       const expiredKey = await KeyUtil.parse(armored);
       expect(expiredKey.usableForEncryptionButExpired).to.equal(true);
       t.pass();
@@ -220,11 +224,17 @@ WeNYP84Yjw6OFSHdi2W0VojRGhxm7PZCMqswN/XaBg==
     ava.default('[unit][KeyUtil.parse] S/MIME key parsing of HTTPS cert', async t => {
       // parsing throws because the domain name doesn't look like an e-mail
       // address
-      await t.throwsAsync(() => KeyUtil.parse(httpsCert), { instanceOf: UnreportableError, message: 'This S/MIME x.509 certificate has an invalid recipient email: news.ycombinator.com' });
+      await t.throwsAsync(() => KeyUtil.parse(httpsCert), {
+        instanceOf: UnreportableError,
+        message: 'This S/MIME x.509 certificate has an invalid recipient email: news.ycombinator.com',
+      });
     });
 
     ava.default('[unit][KeyUtil.parse] Unknown key family parsing fails', async t => {
-      await t.throwsAsync(() => KeyUtil.parse('dummy string for unknown key'), { instanceOf: Error, message: 'Key type is unknown, expecting OpenPGP or x509 S/MIME' });
+      await t.throwsAsync(() => KeyUtil.parse('dummy string for unknown key'), {
+        instanceOf: Error,
+        message: 'Key type is unknown, expecting OpenPGP or x509 S/MIME',
+      });
     });
 
     const expiredPgp = `-----BEGIN PGP PRIVATE KEY BLOCK-----
@@ -549,8 +559,12 @@ vpQiyk4ceuTNkUZ/qmgiMpQLxXZnDDo=
     });
 
     ava.default('[unit][KeyUtil.parse] S/MIME key parsing of unprotected PKCS#8 private key and mismatching certificate', async t => {
-      await t.throwsAsync(() => KeyUtil.parse(`${testConstants.smimeUnencryptedKey}
-${testConstants.smimeCert}`), { instanceOf: UnreportableError, message: `Certificate doesn't match the private key` });
+      await t.throwsAsync(
+        () =>
+          KeyUtil.parse(`${testConstants.smimeUnencryptedKey}
+${testConstants.smimeCert}`),
+        { instanceOf: UnreportableError, message: `Certificate doesn't match the private key` }
+      );
       t.pass();
     });
 
@@ -558,7 +572,8 @@ ${testConstants.smimeCert}`), { instanceOf: UnreportableError, message: `Certifi
       const encryptedKey = await KeyUtil.parse(`${testConstants.smimeEncryptedKey}
 ${testConstants.smimeCert}`);
       await t.throwsAsync(() => KeyUtil.decrypt(encryptedKey, 'AHbxhwquX5pc'), {
-        instanceOf: UnreportableError, message: `Certificate doesn't match the private key`
+        instanceOf: UnreportableError,
+        message: `Certificate doesn't match the private key`,
       });
       t.pass();
     });
@@ -569,30 +584,41 @@ ${testConstants.smimeCert}`);
 AAAAAAAAAAAAAAAAzzzzzzzzzzzzzzzzzzzzzzzzzzzz.....
 -----END ENCRYPTED PRIVATE KEY-----
 ${testConstants.smimeCert}`);
-      await t.throwsAsync(() => KeyUtil.decrypt(encryptedKey, '123'), { instanceOf: Error, message: `Invalid PEM formatted message.` });
+      await t.throwsAsync(() => KeyUtil.decrypt(encryptedKey, '123'), {
+        instanceOf: Error,
+        message: `Invalid PEM formatted message.`,
+      });
       t.pass();
     });
 
     ava.default(`[unit][KeyUtil.parse] throws on incorrect PKCS#8 private key`, async t => {
-      await t.throwsAsync(() => KeyUtil.parse(`-----BEGIN PRIVATE KEY-----
+      await t.throwsAsync(
+        () =>
+          KeyUtil.parse(`-----BEGIN PRIVATE KEY-----
 
 AAAAAAAAAAAAAAAAzzzzzzzzzzzzzzzzzzzzzzzzzzzz.....
 -----END PRIVATE KEY-----
-${testConstants.smimeCert}`), { instanceOf: Error, message: `Invalid PEM formatted message.` });
+${testConstants.smimeCert}`),
+        { instanceOf: Error, message: `Invalid PEM formatted message.` }
+      );
       t.pass();
     });
 
     ava.default(`[unit][KeyUtil.parse] throws on incorrect RSA PKCS#8 private key`, async t => {
-      await t.throwsAsync(() => KeyUtil.parse(`-----BEGIN RSA PRIVATE KEY-----
+      await t.throwsAsync(
+        () =>
+          KeyUtil.parse(`-----BEGIN RSA PRIVATE KEY-----
 
 AAAAAAAAAAAAAAAAzzzzzzzzzzzzzzzzzzzzzzzzzzzz.....
 -----END RSA PRIVATE KEY-----
-${testConstants.smimeCert}`), { instanceOf: Error, message: `Invalid PEM formatted message.` });
+${testConstants.smimeCert}`),
+        { instanceOf: Error, message: `Invalid PEM formatted message.` }
+      );
       t.pass();
     });
 
     ava.default('[unit][KeyUtil.armor] S/MIME key from PKCS#12 is armored to PKCS#8', async t => {
-      const p12 = readFileSync("test/samples/smime/human-pwd-original-PKCS12.pfx", 'binary');
+      const p12 = readFileSync('test/samples/smime/human-pwd-original-PKCS12.pfx', 'binary');
       const key = SmimeKey.parseDecryptBinary(Buf.fromRawBytesStr(p12), 'AHbxhwquX5pc');
       expect(key.id).to.equal('9B5FCFF576A032495AFE77805354351B39AB3BC6');
       expect(key.fullyDecrypted).to.equal(true);
@@ -745,7 +771,8 @@ jLwe8W9IMt765T5x5oux9MmPDXF05xHfm4qfH/BMO3a802x5u2gJjJjuknrFdgXY
     });
 
     ava.default('[unit][KeyUtil.parse] key was never usable', async t => {
-      const expiredPubKey = '-----BEGIN PGP PUBLIC KEY BLOCK-----\r\nVersion: FlowCrypt Email Encryption 7.8.4\r\nComment: Seamlessly send and receive encrypted email\r\n\r\nxsBNBF8QF1cBCADFQRM0S6kJ1LxL+Y2hqz+w2PIbAKnNpV4gr1D0jEX9ygMY\r\nYxyjGP7QcK2umeBrioWBUET/5yu+KkSVFOxGwXw2m1MqJXZH6fPumgDBEAYg\r\n8afLXI/5Rh7Lp2Z3eBDog6W0I9EOHAB6iFHQgc5m+PUlehMZ23VUKxDpb4kW\r\nsIts1b8Zm0sSimUf15bz0nGxCf00bYf5lCuxBfgAQGK+FgpIAdc03a7VI4zJ\r\nc/A18PR4mlMeDfIj2yWKaL4ka8lr8d+qAP2Cu0I6GcNgBUl5yCWc/6S20J52\r\nKjoa48w1vdAYzK1hjTE7INLrB6WKOCPLoY0jRuqE+ksarw6JtNsAhNrFABEB\r\nAAHNKTxoYXMub2xkZXIua2V5Lm9uLmF0dGVzdGVyQHJlY2lwaWVudC5jb20+\r\nwsCTBBABCAAmBQJfEBpQBQkAAAACBgsJBwgDAgQVCAoCBBYCAQACGQECGwMC\r\nHgEAIQkQ0CoIfv1WLLMWIQQoKZEjISHFGWNfjmPQKgh+/VYss4EFB/9apXb/\r\nRYrf/FwK3NEeAuVAjq4sQFOC+e2sOO1Y1i74Hm5Q3YpL5FPWxg1zzQR3cKlw\r\ngwGiTBH9Re86KuB6XIIhropA94c0c5RGXf4Syb66hsp+xyb5laoazW274M26\r\nLhNou77CFgJ4UTOYPqNoDADcGPCoYzlU/tkp8q+vuIEBuizNkO+vOdFdrG9x\r\nON2n7aPVBWTHTy7PXVQr6wYfbj2c3cmH9ju5bZKoKoZ7niR3jQi+NUAHf09Z\r\nkwWGoYwD37iTtPWrn/nnMqp7nqJxpChsJvtfousgKHWUA1IsCXoSeExZuXYU\r\nVpJduSYQx5H6dy4QwmK8bzRfra/l5O6sRTbNzsBNBF8QF1cBCADL0rwgqVw3\r\nsQ6JD7j9eOkbcc0iNrxLqYWnBCu71opLWVQ0b8mw9DqT3WuXtvOVmEBkqDig\r\nq9Q78BbD2EfQhFNuvcE5GL38BvyUkpgZBC+vi9UrisQTStmLS5bSsT7aipwM\r\nGy3tXFIoHX8XQk8swbKa20fCYd5KKZr3wFBZ6mtXN3O1qgelZ4HEl/bCFz6c\r\nuvZUFLvLaMksXh7um2/bjnB6E9uktn/ts34rbYIuHxVTLs6bq4VbPiUilurz\r\n8uzAsU2HMw2QTQTaJzycJyYzdDxAIXrSmtFah2/wqSYC82r65sA17y3gtbHq\r\neP0pzbzbMQitPCV2poxIHJuiMYh4iWV9ABEBAAHCwHwEGAEIAA8FAl8QGlAF\r\nCQAAAAICGwwAIQkQ0CoIfv1WLLMWIQQoKZEjISHFGWNfjmPQKgh+/VYsswOo\r\nCAC2gkz5f7RLboxFxgbjleY/SWttf9j5pJGCfcaPzLGo8wCbnEUdhs+FqAml\r\nGDF1yZAexCQLBukVhil1yEnknaX1emeHB7d4g6cQFoKtSHeVZ0C9mmM+OJMn\r\nZoGVylTsOLMmVXM/CXyp9JUAlo/oZm1Zpb9RK5rvNJukH1f0DajQjWlC09Y9\r\nVLVDBxlJccsEdas1yojMDHMqNOMiNaAlA33mrY3ucAiKb4q3uP9IuDRuD83M\r\ncoDahY5p8xl6IbKQhnxoWtBgGJWrlwBZro83z9HzW4LmP99pPZqfLZQAevUL\r\n+oQiPqyh512p6O5usc1GkEoN9cn9b/qnvnRu5RMxC/vI\r\n=NveA\r\n-----END PGP PUBLIC KEY BLOCK-----\r\n';
+      const expiredPubKey =
+        '-----BEGIN PGP PUBLIC KEY BLOCK-----\r\nVersion: FlowCrypt Email Encryption 7.8.4\r\nComment: Seamlessly send and receive encrypted email\r\n\r\nxsBNBF8QF1cBCADFQRM0S6kJ1LxL+Y2hqz+w2PIbAKnNpV4gr1D0jEX9ygMY\r\nYxyjGP7QcK2umeBrioWBUET/5yu+KkSVFOxGwXw2m1MqJXZH6fPumgDBEAYg\r\n8afLXI/5Rh7Lp2Z3eBDog6W0I9EOHAB6iFHQgc5m+PUlehMZ23VUKxDpb4kW\r\nsIts1b8Zm0sSimUf15bz0nGxCf00bYf5lCuxBfgAQGK+FgpIAdc03a7VI4zJ\r\nc/A18PR4mlMeDfIj2yWKaL4ka8lr8d+qAP2Cu0I6GcNgBUl5yCWc/6S20J52\r\nKjoa48w1vdAYzK1hjTE7INLrB6WKOCPLoY0jRuqE+ksarw6JtNsAhNrFABEB\r\nAAHNKTxoYXMub2xkZXIua2V5Lm9uLmF0dGVzdGVyQHJlY2lwaWVudC5jb20+\r\nwsCTBBABCAAmBQJfEBpQBQkAAAACBgsJBwgDAgQVCAoCBBYCAQACGQECGwMC\r\nHgEAIQkQ0CoIfv1WLLMWIQQoKZEjISHFGWNfjmPQKgh+/VYss4EFB/9apXb/\r\nRYrf/FwK3NEeAuVAjq4sQFOC+e2sOO1Y1i74Hm5Q3YpL5FPWxg1zzQR3cKlw\r\ngwGiTBH9Re86KuB6XIIhropA94c0c5RGXf4Syb66hsp+xyb5laoazW274M26\r\nLhNou77CFgJ4UTOYPqNoDADcGPCoYzlU/tkp8q+vuIEBuizNkO+vOdFdrG9x\r\nON2n7aPVBWTHTy7PXVQr6wYfbj2c3cmH9ju5bZKoKoZ7niR3jQi+NUAHf09Z\r\nkwWGoYwD37iTtPWrn/nnMqp7nqJxpChsJvtfousgKHWUA1IsCXoSeExZuXYU\r\nVpJduSYQx5H6dy4QwmK8bzRfra/l5O6sRTbNzsBNBF8QF1cBCADL0rwgqVw3\r\nsQ6JD7j9eOkbcc0iNrxLqYWnBCu71opLWVQ0b8mw9DqT3WuXtvOVmEBkqDig\r\nq9Q78BbD2EfQhFNuvcE5GL38BvyUkpgZBC+vi9UrisQTStmLS5bSsT7aipwM\r\nGy3tXFIoHX8XQk8swbKa20fCYd5KKZr3wFBZ6mtXN3O1qgelZ4HEl/bCFz6c\r\nuvZUFLvLaMksXh7um2/bjnB6E9uktn/ts34rbYIuHxVTLs6bq4VbPiUilurz\r\n8uzAsU2HMw2QTQTaJzycJyYzdDxAIXrSmtFah2/wqSYC82r65sA17y3gtbHq\r\neP0pzbzbMQitPCV2poxIHJuiMYh4iWV9ABEBAAHCwHwEGAEIAA8FAl8QGlAF\r\nCQAAAAICGwwAIQkQ0CoIfv1WLLMWIQQoKZEjISHFGWNfjmPQKgh+/VYsswOo\r\nCAC2gkz5f7RLboxFxgbjleY/SWttf9j5pJGCfcaPzLGo8wCbnEUdhs+FqAml\r\nGDF1yZAexCQLBukVhil1yEnknaX1emeHB7d4g6cQFoKtSHeVZ0C9mmM+OJMn\r\nZoGVylTsOLMmVXM/CXyp9JUAlo/oZm1Zpb9RK5rvNJukH1f0DajQjWlC09Y9\r\nVLVDBxlJccsEdas1yojMDHMqNOMiNaAlA33mrY3ucAiKb4q3uP9IuDRuD83M\r\ncoDahY5p8xl6IbKQhnxoWtBgGJWrlwBZro83z9HzW4LmP99pPZqfLZQAevUL\r\n+oQiPqyh512p6O5usc1GkEoN9cn9b/qnvnRu5RMxC/vI\r\n=NveA\r\n-----END PGP PUBLIC KEY BLOCK-----\r\n';
       const parsed = await KeyUtil.parse(expiredPubKey);
       expect(parsed?.usableForEncryption).to.equal(false);
       expect(parsed?.expiration).to.equal(1594890073000);
@@ -755,53 +782,79 @@ jLwe8W9IMt765T5x5oux9MmPDXF05xHfm4qfH/BMO3a802x5u2gJjJjuknrFdgXY
 
     ava.default('[unit][MsgUtil.decryptMessage] decrypts a pubkey-encrypted OpenPGP message', async t => {
       const data = await GoogleData.withInitializedData('flowcrypt.compatibility@gmail.com');
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const msg: GmailMsg = data.getMessage('166147ea9bb6669d')!;
-      const enc = Buf.fromBase64Str(msg!.raw!).toUtfStr()
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      const enc = Buf.fromBase64Str(msg!.raw!)
+        .toUtfStr()
         .match(/-----BEGIN PGP MESSAGE-----.*-----END PGP MESSAGE-----/s)![0];
       const encryptedData = Buf.fromUtfStr(enc);
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const compatibilityKey1 = Config.key('flowcrypt.compatibility.1pp1')!;
       const kisWithPp = [
         {
-          ...await KeyUtil.keyInfoObj(await KeyUtil.parse(compatibilityKey1.armored!)), passphrase: compatibilityKey1.passphrase
+          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+          ...(await KeyUtil.keyInfoObj(await KeyUtil.parse(compatibilityKey1.armored!))),
+          passphrase: compatibilityKey1.passphrase,
         },
       ];
       const decrypted1 = await MsgUtil.decryptMessage({ kisWithPp, encryptedData, verificationPubs: [] });
       expect(decrypted1.success).to.equal(true);
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const verifyRes1 = (decrypted1 as DecryptSuccess).signature!;
       expect(verifyRes1.match).to.be.null;
       t.pass();
     });
 
+    /* eslint-disable @typescript-eslint/no-non-null-assertion */
     ava.default('[unit][MsgUtil.decryptMessage] finds correct key to verify signature', async t => {
       const data = await GoogleData.withInitializedData('ci.tests.gmail@flowcrypt.test');
       const msg: GmailMsg = data.getMessage('1766644f13510f58')!;
-      const enc = Buf.fromBase64Str(msg!.raw!).toUtfStr()
+      const enc = Buf.fromBase64Str(msg!.raw!)
+        .toUtfStr()
         .match(/\-\-\-\-\-BEGIN PGP SIGNED MESSAGE\-\-\-\-\-.*\-\-\-\-\-END PGP SIGNATURE\-\-\-\-\-/s)![0];
       const encryptedData = Buf.fromUtfStr(enc);
       // actual key the message was signed with
       const signerPubkey = testConstants.pubkey2864E326A5BE488A;
       // better key
-      const wrongPubkey = "-----BEGIN PGP PUBLIC KEY BLOCK-----\r\nVersion: FlowCrypt Email Encryption [BUILD_REPLACEABLE_VERSION]\r\nComment: Seamlessly send and receive encrypted email\r\n\r\nxjMEYZeW2RYJKwYBBAHaRw8BAQdAT5QfLVP3y1yukk3MM/oiuXLNe1f9az5M\r\nBnOlKdF0nKnNJVNvbWVib2R5IDxTYW1zNTBzYW1zNTBzZXB0QEdtYWlsLkNv\r\nbT7CjwQQFgoAIAUCYZeW2QYLCQcIAwIEFQgKAgQWAgEAAhkBAhsDAh4BACEJ\r\nEMrSTYqLk6SUFiEEBP90ux3d6kDwDdzvytJNiouTpJS27QEA7pFlkLfD0KFQ\r\nsH/dwb/NPzn5zCi2L9gjPAC3d8gv1fwA/0FjAy/vKct4D7QH8KwtEGQns5+D\r\nP1WxDr4YI2hp5TkAzjgEYZeW2RIKKwYBBAGXVQEFAQEHQKNLY/bXrhJMWA2+\r\nWTjk3I7KhawyZfLomJ4hovqr7UtOAwEIB8J4BBgWCAAJBQJhl5bZAhsMACEJ\r\nEMrSTYqLk6SUFiEEBP90ux3d6kDwDdzvytJNiouTpJQnpgD/c1CzfS3YzJUx\r\nnFMrhjiE0WVgqOV/3CkfI4m4RA30QUIA/ju8r4AD2h6lu3Mx/6I6PzIRZQty\r\nLvTkcu4UKodZa4kK\r\n=7C4A\r\n-----END PGP PUBLIC KEY BLOCK-----\r\n";
+      const wrongPubkey =
+        '-----BEGIN PGP PUBLIC KEY BLOCK-----\r\nVersion: FlowCrypt Email Encryption [BUILD_REPLACEABLE_VERSION]\r\nComment: Seamlessly send and receive encrypted email\r\n\r\nxjMEYZeW2RYJKwYBBAHaRw8BAQdAT5QfLVP3y1yukk3MM/oiuXLNe1f9az5M\r\nBnOlKdF0nKnNJVNvbWVib2R5IDxTYW1zNTBzYW1zNTBzZXB0QEdtYWlsLkNv\r\nbT7CjwQQFgoAIAUCYZeW2QYLCQcIAwIEFQgKAgQWAgEAAhkBAhsDAh4BACEJ\r\nEMrSTYqLk6SUFiEEBP90ux3d6kDwDdzvytJNiouTpJS27QEA7pFlkLfD0KFQ\r\nsH/dwb/NPzn5zCi2L9gjPAC3d8gv1fwA/0FjAy/vKct4D7QH8KwtEGQns5+D\r\nP1WxDr4YI2hp5TkAzjgEYZeW2RIKKwYBBAGXVQEFAQEHQKNLY/bXrhJMWA2+\r\nWTjk3I7KhawyZfLomJ4hovqr7UtOAwEIB8J4BBgWCAAJBQJhl5bZAhsMACEJ\r\nEMrSTYqLk6SUFiEEBP90ux3d6kDwDdzvytJNiouTpJQnpgD/c1CzfS3YzJUx\r\nnFMrhjiE0WVgqOV/3CkfI4m4RA30QUIA/ju8r4AD2h6lu3Mx/6I6PzIRZQty\r\nLvTkcu4UKodZa4kK\r\n=7C4A\r\n-----END PGP PUBLIC KEY BLOCK-----\r\n';
       {
-        const decrypted1 = await MsgUtil.decryptMessage({ kisWithPp: [], encryptedData, verificationPubs: [signerPubkey, wrongPubkey] });
+        const decrypted1 = await MsgUtil.decryptMessage({
+          kisWithPp: [],
+          encryptedData,
+          verificationPubs: [signerPubkey, wrongPubkey],
+        });
         expect(decrypted1.success).to.equal(true);
         const verifyRes1 = (decrypted1 as DecryptSuccess).signature!;
         expect(verifyRes1.match).to.be.true;
       }
       {
-        const decrypted2 = await MsgUtil.decryptMessage({ kisWithPp: [], encryptedData, verificationPubs: [wrongPubkey, signerPubkey] });
+        const decrypted2 = await MsgUtil.decryptMessage({
+          kisWithPp: [],
+          encryptedData,
+          verificationPubs: [wrongPubkey, signerPubkey],
+        });
         expect(decrypted2.success).to.equal(true);
         const verifyRes2 = (decrypted2 as DecryptSuccess).signature!;
         expect(verifyRes2.match).to.be.true;
       }
       {
-        const decrypted3 = await MsgUtil.decryptMessage({ kisWithPp: [], encryptedData, verificationPubs: [signerPubkey] });
+        const decrypted3 = await MsgUtil.decryptMessage({
+          kisWithPp: [],
+          encryptedData,
+          verificationPubs: [signerPubkey],
+        });
         expect(decrypted3.success).to.equal(true);
         const verifyRes3 = (decrypted3 as DecryptSuccess).signature!;
         expect(verifyRes3.match).to.be.true;
       }
       {
-        const decrypted4 = await MsgUtil.decryptMessage({ kisWithPp: [], encryptedData, verificationPubs: [wrongPubkey] });
+        const decrypted4 = await MsgUtil.decryptMessage({
+          kisWithPp: [],
+          encryptedData,
+          verificationPubs: [wrongPubkey],
+        });
         expect(decrypted4.success).to.equal(true);
         const verifyRes4 = (decrypted4 as DecryptSuccess).signature!;
         expect(verifyRes4.match).to.not.be.true;
@@ -815,14 +868,20 @@ jLwe8W9IMt765T5x5oux9MmPDXF05xHfm4qfH/BMO3a802x5u2gJjJjuknrFdgXY
       const msgText = Buf.fromBase64Str(msg!.raw!).toUtfStr();
       const sigText = msgText
         .match(/\-\-\-\-\-BEGIN PGP SIGNATURE\-\-\-\-\-.*\-\-\-\-\-END PGP SIGNATURE\-\-\-\-\-/s)![0]
-        .replace(/=\r\n/g, '').replace(/=3D/g, '=');
+        .replace(/=\r\n/g, '')
+        .replace(/=3D/g, '=');
       const plaintext = msgText
         .match(/Content\-Type: multipart\/mixed; boundary="------------0i0uwO075ZQ0NjkA1rJACksf".*--------------0i0uwO075ZQ0NjkA1rJACksf--\r?\n/s)![0]
         .replace(/\r?\n/g, '\r\n')!;
       const pubkey = plaintext
         .match(/\-\-\-\-\-BEGIN PGP PUBLIC KEY BLOCK\-\-\-\-\-.*\-\-\-\-\-END PGP PUBLIC KEY BLOCK\-\-\-\-\-/s)![0]
-        .replace(/=\r\n/g, '').replace(/=3D/g, '=');
-      const result = await MsgUtil.verifyDetached({ plaintext: Buf.fromUtfStr(plaintext), sigText: Buf.fromUtfStr(sigText), verificationPubs: [pubkey] });
+        .replace(/=\r\n/g, '')
+        .replace(/=3D/g, '=');
+      const result = await MsgUtil.verifyDetached({
+        plaintext: Buf.fromUtfStr(plaintext),
+        sigText: Buf.fromUtfStr(sigText),
+        verificationPubs: [pubkey],
+      });
       expect(result.match).to.be.true;
       t.pass();
     });
@@ -833,17 +892,19 @@ jLwe8W9IMt765T5x5oux9MmPDXF05xHfm4qfH/BMO3a802x5u2gJjJjuknrFdgXY
       const msgText = Buf.fromBase64Str(msg!.raw!).toUtfStr();
       const sigText = msgText
         .match(/\-\-\-\-\-BEGIN PGP SIGNATURE\-\-\-\-\-.*\-\-\-\-\-END PGP SIGNATURE\-\-\-\-\-/s)![0]
-        .replace(/=\r\n/g, '').replace(/=3D/g, '=');
+        .replace(/=\r\n/g, '')
+        .replace(/=3D/g, '=');
       const plaintext = msgText
         .match(/Content\-Type: multipart\/mixed; boundary="------------FQ7CfxuiGriwTfTfyc4i1ppF".*-------------FQ7CfxuiGriwTfTfyc4i1ppF--\r?\n/s)![0]
         .replace(/\r?\n/g, '\r\n')!;
       const pubkey = plaintext
         .match(/\-\-\-\-\-BEGIN PGP PUBLIC KEY BLOCK\-\-\-\-\-.*\-\-\-\-\-END PGP PUBLIC KEY BLOCK\-\-\-\-\-/s)![0]
-        .replace(/=\r\n/g, '').replace(/=3D/g, '=');
+        .replace(/=\r\n/g, '')
+        .replace(/=3D/g, '=');
       const result = await MsgUtil.verifyDetached({
         plaintext: Buf.fromUtfStr(plaintext),
         sigText: Buf.fromUtfStr(sigText),
-        verificationPubs: [pubkey]
+        verificationPubs: [pubkey],
       });
       expect(result.match).to.be.true;
       t.pass();
@@ -853,16 +914,17 @@ jLwe8W9IMt765T5x5oux9MmPDXF05xHfm4qfH/BMO3a802x5u2gJjJjuknrFdgXY
       const data = await GoogleData.withInitializedData('flowcrypt.compatibility@gmail.com');
       const msg: GmailMsg = data.getMessage('175ccd8755eab85f')!;
       const msgText = Buf.fromBase64Str(msg!.raw!).toUtfStr();
-      const sigBase64 = msgText
-        .match(/Content\-Type: application\/pgp\-signature;.*\r\n\r\n(.*)\r\n\-\-/s)![1];
+      const sigBase64 = msgText.match(/Content\-Type: application\/pgp\-signature;.*\r\n\r\n(.*)\r\n\-\-/s)![1];
       const sigText = Buf.fromBase64Str(sigBase64);
       const plaintext = msgText
-        .match(/Content\-Type: multipart\/mixed;\r?\n? boundary="\-\-\-\-sinikael\-\?=_2\-16054595384320\.6487848448108896".*\-\-\-\-\-\-sinikael\-\?=_2\-16054595384320\.6487848448108896\-\-\r?\n/s)![0]
+        .match(
+          /Content\-Type: multipart\/mixed;\r?\n? boundary="\-\-\-\-sinikael\-\?=_2\-16054595384320\.6487848448108896".*\-\-\-\-\-\-sinikael\-\?=_2\-16054595384320\.6487848448108896\-\-\r?\n/s
+        )![0]
         .replace(/\r?\n/g, '\r\n')!;
       const result = await MsgUtil.verifyDetached({
         plaintext: Buf.fromUtfStr(plaintext),
         sigText,
-        verificationPubs: [testConstants.flowcryptcompatibilityPublicKey7FDE685548AEA788]
+        verificationPubs: [testConstants.flowcryptcompatibilityPublicKey7FDE685548AEA788],
       });
       expect(result.match).to.be.true;
       t.pass();
@@ -884,11 +946,12 @@ jSB6A93JmnQGIkAem/kzGkKclmfAdGfc4FS+3Cn+6Q==Xmrz
       {
         const pubkey = msgText
           .match(/\-\-\-\-\-BEGIN PGP PUBLIC KEY BLOCK\-\-\-\-\-.*\-\-\-\-\-END PGP PUBLIC KEY BLOCK\-\-\-\-\-/s)![0]
-          .replace(/=\r\n/g, '').replace(/=3D/g, '=');
+          .replace(/=\r\n/g, '')
+          .replace(/=3D/g, '=');
         const resultRightKey = await MsgUtil.verifyDetached({
           plaintext: Buf.fromUtfStr('some irrelevant text'),
           sigText,
-          verificationPubs: [pubkey]
+          verificationPubs: [pubkey],
         });
         expect(resultRightKey.match).to.be.false;
         expect(resultRightKey.error).to.not.be.undefined;
@@ -898,13 +961,14 @@ jSB6A93JmnQGIkAem/kzGkKclmfAdGfc4FS+3Cn+6Q==Xmrz
         const resultWrongKey = await MsgUtil.verifyDetached({
           plaintext: Buf.fromUtfStr('some irrelevant text'),
           sigText,
-          verificationPubs: [testConstants.flowcryptcompatibilityPublicKey7FDE685548AEA788]
+          verificationPubs: [testConstants.flowcryptcompatibilityPublicKey7FDE685548AEA788],
         });
         expect(resultWrongKey.match).to.be.null;
         expect(resultWrongKey.error).to.be.undefined;
       }
       t.pass();
     });
+    /* eslint-enable @typescript-eslint/no-non-null-assertion */
 
     ava.default('[unit][MsgUtil.getSortedKeys,matchingKeyids] must be able to find matching keys', async t => {
       const passphrase = 'some pass for testing';
@@ -913,16 +977,22 @@ jSB6A93JmnQGIkAem/kzGkKclmfAdGfc4FS+3Cn+6Q==Xmrz
       const pub1 = await KeyUtil.parse(key1.public);
       const pub2 = await KeyUtil.parse(key2.public);
       // only encrypt with pub1
-      const { data } = await MsgUtil.encryptMessage({ pubkeys: [pub1], data: Buf.fromUtfStr('anything'), armor: true });
+      const { data } = await MsgUtil.encryptMessage({
+        pubkeys: [pub1],
+        data: Buf.fromUtfStr('anything'),
+        armor: true,
+      });
       const m = await opgp.readMessage({ armoredMessage: Buf.fromUint8(data).toUtfStr() });
       const parsed1 = await KeyUtil.parse(key1.private);
       const parsed2 = await KeyUtil.parse(key2.private);
-      const kisWithPp: KeyInfoWithIdentityAndOptionalPp[] = [ // supply both key1 and key2 for decrypt
-        { ... await KeyUtil.keyInfoObj(parsed1), passphrase },
-        { ... await KeyUtil.keyInfoObj(parsed2), passphrase },
+      const kisWithPp: KeyInfoWithIdentityAndOptionalPp[] = [
+        // supply both key1 and key2 for decrypt
+        { ...(await KeyUtil.keyInfoObj(parsed1)), passphrase },
+        { ...(await KeyUtil.keyInfoObj(parsed2)), passphrase },
       ];
       // we are testing a private method here because the outcome of this method is not directly testable from the
       //   public method that uses it. It only makes the public method faster, which is hard to test.
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore - accessing private method
       const sortedKeys = await MsgUtil.getSortedKeys(kisWithPp, m);
       // point is that only one of the private keys should be used for decrypting, not two
@@ -934,9 +1004,11 @@ jSB6A93JmnQGIkAem/kzGkKclmfAdGfc4FS+3Cn+6Q==Xmrz
       // specifically the pub1
       expect(sortedKeys.prvForDecryptDecrypted[0].ki.longid).to.equal(OpenPGPKey.fingerprintToLongid(pub1.id));
       // also test MsgUtil.matchingKeyids
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore
       const matching1 = MsgUtil.matchingKeyids(KeyUtil.getPubkeyLongids(pub1), m.getEncryptionKeyIDs());
       expect(matching1.length).to.equal(1);
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore
       const matching2 = MsgUtil.matchingKeyids(KeyUtil.getPubkeyLongids(pub2), m.getEncryptionKeyIDs());
       expect(matching2.length).to.equal(0);
@@ -945,9 +1017,15 @@ jSB6A93JmnQGIkAem/kzGkKclmfAdGfc4FS+3Cn+6Q==Xmrz
 
     ava.default('[unit][OpenPGPKey.create] multiple uids', async t => {
       const passphrase = 'some pass for testing';
-      const key = await OpenPGPKey.create([
-        { name: 'Key1', email: 'key1@test.com' },
-        { name: 'Key2', email: 'key2@test.com' }], 'curve25519', passphrase, 0);
+      const key = await OpenPGPKey.create(
+        [
+          { name: 'Key1', email: 'key1@test.com' },
+          { name: 'Key2', email: 'key2@test.com' },
+        ],
+        'curve25519',
+        passphrase,
+        0
+      );
       const pub = await KeyUtil.parse(key.public);
       expect(pub.emails[0]).to.equal('key1@test.com');
       expect(pub.identities[0]).to.equal('Key1 <key1@test.com>');
@@ -960,8 +1038,9 @@ jSB6A93JmnQGIkAem/kzGkKclmfAdGfc4FS+3Cn+6Q==Xmrz
       // shorten pgp fingerprint to become longid
       expect(OpenPGPKey.fingerprintToLongid('3449178FCAAF758E24CB68BE62CB4E6F9ECA6FA1')).to.equal('62CB4E6F9ECA6FA1');
       // throw on s/mime id
-      expect(() => OpenPGPKey.fingerprintToLongid('63F7025E700F3945301FB2FBA5674F84')).
-        to.throw('Unexpected fingerprint format (len: 32): "63F7025E700F3945301FB2FBA5674F84"');
+      expect(() => OpenPGPKey.fingerprintToLongid('63F7025E700F3945301FB2FBA5674F84')).to.throw(
+        'Unexpected fingerprint format (len: 32): "63F7025E700F3945301FB2FBA5674F84"'
+      );
       // throw on broken format
       expect(() => OpenPGPKey.fingerprintToLongid('aaxx')).to.throw('Unexpected fingerprint format (len: 4): "aaxx"');
       t.pass();
@@ -1016,10 +1095,18 @@ jSB6A93JmnQGIkAem/kzGkKclmfAdGfc4FS+3Cn+6Q==Xmrz
       //      trust: ultimate      validity: ultimate
       const justPrimaryPub = tmpPub.armor();
       const pubkeys = [await KeyUtil.parse(justPrimaryPub)];
-      const encrypted = await MsgUtil.encryptMessage({ pubkeys, data, armor: true });
+      const encrypted = await MsgUtil.encryptMessage({
+        pubkeys,
+        data,
+        armor: true,
+      });
       const parsed = await KeyUtil.parse(prvEncryptForSubkeyOnlyProtected);
-      const kisWithPp: KeyInfoWithIdentityAndOptionalPp[] = [{ ... await KeyUtil.keyInfoObj(parsed), family: parsed.family, passphrase }];
-      const decrypted = await MsgUtil.decryptMessage({ kisWithPp, encryptedData: encrypted.data, verificationPubs: [] });
+      const kisWithPp: KeyInfoWithIdentityAndOptionalPp[] = [{ ...(await KeyUtil.keyInfoObj(parsed)), family: parsed.family, passphrase }];
+      const decrypted = await MsgUtil.decryptMessage({
+        kisWithPp,
+        encryptedData: encrypted.data,
+        verificationPubs: [],
+      });
       // todo - later we'll have an org rule for ignoring this, and then it will be expected to pass as follows:
       // expect(decrypted.success).to.equal(true);
       // expect(decrypted.content!.toUtfStr()).to.equal(data.toUtfStr());
@@ -1030,6 +1117,7 @@ jSB6A93JmnQGIkAem/kzGkKclmfAdGfc4FS+3Cn+6Q==Xmrz
 
     ava.default('[KeyUtil.diagnose] displays PK and SK usage', async t => {
       const usageRegex = /\[\-\] \[(.*)\]/;
+      /* eslint-disable @typescript-eslint/no-non-null-assertion */
       const result1 = await KeyUtil.diagnose(await KeyUtil.parse(pubEncryptForPrimaryIsFine), '');
       {
         const pk0UsageStr = result1.get('Usage flags')!;
@@ -1060,6 +1148,7 @@ jSB6A93JmnQGIkAem/kzGkKclmfAdGfc4FS+3Cn+6Q==Xmrz
         expect(sk0Usage).to.include('encrypt_storage');
         expect(sk0Usage).to.include('encrypt_communication');
       }
+      /* eslint-enable @typescript-eslint/no-non-null-assertion */
       t.pass();
     });
 
@@ -1585,7 +1674,11 @@ jA==
       expect(result.get('Primary key verify')).to.equal('[-] valid');
       expect(result.get('Primary key creation?')).to.equal('[-] 1611500681 or 2021-01-24T15:04:41.000Z');
       expect(result.get('Primary key expiration?')).to.equal('[-] -');
-      expect(result.has('Encrypt/Decrypt test: Got error performing encryption/decryption test: Error: Error encrypting message: Could not find valid encryption key packet in key b65550f577cf5cc5')).to.be.true;
+      expect(
+        result.has(
+          'Encrypt/Decrypt test: Got error performing encryption/decryption test: Error: Error encrypting message: Could not find valid encryption key packet in key b65550f577cf5cc5'
+        )
+      ).to.be.true;
       expect(result.get('Sign/Verify test')).to.equal('[-] sign msg ok|verify ok');
       expect(result.get('SK 0 > LongId')).to.equal('[-] 1453C9506DBF5B6A');
       expect(result.get('SK 0 > Created')).to.equal('[-] 1611500698 or 2021-01-24T15:04:58.000Z');
@@ -1691,7 +1784,10 @@ E6kWtoKopSPTzymOUtmw5EkKws6C6C3vLg72V/t82JGjcjzUtmyp6Cp3Ny8J
 j+w8FyoMKOrmOAyFTWjJVyVEruMl2a7QDO/CjaWV4sAUt0LMcRdZdTM=
 =kFcl
 -----END PGP PRIVATE KEY BLOCK-----`);
-      await t.throwsAsync(() => KeyUtil.decrypt(corruptedRsaKey, '123'), { instanceOf: Error, message: 'Key is invalid' });
+      await t.throwsAsync(() => KeyUtil.decrypt(corruptedRsaKey, '123'), {
+        instanceOf: Error,
+        message: 'Key is invalid',
+      });
       t.pass();
     });
 
@@ -1759,7 +1855,10 @@ PBcqDCjq5jgMhU1oyVclRK7jJdmu0Azvwo2lleLAFLdCzHEXWXUz
 -----END PGP PRIVATE KEY BLOCK-----`;
 
     ava.default('[unit][KeyUtil.parse] validates the private key if it is not encrypted', async t => {
-      await t.throwsAsync(() => KeyUtil.parse(unencryptedCorruptedRsaKey), { instanceOf: Error, message: 'Key is invalid' });
+      await t.throwsAsync(() => KeyUtil.parse(unencryptedCorruptedRsaKey), {
+        instanceOf: Error,
+        message: 'Key is invalid',
+      });
       t.pass();
     });
 
@@ -1865,10 +1964,13 @@ PBcqDCjq5jgMhU1oyVclRK7jJdmu0Azvwo2lleLAFLdCzHEXWXUz
     });
 
     ava.default('[unit][KeyUtil.parseBinary] handles OpenPGP binary key', async t => {
-      const key = Buffer.from('mDMEX7JGnBYJKwYBBAHaRw8BAQdA8L8ZDEHJ3N8fojA1P0n9Tc2E0BTCl6AXq/b2ZoS5Evy0BlRl' +
-        'c3QgMYiQBBMWCAA4FiEExOEH3ZJIrCG1lTnB5pbLkt3W1hMFAl+yRpwCGwMFCwkIBwIGFQoJCAsC' +
-        'BBYCAwECHgECF4AACgkQ5pbLkt3W1hOHzAEAj3hiPLsaCeRGjLaYNvKNTetdfGLVSu2+cGMsHh8r' +
-        '+pgBANNxQyqE5+3LjHhecVVNErbgr1n6vTurE5Jhc1Go3x8F', 'base64');
+      const key = Buffer.from(
+        'mDMEX7JGnBYJKwYBBAHaRw8BAQdA8L8ZDEHJ3N8fojA1P0n9Tc2E0BTCl6AXq/b2ZoS5Evy0BlRl' +
+          'c3QgMYiQBBMWCAA4FiEExOEH3ZJIrCG1lTnB5pbLkt3W1hMFAl+yRpwCGwMFCwkIBwIGFQoJCAsC' +
+          'BBYCAwECHgECF4AACgkQ5pbLkt3W1hOHzAEAj3hiPLsaCeRGjLaYNvKNTetdfGLVSu2+cGMsHh8r' +
+          '+pgBANNxQyqE5+3LjHhecVVNErbgr1n6vTurE5Jhc1Go3x8F',
+        'base64'
+      );
       const parsed = await KeyUtil.parseBinary(key, '');
       expect(parsed.length).to.be.equal(1);
       expect(parsed[0].id).to.be.equal('C4E107DD9248AC21B59539C1E696CB92DDD6D613');
@@ -1876,7 +1978,10 @@ PBcqDCjq5jgMhU1oyVclRK7jJdmu0Azvwo2lleLAFLdCzHEXWXUz
     });
 
     ava.default('[unit][KeyUtil.parseBinary] handles PKCS#12 binary key', async t => {
-      const key = Buffer.from(`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`, 'base64');
+      const key = Buffer.from(
+        `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`,
+        'base64'
+      );
       const parsed = await KeyUtil.parseBinary(key, 'test');
       expect(parsed.length).to.be.equal(1);
       expect(parsed[0].id).to.be.equal('60EFFE4DF7B2114A77021459C273F0AA864AFF7F');
@@ -1889,7 +1994,7 @@ PBcqDCjq5jgMhU1oyVclRK7jJdmu0Azvwo2lleLAFLdCzHEXWXUz
     });
 
     ava.default('[unit][KeyUtil.parse] handles encrypted PKCS#8 key', async t => {
-      const p8 = readFileSync("test/samples/smime/human-pwd-pem.txt", 'utf8');
+      const p8 = readFileSync('test/samples/smime/human-pwd-pem.txt', 'utf8');
       let parsed = await KeyUtil.parse(p8);
       expect(parsed.id).to.equal('9B5FCFF576A032495AFE77805354351B39AB3BC6');
       expect(parsed.family).to.equal('x509');
@@ -1921,7 +2026,7 @@ PBcqDCjq5jgMhU1oyVclRK7jJdmu0Azvwo2lleLAFLdCzHEXWXUz
     });
 
     ava.default('[unit][KeyUtil.parse] correctly handles shuffled certificates in PEM', async t => {
-      const p8 = readFileSync("test/samples/smime/human-pwd-shuffled-pem.txt", 'utf8');
+      const p8 = readFileSync('test/samples/smime/human-pwd-shuffled-pem.txt', 'utf8');
       let parsed = await KeyUtil.parse(p8);
       expect(parsed.id).to.equal('9B5FCFF576A032495AFE77805354351B39AB3BC6');
       expect(parsed.family).to.equal('x509');
@@ -1953,7 +2058,7 @@ PBcqDCjq5jgMhU1oyVclRK7jJdmu0Azvwo2lleLAFLdCzHEXWXUz
     });
 
     ava.default('[unit][KeyUtil.encrypt] encrypts S/MIME key', async t => {
-      const p8 = readFileSync("test/samples/smime/human-unprotected-pem.txt", 'utf8');
+      const p8 = readFileSync('test/samples/smime/human-unprotected-pem.txt', 'utf8');
       let parsed = await KeyUtil.parse(p8);
       expect(parsed.id).to.equal('9B5FCFF576A032495AFE77805354351B39AB3BC6');
       expect(parsed.family).to.equal('x509');
@@ -1982,7 +2087,7 @@ PBcqDCjq5jgMhU1oyVclRK7jJdmu0Azvwo2lleLAFLdCzHEXWXUz
     });
 
     ava.default('[unit][SmimeKey.decryptMessage] decrypts an armored S/MIME PKCS#7 message', async t => {
-      const p8 = readFileSync("test/samples/smime/human-unprotected-pem.txt", 'utf8');
+      const p8 = readFileSync('test/samples/smime/human-unprotected-pem.txt', 'utf8');
       const privateSmimeKey = await KeyUtil.parse(p8);
       const publicSmimeKey = await KeyUtil.asPublicKey(privateSmimeKey);
       const text = 'this is a text to be encrypted';
@@ -2282,9 +2387,11 @@ kBXo
     });
 
     ava.default(`[unit][PgpArmor.dearmor] throws on incorrect sequence`, async t => {
-      await expect(PgpArmor.dearmor(`-----BEGIN PGP MESSAGE-----
+      await expect(
+        PgpArmor.dearmor(`-----BEGIN PGP MESSAGE-----
 
-AAAAAAAAAAAAAAAAzzzzzzzzzzzzzzzzzzzzzzzzzzzz.....`)).to.eventually.be.rejectedWith('Misformed armored text');
+AAAAAAAAAAAAAAAAzzzzzzzzzzzzzzzzzzzzzzzzzzzz.....`)
+      ).to.eventually.be.rejectedWith('Misformed armored text');
       t.pass();
     });
 
@@ -2294,10 +2401,7 @@ AAAAAAAAAAAAAAAAzzzzzzzzzzzzzzzzzzzzzzzzzzzz.....`)).to.eventually.be.rejectedWi
       const armored = PgpArmor.armor(type, source);
       const dearmored = await PgpArmor.dearmor(armored);
       expect(dearmored.type).to.equal(type);
-      equals(
-        dearmored.data,
-        source
-      );
+      equals(dearmored.data, source);
       t.pass();
     });
 
@@ -2327,11 +2431,14 @@ AAAAAAAAAAAAAAAAzzzzzzzzzzzzzzzzzzzzzzzzzzzz.....`)).to.eventually.be.rejectedWi
       await KeyUtil.decrypt(prv, '1234');
       const plaintext = 'data to sign';
       const sigText = await MsgUtil.sign(prv, plaintext, true);
-      const verifyRes = await MsgUtil.verifyDetached({ plaintext: Buf.fromRawBytesStr(plaintext), sigText: Buf.fromRawBytesStr(sigText), verificationPubs: [] });
+      const verifyRes = await MsgUtil.verifyDetached({
+        plaintext: Buf.fromRawBytesStr(plaintext),
+        sigText: Buf.fromRawBytesStr(sigText),
+        verificationPubs: [],
+      });
       expect(verifyRes.signerLongids.length).to.equal(1);
       expect(verifyRes.signerLongids[0]).to.equal(KeyUtil.getPrimaryLongid(prv));
       t.pass();
     });
-
   }
 };

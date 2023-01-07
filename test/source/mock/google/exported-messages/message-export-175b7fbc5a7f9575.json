@@ -3,10 +3,7 @@
   "full": {
     "id": "175b7fbc5a7f9575",
     "threadId": "175b7fbc5a7f9575",
-    "labelIds": [
-      "DRAFT",
-      "INBOX"
-    ],
+    "labelIds": ["DRAFT", "INBOX"],
     "snippet": "[flowcrypt:link:draft_compose:r-1145701417842669694] -----BEGIN PGP MESSAGE----- Version: FlowCrypt Email Encryption 7.9.8 Comment: Seamlessly send and receive encrypted email",
     "payload": {
       "partId": "",
@@ -75,10 +72,7 @@
   "raw": {
     "id": "175b7fbc5a7f9575",
     "threadId": "175b7fbc5a7f9575",
-    "labelIds": [
-      "DRAFT",
-      "INBOX"
-    ],
+    "labelIds": ["DRAFT", "INBOX"],
     "snippet": "[flowcrypt:link:draft_compose:r-1145701417842669694] -----BEGIN PGP MESSAGE----- Version: FlowCrypt Email Encryption 7.9.8 Comment: Seamlessly send and receive encrypted email",
     "sizeEstimate": 1119,
     "raw": "UmVjZWl2ZWQ6IGZyb20gNzE3Mjg0NzMwMjQ0DQoJbmFtZWQgdW5rbm93bg0KCWJ5IGdtYWlsYXBpLmdvb2dsZS5jb20NCgl3aXRoIEhUVFBSRVNUOw0KCVdlZCwgMTEgTm92IDIwMjAgMDc6NDU6MzEgLTA4MDANCkNvbnRlbnQtVHlwZTogbXVsdGlwYXJ0L21peGVkOw0KIGJvdW5kYXJ5PSItLS0tc2luaWthZWwtPz1fMS0xNjA1MTA5NTMzMTU2MC41MzQ2MDg3MDU2MTA1MDI0Ig0KT3BlbnBncDogaWQ9MDc0ODFDOEFDRjlENDlGRQ0KRnJvbTogY2kudGVzdHMuZ21haWxAZmxvd2NyeXB0LmRldg0KVG86IGh1bWFuQGZsb3djcnlwdC5jb20NClN1YmplY3Q6IFRlc3QgZW1haWwgdG8gcmVtZW1iZXIgdGhlIGNvbnRhY3QNCkRhdGU6IFdlZCwgMTEgTm92IDIwMjAgMDc6NDU6MzEgLTA4MDANCk1lc3NhZ2UtSWQ6IDxDQU85Rlk5dmkwTHFQUWlvR3k2TmpxeTQ5WW9BSnhTRjQ1ZWdTeXlOWGhCY1VSa3lfdmdAbWFpbC5nbWFpbC5jb20-DQpNSU1FLVZlcnNpb246IDEuMA0KDQotLS0tLS1zaW5pa2FlbC0_PV8xLTE2MDUxMDk1MzMxNTYwLjUzNDYwODcwNTYxMDUwMjQNCkNvbnRlbnQtVHlwZTogdGV4dC9wbGFpbg0KQ29udGVudC1UcmFuc2Zlci1FbmNvZGluZzogcXVvdGVkLXByaW50YWJsZQ0KDQpbZmxvd2NyeXB0Omxpbms6ZHJhZnRfY29tcG9zZTpyLTExNDU3MDE0MTc4NDI2Njk2OTRdDQoNCi0tLS0tQkVHSU4gUEdQIE1FU1NBR0UtLS0tLQ0KVmVyc2lvbjogRmxvd0NyeXB0IEVtYWlsIEVuY3J5cHRpb24gNy45LjgNCkNvbW1lbnQ6IFNlYW1sZXNzbHkgc2VuZCBhbmQgcmVjZWl2ZSBlbmNyeXB0ZWQgZW1haWwNCg0Kd1Y0RGVXZmdDdFZ0ZG5vU0FRZEFrdTAwUHlpeU9oa2pCc3NEUW81a3ZUajM5SURkRnFxYTBKQTdHV0Z6DQpDa1l3a01LWDVHelMxQ3FrZjZKUk9LY3RqbTVhcWxqc3F2TE9IaWJGaklKcGl4cFFXd0VIdi80MWhlUmENCjJzaG5zNmdpMGp3QnI0RlJ4aktXMXk1QUMyQ3MzeUtIT1hPYUFqTFlZa0dSbndTTVFKMFBYcG9rOUc1Sw0KUG9uRnFzN0RMSkRHZmhyUEhjbkk3ZFFPVExRZjBVbz0zRA0KPTNEcHU3Rg0KLS0tLS1FTkQgUEdQIE1FU1NBR0UtLS0tLQ0KDQotLS0tLS1zaW5pa2FlbC0_PV8xLTE2MDUxMDk1MzMxNTYwLjUzNDYwODcwNTYxMDUwMjQtLQ0K",

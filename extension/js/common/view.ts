@@ -8,7 +8,6 @@ import { ApiErr } from './api/shared/api-error.js';
 import { Xss } from './platform/xss.js';
 
 export abstract class View {
-
   public static run<VIEW extends View>(viewClass: new () => VIEW) {
     try {
       const view = new viewClass();
@@ -28,28 +27,29 @@ export abstract class View {
 
   private static reportAndRenderErr = (e: unknown) => {
     ApiErr.reportIfSignificant(e);
-    Xss.sanitizeRender('body', `
+    Xss.sanitizeRender(
+      'body',
+      `
       <br>
       <div data-test="container-err-title">${ApiErr.eli5(e)}</div>
       <br><br>
       <div data-test="container-err-text">${Xss.escape(String(e))}</div>
       <br><br>
       ${Ui.retryLink()}
-    `); // xss-escaped
+    `
+    ); // xss-escaped
     Ui.setTestState('ready');
     View.setTestViewStateLoaded();
   };
-
-  public abstract render(): Promise<void>;
-
-  public abstract setHandlers(): void | Promise<void>;
 
   public setHandler = (cb: (e: HTMLElement, event: JQuery.Event<HTMLElement, null>) => void | Promise<void>, errHandlers?: BrowserEventErrHandler) => {
     return Ui.event.handle(cb, errHandlers, this);
   };
 
   public setHandlerPrevent = (
-    evName: PreventableEventName, cb: (el: HTMLElement, event: Event, resetTimer: () => void) => void | Promise<void>, errHandlers?: BrowserEventErrHandler
+    evName: PreventableEventName,
+    cb: (el: HTMLElement, event: Event, resetTimer: () => void) => void | Promise<void>,
+    errHandlers?: BrowserEventErrHandler
   ) => {
     return Ui.event.prevent(evName, cb, errHandlers, this);
   };
@@ -62,4 +62,7 @@ export abstract class View {
     };
   };
 
+  public abstract render(): Promise<void>;
+
+  public abstract setHandlers(): void | Promise<void>;
 }

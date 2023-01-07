@@ -12,9 +12,9 @@ import { BackendAuthErr } from './shared/api-error.js';
 import { Api, ProgressCb } from './shared/api.js';
 
 export type UploadedMessageData = {
-  url: string, // both FES and FlowCryptComApi
-  externalId?: string, // legacy FES
-  emailToExternalIdAndUrl?: { [email: string]: { url: string, externalId: string } } // FES only
+  url: string; // both FES and FlowCryptComApi
+  externalId?: string; // legacy FES
+  emailToExternalIdAndUrl?: { [email: string]: { url: string; externalId: string } }; // FES only
 };
 
 /**
@@ -22,8 +22,7 @@ export type UploadedMessageData = {
  *   whether FES is deployed on the customer domain or not.
  */
 export class AccountServer extends Api {
-
-  constructor(private acctEmail: string) {
+  public constructor(private acctEmail: string) {
     super();
   }
 
@@ -31,13 +30,15 @@ export class AccountServer extends Api {
     if (await this.isFesUsed()) {
       const fes = new EnterpriseServer(this.acctEmail);
       const fetchedClientConfiguration = await fes.fetchAndSaveClientConfiguration();
+      /* eslint-disable @typescript-eslint/naming-convention */
       return {
         domain_org_rules: fetchedClientConfiguration,
         // todo - rethink this. On FES, expiration is handled with S3 bucket policy regardless of this number
         //  which is set to 180 days on buckets we manage. This number below may still be rendered somewhere
         //  when composing, which should be evaluated.
-        account: { default_message_expire: 180 }
+        account: { default_message_expire: 180 },
       };
+      /* eslint-enable @typescript-eslint/naming-convention */
     } else {
       return await FlowCryptComApi.accountGetAndUpdateLocalStore(await this.getIdToken());
     }
