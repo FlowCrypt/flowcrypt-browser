@@ -6,7 +6,7 @@ import { BaseMailFormatter } from './base-mail-formatter.js';
 import { ComposerResetBtnTrigger } from '../compose-err-module.js';
 import { Mime, SendableMsgBody } from '../../../../js/common/core/mime.js';
 import { getUniqueRecipientEmails, NewMsgData } from '../compose-types.js';
-import { EmailParts, Str, Value } from '../../../../js/common/core/common.js';
+import { Str, Value } from '../../../../js/common/core/common.js';
 import { ApiErr } from '../../../../js/common/api/shared/api-error.js';
 import { Attachment } from '../../../../js/common/core/attachment.js';
 import { Buf } from '../../../../js/common/core/buf.js';
@@ -24,7 +24,6 @@ import { PgpHash } from '../../../../js/common/core/crypto/pgp/pgp-hash.js';
 import { UploadedMessageResponse } from '../../../../js/common/api/account-server.js';
 import { ParsedKeyInfo } from '../../../../js/common/core/crypto/key-store-util.js';
 import { MultipleMessages } from './general-mail-formatter.js';
-import { Api, RecipientType } from '../../../../js/common/api/shared/api.js';
 
 /**
  * this type must be kept in sync with FES UI code, changes must be backwards compatible
@@ -44,9 +43,9 @@ type ReplyInfoRaw = {
 export class EncryptedMsgMailFormatter extends BaseMailFormatter {
   public sendableMsgs = async (newMsg: NewMsgData, pubkeys: PubkeyResult[], signingKey?: ParsedKeyInfo): Promise<MultipleMessages> => {
     if (newMsg.pwd && !this.isDraft) {
-      return await this.formatSendablePwdMsgs(newMsg, pubkeys, signingKey);
+      return await this.formatSendablePwdMsg(newMsg, pubkeys, signingKey);
     } else {
-      const msg = await this.sendableNonPwdMsg(newMsg, pubkeys, signingKey?.key);
+      const msg = await this.encryptSendableNonPwdMsg(newMsg, pubkeys, signingKey?.key);
       return {
         senderKi: signingKey?.keyInfo,
         msgs: [msg],
@@ -58,7 +57,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
     }
   };
 
-  public sendableNonPwdMsg = async (newMsg: NewMsgData, pubkeys: PubkeyResult[], signingPrv?: Key): Promise<SendableMsg> => {
+  public encryptSendableNonPwdMsg = async (newMsg: NewMsgData, pubkeys: PubkeyResult[], signingPrv?: Key): Promise<SendableMsg> => {
     if (!this.isDraft) {
       // S/MIME drafts are currently formatted with inline armored data
       const x509certs = pubkeys.map(entry => entry.pubkey).filter(pub => pub.family === 'x509');
@@ -92,22 +91,13 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
     });
   };
 
-  private formatSendablePwdMsgs = async (newMsg: NewMsgData, pubkeys: PubkeyResult[], signingKey?: ParsedKeyInfo) => {
+  private formatSendablePwdMsg = async (newMsg: NewMsgData, pubkeys: PubkeyResult[], signingKey?: ParsedKeyInfo) => {
     // password-protected message, temporarily uploaded (already encrypted) to:
     //    - flowcrypt.com/api (consumers and customers without on-prem setup), or
     //    - FlowCrypt External Service at fes.example.com (enterprise customers with on-prem setup)
     //    It will be served to recipient through web
     const uploadedMessageResponse = await this.prepareEncryptAndUploadPwdEncryptedMsg(newMsg); // encrypted for pwd only, pubkeys ignored
     newMsg.pwd = undefined;
-    const pubkeyEncryptedAttachments = await this.view.attachmentsModule.attachment.collectEncryptAttachments(pubkeys);
-    const pubkeyRecipients: { [type in RecipientType]?: EmailParts[] } = {};
-    const pwdRecipients: { [type in RecipientType]?: EmailParts[] } = {};
-    for (const [sendingType, value] of Object.entries(newMsg.recipients)) {
-      if (Api.isRecipientHeaderNameType(sendingType)) {
-        pubkeyRecipients[sendingType] = value?.filter(emailPart => pubkeys.some(p => p.email === emailPart.email));
-        pwdRecipients[sendingType] = value?.filter(emailPart => !pubkeys.some(p => p.email === emailPart.email));
-      }
-    }
     // We used to support sending individual messages to each of the password recipients, each with unique link
     //   as per https://github.com/FlowCrypt/flowcrypt-browser/issues/4348. We later reverted that behavior in
     //   https://github.com/FlowCrypt/flowcrypt-browser/issues/4870. Therefore currently it's a single message
@@ -115,45 +105,20 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
     //   messages that is unused, then this can be refactored back to a single message
     //   (`SendableMsg[]` to `SendableMsg` and so on, including error handling which is much simpler when there is
     //   just one message to send)
-    const msgs: SendableMsg[] = [];
-    // pubkey recipients get one combined message. If there are not pubkey recpients, only password - protected messages will be sent
-    if (pubkeyRecipients.to?.length || pubkeyRecipients.cc?.length || pubkeyRecipients.bcc?.length) {
-      const uniquePubkeyRecipientToAndCCs = Value.arr.unique(
-        (pubkeyRecipients.to || []).concat(pubkeyRecipients.cc || []).map(recipient => recipient.email.toLowerCase())
-      );
-      // pubkey recipients should be able to reply to "to" and "cc" pwd recipients
-      const replyToForMessageSentToPubkeyRecipients = (newMsg.recipients.to ?? [])
-        .concat(newMsg.recipients.cc ?? [])
-        .filter(recipient => !uniquePubkeyRecipientToAndCCs.includes(recipient.email.toLowerCase()));
-      const pubkeyMsgData = {
-        ...newMsg,
-        recipients: pubkeyRecipients,
-        // brackets are required for test emails like '@test:8001'
-        replyTo: replyToForMessageSentToPubkeyRecipients.length
-          ? `${Str.formatEmailList([newMsg.from, ...replyToForMessageSentToPubkeyRecipients], true)}`
-          : undefined,
-      };
-      msgs.push(await this.sendableNonPwdMsg(pubkeyMsgData, pubkeys, signingKey?.key));
-    }
-    // // adding individual messages for each recipient that doesn't have a pubkey
-    // for (const recipientEmail of individualLinkPwdRecipients) {
-    //   // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    //   const { url, externalId } = uploadedMessageResponse.emailToExternalIdAndUrl![recipientEmail];
-    //   const foundParsedRecipient = (newMsg.recipients.to ?? [])
-    //     .concat(newMsg.recipients.cc ?? [])
-    //     .concat(newMsg.recipients.bcc ?? [])
-    //     .find(r => r.email.toLowerCase() === recipientEmail.toLowerCase());
-    //   // todo: since a message is allowed to have only `cc` or `bcc` without `to`, should we preserve the original placement(s) of the recipient?
-    //   const individualMsgData = { ...newMsg, recipients: { to: [foundParsedRecipient ?? { email: recipientEmail }] } };
-    //   msgs.push(await this.sendablePwdMsg(individualMsgData, pubkeys, { msgUrl: url, externalId }, signingKey?.key));
-    // }
-    if (pwdRecipients.to?.length || pwdRecipients.cc?.length || pwdRecipients.bcc?.length) {
-      const legacyPwdMsgData = { ...newMsg, recipients: pwdRecipients };
-      msgs.push(await this.sendablePwdMsg(legacyPwdMsgData, pubkeys, { msgUrl: uploadedMessageResponse.url }, signingKey?.key));
-    }
+    const msg = await this.sendableCombinedPubkeyMsgWithoutAttachedFilesWithLinkToUploadedPwdMsg(
+      newMsg, 
+      pubkeys, 
+      { msgUrl: uploadedMessageResponse.url }, 
+      signingKey?.key
+    );
+    // the above message has pgp/mime encrypted content that was attached as a set of pgp/mime attachments,
+    //   but doesn't have the actual attachments the user has attached (they were uploaded to FES/backend but weren't
+    //   attached to the message itself). We are adding the attachments here.
+    const pubkeyEncryptedAttachments = await this.view.attachmentsModule.attachment.collectEncryptAttachments(pubkeys);
+    msg.attachments = msg.attachments.concat(pubkeyEncryptedAttachments);
     return {
       senderKi: signingKey?.keyInfo,
-      msgs,
+      msgs: [msg],
       renderSentMessage: { recipients: newMsg.recipients, attachments: pubkeyEncryptedAttachments },
     };
   };
@@ -195,7 +160,8 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
       { Subject: newMsg.subject }, // eslint-disable-line @typescript-eslint/naming-convention
       await this.view.attachmentsModule.attachment.collectAttachments()
     );
-    const { data: pwdEncryptedWithAttachments } = await this.encryptDataArmor(Buf.fromUtfStr(pgpMimeWithAttachments), newMsg.pwd, []); // encrypted only for pwd, not signed
+    // encrypted only for pwd, not signed
+    const { data: pwdEncryptedWithAttachments } = await this.encryptDataArmor(Buf.fromUtfStr(pgpMimeWithAttachments), newMsg.pwd, []);
     return await this.view.acctServer.messageUpload(
       pwdEncryptedWithAttachments,
       replyToken,
@@ -206,7 +172,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
     );
   };
 
-  private sendablePwdMsg = async (
+  private sendableCombinedPubkeyMsgWithoutAttachedFilesWithLinkToUploadedPwdMsg = async (
     newMsg: NewMsgData,
     pubs: PubkeyResult[],
     { msgUrl, externalId }: { msgUrl: string; externalId?: string },
