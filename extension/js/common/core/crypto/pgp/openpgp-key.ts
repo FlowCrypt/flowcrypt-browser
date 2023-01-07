@@ -156,7 +156,7 @@ export class OpenPGPKey {
 
   public static isWithoutSelfCertifications = async (key: Key) => {
     const opgpPrv = await OpenPGPKey.extractExternalLibraryObjFromKey(key);
-    return await Catch.doesReject(opgpPrv.verifyPrimaryKey(), ['No self-certifications']);
+    return await Catch.doesReject(opgpPrv.verifyPrimaryKey(), ['No self-certifications', 'Could not find valid self-signature']);
   };
 
   public static reformatKey = async (
