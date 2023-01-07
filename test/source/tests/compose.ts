@@ -2487,7 +2487,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
           'to: sender@domain.com, flowcrypt.compatibility@gmail.com, to@example.com, mock.only.pubkey@flowcrypt.com'
         );
         const sentMsgs = (await GoogleData.withInitializedData(acct)).getMessagesByThread('1803be2e506153d2');
-        expect(sentMsgs.length).to.equal(4); // 1 original + 3 newly sent
+        expect(sentMsgs.length).to.equal(1); // 1 combined message for all
         const attachmentFrames = (composePage.target as Page).frames();
         expect(attachmentFrames.length).to.equal(3); // 1 pgp block + 2 attachments
         expect(

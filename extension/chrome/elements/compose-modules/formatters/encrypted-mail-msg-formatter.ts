@@ -119,7 +119,10 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
     return {
       senderKi: signingKey?.keyInfo,
       msgs: [msg],
-      renderSentMessage: { recipients: newMsg.recipients, attachments: pubkeyEncryptedAttachments },
+      renderSentMessage: { 
+        recipients: newMsg.recipients, 
+        attachments: pubkeyEncryptedAttachments
+      },
     };
   };
 
