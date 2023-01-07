@@ -626,11 +626,12 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
         // Generate key that expires in 20 days
         const key = await opgp.generateKey({
+          type: 'ecc',
           curve: 'curve25519',
           userIDs: [{ email: acctEmail }],
           keyExpirationTime: 20 * 24 * 60 * 60,
           passphrase,
-        format: 'armored',
+          format: 'armored',
           date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
         });
         // Setup with above key
@@ -657,10 +658,11 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         const addKeyPopup = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-add-key-page', ['add_key.htm']);
         await addKeyPopup.waitAndClick('@source-paste');
         const updatedKey = await opgp.generateKey({
+          type: 'ecc',
           curve: 'curve25519',
           userIDs: [{ email: acctEmail }, { email: 'demo@gmail.com', name: 'Demo user' }],
           passphrase,
-        format: 'armored',
+          format: 'armored',
           keyExpirationTime: 100 * 24 * 60 * 60,
         });
         await addKeyPopup.waitAndType('@input-armored-key', updatedKey.privateKey);
@@ -682,10 +684,11 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       testWithBrowser(undefined, async (t, browser) => {
         const acctEmail = 'flowcrypt.notify.expiring.keys.updating.key@key-manager-autogen.flowcrypt.test';
         const key = await opgp.generateKey({
+          type: 'ecc',
           curve: 'curve25519',
           userIDs: [{ email: acctEmail }],
           keyExpirationTime: 20 * 24 * 60 * 60,
-        format: 'armored',
+          format: 'armored',
           date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
         });
         MOCK_KM_KEYS[acctEmail] = { response: { privateKeys: [{ decryptedPrivateKey: key.privateKey }] } };

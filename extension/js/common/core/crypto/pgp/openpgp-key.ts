@@ -440,12 +440,16 @@ export class OpenPGPKey {
   ): Promise<{ private: string; public: string }> => {
     const opt: OpenPGP.KeyOptions = { userIDs, passphrase };
     if (variant === 'curve25519') {
+      opt.type = 'ecc';
       opt.curve = 'curve25519';
     } else if (variant === 'rsa2048') {
+      opt.type = 'rsa';
       opt.rsaBits = 2048;
     } else if (variant === 'rsa3072') {
+      opt.type = 'rsa';
       opt.rsaBits = 3072;
     } else {
+      opt.type = 'rsa';
       opt.rsaBits = 4096;
     }
     if (expireInMonths) {
