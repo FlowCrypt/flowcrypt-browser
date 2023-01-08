@@ -529,7 +529,9 @@ export class ContactStore extends AbstractStore {
     if (emails.length === 1) {
       const email = emails[0];
       const contact = await ContactStore.getOneWithAllPubkeys(db, email);
-      const keys = (contact?.sortedPubkeys || []).filter(k => !k.revoked && (k.pubkey.usableForEncryption || k.pubkey.usableForEncryptionButExpired)).map(k => k.pubkey);
+      const keys = (contact?.sortedPubkeys || [])
+        .filter(k => !k.revoked && (k.pubkey.usableForEncryption || k.pubkey.usableForEncryptionButExpired))
+        .map(k => k.pubkey);
       for (const key of keys) {
         KeyUtil.pack(key);
       }
@@ -598,7 +600,7 @@ export class ContactStore extends AbstractStore {
     return emailEntity
       ? {
           info: { email: emailEntity.email, name: emailEntity.name || undefined },
-          sortedPubkeys
+          sortedPubkeys,
         }
       : undefined;
   };
@@ -708,6 +710,7 @@ export class ContactStore extends AbstractStore {
     }
     if (!db) {
       // relay op through background process
+      KeyUtil.pack(pubkey);
       await BrowserMsg.send.bg.await.db({ f: 'saveRevocation', args: [pubkey] });
       return;
     }
