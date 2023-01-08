@@ -522,6 +522,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
         await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
           error: 'decrypt error',
           content: ['Security threat!', 'MDC', 'Display the message at your own risk.'],
+          unexpectedContent: ['As stated in subject', 'Shall not decrypt automatically', 'Has to show a warning'],
           params:
             '?frame_id=frame_obvAUTGAJU&message=-----BEGIN%20PGP%20MESSAGE-----%0AVersion%3A%20FlowCrypt%205.5.9%20Gmail%20Encryption%20flowcrypt.com%0AComment%3A%20Seamlessly%20send%2C%20receive%20and%20search%20encrypted%20email%0A%0AwcFMA0taL%2FzmLZUBAQ%2F7Bwida5vvhXv5Zi%2BqJbG%2FQPst11jWfljDQlw1VLzF%0Aou8ofoIEHpvoFgXegZUnoQXBmlHGD%2BXLs9jG%2FTV1mtE2RWq4hDtqiTQ6rEIa%0AbrN3Nx77Yr%2B4EN1aKI20aTLEPTIjVU2GH2i9DAmjHteBU3nkL9Z3yecB8Pn8%0AEdhpCRY6cj2yrhJ5MPwmXrus9OFv39wA2DqYpqW5Be%2BKD8mipZ2CtJo5xtin%0AaeEhpWSDsdg26rjx1nz4dA0NcFzZK2p%2FBPfPIFzRvmoXoWFigpUnwryEoCqX%0A%2Ftgmcrv7PqiYT5oziPmMuBc1lb7icI%2FAq69uXz2z6%2B4MJHOlcTEFygV36J%2B1%0A1opcjoX%2BJKJNn1nvHovBxuemcMwriJdmDj4Hmfo4zkd6ryUtGVrMVn8DbRp6%0ATWB%2F0MSE8cmfuiA5DgzdGbrevdL6RxnQDmalTHJ5oxurFQVoLwpmbgd36C4Q%0AxMfG1xEqFn5zvrCTGHg2OfS2cynal8CQDG0ZQCoWwdb0kT5D6bx7QKcuyy1%2F%0A1TXKnp1NamD5Uhu1%2BXuxD7EbvDYUWYh3bkqgslsoX%2BOUl%2BONdtMD5PswArd5%0AKisD9UJuddJShL4clBUPoXeNrRxrU6HqjP5T4fapK684MeizicHIRpAww7fu%0AZ8YtaySZ%2FhoOAKWsx0rV4grgJV7pryj4ARBRa1pLL9rBwUwDS1ov%2FOYtlQEB%0AD%2F47fyD%2F6BvepqWmZXj7VLl2y63eE0b%2F6hf5K%2BIzv5A%2F%2B5l%2FEnjFx0rq%2BqeX%0A6hftYZBUAbbBvKfxq9D5xsWg3tnhFv2sYIE3YpkCSzZpWJmahHwQOVNT0ASw%0AgbO25OiTPlYPqfSkGYe0palbL%2B4T5dLOwVilmrZ2bQf%2FrLePwA4RQpWDPYio%0ANDU0Xfi7TQcHQrZTpwFbVzNPXgCHnQkqF%2Bs0v8RDJHnt9vVs2KEpi49V%2FYgN%0A%2BgZnZOeADL0rbre%2FPrIck1YSjZLbrWtQVk4%2BsCf0TjvixJ7MNjA4NgdZPo0M%0AHke%2F9XBFie3NiZaW%2FcEIVZ7WnjB3IbhkmOMJd4LgdHKgmswJwCYm%2BXvpOI19%0AFzU1vzZmfOA1nEJSuuCDNVUoKYIQA5UEYJrVJeGnVN5sU5jkdlX9xPtYceww%0AYFmLisuf9Ev0HC7v27KwYQRDPNYRA8GeK%2FjY6aZdg%2BVccsnzEigdYL5Tm4JI%0AZrxp%2FG807bZvt0yZwWh0gpWOFgbVgrm4Hpji5ilDyulZSW%2B8nJxB5tDoPzL4%0Aj4w9malje0c60GWNtiyCPLURyN63C2q144UpQjSU5r66oP1yF2A97aXKbf4p%0AqO7cSNWEOTpqJkJrNFVKQdWvXZ%2BmvW1PQFmkkwish2HiQIXmWb04uV1pI8hR%0A6YWk2ox9aZiJ664MpncgyJ5uIMlzVfYrX%2BAZRtBW36RgCTprIv6l1M5NcHMy%0AzEscTaSY%2Fe%2BpM5HzQKSzX%2BzHLa5kk5L7veX%2B1G33saiqSJ%2FfK13%2Bk7qDNZQD%0Anbtaebfh2JS0Pdbub6FUFjPHR5PydU9ltuppGEeYrOe1SxwiZ6BZfIXO2%2F8M%0AhA%3D%3D%0A%3DB%2FNE%0A-----END%20PGP%20MESSAGE-----&message_id=166b194b21a0997c&senderEmail=&is_outgoing=___cu_false___&account_email=flowcrypt.compatibility%40gmail.com',
         });
@@ -614,7 +615,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
           params,
           content: [],
           encryption: 'not encrypted',
-          signature: 'error verifying signature: Message digest did not match',
+          signature: 'error verifying signature: Signed digest did not match',
         });
       })
     );
@@ -1031,7 +1032,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
       'decrypt - wrong message - checksum throws error',
       testWithBrowser('compatibility', async (t, browser) => {
         const threadId = '15f7ffb9320bd79e';
-        const expectedContent = 'Ascii armor integrity check on message failed';
+        const expectedContent = 'Ascii armor integrity check failed';
         const params = `?frame_id=&threadId=${threadId}&msgId=${threadId}&senderEmail=&account_email=flowcrypt.compatibility%40gmail.com`;
         await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
           params,
