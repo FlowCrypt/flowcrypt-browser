@@ -25,7 +25,7 @@
       "source.fixAll.stylelint": true
     },
     "diffEditor.wordWrap": "on",
-    "editor.rulers": [140]
+    "editor.rulers": [160]
   },
   "folders": [
     {
@@ -33,12 +33,6 @@
     }
   ],
   "extensions": {
-    "recommendations": [
-      "dbaeumer.vscode-eslint",
-      "esbenp.prettier-vscode",
-      "stylelint.vscode-stylelint",
-      "htmlhint.vscode-htmlhint",
-      "usernamehw.errorlens"
-    ]
+    "recommendations": ["dbaeumer.vscode-eslint", "esbenp.prettier-vscode", "stylelint.vscode-stylelint", "htmlhint.vscode-htmlhint", "usernamehw.errorlens"]
   }
 }

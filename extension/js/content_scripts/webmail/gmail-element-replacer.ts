@@ -458,7 +458,6 @@ export class GmailElementReplacer implements WebmailElementReplacer {
                 // if it looks like OpenPGP public key
                 nRenderedAttachments = await this.renderPublicKeyFromFile(a, attachmentsContainerInner, msgEl, isOutgoing, attachmentSel, nRenderedAttachments);
               } else if (openpgpType && ['encryptedMsg', 'signedMsg'].includes(openpgpType.type)) {
-                // prettier-ignore
                 msgEl = this.updateMsgBodyEl_DANGEROUSLY(msgEl, 'append', this.factory.embeddedMsg(openpgpType.type, '', msgId, false, senderEmail)); // xss-safe-factory
               } else {
                 attachmentSel.show().children('.attachment_loader').text('Unknown OpenPGP format');
@@ -468,7 +467,6 @@ export class GmailElementReplacer implements WebmailElementReplacer {
                 console.debug('processAttachments() try -> awaiting done and processed');
               }
             } else {
-              // prettier-ignore
               msgEl = this.updateMsgBodyEl_DANGEROUSLY(msgEl, 'set', this.factory.embeddedMsg('encryptedMsg', '', msgId, false, senderEmail)); // xss-safe-factory
             }
           } else if (treatAs === 'publicKey') {
@@ -568,7 +566,6 @@ export class GmailElementReplacer implements WebmailElementReplacer {
       data: Buf.fromUint8(downloadedAttachment.data.subarray(0, 1000)).toBase64Str(),
     }); // base64 for FF, see #2587
     if (openpgpType && openpgpType.type === 'publicKey') {
-      // prettier-ignore
       this.updateMsgBodyEl_DANGEROUSLY(msgEl, 'after', this.factory.embeddedPubkey(downloadedAttachment.data.toUtfStr(), isOutgoing)); // xss-safe-factory
     } else {
       attachmentSel.show().addClass('attachment_processed').children('.attachment_loader').text('Unknown Public Key Format');
@@ -593,7 +590,6 @@ export class GmailElementReplacer implements WebmailElementReplacer {
       nRenderedAttachments++;
       return nRenderedAttachments;
     }
-    // prettier-ignore
     this.updateMsgBodyEl_DANGEROUSLY(msgEl, 'append', this.factory.embeddedBackup(downloadedAttachment.data.toUtfStr())); // xss-safe-factory
     return nRenderedAttachments;
   };
@@ -781,8 +777,8 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     const showSwitchToEncryptedReplyWarning = reployBox.closest('div.h7').find(this.sel.msgOuter).find('iframe.pgp_block').hasClass('encryptedMsg');
     if (showSwitchToEncryptedReplyWarning) {
       const notification = $('<div class="error_notification">The last message was encrypted, but you are composing a reply without encryption. </div>');
-      const swithToEncryptedReply = $('<a href id="switch_to_encrypted_reply">Switch to encrypted reply</a>');
-      swithToEncryptedReply.on(
+      const switchToEncryptedReply = $('<a href id="switch_to_encrypted_reply">Switch to encrypted reply</a>');
+      switchToEncryptedReply.on(
         'click',
         Ui.event.handle((el, ev: JQuery.Event) => {
           ev.preventDefault();
@@ -792,7 +788,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
           notification.remove();
         })
       );
-      notification.append(swithToEncryptedReply); // xss-direct
+      notification.append(switchToEncryptedReply); // xss-direct
       reployBox.prepend(notification); // xss-direct
     }
   };
