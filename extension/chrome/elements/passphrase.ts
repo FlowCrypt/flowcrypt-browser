@@ -20,7 +20,7 @@ import { Lang } from '../../js/common/lang.js';
 import { AcctStore } from '../../js/common/platform/store/acct-store.js';
 
 const passPhraseTypes = stringTuple('embedded', 'sign', 'message', 'draft', 'attachment', 'quote', 'backup', 'update_key');
-type PassPhraseType = typeof passPhraseTypes[number];
+type PassPhraseType = (typeof passPhraseTypes)[number];
 
 View.run(
   class PassphraseView extends View {
