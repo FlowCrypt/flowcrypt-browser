@@ -116,25 +116,26 @@ class PwdEncryptedMessageWithFesPubkeyRecipientInBccTestStrategy implements ITes
 }
 
 class PwdEncryptedMessageWithFesReplyBadRequestTestStrategy implements ITestMsgStrategy {
-  public test = async (parseResult: ParseMsgResult, id: string) => {
+  public test = async (parseResult: ParseMsgResult) => {
     const mimeMsg = parseResult.mimeMsg;
     const expectedSenderEmail = 'user4@standardsubdomainfes.localhost:8001';
     expect(mimeMsg.from!.text).to.equal(`First Last <${expectedSenderEmail}>`);
     const to = parsedMailAddressObjectAsArray(mimeMsg.to)
       .concat(parsedMailAddressObjectAsArray(mimeMsg.cc))
       .concat(parsedMailAddressObjectAsArray(mimeMsg.bcc));
-    expect(to.length).to.equal(1);
-    const recipientEmail = to[0].text;
-    if (recipientEmail === 'to@example.com') {
-      // success
-      await new SaveMessageInStorageStrategy().test(parseResult, id);
-      return;
-    } else if (recipientEmail === 'invalid@example.com') {
+    // expect(to.length).to.equal(1);
+    const recipientEmails = to.map(to => to.text)
+    // if (recipientEmail === 'to@example.com') {
+    //   // success
+    //   await new SaveMessageInStorageStrategy().test(parseResult, id);
+    //   return;
+    // } else 
+    if (recipientEmails.includes('invalid@example.com')) {
       throw new HttpClientErr('Invalid to header', Status.BAD_REQUEST);
-    } else if (recipientEmail === 'timeout@example.com') {
+    } else if (recipientEmails.includes('timeout@example.com')) {
       throw new HttpClientErr('RequestTimeout', Status.BAD_REQUEST);
     } else {
-      throw new HttpClientErr(`Vague failure for ${recipientEmail}`, Status.BAD_REQUEST);
+      throw new HttpClientErr(`Vague failure for ${recipientEmails.join(',')}`, Status.BAD_REQUEST);
     }
   };
 }
@@ -362,7 +363,7 @@ export class TestBySubjectStrategyContext {
       this.strategy = new PwdEncryptedMessageWithFesReplyRenderingTestStrategy();
     } else if (subject.includes('PWD encrypted message with FES - pubkey recipient in bcc')) {
       this.strategy = new PwdEncryptedMessageWithFesPubkeyRecipientInBccTestStrategy();
-    } else if (subject.includes('PWD encrypted message with FES web portal - some sends fail with BadRequest error')) {
+    } else if (subject.includes('PWD encrypted message with FES web portal - sends fails with BadRequest error')) {
       this.strategy = new PwdEncryptedMessageWithFesReplyBadRequestTestStrategy();
     } else if (subject.includes('PWD encrypted message with FES web portal - a send fails with gateway update error')) {
       this.strategy = new SaveMessageInStorageStrategy();
