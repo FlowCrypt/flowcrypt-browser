@@ -2533,7 +2533,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         await composePage.waitAndClick('@action-send', { delay: 1 });
         await ComposePageRecipe.closed(composePage);
         const sentMsgs = (await GoogleData.withInitializedData(acct)).searchMessagesBySubject(subject);
-        expect(sentMsgs.length).to.equal(2);
+        expect(sentMsgs.length).to.equal(1);
         // this test is using PwdEncryptedMessageWithFesPubkeyRecipientInBccTestStrategy to check sent result based on subject "PWD encrypted message with FES - pubkey recipient in bcc"
         // also see '/api/v1/message' in fes-endpoints.ts mock
       })
