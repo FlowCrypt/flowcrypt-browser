@@ -204,7 +204,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     }
   };
 
-  public addRecipients = async (recipients: Recipients, triggerCallback = true) => {
+  public addRecipients = async (recipients: Recipients, triggerCallback = true, shouldSetEmailsPreview = false) => {
     const newRecipients: ValidRecipientElement[] = [];
     for (const [sendingType, value] of Object.entries(recipients)) {
       if (Api.isRecipientHeaderNameType(sendingType)) {
@@ -230,7 +230,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
         }
       }
     }
-    await this.evaluateRecipients(newRecipients, triggerCallback);
+    await this.evaluateRecipients(newRecipients, triggerCallback, shouldSetEmailsPreview);
   };
 
   public clearRecipients = () => {
@@ -272,7 +272,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     await this.evaluateRecipients(recipients);
   };
 
-  public evaluateRecipients = async (recipientEls: ValidRecipientElement[], triggerCallback = true) => {
+  public evaluateRecipients = async (recipientEls: ValidRecipientElement[], triggerCallback = true, shouldSetEmailsPreview = true) => {
     this.view.errModule.debug(`evaluateRecipients`);
     $('body').attr('data-test-state', 'working');
     for (const recipientEl of recipientEls) {
@@ -298,7 +298,9 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
         callback(recipientEls);
       }
     }
-    this.setEmailsPreview();
+    if (shouldSetEmailsPreview) {
+      this.setEmailsPreview();
+    }
     $('body').attr('data-test-state', 'ready');
     this.view.sizeModule.setInputTextHeightManuallyIfNeeded();
   };
