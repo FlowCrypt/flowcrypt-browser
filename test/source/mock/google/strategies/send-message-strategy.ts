@@ -29,26 +29,20 @@ class PwdAndPubkeyEncryptedMessagesWithFlowCryptComApiTestStrategy implements IT
     const mimeMsg = parseResult.mimeMsg;
     const senderEmail = Str.parseEmail(mimeMsg.from!.text).email;
     await new SaveMessageInStorageStrategy().test(parseResult, id);
-    if (mimeMsg.cc) {
-      // this is a message to the pubkey recipient
-      expect((mimeMsg.cc as AddressObject).text!).to.include('flowcrypt.compatibility@gmail.com');
-      expect(mimeMsg.text!).to.not.include('has sent you a password-encrypted email');
-      expect(mimeMsg.text!).to.not.include('Follow this link to open it');
-      const kisWithPp = await Config.getKeyInfo(['flowcrypt.compatibility.1pp1', 'flowcrypt.compatibility.2pp1']);
-      const encryptedData = Buf.fromUtfStr(mimeMsg.text!);
-      const decrypted = await MsgUtil.decryptMessage({ kisWithPp, encryptedData, verificationPubs: [] });
-      expect(decrypted.success).to.be.true;
-      expect(decrypted.content!.toUtfStr()).to.contain('PWD and pubkey encrypted messages with flowcrypt.com/api');
-      expect(mimeMsg.bcc).to.be.an.undefined;
-      expect(mimeMsg.to).to.be.an.undefined;
-      expect((mimeMsg.headers.get('reply-to') as AddressObject).text).to.equal('First Last <flowcrypt.compatibility@gmail.com>, test@email.com');
-    } else {
-      expect(mimeMsg.text!).to.contain(`${senderEmail} has sent you a password-encrypted email`);
-      expect(mimeMsg.text!).to.contain('Follow this link to open it');
-      if (!mimeMsg.text?.match(/https:\/\/flowcrypt.com\/[a-z0-9A-Z]{10}/)) {
-        throw new HttpClientErr(`Error: cannot find pwd encrypted flowcrypt.com/api link in:\n\n${mimeMsg.text}`);
-      }
+    expect(mimeMsg.text!).to.contain(`${senderEmail} has sent you a password-encrypted email`);
+    expect(mimeMsg.text!).to.contain('Follow this link to open it');
+    if (!mimeMsg.text?.match(/https:\/\/flowcrypt.com\/[a-z0-9A-Z]{10}/)) {
+      throw new HttpClientErr(`Error: cannot find pwd encrypted flowcrypt.com/api link in:\n\n${mimeMsg.text}`);
     }
+    const kisWithPp = await Config.getKeyInfo(['flowcrypt.compatibility.1pp1', 'flowcrypt.compatibility.2pp1']);
+    const encryptedData = mimeMsg.attachments.find(a => a.filename === 'encrypted.asc')!.content;
+    const decrypted = await MsgUtil.decryptMessage({ kisWithPp, encryptedData, verificationPubs: [] });
+    expect(decrypted.success).to.be.true;
+    expect(decrypted.content!.toUtfStr()).to.contain('PWD and pubkey encrypted messages with flowcrypt.com/api');
+    expect((mimeMsg.to as AddressObject).text!).to.include('test@email.com');
+    expect((mimeMsg.cc as AddressObject).text!).to.include('flowcrypt.compatibility@gmail.com');
+    expect(mimeMsg.bcc).to.be.an.undefined;
+    expect(mimeMsg.headers.get('reply-to')).to.be.undefined;
   };
 }
 class PwdEncryptedMessageWithFlowCryptComApiTestStrategy implements ITestMsgStrategy {
