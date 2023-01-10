@@ -28,7 +28,6 @@ class PwdAndPubkeyEncryptedMessagesWithFlowCryptComApiTestStrategy implements IT
   public test = async (parseResult: ParseMsgResult, id: string) => {
     const mimeMsg = parseResult.mimeMsg;
     const senderEmail = Str.parseEmail(mimeMsg.from!.text).email;
-    await new SaveMessageInStorageStrategy().test(parseResult, id);
     expect(mimeMsg.text!).to.contain(`${senderEmail} has sent you a password-encrypted email`);
     expect(mimeMsg.text!).to.contain('Follow this link to open it');
     if (!mimeMsg.text?.match(/https:\/\/flowcrypt.com\/[a-z0-9A-Z]{10}/)) {
@@ -43,6 +42,7 @@ class PwdAndPubkeyEncryptedMessagesWithFlowCryptComApiTestStrategy implements IT
     expect((mimeMsg.cc as AddressObject).text!).to.include('flowcrypt.compatibility@gmail.com');
     expect(mimeMsg.bcc).to.be.an.undefined;
     expect(mimeMsg.headers.get('reply-to')).to.be.undefined;
+    await new SaveMessageInStorageStrategy().test(parseResult, id);
   };
 }
 class PwdEncryptedMessageWithFlowCryptComApiTestStrategy implements ITestMsgStrategy {
