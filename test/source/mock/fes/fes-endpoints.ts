@@ -92,7 +92,9 @@ const processMessageFromUser3 = async (body: string) => {
   const decryptedMimeMsg = decrypted.content!.toUtfStr();
   // small.txt
   expect(decryptedMimeMsg).to.contain(
-    'Content-Type: text/plain\r\n' + 'Content-Transfer-Encoding: quoted-printable\r\n\r\n' + 'PWD encrypted message with FES - pubkey recipient in bcc'
+    'Content-Type: text/plain\r\n' 
+      + 'Content-Transfer-Encoding: quoted-printable\r\n\r\n'
+      + 'PWD encrypted message with FES - pubkey recipient in bcc'
   );
   return {
     // this url is required for pubkey encrypted message

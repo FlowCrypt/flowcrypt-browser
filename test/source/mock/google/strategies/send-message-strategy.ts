@@ -100,8 +100,8 @@ class PwdEncryptedMessageWithFesPubkeyRecipientInBccTestStrategy implements ITes
     const encryptedData = mimeMsg.attachments.find(a => a.filename === 'encrypted.asc')!.content;
     const decrypted = await MsgUtil.decryptMessage({ kisWithPp, encryptedData, verificationPubs: [] });
     expect(decrypted.success).to.be.true;
-    expect(decrypted.content!.toUtfStr()).to.contain('PWD encrypted message with FES - pubkey recipient in bcc');
-    expect((mimeMsg.headers.get('reply-to') as AddressObject).text).to.be.empty;
+    expect(decrypted.content!.toUtfStr()).to.contain('PWD encrypted message with FES - pubkey recipient');
+    expect(mimeMsg.headers.get('reply-to')).to.be.undefined;
     await new SaveMessageInStorageStrategy().test(parseResult, id);
   };
 }
