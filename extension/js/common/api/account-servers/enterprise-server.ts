@@ -57,7 +57,9 @@ export class EnterpriseServer extends Api {
     }
     try {
       // regardless if this is enterprise or consumer flavor, if FES is available, return yes
-      return (await this.getServiceInfo()).service === 'enterprise-server';
+      const allowedServices = ['external-service', 'enterprise-server'];
+      const serverService = (await this.getServiceInfo()).service;
+      return allowedServices.includes(serverService);
     } catch (e) {
       // FES not available
       if (ApiErr.isNotFound(e)) {
