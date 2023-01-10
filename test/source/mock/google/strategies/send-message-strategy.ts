@@ -93,9 +93,6 @@ class PwdEncryptedMessageWithFesIdTokenTestStrategy implements ITestMsgStrategy 
 class PwdEncryptedMessageWithFesPubkeyRecipientInBccTestStrategy implements ITestMsgStrategy {
   public test = async (parseResult: ParseMsgResult, id: string) => {
     const mimeMsg = parseResult.mimeMsg;
-    console.log('--- MIME MSG ---');
-    console.log(mimeMsg);
-    console.log('--- END MIME MSG ---');
     const expectedSenderEmail = 'user3@standardsubdomainfes.localhost:8001';
     expect(mimeMsg.from!.text).to.equal(`First Last <${expectedSenderEmail}>`);
     // originally  fes
@@ -123,13 +120,7 @@ class PwdEncryptedMessageWithFesReplyBadRequestTestStrategy implements ITestMsgS
     const to = parsedMailAddressObjectAsArray(mimeMsg.to)
       .concat(parsedMailAddressObjectAsArray(mimeMsg.cc))
       .concat(parsedMailAddressObjectAsArray(mimeMsg.bcc));
-    // expect(to.length).to.equal(1);
     const recipientEmails = to.map(to => to.text)
-    // if (recipientEmail === 'to@example.com') {
-    //   // success
-    //   await new SaveMessageInStorageStrategy().test(parseResult, id);
-    //   return;
-    // } else 
     if (recipientEmails.includes('invalid@example.com')) {
       throw new HttpClientErr('Invalid to header', Status.BAD_REQUEST);
     } else if (recipientEmails.includes('timeout@example.com')) {
@@ -363,7 +354,7 @@ export class TestBySubjectStrategyContext {
       this.strategy = new PwdEncryptedMessageWithFesReplyRenderingTestStrategy();
     } else if (subject.includes('PWD encrypted message with FES - pubkey recipient in bcc')) {
       this.strategy = new PwdEncryptedMessageWithFesPubkeyRecipientInBccTestStrategy();
-    } else if (subject.includes('PWD encrypted message with FES web portal - sends fails with BadRequest error')) {
+    } else if (subject.includes('PWD encrypted message with FES web portal - send fails with BadRequest error')) {
       this.strategy = new PwdEncryptedMessageWithFesReplyBadRequestTestStrategy();
     } else if (subject.includes('PWD encrypted message with FES web portal - send fails with gateway update error')) {
       this.strategy = new SaveMessageInStorageStrategy();

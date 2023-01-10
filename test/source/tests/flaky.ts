@@ -202,7 +202,7 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
     );
 
     ava.default(
-      'user4@standardsubdomainfes.localhost:8001 - PWD encrypted message with FES web portal - sends fails with BadRequest error',
+      'user4@standardsubdomainfes.localhost:8001 - PWD encrypted message with FES web portal - send fails with BadRequest error',
       testWithBrowser(undefined, async (t, browser) => {
         const acct = 'user4@standardsubdomainfes.localhost:8001'; // added port to trick extension into calling the mock
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
