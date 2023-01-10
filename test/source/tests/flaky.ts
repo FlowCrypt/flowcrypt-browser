@@ -221,9 +221,9 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
           /* eslint-enable @typescript-eslint/no-explicit-any */
         });
         await dbPage.close();
-        const subject = 'PWD encrypted message with FES web portal - some sends fail with BadRequest error - ' + testVariant;
+        const subject = 'PWD encrypted message with FES web portal - send fails with BadRequest error - ' + testVariant;
         const expectedNumberOfPassedMessages = (await GoogleData.withInitializedData(acct)).searchMessagesBySubject(subject).length;
-        // 2. vague Gmail error with all failures
+        // 1. vague Gmail error with all failures
         let composePage = await ComposePageRecipe.openStandalone(t, browser, 'user4@standardsubdomainfes.localhost:8001');
         await ComposePageRecipe.fillMsg(composePage, { cc: 'cc@example.com', bcc: 'flowcrypt.compatibility@gmail.com' }, subject);
         await composePage.waitAndType('@input-password', 'gO0d-pwd');
