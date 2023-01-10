@@ -149,6 +149,13 @@ export const mockFesEndpoints: HandlersDefinition = {
     if (req.headers.host === standardFesUrl && req.method === 'POST' && typeof body === 'string') {
       // test: `compose - user@standardsubdomainfes.localhost:8001 - PWD encrypted message with FES web portal`
       authenticate(req, 'oidc');
+      if (body.includes('gatewayfailure@example.com')) { // recipient
+        return {
+          // this url is required for pubkey encrypted message
+          url: `http://${standardFesUrl}/message/FES-MOCK-MESSAGE-ID`,
+          externalId: 'FES-MOCK-EXTERNAL-FOR-GATEWAYFAILURE@EXAMPLE.COM-ID',
+        }
+      }
       if (body.includes('"from":"user@standardsubdomainfes.localhost:8001"')) {
         return await processMessageFromUser(body);
       }

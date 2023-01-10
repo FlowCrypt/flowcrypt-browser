@@ -108,7 +108,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
     const msg = await this.sendableCombinedPubkeyMsgWithoutAttachedFilesWithLinkToUploadedPwdMsg(
       newMsg, 
       pubkeys, 
-      { msgUrl: uploadedMessageResponse.url }, 
+      { msgUrl: uploadedMessageResponse.url, externalId: uploadedMessageResponse.externalId }, 
       signingKey?.key
     );
     // the above message has pgp/mime encrypted content that was attached as a set of pgp/mime attachments,
