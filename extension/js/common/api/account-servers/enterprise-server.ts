@@ -20,9 +20,8 @@ type EventTag = 'compose' | 'decrypt' | 'setup' | 'settings' | 'import-pub' | 'i
 export namespace FesRes {
   export type ReplyToken = { replyToken: string };
   export type MessageUpload = {
-    url: string; // LEGACY
-    externalId: string; // LEGACY
-    emailToExternalIdAndUrl?: { [email: string]: { url: string; externalId: string } };
+    url: string;
+    externalId: string;
   };
   export type ServiceInfo = { vendor: string; service: string; orgId: string; version: string; apiVersion: string };
   export type ClientConfiguration = { clientConfiguration: ClientConfigurationJson };
