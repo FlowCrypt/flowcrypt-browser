@@ -191,7 +191,7 @@ export const mockFesEndpoints: HandlersDefinition = {
     if ([standardFesUrl].includes(req.headers.host || '') && req.method === 'GET') {
       return {
         vendor: 'Mock',
-        service: 'enterprise-server',
+        service: 'external-service',
         orgId: 'standardsubdomainfes.test',
         version: 'MOCK',
         apiVersion: 'v1',
