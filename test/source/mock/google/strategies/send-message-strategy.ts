@@ -66,20 +66,16 @@ class PwdEncryptedMessageWithFesIdTokenTestStrategy implements ITestMsgStrategy 
     const mimeMsg = parseResult.mimeMsg;
     const expectedSenderEmail = 'user@standardsubdomainfes.localhost:8001';
     expect(mimeMsg.from!.text).to.equal(`First Last <${expectedSenderEmail}>`);
-    if (mimeMsg.text?.includes('http://fes.standardsubdomainfes.localhost:8001/message/FES-MOCK-MESSAGE-FOR-TO@EXAMPLE.COM-ID')) {
-      expect((mimeMsg.to as AddressObject).text).to.equal('Mr To <to@example.com>');
-      expect(mimeMsg.cc).to.be.an.undefined;
-      expect(mimeMsg.bcc).to.be.an.undefined;
-    } else if (mimeMsg.text?.includes('http://fes.standardsubdomainfes.localhost:8001/message/FES-MOCK-MESSAGE-FOR-BCC@EXAMPLE.COM-ID')) {
-      expect((mimeMsg.to as AddressObject).text).to.equal('Mr Bcc <bcc@example.com>');
-      expect(mimeMsg.cc).to.be.an.undefined;
-      expect(mimeMsg.bcc).to.be.an.undefined;
-    } else {
-      // no pubkey recipients in this test
-      throw new HttpClientErr(`Error: cannot find pwd encrypted FES link in:\n\n${mimeMsg.text}`);
-    }
+    expect((mimeMsg.to as AddressObject).text).to.equal('Mr To <to@example.com>');
+    expect(mimeMsg.cc).to.be.an.undefined;
+    expect((mimeMsg.bcc as AddressObject).text).to.equal('Mr Bcc <bcc@example.com>');
     expect(mimeMsg.text!).to.include(`${expectedSenderEmail} has sent you a password-encrypted email`);
     expect(mimeMsg.text!).to.include('Follow this link to open it');
+    const kisWithPp = await Config.getKeyInfo(['flowcrypt.test.key.used.pgp']);
+    const encryptedData = mimeMsg.attachments.find(a => a.filename === 'encrypted.asc')!.content;
+    const decrypted = await MsgUtil.decryptMessage({ kisWithPp, encryptedData, verificationPubs: [] });
+    expect(decrypted.success).to.be.true;
+    expect(decrypted.content!.toUtfStr()).to.contain('PWD encrypted message with FES - ID TOKEN');
     await new SaveMessageInStorageStrategy().test(parseResult, id);
   };
 }
