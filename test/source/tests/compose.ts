@@ -2540,7 +2540,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
     );
 
     ava.default(
-      'user4@standardsubdomainfes.localhost:8001 - PWD encrypted message with FES web portal - a send fails with gateway update error',
+      'user4@standardsubdomainfes.localhost:8001 - PWD encrypted message with FES web portal - send fails with gateway update error',
       testWithBrowser(undefined, async (t, browser) => {
         const acct = 'user4@standardsubdomainfes.localhost:8001'; // added port to trick extension into calling the mock
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
@@ -2550,7 +2550,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
           { submitPubkey: false, usedPgpBefore: false },
           { isSavePassphraseChecked: false, isSavePassphraseHidden: false }
         );
-        const subject = 'PWD encrypted message with FES web portal - a send fails with gateway update error - ' + testVariant;
+        const subject = 'PWD encrypted message with FES web portal - send fails with gateway update error - ' + testVariant;
         const expectedNumberOfPassedMessages = (await GoogleData.withInitializedData(acct)).searchMessagesBySubject(subject).length;
         const composePage = await ComposePageRecipe.openStandalone(t, browser, 'user4@standardsubdomainfes.localhost:8001');
         await ComposePageRecipe.fillMsg(composePage, { to: 'gatewayfailure@example.com' }, subject);
@@ -2559,7 +2559,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         await composePage.waitForContent('.ui-toast-title', 'Failed to bind Gateway ID of the message:');
         await composePage.close();
         expect((await GoogleData.withInitializedData(acct)).searchMessagesBySubject(subject).length).to.equal(expectedNumberOfPassedMessages + 1);
-        // this test is using PwdEncryptedMessageWithFesReplyGatewayErrorTestStrategy to check sent result based on subject "PWD encrypted message with FES web portal - a send fails with gateway update error"
+        // this test is using SaveMessageInStorageStrategy to check sent result based on subject "PWD encrypted message with FES web portal - send fails with gateway update error"
         // also see '/api/v1/message' in fes-endpoints.ts mock
       })
     );

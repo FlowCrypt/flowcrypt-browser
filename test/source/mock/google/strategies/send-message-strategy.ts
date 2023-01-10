@@ -365,7 +365,7 @@ export class TestBySubjectStrategyContext {
       this.strategy = new PwdEncryptedMessageWithFesPubkeyRecipientInBccTestStrategy();
     } else if (subject.includes('PWD encrypted message with FES web portal - sends fails with BadRequest error')) {
       this.strategy = new PwdEncryptedMessageWithFesReplyBadRequestTestStrategy();
-    } else if (subject.includes('PWD encrypted message with FES web portal - a send fails with gateway update error')) {
+    } else if (subject.includes('PWD encrypted message with FES web portal - send fails with gateway update error')) {
       this.strategy = new SaveMessageInStorageStrategy();
     } else if (subject.includes('Message With Image')) {
       this.strategy = new SaveMessageInStorageStrategy();

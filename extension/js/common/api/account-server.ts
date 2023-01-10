@@ -14,7 +14,6 @@ import { Api, ProgressCb } from './shared/api.js';
 export type UploadedMessageResponse = {
   url: string; // both FES and FlowCryptComApi
   externalId?: string; // legacy FES
-  emailToExternalIdAndUrl?: { [email: string]: { url: string; externalId: string } }; // FES only
 };
 
 /**
