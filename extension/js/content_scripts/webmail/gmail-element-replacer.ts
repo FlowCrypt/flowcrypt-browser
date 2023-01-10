@@ -708,8 +708,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     if (newReplyBoxes.length) {
       // cache for subseqent loop runs
       const convoRootEl = this.getGonvoRootEl(newReplyBoxes[0]);
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      const replyParams = this.getLastMsgReplyParams(convoRootEl!);
+      const replyParams = this.getLastMsgReplyParams(convoRootEl);
       if (msgId) {
         replyParams.replyMsgId = msgId;
       }
@@ -801,7 +800,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
         const recipients = standardComposeWin
           .find(this.sel.standardComposeRecipient)
           .get()
-          .map(e => $(e).attr('email')!) // eslint-disable-line @typescript-eslint/no-non-null-assertion
+          .map(e => $(e).attr('email'))
           .filter(e => !!e);
         if (!recipients.length || $(this.sel.standardComposeWin).find('.close_gmail_compose_window').length === 1) {
           // draft, but not the secure one

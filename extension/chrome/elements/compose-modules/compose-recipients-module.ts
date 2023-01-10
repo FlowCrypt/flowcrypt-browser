@@ -204,7 +204,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     }
   };
 
-  public addRecipients = async (recipients: Recipients, triggerCallback = true, shouldSetEmailsPreview = false) => {
+  public addRecipients = async (recipients: Recipients, triggerCallback = true) => {
     const newRecipients: ValidRecipientElement[] = [];
     for (const [sendingType, value] of Object.entries(recipients)) {
       if (Api.isRecipientHeaderNameType(sendingType)) {
@@ -230,7 +230,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
         }
       }
     }
-    await this.evaluateRecipients(newRecipients, triggerCallback, shouldSetEmailsPreview);
+    await this.evaluateRecipients(newRecipients, triggerCallback);
   };
 
   public clearRecipients = () => {
@@ -264,6 +264,12 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     this.view.S.cached('contacts').children().not('ul').remove();
   };
 
+  public addRecipientsAndShowPreview = (recipients: Recipients) => {
+    this.view.recipientsModule.addRecipients(recipients).catch(Catch.reportErr);
+    this.view.recipientsModule.showHideCcAndBccInputsIfNeeded();
+    this.view.recipientsModule.setEmailsPreview();
+  };
+
   public reEvaluateRecipients = async (recipients: ValidRecipientElement[]) => {
     for (const recipient of recipients) {
       $(recipient.element).empty().removeClass();
@@ -272,7 +278,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     await this.evaluateRecipients(recipients);
   };
 
-  public evaluateRecipients = async (recipientEls: ValidRecipientElement[], triggerCallback = true, shouldSetEmailsPreview = true) => {
+  public evaluateRecipients = async (recipientEls: ValidRecipientElement[], triggerCallback = true) => {
     this.view.errModule.debug(`evaluateRecipients`);
     $('body').attr('data-test-state', 'working');
     for (const recipientEl of recipientEls) {
@@ -298,9 +304,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
         callback(recipientEls);
       }
     }
-    if (shouldSetEmailsPreview) {
-      this.setEmailsPreview();
-    }
+    this.setEmailsPreview();
     $('body').attr('data-test-state', 'ready');
     this.view.sizeModule.setInputTextHeightManuallyIfNeeded();
   };
