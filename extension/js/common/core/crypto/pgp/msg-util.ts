@@ -144,8 +144,11 @@ export class MsgUtil {
         // But it's a good indication that it may be
         const t = opgp.enums.packet;
         const msgTpes = [
-          t.symEncryptedIntegrityProtectedData, t.modificationDetectionCode,
-          t.aeadEncryptedData, t.symmetricallyEncryptedData, t.compressedData
+          t.symEncryptedIntegrityProtectedData,
+          t.modificationDetectionCode,
+          t.aeadEncryptedData,
+          t.symmetricallyEncryptedData,
+          t.compressedData,
         ];
         return { armored: false, type: msgTpes.includes(tagNumber) ? 'encryptedMsg' : 'publicKey' };
       }
@@ -308,7 +311,7 @@ export class MsgUtil {
     for (const ki of keys.prvForDecrypt) {
       const matchingKeyids = MsgUtil.matchingKeyids(KeyUtil.getKeyInfoLongids(ki), encryptionKeyids);
       const cachedKey = KeyCache.getDecrypted(ki.longid);
-      if (cachedKey && await MsgUtil.isKeyDecryptedFor(cachedKey, matchingKeyids)) {
+      if (cachedKey && (await MsgUtil.isKeyDecryptedFor(cachedKey, matchingKeyids))) {
         keys.prvForDecryptDecrypted.push({ ki, decrypted: cachedKey });
         continue;
       }
@@ -316,7 +319,7 @@ export class MsgUtil {
       // todo - the `ki.passphrase || ''` used to be `ki.passphrase!` which could have actually allowed an undefined to be passed
       // as fixed currently it appears better, but it may be best to instead check `ki.passphrase && await MsgUtil.decryptKeyFor(...)`
       // but that is a larger change that would require separate PR and testing
-      if ((await MsgUtil.isKeyDecryptedFor(parsed, matchingKeyids)) || (await MsgUtil.decryptKeyFor(parsed, ki.passphrase || '', matchingKeyids) === true)) {
+      if ((await MsgUtil.isKeyDecryptedFor(parsed, matchingKeyids)) || (await MsgUtil.decryptKeyFor(parsed, ki.passphrase || '', matchingKeyids)) === true) {
         KeyCache.setDecrypted(parsed);
         keys.prvForDecryptDecrypted.push({ ki, decrypted: parsed });
       } else {
