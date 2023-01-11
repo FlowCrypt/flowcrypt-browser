@@ -11,10 +11,9 @@ import { ParsedRecipients } from './email-provider/email-provider-api.js';
 import { BackendAuthErr } from './shared/api-error.js';
 import { Api, ProgressCb } from './shared/api.js';
 
-export type UploadedMessageData = {
+export type UploadedMessageResponse = {
   url: string; // both FES and FlowCryptComApi
-  externalId?: string; // legacy FES
-  emailToExternalIdAndUrl?: { [email: string]: { url: string; externalId: string } }; // FES only
+  externalId?: string; // FES
 };
 
 /**
@@ -59,7 +58,7 @@ export class AccountServer extends Api {
     from: string,
     recipients: ParsedRecipients,
     progressCb: ProgressCb
-  ): Promise<UploadedMessageData> => {
+  ): Promise<UploadedMessageResponse> => {
     if (await this.isFesUsed()) {
       const fes = new EnterpriseServer(this.acctEmail);
       // Recipients are used to later cross-check replies from the web
