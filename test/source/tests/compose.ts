@@ -34,7 +34,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         const acct = 'flowcrypt.compatibility@gmail.com';
         const msgPwd = 'super hard password for the message';
         const subject = 'PWD and pubkey encrypted messages with flowcrypt.com/api';
-        const expectedNumberOfPassedMessages = (await GoogleData.withInitializedData(acct)).searchMessagesBySubject(subject).length + 1;
+        const expectedNumberOfPassedMessages = (await GoogleData.withInitializedData(acct)).searchMessagesBySubject(subject).length + 2;
         const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
         await ComposePageRecipe.selectFromOption(composePage, acct);
         await ComposePageRecipe.fillMsg(composePage, { to: 'test@email.com', cc: 'flowcrypt.compatibility@gmail.com' }, subject);
@@ -2434,7 +2434,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         await composePage.waitAndClick('@action-send', { delay: 1 });
         await ComposePageRecipe.closed(composePage);
         const sentMsgs = (await GoogleData.withInitializedData(acct)).searchMessagesBySubject(subject);
-        expect(sentMsgs.length).to.equal(1);
+        expect(sentMsgs.length).to.equal(2);
         // this test is using PwdEncryptedMessageWithFesIdTokenTestStrategy to check sent result based on subject "PWD encrypted message with FES - ID TOKEN"
         // also see '/api/v1/message' in fes-endpoints.ts mock
       })
@@ -2487,7 +2487,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
           'to: sender@domain.com, flowcrypt.compatibility@gmail.com, to@example.com, mock.only.pubkey@flowcrypt.com'
         );
         const sentMsgs = (await GoogleData.withInitializedData(acct)).getMessagesByThread('1803be2e506153d2');
-        expect(sentMsgs.length).to.equal(2); // 1 original message to reply to, 1 new sent
+        expect(sentMsgs.length).to.equal(4); // 1 original + 3 newly sent
         const attachmentFrames = (composePage.target as Page).frames();
         expect(attachmentFrames.length).to.equal(3); // 1 pgp block + 2 attachments
         expect(
@@ -2533,14 +2533,14 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         await composePage.waitAndClick('@action-send', { delay: 1 });
         await ComposePageRecipe.closed(composePage);
         const sentMsgs = (await GoogleData.withInitializedData(acct)).searchMessagesBySubject(subject);
-        expect(sentMsgs.length).to.equal(1);
+        expect(sentMsgs.length).to.equal(2);
         // this test is using PwdEncryptedMessageWithFesPubkeyRecipientInBccTestStrategy to check sent result based on subject "PWD encrypted message with FES - pubkey recipient in bcc"
         // also see '/api/v1/message' in fes-endpoints.ts mock
       })
     );
 
     ava.default(
-      'user4@standardsubdomainfes.localhost:8001 - PWD encrypted message with FES web portal - send fails with gateway update error',
+      'user4@standardsubdomainfes.localhost:8001 - PWD encrypted message with FES web portal - a send fails with gateway update error',
       testWithBrowser(undefined, async (t, browser) => {
         const acct = 'user4@standardsubdomainfes.localhost:8001'; // added port to trick extension into calling the mock
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
@@ -2550,7 +2550,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
           { submitPubkey: false, usedPgpBefore: false },
           { isSavePassphraseChecked: false, isSavePassphraseHidden: false }
         );
-        const subject = 'PWD encrypted message with FES web portal - send fails with gateway update error - ' + testVariant;
+        const subject = 'PWD encrypted message with FES web portal - a send fails with gateway update error - ' + testVariant;
         const expectedNumberOfPassedMessages = (await GoogleData.withInitializedData(acct)).searchMessagesBySubject(subject).length;
         const composePage = await ComposePageRecipe.openStandalone(t, browser, 'user4@standardsubdomainfes.localhost:8001');
         await ComposePageRecipe.fillMsg(composePage, { to: 'gatewayfailure@example.com' }, subject);
@@ -2559,7 +2559,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         await composePage.waitForContent('.ui-toast-title', 'Failed to bind Gateway ID of the message:');
         await composePage.close();
         expect((await GoogleData.withInitializedData(acct)).searchMessagesBySubject(subject).length).to.equal(expectedNumberOfPassedMessages + 1);
-        // this test is using SaveMessageInStorageStrategy to check sent result based on subject "PWD encrypted message with FES web portal - send fails with gateway update error"
+        // this test is using PwdEncryptedMessageWithFesReplyGatewayErrorTestStrategy to check sent result based on subject "PWD encrypted message with FES web portal - a send fails with gateway update error"
         // also see '/api/v1/message' in fes-endpoints.ts mock
       })
     );
