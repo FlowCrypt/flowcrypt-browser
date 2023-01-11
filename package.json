@@ -38,7 +38,7 @@
     "openpgp": ">=5.5.0",
     "pdfjs-dist": "3.2.146",
     "prettier": "^2.8.1",
-    "puppeteer": "19.4.1",
+    "puppeteer": "19.5.0",
     "stream-browserify": "^3.0.0",
     "stylelint": "14.16.1",
     "stylelint-config-standard": "29.0.0",
@@ -103,7 +103,8 @@
   "homepage": "https://flowcrypt.com",
   "lint-staged": {
     "*.ts": [
-      "npm run test_eslint"
+      "npm run test_eslint",
+      "npm run test_patterns"
     ],
     "*.{css,htm}": [
       "npm run test_stylelint"
