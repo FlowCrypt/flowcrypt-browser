@@ -28,21 +28,27 @@ class PwdAndPubkeyEncryptedMessagesWithFlowCryptComApiTestStrategy implements IT
   public test = async (parseResult: ParseMsgResult, id: string) => {
     const mimeMsg = parseResult.mimeMsg;
     const senderEmail = Str.parseEmail(mimeMsg.from!.text).email;
-    expect(mimeMsg.text!).to.contain(`${senderEmail} has sent you a password-encrypted email`);
-    expect(mimeMsg.text!).to.contain('Follow this link to open it');
-    if (!mimeMsg.text?.match(/https:\/\/flowcrypt.com\/[a-z0-9A-Z]{10}/)) {
-      throw new HttpClientErr(`Error: cannot find pwd encrypted flowcrypt.com/api link in:\n\n${mimeMsg.text}`);
-    }
-    const kisWithPp = await Config.getKeyInfo(['flowcrypt.compatibility.1pp1', 'flowcrypt.compatibility.2pp1']);
-    const encryptedData = mimeMsg.attachments.find(a => a.filename === 'encrypted.asc')!.content;
-    const decrypted = await MsgUtil.decryptMessage({ kisWithPp, encryptedData, verificationPubs: [] });
-    expect(decrypted.success).to.be.true;
-    expect(decrypted.content!.toUtfStr()).to.contain('PWD and pubkey encrypted messages with flowcrypt.com/api');
-    expect((mimeMsg.to as AddressObject).text!).to.include('test@email.com');
-    expect((mimeMsg.cc as AddressObject).text!).to.include('flowcrypt.compatibility@gmail.com');
-    expect(mimeMsg.bcc).to.be.an.undefined;
-    expect(mimeMsg.headers.get('reply-to')).to.be.undefined;
     await new SaveMessageInStorageStrategy().test(parseResult, id);
+    if (mimeMsg.cc) {
+      // this is a message to the pubkey recipient
+      expect((mimeMsg.cc as AddressObject).text!).to.include('flowcrypt.compatibility@gmail.com');
+      expect(mimeMsg.text!).to.not.include('has sent you a password-encrypted email');
+      expect(mimeMsg.text!).to.not.include('Follow this link to open it');
+      const kisWithPp = await Config.getKeyInfo(['flowcrypt.compatibility.1pp1', 'flowcrypt.compatibility.2pp1']);
+      const encryptedData = Buf.fromUtfStr(mimeMsg.text!);
+      const decrypted = await MsgUtil.decryptMessage({ kisWithPp, encryptedData, verificationPubs: [] });
+      expect(decrypted.success).to.be.true;
+      expect(decrypted.content!.toUtfStr()).to.contain('PWD and pubkey encrypted messages with flowcrypt.com/api');
+      expect(mimeMsg.bcc).to.be.an.undefined;
+      expect(mimeMsg.to).to.be.an.undefined;
+      expect((mimeMsg.headers.get('reply-to') as AddressObject).text).to.equal('First Last <flowcrypt.compatibility@gmail.com>, test@email.com');
+    } else {
+      expect(mimeMsg.text!).to.contain(`${senderEmail} has sent you a password-encrypted email`);
+      expect(mimeMsg.text!).to.contain('Follow this link to open it');
+      if (!mimeMsg.text?.match(/https:\/\/flowcrypt.com\/[a-z0-9A-Z]{10}/)) {
+        throw new HttpClientErr(`Error: cannot find pwd encrypted flowcrypt.com/api link in:\n\n${mimeMsg.text}`);
+      }
+    }
   };
 }
 class PwdEncryptedMessageWithFlowCryptComApiTestStrategy implements ITestMsgStrategy {
@@ -66,16 +72,20 @@ class PwdEncryptedMessageWithFesIdTokenTestStrategy implements ITestMsgStrategy 
     const mimeMsg = parseResult.mimeMsg;
     const expectedSenderEmail = 'user@standardsubdomainfes.localhost:8001';
     expect(mimeMsg.from!.text).to.equal(`First Last <${expectedSenderEmail}>`);
-    expect((mimeMsg.to as AddressObject).text).to.equal('Mr To <to@example.com>');
-    expect(mimeMsg.cc).to.be.an.undefined;
-    expect((mimeMsg.bcc as AddressObject).text).to.equal('Mr Bcc <bcc@example.com>');
+    if (mimeMsg.text?.includes('http://fes.standardsubdomainfes.localhost:8001/message/FES-MOCK-MESSAGE-FOR-TO@EXAMPLE.COM-ID')) {
+      expect((mimeMsg.to as AddressObject).text).to.equal('Mr To <to@example.com>');
+      expect(mimeMsg.cc).to.be.an.undefined;
+      expect(mimeMsg.bcc).to.be.an.undefined;
+    } else if (mimeMsg.text?.includes('http://fes.standardsubdomainfes.localhost:8001/message/FES-MOCK-MESSAGE-FOR-BCC@EXAMPLE.COM-ID')) {
+      expect((mimeMsg.to as AddressObject).text).to.equal('Mr Bcc <bcc@example.com>');
+      expect(mimeMsg.cc).to.be.an.undefined;
+      expect(mimeMsg.bcc).to.be.an.undefined;
+    } else {
+      // no pubkey recipients in this test
+      throw new HttpClientErr(`Error: cannot find pwd encrypted FES link in:\n\n${mimeMsg.text}`);
+    }
     expect(mimeMsg.text!).to.include(`${expectedSenderEmail} has sent you a password-encrypted email`);
     expect(mimeMsg.text!).to.include('Follow this link to open it');
-    const kisWithPp = await Config.getKeyInfo(['flowcrypt.test.key.used.pgp']);
-    const encryptedData = mimeMsg.attachments.find(a => a.filename === 'encrypted.asc')!.content;
-    const decrypted = await MsgUtil.decryptMessage({ kisWithPp, encryptedData, verificationPubs: [] });
-    expect(decrypted.success).to.be.true;
-    expect(decrypted.content!.toUtfStr()).to.contain('PWD encrypted message with FES - ID TOKEN');
     await new SaveMessageInStorageStrategy().test(parseResult, id);
   };
 }
@@ -85,38 +95,51 @@ class PwdEncryptedMessageWithFesPubkeyRecipientInBccTestStrategy implements ITes
     const mimeMsg = parseResult.mimeMsg;
     const expectedSenderEmail = 'user3@standardsubdomainfes.localhost:8001';
     expect(mimeMsg.from!.text).to.equal(`First Last <${expectedSenderEmail}>`);
-    // originally  fes
-    expect(mimeMsg.text!).to.include(`${expectedSenderEmail} has sent you a password-encrypted email`);
-    expect(mimeMsg.text!).to.include('Follow this link to open it');
-    expect((mimeMsg.to as AddressObject).text).to.equal('to@example.com');
-    expect(mimeMsg.cc).to.be.an.undefined;
-    expect((mimeMsg.bcc as AddressObject).text).to.equal('flowcrypt.compatibility@gmail.com');
-    expect(mimeMsg.headers.get('reply-to')).to.be.an.undefined;
-    const kisWithPp = await Config.getKeyInfo(['flowcrypt.test.key.used.pgp']);
-    const encryptedData = mimeMsg.attachments.find(a => a.filename === 'encrypted.asc')!.content;
-    const decrypted = await MsgUtil.decryptMessage({ kisWithPp, encryptedData, verificationPubs: [] });
-    expect(decrypted.success).to.be.true;
-    expect(decrypted.content!.toUtfStr()).to.contain('PWD encrypted message with FES - pubkey recipient');
-    expect(mimeMsg.headers.get('reply-to')).to.be.undefined;
+    if (mimeMsg.text?.includes('http://fes.standardsubdomainfes.localhost:8001/message/FES-MOCK-MESSAGE-FOR-TO@EXAMPLE.COM-ID')) {
+      expect(mimeMsg.text!).to.include(`${expectedSenderEmail} has sent you a password-encrypted email`);
+      expect(mimeMsg.text!).to.include('Follow this link to open it');
+      expect((mimeMsg.to as AddressObject).text).to.equal('to@example.com');
+      expect(mimeMsg.cc).to.be.an.undefined;
+      expect(mimeMsg.bcc).to.be.an.undefined;
+      expect(mimeMsg.headers.get('reply-to')).to.be.an.undefined;
+    } else {
+      // this is a message to pubkey recipients
+      expect(mimeMsg.text!).to.not.include('has sent you a password-encrypted email');
+      expect(mimeMsg.text!).to.not.include('Follow this link to open it');
+      const kisWithPp = await Config.getKeyInfo(['flowcrypt.test.key.used.pgp']);
+      const encryptedData = Buf.fromUtfStr(mimeMsg.text!);
+      const decrypted = await MsgUtil.decryptMessage({ kisWithPp, encryptedData, verificationPubs: [] });
+      expect(decrypted.success).to.be.true;
+      expect(decrypted.content!.toUtfStr()).to.equal('PWD encrypted message with FES - pubkey recipient in bcc');
+      expect((mimeMsg.bcc as AddressObject).text).to.equal('flowcrypt.compatibility@gmail.com');
+      expect(mimeMsg.cc).to.be.an.undefined;
+      expect(mimeMsg.to).to.be.an.undefined;
+      expect((mimeMsg.headers.get('reply-to') as AddressObject).text).to.equal('First Last <user3@standardsubdomainfes.localhost:8001>, to@example.com');
+    }
     await new SaveMessageInStorageStrategy().test(parseResult, id);
   };
 }
 
 class PwdEncryptedMessageWithFesReplyBadRequestTestStrategy implements ITestMsgStrategy {
-  public test = async (parseResult: ParseMsgResult) => {
+  public test = async (parseResult: ParseMsgResult, id: string) => {
     const mimeMsg = parseResult.mimeMsg;
     const expectedSenderEmail = 'user4@standardsubdomainfes.localhost:8001';
     expect(mimeMsg.from!.text).to.equal(`First Last <${expectedSenderEmail}>`);
     const to = parsedMailAddressObjectAsArray(mimeMsg.to)
       .concat(parsedMailAddressObjectAsArray(mimeMsg.cc))
       .concat(parsedMailAddressObjectAsArray(mimeMsg.bcc));
-    const recipientEmails = to.map(to => to.text)
-    if (recipientEmails.includes('invalid@example.com')) {
+    expect(to.length).to.equal(1);
+    const recipientEmail = to[0].text;
+    if (recipientEmail === 'to@example.com') {
+      // success
+      await new SaveMessageInStorageStrategy().test(parseResult, id);
+      return;
+    } else if (recipientEmail === 'invalid@example.com') {
       throw new HttpClientErr('Invalid to header', Status.BAD_REQUEST);
-    } else if (recipientEmails.includes('timeout@example.com')) {
+    } else if (recipientEmail === 'timeout@example.com') {
       throw new HttpClientErr('RequestTimeout', Status.BAD_REQUEST);
     } else {
-      throw new HttpClientErr(`Vague failure for ${recipientEmails.join(',')}`, Status.BAD_REQUEST);
+      throw new HttpClientErr(`Vague failure for ${recipientEmail}`, Status.BAD_REQUEST);
     }
   };
 }
@@ -126,17 +149,36 @@ class PwdEncryptedMessageWithFesReplyRenderingTestStrategy implements ITestMsgSt
     const mimeMsg = parseResult.mimeMsg;
     const expectedSenderEmail = 'user2@standardsubdomainfes.localhost:8001';
     expect(mimeMsg.from!.text).to.equal(`First Last <${expectedSenderEmail}>`);
-    expect(mimeMsg.text).to.include(`${expectedSenderEmail} has sent you a password-encrypted email`);
-    expect(mimeMsg.text).to.include('Follow this link to open it');
-    expect((mimeMsg.to as AddressObject).text).to.equal('sender@domain.com, flowcrypt.compatibility@gmail.com, to@example.com, mock.only.pubkey@flowcrypt.com');
-    expect(mimeMsg.cc).to.be.an.undefined;
-    expect(mimeMsg.bcc).to.be.an.undefined;
-    expect(mimeMsg.headers.get('reply-to')).to.be.an.undefined;
-    const kisWithPp = await Config.getKeyInfo(['flowcrypt.test.key.used.pgp']);
-    const encryptedData = mimeMsg.attachments.find(a => a.filename === 'encrypted.asc')!.content;
-    const decrypted = await MsgUtil.decryptMessage({ kisWithPp, encryptedData, verificationPubs: [] });
-    expect(decrypted.success).to.be.true;
-    expect(decrypted.content!.toUtfStr()).to.include('> some dummy text');
+    if (mimeMsg.text?.includes('http://fes.standardsubdomainfes.localhost:8001/message/FES-MOCK-MESSAGE-FOR-SENDER@DOMAIN.COM-ID')) {
+      expect(mimeMsg.text!).to.include(`${expectedSenderEmail} has sent you a password-encrypted email`);
+      expect(mimeMsg.text!).to.include('Follow this link to open it');
+      expect((mimeMsg.to as AddressObject).text).to.equal('sender@domain.com');
+      expect(mimeMsg.cc).to.be.an.undefined;
+      expect(mimeMsg.bcc).to.be.an.undefined;
+      expect(mimeMsg.headers.get('reply-to')).to.be.an.undefined;
+    } else if (mimeMsg.text?.includes('http://fes.standardsubdomainfes.localhost:8001/message/FES-MOCK-MESSAGE-FOR-TO@EXAMPLE.COM-ID')) {
+      expect(mimeMsg.text!).to.include(`${expectedSenderEmail} has sent you a password-encrypted email`);
+      expect(mimeMsg.text!).to.include('Follow this link to open it');
+      expect((mimeMsg.to as AddressObject).text).to.equal('to@example.com');
+      expect(mimeMsg.cc).to.be.an.undefined;
+      expect(mimeMsg.bcc).to.be.an.undefined;
+      expect(mimeMsg.headers.get('reply-to')).to.be.an.undefined;
+    } else {
+      // this is a message to pubkey recipients
+      expect(mimeMsg.text!).to.not.include('has sent you a password-encrypted email');
+      expect(mimeMsg.text!).to.not.include('Follow this link to open it');
+      const kisWithPp = await Config.getKeyInfo(['flowcrypt.test.key.used.pgp']);
+      const encryptedData = Buf.fromUtfStr(mimeMsg.text!);
+      const decrypted = await MsgUtil.decryptMessage({ kisWithPp, encryptedData, verificationPubs: [] });
+      expect(decrypted.success).to.be.true;
+      expect(decrypted.content!.toUtfStr()).to.include('> some dummy text');
+      expect((mimeMsg.to as AddressObject).text).to.equal('flowcrypt.compatibility@gmail.com, mock.only.pubkey@flowcrypt.com');
+      expect(mimeMsg.cc).to.be.an.undefined;
+      expect(mimeMsg.bcc).to.be.an.undefined;
+      expect((mimeMsg.headers.get('reply-to') as AddressObject).text).to.equal(
+        'First Last <user2@standardsubdomainfes.localhost:8001>, sender@domain.com, to@example.com'
+      );
+    }
     await new SaveMessageInStorageStrategy().test(parseResult, id);
   };
 }
@@ -344,9 +386,9 @@ export class TestBySubjectStrategyContext {
       this.strategy = new PwdEncryptedMessageWithFesReplyRenderingTestStrategy();
     } else if (subject.includes('PWD encrypted message with FES - pubkey recipient in bcc')) {
       this.strategy = new PwdEncryptedMessageWithFesPubkeyRecipientInBccTestStrategy();
-    } else if (subject.includes('PWD encrypted message with FES web portal - send fails with BadRequest error')) {
+    } else if (subject.includes('PWD encrypted message with FES web portal - some sends fail with BadRequest error')) {
       this.strategy = new PwdEncryptedMessageWithFesReplyBadRequestTestStrategy();
-    } else if (subject.includes('PWD encrypted message with FES web portal - send fails with gateway update error')) {
+    } else if (subject.includes('PWD encrypted message with FES web portal - a send fails with gateway update error')) {
       this.strategy = new SaveMessageInStorageStrategy();
     } else if (subject.includes('Message With Image')) {
       this.strategy = new SaveMessageInStorageStrategy();
