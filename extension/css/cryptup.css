@@ -1623,7 +1623,7 @@ table#compose div.recipients-inputs > div#input_addresses_container div .recipie
 table#compose div.recipients-inputs > div#input_addresses_container div span.container-cc-bcc-buttons {
   position: absolute;
   right: 8px;
-  top: 5px;
+  bottom: 6px;
   white-space: nowrap;
   color: #636c72;
   pointer-events: auto;
