@@ -27,6 +27,7 @@ if [[ "$#" == 1 ]] && [[ "$1" == "--incremental" ]]; then
   npx tsc --project ./tsconfig.json --incremental --tsBuildInfoFile ./build/tsconfig.tsbuildinfo & pids+=($!)
   npx tsc --project ./conf/tsconfig.content_scripts.json --incremental --tsBuildInfoFile ./build/tsconfig.content_scripts.tsbuildinfo & pids+=($!)
   npx tsc --project ./conf/tsconfig.streams.json --incremental --tsBuildInfoFile ./build/tsconfig.streams.tsbuildinfo & pids+=($!)
+  npx webpack --config conf/webpack.config.js & pids+=($!)
   [[ -d ./build/tooling ]] || npx tsc --project ./conf/tsconfig.tooling.json & pids+=($!)  # only build tooling if missing
   for pid in "${pids[@]}"; do wait "$pid" || exit 1; done
 
@@ -41,6 +42,7 @@ else
   node ./build/tooling/tsc-compiler --project ./tsconfig.json & pids+=($!)
   node ./build/tooling/tsc-compiler --project ./conf/tsconfig.content_scripts.json & pids+=($!)
   node ./build/tooling/tsc-compiler --project ./conf/tsconfig.streams.json & pids+=($!)
+  npx webpack --config conf/webpack.config.js & pids+=($!)
   for pid in "${pids[@]}"; do wait "$pid" || exit 1; done
 
 fi
