@@ -1364,6 +1364,7 @@ table#compose {
   min-height: 260px;
   border-spacing: 0;
   border-collapse: collapse;
+  table-layout: fixed;
   width: 100%;
   background-color: white;
 }
@@ -1622,7 +1623,7 @@ table#compose div.recipients-inputs > div#input_addresses_container div .recipie
 table#compose div.recipients-inputs > div#input_addresses_container div span.container-cc-bcc-buttons {
   position: absolute;
   right: 8px;
-  bottom: 6px;
+  top: 5px;
   white-space: nowrap;
   color: #636c72;
   pointer-events: auto;

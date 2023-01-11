@@ -87,6 +87,7 @@ export class ComposeSizeModule extends ViewModule<ComposeView> {
           cursorOffsetTop,
         });
       }
+      this.resizeInput();
     } else {
       this.view.S.cached('input_text').css('max-width', '');
       this.resizeInput();
@@ -144,7 +145,7 @@ export class ComposeSizeModule extends ViewModule<ComposeView> {
       }
       jqueryElem.css('width', containerWidth - offset - additionalWidth - 11 + 'px');
     }
-    /* eslint-enable */
+    /* eslint-enable @typescript-eslint/no-non-null-assertion */
   };
 
   private windowResized = async () => {
