@@ -282,11 +282,7 @@ export class GoogleData {
       payload: {
         headers: [
           { name: 'Subject', value: parsedMail.subject || '' },
-          // todo - Gmail doesn't retain message ids we give it in the MIME message.
-          //   therefore ideally, we would not retain them in mock either, to be consistent
-          //   in a separate PR try to remove `parsedMail.messageId || ` below
-          //   see if it breaks any tests
-          { name: 'Message-ID', value: parsedMail.messageId || `mock-gmail-message-id-${Util.lousyRandom()}` },
+          { name: 'Message-ID', value: parsedMail.messageId || '' },
         ],
         body,
       },
