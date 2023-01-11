@@ -101,7 +101,8 @@
   "homepage": "https://flowcrypt.com",
   "lint-staged": {
     "*.ts": [
-      "npm run test_eslint"
+      "npm run test_eslint",
+      "npm run test_patterns"
     ],
     "*.{css,htm}": [
       "npm run test_stylelint"
