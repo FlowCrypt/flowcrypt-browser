@@ -23,6 +23,10 @@ export class ComposePwdOrPubkeyContainerModule extends ViewModule<ComposeView> {
 
   public setHandlers = () => {
     this.view.S.cached('input_password').on(
+      'keyup',
+      this.view.setHandlerPrevent('spree', () => this.handlePasswordChange())
+    );
+    this.view.S.cached('input_password').on(
       'focus',
       this.view.setHandlerPrevent('spree', () => this.inputPwdFocusHandler())
     );
@@ -83,9 +87,17 @@ export class ComposePwdOrPubkeyContainerModule extends ViewModule<ComposeView> {
       }
     }
     this.view.sizeModule.setInputTextHeightManuallyIfNeeded();
+  };
+
+  public handlePasswordChange = () => {
     const pwdOk = this.isMessagePasswordStrong(String(this.view.S.cached('input_password').val()));
     this.view.S.cached('input_password').css('color', pwdOk ? '#31a217' : '#d14836'); // green : red
-  };
+    if (pwdOk) {
+      this.view.S.cached('expiration_note').hide();
+    } else {
+      this.view.S.cached('expiration_note').show();
+    }
+  }
 
   public isVisible = () => {
     return !this.view.S.cached('password_or_pubkey').is(':hidden');
