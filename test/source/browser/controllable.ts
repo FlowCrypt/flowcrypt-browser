@@ -406,6 +406,10 @@ abstract class ControllableBase {
     );
   };
 
+  public hasHorizontalScroll = async () => {
+    return await this.target.evaluate(() => document.documentElement.scrollWidth > document.documentElement.offsetWidth);
+  };
+
   public verifyContentIsPresentContinuously = async (selector: string, expectedText: string, expectPresentForMs = 3000, timeoutSec = 30) => {
     await this.waitAll(selector);
     const start = Date.now();

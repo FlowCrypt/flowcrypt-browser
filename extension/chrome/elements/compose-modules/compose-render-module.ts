@@ -23,7 +23,7 @@ import { KeyUtil } from '../../../js/common/core/crypto/key.js';
 import { ReplyOptions } from './compose-reply-btn-popover-module.js';
 
 export class ComposeRenderModule extends ViewModule<ComposeView> {
-  public responseMethod: 'reply' | 'forward' | undefined;
+  private responseMethod: 'reply' | 'forward' | undefined;
 
   public initComposeBox = async () => {
     if (this.view.isReplyBox) {
@@ -50,7 +50,6 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
           bcc: this.view.replyParams.bcc,
         };
         this.view.recipientsModule.addRecipients(recipients, false).catch(Catch.reportErr);
-        // await this.view.composerContacts.addRecipientsAndShowPreview(recipients);
         if (this.view.skipClickPrompt) {
           // TODO: fix issue when loading recipients
           await this.view.recipientsModule.clearRecipientsForReply();
@@ -198,8 +197,7 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
   public fetchReplyMeta = async (aliases: string[]): Promise<void> => {
     Xss.sanitizePrepend('#new_message', Ui.e('div', { id: 'loader', html: `Loading secure reply box..${Ui.spinner('green')}` }));
     try {
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      const gmailMsg = await this.view.emailProvider.msgGet(this.view.replyMsgId!, 'metadata');
+      const gmailMsg = await this.view.emailProvider.msgGet(this.view.replyMsgId, 'metadata');
       this.view.replyParams = GmailParser.determineReplyMeta(this.view.acctEmail, aliases, gmailMsg);
       this.view.threadId = gmailMsg.threadId || '';
     } catch (e) {
@@ -229,8 +227,7 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
       }
       Catch.setHandledTimeout(() => {
         // Chrome needs async focus: https://github.com/FlowCrypt/flowcrypt-browser/issues/2056
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        document.getElementById('input_text')!.focus(); // jQuery no longer worked as of 3.6.0
+        document.getElementById('input_text')?.focus(); // jQuery no longer worked as of 3.6.0
       }, 10);
     }
   };
@@ -338,8 +335,7 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
       this.view.errModule.debug(
         `renderComposeTable: focusing ${focusId} isReplyBox=${this.view.isReplyBox},responseMethod=${this.responseMethod},toCount=${toCount}`
       );
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      document.getElementById(focusId)!.focus(); // jQuery no longer worked as of 3.6.0
+      document.getElementById(focusId)?.focus(); // jQuery no longer worked as of 3.6.0
     }, 100);
     this.view.sizeModule.onComposeTableRender();
   };
@@ -456,8 +452,7 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
             .map(attachment => {
               // xss-safe-factory
               attachment.msgId = msgId;
-              // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-              return this.view.factory!.embeddedAttachment(attachment, isEncrypted, this.view.parentTabId);
+              return this.view.factory.embeddedAttachment(attachment, isEncrypted, this.view.parentTabId);
             })
             .join('')
         )
