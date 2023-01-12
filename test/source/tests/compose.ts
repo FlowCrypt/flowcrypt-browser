@@ -2427,10 +2427,14 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         await fileInput!.uploadFile('test/samples/small.txt');
         // lousy pwd
         await composePage.waitAndType('@input-password', 'lousy pwd');
+        await composePage.checkElementColor('@input-password', 'rgb(209, 72, 54)'); // Check if password element color remains red (which means invalid password)
+        await composePage.clickIfPresent('#expiration_note'); // Expiration note should stay
         await composePage.waitAndClick('@action-send', { delay: 1 });
         await composePage.waitAndRespondToModal('error', 'confirm', 'Please use password with the following properties');
         // good pwd
         await composePage.waitAndType('@input-password', 'gO0d-pwd');
+        await composePage.checkElementColor('@input-password', 'rgb(49, 162, 23)');  // Password element color should turn into green (which means good password)
+        await composePage.notPresent('#expiration_note'); // Expiration note should be hidden when password is good
         await composePage.waitAndClick('@action-send', { delay: 1 });
         await ComposePageRecipe.closed(composePage);
         const sentMsgs = (await GoogleData.withInitializedData(acct)).searchMessagesBySubject(subject);
@@ -2660,9 +2664,8 @@ const sendTextAndVerifyPresentInSentMsg = async (
   text: string,
   sendingOpt: { encrypt?: boolean; sign?: boolean; richtext?: boolean } = {}
 ) => {
-  const subject = `Test Sending ${sendingOpt.sign ? 'Signed' : ''} ${
-    sendingOpt.encrypt ? 'Encrypted' : ''
-  } Message With Test Text ${text} ${Util.lousyRandom()}`;
+  const subject = `Test Sending ${sendingOpt.sign ? 'Signed' : ''} ${sendingOpt.encrypt ? 'Encrypted' : ''
+    } Message With Test Text ${text} ${Util.lousyRandom()}`;
   const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
   await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, subject, text, sendingOpt);
   await ComposePageRecipe.sendAndClose(composePage);
