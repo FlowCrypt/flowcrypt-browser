@@ -102,7 +102,9 @@
   "lint-staged": {
     "*.ts": [
       "npm run test_eslint",
-      "npm run test_patterns"
+      "npm run test_patterns",
+      "prettier --write",
+      "git add"
     ],
     "*.{css,htm}": [
       "npm run test_stylelint"
