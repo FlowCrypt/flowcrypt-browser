@@ -103,8 +103,7 @@
     "*.ts": [
       "npm run test_eslint",
       "npm run test_patterns",
-      "prettier --write",
-      "git add"
+      "prettier --write"
     ],
     "*.{css,htm}": [
       "npm run test_stylelint"
