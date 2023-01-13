@@ -55,16 +55,15 @@ export const defineUnitBrowserTests = (testVariant: TestVariant, testWithBrowser
         .toUtfStr()
         .trim();
       const testCasesInFile = unitTestCodes.split('\nBROWSER_UNIT_TEST_NAME(');
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      const header = testCasesInFile.shift()!;
-      if (!header.startsWith('/* ©️ 2016')) {
+      const header = testCasesInFile.shift();
+      if (!header?.startsWith('/* ©️ 2016')) {
         throw Error(`Expecting ${browserUnitTestsFolder}/${filename} to start with '/* ©️ 2016'`);
       }
       if (header.includes('require(') || header.includes('import')) {
         // do not import anything. Add deps to ci_unit_test.ts
         throw Error(`Unexpected import statement found in ${browserUnitTestsFolder}/${filename}`);
       }
-      const unitTests = [];
+      const unitTests: UnitTest[] = [];
       for (let code of testCasesInFile) {
         if (code.includes('/*')) {
           // just to make sure we don't parse something wrongly. Block comment only allowed in header.

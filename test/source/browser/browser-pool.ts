@@ -33,7 +33,7 @@ export class BrowserPool {
       '--no-sandbox', // make it work in travis-ci
       '--disable-setuid-sandbox',
       '--kiosk-printing',
-      '--disable-features=site-per-process',
+      // '--disable-features=site-per-process',
       `--disable-extensions-except=${this.extensionBuildDir}`,
       `--load-extension=${this.extensionBuildDir}`,
       `--window-size=${this.width + 10},${this.height + 132}`,
@@ -99,7 +99,7 @@ export class BrowserPool {
 
   public close = async () => {
     while (this.browsersForReuse.length) {
-      await this.browsersForReuse.pop()!.close(); // eslint-disable-line @typescript-eslint/no-non-null-assertion
+      await this.browsersForReuse.pop()?.close();
     }
   };
 
@@ -124,7 +124,7 @@ export class BrowserPool {
   public getPooledBrowser = async (cb: (t: AvaContext, browser: BrowserHandle) => void, t: AvaContext) => {
     const browser = await this.openOrReuseBrowser(t);
     try {
-      await cb(t, browser);
+      cb(t, browser);
     } finally {
       await Util.sleep(1);
       await this.doneUsingBrowser(browser);
@@ -148,7 +148,7 @@ export class BrowserPool {
       try {
         const browser = await withTimeouts(this.newBrowserHandle(t));
         try {
-          await withTimeouts(this.cbWithTimeout(async () => await cb(t, browser), consts.TIMEOUT_EACH_RETRY));
+          await withTimeouts(this.cbWithTimeout(async () => cb(t, browser), consts.TIMEOUT_EACH_RETRY));
           await this.throwOnRetryFlagAndReset(t);
           if (attemptDebugHtmls.length && flag !== 'FAILING') {
             // don't debug known failures

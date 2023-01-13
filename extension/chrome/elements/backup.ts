@@ -72,8 +72,7 @@ View.run(
     };
 
     private sendResizeMsg = () => {
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      const desiredHeight = $('#backup_block').height()!;
+      const desiredHeight = $('#backup_block').height();
       BrowserMsg.send.setCss(this.parentTabId, {
         selector: `iframe#${this.frameId}`,
         css: { height: `${desiredHeight}px` },

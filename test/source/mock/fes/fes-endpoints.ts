@@ -26,8 +26,7 @@ const processMessageFromUser = async (body: string) => {
     verificationPubs: [],
   });
   expect(decrypted.success).to.equal(true);
-  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-  const decryptedMimeMsg = decrypted.content!.toUtfStr();
+  const decryptedMimeMsg = decrypted.content?.toUtfStr();
   expect(decryptedMimeMsg).to.contain(
     'Content-Type: text/plain\r\n' + 'Content-Transfer-Encoding: quoted-printable\r\n\r\n' + 'PWD encrypted message with FES - ID TOKEN'
   );
@@ -66,8 +65,7 @@ const processMessageFromUser2 = async (body: string) => {
     verificationPubs: [],
   });
   expect(decrypted.success).to.equal(true);
-  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-  const decryptedMimeMsg = decrypted.content!.toUtfStr();
+  const decryptedMimeMsg = decrypted.content?.toUtfStr();
   // small.txt
   expect(decryptedMimeMsg).to.contain('Content-Type: text/plain; name=small.txt\r\n' + 'Content-Disposition: attachment; filename=small.txt');
   expect(decryptedMimeMsg).to.contain('Content-Transfer-Encoding: base64\r\n\r\n' + 'c21hbGwgdGV4dCBmaWxlCm5vdCBtdWNoIGhlcmUKdGhpcyB3b3JrZWQK');
@@ -116,8 +114,7 @@ const processMessageFromUser3 = async (body: string) => {
     verificationPubs: [],
   });
   expect(decrypted.success).to.equal(true);
-  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-  const decryptedMimeMsg = decrypted.content!.toUtfStr();
+  const decryptedMimeMsg = decrypted.content?.toUtfStr();
   // small.txt
   expect(decryptedMimeMsg).to.contain(
     'Content-Type: text/plain\r\n' + 'Content-Transfer-Encoding: quoted-printable\r\n\r\n' + 'PWD encrypted message with FES - pubkey recipient in bcc'

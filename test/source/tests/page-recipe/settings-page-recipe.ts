@@ -147,8 +147,7 @@ export class SettingsPageRecipe extends PageRecipe {
     } else {
       assert(false);
     }
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    const fp = Str.spaced(Xss.escape(key!.id));
+    const fp = Str.spaced(Xss.escape(key.id));
     await addPrvPage.waitAndClick('#toggle_input_passphrase');
     await addPrvPage.waitAndType('#input_passphrase', passphrase);
     if (checks.isSavePassphraseHidden !== undefined) {

@@ -97,7 +97,7 @@ export class ComposePwdOrPubkeyContainerModule extends ViewModule<ComposeView> {
     } else {
       this.view.S.cached('expiration_note').show();
     }
-  }
+  };
 
   public isVisible = () => {
     return !this.view.S.cached('password_or_pubkey').is(':hidden');

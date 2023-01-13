@@ -862,8 +862,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         expect(await backupPage.isDisabled('[data-id="515431151DDD3EA232B37A4C98ACFA1EADAB5B92"]')).to.equal(false);
         await backupPage.waitAndClick('@action-backup-step3manual-continue');
         await backupPage.waitAndRespondToModal('info', 'confirm', 'Your private keys have been successfully backed up');
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const sentMsg = (await GoogleData.withInitializedData(acctEmail)).searchMessagesBySubject('Your FlowCrypt Backup')[0]!;
+        const sentMsg = (await GoogleData.withInitializedData(acctEmail)).searchMessagesBySubject('Your FlowCrypt Backup')[0];
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const mimeMsg = await Parse.convertBase64ToMimeMsg(sentMsg.raw!);
         const { keys } = await KeyUtil.readMany(Buf.concat(mimeMsg.attachments.map(a => a.content)));
@@ -1124,11 +1123,11 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         );
         await backupPage.waitAndClick('@action-backup-step3manual-continue');
         await backupPage.waitAndRespondToModal('info', 'confirm', 'Your private key has been successfully backed up');
-        /* eslint-disable @typescript-eslint/no-non-null-assertion */
-        const sentMsg = (await GoogleData.withInitializedData(acctEmail)).searchMessagesBySubject('Your FlowCrypt Backup')[0]!;
+
+        const sentMsg = (await GoogleData.withInitializedData(acctEmail)).searchMessagesBySubject('Your FlowCrypt Backup')[0];
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const mimeMsg = await Parse.convertBase64ToMimeMsg(sentMsg.raw!);
-        const { keys } = await KeyUtil.readMany(new Buf(mimeMsg.attachments[0]!.content!));
-        /* eslint-enable @typescript-eslint/no-non-null-assertion */
+        const { keys } = await KeyUtil.readMany(new Buf(mimeMsg.attachments[0].content));
         expect(keys.length).to.equal(1);
         expect(KeyUtil.identityEquals(keys[0], { id: '515431151DDD3EA232B37A4C98ACFA1EADAB5B92', family: 'openpgp' })).to.equal(true);
         await backupPage.close();

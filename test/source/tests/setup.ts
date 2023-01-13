@@ -1037,7 +1037,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         await PageRecipe.waitForToastToAppearAndDisappear(gmailPage, 'Account keys updated');
         const set3 = await retrieveAndCheckKeys(settingsPage, acct, 1);
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        expect(set3[0].lastModified!).to.be.greaterThan(set2[0].lastModified!); // an update happened
+        expect(set3[0].lastModified).to.be.greaterThan(set2[0].lastModified!); // an update happened
         await gmailPage.close();
         // 3. EKM returns the same version of the existing key, no toast, no update
         gmailPage = await browser.newPage(t, TestUrls.mockGmailUrl(), undefined, extraAuthHeaders);

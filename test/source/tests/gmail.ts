@@ -543,8 +543,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
     const testMinimumElementHeight = async (page: ControllablePage, selector: string, min: number) => {
       // testing https://github.com/FlowCrypt/flowcrypt-browser/issues/3519
       const elStyle = await page.target.$eval(selector, el => el.getAttribute('style')); // 'height: 289.162px;'
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      const elHeight = Number(elStyle!.replace('height: ', '').replace('px;', ''));
+      const elHeight = Number(elStyle?.replace('height: ', '').replace('px;', ''));
       if (isNaN(elHeight)) {
         throw Error(`msgIframeHeight iNaN`);
       }

@@ -275,15 +275,12 @@ abstract class ControllableBase {
   };
 
   public checkElementColor = async (selector: string, color: string) => {
-    const elementColor = await this.target.evaluate(
-      (selector) => {
-        const el = document.querySelector(selector) as HTMLElement; // this will get evaluated in the browser
-        return el.style.color;
-      },
-      this.selector(selector)
-    );
+    const elementColor = await this.target.evaluate(selector => {
+      const el = document.querySelector(selector) as HTMLElement; // this will get evaluated in the browser
+      return el.style.color;
+    }, this.selector(selector));
     expect(elementColor).to.equal(color);
-  }
+  };
 
   public waitAndType = async (selector: string, text: string, { delay = 0.1 }: { delay?: number } = {}) => {
     await this.waitAll(selector);
@@ -387,7 +384,7 @@ abstract class ControllableBase {
     }
     throw new Error(
       `Selector ${selector} was found but did not match "${needle}" within ${timeoutSec}s. ` +
-      `Observed content history: "${JSON.stringify(observedContentHistory, undefined, 2)}"`
+        `Observed content history: "${JSON.stringify(observedContentHistory, undefined, 2)}"`
     );
   };
 
@@ -644,7 +641,7 @@ export class ControllableAlert {
 
 class ConsoleEvent {
   // eslint-disable-next-line no-empty-function
-  public constructor(public type: string, public text: string) { }
+  public constructor(public type: string, public text: string) {}
 }
 
 export class ControllablePage extends ControllableBase {

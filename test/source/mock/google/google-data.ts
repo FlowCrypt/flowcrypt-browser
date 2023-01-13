@@ -63,15 +63,13 @@ export class GmailMsg {
     this.threadId = msg.id;
     this.labelIds = [msg.labelId];
     this.raw = msg.raw;
-    /* eslint-disable @typescript-eslint/no-non-null-assertion */
-    const contentTypeHeader = msg.mimeMsg.headers.get('content-type')! as StructuredHeader;
-    const toHeader = msg.mimeMsg.headers.get('to')! as AddressObject;
-    const fromHeader = msg.mimeMsg.headers.get('from')! as AddressObject;
-    const subjectHeader = msg.mimeMsg.headers.get('subject')! as string;
-    const dateHeader = msg.mimeMsg.headers.get('date')! as Date;
-    const messageIdHeader = msg.mimeMsg.headers.get('message-id')! as string;
-    const mimeVersionHeader = msg.mimeMsg.headers.get('mime-version')! as string;
-    /* eslint-enable @typescript-eslint/no-non-null-assertion */
+    const contentTypeHeader = msg.mimeMsg.headers.get('content-type') as StructuredHeader;
+    const toHeader = msg.mimeMsg.headers.get('to') as AddressObject;
+    const fromHeader = msg.mimeMsg.headers.get('from') as AddressObject;
+    const subjectHeader = msg.mimeMsg.headers.get('subject') as string;
+    const dateHeader = msg.mimeMsg.headers.get('date') as Date;
+    const messageIdHeader = msg.mimeMsg.headers.get('message-id') as string;
+    const mimeVersionHeader = msg.mimeMsg.headers.get('mime-version') as string;
     let body: GmailMsg$payload$body | undefined;
     if (msg.mimeMsg.text) {
       const textBase64 = Buffer.from(msg.mimeMsg.text, 'utf-8').toString('base64');
@@ -92,20 +90,18 @@ export class GmailMsg {
       ],
       body,
     };
-    /* eslint-disable @typescript-eslint/no-non-null-assertion */
     if (toHeader) {
-      this.payload.headers!.push({ name: 'To', value: toHeader.value.map(a => a.address).join(',') });
+      this.payload.headers?.push({ name: 'To', value: toHeader.value.map(a => a.address).join(',') });
     }
-    if (fromHeader) {
-      this.payload.headers!.push({ name: 'From', value: fromHeader.value[0].address! });
+    if (fromHeader && fromHeader.value[0].address) {
+      this.payload.headers?.push({ name: 'From', value: fromHeader.value[0].address });
     }
     if (subjectHeader) {
-      this.payload.headers!.push({ name: 'Subject', value: subjectHeader });
+      this.payload.headers?.push({ name: 'Subject', value: subjectHeader });
     }
     if (dateHeader) {
-      this.payload.headers!.push({ name: 'Date', value: dateHeader.toString() });
+      this.payload.headers?.push({ name: 'Date', value: dateHeader.toString() });
     }
-    /* eslint-enable @typescript-eslint/no-non-null-assertion */
   }
 }
 
@@ -242,7 +238,7 @@ export class GoogleData {
         m.payload.headers &&
         m.payload.headers
           .filter(h => h.name === 'To' || h.name === 'From')
-          .map(h => h.value!) // eslint-disable-line @typescript-eslint/no-non-null-assertion
+          .map(h => h.value)
           .filter(h => !!h)
           .join(',')
     );
