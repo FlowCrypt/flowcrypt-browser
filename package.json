@@ -1,6 +1,6 @@
 {
   "name": "flowcrypt-browser",
-  "version": "8.4.1",
+  "version": "8.4.2",
   "description": "Simple end-to-end encryption to secure email and attachments on Google.",
   "resolutions": {
     "graceful-fs": "4.1.13"
@@ -102,7 +102,8 @@
   "lint-staged": {
     "*.ts": [
       "npm run test_eslint",
-      "npm run test_patterns"
+      "npm run test_patterns",
+      "prettier --write"
     ],
     "*.{css,htm}": [
       "npm run test_stylelint"
