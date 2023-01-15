@@ -1364,6 +1364,7 @@ table#compose {
   min-height: 260px;
   border-spacing: 0;
   border-collapse: collapse;
+  table-layout: fixed;
   width: 100%;
   background-color: white;
 }
@@ -1877,6 +1878,8 @@ table#compose div.reply-container .action-show-reply-options-popover.button {
 
 table#compose div.reply-container .action-show-reply-options-popover.button img {
   width: 30px;
+  object-fit: contain;
+  object-position: top;
 }
 
 table#compose .action-show-options-popover {

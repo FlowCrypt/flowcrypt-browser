@@ -1,6 +1,6 @@
 {
   "name": "flowcrypt-browser",
-  "version": "8.4.1",
+  "version": "8.4.2",
   "description": "Simple end-to-end encryption to secure email and attachments on Google.",
   "resolutions": {
     "graceful-fs": "4.1.13"
@@ -14,8 +14,8 @@
     "@types/jquery": "3.5.16",
     "@types/mailparser": "3.4.0",
     "@types/mkdirp": "1.0.2",
-    "@typescript-eslint/eslint-plugin": "5.48.0",
-    "@typescript-eslint/parser": "5.48.0",
+    "@typescript-eslint/eslint-plugin": "^5.48.0",
+    "@typescript-eslint/parser": "^5.48.0",
     "ava": "5.1.0",
     "chai": "4.3.7",
     "chai-as-promised": "7.1.1",
@@ -38,7 +38,7 @@
     "openpgp": ">=5.5.0",
     "pdfjs-dist": "3.2.146",
     "prettier": "^2.8.1",
-    "puppeteer": "19.5.0",
+    "puppeteer": "19.5.2",
     "stream-browserify": "^3.0.0",
     "stylelint": "14.16.1",
     "stylelint-config-standard": "29.0.0",
@@ -104,7 +104,8 @@
   "lint-staged": {
     "*.ts": [
       "npm run test_eslint",
-      "npm run test_patterns"
+      "npm run test_patterns",
+      "prettier --write"
     ],
     "*.{css,htm}": [
       "npm run test_stylelint"

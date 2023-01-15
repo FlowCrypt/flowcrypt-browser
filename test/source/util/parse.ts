@@ -33,14 +33,14 @@ const strictParse = async (source: string): Promise<ParseMsgResult> => {
 
 const parseMixed = async (source: string): Promise<ParsedMail> => {
   if (source.startsWith('Content-Type: multipart/mixed')) {
-    return await simpleParser(new Buffer(source), { keepCidLinks: true });
+    return await simpleParser(Buffer.from(source), { keepCidLinks: true });
   } else {
     throw new Error("multipart/mixed message wasn't found");
   }
 };
 
 const convertBase64ToMimeMsg = async (base64: string) => {
-  return await simpleParser(new Buffer(Buf.fromBase64Str(base64)), { keepCidLinks: true /* #3256 */ });
+  return await simpleParser(Buffer.from(Buf.fromBase64Str(base64)), { keepCidLinks: true /* #3256 */ });
 };
 
 export default { strictParse, parseMixed, convertBase64ToMimeMsg };
