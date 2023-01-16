@@ -2,6 +2,8 @@
 
 'use strict';
 
+import { BrowserMsg } from '../browser/browser-msg.js';
+import { Browser } from '../browser/browser.js';
 import { Buf } from './buf.js';
 import { Str } from './common.js';
 
@@ -63,6 +65,70 @@ export class Attachment {
     this.cid = cid || undefined;
     this.contentDescription = contentDescription || undefined;
   }
+
+  public static prepareFileAttachmentDownload = (attachment: Attachment, parentTabId: string) => {
+    const blacklistedFiles = [
+      '.ade',
+      '.adp',
+      '.apk',
+      '.appx',
+      '.appxbundle',
+      '.bat',
+      '.cab',
+      '.chm',
+      '.cmd',
+      '.com',
+      '.cpl',
+      '.diagcab',
+      '.diagcfg',
+      '.diagpack',
+      '.dll',
+      '.dmg',
+      '.ex',
+      '.ex_',
+      '.exe',
+      '.hta',
+      '.img',
+      '.ins',
+      '.iso',
+      '.isp',
+      '.jar',
+      '.jnlp',
+      '.js',
+      '.jse',
+      '.lib',
+      '.lnk',
+      '.mde',
+      '.msc',
+      '.msi',
+      '.msix',
+      '.msixbundle',
+      '.msp',
+      '.mst',
+      '.nsh',
+      '.pif',
+      '.ps1',
+      '.scr',
+      '.sct',
+      '.shb',
+      '.sys',
+      '.vb',
+      '.vbe',
+      '.vbs',
+      '.vhd',
+      '.vxd',
+      '.wsc',
+      '.wsf',
+      '.wsh',
+      '.xll',
+    ];
+    const badFileExtensionWarning = 'This executable file was not checked for viruses, and may be dangerous to download or run. Proceed anyway?'; // xss-safe-value
+    if (blacklistedFiles.some(badFileExtension => attachment.name.endsWith(badFileExtension))) {
+      BrowserMsg.send.showWarningForAttachmentDownload(parentTabId, { message: badFileExtensionWarning, attachment });
+      return;
+    }
+    Browser.saveToDownloads(attachment);
+  };
 
   public static treatAsForPgpEncryptedAttachments = (mimeType: string | undefined, pgpEncryptedIndex: number | undefined) => {
     let treatAs: 'hidden' | 'encryptedMsg' | undefined;

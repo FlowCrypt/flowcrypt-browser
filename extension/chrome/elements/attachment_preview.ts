@@ -6,7 +6,6 @@ import { Assert } from '../../js/common/assert.js';
 import { Attachment } from '../../js/common/core/attachment.js';
 import { AttachmentDownloadView } from './attachment.js';
 import { AttachmentPreviewPdf } from '../../js/common/ui/attachment_preview_pdf.js';
-import { Browser } from '../../js/common/browser/browser.js';
 import { BrowserMsg } from '../../js/common/browser/browser-msg.js';
 import { KeyStore } from '../../js/common/platform/store/key-store.js';
 import { PDFDocumentProxy } from '../../types/pdf.js';
@@ -81,67 +80,7 @@ View.run(
             .css('display', 'flex')
             .on('click', e => {
               e.stopPropagation();
-              const blacklistedFiles = [
-                '.ade',
-                '.adp',
-                '.apk',
-                '.appx',
-                '.appxbundle',
-                '.bat',
-                '.cab',
-                '.chm',
-                '.cmd',
-                '.com',
-                '.cpl',
-                '.diagcab',
-                '.diagcfg',
-                '.diagpack',
-                '.dll',
-                '.dmg',
-                '.ex',
-                '.ex_',
-                '.exe',
-                '.hta',
-                '.img',
-                '.ins',
-                '.iso',
-                '.isp',
-                '.jar',
-                '.jnlp',
-                '.js',
-                '.jse',
-                '.lib',
-                '.lnk',
-                '.mde',
-                '.msc',
-                '.msi',
-                '.msix',
-                '.msixbundle',
-                '.msp',
-                '.mst',
-                '.nsh',
-                '.pif',
-                '.ps1',
-                '.scr',
-                '.sct',
-                '.shb',
-                '.sys',
-                '.vb',
-                '.vbe',
-                '.vbs',
-                '.vhd',
-                '.vxd',
-                '.wsc',
-                '.wsf',
-                '.wsh',
-                '.xll',
-              ];
-              const badFileExtensionWarning = 'This executable file was not checked for viruses, and may be dangerous to download or run. Proceed anyway?'; // xss-safe-value
-              if (blacklistedFiles.some(badFileExtension => this.attachment.name.endsWith(badFileExtension))) {
-                BrowserMsg.send.showWarningForAttachmentDownload(this.parentTabId, { message: badFileExtensionWarning, attachment: attachmentForSave });
-                return;
-              }
-              Browser.saveToDownloads(attachmentForSave);
+              Attachment.prepareFileAttachmentDownload(attachmentForSave, this.parentTabId);
             });
           $('#attachment-preview-filename').text(this.origNameBasedOnFilename);
         }
