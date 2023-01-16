@@ -405,11 +405,11 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
     } else {
       let expirationText;
       if (expireInDays > 0) {
-        expirationText = `Your keys are expiring in ${Str.pluralize(expireInDays, 'day')}.<br/>`;
+        expirationText = `Your keys are expiring in ${Str.pluralize(expireInDays, 'day')}.`;
       } else {
-        expirationText = `Your keys are expired.<br/>`;
+        expirationText = `Your keys are expired.`;
       }
-      warningMsg = `${expirationText}. Please import a newer set of keys to use.`;
+      warningMsg = `${expirationText} Please import a newer set of keys to use.`;
     }
     warningMsg += `<a href="#" class="close" data-test="notification-close-expiration-popup">close</a>`;
     notifications.show(warningMsg, {}, 'notify_expiring_keys');
