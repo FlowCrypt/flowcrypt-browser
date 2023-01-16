@@ -84,17 +84,19 @@ export class Api<REQ, RES> {
     });
   }
 
-  public listen = (port: number, host = '127.0.0.1', maxMb = 100): Promise<void> => {
+  public listen = (port = 0, host = '127.0.0.1', maxMb = 100): Promise<number | undefined> => {
     return new Promise((resolve, reject) => {
       try {
         this.maxRequestSizeMb = maxMb;
         this.maxRequestSizeBytes = maxMb * 1024 * 1024;
+        // node.js selects random available port when port = 0
         this.server.listen(port, host);
         this.server.on('listening', () => {
           const address = this.server.address();
+          const port = typeof address === 'object' && address ? address.port : undefined;
           const msg = `${this.apiName} listening on ${typeof address === 'object' && address ? address.port : address}`;
           console.log(msg);
-          resolve();
+          resolve(port);
         });
         this.server.on('error', e => {
           console.error('failed to start mock server', e);

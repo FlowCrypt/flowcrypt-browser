@@ -1,14 +1,20 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
 import { startAllApisMock } from './mock/all-apis-mock';
+import { exec } from 'child_process';
 
 export const mock = async (logger: (line: string) => void) => {
-  return await startAllApisMock(logger);
+  const mockApi = await startAllApisMock(logger);
+  const address = mockApi.server.address();
+  if (typeof address === 'object' && address) {
+    exec(`sh ./scripts/set-test-port.sh ${address.port}`);
+  }
+  return mockApi;
 };
 
-if (require.main === module) {
-  mock(msgLog => console.log(msgLog)).catch(e => {
-    console.error(e);
-    process.exit(1);
-  });
-}
+// if (require.main === module) {
+//   mock(8002, msgLog => console.log(msgLog)).catch(e => {
+//     console.error(e);
+//     process.exit(1);
+//   });
+// }

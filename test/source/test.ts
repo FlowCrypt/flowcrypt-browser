@@ -47,7 +47,7 @@ consts.PROMISE_TIMEOUT_OVERALL = new Promise((resolve, reject) => setTimeout(() 
 export type Consts = typeof consts;
 export type CommonAcct = 'compatibility' | 'compose' | 'ci.tests.gmail';
 
-const browserPool = new BrowserPool(consts.POOL_SIZE, 'browserPool', false, buildDir, isMock, undefined, undefined, consts.IS_LOCAL_DEBUG);
+const browserPool = new BrowserPool(consts.POOL_SIZE, 'browserPool', buildDir, isMock, undefined, undefined, consts.IS_LOCAL_DEBUG);
 let closeMockApi: () => Promise<void>;
 const mockApiLogs: string[] = [];
 
@@ -114,7 +114,7 @@ export type TestWithBrowser = typeof testWithBrowser;
 
 ava.default.after.always('close browsers', async t => {
   standaloneTestTimeout(t, consts.TIMEOUT_SHORT, t.title);
-  await browserPool.close();
+  // await browserPool.close();
   t.pass();
 });
 

@@ -1,0 +1,1 @@
+grep "localhost:8001" ./build -lr | xargs sed -i '.bak' "s/localhost\:8001/localhost\:$1/g"
