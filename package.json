@@ -1,6 +1,6 @@
 {
   "name": "flowcrypt-browser",
-  "version": "8.4.1",
+  "version": "8.4.2",
   "description": "Simple end-to-end encryption to secure email and attachments on Google.",
   "resolutions": {
     "graceful-fs": "4.1.13"
@@ -13,8 +13,8 @@
     "@types/jquery": "3.5.16",
     "@types/mailparser": "3.4.0",
     "@types/mkdirp": "1.0.2",
-    "@typescript-eslint/eslint-plugin": "5.48.0",
-    "@typescript-eslint/parser": "5.48.0",
+    "@typescript-eslint/eslint-plugin": "^5.48.0",
+    "@typescript-eslint/parser": "^5.48.0",
     "ava": "5.1.0",
     "chai": "4.3.7",
     "chai-as-promised": "7.1.1",
@@ -30,14 +30,14 @@
     "eslint-plugin-prefer-arrow": "^1.2.3",
     "fc-node-requests": "git+https://git@github.com/FlowCrypt/node-requests.git",
     "googleapis": "110.0.0",
-    "husky": "^8.0.2",
+    "husky": "^8.0.3",
     "lint-staged": "^13.1.0",
     "mailparser": "3.6.3",
     "mkdirp": "1.0.4",
     "openpgp": "4.10.10",
     "pdfjs-dist": "3.2.146",
     "prettier": "^2.8.1",
-    "puppeteer": "19.4.1",
+    "puppeteer": "19.5.2",
     "stylelint": "14.16.1",
     "stylelint-config-standard": "29.0.0",
     "typescript": "4.9.4",
@@ -47,7 +47,7 @@
     "@flowcrypt/fine-uploader": "5.16.4",
     "bootstrap": "4.6.2",
     "clipboard": "2.0.11",
-    "dompurify": "2.4.1",
+    "dompurify": "2.4.3",
     "filesize": "10.0.6",
     "iso-8859-2": "1.0.0",
     "jquery": "3.6.3",
@@ -101,7 +101,9 @@
   "homepage": "https://flowcrypt.com",
   "lint-staged": {
     "*.ts": [
-      "npm run test_eslint"
+      "npm run test_eslint",
+      "npm run test_patterns",
+      "prettier --write"
     ],
     "*.{css,htm}": [
       "npm run test_stylelint"

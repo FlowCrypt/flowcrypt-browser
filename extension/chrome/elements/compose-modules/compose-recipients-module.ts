@@ -334,6 +334,9 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     Xss.sanitizeRender(container, '<span class="rest"><span id="rest_number"></span> more</span>');
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const maxWidth = container.parent().width()! - this.view.S.cached('container_cc_bcc_buttons').width()!;
+    if (maxWidth <= 0) {
+      return;
+    }
     const rest = container.find('.rest');
     let processed = 0;
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -483,8 +486,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
 
   private inputsDragLeaveHandler = (target: HTMLElement) => {
     if (Catch.browser().name === 'firefox') {
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      this.removeCursor(target.previousElementSibling! as HTMLElement);
+      this.removeCursor(target.previousElementSibling as HTMLElement);
     } else {
       target.blur();
     }
@@ -1191,8 +1193,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       if (!element.parentElement) {
         return false;
       }
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      element.parentElement!.insertBefore(cursor, element); // xss-reinsert
+      element.parentElement?.insertBefore(cursor, element); // xss-reinsert
     } else {
       element.appendChild(cursor);
     }
@@ -1202,8 +1203,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
   private removeCursor = (element: HTMLElement) => {
     for (const child of element.children) {
       if (child.classList.contains('drag-cursor')) {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        child.parentElement!.removeChild(child);
+        child.parentElement?.removeChild(child);
         break;
       }
     }

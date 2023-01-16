@@ -58,61 +58,63 @@
         </th>
       </tr>
       <tr id="recipients_row">
-        <td class="flex">
-          <div class="reply-container">
-            <div id="reply-options-container" class="reply-options-container" data-test="container-reply-options">
+        <td>
+          <div class="flex">
+            <div class="reply-container">
+              <div id="reply-options-container" class="reply-options-container" data-test="container-reply-options">
+              </div>
+              <button id="toggle_reply_options" class="action-show-reply-options-popover button"
+                title="More reply options" tabindex="0" data-test="action-show-reply-options-popover">
+                <img class="reply-options-icon" src="/img/reply-icon.png">
+                <div class="icon-chevron"></div>
+              </button>
             </div>
-            <button id="toggle_reply_options" class="action-show-reply-options-popover button"
-              title="More reply options" tabindex="0" data-test="action-show-reply-options-popover">
-              <img class="reply-options-icon" src="/img/reply-icon.png">
-              <div class="icon-chevron"></div>
-            </button>
-          </div>
-          <div class="input recipients-inputs flex-1">
-            <div id="input_addresses_container" class="invisible">
-              <!-- from -->
-              <div id="input-container-from">
-                <span class="recipient-left-label">From</span>
-                <select id="input_from" tabindex="1" data-test="input-from"></select>
-              </div>
-              <!-- to -->
-              <div id="input-container-to" class="input-container" data-sending-type="to" data-test="container-to">
-                <span class="recipient-left-label">To</span>
-                <div class="input-right-container">
-                  <span class="recipients recipients-to"></span>
-                  <input id="input_to" spellcheck="false" tabindex="1" data-test="input-to" data-sending-type="to"
-                    autocomplete="off" maxlength="256" />
-                  <span class="container-cc-bcc-buttons" data-test="container-cc-bcc-buttons">
-                    <button id="cc" class="cc" tabindex="20" data-test="action-show-cc">cc</button>
-                    <button id="bcc" class="bcc" tabindex="21" data-test="action-show-bcc">bcc</button>
-                  </span>
+            <div class="input recipients-inputs flex-1">
+              <div id="input_addresses_container" class="invisible">
+                <!-- from -->
+                <div id="input-container-from">
+                  <span class="recipient-left-label">From</span>
+                  <select id="input_from" tabindex="1" data-test="input-from"></select>
+                </div>
+                <!-- to -->
+                <div id="input-container-to" class="input-container" data-sending-type="to" data-test="container-to">
+                  <span class="recipient-left-label">To</span>
+                  <div class="input-right-container">
+                    <span class="recipients recipients-to"></span>
+                    <input id="input_to" spellcheck="false" tabindex="1" data-test="input-to" data-sending-type="to"
+                      autocomplete="off" maxlength="256" />
+                    <span class="container-cc-bcc-buttons" data-test="container-cc-bcc-buttons">
+                      <button id="cc" class="cc" tabindex="20" data-test="action-show-cc">cc</button>
+                      <button id="bcc" class="bcc" tabindex="21" data-test="action-show-bcc">bcc</button>
+                    </span>
+                  </div>
+                </div>
+                <!-- cc -->
+                <div id="input-container-cc" class="input-container" style="display: none;" data-sending-type="cc"
+                  data-test="container-cc">
+                  <span class="recipient-left-label">Cc</span>
+                  <div class="input-right-container">
+                    <span class="recipients recipients-cc"></span>
+                    <input spellcheck="false" tabindex="1" data-test="input-cc" data-sending-type="cc"
+                      autocomplete="off" maxlength="256" />
+                  </div>
+                </div>
+                <!-- bcc -->
+                <div id="input-container-bcc" class="input-container" style="display: none;" data-test="container-bcc"
+                  data-sending-type="bcc">
+                  <span class="recipient-left-label">Bcc</span>
+                  <div class="input-right-container">
+                    <span class="recipients recipients-bcc"></span>
+                    <input spellcheck="false" tabindex="1" data-test="input-bcc" data-sending-type="bcc"
+                      autocomplete="off" maxlength="256" />
+                  </div>
                 </div>
               </div>
-              <!-- cc -->
-              <div id="input-container-cc" class="input-container" style="display: none;" data-sending-type="cc"
-                data-test="container-cc">
-                <span class="recipient-left-label">Cc</span>
-                <div class="input-right-container">
-                  <span class="recipients recipients-cc"></span>
-                  <input spellcheck="false" tabindex="1" data-test="input-cc" data-sending-type="cc"
-                    autocomplete="off" maxlength="256" />
-                </div>
+              <div id="recipients_placeholder" class="collapsed" data-test="action-show-container-cc-bcc-buttons"
+                style="display: flex;">
+                <span class="placeholder">Recipients</span>
+                <div class="email_preview" data-test="recipients-preview"></div>
               </div>
-              <!-- bcc -->
-              <div id="input-container-bcc" class="input-container" style="display: none;" data-test="container-bcc"
-                data-sending-type="bcc">
-                <span class="recipient-left-label">Bcc</span>
-                <div class="input-right-container">
-                  <span class="recipients recipients-bcc"></span>
-                  <input spellcheck="false" tabindex="1" data-test="input-bcc" data-sending-type="bcc"
-                    autocomplete="off" maxlength="256" />
-                </div>
-              </div>
-            </div>
-            <div id="recipients_placeholder" class="collapsed" data-test="action-show-container-cc-bcc-buttons"
-              style="display: flex;">
-              <span class="placeholder">Recipients</span>
-              <div class="email_preview" data-test="recipients-preview"></div>
             </div>
           </div>
         </td>
