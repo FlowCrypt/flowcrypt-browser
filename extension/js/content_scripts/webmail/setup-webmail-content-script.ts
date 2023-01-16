@@ -12,7 +12,7 @@ import { ContentScriptWindow } from '../../common/browser/browser-window.js';
 import { Env, WebMailName } from '../../common/browser/env.js';
 import { Ui } from '../../common/browser/ui.js';
 import { ClientConfiguration, ClientConfigurationError } from '../../common/client-configuration.js';
-import { Url } from '../../common/core/common.js';
+import { Str, Url } from '../../common/core/common.js';
 import { InMemoryStoreKeys, VERSION } from '../../common/core/const.js';
 import { Injector } from '../../common/inject.js';
 import { Lang } from '../../common/lang.js';
@@ -392,12 +392,24 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
     }
     let warningMsg;
     if (clientConfiguration.usesKeyManager()) {
+      let expirationText;
+      if (expireInDays > 0) {
+        expirationText = `Your local keys expire in ${Str.pluralize(expireInDays, 'day')}.<br/>`;
+      } else {
+        expirationText = `Your local keys are expired.<br/>`;
+      }
       warningMsg =
-        `Your local keys expire in ${expireInDays} days.<br/>` +
+        expirationText +
         `To receive the latest keys, please ensure that you can connect to your corporate network either through VPN or in person and reload Gmail.<br/>` +
         `If this notification still shows after that, please contact your Help Desk.`;
     } else {
-      warningMsg = `Your keys are expiring in ${expireInDays} days. Please import a newer set of keys to use.`;
+      let expirationText;
+      if (expireInDays > 0) {
+        expirationText = `Your keys are expiring in ${Str.pluralize(expireInDays, 'day')}.`;
+      } else {
+        expirationText = `Your keys are expired.`;
+      }
+      warningMsg = `${expirationText} Please import a newer set of keys to use.`;
     }
     warningMsg += `<a href="#" class="close" data-test="notification-close-expiration-popup">close</a>`;
     notifications.show(warningMsg, {}, 'notify_expiring_keys');

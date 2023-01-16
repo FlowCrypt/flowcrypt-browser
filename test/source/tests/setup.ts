@@ -679,6 +679,22 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       'setup [using key manager] - notify users when their keys expire soon',
       testWithBrowser(undefined, async (t, browser) => {
         const acctEmail = 'flowcrypt.notify.expiring.keys.updating.key@key-manager-autogen.flowcrypt.test';
+        // Generate negative expiration key and check if it shows correct expiration note
+        const negativeExpirationKey = await opgp.generateKey({
+          curve: 'curve25519',
+          userIds: [{ email: acctEmail }],
+          keyExpirationTime: 1,
+          date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
+        });
+        MOCK_KM_KEYS[acctEmail] = { response: { privateKeys: [{ decryptedPrivateKey: negativeExpirationKey.privateKeyArmored }] } };
+        const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
+        await SetupPageRecipe.autoSetupWithEKM(settingsPage, { expectWarnModal: 'Public key not usable - not sumbitting to Attester' });
+        const gmailPage = await openMockGmailPage(t, browser, acctEmail);
+        // Check if notification presents
+        let warningMsg =
+          'Your local keys are expired.\nTo receive the latest keys, please ensure that you can connect to your corporate network either through VPN or in person and reload Gmail.\nIf this notification still shows after that, please contact your Help Desk.';
+        await gmailPage.waitForContent('@webmail-notification-notify_expiring_keys', warningMsg);
+        // Generate expired key(positive expiration) and check if it shows correct note
         const key = await opgp.generateKey({
           curve: 'curve25519',
           userIds: [{ email: acctEmail }],
@@ -686,11 +702,10 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
           date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
         });
         MOCK_KM_KEYS[acctEmail] = { response: { privateKeys: [{ decryptedPrivateKey: key.privateKeyArmored }] } };
-        const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
-        await SetupPageRecipe.autoSetupWithEKM(settingsPage);
-        const gmailPage = await openMockGmailPage(t, browser, acctEmail);
+        await gmailPage.page.reload();
+        await Util.sleep(1);
         // Check if notification presents
-        const warningMsg =
+        warningMsg =
           'Your local keys expire in 18 days.\nTo receive the latest keys, please ensure that you can connect to your corporate network either through VPN or in person and reload Gmail.\nIf this notification still shows after that, please contact your Help Desk.';
         await gmailPage.waitForContent('@webmail-notification-notify_expiring_keys', warningMsg);
         // Check if warning message still presents when EKM returns error
@@ -698,6 +713,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         await gmailPage.page.reload();
         await Util.sleep(1);
         await gmailPage.waitForContent('@webmail-notification-notify_expiring_keys', warningMsg);
+        // Return correct key and check if expiration note doesn't appear
         MOCK_KM_KEYS[acctEmail] = {
           response: {
             privateKeys: [{ decryptedPrivateKey: key.privateKeyArmored }, { decryptedPrivateKey: testConstants.notifyExpiringKeys }],
