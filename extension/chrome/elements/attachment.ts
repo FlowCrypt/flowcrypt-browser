@@ -323,10 +323,65 @@ export class AttachmentDownloadView extends View {
       if (!result.filename || ['msg.txt', 'null'].includes(result.filename)) {
         result.filename = this.attachment.name;
       }
-      const blacklistedFiles = ['.ade', '.adp', '.apk', '.appx', '.appxbundle', '.bat', '.cab', '.chm', '.cmd', '.com', '.cpl', '.diagcab', '.diagcfg', '.diagpack', '.dll', '.dmg', '.ex', '.ex_', '.exe', '.hta', '.img', '.ins', '.iso', '.isp', '.jar', '.jnlp', '.js', '.jse', '.lib', '.lnk', '.mde', '.msc', '.msi', '.msix', '.msixbundle', '.msp', '.mst', '.nsh', '.pif', '.ps1', '.scr', '.sct', '.shb', '.sys', '.vb', '.vbe', '.vbs', '.vhd', '.vxd', '.wsc', '.wsf', '.wsh', '.xll'];
+      const blacklistedFiles = [
+        '.ade',
+        '.adp',
+        '.apk',
+        '.appx',
+        '.appxbundle',
+        '.bat',
+        '.cab',
+        '.chm',
+        '.cmd',
+        '.com',
+        '.cpl',
+        '.diagcab',
+        '.diagcfg',
+        '.diagpack',
+        '.dll',
+        '.dmg',
+        '.ex',
+        '.ex_',
+        '.exe',
+        '.hta',
+        '.img',
+        '.ins',
+        '.iso',
+        '.isp',
+        '.jar',
+        '.jnlp',
+        '.js',
+        '.jse',
+        '.lib',
+        '.lnk',
+        '.mde',
+        '.msc',
+        '.msi',
+        '.msix',
+        '.msixbundle',
+        '.msp',
+        '.mst',
+        '.nsh',
+        '.pif',
+        '.ps1',
+        '.scr',
+        '.sct',
+        '.shb',
+        '.sys',
+        '.vb',
+        '.vbe',
+        '.vbs',
+        '.vhd',
+        '.vxd',
+        '.wsc',
+        '.wsf',
+        '.wsh',
+        '.xll',
+      ];
       if (blacklistedFiles.some(badFileExtension => result.filename?.endsWith(badFileExtension))) {
-        const badFileExtensionWarning = 'This executable file was not checked for viruses, and may be dangerous to download or run. Proceed anyway?'
-        // process warning rendering and condition checks here.
+        const badFileExtensionWarning = 'This executable file was not checked for viruses, and may be dangerous to download or run. Proceed anyway?'; // xss-safe-value
+        BrowserMsg.send.showWarningForAttachmentDownload(this.parentTabId, { message: badFileExtensionWarning });
+        return;
       }
       Browser.saveToDownloads(new Attachment({ name: result.filename, type: this.attachment.type, data: result.content }));
     } else if (result.error.type === DecryptErrTypes.needPassphrase) {

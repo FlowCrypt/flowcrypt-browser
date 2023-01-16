@@ -238,6 +238,11 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
     BrowserMsg.addListener('show_attachment_preview', async ({ iframeUrl }: Bm.ShowAttachmentPreview) => {
       await Ui.modal.attachmentPreview(iframeUrl);
     });
+    BrowserMsg.addListener('show_warning_for_attachment_download', async ({ message }: Bm.ShowWarningForAttachmentDownload) => {
+      if (await Ui.modal.confirm(message)) {
+        return;
+      }
+    });
 
     BrowserMsg.listen(tabId);
   };
