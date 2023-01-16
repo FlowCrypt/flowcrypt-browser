@@ -3,8 +3,8 @@
 import { startAllApisMock } from './mock/all-apis-mock';
 import { exec } from 'child_process';
 
-export const mock = async (logger: (line: string) => void) => {
-  const mockApi = await startAllApisMock(logger);
+export const mock = async (port = 0, logger: (line: string) => void) => {
+  const mockApi = await startAllApisMock(port, logger);
   const address = mockApi.server.address();
   if (typeof address === 'object' && address) {
     exec(`sh ./scripts/set-test-port.sh ${address.port}`);

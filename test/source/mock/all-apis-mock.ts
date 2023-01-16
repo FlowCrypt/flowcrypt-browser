@@ -14,7 +14,7 @@ import { mockFesEndpoints } from './fes/fes-endpoints';
 
 export type HandlersDefinition = Handlers<{ query: { [k: string]: string }; body?: unknown }, unknown>;
 
-export const startAllApisMock = async (logger: (line: string) => void) => {
+export const startAllApisMock = async (port = 0, logger: (line: string) => void) => {
   class LoggedApi<REQ, RES> extends Api<REQ, RES> {
     protected throttleChunkMsUpload = 15;
     protected throttleChunkMsDownload = 50;
@@ -34,6 +34,6 @@ export const startAllApisMock = async (logger: (line: string) => void) => {
     ...mockFesEndpoints,
     '/favicon.ico': async () => '',
   });
-  await api.listen();
+  await api.listen(port);
   return api;
 };
