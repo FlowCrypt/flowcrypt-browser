@@ -19,6 +19,8 @@ import { KeyUtil } from '../core/crypto/key';
 import { ElementHandle } from 'puppeteer';
 import { expectRecipientElements } from './compose';
 import { GoogleData } from '../mock/google/google-data';
+import { Stream } from '../core/stream';
+import type * as OpenPGP from 'openpgp';
 
 // these tests are run serially, one after another, because they are somewhat more sensitive to parallel testing
 // eg if they are very cpu-sensitive (create key tests)
@@ -476,7 +478,20 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
         ]);
       })
     );
-
+    ava.default(`[unit][Stream.readToEnd] efficiently handles multiple chunks`, async t => {
+      const stream = new ReadableStream<Uint8Array>({
+        // eslint-disable-next-line prefer-arrow/prefer-arrow-functions
+        start(controller) {
+          for (let i = 0; i < 10; i++) {
+            controller.enqueue(Buffer.from('test'.repeat(1000000)));
+          }
+          controller.close();
+        },
+      });
+      const result = await Stream.readUint8ArrayToEnd(stream as unknown as OpenPGP.Stream<Uint8Array>);
+      expect(result.length).to.equal(40000000);
+      t.pass();
+    });
     ava.default(
       'decrypt - entering pass phrase should unlock all keys that match the pass phrase',
       testWithBrowser('compatibility', async (t, browser) => {

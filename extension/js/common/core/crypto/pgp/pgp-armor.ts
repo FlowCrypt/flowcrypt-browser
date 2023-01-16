@@ -8,8 +8,9 @@ import { Buf } from '../../buf.js';
 import { ReplaceableMsgBlockType } from '../../msg-block.js';
 import { Str } from '../../common.js';
 import type * as OpenPGP from 'openpgp';
-import { opgp, streams } from './openpgpjs-custom.js';
+import { opgp } from './openpgpjs-custom.js';
 import { SmimeKey, ENVELOPED_DATA_OID } from '../smime/smime-key.js';
+import { Stream } from '../../stream.js';
 
 export type PreparedForDecrypt =
   | {
@@ -153,13 +154,14 @@ export class PgpArmor {
     throw new Error('Message does not have armor headers');
   };
 
+  // todo: test in browser
   public static dearmor = async (text: string): Promise<{ type: OpenPGP.enums.armor; data: Uint8Array }> => {
     const decoded = await opgp.unarmor(text);
-    const data = await streams.readToEnd(decoded.data);
+    const data = await Stream.readUint8ArrayToEnd(decoded.data);
     return { type: decoded.type, data };
   };
 
   public static armor = (messagetype: OpenPGP.enums.armor, body: object, partindex?: number, parttotal?: number, customComment?: string): string => {
-    return opgp.armor(messagetype, body, partindex || 0, parttotal || 1, customComment ? { commentString: customComment } as OpenPGP.Config : undefined); // todo: versionString ?
+    return opgp.armor(messagetype, body, partindex || 0, parttotal || 1, customComment ? ({ commentString: customComment } as OpenPGP.Config) : undefined); // todo: versionString ?
   };
 }

@@ -5,12 +5,13 @@ import { Key, KeyInfoWithIdentity, KeyInfoWithIdentityAndOptionalPp, KeyUtil } f
 import { MsgBlockType, ReplaceableMsgBlockType } from '../../msg-block.js';
 import { Buf } from '../../buf.js';
 import { PgpArmor, PreparedForDecrypt } from './pgp-armor.js';
-import { opgp, streams } from './openpgpjs-custom.js';
+import { opgp } from './openpgpjs-custom.js';
 import type * as OpenPGP from 'openpgp';
 import { KeyCache } from '../../../platform/key-cache.js';
 import { SmimeKey, SmimeMsg } from '../smime/smime-key.js';
 import { OpenPGPKey } from './openpgp-key.js';
 import { ContactStore } from '../../../platform/store/contact-store.js';
+import { Stream } from '../../stream.js';
 
 export class DecryptionError extends Error {
   public decryptError: DecryptError;
@@ -235,10 +236,27 @@ export class MsgUtil {
       const privateKeys = keys.prvForDecryptDecrypted.map(decrypted => decrypted.decrypted);
       const decrypted = await OpenPGPKey.decryptMessage(msg, privateKeys, passwords);
       const signature = await OpenPGPKey.verify(decrypted, await ContactStore.getPubkeyInfos(undefined, verificationPubs));
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      const content = signature?.content || new Buf(await streams.readToEnd(decrypted.getLiteralData()!));
+      let content: Buf | undefined;
       if (signature?.content) {
-        signature.content = undefined; // already passed as "content" on the response object, don't need it duplicated
+        content = signature.content;
+        signature.content = undefined; // will pass "content" on the response object, don't need it duplicated
+      } else {
+        const literalData = decrypted.getLiteralData();
+        if (literalData) {
+          content = Buf.with(await Stream.readUint8ArrayToEnd(literalData));
+        }
+      }
+      if (!content) {
+        // should never happen, but I suppose it's better than using content!
+        return {
+          success: false,
+          error: {
+            type: DecryptErrTypes.other,
+            message: 'unexpectedly missing content',
+          },
+          longids,
+          isEncrypted,
+        };
       }
       if (msg.packets.filterByTag(opgp.enums.packet.symmetricallyEncryptedData).length) {
         const noMdc =

@@ -1,11 +1,12 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 import { Key, PrvPacket, KeyAlgo, KeyUtil, UnexpectedKeyTypeError, PubkeyInfo } from '../key.js';
-import { opgp, streams } from './openpgpjs-custom.js';
+import { opgp } from './openpgpjs-custom.js';
 import { Catch } from '../../../platform/catch.js';
 import { Str, Value } from '../../common.js';
 import { Buf } from '../../buf.js';
 import type * as OpenPGP from 'openpgp';
 import { PgpMsgMethod, VerifyRes } from './msg-util.js';
+import { Stream } from '../../stream.js';
 
 type OpenpgpMsgOrCleartext = OpenPGP.Message<OpenPGP.Data> | OpenPGP.CleartextMessage;
 interface KeyWithPrivateFields extends Key {
@@ -288,10 +289,8 @@ export class OpenPGPKey {
     const certificate = await prv.getRevocationCertificate();
     if (!certificate) {
       return undefined;
-    } else if (typeof certificate === 'string') {
-      return certificate;
     } else {
-      return await streams.readToEnd(certificate);
+      return await Stream.readStringToEnd(certificate);
     }
   };
 
