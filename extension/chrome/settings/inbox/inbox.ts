@@ -169,9 +169,11 @@ export class InboxView extends View {
     BrowserMsg.addListener('show_attachment_preview', async ({ iframeUrl }: Bm.ShowAttachmentPreview) => {
       await Ui.modal.attachmentPreview(iframeUrl);
     });
-    // BrowserMsg.addListener('show_attachment_for_attachment_download', async ({ message }: Bm.ShowWarningForAttachmentDownload) => {;
-    //   await Ui.modal.confirm(message);
-    // });
+    BrowserMsg.addListener('show_warning_for_attachment_download', async ({ message, attachment }: Bm.ShowWarningForAttachmentDownload) => {
+      if (await Ui.modal.confirm(message)) {
+        Browser.saveToDownloads(attachment);
+      }
+    });
     if (this.debug) {
       BrowserMsg.addListener('open_compose_window', async ({ draftId }: Bm.ComposeWindowOpenDraft) => {
         console.log('received open_compose_window');

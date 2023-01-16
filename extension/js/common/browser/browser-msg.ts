@@ -4,6 +4,7 @@
 
 import { AuthRes } from '../api/email-provider/gmail/google-auth.js';
 import { AjaxErr } from '../api/shared/api-error.js';
+import { Attachment } from '../core/attachment.js';
 import { Buf } from '../core/buf.js';
 import { Dict, Str, UrlParams } from '../core/common.js';
 import { ArmoredKeyIdentityWithEmails, KeyUtil } from '../core/crypto/key.js';
@@ -81,7 +82,7 @@ export namespace Bm {
   export type Ajax = { req: JQueryAjaxSettings; stack: string };
   export type AjaxGmailAttachmentGetChunk = { acctEmail: string; msgId: string; attachmentId: string };
   export type ShowAttachmentPreview = { iframeUrl: string };
-  export type ShowWarningForAttachmentDownload = { message: string };
+  export type ShowWarningForAttachmentDownload = { message: string; attachment: Attachment };
   export type ReRenderRecipient = { email: string };
   export type SaveFetchedPubkeys = { email: string; pubkeys: string[] };
   export type ProcessAndStoreKeysFromEkmLocally = { acctEmail: string; decryptedPrivateKeys: string[] };

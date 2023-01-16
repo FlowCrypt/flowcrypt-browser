@@ -320,6 +320,7 @@ export class AttachmentDownloadView extends View {
     });
     Xss.sanitizeRender(this.downloadButton, this.originalButtonHTML || '');
     if (result.success) {
+      const attachmentForSave = new Attachment({ name: result.filename, type: this.attachment.type, data: result.content });
       if (!result.filename || ['msg.txt', 'null'].includes(result.filename)) {
         result.filename = this.attachment.name;
       }
@@ -380,10 +381,10 @@ export class AttachmentDownloadView extends View {
       ];
       if (blacklistedFiles.some(badFileExtension => result.filename?.endsWith(badFileExtension))) {
         const badFileExtensionWarning = 'This executable file was not checked for viruses, and may be dangerous to download or run. Proceed anyway?'; // xss-safe-value
-        BrowserMsg.send.showWarningForAttachmentDownload(this.parentTabId, { message: badFileExtensionWarning });
+        BrowserMsg.send.showWarningForAttachmentDownload(this.parentTabId, { message: badFileExtensionWarning, attachment: attachmentForSave });
         return;
       }
-      Browser.saveToDownloads(new Attachment({ name: result.filename, type: this.attachment.type, data: result.content }));
+      Browser.saveToDownloads(attachmentForSave);
     } else if (result.error.type === DecryptErrTypes.needPassphrase) {
       BrowserMsg.send.passphraseDialog(this.parentTabId, {
         type: 'attachment',
