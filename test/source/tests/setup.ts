@@ -685,12 +685,13 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         const acctEmail = 'flowcrypt.notify.expiring.keys.updating.key@key-manager-autogen.flowcrypt.test';
         // Generate negative expiration key and check if it shows correct expiration note
         const negativeExpirationKey = await opgp.generateKey({
+          format: 'armored',
           curve: 'curve25519',
-          userIds: [{ email: acctEmail }],
+          userIDs: [{ email: acctEmail }],
           keyExpirationTime: 1,
           date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
         });
-        MOCK_KM_KEYS[acctEmail] = { response: { privateKeys: [{ decryptedPrivateKey: negativeExpirationKey.privateKeyArmored }] } };
+        MOCK_KM_KEYS[acctEmail] = { response: { privateKeys: [{ decryptedPrivateKey: negativeExpirationKey.privateKey }] } };
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
         await SetupPageRecipe.autoSetupWithEKM(settingsPage, { expectWarnModal: 'Public key not usable - not sumbitting to Attester' });
         const gmailPage = await openMockGmailPage(t, browser, acctEmail);
