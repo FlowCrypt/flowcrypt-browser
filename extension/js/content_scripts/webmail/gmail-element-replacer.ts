@@ -295,18 +295,26 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     const allContenteditableEls = $("div[contenteditable='true']").not('.evaluated').addClass('evaluated');
     for (const contenteditableEl of allContenteditableEls) {
       const contenteditable = $(contenteditableEl);
-      const draftLinkMatch = contenteditable
+      let draftId = '';
+      const legacyDraftLinkMatch = contenteditable
         .html()
-        .substr(0, 1000)
+        .substring(0, 1000)
         .match(/\[flowcrypt:link:draft_compose:([0-9a-fr\-]+)]/);
-      if (draftLinkMatch) {
-        const [, buttonHrefId] = draftLinkMatch;
-        const button = `<a href="#" class="open_draft_${Xss.escape(buttonHrefId)}">Open draft</a>`;
+      if (legacyDraftLinkMatch) {
+        const [, legacyDraftId] = legacyDraftLinkMatch;
+        draftId = legacyDraftId;
+      }
+      const draftHtml = contenteditable.html();
+      if (PgpArmor.isEncryptedMsg(draftHtml)) {
+        draftId = document.querySelector('span[data-standalone-draft-id]')?.getAttribute('data-standalone-draft-id')?.split(':')[1] ?? '';
+      }
+      if (draftId) {
+        const button = `<a href="#" class="open_draft_${Xss.escape(draftId)}">Open draft</a>`;
         Xss.sanitizeReplace(contenteditable, button);
-        $(`a.open_draft_${buttonHrefId}`).on(
+        $(`a.open_draft_${draftId}`).on(
           'click',
           Ui.event.handle(target => {
-            if (this.injector.openComposeWin(buttonHrefId)) {
+            if (this.injector.openComposeWin(draftId)) {
               closeGmailComposeWindow(target);
             }
           })
@@ -703,7 +711,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
   };
 
   private replaceStandardReplyBox = async (msgId?: string, force = false) => {
-    const draftReplyRegex = new RegExp(/\[(flowcrypt|cryptup):link:draft_reply:([0-9a-fr\-]+)]/);
+    const legacyDraftReplyRegex = new RegExp(/\[(flowcrypt|cryptup):link:draft_reply:([0-9a-fr\-]+)]/);
     const newReplyBoxes = $('div.nr.tMHS5d, td.amr > div.nr, div.gA td.I5').not('.reply_message_evaluated').filter(':visible').get();
     if (newReplyBoxes.length) {
       // cache for subseqent loop runs
@@ -712,7 +720,10 @@ export class GmailElementReplacer implements WebmailElementReplacer {
       if (msgId) {
         replyParams.replyMsgId = msgId;
       }
-      const hasDraft = newReplyBoxes.filter(replyBox => $(replyBox).find(this.sel.msgInnerText).text().substr(0, 1000).match(draftReplyRegex)).length;
+      const hasDraft = newReplyBoxes.filter(replyBox => {
+        const msgText = $(replyBox).find(this.sel.msgInnerText).text();
+        return PgpArmor.isEncryptedMsg(msgText) || msgText.substring(0, 1000).match(legacyDraftReplyRegex);
+      }).length;
       const doReplace = Boolean(
         convoRootEl.find('iframe.pgp_block').filter(':visible').closest('.h7').is(':last-child') || (convoRootEl.is(':visible') && force) || hasDraft
       );
@@ -727,10 +738,13 @@ export class GmailElementReplacer implements WebmailElementReplacer {
             continue;
           }
           const replyBoxInnerText = msgInnerText.text().trim();
-          const draftReplyLinkMatch = replyBoxInnerText.substr(0, 1000).match(draftReplyRegex);
-          if (draftReplyLinkMatch) {
+          const legacyDraftReplyLinkMatch = replyBoxInnerText.substring(0, 1000).match(legacyDraftReplyRegex);
+          if (legacyDraftReplyLinkMatch) {
+            // legacy reply draft
+            replyParams.draftId = legacyDraftReplyLinkMatch[2];
+          } else if (PgpArmor.isEncryptedMsg(replyBoxInnerText)) {
             // reply draft
-            replyParams.draftId = draftReplyLinkMatch[2];
+            replyParams.draftId = document.querySelector('[name=draft]')?.getAttribute('value')?.split(':')[1] ?? '';
           } else if (msgInnerText.length && !this.switchToEncryptedReply) {
             // plain reply
             this.showSwitchToEncryptedReplyWarningIfNeeded(replyBox);

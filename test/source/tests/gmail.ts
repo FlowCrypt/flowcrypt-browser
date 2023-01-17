@@ -347,6 +347,18 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
     );
 
     ava.default(
+      'mail.google.com - check draft saved from iOS app',
+      testWithBrowser('compatibility', async (t, browser) => {
+        const gmailPage = await openGmailPage(t, browser);
+        await gotoGmailPage(gmailPage, '', 'drafts'); // to go drafts section
+        await gmailPage.waitAndClick('[span.data-standalone-draft-id]', { delay: 1 });
+        // Open secure draft by clicking `open draft` button
+        await gmailPage.waitAndClick('[class^="open_draft_"]', { delay: 1 });
+        await pageHasSecureDraft(gmailPage, 'Test draft saved from iOS app');
+      })
+    );
+
+    ava.default(
       'mail.google.com - plain message contains smart replies',
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
         const gmailPage = await openGmailPage(t, browser);

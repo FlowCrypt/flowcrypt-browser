@@ -2,26 +2,25 @@
 
 'use strict';
 
-import { Mime, MimeContent, MimeProccesedMsg } from '../../../js/common/core/mime.js';
-import { AjaxErr } from '../../../js/common/api/shared/api-error.js';
-import { ApiErr } from '../../../js/common/api/shared/api-error.js';
-import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
-import { Buf } from '../../../js/common/core/buf.js';
-import { Catch } from '../../../js/common/platform/catch.js';
-import { EncryptedMsgMailFormatter } from './formatters/encrypted-mail-msg-formatter.js';
-import { Env } from '../../../js/common/browser/env.js';
-import { GlobalStore } from '../../../js/common/platform/store/global-store.js';
 import { GmailRes } from '../../../js/common/api/email-provider/gmail/gmail-parser.js';
-import { MsgBlockParser } from '../../../js/common/core/msg-block-parser.js';
-import { DecryptErrTypes, MsgUtil } from '../../../js/common/core/crypto/pgp/msg-util.js';
+import { InvalidRecipientError } from '../../../js/common/api/email-provider/sendable-msg.js';
+import { AjaxErr, ApiErr } from '../../../js/common/api/shared/api-error.js';
+import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
+import { Env } from '../../../js/common/browser/env.js';
 import { Ui } from '../../../js/common/browser/ui.js';
+import { Buf } from '../../../js/common/core/buf.js';
 import { Str, Url } from '../../../js/common/core/common.js';
+import { DecryptErrTypes, MsgUtil } from '../../../js/common/core/crypto/pgp/msg-util.js';
+import { Mime, MimeContent, MimeProccesedMsg } from '../../../js/common/core/mime.js';
+import { MsgBlockParser } from '../../../js/common/core/msg-block-parser.js';
+import { Catch } from '../../../js/common/platform/catch.js';
+import { GlobalStore } from '../../../js/common/platform/store/global-store.js';
+import { KeyStore } from '../../../js/common/platform/store/key-store.js';
+import { PassphraseStore } from '../../../js/common/platform/store/passphrase-store.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { ViewModule } from '../../../js/common/view-module.js';
 import { ComposeView } from '../compose.js';
-import { KeyStore } from '../../../js/common/platform/store/key-store.js';
-import { SendableMsg, InvalidRecipientError } from '../../../js/common/api/email-provider/sendable-msg.js';
-import { PassphraseStore } from '../../../js/common/platform/store/passphrase-store.js';
+import { EncryptedMsgMailFormatter } from './formatters/encrypted-mail-msg-formatter.js';
 
 export class ComposeDraftModule extends ViewModule<ComposeView> {
   public wasMsgLoadedFromDraft = false;
@@ -132,7 +131,6 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
           sendable.headers['In-Reply-To'] = this.view.replyParams.inReplyTo;
         }
         this.view.S.cached('send_btn_note').text('Saving');
-        this.draftSetPrefixIntoBody(sendable);
         const mimeMsg = await sendable.toMime();
         // If a draft was loaded from the local storage, once a user is back online, the local draft will be moved to the email provider
         if (!this.view.draftId || this.isLocalDraftId(this.view.draftId)) {
@@ -213,22 +211,6 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
       return localDraft;
     }
     return undefined;
-  };
-
-  private draftSetPrefixIntoBody = (sendable: SendableMsg) => {
-    let prefix: string;
-    if (this.view.threadId) {
-      // reply draft
-      prefix = `[flowcrypt:link:draft_reply:${this.view.draftId}]\n\n`;
-    } else if (this.view.draftId) {
-      // new message compose draft with known draftId
-      prefix = `[flowcrypt:link:draft_compose:${this.view.draftId}]\n\n`;
-    } else {
-      prefix = `(saving of this draft was interrupted - to decrypt it, send it to yourself)\n\n`;
-    }
-    if (sendable.body['text/plain']) {
-      sendable.body['text/plain'] = `${prefix}${sendable.body['text/plain'] || ''}`;
-    }
   };
 
   private doUploadDraftWithLocalStorageFallback = async (mimeMsg: string, uploadDraft: () => Promise<string>) => {
