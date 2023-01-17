@@ -26,7 +26,7 @@ export class Stream {
     const buffer: string[] = [];
     if (!input || typeof input === 'string') {
       return input;
-    } else if (input && 'pipeTo' in input) {
+    } else if ('pipeTo' in input) {
       const ws = new WritableStream<string>({
         write: chunk => {
           buffer.push(chunk);
