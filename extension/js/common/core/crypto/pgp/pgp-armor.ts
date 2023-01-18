@@ -154,7 +154,6 @@ export class PgpArmor {
     throw new Error('Message does not have armor headers');
   };
 
-  // todo: test in browser
   public static dearmor = async (text: string): Promise<{ type: OpenPGP.enums.armor; data: Uint8Array }> => {
     const decoded = await opgp.unarmor(text);
     const data = await Stream.readToEnd(decoded.data);
