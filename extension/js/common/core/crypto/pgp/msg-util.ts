@@ -11,7 +11,7 @@ import { KeyCache } from '../../../platform/key-cache.js';
 import { SmimeKey, SmimeMsg } from '../smime/smime-key.js';
 import { OpenPGPKey } from './openpgp-key.js';
 import { ContactStore } from '../../../platform/store/contact-store.js';
-import { Stream } from '../../stream.js';
+import * as Stream from '@openpgp/web-stream-tools';
 
 export class DecryptionError extends Error {
   public decryptError: DecryptError;
@@ -243,7 +243,7 @@ export class MsgUtil {
       } else {
         const literalData = decrypted.getLiteralData();
         if (literalData) {
-          content = Buf.with(await Stream.readUint8ArrayToEnd(literalData));
+          content = Buf.with(await Stream.readToEnd(literalData));
         }
       }
       if (!content) {

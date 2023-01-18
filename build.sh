@@ -27,7 +27,6 @@ if [[ "$#" == 1 ]] && [[ "$1" == "--incremental" ]]; then
   npx tsc --project ./tsconfig.json --incremental --tsBuildInfoFile ./build/tsconfig.tsbuildinfo & pids+=($!)
   npx tsc --project ./conf/tsconfig.content_scripts.json --incremental --tsBuildInfoFile ./build/tsconfig.content_scripts.tsbuildinfo & pids+=($!)
   npx tsc --project ./conf/tsconfig.streams.json --incremental --tsBuildInfoFile ./build/tsconfig.streams.tsbuildinfo & pids+=($!)
-  npx webpack --config conf/webpack.config.js & pids+=($!)
   [[ -d ./build/tooling ]] || npx tsc --project ./conf/tsconfig.tooling.json & pids+=($!)  # only build tooling if missing
   for pid in "${pids[@]}"; do wait "$pid" || exit 1; done
 
@@ -42,7 +41,6 @@ else
   node ./build/tooling/tsc-compiler --project ./tsconfig.json & pids+=($!)
   node ./build/tooling/tsc-compiler --project ./conf/tsconfig.content_scripts.json & pids+=($!)
   node ./build/tooling/tsc-compiler --project ./conf/tsconfig.streams.json & pids+=($!)
-  npx webpack --config conf/webpack.config.js & pids+=($!)
   for pid in "${pids[@]}"; do wait "$pid" || exit 1; done
 
 fi
@@ -69,7 +67,9 @@ cp node_modules/bootstrap/dist/js/bootstrap.min.js $OUTDIR/lib/bootstrap/bootstr
 cp node_modules/bootstrap/dist/css/bootstrap.min.css $OUTDIR/lib/bootstrap/bootstrap.min.css
 
 mkdir -p $OUTDIR/lib/streams
-cp ./build/streams/*.js $OUTDIR/lib/streams
+cp node_modules/@openpgp/web-stream-tools/lib/*.js $OUTDIR/lib/streams
+# patch imports with .js, e.g. replace './streams' with './streams.js'
+sed -i -E "s/'\.\/(streams|util|writer|reader|node-conversions)'/'\.\/\1\.js'/g" $OUTDIR/lib/streams/*
 
 # to update node-forge library, which is missing the non-minified version in dist, we have to build it manually
 # cd ~/git && rm -rf ./forge && git clone https://github.com/digitalbazaar/forge.git && cd ./forge && npm install && npm run-script build

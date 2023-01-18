@@ -3,10 +3,9 @@
 'use strict';
 
 import { VERSION } from '../../const.js';
-import { requireOpenpgp, requireStreams } from '../../../platform/require.js';
+import { requireOpenpgp } from '../../../platform/require.js';
 
 export const opgp = requireOpenpgp();
-export const streams = requireStreams();
 
 if (typeof opgp !== 'undefined') {
   // in certain environments, eg pgp_block.htm, openpgp is not included

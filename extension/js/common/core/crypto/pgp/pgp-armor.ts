@@ -10,7 +10,7 @@ import { Str } from '../../common.js';
 import type * as OpenPGP from 'openpgp';
 import { opgp } from './openpgpjs-custom.js';
 import { SmimeKey, ENVELOPED_DATA_OID } from '../smime/smime-key.js';
-import { Stream } from '../../stream.js';
+import * as Stream from '@openpgp/web-stream-tools';
 
 export type PreparedForDecrypt =
   | {
@@ -157,7 +157,7 @@ export class PgpArmor {
   // todo: test in browser
   public static dearmor = async (text: string): Promise<{ type: OpenPGP.enums.armor; data: Uint8Array }> => {
     const decoded = await opgp.unarmor(text);
-    const data = await Stream.readUint8ArrayToEnd(decoded.data);
+    const data = await Stream.readToEnd(decoded.data);
     return { type: decoded.type, data };
   };
 

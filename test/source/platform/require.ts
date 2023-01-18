@@ -3,16 +3,10 @@
 'use strict';
 
 import type OpenPGP from 'openpgp';
-import type * as Streams from '@openpgp/web-stream-tools';
 
 export const requireOpenpgp = (): typeof OpenPGP => {
   // eslint-disable-next-line @typescript-eslint/no-var-requires
   return require('openpgp') as unknown as typeof OpenPGP;
-};
-
-export const requireStreams = (): typeof Streams => {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  return require('@openpgp/web-stream-tools') as unknown as typeof Streams;
 };
 
 /* eslint-disable @typescript-eslint/no-explicit-any */

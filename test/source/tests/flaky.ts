@@ -19,7 +19,7 @@ import { KeyUtil } from '../core/crypto/key';
 import { ElementHandle } from 'puppeteer';
 import { expectRecipientElements } from './compose';
 import { GoogleData } from '../mock/google/google-data';
-import { Stream } from '../core/stream';
+import * as Stream from '@openpgp/web-stream-tools';
 import type * as OpenPGP from 'openpgp';
 
 // these tests are run serially, one after another, because they are somewhat more sensitive to parallel testing
@@ -488,7 +488,7 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
           controller.close();
         },
       });
-      const result = await Stream.readUint8ArrayToEnd(stream as unknown as OpenPGP.Stream<Uint8Array>);
+      const result = await Stream.readToEnd(stream as unknown as OpenPGP.Stream<Uint8Array>);
       expect(result.length).to.equal(40000000);
       t.pass();
     });
