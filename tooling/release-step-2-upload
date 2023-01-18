@@ -1,35 +1,22 @@
 #!/usr/bin/python3.10
 
 import os
-import sys
 import subprocess
 import json
 import boto.s3.key
 import re
 
-# upload
-
-with open('./../flowcrypt-script/browser/release.json', 'r') as fp:
-    config = json.load(fp)
+with open('./tooling/release.json', 'r') as fp:
+    conf = json.load(fp)
 
 with open('./package.json', 'r') as fp:
-    manifest = json.load(fp)
-    version = "".join(c for c in manifest['version'] if c in '0123456789.')
+    version = "".join(c for c in json.load(fp)['version'] if c in '0123456789.')
     version_with_dashes = version.replace('.', '-')
-
-path_packed = config['firefox']['path']['packed'] % version
-path_signed = config['firefox']['path']['signed'] % version
-path_saved = config['firefox']['path']['saved'] % version_with_dashes
-
-input(f"Place AMO-signed file at {path_signed}, then connect to VPN and hit enter when ready")
-
-os.rename(path_signed, path_saved)
-os.unlink(path_packed)
 
 def s3upload(local_path, remote_path):
     with open(local_path, 'rb') as fp:
-        s3conn = boto.connect_s3(config['aws']['id'], config['aws']['secret'])
-        bucket = s3conn.get_bucket(config['aws']['bucket'])
+        s3conn = boto.connect_s3(conf['aws']['id'], conf['aws']['secret'])
+        bucket = s3conn.get_bucket(conf['aws']['bucket'])
         fp.seek(0, os.SEEK_END)
         size = fp.tell()
         k = boto.s3.key.Key(bucket)
@@ -39,37 +26,49 @@ def s3upload(local_path, remote_path):
         if sent != size:
             raise Exception('File did not upload successfully')
 
-# firefox consumer
-print("Uploading " + config['firefox']['path']['upload'] % version)
-s3upload(path_saved, config['firefox']['path']['upload'] % version)
+# chrome enterprise upload
 
-# chrome enterprise
-print("Uploading " + config['chrome-enterprise']['path']['upload'] % version_with_dashes)
-s3upload(config['chrome-enterprise']['path']['saved'] % version_with_dashes, config['chrome-enterprise']['path']['upload'] % version_with_dashes)
+print("Uploading " + conf['chrome-enterprise']['path']['upload'] % version_with_dashes)
+s3upload(conf['chrome-enterprise']['path']['saved'] % version_with_dashes, conf['chrome-enterprise']['path']['upload'] % version_with_dashes)
 hash_chrome = subprocess.check_output(
-    ['sha256sum', config['chrome-enterprise']['path']['saved'] % version_with_dashes]).decode().split('  ')[0]
-enterprise_download_link = "%s%s/%s" % (config['aws']['base_url'], config['aws']['bucket'], 
-    config['chrome-enterprise']['path']['upload'] % version_with_dashes)
+    ['sha256sum', conf['chrome-enterprise']['path']['saved'] % version_with_dashes]).decode().split('  ')[0]
+enterprise_download_link = "%s%s/%s" % (conf['aws']['base_url'], conf['aws']['bucket'], 
+    conf['chrome-enterprise']['path']['upload'] % version_with_dashes)
 print(f"Enterprise release {version}:\n{enterprise_download_link}\nsha256sum: {hash_chrome}")
 
-hash = subprocess.check_output(
-    ['sha256sum', path_saved]).decode().split('  ')[0]
+# firefox consumer upload
 
-ff_download_url = "%s%s/%s" % (config['aws']['base_url'], config['aws']
-                            ['bucket'], config['firefox']['path']['upload'] % version)
-app_name = 'firefox.email.default'
-sql_insert = f"INSERT INTO version (app, version, sha256, download) VALUES ('{app_name}', '{version}', '{hash}', '{ff_download_url}');"
-cmd = f'cockroach sql --url=postgres://user_api:cert_auth@de2-cockroach-a:26257/db_api --execute="{sql_insert}"'
-print(cmd)
-sql_exit_status = os.system(cmd)
+path_packed = conf['firefox']['path']['packed'] % version
+path_signed = conf['firefox']['path']['signed'] % version
+path_saved = conf['firefox']['path']['saved'] % version_with_dashes
 
-with open(config['firefox']['path']['log'], 'a') as fp:
-    fp.write(json.dumps([version, hash]) + '\n')
+os.rename(path_signed, path_saved)
+os.unlink(path_packed)
 
-if sql_exit_status:
-    raise Exception(
-        f'exit status {sql_exit_status} when executing sql command above, not updated')
+input(f"Place AMO-signed file at {path_signed} (don't rename file if downloaded), then hit enter")
 
+print("Uploading " + conf['firefox']['path']['upload'] % version)
+s3upload(path_saved, conf['firefox']['path']['upload'] % version)
+
+with open('json_data.json', 'w') as outfile:
+    json.dump({
+      "addons": {
+        "firefox@cryptup.io": {
+          "updates": [
+            {
+              "version": version,
+              "update_link": f"{conf['aws']['base_url']}{conf['aws']['bucket']}/{conf['firefox']['path']['upload'] % version}",
+              "update_hash": f"sha256:{subprocess.check_output(['sha256sum', path_saved]).decode().split('  ')[0]}",
+              "applications": {
+                "gecko": {
+                  "strict_min_version": "60.0"
+                }
+              }
+            }
+          ]
+        }
+      }
+    }, outfile)
 
 # update the web
 
