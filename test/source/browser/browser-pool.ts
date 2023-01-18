@@ -26,12 +26,14 @@ export class BrowserPool {
 
   public newBrowserHandle = async (t: AvaContext, closeInitialPage = true) => {
     await this.semaphore.acquire();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const extensionDir = (t.context as any).extensionDir ?? this.extensionBuildDir;
     const args = [
       '--no-sandbox', // make it work in travis-ci
       '--disable-setuid-sandbox',
       '--kiosk-printing',
-      `--disable-extensions-except=${this.extensionBuildDir}`,
-      `--load-extension=${this.extensionBuildDir}`,
+      `--disable-extensions-except=${extensionDir}`,
+      `--load-extension=${extensionDir}`,
       `--window-size=${this.width + 10},${this.height + 132}`,
     ];
     if (this.isMock) {

@@ -1,6 +1,8 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
-import * as ava from 'ava';
+import test, { Implementation } from 'ava';
+import { promisify } from 'util';
+import { exec } from 'child_process';
 
 import { AvaContext, getDebugHtmlAtts, minutes, standaloneTestTimeout } from './tests/tooling';
 import { BrowserHandle, BrowserPool } from './browser';
@@ -16,15 +18,15 @@ import { defineSettingsTests } from './tests/settings';
 import { defineSetupTests } from './tests/setup';
 import { defineUnitNodeTests } from './tests/unit-node';
 import { defineUnitBrowserTests } from './tests/unit-browser';
-import { mock } from './mock';
 import { mockBackendData } from './mock/backend/backend-endpoints';
 import { TestUrls } from './browser/test-urls';
 import { mkdirSync, realpathSync, writeFileSync } from 'fs';
+import { startAllApisMock } from './mock/all-apis-mock';
 
 export const { testVariant, testGroup, oneIfNotPooled, buildDir, isMock } = getParsedCliParams();
 export const internalTestState = { expectIntentionalErrReport: false }; // updated when a particular test that causes an error is run
 const DEBUG_BROWSER_LOG = false; // set to true to print / export information from browser
-const DEBUG_MOCK_LOG = false; // se to true to print mock server logs
+const DEBUG_MOCK_LOG = false; // set to true to print mock server logs
 
 process.setMaxListeners(60);
 
@@ -47,29 +49,13 @@ consts.PROMISE_TIMEOUT_OVERALL = new Promise((resolve, reject) => setTimeout(() 
 export type Consts = typeof consts;
 export type CommonAcct = 'compatibility' | 'compose' | 'ci.tests.gmail';
 
+const asyncExec = promisify(exec);
 const browserPool = new BrowserPool(consts.POOL_SIZE, 'browserPool', buildDir, isMock, undefined, undefined, consts.IS_LOCAL_DEBUG);
-let closeMockApi: () => Promise<void>;
+// let closeMockApi: () => Promise<void>;
 const mockApiLogs: string[] = [];
 
-ava.default.before('set config and mock api', async t => {
+test.before('set config and mock api', async t => {
   standaloneTestTimeout(t, consts.TIMEOUT_EACH_RETRY, t.title);
-  Config.extensionId = await browserPool.getExtensionId(t);
-  console.info(`Extension url: chrome-extension://${Config.extensionId}`);
-  if (isMock) {
-    const defaultMockApi = await mock(8001, line => {
-      if (DEBUG_MOCK_LOG) {
-        console.log(line);
-      }
-      mockApiLogs.push(line);
-    });
-    await mock(0, line => {
-      if (DEBUG_MOCK_LOG) {
-        console.log(line);
-      }
-      mockApiLogs.push(line);
-    });
-    closeMockApi = defaultMockApi.close;
-  }
   t.pass();
 });
 
@@ -77,8 +63,23 @@ const testWithBrowser = (
   acct: CommonAcct | undefined,
   cb: (t: AvaContext, browser: BrowserHandle) => Promise<void>,
   flag?: 'FAILING'
-): ava.Implementation<unknown[]> => {
+): Implementation<unknown[]> => {
   return async (t: AvaContext) => {
+    if (isMock) {
+      const mockApi = await startAllApisMock(0, line => {
+        if (DEBUG_MOCK_LOG) {
+          console.log(line);
+        }
+        mockApiLogs.push(line);
+      });
+      const address = mockApi.server.address();
+      if (typeof address === 'object' && address) {
+        const result = await asyncExec(`sh ./scripts/config-mock-build.sh ${buildDir} ${address.port}`);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (t.context as any).extensionDir = result.stdout;
+      }
+    }
+    Config.extensionId = await browserPool.getExtensionId(t);
     await browserPool.withNewBrowserTimeoutAndRetry(
       async (t, browser) => {
         const start = Date.now();
@@ -118,21 +119,21 @@ const testWithBrowser = (
 
 export type TestWithBrowser = typeof testWithBrowser;
 
-ava.default.after.always('close browsers', async t => {
+test.after.always('close browsers', async t => {
   standaloneTestTimeout(t, consts.TIMEOUT_SHORT, t.title);
   // await browserPool.close();
   t.pass();
 });
 
 if (isMock) {
-  ava.default.after.always('close mock api', async t => {
+  test.after.always('close mock api', async t => {
     standaloneTestTimeout(t, consts.TIMEOUT_SHORT, t.title);
-    closeMockApi().catch(t.log);
+    // closeMockApi().catch(t.log);
     t.pass();
   });
 }
 
-ava.default.after.always('evaluate Catch.reportErr errors', async t => {
+test.after.always('evaluate Catch.reportErr errors', async t => {
   if (!isMock || testGroup !== 'STANDARD-GROUP') {
     // can only collect reported errs when running with a mocked api
     t.pass();
@@ -183,7 +184,7 @@ ava.default.after.always('evaluate Catch.reportErr errors', async t => {
   }
 });
 
-ava.default.after.always('send debug info if any', async t => {
+test.after.always('send debug info if any', async t => {
   console.info('send debug info - deciding');
   const failRnd = Util.lousyRandom();
   const testId = `FlowCrypt Browser Extension ${testVariant} ${failRnd}`;

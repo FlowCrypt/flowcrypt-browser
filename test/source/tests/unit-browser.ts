@@ -1,6 +1,6 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
-import * as ava from 'ava';
+import test from 'ava';
 
 import { TestVariant } from '../util';
 import { CommonAcct, TestWithBrowser } from '../test';
@@ -17,7 +17,7 @@ export const defineUnitBrowserTests = (testVariant: TestVariant, testWithBrowser
 
     const defineAvaTest = (title: string, testCode: string, acct?: CommonAcct, flag?: 'only') => {
       // eslint-disable-next-line no-only-tests/no-only-tests
-      (flag !== 'only' ? ava.default : ava.default.only)(
+      (flag !== 'only' ? test : test.only)(
         title,
         testWithBrowser(acct, async (t, browser) => {
           const hostPage = await browser.newPage(t, TestUrls.extension(`chrome/dev/ci_unit_test.htm`));
@@ -142,7 +142,7 @@ export const defineUnitBrowserTests = (testVariant: TestVariant, testWithBrowser
         defineAvaTest(unitTest.title, unitTest.code, unitTest.acct, 'only');
       }
       // eslint-disable-next-line no-only-tests/no-only-tests
-      ava.default.only('reminder to remove .only', async t => {
+      test.only('reminder to remove .only', async t => {
         t.fail(`some tests marked as .only, preventing other tests from running`);
       });
     }

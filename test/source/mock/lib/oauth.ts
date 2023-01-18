@@ -10,7 +10,6 @@ const authURL = 'https://localhost:8001';
 export class OauthMock {
   public clientId = '717284730244-5oejn54f10gnrektjdc4fv4rbic1bj1p.apps.googleusercontent.com';
   public expiresIn = 2 * 60 * 60; // 2hrs in seconds
-  public redirectUri = 'https://google.localhost:8001/robots.txt';
 
   private authCodesByAcct: { [acct: string]: string } = {};
   private scopesByAccessToken: { [token: string]: string } = {};
@@ -24,7 +23,7 @@ export class OauthMock {
     return this.htmlPage(text, text);
   };
 
-  public successResult = (acct: string, state: string, scope: string) => {
+  public successResult = (host: string, acct: string, state: string, scope: string) => {
     const authCode = `mock-auth-code-${Str.sloppyRandom(4)}-${acct.replace(/[^a-z0-9]+/g, '')}`;
     const refreshToken = `mock-refresh-token-${Str.sloppyRandom(4)}-${acct.replace(/[^a-z0-9]+/g, '')}`;
     const accessToken = `mock-access-token-${Str.sloppyRandom(4)}-${acct.replace(/[^a-z0-9]+/g, '')}`;
@@ -33,7 +32,7 @@ export class OauthMock {
     this.accessTokenByRefreshToken[refreshToken] = accessToken;
     this.acctByAccessToken[accessToken] = acct;
     this.scopesByAccessToken[accessToken] = `${this.scopesByAccessToken[accessToken] ?? ''} ${scope}`;
-    const url = new URL(this.redirectUri);
+    const url = new URL(`https://google.${host}/robots.txt`);
     url.searchParams.set('code', authCode);
     url.searchParams.set('scope', scope);
     // return invalid state for test.invalid.csrf@gmail.com to check invalid csrf login

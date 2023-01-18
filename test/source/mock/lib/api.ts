@@ -243,7 +243,7 @@ export class Api<REQ, RES> {
 
   private throttledResponse = async (response: http.ServerResponse, data: Buffer) => {
     // If google oauth2 login, then redirect to url
-    if (/^https:\/\/google\.localhost:8001\/robots\.txt/.test(data.toString())) {
+    if (/^https:\/\/google\.localhost:[0-9]+\/robots\.txt/.test(data.toString())) {
       response.writeHead(302, { Location: data.toString() }); // eslint-disable-line @typescript-eslint/naming-convention
     } else {
       const chunkSize = 100 * 1024;
