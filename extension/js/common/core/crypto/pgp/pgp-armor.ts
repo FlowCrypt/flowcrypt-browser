@@ -9,8 +9,8 @@ import { ReplaceableMsgBlockType } from '../../msg-block.js';
 import { Str } from '../../common.js';
 import type * as OpenPGP from 'openpgp';
 import { opgp } from './openpgpjs-custom.js';
-import { SmimeKey, ENVELOPED_DATA_OID } from '../smime/smime-key.js';
 import * as Stream from '@openpgp/web-stream-tools';
+import { SmimeKey, ENVELOPED_DATA_OID } from '../smime/smime-key.js';
 
 export type PreparedForDecrypt =
   | {
