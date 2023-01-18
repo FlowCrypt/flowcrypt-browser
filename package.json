@@ -37,7 +37,7 @@
     "mkdirp": "1.0.4",
     "openpgp": ">=5.5.0",
     "pdfjs-dist": "3.2.146",
-    "prettier": "^2.8.1",
+    "prettier": "^2.8.3",
     "puppeteer": "19.5.2",
     "stream-browserify": "^3.0.0",
     "stylelint": "14.16.1",
