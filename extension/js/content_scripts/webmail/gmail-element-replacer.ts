@@ -306,26 +306,18 @@ export class GmailElementReplacer implements WebmailElementReplacer {
       }
       const draftHtml = contenteditable.html();
       if (PgpArmor.isEncryptedMsg(draftHtml)) {
-        draftId = document.querySelector('span[data-standalone-draft-id]')?.getAttribute('data-standalone-draft-id')?.split(':')[1] ?? '';
+        draftId = String($(contenteditable).closest('.I5').find('input[name="draft"]')?.val())?.split(':')[1] ?? '';
       }
       if (draftId) {
-        const button = `<a href="#" class="open_draft_${Xss.escape(draftId)}">Open draft</a>`;
-        Xss.sanitizeReplace(contenteditable, button);
-        $(`a.open_draft_${draftId}`).on(
-          'click',
-          Ui.event.handle(target => {
-            if (this.injector.openComposeWin(draftId)) {
-              closeGmailComposeWindow(target);
-            }
-          })
-        );
         // close original draft window
-        const closeGmailComposeWindow = (target: HTMLElement) => {
+        const closeGmailComposeWindow = (target: HTMLElement | JQuery<HTMLElement>) => {
           const mouseUpEvent = document.createEvent('Event');
           mouseUpEvent.initEvent('mouseup', true, true); // Gmail listens for the mouseup event, not click
           $(target).closest('.dw').find('.Ha')[0].dispatchEvent(mouseUpEvent); // jquery's trigger('mouseup') doesn't work for some reason
         };
-        $('.close_gmail_compose_window').on('click', Ui.event.handle(closeGmailComposeWindow));
+        if (this.injector.openComposeWin(draftId)) {
+          closeGmailComposeWindow(contenteditable);
+        }
       }
     }
   };
