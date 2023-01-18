@@ -1,0 +1,89 @@
+#!/usr/bin/python3.10
+
+import os
+import sys
+import subprocess
+import json
+import boto.s3.key
+import re
+
+# upload
+
+with open('./../flowcrypt-script/browser/release.json', 'r') as fp:
+    config = json.load(fp)
+
+with open('./package.json', 'r') as fp:
+    manifest = json.load(fp)
+    version = "".join(c for c in manifest['version'] if c in '0123456789.')
+    version_with_dashes = version.replace('.', '-')
+
+path_packed = config['firefox']['path']['packed'] % version
+path_signed = config['firefox']['path']['signed'] % version
+path_saved = config['firefox']['path']['saved'] % version_with_dashes
+
+input(f"Place AMO-signed file at {path_signed}, then connect to VPN and hit enter when ready")
+
+os.rename(path_signed, path_saved)
+os.unlink(path_packed)
+
+def s3upload(local_path, remote_path):
+    with open(local_path, 'rb') as fp:
+        s3conn = boto.connect_s3(config['aws']['id'], config['aws']['secret'])
+        bucket = s3conn.get_bucket(config['aws']['bucket'])
+        fp.seek(0, os.SEEK_END)
+        size = fp.tell()
+        k = boto.s3.key.Key(bucket)
+        k.key = remote_path
+        fp.seek(0)
+        sent = k.set_contents_from_file(fp)
+        if sent != size:
+            raise Exception('File did not upload successfully')
+
+# firefox consumer
+print("Uploading " + config['firefox']['path']['upload'] % version)
+s3upload(path_saved, config['firefox']['path']['upload'] % version)
+
+# chrome enterprise
+print("Uploading " + config['chrome-enterprise']['path']['upload'] % version_with_dashes)
+s3upload(config['chrome-enterprise']['path']['saved'] % version_with_dashes, config['chrome-enterprise']['path']['upload'] % version_with_dashes)
+hash_chrome = subprocess.check_output(
+    ['sha256sum', config['chrome-enterprise']['path']['saved'] % version_with_dashes]).decode().split('  ')[0]
+enterprise_download_link = "%s%s/%s" % (config['aws']['base_url'], config['aws']['bucket'], 
+    config['chrome-enterprise']['path']['upload'] % version_with_dashes)
+print(f"Enterprise release {version}:\n{enterprise_download_link}\nsha256sum: {hash_chrome}")
+
+hash = subprocess.check_output(
+    ['sha256sum', path_saved]).decode().split('  ')[0]
+
+ff_download_url = "%s%s/%s" % (config['aws']['base_url'], config['aws']
+                            ['bucket'], config['firefox']['path']['upload'] % version)
+app_name = 'firefox.email.default'
+sql_insert = f"INSERT INTO version (app, version, sha256, download) VALUES ('{app_name}', '{version}', '{hash}', '{ff_download_url}');"
+cmd = f'cockroach sql --url=postgres://user_api:cert_auth@de2-cockroach-a:26257/db_api --execute="{sql_insert}"'
+print(cmd)
+sql_exit_status = os.system(cmd)
+
+with open(config['firefox']['path']['log'], 'a') as fp:
+    fp.write(json.dumps([version, hash]) + '\n')
+
+if sql_exit_status:
+    raise Exception(
+        f'exit status {sql_exit_status} when executing sql command above, not updated')
+
+
+# update the web
+
+with open('./../flowcrypt-script/browser/release.json') as f:
+    ff_path = json.load(f)["firefox"]["path"]["upload"]
+
+with open('./package.json', 'r') as fp:
+    manifest = json.load(fp)
+    new_v = ''.join(c for c in manifest['version'] if c in '0123456789.')
+
+for filepath in ['./../flowcrypt-web/source/html/index.htm', './../flowcrypt-web/source/blog/page/download.markdown']:
+    with open(filepath, 'r') as rp:
+        replaced = re.sub(ff_path % r'\d\.\d\.\d', ff_path % new_v, rp.read())
+    with open(filepath, 'w') as wp:
+        wp.write(replaced)
+
+os.system('cd ../flowcrypt-web && git commit -a --message=\'firefox v%s links updated\' && cd ../flowcrypt-browser' % new_v)
