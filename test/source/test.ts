@@ -56,6 +56,7 @@ const mockApiLogs: string[] = [];
 
 test.before('set config and mock api', async t => {
   standaloneTestTimeout(t, consts.TIMEOUT_EACH_RETRY, t.title);
+  Config.extensionId = await browserPool.getExtensionId(t);
   t.pass();
 });
 
@@ -79,7 +80,6 @@ const testWithBrowser = (
         (t.context as any).extensionDir = result.stdout;
       }
     }
-    Config.extensionId = await browserPool.getExtensionId(t);
     await browserPool.withNewBrowserTimeoutAndRetry(
       async (t, browser) => {
         const start = Date.now();
