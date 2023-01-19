@@ -2,26 +2,25 @@
 
 'use strict';
 
-import { Mime, MimeContent, MimeProccesedMsg } from '../../../js/common/core/mime.js';
-import { AjaxErr } from '../../../js/common/api/shared/api-error.js';
-import { ApiErr } from '../../../js/common/api/shared/api-error.js';
-import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
-import { Buf } from '../../../js/common/core/buf.js';
-import { Catch } from '../../../js/common/platform/catch.js';
-import { EncryptedMsgMailFormatter } from './formatters/encrypted-mail-msg-formatter.js';
-import { Env } from '../../../js/common/browser/env.js';
-import { GlobalStore } from '../../../js/common/platform/store/global-store.js';
 import { GmailRes } from '../../../js/common/api/email-provider/gmail/gmail-parser.js';
-import { MsgBlockParser } from '../../../js/common/core/msg-block-parser.js';
-import { DecryptErrTypes, MsgUtil } from '../../../js/common/core/crypto/pgp/msg-util.js';
+import { InvalidRecipientError, SendableMsg } from '../../../js/common/api/email-provider/sendable-msg.js';
+import { AjaxErr, ApiErr } from '../../../js/common/api/shared/api-error.js';
+import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
+import { Env } from '../../../js/common/browser/env.js';
 import { Ui } from '../../../js/common/browser/ui.js';
+import { Buf } from '../../../js/common/core/buf.js';
 import { Str, Url } from '../../../js/common/core/common.js';
+import { DecryptErrTypes, MsgUtil } from '../../../js/common/core/crypto/pgp/msg-util.js';
+import { Mime, MimeContent, MimeProccesedMsg } from '../../../js/common/core/mime.js';
+import { MsgBlockParser } from '../../../js/common/core/msg-block-parser.js';
+import { Catch } from '../../../js/common/platform/catch.js';
+import { GlobalStore } from '../../../js/common/platform/store/global-store.js';
+import { KeyStore } from '../../../js/common/platform/store/key-store.js';
+import { PassphraseStore } from '../../../js/common/platform/store/passphrase-store.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { ViewModule } from '../../../js/common/view-module.js';
 import { ComposeView } from '../compose.js';
-import { KeyStore } from '../../../js/common/platform/store/key-store.js';
-import { SendableMsg, InvalidRecipientError } from '../../../js/common/api/email-provider/sendable-msg.js';
-import { PassphraseStore } from '../../../js/common/platform/store/passphrase-store.js';
+import { EncryptedMsgMailFormatter } from './formatters/encrypted-mail-msg-formatter.js';
 
 export class ComposeDraftModule extends ViewModule<ComposeView> {
   public wasMsgLoadedFromDraft = false;
@@ -216,17 +215,8 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
   };
 
   private draftSetPrefixIntoBody = (sendable: SendableMsg) => {
-    let prefix: string;
-    if (this.view.threadId) {
-      // reply draft
-      prefix = `[flowcrypt:link:draft_reply:${this.view.draftId}]\n\n`;
-    } else if (this.view.draftId) {
-      // new message compose draft with known draftId
-      prefix = `[flowcrypt:link:draft_compose:${this.view.draftId}]\n\n`;
-    } else {
-      prefix = `(saving of this draft was interrupted - to decrypt it, send it to yourself)\n\n`;
-    }
-    if (sendable.body['text/plain']) {
+    if (!this.view.threadId && !this.view.draftId) {
+      const prefix = `(saving of this draft was interrupted - to decrypt it, send it to yourself)\n\n`;
       sendable.body['text/plain'] = `${prefix}${sendable.body['text/plain'] || ''}`;
     }
   };

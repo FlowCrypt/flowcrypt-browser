@@ -302,13 +302,6 @@ export const mockGoogleEndpoints: HandlersDefinition = {
         if (body.message.threadId && !(await GoogleData.withInitializedData(acct)).getThreads().find(t => t.id === body.message.threadId)) {
           throw new HttpClientErr('The thread you are replying to not found', 404);
         }
-        const decoded = await Parse.convertBase64ToMimeMsg(body.message.raw);
-        if (
-          !decoded.text?.startsWith('[flowcrypt:') &&
-          !decoded.text?.startsWith('(saving of this draft was interrupted - to decrypt it, send it to yourself)')
-        ) {
-          throw new Error(`The "flowcrypt" draft prefix was not found in the draft. Instead starts with: ${decoded.text?.substr(0, 100)}`);
-        }
         return {
           id: 'mockfakedraftsave',
           message: {
