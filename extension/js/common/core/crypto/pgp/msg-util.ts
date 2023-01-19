@@ -46,7 +46,7 @@ export namespace PgpMsgMethod {
   export type DiagnosePubkeys = (arg: Arg.DiagnosePubkeys) => Promise<DiagnoseMsgPubkeysResult>;
   export type VerifyDetached = (arg: Arg.VerifyDetached) => Promise<VerifyRes>;
   export type Decrypt = (arg: Arg.Decrypt) => Promise<DecryptSuccess | DecryptError>;
-  export type Type = (arg: Arg.Type) => Promise<PgpMsgTypeResult>;
+  export type Type = (arg: Arg.Type) => PgpMsgTypeResult;
   export type Encrypt = (arg: Arg.Encrypt) => Promise<EncryptResult>;
   export type EncryptResult = EncryptPgpResult | EncryptX509Result;
   export type EncryptPgpResult = {
@@ -116,8 +116,7 @@ export class FormatError extends Error {
 }
 
 export class MsgUtil {
-  public static type: PgpMsgMethod.Type = async ({ data }) => {
-    // promisified because used through bg script
+  public static type: PgpMsgMethod.Type = ({ data }) => {
     if (!data || !data.length) {
       return undefined;
     }
@@ -145,6 +144,7 @@ export class MsgUtil {
         // But it's a good indication that it may be
         const t = opgp.enums.packet;
         const msgTpes = [
+          t.publicKeyEncryptedSessionKey,
           t.symEncryptedIntegrityProtectedData,
           t.modificationDetectionCode,
           t.aeadEncryptedData,
