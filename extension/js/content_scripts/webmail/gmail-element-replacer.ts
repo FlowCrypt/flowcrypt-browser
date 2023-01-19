@@ -318,7 +318,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
         const closeGmailComposeWindow = (target: HTMLElement | JQuery<HTMLElement>) => {
           const mouseUpEvent = document.createEvent('Event');
           mouseUpEvent.initEvent('mouseup', true, true); // Gmail listens for the mouseup event, not click
-          $(target).closest('.dw').find('.Ha')[0].dispatchEvent(mouseUpEvent); // jquery's trigger('mouseup') doesn't work for some reason
+          $(target).closest('.nH.Hd').find('.Ha')[0].dispatchEvent(mouseUpEvent); // jquery's trigger('mouseup') doesn't work for some reason
         };
         if (this.injector.openComposeWin(draftId)) {
           closeGmailComposeWindow(contenteditable);
