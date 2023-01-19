@@ -11,7 +11,7 @@ with open('./tooling/release.json', 'r') as fp:
 
 with open('./package.json', 'r') as fp:
     version = "".join(c for c in json.load(fp)['version'] if c in '0123456789.')
-    version_with_dashes = version.replace('.', '-')
+    dashed_version = version.replace('.', '-')
 
 def s3upload(local_path, remote_path):
     with open(local_path, 'rb') as fp:
@@ -26,29 +26,33 @@ def s3upload(local_path, remote_path):
         if sent != size:
             raise Exception('File did not upload successfully')
 
+def get_hash(path):
+  return subprocess.check_output(['sha256sum', path]).decode().split('  ')[0]
+
 # chrome enterprise upload
 
-print("Uploading " + conf['chrome-enterprise']['path']['upload'] % version_with_dashes)
-s3upload(conf['chrome-enterprise']['path']['saved'] % version_with_dashes, conf['chrome-enterprise']['path']['upload'] % version_with_dashes)
-hash_chrome = subprocess.check_output(
-    ['sha256sum', conf['chrome-enterprise']['path']['saved'] % version_with_dashes]).decode().split('  ')[0]
-enterprise_download_link = "%s%s/%s" % (conf['aws']['base_url'], conf['aws']['bucket'], 
-    conf['chrome-enterprise']['path']['upload'] % version_with_dashes)
-print(f"Enterprise release {version}:\n{enterprise_download_link}\nsha256sum: {hash_chrome}")
+print("Uploading " + conf['chrome-enterprise']['path']['upload'] % dashed_version)
+s3upload(
+  conf['chrome-enterprise']['path']['saved'] % dashed_version, 
+  conf['chrome-enterprise']['path']['upload'] % dashed_version
+)
+chrome_enterprise_download_link = f"{conf['aws']['base_url']}{conf['aws']['bucket']}/{conf['chrome-enterprise']['path']['upload'] % dashed_version}"
+chrome_enterprise_hash = get_hash(conf['chrome-enterprise']['path']['saved'] % dashed_version)
+print(f"Enterprise release {version}:\n{chrome_enterprise_download_link}\nsha256sum: {chrome_enterprise_hash}")
 
 # firefox consumer upload
 
-path_packed = conf['firefox']['path']['packed'] % version
-path_signed = conf['firefox']['path']['signed'] % version
-path_saved = conf['firefox']['path']['saved'] % version_with_dashes
+ff_path_packed = conf['firefox']['path']['packed'] % version
+ff_path_signed = conf['firefox']['path']['signed'] % version
+ff_path_saved = conf['firefox']['path']['saved'] % dashed_version
 
-os.rename(path_signed, path_saved)
-os.unlink(path_packed)
+os.rename(ff_path_signed, ff_path_saved)
+os.unlink(ff_path_packed)
 
-input(f"Place AMO-signed file at {path_signed} (don't rename file if downloaded), then hit enter")
+input(f"Place AMO-signed file at {ff_path_signed} (don't rename file if downloaded), then hit enter")
 
 print("Uploading " + conf['firefox']['path']['upload'] % version)
-s3upload(path_saved, conf['firefox']['path']['upload'] % version)
+s3upload(ff_path_saved, conf['firefox']['path']['upload'] % version)
 
 with open('json_data.json', 'w') as outfile:
     json.dump({
@@ -58,7 +62,7 @@ with open('json_data.json', 'w') as outfile:
             {
               "version": version,
               "update_link": f"{conf['aws']['base_url']}{conf['aws']['bucket']}/{conf['firefox']['path']['upload'] % version}",
-              "update_hash": f"sha256:{subprocess.check_output(['sha256sum', path_saved]).decode().split('  ')[0]}",
+              "update_hash": f"sha256:{get_hash(ff_path_saved)}",
               "applications": {
                 "gecko": {
                   "strict_min_version": "60.0"
@@ -72,17 +76,12 @@ with open('json_data.json', 'w') as outfile:
 
 # update the web
 
-with open('./../flowcrypt-script/browser/release.json') as f:
-    ff_path = json.load(f)["firefox"]["path"]["upload"]
+ff_path = conf["firefox"]["path"]["upload"]
 
-with open('./package.json', 'r') as fp:
-    manifest = json.load(fp)
-    new_v = ''.join(c for c in manifest['version'] if c in '0123456789.')
-
-for filepath in ['./../flowcrypt-web/source/html/index.htm', './../flowcrypt-web/source/blog/page/download.markdown']:
+for filepath in ['../flowcrypt-web/source/html/index.htm', '../flowcrypt-web/source/blog/page/download.markdown']:
     with open(filepath, 'r') as rp:
-        replaced = re.sub(ff_path % r'\d\.\d\.\d', ff_path % new_v, rp.read())
+        replaced = re.sub(ff_path % r'\d\.\d\.\d', ff_path % version, rp.read())
     with open(filepath, 'w') as wp:
         wp.write(replaced)
 
-os.system('cd ../flowcrypt-web && git commit -a --message=\'firefox v%s links updated\' && cd ../flowcrypt-browser' % new_v)
+os.system('cd ../flowcrypt-web && git pull && git commit -a --message=\'firefox v%s links updated\' && git push && cd ../flowcrypt-browser' % version)

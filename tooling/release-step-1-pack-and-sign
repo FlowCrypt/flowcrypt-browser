@@ -4,9 +4,9 @@ set -euo pipefail
 
 VERSION=$(node -e "console.log(JSON.parse(require('fs').readFileSync('./package.json').toString()).version.replace(/\./g, '-'));")
 
-cd ./build; 
-
 # chrome
+
+cd ./build;
 
 rm -f "../release/chrome-consumer/flowcrypt-chrome-consumer-$VERSION.zip";
 zip -rq "../release/chrome-consumer/flowcrypt-chrome-consumer-$VERSION.zip" ./chrome-consumer/*
@@ -14,10 +14,12 @@ zip -rq "../release/chrome-consumer/flowcrypt-chrome-consumer-$VERSION.zip" ./ch
 rm -f "../release/chrome-enterprise/flowcrypt-chrome-enterprise-$VERSION.zip"; 
 zip -rq "../release/chrome-enterprise/flowcrypt-chrome-enterprise-$VERSION.zip" ./chrome-enterprise/*
 
-echo "running firefox release in 10 seconds, CTRL+C to cancel..."
-sleep 10
+cd ..;
 
 # firefox
+
+echo "running firefox release in 10 seconds, CTRL+C to cancel..."
+sleep 10
 
 FF_RELEASE_DIR=./release/firefox-consumer/
 FF_BUILD_DIR=./build/firefox-consumer/
