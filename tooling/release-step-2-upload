@@ -1,0 +1,87 @@
+#!/usr/bin/python3.10
+
+import os
+import subprocess
+import json
+import boto.s3.key  # pip3.10 install --user boto-2.49.0
+import re
+
+with open('./tooling/release.json', 'r') as fp:
+  conf = json.load(fp)
+
+with open('./package.json', 'r') as fp:
+  version = "".join(c for c in json.load(fp)['version'] if c in '0123456789.')
+  dashed_version = version.replace('.', '-')
+
+def s3upload(local_path, remote_path):
+  with open(local_path, 'rb') as fp:
+    s3conn = boto.connect_s3(conf['aws']['id'], conf['aws']['secret'])
+    bucket = s3conn.get_bucket(conf['aws']['bucket'])
+    fp.seek(0, os.SEEK_END)
+    size = fp.tell()
+    k = boto.s3.key.Key(bucket)
+    k.key = remote_path
+    fp.seek(0)
+    sent = k.set_contents_from_file(fp)
+    if sent != size:
+      raise Exception('File did not upload successfully')
+
+def get_hash(path):
+  return subprocess.check_output(['sha256sum', path]).decode().split('  ')[0]
+
+# chrome enterprise upload
+
+print("Uploading " + conf['chrome-enterprise']['path']['upload'] % dashed_version)
+s3upload(
+  conf['chrome-enterprise']['path']['saved'] % dashed_version, 
+  conf['chrome-enterprise']['path']['upload'] % dashed_version
+)
+chrome_enterprise_download_link = f"{conf['aws']['base_url']}{conf['aws']['bucket']}/{conf['chrome-enterprise']['path']['upload'] % dashed_version}"
+chrome_enterprise_hash = get_hash(conf['chrome-enterprise']['path']['saved'] % dashed_version)
+print(f"Enterprise release {version}:\n{chrome_enterprise_download_link}\nsha256sum: {chrome_enterprise_hash}")
+
+# firefox consumer upload
+
+ff_path_packed = conf['firefox']['path']['packed'] % version
+ff_path_signed = conf['firefox']['path']['signed'] % version
+ff_path_saved = conf['firefox']['path']['saved'] % dashed_version
+
+os.rename(ff_path_signed, ff_path_saved)
+os.unlink(ff_path_packed)
+
+input(f"Place AMO-signed file at {ff_path_signed} (don't rename file if downloaded), then hit enter")
+
+print("Uploading " + conf['firefox']['path']['upload'] % version)
+s3upload(ff_path_saved, conf['firefox']['path']['upload'] % version)
+
+with open('json_data.json', 'w') as outfile:
+  json.dump({
+    "addons": {
+      "firefox@cryptup.io": {
+        "updates": [
+          {
+            "version": version,
+            "update_link": f"{conf['aws']['base_url']}{conf['aws']['bucket']}/{conf['firefox']['path']['upload'] % version}",
+            "update_hash": f"sha256:{get_hash(ff_path_saved)}",
+            "applications": {
+              "gecko": {
+                "strict_min_version": "60.0"
+              }
+            }
+          }
+        ]
+      }
+    }
+  }, outfile)
+
+# update the web
+
+ff_path = conf["firefox"]["path"]["upload"]
+
+for filepath in ['../flowcrypt-web/source/html/index.htm', '../flowcrypt-web/source/blog/page/download.markdown']:
+  with open(filepath, 'r') as rp:
+    replaced = re.sub(ff_path % r'\d\.\d\.\d', ff_path % version, rp.read())
+  with open(filepath, 'w') as wp:
+    wp.write(replaced)
+
+os.system('cd ../flowcrypt-web && git pull && git commit -a --message=\'firefox v%s links updated\' && git push && cd ../flowcrypt-browser' % version)
