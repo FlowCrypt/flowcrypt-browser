@@ -1,0 +1,18 @@
+{
+  "addons": {
+    "firefox@cryptup.io": {
+      "updates": [
+        {
+          "version": "8.4.2",
+          "update_link": "https://s3-us-west-2.amazonaws.com/cryptup-release/firefox/cryptup-io-firefox-8.4.2.xpi",
+          "update_hash": "sha256:68d59379cdeae08c813110ffd15c0b7fe2bebb45213a2e6af56b97ed7b7e2fdb",
+          "applications": {
+            "gecko": {
+              "strict_min_version": "60.0"
+            }
+          }
+        }
+      ]
+    }
+  }
+}
