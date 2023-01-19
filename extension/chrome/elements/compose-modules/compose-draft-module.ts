@@ -3,7 +3,7 @@
 'use strict';
 
 import { GmailRes } from '../../../js/common/api/email-provider/gmail/gmail-parser.js';
-import { InvalidRecipientError } from '../../../js/common/api/email-provider/sendable-msg.js';
+import { InvalidRecipientError, SendableMsg } from '../../../js/common/api/email-provider/sendable-msg.js';
 import { AjaxErr, ApiErr } from '../../../js/common/api/shared/api-error.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Env } from '../../../js/common/browser/env.js';
@@ -131,6 +131,7 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
           sendable.headers['In-Reply-To'] = this.view.replyParams.inReplyTo;
         }
         this.view.S.cached('send_btn_note').text('Saving');
+        this.draftSetPrefixIntoBody(sendable);
         const mimeMsg = await sendable.toMime();
         // If a draft was loaded from the local storage, once a user is back online, the local draft will be moved to the email provider
         if (!this.view.draftId || this.isLocalDraftId(this.view.draftId)) {
@@ -211,6 +212,13 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
       return localDraft;
     }
     return undefined;
+  };
+
+  private draftSetPrefixIntoBody = (sendable: SendableMsg) => {
+    if (!this.view.threadId && !this.view.draftId) {
+      const prefix = `(saving of this draft was interrupted - to decrypt it, send it to yourself)\n\n`;
+      sendable.body['text/plain'] = `${prefix}${sendable.body['text/plain'] || ''}`;
+    }
   };
 
   private doUploadDraftWithLocalStorageFallback = async (mimeMsg: string, uploadDraft: () => Promise<string>) => {
