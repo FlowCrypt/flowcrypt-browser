@@ -3,7 +3,7 @@
 import os
 import subprocess
 import json
-import boto.s3.key
+import boto.s3.key  # pip3.10 install --user boto-2.49.0
 import re
 
 with open('./tooling/release.json', 'r') as fp:
