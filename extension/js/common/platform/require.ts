@@ -32,15 +32,7 @@ type Codec = {
 };
 
 export const requireOpenpgp = (): typeof OpenPGP => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const openpgpLocal = (window as any).openpgp as typeof OpenPGP;
-  if (!openpgpLocal) {
-    return openpgpLocal; // in some environments, openpgp is indeed undefined, eg pgp_block.htm or content script (for now)
-  }
-  // todo: openpgpLocal.config.versionstring = `FlowCrypt Gmail Encryption`;
-  // todo: openpgpLocal.config.commentstring = 'Seamlessly send and receive encrypted email';
-  // openpgpLocal.config.require_uid_self_cert = false;
-  return openpgpLocal;
+  return (window as unknown as { openpgp: typeof OpenPGP }).openpgp;
 };
 
 export const requireMimeParser = (): typeof MimeParser => {

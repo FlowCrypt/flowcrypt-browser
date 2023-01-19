@@ -31,3 +31,22 @@ BROWSER_UNIT_TEST_NAME(`Test dearmoring (OpenPGP and Streams)`);
   }
   return 'pass';
 })();
+
+BROWSER_UNIT_TEST_NAME(`Test armoring with Version and Comment`);
+(async () => {
+  const { type, data } = await PgpArmor.dearmor(testConstants.abbdefTestComPubkey);
+  const armored = PgpArmor.armor(type, data);
+  const expectedComment = 'Comment: Seamlessly send and receive encrypted email';
+  const expectedVersion = 'Version: FlowCrypt Email Encryption';
+  const unexpectedVersion = '[BUILD_REPLACEABLE_VERSION]';
+  if (!armored.includes(expectedComment)) {
+    throw Error(`Expected comment "${expectedComment}" is missing in the armored block ${armored}`);
+  }
+  if (!armored.includes(expectedVersion)) {
+    throw Error(`Expected version "${expectedVersion}" is missing in the armored block ${armored}`);
+  }
+  if (armored.includes(unexpectedVersion)) {
+    throw Error(`Unexpected version "${unexpectedVersion}" is present in the armored block`);
+  }
+  return 'pass';
+})();
