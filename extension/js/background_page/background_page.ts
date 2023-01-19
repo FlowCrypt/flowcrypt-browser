@@ -19,8 +19,6 @@ import { migrateGlobal, moveContactsToEmailsAndPubkeys, updateOpgpRevocations, u
 
 console.info('background_process.js starting');
 
-// todo: opgp.initWorker({ path: '/lib/openpgp.worker.js' });
-
 (async () => {
   let db: IDBDatabase;
   let storage: GlobalStoreDict;
