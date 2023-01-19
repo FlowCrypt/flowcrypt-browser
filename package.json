@@ -36,7 +36,7 @@
     "mkdirp": "1.0.4",
     "openpgp": "4.10.10",
     "pdfjs-dist": "3.2.146",
-    "prettier": "^2.8.1",
+    "prettier": "^2.8.3",
     "puppeteer": "19.5.2",
     "stylelint": "14.16.1",
     "stylelint-config-standard": "29.0.0",
@@ -85,8 +85,8 @@
     "run_firefox": "npm run build-incremental && npx web-ext run --source-dir ./build/firefox-consumer/ --firefox-profile ~/.mozilla/firefox/flowcrypt-dev --keep-profile-changes",
     "run_firefox_windows": "npm run build-incremental && npx web-ext run --source-dir ./build/firefox-consumer/ --firefox-profile %userprofile%/AppData/Local/Mozilla/Firefox/Profiles/flowcrypt-dev --keep-profile-changes",
     "find_unused": "ts-prune -p tsconfig.json | grep -v extension/types | grep -v extension/js/common/core",
-    "release": "npm run build && node ./tooling/release.js",
-    "release-finish": "./../flowcrypt-script/browser/firefox_upload && ./../flowcrypt-script/browser/firefox_update_web",
+    "release-step-1": "npm run build && ./tooling/release-step-1-pack-and-sign",
+    "release-step-2": "./tooling/release-step-2-upload",
     "prepare": "husky install"
   },
   "repository": {

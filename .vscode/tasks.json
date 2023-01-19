@@ -34,11 +34,6 @@
     },
     {
       "type": "npm",
-      "script": "release",
-      "problemMatcher": []
-    },
-    {
-      "type": "npm",
       "script": "test_local_chrome_enterprise_mock",
       "problemMatcher": []
     },
