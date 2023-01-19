@@ -72,7 +72,7 @@ with open('json_data.json', 'w') as outfile:
         ]
       }
     }
-  }, outfile)
+  }, './tooling/release-firefox-latest-update.json')
 
 # update the web
 
