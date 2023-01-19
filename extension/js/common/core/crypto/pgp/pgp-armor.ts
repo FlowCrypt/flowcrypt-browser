@@ -65,6 +65,10 @@ export class PgpArmor {
     encryptedMsg: { begin: '-----BEGIN PGP MESSAGE-----', end: '-----END PGP MESSAGE-----', replace: true },
   };
 
+  public static isEncryptedMsg = (msg: string): boolean => {
+    return !!msg.match(new RegExp(`${PgpArmor.ARMOR_HEADER_DICT.encryptedMsg.begin}.*${PgpArmor.ARMOR_HEADER_DICT.encryptedMsg.end}`));
+  };
+
   public static clipIncomplete = (text: string): string | undefined => {
     const match = text?.match(/(-----BEGIN PGP (MESSAGE|SIGNED MESSAGE|SIGNATURE|PUBLIC KEY BLOCK)-----[^]+)/gm);
     return match && match.length ? match[0] : undefined;
