@@ -1,0 +1,38 @@
+#!/bin/bash
+
+set -euo pipefail
+
+VERSION=$(node -e "console.log(JSON.parse(require('fs').readFileSync('./package.json').toString()).version.replace(/\./g, '-'));")
+
+# chrome
+
+cd ./build;
+
+rm -f "../release/chrome-consumer/flowcrypt-chrome-consumer-$VERSION.zip";
+zip -rq "../release/chrome-consumer/flowcrypt-chrome-consumer-$VERSION.zip" ./chrome-consumer/*
+
+rm -f "../release/chrome-enterprise/flowcrypt-chrome-enterprise-$VERSION.zip"; 
+zip -rq "../release/chrome-enterprise/flowcrypt-chrome-enterprise-$VERSION.zip" ./chrome-enterprise/*
+
+cd ..;
+
+# firefox
+
+echo "running firefox release in 10 seconds, CTRL+C to cancel..."
+sleep 10
+
+FF_RELEASE_DIR=./release/firefox-consumer/
+FF_BUILD_DIR=./build/firefox-consumer/
+
+echo "firefox_release: building extension"
+web-ext build --overwrite-dest --artifacts-dir=$FF_RELEASE_DIR --source-dir=$FF_BUILD_DIR
+echo "firefox_release: build done"
+
+echo "firefox_release: setting up secrets"
+TIMEOUT=7200000 # 120 min
+
+AMO_KEY=$(node -e "console.log(JSON.parse(require('fs').readFileSync('./tooling/release.json').toString()).firefox.amo.user);")
+AMO_SECRET=$(node -e "console.log(JSON.parse(require('fs').readFileSync('./tooling/release.json').toString()).firefox.amo.secret);")
+echo "firefox_release: signing extension, starting at: $(date) - with 120 minute timeout > ./release/web-ext-sign-log.txt"
+web-ext sign --api-key="$AMO_KEY" --api-secret="$AMO_SECRET" --artifacts-dir=$FF_RELEASE_DIR --source-dir=$FF_BUILD_DIR --timeout="$TIMEOUT" > ./release/web-ext-sign-log.txt
+echo "firefox_release: signed"
