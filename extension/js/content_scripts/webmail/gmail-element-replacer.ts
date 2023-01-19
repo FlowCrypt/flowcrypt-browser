@@ -305,7 +305,12 @@ export class GmailElementReplacer implements WebmailElementReplacer {
         draftId = legacyDraftId;
       }
       const draftHtml = contenteditable.html();
-      if (PgpArmor.isEncryptedMsg(draftHtml)) {
+      // Used some hacky way to check if draft is compose draft or draft from thread reply
+      // Reply `table` element (class named aoP) has avatar image(class named ajn). Compose draft doesn't have it
+      // For thread reply draft, we don't need to call openComposeWin
+      // Reply draft window will be replaced by secure compose by replaceStandardReplyBox function
+      const isComposeDraft = $(contenteditable).closest('table.aoP').find('img.ajn').length < 1;
+      if (PgpArmor.isEncryptedMsg(draftHtml) && isComposeDraft) {
         draftId = String($(contenteditable).closest('.I5').find('input[name="draft"]')?.val())?.split(':')[1] ?? '';
       }
       if (draftId) {
