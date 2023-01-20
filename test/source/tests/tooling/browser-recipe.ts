@@ -18,7 +18,7 @@ export class BrowserRecipe {
   public static oldAndNewComposeButtonSelectors = ['div.z0[class*="_destroyable"]', '.new_secure_compose_window_button'];
 
   public static openSettingsLoginButCloseOauthWindowBeforeGrantingPermission = async (t: AvaContext, browser: BrowserHandle, acctEmail: string) => {
-    const settingsPage = await browser.newPage(t, TestUrls.extensionSettings());
+    const settingsPage = await browser.newExtensionSettingsPage(t);
     const oauthPopup = await browser.newPageTriggeredBy(t, () => settingsPage.waitAndClick('@action-connect-to-gmail'));
     await OauthPageRecipe.google(t, oauthPopup, acctEmail, 'close');
     await settingsPage.waitAndRespondToModal('info', 'confirm', 'Explaining FlowCrypt webmail permissions');
@@ -26,7 +26,7 @@ export class BrowserRecipe {
   };
 
   public static openSettingsLoginApprove = async (t: AvaContext, browser: BrowserHandle, acctEmail: string) => {
-    const settingsPage = await browser.newPage(t, TestUrls.extensionSettings(acctEmail));
+    const settingsPage = await browser.newExtensionSettingsPage(t, acctEmail);
     const oauthPopup = await browser.newPageTriggeredBy(t, () => settingsPage.waitAndClick('@action-connect-to-gmail'));
     await OauthPageRecipe.google(t, oauthPopup, acctEmail, 'approve');
     return settingsPage;

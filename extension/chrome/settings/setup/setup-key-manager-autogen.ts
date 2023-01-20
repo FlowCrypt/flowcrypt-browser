@@ -16,7 +16,6 @@ import { processAndStoreKeysFromEkmLocally, saveKeysAndPassPhrase } from '../../
 import { Xss } from '../../../js/common/platform/xss.js';
 
 export class SetupWithEmailKeyManagerModule {
-  // eslint-disable-next-line no-empty-function
   public constructor(private view: SetupView) {}
 
   public continueEkmSetupHandler = async () => {

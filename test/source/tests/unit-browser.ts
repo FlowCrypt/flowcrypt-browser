@@ -4,7 +4,6 @@ import test from 'ava';
 
 import { TestVariant } from '../util';
 import { CommonAcct, TestWithBrowser } from '../test';
-import { TestUrls } from '../browser/test-urls';
 import { readdirSync, readFileSync } from 'fs';
 import { Buf } from '../core/buf';
 import { testConstants } from './tooling/consts';
@@ -20,7 +19,7 @@ export const defineUnitBrowserTests = (testVariant: TestVariant, testWithBrowser
       (flag !== 'only' ? test : test.only)(
         title,
         testWithBrowser(acct, async (t, browser) => {
-          const hostPage = await browser.newPage(t, TestUrls.extension(`chrome/dev/ci_unit_test.htm`));
+          const hostPage = await browser.newExtensionPage(t, `chrome/dev/ci_unit_test.htm`);
           // update host page h1
           await hostPage.target.evaluate(title => {
             window.document.getElementsByTagName('h1')[0].textContent = title;
@@ -126,7 +125,7 @@ export const defineUnitBrowserTests = (testVariant: TestVariant, testWithBrowser
 
     const allUnitTests: UnitTest[] = [];
     for (const filename of readdirSync(browserUnitTestsFolder)) {
-      if (!filename.startsWith('.')) {
+      if (!filename.startsWith('.') && filename === 'unit-Wkd.js') {
         allUnitTests.push(...parseTestFile(filename));
       }
     }

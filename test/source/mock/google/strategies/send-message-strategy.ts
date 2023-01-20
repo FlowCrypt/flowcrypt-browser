@@ -247,7 +247,7 @@ class PlainTextMessageTestStrategy implements ITestMsgStrategy {
 }
 
 class NoopTestStrategy implements ITestMsgStrategy {
-  public test = async () => {}; // eslint-disable-line @typescript-eslint/no-empty-function, no-empty-function
+  public test = async () => {}; // eslint-disable-line @typescript-eslint/no-empty-function
 }
 
 class IncludeQuotedPartTestStrategy implements ITestMsgStrategy {

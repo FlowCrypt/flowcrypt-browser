@@ -69,7 +69,7 @@
     "test_local_chrome_enterprise_mock": "npm run pretest && npm run test_ci_chrome_enterprise -- -- --pool-size=1 --debug",
     "test_local_chrome_consumer_live_gmail": "npm run pretest && npm run test_ci_chrome_consumer_live_gmail -- -- --pool-size=1 --debug",
     "test_local_chrome_consumer_mock_flaky": "npm run pretest && npm run test_ci_chrome_consumer_flaky -- -- --pool-size=1 --retry=false --debug",
-    "test_local_unit_consumer": "npm run pretest && npx ava --timeout=20m --verbose --concurrency=1 build/test/test/source/test.js -- UNIT-TESTS --retry=false --pool-size=1 --debug CONSUMER-MOCK",
+    "test_local_unit_consumer": "npm run pretest && npx ava --timeout=20m --verbose --concurrency=8 build/test/test/source/test.js -- UNIT-TESTS --retry=false --debug CONSUMER-MOCK",
     "test_local_unit_enterprise": "npm run pretest && npx ava --timeout=20m --verbose --concurrency=1 build/test/test/source/test.js -- UNIT-TESTS --retry=false --pool-size=1 --debug ENTERPRISE-MOCK",
     "test_local_chrome_consumer_mock_headless": "xvfb-run npm run test_local_chrome_consumer_mock",
     "test_stylelint": "stylelint extension/css/cryptup.css extension/css/settings.css extension/css/webmail.css && stylelint extension/**/*.htm --custom-syntax postcss-html",

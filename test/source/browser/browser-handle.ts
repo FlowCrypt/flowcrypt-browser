@@ -35,13 +35,29 @@ export class BrowserHandle {
       if (initialScript) {
         await page.evaluateOnNewDocument(initialScript);
       }
-      await controllablePage.goto(url);
+      await controllablePage.goto(t, url);
     }
     this.pages.push(controllablePage);
     if (url && url.includes(Config.extensionId)) {
       await controllablePage.waitUntilViewLoaded();
     }
     return controllablePage;
+  };
+
+  public newExtensionPage = async (t: AvaContext, url: string): Promise<ControllablePage> => {
+    return this.newPage(t, t.urls?.extension(url));
+  };
+
+  public newExtensionInboxPage = async (t: AvaContext, acctEmail: string): Promise<ControllablePage> => {
+    return this.newPage(t, t.urls?.extensionInbox(acctEmail));
+  };
+
+  public newExtensionSettingsPage = async (t: AvaContext, acctEmail?: string | undefined): Promise<ControllablePage> => {
+    return this.newPage(t, t.urls?.extensionSettings(acctEmail));
+  };
+
+  public newMockGmailPage = async (t: AvaContext, extraHeaders?: Record<string, string>): Promise<ControllablePage> => {
+    return this.newPage(t, t.urls?.mockGmailUrl(), undefined, extraHeaders);
   };
 
   public newPageTriggeredBy = async (t: AvaContext, triggeringAction: () => Promise<void>): Promise<ControllablePage> => {

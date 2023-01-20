@@ -23,7 +23,6 @@ export class PgpBlockViewRenderModule {
   private heightHist: number[] = [];
   private printMailInfoHtml!: string;
 
-  // eslint-disable-next-line no-empty-function
   public constructor(private view: PgpBlockView) {}
 
   public initPrintView = async () => {

@@ -105,7 +105,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
     const gotoGmailPage = async (gmailPage: ControllablePage, path: string, category: GmailCategory = 'inbox') => {
       const url = TestUrls.gmail(0, path, category);
       await Util.sleep(1);
-      await gmailPage.goto(url);
+      await gmailPage.goto(gmailPage.t, url);
     };
 
     test(

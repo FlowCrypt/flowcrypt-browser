@@ -14,7 +14,6 @@ import { OauthPageRecipe } from './page-recipe/oauth-page-recipe';
 import { PageRecipe } from './page-recipe/abstract-page-recipe';
 import { SettingsPageRecipe } from './page-recipe/settings-page-recipe';
 import { protonMailCompatKey, somePubkey } from './../mock/attester/attester-endpoints';
-import { TestUrls } from './../browser/test-urls';
 import { TestVariant } from './../util';
 import { TestWithBrowser } from './../test';
 import { expect } from 'chai';
@@ -88,7 +87,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
     test(
       'compose - restore compose window size by clicking its header',
       testWithBrowser('compatibility', async (t, browser) => {
-        const inboxPage = await browser.newPage(t, TestUrls.extensionInbox('flowcrypt.compatibility@gmail.com'));
+        const inboxPage = await browser.newExtensionInboxPage(t, 'flowcrypt.compatibility@gmail.com');
         const composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
         const initialComposeFrameHeight = await inboxPage.getOuterHeight('iframe');
         await composeFrame.waitAll('#section_header');
@@ -124,7 +123,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         });
         const forgottenPassphrase = 'this passphrase is forgotten';
         await SettingsPageRecipe.addKeyTest(t, browser, acctEmail, testConstants.testKeyMultipleSmimeCEA2D53BB9D24871, forgottenPassphrase, {}, false);
-        const inboxPage = await browser.newPage(t, TestUrls.extensionInbox(acctEmail));
+        const inboxPage = await browser.newExtensionInboxPage(t, acctEmail);
         await InboxPageRecipe.finishSessionOnInboxPage(inboxPage);
         await inboxPage.close();
         await composePage.waitAndType('@input-password', forgottenPassphrase);
@@ -157,9 +156,9 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       'compose - signed with entered pass phrase + will remember pass phrase in session',
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
         const k = Config.key('ci.tests.gmail');
-        const settingsPage = await browser.newPage(t, TestUrls.extensionSettings('ci.tests.gmail@flowcrypt.test'));
+        const settingsPage = await browser.newExtensionSettingsPage(t, 'ci.tests.gmail@flowcrypt.test');
         await SettingsPageRecipe.forgetAllPassPhrasesInStorage(settingsPage, k.passphrase);
-        const inboxPage = await browser.newPage(t, TestUrls.extensionInbox('ci.tests.gmail@flowcrypt.test'));
+        const inboxPage = await browser.newExtensionInboxPage(t, 'ci.tests.gmail@flowcrypt.test');
         const composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
         await ComposePageRecipe.fillMsg(composeFrame, { to: 'human@flowcrypt.com' }, 'sign with entered pass phrase', undefined, {
           encrypt: false,
@@ -259,14 +258,14 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
         const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
         await composePage.page.setViewport({ width: 540, height: 606 });
-        await ComposePageRecipe.fillMsg(composePage, { to: 'recip1@corp.co', cc: 'сс1@corp.co', bcc: 'bсс1@corp.co' }, 'recipients are properly ordered');
+        await ComposePageRecipe.fillMsg(composePage, { to: 'recip1@corp.co', cc: 'cc1@corp.co', bcc: 'bcc1@corp.co' }, 'recipients are properly ordered');
         await composePage.waitAndType(`@input-to`, 'recip2@corp.co');
         await composePage.waitAndType(`@input-bcc`, 'bcc2@corp.co');
         await composePage.waitAndFocus('@input-body');
         await composePage.waitTillGone('@spinner');
         const emailPreview = await composePage.waitAny('@recipients-preview');
         const recipients = await PageRecipe.getElementPropertyJson(emailPreview, 'textContent');
-        expect(recipients).to.eq(['recip1@corp.co', 'recip2@corp.co', 'сс1@corp.co', 'bсс1@corp.co', '1 more'].join(''));
+        expect(recipients).to.eq(['recip1@corp.co', 'recip2@corp.co', 'cc1@corp.co', 'bcc1@corp.co', '1 more'].join(''));
       })
     );
 
@@ -370,7 +369,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
     test(
       'compose - settings - manually copied pubkey',
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
-        const dbPage = await browser.newPage(t, TestUrls.extension('chrome/dev/ci_unit_test.htm'));
+        const dbPage = await browser.newExtensionPage(t, 'chrome/dev/ci_unit_test.htm');
         // add a contact containing 2 pubkeys to the storage
         await dbPage.page.evaluate(
           async (pubkeys: string[]) => {
@@ -383,7 +382,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
           },
           [testConstants.abcddfTestComPubkey, testConstants.abcdefTestComPubkey]
         );
-        const inboxPage = await browser.newPage(t, TestUrls.extensionInbox('ci.tests.gmail@flowcrypt.test'));
+        const inboxPage = await browser.newExtensionInboxPage(t, 'ci.tests.gmail@flowcrypt.test');
         const composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
         await ComposePageRecipe.fillMsg(composeFrame, { to: 'manualcopypgp@flowcrypt.com' }, 'manual copied key');
         await composeFrame.waitAndClick('@action-open-add-pubkey-dialog', { delay: 1 });
@@ -419,7 +418,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
     test(
       'compose - keyboard - Ctrl+Enter sends message',
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
-        const inboxPage = await browser.newPage(t, TestUrls.extensionInbox('ci.tests.gmail@flowcrypt.test'));
+        const inboxPage = await browser.newExtensionInboxPage(t, 'ci.tests.gmail@flowcrypt.test');
         const composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
         await composeFrame.target.evaluateHandle(() =>
           (document.querySelector('#section_compose') as HTMLElement).dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', ctrlKey: true }))
@@ -431,7 +430,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
     test(
       'compose - keyboard - Opening & changing composer send btn popover using keyboard',
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
-        const inboxPage = await browser.newPage(t, TestUrls.extensionInbox('ci.tests.gmail@flowcrypt.test'));
+        const inboxPage = await browser.newExtensionInboxPage(t, 'ci.tests.gmail@flowcrypt.test');
         const composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
         await composeFrame.waitAndFocus('@action-show-options-popover');
         await inboxPage.press('Enter');
@@ -444,7 +443,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
     test(
       'compose - keyboard - Attaching file using keyboard',
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
-        const inboxPage = await browser.newPage(t, TestUrls.extensionInbox('ci.tests.gmail@flowcrypt.test'));
+        const inboxPage = await browser.newExtensionInboxPage(t, 'ci.tests.gmail@flowcrypt.test');
         const composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
         await composeFrame.waitAndFocus('@action-attach-files');
         // Set up the Promise *before* the file chooser is launched
@@ -633,9 +632,9 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         testWithBrowser('ci.tests.gmail', async (t, browser) => {
           const k = Config.key('ci.tests.gmail');
           const acctEmail = 'ci.tests.gmail@flowcrypt.test';
-          const settingsPage = await browser.newPage(t, TestUrls.extensionSettings(acctEmail));
+          const settingsPage = await browser.newExtensionSettingsPage(t, acctEmail);
           await SettingsPageRecipe.forgetAllPassPhrasesInStorage(settingsPage, k.passphrase);
-          const inboxPage = await browser.newPage(t, TestUrls.extensionInbox(acctEmail));
+          const inboxPage = await browser.newExtensionInboxPage(t, acctEmail);
           const composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
           await ComposePageRecipe.fillMsg(composeFrame, { to: 'anyone@recipient.com' }, 'send signed-only message', undefined, {
             encrypt: false,
@@ -657,11 +656,11 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         testWithBrowser('ci.tests.gmail', async (t, browser) => {
           const k = Config.key('ci.tests.gmail');
           const acctEmail = 'ci.tests.gmail@flowcrypt.test';
-          const settingsPage = await browser.newPage(t, TestUrls.extensionSettings(acctEmail));
+          const settingsPage = await browser.newExtensionSettingsPage(t, acctEmail);
           const forgottenPassphrase = "i'll have to re-enter it";
           await SettingsPageRecipe.addKeyTest(t, browser, acctEmail, testConstants.testKeyMultipleSmimeCEA2D53BB9D24871, forgottenPassphrase, {}, true);
           await SettingsPageRecipe.forgetAllPassPhrasesInStorage(settingsPage, k.passphrase);
-          const inboxPage = await browser.newPage(t, TestUrls.extensionInbox(acctEmail));
+          const inboxPage = await browser.newExtensionInboxPage(t, acctEmail);
           const composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
           await ComposePageRecipe.fillMsg(composeFrame, { to: 'smime@recipient.com' }, 'S/MIME message', undefined);
           await ComposePageRecipe.pastePublicKeyManually(
@@ -687,11 +686,11 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
         const k = Config.key('ci.tests.gmail');
         const acctEmail = 'ci.tests.gmail@flowcrypt.test';
-        const settingsPage = await browser.newPage(t, TestUrls.extensionSettings(acctEmail));
+        const settingsPage = await browser.newExtensionSettingsPage(t, acctEmail);
         const forgottenPassphrase = "i'll have to re-enter it";
         await SettingsPageRecipe.addKeyTest(t, browser, acctEmail, testConstants.testKeyMultipleSmimeCEA2D53BB9D24871, forgottenPassphrase, {}, true);
         await SettingsPageRecipe.forgetAllPassPhrasesInStorage(settingsPage, k.passphrase);
-        const inboxPage = await browser.newPage(t, TestUrls.extensionInbox(acctEmail));
+        const inboxPage = await browser.newExtensionInboxPage(t, acctEmail);
         const composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
         await ComposePageRecipe.fillMsg(composeFrame, { to: 'smime@recipient.com' }, t.title, undefined);
         await ComposePageRecipe.pastePublicKeyManually(
@@ -856,7 +855,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
     test(
       'compose - revoked OpenPGP key',
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
-        const dbPage = await browser.newPage(t, TestUrls.extension('chrome/dev/ci_unit_test.htm'));
+        const dbPage = await browser.newExtensionPage(t, 'chrome/dev/ci_unit_test.htm');
         await dbPage.page.evaluate(async (pubkey: string) => {
           /* eslint-disable @typescript-eslint/no-explicit-any */
           const db = await (window as any).ContactStore.dbOpen();
@@ -878,7 +877,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
     test(
       'compose - externally revoked key',
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
-        const dbPage = await browser.newPage(t, TestUrls.extension('chrome/dev/ci_unit_test.htm'));
+        const dbPage = await browser.newExtensionPage(t, 'chrome/dev/ci_unit_test.htm');
         await dbPage.page.evaluate(async (pubkey: string) => {
           /* eslint-disable @typescript-eslint/no-explicit-any */
           const db = await (window as any).ContactStore.dbOpen();
@@ -907,7 +906,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
     test(
       'compose - nogpg and revoked recipients trigger both warnings',
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
-        const dbPage = await browser.newPage(t, TestUrls.extension('chrome/dev/ci_unit_test.htm'));
+        const dbPage = await browser.newExtensionPage(t, 'chrome/dev/ci_unit_test.htm');
         await dbPage.page.evaluate(async (pubkey: string) => {
           /* eslint-disable @typescript-eslint/no-explicit-any */
           const db = await (window as any).ContactStore.dbOpen();
@@ -926,7 +925,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
     test(
       'compose - nogpg and non-revoked recipients trigger nopgp warning only',
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
-        const dbPage = await browser.newPage(t, TestUrls.extension('chrome/dev/ci_unit_test.htm'));
+        const dbPage = await browser.newExtensionPage(t, 'chrome/dev/ci_unit_test.htm');
         await dbPage.page.evaluate(async (pubkey: string) => {
           /* eslint-disable @typescript-eslint/no-explicit-any */
           const db = await (window as any).ContactStore.dbOpen();
@@ -946,7 +945,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
     test(
       'compose - revoked recipients trigger revoked warning',
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
-        const dbPage = await browser.newPage(t, TestUrls.extension('chrome/dev/ci_unit_test.htm'));
+        const dbPage = await browser.newExtensionPage(t, 'chrome/dev/ci_unit_test.htm');
         await dbPage.page.evaluate(async (pubkey: string) => {
           /* eslint-disable @typescript-eslint/no-explicit-any */
           const db = await (window as any).ContactStore.dbOpen();
@@ -966,7 +965,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
     test(
       'compose - good recipients trigger no warning',
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
-        const dbPage = await browser.newPage(t, TestUrls.extension('chrome/dev/ci_unit_test.htm'));
+        const dbPage = await browser.newExtensionPage(t, 'chrome/dev/ci_unit_test.htm');
         await dbPage.page.evaluate(async (pubkey: string) => {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const db = await (window as any).ContactStore.dbOpen();
@@ -1055,7 +1054,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
           {},
           false
         );
-        const inboxPage = await browser.newPage(t, TestUrls.extensionInbox(acctEmail) + '&labelId=DRAFT&debug=___cu_true___');
+        const inboxPage = await browser.newPage(t, t.urls?.extensionInbox(acctEmail) + '&labelId=DRAFT&debug=___cu_true___');
         await InboxPageRecipe.finishSessionOnInboxPage(inboxPage);
         const inboxTabId = await PageRecipe.getTabId(inboxPage);
         // send message from a different tab
@@ -1602,7 +1601,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
     test(
       'compose - multiple compose windows - opening, max 3, order, active',
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
-        const inboxPage = await browser.newPage(t, TestUrls.extensionInbox('ci.tests.gmail@flowcrypt.test'));
+        const inboxPage = await browser.newExtensionInboxPage(t, 'ci.tests.gmail@flowcrypt.test');
         // open 3 compose windows
         await inboxPage.waitAndClick('@action-open-secure-compose-window', { sleepWhenDone: 1 });
         await inboxPage.waitAndClick('@action-open-secure-compose-window', { sleepWhenDone: 1 });
@@ -1668,7 +1667,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
         const threadId = '173fd7dbe2fec90c';
         const acctEmail = 'ci.tests.gmail@flowcrypt.test';
-        const inboxPage = await browser.newPage(t, TestUrls.extension(`chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`));
+        const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`);
         await inboxPage.waitAll('iframe');
         const replyFrame = await inboxPage.getFrame(['compose.htm']);
         await replyFrame.waitAndClick('@encrypted-reply');
@@ -1688,9 +1687,9 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
     test(
       'attachments - failed to decrypt',
       testWithBrowser('compatibility', async (t, browser) => {
-        const inboxPage = await browser.newPage(
+        const inboxPage = await browser.newExtensionPage(
           t,
-          TestUrls.extension(`chrome/settings/inbox/inbox.htm?acctEmail=flowcrypt.compatibility@gmail.com&threadId=162ec58d70fe04ef`)
+          `chrome/settings/inbox/inbox.htm?acctEmail=flowcrypt.compatibility@gmail.com&threadId=162ec58d70fe04ef`
         );
         const attachment = await inboxPage.getFrame(['attachment.htm']);
         await attachment.waitAndClick('@download-attachment');
@@ -1745,7 +1744,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         const acctEmail = 'flowcrypt.compatibility@gmail.com';
         const passphrase = 'pa$$w0rd';
         await SettingsPageRecipe.addKeyTest(t, browser, acctEmail, testConstants.testKeyMultipleSmimeCEA2D53BB9D24871, passphrase, {}, false);
-        const inboxPage = await browser.newPage(t, TestUrls.extensionInbox(acctEmail));
+        const inboxPage = await browser.newExtensionInboxPage(t, acctEmail);
         const composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
         await ComposePageRecipe.fillMsg(
           composeFrame,
@@ -1770,7 +1769,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         const acctEmail = 'flowcrypt.compatibility@gmail.com';
         const passphrase = 'pa$$w0rd';
         await SettingsPageRecipe.addKeyTest(t, browser, acctEmail, testConstants.testKeyMultipleSmimeCEA2D53BB9D24871, passphrase, {}, false);
-        const inboxPage = await browser.newPage(t, TestUrls.extensionInbox(acctEmail));
+        const inboxPage = await browser.newExtensionInboxPage(t, acctEmail);
         await InboxPageRecipe.finishSessionOnInboxPage(inboxPage);
         const composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
         await ComposePageRecipe.fillMsg(
@@ -1797,7 +1796,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
     test(
       'send with single S/MIME cert',
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
-        const inboxPage = await browser.newPage(t, TestUrls.extensionInbox('ci.tests.gmail@flowcrypt.test'));
+        const inboxPage = await browser.newExtensionInboxPage(t, 'ci.tests.gmail@flowcrypt.test');
         const composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
         await ComposePageRecipe.fillMsg(composeFrame, { to: 'smime@recipient.com' }, t.title, 'This text should be encrypted into PKCS#7 data', {
           sign: false,
@@ -1817,7 +1816,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
     test(
       'send with several S/MIME certs',
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
-        const inboxPage = await browser.newPage(t, TestUrls.extensionInbox('ci.tests.gmail@flowcrypt.test'));
+        const inboxPage = await browser.newExtensionInboxPage(t, 'ci.tests.gmail@flowcrypt.test');
         const composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
         await ComposePageRecipe.fillMsg(
           composeFrame,
@@ -1841,7 +1840,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
     test(
       'send encrypted-only S/MIME message with attachment',
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
-        const inboxPage = await browser.newPage(t, TestUrls.extensionInbox('ci.tests.gmail@flowcrypt.test'));
+        const inboxPage = await browser.newExtensionInboxPage(t, 'ci.tests.gmail@flowcrypt.test');
         const composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
         await ComposePageRecipe.fillMsg(composeFrame, { to: 'smime.attachment@recipient.com' }, t.title, 'This text should be encrypted into PKCS#7 data', {
           sign: false,
@@ -1874,7 +1873,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         const acctEmail = 'ci.tests.gmail@flowcrypt.test';
         const passphrase = 'pa$$w0rd';
         await SettingsPageRecipe.addKeyTest(t, browser, acctEmail, testConstants.testKeyMultipleSmimeCEA2D53BB9D24871, passphrase, {}, false);
-        const inboxPage = await browser.newPage(t, TestUrls.extensionInbox(acctEmail));
+        const inboxPage = await browser.newExtensionInboxPage(t, acctEmail);
         const composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
         await ComposePageRecipe.fillMsg(composeFrame, { to: 'smime.attachment@recipient.com' }, t.title);
         await ComposePageRecipe.pastePublicKeyManually(
@@ -1900,7 +1899,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
     test(
       'send with mixed S/MIME and PGP recipients - should show err',
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
-        const inboxPage = await browser.newPage(t, TestUrls.extensionInbox('ci.tests.gmail@flowcrypt.test'));
+        const inboxPage = await browser.newExtensionInboxPage(t, 'ci.tests.gmail@flowcrypt.test');
         const composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
         await ComposePageRecipe.fillMsg(composeFrame, { to: 'smime@recipient.com', cc: 'human@flowcrypt.com' }, t.title);
         await ComposePageRecipe.pastePublicKeyManually(composeFrame, inboxPage, 'smime@recipient.com', testConstants.smimeCert);
@@ -1917,7 +1916,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       'send with OpenPGP recipients as subset of S/MIME recipients',
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
         const acctEmail = 'ci.tests.gmail@flowcrypt.test';
-        const inboxPage = await browser.newPage(t, TestUrls.extensionInbox(acctEmail));
+        const inboxPage = await browser.newExtensionInboxPage(t, acctEmail);
         const composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
         await ComposePageRecipe.fillMsg(
           composeFrame,
@@ -1949,7 +1948,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       'send with S/MIME recipients as subset of OpenPGP recipients',
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
         const acctEmail = 'ci.tests.gmail@flowcrypt.test';
-        const inboxPage = await browser.newPage(t, TestUrls.extensionInbox(acctEmail));
+        const inboxPage = await browser.newExtensionInboxPage(t, acctEmail);
         const composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
         await ComposePageRecipe.fillMsg(
           composeFrame,
@@ -1980,7 +1979,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
     test(
       'send with broken S/MIME cert - err',
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
-        const inboxPage = await browser.newPage(t, TestUrls.extensionInbox('ci.tests.gmail@flowcrypt.test'));
+        const inboxPage = await browser.newExtensionInboxPage(t, 'ci.tests.gmail@flowcrypt.test');
         const composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
         await ComposePageRecipe.fillMsg(composeFrame, { to: 'smime@recipient.com' }, t.title);
         const brokenCert = testConstants.smimeCert.split('\n');
@@ -1993,7 +1992,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
     test(
       'send non-S/MIME cert - err',
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
-        const inboxPage = await browser.newPage(t, TestUrls.extensionInbox('ci.tests.gmail@flowcrypt.test'));
+        const inboxPage = await browser.newExtensionInboxPage(t, 'ci.tests.gmail@flowcrypt.test');
         const composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
         await ComposePageRecipe.fillMsg(composeFrame, { to: 'smime@recipient.com' }, t.title);
         const httpsCert =
@@ -2006,7 +2005,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
     test(
       'cannot import expired key in secure compose',
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
-        const inboxPage = await browser.newPage(t, TestUrls.extensionInbox('ci.tests.gmail@flowcrypt.test'));
+        const inboxPage = await browser.newExtensionInboxPage(t, 'ci.tests.gmail@flowcrypt.test');
         const to = 'nopgp@recipient.com';
         const composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
         await ComposePageRecipe.fillMsg(composeFrame, { to }, t.title);
@@ -2028,7 +2027,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
         const recipientEmail = 'mock.only.pubkey@flowcrypt.com'; // has "somePubkey" on Attester
         const validKey = protonMailCompatKey; // doesn't really matter which key we import, as long as different from "somePubkey"
-        const settingsPage = await browser.newPage(t, TestUrls.extensionSettings('ci.tests.gmail@flowcrypt.test'));
+        const settingsPage = await browser.newExtensionSettingsPage(t, 'ci.tests.gmail@flowcrypt.test');
         const contactsFrame = await importKeyManuallyAndViewTheNewContact(settingsPage, recipientEmail, validKey, 'IMPORT KEY');
         await contactsFrame.waitForContent('@page-contacts', 'openpgp - active - AB8C F86E 3715 7C3F 290D 7200 7ED4 3D79 E961 7655');
         await contactsFrame.waitAndClick(`@action-show-pubkey-AB8CF86E37157C3F290D72007ED43D79E9617655-openpgp`, {
@@ -2062,7 +2061,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       'auto-refresh expired key if newer version of the same key available',
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
         // add an expired key manually
-        const settingsPage = await browser.newPage(t, TestUrls.extensionSettings('ci.tests.gmail@flowcrypt.test'));
+        const settingsPage = await browser.newExtensionSettingsPage(t, 'ci.tests.gmail@flowcrypt.test');
         const { recipientEmail, contactsFrame } = await importExpiredKeyForAutoRefresh(settingsPage);
         // now we want to see that compose page auto-fetches an updated one
         const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
@@ -2135,7 +2134,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         await ComposePageRecipe.fillMsg(composePage, { to: recipientEmail }, t.title);
         await composePage.close();
         // Check if multiple keys are imported to multiple.pub.key@flowcrypt.com account
-        const settingsPage = await browser.newPage(t, TestUrls.extensionSettings('ci.tests.gmail@flowcrypt.test'));
+        const settingsPage = await browser.newExtensionSettingsPage(t, 'ci.tests.gmail@flowcrypt.test');
         await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
         const contactsFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-contacts-page', ['contacts.htm', 'placement=settings']);
         await contactsFrame.waitAll('@page-contacts');
@@ -2171,7 +2170,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         };
         await ComposePageRecipe.fillMsg(composePage, recipients, t.title);
         await composePage.close();
-        const settingsPage = await browser.newPage(t, TestUrls.extensionSettings('ci.tests.gmail@flowcrypt.test'));
+        const settingsPage = await browser.newExtensionSettingsPage(t, 'ci.tests.gmail@flowcrypt.test');
         await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
         const contactsFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-contacts-page', ['contacts.htm', 'placement=settings']);
         await contactsFrame.waitAll('@page-contacts');
@@ -2195,7 +2194,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         const recipients = { to: 'test.ldap.timeout@gmail.com', cc: 'test.flowcrypt.pubkey.timeout@gmail.com' };
         await ComposePageRecipe.fillMsg(composePage, recipients, t.title);
         await composePage.close();
-        const settingsPage = await browser.newPage(t, TestUrls.extensionSettings('ci.tests.gmail@flowcrypt.test'));
+        const settingsPage = await browser.newExtensionSettingsPage(t, 'ci.tests.gmail@flowcrypt.test');
         await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
         const contactsFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-contacts-page', ['contacts.htm', 'placement=settings']);
         await contactsFrame.waitAll('@page-contacts');
@@ -2224,7 +2223,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
         const recipientEmail = 'has.older.key.on.attester@recipient.com';
         // add a newer expired key manually
-        const settingsPage = await browser.newPage(t, TestUrls.extensionSettings('ci.tests.gmail@flowcrypt.test'));
+        const settingsPage = await browser.newExtensionSettingsPage(t, 'ci.tests.gmail@flowcrypt.test');
         await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
         const contactsFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-contacts-page', ['contacts.htm', 'placement=settings']);
         await contactsFrame.waitAll('@page-contacts');
@@ -2279,7 +2278,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         // the cert since expired, therefore test was updated to reflect that
         const recipientEmail = 'actalis@meta.33mail.com';
         // add S/MIME key manually
-        const settingsPage = await browser.newPage(t, TestUrls.extensionSettings('ci.tests.gmail@flowcrypt.test'));
+        const settingsPage = await browser.newExtensionSettingsPage(t, 'ci.tests.gmail@flowcrypt.test');
         await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
         const contactsFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-contacts-page', ['contacts.htm', 'placement=settings']);
         await contactsFrame.waitAll('@page-contacts');
@@ -2409,7 +2408,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
           { isSavePassphraseChecked: false, isSavePassphraseHidden: false }
         );
         // add names to contacts
-        const dbPage = await browser.newPage(t, TestUrls.extension('chrome/dev/ci_unit_test.htm'));
+        const dbPage = await browser.newExtensionPage(t, 'chrome/dev/ci_unit_test.htm');
         await dbPage.page.evaluate(async () => {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const db = await (window as any).ContactStore.dbOpen();
@@ -2684,13 +2683,10 @@ const sendTextAndVerifyPresentInSentMsg = async (
 };
 
 const setRequirePassPhraseAndOpenRepliedMessage = async (t: AvaContext, browser: BrowserHandle, passphrase: string) => {
-  const settingsPage = await browser.newPage(t, TestUrls.extensionSettings());
+  const settingsPage = await browser.newExtensionSettingsPage(t);
   await SettingsPageRecipe.forgetAllPassPhrasesInStorage(settingsPage, passphrase);
   // Open Message Page
-  const inboxPage = await browser.newPage(
-    t,
-    TestUrls.extension(`chrome/settings/inbox/inbox.htm?acctEmail=flowcrypt.compatibility@gmail.com&threadId=16b584ed95837510`)
-  );
+  const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=flowcrypt.compatibility@gmail.com&threadId=16b584ed95837510`);
   await inboxPage.waitAll('iframe');
   // Get Reply Window (Composer) and click on reply button.
   const replyFrame = await inboxPage.getFrame(['compose.htm']);

@@ -12,7 +12,6 @@ import { SettingsPageRecipe } from './page-recipe/settings-page-recipe';
 import { TestWithBrowser } from './../test';
 import { Stream } from '../core/stream';
 import { InboxPageRecipe } from './page-recipe/inbox-page-recipe';
-import { TestUrls } from '../browser/test-urls';
 import { OauthPageRecipe } from './page-recipe/oauth-page-recipe';
 import { testConstants } from './tooling/consts';
 import { SetupPageRecipe } from './page-recipe/setup-page-recipe';
@@ -213,7 +212,7 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
           { isSavePassphraseChecked: false, isSavePassphraseHidden: false }
         );
         // add a name to one of the contacts
-        const dbPage = await browser.newPage(t, TestUrls.extension('chrome/dev/ci_unit_test.htm'));
+        const dbPage = await browser.newExtensionPage(t, 'chrome/dev/ci_unit_test.htm');
         await dbPage.page.evaluate(async () => {
           /* eslint-disable @typescript-eslint/no-explicit-any */
           const db = await (window as any).ContactStore.dbOpen();
@@ -319,7 +318,7 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
           { isSavePassphraseHidden: true, isSavePassphraseChecked: false }
         );
         await settingsPage.notPresent('.swal2-container');
-        const inboxPage = await browser.newPage(t, TestUrls.extensionInbox(acctEmail));
+        const inboxPage = await browser.newExtensionInboxPage(t, acctEmail);
         await InboxPageRecipe.finishSessionOnInboxPage(inboxPage);
         const composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
         await ComposePageRecipe.fillMsg(composeFrame, { to: 'human@flowcrypt.com' }, 'should not send as pass phrase is not known', undefined, {
@@ -420,7 +419,7 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
     test(
       'compose - load contacts - contacts should be properly ordered',
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
-        const inboxPage = await browser.newPage(t, TestUrls.extensionInbox('ci.tests.gmail@flowcrypt.test'));
+        const inboxPage = await browser.newExtensionInboxPage(t, 'ci.tests.gmail@flowcrypt.test');
         let composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
         await composeFrame.type('@input-to', 'testsearchorder');
         if (testVariant === 'CONSUMER-MOCK') {
@@ -501,7 +500,7 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
         await SettingsPageRecipe.addKeyTest(t, browser, acctEmail, testConstants.testkey17AD7D07, passphrase, {}, false);
         await SettingsPageRecipe.addKeyTest(t, browser, acctEmail, testConstants.testkey0389D3A7, passphrase, {}, false);
         await SettingsPageRecipe.addKeyTest(t, browser, acctEmail, testConstants.testKeyMultipleSmimeCEA2D53BB9D24871, passphrase, {}, false);
-        const inboxPage = await browser.newPage(t, TestUrls.extensionInbox(acctEmail));
+        const inboxPage = await browser.newExtensionInboxPage(t, acctEmail);
         await InboxPageRecipe.finishSessionOnInboxPage(inboxPage);
         await InboxPageRecipe.checkDecryptMsg(t, browser, {
           acctEmail,

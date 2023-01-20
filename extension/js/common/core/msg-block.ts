@@ -32,7 +32,7 @@ export class MsgBlock {
     public attachmentMeta?: AttachmentMeta, // only in plainAttachment, encryptedAttachment, decryptedAttachment, encryptedAttachmentLink (not sure if always)
     public decryptErr?: DecryptError, // only in decryptErr block, always
     public verifyRes?: VerifyRes
-  ) {} // eslint-disable-line no-empty-function
+  ) {}
 
   public static fromContent = (type: MsgBlockType, content: string | Buf, missingEnd = false): MsgBlock => {
     return new MsgBlock(type, content, !missingEnd);

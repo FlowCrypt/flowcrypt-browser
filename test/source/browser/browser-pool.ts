@@ -25,7 +25,7 @@ export class BrowserPool {
   }
 
   public newBrowserHandle = async (t: AvaContext, closeInitialPage = true) => {
-    await this.semaphore.acquire();
+    // await this.semaphore.acquire();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const extensionDir = (t.context as any).extensionDir ?? this.extensionBuildDir;
     const args = [

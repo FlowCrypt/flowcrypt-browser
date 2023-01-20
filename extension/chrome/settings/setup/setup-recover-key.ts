@@ -15,7 +15,6 @@ import { KeyStore } from '../../../js/common/platform/store/key-store.js';
 import { saveKeysAndPassPhrase } from '../../../js/common/helpers.js';
 
 export class SetupRecoverKeyModule {
-  // eslint-disable-next-line no-empty-function
   public constructor(private view: SetupView) {}
 
   public actionRecoverAccountHandler = async () => {

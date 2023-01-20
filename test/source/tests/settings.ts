@@ -9,7 +9,6 @@ import { TestWithBrowser, internalTestState } from './../test';
 import { BrowserRecipe } from './tooling/browser-recipe';
 import { InboxPageRecipe } from './page-recipe/inbox-page-recipe';
 import { SettingsPageRecipe } from './page-recipe/settings-page-recipe';
-import { TestUrls } from './../browser/test-urls';
 import { TestVariant } from './../util';
 import { expect } from 'chai';
 import { SetupPageRecipe } from './page-recipe/setup-page-recipe';
@@ -32,7 +31,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
     test(
       'settings - my own emails show as contacts',
       testWithBrowser('compatibility', async (t, browser) => {
-        const settingsPage = await browser.newPage(t, TestUrls.extensionSettings('flowcrypt.compatibility@gmail.com'));
+        const settingsPage = await browser.newExtensionSettingsPage(t, 'flowcrypt.compatibility@gmail.com');
         await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
         const comtactsFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-contacts-page', ['contacts.htm', 'placement=settings']);
         await comtactsFrame.waitAll('@page-contacts');
@@ -46,7 +45,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
     test(
       'settings - attester shows my emails',
       testWithBrowser('compatibility', async (t, browser) => {
-        const settingsPage = await browser.newPage(t, TestUrls.extensionSettings('flowcrypt.compatibility@gmail.com'));
+        const settingsPage = await browser.newExtensionSettingsPage(t, 'flowcrypt.compatibility@gmail.com');
         await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
         const attesterFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-attester-page', ['keyserver.htm', 'placement=settings']);
         await attesterFrame.waitAll('@page-attester');
@@ -84,14 +83,14 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
     test(
       'settings - verify key presense 1pp1',
       testWithBrowser('compatibility', async (t, browser) => {
-        const settingsPage = await browser.newPage(t, TestUrls.extensionSettings('flowcrypt.compatibility@gmail.com'));
+        const settingsPage = await browser.newExtensionSettingsPage(t, 'flowcrypt.compatibility@gmail.com');
         await SettingsPageRecipe.verifyMyKeyPage(settingsPage, 'flowcrypt.compatibility.1pp1', 'button');
       })
     );
     test(
       'settings - test pass phrase',
       testWithBrowser('compatibility', async (t, browser) => {
-        const settingsPage = await browser.newPage(t, TestUrls.extensionSettings('flowcrypt.compatibility@gmail.com'));
+        const settingsPage = await browser.newExtensionSettingsPage(t, 'flowcrypt.compatibility@gmail.com');
         await SettingsPageRecipe.passphraseTest(settingsPage, Config.key('flowcrypt.wrong.passphrase').passphrase, false);
         await SettingsPageRecipe.passphraseTest(settingsPage, Config.key('flowcrypt.compatibility.1pp1').passphrase, true);
       })
@@ -100,7 +99,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       'settings - clarify passphrase prompt text',
       testWithBrowser('compatibility', async (t, browser) => {
         const acctEmail = 'flowcrypt.compatibility@gmail.com';
-        const settingsPage = await browser.newPage(t, TestUrls.extensionSettings(acctEmail));
+        const settingsPage = await browser.newExtensionSettingsPage(t, acctEmail);
         await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
         const fingerprint = (await settingsPage.read('.good')).split(' ').join('');
         const longid = OpenPGPKey.fingerprintToLongid(fingerprint);
@@ -137,7 +136,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
     test(
       'settings - feedback form',
       testWithBrowser('compatibility', async (t, browser) => {
-        const settingsPage = await browser.newPage(t, TestUrls.extensionSettings('flowcrypt.compatibility@gmail.com'));
+        const settingsPage = await browser.newExtensionSettingsPage(t, 'flowcrypt.compatibility@gmail.com');
         await settingsPage.waitAndClick('@action-open-modules-help');
         await settingsPage.waitAll('@dialog');
         const helpFrame = await settingsPage.getFrame(['help.htm']);
@@ -149,7 +148,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
     test(
       'settings - view contact public key',
       testWithBrowser('compatibility', async (t, browser) => {
-        const settingsPage = await browser.newPage(t, TestUrls.extensionSettings('flowcrypt.compatibility@gmail.com'));
+        const settingsPage = await browser.newExtensionSettingsPage(t, 'flowcrypt.compatibility@gmail.com');
         await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
         const contactsFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-contacts-page', ['contacts.htm', 'placement=settings']);
         await contactsFrame.waitAll('@page-contacts');
@@ -179,7 +178,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
         const recipientEmail = 'has.older.key.on.attester@recipient.com';
         // add a newer expired key manually
-        const settingsPage = await browser.newPage(t, TestUrls.extensionSettings('ci.tests.gmail@flowcrypt.test'));
+        const settingsPage = await browser.newExtensionSettingsPage(t, 'ci.tests.gmail@flowcrypt.test');
         await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
         const contactsFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-contacts-page', ['contacts.htm', 'placement=settings']);
         await contactsFrame.waitAll('@page-contacts');
@@ -222,7 +221,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
     test(
       'settings - import revoked key fails but the revocation info is saved',
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
-        const dbPage = await browser.newPage(t, TestUrls.extension('chrome/dev/ci_unit_test.htm'));
+        const dbPage = await browser.newExtensionPage(t, 'chrome/dev/ci_unit_test.htm');
         const revocationBefore = await dbPage.page.evaluate(async () => {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const db = await (window as any).ContactStore.dbOpen();
@@ -235,7 +234,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
           return revocation;
         });
         expect(revocationBefore).to.be.an('undefined'); // no revocations yet
-        const settingsPage = await browser.newPage(t, TestUrls.extensionSettings('ci.tests.gmail@flowcrypt.test'));
+        const settingsPage = await browser.newExtensionSettingsPage(t, 'ci.tests.gmail@flowcrypt.test');
         await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
         const contactsFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-contacts-page', ['contacts.htm', 'placement=settings']);
         await contactsFrame.waitAll('@page-contacts');
@@ -264,7 +263,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
     test(
       'settings - remove public keys from contact',
       testWithBrowser('compatibility', async (t, browser) => {
-        const dbPage = await browser.newPage(t, TestUrls.extension('chrome/dev/ci_unit_test.htm'));
+        const dbPage = await browser.newExtensionPage(t, 'chrome/dev/ci_unit_test.htm');
         const foundKeys = await dbPage.page.evaluate(async () => {
           /* eslint-disable @typescript-eslint/no-explicit-any */
           const db = await (window as any).ContactStore.dbOpen();
@@ -301,7 +300,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         expect(foundKeys.contactsSize).to.equal(1);
         expect(foundKeys.pubkey7FDE685548AEA788.fingerprint).to.equal('5520CACE2CB61EA713E5B0057FDE685548AEA788');
         expect(foundKeys.pubkeyADAC279C95093207.fingerprint).to.equal('E8F0517BA6D7DAB6081C96E4ADAC279C95093207');
-        const settingsPage = await browser.newPage(t, TestUrls.extensionSettings('flowcrypt.compatibility@gmail.com'));
+        const settingsPage = await browser.newExtensionSettingsPage(t, 'flowcrypt.compatibility@gmail.com');
         await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
         const contactsFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-contacts-page', ['contacts.htm', 'placement=settings']);
         await contactsFrame.waitAll('@page-contacts');
@@ -385,7 +384,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
     test(
       'settings - my key page - primary + secondary',
       testWithBrowser('compatibility', async (t, browser) => {
-        const settingsPage = await browser.newPage(t, TestUrls.extensionSettings('flowcrypt.compatibility@gmail.com'));
+        const settingsPage = await browser.newExtensionSettingsPage(t, 'flowcrypt.compatibility@gmail.com');
         await SettingsPageRecipe.verifyMyKeyPage(settingsPage, 'flowcrypt.compatibility.1pp1', 'link', 0);
         await SettingsPageRecipe.verifyMyKeyPage(settingsPage, 'flowcrypt.compatibility.2pp1', 'link', 1);
       })
@@ -393,7 +392,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
     test(
       'settings - my key page - remove key',
       testWithBrowser('compatibility', async (t, browser) => {
-        const settingsPage = await browser.newPage(t, TestUrls.extensionSettings('flowcrypt.compatibility@gmail.com'));
+        const settingsPage = await browser.newExtensionSettingsPage(t, 'flowcrypt.compatibility@gmail.com');
         await SettingsPageRecipe.ready(settingsPage);
         await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
         await settingsPage.waitAll('@action-open-add-key-page');
@@ -421,16 +420,13 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         await settingsPage.notPresent('@action-remove-key-0');
         const fingerprint = await myKeyFrame.readHtml('@content-fingerprint');
         // test for direct access at my_key_update.htm
-        const myKeyUpdateFrame = await browser.newPage(
+        const myKeyUpdateFrame = await browser.newExtensionPage(
           t,
-          TestUrls.extension(`chrome/settings/modules/my_key_update.htm?placement=settings&acctEmail=${acct}&fingerprint=${fingerprint}`)
+          `chrome/settings/modules/my_key_update.htm?placement=settings&acctEmail=${acct}&fingerprint=${fingerprint}`
         );
         await myKeyUpdateFrame.waitForContent('@container-err-title', 'Error: Insufficient Permission');
         // test for direct access at my add_key.htm
-        const addKeyFrame = await browser.newPage(
-          t,
-          TestUrls.extension(`chrome/settings/modules/add_key.htm?placement=settings&acctEmail=${acct}&parentTabId=1`)
-        );
+        const addKeyFrame = await browser.newExtensionPage(t, `chrome/settings/modules/add_key.htm?placement=settings&acctEmail=${acct}&parentTabId=1`);
         await addKeyFrame.waitForContent('@container-err-text', 'Please contact your IT staff if you wish to update your keys');
       })
     );
@@ -561,7 +557,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
     test(
       'settings - Catch.reportErr reports an error',
       testWithBrowser('compatibility', async (t, browser) => {
-        const settingsPage = await browser.newPage(t, TestUrls.extensionSettings('flowcrypt.compatibility@gmail.com'));
+        const settingsPage = await browser.newExtensionSettingsPage(t, 'flowcrypt.compatibility@gmail.com');
         await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
         const experimentalFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-module-experimental', ['experimental.htm']);
         await experimentalFrame.waitAndClick('@action-throw-err'); // mock tests will verify that err was reported to mock backend in `test.ts`
@@ -571,9 +567,9 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
     test(
       'settings - attachment previews are rendered according to their types',
       testWithBrowser('compatibility', async (t, browser) => {
-        const inboxPage = await browser.newPage(
+        const inboxPage = await browser.newExtensionPage(
           t,
-          TestUrls.extension(`chrome/settings/inbox/inbox.htm?acctEmail=flowcrypt.compatibility@gmail.com&threadId=174ab0ba9643b4fa`)
+          `chrome/settings/inbox/inbox.htm?acctEmail=flowcrypt.compatibility@gmail.com&threadId=174ab0ba9643b4fa`
         );
         // image
         const attachmentImage = await inboxPage.getFrame(['attachment.htm', 'name=tiny-face.png']);
@@ -608,12 +604,12 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
     test(
       'settings - attachment previews with entering pass phrase',
       testWithBrowser('compatibility', async (t, browser) => {
-        const settingsPage = await browser.newPage(t, TestUrls.extensionSettings('flowcrypt.compatibility@gmail.com'));
+        const settingsPage = await browser.newExtensionSettingsPage(t, 'flowcrypt.compatibility@gmail.com');
         const k = Config.key('flowcrypt.compatibility.1pp1');
         await SettingsPageRecipe.forgetAllPassPhrasesInStorage(settingsPage, k.passphrase);
-        const inboxPage = await browser.newPage(
+        const inboxPage = await browser.newExtensionPage(
           t,
-          TestUrls.extension(`chrome/settings/inbox/inbox.htm?acctEmail=flowcrypt.compatibility@gmail.com&threadId=174ab0ba9643b4fa`)
+          `chrome/settings/inbox/inbox.htm?acctEmail=flowcrypt.compatibility@gmail.com&threadId=174ab0ba9643b4fa`
         );
         const attachmentImage = await inboxPage.getFrame(['attachment.htm', 'name=tiny-face.png']);
         await attachmentImage.waitForSelTestState('ready');
@@ -630,9 +626,9 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       testWithBrowser('compatibility', async (t, browser) => {
         const downloadedAttachmentFilename = `${__dirname}/7 years.jpeg`;
         Util.deleteFileIfExists(downloadedAttachmentFilename);
-        const inboxPage = await browser.newPage(
+        const inboxPage = await browser.newExtensionPage(
           t,
-          TestUrls.extension(`chrome/settings/inbox/inbox.htm?acctEmail=flowcrypt.compatibility@gmail.com&threadId=16e8b01f136c3d28`)
+          `chrome/settings/inbox/inbox.htm?acctEmail=flowcrypt.compatibility@gmail.com&threadId=16e8b01f136c3d28`
         );
         const pgpBlockFrame = await inboxPage.getFrame(['pgp_block.htm']);
         // check if download is awailable
@@ -651,10 +647,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       })
     );
     const checkIfFileDownloadsCorrectly = async (t: AvaContext, browser: BrowserHandle, threadId: string, fileName: string) => {
-      const inboxPage = await browser.newPage(
-        t,
-        TestUrls.extension(`chrome/settings/inbox/inbox.htm?acctEmail=flowcrypt.compatibility@gmail.com&threadId=${threadId}`)
-      );
+      const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=flowcrypt.compatibility@gmail.com&threadId=${threadId}`);
       const attachment = await inboxPage.getFrame(['attachment.htm']);
       const downloadedFiles = await inboxPage.awaitDownloadTriggeredByClicking(async () => {
         await attachment.waitAndClick('@download-attachment');
@@ -701,10 +694,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
     test(
       'settings - error modal when page parameter invalid',
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
-        const invalidParamModalPage = await browser.newPage(
-          t,
-          TestUrls.extension(`chrome/settings/index.htm?acctEmail=ci.tests.gmail@flowcrypt.test&page=invalid`)
-        );
+        const invalidParamModalPage = await browser.newExtensionPage(t, `chrome/settings/index.htm?acctEmail=ci.tests.gmail@flowcrypt.test&page=invalid`);
         await Util.sleep(3);
         await invalidParamModalPage.waitForContent('.swal2-html-container', 'An unexpected value was found for the page parameter');
       })
@@ -734,7 +724,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
           isSavePassphraseChecked: true,
           isSavePassphraseHidden: false,
         });
-        const settingsPage = await browser.newPage(t, TestUrls.extensionSettings(acctEmail));
+        const settingsPage = await browser.newExtensionSettingsPage(t, acctEmail);
         await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
         // open key at index 1
         const myKeyFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, `@action-show-key-1`, ['my_key.htm', 'placement=settings']);
@@ -789,9 +779,9 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
           isSavePassphraseHidden: false,
         });
         // opening backup.htm independently of settings/index.htm page limits functionality but sufficient for this test
-        const backupPage = await browser.newPage(
+        const backupPage = await browser.newExtensionPage(
           t,
-          TestUrls.extension(`/chrome/settings/modules/backup.htm?acctEmail=${acctEmail}&action=backup_manual&parentTabId=1%3A0`)
+          `/chrome/settings/modules/backup.htm?acctEmail=${acctEmail}&action=backup_manual&parentTabId=1%3A0`
         );
         // OpenPGP keys are checked, x509 keys are unchecked
         expect(await backupPage.isChecked('[data-id="47FB03183E03A8ED44E3BBFCCEA2D53BB9D24871"]')).to.equal(false);
@@ -852,9 +842,9 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
           isSavePassphraseHidden: false,
         });
         // opening backup.htm independently of settings/index.htm page limits functionality but sufficient for this test
-        const backupPage = await browser.newPage(
+        const backupPage = await browser.newExtensionPage(
           t,
-          TestUrls.extension(`/chrome/settings/modules/backup.htm?acctEmail=${acctEmail}&action=backup_manual&parentTabId=1%3A0`)
+          `/chrome/settings/modules/backup.htm?acctEmail=${acctEmail}&action=backup_manual&parentTabId=1%3A0`
         );
         expect(await backupPage.isChecked('[data-id="CB0485FE44FC22FF09AF0DB31B383D0334E38B28"]')).to.equal(true);
         expect(await backupPage.isChecked('[data-id="515431151DDD3EA232B37A4C98ACFA1EADAB5B92"]')).to.equal(true);
@@ -891,16 +881,16 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
           { isSavePassphraseChecked: false, isSavePassphraseHidden: false }
         );
         await settingsPage.close();
-        const inboxPage = await browser.newPage(t, TestUrls.extension(`chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}`));
+        const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}`);
         await InboxPageRecipe.finishSessionOnInboxPage(inboxPage);
         await SettingsPageRecipe.addKeyTest(t, browser, acctEmail, testConstants.testKeyMultiple98acfa1eadab5b92, '1234', {
           isSavePassphraseChecked: true,
           isSavePassphraseHidden: false,
         });
         // opening backup.htm independently of settings/index.htm page limits functionality but sufficient for this test
-        const backupPage = await browser.newPage(
+        const backupPage = await browser.newExtensionPage(
           t,
-          TestUrls.extension(`/chrome/settings/modules/backup.htm?acctEmail=${acctEmail}` + `&action=backup_manual&parentTabId=1%3A0`)
+          `/chrome/settings/modules/backup.htm?acctEmail=${acctEmail}` + `&action=backup_manual&parentTabId=1%3A0`
         );
         expect(await backupPage.isChecked('[data-id="CB0485FE44FC22FF09AF0DB31B383D0334E38B28"]')).to.equal(true);
         expect(await backupPage.isChecked('[data-id="515431151DDD3EA232B37A4C98ACFA1EADAB5B92"]')).to.equal(true);
@@ -943,7 +933,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
           },
           { isSavePassphraseChecked: false, isSavePassphraseHidden: false }
         );
-        const inboxPage = await browser.newPage(t, TestUrls.extension(`chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}`));
+        const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}`);
         await InboxPageRecipe.finishSessionOnInboxPage(inboxPage);
         await inboxPage.close();
         const key98acfa1eadab5b92 = await KeyUtil.parse(testConstants.testKeyMultiple98acfa1eadab5b92);
@@ -981,7 +971,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
           { submitPubkey: false, usedPgpBefore: false, key },
           { isSavePassphraseChecked: false, isSavePassphraseHidden: false }
         );
-        const inboxPage = await browser.newPage(t, TestUrls.extension(`chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}`));
+        const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}`);
         await InboxPageRecipe.finishSessionOnInboxPage(inboxPage);
         await inboxPage.close();
         await settingsPage.waitAndClick('@action-open-backup-page');
@@ -1025,9 +1015,9 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
           isSavePassphraseHidden: false,
         });
         // opening backup.htm independently of settings/index.htm page limits functionality but sufficient for this test
-        const backupPage = await browser.newPage(
+        const backupPage = await browser.newExtensionPage(
           t,
-          TestUrls.extension(`/chrome/settings/modules/backup.htm?acctEmail=${acctEmail}&action=backup_manual&parentTabId=1%3A0`)
+          `/chrome/settings/modules/backup.htm?acctEmail=${acctEmail}&action=backup_manual&parentTabId=1%3A0`
         );
         expect(await backupPage.isChecked('[data-id="CB0485FE44FC22FF09AF0DB31B383D0334E38B28"]')).to.equal(true);
         expect(await backupPage.isChecked('[data-id="515431151DDD3EA232B37A4C98ACFA1EADAB5B92"]')).to.equal(true);
@@ -1064,12 +1054,10 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
           isSavePassphraseChecked: true,
           isSavePassphraseHidden: false,
         });
-        const backupPage = await browser.newPage(
+        const backupPage = await browser.newExtensionPage(
           t,
-          TestUrls.extension(
-            `/chrome/settings/modules/backup.htm?acctEmail=${acctEmail}&action=backup_manual&parentTabId=1%3A0` +
-              '&type=openpgp&id=515431151DDD3EA232B37A4C98ACFA1EADAB5B92&idToken=fakeheader.01'
-          )
+          `/chrome/settings/modules/backup.htm?acctEmail=${acctEmail}&action=backup_manual&parentTabId=1%3A0` +
+            '&type=openpgp&id=515431151DDD3EA232B37A4C98ACFA1EADAB5B92&idToken=fakeheader.01'
         );
         await backupPage.waitAndClick('@input-backup-step3manual-file');
         const downloadedFiles = await backupPage.awaitDownloadTriggeredByClicking('@action-backup-step3manual-continue');
@@ -1114,12 +1102,10 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
           isSavePassphraseChecked: true,
           isSavePassphraseHidden: false,
         });
-        const backupPage = await browser.newPage(
+        const backupPage = await browser.newExtensionPage(
           t,
-          TestUrls.extension(
-            `/chrome/settings/modules/backup.htm?acctEmail=${acctEmail}&action=backup_manual&parentTabId=17%3A0` +
-              '&type=openpgp&id=515431151DDD3EA232B37A4C98ACFA1EADAB5B92&idToken=fakeheader.01'
-          )
+          `/chrome/settings/modules/backup.htm?acctEmail=${acctEmail}&action=backup_manual&parentTabId=17%3A0` +
+            '&type=openpgp&id=515431151DDD3EA232B37A4C98ACFA1EADAB5B92&idToken=fakeheader.01'
         );
         await backupPage.waitAndClick('@action-backup-step3manual-continue');
         await backupPage.waitAndRespondToModal('info', 'confirm', 'Your private key has been successfully backed up');
@@ -1159,9 +1145,9 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
           isSavePassphraseHidden: false,
         });
         // opening backup.htm independently of settings/index.htm page limits functionality but sufficient for this test
-        const backupPage = await browser.newPage(
+        const backupPage = await browser.newExtensionPage(
           t,
-          TestUrls.extension(`/chrome/settings/modules/backup.htm?acctEmail=${acctEmail}&action=backup_manual&parentTabId=1%3A0`)
+          `/chrome/settings/modules/backup.htm?acctEmail=${acctEmail}&action=backup_manual&parentTabId=1%3A0`
         );
         expect(await backupPage.isChecked('[data-id="CB0485FE44FC22FF09AF0DB31B383D0334E38B28"]')).to.equal(true);
         expect(await backupPage.isChecked('[data-id="515431151DDD3EA232B37A4C98ACFA1EADAB5B92"]')).to.equal(true);
@@ -1211,7 +1197,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
         const acct1 = 'ci.tests.gmail@flowcrypt.test';
         const acct2 = 'user@default-remember-passphrase-client-configuration.flowcrypt.test';
-        const settingsPage = await browser.newPage(t, TestUrls.extensionSettings(acct1));
+        const settingsPage = await browser.newExtensionSettingsPage(t, acct1);
         const { cryptup_citestsgmailflowcrypttest_rules: oldRules, cryptup_citestsgmailflowcrypttest_passphrase_07481C8ACF9D49FE: savedPassphrase1 } =
           await settingsPage.getFromLocalStorage(['cryptup_citestsgmailflowcrypttest_rules', 'cryptup_citestsgmailflowcrypttest_passphrase_07481C8ACF9D49FE']);
         expect(savedPassphrase1).not.to.be.an('undefined');
@@ -1284,11 +1270,11 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
           key_manager_url: 'https://localhost:8001/flowcrypt-email-key-manager', // eslint-disable-line @typescript-eslint/naming-convention
         };
         const extraAuthHeaders = { Authorization: `Bearer ${accessToken}` }; // eslint-disable-line @typescript-eslint/naming-convention
-        const gmailPage = await browser.newPage(t, TestUrls.mockGmailUrl(), undefined, extraAuthHeaders);
+        const gmailPage = await browser.newMockGmailPage(t, extraAuthHeaders);
         const errorMsg = 'Failed to update FlowCrypt Client Configuration: Missing client configuration flags.';
         await PageRecipe.waitForToastToAppearAndDisappear(gmailPage, errorMsg);
         // Ensure previous client configuration remains same
-        const settingsPage = await browser.newPage(t, TestUrls.extensionSettings(acct));
+        const settingsPage = await browser.newExtensionSettingsPage(t, acct);
         await PageRecipe.waitForToastToAppearAndDisappear(settingsPage, errorMsg);
         const { cryptup_testupdatesettingsflowcrypttest_rules: rules2 } = await settingsPage.getFromLocalStorage([
           'cryptup_testupdatesettingsflowcrypttest_rules',
@@ -1353,7 +1339,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         };
         /* eslint-enable @typescript-eslint/naming-convention */
         // open the settings page
-        const settingsPage = await browser.newPage(t, TestUrls.extensionSettings(acct));
+        const settingsPage = await browser.newExtensionSettingsPage(t, acct);
         const { cryptup_settingssettingsflowcrypttest_rules: rules2 } = await settingsPage.getFromLocalStorage(['cryptup_settingssettingsflowcrypttest_rules']);
         // check that the configuration in the storage has been updated
         const clientConfiguration2 = rules2 as ClientConfiguration;
@@ -1379,7 +1365,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         };
         const extraAuthHeaders = { Authorization: `Bearer ${accessToken}` };
         /* eslint-enable @typescript-eslint/naming-convention */
-        let gmailPage = await browser.newPage(t, TestUrls.mockGmailUrl(), undefined, extraAuthHeaders);
+        let gmailPage = await browser.newMockGmailPage(t, extraAuthHeaders);
         await Util.sleep(3);
         // read the local storage from via the extension's own page (settings)
         const { cryptup_settingssettingsflowcrypttest_rules: rules3 } = await settingsPage.getFromLocalStorage(['cryptup_settingssettingsflowcrypttest_rules']);
@@ -1401,7 +1387,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         await gmailPage.close();
         // configure an error
         mockBackendData.clientConfigurationByAcctEmail[acct] = new HttpClientErr('Test error', Status.BAD_REQUEST);
-        gmailPage = await browser.newPage(t, TestUrls.mockGmailUrl(), undefined, extraAuthHeaders);
+        gmailPage = await browser.newMockGmailPage(t, extraAuthHeaders);
         await PageRecipe.waitForToastToAppearAndDisappear(
           gmailPage,
           'Failed to update FlowCrypt Client Configuration: ' +
@@ -1433,7 +1419,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
         const acct1 = 'ci.tests.gmail@flowcrypt.test';
         const acct2 = 'user@forbid-storing-passphrase-client-configuration.flowcrypt.test';
-        const settingsPage = await browser.newPage(t, TestUrls.extensionSettings(acct1));
+        const settingsPage = await browser.newExtensionSettingsPage(t, acct1);
         const { cryptup_citestsgmailflowcrypttest_rules: oldRules, cryptup_citestsgmailflowcrypttest_passphrase_07481C8ACF9D49FE: savedPassphrase1 } =
           await settingsPage.getFromLocalStorage(['cryptup_citestsgmailflowcrypttest_rules', 'cryptup_citestsgmailflowcrypttest_passphrase_07481C8ACF9D49FE']);
         expect(savedPassphrase1).not.to.be.an('undefined');
@@ -1509,7 +1495,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       "settings - password messages' expiry settings shouldn't be available for FES users",
       testWithBrowser('compatibility', async (t, browser) => {
         const acct1 = 'flowcrypt.compatibility@gmail.com';
-        const settingsPage = await browser.newPage(t, TestUrls.extensionSettings('flowcrypt.compatibility@gmail.com'));
+        const settingsPage = await browser.newExtensionSettingsPage(t, 'flowcrypt.compatibility@gmail.com');
         const securitySettingsFrame1 = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-security-page', ['security.htm']);
         expect(await securitySettingsFrame1.isElementVisible('@container-password-messages-expiry')).to.equal(true);
         await SettingsPageRecipe.closeDialog(settingsPage);

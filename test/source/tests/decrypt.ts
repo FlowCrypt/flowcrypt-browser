@@ -8,7 +8,6 @@ import { BrowserRecipe } from './tooling/browser-recipe';
 import { GoogleData } from './../mock/google/google-data';
 import { InboxPageRecipe } from './page-recipe/inbox-page-recipe';
 import { SettingsPageRecipe } from './page-recipe/settings-page-recipe';
-import { TestUrls } from './../browser/test-urls';
 import { TestWithBrowser } from './../test';
 import { expect } from 'chai';
 import { PageRecipe } from './page-recipe/abstract-page-recipe';
@@ -21,7 +20,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
       testWithBrowser('compatibility', async (t, browser) => {
         const threadId = '17d7a32a0613071d';
         const acctEmail = 'flowcrypt.compatibility@gmail.com';
-        const inboxPage = await browser.newPage(t, TestUrls.extension(`chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`));
+        const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`);
         await inboxPage.waitForSelTestState('ready');
         await inboxPage.waitAll('iframe');
         const pgpBlock = await inboxPage.getFrame(['pgp_block.htm']);
@@ -37,7 +36,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
       testWithBrowser('compatibility', async (t, browser) => {
         const threadId = '1850b93d7772173c';
         const acctEmail = 'flowcrypt.compatibility@gmail.com';
-        const inboxPage = await browser.newPage(t, TestUrls.extension(`chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`));
+        const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`);
         await inboxPage.waitForSelTestState('ready');
         await inboxPage.waitAll('iframe');
         const pgpBlock = await inboxPage.getFrame(['pgp_block.htm']);
@@ -51,7 +50,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
       testWithBrowser('compatibility', async (t, browser) => {
         const threadId = '1850f9608240f758';
         const acctEmail = 'flowcrypt.compatibility@gmail.com';
-        const inboxPage = await browser.newPage(t, TestUrls.extension(`chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`));
+        const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`);
         await inboxPage.waitForSelTestState('ready');
         await inboxPage.waitAll('iframe');
         const pgpBlock = await inboxPage.getFrame(['pgp_block.htm']);
@@ -66,7 +65,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
       testWithBrowser('compatibility', async (t, browser) => {
         const threadId = '17dbdf2425ac0f29';
         const acctEmail = 'flowcrypt.compatibility@gmail.com';
-        const inboxPage = await browser.newPage(t, TestUrls.extension(`chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`));
+        const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`);
         await inboxPage.waitForSelTestState('ready');
         await inboxPage.waitAll('iframe');
         expect(await inboxPage.isElementPresent('@container-attachments')).to.equal(false);
@@ -95,7 +94,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
         const threadId = '184a87a7b32dd009';
         const acctEmail = 'ci.tests.gmail@flowcrypt.test';
-        const inboxPage = await browser.newPage(t, TestUrls.extension(`chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`));
+        const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`);
         await inboxPage.waitForSelTestState('ready');
         await inboxPage.waitAll('iframe');
         expect(await inboxPage.isElementPresent('@container-attachments')).to.equal(true);
@@ -653,7 +652,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
         const threadId = '15f7f5630573be2d';
         const expectedContent = 'The International DUBLIN Literary Award is an international literary award';
         const acctEmail = 'flowcrypt.compatibility@gmail.com';
-        const settingsPage = await browser.newPage(t, TestUrls.extensionSettings());
+        const settingsPage = await browser.newExtensionSettingsPage(t);
         await SettingsPageRecipe.forgetAllPassPhrasesInStorage(settingsPage, pp);
         // requires pp entry
         await InboxPageRecipe.checkDecryptMsg(t, browser, {
@@ -678,7 +677,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
       testWithBrowser('compatibility', async (t, browser) => {
         const threadId = '17daefa0eb077da6';
         const acctEmail = 'flowcrypt.compatibility@gmail.com';
-        const inboxPage = await browser.newPage(t, TestUrls.extension(`chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`));
+        const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`);
         await inboxPage.waitAll('iframe');
         const pgpBlock = await inboxPage.getFrame(['pgp_block.htm']);
         await pgpBlock.waitForSelTestState('ready');
@@ -692,7 +691,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
       testWithBrowser('compatibility', async (t, browser) => {
         const threadId = '182917712be838e1';
         const acctEmail = 'flowcrypt.compatibility@gmail.com';
-        const inboxPage = await browser.newPage(t, TestUrls.extension(`chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`));
+        const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`);
         await inboxPage.waitAll('iframe');
         const pgpBlock = await inboxPage.getFrame(['pgp_block.htm']);
         await pgpBlock.waitForSelTestState('ready');
@@ -711,7 +710,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
       testWithBrowser('compatibility', async (t, browser) => {
         const threadId = '17dad75e63e47f97';
         const acctEmail = 'flowcrypt.compatibility@gmail.com';
-        const inboxPage = await browser.newPage(t, TestUrls.extension(`chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`));
+        const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`);
         await inboxPage.waitAll('iframe');
         const pgpBlock = await inboxPage.getFrame(['pgp_block.htm']);
         await pgpBlock.waitForSelTestState('ready');
@@ -725,7 +724,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
         const threadId = '175adb163ac0d69b';
         const acctEmail = 'ci.tests.gmail@flowcrypt.test';
-        const inboxPage = await browser.newPage(t, TestUrls.extension(`chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`));
+        const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`);
         await inboxPage.waitAll('iframe');
         const pgpBlock = await inboxPage.getFrame(['pgp_block.htm']);
         await pgpBlock.waitForSelTestState('ready');
@@ -739,7 +738,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
       testWithBrowser('compatibility', async (t, browser) => {
         const threadId = '17dad75e63e47f97';
         const acctEmail = 'flowcrypt.compatibility@gmail.com';
-        const inboxPage = await browser.newPage(t, TestUrls.extension(`chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`));
+        const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`);
         await inboxPage.waitAll('iframe', { timeout: 2 });
         const urls = await inboxPage.getFramesUrls(['/chrome/elements/pgp_block.htm'], { sleep: 10, appearIn: 20 });
         expect(urls.length).to.equal(1);
@@ -793,7 +792,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
         const acctAttr = acctEmail.replace(/[\.@]/g, '');
         const senderAttr = senderEmail.replace(/[\.@]/g, '');
         {
-          const settingsPage = await browser.newPage(t, TestUrls.extensionSettings(acctEmail));
+          const settingsPage = await browser.newExtensionSettingsPage(t, acctEmail);
           await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
           const contactsFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-contacts-page', ['contacts.htm', 'placement=settings']);
           await contactsFrame.waitAll('@page-contacts');
@@ -809,7 +808,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
           signature: 'signed',
         });
         {
-          const settingsPage = await browser.newPage(t, TestUrls.extensionSettings(acctEmail));
+          const settingsPage = await browser.newExtensionSettingsPage(t, acctEmail);
           await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
           const contactsFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-contacts-page', ['contacts.htm', 'placement=settings']);
           await contactsFrame.waitAll('@page-contacts');
@@ -828,7 +827,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
       testWithBrowser('compatibility', async (t, browser) => {
         const threadId = '17918a9d7ca2fbac';
         const acctEmail = 'flowcrypt.compatibility@gmail.com';
-        const inboxPage = await browser.newPage(t, TestUrls.extension(`chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`));
+        const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`);
         await inboxPage.waitAll('iframe');
         const urls = await inboxPage.getFramesUrls(['/chrome/elements/pgp_block.htm'], { sleep: 3 });
         expect(urls.length).to.equal(1);
@@ -847,7 +846,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
         const threadId = '1766644f13510f58';
         const acctEmail = 'ci.tests.gmail@flowcrypt.test';
-        const inboxPage = await browser.newPage(t, TestUrls.extension(`chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`));
+        const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`);
         await inboxPage.waitAll('iframe', { timeout: 2 });
         const urls = await inboxPage.getFramesUrls(['/chrome/elements/pgp_block.htm'], { sleep: 10, appearIn: 20 });
         expect(urls.length).to.equal(1);
@@ -873,7 +872,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
           '-----BEGIN PGP PUBLIC KEY BLOCK-----\r\nVersion: FlowCrypt Email Encryption [BUILD_REPLACEABLE_VERSION]\r\nComment: Seamlessly send and receive encrypted email\r\n\r\nxjMEYZeW2RYJKwYBBAHaRw8BAQdAT5QfLVP3y1yukk3MM/oiuXLNe1f9az5M\r\nBnOlKdF0nKnNJVNvbWVib2R5IDxTYW1zNTBzYW1zNTBzZXB0QEdtYWlsLkNv\r\nbT7CjwQQFgoAIAUCYZeW2QYLCQcIAwIEFQgKAgQWAgEAAhkBAhsDAh4BACEJ\r\nEMrSTYqLk6SUFiEEBP90ux3d6kDwDdzvytJNiouTpJS27QEA7pFlkLfD0KFQ\r\nsH/dwb/NPzn5zCi2L9gjPAC3d8gv1fwA/0FjAy/vKct4D7QH8KwtEGQns5+D\r\nP1WxDr4YI2hp5TkAzjgEYZeW2RIKKwYBBAGXVQEFAQEHQKNLY/bXrhJMWA2+\r\nWTjk3I7KhawyZfLomJ4hovqr7UtOAwEIB8J4BBgWCAAJBQJhl5bZAhsMACEJ\r\nEMrSTYqLk6SUFiEEBP90ux3d6kDwDdzvytJNiouTpJQnpgD/c1CzfS3YzJUx\r\nnFMrhjiE0WVgqOV/3CkfI4m4RA30QUIA/ju8r4AD2h6lu3Mx/6I6PzIRZQty\r\nLvTkcu4UKodZa4kK\r\n=7C4A\r\n-----END PGP PUBLIC KEY BLOCK-----\r\n',
           'sender@example.com'
         );
-        const inboxPage = await browser.newPage(t, TestUrls.extension(`chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`));
+        const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`);
         await inboxPage.waitAll('iframe', { timeout: 2 });
         const urls = await inboxPage.getFramesUrls(['/chrome/elements/pgp_block.htm'], { sleep: 10, appearIn: 20 });
         expect(urls.length).to.equal(1);
@@ -1118,7 +1117,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
       testWithBrowser('compatibility', async (t, browser) => {
         const threadId1 = '184cc6aa8e884397';
         const acctEmail = 'flowcrypt.compatibility@gmail.com';
-        const inboxPage = await browser.newPage(t, TestUrls.extension(`chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId1}`));
+        const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId1}`);
         await inboxPage.waitAll('iframe');
         const pgpBlock = await inboxPage.getFrame(['pgp_block.htm']);
         await pgpBlock.waitForSelTestState('ready');

@@ -11,7 +11,6 @@ import {
   TIMEOUT_TEST_STATE_SATISFY,
   TIMEOUT_FOCUS,
 } from '.';
-import { TestUrls } from './test-urls';
 import { Util } from '../util';
 import { expect } from 'chai';
 import * as fs from 'fs';
@@ -640,7 +639,6 @@ export class ControllableAlert {
 }
 
 class ConsoleEvent {
-  // eslint-disable-next-line no-empty-function
   public constructor(public type: string, public text: string) {}
 }
 
@@ -658,7 +656,8 @@ export class ControllablePage extends ControllableBase {
       const response = r.response();
       const fail = r.failure();
       const url = r.url();
-      if (url.indexOf(TestUrls.extension('')) !== 0 || fail) {
+      const extensionUrl = t.urls?.extension('');
+      if ((extensionUrl && url.indexOf(extensionUrl) !== 0) || fail) {
         // not an extension url, or a fail
         this.consoleMsgs.push(new ConsoleEvent('request', `${response ? response.status() : '-1'} ${r.method()} ${url}: ${fail ? fail.errorText : 'ok'}`));
       }
@@ -709,8 +708,9 @@ export class ControllablePage extends ControllableBase {
     }
   };
 
-  public goto = async (url: string) => {
-    url = url.indexOf('https://') === 0 || url.indexOf(TestUrls.extension('')) === 0 ? url : TestUrls.extension(url);
+  public goto = async (t: AvaContext, url: string) => {
+    const extensionUrl = t.urls?.extension('') ?? '';
+    url = url.indexOf('https://') === 0 || url.indexOf(extensionUrl) === 0 ? url : t.urls?.extension(url) ?? '';
     await Util.sleep(1);
     // await this.page.goto(url); // may produce intermittent Navigation Timeout Exceeded in CI environment
     this.page.goto(url).catch(e => this.t.log(`goto: ${e.message}: ${url}`));

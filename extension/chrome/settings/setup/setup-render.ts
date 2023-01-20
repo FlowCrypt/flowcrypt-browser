@@ -16,7 +16,6 @@ import { KeyImportUi } from '../../../js/common/ui/key-import-ui.js';
 export class SetupRenderModule {
   public readonly emailDomainsToSkip = ['yahoo', 'live', 'outlook'];
 
-  // eslint-disable-next-line no-empty-function
   public constructor(private view: SetupView) {}
 
   public renderInitial = async (): Promise<void> => {

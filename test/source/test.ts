@@ -6,7 +6,7 @@ import { exec } from 'child_process';
 
 import { AvaContext, getDebugHtmlAtts, minutes, standaloneTestTimeout } from './tests/tooling';
 import { BrowserHandle, BrowserPool } from './browser';
-import { Config, Util, getParsedCliParams } from './util';
+import { Util, getParsedCliParams, Config } from './util';
 
 import { BrowserRecipe } from './tests/tooling/browser-recipe';
 import { defineComposeTests } from './tests/compose';
@@ -56,7 +56,6 @@ const mockApiLogs: string[] = [];
 
 test.before('set config and mock api', async t => {
   standaloneTestTimeout(t, consts.TIMEOUT_EACH_RETRY, t.title);
-  Config.extensionId = await browserPool.getExtensionId(t);
   t.pass();
 });
 
@@ -76,10 +75,12 @@ const testWithBrowser = (
       const address = mockApi.server.address();
       if (typeof address === 'object' && address) {
         const result = await asyncExec(`sh ./scripts/config-mock-build.sh ${buildDir} ${address.port}`);
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (t.context as any).extensionDir = result.stdout;
+
+        t.extensionDir = result.stdout;
+        t.urls = new TestUrls(await browserPool.getExtensionId(t), address.port);
       }
     }
+    Config.extensionId = await browserPool.getExtensionId(t);
     await browserPool.withNewBrowserTimeoutAndRetry(
       async (t, browser) => {
         const start = Date.now();
@@ -89,7 +90,7 @@ const testWithBrowser = (
         await cb(t, browser);
         if (DEBUG_BROWSER_LOG) {
           try {
-            const page = await browser.newPage(t, TestUrls.extension('chrome/dev/ci_unit_test.htm'));
+            const page = await browser.newPage(t, t.urls?.extension('chrome/dev/ci_unit_test.htm'));
             // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-return
             const items = (await page.target.evaluate(() => (window as any).Debug.readDatabase())) as {
               input: unknown;
