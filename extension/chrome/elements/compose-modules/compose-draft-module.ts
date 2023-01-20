@@ -37,8 +37,10 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
 
   public constructor(composer: ComposeView) {
     super(composer);
-    if (!this.view.disableDraftSaving) {
-      this.saveDraftInterval = Catch.setHandledInterval(() => this.draftSave(), this.SAVE_DRAFT_FREQUENCY);
+    // Only start draft timer when draft id is not set.
+    // When draft id is set, draft timer will start only when draft is decrypted successfully
+    if (!this.view.disableDraftSaving && !this.view.draftId) {
+      this.startDraftTimer();
     }
   }
 
@@ -212,6 +214,14 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
       return localDraft;
     }
     return undefined;
+  };
+
+  public startDraftTimer = () => {
+    if (this.saveDraftInterval) {
+      clearInterval(this.saveDraftInterval);
+      this.saveDraftInterval = undefined;
+    }
+    this.saveDraftInterval = Catch.setHandledInterval(() => this.draftSave(), this.SAVE_DRAFT_FREQUENCY);
   };
 
   private draftSetPrefixIntoBody = (sendable: SendableMsg) => {
