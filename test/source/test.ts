@@ -78,6 +78,8 @@ const testWithBrowser = (
 
         t.extensionDir = result.stdout;
         t.urls = new TestUrls(await browserPool.getExtensionId(t), address.port);
+      } else {
+        t.log('Failed to get mock build address');
       }
     }
     Config.extensionId = await browserPool.getExtensionId(t);
