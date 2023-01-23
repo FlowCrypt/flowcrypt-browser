@@ -66,7 +66,7 @@ export class Attachment {
     this.contentDescription = contentDescription || undefined;
   }
 
-  public static prepareFileAttachmentDownload = (attachment: Attachment, parentTabId: string) => {
+  public static prepareFileAttachmentDownload = async (attachment: Attachment, parentTabId: string) => {
     const blacklistedFiles = [
       '.ade',
       '.adp',
@@ -124,8 +124,9 @@ export class Attachment {
     ];
     const badFileExtensionWarning = 'This executable file was not checked for viruses, and may be dangerous to download or run. Proceed anyway?'; // xss-safe-value
     if (blacklistedFiles.some(badFileExtension => attachment.name.endsWith(badFileExtension))) {
-      BrowserMsg.send.showConfirmation(parentTabId, { message: badFileExtensionWarning });
-      return;
+      if (!(await BrowserMsg.send.showConfirmation(parentTabId, { message: badFileExtensionWarning }))) {
+        return;
+      }
     }
     Browser.saveToDownloads(attachment);
   };

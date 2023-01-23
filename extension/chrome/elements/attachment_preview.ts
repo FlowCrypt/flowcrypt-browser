@@ -78,9 +78,9 @@ View.run(
           });
           $('#attachment-preview-download')
             .css('display', 'flex')
-            .on('click', e => {
+            .on('click', async e => {
               e.stopPropagation();
-              Attachment.prepareFileAttachmentDownload(attachmentForSave, this.parentTabId);
+              await Attachment.prepareFileAttachmentDownload(attachmentForSave, this.parentTabId);
             });
           $('#attachment-preview-filename').text(this.origNameBasedOnFilename);
         }

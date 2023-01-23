@@ -324,7 +324,7 @@ export class AttachmentDownloadView extends View {
       if (!result.filename || ['msg.txt', 'null'].includes(result.filename)) {
         result.filename = this.attachment.name;
       }
-      Attachment.prepareFileAttachmentDownload(attachmentForSave, this.parentTabId);
+      await Attachment.prepareFileAttachmentDownload(attachmentForSave, this.parentTabId);
     } else if (result.error.type === DecryptErrTypes.needPassphrase) {
       BrowserMsg.send.passphraseDialog(this.parentTabId, {
         type: 'attachment',

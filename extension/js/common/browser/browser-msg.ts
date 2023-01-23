@@ -86,6 +86,7 @@ export namespace Bm {
   export type SaveFetchedPubkeys = { email: string; pubkeys: string[] };
   export type ProcessAndStoreKeysFromEkmLocally = { acctEmail: string; decryptedPrivateKeys: string[] };
   export type GetLocalKeyExpiration = { acctEmail: string };
+  export type ShowConfirmationResult = { isConfirmed: boolean };
 
   export namespace Res {
     export type GetActiveTabInfo = {
@@ -109,6 +110,7 @@ export namespace Bm {
     export type _tab_ = { tabId: string | null | undefined }; // eslint-disable-line @typescript-eslint/naming-convention
     export type SaveFetchedPubkeys = boolean;
     export type GetLocalKeyExpiration = number | undefined;
+    export type ShowConfirmationResult = boolean;
     export type ProcessAndStoreKeysFromEkmLocally = {
       needPassphrase?: boolean;
       updateCount?: number;
@@ -283,9 +285,8 @@ export class BrowserMsg {
     addToContacts: (dest: Bm.Dest) => BrowserMsg.sendCatch(dest, 'addToContacts', {}),
     reRenderRecipient: (dest: Bm.Dest, bm: Bm.ReRenderRecipient) => BrowserMsg.sendCatch(dest, 'reRenderRecipient', bm),
     showAttachmentPreview: (dest: Bm.Dest, bm: Bm.ShowAttachmentPreview) => BrowserMsg.sendCatch(dest, 'show_attachment_preview', bm),
-    showConfirmation: (dest: Bm.Dest, bm: Bm.ShowConfirmation) => {
-      BrowserMsg.sendCatch(dest, 'show_confirmation', bm);
-    },
+    showConfirmation: (dest: Bm.Dest, bm: Bm.ShowConfirmation) =>
+      BrowserMsg.sendAwait(dest, 'show_confirmation', bm, true) as Promise<Bm.Res.ShowConfirmationResult>,
   };
   /* eslint-disable @typescript-eslint/naming-convention */
   private static HANDLERS_REGISTERED_BACKGROUND: Handlers = {};
