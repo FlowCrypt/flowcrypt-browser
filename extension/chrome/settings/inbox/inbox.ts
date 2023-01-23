@@ -169,10 +169,8 @@ export class InboxView extends View {
     BrowserMsg.addListener('show_attachment_preview', async ({ iframeUrl }: Bm.ShowAttachmentPreview) => {
       await Ui.modal.attachmentPreview(iframeUrl);
     });
-    BrowserMsg.addListener('show_warning_for_attachment_download', async ({ message, attachment }: Bm.ShowWarningForAttachmentDownload) => {
-      if (await Ui.modal.confirm(message)) {
-        Browser.saveToDownloads(attachment);
-      }
+    BrowserMsg.addListener('show_confirmation', async ({ message }: Bm.ShowConfirmation) => {
+      return await Ui.modal.confirm(message);
     });
     if (this.debug) {
       BrowserMsg.addListener('open_compose_window', async ({ draftId }: Bm.ComposeWindowOpenDraft) => {

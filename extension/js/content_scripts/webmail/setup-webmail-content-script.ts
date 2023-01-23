@@ -9,7 +9,6 @@ import { ApiErr, BackendAuthErr } from '../../common/api/shared/api-error.js';
 import { BrowserMsgCommonHandlers } from '../../common/browser/browser-msg-common-handlers.js';
 import { Bm, BrowserMsg, TabIdRequiredError } from '../../common/browser/browser-msg.js';
 import { ContentScriptWindow } from '../../common/browser/browser-window.js';
-import { Browser } from '../../common/browser/browser.js';
 import { Env, WebMailName } from '../../common/browser/env.js';
 import { Ui } from '../../common/browser/ui.js';
 import { ClientConfiguration, ClientConfigurationError } from '../../common/client-configuration.js';
@@ -239,10 +238,8 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
     BrowserMsg.addListener('show_attachment_preview', async ({ iframeUrl }: Bm.ShowAttachmentPreview) => {
       await Ui.modal.attachmentPreview(iframeUrl);
     });
-    BrowserMsg.addListener('show_warning_for_attachment_download', async ({ message, attachment }: Bm.ShowWarningForAttachmentDownload) => {
-      if (await Ui.modal.confirm(message)) {
-        Browser.saveToDownloads(attachment);
-      }
+    BrowserMsg.addListener('show_confirmation', async ({ message }: Bm.ShowConfirmation) => {
+      return await Ui.modal.confirm(message);
     });
 
     BrowserMsg.listen(tabId);

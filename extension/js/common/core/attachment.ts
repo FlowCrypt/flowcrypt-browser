@@ -124,7 +124,7 @@ export class Attachment {
     ];
     const badFileExtensionWarning = 'This executable file was not checked for viruses, and may be dangerous to download or run. Proceed anyway?'; // xss-safe-value
     if (blacklistedFiles.some(badFileExtension => attachment.name.endsWith(badFileExtension))) {
-      BrowserMsg.send.showWarningForAttachmentDownload(parentTabId, { message: badFileExtensionWarning, attachment });
+      BrowserMsg.send.showConfirmation(parentTabId, { message: badFileExtensionWarning });
       return;
     }
     Browser.saveToDownloads(attachment);

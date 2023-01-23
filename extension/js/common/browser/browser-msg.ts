@@ -4,7 +4,6 @@
 
 import { AuthRes } from '../api/email-provider/gmail/google-auth.js';
 import { AjaxErr } from '../api/shared/api-error.js';
-import { Attachment } from '../core/attachment.js';
 import { Buf } from '../core/buf.js';
 import { Dict, Str, UrlParams } from '../core/common.js';
 import { ArmoredKeyIdentityWithEmails, KeyUtil } from '../core/crypto/key.js';
@@ -82,7 +81,7 @@ export namespace Bm {
   export type Ajax = { req: JQueryAjaxSettings; stack: string };
   export type AjaxGmailAttachmentGetChunk = { acctEmail: string; msgId: string; attachmentId: string };
   export type ShowAttachmentPreview = { iframeUrl: string };
-  export type ShowWarningForAttachmentDownload = { message: string; attachment: Attachment };
+  export type ShowConfirmation = { message: string };
   export type ReRenderRecipient = { email: string };
   export type SaveFetchedPubkeys = { email: string; pubkeys: string[] };
   export type ProcessAndStoreKeysFromEkmLocally = { acctEmail: string; decryptedPrivateKeys: string[] };
@@ -176,7 +175,7 @@ export namespace Bm {
     | PgpMsgType
     | Ajax
     | ShowAttachmentPreview
-    | ShowWarningForAttachmentDownload
+    | ShowConfirmation
     | ReRenderRecipient
     | SaveFetchedPubkeys
     | ProcessAndStoreKeysFromEkmLocally
@@ -284,8 +283,8 @@ export class BrowserMsg {
     addToContacts: (dest: Bm.Dest) => BrowserMsg.sendCatch(dest, 'addToContacts', {}),
     reRenderRecipient: (dest: Bm.Dest, bm: Bm.ReRenderRecipient) => BrowserMsg.sendCatch(dest, 'reRenderRecipient', bm),
     showAttachmentPreview: (dest: Bm.Dest, bm: Bm.ShowAttachmentPreview) => BrowserMsg.sendCatch(dest, 'show_attachment_preview', bm),
-    showWarningForAttachmentDownload: (dest: Bm.Dest, bm: Bm.ShowWarningForAttachmentDownload) => {
-      BrowserMsg.sendCatch(dest, 'show_warning_for_attachment_download', bm);
+    showConfirmation: (dest: Bm.Dest, bm: Bm.ShowConfirmation) => {
+      BrowserMsg.sendCatch(dest, 'show_confirmation', bm);
     },
   };
   /* eslint-disable @typescript-eslint/naming-convention */
