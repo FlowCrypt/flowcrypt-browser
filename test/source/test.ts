@@ -28,7 +28,7 @@ export const internalTestState = { expectIntentionalErrReport: false }; // updat
 const DEBUG_BROWSER_LOG = false; // set to true to print / export information from browser
 const DEBUG_MOCK_LOG = false; // set to true to print mock server logs
 
-process.setMaxListeners(60);
+process.setMaxListeners(0);
 
 /* eslint-disable @typescript-eslint/naming-convention */
 const consts = {
