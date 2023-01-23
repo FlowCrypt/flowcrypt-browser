@@ -26,8 +26,7 @@ export class BrowserPool {
 
   public newBrowserHandle = async (t: AvaContext, closeInitialPage = true) => {
     // await this.semaphore.acquire();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const extensionDir = (t.context as any).extensionDir ?? this.extensionBuildDir;
+    const extensionDir = t.extensionDir ?? this.extensionBuildDir;
     const args = [
       '--no-sandbox', // make it work in travis-ci
       '--disable-setuid-sandbox',
