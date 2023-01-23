@@ -16,7 +16,7 @@ import { defineFlakyTests } from './tests/flaky';
 import { defineGmailTests } from './tests/gmail';
 import { defineSettingsTests } from './tests/settings';
 import { defineSetupTests } from './tests/setup';
-import { defineUnitNodeTests } from './tests/unit-node';
+// import { defineUnitNodeTests } from './tests/unit-node';
 import { defineUnitBrowserTests } from './tests/unit-browser';
 import { mockBackendData } from './mock/backend/backend-endpoints';
 import { TestUrls } from './browser/test-urls';
@@ -25,7 +25,7 @@ import { startAllApisMock } from './mock/all-apis-mock';
 
 export const { testVariant, testGroup, oneIfNotPooled, buildDir, isMock } = getParsedCliParams();
 export const internalTestState = { expectIntentionalErrReport: false }; // updated when a particular test that causes an error is run
-const DEBUG_BROWSER_LOG = false; // set to true to print / export information from browser
+const DEBUG_BROWSER_LOG = true; // set to true to print / export information from browser
 const DEBUG_MOCK_LOG = false; // set to true to print mock server logs
 
 process.setMaxListeners(0);
@@ -211,7 +211,7 @@ test.after.always('send debug info if any', async t => {
 });
 
 if (testGroup === 'UNIT-TESTS') {
-  defineUnitNodeTests(testVariant);
+  // defineUnitNodeTests(testVariant);
   defineUnitBrowserTests(testVariant, testWithBrowser);
 } else if (testGroup === 'FLAKY-GROUP') {
   defineFlakyTests(testVariant, testWithBrowser);

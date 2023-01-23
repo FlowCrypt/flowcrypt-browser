@@ -40,6 +40,7 @@ export class Wkd extends Api {
     const userPart = `hu/${hu}?l=${encodeURIComponent(user)}`;
     const advancedUrl = `${advancedHost}/.well-known/openpgpkey/${lowerCaseRecipientDomain}`;
     const directUrl = `${directHost}/.well-known/openpgpkey`;
+    console.log('direct - ' + directHost + ', advanced - ' + advancedHost + ', wkd - ' + WKD_API_HOST);
     let response = await this.urlLookup(advancedUrl, userPart, timeout);
     if (!response.buf && response.hasPolicy) {
       return [];
@@ -62,6 +63,13 @@ export class Wkd extends Api {
     const all = await this.rawLookupEmail(email);
     const filtered = all.filter(key => key.emails.some(e => e.toLowerCase() === email.toLowerCase()));
     return { pubkeys: filtered.map(pubkey => pubkey.armored) };
+  };
+
+  public debugInfo = () => {
+    const lowerCaseRecipientDomain = 'localhost';
+    const directHost = WKD_API_HOST || `https://${lowerCaseRecipientDomain}`;
+    const advancedHost = WKD_API_HOST || `https://openpgpkey.${lowerCaseRecipientDomain}`;
+    return 'direct - ' + directHost + ', advanced - ' + advancedHost + ', wkd - ' + WKD_API_HOST;
   };
 
   private urlLookup = async (methodUrlBase: string, userPart: string, timeout: number): Promise<{ hasPolicy: boolean; buf?: Buf }> => {
