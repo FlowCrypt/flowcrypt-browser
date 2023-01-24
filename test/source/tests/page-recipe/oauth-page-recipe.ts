@@ -49,7 +49,7 @@ export class OauthPageRecipe extends PageRecipe {
   ): Promise<void> => {
     try {
       const isMock = oauthPage.target.url().includes('localhost') || oauthPage.target.url().includes('google.mock.localhost');
-      console.log('is mock ' + isMock);
+      console.log('url ' + oauthPage.target.url() + ', is mock ' + isMock);
       if (isMock) {
         await OauthPageRecipe.mock(t, oauthPage, acctEmail, action);
         return;
