@@ -126,7 +126,7 @@ export const defineUnitBrowserTests = (testVariant: TestVariant, testWithBrowser
 
     const allUnitTests: UnitTest[] = [];
     for (const filename of readdirSync(browserUnitTestsFolder)) {
-      if (!filename.startsWith('.') && filename === 'unit-Wkd.js') {
+      if (!filename.startsWith('.') && filename === 'unit-ContactStore.js') {
         allUnitTests.push(...parseTestFile(filename));
       }
     }
