@@ -26,7 +26,10 @@ export class BrowserRecipe {
   };
 
   public static openSettingsLoginApprove = async (t: AvaContext, browser: BrowserHandle, acctEmail: string) => {
+    console.log('open setttings login approve');
+    console.log('extension page - ' + t.urls?.extensionSettings(acctEmail));
     const settingsPage = await browser.newExtensionSettingsPage(t, acctEmail);
+    console.log('oauth popup');
     const oauthPopup = await browser.newPageTriggeredBy(t, () => settingsPage.waitAndClick('@action-connect-to-gmail'));
     await OauthPageRecipe.google(t, oauthPopup, acctEmail, 'approve');
     return settingsPage;
