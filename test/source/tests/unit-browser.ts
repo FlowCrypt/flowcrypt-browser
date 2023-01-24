@@ -20,7 +20,6 @@ export const defineUnitBrowserTests = (testVariant: TestVariant, testWithBrowser
         title,
         testWithBrowser(acct, async (t, browser) => {
           console.log('Defined test dir - ' + t.extensionDir);
-          console.log('extension page - ' + t.urls?.extension('chrome/dev/ci_unit_test.htm'));
           const hostPage = await browser.newExtensionPage(t, 'chrome/dev/ci_unit_test.htm');
           // update host page h1
           await hostPage.target.evaluate(title => {
