@@ -6,7 +6,7 @@ import { Api } from './../shared/api.js';
 import { ApiErr } from '../shared/api-error.js';
 import { Buf } from '../../core/buf.js';
 import { PubkeysSearchResult } from './../pub-lookup.js';
-import { WKD_API_HOST } from '../../core/const.js';
+import { OAUTH_GOOGLE_API_HOST } from '../../core/const.js';
 import { opgp } from '../../core/crypto/pgp/openpgpjs-custom.js';
 import { BrowserMsg } from '../../browser/browser-msg.js';
 import { ArmoredKeyIdentityWithEmails, KeyUtil } from '../../core/crypto/key.js';
@@ -35,12 +35,12 @@ export class Wkd extends Api {
     const timeout = this.usesKeyManager && lowerCaseRecipientDomain === this.domainName ? 10 : 4;
     const hashed = await window.crypto.subtle.digest('SHA-1', Buf.fromUtfStr(user.toLowerCase()));
     const hu = this.encodeZBase32(new Uint8Array(hashed));
-    const directHost = WKD_API_HOST || `https://${lowerCaseRecipientDomain}`;
-    const advancedHost = WKD_API_HOST || `https://openpgpkey.${lowerCaseRecipientDomain}`;
+    const directHost = OAUTH_GOOGLE_API_HOST || `https://${lowerCaseRecipientDomain}`;
+    const advancedHost = OAUTH_GOOGLE_API_HOST || `https://openpgpkey.${lowerCaseRecipientDomain}`;
     const userPart = `hu/${hu}?l=${encodeURIComponent(user)}`;
     const advancedUrl = `${advancedHost}/.well-known/openpgpkey/${lowerCaseRecipientDomain}`;
     const directUrl = `${directHost}/.well-known/openpgpkey`;
-    console.log('direct - ' + directHost + ', advanced - ' + advancedHost + ', wkd - ' + WKD_API_HOST);
+    console.log('direct - ' + directHost + ', advanced - ' + advancedHost + ', wkd - ' + OAUTH_GOOGLE_API_HOST);
     let response = await this.urlLookup(advancedUrl, userPart, timeout);
     if (!response.buf && response.hasPolicy) {
       return [];
@@ -67,9 +67,9 @@ export class Wkd extends Api {
 
   public debugInfo = () => {
     const lowerCaseRecipientDomain = 'localhost';
-    const directHost = WKD_API_HOST || `https://${lowerCaseRecipientDomain}`;
-    const advancedHost = WKD_API_HOST || `https://openpgpkey.${lowerCaseRecipientDomain}`;
-    return 'direct - ' + directHost + ', advanced - ' + advancedHost + ', wkd - ' + WKD_API_HOST;
+    const directHost = OAUTH_GOOGLE_API_HOST || `https://${lowerCaseRecipientDomain}`;
+    const advancedHost = OAUTH_GOOGLE_API_HOST || `https://openpgpkey.${lowerCaseRecipientDomain}`;
+    return 'direct - ' + directHost + ', advanced - ' + advancedHost + ', wkd - ' + OAUTH_GOOGLE_API_HOST;
   };
 
   private urlLookup = async (methodUrlBase: string, userPart: string, timeout: number): Promise<{ hasPolicy: boolean; buf?: Buf }> => {
