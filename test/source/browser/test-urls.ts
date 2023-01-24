@@ -3,7 +3,7 @@
 import { GmailCategory } from '../tests/gmail';
 
 export class TestUrls {
-  public constructor(private extensionId: string, private port: number) {}
+  public constructor(private extensionId: string, public port: number) {}
 
   public static googleChat = (acctLoginIndex = 0) => {
     return `https://mail.google.com/chat/u/${acctLoginIndex}`;

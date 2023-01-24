@@ -19,7 +19,6 @@ export const defineUnitBrowserTests = (testVariant: TestVariant, testWithBrowser
       (flag !== 'only' ? test : test.only)(
         title,
         testWithBrowser(acct, async (t, browser) => {
-          console.log('Defined test dir - ' + t.extensionDir);
           const hostPage = await browser.newExtensionPage(t, 'chrome/dev/ci_unit_test.htm');
           // update host page h1
           await hostPage.target.evaluate(title => {
@@ -31,10 +30,11 @@ export const defineUnitBrowserTests = (testVariant: TestVariant, testWithBrowser
             (window as any).testConstants = object;
           }, testConstants);
           // prepare code to run
+          const testCodeWithMockPort = testCode.replace(':8001', ':' + t.urls?.port);
           const runThisCodeInBrowser = `
             (async () => {
               try {
-                return await ${testCode}
+                return await ${testCodeWithMockPort}
               } catch (e) {
                 return "unit test threw something:" + String(e) + "\\n\\n" + e.stack;
               }
