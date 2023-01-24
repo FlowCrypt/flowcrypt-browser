@@ -72,6 +72,7 @@ export class BrowserHandle {
       }
       return controllablePage;
     } catch (e) {
+      console.log('new page triggered error "' + String(e).includes('page has been closed') + '", url - ' + url);
       if (String(e).includes('page has been closed') && url.includes('localhost') && url.includes('/o/oauth2/auth')) {
         // the extension may close the auth page after success before we had a chance to evaluate it
         return controllablePage; // returning already closed auth page

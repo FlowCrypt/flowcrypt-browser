@@ -29,7 +29,7 @@ export class BrowserRecipe {
     const settingsPage = await browser.newExtensionSettingsPage(t, acctEmail);
     console.log('oauth popup');
     const oauthPopup = await browser.newPageTriggeredBy(t, () => settingsPage.waitAndClick('@action-connect-to-gmail'));
-    console.log('google approve');
+    console.log('google approve - ' + oauthPopup.page.url());
     await OauthPageRecipe.google(t, oauthPopup, acctEmail, 'approve');
     console.log('settings page');
     return settingsPage;
