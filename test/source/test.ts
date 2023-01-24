@@ -89,6 +89,7 @@ const testWithBrowser = (
         if (acct) {
           await BrowserRecipe.setUpCommonAcct(t, browser, acct);
         }
+        console.log('await cb browser');
         await cb(t, browser);
         if (DEBUG_BROWSER_LOG) {
           try {
