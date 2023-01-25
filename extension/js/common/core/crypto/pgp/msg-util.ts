@@ -143,7 +143,7 @@ export class MsgUtil {
         // This does not 100% mean it's OpenPGP message
         // But it's a good indication that it may be
         const t = opgp.enums.packet;
-        const msgTpes = [
+        const msgTypes = [
           t.publicKeyEncryptedSessionKey,
           t.symEncryptedIntegrityProtectedData,
           t.modificationDetectionCode,
@@ -151,7 +151,7 @@ export class MsgUtil {
           t.symmetricallyEncryptedData,
           t.compressedData,
         ];
-        return { armored: false, type: msgTpes.includes(tagNumber) ? 'encryptedMsg' : 'publicKey' };
+        return { armored: false, type: msgTypes.includes(tagNumber) ? 'encryptedMsg' : 'publicKey' };
       }
     }
     const fiftyBytesUtf = new Buf(data.slice(0, 50)).toUtfStr().trim();
