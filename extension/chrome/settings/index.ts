@@ -368,15 +368,8 @@ View.run(
         // have auth email set
         try {
           // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-          const acctRes = await this.acctServer!.accountGetAndUpdateLocalStore();
+          await this.acctServer!.accountGetAndUpdateLocalStore();
           $('#status-row #status_flowcrypt').text(`fc:ok`);
-          // if (acctRes?.account?.alias) { // Todo: get alias
-          if (acctRes) {
-            statusContainer.find('.status-indicator-text').css('display', 'none');
-            statusContainer.find('.status-indicator').addClass('active');
-          } else {
-            statusContainer.find('.status-indicator').addClass('inactive');
-          }
         } catch (e) {
           if (ApiErr.isAuthErr(e)) {
             const authNeededLink = $('<a class="bad" href="#">Auth Needed</a>');
@@ -410,8 +403,6 @@ View.run(
           }
         }
       } else {
-        // never set up
-        statusContainer.find('.status-indicator').addClass('inactive');
         $('#status-row #status_flowcrypt').text(`fc:none`);
       }
       statusContainer.css('visibility', 'visible');

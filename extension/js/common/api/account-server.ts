@@ -2,11 +2,11 @@
 
 'use strict';
 
-import {isCustomUrlFesUsed} from '../helpers.js';
-import {ExternalService} from './account-servers/external-service.js';
-import {ParsedRecipients} from './email-provider/email-provider-api.js';
-import {Api, ProgressCb} from './shared/api.js';
-import {ClientConfigurationJson} from "../client-configuration.js";
+import { isCustomUrlFesUsed } from '../helpers.js';
+import { ExternalService } from './account-servers/external-service.js';
+import { ParsedRecipients } from './email-provider/email-provider-api.js';
+import { Api, ProgressCb } from './shared/api.js';
+import { ClientConfigurationJson } from '../client-configuration.js';
 
 export type UploadedMessageData = {
   url: string; // both FES and FlowCryptComApi
@@ -17,7 +17,7 @@ export type UploadedMessageData = {
 export type AccountGetAndUpdateResult = {
   clientConfiguration: ClientConfigurationJson;
   defaultWebPortalMessageExpire: number;
-}
+};
 
 /**
  * This may be calling to FlowCryptComApi or Enterprise Server (FES, customer on-prem) depending on
@@ -37,10 +37,9 @@ export class AccountServer extends Api {
   public accountGetAndUpdateLocalStore = async (): Promise<AccountGetAndUpdateResult> => {
     const service = await this.getExternalService();
     const fetchedClientConfiguration = await service.fetchAndSaveClientConfiguration();
-    /* eslint-disable @typescript-eslint/naming-convention */
     return {
       clientConfiguration: fetchedClientConfiguration,
-      defaultWebPortalMessageExpire: await this.isFesUsed() ? 180 : 90
+      defaultWebPortalMessageExpire: (await this.isFesUsed()) ? 180 : 90,
     };
   };
 
@@ -74,5 +73,5 @@ export class AccountServer extends Api {
       return this.potentialCustomUrlFes;
     }
     return this.sharedTenantFes;
-  }
+  };
 }
