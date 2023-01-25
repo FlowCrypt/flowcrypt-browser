@@ -92,7 +92,11 @@ export class KeyImportUi {
           $('.source_paste_container').css('display', 'block');
           $('.source_paste_container .unprotected_key_create_pass_phrase').hide();
         } else if ((this as HTMLInputElement).value === 'backup') {
-          window.location.href = Url.create('/chrome/settings/setup.htm', { acctEmail, parentTabId, action: 'add_key' });
+          window.location.href = Url.create('/chrome/settings/setup.htm', {
+            acctEmail,
+            parentTabId,
+            action: 'add_key',
+          });
         }
       });
     $('.line.unprotected_key_create_pass_phrase .action_use_random_pass_phrase').on(
