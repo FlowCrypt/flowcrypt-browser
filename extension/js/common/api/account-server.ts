@@ -2,13 +2,11 @@
 
 'use strict';
 
-import {InMemoryStoreKeys} from '../core/const.js';
 import {isCustomUrlFesUsed} from '../helpers.js';
-import {InMemoryStore} from '../platform/store/in-memory-store.js';
 import {ExternalService} from './account-servers/external-service';
 import {ParsedRecipients} from './email-provider/email-provider-api.js';
-import {BackendAuthErr} from './shared/api-error.js';
 import {Api, ProgressCb} from './shared/api.js';
+import {ClientConfigurationJson} from "../client-configuration";
 
 export type UploadedMessageData = {
   url: string; // both FES and FlowCryptComApi
@@ -16,13 +14,18 @@ export type UploadedMessageData = {
   emailToExternalIdAndUrl?: { [email: string]: { url: string; externalId: string } }; // FES only
 };
 
+export type AccountGetAndUpdateResult = {
+  clientConfiguration: ClientConfigurationJson;
+  defaultWebPortalMessageExpire: number;
+}
+
 /**
  * This may be calling to FlowCryptComApi or Enterprise Server (FES, customer on-prem) depending on
  *   whether FES is deployed on the customer domain or not.
  */
 export class AccountServer extends Api {
-  private potentialCustomUrlFes: ExternalService;
-  private sharedTenantFes: ExternalService;
+  private readonly potentialCustomUrlFes: ExternalService;
+  private readonly sharedTenantFes: ExternalService;
 
   public constructor(private acctEmail: string) {
     super();
@@ -31,22 +34,14 @@ export class AccountServer extends Api {
     this.sharedTenantFes.url = 'https://flowcrypt.com/shared-tenant-fes/';
   }
 
-  public accountGetAndUpdateLocalStore = async (): Promise<BackendRes.FcAccountGet> => {
-    if (await this.isFesUsed()) {
-      const fes = new ExternalService(this.acctEmail);
-      const fetchedClientConfiguration = await fes.fetchAndSaveClientConfiguration();
-      /* eslint-disable @typescript-eslint/naming-convention */
-      return {
-        domain_org_rules: fetchedClientConfiguration,
-        // todo - rethink this. On FES, expiration is handled with S3 bucket policy regardless of this number
-        //  which is set to 180 days on buckets we manage. This number below may still be rendered somewhere
-        //  when composing, which should be evaluated.
-        account: { default_message_expire: 180 },
-      };
-      /* eslint-enable @typescript-eslint/naming-convention */
-    } else {
-      return await FlowCryptComApi.accountGetAndUpdateLocalStore(await this.getIdToken());
-    }
+  public accountGetAndUpdateLocalStore = async (): Promise<AccountGetAndUpdateResult> => {
+    const service = await this.getExternalService();
+    const fetchedClientConfiguration = await service.fetchAndSaveClientConfiguration();
+    /* eslint-disable @typescript-eslint/naming-convention */
+    return {
+      clientConfiguration: fetchedClientConfiguration,
+      defaultWebPortalMessageExpire: await this.isFesUsed() ? 180 : 90
+    };
   };
 
   public messageUpload = async (
@@ -56,44 +51,28 @@ export class AccountServer extends Api {
     recipients: ParsedRecipients,
     progressCb: ProgressCb
   ): Promise<UploadedMessageData> => {
-    if (await this.isFesUsed()) {
-      const fes = new ExternalService(this.acctEmail);
-      // Recipients are used to later cross-check replies from the web
-      //   The message is not actually sent to them now.
-      //   Message is uploaded and a link is retrieved which is sent through Gmail.
-      return await fes.webPortalMessageUpload(encrypted, replyToken, from, recipients, progressCb);
-    } else {
-      return await FlowCryptComApi.messageUpload(await this.getIdToken(), encrypted, progressCb);
-    }
+    const service = await this.getExternalService();
+    return await service.webPortalMessageUpload(encrypted, replyToken, from, recipients, progressCb);
   };
 
   public messageGatewayUpdate = async (externalId: string, emailGatewayMessageId: string) => {
-    if (await this.isFesUsed()) {
-      const fes = new ExternalService(this.acctEmail);
-      await fes.messageGatewayUpdate(externalId, emailGatewayMessageId);
-    }
+    const service = await this.getExternalService();
+    return await service.messageGatewayUpdate(externalId, emailGatewayMessageId);
   };
 
   public messageToken = async (): Promise<{ replyToken: string }> => {
-    if (await this.isFesUsed()) {
-      const fes = new ExternalService(this.acctEmail);
-      return await fes.webPortalMessageNewReplyToken();
-    } else {
-      const res = await FlowCryptComApi.messageToken(await this.getIdToken());
-      return { replyToken: res.token };
-    }
+    const service = await this.getExternalService();
+    return await service.webPortalMessageNewReplyToken();
   };
 
   public isFesUsed = async (): Promise<boolean> => {
     return await isCustomUrlFesUsed(this.acctEmail);
   };
 
-  private getIdToken = async (): Promise<string> => {
-    const idToken = await InMemoryStore.get(this.acctEmail, InMemoryStoreKeys.ID_TOKEN);
-    if (!idToken) {
-      // user will not actually see this message, they'll see a generic login prompt
-      throw new BackendAuthErr('Missing id token, please re-authenticate');
+  private getExternalService = async (): Promise<ExternalService> => {
+    if (await this.isFesUsed()) {
+      return this.potentialCustomUrlFes;
     }
-    return idToken;
-  };
+    return this.sharedTenantFes;
+  }
 }

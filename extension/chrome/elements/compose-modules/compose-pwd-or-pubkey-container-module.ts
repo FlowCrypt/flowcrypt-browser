@@ -130,7 +130,7 @@ export class ComposePwdOrPubkeyContainerModule extends ViewModule<ComposeView> {
     } else {
       try {
         const response = await this.view.acctServer.accountGetAndUpdateLocalStore();
-        expirationTextEl.text(Str.pluralize(response.account.default_message_expire, 'day'));
+        expirationTextEl.text(Str.pluralize(response.defaultWebPortalMessageExpire, 'day'));
       } catch (e) {
         ApiErr.reportIfSignificant(e);
         expirationTextEl.text(`(unknown days: ${ApiErr.eli5(e)})`);

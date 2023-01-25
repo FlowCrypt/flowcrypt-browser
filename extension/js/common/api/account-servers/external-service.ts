@@ -3,9 +3,8 @@
 
 import { Api, ProgressCb, ReqMethod } from '../shared/api.js';
 import { AcctStore } from '../../platform/store/acct-store.js';
-import { BackendRes, ProfileUpdate } from './flowcrypt-com-api.js';
 import { Dict, Str } from '../../core/common.js';
-import { ErrorReport, UnreportableError } from '../../platform/catch.js';
+import { ErrorReport } from '../../platform/catch.js';
 import { ApiErr, BackendAuthErr } from '../shared/api-error.js';
 import { FLAVOR, InMemoryStoreKeys } from '../../core/const.js';
 import { Attachment } from '../../core/attachment.js';
@@ -155,11 +154,6 @@ export class ExternalService extends Api {
     await this.request<void>('POST', `/api/${this.apiVersion}/message/${externalId}/gateway`, await this.authHdr(), {
       emailGatewayMessageId,
     });
-  };
-
-  public accountUpdate = async (profileUpdate: ProfileUpdate): Promise<BackendRes.FcAccountUpdate> => {
-    console.log('profile update ignored', profileUpdate);
-    throw new UnreportableError('Account update not implemented when using FlowCrypt External Service');
   };
 
   private authHdr = async (): Promise<Dict<string>> => {

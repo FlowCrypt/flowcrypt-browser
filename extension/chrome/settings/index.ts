@@ -370,7 +370,8 @@ View.run(
           // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
           const acctRes = await this.acctServer!.accountGetAndUpdateLocalStore();
           $('#status-row #status_flowcrypt').text(`fc:ok`);
-          if (acctRes?.account?.alias) {
+          // if (acctRes?.account?.alias) { // Todo: get alias
+          if (acctRes) {
             statusContainer.find('.status-indicator-text').css('display', 'none');
             statusContainer.find('.status-indicator').addClass('active');
           } else {
