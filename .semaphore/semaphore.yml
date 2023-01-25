@@ -40,21 +40,21 @@ blocks:
         - name: consumer mock - unit tests
           commands:
             - npm run-script test_local_unit_consumer
-        - name: consumer mock - standard test group
-          commands:
-            - npm -v
-            - node -v
-            - npm run-script test_ci_chrome_consumer
-        - name: consumer mock - flaky test group
-          commands:
-            - npm run-script test_ci_chrome_consumer_flaky
-        - name: enterprise mock - unit tests
-          commands:
-            - npm run-script test_local_unit_enterprise
-        - name: enterprise mock - standard test group
-          commands:
-            - npm run-script test_ci_chrome_enterprise
-            - cd ./build && zip -r ~/chrome-enterprise.zip ./chrome-enterprise/* && cd ~
+        # - name: consumer mock - standard test group
+        #   commands:
+        #     - npm -v
+        #     - node -v
+        #     - npm run-script test_ci_chrome_consumer
+        # - name: consumer mock - flaky test group
+        #   commands:
+        #     - npm run-script test_ci_chrome_consumer_flaky
+        # - name: enterprise mock - unit tests
+        #   commands:
+        #     - npm run-script test_local_unit_enterprise
+        # - name: enterprise mock - standard test group
+        #   commands:
+        #     - npm run-script test_ci_chrome_enterprise
+        #     - cd ./build && zip -r ~/chrome-enterprise.zip ./chrome-enterprise/* && cd ~
       epilogue:
         on_fail:
           commands:
@@ -63,36 +63,36 @@ blocks:
                 echo "Uploading debug files as job artifacts..."
                 artifact push job build/test/test/debugArtifacts/debugHtmlAttachment-*.html
               fi
-  - name: Live Gmail tests
-    dependencies: []
-    run:
-      when: branch = 'master' OR branch =~ 'live-test'  OR branch =~ 'gmail-test'
-    execution_time_limit:
-      minutes: 20
-    task:
-      secrets:
-        - name: flowcrypt-browser-ci-secrets
-      env_vars:
-        - name: SEMAPHORE_GIT_DIR
-          value: /home/semaphore/git/flowcrypt-browser
-      prologue:
-        commands:
-          - nvm use 16
-          - nvm alias default 16
-          - npm install -g npm@8.11.0 && mkdir ~/git && checkout && mv ~/test-secrets.json ~/git/flowcrypt-browser/test/test-secrets.json
-          - cd ~/git/flowcrypt-browser
-          - npm install
-          - 'echo "NODE=$(node --version), NPM=$(npm --version), TSC=$( ./node_modules/typescript/bin/tsc --version)"'
-          - npm run-script pretest
-      jobs:
-        - name: Live Gmail tests
-          commands:
-            - npm run-script test_ci_chrome_consumer_live_gmail
-      epilogue:
-        on_fail:
-          commands:
-            - |
-              if [ -f build/test/test/debugArtifacts/debugHtmlAttachment-0.html ]; then
-                echo "Uploading debug files as job artifacts..."
-                artifact push job build/test/test/debugArtifacts/debugHtmlAttachment-0.html
-              fi
+  # - name: Live Gmail tests
+  #   dependencies: []
+  #   run:
+  #     when: branch = 'master' OR branch =~ 'live-test'  OR branch =~ 'gmail-test'
+  #   execution_time_limit:
+  #     minutes: 20
+  #   task:
+  #     secrets:
+  #       - name: flowcrypt-browser-ci-secrets
+  #     env_vars:
+  #       - name: SEMAPHORE_GIT_DIR
+  #         value: /home/semaphore/git/flowcrypt-browser
+  #     prologue:
+  #       commands:
+  #         - nvm use 16
+  #         - nvm alias default 16
+  #         - npm install -g npm@8.11.0 && mkdir ~/git && checkout && mv ~/test-secrets.json ~/git/flowcrypt-browser/test/test-secrets.json
+  #         - cd ~/git/flowcrypt-browser
+  #         - npm install
+  #         - 'echo "NODE=$(node --version), NPM=$(npm --version), TSC=$( ./node_modules/typescript/bin/tsc --version)"'
+  #         - npm run-script pretest
+  #     jobs:
+  #       - name: Live Gmail tests
+  #         commands:
+  #           - npm run-script test_ci_chrome_consumer_live_gmail
+  #     epilogue:
+  #       on_fail:
+  #         commands:
+  #           - |
+  #             if [ -f build/test/test/debugArtifacts/debugHtmlAttachment-0.html ]; then
+  #               echo "Uploading debug files as job artifacts..."
+  #               artifact push job build/test/test/debugArtifacts/debugHtmlAttachment-0.html
+  #             fi

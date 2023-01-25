@@ -39,7 +39,12 @@ export class BrowserHandle {
     }
     this.pages.push(controllablePage);
     if (url && url.includes(Config.extensionId)) {
-      await controllablePage.waitUntilViewLoaded();
+      if (url.includes('/const.js')) {
+        console.log('const.js');
+        console.log(await controllablePage.html());
+      } else {
+        await controllablePage.waitUntilViewLoaded();
+      }
     }
     return controllablePage;
   };

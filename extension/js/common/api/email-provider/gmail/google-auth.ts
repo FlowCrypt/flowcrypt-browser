@@ -138,6 +138,7 @@ export class GoogleAuth {
   };
 
   public static newAuthPopup = async ({ acctEmail, scopes, save }: { acctEmail?: string; scopes?: string[]; save?: boolean }): Promise<AuthRes> => {
+    console.log('new auth popup');
     if (acctEmail) {
       acctEmail = acctEmail.toLowerCase();
     }
@@ -150,7 +151,9 @@ export class GoogleAuth {
     }
     const authRequest = GoogleAuth.newAuthRequest(acctEmail, scopes);
     const authUrl = GoogleAuth.apiGoogleAuthCodeUrl(authRequest);
+    console.log('auth url - ' + authUrl);
     const authWindowResult = await OAuth2.webAuthFlow(authUrl);
+    console.log('auth window result - ' + authWindowResult.url);
     const authRes = await GoogleAuth.getAuthRes({
       acctEmail,
       save,

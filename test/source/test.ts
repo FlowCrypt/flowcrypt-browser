@@ -87,6 +87,7 @@ const testWithBrowser = (
       async (t, browser) => {
         const start = Date.now();
         if (acct) {
+          console.log('setup common acct with port ' + t.urls?.port);
           await BrowserRecipe.setUpCommonAcct(t, browser, acct);
         }
         console.log('await cb browser');
