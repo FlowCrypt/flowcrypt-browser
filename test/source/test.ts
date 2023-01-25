@@ -75,7 +75,6 @@ const testWithBrowser = (
       const address = mockApi.server.address();
       if (typeof address === 'object' && address) {
         const result = await asyncExec(`sh ./scripts/config-mock-build.sh ${buildDir} ${address.port}`);
-        console.log('config mock build - ' + result.stdout);
 
         t.extensionDir = result.stdout;
         t.urls = new TestUrls(await browserPool.getExtensionId(t), address.port);
