@@ -222,7 +222,7 @@ export class MsgUtil {
       const packets = msg.packets;
       // todo: remove this patch after openpgpjs/openpgpjs#1583 is resolved
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const isSymEncrypted = packets.filter(p => p instanceof (opgp as any).SymEncryptedSessionKeyPacket).length > 0; // tslint:disable-line:no-unsafe-any
+      const isSymEncrypted = packets.filter(p => p instanceof (opgp as any).SymEncryptedSessionKeyPacket).length > 0;
       const isPubEncrypted = packets.filter(p => p instanceof opgp.PublicKeyEncryptedSessionKeyPacket).length > 0;
       if (isSymEncrypted && !isPubEncrypted && !msgPwd) {
         return {
@@ -290,7 +290,7 @@ export class MsgUtil {
 
   public static diagnosePubkeys: PgpMsgMethod.DiagnosePubkeys = async ({ armoredPubs, message }) => {
     const m = await opgp.readMessage({ armoredMessage: Buf.fromUint8(message).toUtfStr() });
-    const msgKeyIds = m.getEncryptionKeyIDs() ?? [];
+    const msgKeyIds = m.getEncryptionKeyIDs();
     const localKeyIds: string[] = [];
     for (const k of await Promise.all(armoredPubs.map(pub => KeyUtil.parse(pub)))) {
       localKeyIds.push(...KeyUtil.getPubkeyLongids(k));

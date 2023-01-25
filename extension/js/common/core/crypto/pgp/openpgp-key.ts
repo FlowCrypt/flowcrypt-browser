@@ -212,7 +212,6 @@ export class OpenPGPKey {
       throw new Error('Key does not have a fingerprint and cannot be parsed.');
     }
     const algoInfo = keyWithoutWeakPackets.keyPacket.getAlgorithmInfo();
-    // tslint:disable-next-line:no-unnecessary-initializer
     const {
       encryptionKey = undefined,
       encryptionKeyIgnoringExpiration = undefined,
@@ -982,7 +981,6 @@ export class OpenPGPKey {
     return nonDummyPrvPackets;
   };
 
-  /* tslint:disable:no-null-keyword */
   private static maxDate = (dates: (Date | null)[]): Date | null => {
     // eslint-disable-next-line no-null/no-null
     let res: Date | null = null;
@@ -1003,7 +1001,6 @@ export class OpenPGPKey {
   };
 
   // Attempt to backport from openpgp.js v4
-  /* tslint:disable:no-null-keyword */
   private static getKeyExpirationTime = async (
     key: OpenPGP.Key,
     capabilities?: 'encrypt' | 'encrypt_sign' | 'sign' | null,
