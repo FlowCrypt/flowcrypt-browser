@@ -100,7 +100,6 @@ View.run(
           const response = await this.acctServer.accountGetAndUpdateLocalStore();
           $('.select_loader_container').text('');
           $('.default_message_expire').val(Number(response.defaultWebPortalMessageExpire).toString()).prop('disabled', false).css('display', 'inline-block');
-          $('.default_message_expire').change(this.setHandler(() => this.onDefaultExpireUserChange()));
         }
       } catch (e) {
         if (ApiErr.isAuthErr(e)) {
@@ -116,14 +115,6 @@ View.run(
             .on('click', () => window.location.reload()); // safe source
         }
       }
-    };
-
-    private onDefaultExpireUserChange = async () => {
-      Xss.sanitizeRender('.select_loader_container', Ui.spinner('green'));
-      $('.default_message_expire').css('display', 'none');
-      // eslint-disable-next-line @typescript-eslint/naming-convention
-      await this.acctServer.accountUpdate({ default_message_expire: Number($('.default_message_expire').val()) });
-      window.location.reload();
     };
 
     private onMsgLanguageUserChange = async () => {

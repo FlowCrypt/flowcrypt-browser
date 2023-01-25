@@ -3,10 +3,10 @@
 'use strict';
 
 import {isCustomUrlFesUsed} from '../helpers.js';
-import {ExternalService} from './account-servers/external-service';
+import {ExternalService} from './account-servers/external-service.js';
 import {ParsedRecipients} from './email-provider/email-provider-api.js';
 import {Api, ProgressCb} from './shared/api.js';
-import {ClientConfigurationJson} from "../client-configuration";
+import {ClientConfigurationJson} from "../client-configuration.js";
 
 export type UploadedMessageData = {
   url: string; // both FES and FlowCryptComApi

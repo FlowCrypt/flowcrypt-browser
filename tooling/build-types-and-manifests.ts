@@ -137,7 +137,7 @@ const makeMockBuild = (sourceBuildType: string) => {
 const makeLocalFesBuild = (sourceBuildType: string) => {
   const localFesBuildType = `${sourceBuildType}-local-fes`;
   exec(`cp -r ${buildDir(sourceBuildType)} ${buildDir(localFesBuildType)}`);
-  edit(`${buildDir(localFesBuildType)}/js/common/api/account-servers/enterprise-server.js`, code =>
+  edit(`${buildDir(localFesBuildType)}/js/common/api/account-servers/external-service.js`, code =>
     code.replace('https://fes.${this.domain}', 'http://localhost:32337')
   );
 };

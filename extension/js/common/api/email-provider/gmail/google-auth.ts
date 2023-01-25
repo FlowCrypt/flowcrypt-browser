@@ -15,9 +15,9 @@ import { Catch } from '../../../platform/catch.js';
 import { AcctStore, AcctStoreDict } from '../../../platform/store/acct-store.js';
 import { InMemoryStore } from '../../../platform/store/in-memory-store.js';
 import { AccountServer } from '../../account-server.js';
-import { ExternalService } from '../../account-servers/external-service';
+import { ExternalService } from '../../account-servers/external-service.js';
 import { GoogleAuthErr } from '../../shared/api-error.js';
-import { GmailRes } from './gmail-parser';
+import { GmailRes } from './gmail-parser.js';
 import { Assert, AssertError } from '../../../assert.js';
 
 /* eslint-disable @typescript-eslint/naming-convention */
