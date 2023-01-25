@@ -95,7 +95,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
   private formatSendablePwdMsgs = async (newMsg: NewMsgData, pubkeys: PubkeyResult[], signingKey?: ParsedKeyInfo) => {
     // password-protected message, temporarily uploaded (already encrypted) to:
     //    - flowcrypt.com/api (consumers and customers without on-prem setup), or
-    //    - FlowCrypt Enterprise Server (enterprise customers with on-prem setup)
+    //    - FlowCrypt External Service (enterprise customers with on-prem setup)
     //    It will be served to recipient through web
     const uploadedMessageData = await this.prepareAndUploadPwdEncryptedMsg(newMsg); // encrypted for pwd only, pubkeys ignored
     // pwdRecipients that have their personal link

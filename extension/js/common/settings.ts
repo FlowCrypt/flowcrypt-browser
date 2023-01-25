@@ -23,7 +23,7 @@ import { GlobalStore } from './platform/store/global-store.js';
 import { AbstractStore } from './platform/store/abstract-store.js';
 import { KeyStore } from './platform/store/key-store.js';
 import { PassphraseStore } from './platform/store/passphrase-store.js';
-import { isFesUsed } from './helpers.js';
+import { isCustomUrlFesUsed } from './helpers.js';
 import { Api } from './api/shared/api.js';
 import { BrowserMsg } from './browser/browser-msg.js';
 
@@ -264,7 +264,7 @@ export class Settings {
                 isFullyEncrypted: reformatted.fullyEncrypted,
                 isFullyDecrypted: reformatted.fullyDecrypted,
               });
-              await Ui.modal.error('Key update:Key not fully encrypted after update. ' + Lang.general.contactForSupportSentence(await isFesUsed(acctEmail)));
+              await Ui.modal.error('Key update:Key not fully encrypted after update. ' + Lang.general.contactForSupportSentence(await isCustomUrlFesUsed(acctEmail)));
               Xss.sanitizeReplace(target, Ui.e('a', { href: backUrl, text: 'Go back and try something else' }));
               return;
             }
@@ -273,7 +273,7 @@ export class Settings {
             } else {
               await Ui.modal.error(
                 'Key update: Key still cannot be used for encryption. This looks like a compatibility issue.\n\n' +
-                  Lang.general.contactForSupportSentence(await isFesUsed(acctEmail))
+                  Lang.general.contactForSupportSentence(await isCustomUrlFesUsed(acctEmail))
               );
               Xss.sanitizeReplace(target, Ui.e('a', { href: backUrl, text: 'Go back and try something else' }));
             }
@@ -359,7 +359,7 @@ export class Settings {
           Catch.report('failed to log into google in newGoogleAcctAuthPromptThenAlertOrForward', response);
         }
         await Ui.modal.error(
-          `Failed to connect to Gmail(new). ${Lang.general.contactIfHappensAgain(acctEmail ? await isFesUsed(acctEmail) : false)}\n\n[${response.result}] ${
+          `Failed to connect to Gmail(new). ${Lang.general.contactIfHappensAgain(acctEmail ? await isCustomUrlFesUsed(acctEmail) : false)}\n\n[${response.result}] ${
             response.error
           }`
         );

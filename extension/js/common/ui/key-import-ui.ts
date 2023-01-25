@@ -15,7 +15,7 @@ import { Ui } from '../browser/ui.js';
 import { Url, Str } from '../core/common.js';
 import { opgp } from '../core/crypto/pgp/openpgpjs-custom.js';
 import { KeyStore } from '../platform/store/key-store.js';
-import { isFesUsed } from '../helpers.js';
+import { isCustomUrlFesUsed } from '../helpers.js';
 
 type KeyImportUiCheckResult = {
   normalized: string;
@@ -200,7 +200,7 @@ export class KeyImportUi {
     const encrypted = await this.read('privateKey', normalized); // original (typically encrypted)
     this.rejectIfNot('privateKey', decrypted);
     await this.rejectKnownIfSelected(acctEmail, decrypted);
-    const contactSubsentence = Lang.general.contactMinimalSubsentence(await isFesUsed(acctEmail));
+    const contactSubsentence = Lang.general.contactMinimalSubsentence(await isCustomUrlFesUsed(acctEmail));
     await this.decryptAndEncryptAsNeeded(decrypted, encrypted, passphrase, contactSubsentence);
     await this.checkEncryptionPrvIfSelected(decrypted, encrypted, contactSubsentence);
     await this.checkSigningIfSelected(decrypted, contactSubsentence);

@@ -2,14 +2,13 @@
 
 'use strict';
 
-import { InMemoryStoreKeys } from '../core/const.js';
-import { isFesUsed } from '../helpers.js';
-import { InMemoryStore } from '../platform/store/in-memory-store.js';
-import { EnterpriseServer } from './account-servers/enterprise-server.js';
-import { BackendRes, FlowCryptComApi, ProfileUpdate } from './account-servers/flowcrypt-com-api.js';
-import { ParsedRecipients } from './email-provider/email-provider-api.js';
-import { BackendAuthErr } from './shared/api-error.js';
-import { Api, ProgressCb } from './shared/api.js';
+import {InMemoryStoreKeys} from '../core/const.js';
+import {isCustomUrlFesUsed} from '../helpers.js';
+import {InMemoryStore} from '../platform/store/in-memory-store.js';
+import {ExternalService} from './account-servers/external-service';
+import {ParsedRecipients} from './email-provider/email-provider-api.js';
+import {BackendAuthErr} from './shared/api-error.js';
+import {Api, ProgressCb} from './shared/api.js';
 
 export type UploadedMessageData = {
   url: string; // both FES and FlowCryptComApi
@@ -22,13 +21,19 @@ export type UploadedMessageData = {
  *   whether FES is deployed on the customer domain or not.
  */
 export class AccountServer extends Api {
+  private potentialCustomUrlFes: ExternalService;
+  private sharedTenantFes: ExternalService;
+
   public constructor(private acctEmail: string) {
     super();
+    this.potentialCustomUrlFes = new ExternalService(this.acctEmail);
+    this.sharedTenantFes = new ExternalService(this.acctEmail);
+    this.sharedTenantFes.url = 'https://flowcrypt.com/shared-tenant-fes/';
   }
 
   public accountGetAndUpdateLocalStore = async (): Promise<BackendRes.FcAccountGet> => {
     if (await this.isFesUsed()) {
-      const fes = new EnterpriseServer(this.acctEmail);
+      const fes = new ExternalService(this.acctEmail);
       const fetchedClientConfiguration = await fes.fetchAndSaveClientConfiguration();
       /* eslint-disable @typescript-eslint/naming-convention */
       return {
@@ -44,15 +49,6 @@ export class AccountServer extends Api {
     }
   };
 
-  public accountUpdate = async (profileUpdate: ProfileUpdate): Promise<void> => {
-    if (await this.isFesUsed()) {
-      const fes = new EnterpriseServer(this.acctEmail);
-      await fes.accountUpdate(profileUpdate);
-    } else {
-      await FlowCryptComApi.accountUpdate(await this.getIdToken(), profileUpdate);
-    }
-  };
-
   public messageUpload = async (
     encrypted: Uint8Array,
     replyToken: string,
@@ -61,7 +57,7 @@ export class AccountServer extends Api {
     progressCb: ProgressCb
   ): Promise<UploadedMessageData> => {
     if (await this.isFesUsed()) {
-      const fes = new EnterpriseServer(this.acctEmail);
+      const fes = new ExternalService(this.acctEmail);
       // Recipients are used to later cross-check replies from the web
       //   The message is not actually sent to them now.
       //   Message is uploaded and a link is retrieved which is sent through Gmail.
@@ -73,14 +69,14 @@ export class AccountServer extends Api {
 
   public messageGatewayUpdate = async (externalId: string, emailGatewayMessageId: string) => {
     if (await this.isFesUsed()) {
-      const fes = new EnterpriseServer(this.acctEmail);
+      const fes = new ExternalService(this.acctEmail);
       await fes.messageGatewayUpdate(externalId, emailGatewayMessageId);
     }
   };
 
   public messageToken = async (): Promise<{ replyToken: string }> => {
     if (await this.isFesUsed()) {
-      const fes = new EnterpriseServer(this.acctEmail);
+      const fes = new ExternalService(this.acctEmail);
       return await fes.webPortalMessageNewReplyToken();
     } else {
       const res = await FlowCryptComApi.messageToken(await this.getIdToken());
@@ -89,7 +85,7 @@ export class AccountServer extends Api {
   };
 
   public isFesUsed = async (): Promise<boolean> => {
-    return await isFesUsed(this.acctEmail);
+    return await isCustomUrlFesUsed(this.acctEmail);
   };
 
   private getIdToken = async (): Promise<string> => {

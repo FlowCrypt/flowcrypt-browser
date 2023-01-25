@@ -29,12 +29,12 @@ export namespace FesRes {
 }
 
 /**
- * FlowCrypt Enterprise Server (FES) may be deployed on-prem by enterprise customers.
+ * FlowCrypt External Service (FES) may be deployed on-prem by enterprise customers.
  * This gives them more control. All OrgRules, log collectors, etc (as implemented) would then be handled by the FES.
  * Once fully integrated, this will allow customers to be fully independent of flowcrypt.com/api
  */
 // ts-prune-ignore-next
-export class EnterpriseServer extends Api {
+export class ExternalService extends Api {
   public url: string;
 
   private domain: string;
@@ -139,7 +139,7 @@ export class EnterpriseServer extends Api {
     });
     const multipartBody = { content, details };
     const authHdr = await this.authHdr();
-    return await EnterpriseServer.apiCall<FesRes.MessageUpload>(
+    return await ExternalService.apiCall<FesRes.MessageUpload>(
       this.url,
       `/api/${this.apiVersion}/message`,
       multipartBody,
@@ -159,7 +159,7 @@ export class EnterpriseServer extends Api {
 
   public accountUpdate = async (profileUpdate: ProfileUpdate): Promise<BackendRes.FcAccountUpdate> => {
     console.log('profile update ignored', profileUpdate);
-    throw new UnreportableError('Account update not implemented when using FlowCrypt Enterprise Server');
+    throw new UnreportableError('Account update not implemented when using FlowCrypt External Service');
   };
 
   private authHdr = async (): Promise<Dict<string>> => {
@@ -172,6 +172,6 @@ export class EnterpriseServer extends Api {
   };
 
   private request = async <RT>(method: ReqMethod, path: string, headers: Dict<string> = {}, vals?: Dict<unknown>): Promise<RT> => {
-    return await EnterpriseServer.apiCall(this.url, path, vals, method === 'GET' ? undefined : 'JSON', undefined, headers, 'json', method);
+    return await ExternalService.apiCall(this.url, path, vals, method === 'GET' ? undefined : 'JSON', undefined, headers, 'json', method);
   };
 }
