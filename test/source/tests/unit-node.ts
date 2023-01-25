@@ -57,7 +57,62 @@ export const defineUnitNodeTests = (testVariant: TestVariant) => {
       });
       t.pass();
     });
+    ava.default(`[unit][OpenPGPKey.parseMany] throws on invalid input`, async t => {
+      await t.throwsAsync(
+        () =>
+          OpenPGPKey.parseMany(`-----BEGIN PGP PUBLIC KEY BLOCK-----
+Version: FlowCrypt Email Encryption
+Comment: Seamlessly send and receive encrypted email
 
+Something wrong with this key`),
+        {
+          instanceOf: Error,
+          message: 'Misformed armored text',
+        }
+      );
+    });
+    ava.default(`[unit][KeyUtil.parseMany] throws on invalid input`, async t => {
+      await t.throwsAsync(
+        () =>
+          KeyUtil.parseMany(`-----BEGIN PGP PUBLIC KEY BLOCK-----
+Version: FlowCrypt Email Encryption
+Comment: Seamlessly send and receive encrypted email
+
+Something wrong with this key`),
+        {
+          instanceOf: Error,
+          message: 'Misformed armored text',
+        }
+      );
+    });
+    ava.default(`[unit][OpenPGPKey.parse] throws on invalid input`, async t => {
+      await t.throwsAsync(
+        () =>
+          OpenPGPKey.parse(`-----BEGIN PGP PUBLIC KEY BLOCK-----
+Version: FlowCrypt Email Encryption
+Comment: Seamlessly send and receive encrypted email
+
+Something wrong with this key`),
+        {
+          instanceOf: Error,
+          message: 'Misformed armored text',
+        }
+      );
+    });
+    ava.default(`[unit][KeyUtil.parse] throws on invalid input`, async t => {
+      await t.throwsAsync(
+        () =>
+          KeyUtil.parse(`-----BEGIN PGP PUBLIC KEY BLOCK-----
+Version: FlowCrypt Email Encryption
+Comment: Seamlessly send and receive encrypted email
+
+Something wrong with this key`),
+        {
+          instanceOf: Error,
+          message: 'Misformed armored text',
+        }
+      );
+    });
     ava.default(`[unit][MsgBlockParser.detectBlocks] does not get tripped on blocks with unknown headers`, async t => {
       expect(
         MsgBlockParser.detectBlocks("This text breaks email and Gmail web app.\n\n-----BEGIN FOO-----\n\nEven though it's not a vaild PGP m\n\nMuhahah")
