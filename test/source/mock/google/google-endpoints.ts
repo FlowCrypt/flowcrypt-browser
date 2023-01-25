@@ -57,7 +57,8 @@ export const mockGoogleEndpoints: HandlersDefinition = {
         return oauth.renderText('redirect with proceed=true to continue');
       } else {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        return oauth.successResult(req.headers.host!, login_hint, state, scope);
+        const port = req.headers.host!.split(':')[1];
+        return oauth.successResult(port, login_hint, state, scope);
       }
     }
     throw new HttpClientErr(`Method not implemented for ${req.url}: ${req.method}`);

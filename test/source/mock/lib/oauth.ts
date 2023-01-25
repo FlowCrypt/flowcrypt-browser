@@ -23,7 +23,7 @@ export class OauthMock {
     return this.htmlPage(text, text);
   };
 
-  public successResult = (host: string, acct: string, state: string, scope: string) => {
+  public successResult = (port: string, acct: string, state: string, scope: string) => {
     const authCode = `mock-auth-code-${Str.sloppyRandom(4)}-${acct.replace(/[^a-z0-9]+/g, '')}`;
     const refreshToken = `mock-refresh-token-${Str.sloppyRandom(4)}-${acct.replace(/[^a-z0-9]+/g, '')}`;
     const accessToken = `mock-access-token-${Str.sloppyRandom(4)}-${acct.replace(/[^a-z0-9]+/g, '')}`;
@@ -32,7 +32,7 @@ export class OauthMock {
     this.accessTokenByRefreshToken[refreshToken] = accessToken;
     this.acctByAccessToken[accessToken] = acct;
     this.scopesByAccessToken[accessToken] = `${this.scopesByAccessToken[accessToken] ?? ''} ${scope}`;
-    const url = new URL(`https://google.${host}/robots.txt`);
+    const url = new URL(`https://google.localhost:${port}/robots.txt`);
     url.searchParams.set('code', authCode);
     url.searchParams.set('scope', scope);
     // return invalid state for test.invalid.csrf@gmail.com to check invalid csrf login
