@@ -69,6 +69,7 @@ cp node_modules/bootstrap/dist/css/bootstrap.min.css $OUTDIR/lib/bootstrap/boots
 mkdir -p $OUTDIR/lib/streams
 cp node_modules/@openpgp/web-stream-tools/lib/*.js $OUTDIR/lib/streams
 # patch imports with .js, e.g. replace './streams' with './streams.js'
+# until https://github.com/openpgpjs/web-stream-tools/pull/20 is resolved
 sed -i -E "s/'\.\/(streams|util|writer|reader|node-conversions)'/'\.\/\1\.js'/g" $OUTDIR/lib/streams/*
 
 # to update node-forge library, which is missing the non-minified version in dist, we have to build it manually
