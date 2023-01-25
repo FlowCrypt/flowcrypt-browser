@@ -16,7 +16,6 @@ export class OauthPageRecipe extends PageRecipe {
     action: 'close' | 'deny' | 'approve' | 'login' | 'login_with_invalid_state' | 'override_acct' | 'missing_permission'
   ): Promise<void> => {
     let mockOauthUrl = oauthPage.target.url();
-    console.log('mockOauthUrl - ' + mockOauthUrl);
     const { login_hint } = Url.parse(['login_hint'], mockOauthUrl); // eslint-disable-line @typescript-eslint/naming-convention
     if (action === 'close') {
       await oauthPage.close();
@@ -36,7 +35,6 @@ export class OauthPageRecipe extends PageRecipe {
         mockOauthUrl = Url.removeParamsFromUrl(mockOauthUrl, ['login_hint']);
         mockOauthUrl += '&login_hint=' + encodeURIComponent(acctEmail);
       }
-      console.log('oauth page goto');
       await oauthPage.target.goto(mockOauthUrl + '&proceed=true');
     }
   };
@@ -49,7 +47,6 @@ export class OauthPageRecipe extends PageRecipe {
   ): Promise<void> => {
     try {
       const isMock = oauthPage.target.url().includes('localhost') || oauthPage.target.url().includes('google.mock.localhost');
-      console.log('url ' + oauthPage.target.url() + ', is mock ' + isMock);
       if (isMock) {
         await OauthPageRecipe.mock(t, oauthPage, acctEmail, action);
         return;
@@ -65,7 +62,6 @@ export class OauthPageRecipe extends PageRecipe {
         return; // in this case the login was already successful
       }
     }
-    console.log('google auth');
     const auth = Config.secrets().auth.google.find(a => a.email === acctEmail);
     const acctPassword = auth?.password;
     const selectors = {

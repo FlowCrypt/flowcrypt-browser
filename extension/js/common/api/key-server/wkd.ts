@@ -40,7 +40,6 @@ export class Wkd extends Api {
     const userPart = `hu/${hu}?l=${encodeURIComponent(user)}`;
     const advancedUrl = `${advancedHost}/.well-known/openpgpkey/${lowerCaseRecipientDomain}`;
     const directUrl = `${directHost}/.well-known/openpgpkey`;
-    console.log('direct - ' + directHost + ', advanced - ' + advancedHost + ', wkd - ' + WKD_API_HOST);
     let response = await this.urlLookup(advancedUrl, userPart, timeout);
     if (!response.buf && response.hasPolicy) {
       return [];

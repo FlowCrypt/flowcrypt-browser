@@ -126,7 +126,7 @@ export const defineUnitBrowserTests = (testVariant: TestVariant, testWithBrowser
 
     const allUnitTests: UnitTest[] = [];
     for (const filename of readdirSync(browserUnitTestsFolder)) {
-      if (!filename.startsWith('.') && filename === 'unit-Gmail.js') {
+      if (!filename.startsWith('.')) {
         allUnitTests.push(...parseTestFile(filename));
       }
     }

@@ -27,12 +27,8 @@ export class BrowserRecipe {
 
   public static openSettingsLoginApprove = async (t: AvaContext, browser: BrowserHandle, acctEmail: string) => {
     const settingsPage = await browser.newExtensionSettingsPage(t, acctEmail);
-    console.log('oauth popup');
-    await browser.newPage(t, t.urls?.extension('js/common/core/const.js'));
     const oauthPopup = await browser.newPageTriggeredBy(t, () => settingsPage.waitAndClick('@action-connect-to-gmail'));
-    console.log('google approve - ' + oauthPopup.page.url());
     await OauthPageRecipe.google(t, oauthPopup, acctEmail, 'approve');
-    console.log('settings page');
     return settingsPage;
   };
 
@@ -71,15 +67,12 @@ export class BrowserRecipe {
   public static setUpCommonAcct = async (t: AvaContext, browser: BrowserHandle, acct: 'compatibility' | 'compose' | 'ci.tests.gmail') => {
     if (acct === 'compatibility') {
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.compatibility@gmail.com');
-      console.log('recover setup');
       await SetupPageRecipe.recover(settingsPage, 'flowcrypt.compatibility.1pp1', {
         hasRecoverMore: true,
         clickRecoverMore: true,
       });
-      console.log('recover setup 2');
       await SetupPageRecipe.recover(settingsPage, 'flowcrypt.compatibility.2pp1');
       await settingsPage.close();
-      console.log('recover end');
     } else if (acct === 'ci.tests.gmail') {
       // live gmail uses ".dev" (real account on real domain). Mock uses "".test".
       const acctEmail = testVariant === 'CONSUMER-LIVE-GMAIL' ? 'ci.tests.gmail@flowcrypt.dev' : 'ci.tests.gmail@flowcrypt.test';

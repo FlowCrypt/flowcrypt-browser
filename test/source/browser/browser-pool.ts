@@ -21,14 +21,12 @@ export class BrowserPool {
     private height = 850,
     private debug = false
   ) {
-    console.log('new browser pool with build dir ' + extensionBuildDir);
     this.semaphore = new Semaphore(poolSize, name);
   }
 
   public newBrowserHandle = async (t: AvaContext, closeInitialPage = true) => {
     // await this.semaphore.acquire();
     const extensionDir = t.extensionDir ?? this.extensionBuildDir;
-    console.log('extension dir from context - ' + t.extensionDir);
     const args = [
       '--no-sandbox', // make it work in travis-ci
       '--disable-setuid-sandbox',
