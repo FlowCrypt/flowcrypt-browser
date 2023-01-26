@@ -1259,8 +1259,9 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
     ava.default(
       'settings - ensure gracious behavior & ui should remain functional when updating client configuration',
       testWithBrowser(undefined, async (t, browser) => {
-        const acct = 'test-update@settings.flowcrypt.test';
-        mockBackendData.clientConfigurationByAcctEmail[acct] = keyManagerAutogenRules;
+        const domain = 'settings.flowcrypt.test';
+        const acct = `test-update@${domain}`;
+        mockBackendData.forceClientConfigurationForDomain[domain] = keyManagerAutogenRules;
         const setupPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
         await SetupPageRecipe.autoSetupWithEKM(setupPage);
         const { cryptup_testupdatesettingsflowcrypttest_rules: rules1 } = await setupPage.getFromLocalStorage([
@@ -1280,7 +1281,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         const accessToken = await BrowserRecipe.getGoogleAccessToken(setupPage, acct);
         await setupPage.close();
         // Set invalid client configuration and check if it ensures gracious behavior & ui remain functional
-        mockBackendData.clientConfigurationByAcctEmail[acct] = {
+        mockBackendData.forceClientConfigurationForDomain[domain] = {
           // flags is required but don't return it (to mock invalid client configuration)
           key_manager_url: 'https://localhost:8001/flowcrypt-email-key-manager', // eslint-disable-line @typescript-eslint/naming-convention
         };
@@ -1310,10 +1311,11 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
     ava.default(
       'settings - client configuration gets updated on settings and content script reloads',
       testWithBrowser(undefined, async (t, browser) => {
+        const domain = 'settings.flowcrypt.test';
         const acct = 'settings@settings.flowcrypt.test';
         /* eslint-disable @typescript-eslint/naming-convention */
         // set up the client configuration returned for the account
-        mockBackendData.clientConfigurationByAcctEmail[acct] = {
+        mockBackendData.forceClientConfigurationForDomain[domain] = {
           flags: ['NO_PRV_BACKUP', 'ENFORCE_ATTESTER_SUBMIT', 'PRV_AUTOIMPORT_OR_AUTOGEN', 'PASS_PHRASE_QUIET_AUTOGEN', 'DEFAULT_REMEMBER_PASS_PHRASE'],
           // custom_keyserver_url: undefined,
           key_manager_url: 'https://localhost:8001/flowcrypt-email-key-manager',
@@ -1343,7 +1345,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         await setupPage.close();
         // modify the setup
         /* eslint-disable @typescript-eslint/naming-convention */
-        mockBackendData.clientConfigurationByAcctEmail[acct] = {
+        mockBackendData.forceClientConfigurationForDomain[domain] = {
           flags: ['NO_ATTESTER_SUBMIT', 'HIDE_ARMOR_META', 'DEFAULT_REMEMBER_PASS_PHRASE'],
           custom_keyserver_url: 'https://localhost:8001',
           // key_manager_url: undefined,
@@ -1369,7 +1371,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         // keep settingsPage open to re-read the storage later via it
         // re-configure the setup again
         /* eslint-disable @typescript-eslint/naming-convention */
-        mockBackendData.clientConfigurationByAcctEmail[acct] = {
+        mockBackendData.forceClientConfigurationForDomain[domain] = {
           flags: ['NO_PRV_BACKUP', 'ENFORCE_ATTESTER_SUBMIT', 'PRV_AUTOIMPORT_OR_AUTOGEN', 'PASS_PHRASE_QUIET_AUTOGEN', 'DEFAULT_REMEMBER_PASS_PHRASE'],
           // custom_keyserver_url: undefined,
           key_manager_url: 'https://localhost:8001/flowcrypt-email-key-manager',
@@ -1401,7 +1403,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         expect(clientConfiguration3.key_manager_url).to.equal('https://localhost:8001/flowcrypt-email-key-manager');
         await gmailPage.close();
         // configure an error
-        mockBackendData.clientConfigurationByAcctEmail[acct] = new HttpClientErr('Test error', Status.BAD_REQUEST);
+        mockBackendData.forceClientConfigurationForDomain[domain] = new HttpClientErr('Test error', Status.BAD_REQUEST);
         gmailPage = await browser.newPage(t, TestUrls.mockGmailUrl(), undefined, extraAuthHeaders);
         await PageRecipe.waitForToastToAppearAndDisappear(
           gmailPage,

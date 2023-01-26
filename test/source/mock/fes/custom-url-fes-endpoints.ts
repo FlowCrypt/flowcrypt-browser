@@ -185,7 +185,7 @@ const processMessageFromUser4 = async (body: string) => {
   return response;
 };
 
-export const mockFesEndpoints: HandlersDefinition = {
+export const mockCustomUrlFesEndpoints: HandlersDefinition = {
   // standard fes location at https://fes.domain.com
   '/api/': async ({}, req) => {
     if ([standardFesUrl].includes(req.headers.host || '') && req.method === 'GET') {

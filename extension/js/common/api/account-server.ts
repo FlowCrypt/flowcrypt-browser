@@ -7,6 +7,7 @@ import { ExternalService } from './account-servers/external-service.js';
 import { ParsedRecipients } from './email-provider/email-provider-api.js';
 import { Api, ProgressCb } from './shared/api.js';
 import { ClientConfigurationJson } from '../client-configuration.js';
+import { SHARED_TENANT_API_HOST } from '../core/const.js';
 
 export type UploadedMessageData = {
   url: string; // both FES and FlowCryptComApi
@@ -31,7 +32,7 @@ export class AccountServer extends Api {
     super();
     this.potentialCustomUrlFes = new ExternalService(this.acctEmail);
     this.sharedTenantFes = new ExternalService(this.acctEmail);
-    this.sharedTenantFes.url = 'https://flowcrypt.com/shared-tenant-fes/';
+    this.sharedTenantFes.url = SHARED_TENANT_API_HOST;
   }
 
   public accountGetAndUpdateLocalStore = async (): Promise<AccountGetAndUpdateResult> => {

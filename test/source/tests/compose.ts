@@ -2433,14 +2433,14 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         await composePage.waitAndRespondToModal('error', 'confirm', 'Please use password with the following properties');
         // good pwd
         await composePage.waitAndType('@input-password', 'gO0d-pwd');
-        await composePage.checkElementColor('@input-password', 'rgb(49, 162, 23)');  // Password element color should turn into green (which means good password)
+        await composePage.checkElementColor('@input-password', 'rgb(49, 162, 23)'); // Password element color should turn into green (which means good password)
         await composePage.notPresent('#expiration_note'); // Expiration note should be hidden when password is good
         await composePage.waitAndClick('@action-send', { delay: 1 });
         await ComposePageRecipe.closed(composePage);
         const sentMsgs = (await GoogleData.withInitializedData(acct)).searchMessagesBySubject(subject);
         expect(sentMsgs.length).to.equal(2);
         // this test is using PwdEncryptedMessageWithFesIdTokenTestStrategy to check sent result based on subject "PWD encrypted message with FES - ID TOKEN"
-        // also see '/api/v1/message' in fes-endpoints.ts mock
+        // also see '/api/v1/message' in custom-url-fes-endpoints.ts mock
       })
     );
 
@@ -2481,7 +2481,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         await composePage.waitAndType('@input-password', 'gO0d-pwd');
         await composePage.waitAndClick('@action-send', { delay: 1 });
         // this test is using PwdEncryptedMessageWithFesReplyRenderingTestStrategy to check sent result based on subject "PWD encrypted message with FES - Reply rendering"
-        // also see '/api/v1/message' in fes-endpoints.ts mock
+        // also see '/api/v1/message' in custom-url-fes-endpoints.ts mock
         const attachmentsContainer = (await composePage.waitAny('@replied-attachments'))!;
         /* eslint-enable @typescript-eslint/no-non-null-assertion */
         const attachments = await attachmentsContainer.$$('.pgp_attachment');
@@ -2541,7 +2541,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         const sentMsgs = (await GoogleData.withInitializedData(acct)).searchMessagesBySubject(subject);
         expect(sentMsgs.length).to.equal(2);
         // this test is using PwdEncryptedMessageWithFesPubkeyRecipientInBccTestStrategy to check sent result based on subject "PWD encrypted message with FES - pubkey recipient in bcc"
-        // also see '/api/v1/message' in fes-endpoints.ts mock
+        // also see '/api/v1/message' in custom-url-fes-endpoints.ts mock
       })
     );
 
@@ -2566,7 +2566,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         await composePage.close();
         expect((await GoogleData.withInitializedData(acct)).searchMessagesBySubject(subject).length).to.equal(expectedNumberOfPassedMessages + 1);
         // this test is using PwdEncryptedMessageWithFesReplyGatewayErrorTestStrategy to check sent result based on subject "PWD encrypted message with FES web portal - a send fails with gateway update error"
-        // also see '/api/v1/message' in fes-endpoints.ts mock
+        // also see '/api/v1/message' in custom-url-fes-endpoints.ts mock
       })
     );
 
@@ -2664,8 +2664,9 @@ const sendTextAndVerifyPresentInSentMsg = async (
   text: string,
   sendingOpt: { encrypt?: boolean; sign?: boolean; richtext?: boolean } = {}
 ) => {
-  const subject = `Test Sending ${sendingOpt.sign ? 'Signed' : ''} ${sendingOpt.encrypt ? 'Encrypted' : ''
-    } Message With Test Text ${text} ${Util.lousyRandom()}`;
+  const subject = `Test Sending ${sendingOpt.sign ? 'Signed' : ''} ${
+    sendingOpt.encrypt ? 'Encrypted' : ''
+  } Message With Test Text ${text} ${Util.lousyRandom()}`;
   const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
   await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, subject, text, sendingOpt);
   await ComposePageRecipe.sendAndClose(composePage);
