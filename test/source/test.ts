@@ -25,7 +25,7 @@ import { startAllApisMock } from './mock/all-apis-mock';
 
 export const { testVariant, testGroup, oneIfNotPooled, buildDir, isMock } = getParsedCliParams();
 export const internalTestState = { expectIntentionalErrReport: false }; // updated when a particular test that causes an error is run
-const DEBUG_BROWSER_LOG = true; // set to true to print / export information from browser
+const DEBUG_BROWSER_LOG = false; // set to true to print / export information from browser
 const DEBUG_MOCK_LOG = false; // set to true to print mock server logs
 
 process.setMaxListeners(0);

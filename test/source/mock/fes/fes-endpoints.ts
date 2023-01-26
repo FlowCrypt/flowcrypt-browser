@@ -8,7 +8,9 @@ import { HandlersDefinition } from '../all-apis-mock';
 import { HttpClientErr, Status } from '../lib/api';
 import { MockJwt } from '../lib/oauth';
 
-const standardFesUrl = 'fes.standardsubdomainfes.localhost:8001';
+const standardFesUrl = (port: string) => {
+  return `fes.standardsubdomainfes.localhost:${port}`;
+};
 const issuedAccessTokens: string[] = [];
 
 const processMessageFromUser = async (body: string) => {
@@ -185,7 +187,9 @@ const processMessageFromUser4 = async (body: string) => {
 export const mockFesEndpoints: HandlersDefinition = {
   // standard fes location at https://fes.domain.com
   '/api/': async ({}, req) => {
-    if ([standardFesUrl].includes(req.headers.host || '') && req.method === 'GET') {
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    const port = req.headers.host!.split(':')[1];
+    if ([standardFesUrl(port)].includes(req.headers.host || '') && req.method === 'GET') {
       return {
         vendor: 'Mock',
         service: 'external-service',
@@ -194,12 +198,12 @@ export const mockFesEndpoints: HandlersDefinition = {
         apiVersion: 'v1',
       };
     }
-    if (req.headers.host === 'fes.localhost:8001') {
+    if (req.headers.host === `fes.localhost:${port}`) {
       // test `status404 does not return any fesUrl` uses this
       // this makes enterprise version tolerate missing FES - explicit 404
       throw new HttpClientErr(`Not found`, 404);
     }
-    if (req.headers.host === 'fes.google.mock.localhost:8001') {
+    if (req.headers.host === `fes.google.mock.localhost:${port}`) {
       // test `compose - auto include pubkey is inactive when our key is available on Wkd` uses this
       // this makes enterprise version tolerate missing FES - explicit 404
       throw new HttpClientErr(`Not found`, 404);
@@ -211,7 +215,9 @@ export const mockFesEndpoints: HandlersDefinition = {
     if (req.method !== 'GET') {
       throw new HttpClientErr('Unsupported method');
     }
-    if (req.headers.host === standardFesUrl && req.url === `/api/v1/client-configuration?domain=standardsubdomainfes.localhost:8001`) {
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    const port = req.headers.host!.split(':')[1];
+    if (req.headers.host === standardFesUrl(port) && req.url === `/api/v1/client-configuration?domain=standardsubdomainfes.localhost:${port}`) {
       return {
         clientConfiguration: { flags: [], disallow_attester_search_for_domains: ['got.this@fromstandardfes.com'] }, // eslint-disable-line @typescript-eslint/naming-convention
       };
@@ -219,67 +225,79 @@ export const mockFesEndpoints: HandlersDefinition = {
     throw new HttpClientErr(`Unexpected FES domain "${req.headers.host}" and url "${req.url}"`);
   },
   '/api/v1/message/new-reply-token': async ({}, req) => {
-    if (req.headers.host === standardFesUrl && req.method === 'POST') {
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    const port = req.headers.host!.split(':')[1];
+    if (req.headers.host === standardFesUrl(port) && req.method === 'POST') {
       authenticate(req, 'oidc');
       return { replyToken: 'mock-fes-reply-token' };
     }
     throw new HttpClientErr('Not Found', 404);
   },
   '/api/v1/message': async ({ body }, req) => {
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    const port = req.headers.host!.split(':')[1];
     // body is a mime-multipart string, we're doing a few smoke checks here without parsing it
-    if (req.headers.host === standardFesUrl && req.method === 'POST' && typeof body === 'string') {
+    if (req.headers.host === standardFesUrl(port) && req.method === 'POST' && typeof body === 'string') {
       // test: `compose - user@standardsubdomainfes.localhost:8001 - PWD encrypted message with FES web portal`
       authenticate(req, 'oidc');
-      if (body.includes('"from":"user@standardsubdomainfes.localhost:8001"')) {
+      if (body.includes(`"from":"user@standardsubdomainfes.localhost:${port}"`)) {
         return await processMessageFromUser(body);
       }
-      if (body.includes('"from":"user2@standardsubdomainfes.localhost:8001"')) {
+      if (body.includes(`"from":"user2@standardsubdomainfes.localhost:${port}"`)) {
         return await processMessageFromUser2(body);
       }
-      if (body.includes('"from":"user3@standardsubdomainfes.localhost:8001"')) {
+      if (body.includes(`"from":"user3@standardsubdomainfes.localhost:${port}"`)) {
         return await processMessageFromUser3(body);
       }
-      if (body.includes('"from":"user4@standardsubdomainfes.localhost:8001"')) {
+      if (body.includes(`"from":"user4@standardsubdomainfes.localhost:${port}"`)) {
         return await processMessageFromUser4(body);
       }
     }
     throw new HttpClientErr('Not Found', 404);
   },
   '/api/v1/message/FES-MOCK-EXTERNAL-ID/gateway': async ({ body }, req) => {
-    if (req.headers.host === standardFesUrl && req.method === 'POST') {
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    const port = req.headers.host!.split(':')[1];
+    if (req.headers.host === standardFesUrl(port) && req.method === 'POST') {
       // test: `compose - user@standardsubdomainfes.localhost:8001 - PWD encrypted message with FES web portal`
       authenticate(req, 'oidc');
-      expect(body).to.match(/{"emailGatewayMessageId":"<(.+)@standardsubdomainfes.localhost:8001>"}/);
+      expect(body).to.match(/{"emailGatewayMessageId":"<(.+)@standardsubdomainfes.localhost:${port}>"}/);
       return {};
     }
     throw new HttpClientErr('Not Found', 404);
   },
   '/api/v1/message/FES-MOCK-EXTERNAL-FOR-SENDER@DOMAIN.COM-ID/gateway': async ({ body }, req) => {
-    if (req.headers.host === standardFesUrl && req.method === 'POST') {
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    const port = req.headers.host!.split(':')[1];
+    if (req.headers.host === standardFesUrl(port) && req.method === 'POST') {
       // test: `compose - user2@standardsubdomainfes.localhost:8001 - PWD encrypted message with FES - Reply rendering`
       authenticate(req, 'oidc');
-      expect(body).to.match(/{"emailGatewayMessageId":"<(.+)@standardsubdomainfes.localhost:8001>"}/);
+      expect(body).to.match(/{"emailGatewayMessageId":"<(.+)@standardsubdomainfes.localhost:${port}>"}/);
       return {};
     }
     throw new HttpClientErr('Not Found', 404);
   },
   '/api/v1/message/FES-MOCK-EXTERNAL-FOR-TO@EXAMPLE.COM-ID/gateway': async ({ body }, req) => {
-    if (req.headers.host === standardFesUrl && req.method === 'POST') {
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    const port = req.headers.host!.split(':')[1];
+    if (req.headers.host === standardFesUrl(port) && req.method === 'POST') {
       // test: `compose - user@standardsubdomainfes.localhost:8001 - PWD encrypted message with FES web portal`
       // test: `compose - user2@standardsubdomainfes.localhost:8001 - PWD encrypted message with FES - Reply rendering`
       // test: `compose - user3@standardsubdomainfes.localhost:8001 - PWD encrypted message with FES web portal - pubkey recipient in bcc`
       // test: `compose - user4@standardsubdomainfes.localhost:8001 - PWD encrypted message with FES web portal - some sends fail with BadRequest error`
       authenticate(req, 'oidc');
-      expect(body).to.match(/{"emailGatewayMessageId":"<(.+)@standardsubdomainfes.localhost:8001>"}/);
+      expect(body).to.match(/{"emailGatewayMessageId":"<(.+)@standardsubdomainfes.localhost:${port}>"}/);
       return {};
     }
     throw new HttpClientErr('Not Found', 404);
   },
   '/api/v1/message/FES-MOCK-EXTERNAL-FOR-BCC@EXAMPLE.COM-ID/gateway': async ({ body }, req) => {
-    if (req.headers.host === standardFesUrl && req.method === 'POST') {
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    const port = req.headers.host!.split(':')[1];
+    if (req.headers.host === standardFesUrl(port) && req.method === 'POST') {
       // test: `compose - user@standardsubdomainfes.localhost:8001 - PWD encrypted message with FES web portal`
       authenticate(req, 'oidc');
-      expect(body).to.match(/{"emailGatewayMessageId":"<(.+)@standardsubdomainfes.localhost:8001>"}/);
+      expect(body).to.match(/{"emailGatewayMessageId":"<(.+)@standardsubdomainfes.localhost:${port}>"}/);
       return {};
     }
     throw new HttpClientErr('Not Found', 404);

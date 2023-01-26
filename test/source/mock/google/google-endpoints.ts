@@ -225,8 +225,7 @@ export const mockGoogleEndpoints: HandlersDefinition = {
     if (isGet(req)) {
       const id = parseResourceId(req.url!); // eslint-disable-line @typescript-eslint/no-non-null-assertion
       const data = await GoogleData.withInitializedData(acct);
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      if (req.url!.includes('/attachments/')) {
+      if (req.url?.includes('/attachments/')) {
         const attachment = data.getAttachment(id);
         if (attachment) {
           return attachment;
@@ -257,8 +256,7 @@ export const mockGoogleEndpoints: HandlersDefinition = {
     throw new HttpClientErr(`Method not implemented for ${req.url}: ${req.method}`);
   },
   '/gmail/v1/users/me/threads/?': async ({ query: { format } }, req) => {
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    if (req.url!.match(/\/modify$/)) {
+    if (req.url?.match(/\/modify$/)) {
       return {};
     }
     const acct = oauth.checkAuthorizationHeaderWithAccessToken(req.headers.authorization);
@@ -365,8 +363,7 @@ const parseMultipartDataAsMimeMsg = async (multipartData: string): Promise<Parse
 };
 
 const validateMimeMsg = async (acct: string, mimeMsg: ParsedMail, threadId?: string) => {
-  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-  const inReplyToMessageId = mimeMsg.headers.get('in-reply-to') ? mimeMsg.headers.get('in-reply-to')!.toString() : '';
+  const inReplyToMessageId = mimeMsg.headers.get('in-reply-to') ? mimeMsg.headers.get('in-reply-to')?.toString() : '';
   if (threadId) {
     const messages = (await GoogleData.withInitializedData(acct)).getMessagesByThread(threadId);
     if (!messages || !messages.length) {
