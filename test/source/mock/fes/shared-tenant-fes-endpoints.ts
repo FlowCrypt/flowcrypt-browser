@@ -43,9 +43,24 @@ export const mockSharedTenantFesEndpoints: HandlersDefinition = {
     };
   },
   '/shared-tenant-fes/api/v1/message/new-reply-token': async ({}, req) => {
-    if (req.headers.host === standardFesUrl && req.method === 'POST') {
+    if (req.method === 'POST') {
       authenticate(req, 'oidc');
       return { replyToken: 'mock-fes-reply-token' };
+    }
+    throw new HttpClientErr('Not Found', 404);
+  },
+  '/shared-tenant-fes/api/v1/message': async ({ body }, req) => {
+    // body is a mime-multipart string, we're doing a few smoke checks here without parsing it
+    if (req.method === 'POST' && typeof body === 'string') {
+      expect(body).to.contain('-----BEGIN PGP MESSAGE-----');
+      expect(body).to.contain('"associateReplyToken":"mock-fes-reply-token"');
+      const response = {
+        // this url is required for pubkey encrypted message
+        url: `https://flowcrypt.com/FESMOCKIDS`,
+        externalId: 'FES-MOCK-EXTERNAL-ID',
+        emailToExternalIdAndUrl: {} as { [email: string]: { url: string; externalId: string } },
+      };
+      return response;
     }
     throw new HttpClientErr('Not Found', 404);
   },

@@ -136,6 +136,7 @@ const processMessageFromUser3 = async (body: string) => {
     url: `http://${standardFesUrl}/message/FES-MOCK-MESSAGE-FOR-FLOWCRYPT.COMPATIBILITY@GMAIL.COM-ID`,
     externalId: 'FES-MOCK-EXTERNAL-FOR-FLOWCRYPT.COMPATIBILITY@GMAIL.COM-ID',
   };
+  console.log(response);
   return response;
 };
 
