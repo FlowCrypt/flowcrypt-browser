@@ -7,7 +7,7 @@ import { MsgBlockParser } from '../core/msg-block-parser';
 import { Config, TestVariant, Util } from '../util';
 import { use, expect } from 'chai';
 import chaiAsPromised from 'chai-as-promised';
-import { KeyUtil, KeyInfoWithIdentityAndOptionalPp } from '../core/crypto/key';
+import { KeyUtil, KeyInfoWithIdentityAndOptionalPp, Key } from '../core/crypto/key';
 import { UnreportableError } from '../platform/catch.js';
 import { Buf } from '../core/buf';
 import { OpenPGPKey } from '../core/crypto/pgp/openpgp-key';
@@ -112,6 +112,67 @@ Something wrong with this key`),
           message: 'Misformed armored text',
         }
       );
+    });
+    ava.default(`[unit][OpenPGPKey.getOrCreateRevocationCertificate] operations`, async t => {
+      const stringData = 'hello';
+      const data = Buf.fromUtfStr(stringData);
+      const originalPrv = await OpenPGPKey.parse(testConstants.existingPrv);
+      const revocationCertificate = await OpenPGPKey.getOrCreateRevocationCertificate(originalPrv);
+      expect(revocationCertificate).to.be.not.empty;
+      if (!revocationCertificate) {
+        throw Error;
+      }
+      expect(revocationCertificate.startsWith('-----BEGIN PGP PUBLIC KEY BLOCK-----')).to.be.true;
+      expect(revocationCertificate).to.include('Version: FlowCrypt Email Encryption');
+      expect(revocationCertificate).to.include('Comment: Seamlessly send and receive encrypted email');
+      expect(revocationCertificate).to.include('Comment: This is a revocation certificate');
+      const expectNotRevoked = async (key: Key) => {
+        expect(key.revoked).to.be.false;
+        if (key.isPrivate) {
+          await MsgUtil.sign(originalPrv, stringData);
+        } else {
+          await MsgUtil.encryptMessage({ pubkeys: [pubkey], data, armor: true });
+        }
+      };
+      const expectRevoked = async (key: Key) => {
+        expect(key.revoked).to.be.true;
+        if (key.isPrivate) {
+          await t.throwsAsync(() => MsgUtil.sign(revokedPrv, stringData), {
+            instanceOf: Error,
+            message: 'Error signing message: Primary key is revoked',
+          });
+        } else {
+          await t.throwsAsync(() => MsgUtil.encryptMessage({ pubkeys: [revokedPub], data, armor: true }), {
+            instanceOf: Error,
+            message: 'Error encrypting message: Primary key is revoked',
+          });
+        }
+      };
+      const testKey = async (key: Key, func: (key: Key) => Promise<void>) => {
+        await func(key);
+        const armored = KeyUtil.armor(key);
+        const unarmored = await OpenPGPKey.parse(armored);
+        await func(unarmored);
+        KeyUtil.pack(key);
+        await func(key);
+      };
+      await testKey(originalPrv, expectNotRevoked); // the original key remains valid
+      const pubkey = await KeyUtil.asPublicKey(originalPrv);
+      await testKey(pubkey, expectNotRevoked); // the pub key remains valid
+      await t.throwsAsync(() => OpenPGPKey.getOrCreateRevocationCertificate(pubkey), {
+        instanceOf: Error,
+        message: 'Key FAFB7D675AC74E87F84D169F00B0115807969D75 is not a private key',
+      });
+      // apply revocation certificate
+      const revokedPrv = await OpenPGPKey.applyRevocationCertificate(originalPrv, revocationCertificate);
+      await testKey(originalPrv, expectNotRevoked); // the original key remains valid
+      await testKey(revokedPrv, expectRevoked);
+      const revokedPub = await OpenPGPKey.applyRevocationCertificate(pubkey, revocationCertificate);
+      await testKey(pubkey, expectNotRevoked); // the original key remains valid
+      await testKey(revokedPub, expectRevoked);
+      // extract the same revocation certificate from the revoked keys
+      expect(await KeyUtil.getOrCreateRevocationCertificate(revokedPub)).to.equal(revocationCertificate);
+      expect(await KeyUtil.getOrCreateRevocationCertificate(revokedPrv)).to.equal(revocationCertificate);
     });
     ava.default(`[unit][MsgBlockParser.detectBlocks] does not get tripped on blocks with unknown headers`, async t => {
       expect(

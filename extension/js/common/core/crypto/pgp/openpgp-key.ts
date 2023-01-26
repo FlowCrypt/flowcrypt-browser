@@ -275,21 +275,28 @@ export class OpenPGPKey {
     return signRes;
   };
 
-  public static revoke = async (key: Key): Promise<string | undefined> => {
-    let prv = await OpenPGPKey.extractExternalLibraryObjFromKey(key);
-    if (!prv.isPrivate()) {
-      return undefined; // todo: or throw?
+  public static getOrCreateRevocationCertificate = async (key: Key): Promise<string | undefined> => {
+    let opgpKey = await OpenPGPKey.extractExternalLibraryObjFromKey(key);
+    if (!(await opgpKey.isRevoked())) {
+      if (!opgpKey.isPrivate()) {
+        throw new Error(`Key ${key.id} is not a private key`);
+      }
+      opgpKey = (await opgp.revokeKey({ key: opgpKey, format: 'object' })).privateKey;
     }
-    if (!(await prv.isRevoked())) {
-      const keypair = await opgp.revokeKey({ key: prv, format: 'object' });
-      // todo: save this data into `key`?
-      prv = keypair.privateKey;
-    }
-    const certificate = await prv.getRevocationCertificate();
+    const certificate = await opgpKey.getRevocationCertificate();
     if (!certificate) {
       return undefined;
     } else {
       return await Stream.readToEnd(certificate);
+    }
+  };
+
+  public static applyRevocationCertificate = async (key: Key, revocationCertificate: string): Promise<Key> => {
+    const keyObj = await OpenPGPKey.extractExternalLibraryObjFromKey(key);
+    if (keyObj.isPrivate()) {
+      return await OpenPGPKey.convertExternalLibraryObjToKey((await opgp.revokeKey({ key: keyObj, revocationCertificate, format: 'object' })).privateKey);
+    } else {
+      return await OpenPGPKey.convertExternalLibraryObjToKey((await opgp.revokeKey({ key: keyObj, revocationCertificate, format: 'object' })).publicKey);
     }
   };
 

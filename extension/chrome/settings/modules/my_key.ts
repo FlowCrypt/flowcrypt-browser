@@ -128,7 +128,7 @@ View.run(
       if (!(await Ui.modal.confirm(revokeConfirmMsg))) {
         return;
       }
-      const revokedArmored = await KeyUtil.revoke(prv);
+      const revokedArmored = await KeyUtil.getOrCreateRevocationCertificate(prv);
       if (!revokedArmored) {
         await Ui.modal.error(`Could not produce revocation cert (empty)`);
         return;
