@@ -393,11 +393,11 @@ export class KeyUtil {
     }
   };
 
-  public static revoke = async (key: Key): Promise<string | undefined> => {
+  public static getOrCreateRevocationCertificate = async (key: Key): Promise<string | undefined> => {
     if (key.family === 'openpgp') {
-      return await OpenPGPKey.revoke(key);
+      return await OpenPGPKey.getOrCreateRevocationCertificate(key);
     } else {
-      throw new Error(`KeyUtil.revoke does not support key family ${key.family}`);
+      throw new Error(`KeyUtil.getOrCreateRevocationCertificate does not support key family ${key.family}`);
     }
   };
 
