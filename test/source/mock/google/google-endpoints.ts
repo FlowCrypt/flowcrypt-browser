@@ -7,7 +7,7 @@ import { GoogleData } from './google-data';
 import { HandlersDefinition } from '../all-apis-mock';
 import { AddressObject, ParsedMail } from 'mailparser';
 import { TestBySubjectStrategyContext } from './strategies/send-message-strategy';
-import { UnsuportableStrategyError } from './strategies/strategy-base';
+import { UnsupportableStrategyError } from './strategies/strategy-base';
 import { oauth } from '../lib/oauth';
 import { Util } from '../../util';
 
@@ -281,11 +281,13 @@ export const mockGoogleEndpoints: HandlersDefinition = {
         const parseResult = await parseMultipartDataAsMimeMsg(parsedReq.body);
         await validateMimeMsg(acct, parseResult.mimeMsg, parseResult.threadId);
         const id = `msg_id_${Util.lousyRandom()}`;
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const port = req.headers.host!.split(':')[1];
         try {
           const testingStrategyContext = new TestBySubjectStrategyContext(parseResult.mimeMsg.subject || '');
-          await testingStrategyContext.test(parseResult, id);
+          await testingStrategyContext.test(parseResult, id, port);
         } catch (e) {
-          if (!(e instanceof UnsuportableStrategyError)) {
+          if (!(e instanceof UnsupportableStrategyError)) {
             // No such strategy for test
             throw e; // todo - should start throwing unsupported test strategies too, else changing subject will cause incomplete testing
             // todo - should stop calling it "strategy", better just "SentMessageTest" or similar

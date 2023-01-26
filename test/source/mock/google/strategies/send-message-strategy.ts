@@ -2,7 +2,7 @@
 
 import * as forge from 'node-forge';
 import { AddressObject, StructuredHeader } from 'mailparser';
-import { ITestMsgStrategy, UnsuportableStrategyError } from './strategy-base.js';
+import { ITestMsgStrategy, UnsupportableStrategyError } from './strategy-base.js';
 import { Buf } from '../../../core/buf';
 import { Config } from '../../../util';
 import { expect } from 'chai';
@@ -121,9 +121,9 @@ class PwdEncryptedMessageWithFesPubkeyRecipientInBccTestStrategy implements ITes
 }
 
 class PwdEncryptedMessageWithFesReplyBadRequestTestStrategy implements ITestMsgStrategy {
-  public test = async (parseResult: ParseMsgResult, id: string) => {
+  public test = async (parseResult: ParseMsgResult, id: string, port: string) => {
     const mimeMsg = parseResult.mimeMsg;
-    const expectedSenderEmail = 'user4@standardsubdomainfes.localhost:8001';
+    const expectedSenderEmail = `user4@standardsubdomainfes.localhost:${port}`;
     expect(mimeMsg.from!.text).to.equal(`First Last <${expectedSenderEmail}>`);
     const to = parsedMailAddressObjectAsArray(mimeMsg.to)
       .concat(parsedMailAddressObjectAsArray(mimeMsg.cc))
@@ -409,11 +409,11 @@ export class TestBySubjectStrategyContext {
     } else if (subject.includes('Re: FROM: flowcrypt.compatibility@gmail.com, TO: flowcrypt.compatibility@gmail.com + vladimir@flowcrypt.com')) {
       this.strategy = new NoopTestStrategy();
     } else {
-      throw new UnsuportableStrategyError(`There isn't any strategy for this subject: ${subject}`);
+      throw new UnsupportableStrategyError(`There isn't any strategy for this subject: ${subject}`);
     }
   }
 
-  public test = async (parseResult: ParseMsgResult, id: string) => {
-    await this.strategy.test(parseResult, id);
+  public test = async (parseResult: ParseMsgResult, id: string, port: string) => {
+    await this.strategy.test(parseResult, id, port);
   };
 }
