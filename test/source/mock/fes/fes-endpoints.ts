@@ -6,6 +6,7 @@ import { Buf } from '../../core/buf';
 import { MsgUtil } from '../../core/crypto/pgp/msg-util';
 import { HandlersDefinition } from '../all-apis-mock';
 import { HttpClientErr, Status } from '../lib/api';
+import { parsePort } from '../lib/mock-util';
 import { MockJwt } from '../lib/oauth';
 
 const standardFesUrl = (port: string) => {
@@ -187,8 +188,7 @@ const processMessageFromUser4 = async (body: string) => {
 export const mockFesEndpoints: HandlersDefinition = {
   // standard fes location at https://fes.domain.com
   '/api/': async ({}, req) => {
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    const port = req.headers.host!.split(':')[1];
+    const port = parsePort(req);
     if ([standardFesUrl(port)].includes(req.headers.host || '') && req.method === 'GET') {
       return {
         vendor: 'Mock',
@@ -215,8 +215,7 @@ export const mockFesEndpoints: HandlersDefinition = {
     if (req.method !== 'GET') {
       throw new HttpClientErr('Unsupported method');
     }
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    const port = req.headers.host!.split(':')[1];
+    const port = parsePort(req);
     if (req.headers.host === standardFesUrl(port) && req.url === `/api/v1/client-configuration?domain=standardsubdomainfes.localhost:${port}`) {
       return {
         clientConfiguration: { flags: [], disallow_attester_search_for_domains: ['got.this@fromstandardfes.com'] }, // eslint-disable-line @typescript-eslint/naming-convention
@@ -225,17 +224,14 @@ export const mockFesEndpoints: HandlersDefinition = {
     throw new HttpClientErr(`Unexpected FES domain "${req.headers.host}" and url "${req.url}"`);
   },
   '/api/v1/message/new-reply-token': async ({}, req) => {
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    const port = req.headers.host!.split(':')[1];
-    if (req.headers.host === standardFesUrl(port) && req.method === 'POST') {
+    if (req.headers.host === standardFesUrl(parsePort(req)) && req.method === 'POST') {
       authenticate(req, 'oidc');
       return { replyToken: 'mock-fes-reply-token' };
     }
     throw new HttpClientErr('Not Found', 404);
   },
   '/api/v1/message': async ({ body }, req) => {
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    const port = req.headers.host!.split(':')[1];
+    const port = parsePort(req);
     // body is a mime-multipart string, we're doing a few smoke checks here without parsing it
     if (req.headers.host === standardFesUrl(port) && req.method === 'POST' && typeof body === 'string') {
       // test: `compose - user@standardsubdomainfes.localhost:8001 - PWD encrypted message with FES web portal`
@@ -256,8 +252,7 @@ export const mockFesEndpoints: HandlersDefinition = {
     throw new HttpClientErr('Not Found', 404);
   },
   '/api/v1/message/FES-MOCK-EXTERNAL-ID/gateway': async ({ body }, req) => {
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    const port = req.headers.host!.split(':')[1];
+    const port = parsePort(req);
     if (req.headers.host === standardFesUrl(port) && req.method === 'POST') {
       // test: `compose - user@standardsubdomainfes.localhost:8001 - PWD encrypted message with FES web portal`
       authenticate(req, 'oidc');
@@ -267,8 +262,7 @@ export const mockFesEndpoints: HandlersDefinition = {
     throw new HttpClientErr('Not Found', 404);
   },
   '/api/v1/message/FES-MOCK-EXTERNAL-FOR-SENDER@DOMAIN.COM-ID/gateway': async ({ body }, req) => {
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    const port = req.headers.host!.split(':')[1];
+    const port = parsePort(req);
     if (req.headers.host === standardFesUrl(port) && req.method === 'POST') {
       // test: `compose - user2@standardsubdomainfes.localhost:8001 - PWD encrypted message with FES - Reply rendering`
       authenticate(req, 'oidc');
@@ -278,8 +272,7 @@ export const mockFesEndpoints: HandlersDefinition = {
     throw new HttpClientErr('Not Found', 404);
   },
   '/api/v1/message/FES-MOCK-EXTERNAL-FOR-TO@EXAMPLE.COM-ID/gateway': async ({ body }, req) => {
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    const port = req.headers.host!.split(':')[1];
+    const port = parsePort(req);
     if (req.headers.host === standardFesUrl(port) && req.method === 'POST') {
       // test: `compose - user@standardsubdomainfes.localhost:8001 - PWD encrypted message with FES web portal`
       // test: `compose - user2@standardsubdomainfes.localhost:8001 - PWD encrypted message with FES - Reply rendering`
@@ -292,8 +285,7 @@ export const mockFesEndpoints: HandlersDefinition = {
     throw new HttpClientErr('Not Found', 404);
   },
   '/api/v1/message/FES-MOCK-EXTERNAL-FOR-BCC@EXAMPLE.COM-ID/gateway': async ({ body }, req) => {
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    const port = req.headers.host!.split(':')[1];
+    const port = parsePort(req);
     if (req.headers.host === standardFesUrl(port) && req.method === 'POST') {
       // test: `compose - user@standardsubdomainfes.localhost:8001 - PWD encrypted message with FES web portal`
       authenticate(req, 'oidc');

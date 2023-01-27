@@ -2,7 +2,7 @@
 
 import { HttpClientErr, Status } from '../lib/api';
 import Parse, { ParseMsgResult } from '../../util/parse';
-import { isDelete, isGet, isPost, isPut, parseResourceId } from '../lib/mock-util';
+import { isDelete, isGet, isPost, isPut, parsePort, parseResourceId } from '../lib/mock-util';
 import { GoogleData } from './google-data';
 import { HandlersDefinition } from '../all-apis-mock';
 import { AddressObject, ParsedMail } from 'mailparser';
@@ -56,9 +56,7 @@ export const mockGoogleEndpoints: HandlersDefinition = {
       } else if (!proceed) {
         return oauth.renderText('redirect with proceed=true to continue');
       } else {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const port = req.headers.host!.split(':')[1];
-        return oauth.successResult(port, login_hint, state, scope);
+        return oauth.successResult(parsePort(req), login_hint, state, scope);
       }
     }
     throw new HttpClientErr(`Method not implemented for ${req.url}: ${req.method}`);
@@ -279,11 +277,9 @@ export const mockGoogleEndpoints: HandlersDefinition = {
         const parseResult = await parseMultipartDataAsMimeMsg(parsedReq.body);
         await validateMimeMsg(acct, parseResult.mimeMsg, parseResult.threadId);
         const id = `msg_id_${Util.lousyRandom()}`;
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const port = req.headers.host!.split(':')[1];
         try {
           const testingStrategyContext = new TestBySubjectStrategyContext(parseResult.mimeMsg.subject || '');
-          await testingStrategyContext.test(parseResult, id, port);
+          await testingStrategyContext.test(parseResult, id, parsePort(req));
         } catch (e) {
           if (!(e instanceof UnsupportableStrategyError)) {
             // No such strategy for test
