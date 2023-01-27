@@ -2,30 +2,28 @@
 
 'use strict';
 
-import { BaseMailFormatter } from './base-mail-formatter.js';
-import { ComposerResetBtnTrigger } from '../compose-err-module.js';
-import { Mime, SendableMsgBody } from '../../../../js/common/core/mime.js';
-import { getUniqueRecipientEmails, NewMsgData } from '../compose-types.js';
-import { EmailParts, Str, Value } from '../../../../js/common/core/common.js';
+import { UploadedMessageData } from '../../../../js/common/api/account-server.js';
+import { SendableMsg } from '../../../../js/common/api/email-provider/sendable-msg.js';
 import { ApiErr } from '../../../../js/common/api/shared/api-error.js';
+import { Api, RecipientType } from '../../../../js/common/api/shared/api.js';
+import { Ui } from '../../../../js/common/browser/ui.js';
 import { Attachment } from '../../../../js/common/core/attachment.js';
 import { Buf } from '../../../../js/common/core/buf.js';
-import { Catch } from '../../../../js/common/platform/catch.js';
-import { Lang } from '../../../../js/common/lang.js';
-import { PubkeyResult, Key, KeyUtil } from '../../../../js/common/core/crypto/key.js';
-import { MsgUtil, PgpMsgMethod } from '../../../../js/common/core/crypto/pgp/msg-util.js';
-import { SendableMsg } from '../../../../js/common/api/email-provider/sendable-msg.js';
-import { Settings } from '../../../../js/common/settings.js';
-import { Ui } from '../../../../js/common/browser/ui.js';
-import { Xss } from '../../../../js/common/platform/xss.js';
-import { AcctStore } from '../../../../js/common/platform/store/acct-store.js';
-import { SmimeKey } from '../../../../js/common/core/crypto/smime/smime-key.js';
-import { PgpHash } from '../../../../js/common/core/crypto/pgp/pgp-hash.js';
-import { UploadedMessageData } from '../../../../js/common/api/account-server.js';
+import { EmailParts, Str, Value } from '../../../../js/common/core/common.js';
 import { ParsedKeyInfo } from '../../../../js/common/core/crypto/key-store-util.js';
+import { Key, KeyUtil, PubkeyResult } from '../../../../js/common/core/crypto/key.js';
+import { MsgUtil, PgpMsgMethod } from '../../../../js/common/core/crypto/pgp/msg-util.js';
+import { SmimeKey } from '../../../../js/common/core/crypto/smime/smime-key.js';
+import { Mime, SendableMsgBody } from '../../../../js/common/core/mime.js';
+import { Lang } from '../../../../js/common/lang.js';
+import { Catch } from '../../../../js/common/platform/catch.js';
+import { AcctStore } from '../../../../js/common/platform/store/acct-store.js';
+import { Xss } from '../../../../js/common/platform/xss.js';
+import { Settings } from '../../../../js/common/settings.js';
+import { ComposerResetBtnTrigger } from '../compose-err-module.js';
+import { getUniqueRecipientEmails, NewMsgData } from '../compose-types.js';
+import { BaseMailFormatter } from './base-mail-formatter.js';
 import { MultipleMessages } from './general-mail-formatter.js';
-import { Api, RecipientType } from '../../../../js/common/api/shared/api.js';
-import { isCustomerUrlFesUsed } from '../../../../js/common/helpers.js';
 
 /**
  * this type must be kept in sync with FES UI code, changes must be backwards compatible
@@ -163,7 +161,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
     }
     /**
      * There are two mechanisms to send password protected messages: flowcrypt.com/shared-tenant-fes and FES
-     *  - flowcrypt.com/shared-tenant-fes is older API, shared instance used by non-enterprise customers
+     *  - flowcrypt.com/shared-tenant-fes is shared instance used by non-enterprise customers
      *  - FES is a more recent API, a dedicated instance that an enterprise customer may run
      * The flowcrypt.com mechanism expects the password to be hashed 100k times, then used
      * The FES mechanism expects the password to be given to OpenPGP.js verbatim
@@ -176,17 +174,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
      *   the recipient will follow transparently. For now, we'll be following the default set
      *   in OpenPGP.js, and later we can make a deliberate choice on how many iterations to use
      *   without having to affect recipient code.
-     *
-     * Another thing to note is that eventually, flowcrypt.com/shared-tenant-fes web portal functionality will
-     *   be deprecated, and we'll instead run a "shared tenant FES instance" to fill that role.
-     *   Nothing will change for users, but our code on the client will be more streamlined.
-     *   Therefore, eventually, this `if` branch with the line below will be removed once both
-     *   consumers and enterprises use API with the same structure.
      */
-    if (!(await isCustomerUrlFesUsed(this.acctEmail))) {
-      // if flowcrypt.com/shared-tenant-fes is used
-      newMsg.pwd = await PgpHash.challengeAnswer(newMsg.pwd); // then hash the password to preserve compatibility
-    }
     const { bodyWithReplyToken, replyToken } = await this.getPwdMsgSendableBodyWithOnlineReplyMsgToken(newMsg);
     const pgpMimeWithAttachments = await Mime.encode(
       bodyWithReplyToken,
