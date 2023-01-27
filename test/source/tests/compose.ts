@@ -289,7 +289,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
     test(
       `compose - auto include pubkey is inactive when our key is available on Wkd`,
       testWithBrowser(undefined, async (t, browser) => {
-        const acct = 'wkd@google.mock.localhost:8001';
+        const acct = `wkd@google.mock.localhost:${t.urls?.port}`;
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
         await SetupPageRecipe.autoSetupWithEKM(settingsPage);
         const composePage = await ComposePageRecipe.openStandalone(t, browser, acct);
@@ -2399,7 +2399,8 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
     test(
       'user@standardsubdomainfes.localhost:8001 - PWD encrypted message with FES web portal',
       testWithBrowser(undefined, async (t, browser) => {
-        const acct = 'user@standardsubdomainfes.localhost:8001'; // added port to trick extension into calling the mock
+        const port = t.urls?.port;
+        const acct = `user@standardsubdomainfes.localhost:${port}`; // added port to trick extension into calling the mock
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
         await SetupPageRecipe.manualEnter(
           settingsPage,
@@ -2419,7 +2420,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         });
         await dbPage.close();
         const subject = 'PWD encrypted message with FES - ID TOKEN';
-        const composePage = await ComposePageRecipe.openStandalone(t, browser, 'user@standardsubdomainfes.localhost:8001');
+        const composePage = await ComposePageRecipe.openStandalone(t, browser, `user@standardsubdomainfes.localhost:${port}`);
         await ComposePageRecipe.fillMsg(composePage, { to: 'to@example.com', bcc: 'bcc@example.com' }, subject);
         const fileInput = (await composePage.target.$('input[type=file]')) as ElementHandle<HTMLInputElement>;
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -2446,7 +2447,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
     test(
       'user2@standardsubdomainfes.localhost:8001 - PWD encrypted message with FES - Reply rendering',
       testWithBrowser(undefined, async (t, browser) => {
-        const acct = 'user2@standardsubdomainfes.localhost:8001'; // added port to trick extension into calling the mock
+        const acct = `user2@standardsubdomainfes.localhost:${t.urls?.port}`; // added port to trick extension into calling the mock
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
         await SetupPageRecipe.manualEnter(
           settingsPage,
@@ -2455,7 +2456,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
           { isSavePassphraseChecked: false, isSavePassphraseHidden: false }
         );
         const appendUrl = 'threadId=1803be2e506153d2&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___&replyMsgId=1803be3182d1937b';
-        const composePage = await ComposePageRecipe.openStandalone(t, browser, 'user2@standardsubdomainfes.localhost:8001', {
+        const composePage = await ComposePageRecipe.openStandalone(t, browser, acct, {
           appendUrl,
           hasReplyPrompt: true,
         });
@@ -2523,7 +2524,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
     test(
       'user3@standardsubdomainfes.localhost:8001 - PWD encrypted message with FES web portal - pubkey recipient in bcc',
       testWithBrowser(undefined, async (t, browser) => {
-        const acct = 'user3@standardsubdomainfes.localhost:8001'; // added port to trick extension into calling the mock
+        const acct = `user3@standardsubdomainfes.localhost:${t.urls?.port}`; // added port to trick extension into calling the mock
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
         await SetupPageRecipe.manualEnter(
           settingsPage,
@@ -2532,7 +2533,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
           { isSavePassphraseChecked: false, isSavePassphraseHidden: false }
         );
         const subject = 'PWD encrypted message with FES - pubkey recipient in bcc';
-        const composePage = await ComposePageRecipe.openStandalone(t, browser, 'user3@standardsubdomainfes.localhost:8001');
+        const composePage = await ComposePageRecipe.openStandalone(t, browser, acct);
         await ComposePageRecipe.fillMsg(composePage, { to: 'to@example.com', bcc: 'flowcrypt.compatibility@gmail.com' }, subject);
         await composePage.waitAndType('@input-password', 'gO0d-pwd');
         await composePage.waitAndClick('@action-send', { delay: 1 });
@@ -2547,7 +2548,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
     test(
       'user4@standardsubdomainfes.localhost:8001 - PWD encrypted message with FES web portal - a send fails with gateway update error',
       testWithBrowser(undefined, async (t, browser) => {
-        const acct = 'user4@standardsubdomainfes.localhost:8001'; // added port to trick extension into calling the mock
+        const acct = `user4@standardsubdomainfes.localhost:${t.urls?.port}`; // added port to trick extension into calling the mock
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
         await SetupPageRecipe.manualEnter(
           settingsPage,
@@ -2557,7 +2558,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         );
         const subject = 'PWD encrypted message with FES web portal - a send fails with gateway update error - ' + testVariant;
         const expectedNumberOfPassedMessages = (await GoogleData.withInitializedData(acct)).searchMessagesBySubject(subject).length;
-        const composePage = await ComposePageRecipe.openStandalone(t, browser, 'user4@standardsubdomainfes.localhost:8001');
+        const composePage = await ComposePageRecipe.openStandalone(t, browser, acct);
         await ComposePageRecipe.fillMsg(composePage, { to: 'gatewayfailure@example.com' }, subject);
         await composePage.waitAndType('@input-password', 'gO0d-pwd');
         await composePage.waitAndClick('@action-send', { delay: 1 });

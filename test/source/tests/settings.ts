@@ -1392,7 +1392,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         await PageRecipe.waitForToastToAppearAndDisappear(
           gmailPage,
           'Failed to update FlowCrypt Client Configuration: ' +
-            'BrowserMsg(ajax) Bad Request: 400 when POST-ing https://localhost:8001/api/account/get string: -> Test error (AjaxErr)'
+            `BrowserMsg(ajax) Bad Request: 400 when POST-ing https://localhost:${port}/api/account/get string: -> Test error (AjaxErr)`
         );
         await gmailPage.close();
         // check that the configuration hasn't changed

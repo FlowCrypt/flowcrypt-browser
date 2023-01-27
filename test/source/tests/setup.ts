@@ -1301,7 +1301,7 @@ export const defineSetupTests = (testVariant: TestVariant, testWithBrowser: Test
         await composePage.close();
         await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
         const contactsFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-contacts-page', ['contacts.htm', 'placement=settings']);
-        await contactsFrame.waitForContent('@custom-key-server-description', 'using custom SKS pubkeyserver: https://localhost:8001');
+        await contactsFrame.waitForContent('@custom-key-server-description', `using custom SKS pubkeyserver: https://localhost:${t.urls?.port}`);
       })
     );
 
@@ -1475,7 +1475,7 @@ export const defineSetupTests = (testVariant: TestVariant, testWithBrowser: Test
         await SetupPageRecipe.autoSetupWithEKM(settingsPage, {
           expectErrView: {
             title: 'Server responded with an unexpected error.',
-            text: '500 when GET-ing https://localhost:8001/flowcrypt-email-key-manager/v1/keys/private (no body): -> Intentional error for get.error to test client behavior',
+            text: `500 when GET-ing https://localhost:${t.urls?.port}/flowcrypt-email-key-manager/v1/keys/private (no body): -> Intentional error for get.error to test client behavior`,
           },
         });
       })
@@ -1494,7 +1494,7 @@ export const defineSetupTests = (testVariant: TestVariant, testWithBrowser: Test
         await Util.sleep(0.5);
         const details = await settingsPage.read('@container-overlay-details');
         expect(details).to.contain(
-          '500 when PUT-ing https://localhost:8001/flowcrypt-email-key-manager/v1/keys/private string: privateKey -> Intentional error for put.error user to test client behavior'
+          `500 when PUT-ing https://localhost:${t.urls?.port}/flowcrypt-email-key-manager/v1/keys/private string: privateKey -> Intentional error for put.error user to test client behavior`
         );
         expect(details).to.not.contain('PRIVATE KEY');
         expect(details).to.not.contain('<REDACTED:');
@@ -1565,7 +1565,7 @@ export const defineSetupTests = (testVariant: TestVariant, testWithBrowser: Test
         await Util.sleep(0.5);
         const details = await settingsPage.read('@container-overlay-details');
         expect(details).to.contain(
-          '405 when PUT-ing https://localhost:8001/flowcrypt-email-key-manager/v1/keys/private string: ' +
+          `405 when PUT-ing https://localhost:${t.urls?.port}/flowcrypt-email-key-manager/v1/keys/private string: ` +
             'privateKey -> No key has been generated for reject.client.keypair@key-manager-autogen.flowcrypt.test yet'
         );
         expect(details).to.not.contain('PRIVATE KEY');
@@ -1575,7 +1575,8 @@ export const defineSetupTests = (testVariant: TestVariant, testWithBrowser: Test
     test(
       'user@standardsubdomainfes.localhost:8001 - uses FES on standard domain',
       testWithBrowser(undefined, async (t, browser) => {
-        const acct = 'user@standardsubdomainfes.localhost:8001'; // added port to trick extension into calling the mock
+        const port = t.urls?.port;
+        const acct = `user@standardsubdomainfes.localhost:${port}}`; // added port to trick extension into calling the mock
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
         await SetupPageRecipe.manualEnter(
           settingsPage,
@@ -1584,7 +1585,7 @@ export const defineSetupTests = (testVariant: TestVariant, testWithBrowser: Test
           { isSavePassphraseChecked: false, isSavePassphraseHidden: false }
         );
         const debugFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-show-local-store-contents', ['debug_api.htm']);
-        await debugFrame.waitForContent('@container-pre', 'fes.standardsubdomainfes.localhost:8001'); // FES url on standard subdomain
+        await debugFrame.waitForContent('@container-pre', `fes.standardsubdomainfes.localhost:${port}`); // FES url on standard subdomain
         await debugFrame.waitForContent('@container-pre', 'got.this@fromstandardfes.com'); // org rules from FES
       })
     );
