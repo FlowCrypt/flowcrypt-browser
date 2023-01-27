@@ -30,7 +30,7 @@ addManifest('firefox-consumer', manifest => {
   manifest.applications = {
     gecko: {
       id: 'firefox@cryptup.io',
-      update_url: 'https://flowcrypt.com/shared-tenant-fes/update/firefox', // eslint-disable-line @typescript-eslint/naming-convention
+      update_url: 'https://flowcrypt.com/api/update/firefox', // eslint-disable-line @typescript-eslint/naming-convention
       strict_min_version: '60.0', // eslint-disable-line @typescript-eslint/naming-convention
     },
   };
