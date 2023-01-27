@@ -13,7 +13,7 @@ import { PassphraseStore } from './platform/store/passphrase-store.js';
 import { Bm } from './browser/browser-msg.js';
 import { PgpPwd } from './core/crypto/pgp/pgp-password.js';
 
-export const isCustomUrlFesUsed = async (acctEmail: string) => {
+export const isCustomerUrlFesUsed = async (acctEmail: string) => {
   const { fesUrl } = await AcctStore.get(acctEmail, ['fesUrl']);
   return Boolean(fesUrl);
 };

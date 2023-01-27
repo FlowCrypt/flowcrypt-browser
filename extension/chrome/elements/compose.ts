@@ -233,7 +233,7 @@ export class ComposeView extends View {
     this.draftModule.setHandlers(); // must be the last one so that 'onRecipientAdded/draftSave' to works properly
   };
 
-  public isFesUsed = () => Boolean(this.fesUrl);
+  public isCustomUrlFesUsed = () => Boolean(this.fesUrl);
 }
 
 View.run(ComposeView);

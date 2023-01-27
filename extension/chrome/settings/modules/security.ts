@@ -97,9 +97,10 @@ View.run(
       try {
         if (!this.clientConfiguration.usesKeyManager()) {
           $('.password_messages_expiry_container').show();
-          const response = await this.acctServer.accountGetAndUpdateLocalStore();
+          await this.acctServer.fetchAndSaveClientConfiguration();
           $('.select_loader_container').text('');
-          $('.default_message_expire').val(Number(response.defaultWebPortalMessageExpire).toString()).prop('disabled', false).css('display', 'inline-block');
+          const defaultWebPortalMessageExpire = await this.acctServer.getWebPortalMessageExpireDays();
+          $('.default_message_expire').val(`${defaultWebPortalMessageExpire}`).prop('disabled', false).css('display', 'inline-block');
         }
       } catch (e) {
         if (ApiErr.isAuthErr(e)) {

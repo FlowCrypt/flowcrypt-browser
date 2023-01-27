@@ -28,6 +28,7 @@ import { PassphraseStore } from '../../js/common/platform/store/passphrase-store
 import Swal from 'sweetalert2';
 import { FlowCryptWebsite } from '../../js/common/api/flowcrypt-website.js';
 import { AccountServer } from '../../js/common/api/account-server.js';
+import { isCustomerUrlFesUsed } from 'js/common/helpers.js';
 
 View.run(
   class SettingsView extends View {
@@ -430,7 +431,7 @@ View.run(
           Catch.reportErr(e);
           await Ui.modal.error(
             `There was an error changing google account, please ${Lang.general.contactMinimalSubsentence(
-              this.acctServer ? await this.acctServer.isFesUsed() : false
+              this.acctServer ? await isCustomerUrlFesUsed(this.acctEmail ?? '') : false
             )}\n\n${ApiErr.eli5(e)}\n\n${String(e)}`
           );
         }

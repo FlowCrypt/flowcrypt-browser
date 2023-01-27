@@ -14,7 +14,7 @@ import { View } from '../../../js/common/view.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { FlowCryptWebsite } from '../../../js/common/api/flowcrypt-website.js';
 import { Lang } from '../../../js/common/lang.js';
-import { isCustomUrlFesUsed } from '../../../js/common/helpers.js';
+import { isCustomerUrlFesUsed } from '../../../js/common/helpers.js';
 
 View.run(
   class HelpView extends View {
@@ -74,13 +74,15 @@ View.run(
           BrowserMsg.send.closePage(this.parentTabId);
         } else {
           $(target).text(origBtnText);
-          await Ui.modal.error(`There was an error sending message. ${Lang.general.contactForSupportSentence(await isCustomUrlFesUsed(this.acctEmail || ''))}`);
+          await Ui.modal.error(
+            `There was an error sending message. ${Lang.general.contactForSupportSentence(await isCustomerUrlFesUsed(this.acctEmail || ''))}`
+          );
         }
       } catch (e) {
         ApiErr.reportIfSignificant(e);
         $(target).text(origBtnText);
         await Ui.modal.error(
-          `There was an error sending message. ${Lang.general.contactForSupportSentence(await isCustomUrlFesUsed(this.acctEmail || ''))}\n\n${ApiErr.eli5(e)}`
+          `There was an error sending message. ${Lang.general.contactForSupportSentence(await isCustomerUrlFesUsed(this.acctEmail || ''))}\n\n${ApiErr.eli5(e)}`
         );
       }
     };

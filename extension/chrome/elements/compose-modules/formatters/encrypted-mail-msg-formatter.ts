@@ -25,6 +25,7 @@ import { UploadedMessageData } from '../../../../js/common/api/account-server.js
 import { ParsedKeyInfo } from '../../../../js/common/core/crypto/key-store-util.js';
 import { MultipleMessages } from './general-mail-formatter.js';
 import { Api, RecipientType } from '../../../../js/common/api/shared/api.js';
+import { isCustomerUrlFesUsed } from 'js/common/helpers.js';
 
 /**
  * this type must be kept in sync with FES UI code, changes must be backwards compatible
@@ -182,7 +183,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
      *   Therefore, eventually, this `if` branch with the line below will be removed once both
      *   consumers and enterprises use API with the same structure.
      */
-    if (!(await this.view.acctServer.isFesUsed())) {
+    if (!(await isCustomerUrlFesUsed(this.acctEmail))) {
       // if flowcrypt.com/api is used
       newMsg.pwd = await PgpHash.challengeAnswer(newMsg.pwd); // then hash the password to preserve compatibility
     }

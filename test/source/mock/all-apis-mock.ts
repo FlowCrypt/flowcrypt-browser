@@ -10,7 +10,7 @@ import { mockGoogleEndpoints } from './google/google-endpoints';
 import { mockKeyManagerEndpoints } from './key-manager/key-manager-endpoints';
 import { mockWkdEndpoints } from './wkd/wkd-endpoints';
 import { mockSksEndpoints } from './sks/sks-endpoints';
-import { mockCustomUrlFesEndpoints } from './fes/custom-url-fes-endpoints';
+import { mockCustomerUrlFesEndpoints } from './fes/custom-url-fes-endpoints';
 import { mockSharedTenantFesEndpoints } from './fes/shared-tenant-fes-endpoints';
 
 export type HandlersDefinition = Handlers<{ query: { [k: string]: string }; body?: unknown }, unknown>;
@@ -32,7 +32,7 @@ export const startAllApisMock = async (logger: (line: string) => void) => {
     ...mockKeyManagerEndpoints,
     ...mockWkdEndpoints,
     ...mockSksEndpoints,
-    ...mockCustomUrlFesEndpoints,
+    ...mockCustomerUrlFesEndpoints,
     ...mockSharedTenantFesEndpoints,
     '/favicon.ico': async () => '',
   });

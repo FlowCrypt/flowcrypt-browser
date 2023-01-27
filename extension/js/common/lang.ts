@@ -6,10 +6,11 @@ import { FLAVOR } from './core/const.js';
 
 const isEnterpriseBuildUsed = FLAVOR === 'enterprise';
 
-const contactMinimalSubsentence = (isFesUsed: boolean) => (isFesUsed || isEnterpriseBuildUsed ? 'contact your Help Desk' : 'write us at human@flowcrypt.com');
-const contactIfHappensAgain = (isFesUsed: boolean) => `If this happens again, please ${contactMinimalSubsentence(isFesUsed)}. `;
-const contactForSupportSubsentence = (isFesUsed: boolean, reason = '') =>
-  isFesUsed || isEnterpriseBuildUsed ? `Please contact your Help Desk ${reason}` : `Please write us at human@flowcrypt.com ${reason}`;
+const contactMinimalSubsentence = (isCustomUrlFesUsed: boolean) =>
+  isCustomUrlFesUsed || isEnterpriseBuildUsed ? 'contact your Help Desk' : 'write us at human@flowcrypt.com';
+const contactIfHappensAgain = (isCustomUrlFesUsed: boolean) => `If this happens again, please ${contactMinimalSubsentence(isCustomUrlFesUsed)}. `;
+const contactForSupportSubsentence = (isCustomUrlFesUsed: boolean, reason = '') =>
+  isCustomUrlFesUsed || isEnterpriseBuildUsed ? `Please contact your Help Desk ${reason}` : `Please write us at human@flowcrypt.com ${reason}`;
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export const Lang = {
@@ -71,8 +72,8 @@ export const Lang = {
     wrongPassword: 'Wrong password. ',
     decryptPasswordPrompt: 'Please enter password to decrypt the message',
     connError: 'Could not connect to email provider to open the message, please refresh the page to try again. ',
-    dontKnowHowOpen: (isFesUsed: boolean) =>
-      `Please ${contactMinimalSubsentence(isFesUsed)} to submit a bug report, and mention what software was used to send this message to you. `,
+    dontKnowHowOpen: (isCustomUrlFesUsed: boolean) =>
+      `Please ${contactMinimalSubsentence(isCustomUrlFesUsed)} to submit a bug report, and mention what software was used to send this message to you. `,
     enterPassphrase: 'Enter passphrase',
     toOpenMsg: 'to open this message.',
     refreshWindow: 'Please refresh your web mail window to read encrypted messages. ',
@@ -123,13 +124,15 @@ export const Lang = {
   general: {
     contactMinimalSubsentence,
     contactIfHappensAgain,
-    contactIfNeedAssistance: (isFesUsed = false) => contactForSupportSubsentence(isFesUsed, 'if you need an assistance.'),
-    somethingWentWrongTryAgain: (isFesUsed: boolean) => `Something went wrong, please try again. ${contactIfHappensAgain(isFesUsed)}`,
+    contactIfNeedAssistance: (isCustomUrlFesUsed = false) => contactForSupportSubsentence(isCustomUrlFesUsed, 'if you need an assistance.'),
+    somethingWentWrongTryAgain: (isCustomUrlFesUsed: boolean) => `Something went wrong, please try again. ${contactIfHappensAgain(isCustomUrlFesUsed)}`,
     contactForSupportSubsentence,
-    contactForSupportSentence: (isFesUsed = false) => contactForSupportSubsentence(isFesUsed, 'for support.'),
-    writeMeToFixIt: (isFesUsed: boolean) => contactForSupportSubsentence(isFesUsed, 'to fix it.'),
-    restartBrowserAndTryAgain: (isFesUsed: boolean) =>
-      `Unexpected error occured. Please restart your browser and try again. If this persists after a restart, ${contactForSupportSubsentence(isFesUsed)}.`,
+    contactForSupportSentence: (isCustomUrlFesUsed = false) => contactForSupportSubsentence(isCustomUrlFesUsed, 'for support.'),
+    writeMeToFixIt: (isCustomUrlFesUsed: boolean) => contactForSupportSubsentence(isCustomUrlFesUsed, 'to fix it.'),
+    restartBrowserAndTryAgain: (isCustomUrlFesUsed: boolean) =>
+      `Unexpected error occured. Please restart your browser and try again. If this persists after a restart, ${contactForSupportSubsentence(
+        isCustomUrlFesUsed
+      )}.`,
     emailAliasChangedAskForReload: 'Your email aliases on Gmail have refreshed since the last time you used FlowCrypt.\nReload the compose window now?',
   },
   passphraseRequired: {

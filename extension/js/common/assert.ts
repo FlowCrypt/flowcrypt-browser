@@ -12,7 +12,7 @@ import { AcctStore } from './platform/store/acct-store.js';
 import { KeyStore } from './platform/store/key-store.js';
 import { Xss } from './platform/xss.js';
 import { Settings } from './settings.js';
-import { isCustomUrlFesUsed } from './helpers.js';
+import { isCustomerUrlFesUsed } from './helpers.js';
 
 export class AssertError extends UnreportableError {}
 /**
@@ -54,7 +54,7 @@ export class Assert {
               { finishSetup: {}, later: { color: 'gray' } },
               msg,
               undefined,
-              Lang.general.contactIfNeedAssistance(await isCustomUrlFesUsed(acctEmail))
+              Lang.general.contactIfNeedAssistance(await isCustomerUrlFesUsed(acctEmail))
             );
             if (r === 'finish_setup') {
               await Browser.openSettingsPage('index.htm', acctEmail);

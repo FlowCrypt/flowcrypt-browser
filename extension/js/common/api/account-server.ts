@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { isCustomUrlFesUsed } from '../helpers.js';
+import { isCustomerUrlFesUsed } from '../helpers.js';
 import { ExternalService } from './account-servers/external-service.js';
 import { ParsedRecipients } from './email-provider/email-provider-api.js';
 import { Api, ProgressCb } from './shared/api.js';
@@ -15,33 +15,28 @@ export type UploadedMessageData = {
   emailToExternalIdAndUrl?: { [email: string]: { url: string; externalId: string } }; // FES only
 };
 
-export type AccountGetAndUpdateResult = {
-  clientConfiguration: ClientConfigurationJson;
-  defaultWebPortalMessageExpire: number;
-};
-
 /**
  * This may be calling to FlowCryptComApi or Enterprise Server (FES, customer on-prem) depending on
  *   whether FES is deployed on the customer domain or not.
  */
 export class AccountServer extends Api {
-  private readonly potentialCustomUrlFes: ExternalService;
+  private readonly potentialCustomerUrlFes: ExternalService;
   private readonly sharedTenantFes: ExternalService;
 
   public constructor(private acctEmail: string) {
     super();
-    this.potentialCustomUrlFes = new ExternalService(this.acctEmail);
+    this.potentialCustomerUrlFes = new ExternalService(this.acctEmail);
     this.sharedTenantFes = new ExternalService(this.acctEmail);
     this.sharedTenantFes.url = SHARED_TENANT_API_HOST;
   }
 
-  public accountGetAndUpdateLocalStore = async (): Promise<AccountGetAndUpdateResult> => {
+  public fetchAndSaveClientConfiguration = async (): Promise<ClientConfigurationJson> => {
     const service = await this.getExternalService();
-    const fetchedClientConfiguration = await service.fetchAndSaveClientConfiguration();
-    return {
-      clientConfiguration: fetchedClientConfiguration,
-      defaultWebPortalMessageExpire: (await this.isFesUsed()) ? 180 : 90,
-    };
+    return await service.fetchAndSaveClientConfiguration();
+  };
+
+  public getWebPortalMessageExpireDays = async (): Promise<number> => {
+    return (await isCustomerUrlFesUsed(this.acctEmail)) ? 180 : 90;
   };
 
   public messageUpload = async (
@@ -65,13 +60,9 @@ export class AccountServer extends Api {
     return await service.webPortalMessageNewReplyToken();
   };
 
-  public isFesUsed = async (): Promise<boolean> => {
-    return await isCustomUrlFesUsed(this.acctEmail);
-  };
-
   private getExternalService = async (): Promise<ExternalService> => {
-    if (await this.isFesUsed()) {
-      return this.potentialCustomUrlFes;
+    if (await isCustomerUrlFesUsed(this.acctEmail)) {
+      return this.potentialCustomerUrlFes;
     }
     return this.sharedTenantFes;
   };
