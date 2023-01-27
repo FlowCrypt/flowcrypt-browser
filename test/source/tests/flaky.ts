@@ -403,17 +403,17 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
     );
 
     ava.default(
-      'compose - PWD encrypted message with flowcrypt.com/api',
+      'compose - PWD encrypted message with flowcrypt.com/shared-tenant-fes',
       testWithBrowser('compatibility', async (t, browser) => {
         const msgPwd = 'super hard password for the message';
-        const subject = 'PWD encrypted message with flowcrypt.com/api';
+        const subject = 'PWD encrypted message with flowcrypt.com/shared-tenant-fes';
         const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
         await ComposePageRecipe.fillMsg(composePage, { to: 'test@email.com' }, subject);
         const fileInput = (await composePage.target.$('input[type=file]')) as ElementHandle<HTMLInputElement>;
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         await fileInput!.uploadFile('test/samples/small.txt');
         await ComposePageRecipe.sendAndClose(composePage, { password: msgPwd });
-        // this test is using PwdEncryptedMessageWithFlowCryptComApiTestStrategy to check sent result based on subject "PWD encrypted message with flowcrypt.com/api"
+        // this test is using PwdEncryptedMessageWithFlowCryptComApiTestStrategy to check sent result based on subject "PWD encrypted message with flowcrypt.com/shared-tenant-fes"
       })
     );
 

@@ -186,7 +186,7 @@ export class GoogleAuth {
           await acctServer.fetchAndSaveClientConfiguration();
         } else {
           // eventually this branch will be dropped once a public FES instance is run for these customers
-          // when using flowcrypt.com/api, pulling ClientConfiguration is authenticated, therefore have
+          // when using flowcrypt.com/shared-tenant-fes, pulling ClientConfiguration is authenticated, therefore have
           //   to retrieve access token first (which is the only way to authenticate other calls)
           const acctServer = new AccountServer(authRes.acctEmail);
           // fetch and store ClientConfiguration (authenticated)

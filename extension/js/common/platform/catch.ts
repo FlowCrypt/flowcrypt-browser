@@ -301,7 +301,7 @@ export class Catch {
   private static doSendErrorToFlowCryptComBackend = (errorReport: ErrorReport) => {
     try {
       void $.ajax({
-        url: 'https://flowcrypt.com/api/help/error',
+        url: 'https://flowcrypt.com/shared-tenant-fes/help/error',
         method: 'POST',
         data: JSON.stringify(errorReport),
         dataType: 'json',

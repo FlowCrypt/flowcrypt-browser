@@ -95,7 +95,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
 
   private formatSendablePwdMsgs = async (newMsg: NewMsgData, pubkeys: PubkeyResult[], signingKey?: ParsedKeyInfo) => {
     // password-protected message, temporarily uploaded (already encrypted) to:
-    //    - flowcrypt.com/api (consumers and customers without on-prem setup), or
+    //    - flowcrypt.com/shared-tenant-fes (consumers and customers without on-prem setup), or
     //    - FlowCrypt External Service (enterprise customers with on-prem setup)
     //    It will be served to recipient through web
     const uploadedMessageData = await this.prepareAndUploadPwdEncryptedMsg(newMsg); // encrypted for pwd only, pubkeys ignored
@@ -162,8 +162,8 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
       throw new Error('password unexpectedly missing');
     }
     /**
-     * There are two mechanisms to send password protected messages: flowcrypt.com/api and FES
-     *  - flowcrypt.com/api is older API, shared instance used by non-enterprise customers
+     * There are two mechanisms to send password protected messages: flowcrypt.com/shared-tenant-fes and FES
+     *  - flowcrypt.com/shared-tenant-fes is older API, shared instance used by non-enterprise customers
      *  - FES is a more recent API, a dedicated instance that an enterprise customer may run
      * The flowcrypt.com mechanism expects the password to be hashed 100k times, then used
      * The FES mechanism expects the password to be given to OpenPGP.js verbatim
@@ -177,14 +177,14 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
      *   in OpenPGP.js, and later we can make a deliberate choice on how many iterations to use
      *   without having to affect recipient code.
      *
-     * Another thing to note is that eventually, flowcrypt.com/api web portal functionality will
+     * Another thing to note is that eventually, flowcrypt.com/shared-tenant-fes web portal functionality will
      *   be deprecated, and we'll instead run a "shared tenant FES instance" to fill that role.
      *   Nothing will change for users, but our code on the client will be more streamlined.
      *   Therefore, eventually, this `if` branch with the line below will be removed once both
      *   consumers and enterprises use API with the same structure.
      */
     if (!(await isCustomerUrlFesUsed(this.acctEmail))) {
-      // if flowcrypt.com/api is used
+      // if flowcrypt.com/shared-tenant-fes is used
       newMsg.pwd = await PgpHash.challengeAnswer(newMsg.pwd); // then hash the password to preserve compatibility
     }
     const { bodyWithReplyToken, replyToken } = await this.getPwdMsgSendableBodyWithOnlineReplyMsgToken(newMsg);
