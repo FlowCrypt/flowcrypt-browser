@@ -375,6 +375,22 @@ BROWSER_UNIT_TEST_NAME(`ContactStore.getOneWithAllPubkeys() returns all pubkeys 
   return 'pass';
 })();
 
+BROWSER_UNIT_TEST_NAME(`ContactStore.getOneWithAllPubkeys() returns usable key from background`);
+(async () => {
+  await ContactStore.update(undefined, 'abcdef@test.com', {
+    pubkey: await KeyUtil.parse(testConstants.abcdefTestComPubkey),
+  });
+
+  const { sortedPubkeys: pubs } = await ContactStore.getOneWithAllPubkeys(undefined, 'abcdef@test.com');
+  const stringData = 'hello';
+  const data = Buf.fromUtfStr(stringData);
+  const dataLength = (await MsgUtil.encryptMessage({ pubkeys: [pubs[0].pubkey], data, armor: true })).data.length;
+  if (dataLength > 0) {
+    return 'pass';
+  }
+  throw Error(`Failed to use the key received from the background`);
+})();
+
 BROWSER_UNIT_TEST_NAME(`ContactStore stores postfixed fingerprint internally for X.509 certificate`);
 (async () => {
   const db = await ContactStore.dbOpen();

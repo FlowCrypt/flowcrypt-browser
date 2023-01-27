@@ -52,7 +52,7 @@ export class OpenPGPKey {
   public static pack = (key: Key) => {
     const keyWithPrivateFields = key as unknown as KeyWithPrivateFields;
     if (typeof keyWithPrivateFields.internal !== 'string') {
-      keyWithPrivateFields.internal = keyWithPrivateFields.internal.armor();
+      keyWithPrivateFields.internal = new Buf(keyWithPrivateFields.internal.write()).toRawBytesStr();
       keyWithPrivateFields.rawKey = undefined;
     }
   };
@@ -721,7 +721,7 @@ export class OpenPGPKey {
     if (!internal) {
       throw new Error('Object has type == "openpgp" but no internal key.');
     } else if (typeof internal === 'string') {
-      keyWithPrivateFields.internal = await opgp.readKey({ armoredKey: internal });
+      keyWithPrivateFields.internal = await opgp.readKey({ binaryKey: Buf.fromRawBytesStr(internal) });
       return keyWithPrivateFields.internal;
     }
     return internal;
