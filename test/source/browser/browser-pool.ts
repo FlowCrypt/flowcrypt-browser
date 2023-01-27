@@ -25,7 +25,7 @@ export class BrowserPool {
   }
 
   public newBrowserHandle = async (t: AvaContext, closeInitialPage = true) => {
-    // await this.semaphore.acquire();
+    await this.semaphore.acquire();
     const extensionDir = t.extensionDir ?? this.extensionBuildDir;
     const args = [
       '--no-sandbox', // make it work in travis-ci

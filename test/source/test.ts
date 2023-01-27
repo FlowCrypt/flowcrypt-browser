@@ -11,10 +11,10 @@ import { Util, getParsedCliParams, Config } from './util';
 import { BrowserRecipe } from './tests/tooling/browser-recipe';
 import { defineComposeTests } from './tests/compose';
 import { defineDecryptTests } from './tests/decrypt';
-// import { defineElementTests } from './tests/elements';
+import { defineElementTests } from './tests/elements';
 import { defineFlakyTests } from './tests/flaky';
-// import { defineGmailTests } from './tests/gmail';
-// import { defineSettingsTests } from './tests/settings';
+import { defineGmailTests } from './tests/gmail';
+import { defineSettingsTests } from './tests/settings';
 import { defineSetupTests } from './tests/setup';
 import { defineUnitNodeTests } from './tests/unit-node';
 import { defineUnitBrowserTests } from './tests/unit-browser';
@@ -221,7 +221,7 @@ if (testGroup === 'UNIT-TESTS') {
   defineSetupTests(testVariant, testWithBrowser);
   defineComposeTests(testVariant, testWithBrowser);
   defineDecryptTests(testVariant, testWithBrowser);
-  // defineGmailTests(testVariant, testWithBrowser);
-  // defineSettingsTests(testVariant, testWithBrowser);
-  // defineElementTests(testVariant, testWithBrowser);
+  defineGmailTests(testVariant, testWithBrowser);
+  defineSettingsTests(testVariant, testWithBrowser);
+  defineElementTests(testVariant, testWithBrowser);
 }

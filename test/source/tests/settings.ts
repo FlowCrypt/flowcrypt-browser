@@ -104,8 +104,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         const fingerprint = (await settingsPage.read('.good')).split(' ').join('');
         const longid = OpenPGPKey.fingerprintToLongid(fingerprint);
         const baseUrl = `chrome/elements/passphrase.htm?acctEmail=${acctEmail}&longids=${longid}&parentTabId=`;
-        let passphrasePage;
-        passphrasePage = await browser.newPage(t, baseUrl.concat('&type=sign'));
+        let passphrasePage = await browser.newPage(t, baseUrl.concat('&type=sign'));
         await passphrasePage.waitForSelTestState('ready');
         expect(await passphrasePage.read('@passphrase-text')).to.equal('Enter FlowCrypt pass phrase to sign email');
         await passphrasePage.close();
