@@ -28,7 +28,7 @@ import { PassphraseStore } from '../../js/common/platform/store/passphrase-store
 import Swal from 'sweetalert2';
 import { FlowCryptWebsite } from '../../js/common/api/flowcrypt-website.js';
 import { AccountServer } from '../../js/common/api/account-server.js';
-import { isCustomerUrlFesUsed } from 'js/common/helpers.js';
+import { isCustomerUrlFesUsed } from '../../js/common/helpers.js';
 
 View.run(
   class SettingsView extends View {
@@ -369,7 +369,7 @@ View.run(
         // have auth email set
         try {
           // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-          await this.acctServer!.accountGetAndUpdateLocalStore();
+          await this.acctServer!.fetchAndSaveClientConfiguration();
           $('#status-row #status_flowcrypt').text(`fc:ok`);
         } catch (e) {
           if (ApiErr.isAuthErr(e)) {

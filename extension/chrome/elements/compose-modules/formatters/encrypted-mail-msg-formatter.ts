@@ -25,7 +25,7 @@ import { UploadedMessageData } from '../../../../js/common/api/account-server.js
 import { ParsedKeyInfo } from '../../../../js/common/core/crypto/key-store-util.js';
 import { MultipleMessages } from './general-mail-formatter.js';
 import { Api, RecipientType } from '../../../../js/common/api/shared/api.js';
-import { isCustomerUrlFesUsed } from 'js/common/helpers.js';
+import { isCustomerUrlFesUsed } from '../../../../js/common/helpers.js';
 
 /**
  * this type must be kept in sync with FES UI code, changes must be backwards compatible
