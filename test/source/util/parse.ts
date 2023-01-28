@@ -1,6 +1,6 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
-import { ParsedMail, simpleParser } from "mailparser";
+import { ParsedMail, simpleParser } from 'mailparser';
 import { Buf } from '../core/buf';
 
 type ThreadIdObject = {
@@ -9,8 +9,8 @@ type ThreadIdObject = {
 
 export class ParseMsgResult {
   public threadId?: string;
-  public mimeMsg: ParsedMail;
-  public base64: string;
+  public mimeMsg!: ParsedMail;
+  public base64!: string;
 }
 
 const strictParse = async (source: string): Promise<ParseMsgResult> => {
@@ -20,27 +20,27 @@ const strictParse = async (source: string): Promise<ParseMsgResult> => {
     const threadIdObject = JSON.parse(lines[3]) as ThreadIdObject;
     result.threadId = threadIdObject.threadId;
   } else {
-    throw new Error('ThreadId property doesn\'t exist');
+    throw new Error("ThreadId property doesn't exist");
   }
   if (lines[6] === 'Content-Type: message/rfc822' && lines[7] === 'Content-Transfer-Encoding: base64' && lines[9]) {
     result.base64 = lines[9];
     result.mimeMsg = await convertBase64ToMimeMsg(lines[9]);
   } else {
-    throw new Error('Base64 MIME Msg wasn\'t found');
+    throw new Error("Base64 MIME Msg wasn't found");
   }
   return result;
 };
 
 const parseMixed = async (source: string): Promise<ParsedMail> => {
   if (source.startsWith('Content-Type: multipart/mixed')) {
-    return await simpleParser(new Buffer(source), { keepCidLinks: true });
+    return await simpleParser(Buffer.from(source), { keepCidLinks: true });
   } else {
-    throw new Error('multipart/mixed message wasn\'t found');
+    throw new Error("multipart/mixed message wasn't found");
   }
 };
 
 const convertBase64ToMimeMsg = async (base64: string) => {
-  return await simpleParser(new Buffer(Buf.fromBase64Str(base64)), { keepCidLinks: true /* #3256 */ });
+  return await simpleParser(Buffer.from(Buf.fromBase64Str(base64)), { keepCidLinks: true /* #3256 */ });
 };
 
 export default { strictParse, parseMixed, convertBase64ToMimeMsg };

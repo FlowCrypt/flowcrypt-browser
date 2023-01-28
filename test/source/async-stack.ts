@@ -1,20 +1,22 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
 (() => {
-
   type Type = 'error' | 'object';
 
   const wait = (): Promise<void> => new Promise(resolve => setTimeout(resolve, 100));
 
-  const acceptCb = (cb: () => Promise<number | void>) => { // eslint-disable-line @typescript-eslint/no-unused-vars
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const acceptCb = (cb: () => Promise<number | void>) => {
     // nothing
   };
 
-  acceptCb(async () => { // test if will get replaced
+  acceptCb(async () => {
+    // test if will get replaced
     await wait();
   });
 
-  acceptCb(async () => { // test if will get replaced
+  acceptCb(async () => {
+    // test if will get replaced
     Math.random();
   });
 
@@ -26,10 +28,11 @@
     if (type === 'error') {
       throw new Error('this failed');
     } else if (type === 'object') {
-      throw { nonsense: 'yes' };
+      throw { nonsense: 'yes' }; // eslint-disable-line no-throw-literal
     }
   };
 
+  // eslint-disable-next-line prefer-arrow/prefer-arrow-functions
   function func(type: Type) {
     thisWillFail(type);
   }
@@ -49,6 +52,7 @@
     await wait();
   };
 
+  // eslint-disable-next-line prefer-arrow/prefer-arrow-functions
   async function asyncFunc(type: Type) {
     await wait();
     await asyncArrowConst(type);
@@ -75,7 +79,6 @@
   }
 
   (async () => {
-
     const doTestWith = async (type: Type, expectedStackStatements: string[]) => {
       try {
         await ClassAsync.staticAsyncFunc(type);
@@ -127,10 +130,8 @@
       console.error(e);
       return process.exit(1);
     }
-
   })().catch(e => {
     console.error(e);
     process.exit(1);
   });
-
 })();

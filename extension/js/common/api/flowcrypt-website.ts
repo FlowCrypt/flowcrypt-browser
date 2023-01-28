@@ -1,8 +1,4 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
-
-// tslint:disable:oneliner-object-literal
-// tslint:disable:no-null-keyword
-
 'use strict';
 
 import { Api, ProgressCbs, ReqFmt } from './shared/api.js';
@@ -13,18 +9,19 @@ import { Browser } from '../browser/browser.js';
 
 namespace FlowCryptWebsiteRes {
   export type FcHelpFeedback = { sent: boolean };
-  export type FcBlogPost = { title: string, date: string, url: string };
+  export type FcBlogPost = { title: string; date: string; url: string };
 }
 
 export class FlowCryptWebsite extends Api {
-
   public static url = (type: 'api' | 'me' | 'pubkey' | 'decrypt' | 'web', resource = '') => {
-    return ({
-      api: BACKEND_API_HOST,
-      me: `https://flowcrypt.com/me/${resource}`,
-      pubkey: `https://flowcrypt.com/pub/${resource}`,
-      web: 'https://flowcrypt.com/',
-    } as Dict<string>)[type];
+    return (
+      {
+        api: BACKEND_API_HOST,
+        me: `https://flowcrypt.com/me/${resource}`,
+        pubkey: `https://flowcrypt.com/pub/${resource}`,
+        web: 'https://flowcrypt.com/',
+      } as Dict<string>
+    )[type];
   };
 
   public static helpFeedback = async (acctEmail: string, message: string): Promise<FlowCryptWebsiteRes.FcHelpFeedback> => {
@@ -35,7 +32,7 @@ export class FlowCryptWebsite extends Api {
   };
 
   public static retrieveBlogPosts = async (): Promise<FlowCryptWebsiteRes.FcBlogPost[]> => {
-    const xml = await Api.ajax({ url: 'https://flowcrypt.com/blog/feed.xml', dataType: 'xml' }, Catch.stackTrace()) as XMLDocument; // tslint:disable-line:no-direct-ajax
+    const xml = (await Api.ajax({ url: 'https://flowcrypt.com/blog/feed.xml', dataType: 'xml' }, Catch.stackTrace())) as XMLDocument;
     const posts: FlowCryptWebsiteRes.FcBlogPost[] = [];
     for (const post of Browser.arrFromDomNodeList(xml.querySelectorAll('entry'))) {
       const children = Browser.arrFromDomNodeList(post.childNodes);
@@ -49,8 +46,16 @@ export class FlowCryptWebsite extends Api {
     return posts.slice(0, 5);
   };
 
-  private static request = async <RT>(path: string, vals: Dict<unknown>, fmt: ReqFmt = 'JSON', addHeaders: Dict<string> = {}, progressCbs?: ProgressCbs): Promise<RT> => {
-    return await FlowCryptWebsite.apiCall(FlowCryptWebsite.url('api'), path, vals, fmt, progressCbs, { 'api-version': '3', ...addHeaders });
+  private static request = async <RT>(
+    path: string,
+    vals: Dict<unknown>,
+    fmt: ReqFmt = 'JSON',
+    addHeaders: Dict<string> = {},
+    progressCbs?: ProgressCbs
+  ): Promise<RT> => {
+    return await FlowCryptWebsite.apiCall(FlowCryptWebsite.url('api'), path, vals, fmt, progressCbs, {
+      'api-version': '3',
+      ...addHeaders,
+    });
   };
-
 }

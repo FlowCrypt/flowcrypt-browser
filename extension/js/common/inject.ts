@@ -13,47 +13,50 @@ import { KeyStore } from './platform/store/key-store.js';
 import { PassphraseStore } from './platform/store/passphrase-store.js';
 
 type Host = {
-  gmail: string,
-  outlook: string,
-  settings: string
+  gmail: string;
+  outlook: string;
+  settings: string;
 };
 
 export class Injector {
-
   private factory: XssSafeFactory;
   private webmailName: WebMailName;
   private webmailVariant: WebmailVariantString;
   private S: SelCache;
   private container: { [key: string]: Host } = {
     composeBtnSel: {
-      'gmail': 'div.aeN, div.aBO', // .aeN for normal look, .aBO for new look https://github.com/FlowCrypt/flowcrypt-browser/issues/4099
-      'outlook': 'div._fce_b',
-      'settings': '#does_not_have',
+      gmail: 'div.aeN, div.aBO', // .aeN for normal look, .aBO for new look https://github.com/FlowCrypt/flowcrypt-browser/issues/4099
+      outlook: 'div._fce_b',
+      settings: '#does_not_have',
     },
     finishSesionBtnSel: {
       gmail: 'body',
       outlook: '#does_not_have',
-      settings: '#settings > div.header'
-    }
+      settings: '#settings > div.header',
+    },
   };
 
   private missingElSelectorReported: Dict<boolean> = {};
 
-  constructor(webmailName: WebMailName, webmailVariant: WebmailVariantString, factory: XssSafeFactory) {
+  public constructor(webmailName: WebMailName, webmailVariant: WebmailVariantString, factory: XssSafeFactory) {
     this.webmailName = webmailName;
     this.webmailVariant = webmailVariant;
     this.factory = factory;
-    this.S = Ui.buildJquerySels({ // these are selectors that are not specific to any webmail variant
+    /* eslint-disable @typescript-eslint/naming-convention */
+    this.S = Ui.buildJquerySels({
+      // these are selectors that are not specific to any webmail variant
       body: 'body',
       compose_button_container: this.container.composeBtnSel[this.webmailName],
       compose_button: '#flowcrypt_secure_compose_button',
       secure_compose_window: '.secure_compose_window',
     });
+    /* eslint-enable @typescript-eslint/naming-convention */
   }
 
   public meta = () => {
-    this.S.cached('body').addClass(`cryptup_${this.webmailName} cryptup_${this.webmailName}_${this.webmailVariant} ${Catch.browser().name}`)
-      .append(this.factory.metaStylesheet('webmail') + this.factory.metaNotificationContainer());  // xss-safe-factory
+    this.S.cached('body')
+      .addClass(`cryptup_${this.webmailName} cryptup_${this.webmailName}_${this.webmailVariant} ${Catch.browser().name}`)
+      .append(this.factory.metaStylesheet('webmail') + this.factory.metaNotificationContainer()); // xss-safe-factory
   };
 
   public openComposeWin = (draftId?: string): boolean => {
@@ -70,14 +73,20 @@ export class Injector {
   };
 
   public btns = () => {
-    if (this.S.now('compose_button_container').length === 0) { // don't inject too early
+    if (this.S.now('compose_button_container').length === 0) {
+      // don't inject too early
       (window as unknown as ContentScriptWindow).TrySetDestroyableTimeout(() => this.btns(), 300);
     } else if (this.shouldInject()) {
       if (this.S.now('compose_button').length === 0) {
         const secureComposeButton = $(this.factory.btnCompose(this.webmailName, this.determineWebmailVersion()));
         const insertBtnOnTopOf = this.S.now('compose_button_container').first();
         const container = insertBtnOnTopOf.prepend(secureComposeButton); // xss-safe-factory
-        container.find(this.S.sel('compose_button')).on('click', Ui.event.prevent('double', () => { this.openComposeWin(); }));
+        container.find(this.S.sel('compose_button')).on(
+          'click',
+          Ui.event.prevent('double', () => {
+            this.openComposeWin();
+          })
+        );
       }
     }
   };
@@ -89,36 +98,47 @@ export class Injector {
     const prependToElem = $(this.container.finishSesionBtnSel[this.webmailName]).first();
     if (!prependToElem.length) {
       if (!this.missingElSelectorReported[this.container.finishSesionBtnSel[this.webmailName]]) {
-        Catch.report(`Selector for locking session container not found: '${this.container.finishSesionBtnSel[this.webmailName]}' (add .children().last() if Gmail)`);
+        Catch.report(
+          `Selector for locking session container not found: '${this.container.finishSesionBtnSel[this.webmailName]}' (add .children().last() if Gmail)`
+        );
         this.missingElSelectorReported[this.container.finishSesionBtnSel[this.webmailName]] = true;
       }
     }
-    prependToElem.prepend(this.factory.btnEndPPSession(this.webmailName)) // xss-safe-factory
-      .find('.action_finish_session').on('click', Ui.event.prevent('double', async (el) => {
-        for (const kinfo of await KeyStore.getKeyInfosThatCurrentlyHavePassPhraseInSession(acctEmail)) {
-          await PassphraseStore.set('session', acctEmail, kinfo, undefined);
+    prependToElem
+      .prepend(this.factory.btnEndPPSession(this.webmailName)) // xss-safe-factory
+      .find('.action_finish_session')
+      .on(
+        'click',
+        Ui.event.prevent('double', async el => {
+          for (const kinfo of await KeyStore.getKeyInfosThatCurrentlyHavePassPhraseInSession(acctEmail)) {
+            await PassphraseStore.set('session', acctEmail, kinfo, undefined);
+          }
+          if (this.webmailName === 'gmail') {
+            // eslint-disable-next-line local-rules/standard-loops
+            $('.' + (window as unknown as ContentScriptWindow).reloadable_class).each((i, reloadableEl) => {
+              $(reloadableEl).replaceWith($(reloadableEl)[0].outerHTML); // xss-reinsert - inserting code that was already present should not be dangerous
+            });
+          } else {
+            window.location.reload();
+          }
+          el.remove();
+        })
+      )
+      .hover(
+        e => {
+          $(e.target).css('z-index', 4);
+        },
+        e => {
+          $(e.target).css('z-index', '');
         }
-        if (this.webmailName === 'gmail') {
-          $('.' + (window as unknown as ContentScriptWindow).reloadable_class).each((i, reloadableEl) => {
-            $(reloadableEl).replaceWith($(reloadableEl)[0].outerHTML); // xss-reinsert - inserting code that was already present should not be dangerous
-          });
-        } else {
-          window.location.reload();
-        }
-        el.remove();
-      }))
-      .hover((e) => {
-        $(e.target).css('z-index', 4);
-      }, (e) => {
-        $(e.target).css('z-index', '');
-      });
+      );
   };
 
   private determineWebmailVersion = (): WebMailVersion => {
     if (this.webmailName !== 'gmail') {
       return 'generic';
     }
-    if (this.webmailName === 'gmail' && $('.V6.CL.W9').length === 1 && $('.V6.CL.W9').width() as number <= 28) {
+    if (this.webmailName === 'gmail' && $('.V6.CL.W9').length === 1 && ($('.V6.CL.W9').width() as number) <= 28) {
       // https://github.com/FlowCrypt/flowcrypt-browser/issues/4099
       // https://github.com/FlowCrypt/flowcrypt-browser/issues/4349
       return 'gmail2022';
@@ -129,11 +149,11 @@ export class Injector {
 
   private shouldInject = () => {
     if (this.webmailName === 'gmail') {
-      if (Env.getUrlNoParams().startsWith('https://mail.google.com/chat/')) { // #3746
+      if (Env.getUrlNoParams().startsWith('https://mail.google.com/chat/')) {
+        // #3746
         return false;
       }
     }
     return true;
   };
-
 }

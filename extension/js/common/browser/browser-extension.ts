@@ -6,7 +6,8 @@ import { Catch } from '../platform/catch.js';
 import { Dict } from '../core/common.js';
 import { FlatTypes } from '../platform/store/abstract-store.js';
 
-export class BrowserExtension { // todo - move extension-specific common.js code here
+export class BrowserExtension {
+  // todo - move extension-specific common.js code here
 
   public static prepareBugReport = (name: string, details?: Dict<FlatTypes>, error?: Error | unknown): string => {
     const bugReport: Dict<string> = { name, stack: Catch.stackTrace() };
@@ -28,5 +29,4 @@ export class BrowserExtension { // todo - move extension-specific common.js code
     }
     return result;
   };
-
 }

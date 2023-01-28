@@ -5,10 +5,7 @@
 //                 FlowCrypt Limited <https://flowcrypt.com>
 // Definitions: https://github.com/DefinitelyTyped/DefinitelyTyped
 
-/* tslint:disable:only-arrow-functions variable-name max-line-length no-null-keyword ban-types */
-
 declare namespace OpenPGP {
-
   type DataPacketType = 'utf8' | 'binary' | 'text' | 'mime';
 
   export interface UserId {
@@ -21,15 +18,28 @@ declare namespace OpenPGP {
     algorithm: string;
   }
 
-  interface BaseStream<T extends Uint8Array | string> { }
-  interface WebStream<T extends Uint8Array | string> extends BaseStream<T> { // copied+simplified version of ReadableStream from lib.dom.d.ts
-    readonly locked: boolean; getReader: Function; pipeThrough: Function; pipeTo: Function; tee: Function;
+  interface BaseStream<T extends Uint8Array | string> {}
+  interface WebStream<T extends Uint8Array | string> extends BaseStream<T> {
+    // copied+simplified version of ReadableStream from lib.dom.d.ts
+    readonly locked: boolean;
+    getReader: Function;
+    pipeThrough: Function;
+    pipeTo: Function;
+    tee: Function;
     cancel(reason?: any): Promise<void>;
   }
-  interface NodeStream<T extends Uint8Array | string> extends BaseStream<T> { // copied+simplified version of ReadableStream from @types/node/index.d.ts
-    readable: boolean; pipe: Function; unpipe: Function; wrap: Function;
-    read(size?: number): string | Uint8Array; setEncoding(encoding: string): this; pause(): this; resume(): this;
-    isPaused(): boolean; unshift(chunk: string | Uint8Array): void;
+  interface NodeStream<T extends Uint8Array | string> extends BaseStream<T> {
+    // copied+simplified version of ReadableStream from @types/node/index.d.ts
+    readable: boolean;
+    pipe: Function;
+    unpipe: Function;
+    wrap: Function;
+    read(size?: number): string | Uint8Array;
+    setEncoding(encoding: string): this;
+    pause(): this;
+    resume(): this;
+    isPaused(): boolean;
+    unshift(chunk: string | Uint8Array): void;
   }
   type Stream<T extends Uint8Array | string> = WebStream<T> | NodeStream<T>;
 
@@ -80,7 +90,6 @@ declare namespace OpenPGP {
   }
 
   export namespace packet {
-
     export class List<PACKET_TYPE> extends Array<PACKET_TYPE> {
       [index: number]: PACKET_TYPE;
       public length: number;
@@ -130,8 +139,7 @@ declare namespace OpenPGP {
       public isDecrypted(): boolean;
     }
 
-    class BasePrimaryKeyPacket extends BaseKeyPacket {
-    }
+    class BasePrimaryKeyPacket extends BaseKeyPacket {}
 
     export class Compressed extends BasePacket {
       public tag: enums.packet.compressed;
@@ -261,8 +269,24 @@ declare namespace OpenPGP {
       public tag: enums.packet.trust;
     }
 
-    export type AnyPacket = Compressed | SymEncryptedIntegrityProtected | SymEncryptedAEADProtected | PublicKeyEncryptedSessionKey | SymEncryptedSessionKey | Literal
-      | PublicKey | SymmetricallyEncrypted | Marker | PublicSubkey | UserAttribute | OnePassSignature | SecretKey | Userid | SecretSubkey | Signature | Trust;
+    export type AnyPacket =
+      | Compressed
+      | SymEncryptedIntegrityProtected
+      | SymEncryptedAEADProtected
+      | PublicKeyEncryptedSessionKey
+      | SymEncryptedSessionKey
+      | Literal
+      | PublicKey
+      | SymmetricallyEncrypted
+      | Marker
+      | PublicSubkey
+      | UserAttribute
+      | OnePassSignature
+      | SecretKey
+      | Userid
+      | SecretSubkey
+      | Signature
+      | Trust;
     export type AnySecretPacket = SecretKey | SecretSubkey;
     export type AnyKeyPacket = PublicKey | SecretKey | PublicSubkey | SecretSubkey;
   }
@@ -380,7 +404,6 @@ declare namespace OpenPGP {
   }
 
   export class AsyncProxy {
-
     public workers: OpenPGPWorker[];
     constructor(options: WorkerOptions);
     public getId(): number;
@@ -493,15 +516,9 @@ declare namespace OpenPGP {
    * @returns {Promise<Object>}                  the unlocked key object in the form: { key:Key }
    * @async
    */
-  export function decryptKey(options: {
-    privateKey: key.Key;
-    passphrase?: string | string[];
-  }): Promise<KeyContainer>;
+  export function decryptKey(options: { privateKey: key.Key; passphrase?: string | string[] }): Promise<KeyContainer>;
 
-  export function encryptKey(options: {
-    privateKey: key.Key;
-    passphrase?: string
-  }): Promise<KeyContainer>;
+  export function encryptKey(options: { privateKey: key.Key; passphrase?: string }): Promise<KeyContainer>;
 
   export namespace armor {
     /** Armor an OpenPGP binary packet block
@@ -516,7 +533,7 @@ declare namespace OpenPGP {
      *
      *  @param text OpenPGP armored message
      */
-    function decode(text: string): Promise<{ type: enums.armor, data: ReadableStream<Uint8Array> }>;
+    function decode(text: string): Promise<{ type: enums.armor; data: ReadableStream<Uint8Array> }>;
   }
 
   export namespace cleartext {
@@ -689,7 +706,6 @@ declare namespace OpenPGP {
   }
 
   export namespace enums {
-
     function read(type: typeof armor, e: armor): armorNames | string | any;
     function read(type: typeof compression, e: compression): compressionNames | string | any;
     function read(type: typeof hash, e: hash): hashNames | string | any;
@@ -738,9 +754,25 @@ declare namespace OpenPGP {
       sha224 = 11,
     }
 
-    export type packetNames = 'publicKeyEncryptedSessionKey' | 'signature' | 'symEncryptedSessionKey' | 'onePassSignature' | 'secretKey' | 'publicKey'
-      | 'secretSubkey' | 'compressed' | 'symmetricallyEncrypted' | 'marker' | 'literal' | 'trust' | 'userid' | 'publicSubkey' | 'userAttribute'
-      | 'symEncryptedIntegrityProtected' | 'modificationDetectionCode' | 'symEncryptedAEADProtected';
+    export type packetNames =
+      | 'publicKeyEncryptedSessionKey'
+      | 'signature'
+      | 'symEncryptedSessionKey'
+      | 'onePassSignature'
+      | 'secretKey'
+      | 'publicKey'
+      | 'secretSubkey'
+      | 'compressed'
+      | 'symmetricallyEncrypted'
+      | 'marker'
+      | 'literal'
+      | 'trust'
+      | 'userid'
+      | 'publicSubkey'
+      | 'userAttribute'
+      | 'symEncryptedIntegrityProtected'
+      | 'modificationDetectionCode'
+      | 'symEncryptedAEADProtected';
     enum packet {
       publicKeyEncryptedSessionKey = 1,
       signature = 2,
@@ -762,7 +794,22 @@ declare namespace OpenPGP {
       symEncryptedAEADProtected = 20,
     }
 
-    export type signatureNames = 'binary' | 'text' | 'standalone' | 'cert_generic' | 'cert_persona' | 'cert_casual' | 'cert_positive' | 'cert_revocation' | 'subkey_binding' | 'key_binding' | 'key' | 'key_revocation' | 'subkey_revocation' | 'timestamp' | 'third_party';
+    export type signatureNames =
+      | 'binary'
+      | 'text'
+      | 'standalone'
+      | 'cert_generic'
+      | 'cert_persona'
+      | 'cert_casual'
+      | 'cert_positive'
+      | 'cert_revocation'
+      | 'subkey_binding'
+      | 'key_binding'
+      | 'key'
+      | 'key_revocation'
+      | 'subkey_revocation'
+      | 'timestamp'
+      | 'third_party';
     enum signature {
       binary = 0,
       text = 1,
@@ -778,7 +825,7 @@ declare namespace OpenPGP {
       key_revocation = 32,
       subkey_revocation = 40,
       timestamp = 64,
-      third_party = 80
+      third_party = 80,
     }
 
     export type publicKeyNames = 'rsa_encrypt_sign' | 'rsa_encrypt' | 'rsa_sign' | 'elgamal' | 'dsa' | 'ecdh' | 'ecdsa' | 'eddsa' | 'aedh' | 'aedsa';
@@ -817,7 +864,13 @@ declare namespace OpenPGP {
       no_self_cert = 4,
     }
 
-    export type keyFlagsNames = 'certify_keys' | 'sign_data' | 'encrypt_communication' | 'encrypt_storage' | 'split_private_key' | 'authentication'
+    export type keyFlagsNames =
+      | 'certify_keys'
+      | 'sign_data'
+      | 'encrypt_communication'
+      | 'encrypt_storage'
+      | 'split_private_key'
+      | 'authentication'
       | 'shared_private_key';
     enum keyFlags {
       certify_keys = 1,
@@ -828,11 +881,9 @@ declare namespace OpenPGP {
       authentication = 32,
       shared_private_key = 128,
     }
-
   }
 
   export namespace key {
-
     // callable constructor
     export function Key(this: Key, packetlist: packet.List<packet.BasePacket>): Key;
 
@@ -850,7 +901,11 @@ declare namespace OpenPGP {
       public armor(): string;
       public decrypt(passphrase: string | string[], keyId?: Keyid): Promise<boolean>;
       public encrypt(passphrase: string | string[]): Promise<void>;
-      public getExpirationTime(capability?: 'encrypt' | 'encrypt_sign' | 'sign' | null, keyId?: Keyid | null, userId?: UserId | null): Promise<Date | typeof Infinity | null>; // Returns null if `capabilities` is passed and the key does not have the specified capabilities or is revoked or invalid.
+      public getExpirationTime(
+        capability?: 'encrypt' | 'encrypt_sign' | 'sign' | null,
+        keyId?: Keyid | null,
+        userId?: UserId | null
+      ): Promise<Date | typeof Infinity | null>; // Returns null if `capabilities` is passed and the key does not have the specified capabilities or is revoked or invalid.
       public getKeyIds(): Keyid[];
       public getPrimaryUser(): Promise<PrimaryUser>; // throws on err
       public getUserIds(): string[];
@@ -861,7 +916,7 @@ declare namespace OpenPGP {
       public update(key: Key): void;
       public verifyPrimaryKey(): Promise<void>; // throws on err
       public isRevoked(): Promise<boolean>;
-      public revoke(reason: { flag?: enums.reasonForRevocation; string?: string; }, date?: Date): Promise<Key>;
+      public revoke(reason: { flag?: enums.reasonForRevocation; string?: string }, date?: Date): Promise<Key>;
       public getRevocationCertificate(): Promise<Stream<string> | string | undefined>;
       public getEncryptionKey(keyid?: Keyid | null, date?: Date, userId?: UserId | null): Promise<key.Key | key.SubKey | null>;
       public getSigningKey(keyid?: Keyid | null, date?: Date, userId?: UserId | null): Promise<key.Key | key.SubKey | null>;
@@ -916,8 +971,8 @@ declare namespace OpenPGP {
     };
 
     /** Generates a new OpenPGP key. Currently only supports RSA keys. Primary and subkey will be of same type.
-      *  @param options
-      */
+     *  @param options
+     */
     function generate(options: FullKeyOptions): Promise<Key>;
 
     /** Reads an OpenPGP armored text and returns one or multiple key objects
@@ -957,7 +1012,6 @@ declare namespace OpenPGP {
     /** Class that represents an OpenPGP message. Can be an encrypted message, signed message, compressed message or literal message
      */
     class Message {
-
       public packets: packet.List<packet.AnyPacket>;
       constructor(packetlist: packet.List<packet.AnyPacket>);
 
@@ -1014,8 +1068,8 @@ declare namespace OpenPGP {
       public appendSignature(detachedSignature: string | Uint8Array): Promise<void>;
     }
 
-    class SessionKey { // todo
-
+    class SessionKey {
+      // todo
     }
 
     export interface Verification {
@@ -1051,7 +1105,7 @@ declare namespace OpenPGP {
 
   export class HKP {
     constructor(keyServerBaseUrl?: string);
-    public lookup(options: { keyid?: string, query?: string }): Promise<string | undefined>;
+    public lookup(options: { keyid?: string; query?: string }): Promise<string | undefined>;
   }
 
   /**
@@ -1168,5 +1222,4 @@ declare namespace OpenPGP {
     // webToNode
     // nodeToWeb
   }
-
 }

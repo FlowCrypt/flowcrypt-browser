@@ -27,11 +27,10 @@ export const compareAndSavePubkeysToStorage = async ({ email, name }: EmailParts
 /**
  * Save fetched keys if they are newer versions of public keys we already have (compared by fingerprint)
  */
-export const saveFetchedPubkeysIfNewerThanInStorage = async ({ email, pubkeys }: { email: string, pubkeys: string[] }): Promise<boolean> => {
+export const saveFetchedPubkeysIfNewerThanInStorage = async ({ email, pubkeys }: { email: string; pubkeys: string[] }): Promise<boolean> => {
   if (!pubkeys.length) {
     return false;
   }
   const storedContact = await ContactStore.getOneWithAllPubkeys(undefined, email);
   return await compareAndSavePubkeysToStorage({ email }, pubkeys, storedContact?.sortedPubkeys ?? []);
 };
-

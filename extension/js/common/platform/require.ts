@@ -1,5 +1,6 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
+// eslint-disable-next-line @typescript-eslint/triple-slash-reference
 /// <reference path="../core/types/openpgp.d.ts" />
 
 'use strict';
@@ -25,7 +26,12 @@
 
 import { MimeParser } from '../core/types/emailjs.js';
 
-type Codec = { encode: (text: string, mode: 'fatal' | 'html') => string, decode: (text: string) => string, labels: string[], version: string };
+type Codec = {
+  encode: (text: string, mode: 'fatal' | 'html') => string;
+  decode: (text: string) => string;
+  labels: string[];
+  version: string;
+};
 
 export const requireOpenpgp = (): typeof OpenPGP => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -40,8 +46,7 @@ export const requireOpenpgp = (): typeof OpenPGP => {
 };
 
 export const requireMimeParser = (): typeof MimeParser => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return (window as any)['emailjs-mime-parser']; // tslint:disable-line:no-unsafe-any
+  return (window as any)['emailjs-mime-parser']; // eslint-disable-line
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

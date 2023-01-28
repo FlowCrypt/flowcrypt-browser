@@ -7,8 +7,16 @@ import { Xss } from '../../platform/xss.js';
 import { StoreFailedError } from '../../platform/store/abstract-store.js';
 import { Str } from '../../core/common.js';
 
-interface StandardErrRes { error: StandardError; }
-interface StandardError { code: number | null; message: string; internal: string | null; data?: string; stack?: string; }
+interface StandardErrRes {
+  error: StandardError;
+}
+interface StandardError {
+  code: number | null;
+  message: string;
+  internal: string | null;
+  data?: string;
+  stack?: string;
+}
 
 interface RawAjaxErr {
   readyState: number;
@@ -17,12 +25,11 @@ interface RawAjaxErr {
   statusText?: string;
 }
 
-abstract class AuthErr extends Error { }
-export class GoogleAuthErr extends AuthErr { }
-export class BackendAuthErr extends AuthErr { }
+abstract class AuthErr extends Error {}
+export class GoogleAuthErr extends AuthErr {}
+export class BackendAuthErr extends AuthErr {}
 
 abstract class ApiCallErr extends Error {
-
   protected static describeApiAction = (req: JQueryAjaxSettings) => {
     const describeBody = typeof req.data === 'undefined' ? '(no body)' : typeof req.data;
     return `${req.method || 'GET'}-ing ${Catch.censoredUrl(req.url)} ${describeBody}: ${ApiCallErr.getPayloadStructure(req)}`;
@@ -40,7 +47,6 @@ abstract class ApiCallErr extends Error {
     }
     return '';
   };
-
 }
 
 export class AjaxErrMsgs {
@@ -48,8 +54,21 @@ export class AjaxErrMsgs {
   public static GOOGLE_RECIPIENT_ADDRESS_REQUIRED = 'Recipient address required';
 }
 
-export class AjaxErr extends ApiCallErr { // no static props, else will get serialised into err reports. Static methods ok
+export class AjaxErr extends ApiCallErr {
+  public constructor(
+    message: string,
+    public stack: string,
+    public status: number,
+    public url: string,
+    public responseText: string,
+    public statusText: string,
+    public resMsg: string | undefined,
+    public resDetails: string | undefined
+  ) {
+    super(message);
+  }
 
+  // no static props, else will get serialised into err reports. Static methods ok
   public static fromXhr = (xhr: RawAjaxErr, req: JQueryAjaxSettings, stack: string) => {
     const responseText = xhr.responseText || '';
     stack += `\n\nprovided ajax call stack:\n${stack}`;
@@ -61,44 +80,39 @@ export class AjaxErr extends ApiCallErr { // no static props, else will get seri
       const redactedPayload = AjaxErr.redactSensitiveData(Catch.stringify(req.data).substr(0, 1000));
       stack += `\n\nresponseText(0, 1000):\n${redactedRes}\n\npayload(0, 1000):\n${redactedPayload}`;
     }
-    const message = `${String(xhr.statusText || '(no status text)')}: ${String(xhr.status || -1)} when ${ApiCallErr.describeApiAction(req)} -> ${resMsg || '(no standard err msg)'}`;
-    return new AjaxErr(
-      message,
-      stack,
-      status,
-      Catch.censoredUrl(req.url),
-      responseText,
-      xhr.statusText || '(no status text)',
-      resMsg,
-      resDetails
-    );
+    const message = `${String(xhr.statusText || '(no status text)')}: ${String(xhr.status || -1)} when ${ApiCallErr.describeApiAction(req)} -> ${
+      resMsg || '(no standard err msg)'
+    }`;
+    return new AjaxErr(message, stack, status, Catch.censoredUrl(req.url), responseText, xhr.statusText || '(no status text)', resMsg, resDetails);
   };
 
-  private static parseResErr = (responseText: string): { resMsg?: string, resDetails?: string, resCode?: number } => {
-    const returnable: { resMsg?: string, resDetails?: string, resCode?: number } = {};
+  private static parseResErr = (responseText: string): { resMsg?: string; resDetails?: string; resCode?: number } => {
+    const returnable: { resMsg?: string; resDetails?: string; resCode?: number } = {};
     let parsedRes: unknown;
     try {
       parsedRes = JSON.parse(responseText);
     } catch (e) {
       return {};
     }
-    try { // JSON[error][message,code,internal]
-      const resMsg = ((parsedRes as { error: Error }).error).message as string; // catching all errs below
+    try {
+      // JSON[error][message,code,internal]
+      const resMsg = (parsedRes as { error: Error }).error.message as string; // catching all errs below
       if (typeof resMsg === 'string') {
         returnable.resMsg = Str.truncate(resMsg, 300);
       }
-      const resDetails = ((parsedRes as { error: { internal: string } }).error).internal as string; // catching all errs below
+      const resDetails = (parsedRes as { error: { internal: string } }).error.internal as string; // catching all errs below
       if (typeof resDetails === 'string') {
         returnable.resDetails = Str.truncate(resDetails, 300);
       }
-      const resCode = ((parsedRes as { error: { code: number } }).error).code as number; // catching all errs below
+      const resCode = (parsedRes as { error: { code: number } }).error.code as number; // catching all errs below
       if (typeof resCode === 'number') {
         returnable.resCode = resCode;
       }
     } catch (e) {
       // skip
     }
-    try { // JSON[message,code,details]
+    try {
+      // JSON[message,code,details]
       const resMsg = (parsedRes as { message: string }).message; // catching all errs below
       if (typeof resMsg === 'string') {
         returnable.resMsg = Str.truncate(resMsg, 300);
@@ -127,24 +141,11 @@ export class AjaxErr extends ApiCallErr { // no static props, else will get seri
     }
     return str;
   };
-
-  constructor(
-    message: string,
-    public stack: string,
-    public status: number,
-    public url: string,
-    public responseText: string,
-    public statusText: string,
-    public resMsg: string | undefined,
-    public resDetails: string | undefined,
-  ) {
-    super(message);
-  }
-
 }
 
 export class ApiErr {
-  public static eli5 = (e: unknown): string => { // "explain like I'm five"
+  public static eli5 = (e: unknown): string => {
+    // "explain like I'm five"
     if (ApiErr.isMailOrAcctDisabledOrPolicy(e)) {
       return 'Email account is disabled, or access has been blocked by admin policy. Contact your email administrator.';
     } else if (ApiErr.isAuthErr(e)) {
@@ -181,7 +182,7 @@ export class ApiErr {
     if (e instanceof AjaxErr && e.resDetails === internalType) {
       return true;
     }
-    if ((e as StandardError).hasOwnProperty('internal') && !!((e as StandardError).message) && (e as StandardError).internal === internalType) {
+    if ((e as StandardError).hasOwnProperty('internal') && !!(e as StandardError).message && (e as StandardError).internal === internalType) {
       return true;
     }
     if ((e as StandardErrRes).error && typeof (e as StandardErrRes).error === 'object' && (e as StandardErrRes).error.internal === internalType) {
@@ -204,6 +205,7 @@ export class ApiErr {
       try {
         const json = JSON.parse(e.responseText);
         if (json && (json as { error: string }).error === 'invalid_grant') {
+          // eslint-disable-next-line @typescript-eslint/naming-convention
           const jsonErrorDesc = (json as { error_description: string }).error_description;
           return jsonErrorDesc === 'Bad Request' || jsonErrorDesc === 'Token has been expired or revoked.';
         }
@@ -265,8 +267,14 @@ export class ApiErr {
   };
 
   public static isSignificant = (e: unknown): boolean => {
-    return !ApiErr.isNetErr(e) && !ApiErr.isServerErr(e) && !ApiErr.isNotFound(e) && !ApiErr.isMailOrAcctDisabledOrPolicy(e)
-      && !ApiErr.isAuthErr(e) && !ApiErr.isBlockedByProxy(e);
+    return (
+      !ApiErr.isNetErr(e) &&
+      !ApiErr.isServerErr(e) &&
+      !ApiErr.isNotFound(e) &&
+      !ApiErr.isMailOrAcctDisabledOrPolicy(e) &&
+      !ApiErr.isAuthErr(e) &&
+      !ApiErr.isBlockedByProxy(e)
+    );
   };
 
   public static isBadReq = (e: unknown): e is AjaxErr => {
@@ -291,7 +299,7 @@ export class ApiErr {
   public static detailsAsHtmlWithNewlines = (e: unknown): string => {
     let details = 'Below are technical details about the error. This may be useful for debugging.\n\n';
     details += `<b>Error string</b>: ${Xss.escape(String(e))}\n\n`;
-    details += `<b>Error stack</b>: ${e instanceof Error ? Xss.escape((e.stack || '(empty)')) : '(no error stack)'}\n\n`;
+    details += `<b>Error stack</b>: ${e instanceof Error ? Xss.escape(e.stack || '(empty)') : '(no error stack)'}\n\n`;
     if (e instanceof AjaxErr) {
       details += `<b>Ajax response</b>:\n${Xss.escape(e.responseText)}\n<b>End of Ajax response</b>\n`;
     }
@@ -307,5 +315,4 @@ export class ApiErr {
       Catch.reportErr(e);
     }
   };
-
 }

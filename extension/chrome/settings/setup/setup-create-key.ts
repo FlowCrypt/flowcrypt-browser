@@ -13,18 +13,18 @@ import { OpenPGPKey } from '../../../js/common/core/crypto/pgp/openpgp-key.js';
 import { saveKeysAndPassPhrase } from '../../../js/common/helpers.js';
 
 export class SetupCreateKeyModule {
-
-  constructor(private view: SetupView) {
-  }
+  // eslint-disable-next-line no-empty-function
+  public constructor(private view: SetupView) {}
 
   public actionCreateKeyHandler = async () => {
     await Settings.forbidAndRefreshPageIfCannot('CREATE_KEYS', this.view.clientConfiguration);
-    if (! await this.view.isCreatePrivateFormInputCorrect('step_2a_manual_create')) {
+    if (!(await this.view.isCreatePrivateFormInputCorrect('step_2a_manual_create'))) {
       return;
     }
     try {
       $('#step_2a_manual_create input').prop('disabled', true);
       Xss.sanitizeRender('#step_2a_manual_create .action_proceed_private', Ui.spinner('white') + 'just a minute');
+      /* eslint-disable @typescript-eslint/naming-convention */
       const opts: SetupOptions = {
         passphrase: String($('#step_2a_manual_create .input_password').val()),
         passphrase_save: Boolean($('#step_2a_manual_create .input_passphrase_save').prop('checked')),
@@ -32,7 +32,8 @@ export class SetupCreateKeyModule {
         submit_all: this.view.shouldSubmitPubkey('#step_2a_manual_create .input_submit_all'),
         recovered: false,
       };
-      const keyAlgo = this.view.clientConfiguration.getEnforcedKeygenAlgo() || $('#step_2a_manual_create .key_type').val() as KeyAlgo;
+      /* eslint-enable @typescript-eslint/naming-convention */
+      const keyAlgo = this.view.clientConfiguration.getEnforcedKeygenAlgo() || ($('#step_2a_manual_create .key_type').val() as KeyAlgo);
       const keyIdentity = await this.createSaveKeyPair(opts, keyAlgo);
       if (this.view.clientConfiguration.canBackupKeys()) {
         await this.view.submitPublicKeys(opts);
@@ -47,7 +48,7 @@ export class SetupCreateKeyModule {
             $('#backup-template-container').remove();
             await this.view.finalizeSetup();
             await this.view.setupRender.renderSetupDone();
-          }
+          },
         });
       } else {
         await this.view.submitPublicKeys(opts);
@@ -77,6 +78,7 @@ export class SetupCreateKeyModule {
 
   public createSaveKeyPair = async (options: SetupOptions, keyAlgo: KeyAlgo): Promise<KeyIdentity> => {
     await Settings.forbidAndRefreshPageIfCannot('CREATE_KEYS', this.view.clientConfiguration);
+    // eslint-disable-next-line @typescript-eslint/naming-convention
     const { full_name } = await AcctStore.get(this.view.acctEmail, ['full_name']);
     const pgpUids = [{ name: full_name || '', email: this.view.acctEmail }]; // todo - add all addresses?
     const expireMonths = this.view.clientConfiguration.getEnforcedKeygenExpirationMonths();

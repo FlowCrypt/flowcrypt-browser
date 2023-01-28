@@ -11,18 +11,12 @@ import { opgp } from '../../core/crypto/pgp/openpgpjs-custom.js';
 import { BrowserMsg } from '../../browser/browser-msg.js';
 import { ArmoredKeyIdentityWithEmails, KeyUtil } from '../../core/crypto/key.js';
 
-// tslint:disable:no-direct-ajax
-
 export class Wkd extends Api {
-
   // https://datatracker.ietf.org/doc/draft-koch-openpgp-webkey-service/?include_text=1
   // https://www.sektioneins.de/en/blog/18-11-23-gnupg-wkd.html
   // https://metacode.biz/openpgp/web-key-directory
 
-  constructor(
-    private domainName: string,
-    private usesKeyManager: boolean
-  ) {
+  public constructor(private domainName: string, private usesKeyManager: boolean) {
     super();
   }
 
@@ -38,11 +32,11 @@ export class Wkd extends Api {
       return [];
     }
     const lowerCaseRecipientDomain = recipientDomain.toLowerCase();
-    const timeout = (this.usesKeyManager && lowerCaseRecipientDomain === this.domainName) ? 10 : 4;
+    const timeout = this.usesKeyManager && lowerCaseRecipientDomain === this.domainName ? 10 : 4;
     const hashed = await window.crypto.subtle.digest('SHA-1', Buf.fromUtfStr(user.toLowerCase()));
     const hu = this.encodeZBase32(new Uint8Array(hashed));
-    const directHost = WKD_API_HOST || `https://${lowerCaseRecipientDomain}`; // lgtm [js/trivial-conditional]
-    const advancedHost = WKD_API_HOST || `https://openpgpkey.${lowerCaseRecipientDomain}`; // lgtm [js/trivial-conditional]
+    const directHost = WKD_API_HOST || `https://${lowerCaseRecipientDomain}`;
+    const advancedHost = WKD_API_HOST || `https://openpgpkey.${lowerCaseRecipientDomain}`;
     const userPart = `hu/${hu}?l=${encodeURIComponent(user)}`;
     const advancedUrl = `${advancedHost}/.well-known/openpgpkey/${lowerCaseRecipientDomain}`;
     const directUrl = `${directHost}/.well-known/openpgpkey`;
@@ -70,7 +64,7 @@ export class Wkd extends Api {
     return { pubkeys: filtered.map(pubkey => pubkey.armored) };
   };
 
-  private urlLookup = async (methodUrlBase: string, userPart: string, timeout: number): Promise<{ hasPolicy: boolean, buf?: Buf }> => {
+  private urlLookup = async (methodUrlBase: string, userPart: string, timeout: number): Promise<{ hasPolicy: boolean; buf?: Buf }> => {
     try {
       await Wkd.download(`${methodUrlBase}/policy`, undefined, timeout);
     } catch (e) {
@@ -99,7 +93,7 @@ export class Wkd extends Api {
     if (data.length === 0) {
       return '';
     }
-    const ALPHABET = "ybndrfg8ejkmcpqxot1uwisza345h769";
+    const ALPHABET = 'ybndrfg8ejkmcpqxot1uwisza345h769';
     const SHIFT = 5;
     const MASK = 31;
     let buffer = data[0];
@@ -123,5 +117,4 @@ export class Wkd extends Api {
     }
     return result;
   };
-
 }

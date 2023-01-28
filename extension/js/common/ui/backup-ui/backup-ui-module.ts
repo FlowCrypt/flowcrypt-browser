@@ -3,11 +3,9 @@
 'use strict';
 
 export abstract class BackupUiModule<BackupUi> {
-
   protected ui: BackupUi;
 
-  constructor(ui: BackupUi) {
+  public constructor(ui: BackupUi) {
     this.ui = ui;
   }
-
 }

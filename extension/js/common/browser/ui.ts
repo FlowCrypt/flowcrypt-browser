@@ -11,20 +11,34 @@ import { Xss } from '../platform/xss.js';
 type NamedSels = Dict<JQuery<HTMLElement>>;
 type ProvidedEventHandler = (e: HTMLElement, event: JQuery.Event<HTMLElement, null>) => void | Promise<void>;
 
-export type SelCache = { cached: (name: string) => JQuery<HTMLElement>; now: (name: string) => JQuery<HTMLElement>; sel: (name: string) => string; };
+export type SelCache = {
+  cached: (name: string) => JQuery<HTMLElement>;
+  now: (name: string) => JQuery<HTMLElement>;
+  sel: (name: string) => string;
+};
 export type PreventableEventName = 'double' | 'parallel' | 'spree' | 'slowspree' | 'veryslowspree';
-export type BrowserEventErrHandler = { auth?: () => Promise<void>, authPopup?: () => Promise<void>, network?: () => Promise<void>, other?: (e: unknown) => Promise<void> };
+export type BrowserEventErrHandler = {
+  auth?: () => Promise<void>;
+  authPopup?: () => Promise<void>;
+  network?: () => Promise<void>;
+  other?: (e: unknown) => Promise<void>;
+};
 
 export class Ui {
-
   public static EVENT_DOUBLE_MS = 1000;
   public static EVENT_SPREE_MS = 50;
   public static EVENT_SLOW_SPREE_MS = 200;
   public static EVENT_VERY_SLOW_SPREE_MS = 500;
 
   public static event = {
-    clicked: (selector: string | JQuery<HTMLElement>): Promise<HTMLElement> => new Promise(resolve => $(selector as string).one('click', function () { resolve(this); })),
-    stop: () => (e: JQuery.Event) => { // returns a function
+    clicked: (selector: string | JQuery<HTMLElement>): Promise<HTMLElement> =>
+      new Promise(resolve =>
+        $(selector as string).one('click', function () {
+          resolve(this);
+        })
+      ),
+    stop: () => (e: JQuery.Event) => {
+      // returns a function
       e.preventDefault();
       e.stopPropagation();
       return false;
@@ -44,11 +58,13 @@ export class Ui {
     handle: (cb: ProvidedEventHandler, errHandlers?: BrowserEventErrHandler, originalThis?: unknown) => {
       return function uiEventHandle(this: HTMLElement, event: JQuery.Event<HTMLElement, null>) {
         try {
-          const r = cb.bind(originalThis)(this, event) as void | Promise<void>; // tslint:disable-line:no-unsafe-any
-          if (typeof r === 'object' && typeof r.catch === 'function') { // tslint:disable-line:no-unbound-method - only testing if exists
+          const r = cb.bind(originalThis)(this, event) as void | Promise<void>;
+          if (typeof r === 'object' && typeof r.catch === 'function') {
+            // eslint-disable-next-line no-underscore-dangle
             r.catch(e => Ui.event._dispatchErr(e, errHandlers));
           }
         } catch (e) {
+          // eslint-disable-next-line no-underscore-dangle
           Ui.event._dispatchErr(e, errHandlers);
         }
       };
@@ -78,11 +94,13 @@ export class Ui {
       };
       const cbWithErrsHandled = (el: HTMLElement) => {
         try {
-          const r = cb.bind(originalThis)(el, event, cbResetTimer) as void | Promise<void>; // tslint:disable-line:no-unsafe-any
-          if (typeof r === 'object' && typeof r.catch === 'function') { // tslint:disable-line:no-unbound-method - only testing if exists
+          const r = cb.bind(originalThis)(el, event, cbResetTimer) as void | Promise<void>;
+          if (typeof r === 'object' && typeof r.catch === 'function') {
+            // eslint-disable-next-line no-underscore-dangle
             r.catch(e => Ui.event._dispatchErr(e, errHandler));
           }
         } catch (e) {
+          // eslint-disable-next-line no-underscore-dangle
           Ui.event._dispatchErr(e, errHandler);
         }
       };
@@ -112,31 +130,33 @@ export class Ui {
           }
         }
       };
-    }
+    },
   };
 
   public static time = {
-    wait: (untilThisFunctionEvalsTrue: () => boolean | undefined): Promise<void> => new Promise((success, error) => {
-      const interval = Catch.setHandledInterval(() => {
-        const result = untilThisFunctionEvalsTrue();
-        if (result === true) {
-          clearInterval(interval);
-          if (success) {
-            success();
+    wait: (untilThisFunctionEvalsTrue: () => boolean | undefined): Promise<void> =>
+      new Promise((success, error) => {
+        const interval = Catch.setHandledInterval(() => {
+          const result = untilThisFunctionEvalsTrue();
+          if (result === true) {
+            clearInterval(interval);
+            if (success) {
+              success();
+            }
+          } else if (result === false) {
+            clearInterval(interval);
+            if (error) {
+              error();
+            }
           }
-        } else if (result === false) {
-          clearInterval(interval);
-          if (error) {
-            error();
-          }
-        }
-      }, 50);
-    }),
-    sleep: (ms: number, setCustomTimeout: (code: () => void, t: number) => void = Catch.setHandledTimeout): Promise<void> => new Promise(resolve => setCustomTimeout(resolve, ms)),
+        }, 50);
+      }),
+    sleep: (ms: number, setCustomTimeout: (code: () => void, t: number) => void = Catch.setHandledTimeout): Promise<void> =>
+      new Promise(resolve => setCustomTimeout(resolve, ms)),
   };
 
   public static modal = {
-    info: async (text: string, isHTML: boolean = false): Promise<void> => {
+    info: async (text: string, isHTML = false): Promise<void> => {
       text = isHTML ? Xss.htmlSanitize(text) : Xss.escape(text).replace(/\n/g, '<br>');
       const userResponsePromise = Ui.swal().fire({
         html: text,
@@ -162,7 +182,7 @@ export class Ui {
       Ui.activateModalPageLinkTags(); // in case the page itself has data-swal-page links
       await userResponsePromise;
     },
-    error: async (text: string, isHTML: boolean = false, footer?: string): Promise<void> => {
+    error: async (text: string, isHTML = false, footer?: string): Promise<void> => {
       text = isHTML ? Xss.htmlSanitize(text) : Xss.escape(text).replace(/\n/g, '<br>');
       const userResponsePromise = Ui.swal().fire({
         html: `<span class="red" data-test="container-error-modal-text">${text}</span>`,
@@ -180,7 +200,7 @@ export class Ui {
      * Presents a modal where user can respond with confirm or cancel.
      * Awaiting this will give you the users choice as a boolean.
      */
-    confirm: async (text: string, isHTML: boolean = false, footer?: string): Promise<boolean> => {
+    confirm: async (text: string, isHTML = false, footer?: string): Promise<boolean> => {
       const html = isHTML ? Xss.htmlSanitize(text) : Xss.escape(text).replace(/\n/g, '<br>');
       const userResponsePromise = Ui.swal().fire({
         html,
@@ -197,7 +217,7 @@ export class Ui {
       const { dismiss } = await userResponsePromise;
       return typeof dismiss === 'undefined';
     },
-    confirmWithCheckbox: async (label: string, html: string = ''): Promise<boolean> => {
+    confirmWithCheckbox: async (label: string, html = ''): Promise<boolean> => {
       const userResponsePromise = Ui.swal().fire({
         html,
         input: 'checkbox',
@@ -210,13 +230,15 @@ export class Ui {
           input: 'ui-modal-confirm-checkbox-input',
         },
         didOpen: () => {
+          /* eslint-disable @typescript-eslint/no-non-null-assertion */
           const input = Swal.getInput()!;
           const confirmButton = Swal.getConfirmButton()!;
+          /* eslint-enable @typescript-eslint/no-non-null-assertion */
           $(confirmButton).prop('disabled', true);
           $(input).on('change', () => {
             $(confirmButton).prop('disabled', !input.checked);
           });
-        }
+        },
       });
       Ui.activateModalPageLinkTags(); // in case the page itself has data-swal-page links
       const { dismiss } = await userResponsePromise;
@@ -230,7 +252,7 @@ export class Ui {
       }
       const userResponsePromise = Ui.swal().fire({
         didOpen: () => {
-          Swal.getCloseButton()!.blur();
+          Swal.getCloseButton()!.blur(); // eslint-disable-line @typescript-eslint/no-non-null-assertion
         },
         html,
         width: 750,
@@ -239,13 +261,14 @@ export class Ui {
         showConfirmButton: false,
         customClass: {
           container: 'ui-modal-page',
-          popup: 'ui-modal-iframe'
-        }
+          popup: 'ui-modal-iframe',
+        },
       });
       Ui.activateModalPageLinkTags(); // in case the page itself has data-swal-page links
       await userResponsePromise;
     },
     iframe: async (iframeUrl: string, iframeHeight?: number, dataTest?: string): Promise<SweetAlertResult> => {
+      /* eslint-disable @typescript-eslint/no-non-null-assertion */
       const iframeWidth = Math.min(800, $('body').width()! - 200);
       iframeHeight = iframeHeight || $('body').height()! - ($('body').height()! > 800 ? 150 : 75);
       return await Ui.swal().fire({
@@ -253,6 +276,7 @@ export class Ui {
           $(Swal.getPopup()!).attr('data-test', dataTest || 'dialog');
           $(Swal.getCloseButton()!).attr('data-test', 'dialog-close').blur();
         },
+        /* eslint-enable @typescript-eslint/no-non-null-assertion */
         willClose: () => {
           const urlWithoutPageParam = Url.removeParamsFromUrl(window.location.href, ['page']);
           window.history.pushState('', '', urlWithoutPageParam);
@@ -265,56 +289,61 @@ export class Ui {
         scrollbarPadding: true,
         showConfirmButton: false,
         customClass: {
-          popup: 'ui-modal-iframe'
-        }
+          popup: 'ui-modal-iframe',
+        },
       });
     },
     fullscreen: async (html: string): Promise<void> => {
       await Ui.swal().fire({
         didOpen: () => {
+          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
           $(Swal.getPopup()!).attr('data-test', 'dialog');
         },
         html: Xss.htmlSanitize(html),
         grow: 'fullscreen',
         showConfirmButton: false,
         customClass: {
-          container: 'ui-modal-fullscreen'
-        }
+          container: 'ui-modal-fullscreen',
+        },
       });
     },
     attachmentPreview: async (iframeUrl: string): Promise<void> => {
       await Ui.swal().fire({
         didOpen: () => {
+          /* eslint-disable @typescript-eslint/no-non-null-assertion */
           $(Swal.getPopup()!).attr('data-test', 'attachment-dialog');
           $(Swal.getCloseButton()!).attr('data-test', 'dialog-close');
+          /* eslint-enable @typescript-eslint/no-non-null-assertion */
         },
         html: `<iframe src="${Xss.escape(iframeUrl)}" style="border: 0" sandbox="allow-scripts allow-same-origin allow-downloads"></iframe>`,
         showConfirmButton: false,
         showCloseButton: true,
         grow: 'fullscreen',
         customClass: {
-          container: 'ui-modal-attachment'
-        }
+          container: 'ui-modal-attachment',
+        },
       });
     },
   };
 
-
   public static testCompatibilityLink = '<a href="/chrome/settings/modules/compatibility.htm" target="_blank">Test your OpenPGP key compatibility</a>';
 
   public static activateModalPageLinkTags = () => {
-    $('[data-swal-page]').on('click', Ui.event.handle(async (target) => {
-      const jsAllowedSwalPage = $(target).data('swal-page-allow-js') as boolean; // use this flag is the swal-page contains javascript
-      const htmlUrl = $(target).data('swal-page') as string;
-      if (jsAllowedSwalPage) {
-        await Ui.modal.iframe(htmlUrl);
-      } else {
-        await Ui.modal.page(htmlUrl);
-      }
-    }));
+    $('[data-swal-page]').on(
+      'click',
+      Ui.event.handle(async target => {
+        const jsAllowedSwalPage = $(target).data('swal-page-allow-js') as boolean; // use this flag is the swal-page contains javascript
+        const htmlUrl = $(target).data('swal-page') as string;
+        if (jsAllowedSwalPage) {
+          await Ui.modal.iframe(htmlUrl);
+        } else {
+          await Ui.modal.page(htmlUrl);
+        }
+      })
+    );
   };
 
-  public static retryLink = (caption: string = 'retry') => {
+  public static retryLink = (caption = 'retry') => {
     return `<a href="${Xss.escape(window.location.href)}" data-test="action-retry-by-reloading">${Xss.escape(caption)}</a>`;
   };
 
@@ -322,19 +351,25 @@ export class Ui {
     return await new Promise(resolve => Catch.setHandledTimeout(resolve, ms));
   };
 
-  public static spinner = (color: string, placeholderCls: "small_spinner" | "large_spinner" = 'small_spinner') => {
+  public static spinner = (color: string, placeholderCls: 'small_spinner' | 'large_spinner' = 'small_spinner') => {
     const path = `/img/svgs/spinner-${color}-small.svg`;
     const url = typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.getURL ? chrome.runtime.getURL(path) : path;
     return `<i class="${placeholderCls}" data-test="spinner"><img src="${url}" /></i>`;
   };
 
-  public static renderOverlayPromptAwaitUserChoice = async (btns: Dict<{ title?: string, color?: string }>, prompt: string, details: string | undefined,
-    contactSentence: string): Promise<string> => {
+  public static renderOverlayPromptAwaitUserChoice = async (
+    btns: Dict<{ title?: string; color?: string }>,
+    prompt: string,
+    details: string | undefined,
+    contactSentence: string
+  ): Promise<string> => {
     return await new Promise(resolve => {
       const getEscapedColor = (id: string) => Xss.escape(btns[id].color || 'green');
       const getEscapedTitle = (id: string) => Xss.escape(btns[id].title || id.replace(/_/g, ' '));
       const formatBtn = (id: string) => {
-        return `<button class="button ${getEscapedColor(id)} overlay_action_${Xss.escape(id)}" data-test="action-overlay-${Xss.escape(id)}">${getEscapedTitle(id)}</button>`;
+        return `<button class="button ${getEscapedColor(id)} overlay_action_${Xss.escape(id)}" data-test="action-overlay-${Xss.escape(id)}">${getEscapedTitle(
+          id
+        )}</button>`;
       };
       const formattedBtns = Object.keys(btns).map(formatBtn).join('&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;');
       if (details) {
@@ -343,7 +378,7 @@ export class Ui {
           ${details.replace(/\n/g, '<br>')}
         </pre>`;
       }
-      // tslint:disable-next-line:no-floating-promises
+      // eslint-disable-next-line @typescript-eslint/no-floating-promises
       Ui.modal.fullscreen(`
         <div class="line" data-test="container-overlay-prompt-text">${prompt.replace(/\n/g, '<br>')}</div>
         <div class="line">${formattedBtns}</div>
@@ -352,21 +387,28 @@ export class Ui {
         <div class="line">&nbsp;</div>
         <div class="line">${contactSentence}</div>
       `);
-      const overlay = $(Swal.getHtmlContainer()!);
-      overlay.find('.action-show-overlay-details').one('click', Ui.event.handle(target => {
-        $(target).hide().siblings('pre').show();
-      }));
+      const overlay = $(Swal.getHtmlContainer()!); // eslint-disable-line @typescript-eslint/no-non-null-assertion
+      overlay.find('.action-show-overlay-details').one(
+        'click',
+        Ui.event.handle(target => {
+          $(target).hide().siblings('pre').show();
+        })
+      );
       for (const id of Object.keys(btns)) {
-        overlay.find(`.overlay_action_${id}`).one('click', Ui.event.handle(() => {
-          Swal.close();
-          resolve(id);
-        }));
+        overlay.find(`.overlay_action_${id}`).one(
+          'click',
+          Ui.event.handle(() => {
+            Swal.close();
+            resolve(id);
+          })
+        );
       }
     });
   };
 
   public static escape = (callback: () => void) => {
-    return (e: JQuery.Event<HTMLElement, null>) => { // returns a function
+    return (e: JQuery.Event<HTMLElement, null>) => {
+      // returns a function
       if (!e.metaKey && !e.ctrlKey && e.key === 'Escape') {
         callback();
       }
@@ -374,7 +416,8 @@ export class Ui {
   };
 
   public static tab = (callback: (e: JQuery.Event<HTMLElement>) => void) => {
-    return (e: JQuery.Event<HTMLElement>) => { // returns a function
+    return (e: JQuery.Event<HTMLElement>) => {
+      // returns a function
       if (!e.metaKey && !e.ctrlKey && !e.shiftKey && e.key === 'Tab') {
         callback(e);
       }
@@ -382,7 +425,8 @@ export class Ui {
   };
 
   public static shiftTab = (callback: (e: JQuery.Event<HTMLElement>) => void) => {
-    return (e: JQuery.Event<HTMLElement>) => { // returns a function
+    return (e: JQuery.Event<HTMLElement>) => {
+      // returns a function
       if (!e.metaKey && !e.ctrlKey && e.shiftKey && e.key === 'Tab') {
         callback(e);
       }
@@ -390,7 +434,8 @@ export class Ui {
   };
 
   public static enter = (callback: () => void) => {
-    return (e: JQuery.Event<HTMLElement, null>) => { // returns a function
+    return (e: JQuery.Event<HTMLElement, null>) => {
+      // returns a function
       if (!e.metaKey && !e.ctrlKey && e.key === 'Enter') {
         callback();
       }
@@ -398,7 +443,8 @@ export class Ui {
   };
 
   public static ctrlEnter = (callback: () => void) => {
-    return (e: JQuery.Event<HTMLElement, null>) => { // returns a function
+    return (e: JQuery.Event<HTMLElement, null>) => {
+      // returns a function
       if (
         (e.metaKey || e.ctrlKey) &&
         (e.key === 'Enter' || e.keyCode === 10) // https://bugs.chromium.org/p/chromium/issues/detail?id=79407
@@ -435,7 +481,7 @@ export class Ui {
           Catch.report('unknown selector name: ' + name);
         }
         return sels[name];
-      }
+      },
     };
   };
 
@@ -443,7 +489,8 @@ export class Ui {
     const el = $(sel as string).first()[0]; // as string due to JQuery TS quirk. Do not convert to String() as this may actually be JQuery<HTMLElement>
     if (el) {
       el.scrollIntoView();
-      for (const delay of repeat) { // useful if mobile keyboard is about to show up
+      for (const delay of repeat) {
+        // useful if mobile keyboard is about to show up
         Catch.setHandledTimeout(() => el.scrollIntoView(), delay);
       }
     }
@@ -453,9 +500,9 @@ export class Ui {
     return $(`<${name}/>`, attrs)[0].outerHTML; // xss-tested: jquery escapes attributes
   }
 
-  public static toast = (text: string, isHTML: boolean = false, seconds = 2, position: SweetAlertPosition = 'bottom', icon?: SweetAlertIcon) => {
+  public static toast = (text: string, isHTML = false, seconds = 2, position: SweetAlertPosition = 'bottom', icon?: SweetAlertIcon) => {
     text = isHTML ? Xss.htmlSanitize(text) : Xss.escape(text).replace(/\n/g, '<br>');
-    // tslint:disable-next-line:no-floating-promises
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
     Ui.swal().fire({
       toast: true,
       title: text,
@@ -467,17 +514,18 @@ export class Ui {
       customClass: {
         container: 'ui-toast-container',
         popup: 'ui-toast',
-        title: 'ui-toast-title'
+        title: 'ui-toast-title',
       },
-      didOpen: (toast) => {
+      didOpen: toast => {
         toast.addEventListener('mouseenter', Swal.stopTimer);
         toast.addEventListener('mouseleave', Swal.resumeTimer);
-      }
+      },
     });
   };
 
-  private static swal = () => Swal.mixin({
-    showClass: { popup: 'swal2-noanimation', backdrop: 'swal2-noanimation' },
-    hideClass: { popup: '', backdrop: '' },
-  });
+  private static swal = () =>
+    Swal.mixin({
+      showClass: { popup: 'swal2-noanimation', backdrop: 'swal2-noanimation' },
+      hideClass: { popup: '', backdrop: '' },
+    });
 }

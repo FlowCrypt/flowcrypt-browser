@@ -27,11 +27,10 @@ import { KeyStore } from '../../../platform/store/key-store.js';
 export type GmailResponseFormat = 'raw' | 'full' | 'metadata';
 
 export class Gmail extends EmailProviderApi implements EmailProviderInterface {
-
   private readonly GMAIL_USELESS_CONTACTS_FILTER = '-to:txt.voice.google.com -to:craigslist.org';
   private readonly GMAIL_SEARCH_QUERY_LENGTH_LIMIT = 1400;
 
-  public privatebuildSearchQueryOr = (arr: string[], quoted: boolean = false) => {
+  public privatebuildSearchQueryOr = (arr: string[], quoted = false) => {
     if (quoted) {
       return '("' + arr.join('") OR ("') + '")';
     } else {
@@ -61,7 +60,9 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
   };
 
   public draftCreate = async (mimeMsg: string, threadId: string): Promise<GmailRes.GmailDraftCreate> => {
-    return await Google.gmailCall<GmailRes.GmailDraftCreate>(this.acctEmail, 'POST', 'drafts', { message: { raw: Buf.fromUtfStr(mimeMsg).toBase64UrlStr(), threadId } });
+    return await Google.gmailCall<GmailRes.GmailDraftCreate>(this.acctEmail, 'POST', 'drafts', {
+      message: { raw: Buf.fromUtfStr(mimeMsg).toBase64UrlStr(), threadId },
+    });
   };
 
   public draftDelete = async (id: string): Promise<GmailRes.GmailDraftDelete> => {
@@ -69,7 +70,9 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
   };
 
   public draftUpdate = async (id: string, mimeMsg: string, threadId: string): Promise<GmailRes.GmailDraftUpdate> => {
-    return await Google.gmailCall<GmailRes.GmailDraftUpdate>(this.acctEmail, 'PUT', `drafts/${id}`, { message: { raw: Buf.fromUtfStr(mimeMsg).toBase64UrlStr(), threadId } });
+    return await Google.gmailCall<GmailRes.GmailDraftUpdate>(this.acctEmail, 'PUT', `drafts/${id}`, {
+      message: { raw: Buf.fromUtfStr(mimeMsg).toBase64UrlStr(), threadId },
+    });
   };
 
   public draftGet = async (id: string, format: GmailResponseFormat = 'full'): Promise<GmailRes.GmailDraftGet> => {
@@ -88,12 +91,19 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
     const cbs = { upload: progressCb || Value.noop };
     const jsonPart = JSON.stringify({ threadId: sendableMsg.thread });
     const mimeMsg = await sendableMsg.toMime();
-    const request = Google.encodeAsMultipartRelated({ 'application/json; charset=UTF-8': jsonPart, 'message/rfc822': mimeMsg });
+    const request = Google.encodeAsMultipartRelated({
+      'application/json; charset=UTF-8': jsonPart,
+      'message/rfc822': mimeMsg,
+    });
     return await Google.gmailCall<GmailRes.GmailMsgSend>(this.acctEmail, 'POST', 'messages/send', request.body, cbs, request.contentType);
   };
 
-  public msgList = async (q: string, includeDeleted: boolean = false, pageToken?: string): Promise<GmailRes.GmailMsgList> => {
-    return await Google.gmailCall<GmailRes.GmailMsgList>(this.acctEmail, 'GET', 'messages', { q, includeSpamTrash: includeDeleted, pageToken });
+  public msgList = async (q: string, includeDeleted = false, pageToken?: string): Promise<GmailRes.GmailMsgList> => {
+    return await Google.gmailCall<GmailRes.GmailMsgList>(this.acctEmail, 'GET', 'messages', {
+      q,
+      includeSpamTrash: includeDeleted,
+      pageToken,
+    });
   };
 
   /**
@@ -114,8 +124,14 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
   };
 
   public attachmentGet = async (msgId: string, attId: string, progressCb?: ProgressCb): Promise<GmailRes.GmailAttachment> => {
-    type RawGmailAttRes = { attachmentId: string, size: number, data: string };
-    const { attachmentId, size, data } = await Google.gmailCall<RawGmailAttRes>(this.acctEmail, 'GET', `messages/${msgId}/attachments/${attId}`, {}, { download: progressCb });
+    type RawGmailAttRes = { attachmentId: string; size: number; data: string };
+    const { attachmentId, size, data } = await Google.gmailCall<RawGmailAttRes>(
+      this.acctEmail,
+      'GET',
+      `messages/${msgId}/attachments/${attId}`,
+      {},
+      { download: progressCb }
+    );
     return { attachmentId, size, data: Buf.fromBase64UrlStr(data) }; // data should be a Buf for ease of passing to/from bg page
   };
 
@@ -123,7 +139,11 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
     if (Env.isContentScript()) {
       // content script CORS not allowed anymore, have to drag it through background page
       // https://www.chromestatus.com/feature/5629709824032768
-      const { chunk } = await BrowserMsg.send.bg.await.ajaxGmailAttachmentGetChunk({ acctEmail: this.acctEmail, msgId, attachmentId });
+      const { chunk } = await BrowserMsg.send.bg.await.ajaxGmailAttachmentGetChunk({
+        acctEmail: this.acctEmail,
+        msgId,
+        attachmentId,
+      });
       return chunk;
     }
     const stack = Catch.stackTrace();
@@ -146,63 +166,69 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
           }
           let parsedJsonDataField;
           try {
-            parsedJsonDataField = JSON.parse(chunk).data; // tslint:disable-line:no-unsafe-any
+            parsedJsonDataField = JSON.parse(chunk).data;
           } catch (e) {
             console.info(e);
-            reject(new Error("Chunk response could not be parsed"));
+            reject(new Error('Chunk response could not be parsed'));
             return;
           }
           for (let i = 0; parsedJsonDataField && i < 50; i++) {
             try {
-              resolve(Buf.fromBase64UrlStr(parsedJsonDataField)); // tslint:disable-line:no-unsafe-any
+              resolve(Buf.fromBase64UrlStr(parsedJsonDataField));
               return;
             } catch (e) {
               // the chunk of data may have been cut at an inconvenient index
               // shave off up to 50 trailing characters until it can be decoded
-              parsedJsonDataField = parsedJsonDataField.slice(0, -1); // tslint:disable-line:no-unsafe-any
+              parsedJsonDataField = parsedJsonDataField.slice(0, -1);
             }
           }
-          reject(new Error("Chunk response could not be decoded"));
+          reject(new Error('Chunk response could not be decoded'));
         }
       };
-      GoogleAuth.googleApiAuthHeader(this.acctEmail).then(authToken => {
-        const r = new XMLHttpRequest();
-        const method = 'GET';
-        const url = `${GMAIL_GOOGLE_API_HOST}/gmail/v1/users/me/messages/${msgId}/attachments/${attachmentId}`;
-        r.open(method, url, true);
-        r.setRequestHeader('Authorization', authToken);
-        r.send();
-        let status: number;
-        const responsePollInterval = Catch.setHandledInterval(() => {
-          if (status >= 200 && status <= 299 && r.responseText.length >= minBytes) {
-            window.clearInterval(responsePollInterval);
-            processChunkAndResolve(r.responseText);
-            r.abort();
-          }
-        }, 10);
-        r.onreadystatechange = () => {
-          if (r.readyState === 2 || r.readyState === 3) { // headers, loading
-            status = r.status;
-            if (status >= 300) {
-              reject(AjaxErr.fromXhr({ status, readyState: r.readyState }, { method, url }, stack));
+      GoogleAuth.googleApiAuthHeader(this.acctEmail)
+        .then(authToken => {
+          const r = new XMLHttpRequest();
+          const method = 'GET';
+          const url = `${GMAIL_GOOGLE_API_HOST}/gmail/v1/users/me/messages/${msgId}/attachments/${attachmentId}`;
+          r.open(method, url, true);
+          r.setRequestHeader('Authorization', authToken);
+          r.send();
+          let status: number;
+          const responsePollInterval = Catch.setHandledInterval(() => {
+            if (status >= 200 && status <= 299 && r.responseText.length >= minBytes) {
               window.clearInterval(responsePollInterval);
+              processChunkAndResolve(r.responseText);
               r.abort();
             }
-          }
-          if (r.readyState === 3 || r.readyState === 4) { // loading, done
-            if (status >= 200 && status <= 299 && r.responseText.length >= minBytes) { // done as a success - resolve in case response_poll didn't catch this yet
-              processChunkAndResolve(r.responseText);
-              window.clearInterval(responsePollInterval);
-              if (r.readyState === 3) {
+          }, 10);
+          r.onreadystatechange = () => {
+            if (r.readyState === 2 || r.readyState === 3) {
+              // headers, loading
+              status = r.status;
+              if (status >= 300) {
+                reject(AjaxErr.fromXhr({ status, readyState: r.readyState }, { method, url }, stack));
+                window.clearInterval(responsePollInterval);
                 r.abort();
               }
-            } else { // done as a fail - reject
-              reject(AjaxErr.fromXhr({ status, readyState: r.readyState }, { method, url }, stack));
-              window.clearInterval(responsePollInterval);
             }
-          }
-        };
-      }).catch(reject);
+            if (r.readyState === 3 || r.readyState === 4) {
+              // loading, done
+              if (status >= 200 && status <= 299 && r.responseText.length >= minBytes) {
+                // done as a success - resolve in case response_poll didn't catch this yet
+                processChunkAndResolve(r.responseText);
+                window.clearInterval(responsePollInterval);
+                if (r.readyState === 3) {
+                  r.abort();
+                }
+              } else {
+                // done as a fail - reject
+                reject(AjaxErr.fromXhr({ status, readyState: r.readyState }, { method, url }, stack));
+                window.clearInterval(responsePollInterval);
+              }
+            }
+          };
+        })
+        .catch(reject);
     });
   };
 
@@ -214,17 +240,22 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
     const loadedAr: Array<number> = [];
     // 1.33 is approximate ratio of downloaded data to what we expected, likely due to encoding
     const total = attachments.map(x => x.length).reduce((a, b) => a + b) * 1.33;
-    const responses = await Promise.all(attachments.map((a, index) => this.attachmentGet(a.msgId!, a.id!, (_, loaded) => {
-      if (progressCb) {
-        loadedAr[index] = loaded || 0;
-        const totalLoaded = loadedAr.reduce((a, b) => a + b);
-        const progressPercent = Math.round((totalLoaded * 100) / total);
-        if (progressPercent !== lastProgressPercent) {
-          lastProgressPercent = progressPercent;
-          progressCb(progressPercent, totalLoaded, total);
-        }
-      }
-    })));
+    const responses = await Promise.all(
+      attachments.map((a, index) =>
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        this.attachmentGet(a.msgId!, a.id!, (_, loaded) => {
+          if (progressCb) {
+            loadedAr[index] = loaded || 0;
+            const totalLoaded = loadedAr.reduce((a, b) => a + b);
+            const progressPercent = Math.round((totalLoaded * 100) / total);
+            if (progressPercent !== lastProgressPercent) {
+              lastProgressPercent = progressPercent;
+              progressCb(progressPercent, totalLoaded, total);
+            }
+          }
+        })
+      )
+    );
     for (const i of responses.keys()) {
       attachments[i].setData(responses[i].data);
     }
@@ -268,8 +299,11 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
    * Extracts the encrypted message from gmail api. Sometimes it's sent as a text, sometimes html, sometimes attachments in various forms.
    * As MsgBlockParser detects incomplete encryptedMsg etc. and they get through, we're handling them too
    */
-  public extractArmoredBlock = async (msgId: string, format: GmailResponseFormat, progressCb?: ProgressCb):
-    Promise<{ armored: string, plaintext?: string, subject?: string, isPwdMsg: boolean }> => {
+  public extractArmoredBlock = async (
+    msgId: string,
+    format: GmailResponseFormat,
+    progressCb?: ProgressCb
+  ): Promise<{ armored: string; plaintext?: string; subject?: string; isPwdMsg: boolean }> => {
     // only track progress in this call if we are getting RAW mime,
     // because these tend to be big, while 'full' and 'metadata' are tiny
     // since we often do full + get attachments below, the user would see 100% after the first short request,
@@ -305,7 +339,9 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
         return { armored: '', plaintext, subject, isPwdMsg };
       }
       throw new FormatError('Armored message not found', textBody || htmlBody);
-    } else { // format === raw
+    } else {
+      // format === raw
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const mimeMsg = Buf.fromBase64UrlStr(gmailMsg.raw!);
       const decoded = await Mime.decode(mimeMsg);
       if (decoded.text !== undefined) {
@@ -326,7 +362,7 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
   };
 
   public fetchAcctAliases = async (): Promise<GmailRes.GmailAliases> => {
-    const res = await Google.gmailCall<GmailRes.GmailAliases>(this.acctEmail, 'GET', 'settings/sendAs', {}) as GmailRes.GmailAliases;
+    const res = (await Google.gmailCall<GmailRes.GmailAliases>(this.acctEmail, 'GET', 'settings/sendAs', {})) as GmailRes.GmailAliases;
     for (const sendAs of res.sendAs) {
       sendAs.sendAsEmail = sendAs.sendAsEmail.toLowerCase();
     }
@@ -378,7 +414,11 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
     return filteredQuery;
   };
 
-  private apiGmailGetNewUniqueRecipientsFromHeaders = async (toHeaders: string[], allResults: EmailProviderContact[], allRawEmails: string[]): Promise<EmailProviderContact[]> => {
+  private apiGmailGetNewUniqueRecipientsFromHeaders = async (
+    toHeaders: string[],
+    allResults: EmailProviderContact[],
+    allRawEmails: string[]
+  ): Promise<EmailProviderContact[]> => {
     if (!toHeaders.length) {
       return [];
     }
@@ -393,7 +433,11 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
       }
     }
     const rawValidEmails = rawParsedResults.filter(r => r.address && Str.isEmailValid(r.address));
-    const newValidResults: EmailProviderContact[] = await Promise.all(rawValidEmails.map((a) => { return { email: a.address!, name: a.name }; }));
+    const newValidResults: EmailProviderContact[] = await Promise.all(
+      rawValidEmails.map(a => {
+        return { email: a.address!, name: a.name }; // eslint-disable-line @typescript-eslint/no-non-null-assertion
+      })
+    );
     const uniqueNewValidResults: EmailProviderContact[] = [];
     for (const newValidRes of newValidResults) {
       if (allResults.map(c => c.email).indexOf(newValidRes.email) === -1) {
@@ -451,7 +495,10 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
     for (const headerName of headerNames) {
       headerVals[headerName] = [];
     }
-    for (const msg of await this.msgsGet(msgsIds.slice(0, msgLimit).map(m => m.id), 'metadata')) {
+    for (const msg of await this.msgsGet(
+      msgsIds.slice(0, msgLimit).map(m => m.id),
+      'metadata'
+    )) {
       for (const headerName of headerNames) {
         const value = GmailParser.findHeader(msg, headerName);
         if (typeof value !== 'undefined') {
@@ -461,5 +508,4 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
     }
     return headerVals;
   };
-
 }

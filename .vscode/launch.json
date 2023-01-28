@@ -16,12 +16,10 @@
         "UNIT-TESTS",
         "--retry=false",
         "--debug",
-        "--pool-size=1",
+        "--pool-size=1"
       ],
       "outputCapture": "std",
-      "skipFiles": [
-        "<node_internals>/**/*.js"
-      ]
+      "skipFiles": ["<node_internals>/**/*.js"]
     },
     {
       "type": "node",
@@ -38,12 +36,10 @@
         "UNIT-TESTS",
         "--retry=false",
         "--debug",
-        "--pool-size=1",
+        "--pool-size=1"
       ],
       "outputCapture": "std",
-      "skipFiles": [
-        "<node_internals>/**/*.js"
-      ]
+      "skipFiles": ["<node_internals>/**/*.js"]
     },
     {
       "type": "node",
@@ -60,12 +56,10 @@
         "STANDARD-GROUP",
         "--retry=false",
         "--debug",
-        "--pool-size=1",
+        "--pool-size=1"
       ],
       "outputCapture": "std",
-      "skipFiles": [
-        "<node_internals>/**/*.js"
-      ]
+      "skipFiles": ["<node_internals>/**/*.js"]
     },
     {
       "type": "node",
@@ -82,12 +76,10 @@
         "FLAKY-GROUP",
         "--retry=false",
         "--debug",
-        "--pool-size=1",
+        "--pool-size=1"
       ],
       "outputCapture": "std",
-      "skipFiles": [
-        "<node_internals>/**/*.js"
-      ]
+      "skipFiles": ["<node_internals>/**/*.js"]
     },
     {
       "type": "node",
@@ -104,12 +96,10 @@
         "STANDARD-GROUP",
         "--retry=false",
         "--debug",
-        "--pool-size=1",
+        "--pool-size=1"
       ],
       "outputCapture": "std",
-      "skipFiles": [
-        "<node_internals>/**/*.js"
-      ]
+      "skipFiles": ["<node_internals>/**/*.js"]
     },
     {
       "type": "node",
@@ -126,12 +116,10 @@
         "STANDARD-GROUP",
         "--retry=false",
         "--debug",
-        "--pool-size=1",
+        "--pool-size=1"
       ],
       "outputCapture": "std",
-      "skipFiles": [
-        "<node_internals>/**/*.js"
-      ]
-    },
+      "skipFiles": ["<node_internals>/**/*.js"]
+    }
   ]
 }

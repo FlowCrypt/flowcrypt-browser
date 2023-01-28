@@ -7,24 +7,35 @@ import { AcctStore } from './platform/store/acct-store.js';
 import { KeyAlgo } from './core/crypto/key.js';
 import { UnreportableError } from './platform/catch.js';
 
-type ClientConfiguration$flag = 'NO_PRV_CREATE' | 'NO_PRV_BACKUP' | 'PRV_AUTOIMPORT_OR_AUTOGEN' | 'PASS_PHRASE_QUIET_AUTOGEN' |
-  'ENFORCE_ATTESTER_SUBMIT' | 'NO_ATTESTER_SUBMIT' | 'SETUP_ENSURE_IMPORTED_PRV_MATCH_LDAP_PUB' |
-  'DEFAULT_REMEMBER_PASS_PHRASE' | 'HIDE_ARMOR_META' | 'FORBID_STORING_PASS_PHRASE' | 'DISABLE_FLOWCRYPT_HOSTED_PASSWORD_MESSAGES';
+type ClientConfiguration$flag =
+  | 'NO_PRV_CREATE'
+  | 'NO_PRV_BACKUP'
+  | 'PRV_AUTOIMPORT_OR_AUTOGEN'
+  | 'PASS_PHRASE_QUIET_AUTOGEN'
+  | 'ENFORCE_ATTESTER_SUBMIT'
+  | 'NO_ATTESTER_SUBMIT'
+  | 'SETUP_ENSURE_IMPORTED_PRV_MATCH_LDAP_PUB'
+  | 'DEFAULT_REMEMBER_PASS_PHRASE'
+  | 'HIDE_ARMOR_META'
+  | 'FORBID_STORING_PASS_PHRASE'
+  | 'DISABLE_FLOWCRYPT_HOSTED_PASSWORD_MESSAGES';
 
+/* eslint-disable @typescript-eslint/naming-convention */
 export type ClientConfigurationJson = {
-  flags?: ClientConfiguration$flag[],
-  custom_keyserver_url?: string,
-  key_manager_url?: string,
-  allow_attester_search_only_for_domains?: string[],
-  disallow_attester_search_for_domains?: string[],
-  enforce_keygen_algo?: string,
-  enforce_keygen_expire_months?: number,
+  flags?: ClientConfiguration$flag[];
+  custom_keyserver_url?: string;
+  key_manager_url?: string;
+  allow_attester_search_only_for_domains?: string[];
+  disallow_attester_search_for_domains?: string[];
+  enforce_keygen_algo?: string;
+  enforce_keygen_expire_months?: number;
   in_memory_pass_phrase_session_length?: number;
 };
+/* eslint-enable @typescript-eslint/naming-convention */
 
 type ClientConfigurationErrorType = 'missing_flags';
 export class ClientConfigurationError extends UnreportableError {
-  constructor(errorType: ClientConfigurationErrorType) {
+  public constructor(errorType: ClientConfigurationErrorType) {
     let errorMsg = '';
     if (errorType === 'missing_flags') {
       errorMsg = 'Missing client configuration flags.';
@@ -38,6 +49,8 @@ export class ClientConfigurationError extends UnreportableError {
  * These either enforce, alter or forbid various behavior to fit customer needs
  */
 export class ClientConfiguration {
+  // eslint-disable-next-line no-empty-function
+  protected constructor(private clientConfigurationJson: ClientConfigurationJson, public domainName: string) {}
 
   public static newInstance = async (acctEmail: string): Promise<ClientConfiguration> => {
     const email = Str.parseEmail(acctEmail).email;
@@ -50,11 +63,6 @@ export class ClientConfiguration {
     }
     return new ClientConfiguration(storage.rules ?? {}, Str.getDomainFromEmailAddress(acctEmail));
   };
-
-  protected constructor(
-    private clientConfigurationJson: ClientConfigurationJson,
-    public domainName: string
-  ) { }
 
   // optional urls
 
@@ -225,5 +233,4 @@ export class ClientConfiguration {
   public shouldDisablePasswordMessages = (): boolean => {
     return (this.clientConfigurationJson.flags || []).includes('DISABLE_FLOWCRYPT_HOSTED_PASSWORD_MESSAGES');
   };
-
 }

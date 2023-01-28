@@ -25,7 +25,6 @@ interface BackupUiOptions {
 }
 export type BackupUiActionType = 'setup_automatic' | 'setup_manual' | 'backup_manual' | undefined;
 export class BackupUi {
-
   public parentTabId: string | undefined; // the master page to interact (settings/index.htm)
   public acctEmail!: string;
   public gmail!: Gmail;
@@ -64,7 +63,9 @@ export class BackupUi {
   };
 
   public setHandlerPrevent = (
-    evName: PreventableEventName, cb: (el: HTMLElement, event: Event, resetTimer: () => void) => void | Promise<void>, errHandlers?: BrowserEventErrHandler
+    evName: PreventableEventName,
+    cb: (el: HTMLElement, event: Event, resetTimer: () => void) => void | Promise<void>,
+    errHandlers?: BrowserEventErrHandler
   ) => {
     return Ui.event.prevent(evName, cb, errHandlers, this);
   };
@@ -91,7 +92,8 @@ export class BackupUi {
       } else if (this.action === 'backup_manual') {
         this.displayBackupBlock('module_manual');
         $('h1').text('Back up your private key');
-      } else { // action = view status
+      } else {
+        // action = view status
         $('.hide_if_backup_done').css('display', 'none');
         $('h1').text('Key Backups');
         this.displayBackupBlock('loading');
@@ -119,12 +121,19 @@ export class BackupUi {
   };
 
   private removeKeyToBackup = (keyIdentity: KeyIdentity) => {
-    this.identityOfKeysToManuallyBackup.splice(this.identityOfKeysToManuallyBackup.findIndex(prvIdentity => KeyUtil.identityEquals(prvIdentity, keyIdentity)), 1);
+    this.identityOfKeysToManuallyBackup.splice(
+      this.identityOfKeysToManuallyBackup.findIndex(prvIdentity => KeyUtil.identityEquals(prvIdentity, keyIdentity)),
+      1
+    );
   };
 
   private preparePrvKeysBackupSelection = async () => {
     const kinfos = await KeyStore.get(this.acctEmail);
-    if (this.keyIdentity && this.keyIdentity.family === 'openpgp' && kinfos.some(ki => KeyUtil.identityEquals(ki, this.keyIdentity!))) {
+    if (
+      this.keyIdentity &&
+      this.keyIdentity.family === 'openpgp' &&
+      kinfos.some(ki => KeyUtil.identityEquals(ki, this.keyIdentity!)) // eslint-disable-line @typescript-eslint/no-non-null-assertion
+    ) {
       // todo: error if not found ?
       this.addKeyToBackup({ id: this.keyIdentity.id, family: this.keyIdentity.family });
     } else if (kinfos.length > 1) {
@@ -136,13 +145,16 @@ export class BackupUi {
 
   private renderPrvKeysBackupSelection = async (kinfos: KeyInfoWithIdentity[]) => {
     for (const ki of kinfos) {
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const email = Xss.escape(String(ki.emails![0]));
       const dom = `
       <div class="mb-20">
         <div class="details">
           <label>
             <p class="m-0">
-            <input class="input_prvkey_backup_checkbox" type="checkbox" data-type="${ki.family}" data-id="${ki.id}" ${ki.family === 'openpgp' ? 'checked' : 'disabled'} />
+            <input class="input_prvkey_backup_checkbox" type="checkbox" data-type="${ki.family}" data-id="${ki.id}" ${
+        ki.family === 'openpgp' ? 'checked' : 'disabled'
+      } />
             ${email}
             </p>
             <p class="m-0 prv_fingerprint"><span>${ki.family} - ${Str.spaced(ki.fingerprints[0])}</span></p>
@@ -155,17 +167,20 @@ export class BackupUi {
         this.addKeyToBackup({ family: ki.family, id: ki.id });
       }
     }
-    $('.input_prvkey_backup_checkbox').on('click', Ui.event.handle((target) => {
-      const family = $(target).data('type') as string;
-      if (family === 'openpgp') {
-        const id = $(target).data('id') as string;
-        if ($(target).prop('checked')) {
-          this.addKeyToBackup({ family, id });
-        } else {
-          this.removeKeyToBackup({ family, id });
+    $('.input_prvkey_backup_checkbox').on(
+      'click',
+      Ui.event.handle(target => {
+        const family = $(target).data('type') as string;
+        if (family === 'openpgp') {
+          const id = $(target).data('id') as string;
+          if ($(target).prop('checked')) {
+            this.addKeyToBackup({ family, id });
+          } else {
+            this.removeKeyToBackup({ family, id });
+          }
         }
-      }
-    }));
+      })
+    );
     $('#key_backup_selection_container').show();
   };
 }

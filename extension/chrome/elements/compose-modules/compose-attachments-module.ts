@@ -9,10 +9,9 @@ import { Ui } from '../../../js/common/browser/ui.js';
 import { ViewModule } from '../../../js/common/view-module.js';
 
 export class ComposeAttachmentsModule extends ViewModule<ComposeView> {
-
   public attachment: AttachmentUI;
 
-  constructor(view: ComposeView) {
+  public constructor(view: ComposeView) {
     super(view);
     this.attachment = new AttachmentUI(() => this.getMaxAttachmentSizeAndOversizeNotice());
   }
@@ -23,7 +22,7 @@ export class ComposeAttachmentsModule extends ViewModule<ComposeView> {
       uiChanged: () => {
         this.view.sizeModule.setInputTextHeightManuallyIfNeeded();
         this.view.sizeModule.resizeComposeBox();
-      }
+      },
     });
     this.view.S.cached('body').on('click', '#attachment_list li', async (e: JQuery.Event) => {
       const fileId = $(e.currentTarget).attr('qq-file-id') as string;
@@ -43,5 +42,4 @@ export class ComposeAttachmentsModule extends ViewModule<ComposeView> {
       },
     };
   };
-
 }

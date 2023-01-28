@@ -9,11 +9,6 @@ import { expect } from 'chai';
 import { KeyUtil } from '../../core/crypto/key';
 import { testConstants } from '../../tests/tooling/consts';
 
-// tslint:disable:max-line-length
-/* eslint-disable max-len */
-// tslint:disable:no-unused-expression
-/* eslint-disable no-unused-expressions */
-
 const twoKeys1 = `-----BEGIN PGP PRIVATE KEY BLOCK-----
 
 xcLYBF+RzZUBCADHT42w0/fMBIEjNZhIgl3bVDXPoX9FYmrROXN2nOy+mEhB
@@ -208,11 +203,11 @@ interface MockKMKeyRes {
   [acct: string]: {
     response?: {
       privateKeys: {
-        decryptedPrivateKey: string
-      }[]
-    },
-    badRequestError?: string
-  }
+        decryptedPrivateKey: string;
+      }[];
+    };
+    badRequestError?: string;
+  };
 }
 
 export const MOCK_KM_LAST_INSERTED_KEY: { [acct: string]: { privateKey: string } } = {}; // accessed from test runners
@@ -341,5 +336,5 @@ export const mockKeyManagerEndpoints: HandlersDefinition = {
       throw new HttpClientErr(`Unexpectedly calling mockKeyManagerEndpoints:/v1/keys/private PUT with acct ${acctEmail}`);
     }
     throw new HttpClientErr(`Unknown method: ${req.method}`);
-  }
+  },
 };

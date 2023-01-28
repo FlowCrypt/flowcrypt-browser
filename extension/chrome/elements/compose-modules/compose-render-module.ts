@@ -17,14 +17,13 @@ import { ComposeView } from '../compose.js';
 import { ApiErr } from '../../../js/common/api/shared/api-error.js';
 import { GmailParser } from '../../../js/common/api/email-provider/gmail/gmail-parser.js';
 import { KeyStore } from '../../../js/common/platform/store/key-store.js';
-import { KeyStoreUtil } from "../../../js/common/core/crypto/key-store-util.js";
+import { KeyStoreUtil } from '../../../js/common/core/crypto/key-store-util.js';
 import { ContactStore } from '../../../js/common/platform/store/contact-store.js';
 import { KeyUtil } from '../../../js/common/core/crypto/key.js';
 import { ReplyOptions } from './compose-reply-btn-popover-module.js';
 
 export class ComposeRenderModule extends ViewModule<ComposeView> {
-
-  public responseMethod: 'reply' | 'forward' | undefined;
+  private responseMethod: 'reply' | 'forward' | undefined;
 
   public initComposeBox = async () => {
     if (this.view.isReplyBox) {
@@ -32,12 +31,13 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
     }
     await this.view.replyPopoverModule.render(this.view.isReplyBox);
     this.initComposeBoxStyles();
-    if (!this.view.draftId && await this.view.draftModule.localDraftGet()) {
+    if (!this.view.draftId && (await this.view.draftModule.localDraftGet())) {
       this.view.draftId = this.view.draftModule.getLocalDraftId();
     }
     if (this.view.draftId) {
       const draftLoaded = await this.view.draftModule.initialDraftLoad();
       if (draftLoaded) {
+        this.view.draftModule.startDraftTimer();
         this.view.S.cached('triple_dot').remove(); // if it's draft, footer and quote should already be included in the draft
       }
       if (this.view.isReplyBox) {
@@ -45,15 +45,21 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
       }
     } else {
       if (this.view.isReplyBox && this.view.replyParams) {
-        const recipients: Recipients = { to: this.view.replyParams.to, cc: this.view.replyParams.cc, bcc: this.view.replyParams.bcc };
+        const recipients: Recipients = {
+          to: this.view.replyParams.to,
+          cc: this.view.replyParams.cc,
+          bcc: this.view.replyParams.bcc,
+        };
         this.view.recipientsModule.addRecipients(recipients, false).catch(Catch.reportErr);
-        // await this.view.composerContacts.addRecipientsAndShowPreview(recipients);
-        if (this.view.skipClickPrompt) { // TODO: fix issue when loading recipients
+        if (this.view.skipClickPrompt) {
+          // TODO: fix issue when loading recipients
           await this.view.recipientsModule.clearRecipientsForReply();
           await this.renderReplyMsgComposeTable();
         } else {
-          $('#a_reply,#a_reply_all,#a_forward')
-            .on('click', this.view.setHandler((el) => this.actionActivateReplyBoxHandler(el), this.view.errModule.handle(`activate reply box`)));
+          $('#a_reply,#a_reply_all,#a_forward').on(
+            'click',
+            this.view.setHandler(el => this.actionActivateReplyBoxHandler(el), this.view.errModule.handle(`activate reply box`))
+          );
         }
       }
     }
@@ -78,15 +84,20 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
     this.view.recipientsModule.setEmailsPreview();
     if (this.view.replyParams) {
       const thread = await this.view.emailProvider.threadGet(this.view.threadId, 'metadata');
-      const inReplyToMessage = thread.messages?.find((message) => message.id === this.view.replyMsgId);
+      const inReplyToMessage = thread.messages?.find(message => message.id === this.view.replyMsgId);
       if (inReplyToMessage) {
-        this.view.replyParams.inReplyTo = inReplyToMessage.payload?.headers?.find((header) => header.name === 'Message-Id')?.value;
+        this.view.replyParams.inReplyTo = inReplyToMessage.payload?.headers?.find(header => header.name === 'Message-Id')?.value;
       }
-      this.view.replyParams.subject = `${(this.responseMethod === 'reply' ? 'Re' : 'Fwd')}: ${this.view.replyParams.subject}`;
+      this.view.replyParams.subject = `${this.responseMethod === 'reply' ? 'Re' : 'Fwd'}: ${this.view.replyParams.subject}`;
     }
-    if (!this.view.draftModule.wasMsgLoadedFromDraft) { // if there is a draft, don't attempt to pull quoted content. It's assumed to be already present in the draft
-      (async () => { // not awaited because can take a long time & blocks rendering
-        await this.view.quoteModule.addTripleDotQuoteExpandFooterAndQuoteBtn(this.view.replyMsgId, this.responseMethod!);
+    if (!this.view.draftModule.wasMsgLoadedFromDraft) {
+      // if there is a draft, don't attempt to pull quoted content. It's assumed to be already present in the draft
+      (async () => {
+        // not awaited because can take a long time & blocks rendering
+        await this.view.quoteModule.addTripleDotQuoteExpandFooterAndQuoteBtn(
+          this.view.replyMsgId,
+          this.responseMethod! // eslint-disable-line @typescript-eslint/no-non-null-assertion
+        );
         if (this.view.quoteModule.messageToReplyOrForward) {
           const msgId = this.view.quoteModule.messageToReplyOrForward.headers['message-id'];
           this.view.sendBtnModule.additionalMsgHeaders['In-Reply-To'] = msgId;
@@ -130,7 +141,9 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
     this.view.S.cached('replied_body').css('width', ($('table#compose').width() || 500) - 30);
     this.view.S.cached('compose_table').css('display', 'none');
     this.view.S.cached('reply_msg_successful').find('div.replied_from').text(this.view.senderModule.getSender());
-    this.view.S.cached('reply_msg_successful').find('div.replied_to span').text(Str.formatEmailList(recipients.to || []));
+    this.view.S.cached('reply_msg_successful')
+      .find('div.replied_to span')
+      .text(Str.formatEmailList(recipients.to || []));
     if (recipients.cc !== undefined && recipients.cc.length > 0) {
       this.view.S.cached('reply_msg_successful').find('div.replied_cc span').text(Str.formatEmailList(recipients.cc));
       $('.replied_cc').show();
@@ -149,7 +162,13 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
       this.renderReplySuccessAttachments(attachments, msgId, this.view.sendBtnModule.popover.choices.encrypt);
     }
     const t = new Date();
-    const time = ((t.getHours() !== 12) ? (t.getHours() % 12) : 12) + ':' + (t.getMinutes() < 10 ? '0' : '') + t.getMinutes() + ((t.getHours() >= 12) ? ' PM ' : ' AM ') + '(0 minutes ago)';
+    const time =
+      (t.getHours() !== 12 ? t.getHours() % 12 : 12) +
+      ':' +
+      (t.getMinutes() < 10 ? '0' : '') +
+      t.getMinutes() +
+      (t.getHours() >= 12 ? ' PM ' : ' AM ') +
+      '(0 minutes ago)';
     this.view.S.cached('reply_msg_successful').find('div.replied_time').text(time);
     this.view.S.cached('reply_msg_successful').css('display', 'block');
     this.view.sizeModule.resizeComposeBox();
@@ -179,7 +198,7 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
   public fetchReplyMeta = async (aliases: string[]): Promise<void> => {
     Xss.sanitizePrepend('#new_message', Ui.e('div', { id: 'loader', html: `Loading secure reply box..${Ui.spinner('green')}` }));
     try {
-      const gmailMsg = await this.view.emailProvider.msgGet(this.view.replyMsgId!, 'metadata');
+      const gmailMsg = await this.view.emailProvider.msgGet(this.view.replyMsgId, 'metadata');
       this.view.replyParams = GmailParser.determineReplyMeta(this.view.acctEmail, aliases, gmailMsg);
       this.view.threadId = gmailMsg.threadId || '';
     } catch (e) {
@@ -207,8 +226,9 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
       if (option === 'a_reply') {
         await this.view.recipientsModule.clearRecipientsForReply();
       }
-      Catch.setHandledTimeout(() => { // Chrome needs async focus: https://github.com/FlowCrypt/flowcrypt-browser/issues/2056
-        document.getElementById('input_text')!.focus(); // jQuery no longer worked as of 3.6.0
+      Catch.setHandledTimeout(() => {
+        // Chrome needs async focus: https://github.com/FlowCrypt/flowcrypt-browser/issues/2056
+        document.getElementById('input_text')?.focus(); // jQuery no longer worked as of 3.6.0
       }, 10);
     }
   };
@@ -219,13 +239,16 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
       this.view.S.cached('header').remove();
       this.view.S.cached('subject').remove();
       this.view.S.cached('contacts').css('top', '39px');
-      this.view.S.cached('compose_table').css({ 'border-bottom': '1px solid #cfcfcf', 'border-top': '1px solid #cfcfcf' });
+      this.view.S.cached('compose_table').css({
+        'border-bottom': '1px solid #cfcfcf',
+        'border-top': '1px solid #cfcfcf',
+      });
       this.view.S.cached('input_text').css('overflow-y', 'hidden');
       if (!this.view.skipClickPrompt && !this.view.draftId) {
         this.renderPrompt();
       }
     } else {
-      this.view.S.cached('compose_table').css({ 'height': '100%' });
+      this.view.S.cached('compose_table').css({ height: '100%' });
     }
   };
 
@@ -250,9 +273,11 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
     // todo - send all valid?
     const mostUsefulPrv = KeyStoreUtil.chooseMostUseful(prvs, 'ONLY-FULLY-USABLE');
     if (!mostUsefulPrv) {
-      await Ui.modal.warning('None of your private keys are usable.\n\n' +
-        'If you are part of an enterprise deployment, ask your Help Desk\n\n.' +
-        'Other users, please check Settings -> Additional settings -> My keys.');
+      await Ui.modal.warning(
+        'None of your private keys are usable.\n\n' +
+          'If you are part of an enterprise deployment, ask your Help Desk\n\n.' +
+          'Other users, please check Settings -> Additional settings -> My keys.'
+      );
       return;
     }
     const attachment = Attachment.keyinfoAsPubkeyAttachment(mostUsefulPrv.keyInfo);
@@ -262,16 +287,20 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
   };
 
   private getFocusableEls = () => {
-    return this.view.S.cached('compose_table').find('[tabindex]:not([tabindex="-1"]):visible').toArray().sort((a, b) => {
-      const tabindexA = parseInt(a.getAttribute('tabindex') || '');
-      const tabindexB = parseInt(b.getAttribute('tabindex') || '');
-      if (tabindexA > tabindexB) { // sort according to tabindex
-        return 1;
-      } else if (tabindexA < tabindexB) {
-        return -1;
-      }
-      return 0;
-    });
+    return this.view.S.cached('compose_table')
+      .find('[tabindex]:not([tabindex="-1"]):visible')
+      .toArray()
+      .sort((a, b) => {
+        const tabindexA = parseInt(a.getAttribute('tabindex') || '');
+        const tabindexB = parseInt(b.getAttribute('tabindex') || '');
+        if (tabindexA > tabindexB) {
+          // sort according to tabindex
+          return 1;
+        } else if (tabindexA < tabindexB) {
+          return -1;
+        }
+        return 0;
+      });
   };
 
   private renderComposeTable = async () => {
@@ -285,7 +314,10 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
         await this.view.recipientsModule.parseRenderRecipients(this.view.S.cached('input_to')); // this will force firefox to render them on load
       }
     } else {
-      $('.close_compose_window').on('click', this.view.setHandler(() => this.actionCloseHandler(), this.view.errModule.handle(`close compose window`)));
+      $('.close_compose_window').on(
+        'click',
+        this.view.setHandler(() => this.actionCloseHandler(), this.view.errModule.handle(`close compose window`))
+      );
       this.view.S.cached('title').on('click', () => {
         if (this.view.sizeModule.composeWindowIsMinimized) {
           $('.minimize_compose_window').trigger('click');
@@ -297,22 +329,38 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
     // Firefox needs an iframe to be focused before focusing its content
     this.view.errModule.debug(`renderComposeTable: focusing this iframe`);
     BrowserMsg.send.focusFrame(this.view.parentTabId, { frameId: this.view.frameId });
-    Catch.setHandledTimeout(() => { // Chrome needs async focus: https://github.com/FlowCrypt/flowcrypt-browser/issues/2056
+    Catch.setHandledTimeout(() => {
+      // Chrome needs async focus: https://github.com/FlowCrypt/flowcrypt-browser/issues/2056
       const toCount = this.view.replyParams?.to.length;
       const focusId = this.view.isReplyBox && this.responseMethod !== 'forward' && toCount ? 'input_text' : 'input_to';
-      this.view.errModule.debug(`renderComposeTable: focusing ${focusId} isReplyBox=${this.view.isReplyBox},responseMethod=${this.responseMethod},toCount=${toCount}`);
-      document.getElementById(focusId)!.focus(); // jQuery no longer worked as of 3.6.0
+      this.view.errModule.debug(
+        `renderComposeTable: focusing ${focusId} isReplyBox=${this.view.isReplyBox},responseMethod=${this.responseMethod},toCount=${toCount}`
+      );
+      document.getElementById(focusId)?.focus(); // jQuery no longer worked as of 3.6.0
     }, 100);
     this.view.sizeModule.onComposeTableRender();
   };
 
   private addComposeTableHandlers = async () => {
     this.view.S.cached('body').keydown(this.view.setHandler((el, ev) => this.onBodyKeydownHandler(el, ev)));
-    this.view.S.cached('input_to').bind('paste', this.view.setHandler((el, ev) => this.onRecipientPasteHandler(el, ev)));
+    this.view.S.cached('input_to').bind(
+      'paste',
+      this.view.setHandler((el, ev) => this.onRecipientPasteHandler(el, ev))
+    );
     this.view.inputModule.squire.addEventListener('input', () => this.view.S.cached('send_btn_note').text(''));
-    this.view.S.cached('input_addresses_container_inner').on('click', this.view.setHandler(() => this.onRecipientsClickHandler(), this.view.errModule.handle(`focus recipients`)));
-    this.view.S.cached('input_addresses_container_inner').children().on('click', () => false);
-    this.view.S.cached('input_subject').bind('input', this.view.setHandler((el: HTMLInputElement) => this.subjectRTLHandler(el))).trigger('input');
+    this.view.S.cached('input_addresses_container_inner').on(
+      'click',
+      this.view.setHandler(() => this.onRecipientsClickHandler(), this.view.errModule.handle(`focus recipients`))
+    );
+    this.view.S.cached('input_addresses_container_inner')
+      .children()
+      .on('click', () => false);
+    this.view.S.cached('input_subject')
+      .bind(
+        'input',
+        this.view.setHandler((el: HTMLInputElement) => this.subjectRTLHandler(el))
+      )
+      .trigger('input');
   };
 
   private subjectRTLHandler = (el: HTMLInputElement) => {
@@ -325,7 +373,7 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
   };
 
   private actionCloseHandler = async () => {
-    if (!this.view.sendBtnModule.isSendMessageInProgres() || await Ui.modal.confirm(Lang.compose.abortSending)) {
+    if (!this.view.sendBtnModule.isSendMessageInProgres() || (await Ui.modal.confirm(Lang.compose.abortSending))) {
       this.view.renderModule.closeMsg();
     }
   };
@@ -348,14 +396,15 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
         return; // key is invalid
       }
       const key = await KeyUtil.parse(normalizedPub);
-      if (!key.emails.length) { // no users is not desired
+      if (!key.emails.length) {
+        // no users is not desired
         await Ui.modal.warning(`There are no email addresses listed in this Public Key - don't know who this key belongs to.`);
         return;
       }
       await ContactStore.update(undefined, key.emails[0], {
         name: Str.parseEmail(key.identities[0]).name,
         pubkey: normalizedPub,
-        pubkeyLastCheck: Date.now()
+        pubkeyLastCheck: Date.now(),
       });
       this.view.S.cached('input_to').val(key.emails[0]);
       await this.view.recipientsModule.parseRenderRecipients(this.view.S.cached('input_to'));
@@ -369,12 +418,15 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
     Ui.escape(() => !this.view.isReplyBox && $('.close_compose_window').trigger('click'))(e);
     const focusableEls = this.getFocusableEls();
     const focusIndex = focusableEls.indexOf(e.target);
-    if (focusIndex !== -1) { // Focus trap (Tab, Shift+Tab)
-      Ui.tab((e) => { // rollover to first item or focus next
+    if (focusIndex !== -1) {
+      // Focus trap (Tab, Shift+Tab)
+      Ui.tab(e => {
+        // rollover to first item or focus next
         focusableEls[focusIndex === focusableEls.length - 1 ? 0 : focusIndex + 1].focus();
         e.preventDefault();
       })(e);
-      Ui.shiftTab((e) => { // rollover to last item or focus prev
+      Ui.shiftTab(e => {
+        // rollover to last item or focus prev
         focusableEls[focusIndex === 0 ? focusableEls.length - 1 : focusIndex - 1].focus();
         e.preventDefault();
       })(e);
@@ -382,18 +434,30 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
   };
 
   private loadRecipientsThenSetTestStateReady = async () => {
-    await Promise.all(this.view.recipientsModule.getRecipients().filter(r => r.evaluating).map(r => r.evaluating));
-    $('body').attr('data-test-state', 'ready');  // set as ready so that automated tests can evaluate results
+    await Promise.all(
+      this.view.recipientsModule
+        .getRecipients()
+        .filter(r => r.evaluating)
+        .map(r => r.evaluating)
+    );
+    $('body').attr('data-test-state', 'ready'); // set as ready so that automated tests can evaluate results
   };
 
   private renderReplySuccessAttachments = (attachments: Attachment[], msgId: string, isEncrypted: boolean) => {
     const hideAttachmentTypes = this.view.sendBtnModule.popover.choices.richtext ? ['hidden', 'encryptedMsg', 'signature', 'publicKey'] : ['publicKey'];
     const renderableAttachments = attachments.filter(attachment => !hideAttachmentTypes.includes(attachment.treatAs()));
     if (renderableAttachments.length) {
-      this.view.S.cached('replied_attachments').html(renderableAttachments.map(attachment => { // xss-safe-factory
-        attachment.msgId = msgId;
-        return this.view.factory!.embeddedAttachment(attachment, isEncrypted, this.view.parentTabId);
-      }).join('')).css('display', 'block');
+      this.view.S.cached('replied_attachments')
+        .html(
+          renderableAttachments
+            .map(attachment => {
+              // xss-safe-factory
+              attachment.msgId = msgId;
+              return this.view.factory.embeddedAttachment(attachment, isEncrypted, this.view.parentTabId);
+            })
+            .join('')
+        )
+        .css('display', 'block');
     }
   };
 

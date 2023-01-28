@@ -12,11 +12,13 @@ import { ComposeView } from '../compose.js';
 import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
 
 export class ComposeSendBtnPopoverModule extends ViewModule<ComposeView> {
-
   public choices: PopoverChoices = { encrypt: true, sign: true, richtext: false }; // defaults, may be changed by user using the popover
 
   public setHandlers = (): void => {
-    this.view.S.cached('toggle_send_options').on('click', this.view.setHandler((el, ev) => this.toggleVisible(ev)));
+    this.view.S.cached('toggle_send_options').on(
+      'click',
+      this.view.setHandler((el, ev) => this.toggleVisible(ev))
+    );
   };
 
   public render = async () => {
@@ -37,7 +39,10 @@ export class ComposeSendBtnPopoverModule extends ViewModule<ComposeView> {
             <span class="option-name">${Xss.escape(item.text)}</span>
         </div>`);
       this.renderCrossOrTick(elem, popoverOpt, this.choices[popoverOpt]);
-      elem.on('click', this.view.setHandler(() => this.toggleItemTick(elem, popoverOpt)));
+      elem.on(
+        'click',
+        this.view.setHandler(() => this.toggleItemTick(elem, popoverOpt))
+      );
       if (item.iconPath) {
         elem.find('.option-name').prepend(`<img src="${item.iconPath}" />`); // xss-direct
       }
@@ -51,7 +56,7 @@ export class ComposeSendBtnPopoverModule extends ViewModule<ComposeView> {
    */
   public toggleItemTick = (elem: JQuery<HTMLElement>, popoverOpt: PopoverOpt, machineForceStateTo?: boolean) => {
     const currentlyTicked = this.isTicked(elem);
-    let newToggleTicked = (typeof machineForceStateTo !== 'undefined') ? machineForceStateTo : !currentlyTicked;
+    let newToggleTicked = typeof machineForceStateTo !== 'undefined' ? machineForceStateTo : !currentlyTicked;
     if (newToggleTicked === this.choices[popoverOpt] && newToggleTicked === currentlyTicked) {
       return; // internal state as well as UI state is in sync with newly desired result, nothing to do
     }
@@ -80,10 +85,13 @@ export class ComposeSendBtnPopoverModule extends ViewModule<ComposeView> {
       this.view.S.cached('compose_table').addClass('not-encrypted');
       this.view.S.now('attached_files').addClass('not-encrypted');
     }
+    /* eslint-disable @typescript-eslint/no-unused-expressions */
     this.choices.richtext ? this.view.inputModule.addRichTextFormatting() : this.view.inputModule.removeRichTextFormatting();
+    /* eslint-enable @typescript-eslint/no-unused-expressions */
     this.view.sendBtnModule.resetSendBtn();
-    this.view.pwdOrPubkeyContainerModule.showHideContainerAndColorSendBtn(); // tslint:disable-line:no-floating-promises
-    if (typeof machineForceStateTo === 'undefined' && popoverOpt === 'richtext') { // human-input choice of rich text
+    this.view.pwdOrPubkeyContainerModule.showHideContainerAndColorSendBtn().catch(Catch.reportErr);
+    if (typeof machineForceStateTo === 'undefined' && popoverOpt === 'richtext') {
+      // human-input choice of rich text
       this.richTextUserChoiceStore(newToggleTicked).catch(Catch.reportErr);
     }
   };
@@ -101,7 +109,10 @@ export class ComposeSendBtnPopoverModule extends ViewModule<ComposeView> {
     });
     if (sendingContainer.hasClass('popover-opened')) {
       $('body').on('click', popoverClickHandler);
-      this.view.S.cached('toggle_send_options').on('keydown', this.view.setHandler(async (target, e) => this.keydownHandler(e)));
+      this.view.S.cached('toggle_send_options').on(
+        'keydown',
+        this.view.setHandler(async (target, e) => this.keydownHandler(e))
+      );
       const sendingOptions = this.view.S.cached('sending_options_container').find('.sending-option');
       sendingOptions.hover(function () {
         sendingOptions.removeClass('active');
@@ -143,7 +154,9 @@ export class ComposeSendBtnPopoverModule extends ViewModule<ComposeView> {
   };
 
   private richTextUserChoiceStore = async (isTicked: boolean) => {
-    await AcctStore.set(this.view.acctEmail, { use_rich_text: isTicked });
+    await AcctStore.set(this.view.acctEmail, {
+      use_rich_text: isTicked, // eslint-disable-line @typescript-eslint/naming-convention
+    });
   };
 
   private richTextUserChoiceRetrieve = async (): Promise<boolean> => {
@@ -178,5 +191,4 @@ export class ComposeSendBtnPopoverModule extends ViewModule<ComposeView> {
       return Lang.compose.headers.plain;
     }
   };
-
 }

@@ -55,7 +55,9 @@ const validateTypeScriptLine = (line: string, location: string) => {
     errsFound++;
   }
   if (line.match(/^ {2}(public |private |protected |static )+?[a-z][a-zA-Z0-9]+ = (async )?\(.+\)(: .+)? => .+;$/)) {
-    console.error(`don't use single-line "method = (arg) => result" class methods, give them a method body and a return statement "method = (arg) => { return result; }":\n${line}\n`);
+    console.error(
+      `don't use single-line "method = (arg) => result" class methods, give them a method body and a return statement "method = (arg) => { return result; }":\n${line}\n`
+    );
     errsFound++;
   }
   if (line.match(/^ {2}(public |private |protected |static |async )*((?!constructor)[a-z][a-zA-Z0-9]+)\([^)]*\) \{$/)) {
@@ -78,13 +80,25 @@ for (const srcFilePath of getAllFilesInDir('./extension', /\.ts$/)) {
  * check for problems in manifest file (because dynamically generated)
  * https://github.com/FlowCrypt/flowcrypt-browser/issues/2934
  */
-const expectedConsumerPermissions = ["storage", "tabs", "https://*.google.com/*", "https://www.googleapis.com/*", "https://flowcrypt.com/*", "unlimitedStorage"];
-const expectedEnterprisePermissions = ["storage", "tabs", "https://*.google.com/*", "https://*.googleapis.com/*", "https://flowcrypt.com/*", "unlimitedStorage"];
+const expectedConsumerPermissions = [
+  'storage',
+  'tabs',
+  'https://*.google.com/*',
+  'https://www.googleapis.com/*',
+  'https://flowcrypt.com/*',
+  'unlimitedStorage',
+];
+const expectedEnterprisePermissions = [
+  'storage',
+  'tabs',
+  'https://*.google.com/*',
+  'https://*.googleapis.com/*',
+  'https://flowcrypt.com/*',
+  'unlimitedStorage',
+];
 for (const buildType of ['chrome-consumer', 'chrome-enterprise', 'firefox-consumer']) {
   const manifest = JSON.parse(readFileSync(`./build/${buildType}/manifest.json`).toString());
-  const expectedPermissions = buildType.includes('consumer')
-    ? expectedConsumerPermissions
-    : expectedEnterprisePermissions;
+  const expectedPermissions = buildType.includes('consumer') ? expectedConsumerPermissions : expectedEnterprisePermissions;
   for (const expectedPermission of expectedPermissions) {
     if (!manifest.permissions.includes(expectedPermission)) {
       if (!(expectedPermission === 'unlimitedStorage' && buildType === 'firefox-consumer')) {

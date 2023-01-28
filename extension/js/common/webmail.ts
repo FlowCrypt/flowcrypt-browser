@@ -9,7 +9,7 @@ export class WebmailCommon {
   private acctEmail: string;
   private injector: Injector;
 
-  constructor(acctEmail: string, injector: Injector) {
+  public constructor(acctEmail: string, injector: Injector) {
     this.acctEmail = acctEmail;
     this.injector = injector;
   }

@@ -110,10 +110,10 @@
           data-swal-page="/chrome/texts/passphrase_help.htm">choosing
           secure pass phrases</a></div>
       <div class="line left">
-        <input class="input_password" type="text" placeholder="Pass phrase" style="margin-bottom: 0;" id="step_2a_manual_create_input_password" data-test="input-step2bmanualcreate-passphrase-1" maxlength="1000" />
+        <input class="input_password" type="text" placeholder="Pass phrase" style="margin-bottom: 0;" id="step_2a_manual_create_input_password" data-test="input-step2bmanualcreate-passphrase-1" maxlength="256" />
       </div>
       <div class="line left">
-        <input class="input_password2" type="text" placeholder="Repeat pass phrase" id="step_2a_manual_create_input_password2" data-test="input-step2bmanualcreate-passphrase-2" maxlength="1000" />
+        <input class="input_password2" type="text" placeholder="Repeat pass phrase" id="step_2a_manual_create_input_password2" data-test="input-step2bmanualcreate-passphrase-2" maxlength="256" />
       </div>
 
       <div class="line left">
@@ -187,7 +187,7 @@
         </div>
         <div class="source_paste_container setup_page display_none">
           <div class="line left">
-            <textarea class="input_private_key" placeholder="ASCII Armored Private Key" data-test="input-step2bmanualenter-ascii-key" spellcheck="false"></textarea>
+            <textarea class="input_private_key" placeholder="ASCII Armored Private Key" data-test="input-step2bmanualenter-ascii-key" spellcheck="false" maxlength="20000"></textarea>
           </div>
           <div class="line display_none unprotected_key_create_pass_phrase">
             This key is unprotected. Create a pass phrase or <a href="#" class="action_use_random_pass_phrase"
@@ -195,7 +195,7 @@
               a random one</a>.
           </div>
           <div class="line left">
-            <input class="input_passphrase" type="text" placeholder="Private Key Passphrase" id="step_2b_manual_enter_passphrase" data-test="input-step2bmanualenter-passphrase" maxlength="1000" />
+            <input class="input_passphrase" type="text" placeholder="Private Key Passphrase" id="step_2b_manual_enter_passphrase" data-test="input-step2bmanualenter-passphrase" maxlength="256" />
           </div>
           <div class="line left">
             <label class="input_passphrase_save_label hidden" data-test="input-step2bmanualenter-save-passphrase-label">
@@ -231,10 +231,10 @@
           data-swal-page="/chrome/texts/passphrase_help.htm">choosing
           secure pass phrases</a></div>
       <div class="line">
-        <input class="input_password" type="text" placeholder="Pass phrase" id="step_2_ekm_input_password" data-test="input-step2ekm-passphrase-1" maxlength="1000" />
+        <input class="input_password" type="text" placeholder="Pass phrase" id="step_2_ekm_input_password" data-test="input-step2ekm-passphrase-1" maxlength="256" />
       </div>
       <div class="line">
-        <input class="input_password2" type="text" placeholder="Repeat pass phrase" data-test="input-step2ekm-passphrase-2" id="step_2_ekm_input_password2" maxlength="1000" />
+        <input class="input_password2" type="text" placeholder="Repeat pass phrase" data-test="input-step2ekm-passphrase-2" id="step_2_ekm_input_password2" maxlength="256" />
       </div>
 
       <div class="line">
@@ -254,7 +254,7 @@
       <div class="line recovery_status">Found <span class="backups_count_words"></span> of your account key. Enter your
         pass phrase to continue.</div>
       <div class="wide line recovery_passphrase_container">
-        <input type="text" id="recovery_password" placeholder="Enter your pass phrase" data-test="input-recovery-pass-phrase" maxlength="1000" />
+        <input type="text" id="recovery_password" placeholder="Enter your pass phrase" data-test="input-recovery-pass-phrase" maxlength="256" />
       </div>
       <div class="wide line">
         <button class="button green longer action_recover_account" data-test="action-recover-account">RECOVER ACCOUNT</button>

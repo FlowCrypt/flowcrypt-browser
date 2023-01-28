@@ -67,7 +67,10 @@ export class BrowserRecipe {
   public static setUpCommonAcct = async (t: AvaContext, browser: BrowserHandle, acct: 'compatibility' | 'compose' | 'ci.tests.gmail') => {
     if (acct === 'compatibility') {
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.compatibility@gmail.com');
-      await SetupPageRecipe.recover(settingsPage, 'flowcrypt.compatibility.1pp1', { hasRecoverMore: true, clickRecoverMore: true });
+      await SetupPageRecipe.recover(settingsPage, 'flowcrypt.compatibility.1pp1', {
+        hasRecoverMore: true,
+        clickRecoverMore: true,
+      });
       await SetupPageRecipe.recover(settingsPage, 'flowcrypt.compatibility.2pp1');
       await settingsPage.close();
     } else if (acct === 'ci.tests.gmail') {
@@ -96,8 +99,9 @@ export class BrowserRecipe {
   public static getGoogleAccessToken = async (controllable: Controllable, acctEmail: string): Promise<string> => {
     const result = await PageRecipe.sendMessage(controllable, {
       name: 'inMemoryStoreGet',
-      // tslint:disable-next-line:no-null-keyword
-      data: { bm: { acctEmail, key: InMemoryStoreKeys.GOOGLE_TOKEN_ACCESS }, objUrls: {} }, to: null, uid: '2'
+      data: { bm: { acctEmail, key: InMemoryStoreKeys.GOOGLE_TOKEN_ACCESS }, objUrls: {} },
+      to: null, // eslint-disable-line no-null/no-null
+      uid: '2',
     });
     return (result as { result: string }).result;
   };
@@ -105,8 +109,9 @@ export class BrowserRecipe {
   public static getFromInMemoryStore = async (controllable: Controllable, acctEmail: string, key: string): Promise<string> => {
     const result = await PageRecipe.sendMessage(controllable, {
       name: 'inMemoryStoreGet',
-      // tslint:disable-next-line:no-null-keyword
-      data: { bm: { acctEmail, key }, objUrls: {} }, to: null, uid: '2' // todo: random uid?
+      data: { bm: { acctEmail, key }, objUrls: {} },
+      to: null, // eslint-disable-line no-null/no-null
+      uid: '2', // todo: random uid?
     });
     return (result as { result: string }).result;
   };
@@ -117,9 +122,17 @@ export class BrowserRecipe {
   public static deleteAllDraftsInGmailAccount = async (settingsPage: ControllablePage): Promise<void> => {
     const accessToken = await BrowserRecipe.getGoogleAccessToken(settingsPage, 'ci.tests.gmail@flowcrypt.dev');
     const gmail = google.gmail({ version: 'v1' });
+    // eslint-disable-next-line @typescript-eslint/naming-convention
     const list = await gmail.users.drafts.list({ userId: 'me', access_token: accessToken });
     if (list.data.drafts) {
-      await Promise.all(list.data.drafts!.filter(draft => draft.id).map(draft => gmail.users.drafts.delete({ id: draft.id!, userId: 'me', access_token: accessToken })));
+      /* eslint-disable @typescript-eslint/no-non-null-assertion */
+      await Promise.all(
+        list.data
+          .drafts!.filter(draft => draft.id)
+          // eslint-disable-next-line @typescript-eslint/naming-convention
+          .map(draft => gmail.users.drafts.delete({ id: draft.id!, userId: 'me', access_token: accessToken }))
+      );
+      /* eslint-enable @typescript-eslint/no-non-null-assertion */
     }
   };
 
@@ -128,15 +141,30 @@ export class BrowserRecipe {
     const acctEmail = 'flowcrypt.test.key.imported@gmail.com';
     const k = Config.key('flowcrypt.test.key.used.pgp');
     const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
-    await SetupPageRecipe.manualEnter(settingsPage, k.title, { usedPgpBefore: false, submitPubkey: false, savePassphrase: true }, { isSavePassphraseHidden: false });
+    await SetupPageRecipe.manualEnter(
+      settingsPage,
+      k.title,
+      { usedPgpBefore: false, submitPubkey: false, savePassphrase: true },
+      { isSavePassphraseHidden: false }
+    );
     return { acctEmail, passphrase: k.passphrase, settingsPage };
   };
 
   public static setUpFcForbidPpStoringAcct = async (t: AvaContext, browser: BrowserHandle) => {
     const acctEmail = 'user@forbid-storing-passphrase-client-configuration.flowcrypt.test';
     const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
-    const key = { title: '', armored: testConstants.testKeyB8F687BCDE14435A, passphrase: 'donotstore', longid: 'B8F687BCDE14435A' };
-    await SetupPageRecipe.manualEnter(settingsPage, 'unused', { submitPubkey: false, usedPgpBefore: false, key }, { isSavePassphraseChecked: false, isSavePassphraseHidden: true });
+    const key = {
+      title: '',
+      armored: testConstants.testKeyB8F687BCDE14435A,
+      passphrase: 'donotstore',
+      longid: 'B8F687BCDE14435A',
+    };
+    await SetupPageRecipe.manualEnter(
+      settingsPage,
+      'unused',
+      { submitPubkey: false, usedPgpBefore: false, key },
+      { isSavePassphraseChecked: false, isSavePassphraseHidden: true }
+    );
     return { acctEmail, passphrase: key.passphrase, settingsPage };
   };
 
@@ -159,8 +187,7 @@ export class BrowserRecipe {
     const content = await pgpBlockPage.read('@pgp-block-content');
     for (const expectedContent of m.content) {
       if (content.indexOf(expectedContent) === -1) {
-        throw new Error(`pgp_block_verify_decrypted_content:missing expected content: ${expectedContent}`
-          + `\nactual content: ${content}`);
+        throw new Error(`pgp_block_verify_decrypted_content:missing expected content: ${expectedContent}` + `\nactual content: ${content}`);
       }
     }
     if (m.unexpectedContent) {
@@ -192,11 +219,10 @@ export class BrowserRecipe {
         throw new Error(`pgp_block_verify_decrypted_content:missing expected error content:${m.error}`);
       }
     } else if (m.content.length > 0) {
-      if (!await pgpBlockPage.isElementVisible('@action-print')) {
+      if (!(await pgpBlockPage.isElementVisible('@action-print'))) {
         throw new Error(`Print button is invisible`);
       }
     }
     await pgpHostPage.close();
   }
-
 }

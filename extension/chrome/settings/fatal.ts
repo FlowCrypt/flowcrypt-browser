@@ -38,7 +38,10 @@ if (reason === 'db_corrupted') {
   Xss.sanitizeRender(details, `<p>${Lang.error.dbFailed}</p><p>${checkFfSettings}</p>`);
 } else if (reason === 'storage_undefined') {
   title.text('FlowCrypt cannot function because browser storage is disabled or missing');
-  Xss.sanitizeRender(details, `<p>browser.storage is undefined</p><p>If you are on Firefox, check for any special browser settings, or use a clean Firefox Profile.</p>`);
+  Xss.sanitizeRender(
+    details,
+    `<p>browser.storage is undefined</p><p>If you are on Firefox, check for any special browser settings, or use a clean Firefox Profile.</p>`
+  );
 } else {
   details.text(`Unknown reason. ${Lang.general.contactForSupportSentence()}`);
 }

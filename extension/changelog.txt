@@ -1,5 +1,9 @@
 <div class="lightboxed">
 
+version 8.4.2 on January 12, 2022: : <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/465?closed=1" target="_blank">FES 2023-01 support</a>
+
+version 8.4.1 on December 30, 2022: : <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/466?closed=1" target="_blank">Plain message fix</a>
+
 version 8.4.0 on November 18, 2022: : <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/463?closed=1" target="_blank">Pwd msg prompt fix, add self-sig key</a>
 
 version 8.3.9 on November 8, 2022: : <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/464?closed=1" target="_blank">Reply improvements</a>
