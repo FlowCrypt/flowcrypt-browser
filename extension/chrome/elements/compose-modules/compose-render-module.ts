@@ -37,6 +37,7 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
     if (this.view.draftId) {
       const draftLoaded = await this.view.draftModule.initialDraftLoad();
       if (draftLoaded) {
+        this.view.draftModule.startDraftTimer();
         this.view.S.cached('triple_dot').remove(); // if it's draft, footer and quote should already be included in the draft
       }
       if (this.view.isReplyBox) {
