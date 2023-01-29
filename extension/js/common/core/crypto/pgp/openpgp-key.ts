@@ -698,17 +698,29 @@ export class OpenPGPKey {
    * This is used to figure out how recently was key updated, and if one key is newer than other.
    */
   private static getLastSigTime = async (key: OpenPGP.Key): Promise<number> => {
-    await key.getExpirationTime(); // will force all sigs to be verified
-    const allSignatures: OpenPGP.SignaturePacket[] = [];
+    const primaryKey = key.keyPacket;
+    const allVerifiedSignatures: OpenPGP.SignaturePacket[] = [];
     for (const user of key.users) {
-      allSignatures.push(...user.selfCertifications);
+      const dataToVerify = { userId: user.userID, key: primaryKey };
+      const selfCertification = await OpenPGPKey.getLatestValidSignature(
+        user.selfCertifications,
+        key.keyPacket,
+        opgp.enums.signature.certGeneric,
+        dataToVerify
+      );
+      if (selfCertification) {
+        allVerifiedSignatures.push(selfCertification);
+      }
     }
     for (const subKey of key.subkeys) {
-      allSignatures.push(...subKey.bindingSignatures);
+      const dataToVerify = { key: primaryKey, bind: subKey.keyPacket };
+      const bindingSignature = await OpenPGPKey.getLatestValidSignature(subKey.bindingSignatures, primaryKey, opgp.enums.signature.subkeyBinding, dataToVerify);
+      if (bindingSignature) {
+        allVerifiedSignatures.push(bindingSignature);
+      }
     }
-    if (allSignatures.length > 0) {
-      // todo: all are verified now? .filter(x => x.verified)
-      return Math.max(...allSignatures.map(x => (x.created ? x.created.getTime() : 0)));
+    if (allVerifiedSignatures.length > 0) {
+      return Math.max(...allVerifiedSignatures.map(x => (x.created ? x.created.getTime() : 0)));
     }
     throw new Error('No valid signature found in key');
   };
