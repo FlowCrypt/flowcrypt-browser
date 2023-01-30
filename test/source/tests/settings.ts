@@ -1245,7 +1245,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       testWithBrowser(undefined, async (t, browser) => {
         const port = t.urls?.port;
         const acct = 'test-update@settings.flowcrypt.test';
-        mockBackendData.clientConfigurationByAcctEmail[acct] = keyManagerAutogenRules;
+        mockBackendData.clientConfigurationByAcctEmail[acct] = keyManagerAutogenRules(`${t.urls?.port}`);
         const setupPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
         await SetupPageRecipe.autoSetupWithEKM(setupPage);
         const { cryptup_testupdatesettingsflowcrypttest_rules: rules1 } = await setupPage.getFromLocalStorage([

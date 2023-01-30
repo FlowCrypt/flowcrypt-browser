@@ -5,7 +5,7 @@ import { HttpClientErr } from '../lib/api';
 import { expect } from 'chai';
 import { IncomingMessage } from 'http';
 import { HandlersDefinition } from '../all-apis-mock';
-import { isPost } from '../lib/mock-util';
+import { isPost, parsePort } from '../lib/mock-util';
 import { BackendData, ReportedError } from './backend-data';
 import { oauth } from '../lib/oauth';
 
@@ -15,9 +15,10 @@ export const mockBackendEndpoints: HandlersDefinition = {
   '/api/account/get': async ({}, req) => {
     throwIfNotPost(req);
     const email = getEmailFromIdTokenOrThrow(req);
+    const port = parsePort(req);
     return JSON.stringify({
-      account: mockBackendData.getAcctRow(email!), // eslint-disable-line @typescript-eslint/no-non-null-assertion
-      domain_org_rules: mockBackendData.getClientConfiguration(email!), // eslint-disable-line @typescript-eslint/naming-convention, @typescript-eslint/no-non-null-assertion
+      account: mockBackendData.getAcctRow(email),
+      domain_org_rules: mockBackendData.getClientConfiguration(email, port), // eslint-disable-line @typescript-eslint/naming-convention
     });
   },
   '/api/account/update': async ({}, req) => {
