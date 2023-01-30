@@ -55,7 +55,7 @@ export const mockSharedTenantFesEndpoints: HandlersDefinition = {
       expect(body).to.contain('"associateReplyToken":"mock-fes-reply-token"');
       const response = {
         // this url is required for pubkey encrypted message
-        url: `https://flowcrypt.com/FESMOCKIDS`,
+        url: `https://flowcrypt.com/shared-tenant-fes/message/6da5ea3c-d2d6-4714-b15e-f29c805e5c6a`,
         externalId: 'FES-MOCK-EXTERNAL-ID',
         emailToExternalIdAndUrl: {} as { [email: string]: { url: string; externalId: string } },
       };

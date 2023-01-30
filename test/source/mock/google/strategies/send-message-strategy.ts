@@ -17,7 +17,7 @@ import { ENVELOPED_DATA_OID, SIGNED_DATA_OID, SmimeKey } from '../../../core/cry
 import { testConstants } from '../../../tests/tooling/consts.js';
 
 const checkPwdEncryptedMessage = (message: string | undefined) => {
-  if (!message?.match(/https:\/\/flowcrypt.com\/[a-z0-9A-Z]{10}/)) {
+  if (!message?.match(/https:\/\/flowcrypt.com\/shared-tenant-fes\/message\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/)) {
     throw new HttpClientErr(`Error: cannot find pwd encrypted flowcrypt.com/shared-tenant-fes link in:\n\n${message}`);
   }
 };
