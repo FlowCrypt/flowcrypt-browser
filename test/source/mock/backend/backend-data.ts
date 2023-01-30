@@ -40,28 +40,13 @@ export interface ReportedError {
 export class BackendData {
   public reportedErrors: ReportedError[] = [];
 
-  public clientConfigurationByAcctEmail: Dict<ClientConfiguration | HttpClientErr> = {};
+  public clientConfigurationForDomain: Dict<ClientConfiguration | HttpClientErr> = {};
 
-  /* eslint-disable no-null/no-null */
-  public getAcctRow = (acct: string) => {
-    return {
-      email: acct,
-      alias: null,
-      name: 'mock name',
-      photo: null,
-      photo_circle: true, // eslint-disable-line @typescript-eslint/naming-convention
-      web: null,
-      phone: null,
-      intro: null,
-      default_message_expire: 3, // eslint-disable-line @typescript-eslint/naming-convention
-      token: '1234-mock-acct-token',
-    };
-  };
   /* eslint-disable no-null/no-null */
 
   /* eslint-disable @typescript-eslint/naming-convention */
-  public getClientConfiguration = (acct: string, port: string) => {
-    const foundConfiguration = this.clientConfigurationByAcctEmail[acct];
+  public getClientConfiguration = (domain: string, port: string) => {
+    const foundConfiguration = this.clientConfigurationForDomain[domain];
     if (foundConfiguration) {
       if (foundConfiguration instanceof HttpClientErr) {
         throw foundConfiguration;
@@ -69,7 +54,6 @@ export class BackendData {
       return foundConfiguration;
     }
     const keyManagerRules = keyManagerAutogenRules(port);
-    const domain = acct.split('@')[1];
     if (domain === 'client-configuration-test.flowcrypt.test') {
       return {
         flags: ['NO_PRV_CREATE', 'NO_PRV_BACKUP', 'HIDE_ARMOR_META', 'ENFORCE_ATTESTER_SUBMIT', 'SETUP_ENSURE_IMPORTED_PRV_MATCH_LDAP_PUB'],

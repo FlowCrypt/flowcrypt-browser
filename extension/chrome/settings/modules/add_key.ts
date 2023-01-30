@@ -73,7 +73,7 @@ View.run(
       $('#input_passphrase').keydown(this.setEnterHandlerThatClicks('.action_add_private_key'));
     };
 
-    private isFesUsed = () => Boolean(this.fesUrl);
+    private isCustomerUrlFesUsed = () => Boolean(this.fesUrl);
 
     private loadAndRenderKeyBackupsOrRenderError = async () => {
       try {
@@ -125,7 +125,7 @@ View.run(
         } else {
           Catch.reportErr(e);
           return await Ui.modal.error(
-            `An error happened when processing the key: ${String(e)}\n${Lang.general.contactForSupportSentence(this.isFesUsed())}`,
+            `An error happened when processing the key: ${String(e)}\n${Lang.general.contactForSupportSentence(this.isCustomerUrlFesUsed())}`,
             false,
             Ui.testCompatibilityLink
           );
@@ -157,7 +157,7 @@ View.run(
         await this.saveKeyAndContinue(fixedPrv);
       } catch (e) {
         Catch.reportErr(e);
-        await Ui.modal.error(`Failed to fix key (${String(e)}). ${Lang.general.writeMeToFixIt(this.isFesUsed())}`, false, Ui.testCompatibilityLink);
+        await Ui.modal.error(`Failed to fix key (${String(e)}). ${Lang.general.writeMeToFixIt(this.isCustomerUrlFesUsed())}`, false, Ui.testCompatibilityLink);
         this.toggleCompatibilityView(false);
       }
     };

@@ -97,10 +97,10 @@ View.run(
       try {
         if (!this.clientConfiguration.usesKeyManager()) {
           $('.password_messages_expiry_container').show();
-          const response = await this.acctServer.accountGetAndUpdateLocalStore();
+          await this.acctServer.fetchAndSaveClientConfiguration();
           $('.select_loader_container').text('');
-          $('.default_message_expire').val(Number(response.account.default_message_expire).toString()).prop('disabled', false).css('display', 'inline-block');
-          $('.default_message_expire').change(this.setHandler(() => this.onDefaultExpireUserChange()));
+          const defaultWebPortalMessageExpire = await this.acctServer.getWebPortalMessageExpireDays();
+          $('.default_message_expire').val(`${defaultWebPortalMessageExpire}`).prop('disabled', false).css('display', 'inline-block');
         }
       } catch (e) {
         if (ApiErr.isAuthErr(e)) {
@@ -116,14 +116,6 @@ View.run(
             .on('click', () => window.location.reload()); // safe source
         }
       }
-    };
-
-    private onDefaultExpireUserChange = async () => {
-      Xss.sanitizeRender('.select_loader_container', Ui.spinner('green'));
-      $('.default_message_expire').css('display', 'none');
-      // eslint-disable-next-line @typescript-eslint/naming-convention
-      await this.acctServer.accountUpdate({ default_message_expire: Number($('.default_message_expire').val()) });
-      window.location.reload();
     };
 
     private onMsgLanguageUserChange = async () => {

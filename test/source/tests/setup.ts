@@ -1604,7 +1604,7 @@ export const defineSetupTests = (testVariant: TestVariant, testWithBrowser: Test
           await settingsPage.waitAndRespondToModal(
             'error',
             'confirm',
-            "Cannot reach your company's FlowCrypt Enterprise Server (FES). Contact your Help Desk when unsure."
+            "Cannot reach your company's FlowCrypt External Service (FES). Contact your Help Desk when unsure."
           );
         } else if (testVariant === 'CONSUMER-MOCK') {
           // allows to set up on consumer
