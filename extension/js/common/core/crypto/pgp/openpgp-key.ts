@@ -588,8 +588,7 @@ export class OpenPGPKey {
     signatures: OpenPGP.SignaturePacket[],
     primaryKey: OpenPGP.BasePublicKeyPacket,
     signatureType: OpenPGP.enums.signature,
-    dataToVerify: object | Uint8Array,
-    date = new Date()
+    dataToVerify: object | Uint8Array
   ): Promise<OpenPGP.SignaturePacket | undefined> => {
     let signature: OpenPGP.SignaturePacket | undefined;
     for (let i = signatures.length - 1; i >= 0; i--) {
@@ -598,9 +597,9 @@ export class OpenPGPKey {
           // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
           (!signature || signatures[i].created! >= signature.created!) &&
           // check binding signature is not expired (ie, check for V4 expiration time)
-          !signatures[i].isExpired(date)
+          !signatures[i].isExpired()
         ) {
-          await signatures[i].verify(primaryKey, signatureType, dataToVerify, date);
+          await signatures[i].verify(primaryKey, signatureType, dataToVerify);
           signature = signatures[i];
         }
       } catch (e) {
