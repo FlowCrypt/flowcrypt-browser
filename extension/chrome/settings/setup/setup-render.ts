@@ -35,7 +35,7 @@ export class SetupRenderModule {
           e,
           Lang.setup.failedToLoadEmailAliases,
           () => this.renderInitial(),
-          Lang.general.contactIfNeedAssistance(this.view.isFesUsed())
+          Lang.general.contactIfNeedAssistance(this.view.isCustomerUrlFesUsed())
         );
       }
     }
@@ -124,7 +124,7 @@ export class SetupRenderModule {
         e,
         Lang.setup.failedToCheckIfAcctUsesEncryption,
         () => this.renderSetupDialog(),
-        Lang.general.contactIfNeedAssistance(this.view.isFesUsed())
+        Lang.general.contactIfNeedAssistance(this.view.isCustomerUrlFesUsed())
       );
     }
     if (keyserverRes.pubkeys.length) {
@@ -142,7 +142,7 @@ export class SetupRenderModule {
             e,
             Lang.setup.failedToCheckAccountBackups,
             () => this.renderSetupDialog(),
-            Lang.general.contactIfNeedAssistance(this.view.isFesUsed())
+            Lang.general.contactIfNeedAssistance(this.view.isCustomerUrlFesUsed())
           );
         }
         if (this.view.fetchedKeyBackupsUniqueLongids.length) {
