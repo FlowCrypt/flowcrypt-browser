@@ -649,18 +649,11 @@ export class OpenPGPKey {
     const primaryKey = key.keyPacket;
     // await subKey.verify(primaryKey);
     const dataToVerify = { key: primaryKey, bind: subKey.keyPacket };
-    const date = new Date();
-    const bindingSignature = await OpenPGPKey.getLatestValidSignature(
-      subKey.bindingSignatures,
-      primaryKey,
-      opgp.enums.signature.subkeyBinding,
-      dataToVerify,
-      date
-    );
+    const bindingSignature = await OpenPGPKey.getLatestValidSignature(subKey.bindingSignatures, primaryKey, opgp.enums.signature.subkeyBinding, dataToVerify);
     if (
       bindingSignature &&
       bindingSignature.embeddedSignature &&
-      (await OpenPGPKey.getLatestValidSignature([bindingSignature.embeddedSignature], subKey.keyPacket, opgp.enums.signature.keyBinding, dataToVerify, date))
+      (await OpenPGPKey.getLatestValidSignature([bindingSignature.embeddedSignature], subKey.keyPacket, opgp.enums.signature.keyBinding, dataToVerify))
     ) {
       return OpenPGPKey.getValidSigningKeyPacketFlags(subKey, bindingSignature);
     }
@@ -671,14 +664,7 @@ export class OpenPGPKey {
     const primaryKey = key.keyPacket;
     // await subKey.verify(primaryKey);
     const dataToVerify = { key: primaryKey, bind: subKey.keyPacket };
-    const date = new Date();
-    const bindingSignature = await OpenPGPKey.getLatestValidSignature(
-      subKey.bindingSignatures,
-      primaryKey,
-      opgp.enums.signature.subkeyBinding,
-      dataToVerify,
-      date
-    );
+    const bindingSignature = await OpenPGPKey.getLatestValidSignature(subKey.bindingSignatures, primaryKey, opgp.enums.signature.subkeyBinding, dataToVerify);
     if (bindingSignature) {
       return OpenPGPKey.getValidEncryptionKeyPacketFlags(subKey, bindingSignature);
     }
