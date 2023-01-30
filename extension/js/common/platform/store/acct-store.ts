@@ -74,7 +74,7 @@ export type AcctStoreDict = {
   setup_date?: number;
   use_rich_text?: boolean;
   rules?: ClientConfigurationJson;
-  fesUrl?: string; // url where FlowCrypt Enterprise Server is deployed
+  fesUrl?: string; // url where FlowCrypt External Service is deployed
 };
 /* eslint-enable @typescript-eslint/naming-convention */
 

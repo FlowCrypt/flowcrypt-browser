@@ -15,9 +15,9 @@ import { Catch } from '../../../platform/catch.js';
 import { AcctStore, AcctStoreDict } from '../../../platform/store/acct-store.js';
 import { InMemoryStore } from '../../../platform/store/in-memory-store.js';
 import { AccountServer } from '../../account-server.js';
-import { EnterpriseServer } from '../../account-servers/enterprise-server.js';
+import { ExternalService } from '../../account-servers/external-service.js';
 import { GoogleAuthErr } from '../../shared/api-error.js';
-import { GmailRes } from './gmail-parser';
+import { GmailRes } from './gmail-parser.js';
 import { Assert, AssertError } from '../../../assert.js';
 
 /* eslint-disable @typescript-eslint/naming-convention */
@@ -176,25 +176,25 @@ export class GoogleAuth {
         };
       }
       try {
-        const potentialFes = new EnterpriseServer(authRes.acctEmail);
+        const potentialFes = new ExternalService(authRes.acctEmail);
         if (await potentialFes.isFesInstalledAndAvailable()) {
           // on FES, pulling ClientConfiguration is not authenticated, and it contains info about how to
           //   authenticate when doing other calls (use access token or OIDC directly)
           await AcctStore.set(authRes.acctEmail, { fesUrl: potentialFes.url });
           const acctServer = new AccountServer(authRes.acctEmail);
           // fetch and store ClientConfiguration (not authenticated)
-          await acctServer.accountGetAndUpdateLocalStore();
+          await acctServer.fetchAndSaveClientConfiguration();
         } else {
           // eventually this branch will be dropped once a public FES instance is run for these customers
-          // when using flowcrypt.com/api, pulling ClientConfiguration is authenticated, therefore have
+          // when using flowcrypt.com/shared-tenant-fes, pulling ClientConfiguration is authenticated, therefore have
           //   to retrieve access token first (which is the only way to authenticate other calls)
           const acctServer = new AccountServer(authRes.acctEmail);
           // fetch and store ClientConfiguration (authenticated)
-          await acctServer.accountGetAndUpdateLocalStore(); // stores ClientConfiguration
+          await acctServer.fetchAndSaveClientConfiguration(); // stores ClientConfiguration
         }
       } catch (e) {
         if (GoogleAuth.isFesUnreachableErr(e, authRes.acctEmail)) {
-          const error = `Cannot reach your company's FlowCrypt Enterprise Server (FES). Contact your Help Desk when unsure. (${String(e)})`;
+          const error = `Cannot reach your company's FlowCrypt External Service (FES). Contact your Help Desk when unsure. (${String(e)})`;
           return { result: 'Error', error, acctEmail: authRes.acctEmail, id_token: undefined }; // eslint-disable-line @typescript-eslint/naming-convention
         }
         return {

@@ -227,10 +227,10 @@ export class ClientConfiguration {
   };
 
   /**
-   * with this option and recipients are missing a public key, and the user is using flowcrypt.com/api (not FES)
+   * with this option and recipients are missing a public key, and the user is using flowcrypt.com/shared-tenant-fes (not FES)
    * it will not give the user option to enter a message password, as if that functionality didn't exist.
    */
-  public shouldDisablePasswordMessages = (): boolean => {
+  public shouldDisableFlowCryptHostedPasswordMessages = (): boolean => {
     return (this.clientConfigurationJson.flags || []).includes('DISABLE_FLOWCRYPT_HOSTED_PASSWORD_MESSAGES');
   };
 }

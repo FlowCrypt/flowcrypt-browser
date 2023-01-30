@@ -123,6 +123,7 @@ const makeMockBuild = (sourceBuildType: string) => {
       )
       .replace(/const (BACKEND_API_HOST) = [^;]+;/g, `const $1 = 'https://localhost:8001/api/';`)
       .replace(/const (ATTESTER_API_HOST) = [^;]+;/g, `const $1 = 'https://localhost:8001/attester/';`)
+      .replace(/const (SHARED_TENANT_API_HOST) = [^;]+;/g, `const $1 = 'https://localhost:8001/shared-tenant-fes';`)
       .replace(/https:\/\/flowcrypt\.com\/api\/help\/error/g, 'https://localhost:8001/api/help/error')
       .replace(/const (WKD_API_HOST) = '';/g, `const $1 = 'https://localhost:8001';`);
   };
@@ -137,7 +138,7 @@ const makeMockBuild = (sourceBuildType: string) => {
 const makeLocalFesBuild = (sourceBuildType: string) => {
   const localFesBuildType = `${sourceBuildType}-local-fes`;
   exec(`cp -r ${buildDir(sourceBuildType)} ${buildDir(localFesBuildType)}`);
-  edit(`${buildDir(localFesBuildType)}/js/common/api/account-servers/enterprise-server.js`, code =>
+  edit(`${buildDir(localFesBuildType)}/js/common/api/account-servers/external-service.js`, code =>
     code.replace('https://fes.${this.domain}', 'http://localhost:32337')
   );
 };

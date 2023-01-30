@@ -63,7 +63,7 @@ export class SetupImportKeyModule {
       } else {
         Catch.reportErr(e);
         return await Ui.modal.error(
-          `An error happened when processing the key: ${String(e)}\n${Lang.general.contactForSupportSentence(this.view.isFesUsed())}`,
+          `An error happened when processing the key: ${String(e)}\n${Lang.general.contactForSupportSentence(this.view.isCustomerUrlFesUsed())}`,
           false,
           Ui.testCompatibilityLink
         );
@@ -72,7 +72,7 @@ export class SetupImportKeyModule {
   };
 
   public renderCompatibilityFixBlockAndFinalizeSetup = async (origPrv: Key, options: SetupOptions) => {
-    $('.ask_support_assistance_container').text(Lang.general.contactIfNeedAssistance(this.view.isFesUsed()));
+    $('.ask_support_assistance_container').text(Lang.general.contactIfNeedAssistance(this.view.isCustomerUrlFesUsed()));
     this.view.setupRender.displayBlock('step_3_compatibility_fix');
     let fixedPrv;
     try {
@@ -85,7 +85,11 @@ export class SetupImportKeyModule {
       );
     } catch (e) {
       Catch.reportErr(e);
-      await Ui.modal.error(`Failed to fix key (${String(e)}). ${Lang.general.writeMeToFixIt(this.view.isFesUsed())}`, false, Ui.testCompatibilityLink);
+      await Ui.modal.error(
+        `Failed to fix key (${String(e)}). ${Lang.general.writeMeToFixIt(this.view.isCustomerUrlFesUsed())}`,
+        false,
+        Ui.testCompatibilityLink
+      );
       this.view.setupRender.displayBlock('step_2b_manual_enter');
       return;
     }

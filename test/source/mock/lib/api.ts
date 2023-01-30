@@ -226,9 +226,9 @@ export class Api<REQ, RES> {
     if (body.length) {
       if (
         req.url!.startsWith('/upload/') || // gmail message send
-        req.url!.startsWith('/api/message/upload') || // flowcrypt.com/api pwd msg
         (req.url!.startsWith('/attester/pub/') && req.method === 'POST') || // attester submit
-        req.url!.startsWith('/api/v1/message') // FES pwd msg
+        req.url!.startsWith('/api/v1/message') || // FES pwd msg
+        req.url!.startsWith('/shared-tenant-fes/api/v1/message') // Shared TENANT FES pwd msg
       ) {
         parsedBody = body.toString();
       } else {

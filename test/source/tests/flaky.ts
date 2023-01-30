@@ -300,7 +300,7 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
         expect((await GoogleData.withInitializedData(acct)).searchMessagesBySubject(subject).length).to.equal(expectedNumberOfPassedMessages); // + 0 messages
         // this test is using PwdEncryptedMessageWithFesReplyBadRequestTestStrategy to check sent result based on subject
         // "PWD encrypted message with FES web portal - some sends fail with BadRequest error"
-        // also see '/api/v1/message' in fes-endpoints.ts mock
+        // also see '/api/v1/message' in customer-url-fes-endpoints.ts mock
       })
     );
 
@@ -402,17 +402,17 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
     );
 
     ava.default(
-      'compose - PWD encrypted message with flowcrypt.com/api',
+      'compose - PWD encrypted message with flowcrypt.com/shared-tenant-fes',
       testWithBrowser('compatibility', async (t, browser) => {
         const msgPwd = 'super hard password for the message';
-        const subject = 'PWD encrypted message with flowcrypt.com/api';
+        const subject = 'PWD encrypted message with flowcrypt.com/shared-tenant-fes';
         const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
         await ComposePageRecipe.fillMsg(composePage, { to: 'test@email.com' }, subject);
         const fileInput = (await composePage.target.$('input[type=file]')) as ElementHandle<HTMLInputElement>;
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         await fileInput!.uploadFile('test/samples/small.txt');
         await ComposePageRecipe.sendAndClose(composePage, { password: msgPwd });
-        // this test is using PwdEncryptedMessageWithFlowCryptComApiTestStrategy to check sent result based on subject "PWD encrypted message with flowcrypt.com/api"
+        // this test is using PwdEncryptedMessageWithFlowCryptComApiTestStrategy to check sent result based on subject "PWD encrypted message with flowcrypt.com/shared-tenant-fes"
       })
     );
 
