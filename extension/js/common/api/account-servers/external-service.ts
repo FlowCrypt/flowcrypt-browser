@@ -30,7 +30,7 @@ export namespace FesRes {
 /**
  * FlowCrypt External Service (FES) may be deployed on-prem by enterprise customers.
  * This gives them more control. All Client Configurations, log collectors, etc (as implemented) would then be handled by the FES.
- * Once fully integrated, this will allow customers to be fully independent of flowcrypt.com/shared-tenant-fes
+ * This allows customers to be fully independent of flowcrypt.com/shared-tenant-fes
  */
 // ts-prune-ignore-next
 export class ExternalService extends Api {

@@ -94,7 +94,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
   private formatSendablePwdMsgs = async (newMsg: NewMsgData, pubkeys: PubkeyResult[], signingKey?: ParsedKeyInfo) => {
     // password-protected message, temporarily uploaded (already encrypted) to:
     //    - flowcrypt.com/shared-tenant-fes (consumers and customers without on-prem setup), or
-    //    - FlowCrypt External Service (enterprise customers with on-prem setup)
+    //    - fes.customer-domain.com (enterprise customers with on-prem setup)
     //    It will be served to recipient through web
     const uploadedMessageData = await this.prepareAndUploadPwdEncryptedMsg(newMsg); // encrypted for pwd only, pubkeys ignored
     // pwdRecipients that have their personal link
@@ -159,22 +159,6 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
     if (!newMsg.pwd) {
       throw new Error('password unexpectedly missing');
     }
-    /**
-     * There are two mechanisms to send password protected messages: flowcrypt.com/shared-tenant-fes and FES
-     *  - flowcrypt.com/shared-tenant-fes is shared instance used by non-enterprise customers
-     *  - FES is a more recent API, a dedicated instance that an enterprise customer may run
-     * The flowcrypt.com mechanism expects the password to be hashed 100k times, then used
-     * The FES mechanism expects the password to be given to OpenPGP.js verbatim
-     *
-     * Reason: OpenPGP spec already has a mechanism for iterated hashing of passwords,
-     *   there is no need to invent our own:
-     *   https://datatracker.ietf.org/doc/html/rfc4880#section-3.7.1.3
-     *
-     * The advantage is that it's dynamic - the sender can choose the rounds of iterations, and
-     *   the recipient will follow transparently. For now, we'll be following the default set
-     *   in OpenPGP.js, and later we can make a deliberate choice on how many iterations to use
-     *   without having to affect recipient code.
-     */
     const { bodyWithReplyToken, replyToken } = await this.getPwdMsgSendableBodyWithOnlineReplyMsgToken(newMsg);
     const pgpMimeWithAttachments = await Mime.encode(
       bodyWithReplyToken,

@@ -111,7 +111,7 @@ export class SetupView extends View {
     this.backupUi = new BackupUi();
   }
 
-  public isCustomUrlFesUsed = () => Boolean(this.storage.fesUrl);
+  public isCustomerUrlFesUsed = () => Boolean(this.storage.fesUrl);
 
   public render = async () => {
     await initPassphraseToggle(['step_2b_manual_enter_passphrase'], 'hide');
@@ -315,7 +315,7 @@ export class SetupView extends View {
         e,
         e instanceof CompanyLdapKeyMismatchError ? Lang.setup.failedToImportUnknownKey : Lang.setup.failedToSubmitToAttester,
         () => this.submitPublicKeys({ submit_main, submit_all }),
-        Lang.general.contactIfNeedAssistance(this.isCustomUrlFesUsed())
+        Lang.general.contactIfNeedAssistance(this.isCustomerUrlFesUsed())
       );
     }
   };

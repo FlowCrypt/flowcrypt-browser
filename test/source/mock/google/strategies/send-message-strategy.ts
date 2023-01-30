@@ -16,6 +16,12 @@ import { GMAIL_RECOVERY_EMAIL_SUBJECTS } from '../../../core/const.js';
 import { ENVELOPED_DATA_OID, SIGNED_DATA_OID, SmimeKey } from '../../../core/crypto/smime/smime-key.js';
 import { testConstants } from '../../../tests/tooling/consts.js';
 
+const checkPwdEncryptedMessage = (message: string | undefined) => {
+  if (!message?.match(/https:\/\/flowcrypt.com\/[a-z0-9A-Z]{10}/)) {
+    throw new HttpClientErr(`Error: cannot find pwd encrypted flowcrypt.com/shared-tenant-fes link in:\n\n${message}`);
+  }
+};
+
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 // TODO: Make a better structure of ITestMsgStrategy. Because this class doesn't test anything, it only saves message in the Mock
 class SaveMessageInStorageStrategy implements ITestMsgStrategy {
@@ -45,9 +51,7 @@ class PwdAndPubkeyEncryptedMessagesWithFlowCryptComApiTestStrategy implements IT
     } else {
       expect(mimeMsg.text!).to.contain(`${senderEmail} has sent you a password-encrypted email`);
       expect(mimeMsg.text!).to.contain('Follow this link to open it');
-      if (!mimeMsg.text?.match(/https:\/\/flowcrypt.com\/[a-z0-9A-Z]{10}/)) {
-        throw new HttpClientErr(`Error: cannot find pwd encrypted flowcrypt.com/shared-tenant-fes link in:\n\n${mimeMsg.text}`);
-      }
+      checkPwdEncryptedMessage(mimeMsg.text);
     }
   };
 }
@@ -58,9 +62,7 @@ class PwdEncryptedMessageWithFlowCryptComApiTestStrategy implements ITestMsgStra
     if (!mimeMsg.text?.includes(`${senderEmail} has sent you a password-encrypted email`)) {
       throw new HttpClientErr(`Error checking sent text in:\n\n${mimeMsg.text}`);
     }
-    if (!mimeMsg.text?.match(/https:\/\/flowcrypt.com\/[a-z0-9A-Z]{10}/)) {
-      throw new HttpClientErr(`Error: cannot find pwd encrypted flowcrypt.com/shared-tenant-fes link in:\n\n${mimeMsg.text}`);
-    }
+    checkPwdEncryptedMessage(mimeMsg.text);
     if (!mimeMsg.text?.includes('Follow this link to open it')) {
       throw new HttpClientErr(`Error: cannot find pwd encrypted open link prompt in ${mimeMsg.text}`);
     }

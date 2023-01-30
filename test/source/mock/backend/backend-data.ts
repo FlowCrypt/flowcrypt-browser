@@ -38,13 +38,13 @@ export interface ReportedError {
 export class BackendData {
   public reportedErrors: ReportedError[] = [];
 
-  public forceClientConfigurationForDomain: Dict<ClientConfiguration | HttpClientErr> = {};
+  public clientConfigurationForDomain: Dict<ClientConfiguration | HttpClientErr> = {};
 
   /* eslint-disable no-null/no-null */
 
   /* eslint-disable @typescript-eslint/naming-convention */
   public getClientConfiguration = (domain: string) => {
-    const foundConfiguration = this.forceClientConfigurationForDomain[domain];
+    const foundConfiguration = this.clientConfigurationForDomain[domain];
     if (foundConfiguration) {
       if (foundConfiguration instanceof HttpClientErr) {
         throw foundConfiguration;

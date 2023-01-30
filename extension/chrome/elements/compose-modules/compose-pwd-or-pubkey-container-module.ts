@@ -140,7 +140,7 @@ export class ComposePwdOrPubkeyContainerModule extends ViewModule<ComposeView> {
   };
 
   private showMsgPwdUiAndColorBtn = async (anyNopgp: boolean, anyRevoked: boolean) => {
-    const isPasswordMessageDisabled = this.view.clientConfiguration.shouldDisablePasswordMessages() && !this.view.isCustomUrlFesUsed();
+    const isPasswordMessageDisabled = this.view.clientConfiguration.shouldDisableFlowCryptHostedPasswordMessages() && !this.view.isCustomerUrlFesUsed();
     if (!this.isVisible()) {
       await this.initExpirationText();
       this.view.S.cached('password_or_pubkey').css('display', 'table-row');

@@ -7,12 +7,11 @@ import { HttpClientErr, Status } from '../lib/api';
 import { MockJwt } from '../lib/oauth';
 import { mockBackendData } from '../backend/backend-endpoints';
 
-const standardFesUrl = 'fes.standardsubdomainfes.localhost:8001';
 const issuedAccessTokens: string[] = [];
 export const mockSharedTenantFesEndpoints: HandlersDefinition = {
   // shared tenant fes location at https://flowcrypt.com/shared-tenant-fes/
   '/shared-tenant-fes/api/': async ({}, req) => {
-    if ([standardFesUrl].includes(req.headers.host || '') && req.method === 'GET') {
+    if (req.method === 'GET') {
       return {
         vendor: 'Mock',
         service: 'external-service',
@@ -65,7 +64,7 @@ export const mockSharedTenantFesEndpoints: HandlersDefinition = {
     throw new HttpClientErr('Not Found', 404);
   },
   '/shared-tenant-fes/api/v1/message/FES-MOCK-EXTERNAL-ID/gateway': async ({ body }, req) => {
-    if (req.headers.host === standardFesUrl && req.method === 'POST') {
+    if (req.method === 'POST') {
       // test: `compose - user@standardsubdomainfes.localhost:8001 - PWD encrypted message with FES web portal`
       authenticate(req, 'oidc');
       expect(body).to.match(/{"emailGatewayMessageId":"<(.+)@standardsubdomainfes.localhost:8001>"}/);
@@ -74,7 +73,7 @@ export const mockSharedTenantFesEndpoints: HandlersDefinition = {
     throw new HttpClientErr('Not Found', 404);
   },
   '/shared-tenant-fes/api/v1/message/FES-MOCK-EXTERNAL-FOR-SENDER@DOMAIN.COM-ID/gateway': async ({ body }, req) => {
-    if (req.headers.host === standardFesUrl && req.method === 'POST') {
+    if (req.method === 'POST') {
       // test: `compose - user2@standardsubdomainfes.localhost:8001 - PWD encrypted message with FES - Reply rendering`
       authenticate(req, 'oidc');
       expect(body).to.match(/{"emailGatewayMessageId":"<(.+)@standardsubdomainfes.localhost:8001>"}/);
@@ -83,7 +82,7 @@ export const mockSharedTenantFesEndpoints: HandlersDefinition = {
     throw new HttpClientErr('Not Found', 404);
   },
   '/shared-tenant-fes/api/v1/message/FES-MOCK-EXTERNAL-FOR-TO@EXAMPLE.COM-ID/gateway': async ({ body }, req) => {
-    if (req.headers.host === standardFesUrl && req.method === 'POST') {
+    if (req.method === 'POST') {
       // test: `compose - user@standardsubdomainfes.localhost:8001 - PWD encrypted message with FES web portal`
       // test: `compose - user2@standardsubdomainfes.localhost:8001 - PWD encrypted message with FES - Reply rendering`
       // test: `compose - user3@standardsubdomainfes.localhost:8001 - PWD encrypted message with FES web portal - pubkey recipient in bcc`
@@ -95,7 +94,7 @@ export const mockSharedTenantFesEndpoints: HandlersDefinition = {
     throw new HttpClientErr('Not Found', 404);
   },
   '/shared-tenant-fes/api/v1/message/FES-MOCK-EXTERNAL-FOR-BCC@EXAMPLE.COM-ID/gateway': async ({ body }, req) => {
-    if (req.headers.host === standardFesUrl && req.method === 'POST') {
+    if (req.method === 'POST') {
       // test: `compose - user@standardsubdomainfes.localhost:8001 - PWD encrypted message with FES web portal`
       authenticate(req, 'oidc');
       expect(body).to.match(/{"emailGatewayMessageId":"<(.+)@standardsubdomainfes.localhost:8001>"}/);
