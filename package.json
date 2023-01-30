@@ -41,7 +41,7 @@
     "stylelint": "14.16.1",
     "stylelint-config-standard": "29.0.0",
     "typescript": "4.9.4",
-    "web-ext": "7.4.0"
+    "web-ext": "7.5.0"
   },
   "dependencies": {
     "@flowcrypt/fine-uploader": "5.16.4",
