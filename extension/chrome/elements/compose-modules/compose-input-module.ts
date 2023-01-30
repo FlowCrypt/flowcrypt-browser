@@ -78,11 +78,20 @@ export class ComposeInputModule extends ViewModule<ComposeView> {
     return this.view.sendBtnModule.popover.choices.richtext;
   };
 
+  public checkInputLengthBeforePasting = (textToPaste: string, targetInputField: HTMLElement, ev: ClipboardEvent) => {
+    const currentLength = targetInputField.innerText.length;
+    const limit = 50000;
+    if (textToPaste.length + currentLength > limit) {
+      ev.preventDefault();
+    }
+  };
+
   private handlePaste = () => {
     this.squire.addEventListener('willPaste', (e: WillPasteEvent) => {
       const div = document.createElement('div');
       div.appendChild(e.fragment);
       const html = div.innerHTML;
+      this.checkInputLengthBeforePasting(div.innerText, this.view.S.cached('input_text').get(0), e);
       const sanitized = this.isRichText() ? Xss.htmlSanitizeKeepBasicTags(html, 'IMG-KEEP') : Xss.htmlSanitizeAndStripAllTags(html, '<br>', false);
       Xss.setElementContentDANGEROUSLY(div, sanitized); // xss-sanitized
       e.fragment.appendChild(div);

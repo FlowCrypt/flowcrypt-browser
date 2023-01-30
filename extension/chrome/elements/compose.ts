@@ -222,6 +222,16 @@ export class ComposeView extends View {
       'click',
       this.setHandler(async () => await this.renderModule.openSettingsWithDialog('help'), this.errModule.handle(`help dialog`))
     );
+    this.S.cached('input_intro').on(
+      'paste',
+      this.setHandler(async (el, ev) => {
+        const clipboardEvent = ev.originalEvent as ClipboardEvent;
+        if (clipboardEvent.clipboardData) {
+          const clipboardData = clipboardEvent.clipboardData.getData('text/plain');
+          this.inputModule.checkInputLengthBeforePasting(clipboardData, el, clipboardEvent);
+        }
+      })
+    );
     this.attachmentsModule.setHandlers();
     this.inputModule.setHandlers();
     this.myPubkeyModule.setHandlers();
