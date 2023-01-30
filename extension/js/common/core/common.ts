@@ -23,7 +23,7 @@ export class Str {
     let name: string | undefined;
     if (full.includes('<') && full.includes('>')) {
       email = full
-        .substring(full.indexOf('<') + 1, full.indexOf('>') - full.indexOf('<') - 1)
+        .substring(full.indexOf('<') + 1, full.indexOf('>'))
         .replace(/["']/g, '')
         .trim()
         .toLowerCase();

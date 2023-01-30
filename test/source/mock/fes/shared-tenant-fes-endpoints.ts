@@ -6,6 +6,7 @@ import { HandlersDefinition } from '../all-apis-mock';
 import { HttpClientErr, Status } from '../lib/api';
 import { MockJwt } from '../lib/oauth';
 import { mockBackendData } from '../backend/backend-endpoints';
+import { parsePort } from '../lib/mock-util';
 
 const issuedAccessTokens: string[] = [];
 export const mockSharedTenantFesEndpoints: HandlersDefinition = {
@@ -20,12 +21,13 @@ export const mockSharedTenantFesEndpoints: HandlersDefinition = {
         apiVersion: 'v1',
       };
     }
-    if (req.headers.host === 'fes.localhost:8001') {
+    const port = parsePort(req);
+    if (req.headers.host === `fes.localhost:${port}`) {
       // test `status404 does not return any fesUrl` uses this
       // this makes enterprise version tolerate missing FES - explicit 404
       throw new HttpClientErr(`Not found`, 404);
     }
-    if (req.headers.host === 'fes.google.mock.localhost:8001') {
+    if (req.headers.host === `fes.google.mock.localhost:${port}`) {
       // test `compose - auto include pubkey is inactive when our key is available on Wkd` uses this
       // this makes enterprise version tolerate missing FES - explicit 404
       throw new HttpClientErr(`Not found`, 404);
@@ -38,7 +40,7 @@ export const mockSharedTenantFesEndpoints: HandlersDefinition = {
       throw new HttpClientErr('Unsupported method');
     }
     return {
-      clientConfiguration: mockBackendData.getClientConfiguration(domain),
+      clientConfiguration: mockBackendData.getClientConfiguration(domain, parsePort(req)),
     };
   },
   '/shared-tenant-fes/api/v1/message/new-reply-token': async ({}, req) => {
