@@ -708,9 +708,9 @@ export class ControllablePage extends ControllableBase {
     }
   };
 
-  public goto = async (t: AvaContext, url: string) => {
-    const extensionUrl = t.urls?.extension('') ?? '';
-    url = url.indexOf('https://') === 0 || url.indexOf(extensionUrl) === 0 ? url : t.urls?.extension(url) ?? '';
+  public goto = async (url: string) => {
+    const extensionUrl = this.t.urls?.extension('') ?? '';
+    url = url.indexOf('https://') === 0 || url.indexOf(extensionUrl) === 0 ? url : this.t.urls?.extension(url) ?? '';
     await Util.sleep(1);
     // await this.page.goto(url); // may produce intermittent Navigation Timeout Exceeded in CI environment
     this.page.goto(url).catch(e => this.t.log(`goto: ${e.message}: ${url}`));

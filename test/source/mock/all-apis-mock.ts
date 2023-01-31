@@ -15,7 +15,7 @@ import { mockSharedTenantFesEndpoints } from './fes/shared-tenant-fes-endpoints'
 
 export type HandlersDefinition = Handlers<{ query: { [k: string]: string }; body?: unknown }, unknown>;
 
-export const startAllApisMock = async (port: number, logger: (line: string) => void) => {
+export const startAllApisMock = async (logger: (line: string) => void) => {
   class LoggedApi<REQ, RES> extends Api<REQ, RES> {
     protected throttleChunkMsUpload = 15;
     protected throttleChunkMsDownload = 50;
@@ -36,6 +36,6 @@ export const startAllApisMock = async (port: number, logger: (line: string) => v
     ...mockSharedTenantFesEndpoints,
     '/favicon.ico': async () => '',
   });
-  await api.listen(port);
+  await api.listen();
   return api;
 };

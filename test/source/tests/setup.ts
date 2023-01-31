@@ -1245,7 +1245,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         // Secondly, configure mock EKM to return a key and re-load the gmail page
         MOCK_KM_KEYS[acct] = { response: { privateKeys: [{ decryptedPrivateKey: testConstants.updatingPrv }] } };
         gmailPage = await browser.newPage(t, undefined, undefined, extraAuthHeaders);
-        const newSettingsPage = await browser.newPageTriggeredBy(t, () => gmailPage.goto(t, t.urls?.mockGmailUrl() ?? ''));
+        const newSettingsPage = await browser.newPageTriggeredBy(t, () => gmailPage.goto(t.urls?.mockGmailUrl() ?? ''));
         await SetupPageRecipe.autoSetupWithEKM(newSettingsPage, {
           enterPp: { passphrase, checks: { isSavePassphraseChecked: false, isSavePassphraseHidden: true } },
         });

@@ -35,7 +35,7 @@ export class BrowserHandle {
       if (initialScript) {
         await page.evaluateOnNewDocument(initialScript);
       }
-      await controllablePage.goto(t, url);
+      await controllablePage.goto(url);
     }
     this.pages.push(controllablePage);
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion

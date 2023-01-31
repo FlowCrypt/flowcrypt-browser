@@ -87,7 +87,7 @@ const testWithBrowser = (
 };
 
 const startMockApiAndCopyBuild = async (t: AvaContext) => {
-  const mockApi = await startAllApisMock(0, line => {
+  const mockApi = await startAllApisMock(line => {
     if (DEBUG_MOCK_LOG) {
       console.log(line);
     }

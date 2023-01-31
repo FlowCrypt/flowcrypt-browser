@@ -101,7 +101,7 @@ export class OauthPageRecipe extends PageRecipe {
       } else if ((await oauthPage.target.$('.wLBAL[data-email="dummy"]')) !== null) {
         // let any e-mail pass
         const href = (await oauthPage.attr('.wLBAL', 'href')) + acctEmail;
-        await oauthPage.goto(t, href);
+        await oauthPage.goto(href);
       }
       await Util.sleep(2);
       if (action === 'login') {

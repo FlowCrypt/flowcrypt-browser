@@ -30,7 +30,7 @@ export const defineUnitBrowserTests = (testVariant: TestVariant, testWithBrowser
             (window as any).testConstants = object;
           }, testConstants);
           // prepare code to run
-          const testCodeWithMockPort = testCode.replace(':8001', ':' + t.urls?.port);
+          const testCodeWithMockPort = testCode.replace(/\:8001/g, ':' + t.urls?.port);
           const runThisCodeInBrowser = `
             (async () => {
               try {
@@ -130,7 +130,7 @@ export const defineUnitBrowserTests = (testVariant: TestVariant, testWithBrowser
         allUnitTests.push(...parseTestFile(filename));
       }
     }
-    const markedAsOnly: UnitTest[] = allUnitTests.filter(unitTest => unitTest.only);
+    const markedAsOnly = allUnitTests.filter(unitTest => unitTest.only);
     if (!markedAsOnly.length) {
       // no tests marked as only - run all
       for (const unitTest of allUnitTests) {
