@@ -121,12 +121,6 @@ const testWithBrowser = (
 
 export type TestWithBrowser = typeof testWithBrowser;
 
-test.after.always('close browsers', async t => {
-  standaloneTestTimeout(t, consts.TIMEOUT_SHORT, t.title);
-  // await browserPool.close();
-  t.pass();
-});
-
 if (isMock) {
   test.after.always('close mock api', async t => {
     standaloneTestTimeout(t, consts.TIMEOUT_SHORT, t.title);
@@ -144,16 +138,13 @@ test.after.always('evaluate Catch.reportErr errors', async t => {
   // todo - here we filter out an error that would otherwise be useful
   // in one test we are testing an error scenario
   // our S/MIME implementation is still early so it throws "reportable" errors like this during tests
-  const port = (t as AvaContext).urls?.port;
   const usefulErrors = mockBackendData.reportedErrors
     .filter(e => e.message !== 'Too few bytes to read ASN.1 value.')
     // below for test "get.updating.key@key-manager-choose-passphrase-forbid-storing.flowcrypt.test - automatic update of key found on key manager"
     .filter(
       e =>
-        ![
-          'BrowserMsg(processAndStoreKeysFromEkmLocally) sendRawResponse::Error: Some keys could not be parsed',
-          `BrowserMsg(ajax) Bad Request: 400 when GET-ing https://localhost:${port}/flowcrypt-email-key-manager/v1/keys/private (no body):  -> RequestTimeout`,
-        ].includes(e.message)
+        e.message !== 'BrowserMsg(processAndStoreKeysFromEkmLocally) sendRawResponse::Error: Some keys could not be parsed' &&
+        !e.message.match(/BrowserMsg\(ajax\) Bad Request: 400 when GET-ing https:\/\/localhost:\d+\/flowcrypt-email-key-manager/)
     )
     // below for test "user4@standardsubdomainfes.localhost:8001 - PWD encrypted message with FES web portal - a send fails with gateway update error"
     .filter(e => !e.message.includes('Test error'))
@@ -163,7 +154,7 @@ test.after.always('evaluate Catch.reportErr errors', async t => {
     .filter(e => !e.trace.includes('-1 when GET-ing https://openpgpkey.flowcrypt.com'))
     // below for "test allows to retry public key search when attester returns error"
     .filter(
-      e => !e.message.includes(`Error: Internal Server Error: 500 when GET-ing https://localhost:${port}/attester/pub/attester.return.error@flowcrypt.test`)
+      e => !e.message.match(/Error: Internal Server Error: 500 when GET-ing https:\/\/localhost:\d+\/attester\/pub\/attester.return.error@flowcrypt.test/)
     );
   const foundExpectedErr = usefulErrors.find(re => re.message === `intentional error for debugging`);
   const foundUnwantedErrs = usefulErrors.filter(re => re.message !== `intentional error for debugging` && !re.message.includes('traversal forbidden'));
