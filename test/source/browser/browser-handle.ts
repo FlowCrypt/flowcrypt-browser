@@ -1,7 +1,7 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
 import { Browser, EvaluateFunc, Page, Target } from 'puppeteer';
-import { Util, Config } from '../util';
+import { Util } from '../util';
 import { ControllablePage } from './controllable';
 import { Semaphore } from './browser-pool';
 import { TIMEOUT_ELEMENT_APPEAR } from '.';
@@ -38,7 +38,8 @@ export class BrowserHandle {
       await controllablePage.goto(t, url);
     }
     this.pages.push(controllablePage);
-    if (url && url.includes(Config.extensionId)) {
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    if (url && url.includes(t.urls!.extensionId)) {
       await controllablePage.waitUntilViewLoaded();
     }
     return controllablePage;
@@ -67,7 +68,8 @@ export class BrowserHandle {
     try {
       await page.setViewport(this.viewport);
       this.pages.push(controllablePage);
-      if (url.includes(Config.extensionId)) {
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      if (url.includes(t.urls!.extensionId)) {
         await controllablePage.waitUntilViewLoaded();
       }
       return controllablePage;

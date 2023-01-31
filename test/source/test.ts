@@ -6,7 +6,7 @@ import { exec } from 'child_process';
 
 import { AvaContext, getDebugHtmlAtts, minutes, standaloneTestTimeout } from './tests/tooling';
 import { BrowserHandle, BrowserPool } from './browser';
-import { Util, getParsedCliParams, Config } from './util';
+import { Util, getParsedCliParams } from './util';
 
 import { BrowserRecipe } from './tests/tooling/browser-recipe';
 import { defineComposeTests } from './tests/compose';
@@ -51,7 +51,6 @@ export type CommonAcct = 'compatibility' | 'compose' | 'ci.tests.gmail';
 
 const asyncExec = promisify(exec);
 const browserPool = new BrowserPool(consts.POOL_SIZE, 'browserPool', buildDir, isMock, undefined, undefined, consts.IS_LOCAL_DEBUG);
-// let closeMockApi: () => Promise<void>;
 const mockApiLogs: string[] = [];
 
 test.beforeEach('set timeout', async t => {
@@ -65,23 +64,8 @@ const testWithBrowser = (
 ): Implementation<unknown[]> => {
   return async (t: AvaContext) => {
     if (isMock) {
-      const mockApi = await startAllApisMock(0, line => {
-        if (DEBUG_MOCK_LOG) {
-          console.log(line);
-        }
-        mockApiLogs.push(line);
-      });
-      const address = mockApi.server.address();
-      if (typeof address === 'object' && address) {
-        const result = await asyncExec(`sh ./scripts/config-mock-build.sh ${buildDir} ${address.port}`);
-
-        t.extensionDir = result.stdout;
-        t.urls = new TestUrls(await browserPool.getExtensionId(t), address.port);
-      } else {
-        t.log('Failed to get mock build address');
-      }
+      await startMockApiAndCopyBuild(t);
     }
-    Config.extensionId = await browserPool.getExtensionId(t);
     await browserPool.withNewBrowserTimeoutAndRetry(
       async (t, browser) => {
         const start = Date.now();
@@ -90,24 +74,7 @@ const testWithBrowser = (
         }
         await cb(t, browser);
         if (DEBUG_BROWSER_LOG) {
-          try {
-            const page = await browser.newPage(t, t.urls?.extension('chrome/dev/ci_unit_test.htm'));
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-return
-            const items = (await page.target.evaluate(() => (window as any).Debug.readDatabase())) as {
-              input: unknown;
-              output: unknown;
-            }[];
-            for (let i = 0; i < items.length; i++) {
-              const item = items[i];
-              const input = JSON.stringify(item.input);
-              const output = JSON.stringify(item.output, undefined, 2);
-              const file = `./test/tmp/${t.title}-${i}.txt`;
-              writeFileSync(file, `in: ${input}\n\nout: ${output}`);
-              t.log(`browser debug written to file: ${file}`);
-            }
-          } catch (e) {
-            t.log(`Error reading debug messages: ${e}`);
-          }
+          await saveBrowserLog(t, browser);
         }
         t.log(`run time: ${Math.ceil((Date.now() - start) / 1000)}s`);
       },
@@ -119,11 +86,52 @@ const testWithBrowser = (
   };
 };
 
+const startMockApiAndCopyBuild = async (t: AvaContext) => {
+  const mockApi = await startAllApisMock(0, line => {
+    if (DEBUG_MOCK_LOG) {
+      console.log(line);
+    }
+    mockApiLogs.push(line);
+  }).catch(e => {
+    console.error(e);
+    process.exit(1);
+  });
+  const address = mockApi.server.address();
+  if (typeof address === 'object' && address) {
+    const result = await asyncExec(`sh ./scripts/config-mock-build.sh ${buildDir} ${address.port}`);
+
+    t.extensionDir = result.stdout;
+    t.urls = new TestUrls(await browserPool.getExtensionId(t), address.port);
+  } else {
+    t.log('Failed to get mock build address');
+  }
+};
+
+const saveBrowserLog = async (t: AvaContext, browser: BrowserHandle) => {
+  try {
+    const page = await browser.newPage(t, t.urls?.extension('chrome/dev/ci_unit_test.htm'));
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-return
+    const items = (await page.target.evaluate(() => (window as any).Debug.readDatabase())) as {
+      input: unknown;
+      output: unknown;
+    }[];
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+      const input = JSON.stringify(item.input);
+      const output = JSON.stringify(item.output, undefined, 2);
+      const file = `./test/tmp/${t.title}-${i}.txt`;
+      writeFileSync(file, `in: ${input}\n\nout: ${output}`);
+      t.log(`browser debug written to file: ${file}`);
+    }
+  } catch (e) {
+    t.log(`Error reading debug messages: ${e}`);
+  }
+};
+
 export type TestWithBrowser = typeof testWithBrowser;
 
 if (isMock) {
-  test.after.always('close mock api', async t => {
-    standaloneTestTimeout(t, consts.TIMEOUT_SHORT, t.title);
+  test.afterEach.always('close mock api', async t => {
     // closeMockApi().catch(t.log);
     t.pass();
   });

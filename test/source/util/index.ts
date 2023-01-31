@@ -64,8 +64,6 @@ interface TestSecretsInterface {
 /* eslint-enable @typescript-eslint/naming-convention */
 
 export class Config {
-  public static extensionId = '';
-
   private static _secrets: TestSecretsInterface;
 
   public static secrets = (): TestSecretsInterface => {
