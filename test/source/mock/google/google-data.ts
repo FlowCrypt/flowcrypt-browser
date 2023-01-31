@@ -177,7 +177,7 @@ export class GoogleData {
       for (const file of files) {
         const utfStr = new TextDecoder().decode(file);
         const json = JSON.parse(utfStr) as ExportedMsg;
-        if (json.acctEmail === acct) {
+        if (json.acctEmail.split(':')[0] === acct.split(':')[0]) {
           Object.assign(acctData.attachments, json.attachments);
           json.full.raw = json.raw.raw;
           if (json.full.labelIds && json.full.labelIds.includes('DRAFT')) {
