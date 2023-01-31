@@ -71,6 +71,7 @@ export declare class SquireEditor {
   removeAllFormatting(): void;
   changeFormat(formattingToAdd: any, formattingToRemove: any, range: Range): void;
   setConfig(config: any): SquireEditor;
+  getRoot(): HTMLElement;
 }
 
 export declare class WillPasteEvent extends ClipboardEvent {
