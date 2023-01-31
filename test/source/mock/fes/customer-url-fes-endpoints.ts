@@ -14,7 +14,7 @@ const standardFesUrl = (port: string) => {
 };
 const issuedAccessTokens: string[] = [];
 
-const processMessageFromUser = async (body: string) => {
+const processMessageFromUser = async (body: string, fesUrl: string) => {
   expect(body).to.contain('-----BEGIN PGP MESSAGE-----');
   expect(body).to.contain('"associateReplyToken":"mock-fes-reply-token"');
   expect(body).to.contain('"to":["Mr To <to@example.com>"]');
@@ -38,22 +38,22 @@ const processMessageFromUser = async (body: string) => {
   expect(decryptedMimeMsg).to.contain('Content-Transfer-Encoding: base64\r\n\r\n' + 'c21hbGwgdGV4dCBmaWxlCm5vdCBtdWNoIGhlcmUKdGhpcyB3b3JrZWQK');
   const response = {
     // this url is required for pubkey encrypted message
-    url: `http://${standardFesUrl}/message/FES-MOCK-MESSAGE-ID`,
+    url: `http://${fesUrl}/message/FES-MOCK-MESSAGE-ID`,
     externalId: 'FES-MOCK-EXTERNAL-ID',
     emailToExternalIdAndUrl: {} as { [email: string]: { url: string; externalId: string } },
   };
   response.emailToExternalIdAndUrl['to@example.com'] = {
-    url: `http://${standardFesUrl}/message/FES-MOCK-MESSAGE-FOR-TO@EXAMPLE.COM-ID`,
+    url: `http://${fesUrl}/message/FES-MOCK-MESSAGE-FOR-TO@EXAMPLE.COM-ID`,
     externalId: 'FES-MOCK-EXTERNAL-FOR-TO@EXAMPLE.COM-ID',
   };
   response.emailToExternalIdAndUrl['bcc@example.com'] = {
-    url: `http://${standardFesUrl}/message/FES-MOCK-MESSAGE-FOR-BCC@EXAMPLE.COM-ID`,
+    url: `http://${fesUrl}/message/FES-MOCK-MESSAGE-FOR-BCC@EXAMPLE.COM-ID`,
     externalId: 'FES-MOCK-EXTERNAL-FOR-BCC@EXAMPLE.COM-ID',
   };
   return response;
 };
 
-const processMessageFromUser2 = async (body: string) => {
+const processMessageFromUser2 = async (body: string, fesUrl: string) => {
   expect(body).to.contain('-----BEGIN PGP MESSAGE-----');
   expect(body).to.contain('"associateReplyToken":"mock-fes-reply-token"');
   expect(body).to.contain('"to":["sender@domain.com","flowcrypt.compatibility@gmail.com","to@example.com","mock.only.pubkey@flowcrypt.com"]');
@@ -79,30 +79,30 @@ const processMessageFromUser2 = async (body: string) => {
   );
   const response = {
     // this url is required for pubkey encrypted message
-    url: `http://${standardFesUrl}/message/FES-MOCK-MESSAGE-ID`,
+    url: `http://${fesUrl}/message/FES-MOCK-MESSAGE-ID`,
     externalId: 'FES-MOCK-EXTERNAL-ID',
     emailToExternalIdAndUrl: {} as { [email: string]: { url: string; externalId: string } },
   };
   response.emailToExternalIdAndUrl['to@example.com'] = {
-    url: `http://${standardFesUrl}/message/FES-MOCK-MESSAGE-FOR-TO@EXAMPLE.COM-ID`,
+    url: `http://${fesUrl}/message/FES-MOCK-MESSAGE-FOR-TO@EXAMPLE.COM-ID`,
     externalId: 'FES-MOCK-EXTERNAL-FOR-TO@EXAMPLE.COM-ID',
   };
   response.emailToExternalIdAndUrl['sender@domain.com'] = {
-    url: `http://${standardFesUrl}/message/FES-MOCK-MESSAGE-FOR-SENDER@DOMAIN.COM-ID`,
+    url: `http://${fesUrl}/message/FES-MOCK-MESSAGE-FOR-SENDER@DOMAIN.COM-ID`,
     externalId: 'FES-MOCK-EXTERNAL-FOR-SENDER@DOMAIN.COM-ID',
   };
   response.emailToExternalIdAndUrl['flowcrypt.compatibility@gmail.com'] = {
-    url: `http://${standardFesUrl}/message/FES-MOCK-MESSAGE-FOR-FLOWCRYPT.COMPATIBILITY@GMAIL.COM-ID`,
+    url: `http://${fesUrl}/message/FES-MOCK-MESSAGE-FOR-FLOWCRYPT.COMPATIBILITY@GMAIL.COM-ID`,
     externalId: 'FES-MOCK-EXTERNAL-FOR-FLOWCRYPT.COMPATIBILITY@GMAIL.COM-ID',
   };
   response.emailToExternalIdAndUrl['mock.only.pubkey@flowcrypt.com'] = {
-    url: `http://${standardFesUrl}/message/FES-MOCK-MESSAGE-FOR-MOCK.ONLY.PUBKEY@FLOWCRYPT.COM-ID`,
+    url: `http://${fesUrl}/message/FES-MOCK-MESSAGE-FOR-MOCK.ONLY.PUBKEY@FLOWCRYPT.COM-ID`,
     externalId: 'FES-MOCK-EXTERNAL-FOR-MOCK.ONLY.PUBKEY@FLOWCRYPT.COM-ID',
   };
   return response;
 };
 
-const processMessageFromUser3 = async (body: string) => {
+const processMessageFromUser3 = async (body: string, fesUrl: string) => {
   expect(body).to.contain('-----BEGIN PGP MESSAGE-----');
   expect(body).to.contain('"associateReplyToken":"mock-fes-reply-token"');
   expect(body).to.contain('"to":["to@example.com"]');
@@ -124,61 +124,61 @@ const processMessageFromUser3 = async (body: string) => {
   );
   const response = {
     // this url is required for pubkey encrypted message
-    url: `http://${standardFesUrl}/message/FES-MOCK-MESSAGE-ID`,
+    url: `http://${fesUrl}/message/FES-MOCK-MESSAGE-ID`,
     externalId: 'FES-MOCK-EXTERNAL-ID',
     emailToExternalIdAndUrl: {} as { [email: string]: { url: string; externalId: string } },
   };
   response.emailToExternalIdAndUrl['to@example.com'] = {
-    url: `http://${standardFesUrl}/message/FES-MOCK-MESSAGE-FOR-TO@EXAMPLE.COM-ID`,
+    url: `http://${fesUrl}/message/FES-MOCK-MESSAGE-FOR-TO@EXAMPLE.COM-ID`,
     externalId: 'FES-MOCK-EXTERNAL-FOR-TO@EXAMPLE.COM-ID',
   };
   response.emailToExternalIdAndUrl['flowcrypt.compatibility@gmail.com'] = {
-    url: `http://${standardFesUrl}/message/FES-MOCK-MESSAGE-FOR-FLOWCRYPT.COMPATIBILITY@GMAIL.COM-ID`,
+    url: `http://${fesUrl}/message/FES-MOCK-MESSAGE-FOR-FLOWCRYPT.COMPATIBILITY@GMAIL.COM-ID`,
     externalId: 'FES-MOCK-EXTERNAL-FOR-FLOWCRYPT.COMPATIBILITY@GMAIL.COM-ID',
   };
   return response;
 };
 
-const processMessageFromUser4 = async (body: string) => {
+const processMessageFromUser4 = async (body: string, fesUrl: string) => {
   const response = {
     // this url is required for pubkey encrypted message
-    url: `http://${standardFesUrl}/message/FES-MOCK-MESSAGE-ID`,
+    url: `http://${fesUrl}/message/FES-MOCK-MESSAGE-ID`,
     externalId: 'FES-MOCK-EXTERNAL-ID',
     emailToExternalIdAndUrl: {} as { [email: string]: { url: string; externalId: string } },
   };
   if (body.includes('to@example.com')) {
     response.emailToExternalIdAndUrl['to@example.com'] = {
-      url: `http://${standardFesUrl}/message/FES-MOCK-MESSAGE-FOR-TO@EXAMPLE.COM-ID`,
+      url: `http://${fesUrl}/message/FES-MOCK-MESSAGE-FOR-TO@EXAMPLE.COM-ID`,
       externalId: 'FES-MOCK-EXTERNAL-FOR-TO@EXAMPLE.COM-ID',
     };
   }
   if (body.includes('invalid@example.com')) {
     response.emailToExternalIdAndUrl['invalid@example.com'] = {
-      url: `http://${standardFesUrl}/message/FES-MOCK-MESSAGE-FOR-INVALID@EXAMPLE.COM-ID`,
+      url: `http://${fesUrl}/message/FES-MOCK-MESSAGE-FOR-INVALID@EXAMPLE.COM-ID`,
       externalId: 'FES-MOCK-EXTERNAL-FOR-INVALID@EXAMPLE.COM-ID',
     };
   }
   if (body.includes('timeout@example.com')) {
     response.emailToExternalIdAndUrl['timeout@example.com'] = {
-      url: `http://${standardFesUrl}/message/FES-MOCK-MESSAGE-FOR-TIMEOUT@EXAMPLE.COM-ID`,
+      url: `http://${fesUrl}/message/FES-MOCK-MESSAGE-FOR-TIMEOUT@EXAMPLE.COM-ID`,
       externalId: 'FES-MOCK-EXTERNAL-FOR-TIMEOUT@EXAMPLE.COM-ID',
     };
   }
   if (body.includes('Mr Cc <cc@example.com>')) {
     response.emailToExternalIdAndUrl['cc@example.com'] = {
-      url: `http://${standardFesUrl}/message/FES-MOCK-MESSAGE-FOR-CC@EXAMPLE.COM-ID`,
+      url: `http://${fesUrl}/message/FES-MOCK-MESSAGE-FOR-CC@EXAMPLE.COM-ID`,
       externalId: 'FES-MOCK-EXTERNAL-FOR-CC@EXAMPLE.COM-ID',
     };
   }
   if (body.includes('First Last <flowcrypt.compatibility@gmail.com>')) {
     response.emailToExternalIdAndUrl['flowcrypt.compatibility@gmail.com'] = {
-      url: `http://${standardFesUrl}/message/FES-MOCK-MESSAGE-FOR-FLOWCRYPT.COMPATIBILITY@GMAIL.COM-ID`,
+      url: `http://${fesUrl}/message/FES-MOCK-MESSAGE-FOR-FLOWCRYPT.COMPATIBILITY@GMAIL.COM-ID`,
       externalId: 'FES-MOCK-EXTERNAL-FOR-FLOWCRYPT.COMPATIBILITY@GMAIL.COM-ID',
     };
   }
   if (body.includes('gatewayfailure@example.com')) {
     response.emailToExternalIdAndUrl['gatewayfailure@example.com'] = {
-      url: `http://${standardFesUrl}/message/FES-MOCK-MESSAGE-FOR-GATEWAYFAILURE@EXAMPLE.COM-ID`,
+      url: `http://${fesUrl}/message/FES-MOCK-MESSAGE-FOR-GATEWAYFAILURE@EXAMPLE.COM-ID`,
       externalId: 'FES-MOCK-EXTERNAL-FOR-GATEWAYFAILURE@EXAMPLE.COM-ID',
     };
   }
@@ -232,21 +232,22 @@ export const mockCustomerUrlFesEndpoints: HandlersDefinition = {
   },
   '/api/v1/message': async ({ body }, req) => {
     const port = parsePort(req);
+    const fesUrl = standardFesUrl(port);
     // body is a mime-multipart string, we're doing a few smoke checks here without parsing it
-    if (req.headers.host === standardFesUrl(port) && req.method === 'POST' && typeof body === 'string') {
+    if (req.headers.host === fesUrl && req.method === 'POST' && typeof body === 'string') {
       // test: `compose - user@standardsubdomainfes.localhost:8001 - PWD encrypted message with FES web portal`
       authenticate(req, 'oidc');
       if (body.includes(`"from":"user@standardsubdomainfes.localhost:${port}"`)) {
-        return await processMessageFromUser(body);
+        return await processMessageFromUser(body, fesUrl);
       }
       if (body.includes(`"from":"user2@standardsubdomainfes.localhost:${port}"`)) {
-        return await processMessageFromUser2(body);
+        return await processMessageFromUser2(body, fesUrl);
       }
       if (body.includes(`"from":"user3@standardsubdomainfes.localhost:${port}"`)) {
-        return await processMessageFromUser3(body);
+        return await processMessageFromUser3(body, fesUrl);
       }
       if (body.includes(`"from":"user4@standardsubdomainfes.localhost:${port}"`)) {
-        return await processMessageFromUser4(body);
+        return await processMessageFromUser4(body, fesUrl);
       }
     }
     throw new HttpClientErr('Not Found', 404);
@@ -256,7 +257,7 @@ export const mockCustomerUrlFesEndpoints: HandlersDefinition = {
     if (req.headers.host === standardFesUrl(port) && req.method === 'POST') {
       // test: `compose - user@standardsubdomainfes.localhost:8001 - PWD encrypted message with FES web portal`
       authenticate(req, 'oidc');
-      expect(body).to.match(/{"emailGatewayMessageId":"<(.+)@standardsubdomainfes.localhost:${port}>"}/);
+      expect(body).to.match(messageIdRegex(port));
       return {};
     }
     throw new HttpClientErr('Not Found', 404);
@@ -266,7 +267,7 @@ export const mockCustomerUrlFesEndpoints: HandlersDefinition = {
     if (req.headers.host === standardFesUrl(port) && req.method === 'POST') {
       // test: `compose - user2@standardsubdomainfes.localhost:8001 - PWD encrypted message with FES - Reply rendering`
       authenticate(req, 'oidc');
-      expect(body).to.match(/{"emailGatewayMessageId":"<(.+)@standardsubdomainfes.localhost:${port}>"}/);
+      expect(body).to.match(messageIdRegex(port));
       return {};
     }
     throw new HttpClientErr('Not Found', 404);
@@ -279,7 +280,7 @@ export const mockCustomerUrlFesEndpoints: HandlersDefinition = {
       // test: `compose - user3@standardsubdomainfes.localhost:8001 - PWD encrypted message with FES web portal - pubkey recipient in bcc`
       // test: `compose - user4@standardsubdomainfes.localhost:8001 - PWD encrypted message with FES web portal - some sends fail with BadRequest error`
       authenticate(req, 'oidc');
-      expect(body).to.match(/{"emailGatewayMessageId":"<(.+)@standardsubdomainfes.localhost:${port}>"}/);
+      expect(body).to.match(messageIdRegex(port));
       return {};
     }
     throw new HttpClientErr('Not Found', 404);
@@ -289,7 +290,7 @@ export const mockCustomerUrlFesEndpoints: HandlersDefinition = {
     if (req.headers.host === standardFesUrl(port) && req.method === 'POST') {
       // test: `compose - user@standardsubdomainfes.localhost:8001 - PWD encrypted message with FES web portal`
       authenticate(req, 'oidc');
-      expect(body).to.match(/{"emailGatewayMessageId":"<(.+)@standardsubdomainfes.localhost:${port}>"}/);
+      expect(body).to.match(messageIdRegex(port));
       return {};
     }
     throw new HttpClientErr('Not Found', 404);
@@ -316,4 +317,8 @@ const authenticate = (req: IncomingMessage, type: 'oidc' | 'fes'): string => {
     }
   }
   return MockJwt.parseEmail(jwt);
+};
+
+const messageIdRegex = (port: string) => {
+  return new RegExp(`{"emailGatewayMessageId":"<(.+)@standardsubdomainfes.localhost:${port}>"}`);
 };
