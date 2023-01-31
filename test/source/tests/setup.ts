@@ -1576,7 +1576,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       'user@standardsubdomainfes.localhost:8001 - uses FES on standard domain',
       testWithBrowser(undefined, async (t, browser) => {
         const port = t.urls?.port;
-        const acct = `user@standardsubdomainfes.localhost:${port}}`; // added port to trick extension into calling the mock
+        const acct = `user@standardsubdomainfes.localhost:${port}`; // added port to trick extension into calling the mock
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
         await SetupPageRecipe.manualEnter(
           settingsPage,
