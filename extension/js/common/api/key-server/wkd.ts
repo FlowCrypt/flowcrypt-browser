@@ -64,13 +64,6 @@ export class Wkd extends Api {
     return { pubkeys: filtered.map(pubkey => pubkey.armored) };
   };
 
-  public debugInfo = () => {
-    const lowerCaseRecipientDomain = 'localhost';
-    const directHost = WKD_API_HOST || `https://${lowerCaseRecipientDomain}`;
-    const advancedHost = WKD_API_HOST || `https://openpgpkey.${lowerCaseRecipientDomain}`;
-    return 'direct - ' + directHost + ', advanced - ' + advancedHost + ', wkd - ' + WKD_API_HOST;
-  };
-
   private urlLookup = async (methodUrlBase: string, userPart: string, timeout: number): Promise<{ hasPolicy: boolean; buf?: Buf }> => {
     try {
       await Wkd.download(`${methodUrlBase}/policy`, undefined, timeout);
