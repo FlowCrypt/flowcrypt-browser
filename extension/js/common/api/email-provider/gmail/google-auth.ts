@@ -178,20 +178,11 @@ export class GoogleAuth {
       try {
         const potentialFes = new ExternalService(authRes.acctEmail);
         if (await potentialFes.isFesInstalledAndAvailable()) {
-          // on FES, pulling ClientConfiguration is not authenticated, and it contains info about how to
-          //   authenticate when doing other calls (use access token or OIDC directly)
           await AcctStore.set(authRes.acctEmail, { fesUrl: potentialFes.url });
-          const acctServer = new AccountServer(authRes.acctEmail);
-          // fetch and store ClientConfiguration (not authenticated)
-          await acctServer.fetchAndSaveClientConfiguration();
-        } else {
-          // eventually this branch will be dropped once a public FES instance is run for these customers
-          // when using flowcrypt.com/shared-tenant-fes, pulling ClientConfiguration is authenticated, therefore have
-          //   to retrieve access token first (which is the only way to authenticate other calls)
-          const acctServer = new AccountServer(authRes.acctEmail);
-          // fetch and store ClientConfiguration (authenticated)
-          await acctServer.fetchAndSaveClientConfiguration(); // stores ClientConfiguration
         }
+        const acctServer = new AccountServer(authRes.acctEmail);
+        // fetch and store ClientConfiguration (not authenticated)
+        await acctServer.fetchAndSaveClientConfiguration();
       } catch (e) {
         if (GoogleAuth.isFesUnreachableErr(e, authRes.acctEmail)) {
           const error = `Cannot reach your company's FlowCrypt External Service (FES). Contact your Help Desk when unsure. (${String(e)})`;
