@@ -1,7 +1,7 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 'use strict';
 
-import { Api, ProgressCb, ReqMethod } from '../shared/api.js';
+import { Api, ProgressCb, ProgressCbs, ReqFmt, ReqMethod } from '../shared/api.js';
 import { AcctStore } from '../../platform/store/acct-store.js';
 import { Dict, Str } from '../../core/common.js';
 import { ErrorReport } from '../../platform/catch.js';
@@ -95,20 +95,24 @@ export class ExternalService extends Api {
   };
 
   public reportException = async (errorReport: ErrorReport): Promise<void> => {
-    await this.request<void>('POST', `/api/${this.apiVersion}/log-collector/exception`, await this.authHdr(), errorReport);
+    await this.request<void>('POST', `/api/${this.apiVersion}/log-collector/exception`, {}, errorReport);
   };
 
   public reportEvent = async (tags: EventTag[], message: string, details?: string): Promise<void> => {
-    await this.request<void>('POST', `/api/${this.apiVersion}/log-collector/exception`, await this.authHdr(), {
-      tags,
-      message,
-      details,
-    });
+    await this.request<void>(
+      'POST',
+      `/api/${this.apiVersion}/log-collector/exception`,
+      {},
+      {
+        tags,
+        message,
+        details,
+      }
+    );
   };
 
   public webPortalMessageNewReplyToken = async (): Promise<FesRes.ReplyToken> => {
-    const authHdr = await this.authHdr();
-    return await this.request<FesRes.ReplyToken>('POST', `/api/${this.apiVersion}/message/new-reply-token`, authHdr, {});
+    return await this.request<FesRes.ReplyToken>('POST', `/api/${this.apiVersion}/message/new-reply-token`, {}, {});
   };
 
   public webPortalMessageUpload = async (
@@ -137,23 +141,18 @@ export class ExternalService extends Api {
       ),
     });
     const multipartBody = { content, details };
-    const authHdr = await this.authHdr();
-    return await ExternalService.apiCall<FesRes.MessageUpload>(
-      this.url,
-      `/api/${this.apiVersion}/message`,
-      multipartBody,
-      'FORM',
-      { upload: progressCb },
-      authHdr,
-      'json',
-      'POST'
-    );
+    return await this.request<FesRes.MessageUpload>('POST', `/api/${this.apiVersion}/message`, {}, multipartBody, { upload: progressCb });
   };
 
   public messageGatewayUpdate = async (externalId: string, emailGatewayMessageId: string) => {
-    await this.request<void>('POST', `/api/${this.apiVersion}/message/${externalId}/gateway`, await this.authHdr(), {
-      emailGatewayMessageId,
-    });
+    await this.request<void>(
+      'POST',
+      `/api/${this.apiVersion}/message/${externalId}/gateway`,
+      {},
+      {
+        emailGatewayMessageId,
+      }
+    );
   };
 
   private authHdr = async (): Promise<Dict<string>> => {
@@ -165,7 +164,25 @@ export class ExternalService extends Api {
     throw new BackendAuthErr('Missing id token, please re-authenticate');
   };
 
-  private request = async <RT>(method: ReqMethod, path: string, headers: Dict<string> = {}, vals?: Dict<unknown>): Promise<RT> => {
-    return await ExternalService.apiCall(this.url, path, vals, method === 'GET' ? undefined : 'JSON', undefined, headers, 'json', method);
+  private request = async <RT>(method: ReqMethod, path: string, headers: Dict<string> = {}, vals?: Dict<unknown>, progress?: ProgressCbs): Promise<RT> => {
+    let reqFmt: ReqFmt | undefined;
+    if (progress) {
+      reqFmt = 'FORM';
+    } else if (method !== 'GET') {
+      reqFmt = 'JSON';
+    }
+    return await ExternalService.apiCall(
+      this.url,
+      path,
+      vals,
+      reqFmt,
+      progress,
+      {
+        ...headers,
+        ...(await this.authHdr()),
+      },
+      'json',
+      method
+    );
   };
 }
