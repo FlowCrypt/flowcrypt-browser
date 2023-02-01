@@ -181,6 +181,7 @@ export class GoogleAuth {
           await AcctStore.set(authRes.acctEmail, { fesUrl: potentialFes.url });
         }
         const acctServer = new AccountServer(authRes.acctEmail);
+        await acctServer.initialize();
         // fetch and store ClientConfiguration (not authenticated)
         await acctServer.fetchAndSaveClientConfiguration();
       } catch (e) {

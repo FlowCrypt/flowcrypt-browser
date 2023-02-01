@@ -188,6 +188,7 @@ export class ComposeView extends View {
     this.renderModule = new ComposeRenderModule(this);
     this.myPubkeyModule = new ComposeMyPubkeyModule(this);
     this.storageModule = new ComposeStorageModule(this);
+    await this.acctServer.initialize();
     if (!this.isReplyBox) {
       await Assert.abortAndRenderErrOnUnprotectedKey(this.acctEmail);
     }

@@ -364,7 +364,9 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
 
   const updateClientConfiguration = async (acctEmail: string) => {
     try {
-      await new AccountServer(acctEmail).fetchAndSaveClientConfiguration();
+      const acctServer = new AccountServer(acctEmail);
+      await acctServer.initialize();
+      await acctServer.fetchAndSaveClientConfiguration();
     } catch (e) {
       if (e instanceof BackendAuthErr) {
         // user will see a prompt to log in during some other actions that involve backend
