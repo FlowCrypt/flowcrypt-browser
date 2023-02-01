@@ -77,15 +77,15 @@ const testWithBrowser = (
         if (DEBUG_BROWSER_LOG) {
           await saveBrowserLog(t, browser);
         }
-        if (t.closeMockApi) {
-          await t.closeMockApi();
-        }
         t.log(`run time: ${Math.ceil((Date.now() - start) / 1000)}s`);
       },
       t,
       consts,
       flag
     );
+    if (t.closeMockApi) {
+      await t.closeMockApi();
+    }
     t.pass();
   };
 };
