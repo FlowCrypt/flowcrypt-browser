@@ -12,7 +12,6 @@ export type AvaContext = ExecutionContext<unknown> & {
   attemptText?: string;
   extensionDir?: string;
   urls?: TestUrls;
-  closeMockApi?: () => Promise<void>;
 };
 
 const MAX_ATT_SIZE = 5 * 1024 * 1024;

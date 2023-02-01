@@ -63,9 +63,10 @@ const testWithBrowser = (
   flag?: 'FAILING'
 ): Implementation<unknown[]> => {
   return async (t: AvaContext) => {
+    let closeMockApi: (() => Promise<void>) | undefined;
     if (isMock) {
       const mockApi = await startMockApiAndCopyBuild(t);
-      t.closeMockApi = mockApi.close;
+      closeMockApi = mockApi.close;
     }
     await browserPool.withNewBrowserTimeoutAndRetry(
       async (t, browser) => {
@@ -83,8 +84,8 @@ const testWithBrowser = (
       consts,
       flag
     );
-    if (t.closeMockApi) {
-      await t.closeMockApi();
+    if (closeMockApi) {
+      await closeMockApi();
     }
     t.pass();
   };
