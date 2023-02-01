@@ -184,22 +184,6 @@ export class OpenPGPKey {
    */
   public static convertExternalLibraryObjToKey = async (opgpKey: OpenPGP.Key, keyToUpdate?: Key): Promise<Key> => {
     const { isPrimaryKeyStrong, keyWithoutWeakPackets } = OpenPGPKey.removeWeakKeyPackets(opgpKey);
-    let encryptionKeyExp: Date | number | null;
-    try {
-      encryptionKeyExp = await OpenPGPKey.getKeyExpirationTime(keyWithoutWeakPackets, 'encrypt');
-      // exp = await keyWithoutWeakPackets.getExpirationTime();
-    } catch (e) {
-      // eslint-disable-next-line no-null/no-null
-      encryptionKeyExp = null;
-    }
-    let signingKeyExp: Date | number | null;
-    try {
-      signingKeyExp = await OpenPGPKey.getKeyExpirationTime(keyWithoutWeakPackets, 'sign');
-      // exp = await keyWithoutWeakPackets.getExpirationTime();
-    } catch (e) {
-      // eslint-disable-next-line no-null/no-null
-      signingKeyExp = null;
-    }
     const { identities, emails } = await OpenPGPKey.getSortedUserids(keyWithoutWeakPackets);
     let lastModified: undefined | number;
     try {
@@ -217,7 +201,14 @@ export class OpenPGPKey {
       encryptionKeyIgnoringExpiration = undefined,
       signingKey = undefined,
       signingKeyIgnoringExpiration = undefined,
-    } = isPrimaryKeyStrong ? await OpenPGPKey.getSigningAndEncryptionKeys(keyWithoutWeakPackets, encryptionKeyExp, signingKeyExp) : {};
+    } = isPrimaryKeyStrong ? await OpenPGPKey.getSigningAndEncryptionKeys(keyWithoutWeakPackets) : {};
+    // eslint-disable-next-line no-null/no-null
+    let expirationTime: Date | typeof Infinity | null = null;
+    if (encryptionKeyIgnoringExpiration instanceof opgp.PublicKey) {
+      expirationTime = await encryptionKeyIgnoringExpiration.getExpirationTime();
+    } else if (encryptionKeyIgnoringExpiration instanceof opgp.Subkey) {
+      expirationTime = await OpenPGPKey.getSubkeyExpirationTime(encryptionKeyIgnoringExpiration, opgpKey.keyPacket);
+    }
     const missingPrivateKeyForSigning = signingKeyIgnoringExpiration?.keyPacket
       ? OpenPGPKey.arePrivateParamsMissing(signingKeyIgnoringExpiration.keyPacket)
       : false;
@@ -243,7 +234,7 @@ export class OpenPGPKey {
 
       identities,
       lastModified,
-      expiration: encryptionKeyExp instanceof Date ? encryptionKeyExp.getTime() : undefined,
+      expiration: expirationTime instanceof Date ? expirationTime.getTime() : undefined,
       created: keyWithoutWeakPackets.getCreationTime().getTime(),
       fullyDecrypted,
       fullyEncrypted,
@@ -736,51 +727,13 @@ export class OpenPGPKey {
     return keyWithPrivateFields.rawKey;
   };
 
-  private static isKeyExpired = (keyExp: number | Date | null) => {
-    if (keyExp === Infinity || !keyExp) {
-      return false;
-    }
-    // According to the documentation expiration is either undefined, Infinity
-    // (typeof number) or a Date object. So in this case `exp` should never
-    // be of type number.
-    if (typeof keyExp === 'number') {
-      throw new Error(`Got unexpected value for expiration: ${keyExp}`);
-    }
-    return Date.now() > keyExp.getTime();
-  };
-
-  private static getKeyIgnoringExpiration = async (
-    getter: (keyid?: OpenPGP.KeyID, date?: Date, userId?: OpenPGP.UserID) => Promise<OpenPGP.Key | OpenPGP.Subkey | null>,
-    exp: Date | number | null
-  ): Promise<OpenPGP.Key | OpenPGP.Subkey | null> => {
-    const firstTry = await Catch.undefinedOnException(getter());
-    if (firstTry) {
-      return firstTry;
-    }
+  private static getSigningAndEncryptionKeys = async (key: OpenPGP.PrivateKey | OpenPGP.PublicKey) => {
+    const encryptionKey = await Catch.undefinedOnException(key.getEncryptionKey());
     // eslint-disable-next-line no-null/no-null
-    if (exp === null || typeof exp === 'number') {
-      // If key does not expire (exp == Infinity) the encryption key should be available.
-      return null; // eslint-disable-line no-null/no-null
-    }
-    const oneSecondBeforeExpiration = exp && OpenPGPKey.isKeyExpired(exp) ? new Date(exp.getTime() - 1000) : undefined;
-    if (typeof oneSecondBeforeExpiration === 'undefined') {
-      return null; // eslint-disable-line no-null/no-null
-    }
-    const secondTry = await Catch.undefinedOnException(getter(undefined, oneSecondBeforeExpiration));
-    return secondTry ? secondTry : null; // eslint-disable-line no-null/no-null
-  };
-
-  private static getSigningAndEncryptionKeys = async (
-    key: OpenPGP.PrivateKey | OpenPGP.PublicKey,
-    encryptionKeyExp: number | Date | null,
-    signingKeyExp: number | Date | null
-  ) => {
-    const getEncryptionKey = (keyid?: OpenPGP.KeyID, date?: Date, userId?: OpenPGP.UserID) => key.getEncryptionKey(keyid, date, userId);
-    const encryptionKey = await Catch.undefinedOnException(getEncryptionKey());
-    const encryptionKeyIgnoringExpiration = encryptionKey ? encryptionKey : await OpenPGPKey.getKeyIgnoringExpiration(getEncryptionKey, encryptionKeyExp);
-    const getSigningKey = (keyid?: OpenPGP.KeyID, date?: Date, userId?: OpenPGP.UserID) => key.getSigningKey(keyid, date, userId);
-    const signingKey = await Catch.undefinedOnException(getSigningKey());
-    const signingKeyIgnoringExpiration = signingKey ? signingKey : await OpenPGPKey.getKeyIgnoringExpiration(getSigningKey, signingKeyExp);
+    const encryptionKeyIgnoringExpiration = encryptionKey ? encryptionKey : await key.getEncryptionKey(undefined, null);
+    const signingKey = await Catch.undefinedOnException(key.getSigningKey());
+    // eslint-disable-next-line no-null/no-null
+    const signingKeyIgnoringExpiration = signingKey ? signingKey : await key.getSigningKey(undefined, null);
     return { encryptionKey, encryptionKeyIgnoringExpiration, signingKey, signingKeyIgnoringExpiration };
   };
 
@@ -995,72 +948,5 @@ export class OpenPGPKey {
     } else {
       return Infinity;
     }
-  };
-
-  // Attempt to backport from openpgp.js v4
-  private static getKeyExpirationTime = async (
-    key: OpenPGP.Key,
-    capabilities?: 'encrypt' | 'encrypt_sign' | 'sign' | null, // eslint-disable-line no-null/no-null
-    keyId?: OpenPGP.KeyID | undefined,
-    userId?: OpenPGP.UserID | undefined
-    // todo: replace null with undefined
-    // eslint-disable-next-line no-null/no-null
-  ): Promise<Date | null | typeof Infinity> => {
-    const primaryUser = await key.getPrimaryUser(undefined, userId, undefined);
-    if (!primaryUser) throw new Error('Could not find primary user');
-    const keyExpiry = await key.getExpirationTime(userId);
-    // eslint-disable-next-line no-null/no-null
-    if (!keyExpiry) return null;
-    const dataToVerify = { userId: primaryUser.user.userID, key: key.keyPacket };
-    const selfCertification = await OpenPGPKey.getLatestValidSignature(
-      primaryUser.user.selfCertifications,
-      key.keyPacket,
-      opgp.enums.signature.certGeneric,
-      dataToVerify
-    );
-    if (!selfCertification) {
-      return null; // eslint-disable-line no-null/no-null
-    }
-    const sigExpiry = selfCertification.getExpirationTime();
-    let expiry = keyExpiry < sigExpiry ? keyExpiry : sigExpiry;
-    if (capabilities === 'encrypt' || capabilities === 'encrypt_sign') {
-      const encryptionKey =
-        (await key.getEncryptionKey(keyId, new Date(expiry), userId).catch(() => {
-          return undefined;
-        })) ||
-        // eslint-disable-next-line no-null/no-null
-        (await key.getEncryptionKey(keyId, null, userId).catch(() => {
-          return undefined;
-        }));
-      // eslint-disable-next-line no-null/no-null
-      if (!encryptionKey) return null;
-      // for some reason, "instanceof Key" didn't work: 'Right-hand side of \'instanceof\' is not an object'
-      const encryptionKeyExpiry =
-        'bindingSignatures' in encryptionKey
-          ? await OpenPGPKey.getSubkeyExpirationTime(encryptionKey, key.keyPacket)
-          : // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            (await encryptionKey.getExpirationTime(userId))!;
-      if (encryptionKeyExpiry < expiry) expiry = encryptionKeyExpiry;
-    }
-    if (capabilities === 'sign' || capabilities === 'encrypt_sign') {
-      const signatureKey =
-        (await key.getSigningKey(keyId, new Date(expiry), userId).catch(() => {
-          return undefined;
-        })) ||
-        // eslint-disable-next-line no-null/no-null
-        (await key.getSigningKey(keyId, null, userId).catch(() => {
-          return undefined;
-        }));
-      // eslint-disable-next-line no-null/no-null
-      if (!signatureKey) return null;
-      // could be the same as above, so checking for property instead of using "instanceof"
-      const signatureKeyExpiry =
-        'bindingSignatures' in signatureKey
-          ? await OpenPGPKey.getSubkeyExpirationTime(signatureKey, key.keyPacket)
-          : // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            (await signatureKey.getExpirationTime(userId))!;
-      if (signatureKeyExpiry < expiry) expiry = signatureKeyExpiry;
-    }
-    return expiry;
   };
 }
