@@ -64,7 +64,8 @@ const testWithBrowser = (
 ): Implementation<unknown[]> => {
   return async (t: AvaContext) => {
     if (isMock) {
-      await startMockApiAndCopyBuild(t);
+      const mockApi = await startMockApiAndCopyBuild(t);
+      t.closeMockApi = mockApi.close;
     }
     await browserPool.withNewBrowserTimeoutAndRetry(
       async (t, browser) => {
@@ -75,6 +76,9 @@ const testWithBrowser = (
         await cb(t, browser);
         if (DEBUG_BROWSER_LOG) {
           await saveBrowserLog(t, browser);
+        }
+        if (t.closeMockApi) {
+          await t.closeMockApi();
         }
         t.log(`run time: ${Math.ceil((Date.now() - start) / 1000)}s`);
       },
@@ -105,6 +109,7 @@ const startMockApiAndCopyBuild = async (t: AvaContext) => {
   } else {
     t.log('Failed to get mock build address');
   }
+  return mockApi;
 };
 
 const saveBrowserLog = async (t: AvaContext, browser: BrowserHandle) => {
@@ -129,13 +134,6 @@ const saveBrowserLog = async (t: AvaContext, browser: BrowserHandle) => {
 };
 
 export type TestWithBrowser = typeof testWithBrowser;
-
-if (isMock) {
-  test.afterEach.always('close mock api', async t => {
-    // closeMockApi().catch(t.log);
-    t.pass();
-  });
-}
 
 test.after.always('evaluate Catch.reportErr errors', async t => {
   if (!isMock || testGroup !== 'STANDARD-GROUP') {
