@@ -27,6 +27,12 @@ export class AccountServer extends Api {
     this.externalService = new ExternalService(this.acctEmail);
   }
 
+  public static init = async (acctEmail: string) => {
+    const acctServer = new AccountServer(acctEmail);
+    await acctServer.initialize();
+    return acctServer;
+  };
+
   public initialize = async () => {
     if (!(await isCustomerUrlFesUsed(this.acctEmail))) {
       this.externalService.url = SHARED_TENANT_API_HOST;
