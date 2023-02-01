@@ -38,6 +38,7 @@ BROWSER_UNIT_TEST_NAME(`Wkd direct method`);
 BROWSER_UNIT_TEST_NAME(`Wkd advanced method`);
 (async () => {
   const wkd = new Wkd();
+  let email;
   email = 'john.doe@localhost';
   if (!(await wkd.lookupEmail(email)).pubkeys.length) {
     throw Error(`Wkd for ${email} didn't return a pubkey`);
