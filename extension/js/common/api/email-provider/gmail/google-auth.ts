@@ -180,9 +180,8 @@ export class GoogleAuth {
         if (await potentialFes.isFesInstalledAndAvailable()) {
           await AcctStore.set(authRes.acctEmail, { fesUrl: potentialFes.url });
         }
-        const acctServer = new AccountServer(authRes.acctEmail);
         // fetch and store ClientConfiguration (not authenticated)
-        await acctServer.fetchAndSaveClientConfiguration();
+        await (await AccountServer.init(authRes.acctEmail)).fetchAndSaveClientConfiguration();
       } catch (e) {
         if (GoogleAuth.isFesUnreachableErr(e, authRes.acctEmail)) {
           const error = `Cannot reach your company's FlowCrypt External Service (FES). Contact your Help Desk when unsure. (${String(e)})`;

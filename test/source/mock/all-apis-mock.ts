@@ -36,6 +36,6 @@ export const startAllApisMock = async (logger: (line: string) => void) => {
     ...mockSharedTenantFesEndpoints,
     '/favicon.ico': async () => '',
   });
-  await api.listen(8001);
+  await api.listen();
   return api;
 };

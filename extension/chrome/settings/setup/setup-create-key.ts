@@ -13,7 +13,6 @@ import { OpenPGPKey } from '../../../js/common/core/crypto/pgp/openpgp-key.js';
 import { saveKeysAndPassPhrase } from '../../../js/common/helpers.js';
 
 export class SetupCreateKeyModule {
-  // eslint-disable-next-line no-empty-function
   public constructor(private view: SetupView) {}
 
   public actionCreateKeyHandler = async () => {

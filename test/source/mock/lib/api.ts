@@ -84,15 +84,17 @@ export class Api<REQ, RES> {
     });
   }
 
-  public listen = (port: number, host = '127.0.0.1', maxMb = 100): Promise<void> => {
+  public listen = (host = '127.0.0.1', maxMb = 100): Promise<void> => {
     return new Promise((resolve, reject) => {
       try {
         this.maxRequestSizeMb = maxMb;
         this.maxRequestSizeBytes = maxMb * 1024 * 1024;
-        this.server.listen(port, host);
+        // node.js selects random available port when port = 0
+        this.server.listen(0, host);
         this.server.on('listening', () => {
           const address = this.server.address();
-          const msg = `${this.apiName} listening on ${typeof address === 'object' && address ? address.port : address}`;
+          const port = typeof address === 'object' && address ? address.port : undefined;
+          const msg = `${this.apiName} listening on ${port}`;
           console.log(msg);
           resolve();
         });
@@ -241,7 +243,7 @@ export class Api<REQ, RES> {
 
   private throttledResponse = async (response: http.ServerResponse, data: Buffer) => {
     // If google oauth2 login, then redirect to url
-    if (/^https:\/\/google\.localhost:8001\/robots\.txt/.test(data.toString())) {
+    if (/^https:\/\/google\.localhost:[0-9]+\/robots\.txt/.test(data.toString())) {
       response.writeHead(302, { Location: data.toString() }); // eslint-disable-line @typescript-eslint/naming-convention
     } else {
       const chunkSize = 100 * 1024;

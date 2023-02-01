@@ -20,19 +20,27 @@ export type UploadedMessageData = {
  *   whether FES is deployed on the customer domain or not.
  */
 export class AccountServer extends Api {
-  private readonly potentialCustomerUrlFes: ExternalService;
-  private readonly sharedTenantFes: ExternalService;
+  private readonly externalService: ExternalService;
 
   public constructor(private acctEmail: string) {
     super();
-    this.potentialCustomerUrlFes = new ExternalService(this.acctEmail);
-    this.sharedTenantFes = new ExternalService(this.acctEmail);
-    this.sharedTenantFes.url = SHARED_TENANT_API_HOST;
+    this.externalService = new ExternalService(this.acctEmail);
   }
 
+  public static init = async (acctEmail: string) => {
+    const acctServer = new AccountServer(acctEmail);
+    await acctServer.initialize();
+    return acctServer;
+  };
+
+  public initialize = async () => {
+    if (!(await isCustomerUrlFesUsed(this.acctEmail))) {
+      this.externalService.url = SHARED_TENANT_API_HOST;
+    }
+  };
+
   public fetchAndSaveClientConfiguration = async (): Promise<ClientConfigurationJson> => {
-    const service = await this.getExternalService();
-    return await service.fetchAndSaveClientConfiguration();
+    return await this.externalService.fetchAndSaveClientConfiguration();
   };
 
   public getWebPortalMessageExpireDays = async (): Promise<number> => {
@@ -46,24 +54,14 @@ export class AccountServer extends Api {
     recipients: ParsedRecipients,
     progressCb: ProgressCb
   ): Promise<UploadedMessageData> => {
-    const service = await this.getExternalService();
-    return await service.webPortalMessageUpload(encrypted, replyToken, from, recipients, progressCb);
+    return await this.externalService.webPortalMessageUpload(encrypted, replyToken, from, recipients, progressCb);
   };
 
   public messageGatewayUpdate = async (externalId: string, emailGatewayMessageId: string) => {
-    const service = await this.getExternalService();
-    return await service.messageGatewayUpdate(externalId, emailGatewayMessageId);
+    return await this.externalService.messageGatewayUpdate(externalId, emailGatewayMessageId);
   };
 
   public messageToken = async (): Promise<{ replyToken: string }> => {
-    const service = await this.getExternalService();
-    return await service.webPortalMessageNewReplyToken();
-  };
-
-  private getExternalService = async (): Promise<ExternalService> => {
-    if (await isCustomerUrlFesUsed(this.acctEmail)) {
-      return this.potentialCustomerUrlFes;
-    }
-    return this.sharedTenantFes;
+    return await this.externalService.webPortalMessageNewReplyToken();
   };
 }

@@ -1,6 +1,6 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
-import * as ava from 'ava';
+import test from 'ava';
 
 import { expect } from 'chai';
 import { BrowserHandle, ControllablePage } from './../browser';
@@ -108,7 +108,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       await gmailPage.goto(url);
     };
 
-    ava.default(
+    test(
       'mail.google.com/chat',
       testWithBrowser(undefined, async (t, browser) => {
         const settingsPage = await BrowserRecipe.openSettingsLoginButCloseOauthWindowBeforeGrantingPermission(t, browser, 'ci.tests.gmail@flowcrypt.dev');
@@ -118,7 +118,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       })
     );
 
-    ava.default(
+    test(
       'mail.google.com - send rich-text encrypted message',
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
         const gmailPage = await BrowserRecipe.openGmailPageAndVerifyComposeBtnPresent(t, browser);
@@ -137,7 +137,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       })
     );
 
-    ava.default(
+    test(
       'mail.google.com - decrypt message in offline mode',
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
         const gmailPage = await openGmailPage(t, browser);
@@ -161,7 +161,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       })
     );
 
-    ava.default(
+    test(
       'mail.google.com - rendering attachmnents',
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
         const gmailPage = await openGmailPage(t, browser);
@@ -172,7 +172,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       })
     );
 
-    ava.default(
+    test(
       'mail.google.com - msg.asc message content renders',
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
         const gmailPage = await openGmailPage(t, browser);
@@ -190,7 +190,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       })
     );
 
-    ava.default(
+    test(
       'mail.google.com - Thunderbird signature [html] is recognized',
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
         const gmailPage = await openGmailPage(t, browser);
@@ -216,7 +216,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       })
     );
 
-    ava.default(
+    test(
       'mail.google.com - Thunderbird signature [plain] is recognized + correct height',
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
         const gmailPage = await openGmailPage(t, browser);
@@ -242,7 +242,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       })
     );
 
-    ava.default(
+    test(
       'mail.google.com - pubkey gets rendered with new signed and encrypted Thunderbird signature',
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
         const gmailPage = await openGmailPage(t, browser);
@@ -264,7 +264,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       })
     );
 
-    ava.default(
+    test(
       'mail.google.com - saving and rendering compose drafts when offline',
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
         const gmailPage = await openGmailPage(t, browser);
@@ -292,7 +292,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       })
     );
 
-    ava.default(
+    test(
       'mail.google.com - secure reply btn, reply draft',
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
         const gmailPage = await openGmailPage(t, browser);
@@ -322,7 +322,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       })
     );
 
-    ava.default(
+    test(
       'mail.google.com - multiple compose windows, saving/opening compose draft',
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
         const gmailPage = await openGmailPage(t, browser);
@@ -346,7 +346,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       })
     );
 
-    ava.default(
+    test(
       'mail.google.com - plain message contains smart replies',
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
         const gmailPage = await openGmailPage(t, browser);
@@ -356,7 +356,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       })
     );
 
-    ava.default(
+    test(
       'mail.google.com - plain reply to encrypted and signed messages',
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
         const gmailPage = await openGmailPage(t, browser);
@@ -381,7 +381,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       })
     );
 
-    ava.default(
+    test(
       'mail.google.com - switch to encrypted reply for middle message',
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
         const gmailPage = await openGmailPage(t, browser);
@@ -400,7 +400,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       })
     );
 
-    ava.default(
+    test(
       'mail.google.com - plain reply with dot menu',
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
         const gmailPage = await openGmailPage(t, browser);
@@ -423,7 +423,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       })
     );
 
-    ava.default(
+    test(
       'mail.google.com - plain reply draft',
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
         const gmailPage = await openGmailPage(t, browser);
@@ -441,7 +441,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       })
     );
 
-    ava.default(
+    test(
       'mail.google.com - Outlook encrypted message with attachment is recognized',
       testWithBrowser(undefined, async (t, browser) => {
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'ci.tests.gmail@flowcrypt.dev');
@@ -461,7 +461,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       })
     );
 
-    ava.default(
+    test(
       `mail.google.com - simple attachments triggering processAttachments() keep "download all" button visible`,
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
         const gmailPage = await openGmailPage(t, browser);
@@ -473,7 +473,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       })
     );
 
-    ava.default(
+    test(
       `mail.google.com - encrypted text inside "message" attachment`,
       testWithBrowser(undefined, async (t, browser) => {
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'ci.tests.gmail@flowcrypt.dev');
@@ -493,7 +493,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       })
     );
 
-    ava.default(
+    test(
       `mail.google.com - render plain text for "message" attachment (which has plain text)`,
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
         const gmailPage = await openGmailPage(t, browser);
@@ -507,7 +507,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       })
     );
 
-    ava.default(
+    test(
       'mail.google.com - pubkey file gets rendered',
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
         const gmailPage = await openGmailPage(t, browser);
@@ -519,7 +519,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
     );
 
     // uses live openpgpkey.flowcrypt.com WKD
-    ava.default(
+    test(
       'can lookup public key from WKD directly',
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
         const composePage = await ComposePageRecipe.openStandalone(t, browser, 'ci.tests.gmail@flowcrypt.dev');
@@ -530,7 +530,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
     );
 
     // todo - missing equivalent sample at ci.tests.gmail
-    // ava.default('mail.google.com - pubkey gets rendered when using quoted-printable mime', testWithBrowser('compatibility', async (t, browser) => {
+    // test('mail.google.com - pubkey gets rendered when using quoted-printable mime', testWithBrowser('compatibility', async (t, browser) => {
     //   const gmailPage = await openGmailPage(t, browser, '/WhctKJVRFztXGwvSbwcrbDshGTnLWMFvhwJmhqllRWwvpKnlpblQMXVZLTsKfWdPWKhPFBV');
     //   const urls = await gmailPage.getFramesUrls(['/chrome/elements/pgp_pubkey.htm'], { sleep: 10, appearIn: 20 });
     //   expect(urls.length).to.equal(1);
@@ -543,8 +543,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
     const testMinimumElementHeight = async (page: ControllablePage, selector: string, min: number) => {
       // testing https://github.com/FlowCrypt/flowcrypt-browser/issues/3519
       const elStyle = await page.target.$eval(selector, el => el.getAttribute('style')); // 'height: 289.162px;'
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      const elHeight = Number(elStyle!.replace('height: ', '').replace('px;', ''));
+      const elHeight = Number(elStyle?.replace('height: ', '').replace('px;', ''));
       if (isNaN(elHeight)) {
         throw Error(`msgIframeHeight iNaN`);
       }

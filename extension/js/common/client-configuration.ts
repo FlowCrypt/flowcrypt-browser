@@ -49,7 +49,6 @@ export class ClientConfigurationError extends UnreportableError {
  * These either enforce, alter or forbid various behavior to fit customer needs
  */
 export class ClientConfiguration {
-  // eslint-disable-next-line no-empty-function
   protected constructor(private clientConfigurationJson: ClientConfigurationJson, public domainName: string) {}
 
   public static newInstance = async (acctEmail: string): Promise<ClientConfiguration> => {

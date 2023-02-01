@@ -111,7 +111,7 @@ export class PgpPwd {
       .toUpperCase()
       .replace(/[^A-Z0-9]|0|O|1/g, '')
       .replace(/(.{4})/g, '$1-')
-      .substr(0, 19);
+      .substring(0, 19);
   };
 
   private static readableCrackTime = (totalSeconds: number) => {
