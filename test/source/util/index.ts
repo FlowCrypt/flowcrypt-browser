@@ -3,7 +3,6 @@
 import * as fs from 'fs';
 import { Keyboard, KeyInput } from 'puppeteer';
 import { BrowserHandle } from '../browser/browser-handle.js';
-import { TestUrls } from '../browser/test-urls.js';
 import { KeyInfoWithIdentityAndOptionalPp, KeyUtil } from '../core/crypto/key.js';
 import { SettingsPageRecipe } from '../tests/page-recipe/settings-page-recipe.js';
 import { testKeyConstants } from '../tests/tooling/consts';
@@ -65,8 +64,6 @@ interface TestSecretsInterface {
 /* eslint-enable @typescript-eslint/naming-convention */
 
 export class Config {
-  public static extensionId = '';
-
   private static _secrets: TestSecretsInterface;
 
   public static secrets = (): TestSecretsInterface => {
@@ -128,7 +125,7 @@ export class Util {
 
   public static wipeGoogleTokensUsingExperimentalSettingsPage = async (t: AvaContext, browser: BrowserHandle, acct: string) => {
     for (const wipeTokenBtnSelector of ['@action-wipe-google-refresh-token', '@action-wipe-google-access-token']) {
-      const settingsPage = await browser.newPage(t, TestUrls.extensionSettings(acct));
+      const settingsPage = await browser.newExtensionSettingsPage(t, acct);
       await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
       const experimentalFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-module-experimental', ['experimental.htm']);
       await experimentalFrame.waitAndClick(wipeTokenBtnSelector);

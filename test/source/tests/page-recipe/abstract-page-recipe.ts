@@ -35,8 +35,7 @@ export abstract class PageRecipe {
     }
     if (clickOn) {
       const button = await modalContainer.$(`button.ui-modal-${type}-${clickOn}`);
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      await button!.click();
+      await button?.click();
     }
   };
 

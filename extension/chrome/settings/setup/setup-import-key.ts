@@ -14,7 +14,6 @@ import { Lang } from '../../../js/common/lang.js';
 import { saveKeysAndPassPhrase } from '../../../js/common/helpers.js';
 
 export class SetupImportKeyModule {
-  // eslint-disable-next-line no-empty-function
   public constructor(private view: SetupView) {}
 
   public actionImportPrivateKeyHandle = async (button: HTMLElement) => {

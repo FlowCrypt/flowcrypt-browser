@@ -2,7 +2,7 @@
 
 import * as forge from 'node-forge';
 import { AddressObject, StructuredHeader } from 'mailparser';
-import { ITestMsgStrategy, UnsuportableStrategyError } from './strategy-base.js';
+import { ITestMsgStrategy, UnsupportableStrategyError } from './strategy-base.js';
 import { Buf } from '../../../core/buf';
 import { Config } from '../../../util';
 import { expect } from 'chai';
@@ -70,15 +70,15 @@ class PwdEncryptedMessageWithFlowCryptComApiTestStrategy implements ITestMsgStra
 }
 
 class PwdEncryptedMessageWithFesIdTokenTestStrategy implements ITestMsgStrategy {
-  public test = async (parseResult: ParseMsgResult, id: string) => {
+  public test = async (parseResult: ParseMsgResult, id: string, port: string) => {
     const mimeMsg = parseResult.mimeMsg;
-    const expectedSenderEmail = 'user@standardsubdomainfes.localhost:8001';
+    const expectedSenderEmail = `user@standardsubdomainfes.localhost:${port}`;
     expect(mimeMsg.from!.text).to.equal(`First Last <${expectedSenderEmail}>`);
-    if (mimeMsg.text?.includes('http://fes.standardsubdomainfes.localhost:8001/message/FES-MOCK-MESSAGE-FOR-TO@EXAMPLE.COM-ID')) {
+    if (mimeMsg.text?.includes(`http://fes.standardsubdomainfes.localhost:${port}/message/FES-MOCK-MESSAGE-FOR-TO@EXAMPLE.COM-ID`)) {
       expect((mimeMsg.to as AddressObject).text).to.equal('Mr To <to@example.com>');
       expect(mimeMsg.cc).to.be.an.undefined;
       expect(mimeMsg.bcc).to.be.an.undefined;
-    } else if (mimeMsg.text?.includes('http://fes.standardsubdomainfes.localhost:8001/message/FES-MOCK-MESSAGE-FOR-BCC@EXAMPLE.COM-ID')) {
+    } else if (mimeMsg.text?.includes(`http://fes.standardsubdomainfes.localhost:${port}/message/FES-MOCK-MESSAGE-FOR-BCC@EXAMPLE.COM-ID`)) {
       expect((mimeMsg.to as AddressObject).text).to.equal('Mr Bcc <bcc@example.com>');
       expect(mimeMsg.cc).to.be.an.undefined;
       expect(mimeMsg.bcc).to.be.an.undefined;
@@ -93,11 +93,11 @@ class PwdEncryptedMessageWithFesIdTokenTestStrategy implements ITestMsgStrategy 
 }
 
 class PwdEncryptedMessageWithFesPubkeyRecipientInBccTestStrategy implements ITestMsgStrategy {
-  public test = async (parseResult: ParseMsgResult, id: string) => {
+  public test = async (parseResult: ParseMsgResult, id: string, port: string) => {
     const mimeMsg = parseResult.mimeMsg;
-    const expectedSenderEmail = 'user3@standardsubdomainfes.localhost:8001';
+    const expectedSenderEmail = `user3@standardsubdomainfes.localhost:${port}`;
     expect(mimeMsg.from!.text).to.equal(`First Last <${expectedSenderEmail}>`);
-    if (mimeMsg.text?.includes('http://fes.standardsubdomainfes.localhost:8001/message/FES-MOCK-MESSAGE-FOR-TO@EXAMPLE.COM-ID')) {
+    if (mimeMsg.text?.includes(`http://fes.standardsubdomainfes.localhost:${port}/message/FES-MOCK-MESSAGE-FOR-TO@EXAMPLE.COM-ID`)) {
       expect(mimeMsg.text!).to.include(`${expectedSenderEmail} has sent you a password-encrypted email`);
       expect(mimeMsg.text!).to.include('Follow this link to open it');
       expect((mimeMsg.to as AddressObject).text).to.equal('to@example.com');
@@ -116,16 +116,16 @@ class PwdEncryptedMessageWithFesPubkeyRecipientInBccTestStrategy implements ITes
       expect((mimeMsg.bcc as AddressObject).text).to.equal('flowcrypt.compatibility@gmail.com');
       expect(mimeMsg.cc).to.be.an.undefined;
       expect(mimeMsg.to).to.be.an.undefined;
-      expect((mimeMsg.headers.get('reply-to') as AddressObject).text).to.equal('First Last <user3@standardsubdomainfes.localhost:8001>, to@example.com');
+      expect((mimeMsg.headers.get('reply-to') as AddressObject).text).to.equal(`First Last <user3@standardsubdomainfes.localhost:${port}>, to@example.com`);
     }
     await new SaveMessageInStorageStrategy().test(parseResult, id);
   };
 }
 
 class PwdEncryptedMessageWithFesReplyBadRequestTestStrategy implements ITestMsgStrategy {
-  public test = async (parseResult: ParseMsgResult, id: string) => {
+  public test = async (parseResult: ParseMsgResult, id: string, port: string) => {
     const mimeMsg = parseResult.mimeMsg;
-    const expectedSenderEmail = 'user4@standardsubdomainfes.localhost:8001';
+    const expectedSenderEmail = `user4@standardsubdomainfes.localhost:${port}`;
     expect(mimeMsg.from!.text).to.equal(`First Last <${expectedSenderEmail}>`);
     const to = parsedMailAddressObjectAsArray(mimeMsg.to)
       .concat(parsedMailAddressObjectAsArray(mimeMsg.cc))
@@ -147,18 +147,18 @@ class PwdEncryptedMessageWithFesReplyBadRequestTestStrategy implements ITestMsgS
 }
 
 class PwdEncryptedMessageWithFesReplyRenderingTestStrategy implements ITestMsgStrategy {
-  public test = async (parseResult: ParseMsgResult, id: string) => {
+  public test = async (parseResult: ParseMsgResult, id: string, port: string) => {
     const mimeMsg = parseResult.mimeMsg;
-    const expectedSenderEmail = 'user2@standardsubdomainfes.localhost:8001';
+    const expectedSenderEmail = `user2@standardsubdomainfes.localhost:${port}`;
     expect(mimeMsg.from!.text).to.equal(`First Last <${expectedSenderEmail}>`);
-    if (mimeMsg.text?.includes('http://fes.standardsubdomainfes.localhost:8001/message/FES-MOCK-MESSAGE-FOR-SENDER@DOMAIN.COM-ID')) {
+    if (mimeMsg.text?.includes(`http://fes.standardsubdomainfes.localhost:${port}/message/FES-MOCK-MESSAGE-FOR-SENDER@DOMAIN.COM-ID`)) {
       expect(mimeMsg.text!).to.include(`${expectedSenderEmail} has sent you a password-encrypted email`);
       expect(mimeMsg.text!).to.include('Follow this link to open it');
       expect((mimeMsg.to as AddressObject).text).to.equal('sender@domain.com');
       expect(mimeMsg.cc).to.be.an.undefined;
       expect(mimeMsg.bcc).to.be.an.undefined;
       expect(mimeMsg.headers.get('reply-to')).to.be.an.undefined;
-    } else if (mimeMsg.text?.includes('http://fes.standardsubdomainfes.localhost:8001/message/FES-MOCK-MESSAGE-FOR-TO@EXAMPLE.COM-ID')) {
+    } else if (mimeMsg.text?.includes(`http://fes.standardsubdomainfes.localhost:${port}/message/FES-MOCK-MESSAGE-FOR-TO@EXAMPLE.COM-ID`)) {
       expect(mimeMsg.text!).to.include(`${expectedSenderEmail} has sent you a password-encrypted email`);
       expect(mimeMsg.text!).to.include('Follow this link to open it');
       expect((mimeMsg.to as AddressObject).text).to.equal('to@example.com');
@@ -178,7 +178,7 @@ class PwdEncryptedMessageWithFesReplyRenderingTestStrategy implements ITestMsgSt
       expect(mimeMsg.cc).to.be.an.undefined;
       expect(mimeMsg.bcc).to.be.an.undefined;
       expect((mimeMsg.headers.get('reply-to') as AddressObject).text).to.equal(
-        'First Last <user2@standardsubdomainfes.localhost:8001>, sender@domain.com, to@example.com'
+        `First Last <user2@standardsubdomainfes.localhost:${port}>, sender@domain.com, to@example.com`
       );
     }
     await new SaveMessageInStorageStrategy().test(parseResult, id);
@@ -249,7 +249,7 @@ class PlainTextMessageTestStrategy implements ITestMsgStrategy {
 }
 
 class NoopTestStrategy implements ITestMsgStrategy {
-  public test = async () => {}; // eslint-disable-line @typescript-eslint/no-empty-function, no-empty-function
+  public test = async () => {}; // eslint-disable-line @typescript-eslint/no-empty-function
 }
 
 class IncludeQuotedPartTestStrategy implements ITestMsgStrategy {
@@ -411,11 +411,11 @@ export class TestBySubjectStrategyContext {
     } else if (subject.includes('Re: FROM: flowcrypt.compatibility@gmail.com, TO: flowcrypt.compatibility@gmail.com + vladimir@flowcrypt.com')) {
       this.strategy = new NoopTestStrategy();
     } else {
-      throw new UnsuportableStrategyError(`There isn't any strategy for this subject: ${subject}`);
+      throw new UnsupportableStrategyError(`There isn't any strategy for this subject: ${subject}`);
     }
   }
 
-  public test = async (parseResult: ParseMsgResult, id: string) => {
-    await this.strategy.test(parseResult, id);
+  public test = async (parseResult: ParseMsgResult, id: string, port: string) => {
+    await this.strategy.test(parseResult, id, port);
   };
 }

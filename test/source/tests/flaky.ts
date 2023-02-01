@@ -1,6 +1,6 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
-import * as ava from 'ava';
+import test from 'ava';
 import { expect } from 'chai';
 
 import { Config, TestVariant, Util } from './../util';
@@ -12,7 +12,6 @@ import { SettingsPageRecipe } from './page-recipe/settings-page-recipe';
 import { TestWithBrowser } from './../test';
 import { Stream } from '../core/stream';
 import { InboxPageRecipe } from './page-recipe/inbox-page-recipe';
-import { TestUrls } from '../browser/test-urls';
 import { OauthPageRecipe } from './page-recipe/oauth-page-recipe';
 import { testConstants } from './tooling/consts';
 import { SetupPageRecipe } from './page-recipe/setup-page-recipe';
@@ -26,7 +25,7 @@ import { GoogleData } from '../mock/google/google-data';
 
 export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: TestWithBrowser) => {
   if (testVariant !== 'CONSUMER-LIVE-GMAIL') {
-    ava.default(
+    test(
       'compose - own key expired - update and retry',
       testWithBrowser(undefined, async (t, browser) => {
         const expiredKey =
@@ -78,7 +77,7 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
       })
     );
 
-    ava.default(
+    test(
       'setup - create key - with backup to inbox',
       testWithBrowser(undefined, async (t, browser) => {
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.test.key.new.manual@gmail.com');
@@ -92,7 +91,7 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
       })
     );
 
-    ava.default(
+    test(
       'setup - create key - choose no backup',
       testWithBrowser(undefined, async (t, browser) => {
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.test.key.new.manual@gmail.com');
@@ -106,7 +105,7 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
       })
     );
 
-    ava.default(
+    test(
       'setup - create key - backup as file - submit pubkey',
       testWithBrowser(undefined, async (t, browser) => {
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.test.key.new.manual@gmail.com');
@@ -120,7 +119,7 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
       })
     );
 
-    ava.default(
+    test(
       'create@prv-create-no-prv-backup.flowcrypt.test - create key allowed but backups not',
       testWithBrowser(undefined, async (t, browser) => {
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'setup@prv-create-no-prv-backup.flowcrypt.test');
@@ -134,7 +133,7 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
       })
     );
 
-    ava.default(
+    test(
       'compose - reply all - from === acctEmail',
       testWithBrowser('compatibility', async (t, browser) => {
         const appendUrl = 'threadId=17d02296bccd4c5c&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___&replyMsgId=17d02296bccd4c5c';
@@ -157,7 +156,7 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
       })
     );
 
-    ava.default(
+    test(
       'user@no-submit-client-configuration.flowcrypt.test - do not submit to attester on key generation',
       testWithBrowser(undefined, async (t, browser) => {
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'user@no-submit-client-configuration.flowcrypt.test');
@@ -173,7 +172,7 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
       })
     );
 
-    ava.default(
+    test(
       'settings - generate rsa3072 key',
       testWithBrowser(undefined, async (t, browser) => {
         const acctEmail = 'user@no-submit-client-configuration.flowcrypt.test';
@@ -201,10 +200,11 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
       })
     );
 
-    ava.default(
+    test(
       'user4@standardsubdomainfes.localhost:8001 - PWD encrypted message with FES web portal - some sends fail with BadRequest error',
       testWithBrowser(undefined, async (t, browser) => {
-        const acct = 'user4@standardsubdomainfes.localhost:8001'; // added port to trick extension into calling the mock
+        const port = t.urls?.port;
+        const acct = `user4@standardsubdomainfes.localhost:${port}`; // added port to trick extension into calling the mock
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
         await SetupPageRecipe.manualEnter(
           settingsPage,
@@ -213,7 +213,7 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
           { isSavePassphraseChecked: false, isSavePassphraseHidden: false }
         );
         // add a name to one of the contacts
-        const dbPage = await browser.newPage(t, TestUrls.extension('chrome/dev/ci_unit_test.htm'));
+        const dbPage = await browser.newExtensionPage(t, 'chrome/dev/ci_unit_test.htm');
         await dbPage.page.evaluate(async () => {
           /* eslint-disable @typescript-eslint/no-explicit-any */
           const db = await (window as any).ContactStore.dbOpen();
@@ -224,7 +224,7 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
         const subject = 'PWD encrypted message with FES web portal - some sends fail with BadRequest error - ' + testVariant;
         let expectedNumberOfPassedMessages = (await GoogleData.withInitializedData(acct)).searchMessagesBySubject(subject).length;
         // 1. vague Gmail error with partial success
-        let composePage = await ComposePageRecipe.openStandalone(t, browser, 'user4@standardsubdomainfes.localhost:8001');
+        let composePage = await ComposePageRecipe.openStandalone(t, browser, `user4@standardsubdomainfes.localhost:${port}`);
         await ComposePageRecipe.fillMsg(composePage, { to: 'to@example.com', cc: 'cc@example.com', bcc: 'flowcrypt.compatibility@gmail.com' }, subject);
         await composePage.waitAndType('@input-password', 'gO0d-pwd');
         await composePage.waitAndClick('@action-send', { delay: 1 });
@@ -237,7 +237,7 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
         await composePage.close();
         expect((await GoogleData.withInitializedData(acct)).searchMessagesBySubject(subject).length).to.equal(++expectedNumberOfPassedMessages);
         // 2. vague Gmail error with all failures
-        composePage = await ComposePageRecipe.openStandalone(t, browser, 'user4@standardsubdomainfes.localhost:8001');
+        composePage = await ComposePageRecipe.openStandalone(t, browser, `user4@standardsubdomainfes.localhost:${port}`);
         await ComposePageRecipe.fillMsg(composePage, { cc: 'cc@example.com', bcc: 'flowcrypt.compatibility@gmail.com' }, subject);
         await composePage.waitAndType('@input-password', 'gO0d-pwd');
         await composePage.waitAndClick('@action-send', { delay: 1 });
@@ -249,7 +249,7 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
         await composePage.close();
         expect((await GoogleData.withInitializedData(acct)).searchMessagesBySubject(subject).length).to.equal(expectedNumberOfPassedMessages); // + 0 messages
         // 3. "invalid To" Gmail error with partial success
-        composePage = await ComposePageRecipe.openStandalone(t, browser, 'user4@standardsubdomainfes.localhost:8001');
+        composePage = await ComposePageRecipe.openStandalone(t, browser, `user4@standardsubdomainfes.localhost:${port}`);
         await ComposePageRecipe.fillMsg(composePage, { to: 'invalid@example.com', cc: 'to@example.com' }, subject);
         await composePage.waitAndType('@input-password', 'gO0d-pwd');
         await composePage.waitAndClick('@action-send', { delay: 1 });
@@ -262,7 +262,7 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
         await composePage.close();
         expect((await GoogleData.withInitializedData(acct)).searchMessagesBySubject(subject).length).to.equal(++expectedNumberOfPassedMessages);
         // 4. "invalid To" Gmail error with all failures
-        composePage = await ComposePageRecipe.openStandalone(t, browser, 'user4@standardsubdomainfes.localhost:8001');
+        composePage = await ComposePageRecipe.openStandalone(t, browser, `user4@standardsubdomainfes.localhost:${port}`);
         await ComposePageRecipe.fillMsg(composePage, { to: 'invalid@example.com', cc: 'cc@example.com' }, subject);
         await composePage.waitAndType('@input-password', 'gO0d-pwd');
         await composePage.waitAndClick('@action-send', { delay: 1 });
@@ -274,7 +274,7 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
         await composePage.close();
         expect((await GoogleData.withInitializedData(acct)).searchMessagesBySubject(subject).length).to.equal(expectedNumberOfPassedMessages); // + 0 messages
         // 5. "RequestTimeout" error with partial success
-        composePage = await ComposePageRecipe.openStandalone(t, browser, 'user4@standardsubdomainfes.localhost:8001');
+        composePage = await ComposePageRecipe.openStandalone(t, browser, `user4@standardsubdomainfes.localhost:${port}`);
         await ComposePageRecipe.fillMsg(composePage, { to: 'timeout@example.com', cc: 'to@example.com' }, subject);
         await composePage.waitAndType('@input-password', 'gO0d-pwd');
         await composePage.waitAndClick('@action-send', { delay: 1 });
@@ -287,7 +287,7 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
         await composePage.close();
         expect((await GoogleData.withInitializedData(acct)).searchMessagesBySubject(subject).length).to.equal(++expectedNumberOfPassedMessages);
         // 6. "RequestTimeout" error with all failures
-        composePage = await ComposePageRecipe.openStandalone(t, browser, 'user4@standardsubdomainfes.localhost:8001');
+        composePage = await ComposePageRecipe.openStandalone(t, browser, `user4@standardsubdomainfes.localhost:${port}`);
         await ComposePageRecipe.fillMsg(composePage, { to: 'timeout@example.com', cc: 'cc@example.com' }, subject);
         await composePage.waitAndType('@input-password', 'gO0d-pwd');
         await composePage.waitAndClick('@action-send', { delay: 1 });
@@ -305,7 +305,7 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
       })
     );
 
-    ava.default(
+    test(
       'user@forbid-storing-passphrase-client-configuration.flowcrypt.test - do not store passphrase',
       testWithBrowser(undefined, async (t, browser) => {
         const acctEmail = 'user@forbid-storing-passphrase-client-configuration.flowcrypt.test';
@@ -319,7 +319,7 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
           { isSavePassphraseHidden: true, isSavePassphraseChecked: false }
         );
         await settingsPage.notPresent('.swal2-container');
-        const inboxPage = await browser.newPage(t, TestUrls.extensionInbox(acctEmail));
+        const inboxPage = await browser.newExtensionInboxPage(t, acctEmail);
         await InboxPageRecipe.finishSessionOnInboxPage(inboxPage);
         const composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
         await ComposePageRecipe.fillMsg(composeFrame, { to: 'human@flowcrypt.com' }, 'should not send as pass phrase is not known', undefined, {
@@ -336,7 +336,7 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
       })
     );
 
-    ava.default(
+    test(
       'standalone - different send from, new signed message, verification in mock',
       testWithBrowser('compatibility', async (t, browser) => {
         const key = Config.key('flowcryptcompatibility.from.address');
@@ -357,7 +357,7 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
       })
     );
 
-    ava.default(
+    test(
       'compose - test compose after reconnect account',
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
         const acct = 'ci.tests.gmail@flowcrypt.test';
@@ -377,7 +377,7 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
       })
     );
 
-    ava.default(
+    test(
       'with attachments + shows progress %',
       testWithBrowser('compatibility', async (t, browser) => {
         const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
@@ -389,7 +389,7 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
       })
     );
 
-    ava.default(
+    test(
       'compose > large file > public domain account (should not prompt to upgrade)',
       testWithBrowser('compatibility', async (t, browser) => {
         const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
@@ -402,7 +402,7 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
       })
     );
 
-    ava.default(
+    test(
       'compose - PWD encrypted message with flowcrypt.com/shared-tenant-fes',
       testWithBrowser('compatibility', async (t, browser) => {
         const msgPwd = 'super hard password for the message';
@@ -417,10 +417,10 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
       })
     );
 
-    ava.default(
+    test(
       'compose - load contacts - contacts should be properly ordered',
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
-        const inboxPage = await browser.newPage(t, TestUrls.extensionInbox('ci.tests.gmail@flowcrypt.test'));
+        const inboxPage = await browser.newExtensionInboxPage(t, 'ci.tests.gmail@flowcrypt.test');
         let composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
         await composeFrame.type('@input-to', 'testsearchorder');
         if (testVariant === 'CONSUMER-MOCK') {
@@ -478,7 +478,7 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
       })
     );
 
-    ava.default(`[unit][Stream.readToEnd] efficiently handles multiple chunks`, async t => {
+    test(`[unit][Stream.readToEnd] efficiently handles multiple chunks`, async t => {
       const stream = new ReadableStream<Uint8Array>({
         // eslint-disable-next-line prefer-arrow/prefer-arrow-functions
         start(controller) {
@@ -493,7 +493,7 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
       t.pass();
     });
 
-    ava.default(
+    test(
       'decrypt - entering pass phrase should unlock all keys that match the pass phrase',
       testWithBrowser('compatibility', async (t, browser) => {
         const acctEmail = 'flowcrypt.compatibility@gmail.com';
@@ -501,7 +501,7 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
         await SettingsPageRecipe.addKeyTest(t, browser, acctEmail, testConstants.testkey17AD7D07, passphrase, {}, false);
         await SettingsPageRecipe.addKeyTest(t, browser, acctEmail, testConstants.testkey0389D3A7, passphrase, {}, false);
         await SettingsPageRecipe.addKeyTest(t, browser, acctEmail, testConstants.testKeyMultipleSmimeCEA2D53BB9D24871, passphrase, {}, false);
-        const inboxPage = await browser.newPage(t, TestUrls.extensionInbox(acctEmail));
+        const inboxPage = await browser.newExtensionInboxPage(t, acctEmail);
         await InboxPageRecipe.finishSessionOnInboxPage(inboxPage);
         await InboxPageRecipe.checkDecryptMsg(t, browser, {
           acctEmail,

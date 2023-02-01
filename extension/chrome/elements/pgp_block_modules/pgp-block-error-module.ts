@@ -16,7 +16,6 @@ import { Str } from '../../../js/common/core/common.js';
 export class PgpBlockViewErrorModule {
   private debugId = Str.sloppyRandom();
 
-  // eslint-disable-next-line no-empty-function
   public constructor(private view: PgpBlockView) {}
 
   public renderErr = async (errBoxContent: string, renderRawMsg: string | undefined, errMsg?: string) => {

@@ -1,6 +1,6 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
-import * as ava from 'ava';
+import test from 'ava';
 
 import { BrowserHandle, Controllable, ControllableFrame, ControllablePage } from './../browser';
 import { Config, Util } from './../util';
@@ -14,7 +14,6 @@ import { OauthPageRecipe } from './page-recipe/oauth-page-recipe';
 import { PageRecipe } from './page-recipe/abstract-page-recipe';
 import { SettingsPageRecipe } from './page-recipe/settings-page-recipe';
 import { protonMailCompatKey, somePubkey } from './../mock/attester/attester-endpoints';
-import { TestUrls } from './../browser/test-urls';
 import { TestVariant } from './../util';
 import { TestWithBrowser } from './../test';
 import { expect } from 'chai';
@@ -28,7 +27,7 @@ import { ElementHandle, Page } from 'puppeteer';
 
 export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: TestWithBrowser) => {
   if (testVariant !== 'CONSUMER-LIVE-GMAIL') {
-    ava.default(
+    test(
       'compose - send an encrypted message to a legacy pwd recipient and a pubkey recipient',
       testWithBrowser('compatibility', async (t, browser) => {
         const acct = 'flowcrypt.compatibility@gmail.com';
@@ -44,7 +43,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       'compose - check for sender [flowcrypt.compatibility@gmail.com] from a password-protected email',
       testWithBrowser('compatibility', async (t, browser) => {
         const senderEmail = 'flowcrypt.compatibility@gmail.com';
@@ -58,7 +57,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       'compose - check for sender [flowcryptcompatibility@gmail.com] (alias) from a password-protected email',
       testWithBrowser('compatibility', async (t, browser) => {
         const senderEmail = 'flowcryptcompatibility@gmail.com';
@@ -72,7 +71,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       'compose - check for sender [ci.tests.gmail@flowcrypt.test] from a password-protected email',
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
         const senderEmail = 'ci.tests.gmail@flowcrypt.test';
@@ -85,10 +84,10 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       'compose - restore compose window size by clicking its header',
       testWithBrowser('compatibility', async (t, browser) => {
-        const inboxPage = await browser.newPage(t, TestUrls.extensionInbox('flowcrypt.compatibility@gmail.com'));
+        const inboxPage = await browser.newExtensionInboxPage(t, 'flowcrypt.compatibility@gmail.com');
         const composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
         const initialComposeFrameHeight = await inboxPage.getOuterHeight('iframe');
         await composeFrame.waitAll('#section_header');
@@ -101,7 +100,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       'compose - trying to send PWD encrypted message with pass phrase - should show err',
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
         const acctEmail = 'ci.tests.gmail@flowcrypt.test';
@@ -124,7 +123,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         });
         const forgottenPassphrase = 'this passphrase is forgotten';
         await SettingsPageRecipe.addKeyTest(t, browser, acctEmail, testConstants.testKeyMultipleSmimeCEA2D53BB9D24871, forgottenPassphrase, {}, false);
-        const inboxPage = await browser.newPage(t, TestUrls.extensionInbox(acctEmail));
+        const inboxPage = await browser.newExtensionInboxPage(t, acctEmail);
         await InboxPageRecipe.finishSessionOnInboxPage(inboxPage);
         await inboxPage.close();
         await composePage.waitAndType('@input-password', forgottenPassphrase);
@@ -136,7 +135,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       'user@key-manager-disabled-password-message.flowcrypt.test - disabled flowcrypt hosted password protected messages',
       testWithBrowser(undefined, async (t, browser) => {
         const acct = 'user@key-manager-disabled-password-message.flowcrypt.test';
@@ -153,13 +152,13 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       'compose - signed with entered pass phrase + will remember pass phrase in session',
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
         const k = Config.key('ci.tests.gmail');
-        const settingsPage = await browser.newPage(t, TestUrls.extensionSettings('ci.tests.gmail@flowcrypt.test'));
+        const settingsPage = await browser.newExtensionSettingsPage(t, 'ci.tests.gmail@flowcrypt.test');
         await SettingsPageRecipe.forgetAllPassPhrasesInStorage(settingsPage, k.passphrase);
-        const inboxPage = await browser.newPage(t, TestUrls.extensionInbox('ci.tests.gmail@flowcrypt.test'));
+        const inboxPage = await browser.newExtensionInboxPage(t, 'ci.tests.gmail@flowcrypt.test');
         const composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
         await ComposePageRecipe.fillMsg(composeFrame, { to: 'human@flowcrypt.com' }, 'sign with entered pass phrase', undefined, {
           encrypt: false,
@@ -183,7 +182,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       'compose - can load contact based on name',
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
         // works on first search
@@ -199,7 +198,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       'compose - can load contact based on name different from email',
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
         // works on the first search
@@ -213,7 +212,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       'compose - should not show contacts for empty #input_to',
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
         // works on the first search
@@ -232,7 +231,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       `compose - can choose found contact`,
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
         const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
@@ -254,23 +253,23 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       `compose - recipients are properly ordered`,
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
         const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
         await composePage.page.setViewport({ width: 540, height: 606 });
-        await ComposePageRecipe.fillMsg(composePage, { to: 'recip1@corp.co', cc: 'сс1@corp.co', bcc: 'bсс1@corp.co' }, 'recipients are properly ordered');
+        await ComposePageRecipe.fillMsg(composePage, { to: 'recip1@corp.co', cc: 'cc1@corp.co', bcc: 'bcc1@corp.co' }, 'recipients are properly ordered');
         await composePage.waitAndType(`@input-to`, 'recip2@corp.co');
         await composePage.waitAndType(`@input-bcc`, 'bcc2@corp.co');
         await composePage.waitAndFocus('@input-body');
         await composePage.waitTillGone('@spinner');
         const emailPreview = await composePage.waitAny('@recipients-preview');
         const recipients = await PageRecipe.getElementPropertyJson(emailPreview, 'textContent');
-        expect(recipients).to.eq(['recip1@corp.co', 'recip2@corp.co', 'сс1@corp.co', 'bсс1@corp.co', '1 more'].join(''));
+        expect(recipients).to.eq(['recip1@corp.co', 'recip2@corp.co', 'cc1@corp.co', 'bcc1@corp.co', '1 more'].join(''));
       })
     );
 
-    ava.default(
+    test(
       `compose - auto include pubkey when our key is not available on Wkd`,
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
         const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
@@ -287,10 +286,10 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       `compose - auto include pubkey is inactive when our key is available on Wkd`,
       testWithBrowser(undefined, async (t, browser) => {
-        const acct = 'wkd@google.mock.localhost:8001';
+        const acct = `wkd@google.mock.localhost:${t.urls?.port}`;
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
         await SetupPageRecipe.autoSetupWithEKM(settingsPage);
         const composePage = await ComposePageRecipe.openStandalone(t, browser, acct);
@@ -307,7 +306,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       `compose - freshly loaded pubkey`,
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
         const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
@@ -316,7 +315,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       'compose - recipient pasted including name',
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
         const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
@@ -325,7 +324,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       'compose - nopgp',
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
         const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
@@ -334,7 +333,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       'compose - from alias',
       testWithBrowser('compatibility', async (t, browser) => {
         const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
@@ -344,7 +343,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       'compose - with attachments + nopgp',
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
         const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
@@ -356,7 +355,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       'compose - signed message',
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
         const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
@@ -367,10 +366,10 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       'compose - settings - manually copied pubkey',
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
-        const dbPage = await browser.newPage(t, TestUrls.extension('chrome/dev/ci_unit_test.htm'));
+        const dbPage = await browser.newExtensionPage(t, 'chrome/dev/ci_unit_test.htm');
         // add a contact containing 2 pubkeys to the storage
         await dbPage.page.evaluate(
           async (pubkeys: string[]) => {
@@ -383,7 +382,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
           },
           [testConstants.abcddfTestComPubkey, testConstants.abcdefTestComPubkey]
         );
-        const inboxPage = await browser.newPage(t, TestUrls.extensionInbox('ci.tests.gmail@flowcrypt.test'));
+        const inboxPage = await browser.newExtensionInboxPage(t, 'ci.tests.gmail@flowcrypt.test');
         const composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
         await ComposePageRecipe.fillMsg(composeFrame, { to: 'manualcopypgp@flowcrypt.com' }, 'manual copied key');
         await composeFrame.waitAndClick('@action-open-add-pubkey-dialog', { delay: 1 });
@@ -416,10 +415,10 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       'compose - keyboard - Ctrl+Enter sends message',
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
-        const inboxPage = await browser.newPage(t, TestUrls.extensionInbox('ci.tests.gmail@flowcrypt.test'));
+        const inboxPage = await browser.newExtensionInboxPage(t, 'ci.tests.gmail@flowcrypt.test');
         const composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
         await composeFrame.target.evaluateHandle(() =>
           (document.querySelector('#section_compose') as HTMLElement).dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', ctrlKey: true }))
@@ -428,10 +427,10 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       'compose - keyboard - Opening & changing composer send btn popover using keyboard',
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
-        const inboxPage = await browser.newPage(t, TestUrls.extensionInbox('ci.tests.gmail@flowcrypt.test'));
+        const inboxPage = await browser.newExtensionInboxPage(t, 'ci.tests.gmail@flowcrypt.test');
         const composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
         await composeFrame.waitAndFocus('@action-show-options-popover');
         await inboxPage.press('Enter');
@@ -441,10 +440,10 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       'compose - keyboard - Attaching file using keyboard',
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
-        const inboxPage = await browser.newPage(t, TestUrls.extensionInbox('ci.tests.gmail@flowcrypt.test'));
+        const inboxPage = await browser.newExtensionInboxPage(t, 'ci.tests.gmail@flowcrypt.test');
         const composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
         await composeFrame.waitAndFocus('@action-attach-files');
         // Set up the Promise *before* the file chooser is launched
@@ -455,7 +454,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       'compose - reply - old gmail threadId fmt',
       testWithBrowser('compatibility', async (t, browser) => {
         const appendUrl = 'skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___&threadId=16841ce0ce5cb74d&replyMsgId=16841ce0ce5cb74d';
@@ -469,7 +468,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       'compose - reply - thread id does not exist',
       testWithBrowser('compatibility', async (t, browser) => {
         const appendUrl = 'skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___&threadId=16804894591b3a4b&replyMsgId=16804894591b3a4b';
@@ -483,7 +482,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       'compose - quote - can load quote from encrypted/text email',
       testWithBrowser('compatibility', async (t, browser) => {
         const appendUrl = 'threadId=16b584ed95837510&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___&replyMsgId=16b584ed95837510';
@@ -511,7 +510,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       'compose - quote - can load quote from plain/text email',
       testWithBrowser('compatibility', async (t, browser) => {
         const appendUrl = 'threadId=16402d6dc4342e7f&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___' + '&replyMsgId=16402d6dc4342e7f';
@@ -527,7 +526,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       'compose - reply - can load quote from plain/html email',
       testWithBrowser('compatibility', async (t, browser) => {
         const appendUrl = 'threadId=16b36861a890bb26&skipClickPrompt=___cu_false___' + '&ignoreDraft=___cu_false___&replyMsgId=16b36861a890bb26';
@@ -553,7 +552,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       'compose - reply - can load quote from encrypted/html email',
       testWithBrowser('compatibility', async (t, browser) => {
         const appendUrl = 'threadId=1663a65bbd73ce1a&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___&replyMsgId=1663a65bbd73ce1a';
@@ -576,7 +575,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
     );
 
     for (const inputMethod of ['mouse', 'keyboard']) {
-      ava.default(
+      test(
         `compose - reply - pass phrase dialog - dialog ok (${inputMethod})`,
         testWithBrowser('compatibility', async (t, browser) => {
           const pp = Config.key('flowcrypt.compatibility.1pp1').passphrase;
@@ -610,7 +609,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         })
       );
 
-      ava.default(
+      test(
         `compose - reply - pass phrase dialog - dialog cancel (${inputMethod})`,
         testWithBrowser('compatibility', async (t, browser) => {
           const pp = Config.key('flowcrypt.compatibility.1pp1').passphrase;
@@ -628,14 +627,14 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         })
       );
 
-      ava.default(
+      test(
         `compose - pass phrase dialog - dialog cancel (${inputMethod})`,
         testWithBrowser('ci.tests.gmail', async (t, browser) => {
           const k = Config.key('ci.tests.gmail');
           const acctEmail = 'ci.tests.gmail@flowcrypt.test';
-          const settingsPage = await browser.newPage(t, TestUrls.extensionSettings(acctEmail));
+          const settingsPage = await browser.newExtensionSettingsPage(t, acctEmail);
           await SettingsPageRecipe.forgetAllPassPhrasesInStorage(settingsPage, k.passphrase);
-          const inboxPage = await browser.newPage(t, TestUrls.extensionInbox(acctEmail));
+          const inboxPage = await browser.newExtensionInboxPage(t, acctEmail);
           const composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
           await ComposePageRecipe.fillMsg(composeFrame, { to: 'anyone@recipient.com' }, 'send signed-only message', undefined, {
             encrypt: false,
@@ -652,16 +651,16 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         })
       );
 
-      ava.default(
+      test(
         `compose - non-primary pass phrase dialog - dialog cancel (${inputMethod})`,
         testWithBrowser('ci.tests.gmail', async (t, browser) => {
           const k = Config.key('ci.tests.gmail');
           const acctEmail = 'ci.tests.gmail@flowcrypt.test';
-          const settingsPage = await browser.newPage(t, TestUrls.extensionSettings(acctEmail));
+          const settingsPage = await browser.newExtensionSettingsPage(t, acctEmail);
           const forgottenPassphrase = "i'll have to re-enter it";
           await SettingsPageRecipe.addKeyTest(t, browser, acctEmail, testConstants.testKeyMultipleSmimeCEA2D53BB9D24871, forgottenPassphrase, {}, true);
           await SettingsPageRecipe.forgetAllPassPhrasesInStorage(settingsPage, k.passphrase);
-          const inboxPage = await browser.newPage(t, TestUrls.extensionInbox(acctEmail));
+          const inboxPage = await browser.newExtensionInboxPage(t, acctEmail);
           const composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
           await ComposePageRecipe.fillMsg(composeFrame, { to: 'smime@recipient.com' }, 'S/MIME message', undefined);
           await ComposePageRecipe.pastePublicKeyManually(
@@ -682,16 +681,16 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       );
     } // end of tests per inputMethod
 
-    ava.default(
+    test(
       `compose - signed and encrypted S/MIME message - pass phrase dialog`,
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
         const k = Config.key('ci.tests.gmail');
         const acctEmail = 'ci.tests.gmail@flowcrypt.test';
-        const settingsPage = await browser.newPage(t, TestUrls.extensionSettings(acctEmail));
+        const settingsPage = await browser.newExtensionSettingsPage(t, acctEmail);
         const forgottenPassphrase = "i'll have to re-enter it";
         await SettingsPageRecipe.addKeyTest(t, browser, acctEmail, testConstants.testKeyMultipleSmimeCEA2D53BB9D24871, forgottenPassphrase, {}, true);
         await SettingsPageRecipe.forgetAllPassPhrasesInStorage(settingsPage, k.passphrase);
-        const inboxPage = await browser.newPage(t, TestUrls.extensionInbox(acctEmail));
+        const inboxPage = await browser.newExtensionInboxPage(t, acctEmail);
         const composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
         await ComposePageRecipe.fillMsg(composeFrame, { to: 'smime@recipient.com' }, t.title, undefined);
         await ComposePageRecipe.pastePublicKeyManually(
@@ -711,7 +710,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       'compose - reply - signed message',
       testWithBrowser('compatibility', async (t, browser) => {
         const appendUrl = 'threadId=15f7f5face7101db&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___&replyMsgId=15f7f5face7101db';
@@ -732,7 +731,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       'compose - forward - pgp/mime signed-only',
       testWithBrowser('compatibility', async (t, browser) => {
         const appendUrl = 'threadId=15f7fc2919788f03&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___&replyMsgId=15f7fc2919788f03';
@@ -747,7 +746,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       'compose - standalone- hide/show btns after signing',
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
         const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
@@ -761,7 +760,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       'compose - show no contact found result if there are no contacts',
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
         const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
@@ -783,7 +782,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       'compose - CC&BCC new message',
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
         const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
@@ -796,7 +795,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       'compose - check recipient validation after user inputs incorrect recipient',
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
         const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
@@ -813,7 +812,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       'compose - reply - CC&BCC test reply',
       testWithBrowser('compatibility', async (t, browser) => {
         const appendUrl = 'threadId=16ce2c965c75e5a6&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___&replyMsgId=16ce2c965c75e5a6';
@@ -833,7 +832,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       'compose - expired can still send',
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
         const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
@@ -853,10 +852,10 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       'compose - revoked OpenPGP key',
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
-        const dbPage = await browser.newPage(t, TestUrls.extension('chrome/dev/ci_unit_test.htm'));
+        const dbPage = await browser.newExtensionPage(t, 'chrome/dev/ci_unit_test.htm');
         await dbPage.page.evaluate(async (pubkey: string) => {
           /* eslint-disable @typescript-eslint/no-explicit-any */
           const db = await (window as any).ContactStore.dbOpen();
@@ -875,10 +874,10 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       'compose - externally revoked key',
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
-        const dbPage = await browser.newPage(t, TestUrls.extension('chrome/dev/ci_unit_test.htm'));
+        const dbPage = await browser.newExtensionPage(t, 'chrome/dev/ci_unit_test.htm');
         await dbPage.page.evaluate(async (pubkey: string) => {
           /* eslint-disable @typescript-eslint/no-explicit-any */
           const db = await (window as any).ContactStore.dbOpen();
@@ -904,10 +903,10 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       'compose - nogpg and revoked recipients trigger both warnings',
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
-        const dbPage = await browser.newPage(t, TestUrls.extension('chrome/dev/ci_unit_test.htm'));
+        const dbPage = await browser.newExtensionPage(t, 'chrome/dev/ci_unit_test.htm');
         await dbPage.page.evaluate(async (pubkey: string) => {
           /* eslint-disable @typescript-eslint/no-explicit-any */
           const db = await (window as any).ContactStore.dbOpen();
@@ -923,10 +922,10 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       'compose - nogpg and non-revoked recipients trigger nopgp warning only',
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
-        const dbPage = await browser.newPage(t, TestUrls.extension('chrome/dev/ci_unit_test.htm'));
+        const dbPage = await browser.newExtensionPage(t, 'chrome/dev/ci_unit_test.htm');
         await dbPage.page.evaluate(async (pubkey: string) => {
           /* eslint-disable @typescript-eslint/no-explicit-any */
           const db = await (window as any).ContactStore.dbOpen();
@@ -943,10 +942,10 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       'compose - revoked recipients trigger revoked warning',
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
-        const dbPage = await browser.newPage(t, TestUrls.extension('chrome/dev/ci_unit_test.htm'));
+        const dbPage = await browser.newExtensionPage(t, 'chrome/dev/ci_unit_test.htm');
         await dbPage.page.evaluate(async (pubkey: string) => {
           /* eslint-disable @typescript-eslint/no-explicit-any */
           const db = await (window as any).ContactStore.dbOpen();
@@ -963,10 +962,10 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       'compose - good recipients trigger no warning',
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
-        const dbPage = await browser.newPage(t, TestUrls.extension('chrome/dev/ci_unit_test.htm'));
+        const dbPage = await browser.newExtensionPage(t, 'chrome/dev/ci_unit_test.htm');
         await dbPage.page.evaluate(async (pubkey: string) => {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const db = await (window as any).ContactStore.dbOpen();
@@ -983,7 +982,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       'compose - loading drafts - new message, rendering cc/bcc and check if cc/bcc btns are hidden',
       testWithBrowser('compatibility', async (t, browser) => {
         const appendUrl = 'draftId=draft-1';
@@ -1002,7 +1001,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       'compose - loading drafts - PKCS#7 encrypted draft',
       testWithBrowser(undefined, async (t, browser) => {
         const acctEmail = 'flowcrypt.test.key.imported@gmail.com';
@@ -1025,7 +1024,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       'compose - loading drafts - PKCS#7 encrypted draft with forgotten non-primary pass phrase',
       testWithBrowser(undefined, async (t, browser) => {
         const acctEmail = 'flowcrypt.test.key.imported@gmail.com';
@@ -1055,7 +1054,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
           {},
           false
         );
-        const inboxPage = await browser.newPage(t, TestUrls.extensionInbox(acctEmail) + '&labelId=DRAFT&debug=___cu_true___');
+        const inboxPage = await browser.newPage(t, t.urls?.extensionInbox(acctEmail) + '&labelId=DRAFT&debug=___cu_true___');
         await InboxPageRecipe.finishSessionOnInboxPage(inboxPage);
         const inboxTabId = await PageRecipe.getTabId(inboxPage);
         // send message from a different tab
@@ -1083,7 +1082,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       'compose - check reply to multiple recipients issue',
       testWithBrowser('compatibility', async (t, browser) => {
         const appendUrl = 'threadId=183ec175f060b2c2&skipClickPrompt=___cu_false___&replyMsgId=183ec175f060b2c2';
@@ -1101,7 +1100,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       'compose - change reply option while composing',
       testWithBrowser('compatibility', async (t, browser) => {
         const appendUrl = 'threadId=183ec175f060b2c2&skipClickPrompt=___cu_false___&replyMsgId=183ec175f060b2c2';
@@ -1124,7 +1123,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       'compose - hide reply all option button for signle recipient',
       testWithBrowser('compatibility', async (t, browser) => {
         const appendUrl = 'threadId=182263bf9f105adf&skipClickPrompt=___cu_false___&replyMsgId=182263bf9f105adf';
@@ -1139,7 +1138,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
     );
 
     // todo: load a draft encrypted by non-first key, enetering passphrase for it
-    ava.default(
+    test(
       'compose - loading drafts - reply',
       testWithBrowser('compatibility', async (t, browser) => {
         const appendUrl = 'threadId=16cfa9001baaac0a&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___&replyMsgId=16cfa9001baaac0a&draftId=draft-3';
@@ -1156,7 +1155,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       'compose - key-mismatch - standalone - key mismatch loading',
       testWithBrowser('compatibility', async (t, browser) => {
         const params =
@@ -1176,7 +1175,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       'compose - reply all - TO/CC/BCC when replying all',
       testWithBrowser('compatibility', async (t, browser) => {
         const appendUrl = `threadId=16d6a6c2d6ae618f&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___&replyMsgId=16d6a6c2d6ae618f`;
@@ -1200,7 +1199,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       'compose - send new plain message',
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
         const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
@@ -1212,7 +1211,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       'compose - reply - signed message with attachment - can be downloaded after send',
       testWithBrowser('compatibility', async (t, browser) => {
         const appendUrl = 'threadId=15f7f5face7101db&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___&replyMsgId=15f7f5face7101db';
@@ -1244,7 +1243,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       'compose - enforce message signing when encrypting',
       testWithBrowser('compatibility', async (t, browser) => {
         const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
@@ -1262,7 +1261,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       'compose - send btn should be disabled while encrypting/sending',
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
         const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
@@ -1276,7 +1275,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       'compose - load contacts through API',
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
         let composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
@@ -1301,7 +1300,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       'compose - delete recipients with keyboard',
       testWithBrowser('compatibility', async (t, browser) => {
         const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
@@ -1329,7 +1328,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       'compose - enter recipient which is not in the contact list',
       testWithBrowser('compatibility', async (t, browser) => {
         const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
@@ -1343,7 +1342,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       'compose - new message, open footer',
       testWithBrowser('compatibility', async (t, browser) => {
         const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
@@ -1366,7 +1365,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       'compose - new message, Footer Mock Test',
       testWithBrowser('compatibility', async (t, browser) => {
         const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
@@ -1375,7 +1374,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       'compose - loading drafts - test tags in draft',
       testWithBrowser('compatibility', async (t, browser) => {
         const appendUrl = 'draftId=draft-0';
@@ -1384,7 +1383,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       'compose - compose - test minimizing/maximizing',
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
         const inboxPage = await browser.newPage(t, 'chrome/settings/inbox/inbox.htm?acctEmail=ci.tests.gmail%40flowcrypt.test');
@@ -1414,7 +1413,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       'compose - saving and rendering a draft with image',
       testWithBrowser('compatibility', async (t, browser) => {
         const imgBase64 =
@@ -1438,7 +1437,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       'compose - leading tabs',
       testWithBrowser('compatibility', async (t, browser) => {
         const appendUrl = 'threadId=16b584ed95837510&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___&replyMsgId=16b584ed95837510';
@@ -1455,7 +1454,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       'compose - RTL subject',
       testWithBrowser('compatibility', async (t, browser) => {
         const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
@@ -1468,7 +1467,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       'compose - saving and rendering a draft with RTL text (plain text)',
       testWithBrowser('compatibility', async (t, browser) => {
         let composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
@@ -1486,7 +1485,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       'compose - saving and rendering a draft with RTL text (rich text)',
       testWithBrowser('compatibility', async (t, browser) => {
         let composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
@@ -1503,28 +1502,28 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       'compose - sending and rendering encrypted message with image',
       testWithBrowser('compatibility', async (t, browser) => {
         await sendImgAndVerifyPresentInSentMsg(t, browser, 'encrypt');
       })
     );
 
-    ava.default(
+    test(
       'compose - sending and rendering signed message with image',
       testWithBrowser('compatibility', async (t, browser) => {
         await sendImgAndVerifyPresentInSentMsg(t, browser, 'sign');
       })
     );
 
-    ava.default(
+    test(
       'compose - sending and rendering plain message with image',
       testWithBrowser('compatibility', async (t, browser) => {
         await sendImgAndVerifyPresentInSentMsg(t, browser, 'plain');
       })
     );
 
-    ava.default(
+    test(
       'compose - sending a message encrypted with all keys of a recipient',
       testWithBrowser('compatibility', async (t, browser) => {
         const text = 'This message is encrypted with 2 keys of flowcrypt.compatibility';
@@ -1537,7 +1536,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         await ComposePageRecipe.sendAndClose(composePage);
         /* eslint-disable @typescript-eslint/no-non-null-assertion */
         // get sent msg from mock
-        const sentMsg = (await GoogleData.withInitializedData('flowcrypt.compatibility@gmail.com')).searchMessagesBySubject(subject)[0]!;
+        const sentMsg = (await GoogleData.withInitializedData('flowcrypt.compatibility@gmail.com')).searchMessagesBySubject(subject)[0];
         const message = sentMsg.payload!.body!.data!;
         const encrypted = message.match(/\-\-\-\-\-BEGIN PGP MESSAGE\-\-\-\-\-.*\-\-\-\-\-END PGP MESSAGE\-\-\-\-\-/s)![0];
         /* eslint-enable @typescript-eslint/no-non-null-assertion */
@@ -1562,7 +1561,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       'compose - sending and rendering message with U+10000 code points',
       testWithBrowser('compatibility', async (t, browser) => {
         const rainbow = '\ud83c\udf08';
@@ -1572,7 +1571,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       "compose - sent message should't have version and comment based on ClientConfiguration",
       testWithBrowser(undefined, async (t, browser) => {
         const acct = 'has.pub@client-configuration-test.flowcrypt.test';
@@ -1589,7 +1588,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         await ComposePageRecipe.sendAndClose(composePage);
         /* eslint-disable @typescript-eslint/no-non-null-assertion */
         // get sent msg from mock
-        const sentMsg = (await GoogleData.withInitializedData(acct)).searchMessagesBySubject(subject)[0]!;
+        const sentMsg = (await GoogleData.withInitializedData(acct)).searchMessagesBySubject(subject)[0];
         const message = sentMsg.payload!.body!.data!;
         /* eslint-enable @typescript-eslint/no-non-null-assertion */
         expect(message).to.include('-----BEGIN PGP MESSAGE-----');
@@ -1599,10 +1598,10 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       'compose - multiple compose windows - opening, max 3, order, active',
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
-        const inboxPage = await browser.newPage(t, TestUrls.extensionInbox('ci.tests.gmail@flowcrypt.test'));
+        const inboxPage = await browser.newExtensionInboxPage(t, 'ci.tests.gmail@flowcrypt.test');
         // open 3 compose windows
         await inboxPage.waitAndClick('@action-open-secure-compose-window', { sleepWhenDone: 1 });
         await inboxPage.waitAndClick('@action-open-secure-compose-window', { sleepWhenDone: 1 });
@@ -1643,7 +1642,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default.skip(
+    test.skip(
       'oversize attachment does not get erroneously added',
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
         const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
@@ -1663,12 +1662,12 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       'rendered reply - can preview attachment',
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
         const threadId = '173fd7dbe2fec90c';
         const acctEmail = 'ci.tests.gmail@flowcrypt.test';
-        const inboxPage = await browser.newPage(t, TestUrls.extension(`chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`));
+        const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`);
         await inboxPage.waitAll('iframe');
         const replyFrame = await inboxPage.getFrame(['compose.htm']);
         await replyFrame.waitAndClick('@encrypted-reply');
@@ -1685,12 +1684,12 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       'attachments - failed to decrypt',
       testWithBrowser('compatibility', async (t, browser) => {
-        const inboxPage = await browser.newPage(
+        const inboxPage = await browser.newExtensionPage(
           t,
-          TestUrls.extension(`chrome/settings/inbox/inbox.htm?acctEmail=flowcrypt.compatibility@gmail.com&threadId=162ec58d70fe04ef`)
+          `chrome/settings/inbox/inbox.htm?acctEmail=flowcrypt.compatibility@gmail.com&threadId=162ec58d70fe04ef`
         );
         const attachment = await inboxPage.getFrame(['attachment.htm']);
         await attachment.waitAndClick('@download-attachment');
@@ -1701,7 +1700,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       'timeouts when searching WKD - used to never time out',
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
         const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
@@ -1711,11 +1710,11 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default.todo('compose - reply - new gmail threadId fmt');
+    test.todo('compose - reply - new gmail threadId fmt');
 
-    ava.default.todo('compose - reply - skip click prompt');
+    test.todo('compose - reply - skip click prompt');
 
-    ava.default(
+    test(
       'send signed S/MIME message',
       testWithBrowser(undefined, async (t, browser) => {
         const acctEmail = 'flowcrypt.test.key.imported@gmail.com';
@@ -1739,13 +1738,13 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       'send signed and encrypted S/MIME message',
       testWithBrowser('compatibility', async (t, browser) => {
         const acctEmail = 'flowcrypt.compatibility@gmail.com';
         const passphrase = 'pa$$w0rd';
         await SettingsPageRecipe.addKeyTest(t, browser, acctEmail, testConstants.testKeyMultipleSmimeCEA2D53BB9D24871, passphrase, {}, false);
-        const inboxPage = await browser.newPage(t, TestUrls.extensionInbox(acctEmail));
+        const inboxPage = await browser.newExtensionInboxPage(t, acctEmail);
         const composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
         await ComposePageRecipe.fillMsg(
           composeFrame,
@@ -1764,13 +1763,13 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       'send signed and encrypted S/MIME message entering a non-primary passphrase',
       testWithBrowser('compatibility', async (t, browser) => {
         const acctEmail = 'flowcrypt.compatibility@gmail.com';
         const passphrase = 'pa$$w0rd';
         await SettingsPageRecipe.addKeyTest(t, browser, acctEmail, testConstants.testKeyMultipleSmimeCEA2D53BB9D24871, passphrase, {}, false);
-        const inboxPage = await browser.newPage(t, TestUrls.extensionInbox(acctEmail));
+        const inboxPage = await browser.newExtensionInboxPage(t, acctEmail);
         await InboxPageRecipe.finishSessionOnInboxPage(inboxPage);
         const composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
         await ComposePageRecipe.fillMsg(
@@ -1794,10 +1793,10 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       'send with single S/MIME cert',
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
-        const inboxPage = await browser.newPage(t, TestUrls.extensionInbox('ci.tests.gmail@flowcrypt.test'));
+        const inboxPage = await browser.newExtensionInboxPage(t, 'ci.tests.gmail@flowcrypt.test');
         const composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
         await ComposePageRecipe.fillMsg(composeFrame, { to: 'smime@recipient.com' }, t.title, 'This text should be encrypted into PKCS#7 data', {
           sign: false,
@@ -1814,10 +1813,10 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       'send with several S/MIME certs',
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
-        const inboxPage = await browser.newPage(t, TestUrls.extensionInbox('ci.tests.gmail@flowcrypt.test'));
+        const inboxPage = await browser.newExtensionInboxPage(t, 'ci.tests.gmail@flowcrypt.test');
         const composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
         await ComposePageRecipe.fillMsg(
           composeFrame,
@@ -1838,10 +1837,10 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       'send encrypted-only S/MIME message with attachment',
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
-        const inboxPage = await browser.newPage(t, TestUrls.extensionInbox('ci.tests.gmail@flowcrypt.test'));
+        const inboxPage = await browser.newExtensionInboxPage(t, 'ci.tests.gmail@flowcrypt.test');
         const composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
         await ComposePageRecipe.fillMsg(composeFrame, { to: 'smime.attachment@recipient.com' }, t.title, 'This text should be encrypted into PKCS#7 data', {
           sign: false,
@@ -1867,14 +1866,14 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       'send signed and encrypted S/MIME message with attachment',
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
         // todo - this is not yet looking for actual attachment in the result, just checks that it's s/mime message
         const acctEmail = 'ci.tests.gmail@flowcrypt.test';
         const passphrase = 'pa$$w0rd';
         await SettingsPageRecipe.addKeyTest(t, browser, acctEmail, testConstants.testKeyMultipleSmimeCEA2D53BB9D24871, passphrase, {}, false);
-        const inboxPage = await browser.newPage(t, TestUrls.extensionInbox(acctEmail));
+        const inboxPage = await browser.newExtensionInboxPage(t, acctEmail);
         const composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
         await ComposePageRecipe.fillMsg(composeFrame, { to: 'smime.attachment@recipient.com' }, t.title);
         await ComposePageRecipe.pastePublicKeyManually(
@@ -1897,10 +1896,10 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       'send with mixed S/MIME and PGP recipients - should show err',
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
-        const inboxPage = await browser.newPage(t, TestUrls.extensionInbox('ci.tests.gmail@flowcrypt.test'));
+        const inboxPage = await browser.newExtensionInboxPage(t, 'ci.tests.gmail@flowcrypt.test');
         const composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
         await ComposePageRecipe.fillMsg(composeFrame, { to: 'smime@recipient.com', cc: 'human@flowcrypt.com' }, t.title);
         await ComposePageRecipe.pastePublicKeyManually(composeFrame, inboxPage, 'smime@recipient.com', testConstants.smimeCert);
@@ -1913,11 +1912,11 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       'send with OpenPGP recipients as subset of S/MIME recipients',
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
         const acctEmail = 'ci.tests.gmail@flowcrypt.test';
-        const inboxPage = await browser.newPage(t, TestUrls.extensionInbox(acctEmail));
+        const inboxPage = await browser.newExtensionInboxPage(t, acctEmail);
         const composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
         await ComposePageRecipe.fillMsg(
           composeFrame,
@@ -1945,11 +1944,11 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       'send with S/MIME recipients as subset of OpenPGP recipients',
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
         const acctEmail = 'ci.tests.gmail@flowcrypt.test';
-        const inboxPage = await browser.newPage(t, TestUrls.extensionInbox(acctEmail));
+        const inboxPage = await browser.newExtensionInboxPage(t, acctEmail);
         const composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
         await ComposePageRecipe.fillMsg(
           composeFrame,
@@ -1977,10 +1976,10 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       'send with broken S/MIME cert - err',
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
-        const inboxPage = await browser.newPage(t, TestUrls.extensionInbox('ci.tests.gmail@flowcrypt.test'));
+        const inboxPage = await browser.newExtensionInboxPage(t, 'ci.tests.gmail@flowcrypt.test');
         const composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
         await ComposePageRecipe.fillMsg(composeFrame, { to: 'smime@recipient.com' }, t.title);
         const brokenCert = testConstants.smimeCert.split('\n');
@@ -1990,10 +1989,10 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       'send non-S/MIME cert - err',
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
-        const inboxPage = await browser.newPage(t, TestUrls.extensionInbox('ci.tests.gmail@flowcrypt.test'));
+        const inboxPage = await browser.newExtensionInboxPage(t, 'ci.tests.gmail@flowcrypt.test');
         const composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
         await ComposePageRecipe.fillMsg(composeFrame, { to: 'smime@recipient.com' }, t.title);
         const httpsCert =
@@ -2003,10 +2002,10 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       'cannot import expired key in secure compose',
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
-        const inboxPage = await browser.newPage(t, TestUrls.extensionInbox('ci.tests.gmail@flowcrypt.test'));
+        const inboxPage = await browser.newExtensionInboxPage(t, 'ci.tests.gmail@flowcrypt.test');
         const to = 'nopgp@recipient.com';
         const composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
         await ComposePageRecipe.fillMsg(composeFrame, { to }, t.title);
@@ -2023,12 +2022,12 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
 
     // we test that list of public keys get refetched even if we already have a good key
     // useful when recipient now has a completely different public key
-    ava.default(
+    test(
       'compose - list of pubkeys gets refetched in compose',
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
         const recipientEmail = 'mock.only.pubkey@flowcrypt.com'; // has "somePubkey" on Attester
         const validKey = protonMailCompatKey; // doesn't really matter which key we import, as long as different from "somePubkey"
-        const settingsPage = await browser.newPage(t, TestUrls.extensionSettings('ci.tests.gmail@flowcrypt.test'));
+        const settingsPage = await browser.newExtensionSettingsPage(t, 'ci.tests.gmail@flowcrypt.test');
         const contactsFrame = await importKeyManuallyAndViewTheNewContact(settingsPage, recipientEmail, validKey, 'IMPORT KEY');
         await contactsFrame.waitForContent('@page-contacts', 'openpgp - active - AB8C F86E 3715 7C3F 290D 7200 7ED4 3D79 E961 7655');
         await contactsFrame.waitAndClick(`@action-show-pubkey-AB8CF86E37157C3F290D72007ED43D79E9617655-openpgp`, {
@@ -2058,11 +2057,11 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
     );
 
     // we test that expired key gets re-fetched to become active again
-    ava.default(
+    test(
       'auto-refresh expired key if newer version of the same key available',
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
         // add an expired key manually
-        const settingsPage = await browser.newPage(t, TestUrls.extensionSettings('ci.tests.gmail@flowcrypt.test'));
+        const settingsPage = await browser.newExtensionSettingsPage(t, 'ci.tests.gmail@flowcrypt.test');
         const { recipientEmail, contactsFrame } = await importExpiredKeyForAutoRefresh(settingsPage);
         // now we want to see that compose page auto-fetches an updated one
         const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
@@ -2086,7 +2085,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
     );
 
     // we test that key re-fetching does not happen when attester is disabled
-    ava.default(
+    test(
       "don't auto-refresh expired key if disallowed search on attester",
       testWithBrowser(undefined, async (t, browser) => {
         const acct = 'user@no-search-wildcard-domains-client-configuration.flowcrypt.test';
@@ -2103,7 +2102,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       'recipient without pub key will turn green & hide password input view when manually updated in different window',
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
         const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
@@ -2127,7 +2126,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       'attester client should understand more than one pub key',
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
         const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
@@ -2135,7 +2134,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         await ComposePageRecipe.fillMsg(composePage, { to: recipientEmail }, t.title);
         await composePage.close();
         // Check if multiple keys are imported to multiple.pub.key@flowcrypt.com account
-        const settingsPage = await browser.newPage(t, TestUrls.extensionSettings('ci.tests.gmail@flowcrypt.test'));
+        const settingsPage = await browser.newExtensionSettingsPage(t, 'ci.tests.gmail@flowcrypt.test');
         await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
         const contactsFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-contacts-page', ['contacts.htm', 'placement=settings']);
         await contactsFrame.waitAll('@page-contacts');
@@ -2157,7 +2156,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       'check attester ldap search',
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
         const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
@@ -2171,7 +2170,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         };
         await ComposePageRecipe.fillMsg(composePage, recipients, t.title);
         await composePage.close();
-        const settingsPage = await browser.newPage(t, TestUrls.extensionSettings('ci.tests.gmail@flowcrypt.test'));
+        const settingsPage = await browser.newExtensionSettingsPage(t, 'ci.tests.gmail@flowcrypt.test');
         await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
         const contactsFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-contacts-page', ['contacts.htm', 'placement=settings']);
         await contactsFrame.waitAll('@page-contacts');
@@ -2188,14 +2187,14 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       'check attester ldap timeout',
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
         const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
         const recipients = { to: 'test.ldap.timeout@gmail.com', cc: 'test.flowcrypt.pubkey.timeout@gmail.com' };
         await ComposePageRecipe.fillMsg(composePage, recipients, t.title);
         await composePage.close();
-        const settingsPage = await browser.newPage(t, TestUrls.extensionSettings('ci.tests.gmail@flowcrypt.test'));
+        const settingsPage = await browser.newExtensionSettingsPage(t, 'ci.tests.gmail@flowcrypt.test');
         await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
         const contactsFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-contacts-page', ['contacts.htm', 'placement=settings']);
         await contactsFrame.waitAll('@page-contacts');
@@ -2208,7 +2207,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       'allows to retry public key search when attester returns error',
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
         const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
@@ -2219,12 +2218,12 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       'do not auto-refresh key if older version of the same key available on attester',
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
         const recipientEmail = 'has.older.key.on.attester@recipient.com';
         // add a newer expired key manually
-        const settingsPage = await browser.newPage(t, TestUrls.extensionSettings('ci.tests.gmail@flowcrypt.test'));
+        const settingsPage = await browser.newExtensionSettingsPage(t, 'ci.tests.gmail@flowcrypt.test');
         await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
         const contactsFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-contacts-page', ['contacts.htm', 'placement=settings']);
         await contactsFrame.waitAll('@page-contacts');
@@ -2273,13 +2272,13 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       'import S/MIME cert',
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
         // the cert since expired, therefore test was updated to reflect that
         const recipientEmail = 'actalis@meta.33mail.com';
         // add S/MIME key manually
-        const settingsPage = await browser.newPage(t, TestUrls.extensionSettings('ci.tests.gmail@flowcrypt.test'));
+        const settingsPage = await browser.newExtensionSettingsPage(t, 'ci.tests.gmail@flowcrypt.test');
         await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
         const contactsFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-contacts-page', ['contacts.htm', 'placement=settings']);
         await contactsFrame.waitAll('@page-contacts');
@@ -2308,7 +2307,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       'compose - reply - CC&BCC test forward',
       testWithBrowser('compatibility', async (t, browser) => {
         const appendUrl = 'threadId=16ce2c965c75e5a6&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___&replyMsgId=16ce2c965c75e5a6';
@@ -2323,7 +2322,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       'compose - reply - from === acctEmail',
       testWithBrowser('compatibility', async (t, browser) => {
         const appendUrl = 'threadId=17d02296bccd4c5c&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___&replyMsgId=17d02296bccd4c5c';
@@ -2340,7 +2339,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       'compose - check reply for web portal messsage',
       testWithBrowser('compatibility', async (t, browser) => {
         const appendUrl =
@@ -2354,7 +2353,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       'compose - reply - subject starts with Re:',
       testWithBrowser('compatibility', async (t, browser) => {
         const appendUrl = 'threadId=17d02296bccd4c5d&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___&replyMsgId=17d02296bccd4c5d';
@@ -2367,7 +2366,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       'compose - reply - from !== acctEmail',
       testWithBrowser('compatibility', async (t, browser) => {
         const appendUrl = 'threadId=17d02268f01c7e40&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___&replyMsgId=17d02268f01c7e40';
@@ -2380,7 +2379,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       'compose - reply all - from !== acctEmail',
       testWithBrowser('compatibility', async (t, browser) => {
         const appendUrl = 'threadId=17d02268f01c7e40&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___&replyMsgId=17d02268f01c7e40';
@@ -2397,10 +2396,11 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       'user@standardsubdomainfes.localhost:8001 - PWD encrypted message with FES web portal',
       testWithBrowser(undefined, async (t, browser) => {
-        const acct = 'user@standardsubdomainfes.localhost:8001'; // added port to trick extension into calling the mock
+        const port = t.urls?.port;
+        const acct = `user@standardsubdomainfes.localhost:${port}`; // added port to trick extension into calling the mock
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
         await SetupPageRecipe.manualEnter(
           settingsPage,
@@ -2409,7 +2409,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
           { isSavePassphraseChecked: false, isSavePassphraseHidden: false }
         );
         // add names to contacts
-        const dbPage = await browser.newPage(t, TestUrls.extension('chrome/dev/ci_unit_test.htm'));
+        const dbPage = await browser.newExtensionPage(t, 'chrome/dev/ci_unit_test.htm');
         await dbPage.page.evaluate(async () => {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const db = await (window as any).ContactStore.dbOpen();
@@ -2420,7 +2420,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         });
         await dbPage.close();
         const subject = 'PWD encrypted message with FES - ID TOKEN';
-        const composePage = await ComposePageRecipe.openStandalone(t, browser, 'user@standardsubdomainfes.localhost:8001');
+        const composePage = await ComposePageRecipe.openStandalone(t, browser, `user@standardsubdomainfes.localhost:${port}`);
         await ComposePageRecipe.fillMsg(composePage, { to: 'to@example.com', bcc: 'bcc@example.com' }, subject);
         const fileInput = (await composePage.target.$('input[type=file]')) as ElementHandle<HTMLInputElement>;
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -2444,10 +2444,10 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       'user2@standardsubdomainfes.localhost:8001 - PWD encrypted message with FES - Reply rendering',
       testWithBrowser(undefined, async (t, browser) => {
-        const acct = 'user2@standardsubdomainfes.localhost:8001'; // added port to trick extension into calling the mock
+        const acct = `user2@standardsubdomainfes.localhost:${t.urls?.port}`; // added port to trick extension into calling the mock
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
         await SetupPageRecipe.manualEnter(
           settingsPage,
@@ -2456,7 +2456,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
           { isSavePassphraseChecked: false, isSavePassphraseHidden: false }
         );
         const appendUrl = 'threadId=1803be2e506153d2&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___&replyMsgId=1803be3182d1937b';
-        const composePage = await ComposePageRecipe.openStandalone(t, browser, 'user2@standardsubdomainfes.localhost:8001', {
+        const composePage = await ComposePageRecipe.openStandalone(t, browser, acct, {
           appendUrl,
           hasReplyPrompt: true,
         });
@@ -2504,7 +2504,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       'compose - reply box correctly resizes recipients on opening',
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
         const acct = 'ci.tests.gmail@flowcrypt.test';
@@ -2521,10 +2521,10 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       'user3@standardsubdomainfes.localhost:8001 - PWD encrypted message with FES web portal - pubkey recipient in bcc',
       testWithBrowser(undefined, async (t, browser) => {
-        const acct = 'user3@standardsubdomainfes.localhost:8001'; // added port to trick extension into calling the mock
+        const acct = `user3@standardsubdomainfes.localhost:${t.urls?.port}`; // added port to trick extension into calling the mock
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
         await SetupPageRecipe.manualEnter(
           settingsPage,
@@ -2533,7 +2533,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
           { isSavePassphraseChecked: false, isSavePassphraseHidden: false }
         );
         const subject = 'PWD encrypted message with FES - pubkey recipient in bcc';
-        const composePage = await ComposePageRecipe.openStandalone(t, browser, 'user3@standardsubdomainfes.localhost:8001');
+        const composePage = await ComposePageRecipe.openStandalone(t, browser, acct);
         await ComposePageRecipe.fillMsg(composePage, { to: 'to@example.com', bcc: 'flowcrypt.compatibility@gmail.com' }, subject);
         await composePage.waitAndType('@input-password', 'gO0d-pwd');
         await composePage.waitAndClick('@action-send', { delay: 1 });
@@ -2545,10 +2545,10 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       'user4@standardsubdomainfes.localhost:8001 - PWD encrypted message with FES web portal - a send fails with gateway update error',
       testWithBrowser(undefined, async (t, browser) => {
-        const acct = 'user4@standardsubdomainfes.localhost:8001'; // added port to trick extension into calling the mock
+        const acct = `user4@standardsubdomainfes.localhost:${t.urls?.port}`; // added port to trick extension into calling the mock
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
         await SetupPageRecipe.manualEnter(
           settingsPage,
@@ -2558,7 +2558,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         );
         const subject = 'PWD encrypted message with FES web portal - a send fails with gateway update error - ' + testVariant;
         const expectedNumberOfPassedMessages = (await GoogleData.withInitializedData(acct)).searchMessagesBySubject(subject).length;
-        const composePage = await ComposePageRecipe.openStandalone(t, browser, 'user4@standardsubdomainfes.localhost:8001');
+        const composePage = await ComposePageRecipe.openStandalone(t, browser, acct);
         await ComposePageRecipe.fillMsg(composePage, { to: 'gatewayfailure@example.com' }, subject);
         await composePage.waitAndType('@input-password', 'gO0d-pwd');
         await composePage.waitAndClick('@action-send', { delay: 1 });
@@ -2570,7 +2570,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       'first.key.revoked@key-manager-autoimport-no-prv-create.flowcrypt.test - selects valid own key when saving draft or sending',
       testWithBrowser(undefined, async (t, browser) => {
         const acct = 'first.key.revoked@key-manager-autoimport-no-prv-create.flowcrypt.test';
@@ -2583,7 +2583,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       'revoked@key-manager-autoimport-no-prv-create.flowcrypt.test - shows modal not submitting to attester',
       testWithBrowser(undefined, async (t, browser) => {
         const acct = 'revoked@key-manager-autoimport-no-prv-create.flowcrypt.test';
@@ -2594,7 +2594,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       'revoked@key-manager-autoimport-no-prv-create-no-attester-submit.flowcrypt.test - cannot draft or send msg',
       testWithBrowser(undefined, async (t, browser) => {
         const acct = 'revoked@key-manager-autoimport-no-prv-create-no-attester-submit.flowcrypt.test';
@@ -2633,8 +2633,7 @@ const sendImgAndVerifyPresentInSentMsg = async (t: AvaContext, browser: BrowserH
   }, imgBase64);
   await ComposePageRecipe.sendAndClose(composePage);
   // get sent msg id from mock
-  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-  const sentMsg = (await GoogleData.withInitializedData('flowcrypt.compatibility@gmail.com')).searchMessagesBySubject(subject)[0]!;
+  const sentMsg = (await GoogleData.withInitializedData('flowcrypt.compatibility@gmail.com')).searchMessagesBySubject(subject)[0];
   if (sendingType === 'plain') {
     expect(sentMsg.payload?.body?.data).to.match(/<img src="cid:(.+)@flowcrypt">Test Sending Plain Message With Image/);
     return;
@@ -2672,7 +2671,7 @@ const sendTextAndVerifyPresentInSentMsg = async (
   await ComposePageRecipe.sendAndClose(composePage);
   /* eslint-disable @typescript-eslint/no-non-null-assertion */
   // get sent msg from mock
-  const sentMsg = (await GoogleData.withInitializedData('flowcrypt.compatibility@gmail.com')).searchMessagesBySubject(subject)[0]!;
+  const sentMsg = (await GoogleData.withInitializedData('flowcrypt.compatibility@gmail.com')).searchMessagesBySubject(subject)[0];
   const message = encodeURIComponent(sentMsg.payload!.body!.data!);
   /* eslint-enable @typescript-eslint/no-non-null-assertion */
   await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
@@ -2685,13 +2684,10 @@ const sendTextAndVerifyPresentInSentMsg = async (
 };
 
 const setRequirePassPhraseAndOpenRepliedMessage = async (t: AvaContext, browser: BrowserHandle, passphrase: string) => {
-  const settingsPage = await browser.newPage(t, TestUrls.extensionSettings());
+  const settingsPage = await browser.newExtensionSettingsPage(t);
   await SettingsPageRecipe.forgetAllPassPhrasesInStorage(settingsPage, passphrase);
   // Open Message Page
-  const inboxPage = await browser.newPage(
-    t,
-    TestUrls.extension(`chrome/settings/inbox/inbox.htm?acctEmail=flowcrypt.compatibility@gmail.com&threadId=16b584ed95837510`)
-  );
+  const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=flowcrypt.compatibility@gmail.com&threadId=16b584ed95837510`);
   await inboxPage.waitAll('iframe');
   // Get Reply Window (Composer) and click on reply button.
   const replyFrame = await inboxPage.getFrame(['compose.htm']);

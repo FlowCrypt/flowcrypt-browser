@@ -17,7 +17,7 @@ declare const filesize: { filesize: Function }; // eslint-disable-line @typescri
 export class PgpBlockViewAttachmentsModule {
   public includedAttachments: Attachment[] = [];
 
-  public constructor(private view: PgpBlockView) {} // eslint-disable-line no-empty-function
+  public constructor(private view: PgpBlockView) {}
 
   public renderInnerAttachments = (attachments: Attachment[], isEncrypted: boolean) => {
     Xss.sanitizeAppend('#pgp_block', '<div id="attachments"></div>');

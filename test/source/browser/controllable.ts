@@ -11,12 +11,11 @@ import {
   TIMEOUT_TEST_STATE_SATISFY,
   TIMEOUT_FOCUS,
 } from '.';
-import { TestUrls } from './test-urls';
 import { Util } from '../util';
 import { expect } from 'chai';
 import * as fs from 'fs';
 import * as path from 'path';
-import * as mkdirp from 'mkdirp';
+import mkdirp from 'mkdirp';
 import { Dict } from '../core/common';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -275,15 +274,12 @@ abstract class ControllableBase {
   };
 
   public checkElementColor = async (selector: string, color: string) => {
-    const elementColor = await this.target.evaluate(
-      (selector) => {
-        const el = document.querySelector(selector) as HTMLElement; // this will get evaluated in the browser
-        return el.style.color;
-      },
-      this.selector(selector)
-    );
+    const elementColor = await this.target.evaluate(selector => {
+      const el = document.querySelector(selector) as HTMLElement; // this will get evaluated in the browser
+      return el.style.color;
+    }, this.selector(selector));
     expect(elementColor).to.equal(color);
-  }
+  };
 
   public waitAndType = async (selector: string, text: string, { delay = 0.1 }: { delay?: number } = {}) => {
     await this.waitAll(selector);
@@ -387,7 +383,7 @@ abstract class ControllableBase {
     }
     throw new Error(
       `Selector ${selector} was found but did not match "${needle}" within ${timeoutSec}s. ` +
-      `Observed content history: "${JSON.stringify(observedContentHistory, undefined, 2)}"`
+        `Observed content history: "${JSON.stringify(observedContentHistory, undefined, 2)}"`
     );
   };
 
@@ -643,8 +639,7 @@ export class ControllableAlert {
 }
 
 class ConsoleEvent {
-  // eslint-disable-next-line no-empty-function
-  public constructor(public type: string, public text: string) { }
+  public constructor(public type: string, public text: string) {}
 }
 
 export class ControllablePage extends ControllableBase {
@@ -661,7 +656,8 @@ export class ControllablePage extends ControllableBase {
       const response = r.response();
       const fail = r.failure();
       const url = r.url();
-      if (url.indexOf(TestUrls.extension('')) !== 0 || fail) {
+      const extensionUrl = t.urls?.extension('');
+      if ((extensionUrl && url.indexOf(extensionUrl) !== 0) || fail) {
         // not an extension url, or a fail
         this.consoleMsgs.push(new ConsoleEvent('request', `${response ? response.status() : '-1'} ${r.method()} ${url}: ${fail ? fail.errorText : 'ok'}`));
       }
@@ -713,7 +709,11 @@ export class ControllablePage extends ControllableBase {
   };
 
   public goto = async (url: string) => {
-    url = url.indexOf('https://') === 0 || url.indexOf(TestUrls.extension('')) === 0 ? url : TestUrls.extension(url);
+    if (this.t.urls) {
+      const extensionUrl = this.t.urls.extension('');
+      url = url.indexOf('https://') === 0 || url.indexOf(extensionUrl) === 0 ? url : this.t.urls.extension(url);
+    }
+
     await Util.sleep(1);
     // await this.page.goto(url); // may produce intermittent Navigation Timeout Exceeded in CI environment
     this.page.goto(url).catch(e => this.t.log(`goto: ${e.message}: ${url}`));

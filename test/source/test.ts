@@ -1,10 +1,12 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
-import * as ava from 'ava';
+import test, { Implementation } from 'ava';
+import { promisify } from 'util';
+import { exec } from 'child_process';
 
 import { AvaContext, getDebugHtmlAtts, minutes, standaloneTestTimeout } from './tests/tooling';
 import { BrowserHandle, BrowserPool } from './browser';
-import { Config, Util, getParsedCliParams } from './util';
+import { Util, getParsedCliParams } from './util';
 
 import { BrowserRecipe } from './tests/tooling/browser-recipe';
 import { defineComposeTests } from './tests/compose';
@@ -16,18 +18,17 @@ import { defineSettingsTests } from './tests/settings';
 import { defineSetupTests } from './tests/setup';
 import { defineUnitNodeTests } from './tests/unit-node';
 import { defineUnitBrowserTests } from './tests/unit-browser';
-import { mock } from './mock';
 import { mockBackendData } from './mock/backend/backend-endpoints';
 import { TestUrls } from './browser/test-urls';
 import { mkdirSync, realpathSync, writeFileSync } from 'fs';
-// import fileSize from 'filesize';
+import { startAllApisMock } from './mock/all-apis-mock';
 
 export const { testVariant, testGroup, oneIfNotPooled, buildDir, isMock } = getParsedCliParams();
 export const internalTestState = { expectIntentionalErrReport: false }; // updated when a particular test that causes an error is run
 const DEBUG_BROWSER_LOG = false; // set to true to print / export information from browser
-const DEBUG_MOCK_LOG = false; // se to true to print mock server logs
+const DEBUG_MOCK_LOG = false; // set to true to print mock server logs
 
-process.setMaxListeners(60);
+process.setMaxListeners(0);
 
 /* eslint-disable @typescript-eslint/naming-convention */
 const consts = {
@@ -48,86 +49,98 @@ consts.PROMISE_TIMEOUT_OVERALL = new Promise((resolve, reject) => setTimeout(() 
 export type Consts = typeof consts;
 export type CommonAcct = 'compatibility' | 'compose' | 'ci.tests.gmail';
 
-const browserPool = new BrowserPool(consts.POOL_SIZE, 'browserPool', false, buildDir, isMock, undefined, undefined, consts.IS_LOCAL_DEBUG);
-let closeMockApi: () => Promise<void>;
+const asyncExec = promisify(exec);
+const browserPool = new BrowserPool(consts.POOL_SIZE, 'browserPool', buildDir, isMock, undefined, undefined, consts.IS_LOCAL_DEBUG);
 const mockApiLogs: string[] = [];
 
-ava.default.before('set config and mock api', async t => {
-  standaloneTestTimeout(t, consts.TIMEOUT_EACH_RETRY, t.title);
-  Config.extensionId = await browserPool.getExtensionId(t);
-  console.info(`Extension url: chrome-extension://${Config.extensionId}`);
-  if (isMock) {
-    const mockApi = await mock(line => {
-      if (DEBUG_MOCK_LOG) {
-        console.log(line);
-      }
-      mockApiLogs.push(line);
-    });
-    closeMockApi = mockApi.close;
-  }
-  t.pass();
+test.beforeEach('set timeout', async t => {
+  t.timeout(consts.TIMEOUT_EACH_RETRY);
 });
 
 const testWithBrowser = (
   acct: CommonAcct | undefined,
   cb: (t: AvaContext, browser: BrowserHandle) => Promise<void>,
   flag?: 'FAILING'
-): ava.Implementation<unknown[]> => {
+): Implementation<unknown[]> => {
   return async (t: AvaContext) => {
-    await browserPool.withNewBrowserTimeoutAndRetry(
-      async (t, browser) => {
-        const start = Date.now();
-        if (acct) {
-          await BrowserRecipe.setUpCommonAcct(t, browser, acct);
-        }
-        await cb(t, browser);
-        if (DEBUG_BROWSER_LOG) {
-          try {
-            const page = await browser.newPage(t, TestUrls.extension('chrome/dev/ci_unit_test.htm'));
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-return
-            const items = (await page.target.evaluate(() => (window as any).Debug.readDatabase())) as {
-              input: unknown;
-              output: unknown;
-            }[];
-            for (let i = 0; i < items.length; i++) {
-              const item = items[i];
-              const input = JSON.stringify(item.input);
-              const output = JSON.stringify(item.output, undefined, 2);
-              const file = `./test/tmp/${t.title}-${i}.txt`;
-              writeFileSync(file, `in: ${input}\n\nout: ${output}`);
-              t.log(`browser debug written to file: ${file}`);
-            }
-          } catch (e) {
-            t.log(`Error reading debug messages: ${e}`);
+    let closeMockApi: (() => Promise<void>) | undefined;
+    if (isMock) {
+      const mockApi = await startMockApiAndCopyBuild(t);
+      closeMockApi = mockApi.close;
+    }
+    try {
+      await browserPool.withNewBrowserTimeoutAndRetry(
+        async (t, browser) => {
+          const start = Date.now();
+          if (acct) {
+            await BrowserRecipe.setUpCommonAcct(t, browser, acct);
           }
-        }
-        t.log(`run time: ${Math.ceil((Date.now() - start) / 1000)}s`);
-      },
-      t,
-      consts,
-      flag
-    );
-    t.pass();
+          await cb(t, browser);
+          if (DEBUG_BROWSER_LOG) {
+            await saveBrowserLog(t, browser);
+          }
+          t.log(`run time: ${Math.ceil((Date.now() - start) / 1000)}s`);
+        },
+        t,
+        consts,
+        flag
+      );
+
+      t.pass();
+    } finally {
+      if (closeMockApi) {
+        await closeMockApi();
+      }
+    }
   };
+};
+
+const startMockApiAndCopyBuild = async (t: AvaContext) => {
+  const mockApi = await startAllApisMock(line => {
+    if (DEBUG_MOCK_LOG) {
+      console.log(line);
+    }
+    mockApiLogs.push(line);
+  }).catch(e => {
+    console.error(e);
+    process.exit(1);
+  });
+  const address = mockApi.server.address();
+  if (typeof address === 'object' && address) {
+    const result = await asyncExec(`sh ./scripts/config-mock-build.sh ${buildDir} ${address.port}`);
+
+    t.extensionDir = result.stdout;
+    t.urls = new TestUrls(await browserPool.getExtensionId(t), address.port);
+  } else {
+    t.log('Failed to get mock build address');
+  }
+  return mockApi;
+};
+
+const saveBrowserLog = async (t: AvaContext, browser: BrowserHandle) => {
+  try {
+    const page = await browser.newPage(t, t.urls?.extension('chrome/dev/ci_unit_test.htm'));
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-return
+    const items = (await page.target.evaluate(() => (window as any).Debug.readDatabase())) as {
+      input: unknown;
+      output: unknown;
+    }[];
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+      const input = JSON.stringify(item.input);
+      const output = JSON.stringify(item.output, undefined, 2);
+      const file = `./test/tmp/${t.title}-${i}.txt`;
+      writeFileSync(file, `in: ${input}\n\nout: ${output}`);
+      t.log(`browser debug written to file: ${file}`);
+    }
+  } catch (e) {
+    t.log(`Error reading debug messages: ${e}`);
+  }
 };
 
 export type TestWithBrowser = typeof testWithBrowser;
 
-ava.default.after.always('close browsers', async t => {
-  standaloneTestTimeout(t, consts.TIMEOUT_SHORT, t.title);
-  await browserPool.close();
-  t.pass();
-});
-
-if (isMock) {
-  ava.default.after.always('close mock api', async t => {
-    standaloneTestTimeout(t, consts.TIMEOUT_SHORT, t.title);
-    closeMockApi().catch(t.log);
-    t.pass();
-  });
-}
-
-ava.default.after.always('evaluate Catch.reportErr errors', async t => {
+test.after.always('evaluate Catch.reportErr errors', async t => {
   if (!isMock || testGroup !== 'STANDARD-GROUP') {
     // can only collect reported errs when running with a mocked api
     t.pass();
@@ -141,10 +154,8 @@ ava.default.after.always('evaluate Catch.reportErr errors', async t => {
     // below for test "get.updating.key@key-manager-choose-passphrase-forbid-storing.flowcrypt.test - automatic update of key found on key manager"
     .filter(
       e =>
-        ![
-          'BrowserMsg(processAndStoreKeysFromEkmLocally) sendRawResponse::Error: Some keys could not be parsed',
-          'BrowserMsg(ajax) Bad Request: 400 when GET-ing https://localhost:8001/flowcrypt-email-key-manager/v1/keys/private (no body):  -> RequestTimeout',
-        ].includes(e.message)
+        e.message !== 'BrowserMsg(processAndStoreKeysFromEkmLocally) sendRawResponse::Error: Some keys could not be parsed' &&
+        !e.message.match(/BrowserMsg\(ajax\) Bad Request: 400 when GET-ing https:\/\/localhost:\d+\/flowcrypt-email-key-manager/)
     )
     // below for test "user4@standardsubdomainfes.localhost:8001 - PWD encrypted message with FES web portal - a send fails with gateway update error"
     .filter(e => !e.message.includes('Test error'))
@@ -154,7 +165,7 @@ ava.default.after.always('evaluate Catch.reportErr errors', async t => {
     .filter(e => !e.trace.includes('-1 when GET-ing https://openpgpkey.flowcrypt.com'))
     // below for "test allows to retry public key search when attester returns error"
     .filter(
-      e => !e.message.includes('Error: Internal Server Error: 500 when GET-ing https://localhost:8001/attester/pub/attester.return.error@flowcrypt.test')
+      e => !e.message.match(/Error: Internal Server Error: 500 when GET-ing https:\/\/localhost:\d+\/attester\/pub\/attester.return.error@flowcrypt.test/)
     );
   const foundExpectedErr = usefulErrors.find(re => re.message === `intentional error for debugging`);
   const foundUnwantedErrs = usefulErrors.filter(re => re.message !== `intentional error for debugging` && !re.message.includes('traversal forbidden'));
@@ -178,7 +189,7 @@ ava.default.after.always('evaluate Catch.reportErr errors', async t => {
   }
 });
 
-ava.default.after.always('send debug info if any', async t => {
+test.after.always('send debug info if any', async t => {
   console.info('send debug info - deciding');
   const failRnd = Util.lousyRandom();
   const testId = `FlowCrypt Browser Extension ${testVariant} ${failRnd}`;

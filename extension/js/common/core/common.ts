@@ -23,11 +23,11 @@ export class Str {
     let name: string | undefined;
     if (full.includes('<') && full.includes('>')) {
       email = full
-        .substr(full.indexOf('<') + 1, full.indexOf('>') - full.indexOf('<') - 1)
+        .substring(full.indexOf('<') + 1, full.indexOf('>'))
         .replace(/["']/g, '')
         .trim()
         .toLowerCase();
-      name = full.substr(0, full.indexOf('<')).replace(/["']/g, '').trim();
+      name = full.substring(0, full.indexOf('<')).replace(/["']/g, '').trim();
     } else {
       email = full.replace(/["']/g, '').trim().toLowerCase();
     }

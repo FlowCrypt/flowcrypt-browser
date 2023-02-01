@@ -6,7 +6,7 @@
 export class ExpirationCache {
   private cache: { [key: string]: { value: string; expiration: number } } = {};
 
-  // eslint-disable-next-line @typescript-eslint/naming-convention, no-empty-function
+  // eslint-disable-next-line @typescript-eslint/naming-convention
   public constructor(public EXPIRATION_TICKS: number) {}
 
   public set = (key: string, value?: string, expiration?: number) => {

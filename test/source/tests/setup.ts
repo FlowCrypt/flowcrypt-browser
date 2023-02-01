@@ -1,6 +1,6 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
-import * as ava from 'ava';
+import test from 'ava';
 
 import { Config, TestVariant, Util } from './../util';
 import { SetupPageRecipe } from './page-recipe/setup-page-recipe';
@@ -16,14 +16,13 @@ import { Key, KeyInfoWithIdentity, KeyUtil } from '../core/crypto/key';
 import { testConstants } from './tooling/consts';
 import { InboxPageRecipe } from './page-recipe/inbox-page-recipe';
 import { PageRecipe } from './page-recipe/abstract-page-recipe';
-import { TestUrls } from '../browser/test-urls';
 import { BrowserHandle, ControllablePage } from '../browser';
 import { OauthPageRecipe } from './page-recipe/oauth-page-recipe';
 import { AvaContext } from './tooling';
 import { opgp } from '../core/crypto/pgp/openpgpjs-custom';
 
 const getAuthorizationHeader = async (t: AvaContext, browser: BrowserHandle, acctEmail: string) => {
-  const settingsPage = await browser.newPage(t, TestUrls.extensionSettings(acctEmail));
+  const settingsPage = await browser.newExtensionSettingsPage(t, acctEmail);
   const accessToken = await BrowserRecipe.getGoogleAccessToken(settingsPage, acctEmail);
   await settingsPage.close();
   // eslint-disable-next-line @typescript-eslint/naming-convention
@@ -34,7 +33,7 @@ const openMockGmailPage = async (t: AvaContext, browser: BrowserHandle, acctEmai
   const authorizationHeader = hasPermission
     ? await getAuthorizationHeader(t, browser, acctEmail)
     : { Authorization: 'Bearer emulating-not-properly-set-up-extension' }; // eslint-disable-line @typescript-eslint/naming-convention
-  return await browser.newPage(t, TestUrls.mockGmailUrl(), undefined, authorizationHeader);
+  return await browser.newMockGmailPage(t, authorizationHeader);
 };
 
 export const defineSetupTests = (testVariant: TestVariant, testWithBrowser: TestWithBrowser) => {
@@ -42,15 +41,15 @@ export const defineSetupTests = (testVariant: TestVariant, testWithBrowser: Test
     // note - `SetupPageRecipe.createKey` tests are in `defineFlakyTests` - running serially
     // because the keygen CPU spike can cause trouble to other concurrent tests
 
-    ava.default.todo('setup - no connection when pulling backup - retry prompt shows and works');
+    test.todo('setup - no connection when pulling backup - retry prompt shows and works');
 
-    ava.default.todo('setup - simple - no connection when making a backup - retry prompt shows');
+    test.todo('setup - simple - no connection when making a backup - retry prompt shows');
 
-    ava.default.todo('setup - advanced - no connection when making a backup - retry prompt shows');
+    test.todo('setup - advanced - no connection when making a backup - retry prompt shows');
 
-    ava.default.todo('setup - no connection when submitting public key - retry prompt shows and works');
+    test.todo('setup - no connection when submitting public key - retry prompt shows and works');
 
-    ava.default(
+    test(
       'settings > login > close oauth window > close popup',
       testWithBrowser(undefined, async (t, browser) => {
         const settingsPage = await BrowserRecipe.openSettingsLoginButCloseOauthWindowBeforeGrantingPermission(
@@ -62,17 +61,17 @@ export const defineSetupTests = (testVariant: TestVariant, testWithBrowser: Test
       })
     );
 
-    ava.default(
+    test(
       'setup - invalid csrf token returns error on gmail login',
       testWithBrowser(undefined, async (t, browser) => {
-        const settingsPage = await browser.newPage(t, TestUrls.extensionSettings());
+        const settingsPage = await browser.newExtensionSettingsPage(t);
         const oauthPopup = await browser.newPageTriggeredBy(t, () => settingsPage.waitAndClick('@action-connect-to-gmail'));
         await OauthPageRecipe.mock(t, oauthPopup, 'test.invalid.csrf@gmail.com', 'login');
         await settingsPage.waitAndRespondToModal('error', 'confirm', 'Wrong oauth CSRF token. Please try again.');
       })
     );
 
-    ava.default(
+    test(
       'setup - optional checkbox for each email aliases',
       testWithBrowser(undefined, async (t, browser) => {
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.compatibility@gmail.com');
@@ -94,7 +93,7 @@ export const defineSetupTests = (testVariant: TestVariant, testWithBrowser: Test
       })
     );
 
-    ava.default(
+    test(
       'setup - import key - do not submit - did not use before',
       testWithBrowser(undefined, async (t, browser) => {
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.test.key.imported@gmail.com');
@@ -107,7 +106,7 @@ export const defineSetupTests = (testVariant: TestVariant, testWithBrowser: Test
       })
     );
 
-    ava.default(
+    test(
       'setup - import unarmored key from file',
       testWithBrowser(undefined, async (t, browser) => {
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.test.key.imported@gmail.com');
@@ -122,7 +121,7 @@ export const defineSetupTests = (testVariant: TestVariant, testWithBrowser: Test
       })
     );
 
-    ava.default(
+    test(
       'setup - import invalid key file',
       testWithBrowser(undefined, async (t, browser) => {
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.test.key.imported@gmail.com');
@@ -137,7 +136,7 @@ export const defineSetupTests = (testVariant: TestVariant, testWithBrowser: Test
       })
     );
 
-    ava.default(
+    test(
       'setup - import key - submit - used before',
       testWithBrowser(undefined, async (t, browser) => {
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.test.key.used.pgp@gmail.com');
@@ -150,7 +149,7 @@ export const defineSetupTests = (testVariant: TestVariant, testWithBrowser: Test
       })
     );
 
-    ava.default(
+    test(
       'setup - import key - naked - choose my own pass phrase',
       testWithBrowser(undefined, async (t, browser) => {
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.test.key.import.naked@gmail.com');
@@ -163,7 +162,7 @@ export const defineSetupTests = (testVariant: TestVariant, testWithBrowser: Test
       })
     );
 
-    ava.default(
+    test(
       'setup - import key - naked - auto-generate a pass phrase',
       testWithBrowser(undefined, async (t, browser) => {
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.test.key.import.naked@gmail.com');
@@ -176,9 +175,9 @@ export const defineSetupTests = (testVariant: TestVariant, testWithBrowser: Test
       })
     );
 
-    ava.default.todo('setup - import key - naked - do not supply pass phrase gets error');
+    test.todo('setup - import key - naked - do not supply pass phrase gets error');
 
-    ava.default(
+    test(
       'setup - import key - fix key self signatures',
       testWithBrowser(undefined, async (t, browser) => {
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.test.key.imported@gmail.com');
@@ -191,7 +190,7 @@ export const defineSetupTests = (testVariant: TestVariant, testWithBrowser: Test
       })
     );
 
-    ava.default(
+    test(
       'setup - import key - fix key self signatures - skip invalid uid',
       testWithBrowser(undefined, async (t, browser) => {
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.test.key.imported@gmail.com');
@@ -209,7 +208,7 @@ export const defineSetupTests = (testVariant: TestVariant, testWithBrowser: Test
     //
     // The test will also succeed if local openpgp.js is patched and
     // `!this.users.length` condition is removed from the Key constructor.
-    ava.default.failing(
+    test.failing(
       'setup - import key - fix uids',
       testWithBrowser(
         undefined,
@@ -221,7 +220,7 @@ export const defineSetupTests = (testVariant: TestVariant, testWithBrowser: Test
       )
     );
 
-    ava.default(
+    test(
       'setup - import key - warning on primary has no secret',
       testWithBrowser(undefined, async (t, browser) => {
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.test.key.imported@gmail.com');
@@ -312,7 +311,7 @@ ZAvn6PBX7vsaReOVa2zsnuY5g70xCxvzHIwR94POu5cENwRtCkrppFnISALpQ1kA
       })
     );
 
-    ava.default(
+    test(
       'setup - import key - two e-mails on the screen',
       testWithBrowser(undefined, async (t, browser) => {
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.test.key.imported@gmail.com');
@@ -407,7 +406,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       })
     );
 
-    ava.default(
+    test(
       'setup - recover with a pass phrase - skip remaining',
       testWithBrowser(undefined, async (t, browser) => {
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.compatibility@gmail.com');
@@ -418,7 +417,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       })
     );
 
-    ava.default(
+    test(
       'setup - recover with a pass phrase - 1pp1 then 2pp1',
       testWithBrowser(undefined, async (t, browser) => {
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.compatibility@gmail.com');
@@ -430,7 +429,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       })
     );
 
-    ava.default(
+    test(
       'setup - recover with a pass phrase - 1pp2 then 2pp1',
       testWithBrowser(undefined, async (t, browser) => {
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.compatibility@gmail.com');
@@ -442,7 +441,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       })
     );
 
-    ava.default(
+    test(
       'setup - recover with a pass phrase - 2pp1 then 1pp1',
       testWithBrowser(undefined, async (t, browser) => {
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.compatibility@gmail.com');
@@ -454,7 +453,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       })
     );
 
-    ava.default(
+    test(
       'setup - recover with a pass phrase - 2pp1 then 1pp2',
       testWithBrowser(undefined, async (t, browser) => {
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.compatibility@gmail.com');
@@ -466,7 +465,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       })
     );
 
-    ava.default(
+    test(
       'setup - recover with a pass phrase - 1pp1 then 1pp2 (shows already recovered), then 2pp1',
       testWithBrowser(undefined, async (t, browser) => {
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.compatibility@gmail.com');
@@ -479,7 +478,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       })
     );
 
-    ava.default(
+    test(
       'test re-auth after updating chrome extension',
       testWithBrowser('compatibility', async (t, browser) => {
         const acctEmail = 'flowcrypt.compatibility@gmail.com';
@@ -506,7 +505,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       })
     );
 
-    ava.default(
+    test(
       'mail.google.com - success notif after setup, click hides it, does not re-appear + offers to reauth',
       testWithBrowser('compatibility', async (t, browser) => {
         const acct = 'flowcrypt.compatibility@gmail.com';
@@ -517,7 +516,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         await gmailPage.notPresent(['@webmail-notification-setup', '@notification-setup-action-close', '@notification-successfully-setup-action-close']);
         // below test that can re-auth after lost access (simulating situation when user changed password on google)
         await Util.wipeGoogleTokensUsingExperimentalSettingsPage(t, browser, acct);
-        const settingsPage = await browser.newPage(t, TestUrls.extensionSettings(acct));
+        const settingsPage = await browser.newExtensionSettingsPage(t, acct);
         await settingsPage.waitAndRespondToModal('confirm', 'cancel', 'FlowCrypt must be re-connected to your Google account.');
         // *** these tests below are very flaky in CI environment, Google will want to re-authenticate the user for whatever reason
         // // opening secure compose should trigger an api call which causes a reconnect notification
@@ -539,7 +538,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       })
     );
 
-    ava.default(
+    test(
       'mail.google.com - setup prompt notif + hides when close clicked + reappears + setup link opens settings',
       testWithBrowser(undefined, async (t, browser) => {
         const acct = 'flowcrypt.compatibility@gmail.com';
@@ -563,7 +562,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       })
     );
 
-    ava.default(
+    test(
       'mail.google.com - setup prompt notification shows up + dismiss hides it + does not reappear if dismissed',
       testWithBrowser(undefined, async (t, browser) => {
         const acct = 'flowcrypt.compatibility@gmail.com';
@@ -585,11 +584,11 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       })
     );
 
-    ava.default(
+    test(
       'setup - test adding missing self-signature key issue',
       testWithBrowser('compatibility', async (t, browser) => {
         const acctEmail = 'flowcrypt.compatibility@gmail.com';
-        const settingsPage = await browser.newPage(t, TestUrls.extensionSettings(acctEmail));
+        const settingsPage = await browser.newExtensionSettingsPage(t, acctEmail);
         await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
         const addKeyPopup = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-add-key-page', ['add_key.htm']);
         await addKeyPopup.waitAndClick('@source-paste');
@@ -617,7 +616,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       })
     );
 
-    ava.default(
+    test(
       'setup [not using key manager] - notify users when their keys expire soon',
       testWithBrowser(undefined, async (t, browser) => {
         const acctEmail = 'flowcrypt.notify.expiring.keys@gmail.com';
@@ -675,7 +674,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       })
     );
 
-    ava.default(
+    test(
       'setup [using key manager] - notify users when their keys expire soon',
       testWithBrowser(undefined, async (t, browser) => {
         const acctEmail = 'flowcrypt.notify.expiring.keys.updating.key@key-manager-autogen.flowcrypt.test';
@@ -726,15 +725,15 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       })
     );
 
-    ava.default.todo('setup - recover with a pass phrase - 1pp1 then wrong, then skip');
-    // ava.default('setup - recover with a pass phrase - 1pp1 then wrong, then skip', test_with_browser(async (t, browser) => {
+    test.todo('setup - recover with a pass phrase - 1pp1 then wrong, then skip');
+    // test('setup - recover with a pass phrase - 1pp1 then wrong, then skip', test_with_browser(async (t, browser) => {
     //   const settingsPage = await BrowserRecipe.open_settings_login_approve(t, browser,'flowcrypt.compatibility@gmail.com');
     //   await SetupPageRecipe.setup_recover(settingsPage, 'flowcrypt.compatibility.1pp1', {has_recover_more: true, click_recover_more: true});
     //   await SetupPageRecipe.setup_recover(settingsPage, 'flowcrypt.wrong.passphrase', {wrong_passphrase: true});
     //   await Util.sleep(200);
     // }));
 
-    ava.default(
+    test(
       'setup - recover with a pass phrase - no remaining',
       testWithBrowser(undefined, async (t, browser) => {
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.test.key.recovered@gmail.com');
@@ -742,7 +741,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       })
     );
 
-    ava.default(
+    test(
       'setup - fail to recover with a wrong pass phrase',
       testWithBrowser(undefined, async (t, browser) => {
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.test.key.recovered@gmail.com');
@@ -753,7 +752,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       })
     );
 
-    ava.default(
+    test(
       'setup - fail to recover with a wrong pass phrase at first, then recover with good pass phrase',
       testWithBrowser(undefined, async (t, browser) => {
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.test.key.recovered@gmail.com');
@@ -762,7 +761,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       })
     );
 
-    ava.default(
+    test(
       'setup - import key - submit - offline - retry',
       testWithBrowser(undefined, async (t, browser) => {
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.test.key.used.pgp@gmail.com');
@@ -775,17 +774,17 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       })
     );
 
-    ava.default(
+    test(
       'setup - enterprise users should be redirected to their help desk when an error occured',
       testWithBrowser(undefined, async (t, browser) => {
         const acctEmail = 'flowcrypt.compatibility@gmail.com';
         if (testVariant === 'ENTERPRISE-MOCK') {
-          const settingsPage = await browser.newPage(t, TestUrls.extensionSettings());
+          const settingsPage = await browser.newExtensionSettingsPage(t);
           const oauthPopup = await browser.newPageTriggeredBy(t, () => settingsPage.waitAndClick('@action-connect-to-gmail'));
           await OauthPageRecipe.mock(t, oauthPopup, acctEmail, 'login_with_invalid_state');
           await settingsPage.waitForContent('@container-error-modal-text', 'please contact your Help Desk');
         } else if (testVariant === 'CONSUMER-MOCK') {
-          const settingsPage = await browser.newPage(t, TestUrls.extensionSettings());
+          const settingsPage = await browser.newExtensionSettingsPage(t);
           const oauthPopup = await browser.newPageTriggeredBy(t, () => settingsPage.waitAndClick('@action-connect-to-gmail'));
           await OauthPageRecipe.mock(t, oauthPopup, acctEmail, 'login_with_invalid_state');
           await settingsPage.waitForContent('@container-error-modal-text', 'write us at human@flowcrypt.com');
@@ -793,7 +792,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       })
     );
 
-    ava.default(
+    test(
       'has.pub@client-configuration-test.flowcrypt.test - no backup, no keygen',
       testWithBrowser(undefined, async (t, browser) => {
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'has.pub@client-configuration-test.flowcrypt.test');
@@ -820,7 +819,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       })
     );
 
-    ava.default(
+    test(
       'invalid.pub@client-configuration-test.flowcrypt.test - no backup, no keygen',
       testWithBrowser(undefined, async (t, browser) => {
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'invalid.pub@client-configuration-test.flowcrypt.test');
@@ -840,7 +839,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       })
     );
 
-    ava.default(
+    test(
       'no.pub@client-configurations-test - no backup, no keygen, enforce attester submit with submit err',
       testWithBrowser(undefined, async (t, browser) => {
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'no.pub@client-configuration-test.flowcrypt.test');
@@ -860,7 +859,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       })
     );
 
-    ava.default(
+    test(
       'user@no-submit-client-configuration.flowcrypt.test - do not submit to attester',
       testWithBrowser(undefined, async (t, browser) => {
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'user@no-submit-client-configuration.flowcrypt.test');
@@ -877,7 +876,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       })
     );
 
-    ava.default(
+    test(
       'setup - manualEnter honors DEFAULT_REMEMBER_PASS_PHRASE ClientConfiguration',
       testWithBrowser(undefined, async (t, browser) => {
         const acctEmail = 'user@default-remember-passphrase-client-configuration.flowcrypt.test';
@@ -904,7 +903,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       })
     );
 
-    ava.default(
+    test(
       'user@no-search-domains-client-configuration.flowcrypt.test - do not search attester for recipients on particular domains',
       testWithBrowser(undefined, async (t, browser) => {
         // disallowed searching attester for pubkeys on "flowcrypt.com" domain
@@ -924,7 +923,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       })
     );
 
-    ava.default(
+    test(
       'user@only-allow-some-domains-client-configuration.flowcrypt.test - search attester for recipients only on particular domains',
       testWithBrowser(undefined, async (t, browser) => {
         // disallow_attester_search_for_domains is not respected if allow_attester_search_only_for_domains is set
@@ -944,7 +943,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       })
     );
 
-    ava.default(
+    test(
       "user@no-allow-domains-client-configuration.flowcrypt.test - search attester for recipients doesn't work on any domains",
       testWithBrowser(undefined, async (t, browser) => {
         // as `allow_attester_search_only_for_domains: []` is set, attester search shouldn't work for any domains
@@ -958,7 +957,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       })
     );
 
-    ava.default(
+    test(
       'user@no-search-wildcard-domains-client-configuration.flowcrypt.test - do not search attester for recipients on any domain',
       testWithBrowser(undefined, async (t, browser) => {
         // disallowed searching attester for pubkeys on * domain
@@ -973,7 +972,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       })
     );
 
-    ava.default(
+    test(
       'get.key@key-manager-autogen.flowcrypt.test - automatic setup with key found on key manager',
       testWithBrowser(undefined, async (t, browser) => {
         const acct = 'get.key@key-manager-autogen.flowcrypt.test';
@@ -1022,7 +1021,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       );
     };
 
-    ava.default(
+    test(
       'get.updating.key@key-manager-choose-passphrase-forbid-storing.flowcrypt.test - automatic update of key found on key manager',
       testWithBrowser(undefined, async (t, browser) => {
         const acct = 'get.updating.key@key-manager-choose-passphrase-forbid-storing.flowcrypt.test';
@@ -1040,7 +1039,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         };
         const set1 = await retrieveAndCheckKeys(settingsPage, acct, 1);
         // 1. EKM returns the same key, no update, no toast
-        let gmailPage = await browser.newPage(t, TestUrls.mockGmailUrl(), undefined, extraAuthHeaders);
+        let gmailPage = await browser.newMockGmailPage(t, extraAuthHeaders);
         await PageRecipe.noToastAppears(gmailPage);
         await gmailPage.notPresent('@dialog-passphrase');
         const set2 = await retrieveAndCheckKeys(settingsPage, acct, 1);
@@ -1049,14 +1048,14 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         // 2. EKM returns a newer version of the existing key
         const someOlderVersion = await updateAndArmorKey(set2[0]);
         MOCK_KM_KEYS[acct].response = { privateKeys: [{ decryptedPrivateKey: someOlderVersion }] };
-        gmailPage = await browser.newPage(t, TestUrls.mockGmailUrl(), undefined, extraAuthHeaders);
+        gmailPage = await browser.newMockGmailPage(t, extraAuthHeaders);
         await PageRecipe.waitForToastToAppearAndDisappear(gmailPage, 'Account keys updated');
         const set3 = await retrieveAndCheckKeys(settingsPage, acct, 1);
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        expect(set3[0].lastModified!).to.be.greaterThan(set2[0].lastModified!); // an update happened
+        expect(set3[0].lastModified).to.be.greaterThan(set2[0].lastModified!); // an update happened
         await gmailPage.close();
         // 3. EKM returns the same version of the existing key, no toast, no update
-        gmailPage = await browser.newPage(t, TestUrls.mockGmailUrl(), undefined, extraAuthHeaders);
+        gmailPage = await browser.newMockGmailPage(t, extraAuthHeaders);
         await PageRecipe.noToastAppears(gmailPage);
         await gmailPage.notPresent('@dialog-passphrase');
         const set4 = await retrieveAndCheckKeys(settingsPage, acct, 1);
@@ -1064,7 +1063,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         // 4. Forget the passphrase, EKM the same version of the existing key, no prompt
         await InboxPageRecipe.finishSessionOnInboxPage(gmailPage);
         await gmailPage.close();
-        gmailPage = await browser.newPage(t, TestUrls.mockGmailUrl(), undefined, extraAuthHeaders);
+        gmailPage = await browser.newMockGmailPage(t, extraAuthHeaders);
         await PageRecipe.noToastAppears(gmailPage);
         await gmailPage.notPresent('@dialog-passphrase');
         const set5 = await retrieveAndCheckKeys(settingsPage, acct, 1, passphrase);
@@ -1072,7 +1071,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         await gmailPage.close();
         // 5. EKM returns a newer version of the existing key, canceling passphrase prompt, no update
         MOCK_KM_KEYS[acct].response = { privateKeys: [{ decryptedPrivateKey: await updateAndArmorKey(set5[0]) }] };
-        gmailPage = await browser.newPage(t, TestUrls.mockGmailUrl(), undefined, extraAuthHeaders);
+        gmailPage = await browser.newMockGmailPage(t, extraAuthHeaders);
         await gmailPage.waitAll('@dialog-passphrase');
         await ComposePageRecipe.cancelPassphraseDialog(gmailPage, 'keyboard');
         await PageRecipe.noToastAppears(gmailPage);
@@ -1080,7 +1079,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         expect(set6[0].lastModified).to.equal(set5[0].lastModified); // no update
         await gmailPage.close();
         // 6. EKM returns a newer version of the existing key, entering the passphrase, update toast
-        gmailPage = await browser.newPage(t, TestUrls.mockGmailUrl(), undefined, extraAuthHeaders);
+        gmailPage = await browser.newMockGmailPage(t, extraAuthHeaders);
         await gmailPage.waitAll('@dialog-passphrase');
         {
           const passphraseDialog = await gmailPage.getFrame(['passphrase.htm']);
@@ -1096,7 +1095,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         await gmailPage.close();
         // 7. EKM returns an older version of the existing key, no toast, no update
         MOCK_KM_KEYS[acct].response = { privateKeys: [{ decryptedPrivateKey: someOlderVersion }] };
-        gmailPage = await browser.newPage(t, TestUrls.mockGmailUrl(), undefined, extraAuthHeaders);
+        gmailPage = await browser.newMockGmailPage(t, extraAuthHeaders);
         await PageRecipe.noToastAppears(gmailPage);
         await gmailPage.notPresent('@dialog-passphrase');
         const set8 = await retrieveAndCheckKeys(settingsPage, acct, 1);
@@ -1106,7 +1105,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         MOCK_KM_KEYS[acct].response = {
           privateKeys: [{ decryptedPrivateKey: someOlderVersion }, { decryptedPrivateKey: testConstants.existingPrv }],
         };
-        gmailPage = await browser.newPage(t, TestUrls.mockGmailUrl(), undefined, extraAuthHeaders);
+        gmailPage = await browser.newMockGmailPage(t, extraAuthHeaders);
         await PageRecipe.waitForToastToAppearAndDisappear(gmailPage, 'Account keys updated');
         await gmailPage.notPresent('@dialog-passphrase');
         const set9 = await retrieveAndCheckKeys(settingsPage, acct, 2);
@@ -1118,7 +1117,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         await gmailPage.close();
         // 9. EKM returns a newer version of one key, fully omitting the other one, a toast, an update and removal
         MOCK_KM_KEYS[acct].response = { privateKeys: [{ decryptedPrivateKey: await updateAndArmorKey(mainKey9[0]) }] };
-        gmailPage = await browser.newPage(t, TestUrls.mockGmailUrl(), undefined, extraAuthHeaders);
+        gmailPage = await browser.newMockGmailPage(t, extraAuthHeaders);
         await PageRecipe.waitForToastToAppearAndDisappear(gmailPage, 'Account keys updated');
         await gmailPage.notPresent('@dialog-passphrase');
         const set10 = await retrieveAndCheckKeys(settingsPage, acct, 1);
@@ -1131,7 +1130,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         await InboxPageRecipe.finishSessionOnInboxPage(gmailPage);
         await gmailPage.close();
         MOCK_KM_KEYS[acct].response = { privateKeys: [{ decryptedPrivateKey: testConstants.unprotectedPrvKey }] };
-        gmailPage = await browser.newPage(t, TestUrls.mockGmailUrl(), undefined, extraAuthHeaders);
+        gmailPage = await browser.newMockGmailPage(t, extraAuthHeaders);
         await gmailPage.waitAll('@dialog-passphrase');
         {
           const passphraseDialog = await gmailPage.getFrame(['passphrase.htm']);
@@ -1147,7 +1146,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         expect(set11.map(entry => entry.id)).to.eql(['392FB1E9FF4184659AB6A246835C0141B9ECF536']);
         await gmailPage.close();
         // 11. EKM returns a new third key, we enter a passphrase matching an existing key, update happens, the old key is removed
-        gmailPage = await browser.newPage(t, TestUrls.mockGmailUrl(), undefined, extraAuthHeaders);
+        gmailPage = await browser.newMockGmailPage(t, extraAuthHeaders);
         await gmailPage.waitAll('@dialog-passphrase');
         {
           const passphraseDialog = await gmailPage.getFrame(['passphrase.htm']);
@@ -1172,7 +1171,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
             decryptedPrivateKey: testConstants.unprotectedPrvKey.substring(0, testConstants.unprotectedPrvKey.length / 2),
           },
         ];
-        gmailPage = await browser.newPage(t, TestUrls.mockGmailUrl(), undefined, extraAuthHeaders);
+        gmailPage = await browser.newMockGmailPage(t, extraAuthHeaders);
         await PageRecipe.waitForToastToAppearAndDisappear(
           gmailPage,
           'Could not update keys from EKM due to error: BrowserMsg(processAndStoreKeysFromEkmLocally) sendRawResponse::Error: Some keys could not be parsed'
@@ -1186,7 +1185,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         await gmailPage.close();
         // 13. EKM down, no toast, no passphrase dialog, no updates
         MOCK_KM_KEYS[acct] = { badRequestError: 'RequestTimeout' };
-        gmailPage = await browser.newPage(t, TestUrls.mockGmailUrl(), undefined, extraAuthHeaders);
+        gmailPage = await browser.newMockGmailPage(t, extraAuthHeaders);
         await PageRecipe.noToastAppears(gmailPage);
         await gmailPage.notPresent('@dialog-passphrase');
         const set14 = await retrieveAndCheckKeys(settingsPage, acct, 1, passphrase);
@@ -1201,7 +1200,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       })
     );
 
-    ava.default(
+    test(
       'put.updating.key@key-manager-choose-passphrase-forbid-storing.flowcrypt.test - updates of key found on key manager via setup page (with passphrase)',
       testWithBrowser(undefined, async (t, browser) => {
         const acct = 'put.updating.key@key-manager-choose-passphrase-forbid-storing.flowcrypt.test';
@@ -1217,7 +1216,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         const set1 = await retrieveAndCheckKeys(settingsPage, acct, 1);
         // 1. EKM returns the empty set, forcing to auto-generate
         MOCK_KM_KEYS[acct].response = { privateKeys: [] };
-        let gmailPage = await browser.newPage(t, TestUrls.mockGmailUrl(), undefined, extraAuthHeaders);
+        let gmailPage = await browser.newMockGmailPage(t, extraAuthHeaders);
         // The new settingsPage is loaded in place of the existing settings tab (this is by design)
         // However, after a second the newly-activated (old) settings tab loses focus in favour of the gmailPage, why is that?
         // Looks like Puppeteer's misbehaviour
@@ -1236,7 +1235,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         // 2. Adding a new key from the key manager when there is none in the storage
         // First, erase the keys by supplying an empty set from mock EKM
         MOCK_KM_KEYS[acct].response = { privateKeys: [] };
-        gmailPage = await browser.newPage(t, TestUrls.mockGmailUrl(), undefined, extraAuthHeaders);
+        gmailPage = await browser.newMockGmailPage(t, extraAuthHeaders);
         await PageRecipe.noToastAppears(gmailPage);
         await gmailPage.notPresent('@dialog-passphrase');
         await gmailPage.close();
@@ -1246,7 +1245,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         // Secondly, configure mock EKM to return a key and re-load the gmail page
         MOCK_KM_KEYS[acct] = { response: { privateKeys: [{ decryptedPrivateKey: testConstants.updatingPrv }] } };
         gmailPage = await browser.newPage(t, undefined, undefined, extraAuthHeaders);
-        const newSettingsPage = await browser.newPageTriggeredBy(t, () => gmailPage.goto(TestUrls.mockGmailUrl()));
+        const newSettingsPage = await browser.newPageTriggeredBy(t, () => gmailPage.goto(t.urls?.mockGmailUrl() ?? ''));
         await SetupPageRecipe.autoSetupWithEKM(newSettingsPage, {
           enterPp: { passphrase, checks: { isSavePassphraseChecked: false, isSavePassphraseHidden: true } },
         });
@@ -1258,7 +1257,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       })
     );
 
-    ava.default(
+    test(
       'get.updating.key@key-manager-autoimport-no-prv-create.flowcrypt.test - updates of key found on key manager when NO_PRV_CREATE',
       testWithBrowser(undefined, async (t, browser) => {
         const acct = 'get.updating.key@key-manager-autoimport-no-prv-create.flowcrypt.test';
@@ -1271,7 +1270,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         const set1 = await retrieveAndCheckKeys(settingsPage, acct, 1);
         MOCK_KM_KEYS[acct].response = { privateKeys: [] };
         // 1. EKM returns the empty set, auto-generation is not allowed, hence the error modal
-        let gmailPage = await browser.newPage(t, TestUrls.mockGmailUrl(), undefined, extraAuthHeaders);
+        let gmailPage = await browser.newMockGmailPage(t, extraAuthHeaders);
         await gmailPage.waitAndRespondToModal('error', 'confirm', 'Keys for your account were not set up yet - please ask your systems administrator');
         await PageRecipe.noToastAppears(gmailPage);
         await gmailPage.close();
@@ -1280,17 +1279,17 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         await settingsPage.close();
         // 2. Adding a new key from the key manager when there is none in the storage
         MOCK_KM_KEYS[acct] = { response: { privateKeys: [{ decryptedPrivateKey: testConstants.updatingPrv }] } };
-        gmailPage = await browser.newPage(t, TestUrls.mockGmailUrl(), undefined, extraAuthHeaders);
+        gmailPage = await browser.newMockGmailPage(t, extraAuthHeaders);
         await PageRecipe.waitForToastToAppearAndDisappear(gmailPage, 'Account keys updated');
         await gmailPage.close();
-        const dbPage = await browser.newPage(t, TestUrls.extension('chrome/dev/ci_unit_test.htm'));
+        const dbPage = await browser.newExtensionPage(t, 'chrome/dev/ci_unit_test.htm');
         const set2 = await retrieveAndCheckKeys(dbPage, acct, 1);
         expect(set2[0].id).to.equal(set1[0].id); // the key was received from the EKM
         await dbPage.close();
       })
     );
 
-    ava.default(
+    test(
       'user@custom-sks.flowcrypt.test - Respect custom key server url',
       testWithBrowser(undefined, async (t, browser) => {
         const acct = 'user@custom-sks.flowcrypt.test';
@@ -1302,14 +1301,14 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         await composePage.close();
         await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
         const contactsFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-contacts-page', ['contacts.htm', 'placement=settings']);
-        await contactsFrame.waitForContent('@custom-key-server-description', 'using custom SKS pubkeyserver: https://localhost:8001');
+        await contactsFrame.waitForContent('@custom-key-server-description', `using custom SKS pubkeyserver: https://localhost:${t.urls?.port}`);
       })
     );
 
-    ava.default.todo('DEFAULT_REMEMBER_PASS_PHRASE with auto-generation when all keys are removed by EKM');
+    test.todo('DEFAULT_REMEMBER_PASS_PHRASE with auto-generation when all keys are removed by EKM');
     // should we re-use the known passphrase or delete it from the storage in this scenario?
 
-    ava.default(
+    test(
       'user@no-flags-client-configuration.flowcrypt.test - should show error when no flags is present',
       testWithBrowser(undefined, async (t, browser) => {
         const acctEmail = 'user@no-flags-client-configuration.flowcrypt.test';
@@ -1319,7 +1318,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       })
     );
 
-    ava.default(
+    test(
       'null-setting@null-client-configuration.flowcrypt.test - should not show error when no setting is present',
       testWithBrowser(undefined, async (t, browser) => {
         const acctEmail = 'null-setting@null-client-configuration.flowcrypt.test';
@@ -1329,7 +1328,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       })
     );
 
-    ava.default(
+    test(
       'get.key@key-manager-choose-passphrase.flowcrypt.test - passphrase chosen by user with key found on key manager',
       testWithBrowser(undefined, async (t, browser) => {
         const acct = 'get.key@key-manager-choose-passphrase.flowcrypt.test';
@@ -1354,7 +1353,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       })
     );
 
-    ava.default(
+    test(
       'get.key@key-manager-choose-passphrase-forbid-storing.flowcrypt.test - passphrase chosen by user with key found on key manager and forbid storing',
       testWithBrowser(undefined, async (t, browser) => {
         const acct = 'get.key@key-manager-choose-passphrase-forbid-storing.flowcrypt.test';
@@ -1381,7 +1380,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       })
     );
 
-    ava.default(
+    test(
       'user@passphrase-session-length-client-configuration.flowcrypt.test - passphrase should expire in in_memory_pass_phrase_session_length',
       testWithBrowser(undefined, async (t, browser) => {
         const acctEmail = 'user@passphrase-session-length-client-configuration.flowcrypt.test';
@@ -1413,7 +1412,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       })
     );
 
-    ava.default(
+    test(
       'get.key@key-manager-autoimport-no-prv-create.flowcrypt.test - respect NO_PRV_CREATE when key not found on key manager',
       testWithBrowser(undefined, async (t, browser) => {
         const acct = 'get.key@key-manager-autoimport-no-prv-create.flowcrypt.test';
@@ -1422,7 +1421,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       })
     );
 
-    ava.default(
+    test(
       'get.key@no-submit-client-configuration.key-manager-autogen.flowcrypt.test - automatic setup with key found on key manager and no submit rule',
       testWithBrowser(undefined, async (t, browser) => {
         const acct = 'get.key@no-submit-client-configuration.key-manager-autogen.flowcrypt.test';
@@ -1440,7 +1439,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       })
     );
 
-    ava.default(
+    test(
       'put.key@key-manager-autogen.flowcrypt.test - automatic setup with key not found on key manager, then generated',
       testWithBrowser(undefined, async (t, browser) => {
         const acct = 'put.key@key-manager-autogen.flowcrypt.test';
@@ -1468,7 +1467,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       })
     );
 
-    ava.default(
+    test(
       'get.error@key-manager-autogen.flowcrypt.test - handles error during KM key GET',
       testWithBrowser(undefined, async (t, browser) => {
         const acct = 'get.error@key-manager-autogen.flowcrypt.test';
@@ -1476,13 +1475,13 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         await SetupPageRecipe.autoSetupWithEKM(settingsPage, {
           expectErrView: {
             title: 'Server responded with an unexpected error.',
-            text: '500 when GET-ing https://localhost:8001/flowcrypt-email-key-manager/v1/keys/private (no body): -> Intentional error for get.error to test client behavior',
+            text: `500 when GET-ing https://localhost:${t.urls?.port}/flowcrypt-email-key-manager/v1/keys/private (no body): -> Intentional error for get.error to test client behavior`,
           },
         });
       })
     );
 
-    ava.default(
+    test(
       'put.error@key-manager-autogen.flowcrypt.test - handles error during KM key PUT',
       testWithBrowser(undefined, async (t, browser) => {
         const acct = 'put.error@key-manager-autogen.flowcrypt.test';
@@ -1495,14 +1494,14 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         await Util.sleep(0.5);
         const details = await settingsPage.read('@container-overlay-details');
         expect(details).to.contain(
-          '500 when PUT-ing https://localhost:8001/flowcrypt-email-key-manager/v1/keys/private string: privateKey -> Intentional error for put.error user to test client behavior'
+          `500 when PUT-ing https://localhost:${t.urls?.port}/flowcrypt-email-key-manager/v1/keys/private string: privateKey -> Intentional error for put.error user to test client behavior`
         );
         expect(details).to.not.contain('PRIVATE KEY');
         expect(details).to.not.contain('<REDACTED:');
       })
     );
 
-    ava.default(
+    test(
       'fail@key-manager-server-offline.flowcrypt.test - shows friendly EKM not reachable error - during autogen',
       testWithBrowser(undefined, async (t, browser) => {
         const acct = 'fail@key-manager-server-offline.flowcrypt.test';
@@ -1516,7 +1515,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       })
     );
 
-    ava.default(
+    test(
       'get.key@ekm-offline-retrieve.flowcrypt.test - show clear error to user - during retrieval',
       testWithBrowser(undefined, async (t, browser) => {
         const acct = 'get.key@ekm-offline-retrieve.flowcrypt.test';
@@ -1529,7 +1528,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       })
     );
 
-    ava.default(
+    test(
       'expire@key-manager-keygen-expiration.flowcrypt.test - ClientConfiguration enforce_keygen_expire_months: 1',
       testWithBrowser(undefined, async (t, browser) => {
         const acct = 'expire@key-manager-keygen-expiration.flowcrypt.test';
@@ -1549,7 +1548,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       })
     );
 
-    ava.default(
+    test(
       'reject.client.keypair@key-manager-autogen.flowcrypt.test - does not leak sensitive info on err 400, shows informative err',
       testWithBrowser(undefined, async (t, browser) => {
         const acct = 'reject.client.keypair@key-manager-autogen.flowcrypt.test';
@@ -1566,17 +1565,18 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         await Util.sleep(0.5);
         const details = await settingsPage.read('@container-overlay-details');
         expect(details).to.contain(
-          '405 when PUT-ing https://localhost:8001/flowcrypt-email-key-manager/v1/keys/private string: ' +
+          `405 when PUT-ing https://localhost:${t.urls?.port}/flowcrypt-email-key-manager/v1/keys/private string: ` +
             'privateKey -> No key has been generated for reject.client.keypair@key-manager-autogen.flowcrypt.test yet'
         );
         expect(details).to.not.contain('PRIVATE KEY');
       })
     );
 
-    ava.default(
+    test(
       'user@standardsubdomainfes.localhost:8001 - uses FES on standard domain',
       testWithBrowser(undefined, async (t, browser) => {
-        const acct = 'user@standardsubdomainfes.localhost:8001'; // added port to trick extension into calling the mock
+        const port = t.urls?.port;
+        const acct = `user@standardsubdomainfes.localhost:${port}`; // added port to trick extension into calling the mock
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
         await SetupPageRecipe.manualEnter(
           settingsPage,
@@ -1585,7 +1585,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
           { isSavePassphraseChecked: false, isSavePassphraseHidden: false }
         );
         const debugFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-show-local-store-contents', ['debug_api.htm']);
-        await debugFrame.waitForContent('@container-pre', 'fes.standardsubdomainfes.localhost:8001'); // FES url on standard subdomain
+        await debugFrame.waitForContent('@container-pre', `fes.standardsubdomainfes.localhost:${port}`); // FES url on standard subdomain
         await debugFrame.waitForContent('@container-pre', 'got.this@fromstandardfes.com'); // org rules from FES
       })
     );
@@ -1594,7 +1594,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
      * enterprise - expects FES to be set up. when it's not, show nice error
      * consumer - tolerates the missing FES and and sets up without it
      */
-    ava.default(
+    test(
       'no.fes@example.com - skip FES on consumer, show friendly message on enterprise',
       testWithBrowser(undefined, async (t, browser) => {
         const acct = 'no.fes@example.com';
@@ -1621,7 +1621,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       })
     );
 
-    ava.default(
+    test(
       'setup - s/mime private key',
       testWithBrowser(undefined, async (t, browser) => {
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.test.key.imported@gmail.com');
@@ -1637,7 +1637,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
   }
 
   if (testVariant === 'CONSUMER-MOCK') {
-    ava.default(
+    test(
       'setup - imported key with multiple alias should show checkbox per alias',
       testWithBrowser(undefined, async (t, browser) => {
         expect((await KeyUtil.parse(testConstants.keyMultiAliasedUser)).emails.length).to.equals(3);
@@ -1664,7 +1664,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       })
     );
 
-    ava.default(
+    test(
       'setup - imported key from a file with multiple alias',
       testWithBrowser(undefined, async (t, browser) => {
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'multi.aliased.user@example.com');
