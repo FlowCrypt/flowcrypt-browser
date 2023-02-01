@@ -75,6 +75,7 @@ View.run(
       }
       this.tabId = await BrowserMsg.requiredTabId();
       this.notifications = new Notifications();
+      await this.acctServer?.initialize();
       if (this.acctEmail) {
         this.clientConfiguration = await ClientConfiguration.newInstance(this.acctEmail);
       }

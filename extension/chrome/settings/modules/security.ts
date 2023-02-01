@@ -35,6 +35,7 @@ View.run(
     }
 
     public render = async () => {
+      await this.acctServer.initialize();
       await initPassphraseToggle(['passphrase_entry']);
       this.prvs = await KeyStoreUtil.parse(await KeyStore.getRequired(this.acctEmail));
       const storage = await AcctStore.get(this.acctEmail, ['hide_message_password', 'outgoing_language']);
