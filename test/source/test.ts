@@ -68,26 +68,30 @@ const testWithBrowser = (
       const mockApi = await startMockApiAndCopyBuild(t);
       closeMockApi = mockApi.close;
     }
-    await browserPool.withNewBrowserTimeoutAndRetry(
-      async (t, browser) => {
-        const start = Date.now();
-        if (acct) {
-          await BrowserRecipe.setUpCommonAcct(t, browser, acct);
-        }
-        await cb(t, browser);
-        if (DEBUG_BROWSER_LOG) {
-          await saveBrowserLog(t, browser);
-        }
-        t.log(`run time: ${Math.ceil((Date.now() - start) / 1000)}s`);
-      },
-      t,
-      consts,
-      flag
-    );
-    if (closeMockApi) {
-      await closeMockApi();
+    try {
+      await browserPool.withNewBrowserTimeoutAndRetry(
+        async (t, browser) => {
+          const start = Date.now();
+          if (acct) {
+            await BrowserRecipe.setUpCommonAcct(t, browser, acct);
+          }
+          await cb(t, browser);
+          if (DEBUG_BROWSER_LOG) {
+            await saveBrowserLog(t, browser);
+          }
+          t.log(`run time: ${Math.ceil((Date.now() - start) / 1000)}s`);
+        },
+        t,
+        consts,
+        flag
+      );
+
+      t.pass();
+    } finally {
+      if (closeMockApi) {
+        await closeMockApi();
+      }
     }
-    t.pass();
   };
 };
 
