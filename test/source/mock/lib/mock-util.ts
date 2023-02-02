@@ -10,3 +10,4 @@ export const isDelete = (r: IncomingMessage) => r.method === 'DELETE';
 export const parsePort = (r: IncomingMessage) => r.headers.host!.split(':')[1];
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 export const parseResourceId = (url: string) => url.match(/\/([a-zA-Z0-9\-_]+)(\?|$)/)![1];
+export const messageIdRegex = (port: string) => new RegExp(`{"emailGatewayMessageId":"<(.+)@standardsubdomainfes.localhost:${port}>"}`);
