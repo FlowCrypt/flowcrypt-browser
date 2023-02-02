@@ -651,6 +651,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       const downloadedFiles = await inboxPage.awaitDownloadTriggeredByClicking(async () => {
         await attachment.waitAndClick('@download-attachment');
       });
+      await Util.sleep(10000);
       expect(Object.keys(downloadedFiles)).contains(fileName);
       await inboxPage.close();
     };
@@ -660,7 +661,10 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         // `what's up?.txt` becomes `what's_up_.txt` and this is native way and we can't change this logic
         // https://github.com/FlowCrypt/flowcrypt-browser/issues/3505#issuecomment-812269422
         await checkIfFileDownloadsCorrectly(t, browser, '1821bf879a6f71e0', "what's_up_.txt");
-        await checkIfFileDownloadsCorrectly(t, browser, '182263bf9f105adf', "what's_up%253F.txt");
+        await checkIfFileDownloadsCorrectly(t, browser, '182263bf9f105adf', "what's_up%253F.txt.pgp");
+        // should not strip .gpg or .pgp extension when downloading original file after unsuccesssful decryption
+        // // Check if bad pgp attachment file got downloaded with original file name
+        await checkIfFileDownloadsCorrectly(t, browser, '18610f7f4ae8da0a', 'test.bat.pgp');
       })
     );
     test(

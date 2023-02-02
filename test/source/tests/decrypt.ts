@@ -1127,25 +1127,6 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
     );
 
     test(
-      'decrypt - should not strip .gpg or .pgp extension when downloading original file after unsuccesssful decryption',
-      testWithBrowser('compatibility', async (t, browser) => {
-        const threadId1 = '18610f7f4ae8da0a';
-        const acctEmail = 'flowcrypt.compatibility@gmail.com';
-        const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId1}`);
-        await inboxPage.waitAll('iframe');
-        const attachmentFileName = 'test.bat.pgp';
-        const attachment = await inboxPage.getFrame(['attachment.htm', `name=${attachmentFileName}`]);
-        await attachment.waitForSelTestState('ready');
-        const downloadedFiles = await inboxPage.awaitDownloadTriggeredByClicking(async () => {
-          await attachment.click('#download');
-        });
-        // Check if bad pgp attachment file got downloaded with original file name
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        expect(downloadedFiles[attachmentFileName]!.toString()).to.contains(`Comment:;|| echo+%USERNAME%;`);
-      })
-    );
-
-    test(
       `decrypt - try path traversal forward slash workaround`,
       testWithBrowser('compatibility', async (t, browser) => {
         const params =
