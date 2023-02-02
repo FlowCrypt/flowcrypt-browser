@@ -31,7 +31,6 @@ export class BrowserPool {
       '--no-sandbox', // make it work in travis-ci
       '--disable-setuid-sandbox',
       '--kiosk-printing',
-      '--disable-features=site-per-process',
       `--disable-extensions-except=${extensionDir}`,
       `--load-extension=${extensionDir}`,
       `--window-size=${this.width + 10},${this.height + 132}`,

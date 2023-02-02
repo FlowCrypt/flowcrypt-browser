@@ -67,6 +67,8 @@ const testWithBrowser = (
     if (isMock) {
       const mockApi = await startMockApiAndCopyBuild(t);
       closeMockApi = mockApi.close;
+    } else {
+      t.urls = new TestUrls(await browserPool.getExtensionId(t));
     }
     try {
       await browserPool.withNewBrowserTimeoutAndRetry(
