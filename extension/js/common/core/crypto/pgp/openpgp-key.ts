@@ -205,11 +205,13 @@ export class OpenPGPKey {
     // eslint-disable-next-line no-null/no-null
     let expirationTime: Date | typeof Infinity | null = null;
     if (encryptionKeyIgnoringExpiration) {
-      if ('getExpirationTime' in encryptionKeyIgnoringExpiration) {
-        expirationTime = await encryptionKeyIgnoringExpiration.getExpirationTime();
-      } else {
-        expirationTime = await OpenPGPKey.getSubkeyExpirationTime(encryptionKeyIgnoringExpiration, opgpKey.keyPacket);
-      }
+      expirationTime = await (
+        encryptionKeyIgnoringExpiration as unknown as {
+          // patch until https://github.com/openpgpjs/openpgpjs/pull/1588 is resolved
+          // eslint-disable-next-line no-null/no-null
+          getExpirationTime(date?: Date): Promise<Date | typeof Infinity | null>;
+        }
+      ).getExpirationTime();
     }
     const missingPrivateKeyForSigning = signingKeyIgnoringExpiration?.keyPacket
       ? OpenPGPKey.arePrivateParamsMissing(signingKeyIgnoringExpiration.keyPacket)
@@ -939,16 +941,5 @@ export class OpenPGPKey {
       throw new Error('This key only has a gnu-dummy private packet, with no actual secret keys.');
     }
     return nonDummyPrvPackets;
-  };
-
-  private static getSubkeyExpirationTime = async (subKey: OpenPGP.Subkey, primaryKey: OpenPGP.BasePublicKeyPacket): Promise<Date | typeof Infinity> => {
-    // await subKey.verify(primaryKey);
-    const dataToVerify = { key: primaryKey, bind: subKey.keyPacket };
-    const bindingSignature = await OpenPGPKey.getLatestValidSignature(subKey.bindingSignatures, primaryKey, opgp.enums.signature.subkeyBinding, dataToVerify);
-    if (bindingSignature) {
-      return bindingSignature.getExpirationTime();
-    } else {
-      return Infinity;
-    }
   };
 }
