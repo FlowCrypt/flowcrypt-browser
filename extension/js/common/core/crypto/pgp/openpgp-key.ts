@@ -734,10 +734,10 @@ export class OpenPGPKey {
   private static getSigningAndEncryptionKeys = async (key: OpenPGP.PrivateKey | OpenPGP.PublicKey) => {
     const encryptionKey = await Catch.undefinedOnException(key.getEncryptionKey());
     // eslint-disable-next-line no-null/no-null
-    const encryptionKeyIgnoringExpiration = encryptionKey ? encryptionKey : await key.getEncryptionKey(undefined, null);
+    const encryptionKeyIgnoringExpiration = encryptionKey ? encryptionKey : await Catch.undefinedOnException(key.getEncryptionKey(undefined, null));
     const signingKey = await Catch.undefinedOnException(key.getSigningKey());
     // eslint-disable-next-line no-null/no-null
-    const signingKeyIgnoringExpiration = signingKey ? signingKey : await key.getSigningKey(undefined, null);
+    const signingKeyIgnoringExpiration = signingKey ? signingKey : await Catch.undefinedOnException(key.getSigningKey(undefined, null));
     return { encryptionKey, encryptionKeyIgnoringExpiration, signingKey, signingKeyIgnoringExpiration };
   };
 
