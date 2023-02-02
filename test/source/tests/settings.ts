@@ -651,7 +651,6 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       const downloadedFiles = await inboxPage.awaitDownloadTriggeredByClicking(async () => {
         await attachment.waitAndClick('@download-attachment');
       });
-      await Util.sleep(10000);
       expect(Object.keys(downloadedFiles)).contains(fileName);
       await inboxPage.close();
     };
