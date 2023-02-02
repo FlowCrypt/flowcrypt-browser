@@ -204,10 +204,12 @@ export class OpenPGPKey {
     } = isPrimaryKeyStrong ? await OpenPGPKey.getSigningAndEncryptionKeys(keyWithoutWeakPackets) : {};
     // eslint-disable-next-line no-null/no-null
     let expirationTime: Date | typeof Infinity | null = null;
-    if (encryptionKeyIgnoringExpiration instanceof opgp.PublicKey) {
-      expirationTime = await encryptionKeyIgnoringExpiration.getExpirationTime();
-    } else if (encryptionKeyIgnoringExpiration instanceof opgp.Subkey) {
-      expirationTime = await OpenPGPKey.getSubkeyExpirationTime(encryptionKeyIgnoringExpiration, opgpKey.keyPacket);
+    if (encryptionKeyIgnoringExpiration) {
+      if ('getExpirationTime' in encryptionKeyIgnoringExpiration) {
+        expirationTime = await encryptionKeyIgnoringExpiration.getExpirationTime();
+      } else {
+        expirationTime = await OpenPGPKey.getSubkeyExpirationTime(encryptionKeyIgnoringExpiration, opgpKey.keyPacket);
+      }
     }
     const missingPrivateKeyForSigning = signingKeyIgnoringExpiration?.keyPacket
       ? OpenPGPKey.arePrivateParamsMissing(signingKeyIgnoringExpiration.keyPacket)
@@ -545,7 +547,7 @@ export class OpenPGPKey {
         key.users
           .filter(user => user?.userID)
           .map(async user => {
-            const dataToVerify = { userId: user.userID, key: key.keyPacket };
+            const dataToVerify = { userID: user.userID, key: key.keyPacket };
             const selfCertification = await OpenPGPKey.getLatestValidSignature(
               user.selfCertifications,
               key.keyPacket,
@@ -677,7 +679,7 @@ export class OpenPGPKey {
     const primaryKey = key.keyPacket;
     const allVerifiedSignatures: OpenPGP.SignaturePacket[] = [];
     for (const user of key.users) {
-      const dataToVerify = { userId: user.userID, key: primaryKey };
+      const dataToVerify = { userID: user.userID, key: primaryKey };
       const selfCertification = await OpenPGPKey.getLatestValidSignature(
         user.selfCertifications,
         key.keyPacket,
