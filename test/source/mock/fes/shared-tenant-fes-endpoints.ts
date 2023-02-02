@@ -6,7 +6,7 @@ import { HandlersDefinition } from '../all-apis-mock';
 import { HttpClientErr, Status } from '../lib/api';
 import { MockJwt } from '../lib/oauth';
 import { mockBackendData } from '../backend/backend-endpoints';
-import { parsePort } from '../lib/mock-util';
+import { messageIdRegex, parsePort } from '../lib/mock-util';
 
 const issuedAccessTokens: string[] = [];
 export const mockSharedTenantFesEndpoints: HandlersDefinition = {
@@ -69,7 +69,7 @@ export const mockSharedTenantFesEndpoints: HandlersDefinition = {
     if (req.method === 'POST') {
       // test: `compose - user@standardsubdomainfes.localhost:8001 - PWD encrypted message with FES web portal`
       authenticate(req, 'oidc');
-      expect(body).to.match(messageIdRegex(req));
+      expect(body).to.match(messageIdRegexForRequest(req));
       return {};
     }
     throw new HttpClientErr('Not Found', 404);
@@ -78,7 +78,7 @@ export const mockSharedTenantFesEndpoints: HandlersDefinition = {
     if (req.method === 'POST') {
       // test: `compose - user2@standardsubdomainfes.localhost:8001 - PWD encrypted message with FES - Reply rendering`
       authenticate(req, 'oidc');
-      expect(body).to.match(messageIdRegex(req));
+      expect(body).to.match(messageIdRegexForRequest(req));
       return {};
     }
     throw new HttpClientErr('Not Found', 404);
@@ -90,7 +90,7 @@ export const mockSharedTenantFesEndpoints: HandlersDefinition = {
       // test: `compose - user3@standardsubdomainfes.localhost:8001 - PWD encrypted message with FES web portal - pubkey recipient in bcc`
       // test: `compose - user4@standardsubdomainfes.localhost:8001 - PWD encrypted message with FES web portal - some sends fail with BadRequest error`
       authenticate(req, 'oidc');
-      expect(body).to.match(messageIdRegex(req));
+      expect(body).to.match(messageIdRegexForRequest(req));
       return {};
     }
     throw new HttpClientErr('Not Found', 404);
@@ -99,7 +99,7 @@ export const mockSharedTenantFesEndpoints: HandlersDefinition = {
     if (req.method === 'POST') {
       // test: `compose - user@standardsubdomainfes.localhost:8001 - PWD encrypted message with FES web portal`
       authenticate(req, 'oidc');
-      expect(body).to.match(messageIdRegex(req));
+      expect(body).to.match(messageIdRegexForRequest(req));
       return {};
     }
     throw new HttpClientErr('Not Found', 404);
@@ -128,7 +128,4 @@ const authenticate = (req: IncomingMessage, type: 'oidc' | 'fes'): string => {
   return MockJwt.parseEmail(jwt);
 };
 
-const messageIdRegex = (req: IncomingMessage) => {
-  const port = parsePort(req);
-  return new RegExp(`{"emailGatewayMessageId":"<(.+)@standardsubdomainfes.localhost:${port}>"}`);
-};
+const messageIdRegexForRequest = (req: IncomingMessage) => messageIdRegex(parsePort(req));

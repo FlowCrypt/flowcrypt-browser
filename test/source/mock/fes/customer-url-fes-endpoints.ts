@@ -6,7 +6,7 @@ import { Buf } from '../../core/buf';
 import { MsgUtil } from '../../core/crypto/pgp/msg-util';
 import { HandlersDefinition } from '../all-apis-mock';
 import { HttpClientErr, Status } from '../lib/api';
-import { parsePort } from '../lib/mock-util';
+import { messageIdRegex, parsePort } from '../lib/mock-util';
 import { MockJwt } from '../lib/oauth';
 
 const standardFesUrl = (port: string) => {
@@ -317,8 +317,4 @@ const authenticate = (req: IncomingMessage, type: 'oidc' | 'fes'): string => {
     }
   }
   return MockJwt.parseEmail(jwt);
-};
-
-const messageIdRegex = (port: string) => {
-  return new RegExp(`{"emailGatewayMessageId":"<(.+)@standardsubdomainfes.localhost:${port}>"}`);
 };
