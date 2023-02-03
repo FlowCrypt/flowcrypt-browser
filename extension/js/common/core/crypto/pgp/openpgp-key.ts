@@ -742,22 +742,54 @@ export class OpenPGPKey {
   };
 
   private static getSigningAndEncryptionKeys = async (key: OpenPGP.PrivateKey | OpenPGP.PublicKey) => {
+    // encryptionKey and signingKey are obtained with undefined value of the date parameter, which is considered current date
     const encryptionKey = await Catch.undefinedOnException(key.getEncryptionKey());
     const signingKey = await Catch.undefinedOnException(key.getSigningKey());
-    const primaryKeyExpirationTime = OpenPGPKey.getExpirationAsDateOrUndefined(await key.getExpirationTime());
-    const encryptionKeyIgnoringExpiration = encryptionKey
-      ? encryptionKey
-      : await Catch.undefinedOnException(
-          // eslint-disable-next-line no-null/no-null
-          key.getEncryptionKey(undefined, primaryKeyExpirationTime ? new Date(primaryKeyExpirationTime.getTime() - 1000) : null)
-        );
-    const signingKeyIgnoringExpiration = signingKey
-      ? signingKey
-      : // eslint-disable-next-line no-null/no-null
-        await Catch.undefinedOnException(key.getSigningKey(undefined, primaryKeyExpirationTime ? new Date(primaryKeyExpirationTime.getTime() - 1000) : null));
+    let encryptionKeyIgnoringExpiration = encryptionKey;
+    let signingKeyIgnoringExpiration = signingKey;
+    let possibleExpirations: number[] | undefined;
+    if (!encryptionKey || !signingKey) {
+      const primaryKeyExpirationTime = OpenPGPKey.getExpirationAsDateOrUndefined(await key.getExpirationTime());
+      if (primaryKeyExpirationTime) {
+        const primaryKeyExpiration = primaryKeyExpirationTime.getTime();
+        // fill possible expirations
+        possibleExpirations = [
+          primaryKeyExpiration,
+          ...(await Promise.all(key.subkeys.map(subkey => OpenPGPKey.getExpiration(subkey))))
+            .filter(Boolean)
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            .map(expirationTime => expirationTime!.getTime())
+            .filter(expiration => expiration < primaryKeyExpiration),
+        ];
+      }
+    }
+    if (!encryptionKey) {
+      encryptionKeyIgnoringExpiration = await OpenPGPKey.getKeyByDate(
+        (date: Date | null | undefined) => key.getEncryptionKey(undefined, date),
+        possibleExpirations
+      );
+    }
+    if (!signingKey) {
+      signingKeyIgnoringExpiration = await OpenPGPKey.getKeyByDate((date: Date | null | undefined) => key.getSigningKey(undefined, date), possibleExpirations);
+    }
     return { encryptionKey, encryptionKeyIgnoringExpiration, signingKey, signingKeyIgnoringExpiration };
   };
 
+  private static getKeyByDate = async (extractor: (date?: Date | null) => Promise<OpenPGP.Key | OpenPGP.Subkey>, dates?: number[]) => {
+    if (dates) {
+      // try dates in descending order
+      for (const date of dates.sort((a, b) => b - a)) {
+        const key = await Catch.undefinedOnException(extractor(new Date(date - 1000)));
+        if (key) {
+          return key;
+        }
+      }
+    } else {
+      // `null` value for the date parameter means to ignore it
+      return await Catch.undefinedOnException(extractor(null)); // eslint-disable-line no-null/no-null
+    }
+    return undefined;
+  };
   /**
    * In order to prioritize strong subkeys over weak ones to solve #2715, we delete the weak ones
    * and let OpenPGP.js decide based on remaining packets

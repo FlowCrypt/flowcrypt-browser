@@ -231,6 +231,26 @@ Something wrong with this key`),
       t.pass();
     });
 
+    test(`[unit][PgpKey.usableForEncryptionButExpired] recognizes usable expired key when subkey is expired prior to expired primary key`, async t => {
+      const expiredKey = await KeyUtil.parse(`-----BEGIN PGP PUBLIC KEY BLOCK-----
+
+xjMEY7FFHhYJKwYBBAHaRw8BAQdAJMyoHhB6M1OIZo592p7H3U2dBphH5JpD
+orInOSAmt+3NKjxmbG93Y3J5cHQubm90aWZ5LmV4cGlyaW5nLmtleXNAZ21h
+aWwuY29tPsKSBBAWCgBEBQJjsUUeBQkAGl4ABAsJBwgJECM4WSPQXyFDAxUI
+CgQWAAIBAhkBAhsDAh4BFiEECp1E5ycyjVgoiNqfIzhZI9BfIUMAAHfrAPwM
+bYj191L3f7EbMguhCLLXeyzr2JPTgWtKwCQKjCRpYQEA3MuN0YB/sRwerKvP
+CrTy8ZMHj2pc1ezRJJLD9nBqxQrOOARjsUUeEgorBgEEAZdVAQUBAQdArxUe
+fRWzL8zjigAdkYHfEevatLcnvx9XOjrLBDwsezIDAQgHwn4EGBYIADAFAmOx
+RR4FCQANLwAJECM4WSPQXyFDAhsMFiEECp1E5ycyjVgoiNqfIzhZI9BfIUMA
+AAvIAP4+Xu5KG3XNg39ZiS0kJs53JZVY27VeeO1JC3Ns2wqmcAEAnpI4MIP3
+QMlzT3kLMkM+vmxB9cgGp3m+CyBttV60vgw=
+=RnaH
+-----END PGP PUBLIC KEY BLOCK-----`);
+      expect(expiredKey.usableForEncryptionButExpired).to.equal(true);
+      expect(expiredKey.expiration).to.equal(1673425950000);
+      t.pass();
+    });
+
     test('[unit][KeyUtil.parse] S/MIME key parsing works', async t => {
       /*
       // generate a key pair
