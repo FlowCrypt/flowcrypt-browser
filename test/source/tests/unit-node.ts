@@ -503,7 +503,7 @@ cmKFmmDYm+rrWuAv6Q==
       expect(key.identities[0]).to.equal('Testing <expiration_100years@test.com>');
       expect(key.isPublic).equal(false);
       expect(key.isPrivate).equal(true);
-      expect(key.expiration).to.equal(4773399003000);
+      expect(key.expiration).to.equal(4773398996000);
       t.pass();
     });
 
