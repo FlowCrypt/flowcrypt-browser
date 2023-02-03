@@ -82,7 +82,6 @@ export class ComposeInputModule extends ViewModule<ComposeView> {
     const limit = 50000;
     const currentLength = targetInputField.innerText.length;
     const isInputLimitExceeded = textToPaste.length + currentLength > limit;
-    console.log(targetInputField.innerText);
     return isInputLimitExceeded;
   };
 

@@ -232,12 +232,6 @@ export class ComposeView extends View {
             ev.preventDefault();
           }
         }
-        // const clipboardData = clipboardEvent?.clipboardData?.getData('text/plain') || '';
-        // const isInputLimitExceeded = this.inputModule.willInputLimitBeExceeded(clipboardData, el);
-        // console.log(isInputLimitExceeded);
-        // if (isInputLimitExceeded) {
-        //     ev.preventDefault();
-        // }
       })
     );
     this.attachmentsModule.setHandlers();
