@@ -78,12 +78,12 @@ export class ComposeInputModule extends ViewModule<ComposeView> {
     return this.view.sendBtnModule.popover.choices.richtext;
   };
 
-  public checkInputLengthBeforePasting = (textToPaste: string, targetInputField: HTMLElement, ev: ClipboardEvent) => {
-    const currentLength = targetInputField.innerText.length;
+  public willInputLimitBeExceeded = (textToPaste: string, targetInputField: HTMLElement) => {
     const limit = 50000;
-    if (textToPaste.length + currentLength > limit) {
-      ev.preventDefault();
-    }
+    const currentLength = targetInputField.innerText.length;
+    const isInputLimitExceeded = textToPaste.length + currentLength > limit;
+    console.log(targetInputField.innerText);
+    return isInputLimitExceeded;
   };
 
   private handlePaste = () => {
@@ -91,9 +91,11 @@ export class ComposeInputModule extends ViewModule<ComposeView> {
       const div = document.createElement('div');
       div.appendChild(e.fragment);
       const html = div.innerHTML;
-      this.checkInputLengthBeforePasting(div.innerText, this.view.S.cached('input_text').get(0), e);
       const sanitized = this.isRichText() ? Xss.htmlSanitizeKeepBasicTags(html, 'IMG-KEEP') : Xss.htmlSanitizeAndStripAllTags(html, '<br>', false);
       Xss.setElementContentDANGEROUSLY(div, sanitized); // xss-sanitized
+      if (this.willInputLimitBeExceeded(sanitized.trim(), this.squire.getRoot())) {
+        e.preventDefault();
+      }
       e.fragment.appendChild(div);
     });
   };

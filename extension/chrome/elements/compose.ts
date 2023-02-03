@@ -227,9 +227,17 @@ export class ComposeView extends View {
       this.setHandler(async (el, ev) => {
         const clipboardEvent = ev.originalEvent as ClipboardEvent;
         if (clipboardEvent.clipboardData) {
-          const clipboardData = clipboardEvent.clipboardData.getData('text/plain');
-          this.inputModule.checkInputLengthBeforePasting(clipboardData, el, clipboardEvent);
+          const isInputLimitExceeded = this.inputModule.willInputLimitBeExceeded(clipboardEvent.clipboardData.getData('text/plain'), el);
+          if (isInputLimitExceeded) {
+            ev.preventDefault();
+          }
         }
+        // const clipboardData = clipboardEvent?.clipboardData?.getData('text/plain') || '';
+        // const isInputLimitExceeded = this.inputModule.willInputLimitBeExceeded(clipboardData, el);
+        // console.log(isInputLimitExceeded);
+        // if (isInputLimitExceeded) {
+        //     ev.preventDefault();
+        // }
       })
     );
     this.attachmentsModule.setHandlers();
