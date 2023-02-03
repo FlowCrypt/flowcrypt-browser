@@ -341,8 +341,7 @@ export class AttachmentDownloadView extends View {
       $('.see-error-details').on('click', async () => {
         await this.previewAttachmentClickedHandler(true);
       });
-      const name = this.attachment.name;
-      Browser.saveToDownloads(new Attachment({ name, type: this.type, data: this.attachment.getData() })); // won't work in ff, possibly neither on some chrome versions (on webmail)
+      Browser.saveToDownloads(new Attachment({ name: this.name, type: this.type, data: this.attachment.getData() })); // won't work in ff, possibly neither on some chrome versions (on webmail)
     }
   };
 
