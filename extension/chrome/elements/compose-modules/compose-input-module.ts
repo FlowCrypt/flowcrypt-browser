@@ -95,6 +95,7 @@ export class ComposeInputModule extends ViewModule<ComposeView> {
       Xss.setElementContentDANGEROUSLY(div, sanitized); // xss-sanitized
       if (this.willInputLimitBeExceeded(sanitized.trim(), this.squire.getRoot())) {
         e.preventDefault();
+        return;
       }
       e.fragment.appendChild(div);
     });
