@@ -747,20 +747,19 @@ export class OpenPGPKey {
     const signingKey = await Catch.undefinedOnException(key.getSigningKey());
     let encryptionKeyIgnoringExpiration = encryptionKey;
     let signingKeyIgnoringExpiration = signingKey;
-    let possibleExpirations: number[] | undefined;
+    const possibleExpirations: number[] = [];
     if (!encryptionKey || !signingKey) {
       const primaryKeyExpirationTime = OpenPGPKey.getExpirationAsDateOrUndefined(await key.getExpirationTime());
-      if (primaryKeyExpirationTime) {
-        const primaryKeyExpiration = primaryKeyExpirationTime.getTime();
-        // fill possible expirations
-        possibleExpirations = [
-          primaryKeyExpiration,
-          ...(await Promise.all(key.subkeys.map(subkey => OpenPGPKey.getExpiration(subkey))))
-            .filter(Boolean)
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            .map(expirationTime => expirationTime!.getTime())
-            .filter(expiration => expiration < primaryKeyExpiration),
-        ];
+      const primaryKeyExpiration = primaryKeyExpirationTime?.getTime();
+      possibleExpirations.push(
+        ...(await Promise.all(key.subkeys.map(subkey => OpenPGPKey.getExpiration(subkey))))
+          .filter(Boolean)
+          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+          .map(expirationTime => expirationTime!.getTime())
+          .filter(expiration => !primaryKeyExpiration || expiration < primaryKeyExpiration)
+      );
+      if (primaryKeyExpiration) {
+        possibleExpirations.push(primaryKeyExpiration);
       }
     }
     if (!encryptionKey) {
@@ -775,10 +774,9 @@ export class OpenPGPKey {
     return { encryptionKey, encryptionKeyIgnoringExpiration, signingKey, signingKeyIgnoringExpiration };
   };
 
-  private static getKeyByDate = async (extractor: (date?: Date | null) => Promise<OpenPGP.Key | OpenPGP.Subkey>, dates?: number[]) => {
-    if (dates) {
-      // try dates in descending order
-      for (const date of dates.sort((a, b) => b - a)) {
+  private static getKeyByDate = async (extractor: (date?: Date | null) => Promise<OpenPGP.Key | OpenPGP.Subkey>, dates: number[]) => {
+    if (dates.length > 0) {
+      for (const date of Value.arr.unique(dates).sort((a, b) => b - a)) {
         const key = await Catch.undefinedOnException(extractor(new Date(date - 1000)));
         if (key) {
           return key;
