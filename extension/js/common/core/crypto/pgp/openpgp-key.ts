@@ -201,6 +201,7 @@ export class OpenPGPKey {
       encryptionKeyIgnoringExpiration = undefined,
       signingKey = undefined,
       signingKeyIgnoringExpiration = undefined,
+      expiration = undefined,
     } = isPrimaryKeyStrong ? await OpenPGPKey.getSigningAndEncryptionKeys(keyWithoutWeakPackets) : {};
     const missingPrivateKeyForSigning = signingKeyIgnoringExpiration?.keyPacket
       ? OpenPGPKey.arePrivateParamsMissing(signingKeyIgnoringExpiration.keyPacket)
@@ -208,14 +209,6 @@ export class OpenPGPKey {
     const missingPrivateKeyForDecryption = encryptionKeyIgnoringExpiration?.keyPacket
       ? OpenPGPKey.arePrivateParamsMissing(encryptionKeyIgnoringExpiration.keyPacket)
       : false;
-    const primaryKeyExpirationTime = OpenPGPKey.getExpirationAsDateOrUndefined(await keyWithoutWeakPackets.getExpirationTime());
-    let encryptionKeyExpirationTime = primaryKeyExpirationTime;
-    if (encryptionKeyIgnoringExpiration && encryptionKeyIgnoringExpiration !== keyWithoutWeakPackets) {
-      const expirationTime = await OpenPGPKey.getExpiration(encryptionKeyIgnoringExpiration);
-      if (expirationTime && (!encryptionKeyExpirationTime || expirationTime < encryptionKeyExpirationTime)) {
-        encryptionKeyExpirationTime = expirationTime;
-      }
-    }
     const fullyDecrypted = keyWithoutWeakPackets.isPrivate() ? OpenPGPKey.isFullyDecrypted(keyWithoutWeakPackets) : true; /* public keys are always decrypted */
     const fullyEncrypted = keyWithoutWeakPackets.isPrivate() ? OpenPGPKey.isFullyEncrypted(keyWithoutWeakPackets) : false; /* public keys are never encrypted */
     const key = keyToUpdate || ({} as Key); // if no key to update, use empty object, will get props assigned below
@@ -234,7 +227,7 @@ export class OpenPGPKey {
       // full uids that have valid emails in them
       identities,
       lastModified,
-      expiration: encryptionKeyExpirationTime instanceof Date ? encryptionKeyExpirationTime.getTime() : undefined,
+      expiration,
       created: keyWithoutWeakPackets.getCreationTime().getTime(),
       fullyDecrypted,
       fullyEncrypted,
@@ -741,12 +734,10 @@ export class OpenPGPKey {
     return keyWithPrivateFields.rawKey;
   };
 
-  private static getSigningAndEncryptionKeys = async (key: OpenPGP.PrivateKey | OpenPGP.PublicKey) => {
+  private static getSigningAndEncryptionKeys = async (key: OpenPGP.Key) => {
     // encryptionKey and signingKey are obtained with undefined value of the date parameter, which is considered current date
     const encryptionKey = await Catch.undefinedOnException(key.getEncryptionKey());
     const signingKey = await Catch.undefinedOnException(key.getSigningKey());
-    let encryptionKeyIgnoringExpiration = encryptionKey;
-    let signingKeyIgnoringExpiration = signingKey;
     const possibleExpirations: number[] = [];
     if (!encryptionKey || !signingKey) {
       const primaryKeyExpirationTime = OpenPGPKey.getExpirationAsDateOrUndefined(await key.getExpirationTime());
@@ -762,16 +753,38 @@ export class OpenPGPKey {
         possibleExpirations.push(primaryKeyExpiration);
       }
     }
-    if (!encryptionKey) {
+    let encryptionKeyIgnoringExpiration: OpenPGP.Key | OpenPGP.Subkey | undefined;
+    let expiration: number | undefined;
+    if (encryptionKey) {
+      encryptionKeyIgnoringExpiration = encryptionKey;
+      // find the key with latest expiration by trying dates of current key's expiration
+      while (true) {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const currentExpirationTime: Date | undefined = await OpenPGPKey.getExpiration(encryptionKeyIgnoringExpiration!);
+        expiration = currentExpirationTime?.getTime();
+        if (!expiration) break; // found a never-expiring key
+        const nextCandidateKey: OpenPGP.Key | OpenPGP.Subkey | undefined = await Catch.undefinedOnException(
+          key.getEncryptionKey(undefined, new Date(expiration + 1000))
+        );
+        if (!nextCandidateKey) break;
+        encryptionKeyIgnoringExpiration = nextCandidateKey;
+      }
+    } else {
       encryptionKeyIgnoringExpiration = await OpenPGPKey.getKeyByDate(
         (date: Date | null | undefined) => key.getEncryptionKey(undefined, date),
         possibleExpirations
       );
+      if (encryptionKeyIgnoringExpiration) {
+        expiration = (await OpenPGPKey.getExpiration(encryptionKeyIgnoringExpiration))?.getTime();
+      }
     }
-    if (!signingKey) {
+    let signingKeyIgnoringExpiration: OpenPGP.Key | OpenPGP.Subkey | undefined;
+    if (signingKey) {
+      signingKeyIgnoringExpiration = signingKey; // no need to search for signing expiration
+    } else {
       signingKeyIgnoringExpiration = await OpenPGPKey.getKeyByDate((date: Date | null | undefined) => key.getSigningKey(undefined, date), possibleExpirations);
     }
-    return { encryptionKey, encryptionKeyIgnoringExpiration, signingKey, signingKeyIgnoringExpiration };
+    return { encryptionKey, encryptionKeyIgnoringExpiration, expiration, signingKey, signingKeyIgnoringExpiration };
   };
 
   private static getKeyByDate = async (extractor: (date?: Date | null) => Promise<OpenPGP.Key | OpenPGP.Subkey>, dates: number[]) => {

@@ -299,6 +299,31 @@ AHdQAQDhNHD2qXs3FsbPCGYuqBpI5mFet64slrmgF/qw082jJAD+IV0r8J7s
       t.pass();
     });
 
+    test(`[unit][Key.expiration] gives correct expiration when earlier key expires later, in the future, non-expiring primary key`, async t => {
+      const expiringKey = await KeyUtil.parse(`-----BEGIN PGP PUBLIC KEY BLOCK-----
+
+xjMEY7QXVRYJKwYBBAHaRw8BAQdAjAQdAmp9L2Xyc/oxarZmXFvKiNBAQb+K
+a8tnPI4LXRHNKjxmbG93Y3J5cHQubm90aWZ5LmV4cGlyaW5nLmtleXNAZ21h
+aWwuY29tPsKMBBAWCgA+BQJjtBdVBAsJBwgJEM5qLrmJzYEeAxUICgQWAAIB
+AhkBAhsDAh4BFiEEHkmnB9FtCPOyqjRbzmouuYnNgR4AAB3+AQCmMhnTFAu+
+HZ53xI5VNfcEDH8eJUzVws9Ua1Ob02+mbQD9FbrzBpChCw/r3xxEAfTvEfIa
+m7p0GlQeUwcJwC/FCgbOOARjtBdVEgorBgEEAZdVAQUBAQdAjl5oDyPuDsyf
+CytKq7Rk7v619xg0MJH4x1yy8OhjDhYDAQgHwn4EGBYIADAFAmO0F1UFCSWl
+NQAJEM5qLrmJzYEeAhsMFiEEHkmnB9FtCPOyqjRbzmouuYnNgR4AAEd1AP42
+HH8Xfpy66FxdNtgDMHVS23rKdlD+T+OCiO+UixsRAAEAuIcTCfi5ZRnjrH2/
+Rk0gHr57uH2Du1DlC2Be6cT7kAfOOARjtrpVEgorBgEEAZdVAQUBAQdAdAZf
+8udXJ69BsjaIY8Zh9QH1SKT8z85AdlzvkMA1ImYDAQgHwn4EGBYIADAFAmO2
+ulUFCSWenYAJEM5qLrmJzYEeAhsMFiEEHkmnB9FtCPOyqjRbzmouuYnNgR4A
+ACu7AP904FUsOvvYhiJJ2GIWwxqnWuhqtz0rKY1Xoxk0vhBmzQD+NqVK9O1/
+qC2PFoU1J4aEVe5Jz2yovJnzkx/aa0Hs4g0=
+=ZB8L
+-----END PGP PUBLIC KEY BLOCK-----`);
+      expect(expiringKey.usableForSigning).to.equal(true);
+      expect(expiringKey.usableForEncryption).to.equal(true);
+      expect(expiringKey.expiration).to.equal(2304330837000);
+      t.pass();
+    });
+
     test('[unit][KeyUtil.parse] S/MIME key parsing works', async t => {
       /*
       // generate a key pair
