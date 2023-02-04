@@ -408,12 +408,12 @@ export class OpenPGPKey {
     throw new Error(`Unexpected fingerprint format (len: ${fingerprint.length}): "${fingerprint}"`);
   };
 
-  public static isFullyDecrypted = (key: OpenPGP.Key): boolean => {
+  public static isFullyDecrypted = (key: OpenPGP.PrivateKey): boolean => {
     const nonDummyPrvPackets = OpenPGPKey.getPrvPackets(key);
     return nonDummyPrvPackets.every(p => p.isDecrypted() === true);
   };
 
-  public static isFullyEncrypted = (key: OpenPGP.Key): boolean => {
+  public static isFullyEncrypted = (key: OpenPGP.PrivateKey): boolean => {
     const nonDummyPrvPackets = OpenPGPKey.getPrvPackets(key);
     return nonDummyPrvPackets.every(p => p.isDecrypted() === false);
   };
@@ -470,7 +470,7 @@ export class OpenPGPKey {
     return keyPacket.isDecrypted() === true;
   };
 
-  public static getPrimaryUserId = async (pubs: OpenPGP.PrivateKey[], keyid: OpenPGP.KeyID): Promise<string | undefined> => {
+  public static getPrimaryUserId = async (pubs: OpenPGP.Key[], keyid: OpenPGP.KeyID): Promise<string | undefined> => {
     for (const opgpkey of pubs) {
       const matchingKeys = opgpkey.getKeys(keyid);
       if (matchingKeys.length > 0) {
@@ -642,7 +642,7 @@ export class OpenPGPKey {
     return verifiedSignature.keyFlags[0] & (opgp.enums.keyFlags.signData | opgp.enums.keyFlags.certifyKeys);
   };
 
-  private static getSubKeySigningFlags = async (key: OpenPGP.PrivateKey | OpenPGP.PublicKey, subKey: OpenPGP.Subkey): Promise<OpenPGP.enums.keyFlags> => {
+  private static getSubKeySigningFlags = async (key: OpenPGP.Key, subKey: OpenPGP.Subkey): Promise<OpenPGP.enums.keyFlags> => {
     const primaryKey = key.keyPacket;
     // await subKey.verify(primaryKey);
     const dataToVerify = { key: primaryKey, bind: subKey.keyPacket };
@@ -657,7 +657,7 @@ export class OpenPGPKey {
     return 0;
   };
 
-  private static getSubKeyEncryptionFlags = async (key: OpenPGP.PrivateKey | OpenPGP.PublicKey, subKey: OpenPGP.Subkey): Promise<OpenPGP.enums.keyFlags> => {
+  private static getSubKeyEncryptionFlags = async (key: OpenPGP.Key, subKey: OpenPGP.Subkey): Promise<OpenPGP.enums.keyFlags> => {
     const primaryKey = key.keyPacket;
     // await subKey.verify(primaryKey);
     const dataToVerify = { key: primaryKey, bind: subKey.keyPacket };
@@ -668,7 +668,7 @@ export class OpenPGPKey {
     return 0;
   };
 
-  private static getPrimaryKeyFlags = async (key: OpenPGP.PrivateKey | OpenPGP.PublicKey): Promise<OpenPGP.enums.keyFlags> => {
+  private static getPrimaryKeyFlags = async (key: OpenPGP.Key): Promise<OpenPGP.enums.keyFlags> => {
     const selfCertification = (await OpenPGPKey.getUsersAndSelfCertifications(key)).map(x => x.selfCertification).find(Boolean);
     if (!selfCertification) {
       return 0;
@@ -708,7 +708,7 @@ export class OpenPGPKey {
     throw new Error('No valid signature found in key');
   };
 
-  private static extractExternalLibraryObjFromKey = async (key: Key): Promise<OpenPGP.PrivateKey | OpenPGP.PublicKey> => {
+  private static extractExternalLibraryObjFromKey = async (key: Key): Promise<OpenPGP.Key> => {
     if (key.family !== 'openpgp') {
       throw new UnexpectedKeyTypeError(`Key type is ${key.family}, expecting OpenPGP`);
     }
@@ -808,9 +808,7 @@ export class OpenPGPKey {
    * @return isPrimaryKeyStrong - true, if primary key is safe to use
    *         keyWithoutWeakPackets - key with weak subkets removed
    */
-  private static removeWeakKeyPackets = (
-    opgpKey: OpenPGP.Key
-  ): { isPrimaryKeyStrong: boolean; keyWithoutWeakPackets: OpenPGP.PrivateKey | OpenPGP.PublicKey } => {
+  private static removeWeakKeyPackets = (opgpKey: OpenPGP.Key): { isPrimaryKeyStrong: boolean; keyWithoutWeakPackets: OpenPGP.Key } => {
     let isPrimaryKeyStrong = true;
     const packets = opgpKey.toPacketList();
     const newPacketList = new opgp.PacketList<OpenPGP.BasePacket>();
@@ -839,7 +837,7 @@ export class OpenPGPKey {
     if (packets.length !== newPacketList.length) {
       return {
         isPrimaryKeyStrong,
-        keyWithoutWeakPackets: opgpKey instanceof opgp.PrivateKey ? new opgp.PrivateKey(newPacketList) : new opgp.PublicKey(newPacketList),
+        keyWithoutWeakPackets: opgpKey.isPrivate() ? new opgp.PrivateKey(newPacketList) : new opgp.PublicKey(newPacketList),
       };
     }
     return { isPrimaryKeyStrong, keyWithoutWeakPackets: opgpKey };
@@ -873,7 +871,7 @@ export class OpenPGPKey {
       : true;
   };
 
-  private static testEncryptDecrypt = async (key: OpenPGP.PrivateKey | OpenPGP.PublicKey): Promise<string[]> => {
+  private static testEncryptDecrypt = async (key: OpenPGP.Key): Promise<string[]> => {
     const output: string[] = [];
     try {
       const encryptedMsg = await opgp.encrypt({
@@ -889,7 +887,9 @@ export class OpenPGPKey {
         });
         output.push(`Decryption with key ${decryptedMsg.data === OpenPGPKey.encryptionText ? 'succeeded' : 'failed!'}`);
       } else {
-        output.push(`Skipping decryption because isPrivate:${key.isPrivate()} isFullyDecrypted:${OpenPGPKey.isFullyDecrypted(key)}`);
+        output.push(
+          `Skipping decryption because isPrivate:${key.isPrivate()} isFullyDecrypted:${key.isPrivate() ? OpenPGPKey.isFullyDecrypted(key) : 'unknown'}`
+        );
       }
     } catch (err) {
       output.push(`Got error performing encryption/decryption test: ${err}`);
