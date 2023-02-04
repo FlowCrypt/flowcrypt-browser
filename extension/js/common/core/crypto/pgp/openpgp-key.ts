@@ -739,9 +739,8 @@ export class OpenPGPKey {
     const encryptionKey = await Catch.undefinedOnException(key.getEncryptionKey());
     const signingKey = await Catch.undefinedOnException(key.getSigningKey());
     const possibleExpirations: number[] = [];
+    const primaryKeyExpiration = OpenPGPKey.getExpirationAsDateOrUndefined(await key.getExpirationTime())?.getTime();
     if (!encryptionKey || !signingKey) {
-      const primaryKeyExpirationTime = OpenPGPKey.getExpirationAsDateOrUndefined(await key.getExpirationTime());
-      const primaryKeyExpiration = primaryKeyExpirationTime?.getTime();
       possibleExpirations.push(
         ...(await Promise.all(key.subkeys.map(subkey => OpenPGPKey.getExpiration(subkey))))
           .filter(Boolean)
@@ -762,7 +761,7 @@ export class OpenPGPKey {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const currentExpirationTime: Date | undefined = await OpenPGPKey.getExpiration(encryptionKeyIgnoringExpiration!);
         expiration = currentExpirationTime?.getTime();
-        if (!expiration) break; // found a never-expiring key
+        if (!expiration || (primaryKeyExpiration && expiration >= primaryKeyExpiration)) break; // found a never-expiring key or a key with expiration beyond primary
         const nextCandidateKey: OpenPGP.Key | OpenPGP.Subkey | undefined = await Catch.undefinedOnException(
           key.getEncryptionKey(undefined, new Date(expiration + 1000))
         );
@@ -777,6 +776,9 @@ export class OpenPGPKey {
       if (encryptionKeyIgnoringExpiration) {
         expiration = (await OpenPGPKey.getExpiration(encryptionKeyIgnoringExpiration))?.getTime();
       }
+    }
+    if (primaryKeyExpiration && (!expiration || expiration > primaryKeyExpiration)) {
+      expiration = primaryKeyExpiration;
     }
     let signingKeyIgnoringExpiration: OpenPGP.Key | OpenPGP.Subkey | undefined;
     if (signingKey) {
