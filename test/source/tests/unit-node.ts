@@ -228,6 +228,8 @@ Something wrong with this key`),
       const expiredKey = await KeyUtil.parse(testConstants.expiredPrv);
       expect(expiredKey.expiration).to.equal(1567605343000);
       expect(expiredKey.usableForEncryptionButExpired).to.equal(true);
+      expect(expiredKey.missingPrivateKeyForDecryption).to.equal(false);
+      expect(expiredKey.missingPrivateKeyForSigning).to.equal(false);
       t.pass();
     });
 
@@ -515,6 +517,8 @@ sOLAw7KgpiL2+0v777saxSO5vtufJCKk4OOEaVDufeijlejKTM+H7twVer4iGqiW
       expect(key.usableForEncryption).equal(false);
       expect(key.usableForSigning).equal(false);
       expect(key.usableForEncryptionButExpired).equal(true);
+      expect(key.missingPrivateKeyForDecryption).to.equal(false);
+      expect(key.missingPrivateKeyForSigning).to.equal(false);
       expect(key.emails.length).to.equal(1);
       expect(key.emails[0]).to.equal('flowcrypt@metacode.biz');
       expect(key.identities.length).to.equal(1);
@@ -588,6 +592,8 @@ cmKFmmDYm+rrWuAv6Q==
       expect(key.usableForSigning).equal(true);
       expect(key.usableForEncryptionButExpired).equal(false);
       expect(key.usableForSigningButExpired).equal(false);
+      expect(key.missingPrivateKeyForDecryption).to.equal(false);
+      expect(key.missingPrivateKeyForSigning).to.equal(false);
       expect(key.emails.length).to.equal(1);
       expect(key.emails[0]).to.equal('expiration_100years@test.com');
       expect(key.identities.length).to.equal(1);
@@ -2602,6 +2608,8 @@ r7V4UalYBHeiwKQhzrU8KfaVfVaYu7ctfitV5Ba/8SqxrblMAZAV6A==
       expect(key1.usableForSigning).to.equal(false);
       expect(key1.usableForEncryptionButExpired).to.equal(false);
       expect(key1.usableForSigningButExpired).to.equal(false);
+      expect(key1.missingPrivateKeyForDecryption).to.equal(false);
+      expect(key1.missingPrivateKeyForSigning).to.equal(false);
       const rsa1024public = `-----BEGIN PGP PUBLIC KEY BLOCK-----
 
 xo0EYAgPUQEEALKmXkrQiioWN+lKsiFuFPkfkyNCDgwpGWAx+peOjykR4Hph/zzC8GeLfqJF1Kei
@@ -2624,6 +2632,8 @@ kBXo
       expect(key2.usableForSigning).to.equal(false);
       expect(key2.usableForEncryptionButExpired).to.equal(false);
       expect(key2.usableForSigningButExpired).to.equal(false);
+      expect(key2.missingPrivateKeyForDecryption).to.equal(false);
+      expect(key2.missingPrivateKeyForSigning).to.equal(false);
       t.pass();
     });
 
@@ -2633,6 +2643,8 @@ kBXo
       expect(key.usableForSigning).to.equal(true);
       expect(key.usableForEncryptionButExpired).to.equal(false);
       expect(key.usableForSigningButExpired).to.equal(false);
+      expect(key.missingPrivateKeyForDecryption).to.equal(false);
+      expect(key.missingPrivateKeyForSigning).to.equal(false);
       t.pass();
     });
 
@@ -2642,11 +2654,15 @@ kBXo
       expect(key.usableForSigning).to.equal(true);
       expect(key.usableForEncryptionButExpired).to.equal(false);
       expect(key.usableForSigningButExpired).to.equal(false);
+      expect(key.missingPrivateKeyForDecryption).to.equal(false);
+      expect(key.missingPrivateKeyForSigning).to.equal(false);
       expect(await KeyUtil.decrypt(key, '1234')).to.be.true;
       expect(key.usableForEncryption).to.equal(false);
       expect(key.usableForSigning).to.equal(true);
       expect(key.usableForEncryptionButExpired).to.equal(false);
       expect(key.usableForSigningButExpired).to.equal(false);
+      expect(key.missingPrivateKeyForDecryption).to.equal(false);
+      expect(key.missingPrivateKeyForSigning).to.equal(false);
       t.pass();
     });
 
