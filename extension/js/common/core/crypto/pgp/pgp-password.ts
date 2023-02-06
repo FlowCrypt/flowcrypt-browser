@@ -106,7 +106,6 @@ export class PgpPwd {
 
   public static random = () => {
     // eg TDW6-DU5M-TANI-LJXY
-    // todo: test!
     return base64encode(Buf.fromUint8(secureRandomBytes(128)).toRawBytesStr())
       .toUpperCase()
       .replace(/[^A-Z0-9]|0|O|1/g, '')

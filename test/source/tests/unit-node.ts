@@ -22,6 +22,7 @@ import { readFileSync } from 'fs';
 import * as forge from 'node-forge';
 import { ENVELOPED_DATA_OID, SmimeKey } from '../core/crypto/smime/smime-key';
 import { Str } from '../core/common';
+import { PgpPwd } from '../core/crypto/pgp/pgp-password';
 
 use(chaiAsPromised);
 
@@ -323,6 +324,13 @@ qC2PFoU1J4aEVe5Jz2yovJnzkx/aa0Hs4g0=
       expect(expiringKey.usableForSigning).to.equal(true);
       expect(expiringKey.usableForEncryption).to.equal(true);
       expect(expiringKey.expiration).to.equal(2304330837000);
+      t.pass();
+    });
+
+    test('[unit][PgpPwd.random] produces string of correct pattern', async t => {
+      const generatedString = PgpPwd.random();
+      // eg TDW6-DU5M-TANI-LJXY
+      expect(/^[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$/.test(generatedString)).to.equal(true);
       t.pass();
     });
 
