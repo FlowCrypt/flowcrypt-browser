@@ -759,8 +759,7 @@ export class OpenPGPKey {
       // find the key with latest expiration by trying dates of current key's expiration
       while (true) {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const currentExpirationTime: Date | undefined = await OpenPGPKey.getExpiration(encryptionKeyIgnoringExpiration!);
-        expiration = currentExpirationTime?.getTime();
+        expiration = (await OpenPGPKey.getExpiration(encryptionKeyIgnoringExpiration!))?.getTime();
         if (!expiration || (primaryKeyExpiration && expiration >= primaryKeyExpiration)) break; // found a never-expiring key or a key with expiration beyond primary
         const nextCandidateKey: OpenPGP.Key | OpenPGP.Subkey | undefined = await Catch.undefinedOnException(
           key.getEncryptionKey(undefined, new Date(expiration + 1000))
@@ -862,15 +861,13 @@ export class OpenPGPKey {
         [opgp.enums.publicKey.eddsa]: { pub: 2, priv: 1 }, // (oid, Q), (seed)
       };
     }
-    return packet instanceof opgp.SecretKeyPacket || packet instanceof opgp.SecretSubkeyPacket
-      ? packet.algorithm &&
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          !(packet as any).isEncrypted && // isDecrypted() returns false when isEncrypted is null
-          (!(packet as OpenPGP.BaseSecretKeyPacket).privateParams ||
-            OpenPGPKey.paramCountByAlgo[packet.algorithm].priv >
-              // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-              Object.keys((packet as OpenPGP.BaseSecretKeyPacket).privateParams!).length)
-      : true;
+    return (
+      !('privateParams' in packet) ||
+      (packet.algorithm &&
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        !(packet as any).isEncrypted && // isDecrypted() returns false when isEncrypted is null
+        (!packet.privateParams || OpenPGPKey.paramCountByAlgo[packet.algorithm].priv > Object.keys(packet.privateParams).length))
+    );
   };
 
   private static testEncryptDecrypt = async (key: OpenPGP.Key): Promise<string[]> => {
