@@ -311,7 +311,7 @@ export class KeyUtil {
   };
 
   // todo - this should be made to tolerate smime keys
-  public static normalize = async (armored: string): Promise<{ normalized: string; keys: OpenPGP.Key[] }> => {
+  public static normalize = async (type: 'publicKey' | 'privateKey', armored: string): Promise<{ normalized: string; keys: OpenPGP.Key[] }> => {
     try {
       let keys: OpenPGP.Key[] = [];
       armored = PgpArmor.normalize(armored, 'key');
@@ -320,7 +320,8 @@ export class KeyUtil {
       } else if (RegExp(PgpArmor.headers('privateKey', 're').begin).test(armored)) {
         keys = await opgp.readKeys({ armoredKeys: armored });
       } else if (RegExp(PgpArmor.headers('encryptedMsg', 're').begin).test(armored)) {
-        keys = [new opgp.PrivateKey((await opgp.readMessage({ armoredMessage: armored })).packets)]; // todo: or PublicKey
+        const packets = (await opgp.readMessage({ armoredMessage: armored })).packets;
+        keys = [type === 'publicKey' ? new opgp.PublicKey(packets) : new opgp.PrivateKey(packets)];
       }
       for (const k of keys) {
         for (const u of k.users) {

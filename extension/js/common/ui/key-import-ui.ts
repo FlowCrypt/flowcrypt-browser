@@ -277,14 +277,14 @@ export class KeyImportUi {
     return { ...validationElements, removeValidationElements };
   };
 
-  private normalize = async (type: KeyBlockType, armored: string): Promise<{ normalized: string }> => {
+  private normalize = async (type: 'publicKey' | 'privateKey', armored: string): Promise<{ normalized: string }> => {
     // non-OpenPGP keys are considered to be always normalized
     // TODO: KeyUtil.normalize depends on OpenPGP.Key objects, when this is resolved
     // this check for key family should be moved to KeyUtil.normalize function.
     if (KeyUtil.getKeyFamily(armored) !== 'openpgp') {
       return { normalized: armored };
     }
-    const normalized = await KeyUtil.normalize(armored);
+    const normalized = await KeyUtil.normalize(type, armored);
     if (!normalized) {
       const headers = PgpArmor.headers(type);
       throw new UserAlert(
