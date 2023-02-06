@@ -44,8 +44,8 @@ export class ComposeQuoteModule extends ViewModule<ComposeView> {
     );
   };
 
-  public addTripleDotQuoteExpandFooterAndQuoteBtn = async (msgId: string, method: 'reply' | 'forward') => {
-    if (!this.messageToReplyOrForward) {
+  public addTripleDotQuoteExpandFooterAndQuoteBtn = async (msgId: string, method: 'reply' | 'forward', forceReload = false) => {
+    if (!this.messageToReplyOrForward || forceReload) {
       this.view.S.cached('triple_dot').addClass('progress');
       Xss.sanitizeAppend(this.view.S.cached('triple_dot'), '<div id="loader">0%</div>');
       this.view.sizeModule.resizeComposeBox();
