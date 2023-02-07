@@ -3,9 +3,18 @@
 'use strict';
 
 import { readFileSync, writeFileSync } from 'fs';
+import { sep } from 'path';
 import { getFilesInDir } from './utils/tooling-utils';
 
-const { compilerOptions } = JSON.parse(readFileSync('./tsconfig.json').toString());
+let tsconfigPath: string | undefined;
+for (let i = 0; i < process.argv.length; i++) {
+  if (process.argv[i] === '-p' || process.argv[i] === '--project') {
+    tsconfigPath = process.argv[i + 1];
+    break;
+  }
+}
+
+const { compilerOptions } = JSON.parse(readFileSync(tsconfigPath || './tsconfig.json').toString());
 const moduleMap: { [name: string]: string | null } = {};
 for (const moduleName of Object.keys(compilerOptions.paths)) {
   if (compilerOptions.paths[moduleName].indexOf('COMMENT') !== -1) {
@@ -13,25 +22,26 @@ for (const moduleName of Object.keys(compilerOptions.paths)) {
     moduleMap[moduleName] = null; // eslint-disable-line no-null/no-null
   } else {
     // replace import with full path from config
-    moduleMap[moduleName] = `/${compilerOptions.paths[moduleName].find((x: string) => x.match(/\.js$/) !== null)}`; // eslint-disable-line no-null/no-null
+    moduleMap[moduleName] = `${compilerOptions.paths[moduleName].find((x: string) => x.match(/\.js$/) !== null)}`; // eslint-disable-line no-null/no-null
   }
 }
 
-const namedImportLineRegEx = /^(import (?:.+ from )?['"])([^.][^'"/]+)(['"];)\r{0,1}$$/g;
+const namedImportLineRegEx = /^(import (?:.+ from )?['"])([^.][^'"]+)(['"];)\r{0,1}$$/g;
+const requireLineRegEx = /^(.+require\(['"])([^.][^'"]+)(['"]\)+;)\r{0,1}$$/g;
 const importLineNotEndingWithJs = /import (?:.+ from )?['"]\.[^'"]+[^.][^j][^s]['"];/g;
 const importLineEndingWithJsNotStartingWithDot = /import (?:.+ from )?['"][^.][^'"]+\.js['"];/g;
 
-const resolveLineImports = (line: string, path: string) =>
-  line.replace(namedImportLineRegEx, (found, prefix, libname, suffix) => {
+const resolveLineImports = (regex: RegExp, line: string, path: string) =>
+  line.replace(regex, (found, prefix, libname, suffix) => {
     // eslint-disable-next-line no-null/no-null
     if (moduleMap[libname] === null) {
       return `// ${prefix}${libname}${suffix} // commented during build process: imported with script tag`;
     } else if (!moduleMap[libname]) {
-      console.error(`Unknown path for module: ${libname} in ${path}`);
-      process.exit(1);
-      return '';
+      return found;
     } else {
-      const resolved = `${prefix}${moduleMap[libname]}${suffix}`;
+      const depth = path.split(sep).length;
+      const prePath = '../'.repeat(depth - 3); // todo:
+      const resolved = `${prefix}${prePath}${moduleMap[libname]}${suffix}`;
       // console.info(`${path}: ${found} -> ${resolved}`);
       return resolved;
     }
@@ -59,8 +69,8 @@ for (const srcFilePath of srcFilePaths) {
   const original = readFileSync(srcFilePath).toString();
   const resolved = original
     .split('\n')
-    .map(l => resolveLineImports(l, srcFilePath))
-    .join('\n');
+    .map(l => resolveLineImports(requireLineRegEx, resolveLineImports(namedImportLineRegEx, l, srcFilePath), srcFilePath)
+  ).join('\n');
   if (resolved !== original) {
     writeFileSync(srcFilePath, resolved);
   }

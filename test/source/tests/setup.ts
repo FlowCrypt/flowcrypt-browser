@@ -594,7 +594,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         await addKeyPopup.waitAndClick('@source-paste');
         const key = Config.key('missing.self.signatures');
         await addKeyPopup.waitAndType('@input-armored-key', key?.armored ?? '');
-        await addKeyPopup.waitAndType('#input_passphrase', key?.passphrase ?? '');
+        await addKeyPopup.waitAndType('#input_passphrase', key?.passphrase ?? '', { delay: 1 });
         await addKeyPopup.waitAndClick('.action_add_private_key', { delay: 1 });
         await addKeyPopup.waitAll('@input-compatibility-fix-expire-years', { timeout: 30 });
         await addKeyPopup.selectOption('@input-compatibility-fix-expire-years', '1');
@@ -625,10 +625,12 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
         // Generate key that expires in 20 days
         const key = await opgp.generateKey({
+          type: 'ecc',
           curve: 'curve25519',
-          userIds: [{ email: acctEmail }],
+          userIDs: [{ email: acctEmail }],
           keyExpirationTime: 20 * 24 * 60 * 60,
           passphrase,
+          format: 'armored',
           date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
         });
         // Setup with above key
@@ -640,7 +642,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
             usedPgpBefore: false,
             key: {
               title: '?',
-              armored: key.privateKeyArmored,
+              armored: key.privateKey,
               passphrase,
               longid: '0000000000000000', // dummy -- not needed
             },
@@ -655,12 +657,14 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         const addKeyPopup = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-add-key-page', ['add_key.htm']);
         await addKeyPopup.waitAndClick('@source-paste');
         const updatedKey = await opgp.generateKey({
+          type: 'ecc',
           curve: 'curve25519',
-          userIds: [{ email: acctEmail }, { email: 'demo@gmail.com', name: 'Demo user' }],
+          userIDs: [{ email: acctEmail }, { email: 'demo@gmail.com', name: 'Demo user' }],
           passphrase,
+          format: 'armored',
           keyExpirationTime: 100 * 24 * 60 * 60,
         });
-        await addKeyPopup.waitAndType('@input-armored-key', updatedKey.privateKeyArmored);
+        await addKeyPopup.waitAndType('@input-armored-key', updatedKey.privateKey);
         await addKeyPopup.waitAndType('#input_passphrase', passphrase);
         await addKeyPopup.waitAndClick('.action_add_private_key', { delay: 1 });
         await Util.sleep(1);
@@ -680,12 +684,13 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         const acctEmail = 'flowcrypt.notify.expiring.keys.updating.key@key-manager-autogen.flowcrypt.test';
         // Generate negative expiration key and check if it shows correct expiration note
         const negativeExpirationKey = await opgp.generateKey({
+          format: 'armored',
           curve: 'curve25519',
-          userIds: [{ email: acctEmail }],
+          userIDs: [{ email: acctEmail }],
           keyExpirationTime: 1,
           date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
         });
-        MOCK_KM_KEYS[acctEmail] = { response: { privateKeys: [{ decryptedPrivateKey: negativeExpirationKey.privateKeyArmored }] } };
+        MOCK_KM_KEYS[acctEmail] = { response: { privateKeys: [{ decryptedPrivateKey: negativeExpirationKey.privateKey }] } };
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
         await SetupPageRecipe.autoSetupWithEKM(settingsPage, { expectWarnModal: 'Public key not usable - not sumbitting to Attester' });
         const gmailPage = await openMockGmailPage(t, browser, acctEmail);
@@ -695,12 +700,14 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         await gmailPage.waitForContent('@webmail-notification-notify_expiring_keys', warningMsg);
         // Generate expired key(positive expiration) and check if it shows correct note
         const key = await opgp.generateKey({
+          type: 'ecc',
           curve: 'curve25519',
-          userIds: [{ email: acctEmail }],
+          userIDs: [{ email: acctEmail }],
           keyExpirationTime: 20 * 24 * 60 * 60,
+          format: 'armored',
           date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
         });
-        MOCK_KM_KEYS[acctEmail] = { response: { privateKeys: [{ decryptedPrivateKey: key.privateKeyArmored }] } };
+        MOCK_KM_KEYS[acctEmail] = { response: { privateKeys: [{ decryptedPrivateKey: key.privateKey }] } };
         await gmailPage.page.reload();
         await Util.sleep(1);
         // Check if notification presents
@@ -715,7 +722,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         // Return correct key and check if expiration note doesn't appear
         MOCK_KM_KEYS[acctEmail] = {
           response: {
-            privateKeys: [{ decryptedPrivateKey: key.privateKeyArmored }, { decryptedPrivateKey: testConstants.notifyExpiringKeys }],
+            privateKeys: [{ decryptedPrivateKey: key.privateKey }, { decryptedPrivateKey: testConstants.notifyExpiringKeys }],
           },
         };
         await gmailPage.page.reload();

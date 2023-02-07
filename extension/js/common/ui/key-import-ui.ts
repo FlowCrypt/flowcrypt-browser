@@ -14,6 +14,7 @@ import { Settings } from '../settings.js';
 import { Ui } from '../browser/ui.js';
 import { Url, Str } from '../core/common.js';
 import { opgp } from '../core/crypto/pgp/openpgpjs-custom.js';
+import { OpenPGPKey } from '../core/crypto/pgp/openpgp-key.js';
 import { KeyStore } from '../platform/store/key-store.js';
 import { isCustomerUrlFesUsed } from '../helpers.js';
 
@@ -111,22 +112,20 @@ export class KeyImportUi {
       Ui.event.handle(async target => {
         $('.action_add_private_key').addClass('btn_disabled').attr('disabled');
         $('.input_email_alias').prop('checked', false);
-        const {
-          keys: [prv],
-        } = await opgp.key.readArmored(String($(target).val()));
+        const prv = await Catch.undefinedOnException(opgp.readKey({ armoredKey: String($(target).val()) }));
         if (prv !== undefined) {
           $('.action_add_private_key').removeClass('btn_disabled').removeAttr('disabled');
           if (submitKeyForAddrs !== undefined) {
             const users = prv.users;
             for (const user of users) {
-              const userId = user.userId;
-              for (const inputCheckboxesWithEmail of $('.input_email_alias')) {
-                /* eslint-disable @typescript-eslint/no-non-null-assertion */
-                if (String($(inputCheckboxesWithEmail).data('email')) === userId!.email) {
-                  KeyImportUi.addAliasForSubmission(userId!.email, submitKeyForAddrs!);
-                  $(inputCheckboxesWithEmail).prop('checked', true);
+              const userId = user.userID;
+              if (userId) {
+                for (const inputCheckboxesWithEmail of $('.input_email_alias')) {
+                  if (String($(inputCheckboxesWithEmail).data('email')) === userId.email) {
+                    KeyImportUi.addAliasForSubmission(userId.email, submitKeyForAddrs);
+                    $(inputCheckboxesWithEmail).prop('checked', true);
+                  }
                 }
-                /* eslint-enable @typescript-eslint/no-non-null-assertion */
               }
             }
           }
@@ -135,14 +134,12 @@ export class KeyImportUi {
     );
     $('.input_private_key').change(
       Ui.event.handle(async target => {
-        const {
-          keys: [prv],
-        } = await opgp.key.readArmored(String($(target).val()));
+        const prv = await Catch.undefinedOnException(opgp.readKey({ armoredKey: String($(target).val()) }));
         if (!prv || !prv.isPrivate()) {
           $('.line.unprotected_key_create_pass_phrase').hide();
           return;
         }
-        if (prv.isFullyDecrypted()) {
+        if (OpenPGPKey.isFullyDecrypted(prv)) {
           $('.line.unprotected_key_create_pass_phrase').show();
           const { passwordResultElement, removeValidationElements } = this.renderPassPhraseStrengthValidationInput(
             $('.input_passphrase'),
@@ -154,7 +151,7 @@ export class KeyImportUi {
             $('.input_private_key').off('change', removeValidationElementsWhenKeyChanged);
           });
           $('.input_private_key').change(removeValidationElementsWhenKeyChanged);
-        } else if (prv.isFullyEncrypted()) {
+        } else if (OpenPGPKey.isFullyEncrypted(prv)) {
           $('.line.unprotected_key_create_pass_phrase').hide();
         } else {
           await Ui.modal.error(Lang.setup.partiallyEncryptedKeyUnsupported);
@@ -280,14 +277,14 @@ export class KeyImportUi {
     return { ...validationElements, removeValidationElements };
   };
 
-  private normalize = async (type: KeyBlockType, armored: string): Promise<{ normalized: string }> => {
+  private normalize = async (type: 'publicKey' | 'privateKey', armored: string): Promise<{ normalized: string }> => {
     // non-OpenPGP keys are considered to be always normalized
-    // TODO: PgpKey.normalize depends on OpenPGP.key.Key objects, when this is resolved
-    // this check for key family should be moved to PgpKey.normalize function.
+    // TODO: KeyUtil.normalize depends on OpenPGP.Key objects, when this is resolved
+    // this check for key family should be moved to KeyUtil.normalize function.
     if (KeyUtil.getKeyFamily(armored) !== 'openpgp') {
       return { normalized: armored };
     }
-    const normalized = await KeyUtil.normalize(armored);
+    const normalized = await KeyUtil.normalize(type, armored);
     if (!normalized) {
       const headers = PgpArmor.headers(type);
       throw new UserAlert(

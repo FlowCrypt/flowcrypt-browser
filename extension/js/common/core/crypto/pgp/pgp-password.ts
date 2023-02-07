@@ -3,8 +3,7 @@
 'use strict';
 
 import { base64encode, secureRandomBytes } from '../../../platform/util.js';
-
-import { opgp } from './openpgpjs-custom.js';
+import { Buf } from '../../buf.js';
 
 interface PwdStrengthResult {
   word: {
@@ -107,7 +106,7 @@ export class PgpPwd {
 
   public static random = () => {
     // eg TDW6-DU5M-TANI-LJXY
-    return base64encode(opgp.util.Uint8Array_to_str(secureRandomBytes(128)))
+    return base64encode(Buf.fromUint8(secureRandomBytes(128)).toRawBytesStr())
       .toUpperCase()
       .replace(/[^A-Z0-9]|0|O|1/g, '')
       .replace(/(.{4})/g, '$1-')

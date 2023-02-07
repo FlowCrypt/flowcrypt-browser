@@ -165,10 +165,9 @@ export class ComposeView extends View {
     const storage = await AcctStore.get(this.acctEmail, ['sendAs', 'hide_message_password', 'fesUrl']);
     this.clientConfiguration = await ClientConfiguration.newInstance(this.acctEmail);
     if (this.clientConfiguration.shouldHideArmorMeta()) {
-      opgp.config.show_comment = false;
-      opgp.config.show_version = false;
+      opgp.config.showComment = false;
+      opgp.config.showVersion = false;
     }
-    opgp.initWorker({ path: '/lib/openpgp.worker.js' });
     this.pubLookup = new PubLookup(this.clientConfiguration);
     this.tabId = await BrowserMsg.requiredTabId();
     this.factory = new XssSafeFactory(this.acctEmail, this.tabId);

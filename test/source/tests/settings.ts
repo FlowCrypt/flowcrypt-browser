@@ -748,6 +748,45 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       })
     );
     test(
+      'settings - my key page - revocation certificate',
+      testWithBrowser(undefined, async (t, browser) => {
+        const acctEmail = 'flowcrypt.test.key.multiple@gmail.com';
+        const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
+        await SetupPageRecipe.manualEnter(
+          settingsPage,
+          'unused',
+          {
+            submitPubkey: false,
+            usedPgpBefore: false,
+            key: {
+              title: '?',
+              armored: testConstants.testKeyMultiple1b383d0334e38b28,
+              passphrase: '1234',
+              longid: '1b383d0334e38b28',
+            },
+          },
+          { isSavePassphraseChecked: false, isSavePassphraseHidden: false }
+        );
+        await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
+        const myKeyFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, `@action-show-key-0`, ['my_key.htm', 'placement=settings']);
+        await Util.sleep(1);
+        await myKeyFrame.waitAll('@content-fingerprint');
+        await myKeyFrame.waitAndClick('@action-revoke-certificate');
+        const downloadedFiles = await myKeyFrame.awaitDownloadTriggeredByClicking(() =>
+          PageRecipe.waitForModalAndRespond(myKeyFrame, 'confirm', {
+            contentToCheck: 'Would you like to generate and save a revocation cert now?',
+            clickOn: 'confirm',
+          })
+        );
+        const entries = Object.entries(downloadedFiles);
+        expect(entries.length).to.equal(1);
+        const [filename, data] = entries[0];
+        expect(filename.endsWith('revocation-cert.asc')).to.be.true;
+        expect(data.toString()).to.include('Comment: This is a revocation certificate');
+        await settingsPage.close();
+      })
+    );
+    test(
       'settings - manual backup several keys to file with the same pass phrase',
       testWithBrowser(undefined, async (t, browser) => {
         const acctEmail = 'flowcrypt.test.key.multiple@gmail.com';

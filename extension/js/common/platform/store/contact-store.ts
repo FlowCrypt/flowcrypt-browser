@@ -492,6 +492,9 @@ export class ContactStore extends AbstractStore {
   public static update = async (db: IDBDatabase | undefined, email: string | string[], update: ContactUpdate): Promise<void> => {
     if (!db) {
       // relay op through background process
+      if (update.pubkey && typeof update.pubkey !== 'string') {
+        KeyUtil.pack(update.pubkey);
+      }
       await BrowserMsg.send.bg.await.db({ f: 'update', args: [email, update] });
       return;
     }
@@ -526,14 +529,13 @@ export class ContactStore extends AbstractStore {
     if (emails.length === 1) {
       const email = emails[0];
       const contact = await ContactStore.getOneWithAllPubkeys(db, email);
-      return [
-        {
-          email,
-          keys: (contact?.sortedPubkeys || [])
-            .filter(k => !k.revoked && (k.pubkey.usableForEncryption || k.pubkey.usableForEncryptionButExpired))
-            .map(k => k.pubkey),
-        },
-      ];
+      const keys = (contact?.sortedPubkeys || [])
+        .filter(k => !k.revoked && (k.pubkey.usableForEncryption || k.pubkey.usableForEncryptionButExpired))
+        .map(k => k.pubkey);
+      for (const key of keys) {
+        KeyUtil.pack(key);
+      }
+      return [{ email, keys }];
     } else {
       return (await Promise.all(emails.map(email => ContactStore.getEncryptionKeys(db, [email])))).reduce((a, b) => a.concat(b));
     }
@@ -591,10 +593,14 @@ export class ContactStore extends AbstractStore {
         reject
       );
     });
+    const sortedPubkeys = await ContactStore.sortKeys(pubkeys, revocations);
+    for (const pubkeyInfo of sortedPubkeys) {
+      KeyUtil.pack(pubkeyInfo.pubkey);
+    }
     return emailEntity
       ? {
           info: { email: emailEntity.email, name: emailEntity.name || undefined },
-          sortedPubkeys: await ContactStore.sortKeys(pubkeys, revocations),
+          sortedPubkeys,
         }
       : undefined;
   };
@@ -704,6 +710,7 @@ export class ContactStore extends AbstractStore {
     }
     if (!db) {
       // relay op through background process
+      KeyUtil.pack(pubkey);
       await BrowserMsg.send.bg.await.db({ f: 'saveRevocation', args: [pubkey] });
       return;
     }
@@ -716,12 +723,12 @@ export class ContactStore extends AbstractStore {
 
   // construct PubkeyInfo objects out of provided keys and revocation data in the database
   // the keys themselves may not be necessarily present in the database
-  public static getPubkeyInfos = async (db: IDBDatabase | undefined, keys: (Key | string)[]): Promise<PubkeyInfo[]> => {
+  public static getPubkeyInfos = async (db: IDBDatabase | undefined, keys: string[]): Promise<PubkeyInfo[]> => {
     if (!db) {
       // relay op through background process
       return (await BrowserMsg.send.bg.await.db({ f: 'getPubkeyInfos', args: [keys] })) as PubkeyInfo[];
     }
-    const parsedKeys = await Promise.all(keys.map(async key => await KeyUtil.asPublicKey(typeof key === 'string' ? await KeyUtil.parse(key) : key)));
+    const parsedKeys = await Promise.all(keys.map(async key => await KeyUtil.asPublicKey(await KeyUtil.parse(key))));
     const unrevokedIds = parsedKeys.filter(key => !key.revoked).map(key => key.id);
     const revocations: Revocation[] = [];
     if (unrevokedIds.length) {
@@ -731,6 +738,9 @@ export class ContactStore extends AbstractStore {
         ContactStore.setTxHandlers(tx, resolve, reject);
         ContactStore.collectRevocations(tx, revocations, unrevokedIds);
       });
+    }
+    for (const parsedKey of parsedKeys) {
+      KeyUtil.pack(parsedKey);
     }
     return parsedKeys.map(key => {
       return {

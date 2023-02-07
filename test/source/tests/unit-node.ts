@@ -4,14 +4,14 @@ import test from 'ava';
 
 import { MsgBlock } from '../core/msg-block';
 import { MsgBlockParser } from '../core/msg-block-parser';
-import { TestVariant, Util } from '../util';
+import { Config, TestVariant, Util } from '../util';
 import { use, expect } from 'chai';
 import chaiAsPromised from 'chai-as-promised';
-import { KeyUtil, KeyInfoWithIdentityAndOptionalPp } from '../core/crypto/key';
+import { KeyUtil, KeyInfoWithIdentityAndOptionalPp, Key } from '../core/crypto/key';
 import { UnreportableError } from '../platform/catch.js';
 import { Buf } from '../core/buf';
 import { OpenPGPKey } from '../core/crypto/pgp/openpgp-key';
-import { DecryptError, DecryptSuccess, MsgUtil, PgpMsgMethod } from '../core/crypto/pgp/msg-util';
+import { DecryptError, DecryptSuccess, MsgUtil } from '../core/crypto/pgp/msg-util';
 import { opgp } from '../core/crypto/pgp/openpgpjs-custom';
 import { Attachment } from '../core/attachment.js';
 import { GoogleData, GmailMsg } from '../mock/google/google-data';
@@ -22,6 +22,7 @@ import { readFileSync } from 'fs';
 import * as forge from 'node-forge';
 import { ENVELOPED_DATA_OID, SmimeKey } from '../core/crypto/smime/smime-key';
 import { Str } from '../core/common';
+import { PgpPwd } from '../core/crypto/pgp/pgp-password';
 
 use(chaiAsPromised);
 
@@ -45,7 +46,7 @@ export const defineUnitNodeTests = (testVariant: TestVariant) => {
         ...(await PgpArmor.dearmor(testConstants.flowcryptcompatibilityPublicKey7FDE685548AEA788)).data,
         ...(await PgpArmor.dearmor(testConstants.pubkey2864E326A5BE488A)).data,
       ]);
-      const armoredKeys = PgpArmor.armor(opgp.enums.armor.public_key, unarmoredKeys);
+      const armoredKeys = PgpArmor.armor(opgp.enums.armor.publicKey, unarmoredKeys);
       expect((await KeyUtil.parseMany(armoredKeys)).length).to.equal(2);
       await t.throwsAsync(() => OpenPGPKey.parse(armoredKeys), {
         instanceOf: Error,
@@ -57,7 +58,123 @@ export const defineUnitNodeTests = (testVariant: TestVariant) => {
       });
       t.pass();
     });
+    test(`[unit][OpenPGPKey.parseMany] throws on invalid input`, async t => {
+      await t.throwsAsync(
+        () =>
+          OpenPGPKey.parseMany(`-----BEGIN PGP PUBLIC KEY BLOCK-----
+Version: FlowCrypt Email Encryption
+Comment: Seamlessly send and receive encrypted email
 
+Something wrong with this key`),
+        {
+          instanceOf: Error,
+          message: 'Misformed armored text',
+        }
+      );
+    });
+    test(`[unit][KeyUtil.parseMany] throws on invalid input`, async t => {
+      await t.throwsAsync(
+        () =>
+          KeyUtil.parseMany(`-----BEGIN PGP PUBLIC KEY BLOCK-----
+Version: FlowCrypt Email Encryption
+Comment: Seamlessly send and receive encrypted email
+
+Something wrong with this key`),
+        {
+          instanceOf: Error,
+          message: 'Misformed armored text',
+        }
+      );
+    });
+    test(`[unit][OpenPGPKey.parse] throws on invalid input`, async t => {
+      await t.throwsAsync(
+        () =>
+          OpenPGPKey.parse(`-----BEGIN PGP PUBLIC KEY BLOCK-----
+Version: FlowCrypt Email Encryption
+Comment: Seamlessly send and receive encrypted email
+
+Something wrong with this key`),
+        {
+          instanceOf: Error,
+          message: 'Misformed armored text',
+        }
+      );
+    });
+    test(`[unit][KeyUtil.parse] throws on invalid input`, async t => {
+      await t.throwsAsync(
+        () =>
+          KeyUtil.parse(`-----BEGIN PGP PUBLIC KEY BLOCK-----
+Version: FlowCrypt Email Encryption
+Comment: Seamlessly send and receive encrypted email
+
+Something wrong with this key`),
+        {
+          instanceOf: Error,
+          message: 'Misformed armored text',
+        }
+      );
+    });
+    test(`[unit][OpenPGPKey.getOrCreateRevocationCertificate] operations`, async t => {
+      const stringData = 'hello';
+      const data = Buf.fromUtfStr(stringData);
+      const originalPrv = await OpenPGPKey.parse(testConstants.existingPrv);
+      const revocationCertificate = await OpenPGPKey.getOrCreateRevocationCertificate(originalPrv);
+      expect(revocationCertificate).to.be.not.empty;
+      if (!revocationCertificate) {
+        throw Error;
+      }
+      expect(revocationCertificate.startsWith('-----BEGIN PGP PUBLIC KEY BLOCK-----')).to.be.true;
+      expect(revocationCertificate).to.include('Version: FlowCrypt Email Encryption');
+      expect(revocationCertificate).to.include('Comment: Seamlessly send and receive encrypted email');
+      expect(revocationCertificate).to.include('Comment: This is a revocation certificate');
+      const expectNotRevoked = async (key: Key) => {
+        expect(key.revoked).to.be.false;
+        if (key.isPrivate) {
+          await MsgUtil.sign(originalPrv, stringData);
+        } else {
+          await MsgUtil.encryptMessage({ pubkeys: [pubkey], data, armor: true });
+        }
+      };
+      const expectRevoked = async (key: Key) => {
+        expect(key.revoked).to.be.true;
+        if (key.isPrivate) {
+          await t.throwsAsync(() => MsgUtil.sign(revokedPrv, stringData), {
+            instanceOf: Error,
+            message: 'Error signing message: Primary key is revoked',
+          });
+        } else {
+          await t.throwsAsync(() => MsgUtil.encryptMessage({ pubkeys: [revokedPub], data, armor: true }), {
+            instanceOf: Error,
+            message: 'Error encrypting message: Primary key is revoked',
+          });
+        }
+      };
+      const testKey = async (key: Key, func: (key: Key) => Promise<void>) => {
+        await func(key);
+        const armored = KeyUtil.armor(key);
+        const unarmored = await OpenPGPKey.parse(armored);
+        await func(unarmored);
+        KeyUtil.pack(key);
+        await func(key);
+      };
+      await testKey(originalPrv, expectNotRevoked); // the original key remains valid
+      const pubkey = await KeyUtil.asPublicKey(originalPrv);
+      await testKey(pubkey, expectNotRevoked); // the pub key remains valid
+      await t.throwsAsync(() => OpenPGPKey.getOrCreateRevocationCertificate(pubkey), {
+        instanceOf: Error,
+        message: 'Key FAFB7D675AC74E87F84D169F00B0115807969D75 is not a private key',
+      });
+      // apply revocation certificate
+      const revokedPrv = await OpenPGPKey.applyRevocationCertificate(originalPrv, revocationCertificate);
+      await testKey(originalPrv, expectNotRevoked); // the original key remains valid
+      await testKey(revokedPrv, expectRevoked);
+      const revokedPub = await OpenPGPKey.applyRevocationCertificate(pubkey, revocationCertificate);
+      await testKey(pubkey, expectNotRevoked); // the original key remains valid
+      await testKey(revokedPub, expectRevoked);
+      // extract the same revocation certificate from the revoked keys
+      expect(await KeyUtil.getOrCreateRevocationCertificate(revokedPub)).to.equal(revocationCertificate);
+      expect(await KeyUtil.getOrCreateRevocationCertificate(revokedPrv)).to.equal(revocationCertificate);
+    });
     test(`[unit][MsgBlockParser.detectBlocks] does not get tripped on blocks with unknown headers`, async t => {
       expect(
         MsgBlockParser.detectBlocks("This text breaks email and Gmail web app.\n\n-----BEGIN FOO-----\n\nEven though it's not a vaild PGP m\n\nMuhahah")
@@ -109,10 +226,111 @@ export const defineUnitNodeTests = (testVariant: TestVariant) => {
     });
 
     test(`[unit][PgpKey.usableForEncryptionButExpired] recognizes usable expired key`, async t => {
-      const armored =
-        '-----BEGIN PGP PRIVATE KEY BLOCK-----\nVersion: FlowCrypt 7.0.1 Gmail Encryption\nComment: Seamlessly send and receive encrypted email\n\nxcTGBF1ucG0BDACuiQEGA1E4SDwqzy9p5acu6BORl51/6y1LpY63mmlkKpS9\n+v12GPzu2d5/YiFmwoXHd4Bz6GPsAGe+j0a4X5m7u9yFjnoODoXkR7XLrisd\nftf+gSkaQc9J4D/JHlAlqXFp+2OC6C25xmo7SFqiL+743gvAFE4AVSAMWW0b\nFHQlvbYSLcOdIr7s+jmnLhcAkC2GQZ5kcy0x44T77hWp3QpsB8ReZq9LgiaD\npcaaaxC+gLQrmlvUAL61TE0clm2/SWiZ2DpDT4PCLZXdBnUJ1/ofWC59YZzQ\nY7JcIs2Pt1BLEU3j3+NT9kuTcsBDA8mqQnhitqoKrs7n0JX7lzlstLEHUbjT\nWy7gogjisXExGEmu4ebGq65iJd+6z52Ir//vQnHEvT4S9L+XbnH6X0X1eD3Q\nMprgCeBSr307x2je2eqClHlngCLEqapoYhRnjbAQYaSkmJ0fi/eZB++62mBy\nZn9N018mc7o8yCHuC81E8axg/6ryrxN5+/cIs8plr1NWqDcAEQEAAf4HAwLO\nbzM6RH+nqv/unflTOVA4znH5G/CaobPIG4zSQ6JS9xRnulL3q/3Lw59wLp4R\nZWfRaC9XgSwDomdmD1nJAOTE6Lpg73DM6KazRmalwifZgxmA2rQAhMr2JY3r\nLC+mG1GySmD83JjjLAxztEnONAZNwI+zSLMmGixF1+fEvDcnC1+cMkI0trq4\n2MsSDZHjMDHBupD1Bh04UDKySHIKZGfjWHU+IEVi3MI0QJX/nfsPg/KJumoA\nG2Ru4RSIBfX3w2X9tdbyK8qwqKTUUv64uR+R7mTtgAZ+y3RIAr0Ver/We9r9\n6PlDUkwboI8D5gOVU17iLuuJSWP/JBqemjkkbU57SR+YVj7TZfVbkiflvVt0\nAS4t+Uv1FcL+yXmL/zxuzAYexbflOB8Oh/M88APJVvliOIEynmHfvONtOdxE\njN1joUol/UkKJNUwC+fufsn7UZQxlsdef8RwuRRqQlbFLqMjyeK9s99sRIRT\nCyEUhUVKh3OBGb5NWBOWmAF7d95QmtT0kX/0aLMgzBqs75apS4l060OoIbqr\nGuaui4gLJHVFzv/795pN13sI9ZQFN30Z+m1NxtDZsgEX4F2W6WrZ/Guzv+QZ\nEBvE2Bgs0QYuzzT/ygFFCXd4o2nYDXJKzPiFQdYVFZXLjQkS6/CK059rqAyD\nMgobSMOw5L1rRnjVkr0UpyGc98aiISiaXb+/CrSiyVt4g6hVHQ1W5hWRm+xL\n3x2A9jv7+6WAVA6wI2gUQ5vM7ZIhI/MVXOdU09F5GH1M6McS9SLC/5b1LS0L\ng6rolH5/JqgU/vGbboc9DdOBmR1W76oFZby0aqLiptN7GSgtHGz5r4y42kC/\nEHwQs6I2XNPzGqIJbBUo9BE3D8DJm0pqj4tVp4siPXle5kxoUhJ3e24BHnv5\nK5W0L4jlRjsBKnVv5nzHyU9XYfGTXqpnUa1dYwbOQ522KhlixNsBFMuar0no\n/bJRFhxVAJ0nfngZa+yJvcWjAD+Iaq9clJnowLa8pZNt/aRKM1eW1S5f+6rB\nv3hVccYcUaiBAJ0JFX5URDEreCb4vNcuBHcXd/5zStTMrh9aWEnr7f9SMA5D\nt5hGNwmKFmsR4CppeQ5wfJMrVI7dpRT5a/W1ZCEhYMJkRpVRQWdVbxlgc+/o\nnc/pFSQpvvcrdY4VARiIW31v8RxZsweLYzvpyoe5vxZxLe4wpfVgoObDISR/\ngf7mENhBYaUjvzOSJROp4wnZgsGUyKRcFS+Fusod22WYEiBP4woQBmCA0KMB\nRsme0XvX30ME1pcVLUfelXFBy+Fkh2eJA8XePcc65/zsSYM1zyCRYcyBOqXl\nVbgmC7CT1OIyi5WcmNmE3le32AyWhc0mTWljaGFlbCA8bWljaGFlbC5mbG93\nY3J5cHQyQGdtYWlsLmNvbT7CwSsEEwEIAD4CGwMFCwkIBwIGFQoJCAsCBBYC\nAwECHgECF4AWIQSt71SyyjyBMojzR8ChBwCUDtu4ZQUCXW5w3wUJAAFR8gAh\nCRChBwCUDtu4ZRYhBK3vVLLKPIEyiPNHwKEHAJQO27hl5ggL/RYvyfblxqdf\nU7KOaBMkRiUkZunGeB7sTipHKh7me+80kAkn1nVe2DBhuFw03UEk3s5kW80h\nITH5Nl2J9kkidQ39s8W4N9ZDLW0ccQ6HBqxF5moxESMahTIX2qVDSeDi61fm\nHzHILg1F3IEidE1UQI8+oW5H2d/J33CORDXRK3dndH0GdmMjsOhSNMEJ8zuM\ntvgAoy+2zVf70apmDTA/svY6nMMQ/5ZGSmoRScH1CfbuXum20ExOaAPp0FWT\ndPIkoA9mH/FgENcrQ6E44ZPV3wvnqFVWCFrOnNGqtNIaa1EdakGsy5FMwRvh\nyedrMJzXlCiziYp/DpwZ6742O/WNvPTJaDfjQ+1Hhm/FnJVK1MF/O+yO4UgI\nPdGMSgWo389wdhZl4dmOTrAVi3xePb3gYtIYRQjzdl+TdNnm+4Ccj01fptKk\n9I6jKozYaYvWMrFhE6tB+V+aifkfyPd5DJigb5sX5tSKGY8iA4b4JCZXzlnO\nhjaFtE0vFT/Fg8zdPnhgWcfExgRdbnBtAQwA02yK9sosJjiV7sdx374xidZu\nnMRfp0Dp8xsSZdALGLS1rnjZfGzNgNA4s/uQt5MZt7Zx6m7MU0XgADIjGox3\naalhmucH6hUXYEJfvM/UiuD/Ow7/UzzJe6UfVlS6p1iKGlrvwf7LBtM2PDH0\nzmPn4NU7QSHBa+i+Cm8fnhq/OBdI3vb0AHjtn401PDn7vUL6Uypuy+NFK9IM\nUOKVmLKrIukGaCj0jUmb10fc1hjoT7Ful/DPy33RRjw3hV06xCCYspeSJcIu\n78EGtrbG0kRVtbaeE2IjdAfx224h6fvy0WkIpUa2MbWLD6NtWiI00b2MbCBK\n8XyyODx4/QY8Aw0q7lXQcapdkeqHwFXvu3exZmh+lRmP1JaxHdEF/qhPwCv9\ntEohhWs1JAGTOqsFZymxvcQ6vrTp+KdSLsvgj5Z+3EvFWhcBvX76Iwz5T78w\nzxtihuXxMGBPsYuoVf+i4tfq+Uy8F5HFtyfE8aL62bF2ped+rYLp50oBF7NN\nyYEVnRNzABEBAAH+BwMCV+eL972MM+b/giD+MUqD5NIH699wSEZswSo3xwIf\nXy3SNDABAijZ/Z1rkagGyo41/icF/CUllCPU5S1yv5DnFCkjcXNDDv8ZbxIN\nHw53SuPNMPolnHE7bhytwKRIulNOpaIxp6eQN+q+dXrRw0TRbp2fKtlsPHsE\nCnw1kei8UD/mKXd+HjuuK+TEgEN0GB0/cjRZ2tKg+fez+SSmeOExu9AoNJKK\nxizKw4pcQAaGM/DMPzcIDd/2IyZKJtmiH6wG3KdF9LHDmUnykHlkbKf7MsAR\nMCzn9hB3OhiP6dNNRz0AI1qNfPcRvB8DcNXfFKj6MUZxGkxGJGZ3GBhtq1Zr\nH/wSjow+8ijm/C5lbd6byog54qaq2YfjTed8IGcvvdo5sfb5rLZEicKlir6I\n2wUUKgLambmc3FXHVJ/7RSSnlyia92ffWyBIohnq8YFDz9iPHHqVLAvfqWi0\nu9EynfsoIsynVkreC2GUobHNaN3h6N+ObsEZhnmfjmokCiTd5x2oHZMzIpQP\nKTmTHH7v3/UTSVJSwmgoL3kDYjWI/ECGJrqXfFXCTpKbrHzdvQz/Ust4NBAS\n1YcrxOBeY2qKzGnv47WppXJaO6SetMMzkHWzYn3V2ebtug0RQeKbBzWUjlqU\nInl5R3GzkDVzEDfmcm9sCbz6y/QFwMU9gqtd75rsPXm5Rhnz62sDMhMb4XlE\n2EKY+aMDdQvxkESj2aZ75cJv2VMqDFDv/X+sqSLk0zVTce6ancPAzjVpTV5O\nN44Tn7pQPFNWSdGgAOpZDWZo7bgQQm/oBFQeW/tzpcMeGv/v8WxaztPsNpDS\nq6AublbT5i+wx+X+gD5m5wvRnlCzaVNoZOaSdE0EB72wE/yofWBGkv1U0oaY\nqD9kg4x7U3xuALLcQiJpQEGO45DdglxvCHQcwKNpeZ3rNIYRmszkTT6Ckz7H\nLHMYjbBF+rYEe7GbKeEZOJRB+FSAsuzNutHu3R112GylGWpjDQoaUqEoy+L+\ngXhTcpLE0mV4MMrwOv2enfsVN9mYY92yDjte+/QtrIdiL95ZnUnsXmpgZCq3\nA8xaCKLMbO6jYqoKvCLPPHDN6OFJPovevjFYxEhFTfAabsY3L9wdAjUhlyqt\nCA4q7rpq1O/dReLgVwlcgLC4pVv3OPCSaXr7lcnklyJaBfD72liMVykev/s5\nG3hV1Z6pJ7Gm6GbHicGFGPqdMRWq+kHmlvNqMDsOYLTd+O3eK3ZmgGYJAtRj\n956+h81OYm3+tLuY6LJsIw4PF0EQeLRvJjma1qulkIvjkkhvrrht8ErNK8XF\n3tWY4ME53TQ//j8k9DuNBApcJpd3CG/J+o963oWgtzQwVx+5XnHCwRMEGAEI\nACYCGwwWIQSt71SyyjyBMojzR8ChBwCUDtu4ZQUCXW5xCAUJAAFSGwAhCRCh\nBwCUDtu4ZRYhBK3vVLLKPIEyiPNHwKEHAJQO27hlQr0L/A1Q8/a1U19tpSB+\nB/KabpW1ljD/GwaGjn0rs+OpPoB/fDcbJ9EYTqqn3sgDpe8kO/vwHT2fBjyD\nHiOECfeWoz2a80PGALkGJycQKyhuWw/DUtaEF3IP6crxt1wPtO5u0hAKxDq9\ne/I/3hZAbHNgVy03F5B+Jdz7+YO63GDfAcgR57b87utmueDagt3o3NR1P5SH\n6PpiP9kqz14NYEc4noisiL8WnVvYhl3i+Uw3n/rRJmB7jGn0XFo2ADSfwHhT\n+SSU2drcKKjYtU03SrXBy0zdipwvD83cA/FSeYteT/kdX7Mf1uKhSgWcQNMv\nNB/B5PK9mwBGu75rifD4784UgNhUo7BnJAYVLZ9O2dgYR05Lv+zW52RHflNL\nn0IHmqViZE1RfefQde5lk10ld+GjL8+6uIitUEKLLhpe8qHohbwpp1AbxV4B\nRyLIpKy7/iqRcMDLhmc4XRLtrPVAh2c7AXy5M2VKUIRjfFbHHWxZfDl3Nqrg\n+gib+vSxHvLhC6oDBA==\n=RIPF\n-----END PGP PRIVATE KEY BLOCK-----';
-      const expiredKey = await KeyUtil.parse(armored);
+      const expiredKey = await KeyUtil.parse(testConstants.expiredPrv);
+      expect(expiredKey.expiration).to.equal(1567605343000);
       expect(expiredKey.usableForEncryptionButExpired).to.equal(true);
+      expect(expiredKey.missingPrivateKeyForDecryption).to.equal(false);
+      expect(expiredKey.missingPrivateKeyForSigning).to.equal(false);
+      t.pass();
+    });
+
+    test(`[unit][Key.usableForEncryptionButExpired] recognizes usable expired key when subkey is expired prior to expired primary key`, async t => {
+      const expiredKey = await KeyUtil.parse(`-----BEGIN PGP PUBLIC KEY BLOCK-----
+
+xjMEY7FFHhYJKwYBBAHaRw8BAQdAJMyoHhB6M1OIZo592p7H3U2dBphH5JpD
+orInOSAmt+3NKjxmbG93Y3J5cHQubm90aWZ5LmV4cGlyaW5nLmtleXNAZ21h
+aWwuY29tPsKSBBAWCgBEBQJjsUUeBQkAGl4ABAsJBwgJECM4WSPQXyFDAxUI
+CgQWAAIBAhkBAhsDAh4BFiEECp1E5ycyjVgoiNqfIzhZI9BfIUMAAHfrAPwM
+bYj191L3f7EbMguhCLLXeyzr2JPTgWtKwCQKjCRpYQEA3MuN0YB/sRwerKvP
+CrTy8ZMHj2pc1ezRJJLD9nBqxQrOOARjsUUeEgorBgEEAZdVAQUBAQdArxUe
+fRWzL8zjigAdkYHfEevatLcnvx9XOjrLBDwsezIDAQgHwn4EGBYIADAFAmOx
+RR4FCQANLwAJECM4WSPQXyFDAhsMFiEECp1E5ycyjVgoiNqfIzhZI9BfIUMA
+AAvIAP4+Xu5KG3XNg39ZiS0kJs53JZVY27VeeO1JC3Ns2wqmcAEAnpI4MIP3
+QMlzT3kLMkM+vmxB9cgGp3m+CyBttV60vgw=
+=RnaH
+-----END PGP PUBLIC KEY BLOCK-----`);
+      expect(expiredKey.usableForEncryptionButExpired).to.equal(true);
+      expect(expiredKey.expiration).to.equal(1673425950000);
+      t.pass();
+    });
+
+    test(`[unit][Key.expiration] gives correct expiration when earlier key expires later, in the past, primary key expires too`, async t => {
+      const expiredKey = await KeyUtil.parse(`-----BEGIN PGP PUBLIC KEY BLOCK-----
+
+xjMEY7P2PBYJKwYBBAHaRw8BAQdAKXZZoF11EaH4wUiCK8O259UZdAzyCJXq
+aBWipx5BF3bNKjxmbG93Y3J5cHQubm90aWZ5LmV4cGlyaW5nLmtleXNAZ21h
+aWwuY29tPsKSBBAWCgBEBQJjs/Y8BQkAGl4ABAsJBwgJEJtkS3XZon29AxUI
+CgQWAAIBAhkBAhsDAh4BFiEESY3/9QK9ExLp4cC6m2RLddmifb0AAIqOAQDl
+1D0cOiJwq5SGSKvBSlaWjnZ/jQWLLimQl8y+Z5/jmgEAz1Ma/A14hqNF5RIU
+QnIgec4kaPWy2SWQyr84+GbFFAjOOARjs/Y8EgorBgEEAZdVAQUBAQdA1b9l
+NzfymR2zXedT6A7SdDGqhdwI66oeDHrZrAo0kTcDAQgHwn4EGBYIADAFAmOz
+9jwFCQANLwAJEJtkS3XZon29AhsMFiEESY3/9QK9ExLp4cC6m2RLddmifb0A
+AP1OAQCarm1IbTdsVAEOYWT5wTW3TViSatrsNH6bM2BfW4ehnwEAt8cE2rpA
+JZjJMVf3WPULEjdBktqxLYCnWX+l76sB7wLOOARjtpk8EgorBgEEAZdVAQUB
+AQdAbZeKralww1T0SHDYhJs+Jz13UyqpR8pMSOsGPL3ZKEIDAQgHwn4EGBYI
+ADAFAmO2mTwFCQAGl4AJEJtkS3XZon29AhsMFiEESY3/9QK9ExLp4cC6m2RL
+ddmifb0AAPebAQDtM5w7GW/lwY6hWVt2KUTn0V5J/67PmpYapK/EkHENDgD/
+fXoskfWDbX6oo8PPW+T5OGYJm2Tk7ozgcg2ezmUgEg8=
+=JqXW
+-----END PGP PUBLIC KEY BLOCK-----`);
+      expect(expiredKey.usableForEncryptionButExpired).to.equal(true);
+      expect(expiredKey.expiration).to.equal(1673602364000);
+      t.pass();
+    });
+
+    test(`[unit][Key.expiration] gives correct expiration when earlier key expires later, in the past, non-expiring primary key`, async t => {
+      const expiredKey = await KeyUtil.parse(`-----BEGIN PGP PUBLIC KEY BLOCK-----
+
+xjMEY7QObRYJKwYBBAHaRw8BAQdAczbosTYkDbJ6Xd0/kAdMRGzDnpRbF5Th
+zhRHEs5+uR7NKjxmbG93Y3J5cHQubm90aWZ5LmV4cGlyaW5nLmtleXNAZ21h
+aWwuY29tPsKMBBAWCgA+BQJjtA5tBAsJBwgJEF1Ram9HtamJAxUICgQWAAIB
+AhkBAhsDAh4BFiEE2eoEaD/F9813lUXtXVFqb0e1qYkAALurAQDrk80QfXEY
+LwXJJrL9bHJIP0kya9cMSvEb8JKzXIzpIAEA3KM2EfDoi/1YS/JTFrEOn1i1
+i/7lai45fVRmRB27Fw7OOARjtA5tEgorBgEEAZdVAQUBAQdAVRKAk9ImOIOx
+HjE1NjoSm8J4+nxRCgJJwAc1ha4MTTIDAQgHwn4EGBYIADAFAmO0Dm0FCQAN
+LwAJEF1Ram9HtamJAhsMFiEE2eoEaD/F9813lUXtXVFqb0e1qYkAABATAP4r
+UImxLz0ms9p0uUEemR4MkeJ2Iui7nUO599X4cQCugQEA2KAxUuf4IC7oY5YJ
+SuLyf8KT9m8kkXjHrA9PAIhEowHOOARjtrFtEgorBgEEAZdVAQUBAQdAFJ/Q
+ZKQpr6ei1cBefr+z8hCEwFyMEzIxVfJY8QUsMH4DAQgHwn4EGBYIADAFAmO2
+sW0FCQAGl4AJEF1Ram9HtamJAhsMFiEE2eoEaD/F9813lUXtXVFqb0e1qYkA
+AHdQAQDhNHD2qXs3FsbPCGYuqBpI5mFet64slrmgF/qw082jJAD+IV0r8J7s
+3iJakM0iGN7IBWTT03Rr4wV/RfVbSzpsrQ8=
+=uMzH
+-----END PGP PUBLIC KEY BLOCK-----`);
+      expect(expiredKey.usableForEncryptionButExpired).to.equal(true);
+      expect(expiredKey.expiration).to.equal(1673608557000);
+      t.pass();
+    });
+
+    test(`[unit][Key.expiration] gives correct expiration when earlier key expires later, in the future, non-expiring primary key`, async t => {
+      const expiringKey = await KeyUtil.parse(`-----BEGIN PGP PUBLIC KEY BLOCK-----
+
+xjMEY7QXVRYJKwYBBAHaRw8BAQdAjAQdAmp9L2Xyc/oxarZmXFvKiNBAQb+K
+a8tnPI4LXRHNKjxmbG93Y3J5cHQubm90aWZ5LmV4cGlyaW5nLmtleXNAZ21h
+aWwuY29tPsKMBBAWCgA+BQJjtBdVBAsJBwgJEM5qLrmJzYEeAxUICgQWAAIB
+AhkBAhsDAh4BFiEEHkmnB9FtCPOyqjRbzmouuYnNgR4AAB3+AQCmMhnTFAu+
+HZ53xI5VNfcEDH8eJUzVws9Ua1Ob02+mbQD9FbrzBpChCw/r3xxEAfTvEfIa
+m7p0GlQeUwcJwC/FCgbOOARjtBdVEgorBgEEAZdVAQUBAQdAjl5oDyPuDsyf
+CytKq7Rk7v619xg0MJH4x1yy8OhjDhYDAQgHwn4EGBYIADAFAmO0F1UFCSWl
+NQAJEM5qLrmJzYEeAhsMFiEEHkmnB9FtCPOyqjRbzmouuYnNgR4AAEd1AP42
+HH8Xfpy66FxdNtgDMHVS23rKdlD+T+OCiO+UixsRAAEAuIcTCfi5ZRnjrH2/
+Rk0gHr57uH2Du1DlC2Be6cT7kAfOOARjtrpVEgorBgEEAZdVAQUBAQdAdAZf
+8udXJ69BsjaIY8Zh9QH1SKT8z85AdlzvkMA1ImYDAQgHwn4EGBYIADAFAmO2
+ulUFCSWenYAJEM5qLrmJzYEeAhsMFiEEHkmnB9FtCPOyqjRbzmouuYnNgR4A
+ACu7AP904FUsOvvYhiJJ2GIWwxqnWuhqtz0rKY1Xoxk0vhBmzQD+NqVK9O1/
+qC2PFoU1J4aEVe5Jz2yovJnzkx/aa0Hs4g0=
+=ZB8L
+-----END PGP PUBLIC KEY BLOCK-----`);
+      expect(expiringKey.usableForSigning).to.equal(true);
+      expect(expiringKey.usableForEncryption).to.equal(true);
+      expect(expiringKey.expiration).to.equal(2304330837000);
+      t.pass();
+    });
+
+    test('[unit][PgpPwd.random] produces string of correct pattern', async t => {
+      const generatedString = PgpPwd.random();
+      // eg TDW6-DU5M-TANI-LJXY
+      expect(/^[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$/.test(generatedString)).to.equal(true);
       t.pass();
     });
 
@@ -307,13 +525,15 @@ sOLAw7KgpiL2+0v777saxSO5vtufJCKk4OOEaVDufeijlejKTM+H7twVer4iGqiW
       expect(key.usableForEncryption).equal(false);
       expect(key.usableForSigning).equal(false);
       expect(key.usableForEncryptionButExpired).equal(true);
+      expect(key.missingPrivateKeyForDecryption).to.equal(false);
+      expect(key.missingPrivateKeyForSigning).to.equal(false);
       expect(key.emails.length).to.equal(1);
       expect(key.emails[0]).to.equal('flowcrypt@metacode.biz');
       expect(key.identities.length).to.equal(1);
       expect(key.identities[0]).to.equal('Testing <flowcrypt@metacode.biz>');
       expect(key.isPublic).equal(false);
       expect(key.isPrivate).equal(true);
-      expect(key.expiration).to.not.equal(undefined);
+      expect(key.expiration).to.equal(63074017000);
       t.pass();
     });
 
@@ -380,13 +600,15 @@ cmKFmmDYm+rrWuAv6Q==
       expect(key.usableForSigning).equal(true);
       expect(key.usableForEncryptionButExpired).equal(false);
       expect(key.usableForSigningButExpired).equal(false);
+      expect(key.missingPrivateKeyForDecryption).to.equal(false);
+      expect(key.missingPrivateKeyForSigning).to.equal(false);
       expect(key.emails.length).to.equal(1);
       expect(key.emails[0]).to.equal('expiration_100years@test.com');
       expect(key.identities.length).to.equal(1);
       expect(key.identities[0]).to.equal('Testing <expiration_100years@test.com>');
       expect(key.isPublic).equal(false);
       expect(key.isPrivate).equal(true);
-      expect(key.expiration).to.not.equal(undefined);
+      expect(key.expiration).to.equal(4773398996000);
       t.pass();
     });
 
@@ -653,15 +875,7 @@ ${testConstants.smimeCert}`),
 
     test('[unit][KeyUtil.parse] issuerAndSerialNumber of S/MIME certificate is constructed according to PKCS#7', async t => {
       const key = await KeyUtil.parse(testConstants.smimeCert);
-      const buf = Buf.with(
-        (
-          (await MsgUtil.encryptMessage({
-            pubkeys: [key],
-            data: Buf.fromUtfStr('anything'),
-            armor: false,
-          })) as PgpMsgMethod.EncryptX509Result
-        ).data
-      );
+      const buf = Buf.with((await MsgUtil.encryptMessage({ pubkeys: [key], data: Buf.fromUtfStr('anything'), armor: false })).data);
       const raw = buf.toRawBytesStr();
       expect(raw).to.include(key.issuerAndSerialNumber);
       t.pass();
@@ -669,15 +883,7 @@ ${testConstants.smimeCert}`),
 
     test('[unit][MsgUtil.encryptMessage] duplicate S/MIME recipients are collapsed into one', async t => {
       const key = await KeyUtil.parse(testConstants.smimeCert);
-      const buf = Buf.with(
-        (
-          (await MsgUtil.encryptMessage({
-            pubkeys: [key, key, key],
-            data: Buf.fromUtfStr('anything'),
-            armor: false,
-          })) as PgpMsgMethod.EncryptX509Result
-        ).data
-      );
+      const buf = Buf.with((await MsgUtil.encryptMessage({ pubkeys: [key, key, key], data: Buf.fromUtfStr('anything'), armor: false })).data);
       const msg = buf.toRawBytesStr();
       const p7 = forge.pkcs7.messageFromAsn1(forge.asn1.fromDer(msg));
       expect(p7.type).to.equal(ENVELOPED_DATA_OID);
@@ -793,6 +999,86 @@ jLwe8W9IMt765T5x5oux9MmPDXF05xHfm4qfH/BMO3a802x5u2gJjJjuknrFdgXY
       expect(parsed?.usableForEncryption).to.equal(false);
       expect(parsed?.expiration).to.equal(1594890073000);
       expect(parsed?.usableForEncryptionButExpired).to.equal(false); // because last signature was created as already expired, no intersection
+      t.pass();
+    });
+    test('[unit][MsgUtil.type] correctly detects message type', async t => {
+      expect(MsgUtil.type({ data: Buf.with('-----BEGIN PGP MESSAGE-----\n\ndummy-----END PGP MESSAGE-----') })).to.eql({
+        armored: true,
+        type: 'encryptedMsg',
+      });
+      const binaryMessage = await PgpArmor.dearmor(decodeURIComponent(testConstants.encryptedMessageMissingMdcUriEncoded));
+      expect(MsgUtil.type({ data: binaryMessage.data })).to.eql({
+        armored: false,
+        type: 'encryptedMsg',
+      });
+      t.pass();
+    });
+    test('[unit][MsgUtil.decryptMessage] mdc - missing - error', async t => {
+      const encryptedData = Buf.fromUtfStr(decodeURIComponent(testConstants.encryptedMessageMissingMdcUriEncoded));
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      const compatibilityKey1 = Config.key('flowcrypt.compatibility.1pp1')!;
+      const kisWithPp = [
+        {
+          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+          ...(await KeyUtil.keyInfoObj(await KeyUtil.parse(compatibilityKey1.armored!))),
+          passphrase: compatibilityKey1.passphrase,
+        },
+      ];
+      const decrypted1 = await MsgUtil.decryptMessage({ kisWithPp, encryptedData, verificationPubs: [] });
+      expect(decrypted1.success).to.equal(false);
+      if (!decrypted1.success) {
+        expect(decrypted1.error).to.eql({
+          type: 'no_mdc',
+          message:
+            'Security threat!\n\nMessage is missing integrity checks (MDC).  The sender should update their outdated software.\n\nDisplay the message at your own risk.',
+        });
+      }
+      t.pass();
+    });
+
+    test('[unit][MsgUtil.decryptMessage] decrypts a pubkey-encrypted OpenPGP message', async t => {
+      const data = await GoogleData.withInitializedData('flowcrypt.compatibility@gmail.com');
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      const msg: GmailMsg = data.getMessage('166147ea9bb6669d')!;
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      const enc = Buf.fromBase64Str(msg!.raw!)
+        .toUtfStr()
+        .match(/-----BEGIN PGP MESSAGE-----.*-----END PGP MESSAGE-----/s)![0];
+      const encryptedData = Buf.fromUtfStr(enc);
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      const compatibilityKey1 = Config.key('flowcrypt.compatibility.1pp1')!;
+      const kisWithPp = [
+        {
+          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+          ...(await KeyUtil.keyInfoObj(await KeyUtil.parse(compatibilityKey1.armored!))),
+          passphrase: compatibilityKey1.passphrase,
+        },
+      ];
+      const decrypted1 = await MsgUtil.decryptMessage({ kisWithPp, encryptedData, verificationPubs: [] });
+      expect(decrypted1.success).to.equal(true);
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      const verifyRes1 = (decrypted1 as DecryptSuccess).signature!;
+      expect(verifyRes1.match).to.be.null;
+      t.pass();
+    });
+
+    test('[MsgUtil.decryptMessage] handles long message', async t => {
+      const data = Buf.fromUtfStr('The test string concatenated many times to produce large output'.repeat(100000));
+      const passphrase = 'pass phrase';
+      const prv = await KeyUtil.parse(prvEncryptForSubkeyOnly);
+      const encrypted = await MsgUtil.encryptMessage({
+        pubkeys: [await KeyUtil.asPublicKey(prv)],
+        data,
+        armor: true,
+      });
+      const kisWithPp: KeyInfoWithIdentityAndOptionalPp[] = [{ ...(await KeyUtil.keyInfoObj(prv)), family: prv.family, passphrase }];
+      const decrypted = await MsgUtil.decryptMessage({
+        kisWithPp,
+        encryptedData: encrypted.data,
+        verificationPubs: [],
+      });
+      expect(decrypted.success).to.equal(true);
+      expect((decrypted as DecryptSuccess).content.length).to.equal(data.length);
       t.pass();
     });
 
@@ -967,12 +1253,12 @@ jSB6A93JmnQGIkAem/kzGkKclmfAdGfc4FS+3Cn+6Q==Xmrz
       const pub1 = await KeyUtil.parse(key1.public);
       const pub2 = await KeyUtil.parse(key2.public);
       // only encrypt with pub1
-      const { data } = (await MsgUtil.encryptMessage({
+      const { data } = await MsgUtil.encryptMessage({
         pubkeys: [pub1],
         data: Buf.fromUtfStr('anything'),
         armor: true,
-      })) as PgpMsgMethod.EncryptPgpArmorResult;
-      const m = await opgp.message.readArmored(Buf.fromUint8(data).toUtfStr());
+      });
+      const m = await opgp.readMessage({ armoredMessage: Buf.fromUint8(data).toUtfStr() });
       const parsed1 = await KeyUtil.parse(key1.private);
       const parsed2 = await KeyUtil.parse(key2.private);
       const kisWithPp: KeyInfoWithIdentityAndOptionalPp[] = [
@@ -996,11 +1282,11 @@ jSB6A93JmnQGIkAem/kzGkKclmfAdGfc4FS+3Cn+6Q==Xmrz
       // also test MsgUtil.matchingKeyids
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore
-      const matching1 = MsgUtil.matchingKeyids(KeyUtil.getPubkeyLongids(pub1), m.getEncryptionKeyIds());
+      const matching1 = MsgUtil.matchingKeyids(KeyUtil.getPubkeyLongids(pub1), m.getEncryptionKeyIDs());
       expect(matching1.length).to.equal(1);
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore
-      const matching2 = MsgUtil.matchingKeyids(KeyUtil.getPubkeyLongids(pub2), m.getEncryptionKeyIds());
+      const matching2 = MsgUtil.matchingKeyids(KeyUtil.getPubkeyLongids(pub2), m.getEncryptionKeyIDs());
       expect(matching2.length).to.equal(0);
       t.pass();
     });
@@ -1077,21 +1363,19 @@ jSB6A93JmnQGIkAem/kzGkKclmfAdGfc4FS+3Cn+6Q==Xmrz
       await KeyUtil.encrypt(tmpPrv, passphrase);
       expect(tmpPrv.fullyEncrypted).to.equal(true);
       const prvEncryptForSubkeyOnlyProtected = KeyUtil.armor(tmpPrv);
-      const {
-        keys: [tmpPub],
-      } = await opgp.key.readArmored(pubEncryptForPrimaryIsFine);
-      tmpPub.subKeys = [];
+      const tmpPub = await opgp.readKey({ armoredKey: pubEncryptForPrimaryIsFine });
+      tmpPub.subkeys = [];
       // removed subkey from the pubkey, which makes the structure into this - forcing opgp to encrypt for the primary
       // sec  rsa2048/F90C76AE611AFDEE
       //      created: 2020-10-15  expires: never       usage: SCE
       //      trust: ultimate      validity: ultimate
       const justPrimaryPub = tmpPub.armor();
       const pubkeys = [await KeyUtil.parse(justPrimaryPub)];
-      const encrypted = (await MsgUtil.encryptMessage({
+      const encrypted = await MsgUtil.encryptMessage({
         pubkeys,
         data,
         armor: true,
-      })) as PgpMsgMethod.EncryptPgpArmorResult;
+      });
       const parsed = await KeyUtil.parse(prvEncryptForSubkeyOnlyProtected);
       const kisWithPp: KeyInfoWithIdentityAndOptionalPp[] = [{ ...(await KeyUtil.keyInfoObj(parsed)), family: parsed.family, passphrase }];
       const decrypted = await MsgUtil.decryptMessage({
@@ -1279,7 +1563,7 @@ ZAvn6PBX7vsaReOVa2zsnuY5g70xCxvzHIwR94POu5cENwRtCkrppFnISALpQ1kA
       expect(result.get('Primary User')).to.equal('Test1 (rsa) <flowcrypt.test.key.imported@gmail.com>');
       expect(result.get('Fingerprint')).to.equal('6628 5F84 B985 71BD 01C0 18EE 8B3B B9CF C476 EE16');
       expect(result.get('Subkeys')).to.equal('[-] 1');
-      expect(result.get('Primary key algo')).to.equal('[-] rsa_encrypt_sign');
+      expect(result.get('Primary key algo')).to.equal('[-] rsaEncryptSign');
       expect(result.get('key decrypt')).to.equal('[-] INCORRECT PASSPHRASE');
       expect(result.get('isFullyDecrypted')).to.equal('[-] false');
       expect(result.get('isFullyEncrypted')).to.equal('[-] true');
@@ -1291,19 +1575,18 @@ ZAvn6PBX7vsaReOVa2zsnuY5g70xCxvzHIwR94POu5cENwRtCkrppFnISALpQ1kA
       expect(result.get('Sign/Verify test')).to.equal('[-] skipped, not fully decrypted');
       expect(result.get('SK 0 > LongId')).to.equal('[-] 0485D618EAA64B05');
       expect(result.get('SK 0 > Created')).to.equal('[-] 1606140328 or 2020-11-23T14:05:28.000Z');
-      expect(result.get('SK 0 > Algo')).to.equal('[-] rsa_encrypt_sign');
+      expect(result.get('SK 0 > Algo')).to.equal('[-] rsaEncryptSign');
       expect(result.get('SK 0 > Verify')).to.equal('[-] OK');
-      expect(result.get('SK 0 > Subkey tag')).to.equal('[-] 7');
+      expect(result.get('SK 0 > Subkey object type')).to.equal('[-] SecretSubkeyPacket');
       expect(result.get('SK 0 > Subkey getBitSize')).to.equal('[-] 3072');
       expect(result.get('SK 0 > Subkey decrypted')).to.equal('[-] false');
       expect(result.get('SK 0 > Binding signature length')).to.equal('[-] 1');
       expect(result.get('SK 0 > SIG 0 > Key flags')).to.equal('[-] 12');
-      expect(result.get('SK 0 > SIG 0 > Tag')).to.equal('[-] 2');
       expect(result.get('SK 0 > SIG 0 > Version')).to.equal('[-] 4');
       expect(result.get('SK 0 > SIG 0 > Public key algorithm')).to.equal('[-] 1');
       expect(result.get('SK 0 > SIG 0 > Sig creation time')).to.equal('[-] 1606140328 or 2020-11-23T14:05:28.000Z');
       expect(result.get('SK 0 > SIG 0 > Sig expiration time')).to.equal('[-] -');
-      expect(result.get('SK 0 > SIG 0 > Verified')).to.equal('[-] true');
+      expect(result.get('SK 0 > SIG 0 > Verify')).to.equal('[-] valid');
       expect(result.get('expiration')).to.equal('[-] undefined');
       expect(result.get('internal dateBeforeExpiration')).to.equal('[-] undefined');
       expect(result.get('internal usableForEncryptionButExpired')).to.equal('[-] false');
@@ -1318,7 +1601,7 @@ ZAvn6PBX7vsaReOVa2zsnuY5g70xCxvzHIwR94POu5cENwRtCkrppFnISALpQ1kA
       expect(result.get('Primary User')).to.equal('Test1 (rsa) <flowcrypt.test.key.imported@gmail.com>');
       expect(result.get('Fingerprint')).to.equal('6628 5F84 B985 71BD 01C0 18EE 8B3B B9CF C476 EE16');
       expect(result.get('Subkeys')).to.equal('[-] 1');
-      expect(result.get('Primary key algo')).to.equal('[-] rsa_encrypt_sign');
+      expect(result.get('Primary key algo')).to.equal('[-] rsaEncryptSign');
       expect(result.get('key decrypt')).to.equal('[-] success');
       expect(result.get('isFullyDecrypted')).to.equal('[-] true');
       expect(result.get('isFullyEncrypted')).to.equal('[-] false');
@@ -1330,19 +1613,18 @@ ZAvn6PBX7vsaReOVa2zsnuY5g70xCxvzHIwR94POu5cENwRtCkrppFnISALpQ1kA
       expect(result.get('Sign/Verify test')).to.equal('[-] sign msg ok|verify ok');
       expect(result.get('SK 0 > LongId')).to.equal('[-] 0485D618EAA64B05');
       expect(result.get('SK 0 > Created')).to.equal('[-] 1606140328 or 2020-11-23T14:05:28.000Z');
-      expect(result.get('SK 0 > Algo')).to.equal('[-] rsa_encrypt_sign');
+      expect(result.get('SK 0 > Algo')).to.equal('[-] rsaEncryptSign');
       expect(result.get('SK 0 > Verify')).to.equal('[-] OK');
-      expect(result.get('SK 0 > Subkey tag')).to.equal('[-] 7');
+      expect(result.get('SK 0 > Subkey object type')).to.equal('[-] SecretSubkeyPacket');
       expect(result.get('SK 0 > Subkey getBitSize')).to.equal('[-] 3072');
       expect(result.get('SK 0 > Subkey decrypted')).to.equal('[-] true');
       expect(result.get('SK 0 > Binding signature length')).to.equal('[-] 1');
       expect(result.get('SK 0 > SIG 0 > Key flags')).to.equal('[-] 12');
-      expect(result.get('SK 0 > SIG 0 > Tag')).to.equal('[-] 2');
       expect(result.get('SK 0 > SIG 0 > Version')).to.equal('[-] 4');
       expect(result.get('SK 0 > SIG 0 > Public key algorithm')).to.equal('[-] 1');
       expect(result.get('SK 0 > SIG 0 > Sig creation time')).to.equal('[-] 1606140328 or 2020-11-23T14:05:28.000Z');
       expect(result.get('SK 0 > SIG 0 > Sig expiration time')).to.equal('[-] -');
-      expect(result.get('SK 0 > SIG 0 > Verified')).to.equal('[-] true');
+      expect(result.get('SK 0 > SIG 0 > Verify')).to.equal('[-] valid');
       expect(result.get('expiration')).to.equal('[-] undefined');
       expect(result.get('internal dateBeforeExpiration')).to.equal('[-] undefined');
       expect(result.get('internal usableForEncryptionButExpired')).to.equal('[-] false');
@@ -1626,7 +1908,7 @@ jA==
       expect(result.get('Primary User')).to.equal('Test1 (rsa) <flowcrypt.test.key.imported@gmail.com>');
       expect(result.get('Fingerprint')).to.equal('6628 5F84 B985 71BD 01C0 18EE 8B3B B9CF C476 EE16');
       expect(result.get('Subkeys')).to.equal('[-] 1');
-      expect(result.get('Primary key algo')).to.equal('[-] rsa_encrypt_sign');
+      expect(result.get('Primary key algo')).to.equal('[-] rsaEncryptSign');
       expect(result.get('key decrypt')).to.equal('[-] success');
       expect(result.get('isFullyDecrypted')).to.equal('[-] true');
       expect(result.get('isFullyEncrypted')).to.equal('[-] false');
@@ -1635,22 +1917,21 @@ jA==
       expect(result.get('Primary key expiration?')).to.equal('[-] -');
       expect(result.has('Encrypt/Decrypt test: Encryption with key was successful')).to.be.true;
       expect(result.has('Encrypt/Decrypt test: Decryption with key succeeded')).to.be.true;
-      expect(result.get('Sign/Verify test')).to.equal('[-] Exception: Error: Missing private key parameters');
+      expect(result.get('Sign/Verify test')).to.equal('[-] Exception: Error: Cannot sign with a gnu-dummy key.');
       expect(result.get('SK 0 > LongId')).to.equal('[-] 0485D618EAA64B05');
       expect(result.get('SK 0 > Created')).to.equal('[-] 1606140328 or 2020-11-23T14:05:28.000Z');
-      expect(result.get('SK 0 > Algo')).to.equal('[-] rsa_encrypt_sign');
+      expect(result.get('SK 0 > Algo')).to.equal('[-] rsaEncryptSign');
       expect(result.get('SK 0 > Verify')).to.equal('[-] OK');
-      expect(result.get('SK 0 > Subkey tag')).to.equal('[-] 7');
+      expect(result.get('SK 0 > Subkey object type')).to.equal('[-] SecretSubkeyPacket');
       expect(result.get('SK 0 > Subkey getBitSize')).to.equal('[-] 3072');
       expect(result.get('SK 0 > Subkey decrypted')).to.equal('[-] true');
       expect(result.get('SK 0 > Binding signature length')).to.equal('[-] 1');
       expect(result.get('SK 0 > SIG 0 > Key flags')).to.equal('[-] 12');
-      expect(result.get('SK 0 > SIG 0 > Tag')).to.equal('[-] 2');
       expect(result.get('SK 0 > SIG 0 > Version')).to.equal('[-] 4');
       expect(result.get('SK 0 > SIG 0 > Public key algorithm')).to.equal('[-] 1');
       expect(result.get('SK 0 > SIG 0 > Sig creation time')).to.equal('[-] 1606140328 or 2020-11-23T14:05:28.000Z');
       expect(result.get('SK 0 > SIG 0 > Sig expiration time')).to.equal('[-] -');
-      expect(result.get('SK 0 > SIG 0 > Verified')).to.equal('[-] true');
+      expect(result.get('SK 0 > SIG 0 > Verify')).to.equal('[-] valid');
       expect(result.get('expiration')).to.equal('[-] undefined');
       expect(result.get('internal dateBeforeExpiration')).to.equal('[-] undefined');
       expect(result.get('internal usableForEncryptionButExpired')).to.equal('[-] false');
@@ -1665,7 +1946,7 @@ jA==
       expect(result.get('Primary User')).to.equal('rsa1024subkey@test');
       expect(result.get('Fingerprint')).to.equal('B804 AF5A 259A 6673 F853 BEB2 B655 50F5 77CF 5CC5');
       expect(result.get('Subkeys')).to.equal('[-] 1');
-      expect(result.get('Primary key algo')).to.equal('[-] rsa_encrypt_sign');
+      expect(result.get('Primary key algo')).to.equal('[-] rsaEncryptSign');
       expect(result.get('Primary key verify')).to.equal('[-] valid');
       expect(result.get('Primary key creation?')).to.equal('[-] 1611500681 or 2021-01-24T15:04:41.000Z');
       expect(result.get('Primary key expiration?')).to.equal('[-] -');
@@ -1677,19 +1958,18 @@ jA==
       expect(result.get('Sign/Verify test')).to.equal('[-] sign msg ok|verify ok');
       expect(result.get('SK 0 > LongId')).to.equal('[-] 1453C9506DBF5B6A');
       expect(result.get('SK 0 > Created')).to.equal('[-] 1611500698 or 2021-01-24T15:04:58.000Z');
-      expect(result.get('SK 0 > Algo')).to.equal('[-] rsa_encrypt_sign');
+      expect(result.get('SK 0 > Algo')).to.equal('[-] rsaEncryptSign');
       expect(result.get('SK 0 > Verify')).to.equal('[-] OK');
-      expect(result.get('SK 0 > Subkey tag')).to.equal('[-] 7');
+      expect(result.get('SK 0 > Subkey object type')).to.equal('[-] SecretSubkeyPacket');
       expect(result.get('SK 0 > Subkey getBitSize')).to.equal('[-] 1024');
       expect(result.get('SK 0 > Subkey decrypted')).to.equal('[-] true');
       expect(result.get('SK 0 > Binding signature length')).to.equal('[-] 1');
       expect(result.get('SK 0 > SIG 0 > Key flags')).to.equal('[-] 12');
-      expect(result.get('SK 0 > SIG 0 > Tag')).to.equal('[-] 2');
       expect(result.get('SK 0 > SIG 0 > Version')).to.equal('[-] 4');
       expect(result.get('SK 0 > SIG 0 > Public key algorithm')).to.equal('[-] 1');
       expect(result.get('SK 0 > SIG 0 > Sig creation time')).to.equal('[-] 1611500699 or 2021-01-24T15:04:59.000Z');
       expect(result.get('SK 0 > SIG 0 > Sig expiration time')).to.equal('[-] -');
-      expect(result.get('SK 0 > SIG 0 > Verified')).to.equal('[-] true');
+      expect(result.get('SK 0 > SIG 0 > Verify')).to.equal('[-] valid');
       expect(result.get('expiration')).to.equal('[-] undefined');
       expect(result.get('internal dateBeforeExpiration')).to.equal('[-] undefined');
       expect(result.get('internal usableForEncryptionButExpired')).to.equal('[-] false');
@@ -1870,9 +2150,10 @@ PBcqDCjq5jgMhU1oyVclRK7jJdmu0Azvwo2lleLAFLdCzHEXWXUz
     test('[unit][KeyUtil.decrypt] correctly handles signing/encryption detection for PKSK with private keys', async t => {
       const dsakey = await KeyUtil.parse(dsaPrimaryKeyAndSubkeyBothHavePrivateKey);
       expect(await KeyUtil.decrypt(dsakey, '1234')).to.be.true;
-      expect(dsakey.usableForSigning).to.be.true;
+      // DSA keys are no longer allowed
+      expect(dsakey.usableForSigning).to.be.false;
       expect(dsakey.missingPrivateKeyForSigning).to.be.false;
-      expect(dsakey.usableForEncryption).to.be.true;
+      expect(dsakey.usableForEncryption).to.be.false;
       expect(dsakey.missingPrivateKeyForDecryption).to.be.false;
       const rsakey = await KeyUtil.parse(rsaPrimaryKeyAndSubkeyBothHavePrivateKey);
       expect(await KeyUtil.decrypt(rsakey, '1234')).to.be.true;
@@ -1904,9 +2185,10 @@ PBcqDCjq5jgMhU1oyVclRK7jJdmu0Azvwo2lleLAFLdCzHEXWXUz
     test('[unit][KeyUtil.decrypt] determines PK missing private key for signing', async t => {
       const dsakey = await KeyUtil.parse(dsaPrimaryKeyIsMissingPrivateKey);
       expect(await KeyUtil.decrypt(dsakey, '1234')).to.be.true;
-      expect(dsakey.usableForSigning).to.be.true;
-      expect(dsakey.missingPrivateKeyForSigning).to.be.true;
-      expect(dsakey.usableForEncryption).to.be.true;
+      // DSA keys are no longer allowed
+      expect(dsakey.usableForSigning).to.be.false;
+      expect(dsakey.missingPrivateKeyForSigning).to.be.false;
+      expect(dsakey.usableForEncryption).to.be.false;
       expect(dsakey.missingPrivateKeyForDecryption).to.be.false;
       const rsakey = await KeyUtil.parse(rsaPrimaryKeyIsMissingPrivateKey);
       expect(await KeyUtil.decrypt(rsakey, '1234')).to.be.true;
@@ -1919,13 +2201,15 @@ PBcqDCjq5jgMhU1oyVclRK7jJdmu0Azvwo2lleLAFLdCzHEXWXUz
 
     test('[unit][KeyUtil.parse] determines missing private key for encryption in expired key', async t => {
       const dsakey = await KeyUtil.parse(dsaExpiredPubkeysOnly);
-      expect(dsakey.usableForEncryptionButExpired).to.be.true;
-      expect(dsakey.usableForSigningButExpired).to.be.true;
+      // DSA keys are no longer allowed
+      expect(dsakey.usableForEncryptionButExpired).to.be.false;
+      expect(dsakey.usableForSigningButExpired).to.be.false;
       expect(dsakey.usableForSigning).to.be.false;
       expect(dsakey.usableForEncryption).to.be.false;
-      expect(dsakey.missingPrivateKeyForSigning).to.be.true;
-      expect(dsakey.missingPrivateKeyForDecryption).to.be.true;
+      expect(dsakey.missingPrivateKeyForSigning).to.be.false;
+      expect(dsakey.missingPrivateKeyForDecryption).to.be.false;
       const rsakey = await KeyUtil.parse(rsaExpiredPubkeysOnly);
+      expect(rsakey.expiration).to.be.equal(1605971196000);
       expect(rsakey.usableForEncryptionButExpired).to.be.true;
       expect(rsakey.usableForSigningButExpired).to.be.true;
       expect(rsakey.usableForSigning).to.be.false;
@@ -1938,14 +2222,16 @@ PBcqDCjq5jgMhU1oyVclRK7jJdmu0Azvwo2lleLAFLdCzHEXWXUz
     test('[unit][KeyUtil.decrypt] handles PK missing private key for signing in expired key', async t => {
       const dsakey = await KeyUtil.parse(dsaExpiredPrimaryKeyIsMissingPrivateKey);
       expect(await KeyUtil.decrypt(dsakey, '1234')).to.be.true;
-      expect(dsakey.usableForEncryptionButExpired).to.be.true;
-      expect(dsakey.usableForSigningButExpired).to.be.true;
+      // DSA keys are no longer allowed
+      expect(dsakey.usableForEncryptionButExpired).to.be.false;
+      expect(dsakey.usableForSigningButExpired).to.be.false;
       expect(dsakey.usableForSigning).to.be.false;
       expect(dsakey.usableForEncryption).to.be.false;
-      expect(dsakey.missingPrivateKeyForSigning).to.be.true;
+      expect(dsakey.missingPrivateKeyForSigning).to.be.false;
       expect(dsakey.missingPrivateKeyForDecryption).to.be.false;
       const rsakey = await KeyUtil.parse(rsaExpiredPrimaryKeyIsMissingPrivateKey);
       expect(await KeyUtil.decrypt(rsakey, '1234')).to.be.true;
+      expect(rsakey.expiration).to.equal(1605971196000);
       expect(rsakey.usableForEncryptionButExpired).to.be.true;
       expect(rsakey.usableForSigningButExpired).to.be.true;
       expect(rsakey.usableForSigning).to.be.false;
@@ -2083,15 +2369,7 @@ PBcqDCjq5jgMhU1oyVclRK7jJdmu0Azvwo2lleLAFLdCzHEXWXUz
       const privateSmimeKey = await KeyUtil.parse(p8);
       const publicSmimeKey = await KeyUtil.asPublicKey(privateSmimeKey);
       const text = 'this is a text to be encrypted';
-      const buf = Buf.with(
-        (
-          (await MsgUtil.encryptMessage({
-            pubkeys: [publicSmimeKey],
-            data: Buf.fromUtfStr(text),
-            armor: true,
-          })) as PgpMsgMethod.EncryptX509Result
-        ).data
-      );
+      const buf = Buf.with((await MsgUtil.encryptMessage({ pubkeys: [publicSmimeKey], data: Buf.fromUtfStr(text), armor: true })).data);
       const encryptedMessage = buf.toRawBytesStr();
       expect(encryptedMessage).to.include(PgpArmor.headers('pkcs7').begin);
       const p7 = SmimeKey.readArmoredPkcs7Message(buf);
@@ -2338,6 +2616,8 @@ r7V4UalYBHeiwKQhzrU8KfaVfVaYu7ctfitV5Ba/8SqxrblMAZAV6A==
       expect(key1.usableForSigning).to.equal(false);
       expect(key1.usableForEncryptionButExpired).to.equal(false);
       expect(key1.usableForSigningButExpired).to.equal(false);
+      expect(key1.missingPrivateKeyForDecryption).to.equal(false);
+      expect(key1.missingPrivateKeyForSigning).to.equal(false);
       const rsa1024public = `-----BEGIN PGP PUBLIC KEY BLOCK-----
 
 xo0EYAgPUQEEALKmXkrQiioWN+lKsiFuFPkfkyNCDgwpGWAx+peOjykR4Hph/zzC8GeLfqJF1Kei
@@ -2360,6 +2640,8 @@ kBXo
       expect(key2.usableForSigning).to.equal(false);
       expect(key2.usableForEncryptionButExpired).to.equal(false);
       expect(key2.usableForSigningButExpired).to.equal(false);
+      expect(key2.missingPrivateKeyForDecryption).to.equal(false);
+      expect(key2.missingPrivateKeyForSigning).to.equal(false);
       t.pass();
     });
 
@@ -2369,6 +2651,8 @@ kBXo
       expect(key.usableForSigning).to.equal(true);
       expect(key.usableForEncryptionButExpired).to.equal(false);
       expect(key.usableForSigningButExpired).to.equal(false);
+      expect(key.missingPrivateKeyForDecryption).to.equal(false);
+      expect(key.missingPrivateKeyForSigning).to.equal(false);
       t.pass();
     });
 
@@ -2378,11 +2662,15 @@ kBXo
       expect(key.usableForSigning).to.equal(true);
       expect(key.usableForEncryptionButExpired).to.equal(false);
       expect(key.usableForSigningButExpired).to.equal(false);
+      expect(key.missingPrivateKeyForDecryption).to.equal(false);
+      expect(key.missingPrivateKeyForSigning).to.equal(false);
       expect(await KeyUtil.decrypt(key, '1234')).to.be.true;
       expect(key.usableForEncryption).to.equal(false);
       expect(key.usableForSigning).to.equal(true);
       expect(key.usableForEncryptionButExpired).to.equal(false);
       expect(key.usableForSigningButExpired).to.equal(false);
+      expect(key.missingPrivateKeyForDecryption).to.equal(false);
+      expect(key.missingPrivateKeyForSigning).to.equal(false);
       t.pass();
     });
 
@@ -2426,7 +2714,7 @@ AAAAAAAAAAAAAAAAzzzzzzzzzzzzzzzzzzzzzzzzzzzz.....`)
       t.pass();
     });
 
-    test(`[unit][MsgUtil.verifyDetached] VerifyRes contains signer fingerprints`, async t => {
+    test(`[unit][MsgUtil.verifyDetached] VerifyRes contains signer longids`, async t => {
       const prv = await KeyUtil.parse(rsaPrimaryKeyAndSubkeyBothHavePrivateKey);
       await KeyUtil.decrypt(prv, '1234');
       const plaintext = 'data to sign';
@@ -2436,8 +2724,8 @@ AAAAAAAAAAAAAAAAzzzzzzzzzzzzzzzzzzzzzzzzzzzz.....`)
         sigText: Buf.fromRawBytesStr(sigText),
         verificationPubs: [],
       });
-      expect(verifyRes.signerFingerprints.length).to.equal(1);
-      expect(verifyRes.signerFingerprints[0]).to.equal(prv.id);
+      expect(verifyRes.signerLongids.length).to.equal(1);
+      expect(verifyRes.signerLongids[0]).to.equal(KeyUtil.getPrimaryLongid(prv));
       t.pass();
     });
   }

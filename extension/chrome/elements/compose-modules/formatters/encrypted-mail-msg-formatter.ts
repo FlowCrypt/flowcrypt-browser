@@ -233,23 +233,18 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
     return attachments;
   };
 
-  private encryptDataArmor = async (
-    data: Buf,
-    pwd: string | undefined,
-    pubs: PubkeyResult[],
-    signingPrv?: Key
-  ): Promise<PgpMsgMethod.EncryptAnyArmorResult> => {
+  private encryptDataArmor = async (data: Buf, pwd: string | undefined, pubs: PubkeyResult[], signingPrv?: Key): Promise<PgpMsgMethod.EncryptResult> => {
     const pgpPubs = pubs.filter(pub => pub.pubkey.family === 'openpgp');
     const encryptAsOfDate = await this.encryptMsgAsOfDateIfSomeAreExpiredAndUserConfirmedModal(pgpPubs);
     const pubsForEncryption = pubs.map(entry => entry.pubkey);
-    return (await MsgUtil.encryptMessage({
+    return await MsgUtil.encryptMessage({
       pubkeys: pubsForEncryption,
       signingPrv,
       pwd,
       data,
       armor: true,
       date: encryptAsOfDate,
-    })) as PgpMsgMethod.EncryptAnyArmorResult;
+    });
   };
 
   private getPwdMsgSendableBodyWithOnlineReplyMsgToken = async (

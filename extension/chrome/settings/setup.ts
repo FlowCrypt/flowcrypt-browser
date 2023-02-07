@@ -126,8 +126,8 @@ export class SetupView extends View {
     this.storage.email_provider = this.storage.email_provider || 'gmail';
     this.clientConfiguration = await ClientConfiguration.newInstance(this.acctEmail);
     if (this.clientConfiguration.shouldHideArmorMeta() && typeof opgp !== 'undefined') {
-      opgp.config.show_comment = false;
-      opgp.config.show_version = false;
+      opgp.config.showComment = false;
+      opgp.config.showVersion = false;
     }
     this.pubLookup = new PubLookup(this.clientConfiguration);
     if (this.clientConfiguration.usesKeyManager() && this.idToken) {
