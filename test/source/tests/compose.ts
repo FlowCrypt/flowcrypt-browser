@@ -1697,6 +1697,9 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         await composePage.waitAndClick('@action-toggle-a_forward');
         // Check attachment is still present after switch to forward
         await composePage.waitForContent('.qq-upload-file', 'test.txt');
+        await composePage.waitAndClick('@action-show-reply-options-popover');
+        await composePage.waitAndClick('@action-toggle-a_reply');
+        await composePage.notPresent('.qq-upload-file');
       })
     );
 
