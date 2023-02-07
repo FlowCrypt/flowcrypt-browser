@@ -24,6 +24,7 @@ import { ReplyOptions } from './compose-reply-btn-popover-module.js';
 
 export class ComposeRenderModule extends ViewModule<ComposeView> {
   private responseMethod: 'reply' | 'forward' | undefined;
+  private previousReplyOption: ReplyOptions | undefined;
 
   public initComposeBox = async () => {
     if (this.view.isReplyBox) {
@@ -223,6 +224,9 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
       await this.view.quoteModule.addTripleDotQuoteExpandFooterAndQuoteBtn(this.view.replyMsgId, 'forward', true);
     } else {
       this.view.recipientsModule.addRecipients(this.view.replyParams, false).catch(Catch.reportErr);
+      if (this.previousReplyOption === 'a_forward') {
+        this.view.attachmentsModule.attachment.clearAllAttachments();
+      }
       if (option === 'a_reply') {
         await this.view.recipientsModule.clearRecipientsForReply();
       }
@@ -231,6 +235,7 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
         document.getElementById('input_text')?.focus(); // jQuery no longer worked as of 3.6.0
       }, 10);
     }
+    this.previousReplyOption = option;
   };
 
   private initComposeBoxStyles = () => {
