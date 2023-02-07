@@ -735,13 +735,29 @@ export class OpenPGPKey {
   };
 
   private static getSigningAndEncryptionKeys = async (key: OpenPGP.Key) => {
-    // encryptionKey and signingKey are obtained with undefined value of the date parameter, which is considered current date
+    // As per discussion https://github.com/FlowCrypt/flowcrypt-browser/pull/4725/files#r1096675897
+    // We're using getSigningKey and getEncryptionKey calls instead of trying to replicate OpenPGP.js behaviour when selecting keys,
+    // but it isn't very simple.
+    // Using a null value for the `date` parameter (meaning: ignore date) instead of undefined value (meaning: take current date)
+    // it is possible to find a (sub)key that was usable for singing/encryption at some date, but some edge cases are not covered by this mechanism:
+    //    1) the subkey may have `created` property after primary key's expiration, and shouldn't be considered usable, (see: `key was never usable` unit test),
+    //    2) the subkey may tell us an incorrect "overall" expiration date, as there may be another subkey with later expiration that didn't show up
+    // because OpenPGP.js sorts subkeys by ascending values of `created` property.
+    //
+    // So this algo is implemented:
+    // - for already expired keys:
+    //    1) create a list of all the subkey's expiration dates (prior to the primary key's expiration)
+    //    2) call getEncryptionKey/getSigningKey with dates from the list in descending order until we get a usable key.
+    // - for usable keys:
+    //    call getEncryptionKey with the expiration date of the found usable key to find a next usable encryption key
+    //    until we reach a date when no usable encryption key is found.
     const encryptionKey = await Catch.undefinedOnException(key.getEncryptionKey());
     const signingKey = await Catch.undefinedOnException(key.getSigningKey());
     const possibleExpirations: number[] = [];
     const primaryKeyExpiration = OpenPGPKey.getExpirationAsDateOrUndefined(await key.getExpirationTime())?.getTime();
     if (!encryptionKey || !signingKey) {
       possibleExpirations.push(
+        // todo: we can make it faster by manually collecting expirations from signatures?
         ...(await Promise.all(key.subkeys.map(subkey => OpenPGPKey.getExpiration(subkey))))
           .filter(Boolean)
           // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -762,7 +778,7 @@ export class OpenPGPKey {
         expiration = (await OpenPGPKey.getExpiration(encryptionKeyIgnoringExpiration!))?.getTime();
         if (!expiration || (primaryKeyExpiration && expiration >= primaryKeyExpiration)) break; // found a never-expiring key or a key with expiration beyond primary
         const nextCandidateKey: OpenPGP.Key | OpenPGP.Subkey | undefined = await Catch.undefinedOnException(
-          key.getEncryptionKey(undefined, new Date(expiration + 1000))
+          key.getEncryptionKey(undefined, new Date(expiration))
         );
         if (!nextCandidateKey) break;
         encryptionKeyIgnoringExpiration = nextCandidateKey;
