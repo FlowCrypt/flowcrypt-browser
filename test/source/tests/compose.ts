@@ -1685,6 +1685,25 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
     );
 
     test(
+      'check attachment after switch to forward',
+      testWithBrowser('compatibility', async (t, browser) => {
+        const appendUrl = 'threadId=18625ff9e8642033&skipClickPrompt=___cu_false___&replyMsgId=18625ff9e8642033';
+        const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', {
+          appendUrl,
+          hasReplyPrompt: true,
+        });
+        await composePage.waitAndClick('@encrypted-reply');
+        await composePage.waitAndClick('@action-show-reply-options-popover');
+        await composePage.waitAndClick('@action-toggle-a_forward');
+        // Check attachment is still present after switch to forward
+        await composePage.waitForContent('.qq-upload-file', 'test.txt');
+        await composePage.waitAndClick('@action-show-reply-options-popover');
+        await composePage.waitAndClick('@action-toggle-a_reply');
+        await composePage.notPresent('.qq-upload-file');
+      })
+    );
+
+    test(
       'attachments - failed to decrypt',
       testWithBrowser('compatibility', async (t, browser) => {
         const inboxPage = await browser.newExtensionPage(

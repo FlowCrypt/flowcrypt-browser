@@ -119,6 +119,7 @@ export class AttachmentUI {
 
   public clearAllAttachments = () => {
     this.attachedFiles = {};
+    this.uploader.reset();
   };
 
   public addFile = (file: File) => {
