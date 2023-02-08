@@ -523,6 +523,11 @@ abstract class ControllableBase {
     return files;
   };
 
+  public checkElementCount = async (selector: string, expectedCount: number) => {
+    const actualCount = await this.elementCount(selector);
+    expect(actualCount).to.equal(expectedCount);
+  };
+
   protected log = (msg: string) => {
     if (this.debugNamespace) {
       console.info(`[debug][controllable][${this.debugNamespace}] ${msg}`);
@@ -557,6 +562,15 @@ abstract class ControllableBase {
       return (await this.target.$x(selector))[0] as ElementHandle<Element>;
     } else {
       return await this.target.$(selector);
+    }
+  };
+
+  protected elementCount = async (selector: string): Promise<number> => {
+    selector = this.selector(selector);
+    if (this.isXpath(selector)) {
+      return (await this.target.$x(selector)).length;
+    } else {
+      return (await this.target.$$(selector)).length;
     }
   };
 
