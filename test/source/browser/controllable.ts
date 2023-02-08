@@ -461,9 +461,9 @@ abstract class ControllableBase {
     throw new Error(`Could not find any frame in ${appearIn}s that matches ${urlMatchables.join(' ')}`);
   };
 
-  public ensureElementsCount = async (selector: string, count: number) => {
-    const elements = await this.target.$$(selector);
-    expect(elements.length).to.equal(count);
+  public ensureElementsCount = async (selector: string, expectedCount: number) => {
+    const actualCount = await this.elementCount(selector);
+    expect(actualCount).to.equal(expectedCount);
   };
 
   public getFrame = async (urlMatchables: string[], { sleep = 1, timeout = 10 } = { sleep: 1, timeout: 10 }): Promise<ControllableFrame> => {
@@ -521,11 +521,6 @@ abstract class ControllableBase {
     const timeoutPromise = newTimeoutPromise(`awaitDownloadTriggeredByClicking timeout for ${selector}`, 20);
     await Promise.race([resolvePromise, timeoutPromise]);
     return files;
-  };
-
-  public checkElementCount = async (selector: string, expectedCount: number) => {
-    const actualCount = await this.elementCount(selector);
-    expect(actualCount).to.equal(expectedCount);
   };
 
   protected log = (msg: string) => {
