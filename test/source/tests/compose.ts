@@ -190,11 +190,13 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         await composePage1.type('@input-to', 'human'); // test guessing of contacts
         await composePage1.waitAll(['@container-contacts', '@action-select-contact-name(Human at FlowCrypt)']);
         await composePage1.waitAll(['@container-contacts', '@action-select-contact-email(human@flowcrypt.com)']);
+        await composePage1.ensureElementsCount('@action-select-contact-email(human@flowcrypt.com)', 1);
         // works on subsequent search
         const composePage2 = await ComposePageRecipe.openStandalone(t, browser, 'compose');
         await composePage2.type('@input-to', 'human'); // test guessing of contacts
         await composePage2.waitAll(['@container-contacts', '@action-select-contact-name(Human at FlowCrypt)']);
         await composePage2.waitAll(['@container-contacts', '@action-select-contact-email(human@flowcrypt.com)']);
+        await composePage1.ensureElementsCount('@action-select-contact-email(human@flowcrypt.com)', 1);
       })
     );
 

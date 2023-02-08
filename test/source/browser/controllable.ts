@@ -461,9 +461,9 @@ abstract class ControllableBase {
     throw new Error(`Could not find any frame in ${appearIn}s that matches ${urlMatchables.join(' ')}`);
   };
 
-  public ensureElementsCount = async (selector: string, count: number) => {
-    const elements = await this.target.$$(selector);
-    expect(elements.length).to.equal(count);
+  public ensureElementsCount = async (selector: string, expectedCount: number) => {
+    const actualCount = await this.elementCount(selector);
+    expect(actualCount).to.equal(expectedCount);
   };
 
   public getFrame = async (urlMatchables: string[], { sleep = 1, timeout = 10 } = { sleep: 1, timeout: 10 }): Promise<ControllableFrame> => {
@@ -557,6 +557,15 @@ abstract class ControllableBase {
       return (await this.target.$x(selector))[0] as ElementHandle<Element>;
     } else {
       return await this.target.$(selector);
+    }
+  };
+
+  protected elementCount = async (selector: string): Promise<number> => {
+    selector = this.selector(selector);
+    if (this.isXpath(selector)) {
+      return (await this.target.$x(selector)).length;
+    } else {
+      return (await this.target.$$(selector)).length;
     }
   };
 

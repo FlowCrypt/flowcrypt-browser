@@ -967,7 +967,8 @@ export class ContactStore extends AbstractStore {
         reject
       );
     });
-    return raw;
+    // Remove duplicated results
+    return raw.filter((value, index, arr) => arr.findIndex(contact => contact.email === value.email) === index);
   };
 
   private static normalizeString = (str: string) => {
