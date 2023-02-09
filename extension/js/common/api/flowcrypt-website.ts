@@ -6,6 +6,7 @@ import { Dict } from '../core/common.js';
 import { BACKEND_API_HOST } from '../core/const.js';
 import { Catch } from '../platform/catch.js';
 import { Browser } from '../browser/browser.js';
+import { ApiHelper } from './shared/api-helper.js';
 
 namespace FlowCryptWebsiteRes {
   export type FcHelpFeedback = { sent: boolean };
@@ -32,7 +33,7 @@ export class FlowCryptWebsite extends Api {
   };
 
   public static retrieveBlogPosts = async (): Promise<FlowCryptWebsiteRes.FcBlogPost[]> => {
-    const xml = (await Api.ajax({ url: 'https://flowcrypt.com/blog/feed.xml', dataType: 'xml' }, Catch.stackTrace())) as XMLDocument;
+    const xml = (await ApiHelper.ajax({ url: 'https://flowcrypt.com/blog/feed.xml', dataType: 'xml' }, Catch.stackTrace())) as XMLDocument;
     const posts: FlowCryptWebsiteRes.FcBlogPost[] = [];
     for (const post of Browser.arrFromDomNodeList(xml.querySelectorAll('entry'))) {
       const children = Browser.arrFromDomNodeList(post.childNodes);

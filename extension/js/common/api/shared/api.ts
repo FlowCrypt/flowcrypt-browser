@@ -2,15 +2,14 @@
 
 'use strict';
 
-import { Attachment } from '../../core/attachment.js';
-import { BrowserMsg } from '../../browser/browser-msg.js';
-import { Buf } from '../../core/buf.js';
-import { Catch } from '../../platform/catch.js';
-import { Dict, EmailParts } from '../../core/common.js';
 import { Env } from '../../browser/env.js';
-import { secureRandomBytes } from '../../platform/util.js';
-import { ApiErr, AjaxErr } from './api-error.js';
+import { Attachment } from '../../core/attachment.js';
+import { Buf } from '../../core/buf.js';
+import { Dict, EmailParts } from '../../core/common.js';
+import { Catch } from '../../platform/catch.js';
 import { GoogleAuth } from '../email-provider/gmail/google-auth.js';
+import { AjaxErr, ApiErr } from './api-error.js';
+import { ApiHelper } from './api-helper.js';
 
 export type ReqFmt = 'JSON' | 'FORM' | 'TEXT';
 export type RecipientType = 'to' | 'cc' | 'bcc';
@@ -18,14 +17,6 @@ type ResFmt = 'json' | 'xhr';
 export type ReqMethod = 'POST' | 'GET' | 'DELETE' | 'PUT';
 export type EmailProviderContact = EmailParts;
 type ProviderContactsResults = { new: EmailProviderContact[]; all: EmailProviderContact[] };
-type RawAjaxErr = {
-  // getAllResponseHeaders?: () => any,
-  // getResponseHeader?: (e: string) => any,
-  readyState: number;
-  responseText?: string;
-  status?: number;
-  statusText?: string;
-};
 
 export type ChunkedCb = (r: ProviderContactsResults) => Promise<void>;
 export type ProgressCb = (percent: number | undefined, loaded: number, total: number) => void;
@@ -34,7 +25,7 @@ export type ProgressCbs = { upload?: ProgressCb | null; download?: ProgressCb | 
 export class Api {
   public static download = async (url: string, progress?: ProgressCb, timeout?: number): Promise<Buf> => {
     return await new Promise((resolve, reject) => {
-      Api.throwIfApiPathTraversalAttempted(url);
+      ApiHelper.throwIfApiPathTraversalAttempted(url);
       const request = new XMLHttpRequest();
       if (timeout) {
         request.timeout = timeout * 1000;
@@ -57,40 +48,6 @@ export class Api {
       request.onload = e => (request.status <= 299 ? resolve(new Buf(request.response as ArrayBuffer)) : errHandler(e));
       request.send();
     });
-  };
-
-  public static ajax = async (req: JQueryAjaxSettings, stack: string): Promise<unknown | JQuery.jqXHR<unknown>> => {
-    if (Env.isContentScript()) {
-      // content script CORS not allowed anymore, have to drag it through background page
-      // https://www.chromestatus.com/feature/5629709824032768
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-      return await BrowserMsg.send.bg.await.ajax({ req, stack });
-    }
-    try {
-      return await new Promise((resolve, reject) => {
-        Api.throwIfApiPathTraversalAttempted(req.url || '');
-        $.ajax({ ...req, dataType: req.dataType === 'xhr' ? undefined : req.dataType })
-          .then((data, s, xhr) => {
-            if (req.dataType === 'xhr') {
-              // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-              // @ts-ignore -> prevent the xhr object from getting further "resolved" and processed by jQuery, below
-              xhr.then = xhr.promise = undefined;
-              resolve(xhr);
-            } else {
-              resolve(data as unknown);
-            }
-          })
-          .catch(reject);
-      });
-    } catch (e) {
-      if (e instanceof Error) {
-        throw e;
-      }
-      if (Api.isRawAjaxErr(e)) {
-        throw AjaxErr.fromXhr(e, req, stack);
-      }
-      throw new Error(`Unknown Ajax error (${String(e)}) type when calling ${req.url}`);
-    }
   };
 
   public static isInternetAccessible = async () => {
@@ -145,11 +102,6 @@ export class Api {
       }
       return progressPeportingXhr;
     };
-  };
-
-  public static randomFortyHexChars = (): string => {
-    const bytes = Array.from(secureRandomBytes(20));
-    return bytes.map(b => ('0' + (b & 0xff).toString(16)).slice(-2)).join('');
   };
 
   public static isRecipientHeaderNameType = (value: string): value is 'to' | 'cc' | 'bcc' => {
@@ -207,7 +159,7 @@ export class Api {
       timeout: typeof progress!.upload === 'function' || typeof progress!.download === 'function' ? undefined : 20000, // substituted with {} above
     };
     try {
-      const res = await Api.ajax(req, Catch.stackTrace());
+      const res = await ApiHelper.ajax(req, Catch.stackTrace());
       return res as RT;
     } catch (firstAttemptErr) {
       const idToken = req.headers?.Authorization?.split(' ')[1];
@@ -218,24 +170,10 @@ export class Api {
         if (email) {
           // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
           req.headers!.Authorization = await GoogleAuth.googleApiAuthHeader(email, true);
-          return await Api.ajax(req, Catch.stackTrace()) as RT;
+          return await ApiHelper.ajax(req, Catch.stackTrace()) as RT;
         }
       }
       throw firstAttemptErr;
-    }
-  };
-
-  private static isRawAjaxErr = (e: unknown): e is RawAjaxErr => {
-    return !!e && typeof e === 'object' && typeof (e as RawAjaxErr).readyState === 'number';
-  };
-
-  /**
-   * Security check, in case attacker modifies parameters which are then used in an url
-   * https://github.com/FlowCrypt/flowcrypt-browser/issues/2646
-   */
-  private static throwIfApiPathTraversalAttempted = (requestUrl: string) => {
-    if (requestUrl.includes('../') || requestUrl.includes('/..')) {
-      throw new Error(`API path traversal forbidden: ${requestUrl}`);
     }
   };
 }

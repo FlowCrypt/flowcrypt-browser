@@ -2,30 +2,30 @@
 
 'use strict';
 
-import { Dict, Str, Url, UrlParams } from './core/common.js';
-import { Ui } from './browser/ui.js';
-import { ApiErr, AjaxErr } from './api/shared/api-error.js';
-import { Attachment } from './core/attachment.js';
-import { Browser } from './browser/browser.js';
-import { Buf } from './core/buf.js';
-import { Catch, CompanyLdapKeyMismatchError } from './platform/catch.js';
-import { Env } from './browser/env.js';
 import { Gmail } from './api/email-provider/gmail/gmail.js';
 import { GoogleAuth } from './api/email-provider/gmail/google-auth.js';
-import { Lang } from './lang.js';
-import { KeyInfoWithIdentityAndOptionalPp, Key, KeyUtil } from './core/crypto/key.js';
-import { PgpPwd } from './core/crypto/pgp/pgp-password.js';
-import { ClientConfiguration } from './client-configuration.js';
-import { Xss } from './platform/xss.js';
+import { AjaxErr, ApiErr } from './api/shared/api-error.js';
+import { ApiHelper } from './api/shared/api-helper.js';
+import { BrowserMsg } from './browser/browser-msg.js';
+import { Browser } from './browser/browser.js';
 import { storageLocalGetAll } from './browser/chrome.js';
+import { Env } from './browser/env.js';
+import { Ui } from './browser/ui.js';
+import { ClientConfiguration } from './client-configuration.js';
+import { Attachment } from './core/attachment.js';
+import { Buf } from './core/buf.js';
+import { Dict, Str, Url, UrlParams } from './core/common.js';
+import { Key, KeyInfoWithIdentityAndOptionalPp, KeyUtil } from './core/crypto/key.js';
+import { PgpPwd } from './core/crypto/pgp/pgp-password.js';
+import { isCustomerUrlFesUsed } from './helpers.js';
+import { Lang } from './lang.js';
+import { Catch, CompanyLdapKeyMismatchError } from './platform/catch.js';
+import { AbstractStore } from './platform/store/abstract-store.js';
 import { AccountIndex, AcctStore, SendAsAlias } from './platform/store/acct-store.js';
 import { GlobalStore } from './platform/store/global-store.js';
-import { AbstractStore } from './platform/store/abstract-store.js';
 import { KeyStore } from './platform/store/key-store.js';
 import { PassphraseStore } from './platform/store/passphrase-store.js';
-import { isCustomerUrlFesUsed } from './helpers.js';
-import { Api } from './api/shared/api.js';
-import { BrowserMsg } from './browser/browser-msg.js';
+import { Xss } from './platform/xss.js';
 
 declare const zxcvbn: Function; // eslint-disable-line @typescript-eslint/ban-types
 
@@ -275,7 +275,7 @@ export class Settings {
             } else {
               await Ui.modal.error(
                 'Key update: Key still cannot be used for encryption. This looks like a compatibility issue.\n\n' +
-                  Lang.general.contactForSupportSentence(await isCustomerUrlFesUsed(acctEmail))
+                Lang.general.contactForSupportSentence(await isCustomerUrlFesUsed(acctEmail))
               );
               Xss.sanitizeReplace(target, Ui.e('a', { href: backUrl, text: 'Go back and try something else' }));
             }
@@ -353,7 +353,7 @@ export class Settings {
           });
         }
       } else if (response.result === 'Denied' || response.result === 'Closed') {
-        const authDeniedHtml = (await Api.ajax({ url: '/chrome/settings/modules/auth_denied.htm' }, Catch.stackTrace())) as string;
+        const authDeniedHtml = (await ApiHelper.ajax({ url: '/chrome/settings/modules/auth_denied.htm' }, Catch.stackTrace())) as string;
         await Ui.modal.info(`${authDeniedHtml}\n<div class="line">${Lang.general.contactIfNeedAssistance()}</div>`, true);
       } else {
         // Do not report error for csrf
@@ -361,8 +361,7 @@ export class Settings {
           Catch.report('failed to log into google in newGoogleAcctAuthPromptThenAlertOrForward', response);
         }
         await Ui.modal.error(
-          `Failed to connect to Gmail(new). ${Lang.general.contactIfHappensAgain(acctEmail ? await isCustomerUrlFesUsed(acctEmail) : false)}\n\n[${
-            response.result
+          `Failed to connect to Gmail(new). ${Lang.general.contactIfHappensAgain(acctEmail ? await isCustomerUrlFesUsed(acctEmail) : false)}\n\n[${response.result
           }] ${response.error}`
         );
         await Ui.time.sleep(1000);

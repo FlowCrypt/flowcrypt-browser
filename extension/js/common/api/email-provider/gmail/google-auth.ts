@@ -5,8 +5,6 @@
 import { Str, Url } from '../../../core/common.js';
 import { FLAVOR, GMAIL_GOOGLE_API_HOST, GOOGLE_OAUTH_SCREEN_HOST, OAUTH_GOOGLE_API_HOST } from '../../../core/const.js';
 import { ApiErr } from '../../shared/api-error.js';
-import { Api } from './../../shared/api.js';
-
 import { Bm, GoogleAuthWindowResult$result } from '../../../browser/browser-msg.js';
 import { Buf } from '../../../core/buf.js';
 import { InMemoryStoreKeys } from '../../../core/const.js';
@@ -19,6 +17,7 @@ import { ExternalService } from '../../account-servers/external-service.js';
 import { GoogleAuthErr } from '../../shared/api-error.js';
 import { GmailRes } from './gmail-parser.js';
 import { Assert, AssertError } from '../../../assert.js';
+import { ApiHelper } from '../../shared/api-helper.js';
 
 /* eslint-disable @typescript-eslint/naming-convention */
 type GoogleAuthTokensResponse = {
@@ -84,7 +83,7 @@ export class GoogleAuth {
   };
 
   public static getTokenInfo = async (accessToken: string): Promise<GoogleTokenInfo> => {
-    return (await Api.ajax(
+    return (await ApiHelper.ajax(
       {
         url: `${GMAIL_GOOGLE_API_HOST}/oauth2/v1/tokeninfo?access_token=${accessToken}`,
         timeout: 10000,
@@ -117,21 +116,20 @@ export class GoogleAuth {
       }
     }
     throw new GoogleAuthErr(
-      `Could not refresh google auth token - did not become valid (access:${refreshTokenRes.access_token},expires_in:${
-        refreshTokenRes.expires_in
+      `Could not refresh google auth token - did not become valid (access:${refreshTokenRes.access_token},expires_in:${refreshTokenRes.expires_in
       },now:${Date.now()})`
     );
   };
 
   public static apiGoogleCallRetryAuthErrorOneTime = async (acctEmail: string, request: JQuery.AjaxSettings): Promise<unknown> => {
     try {
-      return await Api.ajax(request, Catch.stackTrace());
+      return await ApiHelper.ajax(request, Catch.stackTrace());
     } catch (firstAttemptErr) {
       if (ApiErr.isAuthErr(firstAttemptErr)) {
         // force refresh token
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         request.headers!.Authorization = await GoogleAuth.googleApiAuthHeader(acctEmail, true);
-        return await Api.ajax(request, Catch.stackTrace());
+        return await ApiHelper.ajax(request, Catch.stackTrace());
       }
       throw firstAttemptErr;
     }
@@ -286,7 +284,7 @@ export class GoogleAuth {
     const authReq = {
       acctEmail,
       scopes,
-      csrfToken: `csrf-${Api.randomFortyHexChars()}`,
+      csrfToken: `csrf-${ApiHelper.randomFortyHexChars()}`,
     };
     return {
       ...authReq,
@@ -326,7 +324,7 @@ export class GoogleAuth {
   };
 
   private static googleAuthGetTokens = async (code: string) => {
-    return (await Api.ajax(
+    return (await ApiHelper.ajax(
       {
         /* eslint-disable @typescript-eslint/naming-convention */
         url: Url.create(GoogleAuth.OAUTH.url_tokens, {
@@ -346,7 +344,7 @@ export class GoogleAuth {
   };
 
   private static googleAuthRefreshToken = async (refreshToken: string) => {
-    return (await Api.ajax(
+    return (await ApiHelper.ajax(
       {
         /* eslint-disable @typescript-eslint/naming-convention */
         url: Url.create(GoogleAuth.OAUTH.url_tokens, {

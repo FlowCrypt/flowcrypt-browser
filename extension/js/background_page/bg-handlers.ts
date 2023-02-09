@@ -2,12 +2,12 @@
 
 'use strict';
 
-import { Api } from '../common/api/shared/api.js';
-import { BgUtils } from './bgutils.js';
-import { Bm } from '../common/browser/browser-msg.js';
+import { ApiHelper } from '../common/api/shared/api-helper.js';
 import { Gmail } from '../common/api/email-provider/gmail/gmail.js';
-import { GlobalStore } from '../common/platform/store/global-store.js';
+import { Bm } from '../common/browser/browser-msg.js';
 import { ContactStore } from '../common/platform/store/contact-store.js';
+import { GlobalStore } from '../common/platform/store/global-store.js';
+import { BgUtils } from './bgutils.js';
 
 export class BgHandlers {
   public static openSettingsPageHandler: Bm.AsyncResponselessHandler = async ({ page, path, pageUrlParams, addNewAcct, acctEmail }: Bm.Settings) => {
@@ -30,7 +30,7 @@ export class BgHandlers {
   };
 
   public static ajaxHandler = async (r: Bm.Ajax): Promise<Bm.Res.Ajax> => {
-    return await Api.ajax(r.req, r.stack);
+    return await ApiHelper.ajax(r.req, r.stack);
   };
 
   public static ajaxGmailAttachmentGetChunkHandler = async (r: Bm.AjaxGmailAttachmentGetChunk): Promise<Bm.Res.AjaxGmailAttachmentGetChunk> => {
