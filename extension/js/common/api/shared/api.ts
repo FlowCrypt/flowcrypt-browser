@@ -10,7 +10,7 @@ import { Env } from '../../browser/env.js';
 import { secureRandomBytes } from '../../platform/util.js';
 import { ApiErr, AjaxErr } from './api-error.js';
 import { GoogleAuthHelper } from '../email-provider/gmail/google-auth-helper.js';
-import { BrowserMsg } from 'js/common/browser/browser-msg.js';
+import { BrowserMsg } from '../../../common/browser/browser-msg.js';
 
 export type ReqFmt = 'JSON' | 'FORM' | 'TEXT';
 export type RecipientType = 'to' | 'cc' | 'bcc';
@@ -217,8 +217,8 @@ export class Api {
         const { email } = GoogleAuthHelper.parseIdToken(idToken);
         if (email) {
           // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-          req.headers!.Authorization = await GoogleAuth.googleApiAuthHeader(email, true);
-          return (await Api.ajax(req, Catch.stackTrace())) as RT;
+          req.headers!.Authorization = await GoogleAuthHelper.googleApiAuthHeader(email, true);
+          return await Api.ajax(req, Catch.stackTrace()) as RT;
         }
       }
       throw firstAttemptErr;
