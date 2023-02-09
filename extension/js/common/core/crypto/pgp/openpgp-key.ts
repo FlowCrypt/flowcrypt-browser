@@ -669,7 +669,10 @@ export class OpenPGPKey {
   };
 
   private static getPrimaryKeyFlags = async (key: OpenPGP.Key): Promise<OpenPGP.enums.keyFlags> => {
-    const selfCertification = (await OpenPGPKey.getUsersAndSelfCertifications(key)).map(x => x.selfCertification).find(Boolean);
+    // Note: The selected selfCertification (and hence the flags) will differ based on the current date
+    const primaryUser = await Catch.undefinedOnException(key.getPrimaryUser());
+    // a type patch until https://github.com/openpgpjs/openpgpjs/pull/1594 is resolved
+    const selfCertification = (primaryUser as { selfCertification: OpenPGP.SignaturePacket } | undefined)?.selfCertification;
     if (!selfCertification) {
       return 0;
     }
