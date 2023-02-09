@@ -2,27 +2,27 @@
 
 'use strict';
 
-import { BrowserMsg } from '../../../browser/browser-msg.js';
 import { AddrParserResult, BrowserWindow } from '../../../browser/browser-window.js';
-import { Env } from '../../../browser/env.js';
-import { Attachment } from '../../../core/attachment.js';
-import { Buf } from '../../../core/buf.js';
+import { ChunkedCb, ProgressCb, EmailProviderContact } from '../../shared/api.js';
 import { Dict, Str, Value } from '../../../core/common.js';
-import { gmailBackupSearchQuery, GMAIL_GOOGLE_API_HOST } from '../../../core/const.js';
-import { KeyUtil } from '../../../core/crypto/key.js';
-import { FormatError } from '../../../core/crypto/pgp/msg-util.js';
-import { PgpArmor } from '../../../core/crypto/pgp/pgp-armor.js';
-import { Mime } from '../../../core/mime.js';
-import { Catch } from '../../../platform/catch.js';
-import { KeyStore } from '../../../platform/store/key-store.js';
-import { Xss } from '../../../platform/xss.js';
-import { AjaxErr } from '../../shared/api-error.js';
-import { ChunkedCb, EmailProviderContact, ProgressCb } from '../../shared/api.js';
-import { Backups, EmailProviderApi, EmailProviderInterface } from '../email-provider-api.js';
-import { SendableMsg } from '../sendable-msg.js';
+import { EmailProviderApi, EmailProviderInterface, Backups } from '../email-provider-api.js';
+import { GMAIL_GOOGLE_API_HOST, gmailBackupSearchQuery } from '../../../core/const.js';
 import { GmailParser, GmailRes } from './gmail-parser.js';
-import { GoogleAuthHelper } from './google-auth-helper.js';
+import { AjaxErr } from '../../shared/api-error.js';
+import { Attachment } from '../../../core/attachment.js';
+import { BrowserMsg } from '../../../browser/browser-msg.js';
+import { Buf } from '../../../core/buf.js';
+import { Catch } from '../../../platform/catch.js';
+import { KeyUtil } from '../../../core/crypto/key.js';
+import { Env } from '../../../browser/env.js';
+import { FormatError } from '../../../core/crypto/pgp/msg-util.js';
 import { Google } from './google.js';
+import { GoogleAuth } from './google-auth.js';
+import { Mime } from '../../../core/mime.js';
+import { PgpArmor } from '../../../core/crypto/pgp/pgp-armor.js';
+import { SendableMsg } from '../sendable-msg.js';
+import { Xss } from '../../../platform/xss.js';
+import { KeyStore } from '../../../platform/store/key-store.js';
 
 export type GmailResponseFormat = 'raw' | 'full' | 'metadata';
 
@@ -185,7 +185,7 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
           reject(new Error('Chunk response could not be decoded'));
         }
       };
-      GoogleAuthHelper.googleApiAuthHeader(this.acctEmail)
+      GoogleAuth.googleApiAuthHeader(this.acctEmail)
         .then(authToken => {
           const r = new XMLHttpRequest();
           const method = 'GET';
