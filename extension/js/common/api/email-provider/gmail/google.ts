@@ -2,13 +2,14 @@
 
 'use strict';
 
-import { Api, ProgressCbs, ReqMethod } from '../../shared/api.js';
 import { Dict, Str } from '../../../core/common.js';
+import { Api, ProgressCbs, ReqMethod } from '../../shared/api.js';
 
 import { GMAIL_GOOGLE_API_HOST, PEOPLE_GOOGLE_API_HOST } from '../../../core/const.js';
-import { GmailRes } from './gmail-parser.js';
-import { GoogleAuth } from './google-auth.js';
 import { Serializable } from '../../../platform/store/abstract-store.js';
+import { GmailRes } from './gmail-parser.js';
+import { GoogleAuthHelper } from './google-auth-helper.js';
+import { GoogleAuth } from './google-auth.js';
 
 export class Google {
   public static webmailUrl = (acctEmail: string) => {
@@ -38,7 +39,7 @@ export class Google {
     }
     contentType = contentType || 'application/json; charset=UTF-8';
     // eslint-disable-next-line @typescript-eslint/naming-convention
-    const headers = { Authorization: await GoogleAuth.googleApiAuthHeader(acctEmail) };
+    const headers = { Authorization: await GoogleAuthHelper.googleApiAuthHeader(acctEmail) };
     const xhr = Api.getAjaxProgressXhrFactory(progress);
     const request = { xhr, url, method, data, headers, crossDomain: true, contentType, async: true };
     return (await GoogleAuth.apiGoogleCallRetryAuthErrorOneTime(acctEmail, request)) as RT;
@@ -53,7 +54,7 @@ export class Google {
     const data = { query, readMask: 'names,emailAddresses', pageSize: max };
     const xhr = Api.getAjaxProgressXhrFactory(progress);
     // eslint-disable-next-line @typescript-eslint/naming-convention
-    const headers = { Authorization: await GoogleAuth.googleApiAuthHeader(acctEmail) };
+    const headers = { Authorization: await GoogleAuthHelper.googleApiAuthHeader(acctEmail) };
     const contacts = await Promise.all([
       GoogleAuth.apiGoogleCallRetryAuthErrorOneTime(acctEmail, {
         xhr,
