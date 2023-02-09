@@ -71,11 +71,11 @@ cp node_modules/@openpgp/web-stream-tools/lib/*.js $OUTDIR/lib/streams
 # patch imports with .js, e.g. replace './streams' with './streams.js'
 # until https://github.com/openpgpjs/web-stream-tools/pull/20 is resolved
 STREAMS_REGEX="s/'\.\/(streams|util|writer|reader|node-conversions)'/'\.\/\1\.js'/g"
-STREAMS_OUTDIR=$OUTDIR/lib/streams/*
+STREAMS_FILES=$OUTDIR/lib/streams/*
 if [[ "$OSTYPE" =~ ^darwin ]]; then # macOS needs additional parameter for backup files
-  sed -i '' -E $STREAMS_REGEX $STREAMS_OUTDIR
+  sed -i '' -E $STREAMS_REGEX $STREAMS_FILES
 else
-  sed -i -E $STREAMS_REGEX $STREAMS_OUTDIR
+  sed -i -E $STREAMS_REGEX $STREAMS_FILES
 fi
 
 # to update node-forge library, which is missing the non-minified version in dist, we have to build it manually
