@@ -87,8 +87,10 @@ export class Str {
     if (email.indexOf(' ') !== -1) {
       return false;
     }
-    email = email.replace(/\:8001$/, ''); // for MOCK tests until https://github.com/FlowCrypt/flowcrypt-browser/issues/4631
-    return /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/i.test(
+    // todo: `email-addresses` parser used by OpenPGP.js consider top-level domains to be valid for emails e.g. address@domain
+    // should we allow it too (or use `email-addresses` package when manipulating user ids in keys?
+    // For now, I'm explicitly `localhost` domain, which is perfectly legal for testing
+    return /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|localhost|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/i.test(
       email
     );
   };
