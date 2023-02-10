@@ -12,6 +12,7 @@ import { ParsedRecipients } from '../email-provider/email-provider-api.js';
 import { Buf } from '../../core/buf.js';
 import { ClientConfigurationError, ClientConfigurationJson } from '../../client-configuration.js';
 import { InMemoryStore } from '../../platform/store/in-memory-store.js';
+import { GoogleAuth } from '../email-provider/gmail/google-auth.js';
 
 // todo - decide which tags to use
 type EventTag = 'compose' | 'decrypt' | 'setup' | 'settings' | 'import-pub' | 'import-prv';
@@ -171,18 +172,45 @@ export class ExternalService extends Api {
     } else if (method !== 'GET') {
       reqFmt = 'JSON';
     }
-    return await ExternalService.apiCall(
-      this.url,
-      path,
-      vals,
-      reqFmt,
-      progress,
-      {
-        ...headers,
-        ...(await this.authHdr()),
-      },
-      'json',
-      method
-    );
+    try {
+      return await ExternalService.apiCall(
+        this.url,
+        path,
+        vals,
+        reqFmt,
+        progress,
+        {
+          ...headers,
+          ...(await this.authHdr()),
+        },
+        'json',
+        method
+      );
+    } catch (firstAttemptErr) {
+      const idToken = await InMemoryStore.get(this.acctEmail, InMemoryStoreKeys.ID_TOKEN);
+      if (ApiErr.isAuthErr(firstAttemptErr) && idToken) {
+        // force refresh token
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const { email } = GoogleAuth.parseIdToken(idToken);
+        if (email) {
+          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+          return await ExternalService.apiCall(
+            this.url,
+            path,
+            vals,
+            reqFmt,
+            progress,
+            {
+              ...headers,
+              // eslint-disable-next-line @typescript-eslint/naming-convention
+              Authorization: await GoogleAuth.googleApiAuthHeader(email, true),
+            },
+            'json',
+            method
+          );
+        }
+      }
+      throw firstAttemptErr;
+    }
   };
 }
