@@ -1391,6 +1391,42 @@ jSB6A93JmnQGIkAem/kzGkKclmfAdGfc4FS+3Cn+6Q==Xmrz
       t.pass();
     });
 
+    test('[KeyUtil.diagnose] correctly displays revoked userid', async t => {
+      const key = await KeyUtil.parse(`-----BEGIN PGP PRIVATE KEY BLOCK-----
+Version: FlowCrypt Testing Only unspecified
+
+lFgEX6UIExYJKwYBBAHaRw8BAQdAMfHf64wPQ2LC9In5AKYU/KT1qWvI7e7aXr+L
+WeQGUKIAAQCcB3zZlHfepQT26LIwbTDn4lvQ9LuD1fk2hK6i9FXFxxO7tBI8dXNl
+ckBleGFtcGxlLmNvbT6IjwQQFgoAIAUCX6UIEwYLCQcIAwIEFQgKAgQWAgEAAhkB
+AhsDAh4BACEJEEoCtcZ3snFuFiEENY1GQZqrKQqgUAXASgK1xneycW6P6AEA5iXF
+K+fWpj0vn3xpKEuFRqvytPKFzhwd4wEvL+IGSPEBALE/pZdMzsDoKPENiLFpboDV
+NVJScwFXIleKmtNaRycFiIwEExYIAD4FAmLqt7IJEEoCtcZ3snFuFiEENY1GQZqr
+KQqgUAXASgK1xneycW4CngECmwMEFgIBAAYLCQcIAwIEFQgKAgAA7VwA/3x+J0i5
+DPaKtiosXHEV3LnOjaDGJgQlj7bR1BD4P62RAP0To1EcOvYk3qdgwda00oDkvYon
+aAtVAK9dqadkbOI4D4h7BDAWCAAtBQJi6reyCRBKArXGd7JxbhYhBDWNRkGaqykK
+oFAFwEoCtcZ3snFuAocAAh0gAABfXQEAvxCRqQz9r7iyrPyo4R/xF1BajPxoHd0Q
+y4GYx/aIq5UA/19k0C/X7tH+fPJEd3Z2QjlrvyTbymUa+z4YGK1rh/YHtA9maXJz
+dEBtb2NrLnRlc3SIjwQTFggAQQUCYuq3sgkQSgK1xneycW4WIQQ1jUZBmqspCqBQ
+BcBKArXGd7JxbgKeAQKbAwQWAgEABgsJBwgDAgQVCAoCApkBAACNnQEA8tTL+tGS
+wC9u4ECmo2Y8AUa0nvvv9+JmiMQphqldxD0A/jkDmtuj+KX8zxArkwC4IKCAFd2G
+cdgj1z2/dAKVWmICnF0EX6UIExIKKwYBBAGXVQEFAQEHQBDdeawWVNqYkP8c/ihL
+EUlVpn8cQw7rmRc/sIhdAXhfAwEIBwAA/0Jy7IelcHDjxE3OzagEzSxNrCVw8uPH
+NRl8s6iP+CQYEfGIeAQYFggACQUCX6UIEwIbDAAhCRBKArXGd7JxbhYhBDWNRkGa
+qykKoFAFwEoCtcZ3snFuWp8BAIzRBYJSfZzlvlyyPhrbXJoYSICGNy/5x7noXjp/
+ByeOAQDnTbQi4XwXJrU4A8Nl9eyz16ZWUzEPwfWgahIG1eQDDA==
+=eyAR
+-----END PGP PRIVATE KEY BLOCK-----`);
+      expect(key.identities).to.have.length(1);
+      expect(key.identities).to.eql(['first@mock.test']);
+      expect(key.emails).to.have.length(1);
+      expect(key.emails).to.eql(['first@mock.test']);
+      const result = await KeyUtil.diagnose(key, '');
+      expect(result.get('Primary User')).to.equal('first@mock.test');
+      expect(result.get('User id 0')).to.equal('* REVOKED, INVALID OR MISSING SIGNATURE *');
+      expect(result.get('User id 1')).to.equal('first@mock.test');
+      t.pass();
+    });
+
     test('[KeyUtil.diagnose] displays PK and SK usage', async t => {
       const usageRegex = /\[\-\] \[(.*)\]/;
       /* eslint-disable @typescript-eslint/no-non-null-assertion */

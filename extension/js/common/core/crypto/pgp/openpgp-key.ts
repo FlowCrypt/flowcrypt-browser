@@ -308,7 +308,7 @@ export class OpenPGPKey {
     const users = await OpenPGPKey.verifyAllUsers(key);
     for (let i = 0; i < users.length; i++) {
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      result.set(`User id ${i}`, users[i].valid ? users[i].userID : 'Invalid'); // todo: clarify "REVOKED"?
+      result.set(`User id ${i}`, users[i].valid ? users[i].userID : '* REVOKED, INVALID OR MISSING SIGNATURE *');
     }
     const user = await key.getPrimaryUser();
     result.set(`Primary User`, user?.user?.userID?.userID || 'No primary user');
@@ -552,13 +552,12 @@ export class OpenPGPKey {
     const primaryUser = await Catch.undefinedOnException(key.getPrimaryUser());
     // if there is no good enough user id to serve as primary identity, we assume other user ids are even worse
     if (primaryUser?.user?.userID?.userID) {
-      const identities = [primaryUser.user.userID.userID]; // put the "primary" identity first
-      const verifiedUsers = await OpenPGPKey.verifyAllUsers(key);
-      for (let i = 0; i < verifiedUsers.length; i++) {
-        if (i !== primaryUser.index && verifiedUsers[i].valid) {
-          identities.push(verifiedUsers[i].userID);
-        }
-      }
+      const primaryUserId = primaryUser.user.userID.userID;
+      const identities = [
+        primaryUserId, // put the "primary" identity first
+        // other identities go in indeterministic order
+        ...Value.arr.unique((await OpenPGPKey.verifyAllUsers(key)).filter(x => x.valid && x.userID !== primaryUserId).map(x => x.userID)),
+      ];
       const emails = identities.map(userid => Str.parseEmail(userid).email).filter(Boolean);
       if (emails.length === identities.length) {
         // OpenPGP.js uses RFC 5322 `email-addresses` parser, so we expect all identities to contain a valid e-mail address
