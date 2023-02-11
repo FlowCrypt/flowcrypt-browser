@@ -127,11 +127,11 @@ export class SendableMsg {
     acctEmail: string,
     headers: SendableMsgHeaders,
     attachments: Attachment[],
-    options?: SendableMsgOptions
+    options: SendableMsgOptions
   ): Promise<SendableMsg> => {
     return await SendableMsg.createSendableMsg(acctEmail, headers, {}, attachments, {
-      type: options ? 'pgpMimeEncrypted' : undefined,
-      isDraft: options ? options.isDraft : undefined,
+      type: 'pgpMimeEncrypted',
+      isDraft: options.isDraft,
     });
   };
 

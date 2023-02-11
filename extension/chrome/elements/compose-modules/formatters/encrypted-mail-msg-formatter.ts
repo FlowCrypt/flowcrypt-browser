@@ -227,6 +227,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
         type: 'application/octet-stream',
         contentDescription: 'OpenPGP encrypted message',
         name: 'encrypted.asc',
+        contentTransferEncoding: '7bit',
         inline: true,
       })
     );

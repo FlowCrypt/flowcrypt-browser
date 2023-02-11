@@ -395,8 +395,12 @@ export class Mime {
     header['Content-Disposition'] = attachment.inline ? 'inline' : 'attachment';
     header['X-Attachment-Id'] = id;
     header['Content-ID'] = `<${id}>`;
-    header['Content-Transfer-Encoding'] = 'base64';
-    return new MimeBuilder(type, { filename: attachment.name }).setHeader(header).setContent(attachment.getData());
+    header['Content-Transfer-Encoding'] = attachment.contentTransferEncoding || 'base64';
+    const content =
+      attachment.contentTransferEncoding === '7bit'
+        ? attachment.getData().toRawBytesStr() // emailjs-mime-builder doesn't support Buf for 7bit encoding
+        : attachment.getData();
+    return new MimeBuilder(type, { filename: attachment.name }).setHeader(header).setContent(content);
   };
 
   private static getNodeType = (node: MimeParserNode, type: 'value' | 'initial' = 'value') => {

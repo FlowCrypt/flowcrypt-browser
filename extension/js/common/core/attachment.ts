@@ -18,6 +18,7 @@ export type AttachmentMeta = {
   treatAs?: Attachment$treatAs;
   cid?: string;
   contentDescription?: string;
+  contentTransferEncoding?: string;
 };
 
 export type FcAttachmentLinkData = { name: string; type: string; size: number };
@@ -36,11 +37,12 @@ export class Attachment {
   public inline: boolean;
   public cid: string | undefined;
   public contentDescription: string | undefined;
+  public contentTransferEncoding: string | undefined;
 
   private bytes: Uint8Array | undefined;
   private treatAsValue: Attachment$treatAs | undefined;
 
-  public constructor({ data, type, name, length, url, inline, id, msgId, treatAs, cid, contentDescription }: AttachmentMeta) {
+  public constructor({ data, type, name, length, url, inline, id, msgId, treatAs, cid, contentDescription, contentTransferEncoding }: AttachmentMeta) {
     if (typeof data === 'undefined' && typeof url === 'undefined' && typeof id === 'undefined') {
       throw new Error('Attachment: one of data|url|id has to be set');
     }
@@ -62,6 +64,7 @@ export class Attachment {
     this.treatAsValue = treatAs || undefined;
     this.cid = cid || undefined;
     this.contentDescription = contentDescription || undefined;
+    this.contentTransferEncoding = contentTransferEncoding || undefined;
   }
 
   public static treatAsForPgpEncryptedAttachments = (mimeType: string | undefined, pgpEncryptedIndex: number | undefined) => {
@@ -79,6 +82,7 @@ export class Attachment {
     return new Attachment({
       data: Buf.fromUtfStr(ki.public),
       type: 'application/pgp-keys',
+      contentTransferEncoding: '7bit',
       name: `0x${ki.longid}.asc`,
     });
   };
