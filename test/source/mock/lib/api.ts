@@ -84,6 +84,10 @@ export class Api<REQ, RES> {
     });
   }
 
+  public setHandlers = (handlers: Handlers<REQ, RES>) => {
+    this.handlers = handlers;
+  };
+
   public listen = (host = '127.0.0.1', maxMb = 100): Promise<void> => {
     return new Promise((resolve, reject) => {
       try {

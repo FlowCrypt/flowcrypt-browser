@@ -13,7 +13,8 @@ import { mockSksEndpoints } from './sks/sks-endpoints';
 import { mockCustomerUrlFesEndpoints } from './fes/customer-url-fes-endpoints';
 import { mockSharedTenantFesEndpoints } from './fes/shared-tenant-fes-endpoints';
 
-export type HandlersDefinition = Handlers<{ query: { [k: string]: string }; body?: unknown }, unknown>;
+export type RequestType = { query: { [k: string]: string }; body?: unknown };
+export type HandlersDefinition = Handlers<RequestType, unknown>;
 
 export const startAllApisMock = async (logger: (line: string) => void) => {
   class LoggedApi<REQ, RES> extends Api<REQ, RES> {
@@ -25,7 +26,7 @@ export const startAllApisMock = async (logger: (line: string) => void) => {
       }
     };
   }
-  const api = new LoggedApi<{ query: { [k: string]: string }; body?: unknown }, unknown>('google-mock', {
+  const api = new LoggedApi<RequestType, unknown>('google-mock', {
     ...mockGoogleEndpoints,
     ...mockBackendEndpoints,
     ...mockAttesterEndpoints,

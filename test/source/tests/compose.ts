@@ -13,7 +13,7 @@ import { InboxPageRecipe } from './page-recipe/inbox-page-recipe';
 import { OauthPageRecipe } from './page-recipe/oauth-page-recipe';
 import { PageRecipe } from './page-recipe/abstract-page-recipe';
 import { SettingsPageRecipe } from './page-recipe/settings-page-recipe';
-import { protonMailCompatKey, somePubkey } from './../mock/attester/attester-endpoints';
+import { mockAttesterEndpoints, protonMailCompatKey, somePubkey } from './../mock/attester/attester-endpoints';
 import { TestVariant } from './../util';
 import { TestWithBrowser } from './../test';
 import { expect } from 'chai';
@@ -24,6 +24,9 @@ import { MsgUtil } from '../core/crypto/pgp/msg-util';
 import { Buf } from '../core/buf';
 import { PubkeyInfoWithLastCheck } from '../core/crypto/key';
 import { ElementHandle, Page } from 'puppeteer';
+import { mockGoogleEndpoints } from '../mock/google/google-endpoints';
+import { mockKeyManagerEndpoints } from '../mock/key-manager/key-manager-endpoints';
+import { mockCustomerUrlFesEndpoints } from '../mock/fes/customer-url-fes-endpoints';
 
 export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: TestWithBrowser) => {
   if (testVariant !== 'CONSUMER-LIVE-GMAIL') {
@@ -2545,6 +2548,16 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
     test(
       'user3@standardsubdomainfes.localhost:8001 - PWD encrypted message with FES web portal - pubkey recipient in bcc',
       testWithBrowser(undefined, async (t, browser) => {
+        t.mockApi?.setHandlers({
+          ...mockGoogleEndpoints,
+          // ...mockBackendEndpoints,
+          ...mockAttesterEndpoints,
+          ...mockKeyManagerEndpoints,
+          // ...mockWkdEndpoints,
+          // ...mockSksEndpoints,
+          ...mockCustomerUrlFesEndpoints,
+          // ...mockSharedTenantFesEndpoints,
+        });
         const acct = `user3@standardsubdomainfes.localhost:${t.urls?.port}`; // added port to trick extension into calling the mock
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
         await SetupPageRecipe.manualEnter(

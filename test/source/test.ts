@@ -113,6 +113,7 @@ const startMockApiAndCopyBuild = async (t: AvaContext) => {
 
     t.extensionDir = result.stdout;
     t.urls = new TestUrls(await browserPool.getExtensionId(t), address.port);
+    t.mockApi = mockApi;
   } else {
     t.log('Failed to get mock build address');
   }

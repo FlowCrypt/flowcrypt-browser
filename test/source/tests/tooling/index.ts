@@ -2,6 +2,8 @@
 
 import { ExecutionContext } from 'ava';
 import { TestUrls } from '../../browser/test-urls';
+import { RequestType } from '../../mock/all-apis-mock';
+import { Api } from '../../mock/lib/api';
 
 import { Consts } from '../../test';
 
@@ -12,6 +14,7 @@ export type AvaContext = ExecutionContext<unknown> & {
   attemptText?: string;
   extensionDir?: string;
   urls?: TestUrls;
+  mockApi?: Api<RequestType, unknown>;
 };
 
 const MAX_ATT_SIZE = 5 * 1024 * 1024;
