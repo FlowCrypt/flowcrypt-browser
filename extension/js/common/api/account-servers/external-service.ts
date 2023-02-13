@@ -190,10 +190,8 @@ export class ExternalService extends Api {
       const idToken = await InMemoryStore.get(this.acctEmail, InMemoryStoreKeys.ID_TOKEN);
       if (ApiErr.isAuthErr(firstAttemptErr) && idToken) {
         // force refresh token
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const { email } = GoogleAuth.parseIdToken(idToken);
         if (email) {
-          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
           return await ExternalService.apiCall(
             this.url,
             path,
