@@ -112,19 +112,15 @@ export class KeyImportUi {
       Ui.event.handle(async target => {
         $('.action_add_private_key').addClass('btn_disabled').attr('disabled');
         $('.input_email_alias').prop('checked', false);
-        const prv = await Catch.undefinedOnException(opgp.readKey({ armoredKey: String($(target).val()) }));
+        const prv = await Catch.undefinedOnException(KeyUtil.parse(String($(target).val())));
         if (prv !== undefined) {
           $('.action_add_private_key').removeClass('btn_disabled').removeAttr('disabled');
           if (submitKeyForAddrs !== undefined) {
-            const users = prv.users;
-            for (const user of users) {
-              const userId = user.userID;
-              if (userId) {
-                for (const inputCheckboxesWithEmail of $('.input_email_alias')) {
-                  if (String($(inputCheckboxesWithEmail).data('email')) === userId.email) {
-                    KeyImportUi.addAliasForSubmission(userId.email, submitKeyForAddrs);
-                    $(inputCheckboxesWithEmail).prop('checked', true);
-                  }
+            for (const email of prv.emails) {
+              for (const inputCheckboxesWithEmail of $('.input_email_alias')) {
+                if (String($(inputCheckboxesWithEmail).data('email')) === email) {
+                  KeyImportUi.addAliasForSubmission(email, submitKeyForAddrs);
+                  $(inputCheckboxesWithEmail).prop('checked', true);
                 }
               }
             }

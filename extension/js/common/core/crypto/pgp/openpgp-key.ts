@@ -305,9 +305,10 @@ export class OpenPGPKey {
     const key = await OpenPGPKey.extractExternalLibraryObjFromKey(pubkey);
     const result = new Map<string, string>();
     result.set(`Is Private?`, KeyUtil.formatResult(key.isPrivate()));
-    for (let i = 0; i < key.users.length; i++) {
+    const users = await OpenPGPKey.verifyAllUsers(key);
+    for (let i = 0; i < users.length; i++) {
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      result.set(`User id ${i}`, key.users[i].userID!.userID);
+      result.set(`User id ${i}`, (users[i].valid ? '' : '* REVOKED, INVALID OR MISSING SIGNATURE * ') + users[i].userID);
     }
     const user = await key.getPrimaryUser();
     result.set(`Primary User`, user?.user?.userID?.userID || 'No primary user');
@@ -470,17 +471,6 @@ export class OpenPGPKey {
     return keyPacket.isDecrypted() === true;
   };
 
-  public static getPrimaryUserId = async (pubs: OpenPGP.Key[], keyid: OpenPGP.KeyID): Promise<string | undefined> => {
-    for (const opgpkey of pubs) {
-      const matchingKeys = opgpkey.getKeys(keyid);
-      if (matchingKeys.length > 0) {
-        const primaryUser = await opgpkey.getPrimaryUser();
-        return primaryUser?.user?.userID?.userID;
-      }
-    }
-    return undefined;
-  };
-
   public static verify = async (msg: OpenpgpMsgOrCleartext, pubs: PubkeyInfo[]): Promise<VerifyRes> => {
     // todo: double-check if S/MIME ever gets here
     const validKeys = pubs.filter(x => !x.revoked && x.pubkey.family === 'openpgp').map(x => x.pubkey);
@@ -546,39 +536,35 @@ export class OpenPGPKey {
   private static getExpirationAsDateOrUndefined = (expirationTime: Date | typeof Infinity | null) => {
     return expirationTime instanceof Date ? expirationTime : undefined; // we don't differ between Infinity and null
   };
-  private static getUsersAndSelfCertifications = async (key: OpenPGP.Key) => {
-    const data = (
-      await Promise.all(
-        key.users
-          .filter(user => user?.userID)
-          .map(async user => {
-            const dataToVerify = { userID: user.userID, key: key.keyPacket };
-            const selfCertification = await OpenPGPKey.getLatestValidSignature(
-              user.selfCertifications,
-              key.keyPacket,
-              opgp.enums.signature.certGeneric,
-              dataToVerify
-            );
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            return { userid: user.userID!.userID, email: user.userID!.email, selfCertification };
-          })
-      )
-    ).filter(x => x.selfCertification);
-    // sort the same way as OpenPGP.js does
-    data.sort((a, b) => {
-      const A = a.selfCertification!; // eslint-disable-line @typescript-eslint/no-non-null-assertion
-      const B = b.selfCertification!; // eslint-disable-line @typescript-eslint/no-non-null-assertion
-      return Number(A.revoked) - Number(B.revoked) || Number(B.isPrimaryUserID) - Number(A.isPrimaryUserID) || Number(B.created) - Number(A.created);
-    });
-    return data;
+
+  // returns all the `key.users` preserving order with `valid` property
+  private static verifyAllUsers = async (key: OpenPGP.Key) => {
+    return await (
+      key as unknown as {
+        // a type patch until https://github.com/openpgpjs/openpgpjs/pull/1594 is resolved
+        // eslint-disable-next-line no-null/no-null
+        verifyAllUsers(): Promise<{ userID: string; keyID: OpenPGP.KeyID; valid: boolean | null }[]>;
+      }
+    ).verifyAllUsers();
   };
 
-  private static getSortedUserids = async (key: OpenPGP.Key): Promise<{ identities: string[]; emails: string[] }> => {
-    const data = await OpenPGPKey.getUsersAndSelfCertifications(key);
-    return {
-      identities: data.map(x => x.userid).filter(Boolean),
-      emails: data.map(x => x.email).filter(Boolean), // todo: toLowerCase()?
-    };
+  private static getSortedUserids = async (key: OpenPGP.Key) => {
+    const primaryUser = await Catch.undefinedOnException(key.getPrimaryUser());
+    // if there is no good enough user id to serve as primary identity, we assume other user ids are even worse
+    if (primaryUser?.user?.userID?.userID) {
+      const primaryUserId = primaryUser.user.userID.userID;
+      const identities = [
+        primaryUserId, // put the "primary" identity first
+        // other identities go in indeterministic order
+        ...Value.arr.unique((await OpenPGPKey.verifyAllUsers(key)).filter(x => x.valid && x.userID !== primaryUserId).map(x => x.userID)),
+      ];
+      const emails = identities.map(userid => Str.parseEmail(userid).email).filter(Boolean);
+      if (emails.length === identities.length) {
+        // OpenPGP.js uses RFC 5322 `email-addresses` parser, so we expect all identities to contain a valid e-mail address
+        return { emails, identities };
+      }
+    }
+    return { emails: [], identities: [] };
   };
 
   // mimicks OpenPGP.helper.getLatestValidSignature
@@ -669,7 +655,10 @@ export class OpenPGPKey {
   };
 
   private static getPrimaryKeyFlags = async (key: OpenPGP.Key): Promise<OpenPGP.enums.keyFlags> => {
-    const selfCertification = (await OpenPGPKey.getUsersAndSelfCertifications(key)).map(x => x.selfCertification).find(Boolean);
+    // Note: The selected selfCertification (and hence the flags) will differ based on the current date
+    const primaryUser = await Catch.undefinedOnException(key.getPrimaryUser());
+    // a type patch until https://github.com/openpgpjs/openpgpjs/pull/1594 is resolved
+    const selfCertification = (primaryUser as { selfCertification: OpenPGP.SignaturePacket } | undefined)?.selfCertification;
     if (!selfCertification) {
       return 0;
     }
