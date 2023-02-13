@@ -1422,7 +1422,7 @@ ByeOAQDnTbQi4XwXJrU4A8Nl9eyz16ZWUzEPwfWgahIG1eQDDA==
       expect(key.emails).to.eql(['first@mock.test']);
       const result = await KeyUtil.diagnose(key, '');
       expect(result.get('Primary User')).to.equal('first@mock.test');
-      expect(result.get('User id 0')).to.equal('* REVOKED, INVALID OR MISSING SIGNATURE *');
+      expect(result.get('User id 0')).to.equal('* REVOKED, INVALID OR MISSING SIGNATURE * <user@example.com>');
       expect(result.get('User id 1')).to.equal('first@mock.test');
       t.pass();
     });

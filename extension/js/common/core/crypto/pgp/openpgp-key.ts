@@ -308,7 +308,7 @@ export class OpenPGPKey {
     const users = await OpenPGPKey.verifyAllUsers(key);
     for (let i = 0; i < users.length; i++) {
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      result.set(`User id ${i}`, users[i].valid ? users[i].userID : '* REVOKED, INVALID OR MISSING SIGNATURE *');
+      result.set(`User id ${i}`, (users[i].valid ? '' : '* REVOKED, INVALID OR MISSING SIGNATURE * ') + users[i].userID);
     }
     const user = await key.getPrimaryUser();
     result.set(`Primary User`, user?.user?.userID?.userID || 'No primary user');

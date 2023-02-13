@@ -88,9 +88,7 @@ export class Str {
       return false;
     }
     email = email.replace(/\:8001$/, ''); // for MOCK tests, todo: remove from production
-    // todo: `email-addresses` parser used by OpenPGP.js consider top-level domains to be valid for emails e.g. address@domain
-    // should we allow it too (or use `email-addresses` package when manipulating user ids in keys?
-    // For now, I'm explicitly `localhost` domain, which is perfectly legal for testing
+    // `localhost` is a valid top-level domain for an email address, otherwise we require a second-level domain to be present
     return /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|localhost|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/i.test(
       email
     );
