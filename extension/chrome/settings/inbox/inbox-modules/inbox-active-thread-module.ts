@@ -112,7 +112,7 @@ export class InboxActiveThreadModule extends ViewModule<InboxView> {
       const { blocks, headers } = await Mime.process(mimeMsg);
       let r = '';
       let renderedAttachments = '';
-      for (const block of blocks) {
+      for (const [blockIndex, block] of blocks.entries()) {
         if (block.type === 'encryptedMsg' || block.type === 'publicKey' || block.type === 'privateKey' || block.type === 'signedMsg') {
           this.threadHasPgpBlock = true;
         }
@@ -123,6 +123,7 @@ export class InboxActiveThreadModule extends ViewModule<InboxView> {
           renderedAttachments += XssSafeFactory.renderableMsgBlock(
             this.view.factory,
             block,
+            blockIndex,
             message.id,
             from,
             this.view.storage.sendAs && !!this.view.storage.sendAs[from]
@@ -130,7 +131,14 @@ export class InboxActiveThreadModule extends ViewModule<InboxView> {
         } else if (this.view.showOriginal) {
           r += Xss.escape(block.content.toString()).replace(/\n/g, '<br>');
         } else {
-          r += XssSafeFactory.renderableMsgBlock(this.view.factory, block, message.id, from, this.view.storage.sendAs && !!this.view.storage.sendAs[from]);
+          r += XssSafeFactory.renderableMsgBlock(
+            this.view.factory,
+            block,
+            blockIndex,
+            message.id,
+            from,
+            this.view.storage.sendAs && !!this.view.storage.sendAs[from]
+          );
         }
       }
       if (renderedAttachments) {

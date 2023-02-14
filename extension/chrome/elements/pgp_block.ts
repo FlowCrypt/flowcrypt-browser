@@ -28,6 +28,9 @@ export class PgpBlockView extends View {
   public readonly isOutgoing: boolean;
   public readonly senderEmail: string;
   public readonly msgId: string | undefined;
+  // If the block was detected by MsgBlockParser.detectBlock,
+  // it may be useful to know its index in case we want to re-fetch the message by MsgId
+  public readonly blockIndex: number | undefined;
   public readonly encryptedMsgUrlParam: Buf | undefined;
   public readonly signature?: {
     // when parsedSignature is undefined, decryptModule will try to fetch the message
@@ -51,7 +54,18 @@ export class PgpBlockView extends View {
   public constructor() {
     super();
     Ui.event.protect();
-    const uncheckedUrlParams = Url.parse(['acctEmail', 'frameId', 'message', 'parentTabId', 'msgId', 'isOutgoing', 'senderEmail', 'signature', 'debug']);
+    const uncheckedUrlParams = Url.parse([
+      'acctEmail',
+      'frameId',
+      'message',
+      'parentTabId',
+      'msgId',
+      'blockIndex',
+      'isOutgoing',
+      'senderEmail',
+      'signature',
+      'debug',
+    ]);
     this.acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
     this.parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
     this.frameId = Assert.urlParamRequire.string(uncheckedUrlParams, 'frameId');
@@ -59,6 +73,7 @@ export class PgpBlockView extends View {
     this.debug = uncheckedUrlParams.debug === true;
     const senderEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'senderEmail');
     this.senderEmail = Str.parseEmail(senderEmail).email || '';
+    this.blockIndex = Assert.urlParamRequire.optionalInteger(uncheckedUrlParams, 'blockIndex');
     this.msgId = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'msgId');
     if (/\.\.|\\|\//.test(decodeURI(this.msgId || ''))) {
       throw new Error('API path traversal forbidden');

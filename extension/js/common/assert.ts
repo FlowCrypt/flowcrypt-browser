@@ -30,6 +30,19 @@ export class Assert {
       }
       throw new Error(`urlParamRequire.optionalString: type of ${name} unexpectedly ${typeof r}`);
     },
+    optionalInteger: (values: UrlParams, name: string): number | undefined => {
+      const r = Assert.abortAndRenderErrOnUrlParamTypeMismatch(values, name, 'string?');
+      if (typeof r === 'undefined') {
+        return undefined;
+      }
+      if (typeof r === 'string' && Number.isInteger(+r)) {
+        const parsed = Number.parseInt(r);
+        if (Number.isInteger(parsed)) {
+          return parsed;
+        }
+      }
+      throw new Error(`urlParamRequire.optionalInteger: value of ${name} doesn't look like an integer`);
+    },
     oneof: <T>(values: UrlParams, name: string, allowed: T[]): T => {
       return Assert.abortAndRenderErrOnUrlParamValMismatch(values, name, allowed as unknown as UrlParam[]) as unknown as T; // todo - there should be a better way
     },

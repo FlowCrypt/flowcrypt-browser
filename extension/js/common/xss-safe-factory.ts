@@ -1,8 +1,5 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
-// eslint-disable-next-line @typescript-eslint/triple-slash-reference
-/// <reference path="../../../node_modules/@types/chrome/index.d.ts" />
-
 'use strict';
 
 import { Dict, Str, Url, UrlParams } from './core/common.js';
@@ -60,7 +57,14 @@ export class XssSafeFactory {
    *
    * When edited, REQUEST A SECOND SET OF EYES TO REVIEW CHANGES
    */
-  public static renderableMsgBlock = (factory: XssSafeFactory, block: MsgBlock, msgId: string, senderEmail: string, isOutgoing?: boolean) => {
+  public static renderableMsgBlock = (
+    factory: XssSafeFactory,
+    block: MsgBlock,
+    blockIndex: number,
+    msgId: string,
+    senderEmail: string,
+    isOutgoing?: boolean
+  ) => {
     if (block.type === 'plainText') {
       return Xss.escape(block.content.toString()).replace(/\n/g, '<br>') + '<br><br>';
     } else if (block.type === 'plainHtml') {
@@ -69,12 +73,13 @@ export class XssSafeFactory {
       return factory.embeddedMsg(
         'encryptedMsg',
         block.complete ? PgpArmor.normalize(block.content.toString(), 'encryptedMsg') : '',
+        blockIndex,
         msgId,
         isOutgoing,
         senderEmail
       );
     } else if (block.type === 'signedMsg') {
-      return factory.embeddedMsg('signedMsg', block.content.toString(), msgId, isOutgoing, senderEmail);
+      return factory.embeddedMsg('signedMsg', block.content.toString(), blockIndex, msgId, isOutgoing, senderEmail);
     } else if (block.type === 'publicKey') {
       return factory.embeddedPubkey(PgpArmor.normalize(block.content.toString(), 'publicKey'), isOutgoing);
     } else if (block.type === 'privateKey') {
@@ -86,9 +91,9 @@ export class XssSafeFactory {
         ? factory.embeddedAttachment(new Attachment(block.attachmentMeta), block.type === 'encryptedAttachment')
         : '[missing encrypted attachment details]';
     } else if (block.type === 'signedHtml') {
-      return factory.embeddedMsg('signedHtml', '', msgId, isOutgoing, senderEmail, true); // empty msg so it re-fetches from api. True at the and for "signature"
+      return factory.embeddedMsg('signedHtml', '', blockIndex, msgId, isOutgoing, senderEmail, true); // empty msg so it re-fetches from api. True at the and for "signature"
     } else if (block.type === 'signedText') {
-      return factory.embeddedMsg('signedText', '', msgId, isOutgoing, senderEmail, true); // empty msg so it re-fetches from api. True at the and for "signature"
+      return factory.embeddedMsg('signedText', '', blockIndex, msgId, isOutgoing, senderEmail, true); // empty msg so it re-fetches from api. True at the and for "signature"
     } else {
       Catch.report(`don't know how to process block type: ${block.type} (not a hard fail)`);
       return '';
@@ -107,11 +112,7 @@ export class XssSafeFactory {
     if (blocks.length === 1 && blocks[0].type === 'plainText') {
       return undefined; // only has single block which is plain text - meaning
     }
-    let r = '';
-    for (const block of blocks) {
-      r += (r ? '\n\n' : '') + XssSafeFactory.renderableMsgBlock(factory, block, msgId, senderEmail, isOutgoing);
-    }
-    return r;
+    return blocks.map((block, blockIndex) => XssSafeFactory.renderableMsgBlock(factory, block, blockIndex, msgId, senderEmail, isOutgoing)).join('\n\n');
   };
 
   public srcImg = (relPath: string) => {
@@ -160,11 +161,19 @@ export class XssSafeFactory {
     );
   };
 
-  public srcPgpBlockIframe = (message: string, msgId?: string, isOutgoing?: boolean, senderEmail?: string, signature?: string | boolean) => {
+  public srcPgpBlockIframe = (
+    message: string,
+    blockIndex?: number,
+    msgId?: string,
+    isOutgoing?: boolean,
+    senderEmail?: string,
+    signature?: string | boolean
+  ) => {
     return this.frameSrc(this.extUrl('chrome/elements/pgp_block.htm'), {
       frameId: this.newId(),
       message,
       msgId,
+      blockIndex,
       senderEmail,
       isOutgoing,
       signature,
@@ -233,8 +242,19 @@ export class XssSafeFactory {
     });
   };
 
-  public embeddedMsg = (type: MsgBlockType, armored: string, msgId?: string, isOutgoing?: boolean, sender?: string, signature?: string | boolean) => {
-    return this.iframe(this.srcPgpBlockIframe(armored, msgId, isOutgoing, sender, signature), ['pgp_block', type]) + this.hideGmailNewMsgInThreadNotification;
+  public embeddedMsg = (
+    type: MsgBlockType,
+    armored: string,
+    blockIndex?: number,
+    msgId?: string,
+    isOutgoing?: boolean,
+    sender?: string,
+    signature?: string | boolean
+  ) => {
+    return (
+      this.iframe(this.srcPgpBlockIframe(armored, blockIndex, msgId, isOutgoing, sender, signature), ['pgp_block', type]) +
+      this.hideGmailNewMsgInThreadNotification
+    );
   };
 
   public embeddedPubkey = (armoredPubkey: string, isOutgoing?: boolean) => {

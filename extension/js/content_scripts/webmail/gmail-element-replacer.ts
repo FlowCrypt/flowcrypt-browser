@@ -465,7 +465,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
                 // if it looks like OpenPGP public key
                 nRenderedAttachments = await this.renderPublicKeyFromFile(a, attachmentsContainerInner, msgEl, isOutgoing, attachmentSel, nRenderedAttachments);
               } else if (openpgpType && ['encryptedMsg', 'signedMsg'].includes(openpgpType.type)) {
-                msgEl = this.updateMsgBodyEl_DANGEROUSLY(msgEl, 'append', this.factory.embeddedMsg(openpgpType.type, '', msgId, false, senderEmail)); // xss-safe-factory
+                msgEl = this.updateMsgBodyEl_DANGEROUSLY(msgEl, 'append', this.factory.embeddedMsg(openpgpType.type, '', undefined, msgId, false, senderEmail)); // xss-safe-factory
               } else {
                 attachmentSel.show().children('.attachment_loader').text('Unknown OpenPGP format');
                 nRenderedAttachments++;
@@ -474,7 +474,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
                 console.debug('processAttachments() try -> awaiting done and processed');
               }
             } else {
-              msgEl = this.updateMsgBodyEl_DANGEROUSLY(msgEl, 'set', this.factory.embeddedMsg('encryptedMsg', '', msgId, false, senderEmail)); // xss-safe-factory
+              msgEl = this.updateMsgBodyEl_DANGEROUSLY(msgEl, 'set', this.factory.embeddedMsg('encryptedMsg', '', undefined, msgId, false, senderEmail)); // xss-safe-factory
             }
           } else if (treatAs === 'publicKey') {
             // todo - pubkey should be fetched in pgp_pubkey.js
@@ -482,7 +482,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
           } else if (treatAs === 'privateKey') {
             nRenderedAttachments = await this.renderBackupFromFile(a, attachmentsContainerInner, msgEl, attachmentSel, nRenderedAttachments);
           } else if (treatAs === 'signature') {
-            const embeddedSignedMsgXssSafe = this.factory.embeddedMsg('signedMsg', '', msgId, false, senderEmail, true);
+            const embeddedSignedMsgXssSafe = this.factory.embeddedMsg('signedMsg', '', undefined, msgId, false, senderEmail, true);
             msgEl = this.updateMsgBodyEl_DANGEROUSLY(msgEl, 'set', embeddedSignedMsgXssSafe); // xss-safe-factory
           }
         } else if (treatAs === 'plainFile' && a.name.substr(-4) === '.asc') {
