@@ -237,6 +237,29 @@ class SignedMessageTestStrategy implements ITestMsgStrategy {
   };
 }
 
+class PgpEncryptedMessageTestStrategy implements ITestMsgStrategy {
+  public test = async (parseResult: ParseMsgResult) => {
+    const msg = Buf.fromBase64Str(parseResult.base64).toRawBytesStr();
+    if (!/Content-Transfer-Encoding: 7bit\r?\n\r?\n\Version: 1\r?\n/s.test(msg)) {
+      throw new HttpClientErr(`Could not find Version: 1 with Content-Transfer-Encoding: 7bit`);
+    }
+    const match = msg.match(/Content-Transfer-Encoding: 7bit\r?\n\r?\n(-----BEGIN PGP MESSAGE-----.*?-----END PGP MESSAGE-----)/s);
+    if (!match) {
+      throw new HttpClientErr(`Could not find the encrypted message with Content-Transfer-Encoding: 7bit`);
+    }
+    const keyInfo = await Config.getKeyInfo(['flowcrypt.compatibility.1pp1', 'flowcrypt.compatibility.2pp1']);
+    /* eslint-disable @typescript-eslint/no-non-null-assertion */
+    const decrypted = await MsgUtil.decryptMessage({
+      kisWithPp: keyInfo!,
+      encryptedData: Buf.fromUtfStr(match[1]),
+      verificationPubs: [],
+    });
+    if (!decrypted.success) {
+      throw new HttpClientErr(`Error: Could not decrypt the message`);
+    }
+  };
+}
+
 class PlainTextMessageTestStrategy implements ITestMsgStrategy {
   private readonly expectedText = 'New Plain Message';
 
@@ -394,6 +417,8 @@ export class TestBySubjectStrategyContext {
       this.strategy = new SaveMessageInStorageStrategy();
     } else if (subject.includes('Message With Image')) {
       this.strategy = new SaveMessageInStorageStrategy();
+    } else if (subject.includes('Test Sending Encrypted PGP/MIME Message')) {
+      this.strategy = new PgpEncryptedMessageTestStrategy();
     } else if (subject.includes('Message With Test Text')) {
       this.strategy = new SaveMessageInStorageStrategy();
     } else if (subject.includes('PWD encrypted message after reconnect account')) {

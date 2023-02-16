@@ -23,6 +23,7 @@ import * as forge from 'node-forge';
 import { ENVELOPED_DATA_OID, SmimeKey } from '../core/crypto/smime/smime-key';
 import { Str } from '../core/common';
 import { PgpPwd } from '../core/crypto/pgp/pgp-password';
+import { MimeHelper } from '../core/mime-helper.js';
 
 use(chaiAsPromised);
 
@@ -331,6 +332,18 @@ qC2PFoU1J4aEVe5Jz2yovJnzkx/aa0Hs4g0=
       const generatedString = PgpPwd.random();
       // eg TDW6-DU5M-TANI-LJXY
       expect(/^[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$/.test(generatedString)).to.equal(true);
+      t.pass();
+    });
+
+    test('[unit][MimeHelper.contentTransferEncoding7bitOrFallbackToQuotedPrintable] correctly detects possibility of 7bit encoding', async t => {
+      const UNICODE = `abcგ`;
+      const UNICODE_AS_BYTES = Buf.fromUtfStr(UNICODE);
+      const ASCII = 'Simple ASCII text\r\nwith line breaks';
+      const ASCII_AS_BYTES = Buf.fromUtfStr(ASCII);
+      expect(MimeHelper.contentTransferEncoding7bitOrFallbackToQuotedPrintable(UNICODE)).to.equal('quoted-printable');
+      expect(MimeHelper.contentTransferEncoding7bitOrFallbackToQuotedPrintable(UNICODE_AS_BYTES)).to.equal('quoted-printable');
+      expect(MimeHelper.contentTransferEncoding7bitOrFallbackToQuotedPrintable(ASCII)).to.equal('7bit');
+      expect(MimeHelper.contentTransferEncoding7bitOrFallbackToQuotedPrintable(ASCII_AS_BYTES)).to.equal('7bit');
       t.pass();
     });
 

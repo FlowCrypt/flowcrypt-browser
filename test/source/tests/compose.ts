@@ -1505,6 +1505,21 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
     );
 
     test(
+      'compose - sending PGP/MIME encrypted message',
+      testWithBrowser('compatibility', async (t, browser) => {
+        const subject = `Test Sending Encrypted PGP/MIME Message`;
+        const body = `This text is encrypted`;
+        const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
+        await ComposePageRecipe.fillMsg(composePage, { to: 'flowcrypt.compatibility@gmail.com' }, subject, body, {
+          richtext: true,
+          sign: true,
+          encrypt: true,
+        });
+        await ComposePageRecipe.sendAndClose(composePage); // the sent message is checked by PgpEncryptedMessageTestStrategy
+      })
+    );
+
+    test(
       'compose - sending and rendering encrypted message with image',
       testWithBrowser('compatibility', async (t, browser) => {
         await sendImgAndVerifyPresentInSentMsg(t, browser, 'encrypt');
