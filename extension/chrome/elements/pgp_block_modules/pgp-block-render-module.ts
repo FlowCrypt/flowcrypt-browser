@@ -23,7 +23,6 @@ export class PgpBlockViewRenderModule {
   private heightHist: number[] = [];
   private printMailInfoHtml!: string;
 
-  // eslint-disable-next-line no-empty-function
   public constructor(private view: PgpBlockView) {}
 
   public initPrintView = async () => {
@@ -133,14 +132,12 @@ export class PgpBlockViewRenderModule {
       </body>
       </html>
     `;
-    /* eslint-disable @typescript-eslint/no-non-null-assertion */
-    w!.document.write(html);
+    w?.document.write(html);
     // Give some time for above dom to load in print dialog
     // https://stackoverflow.com/questions/31725373/google-chrome-not-showing-image-in-print-preview
     await Ui.time.sleep(250);
-    w!.window.print();
-    w!.document.close();
-    /* eslint-enable @typescript-eslint/no-non-null-assertion */
+    w?.window.print();
+    w?.document.close();
   };
 
   public renderText = (text: string) => {

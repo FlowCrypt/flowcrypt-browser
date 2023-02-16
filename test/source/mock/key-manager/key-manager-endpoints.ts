@@ -2,7 +2,7 @@
 
 import { HttpClientErr, Status } from '../lib/api';
 import { HandlersDefinition } from '../all-apis-mock';
-import { isPut, isGet } from '../lib/mock-util';
+import { isPut, isGet, parsePort } from '../lib/mock-util';
 import { oauth } from '../lib/oauth';
 import { Dict } from '../../core/common';
 import { expect } from 'chai';
@@ -218,7 +218,8 @@ export const mockKeyManagerEndpoints: HandlersDefinition = {
   '/flowcrypt-email-key-manager/v1/keys/private': async ({ body }, req) => {
     const acctEmail = oauth.checkAuthorizationHeaderWithIdToken(req.headers.authorization);
     if (isGet(req)) {
-      if (acctEmail === 'wkd@google.mock.localhost:8001') {
+      const port = parsePort(req);
+      if (acctEmail === `wkd@google.mock.localhost:${port}`) {
         return { privateKeys: [{ decryptedPrivateKey: testConstants.wkdAtgooglemockflowcryptlocalcom8001Private }] };
       }
       if (acctEmail === 'get.key@key-manager-autogen.flowcrypt.test') {

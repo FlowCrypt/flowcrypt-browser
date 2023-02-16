@@ -16,7 +16,6 @@ import { processAndStoreKeysFromEkmLocally, saveKeysAndPassPhrase } from '../../
 import { Xss } from '../../../js/common/platform/xss.js';
 
 export class SetupWithEmailKeyManagerModule {
-  // eslint-disable-next-line no-empty-function
   public constructor(private view: SetupView) {}
 
   public continueEkmSetupHandler = async () => {
@@ -93,7 +92,7 @@ export class SetupWithEmailKeyManagerModule {
     const keygenAlgo = this.view.clientConfiguration.getEnforcedKeygenAlgo();
     if (!keygenAlgo) {
       const notSupportedErr = 'Combination of org rules not yet supported: PRV_AUTOIMPORT_OR_AUTOGEN cannot yet be used without enforce_keygen_algo.';
-      await Ui.modal.error(`${notSupportedErr}\n\nPlease ${Lang.general.contactMinimalSubsentence(this.view.isFesUsed())} to add support.`);
+      await Ui.modal.error(`${notSupportedErr}\n\nPlease ${Lang.general.contactMinimalSubsentence(this.view.isCustomerUrlFesUsed())} to add support.`);
       window.location.href = Url.create('index.htm', { acctEmail: this.view.acctEmail });
       return;
     }
@@ -113,7 +112,7 @@ export class SetupWithEmailKeyManagerModule {
     await Settings.retryUntilSuccessful(
       storePrvOnKm,
       'Failed to store newly generated key on FlowCrypt Email Key Manager',
-      Lang.general.contactIfNeedAssistance(this.view.isFesUsed())
+      Lang.general.contactIfNeedAssistance(this.view.isCustomerUrlFesUsed())
     );
     await saveKeysAndPassPhrase(this.view.acctEmail, [await KeyUtil.parse(generated.private)], setupOptions); // store encrypted key + pass phrase locally
   };

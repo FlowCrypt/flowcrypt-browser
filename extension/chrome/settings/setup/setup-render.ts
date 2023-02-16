@@ -16,7 +16,6 @@ import { KeyImportUi } from '../../../js/common/ui/key-import-ui.js';
 export class SetupRenderModule {
   public readonly emailDomainsToSkip = ['yahoo', 'live', 'outlook'];
 
-  // eslint-disable-next-line no-empty-function
   public constructor(private view: SetupView) {}
 
   public renderInitial = async (): Promise<void> => {
@@ -35,7 +34,7 @@ export class SetupRenderModule {
           e,
           Lang.setup.failedToLoadEmailAliases,
           () => this.renderInitial(),
-          Lang.general.contactIfNeedAssistance(this.view.isFesUsed())
+          Lang.general.contactIfNeedAssistance(this.view.isCustomerUrlFesUsed())
         );
       }
     }
@@ -124,7 +123,7 @@ export class SetupRenderModule {
         e,
         Lang.setup.failedToCheckIfAcctUsesEncryption,
         () => this.renderSetupDialog(),
-        Lang.general.contactIfNeedAssistance(this.view.isFesUsed())
+        Lang.general.contactIfNeedAssistance(this.view.isCustomerUrlFesUsed())
       );
     }
     if (keyserverRes.pubkeys.length) {
@@ -142,7 +141,7 @@ export class SetupRenderModule {
             e,
             Lang.setup.failedToCheckAccountBackups,
             () => this.renderSetupDialog(),
-            Lang.general.contactIfNeedAssistance(this.view.isFesUsed())
+            Lang.general.contactIfNeedAssistance(this.view.isCustomerUrlFesUsed())
           );
         }
         if (this.view.fetchedKeyBackupsUniqueLongids.length) {

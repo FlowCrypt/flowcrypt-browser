@@ -97,7 +97,7 @@ export class ComposePwdOrPubkeyContainerModule extends ViewModule<ComposeView> {
     } else {
       this.view.S.cached('expiration_note').show();
     }
-  }
+  };
 
   public isVisible = () => {
     return !this.view.S.cached('password_or_pubkey').is(':hidden');
@@ -129,8 +129,9 @@ export class ComposePwdOrPubkeyContainerModule extends ViewModule<ComposeView> {
       expirationTextEl.text(Str.pluralize(this.MSG_EXPIRE_DAYS_DEFAULT, 'day'));
     } else {
       try {
-        const response = await this.view.acctServer.accountGetAndUpdateLocalStore();
-        expirationTextEl.text(Str.pluralize(response.account.default_message_expire, 'day'));
+        await this.view.acctServer.fetchAndSaveClientConfiguration();
+        const defaultWebPortalMessageExpire = await this.view.acctServer.getWebPortalMessageExpireDays();
+        expirationTextEl.text(Str.pluralize(defaultWebPortalMessageExpire, 'day'));
       } catch (e) {
         ApiErr.reportIfSignificant(e);
         expirationTextEl.text(`(unknown days: ${ApiErr.eli5(e)})`);
@@ -139,7 +140,7 @@ export class ComposePwdOrPubkeyContainerModule extends ViewModule<ComposeView> {
   };
 
   private showMsgPwdUiAndColorBtn = async (anyNopgp: boolean, anyRevoked: boolean) => {
-    const isPasswordMessageDisabled = this.view.clientConfiguration.shouldDisablePasswordMessages() && !this.view.isFesUsed();
+    const isPasswordMessageDisabled = this.view.clientConfiguration.shouldDisableFlowCryptHostedPasswordMessages() && !this.view.isCustomerUrlFesUsed();
     if (!this.isVisible()) {
       await this.initExpirationText();
       this.view.S.cached('password_or_pubkey').css('display', 'table-row');

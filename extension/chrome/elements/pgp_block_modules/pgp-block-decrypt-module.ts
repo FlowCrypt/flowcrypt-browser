@@ -18,7 +18,6 @@ export class PgpBlockViewDecryptModule {
   private msgFetchedFromApi: false | GmailResponseFormat = false;
   private isPwdMsgBasedOnMsgSnippet: boolean | undefined;
 
-  // eslint-disable-next-line no-empty-function
   public constructor(private view: PgpBlockView) {}
 
   public initialize = async (verificationPubs: string[], forcePullMsgFromApi: boolean) => {

@@ -7,7 +7,7 @@ import { Str } from '../../../js/common/core/common.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 
 export class PgpBlockViewQuoteModule {
-  public constructor(private view: PgpBlockView) {} // eslint-disable-line no-empty-function
+  public constructor(private view: PgpBlockView) {}
 
   public separateQuotedContentAndRenderText = async (decryptedContent: string, isHtml: boolean) => {
     if (isHtml) {

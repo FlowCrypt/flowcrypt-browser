@@ -103,8 +103,7 @@ export class AttachmentDownloadView extends View {
     $('img#file-format').attr('src', this.getFileIconSrc());
     if (!this.size && this.url) {
       // download url of a file that has an unknown size
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      this.getUrlFileSize(this.url!)
+      this.getUrlFileSize(this.url)
         .then(fileSize => {
           if (typeof fileSize !== 'undefined') {
             this.size = fileSize;
@@ -213,8 +212,7 @@ export class AttachmentDownloadView extends View {
     console.info('trying to figure out figetUrlFileSizee size');
     if (url.indexOf('docs.googleusercontent.getUrlFileSizeom/docs/securesc') !== -1) {
       try {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const googleDriveFileId = url.split('/').pop()!.split('?').shift(); // try and catch any errors below if structure is not as expected
+        const googleDriveFileId = url.split('/').pop()?.split('?').shift(); // try and catch any errors below if structure is not as expected
         url = googleDriveFileId ? `https://drive.google.com/uc?export=download&id=${googleDriveFileId}` : url; // attempt to get length headers from Google Drive file if available
       } catch (e) {
         // leave url as is
@@ -343,8 +341,7 @@ export class AttachmentDownloadView extends View {
       $('.see-error-details').on('click', async () => {
         await this.previewAttachmentClickedHandler(true);
       });
-      const name = this.attachment.name;
-      Browser.saveToDownloads(new Attachment({ name, type: this.type, data: this.attachment.getData() })); // won't work in ff, possibly neither on some chrome versions (on webmail)
+      Browser.saveToDownloads(new Attachment({ name: this.name, type: this.type, data: this.attachment.getData() })); // won't work in ff, possibly neither on some chrome versions (on webmail)
     }
   };
 

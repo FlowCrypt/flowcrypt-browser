@@ -16,12 +16,14 @@ import { Gmail } from '../../common/api/email-provider/gmail/gmail.js';
 import { Injector } from '../../common/inject.js';
 import { PubLookup } from '../../common/api/pub-lookup.js';
 import { Notifications } from '../../common/notifications.js';
+// note: only types are supported for OpenPGP.js or web-stream-tools, their function calls will fail
 import { PgpArmor } from '../../common/core/crypto/pgp/pgp-armor.js';
 import { Ui } from '../../common/browser/ui.js';
 import { WebmailCommon } from '../../common/webmail.js';
 import { Xss } from '../../common/platform/xss.js';
 import { ClientConfiguration } from '../../common/client-configuration.js';
 import { SendAsAlias } from '../../common/platform/store/acct-store.js';
+// todo: can we somehow define a purely relay class for ContactStore to clearly show that crypto-libraries are not loaded and can't be used?
 import { ContactStore } from '../../common/platform/store/contact-store.js';
 import { Buf } from '../../common/core/buf.js';
 

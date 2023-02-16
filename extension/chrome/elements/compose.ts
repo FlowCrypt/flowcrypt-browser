@@ -165,10 +165,9 @@ export class ComposeView extends View {
     const storage = await AcctStore.get(this.acctEmail, ['sendAs', 'hide_message_password', 'fesUrl']);
     this.clientConfiguration = await ClientConfiguration.newInstance(this.acctEmail);
     if (this.clientConfiguration.shouldHideArmorMeta()) {
-      opgp.config.show_comment = false;
-      opgp.config.show_version = false;
+      opgp.config.showComment = false;
+      opgp.config.showVersion = false;
     }
-    opgp.initWorker({ path: '/lib/openpgp.worker.js' });
     this.pubLookup = new PubLookup(this.clientConfiguration);
     this.tabId = await BrowserMsg.requiredTabId();
     this.factory = new XssSafeFactory(this.acctEmail, this.tabId);
@@ -188,6 +187,7 @@ export class ComposeView extends View {
     this.renderModule = new ComposeRenderModule(this);
     this.myPubkeyModule = new ComposeMyPubkeyModule(this);
     this.storageModule = new ComposeStorageModule(this);
+    await this.acctServer.initialize();
     if (!this.isReplyBox) {
       await Assert.abortAndRenderErrOnUnprotectedKey(this.acctEmail);
     }
@@ -245,7 +245,7 @@ export class ComposeView extends View {
     this.draftModule.setHandlers(); // must be the last one so that 'onRecipientAdded/draftSave' to works properly
   };
 
-  public isFesUsed = () => Boolean(this.fesUrl);
+  public isCustomerUrlFesUsed = () => Boolean(this.fesUrl);
 }
 
 View.run(ComposeView);

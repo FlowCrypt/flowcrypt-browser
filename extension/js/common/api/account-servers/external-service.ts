@@ -1,11 +1,10 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 'use strict';
 
-import { Api, ProgressCb, ReqMethod } from '../shared/api.js';
+import { Api, ProgressCb, ProgressCbs, ReqFmt, ReqMethod } from '../shared/api.js';
 import { AcctStore } from '../../platform/store/acct-store.js';
-import { BackendRes, ProfileUpdate } from './flowcrypt-com-api.js';
 import { Dict, Str } from '../../core/common.js';
-import { ErrorReport, UnreportableError } from '../../platform/catch.js';
+import { ErrorReport } from '../../platform/catch.js';
 import { ApiErr, BackendAuthErr } from '../shared/api-error.js';
 import { FLAVOR, InMemoryStoreKeys } from '../../core/const.js';
 import { Attachment } from '../../core/attachment.js';
@@ -13,6 +12,7 @@ import { ParsedRecipients } from '../email-provider/email-provider-api.js';
 import { Buf } from '../../core/buf.js';
 import { ClientConfigurationError, ClientConfigurationJson } from '../../client-configuration.js';
 import { InMemoryStore } from '../../platform/store/in-memory-store.js';
+import { GoogleAuth } from '../email-provider/gmail/google-auth.js';
 
 // todo - decide which tags to use
 type EventTag = 'compose' | 'decrypt' | 'setup' | 'settings' | 'import-pub' | 'import-prv';
@@ -29,12 +29,12 @@ export namespace FesRes {
 }
 
 /**
- * FlowCrypt Enterprise Server (FES) may be deployed on-prem by enterprise customers.
- * This gives them more control. All OrgRules, log collectors, etc (as implemented) would then be handled by the FES.
- * Once fully integrated, this will allow customers to be fully independent of flowcrypt.com/api
+ * FlowCrypt External Service (FES) may be deployed on-prem by enterprise customers.
+ * This gives them more control. All Client Configurations, log collectors, etc (as implemented) would then be handled by the FES.
+ * This allows customers to be fully independent of flowcrypt.com/shared-tenant-fes
  */
 // ts-prune-ignore-next
-export class EnterpriseServer extends Api {
+export class ExternalService extends Api {
   public url: string;
 
   private domain: string;
@@ -96,20 +96,24 @@ export class EnterpriseServer extends Api {
   };
 
   public reportException = async (errorReport: ErrorReport): Promise<void> => {
-    await this.request<void>('POST', `/api/${this.apiVersion}/log-collector/exception`, await this.authHdr(), errorReport);
+    await this.request<void>('POST', `/api/${this.apiVersion}/log-collector/exception`, {}, errorReport);
   };
 
   public reportEvent = async (tags: EventTag[], message: string, details?: string): Promise<void> => {
-    await this.request<void>('POST', `/api/${this.apiVersion}/log-collector/exception`, await this.authHdr(), {
-      tags,
-      message,
-      details,
-    });
+    await this.request<void>(
+      'POST',
+      `/api/${this.apiVersion}/log-collector/exception`,
+      {},
+      {
+        tags,
+        message,
+        details,
+      }
+    );
   };
 
   public webPortalMessageNewReplyToken = async (): Promise<FesRes.ReplyToken> => {
-    const authHdr = await this.authHdr();
-    return await this.request<FesRes.ReplyToken>('POST', `/api/${this.apiVersion}/message/new-reply-token`, authHdr, {});
+    return await this.request<FesRes.ReplyToken>('POST', `/api/${this.apiVersion}/message/new-reply-token`, {}, {});
   };
 
   public webPortalMessageUpload = async (
@@ -138,28 +142,18 @@ export class EnterpriseServer extends Api {
       ),
     });
     const multipartBody = { content, details };
-    const authHdr = await this.authHdr();
-    return await EnterpriseServer.apiCall<FesRes.MessageUpload>(
-      this.url,
-      `/api/${this.apiVersion}/message`,
-      multipartBody,
-      'FORM',
-      { upload: progressCb },
-      authHdr,
-      'json',
-      'POST'
-    );
+    return await this.request<FesRes.MessageUpload>('POST', `/api/${this.apiVersion}/message`, {}, multipartBody, { upload: progressCb });
   };
 
   public messageGatewayUpdate = async (externalId: string, emailGatewayMessageId: string) => {
-    await this.request<void>('POST', `/api/${this.apiVersion}/message/${externalId}/gateway`, await this.authHdr(), {
-      emailGatewayMessageId,
-    });
-  };
-
-  public accountUpdate = async (profileUpdate: ProfileUpdate): Promise<BackendRes.FcAccountUpdate> => {
-    console.log('profile update ignored', profileUpdate);
-    throw new UnreportableError('Account update not implemented when using FlowCrypt Enterprise Server');
+    await this.request<void>(
+      'POST',
+      `/api/${this.apiVersion}/message/${externalId}/gateway`,
+      {},
+      {
+        emailGatewayMessageId,
+      }
+    );
   };
 
   private authHdr = async (): Promise<Dict<string>> => {
@@ -171,7 +165,50 @@ export class EnterpriseServer extends Api {
     throw new BackendAuthErr('Missing id token, please re-authenticate');
   };
 
-  private request = async <RT>(method: ReqMethod, path: string, headers: Dict<string> = {}, vals?: Dict<unknown>): Promise<RT> => {
-    return await EnterpriseServer.apiCall(this.url, path, vals, method === 'GET' ? undefined : 'JSON', undefined, headers, 'json', method);
+  private request = async <RT>(method: ReqMethod, path: string, headers: Dict<string> = {}, vals?: Dict<unknown>, progress?: ProgressCbs): Promise<RT> => {
+    let reqFmt: ReqFmt | undefined;
+    if (progress) {
+      reqFmt = 'FORM';
+    } else if (method !== 'GET') {
+      reqFmt = 'JSON';
+    }
+    try {
+      return await ExternalService.apiCall(
+        this.url,
+        path,
+        vals,
+        reqFmt,
+        progress,
+        {
+          ...headers,
+          ...(await this.authHdr()),
+        },
+        'json',
+        method
+      );
+    } catch (firstAttemptErr) {
+      const idToken = await InMemoryStore.get(this.acctEmail, InMemoryStoreKeys.ID_TOKEN);
+      if (ApiErr.isAuthErr(firstAttemptErr) && idToken) {
+        // force refresh token
+        const { email } = GoogleAuth.parseIdToken(idToken);
+        if (email) {
+          return await ExternalService.apiCall(
+            this.url,
+            path,
+            vals,
+            reqFmt,
+            progress,
+            {
+              ...headers,
+              // eslint-disable-next-line @typescript-eslint/naming-convention
+              Authorization: await GoogleAuth.googleApiAuthHeader(email, true),
+            },
+            'json',
+            method
+          );
+        }
+      }
+      throw firstAttemptErr;
+    }
   };
 }

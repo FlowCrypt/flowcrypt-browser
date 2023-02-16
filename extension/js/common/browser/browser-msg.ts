@@ -346,7 +346,7 @@ export class BrowserMsg {
     BrowserMsg.bgAddListener('pgpMsgDiagnosePubkeys', MsgUtil.diagnosePubkeys);
     BrowserMsg.bgAddListener('pgpMsgDecrypt', MsgUtil.decryptMessage);
     BrowserMsg.bgAddListener('pgpMsgVerifyDetached', MsgUtil.verifyDetached);
-    BrowserMsg.bgAddListener('pgpMsgType', MsgUtil.type);
+    BrowserMsg.bgAddListener('pgpMsgType', async (r: Bm.PgpMsgType) => MsgUtil.type(r));
     BrowserMsg.bgAddListener('saveFetchedPubkeys', saveFetchedPubkeysIfNewerThanInStorage);
     BrowserMsg.bgAddListener('pgpKeyBinaryToArmored', async (r: Bm.PgpKeyBinaryToArmored) => ({
       keys: await KeyUtil.parseAndArmorKeys(r.binaryKeysData),

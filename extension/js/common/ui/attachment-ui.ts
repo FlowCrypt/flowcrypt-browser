@@ -105,12 +105,12 @@ export class AttachmentUI {
         data,
         filename: file.name,
         armor: false,
-      })) as OpenPGP.EncryptBinaryResult;
+      }));
       attachments.push(
         new Attachment({
           name: Attachment.sanitizeName(file.name) + '.pgp',
           type: file.type,
-          data: encrypted.message.packets.write(),
+          data: encrypted.data,
         })
       );
     }
@@ -119,6 +119,7 @@ export class AttachmentUI {
 
   public clearAllAttachments = () => {
     this.attachedFiles = {};
+    this.uploader.reset();
   };
 
   public addFile = (file: File) => {

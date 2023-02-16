@@ -15,7 +15,6 @@ import { KeyStore } from '../../../js/common/platform/store/key-store.js';
 import { saveKeysAndPassPhrase } from '../../../js/common/helpers.js';
 
 export class SetupRecoverKeyModule {
-  // eslint-disable-next-line no-empty-function
   public constructor(private view: SetupView) {}
 
   public actionRecoverAccountHandler = async () => {
@@ -80,7 +79,9 @@ export class SetupRecoverKeyModule {
       }
     } catch (e) {
       ApiErr.reportIfSignificant(e);
-      await Ui.modal.error(`Error setting up FlowCrypt:\n\n${ApiErr.eli5(e)} (${String(e)})\n\n${Lang.general.contactIfHappensAgain(this.view.isFesUsed())}`);
+      await Ui.modal.error(
+        `Error setting up FlowCrypt:\n\n${ApiErr.eli5(e)} (${String(e)})\n\n${Lang.general.contactIfHappensAgain(this.view.isCustomerUrlFesUsed())}`
+      );
     }
   };
 
