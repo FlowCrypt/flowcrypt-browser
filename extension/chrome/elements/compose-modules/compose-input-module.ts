@@ -80,7 +80,7 @@ export class ComposeInputModule extends ViewModule<ComposeView> {
 
   public willInputLimitBeExceeded = (textToPaste: string, targetInputField: HTMLElement) => {
     const limit = 50000;
-    const currentLength = targetInputField.innerText.length;
+    const currentLength = targetInputField.innerText.trim().length;
     const isInputLimitExceeded = textToPaste.length + currentLength > limit;
     return isInputLimitExceeded;
   };
@@ -91,11 +91,11 @@ export class ComposeInputModule extends ViewModule<ComposeView> {
       div.appendChild(e.fragment);
       const html = div.innerHTML;
       const sanitized = this.isRichText() ? Xss.htmlSanitizeKeepBasicTags(html, 'IMG-KEEP') : Xss.htmlSanitizeAndStripAllTags(html, '<br>', false);
-      Xss.setElementContentDANGEROUSLY(div, sanitized); // xss-sanitized
-      if (this.willInputLimitBeExceeded(sanitized.trim(), this.squire.getRoot())) {
+      if (this.willInputLimitBeExceeded(sanitized, this.squire.getRoot())) {
         e.preventDefault();
         return;
       }
+      Xss.setElementContentDANGEROUSLY(div, sanitized); // xss-sanitized
       e.fragment.appendChild(div);
     });
   };
