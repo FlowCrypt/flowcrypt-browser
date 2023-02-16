@@ -8,6 +8,7 @@ import { MsgBlockParser } from '../msg-block-parser.js';
 import { PgpArmor } from './pgp/pgp-armor.js';
 import { opgp } from './pgp/openpgpjs-custom.js';
 import { OpenPGPKey } from './pgp/openpgp-key.js';
+import type * as OpenPGP from 'openpgp';
 import { SmimeKey } from './smime/smime-key.js';
 import { MsgBlock } from '../msg-block.js';
 import { EmailParts } from '../common.js';
@@ -95,7 +96,7 @@ export interface KeyInfoWithIdentityAndOptionalPp extends KeyInfoWithIdentity {
 
 export type KeyAlgo = 'curve25519' | 'rsa2048' | 'rsa3072' | 'rsa4096';
 
-export type PrvPacket = OpenPGP.packet.SecretKey | OpenPGP.packet.SecretSubkey;
+export type PrvPacket = OpenPGP.SecretKeyPacket | OpenPGP.SecretSubkeyPacket;
 
 export class UnexpectedKeyTypeError extends Error {}
 
@@ -203,7 +204,7 @@ export class KeyUtil {
       allErr: Error[] = [];
     let uncheckedOpgpKeyCount = 0;
     try {
-      const { keys, err } = await opgp.key.read(key);
+      const keys = await opgp.readKeys({ binaryKeys: key }); // todo: opgp.readKey ?
       uncheckedOpgpKeyCount = keys.length;
       for (const key of keys) {
         try {
@@ -221,9 +222,9 @@ export class KeyUtil {
           allErr.push(e as Error);
         }
       }
-      if (err) {
+      /* todo: re-throw? if (err) {
         allErr.push(...err);
-      }
+      } */
     } catch (e) {
       allErr.push(e as Error);
     }
@@ -246,12 +247,19 @@ export class KeyUtil {
     throw new Error(err.length ? err.map((e, i) => i + 1 + '. ' + e.message).join('\n') : 'Should not happen: no keys and no errors.');
   };
 
-  public static armor = (pubkey: Key): string => {
-    const armored = (pubkey as unknown as { rawArmored: string }).rawArmored;
+  public static armor = (key: Key): string => {
+    const armored = (key as unknown as { rawArmored: string }).rawArmored;
     if (!armored) {
       throw new Error('The Key object has no rawArmored field.');
     }
     return armored;
+  };
+
+  // remove crypto-library objects (useful when sending the object to/from background)
+  public static pack = (key: Key): void => {
+    if (key.family === 'openpgp') {
+      OpenPGPKey.pack(key);
+    }
   };
 
   public static diagnose = async (key: Key, passphrase: string): Promise<Map<string, string>> => {
@@ -303,16 +311,17 @@ export class KeyUtil {
   };
 
   // todo - this should be made to tolerate smime keys
-  public static normalize = async (armored: string): Promise<{ normalized: string; keys: OpenPGP.key.Key[] }> => {
+  public static normalize = async (type: 'publicKey' | 'privateKey', armored: string): Promise<{ normalized: string; keys: OpenPGP.Key[] }> => {
     try {
-      let keys: OpenPGP.key.Key[] = [];
+      let keys: OpenPGP.Key[] = [];
       armored = PgpArmor.normalize(armored, 'key');
       if (RegExp(PgpArmor.headers('publicKey', 're').begin).test(armored)) {
-        keys = (await opgp.key.readArmored(armored)).keys;
+        keys = await opgp.readKeys({ armoredKeys: armored });
       } else if (RegExp(PgpArmor.headers('privateKey', 're').begin).test(armored)) {
-        keys = (await opgp.key.readArmored(armored)).keys;
+        keys = await opgp.readKeys({ armoredKeys: armored });
       } else if (RegExp(PgpArmor.headers('encryptedMsg', 're').begin).test(armored)) {
-        keys = [new opgp.key.Key((await opgp.message.readArmored(armored)).packets)];
+        const packets = (await opgp.readMessage({ armoredMessage: armored })).packets;
+        keys = [type === 'publicKey' ? new opgp.PublicKey(packets) : new opgp.PrivateKey(packets)];
       }
       for (const k of keys) {
         for (const u of k.users) {
@@ -350,7 +359,7 @@ export class KeyUtil {
   public static decrypt = async (
     key: Key,
     passphrase: string,
-    optionalKeyid?: OpenPGP.Keyid,
+    optionalKeyid?: OpenPGP.KeyID,
     optionalBehaviorFlag?: 'OK-IF-ALREADY-DECRYPTED'
   ): Promise<boolean> => {
     if (key.family === 'openpgp') {
@@ -385,11 +394,11 @@ export class KeyUtil {
     }
   };
 
-  public static revoke = async (key: Key): Promise<string | undefined> => {
+  public static getOrCreateRevocationCertificate = async (key: Key): Promise<string | undefined> => {
     if (key.family === 'openpgp') {
-      return await OpenPGPKey.revoke(key);
+      return await OpenPGPKey.getOrCreateRevocationCertificate(key);
     } else {
-      throw new Error(`KeyUtil.revoke does not support key family ${key.family}`);
+      throw new Error(`KeyUtil.getOrCreateRevocationCertificate does not support key family ${key.family}`);
     }
   };
 

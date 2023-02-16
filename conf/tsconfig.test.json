@@ -10,14 +10,19 @@
     "module": "commonjs",
     "sourceMap": true,
     "outDir": "../build/test",
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "paths": {
+      "@openpgp/web-stream-tools": [
+        "../node_modules/@openpgp/web-stream-tools/web-stream-tools.d.ts",
+        "../build/streams/streams.js"
+      ]
+    }
   },
   "files": [
     "../extension/types/node-forge.d.ts",
     "../test/source/test.ts",
     "../test/source/patterns.ts",
     "../test/source/async-stack.ts",
-    "../test/source/buf.ts",
-    "../test/source/mock.ts"
+    "../test/source/buf.ts"
   ]
 }

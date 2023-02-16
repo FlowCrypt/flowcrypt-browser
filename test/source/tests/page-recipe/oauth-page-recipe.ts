@@ -46,7 +46,7 @@ export class OauthPageRecipe extends PageRecipe {
     action: 'close' | 'deny' | 'approve' | 'login' | 'login_with_invalid_state'
   ): Promise<void> => {
     try {
-      const isMock = oauthPage.target.url().includes('localhost') || oauthPage.target.url().includes('google.mock.localhost');
+      const isMock = oauthPage.target.url().includes('localhost');
       if (isMock) {
         await OauthPageRecipe.mock(t, oauthPage, acctEmail, action);
         return;

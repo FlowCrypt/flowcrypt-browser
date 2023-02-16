@@ -1,9 +1,8 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
-// eslint-disable-next-line @typescript-eslint/triple-slash-reference
-/// <reference path="../../../extension/js/common/core/types/openpgp.d.ts" />
-
 'use strict';
+
+import type OpenPGP from 'openpgp';
 
 export const requireOpenpgp = (): typeof OpenPGP => {
   // eslint-disable-next-line @typescript-eslint/no-var-requires

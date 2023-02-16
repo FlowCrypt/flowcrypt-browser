@@ -23,11 +23,11 @@ export class Str {
     let name: string | undefined;
     if (full.includes('<') && full.includes('>')) {
       email = full
-        .substr(full.indexOf('<') + 1, full.indexOf('>') - full.indexOf('<') - 1)
+        .substring(full.indexOf('<') + 1, full.indexOf('>'))
         .replace(/["']/g, '')
         .trim()
         .toLowerCase();
-      name = full.substr(0, full.indexOf('<')).replace(/["']/g, '').trim();
+      name = full.substring(0, full.indexOf('<')).replace(/["']/g, '').trim();
     } else {
       email = full.replace(/["']/g, '').trim().toLowerCase();
     }
@@ -87,8 +87,9 @@ export class Str {
     if (email.indexOf(' ') !== -1) {
       return false;
     }
-    email = email.replace(/\:8001$/, ''); // for MOCK tests until https://github.com/FlowCrypt/flowcrypt-browser/issues/4631
-    return /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/i.test(
+    email = email.replace(/\:8001$/, ''); // for MOCK tests, todo: remove from production
+    // `localhost` is a valid top-level domain for an email address, otherwise we require a second-level domain to be present
+    return /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|localhost|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/i.test(
       email
     );
   };

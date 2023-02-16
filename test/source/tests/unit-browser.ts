@@ -1,10 +1,9 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
-import * as ava from 'ava';
+import test from 'ava';
 
 import { TestVariant } from '../util';
 import { CommonAcct, TestWithBrowser } from '../test';
-import { TestUrls } from '../browser/test-urls';
 import { readdirSync, readFileSync } from 'fs';
 import { Buf } from '../core/buf';
 import { testConstants } from './tooling/consts';
@@ -17,10 +16,10 @@ export const defineUnitBrowserTests = (testVariant: TestVariant, testWithBrowser
 
     const defineAvaTest = (title: string, testCode: string, acct?: CommonAcct, flag?: 'only') => {
       // eslint-disable-next-line no-only-tests/no-only-tests
-      (flag !== 'only' ? ava.default : ava.default.only)(
+      (flag !== 'only' ? test : test.only)(
         title,
         testWithBrowser(acct, async (t, browser) => {
-          const hostPage = await browser.newPage(t, TestUrls.extension(`chrome/dev/ci_unit_test.htm`));
+          const hostPage = await browser.newExtensionPage(t, 'chrome/dev/ci_unit_test.htm');
           // update host page h1
           await hostPage.target.evaluate(title => {
             window.document.getElementsByTagName('h1')[0].textContent = title;
@@ -31,10 +30,11 @@ export const defineUnitBrowserTests = (testVariant: TestVariant, testWithBrowser
             (window as any).testConstants = object;
           }, testConstants);
           // prepare code to run
+          const testCodeWithMockPort = testCode.replace(/\:8001/g, ':' + t.urls?.port);
           const runThisCodeInBrowser = `
             (async () => {
               try {
-                return await ${testCode}
+                return await ${testCodeWithMockPort}
               } catch (e) {
                 return "unit test threw something:" + String(e) + "\\n\\n" + e.stack;
               }
@@ -55,16 +55,15 @@ export const defineUnitBrowserTests = (testVariant: TestVariant, testWithBrowser
         .toUtfStr()
         .trim();
       const testCasesInFile = unitTestCodes.split('\nBROWSER_UNIT_TEST_NAME(');
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      const header = testCasesInFile.shift()!;
-      if (!header.startsWith('/* ©️ 2016')) {
+      const header = testCasesInFile.shift();
+      if (!header?.startsWith('/* ©️ 2016')) {
         throw Error(`Expecting ${browserUnitTestsFolder}/${filename} to start with '/* ©️ 2016'`);
       }
       if (header.includes('require(') || header.includes('import')) {
         // do not import anything. Add deps to ci_unit_test.ts
         throw Error(`Unexpected import statement found in ${browserUnitTestsFolder}/${filename}`);
       }
-      const unitTests = [];
+      const unitTests: UnitTest[] = [];
       for (let code of testCasesInFile) {
         if (code.includes('/*')) {
           // just to make sure we don't parse something wrongly. Block comment only allowed in header.
@@ -131,7 +130,7 @@ export const defineUnitBrowserTests = (testVariant: TestVariant, testWithBrowser
         allUnitTests.push(...parseTestFile(filename));
       }
     }
-    const markedAsOnly: UnitTest[] = allUnitTests.filter(unitTest => unitTest.only);
+    const markedAsOnly = allUnitTests.filter(unitTest => unitTest.only);
     if (!markedAsOnly.length) {
       // no tests marked as only - run all
       for (const unitTest of allUnitTests) {
@@ -143,7 +142,7 @@ export const defineUnitBrowserTests = (testVariant: TestVariant, testWithBrowser
         defineAvaTest(unitTest.title, unitTest.code, unitTest.acct, 'only');
       }
       // eslint-disable-next-line no-only-tests/no-only-tests
-      ava.default.only('reminder to remove .only', async t => {
+      test.only('reminder to remove .only', async t => {
         t.fail(`some tests marked as .only, preventing other tests from running`);
       });
     }

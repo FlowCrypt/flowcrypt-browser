@@ -7,7 +7,6 @@ import { PageRecipe } from './abstract-page-recipe';
 import { assert, expect } from 'chai';
 import { Str } from '../../core/common';
 import { AvaContext } from '../tooling';
-import { TestUrls } from '../../browser/test-urls';
 import { Xss } from '../../platform/xss';
 import { Key, KeyUtil } from '../../core/crypto/key';
 import { readFileSync } from 'fs';
@@ -147,8 +146,7 @@ export class SettingsPageRecipe extends PageRecipe {
     } else {
       assert(false);
     }
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    const fp = Str.spaced(Xss.escape(key!.id));
+    const fp = Str.spaced(Xss.escape(key.id));
     await addPrvPage.waitAndClick('#toggle_input_passphrase');
     await addPrvPage.waitAndType('#input_passphrase', passphrase);
     if (checks.isSavePassphraseHidden !== undefined) {
@@ -165,7 +163,7 @@ export class SettingsPageRecipe extends PageRecipe {
     await Util.sleep(2);
     await addPrvPage.close();
     await Util.sleep(2);
-    const settingsPage = await browser.newPage(t, TestUrls.extensionSettings(acctEmail));
+    const settingsPage = await browser.newExtensionSettingsPage(t, acctEmail);
     await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
     await settingsPage.waitForContent('@container-settings-keys-list', fp); // confirm key successfully loaded
     await settingsPage.close();

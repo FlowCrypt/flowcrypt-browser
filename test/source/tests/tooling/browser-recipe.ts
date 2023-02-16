@@ -18,7 +18,7 @@ export class BrowserRecipe {
   public static oldAndNewComposeButtonSelectors = ['div.z0[class*="_destroyable"]', '.new_secure_compose_window_button'];
 
   public static openSettingsLoginButCloseOauthWindowBeforeGrantingPermission = async (t: AvaContext, browser: BrowserHandle, acctEmail: string) => {
-    const settingsPage = await browser.newPage(t, TestUrls.extensionSettings());
+    const settingsPage = await browser.newExtensionSettingsPage(t);
     const oauthPopup = await browser.newPageTriggeredBy(t, () => settingsPage.waitAndClick('@action-connect-to-gmail'));
     await OauthPageRecipe.google(t, oauthPopup, acctEmail, 'close');
     await settingsPage.waitAndRespondToModal('info', 'confirm', 'Explaining FlowCrypt webmail permissions');
@@ -26,7 +26,7 @@ export class BrowserRecipe {
   };
 
   public static openSettingsLoginApprove = async (t: AvaContext, browser: BrowserHandle, acctEmail: string) => {
-    const settingsPage = await browser.newPage(t, TestUrls.extensionSettings(acctEmail));
+    const settingsPage = await browser.newExtensionSettingsPage(t, acctEmail);
     const oauthPopup = await browser.newPageTriggeredBy(t, () => settingsPage.waitAndClick('@action-connect-to-gmail'));
     await OauthPageRecipe.google(t, oauthPopup, acctEmail, 'approve');
     return settingsPage;
@@ -125,14 +125,12 @@ export class BrowserRecipe {
     // eslint-disable-next-line @typescript-eslint/naming-convention
     const list = await gmail.users.drafts.list({ userId: 'me', access_token: accessToken });
     if (list.data.drafts) {
-      /* eslint-disable @typescript-eslint/no-non-null-assertion */
       await Promise.all(
-        list.data
-          .drafts!.filter(draft => draft.id)
-          // eslint-disable-next-line @typescript-eslint/naming-convention
+        list.data.drafts
+          .filter(draft => draft.id)
+          // eslint-disable-next-line @typescript-eslint/naming-convention, @typescript-eslint/no-non-null-assertion
           .map(draft => gmail.users.drafts.delete({ id: draft.id!, userId: 'me', access_token: accessToken }))
       );
-      /* eslint-enable @typescript-eslint/no-non-null-assertion */
     }
   };
 
