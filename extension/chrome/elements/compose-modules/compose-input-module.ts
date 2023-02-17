@@ -78,10 +78,11 @@ export class ComposeInputModule extends ViewModule<ComposeView> {
     return this.view.sendBtnModule.popover.choices.richtext;
   };
 
-  public willInputLimitBeExceeded = (textToPaste: string, targetInputField: HTMLElement) => {
+  public willInputLimitBeExceeded = (textToPaste: string, targetInputField: HTMLElement, selectionLengthGetter: () => number | undefined) => {
     const limit = 50000;
+    const toBeRemoved = selectionLengthGetter() || 0;
     const currentLength = targetInputField.innerText.trim().length;
-    const isInputLimitExceeded = textToPaste.length + currentLength > limit;
+    const isInputLimitExceeded = currentLength - toBeRemoved + textToPaste.length > limit;
     return isInputLimitExceeded;
   };
 
@@ -91,7 +92,7 @@ export class ComposeInputModule extends ViewModule<ComposeView> {
       div.appendChild(e.fragment);
       const html = div.innerHTML;
       const sanitized = this.isRichText() ? Xss.htmlSanitizeKeepBasicTags(html, 'IMG-KEEP') : Xss.htmlSanitizeAndStripAllTags(html, '<br>', false);
-      if (this.willInputLimitBeExceeded(sanitized, this.squire.getRoot())) {
+      if (this.willInputLimitBeExceeded(sanitized, this.squire.getRoot(), () => this.squire.getSelectedText().length)) {
         e.preventDefault();
         return;
       }

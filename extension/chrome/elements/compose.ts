@@ -227,7 +227,13 @@ export class ComposeView extends View {
       this.setHandler(async (el, ev) => {
         const clipboardEvent = ev.originalEvent as ClipboardEvent;
         if (clipboardEvent.clipboardData) {
-          const isInputLimitExceeded = this.inputModule.willInputLimitBeExceeded(clipboardEvent.clipboardData.getData('text/plain'), el);
+          const isInputLimitExceeded = this.inputModule.willInputLimitBeExceeded(clipboardEvent.clipboardData.getData('text/plain'), el, () => {
+            const selection = window.getSelection();
+            if (selection && selection.anchorNode === selection.focusNode && selection.anchorNode?.parentElement === el) {
+              return Math.abs(selection.anchorOffset - selection.focusOffset);
+            }
+            return 0;
+          });
           if (isInputLimitExceeded) {
             ev.preventDefault();
           }
