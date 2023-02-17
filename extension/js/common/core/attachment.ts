@@ -4,7 +4,6 @@
 
 import { Buf } from './buf.js';
 import { Str } from './common.js';
-import { MimeHelper } from './mime-helper.js';
 
 type Attachment$treatAs = 'publicKey' | 'privateKey' | 'encryptedMsg' | 'hidden' | 'signature' | 'encryptedFile' | 'plainFile';
 export type AttachmentMeta = {
@@ -19,7 +18,7 @@ export type AttachmentMeta = {
   treatAs?: Attachment$treatAs;
   cid?: string;
   contentDescription?: string;
-  contentTransferEncoding?: string;
+  contentTransferEncoding?: '7bit' | 'quoted-printable' | 'base64';
 };
 
 export type FcAttachmentLinkData = { name: string; type: string; size: number };
@@ -84,7 +83,7 @@ export class Attachment {
     return new Attachment({
       data,
       type: 'application/pgp-keys',
-      contentTransferEncoding: MimeHelper.contentTransferEncoding7bitOrFallbackToQuotedPrintable(data),
+      contentTransferEncoding: Str.is7bit(data) ? '7bit' : 'quoted-printable',
       name: `0x${ki.longid}.asc`,
     });
   };

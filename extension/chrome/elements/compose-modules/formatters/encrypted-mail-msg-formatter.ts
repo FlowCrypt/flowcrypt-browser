@@ -14,7 +14,6 @@ import { ParsedKeyInfo } from '../../../../js/common/core/crypto/key-store-util.
 import { Key, KeyUtil, PubkeyResult } from '../../../../js/common/core/crypto/key.js';
 import { MsgUtil, PgpMsgMethod } from '../../../../js/common/core/crypto/pgp/msg-util.js';
 import { SmimeKey } from '../../../../js/common/core/crypto/smime/smime-key.js';
-import { MimeHelper } from '../../../../js/common/core/mime-helper.js';
 import { Mime, SendableMsgBody } from '../../../../js/common/core/mime.js';
 import { Lang } from '../../../../js/common/lang.js';
 import { Catch } from '../../../../js/common/platform/catch.js';
@@ -229,7 +228,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
         type: 'application/octet-stream',
         contentDescription: 'OpenPGP encrypted message',
         name: 'encrypted.asc',
-        contentTransferEncoding: MimeHelper.contentTransferEncoding7bitOrFallbackToQuotedPrintable(data),
+        contentTransferEncoding: Str.is7bit(data) ? '7bit' : 'quoted-printable',
         inline: true,
       })
     );
