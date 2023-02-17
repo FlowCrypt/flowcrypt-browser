@@ -1515,6 +1515,8 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
           sign: true,
           encrypt: true,
         });
+        await composePage.waitAndClick('@action-include-pubkey');
+        expect(await composePage.hasClass('@action-include-pubkey', 'active')).to.be.true;
         await ComposePageRecipe.sendAndClose(composePage); // the sent message is checked by PgpEncryptedMessageTestStrategy
       })
     );

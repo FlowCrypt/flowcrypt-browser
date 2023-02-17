@@ -15,6 +15,7 @@ import { Str } from '../../../core/common.js';
 import { GMAIL_RECOVERY_EMAIL_SUBJECTS } from '../../../core/const.js';
 import { ENVELOPED_DATA_OID, SIGNED_DATA_OID, SmimeKey } from '../../../core/crypto/smime/smime-key.js';
 import { testConstants } from '../../../tests/tooling/consts.js';
+import { KeyUtil } from '../../../core/crypto/key.js';
 
 const checkPwdEncryptedMessage = (message: string | undefined) => {
   if (!message?.match(/https:\/\/flowcrypt.com\/shared-tenant-fes\/message\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/)) {
@@ -243,15 +244,22 @@ class PgpEncryptedMessageTestStrategy implements ITestMsgStrategy {
     if (!/Content-Transfer-Encoding: 7bit\r?\n\r?\n\Version: 1\r?\n/s.test(msg)) {
       throw new HttpClientErr(`Could not find Version: 1 with Content-Transfer-Encoding: 7bit`);
     }
-    const match = msg.match(/Content-Transfer-Encoding: 7bit\r?\n\r?\n(-----BEGIN PGP MESSAGE-----.*?-----END PGP MESSAGE-----)/s);
-    if (!match) {
+    const pubkeyMatch = msg.match(/Content-Transfer-Encoding: 7bit\r?\n\r?\n(-----BEGIN PGP PUBLIC KEY BLOCK-----.*?-----END PGP PUBLIC KEY BLOCK-----)/s);
+    if (!pubkeyMatch) {
+      throw new HttpClientErr(`Could not find the pubkey with Content-Transfer-Encoding: 7bit`);
+    }
+    const keyInfo = await Config.getKeyInfo(['flowcrypt.compatibility.1pp1']);
+    const pubkeys = await KeyUtil.parseMany(pubkeyMatch[1]);
+    expect(pubkeys).to.have.length(1);
+    expect(pubkeys[0].id).to.equal(keyInfo[0].id);
+    const msgMatch = msg.match(/Content-Transfer-Encoding: 7bit\r?\n\r?\n(-----BEGIN PGP MESSAGE-----.*?-----END PGP MESSAGE-----)/s);
+    if (!msgMatch) {
       throw new HttpClientErr(`Could not find the encrypted message with Content-Transfer-Encoding: 7bit`);
     }
-    const keyInfo = await Config.getKeyInfo(['flowcrypt.compatibility.1pp1', 'flowcrypt.compatibility.2pp1']);
     /* eslint-disable @typescript-eslint/no-non-null-assertion */
     const decrypted = await MsgUtil.decryptMessage({
       kisWithPp: keyInfo!,
-      encryptedData: Buf.fromUtfStr(match[1]),
+      encryptedData: Buf.fromUtfStr(msgMatch[1]),
       verificationPubs: [],
     });
     if (!decrypted.success) {
