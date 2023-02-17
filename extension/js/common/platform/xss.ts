@@ -150,8 +150,6 @@ export class Xss {
             );
             a.setAttribute('data-test', 'show-inline-image');
             Xss.replaceElementDANGEROUSLY(img, a.outerHTML); // xss-safe-value - "a" was build using dom node api
-          } else {
-            Xss.replaceElementDANGEROUSLY(img, `<span>[Remote images are blocked due to security]</span>`); // xss-safe-value
           }
         }
       }

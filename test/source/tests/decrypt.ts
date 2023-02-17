@@ -40,7 +40,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
         await inboxPage.waitForSelTestState('ready');
         await inboxPage.waitAll('iframe');
         const pgpBlock = await inboxPage.getFrame(['pgp_block.htm']);
-        await pgpBlock.waitForContent('@pgp-block-content', '[Remote images are blocked due to security]');
+        await pgpBlock.checkIfImageIsDisplayedCorrectly('#pgp_block img');
         await inboxPage.close();
       })
     );
