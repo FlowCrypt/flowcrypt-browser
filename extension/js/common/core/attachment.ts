@@ -6,6 +6,7 @@ import { Buf } from './buf.js';
 import { Str } from './common.js';
 
 type Attachment$treatAs = 'publicKey' | 'privateKey' | 'encryptedMsg' | 'hidden' | 'signature' | 'encryptedFile' | 'plainFile';
+type ContentTransferEncoding = '7bit' | 'quoted-printable' | 'base64';
 export type AttachmentMeta = {
   data?: Uint8Array;
   type?: string;
@@ -18,7 +19,7 @@ export type AttachmentMeta = {
   treatAs?: Attachment$treatAs;
   cid?: string;
   contentDescription?: string;
-  contentTransferEncoding?: '7bit' | 'quoted-printable' | 'base64';
+  contentTransferEncoding?: ContentTransferEncoding;
 };
 
 export type FcAttachmentLinkData = { name: string; type: string; size: number };
@@ -37,7 +38,7 @@ export class Attachment {
   public inline: boolean;
   public cid: string | undefined;
   public contentDescription: string | undefined;
-  public contentTransferEncoding: string | undefined;
+  public contentTransferEncoding?: ContentTransferEncoding;
 
   private bytes: Uint8Array | undefined;
   private treatAsValue: Attachment$treatAs | undefined;
