@@ -235,7 +235,7 @@ export class ComposeView extends View {
             return 0;
           });
           if (isInputLimitExceeded) {
-            await Ui.modal.warning("The paste operation can't be completed because the resulting text size would exceed the allowed limit of 50K");
+            await Ui.modal.warning("The paste operation can't be completed because the resulting text size would exceed the allowed limit of 50K.");
             ev.preventDefault();
           }
         }

@@ -94,7 +94,7 @@ export class ComposeInputModule extends ViewModule<ComposeView> {
       const html = div.innerHTML;
       const sanitized = this.isRichText() ? Xss.htmlSanitizeKeepBasicTags(html, 'IMG-KEEP') : Xss.htmlSanitizeAndStripAllTags(html, '<br>', false);
       if (this.willInputLimitBeExceeded(sanitized, this.squire.getRoot(), () => this.squire.getSelectedText().length)) {
-        await Ui.modal.warning("The paste operation can't be completed because the resulting text size would exceed the allowed limit of 50K");
+        await Ui.modal.warning("The paste operation can't be completed because the resulting text size would exceed the allowed limit of 50K.");
         e.preventDefault();
         return;
       }
