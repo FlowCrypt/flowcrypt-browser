@@ -31,7 +31,7 @@ import { PubLookup } from '../../js/common/api/pub-lookup.js';
 import { AcctStore } from '../../js/common/platform/store/acct-store.js';
 import { AccountServer } from '../../js/common/api/account-server.js';
 import { ComposeReplyBtnPopoverModule } from './compose-modules/compose-reply-btn-popover-module.js';
-import { Lang } from 'js/common/lang.js';
+import { Lang } from '../../js/common/lang.js';
 
 export class ComposeView extends View {
   public readonly acctEmail: string;
