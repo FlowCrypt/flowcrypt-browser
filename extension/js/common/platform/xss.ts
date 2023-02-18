@@ -150,6 +150,10 @@ export class Xss {
             );
             a.setAttribute('data-test', 'show-inline-image');
             Xss.replaceElementDANGEROUSLY(img, a.outerHTML); // xss-safe-value - "a" was build using dom node api
+          } else {
+            img.setAttribute('data-src', img.getAttribute('src') ?? '');
+            img.classList.add('replace_to_base64_image');
+            img.setAttribute('src', 'null');
           }
         }
       }

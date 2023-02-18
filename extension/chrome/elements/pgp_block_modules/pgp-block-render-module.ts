@@ -15,7 +15,7 @@ import { Xss } from '../../../js/common/platform/xss.js';
 import { MsgBlockParser } from '../../../js/common/core/msg-block-parser.js';
 import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
 import { GmailParser } from '../../../js/common/api/email-provider/gmail/gmail-parser.js';
-import { Str } from '../../../js/common/core/common.js';
+import { getBase64FromUrl, Str } from '../../../js/common/core/common.js';
 
 export class PgpBlockViewRenderModule {
   public doNotSetStateAsReadyYet = false;
@@ -181,6 +181,14 @@ export class PgpBlockViewRenderModule {
       // rendering message content
       $('.pgp_print_button').show();
       const pgpBlock = $('#pgp_block').html(Xss.htmlSanitizeKeepBasicTags(htmlContent, 'IMG-TO-LINK')); // xss-sanitized
+      this.replaceToBase64Images()
+        .then(() => {
+          console.log('loaded');
+        })
+        .catch(() => {
+          console.log('error');
+        });
+      console.log('block end');
       pgpBlock.find('a.image_src_link').one(
         'click',
         this.view.setHandler((el, ev) => this.displayImageSrcLinkAsImg(el as HTMLAnchorElement, ev as JQuery.Event<HTMLAnchorElement, null>))
@@ -311,6 +319,16 @@ export class PgpBlockViewRenderModule {
     if (!this.doNotSetStateAsReadyYet) {
       // in case async tasks are still being worked at
       Ui.setTestState('ready');
+    }
+  };
+
+  private replaceToBase64Images = async () => {
+    const replaceImages = $('#pgp_block .replace_to_base64_image');
+    for (const image of replaceImages) {
+      console.log(image.getAttribute('data-src') ?? '');
+      const data = await getBase64FromUrl(image.getAttribute('data-src') ?? '');
+      console.log(data);
+      image.setAttribute('src', data);
     }
   };
 
