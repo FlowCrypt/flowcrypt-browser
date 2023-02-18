@@ -10,6 +10,7 @@ import { ParsedRecipients } from '../../../js/common/api/email-provider/email-pr
 import { Str } from '../../../js/common/core/common.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { ViewModule } from '../../../js/common/view-module.js';
+import { Ui } from '../../../js/common/browser/ui.js';
 import { ComposeView } from '../compose.js';
 
 export class ComposeInputModule extends ViewModule<ComposeView> {
@@ -87,12 +88,13 @@ export class ComposeInputModule extends ViewModule<ComposeView> {
   };
 
   private handlePaste = () => {
-    this.squire.addEventListener('willPaste', (e: WillPasteEvent) => {
+    this.squire.addEventListener('willPaste', async (e: WillPasteEvent) => {
       const div = document.createElement('div');
       div.appendChild(e.fragment);
       const html = div.innerHTML;
       const sanitized = this.isRichText() ? Xss.htmlSanitizeKeepBasicTags(html, 'IMG-KEEP') : Xss.htmlSanitizeAndStripAllTags(html, '<br>', false);
       if (this.willInputLimitBeExceeded(sanitized, this.squire.getRoot(), () => this.squire.getSelectedText().length)) {
+        await Ui.modal.warning("The paste operation can't be completed because the resulting text size would exceed the allowed limit of 50K");
         e.preventDefault();
         return;
       }
