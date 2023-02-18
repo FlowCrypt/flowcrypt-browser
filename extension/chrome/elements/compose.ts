@@ -31,6 +31,7 @@ import { PubLookup } from '../../js/common/api/pub-lookup.js';
 import { AcctStore } from '../../js/common/platform/store/acct-store.js';
 import { AccountServer } from '../../js/common/api/account-server.js';
 import { ComposeReplyBtnPopoverModule } from './compose-modules/compose-reply-btn-popover-module.js';
+import { Lang } from 'js/common/lang.js';
 
 export class ComposeView extends View {
   public readonly acctEmail: string;
@@ -235,8 +236,8 @@ export class ComposeView extends View {
             return 0;
           });
           if (isInputLimitExceeded) {
-            await Ui.modal.warning("The paste operation can't be completed because the resulting text size would exceed the allowed limit of 50K.");
             ev.preventDefault();
+            await Ui.modal.warning(Lang.compose.inputLimitExceededOnPaste);
           }
         }
       })

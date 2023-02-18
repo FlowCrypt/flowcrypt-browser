@@ -12,6 +12,7 @@ import { Xss } from '../../../js/common/platform/xss.js';
 import { ViewModule } from '../../../js/common/view-module.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { ComposeView } from '../compose.js';
+import { Lang } from '../../../js/common/lang.js';
 
 export class ComposeInputModule extends ViewModule<ComposeView> {
   public squire = new window.Squire(this.view.S.cached('input_text').get(0));
@@ -94,8 +95,8 @@ export class ComposeInputModule extends ViewModule<ComposeView> {
       const html = div.innerHTML;
       const sanitized = this.isRichText() ? Xss.htmlSanitizeKeepBasicTags(html, 'IMG-KEEP') : Xss.htmlSanitizeAndStripAllTags(html, '<br>', false);
       if (this.willInputLimitBeExceeded(sanitized, this.squire.getRoot(), () => this.squire.getSelectedText().length)) {
-        await Ui.modal.warning("The paste operation can't be completed because the resulting text size would exceed the allowed limit of 50K.");
         e.preventDefault();
+        await Ui.modal.warning(Lang.compose.inputLimitExceededOnPaste);
         return;
       }
       Xss.setElementContentDANGEROUSLY(div, sanitized); // xss-sanitized
