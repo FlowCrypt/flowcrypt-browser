@@ -886,6 +886,23 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
       })
     );
 
+    test.failing(
+      'signature - cleartext signed messages from HTML are re-fetched when needed',
+      testWithBrowser('ci.tests.gmail', async (t, browser) => {
+        const acctEmail = 'ci.tests.gmail@flowcrypt.test';
+        const settingsPage = await browser.newExtensionSettingsPage(t, acctEmail);
+        const accessToken = await BrowserRecipe.getGoogleAccessToken(settingsPage, acctEmail); // todo: include in t?
+        await settingsPage.close();
+        const extraAuthHeaders = { Authorization: `Bearer ${accessToken}` }; // eslint-disable-line @typescript-eslint/naming-convention
+        const gmailPage = await browser.newPage(t, `${t.urls?.mockGmailUrl()}/1866867cfdb8b61e`, undefined, extraAuthHeaders);
+        await Util.sleep(5); // todo:
+        const pgpBlock = await gmailPage.getFrame(['pgp_block.htm']);
+        await pgpBlock.waitForContent('@pgp-encryption', 'not encrypted');
+        await pgpBlock.waitForContent('@pgp-signature', 'signed');
+        await gmailPage.close();
+      })
+    );
+
     test(
       `decrypt - missing pubkey in "incorrect message digest" scenario`,
       testWithBrowser('ci.tests.gmail', async (t, browser) => {

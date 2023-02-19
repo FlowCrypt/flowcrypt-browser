@@ -5,6 +5,7 @@ import { AddressObject, ParsedMail, StructuredHeader } from 'mailparser';
 import { readdir, readFile } from 'fs';
 import { Util } from '../../util/index';
 import { ParseMsgResult } from '../../util/parse';
+import { Buf } from '../../core/buf';
 
 type GmailMsg$header = { name: string; value: string };
 type GmailMsg$payload$body = { attachmentId?: string; size: number; data?: string };
@@ -214,7 +215,28 @@ export class GoogleData {
     return msgCopy;
   };
 
-  public static getMockGmailPage = (acct: string) => `<!DOCTYPE HTML><html>
+  public static getMockGmailPage = async (acct: string, msgId?: string) => {
+    let msgBlock = '';
+    if (msgId) {
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      const payload = (await GoogleData.withInitializedData(acct)).getMessage(msgId)!.payload!;
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      const fromHeader = payload.headers!.find(header => header.name === 'From')!;
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      const fromAddress = fromHeader.value!;
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      const htmlPart = payload.parts!.find(part => part.mimeType === 'text/html')!;
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      const htmlData = Buf.fromBase64Str(htmlPart.body!.data!).toUtfStr();
+      msgBlock = `<div class="adn ads" data-legacy-message-id="${msgId}">
+    <div class="gs">
+      <span email="${fromAddress}" name="mock sender" class="gD"><span>Mock Sender</span></span>
+      <div class="a3s">${htmlData}</div>
+    </div>
+  </div>
+  `;
+    }
+    return `<!DOCTYPE HTML><html>
   <body>
   <div class="gb_Cb">
     <div class="gb_Ib">${acct}</div>
@@ -223,9 +245,12 @@ export class GoogleData {
     <div class="gb_lb">Full Name</div>
   </div>
   <!-- Compose Button Selector -->
-  <div class="aeN" style="width: 180px; height: 800px"></div>
+  <div class="aeN" style="width: 180px; ">
+  </div>
+  ${msgBlock}
   </body></html>
   `;
+  };
 
   private static msgSubject = (m: GmailMsg): string => {
     const subjectHeader = m.payload && m.payload.headers && m.payload.headers.find(h => h.name === 'Subject');
