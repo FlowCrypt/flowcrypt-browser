@@ -38,13 +38,15 @@ export type TestMessage = {
   name?: string;
   content: string[];
   unexpectedContent?: string[];
-  password?: string;
-  params: string;
   quoted?: boolean;
   expectPercentageProgress?: boolean;
   signature?: string;
   encryption?: string;
   error?: string;
+};
+
+export type TestMessageWithParams = TestMessage & {
+  params: string;
 };
 
 export type TestKeyInfo = {
