@@ -13,6 +13,7 @@ import { Ui } from '../../../js/common/browser/ui.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { KeyStore } from '../../../js/common/platform/store/key-store.js';
 import { PassphraseStore } from '../../../js/common/platform/store/passphrase-store.js';
+import { MsgBlockParser } from '../../../js/common/core/msg-block-parser.js';
 
 export class PgpBlockViewDecryptModule {
   private msgFetchedFromApi: false | GmailResponseFormat = false;
@@ -49,14 +50,8 @@ export class PgpBlockViewDecryptModule {
           Xss.sanitizeRender('#pgp_block', 'Missing msgId to fetch message in pgp_block. ' + Lang.general.contactIfHappensAgain(!!this.view.fesUrl));
           this.view.renderModule.resizePgpBlockFrame();
         } else {
-          this.view.renderModule.renderText('Retrieving message...');
-          const format: GmailResponseFormat = !this.msgFetchedFromApi ? 'full' : 'raw';
-          const { armored, plaintext, subject, isPwdMsg } = await this.view.gmail.extractArmoredBlock(this.view.msgId, format, progress => {
-            this.view.renderModule.renderText(`Retrieving message... ${progress}%`);
-          });
-          this.isPwdMsgBasedOnMsgSnippet = isPwdMsg;
+          const { armored, plaintext, subject } = await this.retrieveMessage(this.view.msgId);
           this.view.renderModule.renderText('Decrypting...');
-          this.msgFetchedFromApi = format;
           if (plaintext) {
             await this.view.renderModule.renderAsRegularContent(plaintext);
           } else {
@@ -71,7 +66,38 @@ export class PgpBlockViewDecryptModule {
 
   public canAndShouldFetchFromApi = () => this.msgFetchedFromApi !== 'raw';
 
-  private decryptAndRender = async (encryptedData: Buf, verificationPubs: string[], plainSubject?: string) => {
+  private retrieveMessage = async (msgId: string) => {
+    // todo: msgId === this.view.msgId
+    this.view.renderModule.renderText('Retrieving message...');
+    const format: GmailResponseFormat = !this.msgFetchedFromApi ? 'full' : 'raw';
+    const extractionResult = await this.view.gmail.extractArmoredBlock(msgId, format, progress => {
+      this.view.renderModule.renderText(`Retrieving message... ${progress}%`);
+    });
+    this.isPwdMsgBasedOnMsgSnippet = extractionResult.isPwdMsg;
+    this.msgFetchedFromApi = format;
+    return extractionResult;
+  };
+
+  // #4342 - we have some corrupted cleartext signed message, find the correct message by the base64 signature characters
+  private getNeededCleartextMessage = (armoredInput: string, referenceData: string): string | undefined => {
+    const { blocks } = MsgBlockParser.detectBlocks(armoredInput);
+    const candidateBlocks = blocks.filter(b => b.type === 'signedMsg');
+    if (candidateBlocks.length === 0) {
+      return undefined;
+    }
+    // todo: what are actual regexes??????!!!
+    const initialSignatureMatch = referenceData.match(/-----BEGIN PGP SIGNATURE-----.*?\r?\n\r?\n(.*)-----END PGP SIGNATURE-----/s);
+    const initialSignature = initialSignatureMatch ? initialSignatureMatch[1].replace(/\s/g, '') : ' ';
+    for (const candidateBlock of candidateBlocks.map(b => (typeof b.content === 'string' ? b.content : b.content.toUtfStr()))) {
+      const match = candidateBlock.match(/-----BEGIN PGP SIGNED MESSAGE-----.*?-----BEGIN PGP SIGNATURE-----.*?\r?\n\r?\n(.*?)-----END PGP SIGNATURE-----/s);
+      if (match && match[1].replace(/\s/g, '') === initialSignature) {
+        return match[0];
+      }
+    }
+    return undefined;
+  };
+
+  private decryptAndRender = async (encryptedData: Buf, verificationPubs: string[], plainSubject?: string): Promise<void> => {
     if (!this.view.signature?.parsedSignature) {
       const kisWithPp = await KeyStore.getAllWithOptionalPassPhrase(this.view.acctEmail);
       const decrypt = async (verificationPubs: string[]) => await BrowserMsg.send.bg.await.pgpMsgDecrypt({ kisWithPp, encryptedData, verificationPubs });
@@ -79,9 +105,18 @@ export class PgpBlockViewDecryptModule {
       if (typeof result === 'undefined') {
         await this.view.errorModule.renderErr(Lang.general.restartBrowserAndTryAgain(!!this.view.fesUrl), undefined);
       } else if (result.success) {
+        if (result.isCleartext && result.signature?.error === 'Signed digest did not match' && this.view.msgId && !this.msgFetchedFromApi) {
+          // only try to re-fetch 'full'
+          console.info(`re-fetching message ${this.view.msgId} from api because looks like bad formatting: full`);
+          const { armored } = await this.retrieveMessage(this.view.msgId); // todo: subject?
+          const fetchedContent = this.getNeededCleartextMessage(armored, encryptedData.toUtfStr());
+          if (typeof fetchedContent !== 'undefined') {
+            return await this.decryptAndRender(Buf.with(fetchedContent), verificationPubs);
+          }
+        }
         await this.view.renderModule.decideDecryptedContentFormattingAndRender(
           result.content,
-          Boolean(result.isEncrypted),
+          result.isEncrypted,
           result.signature,
           verificationPubs,
           async (verificationPubs: string[]) => {

@@ -71,7 +71,8 @@ type SortedKeysForDecrypt = {
 export type DecryptSuccess = {
   success: true;
   signature?: VerifyRes;
-  isEncrypted?: boolean;
+  isCleartext: boolean;
+  isEncrypted: boolean;
   filename?: string;
   content: Buf;
 };
@@ -192,11 +193,12 @@ export class MsgUtil {
     // 2. OpenPGP cleartext message if isCleartext is true
     // 3. Other types of OpenPGP message
     // Hence isCleartext and isPkcs7 are mutually exclusive
-    if (prepared.isCleartext) {
+    const isCleartext = prepared.isCleartext;
+    if (isCleartext) {
       const signature = await OpenPGPKey.verify(prepared.message, await ContactStore.getPubkeyInfos(undefined, verificationPubs));
       const content = signature.content || Buf.fromUtfStr('no content');
       signature.content = undefined; // no need to duplicate data
-      return { success: true, content, isEncrypted: false, signature };
+      return { success: true, content, isEncrypted: false, isCleartext, signature };
     }
     const isEncrypted = true;
     const keys = prepared.isPkcs7 ? await MsgUtil.getSmimeKeys(kisWithPp, prepared.message) : await MsgUtil.getSortedKeys(kisWithPp, prepared.message);
@@ -215,7 +217,7 @@ export class MsgUtil {
     try {
       if (prepared.isPkcs7) {
         const decrypted = SmimeKey.decryptMessage(prepared.message, keys.prvForDecryptDecrypted[0].decrypted);
-        return { success: true, content: new Buf(decrypted), isEncrypted };
+        return { success: true, content: new Buf(decrypted), isEncrypted, isCleartext };
       }
       // cleartext and PKCS#7 are gone by this line
       const msg = prepared.message as OpenPGP.Message<OpenPGP.Data>;
@@ -270,7 +272,7 @@ export class MsgUtil {
           isEncrypted,
         };
       }
-      return { success: true, content, isEncrypted, filename: decrypted.getFilename() || undefined, signature };
+      return { success: true, content, isEncrypted, isCleartext, filename: decrypted.getFilename() || undefined, signature };
     } catch (e) {
       return { success: false, error: MsgUtil.cryptoMsgDecryptCategorizeErr(e, msgPwd), longids, isEncrypted };
     }
