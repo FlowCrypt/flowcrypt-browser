@@ -354,6 +354,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         await fileInput!.uploadFile('test/samples/small.txt', 'test/samples/small.png', 'test/samples/small.pdf');
         await ComposePageRecipe.sendAndClose(composePage, { password: 'test-pass', timeout: 90 });
+        // the sent message is checked by PwdOnlyEncryptedWithAttachmentTestStrategy
       })
     );
 
@@ -1517,7 +1518,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         });
         await composePage.waitAndClick('@action-include-pubkey');
         expect(await composePage.hasClass('@action-include-pubkey', 'active')).to.be.true;
-        await ComposePageRecipe.sendAndClose(composePage); // the sent message is checked by PgpEncryptedMessageTestStrategy
+        await ComposePageRecipe.sendAndClose(composePage); // the sent message is checked by PgpEncryptedMessageWithoutAttachmentTestStrategy
       })
     );
 
