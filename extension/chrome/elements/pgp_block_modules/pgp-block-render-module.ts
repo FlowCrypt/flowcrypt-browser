@@ -181,14 +181,7 @@ export class PgpBlockViewRenderModule {
       // rendering message content
       $('.pgp_print_button').show();
       const pgpBlock = $('#pgp_block').html(Xss.htmlSanitizeKeepBasicTags(htmlContent, 'IMG-TO-LINK')); // xss-sanitized
-      this.replaceToBase64Images()
-        .then(() => {
-          console.log('loaded');
-        })
-        .catch(() => {
-          console.log('error');
-        });
-      console.log('block end');
+      void this.replaceToBase64Images(); // we don't need to await for remote images to be loaded as they need to run in background
       pgpBlock.find('a.image_src_link').one(
         'click',
         this.view.setHandler((el, ev) => this.displayImageSrcLinkAsImg(el as HTMLAnchorElement, ev as JQuery.Event<HTMLAnchorElement, null>))
@@ -325,10 +318,18 @@ export class PgpBlockViewRenderModule {
   private replaceToBase64Images = async () => {
     const replaceImages = $('#pgp_block .replace_to_base64_image');
     for (const image of replaceImages) {
-      console.log(image.getAttribute('data-src') ?? '');
-      const data = await getBase64FromUrl(image.getAttribute('data-src') ?? '');
-      console.log(data);
-      image.setAttribute('src', data);
+      const imgUrl = image.dataset.src;
+      try {
+        if (imgUrl) {
+          const data = await getBase64FromUrl(imgUrl);
+          image.classList.remove('replace_to_base64_image');
+          image.setAttribute('src', data);
+          // Resize pgp bloc frame after windows is loaded
+          image.addEventListener('load', () => this.resizePgpBlockFrame());
+        }
+      } catch (e) {
+        this.view.errorModule.debug(`Error while getting base64 data for ${imgUrl}. ${e}`);
+      }
     }
   };
 

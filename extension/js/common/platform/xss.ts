@@ -153,7 +153,7 @@ export class Xss {
           } else {
             img.setAttribute('data-src', img.getAttribute('src') ?? '');
             img.classList.add('replace_to_base64_image');
-            img.setAttribute('src', 'null');
+            img.setAttribute('src', '/img/loading.gif');
           }
         }
       }

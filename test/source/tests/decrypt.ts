@@ -32,7 +32,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
     );
 
     test(
-      `decrypt - show warning for remote images`,
+      `decrypt - show remote images`,
       testWithBrowser('compatibility', async (t, browser) => {
         const threadId = '1850b93d7772173c';
         const acctEmail = 'flowcrypt.compatibility@gmail.com';
