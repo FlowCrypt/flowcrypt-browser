@@ -84,7 +84,7 @@ fi
 # WARN: the steps above are not working as of forge 0.10.0 due to eval/CSP mentioned here: https://github.com/digitalbazaar/forge/issues/814
 
 # remaining build steps sequentially
-( cd $SRCDIR && cp -r --parents ./**/*.{js,htm,css,woff2,png,gif,svg,txt} ./{.web-extension-id,manifest.json} ../$OUTDIR )
+( cd $SRCDIR && cp -r --parents ./**/*.{js,htm,css,woff2,png,svg,txt} ./{.web-extension-id,manifest.json} ../$OUTDIR )
 node ./build/tooling/resolve-modules --project ./tsconfig.json
 node ./build/tooling/fill-values
 node ./build/tooling/bundle-content-scripts
