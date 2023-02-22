@@ -41,6 +41,12 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
         await inboxPage.waitAll('iframe');
         const pgpBlock = await inboxPage.getFrame(['pgp_block.htm']);
         await pgpBlock.checkIfImageIsDisplayedCorrectly('#pgp_block img');
+        // Chceck if forwarded message contains img url
+        await inboxPage.waitAll('iframe');
+        // Get Reply Window (Composer) and click on reply button.
+        const replyFrame = await inboxPage.getFrame(['compose.htm']);
+        await replyFrame.waitAndClick('@action-forward');
+        await replyFrame.waitForContent('@input-body', 'https://www.google.com/images/branding/googlelogo/2x/googlelogo_color_272x92dp.png');
         await inboxPage.close();
       })
     );

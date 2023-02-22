@@ -6,7 +6,7 @@ import * as DOMPurify from 'dompurify';
 
 import { Str } from '../core/common.js';
 
-export type SanitizeImgHandling = 'IMG-DEL' | 'IMG-KEEP' | 'IMG-TO-LINK';
+export type SanitizeImgHandling = 'IMG-DEL' | 'IMG-KEEP' | 'IMG-TO-LINK' | 'IMG-TO-PLAIN-URL';
 
 /**
  * This class is in platform/ folder because most of it depends on platform specific code
@@ -155,6 +155,8 @@ export class Xss {
             img.classList.add('replace_to_base64_image');
             img.setAttribute('src', '/img/svgs/spinner-green-small.svg');
           }
+        } else if (imgHandling === 'IMG-TO-PLAIN-URL') {
+          Xss.replaceElementDANGEROUSLY(img, img.getAttribute('data-src') ?? ''); // xss-safe-value
         }
       }
       if ('target' in node) {
@@ -184,7 +186,7 @@ export class Xss {
    */
   public static htmlSanitizeAndStripAllTags = (dirtyHtml: string, outputNl: string, trim = true): string => {
     Xss.throwIfNotSupported();
-    let html = Xss.htmlSanitizeKeepBasicTags(dirtyHtml, 'IMG-DEL');
+    let html = Xss.htmlSanitizeKeepBasicTags(dirtyHtml, 'IMG-TO-PLAIN-URL');
     const random = Str.sloppyRandom(5);
     const br = `CU_BR_${random}`;
     const blockStart = `CU_BS_${random}`;
