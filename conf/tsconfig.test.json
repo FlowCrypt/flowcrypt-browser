@@ -12,10 +12,7 @@
     "outDir": "../build/test",
     "skipLibCheck": true,
     "paths": {
-      "@openpgp/web-stream-tools": [
-        "../node_modules/@openpgp/web-stream-tools/web-stream-tools.d.ts",
-        "../build/streams/streams.js"
-      ]
+      "@openpgp/web-stream-tools": ["../node_modules/@openpgp/web-stream-tools/types/index.v4.9.d.ts", "../build/streams/streams.js"]
     }
   },
   "files": [
