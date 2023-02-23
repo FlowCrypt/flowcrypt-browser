@@ -522,17 +522,6 @@ export class OpenPGPKey {
     return verifyRes;
   };
 
-  // patch until https://github.com/openpgpjs/openpgpjs/pull/1588 is resolved
-  private static getExpiration = async (key: OpenPGP.Key | OpenPGP.Subkey, date?: Date) => {
-    const expirationTime = await (
-      key as unknown as {
-        // eslint-disable-next-line no-null/no-null
-        getExpirationTime(date?: Date): Promise<Date | typeof Infinity | null>;
-      }
-    ).getExpirationTime(date);
-    return OpenPGPKey.getExpirationAsDateOrUndefined(expirationTime);
-  };
-
   private static getExpirationAsDateOrUndefined = (expirationTime: Date | typeof Infinity | null) => {
     return expirationTime instanceof Date ? expirationTime : undefined; // we don't differ between Infinity and null
   };
@@ -747,7 +736,7 @@ export class OpenPGPKey {
     if (!encryptionKey || !signingKey) {
       possibleExpirations.push(
         // todo: we can make it faster by manually collecting expirations from signatures?
-        ...(await Promise.all(key.subkeys.map(subkey => OpenPGPKey.getExpiration(subkey))))
+        ...(await Promise.all(key.subkeys.map(async subkey => OpenPGPKey.getExpirationAsDateOrUndefined(await subkey.getExpirationTime()))))
           .filter(Boolean)
           // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
           .map(expirationTime => expirationTime!.getTime())
@@ -764,7 +753,7 @@ export class OpenPGPKey {
       // find the key with latest expiration by trying dates of current key's expiration
       while (true) {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        expiration = (await OpenPGPKey.getExpiration(encryptionKeyIgnoringExpiration!))?.getTime();
+        expiration = OpenPGPKey.getExpirationAsDateOrUndefined(await encryptionKeyIgnoringExpiration!.getExpirationTime())?.getTime();
         if (!expiration || (primaryKeyExpiration && expiration >= primaryKeyExpiration)) break; // found a never-expiring key or a key with expiration beyond primary
         const nextCandidateKey: OpenPGP.Key | OpenPGP.Subkey | undefined = await Catch.undefinedOnException(
           key.getEncryptionKey(undefined, new Date(expiration))
@@ -778,7 +767,7 @@ export class OpenPGPKey {
         possibleExpirations
       );
       if (encryptionKeyIgnoringExpiration) {
-        expiration = (await OpenPGPKey.getExpiration(encryptionKeyIgnoringExpiration))?.getTime();
+        expiration = OpenPGPKey.getExpirationAsDateOrUndefined(await encryptionKeyIgnoringExpiration.getExpirationTime())?.getTime();
       }
     }
     if (primaryKeyExpiration && (!expiration || expiration > primaryKeyExpiration)) {
