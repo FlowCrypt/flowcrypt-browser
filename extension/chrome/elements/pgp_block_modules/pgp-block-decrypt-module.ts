@@ -85,11 +85,12 @@ export class PgpBlockViewDecryptModule {
     if (candidateBlocks.length === 0) {
       return undefined;
     }
-    // todo: what are actual regexes??????!!!
-    const initialSignatureMatch = referenceData.match(/-----BEGIN PGP SIGNATURE-----.*?\r?\n\r?\n(.*)-----END PGP SIGNATURE-----/s);
+    const initialSignatureMatch = referenceData.match(/\r?\n-----BEGIN PGP SIGNATURE-----(?=[\r\n]).*?\r?\n\r?\n(.*)\r?\n-----END PGP SIGNATURE-----$/s);
     const initialSignature = initialSignatureMatch ? initialSignatureMatch[1].replace(/\s/g, '') : ' ';
     for (const candidateBlock of candidateBlocks.map(b => (typeof b.content === 'string' ? b.content : b.content.toUtfStr()))) {
-      const match = candidateBlock.match(/-----BEGIN PGP SIGNED MESSAGE-----.*?-----BEGIN PGP SIGNATURE-----.*?\r?\n\r?\n(.*?)-----END PGP SIGNATURE-----/s);
+      const match = candidateBlock.match(
+        /^-----BEGIN PGP SIGNED MESSAGE-----\r?\n.*?\r?\n-----BEGIN PGP SIGNATURE-----(?=[\r\n]).*?\r?\n\r?\n(.*?)\r?\n-----END PGP SIGNATURE-----\r?\n?$/s
+      );
       if (match && match[1].replace(/\s/g, '') === initialSignature) {
         return match[0];
       }
