@@ -162,6 +162,71 @@ export class AttachmentDownloadView extends View {
     }
   };
 
+  protected prepareFileAttachmentDownload = async (attachment: Attachment, parentTabId: string) => {
+    const blacklistedFiles = [
+      '.ade',
+      '.adp',
+      '.apk',
+      '.appx',
+      '.appxbundle',
+      '.bat',
+      '.cab',
+      '.chm',
+      '.cmd',
+      '.com',
+      '.cpl',
+      '.diagcab',
+      '.diagcfg',
+      '.diagpack',
+      '.dll',
+      '.dmg',
+      '.ex',
+      '.ex_',
+      '.exe',
+      '.hta',
+      '.img',
+      '.ins',
+      '.iso',
+      '.isp',
+      '.jar',
+      '.jnlp',
+      '.js',
+      '.jse',
+      '.lib',
+      '.lnk',
+      '.mde',
+      '.msc',
+      '.msi',
+      '.msix',
+      '.msixbundle',
+      '.msp',
+      '.mst',
+      '.nsh',
+      '.pif',
+      '.ps1',
+      '.scr',
+      '.sct',
+      '.shb',
+      '.sys',
+      '.vb',
+      '.vbe',
+      '.vbs',
+      '.vhd',
+      '.vxd',
+      '.wsc',
+      '.wsf',
+      '.wsh',
+      '.xll',
+    ];
+    const badFileExtensionWarning = 'This executable file was not checked for viruses, and may be dangerous to download or run. Proceed anyway?'; // xss-safe-value
+    if (blacklistedFiles.some(badFileExtension => attachment.name.endsWith(badFileExtension))) {
+      if (!(await BrowserMsg.send.showConfirmation(parentTabId, { message: badFileExtensionWarning }))) {
+        return;
+      }
+    }
+    Browser.saveToDownloads(attachment);
+  };
+
   protected renderErr = (e: unknown) => {
     if (ApiErr.isAuthErr(e)) {
       BrowserMsg.send.notificationShowAuthPopupNeeded(this.parentTabId, { acctEmail: this.acctEmail });
@@ -322,7 +387,7 @@ export class AttachmentDownloadView extends View {
       if (!result.filename || ['msg.txt', 'null'].includes(result.filename)) {
         result.filename = this.attachment.name;
       }
-      await Attachment.prepareFileAttachmentDownload(attachmentForSave, this.parentTabId);
+      await this.prepareFileAttachmentDownload(attachmentForSave, this.parentTabId);
     } else if (result.error.type === DecryptErrTypes.needPassphrase) {
       BrowserMsg.send.passphraseDialog(this.parentTabId, {
         type: 'attachment',

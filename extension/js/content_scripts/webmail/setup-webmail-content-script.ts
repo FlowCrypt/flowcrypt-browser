@@ -239,7 +239,7 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
       await Ui.modal.attachmentPreview(iframeUrl);
     });
     BrowserMsg.addListener('show_confirmation', async ({ message }: Bm.ShowConfirmation): Promise<Bm.Res.ShowConfirmationResult> => {
-      return Ui.modal.confirm(message);
+      return await Ui.modal.confirm(message);
     });
 
     BrowserMsg.listen(tabId);

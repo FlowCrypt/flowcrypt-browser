@@ -80,7 +80,7 @@ View.run(
             .css('display', 'flex')
             .on('click', async e => {
               e.stopPropagation();
-              await Attachment.prepareFileAttachmentDownload(attachmentForSave, this.parentTabId);
+              await this.prepareFileAttachmentDownload(attachmentForSave, this.parentTabId);
             });
           $('#attachment-preview-filename').text(this.origNameBasedOnFilename);
         }
