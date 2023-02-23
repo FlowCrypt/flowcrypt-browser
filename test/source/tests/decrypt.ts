@@ -901,7 +901,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
         await settingsPage.close();
         const extraAuthHeaders = { Authorization: `Bearer ${accessToken}` }; // eslint-disable-line @typescript-eslint/naming-convention
         const gmailPage = await browser.newPage(t, `${t.urls?.mockGmailUrl()}/1866867cfdb8b61e`, undefined, extraAuthHeaders);
-        await Util.sleep(5); // todo:
+        await gmailPage.waitAll('iframe');
         const pgpBlock = await gmailPage.getFrame(['pgp_block.htm']);
         // should re-fetch the correct text/plain text with signature
         await BrowserRecipe.pgpBlockCheck(t, pgpBlock, {
