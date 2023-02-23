@@ -165,11 +165,6 @@ export class PgpArmor {
   };
 
   public static armor = (messagetype: OpenPGP.enums.armor, body: object): string => {
-    return (
-      opgp as {
-        // https://github.com/openpgpjs/openpgpjs/pull/1585
-        armor(messagetype: OpenPGP.enums.armor, body: object, partindex?: number, parttotal?: number, customComment?: string, config?: OpenPGP.Config): string;
-      }
-    ).armor(messagetype, body, undefined, undefined, undefined, opgp.config);
+    return opgp.armor(messagetype, body, undefined, undefined, undefined, opgp.config);
   };
 }
