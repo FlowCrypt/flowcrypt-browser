@@ -62,6 +62,7 @@ console.info('background_process.js starting');
   BrowserMsg.bgAddListener('storeAcctSet', (r: Bm.StoreAcctSet) => AcctStore.set(r.acctEmail, r.values));
   BrowserMsg.bgAddListener('processAndStoreKeysFromEkmLocally', processAndStoreKeysFromEkmLocally);
   BrowserMsg.bgAddListener('getLocalKeyExpiration', getLocalKeyExpiration);
+  BrowserMsg.bgAddListener('showConfirmation', async (r: Bm.ShowConfirmation) => BgHandlers.showConfirmation(r));
 
   // todo - when https://github.com/FlowCrypt/flowcrypt-browser/issues/2560
   //   is fixed, this can be moved to the gmail content script, and some may be removed

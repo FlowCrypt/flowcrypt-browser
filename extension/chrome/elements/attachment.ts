@@ -162,7 +162,7 @@ export class AttachmentDownloadView extends View {
     }
   };
 
-  protected prepareFileAttachmentDownload = async (attachment: Attachment, parentTabId: string) => {
+  protected prepareFileAttachmentDownload = async (attachment: Attachment) => {
     const blacklistedFiles = [
       '.ade',
       '.adp',
@@ -220,7 +220,7 @@ export class AttachmentDownloadView extends View {
     ];
     const badFileExtensionWarning = 'This executable file was not checked for viruses, and may be dangerous to download or run. Proceed anyway?'; // xss-safe-value
     if (blacklistedFiles.some(badFileExtension => attachment.name.endsWith(badFileExtension))) {
-      if (!(await BrowserMsg.send.showConfirmation(parentTabId, { message: badFileExtensionWarning }))) {
+      if (!(await BrowserMsg.send.bg.await.showConfirmation({ message: badFileExtensionWarning }))) {
         return;
       }
     }
@@ -387,7 +387,7 @@ export class AttachmentDownloadView extends View {
       if (!result.filename || ['msg.txt', 'null'].includes(result.filename)) {
         result.filename = this.attachment.name;
       }
-      await this.prepareFileAttachmentDownload(attachmentForSave, this.parentTabId);
+      await this.prepareFileAttachmentDownload(attachmentForSave);
     } else if (result.error.type === DecryptErrTypes.needPassphrase) {
       BrowserMsg.send.passphraseDialog(this.parentTabId, {
         type: 'attachment',

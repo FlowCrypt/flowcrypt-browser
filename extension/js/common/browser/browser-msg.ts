@@ -252,6 +252,7 @@ export class BrowserMsg {
           BrowserMsg.sendAwait(undefined, 'processAndStoreKeysFromEkmLocally', bm, true) as Promise<Bm.Res.ProcessAndStoreKeysFromEkmLocally>,
         getLocalKeyExpiration: (bm: Bm.GetLocalKeyExpiration) =>
           BrowserMsg.sendAwait(undefined, 'getLocalKeyExpiration', bm, true) as Promise<Bm.Res.GetLocalKeyExpiration>,
+        showConfirmation: (bm: Bm.ShowConfirmation) => BrowserMsg.sendAwait(undefined, 'showConfirmation', bm, true) as Promise<Bm.Res.ShowConfirmationResult>,
       },
     },
     passphraseEntry: (dest: Bm.Dest, bm: Bm.PassphraseEntry) => BrowserMsg.sendCatch(dest, 'passphrase_entry', bm),
@@ -285,8 +286,6 @@ export class BrowserMsg {
     addToContacts: (dest: Bm.Dest) => BrowserMsg.sendCatch(dest, 'addToContacts', {}),
     reRenderRecipient: (dest: Bm.Dest, bm: Bm.ReRenderRecipient) => BrowserMsg.sendCatch(dest, 'reRenderRecipient', bm),
     showAttachmentPreview: (dest: Bm.Dest, bm: Bm.ShowAttachmentPreview) => BrowserMsg.sendCatch(dest, 'show_attachment_preview', bm),
-    showConfirmation: (dest: Bm.Dest, bm: Bm.ShowConfirmation) =>
-      BrowserMsg.sendAwait(dest, 'show_confirmation', bm, true) as Promise<Bm.Res.ShowConfirmationResult>,
   };
   /* eslint-disable @typescript-eslint/naming-convention */
   private static HANDLERS_REGISTERED_BACKGROUND: Handlers = {};

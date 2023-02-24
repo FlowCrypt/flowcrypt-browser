@@ -238,10 +238,6 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
     BrowserMsg.addListener('show_attachment_preview', async ({ iframeUrl }: Bm.ShowAttachmentPreview) => {
       await Ui.modal.attachmentPreview(iframeUrl);
     });
-    BrowserMsg.addListener('show_confirmation', async ({ message }: Bm.ShowConfirmation): Promise<Bm.Res.ShowConfirmationResult> => {
-      return await Ui.modal.confirm(message);
-    });
-
     BrowserMsg.listen(tabId);
   };
 

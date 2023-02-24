@@ -169,9 +169,6 @@ export class InboxView extends View {
     BrowserMsg.addListener('show_attachment_preview', async ({ iframeUrl }: Bm.ShowAttachmentPreview) => {
       await Ui.modal.attachmentPreview(iframeUrl);
     });
-    BrowserMsg.addListener('show_confirmation', async ({ message }: Bm.ShowConfirmation): Promise<Bm.Res.ShowConfirmationResult> => {
-      return await Ui.modal.confirm(message);
-    });
     if (this.debug) {
       BrowserMsg.addListener('open_compose_window', async ({ draftId }: Bm.ComposeWindowOpenDraft) => {
         console.log('received open_compose_window');
