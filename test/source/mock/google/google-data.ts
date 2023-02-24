@@ -218,16 +218,13 @@ export class GoogleData {
   public static getMockGmailPage = async (acct: string, msgId?: string) => {
     let msgBlock = '';
     if (msgId) {
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      /* eslint-disable @typescript-eslint/no-non-null-assertion */
       const payload = (await GoogleData.withInitializedData(acct)).getMessage(msgId)!.payload!;
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const fromHeader = payload.headers!.find(header => header.name === 'From')!;
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const fromAddress = fromHeader.value!;
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const htmlPart = payload.parts!.find(part => part.mimeType === 'text/html')!;
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const htmlData = Buf.fromBase64Str(htmlPart.body!.data!).toUtfStr();
+      /* eslint-enable @typescript-eslint/no-non-null-assertion */
       msgBlock = `<div class="adn ads" data-legacy-message-id="${msgId}">
     <div class="gs">
       <span email="${fromAddress}" name="mock sender" class="gD"><span>Mock Sender</span></span>
