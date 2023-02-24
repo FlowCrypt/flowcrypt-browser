@@ -328,7 +328,7 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
           $('.minimize_compose_window').trigger('click');
         }
       });
-      await this.view.quoteModule.addTripleDotQuoteExpandFooterOnlyBtn();
+      await this.view.quoteModule.addSignatureToInput();
       this.view.sizeModule.setInputTextHeightManuallyIfNeeded(true);
     }
     // Firefox needs an iframe to be focused before focusing its content
