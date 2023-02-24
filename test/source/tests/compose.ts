@@ -1345,7 +1345,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
     );
 
     test(
-      'compose - new message, open footer',
+      'compose - new message, check signature',
       testWithBrowser('compatibility', async (t, browser) => {
         const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
         await ComposePageRecipe.fillRecipients(composePage, { to: 'human@flowcrypt.com' });
@@ -1356,7 +1356,6 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         await composePage.waitAndClick(`@action-send`);
         expect(await composePage.read('.swal2-html-container')).to.include('Send empty message?');
         await composePage.waitAndClick('.swal2-cancel');
-        await composePage.waitAndClick('@action-expand-quoted-text', { delay: 1 });
         const footer = await composePage.read('@input-body');
         expect(footer).to.eq('\n\n\n--\nflowcrypt.compatibility test footer with an img');
         await composePage.waitAndClick(`@action-send`);
@@ -1371,7 +1370,8 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       'compose - new message, Footer Mock Test',
       testWithBrowser('compatibility', async (t, browser) => {
         const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
-        await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, 'Test Footer (Mock Test)', undefined, {});
+        const footer = await composePage.read('@input-body');
+        await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, 'Test Footer (Mock Test)\n' + footer, undefined, {});
         await ComposePageRecipe.sendAndClose(composePage);
       })
     );
