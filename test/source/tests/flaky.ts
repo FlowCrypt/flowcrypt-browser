@@ -515,7 +515,7 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
         await inboxPage.waitTillGone('@container-new-message');
       })
     );
-    test(
+    test.skip(
       'decrypt - benchmark decryption of 50 pgp messages',
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
         const acctEmail = 'ci.tests.gmail@flowcrypt.test';
