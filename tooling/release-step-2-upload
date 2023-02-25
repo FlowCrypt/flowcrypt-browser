@@ -54,7 +54,7 @@ input(f"Place AMO-signed file at {ff_path_signed} (don't rename file if download
 print("Uploading " + conf['firefox']['path']['upload'] % version)
 s3upload(ff_path_saved, conf['firefox']['path']['upload'] % version)
 
-with open('json_data.json', 'w') as outfile:
+with open('./tooling/release-firefox-latest-update.json', 'w') as outfile:
   json.dump({
     "addons": {
       "firefox@cryptup.io": {
@@ -72,7 +72,7 @@ with open('json_data.json', 'w') as outfile:
         ]
       }
     }
-  }, './tooling/release-firefox-latest-update.json')
+  }, outfile, indent=2)
 
 # update the web
 
