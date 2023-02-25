@@ -519,6 +519,22 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
       'decrypt - benchmark decryption of 50 pgp messages',
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
         const acctEmail = 'ci.tests.gmail@flowcrypt.test';
+        /* sample to generate the key and messages
+        const passphrase = 'some pass for testing';
+        const keypair = await OpenPGPKey.create([{ name: 'Test', email: 'rsa4096@flowcrypt.test' }], 'rsa4096', passphrase, 0);
+        const pubkeys = [await KeyUtil.parse(keypair.public)];
+        let textData = keypair.public + '\n\n\n\n';
+        for (let i = 0; i < 50; i++) {
+          const data = Buf.fromUtfStr(`This is a message sample #${i}`);
+          const encrypted = await MsgUtil.encryptMessage({
+            pubkeys,
+            data,
+            armor: true,
+          });
+          textData += Buf.with(encrypted.data).toUtfStr();
+          textData += '\n\n\n\n';
+        }
+        */
         const rsa4096 = `-----BEGIN PGP PRIVATE KEY BLOCK-----
 Version: FlowCrypt Email Encryption
 Comment: Seamlessly send and receive encrypted email
