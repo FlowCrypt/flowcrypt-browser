@@ -1220,5 +1220,21 @@ d6Z36//MsmczN00Wd60t9T+qyLz0T4/UG2Y9lgf367f3d+kYPE0LS7mXuFmjlPXfw0nKyVsSeFiu
         });
       })
     );
+
+    test(
+      'settings - download batch file attachment (should show a warning message)',
+      testWithBrowser('compatibility', async (t, browser) => {
+        const threadId = '1868bcd5bebbe085';
+        const acctEmail = 'flowcrypt.compatibility@gmail.com';
+        const attachmentFilename = 'test.bat';
+        const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`);
+        const attachmentFrame = await inboxPage.getFrame(['attachment.htm']);
+        await attachmentFrame.waitAll('@download-attachment');
+        const rawFileAttachment = await attachmentFrame.awaitDownloadTriggeredByClicking('@download-attachment');
+        const fileAttachment = Buf.fromUtfStr(rawFileAttachment[attachmentFilename]!.toString());
+        expect(fileAttachment.toString()).to.equal('# sample bat file\n');
+        await inboxPage.close();
+      })
+    );
   }
 };
