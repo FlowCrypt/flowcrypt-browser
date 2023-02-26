@@ -893,6 +893,43 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
     );
 
     test(
+      'signature - cleartext signed messages from HTML are re-fetched when needed',
+      testWithBrowser('ci.tests.gmail', async (t, browser) => {
+        const acctEmail = 'ci.tests.gmail@flowcrypt.test';
+        const settingsPage = await browser.newExtensionSettingsPage(t, acctEmail);
+        const accessToken = await BrowserRecipe.getGoogleAccessToken(settingsPage, acctEmail); // todo: include in t?
+        await settingsPage.close();
+        const extraAuthHeaders = { Authorization: `Bearer ${accessToken}` }; // eslint-disable-line @typescript-eslint/naming-convention
+        const gmailPage = await browser.newPage(t, `${t.urls?.mockGmailUrl()}/1866867cfdb8b61e`, undefined, extraAuthHeaders);
+        await gmailPage.waitAll('iframe');
+        const pgpBlock = await gmailPage.getFrame(['pgp_block.htm']);
+        // should re-fetch the correct text/plain text with signature
+        await BrowserRecipe.pgpBlockCheck(t, pgpBlock, {
+          content: ['this is message 1 for flowcrypt issue 4342'],
+          unexpectedContent: ['this is message 1 CORRUPTED for flowcrypt issue 4342'],
+          encryption: 'not encrypted',
+          signature: 'signed',
+        });
+        await gmailPage.close();
+      })
+    );
+
+    test(
+      `decrypt - corrupted text in "incorrect message digest" scenario`,
+      testWithBrowser('ci.tests.gmail', async (t, browser) => {
+        const params = `?frameId=none&message=-----BEGIN%20PGP%20SIGNED%20MESSAGE-----%0AHash%3A%20SHA512%0A%0A%0Athis%20is%20message%201%20CORRUPTED%20for%20flowcrypt%20issue%204342%0A-----BEGIN%20PGP%20SIGNATURE-----%0A%0A%0AwnUEARYKACcFAmPwp3kJEAdIHIrPnUn%2BFiEEm6Oc4HXwg5swNA%2FIB0gcis%2Bd%0ASf4AAGFcAP4%2FB%2FjbpeERlTNqorb5x6sXUFhfPHP6PZAXvVnpuaFdJQD%2FZ510%0AeYDnbx25XRLsdWoerPpG23tgqK45zOHjaIoveAo%3D%0A%3DHAkD%0A-----END%20PGP%20SIGNATURE-----&msgId=1866867cfdb8b61e&senderEmail=ci.tests.gmail@flowcrypt.test&isOutgoing=___cu_true___&acctEmail=ci.tests.gmail@flowcrypt.test&parentTabId=0`;
+        // should re-fetch the correct text/plain text with signature
+        await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
+          params,
+          content: ['this is message 1 for flowcrypt issue 4342'],
+          unexpectedContent: ['this is message 1 CORRUPTED for flowcrypt issue 4342'],
+          encryption: 'not encrypted',
+          signature: 'signed',
+        });
+      })
+    );
+
+    test(
       `decrypt - missing pubkey in "incorrect message digest" scenario`,
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
         const msgId = '1766644f13510f58';

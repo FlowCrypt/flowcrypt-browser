@@ -1,9 +1,9 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
-import { Config, Util, TestMessage } from '../../util';
+import { Config, Util, TestMessage, TestMessageWithParams } from '../../util';
 
 import { AvaContext } from '.';
-import { BrowserHandle, Controllable, ControllablePage } from '../../browser';
+import { BrowserHandle, Controllable, ControllableFrame, ControllablePage } from '../../browser';
 import { OauthPageRecipe } from './../page-recipe/oauth-page-recipe';
 import { SetupPageRecipe } from './../page-recipe/setup-page-recipe';
 import { TestUrls } from '../../browser/test-urls';
@@ -166,9 +166,17 @@ export class BrowserRecipe {
     return { acctEmail, passphrase: key.passphrase, settingsPage };
   };
 
-  public static async pgpBlockVerifyDecryptedContent(t: AvaContext, browser: BrowserHandle, m: TestMessage) {
+  public static pgpBlockVerifyDecryptedContent = async (t: AvaContext, browser: BrowserHandle, m: TestMessageWithParams) => {
     const pgpHostPage = await browser.newPage(t, `chrome/dev/ci_pgp_host_page.htm${m.params}`);
-    const pgpBlockPage = await pgpHostPage.getFrame(['pgp_block.htm']);
+    try {
+      const pgpBlockPage = await pgpHostPage.getFrame(['pgp_block.htm']);
+      return await BrowserRecipe.pgpBlockCheck(t, pgpBlockPage, m);
+    } finally {
+      await pgpHostPage.close();
+    }
+  };
+
+  public static pgpBlockCheck = async (t: AvaContext, pgpBlockPage: ControllableFrame, m: TestMessage) => {
     if (m.expectPercentageProgress) {
       await pgpBlockPage.waitForContent('@pgp-block-content', /Retrieving message... \d+%/, 20, 10);
     }
@@ -221,6 +229,5 @@ export class BrowserRecipe {
         throw new Error(`Print button is invisible`);
       }
     }
-    await pgpHostPage.close();
-  }
+  };
 }
