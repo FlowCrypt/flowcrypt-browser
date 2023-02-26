@@ -2674,6 +2674,24 @@ oYO0H2wzxUfJQIcXL8HfNs70eXJwD7U9F6gnIeUKA8+1NsQMgQE=
       t.pass();
     });
 
+    test(`[unit][OpenPGPKey.parse] sets usableForEncryption and usableForSigning to false for primary RSA1024 key and RSA4096 subkey`, async t => {
+      const key1 = await KeyUtil.parse(testConstants.rsa1024primary4096subkeySecret);
+      expect(key1.usableForEncryption).to.equal(false);
+      expect(key1.usableForSigning).to.equal(false);
+      expect(key1.usableForEncryptionButExpired).to.equal(false);
+      expect(key1.usableForSigningButExpired).to.equal(false);
+      expect(key1.missingPrivateKeyForDecryption).to.equal(false);
+      expect(key1.missingPrivateKeyForSigning).to.equal(false);
+      const key2 = await KeyUtil.parse(testConstants.rsa1024primary4096subkeyPublic);
+      expect(key2.usableForEncryption).to.equal(false);
+      expect(key2.usableForSigning).to.equal(false);
+      expect(key2.usableForEncryptionButExpired).to.equal(false);
+      expect(key2.usableForSigningButExpired).to.equal(false);
+      expect(key2.missingPrivateKeyForDecryption).to.equal(false);
+      expect(key2.missingPrivateKeyForSigning).to.equal(false);
+      t.pass();
+    });
+
     test(`[unit][OpenPGPKey.parse] sets usableForEncryption to false and usableForSigning to true for 2048/RSA PK and 1024/RSA SK`, async t => {
       const key = await KeyUtil.parse(testConstants.rsa1024subkeyOnly);
       expect(key.usableForEncryption).to.equal(false);
