@@ -1156,7 +1156,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
     );
 
     test(
-      'decrypt - prevent rendering of attachments from domain sources other than flowcrypt.s3.amazonaws.com1',
+      'decrypt - prevent rendering of attachments from domain sources other than flowcrypt.s3.amazonaws.com',
       testWithBrowser('compatibility', async (t, browser) => {
         const threadId1 = '184cc6aa8e884397';
         const acctEmail = 'flowcrypt.compatibility@gmail.com';
