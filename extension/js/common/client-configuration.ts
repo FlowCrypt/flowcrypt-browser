@@ -27,6 +27,8 @@ export type ClientConfigurationJson = {
   key_manager_url?: string;
   allow_attester_search_only_for_domains?: string[];
   disallow_attester_search_for_domains?: string[];
+  allow_keys_openpgp_org_search_only_for_domains?: string[];
+  disallow_keys_openpgp_org_search_for_domains?: string[];
   enforce_keygen_algo?: string;
   enforce_keygen_expire_months?: number;
   in_memory_pass_phrase_session_length?: number;
@@ -205,6 +207,25 @@ export class ClientConfiguration {
       return this.clientConfigurationJson.allow_attester_search_only_for_domains.includes(userDomain);
     }
     const disallowedDomains = this.clientConfigurationJson.disallow_attester_search_for_domains || [];
+    if (disallowedDomains.includes('*')) {
+      return false;
+    }
+    return !disallowedDomains.includes(userDomain);
+  };
+
+  /**
+   * Some orgs have a list of email domains where they do NOT want such emails to be looked up on keys.openpgp.org
+   */
+  public canLookupThisRecipientOnKeysOpenPGP = (emailAddr: string): boolean => {
+    const userDomain = Str.getDomainFromEmailAddress(emailAddr);
+    if (!userDomain) {
+      throw new Error(`Not a valid email ${emailAddr}`);
+    }
+    // When allow_keys_openpgp_org_search_only_for_domains is set, ignore disallow_keys_openpgp_org_search_for_domains rule
+    if (this.clientConfigurationJson.allow_keys_openpgp_org_search_only_for_domains) {
+      return this.clientConfigurationJson.allow_keys_openpgp_org_search_only_for_domains.includes(userDomain);
+    }
+    const disallowedDomains = this.clientConfigurationJson.disallow_keys_openpgp_org_search_for_domains || [];
     if (disallowedDomains.includes('*')) {
       return false;
     }
