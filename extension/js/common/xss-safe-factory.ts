@@ -11,7 +11,6 @@ import { Browser } from './browser/browser.js';
 import { BrowserMsg } from './browser/browser-msg.js';
 import { Catch } from './platform/catch.js';
 import { MsgBlock, MsgBlockType } from './core/msg-block.js';
-import { MsgBlockParser } from './core/msg-block-parser.js';
 import { PgpArmor } from './core/crypto/pgp/pgp-armor.js';
 import { Ui } from './browser/ui.js';
 import { WebMailName, WebMailVersion } from './browser/env.js';
@@ -102,16 +101,8 @@ export class XssSafeFactory {
    *
    * When edited, REQUEST A SECOND SET OF EYES TO REVIEW CHANGES
    */
-  public static replaceRenderableMsgBlocks = (factory: XssSafeFactory, origText: string, msgId: string, senderEmail: string, isOutgoing?: boolean) => {
-    const { blocks } = MsgBlockParser.detectBlocks(origText);
-    if (blocks.length === 1 && blocks[0].type === 'plainText') {
-      return undefined; // only has single block which is plain text - meaning
-    }
-    let r = '';
-    for (const block of blocks) {
-      r += (r ? '\n\n' : '') + XssSafeFactory.renderableMsgBlock(factory, block, msgId, senderEmail, isOutgoing);
-    }
-    return r;
+  public static renderableMsgBlocks = (factory: XssSafeFactory, blocks: MsgBlock[], msgId: string, senderEmail: string, isOutgoing?: boolean) => {
+    return blocks.map(block => XssSafeFactory.renderableMsgBlock(factory, block, msgId, senderEmail, isOutgoing)).join('\n\n');
   };
 
   public srcImg = (relPath: string) => {
