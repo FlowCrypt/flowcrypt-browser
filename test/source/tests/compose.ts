@@ -354,6 +354,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         await fileInput!.uploadFile('test/samples/small.txt', 'test/samples/small.png', 'test/samples/small.pdf');
         await ComposePageRecipe.sendAndClose(composePage, { password: 'test-pass', timeout: 90 });
+        // the sent message is checked by PwdOnlyEncryptedWithAttachmentTestStrategy
       })
     );
 
@@ -1501,6 +1502,23 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
           appendUrl: 'draftId=draft_with_rtl_text_rich',
         });
         expect(await composePage.readHtml('@input-body')).to.include('<div dir="rtl">مرحبا<br></div>');
+      })
+    );
+
+    test(
+      'compose - sending PGP/MIME encrypted message',
+      testWithBrowser('compatibility', async (t, browser) => {
+        const subject = `Test Sending Encrypted PGP/MIME Message`;
+        const body = `This text is encrypted`;
+        const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
+        await ComposePageRecipe.fillMsg(composePage, { to: 'flowcrypt.compatibility@gmail.com' }, subject, body, {
+          richtext: true,
+          sign: true,
+          encrypt: true,
+        });
+        await composePage.waitAndClick('@action-include-pubkey');
+        expect(await composePage.hasClass('@action-include-pubkey', 'active')).to.be.true;
+        await ComposePageRecipe.sendAndClose(composePage); // the sent message is checked by PgpEncryptedMessageWithoutAttachmentTestStrategy
       })
     );
 

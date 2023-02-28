@@ -94,6 +94,16 @@ export class Str {
     );
   };
 
+  public static is7bit = (content: string | Uint8Array): boolean => {
+    for (let i = 0; i < content.length; i++) {
+      const code = typeof content === 'string' ? content.charCodeAt(i) : content[i] ?? 0;
+      if (!(code >= 0 && code <= 127)) {
+        return false;
+      }
+    }
+    return true;
+  };
+
   public static monthName = (monthIndex: number) => {
     return ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'][monthIndex];
   };

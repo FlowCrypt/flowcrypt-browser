@@ -6,6 +6,7 @@ import { Buf } from './buf.js';
 import { Str } from './common.js';
 
 type Attachment$treatAs = 'publicKey' | 'privateKey' | 'encryptedMsg' | 'hidden' | 'signature' | 'encryptedFile' | 'plainFile';
+type ContentTransferEncoding = '7bit' | 'quoted-printable' | 'base64';
 export type AttachmentMeta = {
   data?: Uint8Array;
   type?: string;
@@ -18,6 +19,7 @@ export type AttachmentMeta = {
   treatAs?: Attachment$treatAs;
   cid?: string;
   contentDescription?: string;
+  contentTransferEncoding?: ContentTransferEncoding;
 };
 
 export type FcAttachmentLinkData = { name: string; type: string; size: number };
@@ -36,11 +38,12 @@ export class Attachment {
   public inline: boolean;
   public cid: string | undefined;
   public contentDescription: string | undefined;
+  public contentTransferEncoding?: ContentTransferEncoding;
 
   private bytes: Uint8Array | undefined;
   private treatAsValue: Attachment$treatAs | undefined;
 
-  public constructor({ data, type, name, length, url, inline, id, msgId, treatAs, cid, contentDescription }: AttachmentMeta) {
+  public constructor({ data, type, name, length, url, inline, id, msgId, treatAs, cid, contentDescription, contentTransferEncoding }: AttachmentMeta) {
     if (typeof data === 'undefined' && typeof url === 'undefined' && typeof id === 'undefined') {
       throw new Error('Attachment: one of data|url|id has to be set');
     }
@@ -62,6 +65,7 @@ export class Attachment {
     this.treatAsValue = treatAs || undefined;
     this.cid = cid || undefined;
     this.contentDescription = contentDescription || undefined;
+    this.contentTransferEncoding = contentTransferEncoding || undefined;
   }
 
   public static treatAsForPgpEncryptedAttachments = (mimeType: string | undefined, pgpEncryptedIndex: number | undefined) => {
@@ -76,9 +80,11 @@ export class Attachment {
   };
 
   public static keyinfoAsPubkeyAttachment = (ki: { public: string; longid: string }) => {
+    const data = Buf.fromUtfStr(ki.public);
     return new Attachment({
-      data: Buf.fromUtfStr(ki.public),
+      data,
       type: 'application/pgp-keys',
+      contentTransferEncoding: Str.is7bit(data) ? '7bit' : 'quoted-printable',
       name: `0x${ki.longid}.asc`,
     });
   };
