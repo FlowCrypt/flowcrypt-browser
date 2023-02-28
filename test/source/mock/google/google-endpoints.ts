@@ -133,7 +133,7 @@ export const mockGoogleEndpoints: HandlersDefinition = {
   '/gmail': async (_parsedReq, req) => {
     if (isGet(req)) {
       const acct = oauth.checkAuthorizationHeaderWithAccessToken(req.headers.authorization, 'flowcrypt.compatibility@gmail.com');
-      return GoogleData.getMockGmailPage(acct);
+      return await GoogleData.getMockGmailPage(acct);
     }
     throw new HttpClientErr(`Method not implemented for ${req.url}: ${req.method}`);
   },
@@ -340,6 +340,14 @@ export const mockGoogleEndpoints: HandlersDefinition = {
       return {};
     } else if (isDelete(req)) {
       return {};
+    }
+    throw new HttpClientErr(`Method not implemented for ${req.url}: ${req.method}`);
+  },
+  '/gmail/?': async ({}, req) => {
+    const acct = oauth.checkAuthorizationHeaderWithAccessToken(req.headers.authorization);
+    if (isGet(req)) {
+      const id = parseResourceId(req.url!); // eslint-disable-line @typescript-eslint/no-non-null-assertion
+      return await GoogleData.getMockGmailPage(acct, id);
     }
     throw new HttpClientErr(`Method not implemented for ${req.url}: ${req.method}`);
   },

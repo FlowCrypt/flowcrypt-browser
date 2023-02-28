@@ -31,6 +31,7 @@ import { PubLookup } from '../../js/common/api/pub-lookup.js';
 import { AcctStore } from '../../js/common/platform/store/acct-store.js';
 import { AccountServer } from '../../js/common/api/account-server.js';
 import { ComposeReplyBtnPopoverModule } from './compose-modules/compose-reply-btn-popover-module.js';
+import { Lang } from '../../js/common/lang.js';
 
 export class ComposeView extends View {
   public readonly acctEmail: string;
@@ -221,6 +222,25 @@ export class ComposeView extends View {
     this.S.cached('icon_help').on(
       'click',
       this.setHandler(async () => await this.renderModule.openSettingsWithDialog('help'), this.errModule.handle(`help dialog`))
+    );
+    this.S.cached('input_intro').on(
+      'paste',
+      this.setHandler(async (el, ev) => {
+        const clipboardEvent = ev.originalEvent as ClipboardEvent;
+        if (clipboardEvent.clipboardData) {
+          const isInputLimitExceeded = this.inputModule.willInputLimitBeExceeded(clipboardEvent.clipboardData.getData('text/plain'), el, () => {
+            const selection = window.getSelection();
+            if (selection && selection.anchorNode === selection.focusNode && selection.anchorNode?.parentElement === el) {
+              return Math.abs(selection.anchorOffset - selection.focusOffset);
+            }
+            return 0;
+          });
+          if (isInputLimitExceeded) {
+            ev.preventDefault();
+            await Ui.modal.warning(Lang.compose.inputLimitExceededOnPaste);
+          }
+        }
+      })
     );
     this.attachmentsModule.setHandlers();
     this.inputModule.setHandlers();

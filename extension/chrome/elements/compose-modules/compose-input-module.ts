@@ -10,7 +10,9 @@ import { ParsedRecipients } from '../../../js/common/api/email-provider/email-pr
 import { Str } from '../../../js/common/core/common.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { ViewModule } from '../../../js/common/view-module.js';
+import { Ui } from '../../../js/common/browser/ui.js';
 import { ComposeView } from '../compose.js';
+import { Lang } from '../../../js/common/lang.js';
 
 export class ComposeInputModule extends ViewModule<ComposeView> {
   public squire = new window.Squire(this.view.S.cached('input_text').get(0));
@@ -78,12 +80,25 @@ export class ComposeInputModule extends ViewModule<ComposeView> {
     return this.view.sendBtnModule.popover.choices.richtext;
   };
 
+  public willInputLimitBeExceeded = (textToPaste: string, targetInputField: HTMLElement, selectionLengthGetter: () => number | undefined) => {
+    const limit = 50000;
+    const toBeRemoved = selectionLengthGetter() || 0;
+    const currentLength = targetInputField.innerText.trim().length;
+    const isInputLimitExceeded = currentLength - toBeRemoved + textToPaste.length > limit;
+    return isInputLimitExceeded;
+  };
+
   private handlePaste = () => {
-    this.squire.addEventListener('willPaste', (e: WillPasteEvent) => {
+    this.squire.addEventListener('willPaste', async (e: WillPasteEvent) => {
       const div = document.createElement('div');
       div.appendChild(e.fragment);
       const html = div.innerHTML;
       const sanitized = this.isRichText() ? Xss.htmlSanitizeKeepBasicTags(html, 'IMG-KEEP') : Xss.htmlSanitizeAndStripAllTags(html, '<br>', false);
+      if (this.willInputLimitBeExceeded(sanitized, this.squire.getRoot(), () => this.squire.getSelectedText().length)) {
+        e.preventDefault();
+        await Ui.modal.warning(Lang.compose.inputLimitExceededOnPaste);
+        return;
+      }
       Xss.setElementContentDANGEROUSLY(div, sanitized); // xss-sanitized
       e.fragment.appendChild(div);
     });

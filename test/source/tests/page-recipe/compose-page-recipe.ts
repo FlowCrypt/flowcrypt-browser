@@ -87,13 +87,13 @@ export class ComposePageRecipe extends PageRecipe {
     }
     const sendingOpts = sendingOpt as { [key: string]: boolean | undefined };
     const keys = ['richtext', 'encrypt', 'sign'];
+    await composePageOrFrame.type('@input-body', body || subject || ''); // fall back to subject if body is not provided
     for (const opt of keys) {
       const shouldBeTicked = sendingOpts[opt];
       if (typeof shouldBeTicked !== 'undefined') {
         await ComposePageRecipe.setPopoverToggle(composePageOrFrame, opt as PopoverOpt, shouldBeTicked);
       }
     }
-    await composePageOrFrame.type('@input-body', body || subject || ''); // fall back to subject if body is not provided
     return { subject, body };
   }
 

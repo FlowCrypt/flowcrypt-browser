@@ -30,18 +30,11 @@ export class ComposeQuoteModule extends ViewModule<ComposeView> {
     return '';
   };
 
-  public addTripleDotQuoteExpandFooterOnlyBtn = async () => {
+  public addSignatureToInput = async () => {
     const textFooter = await this.view.footerModule.getFooterFromStorage(this.view.senderModule.getSender());
-    if (!textFooter) {
-      this.view.S.cached('triple_dot').hide();
-      return;
-    }
     const sanitizedFooter = textFooter && !this.view.draftModule.wasMsgLoadedFromDraft ? this.view.footerModule.createFooterHtml(textFooter) : undefined;
     this.tripleDotSanitizedHtmlContent = { footer: sanitizedFooter, quote: undefined };
-    this.view.S.cached('triple_dot').on(
-      'click',
-      this.view.setHandler(el => this.actionRenderTripleDotContentHandle(el))
-    );
+    this.actionRenderTripleDotContentHandle(this.view.S.cached('triple_dot')[0]);
   };
 
   public addTripleDotQuoteExpandFooterAndQuoteBtn = async (msgId: string, method: 'reply' | 'forward', forceReload = false) => {

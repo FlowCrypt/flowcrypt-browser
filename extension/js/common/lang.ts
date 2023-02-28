@@ -120,6 +120,7 @@ export const Lang = {
     enterprisePasswordPolicy:
       'Please use password with the following properties:\n - one uppercase\n - one lowercase\n - one number\n - one special character eg &"#-\'_%-@,;:!*()\n - 8 characters length',
     consumerPasswordPolicy: 'Please use a password at least 8 characters long',
+    inputLimitExceededOnPaste: "The paste operation can't be completed because the resulting text size would exceed the allowed limit of 50K.",
   },
   general: {
     contactMinimalSubsentence,

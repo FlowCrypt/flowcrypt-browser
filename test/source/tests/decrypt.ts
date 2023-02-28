@@ -32,7 +32,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
     );
 
     test(
-      `decrypt - show warning for remote images`,
+      `decrypt - show remote images`,
       testWithBrowser('compatibility', async (t, browser) => {
         const threadId = '1850b93d7772173c';
         const acctEmail = 'flowcrypt.compatibility@gmail.com';
@@ -40,7 +40,13 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
         await inboxPage.waitForSelTestState('ready');
         await inboxPage.waitAll('iframe');
         const pgpBlock = await inboxPage.getFrame(['pgp_block.htm']);
-        await pgpBlock.waitForContent('@pgp-block-content', '[Remote images are blocked due to security]');
+        await pgpBlock.checkIfImageIsDisplayedCorrectly('#pgp_block img');
+        // Chceck if forwarded message contains img url
+        await inboxPage.waitAll('iframe');
+        // Get Reply Window (Composer) and click on reply button.
+        const replyFrame = await inboxPage.getFrame(['compose.htm']);
+        await replyFrame.waitAndClick('@action-forward');
+        await replyFrame.waitForContent('@input-body', 'https://www.google.com/images/branding/googlelogo/2x/googlelogo_color_272x92dp.png');
         await inboxPage.close();
       })
     );
@@ -880,6 +886,43 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
         await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
           params: url,
           content: ['How is my message signed?'],
+          encryption: 'not encrypted',
+          signature: 'signed',
+        });
+      })
+    );
+
+    test(
+      'signature - cleartext signed messages from HTML are re-fetched when needed',
+      testWithBrowser('ci.tests.gmail', async (t, browser) => {
+        const acctEmail = 'ci.tests.gmail@flowcrypt.test';
+        const settingsPage = await browser.newExtensionSettingsPage(t, acctEmail);
+        const accessToken = await BrowserRecipe.getGoogleAccessToken(settingsPage, acctEmail); // todo: include in t?
+        await settingsPage.close();
+        const extraAuthHeaders = { Authorization: `Bearer ${accessToken}` }; // eslint-disable-line @typescript-eslint/naming-convention
+        const gmailPage = await browser.newPage(t, `${t.urls?.mockGmailUrl()}/1866867cfdb8b61e`, undefined, extraAuthHeaders);
+        await gmailPage.waitAll('iframe');
+        const pgpBlock = await gmailPage.getFrame(['pgp_block.htm']);
+        // should re-fetch the correct text/plain text with signature
+        await BrowserRecipe.pgpBlockCheck(t, pgpBlock, {
+          content: ['this is message 1 for flowcrypt issue 4342'],
+          unexpectedContent: ['this is message 1 CORRUPTED for flowcrypt issue 4342'],
+          encryption: 'not encrypted',
+          signature: 'signed',
+        });
+        await gmailPage.close();
+      })
+    );
+
+    test(
+      `decrypt - corrupted text in "incorrect message digest" scenario`,
+      testWithBrowser('ci.tests.gmail', async (t, browser) => {
+        const params = `?frameId=none&message=-----BEGIN%20PGP%20SIGNED%20MESSAGE-----%0AHash%3A%20SHA512%0A%0A%0Athis%20is%20message%201%20CORRUPTED%20for%20flowcrypt%20issue%204342%0A-----BEGIN%20PGP%20SIGNATURE-----%0A%0A%0AwnUEARYKACcFAmPwp3kJEAdIHIrPnUn%2BFiEEm6Oc4HXwg5swNA%2FIB0gcis%2Bd%0ASf4AAGFcAP4%2FB%2FjbpeERlTNqorb5x6sXUFhfPHP6PZAXvVnpuaFdJQD%2FZ510%0AeYDnbx25XRLsdWoerPpG23tgqK45zOHjaIoveAo%3D%0A%3DHAkD%0A-----END%20PGP%20SIGNATURE-----&msgId=1866867cfdb8b61e&senderEmail=ci.tests.gmail@flowcrypt.test&isOutgoing=___cu_true___&acctEmail=ci.tests.gmail@flowcrypt.test&parentTabId=0`;
+        // should re-fetch the correct text/plain text with signature
+        await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
+          params,
+          content: ['this is message 1 for flowcrypt issue 4342'],
+          unexpectedContent: ['this is message 1 CORRUPTED for flowcrypt issue 4342'],
           encryption: 'not encrypted',
           signature: 'signed',
         });
