@@ -36,20 +36,20 @@ export class PubLookup {
   }
 
   public lookupEmail = async (email: string): Promise<PubkeysSearchResult> => {
-    // const wkdRes = await this.wkd.lookupEmail(email);
-    // if (wkdRes.pubkeys.length) {
-    //   return wkdRes;
-    // }
-    // if (this.internalSks) {
-    //   const res = await this.internalSks.lookupEmail(email);
-    //   if (res.pubkey) {
-    //     return { pubkeys: [res.pubkey] };
-    //   }
-    // }
-    // const attesterRes = await this.attester.lookupEmail(email);
-    // if (attesterRes.pubkeys.length) {
-    //   return attesterRes;
-    // }
+    const wkdRes = await this.wkd.lookupEmail(email);
+    if (wkdRes.pubkeys.length) {
+      return wkdRes;
+    }
+    if (this.internalSks) {
+      const res = await this.internalSks.lookupEmail(email);
+      if (res.pubkey) {
+        return { pubkeys: [res.pubkey] };
+      }
+    }
+    const attesterRes = await this.attester.lookupEmail(email);
+    if (attesterRes.pubkeys.length) {
+      return attesterRes;
+    }
     return await this.keysOpenpgpOrg.lookupEmail(email);
   };
 }
