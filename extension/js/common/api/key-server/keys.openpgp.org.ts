@@ -2,8 +2,9 @@
 
 'use strict';
 
-import { KEYS_OPENPGP_ORG_API_HOST } from 'js/common/core/const';
-import { ClientConfiguration } from '../../client-configuration';
+import { KEYS_OPENPGP_ORG_API_HOST } from '../../core/const.js';
+import { ClientConfiguration } from '../../client-configuration.js';
+import { ApiErr } from '../shared/api-error.js';
 import { PubkeysSearchResult } from './../pub-lookup.js';
 import { Api } from './../shared/api.js';
 
@@ -18,7 +19,28 @@ export class KeysOpenpgpOrg extends Api {
       console.info(`Skipping keys.openpgp.org search of ${email} because search on this domain is disabled.`);
       return { pubkeys: [] };
     }
-    const keys = await Api.apiCall<string>(KEYS_OPENPGP_ORG_API_HOST, ` /vks/v1/by-email/${encodeURIComponent(email)}`);
-    return { pubkeys: [keys] };
+    try {
+      const { responseText } = (await Api.apiCall(
+        KEYS_OPENPGP_ORG_API_HOST,
+        `/vks/v1/by-email/${encodeURIComponent(email)}`,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        'xhr',
+        'GET'
+      )) as XMLHttpRequest;
+      return { pubkeys: [responseText] };
+    } catch (e) {
+      /**
+       * Error 429 should be interpreted as error 404 - public key not found
+       * (because their rate limits are excessively strict, and you could run into them just
+       * by loading a conversation with 20 people in it a few time).
+       */
+      if (ApiErr.isNotFound(e) || ApiErr.isRateLimit(e)) {
+        return { pubkeys: [] };
+      }
+      throw e;
+    }
   };
 }
