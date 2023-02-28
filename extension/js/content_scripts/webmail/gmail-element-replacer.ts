@@ -178,7 +178,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
       const isOutgoing = !!this.sendAs[senderEmail];
       const msgId = this.determineMsgId(emailContainer);
       const { blocks } = MsgBlockParser.detectBlocks(emailContainer.innerText);
-      if (blocks.length === 0 && blocks[0].type === 'plainText') {
+      if (blocks.length === 1 && blocks[0].type === 'plainText') {
         // only has single block which is plain text
       } else {
         const replacementXssSafe = XssSafeFactory.renderableMsgBlocks(this.factory, blocks, msgId, senderEmail, isOutgoing);
