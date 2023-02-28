@@ -20,6 +20,8 @@ export type ClientConfiguration = {
   key_manager_url?: string;
   allow_attester_search_only_for_domains?: string[];
   disallow_attester_search_for_domains?: string[];
+  allow_keys_openpgp_org_search_only_for_domains?: string[];
+  disallow_keys_openpgp_org_search_for_domains?: string[];
   enforce_keygen_algo?: string;
   enforce_keygen_expire_months?: number;
   in_memory_pass_phrase_session_length?: number;

@@ -22,7 +22,7 @@ export class KeysOpenpgpOrg extends Api {
     try {
       const { responseText } = (await Api.apiCall(
         KEYS_OPENPGP_ORG_API_HOST,
-        `/vks/v1/by-email/${encodeURIComponent(email)}`,
+        `vks/v1/by-email/${encodeURIComponent(email)}`,
         undefined,
         undefined,
         undefined,
