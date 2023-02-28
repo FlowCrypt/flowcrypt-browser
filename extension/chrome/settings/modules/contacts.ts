@@ -282,9 +282,9 @@ View.run(
           const container = $('#bulk_import #processed');
           for (const block of blocks) {
             if (block.type === 'publicKey' || block.type === 'certificate') {
-              const replacedHtmlSafe = XssSafeFactory.replaceRenderableMsgBlocks(
+              const replacedHtmlSafe = XssSafeFactory.renderableMsgBlock(
                 this.factory!, // eslint-disable-line @typescript-eslint/no-non-null-assertion
-                block.content.toString(),
+                block,
                 '',
                 ''
               );
