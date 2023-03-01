@@ -122,13 +122,24 @@ export class Attachment {
     throw new Error('Attachment has no data set');
   };
 
-  public treatAs = (isBodyEmpty = false): Attachment$treatAs => {
+  public treatAs = (attachments: Attachment[], isBodyEmpty = false): Attachment$treatAs => {
     if (this.treatAsValue) {
       // pre-set
       return this.treatAsValue;
     } else if (['PGPexch.htm.pgp', 'PGPMIME version identification', 'Version.txt', 'PGPMIME Versions Identification'].includes(this.name)) {
       return 'hidden'; // PGPexch.htm.pgp is html alternative of textual body content produced by PGP Desktop and GPG4o
-    } else if (this.name === 'signature.asc' || this.type === 'application/pgp-signature') {
+    } else if (this.name === 'signature.asc') {
+      return 'signature';
+    } else if (this.type === 'application/pgp-signature') {
+      // this may be a signature for an attachment following these patterns:
+      // sample.name.sig for sample.name.pgp #3448
+      // or sample.name.sig for sample.name
+      if (attachments.length > 1) {
+        const nameWithoutExtension = Str.getFilenameWithoutExtension(this.name);
+        if (attachments.some(a => a !== this && (a.name === nameWithoutExtension || Str.getFilenameWithoutExtension(a.name) === nameWithoutExtension))) {
+          return 'hidden';
+        }
+      }
       return 'signature';
     } else if (!this.name && !this.type.startsWith('image/')) {
       // this.name may be '' or undefined - catch either

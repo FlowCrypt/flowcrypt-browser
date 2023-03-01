@@ -450,7 +450,7 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
 
   private renderReplySuccessAttachments = (attachments: Attachment[], msgId: string, isEncrypted: boolean) => {
     const hideAttachmentTypes = this.view.sendBtnModule.popover.choices.richtext ? ['hidden', 'encryptedMsg', 'signature', 'publicKey'] : ['publicKey'];
-    const renderableAttachments = attachments.filter(attachment => !hideAttachmentTypes.includes(attachment.treatAs()));
+    const renderableAttachments = attachments.filter(attachment => !hideAttachmentTypes.includes(attachment.treatAs(attachments)));
     if (renderableAttachments.length) {
       this.view.S.cached('replied_attachments')
         .html(

@@ -196,6 +196,11 @@ export class Str {
     return rtlCount > lrtCount;
   };
 
+  // the regex has the most votes https://stackoverflow.com/a/4250408
+  public static getFilenameWithoutExtension = (filename: string): string => {
+    return filename.replace(/\.[^/.]+$/, '');
+  };
+
   private static formatEmailWithOptionalNameEx = ({ email, name }: EmailParts, forceBrackets?: boolean): string => {
     if (name) {
       return `${Str.rmSpecialCharsKeepUtf(name, 'ALLOW-SOME')} <${email}>`;

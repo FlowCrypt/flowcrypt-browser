@@ -75,7 +75,7 @@ export class Mime {
     }
     for (const file of decoded.attachments) {
       const isBodyEmpty = decoded.text === '' || decoded.text === '\n';
-      const treatAs = file.treatAs(isBodyEmpty);
+      const treatAs = file.treatAs(decoded.attachments, isBodyEmpty);
       if (treatAs === 'encryptedMsg') {
         const armored = PgpArmor.clip(file.getData().toUtfStr());
         if (armored) {
@@ -258,9 +258,9 @@ export class Mime {
         contentNode = Mime.newContentNode(MimeBuilder, Object.keys(body)[0], body[Object.keys(body)[0] as 'text/plain' | 'text/html'] || '');
       } else {
         contentNode = new MimeBuilder('multipart/alternative');
-        for (const type of Object.keys(body)) {
+        for (const [type, content] of Object.entries(body)) {
           // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-          contentNode.appendChild(Mime.newContentNode(MimeBuilder, type, body[type]!.toString())); // already present, that's why part of for loop
+          contentNode.appendChild(Mime.newContentNode(MimeBuilder, type, content!.toString())); // already present, that's why part of for loop
         }
       }
       rootNode.appendChild(contentNode);
@@ -306,9 +306,9 @@ export class Mime {
       rootNode.addHeader(key, headers[key]);
     }
     const bodyNodes = new MimeBuilder('multipart/alternative');
-    for (const type of Object.keys(body)) {
+    for (const [type, content] of Object.entries(body)) {
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      bodyNodes.appendChild(Mime.newContentNode(MimeBuilder, type, body[type]!.toString()));
+      bodyNodes.appendChild(Mime.newContentNode(MimeBuilder, type, content!.toString()));
     }
     const signedContentNode = new MimeBuilder('multipart/mixed');
     signedContentNode.appendChild(bodyNodes);

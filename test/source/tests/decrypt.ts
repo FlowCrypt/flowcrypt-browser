@@ -893,6 +893,91 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
     );
 
     test(
+      'decrypt - protonmail - PGP/inline signed and encrypted message with pubkey - pubkey signature is ignored',
+      testWithBrowser('ci.tests.gmail', async (t, browser) => {
+        const acctEmail = 'ci.tests.gmail@flowcrypt.test';
+        const dbPage = await browser.newExtensionPage(t, 'chrome/dev/ci_unit_test.htm'); // todo: url?
+        // add the pubkey of the sender
+        await dbPage.page.evaluate(
+          async (pubkey: string) => {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const key = await (window as any).KeyUtil.parse(pubkey);
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            await (window as any).ContactStore.update(undefined, 'schlemazle@proton.me', { pubkey: key });
+          },
+          `-----BEGIN PGP PUBLIC KEY BLOCK-----
+
+xsFNBGP8b1IBEACvY95nEYEFC9JEeP475BY4FHDZK8HLNSMbxskQdcRauwyu
+4JrVnXou/8QftKZz3ayUFlK0mRy5aGg+D1mcN2EDufwA7fuOowGZMr9WqxOl
+mR+mX/B7yc8FfMLsHZ8k9T3Fw+s/Pm4ttGAhuAIJd0Lyo6YLgZTah/HM+S28
+PQHEpfOAgmbNvb7WaLQwh0oTMGMLosXHCh8NOvSW9TS4zB+bMhEnfF53+XM5
+RUZsDQSs8p59itcn7kU3L45CK8Vjg6S49miGpZ6xPDJ+fKN/ZhLzTkT5aHVv
+OjUJLCCXpYnG8uqU/1xXLdANM1FNKHTk4EuuGiHFA6XYeiPVwx/dNw+IvePR
+cbgtkGoMfdet4ywfUfrFydFUuXHf59XJoaS0tk3nU/gRC0fRgeSwdQamZ1is
+xAsyprt9pPSHmVVCyFEOyBND/8lilB8ZL5/1blOBgrZGj1zMRnUJHDjs6TkP
+hAqw9dL6j+4pN2o3gjUFcbPBx9LfbfWbrqaZMWwkDb/ysA4pSCeLBnGYIw78
+hDLcijCe+RJLlu2snHfRqcCI2wab+MMUHC11xTp5lzA4u0eoqufp+LOudDXz
+zawsdjz+ojRxf0YiEd4jYVkI9/qP4WVkO3QmJPNWrDw3XDjSSvwpz5elrE0l
+24pOH1pGLN/6CDZp0h1wNtLhEAX0aIf/kcypjwARAQABzStzY2hsZW1hemxl
+QHByb3Rvbi5tZSA8c2NobGVtYXpsZUBwcm90b24ubWU+wsGKBBABCAA+BQJj
+/G9SBAsJBwgJEGFtWWvCBl1IAxUICgQWAAIBAhkBAhsDAh4BFiEEpRQABVdS
+tE+56giVYW1Za8IGXUgAAJsVEACCwO90h/jfWK0KJ203z9fRnDT+iX1ahTEn
+IvzsGUXwo5opTK8k8fz/wZDNl9itrd9c65fWOkeiVYM0jDINxeEvhTwJwTqY
+yic+yfnnH9EMIBlUCd36dh+xIK2GwdmtdqYBDwyKzOqWGRQb3zE9I6aHajI7
+yzaJyxEBLv2mrNId2Vtrz12JbJJv4RO4Dv3sZPJoJfbkuV5xg6uEUtIk9aAM
+iDdNUhkw3JvPq/cKnh6AAHPBSxxV8dRXOTgIgf5ncoXNodyGtbpPzis7Hxz+
+5KwoyfkDzQYtAKVpXRlyh+F06C5jUCUvmoFxZoH40OfSBpHKcu4EKqIBh28b
+oI0ofxQCIWvMiYkcfYeKjnwg25MdpYvatxS4NQVegzq0DhiVEisO0cKtKawn
+VGPXTUsevGswICsJBS9DRv3FMkGJIDqR1S/E2GWZa3+U6A4TwPrcmzfXvzqQ
++vxPdq03fMExIHeYlcnexypFUN9K/LtLgXEG34/LXXI9gNBjyfYUwjLZAueh
+YqsMqM05waJ3ZlgbZEsePK0LMfRO9g6lq7LsFtB0q28u5IwK6M7Fnox5bzQr
+hIDXAFpU4rw7GWWKF71Ujw9r6P8rY0RcRaW2RGlY8+tQvxnSHcK/Ki6ozlWQ
+Cv5blHur/EmTO9neO84dHspC8d5Ggwv8qDFR5deohm/TLlkh3c7BTQRj/G9S
+ARAAv8AZdsZwWtxE7+NMX+CAurhFwvIxeDOjrXe5LeBhzIEUVXkTNIpf/udq
+BfH34LcemmoB6pPnpaxS0Grg/a8FLk7TRU2WkucrnbT8nuv9GihJCyucC9Co
+5ZoVmNwIFrxaSkC5oQvsQoytUyk5TJ95egTs7qcsICouCpcIJfM+seNtpc26
+XDWVrf+L3FWGK47LBExHhUrIbgEiUjLfHwCGZEQsctfTIs4W2PJhfF/egiPE
+DDLhfWgDQAplZrr6vZlCwPmGy5JYjYMq4u363+9eU/p3jBaK0kJg3O1KvDxn
+om/p4ouA64UbkB65gBW58XCECWGJi+AsKU4nmBTXu6DuFZUSedLl7LEmmFvc
+AHd5Pp9WFvn7UKae7qZRdLT8QDlRutn1IiVQLnlocI3dHS1Aw0uzbc8+kdE8
+SNbDBZYkLb7eb+aLsQtSegCu21+yIfMOBcBSoQa9uB3L9ZC1xvooGzWKWcCP
+jEykQc3akqACHGAsXXSOWvlfzx4dr9oDQASoqdQdZb3j3vDNqYYK00AJyQ9R
+czic4tqDngUX8inTSAswkeQ/N/ZITI2Y3lwD0KF/vYTOSl7SK0wVLHZy54NX
+ViZcuRJwYzqPoBpfj2ILGTa5o/WnTzWAQl+HHlD0xXhsLC0EeyiKMkBi0X/0
+MoHrdEvwvjSVIH7mGo+1hC2PipEAEQEAAcLBdgQYAQgAKgUCY/xvUgkQYW1Z
+a8IGXUgCGwwWIQSlFAAFV1K0T7nqCJVhbVlrwgZdSAAAlfAP/1MszOKhkoqQ
+K6JQHKyfBxXk+MKhp1TTAwtz+1X1OAOkrm/0Qi9S8kJU1LLQUXQWCNAsYM7H
+84lLfu9XTuHm39/QhupULjt1SAzc9Hfri00iSfWBB7diJX6UMjRMOAuNpiJ+
+/nKO8m7QJp61tvWdxYJUAXoJ0niZsnXk2KkJJHtceqVFGIuVjyFZVzZ3Z2I1
+QVOA8rxMZ9bSpnlzJFbHiyFmmAxLjn0Usr/wDKOPOubaVgt3+VVon6i4MWPn
+CgJ+KyuXI8Om99vRI3/d/fH0ZrBeK1Vyc8v2TTXtZHtOwpqczDn0JD4t+V/t
+v512cMeXGHjX1f0bNDkeRJ7czyX92FbyLhePuCg3oxEvB7yknSOzO0B/gmGa
+rCBs3MltkE3fS9p8haasjBX1QLdkQAC4vT31BIrhyFFbQxnBeFGw/PK0Roga
+3gUH4WRkY24xdJ5ZOktj7F6y5mhxv69xbaJet4WB/6MGm36Zc9M0T0tcJlrG
+XTXFEw/PwRB1QJluM/KxliL2WcHSpr1rgRDGBmGCOGYYrPkjiHuBo3JqsVm0
+WNA5sNQKxg7PO+78WdK9nDCl8ZVimWLowZR776EhQ8nCqn8ckik9Y+AlJLQY
+mZj/np4NhifobIjw4MGcf8h2YOq6fWhhyZQKk1IOxVv0wZnqyjcHp3/HqlEq
+dUDdlDNGYaMN
+=efCn
+-----END PGP PUBLIC KEY BLOCK-----
+`
+        );
+        const accessToken = await BrowserRecipe.getGoogleAccessToken(dbPage, acctEmail);
+        await dbPage.close();
+        const extraAuthHeaders = { Authorization: `Bearer ${accessToken}` }; // eslint-disable-line @typescript-eslint/naming-convention
+        const gmailPage = await browser.newPage(t, `${t.urls?.mockGmailUrl()}/1869220e0c8f16dd`, undefined, extraAuthHeaders);
+        await gmailPage.waitAll('iframe');
+        const pgpBlock = await gmailPage.getFrame(['pgp_block.htm']);
+        await BrowserRecipe.pgpBlockCheck(t, pgpBlock, {
+          content: ['Sent with Proton Mail secure email.'],
+          encryption: 'encrypted',
+          signature: 'signed',
+        });
+        await gmailPage.close();
+      })
+    );
+
+    test(
       'signature - cleartext signed messages from HTML are re-fetched when needed',
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
         const acctEmail = 'ci.tests.gmail@flowcrypt.test';

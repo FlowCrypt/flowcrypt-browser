@@ -238,7 +238,8 @@ export class AttachmentDownloadView extends View {
   };
 
   private processAsPublicKeyAndHideAttachmentIfAppropriate = async () => {
-    if (this.attachment.msgId && this.attachment.id && this.attachment.treatAs() === 'publicKey') {
+    // todo: better rely on the preset this.treatAsValue
+    if (this.attachment.msgId && this.attachment.id && this.attachment.treatAs([]) === 'publicKey') {
       // this is encrypted public key - download && decrypt & parse & render
       const { data } = await this.gmail.attachmentGet(this.attachment.msgId, this.attachment.id);
       const decrRes = await MsgUtil.decryptMessage({
