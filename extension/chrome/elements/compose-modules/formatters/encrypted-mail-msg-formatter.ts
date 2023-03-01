@@ -219,6 +219,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
         data: Buf.fromUtfStr('Version: 1'),
         type: 'application/pgp-encrypted',
         contentDescription: 'PGP/MIME version identification',
+        contentTransferEncoding: '7bit',
       })
     );
     attachments.push(
@@ -227,6 +228,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
         type: 'application/octet-stream',
         contentDescription: 'OpenPGP encrypted message',
         name: 'encrypted.asc',
+        contentTransferEncoding: Str.is7bit(data) ? '7bit' : 'quoted-printable',
         inline: true,
       })
     );

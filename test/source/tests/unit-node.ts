@@ -334,6 +334,18 @@ qC2PFoU1J4aEVe5Jz2yovJnzkx/aa0Hs4g0=
       t.pass();
     });
 
+    test('[unit][Str.is7bit] correctly detects presence of non-7bit characters', async t => {
+      const UNICODE = `abcგ`;
+      const UNICODE_AS_BYTES = Buf.fromUtfStr(UNICODE);
+      const ASCII = 'Simple ASCII text\r\nwith line breaks';
+      const ASCII_AS_BYTES = Buf.fromUtfStr(ASCII);
+      expect(Str.is7bit(UNICODE)).to.be.false;
+      expect(Str.is7bit(UNICODE_AS_BYTES)).to.be.false;
+      expect(Str.is7bit(ASCII)).to.be.true;
+      expect(Str.is7bit(ASCII_AS_BYTES)).to.be.true;
+      t.pass();
+    });
+
     test('[unit][KeyUtil.parse] S/MIME key parsing works', async t => {
       /*
       // generate a key pair
