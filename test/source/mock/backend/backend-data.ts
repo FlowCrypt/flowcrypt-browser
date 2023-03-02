@@ -119,6 +119,19 @@ export class BackendData {
         allow_attester_search_only_for_domains: [],
       };
     }
+    if (domain === 'only-allow-some-domains-for-keys-openpgp-org-client-configuration.flowcrypt.test') {
+      return {
+        flags: [],
+        allow_keys_openpgp_org_search_only_for_domains: ['flowcrypt.com'],
+        disallow_keys_openpgp_org_search_for_domains: ['*'],
+      };
+    }
+    if (domain === 'no-allow-domains-for-keys-openpgp-org-client-configuration.flowcrypt.test') {
+      return {
+        flags: [],
+        allow_keys_openpgp_org_search_only_for_domains: [],
+      };
+    }
     if (domain === `google.mock.localhost:${port}`) {
       return { ...keyManagerRules, flags: [...keyManagerRules.flags, 'NO_ATTESTER_SUBMIT'] };
     }
