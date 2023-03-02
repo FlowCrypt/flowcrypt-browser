@@ -49,7 +49,6 @@ export class GoogleAuth {
     redirect_uri: 'https://www.google.com/robots.txt',
     url_code: `${GOOGLE_OAUTH_SCREEN_HOST}/o/oauth2/auth`,
     url_tokens: `${OAUTH_GOOGLE_API_HOST}/token`,
-    url_redirect: 'urn:ietf:wg:oauth:2.0:oob:auto',
     state_header: 'CRYPTUP_STATE_',
     scopes: {
       email: 'email',

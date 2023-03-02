@@ -1,7 +1,7 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
 import * as forge from 'node-forge';
-import { AddressObject, StructuredHeader } from 'mailparser';
+import { AddressObject, Attachment, simpleParser, StructuredHeader } from 'mailparser';
 import { ITestMsgStrategy, UnsupportableStrategyError } from './strategy-base.js';
 import { Buf } from '../../../core/buf';
 import { Config } from '../../../util';
@@ -15,11 +15,56 @@ import { Str } from '../../../core/common.js';
 import { GMAIL_RECOVERY_EMAIL_SUBJECTS } from '../../../core/const.js';
 import { ENVELOPED_DATA_OID, SIGNED_DATA_OID, SmimeKey } from '../../../core/crypto/smime/smime-key.js';
 import { testConstants } from '../../../tests/tooling/consts.js';
+import { KeyUtil } from '../../../core/crypto/key.js';
 
 const checkPwdEncryptedMessage = (message: string | undefined) => {
   if (!message?.match(/https:\/\/flowcrypt.com\/shared-tenant-fes\/message\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/)) {
     throw new HttpClientErr(`Error: cannot find pwd encrypted flowcrypt.com/shared-tenant-fes link in:\n\n${message}`);
   }
+};
+
+const checkForAbsenceofBase64InAttachments = async (attachments: Attachment[]) => {
+  for (const att of attachments) {
+    const encoding = att.headers.get('content-transfer-encoding');
+    if (typeof encoding !== 'string') {
+      throw new HttpClientErr(`Error: Content-Transfer-Encoding isn't present in one of the attachments`);
+    }
+    if (!['7bit', 'quoted-printable'].includes(encoding)) {
+      throw new HttpClientErr(`Error: Unexpected Content-Transfer-Encoding: ${encoding}`);
+    }
+  }
+};
+
+const check7bitEncodedPgpMimeParts = async (parseResult: ParseMsgResult, keyInfoTitles: string[], expectPubkey: boolean) => {
+  await checkForAbsenceofBase64InAttachments(parseResult.mimeMsg.attachments);
+  const msg = Buf.fromBase64Str(parseResult.base64).toRawBytesStr();
+  if (!/Content-Transfer-Encoding: 7bit\r?\n\r?\n\Version: 1\r?\n/s.test(msg)) {
+    throw new HttpClientErr(`Could not find Version: 1 with Content-Transfer-Encoding: 7bit`);
+  }
+  const keyInfos = await Config.getKeyInfo(keyInfoTitles);
+  if (expectPubkey) {
+    const pubkeyMatch = msg.match(/Content-Transfer-Encoding: 7bit\r?\n\r?\n(-----BEGIN PGP PUBLIC KEY BLOCK-----.*?-----END PGP PUBLIC KEY BLOCK-----)/s);
+    if (!pubkeyMatch) {
+      throw new HttpClientErr(`Could not find the pubkey with Content-Transfer-Encoding: 7bit`);
+    }
+    const pubkeys = await KeyUtil.parseMany(pubkeyMatch[1]);
+    expect(pubkeys).to.have.length(1);
+    expect(keyInfos.some(ki => ki.id === pubkeys[0].id)).to.be.true;
+  }
+  const msgMatch = msg.match(/Content-Transfer-Encoding: 7bit\r?\n\r?\n(-----BEGIN PGP MESSAGE-----.*?-----END PGP MESSAGE-----)/s);
+  if (!msgMatch) {
+    throw new HttpClientErr(`Could not find the encrypted message with Content-Transfer-Encoding: 7bit`);
+  }
+  const decrypted = await MsgUtil.decryptMessage({
+    kisWithPp: keyInfos,
+    encryptedData: Buf.fromUtfStr(msgMatch[1]),
+    verificationPubs: [],
+  });
+  if (!decrypted.success) {
+    throw new HttpClientErr(`Error: Could not decrypt the message`);
+  }
+  const innerMimeMsg = await simpleParser(Buffer.from(decrypted.content), { keepCidLinks: true /* #3256 */ });
+  await checkForAbsenceofBase64InAttachments(innerMimeMsg.attachments);
 };
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
@@ -57,6 +102,7 @@ class PwdAndPubkeyEncryptedMessagesWithFlowCryptComApiTestStrategy implements IT
 }
 class PwdEncryptedMessageWithFlowCryptComApiTestStrategy implements ITestMsgStrategy {
   public test = async (parseResult: ParseMsgResult) => {
+    await check7bitEncodedPgpMimeParts(parseResult, ['flowcrypt.compatibility.1pp1', 'ci.tests.gmail'], true);
     const mimeMsg = parseResult.mimeMsg;
     const senderEmail = Str.parseEmail(mimeMsg.from!.text).email;
     if (!mimeMsg.text?.includes(`${senderEmail} has sent you a password-encrypted email`)) {
@@ -71,6 +117,7 @@ class PwdEncryptedMessageWithFlowCryptComApiTestStrategy implements ITestMsgStra
 
 class PwdEncryptedMessageWithFesIdTokenTestStrategy implements ITestMsgStrategy {
   public test = async (parseResult: ParseMsgResult, id: string, port: string) => {
+    await check7bitEncodedPgpMimeParts(parseResult, ['flowcrypt.test.key.used.pgp'], true);
     const mimeMsg = parseResult.mimeMsg;
     const expectedSenderEmail = `user@standardsubdomainfes.localhost:${port}`;
     expect(mimeMsg.from!.text).to.equal(`First Last <${expectedSenderEmail}>`);
@@ -237,6 +284,18 @@ class SignedMessageTestStrategy implements ITestMsgStrategy {
   };
 }
 
+class PgpEncryptedMessageWithoutAttachmentTestStrategy implements ITestMsgStrategy {
+  public test = async (parseResult: ParseMsgResult) => {
+    await check7bitEncodedPgpMimeParts(parseResult, ['flowcrypt.compatibility.1pp1'], true);
+  };
+}
+
+class PwdOnlyEncryptedWithAttachmentTestStrategy implements ITestMsgStrategy {
+  public test = async (parseResult: ParseMsgResult) => {
+    await check7bitEncodedPgpMimeParts(parseResult, ['ci.tests.gmail'], false);
+  };
+}
+
 class PlainTextMessageTestStrategy implements ITestMsgStrategy {
   private readonly expectedText = 'New Plain Message';
 
@@ -392,8 +451,12 @@ export class TestBySubjectStrategyContext {
       this.strategy = new PwdEncryptedMessageWithFesReplyBadRequestTestStrategy();
     } else if (subject.includes('PWD encrypted message with FES web portal - a send fails with gateway update error')) {
       this.strategy = new SaveMessageInStorageStrategy();
+    } else if (subject.includes('with files + nonppg')) {
+      this.strategy = new PwdOnlyEncryptedWithAttachmentTestStrategy();
     } else if (subject.includes('Message With Image')) {
       this.strategy = new SaveMessageInStorageStrategy();
+    } else if (subject.includes('Test Sending Encrypted PGP/MIME Message')) {
+      this.strategy = new PgpEncryptedMessageWithoutAttachmentTestStrategy();
     } else if (subject.includes('Message With Test Text')) {
       this.strategy = new SaveMessageInStorageStrategy();
     } else if (subject.includes('PWD encrypted message after reconnect account')) {
