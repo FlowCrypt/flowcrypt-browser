@@ -162,7 +162,6 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
       throw Error('Empty email');
     }
     try {
-      console.log(storedPubkeys[0].pubkey);
       // Skip keys.openpgp.org search if there is at least one valid key
       const shouldSkipOpenpgpOrg = storedPubkeys.some(pubkey => pubkey.pubkey.usableForEncryption);
       const lookupResult = await this.view.pubLookup.lookupEmail(email, shouldSkipOpenpgpOrg);
