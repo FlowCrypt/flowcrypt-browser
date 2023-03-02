@@ -44,7 +44,8 @@ export class PgpBlockViewSignatureModule {
           $('#pgp_signature').addClass('gray_label').text('verifying signature...');
           try {
             const storedContact = await ContactStore.getOneWithAllPubkeys(undefined, signerEmail);
-            const { pubkeys } = await this.view.pubLookup.lookupEmail(signerEmail, !!storedContact?.sortedPubkeys.length);
+            const shouldSkipOpenpgpOrg = storedContact?.sortedPubkeys.some(pubkey => pubkey.pubkey.usableForEncryption);
+            const { pubkeys } = await this.view.pubLookup.lookupEmail(signerEmail, shouldSkipOpenpgpOrg);
             if (pubkeys.length) {
               await BrowserMsg.send.bg.await.saveFetchedPubkeys({ email: signerEmail, pubkeys });
               await this.renderPgpSignatureCheckResult(await retryVerification(pubkeys), pubkeys, undefined);
