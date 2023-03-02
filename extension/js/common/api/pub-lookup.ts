@@ -35,7 +35,15 @@ export class PubLookup {
     }
   }
 
-  public lookupEmail = async (email: string): Promise<PubkeysSearchResult> => {
+  /**
+   * Look up public keys from email address from various sources
+   * @param email Email Address
+   * - Skip keys.openpgp.org search when we are loading public keys we already have just to keep them fresh and we already have at least one valid key for that email address in local contacts
+   * - Added this logic to avoid 429 rate limit errors for keys.openpgp.org
+   * @param skipOpenpgpOrg
+   * @returns PubkeysSearchResult
+   */
+  public lookupEmail = async (email: string, skipOpenpgpOrg = false): Promise<PubkeysSearchResult> => {
     const wkdRes = await this.wkd.lookupEmail(email);
     if (wkdRes.pubkeys.length) {
       return wkdRes;
@@ -47,7 +55,7 @@ export class PubLookup {
       }
     }
     const attesterRes = await this.attester.lookupEmail(email);
-    if (attesterRes.pubkeys.length) {
+    if (attesterRes.pubkeys.length || skipOpenpgpOrg) {
       return attesterRes;
     }
     return await this.keysOpenpgpOrg.lookupEmail(email);

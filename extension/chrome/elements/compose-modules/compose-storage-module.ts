@@ -162,7 +162,8 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
       throw Error('Empty email');
     }
     try {
-      const lookupResult = await this.view.pubLookup.lookupEmail(email);
+      // Skip keys.openpgp.org search if there is at least one valid key
+      const lookupResult = await this.view.pubLookup.lookupEmail(email, storedPubkeys.length > 0);
       if (await compareAndSavePubkeysToStorage({ email, name }, lookupResult.pubkeys, storedPubkeys)) {
         await this.view.recipientsModule.reRenderRecipientFor(email);
       }
