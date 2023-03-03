@@ -12,7 +12,7 @@ export const mockKeysOpenPGPOrgEndpoints: HandlersDefinition = {
     if (!isGet(req)) {
       throw new HttpClientErr(`Not implemented: ${req.method}`);
     }
-    if (email === 'test.only.pubkey.keys.openpgp.org@flowcrypt.com' || email === 'test.only.pubkey.keys.openpgp.org@other.com') {
+    if (email === 'test.only.pubkey.keys.openpgp.org@allowed-domain.test' || email === 'test.only.pubkey.keys.openpgp.org@other.com') {
       return somePubkey;
     }
     throw new HttpClientErr('Pubkey not found', 404);
