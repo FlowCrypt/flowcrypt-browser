@@ -12,6 +12,7 @@ import { mockWkdEndpoints } from './wkd/wkd-endpoints';
 import { mockSksEndpoints } from './sks/sks-endpoints';
 import { mockCustomerUrlFesEndpoints } from './fes/customer-url-fes-endpoints';
 import { mockSharedTenantFesEndpoints } from './fes/shared-tenant-fes-endpoints';
+import { mockKeysOpenPGPOrgEndpoints } from './keys-openpgp-org/keys-openpgp-org-endpoints';
 
 export type HandlersDefinition = Handlers<{ query: { [k: string]: string }; body?: unknown }, unknown>;
 
@@ -29,6 +30,7 @@ export const startAllApisMock = async (logger: (line: string) => void) => {
     ...mockGoogleEndpoints,
     ...mockBackendEndpoints,
     ...mockAttesterEndpoints,
+    ...mockKeysOpenPGPOrgEndpoints,
     ...mockKeyManagerEndpoints,
     ...mockWkdEndpoints,
     ...mockSksEndpoints,

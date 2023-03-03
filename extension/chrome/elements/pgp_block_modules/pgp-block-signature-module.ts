@@ -9,6 +9,7 @@ import { Ui } from '../../../js/common/browser/ui.js';
 import { VerifyRes } from '../../../js/common/core/crypto/pgp/msg-util.js';
 import { Value } from '../../../js/common/core/common.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
+import { ContactStore } from '../../../js/common/platform/store/contact-store.js';
 
 export class PgpBlockViewSignatureModule {
   public constructor(private view: PgpBlockView) {}
@@ -42,7 +43,9 @@ export class PgpBlockViewSignatureModule {
         } else {
           $('#pgp_signature').addClass('gray_label').text('verifying signature...');
           try {
-            const { pubkeys } = await this.view.pubLookup.lookupEmail(signerEmail);
+            const storedContact = await ContactStore.getOneWithAllPubkeys(undefined, signerEmail);
+            const shouldSkipOpenpgpOrg = storedContact?.sortedPubkeys.some(pubkey => pubkey.pubkey.usableForEncryption);
+            const { pubkeys } = await this.view.pubLookup.lookupEmail(signerEmail, shouldSkipOpenpgpOrg);
             if (pubkeys.length) {
               await BrowserMsg.send.bg.await.saveFetchedPubkeys({ email: signerEmail, pubkeys });
               await this.renderPgpSignatureCheckResult(await retryVerification(pubkeys), pubkeys, undefined);
