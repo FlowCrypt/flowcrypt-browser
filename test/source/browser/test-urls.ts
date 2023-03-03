@@ -21,8 +21,9 @@ export class TestUrls {
     return this.extension(`chrome/settings/index.htm?account_email=${acctEmail || ''}`);
   };
 
-  public extensionInbox = (acctEmail: string) => {
-    return this.extension(`chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}`);
+  public extensionInbox = (acctEmail: string, threadId?: string) => {
+    const url = this.extension(`chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}`);
+    return threadId ? url + `&threadId=${threadId}` : url;
   };
 
   public mockGmailUrl = () => `https://gmail.localhost:${this.port}/gmail`;
