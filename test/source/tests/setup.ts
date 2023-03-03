@@ -965,6 +965,40 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
     );
 
     test(
+      'user@only-allow-some-domains-for-keys-openpgp-org-client-configuration.flowcrypt.test - search pubkey for recipients only on particular domains for keys.openpgp.org',
+      testWithBrowser(undefined, async (t, browser) => {
+        // disallow_keys_openpgp_org_search_for_domains is not respected if allow_keys_openpgp_org_search_only_for_domains is set
+        // searching attester for pubkeys only on "flowcrypt.com" domain
+        const acct = 'user@only-allow-some-domains-for-keys-openpgp-org-client-configuration.flowcrypt.test';
+        const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
+        await SetupPageRecipe.manualEnter(settingsPage, 'flowcrypt.test.key.used.pgp');
+        const composePage = await ComposePageRecipe.openStandalone(t, browser, acct);
+        await ComposePageRecipe.fillMsg(
+          composePage,
+          { to: 'test.only.pubkey.keys.openpgp.org@flowcrypt.com,test.only.pubkey.keys.openpgp.org@other.com' },
+          'flowcrypt domain should be found. other domains should not be found'
+        );
+        await composePage.waitForContent('.email_address.has_pgp', 'test.only.pubkey.keys.openpgp.org@flowcrypt.com');
+        await composePage.waitForContent('.email_address.no_pgp', 'test.only.pubkey.keys.openpgp.org@other.com');
+        await composePage.waitAll('@input-password');
+      })
+    );
+
+    test(
+      "user@no-allow-domains-for-keys-openpgp-org-client-configuration.flowcrypt.test - search pubkey on keys.openpgp.org for recipients doesn't work on any domains",
+      testWithBrowser(undefined, async (t, browser) => {
+        // as `allow_keys_openpgp_org_search_only_for_domains: []` is set, pubkey search shouldn't work for any domains
+        const acct = 'user@no-allow-domains-for-keys-openpgp-org-client-configuration.flowcrypt.test';
+        const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
+        await SetupPageRecipe.manualEnter(settingsPage, 'flowcrypt.test.key.used.pgp');
+        const composePage = await ComposePageRecipe.openStandalone(t, browser, acct);
+        await ComposePageRecipe.fillMsg(composePage, { to: 'test.only.pubkey.keys.openpgp.org@flowcrypt.com' }, 'all domains should not be found');
+        await composePage.waitForContent('.email_address.no_pgp', 'test.only.pubkey.keys.openpgp.org@flowcrypt.com');
+        await composePage.waitAll('@input-password');
+      })
+    );
+
+    test(
       'user@no-search-wildcard-domains-client-configuration.flowcrypt.test - do not search attester for recipients on any domain',
       testWithBrowser(undefined, async (t, browser) => {
         // disallowed searching attester for pubkeys on * domain
