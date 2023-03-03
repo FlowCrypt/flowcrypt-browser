@@ -201,6 +201,9 @@ export class Str {
     return filename.replace(/\.[^/.]+$/, '');
   };
 
+  public static stripPgpOrGpgExtensionIfPresent = (filename: string) => {
+    return filename.replace(/\.(pgp|gpg)$/i, '');
+  };
   private static formatEmailWithOptionalNameEx = ({ email, name }: EmailParts, forceBrackets?: boolean): string => {
     if (name) {
       return `${Str.rmSpecialCharsKeepUtf(name, 'ALLOW-SOME')} <${email}>`;

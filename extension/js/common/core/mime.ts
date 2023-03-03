@@ -25,7 +25,6 @@ type MimeContentHeader = string | AddressHeader[];
 export type MimeContent = {
   headers: Dict<MimeContentHeader>;
   attachments: Attachment[];
-  signature?: string;
   rawSignedContent?: string;
   subject?: string;
   html?: string;
@@ -73,6 +72,7 @@ export class Mime {
     } else if (decoded.html) {
       blocks.push(MsgBlock.fromContent('plainHtml', decoded.html));
     }
+    const signatureAttachments: Attachment[] = [];
     for (const file of decoded.attachments) {
       const isBodyEmpty = decoded.text === '' || decoded.text === '\n';
       const treatAs = file.treatAs(decoded.attachments, isBodyEmpty);
@@ -82,7 +82,7 @@ export class Mime {
           blocks.push(MsgBlock.fromContent('encryptedMsg', armored));
         }
       } else if (treatAs === 'signature') {
-        decoded.signature = decoded.signature || file.getData().toUtfStr();
+        signatureAttachments.push(file);
       } else if (treatAs === 'publicKey') {
         blocks.push(...MsgBlockParser.detectBlocks(file.getData().toUtfStr()).blocks);
       } else if (treatAs === 'privateKey') {
@@ -109,19 +109,21 @@ export class Mime {
         );
       }
     }
-    if (decoded.signature) {
+    if (signatureAttachments.length) {
+      // todo: if multiple signatures, figure out which fits what
+      const signature = signatureAttachments[0].getData().toUtfStr();
       for (const block of blocks) {
         if (block.type === 'plainText') {
           block.type = 'signedText';
-          block.signature = decoded.signature;
+          block.signature = signature;
         } else if (block.type === 'plainHtml') {
           block.type = 'signedHtml';
-          block.signature = decoded.signature;
+          block.signature = signature;
         }
       }
       if (!blocks.find(block => ['plainText', 'plainHtml', 'signedMsg', 'signedHtml', 'signedText'].includes(block.type))) {
         // signed an empty message
-        blocks.push(new MsgBlock('signedMsg', '', true, decoded.signature));
+        blocks.push(new MsgBlock('signedMsg', '', true, signature));
       }
     }
     return {
@@ -182,7 +184,6 @@ export class Mime {
       subject: undefined,
       text: undefined,
       html: undefined,
-      signature: undefined,
       from: undefined,
       to: [],
       cc: [],
@@ -210,9 +211,7 @@ export class Mime {
             }
             for (const node of Object.values(leafNodes)) {
               const nodeType = Mime.getNodeType(node);
-              if (nodeType === 'application/pgp-signature') {
-                mimeContent.signature = node.rawContent;
-              } else if (nodeType === 'text/html' && !Mime.getNodeFilename(node)) {
+              if (nodeType === 'text/html' && !Mime.getNodeFilename(node)) {
                 // html content may be broken up into smaller pieces by attachments in between
                 // AppleMail does this with inline attachments
                 mimeContent.html = (mimeContent.html || '') + Mime.getNodeContentAsUtfStr(node);
