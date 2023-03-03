@@ -5,8 +5,8 @@
 import { KEYS_OPENPGP_ORG_API_HOST } from '../../core/const.js';
 import { ClientConfiguration } from '../../client-configuration.js';
 import { ApiErr } from '../shared/api-error.js';
-import { PubkeysSearchResult } from './../pub-lookup.js';
-import { Api } from './../shared/api.js';
+import { PubkeysSearchResult } from '../pub-lookup.js';
+import { Api } from '../shared/api.js';
 
 // Documentation url: https://keys.openpgp.org/about/api
 export class KeysOpenpgpOrg extends Api {

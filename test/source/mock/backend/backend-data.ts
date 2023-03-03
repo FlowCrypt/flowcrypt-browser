@@ -122,7 +122,7 @@ export class BackendData {
     if (domain === 'only-allow-some-domains-for-keys-openpgp-org-client-configuration.flowcrypt.test') {
       return {
         flags: [],
-        allow_keys_openpgp_org_search_only_for_domains: ['flowcrypt.com'],
+        allow_keys_openpgp_org_search_only_for_domains: ['allowed-domain.test'],
         disallow_keys_openpgp_org_search_for_domains: ['*'],
       };
     }
