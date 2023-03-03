@@ -924,18 +924,36 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
         const acctEmail = 'ci.tests.gmail@flowcrypt.test';
         const threadId = '1869220e0c8f16dd';
-        const inboxPage = await browser.newExtensionInboxPage(t, acctEmail, threadId);
+        let inboxPage = await browser.newExtensionInboxPage(t, acctEmail, threadId);
         await inboxPage.waitAll('iframe');
         expect((await inboxPage.getFramesUrls(['pgp_block.htm'])).length).to.equal(1);
         expect((await inboxPage.getFramesUrls(['pgp_pubkey.htm'])).length).to.equal(1);
         expect((await inboxPage.getFramesUrls(['attachment.htm'])).length).to.equal(0); // invisible
-        const pgpBlock = await inboxPage.getFrame(['pgp_block.htm']);
-        await BrowserRecipe.pgpBlockCheck(t, pgpBlock, {
+        await BrowserRecipe.pgpBlockCheck(t, await inboxPage.getFrame(['pgp_block.htm']), {
           content: ['Sent with Proton Mail secure email.'],
           encryption: 'encrypted',
           signature: 'could not verify signature: missing pubkey 616D596BC2065D48',
         });
         await inboxPage.close();
+        const dbPage = await browser.newExtensionPage(t, 'chrome/dev/ci_unit_test.htm');
+        // add the pubkey of the sender
+        await dbPage.page.evaluate(async (pubkey: string) => {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const key = await (window as any).KeyUtil.parse(pubkey);
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          await (window as any).ContactStore.update(undefined, 'schlemazle@proton.me', { pubkey: key });
+        }, testConstants.protonPubkey);
+        await dbPage.close();
+        inboxPage = await browser.newExtensionInboxPage(t, acctEmail, threadId);
+        await inboxPage.waitAll('iframe');
+        expect((await inboxPage.getFramesUrls(['pgp_block.htm'])).length).to.equal(1);
+        expect((await inboxPage.getFramesUrls(['pgp_pubkey.htm'])).length).to.equal(1);
+        expect((await inboxPage.getFramesUrls(['attachment.htm'])).length).to.equal(0); // invisible
+        await BrowserRecipe.pgpBlockCheck(t, await inboxPage.getFrame(['pgp_block.htm']), {
+          content: ['Sent with Proton Mail secure email.'],
+          encryption: 'encrypted',
+          signature: 'signed',
+        });
         t.pass();
       })
     );
