@@ -32,7 +32,7 @@
     "googleapis": "112.0.0",
     "husky": "^8.0.3",
     "lint-staged": "^13.1.2",
-    "mailparser": "3.6.3",
+    "mailparser": "3.6.4",
     "mkdirp": "2.1.4",
     "openpgp": "^5.7.0",
     "pdfjs-dist": "3.4.120",
