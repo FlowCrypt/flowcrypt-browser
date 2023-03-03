@@ -41,7 +41,7 @@ export class Attachment {
   public contentTransferEncoding?: ContentTransferEncoding;
 
   private bytes: Uint8Array | undefined;
-  private treatAsValue: Attachment$treatAs | undefined;
+  private treatAsValue: Attachment$treatAs | undefined; // this field is to disable on-the-fly detection by this.treatAs()
 
   public constructor({ data, type, name, length, url, inline, id, msgId, treatAs, cid, contentDescription, contentTransferEncoding }: AttachmentMeta) {
     if (typeof data === 'undefined' && typeof url === 'undefined' && typeof id === 'undefined') {
@@ -102,6 +102,9 @@ export class Attachment {
   };
 
   public isPublicKey = (): boolean => {
+    if (this.treatAsValue) {
+      return this.treatAsValue === 'publicKey';
+    }
     return (
       this.type === 'application/pgp-keys' ||
       /^(0|0x)?[A-F0-9]{8}([A-F0-9]{8})?.*\.asc$/g.test(this.name) || // name starts with a key id
