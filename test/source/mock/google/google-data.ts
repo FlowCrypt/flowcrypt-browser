@@ -6,6 +6,7 @@ import { readdir, readFile } from 'fs';
 import { Util } from '../../util/index';
 import { ParseMsgResult } from '../../util/parse';
 import { Buf } from '../../core/buf';
+import { Xss } from '../../platform/xss';
 
 type GmailMsg$header = { name: string; value: string };
 type GmailMsg$payload$body = { attachmentId?: string; size: number; data?: string };
@@ -217,18 +218,43 @@ export class GoogleData {
 
   public static getMockGmailPage = async (acct: string, msgId?: string) => {
     let msgBlock = '';
+    let attachmentsBlock = '';
     if (msgId) {
       /* eslint-disable @typescript-eslint/no-non-null-assertion */
       const payload = (await GoogleData.withInitializedData(acct)).getMessage(msgId)!.payload!;
       const fromHeader = payload.headers!.find(header => header.name === 'From')!;
       const fromAddress = fromHeader.value!;
-      const htmlPart = payload.parts!.find(part => part.mimeType === 'text/html')!;
-      const htmlData = Buf.fromBase64Str(htmlPart.body!.data!).toUtfStr();
+      let htmlData: string;
+      const htmlPart = payload.parts!.find(part => part.mimeType === 'text/html');
+      if (htmlPart) {
+        htmlData = Buf.fromBase64Str(htmlPart.body!.data!).toUtfStr();
+      } else {
+        const textPart = payload.parts!.find(part => part.mimeType === 'text/plain')!;
+        const textData = Buf.fromBase64Str(textPart.body!.data!).toUtfStr();
+        htmlData = Xss.escape(textData);
+      }
+      const otherParts = payload.parts!.filter(part => !['text/plain', 'text/html'].includes(part.mimeType!));
+      if (otherParts.length) {
+        attachmentsBlock =
+          `<div class="ho"><span class="aVW"><span>${otherParts.length}</span> Attachments</span></div>
+        <div class="aQH">` +
+          otherParts
+            .map(
+              part => `<span class="aZo">
+              <div><div><div>
+              <span class="aV3">${Xss.escape(part.filename!)}</span>
+              </div></div></div>
+              </span>`
+            )
+            .join('') +
+          '</div>';
+      }
       /* eslint-enable @typescript-eslint/no-non-null-assertion */
       msgBlock = `<div class="adn ads" data-legacy-message-id="${msgId}">
     <div class="gs">
       <span email="${fromAddress}" name="mock sender" class="gD"><span>Mock Sender</span></span>
       <div class="a3s">${htmlData}</div>
+      ${attachmentsBlock}
     </div>
   </div>
   `;

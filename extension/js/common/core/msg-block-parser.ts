@@ -82,7 +82,7 @@ export class MsgBlockParser {
       blocks.push(MsgBlock.fromContent('decryptedHtml', Str.escapeTextAsRenderableHtml(Buf.with(decryptedContent).toUtfStr()))); // escaped mime text as html
     }
     for (const attachment of decoded.attachments) {
-      if (attachment.treatAs() === 'publicKey') {
+      if (attachment.treatAs(decoded.attachments) === 'publicKey') {
         await MsgBlockParser.pushArmoredPubkeysToBlocks([attachment.getData().toUtfStr()], blocks);
       } else {
         blocks.push(

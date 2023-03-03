@@ -4,7 +4,7 @@
 
 import { Bm, BrowserMsg } from '../../js/common/browser/browser-msg.js';
 import { DecryptErrTypes, MsgUtil } from '../../js/common/core/crypto/pgp/msg-util.js';
-import { PromiseCancellation, Url } from '../../js/common/core/common.js';
+import { PromiseCancellation, Str, Url } from '../../js/common/core/common.js';
 import { Api } from '../../js/common/api/shared/api.js';
 import { ApiErr } from '../../js/common/api/shared/api-error.js';
 import { Assert } from '../../js/common/assert.js';
@@ -66,7 +66,7 @@ export class AttachmentDownloadView extends View {
     this.acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
     this.parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
     this.frameId = Assert.urlParamRequire.string(uncheckedUrlParams, 'frameId');
-    this.origNameBasedOnFilename = uncheckedUrlParams.name ? String(uncheckedUrlParams.name).replace(/\.(pgp|gpg)$/gi, '') : 'noname';
+    this.origNameBasedOnFilename = uncheckedUrlParams.name ? Str.stripPgpOrGpgExtensionIfPresent(String(uncheckedUrlParams.name)) : 'noname';
     this.isEncrypted = uncheckedUrlParams.isEncrypted === true;
     this.errorDetailsOpened = uncheckedUrlParams.errorDetailsOpened === true;
     this.size = uncheckedUrlParams.size ? parseInt(String(uncheckedUrlParams.size)) : undefined;
@@ -238,16 +238,18 @@ export class AttachmentDownloadView extends View {
   };
 
   private processAsPublicKeyAndHideAttachmentIfAppropriate = async () => {
-    if (this.attachment.msgId && this.attachment.id && this.attachment.treatAs() === 'publicKey') {
+    // todo: we should call this detection in the main `core/Attachment.treatAs` (e.g. in the context of GmailElementReplacer and InboxActiveThreadModule)
+    // should be possible after #4906 is done
+    if (((this.attachment.msgId && this.attachment.id) || this.attachment.url) && this.attachment.isPublicKey()) {
       // this is encrypted public key - download && decrypt & parse & render
-      const { data } = await this.gmail.attachmentGet(this.attachment.msgId, this.attachment.id);
+      await this.downloadDataIfNeeded();
       const decrRes = await MsgUtil.decryptMessage({
         kisWithPp: await KeyStore.getAllWithOptionalPassPhrase(this.acctEmail),
-        encryptedData: data,
+        encryptedData: this.attachment.getData(),
         verificationPubs: [], // no need to worry about the public key signature, as public key exchange is inherently unsafe
       });
       if (decrRes.success && decrRes.content) {
-        const openpgpType = await MsgUtil.type({ data: decrRes.content });
+        const openpgpType = MsgUtil.type({ data: decrRes.content });
         if (openpgpType && openpgpType.type === 'publicKey' && openpgpType.armored) {
           // 'openpgpType.armored': could potentially process unarmored pubkey files, maybe later
           BrowserMsg.send.renderPublicKeys(this.parentTabId, {
