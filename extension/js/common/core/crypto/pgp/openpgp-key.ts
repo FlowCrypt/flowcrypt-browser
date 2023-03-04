@@ -252,11 +252,18 @@ export class OpenPGPKey {
    * Returns signed data if detached=false, armored
    * Returns signature if detached=true, armored
    */
+  /**
+   * Returns cleartext signed message if detached=false
+   * Returns signature if detached=true, armored
+   */
   public static sign = async (signingPrivate: Key, text: string, detached = false): Promise<string> => {
     const signingPrv = (await OpenPGPKey.extractExternalLibraryObjFromKey(signingPrivate)) as OpenPGP.PrivateKey; // todo: throw?
-    const message = await opgp.createMessage({ text });
-    const signRes = await opgp.sign({ message, format: 'armored', signingKeys: [signingPrv], detached });
-    return signRes;
+    if (detached) {
+      const message = await opgp.createMessage({ text });
+      return await opgp.sign({ message, format: 'armored', signingKeys: [signingPrv], detached });
+    }
+    const message = await opgp.createCleartextMessage({ text });
+    return await opgp.sign({ message, signingKeys: [signingPrv] });
   };
 
   public static getOrCreateRevocationCertificate = async (key: Key): Promise<string | undefined> => {

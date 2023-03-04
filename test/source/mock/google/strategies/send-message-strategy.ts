@@ -16,6 +16,7 @@ import { GMAIL_RECOVERY_EMAIL_SUBJECTS } from '../../../core/const.js';
 import { ENVELOPED_DATA_OID, SIGNED_DATA_OID, SmimeKey } from '../../../core/crypto/smime/smime-key.js';
 import { testConstants } from '../../../tests/tooling/consts.js';
 import { KeyUtil } from '../../../core/crypto/key.js';
+import { PgpArmor } from '../../../core/crypto/pgp/pgp-armor.js';
 
 const checkPwdEncryptedMessage = (message: string | undefined) => {
   if (!message?.match(/https:\/\/flowcrypt.com\/shared-tenant-fes\/message\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/)) {
@@ -259,11 +260,12 @@ class SignedMessageTestStrategy implements ITestMsgStrategy {
   private readonly signedBy = 'B6BE3C4293DDCF66'; // could potentially grab this from test-secrets.json file
 
   public test = async (parseResult: ParseMsgResult) => {
-    const mimeMsg = parseResult.mimeMsg;
-    const keyInfo = await Config.getKeyInfo(['flowcrypt.compatibility.1pp1', 'flowcrypt.compatibility.2pp1']);
+    const text = parseResult.mimeMsg.text ?? '';
+    expect(text).to.not.include(PgpArmor.headers('encryptedMsg').begin);
+    expect(text).to.include(PgpArmor.headers('signedMsg').begin);
     const decrypted = await MsgUtil.decryptMessage({
-      kisWithPp: keyInfo!, // eslint-disable-line @typescript-eslint/no-non-null-assertion
-      encryptedData: Buf.fromUtfStr(mimeMsg.text!), // eslint-disable-line @typescript-eslint/no-non-null-assertion
+      kisWithPp: [],
+      encryptedData: Buf.fromUtfStr(text),
       verificationPubs: [],
     });
     if (!decrypted.success) {
