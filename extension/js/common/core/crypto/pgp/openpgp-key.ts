@@ -249,10 +249,6 @@ export class OpenPGPKey {
   };
 
   /**
-   * Returns signed data if detached=false, armored
-   * Returns signature if detached=true, armored
-   */
-  /**
    * Returns cleartext signed message if detached=false
    * Returns signature if detached=true, armored
    */
