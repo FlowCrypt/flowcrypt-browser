@@ -10,7 +10,8 @@ import { BrowserMsgCommonHandlers } from '../../common/browser/browser-msg-commo
 import { Bm, BrowserMsg, TabIdRequiredError } from '../../common/browser/browser-msg.js';
 import { ContentScriptWindow } from '../../common/browser/browser-window.js';
 import { Env, WebMailName } from '../../common/browser/env.js';
-import { Ui } from '../../common/browser/ui.js';
+import { Time } from '../../common/browser/time.js';
+import { CommonHandlers, Ui } from '../../common/browser/ui.js';
 import { ClientConfiguration, ClientConfigurationError } from '../../common/client-configuration.js';
 import { Str, Url } from '../../common/core/common.js';
 import { InMemoryStoreKeys, VERSION } from '../../common/core/const.js';
@@ -91,7 +92,7 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
       if (acctEmailInterval > 6000) {
         console.info(`Cannot load FlowCrypt yet. Page: ${window.location} (${document.title})`);
       }
-      await Ui.time.sleep(acctEmailInterval, win.TrySetDestroyableTimeout);
+      await Time.sleep(acctEmailInterval, win.TrySetDestroyableTimeout);
       acctEmailInterval += 1000;
       if (wasDestroyed) {
         throw new DestroyTrigger(); // maybe not necessary, but don't want to take chances
@@ -137,7 +138,7 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
           },
         });
       }
-      await Ui.time.sleep(3000, win.TrySetDestroyableTimeout);
+      await Time.sleep(3000, win.TrySetDestroyableTimeout);
       if (wasDestroyed) {
         throw new DestroyTrigger(); // maybe not necessary, but don't want to take chances
       }
@@ -220,6 +221,7 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
     BrowserMsg.addListener('passphrase_entry', async ({ entered }: Bm.PassphraseEntry) => {
       ppEvent.entered = entered;
     });
+    BrowserMsg.addListener('confirmation_show', CommonHandlers.showConfirmationHandler);
     BrowserMsg.addListener('add_pubkey_dialog', async ({ emails }: Bm.AddPubkeyDialog) => {
       await factory.showAddPubkeyDialog(emails);
     });
@@ -251,7 +253,7 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
           await AcctStore.set(acctEmail, { full_name: fullName }); // eslint-disable-line @typescript-eslint/naming-convention
           return;
         }
-        await Ui.time.sleep(timeout, win.TrySetDestroyableTimeout);
+        await Time.sleep(timeout, win.TrySetDestroyableTimeout);
         timeout += 1000;
         if (wasDestroyed) {
           return;
@@ -310,7 +312,7 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
         ppEvent.entered = undefined;
         await showPassphraseDialog(factory, { longids: [], type: 'update_key' });
         while (ppEvent.entered === undefined) {
-          await Ui.time.sleep(100);
+          await Time.sleep(100);
         }
         if (ppEvent.entered) {
           await processKeysFromEkm(acctEmail, decryptedPrivateKeys, clientConfiguration, factory, idToken, ppEvent);

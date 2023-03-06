@@ -17,7 +17,7 @@ import { PassphraseDialogType } from '../xss-safe-factory.js';
 import { BrowserMsgCommonHandlers } from './browser-msg-common-handlers.js';
 import { Browser } from './browser.js';
 import { Env } from './env.js';
-import { Ui } from './ui.js';
+import { Time } from './time.js';
 
 export type GoogleAuthWindowResult$result = 'Success' | 'Denied' | 'Error' | 'Closed';
 
@@ -59,6 +59,7 @@ export namespace Bm {
   export type OpenGoogleAuthDialog = { acctEmail?: string; scopes?: string[] };
   export type OpenPage = { page: string; addUrlText?: string | UrlParams };
   export type PassphraseEntry = { entered: boolean; initiatorFrameId?: string };
+  export type ConfirmationResult = { confirm: boolean };
   export type AuthWindowResult = { url?: string; error?: string };
   export type Db = { f: string; args: unknown[] };
   export type InMemoryStoreSet = {
@@ -81,7 +82,7 @@ export namespace Bm {
   export type Ajax = { req: JQueryAjaxSettings; stack: string };
   export type AjaxGmailAttachmentGetChunk = { acctEmail: string; msgId: string; attachmentId: string };
   export type ShowAttachmentPreview = { iframeUrl: string };
-  export type ShowConfirmation = { message: string };
+  export type ShowConfirmation = { text: string; isHTML: boolean; footer?: string };
   export type ReRenderRecipient = { email: string };
   export type SaveFetchedPubkeys = { email: string; pubkeys: string[] };
   export type ProcessAndStoreKeysFromEkmLocally = { acctEmail: string; decryptedPrivateKeys: string[] };
@@ -183,7 +184,8 @@ export namespace Bm {
     | ProcessAndStoreKeysFromEkmLocally
     | GetLocalKeyExpiration
     | PgpKeyBinaryToArmored
-    | AuthWindowResult;
+    | AuthWindowResult
+    | ConfirmationResult;
 
   // export type RawResponselessHandler = (req: AnyRequest) => Promise<void>;
   // export type RawRespoHandler = (req: AnyRequest) => Promise<void>;
@@ -255,6 +257,7 @@ export class BrowserMsg {
         showConfirmation: (bm: Bm.ShowConfirmation) => BrowserMsg.sendAwait(undefined, 'showConfirmation', bm, true) as Promise<Bm.Res.ShowConfirmationResult>,
       },
     },
+    confirmationResult: (dest: Bm.Dest, bm: Bm.ConfirmationResult) => BrowserMsg.sendCatch(dest, 'confirmation_result', bm),
     passphraseEntry: (dest: Bm.Dest, bm: Bm.PassphraseEntry) => BrowserMsg.sendCatch(dest, 'passphrase_entry', bm),
     addEndSessionBtn: (dest: Bm.Dest) => BrowserMsg.sendCatch(dest, 'add_end_session_btn', {}),
     openPage: (dest: Bm.Dest, bm: Bm.OpenPage) => BrowserMsg.sendCatch(dest, 'open_page', bm),
@@ -277,12 +280,12 @@ export class BrowserMsg {
     notificationShow: (dest: Bm.Dest, bm: Bm.NotificationShow) => BrowserMsg.sendCatch(dest, 'notification_show', bm),
     notificationShowAuthPopupNeeded: (dest: Bm.Dest, bm: Bm.NotificationShowAuthPopupNeeded) =>
       BrowserMsg.sendCatch(dest, 'notification_show_auth_popup_needed', bm),
+    showConfirmation: (dest: Bm.Dest, bm: Bm.ShowConfirmation) => BrowserMsg.sendCatch(dest, 'confirmation_show', bm),
     renderPublicKeys: (dest: Bm.Dest, bm: Bm.RenderPublicKeys) => BrowserMsg.sendCatch(dest, 'render_public_keys', bm),
     replyPubkeyMismatch: (dest: Bm.Dest) => BrowserMsg.sendCatch(dest, 'reply_pubkey_mismatch', {}),
     addPubkeyDialog: (dest: Bm.Dest, bm: Bm.AddPubkeyDialog) => BrowserMsg.sendCatch(dest, 'add_pubkey_dialog', bm),
     reload: (dest: Bm.Dest, bm: Bm.Reload) => BrowserMsg.sendCatch(dest, 'reload', bm),
     redirect: (dest: Bm.Dest, bm: Bm.Redirect) => BrowserMsg.sendCatch(dest, 'redirect', bm),
-    openGoogleAuthDialog: (dest: Bm.Dest, bm: Bm.OpenGoogleAuthDialog) => BrowserMsg.sendCatch(dest, 'open_google_auth_dialog', bm),
     addToContacts: (dest: Bm.Dest) => BrowserMsg.sendCatch(dest, 'addToContacts', {}),
     reRenderRecipient: (dest: Bm.Dest, bm: Bm.ReRenderRecipient) => BrowserMsg.sendCatch(dest, 'reRenderRecipient', bm),
     showAttachmentPreview: (dest: Bm.Dest, bm: Bm.ShowAttachmentPreview) => BrowserMsg.sendCatch(dest, 'show_attachment_preview', bm),
@@ -342,7 +345,7 @@ export class BrowserMsg {
       if (tabId) {
         return tabId;
       }
-      await Ui.time.sleep(delay);
+      await Time.sleep(delay);
     }
     throw new TabIdRequiredError(`tabId is required, but received '${String(tabId)}' after ${attempts} attempts`);
   };

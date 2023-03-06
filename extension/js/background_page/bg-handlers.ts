@@ -8,7 +8,6 @@ import { Bm } from '../common/browser/browser-msg.js';
 import { Gmail } from '../common/api/email-provider/gmail/gmail.js';
 import { GlobalStore } from '../common/platform/store/global-store.js';
 import { ContactStore } from '../common/platform/store/contact-store.js';
-import { Ui } from '../../js/common/browser/ui.js';
 
 export class BgHandlers {
   public static openSettingsPageHandler: Bm.AsyncResponselessHandler = async ({ page, path, pageUrlParams, addNewAcct, acctEmail }: Bm.Settings) => {
@@ -36,10 +35,6 @@ export class BgHandlers {
 
   public static ajaxGmailAttachmentGetChunkHandler = async (r: Bm.AjaxGmailAttachmentGetChunk): Promise<Bm.Res.AjaxGmailAttachmentGetChunk> => {
     return { chunk: await new Gmail(r.acctEmail).attachmentGetChunk(r.msgId, r.attachmentId) };
-  };
-
-  public static showConfirmation = async (r: Bm.ShowConfirmation): Promise<Bm.Res.ShowConfirmationResult> => {
-    return await Ui.modal.confirm(r.message);
   };
 
   public static updateUninstallUrl: Bm.AsyncResponselessHandler = async () => {

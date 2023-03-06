@@ -14,6 +14,8 @@ import { View } from '../../js/common/view.js';
 import { Xss } from '../../js/common/platform/xss.js';
 import { Ui } from '../../js/common/browser/ui.js';
 import { Url } from '../../js/common/core/common.js';
+import { Browser } from '../../js/common/browser/browser.js';
+import { AttachmentWarnings } from './shared/attachment_warnings.js';
 
 type AttachmentType = 'img' | 'txt' | 'pdf';
 
@@ -80,7 +82,9 @@ View.run(
             .css('display', 'flex')
             .on('click', async e => {
               e.stopPropagation();
-              await this.prepareFileAttachmentDownload(attachmentForSave);
+              if (await AttachmentWarnings.confirmSaveToDownloadsIfNeeded(attachmentForSave)) {
+                Browser.saveToDownloads(attachmentForSave);
+              }
             });
           $('#attachment-preview-filename').text(this.origNameBasedOnFilename);
         }
