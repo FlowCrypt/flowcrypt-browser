@@ -2776,5 +2776,28 @@ AAAAAAAAAAAAAAAAzzzzzzzzzzzzzzzzzzzzzzzzzzzz.....`)
       expect(verifyRes.signerLongids[0]).to.equal(KeyUtil.getPrimaryLongid(prv));
       t.pass();
     });
+
+    test(`[unit][MsgUtil.sign(detached=false)] creates a cleartext signed message`, async t => {
+      const prv = await KeyUtil.parse(rsaPrimaryKeyAndSubkeyBothHavePrivateKey);
+      await KeyUtil.decrypt(prv, '1234');
+      const plaintext = 'data to sign';
+      const signedData = await MsgUtil.sign(prv, plaintext, false);
+      expect(signedData).to.not.include(PgpArmor.headers('encryptedMsg').begin);
+      expect(signedData).to.include(PgpArmor.headers('signedMsg').begin);
+      expect(signedData).to.include(plaintext);
+      const decrypted = await MsgUtil.decryptMessage({
+        kisWithPp: [],
+        encryptedData: Buf.fromUtfStr(signedData),
+        verificationPubs: [KeyUtil.armor(await KeyUtil.asPublicKey(prv))],
+      });
+      expect(decrypted.success).to.be.true;
+      if (decrypted.success) {
+        const verifyRes = decrypted.signature;
+        expect(verifyRes?.match).to.be.true;
+        expect(verifyRes?.signerLongids.length).to.equal(1);
+        expect(verifyRes?.signerLongids[0]).to.equal(KeyUtil.getPrimaryLongid(prv));
+      }
+      t.pass();
+    });
   }
 };

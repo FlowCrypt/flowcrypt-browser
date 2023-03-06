@@ -288,6 +288,10 @@ export class ApiErr {
     return e instanceof AjaxErr && e.status === 404;
   };
 
+  public static isRateLimit = (e: unknown): e is AjaxErr => {
+    return e instanceof AjaxErr && e.status === 429;
+  };
+
   public static isReqTooLarge = (e: unknown): boolean => {
     return e instanceof AjaxErr && e.status === 413;
   };

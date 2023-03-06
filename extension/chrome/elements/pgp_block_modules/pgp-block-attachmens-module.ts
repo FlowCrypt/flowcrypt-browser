@@ -11,6 +11,7 @@ import { Ui } from '../../../js/common/browser/ui.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { KeyStore } from '../../../js/common/platform/store/key-store.js';
 import { XssSafeFactory } from '../../../js/common/xss-safe-factory.js';
+import { Str } from '../../../js/common/core/common.js';
 
 declare const filesize: { filesize: Function }; // eslint-disable-line @typescript-eslint/ban-types
 
@@ -23,7 +24,7 @@ export class PgpBlockViewAttachmentsModule {
     Xss.sanitizeAppend('#pgp_block', '<div id="attachments"></div>');
     this.includedAttachments = attachments;
     for (const i of attachments.keys()) {
-      const name = (attachments[i].name ? attachments[i].name : 'noname').replace(/\.(pgp|gpg)$/, '');
+      const name = attachments[i].name ? Str.stripPgpOrGpgExtensionIfPresent(attachments[i].name) : 'noname';
       const nameVisible = name.length > 100 ? name.slice(0, 100) + '…' : name;
       const size = filesize.filesize(attachments[i].length);
       const htmlContent = `<b>${Xss.escape(nameVisible)}</b>&nbsp;&nbsp;&nbsp;${size}<span class="progress"><span class="percent"></span></span>`;
@@ -90,7 +91,7 @@ export class PgpBlockViewAttachmentsModule {
     });
     if (decrypted.success) {
       const attachment = new Attachment({
-        name: encrypted.name.replace(/\.(pgp|gpg)$/, ''),
+        name: Str.stripPgpOrGpgExtensionIfPresent(encrypted.name),
         type: encrypted.type,
         data: decrypted.content,
       });

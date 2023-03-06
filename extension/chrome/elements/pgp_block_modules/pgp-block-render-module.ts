@@ -294,7 +294,7 @@ export class PgpBlockViewRenderModule {
         decryptedContent = this.getEncryptedSubjectText(decoded.subject, isHtml) + decryptedContent; // render encrypted subject in message
       }
       for (const attachment of decoded.attachments) {
-        if (attachment.treatAs() !== 'publicKey') {
+        if (attachment.treatAs(decoded.attachments) !== 'publicKey') {
           renderableAttachments.push(attachment);
         } else {
           publicKeys.push(attachment.getData().toUtfStr());

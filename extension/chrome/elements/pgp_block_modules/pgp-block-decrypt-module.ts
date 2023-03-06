@@ -30,16 +30,18 @@ export class PgpBlockViewDecryptModule {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const mimeMsg = Buf.fromBase64UrlStr(raw!); // used 'raw' above
         const parsed = await Mime.decode(mimeMsg);
-        if (parsed && typeof parsed.rawSignedContent === 'string' && parsed.signature) {
-          this.view.signature.parsedSignature = parsed.signature;
-          await this.decryptAndRender(Buf.fromUtfStr(parsed.rawSignedContent), verificationPubs);
-        } else {
-          await this.view.errorModule.renderErr(
-            'Error: could not properly parse signed message',
-            parsed.rawSignedContent || parsed.text || parsed.html || mimeMsg.toUtfStr(),
-            'parse error'
-          );
+        if (parsed && typeof parsed.rawSignedContent === 'string') {
+          const signatureAttachment = parsed.attachments.find(a => a.treatAs(parsed.attachments) === 'signature'); // todo: more than one signature candidate?
+          if (signatureAttachment) {
+            this.view.signature.parsedSignature = signatureAttachment.getData().toUtfStr();
+            return await this.decryptAndRender(Buf.fromUtfStr(parsed.rawSignedContent), verificationPubs);
+          }
         }
+        await this.view.errorModule.renderErr(
+          'Error: could not properly parse signed message',
+          parsed.rawSignedContent || parsed.text || parsed.html || mimeMsg.toUtfStr(),
+          'parse error'
+        );
       } else if (this.view.encryptedMsgUrlParam && !forcePullMsgFromApi) {
         // ascii armored message supplied
         this.view.renderModule.renderText(this.view.signature ? 'Verifying...' : 'Decrypting...');

@@ -49,8 +49,8 @@ export class BrowserHandle {
     return this.newPage(t, t.urls?.extension(url));
   };
 
-  public newExtensionInboxPage = async (t: AvaContext, acctEmail: string): Promise<ControllablePage> => {
-    return this.newPage(t, t.urls?.extensionInbox(acctEmail));
+  public newExtensionInboxPage = async (t: AvaContext, acctEmail: string, threadId?: string): Promise<ControllablePage> => {
+    return this.newPage(t, t.urls?.extensionInbox(acctEmail, threadId));
   };
 
   public newExtensionSettingsPage = async (t: AvaContext, acctEmail?: string | undefined): Promise<ControllablePage> => {

@@ -41,7 +41,7 @@ export class Attachment {
   public contentTransferEncoding?: ContentTransferEncoding;
 
   private bytes: Uint8Array | undefined;
-  private treatAsValue: Attachment$treatAs | undefined;
+  private treatAsValue: Attachment$treatAs | undefined; // this field is to disable on-the-fly detection by this.treatAs()
 
   public constructor({ data, type, name, length, url, inline, id, msgId, treatAs, cid, contentDescription, contentTransferEncoding }: AttachmentMeta) {
     if (typeof data === 'undefined' && typeof url === 'undefined' && typeof id === 'undefined') {
@@ -101,6 +101,18 @@ export class Attachment {
     return `f_${Str.sloppyRandom(30)}@flowcrypt`;
   };
 
+  public isPublicKey = (): boolean => {
+    if (this.treatAsValue) {
+      return this.treatAsValue === 'publicKey';
+    }
+    return (
+      this.type === 'application/pgp-keys' ||
+      /^(0|0x)?[A-F0-9]{8}([A-F0-9]{8})?.*\.asc$/g.test(this.name) || // name starts with a key id
+      (this.name.toLowerCase().includes('public') && /[A-F0-9]{8}.*\.asc$/g.test(this.name)) || // name contains the word "public", any key id and ends with .asc
+      (/\.asc$/.test(this.name) && this.hasData() && Buf.with(this.getData().subarray(0, 100)).toUtfStr().includes('-----BEGIN PGP PUBLIC KEY BLOCK-----'))
+    );
+  };
+
   public hasData = () => {
     return this.bytes instanceof Uint8Array;
   };
@@ -122,13 +134,24 @@ export class Attachment {
     throw new Error('Attachment has no data set');
   };
 
-  public treatAs = (isBodyEmpty = false): Attachment$treatAs => {
+  public treatAs = (attachments: Attachment[], isBodyEmpty = false): Attachment$treatAs => {
     if (this.treatAsValue) {
       // pre-set
       return this.treatAsValue;
     } else if (['PGPexch.htm.pgp', 'PGPMIME version identification', 'Version.txt', 'PGPMIME Versions Identification'].includes(this.name)) {
       return 'hidden'; // PGPexch.htm.pgp is html alternative of textual body content produced by PGP Desktop and GPG4o
-    } else if (this.name === 'signature.asc' || this.type === 'application/pgp-signature') {
+    } else if (this.name === 'signature.asc') {
+      return 'signature';
+    } else if (this.type === 'application/pgp-signature') {
+      // this may be a signature for an attachment following these patterns:
+      // sample.name.sig for sample.name.pgp #3448
+      // or sample.name.sig for sample.name
+      if (attachments.length > 1) {
+        const nameWithoutExtension = Str.getFilenameWithoutExtension(this.name);
+        if (attachments.some(a => a !== this && (a.name === nameWithoutExtension || Str.getFilenameWithoutExtension(a.name) === nameWithoutExtension))) {
+          return 'hidden';
+        }
+      }
       return 'signature';
     } else if (!this.name && !this.type.startsWith('image/')) {
       // this.name may be '' or undefined - catch either
@@ -143,22 +166,11 @@ export class Attachment {
     } else if (this.name.match(/(\.pgp$)|(\.gpg$)|(\.[a-zA-Z0-9]{3,4}\.asc$)/g)) {
       // ends with one of .gpg, .pgp, .???.asc, .????.asc
       return 'encryptedFile';
+      // todo: after #4906 is done we should "decrypt" the encryptedFile here to see if it's a binary 'publicKey' (as in message 1869220e0c8f16dd)
+    } else if (this.isPublicKey()) {
+      return 'publicKey';
     } else if (this.name.match(/(cryptup|flowcrypt)-backup-[a-z0-9]+\.(key|asc)$/g)) {
       return 'privateKey';
-    } else if (this.type === 'application/pgp-keys') {
-      return 'publicKey';
-    } else if (this.name.match(/^(0|0x)?[A-F0-9]{8}([A-F0-9]{8})?.*\.asc$/g)) {
-      // name starts with a key id
-      return 'publicKey';
-    } else if (this.name.toLowerCase().includes('public') && this.name.match(/[A-F0-9]{8}.*\.asc$/g)) {
-      // name contains the word "public", any key id and ends with .asc
-      return 'publicKey';
-    } else if (
-      this.name.match(/\.asc$/) &&
-      this.hasData() &&
-      Buf.with(this.getData().subarray(0, 100)).toUtfStr().includes('-----BEGIN PGP PUBLIC KEY BLOCK-----')
-    ) {
-      return 'publicKey';
     } else if (this.name.match(/\.asc$/) && this.length < 100000 && !this.inline) {
       return 'encryptedMsg';
     } else {
