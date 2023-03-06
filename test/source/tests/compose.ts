@@ -1434,9 +1434,9 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', {
           appendUrl: 'draftId=draft_with_image',
         });
-        const body = await composePage.waitAny('@input-body');
         await composePage.waitAll('#input_text img');
-        expect(await body.$eval('#input_text img', el => el.getAttribute('src'))).to.eq(imgBase64);
+        const imgSrc = await composePage.attr('#input_text img', 'src');
+        expect(imgSrc).to.eq(imgBase64);
       })
     );
 
