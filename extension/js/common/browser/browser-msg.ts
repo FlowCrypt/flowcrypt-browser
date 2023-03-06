@@ -254,7 +254,6 @@ export class BrowserMsg {
           BrowserMsg.sendAwait(undefined, 'processAndStoreKeysFromEkmLocally', bm, true) as Promise<Bm.Res.ProcessAndStoreKeysFromEkmLocally>,
         getLocalKeyExpiration: (bm: Bm.GetLocalKeyExpiration) =>
           BrowserMsg.sendAwait(undefined, 'getLocalKeyExpiration', bm, true) as Promise<Bm.Res.GetLocalKeyExpiration>,
-        showConfirmation: (bm: Bm.ShowConfirmation) => BrowserMsg.sendAwait(undefined, 'showConfirmation', bm, true) as Promise<Bm.Res.ShowConfirmationResult>,
       },
     },
     confirmationResult: (dest: Bm.Dest, bm: Bm.ConfirmationResult) => BrowserMsg.sendCatch(dest, 'confirmation_result', bm),
