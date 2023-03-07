@@ -328,9 +328,11 @@ export class PgpBlockViewRenderModule {
           image.addEventListener('load', () => this.resizePgpBlockFrame());
         }
       } catch (e) {
-        // When CORS error, set error message to `Remote server blocked image loading`
-        const errorMessage = e.message?.includes('Failed to fetch') ? 'Remote server blocked image loading' : 'Failed to load image';
-        Xss.replaceElementDANGEROUSLY(image, `<p style="white-space: pre">${errorMessage}</p><a href="${imgUrl}" target="_blank">Open image in a new tab</a>`); // xss-safe-value
+        Xss.replaceElementDANGEROUSLY(
+          image,
+          `<div class="remote_image_load_error"><p style="white-space: pre">Failed to load image</p><a href="${imgUrl}" target="_blank">Open image in a new tab</a></div>`
+        ); // xss-safe-value
+        this.resizePgpBlockFrame();
         this.view.errorModule.debug(`Error while getting base64 data for ${imgUrl}. ${e}`);
       }
     }
