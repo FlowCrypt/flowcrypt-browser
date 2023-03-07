@@ -271,6 +271,8 @@ export class KeyUtil {
     }
     result.set(`expiration`, KeyUtil.formatResult(key.expiration));
     result.set(`internal dateBeforeExpiration`, await KeyUtil.formatResultAsync(async () => KeyUtil.dateBeforeExpirationIfAlreadyExpired(key)));
+    result.set(`internal usableForEncryption`, KeyUtil.formatResult(key.usableForEncryption));
+    result.set(`internal usableForSigning`, KeyUtil.formatResult(key.usableForSigning));
     result.set(`internal usableForEncryptionButExpired`, KeyUtil.formatResult(key.usableForEncryptionButExpired));
     result.set(`internal usableForSigningButExpired`, KeyUtil.formatResult(key.usableForSigningButExpired));
     return result;
