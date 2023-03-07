@@ -60,7 +60,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
         await inboxPage.waitForSelTestState('ready');
         await inboxPage.waitAll('iframe');
         const pgpBlock = await inboxPage.getFrame(['pgp_block.htm']);
-        await pgpBlock.waitForContent('@pgp-block-content', 'Remote server blocked image loading');
+        await pgpBlock.waitForContent('@pgp-block-content', 'Failed to load image');
         await pgpBlock.waitForContent('@pgp-block-content', 'Open image in a new tab');
         const linkAttr = await pgpBlock.attr('#pgp_block a', 'href');
         expect(linkAttr).to.equal('https://test-site.com/bad-image');
