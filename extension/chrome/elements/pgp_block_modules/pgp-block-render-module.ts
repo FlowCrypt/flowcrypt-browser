@@ -330,7 +330,7 @@ export class PgpBlockViewRenderModule {
       } catch (e) {
         const errorHtml = `
           <div class="remote_image_load_error">
-            <p style="white-space: pre">Failed to load image</p>
+            <span>Failed to load image</span>
             <a href="${imgUrl}" target="_blank">Open image in a new tab</a>
           </div>`;
         Xss.replaceElementDANGEROUSLY(image, errorHtml); // xss-safe-value
