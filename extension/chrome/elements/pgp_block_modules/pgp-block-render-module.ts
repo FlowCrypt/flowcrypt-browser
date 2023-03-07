@@ -181,6 +181,11 @@ export class PgpBlockViewRenderModule {
       // rendering message content
       $('.pgp_print_button').show();
       const pgpBlock = $('#pgp_block').html(Xss.htmlSanitizeKeepBasicTags(htmlContent, 'IMG-TO-LINK')); // xss-sanitized
+      Xss.appendRemoteImagesToContainer();
+      $('#pgp_block .remote_image_container img').on(
+        'load',
+        this.view.setHandler(() => this.resizePgpBlockFrame())
+      );
       pgpBlock.find('a.image_src_link').one(
         'click',
         this.view.setHandler((el, ev) => this.displayImageSrcLinkAsImg(el as HTMLAnchorElement, ev as JQuery.Event<HTMLAnchorElement, null>))

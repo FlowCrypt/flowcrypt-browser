@@ -32,15 +32,22 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
     );
 
     test(
-      `decrypt - show warning for remote images`,
+      `decrypt - show remote images`,
       testWithBrowser('compatibility', async (t, browser) => {
-        const threadId = '1850b93d7772173c';
+        const threadId = '186bd029856d1e39';
         const acctEmail = 'flowcrypt.compatibility@gmail.com';
         const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`);
         await inboxPage.waitForSelTestState('ready');
         await inboxPage.waitAll('iframe');
         const pgpBlock = await inboxPage.getFrame(['pgp_block.htm']);
-        await pgpBlock.waitForContent('@pgp-block-content', '[Remote images are blocked due to security]');
+        await pgpBlock.waitForContent('@remote-image-container', 'Authenticity of this remote image cannot be verified.');
+        await pgpBlock.checkIfImageIsDisplayedCorrectly('#pgp_block img');
+        // Chceck if forwarded message contains img url
+        await inboxPage.waitAll('iframe');
+        // Get Reply Window (Composer) and click on reply button.
+        const replyFrame = await inboxPage.getFrame(['compose.htm']);
+        await replyFrame.waitAndClick('@action-forward');
+        await replyFrame.waitForContent('@input-body', 'https://flowcrypt.com/assets/imgs/svgs/flowcrypt-logo.svg');
         await inboxPage.close();
       })
     );

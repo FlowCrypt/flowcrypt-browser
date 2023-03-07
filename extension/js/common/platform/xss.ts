@@ -6,7 +6,7 @@ import * as DOMPurify from 'dompurify';
 
 import { Str } from '../core/common.js';
 
-export type SanitizeImgHandling = 'IMG-DEL' | 'IMG-KEEP' | 'IMG-TO-LINK';
+export type SanitizeImgHandling = 'IMG-DEL' | 'IMG-KEEP' | 'IMG-TO-LINK' | 'IMG-TO-PLAIN-URL';
 
 /**
  * This class is in platform/ folder because most of it depends on platform specific code
@@ -125,8 +125,11 @@ export class Xss {
         }
       }
       if ('src' in node) {
-        const img: Element = node;
+        const img = node as HTMLImageElement;
         const src = img.getAttribute('src');
+        const imgWidth = img.width ?? img.clientWidth;
+        const imgHeight = img.height ?? img.clientHeight;
+        const heightWidth = `height: ${imgHeight ? `${Number(imgHeight)}px` : 'auto'}; width: ${imgWidth ? `${Number(imgWidth)}px` : 'auto'};max-width:98%;`;
         if (imgHandling === 'IMG-DEL') {
           img.remove(); // just skip images
         } else if (!src) {
@@ -141,9 +144,6 @@ export class Xss {
             a.className = 'image_src_link';
             a.target = '_blank';
             a.innerText = title || 'show image';
-            const heightWidth = `height: ${img.clientHeight ? `${Number(img.clientHeight)}px` : 'auto'}; width: ${
-              img.clientWidth ? `${Number(img.clientWidth)}px` : 'auto'
-            };max-width:98%;`;
             a.setAttribute(
               'style',
               `text-decoration: none; background: #FAFAFA; padding: 4px; border: 1px dotted #CACACA; display: inline-block; ${heightWidth}`
@@ -151,9 +151,13 @@ export class Xss {
             a.setAttribute('data-test', 'show-inline-image');
             Xss.replaceElementDANGEROUSLY(img, a.outerHTML); // xss-safe-value - "a" was build using dom node api
           } else {
-            Xss.replaceElementDANGEROUSLY(img, `<span>[Remote images are blocked due to security]</span>`); // xss-safe-value
+            const remoteImgEl = `<div class="remote_image_container" data-src="${src}" data-size="${heightWidth}" data-test="remote-image-container"><span>Authenticity of this remote image cannot be verified.</span></div>`;
+            Xss.replaceElementDANGEROUSLY(img, remoteImgEl); // xss-safe-value
           }
         }
+      }
+      if (node.classList.contains('remote_image_container') && imgHandling === 'IMG-TO-PLAIN-URL') {
+        Xss.replaceElementDANGEROUSLY(node, node.getAttribute('data-src') ?? ''); // xss-safe-value
       }
       if ('target' in node) {
         // open links in new window
@@ -175,6 +179,20 @@ export class Xss {
   };
 
   /**
+   * Append the remote image `img` element to the remote_image_container.
+   * We couldn't add it directly to htmlSanitizeKeepBasicTags because doing so would cause an infinite loop.
+   */
+  public static appendRemoteImagesToContainer = () => {
+    const imageContainerList = $('#pgp_block .remote_image_container');
+    for (const imageContainer of imageContainerList) {
+      const imgUrl = imageContainer.dataset.src;
+      if (imgUrl) {
+        Xss.sanitizeAppend(imageContainer, `<img src="${imgUrl}" style="${imageContainer.dataset.size}"/>`);
+      }
+    }
+  };
+
+  /**
    * Convert untrusted rich html to plain text, preserving newlines caused by div/p/h1/pre/br and similar tags,
    * in a way that is consistent across browsers, unlike `element.textContent`. Maximum two consecutive newlines preserved.
    *
@@ -182,7 +200,7 @@ export class Xss {
    */
   public static htmlSanitizeAndStripAllTags = (dirtyHtml: string, outputNl: string, trim = true): string => {
     Xss.throwIfNotSupported();
-    let html = Xss.htmlSanitizeKeepBasicTags(dirtyHtml, 'IMG-DEL');
+    let html = Xss.htmlSanitizeKeepBasicTags(dirtyHtml, 'IMG-TO-PLAIN-URL');
     const random = Str.sloppyRandom(5);
     const br = `CU_BR_${random}`;
     const blockStart = `CU_BS_${random}`;

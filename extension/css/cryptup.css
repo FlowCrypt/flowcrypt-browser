@@ -1353,6 +1353,23 @@ td {
   opacity: 0.75;
 }
 
+#pgp_block .remote_image_container {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: max-content;
+  border: 1px solid #d5d5d5; 
+  padding: 10px 20px; 
+  line-height: 1.8; 
+  margin: 10px 0;
+  font-size: 0.9em;
+  color: #666;
+}
+
+#pgp_block .remote_image_container img {
+  margin-top: 5px;
+}
+
 #backup_block label#toggle_pass_phrase.toggle_show_hide_pass_phrase {
   padding-top: 3px;
   margin-top: 1px;
