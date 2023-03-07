@@ -329,9 +329,10 @@ export class PgpBlockViewRenderModule {
         }
       } catch (e) {
         Xss.replaceElementDANGEROUSLY(
+          // xss-safe-value
           image,
           `<div class="remote_image_load_error"><p style="white-space: pre">Failed to load image</p><a href="${imgUrl}" target="_blank">Open image in a new tab</a></div>`
-        ); // xss-safe-value
+        );
         this.resizePgpBlockFrame();
         this.view.errorModule.debug(`Error while getting base64 data for ${imgUrl}. ${e}`);
       }
