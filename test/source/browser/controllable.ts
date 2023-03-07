@@ -413,14 +413,6 @@ abstract class ControllableBase {
     );
   };
 
-  public checkIfImageIsDisplayedCorrectly = async (selector: string) => {
-    const isImageDisplayedCorrectly = await this.target.evaluate(selector => {
-      const img = document.querySelector(selector) as HTMLImageElement;
-      return img.naturalWidth !== 0 && img.naturalHeight !== 0;
-    }, selector);
-    expect(isImageDisplayedCorrectly).to.be.true;
-  };
-
   public hasHorizontalScroll = async () => {
     return await this.target.evaluate(() => document.documentElement.scrollWidth > document.documentElement.offsetWidth);
   };

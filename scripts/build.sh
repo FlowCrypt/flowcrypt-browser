@@ -8,8 +8,8 @@ shopt -s globstar
 
 if [[ "$#" == 1 ]] && [[ "$1" == "--assets-only" ]]; then # only build static assets, without re-building TS
     ( cd $SRCDIR && cp -r --parents ./**/*.{js,htm,css,woff2,png,svg,txt} ../build/chrome-enterprise )
-    ( cd $SRCDIR && cp -r --parents ./**/*.{js,htm,css,woff2,png,svg,txt} ../build/firefox-consumer )
     ( cd $SRCDIR && cp -r --parents ./**/*.{js,htm,css,woff2,png,svg,txt} ../build/chrome-consumer )
+    ( cd $SRCDIR && cp -r --parents ./**/*.{js,htm,css,woff2,png,svg,txt} ../build/firefox-consumer )
     exit 0
 fi
 

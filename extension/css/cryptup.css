@@ -1199,15 +1199,6 @@ td {
   padding-left: 10px;
 }
 
-#pgp_block .replace_to_base64_image {
-  width: 64px !important; /* override width and height of original image */
-  height: 64px !important;
-}
-
-#pgp_block img {
-  max-width: 100%;
-}
-
 #pgp_block,
 #backup_block {
   height: auto;
