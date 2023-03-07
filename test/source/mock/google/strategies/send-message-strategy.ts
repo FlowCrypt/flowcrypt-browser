@@ -58,7 +58,7 @@ const check7bitEncodedPgpMimeParts = async (parseResult: ParseMsgResult, keyInfo
   }
   const decrypted = await MsgUtil.decryptMessage({
     kisWithPp: keyInfos,
-    encryptedData: Buf.fromUtfStr(msgMatch[1]),
+    encryptedData: msgMatch[1],
     verificationPubs: [],
   });
   if (!decrypted.success) {
@@ -265,7 +265,7 @@ class SignedMessageTestStrategy implements ITestMsgStrategy {
     expect(text).to.include(PgpArmor.headers('signedMsg').begin);
     const decrypted = await MsgUtil.decryptMessage({
       kisWithPp: [],
-      encryptedData: Buf.fromUtfStr(text),
+      encryptedData: text,
       verificationPubs: [],
     });
     if (!decrypted.success) {

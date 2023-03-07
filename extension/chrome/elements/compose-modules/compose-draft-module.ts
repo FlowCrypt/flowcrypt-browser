@@ -308,10 +308,9 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
     if (!rawBlock) {
       return await this.abortAndRenderReplyMsgComposeTableIfIsReplyBox('!rawBlock');
     }
-    const encryptedData = rawBlock.content instanceof Buf ? rawBlock.content : Buf.fromUtfStr(rawBlock.content);
     const decrypted = await MsgUtil.decryptMessage({
       kisWithPp: await KeyStore.getAllWithOptionalPassPhrase(this.view.acctEmail),
-      encryptedData,
+      encryptedData: rawBlock.content,
       verificationPubs: [],
     });
     if (!decrypted.success) {

@@ -155,8 +155,9 @@ export class Mime {
     return { 'in-reply-to': msgId, references: refs + ' ' + msgId };
   };
 
-  public static resemblesMsg = (msg: Uint8Array) => {
-    const chunk = new Buf(msg.slice(0, 3000)).toUtfStr().toLowerCase().replace(/\r\n/g, '\n');
+  public static resemblesMsg = (msg: Uint8Array | string) => {
+    // todo: what would happen if we cut a UTF8 sequence here? make a common method with .toUtfStr('ignore') as in PgpArmor?
+    const chunk = Str.with(msg.slice(0, 3000)).toLowerCase().replace(/\r\n/g, '\n');
     const headers = chunk.split('\n\n')[0];
     if (!headers) {
       return false;
@@ -177,7 +178,7 @@ export class Mime {
     return contentType.index === 0;
   };
 
-  public static decode = async (mimeMsg: Uint8Array): Promise<MimeContent> => {
+  public static decode = async (mimeMsg: Uint8Array | string): Promise<MimeContent> => {
     let mimeContent: MimeContent = {
       attachments: [],
       headers: {},

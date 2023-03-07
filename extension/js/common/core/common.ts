@@ -4,6 +4,7 @@
 
 import { base64decode, base64encode } from '../platform/util.js';
 import { Xss } from '../platform/xss.js';
+import { Buf } from './buf.js';
 
 export type Dict<T> = { [key: string]: T };
 export type UrlParam = string | number | null | undefined | boolean | string[];
@@ -102,6 +103,10 @@ export class Str {
       }
     }
     return true;
+  };
+
+  public static with = (data: Uint8Array | string): string => {
+    return typeof data === 'string' ? data : Buf.with(data).toUtfStr();
   };
 
   public static monthName = (monthIndex: number) => {

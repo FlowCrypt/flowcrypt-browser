@@ -107,7 +107,7 @@ export class ComposeQuoteModule extends ViewModule<ComposeView> {
       for (const block of message.blocks.filter(b => readableBlockTypes.includes(b.type))) {
         if (['encryptedMsg', 'signedMsg'].includes(block.type)) {
           this.setQuoteLoaderProgress('decrypting...');
-          const decrypted = await this.decryptMessage(Buf.fromUtfStr(block.content.toString()));
+          const decrypted = await this.decryptMessage(block.content);
           const msgBlocks = await MsgBlockParser.fmtDecryptedAsSanitizedHtmlBlocks(Buf.fromUtfStr(decrypted));
           readableBlocks.push(...msgBlocks.blocks.filter(b => decryptedBlockTypes.includes(b.type)));
         } else {
@@ -171,7 +171,7 @@ export class ComposeQuoteModule extends ViewModule<ComposeView> {
     }
   };
 
-  private decryptMessage = async (encryptedData: Buf): Promise<string> => {
+  private decryptMessage = async (encryptedData: Uint8Array | string): Promise<string> => {
     const decryptRes = await MsgUtil.decryptMessage({
       kisWithPp: await KeyStore.getAllWithOptionalPassPhrase(this.view.acctEmail),
       encryptedData,
