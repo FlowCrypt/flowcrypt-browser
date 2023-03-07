@@ -52,6 +52,23 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
     );
 
     test(
+      `decrypt - check error handling for remote images`,
+      testWithBrowser('compatibility', async (t, browser) => {
+        const threadId = '186b60222fa8a75d';
+        const acctEmail = 'flowcrypt.compatibility@gmail.com';
+        const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`);
+        await inboxPage.waitForSelTestState('ready');
+        await inboxPage.waitAll('iframe');
+        const pgpBlock = await inboxPage.getFrame(['pgp_block.htm']);
+        await pgpBlock.waitForContent('@pgp-block-content', 'Failed to load image');
+        await pgpBlock.waitForContent('@pgp-block-content', 'Open image in a new tab');
+        const linkAttr = await pgpBlock.attr('#pgp_block a', 'href');
+        expect(linkAttr).to.equal('https://test-site.com/bad-image');
+        await inboxPage.close();
+      })
+    );
+
+    test(
       `decrypt - show inline image when user clicks show image`,
       testWithBrowser('compatibility', async (t, browser) => {
         const threadId = '1850f9608240f758';

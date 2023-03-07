@@ -1204,6 +1204,19 @@ td {
   height: 64px !important;
 }
 
+#pgp_block .remote_image_load_error {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: max-content;
+  border: 1px solid #d5d5d5; 
+  padding: 10px 20px; 
+  line-height: 1.8; 
+  margin: 10px 0;
+  font-size: 0.9em;
+  color: #666;
+}
+
 #pgp_block img {
   max-width: 100%;
 }
