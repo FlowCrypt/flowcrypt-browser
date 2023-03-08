@@ -1358,6 +1358,7 @@ td {
   flex-direction: column;
   align-items: flex-start;
   width: max-content;
+  max-width: 90%;
   border: 1px solid #d5d5d5; 
   padding: 10px 20px; 
   line-height: 1.8; 
