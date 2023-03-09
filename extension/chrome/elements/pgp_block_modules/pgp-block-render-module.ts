@@ -294,9 +294,9 @@ export class PgpBlockViewRenderModule {
       }
       for (const attachment of decoded.attachments) {
         if (attachment.isPublicKey()) {
-          renderableAttachments.push(attachment);
-        } else {
           publicKeys.push(attachment.getData().toUtfStr());
+        } else {
+          renderableAttachments.push(attachment);
         }
       }
     }
