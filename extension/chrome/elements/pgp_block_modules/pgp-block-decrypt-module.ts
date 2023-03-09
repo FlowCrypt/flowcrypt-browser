@@ -35,7 +35,7 @@ export class PgpBlockViewDecryptModule {
           const signatureAttachment = parsed.attachments.find(a => a.treatAs(parsed.attachments) === 'signature'); // todo: more than one signature candidate?
           if (signatureAttachment) {
             this.view.signature.parsedSignature = signatureAttachment.getData().toUtfStr();
-            return await this.decryptAndRender(Buf.fromUtfStr(parsed.rawSignedContent), verificationPubs);
+            return await this.decryptAndRender(parsed.rawSignedContent, verificationPubs);
           }
         }
         await this.view.errorModule.renderErr(
@@ -58,7 +58,7 @@ export class PgpBlockViewDecryptModule {
           if (plaintext) {
             await this.view.renderModule.renderAsRegularContent(plaintext);
           } else {
-            await this.decryptAndRender(Buf.fromUtfStr(armored), verificationPubs, subject);
+            await this.decryptAndRender(armored, verificationPubs, subject);
           }
         }
       }

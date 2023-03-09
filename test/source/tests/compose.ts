@@ -21,7 +21,6 @@ import { BrowserRecipe } from './tooling/browser-recipe';
 import { SetupPageRecipe } from './page-recipe/setup-page-recipe';
 import { testConstants } from './tooling/consts';
 import { MsgUtil } from '../core/crypto/pgp/msg-util';
-import { Buf } from '../core/buf';
 import { PubkeyInfoWithLastCheck } from '../core/crypto/key';
 import { ElementHandle, Page } from 'puppeteer';
 
@@ -1558,9 +1557,8 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         // get sent msg from mock
         const sentMsg = (await GoogleData.withInitializedData('flowcrypt.compatibility@gmail.com')).searchMessagesBySubject(subject)[0];
         const message = sentMsg.payload!.body!.data!;
-        const encrypted = message.match(/\-\-\-\-\-BEGIN PGP MESSAGE\-\-\-\-\-.*\-\-\-\-\-END PGP MESSAGE\-\-\-\-\-/s)![0];
+        const encryptedData = message.match(/\-\-\-\-\-BEGIN PGP MESSAGE\-\-\-\-\-.*\-\-\-\-\-END PGP MESSAGE\-\-\-\-\-/s)![0];
         /* eslint-enable @typescript-eslint/no-non-null-assertion */
-        const encryptedData = Buf.fromUtfStr(encrypted);
         const decrypted0 = await MsgUtil.decryptMessage({ kisWithPp: [], encryptedData, verificationPubs: [] });
         // decryption without a ki should fail
         expect(decrypted0.success).to.equal(false);

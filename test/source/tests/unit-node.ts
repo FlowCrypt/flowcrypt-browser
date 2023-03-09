@@ -1026,7 +1026,7 @@ jLwe8W9IMt765T5x5oux9MmPDXF05xHfm4qfH/BMO3a802x5u2gJjJjuknrFdgXY
       t.pass();
     });
     test('[unit][MsgUtil.decryptMessage] mdc - missing - error', async t => {
-      const encryptedData = Buf.fromUtfStr(decodeURIComponent(testConstants.encryptedMessageMissingMdcUriEncoded));
+      const encryptedData = decodeURIComponent(testConstants.encryptedMessageMissingMdcUriEncoded);
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const compatibilityKey1 = Config.key('flowcrypt.compatibility.1pp1')!;
       const kisWithPp = [
@@ -1053,10 +1053,9 @@ jLwe8W9IMt765T5x5oux9MmPDXF05xHfm4qfH/BMO3a802x5u2gJjJjuknrFdgXY
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const msg: GmailMsg = data.getMessage('166147ea9bb6669d')!;
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      const enc = Buf.fromBase64Str(msg!.raw!)
+      const encryptedData = Buf.fromBase64Str(msg!.raw!)
         .toUtfStr()
         .match(/-----BEGIN PGP MESSAGE-----.*-----END PGP MESSAGE-----/s)![0];
-      const encryptedData = Buf.fromUtfStr(enc);
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const compatibilityKey1 = Config.key('flowcrypt.compatibility.1pp1')!;
       const kisWithPp = [
@@ -1098,10 +1097,9 @@ jLwe8W9IMt765T5x5oux9MmPDXF05xHfm4qfH/BMO3a802x5u2gJjJjuknrFdgXY
     test('[unit][MsgUtil.decryptMessage] finds correct key to verify signature', async t => {
       const data = await GoogleData.withInitializedData('ci.tests.gmail@flowcrypt.test');
       const msg: GmailMsg = data.getMessage('1766644f13510f58')!;
-      const enc = Buf.fromBase64Str(msg!.raw!)
+      const encryptedData = Buf.fromBase64Str(msg!.raw!)
         .toUtfStr()
         .match(/\-\-\-\-\-BEGIN PGP SIGNED MESSAGE\-\-\-\-\-.*\-\-\-\-\-END PGP SIGNATURE\-\-\-\-\-/s)![0];
-      const encryptedData = Buf.fromUtfStr(enc);
       // actual key the message was signed with
       const signerPubkey = testConstants.pubkey2864E326A5BE488A;
       // better key
@@ -2771,7 +2769,7 @@ AAAAAAAAAAAAAAAAzzzzzzzzzzzzzzzzzzzzzzzzzzzz.....`)
       expect(signedData).to.include(plaintext);
       const decrypted = await MsgUtil.decryptMessage({
         kisWithPp: [],
-        encryptedData: Buf.fromUtfStr(signedData),
+        encryptedData: signedData,
         verificationPubs: [KeyUtil.armor(await KeyUtil.asPublicKey(prv))],
       });
       expect(decrypted.success).to.be.true;
