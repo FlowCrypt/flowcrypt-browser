@@ -411,16 +411,3 @@ export const asyncSome = async <T>(arr: Array<T>, predicate: (e: T) => Promise<b
 export const stringTuple = <T extends string[]>(...data: T): T => {
   return data;
 };
-
-export const getBase64FromUrl = async (url: string): Promise<string> => {
-  const data = await fetch(url);
-  const blob = await data.blob();
-  return new Promise(resolve => {
-    const reader = new FileReader();
-    reader.readAsDataURL(blob);
-    reader.onloadend = () => {
-      const base64data = reader.result;
-      resolve(base64data as string);
-    };
-  });
-};

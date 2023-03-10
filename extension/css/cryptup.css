@@ -1199,15 +1199,6 @@ td {
   padding-left: 10px;
 }
 
-#pgp_block .replace_to_base64_image {
-  width: 64px !important; /* override width and height of original image */
-  height: 64px !important;
-}
-
-#pgp_block img {
-  max-width: 100%;
-}
-
 #pgp_block,
 #backup_block {
   height: auto;
@@ -1360,6 +1351,25 @@ td {
 #pgp_block .quoted_content {
   display: none;
   opacity: 0.75;
+}
+
+#pgp_block .remote_image_container {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: max-content;
+  max-width: 90%;
+  border: 1px solid #d5d5d5;
+  padding: 10px 20px;
+  line-height: 1.8;
+  margin: 10px 0;
+  font-size: 0.9em;
+  color: #666;
+}
+
+#pgp_block .remote_image_container img {
+  margin-top: 5px;
+  max-width: 100%;
 }
 
 #backup_block label#toggle_pass_phrase.toggle_show_hide_pass_phrase {

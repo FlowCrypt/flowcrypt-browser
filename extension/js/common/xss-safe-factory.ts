@@ -249,22 +249,18 @@ export class XssSafeFactory {
   };
 
   public btnCompose = (webmailName: WebMailName, webmailVersion: WebMailVersion) => {
-    const btnCls = 'new_secure_compose_window_button';
     if (webmailName === 'outlook') {
-      const btn = `<div class="new_secure_compose_window_button" id="flowcrypt_secure_compose_button" title="New Secure Email"><img src="${this.srcImg(
+      const btn = `<div class="new_secure_compose_window_button" id="flowcrypt_secure_compose_button_icon" title="New Secure Email"><img src="${this.srcImg(
         'logo-19-19.png'
       )}"></div>`;
-      return `<div class="_fce_c ${this.destroyableCls} cryptup_compose_button_container" role="presentation">${btn}</div>`;
+      return `<div id="flowcrypt_secure_compose_button" class="_fce_c ${this.destroyableCls} cryptup_compose_button_container" role="presentation">${btn}</div>`;
     } else {
-      const elAttrs =
-        'role="button" tabindex="0" data-test="action-secure-compose" data-tooltip="Secure Compose" aria-label="Secure Compose" id="flowcrypt_secure_compose_button"';
+      const elAttrs = 'data-tooltip="Secure Compose" aria-label="Secure Compose" id="flowcrypt_secure_compose_button_icon"';
       const title = 'Secure Compose';
       const btnEl =
-        webmailVersion === 'gmail2022'
-          ? `<div class="${btnCls} compose_button_simple only-icon" ${elAttrs}></div><div class="apW">${title}</div>`
-          : `<div class="${btnCls} small" ${elAttrs}>${title}</div>`;
+        webmailVersion === 'gmail2022' ? `<div class="compose_icon_simple" ${elAttrs}></div><div class="apW">${title}</div>` : `<div ${elAttrs}>${title}</div>`;
       const containerCls = webmailVersion === 'gmail2022' ? 'pb-25px' : 'z0';
-      return `<div class="${this.destroyableCls} ${containerCls}">${btnEl}</div>`;
+      return `<div class="${this.destroyableCls} ${containerCls}" id="flowcrypt_secure_compose_button" role="button" tabindex="0" data-test="action-secure-compose" >${btnEl}</div>`;
     }
   };
 

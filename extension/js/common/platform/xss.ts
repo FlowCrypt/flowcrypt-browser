@@ -125,7 +125,7 @@ export class Xss {
         }
       }
       if ('src' in node) {
-        const img: Element = node;
+        const img = node as HTMLImageElement;
         const src = img.getAttribute('src');
         if (imgHandling === 'IMG-DEL') {
           img.remove(); // just skip images
@@ -151,13 +151,13 @@ export class Xss {
             a.setAttribute('data-test', 'show-inline-image');
             Xss.replaceElementDANGEROUSLY(img, a.outerHTML); // xss-safe-value - "a" was build using dom node api
           } else {
-            img.setAttribute('data-src', img.getAttribute('src') ?? '');
-            img.classList.add('replace_to_base64_image');
-            img.setAttribute('src', '/img/svgs/spinner-green-small.svg');
+            const remoteImgEl = `<div class="remote_image_container" data-src="${src}" data-test="remote-image-container"><span>Authenticity of this remote image cannot be verified.</span></div>`;
+            Xss.replaceElementDANGEROUSLY(img, remoteImgEl); // xss-safe-value
           }
-        } else if (imgHandling === 'IMG-TO-PLAIN-URL') {
-          Xss.replaceElementDANGEROUSLY(img, img.getAttribute('data-src') ?? ''); // xss-safe-value
         }
+      }
+      if (node.classList.contains('remote_image_container') && imgHandling === 'IMG-TO-PLAIN-URL') {
+        Xss.replaceElementDANGEROUSLY(node, node.getAttribute('data-src') ?? ''); // xss-safe-value
       }
       if ('target' in node) {
         // open links in new window
@@ -176,6 +176,20 @@ export class Xss {
     /* eslint-enable @typescript-eslint/naming-convention */
     DOMPurify.removeAllHooks();
     return cleanHtml;
+  };
+
+  /**
+   * Append the remote image `img` element to the remote_image_container.
+   * We couldn't add it directly to htmlSanitizeKeepBasicTags because doing so would cause an infinite loop.
+   */
+  public static appendRemoteImagesToContainer = () => {
+    const imageContainerList = $('#pgp_block .remote_image_container');
+    for (const imageContainer of imageContainerList) {
+      const imgUrl = imageContainer.dataset.src;
+      if (imgUrl) {
+        Xss.sanitizeAppend(imageContainer, `<img src="${imgUrl}"/>`);
+      }
+    }
   };
 
   /**
