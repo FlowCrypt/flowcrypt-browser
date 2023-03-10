@@ -560,7 +560,8 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     if (e.key === 'Backspace') {
       if (!$(e.target).val()) {
         const sendingType = e.target.getAttribute('data-sending-type') as RecipientType;
-        const lastRecipient = this.addedRecipients.reverse().find(r => r.sendingType === sendingType);
+        const reversedRecipients = [...this.addedRecipients].reverse();
+        const lastRecipient = reversedRecipients.find(r => r.sendingType === sendingType);
         if (lastRecipient) {
           this.removeRecipient(lastRecipient.element);
         }
