@@ -1,5 +1,7 @@
 <div class="lightboxed">
 
+version 8.4.4 on March 10, 2023: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/469?closed=1" target="_blank">keys.openpgp.org lookup support, fix remote images</a>
+
 version 8.4.3 on February 25, 2023: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/467?closed=1" target="_blank">Use shared-tenant-fes instead of flowcrypt.com/api</a>
 
 version 8.4.2 on January 12, 2023: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/465?closed=1" target="_blank">FES 2023-01 support</a>
