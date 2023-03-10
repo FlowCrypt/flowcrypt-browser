@@ -97,6 +97,7 @@ export class Buf extends Uint8Array {
     return Buf.fromBase64Str(b64UrlStr.replace(/-/g, '+').replace(/_/g, '/'));
   };
 
+  // todo: deprecate
   public toString = (mode: 'strict' | 'inform' | 'ignore' = 'inform'): string => {
     // mimic Node api
     return this.toUtfStr(mode);
