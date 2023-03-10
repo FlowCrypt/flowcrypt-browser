@@ -156,8 +156,7 @@ export class Mime {
   };
 
   public static resemblesMsg = (msg: Uint8Array | string) => {
-    // todo: what would happen if we cut a UTF8 sequence here? make a common method with .toUtfStr('ignore') as in PgpArmor?
-    const chunk = Str.with(msg.slice(0, 3000)).toLowerCase().replace(/\r\n/g, '\n');
+    const chunk = (typeof msg === 'string' ? msg.substring(0, 3000) : new Buf(msg.slice(0, 3000)).toUtfStr('ignore')).toLowerCase().replace(/\r\n/g, '\n');
     const headers = chunk.split('\n\n')[0];
     if (!headers) {
       return false;
