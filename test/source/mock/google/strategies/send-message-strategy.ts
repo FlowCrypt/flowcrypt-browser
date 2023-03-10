@@ -58,7 +58,7 @@ const check7bitEncodedPgpMimeParts = async (parseResult: ParseMsgResult, keyInfo
   }
   const decrypted = await MsgUtil.decryptMessage({
     kisWithPp: keyInfos,
-    encryptedData: Buf.fromUtfStr(msgMatch[1]),
+    encryptedData: msgMatch[1],
     verificationPubs: [],
   });
   if (!decrypted.success) {
@@ -87,7 +87,7 @@ class PwdAndPubkeyEncryptedMessagesWithFlowCryptComApiTestStrategy implements IT
       expect(mimeMsg.text!).to.not.include('has sent you a password-encrypted email');
       expect(mimeMsg.text!).to.not.include('Follow this link to open it');
       const kisWithPp = await Config.getKeyInfo(['flowcrypt.compatibility.1pp1', 'flowcrypt.compatibility.2pp1']);
-      const encryptedData = Buf.fromUtfStr(mimeMsg.text!);
+      const encryptedData = mimeMsg.text!;
       const decrypted = await MsgUtil.decryptMessage({ kisWithPp, encryptedData, verificationPubs: [] });
       expect(decrypted.success).to.be.true;
       expect(decrypted.content!.toUtfStr()).to.contain('PWD and pubkey encrypted messages with flowcrypt.com/shared-tenant-fes');
@@ -218,7 +218,7 @@ class PwdEncryptedMessageWithFesReplyRenderingTestStrategy implements ITestMsgSt
       expect(mimeMsg.text!).to.not.include('has sent you a password-encrypted email');
       expect(mimeMsg.text!).to.not.include('Follow this link to open it');
       const kisWithPp = await Config.getKeyInfo(['flowcrypt.test.key.used.pgp']);
-      const encryptedData = Buf.fromUtfStr(mimeMsg.text!);
+      const encryptedData = mimeMsg.text!;
       const decrypted = await MsgUtil.decryptMessage({ kisWithPp, encryptedData, verificationPubs: [] });
       expect(decrypted.success).to.be.true;
       expect(decrypted.content!.toUtfStr()).to.include('> some dummy text');
@@ -265,7 +265,7 @@ class SignedMessageTestStrategy implements ITestMsgStrategy {
     expect(text).to.include(PgpArmor.headers('signedMsg').begin);
     const decrypted = await MsgUtil.decryptMessage({
       kisWithPp: [],
-      encryptedData: Buf.fromUtfStr(text),
+      encryptedData: text,
       verificationPubs: [],
     });
     if (!decrypted.success) {
@@ -332,7 +332,7 @@ class IncludeQuotedPartTestStrategy implements ITestMsgStrategy {
     /* eslint-disable @typescript-eslint/no-non-null-assertion */
     const decrypted = await MsgUtil.decryptMessage({
       kisWithPp: keyInfo!,
-      encryptedData: Buf.fromUtfStr(parseResult.mimeMsg.text!),
+      encryptedData: parseResult.mimeMsg.text!,
       verificationPubs: [],
     });
     /* eslint-enable @typescript-eslint/no-non-null-assertion */

@@ -21,7 +21,7 @@ const processMessageFromUser = async (body: string, fesUrl: string) => {
   expect(body).to.contain('"cc":[]');
   expect(body).to.contain('"bcc":["Mr Bcc <bcc@example.com>"]');
   // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-  const encryptedData = Buf.fromUtfStr(body.match(/-----BEGIN PGP MESSAGE-----.*-----END PGP MESSAGE-----/s)![0]);
+  const encryptedData = body.match(/-----BEGIN PGP MESSAGE-----.*-----END PGP MESSAGE-----/s)![0];
   const decrypted = await MsgUtil.decryptMessage({
     kisWithPp: [],
     msgPwd: 'lousy pwdgO0d-pwd',
@@ -109,7 +109,7 @@ const processMessageFromUser3 = async (body: string, fesUrl: string) => {
   expect(body).to.contain('"cc":[]');
   expect(body).to.contain('"bcc":["flowcrypt.compatibility@gmail.com"]');
   // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-  const encryptedData = Buf.fromUtfStr(body.match(/-----BEGIN PGP MESSAGE-----.*-----END PGP MESSAGE-----/s)![0]);
+  const encryptedData = body.match(/-----BEGIN PGP MESSAGE-----.*-----END PGP MESSAGE-----/s)![0];
   const decrypted = await MsgUtil.decryptMessage({
     kisWithPp: [],
     msgPwd: 'gO0d-pwd',

@@ -5,7 +5,6 @@
 import { VerifyRes } from '../../../js/common/core/crypto/pgp/msg-util.js';
 import { Attachment } from '../../../js/common/core/attachment.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
-import { Buf } from '../../../js/common/core/buf.js';
 import { Catch } from '../../../js/common/platform/catch.js';
 import { Mime } from '../../../js/common/core/mime.js';
 import { MsgBlock } from '../../../js/common/core/msg-block.js';
@@ -248,7 +247,7 @@ export class PgpBlockViewRenderModule {
   };
 
   public decideDecryptedContentFormattingAndRender = async (
-    decryptedBytes: Buf,
+    decryptedBytes: Uint8Array | string,
     isEncrypted: boolean,
     sigResult: VerifyRes | undefined,
     verificationPubs: string[],
@@ -264,11 +263,12 @@ export class PgpBlockViewRenderModule {
     }
     const publicKeys: string[] = [];
     let renderableAttachments: Attachment[] = [];
-    let decryptedContent = decryptedBytes.toUtfStr();
+    let decryptedContent: string | undefined;
     let isHtml = false;
     // todo - replace with MsgBlockParser.fmtDecryptedAsSanitizedHtmlBlocks, then the extract/strip methods could be private?
     if (!Mime.resemblesMsg(decryptedBytes)) {
       const fcAttachmentBlocks: MsgBlock[] = [];
+      decryptedContent = Str.with(decryptedBytes);
       decryptedContent = MsgBlockParser.extractFcAttachments(decryptedContent, fcAttachmentBlocks);
       decryptedContent = MsgBlockParser.stripFcTeplyToken(decryptedContent);
       decryptedContent = MsgBlockParser.stripPublicKeys(decryptedContent, publicKeys);
@@ -297,10 +297,10 @@ export class PgpBlockViewRenderModule {
         decryptedContent = this.getEncryptedSubjectText(decoded.subject, isHtml) + decryptedContent; // render encrypted subject in message
       }
       for (const attachment of decoded.attachments) {
-        if (attachment.treatAs(decoded.attachments) !== 'publicKey') {
-          renderableAttachments.push(attachment);
-        } else {
+        if (attachment.isPublicKey()) {
           publicKeys.push(attachment.getData().toUtfStr());
+        } else {
+          renderableAttachments.push(attachment);
         }
       }
     }
