@@ -40,27 +40,13 @@
   ],
   "content_scripts": [
     {
-      "matches": [
-        "https://mail.google.com/*"
-      ],
-      "css": [
-        "/css/webmail.css",
-        "/css/sweetalert2.css"
-      ],
-      "js": [
-        "/lib/purify.js",
-        "/lib/jquery.min.js",
-        "/lib/sweetalert2.js",
-        "/js/content_scripts/webmail_bundle.js"
-      ]
+      "matches": ["https://mail.google.com/*"],
+      "css": ["/css/webmail.css", "/css/sweetalert2.css"],
+      "js": ["/lib/purify.js", "/lib/jquery.min.js", "/lib/openpgp.js", "/lib/sweetalert2.js", "/lib/jquery.min.js", "/js/content_scripts/webmail_bundle.js"]
     },
     {
-      "matches": [
-        "https://www.google.com/robots.txt*"
-      ],
-      "js": [
-        "/js/common/oauth2/oauth2_inject.js"
-      ],
+      "matches": ["https://www.google.com/robots.txt*"],
+      "js": ["/js/common/oauth2/oauth2_inject.js"],
       "run_at": "document_start"
     }
   ],
