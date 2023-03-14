@@ -156,7 +156,7 @@ test.after.always('evaluate Catch.reportErr errors', async t => {
     // below for test "get.updating.key@key-manager-choose-passphrase-forbid-storing.flowcrypt.test - automatic update of key found on key manager"
     .filter(
       e =>
-        e.message !== 'BrowserMsg(processAndStoreKeysFromEkmLocally) sendRawResponse::Error: Some keys could not be parsed' &&
+        e.message !== 'Some keys could not be parsed' &&
         !e.message.match(/BrowserMsg\(ajax\) Bad Request: 400 when GET-ing https:\/\/localhost:\d+\/flowcrypt-email-key-manager/)
     )
     // below for test "user4@standardsubdomainfes.localhost:8001 - PWD encrypted message with FES web portal - a send fails with gateway update error"

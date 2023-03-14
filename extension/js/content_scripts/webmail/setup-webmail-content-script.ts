@@ -14,7 +14,7 @@ import { Ui } from '../../common/browser/ui.js';
 import { ClientConfiguration, ClientConfigurationError } from '../../common/client-configuration.js';
 import { Str, Url } from '../../common/core/common.js';
 import { InMemoryStoreKeys, VERSION } from '../../common/core/const.js';
-import { getLocalKeyExpiration } from '../../common/helpers.js';
+import { getLocalKeyExpiration, processAndStoreKeysFromEkmLocally } from '../../common/helpers.js';
 import { Injector } from '../../common/inject.js';
 import { Lang } from '../../common/lang.js';
 import { Notifications } from '../../common/notifications.js';
@@ -292,7 +292,7 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
     ppEvent: { entered?: boolean }
   ) => {
     try {
-      const { needPassphrase, updateCount, noKeysSetup } = await BrowserMsg.send.bg.await.processAndStoreKeysFromEkmLocally({
+      const { needPassphrase, updateCount, noKeysSetup } = await processAndStoreKeysFromEkmLocally({
         acctEmail,
         decryptedPrivateKeys,
       });

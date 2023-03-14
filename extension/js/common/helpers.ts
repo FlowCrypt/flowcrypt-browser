@@ -10,7 +10,6 @@ import { ClientConfiguration } from './client-configuration.js';
 import { ContactStore } from './platform/store/contact-store.js';
 import { KeyStore } from './platform/store/key-store.js';
 import { PassphraseStore } from './platform/store/passphrase-store.js';
-import { Bm } from './browser/browser-msg.js';
 import { PgpPwd } from './core/crypto/pgp/pgp-password.js';
 
 export const isCustomerUrlFesUsed = async (acctEmail: string) => {
@@ -111,9 +110,11 @@ export const processAndStoreKeysFromEkmLocally = async ({
   acctEmail,
   decryptedPrivateKeys,
   ppOptions: originalOptions,
-}: Bm.ProcessAndStoreKeysFromEkmLocally & {
+}: {
+  acctEmail: string;
+  decryptedPrivateKeys: string[];
   ppOptions?: PassphraseOptions;
-}): Promise<Bm.Res.ProcessAndStoreKeysFromEkmLocally> => {
+}) => {
   const { unencryptedPrvs } = await parseAndCheckPrivateKeys(decryptedPrivateKeys);
   const existingKeys = await KeyStore.get(acctEmail);
   let { keysToRetain, newUnencryptedKeysToSave } = await filterKeysToSave(unencryptedPrvs, existingKeys);

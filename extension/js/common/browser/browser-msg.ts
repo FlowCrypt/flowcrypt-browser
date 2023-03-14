@@ -83,7 +83,6 @@ export namespace Bm {
   export type ShowAttachmentPreview = { iframeUrl: string };
   export type ReRenderRecipient = { email: string };
   export type SaveFetchedPubkeys = { email: string; pubkeys: string[] };
-  export type ProcessAndStoreKeysFromEkmLocally = { acctEmail: string; decryptedPrivateKeys: string[] };
 
   export namespace Res {
     export type GetActiveTabInfo = {
@@ -106,11 +105,6 @@ export namespace Bm {
     export type AjaxGmailAttachmentGetChunk = { chunk: Buf };
     export type _tab_ = { tabId: string | null | undefined }; // eslint-disable-line @typescript-eslint/naming-convention
     export type SaveFetchedPubkeys = boolean;
-    export type ProcessAndStoreKeysFromEkmLocally = {
-      needPassphrase?: boolean;
-      updateCount?: number;
-      noKeysSetup?: boolean;
-    };
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     export type Db = any; // not included in Any below
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -132,7 +126,6 @@ export namespace Bm {
       | StoreGlobalSet
       | AjaxGmailAttachmentGetChunk
       | SaveFetchedPubkeys
-      | ProcessAndStoreKeysFromEkmLocally
       | PgpKeyBinaryToArmored;
   }
 
@@ -173,7 +166,6 @@ export namespace Bm {
     | ShowAttachmentPreview
     | ReRenderRecipient
     | SaveFetchedPubkeys
-    | ProcessAndStoreKeysFromEkmLocally
     | PgpKeyBinaryToArmored
     | AuthWindowResult;
 
@@ -240,8 +232,6 @@ export class BrowserMsg {
           BrowserMsg.sendAwait(undefined, 'pgpKeyBinaryToArmored', bm, true) as Promise<Bm.Res.PgpKeyBinaryToArmored>,
         saveFetchedPubkeys: (bm: Bm.SaveFetchedPubkeys) =>
           BrowserMsg.sendAwait(undefined, 'saveFetchedPubkeys', bm, true) as Promise<Bm.Res.SaveFetchedPubkeys>,
-        processAndStoreKeysFromEkmLocally: (bm: Bm.ProcessAndStoreKeysFromEkmLocally) =>
-          BrowserMsg.sendAwait(undefined, 'processAndStoreKeysFromEkmLocally', bm, true) as Promise<Bm.Res.ProcessAndStoreKeysFromEkmLocally>,
       },
     },
     passphraseEntry: (dest: Bm.Dest, bm: Bm.PassphraseEntry) => BrowserMsg.sendCatch(dest, 'passphrase_entry', bm),
