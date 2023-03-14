@@ -32,7 +32,7 @@ type Codec = {
 };
 
 export const requireOpenpgp = (): typeof OpenPGP => {
-  return (window as unknown as { openpgp: typeof OpenPGP }).openpgp;
+  return (window as unknown as { openpgp: typeof OpenPGP }).openpgp ?? (globalThis as unknown as { openpgp: typeof OpenPGP }).openpgp;
 };
 
 export const requireMimeParser = (): typeof MimeParser => {

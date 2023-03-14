@@ -72,10 +72,15 @@ cp node_modules/@openpgp/web-stream-tools/lib/*.js $OUTDIR/lib/streams
 # until https://github.com/openpgpjs/web-stream-tools/pull/20 is resolved
 STREAMS_REGEX="s/'\.\/(streams|util|writer|reader|node-conversions)'/'\.\/\1\.js'/g"
 STREAMS_FILES=$OUTDIR/lib/streams/*
+# patch isUint8Array
+ISUINT8ARRAY_REGEX="s/^(\s*)return\x20Uint8Array\.prototype\.isPrototypeOf\(input\);/\1return\x20Uint8Array\.prototype\.isPrototypeOf\(input\)\x20\|\|\x20globalThis\.Uint8Array\.prototype\.isPrototypeOf\(input\);/mg"
+OPENPGP_FILE=$OUTDIR/lib/openpgp.js
 if [[ "$OSTYPE" =~ ^darwin ]]; then # macOS needs additional parameter for backup files
   sed -i '' -E $STREAMS_REGEX $STREAMS_FILES
+  sed -i '' -E $ISUINT8ARRAY_REGEX $OPENPGP_FILE
 else
   sed -i -E $STREAMS_REGEX $STREAMS_FILES
+  sed -i -E $ISUINT8ARRAY_REGEX $OPENPGP_FILE
 fi
 
 # to update node-forge library, which is missing the non-minified version in dist, we have to build it manually
