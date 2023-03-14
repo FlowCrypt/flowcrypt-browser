@@ -43,6 +43,8 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
 
   private googleContactsSearchEnabled: boolean | Promise<boolean | undefined>;
 
+  private uniqueRecipientIndex = 0;
+
   public constructor(view: ComposeView) {
     super(view);
     this.googleContactsSearchEnabled = this.queryIfGoogleSearchEnabled();
@@ -1136,7 +1138,8 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
   };
 
   private generateRecipientId = (): string => {
-    return `recipient_${this.addedRecipients.length}`;
+    this.uniqueRecipientIndex += 1;
+    return `recipient_${this.uniqueRecipientIndex}`;
   };
 
   private addDraggableEvents = (element: HTMLElement) => {
