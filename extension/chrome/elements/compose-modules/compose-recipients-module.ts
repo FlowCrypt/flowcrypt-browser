@@ -1138,8 +1138,9 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
   };
 
   private generateRecipientId = (): string => {
+    const recipientId = `recipient_${this.uniqueRecipientIndex}`;
     this.uniqueRecipientIndex += 1;
-    return `recipient_${this.uniqueRecipientIndex}`;
+    return recipientId;
   };
 
   private addDraggableEvents = (element: HTMLElement) => {
