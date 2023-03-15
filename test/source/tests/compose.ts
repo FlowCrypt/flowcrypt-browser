@@ -815,6 +815,26 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
     );
 
     test(
+      'compose - check recipient is added correctly after deleting recipient',
+      testWithBrowser('ci.tests.gmail', async (t, browser) => {
+        // Background: Previously, when adding recipient a (correct recipient) and recipient b (unknown recipient),
+        // then removing recipient a and adding recipient a again, the recipient input was not showing recipient status correctly.
+        // https://github.com/FlowCrypt/flowcrypt-browser/issues/4241
+        const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
+        const unknownRecipient = 'unknown@flowcrypt.test';
+        const correctRecipient = 'mock.only.pubkey@flowcrypt.com';
+        await ComposePageRecipe.showRecipientInput(composePage);
+        await composePage.waitAndType(`@input-to`, `${correctRecipient}\n`); // Enter correct recipient
+        await composePage.waitAndType(`@input-to`, `${unknownRecipient}\n`); // enter unknown recipient
+        await composePage.waitAndClick('@action-remove-mockonlypubkeyflowcryptcom-recipient'); // Now delete correct recipient
+        await composePage.waitAndType(`@input-to`, `${correctRecipient}\n`); // add unknown recipient again
+        await composePage.click('@input-subject');
+        await composePage.waitForContent('.email_address.no_pgp', unknownRecipient); // Check if unknown email recipient correctly displays no_pgp status
+        await composePage.waitForContent('.email_address.has_pgp', correctRecipient); // Check if mock recipient shows correct has_pgp status
+      })
+    );
+
+    test(
       'compose - reply - CC&BCC test reply',
       testWithBrowser('compatibility', async (t, browser) => {
         const appendUrl = 'threadId=16ce2c965c75e5a6&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___&replyMsgId=16ce2c965c75e5a6';
