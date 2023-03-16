@@ -5,7 +5,7 @@
 import { Bm, BrowserMsg } from '../../../../js/common/browser/browser-msg.js';
 import { FactoryReplyParams, XssSafeFactory } from '../../../../js/common/xss-safe-factory.js';
 import { GmailParser, GmailRes } from '../../../../js/common/api/email-provider/gmail/gmail-parser.js';
-import { Url, UrlParams } from '../../../../js/common/core/common.js';
+import { Str, Url, UrlParams } from '../../../../js/common/core/common.js';
 
 import { ApiErr } from '../../../../js/common/api/shared/api-error.js';
 import { BrowserMsgCommonHandlers } from '../../../../js/common/browser/browser-msg-common-handlers.js';
@@ -128,7 +128,7 @@ export class InboxActiveThreadModule extends ViewModule<InboxView> {
             this.view.storage.sendAs && !!this.view.storage.sendAs[from]
           );
         } else if (this.view.showOriginal) {
-          r += Xss.escape(block.content.toString()).replace(/\n/g, '<br>');
+          r += Xss.escape(Str.with(block.content)).replace(/\n/g, '<br>');
         } else {
           r += XssSafeFactory.renderableMsgBlock(this.view.factory, block, message.id, from, this.view.storage.sendAs && !!this.view.storage.sendAs[from]);
         }

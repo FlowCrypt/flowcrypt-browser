@@ -132,7 +132,7 @@ export class MsgBlockParser {
     let { blocks, normalized } = MsgBlockParser.detectBlocks(decryptedContent);
     for (const block of blocks) {
       if (block.type === 'publicKey') {
-        const armored = block.content.toString();
+        const armored = Str.with(block.content);
         foundPublicKeys.push(armored);
         normalized = normalized.replace(armored, '');
       }

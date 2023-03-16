@@ -58,7 +58,7 @@ View.run(
               this.attachmentPreviewContainer.html(`<img src="${url}" class="attachment-preview-img" alt="${Xss.escape(this.origNameBasedOnFilename)}">`); // xss-escaped
             } else if (attachmentType === 'txt') {
               // text
-              this.attachmentPreviewContainer.html(`<div class="attachment-preview-txt">${Xss.escape(result.toString()).replace(/\n/g, '<br>')}</div>`); // xss-escaped
+              this.attachmentPreviewContainer.html(`<div class="attachment-preview-txt">${Xss.escape(result.toUtfStr()).replace(/\n/g, '<br>')}</div>`); // xss-escaped
             } else if (attachmentType === 'pdf') {
               // PDF
               pdfjsLib.getDocument({ data: result }).promise.then(async (pdf: PDFDocumentProxy) => {

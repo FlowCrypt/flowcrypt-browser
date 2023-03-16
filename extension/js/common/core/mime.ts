@@ -259,7 +259,7 @@ export class Mime {
         contentNode = new MimeBuilder('multipart/alternative');
         for (const [type, content] of Object.entries(body)) {
           // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-          contentNode.appendChild(Mime.newContentNode(MimeBuilder, type, content!.toString())); // already present, that's why part of for loop
+          contentNode.appendChild(Mime.newContentNode(MimeBuilder, type, Str.with(content!))); // already present, that's why part of for loop
         }
       }
       rootNode.appendChild(contentNode);
@@ -307,7 +307,7 @@ export class Mime {
     const bodyNodes = new MimeBuilder('multipart/alternative');
     for (const [type, content] of Object.entries(body)) {
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      bodyNodes.appendChild(Mime.newContentNode(MimeBuilder, type, content!.toString()));
+      bodyNodes.appendChild(Mime.newContentNode(MimeBuilder, type, Str.with(content!)));
     }
     const signedContentNode = new MimeBuilder('multipart/mixed');
     signedContentNode.appendChild(bodyNodes);
