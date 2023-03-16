@@ -131,7 +131,7 @@ export class Xss {
           img.remove(); // just skip images
         } else if (!src) {
           img.remove(); // src that exists but is null is suspicious
-        } else if (imgHandling === 'IMG-TO-LINK') {
+        } else if (imgHandling === 'IMG-TO-LINK' && !img.classList.contains('cid_to_base64_img')) {
           // replace images with a link that points to that image
           if (src.startsWith('data:image/')) {
             const title = img.getAttribute('title');

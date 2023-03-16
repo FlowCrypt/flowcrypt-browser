@@ -15,6 +15,7 @@ import { MsgBlockParser } from '../../../js/common/core/msg-block-parser.js';
 import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
 import { GmailParser } from '../../../js/common/api/email-provider/gmail/gmail-parser.js';
 import { Str } from '../../../js/common/core/common.js';
+import DOMPurify from 'dompurify';
 
 export class PgpBlockViewRenderModule {
   public doNotSetStateAsReadyYet = false;
@@ -280,8 +281,9 @@ export class PgpBlockViewRenderModule {
     } else {
       this.renderText('Formatting...');
       const decoded = await Mime.decode(decryptedBytes);
+      let inlineCIDAttachments: Attachment[] = [];
       if (typeof decoded.html !== 'undefined') {
-        decryptedContent = decoded.html;
+        ({ sanitizedHtml: decryptedContent, inlineCIDAttachments } = this.replaceInlineImageCIDs(decoded.html, decoded.attachments));
         isHtml = true;
       } else if (typeof decoded.text !== 'undefined') {
         decryptedContent = decoded.text;
@@ -299,7 +301,7 @@ export class PgpBlockViewRenderModule {
       for (const attachment of decoded.attachments) {
         if (attachment.isPublicKey()) {
           publicKeys.push(attachment.getData().toUtfStr());
-        } else {
+        } else if (!inlineCIDAttachments.some(inlineAttachment => inlineAttachment.cid === attachment.cid)) {
           renderableAttachments.push(attachment);
         }
       }
@@ -317,6 +319,50 @@ export class PgpBlockViewRenderModule {
       // in case async tasks are still being worked at
       Ui.setTestState('ready');
     }
+  };
+
+  /**
+   * Replaces inline image CID references with base64 encoded data in sanitized HTML
+   * and returns the sanitized HTML along with the inline CID attachments.
+   *
+   * @param html - The original HTML content.
+   * @param attachments - An array of email attachments.
+   * @returns An object containing sanitized HTML and an array of inline CID attachments.
+   */
+  private replaceInlineImageCIDs = (html: string, attachments: Attachment[]): { sanitizedHtml: string; inlineCIDAttachments: Attachment[] } => {
+    // Array to store inline CID attachments
+    const inlineCIDAttachments: Attachment[] = [];
+
+    // Define the hook function for DOMPurify to process image elements after sanitizing attributes
+    const processImageElements = (node: Element | null) => {
+      // Ensure the node exists and has a 'src' attribute
+      if (!node || !('src' in node)) return;
+      const imageSrc = node.getAttribute('src') as string;
+      const cidPattern = /^cid:(.+)/;
+      const matches = imageSrc.match(cidPattern);
+
+      // Check if the src attribute contains a CID
+      if (matches && matches[1]) {
+        const contentId = matches[1];
+        const contentIdAttachment = attachments.find(attachment => attachment.cid === `<${contentId}>`);
+
+        // Replace the src attribute with a base64 encoded string
+        if (contentIdAttachment) {
+          inlineCIDAttachments.push(contentIdAttachment);
+          node.setAttribute('src', `data:image/png;base64,${contentIdAttachment.getData().toBase64Str()}`);
+          node.classList.add('cid_to_base64_img');
+        }
+      }
+    };
+
+    // Add the DOMPurify hook
+    DOMPurify.addHook('afterSanitizeAttributes', processImageElements);
+
+    // Sanitize the HTML and remove the DOMPurify hooks
+    const sanitizedHtml = DOMPurify.sanitize(html);
+    DOMPurify.removeAllHooks();
+
+    return { sanitizedHtml, inlineCIDAttachments };
   };
 
   private displayImageSrcLinkAsImg = (a: HTMLAnchorElement, event: JQuery.Event<HTMLAnchorElement, null>) => {
