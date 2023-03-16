@@ -11,7 +11,7 @@ import { OpenPGPKey } from './pgp/openpgp-key.js';
 import type * as OpenPGP from 'openpgp';
 import { SmimeKey } from './smime/smime-key.js';
 import { MsgBlock } from '../msg-block.js';
-import { EmailParts } from '../common.js';
+import { EmailParts, Str } from '../common.js';
 
 /**
  * This is a common Key interface for both OpenPGP and X.509 keys.
@@ -158,7 +158,7 @@ export class KeyUtil {
     const pushKeysAndErrs = async (content: string | Buf, isArmored: boolean) => {
       try {
         if (isArmored) {
-          allKeys.push(...(await KeyUtil.parseMany(content.toString())));
+          allKeys.push(...(await KeyUtil.parseMany(Str.with(content))));
         } else {
           const buf = typeof content === 'string' ? Buf.fromUtfStr(content) : content;
           const { keys, err } = await KeyUtil.readBinary(buf);

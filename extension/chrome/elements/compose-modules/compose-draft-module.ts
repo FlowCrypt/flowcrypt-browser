@@ -331,7 +331,7 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
     if (isRichText) {
       this.view.sendBtnModule.popover.toggleItemTick($('.action-toggle-richtext-sending-option'), 'richtext', true);
     }
-    this.view.inputModule.inputTextHtmlSetSafely(sanitizedContent.toString());
+    this.view.inputModule.inputTextHtmlSetSafely(Str.with(sanitizedContent));
     this.view.inputModule.squire.focus();
   };
 
