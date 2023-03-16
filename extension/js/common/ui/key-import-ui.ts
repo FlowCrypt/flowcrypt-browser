@@ -165,7 +165,7 @@ export class KeyImportUi {
           const firstPrv = MsgBlockParser.detectBlocks(utf).blocks.filter(b => b.type === 'privateKey')[0];
           if (firstPrv) {
             // filter out all content except for the first encountered private key (GPGKeychain compatibility)
-            prv = await KeyUtil.parse(firstPrv.content.toString());
+            prv = await KeyUtil.parse(Str.with(firstPrv.content));
           }
         } else {
           try {

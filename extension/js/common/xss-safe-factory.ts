@@ -61,25 +61,25 @@ export class XssSafeFactory {
    */
   public static renderableMsgBlock = (factory: XssSafeFactory, block: MsgBlock, msgId: string, senderEmail: string, isOutgoing?: boolean) => {
     if (block.type === 'plainText') {
-      return Xss.escape(block.content.toString()).replace(/\n/g, '<br>') + '<br><br>';
+      return Xss.escape(Str.with(block.content)).replace(/\n/g, '<br>') + '<br><br>';
     } else if (block.type === 'plainHtml') {
-      return Xss.htmlSanitizeAndStripAllTags(block.content.toString(), '<br>') + '<br><br>';
+      return Xss.htmlSanitizeAndStripAllTags(Str.with(block.content), '<br>') + '<br><br>';
     } else if (block.type === 'encryptedMsg') {
       return factory.embeddedMsg(
         'encryptedMsg',
-        block.complete ? PgpArmor.normalize(block.content.toString(), 'encryptedMsg') : '',
+        block.complete ? PgpArmor.normalize(Str.with(block.content), 'encryptedMsg') : '',
         msgId,
         isOutgoing,
         senderEmail
       );
     } else if (block.type === 'signedMsg') {
-      return factory.embeddedMsg('signedMsg', block.content.toString(), msgId, isOutgoing, senderEmail);
+      return factory.embeddedMsg('signedMsg', Str.with(block.content), msgId, isOutgoing, senderEmail);
     } else if (block.type === 'publicKey') {
-      return factory.embeddedPubkey(PgpArmor.normalize(block.content.toString(), 'publicKey'), isOutgoing);
+      return factory.embeddedPubkey(PgpArmor.normalize(Str.with(block.content), 'publicKey'), isOutgoing);
     } else if (block.type === 'privateKey') {
-      return factory.embeddedBackup(PgpArmor.normalize(block.content.toString(), 'privateKey'));
+      return factory.embeddedBackup(PgpArmor.normalize(Str.with(block.content), 'privateKey'));
     } else if (block.type === 'certificate') {
-      return factory.embeddedPubkey(block.content.toString());
+      return factory.embeddedPubkey(Str.with(block.content));
     } else if (['encryptedAttachment', 'plainAttachment'].includes(block.type)) {
       return block.attachmentMeta
         ? factory.embeddedAttachment(new Attachment(block.attachmentMeta), block.type === 'encryptedAttachment')

@@ -117,7 +117,7 @@ export class ComposeQuoteModule extends ViewModule<ComposeView> {
       const decryptedAndFormatedContent: string[] = [];
       const decryptedFiles: File[] = [];
       for (const block of readableBlocks) {
-        const stringContent = block.content.toString();
+        const stringContent = Str.with(block.content);
         if (block.type === 'decryptedHtml') {
           const htmlParsed = Xss.htmlSanitizeAndStripAllTags(stringContent || 'No Content', '\n', false);
           decryptedAndFormatedContent.push(Xss.htmlUnescape(htmlParsed));
