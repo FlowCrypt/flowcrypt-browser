@@ -72,7 +72,7 @@ cp node_modules/@openpgp/web-stream-tools/lib/*.js $OUTDIR/lib/streams
 # until https://github.com/openpgpjs/web-stream-tools/pull/20 is resolved
 STREAMS_REGEX="s/'\.\/(streams|util|writer|reader|node-conversions)'/'\.\/\1\.js'/g"
 STREAMS_FILES=$OUTDIR/lib/streams/*
-# patch isUint8Array
+# patch isUint8Array until https://github.com/openpgpjs/web-stream-tools/pull/23 is resolved
 ISUINT8ARRAY_REGEX="s/^(\s*)return\x20Uint8Array\.prototype\.isPrototypeOf\(input\);/\1return\x20Uint8Array\.prototype\.isPrototypeOf\(input\)\x20\|\|\x20globalThis\.Uint8Array\.prototype\.isPrototypeOf\(input\);/mg"
 OPENPGP_FILE=$OUTDIR/lib/openpgp.js
 if [[ "$OSTYPE" =~ ^darwin ]]; then # macOS needs additional parameter for backup files
