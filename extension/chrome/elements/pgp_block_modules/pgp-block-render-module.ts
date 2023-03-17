@@ -344,7 +344,7 @@ export class PgpBlockViewRenderModule {
         // Replace the src attribute with a base64 encoded string
         if (contentIdAttachment) {
           inlineCIDAttachments.push(contentIdAttachment);
-          node.setAttribute('src', `data:image/png;base64,${contentIdAttachment.getData().toBase64Str()}`);
+          node.setAttribute('src', `data:${contentIdAttachment.type};base64,${contentIdAttachment.getData().toBase64Str()}`);
         }
       }
     };
