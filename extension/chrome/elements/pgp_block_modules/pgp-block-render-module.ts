@@ -180,6 +180,7 @@ export class PgpBlockViewRenderModule {
     if (!isErr) {
       // rendering message content
       $('.pgp_print_button').show();
+      $('#pgp_block').html(Xss.htmlSanitizeKeepBasicTags(htmlContent)); // xss-sanitized
       Xss.appendRemoteImagesToContainer();
       $('#pgp_block .remote_image_container img').on(
         'load',
