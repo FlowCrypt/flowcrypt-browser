@@ -62,7 +62,8 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
         await inboxPage.waitAll('iframe');
         const pgpBlock = await inboxPage.getFrame(['pgp_block.htm']);
         await pgpBlock.waitForContent('@pgp-block-content', 'This message contains inline base64 image');
-        await pgpBlock.waitAndClick('@show-inline-image');
+        await pgpBlock.waitAll('#pgp_block img');
+        await pgpBlock.checkIfImageIsDisplayedCorrectly('#pgp_block img');
         await inboxPage.close();
       })
     );

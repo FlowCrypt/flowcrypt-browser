@@ -11,7 +11,7 @@ export class PgpBlockViewQuoteModule {
 
   public separateQuotedContentAndRenderText = async (decryptedContent: string, isHtml: boolean) => {
     if (isHtml) {
-      const message = $('<div>').html(Xss.htmlSanitizeKeepBasicTags(decryptedContent, 'IMG-TO-LINK')); // xss-sanitized
+      const message = $('<div>').html(Xss.htmlSanitizeKeepBasicTags(decryptedContent)); // xss-sanitized
       let htmlBlockQuoteExists = false;
       const shouldBeQuoted: Array<Element> = [];
       for (let i = message[0].children.length - 1; i >= 0; i--) {
@@ -75,7 +75,7 @@ export class PgpBlockViewQuoteModule {
       '<div id="action_show_quoted_content" data-test="action-show-quoted-content" class="three_dots"><img src="/img/svgs/three-dots.svg" /></div>'
     ); // xss-direct
     const messageHtml = isHtml ? message : Str.escapeTextAsRenderableHtml(message);
-    pgpBlk.append(`<div class="quoted_content">${Xss.htmlSanitizeKeepBasicTags(messageHtml, 'IMG-TO-LINK')}</div>`); // xss-sanitized
+    pgpBlk.append(`<div class="quoted_content">${Xss.htmlSanitizeKeepBasicTags(messageHtml)}</div>`); // xss-sanitized
     pgpBlk.find('#action_show_quoted_content').on(
       'click',
       this.view.setHandler(() => {

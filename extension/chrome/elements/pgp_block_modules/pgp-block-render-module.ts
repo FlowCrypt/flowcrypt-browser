@@ -180,15 +180,10 @@ export class PgpBlockViewRenderModule {
     if (!isErr) {
       // rendering message content
       $('.pgp_print_button').show();
-      const pgpBlock = $('#pgp_block').html(Xss.htmlSanitizeKeepBasicTags(htmlContent, 'IMG-TO-LINK')); // xss-sanitized
       Xss.appendRemoteImagesToContainer();
       $('#pgp_block .remote_image_container img').on(
         'load',
         this.view.setHandler(() => this.resizePgpBlockFrame())
-      );
-      pgpBlock.find('a.image_src_link').one(
-        'click',
-        this.view.setHandler((el, ev) => this.displayImageSrcLinkAsImg(el as HTMLAnchorElement, ev as JQuery.Event<HTMLAnchorElement, null>))
       );
     } else {
       // rendering our own ui
@@ -350,7 +345,6 @@ export class PgpBlockViewRenderModule {
         if (contentIdAttachment) {
           inlineCIDAttachments.push(contentIdAttachment);
           node.setAttribute('src', `data:image/png;base64,${contentIdAttachment.getData().toBase64Str()}`);
-          node.classList.add('cid_to_base64_img');
         }
       }
     };
@@ -363,38 +357,6 @@ export class PgpBlockViewRenderModule {
     DOMPurify.removeAllHooks();
 
     return { sanitizedHtml, inlineCIDAttachments };
-  };
-
-  private displayImageSrcLinkAsImg = (a: HTMLAnchorElement, event: JQuery.Event<HTMLAnchorElement, null>) => {
-    const img = document.createElement('img');
-    img.setAttribute('style', a.getAttribute('style') || '');
-    img.style.background = 'none';
-    img.style.border = 'none';
-    img.addEventListener('load', () => this.resizePgpBlockFrame());
-    if (a.href.startsWith('cid:')) {
-      // image included in the email
-      const contentId = a.href.replace(/^cid:/g, '');
-      const content = this.view.attachmentsModule.includedAttachments.filter(a => a.type.indexOf('image/') === 0 && a.cid === `<${contentId}>`)[0];
-      if (content) {
-        img.src = `data:${a.type};base64,${content.getData().toBase64Str()}`;
-        Xss.replaceElementDANGEROUSLY(a, img.outerHTML); // xss-safe-value - img.outerHTML was built using dom node api
-      } else {
-        Xss.replaceElementDANGEROUSLY(a, Xss.escape(`[broken link: ${a.href}]`)); // xss-escaped
-      }
-    } else if (a.href.startsWith('https://') || a.href.startsWith('http://')) {
-      // image referenced as url
-      img.src = a.href;
-      Xss.replaceElementDANGEROUSLY(a, img.outerHTML); // xss-safe-value - img.outerHTML was built using dom node api
-    } else if (a.href.startsWith('data:image/')) {
-      // image directly inlined
-      img.src = a.href;
-      Xss.replaceElementDANGEROUSLY(a, img.outerHTML); // xss-safe-value - img.outerHTML was built using dom node api
-    } else {
-      Xss.replaceElementDANGEROUSLY(a, Xss.escape(`[broken link: ${a.href}]`)); // xss-escaped
-    }
-    event.preventDefault();
-    event.stopPropagation();
-    event.stopImmediatePropagation();
   };
 
   private getEncryptedSubjectText = (subject: string, isHtml: boolean) => {
