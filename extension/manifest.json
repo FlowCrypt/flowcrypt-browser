@@ -42,7 +42,15 @@
     {
       "matches": ["https://mail.google.com/*"],
       "css": ["/css/webmail.css", "/css/sweetalert2.css"],
-      "js": ["/lib/purify.js", "/lib/jquery.min.js", "/lib/openpgp.js", "/lib/sweetalert2.js", "/lib/jquery.min.js", "/js/content_scripts/webmail_bundle.js"]
+      "js": [
+        "/lib/purify.js",
+        "/lib/jquery.min.js",
+        "/lib/openpgp.js",
+        "/lib/sweetalert2.js",
+        "/lib/jquery.min.js",
+        "/lib/streams_web.js",
+        "/js/content_scripts/webmail_bundle.js"
+      ]
     },
     {
       "matches": ["https://www.google.com/robots.txt*"],
