@@ -3,8 +3,7 @@
 const path = require('path');
 
 module.exports = {
-  mode: 'development',
-  devtool: 'inline-source-map',
+  mode: 'production',
   entry: {
     main: '../build/generic-extension-wip/lib/streams/streams.js',
   },
