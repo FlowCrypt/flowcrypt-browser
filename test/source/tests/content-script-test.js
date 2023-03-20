@@ -6,7 +6,7 @@
  */
 
 (async () => {
-  let result = 'error';
+  let result;
   try {
     Xss.sanitizePrepend('body', '<h1 id="content-script-test-status">Running content script tests...</h1>');
     const key = await KeyUtil.parse(`-----BEGIN PGP PRIVATE KEY BLOCK-----
