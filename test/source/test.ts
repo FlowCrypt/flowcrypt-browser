@@ -22,6 +22,7 @@ import { mockBackendData } from './mock/backend/backend-endpoints';
 import { TestUrls } from './browser/test-urls';
 import { mkdirSync, realpathSync, writeFileSync } from 'fs';
 import { startAllApisMock } from './mock/all-apis-mock';
+import { defineContentScriptTests } from './tests/content-script';
 
 export const { testVariant, testGroup, oneIfNotPooled, buildDir, isMock } = getParsedCliParams();
 export const internalTestState = { expectIntentionalErrReport: false }; // updated when a particular test that causes an error is run
@@ -221,6 +222,8 @@ if (testGroup === 'UNIT-TESTS') {
   defineUnitBrowserTests(testVariant, testWithBrowser);
 } else if (testGroup === 'FLAKY-GROUP') {
   defineFlakyTests(testVariant, testWithBrowser);
+} else if (testGroup === 'CONTENT-SCRIPT-TESTS') {
+  defineContentScriptTests(testWithBrowser);
 } else {
   defineSetupTests(testVariant, testWithBrowser);
   defineComposeTests(testVariant, testWithBrowser);

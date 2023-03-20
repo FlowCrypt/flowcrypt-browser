@@ -8,10 +8,11 @@ import { SettingsPageRecipe } from '../tests/page-recipe/settings-page-recipe.js
 import { testKeyConstants } from '../tests/tooling/consts';
 import { AvaContext } from '../tests/tooling/index.js';
 
-export type TestVariant = 'CONSUMER-MOCK' | 'ENTERPRISE-MOCK' | 'CONSUMER-LIVE-GMAIL' | 'UNIT-TESTS';
+export type TestVariant = 'CONSUMER-MOCK' | 'ENTERPRISE-MOCK' | 'CONSUMER-LIVE-GMAIL' | 'UNIT-TESTS' | 'CONSUMER-CONTENT-SCRIPT-TESTS-MOCK';
 
 export const getParsedCliParams = () => {
   let testVariant: TestVariant;
+  let testGroup: 'FLAKY-GROUP' | 'STANDARD-GROUP' | 'UNIT-TESTS' | 'CONTENT-SCRIPT-TESTS' | undefined;
   if (process.argv.includes('CONSUMER-MOCK')) {
     testVariant = 'CONSUMER-MOCK';
   } else if (process.argv.includes('ENTERPRISE-MOCK')) {
@@ -20,15 +21,18 @@ export const getParsedCliParams = () => {
     testVariant = 'CONSUMER-LIVE-GMAIL';
   } else if (process.argv.includes('UNIT-TESTS')) {
     testVariant = 'UNIT-TESTS';
+    testGroup = 'UNIT-TESTS';
+  } else if (process.argv.includes('CONTENT-SCRIPT-TESTS')) {
+    testVariant = 'CONSUMER-CONTENT-SCRIPT-TESTS-MOCK';
+    testGroup = 'CONTENT-SCRIPT-TESTS';
   } else {
     throw new Error('Unknown test type: specify CONSUMER-MOCK or ENTERPRISE-MOCK CONSUMER-LIVE-GMAIL');
   }
-  const testGroup = (process.argv.includes('UNIT-TESTS') ? 'UNIT-TESTS' : process.argv.includes('FLAKY-GROUP') ? 'FLAKY-GROUP' : 'STANDARD-GROUP') as
-    | 'FLAKY-GROUP'
-    | 'STANDARD-GROUP'
-    | 'UNIT-TESTS';
+  if (!testGroup) {
+    testGroup = process.argv.includes('FLAKY-GROUP') ? 'FLAKY-GROUP' : 'STANDARD-GROUP';
+  }
   const buildDir = `build/chrome-${(testVariant === 'CONSUMER-LIVE-GMAIL' ? 'CONSUMER' : testVariant).toLowerCase()}`;
-  const poolSizeOne = process.argv.includes('--pool-size=1') || testGroup === 'FLAKY-GROUP';
+  const poolSizeOne = process.argv.includes('--pool-size=1') || ['FLAKY-GROUP', 'CONTENT-SCRIPT-TESTS'].includes(testGroup);
   const oneIfNotPooled = (suggestedPoolSize: number) => (poolSizeOne ? Math.min(1, suggestedPoolSize) : suggestedPoolSize);
   console.info(`TEST_VARIANT: ${testVariant}:${testGroup}, (build dir: ${buildDir}, poolSizeOne: ${poolSizeOne})`);
   return { testVariant, testGroup, oneIfNotPooled, buildDir, isMock: testVariant.includes('-MOCK') };

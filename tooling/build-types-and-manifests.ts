@@ -144,7 +144,19 @@ const makeLocalFesBuild = (sourceBuildType: string) => {
   );
 };
 
+const makeContentScriptTestsBuild = (sourceBuildType: string) => {
+  const testCode = readFileSync('./test/source/tests/content-script-test.js').toString();
+  const mockBuildType = sourceBuildType.endsWith('-mock')
+    ? sourceBuildType.slice(0, -5) + '-content-script-tests-mock'
+    : sourceBuildType + '-content-script-tests';
+  exec(`cp -r ${buildDir(sourceBuildType)} ${buildDir(mockBuildType)}`);
+  edit(`${buildDir(mockBuildType)}/js/content_scripts/webmail_bundle.js`, code =>
+    code.replace(/\/\* ----- [^\r\n]*\/content_scripts\/webmail\/.*}\)\(\);/s, `${testCode}\r\n\r\n})();`)
+  );
+};
+
 updateEnterpriseBuild();
 makeMockBuild(CHROME_CONSUMER);
 makeMockBuild(CHROME_ENTERPRISE);
 makeLocalFesBuild(CHROME_ENTERPRISE);
+makeContentScriptTestsBuild('chrome-consumer-mock');
