@@ -160,3 +160,4 @@ makeMockBuild(CHROME_CONSUMER);
 makeMockBuild(CHROME_ENTERPRISE);
 makeLocalFesBuild(CHROME_ENTERPRISE);
 makeContentScriptTestsBuild('chrome-consumer-mock');
+// makeContentScriptTestsBuild('firefox-consumer'); // for manual testing of content script in Firefox
