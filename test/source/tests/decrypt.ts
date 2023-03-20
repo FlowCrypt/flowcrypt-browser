@@ -681,6 +681,22 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
     );
 
     test(
+      'decrypt - display email with cid image correctly',
+      testWithBrowser('compatibility', async (t, browser) => {
+        const threadId = '186eed032659ad4f';
+        const acctEmail = 'flowcrypt.compatibility@gmail.com';
+        const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`);
+        await inboxPage.waitAll('iframe');
+        const pgpBlock = await inboxPage.getFrame(['pgp_block.htm']);
+        await pgpBlock.waitForSelTestState('ready');
+        await pgpBlock.checkIfImageIsDisplayedCorrectly('#pgp_block img');
+        const replyFrame = await inboxPage.getFrame(['compose.htm']);
+        await replyFrame.waitAndClick('@action-forward');
+        await replyFrame.waitForContent('@input-body', 'googlelogo_color_272x92dp.png'); // check if forwarded content contains cid image name
+      })
+    );
+
+    test(
       "decrypt - thunderbird - signedHtml verifyDetached doesn't duplicate PGP key section",
       testWithBrowser('compatibility', async (t, browser) => {
         const threadId = '17daefa0eb077da6';

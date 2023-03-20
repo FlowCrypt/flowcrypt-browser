@@ -4,9 +4,9 @@
 
 import * as DOMPurify from 'dompurify';
 
-import { Str } from '../core/common.js';
+import { checkValidURL, CID_PATTERN, Str } from '../core/common.js';
 
-export type SanitizeImgHandling = 'IMG-DEL' | 'IMG-KEEP' | 'IMG-TO-PLAIN-URL';
+export type SanitizeImgHandling = 'IMG-DEL' | 'IMG-KEEP' | 'IMG-TO-PLAIN-TEXT';
 
 /**
  * This class is in platform/ folder because most of it depends on platform specific code
@@ -126,13 +126,14 @@ export class Xss {
           img.remove(); // just skip images
         } else if (!src) {
           img.remove(); // src that exists but is null is suspicious
-        } else if (!src.startsWith('data:image/')) {
+        } else if (imgHandling === 'IMG-KEEP' && checkValidURL(src)) {
+          // replace remote image with remote_image_container
           const remoteImgEl = `<div class="remote_image_container" data-src="${src}" data-test="remote-image-container"><span>Authenticity of this remote image cannot be verified.</span></div>`;
           Xss.replaceElementDANGEROUSLY(img, remoteImgEl); // xss-safe-value
         }
       }
-      if (node.classList.contains('remote_image_container') && imgHandling === 'IMG-TO-PLAIN-URL') {
-        Xss.replaceElementDANGEROUSLY(node, node.getAttribute('data-src') ?? ''); // xss-safe-value
+      if ((node.classList.contains('remote_image_container') || CID_PATTERN.test(node.getAttribute('src') ?? '')) && imgHandling === 'IMG-TO-PLAIN-TEXT') {
+        Xss.replaceElementDANGEROUSLY(node, node.getAttribute('data-src') ?? node.getAttribute('alt') ?? ''); // xss-safe-value
       }
       if ('target' in node) {
         // open links in new window
@@ -175,7 +176,7 @@ export class Xss {
    */
   public static htmlSanitizeAndStripAllTags = (dirtyHtml: string, outputNl: string, trim = true): string => {
     Xss.throwIfNotSupported();
-    let html = Xss.htmlSanitizeKeepBasicTags(dirtyHtml, 'IMG-TO-PLAIN-URL');
+    let html = Xss.htmlSanitizeKeepBasicTags(dirtyHtml, 'IMG-TO-PLAIN-TEXT');
     const random = Str.sloppyRandom(5);
     const br = `CU_BR_${random}`;
     const blockStart = `CU_BS_${random}`;

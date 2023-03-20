@@ -12,6 +12,8 @@ export type UrlParams = Dict<UrlParam>;
 export type PromiseCancellation = { cancel: boolean };
 export type EmailParts = { email: string; name?: string };
 
+export const CID_PATTERN = /^cid:(.+)/;
+
 export class Str {
   // ranges are taken from https://stackoverflow.com/a/14824756
   // with the '\u0300' -> '\u0370' modification, because from '\u0300' to '\u0370' there are only punctuation marks
@@ -415,4 +417,9 @@ export const asyncSome = async <T>(arr: Array<T>, predicate: (e: T) => Promise<b
 
 export const stringTuple = <T extends string[]>(...data: T): T => {
   return data;
+};
+
+export const checkValidURL = (url: string): boolean => {
+  const pattern = /(http|https):\/\/([a-z0-9-]+((\.[a-z0-9-]+)+)?)(:[0-9]+)?(\/|\/([\w#!:.?+=&%@!\-\/]))?/;
+  return pattern.test(url);
 };

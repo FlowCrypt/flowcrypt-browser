@@ -2706,6 +2706,10 @@ const sendImgAndVerifyPresentInSentMsg = async (t: AvaContext, browser: BrowserH
   // open a page with the sent msg, investigate img
   const pgpHostPage = await browser.newPage(t, url);
   const pgpBlockPage = await pgpHostPage.getFrame(['pgp_block.htm']);
+  await pgpBlockPage.waitAll('.image_src_link');
+  expect(await pgpBlockPage.read('.image_src_link')).to.contain('show image');
+  await pgpBlockPage.waitAndClick('.image_src_link');
+  await pgpBlockPage.waitTillGone('.image_src_link');
   const img = await pgpBlockPage.waitAny('body img');
   expect(await PageRecipe.getElementPropertyJson(img, 'src')).to.eq(imgBase64);
 };

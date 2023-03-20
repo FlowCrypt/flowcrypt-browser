@@ -14,7 +14,7 @@ import { Xss } from '../../../js/common/platform/xss.js';
 import { MsgBlockParser } from '../../../js/common/core/msg-block-parser.js';
 import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
 import { GmailParser } from '../../../js/common/api/email-provider/gmail/gmail-parser.js';
-import { Str } from '../../../js/common/core/common.js';
+import { CID_PATTERN, Str } from '../../../js/common/core/common.js';
 import DOMPurify from 'dompurify';
 
 export class PgpBlockViewRenderModule {
@@ -334,8 +334,7 @@ export class PgpBlockViewRenderModule {
       // Ensure the node exists and has a 'src' attribute
       if (!node || !('src' in node)) return;
       const imageSrc = node.getAttribute('src') as string;
-      const cidPattern = /^cid:(.+)/;
-      const matches = imageSrc.match(cidPattern);
+      const matches = imageSrc.match(CID_PATTERN);
 
       // Check if the src attribute contains a CID
       if (matches && matches[1]) {
