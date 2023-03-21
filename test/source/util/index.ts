@@ -13,10 +13,7 @@ export type TestVariant = 'CONSUMER-MOCK' | 'ENTERPRISE-MOCK' | 'CONSUMER-LIVE-G
 export const getParsedCliParams = () => {
   let testVariant: TestVariant;
   let testGroup: 'FLAKY-GROUP' | 'STANDARD-GROUP' | 'UNIT-TESTS' | 'CONTENT-SCRIPT-TESTS' | undefined;
-  if (process.argv.includes('UNIT-TESTS')) {
-    testVariant = 'UNIT-TESTS';
-    testGroup = 'UNIT-TESTS';
-  } else if (process.argv.includes('CONTENT-SCRIPT-TESTS')) {
+  if (process.argv.includes('CONTENT-SCRIPT-TESTS')) {
     testVariant = 'CONSUMER-CONTENT-SCRIPT-TESTS-MOCK';
     testGroup = 'CONTENT-SCRIPT-TESTS';
   } else if (process.argv.includes('CONSUMER-MOCK')) {
@@ -29,7 +26,7 @@ export const getParsedCliParams = () => {
     throw new Error('Unknown test type: specify CONSUMER-MOCK or ENTERPRISE-MOCK CONSUMER-LIVE-GMAIL');
   }
   if (!testGroup) {
-    testGroup = process.argv.includes('FLAKY-GROUP') ? 'FLAKY-GROUP' : 'STANDARD-GROUP';
+    testGroup = process.argv.includes('UNIT-TESTS') ? 'UNIT-TESTS' : process.argv.includes('FLAKY-GROUP') ? 'FLAKY-GROUP' : 'STANDARD-GROUP';
   }
   const buildDir = `build/chrome-${(testVariant === 'CONSUMER-LIVE-GMAIL' ? 'CONSUMER' : testVariant).toLowerCase()}`;
   const poolSizeOne = process.argv.includes('--pool-size=1') || ['FLAKY-GROUP', 'CONTENT-SCRIPT-TESTS'].includes(testGroup);
