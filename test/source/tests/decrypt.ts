@@ -62,7 +62,8 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
         await inboxPage.waitAll('iframe');
         const pgpBlock = await inboxPage.getFrame(['pgp_block.htm']);
         await pgpBlock.waitForContent('@pgp-block-content', 'This message contains inline base64 image');
-        await pgpBlock.waitAndClick('@show-inline-image');
+        await pgpBlock.waitAll('#pgp_block img');
+        await pgpBlock.checkIfImageIsDisplayedCorrectly('#pgp_block img');
         await inboxPage.close();
       })
     );
@@ -676,6 +677,22 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
         await InboxPageRecipe.checkDecryptMsg(t, browser, { acctEmail, threadId, expectedContent });
         // Finish session and check if it's finished
         await InboxPageRecipe.checkFinishingSession(t, browser, acctEmail, threadId);
+      })
+    );
+
+    test(
+      'decrypt - display email with cid image correctly',
+      testWithBrowser('compatibility', async (t, browser) => {
+        const threadId = '186eed032659ad4f';
+        const acctEmail = 'flowcrypt.compatibility@gmail.com';
+        const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`);
+        await inboxPage.waitAll('iframe');
+        const pgpBlock = await inboxPage.getFrame(['pgp_block.htm']);
+        await pgpBlock.waitForSelTestState('ready');
+        await pgpBlock.checkIfImageIsDisplayedCorrectly('#pgp_block img');
+        const replyFrame = await inboxPage.getFrame(['compose.htm']);
+        await replyFrame.waitAndClick('@action-forward');
+        await replyFrame.waitForContent('@input-body', 'googlelogo_color_272x92dp.png'); // check if forwarded content contains cid image name
       })
     );
 

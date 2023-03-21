@@ -46,7 +46,7 @@ export class MsgBlockParser {
 
   public static fmtDecryptedAsSanitizedHtmlBlocks = async (
     decryptedContent: Uint8Array,
-    imgHandling: SanitizeImgHandling = 'IMG-TO-LINK'
+    imgHandling: SanitizeImgHandling = 'IMG-KEEP'
   ): Promise<SanitizedBlocks> => {
     const blocks: MsgBlock[] = [];
     let isRichText = false;
