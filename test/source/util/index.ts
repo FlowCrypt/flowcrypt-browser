@@ -13,18 +13,18 @@ export type TestVariant = 'CONSUMER-MOCK' | 'ENTERPRISE-MOCK' | 'CONSUMER-LIVE-G
 export const getParsedCliParams = () => {
   let testVariant: TestVariant;
   let testGroup: 'FLAKY-GROUP' | 'STANDARD-GROUP' | 'UNIT-TESTS' | 'CONTENT-SCRIPT-TESTS' | undefined;
-  if (process.argv.includes('CONSUMER-MOCK')) {
-    testVariant = 'CONSUMER-MOCK';
-  } else if (process.argv.includes('ENTERPRISE-MOCK')) {
-    testVariant = 'ENTERPRISE-MOCK';
-  } else if (process.argv.includes('CONSUMER-LIVE-GMAIL')) {
-    testVariant = 'CONSUMER-LIVE-GMAIL';
-  } else if (process.argv.includes('UNIT-TESTS')) {
+  if (process.argv.includes('UNIT-TESTS')) {
     testVariant = 'UNIT-TESTS';
     testGroup = 'UNIT-TESTS';
   } else if (process.argv.includes('CONTENT-SCRIPT-TESTS')) {
     testVariant = 'CONSUMER-CONTENT-SCRIPT-TESTS-MOCK';
     testGroup = 'CONTENT-SCRIPT-TESTS';
+  } else if (process.argv.includes('CONSUMER-MOCK')) {
+    testVariant = 'CONSUMER-MOCK';
+  } else if (process.argv.includes('ENTERPRISE-MOCK')) {
+    testVariant = 'ENTERPRISE-MOCK';
+  } else if (process.argv.includes('CONSUMER-LIVE-GMAIL')) {
+    testVariant = 'CONSUMER-LIVE-GMAIL';
   } else {
     throw new Error('Unknown test type: specify CONSUMER-MOCK or ENTERPRISE-MOCK CONSUMER-LIVE-GMAIL');
   }
