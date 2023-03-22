@@ -62,7 +62,6 @@ dYU0CKNXUkv+q8TEUw==
 =LKvX
 -----END PGP PRIVATE KEY BLOCK-----
 `;
-    const key = await KeyUtil.parse(armoredPrv);
     const { type, data } = await PgpArmor.dearmor(armoredPrv);
     try {
       Xss.sanitizeAppend('[data-test="content-script-test-status"]', '<div>Testing PgpArmor.armor()...</div>');
@@ -76,6 +75,7 @@ dYU0CKNXUkv+q8TEUw==
     try {
       Xss.sanitizeAppend('[data-test="content-script-test-status"]', '<div>Testing KeyUtil.getOrCreateRevocationCertificate()...</div>');
       // getOrCreateRevocationCertificate tests if Stream (web-stream-tools) is wired correctly
+      const key = await KeyUtil.parse(armoredPrv);
       const revocationCertificate = await KeyUtil.getOrCreateRevocationCertificate(key);
       if (typeof revocationCertificate !== 'string' || revocationCertificate.length < 100) {
         result += `revocation certificate isn't a string\n`;
@@ -86,5 +86,5 @@ dYU0CKNXUkv+q8TEUw==
   } catch (e) {
     result += `Exception: ${e}`;
   }
-  Xss.sanitizeAppend('[data-test="content-script-test-status"]', `<div data-test="content-script-test-result">${Xss.escape(result || 'pass')}</div>`);
+  Xss.sanitizeAppend('[data-test="content-script-test-status"]', `<div data-test="content-script-test-result"><b>${Xss.escape(result || 'pass')}</b></div>`);
 })();
