@@ -365,7 +365,9 @@ export class Mime {
       }
       const isSigned = node._isMultipart === 'signed';
       const isMixedWithSig =
-        node._isMultipart === 'mixed' && node._childNodes.length === 2 && Mime.getNodeType(node._childNodes[1]) === 'application/pgp-signature';
+        node._isMultipart === 'mixed' &&
+        node._childNodes.length === 2 &&
+        (Mime.getNodeType(node._childNodes[1]) === 'application/pgp-signature' || node._childNodes[1].contentType?.params?.name === 'signature.asc');
       if (isSigned || isMixedWithSig) {
         // PGP/MIME signed content uses <CR><LF> as in // use CR-LF https://tools.ietf.org/html/rfc3156#section-5
         // however emailjs parser will replace it to <LF>, so we fix it here
