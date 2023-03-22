@@ -249,18 +249,23 @@ abstract class ControllableBase {
     }, this.selector(selector));
   };
 
-  public read = async (selector: string, onlyVisible = false): Promise<string> => {
+  public read = async (selector: string, onlyVisible = false): Promise<string | undefined> => {
     selector = this.selector(selector);
     if (onlyVisible) {
-      /* eslint-disable @typescript-eslint/no-unsafe-return, @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-explicit-any, no-null/no-null */
-      return await this.target.evaluate(
-        s => ([].slice.call(document.querySelectorAll(s))!.find((el: HTMLElement) => el.offsetParent !== null) as any).innerText,
-        selector
-      );
-      /* eslint-enable */
+      return (await this.readAll(selector)).find(el => el.visible)?.innerText;
     } else {
-      return await this.target.evaluate(s => (document.querySelector(s) as HTMLElement).innerText, selector);
+      return await this.target.evaluate(s => (document.querySelector(s) as HTMLElement).innerText, this.selector(selector));
     }
+  };
+
+  public readAll = async (selector: string) => {
+    return await this.target.evaluate(
+      s =>
+        ([].slice.call(document.querySelectorAll(s)) as HTMLElement[]).map(el => {
+          return { innerText: el.innerText, visible: Boolean(el.offsetParent) };
+        }),
+      this.selector(selector)
+    );
   };
 
   public readHtml = async (selector: string): Promise<string> => {
@@ -366,18 +371,18 @@ abstract class ControllableBase {
       const currentText = await this.read(selector, true);
       if (typeof needle === 'string') {
         // str
-        if (currentText.includes(needle)) {
+        if (currentText?.includes(needle)) {
           return;
         }
       } else {
         // regex
-        if (currentText.match(needle)) {
+        if (currentText?.match(needle)) {
           return;
         }
       }
       const lastText = observedContentHistory[observedContentHistory.length - 1];
       if (typeof lastText !== 'undefined' && currentText !== lastText) {
-        observedContentHistory.push(currentText);
+        observedContentHistory.push(currentText || '(undefined)');
       }
       await Util.sleep(testLoopLengthMs / 1000);
     }
@@ -430,13 +435,13 @@ abstract class ControllableBase {
     const start = Date.now();
     const sleepMs = 250;
     let presentForMs = 0;
-    let actualText = '';
+    let actualText: string | undefined;
     const history: string[] = [];
     let round = 1;
     while (Date.now() - start < timeoutSec * 1000) {
       await Util.sleep(sleepMs / 1000);
       actualText = await this.read(selector, true);
-      if (!actualText.includes(expectedText)) {
+      if (!actualText?.includes(expectedText)) {
         presentForMs = 0;
       } else {
         presentForMs += sleepMs;
@@ -656,6 +661,7 @@ export class ControllableAlert {
 }
 
 class ConsoleEvent {
+  // eslint-disable-next-line no-empty-function
   public constructor(public type: string, public text: string) {}
 }
 

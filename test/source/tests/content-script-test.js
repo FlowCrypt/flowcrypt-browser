@@ -6,10 +6,10 @@
  */
 
 (async () => {
-  let result;
+  let result = '';
   try {
     Xss.sanitizePrepend('body', '<h1 id="content-script-test-status">Running content script tests...</h1>');
-    const key = await KeyUtil.parse(`-----BEGIN PGP PRIVATE KEY BLOCK-----
+    const armoredPrv = `-----BEGIN PGP PRIVATE KEY BLOCK-----
 
 xcLYBF/vGhABCACoP5aISHFQ0fiaWurcVkpNMF/LNCIp0SW1tp5TipKXljwiJY9kK12rYgJRAjJ1
 AblBEGhVMBQb1SU794ZzVkdzWikbVgIFk/A4XizMOUi/wfX3CXw4i3gslAjosXeSJlRAICXI8vF8
@@ -58,15 +58,28 @@ BEEpFqFcWbUgy576qtVYYczJSgKyWDIXfDd9LJDcdSBRxVC/YaY+yQLWRULkkk2fVYLxxVb2G8QX
 dYU0CKNXUkv+q8TEUw==
 =LKvX
 -----END PGP PRIVATE KEY BLOCK-----
-`);
-    // getOrCreateRevocationCertificate tests if Stream (web-stream-tools) is wired correctly
-    const revocationCertificate = await KeyUtil.getOrCreateRevocationCertificate(key);
-    if (typeof revocationCertificate !== 'string' || revocationCertificate.length < 100) {
-      throw Error(`revocation certificate isn't a string`);
+`;
+    const key = await KeyUtil.parse(armoredPrv);
+    const { type, data } = await PgpArmor.dearmor(armoredPrv);
+    try {
+      const armorResult = PgpArmor.armor(type, data);
+      if (typeof armorResult !== 'string' || armorResult.length < 100) {
+        result += `armor result isn't a string\n`;
+      }
+    } catch (e) {
+      result += `Exception when calling PgpArmor.armor(): ${e}\n`;
     }
-    result = 'pass';
+    try {
+      // getOrCreateRevocationCertificate tests if Stream (web-stream-tools) is wired correctly
+      const revocationCertificate = await KeyUtil.getOrCreateRevocationCertificate(key);
+      if (typeof revocationCertificate !== 'string' || revocationCertificate.length < 100) {
+        result += `revocation certificate isn't a string\n`;
+      }
+    } catch (e) {
+      result += `Exception when calling KeyUtil.getOrCreateRevocationCertificate(): ${e}\n`;
+    }
   } catch (e) {
-    result = `Exception: ${e}`;
+    result += `Exception: ${e}`;
   }
-  Xss.sanitizeReplace('#content-script-test-status', `<div data-test="content-script-test-result">${Xss.escape(result)}</div>`);
+  Xss.sanitizeReplace('#content-script-test-status', `<div data-test="content-script-test-result">${Xss.escape(result || 'pass')}</div>`);
 })();

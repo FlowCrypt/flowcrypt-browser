@@ -101,7 +101,8 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         const acctEmail = 'flowcrypt.compatibility@gmail.com';
         const settingsPage = await browser.newExtensionSettingsPage(t, acctEmail);
         await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
-        const fingerprint = (await settingsPage.read('.good')).split(' ').join('');
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const fingerprint = (await settingsPage.read('.good'))!.split(' ').join('');
         const longid = OpenPGPKey.fingerprintToLongid(fingerprint);
         const baseUrl = `chrome/elements/passphrase.htm?acctEmail=${acctEmail}&longids=${longid}&parentTabId=`;
         let passphrasePage = await browser.newPage(t, baseUrl.concat('&type=sign'));
@@ -244,7 +245,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         const pubkeyFrame = await contactsFrame.getFrame(['pgp_pubkey.htm']);
         await pubkeyFrame.notPresent('@action-add-contact');
         await pubkeyFrame.notPresent('@manual-import-warning');
-        expect((await pubkeyFrame.read('#pgp_block.pgp_pubkey')).toLowerCase()).to.include('not usable');
+        expect((await pubkeyFrame.read('#pgp_block.pgp_pubkey'))?.toLowerCase()).to.include('not usable');
         const revocationAfter = await dbPage.page.evaluate(async () => {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const db = await (window as any).ContactStore.dbOpen();

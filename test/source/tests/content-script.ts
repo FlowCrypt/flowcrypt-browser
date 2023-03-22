@@ -14,7 +14,9 @@ export const defineContentScriptTests = (testWithBrowser: TestWithBrowser) => {
       };
       const gmailPage = await browser.newMockGmailPage(t, authorizationHeader);
       await gmailPage.waitAny('@content-script-test-result');
-      expect(await gmailPage.read('@content-script-test-result')).to.equal('pass');
+      const allValues = (await gmailPage.readAll('@content-script-test-result')).map(el => el.innerText);
+      // multiple result div may appear on exceptions. The test is successful only if there is exactly one div containing the word 'pass'
+      expect(allValues).to.eql(['pass']);
       await gmailPage.close();
     })
   );
