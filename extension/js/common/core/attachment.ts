@@ -5,7 +5,7 @@
 import { Buf } from './buf.js';
 import { Str } from './common.js';
 
-type Attachment$treatAs = 'publicKey' | 'privateKey' | 'encryptedMsg' | 'hidden' | 'signature' | 'encryptedFile' | 'plainFile' | 'inline_image';
+type Attachment$treatAs = 'publicKey' | 'privateKey' | 'encryptedMsg' | 'hidden' | 'signature' | 'encryptedFile' | 'plainFile' | 'inlineImage';
 type ContentTransferEncoding = '7bit' | 'quoted-printable' | 'base64';
 export type AttachmentMeta = {
   data?: Uint8Array;
@@ -154,7 +154,7 @@ export class Attachment {
       }
       return 'signature';
     } else if (this.inline && this.type.startsWith('image/')) {
-      return 'inline_image';
+      return 'inlineImage';
     } else if (!this.name && !this.type.startsWith('image/')) {
       // this.name may be '' or undefined - catch either
       return this.length < 100 ? 'hidden' : 'encryptedMsg';
