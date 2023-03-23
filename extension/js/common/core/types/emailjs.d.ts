@@ -22,7 +22,7 @@ export type MimeParserNode = {
   appendChild: (child: MimeParserNode) => void;
   contentTransferEncoding: { value: string };
   charset?: string;
-  contentType?: { value: string; params?: { protocol?: string } };
+  contentType?: { value: string; params?: { protocol?: string; name?: string } };
   addHeader: (name: string, value: string) => void;
   raw: string; // on all nodes, not just body nodes
   _parentNode: MimeParserNode | null;

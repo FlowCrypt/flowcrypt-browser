@@ -69,6 +69,20 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
     );
 
     test(
+      `decrypt - parsed signed message with signautre.asc as plain attachment`,
+      testWithBrowser('compatibility', async (t, browser) => {
+        const threadId = '187085b874fb727c';
+        const acctEmail = 'flowcrypt.compatibility@gmail.com';
+        const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`);
+        await inboxPage.waitForSelTestState('ready');
+        await inboxPage.waitAll('iframe');
+        const pgpBlock = await inboxPage.getFrame(['pgp_block.htm']);
+        await pgpBlock.waitForContent('@pgp-block-content', 'flowcrypt-browser issue #5029 test email');
+        await inboxPage.close();
+      })
+    );
+
+    test(
       `decrypt - outlook message with ATTxxxx encrypted email doesn't show empty attachment`,
       testWithBrowser('compatibility', async (t, browser) => {
         const threadId = '17dbdf2425ac0f29';
