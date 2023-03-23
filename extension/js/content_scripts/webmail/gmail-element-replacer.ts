@@ -424,6 +424,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     if (this.debug) {
       console.debug('processAttachments()', attachmentMetas);
     }
+    console.log(attachmentsContainerInner);
     let msgEl = this.getMsgBodyEl(msgId); // not a constant because sometimes elements get replaced, then returned by the function that replaced them
     const isBodyEmpty = msgEl.text() === '' || msgEl.text() === '\n';
     const senderEmail = this.getSenderEmail(msgEl);
