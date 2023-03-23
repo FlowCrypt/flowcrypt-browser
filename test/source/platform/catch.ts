@@ -49,4 +49,8 @@ export class Catch {
   public static version = () => {
     return Catch.RUNTIME_VERSION;
   };
+
+  public static browser = (): { name: string } | undefined => {
+    return undefined;
+  };
 }
