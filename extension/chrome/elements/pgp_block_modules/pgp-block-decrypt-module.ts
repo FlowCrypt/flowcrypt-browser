@@ -14,6 +14,7 @@ import { Xss } from '../../../js/common/platform/xss.js';
 import { KeyStore } from '../../../js/common/platform/store/key-store.js';
 import { PassphraseStore } from '../../../js/common/platform/store/passphrase-store.js';
 import { MsgBlockParser } from '../../../js/common/core/msg-block-parser.js';
+import { Str } from '../../../js/common/core/common.js';
 
 export class PgpBlockViewDecryptModule {
   private msgFetchedFromApi: false | GmailResponseFormat = false;
@@ -34,7 +35,7 @@ export class PgpBlockViewDecryptModule {
           const signatureAttachment = parsed.attachments.find(a => a.treatAs(parsed.attachments) === 'signature'); // todo: more than one signature candidate?
           if (signatureAttachment) {
             this.view.signature.parsedSignature = signatureAttachment.getData().toUtfStr();
-            return await this.decryptAndRender(Buf.fromUtfStr(parsed.rawSignedContent), verificationPubs);
+            return await this.decryptAndRender(parsed.rawSignedContent, verificationPubs);
           }
         }
         await this.view.errorModule.renderErr(
@@ -57,7 +58,7 @@ export class PgpBlockViewDecryptModule {
           if (plaintext) {
             await this.view.renderModule.renderAsRegularContent(plaintext);
           } else {
-            await this.decryptAndRender(Buf.fromUtfStr(armored), verificationPubs, subject);
+            await this.decryptAndRender(armored, verificationPubs, subject);
           }
         }
       }
@@ -100,7 +101,7 @@ export class PgpBlockViewDecryptModule {
     return undefined;
   };
 
-  private decryptAndRender = async (encryptedData: Buf, verificationPubs: string[], plainSubject?: string): Promise<void> => {
+  private decryptAndRender = async (encryptedData: Uint8Array | string, verificationPubs: string[], plainSubject?: string): Promise<void> => {
     if (!this.view.signature?.parsedSignature) {
       const kisWithPp = await KeyStore.getAllWithOptionalPassPhrase(this.view.acctEmail);
       const decrypt = async (verificationPubs: string[]) => await BrowserMsg.send.bg.await.pgpMsgDecrypt({ kisWithPp, encryptedData, verificationPubs });
@@ -112,9 +113,9 @@ export class PgpBlockViewDecryptModule {
           // only try to re-fetch 'full'
           console.info(`re-fetching message ${this.view.msgId} from api because looks like bad formatting: full`);
           const { armored } = await this.retrieveMessage(this.view.msgId); // todo: subject?
-          const fetchedContent = this.getNeededCleartextMessage(armored, encryptedData.toUtfStr());
+          const fetchedContent = this.getNeededCleartextMessage(armored, Str.with(encryptedData));
           if (typeof fetchedContent !== 'undefined') {
-            return await this.decryptAndRender(Buf.with(fetchedContent), verificationPubs);
+            return await this.decryptAndRender(fetchedContent, verificationPubs);
           }
         }
         await this.view.renderModule.decideDecryptedContentFormattingAndRender(
@@ -137,7 +138,7 @@ export class PgpBlockViewDecryptModule {
           console.info(`re-fetching message ${this.view.msgId} from api because looks like bad formatting: ${!this.msgFetchedFromApi ? 'full' : 'raw'}`);
           await this.initialize(verificationPubs, true);
         } else {
-          await this.view.errorModule.renderErr(Lang.pgpBlock.badFormat + '\n\n' + result.error.message, encryptedData.toUtfStr());
+          await this.view.errorModule.renderErr(Lang.pgpBlock.badFormat + '\n\n' + result.error.message, Str.with(encryptedData));
         }
       } else if (result.longids.needPassphrase.length) {
         const enterPp = `<a href="#" class="enter_passphrase" data-test="action-show-passphrase-dialog">${Lang.pgpBlock.enterPassphrase}</a> ${Lang.pgpBlock.toOpenMsg}`;
@@ -174,22 +175,19 @@ export class PgpBlockViewDecryptModule {
           // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
           await this.view.errorModule.renderErr(result.error.message, result.content!.toUtfStr()); // missing mdc - only render the result after user confirmation
         } else if (result.error) {
-          await this.view.errorModule.renderErr(
-            `${Lang.pgpBlock.cantOpen}\n\n<em>${result.error.type}: ${result.error.message}</em>`,
-            encryptedData.toUtfStr()
-          );
+          await this.view.errorModule.renderErr(`${Lang.pgpBlock.cantOpen}\n\n<em>${result.error.type}: ${result.error.message}</em>`, Str.with(encryptedData));
         } else {
           // should generally not happen
           await this.view.errorModule.renderErr(
             Lang.pgpBlock.cantOpen + Lang.general.writeMeToFixIt(!!this.view.fesUrl) + '\n\nDiagnostic info: "' + JSON.stringify(result) + '"',
-            encryptedData.toUtfStr()
+            Str.with(encryptedData)
           );
         }
       }
     } else {
       // this.view.signature.parsedSignature is defined
       // sometimes signatures come wrongly percent-encoded. Here we check for typical "=3Dabcd" at the end
-      const sigText = Buf.fromUtfStr(this.view.signature.parsedSignature.replace('\n=3D', '\n='));
+      const sigText = this.view.signature.parsedSignature.replace('\n=3D', '\n=');
       const verify = async (verificationPubs: string[]) =>
         await BrowserMsg.send.bg.await.pgpMsgVerifyDetached({ plaintext: encryptedData, sigText, verificationPubs });
       const signatureResult = await verify(verificationPubs);

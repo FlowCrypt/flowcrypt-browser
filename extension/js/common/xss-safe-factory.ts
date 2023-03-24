@@ -61,25 +61,25 @@ export class XssSafeFactory {
    */
   public static renderableMsgBlock = (factory: XssSafeFactory, block: MsgBlock, msgId: string, senderEmail: string, isOutgoing?: boolean) => {
     if (block.type === 'plainText') {
-      return Xss.escape(block.content.toString()).replace(/\n/g, '<br>') + '<br><br>';
+      return Xss.escape(Str.with(block.content)).replace(/\n/g, '<br>') + '<br><br>';
     } else if (block.type === 'plainHtml') {
-      return Xss.htmlSanitizeAndStripAllTags(block.content.toString(), '<br>') + '<br><br>';
+      return Xss.htmlSanitizeAndStripAllTags(Str.with(block.content), '<br>') + '<br><br>';
     } else if (block.type === 'encryptedMsg') {
       return factory.embeddedMsg(
         'encryptedMsg',
-        block.complete ? PgpArmor.normalize(block.content.toString(), 'encryptedMsg') : '',
+        block.complete ? PgpArmor.normalize(Str.with(block.content), 'encryptedMsg') : '',
         msgId,
         isOutgoing,
         senderEmail
       );
     } else if (block.type === 'signedMsg') {
-      return factory.embeddedMsg('signedMsg', block.content.toString(), msgId, isOutgoing, senderEmail);
+      return factory.embeddedMsg('signedMsg', Str.with(block.content), msgId, isOutgoing, senderEmail);
     } else if (block.type === 'publicKey') {
-      return factory.embeddedPubkey(PgpArmor.normalize(block.content.toString(), 'publicKey'), isOutgoing);
+      return factory.embeddedPubkey(PgpArmor.normalize(Str.with(block.content), 'publicKey'), isOutgoing);
     } else if (block.type === 'privateKey') {
-      return factory.embeddedBackup(PgpArmor.normalize(block.content.toString(), 'privateKey'));
+      return factory.embeddedBackup(PgpArmor.normalize(Str.with(block.content), 'privateKey'));
     } else if (block.type === 'certificate') {
-      return factory.embeddedPubkey(block.content.toString());
+      return factory.embeddedPubkey(Str.with(block.content));
     } else if (['encryptedAttachment', 'plainAttachment'].includes(block.type)) {
       return block.attachmentMeta
         ? factory.embeddedAttachment(new Attachment(block.attachmentMeta), block.type === 'encryptedAttachment')
@@ -249,22 +249,18 @@ export class XssSafeFactory {
   };
 
   public btnCompose = (webmailName: WebMailName, webmailVersion: WebMailVersion) => {
-    const btnCls = 'new_secure_compose_window_button';
     if (webmailName === 'outlook') {
-      const btn = `<div class="new_secure_compose_window_button" id="flowcrypt_secure_compose_button" title="New Secure Email"><img src="${this.srcImg(
+      const btn = `<div class="new_secure_compose_window_button" id="flowcrypt_secure_compose_button_icon" title="New Secure Email"><img src="${this.srcImg(
         'logo-19-19.png'
       )}"></div>`;
-      return `<div class="_fce_c ${this.destroyableCls} cryptup_compose_button_container" role="presentation">${btn}</div>`;
+      return `<div id="flowcrypt_secure_compose_button" class="_fce_c ${this.destroyableCls} cryptup_compose_button_container" role="presentation">${btn}</div>`;
     } else {
-      const elAttrs =
-        'role="button" tabindex="0" data-test="action-secure-compose" data-tooltip="Secure Compose" aria-label="Secure Compose" id="flowcrypt_secure_compose_button"';
+      const elAttrs = 'data-tooltip="Secure Compose" aria-label="Secure Compose" id="flowcrypt_secure_compose_button_icon"';
       const title = 'Secure Compose';
       const btnEl =
-        webmailVersion === 'gmail2022'
-          ? `<div class="${btnCls} compose_button_simple only-icon" ${elAttrs}></div><div class="apW">${title}</div>`
-          : `<div class="${btnCls} small" ${elAttrs}>${title}</div>`;
+        webmailVersion === 'gmail2022' ? `<div class="compose_icon_simple" ${elAttrs}></div><div class="apW">${title}</div>` : `<div ${elAttrs}>${title}</div>`;
       const containerCls = webmailVersion === 'gmail2022' ? 'pb-25px' : 'z0';
-      return `<div class="${this.destroyableCls} ${containerCls}">${btnEl}</div>`;
+      return `<div class="${this.destroyableCls} ${containerCls}" id="flowcrypt_secure_compose_button" role="button" tabindex="0" data-test="action-secure-compose" >${btnEl}</div>`;
     }
   };
 

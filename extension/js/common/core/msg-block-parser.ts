@@ -46,7 +46,7 @@ export class MsgBlockParser {
 
   public static fmtDecryptedAsSanitizedHtmlBlocks = async (
     decryptedContent: Uint8Array,
-    imgHandling: SanitizeImgHandling = 'IMG-TO-LINK'
+    imgHandling: SanitizeImgHandling = 'IMG-KEEP'
   ): Promise<SanitizedBlocks> => {
     const blocks: MsgBlock[] = [];
     let isRichText = false;
@@ -132,7 +132,7 @@ export class MsgBlockParser {
     let { blocks, normalized } = MsgBlockParser.detectBlocks(decryptedContent);
     for (const block of blocks) {
       if (block.type === 'publicKey') {
-        const armored = block.content.toString();
+        const armored = Str.with(block.content);
         foundPublicKeys.push(armored);
         normalized = normalized.replace(armored, '');
       }

@@ -12,6 +12,7 @@ import { SmimeKey, SmimeMsg } from '../smime/smime-key.js';
 import { OpenPGPKey } from './openpgp-key.js';
 import { ContactStore } from '../../../platform/store/contact-store.js';
 import * as Stream from '@openpgp/web-stream-tools';
+import { Str } from '../../common.js';
 
 export class DecryptionError extends Error {
   public decryptError: DecryptError;
@@ -36,12 +37,12 @@ export namespace PgpMsgMethod {
     export type Type = { data: Uint8Array | string };
     export type Decrypt = {
       kisWithPp: KeyInfoWithIdentityAndOptionalPp[];
-      encryptedData: Uint8Array;
+      encryptedData: Uint8Array | string;
       msgPwd?: string;
       verificationPubs: string[];
     };
-    export type DiagnosePubkeys = { armoredPubs: string[]; message: Uint8Array };
-    export type VerifyDetached = { plaintext: Uint8Array; sigText: Uint8Array; verificationPubs: string[] };
+    export type DiagnosePubkeys = { armoredPubs: string[]; message: Uint8Array | string };
+    export type VerifyDetached = { plaintext: Uint8Array | string; sigText: string; verificationPubs: string[] };
   }
   export type DiagnosePubkeys = (arg: Arg.DiagnosePubkeys) => Promise<DiagnoseMsgPubkeysResult>;
   export type VerifyDetached = (arg: Arg.VerifyDetached) => Promise<VerifyRes>;
@@ -175,8 +176,8 @@ export class MsgUtil {
   };
 
   public static verifyDetached: PgpMsgMethod.VerifyDetached = async ({ plaintext, sigText, verificationPubs }) => {
-    const message = await opgp.createMessage({ text: Buf.fromUint8(plaintext).toUtfStr() });
-    await message.appendSignature(Buf.fromUint8(sigText).toUtfStr());
+    const message = await opgp.createMessage({ text: Str.with(plaintext) });
+    await message.appendSignature(sigText);
     return await OpenPGPKey.verify(message, await ContactStore.getPubkeyInfos(undefined, verificationPubs));
   };
 
@@ -291,7 +292,7 @@ export class MsgUtil {
   };
 
   public static diagnosePubkeys: PgpMsgMethod.DiagnosePubkeys = async ({ armoredPubs, message }) => {
-    const m = await opgp.readMessage({ armoredMessage: Buf.fromUint8(message).toUtfStr() });
+    const m = await opgp.readMessage({ armoredMessage: Str.with(message) });
     const msgKeyIds = m.getEncryptionKeyIDs();
     const localKeyIds: string[] = [];
     for (const k of await Promise.all(armoredPubs.map(pub => KeyUtil.parse(pub)))) {

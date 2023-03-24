@@ -4,12 +4,15 @@
 
 import { base64decode, base64encode } from '../platform/util.js';
 import { Xss } from '../platform/xss.js';
+import { Buf } from './buf.js';
 
 export type Dict<T> = { [key: string]: T };
 export type UrlParam = string | number | null | undefined | boolean | string[];
 export type UrlParams = Dict<UrlParam>;
 export type PromiseCancellation = { cancel: boolean };
 export type EmailParts = { email: string; name?: string };
+
+export const CID_PATTERN = /^cid:(.+)/;
 
 export class Str {
   // ranges are taken from https://stackoverflow.com/a/14824756
@@ -102,6 +105,10 @@ export class Str {
       }
     }
     return true;
+  };
+
+  public static with = (data: Uint8Array | string): string => {
+    return typeof data === 'string' ? data : Buf.with(data).toUtfStr();
   };
 
   public static monthName = (monthIndex: number) => {
@@ -412,15 +419,7 @@ export const stringTuple = <T extends string[]>(...data: T): T => {
   return data;
 };
 
-export const getBase64FromUrl = async (url: string): Promise<string> => {
-  const data = await fetch(url);
-  const blob = await data.blob();
-  return new Promise(resolve => {
-    const reader = new FileReader();
-    reader.readAsDataURL(blob);
-    reader.onloadend = () => {
-      const base64data = reader.result;
-      resolve(base64data as string);
-    };
-  });
+export const checkValidURL = (url: string): boolean => {
+  const pattern = /(http|https):\/\/([a-z0-9-]+((\.[a-z0-9-]+)+)?)(:[0-9]+)?(\/|\/([\w#!:.?+=&%@\-\/]))?/;
+  return pattern.test(url);
 };

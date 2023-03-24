@@ -58,7 +58,7 @@ export class PgpBlockViewErrorModule {
     }
   };
 
-  public handlePrivateKeyMismatch = async (armoredPubs: string[], message: Uint8Array, isPwdMsg: boolean) => {
+  public handlePrivateKeyMismatch = async (armoredPubs: string[], message: Uint8Array | string, isPwdMsg: boolean) => {
     // todo - make it work for multiple stored keys
     const msgDiagnosis = await BrowserMsg.send.bg.await.pgpMsgDiagnosePubkeys({ armoredPubs, message });
     if (msgDiagnosis.found_match) {
