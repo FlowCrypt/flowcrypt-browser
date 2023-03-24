@@ -22,21 +22,23 @@ $ npm install
 ```bash
 $ npm run build
 ```
-After running this command, you can find your built project in the build/chrome-consumer and build/firefox-consumer folders.
+After running this command, you can find your built project in the `build/chrome-consumer` and `build/firefox-consumer` folders.
 
 To load the extension in Google Chrome, please follow these steps:
 
-1. Open your Chrome browser and navigate to chrome://extensions/.
-2. If not already enabled, toggle on the Developer mode switch located at the top-right corner.
-3. Click on the Load Unpacked button.
-4. Browse to and select the appropriate folder, either build/chrome-consumer or chrome-enterprise.
+1. Open your Chrome browser and navigate to `chrome://extensions/`.
+2. If not already enabled, toggle on the `Developer mode`    switch located at the top-right corner.
+3. Click on the `Load Unpacked` button.
+4. Browse to and select the appropriate folder, either `build/chrome-consumer` or `chrome-enterprise`.
 
 Similarly, to load the extension in Firefox, follow these steps:
 
-1. Open your Firefox browser and navigate to about:debugging.
-2. Click on the "This Firefox" tab.
-3. Click on the "Load Temporary Add-on" button located at the top-right corner.
-4. Browse to and select the appropriate folder, either build/firefox-consumer or firefox-enterprise, and select the manifest.json file.
+1. Open your Firefox browser and navigate to `about:debugging`.
+2. Click on the `This Firefox` tab.
+3. Click on the `Load Temporary Add-on` button located at the top-right corner.
+4. Browse to and select the appropriate folder, either `build/firefox-consumer` or `firefox-enterprise`, and select the `manifest.json` file.
+
+If you prefer, you can also use the `run_firefox` script (`npm run run_firefox`) included in the package.json file to run the Firefox extension in a separate instance without interfering with the production extension installed in your browser.
 
 Printing debug data to test logs can be done using special `Debug` class:
 https://github.com/FlowCrypt/flowcrypt-browser/tree/master/extension/js/common/platform/debug.ts#L7
