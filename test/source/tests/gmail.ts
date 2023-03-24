@@ -308,14 +308,14 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
         expect(await replyBox.read('@recipients-preview')).to.equal('e2e.enterprise.test@flowcrypt.com');
         await createSecureDraft(t, browser, gmailPage, 'reply draft');
         await createSecureDraft(t, browser, gmailPage, 'offline reply draft', { offline: true });
-        await gmailPage.page.reload({ waitUntil: 'networkidle2' });
+        await gmailPage.page.reload(/* { waitUntil: 'networkidle2' } */);
         await Util.sleep(30);
         replyBox = await pageHasSecureDraft(gmailPage, 'offline reply draft');
         // await replyBox.waitAndClick('@action-send'); doesn't work for some reason, use keyboard instead
         await gmailPage.page.keyboard.press('Tab');
         await gmailPage.page.keyboard.press('Enter');
         await replyBox.waitTillGone('@action-send');
-        await gmailPage.page.reload({ waitUntil: 'networkidle2' });
+        await gmailPage.page.reload(/* { waitUntil: 'networkidle2' } */);
         await gmailPage.waitAndClick('.h7:last-child .ajz', { delay: 1 }); // the small triangle which toggles the message details
         await gmailPage.waitForContent('.h7:last-child .ajA', 'Re: [ci.test] encrypted email for reply render'); // make sure that the subject of the sent draft is corrent
         await GmailPageRecipe.deleteLastReply(gmailPage);
@@ -434,7 +434,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
         await gmailPage.type('div[aria-label="Message Body"]', 'plain reply', true);
         await gmailPage.waitForContent('.oG.aOy', 'Draft saved');
         await Util.sleep(10);
-        await gmailPage.page.reload({ waitUntil: 'networkidle2' });
+        await gmailPage.page.reload(/* { waitUntil: 'networkidle2' }*/);
         await gmailPage.waitForContent('div[aria-label="Message Body"]', 'plain reply', 30);
         await pageDoesNotHaveSecureReplyContainer(gmailPage);
         await gmailPage.click('[aria-label^="Discard draft"]');
