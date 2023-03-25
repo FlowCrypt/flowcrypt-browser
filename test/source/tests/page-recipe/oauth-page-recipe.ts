@@ -126,6 +126,7 @@ export class OauthPageRecipe extends PageRecipe {
       // no need to await the API call because it's not crucial to always save it, can mostly skip errors
       if (action === 'close') {
         await oauthPage.close();
+        return;
       } else if (action === 'deny') {
         throw new Error('tests.handle_gmail_oauth options.deny.true not implemented');
       } else {
