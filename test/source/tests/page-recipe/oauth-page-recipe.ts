@@ -126,7 +126,6 @@ export class OauthPageRecipe extends PageRecipe {
       // no need to await the API call because it's not crucial to always save it, can mostly skip errors
       if (action === 'close') {
         await oauthPage.close();
-        return;
       } else if (action === 'deny') {
         throw new Error('tests.handle_gmail_oauth options.deny.true not implemented');
       } else {
@@ -134,7 +133,11 @@ export class OauthPageRecipe extends PageRecipe {
       }
     } catch (e) {
       const eStr = String(e);
-      if (!eStr.includes('Execution context was destroyed') && !eStr.includes('Cannot find context with specified id')) {
+      if (
+        !eStr.includes('Execution context was destroyed') &&
+        !eStr.includes('Cannot find context with specified id') &&
+        !eStr.includes('Argument should belong to the same JavaScript world as target object')
+      ) {
         throw e; // not a known retriable error
       }
       // t.log(`Attempting to retry google auth:${action} on the same window for ${email} because: ${eStr}`);
