@@ -23,6 +23,7 @@
 
 import { MimeParser } from '../core/types/emailjs.js';
 import type * as OpenPGP from 'openpgp';
+import { Catch } from './catch.js';
 
 type Codec = {
   encode: (text: string, mode: 'fatal' | 'html') => string;
@@ -32,6 +33,11 @@ type Codec = {
 };
 
 export const requireOpenpgp = (): typeof OpenPGP => {
+  if (window !== globalThis && Catch.browser().name === 'firefox') {
+    window.Uint8Array.prototype.subarray = function (i) {
+      return new Uint8Array(this).subarray(i);
+    };
+  }
   return (globalThis as unknown as { openpgp: typeof OpenPGP }).openpgp;
 };
 

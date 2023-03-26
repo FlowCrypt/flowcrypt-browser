@@ -269,7 +269,6 @@ export class OpenPGPKey {
         throw new Error(`Key ${key.id} is not a private key`);
       }
       opgpKey = (await opgp.revokeKey({ key: opgpKey, format: 'object' })).privateKey;
-      OpenPGPKey.patch(opgpKey);
     }
     const certificate = await opgpKey.getRevocationCertificate();
     if (!certificate) {
@@ -998,28 +997,5 @@ export class OpenPGPKey {
       throw new Error('This key only has a gnu-dummy private packet, with no actual secret keys.');
     }
     return nonDummyPrvPackets;
-  };
-
-  private static fixUint8Arrays = (obj: object, processed: object[] = []) => {
-    for (const k in obj) {
-      if (obj.hasOwnProperty(k)) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const x = (obj as any)[k];
-        if (x instanceof globalThis.Uint8Array || x instanceof window.Uint8Array) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          (obj as any)[k] = new Uint8Array(x);
-        } else if (typeof x === 'object' && x && !processed.includes(x)) {
-          processed.push(x);
-          OpenPGPKey.fixUint8Arrays(x, processed);
-        }
-      }
-    }
-  };
-
-  private static patch = (opgpKey: OpenPGP.Key) => {
-    if (Catch.browser()?.name === 'firefox') {
-      // need to re-create Uint8Array from globalThis.Uint8Array or window.Uint8Array for Firefox content script
-      OpenPGPKey.fixUint8Arrays(opgpKey);
-    }
   };
 }
