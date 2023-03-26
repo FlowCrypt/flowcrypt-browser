@@ -38,6 +38,9 @@ export const requireOpenpgp = (): typeof OpenPGP => {
     window.Uint8Array.prototype.subarray = function (...args) {
       return new Uint8Array(this).subarray(...args);
     };
+    window.Uint8Array.prototype.slice = function (...args) {
+      return new Uint8Array(this).slice(...args);
+    };
   }
   return (globalThis as unknown as { openpgp: typeof OpenPGP }).openpgp;
 };
