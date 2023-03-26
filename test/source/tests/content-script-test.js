@@ -73,6 +73,17 @@ dYU0CKNXUkv+q8TEUw==
       result += `Exception when calling PgpArmor.armor(): ${e}\n`;
     }
     try {
+      Xss.sanitizeAppend('[data-test="content-script-test-status"]', '<div>Testing KeyUtil.readBinary()...</div>');
+      const { keys, err } = await KeyUtil.readBinary(data);
+      const keysLength = keys.length;
+      const errLength = err.length;
+      if (keysLength !== 1 || errLength) {
+        result += `expected 1 key and no errors, got ${keysLength} keys and ${errLength} errors\n`;
+      }
+    } catch (e) {
+      result += `Exception when testing KeyUtil.readBinary(): ${e}\n`;
+    }
+    try {
       Xss.sanitizeAppend('[data-test="content-script-test-status"]', '<div>Testing KeyUtil.getOrCreateRevocationCertificate()...</div>');
       // getOrCreateRevocationCertificate tests if Stream (web-stream-tools) is wired correctly
       const key = await KeyUtil.parse(armoredPrv);
