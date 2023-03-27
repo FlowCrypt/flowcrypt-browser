@@ -309,10 +309,9 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
     if (!rawBlock) {
       return await this.abortAndRenderReplyMsgComposeTableIfIsReplyBox('!rawBlock');
     }
-    const encryptedData = rawBlock.content instanceof Buf ? rawBlock.content : Buf.fromUtfStr(rawBlock.content);
     const decrypted = await MsgUtil.decryptMessage({
       kisWithPp: await KeyStore.getAllWithOptionalPassPhrase(this.view.acctEmail),
-      encryptedData,
+      encryptedData: rawBlock.content,
       verificationPubs: [],
     });
     if (!decrypted.success) {
@@ -333,7 +332,7 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
     if (isRichText) {
       this.view.sendBtnModule.popover.toggleItemTick($('.action-toggle-richtext-sending-option'), 'richtext', true);
     }
-    this.view.inputModule.inputTextHtmlSetSafely(sanitizedContent.toString());
+    this.view.inputModule.inputTextHtmlSetSafely(Str.with(sanitizedContent));
     this.view.inputModule.squire.focus();
   };
 

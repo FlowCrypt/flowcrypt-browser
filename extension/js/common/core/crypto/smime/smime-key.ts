@@ -114,9 +114,9 @@ export class SmimeKey {
   };
 
   public static readArmoredPkcs7Message = (
-    encrypted: Uint8Array
+    encrypted: Uint8Array | string
   ): forge.pkcs7.PkcsEnvelopedData | forge.pkcs7.PkcsEncryptedData | forge.pkcs7.PkcsSignedData => {
-    return forge.pkcs7.messageFromPem(new Buf(encrypted).toUtfStr());
+    return forge.pkcs7.messageFromPem(Str.with(encrypted));
   };
 
   public static decryptMessage = (p7: forge.pkcs7.PkcsEnvelopedData, key: Key): Uint8Array => {

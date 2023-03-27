@@ -5,7 +5,6 @@
 import { VerifyRes } from '../../../js/common/core/crypto/pgp/msg-util.js';
 import { Attachment } from '../../../js/common/core/attachment.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
-import { Buf } from '../../../js/common/core/buf.js';
 import { Catch } from '../../../js/common/platform/catch.js';
 import { Mime } from '../../../js/common/core/mime.js';
 import { MsgBlock } from '../../../js/common/core/msg-block.js';
@@ -15,7 +14,8 @@ import { Xss } from '../../../js/common/platform/xss.js';
 import { MsgBlockParser } from '../../../js/common/core/msg-block-parser.js';
 import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
 import { GmailParser } from '../../../js/common/api/email-provider/gmail/gmail-parser.js';
-import { Str } from '../../../js/common/core/common.js';
+import { CID_PATTERN, Str } from '../../../js/common/core/common.js';
+import DOMPurify from 'dompurify';
 import { Time } from '../../../js/common/browser/time.js';
 
 export class PgpBlockViewRenderModule {
@@ -181,15 +181,11 @@ export class PgpBlockViewRenderModule {
     if (!isErr) {
       // rendering message content
       $('.pgp_print_button').show();
-      const pgpBlock = $('#pgp_block').html(Xss.htmlSanitizeKeepBasicTags(htmlContent, 'IMG-TO-LINK')); // xss-sanitized
+      $('#pgp_block').html(Xss.htmlSanitizeKeepBasicTags(htmlContent)); // xss-sanitized
       Xss.appendRemoteImagesToContainer();
       $('#pgp_block .remote_image_container img').on(
         'load',
         this.view.setHandler(() => this.resizePgpBlockFrame())
-      );
-      pgpBlock.find('a.image_src_link').one(
-        'click',
-        this.view.setHandler((el, ev) => this.displayImageSrcLinkAsImg(el as HTMLAnchorElement, ev as JQuery.Event<HTMLAnchorElement, null>))
       );
     } else {
       // rendering our own ui
@@ -249,7 +245,7 @@ export class PgpBlockViewRenderModule {
   };
 
   public decideDecryptedContentFormattingAndRender = async (
-    decryptedBytes: Buf,
+    decryptedBytes: Uint8Array | string,
     isEncrypted: boolean,
     sigResult: VerifyRes | undefined,
     verificationPubs: string[],
@@ -265,11 +261,12 @@ export class PgpBlockViewRenderModule {
     }
     const publicKeys: string[] = [];
     let renderableAttachments: Attachment[] = [];
-    let decryptedContent = decryptedBytes.toUtfStr();
+    let decryptedContent: string | undefined;
     let isHtml = false;
     // todo - replace with MsgBlockParser.fmtDecryptedAsSanitizedHtmlBlocks, then the extract/strip methods could be private?
     if (!Mime.resemblesMsg(decryptedBytes)) {
       const fcAttachmentBlocks: MsgBlock[] = [];
+      decryptedContent = Str.with(decryptedBytes);
       decryptedContent = MsgBlockParser.extractFcAttachments(decryptedContent, fcAttachmentBlocks);
       decryptedContent = MsgBlockParser.stripFcTeplyToken(decryptedContent);
       decryptedContent = MsgBlockParser.stripPublicKeys(decryptedContent, publicKeys);
@@ -281,8 +278,9 @@ export class PgpBlockViewRenderModule {
     } else {
       this.renderText('Formatting...');
       const decoded = await Mime.decode(decryptedBytes);
+      let inlineCIDAttachments: Attachment[] = [];
       if (typeof decoded.html !== 'undefined') {
-        decryptedContent = decoded.html;
+        ({ sanitizedHtml: decryptedContent, inlineCIDAttachments } = this.replaceInlineImageCIDs(decoded.html, decoded.attachments));
         isHtml = true;
       } else if (typeof decoded.text !== 'undefined') {
         decryptedContent = decoded.text;
@@ -298,10 +296,10 @@ export class PgpBlockViewRenderModule {
         decryptedContent = this.getEncryptedSubjectText(decoded.subject, isHtml) + decryptedContent; // render encrypted subject in message
       }
       for (const attachment of decoded.attachments) {
-        if (attachment.treatAs(decoded.attachments) !== 'publicKey') {
-          renderableAttachments.push(attachment);
-        } else {
+        if (attachment.isPublicKey()) {
           publicKeys.push(attachment.getData().toUtfStr());
+        } else if (!inlineCIDAttachments.some(inlineAttachment => inlineAttachment.cid === attachment.cid)) {
+          renderableAttachments.push(attachment);
         }
       }
     }
@@ -320,36 +318,46 @@ export class PgpBlockViewRenderModule {
     }
   };
 
-  private displayImageSrcLinkAsImg = (a: HTMLAnchorElement, event: JQuery.Event<HTMLAnchorElement, null>) => {
-    const img = document.createElement('img');
-    img.setAttribute('style', a.getAttribute('style') || '');
-    img.style.background = 'none';
-    img.style.border = 'none';
-    img.addEventListener('load', () => this.resizePgpBlockFrame());
-    if (a.href.startsWith('cid:')) {
-      // image included in the email
-      const contentId = a.href.replace(/^cid:/g, '');
-      const content = this.view.attachmentsModule.includedAttachments.filter(a => a.type.indexOf('image/') === 0 && a.cid === `<${contentId}>`)[0];
-      if (content) {
-        img.src = `data:${a.type};base64,${content.getData().toBase64Str()}`;
-        Xss.replaceElementDANGEROUSLY(a, img.outerHTML); // xss-safe-value - img.outerHTML was built using dom node api
-      } else {
-        Xss.replaceElementDANGEROUSLY(a, Xss.escape(`[broken link: ${a.href}]`)); // xss-escaped
+  /**
+   * Replaces inline image CID references with base64 encoded data in sanitized HTML
+   * and returns the sanitized HTML along with the inline CID attachments.
+   *
+   * @param html - The original HTML content.
+   * @param attachments - An array of email attachments.
+   * @returns An object containing sanitized HTML and an array of inline CID attachments.
+   */
+  private replaceInlineImageCIDs = (html: string, attachments: Attachment[]): { sanitizedHtml: string; inlineCIDAttachments: Attachment[] } => {
+    // Array to store inline CID attachments
+    const inlineCIDAttachments: Attachment[] = [];
+
+    // Define the hook function for DOMPurify to process image elements after sanitizing attributes
+    const processImageElements = (node: Element | null) => {
+      // Ensure the node exists and has a 'src' attribute
+      if (!node || !('src' in node)) return;
+      const imageSrc = node.getAttribute('src') as string;
+      const matches = imageSrc.match(CID_PATTERN);
+
+      // Check if the src attribute contains a CID
+      if (matches && matches[1]) {
+        const contentId = matches[1];
+        const contentIdAttachment = attachments.find(attachment => attachment.cid === `<${contentId}>`);
+
+        // Replace the src attribute with a base64 encoded string
+        if (contentIdAttachment) {
+          inlineCIDAttachments.push(contentIdAttachment);
+          node.setAttribute('src', `data:${contentIdAttachment.type};base64,${contentIdAttachment.getData().toBase64Str()}`);
+        }
       }
-    } else if (a.href.startsWith('https://') || a.href.startsWith('http://')) {
-      // image referenced as url
-      img.src = a.href;
-      Xss.replaceElementDANGEROUSLY(a, img.outerHTML); // xss-safe-value - img.outerHTML was built using dom node api
-    } else if (a.href.startsWith('data:image/')) {
-      // image directly inlined
-      img.src = a.href;
-      Xss.replaceElementDANGEROUSLY(a, img.outerHTML); // xss-safe-value - img.outerHTML was built using dom node api
-    } else {
-      Xss.replaceElementDANGEROUSLY(a, Xss.escape(`[broken link: ${a.href}]`)); // xss-escaped
-    }
-    event.preventDefault();
-    event.stopPropagation();
-    event.stopImmediatePropagation();
+    };
+
+    // Add the DOMPurify hook
+    DOMPurify.addHook('afterSanitizeAttributes', processImageElements);
+
+    // Sanitize the HTML and remove the DOMPurify hooks
+    const sanitizedHtml = DOMPurify.sanitize(html);
+    DOMPurify.removeAllHooks();
+
+    return { sanitizedHtml, inlineCIDAttachments };
   };
 
   private getEncryptedSubjectText = (subject: string, isHtml: boolean) => {

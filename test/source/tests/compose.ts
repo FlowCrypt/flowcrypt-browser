@@ -21,7 +21,6 @@ import { BrowserRecipe } from './tooling/browser-recipe';
 import { SetupPageRecipe } from './page-recipe/setup-page-recipe';
 import { testConstants } from './tooling/consts';
 import { MsgUtil } from '../core/crypto/pgp/msg-util';
-import { Buf } from '../core/buf';
 import { PubkeyInfoWithLastCheck } from '../core/crypto/key';
 import { ElementHandle, Page } from 'puppeteer';
 
@@ -816,6 +815,26 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
     );
 
     test(
+      'compose - check recipient is added correctly after deleting recipient',
+      testWithBrowser('ci.tests.gmail', async (t, browser) => {
+        // Background: Previously, when adding recipient a (correct recipient) and recipient b (unknown recipient),
+        // then removing recipient a and adding recipient a again, the recipient input was not showing recipient status correctly.
+        // https://github.com/FlowCrypt/flowcrypt-browser/issues/4241
+        const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
+        const unknownRecipient = 'unknown@flowcrypt.test';
+        const correctRecipient = 'mock.only.pubkey@flowcrypt.com';
+        await ComposePageRecipe.showRecipientInput(composePage);
+        await composePage.waitAndType(`@input-to`, `${correctRecipient}\n`); // Enter correct recipient
+        await composePage.waitAndType(`@input-to`, `${unknownRecipient}\n`); // enter unknown recipient
+        await composePage.waitAndClick('@action-remove-mockonlypubkeyflowcryptcom-recipient'); // Now delete correct recipient
+        await composePage.waitAndType(`@input-to`, `${correctRecipient}\n`); // add unknown recipient again
+        await composePage.click('@input-subject');
+        await composePage.waitForContent('.email_address.no_pgp', unknownRecipient); // Check if unknown email recipient correctly displays no_pgp status
+        await composePage.waitForContent('.email_address.has_pgp', correctRecipient); // Check if mock recipient shows correct has_pgp status
+      })
+    );
+
+    test(
       'compose - reply - CC&BCC test reply',
       testWithBrowser('compatibility', async (t, browser) => {
         const appendUrl = 'threadId=16ce2c965c75e5a6&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___&replyMsgId=16ce2c965c75e5a6';
@@ -1475,6 +1494,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       testWithBrowser('compatibility', async (t, browser) => {
         let composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
         const subject = `مرحبا RTL plain text`;
+        await Util.sleep(5); // until #5037 is fixed
         await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, subject, 'مرحبا', {
           richtext: false,
         });
@@ -1493,6 +1513,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       testWithBrowser('compatibility', async (t, browser) => {
         let composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
         const subject = `مرحبا RTL rich text`;
+        await Util.sleep(5); // until #5037 is fixed
         await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, subject, 'مرحبا', {
           richtext: true,
         });
@@ -1558,9 +1579,8 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         // get sent msg from mock
         const sentMsg = (await GoogleData.withInitializedData('flowcrypt.compatibility@gmail.com')).searchMessagesBySubject(subject)[0];
         const message = sentMsg.payload!.body!.data!;
-        const encrypted = message.match(/\-\-\-\-\-BEGIN PGP MESSAGE\-\-\-\-\-.*\-\-\-\-\-END PGP MESSAGE\-\-\-\-\-/s)![0];
+        const encryptedData = message.match(/\-\-\-\-\-BEGIN PGP MESSAGE\-\-\-\-\-.*\-\-\-\-\-END PGP MESSAGE\-\-\-\-\-/s)![0];
         /* eslint-enable @typescript-eslint/no-non-null-assertion */
-        const encryptedData = Buf.fromUtfStr(encrypted);
         const decrypted0 = await MsgUtil.decryptMessage({ kisWithPp: [], encryptedData, verificationPubs: [] });
         // decryption without a ki should fail
         expect(decrypted0.success).to.equal(false);
@@ -2688,10 +2708,6 @@ const sendImgAndVerifyPresentInSentMsg = async (t: AvaContext, browser: BrowserH
   // open a page with the sent msg, investigate img
   const pgpHostPage = await browser.newPage(t, url);
   const pgpBlockPage = await pgpHostPage.getFrame(['pgp_block.htm']);
-  await pgpBlockPage.waitAll('.image_src_link');
-  expect(await pgpBlockPage.read('.image_src_link')).to.contain('show image');
-  await pgpBlockPage.waitAndClick('.image_src_link');
-  await pgpBlockPage.waitTillGone('.image_src_link');
   const img = await pgpBlockPage.waitAny('body img');
   expect(await PageRecipe.getElementPropertyJson(img, 'src')).to.eq(imgBase64);
 };

@@ -155,8 +155,8 @@ export class Mime {
     return { 'in-reply-to': msgId, references: refs + ' ' + msgId };
   };
 
-  public static resemblesMsg = (msg: Uint8Array) => {
-    const chunk = new Buf(msg.slice(0, 3000)).toUtfStr().toLowerCase().replace(/\r\n/g, '\n');
+  public static resemblesMsg = (msg: Uint8Array | string) => {
+    const chunk = (typeof msg === 'string' ? msg.substring(0, 3000) : new Buf(msg.slice(0, 3000)).toUtfStr('ignore')).toLowerCase().replace(/\r\n/g, '\n');
     const headers = chunk.split('\n\n')[0];
     if (!headers) {
       return false;
@@ -177,7 +177,7 @@ export class Mime {
     return contentType.index === 0;
   };
 
-  public static decode = async (mimeMsg: Uint8Array): Promise<MimeContent> => {
+  public static decode = async (mimeMsg: Uint8Array | string): Promise<MimeContent> => {
     let mimeContent: MimeContent = {
       attachments: [],
       headers: {},
@@ -259,7 +259,7 @@ export class Mime {
         contentNode = new MimeBuilder('multipart/alternative');
         for (const [type, content] of Object.entries(body)) {
           // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-          contentNode.appendChild(Mime.newContentNode(MimeBuilder, type, content!.toString())); // already present, that's why part of for loop
+          contentNode.appendChild(Mime.newContentNode(MimeBuilder, type, Str.with(content!))); // already present, that's why part of for loop
         }
       }
       rootNode.appendChild(contentNode);
@@ -307,7 +307,7 @@ export class Mime {
     const bodyNodes = new MimeBuilder('multipart/alternative');
     for (const [type, content] of Object.entries(body)) {
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      bodyNodes.appendChild(Mime.newContentNode(MimeBuilder, type, content!.toString()));
+      bodyNodes.appendChild(Mime.newContentNode(MimeBuilder, type, Str.with(content!)));
     }
     const signedContentNode = new MimeBuilder('multipart/mixed');
     signedContentNode.appendChild(bodyNodes);
@@ -365,7 +365,9 @@ export class Mime {
       }
       const isSigned = node._isMultipart === 'signed';
       const isMixedWithSig =
-        node._isMultipart === 'mixed' && node._childNodes.length === 2 && Mime.getNodeType(node._childNodes[1]) === 'application/pgp-signature';
+        node._isMultipart === 'mixed' &&
+        node._childNodes.length === 2 &&
+        (Mime.getNodeType(node._childNodes[1]) === 'application/pgp-signature' || node._childNodes[1].contentType?.params?.name === 'signature.asc');
       if (isSigned || isMixedWithSig) {
         // PGP/MIME signed content uses <CR><LF> as in // use CR-LF https://tools.ietf.org/html/rfc3156#section-5
         // however emailjs parser will replace it to <LF>, so we fix it here

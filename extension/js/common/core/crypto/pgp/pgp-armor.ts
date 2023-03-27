@@ -126,11 +126,11 @@ export class PgpArmor {
     return armored;
   };
 
-  public static cryptoMsgPrepareForDecrypt = async (encrypted: Uint8Array): Promise<PreparedForDecrypt> => {
+  public static cryptoMsgPrepareForDecrypt = async (encrypted: Uint8Array | string): Promise<PreparedForDecrypt> => {
     if (!encrypted.length) {
       throw new Error('Encrypted message could not be parsed because no data was provided');
     }
-    const utfChunk = new Buf(encrypted.slice(0, 100)).toUtfStr('ignore'); // ignore errors - this may not be utf string, just testing
+    const utfChunk = typeof encrypted === 'string' ? encrypted.substring(0, 100) : new Buf(encrypted.slice(0, 100)).toUtfStr('ignore'); // ignore errors - this may not be utf string, just testing
     if (utfChunk.includes(PgpArmor.headers('pkcs7').begin)) {
       const p7 = SmimeKey.readArmoredPkcs7Message(encrypted);
       if (p7.type !== ENVELOPED_DATA_OID) {
@@ -146,10 +146,10 @@ export class PgpArmor {
         isArmored,
         isCleartext: true,
         isPkcs7: false,
-        message: await opgp.readCleartextMessage({ cleartextMessage: new Buf(encrypted).toUtfStr() }),
+        message: await opgp.readCleartextMessage({ cleartextMessage: Str.with(encrypted) }),
       };
     } else if (isArmoredEncrypted) {
-      const message = await opgp.readMessage({ armoredMessage: new Buf(encrypted).toUtfStr() });
+      const message = await opgp.readMessage({ armoredMessage: Str.with(encrypted) });
       const isCleartext = !!message.getLiteralData() && !!message.getSigningKeyIDs().length && !message.getEncryptionKeyIDs().length;
       return { isArmored: true, isCleartext, isPkcs7: false, message };
     } else if (encrypted instanceof Uint8Array) {

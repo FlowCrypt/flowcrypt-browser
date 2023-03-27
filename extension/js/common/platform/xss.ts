@@ -4,9 +4,9 @@
 
 import * as DOMPurify from 'dompurify';
 
-import { Str } from '../core/common.js';
+import { checkValidURL, CID_PATTERN, Str } from '../core/common.js';
 
-export type SanitizeImgHandling = 'IMG-DEL' | 'IMG-KEEP' | 'IMG-TO-LINK' | 'IMG-TO-PLAIN-URL';
+export type SanitizeImgHandling = 'IMG-DEL' | 'IMG-KEEP' | 'IMG-TO-PLAIN-TEXT';
 
 /**
  * This class is in platform/ folder because most of it depends on platform specific code
@@ -98,13 +98,8 @@ export class Xss {
    * @property {string} imgHandling   - how should images be treated, with the following options:
    *   - IMG-DEL: remove images, only leaving text
    *   - IMG-KEEP: keep images as they are
-   *   - IMG-TO-LINK: transform images to clickable links that display the images inline upon click, as follows:
-   *          from: <img src="there" title="that">
-   *          to:   <a href="data:image/..." title="that" class="image_src_link" target="_blank" style="...">show image</a>
-   *          or:   <a href="https://..." title="that" class="image_src_link" target="_blank" style="...">show image (remote)</a>
-   *          (when rendered, we add event handler to `.image_src_link` that responds to a click and render the image)
    */
-  public static htmlSanitizeKeepBasicTags = (dirtyHtml: string, imgHandling: SanitizeImgHandling): string => {
+  public static htmlSanitizeKeepBasicTags = (dirtyHtml: string, imgHandling: SanitizeImgHandling = 'IMG-KEEP'): string => {
     Xss.throwIfNotSupported();
     // used whenever untrusted remote content (eg html email) is rendered, but we still want to preserve html
     DOMPurify.removeAllHooks();
@@ -131,33 +126,14 @@ export class Xss {
           img.remove(); // just skip images
         } else if (!src) {
           img.remove(); // src that exists but is null is suspicious
-        } else if (imgHandling === 'IMG-TO-LINK') {
-          // replace images with a link that points to that image
-          if (src.startsWith('data:image/')) {
-            const title = img.getAttribute('title');
-            img.removeAttribute('src');
-            const a = document.createElement('a');
-            a.href = src;
-            a.className = 'image_src_link';
-            a.target = '_blank';
-            a.innerText = title || 'show image';
-            const heightWidth = `height: ${img.clientHeight ? `${Number(img.clientHeight)}px` : 'auto'}; width: ${
-              img.clientWidth ? `${Number(img.clientWidth)}px` : 'auto'
-            };max-width:98%;`;
-            a.setAttribute(
-              'style',
-              `text-decoration: none; background: #FAFAFA; padding: 4px; border: 1px dotted #CACACA; display: inline-block; ${heightWidth}`
-            );
-            a.setAttribute('data-test', 'show-inline-image');
-            Xss.replaceElementDANGEROUSLY(img, a.outerHTML); // xss-safe-value - "a" was build using dom node api
-          } else {
-            const remoteImgEl = `<div class="remote_image_container" data-src="${src}" data-test="remote-image-container"><span>Authenticity of this remote image cannot be verified.</span></div>`;
-            Xss.replaceElementDANGEROUSLY(img, remoteImgEl); // xss-safe-value
-          }
+        } else if (imgHandling === 'IMG-KEEP' && checkValidURL(src)) {
+          // replace remote image with remote_image_container
+          const remoteImgEl = `<div class="remote_image_container" data-src="${src}" data-test="remote-image-container"><span>Authenticity of this remote image cannot be verified.</span></div>`;
+          Xss.replaceElementDANGEROUSLY(img, remoteImgEl); // xss-safe-value
         }
       }
-      if (node.classList.contains('remote_image_container') && imgHandling === 'IMG-TO-PLAIN-URL') {
-        Xss.replaceElementDANGEROUSLY(node, node.getAttribute('data-src') ?? ''); // xss-safe-value
+      if ((node.classList.contains('remote_image_container') || CID_PATTERN.test(node.getAttribute('src') ?? '')) && imgHandling === 'IMG-TO-PLAIN-TEXT') {
+        Xss.replaceElementDANGEROUSLY(node, node.getAttribute('data-src') ?? node.getAttribute('alt') ?? ''); // xss-safe-value
       }
       if ('target' in node) {
         // open links in new window
@@ -200,7 +176,7 @@ export class Xss {
    */
   public static htmlSanitizeAndStripAllTags = (dirtyHtml: string, outputNl: string, trim = true): string => {
     Xss.throwIfNotSupported();
-    let html = Xss.htmlSanitizeKeepBasicTags(dirtyHtml, 'IMG-TO-PLAIN-URL');
+    let html = Xss.htmlSanitizeKeepBasicTags(dirtyHtml, 'IMG-TO-PLAIN-TEXT');
     const random = Str.sloppyRandom(5);
     const br = `CU_BR_${random}`;
     const blockStart = `CU_BS_${random}`;

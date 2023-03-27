@@ -330,9 +330,9 @@ abstract class ControllableBase {
       } catch (e) {
         this.log(`wait_and_click(i${i}):6:err(${String(e)}):${selector}`);
         if (
-          e.message === 'Node is either not visible or not an HTMLElement' ||
-          e.message === 'Node is either not clickable or not an HTMLElement' ||
-          e.message === 'Node is detached from document'
+          ['Node is either not visible or not an HTMLElement', 'Node is either not clickable or not an HTMLElement', 'Node is detached from document'].includes(
+            e.message
+          )
         ) {
           // maybe the node just re-rendered?
           if (!retryErrs || i === 3) {
