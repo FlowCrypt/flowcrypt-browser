@@ -621,7 +621,8 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
           await ComposePageRecipe.cancelPassphraseDialog(inboxPage, inputMethod);
           await replyFrame.waitAll(['@action-expand-quoted-text']);
           const inputBody = await replyFrame.read('@input-body');
-          expect(inputBody.trim()).to.be.empty;
+          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+          expect(inputBody!.trim()).to.be.empty;
           await clickTripleDotAndExpectQuoteToLoad(
             replyFrame,
             ['On 2019-06-14 at 23:24, flowcrypt.compatibility@gmail.com wrote:', '>', '> (Skipping previous message quote)'].join('\n')
@@ -1016,7 +1017,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         });
         const subjectElem = await composePage.waitAny('@input-subject');
         expect(await PageRecipe.getElementPropertyJson(subjectElem, 'value')).to.equal('Test Draft - New Message');
-        expect((await composePage.read('@input-body')).trim()).to.equal('Testing Drafts (Do not delete)');
+        expect((await composePage.read('@input-body'))?.trim()).to.equal('Testing Drafts (Do not delete)');
         for (const elem of await composePage.target.$$('.container-cc-bcc-buttons > span')) {
           expect(await PageRecipe.getElementPropertyJson(elem, 'offsetHeight')).to.equal(0); // CC/BCC btn isn't visible
         }
@@ -1042,7 +1043,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         await expectRecipientElements(composePage, { to: [{ email: 'smime@recipient.com' }] });
         const subjectElem = await composePage.waitAny('@input-subject');
         expect(await PageRecipe.getElementPropertyJson(subjectElem, 'value')).to.equal('Test S/MIME Encrypted Draft');
-        expect((await composePage.read('@input-body')).trim()).to.equal('test text');
+        expect((await composePage.read('@input-body'))?.trim()).to.equal('test text');
       })
     );
 

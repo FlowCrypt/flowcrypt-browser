@@ -63,7 +63,7 @@ export class InboxPageRecipe extends PageRecipe {
       throw new Error(`Print button is invisible`);
     }
     const content = await pgpBlockFrame.read('@pgp-block-content');
-    if (content.indexOf(expectedContent) === -1) {
+    if (!content?.includes(expectedContent)) {
       throw new Error(`message did not decrypt`);
     }
     await inboxPage.close();

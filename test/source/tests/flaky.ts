@@ -181,7 +181,8 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
           key: { passphrase: 'long enough to suit requirements' },
         });
         await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
-        const fingerprint = (await settingsPage.read('.good', true)).split(' ').join('');
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const fingerprint = (await settingsPage.read('.good', true))!.split(' ').join('');
         const myKeyFrame = await browser.newPage(
           t,
           `chrome/settings/modules/my_key.htm?placement=settings&parentTabId=60%3A0&acctEmail=${acctEmail}&fingerprint=${fingerprint}`

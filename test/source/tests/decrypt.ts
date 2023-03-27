@@ -1146,7 +1146,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
         )}&acctEmail=flowcrypt.compatibility%40gmail.com&parentTabId=0`;
         const pubFrame = await browser.newPage(t, pubFrameUrl);
         await pubFrame.waitAll('@action-add-contact');
-        expect((await pubFrame.read('@action-add-contact')).toLowerCase()).to.include('expired');
+        expect((await pubFrame.read('@action-add-contact'))?.toLowerCase()).to.include('expired');
         await pubFrame.click('@action-add-contact');
         await Util.sleep(1);
         await pubFrame.close();
@@ -1162,7 +1162,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
         const pubFrame = await browser.newPage(t, pubFrameUrl);
         await Util.sleep(1);
         await pubFrame.notPresent('@action-add-contact');
-        expect((await pubFrame.read('#pgp_block.pgp_pubkey')).toLowerCase()).to.include('not usable');
+        expect((await pubFrame.read('#pgp_block.pgp_pubkey'))?.toLowerCase()).to.include('not usable');
         await pubFrame.close();
       })
     );

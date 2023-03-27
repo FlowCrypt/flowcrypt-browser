@@ -23,6 +23,7 @@
 
 import { MimeParser } from '../core/types/emailjs.js';
 import type * as OpenPGP from 'openpgp';
+import { Catch } from './catch.js';
 
 type Codec = {
   encode: (text: string, mode: 'fatal' | 'html') => string;
@@ -32,7 +33,16 @@ type Codec = {
 };
 
 export const requireOpenpgp = (): typeof OpenPGP => {
-  return (window as unknown as { openpgp: typeof OpenPGP }).openpgp;
+  if (window !== globalThis && Catch.browser().name === 'firefox') {
+    // fix Firefox sandbox permission issues as per convo https://github.com/FlowCrypt/flowcrypt-browser/pull/5013#discussion_r1148343995
+    window.Uint8Array.prototype.subarray = function (...args) {
+      return new Uint8Array(this).subarray(...args);
+    };
+    window.Uint8Array.prototype.slice = function (...args) {
+      return new Uint8Array(this).slice(...args);
+    };
+  }
+  return (globalThis as unknown as { openpgp: typeof OpenPGP }).openpgp;
 };
 
 export const requireMimeParser = (): typeof MimeParser => {

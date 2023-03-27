@@ -184,7 +184,7 @@ export class SetupPageRecipe extends PageRecipe {
         }
         const ppValidationExpect = 'GREAT (time to crack: centuries)';
         const ppValidationResult = await settingsPage.read('@container-password-feedback', true);
-        if (!ppValidationResult.includes(ppValidationExpect)) {
+        if (!ppValidationResult?.includes(ppValidationExpect)) {
           throw new Error(`Incorrect Passphrase validation result, expected '${ppValidationExpect}' but got ${ppValidationResult}`);
         }
       } else {
