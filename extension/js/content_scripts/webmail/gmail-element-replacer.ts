@@ -16,7 +16,6 @@ import { Gmail } from '../../common/api/email-provider/gmail/gmail.js';
 import { Injector } from '../../common/inject.js';
 import { PubLookup } from '../../common/api/pub-lookup.js';
 import { Notifications } from '../../common/notifications.js';
-// note: only types are supported for OpenPGP.js or web-stream-tools, their function calls will fail
 import { PgpArmor } from '../../common/core/crypto/pgp/pgp-armor.js';
 import { Ui } from '../../common/browser/ui.js';
 import { WebmailCommon } from '../../common/webmail.js';
@@ -391,7 +390,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
           if (this.debug) {
             console.debug('processNewPgpAttachments() -> msgGet may take some time');
           }
-          const msg = await this.gmail.msgGet(msgId, 'full');
+          const msg = await this.gmail.msgGet(msgId, 'full'); // todo: cache or thoroughly refactor in #5022
           if (this.debug) {
             console.debug('processNewPgpAttachments() -> msgGet done -> processAttachments', msg);
           }

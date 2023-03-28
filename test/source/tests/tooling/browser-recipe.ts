@@ -192,13 +192,14 @@ export class BrowserRecipe {
     }
     const content = await pgpBlockPage.read('@pgp-block-content');
     for (const expectedContent of m.content) {
-      if (content.indexOf(expectedContent) === -1) {
+      if (!content?.includes(expectedContent)) {
         throw new Error(`pgp_block_verify_decrypted_content:missing expected content: ${expectedContent}` + `\nactual content: ${content}`);
       }
     }
     if (m.unexpectedContent) {
       for (const unexpectedContent of m.unexpectedContent) {
-        if (content.indexOf(unexpectedContent) !== -1) {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        if (content!.includes(unexpectedContent)) {
           throw new Error(`pgp_block_verify_decrypted_content:unexpected content presents: ${unexpectedContent}`);
         }
       }

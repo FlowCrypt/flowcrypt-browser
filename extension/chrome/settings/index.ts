@@ -69,7 +69,8 @@ View.run(
     }
 
     public render = async () => {
-      $('#status-row #status_version').text(`v:${VERSION}`);
+      const isDevMode = !('update_url' in chrome.runtime.getManifest());
+      $('#status-row #status_version').text(`v:${VERSION}${isDevMode ? '-dev' : ''}`);
       for (const webmailLName of await Env.webmails()) {
         $('.signin_button.' + webmailLName).css('display', 'inline-block');
       }

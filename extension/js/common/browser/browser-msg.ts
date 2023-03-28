@@ -138,9 +138,7 @@ export namespace Bm {
       | StoreGlobalSet
       | AjaxGmailAttachmentGetChunk
       | SaveFetchedPubkeys
-      | ProcessAndStoreKeysFromEkmLocally
-      | PgpKeyBinaryToArmored
-      | GetLocalKeyExpiration;
+      | PgpKeyBinaryToArmored;
   }
 
   export type AnyRequest =
@@ -181,8 +179,6 @@ export namespace Bm {
     | ShowConfirmation
     | ReRenderRecipient
     | SaveFetchedPubkeys
-    | ProcessAndStoreKeysFromEkmLocally
-    | GetLocalKeyExpiration
     | PgpKeyBinaryToArmored
     | AuthWindowResult
     | ConfirmationResult;
@@ -250,10 +246,6 @@ export class BrowserMsg {
           BrowserMsg.sendAwait(undefined, 'pgpKeyBinaryToArmored', bm, true) as Promise<Bm.Res.PgpKeyBinaryToArmored>,
         saveFetchedPubkeys: (bm: Bm.SaveFetchedPubkeys) =>
           BrowserMsg.sendAwait(undefined, 'saveFetchedPubkeys', bm, true) as Promise<Bm.Res.SaveFetchedPubkeys>,
-        processAndStoreKeysFromEkmLocally: (bm: Bm.ProcessAndStoreKeysFromEkmLocally) =>
-          BrowserMsg.sendAwait(undefined, 'processAndStoreKeysFromEkmLocally', bm, true) as Promise<Bm.Res.ProcessAndStoreKeysFromEkmLocally>,
-        getLocalKeyExpiration: (bm: Bm.GetLocalKeyExpiration) =>
-          BrowserMsg.sendAwait(undefined, 'getLocalKeyExpiration', bm, true) as Promise<Bm.Res.GetLocalKeyExpiration>,
       },
     },
     confirmationResult: (dest: Bm.Dest, bm: Bm.ConfirmationResult) => BrowserMsg.sendCatch(dest, 'confirmation_result', bm),

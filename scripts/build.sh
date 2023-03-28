@@ -26,9 +26,9 @@ if [[ "$#" == 1 ]] && [[ "$1" == "--incremental" ]]; then
   # build concurrently - using standard typescript compiler with --incremental flag
   npx tsc --project ./tsconfig.json --incremental --tsBuildInfoFile ./build/tsconfig.tsbuildinfo & pids+=($!)
   npx tsc --project ./conf/tsconfig.content_scripts.json --incremental --tsBuildInfoFile ./build/tsconfig.content_scripts.tsbuildinfo & pids+=($!)
+  # we can have unpatched version of web-stream-tools for NodeJS tests
   npx tsc --project ./conf/tsconfig.streams.json --incremental --tsBuildInfoFile ./build/tsconfig.streams.tsbuildinfo & pids+=($!)
   [[ -d ./build/tooling ]] || npx tsc --project ./conf/tsconfig.tooling.json & pids+=($!)  # only build tooling if missing
-  for pid in "${pids[@]}"; do wait "$pid" || exit 1; done
 
 else
 
@@ -40,8 +40,8 @@ else
   # build concurrently - using our own compiler (which fixes async stack, but doesn't support incremental builds)
   node ./build/tooling/tsc-compiler --project ./tsconfig.json & pids+=($!)
   node ./build/tooling/tsc-compiler --project ./conf/tsconfig.content_scripts.json & pids+=($!)
+  # we can have unpatched version of web-stream-tools for NodeJS tests
   node ./build/tooling/tsc-compiler --project ./conf/tsconfig.streams.json & pids+=($!)
-  for pid in "${pids[@]}"; do wait "$pid" || exit 1; done
 
 fi
 
@@ -72,11 +72,22 @@ cp node_modules/@openpgp/web-stream-tools/lib/*.js $OUTDIR/lib/streams
 # until https://github.com/openpgpjs/web-stream-tools/pull/20 is resolved
 STREAMS_REGEX="s/'\.\/(streams|util|writer|reader|node-conversions)'/'\.\/\1\.js'/g"
 STREAMS_FILES=$OUTDIR/lib/streams/*
+# patch isUint8Array until https://github.com/openpgpjs/web-stream-tools/pull/23 is resolved
+ISUINT8ARRAY_REGEX="s/^(\s*)return\x20Uint8Array\.prototype\.isPrototypeOf\(input\);/\1return\x20Uint8Array\.prototype\.isPrototypeOf\(input\)\x20\|\|\x20globalThis\.Uint8Array\.prototype\.isPrototypeOf\(input\);/mg"
+OPENPGP_FILE=$OUTDIR/lib/openpgp.js
 if [[ "$OSTYPE" =~ ^darwin ]]; then # macOS needs additional parameter for backup files
   sed -i '' -E $STREAMS_REGEX $STREAMS_FILES
+  sed -i '' -E $ISUINT8ARRAY_REGEX $STREAMS_FILES
+  sed -i '' -E $ISUINT8ARRAY_REGEX $OPENPGP_FILE
 else
   sed -i -E $STREAMS_REGEX $STREAMS_FILES
+  sed -i -E $ISUINT8ARRAY_REGEX $STREAMS_FILES
+  sed -i -E $ISUINT8ARRAY_REGEX $OPENPGP_FILE
 fi
+
+# bundle web-stream-tools as Stream var for the content script
+( cd conf && npx webpack ) & pids+=($!)
+for pid in "${pids[@]}"; do wait "$pid" || exit 1; done
 
 # to update node-forge library, which is missing the non-minified version in dist, we have to build it manually
 # cd ~/git && rm -rf ./forge && git clone https://github.com/digitalbazaar/forge.git && cd ./forge && npm install && npm run-script build
