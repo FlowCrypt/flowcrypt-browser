@@ -56,6 +56,7 @@
     "postcss-html": "^1.5.0",
     "squire-rte": "1.11.3",
     "sweetalert2": "11.7.3",
+    "tap-xunit": "^2.4.1",
     "zxcvbn": "4.4.2"
   },
   "scripts": {
@@ -79,7 +80,7 @@
     "test_async_stack": "node build/test/test/source/async-stack.js",
     "test_buf": "npx ava --timeout=3m --verbose --concurrency=10 build/test/test/source/buf.js",
     "test_ci_chrome_consumer_live_gmail": "npx ava --timeout=30m --verbose --concurrency=1 build/test/test/source/test.js -- CONSUMER-LIVE-GMAIL STANDARD-GROUP",
-    "test_ci_chrome_consumer": "npx ava --timeout=30m --verbose --concurrency=10 build/test/test/source/test.js -- CONSUMER-MOCK STANDARD-GROUP",
+    "test_ci_chrome_consumer": "npx ava --timeout=30m --verbose --concurrency=10 build/test/test/source/test.js -- CONSUMER-MOCK STANDARD-GROUP  --tap | tap-xunit > report.xml",
     "test_ci_chrome_enterprise": "npx ava --timeout=30m --verbose --concurrency=10 build/test/test/source/test.js -- ENTERPRISE-MOCK STANDARD-GROUP",
     "test_ci_chrome_consumer_flaky": "npx ava --timeout=30m --verbose --concurrency=10 build/test/test/source/test.js -- CONSUMER-MOCK FLAKY-GROUP",
     "test_ci_chrome_content_scripts": "npx ava --timeout=3m --verbose build/test/test/source/test.js -- CONTENT-SCRIPT-TESTS",
