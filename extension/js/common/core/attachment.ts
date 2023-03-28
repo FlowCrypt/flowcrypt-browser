@@ -235,6 +235,6 @@ export class Attachment {
       'wsf',
       'wsh',
       'xll',
-    ].some(badFileExtension => this.name.endsWith(badFileExtension));
+    ].some(exeFileExtension => this.name.endsWith('.' + exeFileExtension));
   };
 }
