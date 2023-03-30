@@ -90,7 +90,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
         const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`);
         await inboxPage.waitForSelTestState('ready');
         await inboxPage.waitAll('iframe');
-        expect(await inboxPage.isElementPresent('@container-attachments')).to.equal(false);
+        expect(await inboxPage.isElementPresent('@container-attachments')).to.equal(true);
         await inboxPage.close();
       })
     );

@@ -43,7 +43,7 @@ blocks:
         - name: enterprise mock - standard test group
           commands:
             - npm run-script test_ci_chrome_enterprise
-            - cd ./build && zip -r ~/chrome-enterprise.zip ./chrome-enterprise/* && cd ~
+            # - cd ./build && zip -r ~/chrome-enterprise.zip ./chrome-enterprise/* && cd ~
       epilogue:
         always:
           commands:
