@@ -53,13 +53,6 @@ View.run(
             type: this.type,
             data: result,
           });
-          if (this.showConfirmationOnly) {
-            if (await AttachmentWarnings.confirmSaveToDownloadsIfNeeded(attachmentForSave)) {
-              Browser.saveToDownloads(attachmentForSave);
-            }
-            this.closeDialog();
-            return;
-          }
           if (attachmentType) {
             if (attachmentType === 'img') {
               // image
@@ -129,10 +122,6 @@ View.run(
         });
       }
       throw new DecryptionError(result as DecryptError);
-    };
-
-    private closeDialog = () => {
-      BrowserMsg.send.closeDialog(this.parentTabId);
     };
   }
 );

@@ -127,8 +127,7 @@ export class XssSafeFactory {
     parentTabId?: string,
     iframeUrl = 'chrome/elements/attachment.htm',
     errorDetailsOpened?: boolean,
-    initiatorFrameId?: string,
-    showConfirmationOnly?: boolean | false
+    initiatorFrameId?: string
   ) => {
     if (!a.id && !a.url && a.hasData()) {
       // data provided directly, pass as object url
@@ -147,7 +146,6 @@ export class XssSafeFactory {
         isEncrypted,
         errorDetailsOpened,
         initiatorFrameId,
-        showConfirmationOnly,
       },
       parentTabId
     );
