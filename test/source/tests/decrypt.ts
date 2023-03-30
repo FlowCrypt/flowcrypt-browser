@@ -1320,14 +1320,35 @@ d6Z36//MsmczN00Wd60t9T+qyLz0T4/UG2Y9lgf367f3d+kYPE0LS7mXuFmjlPXfw0nKyVsSeFiu
     );
 
     test(
-      'settings - download batch file attachment (should show a warning message)',
+      'settings - download batch inline file attachment (should show a warning message)',
       testWithBrowser('compatibility', async (t, browser) => {
         const expectedErrMsg = 'This executable file was not checked for viruses, and may be dangerous to download or run. Proceed anyway?';
         const threadId = '186bbb485ddd3b3a'; // add/use 1868bcd5bebbe085 to test non-inline file attachment
         const acctEmail = 'flowcrypt.compatibility@gmail.com';
         const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`);
         const pgpBlockPage = await inboxPage.getFrame(['pgp_block.htm']);
+        await pgpBlockPage.waitAndClick('@download-attachment-0');
+        const attachmentPreviewPage = await inboxPage.getFrame(['attachment_preview.htm']);
+        await attachmentPreviewPage.waitAndRespondToModal('confirm', 'confirm', expectedErrMsg);
         await pgpBlockPage.waitAndClick('@preview-attachment');
+        const attachmentPreviewPage2 = await inboxPage.getFrame(['attachment_preview.htm']);
+        await attachmentPreviewPage2.waitAndClick('@attachment-preview-download');
+        await attachmentPreviewPage2.waitAndRespondToModal('confirm', 'confirm', expectedErrMsg);
+        await inboxPage.close();
+      })
+    );
+
+    test(
+      'settings - download batch file attachment (should show a warning message)',
+      testWithBrowser('compatibility', async (t, browser) => {
+        const expectedErrMsg = 'This executable file was not checked for viruses, and may be dangerous to download or run. Proceed anyway?';
+        const threadId = '1868bcd5bebbe085';
+        const acctEmail = 'flowcrypt.compatibility@gmail.com';
+        const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`);
+        const attachmentPage = await inboxPage.getFrame(['attachment.htm']);
+        await attachmentPage.waitAndClick('@download-attachment');
+        await inboxPage.waitAndRespondToModal('confirm', 'confirm', expectedErrMsg);
+        await attachmentPage.waitAndClick('@attachment-container');
         const attachmentPreviewPage = await inboxPage.getFrame(['attachment_preview.htm']);
         await attachmentPreviewPage.waitAndClick('@attachment-preview-download');
         await attachmentPreviewPage.waitAndRespondToModal('confirm', 'confirm', expectedErrMsg);
