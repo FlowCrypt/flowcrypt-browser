@@ -31,6 +31,7 @@ export class AttachmentDownloadView extends View {
   protected readonly origNameBasedOnFilename: string;
   protected readonly isEncrypted: boolean;
   protected readonly errorDetailsOpened: boolean;
+  protected readonly showConfirmationOnly: boolean;
   protected readonly type: string | undefined;
   protected readonly msgId: string | undefined;
   protected readonly id: string | undefined;
@@ -64,6 +65,7 @@ export class AttachmentDownloadView extends View {
       'frameId',
       'isEncrypted',
       'errorDetailsOpened',
+      'showConfirmationOnly',
     ]);
     this.acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
     this.parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
@@ -71,6 +73,7 @@ export class AttachmentDownloadView extends View {
     this.origNameBasedOnFilename = uncheckedUrlParams.name ? Str.stripPgpOrGpgExtensionIfPresent(String(uncheckedUrlParams.name)) : 'noname';
     this.isEncrypted = uncheckedUrlParams.isEncrypted === true;
     this.errorDetailsOpened = uncheckedUrlParams.errorDetailsOpened === true;
+    this.showConfirmationOnly = uncheckedUrlParams.showConfirmationOnly === true;
     this.size = uncheckedUrlParams.size ? parseInt(String(uncheckedUrlParams.size)) : undefined;
     this.type = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'type');
     this.msgId = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'msgId');

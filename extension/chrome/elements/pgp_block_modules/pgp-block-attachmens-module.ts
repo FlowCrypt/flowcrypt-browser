@@ -58,7 +58,7 @@ export class PgpBlockViewAttachmentsModule {
         event.stopPropagation();
         const attachment = this.includedAttachments[Number($(target).attr('index'))];
         if (attachment.hasData()) {
-          Browser.saveToDownloads(attachment);
+          await this.previewAttachmentClickedHandler(attachment, true);
           this.view.renderModule.resizePgpBlockFrame();
         } else {
           Xss.sanitizePrepend($(target).find('.progress'), Ui.spinner('green'));
@@ -76,9 +76,17 @@ export class PgpBlockViewAttachmentsModule {
     );
   };
 
-  private previewAttachmentClickedHandler = async (attachment: Attachment) => {
+  private previewAttachmentClickedHandler = async (attachment: Attachment, showConfirmationOnly?: boolean) => {
     const factory = new XssSafeFactory(this.view.acctEmail, this.view.parentTabId);
-    const iframeUrl = factory.srcPgpAttachmentIframe(attachment, false, undefined, 'chrome/elements/attachment_preview.htm');
+    const iframeUrl = factory.srcPgpAttachmentIframe(
+      attachment,
+      false,
+      undefined,
+      'chrome/elements/attachment_preview.htm',
+      undefined,
+      undefined,
+      showConfirmationOnly
+    );
     BrowserMsg.send.showAttachmentPreview(this.view.parentTabId, { iframeUrl });
   };
 
@@ -96,7 +104,7 @@ export class PgpBlockViewAttachmentsModule {
         type: encrypted.type,
         data: decrypted.content,
       });
-      Browser.saveToDownloads(attachment);
+      await this.previewAttachmentClickedHandler(attachment, true);
       this.view.renderModule.resizePgpBlockFrame();
     } else {
       console.info(decrypted);
