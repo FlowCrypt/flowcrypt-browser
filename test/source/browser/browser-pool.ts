@@ -44,7 +44,7 @@ export class BrowserPool {
       args,
       ignoreHTTPSErrors: this.isMock,
       headless: false,
-      devtools: false,
+      devtools: true,
       slowMo,
     });
     const handle = new BrowserHandle(browser, this.semaphore, this.height, this.width);
