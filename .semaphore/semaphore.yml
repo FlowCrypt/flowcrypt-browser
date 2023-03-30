@@ -45,6 +45,9 @@ blocks:
             - npm run-script test_ci_chrome_enterprise
             - cd ./build && zip -r ~/chrome-enterprise.zip ./chrome-enterprise/* && cd ~
       epilogue:
+        always:
+          commands:
+            - '[[ -f report.xml ]] && test-results publish report.xml'
         on_fail:
           commands:
             - |
@@ -79,6 +82,9 @@ blocks:
           commands:
             - npm run-script test_ci_chrome_consumer_live_gmail
       epilogue:
+        always:
+          commands:
+            - '[[ -f report.xml ]] && test-results publish report.xml'
         on_fail:
           commands:
             - |
@@ -125,3 +131,10 @@ blocks:
         - name: enterprise mock - unit tests
           commands:
             - npm run-script test_local_unit_enterprise
+
+after_pipeline:
+  task:
+    jobs:
+      - name: Publish Results
+        commands:
+          - test-results gen-pipeline-report
