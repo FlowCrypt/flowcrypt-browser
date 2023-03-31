@@ -127,9 +127,11 @@ blocks:
         - name: consumer mock - unit tests
           commands:
             - npm run-script test_local_unit_consumer
+            - '[[ -f report.xml ]] && test-results publish report.xml'
         - name: enterprise mock - unit tests
           commands:
             - npm run-script test_local_unit_enterprise
+            - '[[ -f report.xml ]] && test-results publish report.xml'
 
 after_pipeline:
   task:
