@@ -15,7 +15,7 @@ import { Xss } from '../../js/common/platform/xss.js';
 import { Ui } from '../../js/common/browser/ui.js';
 import { Url } from '../../js/common/core/common.js';
 import { Browser } from '../../js/common/browser/browser.js';
-import { AttachmentWarnings } from './shared/attachment_warnings.js';
+import { Lang } from '../../js/common/lang.js';
 
 type AttachmentType = 'img' | 'txt' | 'pdf';
 
@@ -82,7 +82,11 @@ View.run(
             .css('display', 'flex')
             .on('click', async e => {
               e.stopPropagation();
-              if (await AttachmentWarnings.confirmSaveToDownloadsIfNeeded(attachmentForSave)) {
+              if (!this.attachment.isExecutableFile()) {
+                Browser.saveToDownloads(attachmentForSave);
+                return;
+              }
+              if (await Ui.modal.confirm(Lang.attachment.executableFileWarning)) {
                 Browser.saveToDownloads(attachmentForSave);
               }
             });

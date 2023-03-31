@@ -4,6 +4,7 @@
 
 import { ConfirmationResultTracker, Ui } from '../../../js/common/browser/ui.js';
 import { Attachment } from '../../../js/common/core/attachment.js';
+import { Lang } from '../../../js/common/lang.js';
 
 export class AttachmentWarnings {
   public static confirmSaveToDownloadsIfNeeded = async (attachment: Attachment, confirmationResultTracker?: ConfirmationResultTracker): Promise<boolean> => {
@@ -11,7 +12,6 @@ export class AttachmentWarnings {
       return true;
     }
     const confirmFunction = confirmationResultTracker ? Ui.modalInParentTab(confirmationResultTracker).confirm : Ui.modal.confirm;
-    const executableFileWarning = 'This executable file was not checked for viruses, and may be dangerous to download or run. Proceed anyway?'; // xss-safe-value
-    return await confirmFunction(executableFileWarning);
+    return await confirmFunction(Lang.attachment.executableFileWarning);
   };
 }
