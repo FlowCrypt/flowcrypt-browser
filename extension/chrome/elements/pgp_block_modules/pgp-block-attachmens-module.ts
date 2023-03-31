@@ -45,6 +45,7 @@ export class PgpBlockViewAttachmentsModule {
           )}" title="DOWNLOAD"><img src="/img/svgs/download-link-green.svg"></button>`
         ); // xss-escaped
       } else {
+        attachment.attr('data-test', `download-attachment-${Number(i)}`);
         attachment.addClass('download-attachment');
       }
       $('#attachments').append(attachment); // xss-escaped
