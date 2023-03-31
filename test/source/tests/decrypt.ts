@@ -1328,8 +1328,7 @@ d6Z36//MsmczN00Wd60t9T+qyLz0T4/UG2Y9lgf367f3d+kYPE0LS7mXuFmjlPXfw0nKyVsSeFiu
         const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`);
         const pgpBlockPage = await inboxPage.getFrame(['pgp_block.htm']);
         await pgpBlockPage.waitAndClick('@download-attachment-0');
-        const attachmentPreviewPage = await inboxPage.getFrame(['attachment_preview.htm']);
-        await attachmentPreviewPage.waitAndRespondToModal('confirm', 'confirm', expectedErrMsg);
+        await inboxPage.waitAndRespondToModal('confirm', 'confirm', expectedErrMsg);
         await pgpBlockPage.waitAndClick('@preview-attachment');
         const attachmentPreviewPage2 = await inboxPage.getFrame(['attachment_preview.htm']);
         await attachmentPreviewPage2.waitAndClick('@attachment-preview-download');
@@ -1353,6 +1352,27 @@ d6Z36//MsmczN00Wd60t9T+qyLz0T4/UG2Y9lgf367f3d+kYPE0LS7mXuFmjlPXfw0nKyVsSeFiu
         await attachmentPreviewPage.waitAndClick('@attachment-preview-download');
         await attachmentPreviewPage.waitAndRespondToModal('confirm', 'confirm', expectedErrMsg);
         await inboxPage.close();
+      })
+    );
+
+    test(
+      'settings - webmail - download batch file attachment (should show a warning message)',
+      testWithBrowser('compatibility', async (t, browser) => {
+        const expectedErrMsg = 'This executable file was not checked for viruses, and may be dangerous to download or run. Proceed anyway?';
+        const threadId = '1868bcd5bebbe085'; // add/use 1868bcd5bebbe085 to test non-inline file attachment
+        const acctEmail = 'flowcrypt.compatibility@gmail.com';
+        const dbPage = await browser.newExtensionPage(t, 'chrome/dev/ci_unit_test.htm');
+        const accessToken = await BrowserRecipe.getGoogleAccessToken(dbPage, acctEmail);
+        await dbPage.close();
+        const extraAuthHeaders = { Authorization: `Bearer ${accessToken}` }; // eslint-disable-line @typescript-eslint/naming-convention
+        const gmailPage = await browser.newPage(t, `${t.urls?.mockGmailUrl()}/${threadId}`, undefined, extraAuthHeaders);
+        await gmailPage.waitAll('iframe');
+        const pgpBlockPage = await gmailPage.getFrame(['pgp_block.htm']);
+        await pgpBlockPage.waitAndClick('@preview-attachment');
+        const attachmentPreviewPage = await gmailPage.getFrame(['attachment_preview.htm']);
+        await attachmentPreviewPage.waitAndClick('@attachment-preview-download');
+        await attachmentPreviewPage.waitAndRespondToModal('confirm', 'confirm', expectedErrMsg);
+        await gmailPage.close();
       })
     );
 
