@@ -308,7 +308,7 @@ export class OpenPGPKey {
     const key = await OpenPGPKey.extractExternalLibraryObjFromKey(pubkey);
     const result = new Map<string, string>();
     result.set(`Is Private?`, KeyUtil.formatResult(key.isPrivate()));
-    const users = await OpenPGPKey.verifyAllUsers(key);
+    const users = await key.verifyAllUsers();
     for (let i = 0; i < users.length; i++) {
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       result.set(`User id ${i}`, (users[i].valid ? '' : '* REVOKED, INVALID OR MISSING SIGNATURE * ') + users[i].userID);
@@ -529,17 +529,6 @@ export class OpenPGPKey {
     return expirationTime instanceof Date ? expirationTime : undefined; // we don't differ between Infinity and null
   };
 
-  // returns all the `key.users` preserving order with `valid` property
-  private static verifyAllUsers = async (key: OpenPGP.Key) => {
-    return await (
-      key as unknown as {
-        // a type patch until https://github.com/openpgpjs/openpgpjs/pull/1594 is resolved
-        // eslint-disable-next-line no-null/no-null
-        verifyAllUsers(): Promise<{ userID: string; keyID: OpenPGP.KeyID; valid: boolean | null }[]>;
-      }
-    ).verifyAllUsers();
-  };
-
   private static getSortedUserids = async (key: OpenPGP.Key) => {
     const primaryUser = await Catch.undefinedOnException(key.getPrimaryUser());
     // if there is no good enough user id to serve as primary identity, we assume other user ids are even worse
@@ -548,7 +537,7 @@ export class OpenPGPKey {
       const identities = [
         primaryUserId, // put the "primary" identity first
         // other identities go in indeterministic order
-        ...Value.arr.unique((await OpenPGPKey.verifyAllUsers(key)).filter(x => x.valid && x.userID !== primaryUserId).map(x => x.userID)),
+        ...Value.arr.unique((await key.verifyAllUsers()).filter(x => x.valid && x.userID !== primaryUserId).map(x => x.userID)),
       ];
       const emails = identities.map(userid => Str.parseEmail(userid).email).filter(Boolean);
       if (emails.length === identities.length) {
@@ -649,8 +638,7 @@ export class OpenPGPKey {
   private static getPrimaryKeyFlags = async (key: OpenPGP.Key): Promise<OpenPGP.enums.keyFlags> => {
     // Note: The selected selfCertification (and hence the flags) will differ based on the current date
     const primaryUser = await Catch.undefinedOnException(key.getPrimaryUser());
-    // a type patch until https://github.com/openpgpjs/openpgpjs/pull/1594 is resolved
-    const selfCertification = (primaryUser as { selfCertification: OpenPGP.SignaturePacket } | undefined)?.selfCertification;
+    const selfCertification = primaryUser?.selfCertification;
     if (!selfCertification) {
       return 0;
     }

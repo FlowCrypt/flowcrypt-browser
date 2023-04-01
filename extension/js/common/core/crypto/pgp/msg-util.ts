@@ -223,9 +223,7 @@ export class MsgUtil {
       // cleartext and PKCS#7 are gone by this line
       const msg = prepared.message as OpenPGP.Message<OpenPGP.Data>;
       const packets = msg.packets;
-      // todo: remove this patch after openpgpjs/openpgpjs#1583 is resolved
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const isSymEncrypted = packets.filter(p => p instanceof (opgp as any).SymEncryptedSessionKeyPacket).length > 0;
+      const isSymEncrypted = packets.filter(p => p instanceof opgp.SymEncryptedSessionKeyPacket).length > 0;
       const isPubEncrypted = packets.filter(p => p instanceof opgp.PublicKeyEncryptedSessionKeyPacket).length > 0;
       if (isSymEncrypted && !isPubEncrypted && !msgPwd) {
         return {
