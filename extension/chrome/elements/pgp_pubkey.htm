@@ -1,41 +1,37 @@
 <!-- © 2016-2018 FlowCrypt Limited. Limitations apply. Contact human@flowcrypt.com -->
 
 <html>
+  <head>
+    <meta content="text/html;charset=utf-8" http-equiv="Content-Type" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+    <title>FlowCrypt</title>
+    <link rel="stylesheet" href="/css/cryptup.css" />
+    <link rel="stylesheet" href="/css/sweetalert2.css" />
+    <link rel="stylesheet" href="/css/mobile-menu-styling.css" />
+  </head>
 
-<head>
-  <meta content="text/html;charset=utf-8" http-equiv="Content-Type">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>FlowCrypt</title>
-  <link rel="stylesheet" href="/css/cryptup.css" />
-  <link rel="stylesheet" href="/css/sweetalert2.css" />
-  <link rel="stylesheet" href="/css/mobile-menu-styling.css" />
-</head>
-
-<body class="pgp_neutral">
-
-  <div id="pgp_block" class="pgp_pubkey" data-test="container-pgp-pubkey">
-    <div class="line hide_if_compact_and_not_error result">
-      <a href="#" class="action_show_full hide_if_compact">Details</a>
+  <body class="pgp_neutral">
+    <div id="pgp_block" class="pgp_pubkey" data-test="container-pgp-pubkey">
+      <div class="line hide_if_compact_and_not_error result">
+        <a href="#" class="action_show_full hide_if_compact">Details</a>
+      </div>
+      <div class="line fingerprints hide_if_compact">Fingerprint: <span class="fingerprint good"></span></div>
+      <div class="line add_contact">
+        <input class="input_email" data-test="input-email" value="..." maxlength="256" />
+        <button class="button orange action_add_contact" data-test="action-add-contact"></button>
+      </div>
+      <div class="mt-10 orange hide_if_compact" id="manual_import_warning" data-test="manual-import-warning">
+        Manually importing Public Keys received over email can be dangerous. <br />
+        Contact the sender to verify that the fingerprint matches.
+      </div>
+      <pre class="pubkey hide_if_compact"></pre>
     </div>
-    <div class="line fingerprints hide_if_compact">Fingerprint: <span class="fingerprint good"></span></div>
-    <div class="line add_contact">
-      <input class="input_email" data-test="input-email" value="..." maxlength="256" />
-      <button class="button orange action_add_contact" data-test="action-add-contact"></button>
-    </div>
-    <div class="mt-10 orange hide_if_compact" id="manual_import_warning" data-test="manual-import-warning">
-      Manually importing Public Keys received over email can be dangerous. <br>
-      Contact the sender to verify that the fingerprint matches.
-    </div>
-    <pre class="pubkey hide_if_compact"></pre>
-  </div>
 
-  <script src="/lib/purify.js"></script>
-  <script src="/lib/jquery.min.js"></script>
-  <script src="/lib/sweetalert2.js"></script>
-  <script src="/lib/openpgp.js"></script>
-  <script src="/lib/forge.js"></script>
-  <script src="pgp_pubkey.js" type="module"></script>
-
-</body>
-
+    <script src="/lib/purify.js"></script>
+    <script src="/lib/jquery.min.js"></script>
+    <script src="/lib/sweetalert2.js"></script>
+    <script src="/lib/openpgp.js"></script>
+    <script src="/lib/forge.js"></script>
+    <script src="pgp_pubkey.js" type="module"></script>
+  </body>
 </html>

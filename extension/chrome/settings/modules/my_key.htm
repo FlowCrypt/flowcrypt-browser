@@ -1,68 +1,69 @@
 <!-- © 2016-2018 FlowCrypt Limited. Limitations apply. Contact human@flowcrypt.com -->
 
 <html>
+  <head>
+    <meta content="text/html;charset=utf-8" http-equiv="Content-Type" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+    <title>FlowCrypt</title>
+    <link rel="stylesheet" href="/css/cryptup.css" />
+    <link rel="stylesheet" href="/css/sweetalert2.css" />
+    <link rel="stylesheet" href="/css/open-sans.css" />
+    <link rel="stylesheet" href="/css/animate.css" />
+    <link rel="stylesheet" href="/css/mobile-menu-styling.css" />
+    <link rel="icon" href="/img/logo/flowcrypt-logo-19-19.png" />
+  </head>
 
-<head>
-  <meta content="text/html;charset=utf-8" http-equiv="Content-Type">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>FlowCrypt</title>
-  <link rel="stylesheet" href="/css/cryptup.css" />
-  <link rel="stylesheet" href="/css/sweetalert2.css" />
-  <link rel="stylesheet" href="/css/open-sans.css" />
-  <link rel="stylesheet" href="/css/animate.css" />
-  <link rel="stylesheet" href="/css/mobile-menu-styling.css" />
-  <link rel="icon" href="/img/logo/flowcrypt-logo-19-19.png" />
-</head>
+  <body id="settings">
+    <div id="content" class="my_key page" style="text-align: left">
+      <div class="line">
+        <b class="key_type">Public Key Info</b> for <span class="email" data-test="content-emails"></span>&nbsp;&nbsp;<a href="#" class="action_view_user_ids"
+          >show user ids</a
+        >
+      </div>
+      <div class="line">
+        Public Fingerprint: <span class="fingerprint good" data-test="content-fingerprint"></span>. This Fingerprint is unique to your public key. Share this so
+        that your contacts can verify that they have the right key to encrypt for.
+      </div>
+      <div class="line"><span class="green_label">Public Key Below is safe to share with others</span></div>
+      <div class="line">
+        <a href="#" class="action_copy_pubkey">Copy public key to clipboard</a>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        <a href="#" class="action_download_pubkey">Save public key to a file</a>
+      </div>
+      <div class="line show_when_showing_public pubkey_link_container" style="display: none">Share your Public Key: <a href="" target="_blank"></a></div>
+      <div class="line">Key expiration: <span class="key_expiration" data-test="content-key-expiration"></span></div>
+      <div class="line-separator"></div>
+      <div class="line">
+        <b class="key_type">Private Key</b> for <span class="email"></span>&nbsp;&nbsp;<a
+          href="#"
+          class="action_view_update display_none"
+          data-test="action-update-prv"
+          >update</a
+        >&nbsp;&nbsp;<a href="#" class="action_download_revocation_cert display_none" data-test="action-revoke-certificate">revocation certificate</a>
+      </div>
+      <div class="line enter_pp" style="display: none">
+        <input id="input_passphrase" type="text" placeholder="Enter your pass phrase" maxlength="256" />
+      </div>
+      <div class="line enter_pp" style="display: none">
+        <button class="button green action_continue_download">download</button>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        <button class="button gray action_cancel_download_cert">cancel</button>
+      </div>
+      <div class="line">
+        <span class="red_label" style="display: none">Never send this to anyone!</span>
+        <span class="orange_label" style="display: none" data-test="label-download-prv">This private key is managed by Email Key Manager</span>
+      </div>
+      <div class="line container_download_prv">
+        <a href="#" class="action_download_prv bad" data-test="action-download-prv">Save private key to a file</a>
+      </div>
+    </div>
 
-<body id="settings">
-  <div id="content" class="my_key page" style="text-align: left;">
-    <div class="line">
-      <b class="key_type">Public Key Info</b> for <span class="email" data-test="content-emails"></span>&nbsp;&nbsp;<a href="#"
-        class="action_view_user_ids">show user ids</a>
-    </div>
-    <div class="line">Public Fingerprint: <span class="fingerprint good" data-test="content-fingerprint"></span>.
-      This Fingerprint is unique to your public key. Share this so that your contacts can verify that they
-      have the right key to encrypt for.</div>
-    <div class="line"><span class="green_label">Public Key Below is safe to share with
-        others</span></div>
-    <div class="line">
-      <a href="#" class="action_copy_pubkey">Copy public key to clipboard</a>
-      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-      <a href="#" class="action_download_pubkey">Save public key to a file</a>
-    </div>
-    <div class="line show_when_showing_public pubkey_link_container" style="display: none;">Share your Public Key:
-      <a href="" target="_blank"></a></div>
-    <div class="line">Key expiration: <span class="key_expiration" data-test="content-key-expiration"></span></div>
-    <div class="line-separator"></div>
-    <div class="line">
-      <b class="key_type">Private Key</b> for <span class="email"></span>&nbsp;&nbsp;<a href="#"
-        class="action_view_update display_none" data-test="action-update-prv">update</a>&nbsp;&nbsp;<a href="#"
-        class="action_download_revocation_cert display_none" data-test="action-revoke-certificate">revocation certificate</a>
-    </div>
-    <div class="line enter_pp" style="display: none;">
-      <input id="input_passphrase" type="text" placeholder="Enter your pass phrase" maxlength="256" />
-    </div>
-    <div class="line enter_pp" style="display: none;">
-      <button class="button green action_continue_download">download</button>
-      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-      <button class="button gray action_cancel_download_cert">cancel</button>
-    </div>
-    <div class="line">
-      <span class="red_label" style="display: none;">Never send this to anyone!</span>
-      <span class="orange_label" style="display: none;" data-test="label-download-prv">This private key is managed by Email Key Manager</span>
-    </div>
-    <div class="line container_download_prv">
-      <a href="#" class="action_download_prv bad" data-test="action-download-prv">Save private key to a file</a>
-    </div>
-  </div>
-
-  <script src="/lib/purify.js"></script>
-  <script src="/lib/jquery.min.js"></script>
-  <script src="/lib/sweetalert2.js"></script>
-  <script src="/lib/openpgp.js"></script>
-  <script src="/lib/forge.js"></script>
-  <script src="/lib/clipboard.js"></script>
-  <script src="my_key.js" type="module"></script>
-</body>
-
+    <script src="/lib/purify.js"></script>
+    <script src="/lib/jquery.min.js"></script>
+    <script src="/lib/sweetalert2.js"></script>
+    <script src="/lib/openpgp.js"></script>
+    <script src="/lib/forge.js"></script>
+    <script src="/lib/clipboard.js"></script>
+    <script src="my_key.js" type="module"></script>
+  </body>
 </html>

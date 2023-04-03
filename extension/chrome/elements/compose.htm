@@ -1,253 +1,249 @@
 <!-- © 2016-2018 FlowCrypt Limited. Limitations apply. Contact human@flowcrypt.com -->
 
 <html>
+  <head>
+    <meta content="text/html;charset=utf-8" http-equiv="Content-Type" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+    <title>FlowCrypt</title>
+    <link rel="stylesheet" href="/css/cryptup.css" />
+    <link rel="stylesheet" href="/css/sweetalert2.css" />
+    <link rel="stylesheet" href="/css/animate.css" />
+    <link rel="stylesheet" href="/css/fine-uploader-new.css" />
+    <link rel="stylesheet" href="/css/mobile-menu-styling.css" />
+    <script type="text/template" src="shared/attach.template.htm" id="qq-template"></script>
+  </head>
 
-<head>
-  <meta content="text/html;charset=utf-8" http-equiv="Content-Type">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>FlowCrypt</title>
-  <link rel="stylesheet" href="/css/cryptup.css" />
-  <link rel="stylesheet" href="/css/sweetalert2.css" />
-  <link rel="stylesheet" href="/css/animate.css" />
-  <link rel="stylesheet" href="/css/fine-uploader-new.css" />
-  <link rel="stylesheet" href="/css/mobile-menu-styling.css" />
-  <script type="text/template" src="shared/attach.template.htm" id="qq-template"></script>
-</head>
+  <body id="new_message">
+    <div class="container">
+      <div id="initial_prompt" class="display_none" data-test="action-accept-reply-prompt">
+        <a href="#" id="a_reply_all" data-test="action-accept-reply-all-prompt">
+          <img src="/img/reply-all-icon.png" alt="" />
+          Secure Reply to All
+        </a>
+        <a href="#" id="a_reply" data-test="encrypted-reply">
+          <img src="/img/reply-icon.png" alt="" />
+          Secure Reply
+        </a>
+        <a href="#" id="a_forward" data-test="action-forward">
+          <img src="/img/forward-icon.png" alt="" />
+          Secure Forward
+        </a>
+      </div>
+      <div id="contacts" data-test="container-contacts" tabindex="0">
+        <ul></ul>
+      </div>
 
-<body id="new_message">
-  <div class="container">
-    <div id="initial_prompt" class="display_none" data-test="action-accept-reply-prompt">
-      <a href="#" id="a_reply_all" data-test="action-accept-reply-all-prompt">
-        <img src="/img/reply-all-icon.png" alt="">
-        Secure Reply to All
-      </a>
-      <a href="#" id="a_reply" data-test="encrypted-reply">
-        <img src="/img/reply-icon.png" alt="">
-        Secure Reply
-      </a>
-      <a href="#" id="a_forward" data-test="action-forward">
-        <img src="/img/forward-icon.png" alt="">
-        Secure Forward
-      </a>
-    </div>
-    <div id="contacts" data-test="container-contacts" tabindex="0">
-      <ul></ul>
-    </div>
-
-    <table id="compose" class="display_none">
-      <tr id="section_header">
-        <th>
-          <div class="header">
-            <!-- header -->
-            <h1 id="header_title" data-test="header-title">New Secure Message</h1>
-            <div class="actions_container">
-              <span class="action_feedback" title="Feedback or Help">
-                <img src="/img/svgs/question-icon-white.svg" alt="Help">
-              </span>
-              <span class="minimize_compose_window" title="Minimize">
-                <img src="/img/svgs/minimize.svg">
-              </span>
-              <span class="popout maximize_composer" title="Full screen">
-                <img src="/img/svgs/maximize.svg">
-              </span>
-              <span class="close_compose_window" title="Save & close" data-test="action-close-new-message">
-                <img src="/img/svgs/close-icon.svg">
-              </span>
-            </div>
-          </div>
-        </th>
-      </tr>
-      <tr id="recipients_row">
-        <td>
-          <div class="flex">
-            <div class="reply-container">
-              <div id="reply-options-container" class="reply-options-container" data-test="container-reply-options">
+      <table id="compose" class="display_none">
+        <tr id="section_header">
+          <th>
+            <div class="header">
+              <!-- header -->
+              <h1 id="header_title" data-test="header-title">New Secure Message</h1>
+              <div class="actions_container">
+                <span class="action_feedback" title="Feedback or Help">
+                  <img src="/img/svgs/question-icon-white.svg" alt="Help" />
+                </span>
+                <span class="minimize_compose_window" title="Minimize">
+                  <img src="/img/svgs/minimize.svg" />
+                </span>
+                <span class="popout maximize_composer" title="Full screen">
+                  <img src="/img/svgs/maximize.svg" />
+                </span>
+                <span class="close_compose_window" title="Save & close" data-test="action-close-new-message">
+                  <img src="/img/svgs/close-icon.svg" />
+                </span>
               </div>
-              <button id="toggle_reply_options" class="action-show-reply-options-popover button"
-                title="More reply options" tabindex="0" data-test="action-show-reply-options-popover">
-                <img class="reply-options-icon" src="/img/reply-icon.png">
+            </div>
+          </th>
+        </tr>
+        <tr id="recipients_row">
+          <td>
+            <div class="flex">
+              <div class="reply-container">
+                <div id="reply-options-container" class="reply-options-container" data-test="container-reply-options"></div>
+                <button
+                  id="toggle_reply_options"
+                  class="action-show-reply-options-popover button"
+                  title="More reply options"
+                  tabindex="0"
+                  data-test="action-show-reply-options-popover"
+                >
+                  <img class="reply-options-icon" src="/img/reply-icon.png" />
+                  <div class="icon-chevron"></div>
+                </button>
+              </div>
+              <div class="input recipients-inputs flex-1">
+                <div id="input_addresses_container" class="invisible">
+                  <!-- from -->
+                  <div id="input-container-from">
+                    <span class="recipient-left-label">From</span>
+                    <select id="input_from" tabindex="1" data-test="input-from"></select>
+                  </div>
+                  <!-- to -->
+                  <div id="input-container-to" class="input-container" data-sending-type="to" data-test="container-to">
+                    <span class="recipient-left-label">To</span>
+                    <div class="input-right-container">
+                      <span class="recipients recipients-to"></span>
+                      <input id="input_to" spellcheck="false" tabindex="1" data-test="input-to" data-sending-type="to" autocomplete="off" maxlength="256" />
+                      <span class="container-cc-bcc-buttons" data-test="container-cc-bcc-buttons">
+                        <button id="cc" class="cc" tabindex="20" data-test="action-show-cc">cc</button>
+                        <button id="bcc" class="bcc" tabindex="21" data-test="action-show-bcc">bcc</button>
+                      </span>
+                    </div>
+                  </div>
+                  <!-- cc -->
+                  <div id="input-container-cc" class="input-container" style="display: none" data-sending-type="cc" data-test="container-cc">
+                    <span class="recipient-left-label">Cc</span>
+                    <div class="input-right-container">
+                      <span class="recipients recipients-cc"></span>
+                      <input spellcheck="false" tabindex="1" data-test="input-cc" data-sending-type="cc" autocomplete="off" maxlength="256" />
+                    </div>
+                  </div>
+                  <!-- bcc -->
+                  <div id="input-container-bcc" class="input-container" style="display: none" data-test="container-bcc" data-sending-type="bcc">
+                    <span class="recipient-left-label">Bcc</span>
+                    <div class="input-right-container">
+                      <span class="recipients recipients-bcc"></span>
+                      <input spellcheck="false" tabindex="1" data-test="input-bcc" data-sending-type="bcc" autocomplete="off" maxlength="256" />
+                    </div>
+                  </div>
+                </div>
+                <div id="recipients_placeholder" class="collapsed" data-test="action-show-container-cc-bcc-buttons" style="display: flex">
+                  <span class="placeholder">Recipients</span>
+                  <div class="email_preview" data-test="recipients-preview"></div>
+                </div>
+              </div>
+            </div>
+          </td>
+        </tr>
+        <tr id="section_subject">
+          <td class="input">
+            <!-- subject -->
+            <input id="input_subject" autocomplete="off" spellcheck="true" tabindex="2" placeholder="Subject" data-test="input-subject" maxlength="512" />
+          </td>
+        </tr>
+        <tr class="intro_container">
+          <td>
+            <p>Intro will make your message more trustworthy. Intros are not encrypted.</p>
+            <div contenteditable class="input_intro" tabindex="3"></div>
+          </td>
+        </tr>
+        <tr id="section_compose">
+          <td class="text">
+            <div
+              class="action_add_intro good"
+              data-test="add-intro"
+              title="Add a custom message that your recipient will see before they open encrypted content"
+            >
+              + add intro
+            </div>
+            <!-- body -->
+            <div class="text_container">
+              <div contenteditable id="input_text" tabindex="4" data-test="input-body"></div>
+              <button class="action_show_prev_msg" data-test="action-expand-quoted-text" title="Show your email signature and quoted content" tabindex="4">
+                <img src="/img/svgs/three-dots.svg" />
+              </button>
+              <div id="fineuploader"></div>
+            </div>
+          </td>
+        </tr>
+        <tr id="password_or_pubkey_container" data-test="password-or-pubkey-container">
+          <td>
+            <div id="expiration_note">
+              Recipient will have access to this message
+              <a href="#" id="expiration_note_settings_link">
+                for
+                <span id="expiration_note_message_expire">(loading)</span>
+              </a>
+              . You are responsible for sharing this password with them (use other medium to share the password - not email).
+              <br />
+              <br />
+              <span id="password-policy-container"></span>
+              <br /><br />
+              (Messages sent to FlowCrypt users don't expire this way and don't need password exchange)
+            </div>
+            <div>
+              <div class="warning_nopgp" data-test="warning-nopgp">emails <span class="grey">in grey</span> don't use encryption</div>
+              <div class="warning_revoked" data-test="warning-revoked">emails <span class="orange">in orange</span> have expired or revoked key</div>
+              <br />
+              <a href="#" class="add_pubkey" data-test="action-open-add-pubkey-dialog">Add their Public Key</a>
+              <div class="warning_nopgp">or ask them to get FlowCrypt.</div>
+              <div class="password_input_container" data-test="password-input-container">
+                Or send email password protected:
+                <input id="input_password" autocomplete="off" placeholder="message password" tabindex="5" data-test="input-password" maxlength="256" />
+              </div>
+            </div>
+          </td>
+        </tr>
+        <tr id="section_footer" class="bottom">
+          <td class="bottom">
+            <div class="sending-container">
+              <div id="sending-options-container" class="sending-options-container" data-test="container-sending-options"></div>
+              <button id="send_btn" class="button green" tabindex="6" data-test="action-send">
+                <span id="send_btn_text" class="btn-text"><i></i></span>
+              </button>
+              <button
+                id="toggle_send_options"
+                class="action-show-options-popover button green"
+                title="More send options"
+                tabindex="7"
+                data-test="action-show-options-popover"
+              >
                 <div class="icon-chevron"></div>
               </button>
             </div>
-            <div class="input recipients-inputs flex-1">
-              <div id="input_addresses_container" class="invisible">
-                <!-- from -->
-                <div id="input-container-from">
-                  <span class="recipient-left-label">From</span>
-                  <select id="input_from" tabindex="1" data-test="input-from"></select>
-                </div>
-                <!-- to -->
-                <div id="input-container-to" class="input-container" data-sending-type="to" data-test="container-to">
-                  <span class="recipient-left-label">To</span>
-                  <div class="input-right-container">
-                    <span class="recipients recipients-to"></span>
-                    <input id="input_to" spellcheck="false" tabindex="1" data-test="input-to" data-sending-type="to"
-                      autocomplete="off" maxlength="256" />
-                    <span class="container-cc-bcc-buttons" data-test="container-cc-bcc-buttons">
-                      <button id="cc" class="cc" tabindex="20" data-test="action-show-cc">cc</button>
-                      <button id="bcc" class="bcc" tabindex="21" data-test="action-show-bcc">bcc</button>
-                    </span>
-                  </div>
-                </div>
-                <!-- cc -->
-                <div id="input-container-cc" class="input-container" style="display: none;" data-sending-type="cc"
-                  data-test="container-cc">
-                  <span class="recipient-left-label">Cc</span>
-                  <div class="input-right-container">
-                    <span class="recipients recipients-cc"></span>
-                    <input spellcheck="false" tabindex="1" data-test="input-cc" data-sending-type="cc"
-                      autocomplete="off" maxlength="256" />
-                  </div>
-                </div>
-                <!-- bcc -->
-                <div id="input-container-bcc" class="input-container" style="display: none;" data-test="container-bcc"
-                  data-sending-type="bcc">
-                  <span class="recipient-left-label">Bcc</span>
-                  <div class="input-right-container">
-                    <span class="recipients recipients-bcc"></span>
-                    <input spellcheck="false" tabindex="1" data-test="input-bcc" data-sending-type="bcc"
-                      autocomplete="off" maxlength="256" />
-                  </div>
-                </div>
-              </div>
-              <div id="recipients_placeholder" class="collapsed" data-test="action-show-container-cc-bcc-buttons"
-                style="display: flex;">
-                <span class="placeholder">Recipients</span>
-                <div class="email_preview" data-test="recipients-preview"></div>
-              </div>
-            </div>
-          </div>
-        </td>
-      </tr>
-      <tr id="section_subject">
-        <td class="input">
-          <!-- subject -->
-          <input id="input_subject" autocomplete="off" spellcheck="true" tabindex="2" placeholder="Subject"
-            data-test="input-subject" maxlength="512" />
-        </td>
-      </tr>
-      <tr class="intro_container">
-        <td>
-          <p>Intro will make your message more trustworthy. Intros are not encrypted.</p>
-          <div contenteditable class="input_intro" tabindex="3"></div>
-        </td>
-      </tr>
-      <tr id="section_compose">
-        <td class="text">
-          <div class="action_add_intro good" data-test="add-intro"
-            title="Add a custom message that your recipient will see before they open encrypted content">+
-            add intro</div>
-          <!-- body -->
-          <div class="text_container">
-            <div contenteditable id="input_text" tabindex="4" data-test="input-body"></div>
-            <button class="action_show_prev_msg" data-test="action-expand-quoted-text"
-              title="Show your email signature and quoted content" tabindex="4">
-              <img src="/img/svgs/three-dots.svg" />
+            <div class="icon attach" id="fineuploader_button"><img src="/img/svgs/paperclip-icon.svg" class="attach-file" alt="Attach File" /></div>
+            <div id="send_btn_note" data-test="send-btn-note"></div>
+            <button class="icon right delete_draft" tabindex="11" title="Delete draft">
+              <img src="/img/svgs/trash-can-icon.svg" class="delete-draft" alt="Delete Email" />
             </button>
-            <div id="fineuploader"></div>
-          </div>
-        </td>
-      </tr>
-      <tr id="password_or_pubkey_container" data-test="password-or-pubkey-container">
-        <td>
-          <div id="expiration_note">
-            Recipient will have access to this message
-            <a href="#" id="expiration_note_settings_link">
-              for
-              <span id="expiration_note_message_expire">(loading)</span>
-            </a>
-            . You are responsible for sharing this password with them (use other medium to share the password - not
-            email).
-            <br /> <br />
-            <span id="password-policy-container"></span>
-            <br /><br />
-            (Messages sent to FlowCrypt users don't expire this way and don't need password exchange)
-          </div>
-          <div>
-            <div class="warning_nopgp" data-test="warning-nopgp">
-              emails <span class="grey">in grey</span> don't use encryption
-            </div>
-            <div class="warning_revoked" data-test="warning-revoked">
-              emails <span class="orange">in orange</span> have expired or revoked key
-            </div>
-            <br />
-            <a href="#" class="add_pubkey" data-test="action-open-add-pubkey-dialog">Add their Public Key</a>
-            <div class="warning_nopgp"> or ask them to get FlowCrypt.</div>
-            <div class="password_input_container" data-test="password-input-container">
-              Or send email password protected:
-              <input id="input_password" autocomplete="off" placeholder="message password" tabindex="5"
-                data-test="input-password" maxlength="256">
-            </div>
-          </div>
-        </td>
-      </tr>
-      <tr id="section_footer" class="bottom">
-        <td class="bottom">
-          <div class="sending-container">
-            <div id="sending-options-container" class="sending-options-container" data-test="container-sending-options">
-            </div>
-            <button id="send_btn" class="button green" tabindex="6" data-test="action-send">
-              <span id="send_btn_text" class="btn-text"><i></i></span>
+            <button class="icon right action_include_pubkey" data-test="action-include-pubkey" tabindex="10" title="Include your Public Key">
+              <i alt="pubkey"></i>
             </button>
-            <button id="toggle_send_options" class="action-show-options-popover button green" title="More send options"
-              tabindex="7" data-test="action-show-options-popover">
-              <div class="icon-chevron"></div>
-            </button>
-          </div>
-          <div class="icon attach" id="fineuploader_button"><img src="/img/svgs/paperclip-icon.svg" class="attach-file"
-              alt="Attach File"></div>
-          <div id="send_btn_note" data-test="send-btn-note"></div>
-          <button class="icon right delete_draft" tabindex="11" title="Delete draft">
-            <img src="/img/svgs/trash-can-icon.svg" class="delete-draft" alt="Delete Email">
-          </button>
-          <button class="icon right action_include_pubkey" data-test="action-include-pubkey" tabindex="10"
-            title="Include your Public Key"><i alt="pubkey"></i></button>
-        </td>
-      </tr>
-    </table>
-
-    <div id="reply_message_successful_container" data-test="container-reply-msg-successful">
-      <table>
-        <tr class="first">
-          <td>
-            <!-- to -->
-            <div class="replied_from"></div>
-            <div class="replied_to" data-test="replied-to">to: <span></span></div>
-            <div class="replied_cc display_none" data-test="replied-cc">cc: <span></span></div>
-            <div class="replied_bcc display_none" data-test="replied-bcc">bcc: <span></span></div>
-          </td>
-          <td class="right">
-            <div class="replied_time"></div>
-          </td>
-        </tr>
-        <tr>
-          <td colspan="2">
-            <!-- body -->
-            <div class="replied_body pgp_secure"></div>
           </td>
         </tr>
       </table>
-      <div id="attachments" data-test="replied-attachments"></div>
+
+      <div id="reply_message_successful_container" data-test="container-reply-msg-successful">
+        <table>
+          <tr class="first">
+            <td>
+              <!-- to -->
+              <div class="replied_from"></div>
+              <div class="replied_to" data-test="replied-to">to: <span></span></div>
+              <div class="replied_cc display_none" data-test="replied-cc">cc: <span></span></div>
+              <div class="replied_bcc display_none" data-test="replied-bcc">bcc: <span></span></div>
+            </td>
+            <td class="right">
+              <div class="replied_time"></div>
+            </td>
+          </tr>
+          <tr>
+            <td colspan="2">
+              <!-- body -->
+              <div class="replied_body pgp_secure"></div>
+            </td>
+          </tr>
+        </table>
+        <div id="attachments" data-test="replied-attachments"></div>
+      </div>
     </div>
-  </div>
-  <script src="/lib/purify.js"></script>
-  <script src="/lib/openpgp.js"></script>
-  <script src="/lib/jquery.min.js"></script>
-  <script src="/lib/sweetalert2.js"></script>
-  <script src="/lib/squire-raw.js"></script>
-  <script src="/lib/emailjs/punycode.js"></script>
-  <script src="/lib/emailjs/emailjs-stringencoding.js"></script>
-  <script src="/lib/emailjs/emailjs-mime-codec.js"></script>
-  <script src="/lib/emailjs/emailjs-mime-types.js"></script>
-  <script src="/lib/emailjs/emailjs-addressparser.js"></script>
-  <script src="/lib/emailjs/emailjs-mime-builder.js"></script>
-  <script src="/lib/emailjs/emailjs-mime-parser.js"></script>
-  <script src="/lib/fine-uploader.js"></script>
-  <script src="/lib/zxcvbn.js"></script>
-  <script src="/lib/iso-8859-2.js"></script>
-  <script src="/lib/forge.js"></script>
-  <script src="compose.js" type="module"></script>
-
-</body>
-
+    <script src="/lib/purify.js"></script>
+    <script src="/lib/openpgp.js"></script>
+    <script src="/lib/jquery.min.js"></script>
+    <script src="/lib/sweetalert2.js"></script>
+    <script src="/lib/squire-raw.js"></script>
+    <script src="/lib/emailjs/punycode.js"></script>
+    <script src="/lib/emailjs/emailjs-stringencoding.js"></script>
+    <script src="/lib/emailjs/emailjs-mime-codec.js"></script>
+    <script src="/lib/emailjs/emailjs-mime-types.js"></script>
+    <script src="/lib/emailjs/emailjs-addressparser.js"></script>
+    <script src="/lib/emailjs/emailjs-mime-builder.js"></script>
+    <script src="/lib/emailjs/emailjs-mime-parser.js"></script>
+    <script src="/lib/fine-uploader.js"></script>
+    <script src="/lib/zxcvbn.js"></script>
+    <script src="/lib/iso-8859-2.js"></script>
+    <script src="/lib/forge.js"></script>
+    <script src="compose.js" type="module"></script>
+  </body>
 </html>

@@ -1,52 +1,54 @@
 <!-- © 2016-2018 FlowCrypt Limited. Limitations apply. Contact human@flowcrypt.com -->
 
-<!doctype html>
+<!DOCTYPE html>
 <html>
+  <head>
+    <meta content="text/html;charset=utf-8" http-equiv="Content-Type" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+    <title>FlowCrypt</title>
+    <link rel="stylesheet" href="/css/animate.css" />
+    <link rel="stylesheet" href="/css/cryptup.css" />
+    <link rel="stylesheet" href="/css/sweetalert2.css" />
+    <link rel="stylesheet" href="/css/mobile-menu-styling.css" />
+    <link rel="stylesheet" href="/css/open-sans.css" />
+  </head>
 
-<head>
-  <meta content="text/html;charset=utf-8" http-equiv="Content-Type">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>FlowCrypt</title>
-  <link rel="stylesheet" href="/css/animate.css" />
-  <link rel="stylesheet" href="/css/cryptup.css" />
-  <link rel="stylesheet" href="/css/sweetalert2.css" />
-  <link rel="stylesheet" href="/css/mobile-menu-styling.css" />
-  <link rel="stylesheet" href="/css/open-sans.css" />
-</head>
-
-<body id="settings" class="whitebg">
-
-  <div id="content" class="passphrase dialog">
-    <div class="line passphrase_text_container">
-      <h1 class="passphrase_text" data-test="passphrase-text"></h1>
+  <body id="settings" class="whitebg">
+    <div id="content" class="passphrase dialog">
+      <div class="line passphrase_text_container">
+        <h1 class="passphrase_text" data-test="passphrase-text"></h1>
+      </div>
+      <div class="separator"></div>
+      <div class="line which_key" data-test="which-key" style="display: none"></div>
+      <div class="line">
+        <input type="text" placeholder="Enter Pass Phrase" id="passphrase" data-test="input-pass-phrase" maxlength="256" />
+      </div>
+      <div class="line">
+        <button class="button long green action_ok" data-test="action-confirm-pass-phrase-entry">OK</button>
+        &nbsp;&nbsp;
+        <button class="button long gray action_close" data-test="action-cancel-pass-phrase-entry">LATER</button>
+      </div>
+      <br />
+      <div>
+        <label class="forget-pass-phrase-label hidden" data-test="forget-pass-phrase-label">
+          <input type="checkbox" name="forget" class="forget-pass-phrase-checkbox" data-test="forget-pass-phrase-checkbox" checked />
+          Forget passphrase when I close the browser
+        </label>
+      </div>
+      <div class="separator" style="margin-top: 85px"></div>
+      <a href id="lost-pass-phrase"
+        ><div class="lost-pass-phrase display_none" data-test="lost-pass-phrase">Lost pass phrase?</div>
+        <div class="lost-pass-phrase-with-ekm display_none" data-test="lost-pass-phrase-with-ekm">
+          Ask your IT staff for help if you lost your pass phrase.
+        </div></a
+      >
     </div>
-    <div class="separator"></div>
-    <div class="line which_key" data-test="which-key" style="display: none;"></div>
-    <div class="line">
-      <input type="text" placeholder="Enter Pass Phrase" id="passphrase" data-test="input-pass-phrase" maxlength="256">
-    </div>
-    <div class="line">
-      <button class="button long green action_ok" data-test="action-confirm-pass-phrase-entry">OK</button>
-      &nbsp;&nbsp;
-      <button class="button long gray action_close" data-test="action-cancel-pass-phrase-entry">LATER</button>
-    </div>
-    <br>
-    <div>
-      <label class="forget-pass-phrase-label hidden" data-test="forget-pass-phrase-label">
-        <input type="checkbox" name="forget" class="forget-pass-phrase-checkbox" data-test="forget-pass-phrase-checkbox" checked>
-        Forget passphrase when I close the browser
-      </label>
-    </div>
-    <div class="separator" style="margin-top: 85px;"></div>
-    <a href id="lost-pass-phrase"><div class="lost-pass-phrase display_none" data-test="lost-pass-phrase">Lost pass phrase?</div><div class="lost-pass-phrase-with-ekm display_none" data-test="lost-pass-phrase-with-ekm">Ask your IT staff for help if you lost your pass phrase.</div></a>
-  </div>
 
-  <script src="/lib/purify.js"></script>
-  <script src="/lib/jquery.min.js"></script>
-  <script src="/lib/sweetalert2.js"></script>
-  <script src="/lib/openpgp.js"></script>
-  <script src="/lib/forge.js"></script>
-  <script src="passphrase.js" type="module"></script>
-</body>
-
+    <script src="/lib/purify.js"></script>
+    <script src="/lib/jquery.min.js"></script>
+    <script src="/lib/sweetalert2.js"></script>
+    <script src="/lib/openpgp.js"></script>
+    <script src="/lib/forge.js"></script>
+    <script src="passphrase.js" type="module"></script>
+  </body>
 </html>

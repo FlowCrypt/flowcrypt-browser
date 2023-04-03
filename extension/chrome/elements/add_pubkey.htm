@@ -1,61 +1,59 @@
 <!-- © 2016-2018 FlowCrypt Limited. Limitations apply. Contact human@flowcrypt.com -->
 
-<!doctype html>
+<!DOCTYPE html>
 <html>
+  <head>
+    <meta content="text/html;charset=utf-8" http-equiv="Content-Type" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+    <title>FlowCrypt</title>
+    <link rel="stylesheet" href="/css/animate.css" />
+    <link rel="stylesheet" href="/css/cryptup.css" />
+    <link rel="stylesheet" href="/css/sweetalert2.css" />
+    <link rel="stylesheet" href="/css/open-sans.css" />
+    <link rel="stylesheet" href="/css/mobile-menu-styling.css" />
+    <link rel="stylesheet" href="/css/fine-uploader-new.css" />
+    <script type="text/template" src="/chrome/elements/hared/attach.template.htm" id="qq-template"></script>
+  </head>
 
-<head>
-  <meta content="text/html;charset=utf-8" http-equiv="Content-Type">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>FlowCrypt</title>
-  <link rel="stylesheet" href="/css/animate.css" />
-  <link rel="stylesheet" href="/css/cryptup.css" />
-  <link rel="stylesheet" href="/css/sweetalert2.css" />
-  <link rel="stylesheet" href="/css/open-sans.css" />
-  <link rel="stylesheet" href="/css/mobile-menu-styling.css" />
-  <link rel="stylesheet" href="/css/fine-uploader-new.css" />
-  <script type="text/template" src="/chrome/elements/hared/attach.template.htm" id="qq-template"></script>
-</head>
+  <body id="settings">
+    <div id="content" class="add_pubkey dialog">
+      <div class="line">
+        <h1>Add a public key to email address</h1>
+      </div>
+      <div class="separator"></div>
+      <div class="line">
+        <select class="email"></select>
+      </div>
+      <div class="line copy_from" style="text-align: left; padding-left: 25px">
+        <select class="copy_from_email" data-test="input-select-copy-from">
+          <option value="">Copy from Contact</option>
+        </select>
+        or
+        <div id="fineuploader_button" class="button gray">LOAD FILE</div>
+        or paste below:
+      </div>
+      <div class="line">
+        <textarea class="pubkey" placeholder="ASCII Armored Public Key" spellcheck="false" data-test="input-pubkey" maxlength="30000"></textarea>
+      </div>
+      <div class="line orange" id="manual-import-warning" data-test="manual-import-warning">
+        Manually importing Public Keys can be dangerous <br />
+        Please read the <a href="https://flowcrypt.com/docs/help/raq.html" target="_blank">"Manually importing public keys can be dangerous"</a> before
+        proceeding.
+      </div>
+      <div class="line">
+        <button class="button long orange action_ok" data-test="action-add-pubkey">OK</button>
+        <button class="button long gray action_settings">SETTINGS</button>
+        <button class="button long gray action_close">CLOSE</button>
+      </div>
+      <div id="fineuploader" class="display_none"></div>
+    </div>
 
-<body id="settings">
-
-  <div id="content" class="add_pubkey dialog">
-    <div class="line">
-      <h1>Add a public key to email address</h1>
-    </div>
-    <div class="separator"></div>
-    <div class="line">
-      <select class="email"></select>
-    </div>
-    <div class="line copy_from" style="text-align: left; padding-left: 25px;">
-      <select class="copy_from_email" data-test="input-select-copy-from">
-        <option value="">Copy from Contact</option>
-      </select>
-      or
-      <div id="fineuploader_button" class="button gray">LOAD FILE</div>
-      or paste below:
-    </div>
-    <div class="line">
-      <textarea class="pubkey" placeholder="ASCII Armored Public Key" spellcheck="false" data-test="input-pubkey" maxlength="30000"></textarea>
-    </div>
-    <div class="line orange" id="manual-import-warning" data-test="manual-import-warning">
-      Manually importing Public Keys can be dangerous <br>
-      Please read the <a href="https://flowcrypt.com/docs/help/raq.html" target="_blank">"Manually importing public keys can be dangerous"</a> before proceeding.
-    </div>
-    <div class="line">
-      <button class="button long orange action_ok" data-test="action-add-pubkey">OK</button>
-      <button class="button long gray action_settings">SETTINGS</button>
-      <button class="button long gray action_close">CLOSE</button>
-    </div>
-    <div id="fineuploader" class="display_none"></div>
-  </div>
-
-  <script src="/lib/purify.js"></script>
-  <script src="/lib/jquery.min.js"></script>
-  <script src="/lib/sweetalert2.js"></script>
-  <script src="/lib/openpgp.js"></script>
-  <script src="/lib/forge.js"></script>
-  <script src="/lib/fine-uploader.js"></script>
-  <script src="add_pubkey.js" type="module"></script>
-</body>
-
+    <script src="/lib/purify.js"></script>
+    <script src="/lib/jquery.min.js"></script>
+    <script src="/lib/sweetalert2.js"></script>
+    <script src="/lib/openpgp.js"></script>
+    <script src="/lib/forge.js"></script>
+    <script src="/lib/fine-uploader.js"></script>
+    <script src="add_pubkey.js" type="module"></script>
+  </body>
 </html>

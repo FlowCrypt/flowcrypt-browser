@@ -8,7 +8,9 @@ html {
   width: auto;
 }
 
-#header-row { padding-top: 20px; }
+#header-row {
+  padding-top: 20px;
+}
 
 #header-row .logo-row img.cryptup-logo {
   height: auto;
@@ -17,8 +19,14 @@ html {
   text-align: left;
   margin-top: -2px;
 }
-#header-row .logo-row { margin-top: 10px; }
-#header-row .logo-row .subscription { font-size: 14px; }
+
+#header-row .logo-row {
+  margin-top: 10px;
+}
+
+#header-row .logo-row .subscription {
+  font-size: 14px;
+}
 
 #header-row .logo-row .subscription > span,
 #header-row .logo-row .subscription > button {
@@ -35,9 +43,13 @@ html {
 }
 
 #header-row .logo-row .subscription .level,
-#header-row .logo-row .subscription .expire { display: none; }
+#header-row .logo-row .subscription .expire {
+  display: none;
+}
 
-#header-row .logo-row a.cryptup-logo-row { text-decoration: none; }
+#header-row .logo-row a.cryptup-logo-row {
+  text-decoration: none;
+}
 
 #header-row .logo-row .cryptup-logo-row span {
   opacity: 0.7;
@@ -46,7 +58,10 @@ html {
   font-size: 12px;
   display: inline-block;
 }
-#header-row .logo-row .cryptup-logo-row:hover span { opacity: 1; }
+
+#header-row .logo-row .cryptup-logo-row:hover span {
+  opacity: 1;
+}
 
 a.gray_link {
   color: #aaa;
@@ -72,7 +87,10 @@ a.gray_link {
   animation: fadeIn 1s 1s ease;
   animation-fill-mode: forwards;
 }
-#public-profile-indicator a { color: #337ab7; }
+
+#public-profile-indicator a {
+  color: #337ab7;
+}
 
 #public-profile-indicator:focus-within {
   border-color: #31a217;
@@ -142,7 +160,10 @@ a.gray_link {
   left: 19px;
   top: 13px;
 }
-.row.alt-accounts:focus { background: rgba(0, 0, 0, 0.019) !important; }
+
+.row.alt-accounts:focus {
+  background: rgba(0, 0, 0, 0.019) !important;
+}
 
 #alt-accounts .action_add_account.action_add_account--settings::before {
   left: 22px;
@@ -420,7 +441,10 @@ a.gray_link {
   background: white;
   border-top: 1px solid #f3f3f3;
 }
-#footer-row .container { position: relative; }
+
+#footer-row .container {
+  position: relative;
+}
 
 #footer-row #status-row {
   bottom: 0;
@@ -438,8 +462,14 @@ a.gray_link {
   letter-spacing: 0;
   opacity: 0.4;
 }
-#footer-row #status-row span { padding-right: 6px; }
-#footer-row #status-row span.bad { color: #f00; }
+
+#footer-row #status-row span {
+  padding-right: 6px;
+}
+
+#footer-row #status-row span.bad {
+  color: #f00;
+}
 
 #footer-row #status-row span.link:hover {
   text-decoration: underline;
@@ -588,7 +618,10 @@ body#settings .settings-border .key_list {
   margin-right: 0;
   padding: 20px;
 }
-#settings.client div.webmail_notifications div.webmail_notification { margin-top: 44px !important; }
+
+#settings.client div.webmail_notifications div.webmail_notification {
+  margin-top: 44px !important;
+}
 
 #settings.client .line {
   width: auto;
@@ -606,8 +639,14 @@ body#settings .settings-border .key_list {
   margin-bottom: 8px;
   font-size: 22px;
 }
-#settings.client .block { display: none; }
-#settings.client .threads { padding-bottom: 200px; }
+
+#settings.client .block {
+  display: none;
+}
+
+#settings.client .threads {
+  padding-bottom: 200px;
+}
 
 #settings.client .threads > p {
   padding-left: 20px;
@@ -621,13 +660,19 @@ body#settings .settings-border .key_list {
   padding-right: 20px;
   width: auto;
 }
-#settings.client .threads > .line:last-child { border-bottom: 1px solid #31a217; }
+
+#settings.client .threads > .line:last-child {
+  border-bottom: 1px solid #31a217;
+}
 
 #settings.client .threads > .line.loaded:hover {
   background-color: #fff;
   cursor: pointer;
 }
-#settings.client .threads > .line .loading { display: inline-block; }
+
+#settings.client .threads > .line .loading {
+  display: inline-block;
+}
 
 #settings.client .threads > .line .from_container {
   display: inline-block;
@@ -647,15 +692,24 @@ body#settings .settings-border .key_list {
   position: absolute;
   right: 20px;
 }
-#settings.client .thread { padding-bottom: 200px; }
-#settings.client .thread .message { border-top: 1px dotted #c0c0c0; }
+
+#settings.client .thread {
+  padding-bottom: 200px;
+}
+
+#settings.client .thread .message {
+  border-top: 1px dotted #c0c0c0;
+}
 
 #settings.client .thread .message > iframe,
 #settings.client .thread .reply > iframe {
   width: 100%;
   border: none;
 }
-#settings.client .secure_compose_window { position: fixed; }
+
+#settings.client .secure_compose_window {
+  position: fixed;
+}
 
 #settings.client span.label {
   font-weight: normal;
@@ -712,7 +766,10 @@ body#settings .settings-border .key_list {
   margin-top: -6px;
   margin-left: 20px;
 }
-#settings.client > #banner > img.action_open_settings { cursor: pointer; }
+
+#settings.client > #banner > img.action_open_settings {
+  cursor: pointer;
+}
 
 #settings.client > #banner > .action_finish_session {
   height: 32px;
@@ -721,8 +778,14 @@ body#settings .settings-border .key_list {
   margin-left: 20px;
   cursor: pointer;
 }
-#settings.client > #banner > .action_finish_session img { height: 32px; }
-#settings.client .attachments { margin-top: 12px; }
+
+#settings.client > #banner > .action_finish_session img {
+  height: 32px;
+}
+
+#settings.client .attachments {
+  margin-top: 12px;
+}
 
 #settings.client .attachments span.pgp_attachment {
   float: none;
