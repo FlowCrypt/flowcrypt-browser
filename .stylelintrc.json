@@ -4,9 +4,6 @@
     "**/*.js",
     "**/*.ts"
   ],
-  "plugins": [
-    "stylelint-prettier"
-  ],
   "rules": {
     "alpha-value-notation": null,
     "color-function-notation": null,
