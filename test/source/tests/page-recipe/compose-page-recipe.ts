@@ -93,6 +93,12 @@ export class ComposePageRecipe extends PageRecipe {
       await Util.sleep(1);
       await composePageOrFrame.type('@input-subject', subject?.match(/RTL/) ? subject : `Automated puppeteer test: ${subject}`);
     }
+    await composePageOrFrame.click('@input-body');
+    // bring cursor to the beginning of the multiline contenteditable
+    const keyboard = composePageOrFrame.keyboard();
+    await keyboard.down('Control');
+    await keyboard.press('Home');
+    await keyboard.up('Control');
     await composePageOrFrame.type('@input-body', body || subject || ''); // fall back to subject if body is not provided
     return { subject, body };
   }
