@@ -221,7 +221,11 @@ export const mockGoogleEndpoints: HandlersDefinition = {
     // get msg or attachment
     const acct = oauth.checkAuthorizationHeaderWithAccessToken(req.headers.authorization);
     if (isGet(req)) {
-      const id = parseResourceId(req.url!); // eslint-disable-line @typescript-eslint/no-non-null-assertion
+      // temporary replacement for parseResourceId() until #5050 is fixed
+      const id = req.url!.match(/\/([a-zA-Z0-9\-_]+)(\?|$)/)?.[1]; // eslint-disable-line @typescript-eslint/no-non-null-assertion
+      if (!id) {
+        return {};
+      }
       const data = await GoogleData.withInitializedData(acct);
       if (req.url?.includes('/attachments/')) {
         const attachment = data.getAttachment(id);
