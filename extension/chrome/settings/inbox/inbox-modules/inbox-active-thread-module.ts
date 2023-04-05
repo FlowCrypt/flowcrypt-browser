@@ -3,9 +3,9 @@
 'use strict';
 
 import { Bm, BrowserMsg } from '../../../../js/common/browser/browser-msg.js';
-import { FactoryReplyParams, XssSafeFactory } from '../../../../js/common/xss-safe-factory.js';
+import { FactoryReplyParams } from '../../../../js/common/xss-safe-factory.js';
 import { GmailParser, GmailRes } from '../../../../js/common/api/email-provider/gmail/gmail-parser.js';
-import { Str, Url, UrlParams } from '../../../../js/common/core/common.js';
+import { Url, UrlParams } from '../../../../js/common/core/common.js';
 
 import { ApiErr } from '../../../../js/common/api/shared/api-error.js';
 import { BrowserMsgCommonHandlers } from '../../../../js/common/browser/browser-msg-common-handlers.js';
@@ -13,7 +13,7 @@ import { Buf } from '../../../../js/common/core/buf.js';
 import { Catch } from '../../../../js/common/platform/catch.js';
 import { InboxView } from '../inbox.js';
 import { Lang } from '../../../../js/common/lang.js';
-import { Mime } from '../../../../js/common/core/mime.js';
+import { MessageRenderer } from '../../../../js/common/ui/message-renderer.js';
 import { Ui } from '../../../../js/common/browser/ui.js';
 import { ViewModule } from '../../../../js/common/view-module.js';
 import { Xss } from '../../../../js/common/platform/xss.js';
@@ -105,40 +105,19 @@ export class InboxActiveThreadModule extends ViewModule<InboxView> {
 
   private renderMsg = async (message: GmailRes.GmailMsg) => {
     const htmlId = this.replyMsgId(message.id);
-    const from = GmailParser.findHeader(message, 'from') || 'unknown';
+    const from = GmailParser.findHeader(message, 'from');
     try {
       const { raw } = await this.view.gmail.msgGet(message.id, 'raw');
-      const mimeMsg = Buf.fromBase64UrlStr(raw!); // eslint-disable-line @typescript-eslint/no-non-null-assertion
-      const { blocks, headers } = await Mime.process(mimeMsg);
-      let r = '';
-      let renderedAttachments = '';
-      for (const block of blocks) {
-        if (block.type === 'encryptedMsg' || block.type === 'publicKey' || block.type === 'privateKey' || block.type === 'signedMsg') {
-          this.threadHasPgpBlock = true;
-        }
-        if (r) {
-          r += '<br><br>';
-        }
-        if (['encryptedAttachment', 'plainAttachment'].includes(block.type)) {
-          renderedAttachments += XssSafeFactory.renderableMsgBlock(
-            this.view.factory,
-            block,
-            message.id,
-            from,
-            this.view.storage.sendAs && !!this.view.storage.sendAs[from]
-          );
-        } else if (this.view.showOriginal) {
-          r += Xss.escape(Str.with(block.content)).replace(/\n/g, '<br>');
-        } else {
-          r += XssSafeFactory.renderableMsgBlock(this.view.factory, block, message.id, from, this.view.storage.sendAs && !!this.view.storage.sendAs[from]);
-        }
-      }
-      if (renderedAttachments) {
-        r += `<div class="attachments" data-test="container-attachments">${renderedAttachments}</div>`;
-      }
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      const { blocks, headers } = await MessageRenderer.processMessageFromRaw(raw!);
+      // todo: review the meaning of threadHasPgpBlock
+      this.threadHasPgpBlock ||= blocks.some(block => ['encryptedMsg', 'publicKey', 'privateKey', 'signedMsg'].includes(block.type));
+      // todo: take `from` from the processedMessage?
       const exportBtn = this.debugEmails.includes(this.view.acctEmail) ? '<a href="#" class="action-export">download api export</a>' : '';
-      r =
-        `<p class="message_header" data-test="container-msg-header">From: ${Xss.escape(from)} <span style="float:right;">${headers.date} ${exportBtn}</p>` + r;
+      const r =
+        `<p class="message_header" data-test="container-msg-header">From: ${Xss.escape(from || 'unknown')} <span style="float:right;">${
+          headers.date
+        } ${exportBtn}</p>` + MessageRenderer.renderMsg({ from, blocks }, this.view.factory, this.view.showOriginal, message.id, this.view.storage.sendAs);
       $('.thread').append(this.wrapMsg(htmlId, r)); // xss-safe-factory
       if (exportBtn) {
         $('.action-export').on(

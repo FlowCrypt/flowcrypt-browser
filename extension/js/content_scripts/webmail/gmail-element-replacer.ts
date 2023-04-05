@@ -25,9 +25,14 @@ import { SendAsAlias } from '../../common/platform/store/acct-store.js';
 // todo: can we somehow define a purely relay class for ContactStore to clearly show that crypto-libraries are not loaded and can't be used?
 import { ContactStore } from '../../common/platform/store/contact-store.js';
 import { Buf } from '../../common/core/buf.js';
-import { MsgBlockParser } from '../../common/core/msg-block-parser.js';
+import { MessageRenderer, ProccesedMsg } from '../../common/ui/message-renderer.js';
 
 type JQueryEl = JQuery<HTMLElement>;
+
+interface MessageCacheEntry {
+  full: Promise<GmailRes.GmailMsg>;
+  processedFull?: ProccesedMsg;
+}
 
 export class GmailElementReplacer implements WebmailElementReplacer {
   private debug = false;
@@ -35,6 +40,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
   private gmail: Gmail;
   private recipientHasPgpCache: Dict<boolean> = {};
   private sendAs: Dict<SendAsAlias>;
+  private messages: Dict<MessageCacheEntry> = {};
   private factory: XssSafeFactory;
   private clientConfiguration: ClientConfiguration;
   private pubLookup: PubLookup;
@@ -152,8 +158,29 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     }
   };
 
+  private msgGetCached = (msgId: string): MessageCacheEntry => {
+    // todo: retries? exceptions?
+    let msgDownload = this.messages[msgId];
+    if (!msgDownload) {
+      this.messages[msgId] = { full: this.gmail.msgGet(msgId, 'full') };
+      msgDownload = this.messages[msgId];
+    }
+    return msgDownload;
+  };
+
+  private msgGetProcessed = async (msgId: string): Promise<ProccesedMsg> => {
+    // todo: retries? exceptions?
+    const msgDownload = this.msgGetCached(msgId);
+    if (msgDownload.processedFull) {
+      return msgDownload.processedFull;
+    }
+    const msg = await msgDownload.full;
+    msgDownload.processedFull = await MessageRenderer.process(msg);
+    return msgDownload.processedFull;
+  };
+
   private everything = () => {
-    this.replaceArmoredBlocks();
+    this.replaceArmoredBlocks().catch(Catch.reportErr);
     this.replaceAttachments().catch(Catch.reportErr);
     this.replaceComposeDraftLinks();
     this.replaceConvoBtns();
@@ -163,7 +190,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     this.renderLocalDrafts().catch(Catch.reportErr);
   };
 
-  private replaceArmoredBlocks = () => {
+  private replaceArmoredBlocks = async () => {
     const emailsContainingPgpBlock = $(this.sel.msgOuter).find(this.sel.msgInnerContainingPgp).not('.evaluated');
     for (const emailContainer of emailsContainingPgpBlock) {
       if (this.debug) {
@@ -173,14 +200,12 @@ export class GmailElementReplacer implements WebmailElementReplacer {
       if (this.debug) {
         console.debug('replaceArmoredBlocks() for of emailsContainingPgpBlock -> emailContainer added evaluated');
       }
-      const senderEmail = this.getSenderEmail(emailContainer);
-      const isOutgoing = !!this.sendAs[senderEmail];
       const msgId = this.determineMsgId(emailContainer);
-      const { blocks } = MsgBlockParser.detectBlocks(emailContainer.innerText);
+      const { blocks, from } = await this.msgGetProcessed(msgId);
       if (blocks.length === 1 && blocks[0].type === 'plainText') {
         // only has single block which is plain text
       } else {
-        const replacementXssSafe = XssSafeFactory.renderableMsgBlocks(this.factory, blocks, msgId, senderEmail, isOutgoing);
+        const replacementXssSafe = MessageRenderer.renderMsg({ blocks, from }, this.factory, false, msgId, this.sendAs);
         $(this.sel.translatePrompt).hide();
         if (this.debug) {
           console.debug('replaceArmoredBlocks() for of emailsContainingPgpBlock -> emailContainer replacing');
@@ -390,7 +415,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
           if (this.debug) {
             console.debug('processNewPgpAttachments() -> msgGet may take some time');
           }
-          const msg = await this.gmail.msgGet(msgId, 'full'); // todo: cache or thoroughly refactor in #5022
+          const msg = await this.msgGetCached(msgId).full;
           if (this.debug) {
             console.debug('processNewPgpAttachments() -> msgGet done -> processAttachments', msg);
           }
@@ -423,7 +448,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     if (this.debug) {
       console.debug('processAttachments()', attachmentMetas);
     }
-    let msgEl = this.getMsgBodyEl(msgId); // not a constant because sometimes elements get replaced, then returned by the function that replaced them
+    const msgEl = this.getMsgBodyEl(msgId); // not a constant because sometimes elements get replaced, then returned by the function that replaced them
     const isBodyEmpty = msgEl.text() === '' || msgEl.text() === '\n';
     const senderEmail = this.getSenderEmail(msgEl);
     const isOutgoing = !!this.sendAs[senderEmail];
@@ -444,6 +469,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
         if (treatAs !== 'plainFile') {
           this.hideAttachment(attachmentSel, attachmentsContainerInner);
           nRenderedAttachments--;
+          /*
           if (treatAs === 'encryptedFile') {
             // actual encrypted attachment - show it
             attachmentsContainerInner.prepend(this.factory.embeddedAttachment(a, true)); // xss-safe-factory
@@ -483,7 +509,9 @@ export class GmailElementReplacer implements WebmailElementReplacer {
             const embeddedSignedMsgXssSafe = this.factory.embeddedMsg('signedMsg', '', msgId, false, senderEmail, true);
             msgEl = this.updateMsgBodyEl_DANGEROUSLY(msgEl, 'set', embeddedSignedMsgXssSafe); // xss-safe-factory
           }
+          */
         } else if (treatAs === 'plainFile' && a.name.substr(-4) === '.asc') {
+          // todo:
           // normal looking attachment ending with .asc
           // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
           const data = await this.gmail.attachmentGetChunk(msgId, a.id!); // .id is present when fetched from api
@@ -579,6 +607,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     return nRenderedAttachments;
   };
 
+  /* todo:
   private renderBackupFromFile = async (
     attachmentMeta: Attachment,
     attachmentsContainerInner: JQueryEl,
@@ -598,7 +627,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     this.updateMsgBodyEl_DANGEROUSLY(msgEl, 'append', this.factory.embeddedBackup(downloadedAttachment.data.toUtfStr())); // xss-safe-factory
     return nRenderedAttachments;
   };
-
+  */
   private filterAttachments = (potentialMatches: JQueryEl | HTMLElement, regExp: RegExp) => {
     return $(potentialMatches)
       .filter('span.aZo:visible, span.a5r:visible')
@@ -683,6 +712,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     }
   };
 
+  // todo: should we use it?
   private getSenderEmail = (msgEl: HTMLElement | JQueryEl) => {
     return ($(msgEl).closest('.gs').find('span.gD').attr('email') || '').toLowerCase();
   };

@@ -295,7 +295,7 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
     await this.apiGmailLoopThroughEmailsToCompileContacts(needles, gmailQuery, chunkedCb);
   };
 
-  /**
+  /** @deprecated should not be used by pgp_block frames
    * Extracts the encrypted message from gmail api. Sometimes it's sent as a text, sometimes html, sometimes attachments in various forms.
    * As MsgBlockParser detects incomplete encryptedMsg etc. and they get through, we're handling them too
    */

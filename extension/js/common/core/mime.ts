@@ -23,16 +23,19 @@ const Iso88592 = requireIso88592();
 type AddressHeader = { address: string; name: string };
 type MimeContentHeader = string | AddressHeader[];
 export type MimeContent = {
-  headers: Dict<MimeContentHeader>;
   attachments: Attachment[];
   rawSignedContent?: string;
   subject?: string;
   html?: string;
   text?: string;
-  from?: string;
+};
+
+export type MimeContentWithHeaders = MimeContent & {
+  headers: Dict<MimeContentHeader>;
   to: string[];
   cc: string[];
   bcc: string[];
+  from?: string;
 };
 
 export type MimeEncodeType = 'pgpMimeEncrypted' | 'pgpMimeSigned' | 'smimeEncrypted' | 'smimeSigned' | undefined;
@@ -46,12 +49,14 @@ export type SendableMsgBody = {
 };
 /* eslint-enable @typescript-eslint/naming-convention */
 export type MimeProccesedMsg = {
-  rawSignedContent: string | undefined;
-  headers: Dict<MimeContentHeader>;
+  rawSignedContent: string | undefined; // undefined if format was 'full'
   blocks: MsgBlock[];
-  from: string | undefined;
-  to: string[];
 };
+
+export type MimeProccesedFromRawMsg = MimeProccesedMsg & {
+  headers: Dict<MimeContentHeader>;
+};
+
 type SendingType = 'to' | 'cc' | 'bcc';
 
 export class Mime {
@@ -127,17 +132,17 @@ export class Mime {
       }
     }
     return {
-      headers: decoded.headers,
       blocks,
-      from: decoded.from,
-      to: decoded.to,
       rawSignedContent: decoded.rawSignedContent,
     };
   };
 
-  public static process = async (mimeMsg: Uint8Array): Promise<MimeProccesedMsg> => {
+  public static process = async (mimeMsg: Uint8Array): Promise<MimeProccesedFromRawMsg> => {
     const decoded = await Mime.decode(mimeMsg);
-    return Mime.processDecoded(decoded);
+    return {
+      headers: decoded.headers,
+      ...Mime.processDecoded(decoded),
+    };
   };
 
   public static isPlainImgAttachment = (b: MsgBlock) => {
@@ -147,12 +152,6 @@ export class Mime {
       b.attachmentMeta.type &&
       ['image/jpeg', 'image/jpg', 'image/bmp', 'image/png', 'image/svg+xml'].includes(b.attachmentMeta.type)
     );
-  };
-
-  public static replyHeaders = (parsedMimeMsg: MimeContent) => {
-    const msgId = String(parsedMimeMsg.headers['message-id'] || '');
-    const refs = String(parsedMimeMsg.headers['in-reply-to'] || '');
-    return { 'in-reply-to': msgId, references: refs + ' ' + msgId };
   };
 
   public static resemblesMsg = (msg: Uint8Array | string) => {
@@ -177,18 +176,8 @@ export class Mime {
     return contentType.index === 0;
   };
 
-  public static decode = async (mimeMsg: Uint8Array | string): Promise<MimeContent> => {
-    let mimeContent: MimeContent = {
-      attachments: [],
-      headers: {},
-      subject: undefined,
-      text: undefined,
-      html: undefined,
-      from: undefined,
-      to: [],
-      cc: [],
-      bcc: [],
-    };
+  public static decode = async (mimeMsg: Uint8Array | string): Promise<MimeContentWithHeaders> => {
+    let mimeContent: MimeContentWithHeaders;
     const parser = new MimeParser();
     const leafNodes: { [key: string]: MimeParserNode } = {};
     parser.onbody = (node: MimeParserNode) => {
@@ -338,7 +327,7 @@ export class Mime {
     return pgpMimeSigned;
   };
 
-  private static headerGetAddress = (parsedMimeMsg: MimeContent, headersNames: Array<SendingType | 'from'>) => {
+  private static headerGetAddress = (parsedMimeMsg: MimeContentWithHeaders, headersNames: Array<SendingType | 'from'>) => {
     const result: { to: string[]; cc: string[]; bcc: string[] } = { to: [], cc: [], bcc: [] };
     let from: string | undefined;
     const getHdrValAsArr = (hdr: MimeContentHeader) =>
