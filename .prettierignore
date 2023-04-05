@@ -2,8 +2,5 @@ build/*
 extension/lib
 extension/types
 *.code-workspace
-*.css
-*.htm
-*.html
 *.md
 *.yml

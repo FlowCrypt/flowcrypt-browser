@@ -1,74 +1,65 @@
 <!-- © 2016-2018 FlowCrypt Limited. Limitations apply. Contact human@flowcrypt.com -->
 
 <html>
+  <head>
+    <meta content="text/html;charset=utf-8" http-equiv="Content-Type" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+    <title>FlowCrypt</title>
+    <link rel="stylesheet" href="/css/cryptup.css" />
+    <link rel="stylesheet" href="/css/sweetalert2.css" />
+    <link rel="stylesheet" href="/css/open-sans.css" />
+    <link rel="stylesheet" href="/css/animate.css" />
+    <link rel="stylesheet" href="/css/mobile-menu-styling.css" />
+    <link rel="icon" href="/img/logo/flowcrypt-logo-19-19.png" />
+  </head>
 
-<head>
-  <meta content="text/html;charset=utf-8" http-equiv="Content-Type">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>FlowCrypt</title>
-  <link rel="stylesheet" href="/css/cryptup.css" />
-  <link rel="stylesheet" href="/css/sweetalert2.css" />
-  <link rel="stylesheet" href="/css/open-sans.css" />
-  <link rel="stylesheet" href="/css/animate.css" />
-  <link rel="stylesheet" href="/css/mobile-menu-styling.css" />
-  <link rel="icon" href="/img/logo/flowcrypt-logo-19-19.png" />
-</head>
-
-<body id="settings">
-
-  <div id="content" class="change_passphrase">
-
-    <div id="step_0_enter_current" class="display_none">
-      <div class="line sentence">Enter your current pass phrase</div>
-      <div class="line">
-        <input id="current_pass_phrase" type="text" placeholder="Current pass phrase" data-test="input-current-pp" maxlength="256" />
+  <body id="settings">
+    <div id="content" class="change_passphrase">
+      <div id="step_0_enter_current" class="display_none">
+        <div class="line sentence">Enter your current pass phrase</div>
+        <div class="line">
+          <input id="current_pass_phrase" type="text" placeholder="Current pass phrase" data-test="input-current-pp" maxlength="256" />
+        </div>
+        <div class="line">
+          <button class="button long green action_test_current_passphrase" data-test="action-confirm-current-pp">continue</button>
+        </div>
       </div>
-      <div class="line">
-        <button class="button long green action_test_current_passphrase" data-test="action-confirm-current-pp">continue
-        </button>
+
+      <div id="step_1_enter_new" class="display_none">
+        <div class="line">See <a href="#" data-swal-page="/chrome/texts/passphrase_help.htm">choosing secure pass phrases</a>.</div>
+        <div class="line">
+          <input id="new_pass_phrase" type="text" placeholder="Enter a new pass phrase" data-test="input-new-pp" maxlength="256" />
+        </div>
+        <div class="line">
+          <button class="button long gray action_set_pass_phrase" data-test="action-show-confirm-new-pp">SET PASS PHRASE</button>
+        </div>
+        <div class="line">Loss of this pass phrase cannot be recovered.</div>
+      </div>
+
+      <div id="step_2_confirm_new" class="display_none">
+        <div class="line">Please repeat it one more time. Make sure to note the pass phrase down.</div>
+        <div class="line">
+          <input id="new_pass_phrase_confirm" type="text" placeholder="Repeat pass phrase" data-test="input-confirm-new-pp" maxlength="256" />
+        </div>
+        <div class="line">
+          <button class="button long green action_change" data-test="action-confirm-new-pp">CONFIRM PASS PHRASE</button>
+        </div>
+        <div class="line">
+          <button class="button longer gray action_use_another">USE ANOTHER PASS PHRASE</button>
+        </div>
+      </div>
+
+      <div id="step_3_done" class="display_none">
+        <div class="line">All set!</div>
       </div>
     </div>
 
-    <div id="step_1_enter_new" class="display_none">
-      <div class="line ">See <a href="#" data-swal-page="/chrome/texts/passphrase_help.htm">choosing secure pass
-          phrases</a>.</div>
-      <div class="line">
-        <input id="new_pass_phrase" type="text" placeholder="Enter a new pass phrase" data-test="input-new-pp" maxlength="256" />
-      </div>
-      <div class="line">
-        <button class="button long gray action_set_pass_phrase" data-test="action-show-confirm-new-pp">SET PASS PHRASE
-        </button>
-      </div>
-      <div class="line">Loss of this pass phrase cannot be recovered.</div>
-    </div>
-
-    <div id="step_2_confirm_new" class="display_none">
-      <div class="line">Please repeat it one more time. Make sure to note the pass phrase down.</div>
-      <div class="line">
-        <input id="new_pass_phrase_confirm" type="text" placeholder="Repeat pass phrase" data-test="input-confirm-new-pp" maxlength="256" />
-      </div>
-      <div class="line">
-        <button class="button long green action_change" data-test="action-confirm-new-pp">CONFIRM PASS PHRASE</button>
-      </div>
-      <div class="line">
-        <button class="button longer gray action_use_another">USE ANOTHER PASS PHRASE</button>
-      </div>
-    </div>
-
-    <div id="step_3_done" class="display_none">
-      <div class="line">All set!</div>
-    </div>
-
-  </div>
-
-  <script src="/lib/purify.js"></script>
-  <script src="/lib/jquery.min.js"></script>
-  <script src="/lib/sweetalert2.js"></script>
-  <script src="/lib/zxcvbn.js"></script>
-  <script src="/lib/openpgp.js"></script>
-  <script src="change_passphrase.js" type="module"></script>
-  <script src="../../settings/index.js" type="module"></script>
-
-</body>
-
+    <script src="/lib/purify.js"></script>
+    <script src="/lib/jquery.min.js"></script>
+    <script src="/lib/sweetalert2.js"></script>
+    <script src="/lib/zxcvbn.js"></script>
+    <script src="/lib/openpgp.js"></script>
+    <script src="change_passphrase.js" type="module"></script>
+    <script src="../../settings/index.js" type="module"></script>
+  </body>
 </html>

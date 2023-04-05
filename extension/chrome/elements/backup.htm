@@ -1,36 +1,34 @@
 <!-- © 2016-2018 FlowCrypt Limited. Limitations apply. Contact human@flowcrypt.com -->
 
 <html>
+  <head>
+    <meta content="text/html;charset=utf-8" http-equiv="Content-Type" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+    <title>FlowCrypt</title>
+    <link rel="stylesheet" href="/css/cryptup.css" />
+    <link rel="stylesheet" href="/css/sweetalert2.css" />
+    <link rel="stylesheet" href="/css/mobile-menu-styling.css" />
+  </head>
 
-<head>
-  <meta content="text/html;charset=utf-8" http-equiv="Content-Type">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>FlowCrypt</title>
-  <link rel="stylesheet" href="/css/cryptup.css" />
-  <link rel="stylesheet" href="/css/sweetalert2.css" />
-  <link rel="stylesheet" href="/css/mobile-menu-styling.css" />
-</head>
-
-<body class="backup_neutral">
-  <div id="backup_block" class="backup">
-    <div class="line">This backup is protected by your pass phrase. Please make sure
-      to note your pass phrase down or you may lose access to your encrypted emails!</div>
-    <div class="line">
-      <input class="input_pass_phrase" type="password" id="pass_phrase" placeholder="Enter your pass phrase..." maxlength="256" />
-      <button class="button green action_test_pass">Test your Passphrase</button>
+  <body class="backup_neutral">
+    <div id="backup_block" class="backup">
+      <div class="line">
+        This backup is protected by your pass phrase. Please make sure to note your pass phrase down or you may lose access to your encrypted emails!
+      </div>
+      <div class="line">
+        <input class="input_pass_phrase" type="password" id="pass_phrase" placeholder="Enter your pass phrase..." maxlength="256" />
+        <button class="button green action_test_pass">Test your Passphrase</button>
+      </div>
+      <div class="line fingerprints hide_if_compact">Key Fingerprint: <span class="fingerprint good"></span></div>
+      <div class="line">
+        <span class="private_key_status"></span>
+      </div>
     </div>
-    <div class="line fingerprints hide_if_compact">Key Fingerprint: <span class="fingerprint good"></span></div>
-    <div class="line">
-      <span class="private_key_status"></span>
-    </div>
-  </div>
 
-  <script src="/lib/purify.js"></script>
-  <script src="/lib/jquery.min.js"></script>
-  <script src="/lib/sweetalert2.js"></script>
-  <script src="/lib/openpgp.js"></script>
-  <script src="backup.js" type="module"></script>
-
-</body>
-
+    <script src="/lib/purify.js"></script>
+    <script src="/lib/jquery.min.js"></script>
+    <script src="/lib/sweetalert2.js"></script>
+    <script src="/lib/openpgp.js"></script>
+    <script src="backup.js" type="module"></script>
+  </body>
 </html>

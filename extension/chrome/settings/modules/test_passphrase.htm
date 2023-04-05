@@ -1,47 +1,36 @@
 <!-- © 2016-2018 FlowCrypt Limited. Limitations apply. Contact human@flowcrypt.com -->
 
 <html>
+  <head>
+    <meta content="text/html;charset=utf-8" http-equiv="Content-Type" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+    <title>FlowCrypt</title>
+    <link rel="stylesheet" href="/css/cryptup.css" />
+    <link rel="stylesheet" href="/css/sweetalert2.css" />
+    <link rel="stylesheet" href="/css/open-sans.css" />
+    <link rel="stylesheet" href="/css/animate.css" />
+    <link rel="stylesheet" href="/css/mobile-menu-styling.css" />
+    <link rel="icon" href="/img/logo/flowcrypt-logo-19-19.png" />
+  </head>
 
-<head>
-  <meta content="text/html;charset=utf-8" http-equiv="Content-Type">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>FlowCrypt</title>
-  <link rel="stylesheet" href="/css/cryptup.css" />
-  <link rel="stylesheet" href="/css/sweetalert2.css" />
-  <link rel="stylesheet" href="/css/open-sans.css" />
-  <link rel="stylesheet" href="/css/animate.css" />
-  <link rel="stylesheet" href="/css/mobile-menu-styling.css" />
-  <link rel="icon" href="/img/logo/flowcrypt-logo-19-19.png" />
-</head>
-
-<body id="settings">
-
-  <div id="content" class="test_passphrase">
-
-    <div class="line">Lost pass phrase might lock you out of your encrypted messages.</div>
-    <div class="line">We <b class="red">STRONGLY</b> encourage you to check that you remember your passphrase
-      correctly.</div>
-    <div class="line">
-      <input id="password" type="text" placeholder="Your pass phrase" data-test="input-test-passphrase" maxlength="256" />
-    </div>
-    <div class="line">
-      <button class="button green long action_verify" data-test="action-test-passphrase">VERIFY</button>
-    </div>
-    <div class="line">
-      &nbsp;
-    </div>
-    <div class="line">
-      Cannot remember? <a href="#" class="action_change_passphrase">Change your pass phrase</a>
+  <body id="settings">
+    <div id="content" class="test_passphrase">
+      <div class="line">Lost pass phrase might lock you out of your encrypted messages.</div>
+      <div class="line">We <b class="red">STRONGLY</b> encourage you to check that you remember your passphrase correctly.</div>
+      <div class="line">
+        <input id="password" type="text" placeholder="Your pass phrase" data-test="input-test-passphrase" maxlength="256" />
+      </div>
+      <div class="line">
+        <button class="button green long action_verify" data-test="action-test-passphrase">VERIFY</button>
+      </div>
+      <div class="line">&nbsp;</div>
+      <div class="line">Cannot remember? <a href="#" class="action_change_passphrase">Change your pass phrase</a></div>
     </div>
 
-  </div>
-
-  <script src="/lib/purify.js"></script>
-  <script src="/lib/jquery.min.js"></script>
-  <script src="/lib/sweetalert2.js"></script>
-  <script src="/lib/openpgp.js"></script>
-  <script src="test_passphrase.js" type="module"></script>
-
-</body>
-
+    <script src="/lib/purify.js"></script>
+    <script src="/lib/jquery.min.js"></script>
+    <script src="/lib/sweetalert2.js"></script>
+    <script src="/lib/openpgp.js"></script>
+    <script src="test_passphrase.js" type="module"></script>
+  </body>
 </html>

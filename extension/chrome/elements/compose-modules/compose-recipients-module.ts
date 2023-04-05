@@ -385,10 +385,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       .find(`#input-container-bcc`)
       .css('display', isThere.bcc ? '' : 'none');
     this.view.S.cached('bcc').css('display', isThere.bcc ? 'none' : '');
-    this.view.S.cached('input_addresses_container_outer')
-      .children(`:not([style="display: none;"])`)
-      .last()
-      .append(this.view.S.cached('container_cc_bcc_buttons')); // xss-reinsert
+    this.view.S.cached('input_addresses_container_outer').children(':visible').last().append(this.view.S.cached('container_cc_bcc_buttons')); // xss-reinsert
   };
 
   public collapseInputsIfNeeded = async () => {
