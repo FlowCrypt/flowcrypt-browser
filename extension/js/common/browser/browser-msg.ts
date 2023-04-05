@@ -85,8 +85,6 @@ export namespace Bm {
   export type ShowConfirmation = { text: string; isHTML: boolean; footer?: string };
   export type ReRenderRecipient = { email: string };
   export type SaveFetchedPubkeys = { email: string; pubkeys: string[] };
-  export type ProcessAndStoreKeysFromEkmLocally = { acctEmail: string; decryptedPrivateKeys: string[] };
-  export type GetLocalKeyExpiration = { acctEmail: string };
   export type ShowConfirmationResult = { isConfirmed: boolean };
 
   export namespace Res {
@@ -110,13 +108,7 @@ export namespace Bm {
     export type AjaxGmailAttachmentGetChunk = { chunk: Buf };
     export type _tab_ = { tabId: string | null | undefined }; // eslint-disable-line @typescript-eslint/naming-convention
     export type SaveFetchedPubkeys = boolean;
-    export type GetLocalKeyExpiration = number | undefined;
     export type ShowConfirmationResult = boolean;
-    export type ProcessAndStoreKeysFromEkmLocally = {
-      needPassphrase?: boolean;
-      updateCount?: number;
-      noKeysSetup?: boolean;
-    };
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     export type Db = any; // not included in Any below
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
