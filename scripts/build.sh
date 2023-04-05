@@ -56,7 +56,7 @@ cp node_modules/sweetalert2/dist/sweetalert2.js $OUTDIR/lib/sweetalert2.js
 cp node_modules/sweetalert2/dist/sweetalert2.css $OUTDIR/css/sweetalert2.css
 cp node_modules/iso-8859-2/iso-8859-2.js $OUTDIR/lib/iso-8859-2.js
 cp node_modules/zxcvbn/dist/zxcvbn.js $OUTDIR/lib/zxcvbn.js
-cp node_modules/squire-rte/build/squire-raw.js $OUTDIR/lib/squire-raw.js
+cp node_modules/squire-rte/dist/squire-raw.js $OUTDIR/lib/squire-raw.js
 cp node_modules/clipboard/dist/clipboard.js $OUTDIR/lib/clipboard.js
 cp node_modules/@flowcrypt/fine-uploader/fine-uploader/fine-uploader.js $OUTDIR/lib/fine-uploader.js
 cp node_modules/filesize/dist/filesize.js $OUTDIR/lib/filesize.js
