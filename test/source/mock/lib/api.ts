@@ -4,6 +4,7 @@ import * as https from 'https';
 import * as http from 'http';
 import { Util } from '../../util';
 import { readFileSync } from 'fs';
+import { AttesterConfig } from '../attester/attester-endpoints';
 
 export class HttpAuthErr extends Error {}
 export class HttpClientErr extends Error {
@@ -31,6 +32,7 @@ export type Handlers<REQ, RES> = { [request: string]: RequestHandler<REQ, RES> }
 
 export class Api<REQ, RES> {
   public server: https.Server;
+  public attesterConfig: AttesterConfig;
   protected apiName: string;
   protected maxRequestSizeMb = 0;
   protected maxRequestSizeBytes = 0;

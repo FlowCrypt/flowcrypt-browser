@@ -6,155 +6,22 @@ import { HandlersDefinition } from '../all-apis-mock';
 import { isPost, isGet } from '../lib/mock-util';
 import { oauth } from '../lib/oauth';
 import { expect } from 'chai';
-import { GoogleData } from '../google/google-data';
-import { Buf } from '../../core/buf';
-import { testConstants } from '../../tests/tooling/consts';
-import { Util } from '../../util';
 
-const knownMockEmails = [
-  'ci.tests.gmail@flowcrypt.test',
-  'flowcrypt.compatibility@gmail.com',
-  'human@flowcrypt.com',
-  'flowcrypt.test.key.new.manual@gmail.com',
-  'flowcrypt.test.key.used.pgp@gmail.com',
-  'flowcrypt.test.key.recovered@gmail.com',
-];
-
-let data: GoogleData;
+// let data: GoogleData;
 export const MOCK_ATTESTER_LAST_INSERTED_PUB: { [email: string]: string } = {};
-const get203FAE7076005381 = async () => {
-  if (!data) {
-    data = await GoogleData.withInitializedData('flowcrypt.compatibility@gmail.com');
-  }
-  /* eslint-disable @typescript-eslint/no-non-null-assertion */
-  const msg = data.getMessage('17dad75e63e47f97')!;
-  const msgText = Buf.fromBase64Str(msg!.raw!).toUtfStr();
-  return msgText
-    .match(/\-\-\-\-\-BEGIN PGP PUBLIC KEY BLOCK\-\-\-\-\-.*\-\-\-\-\-END PGP PUBLIC KEY BLOCK\-\-\-\-\-/s)![0]
-    .replace(/=\r\n/g, '')
-    .replace(/=3D/g, '=');
-  /* eslint-enable @typescript-eslint/no-non-null-assertion */
-};
-
-export const mockAttesterEndpoints: HandlersDefinition = {
-  '/attester/pub/?': async ({ body }, req) => {
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    const emailOrLongid = req.url!.split('/').pop()!.toLowerCase().trim();
-    if (isGet(req)) {
-      if (knownMockEmails.includes(emailOrLongid)) {
-        // the client does not yet check that the pubkey contains the right uids
-        // once it starts checking that, we'll have to be more specific with the pubkeys
-        return somePubkey;
-      }
-      if (emailOrLongid === 'mock.only.pubkey@flowcrypt.com') {
-        return somePubkey;
-      }
-      if (emailOrLongid === 'test.match.attester.key@gmail.com') {
-        return testMatchPubKey;
-      }
-      if (emailOrLongid === 'test.mismatch.attester.key@gmail.com') {
-        return somePubkey;
-      }
-      if (emailOrLongid === 'mock.only.pubkey@other.com') {
-        return somePubkey;
-      }
-      if (emailOrLongid === 'expired.on.attester@domain.com') {
-        return expiredPubkey;
-      }
-      if (emailOrLongid === 'flowcrypt.compatibility@protonmail.com') {
-        return protonMailCompatKey;
-      }
-      if (emailOrLongid === 'multiple.pub.key@flowcrypt.com') {
-        return [somePubkey, protonMailCompatKey].join('\n');
-      }
-      if (emailOrLongid === 'some.sender@test.com') {
-        return await get203FAE7076005381();
-      }
-      if (emailOrLongid === 'this.pubkey.takes.long.time.to.load@sender.test') {
-        await Util.sleep(5);
-        return await get203FAE7076005381();
-      }
-      if (['sams50sams50sept@gmail.com', 'sender@example.com'].includes(emailOrLongid)) {
-        return testConstants.pubkey2864E326A5BE488A;
-      }
-      if (emailOrLongid.startsWith('martin@p')) {
-        return mpVerificationKey;
-      }
-      if (emailOrLongid === 'sha1@sign.com') {
-        return sha1signpubkey;
-      }
-      if (emailOrLongid === 'auto.refresh.expired.key@recipient.com') {
-        // newer version of expired pubkey
-        return newerVersionOfExpiredPubkey;
-      }
-      if (emailOrLongid === '8EC78F043CEB022498AFD4771E62ED6D15A25921'.toLowerCase()) {
-        return testConstants.oldHasOlderKeyOnAttester;
-      }
-      if (emailOrLongid === 'test.ldap.priority@gmail.com') {
-        return somePubkey;
-      }
-      if (emailOrLongid === 'test.flowcrypt.pubkeyserver.priority@gmail.com') {
-        return somePubkey;
-      }
-      if (emailOrLongid === 'test.ldap.timeout@gmail.com') {
-        return somePubkey;
-      }
-      if (emailOrLongid === 'test.flowcrypt.pubkey.timeout@gmail.com') {
-        throw new HttpClientErr('RequestTimeout', Status.BAD_REQUEST);
-      }
-      if (emailOrLongid === 'attester.return.error@flowcrypt.test') {
-        throw new HttpClientErr('Server error. Please try again', Status.SERVER_ERROR);
-      }
-      throw new HttpClientErr('Pubkey not found', 404);
-    } else if (isPost(req)) {
-      oauth.checkAuthorizationForEmail(req.headers.authorization, emailOrLongid);
-      expect(body).to.contain('-----BEGIN PGP PUBLIC KEY BLOCK-----');
-      MOCK_ATTESTER_LAST_INSERTED_PUB[emailOrLongid] = body as string;
-      return 'Saved'; // 200 OK
-    } else {
-      throw new HttpClientErr(`Not implemented: ${req.method}`);
-    }
-  },
-  '/attester/ldap-relay': async (parsedReq, req) => {
-    const server = parsedReq.query.server;
-    const emailOrLongid = parsedReq.query.search;
-    if (isGet(req)) {
-      if (emailOrLongid === 'test.ldap.priority@gmail.com') {
-        return protonMailCompatKey;
-      }
-      if (emailOrLongid === 'test.flowcrypt.pubkeyserver.priority@gmail.com') {
-        return protonMailCompatKey;
-      }
-      if (emailOrLongid === 'has.pub@client-configuration-test.flowcrypt.test') {
-        return hasPubKey;
-      }
-      if (emailOrLongid === 'invalid.pub@client-configuration-test.flowcrypt.test') {
-        return protonMailCompatKey;
-      }
-      if (emailOrLongid === 'test.ldap.keyserver.pgp@gmail.com' && server === 'keyserver.pgp.com') {
-        return [protonMailCompatKey, testMatchPubKey].join('\n');
-      }
-      if (emailOrLongid === 'test.ldap.timeout@gmail.com') {
-        throw new HttpClientErr('RequestTimeout', Status.BAD_REQUEST);
-      }
-      if (emailOrLongid === 'test.flowcrypt.pubkey.timeout@gmail.com') {
-        return somePubkey;
-      }
-      throw new HttpClientErr('No OpenPGP LDAP server on this address.', Status.NOT_FOUND);
-    } else {
-      throw new HttpClientErr(`Not implemented: ${req.method}`);
-    }
-  },
-  '/attester/welcome-message': async ({ body }, req) => {
-    if (!isPost(req)) {
-      throw new HttpClientErr(`Wrong method: ${req.method}`);
-    }
-    const { email, pubkey } = body as Dict<string>;
-    expect(email).to.contain('@');
-    expect(pubkey).to.contain('-----BEGIN PGP PUBLIC KEY BLOCK-----');
-    return { sent: true };
-  },
-};
+// const get203FAE7076005381 = async () => {
+//   if (!data) {
+//     data = await GoogleData.withInitializedData('flowcrypt.compatibility@gmail.com');
+//   }
+//   /* eslint-disable @typescript-eslint/no-non-null-assertion */
+//   const msg = data.getMessage('17dad75e63e47f97')!;
+//   const msgText = Buf.fromBase64Str(msg!.raw!).toUtfStr();
+//   return msgText
+//     .match(/\-\-\-\-\-BEGIN PGP PUBLIC KEY BLOCK\-\-\-\-\-.*\-\-\-\-\-END PGP PUBLIC KEY BLOCK\-\-\-\-\-/s)![0]
+//     .replace(/=\r\n/g, '')
+//     .replace(/=3D/g, '=');
+//   /* eslint-enable @typescript-eslint/no-non-null-assertion */
+// };
 
 export const somePubkey = `-----BEGIN PGP PUBLIC KEY BLOCK-----
 Version: CryptUP 3.2.0 Easy Gmail Encryption https://cryptup.org
@@ -435,3 +302,99 @@ NaqFqwp9jMCYEnjfM2VSYFTKFrQYm9zYUTIKnQxNtWC8Z85UKz2eMk/INukzWe7g
 cvQabqad/ZghLSTzo/Kf
 =sshZ
 -----END PGP PUBLIC KEY BLOCK-----`;
+
+interface PubKeyLookUpResult {
+  pubkey?: string;
+  returnError?: { code: number; message: string };
+}
+
+export interface AttesterConfig {
+  pubkeyLookup?: Record<string, PubKeyLookUpResult>;
+  ldapRelay?: Record<string, PubKeyLookUpResult>;
+  welcomeMessageEnabled?: boolean;
+}
+
+const LEGACY_GLOBAL_ATTESTER_MOCK_CONFIG: AttesterConfig = {
+  pubkeyLookup: {
+    'ci.tests.gmail@flowcrypt.test': {
+      pubkey: somePubkey,
+    },
+    'test.flowcrypt.pubkey.timeout@gmail.com': {
+      returnError: {
+        code: Status.BAD_REQUEST,
+        message: 'Request timeout',
+      },
+    },
+  },
+  ldapRelay: {
+    'test.ldap.priority@gmail.com': {
+      pubkey: protonMailCompatKey,
+    },
+    'test.ldap.timeout@gmail.com': {
+      returnError: {
+        code: Status.BAD_REQUEST,
+        message: 'Request timeout',
+      },
+    },
+  },
+};
+
+// const throwErrorIfConfigSaysSo = (config: AttesterConfig) => {
+//   if (config.returnError) {
+//     throw new AttesterErr(config.returnError.message, config.returnError.code);
+//   }
+// };
+
+export const getMockAttesterEndpoints = (attesterConfig: AttesterConfig): HandlersDefinition => {
+  return {
+    '/attester/pub/?': async ({ body }, req) => {
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      const emailOrLongid = req.url!.split('/').pop()!.toLowerCase().trim();
+      if (isGet(req)) {
+        if (!attesterConfig.pubkeyLookup) {
+          throw new HttpClientErr('Method not allowed', 405);
+        }
+        const pubRes = attesterConfig.pubkeyLookup[emailOrLongid];
+        if (pubRes) {
+          if (pubRes.returnError) {
+            throw new HttpClientErr(pubRes.returnError.message, pubRes.returnError.code);
+          }
+          return pubRes.pubkey;
+        }
+        throw new HttpClientErr('Pubkey not found', 404);
+      } else if (isPost(req)) {
+        oauth.checkAuthorizationForEmail(req.headers.authorization, emailOrLongid);
+        expect(body).to.contain('-----BEGIN PGP PUBLIC KEY BLOCK-----');
+        MOCK_ATTESTER_LAST_INSERTED_PUB[emailOrLongid] = body as string;
+        return 'Saved'; // 200 OK
+      } else {
+        throw new HttpClientErr(`Not implemented: ${req.method}`);
+      }
+    },
+    '/attester/ldap-relay': async (parsedReq, req) => {
+      const server = parsedReq.query.server;
+      const emailOrLongid = parsedReq.query.search;
+      if (isGet(req)) {
+        if (!attesterConfig.ldapRelay) {
+          throw new HttpClientErr('Method not allowed', 405);
+        }
+        const pubRes = attesterConfig.ldapRelay[emailOrLongid];
+        if (pubRes) {
+          if (pubRes.returnError) {
+            throw new HttpClientErr(pubRes.returnError.message, pubRes.returnError.code);
+          }
+          return pubRes.pubkey;
+        }
+        throw new HttpClientErr('No OpenPGP LDAP server on this address.', Status.NOT_FOUND);
+      } else {
+        throw new HttpClientErr(`Not implemented: ${req.method}`);
+      }
+    },
+    '/attester/welcome-message': async ({}, req) => {
+      if (!isPost(req)) {
+        throw new HttpClientErr(`Wrong method: ${req.method}`);
+      }
+      return attesterConfig.welcomeMessageEnabled ?? false;
+    },
+  };
+};
