@@ -536,6 +536,10 @@ abstract class ControllableBase {
     return files;
   };
 
+  public keyboard = () => {
+    return 'keyboard' in this.target ? this.target.keyboard : this.target.page().keyboard;
+  };
+
   protected log = (msg: string) => {
     if (this.debugNamespace) {
       console.info(`[debug][controllable][${this.debugNamespace}] ${msg}`);
