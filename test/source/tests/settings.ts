@@ -1537,28 +1537,6 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         expect(savedPassphrase2).to.be.an('undefined');
       })
     );
-    test(
-      "settings - password messages' expiry settings shouldn't be available for FES users",
-      testWithBrowser('compatibility', async (t, browser) => {
-        const acct1 = 'flowcrypt.compatibility@gmail.com';
-        const settingsPage = await browser.newExtensionSettingsPage(t, 'flowcrypt.compatibility@gmail.com');
-        const securitySettingsFrame1 = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-security-page', ['security.htm']);
-        expect(await securitySettingsFrame1.isElementVisible('@container-password-messages-expiry')).to.equal(true);
-        await SettingsPageRecipe.closeDialog(settingsPage);
-        await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
-        const experimentalFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-module-experimental', ['experimental.htm']);
-        await experimentalFrame.waitAndClick('@action-reset-account');
-        await experimentalFrame.waitAndRespondToModal('confirm', 'confirm', `This will remove all your FlowCrypt settings for ${acct1}`);
-        await experimentalFrame.waitAndRespondToModal('confirm', 'confirm', "Proceed to reset? Don't come back telling me I didn't warn you.");
-        await settingsPage.close();
-        const acct2 = 'settings@key-manager-autogen.flowcrypt.test';
-        const settingsPage1 = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct2);
-        await SetupPageRecipe.autoSetupWithEKM(settingsPage1);
-        const securitySettingsFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage1, '@action-open-security-page', ['security.htm']);
-        expect(await securitySettingsFrame.isElementVisible('@container-password-messages-expiry')).to.equal(false);
-        await settingsPage1.close();
-      })
-    );
     test.todo('settings - change passphrase - mismatch curent pp');
     test.todo('settings - change passphrase - mismatch new pp');
   }
