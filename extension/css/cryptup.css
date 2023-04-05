@@ -2487,10 +2487,7 @@ table#compose .intro_container > td > .input_intro {
 .qq-upload-drop-area-active::before {
   position: absolute;
   content: 'Drop files here';
-  left: 0;
-  right: 0;
-  top: 35%;
-  bottom: 0;
+  inset: 35% 0 0;
   width: 100%;
   height: 100%;
   text-align: center;
