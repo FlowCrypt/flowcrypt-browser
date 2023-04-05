@@ -357,10 +357,7 @@ a.gray_link {
   color: white;
   opacity: 0.9;
   position: absolute;
-  top: 20px;
-  right: 0;
-  left: 0;
-  bottom: 0;
+  inset: 20px 0 0;
   width: 75px;
   margin: 0 auto;
   text-align: center !important;
