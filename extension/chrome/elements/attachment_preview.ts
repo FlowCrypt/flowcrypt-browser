@@ -82,11 +82,7 @@ View.run(
             .css('display', 'flex')
             .on('click', async e => {
               e.stopPropagation();
-              if (!this.attachment.isExecutableFile()) {
-                Browser.saveToDownloads(attachmentForSave);
-                return;
-              }
-              if (await Ui.modal.confirm(Lang.attachment.executableFileWarning)) {
+              if (!this.attachment.isExecutableFile() || (await Ui.modal.confirm(Lang.attachment.executableFileWarning))) {
                 Browser.saveToDownloads(attachmentForSave);
               }
             });
