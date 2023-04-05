@@ -86,7 +86,7 @@
   padding-bottom: 25px;
 }
 
-[class*="_destroyable"].z0:not(.small) {
+[class*='_destroyable'].z0:not(.small) {
   margin-bottom: 0 !important;
   display: initial;
 }
@@ -109,7 +109,7 @@ div.webmail_notifications div.webmail_notification {
   border-radius: 2px;
   box-shadow: rgba(0, 0, 0, 0.2) 0 2px 4px 0;
   color: rgb(34, 34, 34);
-  font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-family: -apple-system, system-ui, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   font-size: 12.8px;
   font-weight: bold;
   line-height: 16px;
@@ -231,7 +231,7 @@ body.cryptup_gmail_new div.new_secure_compose_window_button:hover {
   background-color: #fafafb;
 }
 
-body.cryptup_gmail div.ade.appended span.cryptup_convo_button>img {
+body.cryptup_gmail div.ade.appended span.cryptup_convo_button > img {
   border: 2px solid #31a217;
   width: 10px;
   margin: 4px;
@@ -251,7 +251,7 @@ body.cryptup_gmail div.ade.appended span.cryptup_convo_button > span {
   cursor: default;
 }
 
-body.cryptup_gmail div.ade.appended span.cryptup_convo_button:hover>img,
+body.cryptup_gmail div.ade.appended span.cryptup_convo_button:hover > img,
 div.ade.appended span.cryptup_convo_button:hover > span {
   opacity: 1;
 }
@@ -349,16 +349,16 @@ body.cryptup_outlook ._fce_i {
   pointer-events: none;
 }
 
-.secure_compose_window[data-order="1"] {
+.secure_compose_window[data-order='1'] {
   right: 30px;
 }
 
-.secure_compose_window[data-order="2"] {
+.secure_compose_window[data-order='2'] {
   left: 50%;
   margin-left: -270px;
 }
 
-.secure_compose_window[data-order="3"] {
+.secure_compose_window[data-order='3'] {
   left: 30px;
 }
 

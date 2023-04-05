@@ -109,7 +109,8 @@
       "prettier --write"
     ],
     "*.{css,htm}": [
-      "npm run test_stylelint"
+      "npm run test_stylelint",
+      "prettier --write"
     ]
   }
 }
