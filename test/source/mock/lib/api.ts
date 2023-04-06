@@ -146,7 +146,6 @@ export class Api<REQ, RES> {
     if (!req.url) {
       throw new Error('no url');
     }
-    console.log(this.attesterConfig);
     const attesterHandler = getMockAttesterEndpoints(this.attesterConfig);
     const newHandlers: Handlers<REQ, RES> = {
       ...(attesterHandler as Handlers<REQ, RES>),

@@ -296,7 +296,6 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
           /* eslint-enable @typescript-eslint/no-explicit-any */
           return { pubkey7FDE685548AEA788, pubkeyADAC279C95093207, contactsSize };
         });
-        console.log('got contacts size ' + foundKeys.contactsSize);
         expect(foundKeys.contactsSize).to.equal(1);
         expect(foundKeys.pubkey7FDE685548AEA788.fingerprint).to.equal('5520CACE2CB61EA713E5B0057FDE685548AEA788');
         expect(foundKeys.pubkeyADAC279C95093207.fingerprint).to.equal('E8F0517BA6D7DAB6081C96E4ADAC279C95093207');

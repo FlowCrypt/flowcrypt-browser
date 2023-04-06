@@ -69,7 +69,6 @@ const testWithBrowser = (
     if (isMock) {
       t.mockApi = await startMockApiAndCopyBuild(t);
       t.mockApi.attesterConfig = LEGACY_GLOBAL_ATTESTER_MOCK_CONFIG;
-      console.log('-------');
       closeMockApi = t.mockApi.close;
     } else {
       t.urls = new TestUrls(await browserPool.getExtensionId(t));
