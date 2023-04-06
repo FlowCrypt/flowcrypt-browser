@@ -1356,10 +1356,8 @@ d6Z36//MsmczN00Wd60t9T+qyLz0T4/UG2Y9lgf367f3d+kYPE0LS7mXuFmjlPXfw0nKyVsSeFiu
           })
         );
         expect(Object.entries(downloadedFile3).length).to.equal(1);
+        const accessToken = await BrowserRecipe.getGoogleAccessToken(inboxPage2, acctEmail);
         await inboxPage2.close();
-        const dbPage = await browser.newExtensionPage(t, 'chrome/dev/ci_unit_test.htm');
-        const accessToken = await BrowserRecipe.getGoogleAccessToken(dbPage, acctEmail);
-        await dbPage.close();
         const extraAuthHeaders = { Authorization: `Bearer ${accessToken}` }; // eslint-disable-line @typescript-eslint/naming-convention
         const gmailPage = await browser.newPage(t, `${t.urls?.mockGmailUrl()}/${threadId}`, undefined, extraAuthHeaders);
         await gmailPage.waitAll('iframe');
