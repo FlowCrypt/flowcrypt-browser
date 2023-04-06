@@ -1,94 +1,80 @@
 <!-- © 2016-2018 FlowCrypt Limited. Limitations apply. Contact human@flowcrypt.com -->
 
 <html>
+  <head>
+    <meta content="text/html;charset=utf-8" http-equiv="Content-Type" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+    <title>FlowCrypt</title>
+    <link rel="stylesheet" href="/css/cryptup.css" />
+    <link rel="stylesheet" href="/css/sweetalert2.css" />
+    <link rel="stylesheet" href="/css/open-sans.css" />
+    <link rel="stylesheet" href="/css/animate.css" />
+    <link rel="icon" href="/img/logo/flowcrypt-logo-19-19.png" />
+    <link rel="stylesheet" href="/css/fine-uploader-new.css" />
+    <link rel="stylesheet" href="/css/mobile-menu-styling.css" />
+    <script type="text/template" src="/chrome/elements/hared/attach.template.htm" id="qq-template"></script>
+  </head>
 
-<head>
-  <meta content="text/html;charset=utf-8" http-equiv="Content-Type">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>FlowCrypt</title>
-  <link rel="stylesheet" href="/css/cryptup.css" />
-  <link rel="stylesheet" href="/css/sweetalert2.css" />
-  <link rel="stylesheet" href="/css/open-sans.css" />
-  <link rel="stylesheet" href="/css/animate.css" />
-  <link rel="icon" href="/img/logo/flowcrypt-logo-19-19.png" />
-  <link rel="stylesheet" href="/css/fine-uploader-new.css" />
-  <link rel="stylesheet" href="/css/mobile-menu-styling.css" />
-  <script type="text/template" src="/chrome/elements/hared/attach.template.htm" id="qq-template"></script>
-</head>
-
-<body id="settings">
-  <div id="content" class="setup page display_none">
-    <div id="add_key_container" class="manual" style="display: block; text-align: left;">
-      <div class="line">
-        <h1>Add Private Key <span id="spinner_container"></span></h1>
-      </div>
-      <div class="line">
-        <ul style="list-style: none; margin-left: 0; padding-left: 0;" class="source_selector display_none">
-          <li>
-            <input type="radio" name="source" id="source_backup" value="backup">
-            <label for="source_backup">
-              Load from backup
+  <body id="settings">
+    <div id="content" class="setup page display_none">
+      <div id="add_key_container" class="manual" style="display: block; text-align: left">
+        <div class="line">
+          <h1>Add Private Key <span id="spinner_container"></span></h1>
+        </div>
+        <div class="line">
+          <ul style="list-style: none; margin-left: 0; padding-left: 0" class="source_selector display_none">
+            <li>
+              <input type="radio" name="source" id="source_backup" value="backup" />
+              <label for="source_backup"> Load from backup </label>
+            </li>
+            <li>
+              <input type="radio" name="source" id="source_file" data-test="source-file" value="file" />
+              <label for="source_file"> Load from a file</label>
+            </li>
+            <li>
+              <input type="radio" name="source" id="source_paste" data-test="source-paste" value="paste" />
+              <label for="source_paste"> Paste armored key directly </label>
+            </li>
+          </ul>
+        </div>
+        <div class="source_file_container display_none">
+          <a href="#" id="fineuploader_button" class="display_none">file</a>
+          <div class="line display_none" id="fineuploader"></div>
+        </div>
+        <div class="source_paste_container display_none">
+          <div class="line">
+            <textarea class="input_private_key" data-test="input-armored-key" placeholder="ASCII Armored Private Key" maxlength="80000"> </textarea>
+          </div>
+          <div class="line display_none unprotected_key_create_pass_phrase" style="text-align: left; padding-left: 40px">
+            This key is unprotected. Create a pass phrase or
+            <a href="#" class="action_use_random_pass_phrase" data-test="action-step2bmanualenter-new-random-passphrase"> use a random one </a>
+            .
+          </div>
+          <div class="line">
+            <input id="input_passphrase" class="input_passphrase" type="text" placeholder="Private Key Passphrase" maxlength="256" />
+          </div>
+          <div class="line">
+            <label class="input_passphrase_save_label hidden" data-test="input-save-passphrase-label">
+              <input type="checkbox" value="" name="check" class="input_passphrase_save" data-test="input-save-passphrase" />
+              Remember the pass phrase after closing the browser
             </label>
-          </li>
-          <li>
-            <input type="radio" name="source" id="source_file" data-test="source-file" value="file">
-            <label for="source_file">
-              Load from a file</label>
-          </li>
-          <li>
-            <input type="radio" name="source" id="source_paste" data-test="source-paste" value="paste">
-            <label for="source_paste">
-              Paste armored key directly
-            </label>
-          </li>
-        </ul>
-      </div>
-      <div class="source_file_container display_none">
-        <a href="#" id="fineuploader_button" class="display_none">file</a>
-        <div class="line display_none" id="fineuploader"></div>
-      </div>
-      <div class="source_paste_container display_none">
-        <div class="line">
-          <textarea class="input_private_key" data-test="input-armored-key" placeholder="ASCII Armored Private Key"
-            maxlength="80000">
-          </textarea>
-        </div>
-        <div class="line display_none unprotected_key_create_pass_phrase" style="text-align: left; padding-left: 40px;">
-          This key is unprotected. Create a pass phrase or
-          <a href="#" class="action_use_random_pass_phrase" data-test="action-step2bmanualenter-new-random-passphrase">
-            use a random one
-          </a>
-          .
-        </div>
-        <div class="line">
-          <input id="input_passphrase" class="input_passphrase" type="text" placeholder="Private Key Passphrase"
-            maxlength="256" />
-        </div>
-        <div class="line">
-          <label class="input_passphrase_save_label hidden" data-test="input-save-passphrase-label">
-            <input type="checkbox" value="" name="check" class="input_passphrase_save"
-              data-test="input-save-passphrase">
-            Remember the pass phrase after closing the browser
-          </label>
-        </div>
-        <div class="line">
-          <br />
-          <button class="button long green action_add_private_key">Add Private Key</button>
+          </div>
+          <div class="line">
+            <br />
+            <button class="button long green action_add_private_key">Add Private Key</button>
+          </div>
         </div>
       </div>
+      <div id="compatibility_fix" class="compatibility_fix_container"></div>
     </div>
-    <div id="compatibility_fix" class="compatibility_fix_container">
-    </div>
-  </div>
 
-  <script src="/lib/purify.js"></script>
-  <script src="/lib/fine-uploader.js"></script>
-  <script src="/lib/jquery.min.js"></script>
-  <script src="/lib/sweetalert2.js"></script>
-  <script src="/lib/openpgp.js"></script>
-  <script src="/lib/forge.js"></script>
-  <script src="/lib/zxcvbn.js"></script>
-  <script src="add_key.js" type="module"></script>
-</body>
-
+    <script src="/lib/purify.js"></script>
+    <script src="/lib/fine-uploader.js"></script>
+    <script src="/lib/jquery.min.js"></script>
+    <script src="/lib/sweetalert2.js"></script>
+    <script src="/lib/openpgp.js"></script>
+    <script src="/lib/forge.js"></script>
+    <script src="/lib/zxcvbn.js"></script>
+    <script src="add_key.js" type="module"></script>
+  </body>
 </html>

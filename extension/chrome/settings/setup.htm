@@ -1,366 +1,376 @@
 <!-- © 2016-2018 FlowCrypt Limited. Limitations apply. Contact human@flowcrypt.com -->
 
 <html>
+  <head>
+    <meta content="text/html;charset=utf-8" http-equiv="Content-Type" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
 
-<head>
-  <meta content="text/html;charset=utf-8" http-equiv="Content-Type">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>FlowCrypt</title>
+    <link rel="stylesheet" href="/css/cryptup.css" />
+    <link rel="stylesheet" href="/css/sweetalert2.css" />
+    <link rel="stylesheet" href="/css/settings.css" />
+    <link rel="stylesheet" href="/css/open-sans.css" />
+    <link rel="stylesheet" href="/css/animate.css" />
+    <link rel="stylesheet" href="/lib/bootstrap/bootstrap.min.css" />
+    <link rel="stylesheet" href="/css/mobile-menu-styling.css" />
+    <link rel="icon" href="/img/logo/flowcrypt-logo-19-19.png" />
+    <script type="text/template" src="/chrome/elements/hared/attach.template.htm" id="qq-template"></script>
+  </head>
 
-  <title>FlowCrypt</title>
-  <link rel="stylesheet" href="/css/cryptup.css" />
-  <link rel="stylesheet" href="/css/sweetalert2.css" />
-  <link rel="stylesheet" href="/css/settings.css" />
-  <link rel="stylesheet" href="/css/open-sans.css" />
-  <link rel="stylesheet" href="/css/animate.css" />
-  <link rel="stylesheet" href="/lib/bootstrap/bootstrap.min.css" />
-  <link rel="stylesheet" href="/css/mobile-menu-styling.css" />
-  <link rel="icon" href="/img/logo/flowcrypt-logo-19-19.png" />
-  <script type="text/template" src="/chrome/elements/hared/attach.template.htm" id="qq-template"></script>
-</head>
-
-<body id="settings">
-  <section id="header-row">
-    <div class="container">
-      <div class="row ">
-        <div class="col-12 col-lg-6 text-left logo-row">
-          <img class="cryptup-logo" src="/img/logo/full-logo.svg" alt="FlowCrypt Logo">
-        </div>
-
-        <div class="col-12 col-lg-6 text-right">
-          <div class="profile-row ">
-            <div class="public-profile-container hide_if_setup_not_done public_profile_indicator_container"
-              style="visibility: hidden;"></div>
-            <a href="#" class="email-address action-toggle-accounts-menu" data-test="action-toggle-accounts-menu"></a>
-            <span id="toggle-accounts-profile-img" class="action-toggle-accounts-menu">
-              <img src="/img/svgs/profile-icon.svg" class="profile-img main-profile-img" alt="Profile Image">
-            </span>
-            <a href="#" class="add-account action_add_account hide_if_setup_not_done" data-test="action-add-account">+
-              Add account</a>
+  <body id="settings">
+    <section id="header-row">
+      <div class="container">
+        <div class="row">
+          <div class="col-12 col-lg-6 text-left logo-row">
+            <img class="cryptup-logo" src="/img/logo/full-logo.svg" alt="FlowCrypt Logo" />
           </div>
-          <div id="alt-accounts" class="accounts-row">
-            <div class="row alt-accounts accounts-options-row text-center">
-              <a href="#" class="action_add_account action_add_account--settings">Add Account</a>
+
+          <div class="col-12 col-lg-6 text-right">
+            <div class="profile-row">
+              <div class="public-profile-container hide_if_setup_not_done public_profile_indicator_container" style="visibility: hidden"></div>
+              <a href="#" class="email-address action-toggle-accounts-menu" data-test="action-toggle-accounts-menu"></a>
+              <span id="toggle-accounts-profile-img" class="action-toggle-accounts-menu">
+                <img src="/img/svgs/profile-icon.svg" class="profile-img main-profile-img" alt="Profile Image" />
+              </span>
+              <a href="#" class="add-account action_add_account hide_if_setup_not_done" data-test="action-add-account">+ Add account</a>
+            </div>
+            <div id="alt-accounts" class="accounts-row">
+              <div class="row alt-accounts accounts-options-row text-center">
+                <a href="#" class="action_add_account action_add_account--settings">Add Account</a>
+              </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
-  </section>
+    </section>
 
-  <div id="content" class="setup">
-    <div class="wide line">
-      <button id="button-go-back" data-test="action-setup-go-back" title="Go back">
-        <img src="/img/svgs/chevron-left.svg">
-      </button>
-      <a href="#" class="action_show_help" page="modules/help.htm">
-        <img src="/img/svgs/question-icon.svg" alt="Help icon">
-      </a>
-      <h1>Set Up FlowCrypt</h1>
-      <br />
-    </div>
-
-    <div id="loading" class="loading">
-      <div class="loader" title="0"><img src="/img/svgs/spinner-green-large.svg" /></div>
-      <div class="loading_copy">Loading...</div>
-    </div>
-
-    <div id="step_0_found_key">
-      <div class="wide line">Used PGP encryption before?</div>
-      <div class="wide line"><a href="#" class="button longer green action_manual_enter_key"
-          data-test="action-step0foundkey-choose-manual-enter">Enter
-          existing key</a></div>
-      <div class="wide line">Alternatively, <a href="#new_key" class="action_manual_create_key hover_underline"
-          data-test="action-step0foundkey-choose-manual-create">create
-          a new key</a></div>
-    </div>
-
-    <div id="step_1_easy_or_manual">
-      <div class="col">
-        <div class="line circle-i" style="padding-bottom: 10px;">
-          <img src="/img/svgs/stopwatch-icon.svg" alt="stopwatch icon">
-        </div>
-        <button class="button long green action_manual_create_key"
-          data-test="action-step1easyormanual-choose-manual-create">new
-          encryption key</button>
-        <div class="wide line">&nbsp;</div>
-        <div class="wide line">New to encryption?</div>
-        <div class="wide line">Quick setup</div>
+    <div id="content" class="setup">
+      <div class="wide line">
+        <button id="button-go-back" data-test="action-setup-go-back" title="Go back">
+          <img src="/img/svgs/chevron-left.svg" />
+        </button>
+        <a href="#" class="action_show_help" page="modules/help.htm">
+          <img src="/img/svgs/question-icon.svg" alt="Help icon" />
+        </a>
+        <h1>Set Up FlowCrypt</h1>
+        <br />
       </div>
 
-      <div class="col">
-        <div class="line circle-i">
-          <img src="/img/fa/fa-cogs-green.png" alt="Settings">
-        </div>
-        <button class="button long green action_manual_enter_key"
-          data-test="action-step1easyormanual-choose-manual-enter">
-          import private key</button>
-        <div class="wide line">&nbsp;</div>
-        <div class="wide line">Use your own PGP key</div>
-        <div class="wide line">Manual setup</div>
-      </div>
-
-    </div>
-
-    <div id="step_2_easy_generating">
-      <div class="loading">
+      <div id="loading" class="loading">
         <div class="loader" title="0"><img src="/img/svgs/spinner-green-large.svg" /></div>
         <div class="loading_copy">Loading...</div>
       </div>
-    </div>
 
-    <div id="step_2a_manual_create" class="manual">
-      <div class="line left">Choose pass phrase to protect your encrypted emails. <a href="#"
-          data-swal-page="/chrome/texts/passphrase_help.htm">choosing
-          secure pass phrases</a></div>
-      <div class="line left">
-        <input class="input_password" type="text" placeholder="Pass phrase" style="margin-bottom: 0;"
-          id="step_2a_manual_create_input_password" data-test="input-step2bmanualcreate-passphrase-1" maxlength="256" />
-      </div>
-      <div class="line left">
-        <input class="input_password2" type="text" placeholder="Repeat pass phrase"
-          id="step_2a_manual_create_input_password2" data-test="input-step2bmanualcreate-passphrase-2"
-          maxlength="256" />
+      <div id="step_0_found_key">
+        <div class="wide line">Used PGP encryption before?</div>
+        <div class="wide line">
+          <a href="#" class="button longer green action_manual_enter_key" data-test="action-step0foundkey-choose-manual-enter">Enter existing key</a>
+        </div>
+        <div class="wide line">
+          Alternatively,
+          <a href="#new_key" class="action_manual_create_key hover_underline" data-test="action-step0foundkey-choose-manual-create">create a new key</a>
+        </div>
       </div>
 
-      <div class="line left">
-        <label class="input_passphrase_save_label hidden" data-test="input-step2bmanualcreate-save-passphrase-label">
-          <input type="checkbox" class="input_passphrase_save" data-test="input-step2bmanualcreate-save-passphrase"
-            value="" name="check">
-          Remember the pass phrase after closing the browser
-        </label>
-      </div>
-      <div class="line left remove_if_backup_not_allowed">
-        <label data-test="input-step2bmanualcreate-backup-inbox">
-          <input type="checkbox" class="input_backup_inbox" value="" name="check" checked="" />
-          Back up encrypted private key in inbox (recommended)
-        </label>
+      <div id="step_1_easy_or_manual">
+        <div class="col">
+          <div class="line circle-i" style="padding-bottom: 10px">
+            <img src="/img/svgs/stopwatch-icon.svg" alt="stopwatch icon" />
+          </div>
+          <button class="button long green action_manual_create_key" data-test="action-step1easyormanual-choose-manual-create">new encryption key</button>
+          <div class="wide line">&nbsp;</div>
+          <div class="wide line">New to encryption?</div>
+          <div class="wide line">Quick setup</div>
+        </div>
+
+        <div class="col">
+          <div class="line circle-i">
+            <img src="/img/fa/fa-cogs-green.png" alt="Settings" />
+          </div>
+          <button class="button long green action_manual_enter_key" data-test="action-step1easyormanual-choose-manual-enter">import private key</button>
+          <div class="wide line">&nbsp;</div>
+          <div class="wide line">Use your own PGP key</div>
+          <div class="wide line">Manual setup</div>
+        </div>
       </div>
 
-      <div class="line left remove_if_pubkey_submitting_not_user_configurable">
-        <label data-test="input-step2bmanualcreate-submit-pubkey">
-          <input type="checkbox" class="input_submit_key" value="" name="check" checked="">
-          Submit corresponding pubkey to FlowCrypt Attester (recommended)
-        </label>
-      </div>
-      <div class="line left display_none remove_if_pubkey_submitting_not_user_configurable">
-        <label>
-          <input type="checkbox" class="input_submit_all" disabled="disabled" />
-          <span>
-            Also submit the same pubkey for:
-            <br /><span class="addresses"></span>
-          </span>
-        </label>
+      <div id="step_2_easy_generating">
+        <div class="loading">
+          <div class="loader" title="0"><img src="/img/svgs/spinner-green-large.svg" /></div>
+          <div class="loading_copy">Loading...</div>
+        </div>
       </div>
 
-      <div class="line left">
-        <label>
-          Encryption key type:
-          <select class="key_type" data-test="input-step2bmanualcreate-key-type">
-            <option value="curve25519">ECC Curve25519</option>
-            <option value="rsa2048">RSA 2048bit</option>
-            <option value="rsa3072">RSA 3072bit</option>
-            <option value="rsa4096">RSA 4096bit</option>
-          </select>
-        </label>
-      </div>
-
-      <div class="line left">
-        <button class="button longer gray action_proceed_private"
-          data-test="input-step2bmanualcreate-create-and-save">CREATE
-          AND SAVE</button>
-      </div>
-    </div>
-
-    <div id="backup-template-container"></div>
-
-    <div id="step_2b_manual_enter" class="manual">
-      <div class="aligncenter">
+      <div id="step_2a_manual_create" class="manual">
         <div class="line left">
-          Import your private key. Keys are stored safely in your local browser extension storage.<br>
-          The key will not leave your browser.
+          Choose pass phrase to protect your encrypted emails. <a href="#" data-swal-page="/chrome/texts/passphrase_help.htm">choosing secure pass phrases</a>
         </div>
         <div class="line left">
-          <ul style="list-style: none; margin-left: 0; padding-left: 0;" class="source_selector">
-            <li><input type="radio" name="source" id="source_file" value="file"
-                data-test="input-step2bmanualenter-file">
-              <label for="source_file">Load from a file</label>
-            </li>
-            <li><input type="radio" name="source" id="source_paste" value="paste"
-                data-test="input-step2bmanualenter-source-paste">
-              <label for="source_paste">Paste armored key directly</label>
-            </li>
-          </ul>
+          <input
+            class="input_password"
+            type="text"
+            placeholder="Pass phrase"
+            style="margin-bottom: 0"
+            id="step_2a_manual_create_input_password"
+            data-test="input-step2bmanualcreate-passphrase-1"
+            maxlength="256"
+          />
         </div>
-        <div class="source_file_container display_none">
-          <a href="#" id="fineuploader_button" class="display_none">file</a>
-          <div class="line display_none" id="fineuploader"></div>
+        <div class="line left">
+          <input
+            class="input_password2"
+            type="text"
+            placeholder="Repeat pass phrase"
+            id="step_2a_manual_create_input_password2"
+            data-test="input-step2bmanualcreate-passphrase-2"
+            maxlength="256"
+          />
         </div>
-        <div class="source_paste_container setup_page display_none">
+
+        <div class="line left">
+          <label class="input_passphrase_save_label hidden" data-test="input-step2bmanualcreate-save-passphrase-label">
+            <input type="checkbox" class="input_passphrase_save" data-test="input-step2bmanualcreate-save-passphrase" value="" name="check" />
+            Remember the pass phrase after closing the browser
+          </label>
+        </div>
+        <div class="line left remove_if_backup_not_allowed">
+          <label data-test="input-step2bmanualcreate-backup-inbox">
+            <input type="checkbox" class="input_backup_inbox" value="" name="check" checked="" />
+            Back up encrypted private key in inbox (recommended)
+          </label>
+        </div>
+
+        <div class="line left remove_if_pubkey_submitting_not_user_configurable">
+          <label data-test="input-step2bmanualcreate-submit-pubkey">
+            <input type="checkbox" class="input_submit_key" value="" name="check" checked="" />
+            Submit corresponding pubkey to FlowCrypt Attester (recommended)
+          </label>
+        </div>
+        <div class="line left display_none remove_if_pubkey_submitting_not_user_configurable">
+          <label>
+            <input type="checkbox" class="input_submit_all" disabled="disabled" />
+            <span>
+              Also submit the same pubkey for:
+              <br /><span class="addresses"></span>
+            </span>
+          </label>
+        </div>
+
+        <div class="line left">
+          <label>
+            Encryption key type:
+            <select class="key_type" data-test="input-step2bmanualcreate-key-type">
+              <option value="curve25519">ECC Curve25519</option>
+              <option value="rsa2048">RSA 2048bit</option>
+              <option value="rsa3072">RSA 3072bit</option>
+              <option value="rsa4096">RSA 4096bit</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="line left">
+          <button class="button longer gray action_proceed_private" data-test="input-step2bmanualcreate-create-and-save">CREATE AND SAVE</button>
+        </div>
+      </div>
+
+      <div id="backup-template-container"></div>
+
+      <div id="step_2b_manual_enter" class="manual">
+        <div class="aligncenter">
           <div class="line left">
-            <textarea class="input_private_key" placeholder="ASCII Armored Private Key"
-              data-test="input-step2bmanualenter-ascii-key" spellcheck="false" maxlength="80000"></textarea>
-          </div>
-          <div class="line display_none unprotected_key_create_pass_phrase">
-            This key is unprotected. Create a pass phrase or <a href="#" class="action_use_random_pass_phrase"
-              data-test="action-step2bmanualenter-new-random-passphrase">use
-              a random one</a>.
+            Import your private key. Keys are stored safely in your local browser extension storage.<br />
+            The key will not leave your browser.
           </div>
           <div class="line left">
-            <input class="input_passphrase" type="text" placeholder="Private Key Passphrase"
-              id="step_2b_manual_enter_passphrase" data-test="input-step2bmanualenter-passphrase" maxlength="256" />
+            <ul style="list-style: none; margin-left: 0; padding-left: 0" class="source_selector">
+              <li>
+                <input type="radio" name="source" id="source_file" value="file" data-test="input-step2bmanualenter-file" />
+                <label for="source_file">Load from a file</label>
+              </li>
+              <li>
+                <input type="radio" name="source" id="source_paste" value="paste" data-test="input-step2bmanualenter-source-paste" />
+                <label for="source_paste">Paste armored key directly</label>
+              </li>
+            </ul>
           </div>
-          <div class="line left">
-            <label class="input_passphrase_save_label hidden" data-test="input-step2bmanualenter-save-passphrase-label">
-              <input type="checkbox" value="" name="check" data-test="input-step2bmanualenter-save-passphrase"
-                class="input_passphrase_save">
-              Remember the pass phrase after closing the browser
-            </label>
+          <div class="source_file_container display_none">
+            <a href="#" id="fineuploader_button" class="display_none">file</a>
+            <div class="line display_none" id="fineuploader"></div>
           </div>
-          <div class="line left remove_if_pubkey_submitting_not_user_configurable">
-            <label data-test="input-step2bmanualenter-submit-pubkey">
-              <input type="checkbox" value="" name="check" checked="" class="input_submit_key">
-              Submit the corresponding pubkey to FlowCrypt Attester
-            </label>
-          </div>
-          <div class="line left remove_if_pubkey_submitting_not_user_configurable container_for_import_key_email_alias"
-            data-test="container-for-import-key-email-alias" style="visibility: hidden;">
-            <label>
-              <input type="checkbox" class="input_submit_all" disabled="disabled" />
-              <span>
-                Also submit the same pubkey for:
-                <br /><span class="addresses"></span>
-              </span>
-            </label>
-          </div>
+          <div class="source_paste_container setup_page display_none">
+            <div class="line left">
+              <textarea
+                class="input_private_key"
+                placeholder="ASCII Armored Private Key"
+                data-test="input-step2bmanualenter-ascii-key"
+                spellcheck="false"
+                maxlength="80000"
+              ></textarea>
+            </div>
+            <div class="line display_none unprotected_key_create_pass_phrase">
+              This key is unprotected. Create a pass phrase or
+              <a href="#" class="action_use_random_pass_phrase" data-test="action-step2bmanualenter-new-random-passphrase">use a random one</a>.
+            </div>
+            <div class="line left">
+              <input
+                class="input_passphrase"
+                type="text"
+                placeholder="Private Key Passphrase"
+                id="step_2b_manual_enter_passphrase"
+                data-test="input-step2bmanualenter-passphrase"
+                maxlength="256"
+              />
+            </div>
+            <div class="line left">
+              <label class="input_passphrase_save_label hidden" data-test="input-step2bmanualenter-save-passphrase-label">
+                <input type="checkbox" value="" name="check" data-test="input-step2bmanualenter-save-passphrase" class="input_passphrase_save" />
+                Remember the pass phrase after closing the browser
+              </label>
+            </div>
+            <div class="line left remove_if_pubkey_submitting_not_user_configurable">
+              <label data-test="input-step2bmanualenter-submit-pubkey">
+                <input type="checkbox" value="" name="check" checked="" class="input_submit_key" />
+                Submit the corresponding pubkey to FlowCrypt Attester
+              </label>
+            </div>
+            <div
+              class="line left remove_if_pubkey_submitting_not_user_configurable container_for_import_key_email_alias"
+              data-test="container-for-import-key-email-alias"
+              style="visibility: hidden"
+            >
+              <label>
+                <input type="checkbox" class="input_submit_all" disabled="disabled" />
+                <span>
+                  Also submit the same pubkey for:
+                  <br /><span class="addresses"></span>
+                </span>
+              </label>
+            </div>
 
-          <div class="wide line">
-            <button class="button longer green action_add_private_key"
-              data-test="input-step2bmanualenter-save">SAVE</button>
+            <div class="wide line">
+              <button class="button longer green action_add_private_key" data-test="input-step2bmanualenter-save">SAVE</button>
+            </div>
           </div>
+        </div>
+      </div>
+
+      <div id="step_2_ekm_choose_pass_phrase" class="manual">
+        <div class="line">
+          Choose pass phrase to protect your encrypted emails. <a href="#" data-swal-page="/chrome/texts/passphrase_help.htm">choosing secure pass phrases</a>
+        </div>
+        <div class="line">
+          <input
+            class="input_password"
+            type="text"
+            placeholder="Pass phrase"
+            id="step_2_ekm_input_password"
+            data-test="input-step2ekm-passphrase-1"
+            maxlength="256"
+          />
+        </div>
+        <div class="line">
+          <input
+            class="input_password2"
+            type="text"
+            placeholder="Repeat pass phrase"
+            data-test="input-step2ekm-passphrase-2"
+            id="step_2_ekm_input_password2"
+            maxlength="256"
+          />
+        </div>
+
+        <div class="line">
+          <p class="text-success small m-0" data-test="ekm-setup-user-notify">Your keys are managed with your organization's Email Key Manager.</p>
+          <label class="input_passphrase_save_label hidden" data-test="input-step2ekm-save-passphrase-label">
+            <input type="checkbox" class="input_passphrase_save" value="" name="check" data-test="input-step2ekm-save-passphrase" />
+            Remember the pass phrase after closing the browser
+          </label>
+        </div>
+
+        <div class="line">
+          <button class="button longer gray action_proceed_private" data-test="input-step2ekm-continue">CONTINUE</button>
+        </div>
+      </div>
+
+      <div id="step_2_recovery">
+        <div class="line recovery_status">Found <span class="backups_count_words"></span> of your account key. Enter your pass phrase to continue.</div>
+        <div class="wide line recovery_passphrase_container">
+          <input type="text" id="recovery_password" placeholder="Enter your pass phrase" data-test="input-recovery-pass-phrase" maxlength="256" />
+        </div>
+        <div class="wide line">
+          <button class="button green longer action_recover_account" data-test="action-recover-account">RECOVER ACCOUNT</button>
+        </div>
+        <div class="line line_skip_recovery center">
+          <a href="#" id="lost_pass_phrase">Lost your pass phrase?</a>
+        </div>
+        <div id="error_text_container" class="line">
+          <div id="error_text">
+            This password did not match your original setup. <br />
+            Please try again.
+          </div>
+        </div>
+      </div>
+
+      <div id="step_3_compatibility_fix" class="compatibility_fix_container"></div>
+
+      <div id="step_3_test_failed">
+        <div class="wide line">
+          This is rare and it's probably FlowCrypt's fault. Following button will test your browser and send me a report, so that I can fix it soon.
+        </div>
+        <div class="wide line">
+          <button class="button longer green action_diagnose_browser">test my browser</button>
+        </div>
+        <div class="wide line ask_support_assistance_container"></div>
+      </div>
+
+      <div id="step_4_done">
+        <div class="wide line">
+          <a class="button longer green action_send" target="_blank">COMPOSE ENCRYPTED EMAIL</a>
+        </div>
+        <div class="wide line">
+          <button class="button longer gray action_account_settings" data-test="action-step4done-account-settings">MORE SETTINGS</button>
+        </div>
+      </div>
+
+      <div id="step_4_more_to_recover">
+        <div class="wide line">
+          You successfully recovered <span class="private_key_count"></span> out of <span class="backups_count"></span>
+          available backups.
+        </div>
+        <div class="wide line">Try to recover the remaining keys to make sure all your encrypted email is readable.</div>
+        <div class="wide line">
+          <button class="button longer green action_recover_remaining" data-test="action-step4more-recover-remaining">RECOVER REMAINING KEYS</button>
+        </div>
+        <div class="wide line">
+          <a class="button longer gray action_send" target="_blank">COMPOSE ENCRYPTED EMAIL</a>
+        </div>
+        <div class="wide line">
+          <button class="button longer gray action_account_settings" data-test="action-step4more-account-settings">MORE SETTINGS</button>
+        </div>
+      </div>
+
+      <div id="step_4_close" class="display_none">
+        <div class="wide line">
+          <button class="button longer green action_close">close</button>
         </div>
       </div>
     </div>
 
-    <div id="step_2_ekm_choose_pass_phrase" class="manual">
-      <div class="line">Choose pass phrase to protect your encrypted emails. <a href="#"
-          data-swal-page="/chrome/texts/passphrase_help.htm">choosing
-          secure pass phrases</a></div>
-      <div class="line">
-        <input class="input_password" type="text" placeholder="Pass phrase" id="step_2_ekm_input_password"
-          data-test="input-step2ekm-passphrase-1" maxlength="256" />
-      </div>
-      <div class="line">
-        <input class="input_password2" type="text" placeholder="Repeat pass phrase"
-          data-test="input-step2ekm-passphrase-2" id="step_2_ekm_input_password2" maxlength="256" />
-      </div>
-
-      <div class="line">
-        <p class="text-success small m-0" data-test="ekm-setup-user-notify">Your keys are managed with your
-          organization's Email Key Manager.</p>
-        <label class="input_passphrase_save_label hidden" data-test="input-step2ekm-save-passphrase-label">
-          <input type="checkbox" class="input_passphrase_save" value="" name="check"
-            data-test="input-step2ekm-save-passphrase">
-          Remember the pass phrase after closing the browser
-        </label>
-      </div>
-
-      <div class="line">
-        <button class="button longer gray action_proceed_private" data-test="input-step2ekm-continue">CONTINUE</button>
-      </div>
-    </div>
-
-    <div id="step_2_recovery">
-      <div class="line recovery_status">Found <span class="backups_count_words"></span> of your account key. Enter your
-        pass phrase to continue.</div>
-      <div class="wide line recovery_passphrase_container">
-        <input type="text" id="recovery_password" placeholder="Enter your pass phrase"
-          data-test="input-recovery-pass-phrase" maxlength="256" />
-      </div>
-      <div class="wide line">
-        <button class="button green longer action_recover_account" data-test="action-recover-account">RECOVER
-          ACCOUNT</button>
-      </div>
-      <div class="line line_skip_recovery center">
-        <a href="#" id="lost_pass_phrase">Lost your pass phrase?</a>
-      </div>
-      <div id="error_text_container" class="line">
-        <div id="error_text">This password did not match your original setup.
-          <br> Please try again.
-        </div>
-      </div>
-    </div>
-
-    <div id="step_3_compatibility_fix" class="compatibility_fix_container">
-    </div>
-
-    <div id="step_3_test_failed">
-      <div class="wide line">
-        This is rare and it's probably FlowCrypt's fault. Following button will test your browser and send me a report,
-        so that I can fix it soon.
-      </div>
-      <div class="wide line">
-        <button class="button longer green action_diagnose_browser">test my browser</button>
-      </div>
-      <div class="wide line ask_support_assistance_container"></div>
-    </div>
-
-    <div id="step_4_done">
-      <div class="wide line">
-        <a class="button longer green action_send" target="_blank">COMPOSE ENCRYPTED EMAIL</a>
-      </div>
-      <div class="wide line">
-        <button class="button longer gray action_account_settings" data-test="action-step4done-account-settings">MORE
-          SETTINGS</button>
-      </div>
-    </div>
-
-    <div id="step_4_more_to_recover">
-      <div class="wide line">
-        You successfully recovered <span class="private_key_count"></span> out of <span class="backups_count"></span>
-        available backups.
-      </div>
-      <div class="wide line">
-        Try to recover the remaining keys to make sure all your encrypted email is readable.
-      </div>
-      <div class="wide line">
-        <button class="button longer green action_recover_remaining"
-          data-test="action-step4more-recover-remaining">RECOVER
-          REMAINING KEYS</button>
-      </div>
-      <div class="wide line">
-        <a class="button longer gray action_send" target="_blank">COMPOSE ENCRYPTED EMAIL</a>
-      </div>
-      <div class="wide line">
-        <button class="button longer gray action_account_settings" data-test="action-step4more-account-settings">MORE
-          SETTINGS</button>
-      </div>
-    </div>
-
-    <div id="step_4_close" class="display_none">
-      <div class="wide line">
-        <button class="button longer green action_close">close</button>
-      </div>
-    </div>
-
-  </div>
-
-  <script src="/lib/purify.js"></script>
-  <script src="/lib/fine-uploader.js"></script>
-  <script src="/lib/jquery.min.js"></script>
-  <script src="/lib/sweetalert2.js"></script>
-  <script src="/lib/zxcvbn.js"></script>
-  <script src="/lib/openpgp.js"></script>
-  <script src="/lib/forge.js"></script>
-  <script src="/lib/emailjs/punycode.js"></script>
-  <script src="/lib/emailjs/emailjs-stringencoding.js"></script>
-  <script src="/lib/emailjs/emailjs-mime-codec.js"></script>
-  <script src="/lib/emailjs/emailjs-mime-types.js"></script>
-  <script src="/lib/emailjs/emailjs-addressparser.js"></script>
-  <script src="/lib/emailjs/emailjs-mime-builder.js"></script>
-  <script src="/lib/emailjs/emailjs-mime-parser.js"></script>
-  <script src="setup.js" type="module"></script>
-  <script src="../settings/index.js" type="module"></script>
-
-</body>
-
+    <script src="/lib/purify.js"></script>
+    <script src="/lib/fine-uploader.js"></script>
+    <script src="/lib/jquery.min.js"></script>
+    <script src="/lib/sweetalert2.js"></script>
+    <script src="/lib/zxcvbn.js"></script>
+    <script src="/lib/openpgp.js"></script>
+    <script src="/lib/forge.js"></script>
+    <script src="/lib/emailjs/punycode.js"></script>
+    <script src="/lib/emailjs/emailjs-stringencoding.js"></script>
+    <script src="/lib/emailjs/emailjs-mime-codec.js"></script>
+    <script src="/lib/emailjs/emailjs-mime-types.js"></script>
+    <script src="/lib/emailjs/emailjs-addressparser.js"></script>
+    <script src="/lib/emailjs/emailjs-mime-builder.js"></script>
+    <script src="/lib/emailjs/emailjs-mime-parser.js"></script>
+    <script src="setup.js" type="module"></script>
+    <script src="../settings/index.js" type="module"></script>
+  </body>
 </html>
