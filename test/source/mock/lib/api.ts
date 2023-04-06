@@ -4,7 +4,7 @@ import * as https from 'https';
 import * as http from 'http';
 import { Util } from '../../util';
 import { readFileSync } from 'fs';
-import { AttesterConfig } from '../attester/attester-endpoints';
+import { AttesterConfig, getMockAttesterEndpoints } from '../attester/attester-endpoints';
 
 export class HttpAuthErr extends Error {}
 export class HttpClientErr extends Error {
@@ -146,19 +146,25 @@ export class Api<REQ, RES> {
     if (!req.url) {
       throw new Error('no url');
     }
-    if (this.handlers[req.url]) {
+    console.log(this.attesterConfig);
+    const attesterHandler = getMockAttesterEndpoints(this.attesterConfig);
+    const newHandlers: Handlers<REQ, RES> = {
+      ...(attesterHandler as Handlers<REQ, RES>),
+      ...this.handlers,
+    };
+    if (newHandlers[req.url]) {
       // direct handler name match
-      return this.handlers[req.url];
+      return newHandlers[req.url];
     }
     const url = req.url.split('?')[0];
-    if (this.handlers[url]) {
+    if (newHandlers[url]) {
       // direct handler name match - ignoring query
-      return this.handlers[url];
+      return newHandlers[url];
     }
     // handler match where definition url ends with "/?" - incomplete path definition
-    for (const handlerPathDefinition of Object.keys(this.handlers).filter(def => /\/\?$/.test(def))) {
+    for (const handlerPathDefinition of Object.keys(newHandlers).filter(def => /\/\?$/.test(def))) {
       if (req.url.startsWith(handlerPathDefinition.replace(/\?$/, ''))) {
-        return this.handlers[handlerPathDefinition];
+        return newHandlers[handlerPathDefinition];
       }
     }
   };
