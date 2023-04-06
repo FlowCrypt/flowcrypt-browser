@@ -1329,16 +1329,33 @@ d6Z36//MsmczN00Wd60t9T+qyLz0T4/UG2Y9lgf367f3d+kYPE0LS7mXuFmjlPXfw0nKyVsSeFiu
         const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`);
         const pgpBlockPage = await inboxPage.getFrame(['pgp_block.htm']);
         await pgpBlockPage.waitAndClick('@download-attachment-0'); // test for inline attachment
-        await inboxPage.waitAndRespondToModal('confirm', 'confirm', expectedErrMsg);
+        const downloadedFile1 = await inboxPage.awaitDownloadTriggeredByClicking(() =>
+          PageRecipe.waitForModalAndRespond(inboxPage, 'confirm', {
+            contentToCheck: expectedErrMsg,
+            clickOn: 'confirm',
+          })
+        );
         await pgpBlockPage.waitAndClick('@preview-attachment');
         const attachmentPreviewPage = await inboxPage.getFrame(['attachment_preview.htm']);
         await attachmentPreviewPage.waitAndClick('@attachment-preview-download');
-        await attachmentPreviewPage.waitAndRespondToModal('confirm', 'confirm', expectedErrMsg);
+        const downloadedFile2 = await attachmentPreviewPage.awaitDownloadTriggeredByClicking(() =>
+          PageRecipe.waitForModalAndRespond(attachmentPreviewPage, 'confirm', {
+            contentToCheck: expectedErrMsg,
+            clickOn: 'confirm',
+          })
+        );
+        expect(Object.entries([downloadedFile1, downloadedFile2]).length).to.equal(2);
         await inboxPage.close();
         const inboxPage2 = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId2}`);
         const pgpBlockPage2 = await inboxPage2.getFrame(['pgp_block.htm']);
         await pgpBlockPage2.waitAndClick('@download-attachment-0');
-        await inboxPage2.waitAndRespondToModal('confirm', 'confirm', expectedErrMsg);
+        const downloadedFile3 = await inboxPage2.awaitDownloadTriggeredByClicking(() =>
+          PageRecipe.waitForModalAndRespond(inboxPage2, 'confirm', {
+            contentToCheck: expectedErrMsg,
+            clickOn: 'confirm',
+          })
+        );
+        expect(Object.entries(downloadedFile3).length).to.equal(1);
         await inboxPage2.close();
         const dbPage = await browser.newExtensionPage(t, 'chrome/dev/ci_unit_test.htm');
         const accessToken = await BrowserRecipe.getGoogleAccessToken(dbPage, acctEmail);
@@ -1348,16 +1365,34 @@ d6Z36//MsmczN00Wd60t9T+qyLz0T4/UG2Y9lgf367f3d+kYPE0LS7mXuFmjlPXfw0nKyVsSeFiu
         await gmailPage.waitAll('iframe');
         const pgpBlockPage3 = await gmailPage.getFrame(['pgp_block.htm']);
         await pgpBlockPage3.waitAndClick('@download-attachment-0'); // test for inline attachment
-        await gmailPage.waitAndRespondToModal('confirm', 'confirm', expectedErrMsg);
+        const downloadedFile4 = await gmailPage.awaitDownloadTriggeredByClicking(() =>
+          PageRecipe.waitForModalAndRespond(gmailPage, 'confirm', {
+            contentToCheck: expectedErrMsg,
+            clickOn: 'confirm',
+          })
+        );
         const attachmentFrame = await gmailPage.getFrame(['attachment.htm']);
         await attachmentFrame.waitAndClick('@attachment-container');
         const attachmentPreviewPage2 = await gmailPage.getFrame(['attachment_preview.htm']);
         await attachmentPreviewPage2.waitAndClick('@attachment-preview-download');
-        await attachmentPreviewPage2.waitAndRespondToModal('confirm', 'confirm', expectedErrMsg);
+        const downloadedFile5 = await attachmentPreviewPage2.awaitDownloadTriggeredByClicking(() =>
+          PageRecipe.waitForModalAndRespond(attachmentPreviewPage2, 'confirm', {
+            contentToCheck: expectedErrMsg,
+            clickOn: 'confirm',
+          })
+        );
+        expect(Object.entries([downloadedFile4, downloadedFile5]).length).to.equal(2);
         await gmailPage.close();
         const gmailPage2 = await browser.newPage(t, `${t.urls?.mockGmailUrl()}/${threadId2}`, undefined, extraAuthHeaders);
         const pgpBlockPage4 = await gmailPage2.getFrame(['pgp_block.htm']);
         await pgpBlockPage4.waitAndClick('@download-attachment-0');
+        const downloadedFile6 = await gmailPage2.awaitDownloadTriggeredByClicking(() =>
+          PageRecipe.waitForModalAndRespond(gmailPage2, 'confirm', {
+            contentToCheck: expectedErrMsg,
+            clickOn: 'confirm',
+          })
+        );
+        expect(Object.entries(downloadedFile6).length).to.equal(1);
         await gmailPage2.close();
       })
     );

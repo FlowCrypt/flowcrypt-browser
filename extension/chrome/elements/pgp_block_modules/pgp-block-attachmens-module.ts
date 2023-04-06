@@ -80,6 +80,7 @@ export class PgpBlockViewAttachmentsModule {
       })
     );
     BrowserMsg.addListener('confirmation_result', CommonHandlers.createConfirmationResultHandler(this));
+    BrowserMsg.listen(this.view.parentTabId);
   };
 
   private previewAttachmentClickedHandler = async (attachment: Attachment) => {
