@@ -12,7 +12,7 @@ import { TestWithBrowser } from './../test';
 import { expect } from 'chai';
 import { PageRecipe } from './page-recipe/abstract-page-recipe';
 import { Buf } from '../core/buf';
-import { get203FAE7076005381, mpVerificationKey, protonMailCompatKey } from '../mock/attester/attester-endpoints';
+import { get203FAE7076005381, protonMailCompatKey, mpVerificationKey, sha1signpubkey } from '../mock/attester/attester-key-contstants';
 
 export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: TestWithBrowser) => {
   if (testVariant !== 'CONSUMER-LIVE-GMAIL') {
@@ -794,20 +794,22 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
     test(
       'verification - message text is rendered prior to pubkey fetching',
       testWithBrowser('compatibility', async (t, browser) => {
-        t.mockApi!.attesterConfig = {
-          pubkeyLookup: {
-            'this.pubkey.takes.long.time.to.load@sender.test': {
-              pubkey: await get203FAE7076005381(),
-            },
-          },
-        };
         const msgId = '17dad75e63e47f97';
         const acctEmail = 'flowcrypt.compatibility@gmail.com';
         const senderEmail = 'this.pubkey.takes.long.time.to.load@sender.test';
+        t.mockApi!.attesterConfig = {
+          pubkeyLookup: {
+            [senderEmail]: {
+              pubkey: await get203FAE7076005381(),
+              delayInSeconds: 5,
+            },
+          },
+        };
         const params = `?frameId=none&acctEmail=${acctEmail}&msgId=${msgId}&signature=___cu_true___&senderEmail=${senderEmail}`;
         const pgpHostPage = await browser.newPage(t, `chrome/dev/ci_pgp_host_page.htm${params}`);
         const pgpBlockPage = await pgpHostPage.getFrame(['pgp_block.htm']);
         await pgpBlockPage.waitForContent('@pgp-block-content', '1234', 4, 10);
+        await pgpBlockPage.waitForContent('@pgp-signature', 'verifying signature...', 3, 10);
         await pgpBlockPage.waitForContent('@pgp-signature', 'signed', 10, 10);
       })
     );
@@ -1081,6 +1083,13 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
         const acctEmail = 'flowcrypt.compatibility@gmail.com';
         const signerEmail = 'some.sender@test.com';
         const data = await GoogleData.withInitializedData(acctEmail);
+        t.mockApi!.attesterConfig = {
+          pubkeyLookup: {
+            [signerEmail]: {
+              pubkey: await get203FAE7076005381(),
+            },
+          },
+        };
         /* eslint-disable @typescript-eslint/no-non-null-assertion */
         const msg = data.getMessage(msgId)!;
         const signature = Buf.fromBase64Str(msg!.raw!)
@@ -1324,6 +1333,13 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
     test(
       `verify - sha1 shows error`,
       testWithBrowser('compatibility', async (t, browser) => {
+        t.mockApi!.attesterConfig = {
+          pubkeyLookup: {
+            'sha1@sign.com': {
+              pubkey: sha1signpubkey,
+            },
+          },
+        };
         const msg = `-----BEGIN PGP MESSAGE-----
 
 yMCxATvCy8zAxHhitbJOfXrcEcbTKkkMIOCRmpOTr6NQkpFZrABEiQolqcUlCrmpxcWJ6alchw5U

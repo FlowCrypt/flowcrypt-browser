@@ -13,7 +13,6 @@ import { InboxPageRecipe } from './page-recipe/inbox-page-recipe';
 import { OauthPageRecipe } from './page-recipe/oauth-page-recipe';
 import { PageRecipe } from './page-recipe/abstract-page-recipe';
 import { SettingsPageRecipe } from './page-recipe/settings-page-recipe';
-import { protonMailCompatKey, somePubkey } from './../mock/attester/attester-endpoints';
 import { TestVariant } from './../util';
 import { TestWithBrowser } from './../test';
 import { expect } from 'chai';
@@ -23,6 +22,8 @@ import { testConstants } from './tooling/consts';
 import { MsgUtil } from '../core/crypto/pgp/msg-util';
 import { PubkeyInfoWithLastCheck } from '../core/crypto/key';
 import { ElementHandle, Page } from 'puppeteer';
+import { Status } from '../mock/lib/api';
+import { expiredPubkey, newerVersionOfExpiredPubkey, protonMailCompatKey, somePubkey, testMatchPubKey } from '../mock/attester/attester-key-contstants';
 
 export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: TestWithBrowser) => {
   if (testVariant !== 'CONSUMER-LIVE-GMAIL') {
@@ -824,6 +825,13 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
         const unknownRecipient = 'unknown@flowcrypt.test';
         const correctRecipient = 'mock.only.pubkey@flowcrypt.com';
+        t.mockApi!.attesterConfig = {
+          pubkeyLookup: {
+            [correctRecipient]: {
+              pubkey: somePubkey,
+            },
+          },
+        };
         await ComposePageRecipe.showRecipientInput(composePage);
         await composePage.waitAndType(`@input-to`, `${correctRecipient}\n`); // Enter correct recipient
         await composePage.waitAndType(`@input-to`, `${unknownRecipient}\n`); // enter unknown recipient
@@ -858,8 +866,16 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
     test(
       'compose - expired can still send',
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
+        const expiredEmail = 'expired.on.attester@domain.com';
+        t.mockApi!.attesterConfig = {
+          pubkeyLookup: {
+            [expiredEmail]: {
+              pubkey: expiredPubkey,
+            },
+          },
+        };
         const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
-        await ComposePageRecipe.fillMsg(composePage, { to: 'expired.on.attester@domain.com' }, 'Test Expired Email');
+        await ComposePageRecipe.fillMsg(composePage, { to: expiredEmail }, 'Test Expired Email');
         const expandContainer = await composePage.waitAny('@action-show-container-cc-bcc-buttons');
         const recipient = await expandContainer.$('.email_preview span');
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -2086,6 +2102,13 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       'compose - list of pubkeys gets refetched in compose',
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
         const recipientEmail = 'mock.only.pubkey@flowcrypt.com'; // has "somePubkey" on Attester
+        t.mockApi!.attesterConfig = {
+          pubkeyLookup: {
+            [recipientEmail]: {
+              pubkey: somePubkey,
+            },
+          },
+        };
         const validKey = protonMailCompatKey; // doesn't really matter which key we import, as long as different from "somePubkey"
         const settingsPage = await browser.newExtensionSettingsPage(t, 'ci.tests.gmail@flowcrypt.test');
         const contactsFrame = await importKeyManuallyAndViewTheNewContact(settingsPage, recipientEmail, validKey, 'IMPORT KEY');
@@ -2121,6 +2144,13 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       'auto-refresh expired key if newer version of the same key available',
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
         // add an expired key manually
+        t.mockApi!.attesterConfig = {
+          pubkeyLookup: {
+            'auto.refresh.expired.key@recipient.com': {
+              pubkey: newerVersionOfExpiredPubkey,
+            },
+          },
+        };
         const settingsPage = await browser.newExtensionSettingsPage(t, 'ci.tests.gmail@flowcrypt.test');
         const { recipientEmail, contactsFrame } = await importExpiredKeyForAutoRefresh(settingsPage);
         // now we want to see that compose page auto-fetches an updated one
@@ -2189,6 +2219,13 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
     test(
       'attester client should understand more than one pub key',
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
+        t.mockApi!.attesterConfig = {
+          pubkeyLookup: {
+            'multiple.pub.key@flowcrypt.com': {
+              pubkey: [somePubkey, protonMailCompatKey].join('\n'),
+            },
+          },
+        };
         const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
         const recipientEmail = 'multiple.pub.key@flowcrypt.com';
         await ComposePageRecipe.fillMsg(composePage, { to: recipientEmail }, t.title);
@@ -2219,7 +2256,6 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
     test(
       'check attester ldap search',
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
-        const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
         const recipients = {
           to: 'test.ldap.priority@gmail.com', // check if recipient-specific LDAP server results are priotized than flowcrypt pubkey server
           // check if we can get results from keyserver.pgp.com when no results are returned from flowcrypt key server and recipient-specific LDAP server
@@ -2228,6 +2264,29 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
           // check if flowcrypt keyserver results are priotized than keyserver.pgp.com results
           bcc: 'test.flowcrypt.pubkeyserver.priority@gmail.com',
         };
+        t.mockApi!.attesterConfig = {
+          pubkeyLookup: {
+            [recipients.to]: {
+              pubkey: somePubkey,
+            },
+            [recipients.bcc]: {
+              pubkey: somePubkey,
+            },
+          },
+          ldapRelay: {
+            [recipients.to]: {
+              pubkey: protonMailCompatKey,
+            },
+            [recipients.cc]: {
+              pubkey: [protonMailCompatKey, testMatchPubKey].join('\n'),
+              domainToCheck: 'keyserver.pgp.com',
+            },
+            [recipients.bcc]: {
+              pubkey: protonMailCompatKey,
+            },
+          },
+        };
+        const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
         await ComposePageRecipe.fillMsg(composePage, recipients, t.title);
         await composePage.close();
         const settingsPage = await browser.newExtensionSettingsPage(t, 'ci.tests.gmail@flowcrypt.test');
@@ -2250,8 +2309,32 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
     test(
       'check attester ldap timeout',
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
-        const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
         const recipients = { to: 'test.ldap.timeout@gmail.com', cc: 'test.flowcrypt.pubkey.timeout@gmail.com' };
+        t.mockApi!.attesterConfig = {
+          pubkeyLookup: {
+            [recipients.to]: {
+              pubkey: somePubkey,
+            },
+            [recipients.cc]: {
+              returnError: {
+                code: Status.BAD_REQUEST,
+                message: 'Request timeout',
+              },
+            },
+          },
+          ldapRelay: {
+            [recipients.to]: {
+              returnError: {
+                code: Status.BAD_REQUEST,
+                message: 'Request timeout',
+              },
+            },
+            [recipients.cc]: {
+              pubkey: somePubkey,
+            },
+          },
+        };
+        const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
         await ComposePageRecipe.fillMsg(composePage, recipients, t.title);
         await composePage.close();
         const settingsPage = await browser.newExtensionSettingsPage(t, 'ci.tests.gmail@flowcrypt.test');
