@@ -2,22 +2,28 @@
 
 'use strict';
 
-import { GmailParser, GmailRes } from '../api/email-provider/gmail/gmail-parser.js';
-import { Buf } from '../core/buf.js';
-import { Dict, Str } from '../core/common.js';
-import { Mime, MimeContent, MimeProccesedMsg } from '../core/mime.js';
-import { MsgBlock } from '../core/msg-block.js';
-import { SendAsAlias } from '../platform/store/acct-store.js';
-import { Xss } from '../platform/xss.js';
-import { XssSafeFactory } from '../xss-safe-factory.js';
+import { GmailParser, GmailRes } from './api/email-provider/gmail/gmail-parser.js';
+import { Attachment } from './core/attachment.js';
+import { Buf } from './core/buf.js';
+import { Dict, Str } from './core/common.js';
+import { Mime, MimeContent, MimeProccesedMsg } from './core/mime.js';
+import { MsgBlock } from './core/msg-block.js';
+import { SendAsAlias } from './platform/store/acct-store.js';
+import { Xss } from './platform/xss.js';
+import { XssSafeFactory } from './xss-safe-factory.js';
 
 export type ProccesedMsg = MimeProccesedMsg & {
   from?: string;
 };
 
+export type RenderedAttachment = {
+  renderedBlock: string;
+  file: Attachment;
+};
+
 export class MessageRenderer {
   public static renderMsg = (
-    { from, blocks }: { blocks: MsgBlock[]; from?: string },
+    { from, blocks }: { blocks: { block: MsgBlock; file?: Attachment }[]; from?: string },
     factory: XssSafeFactory,
     showOriginal: boolean,
     msgId: string, // todo: will be removed
@@ -25,23 +31,28 @@ export class MessageRenderer {
   ) => {
     const isOutgoing = Boolean(from && !!sendAs?.[from]);
     let r = '';
-    let renderedAttachments = '';
+    const renderedAttachments: RenderedAttachment[] = [];
     for (const block of blocks) {
       if (r) {
         r += '<br><br>';
       }
-      if (['encryptedAttachment', 'plainAttachment'].includes(block.type)) {
-        renderedAttachments += XssSafeFactory.renderableMsgBlock(factory, block, msgId, from || 'unknown', isOutgoing);
+      // todo: we don't need types, just source property?
+      if (['encryptedAttachment', 'plainAttachment'].includes(block.block.type) && !block.file) {
+        // debugger;
+        throw new Error('Unexpected!');
+      }
+      if (block.file) {
+        renderedAttachments.push({
+          renderedBlock: XssSafeFactory.renderableMsgBlock(factory, block.block, msgId, from || 'unknown', isOutgoing),
+          file: block.file,
+        });
       } else if (showOriginal) {
-        r += Xss.escape(Str.with(block.content)).replace(/\n/g, '<br>');
+        r += Xss.escape(Str.with(block.block.content)).replace(/\n/g, '<br>');
       } else {
-        r += XssSafeFactory.renderableMsgBlock(factory, block, msgId, from || 'unknown', isOutgoing);
+        r += XssSafeFactory.renderableMsgBlock(factory, block.block, msgId, from || 'unknown', isOutgoing);
       }
     }
-    if (renderedAttachments) {
-      r += `<div class="attachments" data-test="container-attachments">${renderedAttachments}</div>`;
-    }
-    return r;
+    return { renderedXssSafe: r, renderedAttachments };
   };
 
   public static process = async (gmailMsg: GmailRes.GmailMsg): Promise<ProccesedMsg> => {

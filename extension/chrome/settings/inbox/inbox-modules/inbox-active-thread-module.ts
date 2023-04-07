@@ -13,7 +13,7 @@ import { Buf } from '../../../../js/common/core/buf.js';
 import { Catch } from '../../../../js/common/platform/catch.js';
 import { InboxView } from '../inbox.js';
 import { Lang } from '../../../../js/common/lang.js';
-import { MessageRenderer } from '../../../../js/common/ui/message-renderer.js';
+import { MessageRenderer } from '../../../../js/common/message-renderer.js';
 import { Ui } from '../../../../js/common/browser/ui.js';
 import { ViewModule } from '../../../../js/common/view-module.js';
 import { Xss } from '../../../../js/common/platform/xss.js';
@@ -111,13 +111,24 @@ export class InboxActiveThreadModule extends ViewModule<InboxView> {
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const { blocks, headers } = await MessageRenderer.processMessageFromRaw(raw!);
       // todo: review the meaning of threadHasPgpBlock
-      this.threadHasPgpBlock ||= blocks.some(block => ['encryptedMsg', 'publicKey', 'privateKey', 'signedMsg'].includes(block.type));
+      this.threadHasPgpBlock ||= blocks.some(block => ['encryptedMsg', 'publicKey', 'privateKey', 'signedMsg'].includes(block.block.type));
       // todo: take `from` from the processedMessage?
+      const { renderedXssSafe, renderedAttachments } = MessageRenderer.renderMsg(
+        { from, blocks },
+        this.view.factory,
+        this.view.showOriginal,
+        message.id,
+        this.view.storage.sendAs
+      );
       const exportBtn = this.debugEmails.includes(this.view.acctEmail) ? '<a href="#" class="action-export">download api export</a>' : '';
       const r =
         `<p class="message_header" data-test="container-msg-header">From: ${Xss.escape(from || 'unknown')} <span style="float:right;">${
           headers.date
-        } ${exportBtn}</p>` + MessageRenderer.renderMsg({ from, blocks }, this.view.factory, this.view.showOriginal, message.id, this.view.storage.sendAs);
+        } ${exportBtn}</p>` +
+        renderedXssSafe +
+        (renderedAttachments.length
+          ? `<div class="attachments" data-test="container-attachments">${renderedAttachments.map(a => a.renderedBlock).join('')}</div>`
+          : '');
       $('.thread').append(this.wrapMsg(htmlId, r)); // xss-safe-factory
       if (exportBtn) {
         $('.action-export').on(

@@ -25,13 +25,13 @@ import { SendAsAlias } from '../../common/platform/store/acct-store.js';
 // todo: can we somehow define a purely relay class for ContactStore to clearly show that crypto-libraries are not loaded and can't be used?
 import { ContactStore } from '../../common/platform/store/contact-store.js';
 import { Buf } from '../../common/core/buf.js';
-import { MessageRenderer, ProccesedMsg } from '../../common/ui/message-renderer.js';
+import { MessageRenderer, RenderedAttachment } from '../../common/message-renderer.js';
 
 type JQueryEl = JQuery<HTMLElement>;
 
 interface MessageCacheEntry {
   full: Promise<GmailRes.GmailMsg>;
-  processedFull?: ProccesedMsg;
+  processedFull?: { renderedXssSafe?: string; renderedAttachments: RenderedAttachment[] };
 }
 
 export class GmailElementReplacer implements WebmailElementReplacer {
@@ -168,14 +168,20 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     return msgDownload;
   };
 
-  private msgGetProcessed = async (msgId: string): Promise<ProccesedMsg> => {
+  private msgGetProcessed = async (msgId: string): Promise<{ renderedXssSafe?: string; renderedAttachments: RenderedAttachment[] }> => {
     // todo: retries? exceptions?
     const msgDownload = this.msgGetCached(msgId);
     if (msgDownload.processedFull) {
       return msgDownload.processedFull;
     }
     const msg = await msgDownload.full;
-    msgDownload.processedFull = await MessageRenderer.process(msg);
+    const { blocks, from } = await MessageRenderer.process(msg);
+    if (blocks.length === 1 && blocks[0].block.type === 'plainText') {
+      // only has single block which is plain text
+      msgDownload.processedFull = { renderedAttachments: [] };
+    } else {
+      msgDownload.processedFull = MessageRenderer.renderMsg({ blocks, from }, this.factory, false, msgId, this.sendAs);
+    }
     return msgDownload.processedFull;
   };
 
@@ -201,16 +207,13 @@ export class GmailElementReplacer implements WebmailElementReplacer {
         console.debug('replaceArmoredBlocks() for of emailsContainingPgpBlock -> emailContainer added evaluated');
       }
       const msgId = this.determineMsgId(emailContainer);
-      const { blocks, from } = await this.msgGetProcessed(msgId);
-      if (blocks.length === 1 && blocks[0].type === 'plainText') {
-        // only has single block which is plain text
-      } else {
-        const replacementXssSafe = MessageRenderer.renderMsg({ blocks, from }, this.factory, false, msgId, this.sendAs);
+      const { renderedXssSafe } = await this.msgGetProcessed(msgId);
+      if (renderedXssSafe) {
         $(this.sel.translatePrompt).hide();
         if (this.debug) {
           console.debug('replaceArmoredBlocks() for of emailsContainingPgpBlock -> emailContainer replacing');
         }
-        this.updateMsgBodyEl_DANGEROUSLY(emailContainer, 'set', replacementXssSafe); // xss-safe-factory: replace_blocks is XSS safe
+        this.updateMsgBodyEl_DANGEROUSLY(emailContainer, 'set', renderedXssSafe); // xss-safe-factory: replace_blocks is XSS safe
         if (this.debug) {
           console.debug('replaceArmoredBlocks() for of emailsContainingPgpBlock -> emailContainer replaced');
         }
@@ -448,7 +451,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     if (this.debug) {
       console.debug('processAttachments()', attachmentMetas);
     }
-    const msgEl = this.getMsgBodyEl(msgId); // not a constant because sometimes elements get replaced, then returned by the function that replaced them
+    let msgEl = this.getMsgBodyEl(msgId); // not a constant because sometimes elements get replaced, then returned by the function that replaced them
     const isBodyEmpty = msgEl.text() === '' || msgEl.text() === '\n';
     const senderEmail = this.getSenderEmail(msgEl);
     const isOutgoing = !!this.sendAs[senderEmail];
@@ -469,7 +472,6 @@ export class GmailElementReplacer implements WebmailElementReplacer {
         if (treatAs !== 'plainFile') {
           this.hideAttachment(attachmentSel, attachmentsContainerInner);
           nRenderedAttachments--;
-          /*
           if (treatAs === 'encryptedFile') {
             // actual encrypted attachment - show it
             attachmentsContainerInner.prepend(this.factory.embeddedAttachment(a, true)); // xss-safe-factory
@@ -509,7 +511,6 @@ export class GmailElementReplacer implements WebmailElementReplacer {
             const embeddedSignedMsgXssSafe = this.factory.embeddedMsg('signedMsg', '', msgId, false, senderEmail, true);
             msgEl = this.updateMsgBodyEl_DANGEROUSLY(msgEl, 'set', embeddedSignedMsgXssSafe); // xss-safe-factory
           }
-          */
         } else if (treatAs === 'plainFile' && a.name.substr(-4) === '.asc') {
           // todo:
           // normal looking attachment ending with .asc
@@ -607,7 +608,6 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     return nRenderedAttachments;
   };
 
-  /* todo:
   private renderBackupFromFile = async (
     attachmentMeta: Attachment,
     attachmentsContainerInner: JQueryEl,
@@ -627,7 +627,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     this.updateMsgBodyEl_DANGEROUSLY(msgEl, 'append', this.factory.embeddedBackup(downloadedAttachment.data.toUtfStr())); // xss-safe-factory
     return nRenderedAttachments;
   };
-  */
+
   private filterAttachments = (potentialMatches: JQueryEl | HTMLElement, regExp: RegExp) => {
     return $(potentialMatches)
       .filter('span.aZo:visible, span.a5r:visible')
