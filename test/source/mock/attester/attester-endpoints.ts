@@ -28,7 +28,6 @@ export const getMockAttesterEndpoints = (attesterConfig: AttesterConfig): Handle
     '/attester/pub/?': async ({ body }, req) => {
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const emailOrLongid = req.url!.split('/').pop()!.toLowerCase().trim();
-      console.log(`test: $${emailOrLongid}`);
       if (isGet(req)) {
         if (!attesterConfig?.pubkeyLookup) {
           throw new HttpClientErr('Method not allowed', 405);
@@ -57,7 +56,6 @@ export const getMockAttesterEndpoints = (attesterConfig: AttesterConfig): Handle
       // const server = parsedReq.query.server;
       const server = parsedReq.query.server;
       const emailOrLongid = parsedReq.query.search;
-      console.log(`ldap: $${emailOrLongid}`);
       if (isGet(req)) {
         if (!attesterConfig?.ldapRelay) {
           throw new HttpClientErr('Method not allowed', 405);
