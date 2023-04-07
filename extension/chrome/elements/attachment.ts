@@ -4,7 +4,7 @@
 
 import { Bm, BrowserMsg } from '../../js/common/browser/browser-msg.js';
 import { DecryptErrTypes, MsgUtil } from '../../js/common/core/crypto/pgp/msg-util.js';
-import { PromiseCancellation, Url } from '../../js/common/core/common.js';
+import { PromiseCancellation, Str, Url } from '../../js/common/core/common.js';
 import { Api } from '../../js/common/api/shared/api.js';
 import { ApiErr } from '../../js/common/api/shared/api-error.js';
 import { Assert } from '../../js/common/assert.js';
@@ -66,7 +66,7 @@ export class AttachmentDownloadView extends View {
     this.acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
     this.parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
     this.frameId = Assert.urlParamRequire.string(uncheckedUrlParams, 'frameId');
-    this.origNameBasedOnFilename = uncheckedUrlParams.name ? String(uncheckedUrlParams.name).replace(/\.(pgp|gpg)$/gi, '') : 'noname';
+    this.origNameBasedOnFilename = uncheckedUrlParams.name ? Str.stripPgpOrGpgExtensionIfPresent(String(uncheckedUrlParams.name)) : 'noname';
     this.isEncrypted = uncheckedUrlParams.isEncrypted === true;
     this.errorDetailsOpened = uncheckedUrlParams.errorDetailsOpened === true;
     this.size = uncheckedUrlParams.size ? parseInt(String(uncheckedUrlParams.size)) : undefined;
@@ -103,8 +103,7 @@ export class AttachmentDownloadView extends View {
     $('img#file-format').attr('src', this.getFileIconSrc());
     if (!this.size && this.url) {
       // download url of a file that has an unknown size
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      this.getUrlFileSize(this.url!)
+      this.getUrlFileSize(this.url)
         .then(fileSize => {
           if (typeof fileSize !== 'undefined') {
             this.size = fileSize;
@@ -213,8 +212,7 @@ export class AttachmentDownloadView extends View {
     console.info('trying to figure out figetUrlFileSizee size');
     if (url.indexOf('docs.googleusercontent.getUrlFileSizeom/docs/securesc') !== -1) {
       try {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const googleDriveFileId = url.split('/').pop()!.split('?').shift(); // try and catch any errors below if structure is not as expected
+        const googleDriveFileId = url.split('/').pop()?.split('?').shift(); // try and catch any errors below if structure is not as expected
         url = googleDriveFileId ? `https://drive.google.com/uc?export=download&id=${googleDriveFileId}` : url; // attempt to get length headers from Google Drive file if available
       } catch (e) {
         // leave url as is
@@ -240,16 +238,18 @@ export class AttachmentDownloadView extends View {
   };
 
   private processAsPublicKeyAndHideAttachmentIfAppropriate = async () => {
-    if (this.attachment.msgId && this.attachment.id && this.attachment.treatAs() === 'publicKey') {
+    // todo: we should call this detection in the main `core/Attachment.treatAs` (e.g. in the context of GmailElementReplacer and InboxActiveThreadModule)
+    // should be possible after #4906 is done
+    if (((this.attachment.msgId && this.attachment.id) || this.attachment.url) && this.attachment.isPublicKey()) {
       // this is encrypted public key - download && decrypt & parse & render
-      const { data } = await this.gmail.attachmentGet(this.attachment.msgId, this.attachment.id);
+      await this.downloadDataIfNeeded();
       const decrRes = await MsgUtil.decryptMessage({
         kisWithPp: await KeyStore.getAllWithOptionalPassPhrase(this.acctEmail),
-        encryptedData: data,
+        encryptedData: this.attachment.getData(),
         verificationPubs: [], // no need to worry about the public key signature, as public key exchange is inherently unsafe
       });
       if (decrRes.success && decrRes.content) {
-        const openpgpType = await MsgUtil.type({ data: decrRes.content });
+        const openpgpType = MsgUtil.type({ data: decrRes.content });
         if (openpgpType && openpgpType.type === 'publicKey' && openpgpType.armored) {
           // 'openpgpType.armored': could potentially process unarmored pubkey files, maybe later
           BrowserMsg.send.renderPublicKeys(this.parentTabId, {
@@ -343,8 +343,7 @@ export class AttachmentDownloadView extends View {
       $('.see-error-details').on('click', async () => {
         await this.previewAttachmentClickedHandler(true);
       });
-      const name = this.attachment.name;
-      Browser.saveToDownloads(new Attachment({ name, type: this.type, data: this.attachment.getData() })); // won't work in ff, possibly neither on some chrome versions (on webmail)
+      Browser.saveToDownloads(new Attachment({ name: this.name, type: this.type, data: this.attachment.getData() })); // won't work in ff, possibly neither on some chrome versions (on webmail)
     }
   };
 

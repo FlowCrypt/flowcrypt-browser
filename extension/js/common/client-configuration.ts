@@ -27,6 +27,8 @@ export type ClientConfigurationJson = {
   key_manager_url?: string;
   allow_attester_search_only_for_domains?: string[];
   disallow_attester_search_for_domains?: string[];
+  allow_keys_openpgp_org_search_only_for_domains?: string[];
+  disallow_keys_openpgp_org_search_for_domains?: string[];
   enforce_keygen_algo?: string;
   enforce_keygen_expire_months?: number;
   in_memory_pass_phrase_session_length?: number;
@@ -49,7 +51,6 @@ export class ClientConfigurationError extends UnreportableError {
  * These either enforce, alter or forbid various behavior to fit customer needs
  */
 export class ClientConfiguration {
-  // eslint-disable-next-line no-empty-function
   protected constructor(private clientConfigurationJson: ClientConfigurationJson, public domainName: string) {}
 
   public static newInstance = async (acctEmail: string): Promise<ClientConfiguration> => {
@@ -213,6 +214,25 @@ export class ClientConfiguration {
   };
 
   /**
+   * Some orgs have a list of email domains where they do NOT want such emails to be looked up on keys.openpgp.org
+   */
+  public canLookupThisRecipientOnKeysOpenPGP = (emailAddr: string): boolean => {
+    const userDomain = Str.getDomainFromEmailAddress(emailAddr);
+    if (!userDomain) {
+      throw new Error(`Not a valid email ${emailAddr}`);
+    }
+    // When allow_keys_openpgp_org_search_only_for_domains is set, ignore disallow_keys_openpgp_org_search_for_domains rule
+    if (this.clientConfigurationJson.allow_keys_openpgp_org_search_only_for_domains) {
+      return this.clientConfigurationJson.allow_keys_openpgp_org_search_only_for_domains.includes(userDomain);
+    }
+    const disallowedDomains = this.clientConfigurationJson.disallow_keys_openpgp_org_search_for_domains || [];
+    if (disallowedDomains.includes('*')) {
+      return false;
+    }
+    return !disallowedDomains.includes(userDomain);
+  };
+
+  /**
    * Some orgs will require user's imported private key to match their LDAP pub key result
    */
   public setupEnsureImportedPrvMatchLdapPub = (): boolean => {
@@ -227,10 +247,10 @@ export class ClientConfiguration {
   };
 
   /**
-   * with this option and recipients are missing a public key, and the user is using flowcrypt.com/api (not FES)
+   * with this option and recipients are missing a public key, and the user is using flowcrypt.com/shared-tenant-fes (not FES)
    * it will not give the user option to enter a message password, as if that functionality didn't exist.
    */
-  public shouldDisablePasswordMessages = (): boolean => {
+  public shouldDisableFlowCryptHostedPasswordMessages = (): boolean => {
     return (this.clientConfigurationJson.flags || []).includes('DISABLE_FLOWCRYPT_HOSTED_PASSWORD_MESSAGES');
   };
 }

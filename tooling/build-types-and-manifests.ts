@@ -123,6 +123,8 @@ const makeMockBuild = (sourceBuildType: string) => {
       )
       .replace(/const (BACKEND_API_HOST) = [^;]+;/g, `const $1 = 'https://localhost:8001/api/';`)
       .replace(/const (ATTESTER_API_HOST) = [^;]+;/g, `const $1 = 'https://localhost:8001/attester/';`)
+      .replace(/const (KEYS_OPENPGP_ORG_API_HOST) = [^;]+;/g, `const $1 = 'https://localhost:8001/keys-openpgp-org/';`)
+      .replace(/const (SHARED_TENANT_API_HOST) = [^;]+;/g, `const $1 = 'https://localhost:8001/shared-tenant-fes';`)
       .replace(/https:\/\/flowcrypt\.com\/api\/help\/error/g, 'https://localhost:8001/api/help/error')
       .replace(/const (WKD_API_HOST) = '';/g, `const $1 = 'https://localhost:8001';`);
   };
@@ -137,8 +139,19 @@ const makeMockBuild = (sourceBuildType: string) => {
 const makeLocalFesBuild = (sourceBuildType: string) => {
   const localFesBuildType = `${sourceBuildType}-local-fes`;
   exec(`cp -r ${buildDir(sourceBuildType)} ${buildDir(localFesBuildType)}`);
-  edit(`${buildDir(localFesBuildType)}/js/common/api/account-servers/enterprise-server.js`, code =>
-    code.replace('https://fes.${this.domain}', 'http://localhost:32337')
+  edit(`${buildDir(localFesBuildType)}/js/common/api/account-servers/external-service.js`, code =>
+    code.replace('https://fes.${this.domain}', 'http://localhost:32667')
+  );
+};
+
+const makeContentScriptTestsBuild = (sourceBuildType: string) => {
+  const testCode = readFileSync('./test/source/tests/content-script-test.js').toString();
+  const testBuildType = sourceBuildType.endsWith('-mock')
+    ? sourceBuildType.slice(0, -5) + '-content-script-tests-mock'
+    : sourceBuildType + '-content-script-tests';
+  exec(`cp -r ${buildDir(sourceBuildType)} ${buildDir(testBuildType)}`);
+  edit(`${buildDir(testBuildType)}/js/content_scripts/webmail_bundle.js`, code =>
+    code.replace(/\/\* ----- [^\r\n]*\/content_scripts\/webmail\/.*}\)\(\);/s, `${testCode}\r\n\r\n})();`)
   );
 };
 
@@ -146,3 +159,5 @@ updateEnterpriseBuild();
 makeMockBuild(CHROME_CONSUMER);
 makeMockBuild(CHROME_ENTERPRISE);
 makeLocalFesBuild(CHROME_ENTERPRISE);
+makeContentScriptTestsBuild('chrome-consumer-mock');
+// makeContentScriptTestsBuild('firefox-consumer'); // for manual testing of content script in Firefox

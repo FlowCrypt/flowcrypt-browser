@@ -24,6 +24,7 @@ import { ReplyOptions } from './compose-reply-btn-popover-module.js';
 
 export class ComposeRenderModule extends ViewModule<ComposeView> {
   private responseMethod: 'reply' | 'forward' | undefined;
+  private previousReplyOption: ReplyOptions | undefined;
 
   public initComposeBox = async () => {
     if (this.view.isReplyBox) {
@@ -220,9 +221,12 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
     }
     this.view.recipientsModule.clearRecipients();
     if (option === 'a_forward') {
-      await this.view.quoteModule.addTripleDotQuoteExpandFooterAndQuoteBtn(this.view.replyMsgId, 'forward');
+      await this.view.quoteModule.addTripleDotQuoteExpandFooterAndQuoteBtn(this.view.replyMsgId, 'forward', true);
     } else {
       this.view.recipientsModule.addRecipients(this.view.replyParams, false).catch(Catch.reportErr);
+      if (this.previousReplyOption === 'a_forward') {
+        this.view.attachmentsModule.attachment.clearAllAttachments();
+      }
       if (option === 'a_reply') {
         await this.view.recipientsModule.clearRecipientsForReply();
       }
@@ -231,6 +235,7 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
         document.getElementById('input_text')?.focus(); // jQuery no longer worked as of 3.6.0
       }, 10);
     }
+    this.previousReplyOption = option;
   };
 
   private initComposeBoxStyles = () => {
@@ -323,7 +328,7 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
           $('.minimize_compose_window').trigger('click');
         }
       });
-      await this.view.quoteModule.addTripleDotQuoteExpandFooterOnlyBtn();
+      await this.view.quoteModule.addSignatureToInput();
       this.view.sizeModule.setInputTextHeightManuallyIfNeeded(true);
     }
     // Firefox needs an iframe to be focused before focusing its content
@@ -445,7 +450,7 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
 
   private renderReplySuccessAttachments = (attachments: Attachment[], msgId: string, isEncrypted: boolean) => {
     const hideAttachmentTypes = this.view.sendBtnModule.popover.choices.richtext ? ['hidden', 'encryptedMsg', 'signature', 'publicKey'] : ['publicKey'];
-    const renderableAttachments = attachments.filter(attachment => !hideAttachmentTypes.includes(attachment.treatAs()));
+    const renderableAttachments = attachments.filter(attachment => !hideAttachmentTypes.includes(attachment.treatAs(attachments)));
     if (renderableAttachments.length) {
       this.view.S.cached('replied_attachments')
         .html(

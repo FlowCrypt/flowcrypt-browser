@@ -22,8 +22,10 @@ import { WebmailCommon } from '../../common/webmail.js';
 import { Xss } from '../../common/platform/xss.js';
 import { ClientConfiguration } from '../../common/client-configuration.js';
 import { SendAsAlias } from '../../common/platform/store/acct-store.js';
+// todo: can we somehow define a purely relay class for ContactStore to clearly show that crypto-libraries are not loaded and can't be used?
 import { ContactStore } from '../../common/platform/store/contact-store.js';
 import { Buf } from '../../common/core/buf.js';
+import { MsgBlockParser } from '../../common/core/msg-block-parser.js';
 
 type JQueryEl = JQuery<HTMLElement>;
 
@@ -173,14 +175,12 @@ export class GmailElementReplacer implements WebmailElementReplacer {
       }
       const senderEmail = this.getSenderEmail(emailContainer);
       const isOutgoing = !!this.sendAs[senderEmail];
-      const replacementXssSafe = XssSafeFactory.replaceRenderableMsgBlocks(
-        this.factory,
-        emailContainer.innerText,
-        this.determineMsgId(emailContainer),
-        senderEmail,
-        isOutgoing
-      );
-      if (typeof replacementXssSafe !== 'undefined') {
+      const msgId = this.determineMsgId(emailContainer);
+      const { blocks } = MsgBlockParser.detectBlocks(emailContainer.innerText);
+      if (blocks.length === 1 && blocks[0].type === 'plainText') {
+        // only has single block which is plain text
+      } else {
+        const replacementXssSafe = XssSafeFactory.renderableMsgBlocks(this.factory, blocks, msgId, senderEmail, isOutgoing);
         $(this.sel.translatePrompt).hide();
         if (this.debug) {
           console.debug('replaceArmoredBlocks() for of emailsContainingPgpBlock -> emailContainer replacing');
@@ -390,7 +390,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
           if (this.debug) {
             console.debug('processNewPgpAttachments() -> msgGet may take some time');
           }
-          const msg = await this.gmail.msgGet(msgId, 'full');
+          const msg = await this.gmail.msgGet(msgId, 'full'); // todo: cache or thoroughly refactor in #5022
           if (this.debug) {
             console.debug('processNewPgpAttachments() -> msgGet done -> processAttachments', msg);
           }
@@ -431,7 +431,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     attachmentsContainerInner.parent().find(this.sel.numberOfAttachments).hide();
     let nRenderedAttachments = attachmentMetas.length;
     for (const a of attachmentMetas) {
-      const treatAs = a.treatAs(isBodyEmpty);
+      const treatAs = a.treatAs(attachmentMetas, isBodyEmpty);
       // todo - [same name + not processed].first() ... What if attachment metas are out of order compared to how gmail shows it? And have the same name?
       const attachmentSel = this.filterAttachments(
         attachmentsContainerInner.children().not('.attachment_processed'),

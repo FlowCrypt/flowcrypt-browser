@@ -2,14 +2,11 @@
 
 'use strict';
 
-import { ApiErr } from '../../../js/common/api/shared/api-error.js';
 import { Assert } from '../../../js/common/assert.js';
-import { Catch } from '../../../js/common/platform/catch.js';
 import { Settings } from '../../../js/common/settings.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { Url } from '../../../js/common/core/common.js';
 import { View } from '../../../js/common/view.js';
-import { Xss } from '../../../js/common/platform/xss.js';
 import { initPassphraseToggle } from '../../../js/common/ui/passphrase-ui.js';
 import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
 import { KeyStore } from '../../../js/common/platform/store/key-store.js';
@@ -35,6 +32,7 @@ View.run(
     }
 
     public render = async () => {
+      await this.acctServer.initialize();
       await initPassphraseToggle(['passphrase_entry']);
       this.prvs = await KeyStoreUtil.parse(await KeyStore.getRequired(this.acctEmail));
       const storage = await AcctStore.get(this.acctEmail, ['hide_message_password', 'outgoing_language']);
@@ -42,7 +40,6 @@ View.run(
       $('#hide_message_password').prop('checked', storage.hide_message_password === true);
       $('.password_message_language').val(storage.outgoing_language || 'EN');
       await this.renderPassPhraseOptionsIfStoredPermanently();
-      await this.loadAndRenderPwdEncryptedMsgSettings();
       if (this.clientConfiguration.mustAutogenPassPhraseQuietly()) {
         $('.hide_if_pass_phrase_not_user_configurable').hide();
       }
@@ -90,40 +87,6 @@ View.run(
         $('.cancel_passphrase_requirement_change').on('click', () => window.location.reload());
         $('#passphrase_entry').keydown(this.setEnterHandlerThatClicks('.confirm_passphrase_requirement_change'));
       }
-    };
-
-    private loadAndRenderPwdEncryptedMsgSettings = async () => {
-      Xss.sanitizeRender('.select_loader_container', Ui.spinner('green'));
-      try {
-        if (!this.clientConfiguration.usesKeyManager()) {
-          $('.password_messages_expiry_container').show();
-          const response = await this.acctServer.accountGetAndUpdateLocalStore();
-          $('.select_loader_container').text('');
-          $('.default_message_expire').val(Number(response.account.default_message_expire).toString()).prop('disabled', false).css('display', 'inline-block');
-          $('.default_message_expire').change(this.setHandler(() => this.onDefaultExpireUserChange()));
-        }
-      } catch (e) {
-        if (ApiErr.isAuthErr(e)) {
-          Settings.offerToLoginWithPopupShowModalOnErr(this.acctEmail, () => window.location.reload());
-        } else if (ApiErr.isNetErr(e)) {
-          Xss.sanitizeRender('.expiration_container', '(network error: <a href="#">retry</a>)')
-            .find('a')
-            .on('click', () => window.location.reload()); // safe source
-        } else {
-          Catch.reportErr(e);
-          Xss.sanitizeRender('.expiration_container', '(unknown error: <a href="#">retry</a>)')
-            .find('a')
-            .on('click', () => window.location.reload()); // safe source
-        }
-      }
-    };
-
-    private onDefaultExpireUserChange = async () => {
-      Xss.sanitizeRender('.select_loader_container', Ui.spinner('green'));
-      $('.default_message_expire').css('display', 'none');
-      // eslint-disable-next-line @typescript-eslint/naming-convention
-      await this.acctServer.accountUpdate({ default_message_expire: Number($('.default_message_expire').val()) });
-      window.location.reload();
     };
 
     private onMsgLanguageUserChange = async () => {

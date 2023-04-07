@@ -7,8 +7,9 @@ import * as forge from 'node-forge';
 import { Buf } from '../../buf.js';
 import { ReplaceableMsgBlockType } from '../../msg-block.js';
 import { Str } from '../../common.js';
+import type * as OpenPGP from 'openpgp';
 import { opgp } from './openpgpjs-custom.js';
-import { Stream } from '../../stream.js';
+import * as Stream from '@openpgp/web-stream-tools';
 import { SmimeKey, ENVELOPED_DATA_OID } from '../smime/smime-key.js';
 
 export type PreparedForDecrypt =
@@ -16,9 +17,9 @@ export type PreparedForDecrypt =
       isArmored: boolean;
       isCleartext: true;
       isPkcs7: false;
-      message: OpenPGP.cleartext.CleartextMessage | OpenPGP.message.Message;
+      message: OpenPGP.CleartextMessage | OpenPGP.Message<OpenPGP.Data>;
     }
-  | { isArmored: boolean; isCleartext: false; isPkcs7: false; message: OpenPGP.message.Message }
+  | { isArmored: boolean; isCleartext: false; isPkcs7: false; message: OpenPGP.Message<OpenPGP.Data> }
   | { isArmored: boolean; isCleartext: false; isPkcs7: true; message: forge.pkcs7.PkcsEnvelopedData };
 
 type CryptoArmorHeaderDefinitions = {
@@ -125,11 +126,11 @@ export class PgpArmor {
     return armored;
   };
 
-  public static cryptoMsgPrepareForDecrypt = async (encrypted: Uint8Array): Promise<PreparedForDecrypt> => {
+  public static cryptoMsgPrepareForDecrypt = async (encrypted: Uint8Array | string): Promise<PreparedForDecrypt> => {
     if (!encrypted.length) {
       throw new Error('Encrypted message could not be parsed because no data was provided');
     }
-    const utfChunk = new Buf(encrypted.slice(0, 100)).toUtfStr('ignore'); // ignore errors - this may not be utf string, just testing
+    const utfChunk = typeof encrypted === 'string' ? encrypted.substring(0, 100) : new Buf(encrypted.slice(0, 100)).toUtfStr('ignore'); // ignore errors - this may not be utf string, just testing
     if (utfChunk.includes(PgpArmor.headers('pkcs7').begin)) {
       const p7 = SmimeKey.readArmoredPkcs7Message(encrypted);
       if (p7.type !== ENVELOPED_DATA_OID) {
@@ -145,25 +146,25 @@ export class PgpArmor {
         isArmored,
         isCleartext: true,
         isPkcs7: false,
-        message: await opgp.cleartext.readArmored(new Buf(encrypted).toUtfStr()),
+        message: await opgp.readCleartextMessage({ cleartextMessage: Str.with(encrypted) }),
       };
     } else if (isArmoredEncrypted) {
-      const message = await opgp.message.readArmored(new Buf(encrypted).toUtfStr());
-      const isCleartext = !!message.getLiteralData() && !!message.getSigningKeyIds().length && !message.getEncryptionKeyIds().length;
+      const message = await opgp.readMessage({ armoredMessage: Str.with(encrypted) });
+      const isCleartext = !!message.getLiteralData() && !!message.getSigningKeyIDs().length && !message.getEncryptionKeyIDs().length;
       return { isArmored: true, isCleartext, isPkcs7: false, message };
     } else if (encrypted instanceof Uint8Array) {
-      return { isArmored, isCleartext: false, isPkcs7: false, message: await opgp.message.read(encrypted) };
+      return { isArmored, isCleartext: false, isPkcs7: false, message: await opgp.readMessage({ binaryMessage: encrypted }) };
     }
     throw new Error('Message does not have armor headers');
   };
 
   public static dearmor = async (text: string): Promise<{ type: OpenPGP.enums.armor; data: Uint8Array }> => {
-    const decoded = await opgp.armor.decode(text);
+    const decoded = await opgp.unarmor(text);
     const data = await Stream.readToEnd(decoded.data);
     return { type: decoded.type, data };
   };
 
-  public static armor = (messagetype: OpenPGP.enums.armor, body: object, partindex?: number, parttotal?: number, customComment?: string): string => {
-    return opgp.armor.encode(messagetype, body, partindex, parttotal, customComment);
+  public static armor = (messagetype: OpenPGP.enums.armor, body: object): string => {
+    return opgp.armor(messagetype, body, undefined, undefined, undefined, opgp.config);
   };
 }

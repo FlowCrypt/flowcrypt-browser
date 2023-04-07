@@ -157,8 +157,8 @@ export class ComposeErrModule extends ViewModule<ComposeView> {
   };
 
   public throwIfEncryptionPasswordInvalidOrDisabled = async ({ subject, pwd }: { subject: string; pwd?: string }) => {
-    // When DISABLE_FLOWCRYPT_HOSTED_PASSWORD_MESSAGES present, and recipients are missing a public key, and the user is using flowcrypt.com/api (not FES)
-    if (this.view.clientConfiguration.shouldDisablePasswordMessages() && !this.view.isFesUsed()) {
+    // When DISABLE_FLOWCRYPT_HOSTED_PASSWORD_MESSAGES present, and recipients are missing a public key, and the user is using flowcrypt.com/shared-tenant-fes (not FES)
+    if (this.view.clientConfiguration.shouldDisableFlowCryptHostedPasswordMessages() && !this.view.isCustomerUrlFesUsed()) {
       throw new ComposerUserError(Lang.compose.addMissingRecipientPubkeys);
     }
     if (pwd) {

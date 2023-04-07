@@ -43,6 +43,8 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
 
   private googleContactsSearchEnabled: boolean | Promise<boolean | undefined>;
 
+  private uniqueRecipientIndex = 0;
+
   public constructor(view: ComposeView) {
     super(view);
     this.googleContactsSearchEnabled = this.queryIfGoogleSearchEnabled();
@@ -383,10 +385,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       .find(`#input-container-bcc`)
       .css('display', isThere.bcc ? '' : 'none');
     this.view.S.cached('bcc').css('display', isThere.bcc ? 'none' : '');
-    this.view.S.cached('input_addresses_container_outer')
-      .children(`:not([style="display: none;"])`)
-      .last()
-      .append(this.view.S.cached('container_cc_bcc_buttons')); // xss-reinsert
+    this.view.S.cached('input_addresses_container_outer').children(':visible').last().append(this.view.S.cached('container_cc_bcc_buttons')); // xss-reinsert
   };
 
   public collapseInputsIfNeeded = async () => {
@@ -560,7 +559,8 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     if (e.key === 'Backspace') {
       if (!$(e.target).val()) {
         const sendingType = e.target.getAttribute('data-sending-type') as RecipientType;
-        const lastRecipient = this.addedRecipients.reverse().find(r => r.sendingType === sendingType);
+        const reversedRecipients = [...this.addedRecipients].reverse();
+        const lastRecipient = reversedRecipients.find(r => r.sendingType === sendingType);
         if (lastRecipient) {
           this.removeRecipient(lastRecipient.element);
         }
@@ -1135,7 +1135,9 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
   };
 
   private generateRecipientId = (): string => {
-    return `recipient_${this.addedRecipients.length}`;
+    const recipientId = `recipient_${this.uniqueRecipientIndex}`;
+    this.uniqueRecipientIndex += 1;
+    return recipientId;
   };
 
   private addDraggableEvents = (element: HTMLElement) => {

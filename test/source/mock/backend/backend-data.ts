@@ -4,11 +4,13 @@ import { Dict } from '../../core/common';
 import { HttpClientErr } from '../lib/api';
 
 /* eslint-disable @typescript-eslint/naming-convention */
-export const keyManagerAutogenRules = {
-  flags: ['NO_PRV_BACKUP', 'ENFORCE_ATTESTER_SUBMIT', 'PRV_AUTOIMPORT_OR_AUTOGEN', 'PASS_PHRASE_QUIET_AUTOGEN', 'DEFAULT_REMEMBER_PASS_PHRASE'],
-  key_manager_url: 'https://localhost:8001/flowcrypt-email-key-manager',
-  enforce_keygen_algo: 'rsa2048',
-  disallow_attester_search_for_domains: [],
+export const keyManagerAutogenRules = (port: string) => {
+  return {
+    flags: ['NO_PRV_BACKUP', 'ENFORCE_ATTESTER_SUBMIT', 'PRV_AUTOIMPORT_OR_AUTOGEN', 'PASS_PHRASE_QUIET_AUTOGEN', 'DEFAULT_REMEMBER_PASS_PHRASE'],
+    key_manager_url: `https://localhost:${port}/flowcrypt-email-key-manager`,
+    enforce_keygen_algo: 'rsa2048',
+    disallow_attester_search_for_domains: [],
+  };
 };
 
 export type ClientConfiguration = {
@@ -18,6 +20,8 @@ export type ClientConfiguration = {
   key_manager_url?: string;
   allow_attester_search_only_for_domains?: string[];
   disallow_attester_search_for_domains?: string[];
+  allow_keys_openpgp_org_search_only_for_domains?: string[];
+  disallow_keys_openpgp_org_search_for_domains?: string[];
   enforce_keygen_algo?: string;
   enforce_keygen_expire_months?: number;
   in_memory_pass_phrase_session_length?: number;
@@ -38,35 +42,20 @@ export interface ReportedError {
 export class BackendData {
   public reportedErrors: ReportedError[] = [];
 
-  public clientConfigurationByAcctEmail: Dict<ClientConfiguration | HttpClientErr> = {};
+  public clientConfigurationForDomain: Dict<ClientConfiguration | HttpClientErr> = {};
 
-  /* eslint-disable no-null/no-null */
-  public getAcctRow = (acct: string) => {
-    return {
-      email: acct,
-      alias: null,
-      name: 'mock name',
-      photo: null,
-      photo_circle: true, // eslint-disable-line @typescript-eslint/naming-convention
-      web: null,
-      phone: null,
-      intro: null,
-      default_message_expire: 3, // eslint-disable-line @typescript-eslint/naming-convention
-      token: '1234-mock-acct-token',
-    };
-  };
   /* eslint-disable no-null/no-null */
 
   /* eslint-disable @typescript-eslint/naming-convention */
-  public getClientConfiguration = (acct: string) => {
-    const foundConfiguration = this.clientConfigurationByAcctEmail[acct];
+  public getClientConfiguration = (domain: string, port: string) => {
+    const foundConfiguration = this.clientConfigurationForDomain[domain];
     if (foundConfiguration) {
       if (foundConfiguration instanceof HttpClientErr) {
         throw foundConfiguration;
       }
       return foundConfiguration;
     }
-    const domain = acct.split('@')[1];
+    const keyManagerRules = keyManagerAutogenRules(port);
     if (domain === 'client-configuration-test.flowcrypt.test') {
       return {
         flags: ['NO_PRV_CREATE', 'NO_PRV_BACKUP', 'HIDE_ARMOR_META', 'ENFORCE_ATTESTER_SUBMIT', 'SETUP_ENSURE_IMPORTED_PRV_MATCH_LDAP_PUB'],
@@ -91,8 +80,8 @@ export class BackendData {
     }
     if (domain === 'custom-sks.flowcrypt.test') {
       return {
-        ...keyManagerAutogenRules,
-        custom_keyserver_url: 'https://localhost:8001',
+        ...keyManagerRules,
+        custom_keyserver_url: `https://localhost:${port}`,
       };
     }
     if (domain === 'forbid-storing-passphrase-client-configuration.flowcrypt.test') {
@@ -130,42 +119,55 @@ export class BackendData {
         allow_attester_search_only_for_domains: [],
       };
     }
-    if (domain === 'google.mock.localhost:8001') {
-      return { ...keyManagerAutogenRules, flags: [...keyManagerAutogenRules.flags, 'NO_ATTESTER_SUBMIT'] };
+    if (domain === 'only-allow-some-domains-for-keys-openpgp-org-client-configuration.flowcrypt.test') {
+      return {
+        flags: [],
+        allow_keys_openpgp_org_search_only_for_domains: ['allowed-domain.test'],
+        disallow_keys_openpgp_org_search_for_domains: ['*'],
+      };
+    }
+    if (domain === 'no-allow-domains-for-keys-openpgp-org-client-configuration.flowcrypt.test') {
+      return {
+        flags: [],
+        allow_keys_openpgp_org_search_only_for_domains: [],
+      };
+    }
+    if (domain === `google.mock.localhost:${port}`) {
+      return { ...keyManagerRules, flags: [...keyManagerRules.flags, 'NO_ATTESTER_SUBMIT'] };
     }
     if (domain === 'key-manager-autogen.flowcrypt.test') {
-      return keyManagerAutogenRules;
+      return keyManagerRules;
     }
     if (domain === 'key-manager-autoimport-no-prv-create.flowcrypt.test') {
-      return { ...keyManagerAutogenRules, flags: [...keyManagerAutogenRules.flags, 'NO_PRV_CREATE'] };
+      return { ...keyManagerRules, flags: [...keyManagerRules.flags, 'NO_PRV_CREATE'] };
     }
     if (domain === 'key-manager-disabled-password-message.flowcrypt.test') {
       return {
-        ...keyManagerAutogenRules,
-        flags: [...keyManagerAutogenRules.flags, 'DISABLE_FLOWCRYPT_HOSTED_PASSWORD_MESSAGES'],
+        ...keyManagerRules,
+        flags: [...keyManagerRules.flags, 'DISABLE_FLOWCRYPT_HOSTED_PASSWORD_MESSAGES'],
       };
     }
     if (domain === 'key-manager-autoimport-no-prv-create-no-attester-submit.flowcrypt.test') {
       return {
-        ...keyManagerAutogenRules,
-        flags: [...keyManagerAutogenRules.flags, 'NO_PRV_CREATE', 'NO_ATTESTER_SUBMIT'],
+        ...keyManagerRules,
+        flags: [...keyManagerRules.flags, 'NO_PRV_CREATE', 'NO_ATTESTER_SUBMIT'],
       };
     }
     if (domain === 'key-manager-choose-passphrase.flowcrypt.test') {
       return {
-        ...keyManagerAutogenRules,
+        ...keyManagerRules,
         flags: ['NO_PRV_BACKUP', 'PRV_AUTOIMPORT_OR_AUTOGEN', 'NO_ATTESTER_SUBMIT', 'DEFAULT_REMEMBER_PASS_PHRASE'],
       };
     }
     if (domain === 'key-manager-choose-passphrase-forbid-storing.flowcrypt.test') {
       return {
-        ...keyManagerAutogenRules,
+        ...keyManagerRules,
         flags: ['NO_PRV_BACKUP', 'PRV_AUTOIMPORT_OR_AUTOGEN', 'NO_ATTESTER_SUBMIT', 'FORBID_STORING_PASS_PHRASE'],
       };
     }
     if (domain === 'key-manager-server-offline.flowcrypt.test') {
       // EKM offline during local key autogen / upload to EKM flow
-      return { ...keyManagerAutogenRules, key_manager_url: 'https://localhost:1230/intentionally-wrong' };
+      return { ...keyManagerRules, key_manager_url: 'https://localhost:1230/intentionally-wrong' };
     }
     if (domain === 'ekm-offline-retrieve.flowcrypt.test') {
       return {
@@ -175,10 +177,10 @@ export class BackendData {
       };
     }
     if (domain === 'key-manager-keygen-expiration.flowcrypt.test') {
-      return { ...keyManagerAutogenRules, enforce_keygen_expire_months: 1 };
+      return { ...keyManagerRules, enforce_keygen_expire_months: 1 };
     }
     if (domain === 'no-submit-client-configuration.key-manager-autogen.flowcrypt.test') {
-      return { ...keyManagerAutogenRules, flags: [...keyManagerAutogenRules.flags, 'NO_ATTESTER_SUBMIT'] };
+      return { ...keyManagerRules, flags: [...keyManagerRules.flags, 'NO_ATTESTER_SUBMIT'] };
     }
     if (domain === 'prv-create-no-prv-backup.flowcrypt.test') {
       // org is allowed to create new keys in the plugin, without EKM, but no backups are allowed

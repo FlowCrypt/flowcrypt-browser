@@ -78,13 +78,6 @@ export class ComposePageRecipe extends PageRecipe {
     body?: string | undefined,
     sendingOpt: { encrypt?: boolean; sign?: boolean; richtext?: boolean } = {} // undefined means leave default
   ) {
-    await Util.sleep(0.5);
-    await ComposePageRecipe.fillRecipients(composePageOrFrame, recipients);
-    if (subject) {
-      await composePageOrFrame.click('@input-subject');
-      await Util.sleep(1);
-      await composePageOrFrame.type('@input-subject', subject?.match(/RTL/) ? subject : `Automated puppeteer test: ${subject}`);
-    }
     const sendingOpts = sendingOpt as { [key: string]: boolean | undefined };
     const keys = ['richtext', 'encrypt', 'sign'];
     for (const opt of keys) {
@@ -93,6 +86,19 @@ export class ComposePageRecipe extends PageRecipe {
         await ComposePageRecipe.setPopoverToggle(composePageOrFrame, opt as PopoverOpt, shouldBeTicked);
       }
     }
+    await Util.sleep(0.5); // todo: should we wait only if we didn't modify any sendingOpts?
+    await ComposePageRecipe.fillRecipients(composePageOrFrame, recipients);
+    if (subject) {
+      await composePageOrFrame.click('@input-subject');
+      await Util.sleep(1);
+      await composePageOrFrame.type('@input-subject', subject?.match(/RTL/) ? subject : `Automated puppeteer test: ${subject}`);
+    }
+    await composePageOrFrame.click('@input-body');
+    // bring cursor to the beginning of the multiline contenteditable
+    const keyboard = composePageOrFrame.keyboard();
+    await keyboard.down('Control');
+    await keyboard.press('Home');
+    await keyboard.up('Control');
     await composePageOrFrame.type('@input-body', body || subject || ''); // fall back to subject if body is not provided
     return { subject, body };
   }

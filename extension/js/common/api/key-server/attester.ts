@@ -107,7 +107,7 @@ export class Attester extends Api {
 
   private getPubKeysSearchResult = async (r: PubCallRes): Promise<PubkeysSearchResult> => {
     const { blocks } = MsgBlockParser.detectBlocks(r.responseText);
-    const pubkeys = blocks.filter(block => block.type === 'publicKey').map(block => block.content.toString());
+    const pubkeys = blocks.filter(block => block.type === 'publicKey').map(block => Str.with(block.content));
     return { pubkeys };
   };
 

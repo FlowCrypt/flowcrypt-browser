@@ -11,12 +11,10 @@ class TimeoutError extends Error {}
 
 export class BrowserPool {
   private semaphore: Semaphore;
-  private browsersForReuse: BrowserHandle[] = [];
 
   public constructor(
     public poolSize: number,
     public name: string,
-    private reuse: boolean,
     private extensionBuildDir: string,
     private isMock: boolean,
     private width = 1280,
@@ -28,14 +26,13 @@ export class BrowserPool {
 
   public newBrowserHandle = async (t: AvaContext, closeInitialPage = true) => {
     await this.semaphore.acquire();
-    // ext frames in gmail: https://github.com/GoogleChrome/puppeteer/issues/2506 https://github.com/GoogleChrome/puppeteer/issues/2548
+    const extensionDir = t.extensionDir ?? this.extensionBuildDir;
     const args = [
       '--no-sandbox', // make it work in travis-ci
       '--disable-setuid-sandbox',
       '--kiosk-printing',
-      '--disable-features=site-per-process',
-      `--disable-extensions-except=${this.extensionBuildDir}`,
-      `--load-extension=${this.extensionBuildDir}`,
+      `--disable-extensions-except=${extensionDir}`,
+      `--load-extension=${extensionDir}`,
       `--window-size=${this.width + 10},${this.height + 132}`,
     ];
     if (this.isMock) {
@@ -82,8 +79,7 @@ export class BrowserPool {
       const extensionUrl = urls.find(url => url !== 'about:blank');
       if (extensionUrl) {
         const match = extensionUrl.match(/[a-z]{32}/);
-        // eslint-disable-next-line no-null/no-null
-        if (match !== null) {
+        if (match) {
           await browser.close();
           return match[0];
         }
@@ -95,40 +91,6 @@ export class BrowserPool {
     }
     await browser.close();
     throw new Error(`Cannot determine extension id from urls.`);
-  };
-
-  public close = async () => {
-    while (this.browsersForReuse.length) {
-      await this.browsersForReuse.pop()!.close(); // eslint-disable-line @typescript-eslint/no-non-null-assertion
-    }
-  };
-
-  public openOrReuseBrowser = async (t: AvaContext): Promise<BrowserHandle> => {
-    if (!this.reuse) {
-      return await this.newBrowserHandle(t);
-    }
-    await this.semaphore.acquire();
-    return this.browsersForReuse.pop()!; // eslint-disable-line @typescript-eslint/no-non-null-assertion
-  };
-
-  public doneUsingBrowser = async (browser: BrowserHandle) => {
-    if (this.reuse) {
-      await browser.closeAllPages();
-      this.browsersForReuse.push(browser);
-      browser.release();
-    } else {
-      await browser.close();
-    }
-  };
-
-  public getPooledBrowser = async (cb: (t: AvaContext, browser: BrowserHandle) => void, t: AvaContext) => {
-    const browser = await this.openOrReuseBrowser(t);
-    try {
-      await cb(t, browser);
-    } finally {
-      await Util.sleep(1);
-      await this.doneUsingBrowser(browser);
-    }
   };
 
   public cbWithTimeout = (cb: () => Promise<void>, timeout: number): Promise<void> => {
@@ -148,7 +110,7 @@ export class BrowserPool {
       try {
         const browser = await withTimeouts(this.newBrowserHandle(t));
         try {
-          await withTimeouts(this.cbWithTimeout(async () => await cb(t, browser), consts.TIMEOUT_EACH_RETRY));
+          await withTimeouts(this.cbWithTimeout(async () => cb(t, browser), consts.TIMEOUT_EACH_RETRY));
           await this.throwOnRetryFlagAndReset(t);
           if (attemptDebugHtmls.length && flag !== 'FAILING') {
             // don't debug known failures

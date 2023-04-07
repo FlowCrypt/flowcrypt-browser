@@ -31,6 +31,7 @@ import { PubLookup } from '../../js/common/api/pub-lookup.js';
 import { AcctStore } from '../../js/common/platform/store/acct-store.js';
 import { AccountServer } from '../../js/common/api/account-server.js';
 import { ComposeReplyBtnPopoverModule } from './compose-modules/compose-reply-btn-popover-module.js';
+import { Lang } from '../../js/common/lang.js';
 
 export class ComposeView extends View {
   public readonly acctEmail: string;
@@ -165,10 +166,9 @@ export class ComposeView extends View {
     const storage = await AcctStore.get(this.acctEmail, ['sendAs', 'hide_message_password', 'fesUrl']);
     this.clientConfiguration = await ClientConfiguration.newInstance(this.acctEmail);
     if (this.clientConfiguration.shouldHideArmorMeta()) {
-      opgp.config.show_comment = false;
-      opgp.config.show_version = false;
+      opgp.config.showComment = false;
+      opgp.config.showVersion = false;
     }
-    opgp.initWorker({ path: '/lib/openpgp.worker.js' });
     this.pubLookup = new PubLookup(this.clientConfiguration);
     this.tabId = await BrowserMsg.requiredTabId();
     this.factory = new XssSafeFactory(this.acctEmail, this.tabId);
@@ -188,6 +188,7 @@ export class ComposeView extends View {
     this.renderModule = new ComposeRenderModule(this);
     this.myPubkeyModule = new ComposeMyPubkeyModule(this);
     this.storageModule = new ComposeStorageModule(this);
+    await this.acctServer.initialize();
     if (!this.isReplyBox) {
       await Assert.abortAndRenderErrOnUnprotectedKey(this.acctEmail);
     }
@@ -222,6 +223,25 @@ export class ComposeView extends View {
       'click',
       this.setHandler(async () => await this.renderModule.openSettingsWithDialog('help'), this.errModule.handle(`help dialog`))
     );
+    this.S.cached('input_intro').on(
+      'paste',
+      this.setHandler(async (el, ev) => {
+        const clipboardEvent = ev.originalEvent as ClipboardEvent;
+        if (clipboardEvent.clipboardData) {
+          const isInputLimitExceeded = this.inputModule.willInputLimitBeExceeded(clipboardEvent.clipboardData.getData('text/plain'), el, () => {
+            const selection = window.getSelection();
+            if (selection && selection.anchorNode === selection.focusNode && selection.anchorNode?.parentElement === el) {
+              return Math.abs(selection.anchorOffset - selection.focusOffset);
+            }
+            return 0;
+          });
+          if (isInputLimitExceeded) {
+            ev.preventDefault();
+            await Ui.modal.warning(Lang.compose.inputLimitExceededOnPaste);
+          }
+        }
+      })
+    );
     this.attachmentsModule.setHandlers();
     this.inputModule.setHandlers();
     this.myPubkeyModule.setHandlers();
@@ -233,7 +253,7 @@ export class ComposeView extends View {
     this.draftModule.setHandlers(); // must be the last one so that 'onRecipientAdded/draftSave' to works properly
   };
 
-  public isFesUsed = () => Boolean(this.fesUrl);
+  public isCustomerUrlFesUsed = () => Boolean(this.fesUrl);
 }
 
 View.run(ComposeView);

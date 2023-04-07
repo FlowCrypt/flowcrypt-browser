@@ -28,6 +28,7 @@ import { PassphraseStore } from '../../js/common/platform/store/passphrase-store
 import Swal from 'sweetalert2';
 import { FlowCryptWebsite } from '../../js/common/api/flowcrypt-website.js';
 import { AccountServer } from '../../js/common/api/account-server.js';
+import { isCustomerUrlFesUsed } from '../../js/common/helpers.js';
 
 View.run(
   class SettingsView extends View {
@@ -68,12 +69,14 @@ View.run(
     }
 
     public render = async () => {
-      $('#status-row #status_version').text(`v:${VERSION}`);
+      const isDevMode = !('update_url' in chrome.runtime.getManifest());
+      $('#status-row #status_version').text(`v:${VERSION}${isDevMode ? '-dev' : ''}`);
       for (const webmailLName of await Env.webmails()) {
         $('.signin_button.' + webmailLName).css('display', 'inline-block');
       }
       this.tabId = await BrowserMsg.requiredTabId();
       this.notifications = new Notifications();
+      await this.acctServer?.initialize();
       if (this.acctEmail) {
         this.clientConfiguration = await ClientConfiguration.newInstance(this.acctEmail);
       }
@@ -368,14 +371,8 @@ View.run(
         // have auth email set
         try {
           // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-          const acctRes = await this.acctServer!.accountGetAndUpdateLocalStore();
+          await this.acctServer!.fetchAndSaveClientConfiguration();
           $('#status-row #status_flowcrypt').text(`fc:ok`);
-          if (acctRes?.account?.alias) {
-            statusContainer.find('.status-indicator-text').css('display', 'none');
-            statusContainer.find('.status-indicator').addClass('active');
-          } else {
-            statusContainer.find('.status-indicator').addClass('inactive');
-          }
         } catch (e) {
           if (ApiErr.isAuthErr(e)) {
             const authNeededLink = $('<a class="bad" href="#">Auth Needed</a>');
@@ -409,8 +406,6 @@ View.run(
           }
         }
       } else {
-        // never set up
-        statusContainer.find('.status-indicator').addClass('inactive');
         $('#status-row #status_flowcrypt').text(`fc:none`);
       }
       statusContainer.css('visibility', 'visible');
@@ -438,7 +433,7 @@ View.run(
           Catch.reportErr(e);
           await Ui.modal.error(
             `There was an error changing google account, please ${Lang.general.contactMinimalSubsentence(
-              this.acctServer ? await this.acctServer.isFesUsed() : false
+              this.acctServer ? await isCustomerUrlFesUsed(this.acctEmail ?? '') : false
             )}\n\n${ApiErr.eli5(e)}\n\n${String(e)}`
           );
         }

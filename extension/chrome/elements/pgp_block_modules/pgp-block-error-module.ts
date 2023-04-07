@@ -16,7 +16,6 @@ import { Str } from '../../../js/common/core/common.js';
 export class PgpBlockViewErrorModule {
   private debugId = Str.sloppyRandom();
 
-  // eslint-disable-next-line no-empty-function
   public constructor(private view: PgpBlockView) {}
 
   public renderErr = async (errBoxContent: string, renderRawMsg: string | undefined, errMsg?: string) => {
@@ -59,7 +58,7 @@ export class PgpBlockViewErrorModule {
     }
   };
 
-  public handlePrivateKeyMismatch = async (armoredPubs: string[], message: Uint8Array, isPwdMsg: boolean) => {
+  public handlePrivateKeyMismatch = async (armoredPubs: string[], message: Uint8Array | string, isPwdMsg: boolean) => {
     // todo - make it work for multiple stored keys
     const msgDiagnosis = await BrowserMsg.send.bg.await.pgpMsgDiagnosePubkeys({ armoredPubs, message });
     if (msgDiagnosis.found_match) {

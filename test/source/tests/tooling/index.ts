@@ -1,14 +1,17 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
-import * as ava from 'ava';
+import { ExecutionContext } from 'ava';
+import { TestUrls } from '../../browser/test-urls';
 
 import { Consts } from '../../test';
 
-export type AvaContext = ava.ExecutionContext<unknown> & {
+export type AvaContext = ExecutionContext<unknown> & {
   retry?: true;
   attemptNumber?: number;
   totalAttempts?: number;
   attemptText?: string;
+  extensionDir?: string;
+  urls?: TestUrls;
 };
 
 const MAX_ATT_SIZE = 5 * 1024 * 1024;

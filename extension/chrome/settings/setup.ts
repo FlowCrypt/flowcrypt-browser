@@ -111,7 +111,7 @@ export class SetupView extends View {
     this.backupUi = new BackupUi();
   }
 
-  public isFesUsed = () => Boolean(this.storage.fesUrl);
+  public isCustomerUrlFesUsed = () => Boolean(this.storage.fesUrl);
 
   public render = async () => {
     await initPassphraseToggle(['step_2b_manual_enter_passphrase'], 'hide');
@@ -126,8 +126,8 @@ export class SetupView extends View {
     this.storage.email_provider = this.storage.email_provider || 'gmail';
     this.clientConfiguration = await ClientConfiguration.newInstance(this.acctEmail);
     if (this.clientConfiguration.shouldHideArmorMeta() && typeof opgp !== 'undefined') {
-      opgp.config.show_comment = false;
-      opgp.config.show_version = false;
+      opgp.config.showComment = false;
+      opgp.config.showVersion = false;
     }
     this.pubLookup = new PubLookup(this.clientConfiguration);
     if (this.clientConfiguration.usesKeyManager() && this.idToken) {
@@ -315,7 +315,7 @@ export class SetupView extends View {
         e,
         e instanceof CompanyLdapKeyMismatchError ? Lang.setup.failedToImportUnknownKey : Lang.setup.failedToSubmitToAttester,
         () => this.submitPublicKeys({ submit_main, submit_all }),
-        Lang.general.contactIfNeedAssistance(this.isFesUsed())
+        Lang.general.contactIfNeedAssistance(this.isCustomerUrlFesUsed())
       );
     }
   };

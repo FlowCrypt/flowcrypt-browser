@@ -5,6 +5,8 @@ import { AddressObject, ParsedMail, StructuredHeader } from 'mailparser';
 import { readdir, readFile } from 'fs';
 import { Util } from '../../util/index';
 import { ParseMsgResult } from '../../util/parse';
+import { Buf } from '../../core/buf';
+import { Xss } from '../../platform/xss';
 
 type GmailMsg$header = { name: string; value: string };
 type GmailMsg$payload$body = { attachmentId?: string; size: number; data?: string };
@@ -63,15 +65,13 @@ export class GmailMsg {
     this.threadId = msg.id;
     this.labelIds = [msg.labelId];
     this.raw = msg.raw;
-    /* eslint-disable @typescript-eslint/no-non-null-assertion */
-    const contentTypeHeader = msg.mimeMsg.headers.get('content-type')! as StructuredHeader;
-    const toHeader = msg.mimeMsg.headers.get('to')! as AddressObject;
-    const fromHeader = msg.mimeMsg.headers.get('from')! as AddressObject;
-    const subjectHeader = msg.mimeMsg.headers.get('subject')! as string;
-    const dateHeader = msg.mimeMsg.headers.get('date')! as Date;
-    const messageIdHeader = msg.mimeMsg.headers.get('message-id')! as string;
-    const mimeVersionHeader = msg.mimeMsg.headers.get('mime-version')! as string;
-    /* eslint-enable @typescript-eslint/no-non-null-assertion */
+    const contentTypeHeader = msg.mimeMsg.headers.get('content-type') as StructuredHeader;
+    const toHeader = msg.mimeMsg.headers.get('to') as AddressObject;
+    const fromHeader = msg.mimeMsg.headers.get('from') as AddressObject;
+    const subjectHeader = msg.mimeMsg.headers.get('subject') as string;
+    const dateHeader = msg.mimeMsg.headers.get('date') as Date;
+    const messageIdHeader = msg.mimeMsg.headers.get('message-id') as string;
+    const mimeVersionHeader = msg.mimeMsg.headers.get('mime-version') as string;
     let body: GmailMsg$payload$body | undefined;
     if (msg.mimeMsg.text) {
       const textBase64 = Buffer.from(msg.mimeMsg.text, 'utf-8').toString('base64');
@@ -92,20 +92,18 @@ export class GmailMsg {
       ],
       body,
     };
-    /* eslint-disable @typescript-eslint/no-non-null-assertion */
     if (toHeader) {
-      this.payload.headers!.push({ name: 'To', value: toHeader.value.map(a => a.address).join(',') });
+      this.payload.headers?.push({ name: 'To', value: toHeader.value.map(a => a.address).join(',') });
     }
-    if (fromHeader) {
-      this.payload.headers!.push({ name: 'From', value: fromHeader.value[0].address! });
+    if (fromHeader && fromHeader.value[0].address) {
+      this.payload.headers?.push({ name: 'From', value: fromHeader.value[0].address });
     }
     if (subjectHeader) {
-      this.payload.headers!.push({ name: 'Subject', value: subjectHeader });
+      this.payload.headers?.push({ name: 'Subject', value: subjectHeader });
     }
     if (dateHeader) {
-      this.payload.headers!.push({ name: 'Date', value: dateHeader.toString() });
+      this.payload.headers?.push({ name: 'Date', value: dateHeader.toString() });
     }
-    /* eslint-enable @typescript-eslint/no-non-null-assertion */
   }
 }
 
@@ -181,7 +179,7 @@ export class GoogleData {
       for (const file of files) {
         const utfStr = new TextDecoder().decode(file);
         const json = JSON.parse(utfStr) as ExportedMsg;
-        if (json.acctEmail === acct) {
+        if (json.acctEmail.split(':')[0] === acct.split(':')[0]) {
           Object.assign(acctData.attachments, json.attachments);
           json.full.raw = json.raw.raw;
           if (json.full.labelIds && json.full.labelIds.includes('DRAFT')) {
@@ -218,7 +216,50 @@ export class GoogleData {
     return msgCopy;
   };
 
-  public static getMockGmailPage = (acct: string) => `<!DOCTYPE HTML><html>
+  public static getMockGmailPage = async (acct: string, msgId?: string) => {
+    let msgBlock = '';
+    let attachmentsBlock = '';
+    if (msgId) {
+      /* eslint-disable @typescript-eslint/no-non-null-assertion */
+      const payload = (await GoogleData.withInitializedData(acct)).getMessage(msgId)!.payload!;
+      const fromHeader = payload.headers!.find(header => header.name === 'From')!;
+      const fromAddress = fromHeader.value!;
+      let htmlData: string;
+      const htmlPart = payload.parts!.find(part => part.mimeType === 'text/html');
+      if (htmlPart) {
+        htmlData = Buf.fromBase64Str(htmlPart.body!.data!).toUtfStr();
+      } else {
+        const textPart = payload.parts!.find(part => part.mimeType === 'text/plain')!;
+        const textData = Buf.fromBase64Str(textPart.body!.data!).toUtfStr();
+        htmlData = Xss.escape(textData);
+      }
+      const otherParts = payload.parts!.filter(part => !['text/plain', 'text/html'].includes(part.mimeType!));
+      if (otherParts.length) {
+        attachmentsBlock =
+          `<div class="ho"><span class="aVW"><span>${otherParts.length}</span> Attachments</span></div>
+        <div class="aQH">` +
+          otherParts
+            .map(
+              part => `<span class="aZo">
+              <div><div><div>
+              <span class="aV3">${Xss.escape(part.filename!)}</span>
+              </div></div></div>
+              </span>`
+            )
+            .join('') +
+          '</div>';
+      }
+      /* eslint-enable @typescript-eslint/no-non-null-assertion */
+      msgBlock = `<div class="adn ads" data-legacy-message-id="${msgId}">
+    <div class="gs">
+      <span email="${fromAddress}" name="mock sender" class="gD"><span>Mock Sender</span></span>
+      <div class="a3s">${htmlData}</div>
+      ${attachmentsBlock}
+    </div>
+  </div>
+  `;
+    }
+    return `<!DOCTYPE HTML><html>
   <body>
   <div class="gb_Cb">
     <div class="gb_Ib">${acct}</div>
@@ -227,9 +268,12 @@ export class GoogleData {
     <div class="gb_lb">Full Name</div>
   </div>
   <!-- Compose Button Selector -->
-  <div class="aeN" style="width: 180px; height: 800px"></div>
+  <div class="aeN" style="width: 180px; ">
+  </div>
+  ${msgBlock}
   </body></html>
   `;
+  };
 
   private static msgSubject = (m: GmailMsg): string => {
     const subjectHeader = m.payload && m.payload.headers && m.payload.headers.find(h => h.name === 'Subject');
@@ -242,7 +286,7 @@ export class GoogleData {
         m.payload.headers &&
         m.payload.headers
           .filter(h => h.name === 'To' || h.name === 'From')
-          .map(h => h.value!) // eslint-disable-line @typescript-eslint/no-non-null-assertion
+          .map(h => h.value)
           .filter(h => !!h)
           .join(',')
     );

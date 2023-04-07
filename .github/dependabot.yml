@@ -3,9 +3,10 @@ updates:
 
   - package-ecosystem: "npm"
     directory: "/"
-    open-pull-requests-limit: 1
     schedule:
-      interval: "daily"
+      interval: "weekly"
+      day: "sunday"
+      time: "22:00"
     ignore:
       # ignore all bootstrap major updates
       - dependency-name: "bootstrap"

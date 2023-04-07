@@ -1,7 +1,7 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
 import { Browser, EvaluateFunc, Page, Target } from 'puppeteer';
-import { Util, Config } from '../util';
+import { Util } from '../util';
 import { ControllablePage } from './controllable';
 import { Semaphore } from './browser-pool';
 import { TIMEOUT_ELEMENT_APPEAR } from '.';
@@ -38,10 +38,27 @@ export class BrowserHandle {
       await controllablePage.goto(url);
     }
     this.pages.push(controllablePage);
-    if (url && url.includes(Config.extensionId)) {
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    if (url && url.includes(t.urls!.extensionId)) {
       await controllablePage.waitUntilViewLoaded();
     }
     return controllablePage;
+  };
+
+  public newExtensionPage = async (t: AvaContext, url: string): Promise<ControllablePage> => {
+    return this.newPage(t, t.urls?.extension(url));
+  };
+
+  public newExtensionInboxPage = async (t: AvaContext, acctEmail: string, threadId?: string): Promise<ControllablePage> => {
+    return this.newPage(t, t.urls?.extensionInbox(acctEmail, threadId));
+  };
+
+  public newExtensionSettingsPage = async (t: AvaContext, acctEmail?: string | undefined): Promise<ControllablePage> => {
+    return this.newPage(t, t.urls?.extensionSettings(acctEmail));
+  };
+
+  public newMockGmailPage = async (t: AvaContext, extraHeaders?: Record<string, string>): Promise<ControllablePage> => {
+    return this.newPage(t, t.urls?.mockGmailUrl(), undefined, extraHeaders);
   };
 
   public newPageTriggeredBy = async (t: AvaContext, triggeringAction: () => Promise<void>): Promise<ControllablePage> => {
@@ -51,7 +68,8 @@ export class BrowserHandle {
     try {
       await page.setViewport(this.viewport);
       this.pages.push(controllablePage);
-      if (url.includes(Config.extensionId)) {
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      if (url.includes(t.urls!.extensionId)) {
         await controllablePage.waitUntilViewLoaded();
       }
       return controllablePage;

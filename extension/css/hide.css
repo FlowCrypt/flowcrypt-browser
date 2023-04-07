@@ -1,1 +1,6 @@
-html, body { display: none; visibility: hidden; opacity: 0; }
+html,
+body {
+  display: none;
+  visibility: hidden;
+  opacity: 0;
+}

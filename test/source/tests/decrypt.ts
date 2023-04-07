@@ -1,6 +1,6 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
-import * as ava from 'ava';
+import test from 'ava';
 
 import { Config, TestVariant, Util } from './../util';
 import { testConstants } from './tooling/consts';
@@ -8,7 +8,6 @@ import { BrowserRecipe } from './tooling/browser-recipe';
 import { GoogleData } from './../mock/google/google-data';
 import { InboxPageRecipe } from './page-recipe/inbox-page-recipe';
 import { SettingsPageRecipe } from './page-recipe/settings-page-recipe';
-import { TestUrls } from './../browser/test-urls';
 import { TestWithBrowser } from './../test';
 import { expect } from 'chai';
 import { PageRecipe } from './page-recipe/abstract-page-recipe';
@@ -16,12 +15,12 @@ import { Buf } from '../core/buf';
 
 export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: TestWithBrowser) => {
   if (testVariant !== 'CONSUMER-LIVE-GMAIL') {
-    ava.default(
+    test(
       `decrypt - detect bogus pgp message`,
       testWithBrowser('compatibility', async (t, browser) => {
         const threadId = '17d7a32a0613071d';
         const acctEmail = 'flowcrypt.compatibility@gmail.com';
-        const inboxPage = await browser.newPage(t, TestUrls.extension(`chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`));
+        const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`);
         await inboxPage.waitForSelTestState('ready');
         await inboxPage.waitAll('iframe');
         const pgpBlock = await inboxPage.getFrame(['pgp_block.htm']);
@@ -32,41 +31,63 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
-      `decrypt - show warning for remote images`,
+    test(
+      `decrypt - show remote images`,
       testWithBrowser('compatibility', async (t, browser) => {
-        const threadId = '1850b93d7772173c';
+        const threadId = '186bd029856d1e39';
         const acctEmail = 'flowcrypt.compatibility@gmail.com';
-        const inboxPage = await browser.newPage(t, TestUrls.extension(`chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`));
+        const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`);
         await inboxPage.waitForSelTestState('ready');
         await inboxPage.waitAll('iframe');
         const pgpBlock = await inboxPage.getFrame(['pgp_block.htm']);
-        await pgpBlock.waitForContent('@pgp-block-content', '[Remote images are blocked due to security]');
+        await pgpBlock.waitForContent('@remote-image-container', 'Authenticity of this remote image cannot be verified.');
+        await pgpBlock.checkIfImageIsDisplayedCorrectly('#pgp_block img');
+        // Chceck if forwarded message contains img url
+        await inboxPage.waitAll('iframe');
+        // Get Reply Window (Composer) and click on reply button.
+        const replyFrame = await inboxPage.getFrame(['compose.htm']);
+        await replyFrame.waitAndClick('@action-forward');
+        await replyFrame.waitForContent('@input-body', 'https://flowcrypt.com/assets/imgs/svgs/flowcrypt-logo.svg');
         await inboxPage.close();
       })
     );
 
-    ava.default(
+    test(
       `decrypt - show inline image when user clicks show image`,
       testWithBrowser('compatibility', async (t, browser) => {
         const threadId = '1850f9608240f758';
         const acctEmail = 'flowcrypt.compatibility@gmail.com';
-        const inboxPage = await browser.newPage(t, TestUrls.extension(`chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`));
+        const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`);
         await inboxPage.waitForSelTestState('ready');
         await inboxPage.waitAll('iframe');
         const pgpBlock = await inboxPage.getFrame(['pgp_block.htm']);
         await pgpBlock.waitForContent('@pgp-block-content', 'This message contains inline base64 image');
-        await pgpBlock.waitAndClick('@show-inline-image');
+        await pgpBlock.waitAll('#pgp_block img');
+        await pgpBlock.checkIfImageIsDisplayedCorrectly('#pgp_block img');
         await inboxPage.close();
       })
     );
 
-    ava.default(
+    test(
+      `decrypt - parsed signed message with signautre.asc as plain attachment`,
+      testWithBrowser('compatibility', async (t, browser) => {
+        const threadId = '187085b874fb727c';
+        const acctEmail = 'flowcrypt.compatibility@gmail.com';
+        const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`);
+        await inboxPage.waitForSelTestState('ready');
+        await inboxPage.waitAll('iframe');
+        const pgpBlock = await inboxPage.getFrame(['pgp_block.htm']);
+        await pgpBlock.waitForContent('@pgp-block-content', 'flowcrypt-browser issue #5029 test email');
+        await inboxPage.close();
+      })
+    );
+
+    test(
       `decrypt - outlook message with ATTxxxx encrypted email doesn't show empty attachment`,
       testWithBrowser('compatibility', async (t, browser) => {
         const threadId = '17dbdf2425ac0f29';
         const acctEmail = 'flowcrypt.compatibility@gmail.com';
-        const inboxPage = await browser.newPage(t, TestUrls.extension(`chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`));
+        const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`);
         await inboxPage.waitForSelTestState('ready');
         await inboxPage.waitAll('iframe');
         expect(await inboxPage.isElementPresent('@container-attachments')).to.equal(false);
@@ -74,7 +95,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       'decrypt - encrypted text inside "message" attachment is correctly decrypted',
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
         const acctEmail = 'ci.tests.gmail@flowcrypt.test';
@@ -90,12 +111,12 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       `decrypt - render plain text for "message" attachment (which has plain text)`,
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
         const threadId = '184a87a7b32dd009';
         const acctEmail = 'ci.tests.gmail@flowcrypt.test';
-        const inboxPage = await browser.newPage(t, TestUrls.extension(`chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`));
+        const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`);
         await inboxPage.waitForSelTestState('ready');
         await inboxPage.waitAll('iframe');
         expect(await inboxPage.isElementPresent('@container-attachments')).to.equal(true);
@@ -107,7 +128,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       `decrypt - outlook message with ATTxxxx encrypted email is correctly decrypted`,
       testWithBrowser('compatibility', async (t, browser) => {
         const acctEmail = 'flowcrypt.compatibility@gmail.com';
@@ -119,7 +140,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       `decrypt - without a subject`,
       testWithBrowser('compatibility', async (t, browser) => {
         await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
@@ -133,7 +154,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       `decrypt - [enigmail] encrypted iso-2022-jp pgp/mime`,
       testWithBrowser('compatibility', async (t, browser) => {
         await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
@@ -146,7 +167,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       `decrypt - [enigmail] encrypted iso-2022-jp, plain text`,
       testWithBrowser('compatibility', async (t, browser) => {
         await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
@@ -159,7 +180,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       `decrypt - iso-2022-jp, signed plain text`,
       testWithBrowser('compatibility', async (t, browser) => {
         await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
@@ -172,7 +193,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       `decrypt - quoted part parsing will not crash browser`,
       testWithBrowser('compatibility', async (t, browser) => {
         await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
@@ -186,7 +207,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       `decrypt - [flowcrypt] signed message inline`,
       testWithBrowser('compatibility', async (t, browser) => {
         await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
@@ -199,7 +220,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       `decrypt - [gpgmail] signed message will get parsed and rendered (though verification fails, enigmail does the same)`,
       testWithBrowser('compatibility', async (t, browser) => {
         await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
@@ -212,7 +233,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       `decrypt - [gpg] signed fully armored message`,
       testWithBrowser('compatibility', async (t, browser) => {
         await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
@@ -226,7 +247,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       `decrypt - [flowcrypt] encrypted hello`,
       testWithBrowser('compatibility', async (t, browser) => {
         await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
@@ -239,7 +260,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       `decrypt - [flowcrypt] encrypted utf8`,
       testWithBrowser('compatibility', async (t, browser) => {
         await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
@@ -252,7 +273,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       `decrypt - [flowcrypt] encrypted thai utf8`,
       testWithBrowser('compatibility', async (t, browser) => {
         await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
@@ -265,7 +286,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       `decrypt - [facebook] encrypted utf8`,
       testWithBrowser('compatibility', async (t, browser) => {
         await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
@@ -278,7 +299,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       `decrypt - [gpgmail] encrypted utf8`,
       testWithBrowser('compatibility', async (t, browser) => {
         await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
@@ -291,7 +312,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       `decrypt - [enigmail] encrypted utf8`,
       testWithBrowser('compatibility', async (t, browser) => {
         await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
@@ -305,7 +326,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       `decrypt - [enigmail] encrypted pgp/mime`,
       testWithBrowser('compatibility', async (t, browser) => {
         await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
@@ -318,7 +339,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       `decrypt - [enigmail] encrypted inline`,
       testWithBrowser('compatibility', async (t, browser) => {
         await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
@@ -331,7 +352,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       `decrypt - [enigmail] encrypted+signed inline`,
       testWithBrowser('compatibility', async (t, browser) => {
         await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
@@ -344,7 +365,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       `decrypt - [enigmail] encrypted+signed pgp/mime`,
       testWithBrowser('compatibility', async (t, browser) => {
         await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
@@ -357,7 +378,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       `decrypt - [enigmail] encrypted+signed+file pgp/mime + load from gmail`,
       testWithBrowser('compatibility', async (t, browser) => {
         await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
@@ -370,7 +391,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       `decrypt - encrypted missing checksum`,
       testWithBrowser('compatibility', async (t, browser) => {
         await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
@@ -383,7 +404,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       `decrypt - pgp/mime with large attachment - mismatch`,
       testWithBrowser('compatibility', async (t, browser) => {
         await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
@@ -396,7 +417,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       `decrypt - pgp/mime with large attachment`,
       testWithBrowser('compatibility', async (t, browser) => {
         await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
@@ -410,7 +431,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       `decrypt - pgp/mime with large attachment as message.asc`,
       testWithBrowser('compatibility', async (t, browser) => {
         await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
@@ -424,7 +445,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       `decrypt - pgp/mime with small attachments as message.asc`,
       testWithBrowser('compatibility', async (t, browser) => {
         await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
@@ -437,7 +458,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       `decrypt - [flowcrypt] escape and keep tags in plain text`,
       testWithBrowser('compatibility', async (t, browser) => {
         await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
@@ -450,7 +471,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       `decrypt - [symantec] base64 german umlauts`,
       testWithBrowser('compatibility', async (t, browser) => {
         await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
@@ -463,7 +484,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       `decrypt - [gnupg v2] thai text`,
       testWithBrowser('compatibility', async (t, browser) => {
         await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
@@ -476,7 +497,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       `decrypt - [gnupg v2] thai text in html`,
       testWithBrowser('compatibility', async (t, browser) => {
         await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
@@ -489,7 +510,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       `decrypt - [enigmail] basic html`,
       testWithBrowser('compatibility', async (t, browser) => {
         await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
@@ -502,7 +523,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       `decrypt - [thunderbird] unicode chinese`,
       testWithBrowser('compatibility', async (t, browser) => {
         await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
@@ -516,19 +537,19 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       `decrypt - [security] mdc - missing - error`,
       testWithBrowser('compatibility', async (t, browser) => {
         await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
           error: 'decrypt error',
           content: ['Security threat!', 'MDC', 'Display the message at your own risk.'],
-          params:
-            '?frame_id=frame_obvAUTGAJU&message=-----BEGIN%20PGP%20MESSAGE-----%0AVersion%3A%20FlowCrypt%205.5.9%20Gmail%20Encryption%20flowcrypt.com%0AComment%3A%20Seamlessly%20send%2C%20receive%20and%20search%20encrypted%20email%0A%0AwcFMA0taL%2FzmLZUBAQ%2F7Bwida5vvhXv5Zi%2BqJbG%2FQPst11jWfljDQlw1VLzF%0Aou8ofoIEHpvoFgXegZUnoQXBmlHGD%2BXLs9jG%2FTV1mtE2RWq4hDtqiTQ6rEIa%0AbrN3Nx77Yr%2B4EN1aKI20aTLEPTIjVU2GH2i9DAmjHteBU3nkL9Z3yecB8Pn8%0AEdhpCRY6cj2yrhJ5MPwmXrus9OFv39wA2DqYpqW5Be%2BKD8mipZ2CtJo5xtin%0AaeEhpWSDsdg26rjx1nz4dA0NcFzZK2p%2FBPfPIFzRvmoXoWFigpUnwryEoCqX%0A%2Ftgmcrv7PqiYT5oziPmMuBc1lb7icI%2FAq69uXz2z6%2B4MJHOlcTEFygV36J%2B1%0A1opcjoX%2BJKJNn1nvHovBxuemcMwriJdmDj4Hmfo4zkd6ryUtGVrMVn8DbRp6%0ATWB%2F0MSE8cmfuiA5DgzdGbrevdL6RxnQDmalTHJ5oxurFQVoLwpmbgd36C4Q%0AxMfG1xEqFn5zvrCTGHg2OfS2cynal8CQDG0ZQCoWwdb0kT5D6bx7QKcuyy1%2F%0A1TXKnp1NamD5Uhu1%2BXuxD7EbvDYUWYh3bkqgslsoX%2BOUl%2BONdtMD5PswArd5%0AKisD9UJuddJShL4clBUPoXeNrRxrU6HqjP5T4fapK684MeizicHIRpAww7fu%0AZ8YtaySZ%2FhoOAKWsx0rV4grgJV7pryj4ARBRa1pLL9rBwUwDS1ov%2FOYtlQEB%0AD%2F47fyD%2F6BvepqWmZXj7VLl2y63eE0b%2F6hf5K%2BIzv5A%2F%2B5l%2FEnjFx0rq%2BqeX%0A6hftYZBUAbbBvKfxq9D5xsWg3tnhFv2sYIE3YpkCSzZpWJmahHwQOVNT0ASw%0AgbO25OiTPlYPqfSkGYe0palbL%2B4T5dLOwVilmrZ2bQf%2FrLePwA4RQpWDPYio%0ANDU0Xfi7TQcHQrZTpwFbVzNPXgCHnQkqF%2Bs0v8RDJHnt9vVs2KEpi49V%2FYgN%0A%2BgZnZOeADL0rbre%2FPrIck1YSjZLbrWtQVk4%2BsCf0TjvixJ7MNjA4NgdZPo0M%0AHke%2F9XBFie3NiZaW%2FcEIVZ7WnjB3IbhkmOMJd4LgdHKgmswJwCYm%2BXvpOI19%0AFzU1vzZmfOA1nEJSuuCDNVUoKYIQA5UEYJrVJeGnVN5sU5jkdlX9xPtYceww%0AYFmLisuf9Ev0HC7v27KwYQRDPNYRA8GeK%2FjY6aZdg%2BVccsnzEigdYL5Tm4JI%0AZrxp%2FG807bZvt0yZwWh0gpWOFgbVgrm4Hpji5ilDyulZSW%2B8nJxB5tDoPzL4%0Aj4w9malje0c60GWNtiyCPLURyN63C2q144UpQjSU5r66oP1yF2A97aXKbf4p%0AqO7cSNWEOTpqJkJrNFVKQdWvXZ%2BmvW1PQFmkkwish2HiQIXmWb04uV1pI8hR%0A6YWk2ox9aZiJ664MpncgyJ5uIMlzVfYrX%2BAZRtBW36RgCTprIv6l1M5NcHMy%0AzEscTaSY%2Fe%2BpM5HzQKSzX%2BzHLa5kk5L7veX%2B1G33saiqSJ%2FfK13%2Bk7qDNZQD%0Anbtaebfh2JS0Pdbub6FUFjPHR5PydU9ltuppGEeYrOe1SxwiZ6BZfIXO2%2F8M%0AhA%3D%3D%0A%3DB%2FNE%0A-----END%20PGP%20MESSAGE-----&message_id=166b194b21a0997c&senderEmail=&is_outgoing=___cu_false___&account_email=flowcrypt.compatibility%40gmail.com',
+          unexpectedContent: ['As stated in subject', 'Shall not decrypt automatically', 'Has to show a warning'],
+          params: `?frame_id=frame_obvAUTGAJU&message=${testConstants.encryptedMessageMissingMdcUriEncoded}&message_id=166b194b21a0997c&senderEmail=&is_outgoing=___cu_false___&account_email=flowcrypt.compatibility%40gmail.com`,
         });
       })
     );
 
-    ava.default(
+    test(
       `decrypt - [security] mdc - modification detected - error`,
       testWithBrowser('compatibility', async (t, browser) => {
         await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
@@ -540,7 +561,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    ava.default(
+    test(
       `decrypt - [security] signed message - maliciously modified - should not pass`,
       testWithBrowser('compatibility', async (t, browser) => {
         const acctEmail = 'flowcrypt.compatibility@gmail.com';
@@ -614,12 +635,12 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
           params,
           content: [],
           encryption: 'not encrypted',
-          signature: 'error verifying signature: Message digest did not match',
+          signature: 'error verifying signature: Signed digest did not match',
         });
       })
     );
 
-    ava.default(
+    test(
       `decrypt - [everdesk] message encrypted for sub but claims encryptedFor:primary,sub`,
       testWithBrowser('compatibility', async (t, browser) => {
         await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
@@ -632,7 +653,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
       })
     );
 
-    ava.default(
+    test(
       `decrypt - [pep] pgp/mime message with text encoded as inline attachment`,
       testWithBrowser('compatibility', async (t, browser) => {
         await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
@@ -646,14 +667,14 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
       })
     );
 
-    ava.default(
+    test(
       'decrypt - by entering pass phrase + remember in session',
       testWithBrowser('compatibility', async (t, browser) => {
         const pp = Config.key('flowcrypt.compatibility.1pp1').passphrase;
         const threadId = '15f7f5630573be2d';
         const expectedContent = 'The International DUBLIN Literary Award is an international literary award';
         const acctEmail = 'flowcrypt.compatibility@gmail.com';
-        const settingsPage = await browser.newPage(t, TestUrls.extensionSettings());
+        const settingsPage = await browser.newExtensionSettingsPage(t);
         await SettingsPageRecipe.forgetAllPassPhrasesInStorage(settingsPage, pp);
         // requires pp entry
         await InboxPageRecipe.checkDecryptMsg(t, browser, {
@@ -673,12 +694,28 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
       })
     );
 
-    ava.default(
+    test(
+      'decrypt - display email with cid image correctly',
+      testWithBrowser('compatibility', async (t, browser) => {
+        const threadId = '186eed032659ad4f';
+        const acctEmail = 'flowcrypt.compatibility@gmail.com';
+        const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`);
+        await inboxPage.waitAll('iframe');
+        const pgpBlock = await inboxPage.getFrame(['pgp_block.htm']);
+        await pgpBlock.waitForSelTestState('ready');
+        await pgpBlock.checkIfImageIsDisplayedCorrectly('#pgp_block img');
+        const replyFrame = await inboxPage.getFrame(['compose.htm']);
+        await replyFrame.waitAndClick('@action-forward');
+        await replyFrame.waitForContent('@input-body', 'googlelogo_color_272x92dp.png'); // check if forwarded content contains cid image name
+      })
+    );
+
+    test(
       "decrypt - thunderbird - signedHtml verifyDetached doesn't duplicate PGP key section",
       testWithBrowser('compatibility', async (t, browser) => {
         const threadId = '17daefa0eb077da6';
         const acctEmail = 'flowcrypt.compatibility@gmail.com';
-        const inboxPage = await browser.newPage(t, TestUrls.extension(`chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`));
+        const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`);
         await inboxPage.waitAll('iframe');
         const pgpBlock = await inboxPage.getFrame(['pgp_block.htm']);
         await pgpBlock.waitForSelTestState('ready');
@@ -687,12 +724,12 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
       })
     );
 
-    ava.default(
+    test(
       'decrypt - print feature in pgp block',
       testWithBrowser('compatibility', async (t, browser) => {
         const threadId = '182917712be838e1';
         const acctEmail = 'flowcrypt.compatibility@gmail.com';
-        const inboxPage = await browser.newPage(t, TestUrls.extension(`chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`));
+        const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`);
         await inboxPage.waitAll('iframe');
         const pgpBlock = await inboxPage.getFrame(['pgp_block.htm']);
         await pgpBlock.waitForSelTestState('ready');
@@ -706,12 +743,12 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
       })
     );
 
-    ava.default(
+    test(
       "decrypt - thunderbird - signedMsg verifyDetached doesn't duplicate PGP key section",
       testWithBrowser('compatibility', async (t, browser) => {
         const threadId = '17dad75e63e47f97';
         const acctEmail = 'flowcrypt.compatibility@gmail.com';
-        const inboxPage = await browser.newPage(t, TestUrls.extension(`chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`));
+        const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`);
         await inboxPage.waitAll('iframe');
         const pgpBlock = await inboxPage.getFrame(['pgp_block.htm']);
         await pgpBlock.waitForSelTestState('ready');
@@ -720,12 +757,12 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
       })
     );
 
-    ava.default(
+    test(
       'decrypt - thunderbird - signing key is rendered in signed and encrypted message',
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
         const threadId = '175adb163ac0d69b';
         const acctEmail = 'ci.tests.gmail@flowcrypt.test';
-        const inboxPage = await browser.newPage(t, TestUrls.extension(`chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`));
+        const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`);
         await inboxPage.waitAll('iframe');
         const pgpBlock = await inboxPage.getFrame(['pgp_block.htm']);
         await pgpBlock.waitForSelTestState('ready');
@@ -734,12 +771,12 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
       })
     );
 
-    ava.default(
+    test(
       'decrypt - thunderbird - signed text is recognized',
       testWithBrowser('compatibility', async (t, browser) => {
         const threadId = '17dad75e63e47f97';
         const acctEmail = 'flowcrypt.compatibility@gmail.com';
-        const inboxPage = await browser.newPage(t, TestUrls.extension(`chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`));
+        const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`);
         await inboxPage.waitAll('iframe', { timeout: 2 });
         const urls = await inboxPage.getFramesUrls(['/chrome/elements/pgp_block.htm'], { sleep: 10, appearIn: 20 });
         expect(urls.length).to.equal(1);
@@ -753,7 +790,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
       })
     );
 
-    ava.default(
+    test(
       'verification - message text is rendered prior to pubkey fetching',
       testWithBrowser('compatibility', async (t, browser) => {
         const msgId = '17dad75e63e47f97';
@@ -768,7 +805,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
       })
     );
 
-    ava.default(
+    test(
       'verification - public key fetched from WKD',
       testWithBrowser('compatibility', async (t, browser) => {
         const senderEmail = 'only.on.wkd@signing.test';
@@ -784,7 +821,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
       })
     );
 
-    ava.default(
+    test(
       'decrypt - fetched pubkey is automatically saved to contacts',
       testWithBrowser('compatibility', async (t, browser) => {
         const msgId = '17dad75e63e47f97';
@@ -793,7 +830,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
         const acctAttr = acctEmail.replace(/[\.@]/g, '');
         const senderAttr = senderEmail.replace(/[\.@]/g, '');
         {
-          const settingsPage = await browser.newPage(t, TestUrls.extensionSettings(acctEmail));
+          const settingsPage = await browser.newExtensionSettingsPage(t, acctEmail);
           await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
           const contactsFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-contacts-page', ['contacts.htm', 'placement=settings']);
           await contactsFrame.waitAll('@page-contacts');
@@ -809,7 +846,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
           signature: 'signed',
         });
         {
-          const settingsPage = await browser.newPage(t, TestUrls.extensionSettings(acctEmail));
+          const settingsPage = await browser.newExtensionSettingsPage(t, acctEmail);
           await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
           const contactsFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-contacts-page', ['contacts.htm', 'placement=settings']);
           await contactsFrame.waitAll('@page-contacts');
@@ -823,12 +860,12 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
       })
     );
 
-    ava.default(
+    test(
       'decrypt - unsigned encrypted message',
       testWithBrowser('compatibility', async (t, browser) => {
         const threadId = '17918a9d7ca2fbac';
         const acctEmail = 'flowcrypt.compatibility@gmail.com';
-        const inboxPage = await browser.newPage(t, TestUrls.extension(`chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`));
+        const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`);
         await inboxPage.waitAll('iframe');
         const urls = await inboxPage.getFramesUrls(['/chrome/elements/pgp_block.htm'], { sleep: 3 });
         expect(urls.length).to.equal(1);
@@ -842,12 +879,12 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
       })
     );
 
-    ava.default(
+    test(
       'signature - sender is different from pubkey uid',
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
         const threadId = '1766644f13510f58';
         const acctEmail = 'ci.tests.gmail@flowcrypt.test';
-        const inboxPage = await browser.newPage(t, TestUrls.extension(`chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`));
+        const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`);
         await inboxPage.waitAll('iframe', { timeout: 2 });
         const urls = await inboxPage.getFramesUrls(['/chrome/elements/pgp_block.htm'], { sleep: 10, appearIn: 20 });
         expect(urls.length).to.equal(1);
@@ -861,7 +898,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
       })
     );
 
-    ava.default(
+    test(
       'signature - verification succeeds when signed with a second-best key',
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
         const threadId = '1766644f13510f58';
@@ -873,7 +910,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
           '-----BEGIN PGP PUBLIC KEY BLOCK-----\r\nVersion: FlowCrypt Email Encryption [BUILD_REPLACEABLE_VERSION]\r\nComment: Seamlessly send and receive encrypted email\r\n\r\nxjMEYZeW2RYJKwYBBAHaRw8BAQdAT5QfLVP3y1yukk3MM/oiuXLNe1f9az5M\r\nBnOlKdF0nKnNJVNvbWVib2R5IDxTYW1zNTBzYW1zNTBzZXB0QEdtYWlsLkNv\r\nbT7CjwQQFgoAIAUCYZeW2QYLCQcIAwIEFQgKAgQWAgEAAhkBAhsDAh4BACEJ\r\nEMrSTYqLk6SUFiEEBP90ux3d6kDwDdzvytJNiouTpJS27QEA7pFlkLfD0KFQ\r\nsH/dwb/NPzn5zCi2L9gjPAC3d8gv1fwA/0FjAy/vKct4D7QH8KwtEGQns5+D\r\nP1WxDr4YI2hp5TkAzjgEYZeW2RIKKwYBBAGXVQEFAQEHQKNLY/bXrhJMWA2+\r\nWTjk3I7KhawyZfLomJ4hovqr7UtOAwEIB8J4BBgWCAAJBQJhl5bZAhsMACEJ\r\nEMrSTYqLk6SUFiEEBP90ux3d6kDwDdzvytJNiouTpJQnpgD/c1CzfS3YzJUx\r\nnFMrhjiE0WVgqOV/3CkfI4m4RA30QUIA/ju8r4AD2h6lu3Mx/6I6PzIRZQty\r\nLvTkcu4UKodZa4kK\r\n=7C4A\r\n-----END PGP PUBLIC KEY BLOCK-----\r\n',
           'sender@example.com'
         );
-        const inboxPage = await browser.newPage(t, TestUrls.extension(`chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`));
+        const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`);
         await inboxPage.waitAll('iframe', { timeout: 2 });
         const urls = await inboxPage.getFramesUrls(['/chrome/elements/pgp_block.htm'], { sleep: 10, appearIn: 20 });
         expect(urls.length).to.equal(1);
@@ -887,7 +924,110 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
       })
     );
 
-    ava.default(
+    test(
+      'decrypt - protonmail - PGP/inline signed and encrypted message with pubkey - pubkey signature is ignored',
+      testWithBrowser('ci.tests.gmail', async (t, browser) => {
+        const acctEmail = 'ci.tests.gmail@flowcrypt.test';
+        const dbPage = await browser.newExtensionPage(t, 'chrome/dev/ci_unit_test.htm'); // todo: url?
+        // add the pubkey of the sender
+        await dbPage.page.evaluate(async (pubkey: string) => {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const key = await (window as any).KeyUtil.parse(pubkey);
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          await (window as any).ContactStore.update(undefined, 'schlemazle@proton.me', { pubkey: key });
+        }, testConstants.protonPubkey);
+        const accessToken = await BrowserRecipe.getGoogleAccessToken(dbPage, acctEmail);
+        await dbPage.close();
+        const extraAuthHeaders = { Authorization: `Bearer ${accessToken}` }; // eslint-disable-line @typescript-eslint/naming-convention
+        const gmailPage = await browser.newPage(t, `${t.urls?.mockGmailUrl()}/1869220e0c8f16dd`, undefined, extraAuthHeaders);
+        await gmailPage.waitAll('iframe');
+        const pgpBlock = await gmailPage.getFrame(['pgp_block.htm']);
+        await BrowserRecipe.pgpBlockCheck(t, pgpBlock, {
+          content: ['Sent with Proton Mail secure email.'],
+          encryption: 'encrypted',
+          signature: 'signed',
+        });
+        await gmailPage.close();
+      })
+    );
+
+    test(
+      'decrypt - protonmail - PGP/inline signed and encrypted message with pubkey - pubkey signature is ignored - inbox',
+      testWithBrowser('ci.tests.gmail', async (t, browser) => {
+        const acctEmail = 'ci.tests.gmail@flowcrypt.test';
+        const threadId = '1869220e0c8f16dd';
+        let inboxPage = await browser.newExtensionInboxPage(t, acctEmail, threadId);
+        await inboxPage.waitAll('iframe');
+        expect((await inboxPage.getFramesUrls(['pgp_block.htm'])).length).to.equal(1);
+        expect((await inboxPage.getFramesUrls(['pgp_pubkey.htm'])).length).to.equal(1);
+        expect((await inboxPage.getFramesUrls(['attachment.htm'])).length).to.equal(0); // invisible
+        await BrowserRecipe.pgpBlockCheck(t, await inboxPage.getFrame(['pgp_block.htm']), {
+          content: ['Sent with Proton Mail secure email.'],
+          encryption: 'encrypted',
+          signature: 'could not verify signature: missing pubkey 616D596BC2065D48',
+        });
+        await inboxPage.close();
+        const dbPage = await browser.newExtensionPage(t, 'chrome/dev/ci_unit_test.htm');
+        // add the pubkey of the sender
+        await dbPage.page.evaluate(async (pubkey: string) => {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const key = await (window as any).KeyUtil.parse(pubkey);
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          await (window as any).ContactStore.update(undefined, 'schlemazle@proton.me', { pubkey: key });
+        }, testConstants.protonPubkey);
+        await dbPage.close();
+        inboxPage = await browser.newExtensionInboxPage(t, acctEmail, threadId);
+        await inboxPage.waitAll('iframe');
+        expect((await inboxPage.getFramesUrls(['pgp_block.htm'])).length).to.equal(1);
+        expect((await inboxPage.getFramesUrls(['pgp_pubkey.htm'])).length).to.equal(1);
+        expect((await inboxPage.getFramesUrls(['attachment.htm'])).length).to.equal(0); // invisible
+        await BrowserRecipe.pgpBlockCheck(t, await inboxPage.getFrame(['pgp_block.htm']), {
+          content: ['Sent with Proton Mail secure email.'],
+          encryption: 'encrypted',
+          signature: 'signed',
+        });
+        t.pass();
+      })
+    );
+
+    test(
+      'signature - cleartext signed messages from HTML are re-fetched when needed',
+      testWithBrowser('ci.tests.gmail', async (t, browser) => {
+        const acctEmail = 'ci.tests.gmail@flowcrypt.test';
+        const settingsPage = await browser.newExtensionSettingsPage(t, acctEmail);
+        const accessToken = await BrowserRecipe.getGoogleAccessToken(settingsPage, acctEmail); // todo: include in t?
+        await settingsPage.close();
+        const extraAuthHeaders = { Authorization: `Bearer ${accessToken}` }; // eslint-disable-line @typescript-eslint/naming-convention
+        const gmailPage = await browser.newPage(t, `${t.urls?.mockGmailUrl()}/1866867cfdb8b61e`, undefined, extraAuthHeaders);
+        await gmailPage.waitAll('iframe');
+        const pgpBlock = await gmailPage.getFrame(['pgp_block.htm']);
+        // should re-fetch the correct text/plain text with signature
+        await BrowserRecipe.pgpBlockCheck(t, pgpBlock, {
+          content: ['this is message 1 for flowcrypt issue 4342'],
+          unexpectedContent: ['this is message 1 CORRUPTED for flowcrypt issue 4342'],
+          encryption: 'not encrypted',
+          signature: 'signed',
+        });
+        await gmailPage.close();
+      })
+    );
+
+    test(
+      `decrypt - corrupted text in "incorrect message digest" scenario`,
+      testWithBrowser('ci.tests.gmail', async (t, browser) => {
+        const params = `?frameId=none&message=-----BEGIN%20PGP%20SIGNED%20MESSAGE-----%0AHash%3A%20SHA512%0A%0A%0Athis%20is%20message%201%20CORRUPTED%20for%20flowcrypt%20issue%204342%0A-----BEGIN%20PGP%20SIGNATURE-----%0A%0A%0AwnUEARYKACcFAmPwp3kJEAdIHIrPnUn%2BFiEEm6Oc4HXwg5swNA%2FIB0gcis%2Bd%0ASf4AAGFcAP4%2FB%2FjbpeERlTNqorb5x6sXUFhfPHP6PZAXvVnpuaFdJQD%2FZ510%0AeYDnbx25XRLsdWoerPpG23tgqK45zOHjaIoveAo%3D%0A%3DHAkD%0A-----END%20PGP%20SIGNATURE-----&msgId=1866867cfdb8b61e&senderEmail=ci.tests.gmail@flowcrypt.test&isOutgoing=___cu_true___&acctEmail=ci.tests.gmail@flowcrypt.test&parentTabId=0`;
+        // should re-fetch the correct text/plain text with signature
+        await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
+          params,
+          content: ['this is message 1 for flowcrypt issue 4342'],
+          unexpectedContent: ['this is message 1 CORRUPTED for flowcrypt issue 4342'],
+          encryption: 'not encrypted',
+          signature: 'signed',
+        });
+      })
+    );
+
+    test(
       `decrypt - missing pubkey in "incorrect message digest" scenario`,
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
         const msgId = '1766644f13510f58';
@@ -913,7 +1053,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
       })
     );
 
-    ava.default(
+    test(
       'decrypt - re-fetch signed-only message from API on non-fatal verification error',
       testWithBrowser('compatibility', async (t, browser) => {
         const msgId = '17daefa0eb077da6';
@@ -939,7 +1079,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
       })
     );
 
-    ava.default(
+    test(
       'decrypt - protonmail - load pubkey into contact + verify detached msg',
       testWithBrowser('compatibility', async (t, browser) => {
         const textParams =
@@ -970,7 +1110,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
       })
     );
 
-    ava.default(
+    test(
       'decrypt - protonmail - auto TOFU load matching pubkey first time',
       testWithBrowser('compatibility', async (t, browser) => {
         const params =
@@ -985,7 +1125,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
       })
     );
 
-    ava.default(
+    test(
       'decrypt - verify encrypted+signed message',
       testWithBrowser('compatibility', async (t, browser) => {
         const params = `?frameId=none&message=&msgId=1617429dc55600db&senderEmail=martin%40politick.ca&isOutgoing=___cu_false___&acctEmail=flowcrypt.compatibility%40gmail.com`;
@@ -998,7 +1138,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
       })
     );
 
-    ava.default(
+    test(
       'decrypt - load key - expired key',
       testWithBrowser('compatibility', async (t, browser) => {
         const pubFrameUrl = `chrome/elements/pgp_pubkey.htm?frameId=none&armoredPubkey=${encodeURIComponent(
@@ -1006,14 +1146,14 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
         )}&acctEmail=flowcrypt.compatibility%40gmail.com&parentTabId=0`;
         const pubFrame = await browser.newPage(t, pubFrameUrl);
         await pubFrame.waitAll('@action-add-contact');
-        expect((await pubFrame.read('@action-add-contact')).toLowerCase()).to.include('expired');
+        expect((await pubFrame.read('@action-add-contact'))?.toLowerCase()).to.include('expired');
         await pubFrame.click('@action-add-contact');
         await Util.sleep(1);
         await pubFrame.close();
       })
     );
 
-    ava.default(
+    test(
       'decrypt - load key - unusable key',
       testWithBrowser('compatibility', async (t, browser) => {
         const pubFrameUrl = `chrome/elements/pgp_pubkey.htm?frameId=none&armoredPubkey=${encodeURIComponent(
@@ -1022,16 +1162,16 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
         const pubFrame = await browser.newPage(t, pubFrameUrl);
         await Util.sleep(1);
         await pubFrame.notPresent('@action-add-contact');
-        expect((await pubFrame.read('#pgp_block.pgp_pubkey')).toLowerCase()).to.include('not usable');
+        expect((await pubFrame.read('#pgp_block.pgp_pubkey'))?.toLowerCase()).to.include('not usable');
         await pubFrame.close();
       })
     );
 
-    ava.default(
+    test(
       'decrypt - wrong message - checksum throws error',
       testWithBrowser('compatibility', async (t, browser) => {
         const threadId = '15f7ffb9320bd79e';
-        const expectedContent = 'Ascii armor integrity check on message failed';
+        const expectedContent = 'Ascii armor integrity check failed';
         const params = `?frame_id=&threadId=${threadId}&msgId=${threadId}&senderEmail=&account_email=flowcrypt.compatibility%40gmail.com`;
         await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
           params,
@@ -1043,7 +1183,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
       })
     );
 
-    ava.default(
+    test(
       'decrypt - inbox - encrypted message inside signed',
       testWithBrowser('compatibility', async (t, browser) => {
         const inboxPage = await browser.newPage(t, 'chrome/settings/inbox/inbox.htm?acctEmail=flowcrypt.compatibility%40gmail.com&threadId=16f0bfce331ca2fd');
@@ -1057,7 +1197,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
       })
     );
 
-    ava.default(
+    test(
       'decrypt - inbox - check for rel="noopener noreferrer" attribute in PGP/MIME links',
       testWithBrowser('compatibility', async (t, browser) => {
         const inboxPage = await browser.newPage(t, 'chrome/settings/inbox/inbox.htm?acctEmail=flowcrypt.compatibility%40gmail.com&threadId=1762c9a49bedbf6f');
@@ -1069,7 +1209,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
       })
     );
 
-    ava.default(
+    test(
       'decrypt - inbox - Verify null window.opener object after opening PGP/MIME links',
       testWithBrowser('compatibility', async (t, browser) => {
         const inboxPage = await browser.newPage(t, 'chrome/settings/inbox/inbox.htm?acctEmail=flowcrypt.compatibility%40gmail.com&threadId=1762c9a49bedbf6f');
@@ -1085,9 +1225,9 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
       })
     );
 
-    ava.default.todo('decrypt - by entering secondary pass phrase');
+    test.todo('decrypt - by entering secondary pass phrase');
 
-    ava.default(
+    test(
       `decrypt - don't allow api path traversal`,
       testWithBrowser('compatibility', async (t, browser) => {
         const params =
@@ -1099,7 +1239,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
       })
     );
 
-    ava.default(
+    test(
       `decrypt - signed only - parse error in a badge`,
       testWithBrowser('compatibility', async (t, browser) => {
         const params = '?frame_id=&msgId=corrupted-1&signature=___cu_true___&senderEmail=&account_email=flowcrypt.compatibility%40gmail.com';
@@ -1137,7 +1277,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
       testWithBrowser('compatibility', async (t, browser) => {
         const threadId1 = '184cc6aa8e884397';
         const acctEmail = 'flowcrypt.compatibility@gmail.com';
-        const inboxPage = await browser.newPage(t, TestUrls.extension(`chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId1}`));
+        const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId1}`);
         await inboxPage.waitAll('iframe');
         const pgpBlock = await inboxPage.getFrame(['pgp_block.htm']);
         await pgpBlock.waitForSelTestState('ready');
@@ -1146,7 +1286,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
       })
     );
 
-    ava.default(
+    test(
       `decrypt - try path traversal forward slash workaround`,
       testWithBrowser('compatibility', async (t, browser) => {
         const params =
@@ -1158,7 +1298,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
       })
     );
 
-    ava.default(
+    test(
       `verify - sha1 shows error`,
       testWithBrowser('compatibility', async (t, browser) => {
         const msg = `-----BEGIN PGP MESSAGE-----
@@ -1184,7 +1324,7 @@ d6Z36//MsmczN00Wd60t9T+qyLz0T4/UG2Y9lgf367f3d+kYPE0LS7mXuFmjlPXfw0nKyVsSeFiu
       })
     );
 
-    ava.default(
+    test(
       'verify - Kraken - urldecode signature',
       testWithBrowser('compatibility', async (t, browser) => {
         const params = `?frameId=frame_ZRxshLEFdc&message=&msgId=171d138c8750863b&senderEmail=Kraken%20%3Ccensored%40email.com%3E&isOutgoing=___cu_false___&signature=___cu_true___&acctEmail=flowcrypt.compatibility%40gmail.com&parentTabId=12%3A0`;

@@ -2,12 +2,12 @@
 
 import { HttpClientErr, Status } from '../lib/api';
 import Parse, { ParseMsgResult } from '../../util/parse';
-import { isDelete, isGet, isPost, isPut, parseResourceId } from '../lib/mock-util';
+import { isDelete, isGet, isPost, isPut, parsePort, parseResourceId } from '../lib/mock-util';
 import { GoogleData } from './google-data';
 import { HandlersDefinition } from '../all-apis-mock';
 import { AddressObject, ParsedMail } from 'mailparser';
 import { TestBySubjectStrategyContext } from './strategies/send-message-strategy';
-import { UnsuportableStrategyError } from './strategies/strategy-base';
+import { UnsupportableStrategyError } from './strategies/strategy-base';
 import { oauth } from '../lib/oauth';
 import { Util } from '../../util';
 
@@ -56,7 +56,7 @@ export const mockGoogleEndpoints: HandlersDefinition = {
       } else if (!proceed) {
         return oauth.renderText('redirect with proceed=true to continue');
       } else {
-        return oauth.successResult(login_hint, state, scope);
+        return oauth.successResult(parsePort(req), login_hint, state, scope);
       }
     }
     throw new HttpClientErr(`Method not implemented for ${req.url}: ${req.method}`);
@@ -133,7 +133,7 @@ export const mockGoogleEndpoints: HandlersDefinition = {
   '/gmail': async (_parsedReq, req) => {
     if (isGet(req)) {
       const acct = oauth.checkAuthorizationHeaderWithAccessToken(req.headers.authorization, 'flowcrypt.compatibility@gmail.com');
-      return GoogleData.getMockGmailPage(acct);
+      return await GoogleData.getMockGmailPage(acct);
     }
     throw new HttpClientErr(`Method not implemented for ${req.url}: ${req.method}`);
   },
@@ -221,10 +221,13 @@ export const mockGoogleEndpoints: HandlersDefinition = {
     // get msg or attachment
     const acct = oauth.checkAuthorizationHeaderWithAccessToken(req.headers.authorization);
     if (isGet(req)) {
-      const id = parseResourceId(req.url!); // eslint-disable-line @typescript-eslint/no-non-null-assertion
+      // temporary replacement for parseResourceId() until #5050 is fixed
+      const id = req.url!.match(/\/([a-zA-Z0-9\-_]+)(\?|$)/)?.[1]; // eslint-disable-line @typescript-eslint/no-non-null-assertion
+      if (!id) {
+        return {};
+      }
       const data = await GoogleData.withInitializedData(acct);
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      if (req.url!.includes('/attachments/')) {
+      if (req.url?.includes('/attachments/')) {
         const attachment = data.getAttachment(id);
         if (attachment) {
           return attachment;
@@ -255,8 +258,7 @@ export const mockGoogleEndpoints: HandlersDefinition = {
     throw new HttpClientErr(`Method not implemented for ${req.url}: ${req.method}`);
   },
   '/gmail/v1/users/me/threads/?': async ({ query: { format } }, req) => {
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    if (req.url!.match(/\/modify$/)) {
+    if (req.url?.match(/\/modify$/)) {
       return {};
     }
     const acct = oauth.checkAuthorizationHeaderWithAccessToken(req.headers.authorization);
@@ -281,9 +283,9 @@ export const mockGoogleEndpoints: HandlersDefinition = {
         const id = `msg_id_${Util.lousyRandom()}`;
         try {
           const testingStrategyContext = new TestBySubjectStrategyContext(parseResult.mimeMsg.subject || '');
-          await testingStrategyContext.test(parseResult, id);
+          await testingStrategyContext.test(parseResult, id, parsePort(req));
         } catch (e) {
-          if (!(e instanceof UnsuportableStrategyError)) {
+          if (!(e instanceof UnsupportableStrategyError)) {
             // No such strategy for test
             throw e; // todo - should start throwing unsupported test strategies too, else changing subject will cause incomplete testing
             // todo - should stop calling it "strategy", better just "SentMessageTest" or similar
@@ -345,6 +347,14 @@ export const mockGoogleEndpoints: HandlersDefinition = {
     }
     throw new HttpClientErr(`Method not implemented for ${req.url}: ${req.method}`);
   },
+  '/gmail/?': async ({}, req) => {
+    const acct = oauth.checkAuthorizationHeaderWithAccessToken(req.headers.authorization);
+    if (isGet(req)) {
+      const id = parseResourceId(req.url!); // eslint-disable-line @typescript-eslint/no-non-null-assertion
+      return await GoogleData.getMockGmailPage(acct, id);
+    }
+    throw new HttpClientErr(`Method not implemented for ${req.url}: ${req.method}`);
+  },
 };
 
 const parseMultipartDataAsMimeMsg = async (multipartData: string): Promise<ParseMsgResult> => {
@@ -361,8 +371,7 @@ const parseMultipartDataAsMimeMsg = async (multipartData: string): Promise<Parse
 };
 
 const validateMimeMsg = async (acct: string, mimeMsg: ParsedMail, threadId?: string) => {
-  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-  const inReplyToMessageId = mimeMsg.headers.get('in-reply-to') ? mimeMsg.headers.get('in-reply-to')!.toString() : '';
+  const inReplyToMessageId = mimeMsg.headers.get('in-reply-to') ? mimeMsg.headers.get('in-reply-to')?.toString() : '';
   if (threadId) {
     const messages = (await GoogleData.withInitializedData(acct)).getMessagesByThread(threadId);
     if (!messages || !messages.length) {

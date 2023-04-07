@@ -1,9 +1,9 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
-import { Config, Util, TestMessage } from '../../util';
+import { Config, Util, TestMessage, TestMessageWithParams } from '../../util';
 
 import { AvaContext } from '.';
-import { BrowserHandle, Controllable, ControllablePage } from '../../browser';
+import { BrowserHandle, Controllable, ControllableFrame, ControllablePage } from '../../browser';
 import { OauthPageRecipe } from './../page-recipe/oauth-page-recipe';
 import { SetupPageRecipe } from './../page-recipe/setup-page-recipe';
 import { TestUrls } from '../../browser/test-urls';
@@ -15,10 +15,10 @@ import { InMemoryStoreKeys } from '../../core/const';
 import { GmailPageRecipe } from '../page-recipe/gmail-page-recipe';
 
 export class BrowserRecipe {
-  public static oldAndNewComposeButtonSelectors = ['div.z0[class*="_destroyable"]', '.new_secure_compose_window_button'];
+  public static oldAndNewComposeButtonSelectors = ['div.z0[class*="_destroyable"]', 'div.pb-25px[class*="_destroyable"]', '.new_secure_compose_window_button'];
 
   public static openSettingsLoginButCloseOauthWindowBeforeGrantingPermission = async (t: AvaContext, browser: BrowserHandle, acctEmail: string) => {
-    const settingsPage = await browser.newPage(t, TestUrls.extensionSettings());
+    const settingsPage = await browser.newExtensionSettingsPage(t);
     const oauthPopup = await browser.newPageTriggeredBy(t, () => settingsPage.waitAndClick('@action-connect-to-gmail'));
     await OauthPageRecipe.google(t, oauthPopup, acctEmail, 'close');
     await settingsPage.waitAndRespondToModal('info', 'confirm', 'Explaining FlowCrypt webmail permissions');
@@ -26,7 +26,7 @@ export class BrowserRecipe {
   };
 
   public static openSettingsLoginApprove = async (t: AvaContext, browser: BrowserHandle, acctEmail: string) => {
-    const settingsPage = await browser.newPage(t, TestUrls.extensionSettings(acctEmail));
+    const settingsPage = await browser.newExtensionSettingsPage(t, acctEmail);
     const oauthPopup = await browser.newPageTriggeredBy(t, () => settingsPage.waitAndClick('@action-connect-to-gmail'));
     await OauthPageRecipe.google(t, oauthPopup, acctEmail, 'approve');
     return settingsPage;
@@ -125,14 +125,12 @@ export class BrowserRecipe {
     // eslint-disable-next-line @typescript-eslint/naming-convention
     const list = await gmail.users.drafts.list({ userId: 'me', access_token: accessToken });
     if (list.data.drafts) {
-      /* eslint-disable @typescript-eslint/no-non-null-assertion */
       await Promise.all(
-        list.data
-          .drafts!.filter(draft => draft.id)
-          // eslint-disable-next-line @typescript-eslint/naming-convention
+        list.data.drafts
+          .filter(draft => draft.id)
+          // eslint-disable-next-line @typescript-eslint/naming-convention, @typescript-eslint/no-non-null-assertion
           .map(draft => gmail.users.drafts.delete({ id: draft.id!, userId: 'me', access_token: accessToken }))
       );
-      /* eslint-enable @typescript-eslint/no-non-null-assertion */
     }
   };
 
@@ -168,9 +166,17 @@ export class BrowserRecipe {
     return { acctEmail, passphrase: key.passphrase, settingsPage };
   };
 
-  public static async pgpBlockVerifyDecryptedContent(t: AvaContext, browser: BrowserHandle, m: TestMessage) {
+  public static pgpBlockVerifyDecryptedContent = async (t: AvaContext, browser: BrowserHandle, m: TestMessageWithParams) => {
     const pgpHostPage = await browser.newPage(t, `chrome/dev/ci_pgp_host_page.htm${m.params}`);
-    const pgpBlockPage = await pgpHostPage.getFrame(['pgp_block.htm']);
+    try {
+      const pgpBlockPage = await pgpHostPage.getFrame(['pgp_block.htm']);
+      return await BrowserRecipe.pgpBlockCheck(t, pgpBlockPage, m);
+    } finally {
+      await pgpHostPage.close();
+    }
+  };
+
+  public static pgpBlockCheck = async (t: AvaContext, pgpBlockPage: ControllableFrame, m: TestMessage) => {
     if (m.expectPercentageProgress) {
       await pgpBlockPage.waitForContent('@pgp-block-content', /Retrieving message... \d+%/, 20, 10);
     }
@@ -186,13 +192,14 @@ export class BrowserRecipe {
     }
     const content = await pgpBlockPage.read('@pgp-block-content');
     for (const expectedContent of m.content) {
-      if (content.indexOf(expectedContent) === -1) {
+      if (!content?.includes(expectedContent)) {
         throw new Error(`pgp_block_verify_decrypted_content:missing expected content: ${expectedContent}` + `\nactual content: ${content}`);
       }
     }
     if (m.unexpectedContent) {
       for (const unexpectedContent of m.unexpectedContent) {
-        if (content.indexOf(unexpectedContent) !== -1) {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        if (content!.includes(unexpectedContent)) {
           throw new Error(`pgp_block_verify_decrypted_content:unexpected content presents: ${unexpectedContent}`);
         }
       }
@@ -223,6 +230,5 @@ export class BrowserRecipe {
         throw new Error(`Print button is invisible`);
       }
     }
-    await pgpHostPage.close();
-  }
+  };
 }

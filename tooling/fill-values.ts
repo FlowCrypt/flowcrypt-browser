@@ -23,6 +23,8 @@ const replaceables: { needle: RegExp; val: string }[] = [
   { needle: /\[BUILD_REPLACEABLE_GOOGLE_OAUTH_SCREEN_HOST\]/g, val: 'https://accounts.google.com' },
   { needle: /\[BUILD_REPLACEABLE_BACKEND_API_HOST\]/g, val: 'https://flowcrypt.com/api/' },
   { needle: /\[BUILD_REPLACEABLE_ATTESTER_API_HOST\]/g, val: 'https://flowcrypt.com/attester/' },
+  { needle: /\[BUILD_REPLACEABLE_KEYS_OPENPGP_ORG_API_HOST\]/g, val: 'https://keys.openpgp.org/' },
+  { needle: /\[BUILD_REPLACEABLE_SHARED_TENANT_API_HOST\]/g, val: 'https://flowcrypt.com/shared-tenant-fes' },
 ];
 
 const paths = [`${targetDirExtension}/js/common/core/const.js`, `./build/${targetDirContentScripts}/js/common/core/const.js`];

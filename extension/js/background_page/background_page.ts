@@ -6,9 +6,7 @@ import { GoogleAuth } from '../common/api/email-provider/gmail/google-auth.js';
 import { Bm, BrowserMsg } from '../common/browser/browser-msg.js';
 import { emailKeyIndex } from '../common/core/common.js';
 import { VERSION } from '../common/core/const.js';
-import { opgp } from '../common/core/crypto/pgp/openpgpjs-custom.js';
 import { ExpirationCache } from '../common/core/expiration-cache.js';
-import { processAndStoreKeysFromEkmLocally, getLocalKeyExpiration } from '../common/helpers.js';
 import { Catch } from '../common/platform/catch.js';
 import { AcctStore } from '../common/platform/store/acct-store.js';
 import { ContactStore } from '../common/platform/store/contact-store.js';
@@ -19,8 +17,6 @@ import { injectFcIntoWebmail } from './inject.js';
 import { migrateGlobal, moveContactsToEmailsAndPubkeys, updateOpgpRevocations, updateSearchables, updateX509FingerprintsAndLongids } from './migrations.js';
 
 console.info('background_process.js starting');
-
-opgp.initWorker({ path: '/lib/openpgp.worker.js' });
 
 (async () => {
   let db: IDBDatabase;
@@ -63,8 +59,6 @@ opgp.initWorker({ path: '/lib/openpgp.worker.js' });
   BrowserMsg.bgAddListener('storeGlobalSet', (r: Bm.StoreGlobalSet) => GlobalStore.set(r.values));
   BrowserMsg.bgAddListener('storeAcctGet', (r: Bm.StoreAcctGet) => AcctStore.get(r.acctEmail, r.keys));
   BrowserMsg.bgAddListener('storeAcctSet', (r: Bm.StoreAcctSet) => AcctStore.set(r.acctEmail, r.values));
-  BrowserMsg.bgAddListener('processAndStoreKeysFromEkmLocally', processAndStoreKeysFromEkmLocally);
-  BrowserMsg.bgAddListener('getLocalKeyExpiration', getLocalKeyExpiration);
 
   // todo - when https://github.com/FlowCrypt/flowcrypt-browser/issues/2560
   //   is fixed, this can be moved to the gmail content script, and some may be removed

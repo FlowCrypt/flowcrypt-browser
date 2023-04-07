@@ -1,7 +1,7 @@
 /* © 2016-2018 FlowCrypt Limited. Limitations apply. Contact human@flowcrypt.com */
 
 /* Secure Compose button */
-#flowcrypt_secure_compose_button {
+#flowcrypt_secure_compose_button_icon {
   display: inline-flex;
   align-items: center;
   width: auto;
@@ -27,11 +27,11 @@
   outline: 0;
 }
 
-.small #flowcrypt_secure_compose_button {
+.small #flowcrypt_secure_compose_button_icon {
   height: 40px;
 }
 
-#flowcrypt_secure_compose_button::before {
+#flowcrypt_secure_compose_button_icon::before {
   display: block;
   content: '';
   background-size: 24px;
@@ -44,34 +44,23 @@
   background-repeat: no-repeat;
 }
 
-.compose_button_simple {
+.compose_icon_simple {
   height: 33px !important;
   margin: 0 12px !important;
   display: block !important;
 }
 
-.compose_button_simple::before {
+.compose_icon_simple::before {
   left: -6px;
   position: relative;
 }
 
-.only-icon #flowcrypt_secure_compose_button {
-  height: 40px;
-  width: 16px;
-  border-radius: 20px;
-}
-
-.only-icon #flowcrypt_secure_compose_button::before {
-  background-position-x: 9px !important;
-  background-position-y: 12px !important;
-}
-
-#flowcrypt_secure_compose_button:hover,
-#flowcrypt_secure_compose_button:focus {
+#flowcrypt_secure_compose_button_icon:hover,
+#flowcrypt_secure_compose_button_icon:focus {
   box-shadow: 0 5px 10px 2px rgb(60 64 67 / 20%);
 }
 
-.bhZ:not(.bym) #flowcrypt_secure_compose_button {
+.bhZ:not(.bym) #flowcrypt_secure_compose_button_icon {
   width: 56px;
   height: 56px;
   border-radius: 28px;
@@ -79,13 +68,13 @@
   padding: 0;
 }
 
-.bhZ:not(.bym) .small #flowcrypt_secure_compose_button {
+.bhZ:not(.bym) .small #flowcrypt_secure_compose_button_icon {
   width: 40px;
   height: 40px;
   border-radius: 20px;
 }
 
-.bhZ:not(.bym) .small #flowcrypt_secure_compose_button::before {
+.bhZ:not(.bym) .small #flowcrypt_secure_compose_button_icon::before {
   min-width: 42px;
 }
 
@@ -97,7 +86,7 @@
   padding-bottom: 25px;
 }
 
-[class*="_destroyable"].z0:not(.small) {
+[class*='_destroyable'].z0:not(.small) {
   margin-bottom: 0 !important;
   display: initial;
 }
@@ -120,7 +109,7 @@ div.webmail_notifications div.webmail_notification {
   border-radius: 2px;
   box-shadow: rgba(0, 0, 0, 0.2) 0 2px 4px 0;
   color: rgb(34, 34, 34);
-  font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-family: -apple-system, system-ui, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   font-size: 12.8px;
   font-weight: bold;
   line-height: 16px;
@@ -360,16 +349,16 @@ body.cryptup_outlook ._fce_i {
   pointer-events: none;
 }
 
-.secure_compose_window[data-order="1"] {
+.secure_compose_window[data-order='1'] {
   right: 30px;
 }
 
-.secure_compose_window[data-order="2"] {
+.secure_compose_window[data-order='2'] {
   left: 50%;
   margin-left: -270px;
 }
 
-.secure_compose_window[data-order="3"] {
+.secure_compose_window[data-order='3'] {
   left: 30px;
 }
 

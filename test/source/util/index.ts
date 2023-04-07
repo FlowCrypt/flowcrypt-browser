@@ -3,33 +3,33 @@
 import * as fs from 'fs';
 import { Keyboard, KeyInput } from 'puppeteer';
 import { BrowserHandle } from '../browser/browser-handle.js';
-import { TestUrls } from '../browser/test-urls.js';
 import { KeyInfoWithIdentityAndOptionalPp, KeyUtil } from '../core/crypto/key.js';
 import { SettingsPageRecipe } from '../tests/page-recipe/settings-page-recipe.js';
 import { testKeyConstants } from '../tests/tooling/consts';
 import { AvaContext } from '../tests/tooling/index.js';
 
-export type TestVariant = 'CONSUMER-MOCK' | 'ENTERPRISE-MOCK' | 'CONSUMER-LIVE-GMAIL' | 'UNIT-TESTS';
+export type TestVariant = 'CONSUMER-MOCK' | 'ENTERPRISE-MOCK' | 'CONSUMER-LIVE-GMAIL' | 'UNIT-TESTS' | 'CONSUMER-CONTENT-SCRIPT-TESTS-MOCK';
 
 export const getParsedCliParams = () => {
   let testVariant: TestVariant;
-  if (process.argv.includes('CONSUMER-MOCK')) {
+  let testGroup: 'FLAKY-GROUP' | 'STANDARD-GROUP' | 'UNIT-TESTS' | 'CONTENT-SCRIPT-TESTS' | undefined;
+  if (process.argv.includes('CONTENT-SCRIPT-TESTS')) {
+    testVariant = 'CONSUMER-CONTENT-SCRIPT-TESTS-MOCK';
+    testGroup = 'CONTENT-SCRIPT-TESTS';
+  } else if (process.argv.includes('CONSUMER-MOCK')) {
     testVariant = 'CONSUMER-MOCK';
   } else if (process.argv.includes('ENTERPRISE-MOCK')) {
     testVariant = 'ENTERPRISE-MOCK';
   } else if (process.argv.includes('CONSUMER-LIVE-GMAIL')) {
     testVariant = 'CONSUMER-LIVE-GMAIL';
-  } else if (process.argv.includes('UNIT-TESTS')) {
-    testVariant = 'UNIT-TESTS';
   } else {
     throw new Error('Unknown test type: specify CONSUMER-MOCK or ENTERPRISE-MOCK CONSUMER-LIVE-GMAIL');
   }
-  const testGroup = (process.argv.includes('UNIT-TESTS') ? 'UNIT-TESTS' : process.argv.includes('FLAKY-GROUP') ? 'FLAKY-GROUP' : 'STANDARD-GROUP') as
-    | 'FLAKY-GROUP'
-    | 'STANDARD-GROUP'
-    | 'UNIT-TESTS';
+  if (!testGroup) {
+    testGroup = process.argv.includes('UNIT-TESTS') ? 'UNIT-TESTS' : process.argv.includes('FLAKY-GROUP') ? 'FLAKY-GROUP' : 'STANDARD-GROUP';
+  }
   const buildDir = `build/chrome-${(testVariant === 'CONSUMER-LIVE-GMAIL' ? 'CONSUMER' : testVariant).toLowerCase()}`;
-  const poolSizeOne = process.argv.includes('--pool-size=1') || testGroup === 'FLAKY-GROUP';
+  const poolSizeOne = process.argv.includes('--pool-size=1') || ['FLAKY-GROUP', 'CONTENT-SCRIPT-TESTS'].includes(testGroup);
   const oneIfNotPooled = (suggestedPoolSize: number) => (poolSizeOne ? Math.min(1, suggestedPoolSize) : suggestedPoolSize);
   console.info(`TEST_VARIANT: ${testVariant}:${testGroup}, (build dir: ${buildDir}, poolSizeOne: ${poolSizeOne})`);
   return { testVariant, testGroup, oneIfNotPooled, buildDir, isMock: testVariant.includes('-MOCK') };
@@ -39,13 +39,15 @@ export type TestMessage = {
   name?: string;
   content: string[];
   unexpectedContent?: string[];
-  password?: string;
-  params: string;
   quoted?: boolean;
   expectPercentageProgress?: boolean;
   signature?: string;
   encryption?: string;
   error?: string;
+};
+
+export type TestMessageWithParams = TestMessage & {
+  params: string;
 };
 
 export type TestKeyInfo = {
@@ -65,8 +67,6 @@ interface TestSecretsInterface {
 /* eslint-enable @typescript-eslint/naming-convention */
 
 export class Config {
-  public static extensionId = '';
-
   private static _secrets: TestSecretsInterface;
 
   public static secrets = (): TestSecretsInterface => {
@@ -128,7 +128,7 @@ export class Util {
 
   public static wipeGoogleTokensUsingExperimentalSettingsPage = async (t: AvaContext, browser: BrowserHandle, acct: string) => {
     for (const wipeTokenBtnSelector of ['@action-wipe-google-refresh-token', '@action-wipe-google-access-token']) {
-      const settingsPage = await browser.newPage(t, TestUrls.extensionSettings(acct));
+      const settingsPage = await browser.newExtensionSettingsPage(t, acct);
       await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
       const experimentalFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-module-experimental', ['experimental.htm']);
       await experimentalFrame.waitAndClick(wipeTokenBtnSelector);

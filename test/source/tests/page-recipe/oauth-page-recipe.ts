@@ -46,7 +46,7 @@ export class OauthPageRecipe extends PageRecipe {
     action: 'close' | 'deny' | 'approve' | 'login' | 'login_with_invalid_state'
   ): Promise<void> => {
     try {
-      const isMock = oauthPage.target.url().includes('localhost') || oauthPage.target.url().includes('google.mock.localhost');
+      const isMock = oauthPage.target.url().includes('localhost');
       if (isMock) {
         await OauthPageRecipe.mock(t, oauthPage, acctEmail, action);
         return;
@@ -133,7 +133,11 @@ export class OauthPageRecipe extends PageRecipe {
       }
     } catch (e) {
       const eStr = String(e);
-      if (!eStr.includes('Execution context was destroyed') && !eStr.includes('Cannot find context with specified id')) {
+      if (
+        !eStr.includes('Execution context was destroyed') &&
+        !eStr.includes('Cannot find context with specified id') &&
+        !eStr.includes('Argument should belong to the same JavaScript world as target object')
+      ) {
         throw e; // not a known retriable error
       }
       // t.log(`Attempting to retry google auth:${action} on the same window for ${email} because: ${eStr}`);

@@ -1,71 +1,62 @@
 <!-- © 2016-2018 FlowCrypt Limited. Limitations apply. Contact human@flowcrypt.com -->
 
 <html>
+  <head>
+    <meta content="text/html;charset=utf-8" http-equiv="Content-Type" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+    <title>FlowCrypt</title>
+    <link rel="stylesheet" href="/css/cryptup.css" />
+    <link rel="stylesheet" href="/css/sweetalert2.css" />
+    <link rel="stylesheet" href="/css/webmail.css" />
+    <link rel="stylesheet" href="/css/settings.css" />
+    <link rel="stylesheet" href="/css/animate.css" />
+    <link rel="stylesheet" href="/css/open-sans.css" />
+    <link rel="stylesheet" href="/css/mobile-menu-styling.css" />
+    <link rel="icon" href="/img/logo/flowcrypt-logo-19-19.png" />
+  </head>
 
-<head>
-  <meta content="text/html;charset=utf-8" http-equiv="Content-Type">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>FlowCrypt</title>
-  <link rel="stylesheet" href="/css/cryptup.css">
-  <link rel="stylesheet" href="/css/sweetalert2.css" />
-  <link rel="stylesheet" href="/css/webmail.css">
-  <link rel="stylesheet" href="/css/settings.css">
-  <link rel="stylesheet" href="/css/animate.css">
-  <link rel="stylesheet" href="/css/open-sans.css">
-  <link rel="stylesheet" href="/css/mobile-menu-styling.css" />
-  <link rel="icon" href="/img/logo/flowcrypt-logo-19-19.png" />
-</head>
+  <body id="settings" class="client">
+    <div class="line header" id="banner">
+      This page has limited functionality. Using FlowCrypt directly in Gmail is more convenient:
+      <a href="https://mail.google.com/" class="action_open_webmail">Open Gmail</a>
 
-<body id="settings" class="client">
-
-  <div class="line header" id="banner">
-    This page has limited functionality. Using FlowCrypt directly in Gmail is more convenient: <a
-      href="https://mail.google.com/" class="action_open_webmail">Open Gmail</a>
-
-    <img src="/img/svgs/profile-icon.svg"
-      class="action_choose_account action-toggle-accounts-menu profile-img main-profile-img" alt="Profile Image">
-    <img src="/img/svgs/settings-icon.svg" class="action_open_settings" alt="Settings" title="Open FlowCrypt Settings">
-  </div>
-  <div id="alt-accounts" class="accounts-row">
-    <div class="row alt-accounts accounts-options-row text-center">
-      <a href="#" class="action_add_account action_add_account--settings">Add Account</a>
+      <img src="/img/svgs/profile-icon.svg" class="action_choose_account action-toggle-accounts-menu profile-img main-profile-img" alt="Profile Image" />
+      <img src="/img/svgs/settings-icon.svg" class="action_open_settings" alt="Settings" title="Open FlowCrypt Settings" />
     </div>
-  </div>
+    <div id="alt-accounts" class="accounts-row">
+      <div class="row alt-accounts accounts-options-row text-center">
+        <a href="#" class="action_add_account action_add_account--settings">Add Account</a>
+      </div>
+    </div>
 
-  <table>
-    <tr>
-      <td class="menu">
+    <table>
+      <tr>
+        <td class="menu">
+          <button class="button green action_open_secure_compose_window" data-test="action-open-secure-compose-window">Secure Compose</button><br />
+        </td>
+        <td>
+          <div class="line left header">
+            <h1></h1>
+            <span class="action_see_original_message">See Original</span>
+          </div>
+          <div class="threads block"></div>
+          <div class="thread block"></div>
+        </td>
+      </tr>
+    </table>
 
-        <button class="button green action_open_secure_compose_window" data-test="action-open-secure-compose-window">Secure Compose</button><br>
-
-      </td>
-      <td>
-
-        <div class="line left header">
-          <h1></h1>
-          <span class="action_see_original_message">See Original</span>
-        </div>
-        <div class="threads block"></div>
-        <div class="thread block"></div>
-
-      </td>
-    </tr>
-  </table>
-
-  <script src="/lib/purify.js"></script>
-  <script src="/lib/jquery.min.js"></script>
-  <script src="/lib/sweetalert2.js"></script>
-  <script src="/lib/iso-8859-2.js"></script>
-  <script src="/lib/emailjs/punycode.js"></script>
-  <script src="/lib/emailjs/emailjs-stringencoding.js"></script>
-  <script src="/lib/emailjs/emailjs-mime-codec.js"></script>
-  <script src="/lib/emailjs/emailjs-mime-types.js"></script>
-  <script src="/lib/emailjs/emailjs-addressparser.js"></script>
-  <script src="/lib/emailjs/emailjs-mime-builder.js"></script>
-  <script src="/lib/emailjs/emailjs-mime-parser.js"></script>
-  <script src="/lib/openpgp.js"></script>
-  <script src="inbox.js" type="module"></script>
-
-</body>
-
+    <script src="/lib/purify.js"></script>
+    <script src="/lib/jquery.min.js"></script>
+    <script src="/lib/sweetalert2.js"></script>
+    <script src="/lib/iso-8859-2.js"></script>
+    <script src="/lib/emailjs/punycode.js"></script>
+    <script src="/lib/emailjs/emailjs-stringencoding.js"></script>
+    <script src="/lib/emailjs/emailjs-mime-codec.js"></script>
+    <script src="/lib/emailjs/emailjs-mime-types.js"></script>
+    <script src="/lib/emailjs/emailjs-addressparser.js"></script>
+    <script src="/lib/emailjs/emailjs-mime-builder.js"></script>
+    <script src="/lib/emailjs/emailjs-mime-parser.js"></script>
+    <script src="/lib/openpgp.js"></script>
+    <script src="inbox.js" type="module"></script>
+  </body>
 </html>

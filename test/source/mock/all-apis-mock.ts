@@ -10,14 +10,16 @@ import { mockGoogleEndpoints } from './google/google-endpoints';
 import { mockKeyManagerEndpoints } from './key-manager/key-manager-endpoints';
 import { mockWkdEndpoints } from './wkd/wkd-endpoints';
 import { mockSksEndpoints } from './sks/sks-endpoints';
-import { mockFesEndpoints } from './fes/fes-endpoints';
+import { mockCustomerUrlFesEndpoints } from './fes/customer-url-fes-endpoints';
+import { mockSharedTenantFesEndpoints } from './fes/shared-tenant-fes-endpoints';
+import { mockKeysOpenPGPOrgEndpoints } from './keys-openpgp-org/keys-openpgp-org-endpoints';
 
 export type HandlersDefinition = Handlers<{ query: { [k: string]: string }; body?: unknown }, unknown>;
 
 export const startAllApisMock = async (logger: (line: string) => void) => {
   class LoggedApi<REQ, RES> extends Api<REQ, RES> {
     protected throttleChunkMsUpload = 15;
-    protected throttleChunkMsDownload = 50;
+    protected throttleChunkMsDownload = 200;
     protected log = (ms: number, req: http.IncomingMessage, res: http.ServerResponse, errRes?: Buffer) => {
       if (req.url !== '/favicon.ico') {
         logger(`${ms}ms | ${res.statusCode} ${req.method} ${req.url} | ${errRes ? errRes : ''}`);
@@ -28,12 +30,14 @@ export const startAllApisMock = async (logger: (line: string) => void) => {
     ...mockGoogleEndpoints,
     ...mockBackendEndpoints,
     ...mockAttesterEndpoints,
+    ...mockKeysOpenPGPOrgEndpoints,
     ...mockKeyManagerEndpoints,
     ...mockWkdEndpoints,
     ...mockSksEndpoints,
-    ...mockFesEndpoints,
+    ...mockCustomerUrlFesEndpoints,
+    ...mockSharedTenantFesEndpoints,
     '/favicon.ico': async () => '',
   });
-  await api.listen(8001);
+  await api.listen();
   return api;
 };

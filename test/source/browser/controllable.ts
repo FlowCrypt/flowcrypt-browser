@@ -11,12 +11,11 @@ import {
   TIMEOUT_TEST_STATE_SATISFY,
   TIMEOUT_FOCUS,
 } from '.';
-import { TestUrls } from './test-urls';
 import { Util } from '../util';
 import { expect } from 'chai';
 import * as fs from 'fs';
 import * as path from 'path';
-import * as mkdirp from 'mkdirp';
+import mkdirp from 'mkdirp';
 import { Dict } from '../core/common';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -250,18 +249,23 @@ abstract class ControllableBase {
     }, this.selector(selector));
   };
 
-  public read = async (selector: string, onlyVisible = false): Promise<string> => {
+  public read = async (selector: string, onlyVisible = false): Promise<string | undefined> => {
     selector = this.selector(selector);
     if (onlyVisible) {
-      /* eslint-disable @typescript-eslint/no-unsafe-return, @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-explicit-any, no-null/no-null */
-      return await this.target.evaluate(
-        s => ([].slice.call(document.querySelectorAll(s))!.find((el: HTMLElement) => el.offsetParent !== null) as any).innerText,
-        selector
-      );
-      /* eslint-enable */
+      return (await this.readAll(selector)).find(el => el.visible)?.innerText;
     } else {
-      return await this.target.evaluate(s => (document.querySelector(s) as HTMLElement).innerText, selector);
+      return await this.target.evaluate(s => (document.querySelector(s) as HTMLElement).innerText, this.selector(selector));
     }
+  };
+
+  public readAll = async (selector: string) => {
+    return await this.target.evaluate(
+      s =>
+        ([].slice.call(document.querySelectorAll(s)) as HTMLElement[]).map(el => {
+          return { innerText: el.innerText, visible: Boolean(el.offsetParent) };
+        }),
+      this.selector(selector)
+    );
   };
 
   public readHtml = async (selector: string): Promise<string> => {
@@ -331,9 +335,9 @@ abstract class ControllableBase {
       } catch (e) {
         this.log(`wait_and_click(i${i}):6:err(${String(e)}):${selector}`);
         if (
-          e.message === 'Node is either not visible or not an HTMLElement' ||
-          e.message === 'Node is either not clickable or not an HTMLElement' ||
-          e.message === 'Node is detached from document'
+          ['Node is either not visible or not an HTMLElement', 'Node is either not clickable or not an HTMLElement', 'Node is detached from document'].includes(
+            e.message
+          )
         ) {
           // maybe the node just re-rendered?
           if (!retryErrs || i === 3) {
@@ -367,18 +371,18 @@ abstract class ControllableBase {
       const currentText = await this.read(selector, true);
       if (typeof needle === 'string') {
         // str
-        if (currentText.includes(needle)) {
+        if (currentText?.includes(needle)) {
           return;
         }
       } else {
         // regex
-        if (currentText.match(needle)) {
+        if (currentText?.match(needle)) {
           return;
         }
       }
       const lastText = observedContentHistory[observedContentHistory.length - 1];
       if (typeof lastText !== 'undefined' && currentText !== lastText) {
-        observedContentHistory.push(currentText);
+        observedContentHistory.push(currentText || '(undefined)');
       }
       await Util.sleep(testLoopLengthMs / 1000);
     }
@@ -414,6 +418,14 @@ abstract class ControllableBase {
     );
   };
 
+  public checkIfImageIsDisplayedCorrectly = async (selector: string) => {
+    const isImageDisplayedCorrectly = await this.target.evaluate(selector => {
+      const img = document.querySelector(selector) as HTMLImageElement;
+      return img.naturalWidth !== 0 && img.naturalHeight !== 0;
+    }, selector);
+    expect(isImageDisplayedCorrectly).to.be.true;
+  };
+
   public hasHorizontalScroll = async () => {
     return await this.target.evaluate(() => document.documentElement.scrollWidth > document.documentElement.offsetWidth);
   };
@@ -423,13 +435,13 @@ abstract class ControllableBase {
     const start = Date.now();
     const sleepMs = 250;
     let presentForMs = 0;
-    let actualText = '';
+    let actualText: string | undefined;
     const history: string[] = [];
     let round = 1;
     while (Date.now() - start < timeoutSec * 1000) {
       await Util.sleep(sleepMs / 1000);
       actualText = await this.read(selector, true);
-      if (!actualText.includes(expectedText)) {
+      if (!actualText?.includes(expectedText)) {
         presentForMs = 0;
       } else {
         presentForMs += sleepMs;
@@ -462,9 +474,9 @@ abstract class ControllableBase {
     throw new Error(`Could not find any frame in ${appearIn}s that matches ${urlMatchables.join(' ')}`);
   };
 
-  public ensureElementsCount = async (selector: string, count: number) => {
-    const elements = await this.target.$$(selector);
-    expect(elements.length).to.equal(count);
+  public ensureElementsCount = async (selector: string, expectedCount: number) => {
+    const actualCount = await this.elementCount(selector);
+    expect(actualCount).to.equal(expectedCount);
   };
 
   public getFrame = async (urlMatchables: string[], { sleep = 1, timeout = 10 } = { sleep: 1, timeout: 10 }): Promise<ControllableFrame> => {
@@ -524,6 +536,10 @@ abstract class ControllableBase {
     return files;
   };
 
+  public keyboard = () => {
+    return 'keyboard' in this.target ? this.target.keyboard : this.target.page().keyboard;
+  };
+
   protected log = (msg: string) => {
     if (this.debugNamespace) {
       console.info(`[debug][controllable][${this.debugNamespace}] ${msg}`);
@@ -558,6 +574,15 @@ abstract class ControllableBase {
       return (await this.target.$x(selector))[0] as ElementHandle<Element>;
     } else {
       return await this.target.$(selector);
+    }
+  };
+
+  protected elementCount = async (selector: string): Promise<number> => {
+    selector = this.selector(selector);
+    if (this.isXpath(selector)) {
+      return (await this.target.$x(selector)).length;
+    } else {
+      return (await this.target.$$(selector)).length;
     }
   };
 
@@ -658,7 +683,8 @@ export class ControllablePage extends ControllableBase {
       const response = r.response();
       const fail = r.failure();
       const url = r.url();
-      if (url.indexOf(TestUrls.extension('')) !== 0 || fail) {
+      const extensionUrl = t.urls?.extension('');
+      if ((extensionUrl && url.indexOf(extensionUrl) !== 0) || fail) {
         // not an extension url, or a fail
         this.consoleMsgs.push(new ConsoleEvent('request', `${response ? response.status() : '-1'} ${r.method()} ${url}: ${fail ? fail.errorText : 'ok'}`));
       }
@@ -710,7 +736,11 @@ export class ControllablePage extends ControllableBase {
   };
 
   public goto = async (url: string) => {
-    url = url.indexOf('https://') === 0 || url.indexOf(TestUrls.extension('')) === 0 ? url : TestUrls.extension(url);
+    if (this.t.urls) {
+      const extensionUrl = this.t.urls.extension('');
+      url = url.indexOf('https://') === 0 || url.indexOf(extensionUrl) === 0 ? url : this.t.urls.extension(url);
+    }
+
     await Util.sleep(1);
     // await this.page.goto(url); // may produce intermittent Navigation Timeout Exceeded in CI environment
     this.page.goto(url).catch(e => this.t.log(`goto: ${e.message}: ${url}`));

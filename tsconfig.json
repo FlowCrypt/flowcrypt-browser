@@ -20,7 +20,8 @@
     "paths": {
       "jquery": ["lib/jquery.min.js", "COMMENT"],
       "sweetalert2": ["lib/sweetalert2.js", "COMMENT"],
-      "openpgp": ["lib/openpgp.js", "COMMENT"],
+      "openpgp": ["../node_modules/openpgp/openpgp.d.js", "lib/openpgp.js", "COMMENT"],
+      "@openpgp/web-stream-tools": ["../node_modules/@openpgp/web-stream-tools/types/index.v4.9.d.ts", "lib/streams/streams.js"],
       "dompurify": ["types/purify.d.ts", "lib/purify.js", "COMMENT"],
       "fine-uploader": ["lib/fine-uploader.js", "COMMENT"],
       "clipboard": ["lib/clipboard.js", "COMMENT"],

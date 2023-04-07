@@ -1,66 +1,51 @@
 <!-- © 2016-2018 FlowCrypt Limited. Limitations apply. Contact human@flowcrypt.com -->
 
 <html>
+  <head>
+    <meta content="text/html;charset=utf-8" http-equiv="Content-Type" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+    <title>FlowCrypt</title>
+    <link rel="stylesheet" href="/css/cryptup.css" />
+    <link rel="stylesheet" href="/css/sweetalert2.css" />
+    <link rel="stylesheet" href="/css/mobile-menu-styling.css" />
+  </head>
 
-<head>
-  <meta content="text/html;charset=utf-8" http-equiv="Content-Type">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>FlowCrypt</title>
-  <link rel="stylesheet" href="/css/cryptup.css" />
-  <link rel="stylesheet" href="/css/sweetalert2.css" />
-  <link rel="stylesheet" href="/css/mobile-menu-styling.css" />
-</head>
-
-<body style="background-color: transparent;">
-  <div id="pgp_background" class="pgp_secure">
-    <div id="pgp_error" data-test="pgp-error" class="pgp_badge red_label short" style="display: none;">
-    </div>
-    <div id="pgp_encryption" data-test="pgp-encryption" class="pgp_badge short">
-    </div>
-    <div id="pgp_signature" data-test="pgp-signature" class="pgp_badge short">
-    </div>
-    <a href="#" class="pgp_print_button" data-test="action-print">
-      Print
-    </a>
-    <div class="printable">
-      <div id="print-header">
-        <table width="100%" cellpadding="0" cellspacing="0">
-          <tbody>
-            <tr class="print_header_info">
-              <td class="print_user_email" data-test="print-user-email">
-              </td>
-              <td class="display-table float-right">
-                <span class="print_encrypted_with_label">Encrypted with</span>
-                <img
-                  src="/img/logo/flowcrypt-logo-125-27.png"
-                  width="auto"
-                  height="22"
-                  alt="FlowCrypt a.s. Mail"
-                  class="logo"
-                >
-              </td>
-            </tr>
-          </tbody>
-        </table>
+  <body style="background-color: transparent">
+    <div id="pgp_background" class="pgp_secure">
+      <div id="pgp_error" data-test="pgp-error" class="pgp_badge red_label short" style="display: none"></div>
+      <div id="pgp_encryption" data-test="pgp-encryption" class="pgp_badge short"></div>
+      <div id="pgp_signature" data-test="pgp-signature" class="pgp_badge short"></div>
+      <a href="#" class="pgp_print_button" data-test="action-print"> Print </a>
+      <div class="printable">
+        <div id="print-header">
+          <table width="100%" cellpadding="0" cellspacing="0">
+            <tbody>
+              <tr class="print_header_info">
+                <td class="print_user_email" data-test="print-user-email"></td>
+                <td class="display-table float-right">
+                  <span class="print_encrypted_with_label">Encrypted with</span>
+                  <img src="/img/logo/flowcrypt-logo-125-27.png" width="auto" height="22" alt="FlowCrypt a.s. Mail" class="logo" />
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
+      <div id="pgp_block" data-test="pgp-block-content">Loading...</div>
     </div>
-    <div id="pgp_block" data-test="pgp-block-content">Loading...</div>
-  </div>
 
-  <script src="/lib/purify.js"></script>
-  <script src="/lib/jquery.min.js"></script>
-  <script src="/lib/sweetalert2.js"></script>
-  <script src="/lib/filesize.js"></script>
-  <script src="/lib/iso-8859-2.js"></script>
-  <script src="/lib/emailjs/punycode.js"></script>
-  <script src="/lib/emailjs/emailjs-stringencoding.js"></script>
-  <script src="/lib/emailjs/emailjs-mime-codec.js"></script>
-  <script src="/lib/emailjs/emailjs-mime-types.js"></script>
-  <script src="/lib/emailjs/emailjs-addressparser.js"></script>
-  <script src="/lib/emailjs/emailjs-mime-builder.js"></script>
-  <script src="/lib/emailjs/emailjs-mime-parser.js"></script>
-  <script src="pgp_block.js" type="module"></script>
-
-</body>
-
+    <script src="/lib/purify.js"></script>
+    <script src="/lib/jquery.min.js"></script>
+    <script src="/lib/sweetalert2.js"></script>
+    <script src="/lib/filesize.js"></script>
+    <script src="/lib/iso-8859-2.js"></script>
+    <script src="/lib/emailjs/punycode.js"></script>
+    <script src="/lib/emailjs/emailjs-stringencoding.js"></script>
+    <script src="/lib/emailjs/emailjs-mime-codec.js"></script>
+    <script src="/lib/emailjs/emailjs-mime-types.js"></script>
+    <script src="/lib/emailjs/emailjs-addressparser.js"></script>
+    <script src="/lib/emailjs/emailjs-mime-builder.js"></script>
+    <script src="/lib/emailjs/emailjs-mime-parser.js"></script>
+    <script src="pgp_block.js" type="module"></script>
+  </body>
 </html>

@@ -4,7 +4,6 @@ import { BrowserHandle, ControllableFrame, ControllablePage } from '../../browse
 
 import { AvaContext } from '../tooling/';
 import { PageRecipe } from './abstract-page-recipe';
-import { TestUrls } from '../../browser/test-urls';
 import { Util } from '../../util';
 import { expect } from 'chai';
 
@@ -30,7 +29,7 @@ export class InboxPageRecipe extends PageRecipe {
     browser: BrowserHandle,
     { acctEmail, threadId, enterPp, expectedContent, finishCurrentSession }: CheckDecryptMsg$opt
   ) => {
-    const inboxPage = await browser.newPage(t, TestUrls.extension(`chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`));
+    const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`);
     await inboxPage.waitAll('iframe');
     if (finishCurrentSession) {
       await InboxPageRecipe.finishSessionOnInboxPage(inboxPage);
@@ -64,7 +63,7 @@ export class InboxPageRecipe extends PageRecipe {
       throw new Error(`Print button is invisible`);
     }
     const content = await pgpBlockFrame.read('@pgp-block-content');
-    if (content.indexOf(expectedContent) === -1) {
+    if (!content?.includes(expectedContent)) {
       throw new Error(`message did not decrypt`);
     }
     await inboxPage.close();
@@ -77,7 +76,7 @@ export class InboxPageRecipe extends PageRecipe {
   };
 
   public static checkFinishingSession = async (t: AvaContext, browser: BrowserHandle, acctEmail: string, threadId: string) => {
-    const inboxPage = await browser.newPage(t, TestUrls.extension(`chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`));
+    const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`);
     await InboxPageRecipe.finishSessionOnInboxPage(inboxPage);
     await inboxPage.waitAll('iframe');
     const pgpBlockFrame = await inboxPage.getFrame(['pgp_block.htm']);
@@ -101,7 +100,7 @@ export class InboxPageRecipe extends PageRecipe {
     if (typeof isEncrypted !== 'undefined') {
       throw new Error('checkSentMsg.isEncrypted not implemented');
     }
-    const inboxPage = await browser.newPage(t, TestUrls.extension(`chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&labelId=SENT`));
+    const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&labelId=SENT`);
     await inboxPage.waitAndClick(`@container-subject(${subject})`, { delay: 1 });
     if (sender) {
       // make sure it was sent from intended addr

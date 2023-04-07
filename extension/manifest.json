@@ -42,7 +42,7 @@
     {
       "matches": ["https://mail.google.com/*"],
       "css": ["/css/webmail.css", "/css/sweetalert2.css"],
-      "js": ["/lib/purify.js", "/lib/jquery.min.js", "/lib/sweetalert2.js", "/js/content_scripts/webmail_bundle.js"]
+      "js": ["/lib/purify.js", "/lib/jquery.min.js", "/lib/openpgp.js", "/lib/sweetalert2.js", "/lib/streams_web.js", "/js/content_scripts/webmail_bundle.js"]
     },
     {
       "matches": ["https://www.google.com/robots.txt*"],
@@ -78,5 +78,5 @@
     "/chrome/elements/oauth2.htm"
   ],
   "minimum_chrome_version": "96",
-  "content_security_policy": "upgrade-insecure-requests; script-src 'self'; frame-ancestors https://mail.google.com 'self'; img-src 'self' https://*.googleusercontent.com data: blob:; frame-src 'self' blob:; worker-src 'self'; form-action 'none'; media-src 'none'; font-src 'none'; manifest-src 'none'; object-src 'none'; base-uri 'self'"
+  "content_security_policy": "upgrade-insecure-requests; script-src 'self'; frame-ancestors https://mail.google.com 'self'; img-src 'self' https://* data: blob:; frame-src 'self' blob:; worker-src 'self'; form-action 'none'; media-src 'none'; font-src 'none'; manifest-src 'none'; object-src 'none'; base-uri 'self'"
 }

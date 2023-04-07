@@ -1,0 +1,22 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "lib": [
+      "es6",
+      "dom"
+    ],
+    "allowJs": true,
+    "alwaysStrict": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "module": "commonjs",
+    "sourceMap": true,
+    "outDir": "../build/streams",
+    "skipLibCheck": true
+  },
+  "include": [
+    "../node_modules/@openpgp/web-stream-tools/lib/*.js"
+  ]
+}

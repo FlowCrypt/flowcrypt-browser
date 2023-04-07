@@ -4,12 +4,15 @@
 
 import { base64decode, base64encode } from '../platform/util.js';
 import { Xss } from '../platform/xss.js';
+import { Buf } from './buf.js';
 
 export type Dict<T> = { [key: string]: T };
 export type UrlParam = string | number | null | undefined | boolean | string[];
 export type UrlParams = Dict<UrlParam>;
 export type PromiseCancellation = { cancel: boolean };
 export type EmailParts = { email: string; name?: string };
+
+export const CID_PATTERN = /^cid:(.+)/;
 
 export class Str {
   // ranges are taken from https://stackoverflow.com/a/14824756
@@ -23,11 +26,11 @@ export class Str {
     let name: string | undefined;
     if (full.includes('<') && full.includes('>')) {
       email = full
-        .substr(full.indexOf('<') + 1, full.indexOf('>') - full.indexOf('<') - 1)
+        .substring(full.indexOf('<') + 1, full.indexOf('>'))
         .replace(/["']/g, '')
         .trim()
         .toLowerCase();
-      name = full.substr(0, full.indexOf('<')).replace(/["']/g, '').trim();
+      name = full.substring(0, full.indexOf('<')).replace(/["']/g, '').trim();
     } else {
       email = full.replace(/["']/g, '').trim().toLowerCase();
     }
@@ -87,10 +90,25 @@ export class Str {
     if (email.indexOf(' ') !== -1) {
       return false;
     }
-    email = email.replace(/\:8001$/, ''); // for MOCK tests until https://github.com/FlowCrypt/flowcrypt-browser/issues/4631
-    return /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/i.test(
+    email = email.replace(/\:8001$/, ''); // for MOCK tests, todo: remove from production
+    // `localhost` is a valid top-level domain for an email address, otherwise we require a second-level domain to be present
+    return /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|localhost|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/i.test(
       email
     );
+  };
+
+  public static is7bit = (content: string | Uint8Array): boolean => {
+    for (let i = 0; i < content.length; i++) {
+      const code = typeof content === 'string' ? content.charCodeAt(i) : content[i] ?? 0;
+      if (!(code >= 0 && code <= 127)) {
+        return false;
+      }
+    }
+    return true;
+  };
+
+  public static with = (data: Uint8Array | string): string => {
+    return typeof data === 'string' ? data : Buf.with(data).toUtfStr();
   };
 
   public static monthName = (monthIndex: number) => {
@@ -185,6 +203,14 @@ export class Str {
     return rtlCount > lrtCount;
   };
 
+  // the regex has the most votes https://stackoverflow.com/a/4250408
+  public static getFilenameWithoutExtension = (filename: string): string => {
+    return filename.replace(/\.[^/.]+$/, '');
+  };
+
+  public static stripPgpOrGpgExtensionIfPresent = (filename: string) => {
+    return filename.replace(/\.(pgp|gpg)$/i, '');
+  };
   private static formatEmailWithOptionalNameEx = ({ email, name }: EmailParts, forceBrackets?: boolean): string => {
     if (name) {
       return `${Str.rmSpecialCharsKeepUtf(name, 'ALLOW-SOME')} <${email}>`;
@@ -391,4 +417,9 @@ export const asyncSome = async <T>(arr: Array<T>, predicate: (e: T) => Promise<b
 
 export const stringTuple = <T extends string[]>(...data: T): T => {
   return data;
+};
+
+export const checkValidURL = (url: string): boolean => {
+  const pattern = /(http|https):\/\/([a-z0-9-]+((\.[a-z0-9-]+)+)?)(:[0-9]+)?(\/|\/([\w#!:.?+=&%@\-\/]))?/;
+  return pattern.test(url);
 };

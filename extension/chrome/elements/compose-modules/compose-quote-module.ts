@@ -30,22 +30,15 @@ export class ComposeQuoteModule extends ViewModule<ComposeView> {
     return '';
   };
 
-  public addTripleDotQuoteExpandFooterOnlyBtn = async () => {
+  public addSignatureToInput = async () => {
     const textFooter = await this.view.footerModule.getFooterFromStorage(this.view.senderModule.getSender());
-    if (!textFooter) {
-      this.view.S.cached('triple_dot').hide();
-      return;
-    }
     const sanitizedFooter = textFooter && !this.view.draftModule.wasMsgLoadedFromDraft ? this.view.footerModule.createFooterHtml(textFooter) : undefined;
     this.tripleDotSanitizedHtmlContent = { footer: sanitizedFooter, quote: undefined };
-    this.view.S.cached('triple_dot').on(
-      'click',
-      this.view.setHandler(el => this.actionRenderTripleDotContentHandle(el))
-    );
+    this.actionRenderTripleDotContentHandle(this.view.S.cached('triple_dot')[0]);
   };
 
-  public addTripleDotQuoteExpandFooterAndQuoteBtn = async (msgId: string, method: 'reply' | 'forward') => {
-    if (!this.messageToReplyOrForward) {
+  public addTripleDotQuoteExpandFooterAndQuoteBtn = async (msgId: string, method: 'reply' | 'forward', forceReload = false) => {
+    if (!this.messageToReplyOrForward || forceReload) {
       this.view.S.cached('triple_dot').addClass('progress');
       Xss.sanitizeAppend(this.view.S.cached('triple_dot'), '<div id="loader">0%</div>');
       this.view.sizeModule.resizeComposeBox();
@@ -114,7 +107,7 @@ export class ComposeQuoteModule extends ViewModule<ComposeView> {
       for (const block of message.blocks.filter(b => readableBlockTypes.includes(b.type))) {
         if (['encryptedMsg', 'signedMsg'].includes(block.type)) {
           this.setQuoteLoaderProgress('decrypting...');
-          const decrypted = await this.decryptMessage(Buf.fromUtfStr(block.content.toString()));
+          const decrypted = await this.decryptMessage(block.content);
           const msgBlocks = await MsgBlockParser.fmtDecryptedAsSanitizedHtmlBlocks(Buf.fromUtfStr(decrypted));
           readableBlocks.push(...msgBlocks.blocks.filter(b => decryptedBlockTypes.includes(b.type)));
         } else {
@@ -124,9 +117,9 @@ export class ComposeQuoteModule extends ViewModule<ComposeView> {
       const decryptedAndFormatedContent: string[] = [];
       const decryptedFiles: File[] = [];
       for (const block of readableBlocks) {
-        const stringContent = block.content.toString();
+        const stringContent = Str.with(block.content);
         if (block.type === 'decryptedHtml') {
-          const htmlParsed = Xss.htmlSanitizeAndStripAllTags(block ? block.content.toString() : 'No Content', '\n', false);
+          const htmlParsed = Xss.htmlSanitizeAndStripAllTags(stringContent || 'No Content', '\n', false);
           decryptedAndFormatedContent.push(Xss.htmlUnescape(htmlParsed));
         } else if (block.type === 'plainHtml') {
           decryptedAndFormatedContent.push(Xss.htmlUnescape(Xss.htmlSanitizeAndStripAllTags(stringContent, '\n', false)));
@@ -178,7 +171,7 @@ export class ComposeQuoteModule extends ViewModule<ComposeView> {
     }
   };
 
-  private decryptMessage = async (encryptedData: Buf): Promise<string> => {
+  private decryptMessage = async (encryptedData: Uint8Array | string): Promise<string> => {
     const decryptRes = await MsgUtil.decryptMessage({
       kisWithPp: await KeyStore.getAllWithOptionalPassPhrase(this.view.acctEmail),
       encryptedData,

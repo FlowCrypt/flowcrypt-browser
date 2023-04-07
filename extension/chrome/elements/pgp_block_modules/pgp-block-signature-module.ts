@@ -11,7 +11,6 @@ import { Value } from '../../../js/common/core/common.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 
 export class PgpBlockViewSignatureModule {
-  // eslint-disable-next-line no-empty-function
   public constructor(private view: PgpBlockView) {}
 
   public renderPgpSignatureCheckResult = async (

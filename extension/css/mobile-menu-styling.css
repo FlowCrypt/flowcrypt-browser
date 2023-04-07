@@ -264,10 +264,12 @@
     font-size: 12px;
   }
 
-  div#content .subscribe--header-row { text-align: right; }
+  div#content .subscribe--header-row {
+    text-align: right;
+  }
 
-  body#settings > div#content input[type="password"],
-  body#settings > div#content input[type="text"] {
+  body#settings > div#content input[type='password'],
+  body#settings > div#content input[type='text'] {
     margin: 0 auto;
     width: 90% !important;
   }
@@ -349,7 +351,7 @@
   body#settings a.action_change::before,
   body#settings a.action_remove::before {
     background-size: 100%;
-    content: "";
+    content: '';
     height: 20px;
     left: 2px;
     position: absolute;
