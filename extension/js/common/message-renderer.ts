@@ -16,9 +16,9 @@ export type ProccesedMsg = MimeProccesedMsg & {
   from?: string;
 };
 
-export type RenderedAttachment = {
-  renderedBlock: string;
-  file: Attachment;
+export type AttachmentBlock = {
+  block: MsgBlock;
+  file: Attachment; // todo: only need id in MsgBlock's AttachmentMeta?
 };
 
 export class MessageRenderer {
@@ -31,28 +31,24 @@ export class MessageRenderer {
   ) => {
     const isOutgoing = Boolean(from && !!sendAs?.[from]);
     let r = '';
-    const renderedAttachments: RenderedAttachment[] = [];
+    const attachmentBlocks: AttachmentBlock[] = [];
     for (const block of blocks) {
       if (r) {
         r += '<br><br>';
       }
-      // todo: we don't need types, just source property?
       if (['encryptedAttachment', 'plainAttachment'].includes(block.block.type) && !block.file) {
         // debugger;
         throw new Error('Unexpected!');
       }
-      if (block.file) {
-        renderedAttachments.push({
-          renderedBlock: XssSafeFactory.renderableMsgBlock(factory, block.block, msgId, from || 'unknown', isOutgoing),
-          file: block.file,
-        });
+      if (block.file && ['encryptedAttachment', 'plainAttachment'].includes(block.block.type)) {
+        attachmentBlocks.push({ block: block.block, file: block.file });
       } else if (showOriginal) {
         r += Xss.escape(Str.with(block.block.content)).replace(/\n/g, '<br>');
       } else {
         r += XssSafeFactory.renderableMsgBlock(factory, block.block, msgId, from || 'unknown', isOutgoing);
       }
     }
-    return { renderedXssSafe: r, renderedAttachments };
+    return { renderedXssSafe: r, attachmentBlocks, isOutgoing };
   };
 
   public static process = async (gmailMsg: GmailRes.GmailMsg): Promise<ProccesedMsg> => {

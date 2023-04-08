@@ -25,13 +25,15 @@ import { SendAsAlias } from '../../common/platform/store/acct-store.js';
 // todo: can we somehow define a purely relay class for ContactStore to clearly show that crypto-libraries are not loaded and can't be used?
 import { ContactStore } from '../../common/platform/store/contact-store.js';
 import { Buf } from '../../common/core/buf.js';
-import { MessageRenderer, RenderedAttachment } from '../../common/message-renderer.js';
+import { MessageRenderer, AttachmentBlock } from '../../common/message-renderer.js';
 
 type JQueryEl = JQuery<HTMLElement>;
 
+type ProcessedMessage = { renderedXssSafe?: string; attachmentBlocks: AttachmentBlock[] };
+
 interface MessageCacheEntry {
   full: Promise<GmailRes.GmailMsg>;
-  processedFull?: { renderedXssSafe?: string; renderedAttachments: RenderedAttachment[] };
+  processedFull?: ProcessedMessage;
 }
 
 export class GmailElementReplacer implements WebmailElementReplacer {
@@ -168,7 +170,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     return msgDownload;
   };
 
-  private msgGetProcessed = async (msgId: string): Promise<{ renderedXssSafe?: string; renderedAttachments: RenderedAttachment[] }> => {
+  private msgGetProcessed = async (msgId: string): Promise<ProcessedMessage> => {
     // todo: retries? exceptions?
     const msgDownload = this.msgGetCached(msgId);
     if (msgDownload.processedFull) {
@@ -178,7 +180,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     const { blocks, from } = await MessageRenderer.process(msg);
     if (blocks.length === 1 && blocks[0].block.type === 'plainText') {
       // only has single block which is plain text
-      msgDownload.processedFull = { renderedAttachments: [] };
+      msgDownload.processedFull = { attachmentBlocks: [] };
     } else {
       msgDownload.processedFull = MessageRenderer.renderMsg({ blocks, from }, this.factory, false, msgId, this.sendAs);
     }
@@ -418,7 +420,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
           if (this.debug) {
             console.debug('processNewPgpAttachments() -> msgGet may take some time');
           }
-          const msg = await this.msgGetCached(msgId).full;
+          const msg = await this.msgGetCached(msgId).full; // todo: msgGetProcessed
           if (this.debug) {
             console.debug('processNewPgpAttachments() -> msgGet done -> processAttachments', msg);
           }

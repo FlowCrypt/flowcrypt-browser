@@ -1000,11 +1000,22 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
         const extraAuthHeaders = { Authorization: `Bearer ${accessToken}` }; // eslint-disable-line @typescript-eslint/naming-convention
         const gmailPage = await browser.newPage(t, `${t.urls?.mockGmailUrl()}/1866867cfdb8b61e`, undefined, extraAuthHeaders);
         await gmailPage.waitAll('iframe');
-        const pgpBlock = await gmailPage.getFrame(['pgp_block.htm']);
+        const pgpBlocks = await Promise.all((await gmailPage.getFramesUrls(['pgp_block.htm'])).map(url => gmailPage.getFrame([url])));
+        expect(pgpBlocks.length).to.equal(3);
+        await BrowserRecipe.pgpBlockCheck(t, pgpBlocks[0], {
+          content: ['this is message 3 for flowcrypt issue 4342'],
+          encryption: 'not encrypted',
+          signature: 'signed',
+        });
         // should re-fetch the correct text/plain text with signature
-        await BrowserRecipe.pgpBlockCheck(t, pgpBlock, {
+        await BrowserRecipe.pgpBlockCheck(t, pgpBlocks[1], {
           content: ['this is message 1 for flowcrypt issue 4342'],
           unexpectedContent: ['this is message 1 CORRUPTED for flowcrypt issue 4342'],
+          encryption: 'not encrypted',
+          signature: 'signed',
+        });
+        await BrowserRecipe.pgpBlockCheck(t, pgpBlocks[2], {
+          content: ['this is message 2 for flowcrypt issue 4342'],
           encryption: 'not encrypted',
           signature: 'signed',
         });

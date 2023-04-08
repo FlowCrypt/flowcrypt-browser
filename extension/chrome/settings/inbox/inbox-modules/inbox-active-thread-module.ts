@@ -3,7 +3,7 @@
 'use strict';
 
 import { Bm, BrowserMsg } from '../../../../js/common/browser/browser-msg.js';
-import { FactoryReplyParams } from '../../../../js/common/xss-safe-factory.js';
+import { FactoryReplyParams, XssSafeFactory } from '../../../../js/common/xss-safe-factory.js';
 import { GmailParser, GmailRes } from '../../../../js/common/api/email-provider/gmail/gmail-parser.js';
 import { Url, UrlParams } from '../../../../js/common/core/common.js';
 
@@ -113,7 +113,7 @@ export class InboxActiveThreadModule extends ViewModule<InboxView> {
       // todo: review the meaning of threadHasPgpBlock
       this.threadHasPgpBlock ||= blocks.some(block => ['encryptedMsg', 'publicKey', 'privateKey', 'signedMsg'].includes(block.block.type));
       // todo: take `from` from the processedMessage?
-      const { renderedXssSafe, renderedAttachments } = MessageRenderer.renderMsg(
+      const { renderedXssSafe, attachmentBlocks, isOutgoing } = MessageRenderer.renderMsg(
         { from, blocks },
         this.view.factory,
         this.view.showOriginal,
@@ -126,8 +126,10 @@ export class InboxActiveThreadModule extends ViewModule<InboxView> {
           headers.date
         } ${exportBtn}</p>` +
         renderedXssSafe +
-        (renderedAttachments.length
-          ? `<div class="attachments" data-test="container-attachments">${renderedAttachments.map(a => a.renderedBlock).join('')}</div>`
+        (attachmentBlocks.length // todo: we always have data on this page (for now), as we download 'raw'
+          ? `<div class="attachments" data-test="container-attachments">${attachmentBlocks
+              .map(block => XssSafeFactory.renderableMsgBlock(this.view.factory, block.block, message.id, from || 'unknown', isOutgoing))
+              .join('')}</div>`
           : '');
       $('.thread').append(this.wrapMsg(htmlId, r)); // xss-safe-factory
       if (exportBtn) {
