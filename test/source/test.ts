@@ -203,6 +203,8 @@ test.after.always('send debug info if any', async t => {
   const debugHtmlAttachments = getDebugHtmlAtts(testId, mockApiLogs);
   if (debugHtmlAttachments.length) {
     console.info(`FAIL ID ${testId}`);
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
     standaloneTestTimeout(t, consts.TIMEOUT_SHORT, t.title);
     console.info(`There are ${debugHtmlAttachments.length} debug files.`);
     const debugArtifactDir = realpathSync(`${__dirname}/..`) + '/debugArtifacts';
