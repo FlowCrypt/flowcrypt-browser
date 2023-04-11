@@ -775,6 +775,14 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
     test(
       'decrypt - thunderbird - signed text is recognized',
       testWithBrowser('compatibility', async (t, browser) => {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        t.mockApi!.attesterConfig = {
+          pubkeyLookup: {
+            'some.sender@test.com': {
+              pubkey: await get203FAE7076005381(),
+            },
+          },
+        };
         const threadId = '17dad75e63e47f97';
         const acctEmail = 'flowcrypt.compatibility@gmail.com';
         const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`);
@@ -797,6 +805,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
         const msgId = '17dad75e63e47f97';
         const acctEmail = 'flowcrypt.compatibility@gmail.com';
         const senderEmail = 'this.pubkey.takes.long.time.to.load@sender.test';
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         t.mockApi!.attesterConfig = {
           pubkeyLookup: {
             [senderEmail]: {
@@ -838,6 +847,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
         const senderEmail = 'some.sender@test.com';
         const acctAttr = acctEmail.replace(/[\.@]/g, '');
         const senderAttr = senderEmail.replace(/[\.@]/g, '');
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         t.mockApi!.attesterConfig = {
           pubkeyLookup: {
             [senderEmail]: {
@@ -898,6 +908,14 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
     test(
       'signature - sender is different from pubkey uid',
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        t.mockApi!.attesterConfig = {
+          pubkeyLookup: {
+            'sender@example.com': {
+              pubkey: testConstants.pubkey2864E326A5BE488A,
+            },
+          },
+        };
         const threadId = '1766644f13510f58';
         const acctEmail = 'ci.tests.gmail@flowcrypt.test';
         const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`);
@@ -926,6 +944,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
           '-----BEGIN PGP PUBLIC KEY BLOCK-----\r\nVersion: FlowCrypt Email Encryption [BUILD_REPLACEABLE_VERSION]\r\nComment: Seamlessly send and receive encrypted email\r\n\r\nxjMEYZeW2RYJKwYBBAHaRw8BAQdAT5QfLVP3y1yukk3MM/oiuXLNe1f9az5M\r\nBnOlKdF0nKnNJVNvbWVib2R5IDxTYW1zNTBzYW1zNTBzZXB0QEdtYWlsLkNv\r\nbT7CjwQQFgoAIAUCYZeW2QYLCQcIAwIEFQgKAgQWAgEAAhkBAhsDAh4BACEJ\r\nEMrSTYqLk6SUFiEEBP90ux3d6kDwDdzvytJNiouTpJS27QEA7pFlkLfD0KFQ\r\nsH/dwb/NPzn5zCi2L9gjPAC3d8gv1fwA/0FjAy/vKct4D7QH8KwtEGQns5+D\r\nP1WxDr4YI2hp5TkAzjgEYZeW2RIKKwYBBAGXVQEFAQEHQKNLY/bXrhJMWA2+\r\nWTjk3I7KhawyZfLomJ4hovqr7UtOAwEIB8J4BBgWCAAJBQJhl5bZAhsMACEJ\r\nEMrSTYqLk6SUFiEEBP90ux3d6kDwDdzvytJNiouTpJQnpgD/c1CzfS3YzJUx\r\nnFMrhjiE0WVgqOV/3CkfI4m4RA30QUIA/ju8r4AD2h6lu3Mx/6I6PzIRZQty\r\nLvTkcu4UKodZa4kK\r\n=7C4A\r\n-----END PGP PUBLIC KEY BLOCK-----\r\n',
           'sender@example.com'
         );
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         t.mockApi!.attesterConfig = {
           pubkeyLookup: {
             'sender@example.com': {
@@ -1083,6 +1102,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
         const acctEmail = 'flowcrypt.compatibility@gmail.com';
         const signerEmail = 'some.sender@test.com';
         const data = await GoogleData.withInitializedData(acctEmail);
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         t.mockApi!.attesterConfig = {
           pubkeyLookup: {
             [signerEmail]: {
@@ -1112,6 +1132,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
     test(
       'decrypt - protonmail - load pubkey into contact + verify detached msg',
       testWithBrowser('compatibility', async (t, browser) => {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         t.mockApi!.attesterConfig = {
           pubkeyLookup: {
             'flowcrypt.compatibility@protonmail.com': {
@@ -1150,6 +1171,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
     test(
       'decrypt - protonmail - auto TOFU load matching pubkey first time',
       testWithBrowser('compatibility', async (t, browser) => {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         t.mockApi!.attesterConfig = {
           pubkeyLookup: {
             'flowcrypt.compatibility@protonmail.com': {
@@ -1172,6 +1194,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
     test(
       'decrypt - verify encrypted+signed message',
       testWithBrowser('compatibility', async (t, browser) => {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         t.mockApi!.attesterConfig = {
           pubkeyLookup: {
             'martin@politick.ca': {
@@ -1333,6 +1356,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
     test(
       `verify - sha1 shows error`,
       testWithBrowser('compatibility', async (t, browser) => {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         t.mockApi!.attesterConfig = {
           pubkeyLookup: {
             'sha1@sign.com': {

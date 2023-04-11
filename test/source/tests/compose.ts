@@ -23,7 +23,14 @@ import { MsgUtil } from '../core/crypto/pgp/msg-util';
 import { PubkeyInfoWithLastCheck } from '../core/crypto/key';
 import { ElementHandle, Page } from 'puppeteer';
 import { Status } from '../mock/lib/api';
-import { expiredPubkey, newerVersionOfExpiredPubkey, protonMailCompatKey, somePubkey, testMatchPubKey } from '../mock/attester/attester-key-contstants';
+import {
+  expiredPubkey,
+  hasPubKey,
+  newerVersionOfExpiredPubkey,
+  protonMailCompatKey,
+  somePubkey,
+  testMatchPubKey,
+} from '../mock/attester/attester-key-contstants';
 
 export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: TestWithBrowser) => {
   if (testVariant !== 'CONSUMER-LIVE-GMAIL') {
@@ -825,6 +832,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
         const unknownRecipient = 'unknown@flowcrypt.test';
         const correctRecipient = 'mock.only.pubkey@flowcrypt.com';
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         t.mockApi!.attesterConfig = {
           pubkeyLookup: {
             [correctRecipient]: {
@@ -867,6 +875,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       'compose - expired can still send',
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
         const expiredEmail = 'expired.on.attester@domain.com';
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         t.mockApi!.attesterConfig = {
           pubkeyLookup: {
             [expiredEmail]: {
@@ -1632,6 +1641,17 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       "compose - sent message should't have version and comment based on ClientConfiguration",
       testWithBrowser(undefined, async (t, browser) => {
         const acct = 'has.pub@client-configuration-test.flowcrypt.test';
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        t.mockApi!.attesterConfig = {
+          ldapRelay: {
+            [acct]: {
+              pubkey: hasPubKey,
+            },
+            'human@flowcrypt.com': {
+              pubkey: somePubkey,
+            },
+          },
+        };
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
         await SetupPageRecipe.manualEnter(
           settingsPage,
@@ -2102,6 +2122,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       'compose - list of pubkeys gets refetched in compose',
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
         const recipientEmail = 'mock.only.pubkey@flowcrypt.com'; // has "somePubkey" on Attester
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         t.mockApi!.attesterConfig = {
           pubkeyLookup: {
             [recipientEmail]: {
@@ -2144,6 +2165,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       'auto-refresh expired key if newer version of the same key available',
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
         // add an expired key manually
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         t.mockApi!.attesterConfig = {
           pubkeyLookup: {
             'auto.refresh.expired.key@recipient.com': {
@@ -2219,6 +2241,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
     test(
       'attester client should understand more than one pub key',
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         t.mockApi!.attesterConfig = {
           pubkeyLookup: {
             'multiple.pub.key@flowcrypt.com': {
@@ -2264,6 +2287,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
           // check if flowcrypt keyserver results are priotized than keyserver.pgp.com results
           bcc: 'test.flowcrypt.pubkeyserver.priority@gmail.com',
         };
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         t.mockApi!.attesterConfig = {
           pubkeyLookup: {
             [recipients.to]: {
@@ -2310,6 +2334,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       'check attester ldap timeout',
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
         const recipients = { to: 'test.ldap.timeout@gmail.com', cc: 'test.flowcrypt.pubkey.timeout@gmail.com' };
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         t.mockApi!.attesterConfig = {
           pubkeyLookup: {
             [recipients.to]: {
@@ -2355,6 +2380,14 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
         const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
         const recipients = { to: 'attester.return.error@flowcrypt.test' };
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        t.mockApi!.attesterConfig = {
+          pubkeyLookup: {
+            [recipients.to]: {
+              returnError: { code: Status.SERVER_ERROR, message: 'Server error. Please try again' },
+            },
+          },
+        };
         await ComposePageRecipe.fillMsg(composePage, recipients, t.title);
         await ComposePageRecipe.showRecipientInput(composePage);
         await composePage.waitAndClick(`@action-retry-${recipients.to.replace(/[^a-z0-9]+/g, '')}-pubkey-fetch`);
@@ -2590,6 +2623,17 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
     test(
       'user2@standardsubdomainfes.localhost:8001 - PWD encrypted message with FES - Reply rendering',
       testWithBrowser(undefined, async (t, browser) => {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        t.mockApi!.attesterConfig = {
+          pubkeyLookup: {
+            'flowcrypt.compatibility@gmail.com': {
+              pubkey: somePubkey,
+            },
+            'mock.only.pubkey@flowcrypt.com': {
+              pubkey: somePubkey,
+            },
+          },
+        };
         const acct = `user2@standardsubdomainfes.localhost:${t.urls?.port}`; // added port to trick extension into calling the mock
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
         await SetupPageRecipe.manualEnter(
@@ -2717,6 +2761,15 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       'first.key.revoked@key-manager-autoimport-no-prv-create.flowcrypt.test - selects valid own key when saving draft or sending',
       testWithBrowser(undefined, async (t, browser) => {
         const acct = 'first.key.revoked@key-manager-autoimport-no-prv-create.flowcrypt.test';
+        const toRecipient = 'mock.only.pubkey@flowcrypt.com';
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        t.mockApi!.attesterConfig = {
+          pubkeyLookup: {
+            [toRecipient]: {
+              pubkey: somePubkey,
+            },
+          },
+        };
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
         await SetupPageRecipe.autoSetupWithEKM(settingsPage);
         const composePage = await ComposePageRecipe.openStandalone(t, browser, acct);
