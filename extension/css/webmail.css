@@ -383,7 +383,7 @@ body.cryptup_outlook ._fce_i {
   height: 100%;
 }
 
-@media screen and (max-height: 600px) {
+@media screen and (height <= 600px) {
   .secure_compose_window,
   .secure_compose_window iframe {
     height: 450px;

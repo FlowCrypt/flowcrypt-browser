@@ -584,21 +584,21 @@ body#settings .settings-border .key_list {
   top: 28px;
 }
 
-@media (max-width: 991px) {
+@media (width <= 991px) {
   .my-keys-row .settings-border {
     margin: 35px auto !important;
     width: 100% !important;
   }
 }
 
-@media (max-width: 776px) {
+@media (width <= 776px) {
   #public-profile-indicator {
     left: 0;
     right: 0;
   }
 }
 
-@media (max-width: 448px) {
+@media (width <= 448px) {
   #footer-row {
     position: relative;
   }
