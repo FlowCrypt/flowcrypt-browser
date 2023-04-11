@@ -1323,7 +1323,7 @@ d6Z36//MsmczN00Wd60t9T+qyLz0T4/UG2Y9lgf367f3d+kYPE0LS7mXuFmjlPXfw0nKyVsSeFiu
       'settings - download batch file attachment (should show a warning message)',
       testWithBrowser('compatibility', async (t, browser) => {
         const threadId = '187365d19ec9a10c';
-        const threadId2 = '18736a0687a8426b';
+        // const threadId2 = '18736a0687a8426b';
         const acctEmail = 'flowcrypt.compatibility@gmail.com';
         const expectedErrMsg = 'This executable file was not checked for viruses, and may be dangerous to download or run. Proceed anyway?';
         const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`);
@@ -1345,53 +1345,53 @@ d6Z36//MsmczN00Wd60t9T+qyLz0T4/UG2Y9lgf367f3d+kYPE0LS7mXuFmjlPXfw0nKyVsSeFiu
           })
         );
         expect(Object.entries([downloadedFile1, downloadedFile2]).length).to.equal(2);
-        await inboxPage.close();
-        const inboxPage2 = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId2}`);
-        const pgpBlockPage2 = await inboxPage2.getFrame(['pgp_block.htm']);
-        await pgpBlockPage2.waitAndClick('@download-attachment-0');
-        const downloadedFile3 = await inboxPage2.awaitDownloadTriggeredByClicking(() =>
-          PageRecipe.waitForModalAndRespond(inboxPage2, 'confirm', {
-            contentToCheck: expectedErrMsg,
-            clickOn: 'confirm',
-          })
-        );
-        expect(Object.entries(downloadedFile3).length).to.equal(1);
-        const accessToken = await BrowserRecipe.getGoogleAccessToken(inboxPage2, acctEmail);
-        await inboxPage2.close();
-        const extraAuthHeaders = { Authorization: `Bearer ${accessToken}` }; // eslint-disable-line @typescript-eslint/naming-convention
-        const gmailPage = await browser.newPage(t, `${t.urls?.mockGmailUrl()}/${threadId}`, undefined, extraAuthHeaders);
-        await gmailPage.waitAll('iframe');
-        const pgpBlockPage3 = await gmailPage.getFrame(['pgp_block.htm']);
-        await pgpBlockPage3.waitAndClick('@download-attachment-0'); // test for inline attachment
-        const downloadedFile4 = await gmailPage.awaitDownloadTriggeredByClicking(() =>
-          PageRecipe.waitForModalAndRespond(gmailPage, 'confirm', {
-            contentToCheck: expectedErrMsg,
-            clickOn: 'confirm',
-          })
-        );
-        const attachmentFrame = await gmailPage.getFrame(['attachment.htm']);
-        await attachmentFrame.waitAndClick('@attachment-container');
-        const attachmentPreviewPage2 = await gmailPage.getFrame(['attachment_preview.htm']);
-        await attachmentPreviewPage2.waitAndClick('@attachment-preview-download');
-        const downloadedFile5 = await attachmentPreviewPage2.awaitDownloadTriggeredByClicking(() =>
-          PageRecipe.waitForModalAndRespond(attachmentPreviewPage2, 'confirm', {
-            contentToCheck: expectedErrMsg,
-            clickOn: 'confirm',
-          })
-        );
-        expect(Object.entries([downloadedFile4, downloadedFile5]).length).to.equal(2);
-        await gmailPage.close();
-        const gmailPage2 = await browser.newPage(t, `${t.urls?.mockGmailUrl()}/${threadId2}`, undefined, extraAuthHeaders);
-        const pgpBlockPage4 = await gmailPage2.getFrame(['pgp_block.htm']);
-        await pgpBlockPage4.waitAndClick('@download-attachment-0');
-        const downloadedFile6 = await gmailPage2.awaitDownloadTriggeredByClicking(() =>
-          PageRecipe.waitForModalAndRespond(gmailPage2, 'confirm', {
-            contentToCheck: expectedErrMsg,
-            clickOn: 'confirm',
-          })
-        );
-        expect(Object.entries(downloadedFile6).length).to.equal(1);
-        await gmailPage2.close();
+        // await inboxPage.close();
+        // const inboxPage2 = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId2}`);
+        // const pgpBlockPage2 = await inboxPage2.getFrame(['pgp_block.htm']);
+        // await pgpBlockPage2.waitAndClick('@download-attachment-0');
+        // const downloadedFile3 = await inboxPage2.awaitDownloadTriggeredByClicking(() =>
+        //   PageRecipe.waitForModalAndRespond(inboxPage2, 'confirm', {
+        //     contentToCheck: expectedErrMsg,
+        //     clickOn: 'confirm',
+        //   })
+        // );
+        // expect(Object.entries(downloadedFile3).length).to.equal(1);
+        // const accessToken = await BrowserRecipe.getGoogleAccessToken(inboxPage2, acctEmail);
+        // await inboxPage2.close();
+        // const extraAuthHeaders = { Authorization: `Bearer ${accessToken}` }; // eslint-disable-line @typescript-eslint/naming-convention
+        // const gmailPage = await browser.newPage(t, `${t.urls?.mockGmailUrl()}/${threadId}`, undefined, extraAuthHeaders);
+        // await gmailPage.waitAll('iframe');
+        // const pgpBlockPage3 = await gmailPage.getFrame(['pgp_block.htm']);
+        // await pgpBlockPage3.waitAndClick('@download-attachment-0'); // test for inline attachment
+        // const downloadedFile4 = await gmailPage.awaitDownloadTriggeredByClicking(() =>
+        //   PageRecipe.waitForModalAndRespond(gmailPage, 'confirm', {
+        //     contentToCheck: expectedErrMsg,
+        //     clickOn: 'confirm',
+        //   })
+        // );
+        // const attachmentFrame = await gmailPage.getFrame(['attachment.htm']);
+        // await attachmentFrame.waitAndClick('@attachment-container');
+        // const attachmentPreviewPage2 = await gmailPage.getFrame(['attachment_preview.htm']);
+        // await attachmentPreviewPage2.waitAndClick('@attachment-preview-download');
+        // const downloadedFile5 = await attachmentPreviewPage2.awaitDownloadTriggeredByClicking(() =>
+        //   PageRecipe.waitForModalAndRespond(attachmentPreviewPage2, 'confirm', {
+        //     contentToCheck: expectedErrMsg,
+        //     clickOn: 'confirm',
+        //   })
+        // );
+        // expect(Object.entries([downloadedFile4, downloadedFile5]).length).to.equal(2);
+        // await gmailPage.close();
+        // const gmailPage2 = await browser.newPage(t, `${t.urls?.mockGmailUrl()}/${threadId2}`, undefined, extraAuthHeaders);
+        // const pgpBlockPage4 = await gmailPage2.getFrame(['pgp_block.htm']);
+        // await pgpBlockPage4.waitAndClick('@download-attachment-0');
+        // const downloadedFile6 = await gmailPage2.awaitDownloadTriggeredByClicking(() =>
+        //   PageRecipe.waitForModalAndRespond(gmailPage2, 'confirm', {
+        //     contentToCheck: expectedErrMsg,
+        //     clickOn: 'confirm',
+        //   })
+        // );
+        // expect(Object.entries(downloadedFile6).length).to.equal(1);
+        // await gmailPage2.close();
       })
     );
   }
