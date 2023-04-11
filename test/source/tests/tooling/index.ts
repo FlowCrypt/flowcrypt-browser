@@ -13,7 +13,7 @@ export type AvaContext = ExecutionContext<unknown> & {
   attemptText?: string;
   extensionDir?: string;
   urls?: TestUrls;
-  mockApi?: Api<{ query: { [k: string]: string }; body?: unknown }, unknown>;
+  mockApi: Api<{ query: { [k: string]: string }; body?: unknown }, unknown>;
 };
 
 const MAX_ATT_SIZE = 5 * 1024 * 1024;

@@ -804,8 +804,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       'has.pub@client-configuration-test.flowcrypt.test - no backup, no keygen',
       testWithBrowser(undefined, async (t, browser) => {
         const acct = 'has.pub@client-configuration-test.flowcrypt.test';
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        t.mockApi!.attesterConfig = {
+        t.mockApi.attesterConfig = {
           ldapRelay: {
             [acct]: {
               pubkey: hasPubKey,
@@ -840,8 +839,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       'invalid.pub@client-configuration-test.flowcrypt.test - no backup, no keygen',
       testWithBrowser(undefined, async (t, browser) => {
         const acct = 'invalid.pub@client-configuration-test.flowcrypt.test';
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        t.mockApi!.attesterConfig = {
+        t.mockApi.attesterConfig = {
           ldapRelay: {
             [acct]: {
               pubkey: protonMailCompatKey,
@@ -868,8 +866,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
     test(
       'no.pub@client-configurations-test - no backup, no keygen, enforce attester submit with submit err',
       testWithBrowser(undefined, async (t, browser) => {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        t.mockApi!.attesterConfig = {
+        t.mockApi.attesterConfig = {
           pubkeyLookup: {},
           ldapRelay: {},
         };
@@ -939,8 +936,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       testWithBrowser(undefined, async (t, browser) => {
         // disallowed searching attester for pubkeys on "flowcrypt.com" domain
         // below we search for human@flowcrypt.com which normally has pubkey on attester, but none should be found due to the rule
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        t.mockApi!.attesterConfig = {
+        t.mockApi.attesterConfig = {
           pubkeyLookup: {
             'mock.only.pubkey@flowcrypt.com': {
               pubkey: somePubkey,
@@ -970,8 +966,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       testWithBrowser(undefined, async (t, browser) => {
         // disallow_attester_search_for_domains is not respected if allow_attester_search_only_for_domains is set
         // searching attester for pubkeys only on "flowcrypt.com" domain
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        t.mockApi!.attesterConfig = {
+        t.mockApi.attesterConfig = {
           pubkeyLookup: {
             'mock.only.pubkey@flowcrypt.com': {
               pubkey: somePubkey,
