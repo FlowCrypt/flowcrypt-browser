@@ -3467,7 +3467,7 @@ body#settings div.webmail_notifications div.webmail_notification a:hover {
 }
 
 /* short frames */
-@media (max-height: 200px) {
+@media (height <= 200px) {
   .swal2-container {
     padding: 1px !important;
   }
@@ -3495,7 +3495,7 @@ body#settings div.webmail_notifications div.webmail_notification a:hover {
 }
 
 /* small frames */
-@media (max-width: 400px) {
+@media (width <= 400px) {
   .swal2-container {
     padding: 6px !important;
     font-size: 12px !important;
@@ -3521,7 +3521,7 @@ body#settings div.webmail_notifications div.webmail_notification a:hover {
 }
 
 /* medium frames (aligned with Bootstrap) */
-@media (max-width: 768px) {
+@media (width <= 768px) {
   body#settings .settings-banner {
     flex-direction: column;
   }
