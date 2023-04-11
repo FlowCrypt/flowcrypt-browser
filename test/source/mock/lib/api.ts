@@ -147,23 +147,23 @@ export class Api<REQ, RES> {
       throw new Error('no url');
     }
     const attesterHandler = getMockAttesterEndpoints(this.attesterConfig);
-    const newHandlers: Handlers<REQ, RES> = {
+    const allHandlers: Handlers<REQ, RES> = {
       ...(attesterHandler as Handlers<REQ, RES>),
       ...this.handlers,
     };
-    if (newHandlers[req.url]) {
+    if (allHandlers[req.url]) {
       // direct handler name match
-      return newHandlers[req.url];
+      return allHandlers[req.url];
     }
     const url = req.url.split('?')[0];
-    if (newHandlers[url]) {
+    if (allHandlers[url]) {
       // direct handler name match - ignoring query
-      return newHandlers[url];
+      return allHandlers[url];
     }
     // handler match where definition url ends with "/?" - incomplete path definition
-    for (const handlerPathDefinition of Object.keys(newHandlers).filter(def => /\/\?$/.test(def))) {
+    for (const handlerPathDefinition of Object.keys(allHandlers).filter(def => /\/\?$/.test(def))) {
       if (req.url.startsWith(handlerPathDefinition.replace(/\?$/, ''))) {
-        return newHandlers[handlerPathDefinition];
+        return allHandlers[handlerPathDefinition];
       }
     }
   };
