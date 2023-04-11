@@ -25,7 +25,7 @@ import { AvaContext } from './tooling';
 import { mockBackendData } from '../mock/backend/backend-endpoints';
 import { ClientConfiguration, keyManagerAutogenRules } from '../mock/backend/backend-data';
 import { HttpClientErr, Status } from '../mock/lib/api';
-import { somePubkey, testMatchPubKey } from '../mock/attester/attester-key-contstants';
+import { somePubkey, testMatchPubKey } from '../mock/attester/attester-key-constants';
 
 export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: TestWithBrowser) => {
   if (testVariant !== 'CONSUMER-LIVE-GMAIL') {

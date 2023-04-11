@@ -30,7 +30,7 @@ import {
   protonMailCompatKey,
   somePubkey,
   testMatchPubKey,
-} from '../mock/attester/attester-key-contstants';
+} from '../mock/attester/attester-key-constants';
 
 export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: TestWithBrowser) => {
   if (testVariant !== 'CONSUMER-LIVE-GMAIL') {

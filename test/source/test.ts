@@ -23,7 +23,7 @@ import { TestUrls } from './browser/test-urls';
 import { mkdirSync, realpathSync, writeFileSync } from 'fs';
 import { startAllApisMock } from './mock/all-apis-mock';
 import { defineContentScriptTests } from './tests/content-script';
-import { ATTESTER_ACCOUNT_INIT_SETUP_MOCK_CONFIG } from './mock/attester/attester-key-contstants';
+import { ATTESTER_ACCOUNT_INIT_SETUP_MOCK_CONFIG } from './mock/attester/attester-key-constants';
 
 export const { testVariant, testGroup, oneIfNotPooled, buildDir, isMock } = getParsedCliParams();
 export const internalTestState = { expectIntentionalErrReport: false }; // updated when a particular test that causes an error is run

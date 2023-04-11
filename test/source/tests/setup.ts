@@ -20,7 +20,7 @@ import { OauthPageRecipe } from './page-recipe/oauth-page-recipe';
 import { AvaContext } from './tooling';
 import { opgp } from '../core/crypto/pgp/openpgpjs-custom';
 import { MOCK_ATTESTER_LAST_INSERTED_PUB } from '../mock/attester/attester-endpoints';
-import { hasPubKey, protonMailCompatKey, somePubkey } from '../mock/attester/attester-key-contstants';
+import { hasPubKey, protonMailCompatKey, somePubkey } from '../mock/attester/attester-key-constants';
 
 const getAuthorizationHeader = async (t: AvaContext, browser: BrowserHandle, acctEmail: string) => {
   const settingsPage = await browser.newExtensionSettingsPage(t, acctEmail);

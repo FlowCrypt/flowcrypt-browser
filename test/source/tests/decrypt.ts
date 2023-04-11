@@ -12,7 +12,7 @@ import { TestWithBrowser } from './../test';
 import { expect } from 'chai';
 import { PageRecipe } from './page-recipe/abstract-page-recipe';
 import { Buf } from '../core/buf';
-import { get203FAE7076005381, protonMailCompatKey, mpVerificationKey, sha1signpubkey } from '../mock/attester/attester-key-contstants';
+import { get203FAE7076005381, protonMailCompatKey, mpVerificationKey, sha1signpubkey } from '../mock/attester/attester-key-constants';
 
 export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: TestWithBrowser) => {
   if (testVariant !== 'CONSUMER-LIVE-GMAIL') {
