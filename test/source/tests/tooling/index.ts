@@ -5,7 +5,6 @@ import { TestUrls } from '../../browser/test-urls';
 
 import { Consts } from '../../test';
 import { Api } from '../../mock/lib/api';
-import { HandlersRequestDefinition } from '../../mock/all-apis-mock';
 
 export type AvaContext = ExecutionContext<unknown> & {
   retry?: true;
@@ -14,7 +13,7 @@ export type AvaContext = ExecutionContext<unknown> & {
   attemptText?: string;
   extensionDir?: string;
   urls?: TestUrls;
-  mockApi: Api<HandlersRequestDefinition, unknown>;
+  mockApi?: Api<{ query: { [k: string]: string }; body?: unknown }, unknown>;
 };
 
 const MAX_ATT_SIZE = 5 * 1024 * 1024;

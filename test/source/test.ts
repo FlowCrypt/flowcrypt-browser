@@ -64,8 +64,6 @@ const testWithBrowser = (
   cb: (t: AvaContext, browser: BrowserHandle) => Promise<void>,
   flag?: 'FAILING'
 ): Implementation<unknown[]> => {
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-ignore
   return async (t: AvaContext) => {
     let closeMockApi: (() => Promise<void>) | undefined;
     if (isMock) {
