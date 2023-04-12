@@ -45,9 +45,7 @@ export class ConfigurationProvider implements ConfigurationProviderInterface<Han
     if (this.config.attester) {
       handlers = { ...handlers, ...getMockAttesterEndpoints(this.config.attester) };
     }
-    if (this.config.keysOpenPgp) {
-      handlers = { ...handlers, ...getMockKeysOpenPGPOrgEndpoints(this.config.keysOpenPgp) };
-    }
+    handlers = { ...handlers, ...getMockKeysOpenPGPOrgEndpoints(this.config.keysOpenPgp) };
     return handlers;
   }
 }
