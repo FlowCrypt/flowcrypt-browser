@@ -89,6 +89,7 @@ module.exports = {
     '@typescript-eslint/typedef': 'off',
     '@typescript-eslint/unbound-method': 'error',
     '@typescript-eslint/unified-signatures': 'error',
+    '@typescript-eslint/no-non-null-assertion': 0,
     complexity: 'off',
     'constructor-super': 'error',
     'dot-notation': 'error',

@@ -63,7 +63,6 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       testWithBrowser(undefined, async (t, browser) => {
         const email = 'test.match.attester.key@gmail.com';
         const mismatchEmail = 'test.mismatch.attester.key@gmail.com';
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         t.mockApi!.attesterConfig = {
           pubkeyLookup: {
             [email]: {
