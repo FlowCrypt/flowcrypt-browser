@@ -24,6 +24,7 @@ import { mkdirSync, realpathSync, writeFileSync } from 'fs';
 import { startAllApisMock } from './mock/all-apis-mock';
 import { defineContentScriptTests } from './tests/content-script';
 import { ATTESTER_ACCOUNT_INIT_SETUP_MOCK_CONFIG } from './mock/attester/attester-key-constants';
+import { ConfigurationProvider } from './mock/lib/api';
 
 export const { testVariant, testGroup, oneIfNotPooled, buildDir, isMock } = getParsedCliParams();
 export const internalTestState = { expectIntentionalErrReport: false }; // updated when a particular test that causes an error is run
@@ -68,7 +69,9 @@ const testWithBrowser = (
     let closeMockApi: (() => Promise<void>) | undefined;
     if (isMock) {
       t.mockApi = await startMockApiAndCopyBuild(t);
-      t.mockApi.attesterConfig = ATTESTER_ACCOUNT_INIT_SETUP_MOCK_CONFIG;
+      t.mockApi.configProvider = new ConfigurationProvider({
+        attester: ATTESTER_ACCOUNT_INIT_SETUP_MOCK_CONFIG,
+      });
       closeMockApi = t.mockApi.close;
     } else {
       t.urls = new TestUrls(await browserPool.getExtensionId(t));
