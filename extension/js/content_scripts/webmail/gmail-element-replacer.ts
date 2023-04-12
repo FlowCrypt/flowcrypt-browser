@@ -494,9 +494,9 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     if (this.debug) {
       console.debug('processAttachments()', attachmentMetas);
     }
-    const msgEl = this.getMsgBodyEl(msgId); // not a constant because sometimes elements get replaced, then returned by the function that replaced them
-    const isBodyEmpty = msgEl.text() === '' || msgEl.text() === '\n'; // todo:
-    const senderEmail = this.getSenderEmail(msgEl);
+    const msgElReference = { msgEl: this.getMsgBodyEl(msgId) };
+    const isBodyEmpty = msgElReference.msgEl.text() === '' || msgElReference.msgEl.text() === '\n'; // todo:
+    const senderEmail = this.getSenderEmail(msgElReference.msgEl);
     const isOutgoing = !!this.sendAs[senderEmail];
     attachmentsContainerInner = $(attachmentsContainerInner);
     attachmentsContainerInner.parent().find(this.sel.numberOfAttachments).hide();
@@ -512,7 +512,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
         a.treatAs(attachmentMetas, isBodyEmpty),
         attachmentSel,
         attachmentsContainerInner,
-        msgEl,
+        msgElReference,
         msgId,
         senderEmail,
         isOutgoing
@@ -535,7 +535,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
       attachmentsContainerInner.parents(this.sel.attachmentsContainerOuter).first().hide();
     }
     if (!skipGoogleDrive) {
-      await this.processGoogleDriveAttachments(msgId, msgEl, attachmentsContainerInner);
+      await this.processGoogleDriveAttachments(msgId, msgElReference.msgEl, attachmentsContainerInner);
     }
   };
 
@@ -544,7 +544,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     treatAs: Attachment$treatAs,
     attachmentSel: JQueryEl,
     attachmentsContainerInner: JQueryEl,
-    msgEl: JQueryEl,
+    msgElReference: { msgEl: JQueryEl },
     msgId: string, // deprecated
     senderEmail: string, // deprecated?
     isOutgoing: boolean // deprecated
@@ -585,16 +585,20 @@ export class GmailElementReplacer implements WebmailElementReplacer {
         attachmentsContainerInner.prepend(this.factory.embeddedAttachment(a, true)); // xss-safe-factory
         return 'replaced'; // native should be hidden, custom should appear instead
       } else if (treatAs === 'encryptedMsg') {
-        msgEl = this.updateMsgBodyEl_DANGEROUSLY(msgEl, 'set', this.factory.embeddedMsg('encryptedMsg', '', msgId, false, senderEmail)); // xss-safe-factory
+        msgElReference.msgEl = /* xss-safe-factory */ this.updateMsgBodyEl_DANGEROUSLY(
+          msgElReference.msgEl,
+          'set',
+          this.factory.embeddedMsg('encryptedMsg', '', msgId, false, senderEmail)
+        );
         return 'hidden'; // native attachment should be hidden, the "attachment" goes to the message container
       } else if (treatAs === 'publicKey') {
         // todo - pubkey should be fetched in pgp_pubkey.js
-        return await this.renderPublicKeyFromFile(a, attachmentsContainerInner, msgEl, isOutgoing, attachmentSel);
+        return await this.renderPublicKeyFromFile(a, attachmentsContainerInner, msgElReference.msgEl, isOutgoing, attachmentSel);
       } else if (treatAs === 'privateKey') {
-        return await this.renderBackupFromFile(a, attachmentsContainerInner, msgEl);
+        return await this.renderBackupFromFile(a, attachmentsContainerInner, msgElReference.msgEl);
       } else if (treatAs === 'signature') {
         const embeddedSignedMsgXssSafe = this.factory.embeddedMsg('signedMsg', '', msgId, false, senderEmail, true);
-        msgEl = this.updateMsgBodyEl_DANGEROUSLY(msgEl, 'set', embeddedSignedMsgXssSafe); // xss-safe-factory
+        msgElReference.msgEl = this.updateMsgBodyEl_DANGEROUSLY(msgElReference.msgEl, 'set', embeddedSignedMsgXssSafe); // xss-safe-factory
         return 'hidden'; // native attachment should be hidden, the "attachment" goes to the message container
       } else {
         // standard file

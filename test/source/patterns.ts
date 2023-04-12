@@ -26,7 +26,7 @@ const getAllFilesInDir = (dir: string, filePattern: RegExp): string[] => {
 };
 
 const hasXssComment = (line: string) => {
-  return /\/\/ xss-(known-source|direct|escaped|safe-factory|safe-value|sanitized|none|reinsert|dangerous-function)/.test(line);
+  return /\/[\/\*] xss-(known-source|direct|escaped|safe-factory|safe-value|sanitized|none|reinsert|dangerous-function)/.test(line);
 };
 
 const hasErrHandledComment = (line: string) => {
