@@ -25,6 +25,7 @@ import { AvaContext } from './tooling';
 import { mockBackendData } from '../mock/backend/backend-endpoints';
 import { ClientConfiguration, keyManagerAutogenRules } from '../mock/backend/backend-data';
 import { HttpClientErr, Status } from '../mock/lib/api';
+import { somePubkey, testMatchPubKey } from '../mock/attester/attester-key-constants';
 
 export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: TestWithBrowser) => {
   if (testVariant !== 'CONSUMER-LIVE-GMAIL') {
@@ -62,6 +63,16 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       testWithBrowser(undefined, async (t, browser) => {
         const email = 'test.match.attester.key@gmail.com';
         const mismatchEmail = 'test.mismatch.attester.key@gmail.com';
+        t.mockApi!.attesterConfig = {
+          pubkeyLookup: {
+            [email]: {
+              pubkey: testMatchPubKey,
+            },
+            [mismatchEmail]: {
+              pubkey: somePubkey,
+            },
+          },
+        };
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, email);
         await SetupPageRecipe.manualEnter(
           settingsPage,
@@ -296,7 +307,6 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
           /* eslint-enable @typescript-eslint/no-explicit-any */
           return { pubkey7FDE685548AEA788, pubkeyADAC279C95093207, contactsSize };
         });
-        console.log('got contacts size ' + foundKeys.contactsSize);
         expect(foundKeys.contactsSize).to.equal(1);
         expect(foundKeys.pubkey7FDE685548AEA788.fingerprint).to.equal('5520CACE2CB61EA713E5B0057FDE685548AEA788');
         expect(foundKeys.pubkeyADAC279C95093207.fingerprint).to.equal('E8F0517BA6D7DAB6081C96E4ADAC279C95093207');

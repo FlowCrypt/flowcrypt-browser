@@ -10,7 +10,6 @@ import { SettingsPageRecipe } from './page-recipe/settings-page-recipe';
 import { ComposePageRecipe } from './page-recipe/compose-page-recipe';
 import { Str, emailKeyIndex } from './../core/common';
 import { MOCK_KM_LAST_INSERTED_KEY, MOCK_KM_KEYS } from './../mock/key-manager/key-manager-endpoints';
-import { MOCK_ATTESTER_LAST_INSERTED_PUB } from './../mock/attester/attester-endpoints';
 import { BrowserRecipe } from './tooling/browser-recipe';
 import { Key, KeyInfoWithIdentity, KeyUtil } from '../core/crypto/key';
 import { testConstants } from './tooling/consts';
@@ -20,6 +19,7 @@ import { BrowserHandle, ControllablePage } from '../browser';
 import { OauthPageRecipe } from './page-recipe/oauth-page-recipe';
 import { AvaContext } from './tooling';
 import { opgp } from '../core/crypto/pgp/openpgpjs-custom';
+import { hasPubKey, protonMailCompatKey, somePubkey } from '../mock/attester/attester-key-constants';
 
 const getAuthorizationHeader = async (t: AvaContext, browser: BrowserHandle, acctEmail: string) => {
   const settingsPage = await browser.newExtensionSettingsPage(t, acctEmail);
@@ -87,8 +87,8 @@ export const defineSetupTests = (testVariant: TestVariant, testWithBrowser: Test
             await settingsPage.waitAndClick('@input-step2bmanualcreate-create-and-save');
           },
         });
-        expect(MOCK_ATTESTER_LAST_INSERTED_PUB['flowcrypt.compatibility@gmail.com']).not.to.be.an('undefined');
-        expect(MOCK_ATTESTER_LAST_INSERTED_PUB['flowcryptcompatibility@gmail.com']).not.to.be.an('undefined');
+        expect(t.mockApi!.attesterConfig.pubkeyLookup?.['flowcrypt.compatibility@gmail.com']).not.to.be.an('undefined');
+        expect(t.mockApi!.attesterConfig.pubkeyLookup?.['flowcryptcompatibility@gmail.com']).not.to.be.an('undefined');
         await settingsPage.close();
       })
     );
@@ -802,7 +802,15 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
     test(
       'has.pub@client-configuration-test.flowcrypt.test - no backup, no keygen',
       testWithBrowser(undefined, async (t, browser) => {
-        const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'has.pub@client-configuration-test.flowcrypt.test');
+        const acct = 'has.pub@client-configuration-test.flowcrypt.test';
+        t.mockApi!.attesterConfig = {
+          ldapRelay: {
+            [acct]: {
+              pubkey: hasPubKey,
+            },
+          },
+        };
+        const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
         await SetupPageRecipe.manualEnter(
           settingsPage,
           'has.pub.client.configuration.test',
@@ -829,7 +837,15 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
     test(
       'invalid.pub@client-configuration-test.flowcrypt.test - no backup, no keygen',
       testWithBrowser(undefined, async (t, browser) => {
-        const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'invalid.pub@client-configuration-test.flowcrypt.test');
+        const acct = 'invalid.pub@client-configuration-test.flowcrypt.test';
+        t.mockApi!.attesterConfig = {
+          ldapRelay: {
+            [acct]: {
+              pubkey: protonMailCompatKey,
+            },
+          },
+        };
+        const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
         await SetupPageRecipe.manualEnter(
           settingsPage,
           'has.pub.client.configuration.test',
@@ -849,6 +865,10 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
     test(
       'no.pub@client-configurations-test - no backup, no keygen, enforce attester submit with submit err',
       testWithBrowser(undefined, async (t, browser) => {
+        t.mockApi!.attesterConfig = {
+          pubkeyLookup: {},
+          ldapRelay: {},
+        };
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'no.pub@client-configuration-test.flowcrypt.test');
         await SetupPageRecipe.manualEnter(
           settingsPage,
@@ -915,6 +935,16 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       testWithBrowser(undefined, async (t, browser) => {
         // disallowed searching attester for pubkeys on "flowcrypt.com" domain
         // below we search for human@flowcrypt.com which normally has pubkey on attester, but none should be found due to the rule
+        t.mockApi!.attesterConfig = {
+          pubkeyLookup: {
+            'mock.only.pubkey@flowcrypt.com': {
+              pubkey: somePubkey,
+            },
+            'mock.only.pubkey@other.com': {
+              pubkey: somePubkey,
+            },
+          },
+        };
         const acct = 'user@no-search-domains-client-configuration.flowcrypt.test';
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
         await SetupPageRecipe.manualEnter(settingsPage, 'flowcrypt.test.key.used.pgp');
@@ -935,6 +965,16 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       testWithBrowser(undefined, async (t, browser) => {
         // disallow_attester_search_for_domains is not respected if allow_attester_search_only_for_domains is set
         // searching attester for pubkeys only on "flowcrypt.com" domain
+        t.mockApi!.attesterConfig = {
+          pubkeyLookup: {
+            'mock.only.pubkey@flowcrypt.com': {
+              pubkey: somePubkey,
+            },
+            'mock.only.pubkey@other.com': {
+              pubkey: somePubkey,
+            },
+          },
+        };
         const acct = 'user@only-allow-some-domains-client-configuration.flowcrypt.test';
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
         await SetupPageRecipe.manualEnter(settingsPage, 'flowcrypt.test.key.used.pgp');
@@ -1724,9 +1764,9 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         await settingsPage.waitAndClick('.container_for_import_key_email_alias @input-email-alias-alias2examplecom'); // finally uncheck
         await settingsPage.waitAndClick('@input-step2bmanualenter-save', { delay: 1 });
         await settingsPage.waitAndClick('@action-step4done-account-settings');
-        expect(MOCK_ATTESTER_LAST_INSERTED_PUB['multi.aliased.user@example.com']).not.to.be.an('undefined');
-        expect(MOCK_ATTESTER_LAST_INSERTED_PUB['alias1@example.com']).not.to.be.an('undefined');
-        expect(MOCK_ATTESTER_LAST_INSERTED_PUB['alias2@example.com']).to.be.an('undefined');
+        expect(t.mockApi!.attesterConfig.pubkeyLookup?.['multi.aliased.user@example.com']).not.to.be.an('undefined');
+        expect(t.mockApi!.attesterConfig.pubkeyLookup?.['alias1@example.com']).not.to.be.an('undefined');
+        expect(t.mockApi!.attesterConfig.pubkeyLookup?.['alias2@example.com']).to.be.an('undefined');
         await settingsPage.close();
       })
     );
