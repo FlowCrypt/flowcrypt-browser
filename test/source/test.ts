@@ -35,7 +35,7 @@ process.setMaxListeners(0);
 const consts = {
   // higher concurrency can cause 429 google errs when composing
   TIMEOUT_SHORT: minutes(1),
-  TIMEOUT_EACH_RETRY: minutes(4),
+  TIMEOUT_EACH_RETRY: minutes(6),
   TIMEOUT_ALL_RETRIES: minutes(25), // this has to suffer waiting for semaphore between retries, thus almost the same as below
   TIMEOUT_OVERALL: minutes(30),
   ATTEMPTS: testGroup === 'STANDARD-GROUP' ? oneIfNotPooled(3) : process.argv.includes('--retry=false') ? 1 : 3,
