@@ -334,6 +334,7 @@ export class PgpBlockViewRenderModule {
       // Ensure the node exists and has a 'src' attribute
       if (!node || !('src' in node)) return;
       const imageSrc = node.getAttribute('src') as string;
+      if (!imageSrc) return;
       const matches = imageSrc.match(CID_PATTERN);
 
       // Check if the src attribute contains a CID
