@@ -13,7 +13,8 @@ import { mockCustomerUrlFesEndpoints } from './fes/customer-url-fes-endpoints';
 import { mockSharedTenantFesEndpoints } from './fes/shared-tenant-fes-endpoints';
 import { mockKeysOpenPGPOrgEndpoints } from './keys-openpgp-org/keys-openpgp-org-endpoints';
 
-export type HandlersDefinition = Handlers<{ query: { [k: string]: string }; body?: unknown }, unknown>;
+export type HandlersRequestDefinition = { query: { [k: string]: string }; body?: unknown };
+export type HandlersDefinition = Handlers<HandlersRequestDefinition, unknown>;
 
 export const startAllApisMock = async (logger: (line: string) => void) => {
   class LoggedApi<REQ, RES> extends Api<REQ, RES> {
@@ -25,7 +26,7 @@ export const startAllApisMock = async (logger: (line: string) => void) => {
       }
     };
   }
-  const api = new LoggedApi<{ query: { [k: string]: string }; body?: unknown }, unknown>('google-mock', {
+  const api = new LoggedApi<HandlersRequestDefinition, unknown>('google-mock', {
     ...mockGoogleEndpoints,
     ...mockBackendEndpoints,
     ...mockKeysOpenPGPOrgEndpoints,

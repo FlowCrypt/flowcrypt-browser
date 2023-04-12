@@ -8,8 +8,6 @@ import { expect } from 'chai';
 import { Dict } from '../../core/common';
 import { Util } from '../../util';
 
-export const MOCK_ATTESTER_LAST_INSERTED_PUB: { [email: string]: string } = {};
-
 interface PubKeyLookUpResult {
   pubkey?: string;
   delayInSeconds?: number;
@@ -46,8 +44,11 @@ export const getMockAttesterEndpoints = (attesterConfig: AttesterConfig): Handle
       } else if (isPost(req)) {
         oauth.checkAuthorizationForEmail(req.headers.authorization, emailOrLongid);
         expect(body).to.contain('-----BEGIN PGP PUBLIC KEY BLOCK-----');
-        MOCK_ATTESTER_LAST_INSERTED_PUB[emailOrLongid] = body as string;
-        return 'Saved'; // 200 OK
+        if (attesterConfig.pubkeyLookup) {
+          attesterConfig.pubkeyLookup[emailOrLongid] = { pubkey: body as string };
+          return 'Saved'; // 200 OK
+        }
+        throw new HttpClientErr('Method now allowed', 405);
       } else {
         throw new HttpClientErr(`Not implemented: ${req.method}`);
       }

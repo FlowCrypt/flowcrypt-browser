@@ -19,7 +19,6 @@ import { BrowserHandle, ControllablePage } from '../browser';
 import { OauthPageRecipe } from './page-recipe/oauth-page-recipe';
 import { AvaContext } from './tooling';
 import { opgp } from '../core/crypto/pgp/openpgpjs-custom';
-import { MOCK_ATTESTER_LAST_INSERTED_PUB } from '../mock/attester/attester-endpoints';
 import { hasPubKey, protonMailCompatKey, somePubkey } from '../mock/attester/attester-key-constants';
 
 const getAuthorizationHeader = async (t: AvaContext, browser: BrowserHandle, acctEmail: string) => {
@@ -88,8 +87,8 @@ export const defineSetupTests = (testVariant: TestVariant, testWithBrowser: Test
             await settingsPage.waitAndClick('@input-step2bmanualcreate-create-and-save');
           },
         });
-        expect(MOCK_ATTESTER_LAST_INSERTED_PUB['flowcrypt.compatibility@gmail.com']).not.to.be.an('undefined');
-        expect(MOCK_ATTESTER_LAST_INSERTED_PUB['flowcryptcompatibility@gmail.com']).not.to.be.an('undefined');
+        expect(t.mockApi.attesterConfig.pubkeyLookup?.['flowcrypt.compatibility@gmail.com']).not.to.be.an('undefined');
+        expect(t.mockApi.attesterConfig.pubkeyLookup?.['flowcryptcompatibility@gmail.com']).not.to.be.an('undefined');
         await settingsPage.close();
       })
     );
@@ -1765,9 +1764,9 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         await settingsPage.waitAndClick('.container_for_import_key_email_alias @input-email-alias-alias2examplecom'); // finally uncheck
         await settingsPage.waitAndClick('@input-step2bmanualenter-save', { delay: 1 });
         await settingsPage.waitAndClick('@action-step4done-account-settings');
-        expect(MOCK_ATTESTER_LAST_INSERTED_PUB['multi.aliased.user@example.com']).not.to.be.an('undefined');
-        expect(MOCK_ATTESTER_LAST_INSERTED_PUB['alias1@example.com']).not.to.be.an('undefined');
-        expect(MOCK_ATTESTER_LAST_INSERTED_PUB['alias2@example.com']).to.be.an('undefined');
+        expect(t.mockApi.attesterConfig.pubkeyLookup?.['multi.aliased.user@example.com']).not.to.be.an('undefined');
+        expect(t.mockApi.attesterConfig.pubkeyLookup?.['alias1@example.com']).not.to.be.an('undefined');
+        expect(t.mockApi.attesterConfig.pubkeyLookup?.['alias2@example.com']).to.be.an('undefined');
         await settingsPage.close();
       })
     );
