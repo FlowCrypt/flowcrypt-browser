@@ -44,11 +44,11 @@ export const getMockAttesterEndpoints = (attesterConfig: AttesterConfig): Handle
       } else if (isPost(req)) {
         oauth.checkAuthorizationForEmail(req.headers.authorization, emailOrLongid);
         expect(body).to.contain('-----BEGIN PGP PUBLIC KEY BLOCK-----');
-        if (attesterConfig.pubkeyLookup) {
-          attesterConfig.pubkeyLookup[emailOrLongid] = { pubkey: body as string };
-          return 'Saved'; // 200 OK
-        }
-        throw new HttpClientErr('Method now allowed', 405);
+        attesterConfig.pubkeyLookup = {
+          ...(attesterConfig.pubkeyLookup ?? {}),
+          [emailOrLongid]: { pubkey: body as string },
+        };
+        return 'Saved'; // 200 OK
       } else {
         throw new HttpClientErr(`Not implemented: ${req.method}`);
       }
