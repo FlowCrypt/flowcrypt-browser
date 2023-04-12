@@ -15,7 +15,7 @@ import { Util } from '../util';
 import { expect } from 'chai';
 import * as fs from 'fs';
 import * as path from 'path';
-import mkdirp from 'mkdirp';
+import { mkdirp } from 'mkdirp';
 import { Dict } from '../core/common';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
