@@ -24,7 +24,7 @@ import { BrowserHandle } from '../browser';
 import { AvaContext } from './tooling';
 import { mockBackendData } from '../mock/backend/backend-endpoints';
 import { ClientConfiguration, keyManagerAutogenRules } from '../mock/backend/backend-data';
-import { HttpClientErr, Status } from '../mock/lib/api';
+import { ConfigurationProvider, HttpClientErr, Status } from '../mock/lib/api';
 import { somePubkey, testMatchPubKey } from '../mock/attester/attester-key-constants';
 
 export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: TestWithBrowser) => {
@@ -63,16 +63,18 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       testWithBrowser(undefined, async (t, browser) => {
         const email = 'test.match.attester.key@gmail.com';
         const mismatchEmail = 'test.mismatch.attester.key@gmail.com';
-        t.mockApi!.attesterConfig = {
-          pubkeyLookup: {
-            [email]: {
-              pubkey: testMatchPubKey,
-            },
-            [mismatchEmail]: {
-              pubkey: somePubkey,
+        t.mockApi!.configProvider = new ConfigurationProvider({
+          attester: {
+            pubkeyLookup: {
+              [email]: {
+                pubkey: testMatchPubKey,
+              },
+              [mismatchEmail]: {
+                pubkey: somePubkey,
+              },
             },
           },
-        };
+        });
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, email);
         await SetupPageRecipe.manualEnter(
           settingsPage,
