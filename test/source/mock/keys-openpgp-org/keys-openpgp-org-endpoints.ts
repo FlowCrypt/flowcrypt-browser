@@ -1,7 +1,7 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
 import { HandlersDefinition } from '../all-apis-mock';
-import { somePubkey } from '../attester/attester-endpoints';
+import { somePubkey } from '../attester/attester-key-constants';
 import { HttpClientErr } from '../lib/api';
 import { isGet } from '../lib/mock-util';
 

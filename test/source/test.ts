@@ -23,6 +23,7 @@ import { TestUrls } from './browser/test-urls';
 import { mkdirSync, realpathSync, writeFileSync } from 'fs';
 import { startAllApisMock } from './mock/all-apis-mock';
 import { defineContentScriptTests } from './tests/content-script';
+import { ATTESTER_ACCOUNT_INIT_SETUP_MOCK_CONFIG } from './mock/attester/attester-key-constants';
 
 export const { testVariant, testGroup, oneIfNotPooled, buildDir, isMock } = getParsedCliParams();
 export const internalTestState = { expectIntentionalErrReport: false }; // updated when a particular test that causes an error is run
@@ -66,8 +67,9 @@ const testWithBrowser = (
   return async (t: AvaContext) => {
     let closeMockApi: (() => Promise<void>) | undefined;
     if (isMock) {
-      const mockApi = await startMockApiAndCopyBuild(t);
-      closeMockApi = mockApi.close;
+      t.mockApi = await startMockApiAndCopyBuild(t);
+      t.mockApi.attesterConfig = ATTESTER_ACCOUNT_INIT_SETUP_MOCK_CONFIG;
+      closeMockApi = t.mockApi.close;
     } else {
       t.urls = new TestUrls(await browserPool.getExtensionId(t));
     }
@@ -199,6 +201,8 @@ test.after.always('send debug info if any', async t => {
   const debugHtmlAttachments = getDebugHtmlAtts(testId, mockApiLogs);
   if (debugHtmlAttachments.length) {
     console.info(`FAIL ID ${testId}`);
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
     standaloneTestTimeout(t, consts.TIMEOUT_SHORT, t.title);
     console.info(`There are ${debugHtmlAttachments.length} debug files.`);
     const debugArtifactDir = realpathSync(`${__dirname}/..`) + '/debugArtifacts';

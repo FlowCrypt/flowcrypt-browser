@@ -12,6 +12,7 @@ import { TestWithBrowser } from './../test';
 import { expect } from 'chai';
 import { PageRecipe } from './page-recipe/abstract-page-recipe';
 import { Buf } from '../core/buf';
+import { get203FAE7076005381, protonMailCompatKey, mpVerificationKey, sha1signpubkey } from '../mock/attester/attester-key-constants';
 
 export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: TestWithBrowser) => {
   if (testVariant !== 'CONSUMER-LIVE-GMAIL') {
@@ -774,6 +775,13 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
     test(
       'decrypt - thunderbird - signed text is recognized',
       testWithBrowser('compatibility', async (t, browser) => {
+        t.mockApi!.attesterConfig = {
+          pubkeyLookup: {
+            'some.sender@test.com': {
+              pubkey: await get203FAE7076005381(),
+            },
+          },
+        };
         const threadId = '17dad75e63e47f97';
         const acctEmail = 'flowcrypt.compatibility@gmail.com';
         const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`);
@@ -796,6 +804,14 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
         const msgId = '17dad75e63e47f97';
         const acctEmail = 'flowcrypt.compatibility@gmail.com';
         const senderEmail = 'this.pubkey.takes.long.time.to.load@sender.test';
+        t.mockApi!.attesterConfig = {
+          pubkeyLookup: {
+            [senderEmail]: {
+              pubkey: await get203FAE7076005381(),
+              delayInSeconds: 5,
+            },
+          },
+        };
         const params = `?frameId=none&acctEmail=${acctEmail}&msgId=${msgId}&signature=___cu_true___&senderEmail=${senderEmail}`;
         const pgpHostPage = await browser.newPage(t, `chrome/dev/ci_pgp_host_page.htm${params}`);
         const pgpBlockPage = await pgpHostPage.getFrame(['pgp_block.htm']);
@@ -829,6 +845,13 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
         const senderEmail = 'some.sender@test.com';
         const acctAttr = acctEmail.replace(/[\.@]/g, '');
         const senderAttr = senderEmail.replace(/[\.@]/g, '');
+        t.mockApi!.attesterConfig = {
+          pubkeyLookup: {
+            [senderEmail]: {
+              pubkey: await get203FAE7076005381(),
+            },
+          },
+        };
         {
           const settingsPage = await browser.newExtensionSettingsPage(t, acctEmail);
           await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
@@ -882,6 +905,13 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
     test(
       'signature - sender is different from pubkey uid',
       testWithBrowser('ci.tests.gmail', async (t, browser) => {
+        t.mockApi!.attesterConfig = {
+          pubkeyLookup: {
+            'sender@example.com': {
+              pubkey: testConstants.pubkey2864E326A5BE488A,
+            },
+          },
+        };
         const threadId = '1766644f13510f58';
         const acctEmail = 'ci.tests.gmail@flowcrypt.test';
         const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`);
@@ -910,6 +940,13 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
           '-----BEGIN PGP PUBLIC KEY BLOCK-----\r\nVersion: FlowCrypt Email Encryption [BUILD_REPLACEABLE_VERSION]\r\nComment: Seamlessly send and receive encrypted email\r\n\r\nxjMEYZeW2RYJKwYBBAHaRw8BAQdAT5QfLVP3y1yukk3MM/oiuXLNe1f9az5M\r\nBnOlKdF0nKnNJVNvbWVib2R5IDxTYW1zNTBzYW1zNTBzZXB0QEdtYWlsLkNv\r\nbT7CjwQQFgoAIAUCYZeW2QYLCQcIAwIEFQgKAgQWAgEAAhkBAhsDAh4BACEJ\r\nEMrSTYqLk6SUFiEEBP90ux3d6kDwDdzvytJNiouTpJS27QEA7pFlkLfD0KFQ\r\nsH/dwb/NPzn5zCi2L9gjPAC3d8gv1fwA/0FjAy/vKct4D7QH8KwtEGQns5+D\r\nP1WxDr4YI2hp5TkAzjgEYZeW2RIKKwYBBAGXVQEFAQEHQKNLY/bXrhJMWA2+\r\nWTjk3I7KhawyZfLomJ4hovqr7UtOAwEIB8J4BBgWCAAJBQJhl5bZAhsMACEJ\r\nEMrSTYqLk6SUFiEEBP90ux3d6kDwDdzvytJNiouTpJQnpgD/c1CzfS3YzJUx\r\nnFMrhjiE0WVgqOV/3CkfI4m4RA30QUIA/ju8r4AD2h6lu3Mx/6I6PzIRZQty\r\nLvTkcu4UKodZa4kK\r\n=7C4A\r\n-----END PGP PUBLIC KEY BLOCK-----\r\n',
           'sender@example.com'
         );
+        t.mockApi!.attesterConfig = {
+          pubkeyLookup: {
+            'sender@example.com': {
+              pubkey: testConstants.pubkey2864E326A5BE488A,
+            },
+          },
+        };
         const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`);
         await inboxPage.waitAll('iframe', { timeout: 2 });
         const urls = await inboxPage.getFramesUrls(['/chrome/elements/pgp_block.htm'], { sleep: 10, appearIn: 20 });
@@ -1060,6 +1097,13 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
         const acctEmail = 'flowcrypt.compatibility@gmail.com';
         const signerEmail = 'some.sender@test.com';
         const data = await GoogleData.withInitializedData(acctEmail);
+        t.mockApi!.attesterConfig = {
+          pubkeyLookup: {
+            [signerEmail]: {
+              pubkey: await get203FAE7076005381(),
+            },
+          },
+        };
         /* eslint-disable @typescript-eslint/no-non-null-assertion */
         const msg = data.getMessage(msgId)!;
         const signature = Buf.fromBase64Str(msg!.raw!)
@@ -1082,6 +1126,13 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
     test(
       'decrypt - protonmail - load pubkey into contact + verify detached msg',
       testWithBrowser('compatibility', async (t, browser) => {
+        t.mockApi!.attesterConfig = {
+          pubkeyLookup: {
+            'flowcrypt.compatibility@protonmail.com': {
+              pubkey: protonMailCompatKey,
+            },
+          },
+        };
         const textParams =
           `?frameId=none&message=&msgId=16a9c109bc51687d&` +
           `senderEmail=some.alias%40protonmail.com&isOutgoing=___cu_false___&signature=___cu_true___&acctEmail=flowcrypt.compatibility%40gmail.com`;
@@ -1113,6 +1164,13 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
     test(
       'decrypt - protonmail - auto TOFU load matching pubkey first time',
       testWithBrowser('compatibility', async (t, browser) => {
+        t.mockApi!.attesterConfig = {
+          pubkeyLookup: {
+            'flowcrypt.compatibility@protonmail.com': {
+              pubkey: protonMailCompatKey,
+            },
+          },
+        };
         const params =
           `?frameId=none&message=&msgId=16a9c109bc51687d&` +
           `senderEmail=flowcrypt.compatibility%40protonmail.com&isOutgoing=___cu_false___&signature=___cu_true___&acctEmail=flowcrypt.compatibility%40gmail.com`;
@@ -1128,6 +1186,13 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
     test(
       'decrypt - verify encrypted+signed message',
       testWithBrowser('compatibility', async (t, browser) => {
+        t.mockApi!.attesterConfig = {
+          pubkeyLookup: {
+            'martin@politick.ca': {
+              pubkey: mpVerificationKey,
+            },
+          },
+        };
         const params = `?frameId=none&message=&msgId=1617429dc55600db&senderEmail=martin%40politick.ca&isOutgoing=___cu_false___&acctEmail=flowcrypt.compatibility%40gmail.com`;
         await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
           params,
@@ -1282,6 +1347,13 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
     test(
       `verify - sha1 shows error`,
       testWithBrowser('compatibility', async (t, browser) => {
+        t.mockApi!.attesterConfig = {
+          pubkeyLookup: {
+            'sha1@sign.com': {
+              pubkey: sha1signpubkey,
+            },
+          },
+        };
         const msg = `-----BEGIN PGP MESSAGE-----
 
 yMCxATvCy8zAxHhitbJOfXrcEcbTKkkMIOCRmpOTr6NQkpFZrABEiQolqcUlCrmpxcWJ6alchw5U
