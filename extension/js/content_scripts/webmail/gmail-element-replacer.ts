@@ -8,7 +8,7 @@ import { GmailParser, GmailRes } from '../../common/api/email-provider/gmail/gma
 import { IntervalFunction, WebmailElementReplacer } from './setup-webmail-content-script.js';
 import { AjaxErr } from '../../common/api/shared/api-error.js';
 import { ApiErr } from '../../common/api/shared/api-error.js';
-import { Attachment } from '../../common/core/attachment.js';
+import { Attachment, Attachment$treatAs } from '../../common/core/attachment.js';
 import { BrowserMsg } from '../../common/browser/browser-msg.js';
 import { Catch } from '../../common/platform/catch.js';
 import { GlobalStore, LocalDraft } from '../../common/platform/store/global-store.js';
@@ -25,11 +25,13 @@ import { SendAsAlias } from '../../common/platform/store/acct-store.js';
 // todo: can we somehow define a purely relay class for ContactStore to clearly show that crypto-libraries are not loaded and can't be used?
 import { ContactStore } from '../../common/platform/store/contact-store.js';
 import { Buf } from '../../common/core/buf.js';
-import { MessageRenderer, AttachmentBlock } from '../../common/message-renderer.js';
+import { MessageRenderer } from '../../common/message-renderer.js';
+import { Mime } from '../../common/core/mime.js';
+import { MsgUtil } from '../../common/core/crypto/pgp/msg-util.js';
 
 type JQueryEl = JQuery<HTMLElement>;
 
-type ProcessedMessage = { renderedXssSafe?: string; attachmentBlocks: AttachmentBlock[] };
+type ProcessedMessage = { renderedXssSafe?: string; attachments: Attachment[] };
 
 interface MessageCacheEntry {
   full: Promise<GmailRes.GmailMsg>;
@@ -43,6 +45,8 @@ export class GmailElementReplacer implements WebmailElementReplacer {
   private recipientHasPgpCache: Dict<boolean> = {};
   private sendAs: Dict<SendAsAlias>;
   private messages: Dict<MessageCacheEntry> = {};
+  private chunkDownloads: { attachment: Attachment; result: Promise<Buf> }[];
+  // private attachmentDownloads: { attachment: Attachment; result: Promise<GmailRes.GmailAttachment> }[];
   private factory: XssSafeFactory;
   private clientConfiguration: ClientConfiguration;
   private pubLookup: PubLookup;
@@ -170,6 +174,25 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     return msgDownload;
   };
 
+  private queueAttachmentChunkDownload = (a: Attachment) => {
+    if (a.hasData()) {
+      return { attachment: a, result: Promise.resolve(a.getData()) };
+    }
+    let download = this.chunkDownloads.find(d => d.attachment === a);
+    if (!download) {
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      download = { attachment: a, result: this.gmail.attachmentGetChunk(a.msgId!, a.id!) };
+      this.chunkDownloads.push(download);
+    }
+    return download;
+  };
+
+  /* 
+  private queueAttachmentDownload = (a: Attachment) => {
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    this.attachmentDownloads.push({ attachment: a, result: this.gmail.attachmentGet(a.msgId!, a.id!) });
+  };
+  */
   private msgGetProcessed = async (msgId: string): Promise<ProcessedMessage> => {
     // todo: retries? exceptions?
     const msgDownload = this.msgGetCached(msgId);
@@ -177,13 +200,31 @@ export class GmailElementReplacer implements WebmailElementReplacer {
       return msgDownload.processedFull;
     }
     const msg = await msgDownload.full;
-    const { blocks, from } = await MessageRenderer.process(msg);
-    if (blocks.length === 1 && blocks[0].block.type === 'plainText') {
-      // only has single block which is plain text
-      msgDownload.processedFull = { attachmentBlocks: [] };
-    } else {
-      msgDownload.processedFull = MessageRenderer.renderMsg({ blocks, from }, this.factory, false, msgId, this.sendAs);
+    const mimeContent = MessageRenderer.reconstructMimeContent(msg);
+    const blocks = Mime.processBody(mimeContent);
+    // todo: only start `signature` download?
+    // start download of all attachments that are not plainFile, for 'needChunk' -- chunked download
+    for (const a of mimeContent.attachments.filter(a => !a.hasData())) {
+      const treatAs = a.treatAs(mimeContent.attachments); // todo: isBodyEmpty
+      if (treatAs === 'plainFile') continue;
+      if (treatAs === 'needChunk') {
+        this.queueAttachmentChunkDownload(a);
+      } else if (treatAs === 'publicKey') {
+        // we also want a chunk before we replace the attachment in the UI
+        // todo: or simply download in full?
+        this.queueAttachmentChunkDownload(a);
+      } else {
+        // todo: this.queueAttachmentDownload(a);
+      }
     }
+    let renderedXssSafe: string | undefined;
+    if (blocks.length === 0 || (blocks.length === 1 && ['plainText', 'plainHtml'].includes(blocks[0].type))) {
+      // only has single block which is plain text
+    } else {
+      const from = GmailParser.findHeader(msg, 'from');
+      ({ renderedXssSafe } = MessageRenderer.renderMsg({ blocks, from }, this.factory, false, msgId, this.sendAs));
+    }
+    msgDownload.processedFull = { renderedXssSafe, attachments: mimeContent.attachments };
     return msgDownload.processedFull;
   };
 
@@ -420,11 +461,11 @@ export class GmailElementReplacer implements WebmailElementReplacer {
           if (this.debug) {
             console.debug('processNewPgpAttachments() -> msgGet may take some time');
           }
-          const msg = await this.msgGetCached(msgId).full; // todo: msgGetProcessed
+          const { attachments } = await this.msgGetProcessed(msgId);
           if (this.debug) {
-            console.debug('processNewPgpAttachments() -> msgGet done -> processAttachments', msg);
+            console.debug('processNewPgpAttachments() -> msgGet done -> processAttachments', attachments);
           }
-          await this.processAttachments(msgId, GmailParser.findAttachments(msg), attachmentsContainer, false);
+          await this.processAttachments(msgId, attachments, attachmentsContainer, false);
         } catch (e) {
           if (ApiErr.isAuthErr(e)) {
             this.notifications.showAuthPopupNeeded(this.acctEmail);
@@ -446,101 +487,44 @@ export class GmailElementReplacer implements WebmailElementReplacer {
 
   private processAttachments = async (
     msgId: string,
-    attachmentMetas: Attachment[],
+    attachmentMetas: Attachment[], // todo: these are not Metas!
     attachmentsContainerInner: JQueryEl | HTMLElement,
     skipGoogleDrive: boolean
   ) => {
     if (this.debug) {
       console.debug('processAttachments()', attachmentMetas);
     }
-    let msgEl = this.getMsgBodyEl(msgId); // not a constant because sometimes elements get replaced, then returned by the function that replaced them
-    const isBodyEmpty = msgEl.text() === '' || msgEl.text() === '\n';
+    const msgEl = this.getMsgBodyEl(msgId); // not a constant because sometimes elements get replaced, then returned by the function that replaced them
+    const isBodyEmpty = msgEl.text() === '' || msgEl.text() === '\n'; // todo:
     const senderEmail = this.getSenderEmail(msgEl);
     const isOutgoing = !!this.sendAs[senderEmail];
     attachmentsContainerInner = $(attachmentsContainerInner);
     attachmentsContainerInner.parent().find(this.sel.numberOfAttachments).hide();
     let nRenderedAttachments = attachmentMetas.length;
     for (const a of attachmentMetas) {
-      const treatAs = a.treatAs(attachmentMetas, isBodyEmpty);
-      // todo - [same name + not processed].first() ... What if attachment metas are out of order compared to how gmail shows it? And have the same name?
       const attachmentSel = this.filterAttachments(
         attachmentsContainerInner.children().not('.attachment_processed'),
         new RegExp(`^${Str.regexEscape(a.name || 'noname')}$`)
       ).first();
-      if (this.debug) {
-        console.debug('processAttachments() treatAs');
+      // todo: shouldn't call `treatAs` in too many places ?
+      const renderStatus = await this.processAttachment(
+        a,
+        a.treatAs(attachmentMetas, isBodyEmpty),
+        attachmentSel,
+        attachmentsContainerInner,
+        msgEl,
+        msgId,
+        senderEmail,
+        isOutgoing
+      );
+      if (renderStatus === 'hidden') {
+        nRenderedAttachments--;
       }
-      try {
-        if (treatAs !== 'plainFile') {
-          this.hideAttachment(attachmentSel, attachmentsContainerInner);
-          nRenderedAttachments--;
-          if (treatAs === 'encryptedFile') {
-            // actual encrypted attachment - show it
-            attachmentsContainerInner.prepend(this.factory.embeddedAttachment(a, true)); // xss-safe-factory
-            nRenderedAttachments++;
-          } else if (treatAs === 'encryptedMsg') {
-            const isAmbiguousAscFile = a.name.substr(-4) === '.asc' && !Attachment.encryptedMsgNames.includes(a.name); // ambiguous .asc name
-            const isAmbiguousNonameFile = !a.name || a.name === 'noname'; // may not even be OpenPGP related
-            if (isAmbiguousAscFile || isAmbiguousNonameFile) {
-              // Inspect a chunk
-              if (this.debug) {
-                console.debug('processAttachments() try -> awaiting chunk + awaiting type');
-              }
-              // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-              const data = await this.gmail.attachmentGetChunk(msgId, a.id!); // .id is present when fetched from api
-              const openpgpType = await BrowserMsg.send.bg.await.pgpMsgType({ data: data.toBase64Str() }); // base64 for FF, see #2587
-              if (openpgpType && openpgpType.type === 'publicKey' && openpgpType.armored) {
-                // if it looks like OpenPGP public key
-                nRenderedAttachments = await this.renderPublicKeyFromFile(a, attachmentsContainerInner, msgEl, isOutgoing, attachmentSel, nRenderedAttachments);
-              } else if (openpgpType && ['encryptedMsg', 'signedMsg'].includes(openpgpType.type)) {
-                msgEl = this.updateMsgBodyEl_DANGEROUSLY(msgEl, 'append', this.factory.embeddedMsg(openpgpType.type, '', msgId, false, senderEmail)); // xss-safe-factory
-              } else {
-                attachmentSel.show().children('.attachment_loader').text('Unknown OpenPGP format');
-                nRenderedAttachments++;
-              }
-              if (this.debug) {
-                console.debug('processAttachments() try -> awaiting done and processed');
-              }
-            } else {
-              msgEl = this.updateMsgBodyEl_DANGEROUSLY(msgEl, 'set', this.factory.embeddedMsg('encryptedMsg', '', msgId, false, senderEmail)); // xss-safe-factory
-            }
-          } else if (treatAs === 'publicKey') {
-            // todo - pubkey should be fetched in pgp_pubkey.js
-            nRenderedAttachments = await this.renderPublicKeyFromFile(a, attachmentsContainerInner, msgEl, isOutgoing, attachmentSel, nRenderedAttachments);
-          } else if (treatAs === 'privateKey') {
-            nRenderedAttachments = await this.renderBackupFromFile(a, attachmentsContainerInner, msgEl, attachmentSel, nRenderedAttachments);
-          } else if (treatAs === 'signature') {
-            const embeddedSignedMsgXssSafe = this.factory.embeddedMsg('signedMsg', '', msgId, false, senderEmail, true);
-            msgEl = this.updateMsgBodyEl_DANGEROUSLY(msgEl, 'set', embeddedSignedMsgXssSafe); // xss-safe-factory
-          }
-        } else if (treatAs === 'plainFile' && a.name.substr(-4) === '.asc') {
-          // todo:
-          // normal looking attachment ending with .asc
-          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-          const data = await this.gmail.attachmentGetChunk(msgId, a.id!); // .id is present when fetched from api
-          const openpgpType = await BrowserMsg.send.bg.await.pgpMsgType({ data: data.toBase64Str() }); // base64 for FF, see #2587
-          if (openpgpType && openpgpType.type === 'publicKey' && openpgpType.armored) {
-            // if it looks like OpenPGP public key
-            nRenderedAttachments = await this.renderPublicKeyFromFile(a, attachmentsContainerInner, msgEl, isOutgoing, attachmentSel, nRenderedAttachments);
-            this.hideAttachment(attachmentSel, attachmentsContainerInner);
-            nRenderedAttachments--;
-          } else {
-            attachmentSel.addClass('attachment_processed').children('.attachment_loader').remove();
-          }
-        } else {
-          // standard file
-          attachmentSel.addClass('attachment_processed').children('.attachment_loader').remove();
-        }
-      } catch (e) {
-        if (!ApiErr.isSignificant(e) || (e instanceof AjaxErr && e.status === 200)) {
-          attachmentSel.show().children('.attachment_loader').text('Categorize: net err');
-          nRenderedAttachments++;
-        } else {
-          Catch.reportErr(e);
-          attachmentSel.show().children('.attachment_loader').text('Categorize: unknown err');
-          nRenderedAttachments++;
-        }
-      }
+      // if (renderStatus === 'shown') attachmentSel.show();
+    }
+    if (nRenderedAttachments !== attachmentMetas.length) {
+      // according to #4200, no point in showing "download all" button if at least one attachment is encrypted etc.
+      $(this.sel.attachmentsButtons).hide();
     }
     if (nRenderedAttachments >= 2) {
       // Aligned with Gmail, the label is shown only if there are 2 or more attachments
@@ -552,6 +536,82 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     }
     if (!skipGoogleDrive) {
       await this.processGoogleDriveAttachments(msgId, msgEl, attachmentsContainerInner);
+    }
+  };
+
+  private processAttachment = async (
+    a: Attachment,
+    treatAs: Attachment$treatAs,
+    attachmentSel: JQueryEl,
+    attachmentsContainerInner: JQueryEl,
+    msgEl: JQueryEl,
+    msgId: string, // deprecated
+    senderEmail: string, // deprecated?
+    isOutgoing: boolean // deprecated
+  ): Promise<'shown' | 'replaced' | 'hidden'> => {
+    // todo - [same name + not processed].first() ... What if attachment metas are out of order compared to how gmail shows it? And have the same name?
+    try {
+      if (['needChunk', 'maybePgp', 'publicKey'].includes(treatAs)) {
+        // todo: this isn't the best way to do this
+        // todo: move into a handler
+        // Inspect a chunk
+        if (this.debug) {
+          console.debug('processAttachments() try -> awaiting chunk + awaiting type');
+        }
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const data = await this.queueAttachmentChunkDownload(a).result;
+        const openpgpType = MsgUtil.type({ data });
+        if (openpgpType && openpgpType.type === 'publicKey' && openpgpType.armored) {
+          // if it looks like OpenPGP public key
+          treatAs = 'publicKey';
+        } else if (openpgpType && ['encryptedMsg', 'signedMsg'].includes(openpgpType.type)) {
+          treatAs = 'encryptedMsg'; // todo: signedMsg ?
+        } else {
+          attachmentSel.show().children('.attachment_loader').text('Unknown OpenPGP format');
+          if (this.debug) {
+            console.debug("processAttachments() try -> awaiting done and processed -- doesn't look like OpenPGP");
+          }
+          return 'shown';
+        }
+        if (this.debug) {
+          console.debug('processAttachments() try -> awaiting done and processed');
+        }
+      }
+      if (treatAs !== 'plainFile') {
+        this.hideAttachment(attachmentSel, attachmentsContainerInner);
+      }
+      if (treatAs === 'encryptedFile') {
+        // actual encrypted attachment - show it
+        attachmentsContainerInner.prepend(this.factory.embeddedAttachment(a, true)); // xss-safe-factory
+        return 'replaced'; // native should be hidden, custom should appear instead
+      } else if (treatAs === 'encryptedMsg') {
+        msgEl = this.updateMsgBodyEl_DANGEROUSLY(msgEl, 'set', this.factory.embeddedMsg('encryptedMsg', '', msgId, false, senderEmail)); // xss-safe-factory
+        return 'hidden'; // native attachment should be hidden, the "attachment" goes to the message container
+      } else if (treatAs === 'publicKey') {
+        // todo - pubkey should be fetched in pgp_pubkey.js
+        return await this.renderPublicKeyFromFile(a, attachmentsContainerInner, msgEl, isOutgoing, attachmentSel);
+      } else if (treatAs === 'privateKey') {
+        return await this.renderBackupFromFile(a, attachmentsContainerInner, msgEl);
+      } else if (treatAs === 'signature') {
+        const embeddedSignedMsgXssSafe = this.factory.embeddedMsg('signedMsg', '', msgId, false, senderEmail, true);
+        msgEl = this.updateMsgBodyEl_DANGEROUSLY(msgEl, 'set', embeddedSignedMsgXssSafe); // xss-safe-factory
+        return 'hidden'; // native attachment should be hidden, the "attachment" goes to the message container
+      } else {
+        // standard file
+        attachmentSel.show().addClass('attachment_processed').children('.attachment_loader').remove();
+        return 'shown';
+      }
+    } catch (e) {
+      if (!ApiErr.isSignificant(e) || (e instanceof AjaxErr && e.status === 200)) {
+        // todo: show() not needed?
+        attachmentSel.show().children('.attachment_loader').text('Categorize: net err');
+        return 'shown';
+      } else {
+        Catch.reportErr(e);
+        // todo: show() not needed?
+        attachmentSel.show().children('.attachment_loader').text('Categorize: unknown err');
+        return 'shown';
+      }
     }
   };
 
@@ -573,6 +633,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
               treatAs: 'encryptedFile',
             })
           );
+          // todo: start download
         } else {
           console.info('Missing Google Drive attachments download_url');
         }
@@ -586,48 +647,40 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     attachmentsContainerInner: JQueryEl,
     msgEl: JQueryEl,
     isOutgoing: boolean,
-    attachmentSel: JQueryEl,
-    nRenderedAttachments: number
-  ) => {
+    attachmentSel: JQueryEl
+  ): Promise<'hidden' | 'shown'> => {
     let downloadedAttachment: GmailRes.GmailAttachment;
     try {
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       downloadedAttachment = await this.gmail.attachmentGet(attachmentMeta.msgId!, attachmentMeta.id!); // .id! is present when fetched from api
     } catch (e) {
       attachmentsContainerInner.show().addClass('attachment_processed').find('.attachment_loader').text('Please reload page');
-      nRenderedAttachments++;
-      return nRenderedAttachments;
+      // todo: attachmentSel.show()? unit-test this case?
+      return 'shown';
     }
-    const openpgpType = await BrowserMsg.send.bg.await.pgpMsgType({
-      data: Buf.fromUint8(downloadedAttachment.data.subarray(0, 1000)).toBase64Str(),
-    }); // base64 for FF, see #2587
+    const openpgpType = MsgUtil.type({ data: downloadedAttachment.data.subarray(0, 1000) });
     if (openpgpType && openpgpType.type === 'publicKey') {
       this.updateMsgBodyEl_DANGEROUSLY(msgEl, 'after', this.factory.embeddedPubkey(downloadedAttachment.data.toUtfStr(), isOutgoing)); // xss-safe-factory
+      return 'hidden';
     } else {
       attachmentSel.show().addClass('attachment_processed').children('.attachment_loader').text('Unknown Public Key Format');
-      nRenderedAttachments++;
+      return 'shown';
     }
-    return nRenderedAttachments;
   };
 
-  private renderBackupFromFile = async (
-    attachmentMeta: Attachment,
-    attachmentsContainerInner: JQueryEl,
-    msgEl: JQueryEl,
-    attachmentSel: JQueryEl,
-    nRenderedAttachments: number
-  ) => {
+  private renderBackupFromFile = async (attachmentMeta: Attachment, attachmentsContainerInner: JQueryEl, msgEl: JQueryEl) => {
     let downloadedAttachment: GmailRes.GmailAttachment;
     try {
+      // todo: fetch from queue
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       downloadedAttachment = await this.gmail.attachmentGet(attachmentMeta.msgId!, attachmentMeta.id!); // .id! is present when fetched from api
     } catch (e) {
+      // todo: do we really need show() for attachmentsContainerInner?
       attachmentsContainerInner.show().addClass('attachment_processed').find('.attachment_loader').text('Please reload page');
-      nRenderedAttachments++;
-      return nRenderedAttachments;
+      return 'shown';
     }
     this.updateMsgBodyEl_DANGEROUSLY(msgEl, 'append', this.factory.embeddedBackup(downloadedAttachment.data.toUtfStr())); // xss-safe-factory
-    return nRenderedAttachments;
+    return 'hidden';
   };
 
   private filterAttachments = (potentialMatches: JQueryEl | HTMLElement, regExp: RegExp) => {
@@ -648,8 +701,6 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     if (!attachmentEl.length) {
       attachmentsContainerSel.children('.attachment_loader').text('Missing file info');
     }
-    // according to #4200, no point in showing "download all" button if at least one attachment is encrypted etc.
-    $(this.sel.attachmentsButtons).hide();
   };
 
   private determineMsgId = (innerMsgEl: HTMLElement | JQueryEl) => {

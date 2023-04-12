@@ -12,9 +12,7 @@ import { SendAsAlias } from './platform/store/acct-store.js';
 import { Xss } from './platform/xss.js';
 import { XssSafeFactory } from './xss-safe-factory.js';
 
-export type ProccesedMsg = MimeProccesedMsg & {
-  from?: string;
-};
+export type ProccesedMsg = MimeProccesedMsg;
 
 export type AttachmentBlock = {
   block: MsgBlock;
@@ -23,7 +21,7 @@ export type AttachmentBlock = {
 
 export class MessageRenderer {
   public static renderMsg = (
-    { from, blocks }: { blocks: { block: MsgBlock; file?: Attachment }[]; from?: string },
+    { from, blocks }: { blocks: MsgBlock[]; from?: string },
     factory: XssSafeFactory,
     showOriginal: boolean,
     msgId: string, // todo: will be removed
@@ -31,48 +29,40 @@ export class MessageRenderer {
   ) => {
     const isOutgoing = Boolean(from && !!sendAs?.[from]);
     let r = '';
-    const attachmentBlocks: AttachmentBlock[] = [];
     for (const block of blocks) {
       if (r) {
         r += '<br><br>';
       }
-      if (['encryptedAttachment', 'plainAttachment'].includes(block.block.type) && !block.file) {
-        // debugger;
-        throw new Error('Unexpected!');
-      }
-      if (block.file && ['encryptedAttachment', 'plainAttachment'].includes(block.block.type)) {
-        attachmentBlocks.push({ block: block.block, file: block.file });
-      } else if (showOriginal) {
-        r += Xss.escape(Str.with(block.block.content)).replace(/\n/g, '<br>');
+      if (showOriginal) {
+        r += Xss.escape(Str.with(block.content)).replace(/\n/g, '<br>');
       } else {
-        r += XssSafeFactory.renderableMsgBlock(factory, block.block, msgId, from || 'unknown', isOutgoing);
+        r += XssSafeFactory.renderableMsgBlock(factory, block, msgId, from || 'unknown', isOutgoing);
       }
     }
-    return { renderedXssSafe: r, attachmentBlocks, isOutgoing };
+    return { renderedXssSafe: r, isOutgoing };
   };
 
+  /* todo: remove
   public static process = async (gmailMsg: GmailRes.GmailMsg): Promise<ProccesedMsg> => {
-    const processedMsg = gmailMsg.raw ? await MessageRenderer.processMessageFromRaw(gmailMsg.raw) : MessageRenderer.processMessageFromFull(gmailMsg);
-    return { from: GmailParser.findHeader(gmailMsg, 'from'), ...processedMsg };
-  };
+    return gmailMsg.raw ? await MessageRenderer.processMessageFromRaw(gmailMsg.raw) : MessageRenderer.processMessageFromFull(gmailMsg);
+  }; */
 
   public static processMessageFromRaw = async (raw: string) => {
     const mimeMsg = Buf.fromBase64UrlStr(raw);
     return await Mime.process(mimeMsg);
   };
 
-  private static processMessageFromFull = (gmailMsg: GmailRes.GmailMsg) => {
+  public static reconstructMimeContent = (gmailMsg: GmailRes.GmailMsg): MimeContent => {
     const bodies = GmailParser.findBodies(gmailMsg);
     const attachments = GmailParser.findAttachments(gmailMsg);
     const text = bodies['text/plain'] ? Buf.fromBase64UrlStr(bodies['text/plain']).toUtfStr() : undefined;
     // todo: do we need to strip?
     const html = bodies['text/html'] ? Xss.htmlSanitizeAndStripAllTags(Buf.fromBase64UrlStr(bodies['text/html']).toUtfStr(), '\n') : undefined;
     // reconstructed MIME content
-    const mimeContent: MimeContent = {
+    return {
       text,
       html,
       attachments,
     };
-    return Mime.processDecoded(mimeContent);
   };
 }

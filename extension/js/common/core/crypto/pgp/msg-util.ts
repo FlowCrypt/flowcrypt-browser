@@ -34,7 +34,7 @@ export namespace PgpMsgMethod {
       armor: boolean;
       date?: Date;
     };
-    export type Type = { data: Uint8Array | string };
+    export type Type = { data: Uint8Array };
     export type Decrypt = {
       kisWithPp: KeyInfoWithIdentityAndOptionalPp[];
       encryptedData: Uint8Array | string;
@@ -121,12 +121,6 @@ export class MsgUtil {
   public static type: PgpMsgMethod.Type = ({ data }) => {
     if (!data || !data.length) {
       return undefined;
-    }
-    if (typeof data === 'string') {
-      // Uint8Array sent over BrowserMsg gets converted to blobs on the sending side, and read on the receiving side
-      // Firefox blocks such blobs from content scripts to background, see: https://github.com/FlowCrypt/flowcrypt-browser/issues/2587
-      // that's why we add an option to send data as a base64 formatted string
-      data = Buf.fromBase64Str(data);
     }
     const firstByte = data[0];
     // attempt to understand this as a binary PGP packet: https://tools.ietf.org/html/rfc4880#section-4.2

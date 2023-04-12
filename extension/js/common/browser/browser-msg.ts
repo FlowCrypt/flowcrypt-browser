@@ -7,7 +7,7 @@ import { AjaxErr } from '../api/shared/api-error.js';
 import { Buf } from '../core/buf.js';
 import { Dict, Str, UrlParams } from '../core/common.js';
 import { ArmoredKeyIdentityWithEmails, KeyUtil } from '../core/crypto/key.js';
-import { DecryptResult, DiagnoseMsgPubkeysResult, MsgUtil, PgpMsgMethod, PgpMsgTypeResult, VerifyRes } from '../core/crypto/pgp/msg-util.js';
+import { DecryptResult, DiagnoseMsgPubkeysResult, MsgUtil, PgpMsgMethod, VerifyRes } from '../core/crypto/pgp/msg-util.js';
 import { NotificationGroupType } from '../notifications.js';
 import { Catch } from '../platform/catch.js';
 import { AccountIndex, AcctStoreDict } from '../platform/store/acct-store.js';
@@ -76,7 +76,6 @@ export namespace Bm {
   export type PgpMsgDecrypt = PgpMsgMethod.Arg.Decrypt;
   export type PgpMsgDiagnoseMsgPubkeys = PgpMsgMethod.Arg.DiagnosePubkeys;
   export type PgpMsgVerifyDetached = PgpMsgMethod.Arg.VerifyDetached;
-  export type PgpMsgType = PgpMsgMethod.Arg.Type;
   export type PgpKeyBinaryToArmored = { binaryKeysData: Uint8Array };
   export type Ajax = { req: JQueryAjaxSettings; stack: string };
   export type AjaxGmailAttachmentGetChunk = { acctEmail: string; msgId: string; attachmentId: string };
@@ -100,7 +99,6 @@ export namespace Bm {
     export type PgpMsgDecrypt = DecryptResult;
     export type PgpMsgDiagnoseMsgPubkeys = DiagnoseMsgPubkeysResult;
     export type PgpMsgVerify = VerifyRes;
-    export type PgpMsgType = PgpMsgTypeResult;
     export type PgpKeyBinaryToArmored = { keys: ArmoredKeyIdentityWithEmails[] };
     export type AjaxGmailAttachmentGetChunk = { chunk: Buf };
     export type _tab_ = { tabId: string | null | undefined }; // eslint-disable-line @typescript-eslint/naming-convention
@@ -117,7 +115,6 @@ export namespace Bm {
       | PgpMsgDecrypt
       | PgpMsgDiagnoseMsgPubkeys
       | PgpMsgVerify
-      | PgpMsgType
       | InMemoryStoreGet
       | InMemoryStoreSet
       | StoreAcctGet
@@ -161,7 +158,6 @@ export namespace Bm {
     | PgpMsgDecrypt
     | PgpMsgDiagnoseMsgPubkeys
     | PgpMsgVerifyDetached
-    | PgpMsgType
     | Ajax
     | ShowAttachmentPreview
     | ReRenderRecipient
@@ -227,7 +223,6 @@ export class BrowserMsg {
         pgpMsgDecrypt: (bm: Bm.PgpMsgDecrypt) => BrowserMsg.sendAwait(undefined, 'pgpMsgDecrypt', bm, true) as Promise<Bm.Res.PgpMsgDecrypt>,
         pgpMsgVerifyDetached: (bm: Bm.PgpMsgVerifyDetached) =>
           BrowserMsg.sendAwait(undefined, 'pgpMsgVerifyDetached', bm, true) as Promise<Bm.Res.PgpMsgVerify>,
-        pgpMsgType: (bm: Bm.PgpMsgType) => BrowserMsg.sendAwait(undefined, 'pgpMsgType', bm, true) as Promise<Bm.Res.PgpMsgType>,
         pgpKeyBinaryToArmored: (bm: Bm.PgpKeyBinaryToArmored) =>
           BrowserMsg.sendAwait(undefined, 'pgpKeyBinaryToArmored', bm, true) as Promise<Bm.Res.PgpKeyBinaryToArmored>,
         saveFetchedPubkeys: (bm: Bm.SaveFetchedPubkeys) =>
@@ -330,7 +325,6 @@ export class BrowserMsg {
     BrowserMsg.bgAddListener('pgpMsgDiagnosePubkeys', MsgUtil.diagnosePubkeys);
     BrowserMsg.bgAddListener('pgpMsgDecrypt', MsgUtil.decryptMessage);
     BrowserMsg.bgAddListener('pgpMsgVerifyDetached', MsgUtil.verifyDetached);
-    BrowserMsg.bgAddListener('pgpMsgType', async (r: Bm.PgpMsgType) => MsgUtil.type(r));
     BrowserMsg.bgAddListener('saveFetchedPubkeys', saveFetchedPubkeysIfNewerThanInStorage);
     BrowserMsg.bgAddListener('pgpKeyBinaryToArmored', async (r: Bm.PgpKeyBinaryToArmored) => ({
       keys: await KeyUtil.parseAndArmorKeys(r.binaryKeysData),

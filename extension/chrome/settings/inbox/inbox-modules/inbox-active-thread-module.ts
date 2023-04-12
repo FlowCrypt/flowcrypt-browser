@@ -13,12 +13,13 @@ import { Buf } from '../../../../js/common/core/buf.js';
 import { Catch } from '../../../../js/common/platform/catch.js';
 import { InboxView } from '../inbox.js';
 import { Lang } from '../../../../js/common/lang.js';
-import { MessageRenderer } from '../../../../js/common/message-renderer.js';
+import { AttachmentBlock, MessageRenderer } from '../../../../js/common/message-renderer.js';
 import { Ui } from '../../../../js/common/browser/ui.js';
 import { ViewModule } from '../../../../js/common/view-module.js';
 import { Xss } from '../../../../js/common/platform/xss.js';
 import { Browser } from '../../../../js/common/browser/browser.js';
 import { Attachment } from '../../../../js/common/core/attachment.js';
+import { MsgBlock } from '../../../../js/common/core/msg-block';
 
 export class InboxActiveThreadModule extends ViewModule<InboxView> {
   private threadId: string | undefined;
@@ -113,8 +114,17 @@ export class InboxActiveThreadModule extends ViewModule<InboxView> {
       // todo: review the meaning of threadHasPgpBlock
       this.threadHasPgpBlock ||= blocks.some(block => ['encryptedMsg', 'publicKey', 'privateKey', 'signedMsg'].includes(block.block.type));
       // todo: take `from` from the processedMessage?
-      const { renderedXssSafe, attachmentBlocks, isOutgoing } = MessageRenderer.renderMsg(
-        { from, blocks },
+      const messageBlocks: MsgBlock[] = [];
+      const attachmentBlocks: AttachmentBlock[] = [];
+      for (const block of blocks) {
+        if (block.file && ['encryptedAttachment', 'plainAttachment'].includes(block.block.type)) {
+          attachmentBlocks.push({ block: block.block, file: block.file });
+        } else {
+          messageBlocks.push(block.block);
+        }
+      }
+      const { renderedXssSafe, isOutgoing } = MessageRenderer.renderMsg(
+        { from, blocks: messageBlocks },
         this.view.factory,
         this.view.showOriginal,
         message.id,

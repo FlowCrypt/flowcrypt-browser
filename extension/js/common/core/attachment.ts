@@ -5,7 +5,17 @@
 import { Buf } from './buf.js';
 import { Str } from './common.js';
 
-type Attachment$treatAs = 'publicKey' | 'privateKey' | 'encryptedMsg' | 'hidden' | 'signature' | 'encryptedFile' | 'plainFile' | 'inlineImage';
+export type Attachment$treatAs =
+  | 'publicKey'
+  | 'privateKey'
+  | 'encryptedMsg'
+  | 'hidden'
+  | 'signature'
+  | 'encryptedFile'
+  | 'plainFile'
+  | 'inlineImage'
+  | 'needChunk'
+  | 'maybePgp';
 type ContentTransferEncoding = '7bit' | 'quoted-printable' | 'base64';
 export type AttachmentMeta = {
   data?: Uint8Array;
@@ -101,6 +111,9 @@ export class Attachment {
     return `f_${Str.sloppyRandom(30)}@flowcrypt`;
   };
 
+  /** @deprecated attachment and pgp_block frames won't be performing this analysis
+   *
+   */
   public isPublicKey = (): boolean => {
     if (this.treatAsValue) {
       return this.treatAsValue === 'publicKey';
@@ -173,9 +186,14 @@ export class Attachment {
       return 'publicKey';
     } else if (this.name.match(/(cryptup|flowcrypt)-backup-[a-z0-9]+\.(key|asc)$/g)) {
       return 'privateKey';
-    } else if (this.name.match(/\.asc$/) && this.length < 100000 && !this.inline) {
-      return 'encryptedMsg';
     } else {
+      // && !Attachment.encryptedMsgNames.includes(this.name) -- already checked above
+      const isAmbiguousAscFile = /\.asc$/.test(this.name); // ambiguous .asc name
+      const isAmbiguousNonameFile = !this.name || this.name === 'noname'; // may not even be OpenPGP related
+      // todo: do we know length before fetching?
+      if (!this.inline && this.length < 100000 && (isAmbiguousAscFile || isAmbiguousNonameFile)) {
+        return this.hasData() ? 'maybePgp' : 'needChunk';
+      }
       return 'plainFile';
     }
   };

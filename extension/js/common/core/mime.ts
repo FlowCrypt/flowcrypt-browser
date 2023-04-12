@@ -22,12 +22,16 @@ const Iso88592 = requireIso88592();
 
 type AddressHeader = { address: string; name: string };
 type MimeContentHeader = string | AddressHeader[];
-export type MimeContent = {
+
+export type MimeContentBody = {
+  html?: string;
+  text?: string;
+};
+
+export type MimeContent = MimeContentBody & {
   attachments: Attachment[];
   rawSignedContent?: string;
   subject?: string;
-  html?: string;
-  text?: string;
 };
 
 export type MimeContentWithHeaders = MimeContent & {
@@ -60,51 +64,58 @@ export type MimeProccesedFromRawMsg = MimeProccesedMsg & {
 type SendingType = 'to' | 'cc' | 'bcc';
 
 export class Mime {
-  public static processDecoded = (decoded: MimeContent): MimeProccesedMsg => {
-    const blocksFromBody: MsgBlock[] = [];
+  public static processBody = (decoded: MimeContentBody): MsgBlock[] => {
+    const blocks: MsgBlock[] = [];
     if (decoded.text) {
       const blocksFromTextPart = MsgBlockParser.detectBlocks(Str.normalize(decoded.text)).blocks;
       // if there are some encryption-related blocks found in the text section, which we can use, and not look at the html section
       if (blocksFromTextPart.find(b => ['pkcs7', 'encryptedMsg', 'signedMsg', 'publicKey', 'privateKey'].includes(b.type))) {
-        blocksFromBody.push(...blocksFromTextPart); // because the html most likely containt the same thing, just harder to parse pgp sections cause it's html
+        blocks.push(...blocksFromTextPart); // because the html most likely containt the same thing, just harder to parse pgp sections cause it's html
       } else if (decoded.html) {
         // if no pgp blocks found in text part and there is html part, prefer html
-        blocksFromBody.push(MsgBlock.fromContent('plainHtml', decoded.html));
+        blocks.push(MsgBlock.fromContent('plainHtml', decoded.html));
       } else {
         // else if no html and just a plain text message, use that
-        blocksFromBody.push(...blocksFromTextPart);
+        blocks.push(...blocksFromTextPart);
       }
     } else if (decoded.html) {
-      blocksFromBody.push(MsgBlock.fromContent('plainHtml', decoded.html));
+      blocks.push(MsgBlock.fromContent('plainHtml', decoded.html));
     }
-    const blocks: { block: MsgBlock; file?: Attachment }[] = blocksFromBody.map(block => {
-      return { block };
-    });
+    return blocks;
+  };
+
+  public static processAttachments = (messageBlocks: MsgBlock[], decoded: MimeContent): MimeProccesedMsg => {
+    const attachmentBlocks: { block: MsgBlock; file: Attachment }[] = [];
     const signatureAttachments: Attachment[] = [];
     for (const file of decoded.attachments) {
-      const isBodyEmpty = decoded.text === '' || decoded.text === '\n';
-      const treatAs = file.treatAs(decoded.attachments, isBodyEmpty);
+      const isBodyEmpty = decoded.text === '' || decoded.text === '\n'; // todo:
+      let treatAs = file.treatAs(decoded.attachments, isBodyEmpty);
+      if (['needChunk', 'maybePgp'].includes(treatAs)) {
+        // don't want to reference MsgUtil and OpenPGP.js here, so
+        // todo: think about refactoring this
+        treatAs = 'encryptedMsg'; // publicKey?
+      }
       if (treatAs === 'encryptedMsg') {
         const armored = PgpArmor.clip(file.getData().toUtfStr());
         if (armored) {
-          blocks.push({ block: MsgBlock.fromContent('encryptedMsg', armored), file });
+          attachmentBlocks.push({ block: MsgBlock.fromContent('encryptedMsg', armored), file });
         }
       } else if (treatAs === 'signature') {
         signatureAttachments.push(file);
       } else if (treatAs === 'publicKey') {
-        blocks.push(
+        attachmentBlocks.push(
           ...MsgBlockParser.detectBlocks(file.getData().toUtfStr()).blocks.map(block => {
             return { block, file }; // todo: test when more than one
           })
         );
       } else if (treatAs === 'privateKey') {
-        blocks.push(
+        attachmentBlocks.push(
           ...MsgBlockParser.detectBlocks(file.getData().toUtfStr()).blocks.map(block => {
             return { block, file }; // todo: test when more than one
           })
         );
       } else if (treatAs === 'encryptedFile') {
-        blocks.push({
+        attachmentBlocks.push({
           // todo: fromAttachment return complete record?
           block: MsgBlock.fromAttachment('encryptedAttachment', '', {
             name: file.name,
@@ -117,7 +128,7 @@ export class Mime {
           file,
         });
       } else if (treatAs === 'plainFile') {
-        blocks.push({
+        attachmentBlocks.push({
           block: MsgBlock.fromAttachment('plainAttachment', '', {
             name: file.name,
             type: file.type,
@@ -137,7 +148,7 @@ export class Mime {
       // todo: data may not be present
       if (signatureAttachment.hasData()) {
         const signature = signatureAttachment.getData().toUtfStr();
-        for (const block of blocks) {
+        for (const block of attachmentBlocks) {
           if (block.block.type === 'plainText') {
             block.block.type = 'signedText';
             block.block.signature = signature;
@@ -146,9 +157,9 @@ export class Mime {
             block.block.signature = signature;
           }
         }
-        if (!blocks.find(block => ['plainText', 'plainHtml', 'signedMsg', 'signedHtml', 'signedText'].includes(block.block.type))) {
+        if (!attachmentBlocks.find(block => ['plainText', 'plainHtml', 'signedMsg', 'signedHtml', 'signedText'].includes(block.block.type))) {
           // signed an empty message
-          blocks.push({ block: new MsgBlock('signedMsg', '', true, signature), file: signatureAttachment });
+          attachmentBlocks.push({ block: new MsgBlock('signedMsg', '', true, signature), file: signatureAttachment });
         }
       } else {
         // debugger;
@@ -156,9 +167,19 @@ export class Mime {
       }
     }
     return {
-      blocks,
+      blocks: [
+        ...messageBlocks.map(block => {
+          return { block };
+        }),
+        ...attachmentBlocks,
+      ],
       rawSignedContent: decoded.rawSignedContent,
     };
+  };
+
+  public static processDecoded = (decoded: MimeContent): MimeProccesedMsg => {
+    const bodyBlocks = Mime.processBody(decoded);
+    return Mime.processAttachments(bodyBlocks, decoded);
   };
 
   public static process = async (mimeMsg: Uint8Array): Promise<MimeProccesedFromRawMsg> => {
