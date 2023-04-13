@@ -493,7 +493,7 @@ abstract class ControllableBase {
       } else {
         throw Error(`Unknown this.target.constructor.name: ${this.target.constructor.name}`);
       }
-      const frame = frames.find(frame => {
+      const matchingFrames = frames.filter(frame => {
         for (const fragment of urlMatchables) {
           if (frame.url().indexOf(fragment) === -1) {
             return false;
@@ -501,8 +501,10 @@ abstract class ControllableBase {
         }
         return true;
       });
-      if (frame) {
-        return new ControllableFrame(frame);
+      if (matchingFrames.length > 1) {
+        throw Error(`More than one frame found: ${urlMatchables.join(',')}`);
+      } else if (matchingFrames.length === 1) {
+        return new ControllableFrame(matchingFrames[0]);
       }
       await Util.sleep(1);
     }
