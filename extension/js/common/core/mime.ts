@@ -84,7 +84,7 @@ export class Mime {
     return blocks;
   };
 
-  public static processAttachments = (messageBlocks: MsgBlock[], decoded: MimeContent): MimeProccesedMsg => {
+  public static processAttachments = (bodyBlocks: MsgBlock[], decoded: MimeContent): MimeProccesedMsg => {
     const attachmentBlocks: { block: MsgBlock; file: Attachment }[] = [];
     const signatureAttachments: Attachment[] = [];
     for (const file of decoded.attachments) {
@@ -148,16 +148,17 @@ export class Mime {
       // todo: data may not be present
       if (signatureAttachment.hasData()) {
         const signature = signatureAttachment.getData().toUtfStr();
-        for (const block of attachmentBlocks) {
-          if (block.block.type === 'plainText') {
-            block.block.type = 'signedText';
-            block.block.signature = signature;
-          } else if (block.block.type === 'plainHtml') {
-            block.block.type = 'signedHtml';
-            block.block.signature = signature;
+        const blocksToRevisit = [...bodyBlocks, ...attachmentBlocks.map(x => x.block)];
+        for (const block of blocksToRevisit) {
+          if (block.type === 'plainText') {
+            block.type = 'signedText';
+            block.signature = signature;
+          } else if (block.type === 'plainHtml') {
+            block.type = 'signedHtml';
+            block.signature = signature;
           }
         }
-        if (!attachmentBlocks.find(block => ['plainText', 'plainHtml', 'signedMsg', 'signedHtml', 'signedText'].includes(block.block.type))) {
+        if (!blocksToRevisit.find(block => ['plainText', 'plainHtml', 'signedMsg', 'signedHtml', 'signedText'].includes(block.type))) {
           // signed an empty message
           attachmentBlocks.push({ block: new MsgBlock('signedMsg', '', true, signature), file: signatureAttachment });
         }
@@ -168,7 +169,7 @@ export class Mime {
     }
     return {
       blocks: [
-        ...messageBlocks.map(block => {
+        ...bodyBlocks.map(block => {
           return { block };
         }),
         ...attachmentBlocks,
