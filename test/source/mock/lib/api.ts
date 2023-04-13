@@ -5,6 +5,8 @@ import * as http from 'http';
 import { Util } from '../../util';
 import { readFileSync } from 'fs';
 import { AttesterConfig, getMockAttesterEndpoints } from '../attester/attester-endpoints';
+import { HandlersRequestDefinition } from '../all-apis-mock';
+import { KeysOpenPGPOrgConfig, getMockKeysOpenPGPOrgEndpoints } from '../keys-openpgp-org/keys-openpgp-org-endpoints';
 
 export class HttpAuthErr extends Error {}
 export class HttpClientErr extends Error {
@@ -30,9 +32,27 @@ export enum Status {
 export type RequestHandler<REQ, RES> = (parsedReqBody: REQ, req: http.IncomingMessage) => Promise<RES>;
 export type Handlers<REQ, RES> = { [request: string]: RequestHandler<REQ, RES> };
 
+interface ConfigurationProviderInterface<REQ, RES> {
+  config: { attester?: AttesterConfig; keysOpenPgp?: KeysOpenPGPOrgConfig };
+  getHandlers(): Handlers<REQ, RES>;
+}
+
+export class ConfigurationProvider implements ConfigurationProviderInterface<HandlersRequestDefinition, unknown> {
+  public constructor(public config: { attester?: AttesterConfig; keysOpenPgp?: KeysOpenPGPOrgConfig }) {}
+
+  public getHandlers(): Handlers<HandlersRequestDefinition, unknown> {
+    let handlers: Handlers<HandlersRequestDefinition, unknown> = {};
+    if (this.config.attester) {
+      handlers = { ...handlers, ...getMockAttesterEndpoints(this.config.attester) };
+    }
+    handlers = { ...handlers, ...getMockKeysOpenPGPOrgEndpoints(this.config.keysOpenPgp) };
+    return handlers;
+  }
+}
+
 export class Api<REQ, RES> {
   public server: https.Server;
-  public attesterConfig: AttesterConfig;
+  public configProvider: ConfigurationProviderInterface<REQ, RES> | undefined;
   protected apiName: string;
   protected maxRequestSizeMb = 0;
   protected maxRequestSizeBytes = 0;
@@ -146,9 +166,9 @@ export class Api<REQ, RES> {
     if (!req.url) {
       throw new Error('no url');
     }
-    const attesterHandler = getMockAttesterEndpoints(this.attesterConfig);
+    const configHandlers = this.configProvider?.getHandlers() ?? {};
     const allHandlers: Handlers<REQ, RES> = {
-      ...(attesterHandler as Handlers<REQ, RES>),
+      ...configHandlers,
       ...this.handlers,
     };
     if (allHandlers[req.url]) {
