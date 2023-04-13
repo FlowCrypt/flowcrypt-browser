@@ -224,16 +224,13 @@ export class GoogleData {
       const payload = (await GoogleData.withInitializedData(acct)).getMessage(msgId)!.payload!;
       const fromHeader = payload.headers!.find(header => header.name === 'From')!;
       const fromAddress = fromHeader.value!;
-      let htmlData: string;
-      const htmlPart = payload.parts!.find(part => part.mimeType === 'text/html');
-      if (htmlPart) {
-        htmlData = Buf.fromBase64Str(htmlPart.body!.data!).toUtfStr();
-      } else {
-        const textPart = payload.parts!.find(part => part.mimeType === 'text/plain')!;
-        const textData = Buf.fromBase64Str(textPart.body!.data!).toUtfStr();
-        htmlData = Xss.escape(textData);
+      let htmlData = GoogleData.getHtmlDataToDisplay(payload.parts!);
+      if (typeof htmlData === 'undefined') {
+        // search inside multipart/alternative
+        const alternativePart = payload.parts!.find(part => part.mimeType === 'multipart/alternative');
+        htmlData = GoogleData.getHtmlDataToDisplay(alternativePart!.parts!);
       }
-      const otherParts = payload.parts!.filter(part => !['text/plain', 'text/html'].includes(part.mimeType!));
+      const otherParts = payload.parts!.filter(part => part.filename);
       if (otherParts.length) {
         attachmentsBlock =
           `<div class="ho"><span class="aVW"><span>${otherParts.length}</span> Attachments</span></div>
@@ -290,6 +287,20 @@ export class GoogleData {
           .filter(h => !!h)
           .join(',')
     );
+  };
+
+  private static getHtmlDataToDisplay = (parts: GmailMsg$payload$part[]): string | undefined => {
+    const htmlPart = parts.find(part => part.mimeType === 'text/html');
+    if (htmlPart) {
+      return Buf.fromBase64Str(htmlPart.body!.data!).toUtfStr();
+    } else {
+      const textPart = parts.find(part => part.mimeType === 'text/plain');
+      if (typeof textPart?.body?.data === 'undefined') {
+        return undefined;
+      }
+      const textData = Buf.fromBase64Str(textPart.body.data).toUtfStr();
+      return Xss.escape(textData);
+    }
   };
 
   public storeSentMessage = (parseResult: ParseMsgResult, id: string): string => {
