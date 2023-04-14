@@ -26,6 +26,7 @@ import { mockBackendData } from '../mock/backend/backend-endpoints';
 import { ClientConfiguration, keyManagerAutogenRules } from '../mock/backend/backend-data';
 import { ConfigurationProvider, HttpClientErr, Status } from '../mock/lib/api';
 import { somePubkey, testMatchPubKey } from '../mock/attester/attester-key-constants';
+import { emailKeyIndex } from '../core/common';
 
 export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: TestWithBrowser) => {
   if (testVariant !== 'CONSUMER-LIVE-GMAIL') {
@@ -1301,13 +1302,11 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         const port = t.urls?.port;
         const domain = 'settings.flowcrypt.test';
         const acct = `test-update@${domain}`;
+        const rulesKey = `cryptup_${emailKeyIndex(acct, 'rules')}`;
         mockBackendData.clientConfigurationForDomain[domain] = keyManagerAutogenRules(`${t.urls?.port}`);
         const setupPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
         await SetupPageRecipe.autoSetupWithEKM(setupPage);
-        const { cryptup_testupdatesettingsflowcrypttest_rules: rules1 } = await setupPage.getFromLocalStorage([
-          'cryptup_testupdatesettingsflowcrypttest_rules',
-        ]);
-        const clientConfiguration1 = rules1 as ClientConfiguration;
+        const clientConfiguration1 = (await setupPage.getFromLocalStorage([rulesKey]))[rulesKey] as ClientConfiguration;
         expect(clientConfiguration1.flags).to.eql([
           'NO_PRV_BACKUP',
           'ENFORCE_ATTESTER_SUBMIT',
@@ -1332,10 +1331,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         // Ensure previous client configuration remains same
         const settingsPage = await browser.newExtensionSettingsPage(t, acct);
         await PageRecipe.waitForToastToAppearAndDisappear(settingsPage, errorMsg);
-        const { cryptup_testupdatesettingsflowcrypttest_rules: rules2 } = await settingsPage.getFromLocalStorage([
-          'cryptup_testupdatesettingsflowcrypttest_rules',
-        ]);
-        const clientConfiguration2 = rules2 as ClientConfiguration;
+        const clientConfiguration2 = (await settingsPage.getFromLocalStorage([rulesKey]))[rulesKey] as ClientConfiguration;
         expect(clientConfiguration2.flags).to.eql([
           'NO_PRV_BACKUP',
           'ENFORCE_ATTESTER_SUBMIT',
@@ -1352,8 +1348,9 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       'settings - client configuration gets updated on settings and content script reloads',
       testWithBrowser(undefined, async (t, browser) => {
         const port = t.urls?.port;
-        const domain = 'settings.flowcrypt.test';
-        const acct = 'settings@settings.flowcrypt.test';
+        const domain = 'test1.settings.flowcrypt.test';
+        const acct = `settings@${domain}`;
+        const rulesKey = `cryptup_${emailKeyIndex(acct, 'rules')}`;
         /* eslint-disable @typescript-eslint/naming-convention */
         // set up the client configuration returned for the account
         mockBackendData.clientConfigurationForDomain[domain] = {
@@ -1368,8 +1365,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         /* eslint-enable @typescript-eslint/naming-convention */
         const setupPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
         await SetupPageRecipe.autoSetupWithEKM(setupPage);
-        const { cryptup_settingssettingsflowcrypttest_rules: rules1 } = await setupPage.getFromLocalStorage(['cryptup_settingssettingsflowcrypttest_rules']);
-        const clientConfiguration1 = rules1 as ClientConfiguration;
+        const clientConfiguration1 = (await setupPage.getFromLocalStorage([rulesKey]))[rulesKey] as ClientConfiguration;
         expect(clientConfiguration1.flags).to.eql([
           'NO_PRV_BACKUP',
           'ENFORCE_ATTESTER_SUBMIT',
@@ -1398,9 +1394,8 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         /* eslint-enable @typescript-eslint/naming-convention */
         // open the settings page
         const settingsPage = await browser.newExtensionSettingsPage(t, acct);
-        const { cryptup_settingssettingsflowcrypttest_rules: rules2 } = await settingsPage.getFromLocalStorage(['cryptup_settingssettingsflowcrypttest_rules']);
+        const clientConfiguration2 = (await settingsPage.getFromLocalStorage([rulesKey]))[rulesKey] as ClientConfiguration;
         // check that the configuration in the storage has been updated
-        const clientConfiguration2 = rules2 as ClientConfiguration;
         expect(clientConfiguration2.flags).to.eql(['NO_ATTESTER_SUBMIT', 'HIDE_ARMOR_META', 'DEFAULT_REMEMBER_PASS_PHRASE']);
         expect(clientConfiguration2.custom_keyserver_url).to.equal(`https://localhost:${port}`);
         expect(clientConfiguration2.key_manager_url).to.be.an.undefined;
@@ -1426,9 +1421,8 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         let gmailPage = await browser.newMockGmailPage(t, extraAuthHeaders);
         await Util.sleep(3);
         // read the local storage from via the extension's own page (settings)
-        const { cryptup_settingssettingsflowcrypttest_rules: rules3 } = await settingsPage.getFromLocalStorage(['cryptup_settingssettingsflowcrypttest_rules']);
+        const clientConfiguration3 = (await settingsPage.getFromLocalStorage([rulesKey]))[rulesKey] as ClientConfiguration;
         // check that the configuration in the storage has been updated
-        const clientConfiguration3 = rules3 as ClientConfiguration;
         expect(clientConfiguration3.flags).to.eql([
           'NO_PRV_BACKUP',
           'ENFORCE_ATTESTER_SUBMIT',
@@ -1449,13 +1443,12 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         await PageRecipe.waitForToastToAppearAndDisappear(
           gmailPage,
           'Failed to update FlowCrypt Client Configuration: ' +
-            `BrowserMsg(ajax) Bad Request: 400 when GET-ing https://localhost:${port}/shared-tenant-fes/api/v1/client-configuration?domain=settings.flowcrypt.test (no body)`
+            `BrowserMsg(ajax) Bad Request: 400 when GET-ing https://localhost:${port}/shared-tenant-fes/api/v1/client-configuration?domain=${domain} (no body)`
         );
         await gmailPage.close();
         // check that the configuration hasn't changed
-        const { cryptup_settingssettingsflowcrypttest_rules: rules4 } = await settingsPage.getFromLocalStorage(['cryptup_settingssettingsflowcrypttest_rules']);
+        const clientConfiguration4 = (await settingsPage.getFromLocalStorage([rulesKey]))[rulesKey] as ClientConfiguration;
         // check that the configuration in the storage has been updated
-        const clientConfiguration4 = rules4 as ClientConfiguration;
         expect(clientConfiguration4.flags).to.eql([
           'NO_PRV_BACKUP',
           'ENFORCE_ATTESTER_SUBMIT',
