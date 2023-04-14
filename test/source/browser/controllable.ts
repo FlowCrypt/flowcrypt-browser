@@ -485,22 +485,8 @@ abstract class ControllableBase {
     }
     let passes = Math.max(2, Math.round(timeout)); // 1 second per pass, 2 pass minimum
     while (passes--) {
-      let frames: Frame[];
-      if (this.target.constructor.name.endsWith('Page')) {
-        frames = (this.target as Page).frames();
-      } else if (this.target.constructor.name === 'Frame') {
-        frames = (this.target as Frame).childFrames();
-      } else {
-        throw Error(`Unknown this.target.constructor.name: ${this.target.constructor.name}`);
-      }
-      const matchingFrames = frames.filter(frame => {
-        for (const fragment of urlMatchables) {
-          if (frame.url().indexOf(fragment) === -1) {
-            return false;
-          }
-        }
-        return true;
-      });
+      const frames = 'frames' in this.target ? this.target.frames() : this.target.childFrames();
+      const matchingFrames = frames.filter(frame => urlMatchables.every(fragment => frame.url().includes(fragment)));
       if (matchingFrames.length > 1) {
         throw Error(`More than one frame found: ${urlMatchables.join(',')}`);
       } else if (matchingFrames.length === 1) {
