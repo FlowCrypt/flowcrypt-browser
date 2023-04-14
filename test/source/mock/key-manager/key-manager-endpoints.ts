@@ -283,7 +283,7 @@ export const mockKeyManagerEndpoints: HandlersDefinition = {
       if (acctEmail === 'settings@key-manager-autogen.flowcrypt.test') {
         return { privateKeys: [{ decryptedPrivateKey: testConstants.existingPrv }] };
       }
-      if (acctEmail === 'settings@settings.flowcrypt.test') {
+      if (acctEmail === 'settings@test1.settings.flowcrypt.test') {
         return { privateKeys: [{ decryptedPrivateKey: testConstants.existingPrv }] };
       }
       if (acctEmail === 'test-update@settings.flowcrypt.test') {
