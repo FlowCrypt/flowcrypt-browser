@@ -1702,8 +1702,11 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         expect(await inboxPage.hasClass('.secure_compose_window[data-order="1"]', 'previous_active')).to.be.false;
         expect(await inboxPage.hasClass('.secure_compose_window[data-order="2"]', 'previous_active')).to.be.true;
         expect(await inboxPage.hasClass('.secure_compose_window[data-order="3"]', 'previous_active')).to.be.false;
+        const framesUrls = await inboxPage.getFramesUrls(['compose.htm']);
+        expect(framesUrls.length).to.equal(3);
         // focus the 1st one
-        const firstComposeFrame = await inboxPage.getFrame(['compose.htm']);
+        const firstFrameId = framesUrls[0].match(/frameId=.*?&/s)![0];
+        const firstComposeFrame = await inboxPage.getFrame(['compose.htm', firstFrameId]);
         await inboxPage.waitAndFocus('iframe');
         await firstComposeFrame.waitAndFocus('@input-body');
         // make sure the 1st compose window is active, and the 3rd is previous_active
@@ -1790,7 +1793,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
           t,
           `chrome/settings/inbox/inbox.htm?acctEmail=flowcrypt.compatibility@gmail.com&threadId=162ec58d70fe04ef`
         );
-        const attachment = await inboxPage.getFrame(['attachment.htm']);
+        const attachment = await inboxPage.getFrame(['attachment.htm', 'name=Screenshot_20180422_125217.png.asc']);
         await attachment.waitAndClick('@download-attachment');
         await attachment.waitAndClick('@decrypt-error-details');
         const decryptErrorDetails = await inboxPage.getFrame(['attachment_preview.htm']);
