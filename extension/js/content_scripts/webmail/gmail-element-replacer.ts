@@ -580,7 +580,9 @@ export class GmailElementReplacer implements WebmailElementReplacer {
       if (treatAs !== 'plainFile') {
         this.hideAttachment(attachmentSel, attachmentsContainerInner);
       }
-      if (treatAs === 'encryptedFile') {
+      if (treatAs === 'hidden') {
+        return 'hidden';
+      } else if (treatAs === 'encryptedFile') {
         // actual encrypted attachment - show it
         attachmentsContainerInner.prepend(this.factory.embeddedAttachment(a, true)); // xss-safe-factory
         return 'replaced'; // native should be hidden, custom should appear instead
