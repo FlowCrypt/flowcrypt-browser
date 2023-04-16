@@ -186,7 +186,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
           signature: 'not signed',
         });
         await pageHasSecureReplyContainer(t, browser, gmailPage);
-        expect(await gmailPage.isElementVisible('div.aQH')).to.equal(false); // original attachment container(s) should be hidden
+        expect(await gmailPage.isElementVisible('.aQH')).to.equal(false); // original attachment container(s) should be hidden
       })
     );
 
@@ -212,7 +212,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
         await testMinimumElementHeight(gmailPage, '.pgp_block.publicKey', 120);
         const pubkeyPage = await gmailPage.getFrame(['/chrome/elements/pgp_pubkey.htm']);
         await pubkeyPage.waitForContent('@container-pgp-pubkey', 'Fingerprint: 50B7 A032 B5E1 FBAB 24BA B205 B362 45FD AC2F BF3D');
-        expect(await gmailPage.isElementVisible('div.aQH')).to.equal(false); // original attachment container(s) should be hidden
+        expect(await gmailPage.isElementVisible('.aQH')).to.equal(false); // original attachment container(s) should be hidden
       })
     );
 
@@ -238,7 +238,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
         await pageHasSecureReplyContainer(t, browser, gmailPage);
         const pubkeyPage = await gmailPage.getFrame(['/chrome/elements/pgp_pubkey.htm']);
         await pubkeyPage.waitForContent('@container-pgp-pubkey', 'Fingerprint: 50B7 A032 B5E1 FBAB 24BA B205 B362 45FD AC2F BF3D');
-        expect(await gmailPage.isElementVisible('div.aQH')).to.equal(false); // original attachment container(s) should be hidden
+        expect(await gmailPage.isElementVisible('.aQH')).to.equal(false); // original attachment container(s) should be hidden
       })
     );
 
@@ -256,7 +256,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
         await pageHasSecureReplyContainer(t, browser, gmailPage);
         const pubkeyPage = await gmailPage.getFrame(['/chrome/elements/pgp_pubkey.htm']);
         await pubkeyPage.waitForContent('@container-pgp-pubkey', 'Fingerprint: 50B7 A032 B5E1 FBAB 24BA B205 B362 45FD AC2F BF3D');
-        expect(await gmailPage.isElementVisible('div.aQH')).to.equal(false); // original attachment container(s) should be hidden
+        expect(await gmailPage.isElementVisible('.aQH')).to.equal(false); // original attachment container(s) should be hidden
       })
     );
 
@@ -446,6 +446,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
         await gmailPage.waitAll('iframe');
         expect(await gmailPage.isElementPresent('@container-attachments')).to.equal(false);
         await gmailPage.waitAll(['.aZi'], { visible: false });
+        expect(await gmailPage.isElementVisible('.aQH')).to.equal(false); // original attachment container(s) should be hidden
         await gmailPage.close();
       })
     );
@@ -489,7 +490,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
         await gotoGmailPage(gmailPage, '/FMfcgzGrbHrBdFGBXqpFZvSkcQpKkvrM');
         await Util.sleep(5);
         await gmailPage.waitForContent('.a3s', 'Plain message');
-        expect(await gmailPage.isElementPresent('div.aQH')).to.equal(true); // gmail attachment container
+        expect(await gmailPage.isElementPresent('.aQH')).to.equal(true); // gmail attachment container
         // expect no pgp blocks
         const urls = await gmailPage.getFramesUrls(['/chrome/elements/pgp_block.htm']);
         expect(urls.length).to.equal(0);
