@@ -269,7 +269,19 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
     let gmailQuery = `is:sent ${this.GMAIL_USELESS_CONTACTS_FILTER} `;
     const needles: string[] = [];
     if (userQuery) {
-      needles.push(...userQuery.split(/[ .]/g).filter(v => !['com', 'org', 'net'].includes(v)));
+      const needlesWithoutSpaces = userQuery.split(/ +/g);
+      needles.push(
+        ...needlesWithoutSpaces
+          .map(bigNeedle => {
+            const email = Str.parseEmail(bigNeedle);
+            if (email?.email) {
+              const match = email.email.match(/^(.*@.+)\.[^@]+?$/);
+              if (match) bigNeedle = match[1]; // omit the top-level domain
+            }
+            return bigNeedle.split('.').filter(v => !['com', 'org', 'net'].includes(v));
+          })
+          .reduce((a, b) => [...a, ...b])
+      );
       if (!needles.includes(userQuery)) {
         needles.push(userQuery);
       }
