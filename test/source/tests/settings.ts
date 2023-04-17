@@ -375,11 +375,10 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
     test(
       'settings - remove public keys from contact',
       testWithBrowser(async (t, browser) => {
-        const acct = 'flowcrypt.compatibility@gmail.com';
         t.mockApi!.configProvider = new ConfigurationProvider({
           attester: {
             pubkeyLookup: {
-              [acct]: {
+              'flowcrypt.compatibility@gmail.com': {
                 pubkey: somePubkey,
               },
             },
@@ -388,6 +387,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
         const dbPage = await browser.newExtensionPage(t, 'chrome/dev/ci_unit_test.htm');
         const foundKeys = await dbPage.page.evaluate(async () => {
+          const acct = 'flowcrypt.compatibility@gmail.com';
           /* eslint-disable @typescript-eslint/no-explicit-any */
           const db = await (window as any).ContactStore.dbOpen();
           // first, unlink pubkeys from `flowcrypt.compatibility@gmail.com',
@@ -583,6 +583,11 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
     test(
       'settings - change passphrase - current in local storage',
       testWithBrowser(async (t, browser) => {
+        t.mockApi!.configProvider = new ConfigurationProvider({
+          attester: {
+            pubkeyLookup: {},
+          },
+        });
         const { acctEmail, settingsPage } = await BrowserRecipe.setUpFcPpChangeAcct(t, browser);
         const newPp = `temp ci test pp: ${Util.lousyRandom()}`;
         await SettingsPageRecipe.changePassphrase(settingsPage, undefined, newPp); // change pp and test
@@ -596,6 +601,11 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
     test(
       'settings - change passphrase - current in session known',
       testWithBrowser(async (t, browser) => {
+        t.mockApi!.configProvider = new ConfigurationProvider({
+          attester: {
+            pubkeyLookup: {},
+          },
+        });
         const { acctEmail, passphrase, settingsPage } = await BrowserRecipe.setUpFcPpChangeAcct(t, browser);
         const newPp = `temp ci test pp: ${Util.lousyRandom()}`;
         await SettingsPageRecipe.forgetAllPassPhrasesInStorage(settingsPage, passphrase);

@@ -87,11 +87,11 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
     test(
       'compose - check for sender [flowcryptcompatibility@gmail.com] (alias) from a password-protected email',
       testWithBrowser(async (t, browser) => {
-        const senderEmail = 'flowcryptcompatibility@gmail.com';
+        const senderEmail = 'flowcrypt.compatibility@gmail.com';
         t.mockApi!.configProvider = new ConfigurationProvider({
           attester: {
             pubkeyLookup: {
-              [senderEmail]: {
+              'flowcrypt.compatibility@gmail.com': {
                 pubkey: somePubkey,
               },
             },
@@ -233,6 +233,9 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
           attester: {
             pubkeyLookup: {
               [acctEmail]: {
+                pubkey: somePubkey,
+              },
+              'human@flowcrypt.com': {
                 pubkey: somePubkey,
               },
             },
@@ -473,6 +476,9 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
               'ci.tests.gmail@flowcrypt.test': {
                 pubkey: somePubkey,
               },
+              'human@flowcrypt.com': {
+                pubkey: somePubkey,
+              },
             },
           },
         });
@@ -532,6 +538,9 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
           attester: {
             pubkeyLookup: {
               [acct]: {
+                pubkey: somePubkey,
+              },
+              'human@flowcrypt.com': {
                 pubkey: somePubkey,
               },
             },
@@ -2514,6 +2523,9 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
               [acct]: {
                 pubkey: somePubkey,
               },
+              'human@flowcrypt.com': {
+                pubkey: somePubkey,
+              },
             },
           },
         });
@@ -2748,7 +2760,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
     test(
       'timeouts when searching WKD - used to never time out',
       testWithBrowser(async (t, browser) => {
-        const acct = 'flowcrypt.compatibility@gmail.com';
+        const acct = 'ci.tests.gmail@flowcrypt.test';
         t.mockApi!.configProvider = new ConfigurationProvider({
           attester: {
             pubkeyLookup: {
@@ -2758,7 +2770,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
             },
           },
         });
-        await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
+        await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
         const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
         await ComposePageRecipe.fillMsg(composePage, { to: 'somewhere@mac.com' }, 'should show no pubkey within a few seconds');
         await composePage.waitForContent('.email_address.no_pgp', 'somewhere@mac.com');
@@ -2773,6 +2785,11 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
     test(
       'send signed S/MIME message',
       testWithBrowser(async (t, browser) => {
+        t.mockApi!.configProvider = new ConfigurationProvider({
+          attester: {
+            pubkeyLookup: {},
+          },
+        });
         const acctEmail = 'flowcrypt.test.key.imported@gmail.com';
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
         await SetupPageRecipe.setupSmimeAccount(settingsPage, {
@@ -3966,7 +3983,11 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       testWithBrowser(async (t, browser) => {
         t.mockApi!.configProvider = new ConfigurationProvider({
           attester: {
-            pubkeyLookup: {},
+            pubkeyLookup: {
+              'flowcrypt.compatibility@gmail.com': {
+                pubkey: somePubkey,
+              },
+            },
           },
         });
         const acct = `user3@standardsubdomainfes.localhost:${t.urls?.port}`; // added port to trick extension into calling the mock

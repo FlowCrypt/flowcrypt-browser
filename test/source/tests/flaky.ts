@@ -101,11 +101,6 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
             },
           },
         });
-        t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: {
-            pubkeyLookup: {},
-          },
-        });
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
         await SetupPageRecipe.createKey(
           settingsPage,
