@@ -35,7 +35,7 @@ export const defineUnitBrowserTests = (testVariant: TestVariant, testWithBrowser
                 },
               },
             });
-            await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
+            await BrowserRecipe.setUpCommonAcct(t, browser, acct);
           }
           const hostPage = await browser.newExtensionPage(t, 'chrome/dev/ci_unit_test.htm');
           // update host page h1

@@ -124,15 +124,6 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       'mail.google.com - send rich-text encrypted message',
       testWithBrowser(async (t, browser) => {
         const acctEmail = 'ci.tests.gmail@flowcrypt.dev';
-        t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: {
-            pubkeyLookup: {
-              [acctEmail]: {
-                pubkey: somePubkey,
-              },
-            },
-          },
-        });
         await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
         const gmailPage = await BrowserRecipe.openGmailPageAndVerifyComposeBtnPresent(t, browser);
         const composePage = await GmailPageRecipe.openSecureCompose(t, gmailPage, browser);
@@ -153,16 +144,6 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
     test(
       'mail.google.com - decrypt message in offline mode',
       testWithBrowser(async (t, browser) => {
-        const acctEmail = 'ci.tests.gmail@flowcrypt.dev';
-        t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: {
-            pubkeyLookup: {
-              [acctEmail]: {
-                pubkey: somePubkey,
-              },
-            },
-          },
-        });
         await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
         const gmailPage = await openGmailPage(t, browser);
         /*
@@ -188,16 +169,6 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
     test(
       'mail.google.com - rendering attachmnents',
       testWithBrowser(async (t, browser) => {
-        const acctEmail = 'ci.tests.gmail@flowcrypt.dev';
-        t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: {
-            pubkeyLookup: {
-              [acctEmail]: {
-                pubkey: somePubkey,
-              },
-            },
-          },
-        });
         await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
         const gmailPage = await openGmailPage(t, browser);
         await gotoGmailPage(gmailPage, '/FMfcgzGkbDXBWBWBfVKHssLtMqvDQSWN');
@@ -210,16 +181,6 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
     test(
       'mail.google.com - msg.asc message content renders',
       testWithBrowser(async (t, browser) => {
-        const acctEmail = 'ci.tests.gmail@flowcrypt.dev';
-        t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: {
-            pubkeyLookup: {
-              [acctEmail]: {
-                pubkey: somePubkey,
-              },
-            },
-          },
-        });
         await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
         const gmailPage = await openGmailPage(t, browser);
         await gotoGmailPage(gmailPage, '/QgrcJHrtqfgLGKqwChjKsHKzZQpwRHMBqpG');
@@ -239,16 +200,6 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
     test(
       'mail.google.com - Thunderbird signature [html] is recognized',
       testWithBrowser(async (t, browser) => {
-        const acctEmail = 'ci.tests.gmail@flowcrypt.dev';
-        t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: {
-            pubkeyLookup: {
-              [acctEmail]: {
-                pubkey: somePubkey,
-              },
-            },
-          },
-        });
         await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
         const gmailPage = await openGmailPage(t, browser);
         await gotoGmailPage(gmailPage, '/FMfcgzGkbDZKPJrNLplXZhKfWwtgjrXt');
@@ -276,16 +227,6 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
     test(
       'mail.google.com - Thunderbird signature [plain] is recognized + correct height',
       testWithBrowser(async (t, browser) => {
-        const acctEmail = 'ci.tests.gmail@flowcrypt.dev';
-        t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: {
-            pubkeyLookup: {
-              [acctEmail]: {
-                pubkey: somePubkey,
-              },
-            },
-          },
-        });
         await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
         const gmailPage = await openGmailPage(t, browser);
         await gotoGmailPage(gmailPage, '/FMfcgzGkbDZKPKzSnGtGKZrPZSbTBNnB');
@@ -313,16 +254,6 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
     test(
       'mail.google.com - pubkey gets rendered with new signed and encrypted Thunderbird signature',
       testWithBrowser(async (t, browser) => {
-        const acctEmail = 'ci.tests.gmail@flowcrypt.dev';
-        t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: {
-            pubkeyLookup: {
-              [acctEmail]: {
-                pubkey: somePubkey,
-              },
-            },
-          },
-        });
         await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
         const gmailPage = await openGmailPage(t, browser);
         await gotoGmailPage(gmailPage, '/FMfcgzGkbDZKPLBqWFzbgWqCrplTQdNz');
@@ -346,16 +277,6 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
     test(
       'mail.google.com - saving and rendering compose drafts when offline',
       testWithBrowser(async (t, browser) => {
-        const acctEmail = 'ci.tests.gmail@flowcrypt.dev';
-        t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: {
-            pubkeyLookup: {
-              [acctEmail]: {
-                pubkey: somePubkey,
-              },
-            },
-          },
-        });
         await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
         const gmailPage = await openGmailPage(t, browser);
         // create compose draft
@@ -385,16 +306,6 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
     test(
       'mail.google.com - secure reply btn, reply draft',
       testWithBrowser(async (t, browser) => {
-        const acctEmail = 'ci.tests.gmail@flowcrypt.dev';
-        t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: {
-            pubkeyLookup: {
-              [acctEmail]: {
-                pubkey: somePubkey,
-              },
-            },
-          },
-        });
         await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
         const gmailPage = await openGmailPage(t, browser);
         await gotoGmailPage(gmailPage, '/FMfcgzGpGnLZzLxNpWchTnNfxKkNzBSD'); // to go encrypted convo
@@ -426,16 +337,6 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
     test(
       'mail.google.com - multiple compose windows, saving/opening compose draft',
       testWithBrowser(async (t, browser) => {
-        const acctEmail = 'ci.tests.gmail@flowcrypt.dev';
-        t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: {
-            pubkeyLookup: {
-              [acctEmail]: {
-                pubkey: somePubkey,
-              },
-            },
-          },
-        });
         await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
         const gmailPage = await openGmailPage(t, browser);
         // create compose draft
@@ -461,16 +362,6 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
     test(
       'mail.google.com - plain message contains smart replies',
       testWithBrowser(async (t, browser) => {
-        const acctEmail = 'ci.tests.gmail@flowcrypt.dev';
-        t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: {
-            pubkeyLookup: {
-              [acctEmail]: {
-                pubkey: somePubkey,
-              },
-            },
-          },
-        });
         await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
         const gmailPage = await openGmailPage(t, browser);
         await Util.sleep(1);
@@ -482,16 +373,6 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
     test(
       'mail.google.com - plain reply to encrypted and signed messages',
       testWithBrowser(async (t, browser) => {
-        const acctEmail = 'ci.tests.gmail@flowcrypt.dev';
-        t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: {
-            pubkeyLookup: {
-              [acctEmail]: {
-                pubkey: somePubkey,
-              },
-            },
-          },
-        });
         await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
         const gmailPage = await openGmailPage(t, browser);
         await gotoGmailPage(gmailPage, '/FMfcgzGkbDRNgcQxLmkhBCKVSFwkfdvV'); // plain convo
@@ -518,16 +399,6 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
     test(
       'mail.google.com - switch to encrypted reply for middle message',
       testWithBrowser(async (t, browser) => {
-        const acctEmail = 'ci.tests.gmail@flowcrypt.dev';
-        t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: {
-            pubkeyLookup: {
-              [acctEmail]: {
-                pubkey: somePubkey,
-              },
-            },
-          },
-        });
         await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
         const gmailPage = await openGmailPage(t, browser);
         await gotoGmailPage(gmailPage, '/FMfcgzGqRGfPBbNLWvfPvDbxnHBwkdGf'); // plain convo
@@ -548,16 +419,6 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
     test(
       'mail.google.com - plain reply with dot menu',
       testWithBrowser(async (t, browser) => {
-        const acctEmail = 'ci.tests.gmail@flowcrypt.dev';
-        t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: {
-            pubkeyLookup: {
-              [acctEmail]: {
-                pubkey: somePubkey,
-              },
-            },
-          },
-        });
         await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
         const gmailPage = await openGmailPage(t, browser);
         await gotoGmailPage(gmailPage, '/FMfcgzGkbDRNgcQxLmkhBCKVSFwkfdvV'); // plain convo
@@ -582,16 +443,6 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
     test(
       'mail.google.com - plain reply draft',
       testWithBrowser(async (t, browser) => {
-        const acctEmail = 'ci.tests.gmail@flowcrypt.dev';
-        t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: {
-            pubkeyLookup: {
-              [acctEmail]: {
-                pubkey: somePubkey,
-              },
-            },
-          },
-        });
         await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
         const gmailPage = await openGmailPage(t, browser);
         await gotoGmailPage(gmailPage, '/FMfcgzGpGnLZzLxNpWchTnNfxKkNzBSD'); // go to encrypted convo
@@ -631,16 +482,6 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
     test(
       `mail.google.com - simple attachments triggering processAttachments() keep "download all" button visible`,
       testWithBrowser(async (t, browser) => {
-        const acctEmail = 'ci.tests.gmail@flowcrypt.dev';
-        t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: {
-            pubkeyLookup: {
-              [acctEmail]: {
-                pubkey: somePubkey,
-              },
-            },
-          },
-        });
         await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
         const gmailPage = await openGmailPage(t, browser);
         await gotoGmailPage(gmailPage, '/KtbxLvHkSWwbVHxgCbWNvXVKGjFgqMbGQq');
@@ -674,16 +515,6 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
     test(
       `mail.google.com - render plain text for "message" attachment (which has plain text)`,
       testWithBrowser(async (t, browser) => {
-        const acctEmail = 'ci.tests.gmail@flowcrypt.dev';
-        t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: {
-            pubkeyLookup: {
-              [acctEmail]: {
-                pubkey: somePubkey,
-              },
-            },
-          },
-        });
         await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
         const gmailPage = await openGmailPage(t, browser);
         await gotoGmailPage(gmailPage, '/FMfcgzGrbHrBdFGBXqpFZvSkcQpKkvrM');
@@ -699,16 +530,6 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
     test(
       'mail.google.com - pubkey file gets rendered',
       testWithBrowser(async (t, browser) => {
-        const acctEmail = 'ci.tests.gmail@flowcrypt.dev';
-        t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: {
-            pubkeyLookup: {
-              [acctEmail]: {
-                pubkey: somePubkey,
-              },
-            },
-          },
-        });
         await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
         const gmailPage = await openGmailPage(t, browser);
         await gotoGmailPage(gmailPage, '/FMfcgzGkbDXBWCgTcMJlmBtfNxrbzTTn');
@@ -723,15 +544,6 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       'can lookup public key from WKD directly',
       testWithBrowser(async (t, browser) => {
         const acctEmail = 'ci.tests.gmail@flowcrypt.dev';
-        t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: {
-            pubkeyLookup: {
-              [acctEmail]: {
-                pubkey: somePubkey,
-              },
-            },
-          },
-        });
         await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
         const composePage = await ComposePageRecipe.openStandalone(t, browser, acctEmail);
         await ComposePageRecipe.fillMsg(composePage, { to: 'demo@flowcrypt.com' }, 'should find pubkey from WKD directly');
