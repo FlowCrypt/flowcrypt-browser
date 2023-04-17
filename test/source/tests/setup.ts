@@ -120,6 +120,11 @@ export const defineSetupTests = (testVariant: TestVariant, testWithBrowser: Test
     test(
       'setup - import unarmored key from file',
       testWithBrowser(async (t, browser) => {
+        t.mockApi!.configProvider = new ConfigurationProvider({
+          attester: {
+            pubkeyLookup: {},
+          },
+        });
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.test.key.imported@gmail.com');
         const key = {
           title: 'unarmored OpenPGP key',
@@ -135,6 +140,11 @@ export const defineSetupTests = (testVariant: TestVariant, testWithBrowser: Test
     test(
       'setup - import invalid key file',
       testWithBrowser(async (t, browser) => {
+        t.mockApi!.configProvider = new ConfigurationProvider({
+          attester: {
+            pubkeyLookup: {},
+          },
+        });
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.test.key.imported@gmail.com');
         const key = {
           title: 'invalid key',
@@ -150,7 +160,17 @@ export const defineSetupTests = (testVariant: TestVariant, testWithBrowser: Test
     test(
       'setup - import key - submit - used before',
       testWithBrowser(async (t, browser) => {
-        const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.test.key.used.pgp@gmail.com');
+        const acctEmail = 'flowcrypt.test.key.used.pgp@gmail.com';
+        t.mockApi!.configProvider = new ConfigurationProvider({
+          attester: {
+            pubkeyLookup: {
+              [acctEmail]: {
+                pubkey: somePubkey,
+              },
+            },
+          },
+        });
+        const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
         await SetupPageRecipe.manualEnter(
           settingsPage,
           'flowcrypt.test.key.used.pgp',
@@ -163,6 +183,11 @@ export const defineSetupTests = (testVariant: TestVariant, testWithBrowser: Test
     test(
       'setup - import key - naked - choose my own pass phrase',
       testWithBrowser(async (t, browser) => {
+        t.mockApi!.configProvider = new ConfigurationProvider({
+          attester: {
+            pubkeyLookup: {},
+          },
+        });
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.test.key.import.naked@gmail.com');
         await SetupPageRecipe.manualEnter(
           settingsPage,
@@ -176,6 +201,11 @@ export const defineSetupTests = (testVariant: TestVariant, testWithBrowser: Test
     test(
       'setup - import key - naked - auto-generate a pass phrase',
       testWithBrowser(async (t, browser) => {
+        t.mockApi!.configProvider = new ConfigurationProvider({
+          attester: {
+            pubkeyLookup: {},
+          },
+        });
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.test.key.import.naked@gmail.com');
         await SetupPageRecipe.manualEnter(
           settingsPage,
@@ -191,6 +221,11 @@ export const defineSetupTests = (testVariant: TestVariant, testWithBrowser: Test
     test(
       'setup - import key - fix key self signatures',
       testWithBrowser(async (t, browser) => {
+        t.mockApi!.configProvider = new ConfigurationProvider({
+          attester: {
+            pubkeyLookup: {},
+          },
+        });
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.test.key.imported@gmail.com');
         await SetupPageRecipe.manualEnter(
           settingsPage,
@@ -204,6 +239,11 @@ export const defineSetupTests = (testVariant: TestVariant, testWithBrowser: Test
     test(
       'setup - import key - fix key self signatures - skip invalid uid',
       testWithBrowser(async (t, browser) => {
+        t.mockApi!.configProvider = new ConfigurationProvider({
+          attester: {
+            pubkeyLookup: {},
+          },
+        });
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.test.key.imported@gmail.com');
         await SetupPageRecipe.manualEnter(
           settingsPage,
@@ -222,6 +262,11 @@ export const defineSetupTests = (testVariant: TestVariant, testWithBrowser: Test
     test.failing(
       'setup - import key - fix uids',
       testWithBrowser(async (t, browser) => {
+        t.mockApi!.configProvider = new ConfigurationProvider({
+          attester: {
+            pubkeyLookup: {},
+          },
+        });
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.test.key.imported@gmail.com');
         await SetupPageRecipe.manualEnter(settingsPage, 'uid.less.key', { submitPubkey: false, fixKey: true });
       }, 'FAILING')
@@ -230,6 +275,11 @@ export const defineSetupTests = (testVariant: TestVariant, testWithBrowser: Test
     test(
       'setup - import key - warning on primary has no secret',
       testWithBrowser(async (t, browser) => {
+        t.mockApi!.configProvider = new ConfigurationProvider({
+          attester: {
+            pubkeyLookup: {},
+          },
+        });
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.test.key.imported@gmail.com');
         await SetupPageRecipe.manualEnter(
           settingsPage,
@@ -321,6 +371,11 @@ ZAvn6PBX7vsaReOVa2zsnuY5g70xCxvzHIwR94POu5cENwRtCkrppFnISALpQ1kA
     test(
       'setup - import key - two e-mails on the screen',
       testWithBrowser(async (t, browser) => {
+        t.mockApi!.configProvider = new ConfigurationProvider({
+          attester: {
+            pubkeyLookup: {},
+          },
+        });
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.test.key.imported@gmail.com');
         await SetupPageRecipe.manualEnter(
           settingsPage,
@@ -416,6 +471,11 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
     test(
       'setup - recover with a pass phrase - skip remaining',
       testWithBrowser(async (t, browser) => {
+        t.mockApi!.configProvider = new ConfigurationProvider({
+          attester: {
+            pubkeyLookup: {},
+          },
+        });
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.compatibility@gmail.com');
         await SetupPageRecipe.recover(settingsPage, 'flowcrypt.compatibility.1pp1', {
           hasRecoverMore: true,
@@ -427,6 +487,11 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
     test(
       'setup - recover with a pass phrase - 1pp1 then 2pp1',
       testWithBrowser(async (t, browser) => {
+        t.mockApi!.configProvider = new ConfigurationProvider({
+          attester: {
+            pubkeyLookup: {},
+          },
+        });
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.compatibility@gmail.com');
         await SetupPageRecipe.recover(settingsPage, 'flowcrypt.compatibility.1pp1', {
           hasRecoverMore: true,
@@ -439,12 +504,17 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
     test(
       'setup - recover with a pass phrase - 1pp2 then 2pp1',
       testWithBrowser(async (t, browser) => {
+        const acctEmail = 'flowcrypt.compatibility@gmail.com';
         t.mockApi!.configProvider = new ConfigurationProvider({
           attester: {
-            pubkeyLookup: {},
+            pubkeyLookup: {
+              [acctEmail]: {
+                pubkey: somePubkey,
+              },
+            },
           },
         });
-        const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.compatibility@gmail.com');
+        const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
         await SetupPageRecipe.recover(settingsPage, 'flowcrypt.compatibility.1pp2', {
           hasRecoverMore: true,
           clickRecoverMore: true,
@@ -456,6 +526,11 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
     test(
       'setup - recover with a pass phrase - 2pp1 then 1pp1',
       testWithBrowser(async (t, browser) => {
+        t.mockApi!.configProvider = new ConfigurationProvider({
+          attester: {
+            pubkeyLookup: {},
+          },
+        });
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.compatibility@gmail.com');
         await SetupPageRecipe.recover(settingsPage, 'flowcrypt.compatibility.2pp1', {
           hasRecoverMore: true,
@@ -468,6 +543,11 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
     test(
       'setup - recover with a pass phrase - 2pp1 then 1pp2',
       testWithBrowser(async (t, browser) => {
+        t.mockApi!.configProvider = new ConfigurationProvider({
+          attester: {
+            pubkeyLookup: {},
+          },
+        });
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.compatibility@gmail.com');
         await SetupPageRecipe.recover(settingsPage, 'flowcrypt.compatibility.2pp1', {
           hasRecoverMore: true,
@@ -578,6 +658,11 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
     test(
       'mail.google.com - setup prompt notif + hides when close clicked + reappears + setup link opens settings',
       testWithBrowser(async (t, browser) => {
+        t.mockApi!.configProvider = new ConfigurationProvider({
+          attester: {
+            pubkeyLookup: {},
+          },
+        });
         const acct = 'flowcrypt.compatibility@gmail.com';
         const gmailPage = await openMockGmailPage(t, browser, acct, false);
         await gmailPage.waitAll([
@@ -602,6 +687,11 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
     test(
       'mail.google.com - setup prompt notification shows up + dismiss hides it + does not reappear if dismissed',
       testWithBrowser(async (t, browser) => {
+        t.mockApi!.configProvider = new ConfigurationProvider({
+          attester: {
+            pubkeyLookup: {},
+          },
+        });
         const acct = 'flowcrypt.compatibility@gmail.com';
         const gmailPage = await openMockGmailPage(t, browser, acct, false);
         await gmailPage.waitAll([
@@ -666,6 +756,11 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
     test(
       'setup [not using key manager] - notify users when their keys expire soon',
       testWithBrowser(async (t, browser) => {
+        t.mockApi!.configProvider = new ConfigurationProvider({
+          attester: {
+            pubkeyLookup: {},
+          },
+        });
         const acctEmail = 'flowcrypt.notify.expiring.keys@gmail.com';
         const passphrase = '1234';
         const warningMsg = 'Your keys are expiring in 18 days. Please import a newer set of keys to use.';
@@ -728,6 +823,11 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
     test(
       'setup [using key manager] - notify users when their keys expire soon',
       testWithBrowser(async (t, browser) => {
+        t.mockApi!.configProvider = new ConfigurationProvider({
+          attester: {
+            pubkeyLookup: {},
+          },
+        });
         const acctEmail = 'flowcrypt.notify.expiring.keys.updating.key@key-manager-autogen.flowcrypt.test';
         // Generate negative expiration key and check if it shows correct expiration note
         const negativeExpirationKey = await opgp.generateKey({
@@ -790,12 +890,17 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
     test(
       'setup - recover with a pass phrase - no remaining',
       testWithBrowser(async (t, browser) => {
+        const acctEmail = 'flowcrypt.test.key.recovered@gmail.com';
         t.mockApi!.configProvider = new ConfigurationProvider({
           attester: {
-            pubkeyLookup: {},
+            pubkeyLookup: {
+              [acctEmail]: {
+                pubkey: somePubkey,
+              },
+            },
           },
         });
-        const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.test.key.recovered@gmail.com');
+        const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
         await SetupPageRecipe.recover(settingsPage, 'flowcrypt.test.key.recovered', { hasRecoverMore: false });
       })
     );
@@ -803,7 +908,17 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
     test(
       'setup - fail to recover with a wrong pass phrase',
       testWithBrowser(async (t, browser) => {
-        const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.test.key.recovered@gmail.com');
+        const acctEmail = 'flowcrypt.test.key.recovered@gmail.com';
+        t.mockApi!.configProvider = new ConfigurationProvider({
+          attester: {
+            pubkeyLookup: {
+              [acctEmail]: {
+                pubkey: somePubkey,
+              },
+            },
+          },
+        });
+        const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
         await SetupPageRecipe.recover(settingsPage, 'flowcrypt.wrong.passphrase', {
           hasRecoverMore: false,
           wrongPp: true,
@@ -814,7 +929,17 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
     test(
       'setup - fail to recover with a wrong pass phrase at first, then recover with good pass phrase',
       testWithBrowser(async (t, browser) => {
-        const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.test.key.recovered@gmail.com');
+        const acctEmail = 'flowcrypt.test.key.recovered@gmail.com';
+        t.mockApi!.configProvider = new ConfigurationProvider({
+          attester: {
+            pubkeyLookup: {
+              [acctEmail]: {
+                pubkey: somePubkey,
+              },
+            },
+          },
+        });
+        const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
         await SetupPageRecipe.recover(settingsPage, 'flowcrypt.wrong.passphrase', { wrongPp: true });
         await SetupPageRecipe.recover(settingsPage, 'flowcrypt.test.key.recovered');
       })
@@ -823,6 +948,11 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
     test(
       'setup - import key - submit - offline - retry',
       testWithBrowser(async (t, browser) => {
+        t.mockApi!.configProvider = new ConfigurationProvider({
+          attester: {
+            pubkeyLookup: {},
+          },
+        });
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.test.key.used.pgp@gmail.com');
         await SetupPageRecipe.manualEnter(
           settingsPage,
@@ -836,6 +966,11 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
     test(
       'setup - enterprise users should be redirected to their help desk when an error occured',
       testWithBrowser(async (t, browser) => {
+        t.mockApi!.configProvider = new ConfigurationProvider({
+          attester: {
+            pubkeyLookup: {},
+          },
+        });
         const acctEmail = 'flowcrypt.compatibility@gmail.com';
         if (testVariant === 'ENTERPRISE-MOCK') {
           const settingsPage = await browser.newExtensionSettingsPage(t);
@@ -947,6 +1082,11 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
     test(
       'user@no-submit-client-configuration.flowcrypt.test - do not submit to attester',
       testWithBrowser(async (t, browser) => {
+        t.mockApi!.configProvider = new ConfigurationProvider({
+          attester: {
+            pubkeyLookup: {},
+          },
+        });
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'user@no-submit-client-configuration.flowcrypt.test');
         await SetupPageRecipe.manualEnter(
           settingsPage,
@@ -964,6 +1104,11 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
     test(
       'setup - manualEnter honors DEFAULT_REMEMBER_PASS_PHRASE ClientConfiguration',
       testWithBrowser(async (t, browser) => {
+        t.mockApi!.configProvider = new ConfigurationProvider({
+          attester: {
+            pubkeyLookup: {},
+          },
+        });
         const acctEmail = 'user@default-remember-passphrase-client-configuration.flowcrypt.test';
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
         await SetupPageRecipe.manualEnter(
@@ -1055,6 +1200,11 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
     test(
       "user@no-allow-domains-client-configuration.flowcrypt.test - search attester for recipients doesn't work on any domains",
       testWithBrowser(async (t, browser) => {
+        t.mockApi!.configProvider = new ConfigurationProvider({
+          attester: {
+            pubkeyLookup: {},
+          },
+        });
         // as `allow_attester_search_only_for_domains: []` is set, attester search shouldn't work for any domains
         const acct = 'user@no-allow-domains-client-configuration.flowcrypt.test';
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
@@ -1100,6 +1250,11 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
     test(
       "user@no-allow-domains-for-keys-openpgp-org-client-configuration.flowcrypt.test - search pubkey on keys.openpgp.org for recipients doesn't work on any domains",
       testWithBrowser(async (t, browser) => {
+        t.mockApi!.configProvider = new ConfigurationProvider({
+          attester: {
+            pubkeyLookup: {},
+          },
+        });
         // as `allow_keys_openpgp_org_search_only_for_domains: []` is set, pubkey search shouldn't work for any domains
         const acct = 'user@no-allow-domains-for-keys-openpgp-org-client-configuration.flowcrypt.test';
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
@@ -1134,6 +1289,11 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
     test(
       'get.key@key-manager-autogen.flowcrypt.test - automatic setup with key found on key manager',
       testWithBrowser(async (t, browser) => {
+        t.mockApi!.configProvider = new ConfigurationProvider({
+          attester: {
+            pubkeyLookup: {},
+          },
+        });
         const acct = 'get.key@key-manager-autogen.flowcrypt.test';
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
         await SetupPageRecipe.autoSetupWithEKM(settingsPage);
@@ -1183,6 +1343,11 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
     test(
       'get.updating.key@key-manager-choose-passphrase-forbid-storing.flowcrypt.test - automatic update of key found on key manager',
       testWithBrowser(async (t, browser) => {
+        t.mockApi!.configProvider = new ConfigurationProvider({
+          attester: {
+            pubkeyLookup: {},
+          },
+        });
         const acct = 'get.updating.key@key-manager-choose-passphrase-forbid-storing.flowcrypt.test';
         MOCK_KM_KEYS[acct] = { response: { privateKeys: [{ decryptedPrivateKey: testConstants.updatingPrv }] } };
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
@@ -1359,6 +1524,11 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
     test(
       'put.updating.key@key-manager-choose-passphrase-forbid-storing.flowcrypt.test - updates of key found on key manager via setup page (with passphrase)',
       testWithBrowser(async (t, browser) => {
+        t.mockApi!.configProvider = new ConfigurationProvider({
+          attester: {
+            pubkeyLookup: {},
+          },
+        });
         const acct = 'put.updating.key@key-manager-choose-passphrase-forbid-storing.flowcrypt.test';
         MOCK_KM_KEYS[acct] = { response: { privateKeys: [{ decryptedPrivateKey: testConstants.updatingPrv }] } };
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
@@ -1416,6 +1586,11 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
     test(
       'get.updating.key@key-manager-autoimport-no-prv-create.flowcrypt.test - updates of key found on key manager when NO_PRV_CREATE',
       testWithBrowser(async (t, browser) => {
+        t.mockApi!.configProvider = new ConfigurationProvider({
+          attester: {
+            pubkeyLookup: {},
+          },
+        });
         const acct = 'get.updating.key@key-manager-autoimport-no-prv-create.flowcrypt.test';
         MOCK_KM_KEYS[acct] = { response: { privateKeys: [{ decryptedPrivateKey: testConstants.updatingPrv }] } };
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
@@ -1448,6 +1623,11 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
     test(
       'user@custom-sks.flowcrypt.test - Respect custom key server url',
       testWithBrowser(async (t, browser) => {
+        t.mockApi!.configProvider = new ConfigurationProvider({
+          attester: {
+            pubkeyLookup: {},
+          },
+        });
         const acct = 'user@custom-sks.flowcrypt.test';
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
         await SetupPageRecipe.autoSetupWithEKM(settingsPage);
@@ -1467,6 +1647,11 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
     test(
       'user@no-flags-client-configuration.flowcrypt.test - should show error when no flags is present',
       testWithBrowser(async (t, browser) => {
+        t.mockApi!.configProvider = new ConfigurationProvider({
+          attester: {
+            pubkeyLookup: {},
+          },
+        });
         const acctEmail = 'user@no-flags-client-configuration.flowcrypt.test';
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
         await Util.sleep(1);
@@ -1477,6 +1662,11 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
     test(
       'null-setting@null-client-configuration.flowcrypt.test - should not show error when no setting is present',
       testWithBrowser(async (t, browser) => {
+        t.mockApi!.configProvider = new ConfigurationProvider({
+          attester: {
+            pubkeyLookup: {},
+          },
+        });
         const acctEmail = 'null-setting@null-client-configuration.flowcrypt.test';
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
         await Util.sleep(1);
@@ -1487,6 +1677,11 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
     test(
       'get.key@key-manager-choose-passphrase.flowcrypt.test - passphrase chosen by user with key found on key manager',
       testWithBrowser(async (t, browser) => {
+        t.mockApi!.configProvider = new ConfigurationProvider({
+          attester: {
+            pubkeyLookup: {},
+          },
+        });
         const acct = 'get.key@key-manager-choose-passphrase.flowcrypt.test';
         const passphrase = 'Long and complicated pass PHRASE';
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
@@ -1512,6 +1707,11 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
     test(
       'get.key@key-manager-choose-passphrase-forbid-storing.flowcrypt.test - passphrase chosen by user with key found on key manager and forbid storing',
       testWithBrowser(async (t, browser) => {
+        t.mockApi!.configProvider = new ConfigurationProvider({
+          attester: {
+            pubkeyLookup: {},
+          },
+        });
         const acct = 'get.key@key-manager-choose-passphrase-forbid-storing.flowcrypt.test';
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
         await SetupPageRecipe.autoSetupWithEKM(settingsPage, {
@@ -1539,6 +1739,11 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
     test(
       'user@passphrase-session-length-client-configuration.flowcrypt.test - passphrase should expire in in_memory_pass_phrase_session_length',
       testWithBrowser(async (t, browser) => {
+        t.mockApi!.configProvider = new ConfigurationProvider({
+          attester: {
+            pubkeyLookup: {},
+          },
+        });
         const acctEmail = 'user@passphrase-session-length-client-configuration.flowcrypt.test';
         const longid = '715EDCDC7939A8F7';
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
@@ -1571,6 +1776,11 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
     test(
       'get.key@key-manager-autoimport-no-prv-create.flowcrypt.test - respect NO_PRV_CREATE when key not found on key manager',
       testWithBrowser(async (t, browser) => {
+        t.mockApi!.configProvider = new ConfigurationProvider({
+          attester: {
+            pubkeyLookup: {},
+          },
+        });
         const acct = 'get.key@key-manager-autoimport-no-prv-create.flowcrypt.test';
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
         await settingsPage.waitAndRespondToModal('error', 'confirm', 'Keys for your account were not set up yet - please ask your systems administrator');
@@ -1580,6 +1790,11 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
     test(
       'get.key@no-submit-client-configuration.key-manager-autogen.flowcrypt.test - automatic setup with key found on key manager and no submit rule',
       testWithBrowser(async (t, browser) => {
+        t.mockApi!.configProvider = new ConfigurationProvider({
+          attester: {
+            pubkeyLookup: {},
+          },
+        });
         const acct = 'get.key@no-submit-client-configuration.key-manager-autogen.flowcrypt.test';
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
         await SetupPageRecipe.autoSetupWithEKM(settingsPage);
@@ -1598,6 +1813,11 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
     test(
       'put.key@key-manager-autogen.flowcrypt.test - automatic setup with key not found on key manager, then generated',
       testWithBrowser(async (t, browser) => {
+        t.mockApi!.configProvider = new ConfigurationProvider({
+          attester: {
+            pubkeyLookup: {},
+          },
+        });
         const acct = 'put.key@key-manager-autogen.flowcrypt.test';
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
         await SetupPageRecipe.autoSetupWithEKM(settingsPage);
@@ -1626,6 +1846,11 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
     test(
       'get.error@key-manager-autogen.flowcrypt.test - handles error during KM key GET',
       testWithBrowser(async (t, browser) => {
+        t.mockApi!.configProvider = new ConfigurationProvider({
+          attester: {
+            pubkeyLookup: {},
+          },
+        });
         const acct = 'get.error@key-manager-autogen.flowcrypt.test';
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
         await SetupPageRecipe.autoSetupWithEKM(settingsPage, {
@@ -1640,6 +1865,11 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
     test(
       'put.error@key-manager-autogen.flowcrypt.test - handles error during KM key PUT',
       testWithBrowser(async (t, browser) => {
+        t.mockApi!.configProvider = new ConfigurationProvider({
+          attester: {
+            pubkeyLookup: {},
+          },
+        });
         const acct = 'put.error@key-manager-autogen.flowcrypt.test';
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
         await settingsPage.waitAll(['@action-overlay-retry', '@container-overlay-prompt-text', '@action-show-overlay-details']);
@@ -1660,6 +1890,11 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
     test(
       'fail@key-manager-server-offline.flowcrypt.test - shows friendly EKM not reachable error - during autogen',
       testWithBrowser(async (t, browser) => {
+        t.mockApi!.configProvider = new ConfigurationProvider({
+          attester: {
+            pubkeyLookup: {},
+          },
+        });
         const acct = 'fail@key-manager-server-offline.flowcrypt.test';
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
         await SetupPageRecipe.autoSetupWithEKM(settingsPage, {
@@ -1674,6 +1909,11 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
     test(
       'get.key@ekm-offline-retrieve.flowcrypt.test - show clear error to user - during retrieval',
       testWithBrowser(async (t, browser) => {
+        t.mockApi!.configProvider = new ConfigurationProvider({
+          attester: {
+            pubkeyLookup: {},
+          },
+        });
         const acct = 'get.key@ekm-offline-retrieve.flowcrypt.test';
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
         await SetupPageRecipe.autoSetupWithEKM(settingsPage, {
@@ -1687,6 +1927,11 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
     test(
       'expire@key-manager-keygen-expiration.flowcrypt.test - ClientConfiguration enforce_keygen_expire_months: 1',
       testWithBrowser(async (t, browser) => {
+        t.mockApi!.configProvider = new ConfigurationProvider({
+          attester: {
+            pubkeyLookup: {},
+          },
+        });
         const acct = 'expire@key-manager-keygen-expiration.flowcrypt.test';
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
         await SetupPageRecipe.autoSetupWithEKM(settingsPage);
@@ -1707,6 +1952,11 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
     test(
       'reject.client.keypair@key-manager-autogen.flowcrypt.test - does not leak sensitive info on err 400, shows informative err',
       testWithBrowser(async (t, browser) => {
+        t.mockApi!.configProvider = new ConfigurationProvider({
+          attester: {
+            pubkeyLookup: {},
+          },
+        });
         const acct = 'reject.client.keypair@key-manager-autogen.flowcrypt.test';
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
         await settingsPage.waitAll(['@action-overlay-retry', '@container-overlay-prompt-text', '@action-show-overlay-details']);
@@ -1731,6 +1981,11 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
     test(
       'user@standardsubdomainfes.localhost:8001 - uses FES on standard domain',
       testWithBrowser(async (t, browser) => {
+        t.mockApi!.configProvider = new ConfigurationProvider({
+          attester: {
+            pubkeyLookup: {},
+          },
+        });
         const port = t.urls?.port;
         const acct = `user@standardsubdomainfes.localhost:${port}`; // added port to trick extension into calling the mock
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
@@ -1753,6 +2008,11 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
     test(
       'no.fes@example.com - skip FES on consumer, show friendly message on enterprise',
       testWithBrowser(async (t, browser) => {
+        t.mockApi!.configProvider = new ConfigurationProvider({
+          attester: {
+            pubkeyLookup: {},
+          },
+        });
         const acct = 'no.fes@example.com';
         if (testVariant === 'ENTERPRISE-MOCK') {
           // shows err on enterprise
@@ -1780,6 +2040,11 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
     test(
       'setup - s/mime private key',
       testWithBrowser(async (t, browser) => {
+        t.mockApi!.configProvider = new ConfigurationProvider({
+          attester: {
+            pubkeyLookup: {},
+          },
+        });
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.test.key.imported@gmail.com');
         await SetupPageRecipe.setupSmimeAccount(settingsPage, {
           title: 's/mime pkcs12 unprotected key',

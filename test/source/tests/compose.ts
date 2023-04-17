@@ -2150,6 +2150,9 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
               [acct]: {
                 pubkey: somePubkey,
               },
+              'human@flowcrypt.com': {
+                pubkey: somePubkey,
+              },
             },
           },
         });
@@ -2661,6 +2664,9 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
               [acctEmail]: {
                 pubkey: somePubkey,
               },
+              'flowcrypt.compatibility@gmail.com': {
+                pubkey: somePubkey,
+              },
             },
           },
         });
@@ -3094,6 +3100,9 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
               [acctEmail]: {
                 pubkey: somePubkey,
               },
+              'human@flowcrypt.com': {
+                pubkey: somePubkey,
+              },
             },
           },
         });
@@ -3209,26 +3218,20 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       'compose - list of pubkeys gets refetched in compose',
       testWithBrowser(async (t, browser) => {
         const acctEmail = 'ci.tests.gmail@flowcrypt.test';
+        const recipientEmail = 'mock.only.pubkey@flowcrypt.com'; // has "somePubkey" on Attester
         t.mockApi!.configProvider = new ConfigurationProvider({
           attester: {
             pubkeyLookup: {
               [acctEmail]: {
                 pubkey: somePubkey,
               },
-            },
-          },
-        });
-        await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
-        const recipientEmail = 'mock.only.pubkey@flowcrypt.com'; // has "somePubkey" on Attester
-        t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: {
-            pubkeyLookup: {
               [recipientEmail]: {
                 pubkey: somePubkey,
               },
             },
           },
         });
+        await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
         const validKey = protonMailCompatKey; // doesn't really matter which key we import, as long as different from "somePubkey"
         const settingsPage = await browser.newExtensionSettingsPage(t, acctEmail);
         const contactsFrame = await importKeyManuallyAndViewTheNewContact(settingsPage, recipientEmail, validKey, 'IMPORT KEY');
