@@ -75,6 +75,11 @@ export const defineSetupTests = (testVariant: TestVariant, testWithBrowser: Test
     test(
       'setup - optional checkbox for each email aliases',
       testWithBrowser(async (t, browser) => {
+        t.mockApi!.configProvider = new ConfigurationProvider({
+          attester: {
+            pubkeyLookup: {},
+          },
+        });
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.compatibility@gmail.com');
         await Util.sleep(5);
         await SetupPageRecipe.createKey(settingsPage, 'unused', 'none', {
@@ -97,6 +102,11 @@ export const defineSetupTests = (testVariant: TestVariant, testWithBrowser: Test
     test(
       'setup - import key - do not submit - did not use before',
       testWithBrowser(async (t, browser) => {
+        t.mockApi!.configProvider = new ConfigurationProvider({
+          attester: {
+            pubkeyLookup: {},
+          },
+        });
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.test.key.imported@gmail.com');
         await SetupPageRecipe.manualEnter(
           settingsPage,
@@ -429,6 +439,11 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
     test(
       'setup - recover with a pass phrase - 1pp2 then 2pp1',
       testWithBrowser(async (t, browser) => {
+        t.mockApi!.configProvider = new ConfigurationProvider({
+          attester: {
+            pubkeyLookup: {},
+          },
+        });
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.compatibility@gmail.com');
         await SetupPageRecipe.recover(settingsPage, 'flowcrypt.compatibility.1pp2', {
           hasRecoverMore: true,
@@ -465,6 +480,11 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
     test(
       'setup - recover with a pass phrase - 1pp1 then 1pp2 (shows already recovered), then 2pp1',
       testWithBrowser(async (t, browser) => {
+        t.mockApi!.configProvider = new ConfigurationProvider({
+          attester: {
+            pubkeyLookup: {},
+          },
+        });
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.compatibility@gmail.com');
         await SetupPageRecipe.recover(settingsPage, 'flowcrypt.compatibility.1pp1', {
           hasRecoverMore: true,
@@ -770,6 +790,11 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
     test(
       'setup - recover with a pass phrase - no remaining',
       testWithBrowser(async (t, browser) => {
+        t.mockApi!.configProvider = new ConfigurationProvider({
+          attester: {
+            pubkeyLookup: {},
+          },
+        });
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.test.key.recovered@gmail.com');
         await SetupPageRecipe.recover(settingsPage, 'flowcrypt.test.key.recovered', { hasRecoverMore: false });
       })
@@ -1089,6 +1114,11 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
     test(
       'user@no-search-wildcard-domains-client-configuration.flowcrypt.test - do not search attester for recipients on any domain',
       testWithBrowser(async (t, browser) => {
+        t.mockApi!.configProvider = new ConfigurationProvider({
+          attester: {
+            pubkeyLookup: {},
+          },
+        });
         // disallowed searching attester for pubkeys on * domain
         // below we search for mock.only.pubkey@other.com which normally has pubkey on attester, but none should be found due to the rule
         const acct = 'user@no-search-wildcard-domains-client-configuration.flowcrypt.test';
@@ -1766,6 +1796,11 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
     test(
       'setup - imported key with multiple alias should show checkbox per alias',
       testWithBrowser(async (t, browser) => {
+        t.mockApi!.configProvider = new ConfigurationProvider({
+          attester: {
+            pubkeyLookup: {},
+          },
+        });
         expect((await KeyUtil.parse(testConstants.keyMultiAliasedUser)).emails.length).to.equals(3);
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'multi.aliased.user@example.com');
         await SetupPageRecipe.manualEnter(
@@ -1793,6 +1828,11 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
     test(
       'setup - imported key from a file with multiple alias',
       testWithBrowser(async (t, browser) => {
+        t.mockApi!.configProvider = new ConfigurationProvider({
+          attester: {
+            pubkeyLookup: {},
+          },
+        });
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'multi.aliased.user@example.com');
         const key = {
           title: 'unarmored OpenPGP key',

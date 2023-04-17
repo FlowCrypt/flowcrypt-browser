@@ -551,6 +551,11 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       'settings - my key page - privileged frames and action buttons should be hidden when using key manager test',
       testWithBrowser(async (t, browser) => {
         const acct = 'two.keys@key-manager-autogen.flowcrypt.test';
+        t.mockApi!.configProvider = new ConfigurationProvider({
+          attester: {
+            pubkeyLookup: {},
+          },
+        });
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
         await SetupPageRecipe.autoSetupWithEKM(settingsPage);
         await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
@@ -631,6 +636,11 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       'settings - change passphrase honoring FORBID_STORING_PASS_PHRASE ClientConfiguration',
       testWithBrowser(async (t, browser) => {
         const acctEmail = 'user@forbid-storing-passphrase-client-configuration.flowcrypt.test';
+        t.mockApi!.configProvider = new ConfigurationProvider({
+          attester: {
+            pubkeyLookup: {},
+          },
+        });
         const { settingsPage, passphrase } = await BrowserRecipe.setUpFcForbidPpStoringAcct(t, browser);
         const {
           cryptup_userforbidstoringpassphraseclientconfigurationflowcrypttest_passphrase_B8F687BCDE14435A: savedPassphrase1,
@@ -677,6 +687,11 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
     test(
       'settings - change passphrase - current in session unknown',
       testWithBrowser(async (t, browser) => {
+        t.mockApi!.configProvider = new ConfigurationProvider({
+          attester: {
+            pubkeyLookup: {},
+          },
+        });
         const { acctEmail, passphrase, settingsPage } = await BrowserRecipe.setUpFcPpChangeAcct(t, browser);
         const newPp = `temp ci test pp: ${Util.lousyRandom()}`;
         await SettingsPageRecipe.forgetAllPassPhrasesInStorage(settingsPage, passphrase);
@@ -846,7 +861,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
     test(
       'settings - check if downloaded attachment name is correct',
       testWithBrowser(async (t, browser) => {
-        const acct = 'ci.tests.gmail@flowcrypt.test';
+        const acct = 'flowcrypt.compatibility@gmail.com';
         t.mockApi!.configProvider = new ConfigurationProvider({
           attester: {
             pubkeyLookup: {
@@ -856,7 +871,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
             },
           },
         });
-        await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
+        await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
         // `what's up?.txt` becomes `what's_up_.txt` and this is native way and we can't change this logic
         // https://github.com/FlowCrypt/flowcrypt-browser/issues/3505#issuecomment-812269422
         await checkIfFileDownloadsCorrectly(t, browser, '1821bf879a6f71e0', "what's_up_.txt");
@@ -938,6 +953,11 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       'settings - my key page - update non-first private key',
       testWithBrowser(async (t, browser) => {
         const acctEmail = 'flowcrypt.test.key.multiple@gmail.com';
+        t.mockApi!.configProvider = new ConfigurationProvider({
+          attester: {
+            pubkeyLookup: {},
+          },
+        });
         const settingsPage1 = await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
         await SetupPageRecipe.manualEnter(
           settingsPage1,
@@ -984,6 +1004,11 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       'settings - my key page - revocation certificate',
       testWithBrowser(async (t, browser) => {
         const acctEmail = 'flowcrypt.test.key.multiple@gmail.com';
+        t.mockApi!.configProvider = new ConfigurationProvider({
+          attester: {
+            pubkeyLookup: {},
+          },
+        });
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
         await SetupPageRecipe.manualEnter(
           settingsPage,
@@ -1023,6 +1048,11 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       'settings - manual backup several keys to file with the same pass phrase',
       testWithBrowser(async (t, browser) => {
         const acctEmail = 'flowcrypt.test.key.multiple@gmail.com';
+        t.mockApi!.configProvider = new ConfigurationProvider({
+          attester: {
+            pubkeyLookup: {},
+          },
+        });
         const settingsPage1 = await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
         await SetupPageRecipe.manualEnter(
           settingsPage1,
@@ -1093,6 +1123,11 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       'settings - manual backup several keys to inbox with the same strong pass phrase',
       testWithBrowser(async (t, browser) => {
         const acctEmail = 'flowcrypt.test.key.multiple.inbox2@gmail.com';
+        t.mockApi!.configProvider = new ConfigurationProvider({
+          attester: {
+            pubkeyLookup: {},
+          },
+        });
         const passphrase = 'strong enough passphrase for all keys';
         const settingsPage1 = await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
         const key1b383d0334e38b28 = await KeyUtil.parse(testConstants.testKeyMultiple1b383d0334e38b28);
@@ -1137,6 +1172,11 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
     test(
       'settings - manual backup several keys to file with a missing but guessed pass phrase',
       testWithBrowser(async (t, browser) => {
+        t.mockApi!.configProvider = new ConfigurationProvider({
+          attester: {
+            pubkeyLookup: {},
+          },
+        });
         const acctEmail = 'flowcrypt.test.key.multiple@gmail.com';
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
         await SetupPageRecipe.manualEnter(
@@ -1191,6 +1231,11 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       'settings - manual backup several keys to inbox with a missing pass phrase',
       testWithBrowser(async (t, browser) => {
         const acctEmail = 'flowcrypt.test.key.multiple@gmail.com';
+        t.mockApi!.configProvider = new ConfigurationProvider({
+          attester: {
+            pubkeyLookup: {},
+          },
+        });
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
         await SetupPageRecipe.manualEnter(
           settingsPage,
@@ -1232,6 +1277,11 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       'settings - manual backup a key with a missing pass phrase',
       testWithBrowser(async (t, browser) => {
         const acctEmail = 'flowcrypt.test.key.multiple@gmail.com';
+        t.mockApi!.configProvider = new ConfigurationProvider({
+          attester: {
+            pubkeyLookup: {},
+          },
+        });
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
         const key = {
           title: '?',
@@ -1265,6 +1315,11 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       'settings - manual backup several keys to file with different pass phrases',
       testWithBrowser(async (t, browser) => {
         const acctEmail = 'flowcrypt.test.key.multiple@gmail.com';
+        t.mockApi!.configProvider = new ConfigurationProvider({
+          attester: {
+            pubkeyLookup: {},
+          },
+        });
         const settingsPage1 = await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
         await SetupPageRecipe.manualEnter(
           settingsPage1,
@@ -1307,6 +1362,11 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       'settings - setup_manual only backs up supplied key to file',
       testWithBrowser(async (t, browser) => {
         const acctEmail = 'flowcrypt.test.key.multiple@gmail.com';
+        t.mockApi!.configProvider = new ConfigurationProvider({
+          attester: {
+            pubkeyLookup: {},
+          },
+        });
         const settingsPage1 = await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
         await SetupPageRecipe.manualEnter(
           settingsPage1,
@@ -1351,6 +1411,11 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       'settings - setup_manual only backs up supplied key to inbox',
       testWithBrowser(async (t, browser) => {
         const acctEmail = 'flowcrypt.test.key.multiple.inbox1@gmail.com';
+        t.mockApi!.configProvider = new ConfigurationProvider({
+          attester: {
+            pubkeyLookup: {},
+          },
+        });
         const settingsPage1 = await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
         await SetupPageRecipe.manualEnter(
           settingsPage1,
@@ -1396,6 +1461,11 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
     test(
       'settings - manual backup to inbox keys with weak pass phrases results in error',
       testWithBrowser(async (t, browser) => {
+        t.mockApi!.configProvider = new ConfigurationProvider({
+          attester: {
+            pubkeyLookup: {},
+          },
+        });
         const acctEmail = 'flowcrypt.test.key.multiple@gmail.com';
         const settingsPage1 = await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
         await SetupPageRecipe.manualEnter(
@@ -1756,6 +1826,11 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
     test(
       'settings - adding a key honors FORBID_STORING_PASS_PHRASE ClientConfiguration',
       testWithBrowser(async (t, browser) => {
+        t.mockApi!.configProvider = new ConfigurationProvider({
+          attester: {
+            pubkeyLookup: {},
+          },
+        });
         const { acctEmail, settingsPage } = await BrowserRecipe.setUpFcForbidPpStoringAcct(t, browser);
         const {
           cryptup_userforbidstoringpassphraseclientconfigurationflowcrypttest_passphrase_B8F687BCDE14435A: savedPassphrase1,

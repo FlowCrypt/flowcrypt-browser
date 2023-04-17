@@ -207,6 +207,11 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       'user@key-manager-disabled-password-message.flowcrypt.test - disabled flowcrypt hosted password protected messages',
       testWithBrowser(async (t, browser) => {
         const acct = 'user@key-manager-disabled-password-message.flowcrypt.test';
+        t.mockApi!.configProvider = new ConfigurationProvider({
+          attester: {
+            pubkeyLookup: {},
+          },
+        });
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
         await SetupPageRecipe.autoSetupWithEKM(settingsPage);
         const composePage = await ComposePageRecipe.openStandalone(t, browser, acct);
@@ -437,6 +442,11 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
     test(
       `compose - auto include pubkey is inactive when our key is available on Wkd`,
       testWithBrowser(async (t, browser) => {
+        t.mockApi!.configProvider = new ConfigurationProvider({
+          attester: {
+            pubkeyLookup: {},
+          },
+        });
         const acct = `wkd@google.mock.localhost:${t.urls?.port}`;
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
         await SetupPageRecipe.autoSetupWithEKM(settingsPage);
@@ -480,6 +490,9 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
           attester: {
             pubkeyLookup: {
               'ci.tests.gmail@flowcrypt.test': {
+                pubkey: somePubkey,
+              },
+              'human@flowcrypt.com': {
                 pubkey: somePubkey,
               },
             },
@@ -1597,6 +1610,11 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
     test(
       'compose - loading drafts - PKCS#7 encrypted draft',
       testWithBrowser(async (t, browser) => {
+        t.mockApi!.configProvider = new ConfigurationProvider({
+          attester: {
+            pubkeyLookup: {},
+          },
+        });
         const acctEmail = 'flowcrypt.test.key.imported@gmail.com';
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
         await SetupPageRecipe.setupSmimeAccount(settingsPage, {
@@ -1621,6 +1639,11 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       'compose - loading drafts - PKCS#7 encrypted draft with forgotten non-primary pass phrase',
       testWithBrowser(async (t, browser) => {
         const acctEmail = 'flowcrypt.test.key.imported@gmail.com';
+        t.mockApi!.configProvider = new ConfigurationProvider({
+          attester: {
+            pubkeyLookup: {},
+          },
+        });
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
         await SetupPageRecipe.manualEnter(
           settingsPage,
@@ -2091,6 +2114,9 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
               [acct]: {
                 pubkey: somePubkey,
               },
+              'human@flowcrypt.com': {
+                pubkey: somePubkey,
+              },
             },
           },
         });
@@ -2378,6 +2404,9 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
           attester: {
             pubkeyLookup: {
               [acct]: {
+                pubkey: somePubkey,
+              },
+              'human@flowcrypt.com': {
                 pubkey: somePubkey,
               },
             },
@@ -2990,6 +3019,9 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
               [acct]: {
                 pubkey: somePubkey,
               },
+              'human@flowcrypt.com': {
+                pubkey: somePubkey,
+              },
             },
           },
         });
@@ -3015,6 +3047,9 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
           attester: {
             pubkeyLookup: {
               [acctEmail]: {
+                pubkey: somePubkey,
+              },
+              'human@flowcrypt.com': {
                 pubkey: somePubkey,
               },
             },
@@ -3270,6 +3305,11 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
     test(
       "don't auto-refresh expired key if disallowed search on attester",
       testWithBrowser(async (t, browser) => {
+        t.mockApi!.configProvider = new ConfigurationProvider({
+          attester: {
+            pubkeyLookup: {},
+          },
+        });
         const acct = 'user@no-search-wildcard-domains-client-configuration.flowcrypt.test';
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
         await SetupPageRecipe.manualEnter(settingsPage, 'flowcrypt.test.key.used.pgp');
@@ -3921,6 +3961,11 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
     test(
       'user3@standardsubdomainfes.localhost:8001 - PWD encrypted message with FES web portal - pubkey recipient in bcc',
       testWithBrowser(async (t, browser) => {
+        t.mockApi!.configProvider = new ConfigurationProvider({
+          attester: {
+            pubkeyLookup: {},
+          },
+        });
         const acct = `user3@standardsubdomainfes.localhost:${t.urls?.port}`; // added port to trick extension into calling the mock
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
         await SetupPageRecipe.manualEnter(
@@ -3945,6 +3990,11 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
     test(
       'user4@standardsubdomainfes.localhost:8001 - PWD encrypted message with FES web portal - a send fails with gateway update error',
       testWithBrowser(async (t, browser) => {
+        t.mockApi!.configProvider = new ConfigurationProvider({
+          attester: {
+            pubkeyLookup: {},
+          },
+        });
         const acct = `user4@standardsubdomainfes.localhost:${t.urls?.port}`; // added port to trick extension into calling the mock
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
         await SetupPageRecipe.manualEnter(
@@ -3993,6 +4043,11 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
     test(
       'revoked@key-manager-autoimport-no-prv-create.flowcrypt.test - shows modal not submitting to attester',
       testWithBrowser(async (t, browser) => {
+        t.mockApi!.configProvider = new ConfigurationProvider({
+          attester: {
+            pubkeyLookup: {},
+          },
+        });
         const acct = 'revoked@key-manager-autoimport-no-prv-create.flowcrypt.test';
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
         await SetupPageRecipe.autoSetupWithEKM(settingsPage, {
@@ -4004,6 +4059,11 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
     test(
       'revoked@key-manager-autoimport-no-prv-create-no-attester-submit.flowcrypt.test - cannot draft or send msg',
       testWithBrowser(async (t, browser) => {
+        t.mockApi!.configProvider = new ConfigurationProvider({
+          attester: {
+            pubkeyLookup: {},
+          },
+        });
         const acct = 'revoked@key-manager-autoimport-no-prv-create-no-attester-submit.flowcrypt.test';
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
         await SetupPageRecipe.autoSetupWithEKM(settingsPage);

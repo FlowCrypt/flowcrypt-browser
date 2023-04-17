@@ -81,6 +81,11 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
     test(
       'setup - create key - with backup to inbox',
       testWithBrowser(async (t, browser) => {
+        t.mockApi!.configProvider = new ConfigurationProvider({
+          attester: {
+            pubkeyLookup: {},
+          },
+        });
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.test.key.new.manual@gmail.com');
         await SetupPageRecipe.createKey(
           settingsPage,
@@ -95,6 +100,11 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
     test(
       'setup - create key - choose no backup',
       testWithBrowser(async (t, browser) => {
+        t.mockApi!.configProvider = new ConfigurationProvider({
+          attester: {
+            pubkeyLookup: {},
+          },
+        });
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.test.key.new.manual@gmail.com');
         await SetupPageRecipe.createKey(
           settingsPage,
@@ -109,6 +119,11 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
     test(
       'setup - create key - backup as file - submit pubkey',
       testWithBrowser(async (t, browser) => {
+        t.mockApi!.configProvider = new ConfigurationProvider({
+          attester: {
+            pubkeyLookup: {},
+          },
+        });
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.test.key.new.manual@gmail.com');
         await SetupPageRecipe.createKey(
           settingsPage,
@@ -123,6 +138,11 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
     test(
       'create@prv-create-no-prv-backup.flowcrypt.test - create key allowed but backups not',
       testWithBrowser(async (t, browser) => {
+        t.mockApi!.configProvider = new ConfigurationProvider({
+          attester: {
+            pubkeyLookup: {},
+          },
+        });
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'setup@prv-create-no-prv-backup.flowcrypt.test');
         await SetupPageRecipe.createKey(
           settingsPage,
@@ -171,6 +191,11 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
     test(
       'user@no-submit-client-configuration.flowcrypt.test - do not submit to attester on key generation',
       testWithBrowser(async (t, browser) => {
+        t.mockApi!.configProvider = new ConfigurationProvider({
+          attester: {
+            pubkeyLookup: {},
+          },
+        });
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'user@no-submit-client-configuration.flowcrypt.test');
         await SetupPageRecipe.createKey(
           settingsPage,
@@ -187,6 +212,11 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
     test(
       'settings - generate rsa3072 key',
       testWithBrowser(async (t, browser) => {
+        t.mockApi!.configProvider = new ConfigurationProvider({
+          attester: {
+            pubkeyLookup: {},
+          },
+        });
         const acctEmail = 'user@no-submit-client-configuration.flowcrypt.test';
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
         await SetupPageRecipe.createKey(settingsPage, 'unused', 'none', {
@@ -216,6 +246,11 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
     test(
       'user4@standardsubdomainfes.localhost:8001 - PWD encrypted message with FES web portal - some sends fail with BadRequest error',
       testWithBrowser(async (t, browser) => {
+        t.mockApi!.configProvider = new ConfigurationProvider({
+          attester: {
+            pubkeyLookup: {},
+          },
+        });
         const port = t.urls?.port;
         const acct = `user4@standardsubdomainfes.localhost:${port}`; // added port to trick extension into calling the mock
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
@@ -321,6 +356,11 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
     test(
       'user@forbid-storing-passphrase-client-configuration.flowcrypt.test - do not store passphrase',
       testWithBrowser(async (t, browser) => {
+        t.mockApi!.configProvider = new ConfigurationProvider({
+          attester: {
+            pubkeyLookup: {},
+          },
+        });
         const acctEmail = 'user@forbid-storing-passphrase-client-configuration.flowcrypt.test';
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
         const passphrase = 'long enough to suit requirements';
