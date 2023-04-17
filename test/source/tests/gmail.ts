@@ -13,8 +13,6 @@ import { GmailPageRecipe } from './page-recipe/gmail-page-recipe';
 import { SetupPageRecipe } from './page-recipe/setup-page-recipe';
 import { AvaContext } from './tooling';
 import { BrowserRecipe } from './tooling/browser-recipe';
-import { ConfigurationProvider } from '../mock/lib/api';
-import { somePubkey } from '../mock/attester/attester-key-constants';
 
 /**
  * All tests that use mail.google.com or have to operate without a Gmail API mock should go here
