@@ -45,8 +45,8 @@ export class GmailElementReplacer implements WebmailElementReplacer {
   private recipientHasPgpCache: Dict<boolean> = {};
   private sendAs: Dict<SendAsAlias>;
   private messages: Dict<MessageCacheEntry> = {};
-  private chunkDownloads: { attachment: Attachment; result: Promise<Buf> }[];
-  // private attachmentDownloads: { attachment: Attachment; result: Promise<GmailRes.GmailAttachment> }[];
+  private chunkDownloads: { attachment: Attachment; result: Promise<Buf> }[] = [];
+  // private attachmentDownloads: { attachment: Attachment; result: Promise<GmailRes.GmailAttachment> }[] = [];
   private factory: XssSafeFactory;
   private clientConfiguration: ClientConfiguration;
   private pubLookup: PubLookup;
