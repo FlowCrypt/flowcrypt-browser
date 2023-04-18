@@ -65,6 +65,11 @@ export const defineSetupTests = (testVariant: TestVariant, testWithBrowser: Test
     test(
       'setup - invalid csrf token returns error on gmail login',
       testWithBrowser(async (t, browser) => {
+        t.mockApi!.configProvider = new ConfigurationProvider({
+          attester: {
+            pubkeyLookup: {},
+          },
+        });
         const settingsPage = await browser.newExtensionSettingsPage(t);
         const oauthPopup = await browser.newPageTriggeredBy(t, () => settingsPage.waitAndClick('@action-connect-to-gmail'));
         await OauthPageRecipe.mock(t, oauthPopup, 'test.invalid.csrf@gmail.com', 'login');
