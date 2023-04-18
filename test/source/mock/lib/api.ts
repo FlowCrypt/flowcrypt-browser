@@ -7,6 +7,9 @@ import { readFileSync } from 'fs';
 import { AttesterConfig, getMockAttesterEndpoints } from '../attester/attester-endpoints';
 import { HandlersRequestDefinition } from '../all-apis-mock';
 import { KeysOpenPGPOrgConfig, getMockKeysOpenPGPOrgEndpoints } from '../keys-openpgp-org/keys-openpgp-org-endpoints';
+import { OauthMock } from './oauth';
+import { getMockGoogleEndpoints } from '../google/google-endpoints';
+import { getMockKeyManagerEndpoints } from '../key-manager/key-manager-endpoints';
 
 export class HttpAuthErr extends Error {}
 export class HttpClientErr extends Error {
@@ -38,14 +41,21 @@ interface ConfigurationProviderInterface<REQ, RES> {
 }
 
 export class ConfigurationProvider implements ConfigurationProviderInterface<HandlersRequestDefinition, unknown> {
+  private oauth = new OauthMock();
+
   public constructor(public config: { attester?: AttesterConfig; keysOpenPgp?: KeysOpenPGPOrgConfig }) {}
 
   public getHandlers(): Handlers<HandlersRequestDefinition, unknown> {
     let handlers: Handlers<HandlersRequestDefinition, unknown> = {};
     if (this.config.attester) {
-      handlers = { ...handlers, ...getMockAttesterEndpoints(this.config.attester) };
+      handlers = { ...handlers, ...getMockAttesterEndpoints(this.oauth, this.config.attester) };
     }
-    handlers = { ...handlers, ...getMockKeysOpenPGPOrgEndpoints(this.config.keysOpenPgp) };
+    handlers = {
+      ...handlers,
+      ...getMockGoogleEndpoints(this.oauth),
+      ...getMockKeyManagerEndpoints(this.oauth),
+      ...getMockKeysOpenPGPOrgEndpoints(this.config.keysOpenPgp),
+    };
     return handlers;
   }
 }

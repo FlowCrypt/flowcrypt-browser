@@ -1390,28 +1390,22 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
       testWithBrowser(async (t, browser) => {
         const msgId = '17dad75e63e47f97';
         const acctEmail = 'flowcrypt.compatibility@gmail.com';
+        const senderEmail = 'some.sender@test.com';
         t.mockApi!.configProvider = new ConfigurationProvider({
           attester: {
             pubkeyLookup: {
               [acctEmail]: {
                 pubkey: somePubkey,
               },
-            },
-          },
-        });
-        await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
-        const senderEmail = 'some.sender@test.com';
-        const acctAttr = acctEmail.replace(/[\.@]/g, '');
-        const senderAttr = senderEmail.replace(/[\.@]/g, '');
-        t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: {
-            pubkeyLookup: {
               [senderEmail]: {
                 pubkey: await get203FAE7076005381(),
               },
             },
           },
         });
+        await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
+        const acctAttr = acctEmail.replace(/[\.@]/g, '');
+        const senderAttr = senderEmail.replace(/[\.@]/g, '');
         {
           const settingsPage = await browser.newExtensionSettingsPage(t, acctEmail);
           await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
@@ -1515,6 +1509,9 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
               [acctEmail]: {
                 pubkey: somePubkey,
               },
+              'sender@example.com': {
+                pubkey: testConstants.pubkey2864E326A5BE488A,
+              },
             },
           },
         });
@@ -1526,15 +1523,6 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
           '-----BEGIN PGP PUBLIC KEY BLOCK-----\r\nVersion: FlowCrypt Email Encryption [BUILD_REPLACEABLE_VERSION]\r\nComment: Seamlessly send and receive encrypted email\r\n\r\nxjMEYZeW2RYJKwYBBAHaRw8BAQdAT5QfLVP3y1yukk3MM/oiuXLNe1f9az5M\r\nBnOlKdF0nKnNJVNvbWVib2R5IDxTYW1zNTBzYW1zNTBzZXB0QEdtYWlsLkNv\r\nbT7CjwQQFgoAIAUCYZeW2QYLCQcIAwIEFQgKAgQWAgEAAhkBAhsDAh4BACEJ\r\nEMrSTYqLk6SUFiEEBP90ux3d6kDwDdzvytJNiouTpJS27QEA7pFlkLfD0KFQ\r\nsH/dwb/NPzn5zCi2L9gjPAC3d8gv1fwA/0FjAy/vKct4D7QH8KwtEGQns5+D\r\nP1WxDr4YI2hp5TkAzjgEYZeW2RIKKwYBBAGXVQEFAQEHQKNLY/bXrhJMWA2+\r\nWTjk3I7KhawyZfLomJ4hovqr7UtOAwEIB8J4BBgWCAAJBQJhl5bZAhsMACEJ\r\nEMrSTYqLk6SUFiEEBP90ux3d6kDwDdzvytJNiouTpJQnpgD/c1CzfS3YzJUx\r\nnFMrhjiE0WVgqOV/3CkfI4m4RA30QUIA/ju8r4AD2h6lu3Mx/6I6PzIRZQty\r\nLvTkcu4UKodZa4kK\r\n=7C4A\r\n-----END PGP PUBLIC KEY BLOCK-----\r\n',
           'sender@example.com'
         );
-        t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: {
-            pubkeyLookup: {
-              'sender@example.com': {
-                pubkey: testConstants.pubkey2864E326A5BE488A,
-              },
-            },
-          },
-        });
         const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`);
         await inboxPage.waitAll('iframe', { timeout: 2 });
         const urls = await inboxPage.getFramesUrls(['/chrome/elements/pgp_block.htm'], { sleep: 10, appearIn: 20 });

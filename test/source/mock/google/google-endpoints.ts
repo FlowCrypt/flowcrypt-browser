@@ -8,7 +8,7 @@ import { HandlersDefinition } from '../all-apis-mock';
 import { AddressObject, ParsedMail } from 'mailparser';
 import { TestBySubjectStrategyContext } from './strategies/send-message-strategy';
 import { UnsupportableStrategyError } from './strategies/strategy-base';
-import { oauth } from '../lib/oauth';
+import { OauthMock } from '../lib/oauth';
 import { Util } from '../../util';
 
 type DraftSaveModel = { message: { raw: string; threadId: string } };
@@ -43,318 +43,320 @@ const allowedRecipients: Array<string> = [
   'flowcrypt.test.key.new.manual@gmail.com',
 ];
 
-export const mockGoogleEndpoints: HandlersDefinition = {
-  '/o/oauth2/auth': async (
+export const getMockGoogleEndpoints = (oauth: OauthMock): HandlersDefinition => {
+  return {
+    '/o/oauth2/auth': async (
+      // eslint-disable-next-line @typescript-eslint/naming-convention
+      { query: { client_id, response_type, access_type, state, scope, login_hint, proceed } },
+      req
+    ) => {
+      if (isGet(req) && client_id === oauth.clientId && response_type === 'code' && access_type === 'offline' && state && scope) {
+        // auth screen
+        if (!login_hint) {
+          return oauth.renderText('choose account with login_hint');
+        } else if (!proceed) {
+          return oauth.renderText('redirect with proceed=true to continue');
+        } else {
+          return oauth.successResult(parsePort(req), login_hint, state, scope);
+        }
+      }
+      throw new HttpClientErr(`Method not implemented for ${req.url}: ${req.method}`);
+    },
     // eslint-disable-next-line @typescript-eslint/naming-convention
-    { query: { client_id, response_type, access_type, state, scope, login_hint, proceed } },
-    req
-  ) => {
-    if (isGet(req) && client_id === oauth.clientId && response_type === 'code' && access_type === 'offline' && state && scope) {
-      // auth screen
-      if (!login_hint) {
-        return oauth.renderText('choose account with login_hint');
-      } else if (!proceed) {
-        return oauth.renderText('redirect with proceed=true to continue');
-      } else {
-        return oauth.successResult(parsePort(req), login_hint, state, scope);
+    '/token': async ({ query: { grant_type, refreshToken, client_id, code } }, req) => {
+      if (isPost(req) && grant_type === 'authorization_code' && code && client_id === oauth.clientId) {
+        // auth code from auth screen gets exchanged for access and refresh tokens
+        return oauth.getRefreshTokenResponse(code);
+      } else if (isPost(req) && grant_type === 'refresh_token' && refreshToken && client_id === oauth.clientId) {
+        // here also later refresh token gets exchanged for access token
+        return oauth.getTokenResponse(refreshToken);
       }
-    }
-    throw new HttpClientErr(`Method not implemented for ${req.url}: ${req.method}`);
-  },
-  // eslint-disable-next-line @typescript-eslint/naming-convention
-  '/token': async ({ query: { grant_type, refreshToken, client_id, code } }, req) => {
-    if (isPost(req) && grant_type === 'authorization_code' && code && client_id === oauth.clientId) {
-      // auth code from auth screen gets exchanged for access and refresh tokens
-      return oauth.getRefreshTokenResponse(code);
-    } else if (isPost(req) && grant_type === 'refresh_token' && refreshToken && client_id === oauth.clientId) {
-      // here also later refresh token gets exchanged for access token
-      return oauth.getTokenResponse(refreshToken);
-    }
-    throw new Error(`Method not implemented for ${req.url}: ${req.method}`);
-  },
-  // eslint-disable-next-line @typescript-eslint/naming-convention
-  '/oauth2/v1/tokeninfo': async ({ query: { access_token } }, req) => {
-    if (isGet(req)) {
-      return oauth.getTokenInfo(access_token);
-    }
-    throw new Error(`Method not implemented for ${req.url}: ${req.method}`);
-  },
-  '/v1/people:searchContacts': async ({ query: { query } }, req) => {
-    if (!isGet(req)) {
-      throw new HttpClientErr(`Method not implemented for ${req.url}: ${req.method}`);
-    }
-    const empty = {};
-    const acct = oauth.checkAuthorizationHeaderWithAccessToken(req.headers.authorization);
-    if (acct === 'ci.tests.gmail@flowcrypt.test') {
-      if (query === 'contact') {
-        return {
-          results: [{ person: { emailAddresses: [{ metadata: { primary: true }, value: 'contact.test@flowcrypt.com' }] } }],
-        };
-      } else if (query === 'testsearchorder') {
-        return {
-          results: [
-            { person: { emailAddresses: [{ metadata: { primary: true }, value: 'testsearchorder1@flowcrypt.com' }] } },
-            { person: { emailAddresses: [{ metadata: { primary: true }, value: 'testsearchorder2@flowcrypt.com' }] } },
-            { person: { emailAddresses: [{ metadata: { primary: true }, value: 'testsearchorder3@flowcrypt.com' }] } },
-            { person: { emailAddresses: [{ metadata: { primary: true }, value: 'testsearchorder4@flowcrypt.com' }] } },
-            { person: { emailAddresses: [{ metadata: { primary: true }, value: 'testsearchorder5@flowcrypt.com' }] } },
-            { person: { emailAddresses: [{ metadata: { primary: true }, value: 'testsearchorder6@flowcrypt.com' }] } },
-          ],
-        };
+      throw new Error(`Method not implemented for ${req.url}: ${req.method}`);
+    },
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    '/oauth2/v1/tokeninfo': async ({ query: { access_token } }, req) => {
+      if (isGet(req)) {
+        return oauth.getTokenInfo(access_token);
+      }
+      throw new Error(`Method not implemented for ${req.url}: ${req.method}`);
+    },
+    '/v1/people:searchContacts': async ({ query: { query } }, req) => {
+      if (!isGet(req)) {
+        throw new HttpClientErr(`Method not implemented for ${req.url}: ${req.method}`);
+      }
+      const empty = {};
+      const acct = oauth.checkAuthorizationHeaderWithAccessToken(req.headers.authorization);
+      if (acct === 'ci.tests.gmail@flowcrypt.test') {
+        if (query === 'contact') {
+          return {
+            results: [{ person: { emailAddresses: [{ metadata: { primary: true }, value: 'contact.test@flowcrypt.com' }] } }],
+          };
+        } else if (query === 'testsearchorder') {
+          return {
+            results: [
+              { person: { emailAddresses: [{ metadata: { primary: true }, value: 'testsearchorder1@flowcrypt.com' }] } },
+              { person: { emailAddresses: [{ metadata: { primary: true }, value: 'testsearchorder2@flowcrypt.com' }] } },
+              { person: { emailAddresses: [{ metadata: { primary: true }, value: 'testsearchorder3@flowcrypt.com' }] } },
+              { person: { emailAddresses: [{ metadata: { primary: true }, value: 'testsearchorder4@flowcrypt.com' }] } },
+              { person: { emailAddresses: [{ metadata: { primary: true }, value: 'testsearchorder5@flowcrypt.com' }] } },
+              { person: { emailAddresses: [{ metadata: { primary: true }, value: 'testsearchorder6@flowcrypt.com' }] } },
+            ],
+          };
+        } else {
+          return empty;
+        }
       } else {
         return empty;
       }
-    } else {
-      return empty;
-    }
-  },
-  '/v1/otherContacts:search': async ({ query: { query } }, req) => {
-    if (!isGet(req)) {
-      throw new HttpClientErr(`Method not implemented for ${req.url}: ${req.method}`);
-    }
-    const empty = {};
-    const acct = oauth.checkAuthorizationHeaderWithAccessToken(req.headers.authorization);
-    if (acct === 'ci.tests.gmail@flowcrypt.test') {
-      if (query === 'testsearchorder') {
-        return {
-          results: [
-            { person: { emailAddresses: [{ metadata: { primary: true }, value: 'testsearchorder7@flowcrypt.com' }] } },
-            { person: { emailAddresses: [{ metadata: { primary: true }, value: 'testsearchorder8@flowcrypt.com' }] } },
-            { person: { emailAddresses: [{ metadata: { primary: true }, value: 'testsearchorder9@flowcrypt.com' }] } },
-          ],
-        };
+    },
+    '/v1/otherContacts:search': async ({ query: { query } }, req) => {
+      if (!isGet(req)) {
+        throw new HttpClientErr(`Method not implemented for ${req.url}: ${req.method}`);
+      }
+      const empty = {};
+      const acct = oauth.checkAuthorizationHeaderWithAccessToken(req.headers.authorization);
+      if (acct === 'ci.tests.gmail@flowcrypt.test') {
+        if (query === 'testsearchorder') {
+          return {
+            results: [
+              { person: { emailAddresses: [{ metadata: { primary: true }, value: 'testsearchorder7@flowcrypt.com' }] } },
+              { person: { emailAddresses: [{ metadata: { primary: true }, value: 'testsearchorder8@flowcrypt.com' }] } },
+              { person: { emailAddresses: [{ metadata: { primary: true }, value: 'testsearchorder9@flowcrypt.com' }] } },
+            ],
+          };
+        } else {
+          return empty;
+        }
       } else {
         return empty;
       }
-    } else {
-      return empty;
-    }
-  },
-  '/gmail': async (_parsedReq, req) => {
-    if (isGet(req)) {
-      const acct = oauth.checkAuthorizationHeaderWithAccessToken(req.headers.authorization, 'flowcrypt.compatibility@gmail.com');
-      return await GoogleData.getMockGmailPage(acct);
-    }
-    throw new HttpClientErr(`Method not implemented for ${req.url}: ${req.method}`);
-  },
-  '/gmail/v1/users/me/settings/sendAs': async (parsedReq, req) => {
-    const acct = oauth.checkAuthorizationHeaderWithAccessToken(req.headers.authorization);
-    if (isGet(req)) {
-      const sendAs = [
-        {
-          sendAsEmail: acct,
-          displayName: 'First Last',
-          replyToAddress: acct,
-          signature: '',
-          isDefault: true,
-          isPrimary: true,
-          treatAsAlias: false,
-          verificationStatus: 'accepted',
-        },
-      ];
-      if (acct === 'flowcrypt.compatibility@gmail.com') {
-        sendAs[0].signature =
-          '<div dir="ltr">flowcrypt.compatibility test footer with an img<br><img src="https://flowcrypt.com/assets/imgs/svgs/flowcrypt-logo.svg" alt="Image result for small image"><br></div>';
-        const alias = 'flowcryptcompatibility@gmail.com';
-        sendAs.push({
-          sendAsEmail: alias,
-          displayName: 'An Alias',
-          replyToAddress: alias,
-          signature: '',
-          isDefault: false,
-          isPrimary: false,
-          treatAsAlias: false,
-          verificationStatus: 'accepted',
-        });
-      } else if (acct === 'multi.aliased.user@example.com') {
-        const alias1 = 'alias1@example.com';
-        const alias2 = 'alias2@example.com';
-        sendAs.push(
+    },
+    '/gmail': async (_parsedReq, req) => {
+      if (isGet(req)) {
+        const acct = oauth.checkAuthorizationHeaderWithAccessToken(req.headers.authorization, 'flowcrypt.compatibility@gmail.com');
+        return await GoogleData.getMockGmailPage(acct);
+      }
+      throw new HttpClientErr(`Method not implemented for ${req.url}: ${req.method}`);
+    },
+    '/gmail/v1/users/me/settings/sendAs': async (parsedReq, req) => {
+      const acct = oauth.checkAuthorizationHeaderWithAccessToken(req.headers.authorization);
+      if (isGet(req)) {
+        const sendAs = [
           {
-            sendAsEmail: alias1,
-            displayName: 'An Alias1',
-            replyToAddress: alias1,
+            sendAsEmail: acct,
+            displayName: 'First Last',
+            replyToAddress: acct,
             signature: '',
-            isDefault: false,
-            isPrimary: false,
+            isDefault: true,
+            isPrimary: true,
             treatAsAlias: false,
             verificationStatus: 'accepted',
           },
-          {
-            sendAsEmail: alias2,
-            displayName: 'An Alias1',
-            replyToAddress: alias2,
+        ];
+        if (acct === 'flowcrypt.compatibility@gmail.com') {
+          sendAs[0].signature =
+            '<div dir="ltr">flowcrypt.compatibility test footer with an img<br><img src="https://flowcrypt.com/assets/imgs/svgs/flowcrypt-logo.svg" alt="Image result for small image"><br></div>';
+          const alias = 'flowcryptcompatibility@gmail.com';
+          sendAs.push({
+            sendAsEmail: alias,
+            displayName: 'An Alias',
+            replyToAddress: alias,
             signature: '',
             isDefault: false,
             isPrimary: false,
             treatAsAlias: false,
             verificationStatus: 'accepted',
-          }
-        );
-      } else if (acct === 'test.match.attester.key@gmail.com') {
-        const alias = 'test.mismatch.attester.key@gmail.com';
-        sendAs.push({
-          sendAsEmail: alias,
-          displayName: 'Test mismatch',
-          replyToAddress: alias,
-          signature: '',
-          isDefault: false,
-          isPrimary: false,
-          treatAsAlias: false,
-          verificationStatus: 'accepted',
-        });
+          });
+        } else if (acct === 'multi.aliased.user@example.com') {
+          const alias1 = 'alias1@example.com';
+          const alias2 = 'alias2@example.com';
+          sendAs.push(
+            {
+              sendAsEmail: alias1,
+              displayName: 'An Alias1',
+              replyToAddress: alias1,
+              signature: '',
+              isDefault: false,
+              isPrimary: false,
+              treatAsAlias: false,
+              verificationStatus: 'accepted',
+            },
+            {
+              sendAsEmail: alias2,
+              displayName: 'An Alias1',
+              replyToAddress: alias2,
+              signature: '',
+              isDefault: false,
+              isPrimary: false,
+              treatAsAlias: false,
+              verificationStatus: 'accepted',
+            }
+          );
+        } else if (acct === 'test.match.attester.key@gmail.com') {
+          const alias = 'test.mismatch.attester.key@gmail.com';
+          sendAs.push({
+            sendAsEmail: alias,
+            displayName: 'Test mismatch',
+            replyToAddress: alias,
+            signature: '',
+            isDefault: false,
+            isPrimary: false,
+            treatAsAlias: false,
+            verificationStatus: 'accepted',
+          });
+        }
+        return { sendAs };
       }
-      return { sendAs };
-    }
-    throw new HttpClientErr(`Method not implemented for ${req.url}: ${req.method}`);
-  },
-  '/gmail/v1/users/me/messages': async ({ query: { q } }, req) => {
-    // search messages
-    const acct = oauth.checkAuthorizationHeaderWithAccessToken(req.headers.authorization);
-    if (isGet(req) && q) {
-      const msgs = (await GoogleData.withInitializedData(acct)).searchMessages(q);
-      return { messages: msgs.map(({ id, threadId }) => ({ id, threadId })), resultSizeEstimate: msgs.length };
-    }
-    throw new HttpClientErr(`Method not implemented for ${req.url}: ${req.method}`);
-  },
-  '/gmail/v1/users/me/messages/?': async ({ query: { format } }, req) => {
-    // get msg or attachment
-    const acct = oauth.checkAuthorizationHeaderWithAccessToken(req.headers.authorization);
-    if (isGet(req)) {
-      // temporary replacement for parseResourceId() until #5050 is fixed
-      const id = req.url!.match(/\/([a-zA-Z0-9\-_]+)(\?|$)/)?.[1]; // eslint-disable-line @typescript-eslint/no-non-null-assertion
-      if (!id) {
+      throw new HttpClientErr(`Method not implemented for ${req.url}: ${req.method}`);
+    },
+    '/gmail/v1/users/me/messages': async ({ query: { q } }, req) => {
+      // search messages
+      const acct = oauth.checkAuthorizationHeaderWithAccessToken(req.headers.authorization);
+      if (isGet(req) && q) {
+        const msgs = (await GoogleData.withInitializedData(acct)).searchMessages(q);
+        return { messages: msgs.map(({ id, threadId }) => ({ id, threadId })), resultSizeEstimate: msgs.length };
+      }
+      throw new HttpClientErr(`Method not implemented for ${req.url}: ${req.method}`);
+    },
+    '/gmail/v1/users/me/messages/?': async ({ query: { format } }, req) => {
+      // get msg or attachment
+      const acct = oauth.checkAuthorizationHeaderWithAccessToken(req.headers.authorization);
+      if (isGet(req)) {
+        // temporary replacement for parseResourceId() until #5050 is fixed
+        const id = req.url!.match(/\/([a-zA-Z0-9\-_]+)(\?|$)/)?.[1]; // eslint-disable-line @typescript-eslint/no-non-null-assertion
+        if (!id) {
+          return {};
+        }
+        const data = await GoogleData.withInitializedData(acct);
+        if (req.url?.includes('/attachments/')) {
+          const attachment = data.getAttachment(id);
+          if (attachment) {
+            return attachment;
+          }
+          throw new HttpClientErr(`MOCK attachment not found for ${acct}: ${id}`, Status.NOT_FOUND);
+        }
+        const msg = data.getMessage(id);
+        if (msg) {
+          return GoogleData.fmtMsg(msg, format);
+        }
+        throw new HttpClientErr(`MOCK Message not found for ${acct}: ${id}`, Status.NOT_FOUND);
+      }
+      throw new HttpClientErr(`Method not implemented for ${req.url}: ${req.method}`);
+    },
+    '/gmail/v1/users/me/labels': async (parsedReq, req) => {
+      const acct = oauth.checkAuthorizationHeaderWithAccessToken(req.headers.authorization);
+      if (isGet(req)) {
+        return { labels: (await GoogleData.withInitializedData(acct)).getLabels() };
+      }
+      throw new HttpClientErr(`Method not implemented for ${req.url}: ${req.method}`);
+    },
+    '/gmail/v1/users/me/threads': async (parsedReq, req) => {
+      const acct = oauth.checkAuthorizationHeaderWithAccessToken(req.headers.authorization);
+      if (isGet(req)) {
+        const threads = (await GoogleData.withInitializedData(acct)).getThreads([parsedReq.query.labelIds]); // todo: support arrays?
+        return { threads, resultSizeEstimate: threads.length };
+      }
+      throw new HttpClientErr(`Method not implemented for ${req.url}: ${req.method}`);
+    },
+    '/gmail/v1/users/me/threads/?': async ({ query: { format } }, req) => {
+      if (req.url?.match(/\/modify$/)) {
         return {};
       }
-      const data = await GoogleData.withInitializedData(acct);
-      if (req.url?.includes('/attachments/')) {
-        const attachment = data.getAttachment(id);
-        if (attachment) {
-          return attachment;
-        }
-        throw new HttpClientErr(`MOCK attachment not found for ${acct}: ${id}`, Status.NOT_FOUND);
-      }
-      const msg = data.getMessage(id);
-      if (msg) {
-        return GoogleData.fmtMsg(msg, format);
-      }
-      throw new HttpClientErr(`MOCK Message not found for ${acct}: ${id}`, Status.NOT_FOUND);
-    }
-    throw new HttpClientErr(`Method not implemented for ${req.url}: ${req.method}`);
-  },
-  '/gmail/v1/users/me/labels': async (parsedReq, req) => {
-    const acct = oauth.checkAuthorizationHeaderWithAccessToken(req.headers.authorization);
-    if (isGet(req)) {
-      return { labels: (await GoogleData.withInitializedData(acct)).getLabels() };
-    }
-    throw new HttpClientErr(`Method not implemented for ${req.url}: ${req.method}`);
-  },
-  '/gmail/v1/users/me/threads': async (parsedReq, req) => {
-    const acct = oauth.checkAuthorizationHeaderWithAccessToken(req.headers.authorization);
-    if (isGet(req)) {
-      const threads = (await GoogleData.withInitializedData(acct)).getThreads([parsedReq.query.labelIds]); // todo: support arrays?
-      return { threads, resultSizeEstimate: threads.length };
-    }
-    throw new HttpClientErr(`Method not implemented for ${req.url}: ${req.method}`);
-  },
-  '/gmail/v1/users/me/threads/?': async ({ query: { format } }, req) => {
-    if (req.url?.match(/\/modify$/)) {
-      return {};
-    }
-    const acct = oauth.checkAuthorizationHeaderWithAccessToken(req.headers.authorization);
-    if (isGet(req) && (format === 'metadata' || format === 'full')) {
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      const id = parseResourceId(req.url!);
-      const msgs = (await GoogleData.withInitializedData(acct)).getMessagesAndDraftsByThread(id);
-      if (!msgs.length) {
-        const statusCode = id === '16841ce0ce5cb74d' ? 404 : 400; // intentionally testing missing thread
-        throw new HttpClientErr(`MOCK thread not found for ${acct}: ${id}`, statusCode);
-      }
-      return { id, historyId: msgs[0].historyId, messages: msgs.map(m => GoogleData.fmtMsg(m, format)) };
-    }
-    throw new HttpClientErr(`Method not implemented for ${req.url}: ${req.method}`);
-  },
-  '/upload/gmail/v1/users/me/messages/send?uploadType=multipart': async (parsedReq, req) => {
-    const acct = oauth.checkAuthorizationHeaderWithAccessToken(req.headers.authorization);
-    if (isPost(req)) {
-      if (parsedReq.body && typeof parsedReq.body === 'string') {
-        const parseResult = await parseMultipartDataAsMimeMsg(parsedReq.body);
-        await validateMimeMsg(acct, parseResult.mimeMsg, parseResult.threadId);
-        const id = `msg_id_${Util.lousyRandom()}`;
-        try {
-          const testingStrategyContext = new TestBySubjectStrategyContext(parseResult.mimeMsg.subject || '');
-          await testingStrategyContext.test(parseResult, id, parsePort(req));
-        } catch (e) {
-          if (!(e instanceof UnsupportableStrategyError)) {
-            // No such strategy for test
-            throw e; // todo - should start throwing unsupported test strategies too, else changing subject will cause incomplete testing
-            // todo - should stop calling it "strategy", better just "SentMessageTest" or similar
-          }
-        }
-        return { id, labelIds: ['SENT'], threadId: parseResult.threadId };
-      }
-    }
-    throw new HttpClientErr(`Method not implemented for ${req.url}: ${req.method}`);
-  },
-  '/gmail/v1/users/me/drafts': async (parsedReq, req) => {
-    if (isPost(req)) {
       const acct = oauth.checkAuthorizationHeaderWithAccessToken(req.headers.authorization);
-      const body = parsedReq.body as DraftSaveModel;
-      if (body && body.message && body.message.raw && typeof body.message.raw === 'string') {
-        if (body.message.threadId && !(await GoogleData.withInitializedData(acct)).getThreads().find(t => t.id === body.message.threadId)) {
-          throw new HttpClientErr('The thread you are replying to not found', 404);
+      if (isGet(req) && (format === 'metadata' || format === 'full')) {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const id = parseResourceId(req.url!);
+        const msgs = (await GoogleData.withInitializedData(acct)).getMessagesAndDraftsByThread(id);
+        if (!msgs.length) {
+          const statusCode = id === '16841ce0ce5cb74d' ? 404 : 400; // intentionally testing missing thread
+          throw new HttpClientErr(`MOCK thread not found for ${acct}: ${id}`, statusCode);
         }
-        return {
-          id: 'mockfakedraftsave',
-          message: {
-            id: 'mockfakedmessageraftsave',
-            labelIds: ['DRAFT'],
-            threadId: body.message.threadId,
-          },
-        };
+        return { id, historyId: msgs[0].historyId, messages: msgs.map(m => GoogleData.fmtMsg(m, format)) };
       }
-    }
-    throw new HttpClientErr(`Method not implemented for ${req.url}: ${req.method}`);
-  },
-  '/gmail/v1/users/me/drafts/?': async (parsedReq, req) => {
-    const acct = oauth.checkAuthorizationHeaderWithAccessToken(req.headers.authorization);
-    if (isGet(req)) {
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      const id = parseResourceId(req.url!);
-      const data = await GoogleData.withInitializedData(acct);
-      const draft = data.getDraft(id);
-      if (draft) {
-        return { id: draft.id, message: draft };
+      throw new HttpClientErr(`Method not implemented for ${req.url}: ${req.method}`);
+    },
+    '/upload/gmail/v1/users/me/messages/send?uploadType=multipart': async (parsedReq, req) => {
+      const acct = oauth.checkAuthorizationHeaderWithAccessToken(req.headers.authorization);
+      if (isPost(req)) {
+        if (parsedReq.body && typeof parsedReq.body === 'string') {
+          const parseResult = await parseMultipartDataAsMimeMsg(parsedReq.body);
+          await validateMimeMsg(acct, parseResult.mimeMsg, parseResult.threadId);
+          const id = `msg_id_${Util.lousyRandom()}`;
+          try {
+            const testingStrategyContext = new TestBySubjectStrategyContext(parseResult.mimeMsg.subject || '');
+            await testingStrategyContext.test(parseResult, id, parsePort(req));
+          } catch (e) {
+            if (!(e instanceof UnsupportableStrategyError)) {
+              // No such strategy for test
+              throw e; // todo - should start throwing unsupported test strategies too, else changing subject will cause incomplete testing
+              // todo - should stop calling it "strategy", better just "SentMessageTest" or similar
+            }
+          }
+          return { id, labelIds: ['SENT'], threadId: parseResult.threadId };
+        }
       }
-      throw new HttpClientErr(`MOCK draft not found for ${acct} (draftId: ${id})`, Status.NOT_FOUND);
-    } else if (isPut(req)) {
-      const raw = (parsedReq.body as { message?: { raw: string } })?.message?.raw as string;
-      if (!raw) {
-        throw new Error('mock Draft PUT without raw data');
+      throw new HttpClientErr(`Method not implemented for ${req.url}: ${req.method}`);
+    },
+    '/gmail/v1/users/me/drafts': async (parsedReq, req) => {
+      if (isPost(req)) {
+        const acct = oauth.checkAuthorizationHeaderWithAccessToken(req.headers.authorization);
+        const body = parsedReq.body as DraftSaveModel;
+        if (body && body.message && body.message.raw && typeof body.message.raw === 'string') {
+          if (body.message.threadId && !(await GoogleData.withInitializedData(acct)).getThreads().find(t => t.id === body.message.threadId)) {
+            throw new HttpClientErr('The thread you are replying to not found', 404);
+          }
+          return {
+            id: 'mockfakedraftsave',
+            message: {
+              id: 'mockfakedmessageraftsave',
+              labelIds: ['DRAFT'],
+              threadId: body.message.threadId,
+            },
+          };
+        }
       }
-      const mimeMsg = await Parse.convertBase64ToMimeMsg(raw);
-      if ((mimeMsg.subject || '').includes('saving and rendering a draft with image')) {
+      throw new HttpClientErr(`Method not implemented for ${req.url}: ${req.method}`);
+    },
+    '/gmail/v1/users/me/drafts/?': async (parsedReq, req) => {
+      const acct = oauth.checkAuthorizationHeaderWithAccessToken(req.headers.authorization);
+      if (isGet(req)) {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const id = parseResourceId(req.url!);
         const data = await GoogleData.withInitializedData(acct);
-        data.addDraft('draft_with_image', raw, mimeMsg);
+        const draft = data.getDraft(id);
+        if (draft) {
+          return { id: draft.id, message: draft };
+        }
+        throw new HttpClientErr(`MOCK draft not found for ${acct} (draftId: ${id})`, Status.NOT_FOUND);
+      } else if (isPut(req)) {
+        const raw = (parsedReq.body as { message?: { raw: string } })?.message?.raw as string;
+        if (!raw) {
+          throw new Error('mock Draft PUT without raw data');
+        }
+        const mimeMsg = await Parse.convertBase64ToMimeMsg(raw);
+        if ((mimeMsg.subject || '').includes('saving and rendering a draft with image')) {
+          const data = await GoogleData.withInitializedData(acct);
+          data.addDraft('draft_with_image', raw, mimeMsg);
+        }
+        if ((mimeMsg.subject || '').includes('RTL')) {
+          const data = await GoogleData.withInitializedData(acct);
+          data.addDraft(`draft_with_rtl_text_${mimeMsg.subject?.includes('rich text') ? 'rich' : 'plain'}`, raw, mimeMsg);
+        }
+        return {};
+      } else if (isDelete(req)) {
+        return {};
       }
-      if ((mimeMsg.subject || '').includes('RTL')) {
-        const data = await GoogleData.withInitializedData(acct);
-        data.addDraft(`draft_with_rtl_text_${mimeMsg.subject?.includes('rich text') ? 'rich' : 'plain'}`, raw, mimeMsg);
+      throw new HttpClientErr(`Method not implemented for ${req.url}: ${req.method}`);
+    },
+    '/gmail/?': async ({}, req) => {
+      const acct = oauth.checkAuthorizationHeaderWithAccessToken(req.headers.authorization);
+      if (isGet(req)) {
+        const id = parseResourceId(req.url!); // eslint-disable-line @typescript-eslint/no-non-null-assertion
+        return await GoogleData.getMockGmailPage(acct, id);
       }
-      return {};
-    } else if (isDelete(req)) {
-      return {};
-    }
-    throw new HttpClientErr(`Method not implemented for ${req.url}: ${req.method}`);
-  },
-  '/gmail/?': async ({}, req) => {
-    const acct = oauth.checkAuthorizationHeaderWithAccessToken(req.headers.authorization);
-    if (isGet(req)) {
-      const id = parseResourceId(req.url!); // eslint-disable-line @typescript-eslint/no-non-null-assertion
-      return await GoogleData.getMockGmailPage(acct, id);
-    }
-    throw new HttpClientErr(`Method not implemented for ${req.url}: ${req.method}`);
-  },
+      throw new HttpClientErr(`Method not implemented for ${req.url}: ${req.method}`);
+    },
+  };
 };
 
 const parseMultipartDataAsMimeMsg = async (multipartData: string): Promise<ParseMsgResult> => {
