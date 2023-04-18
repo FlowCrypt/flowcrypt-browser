@@ -2,7 +2,6 @@
 
 import { Buf } from '../../core/buf';
 import { GoogleData } from '../google/google-data';
-import { AttesterConfig } from './attester-endpoints';
 
 let data: GoogleData;
 export const get203FAE7076005381 = async () => {
@@ -298,26 +297,3 @@ NaqFqwp9jMCYEnjfM2VSYFTKFrQYm9zYUTIKnQxNtWC8Z85UKz2eMk/INukzWe7g
 cvQabqad/ZghLSTzo/Kf
 =sshZ
 -----END PGP PUBLIC KEY BLOCK-----`;
-
-export const ATTESTER_ACCOUNT_INIT_SETUP_MOCK_CONFIG: AttesterConfig = {
-  pubkeyLookup: {
-    'ci.tests.gmail@flowcrypt.test': {
-      pubkey: somePubkey,
-    },
-    'flowcrypt.compatibility@gmail.com': {
-      pubkey: somePubkey,
-    },
-    'human@flowcrypt.com': {
-      pubkey: somePubkey,
-    },
-    'flowcrypt.test.key.new.manual@gmail.com': {
-      pubkey: somePubkey,
-    },
-    'flowcrypt.test.key.used.pgp@gmail.com': {
-      pubkey: somePubkey,
-    },
-    'flowcrypt.test.key.recovered@gmail.com': {
-      pubkey: somePubkey,
-    },
-  },
-};

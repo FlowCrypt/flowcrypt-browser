@@ -110,7 +110,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
 
     test(
       'mail.google.com/chat',
-      testWithBrowser(undefined, async (t, browser) => {
+      testWithBrowser(async (t, browser) => {
         const settingsPage = await BrowserRecipe.openSettingsLoginButCloseOauthWindowBeforeGrantingPermission(t, browser, 'ci.tests.gmail@flowcrypt.dev');
         await settingsPage.close();
         const googleChatPage = await BrowserRecipe.openGoogleChatPage(t, browser);
@@ -120,11 +120,13 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
 
     test(
       'mail.google.com - send rich-text encrypted message',
-      testWithBrowser('ci.tests.gmail', async (t, browser) => {
+      testWithBrowser(async (t, browser) => {
+        const acctEmail = 'ci.tests.gmail@flowcrypt.dev';
+        await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
         const gmailPage = await BrowserRecipe.openGmailPageAndVerifyComposeBtnPresent(t, browser);
         const composePage = await GmailPageRecipe.openSecureCompose(t, gmailPage, browser);
         const subject = `New Rich Text Message ${Util.lousyRandom()}`;
-        await ComposePageRecipe.fillMsg(composePage, { to: 'ci.tests.gmail@flowcrypt.dev' }, subject, undefined, {
+        await ComposePageRecipe.fillMsg(composePage, { to: acctEmail }, subject, undefined, {
           richtext: true,
         });
         await ComposePageRecipe.sendAndClose(composePage);
@@ -139,7 +141,8 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
 
     test(
       'mail.google.com - decrypt message in offline mode',
-      testWithBrowser('ci.tests.gmail', async (t, browser) => {
+      testWithBrowser(async (t, browser) => {
+        await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
         const gmailPage = await openGmailPage(t, browser);
         /*
       await gmailPage.type('[aria-label^="Search"]', 'encrypted email for offline decrypt');
@@ -163,7 +166,8 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
 
     test(
       'mail.google.com - rendering attachmnents',
-      testWithBrowser('ci.tests.gmail', async (t, browser) => {
+      testWithBrowser(async (t, browser) => {
+        await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
         const gmailPage = await openGmailPage(t, browser);
         await gotoGmailPage(gmailPage, '/FMfcgzGkbDXBWBWBfVKHssLtMqvDQSWN');
         await gmailPage.waitForContent('.aVW span:first-child', '36');
@@ -174,7 +178,8 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
 
     test(
       'mail.google.com - msg.asc message content renders',
-      testWithBrowser('ci.tests.gmail', async (t, browser) => {
+      testWithBrowser(async (t, browser) => {
+        await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
         const gmailPage = await openGmailPage(t, browser);
         await gotoGmailPage(gmailPage, '/QgrcJHrtqfgLGKqwChjKsHKzZQpwRHMBqpG');
         const urls = await gmailPage.getFramesUrls(['/chrome/elements/pgp_block.htm'], { sleep: 10, appearIn: 25 });
@@ -192,7 +197,8 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
 
     test(
       'mail.google.com - Thunderbird signature [html] is recognized',
-      testWithBrowser('ci.tests.gmail', async (t, browser) => {
+      testWithBrowser(async (t, browser) => {
+        await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
         const gmailPage = await openGmailPage(t, browser);
         await gotoGmailPage(gmailPage, '/FMfcgzGkbDZKPJrNLplXZhKfWwtgjrXt');
         // validate pgp_block.htm is rendered
@@ -218,7 +224,8 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
 
     test(
       'mail.google.com - Thunderbird signature [plain] is recognized + correct height',
-      testWithBrowser('ci.tests.gmail', async (t, browser) => {
+      testWithBrowser(async (t, browser) => {
+        await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
         const gmailPage = await openGmailPage(t, browser);
         await gotoGmailPage(gmailPage, '/FMfcgzGkbDZKPKzSnGtGKZrPZSbTBNnB');
         // validate pgp_block.htm is rendered
@@ -244,7 +251,8 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
 
     test(
       'mail.google.com - pubkey gets rendered with new signed and encrypted Thunderbird signature',
-      testWithBrowser('ci.tests.gmail', async (t, browser) => {
+      testWithBrowser(async (t, browser) => {
+        await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
         const gmailPage = await openGmailPage(t, browser);
         await gotoGmailPage(gmailPage, '/FMfcgzGkbDZKPLBqWFzbgWqCrplTQdNz');
         const pgpBlockUrls = await gmailPage.getFramesUrls(['/chrome/elements/pgp_block.htm'], {
@@ -266,7 +274,8 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
 
     test(
       'mail.google.com - saving and rendering compose drafts when offline',
-      testWithBrowser('ci.tests.gmail', async (t, browser) => {
+      testWithBrowser(async (t, browser) => {
+        await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
         const gmailPage = await openGmailPage(t, browser);
         // create compose draft
         await gmailPage.waitAndClick('@action-secure-compose', { delay: 1 });
@@ -294,7 +303,8 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
 
     test(
       'mail.google.com - secure reply btn, reply draft',
-      testWithBrowser('ci.tests.gmail', async (t, browser) => {
+      testWithBrowser(async (t, browser) => {
+        await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
         const gmailPage = await openGmailPage(t, browser);
         await gotoGmailPage(gmailPage, '/FMfcgzGpGnLZzLxNpWchTnNfxKkNzBSD'); // to go encrypted convo
         // Gmail has 100 emails per thread limit, so if there are 98 deleted messages + 1 initial message,
@@ -324,7 +334,8 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
 
     test(
       'mail.google.com - multiple compose windows, saving/opening compose draft',
-      testWithBrowser('ci.tests.gmail', async (t, browser) => {
+      testWithBrowser(async (t, browser) => {
+        await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
         const gmailPage = await openGmailPage(t, browser);
         // create compose draft
         await gmailPage.waitAndClick('@action-secure-compose', { delay: 1 });
@@ -348,7 +359,8 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
 
     test(
       'mail.google.com - plain message contains smart replies',
-      testWithBrowser('ci.tests.gmail', async (t, browser) => {
+      testWithBrowser(async (t, browser) => {
+        await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
         const gmailPage = await openGmailPage(t, browser);
         await Util.sleep(1);
         await gotoGmailPage(gmailPage, '/FMfcgzGpHHKCrKRLptBSNwkpMxzkdcQc'); // plain convo with smart replies
@@ -358,7 +370,8 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
 
     test(
       'mail.google.com - plain reply to encrypted and signed messages',
-      testWithBrowser('ci.tests.gmail', async (t, browser) => {
+      testWithBrowser(async (t, browser) => {
+        await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
         const gmailPage = await openGmailPage(t, browser);
         await gotoGmailPage(gmailPage, '/FMfcgzGkbDRNgcQxLmkhBCKVSFwkfdvV'); // plain convo
         await gmailPage.waitAndClick('[data-tooltip="Reply"]', { delay: 1 });
@@ -383,7 +396,8 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
 
     test(
       'mail.google.com - switch to encrypted reply for middle message',
-      testWithBrowser('ci.tests.gmail', async (t, browser) => {
+      testWithBrowser(async (t, browser) => {
+        await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
         const gmailPage = await openGmailPage(t, browser);
         await gotoGmailPage(gmailPage, '/FMfcgzGqRGfPBbNLWvfPvDbxnHBwkdGf'); // plain convo
         await gmailPage.waitAndClick('[role="listitem"] .adf.ads', { delay: 1 }); // click first message of thread
@@ -402,7 +416,8 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
 
     test(
       'mail.google.com - plain reply with dot menu',
-      testWithBrowser('ci.tests.gmail', async (t, browser) => {
+      testWithBrowser(async (t, browser) => {
+        await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
         const gmailPage = await openGmailPage(t, browser);
         await gotoGmailPage(gmailPage, '/FMfcgzGkbDRNgcQxLmkhBCKVSFwkfdvV'); // plain convo
         await gmailPage.waitAndClick('[data-tooltip="Reply"]', { delay: 1 });
@@ -425,7 +440,8 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
 
     test(
       'mail.google.com - plain reply draft',
-      testWithBrowser('ci.tests.gmail', async (t, browser) => {
+      testWithBrowser(async (t, browser) => {
+        await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
         const gmailPage = await openGmailPage(t, browser);
         await gotoGmailPage(gmailPage, '/FMfcgzGpGnLZzLxNpWchTnNfxKkNzBSD'); // go to encrypted convo
         await gmailPage.waitAndClick('[data-tooltip="Reply"]', { delay: 5 });
@@ -443,7 +459,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
 
     test(
       'mail.google.com - Outlook encrypted message with attachment is recognized',
-      testWithBrowser(undefined, async (t, browser) => {
+      testWithBrowser(async (t, browser) => {
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'ci.tests.gmail@flowcrypt.dev');
         await SetupPageRecipe.manualEnter(
           settingsPage,
@@ -463,7 +479,8 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
 
     test(
       `mail.google.com - simple attachments triggering processAttachments() keep "download all" button visible`,
-      testWithBrowser('ci.tests.gmail', async (t, browser) => {
+      testWithBrowser(async (t, browser) => {
+        await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
         const gmailPage = await openGmailPage(t, browser);
         await gotoGmailPage(gmailPage, '/KtbxLvHkSWwbVHxgCbWNvXVKGjFgqMbGQq');
         await Util.sleep(5);
@@ -475,7 +492,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
 
     test(
       `mail.google.com - encrypted text inside "message" attachment`,
-      testWithBrowser(undefined, async (t, browser) => {
+      testWithBrowser(async (t, browser) => {
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'ci.tests.gmail@flowcrypt.dev');
         await SetupPageRecipe.manualEnter(
           settingsPage,
@@ -495,7 +512,8 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
 
     test(
       `mail.google.com - render plain text for "message" attachment (which has plain text)`,
-      testWithBrowser('ci.tests.gmail', async (t, browser) => {
+      testWithBrowser(async (t, browser) => {
+        await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
         const gmailPage = await openGmailPage(t, browser);
         await gotoGmailPage(gmailPage, '/FMfcgzGrbHrBdFGBXqpFZvSkcQpKkvrM');
         await Util.sleep(5);
@@ -509,7 +527,8 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
 
     test(
       'mail.google.com - pubkey file gets rendered',
-      testWithBrowser('ci.tests.gmail', async (t, browser) => {
+      testWithBrowser(async (t, browser) => {
+        await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
         const gmailPage = await openGmailPage(t, browser);
         await gotoGmailPage(gmailPage, '/FMfcgzGkbDXBWCgTcMJlmBtfNxrbzTTn');
         const urls = await gmailPage.getFramesUrls(['/chrome/elements/pgp_pubkey.htm']);
@@ -521,8 +540,10 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
     // uses live openpgpkey.flowcrypt.com WKD
     test(
       'can lookup public key from WKD directly',
-      testWithBrowser('ci.tests.gmail', async (t, browser) => {
-        const composePage = await ComposePageRecipe.openStandalone(t, browser, 'ci.tests.gmail@flowcrypt.dev');
+      testWithBrowser(async (t, browser) => {
+        const acctEmail = 'ci.tests.gmail@flowcrypt.dev';
+        await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
+        const composePage = await ComposePageRecipe.openStandalone(t, browser, acctEmail);
         await ComposePageRecipe.fillMsg(composePage, { to: 'demo@flowcrypt.com' }, 'should find pubkey from WKD directly');
         await composePage.waitForContent('.email_address.has_pgp', 'demo@flowcrypt.com');
         expect(await composePage.attr('.email_address.has_pgp', 'title')).to.contain('0997 7F6F 512C A5AD 76F0 C210 248B 60EB 6D04 4DF8 (openpgp)');
