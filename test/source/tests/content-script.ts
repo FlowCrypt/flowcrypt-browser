@@ -9,7 +9,7 @@ import { Value } from '../core/common';
 export const defineContentScriptTests = (testWithBrowser: TestWithBrowser) => {
   test(
     'content script test',
-    testWithBrowser(undefined, async (t, browser) => {
+    testWithBrowser(async (t, browser) => {
       const authorizationHeader = {
         Authorization: 'Bearer just-to-load-and-run-content-scripts', // eslint-disable-line @typescript-eslint/naming-convention
       };
