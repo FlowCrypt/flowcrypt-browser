@@ -1,30 +1,27 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
 import test, { Implementation } from 'ava';
-import { promisify } from 'util';
 import { exec } from 'child_process';
+import { promisify } from 'util';
 
-import { AvaContext, getDebugHtmlAtts, minutes, standaloneTestTimeout } from './tests/tooling';
 import { BrowserHandle, BrowserPool } from './browser';
+import { AvaContext, getDebugHtmlAtts, minutes, standaloneTestTimeout } from './tests/tooling';
 import { Util, getParsedCliParams } from './util';
 
-import { BrowserRecipe } from './tests/tooling/browser-recipe';
+import { mkdirSync, realpathSync, writeFileSync } from 'fs';
+import { TestUrls } from './browser/test-urls';
+import { startAllApisMock } from './mock/all-apis-mock';
+import { mockBackendData } from './mock/backend/backend-endpoints';
 import { defineComposeTests } from './tests/compose';
+import { defineContentScriptTests } from './tests/content-script';
 import { defineDecryptTests } from './tests/decrypt';
 import { defineElementTests } from './tests/elements';
 import { defineFlakyTests } from './tests/flaky';
 import { defineGmailTests } from './tests/gmail';
 import { defineSettingsTests } from './tests/settings';
 import { defineSetupTests } from './tests/setup';
-import { defineUnitNodeTests } from './tests/unit-node';
 import { defineUnitBrowserTests } from './tests/unit-browser';
-import { mockBackendData } from './mock/backend/backend-endpoints';
-import { TestUrls } from './browser/test-urls';
-import { mkdirSync, realpathSync, writeFileSync } from 'fs';
-import { startAllApisMock } from './mock/all-apis-mock';
-import { defineContentScriptTests } from './tests/content-script';
-import { ATTESTER_ACCOUNT_INIT_SETUP_MOCK_CONFIG } from './mock/attester/attester-key-constants';
-import { ConfigurationProvider } from './mock/lib/api';
+import { defineUnitNodeTests } from './tests/unit-node';
 
 export const { testVariant, testGroup, oneIfNotPooled, buildDir, isMock } = getParsedCliParams();
 export const internalTestState = { expectIntentionalErrReport: false }; // updated when a particular test that causes an error is run
@@ -60,18 +57,11 @@ test.beforeEach('set timeout', async t => {
   t.timeout(consts.TIMEOUT_EACH_RETRY);
 });
 
-const testWithBrowser = (
-  acct: CommonAcct | undefined,
-  cb: (t: AvaContext, browser: BrowserHandle) => Promise<void>,
-  flag?: 'FAILING'
-): Implementation<unknown[]> => {
+const testWithBrowser = (cb: (t: AvaContext, browser: BrowserHandle) => Promise<void>, flag?: 'FAILING'): Implementation<unknown[]> => {
   return async (t: AvaContext) => {
     let closeMockApi: (() => Promise<void>) | undefined;
     if (isMock) {
       t.mockApi = await startMockApiAndCopyBuild(t);
-      t.mockApi.configProvider = new ConfigurationProvider({
-        attester: ATTESTER_ACCOUNT_INIT_SETUP_MOCK_CONFIG,
-      });
       closeMockApi = t.mockApi.close;
     } else {
       t.urls = new TestUrls(await browserPool.getExtensionId(t));
@@ -80,9 +70,6 @@ const testWithBrowser = (
       await browserPool.withNewBrowserTimeoutAndRetry(
         async (t, browser) => {
           const start = Date.now();
-          if (acct) {
-            await BrowserRecipe.setUpCommonAcct(t, browser, acct);
-          }
           await cb(t, browser);
           if (DEBUG_BROWSER_LOG) {
             await saveBrowserLog(t, browser);
