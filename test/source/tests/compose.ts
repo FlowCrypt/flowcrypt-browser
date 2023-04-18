@@ -1352,26 +1352,20 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       'compose - expired can still send',
       testWithBrowser(async (t, browser) => {
         const acct = 'ci.tests.gmail@flowcrypt.test';
+        const expiredEmail = 'expired.on.attester@domain.com';
         t.mockApi!.configProvider = new ConfigurationProvider({
           attester: {
             pubkeyLookup: {
               [acct]: {
                 pubkey: somePubkey,
               },
-            },
-          },
-        });
-        await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
-        const expiredEmail = 'expired.on.attester@domain.com';
-        t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: {
-            pubkeyLookup: {
               [expiredEmail]: {
                 pubkey: expiredPubkey,
               },
             },
           },
         });
+        await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
         const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
         await ComposePageRecipe.fillMsg(composePage, { to: expiredEmail }, 'Test Expired Email');
         const expandContainer = await composePage.waitAny('@action-show-container-cc-bcc-buttons');

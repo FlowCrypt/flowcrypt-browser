@@ -3,7 +3,7 @@
 import { HttpClientErr, Status } from '../lib/api';
 import { HandlersDefinition } from '../all-apis-mock';
 import { isPost, isGet } from '../lib/mock-util';
-import { oauth } from '../lib/oauth';
+import { OauthMock } from '../lib/oauth';
 import { expect } from 'chai';
 import { Dict } from '../../core/common';
 import { Util } from '../../util';
@@ -21,7 +21,7 @@ export interface AttesterConfig {
   welcomeMessageEnabled?: boolean;
 }
 
-export const getMockAttesterEndpoints = (attesterConfig: AttesterConfig): HandlersDefinition => {
+export const getMockAttesterEndpoints = (oauth: OauthMock, attesterConfig: AttesterConfig): HandlersDefinition => {
   return {
     '/attester/pub/?': async ({ body }, req) => {
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
