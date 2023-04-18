@@ -3833,6 +3833,11 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
     test(
       'user@standardsubdomainfes.localhost:8001 - PWD encrypted message with FES web portal',
       testWithBrowser(async (t, browser) => {
+        t.mockApi!.configProvider = new ConfigurationProvider({
+          attester: {
+            pubkeyLookup: {},
+          },
+        });
         const port = t.urls?.port;
         const acct = `user@standardsubdomainfes.localhost:${port}`; // added port to trick extension into calling the mock
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);

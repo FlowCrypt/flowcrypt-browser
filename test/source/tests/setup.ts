@@ -498,7 +498,11 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       testWithBrowser(async (t, browser) => {
         t.mockApi!.configProvider = new ConfigurationProvider({
           attester: {
-            pubkeyLookup: {},
+            pubkeyLookup: {
+              'flowcrypt.compatibility@gmail.com': {
+                pubkey: somePubkey,
+              },
+            },
           },
         });
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.compatibility@gmail.com');
