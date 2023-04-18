@@ -2237,7 +2237,7 @@ d6Z36//MsmczN00Wd60t9T+qyLz0T4/UG2Y9lgf367f3d+kYPE0LS7mXuFmjlPXfw0nKyVsSeFiu
         const attachmentPreviewPage2 = await gmailPage.getFrame(['attachment_preview.htm']);
         await attachmentPreviewPage2.waitAndClick('@attachment-preview-download');
         const downloadedFile5 = await gmailPage.awaitDownloadTriggeredByClicking(() =>
-          PageRecipe.waitForModalAndRespond(gmailPage, 'confirm', {
+          PageRecipe.waitForModalAndRespond(attachmentPreviewPage2, 'confirm', {
             contentToCheck: expectedErrMsg,
             clickOn: 'confirm',
           })
