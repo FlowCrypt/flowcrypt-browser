@@ -7,6 +7,9 @@ import { CommonAcct, TestWithBrowser } from '../test';
 import { readdirSync, readFileSync } from 'fs';
 import { Buf } from '../core/buf';
 import { testConstants } from './tooling/consts';
+import { BrowserRecipe } from './tooling/browser-recipe';
+import { ConfigurationProvider } from '../mock/lib/api';
+import { somePubkey } from '../mock/attester/attester-key-constants';
 
 type UnitTest = { title: string; code: string; acct?: CommonAcct; only: boolean };
 
@@ -18,7 +21,22 @@ export const defineUnitBrowserTests = (testVariant: TestVariant, testWithBrowser
       // eslint-disable-next-line no-only-tests/no-only-tests
       (flag !== 'only' ? test : test.only)(
         title,
-        testWithBrowser(acct, async (t, browser) => {
+        testWithBrowser(async (t, browser) => {
+          if (acct) {
+            t.mockApi!.configProvider = new ConfigurationProvider({
+              attester: {
+                pubkeyLookup: {
+                  'ci.tests.gmail@flowcrypt.test': {
+                    pubkey: somePubkey,
+                  },
+                  'flowcrypt.compatibility@gmail.com': {
+                    pubkey: somePubkey,
+                  },
+                },
+              },
+            });
+            await BrowserRecipe.setUpCommonAcct(t, browser, acct);
+          }
           const hostPage = await browser.newExtensionPage(t, 'chrome/dev/ci_unit_test.htm');
           // update host page h1
           await hostPage.target.evaluate(title => {
