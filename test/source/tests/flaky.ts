@@ -37,6 +37,9 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
               [acctEmail]: {
                 pubkey: somePubkey,
               },
+              'human@flowcrypt.com': {
+                pubkey: somePubkey,
+              },
             },
           },
         });
@@ -387,7 +390,11 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
       testWithBrowser(async (t, browser) => {
         t.mockApi!.configProvider = new ConfigurationProvider({
           attester: {
-            pubkeyLookup: {},
+            pubkeyLookup: {
+              'human@flowcrypt.com': {
+                pubkey: somePubkey,
+              },
+            },
           },
         });
         const acctEmail = 'user@forbid-storing-passphrase-client-configuration.flowcrypt.test';
@@ -426,6 +433,9 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
           attester: {
             pubkeyLookup: {
               [acct]: {
+                pubkey: somePubkey,
+              },
+              'human@flowcrypt.com': {
                 pubkey: somePubkey,
               },
             },

@@ -533,11 +533,10 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
     test(
       'compose - from alias',
       testWithBrowser(async (t, browser) => {
-        const acct = 'flowcryptcompatibility@gmail.com';
         t.mockApi!.configProvider = new ConfigurationProvider({
           attester: {
             pubkeyLookup: {
-              [acct]: {
+              'flowcrypt.compatibility@gmail.com': {
                 pubkey: somePubkey,
               },
               'human@flowcrypt.com': {
@@ -548,7 +547,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         });
         await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
         const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
-        await ComposePageRecipe.selectFromOption(composePage, acct);
+        await ComposePageRecipe.selectFromOption(composePage, 'flowcryptcompatibility@gmail.com');
         await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, 'from alias');
         await ComposePageRecipe.sendAndClose(composePage);
       })

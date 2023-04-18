@@ -973,7 +973,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         t.mockApi!.configProvider = new ConfigurationProvider({
           attester: {
             pubkeyLookup: {
-              acctEmail: {
+              [acctEmail]: {
                 pubkey: somePubkey,
               },
             },
