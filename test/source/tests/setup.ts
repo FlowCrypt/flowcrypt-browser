@@ -19,7 +19,7 @@ import { BrowserHandle, ControllablePage } from '../browser';
 import { OauthPageRecipe } from './page-recipe/oauth-page-recipe';
 import { AvaContext } from './tooling';
 import { opgp } from '../core/crypto/pgp/openpgpjs-custom';
-import { hasPubKey, protonMailCompatKey, somePubkey } from '../mock/attester/attester-key-constants';
+import { hasPubKey, protonMailCompatKey, singlePubKeyAttesterConfig, somePubkey } from '../mock/attester/attester-key-constants';
 import { ConfigurationProvider } from '../mock/lib/api';
 
 const getAuthorizationHeader = async (t: AvaContext, browser: BrowserHandle, acctEmail: string) => {
@@ -166,13 +166,7 @@ export const defineSetupTests = (testVariant: TestVariant, testWithBrowser: Test
       testWithBrowser(async (t, browser) => {
         const acctEmail = 'flowcrypt.test.key.used.pgp@gmail.com';
         t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: {
-            pubkeyLookup: {
-              [acctEmail]: {
-                pubkey: somePubkey,
-              },
-            },
-          },
+          attester: singlePubKeyAttesterConfig(acctEmail, somePubkey),
         });
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
         await SetupPageRecipe.manualEnter(
@@ -477,13 +471,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       testWithBrowser(async (t, browser) => {
         const acctEmail = 'flowcrypt.compatibility@gmail.com';
         t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: {
-            pubkeyLookup: {
-              [acctEmail]: {
-                pubkey: somePubkey,
-              },
-            },
-          },
+          attester: singlePubKeyAttesterConfig(acctEmail, somePubkey),
         });
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
         await SetupPageRecipe.recover(settingsPage, 'flowcrypt.compatibility.1pp1', {
@@ -519,13 +507,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       testWithBrowser(async (t, browser) => {
         const acctEmail = 'flowcrypt.compatibility@gmail.com';
         t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: {
-            pubkeyLookup: {
-              [acctEmail]: {
-                pubkey: somePubkey,
-              },
-            },
-          },
+          attester: singlePubKeyAttesterConfig(acctEmail, somePubkey),
         });
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
         await SetupPageRecipe.recover(settingsPage, 'flowcrypt.compatibility.1pp2', {
@@ -605,13 +587,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       testWithBrowser(async (t, browser) => {
         const acctEmail = 'flowcrypt.compatibility@gmail.com';
         t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: {
-            pubkeyLookup: {
-              [acctEmail]: {
-                pubkey: somePubkey,
-              },
-            },
-          },
+          attester: singlePubKeyAttesterConfig(acctEmail, somePubkey),
         });
         await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
         // Wipe google tokens to test re-auth popup
@@ -642,13 +618,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       testWithBrowser(async (t, browser) => {
         const acct = 'flowcrypt.compatibility@gmail.com';
         t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: {
-            pubkeyLookup: {
-              [acct]: {
-                pubkey: somePubkey,
-              },
-            },
-          },
+          attester: singlePubKeyAttesterConfig(acct, somePubkey),
         });
         await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
         const gmailPage = await openMockGmailPage(t, browser, acct);
@@ -741,13 +711,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       testWithBrowser(async (t, browser) => {
         const acctEmail = 'flowcrypt.compatibility@gmail.com';
         t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: {
-            pubkeyLookup: {
-              [acctEmail]: {
-                pubkey: somePubkey,
-              },
-            },
-          },
+          attester: singlePubKeyAttesterConfig(acctEmail, somePubkey),
         });
         await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
         const settingsPage = await browser.newExtensionSettingsPage(t, acctEmail);
@@ -917,13 +881,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       testWithBrowser(async (t, browser) => {
         const acctEmail = 'flowcrypt.test.key.recovered@gmail.com';
         t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: {
-            pubkeyLookup: {
-              [acctEmail]: {
-                pubkey: somePubkey,
-              },
-            },
-          },
+          attester: singlePubKeyAttesterConfig(acctEmail, somePubkey),
         });
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
         await SetupPageRecipe.recover(settingsPage, 'flowcrypt.test.key.recovered', { hasRecoverMore: false });
@@ -935,13 +893,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       testWithBrowser(async (t, browser) => {
         const acctEmail = 'flowcrypt.test.key.recovered@gmail.com';
         t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: {
-            pubkeyLookup: {
-              [acctEmail]: {
-                pubkey: somePubkey,
-              },
-            },
-          },
+          attester: singlePubKeyAttesterConfig(acctEmail, somePubkey),
         });
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
         await SetupPageRecipe.recover(settingsPage, 'flowcrypt.wrong.passphrase', {
@@ -956,13 +908,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       testWithBrowser(async (t, browser) => {
         const acctEmail = 'flowcrypt.test.key.recovered@gmail.com';
         t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: {
-            pubkeyLookup: {
-              [acctEmail]: {
-                pubkey: somePubkey,
-              },
-            },
-          },
+          attester: singlePubKeyAttesterConfig(acctEmail, somePubkey),
         });
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
         await SetupPageRecipe.recover(settingsPage, 'flowcrypt.wrong.passphrase', { wrongPp: true });
@@ -975,13 +921,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       testWithBrowser(async (t, browser) => {
         const acctEmail = 'flowcrypt.test.key.used.pgp@gmail.com';
         t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: {
-            pubkeyLookup: {
-              [acctEmail]: {
-                pubkey: somePubkey,
-              },
-            },
-          },
+          attester: singlePubKeyAttesterConfig(acctEmail, somePubkey),
         });
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
         await SetupPageRecipe.manualEnter(
