@@ -20,7 +20,7 @@ import { expectRecipientElements } from './compose';
 import { GoogleData } from '../mock/google/google-data';
 import { ControllableFrame } from '../browser/controllable';
 import { ConfigurationProvider } from '../mock/lib/api';
-import { somePubkey } from '../mock/attester/attester-key-constants';
+import { singlePubKeyAttesterConfig, somePubkey } from '../mock/attester/attester-key-constants';
 
 // these tests are run serially, one after another, because they are somewhat more sensitive to parallel testing
 // eg if they are very cpu-sensitive (create key tests)
@@ -96,13 +96,7 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
       testWithBrowser(async (t, browser) => {
         const acctEmail = 'flowcrypt.test.key.new.manual@gmail.com';
         t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: {
-            pubkeyLookup: {
-              [acctEmail]: {
-                pubkey: somePubkey,
-              },
-            },
-          },
+          attester: singlePubKeyAttesterConfig(acctEmail, somePubkey),
         });
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
         await SetupPageRecipe.createKey(
@@ -120,13 +114,7 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
       testWithBrowser(async (t, browser) => {
         const acctEmail = 'flowcrypt.test.key.new.manual@gmail.com';
         t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: {
-            pubkeyLookup: {
-              [acctEmail]: {
-                pubkey: somePubkey,
-              },
-            },
-          },
+          attester: singlePubKeyAttesterConfig(acctEmail, somePubkey),
         });
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
         await SetupPageRecipe.createKey(
@@ -144,13 +132,7 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
       testWithBrowser(async (t, browser) => {
         const acctEmail = 'flowcrypt.test.key.new.manual@gmail.com';
         t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: {
-            pubkeyLookup: {
-              [acctEmail]: {
-                pubkey: somePubkey,
-              },
-            },
-          },
+          attester: singlePubKeyAttesterConfig(acctEmail, somePubkey),
         });
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
         await SetupPageRecipe.createKey(
@@ -187,13 +169,7 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
       testWithBrowser(async (t, browser) => {
         const acct = 'flowcrypt.compatibility@gmail.com';
         t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: {
-            pubkeyLookup: {
-              [acct]: {
-                pubkey: somePubkey,
-              },
-            },
-          },
+          attester: singlePubKeyAttesterConfig(acct, somePubkey),
         });
         await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
         const appendUrl = 'threadId=17d02296bccd4c5c&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___&replyMsgId=17d02296bccd4c5c';
@@ -465,13 +441,7 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
       testWithBrowser(async (t, browser) => {
         const acct = 'ci.tests.gmail@flowcrypt.test';
         t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: {
-            pubkeyLookup: {
-              [acct]: {
-                pubkey: somePubkey,
-              },
-            },
-          },
+          attester: singlePubKeyAttesterConfig(acct, somePubkey),
         });
         await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
         const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
@@ -548,13 +518,7 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
       testWithBrowser(async (t, browser) => {
         const acct = 'flowcrypt.compatibility@gmail.com';
         t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: {
-            pubkeyLookup: {
-              [acct]: {
-                pubkey: somePubkey,
-              },
-            },
-          },
+          attester: singlePubKeyAttesterConfig(acct, somePubkey),
         });
         await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
         const msgPwd = 'super hard password for the message';
@@ -574,13 +538,7 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
       testWithBrowser(async (t, browser) => {
         const acct = 'ci.tests.gmail@flowcrypt.test';
         t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: {
-            pubkeyLookup: {
-              [acct]: {
-                pubkey: somePubkey,
-              },
-            },
-          },
+          attester: singlePubKeyAttesterConfig(acct, somePubkey),
         });
         await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
         const inboxPage = await browser.newExtensionInboxPage(t, acct);
@@ -645,13 +603,7 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
       testWithBrowser(async (t, browser) => {
         const acctEmail = 'flowcrypt.compatibility@gmail.com';
         t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: {
-            pubkeyLookup: {
-              [acctEmail]: {
-                pubkey: somePubkey,
-              },
-            },
-          },
+          attester: singlePubKeyAttesterConfig(acctEmail, somePubkey),
         });
         await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
         const passphrase = 'pa$$w0rd';
@@ -694,13 +646,7 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
       testWithBrowser(async (t, browser) => {
         const acctEmail = 'ci.tests.gmail@flowcrypt.test';
         t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: {
-            pubkeyLookup: {
-              [acctEmail]: {
-                pubkey: somePubkey,
-              },
-            },
-          },
+          attester: singlePubKeyAttesterConfig(acctEmail, somePubkey),
         });
         await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
         /* sample to generate the key and messages

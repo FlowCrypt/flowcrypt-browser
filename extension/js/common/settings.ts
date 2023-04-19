@@ -26,6 +26,7 @@ import { PassphraseStore } from './platform/store/passphrase-store.js';
 import { isCustomerUrlFesUsed } from './helpers.js';
 import { Api } from './api/shared/api.js';
 import { BrowserMsg } from './browser/browser-msg.js';
+import { Time } from './browser/time.js';
 
 declare const zxcvbn: Function; // eslint-disable-line @typescript-eslint/ban-types
 
@@ -365,7 +366,7 @@ export class Settings {
             response.result
           }] ${response.error}`
         );
-        await Ui.time.sleep(1000);
+        await Time.sleep(1000);
         window.location.reload();
       }
     } catch (e) {
@@ -377,7 +378,7 @@ export class Settings {
         Catch.reportErr(e);
         await Ui.modal.error(`Unknown error happened when connecting to Google: ${String(e)}`);
       }
-      await Ui.time.sleep(1000);
+      await Time.sleep(1000);
       window.location.reload();
     }
   };

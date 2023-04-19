@@ -2,8 +2,20 @@
 
 import { Buf } from '../../core/buf';
 import { GoogleData } from '../google/google-data';
+import { AttesterConfig } from './attester-endpoints';
 
 let data: GoogleData;
+
+export const singlePubKeyAttesterConfig = (email: string, pubKey: string): AttesterConfig => {
+  return {
+    pubkeyLookup: {
+      [email]: {
+        pubkey: pubKey,
+      },
+    },
+  };
+};
+
 export const get203FAE7076005381 = async () => {
   if (!data) {
     data = await GoogleData.withInitializedData('flowcrypt.compatibility@gmail.com');

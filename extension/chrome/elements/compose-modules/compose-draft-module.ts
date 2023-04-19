@@ -7,6 +7,7 @@ import { InvalidRecipientError, SendableMsg } from '../../../js/common/api/email
 import { AjaxErr, ApiErr } from '../../../js/common/api/shared/api-error.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Env } from '../../../js/common/browser/env.js';
+import { Time } from '../../../js/common/browser/time.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { Buf } from '../../../js/common/core/buf.js';
 import { Str, Url } from '../../../js/common/core/common.js';
@@ -83,7 +84,7 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
         Xss.sanitizeRender('body', `Failed to load draft - FlowCrypt needs to be re-connected to Gmail. ${Ui.retryLink()}`);
       } else if (this.view.isReplyBox && ApiErr.isNotFound(e)) {
         console.info('about to reload reply_message automatically: get draft 404', this.view.acctEmail);
-        await Ui.time.sleep(500);
+        await Time.sleep(500);
         console.info('Above red message means that there used to be a draft, but was since deleted. (not an error)');
         this.view.draftId = '';
         window.location.href = Url.create(Env.getUrlNoParams(), this.urlParams());
@@ -97,7 +98,7 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
 
   public draftDelete = async () => {
     clearInterval(this.saveDraftInterval);
-    await Ui.time.wait(() => (!this.currentlySavingDraft ? true : undefined));
+    await Time.wait(() => (!this.currentlySavingDraft ? true : undefined));
     if (this.view.draftId) {
       try {
         if (!this.isLocalDraftId(this.view.draftId)) {

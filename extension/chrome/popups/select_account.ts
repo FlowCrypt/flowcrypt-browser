@@ -5,7 +5,7 @@
 import { Assert } from '../../js/common/assert.js';
 import { Browser } from '../../js/common/browser/browser.js';
 import { Catch } from '../../js/common/platform/catch.js';
-import { Ui } from '../../js/common/browser/ui.js';
+import { Time } from '../../js/common/browser/time.js';
 import { Url } from '../../js/common/core/common.js';
 import { View } from '../../js/common/view.js';
 import { Xss } from '../../js/common/platform/xss.js';
@@ -61,13 +61,13 @@ View.run(
       } else {
         await Browser.openSettingsPage('index.htm', $(clickedElement).attr('email'));
       }
-      await Ui.time.sleep(100);
+      await Time.sleep(100);
       window.close();
     };
 
     private actionRedirectToAddAcctPageHandler = async () => {
       await Browser.openSettingsPage('index.htm', undefined, undefined, undefined, true);
-      await Ui.time.sleep(100);
+      await Time.sleep(100);
       window.close();
     };
   }

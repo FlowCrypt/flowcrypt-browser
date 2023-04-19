@@ -186,5 +186,3 @@ export class MockJwt {
     return email; // eslint-disable-line @typescript-eslint/no-unsafe-return
   };
 }
-
-export const oauth = new OauthMock();
