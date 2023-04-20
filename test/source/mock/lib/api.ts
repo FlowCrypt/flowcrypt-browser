@@ -9,7 +9,7 @@ import { HandlersRequestDefinition } from '../all-apis-mock';
 import { KeysOpenPGPOrgConfig, getMockKeysOpenPGPOrgEndpoints } from '../keys-openpgp-org/keys-openpgp-org-endpoints';
 import { OauthMock } from './oauth';
 import { getMockGoogleEndpoints } from '../google/google-endpoints';
-import { getMockKeyManagerEndpoints } from '../key-manager/key-manager-endpoints';
+import { KeyManagerConfig, getMockKeyManagerEndpoints } from '../key-manager/key-manager-endpoints';
 
 export class HttpAuthErr extends Error {}
 export class HttpClientErr extends Error {
@@ -35,15 +35,21 @@ export enum Status {
 export type RequestHandler<REQ, RES> = (parsedReqBody: REQ, req: http.IncomingMessage) => Promise<RES>;
 export type Handlers<REQ, RES> = { [request: string]: RequestHandler<REQ, RES> };
 
+interface ConfigurationOptions {
+  attester?: AttesterConfig;
+  keysOpenPgp?: KeysOpenPGPOrgConfig;
+  ekm?: KeyManagerConfig;
+}
+
 interface ConfigurationProviderInterface<REQ, RES> {
-  config: { attester?: AttesterConfig; keysOpenPgp?: KeysOpenPGPOrgConfig };
+  config: ConfigurationOptions;
   getHandlers(): Handlers<REQ, RES>;
 }
 
 export class ConfigurationProvider implements ConfigurationProviderInterface<HandlersRequestDefinition, unknown> {
   private oauth = new OauthMock();
 
-  public constructor(public config: { attester?: AttesterConfig; keysOpenPgp?: KeysOpenPGPOrgConfig }) {}
+  public constructor(public config: ConfigurationOptions) {}
 
   public getHandlers(): Handlers<HandlersRequestDefinition, unknown> {
     let handlers: Handlers<HandlersRequestDefinition, unknown> = {};
@@ -53,7 +59,7 @@ export class ConfigurationProvider implements ConfigurationProviderInterface<Han
     handlers = {
       ...handlers,
       ...getMockGoogleEndpoints(this.oauth),
-      ...getMockKeyManagerEndpoints(this.oauth),
+      ...getMockKeyManagerEndpoints(this.oauth, this.config.ekm),
       ...getMockKeysOpenPGPOrgEndpoints(this.config.keysOpenPgp),
     };
     return handlers;
