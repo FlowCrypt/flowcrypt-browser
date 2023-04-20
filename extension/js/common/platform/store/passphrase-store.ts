@@ -3,7 +3,7 @@
 import { StorageType, AbstractStore } from './abstract-store.js';
 import { AccountIndex, AcctStore, AcctStoreDict } from './acct-store.js';
 import { PromiseCancellation, Dict } from '../../core/common.js';
-import { Ui } from '../../browser/ui.js';
+import { Time } from '../../browser/time.js';
 import { InMemoryStore } from './in-memory-store.js';
 import { ClientConfiguration } from '../../client-configuration.js';
 
@@ -52,7 +52,7 @@ export class PassphraseStore extends AbstractStore {
       missingOrWrongPassprases[missingOrWrongPpKeyLongids[i]] = passphrases[i];
     }
     while (!cancellation.cancel) {
-      await Ui.time.sleep(interval);
+      await Time.sleep(interval);
       const longidsMissingPp = Object.keys(missingOrWrongPassprases);
       const updatedPpArr = await Promise.all(longidsMissingPp.map(longid => PassphraseStore.get(acctEmail, { longid })));
       for (let i = 0; i < longidsMissingPp.length; i++) {

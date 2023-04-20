@@ -16,6 +16,7 @@ import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
 import { GmailParser } from '../../../js/common/api/email-provider/gmail/gmail-parser.js';
 import { CID_PATTERN, Str } from '../../../js/common/core/common.js';
 import DOMPurify from 'dompurify';
+import { Time } from '../../../js/common/browser/time.js';
 
 export class PgpBlockViewRenderModule {
   public doNotSetStateAsReadyYet = false;
@@ -135,7 +136,7 @@ export class PgpBlockViewRenderModule {
     w?.document.write(html);
     // Give some time for above dom to load in print dialog
     // https://stackoverflow.com/questions/31725373/google-chrome-not-showing-image-in-print-preview
-    await Ui.time.sleep(250);
+    await Time.sleep(250);
     w?.window.print();
     w?.document.close();
   };

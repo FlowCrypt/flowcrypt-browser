@@ -15,6 +15,7 @@ import { View } from '../../../js/common/view.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { XssSafeFactory } from '../../../js/common/xss-safe-factory.js';
 import { KeyStore } from '../../../js/common/platform/store/key-store.js';
+import { AttachmentWarnings } from '../../elements/shared/attachment_warnings.js';
 
 View.run(
   class ManualDecryptView extends View {
@@ -75,7 +76,9 @@ View.run(
           type: encrypted.type,
           data: result.content,
         });
-        Browser.saveToDownloads(attachment);
+        if (await AttachmentWarnings.confirmSaveToDownloadsIfNeeded(attachment)) {
+          Browser.saveToDownloads(attachment);
+        }
       } else if (result.error.type === DecryptErrTypes.needPassphrase) {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         $('.passphrase_dialog').html(this.factory!.embeddedPassphrase(result.longids.needPassphrase)); // xss-safe-factory
