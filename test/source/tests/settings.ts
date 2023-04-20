@@ -1507,6 +1507,9 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
           attester: {
             pubkeyLookup: {},
           },
+          ekm: {
+            keys: [testConstants.existingPrv],
+          },
         });
         const port = t.urls?.port;
         const domain = 'settings.flowcrypt.test';
@@ -1559,6 +1562,9 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         t.mockApi!.configProvider = new ConfigurationProvider({
           attester: {
             pubkeyLookup: {},
+          },
+          ekm: {
+            keys: [testConstants.existingPrv],
           },
         });
         const port = t.urls?.port;
