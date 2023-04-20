@@ -7,9 +7,27 @@ import { Catch } from '../platform/catch.js';
 import { Dict, Url } from '../core/common.js';
 import Swal, { SweetAlertIcon, SweetAlertPosition, SweetAlertResult } from 'sweetalert2';
 import { Xss } from '../platform/xss.js';
+import { Bm, BrowserMsg } from './browser-msg.js';
 
 type NamedSels = Dict<JQuery<HTMLElement>>;
 type ProvidedEventHandler = (e: HTMLElement, event: JQuery.Event<HTMLElement, null>) => void | Promise<void>;
+
+export interface ConfirmationResultTracker {
+  getParentTabId: () => string;
+  confirmationResultResolver?: (confirm: boolean) => void;
+}
+
+export class CommonHandlers {
+  public static createConfirmationResultHandler: (view: ConfirmationResultTracker) => Bm.AsyncResponselessHandler = view => {
+    return async ({ confirm }: Bm.ConfirmationResult) => {
+      view.confirmationResultResolver?.(confirm);
+    };
+  };
+  public static showConfirmationHandler: Bm.AsyncResponselessHandler = async ({ text, isHTML, footer }: Bm.ShowConfirmation) => {
+    const confirm = await Ui.modal.confirm(text, isHTML, footer);
+    BrowserMsg.send.confirmationResult('broadcast', { confirm });
+  };
+}
 
 export type SelCache = {
   cached: (name: string) => JQuery<HTMLElement>;
@@ -131,28 +149,6 @@ export class Ui {
         }
       };
     },
-  };
-
-  public static time = {
-    wait: (untilThisFunctionEvalsTrue: () => boolean | undefined): Promise<void> =>
-      new Promise((success, error) => {
-        const interval = Catch.setHandledInterval(() => {
-          const result = untilThisFunctionEvalsTrue();
-          if (result === true) {
-            clearInterval(interval);
-            if (success) {
-              success();
-            }
-          } else if (result === false) {
-            clearInterval(interval);
-            if (error) {
-              error();
-            }
-          }
-        }, 50);
-      }),
-    sleep: (ms: number, setCustomTimeout: (code: () => void, t: number) => void = Catch.setHandledTimeout): Promise<void> =>
-      new Promise(resolve => setCustomTimeout(resolve, ms)),
   };
 
   public static modal = {
@@ -327,6 +323,22 @@ export class Ui {
   };
 
   public static testCompatibilityLink = '<a href="/chrome/settings/modules/compatibility.htm" target="_blank">Test your OpenPGP key compatibility</a>';
+
+  public static modalInParentTab = (confirmationResultTracker: ConfirmationResultTracker) => {
+    return {
+      /**
+       * Presents a modal where user can respond with confirm or cancel.
+       * Awaiting this will give you the users choice as a boolean.
+       */
+      confirm: async (text: string, isHTML = false, footer?: string): Promise<boolean> => {
+        const p = new Promise((resolve: (value: boolean) => void) => {
+          confirmationResultTracker.confirmationResultResolver = resolve;
+        });
+        BrowserMsg.send.showConfirmation(confirmationResultTracker.getParentTabId(), { text, isHTML, footer });
+        return await p;
+      },
+    };
+  };
 
   public static activateModalPageLinkTags = () => {
     $('[data-swal-page]').on(

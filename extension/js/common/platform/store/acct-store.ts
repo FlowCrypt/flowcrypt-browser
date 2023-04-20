@@ -5,7 +5,7 @@ import { ApiErr } from '../../api/shared/api-error.js';
 import { BgNotReadyErr, BrowserMsg } from '../../browser/browser-msg.js';
 import { storageLocalGet, storageLocalRemove, storageLocalSet } from '../../browser/chrome.js';
 import { Env } from '../../browser/env.js';
-import { Ui } from '../../browser/ui.js';
+import { Time } from '../../browser/time.js';
 import { ClientConfigurationJson } from '../../client-configuration.js';
 import { Dict } from '../../core/common.js';
 import { InMemoryStoreKeys } from '../../core/const.js';
@@ -94,7 +94,7 @@ export class AcctStore extends AbstractStore {
           if (!(e instanceof BgNotReadyErr) || i === 9) {
             throw e;
           }
-          await Ui.time.sleep(300);
+          await Time.sleep(300);
         }
       }
       throw new BgNotReadyErr('this should never happen');

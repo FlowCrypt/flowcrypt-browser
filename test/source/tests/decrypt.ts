@@ -1684,7 +1684,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
     );
 
     test(
-      'decrypt - prevent rendering of attachments from domain sources other than flowcrypt.s3.amazonaws.com1',
+      'decrypt - prevent rendering of attachments from domain sources other than flowcrypt.s3.amazonaws.com',
       testWithBrowser(async (t, browser) => {
         const threadId1 = '184cc6aa8e884397';
         const acctEmail = 'flowcrypt.compatibility@gmail.com';
@@ -1774,6 +1774,98 @@ d6Z36//MsmczN00Wd60t9T+qyLz0T4/UG2Y9lgf367f3d+kYPE0LS7mXuFmjlPXfw0nKyVsSeFiu
           encryption: 'not encrypted',
           signature: 'could not verify signature: missing pubkey A38042F607D623DA',
         });
+      })
+    );
+
+    test(
+      'settings - test for warning modal when downloading an executable file',
+      testWithBrowser(async (t, browser) => {
+        const threadId = '187365d19ec9a10c';
+        const threadId2 = '18736a0687a8426b';
+        const acctEmail = 'flowcrypt.compatibility@gmail.com';
+        const expectedErrMsg = 'This executable file was not checked for viruses, and may be dangerous to download or run. Proceed anyway?';
+        t.mockApi!.configProvider = new ConfigurationProvider({
+          attester: {
+            pubkeyLookup: {
+              [acctEmail]: {
+                pubkey: somePubkey,
+              },
+            },
+          },
+        });
+        await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
+        const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`);
+        const pgpBlockPage = await inboxPage.getFrame(['pgp_block.htm']);
+        await pgpBlockPage.waitAndClick('@download-attachment-0');
+        // check warning modal for inline encrypted attachment on FlowCrypt web extension page
+        const downloadedFile1 = await inboxPage.awaitDownloadTriggeredByClicking(() =>
+          PageRecipe.waitForModalAndRespond(inboxPage, 'confirm', {
+            contentToCheck: expectedErrMsg,
+            clickOn: 'confirm',
+          })
+        );
+        await pgpBlockPage.waitAndClick('@preview-attachment');
+        const attachmentPreviewPage = await inboxPage.getFrame(['attachment_preview.htm']);
+        await attachmentPreviewPage.waitAndClick('@attachment-preview-download');
+        // check warning modal for regular encrypted attachment on FlowCrypt web extension page
+        const downloadedFile2 = await attachmentPreviewPage.awaitDownloadTriggeredByClicking(() =>
+          PageRecipe.waitForModalAndRespond(attachmentPreviewPage, 'confirm', {
+            contentToCheck: expectedErrMsg,
+            clickOn: 'confirm',
+          })
+        );
+        expect(Object.entries([downloadedFile1, downloadedFile2]).length).to.equal(2);
+        await inboxPage.close();
+        const inboxPage2 = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId2}`);
+        const pgpBlockPage2 = await inboxPage2.getFrame(['pgp_block.htm']);
+        await pgpBlockPage2.waitAndClick('@download-attachment-0');
+        // check warning modal for inline signed attachment on FlowCrypt web extension page
+        const downloadedFile3 = await inboxPage2.awaitDownloadTriggeredByClicking(() =>
+          PageRecipe.waitForModalAndRespond(inboxPage2, 'confirm', {
+            contentToCheck: expectedErrMsg,
+            clickOn: 'confirm',
+          })
+        );
+        expect(Object.entries(downloadedFile3).length).to.equal(1);
+        const accessToken = await BrowserRecipe.getGoogleAccessToken(inboxPage2, acctEmail);
+        await inboxPage2.close();
+        const extraAuthHeaders = { Authorization: `Bearer ${accessToken}` }; // eslint-disable-line @typescript-eslint/naming-convention
+        const gmailPage = await browser.newPage(t, `${t.urls?.mockGmailUrl()}/${threadId}`, undefined, extraAuthHeaders);
+        await gmailPage.waitAll('iframe');
+        const pgpBlockPage3 = await gmailPage.getFrame(['pgp_block.htm']);
+        await pgpBlockPage3.waitAndClick('@download-attachment-0');
+        // check warning modal for inline encrypted attachment test on Gmail page
+        const downloadedFile4 = await gmailPage.awaitDownloadTriggeredByClicking(() =>
+          PageRecipe.waitForModalAndRespond(gmailPage, 'confirm', {
+            contentToCheck: expectedErrMsg,
+            clickOn: 'confirm',
+          })
+        );
+        const attachmentFrame = await gmailPage.getFrame(['attachment.htm']);
+        await attachmentFrame.waitAndClick('@attachment-container');
+        const attachmentPreviewPage2 = await gmailPage.getFrame(['attachment_preview.htm']);
+        await attachmentPreviewPage2.waitAndClick('@attachment-preview-download');
+        // check warning modal for regular encrypted attachment test on Gmail page
+        const downloadedFile5 = await gmailPage.awaitDownloadTriggeredByClicking(() =>
+          PageRecipe.waitForModalAndRespond(attachmentPreviewPage2, 'confirm', {
+            contentToCheck: expectedErrMsg,
+            clickOn: 'confirm',
+          })
+        );
+        expect(Object.entries([downloadedFile4, downloadedFile5]).length).to.equal(2);
+        await gmailPage.close();
+        const gmailPage2 = await browser.newPage(t, `${t.urls?.mockGmailUrl()}/${threadId2}`, undefined, extraAuthHeaders);
+        const pgpBlockPage4 = await gmailPage2.getFrame(['pgp_block.htm']);
+        await pgpBlockPage4.waitAndClick('@download-attachment-0');
+        // check warning modal for inline signed attachment test on Gmail page
+        const downloadedFile6 = await gmailPage2.awaitDownloadTriggeredByClicking(() =>
+          PageRecipe.waitForModalAndRespond(gmailPage2, 'confirm', {
+            contentToCheck: expectedErrMsg,
+            clickOn: 'confirm',
+          })
+        );
+        expect(Object.entries(downloadedFile6).length).to.equal(1);
+        await gmailPage2.close();
       })
     );
   }

@@ -145,4 +145,7 @@ export const Lang = {
     updateKey: 'Enter FlowCrypt pass phrase to keep your account keys up to date',
     email: 'Enter FlowCrypt pass phrase to read encrypted email',
   },
+  attachment: {
+    executableFileWarning: 'This executable file was not checked for viruses, and may be dangerous to download or run. Proceed anyway?', // xss-escaped
+  },
 };
