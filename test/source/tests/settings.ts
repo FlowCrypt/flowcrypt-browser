@@ -27,6 +27,7 @@ import { ClientConfiguration, keyManagerAutogenRules } from '../mock/backend/bac
 import { ConfigurationProvider, HttpClientErr, Status } from '../mock/lib/api';
 import { singlePubKeyAttesterConfig, somePubkey, testMatchPubKey } from '../mock/attester/attester-key-constants';
 import { emailKeyIndex } from '../core/common';
+import { twoKeys1, twoKeys2 } from '../mock/key-manager/key-manager-constants';
 
 export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: TestWithBrowser) => {
   if (testVariant !== 'CONSUMER-LIVE-GMAIL') {
@@ -488,6 +489,9 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         t.mockApi!.configProvider = new ConfigurationProvider({
           attester: {
             pubkeyLookup: {},
+          },
+          ekm: {
+            keys: [twoKeys1, twoKeys2],
           },
         });
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
@@ -1503,6 +1507,9 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
           attester: {
             pubkeyLookup: {},
           },
+          ekm: {
+            keys: [testConstants.existingPrv],
+          },
         });
         const port = t.urls?.port;
         const domain = 'settings.flowcrypt.test';
@@ -1555,6 +1562,9 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         t.mockApi!.configProvider = new ConfigurationProvider({
           attester: {
             pubkeyLookup: {},
+          },
+          ekm: {
+            keys: [testConstants.existingPrv],
           },
         });
         const port = t.urls?.port;
