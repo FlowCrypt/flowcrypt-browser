@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { SelCache, Ui } from '../../../js/common/browser/ui.js';
+import { CommonHandlers, SelCache, Ui } from '../../../js/common/browser/ui.js';
 import { Url, UrlParams } from '../../../js/common/core/common.js';
 import { ApiErr } from '../../../js/common/api/shared/api-error.js';
 import { Assert } from '../../../js/common/assert.js';
@@ -169,6 +169,7 @@ export class InboxView extends View {
     BrowserMsg.addListener('show_attachment_preview', async ({ iframeUrl }: Bm.ShowAttachmentPreview) => {
       await Ui.modal.attachmentPreview(iframeUrl);
     });
+    BrowserMsg.addListener('confirmation_show', CommonHandlers.showConfirmationHandler);
     if (this.debug) {
       BrowserMsg.addListener('open_compose_window', async ({ draftId }: Bm.ComposeWindowOpenDraft) => {
         console.log('received open_compose_window');
