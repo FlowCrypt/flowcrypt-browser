@@ -105,6 +105,16 @@ export class XssSafeFactory {
     return blocks.map(block => XssSafeFactory.renderableMsgBlock(factory, block, msgId, senderEmail, isOutgoing)).join('\n\n');
   };
 
+  public static getWindowOfEmbeddedMsg = (frameId: string): Window | undefined => {
+    // const iframe = document.getElementById(frameId) as HTMLIFrameElement;
+    const iframe = $(`iframe#${frameId}`).get(0) as HTMLIFrameElement;
+    if (iframe?.contentWindow) {
+      return iframe?.contentWindow;
+    }
+    Catch.report('Unable to find iframe by frameId=' + frameId);
+    return undefined;
+  };
+
   public srcImg = (relPath: string) => {
     return this.extUrl(`img/${relPath}`);
   };
@@ -160,6 +170,16 @@ export class XssSafeFactory {
       isOutgoing,
       signature,
     });
+  };
+
+  public srcPgpRenderBlockIframe = () => {
+    const frameId = this.newId();
+    return {
+      frameId,
+      frameSrc: this.frameSrc(this.extUrl('chrome/elements/pgp_render_block.htm'), {
+        frameId,
+      }),
+    };
   };
 
   public srcPgpPubkeyIframe = (armoredPubkey: string, isOutgoing?: boolean) => {
@@ -226,6 +246,11 @@ export class XssSafeFactory {
 
   public embeddedMsg = (type: MsgBlockType, armored: string, msgId?: string, isOutgoing?: boolean, sender?: string, signature?: string | boolean) => {
     return this.iframe(this.srcPgpBlockIframe(armored, msgId, isOutgoing, sender, signature), ['pgp_block', type]) + this.hideGmailNewMsgInThreadNotification;
+  };
+
+  public embeddedRenderMsg = () => {
+    const { frameId, frameSrc } = this.srcPgpRenderBlockIframe();
+    return { frameId, frameHtml: this.iframe(frameSrc, ['pgp_block']) + this.hideGmailNewMsgInThreadNotification };
   };
 
   public embeddedPubkey = (armoredPubkey: string, isOutgoing?: boolean) => {

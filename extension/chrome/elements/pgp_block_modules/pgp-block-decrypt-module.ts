@@ -4,7 +4,7 @@
 
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Buf } from '../../../js/common/core/buf.js';
-import { DecryptErrTypes } from '../../../js/common/core/crypto/pgp/msg-util.js';
+import { DecryptErrTypes, VerifyRes } from '../../../js/common/core/crypto/pgp/msg-util.js';
 import { GmailResponseFormat } from '../../../js/common/api/email-provider/gmail/gmail.js';
 import { Lang } from '../../../js/common/lang.js';
 import { Mime } from '../../../js/common/core/mime.js';
@@ -15,6 +15,9 @@ import { KeyStore } from '../../../js/common/platform/store/key-store.js';
 import { PassphraseStore } from '../../../js/common/platform/store/passphrase-store.js';
 import { MsgBlockParser } from '../../../js/common/core/msg-block-parser.js';
 import { Str } from '../../../js/common/core/common.js';
+import { Attachment } from '../../../js/common/core/attachment.js';
+import { MsgBlock } from '../../../js/common/core/msg-block.js';
+import { MessageRenderer } from '../../../js/common/message-renderer.js';
 
 export class PgpBlockViewDecryptModule {
   private msgFetchedFromApi: false | GmailResponseFormat = false;
@@ -118,7 +121,7 @@ export class PgpBlockViewDecryptModule {
             return await this.decryptAndRender(fetchedContent, verificationPubs);
           }
         }
-        await this.view.renderModule.decideDecryptedContentFormattingAndRender(
+        await this.decideDecryptedContentFormattingAndRender(
           result.content,
           result.isEncrypted,
           result.signature,
@@ -191,7 +194,81 @@ export class PgpBlockViewDecryptModule {
       const verify = async (verificationPubs: string[]) =>
         await BrowserMsg.send.bg.await.pgpMsgVerifyDetached({ plaintext: encryptedData, sigText, verificationPubs });
       const signatureResult = await verify(verificationPubs);
-      await this.view.renderModule.decideDecryptedContentFormattingAndRender(encryptedData, false, signatureResult, verificationPubs, verify);
+      await this.decideDecryptedContentFormattingAndRender(encryptedData, false, signatureResult, verificationPubs, verify);
+    }
+  };
+
+  private decideDecryptedContentFormattingAndRender = async (
+    decryptedBytes: Uint8Array | string,
+    isEncrypted: boolean,
+    sigResult: VerifyRes | undefined,
+    verificationPubs: string[],
+    retryVerification: (verificationPubs: string[]) => Promise<VerifyRes | undefined>,
+    plainSubject?: string
+  ) => {
+    if (isEncrypted) {
+      this.view.renderModule.renderEncryptionStatus('encrypted');
+      this.view.renderModule.setFrameColor('green');
+    } else {
+      this.view.renderModule.renderEncryptionStatus('not encrypted');
+      this.view.renderModule.setFrameColor('gray');
+    }
+    const publicKeys: string[] = [];
+    let renderableAttachments: Attachment[] = [];
+    let decryptedContent: string | undefined;
+    let isHtml = false;
+    // todo - replace with MsgBlockParser.fmtDecryptedAsSanitizedHtmlBlocks, then the extract/strip methods could be private?
+    if (!Mime.resemblesMsg(decryptedBytes)) {
+      const fcAttachmentBlocks: MsgBlock[] = [];
+      decryptedContent = Str.with(decryptedBytes);
+      decryptedContent = MsgBlockParser.extractFcAttachments(decryptedContent, fcAttachmentBlocks);
+      decryptedContent = MsgBlockParser.stripFcTeplyToken(decryptedContent);
+      decryptedContent = MsgBlockParser.stripPublicKeys(decryptedContent, publicKeys);
+      if (fcAttachmentBlocks.length) {
+        renderableAttachments = fcAttachmentBlocks.map(
+          attachmentBlock => new Attachment(attachmentBlock.attachmentMeta!) // eslint-disable-line @typescript-eslint/no-non-null-assertion
+        );
+      }
+    } else {
+      this.view.renderModule.renderText('Formatting...');
+      const decoded = await Mime.decode(decryptedBytes);
+      let inlineCIDAttachments: Attachment[] = [];
+      if (typeof decoded.html !== 'undefined') {
+        ({ sanitizedHtml: decryptedContent, inlineCIDAttachments } = MessageRenderer.replaceInlineImageCIDs(decoded.html, decoded.attachments));
+        isHtml = true;
+      } else if (typeof decoded.text !== 'undefined') {
+        decryptedContent = decoded.text;
+      } else {
+        decryptedContent = '';
+      }
+      if (
+        decoded.subject &&
+        isEncrypted &&
+        (!plainSubject || !Mime.subjectWithoutPrefixes(plainSubject).includes(Mime.subjectWithoutPrefixes(decoded.subject)))
+      ) {
+        // there is an encrypted subject + (either there is no plain subject or the plain subject does not contain what's in the encrypted subject)
+        decryptedContent = MessageRenderer.getEncryptedSubjectText(decoded.subject, isHtml) + decryptedContent; // render encrypted subject in message
+      }
+      for (const attachment of decoded.attachments) {
+        if (attachment.isPublicKey()) {
+          publicKeys.push(attachment.getData().toUtfStr());
+        } else if (!inlineCIDAttachments.some(inlineAttachment => inlineAttachment.cid === attachment.cid)) {
+          renderableAttachments.push(attachment);
+        }
+      }
+    }
+    this.view.quoteModule.separateQuotedContentAndRenderText(decryptedContent, isHtml);
+    await this.view.signatureModule.renderPgpSignatureCheckResult(sigResult, verificationPubs, retryVerification);
+    if (isEncrypted && publicKeys.length) {
+      BrowserMsg.send.renderPublicKeys(this.view.parentTabId, { afterFrameId: this.view.frameId, publicKeys });
+    }
+    if (renderableAttachments.length) {
+      this.view.attachmentsModule.renderInnerAttachments(renderableAttachments, isEncrypted);
+    }
+    this.view.renderModule.resizePgpBlockFrame();
+    if (!this.view.renderModule.doNotSetStateAsReadyYet) {
+      // in case async tasks are still being worked at
+      Ui.setTestState('ready');
     }
   };
 }

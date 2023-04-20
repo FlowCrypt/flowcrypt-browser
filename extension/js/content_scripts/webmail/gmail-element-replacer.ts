@@ -26,15 +26,17 @@ import { SendAsAlias } from '../../common/platform/store/acct-store.js';
 import { ContactStore } from '../../common/platform/store/contact-store.js';
 import { Buf } from '../../common/core/buf.js';
 import { MessageRenderer } from '../../common/message-renderer.js';
+import { RenderRelay } from '../../common/render-relay.js';
 import { Mime } from '../../common/core/mime.js';
 import { MsgUtil } from '../../common/core/crypto/pgp/msg-util.js';
+import { RenderInterface } from '../../common/render-interface.js';
 
 type JQueryEl = JQuery<HTMLElement>;
 
 type ProcessedMessage = { renderedXssSafe?: string; attachments: Attachment[] };
 
 interface MessageCacheEntry {
-  full: Promise<GmailRes.GmailMsg>;
+  download: { full: Promise<GmailRes.GmailMsg>; raw?: Promise<GmailRes.GmailMsg> };
   processedFull?: ProcessedMessage;
 }
 
@@ -168,10 +170,18 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     // todo: retries? exceptions?
     let msgDownload = this.messages[msgId];
     if (!msgDownload) {
-      this.messages[msgId] = { full: this.gmail.msgGet(msgId, 'full') };
+      this.messages[msgId] = { download: { full: this.gmail.msgGet(msgId, 'full') } };
       msgDownload = this.messages[msgId];
     }
     return msgDownload;
+  };
+
+  private msgGetRaw = async (msgId: string): Promise<string> => {
+    const msgDownload = this.msgGetCached(msgId).download;
+    if (!msgDownload.raw) {
+      msgDownload.raw = this.gmail.msgGet(msgId, 'raw');
+    }
+    return (await msgDownload.raw).raw || '';
   };
 
   private queueAttachmentChunkDownload = (a: Attachment) => {
@@ -199,8 +209,9 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     if (msgDownload.processedFull) {
       return msgDownload.processedFull;
     }
-    const msg = await msgDownload.full;
-    const mimeContent = MessageRenderer.reconstructMimeContent(msg);
+    const fullOrRawMsg = await Promise.race(Object.values(msgDownload.download).filter(Boolean));
+    // todo: what should we do if we received 'raw'?
+    const mimeContent = MessageRenderer.reconstructMimeContent(fullOrRawMsg);
     const blocks = Mime.processBody(mimeContent);
     // todo: only start `signature` download?
     // start download of all attachments that are not plainFile, for 'needChunk' -- chunked download
@@ -221,7 +232,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     if (blocks.length === 0 || (blocks.length === 1 && ['plainText', 'plainHtml'].includes(blocks[0].type))) {
       // only has single block which is plain text
     } else {
-      const from = GmailParser.findHeader(msg, 'from');
+      const from = GmailParser.findHeader(fullOrRawMsg, 'from');
       ({ renderedXssSafe } = MessageRenderer.renderMsg({ blocks, from }, this.factory, false, msgId, this.sendAs));
     }
     msgDownload.processedFull = { renderedXssSafe, attachments: mimeContent.attachments };
@@ -599,8 +610,16 @@ export class GmailElementReplacer implements WebmailElementReplacer {
       } else if (treatAs === 'privateKey') {
         return await this.renderBackupFromFile(a, attachmentsContainerInner, msgElReference.msgEl);
       } else if (treatAs === 'signature') {
-        const embeddedSignedMsgXssSafe = this.factory.embeddedMsg('signedMsg', '', msgId, false, senderEmail, true);
+        // todo: generate frameId here, prevent frameId duplicates?
+        const { frameId, frameHtml: embeddedSignedMsgXssSafe } = this.factory.embeddedRenderMsg();
         msgElReference.msgEl = this.updateMsgBodyEl_DANGEROUSLY(msgElReference.msgEl, 'set', embeddedSignedMsgXssSafe); // xss-safe-factory
+        const frameWindow = XssSafeFactory.getWindowOfEmbeddedMsg(frameId);
+        if (frameWindow) {
+          const renderModule = new RenderRelay(frameWindow);
+          this.processSignedMessage(msgId, renderModule, senderEmail).catch(Catch.reportErr); // todo: clear cached items
+        } else {
+          Catch.report('Unexpected: unable to reference a newly created message frame'); // todo:
+        }
         return 'hidden'; // native attachment should be hidden, the "attachment" goes to the message container
       } else {
         // standard file
@@ -618,6 +637,16 @@ export class GmailElementReplacer implements WebmailElementReplacer {
         attachmentSel.show().children('.attachment_loader').text('Categorize: unknown err');
         return 'shown';
       }
+    }
+  };
+
+  private processSignedMessage = async (msgId: string, renderModule: RenderInterface, senderEmail: string) => {
+    try {
+      renderModule.renderText('Loading signed message...');
+      const raw = await this.msgGetRaw(msgId);
+      await MessageRenderer.renderSignedMessage(raw, renderModule, senderEmail);
+    } catch {
+      // todo: render error via renderModule
     }
   };
 
