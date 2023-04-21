@@ -1469,7 +1469,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
           },
           fes: {
             clientConfiguration: {
-              flags: ['DEFAULT_REMEMBER_PASS_PHRASE'],
+              flags: [],
             },
           },
         });
@@ -1488,6 +1488,9 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
             clickOn: 'confirm',
           })
         );
+        t.mockApi!.configProvider.config.fes!.clientConfiguration = {
+          flags: ['DEFAULT_REMEMBER_PASS_PHRASE'],
+        };
         await OauthPageRecipe.mock(t, oauthPopup1, acct2, 'override_acct');
         await PageRecipe.waitForModalAndRespond(experimentalFrame, 'confirm', {
           contentToCheck: 'email from ci.tests.gmail@flowcrypt.test to user@default-remember-passphrase-client-configuration.flowcrypt.test',
