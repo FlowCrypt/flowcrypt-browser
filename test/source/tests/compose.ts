@@ -32,6 +32,7 @@ import {
   somePubkey,
   testMatchPubKey,
 } from '../mock/attester/attester-key-constants';
+import { revokedPrv, twoKeys2 } from '../mock/key-manager/key-manager-constants';
 
 export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: TestWithBrowser) => {
   if (testVariant !== 'CONSUMER-LIVE-GMAIL') {
@@ -175,6 +176,9 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         t.mockApi!.configProvider = new ConfigurationProvider({
           attester: {
             pubkeyLookup: {},
+          },
+          ekm: {
+            keys: [testConstants.existingPrv],
           },
         });
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
@@ -401,6 +405,9 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         t.mockApi!.configProvider = new ConfigurationProvider({
           attester: {
             pubkeyLookup: {},
+          },
+          ekm: {
+            keys: [testConstants.wkdAtgooglemockflowcryptlocalcom8001Private],
           },
         });
         const acct = `wkd@google.mock.localhost:${t.urls?.port}`;
@@ -3531,6 +3538,9 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
               },
             },
           },
+          ekm: {
+            keys: [revokedPrv, twoKeys2],
+          },
         });
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
         await SetupPageRecipe.autoSetupWithEKM(settingsPage);
@@ -3548,6 +3558,9 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
           attester: {
             pubkeyLookup: {},
           },
+          ekm: {
+            keys: [revokedPrv],
+          },
         });
         const acct = 'revoked@key-manager-autoimport-no-prv-create.flowcrypt.test';
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
@@ -3563,6 +3576,9 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         t.mockApi!.configProvider = new ConfigurationProvider({
           attester: {
             pubkeyLookup: {},
+          },
+          ekm: {
+            keys: [revokedPrv],
           },
         });
         const acct = 'revoked@key-manager-autoimport-no-prv-create-no-attester-submit.flowcrypt.test';
