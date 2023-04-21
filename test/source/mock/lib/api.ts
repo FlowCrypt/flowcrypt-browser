@@ -10,6 +10,7 @@ import { KeysOpenPGPOrgConfig, getMockKeysOpenPGPOrgEndpoints } from '../keys-op
 import { OauthMock } from './oauth';
 import { getMockGoogleEndpoints } from '../google/google-endpoints';
 import { KeyManagerConfig, getMockKeyManagerEndpoints } from '../key-manager/key-manager-endpoints';
+import { FesConfig, getMockSharedTenantFesEndpoints } from '../fes/shared-tenant-fes-endpoints';
 
 export class HttpAuthErr extends Error {}
 export class HttpClientErr extends Error {
@@ -39,6 +40,7 @@ interface ConfigurationOptions {
   attester?: AttesterConfig;
   keysOpenPgp?: KeysOpenPGPOrgConfig;
   ekm?: KeyManagerConfig;
+  fes?: FesConfig;
 }
 
 interface ConfigurationProviderInterface<REQ, RES> {
@@ -59,6 +61,7 @@ export class ConfigurationProvider implements ConfigurationProviderInterface<Han
     handlers = {
       ...handlers,
       ...getMockGoogleEndpoints(this.oauth),
+      ...getMockSharedTenantFesEndpoints(this.config.fes),
       ...getMockKeyManagerEndpoints(this.oauth, this.config.ekm),
       ...getMockKeysOpenPGPOrgEndpoints(this.config.keysOpenPgp),
     };

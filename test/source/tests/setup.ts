@@ -21,6 +21,12 @@ import { opgp } from '../core/crypto/pgp/openpgpjs-custom';
 import { hasPubKey, protonMailCompatKey, singlePubKeyAttesterConfig, somePubkey } from '../mock/attester/attester-key-constants';
 import { ConfigurationProvider } from '../mock/lib/api';
 import { prvNoSubmit } from '../mock/key-manager/key-manager-constants';
+import {
+  flowcryptTestClientConfiguration,
+  getKeyManagerAutoImportNoPrvCreateRules,
+  getKeyManagerAutogenRules,
+  getKeyManagerChoosePassphraseForbidStoringRules,
+} from '../mock/fes/fes-constants';
 
 const getAuthorizationHeader = async (t: AvaContext, browser: BrowserHandle, acctEmail: string) => {
   const settingsPage = await browser.newExtensionSettingsPage(t, acctEmail);
@@ -833,6 +839,9 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
           ekm: {
             keys: [negativeExpirationKey.privateKey],
           },
+          fes: {
+            clientConfiguration: getKeyManagerAutogenRules(t.urls!.port!),
+          },
         });
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
         await SetupPageRecipe.autoSetupWithEKM(settingsPage, { expectWarnModal: 'Public key not usable - not sumbitting to Attester' });
@@ -971,6 +980,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
               },
             },
           },
+          fes: flowcryptTestClientConfiguration,
         });
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
         await SetupPageRecipe.manualEnter(
@@ -1008,6 +1018,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
               },
             },
           },
+          fes: flowcryptTestClientConfiguration,
         });
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
         await SetupPageRecipe.manualEnter(
@@ -1034,6 +1045,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
             pubkeyLookup: {},
             ldapRelay: {},
           },
+          fes: flowcryptTestClientConfiguration,
         });
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'no.pub@client-configuration-test.flowcrypt.test');
         await SetupPageRecipe.manualEnter(
@@ -1059,6 +1071,11 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
           attester: {
             pubkeyLookup: {},
           },
+          fes: {
+            clientConfiguration: {
+              flags: ['NO_ATTESTER_SUBMIT'],
+            },
+          },
         });
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'user@no-submit-client-configuration.flowcrypt.test');
         await SetupPageRecipe.manualEnter(
@@ -1080,6 +1097,11 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         t.mockApi!.configProvider = new ConfigurationProvider({
           attester: {
             pubkeyLookup: {},
+          },
+          fes: {
+            clientConfiguration: {
+              flags: ['DEFAULT_REMEMBER_PASS_PHRASE'],
+            },
           },
         });
         const acctEmail = 'user@default-remember-passphrase-client-configuration.flowcrypt.test';
@@ -1122,6 +1144,13 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
               },
             },
           },
+          fes: {
+            clientConfiguration: {
+              flags: [],
+              // eslint-disable-next-line @typescript-eslint/naming-convention
+              disallow_attester_search_for_domains: ['flowcrypt.com'],
+            },
+          },
         });
         const acct = 'user@no-search-domains-client-configuration.flowcrypt.test';
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
@@ -1154,6 +1183,15 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
               },
             },
           },
+          fes: {
+            clientConfiguration: {
+              flags: [],
+              // eslint-disable-next-line @typescript-eslint/naming-convention
+              allow_attester_search_only_for_domains: ['flowcrypt.com'],
+              // eslint-disable-next-line @typescript-eslint/naming-convention
+              disallow_attester_search_for_domains: ['*'],
+            },
+          },
         });
         const acct = 'user@only-allow-some-domains-client-configuration.flowcrypt.test';
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
@@ -1176,6 +1214,13 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         t.mockApi!.configProvider = new ConfigurationProvider({
           attester: {
             pubkeyLookup: {},
+          },
+          fes: {
+            clientConfiguration: {
+              flags: [],
+              // eslint-disable-next-line @typescript-eslint/naming-convention
+              allow_attester_search_only_for_domains: [],
+            },
           },
         });
         // as `allow_attester_search_only_for_domains: []` is set, attester search shouldn't work for any domains
@@ -1204,6 +1249,15 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
             [recipient1]: somePubkey,
             [recipient2]: somePubkey,
           },
+          fes: {
+            clientConfiguration: {
+              flags: [],
+              // eslint-disable-next-line @typescript-eslint/naming-convention
+              allow_keys_openpgp_org_search_only_for_domains: ['allowed-domain.test'],
+              // eslint-disable-next-line @typescript-eslint/naming-convention
+              disallow_keys_openpgp_org_search_for_domains: ['*'],
+            },
+          },
         });
         const acct = 'user@only-allow-some-domains-for-keys-openpgp-org-client-configuration.flowcrypt.test';
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
@@ -1227,6 +1281,13 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
           attester: {
             pubkeyLookup: {},
           },
+          fes: {
+            clientConfiguration: {
+              flags: [],
+              // eslint-disable-next-line @typescript-eslint/naming-convention
+              allow_keys_openpgp_org_search_only_for_domains: [],
+            },
+          },
         });
         // as `allow_keys_openpgp_org_search_only_for_domains: []` is set, pubkey search shouldn't work for any domains
         const acct = 'user@no-allow-domains-for-keys-openpgp-org-client-configuration.flowcrypt.test';
@@ -1245,6 +1306,13 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         t.mockApi!.configProvider = new ConfigurationProvider({
           attester: {
             pubkeyLookup: {},
+          },
+          fes: {
+            clientConfiguration: {
+              flags: [],
+              // eslint-disable-next-line @typescript-eslint/naming-convention
+              disallow_attester_search_for_domains: ['*'],
+            },
           },
         });
         // disallowed searching attester for pubkeys on * domain
@@ -1268,6 +1336,9 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
           },
           ekm: {
             keys: [testConstants.existingPrv],
+          },
+          fes: {
+            clientConfiguration: getKeyManagerAutogenRules(t.urls!.port!),
           },
         });
         const acct = 'get.key@key-manager-autogen.flowcrypt.test';
@@ -1325,6 +1396,9 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
           },
           ekm: {
             keys: [testConstants.updatingPrv],
+          },
+          fes: {
+            clientConfiguration: getKeyManagerChoosePassphraseForbidStoringRules(t.urls!.port!),
           },
         });
         const acct = 'get.updating.key@key-manager-choose-passphrase-forbid-storing.flowcrypt.test';
@@ -1504,6 +1578,9 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
           ekm: {
             keys: [testConstants.updatingPrv],
           },
+          fes: {
+            clientConfiguration: getKeyManagerChoosePassphraseForbidStoringRules(t.urls!.port!),
+          },
         });
         const acct = 'put.updating.key@key-manager-choose-passphrase-forbid-storing.flowcrypt.test';
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
@@ -1569,6 +1646,9 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
           ekm: {
             keys: [testConstants.updatingPrv],
           },
+          fes: {
+            clientConfiguration: getKeyManagerAutoImportNoPrvCreateRules(t.urls!.port!),
+          },
         });
         const acct = 'get.updating.key@key-manager-autoimport-no-prv-create.flowcrypt.test';
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
@@ -1601,12 +1681,20 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
     test(
       'user@custom-sks.flowcrypt.test - Respect custom key server url',
       testWithBrowser(async (t, browser) => {
+        const port = t.urls!.port!;
         t.mockApi!.configProvider = new ConfigurationProvider({
           attester: {
             pubkeyLookup: {},
           },
           ekm: {
             keys: [testConstants.existingPrv],
+          },
+          fes: {
+            clientConfiguration: {
+              ...getKeyManagerAutogenRules(port),
+              // eslint-disable-next-line @typescript-eslint/naming-convention
+              custom_keyserver_url: `https://localhost:${port}`,
+            },
           },
         });
         const acct = 'user@custom-sks.flowcrypt.test';
@@ -1618,7 +1706,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         await composePage.close();
         await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
         const contactsFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-contacts-page', ['contacts.htm', 'placement=settings']);
-        await contactsFrame.waitForContent('@custom-key-server-description', `using custom SKS pubkeyserver: https://localhost:${t.urls?.port}`);
+        await contactsFrame.waitForContent('@custom-key-server-description', `using custom SKS pubkeyserver: https://localhost:${port}`);
       })
     );
 
@@ -1631,6 +1719,9 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         t.mockApi!.configProvider = new ConfigurationProvider({
           attester: {
             pubkeyLookup: {},
+          },
+          fes: {
+            clientConfiguration: {},
           },
         });
         const acctEmail = 'user@no-flags-client-configuration.flowcrypt.test';
@@ -1647,6 +1738,9 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
           attester: {
             pubkeyLookup: {},
           },
+          fes: {
+            clientConfiguration: undefined,
+          },
         });
         const acctEmail = 'null-setting@null-client-configuration.flowcrypt.test';
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
@@ -1658,12 +1752,19 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
     test(
       'get.key@key-manager-choose-passphrase.flowcrypt.test - passphrase chosen by user with key found on key manager',
       testWithBrowser(async (t, browser) => {
+        const clientConfiguration = getKeyManagerAutogenRules(t.urls!.port!);
         t.mockApi!.configProvider = new ConfigurationProvider({
           attester: {
             pubkeyLookup: {},
           },
           ekm: {
             keys: [testConstants.existingPrv],
+          },
+          fes: {
+            clientConfiguration: {
+              ...clientConfiguration,
+              flags: ['NO_PRV_BACKUP', 'PRV_AUTOIMPORT_OR_AUTOGEN', 'NO_ATTESTER_SUBMIT', 'DEFAULT_REMEMBER_PASS_PHRASE'],
+            },
           },
         });
         const acct = 'get.key@key-manager-choose-passphrase.flowcrypt.test';
@@ -1698,6 +1799,9 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
           ekm: {
             keys: [testConstants.existingPrv],
           },
+          fes: {
+            clientConfiguration: getKeyManagerChoosePassphraseForbidStoringRules(t.urls!.port!),
+          },
         });
         const acct = 'get.key@key-manager-choose-passphrase-forbid-storing.flowcrypt.test';
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
@@ -1729,6 +1833,13 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         t.mockApi!.configProvider = new ConfigurationProvider({
           attester: {
             pubkeyLookup: {},
+          },
+          fes: {
+            clientConfiguration: {
+              flags: ['FORBID_STORING_PASS_PHRASE'],
+              // eslint-disable-next-line @typescript-eslint/naming-convention
+              in_memory_pass_phrase_session_length: 10,
+            },
           },
         });
         const acctEmail = 'user@passphrase-session-length-client-configuration.flowcrypt.test';
@@ -1770,6 +1881,9 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
           ekm: {
             keys: [],
           },
+          fes: {
+            clientConfiguration: getKeyManagerAutoImportNoPrvCreateRules(t.urls!.port!),
+          },
         });
         const acct = 'get.key@key-manager-autoimport-no-prv-create.flowcrypt.test';
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
@@ -1780,12 +1894,19 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
     test(
       'get.key@no-submit-client-configuration.key-manager-autogen.flowcrypt.test - automatic setup with key found on key manager and no submit rule',
       testWithBrowser(async (t, browser) => {
+        const rules = getKeyManagerAutogenRules(t.urls!.port!);
         t.mockApi!.configProvider = new ConfigurationProvider({
           attester: {
             pubkeyLookup: {},
           },
           ekm: {
             keys: [prvNoSubmit],
+          },
+          fes: {
+            clientConfiguration: {
+              ...rules,
+              flags: [...(rules.flags ?? []), 'NO_ATTESTER_SUBMIT'],
+            },
           },
         });
         const acct = 'get.key@no-submit-client-configuration.key-manager-autogen.flowcrypt.test';
@@ -1812,6 +1933,9 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
           },
           ekm: {
             keys: [],
+          },
+          fes: {
+            clientConfiguration: getKeyManagerAutogenRules(t.urls!.port!),
           },
         });
         const acct = 'put.key@key-manager-autogen.flowcrypt.test';
@@ -1851,6 +1975,9 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
               message: 'Intentional error for get.error to test client behavior',
             },
           },
+          fes: {
+            clientConfiguration: getKeyManagerAutogenRules(t.urls!.port!),
+          },
         });
         const acct = 'get.error@key-manager-autogen.flowcrypt.test';
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
@@ -1877,6 +2004,9 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
               message: 'Intentional error for put.error user to test client behavior',
             },
           },
+          fes: {
+            clientConfiguration: getKeyManagerAutogenRules(t.urls!.port!),
+          },
         });
         const acct = 'put.error@key-manager-autogen.flowcrypt.test';
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
@@ -1902,6 +2032,13 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
           attester: {
             pubkeyLookup: {},
           },
+          fes: {
+            clientConfiguration: {
+              ...getKeyManagerAutogenRules(t.urls!.port!),
+              // eslint-disable-next-line @typescript-eslint/naming-convention
+              key_manager_url: 'https://localhost:1230/intentionally-wrong',
+            },
+          },
         });
         const acct = 'fail@key-manager-server-offline.flowcrypt.test';
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
@@ -1920,6 +2057,14 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         t.mockApi!.configProvider = new ConfigurationProvider({
           attester: {
             pubkeyLookup: {},
+          },
+          fes: {
+            clientConfiguration: {
+              // EKM offline during key retrieval from EKM flow
+              flags: ['NO_PRV_CREATE', 'NO_PRV_BACKUP', 'NO_ATTESTER_SUBMIT', 'PRV_AUTOIMPORT_OR_AUTOGEN'],
+              // eslint-disable-next-line @typescript-eslint/naming-convention
+              key_manager_url: 'https://localhost:1230/intentionally-wrong',
+            },
           },
         });
         const acct = 'get.key@ekm-offline-retrieve.flowcrypt.test';
@@ -1941,6 +2086,13 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
           },
           ekm: {
             keys: [],
+          },
+          fes: {
+            clientConfiguration: {
+              ...getKeyManagerAutogenRules(t.urls!.port!),
+              // eslint-disable-next-line @typescript-eslint/naming-convention
+              enforce_keygen_expire_months: 1,
+            },
           },
         });
         const acct = 'expire@key-manager-keygen-expiration.flowcrypt.test';
@@ -1973,6 +2125,9 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
               code: 405,
               message: `No key has been generated for ${acct} yet. Please ask your administrator.`,
             },
+          },
+          fes: {
+            clientConfiguration: getKeyManagerAutogenRules(t.urls!.port!),
           },
         });
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
