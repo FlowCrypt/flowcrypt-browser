@@ -90,26 +90,25 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
     );
 
     test(
-      `decrypt - parsed signed message with signautre.asc as plain attachment`,
+      `decrypt - parsed signed message with signature.asc as plain attachment`,
       testWithBrowser(async (t, browser) => {
         const threadId = '187085b874fb727c';
         const acctEmail = 'flowcrypt.compatibility@gmail.com';
         t.mockApi!.configProvider = new ConfigurationProvider({
           attester: singlePubKeyAttesterConfig(acctEmail, somePubkey),
         });
-        await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
+        const { accessToken } = await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
+        const expectedContent = 'flowcrypt-browser issue #5029 test email';
         const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`);
         await inboxPage.waitForSelTestState('ready');
         await inboxPage.waitAll('iframe');
         const pgpBlock = await inboxPage.getFrame(['pgp_block.htm']);
-        const expectedContent = 'flowcrypt-browser issue #5029 test email';
         await pgpBlock.waitForContent('@pgp-block-content', expectedContent);
-        const accessToken = await BrowserRecipe.getGoogleAccessToken(inboxPage, acctEmail);
         await inboxPage.close();
         const extraAuthHeaders = { Authorization: `Bearer ${accessToken}` }; // eslint-disable-line @typescript-eslint/naming-convention
         const gmailPage = await browser.newPage(t, `${t.urls?.mockGmailUrl()}/${threadId}`, undefined, extraAuthHeaders);
         await gmailPage.waitAll('iframe');
-        const pgpBlock2 = await gmailPage.getFrame(['pgp_block.htm']);
+        const pgpBlock2 = await gmailPage.getFrame(['pgp_render_block.htm']);
         await pgpBlock2.waitForContent('@pgp-block-content', expectedContent);
         await gmailPage.close();
       })
