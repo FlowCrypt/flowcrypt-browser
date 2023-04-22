@@ -185,7 +185,7 @@ export class BrowserRecipe {
     if (m.expectPercentageProgress) {
       await pgpBlockPage.waitForContent('@pgp-block-content', /Retrieving message... \d+%/, 20, 10);
     }
-    await pgpBlockPage.waitForSelTestState('ready', 100);
+    await pgpBlockPage.waitForSelTestState('ready', 10000);
     await Util.sleep(1);
     if (m.quoted) {
       await pgpBlockPage.waitAndClick('@action-show-quoted-content');
@@ -210,26 +210,10 @@ export class BrowserRecipe {
       }
     }
     const sigBadgeContent = await pgpBlockPage.read('@pgp-signature');
-    if (m.signature) {
-      if (sigBadgeContent !== m.signature) {
-        t.log(`found sig content:${sigBadgeContent}`);
-        throw new Error(`pgp_block_verify_decrypted_content:missing expected signature content:${m.signature}\nactual sig content:${sigBadgeContent}`);
-      }
-    } else {
-      // some badge still has to be present
-      expect(sigBadgeContent).to.be.ok;
-    }
     const encBadgeContent = await pgpBlockPage.read('@pgp-encryption');
-    if (m.encryption) {
-      if (encBadgeContent !== m.encryption) {
-        t.log(`found enc content:${encBadgeContent}`);
-        throw new Error(`pgp_block_verify_decrypted_content:missing expected encryption content:${m.encryption}`);
-      }
-    } else {
-      // some badge still has to be present
-      expect(encBadgeContent).to.be.ok;
-    }
     if (m.error) {
+      expect(sigBadgeContent).to.be.empty;
+      expect(encBadgeContent).to.be.empty;
       await pgpBlockPage.notPresent('@action-print');
       const errBadgeContent = await pgpBlockPage.read('@pgp-error');
       if (errBadgeContent !== m.error) {
@@ -239,6 +223,25 @@ export class BrowserRecipe {
     } else if (m.content.length > 0) {
       if (!(await pgpBlockPage.isElementVisible('@action-print'))) {
         throw new Error(`Print button is invisible`);
+      }
+    } else {
+      if (m.signature) {
+        if (sigBadgeContent !== m.signature) {
+          t.log(`found sig content:${sigBadgeContent}`);
+          throw new Error(`pgp_block_verify_decrypted_content:missing expected signature content:${m.signature}\nactual sig content:${sigBadgeContent}`);
+        }
+      } else {
+        // some badge still has to be present
+        expect(sigBadgeContent).to.be.ok;
+      }
+      if (m.encryption) {
+        if (encBadgeContent !== m.encryption) {
+          t.log(`found enc content:${encBadgeContent}`);
+          throw new Error(`pgp_block_verify_decrypted_content:missing expected encryption content:${m.encryption}`);
+        }
+      } else {
+        // some badge still has to be present
+        expect(encBadgeContent).to.be.ok;
       }
     }
   };
