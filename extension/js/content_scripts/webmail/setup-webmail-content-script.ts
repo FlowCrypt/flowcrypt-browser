@@ -24,6 +24,7 @@ import { AcctStore } from '../../common/platform/store/acct-store.js';
 import { GlobalStore } from '../../common/platform/store/global-store.js';
 import { InMemoryStore } from '../../common/platform/store/in-memory-store.js';
 import { WebmailVariantString, XssSafeFactory } from '../../common/xss-safe-factory.js';
+import { RelayManager } from '../../common/relay-manager.js';
 
 export type WebmailVariantObject = {
   newDataLayer: undefined | boolean;
@@ -44,7 +45,8 @@ type WebmailSpecificInfo = {
     inject: Injector,
     notifications: Notifications,
     factory: XssSafeFactory,
-    notifyMurdered: () => void
+    notifyMurdered: () => void,
+    relayManager: RelayManager
   ) => Promise<void>;
 };
 export interface WebmailElementReplacer {
@@ -433,7 +435,14 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
         ppEvent,
         Catch.try(() => notifyExpiringKeys(acctEmail, clientConfiguration, notifications))
       );
-      await webmailSpecific.start(acctEmail, clientConfiguration, inject, notifications, factory, notifyMurdered);
+      const relayManager = new RelayManager();
+      window.addEventListener('message', e => {
+        const regex = new RegExp(`^(chrome|moz)-extension://${chrome.runtime.id}$`);
+        if (regex.test(e.origin) && typeof e.data?.readyToReceive === 'string') {
+          relayManager.readyToReceive(e.data.readyToReceive);
+        }
+      });
+      await webmailSpecific.start(acctEmail, clientConfiguration, inject, notifications, factory, notifyMurdered, relayManager);
     } catch (e) {
       if (e instanceof TabIdRequiredError) {
         console.error(`FlowCrypt cannot start: ${String(e)}`);

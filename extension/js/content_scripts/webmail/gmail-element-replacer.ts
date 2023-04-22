@@ -26,7 +26,7 @@ import { SendAsAlias } from '../../common/platform/store/acct-store.js';
 import { ContactStore } from '../../common/platform/store/contact-store.js';
 import { Buf } from '../../common/core/buf.js';
 import { MessageRenderer } from '../../common/message-renderer.js';
-import { RenderRelay } from '../../common/render-relay.js';
+import { RelayManager } from '../../common/relay-manager.js';
 import { Mime } from '../../common/core/mime.js';
 import { MsgUtil } from '../../common/core/crypto/pgp/msg-util.js';
 import { RenderInterface } from '../../common/render-interface.js';
@@ -45,16 +45,10 @@ export class GmailElementReplacer implements WebmailElementReplacer {
 
   private gmail: Gmail;
   private recipientHasPgpCache: Dict<boolean> = {};
-  private sendAs: Dict<SendAsAlias>;
   private messages: Dict<MessageCacheEntry> = {};
   private chunkDownloads: { attachment: Attachment; result: Promise<Buf> }[] = [];
   // private attachmentDownloads: { attachment: Attachment; result: Promise<GmailRes.GmailAttachment> }[] = [];
-  private factory: XssSafeFactory;
-  private clientConfiguration: ClientConfiguration;
   private pubLookup: PubLookup;
-  private acctEmail: string;
-  private injector: Injector;
-  private notifications: Notifications;
   private webmailCommon: WebmailCommon;
   private currentlyEvaluatingStandardComposeBoxRecipients = false;
   private currentlyReplacingAttachments = false;
@@ -85,21 +79,16 @@ export class GmailElementReplacer implements WebmailElementReplacer {
   };
 
   public constructor(
-    factory: XssSafeFactory,
-    clientConfiguration: ClientConfiguration,
-    acctEmail: string,
-    sendAs: Dict<SendAsAlias>,
-    injector: Injector,
-    notifications: Notifications
+    private factory: XssSafeFactory,
+    private clientConfiguration: ClientConfiguration,
+    private acctEmail: string,
+    private sendAs: Dict<SendAsAlias>,
+    private injector: Injector,
+    private notifications: Notifications,
+    private relayManager: RelayManager
   ) {
-    this.factory = factory;
-    this.acctEmail = acctEmail;
-    this.sendAs = sendAs;
-    this.injector = injector;
-    this.notifications = notifications;
     this.webmailCommon = new WebmailCommon(acctEmail, injector);
     this.gmail = new Gmail(acctEmail);
-    this.clientConfiguration = clientConfiguration;
     this.pubLookup = new PubLookup(this.clientConfiguration);
   }
 
@@ -615,7 +604,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
         msgElReference.msgEl = this.updateMsgBodyEl_DANGEROUSLY(msgElReference.msgEl, 'set', embeddedSignedMsgXssSafe); // xss-safe-factory
         const frameWindow = XssSafeFactory.getWindowOfEmbeddedMsg(frameId);
         if (frameWindow) {
-          const renderModule = new RenderRelay(frameWindow);
+          const renderModule = this.relayManager.createRelay(frameId, frameWindow);
           this.processSignedMessage(msgId, renderModule, senderEmail).catch(Catch.reportErr); // todo: clear cached items
         } else {
           Catch.report('Unexpected: unable to reference a newly created message frame'); // todo:

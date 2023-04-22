@@ -17,7 +17,8 @@ export class PgpRenderBlockView extends PgpBaseBlockView {
     const uncheckedUrlParams = Url.parse(['frameId', 'parentTabId', 'debug']);
     super(Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId'), Assert.urlParamRequire.string(uncheckedUrlParams, 'frameId'));
     this.debug = uncheckedUrlParams.debug === true;
-    window.addEventListener('message', this.handleMessage, true);
+    window.addEventListener('message', this.handleMessage, true); // todo: capture?
+    window.addEventListener('load', () => window.parent.postMessage({ readyToReceive: this.frameId }, '*'));
   }
 
   public render = async () => {

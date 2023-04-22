@@ -4,8 +4,6 @@
 
 // todo - a few things are duplicated here, refactor
 
-/// <reference path="../../../node_modules/@types/chrome/index.d.ts" />
-
 import { WebmailVariantObject, contentScriptSetupIfVacant } from './setup-webmail-content-script.js';
 import { Catch } from '../../common/platform/catch.js';
 import { ContentScriptWindow } from '../../common/browser/browser-window.js';
@@ -17,6 +15,7 @@ import { Str } from '../../common/core/common.js';
 import { XssSafeFactory } from '../../common/xss-safe-factory.js';
 import { ClientConfiguration } from '../../common/client-configuration.js';
 import { AcctStore } from '../../common/platform/store/acct-store.js';
+import { RelayManager } from '../../common/relay-manager.js';
 
 Catch.try(async () => {
   const gmailWebmailStartup = async () => {
@@ -98,7 +97,8 @@ Catch.try(async () => {
       injector: Injector,
       notifications: Notifications,
       factory: XssSafeFactory,
-      notifyMurdered: () => void
+      notifyMurdered: () => void,
+      relayManager: RelayManager
     ) => {
       hijackGmailHotkeys();
       const storage = await AcctStore.get(acctEmail, ['sendAs', 'full_name']);
@@ -107,7 +107,7 @@ Catch.try(async () => {
         storage.sendAs[acctEmail] = { name: storage.full_name, isPrimary: true };
       }
       injector.btns();
-      replacer = new GmailElementReplacer(factory, clientConfiguration, acctEmail, storage.sendAs, injector, notifications);
+      replacer = new GmailElementReplacer(factory, clientConfiguration, acctEmail, storage.sendAs, injector, notifications, relayManager);
       await notifications.showInitial(acctEmail);
       const intervaliFunctions = replacer.getIntervalFunctions();
       for (const intervalFunction of intervaliFunctions) {

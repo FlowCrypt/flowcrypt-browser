@@ -2,11 +2,12 @@
 
 'use strict';
 
+import { RelayManagerInterface } from './relay-manager-interface.js';
 import { RenderInterface } from './render-interface.js';
 import { RenderMessage } from './render-message.js';
 
 export class RenderRelay implements RenderInterface {
-  public constructor(private frameWindow: Window) {}
+  public constructor(private relayManager: RelayManagerInterface, private frameId: string) {}
   public setTestState = (state: 'ready' | 'working' | 'waiting') => {
     this.relay({ setTestState: state });
   };
@@ -35,6 +36,6 @@ export class RenderRelay implements RenderInterface {
   };
 
   private relay = (message: RenderMessage) => {
-    this.frameWindow.postMessage(message, '*'); // todo: targetOrigin
+    this.relayManager.relay(this.frameId, message);
   };
 }
