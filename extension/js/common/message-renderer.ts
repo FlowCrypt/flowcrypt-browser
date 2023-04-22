@@ -5,7 +5,7 @@
 import { GmailParser, GmailRes } from './api/email-provider/gmail/gmail-parser.js';
 import { Attachment } from './core/attachment.js';
 import { Buf } from './core/buf.js';
-import { CID_PATTERN, Dict, Str } from './core/common.js';
+import { CID_PATTERN, Dict, Str, Value } from './core/common.js';
 import { KeyUtil } from './core/crypto/key.js';
 import { MsgUtil, VerifyRes } from './core/crypto/pgp/msg-util.js';
 import { Mime, MimeContent, MimeProccesedMsg } from './core/mime.js';
@@ -14,7 +14,7 @@ import { MsgBlock } from './core/msg-block.js';
 import { SendAsAlias } from './platform/store/acct-store.js';
 import { ContactStore } from './platform/store/contact-store.js';
 import { Xss } from './platform/xss.js';
-import { RenderInterface } from './render-interface.js';
+import { RenderInterface, RenderInterfaceBase } from './render-interface.js';
 import { XssSafeFactory } from './xss-safe-factory.js';
 import * as DOMPurify from 'dompurify';
 
@@ -244,8 +244,26 @@ export class MessageRenderer {
     } else if (verifyRes.match) {
       renderModule.renderSignatureStatus('signed');
     } else {
-      // todo: renderModule.renderMissingPubkeyOrBadSignature(verifyRes);
+      MessageRenderer.renderMissingPubkeyOrBadSignature(renderModule, verifyRes);
     }
     renderModule.setTestState('ready');
+  };
+
+  public static renderMissingPubkeyOrBadSignature = (renderModule: RenderInterfaceBase, verifyRes: VerifyRes): void => {
+    // eslint-disable-next-line no-null/no-null
+    if (verifyRes.match === null || !Value.arr.hasIntersection(verifyRes.signerLongids, verifyRes.suppliedLongids)) {
+      MessageRenderer.renderMissingPubkey(renderModule, verifyRes.signerLongids[0]);
+    } else {
+      MessageRenderer.renderBadSignature(renderModule);
+    }
+  };
+
+  public static renderMissingPubkey = (renderModule: RenderInterfaceBase, signerLongid: string) => {
+    renderModule.renderSignatureStatus(`could not verify signature: missing pubkey ${signerLongid}`);
+  };
+
+  public static renderBadSignature = (renderModule: RenderInterfaceBase) => {
+    renderModule.renderSignatureStatus('bad signature');
+    renderModule.setFrameColor('red'); // todo: in what other cases should we set the frame red?
   };
 }

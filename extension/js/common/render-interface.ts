@@ -2,12 +2,15 @@
 
 'use strict';
 
-export interface RenderInterface {
-  setTestState(state: 'ready' | 'working' | 'waiting'): void;
+export interface RenderInterfaceBase {
   resizePgpBlockFrame(): void;
-  separateQuotedContentAndRenderText(decryptedContent: string, isHtml: boolean): void;
   renderText(text: string): void;
   setFrameColor(color: 'red' | 'green' | 'gray'): void;
   renderEncryptionStatus(status: string): void;
   renderSignatureStatus(status: string): void; // todo: need to implement "offline error"->"click"->retry scenario
+}
+
+export interface RenderInterface extends RenderInterfaceBase {
+  setTestState(state: 'ready' | 'working' | 'waiting'): void;
+  separateQuotedContentAndRenderText(decryptedContent: string, isHtml: boolean): void;
 }

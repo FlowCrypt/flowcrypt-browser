@@ -4,11 +4,11 @@
 
 import { ApiErr } from '../../../js/common/api/shared/api-error.js';
 import { Catch } from '../../../js/common/platform/catch.js';
-import { PgpBlockView } from '../pgp_block';
+import { PgpBlockView } from '../pgp_block.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { VerifyRes } from '../../../js/common/core/crypto/pgp/msg-util.js';
-import { Value } from '../../../js/common/core/common.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
+import { MessageRenderer } from '../../../js/common/message-renderer.js';
 
 export class PgpBlockViewSignatureModule {
   public constructor(private view: PgpBlockView) {}
@@ -48,7 +48,7 @@ export class PgpBlockViewSignatureModule {
               await this.renderPgpSignatureCheckResult(await retryVerification(pubkeys), pubkeys, undefined);
               return;
             }
-            this.renderMissingPubkeyOrBadSignature(verifyRes);
+            MessageRenderer.renderMissingPubkeyOrBadSignature(this.view.renderModule, verifyRes);
           } catch (e) {
             if (ApiErr.isSignificant(e)) {
               Catch.reportErr(e);
@@ -63,28 +63,10 @@ export class PgpBlockViewSignatureModule {
         }
       } else {
         // !retryVerification
-        this.renderMissingPubkeyOrBadSignature(verifyRes);
+        MessageRenderer.renderMissingPubkeyOrBadSignature(this.view.renderModule, verifyRes);
       }
     }
     this.view.renderModule.doNotSetStateAsReadyYet = false;
     Ui.setTestState('ready');
-  };
-
-  private renderMissingPubkey = (signerLongid: string) => {
-    this.view.renderModule.renderSignatureStatus(`could not verify signature: missing pubkey ${signerLongid}`);
-  };
-
-  private renderBadSignature = () => {
-    this.view.renderModule.renderSignatureStatus('bad signature');
-    this.view.renderModule.setFrameColor('red'); // todo: in what other cases should we set the frame red?
-  };
-
-  private renderMissingPubkeyOrBadSignature = (verifyRes: VerifyRes): void => {
-    // eslint-disable-next-line no-null/no-null
-    if (verifyRes.match === null || !Value.arr.hasIntersection(verifyRes.signerLongids, verifyRes.suppliedLongids)) {
-      this.renderMissingPubkey(verifyRes.signerLongids[0]);
-    } else {
-      this.renderBadSignature();
-    }
   };
 }
