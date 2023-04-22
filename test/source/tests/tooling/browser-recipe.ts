@@ -13,6 +13,7 @@ import { testConstants } from './consts';
 import { PageRecipe } from '../page-recipe/abstract-page-recipe';
 import { InMemoryStoreKeys } from '../../core/const';
 import { GmailPageRecipe } from '../page-recipe/gmail-page-recipe';
+import { expect } from 'chai';
 
 export class BrowserRecipe {
   public static oldAndNewComposeButtonSelectors = ['div.z0[class*="_destroyable"]', 'div.pb-25px[class*="_destroyable"]', '.new_secure_compose_window_button'];
@@ -208,19 +209,25 @@ export class BrowserRecipe {
         }
       }
     }
+    const sigBadgeContent = await pgpBlockPage.read('@pgp-signature');
     if (m.signature) {
-      const sigBadgeContent = await pgpBlockPage.read('@pgp-signature');
       if (sigBadgeContent !== m.signature) {
         t.log(`found sig content:${sigBadgeContent}`);
         throw new Error(`pgp_block_verify_decrypted_content:missing expected signature content:${m.signature}\nactual sig content:${sigBadgeContent}`);
       }
+    } else {
+      // some badge still has to be present
+      expect(sigBadgeContent).to.be.ok;
     }
+    const encBadgeContent = await pgpBlockPage.read('@pgp-encryption');
     if (m.encryption) {
-      const encBadgeContent = await pgpBlockPage.read('@pgp-encryption');
       if (encBadgeContent !== m.encryption) {
         t.log(`found enc content:${encBadgeContent}`);
         throw new Error(`pgp_block_verify_decrypted_content:missing expected encryption content:${m.encryption}`);
       }
+    } else {
+      // some badge still has to be present
+      expect(encBadgeContent).to.be.ok;
     }
     if (m.error) {
       await pgpBlockPage.notPresent('@action-print');

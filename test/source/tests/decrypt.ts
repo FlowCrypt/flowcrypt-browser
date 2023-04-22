@@ -102,14 +102,18 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
         const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`);
         await inboxPage.waitForSelTestState('ready');
         await inboxPage.waitAll('iframe');
-        const pgpBlock = await inboxPage.getFrame(['pgp_block.htm']);
-        await pgpBlock.waitForContent('@pgp-block-content', expectedContent);
+        await BrowserRecipe.pgpBlockCheck(t, await inboxPage.getFrame(['pgp_block.htm']), {
+          encryption: 'not encrypted',
+          content: [expectedContent],
+        });
         await inboxPage.close();
         const extraAuthHeaders = { Authorization: `Bearer ${accessToken}` }; // eslint-disable-line @typescript-eslint/naming-convention
         const gmailPage = await browser.newPage(t, `${t.urls?.mockGmailUrl()}/${threadId}`, undefined, extraAuthHeaders);
         await gmailPage.waitAll('iframe');
-        const pgpBlock2 = await gmailPage.getFrame(['pgp_render_block.htm']);
-        await pgpBlock2.waitForContent('@pgp-block-content', expectedContent);
+        await BrowserRecipe.pgpBlockCheck(t, await gmailPage.getFrame(['pgp_render_block.htm']), {
+          encryption: 'not encrypted',
+          content: [expectedContent],
+        });
         await gmailPage.close();
       })
     );
