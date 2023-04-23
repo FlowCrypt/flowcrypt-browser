@@ -236,7 +236,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
         expect(pgpBlockUrls.length).to.equal(1);
         await testMinimumElementHeight(gmailPage, '.pgp_block.signedMsg', 80);
         await testMinimumElementHeight(gmailPage, '.pgp_block.publicKey', 120);
-        const url = pgpBlockUrls[0].split('/chrome/elements/pgp_block.htm')[1];
+        const url = pgpBlockUrls[0].split('/chrome/elements/pgp_render_block.htm')[1];
         await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
           params: url,
           content: ['1234'],
