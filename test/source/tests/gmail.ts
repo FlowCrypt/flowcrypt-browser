@@ -229,7 +229,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
         const gmailPage = await openGmailPage(t, browser);
         await gotoGmailPage(gmailPage, '/FMfcgzGkbDZKPKzSnGtGKZrPZSbTBNnB');
         // validate pgp_block.htm is rendered
-        const pgpBlockUrls = await gmailPage.getFramesUrls(['/chrome/elements/pgp_render_block.htm'], {
+        const pgpBlockUrls = await gmailPage.getFramesUrls(['/chrome/elements/pgp_block.htm'], {
           sleep: 10,
           appearIn: 25,
         });
