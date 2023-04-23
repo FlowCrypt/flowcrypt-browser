@@ -6,7 +6,6 @@ import { Assert } from '../../js/common/assert.js';
 import { Attachment } from '../../js/common/core/attachment.js';
 import { AttachmentDownloadView } from './attachment.js';
 import { AttachmentPreviewPdf } from '../../js/common/ui/attachment_preview_pdf.js';
-import { Browser } from '../../js/common/browser/browser.js';
 import { BrowserMsg } from '../../js/common/browser/browser-msg.js';
 import { KeyStore } from '../../js/common/platform/store/key-store.js';
 import { PDFDocumentProxy } from '../../types/pdf.js';
@@ -15,6 +14,8 @@ import { View } from '../../js/common/view.js';
 import { Xss } from '../../js/common/platform/xss.js';
 import { Ui } from '../../js/common/browser/ui.js';
 import { Url } from '../../js/common/core/common.js';
+import { Browser } from '../../js/common/browser/browser.js';
+import { AttachmentWarnings } from './shared/attachment_warnings.js';
 
 type AttachmentType = 'img' | 'txt' | 'pdf';
 
@@ -79,9 +80,11 @@ View.run(
           });
           $('#attachment-preview-download')
             .css('display', 'flex')
-            .on('click', e => {
+            .on('click', async e => {
               e.stopPropagation();
-              Browser.saveToDownloads(attachmentForSave);
+              if (await AttachmentWarnings.confirmSaveToDownloadsIfNeeded(attachmentForSave)) {
+                Browser.saveToDownloads(attachmentForSave);
+              }
             });
           $('#attachment-preview-filename').text(this.origNameBasedOnFilename);
         }

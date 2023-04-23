@@ -69,8 +69,8 @@ for (const srcFilePath of srcFilePaths) {
   const original = readFileSync(srcFilePath).toString();
   const resolved = original
     .split('\n')
-    .map(l => resolveLineImports(requireLineRegEx, resolveLineImports(namedImportLineRegEx, l, srcFilePath), srcFilePath)
-  ).join('\n');
+    .map(l => resolveLineImports(requireLineRegEx, resolveLineImports(namedImportLineRegEx, l, srcFilePath), srcFilePath))
+    .join('\n');
   if (resolved !== original) {
     writeFileSync(srcFilePath, resolved);
   }

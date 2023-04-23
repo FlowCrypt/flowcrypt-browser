@@ -65,18 +65,20 @@ export class BrowserRecipe {
   };
 
   public static setUpCommonAcct = async (t: AvaContext, browser: BrowserHandle, acct: 'compatibility' | 'compose' | 'ci.tests.gmail') => {
+    let acctEmail: string | undefined;
+    let settingsPage: ControllablePage | undefined;
     if (acct === 'compatibility') {
-      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.compatibility@gmail.com');
+      acctEmail = 'flowcrypt.compatibility@gmail.com';
+      settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
       await SetupPageRecipe.recover(settingsPage, 'flowcrypt.compatibility.1pp1', {
         hasRecoverMore: true,
         clickRecoverMore: true,
       });
       await SetupPageRecipe.recover(settingsPage, 'flowcrypt.compatibility.2pp1');
-      await settingsPage.close();
     } else if (acct === 'ci.tests.gmail') {
       // live gmail uses ".dev" (real account on real domain). Mock uses "".test".
-      const acctEmail = testVariant === 'CONSUMER-LIVE-GMAIL' ? 'ci.tests.gmail@flowcrypt.dev' : 'ci.tests.gmail@flowcrypt.test';
-      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
+      acctEmail = testVariant === 'CONSUMER-LIVE-GMAIL' ? 'ci.tests.gmail@flowcrypt.dev' : 'ci.tests.gmail@flowcrypt.test';
+      settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
       if (testVariant === 'CONSUMER-LIVE-GMAIL') {
         // using import manually so that we don't rely on email server state, like relying on backup emails being present
         await SetupPageRecipe.manualEnter(settingsPage, 'ci.tests.gmail', { usedPgpBefore: true });
@@ -87,13 +89,15 @@ export class BrowserRecipe {
       if (testVariant === 'CONSUMER-LIVE-GMAIL') {
         // clean up drafts so that broken tests from the past don't affect this test run
         await BrowserRecipe.deleteAllDraftsInGmailAccount(settingsPage);
-        await settingsPage.close();
       }
     } else {
-      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'ci.tests.gmail@flowcrypt.dev');
+      acctEmail = 'ci.tests.gmail@flowcrypt.dev';
+      settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
       await SetupPageRecipe.recover(settingsPage, 'test.ci.compose');
-      await settingsPage.close();
     }
+    const accessToken = await BrowserRecipe.getGoogleAccessToken(settingsPage, acctEmail);
+    await settingsPage.close();
+    return { acctEmail, accessToken };
   };
 
   public static getGoogleAccessToken = async (controllable: Controllable, acctEmail: string): Promise<string> => {

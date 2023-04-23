@@ -11,7 +11,7 @@ import { Browser } from '../../js/common/browser/browser.js';
 import { Buf } from '../../js/common/core/buf.js';
 import { Catch } from '../../js/common/platform/catch.js';
 import { Gmail } from '../../js/common/api/email-provider/gmail/gmail.js';
-import { Ui } from '../../js/common/browser/ui.js';
+import { Time } from '../../js/common/browser/time.js';
 import { Url } from '../../js/common/core/common.js';
 import { opgp } from '../../js/common/core/crypto/pgp/openpgpjs-custom.js';
 
@@ -60,7 +60,7 @@ Catch.try(async () => {
     print(`downloading full..`);
     const msgsFull = await gmail.msgsGet(fullMsgIdsList, 'full');
     print(`downloading full done. waiting 5 seconds..`);
-    await Ui.time.sleep(5000);
+    await Time.sleep(5000);
     print(`waiting done. Downloading raw..`);
     const msgsRaw = await gmail.msgsGet(fullMsgIdsList, 'raw');
     print(`downloading raw done. Joining results..`);
@@ -82,7 +82,7 @@ Catch.try(async () => {
     print(`joining done. Downloading labels..`);
     const { labels } = await gmail.labelsGet();
     print('labels done. waiting 5s..');
-    await Ui.time.sleep(5000);
+    await Time.sleep(5000);
     print('waiting done. Downloading attachments..');
     const fetchableAttachments: Attachment[] = [];
     const skippedAttachments: Attachment[] = [];
