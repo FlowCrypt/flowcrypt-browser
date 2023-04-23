@@ -229,7 +229,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
         const gmailPage = await openGmailPage(t, browser);
         await gotoGmailPage(gmailPage, '/FMfcgzGkbDZKPKzSnGtGKZrPZSbTBNnB');
         // validate pgp_block.htm is rendered
-        const pgpBlockUrls = await gmailPage.getFramesUrls(['/chrome/elements/pgp_block.htm'], {
+        const pgpBlockUrls = await gmailPage.getFramesUrls(['/chrome/elements/pgp_render_block.htm'], {
           sleep: 10,
           appearIn: 25,
         });
@@ -335,7 +335,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
         const gmailPage = await openGmailPage(t, browser);
         // create compose draft
         await gmailPage.waitAndClick('@action-secure-compose', { delay: 1 });
-        await createSecureDraft(t, browser, gmailPage, 'a compose draft');
+        await createSecureDraft(t, browser, gmailPage, 'a compose draft, text long enough to trigger draft saving'); // todo: #5037
         await gmailPage.page.reload({ timeout: TIMEOUT_PAGE_LOAD * 1000, waitUntil: 'load' });
         await gotoGmailPage(gmailPage, '', 'drafts'); // to go drafts section
         // open new compose window and saved draft
@@ -531,6 +531,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
         const urls = await gmailPage.getFramesUrls(['/chrome/elements/pgp_pubkey.htm']);
         expect(urls.length).to.equal(1);
         await pageHasSecureReplyContainer(t, browser, gmailPage);
+        expect(await gmailPage.isElementVisible('.aQH')).to.equal(false); // original attachment container(s) should be hidden
       })
     );
 
