@@ -1603,8 +1603,6 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
         await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
           params,
           content: [expectedContent],
-          encryption: '',
-          signature: '',
           error: 'decrypt error',
         });
       })
@@ -1698,8 +1696,6 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
         await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
           params,
           content: [],
-          encryption: '',
-          signature: '',
           error: 'parse error',
         });
       })
