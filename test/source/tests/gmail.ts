@@ -367,6 +367,8 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
         // eslint-disable-next-line @typescript-eslint/naming-convention
         const draftListResult = await gmail.users.drafts.list({ userId: 'me', access_token: accessToken });
         expect(draftListResult.data.drafts?.map(d => d.id)).to.eql([draftId]);
+        const draftComposeUrls = urls.filter(url => url.includes(`&draftId=${draftId}`));
+        expect(draftComposeUrls.length).to.equal(1);
         await pageHasSecureDraft(gmailPage, 'compose draft');
         // try to open 4 compose windows at the same time
         await gmailPage.waitAndClick('@action-secure-compose', { delay: 1 });
