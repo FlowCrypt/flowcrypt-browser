@@ -13,6 +13,7 @@ import { GmailPageRecipe } from './page-recipe/gmail-page-recipe';
 import { SetupPageRecipe } from './page-recipe/setup-page-recipe';
 import { AvaContext } from './tooling';
 import { BrowserRecipe } from './tooling/browser-recipe';
+import { google } from 'googleapis';
 
 /**
  * All tests that use mail.google.com or have to operate without a Gmail API mock should go here
@@ -59,10 +60,10 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       browser: BrowserHandle,
       gmailPage: ControllablePage,
       content: string,
-      params: { offline: boolean } = { offline: false }
+      params: { offline: true } | { accessToken: string }
     ) => {
       let composeBox: Controllable | undefined;
-      if (params.offline) {
+      if ('offline' in params) {
         // TODO(@limonte): for some reason iframe is able to save the draft to the cloud even
         // after gmailPage.page.setOfflineMode(true) is called. Probably, the puppeteer issue, revisit.
         // const composeBoxFrame = await gmailPage.getFrame(['/chrome/elements/compose.htm']);
@@ -73,12 +74,29 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
         composeBox = await gmailPage.getFrame(['/chrome/elements/compose.htm']);
       }
       await Util.sleep(5); // until #5037 is fixed
+      const gmail = google.gmail({ version: 'v1' });
+      if ('accessToken' in params) {
+        // delete any possible phantom drafts
+        await BrowserRecipe.deleteAllDraftsInGmailAccount(params.accessToken);
+      }
       await composeBox.type('@input-body', content, true);
-      if (params.offline) {
+      if ('offline' in params) {
         await ComposePageRecipe.waitWhenDraftIsSavedLocally(composeBox);
         await (composeBox as ControllablePage).close();
       } else {
         await ComposePageRecipe.waitWhenDraftIsSaved(composeBox);
+        // eslint-disable-next-line @typescript-eslint/naming-convention
+        const newListResult = await gmail.users.drafts.list({ userId: 'me', access_token: params.accessToken });
+        if (newListResult.data.drafts?.length === 1) {
+          const draft = newListResult.data.drafts[0];
+          if (draft.id) {
+            return draft.id;
+          } else {
+            throw Error(`Couldn't determine draft id via API: undefined`);
+          }
+        } else {
+          throw Error(`Unexpected number of drafts found via API: ${newListResult.data.drafts?.length || 'undefined'}`);
+        }
       }
     };
 
@@ -300,7 +318,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
     test(
       'mail.google.com - secure reply btn, reply draft',
       testWithBrowser(async (t, browser) => {
-        await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
+        const { accessToken } = await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
         const gmailPage = await openGmailPage(t, browser);
         await gotoGmailPage(gmailPage, '/FMfcgzGpGnLZzLxNpWchTnNfxKkNzBSD'); // to go encrypted convo
         // Gmail has 100 emails per thread limit, so if there are 98 deleted messages + 1 initial message,
@@ -312,7 +330,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
         let replyBox = await gmailPage.getFrame(['/chrome/elements/compose.htm'], { sleep: 5 });
         await Util.sleep(3);
         expect(await replyBox.read('@recipients-preview')).to.equal('e2e.enterprise.test@flowcrypt.com');
-        await createSecureDraft(t, browser, gmailPage, 'reply draft');
+        await createSecureDraft(t, browser, gmailPage, 'reply draft', { accessToken });
         await createSecureDraft(t, browser, gmailPage, 'offline reply draft', { offline: true });
         await gmailPage.page.reload({ timeout: TIMEOUT_PAGE_LOAD * 1000, waitUntil: 'networkidle2' });
         await Util.sleep(30);
@@ -331,11 +349,11 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
     test(
       'mail.google.com - multiple compose windows, saving/opening compose draft',
       testWithBrowser(async (t, browser) => {
-        await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
+        const { accessToken } = await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
         const gmailPage = await openGmailPage(t, browser);
         // create compose draft
         await gmailPage.waitAndClick('@action-secure-compose', { delay: 1 });
-        await createSecureDraft(t, browser, gmailPage, 'a compose draft');
+        await createSecureDraft(t, browser, gmailPage, 'a compose draft', { accessToken });
         await gmailPage.page.reload({ timeout: TIMEOUT_PAGE_LOAD * 1000, waitUntil: 'load' });
         await gotoGmailPage(gmailPage, '', 'drafts'); // to go drafts section
         // open new compose window and saved draft

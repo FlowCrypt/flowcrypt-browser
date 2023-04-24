@@ -174,7 +174,7 @@ abstract class ControllableBase {
       throw Error(`Element not found: ${selector}`);
     }
     if (letterByLetter || text.length < 10) {
-      await e.type(text, { delay: 100 });
+      await e.type(text);
     } else {
       const typeLastTenChars = await this.target.evaluate(
         (s, t) => {
