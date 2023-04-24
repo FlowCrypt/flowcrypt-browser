@@ -27,6 +27,7 @@ export enum Status {
   UNAUTHORIZED = 401,
   FORBIDDEN = 403,
   NOT_FOUND = 404,
+  NOT_ALLOWED = 404,
   CONFLICT = 409, // conflicts with key on record - request needs to be verified
   SERVER_ERROR = 500,
   NOT_IMPLEMENTED = 501,

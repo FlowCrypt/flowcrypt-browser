@@ -19,7 +19,7 @@ import { OauthPageRecipe } from './page-recipe/oauth-page-recipe';
 import { AvaContext } from './tooling';
 import { opgp } from '../core/crypto/pgp/openpgpjs-custom';
 import { hasPubKey, protonMailCompatKey, singlePubKeyAttesterConfig, somePubkey } from '../mock/attester/attester-key-constants';
-import { ConfigurationProvider } from '../mock/lib/api';
+import { ConfigurationProvider, HttpClientErr, Status } from '../mock/lib/api';
 import { prvNoSubmit } from '../mock/key-manager/key-manager-constants';
 import {
   flowcryptTestClientConfiguration,
@@ -867,7 +867,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
           'Your local keys expire in 18 days.\nTo receive the latest keys, please ensure that you can connect to your corporate network either through VPN or in person and reload Gmail.\nIf this notification still shows after that, please contact your Help Desk.';
         await gmailPage.waitForContent('@webmail-notification-notify_expiring_keys', warningMsg);
         // Check if warning message still presents when EKM returns error
-        t.mockApi!.configProvider.config.ekm!.returnError = { code: 400, message: 'RequestTimeout' };
+        t.mockApi!.configProvider.config.ekm!.returnError = new HttpClientErr('RequestTimeout', Status.BAD_REQUEST);
         await gmailPage.page.reload();
         await Util.sleep(1);
         await gmailPage.waitForContent('@webmail-notification-notify_expiring_keys', warningMsg);
@@ -1552,7 +1552,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         expect(mainKey13[0].lastModified).to.equal(mainKey12[0].lastModified); // no update
         await gmailPage.close();
         // 13. EKM down, no toast, no passphrase dialog, no updates
-        t.mockApi!.configProvider.config.ekm!.returnError = { code: 400, message: 'RequestTimeout' };
+        t.mockApi!.configProvider.config.ekm!.returnError = new HttpClientErr('RequestTimeout', Status.BAD_REQUEST);
         gmailPage = await browser.newMockGmailPage(t, extraAuthHeaders);
         await PageRecipe.noToastAppears(gmailPage);
         await gmailPage.notPresent('@dialog-passphrase');
@@ -1970,10 +1970,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
             pubkeyLookup: {},
           },
           ekm: {
-            returnError: {
-              code: 500,
-              message: 'Intentional error for get.error to test client behavior',
-            },
+            returnError: new HttpClientErr('Intentional error for get.error to test client behavior', Status.SERVER_ERROR),
           },
           fes: {
             clientConfiguration: getKeyManagerAutogenRules(t.urls!.port!),
@@ -1999,10 +1996,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
           },
           ekm: {
             keys: [],
-            putReturnError: {
-              code: 500,
-              message: 'Intentional error for put.error user to test client behavior',
-            },
+            putReturnError: new HttpClientErr('Intentional error for put.error user to test client behavior', Status.SERVER_ERROR),
           },
           fes: {
             clientConfiguration: getKeyManagerAutogenRules(t.urls!.port!),
@@ -2121,10 +2115,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
           },
           ekm: {
             keys: [],
-            putReturnError: {
-              code: 405,
-              message: `No key has been generated for ${acct} yet. Please ask your administrator.`,
-            },
+            putReturnError: new HttpClientErr(`No key has been generated for ${acct} yet. Please ask your administrator.`, Status.NOT_ALLOWED),
           },
           fes: {
             clientConfiguration: getKeyManagerAutogenRules(t.urls!.port!),

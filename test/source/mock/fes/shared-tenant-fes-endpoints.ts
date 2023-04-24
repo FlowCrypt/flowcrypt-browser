@@ -6,7 +6,6 @@ import { HandlersDefinition } from '../all-apis-mock';
 import { HttpClientErr, Status } from '../lib/api';
 import { MockJwt } from '../lib/oauth';
 import { messageIdRegex, parsePort } from '../lib/mock-util';
-/* eslint-disable @typescript-eslint/naming-convention */
 
 type FesClientConfigurationFlag =
   | 'NO_PRV_CREATE'
@@ -23,6 +22,7 @@ type FesClientConfigurationFlag =
   | 'DISABLE_FES_ACCESS_TOKEN'
   | 'SETUP_ENSURE_IMPORTED_PRV_MATCH_LDAP_PUB';
 
+/* eslint-disable @typescript-eslint/naming-convention */
 export type FesClientConfiguration = {
   flags?: FesClientConfigurationFlag[];
   custom_keyserver_url?: string;
@@ -35,9 +35,10 @@ export type FesClientConfiguration = {
   allow_keys_openpgp_org_search_only_for_domains?: string[];
   disallow_keys_openpgp_org_search_for_domains?: string[];
 };
+/* eslint-enable @typescript-eslint/naming-convention */
 
 export interface FesConfig {
-  returnError?: { code: number; message: string };
+  returnError?: HttpClientErr;
   clientConfiguration?: FesClientConfiguration;
 }
 
@@ -75,7 +76,7 @@ export const getMockSharedTenantFesEndpoints = (config: FesConfig | undefined): 
       }
       if (config) {
         if (config.returnError) {
-          throw new HttpClientErr(config.returnError.message, config.returnError.code);
+          throw config.returnError;
         }
         return {
           clientConfiguration: config.clientConfiguration,

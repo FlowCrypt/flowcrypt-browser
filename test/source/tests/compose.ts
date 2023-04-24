@@ -22,7 +22,7 @@ import { testConstants } from './tooling/consts';
 import { MsgUtil } from '../core/crypto/pgp/msg-util';
 import { PubkeyInfoWithLastCheck } from '../core/crypto/key';
 import { ElementHandle, Page } from 'puppeteer';
-import { ConfigurationProvider, Status } from '../mock/lib/api';
+import { ConfigurationProvider, HttpClientErr, Status } from '../mock/lib/api';
 import {
   expiredPubkey,
   hasPubKey,
@@ -3061,18 +3061,12 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
                 pubkey: somePubkey,
               },
               [recipients.cc]: {
-                returnError: {
-                  code: Status.BAD_REQUEST,
-                  message: 'Request timeout',
-                },
+                returnError: new HttpClientErr('Request timeout', Status.BAD_REQUEST),
               },
             },
             ldapRelay: {
               [recipients.to]: {
-                returnError: {
-                  code: Status.BAD_REQUEST,
-                  message: 'Request timeout',
-                },
+                returnError: new HttpClientErr('Request timeout', Status.BAD_REQUEST),
               },
               [recipients.cc]: {
                 pubkey: somePubkey,
@@ -3111,7 +3105,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
           attester: {
             pubkeyLookup: {
               [recipients.to]: {
-                returnError: { code: Status.SERVER_ERROR, message: 'Server error. Please try again' },
+                returnError: new HttpClientErr('Server error. Please try again', Status.SERVER_ERROR),
               },
             },
           },

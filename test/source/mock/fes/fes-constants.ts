@@ -18,7 +18,6 @@ export const getKeyManagerAutogenRules = (port: number): FesClientConfiguration 
   };
 };
 
-/* eslint-disable @typescript-eslint/naming-convention */
 export const getKeyManagerAutoImportNoPrvCreateRules = (port: number): FesClientConfiguration => {
   const rules = getKeyManagerAutogenRules(port);
   return {
@@ -27,7 +26,6 @@ export const getKeyManagerAutoImportNoPrvCreateRules = (port: number): FesClient
   };
 };
 
-/* eslint-disable @typescript-eslint/naming-convention */
 export const getKeyManagerChoosePassphraseForbidStoringRules = (port: number): FesClientConfiguration => {
   const rules = getKeyManagerAutogenRules(port);
   return {

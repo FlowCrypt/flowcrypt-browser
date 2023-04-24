@@ -22,7 +22,7 @@ import Parse from './../util/parse';
 import { OpenPGPKey } from '../core/crypto/pgp/openpgp-key';
 import { BrowserHandle } from '../browser';
 import { AvaContext } from './tooling';
-import { ConfigurationProvider, Status } from '../mock/lib/api';
+import { ConfigurationProvider, HttpClientErr, Status } from '../mock/lib/api';
 import { singlePubKeyAttesterConfig, somePubkey, testMatchPubKey } from '../mock/attester/attester-key-constants';
 import { emailKeyIndex } from '../core/common';
 import { twoKeys1, twoKeys2 } from '../mock/key-manager/key-manager-constants';
@@ -1682,7 +1682,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         expect(clientConfiguration3.key_manager_url).to.equal(`https://localhost:${port}/flowcrypt-email-key-manager`);
         await gmailPage.close();
         // configure an error
-        t.mockApi!.configProvider.config.fes!.returnError = { code: Status.BAD_REQUEST, message: 'Test error' };
+        t.mockApi!.configProvider.config.fes!.returnError = new HttpClientErr('Test error', Status.BAD_REQUEST);
         gmailPage = await browser.newMockGmailPage(t, extraAuthHeaders);
         await PageRecipe.waitForToastToAppearAndDisappear(
           gmailPage,
