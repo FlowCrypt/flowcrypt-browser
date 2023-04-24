@@ -353,16 +353,20 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
         const gmailPage = await openGmailPage(t, browser);
         // create compose draft
         await gmailPage.waitAndClick('@action-secure-compose', { delay: 1 });
-        await createSecureDraft(t, browser, gmailPage, 'a compose draft', { accessToken });
+        const draftId = await createSecureDraft(t, browser, gmailPage, 'a compose draft', { accessToken });
         await gmailPage.page.reload({ timeout: TIMEOUT_PAGE_LOAD * 1000, waitUntil: 'load' });
         await gotoGmailPage(gmailPage, '', 'drafts'); // to go drafts section
         // open new compose window and saved draft
         await gmailPage.waitAndClick('@action-secure-compose', { delay: 1 });
         await gmailPage.waitAndClick('//*[text()="Draft"]');
         await Util.sleep(2);
-        // veryfy that there are two compose windows: new compose window and secure draft
+        // verify that there are two compose windows: new compose window and secure draft
         const urls = await gmailPage.getFramesUrls(['/chrome/elements/compose.htm'], { sleep: 1 });
         expect(urls.length).to.equal(2);
+        const gmail = google.gmail({ version: 'v1' });
+        // eslint-disable-next-line @typescript-eslint/naming-convention
+        const draftListResult = await gmail.users.drafts.list({ userId: 'me', access_token: accessToken });
+        expect(draftListResult.data.drafts?.map(d => d.id)).to.eql([draftId]);
         await pageHasSecureDraft(gmailPage, 'compose draft');
         // try to open 4 compose windows at the same time
         await gmailPage.waitAndClick('@action-secure-compose', { delay: 1 });
