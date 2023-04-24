@@ -643,6 +643,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         await settingsPage.waitAndRespondToModal('confirm', 'cancel', 'FlowCrypt must be re-connected to your Google account.');
         // *** these tests below are very flaky in CI environment, Google will want to re-authenticate the user for whatever reason
         // // opening secure compose should trigger an api call which causes a reconnect notification
+        await gmailPage.page.bringToFront();
         await gmailPage.page.reload();
         await gmailPage.waitAndClick('@action-secure-compose');
         await gmailPage.waitAll(['@webmail-notification-setup', '@action-reconnect-account']);
@@ -795,6 +796,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         // Check if notification presents
         await gmailPage.waitForContent('@webmail-notification-notify_expiring_keys', warningMsg);
         // Add updated key that expires in 100 days
+        await settingsPage.page.bringToFront();
         await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
         const addKeyPopup = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-add-key-page', ['add_key.htm']);
         await addKeyPopup.waitAndClick('@source-paste');
