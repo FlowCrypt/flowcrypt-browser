@@ -74,7 +74,7 @@ const preserveAsyncStackTracesTransformerFactory = () => {
     return recursiveVisitor;
   };
   return (ctx: ts.TransformationContext): ts.Transformer<ts.SourceFile> => {
-    return (sf: ts.SourceFile) => ts.visitNode(sf, visitor(ctx));
+    return (sf: ts.SourceFile) => ts.visitNode(sf, visitor(ctx)) as ts.SourceFile;
   };
 };
 
