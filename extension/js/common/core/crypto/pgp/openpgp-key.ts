@@ -24,6 +24,8 @@ export class OpenPGPKey {
   // mapping of algo names to required bits, lazy initialized
   private static minimumBitsByAlgo: { [key: string]: number };
 
+  private static readonly noKeyFlags = 0 as OpenPGP.enums.keyFlags;
+
   public static parse = async (text: string): Promise<Key> => {
     const keys = await OpenPGPKey.parseMany(text);
     const keysLength = keys.length;
@@ -578,7 +580,7 @@ export class OpenPGPKey {
   private static getValidEncryptionKeyPacketFlags = (key: OpenPGP.Key | OpenPGP.Subkey, verifiedSignature: OpenPGP.SignaturePacket): OpenPGP.enums.keyFlags => {
     if (!verifiedSignature.keyFlags || verifiedSignature.revoked !== false) {
       // Sanity check
-      return 0;
+      return this.noKeyFlags;
     }
     if (
       [
@@ -588,7 +590,7 @@ export class OpenPGPKey {
         opgp.enums.read(opgp.enums.publicKey, opgp.enums.publicKey.eddsa),
       ].includes(key.getAlgorithmInfo().algorithm)
     ) {
-      return 0; // disallow encryption for these algorithms
+      return this.noKeyFlags; // disallow encryption for these algorithms
     }
     return verifiedSignature.keyFlags[0] & (opgp.enums.keyFlags.encryptCommunication | opgp.enums.keyFlags.encryptStorage);
   };
@@ -596,7 +598,7 @@ export class OpenPGPKey {
   private static getValidSigningKeyPacketFlags = (key: OpenPGP.Key | OpenPGP.Subkey, verifiedSignature: OpenPGP.SignaturePacket): OpenPGP.enums.keyFlags => {
     if (!verifiedSignature.keyFlags || verifiedSignature.revoked !== false) {
       // Sanity check
-      return 0;
+      return this.noKeyFlags;
     }
     if (
       [
@@ -605,7 +607,7 @@ export class OpenPGPKey {
         opgp.enums.read(opgp.enums.publicKey, opgp.enums.publicKey.ecdh),
       ].includes(key.getAlgorithmInfo().algorithm)
     ) {
-      return 0; // disallow signing for these algorithms
+      return this.noKeyFlags; // disallow signing for these algorithms
     }
     return verifiedSignature.keyFlags[0] & (opgp.enums.keyFlags.signData | opgp.enums.keyFlags.certifyKeys);
   };
@@ -622,7 +624,7 @@ export class OpenPGPKey {
     ) {
       return OpenPGPKey.getValidSigningKeyPacketFlags(subKey, bindingSignature);
     }
-    return 0;
+    return this.noKeyFlags;
   };
 
   private static getSubKeyEncryptionFlags = async (key: OpenPGP.Key, subKey: OpenPGP.Subkey): Promise<OpenPGP.enums.keyFlags> => {
@@ -633,7 +635,7 @@ export class OpenPGPKey {
     if (bindingSignature) {
       return OpenPGPKey.getValidEncryptionKeyPacketFlags(subKey, bindingSignature);
     }
-    return 0;
+    return this.noKeyFlags;
   };
 
   private static getPrimaryKeyFlags = async (key: OpenPGP.Key): Promise<OpenPGP.enums.keyFlags> => {
@@ -641,7 +643,7 @@ export class OpenPGPKey {
     const primaryUser = await Catch.undefinedOnException(key.getPrimaryUser());
     const selfCertification = primaryUser?.selfCertification;
     if (!selfCertification) {
-      return 0;
+      return this.noKeyFlags;
     }
     return OpenPGPKey.getValidEncryptionKeyPacketFlags(key, selfCertification) | OpenPGPKey.getValidSigningKeyPacketFlags(key, selfCertification);
   };
