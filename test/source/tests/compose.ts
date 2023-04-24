@@ -22,7 +22,7 @@ import { testConstants } from './tooling/consts';
 import { MsgUtil } from '../core/crypto/pgp/msg-util';
 import { PubkeyInfoWithLastCheck } from '../core/crypto/key';
 import { ElementHandle, Page } from 'puppeteer';
-import { ConfigurationProvider, Status } from '../mock/lib/api';
+import { ConfigurationProvider, HttpClientErr, Status } from '../mock/lib/api';
 import {
   expiredPubkey,
   hasPubKey,
@@ -33,6 +33,7 @@ import {
   testMatchPubKey,
 } from '../mock/attester/attester-key-constants';
 import { revokedPrv, twoKeys2 } from '../mock/key-manager/key-manager-constants';
+import { flowcryptTestClientConfiguration, getKeyManagerAutoImportNoPrvCreateRules, getKeyManagerAutogenRules } from '../mock/fes/fes-constants';
 
 export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: TestWithBrowser) => {
   if (testVariant !== 'CONSUMER-LIVE-GMAIL') {
@@ -173,12 +174,19 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       'user@key-manager-disabled-password-message.flowcrypt.test - disabled flowcrypt hosted password protected messages',
       testWithBrowser(async (t, browser) => {
         const acct = 'user@key-manager-disabled-password-message.flowcrypt.test';
+        const rules = getKeyManagerAutogenRules(t.urls!.port!);
         t.mockApi!.configProvider = new ConfigurationProvider({
           attester: {
             pubkeyLookup: {},
           },
           ekm: {
             keys: [testConstants.existingPrv],
+          },
+          fes: {
+            clientConfiguration: {
+              ...rules,
+              flags: [...(rules.flags ?? []), 'DISABLE_FLOWCRYPT_HOSTED_PASSWORD_MESSAGES'],
+            },
           },
         });
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
@@ -402,6 +410,8 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
     test(
       `compose - auto include pubkey is inactive when our key is available on Wkd`,
       testWithBrowser(async (t, browser) => {
+        const port = t.urls!.port!;
+        const keyManagerAutogenRules = getKeyManagerAutogenRules(port);
         t.mockApi!.configProvider = new ConfigurationProvider({
           attester: {
             pubkeyLookup: {},
@@ -409,8 +419,14 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
           ekm: {
             keys: [testConstants.wkdAtgooglemockflowcryptlocalcom8001Private],
           },
+          fes: {
+            clientConfiguration: {
+              ...keyManagerAutogenRules,
+              flags: [...(keyManagerAutogenRules.flags ?? []), 'NO_ATTESTER_SUBMIT'],
+            },
+          },
         });
-        const acct = `wkd@google.mock.localhost:${t.urls?.port}`;
+        const acct = `wkd@google.mock.localhost:${port}`;
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
         await SetupPageRecipe.autoSetupWithEKM(settingsPage);
         const composePage = await ComposePageRecipe.openStandalone(t, browser, acct);
@@ -2181,6 +2197,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
               },
             },
           },
+          fes: flowcryptTestClientConfiguration,
         });
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
         await SetupPageRecipe.manualEnter(
@@ -2874,6 +2891,13 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
           attester: {
             pubkeyLookup: {},
           },
+          fes: {
+            clientConfiguration: {
+              flags: [],
+              // eslint-disable-next-line @typescript-eslint/naming-convention
+              disallow_attester_search_for_domains: ['*'],
+            },
+          },
         });
         const acct = 'user@no-search-wildcard-domains-client-configuration.flowcrypt.test';
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
@@ -3037,18 +3061,12 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
                 pubkey: somePubkey,
               },
               [recipients.cc]: {
-                returnError: {
-                  code: Status.BAD_REQUEST,
-                  message: 'Request timeout',
-                },
+                returnError: new HttpClientErr('Request timeout', Status.BAD_REQUEST),
               },
             },
             ldapRelay: {
               [recipients.to]: {
-                returnError: {
-                  code: Status.BAD_REQUEST,
-                  message: 'Request timeout',
-                },
+                returnError: new HttpClientErr('Request timeout', Status.BAD_REQUEST),
               },
               [recipients.cc]: {
                 pubkey: somePubkey,
@@ -3087,7 +3105,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
           attester: {
             pubkeyLookup: {
               [recipients.to]: {
-                returnError: { code: Status.SERVER_ERROR, message: 'Server error. Please try again' },
+                returnError: new HttpClientErr('Server error. Please try again', Status.SERVER_ERROR),
               },
             },
           },
@@ -3541,6 +3559,9 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
           ekm: {
             keys: [revokedPrv, twoKeys2],
           },
+          fes: {
+            clientConfiguration: getKeyManagerAutoImportNoPrvCreateRules(t.urls!.port!),
+          },
         });
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
         await SetupPageRecipe.autoSetupWithEKM(settingsPage);
@@ -3561,6 +3582,9 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
           ekm: {
             keys: [revokedPrv],
           },
+          fes: {
+            clientConfiguration: getKeyManagerAutoImportNoPrvCreateRules(t.urls!.port!),
+          },
         });
         const acct = 'revoked@key-manager-autoimport-no-prv-create.flowcrypt.test';
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
@@ -3573,12 +3597,19 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
     test(
       'revoked@key-manager-autoimport-no-prv-create-no-attester-submit.flowcrypt.test - cannot draft or send msg',
       testWithBrowser(async (t, browser) => {
+        const rules = getKeyManagerAutogenRules(t.urls!.port!);
         t.mockApi!.configProvider = new ConfigurationProvider({
           attester: {
             pubkeyLookup: {},
           },
           ekm: {
             keys: [revokedPrv],
+          },
+          fes: {
+            clientConfiguration: {
+              ...rules,
+              flags: [...(rules.flags ?? []), 'NO_PRV_CREATE', 'NO_ATTESTER_SUBMIT'],
+            },
           },
         });
         const acct = 'revoked@key-manager-autoimport-no-prv-create-no-attester-submit.flowcrypt.test';

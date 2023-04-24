@@ -152,6 +152,15 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
           attester: {
             pubkeyLookup: {},
           },
+          fes: {
+            clientConfiguration: {
+              // org is allowed to create new keys in the plugin, without EKM, but no backups are allowed
+              // not a sensible choice for production deployments (no backups and no key management), but useful for demos
+              flags: ['NO_PRV_BACKUP'],
+              // eslint-disable-next-line @typescript-eslint/naming-convention
+              enforce_keygen_algo: 'rsa2048',
+            },
+          },
         });
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'setup@prv-create-no-prv-backup.flowcrypt.test');
         await SetupPageRecipe.createKey(
@@ -199,6 +208,11 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
           attester: {
             pubkeyLookup: {},
           },
+          fes: {
+            clientConfiguration: {
+              flags: ['NO_ATTESTER_SUBMIT'],
+            },
+          },
         });
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'user@no-submit-client-configuration.flowcrypt.test');
         await SetupPageRecipe.createKey(
@@ -219,6 +233,11 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
         t.mockApi!.configProvider = new ConfigurationProvider({
           attester: {
             pubkeyLookup: {},
+          },
+          fes: {
+            clientConfiguration: {
+              flags: ['NO_ATTESTER_SUBMIT'],
+            },
           },
         });
         const acctEmail = 'user@no-submit-client-configuration.flowcrypt.test';
@@ -370,6 +389,11 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
               'human@flowcrypt.com': {
                 pubkey: somePubkey,
               },
+            },
+          },
+          fes: {
+            clientConfiguration: {
+              flags: ['FORBID_STORING_PASS_PHRASE'],
             },
           },
         });
