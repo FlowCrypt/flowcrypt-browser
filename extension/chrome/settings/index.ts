@@ -133,9 +133,6 @@ View.run(
         Catch.setHandledTimeout(clear, 10000);
         $('.webmail_notifications').one('click', clear);
       });
-      BrowserMsg.addListener('open_google_auth_dialog', async ({ acctEmail, scopes }: Bm.OpenGoogleAuthDialog) => {
-        await Settings.newGoogleAcctAuthPromptThenAlertOrForward(this.tabId, acctEmail, scopes);
-      });
       BrowserMsg.addListener('passphrase_dialog', async ({ longids, type, initiatorFrameId }: Bm.PassphraseDialog) => {
         const factory = new XssSafeFactory(this.acctEmail!, this.tabId);
         await factory.showPassphraseDialog(longids, type, initiatorFrameId);

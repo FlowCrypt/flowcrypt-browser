@@ -12,7 +12,7 @@ import { Attachment } from '../../js/common/core/attachment.js';
 import { Browser } from '../../js/common/browser/browser.js';
 import { Catch } from '../../js/common/platform/catch.js';
 import { Gmail } from '../../js/common/api/email-provider/gmail/gmail.js';
-import { Ui } from '../../js/common/browser/ui.js';
+import { CommonHandlers, Ui } from '../../js/common/browser/ui.js';
 import { View } from '../../js/common/view.js';
 import { Xss } from '../../js/common/platform/xss.js';
 import { KeyStore } from '../../js/common/platform/store/key-store.js';
@@ -20,9 +20,11 @@ import { PassphraseStore } from '../../js/common/platform/store/passphrase-store
 import { XssSafeFactory } from '../../js/common/xss-safe-factory.js';
 import { Lang } from '../../js/common/lang.js';
 import { AcctStore } from '../../js/common/platform/store/acct-store.js';
+import { AttachmentWarnings } from './shared/attachment_warnings.js';
 
 export class AttachmentDownloadView extends View {
   public fesUrl?: string;
+  public confirmationResultResolver?: (confirm: boolean) => void;
   protected readonly acctEmail: string;
   protected readonly parentTabId: string;
   protected readonly frameId: string;
@@ -78,6 +80,10 @@ export class AttachmentDownloadView extends View {
     this.url = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'url');
     this.gmail = new Gmail(this.acctEmail);
   }
+
+  public getParentTabId = () => {
+    return this.parentTabId;
+  };
 
   public render = async () => {
     this.tabId = await BrowserMsg.requiredTabId();
@@ -143,6 +149,7 @@ export class AttachmentDownloadView extends View {
         this.ppChangedPromiseCancellation = { cancel: false }; // set to a new, not yet used object
       }
     });
+    BrowserMsg.addListener('confirmation_result', CommonHandlers.createConfirmationResultHandler(this));
     BrowserMsg.listen(this.tabId);
   };
 
@@ -320,10 +327,13 @@ export class AttachmentDownloadView extends View {
     });
     Xss.sanitizeRender(this.downloadButton, this.originalButtonHTML || '');
     if (result.success) {
+      const attachmentForSave = new Attachment({ name: result.filename, type: this.attachment.type, data: result.content });
       if (!result.filename || ['msg.txt', 'null'].includes(result.filename)) {
         result.filename = this.attachment.name;
       }
-      Browser.saveToDownloads(new Attachment({ name: result.filename, type: this.attachment.type, data: result.content }));
+      if (await AttachmentWarnings.confirmSaveToDownloadsIfNeeded(attachmentForSave, this)) {
+        Browser.saveToDownloads(attachmentForSave);
+      }
     } else if (result.error.type === DecryptErrTypes.needPassphrase) {
       BrowserMsg.send.passphraseDialog(this.parentTabId, {
         type: 'attachment',

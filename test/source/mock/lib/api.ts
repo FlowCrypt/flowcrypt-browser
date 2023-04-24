@@ -7,6 +7,9 @@ import { readFileSync } from 'fs';
 import { AttesterConfig, getMockAttesterEndpoints } from '../attester/attester-endpoints';
 import { HandlersRequestDefinition } from '../all-apis-mock';
 import { KeysOpenPGPOrgConfig, getMockKeysOpenPGPOrgEndpoints } from '../keys-openpgp-org/keys-openpgp-org-endpoints';
+import { OauthMock } from './oauth';
+import { getMockGoogleEndpoints } from '../google/google-endpoints';
+import { KeyManagerConfig, getMockKeyManagerEndpoints } from '../key-manager/key-manager-endpoints';
 
 export class HttpAuthErr extends Error {}
 export class HttpClientErr extends Error {
@@ -32,20 +35,33 @@ export enum Status {
 export type RequestHandler<REQ, RES> = (parsedReqBody: REQ, req: http.IncomingMessage) => Promise<RES>;
 export type Handlers<REQ, RES> = { [request: string]: RequestHandler<REQ, RES> };
 
+interface ConfigurationOptions {
+  attester?: AttesterConfig;
+  keysOpenPgp?: KeysOpenPGPOrgConfig;
+  ekm?: KeyManagerConfig;
+}
+
 interface ConfigurationProviderInterface<REQ, RES> {
-  config: { attester?: AttesterConfig; keysOpenPgp?: KeysOpenPGPOrgConfig };
+  config: ConfigurationOptions;
   getHandlers(): Handlers<REQ, RES>;
 }
 
 export class ConfigurationProvider implements ConfigurationProviderInterface<HandlersRequestDefinition, unknown> {
-  public constructor(public config: { attester?: AttesterConfig; keysOpenPgp?: KeysOpenPGPOrgConfig }) {}
+  private oauth = new OauthMock();
+
+  public constructor(public config: ConfigurationOptions) {}
 
   public getHandlers(): Handlers<HandlersRequestDefinition, unknown> {
     let handlers: Handlers<HandlersRequestDefinition, unknown> = {};
     if (this.config.attester) {
-      handlers = { ...handlers, ...getMockAttesterEndpoints(this.config.attester) };
+      handlers = { ...handlers, ...getMockAttesterEndpoints(this.oauth, this.config.attester) };
     }
-    handlers = { ...handlers, ...getMockKeysOpenPGPOrgEndpoints(this.config.keysOpenPgp) };
+    handlers = {
+      ...handlers,
+      ...getMockGoogleEndpoints(this.oauth),
+      ...getMockKeyManagerEndpoints(this.oauth, this.config.ekm),
+      ...getMockKeysOpenPGPOrgEndpoints(this.config.keysOpenPgp),
+    };
     return handlers;
   }
 }
