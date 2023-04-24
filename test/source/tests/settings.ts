@@ -22,12 +22,12 @@ import Parse from './../util/parse';
 import { OpenPGPKey } from '../core/crypto/pgp/openpgp-key';
 import { BrowserHandle } from '../browser';
 import { AvaContext } from './tooling';
-import { mockBackendData } from '../mock/backend/backend-endpoints';
-import { ClientConfiguration, keyManagerAutogenRules } from '../mock/backend/backend-data';
 import { ConfigurationProvider, HttpClientErr, Status } from '../mock/lib/api';
 import { singlePubKeyAttesterConfig, somePubkey, testMatchPubKey } from '../mock/attester/attester-key-constants';
 import { emailKeyIndex } from '../core/common';
 import { twoKeys1, twoKeys2 } from '../mock/key-manager/key-manager-constants';
+import { getKeyManagerAutogenRules } from '../mock/fes/fes-constants';
+import { FesClientConfiguration } from '../mock/fes/shared-tenant-fes-endpoints';
 
 export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: TestWithBrowser) => {
   if (testVariant !== 'CONSUMER-LIVE-GMAIL') {
@@ -493,6 +493,9 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
           ekm: {
             keys: [twoKeys1, twoKeys2],
           },
+          fes: {
+            clientConfiguration: getKeyManagerAutogenRules(t.urls!.port!),
+          },
         });
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
         await SetupPageRecipe.autoSetupWithEKM(settingsPage);
@@ -587,6 +590,11 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         t.mockApi!.configProvider = new ConfigurationProvider({
           attester: {
             pubkeyLookup: {},
+          },
+          fes: {
+            clientConfiguration: {
+              flags: ['FORBID_STORING_PASS_PHRASE'],
+            },
           },
         });
         const { settingsPage, passphrase } = await BrowserRecipe.setUpFcForbidPpStoringAcct(t, browser);
@@ -1411,6 +1419,11 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
           attester: {
             pubkeyLookup: {},
           },
+          fes: {
+            clientConfiguration: {
+              flags: ['FORBID_STORING_PASS_PHRASE'],
+            },
+          },
         });
         const { settingsPage, passphrase } = await BrowserRecipe.setUpFcForbidPpStoringAcct(t, browser);
         const {
@@ -1454,6 +1467,11 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
               },
             },
           },
+          fes: {
+            clientConfiguration: {
+              flags: [],
+            },
+          },
         });
         await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
         const settingsPage = await browser.newExtensionSettingsPage(t, acct1);
@@ -1470,6 +1488,9 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
             clickOn: 'confirm',
           })
         );
+        t.mockApi!.configProvider.config.fes!.clientConfiguration = {
+          flags: ['DEFAULT_REMEMBER_PASS_PHRASE'],
+        };
         await OauthPageRecipe.mock(t, oauthPopup1, acct2, 'override_acct');
         await PageRecipe.waitForModalAndRespond(experimentalFrame, 'confirm', {
           contentToCheck: 'email from ci.tests.gmail@flowcrypt.test to user@default-remember-passphrase-client-configuration.flowcrypt.test',
@@ -1510,15 +1531,17 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
           ekm: {
             keys: [testConstants.existingPrv],
           },
+          fes: {
+            clientConfiguration: getKeyManagerAutogenRules(t.urls!.port!),
+          },
         });
         const port = t.urls?.port;
         const domain = 'settings.flowcrypt.test';
         const acct = `test-update@${domain}`;
         const rulesKey = `cryptup_${emailKeyIndex(acct, 'rules')}`;
-        mockBackendData.clientConfigurationForDomain[domain] = keyManagerAutogenRules(`${t.urls?.port}`);
         const setupPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
         await SetupPageRecipe.autoSetupWithEKM(setupPage);
-        const clientConfiguration1 = (await setupPage.getFromLocalStorage([rulesKey]))[rulesKey] as ClientConfiguration;
+        const clientConfiguration1 = (await setupPage.getFromLocalStorage([rulesKey]))[rulesKey] as FesClientConfiguration;
         expect(clientConfiguration1.flags).to.eql([
           'NO_PRV_BACKUP',
           'ENFORCE_ATTESTER_SUBMIT',
@@ -1532,7 +1555,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         const accessToken = await BrowserRecipe.getGoogleAccessToken(setupPage, acct);
         await setupPage.close();
         // Set invalid client configuration and check if it ensures gracious behavior & ui remain functional
-        mockBackendData.clientConfigurationForDomain[domain] = {
+        t.mockApi!.configProvider.config.fes!.clientConfiguration = {
           // flags is required but don't return it (to mock invalid client configuration)
           key_manager_url: `https://localhost:${port}/flowcrypt-email-key-manager`, // eslint-disable-line @typescript-eslint/naming-convention
         };
@@ -1543,7 +1566,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         // Ensure previous client configuration remains same
         const settingsPage = await browser.newExtensionSettingsPage(t, acct);
         await PageRecipe.waitForToastToAppearAndDisappear(settingsPage, errorMsg);
-        const clientConfiguration2 = (await settingsPage.getFromLocalStorage([rulesKey]))[rulesKey] as ClientConfiguration;
+        const clientConfiguration2 = (await settingsPage.getFromLocalStorage([rulesKey]))[rulesKey] as FesClientConfiguration;
         expect(clientConfiguration2.flags).to.eql([
           'NO_PRV_BACKUP',
           'ENFORCE_ATTESTER_SUBMIT',
@@ -1559,6 +1582,8 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
     test(
       'settings - client configuration gets updated on settings and content script reloads',
       testWithBrowser(async (t, browser) => {
+        const port = t.urls?.port;
+        /* eslint-disable @typescript-eslint/naming-convention */
         t.mockApi!.configProvider = new ConfigurationProvider({
           attester: {
             pubkeyLookup: {},
@@ -1566,26 +1591,25 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
           ekm: {
             keys: [testConstants.existingPrv],
           },
+          fes: {
+            clientConfiguration: {
+              flags: ['NO_PRV_BACKUP', 'ENFORCE_ATTESTER_SUBMIT', 'PRV_AUTOIMPORT_OR_AUTOGEN', 'PASS_PHRASE_QUIET_AUTOGEN', 'DEFAULT_REMEMBER_PASS_PHRASE'],
+              // custom_keyserver_url: undefined,
+              key_manager_url: `https://localhost:${port}/flowcrypt-email-key-manager`,
+              // allow_attester_search_only_for_domains: undefined,
+              disallow_attester_search_for_domains: ['disallowed_domain1.test', 'disallowed_domain2.test'],
+              enforce_keygen_algo: 'rsa2048',
+              // enforce_keygen_expire_months: undefined
+            },
+          },
         });
-        const port = t.urls?.port;
+        /* eslint-enable @typescript-eslint/naming-convention */
         const domain = 'test1.settings.flowcrypt.test';
         const acct = `settings@${domain}`;
         const rulesKey = `cryptup_${emailKeyIndex(acct, 'rules')}`;
-        /* eslint-disable @typescript-eslint/naming-convention */
-        // set up the client configuration returned for the account
-        mockBackendData.clientConfigurationForDomain[domain] = {
-          flags: ['NO_PRV_BACKUP', 'ENFORCE_ATTESTER_SUBMIT', 'PRV_AUTOIMPORT_OR_AUTOGEN', 'PASS_PHRASE_QUIET_AUTOGEN', 'DEFAULT_REMEMBER_PASS_PHRASE'],
-          // custom_keyserver_url: undefined,
-          key_manager_url: `https://localhost:${port}/flowcrypt-email-key-manager`,
-          // allow_attester_search_only_for_domains: undefined,
-          disallow_attester_search_for_domains: ['disallowed_domain1.test', 'disallowed_domain2.test'],
-          enforce_keygen_algo: 'rsa2048',
-          // enforce_keygen_expire_months: undefined
-        };
-        /* eslint-enable @typescript-eslint/naming-convention */
         const setupPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
         await SetupPageRecipe.autoSetupWithEKM(setupPage);
-        const clientConfiguration1 = (await setupPage.getFromLocalStorage([rulesKey]))[rulesKey] as ClientConfiguration;
+        const clientConfiguration1 = (await setupPage.getFromLocalStorage([rulesKey]))[rulesKey] as FesClientConfiguration;
         expect(clientConfiguration1.flags).to.eql([
           'NO_PRV_BACKUP',
           'ENFORCE_ATTESTER_SUBMIT',
@@ -1602,7 +1626,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         await setupPage.close();
         // modify the setup
         /* eslint-disable @typescript-eslint/naming-convention */
-        mockBackendData.clientConfigurationForDomain[domain] = {
+        t.mockApi!.configProvider.config.fes!.clientConfiguration = {
           flags: ['NO_ATTESTER_SUBMIT', 'HIDE_ARMOR_META', 'DEFAULT_REMEMBER_PASS_PHRASE'],
           custom_keyserver_url: `https://localhost:${port}`,
           // key_manager_url: undefined,
@@ -1614,7 +1638,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         /* eslint-enable @typescript-eslint/naming-convention */
         // open the settings page
         const settingsPage = await browser.newExtensionSettingsPage(t, acct);
-        const clientConfiguration2 = (await settingsPage.getFromLocalStorage([rulesKey]))[rulesKey] as ClientConfiguration;
+        const clientConfiguration2 = (await settingsPage.getFromLocalStorage([rulesKey]))[rulesKey] as FesClientConfiguration;
         // check that the configuration in the storage has been updated
         expect(clientConfiguration2.flags).to.eql(['NO_ATTESTER_SUBMIT', 'HIDE_ARMOR_META', 'DEFAULT_REMEMBER_PASS_PHRASE']);
         expect(clientConfiguration2.custom_keyserver_url).to.equal(`https://localhost:${port}`);
@@ -1627,7 +1651,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         // keep settingsPage open to re-read the storage later via it
         // re-configure the setup again
         /* eslint-disable @typescript-eslint/naming-convention */
-        mockBackendData.clientConfigurationForDomain[domain] = {
+        t.mockApi!.configProvider.config.fes!.clientConfiguration = {
           flags: ['NO_PRV_BACKUP', 'ENFORCE_ATTESTER_SUBMIT', 'PRV_AUTOIMPORT_OR_AUTOGEN', 'PASS_PHRASE_QUIET_AUTOGEN', 'DEFAULT_REMEMBER_PASS_PHRASE'],
           // custom_keyserver_url: undefined,
           key_manager_url: `https://localhost:${port}/flowcrypt-email-key-manager`,
@@ -1641,7 +1665,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         let gmailPage = await browser.newMockGmailPage(t, extraAuthHeaders);
         await Util.sleep(3);
         // read the local storage from via the extension's own page (settings)
-        const clientConfiguration3 = (await settingsPage.getFromLocalStorage([rulesKey]))[rulesKey] as ClientConfiguration;
+        const clientConfiguration3 = (await settingsPage.getFromLocalStorage([rulesKey]))[rulesKey] as FesClientConfiguration;
         // check that the configuration in the storage has been updated
         expect(clientConfiguration3.flags).to.eql([
           'NO_PRV_BACKUP',
@@ -1658,7 +1682,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         expect(clientConfiguration3.key_manager_url).to.equal(`https://localhost:${port}/flowcrypt-email-key-manager`);
         await gmailPage.close();
         // configure an error
-        mockBackendData.clientConfigurationForDomain[domain] = new HttpClientErr('Test error', Status.BAD_REQUEST);
+        t.mockApi!.configProvider.config.fes!.returnError = new HttpClientErr('Test error', Status.BAD_REQUEST);
         gmailPage = await browser.newMockGmailPage(t, extraAuthHeaders);
         await PageRecipe.waitForToastToAppearAndDisappear(
           gmailPage,
@@ -1667,7 +1691,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         );
         await gmailPage.close();
         // check that the configuration hasn't changed
-        const clientConfiguration4 = (await settingsPage.getFromLocalStorage([rulesKey]))[rulesKey] as ClientConfiguration;
+        const clientConfiguration4 = (await settingsPage.getFromLocalStorage([rulesKey]))[rulesKey] as FesClientConfiguration;
         // check that the configuration in the storage has been updated
         expect(clientConfiguration4.flags).to.eql([
           'NO_PRV_BACKUP',
@@ -1697,6 +1721,11 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
               },
             },
           },
+          fes: {
+            clientConfiguration: {
+              flags: [],
+            },
+          },
         });
         await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
         const acct2 = 'user@forbid-storing-passphrase-client-configuration.flowcrypt.test';
@@ -1714,6 +1743,9 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
             clickOn: 'confirm',
           })
         );
+        t.mockApi!.configProvider.config.fes!.clientConfiguration = {
+          flags: ['FORBID_STORING_PASS_PHRASE'],
+        };
         await OauthPageRecipe.mock(t, oauthPopup1, acct2, 'override_acct');
         await PageRecipe.waitForModalAndRespond(experimentalFrame, 'confirm', {
           contentToCheck: 'email from ci.tests.gmail@flowcrypt.test to user@forbid-storing-passphrase-client-configuration.flowcrypt.test',
@@ -1750,6 +1782,11 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         t.mockApi!.configProvider = new ConfigurationProvider({
           attester: {
             pubkeyLookup: {},
+          },
+          fes: {
+            clientConfiguration: {
+              flags: ['FORBID_STORING_PASS_PHRASE'],
+            },
           },
         });
         const { acctEmail, settingsPage } = await BrowserRecipe.setUpFcForbidPpStoringAcct(t, browser);

@@ -10,8 +10,8 @@ import { OauthMock } from '../lib/oauth';
 
 export interface KeyManagerConfig {
   keys?: string[];
-  returnError?: { code: number; message: string };
-  putReturnError?: { code: number; message: string };
+  returnError?: HttpClientErr;
+  putReturnError?: HttpClientErr;
 }
 
 export const getMockKeyManagerEndpoints = (oauth: OauthMock, config: KeyManagerConfig | undefined): HandlersDefinition => {
@@ -21,7 +21,7 @@ export const getMockKeyManagerEndpoints = (oauth: OauthMock, config: KeyManagerC
       if (isGet(req)) {
         if (config) {
           if (config.returnError) {
-            throw new HttpClientErr(config.returnError.message, config.returnError.code);
+            throw config.returnError;
           }
           return { privateKeys: config.keys?.map(key => ({ decryptedPrivateKey: key })) ?? [] };
         }
@@ -30,7 +30,7 @@ export const getMockKeyManagerEndpoints = (oauth: OauthMock, config: KeyManagerC
       if (isPut(req)) {
         if (config) {
           if (config.putReturnError) {
-            throw new HttpClientErr(config.putReturnError.message, config.putReturnError.code);
+            throw config.putReturnError;
           }
           const { privateKey } = body as Dict<string>;
           if (acctEmail === 'put.key@key-manager-autogen.flowcrypt.test') {
