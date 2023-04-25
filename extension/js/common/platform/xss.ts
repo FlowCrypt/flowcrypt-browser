@@ -44,6 +44,8 @@ export class Xss {
     'fieldset',
     'a',
     'font',
+    'colgroup',
+    'col',
   ];
   private static ADD_ATTR = ['email', 'page', 'addurltext', 'longid', 'index', 'target', 'fingerprint'];
   private static FORBID_ATTR = ['background'];
