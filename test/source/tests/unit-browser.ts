@@ -10,6 +10,7 @@ import { testConstants } from './tooling/consts';
 import { BrowserRecipe } from './tooling/browser-recipe';
 import { ConfigurationProvider } from '../mock/lib/api';
 import { somePubkey } from '../mock/attester/attester-key-constants';
+import { aliceKey, jackAdvancedKey, johnDoeDirectKey, johnDoeAdvancedKey } from '../mock/wkd/wkd-constants';
 
 type UnitTest = { title: string; code: string; acct?: CommonAcct; only: boolean };
 
@@ -36,6 +37,20 @@ export const defineUnitBrowserTests = (testVariant: TestVariant, testWithBrowser
               },
             });
             await BrowserRecipe.setUpCommonAcct(t, browser, acct);
+          } else {
+            t.mockApi!.configProvider = new ConfigurationProvider({
+              wkd: {
+                directLookup: {
+                  'john.doe': { pubkeys: [johnDoeDirectKey] },
+                  'jack.advanced': { pubkeys: [jackAdvancedKey] },
+                },
+                advancedLookup: {
+                  'john.doe': { pubkeys: [johnDoeAdvancedKey] },
+                  incorrect: { pubkeys: [aliceKey] },
+                  'some.revoked': { pubkeys: [testConstants.somerevokedRevoked1, testConstants.somerevokedValid, testConstants.somerevokedRevoked2] },
+                },
+              },
+            });
           }
           const hostPage = await browser.newExtensionPage(t, 'chrome/dev/ci_unit_test.htm');
           // update host page h1
