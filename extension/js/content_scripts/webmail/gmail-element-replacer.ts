@@ -600,7 +600,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
         return await this.renderBackupFromFile(a, attachmentsContainerInner, msgElReference.msgEl);
       } else if (treatAs === 'signature') {
         // todo: generate frameId here, prevent frameId duplicates?
-        const { frameId, frameHtml: embeddedSignedMsgXssSafe } = this.factory.embeddedRenderMsg();
+        const { frameId, frameHtml: embeddedSignedMsgXssSafe } = this.factory.embeddedRenderMsg('signedMsg');
         msgElReference.msgEl = this.updateMsgBodyEl_DANGEROUSLY(msgElReference.msgEl, 'set', embeddedSignedMsgXssSafe); // xss-safe-factory
         const frameWindow = XssSafeFactory.getWindowOfEmbeddedMsg(frameId);
         if (frameWindow) {

@@ -248,9 +248,11 @@ export class XssSafeFactory {
     return this.iframe(this.srcPgpBlockIframe(armored, msgId, isOutgoing, sender, signature), ['pgp_block', type]) + this.hideGmailNewMsgInThreadNotification;
   };
 
-  public embeddedRenderMsg = () => {
+  public embeddedRenderMsg = (
+    type: MsgBlockType // for diagnostic purposes
+  ) => {
     const { frameId, frameSrc } = this.srcPgpRenderBlockIframe();
-    return { frameId, frameHtml: this.iframe(frameSrc, ['pgp_block']) + this.hideGmailNewMsgInThreadNotification };
+    return { frameId, frameHtml: this.iframe(frameSrc, ['pgp_block', type]) + this.hideGmailNewMsgInThreadNotification };
   };
 
   public embeddedPubkey = (armoredPubkey: string, isOutgoing?: boolean) => {
