@@ -8,17 +8,17 @@ import { IncomingMessage } from 'http';
 
 // todo - add a not found test with: throw new HttpClientErr('Pubkey not found', 404);
 
-interface WKDLookUpResult {
+interface WkdLookUpResult {
   pubkeys?: string[];
   returnError?: HttpClientErr;
 }
 
-export interface WKDConfig {
-  directLookup?: Record<string, WKDLookUpResult>;
-  advancedLookup?: Record<string, WKDLookUpResult>;
+export interface WkdConfig {
+  directLookup?: Record<string, WkdLookUpResult>;
+  advancedLookup?: Record<string, WkdLookUpResult>;
 }
 
-const fetchKeyResult = async (req: IncomingMessage, keyRecord: Record<string, WKDLookUpResult> | undefined) => {
+const fetchKeyResult = async (req: IncomingMessage, keyRecord: Record<string, WkdLookUpResult> | undefined) => {
   const emailLocalPart = req.url!.split('?l=').pop()!.toLowerCase().trim();
   if (!keyRecord) {
     return '';
@@ -43,7 +43,7 @@ const fetchKeyResult = async (req: IncomingMessage, keyRecord: Record<string, WK
   }
 };
 
-export const getMockWkdEndpoints = (config: WKDConfig | undefined): HandlersDefinition => {
+export const getMockWkdEndpoints = (config: WkdConfig | undefined): HandlersDefinition => {
   return {
     '/.well-known/openpgpkey/hu/?': async (_, req) => {
       return await fetchKeyResult(req, config?.directLookup);

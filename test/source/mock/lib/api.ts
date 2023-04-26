@@ -11,7 +11,7 @@ import { OauthMock } from './oauth';
 import { getMockGoogleEndpoints } from '../google/google-endpoints';
 import { KeyManagerConfig, getMockKeyManagerEndpoints } from '../key-manager/key-manager-endpoints';
 import { FesConfig, getMockSharedTenantFesEndpoints } from '../fes/shared-tenant-fes-endpoints';
-import { WKDConfig, getMockWkdEndpoints } from '../wkd/wkd-endpoints';
+import { WkdConfig, getMockWkdEndpoints } from '../wkd/wkd-endpoints';
 
 export class HttpAuthErr extends Error {}
 export class HttpClientErr extends Error {
@@ -43,7 +43,7 @@ interface ConfigurationOptions {
   keysOpenPgp?: KeysOpenPGPOrgConfig;
   ekm?: KeyManagerConfig;
   fes?: FesConfig;
-  wkd?: WKDConfig;
+  wkd?: WkdConfig;
 }
 
 interface ConfigurationProviderInterface<REQ, RES> {
