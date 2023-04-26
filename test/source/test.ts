@@ -38,7 +38,7 @@ const consts = {
   TIMEOUT_ALL_RETRIES: minutes(25), // this has to suffer waiting for semaphore between retries, thus almost the same as below
   TIMEOUT_OVERALL: minutes(30),
   ATTEMPTS: testGroup === 'STANDARD-GROUP' ? oneIfNotPooled(3) : process.argv.includes('--retry=false') ? 1 : 3,
-  POOL_SIZE: oneIfNotPooled(isMock ? 20 : 3),
+  POOL_SIZE: oneIfNotPooled(isMock ? 20 : 1),
   PROMISE_TIMEOUT_OVERALL: undefined as unknown as Promise<never>, // will be set right below
   IS_LOCAL_DEBUG: process.argv.includes('--debug') ? true : false, // run locally by developer, not in ci
 };
