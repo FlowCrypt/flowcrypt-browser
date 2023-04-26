@@ -20,7 +20,7 @@ import { BrowserRecipe } from './tooling/browser-recipe';
 import { SetupPageRecipe } from './page-recipe/setup-page-recipe';
 import { testConstants } from './tooling/consts';
 import { MsgUtil } from '../core/crypto/pgp/msg-util';
-import { PubkeyInfoWithLastCheck } from '../core/crypto/key';
+import { KeyUtil, PubkeyInfoWithLastCheck } from '../core/crypto/key';
 import { ElementHandle, Page } from 'puppeteer';
 import { ConfigurationProvider, HttpClientErr, Status } from '../mock/lib/api';
 import {
@@ -411,7 +411,9 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       `compose - auto include pubkey is inactive when our key is available on Wkd`,
       testWithBrowser(async (t, browser) => {
         const port = t.urls!.port!;
+        const acct = `wkd@google.mock.localhost:${port}`;
         const keyManagerAutogenRules = getKeyManagerAutogenRules(port);
+        const pub = await KeyUtil.asPublicKey(await KeyUtil.parse(testConstants.wkdAtgooglemockflowcryptlocalcom8001Private));
         t.mockApi!.configProvider = new ConfigurationProvider({
           attester: {
             pubkeyLookup: {},
@@ -425,8 +427,14 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
               flags: [...(keyManagerAutogenRules.flags ?? []), 'NO_ATTESTER_SUBMIT'],
             },
           },
+          wkd: {
+            directLookup: {
+              wkd: {
+                pubkeys: [KeyUtil.armor(pub)],
+              },
+            },
+          },
         });
-        const acct = `wkd@google.mock.localhost:${port}`;
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
         await SetupPageRecipe.autoSetupWithEKM(settingsPage);
         const composePage = await ComposePageRecipe.openStandalone(t, browser, acct);

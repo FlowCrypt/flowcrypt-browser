@@ -21,6 +21,7 @@ import {
   singlePubKeyAttesterConfig,
 } from '../mock/attester/attester-key-constants';
 import { ConfigurationProvider } from '../mock/lib/api';
+import { onlyOnWkdPubKey } from '../mock/wkd/wkd-constants';
 
 export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: TestWithBrowser) => {
   if (testVariant !== 'CONSUMER-LIVE-GMAIL') {
@@ -1077,6 +1078,13 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
         const acctEmail = 'flowcrypt.compatibility@gmail.com';
         t.mockApi!.configProvider = new ConfigurationProvider({
           attester: singlePubKeyAttesterConfig(acctEmail, somePubkey),
+          wkd: {
+            directLookup: {
+              'only.on.wkd': {
+                pubkeys: [onlyOnWkdPubKey],
+              },
+            },
+          },
         });
         await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
         const senderEmail = 'only.on.wkd@signing.test';
