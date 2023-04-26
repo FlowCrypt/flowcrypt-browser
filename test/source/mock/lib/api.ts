@@ -10,6 +10,8 @@ import { KeysOpenPGPOrgConfig, getMockKeysOpenPGPOrgEndpoints } from '../keys-op
 import { OauthMock } from './oauth';
 import { getMockGoogleEndpoints } from '../google/google-endpoints';
 import { KeyManagerConfig, getMockKeyManagerEndpoints } from '../key-manager/key-manager-endpoints';
+import { FesConfig, getMockSharedTenantFesEndpoints } from '../fes/shared-tenant-fes-endpoints';
+import { WkdConfig, getMockWkdEndpoints } from '../wkd/wkd-endpoints';
 
 export class HttpAuthErr extends Error {}
 export class HttpClientErr extends Error {
@@ -26,6 +28,7 @@ export enum Status {
   UNAUTHORIZED = 401,
   FORBIDDEN = 403,
   NOT_FOUND = 404,
+  NOT_ALLOWED = 405,
   CONFLICT = 409, // conflicts with key on record - request needs to be verified
   SERVER_ERROR = 500,
   NOT_IMPLEMENTED = 501,
@@ -39,6 +42,8 @@ interface ConfigurationOptions {
   attester?: AttesterConfig;
   keysOpenPgp?: KeysOpenPGPOrgConfig;
   ekm?: KeyManagerConfig;
+  fes?: FesConfig;
+  wkd?: WkdConfig;
 }
 
 interface ConfigurationProviderInterface<REQ, RES> {
@@ -59,6 +64,8 @@ export class ConfigurationProvider implements ConfigurationProviderInterface<Han
     handlers = {
       ...handlers,
       ...getMockGoogleEndpoints(this.oauth),
+      ...getMockSharedTenantFesEndpoints(this.config.fes),
+      ...getMockWkdEndpoints(this.config.wkd),
       ...getMockKeyManagerEndpoints(this.oauth, this.config.ekm),
       ...getMockKeysOpenPGPOrgEndpoints(this.config.keysOpenPgp),
     };

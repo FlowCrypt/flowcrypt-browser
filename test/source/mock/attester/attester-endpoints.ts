@@ -12,7 +12,7 @@ interface PubKeyLookUpResult {
   pubkey?: string;
   delayInSeconds?: number;
   domainToCheck?: string;
-  returnError?: { code: number; message: string };
+  returnError?: HttpClientErr;
 }
 
 export interface AttesterConfig {
@@ -33,7 +33,7 @@ export const getMockAttesterEndpoints = (oauth: OauthMock, attesterConfig: Attes
         const pubRes = attesterConfig.pubkeyLookup[emailOrLongid];
         if (pubRes) {
           if (pubRes.returnError) {
-            throw new HttpClientErr(pubRes.returnError.message, pubRes.returnError.code);
+            throw pubRes.returnError;
           }
           if (pubRes.delayInSeconds) {
             await Util.sleep(pubRes.delayInSeconds);
@@ -64,7 +64,7 @@ export const getMockAttesterEndpoints = (oauth: OauthMock, attesterConfig: Attes
         const pubRes = attesterConfig.ldapRelay[emailOrLongid];
         if (pubRes) {
           if (pubRes.returnError) {
-            throw new HttpClientErr(pubRes.returnError.message, pubRes.returnError.code);
+            throw pubRes.returnError;
           }
           if (!pubRes.domainToCheck || pubRes.domainToCheck === server) {
             return pubRes.pubkey;

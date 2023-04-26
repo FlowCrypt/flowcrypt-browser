@@ -11,7 +11,7 @@ import { Util, getParsedCliParams } from './util';
 import { mkdirSync, realpathSync, writeFileSync } from 'fs';
 import { TestUrls } from './browser/test-urls';
 import { startAllApisMock } from './mock/all-apis-mock';
-import { mockBackendData } from './mock/backend/backend-endpoints';
+import { reportedErrors } from './mock/backend/backend-endpoints';
 import { defineComposeTests } from './tests/compose';
 import { defineContentScriptTests } from './tests/content-script';
 import { defineDecryptTests } from './tests/decrypt';
@@ -144,7 +144,7 @@ test.after.always('evaluate Catch.reportErr errors', async t => {
   // todo - here we filter out an error that would otherwise be useful
   // in one test we are testing an error scenario
   // our S/MIME implementation is still early so it throws "reportable" errors like this during tests
-  const usefulErrors = mockBackendData.reportedErrors
+  const usefulErrors = reportedErrors
     .filter(e => e.message !== 'Too few bytes to read ASN.1 value.')
     // below for test "get.updating.key@key-manager-choose-passphrase-forbid-storing.flowcrypt.test - automatic update of key found on key manager"
     .filter(
@@ -169,7 +169,7 @@ test.after.always('evaluate Catch.reportErr errors', async t => {
     t.fail(`Catch.reportErr errors: missing intentional error report on consumer flavor`);
     return;
   }
-  if (testVariant === 'ENTERPRISE-MOCK' && mockBackendData.reportedErrors.length) {
+  if (testVariant === 'ENTERPRISE-MOCK' && reportedErrors.length) {
     // on enterprise flavor app, we don't submit any errors anywhere yet
     t.fail(`Catch.reportErr errors: should not report any error on enterprise app`);
     return;

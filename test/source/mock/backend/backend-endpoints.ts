@@ -2,13 +2,22 @@
 
 import { expect } from 'chai';
 import { HandlersDefinition } from '../all-apis-mock';
-import { BackendData, ReportedError } from './backend-data';
+export interface ReportedError {
+  name: string;
+  message: string;
+  url: string;
+  line: number;
+  col: number;
+  trace: string;
+  version: string;
+  environmane: string;
+}
 
-export const mockBackendData = new BackendData();
+export const reportedErrors: ReportedError[] = [];
 
 export const mockBackendEndpoints: HandlersDefinition = {
   '/api/help/error': async ({ body }) => {
-    mockBackendData.reportedErrors.push(body as ReportedError);
+    reportedErrors.push(body as ReportedError);
     return { saved: true };
   },
   '/api/help/feedback': async ({ body }) => {
