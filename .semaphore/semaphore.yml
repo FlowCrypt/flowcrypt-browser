@@ -8,7 +8,7 @@ auto_cancel:
   running:
     when: branch != 'master'
 execution_time_limit:
-  hours: 2
+  hours: 1
 
 blocks:
   - name: Mock UI Tests
@@ -62,7 +62,7 @@ blocks:
     run:
       when: branch = 'master' OR branch =~ 'live-test'  OR branch =~ 'gmail-test'
     execution_time_limit:
-      minutes: 80
+      minutes: 50
     task:
       secrets:
         - name: flowcrypt-browser-ci-secrets
