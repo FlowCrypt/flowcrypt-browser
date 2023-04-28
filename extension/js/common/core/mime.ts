@@ -120,10 +120,15 @@ export class Mime {
           block: MsgBlock.fromAttachment('encryptedAttachment', '', {
             name: file.name,
             type: file.type,
+            length: file.getData().length,
+            data: file.getData(),
+            /*
+            todo: do we need this?
             length: file.hasData() ? file.getData().length : undefined,
             data: file.hasData() ? file.getData() : undefined,
-            id: file.id, // todo:
-            cid: file.cid, // todo:
+            id: file.id,
+            msgId: file.id,
+            cid: file.cid, */
           }),
           file,
         });

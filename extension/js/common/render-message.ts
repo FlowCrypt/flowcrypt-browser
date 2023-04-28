@@ -2,6 +2,8 @@
 
 'use strict';
 
+import { TransferableAttachment } from './core/attachment.js';
+
 export type RenderMessage = {
   setTestState?: 'ready' | 'working' | 'waiting';
   resizePgpBlockFrame?: boolean;
@@ -10,4 +12,8 @@ export type RenderMessage = {
   setFrameColor?: 'green' | 'gray' | 'red';
   renderEncryptionStatus?: string;
   renderSignatureStatus?: string;
+  renderInnerAttachments?: {
+    attachments: TransferableAttachment[];
+    isEncrypted: boolean;
+  };
 };

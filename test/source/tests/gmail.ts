@@ -253,16 +253,11 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
         await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
         const gmailPage = await openGmailPage(t, browser);
         await gotoGmailPage(gmailPage, '/FMfcgzGkbDZKPLBqWFzbgWqCrplTQdNz');
-        const pgpBlockUrls = await gmailPage.getFramesUrls(['/chrome/elements/pgp_block.htm'], {
-          sleep: 10,
-          appearIn: 25,
-        });
-        const url = pgpBlockUrls[0].split('/chrome/elements/pgp_block.htm')[1];
-        await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
-          params: url,
+        const pgpBlockFrame = await gmailPage.getFrame(['pgp_render_block.htm'], { sleep: 10, timeout: 25 });
+        await BrowserRecipe.pgpBlockCheck(t, pgpBlockFrame, {
           content: ['Encrypted Subject: [ci.test] Thunderbird html signed + encrypted', '1234'],
           encryption: 'encrypted',
-          signature: 'not signed',
+          signature: 'not signed', // should be 'signed'? #3944
         });
         await pageHasSecureReplyContainer(t, browser, gmailPage);
         const pubkeyPage = await gmailPage.getFrame(['/chrome/elements/pgp_pubkey.htm']);

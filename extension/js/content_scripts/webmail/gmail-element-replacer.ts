@@ -28,8 +28,10 @@ import { Buf } from '../../common/core/buf.js';
 import { MessageRenderer } from '../../common/message-renderer.js';
 import { RelayManager } from '../../common/relay-manager.js';
 import { Mime } from '../../common/core/mime.js';
-import { MsgUtil } from '../../common/core/crypto/pgp/msg-util.js';
+import { FormatError, MsgUtil } from '../../common/core/crypto/pgp/msg-util.js';
 import { RenderInterface } from '../../common/render-interface.js';
+import { MsgBlockType } from '../../common/core/msg-block.js';
+import { KeyStore } from '../../common/platform/store/key-store.js';
 
 type JQueryEl = JQuery<HTMLElement>;
 
@@ -587,11 +589,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
         attachmentsContainerInner.prepend(this.factory.embeddedAttachment(a, true)); // xss-safe-factory
         return 'replaced'; // native should be hidden, custom should appear instead
       } else if (treatAs === 'encryptedMsg') {
-        msgElReference.msgEl = /* xss-safe-factory */ this.updateMsgBodyEl_DANGEROUSLY(
-          msgElReference.msgEl,
-          'set',
-          this.factory.embeddedMsg('encryptedMsg', '', msgId, false, senderEmail)
-        );
+        this.startProcessingForMsgEl(msgElReference, 'encryptedMsg', renderModule => this.processEncryptedMessage(a, renderModule, senderEmail));
         return 'hidden'; // native attachment should be hidden, the "attachment" goes to the message container
       } else if (treatAs === 'publicKey') {
         // todo - pubkey should be fetched in pgp_pubkey.js
@@ -599,16 +597,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
       } else if (treatAs === 'privateKey') {
         return await this.renderBackupFromFile(a, attachmentsContainerInner, msgElReference.msgEl);
       } else if (treatAs === 'signature') {
-        // todo: generate frameId here, prevent frameId duplicates?
-        const { frameId, frameHtml: embeddedSignedMsgXssSafe } = this.factory.embeddedRenderMsg('signedMsg');
-        msgElReference.msgEl = this.updateMsgBodyEl_DANGEROUSLY(msgElReference.msgEl, 'set', embeddedSignedMsgXssSafe); // xss-safe-factory
-        const frameWindow = XssSafeFactory.getWindowOfEmbeddedMsg(frameId);
-        if (frameWindow) {
-          const renderModule = this.relayManager.createRelay(frameId, frameWindow);
-          this.processSignedMessage(msgId, renderModule, senderEmail).catch(Catch.reportErr); // todo: clear cached items
-        } else {
-          Catch.report('Unexpected: unable to reference a newly created message frame'); // todo:
-        }
+        this.startProcessingForMsgEl(msgElReference, 'signedMsg', renderModule => this.processSignedMessage(msgId, renderModule, senderEmail));
         return 'hidden'; // native attachment should be hidden, the "attachment" goes to the message container
       } else {
         // standard file
@@ -629,14 +618,62 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     }
   };
 
+  private startProcessingForMsgEl = (
+    msgElReference: { msgEl: JQueryEl },
+    type: MsgBlockType, // for diagnostics
+    cb: (renderModule: RenderInterface) => Promise<{ publicKeys?: string[] }>
+  ) => {
+    // todo: generate frameId here, prevent frameId duplicates?
+    const { frameId, frameHtml: embeddedSignedMsgXssSafe } = this.factory.embeddedRenderMsg(type);
+    msgElReference.msgEl = this.updateMsgBodyEl_DANGEROUSLY(msgElReference.msgEl, 'set', embeddedSignedMsgXssSafe); // xss-safe-factory
+    const frameWindow = XssSafeFactory.getWindowOfEmbeddedMsg(frameId);
+    if (frameWindow) {
+      const renderModule = this.relayManager.createRelay(frameId, frameWindow);
+      cb(renderModule)
+        .then(result => {
+          const appendAfter = $(`iframe#${frameId}`);
+          for (const armoredPubkey of result.publicKeys ?? []) {
+            appendAfter.after(this.factory.embeddedPubkey(armoredPubkey, false));
+          }
+        })
+        .catch(Catch.reportErr); // todo: clear cached items
+    } else {
+      Catch.report('Unexpected: unable to reference a newly created message frame'); // todo:
+    }
+  };
+
   private processSignedMessage = async (msgId: string, renderModule: RenderInterface, senderEmail: string) => {
     try {
       renderModule.renderText('Loading signed message...');
       const raw = await this.msgGetRaw(msgId);
-      await MessageRenderer.renderSignedMessage(raw, renderModule, senderEmail);
+      return await MessageRenderer.renderSignedMessage(raw, renderModule, senderEmail);
     } catch {
       // todo: render error via renderModule
     }
+    return {};
+  };
+
+  private processEncryptedMessage = async (attachment: Attachment, renderModule: RenderInterface, senderEmail: string) => {
+    try {
+      if (!attachment.hasData()) {
+        // todo: common cache, load control?
+        renderModule.renderText('Retrieving message...');
+        await this.gmail.fetchAttachments([attachment]); // todo: render progressCb
+      }
+      // todo: probaby subject isn't relevant in attachment-based decryption?
+      // const subject = gmailMsg.payload ? GmailParser.findHeader(gmailMsg.payload, 'subject') : undefined;
+      const armoredMsg = PgpArmor.clip(attachment.getData().toUtfStr());
+      if (!armoredMsg) {
+        // todo:
+        throw new FormatError('Problem extracting armored message', attachment.getData().toUtfStr());
+      }
+      renderModule.renderText('Decrypting...');
+      const kisWithPp = await KeyStore.getAllWithOptionalPassPhrase(this.acctEmail); // todo: cache?
+      return await MessageRenderer.renderEncryptedMessage(armoredMsg, kisWithPp, renderModule, senderEmail);
+    } catch {
+      // todo: render error via renderModule
+    }
+    return {};
   };
 
   private processGoogleDriveAttachments = async (msgId: string, msgEl: JQueryEl, attachmentsContainerInner: JQueryEl) => {

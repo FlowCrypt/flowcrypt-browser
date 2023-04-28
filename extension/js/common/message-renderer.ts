@@ -3,10 +3,10 @@
 'use strict';
 
 import { GmailParser, GmailRes } from './api/email-provider/gmail/gmail-parser.js';
-import { Attachment } from './core/attachment.js';
+import { Attachment, TransferableAttachment } from './core/attachment.js';
 import { Buf } from './core/buf.js';
 import { CID_PATTERN, Dict, Str, Value } from './core/common.js';
-import { KeyUtil } from './core/crypto/key.js';
+import { KeyInfoWithIdentityAndOptionalPp, KeyUtil } from './core/crypto/key.js';
 import { MsgUtil, VerifyRes } from './core/crypto/pgp/msg-util.js';
 import { Mime, MimeContent, MimeProccesedMsg } from './core/mime.js';
 import { MsgBlockParser } from './core/msg-block-parser.js';
@@ -38,14 +38,11 @@ export class MessageRenderer {
         const sigText = parsedSignature.replace('\n=3D', '\n=');
         const encryptedData = parsed.rawSignedContent;
         try {
-          const parsedPubs = (await ContactStore.getOneWithAllPubkeys(undefined, signerEmail))?.sortedPubkeys ?? [];
-          // todo: we don't actually need parsed pubs here because we're going to pass them to the backgorund page
-          // maybe we can have a method in ContactStore to extract armored keys
-          const verificationPubs = parsedPubs.map(key => KeyUtil.armor(key.pubkey));
+          const verificationPubs = await MessageRenderer.getVerificationPubs(signerEmail);
           const verify = async (verificationPubs: string[]) => await MsgUtil.verifyDetached({ plaintext: encryptedData, sigText, verificationPubs });
           const signatureResult = await verify(verificationPubs);
           // todo: retry verification with looked up keys?
-          await MessageRenderer.decideDecryptedContentFormattingAndRender(encryptedData, false, signatureResult, renderModule);
+          return await MessageRenderer.decideDecryptedContentFormattingAndRender(encryptedData, false, signatureResult, renderModule);
         } catch (e) {
           console.log(e);
         }
@@ -56,6 +53,28 @@ export class MessageRenderer {
       parsed.rawSignedContent || parsed.text || parsed.html || mimeMsg.toUtfStr(),
       'parse error'
     ); */
+    return {};
+  };
+
+  public static renderEncryptedMessage = async (
+    encryptedData: string | Uint8Array,
+    kisWithPp: KeyInfoWithIdentityAndOptionalPp[],
+    renderModule: RenderInterface,
+    signerEmail: string
+  ) => {
+    const verificationPubs = await MessageRenderer.getVerificationPubs(signerEmail);
+    const decryptResult = await MsgUtil.decryptMessage({ kisWithPp, encryptedData, verificationPubs });
+    if (decryptResult.success) {
+      return await MessageRenderer.decideDecryptedContentFormattingAndRender(
+        decryptResult.content,
+        !!decryptResult.isEncrypted,
+        decryptResult.signature,
+        renderModule
+      );
+    } else {
+      // todo:
+    }
+    return {};
   };
 
   public static renderMsg = (
@@ -92,7 +111,7 @@ export class MessageRenderer {
 
   public static reconstructMimeContent = (gmailMsg: GmailRes.GmailMsg): MimeContent => {
     const bodies = GmailParser.findBodies(gmailMsg);
-    const attachments = GmailParser.findAttachments(gmailMsg);
+    const attachments = GmailParser.findAttachments(gmailMsg, gmailMsg.id);
     const text = bodies['text/plain'] ? Buf.fromBase64UrlStr(bodies['text/plain']).toUtfStr() : undefined;
     // todo: do we need to strip?
     const html = bodies['text/html'] ? Xss.htmlSanitizeAndStripAllTags(Buf.fromBase64UrlStr(bodies['text/html']).toUtfStr(), '\n') : undefined;
@@ -164,7 +183,7 @@ export class MessageRenderer {
     sigResult: VerifyRes | undefined,
     renderModule: RenderInterface,
     plainSubject?: string
-  ) => {
+  ): Promise<{ publicKeys?: string[] }> => {
     if (isEncrypted) {
       renderModule.renderEncryptionStatus('encrypted');
       renderModule.setFrameColor('green');
@@ -173,7 +192,7 @@ export class MessageRenderer {
       renderModule.setFrameColor('gray');
     }
     const publicKeys: string[] = [];
-    let renderableAttachments: Attachment[] = [];
+    let renderableAttachments: TransferableAttachment[] = [];
     let decryptedContent: string | undefined;
     let isHtml = false;
     // todo - replace with MsgBlockParser.fmtDecryptedAsSanitizedHtmlBlocks, then the extract/strip methods could be private?
@@ -185,7 +204,7 @@ export class MessageRenderer {
       decryptedContent = MsgBlockParser.stripPublicKeys(decryptedContent, publicKeys);
       if (fcAttachmentBlocks.length) {
         renderableAttachments = fcAttachmentBlocks.map(
-          attachmentBlock => new Attachment(attachmentBlock.attachmentMeta!) // eslint-disable-line @typescript-eslint/no-non-null-assertion
+          attachmentBlock => Attachment.toTransferableAttachment(attachmentBlock.attachmentMeta!) // eslint-disable-line @typescript-eslint/no-non-null-assertion
         );
       }
     } else {
@@ -212,20 +231,26 @@ export class MessageRenderer {
         if (attachment.isPublicKey()) {
           publicKeys.push(attachment.getData().toUtfStr());
         } else if (!inlineCIDAttachments.some(inlineAttachment => inlineAttachment.cid === attachment.cid)) {
-          renderableAttachments.push(attachment);
+          renderableAttachments.push(
+            Attachment.toTransferableAttachment({
+              name: attachment.name,
+              type: attachment.type,
+              length: attachment.getData().length,
+              data: attachment.getData(),
+              cid: attachment.cid, // todo: do we need it?
+            })
+          );
         }
       }
     }
     renderModule.separateQuotedContentAndRenderText(decryptedContent, isHtml); // todo: quoteModule ?
     MessageRenderer.renderPgpSignatureCheckResult(renderModule, sigResult);
-    if (isEncrypted && publicKeys.length) {
-      // todo: BrowserMsg.send.renderPublicKeys(this.view.parentTabId, { afterFrameId: this.view.frameId, publicKeys });
-    }
     if (renderableAttachments.length) {
-      // todo: this.view.attachmentsModule.renderInnerAttachments(renderableAttachments, isEncrypted);
+      renderModule.renderInnerAttachments(renderableAttachments, isEncrypted);
     }
     renderModule.resizePgpBlockFrame();
     renderModule.setTestState('ready');
+    return isEncrypted ? { publicKeys } : {};
   };
 
   public static renderPgpSignatureCheckResult = (renderModule: RenderInterface, verifyRes: VerifyRes | undefined) => {
@@ -265,5 +290,12 @@ export class MessageRenderer {
   public static renderBadSignature = (renderModule: RenderInterfaceBase) => {
     renderModule.renderSignatureStatus('bad signature');
     renderModule.setFrameColor('red'); // todo: in what other cases should we set the frame red?
+  };
+
+  private static getVerificationPubs = async (signerEmail: string) => {
+    const parsedPubs = (await ContactStore.getOneWithAllPubkeys(undefined, signerEmail))?.sortedPubkeys ?? [];
+    // todo: we don't actually need parsed pubs here because we're going to pass them to the background page
+    // maybe we can have a method in ContactStore to extract armored keys
+    return parsedPubs.map(key => KeyUtil.armor(key.pubkey));
   };
 }

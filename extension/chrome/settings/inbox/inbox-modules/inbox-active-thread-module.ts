@@ -166,7 +166,7 @@ export class InboxActiveThreadModule extends ViewModule<InboxView> {
   private exportMsgForDebug = async (msgId: string) => {
     const full = await this.view.gmail.msgGet(msgId, 'full');
     const raw = await this.view.gmail.msgGet(msgId, 'raw');
-    const existingAttachments = GmailParser.findAttachments(full);
+    const existingAttachments = GmailParser.findAttachments(full, full.id);
     await this.view.gmail.fetchAttachments(existingAttachments);
     this.redactExportMsgHeaders(full);
     this.redactExportMsgHeaders(raw);

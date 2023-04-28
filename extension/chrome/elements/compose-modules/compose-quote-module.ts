@@ -123,29 +123,31 @@ export class ComposeQuoteModule extends ViewModule<ComposeView> {
           decryptedAndFormatedContent.push(Xss.htmlUnescape(htmlParsed));
         } else if (block.type === 'plainHtml') {
           decryptedAndFormatedContent.push(Xss.htmlUnescape(Xss.htmlSanitizeAndStripAllTags(stringContent, '\n', false)));
-        } else if (['encryptedAttachment', 'decryptedAttachment', 'plainAttachment'].includes(block.type)) {
-          if (block.attachmentMeta?.data) {
-            let attachmentMeta: { content: Buf; filename?: string } | undefined;
-            if (block.type === 'encryptedAttachment') {
-              this.setQuoteLoaderProgress('decrypting...');
-              const result = await MsgUtil.decryptMessage({
-                kisWithPp: await KeyStore.getAllWithOptionalPassPhrase(this.view.acctEmail),
-                encryptedData: block.attachmentMeta.data,
-                verificationPubs: [], // todo: #4158 signature verification of attachments
-              });
-              if (result.success) {
-                attachmentMeta = { content: result.content, filename: result.filename };
-              }
-            } else {
-              attachmentMeta = {
-                content: Buf.fromUint8(block.attachmentMeta.data),
-                filename: block.attachmentMeta.name,
-              };
+        } else if (
+          block.attachmentMeta &&
+          'data' in block.attachmentMeta &&
+          ['encryptedAttachment', 'decryptedAttachment', 'plainAttachment'].includes(block.type)
+        ) {
+          let attachmentMeta: { content: Buf; filename?: string } | undefined;
+          if (block.type === 'encryptedAttachment') {
+            this.setQuoteLoaderProgress('decrypting...');
+            const result = await MsgUtil.decryptMessage({
+              kisWithPp: await KeyStore.getAllWithOptionalPassPhrase(this.view.acctEmail),
+              encryptedData: block.attachmentMeta.data,
+              verificationPubs: [], // todo: #4158 signature verification of attachments
+            });
+            if (result.success) {
+              attachmentMeta = { content: result.content, filename: result.filename };
             }
-            if (attachmentMeta) {
-              const file = new File([attachmentMeta.content], attachmentMeta.filename || '');
-              decryptedFiles.push(file);
-            }
+          } else {
+            attachmentMeta = {
+              content: Buf.fromUint8(block.attachmentMeta.data),
+              filename: block.attachmentMeta.name,
+            };
+          }
+          if (attachmentMeta) {
+            const file = new File([attachmentMeta.content], attachmentMeta.filename || '');
+            decryptedFiles.push(file);
           }
         } else {
           decryptedAndFormatedContent.push(stringContent);

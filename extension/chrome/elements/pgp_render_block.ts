@@ -8,14 +8,19 @@ import { Ui } from '../../js/common/browser/ui.js';
 import { View } from '../../js/common/view.js';
 import { PgpBaseBlockView } from './pgp_base_block_view.js';
 import { RenderMessage } from '../../js/common/render-message.js';
+import { Attachment } from '../../js/common/core/attachment.js';
 
 export class PgpRenderBlockView extends PgpBaseBlockView {
   public readonly debug: boolean;
 
   public constructor() {
     Ui.event.protect();
-    const uncheckedUrlParams = Url.parse(['frameId', 'parentTabId', 'debug']);
-    super(Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId'), Assert.urlParamRequire.string(uncheckedUrlParams, 'frameId'));
+    const uncheckedUrlParams = Url.parse(['frameId', 'parentTabId', 'debug', 'acctEmail']);
+    super(
+      Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId'),
+      Assert.urlParamRequire.string(uncheckedUrlParams, 'frameId'),
+      Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail')
+    );
     this.debug = uncheckedUrlParams.debug === true;
     window.addEventListener('message', this.handleMessage, true); // todo: capture?
     window.addEventListener('load', () => window.parent.postMessage({ readyToReceive: this.frameId }, '*'));
@@ -60,6 +65,10 @@ export class PgpRenderBlockView extends PgpBaseBlockView {
     }
     if (data?.setTestState) {
       Ui.setTestState(data.setTestState);
+    }
+    if (data?.renderInnerAttachments) {
+      const attachments = data.renderInnerAttachments.attachments.map(Attachment.fromTransferableAttachment);
+      this.attachmentsModule.renderInnerAttachments(attachments, data.renderInnerAttachments.isEncrypted);
     }
   };
 }

@@ -325,7 +325,7 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
     const subject = gmailMsg.payload ? GmailParser.findHeader(gmailMsg.payload, 'subject') : undefined;
     if (format === 'full') {
       const bodies = GmailParser.findBodies(gmailMsg);
-      const attachments = GmailParser.findAttachments(gmailMsg);
+      const attachments = GmailParser.findAttachments(gmailMsg, gmailMsg.id);
       const textBody = Buf.fromBase64UrlStr(bodies['text/plain'] || '').toUtfStr();
       const fromTextBody = PgpArmor.clip(textBody);
       if (fromTextBody) {
@@ -392,7 +392,7 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
     const msgs = await this.msgsGet(msgIds, 'full');
     const attachments: Attachment[] = [];
     for (const msg of msgs) {
-      attachments.push(...GmailParser.findAttachments(msg));
+      attachments.push(...GmailParser.findAttachments(msg, msg.id));
     }
     await this.fetchAttachments(attachments);
     const { keys: foundBackupKeys } = await KeyUtil.readMany(Buf.fromUtfStr(attachments.map(a => a.getData().toUtfStr()).join('\n')));

@@ -87,7 +87,7 @@ Catch.try(async () => {
     const fetchableAttachments: Attachment[] = [];
     const skippedAttachments: Attachment[] = [];
     for (const msg of messages) {
-      for (const attachment of GmailParser.findAttachments(msg)) {
+      for (const attachment of GmailParser.findAttachments(msg, msg.id)) {
         if (attachment.length > 1024 * 1024 * 7) {
           // over 7 mb - attachment too big
           skippedAttachments.push(

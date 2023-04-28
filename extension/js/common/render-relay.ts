@@ -5,9 +5,15 @@
 import { RelayManagerInterface } from './relay-manager-interface.js';
 import { RenderInterface } from './render-interface.js';
 import { RenderMessage } from './render-message.js';
+import { TransferableAttachment } from './core/attachment.js';
 
 export class RenderRelay implements RenderInterface {
   public constructor(private relayManager: RelayManagerInterface, private frameId: string) {}
+
+  public renderInnerAttachments = async (attachments: TransferableAttachment[], isEncrypted: boolean) => {
+    this.relay({ renderInnerAttachments: { attachments, isEncrypted } });
+  };
+
   public setTestState = (state: 'ready' | 'working' | 'waiting') => {
     this.relay({ setTestState: state });
   };

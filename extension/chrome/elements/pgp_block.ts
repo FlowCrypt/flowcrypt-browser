@@ -7,7 +7,6 @@ import { Assert } from '../../js/common/assert.js';
 import { Buf } from '../../js/common/core/buf.js';
 import { Gmail } from '../../js/common/api/email-provider/gmail/gmail.js';
 import { Lang } from '../../js/common/lang.js';
-import { PgpBlockViewAttachmentsModule } from './pgp_block_modules/pgp-block-attachmens-module.js';
 import { PgpBlockViewDecryptModule } from './pgp_block_modules/pgp-block-decrypt-module.js';
 import { PgpBlockViewErrorModule } from './pgp_block_modules/pgp-block-error-module.js';
 import { PgpBlockViewSignatureModule } from './pgp_block_modules/pgp-block-signature-module.js';
@@ -22,7 +21,6 @@ import { PgpBaseBlockView } from './pgp_base_block_view.js';
 import { PgpBlockViewPrintModule } from './pgp_block_modules/pgp-block-print-module.js';
 
 export class PgpBlockView extends PgpBaseBlockView {
-  public readonly acctEmail: string;
   public readonly isOutgoing: boolean;
   public readonly senderEmail: string;
   public readonly msgId: string | undefined;
@@ -37,7 +35,6 @@ export class PgpBlockView extends PgpBaseBlockView {
   public pubLookup!: PubLookup;
 
   public readonly debug: boolean;
-  public readonly attachmentsModule: PgpBlockViewAttachmentsModule;
   public readonly signatureModule: PgpBlockViewSignatureModule;
   public readonly errorModule: PgpBlockViewErrorModule;
   public readonly printModule: PgpBlockViewPrintModule;
@@ -48,8 +45,11 @@ export class PgpBlockView extends PgpBaseBlockView {
   public constructor() {
     Ui.event.protect();
     const uncheckedUrlParams = Url.parse(['acctEmail', 'frameId', 'message', 'parentTabId', 'msgId', 'isOutgoing', 'senderEmail', 'signature', 'debug']);
-    super(Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId'), Assert.urlParamRequire.string(uncheckedUrlParams, 'frameId'));
-    this.acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
+    super(
+      Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId'),
+      Assert.urlParamRequire.string(uncheckedUrlParams, 'frameId'),
+      Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail')
+    );
     this.isOutgoing = uncheckedUrlParams.isOutgoing === true;
     this.debug = uncheckedUrlParams.debug === true;
     const senderEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'senderEmail');
@@ -66,7 +66,6 @@ export class PgpBlockView extends PgpBaseBlockView {
     }
     this.gmail = new Gmail(this.acctEmail);
     // modules
-    this.attachmentsModule = new PgpBlockViewAttachmentsModule(this);
     this.signatureModule = new PgpBlockViewSignatureModule(this);
     this.errorModule = new PgpBlockViewErrorModule(this);
     this.printModule = new PgpBlockViewPrintModule(this);

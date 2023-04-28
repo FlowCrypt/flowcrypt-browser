@@ -199,16 +199,6 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
     BrowserMsg.addListener('reinsert_reply_box', async ({ replyMsgId }: Bm.ReinsertReplyBox) => {
       webmailSpecific.getReplacer().reinsertReplyBox(replyMsgId);
     });
-    BrowserMsg.addListener('render_public_keys', async ({ traverseUp, afterFrameId, publicKeys }: Bm.RenderPublicKeys) => {
-      const traverseUpLevels = (traverseUp as number) || 0;
-      let appendAfter = $(`iframe#${afterFrameId}`);
-      for (let i = 0; i < traverseUpLevels; i++) {
-        appendAfter = appendAfter.parent();
-      }
-      for (const armoredPubkey of publicKeys) {
-        appendAfter.after(factory.embeddedPubkey(armoredPubkey, false));
-      }
-    });
     BrowserMsg.addListener('close_dialog', async () => {
       Swal.close();
     });
