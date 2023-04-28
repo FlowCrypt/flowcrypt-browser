@@ -5,7 +5,6 @@
 import { Api, Handlers } from './lib/api';
 import * as http from 'http';
 import { mockBackendEndpoints } from './backend/backend-endpoints';
-import { mockSksEndpoints } from './sks/sks-endpoints';
 import { mockCustomerUrlFesEndpoints } from './fes/customer-url-fes-endpoints';
 
 export type HandlersRequestDefinition = { query: { [k: string]: string }; body?: unknown };
@@ -23,7 +22,6 @@ export const startAllApisMock = async (logger: (line: string) => void) => {
   }
   const api = new LoggedApi<HandlersRequestDefinition, unknown>('google-mock', {
     ...mockBackendEndpoints,
-    ...mockSksEndpoints,
     ...mockCustomerUrlFesEndpoints,
     '/favicon.ico': async () => '',
   });

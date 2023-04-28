@@ -27,6 +27,7 @@ import {
   getKeyManagerAutogenRules,
   getKeyManagerChoosePassphraseForbidStoringRules,
 } from '../mock/fes/fes-constants';
+import { testSksKey } from '../mock/sks/sks-constants';
 
 const getAuthorizationHeader = async (t: AvaContext, browser: BrowserHandle, acctEmail: string) => {
   const settingsPage = await browser.newExtensionSettingsPage(t, acctEmail);
@@ -1684,6 +1685,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       'user@custom-sks.flowcrypt.test - Respect custom key server url',
       testWithBrowser(async (t, browser) => {
         const port = t.urls!.port!;
+        const recipient = 'test@custom-sks.flowcrypt.test';
         t.mockApi!.configProvider = new ConfigurationProvider({
           attester: {
             pubkeyLookup: {},
@@ -1698,13 +1700,18 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
               custom_keyserver_url: `https://localhost:${port}`,
             },
           },
+          sks: {
+            [recipient]: {
+              pubkey: testSksKey,
+            },
+          },
         });
         const acct = 'user@custom-sks.flowcrypt.test';
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
         await SetupPageRecipe.autoSetupWithEKM(settingsPage);
         const composePage = await ComposePageRecipe.openStandalone(t, browser, acct);
-        await ComposePageRecipe.fillMsg(composePage, { to: 'test@custom-sks.flowcrypt.test' }, 'Respect custom key server url');
-        await composePage.waitForContent('.email_address.has_pgp', 'test@custom-sks.flowcrypt.test');
+        await ComposePageRecipe.fillMsg(composePage, { to: recipient }, 'Respect custom key server url');
+        await composePage.waitForContent('.email_address.has_pgp', recipient);
         await composePage.close();
         await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
         const contactsFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-contacts-page', ['contacts.htm', 'placement=settings']);
