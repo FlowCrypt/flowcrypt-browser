@@ -133,7 +133,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
         await gmailPage.waitAndClick('[aria-label^="Inbox"]');
         await gmailPage.waitAndClick('[role="row"]'); // click the first message
         await gmailPage.waitForContent('.nH h2.hP', `Automated puppeteer test: ${subject}`);
-        const urls = await gmailPage.getFramesUrls(['/chrome/elements/pgp_block.htm'], { sleep: 1 });
+        const urls = await gmailPage.getFramesUrls(['/chrome/elements/pgp_render_block.htm'], { sleep: 1 });
         await GmailPageRecipe.deleteThread(gmailPage);
         expect(urls.length).to.eq(1);
       })
@@ -182,11 +182,10 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
         await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
         const gmailPage = await openGmailPage(t, browser);
         await gotoGmailPage(gmailPage, '/QgrcJHrtqfgLGKqwChjKsHKzZQpwRHMBqpG');
-        const urls = await gmailPage.getFramesUrls(['/chrome/elements/pgp_block.htm'], { sleep: 10, appearIn: 25 });
+        const urls = await gmailPage.getFramesUrls(['/chrome/elements/pgp_render_block.htm'], { sleep: 10, appearIn: 25 });
         expect(urls.length).to.equal(1);
-        const params = urls[0].split('/chrome/elements/pgp_block.htm')[1];
-        await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
-          params,
+        const pgpBlockFrame = await gmailPage.getFrame(['pgp_render_block.htm']);
+        await BrowserRecipe.pgpBlockCheck(t, pgpBlockFrame, {
           content: ['test that content from msg.asc renders'],
           encryption: 'encrypted',
           signature: 'not signed',
