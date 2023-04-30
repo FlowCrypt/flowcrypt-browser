@@ -46,7 +46,7 @@ export namespace PgpMsgMethod {
   }
   export type DiagnosePubkeys = (arg: Arg.DiagnosePubkeys) => Promise<DiagnoseMsgPubkeysResult>;
   export type VerifyDetached = (arg: Arg.VerifyDetached) => Promise<VerifyRes>;
-  export type Decrypt = (arg: Arg.Decrypt) => Promise<DecryptSuccess | DecryptError>;
+  export type Decrypt = (arg: Arg.Decrypt) => Promise<DecryptResult>;
   export type Type = (arg: Arg.Type) => PgpMsgTypeResult;
   export type Encrypt = (arg: Arg.Encrypt) => Promise<EncryptResult>;
   export type EncryptResult = EncryptPgpResult | EncryptX509Result;

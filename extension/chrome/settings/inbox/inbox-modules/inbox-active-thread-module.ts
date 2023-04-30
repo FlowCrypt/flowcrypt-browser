@@ -5,7 +5,7 @@
 import { Bm, BrowserMsg } from '../../../../js/common/browser/browser-msg.js';
 import { FactoryReplyParams, XssSafeFactory } from '../../../../js/common/xss-safe-factory.js';
 import { GmailParser, GmailRes } from '../../../../js/common/api/email-provider/gmail/gmail-parser.js';
-import { Url, UrlParams } from '../../../../js/common/core/common.js';
+import { Str, Url, UrlParams } from '../../../../js/common/core/common.js';
 
 import { ApiErr } from '../../../../js/common/api/shared/api-error.js';
 import { BrowserMsgCommonHandlers } from '../../../../js/common/browser/browser-msg-common-handlers.js';
@@ -19,7 +19,7 @@ import { ViewModule } from '../../../../js/common/view-module.js';
 import { Xss } from '../../../../js/common/platform/xss.js';
 import { Browser } from '../../../../js/common/browser/browser.js';
 import { Attachment } from '../../../../js/common/core/attachment.js';
-import { MsgBlock } from '../../../../js/common/core/msg-block';
+import { MsgBlock } from '../../../../js/common/core/msg-block.js';
 
 export class InboxActiveThreadModule extends ViewModule<InboxView> {
   private threadId: string | undefined;
@@ -123,7 +123,7 @@ export class InboxActiveThreadModule extends ViewModule<InboxView> {
           messageBlocks.push(block.block);
         }
       }
-      const { renderedXssSafe, isOutgoing } = MessageRenderer.renderMsg(
+      const { renderedXssSafe, isOutgoing, blocksInFrames } = MessageRenderer.renderMsg(
         { from, blocks: messageBlocks },
         this.view.factory,
         this.view.showOriginal,
@@ -142,6 +142,14 @@ export class InboxActiveThreadModule extends ViewModule<InboxView> {
               .join('')}</div>`
           : '');
       $('.thread').append(this.wrapMsg(htmlId, r)); // xss-safe-factory
+      // todo: isOutgoing ?
+      MessageRenderer.processInlineBlocks(
+        this.view.relayManager,
+        this.view.factory,
+        this.view.acctEmail,
+        blocksInFrames,
+        from ? Str.parseEmail(from).email : undefined
+      ).catch(Catch.reportErr);
       if (exportBtn) {
         $('.action-export').on(
           'click',

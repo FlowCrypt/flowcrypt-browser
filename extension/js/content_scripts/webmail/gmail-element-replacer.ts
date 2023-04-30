@@ -30,12 +30,12 @@ import { RelayManager } from '../../common/relay-manager.js';
 import { Mime } from '../../common/core/mime.js';
 import { FormatError, MsgUtil } from '../../common/core/crypto/pgp/msg-util.js';
 import { RenderInterface } from '../../common/render-interface.js';
-import { MsgBlockType } from '../../common/core/msg-block.js';
+import { MsgBlock, MsgBlockType } from '../../common/core/msg-block.js';
 import { KeyStore } from '../../common/platform/store/key-store.js';
 
 type JQueryEl = JQuery<HTMLElement>;
 
-type ProcessedMessage = { renderedXssSafe?: string; attachments: Attachment[] };
+type ProcessedMessage = { renderedXssSafe?: string; blocksInFrames: Dict<MsgBlock>; attachments: Attachment[]; from: string | undefined };
 
 interface MessageCacheEntry {
   download: { full: Promise<GmailRes.GmailMsg>; raw?: Promise<GmailRes.GmailMsg> };
@@ -220,13 +220,14 @@ export class GmailElementReplacer implements WebmailElementReplacer {
       }
     }
     let renderedXssSafe: string | undefined;
+    let blocksInFrames: Dict<MsgBlock> = {};
     if (blocks.length === 0 || (blocks.length === 1 && ['plainText', 'plainHtml'].includes(blocks[0].type))) {
       // only has single block which is plain text
     } else {
       const from = GmailParser.findHeader(fullOrRawMsg, 'from');
-      ({ renderedXssSafe } = MessageRenderer.renderMsg({ blocks, from }, this.factory, false, msgId, this.sendAs));
+      ({ renderedXssSafe, blocksInFrames } = MessageRenderer.renderMsg({ blocks, from }, this.factory, false, msgId, this.sendAs));
     }
-    msgDownload.processedFull = { renderedXssSafe, attachments: mimeContent.attachments };
+    msgDownload.processedFull = { renderedXssSafe, blocksInFrames, from: GmailParser.findHeader(fullOrRawMsg, 'from'), attachments: mimeContent.attachments };
     return msgDownload.processedFull;
   };
 
@@ -252,7 +253,10 @@ export class GmailElementReplacer implements WebmailElementReplacer {
         console.debug('replaceArmoredBlocks() for of emailsContainingPgpBlock -> emailContainer added evaluated');
       }
       const msgId = this.determineMsgId(emailContainer);
-      const { renderedXssSafe } = await this.msgGetProcessed(msgId);
+      const { renderedXssSafe, blocksInFrames, from } = await this.msgGetProcessed(msgId);
+      const senderEmail = this.getSenderEmail(this.getMsgBodyEl(msgId)) || from;
+      // todo: const isOutgoing = !!this.sendAs[senderEmail];
+      MessageRenderer.processInlineBlocks(this.relayManager, this.factory, this.acctEmail, blocksInFrames, senderEmail).catch(Catch.reportErr);
       if (renderedXssSafe) {
         $(this.sel.translatePrompt).hide();
         if (this.debug) {
@@ -623,30 +627,16 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     type: MsgBlockType, // for diagnostics
     cb: (renderModule: RenderInterface) => Promise<{ publicKeys?: string[] }>
   ) => {
-    // todo: generate frameId here, prevent frameId duplicates?
-    const { frameId, frameHtml: embeddedSignedMsgXssSafe } = this.factory.embeddedRenderMsg(type);
-    msgElReference.msgEl = this.updateMsgBodyEl_DANGEROUSLY(msgElReference.msgEl, 'set', embeddedSignedMsgXssSafe); // xss-safe-factory
-    const frameWindow = XssSafeFactory.getWindowOfEmbeddedMsg(frameId);
-    if (frameWindow) {
-      const renderModule = this.relayManager.createRelay(frameId, frameWindow);
-      cb(renderModule)
-        .then(result => {
-          const appendAfter = $(`iframe#${frameId}`);
-          for (const armoredPubkey of result.publicKeys ?? []) {
-            appendAfter.after(this.factory.embeddedPubkey(armoredPubkey, false));
-          }
-        })
-        .catch(Catch.reportErr); // todo: clear cached items
-    } else {
-      Catch.report('Unexpected: unable to reference a newly created message frame'); // todo:
-    }
+    const { frameId, frameXssSafe } = this.factory.embeddedRenderMsg(type);
+    msgElReference.msgEl = this.updateMsgBodyEl_DANGEROUSLY(msgElReference.msgEl, 'set', frameXssSafe); // xss-safe-factory
+    MessageRenderer.relayAndProcess(this.relayManager, this.factory, frameId, cb).catch(Catch.reportErr);
   };
 
   private processSignedMessage = async (msgId: string, renderModule: RenderInterface, senderEmail: string) => {
     try {
       renderModule.renderText('Loading signed message...');
       const raw = await this.msgGetRaw(msgId);
-      return await MessageRenderer.renderSignedMessage(raw, renderModule, senderEmail);
+      return await MessageRenderer.renderSignedMessage(this.acctEmail, raw, renderModule, senderEmail);
     } catch {
       // todo: render error via renderModule
     }
@@ -669,7 +659,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
       }
       renderModule.renderText('Decrypting...');
       const kisWithPp = await KeyStore.getAllWithOptionalPassPhrase(this.acctEmail); // todo: cache?
-      return await MessageRenderer.renderEncryptedMessage(armoredMsg, kisWithPp, renderModule, senderEmail);
+      return await MessageRenderer.renderEncryptedMessage(this.acctEmail, armoredMsg, kisWithPp, renderModule, senderEmail);
     } catch {
       // todo: render error via renderModule
     }

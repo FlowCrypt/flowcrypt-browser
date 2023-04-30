@@ -16,4 +16,5 @@ export interface RenderInterface extends RenderInterfaceBase {
   renderInnerAttachments(attachments: TransferableAttachment[], isEncrypted: boolean): void;
   setTestState(state: 'ready' | 'working' | 'waiting'): void;
   separateQuotedContentAndRenderText(decryptedContent: string, isHtml: boolean): void;
+  renderVerificationInProgress(): void;
 }

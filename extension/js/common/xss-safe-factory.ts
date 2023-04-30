@@ -64,16 +64,6 @@ export class XssSafeFactory {
       return Xss.escape(Str.with(block.content)).replace(/\n/g, '<br>') + '<br><br>';
     } else if (block.type === 'plainHtml') {
       return Xss.htmlSanitizeAndStripAllTags(Str.with(block.content), '<br>') + '<br><br>';
-    } else if (block.type === 'encryptedMsg') {
-      return factory.embeddedMsg(
-        'encryptedMsg',
-        block.complete ? PgpArmor.normalize(Str.with(block.content), 'encryptedMsg') : '',
-        msgId,
-        isOutgoing,
-        senderEmail
-      );
-    } else if (block.type === 'signedMsg') {
-      return factory.embeddedMsg('signedMsg', Str.with(block.content), msgId, isOutgoing, senderEmail);
     } else if (block.type === 'publicKey') {
       return factory.embeddedPubkey(PgpArmor.normalize(Str.with(block.content), 'publicKey'), isOutgoing);
     } else if (block.type === 'privateKey') {
@@ -101,9 +91,6 @@ export class XssSafeFactory {
    *
    * When edited, REQUEST A SECOND SET OF EYES TO REVIEW CHANGES
    */
-  public static renderableMsgBlocks = (factory: XssSafeFactory, blocks: MsgBlock[], msgId: string, senderEmail: string, isOutgoing?: boolean) => {
-    return blocks.map(block => XssSafeFactory.renderableMsgBlock(factory, block, msgId, senderEmail, isOutgoing)).join('\n\n');
-  };
 
   public static getWindowOfEmbeddedMsg = (frameId: string): Window | undefined => {
     // const iframe = document.getElementById(frameId) as HTMLIFrameElement;
@@ -252,7 +239,7 @@ export class XssSafeFactory {
     type: MsgBlockType // for diagnostic purposes
   ) => {
     const { frameId, frameSrc } = this.srcPgpRenderBlockIframe();
-    return { frameId, frameHtml: this.iframe(frameSrc, ['pgp_block', type]) + this.hideGmailNewMsgInThreadNotification };
+    return { frameId, frameXssSafe: this.iframe(frameSrc, ['pgp_block', type]) + this.hideGmailNewMsgInThreadNotification };
   };
 
   public embeddedPubkey = (armoredPubkey: string, isOutgoing?: boolean) => {

@@ -45,6 +45,9 @@ export class PgpRenderBlockView extends PgpBaseBlockView {
     if (data?.renderEncryptionStatus) {
       this.renderModule.renderEncryptionStatus(data.renderEncryptionStatus);
     }
+    if (data?.renderVerificationInProgress) {
+      $('#pgp_signature').addClass('gray_label').text('verifying signature...');
+    }
     if (data?.renderSignatureStatus) {
       this.renderModule.renderSignatureStatus(data.renderSignatureStatus); // todo: "offline"->click->reload?
     }

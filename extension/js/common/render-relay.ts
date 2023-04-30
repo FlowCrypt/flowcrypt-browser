@@ -41,6 +41,10 @@ export class RenderRelay implements RenderInterface {
     this.relay({ renderSignatureStatus: status });
   };
 
+  public renderVerificationInProgress = () => {
+    this.relay({ renderVerificationInProgress: true });
+  };
+
   private relay = (message: RenderMessage) => {
     this.relayManager.relay(this.frameId, message);
   };

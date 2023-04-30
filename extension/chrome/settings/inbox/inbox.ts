@@ -22,6 +22,7 @@ import { WebmailCommon } from '../../../js/common/webmail.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { XssSafeFactory } from '../../../js/common/xss-safe-factory.js';
 import { AcctStore, AcctStoreDict } from '../../../js/common/platform/store/acct-store.js';
+import { RelayManager } from '../../../js/common/relay-manager.js';
 
 export class InboxView extends View {
   public readonly inboxMenuModule: InboxMenuModule;
@@ -42,6 +43,7 @@ export class InboxView extends View {
   public factory!: XssSafeFactory;
   public storage!: AcctStoreDict;
   public tabId!: string;
+  public relayManager = new RelayManager();
 
   public constructor() {
     super();
@@ -57,6 +59,12 @@ export class InboxView extends View {
     this.inboxNotificationModule = new InboxNotificationModule(this);
     this.inboxActiveThreadModule = new InboxActiveThreadModule(this);
     this.inboxListThreadsModule = new InboxListThreadsModule(this);
+    window.addEventListener('message', e => {
+      const regex = new RegExp(`^(chrome|moz)-extension://${chrome.runtime.id}$`);
+      if (regex.test(e.origin) && typeof e.data?.readyToReceive === 'string') {
+        this.relayManager.readyToReceive(e.data.readyToReceive);
+      }
+    });
   }
 
   public render = async () => {

@@ -12,6 +12,7 @@ export type RenderMessage = {
   setFrameColor?: 'green' | 'gray' | 'red';
   renderEncryptionStatus?: string;
   renderSignatureStatus?: string;
+  renderVerificationInProgress?: boolean;
   renderInnerAttachments?: {
     attachments: TransferableAttachment[];
     isEncrypted: boolean;
