@@ -765,7 +765,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
           t,
           `chrome/settings/inbox/inbox.htm?acctEmail=flowcrypt.compatibility@gmail.com&threadId=16e8b01f136c3d28`
         );
-        const pgpBlockFrame = await inboxPage.getFrame(['pgp_block.htm']);
+        const pgpBlockFrame = await inboxPage.getFrame(['pgp_render_block.htm']);
         // check if download is awailable
         await pgpBlockFrame.waitAll('.download-attachment');
         // and preview

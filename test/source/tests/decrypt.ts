@@ -37,7 +37,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
         const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`);
         await inboxPage.waitForSelTestState('ready');
         await inboxPage.waitAll('iframe');
-        const pgpBlock = await inboxPage.getFrame(['pgp_block.htm']);
+        const pgpBlock = await inboxPage.getFrame(['pgp_render_block.htm']);
         await pgpBlock.waitForContent('@pgp-encryption', 'not encrypted');
         await pgpBlock.waitForContent('@pgp-signature', 'not signed');
         await pgpBlock.waitForContent('@pgp-block-content', '-----BEGIN PGP MESSAGE-----\n\nThis is not a valid PGP message');
@@ -57,7 +57,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
         const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`);
         await inboxPage.waitForSelTestState('ready');
         await inboxPage.waitAll('iframe');
-        const pgpBlock = await inboxPage.getFrame(['pgp_block.htm']);
+        const pgpBlock = await inboxPage.getFrame(['pgp_render_block.htm']);
         await pgpBlock.waitForContent('@remote-image-container', 'Authenticity of this remote image cannot be verified.');
         await pgpBlock.checkIfImageIsDisplayedCorrectly('#pgp_block img');
         // Chceck if forwarded message contains img url
@@ -82,7 +82,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
         const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`);
         await inboxPage.waitForSelTestState('ready');
         await inboxPage.waitAll('iframe');
-        const pgpBlock = await inboxPage.getFrame(['pgp_block.htm']);
+        const pgpBlock = await inboxPage.getFrame(['pgp_render_block.htm']);
         await pgpBlock.waitForContent('@pgp-block-content', 'This message contains inline base64 image');
         await pgpBlock.waitAll('#pgp_block img');
         await pgpBlock.checkIfImageIsDisplayedCorrectly('#pgp_block img');
@@ -936,7 +936,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
         await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
         const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`);
         await inboxPage.waitAll('iframe');
-        const pgpBlock = await inboxPage.getFrame(['pgp_block.htm']);
+        const pgpBlock = await inboxPage.getFrame(['pgp_render_block.htm']);
         await pgpBlock.waitForSelTestState('ready');
         await pgpBlock.checkIfImageIsDisplayedCorrectly('#pgp_block img');
         const replyFrame = await inboxPage.getFrame(['compose.htm']);
@@ -1015,7 +1015,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
         await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
         const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`);
         await inboxPage.waitAll('iframe');
-        const pgpBlock = await inboxPage.getFrame(['pgp_block.htm']);
+        const pgpBlock = await inboxPage.getFrame(['pgp_render_block.htm']);
         await pgpBlock.waitForSelTestState('ready');
         const urls = await inboxPage.getFramesUrls(['pgp_pubkey.htm'], { sleep: 3 });
         expect(urls.length).to.be.equal(1);
@@ -1174,7 +1174,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
         await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
         const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`);
         await inboxPage.waitAll('iframe');
-        const urls = await inboxPage.getFramesUrls(['/chrome/elements/pgp_block.htm'], { sleep: 3 });
+        const urls = await inboxPage.getFramesUrls(['/chrome/elements/pgp_render_block.htm'], { sleep: 3 });
         expect(urls.length).to.equal(1);
         const url = urls[0].split('/chrome/elements/pgp_block.htm')[1];
         await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
@@ -1204,11 +1204,12 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
         });
         await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
         const threadId = '1766644f13510f58';
+        // todo: test with gmail mock page
         const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`);
         await inboxPage.waitAll('iframe', { timeout: 2 });
-        const urls = await inboxPage.getFramesUrls(['/chrome/elements/pgp_block.htm'], { sleep: 10, appearIn: 20 });
+        const urls = await inboxPage.getFramesUrls(['/chrome/elements/pgp_render_block.htm'], { sleep: 10, appearIn: 20 });
         expect(urls.length).to.equal(1);
-        const url = urls[0].split('/chrome/elements/pgp_block.htm')[1];
+        const url = urls[0].split('/chrome/elements/pgp_render_block.htm')[1];
         await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
           params: url,
           content: ['How is my message signed?'],
@@ -1353,7 +1354,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
         const extraAuthHeaders = { Authorization: `Bearer ${accessToken}` }; // eslint-disable-line @typescript-eslint/naming-convention
         const gmailPage = await browser.newPage(t, `${t.urls?.mockGmailUrl()}/1866867cfdb8b61e`, undefined, extraAuthHeaders);
         await gmailPage.waitAll('iframe');
-        const pgpBlocks = await Promise.all((await gmailPage.getFramesUrls(['pgp_block.htm'])).map(url => gmailPage.getFrame([url])));
+        const pgpBlocks = await Promise.all((await gmailPage.getFramesUrls(['pgp_render_block.htm'])).map(url => gmailPage.getFrame([url])));
         expect(pgpBlocks.length).to.equal(3);
         await BrowserRecipe.pgpBlockCheck(t, pgpBlocks[0], {
           content: ['this is message 3 for flowcrypt issue 4342'],
@@ -1634,7 +1635,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
         await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
         const inboxPage = await browser.newPage(t, 'chrome/settings/inbox/inbox.htm?acctEmail=flowcrypt.compatibility%40gmail.com&threadId=16f0bfce331ca2fd');
         await inboxPage.waitAll('iframe.pgp_block');
-        const pgpBlock = await inboxPage.getFrame(['pgp_block.htm']);
+        const pgpBlock = await inboxPage.getFrame(['pgp_render_block.htm']);
         await pgpBlock.waitForSelTestState('ready');
         const content = await pgpBlock.read('#pgp_block');
         expect(content).to.include(
@@ -1653,7 +1654,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
         await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
         const inboxPage = await browser.newPage(t, 'chrome/settings/inbox/inbox.htm?acctEmail=flowcrypt.compatibility%40gmail.com&threadId=1762c9a49bedbf6f');
         await inboxPage.waitAll('iframe.pgp_block');
-        const pgpBlock = await inboxPage.getFrame(['pgp_block.htm']);
+        const pgpBlock = await inboxPage.getFrame(['pgp_render_block.htm']);
         await pgpBlock.waitForSelTestState('ready');
         const htmlContent = await pgpBlock.readHtml('#pgp_block');
         expect(htmlContent).to.include('rel="noopener noreferrer"');
@@ -1670,7 +1671,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
         await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
         const inboxPage = await browser.newPage(t, 'chrome/settings/inbox/inbox.htm?acctEmail=flowcrypt.compatibility%40gmail.com&threadId=1762c9a49bedbf6f');
         await inboxPage.waitAll('iframe.pgp_block');
-        const pgpBlock = await inboxPage.getFrame(['pgp_block.htm']);
+        const pgpBlock = await inboxPage.getFrame(['pgp_render_block.htm']);
         await pgpBlock.waitForSelTestState('ready');
         await pgpBlock.click('#pgp_block a');
         await Util.sleep(5);
@@ -1728,7 +1729,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
         await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
         const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId1}`);
         await inboxPage.waitAll('iframe');
-        const pgpBlock = await inboxPage.getFrame(['pgp_block.htm']);
+        const pgpBlock = await inboxPage.getFrame(['pgp_render_block.htm']);
         await pgpBlock.waitForSelTestState('ready');
         await pgpBlock.waitForContent('@pgp-block-content', '[skipped attachment due to invalid url]');
         await pgpBlock.notPresent(['.preview-attachment', '@download-attachment-0']);
@@ -1829,7 +1830,7 @@ d6Z36//MsmczN00Wd60t9T+qyLz0T4/UG2Y9lgf367f3d+kYPE0LS7mXuFmjlPXfw0nKyVsSeFiu
         });
         await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
         const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`);
-        const pgpBlockPage = await inboxPage.getFrame(['pgp_block.htm']);
+        const pgpBlockPage = await inboxPage.getFrame(['pgp_render_block.htm']);
         await pgpBlockPage.waitAndClick('@download-attachment-0');
         // check warning modal for inline encrypted attachment on FlowCrypt web extension page
         const downloadedFile1 = await inboxPage.awaitDownloadTriggeredByClicking(() =>
@@ -1851,7 +1852,8 @@ d6Z36//MsmczN00Wd60t9T+qyLz0T4/UG2Y9lgf367f3d+kYPE0LS7mXuFmjlPXfw0nKyVsSeFiu
         expect(Object.entries([downloadedFile1, downloadedFile2]).length).to.equal(2);
         await inboxPage.close();
         const inboxPage2 = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId2}`);
-        const pgpBlockPage2 = await inboxPage2.getFrame(['pgp_block.htm']);
+        const pgpBlockPage2 = await inboxPage2.getFrame(['pgp_render_block.htm']);
+        // todo: glitch? it shows "not encrypted" and "not signed"
         await pgpBlockPage2.waitAndClick('@download-attachment-0');
         // check warning modal for inline signed attachment on FlowCrypt web extension page
         const downloadedFile3 = await inboxPage2.awaitDownloadTriggeredByClicking(() =>
@@ -1866,7 +1868,7 @@ d6Z36//MsmczN00Wd60t9T+qyLz0T4/UG2Y9lgf367f3d+kYPE0LS7mXuFmjlPXfw0nKyVsSeFiu
         const extraAuthHeaders = { Authorization: `Bearer ${accessToken}` }; // eslint-disable-line @typescript-eslint/naming-convention
         const gmailPage = await browser.newPage(t, `${t.urls?.mockGmailUrl()}/${threadId}`, undefined, extraAuthHeaders);
         await gmailPage.waitAll('iframe');
-        const pgpBlockPage3 = await gmailPage.getFrame(['pgp_block.htm']);
+        const pgpBlockPage3 = await gmailPage.getFrame(['pgp_render_block.htm']);
         await pgpBlockPage3.waitAndClick('@download-attachment-0');
         // check warning modal for inline encrypted attachment test on Gmail page
         const downloadedFile4 = await gmailPage.awaitDownloadTriggeredByClicking(() =>
@@ -1889,7 +1891,8 @@ d6Z36//MsmczN00Wd60t9T+qyLz0T4/UG2Y9lgf367f3d+kYPE0LS7mXuFmjlPXfw0nKyVsSeFiu
         expect(Object.entries([downloadedFile4, downloadedFile5]).length).to.equal(2);
         await gmailPage.close();
         const gmailPage2 = await browser.newPage(t, `${t.urls?.mockGmailUrl()}/${threadId2}`, undefined, extraAuthHeaders);
-        const pgpBlockPage4 = await gmailPage2.getFrame(['pgp_block.htm']);
+        const pgpBlockPage4 = await gmailPage2.getFrame(['pgp_render_block.htm']);
+        // todo: glitch? it shows "not encrypted" and "not signed"
         await pgpBlockPage4.waitAndClick('@download-attachment-0');
         // check warning modal for inline signed attachment test on Gmail page
         const downloadedFile6 = await gmailPage2.awaitDownloadTriggeredByClicking(() =>

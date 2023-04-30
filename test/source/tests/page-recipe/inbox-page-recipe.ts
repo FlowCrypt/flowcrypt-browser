@@ -35,7 +35,7 @@ export class InboxPageRecipe extends PageRecipe {
       await InboxPageRecipe.finishSessionOnInboxPage(inboxPage);
       await inboxPage.waitAll('iframe');
     }
-    const pgpBlockFrame = await inboxPage.getFrame(['pgp_block.htm']);
+    const pgpBlockFrame = await inboxPage.getFrame(['pgp_render_block.htm']);
     await pgpBlockFrame.waitAll('@pgp-block-content');
     await pgpBlockFrame.waitForSelTestState('ready');
     if (enterPp) {
