@@ -33,7 +33,7 @@
     "husky": "^8.0.3",
     "lint-staged": "^13.2.1",
     "mailparser": "3.6.4",
-    "mkdirp": "3.0.0",
+    "mkdirp": "3.0.1",
     "openpgp": "5.7.0",
     "pdfjs-dist": "3.5.141",
     "prettier": "^2.8.7",
