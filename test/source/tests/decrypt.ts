@@ -1235,7 +1235,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
             },
           },
         });
-        await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
+        const { accessToken } = await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
         await PageRecipe.addPubkey(
           t,
           browser,
@@ -1243,17 +1243,25 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
           '-----BEGIN PGP PUBLIC KEY BLOCK-----\r\nVersion: FlowCrypt Email Encryption [BUILD_REPLACEABLE_VERSION]\r\nComment: Seamlessly send and receive encrypted email\r\n\r\nxjMEYZeW2RYJKwYBBAHaRw8BAQdAT5QfLVP3y1yukk3MM/oiuXLNe1f9az5M\r\nBnOlKdF0nKnNJVNvbWVib2R5IDxTYW1zNTBzYW1zNTBzZXB0QEdtYWlsLkNv\r\nbT7CjwQQFgoAIAUCYZeW2QYLCQcIAwIEFQgKAgQWAgEAAhkBAhsDAh4BACEJ\r\nEMrSTYqLk6SUFiEEBP90ux3d6kDwDdzvytJNiouTpJS27QEA7pFlkLfD0KFQ\r\nsH/dwb/NPzn5zCi2L9gjPAC3d8gv1fwA/0FjAy/vKct4D7QH8KwtEGQns5+D\r\nP1WxDr4YI2hp5TkAzjgEYZeW2RIKKwYBBAGXVQEFAQEHQKNLY/bXrhJMWA2+\r\nWTjk3I7KhawyZfLomJ4hovqr7UtOAwEIB8J4BBgWCAAJBQJhl5bZAhsMACEJ\r\nEMrSTYqLk6SUFiEEBP90ux3d6kDwDdzvytJNiouTpJQnpgD/c1CzfS3YzJUx\r\nnFMrhjiE0WVgqOV/3CkfI4m4RA30QUIA/ju8r4AD2h6lu3Mx/6I6PzIRZQty\r\nLvTkcu4UKodZa4kK\r\n=7C4A\r\n-----END PGP PUBLIC KEY BLOCK-----\r\n',
           'sender@example.com'
         );
-        const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`);
-        await inboxPage.waitAll('iframe', { timeout: 2 });
-        const urls = await inboxPage.getFramesUrls(['/chrome/elements/pgp_block.htm'], { sleep: 10, appearIn: 20 });
-        expect(urls.length).to.equal(1);
-        const url = urls[0].split('/chrome/elements/pgp_block.htm')[1];
-        await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
-          params: url,
+        // todo: make sure pubkey2864E326A5BE488A isn't present in ContactStore yet
+        const extraAuthHeaders = { Authorization: `Bearer ${accessToken}` }; // eslint-disable-line @typescript-eslint/naming-convention
+        const gmailPage = await browser.newPage(t, `${t.urls?.mockGmailUrl()}/${threadId}`, undefined, extraAuthHeaders);
+        await gmailPage.waitAll('iframe', { timeout: 2 });
+        const frameUrlsFromGmailPage = await gmailPage.getFramesUrls(['/chrome/elements/pgp_render_block.htm'], { sleep: 10, appearIn: 20 });
+        expect(frameUrlsFromGmailPage.length).to.equal(1);
+        const expectedMessage = {
           content: ['How is my message signed?'],
           encryption: 'not encrypted',
           signature: 'signed',
-        });
+        };
+        await BrowserRecipe.pgpBlockCheck(t, await gmailPage.getFrame([frameUrlsFromGmailPage[0]]), expectedMessage);
+        await gmailPage.close();
+        // todo: remove pubkey2864E326A5BE488A from ContactStore
+        const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`);
+        await inboxPage.waitAll('iframe', { timeout: 2 });
+        const urls = await inboxPage.getFramesUrls(['/chrome/elements/pgp_render_block.htm'], { sleep: 10, appearIn: 20 });
+        expect(urls.length).to.equal(1);
+        await BrowserRecipe.pgpBlockCheck(t, await inboxPage.getFrame([urls[0]]), expectedMessage);
       })
     );
 
@@ -1278,7 +1286,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
         const extraAuthHeaders = { Authorization: `Bearer ${accessToken}` }; // eslint-disable-line @typescript-eslint/naming-convention
         const gmailPage = await browser.newPage(t, `${t.urls?.mockGmailUrl()}/1869220e0c8f16dd`, undefined, extraAuthHeaders);
         await gmailPage.waitAll('iframe');
-        const pgpBlock = await gmailPage.getFrame(['pgp_block.htm']);
+        const pgpBlock = await gmailPage.getFrame(['pgp_render_block.htm']);
         await BrowserRecipe.pgpBlockCheck(t, pgpBlock, {
           content: ['Sent with Proton Mail secure email.'],
           encryption: 'encrypted',
@@ -1299,10 +1307,10 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
         const threadId = '1869220e0c8f16dd';
         let inboxPage = await browser.newExtensionInboxPage(t, acctEmail, threadId);
         await inboxPage.waitAll('iframe');
-        expect((await inboxPage.getFramesUrls(['pgp_block.htm'])).length).to.equal(1);
+        expect((await inboxPage.getFramesUrls(['pgp_render_block.htm'])).length).to.equal(1);
         expect((await inboxPage.getFramesUrls(['pgp_pubkey.htm'])).length).to.equal(1);
         expect((await inboxPage.getFramesUrls(['attachment.htm'])).length).to.equal(0); // invisible
-        await BrowserRecipe.pgpBlockCheck(t, await inboxPage.getFrame(['pgp_block.htm']), {
+        await BrowserRecipe.pgpBlockCheck(t, await inboxPage.getFrame(['pgp_render_block.htm']), {
           content: ['Sent with Proton Mail secure email.'],
           encryption: 'encrypted',
           signature: 'could not verify signature: missing pubkey 616D596BC2065D48',
@@ -1319,10 +1327,10 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
         await dbPage.close();
         inboxPage = await browser.newExtensionInboxPage(t, acctEmail, threadId);
         await inboxPage.waitAll('iframe');
-        expect((await inboxPage.getFramesUrls(['pgp_block.htm'])).length).to.equal(1);
+        expect((await inboxPage.getFramesUrls(['pgp_render_block.htm'])).length).to.equal(1);
         expect((await inboxPage.getFramesUrls(['pgp_pubkey.htm'])).length).to.equal(1);
         expect((await inboxPage.getFramesUrls(['attachment.htm'])).length).to.equal(0); // invisible
-        await BrowserRecipe.pgpBlockCheck(t, await inboxPage.getFrame(['pgp_block.htm']), {
+        await BrowserRecipe.pgpBlockCheck(t, await inboxPage.getFrame(['pgp_render_block.htm']), {
           content: ['Sent with Proton Mail secure email.'],
           encryption: 'encrypted',
           signature: 'signed',

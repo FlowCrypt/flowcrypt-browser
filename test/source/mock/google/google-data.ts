@@ -224,14 +224,20 @@ export class GoogleData {
       const payload = (await GoogleData.withInitializedData(acct)).getMessage(msgId)!.payload!;
       const fromHeader = payload.headers!.find(header => header.name === 'From')!;
       const fromAddress = fromHeader.value!;
-      let htmlData = GoogleData.getHtmlDataToDisplay(payload.parts!);
-      if (typeof htmlData === 'undefined') {
-        // search inside multipart/alternative
-        const alternativePart = payload.parts!.find(part => part.mimeType === 'multipart/alternative');
-        htmlData = GoogleData.getHtmlDataToDisplay(alternativePart!.parts!);
+      let htmlData: string | undefined;
+      if (payload.mimeType === 'text/plain') {
+        const textData = Buf.fromBase64Str(payload.body!.data!).toUtfStr();
+        htmlData = GoogleData.htmlFromText(textData);
+      } else {
+        htmlData = GoogleData.getHtmlDataToDisplay(payload.parts!);
+        if (typeof htmlData === 'undefined') {
+          // search inside multipart/alternative
+          const alternativePart = payload.parts!.find(part => part.mimeType === 'multipart/alternative');
+          htmlData = GoogleData.getHtmlDataToDisplay(alternativePart!.parts!);
+        }
       }
-      const otherParts = payload.parts!.filter(part => part.filename);
-      if (otherParts.length) {
+      const otherParts = payload.parts?.filter(part => part.filename);
+      if (otherParts?.length) {
         attachmentsBlock =
           `<div class="ho"><span class="aVW"><span>${otherParts.length}</span> Attachments</span></div>
         <div class="aQH">` +
@@ -299,8 +305,12 @@ export class GoogleData {
         return undefined;
       }
       const textData = Buf.fromBase64Str(textPart.body.data).toUtfStr();
-      return Xss.escape(textData);
+      return GoogleData.htmlFromText(textData);
     }
+  };
+
+  private static htmlFromText = (textData: string): string => {
+    return Xss.escape(textData); // this is skewed, as we should replace \r\n with <br/> etc., but it should be good for tests
   };
 
   public storeSentMessage = (parseResult: ParseMsgResult, id: string): string => {
