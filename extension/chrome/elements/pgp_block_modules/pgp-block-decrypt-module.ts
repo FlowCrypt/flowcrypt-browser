@@ -4,7 +4,7 @@
 
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Buf } from '../../../js/common/core/buf.js';
-import { DecryptErrTypes, VerifyRes } from '../../../js/common/core/crypto/pgp/msg-util.js';
+import { DecryptErrTypes, FormatError, VerifyRes } from '../../../js/common/core/crypto/pgp/msg-util.js';
 import { GmailResponseFormat } from '../../../js/common/api/email-provider/gmail/gmail.js';
 import { Lang } from '../../../js/common/lang.js';
 import { Mime } from '../../../js/common/core/mime.js';
@@ -18,6 +18,8 @@ import { Str } from '../../../js/common/core/common.js';
 import { Attachment } from '../../../js/common/core/attachment.js';
 import { MsgBlock } from '../../../js/common/core/msg-block.js';
 import { MessageRenderer } from '../../../js/common/message-renderer.js';
+import { ApiErr } from '../../../js/common/api/shared/api-error.js';
+import { Catch } from '../../../js/common/platform/catch.js';
 
 export class PgpBlockViewDecryptModule {
   private msgFetchedFromApi: false | GmailResponseFormat = false;
@@ -66,11 +68,33 @@ export class PgpBlockViewDecryptModule {
         }
       }
     } catch (e) {
-      await this.view.errorModule.handleInitializeErr(e);
+      await this.handleInitializeErr(e);
     }
   };
 
   public canAndShouldFetchFromApi = () => this.msgFetchedFromApi !== 'raw';
+
+  private handleInitializeErr = async (e: unknown) => {
+    if (ApiErr.isNetErr(e)) {
+      await this.view.errorModule.renderErr(`Could not load message due to network error. ${Ui.retryLink()}`, undefined);
+    } else if (ApiErr.isAuthErr(e)) {
+      BrowserMsg.send.notificationShowAuthPopupNeeded(this.view.parentTabId, { acctEmail: this.view.acctEmail });
+      await this.view.errorModule.renderErr(`Could not load message due to missing auth. ${Ui.retryLink()}`, undefined);
+    } else if (e instanceof FormatError) {
+      await this.view.errorModule.renderErr(
+        Lang.pgpBlock.cantOpen + Lang.pgpBlock.badFormat + Lang.pgpBlock.details + e.message + ' ' + Lang.pgpBlock.dontKnowHowOpen(!!this.view.fesUrl),
+        e.data
+      );
+    } else if (ApiErr.isInPrivateMode(e)) {
+      await this.view.errorModule.renderErr(
+        `FlowCrypt does not work in a Firefox Private Window (or when Firefox Containers are used). Please try in a standard window.`,
+        undefined
+      );
+    } else {
+      Catch.reportErr(e);
+      await this.view.errorModule.renderErr(Xss.escape(String(e)), this.view.encryptedMsgUrlParam ? this.view.encryptedMsgUrlParam.toUtfStr() : undefined);
+    }
+  };
 
   private retrieveMessage = async (msgId: string) => {
     // todo: msgId === this.view.msgId
@@ -144,18 +168,7 @@ export class PgpBlockViewDecryptModule {
           await this.view.errorModule.renderErr(Lang.pgpBlock.badFormat + '\n\n' + result.error.message, Str.with(encryptedData));
         }
       } else if (result.longids.needPassphrase.length) {
-        const enterPp = `<a href="#" class="enter_passphrase" data-test="action-show-passphrase-dialog">${Lang.pgpBlock.enterPassphrase}</a> ${Lang.pgpBlock.toOpenMsg}`;
-        await this.view.errorModule.renderErr(enterPp, undefined, 'pass phrase needed');
-        $('.enter_passphrase').on(
-          'click',
-          this.view.setHandler(() => {
-            Ui.setTestState('waiting');
-            BrowserMsg.send.passphraseDialog(this.view.parentTabId, {
-              type: 'message',
-              longids: result.longids.needPassphrase,
-            });
-          })
-        );
+        this.view.renderModule.renderPassphraseNeeded(result.longids.needPassphrase);
         await PassphraseStore.waitUntilPassphraseChanged(this.view.acctEmail, result.longids.needPassphrase);
         this.view.renderModule.clearErrorStatus();
         this.view.renderModule.renderText('Decrypting...');

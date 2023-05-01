@@ -11,17 +11,15 @@ import { RenderMessage } from '../../js/common/render-message.js';
 import { Attachment } from '../../js/common/core/attachment.js';
 
 export class PgpRenderBlockView extends PgpBaseBlockView {
-  public readonly debug: boolean;
-
   public constructor() {
     Ui.event.protect();
     const uncheckedUrlParams = Url.parse(['frameId', 'parentTabId', 'debug', 'acctEmail']);
     super(
+      uncheckedUrlParams.debug === true,
       Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId'),
       Assert.urlParamRequire.string(uncheckedUrlParams, 'frameId'),
       Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail')
     );
-    this.debug = uncheckedUrlParams.debug === true;
     window.addEventListener('message', this.handleMessage, true); // todo: capture?
     window.addEventListener('load', () => window.parent.postMessage({ readyToReceive: this.frameId }, '*'));
   }
@@ -66,12 +64,21 @@ export class PgpRenderBlockView extends PgpBaseBlockView {
     if (data?.setFrameColor) {
       this.renderModule.setFrameColor(data.setFrameColor);
     }
-    if (data?.setTestState) {
-      Ui.setTestState(data.setTestState);
-    }
     if (data?.renderInnerAttachments) {
       const attachments = data.renderInnerAttachments.attachments.map(Attachment.fromTransferableAttachment);
       this.attachmentsModule.renderInnerAttachments(attachments, data.renderInnerAttachments.isEncrypted);
+    }
+    if (data?.renderErr) {
+      this.errorModule.renderErr(data.renderErr.errBoxContent, data.renderErr.renderRawMsg, data.renderErr.errMsg);
+    }
+    if (data?.renderPassphraseNeeded) {
+      this.renderModule.renderPassphraseNeeded(data.renderPassphraseNeeded);
+    }
+    if (data?.clearErrorStatus) {
+      this.renderModule.clearErrorStatus();
+    }
+    if (data?.setTestState) {
+      Ui.setTestState(data.setTestState);
     }
   };
 }

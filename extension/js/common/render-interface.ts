@@ -13,6 +13,9 @@ export interface RenderInterfaceBase {
 }
 
 export interface RenderInterface extends RenderInterfaceBase {
+  clearErrorStatus(): void;
+  renderPassphraseNeeded(longids: string[]): void;
+  renderErr(errBoxContent: string, renderRawMsg: string | undefined, errMsg?: string): void;
   renderInnerAttachments(attachments: TransferableAttachment[], isEncrypted: boolean): void;
   setTestState(state: 'ready' | 'working' | 'waiting'): void;
   separateQuotedContentAndRenderText(decryptedContent: string, isHtml: boolean): void;

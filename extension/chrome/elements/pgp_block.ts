@@ -8,7 +8,6 @@ import { Buf } from '../../js/common/core/buf.js';
 import { Gmail } from '../../js/common/api/email-provider/gmail/gmail.js';
 import { Lang } from '../../js/common/lang.js';
 import { PgpBlockViewDecryptModule } from './pgp_block_modules/pgp-block-decrypt-module.js';
-import { PgpBlockViewErrorModule } from './pgp_block_modules/pgp-block-error-module.js';
 import { PgpBlockViewSignatureModule } from './pgp_block_modules/pgp-block-signature-module.js';
 import { Ui } from '../../js/common/browser/ui.js';
 import { View } from '../../js/common/view.js';
@@ -34,9 +33,7 @@ export class PgpBlockView extends PgpBaseBlockView {
   public clientConfiguration!: ClientConfiguration;
   public pubLookup!: PubLookup;
 
-  public readonly debug: boolean;
   public readonly signatureModule: PgpBlockViewSignatureModule;
-  public readonly errorModule: PgpBlockViewErrorModule;
   public readonly printModule: PgpBlockViewPrintModule;
   public readonly decryptModule: PgpBlockViewDecryptModule;
 
@@ -46,12 +43,12 @@ export class PgpBlockView extends PgpBaseBlockView {
     Ui.event.protect();
     const uncheckedUrlParams = Url.parse(['acctEmail', 'frameId', 'message', 'parentTabId', 'msgId', 'isOutgoing', 'senderEmail', 'signature', 'debug']);
     super(
+      uncheckedUrlParams.debug === true,
       Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId'),
       Assert.urlParamRequire.string(uncheckedUrlParams, 'frameId'),
       Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail')
     );
     this.isOutgoing = uncheckedUrlParams.isOutgoing === true;
-    this.debug = uncheckedUrlParams.debug === true;
     const senderEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'senderEmail');
     this.senderEmail = Str.parseEmail(senderEmail).email || '';
     this.msgId = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'msgId');
@@ -67,7 +64,6 @@ export class PgpBlockView extends PgpBaseBlockView {
     this.gmail = new Gmail(this.acctEmail);
     // modules
     this.signatureModule = new PgpBlockViewSignatureModule(this);
-    this.errorModule = new PgpBlockViewErrorModule(this);
     this.printModule = new PgpBlockViewPrintModule(this);
     this.decryptModule = new PgpBlockViewDecryptModule(this);
   }

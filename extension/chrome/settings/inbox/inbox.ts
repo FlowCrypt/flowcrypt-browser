@@ -23,6 +23,7 @@ import { Xss } from '../../../js/common/platform/xss.js';
 import { XssSafeFactory } from '../../../js/common/xss-safe-factory.js';
 import { AcctStore, AcctStoreDict } from '../../../js/common/platform/store/acct-store.js';
 import { RelayManager } from '../../../js/common/relay-manager.js';
+import { MessageRenderer } from '../../../js/common/message-renderer.js';
 
 export class InboxView extends View {
   public readonly inboxMenuModule: InboxMenuModule;
@@ -40,6 +41,7 @@ export class InboxView extends View {
 
   public injector!: Injector;
   public webmailCommon!: WebmailCommon;
+  public readonly messageRenderer: MessageRenderer;
   public factory!: XssSafeFactory;
   public storage!: AcctStoreDict;
   public tabId!: string;
@@ -49,6 +51,7 @@ export class InboxView extends View {
     super();
     const uncheckedUrlParams = Url.parse(['acctEmail', 'labelId', 'threadId', 'showOriginal', 'debug']);
     this.acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
+    this.messageRenderer = new MessageRenderer(this.acctEmail);
     this.labelId = uncheckedUrlParams.labelId ? String(uncheckedUrlParams.labelId) : 'INBOX';
     this.threadId = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'threadId');
     this.showOriginal = uncheckedUrlParams.showOriginal === true;

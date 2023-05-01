@@ -92,11 +92,11 @@ export class XssSafeFactory {
    * When edited, REQUEST A SECOND SET OF EYES TO REVIEW CHANGES
    */
 
-  public static getWindowOfEmbeddedMsg = (frameId: string): Window | undefined => {
+  public static getEmbeddedMsg = (frameId: string): { frameElement: HTMLIFrameElement; frameWindow: Window } | undefined => {
     // const iframe = document.getElementById(frameId) as HTMLIFrameElement;
-    const iframe = $(`iframe#${frameId}`).get(0) as HTMLIFrameElement;
-    if (iframe?.contentWindow) {
-      return iframe?.contentWindow;
+    const frameElement = $(`iframe#${frameId}`).get(0) as HTMLIFrameElement;
+    if (frameElement?.contentWindow) {
+      return { frameElement, frameWindow: frameElement.contentWindow };
     }
     Catch.report('Unable to find iframe by frameId=' + frameId);
     return undefined;

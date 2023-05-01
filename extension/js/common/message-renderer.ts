@@ -8,21 +8,25 @@ import { ClientConfiguration } from './client-configuration.js';
 import { Attachment, TransferableAttachment } from './core/attachment.js';
 import { Buf } from './core/buf.js';
 import { CID_PATTERN, Dict, Str, Value } from './core/common.js';
-import { KeyInfoWithIdentityAndOptionalPp, KeyUtil } from './core/crypto/key.js';
-import { DecryptResult, MsgUtil, VerifyRes } from './core/crypto/pgp/msg-util.js';
+import { KeyUtil } from './core/crypto/key.js';
+import { DecryptErrTypes, DecryptResult, MsgUtil, VerifyRes } from './core/crypto/pgp/msg-util.js';
 import { Mime, MimeContent, MimeProccesedMsg } from './core/mime.js';
 import { MsgBlockParser } from './core/msg-block-parser.js';
 import { MsgBlock } from './core/msg-block.js';
+import { Lang } from './lang.js';
 import { Catch } from './platform/catch.js';
 import { SendAsAlias } from './platform/store/acct-store.js';
 import { ContactStore } from './platform/store/contact-store.js';
 import { KeyStore } from './platform/store/key-store.js';
+import { PassphraseStore } from './platform/store/passphrase-store.js';
 import { Xss } from './platform/xss.js';
 import { RelayManager } from './relay-manager.js';
 import { RenderInterface, RenderInterfaceBase } from './render-interface.js';
 import { saveFetchedPubkeysIfNewerThanInStorage } from './shared.js';
 import { XssSafeFactory } from './xss-safe-factory.js';
 import * as DOMPurify from 'dompurify';
+
+export type JQueryEl = JQuery<HTMLElement>;
 
 export type ProccesedMsg = MimeProccesedMsg;
 
@@ -32,208 +36,7 @@ export type AttachmentBlock = {
 };
 
 export class MessageRenderer {
-  public static relayAndProcess = async (
-    relayManager: RelayManager,
-    factory: XssSafeFactory,
-    frameId: string,
-    cb: (renderModule: RenderInterface) => Promise<{ publicKeys?: string[] }>
-  ) => {
-    const frameWindow = XssSafeFactory.getWindowOfEmbeddedMsg(frameId);
-    if (frameWindow) {
-      const renderModule = relayManager.createRelay(frameId, frameWindow);
-      const result = await cb(renderModule);
-      const appendAfter = $(`iframe#${frameId}`);
-      for (const armoredPubkey of result.publicKeys ?? []) {
-        appendAfter.after(factory.embeddedPubkey(armoredPubkey, false));
-      }
-      // todo: wait for renderModule completion: the queue has been actually flushed,
-      // and then remove the frame from relayManager.frames
-      // Something like:
-      // await relayManager.waitForCompletion(renderModule)
-    } else {
-      Catch.report('Unexpected: unable to reference a newly created message frame'); // todo:
-    }
-  };
-
-  public static processInlineBlocks = async (
-    relayManager: RelayManager,
-    factory: XssSafeFactory,
-    acctEmail: string,
-    blocks: Dict<MsgBlock>,
-    from?: string // need to unify somehow when we accept `abc <email@address>` and when just `email@address`
-  ) => {
-    const kisWithPp = await KeyStore.getAllWithOptionalPassPhrase(acctEmail); // todo: cache
-    const signerEmail = from ? Str.parseEmail(from).email : undefined;
-    await Promise.all(
-      Object.entries(blocks).map(([frameId, block]) =>
-        MessageRenderer.relayAndProcess(relayManager, factory, frameId, renderModule =>
-          MessageRenderer.renderMsgBlock(block, kisWithPp, renderModule, acctEmail, signerEmail)
-        ).catch(Catch.reportErr)
-      )
-    );
-  };
-
-  public static renderMsgBlock = async (
-    block: MsgBlock,
-    kisWithPp: KeyInfoWithIdentityAndOptionalPp[],
-    renderModule: RenderInterface,
-    acctEmail: string,
-    signerEmail?: string
-  ) => {
-    const verificationPubs = signerEmail ? await MessageRenderer.getVerificationPubs(signerEmail) : [];
-    // todo: 'signedMsg'
-    const decrypt = (verificationPubs: string[]) => MsgUtil.decryptMessage({ kisWithPp, encryptedData: block.content, verificationPubs });
-    const decryptResult = await decrypt(verificationPubs);
-    if (decryptResult.success) {
-      return await MessageRenderer.decideDecryptedContentFormattingAndRender(
-        decryptResult.content,
-        !!decryptResult.isEncrypted,
-        decryptResult.signature,
-        renderModule,
-        signerEmail
-          ? MessageRenderer.getRetryVerification(acctEmail, signerEmail, verificationPubs =>
-              MessageRenderer.decryptFunctionToVerifyRes(() => decrypt(verificationPubs))
-            )
-          : undefined
-      );
-    } else {
-      // todo:
-    }
-    return {};
-  };
-
-  // todo: this should be moved to some other class?
-  public static getRetryVerification =
-    (acctEmail: string, signerEmail: string, verify: (verificationPubs: string[]) => Promise<VerifyRes | undefined>) => async () => {
-      const clientConfiguration = await ClientConfiguration.newInstance(acctEmail);
-      const { pubkeys } = await new PubLookup(clientConfiguration).lookupEmail(signerEmail);
-      if (pubkeys.length) {
-        await saveFetchedPubkeysIfNewerThanInStorage({ email: signerEmail, pubkeys }); // synchronously because we don't want erratic behaviour
-        return await verify(pubkeys);
-      }
-      return undefined;
-    };
-
-  public static decryptFunctionToVerifyRes = async (decrypt: () => Promise<DecryptResult>): Promise<VerifyRes | undefined> => {
-    const decryptResult = await decrypt();
-    if (!decryptResult.success) {
-      return undefined; // note: this internal error results in a wrong "Not Signed" badge
-    } else {
-      return decryptResult.signature;
-    }
-  };
-
-  public static renderSignedMessage = async (acctEmail: string, raw: string, renderModule: RenderInterface, signerEmail: string) => {
-    // ... from PgpBlockViewDecryptModule.initialize
-    const mimeMsg = Buf.fromBase64UrlStr(raw);
-    const parsed = await Mime.decode(mimeMsg);
-    if (parsed && typeof parsed.rawSignedContent === 'string') {
-      const signatureAttachment = parsed.attachments.find(a => a.treatAs(parsed.attachments) === 'signature'); // todo: more than one signature candidate?
-      if (signatureAttachment) {
-        const parsedSignature = signatureAttachment.getData().toUtfStr();
-        // ... from PgpBlockViewDecryptModule.decryptAndRender
-        const sigText = parsedSignature.replace('\n=3D', '\n=');
-        const encryptedData = parsed.rawSignedContent;
-        try {
-          const verificationPubs = await MessageRenderer.getVerificationPubs(signerEmail);
-          const verify = async (verificationPubs: string[]) => await MsgUtil.verifyDetached({ plaintext: encryptedData, sigText, verificationPubs });
-          const signatureResult = await verify(verificationPubs);
-          return await MessageRenderer.decideDecryptedContentFormattingAndRender(
-            encryptedData,
-            false,
-            signatureResult,
-            renderModule,
-            MessageRenderer.getRetryVerification(acctEmail, signerEmail, verify)
-          );
-        } catch (e) {
-          console.log(e);
-        }
-      }
-    }
-    /* todo: await this.view.errorModule.renderErr(
-      'Error: could not properly parse signed message',
-      parsed.rawSignedContent || parsed.text || parsed.html || mimeMsg.toUtfStr(),
-      'parse error'
-    ); */
-    return {};
-  };
-
-  public static renderEncryptedMessage = async (
-    acctEmail: string,
-    encryptedData: string | Uint8Array,
-    kisWithPp: KeyInfoWithIdentityAndOptionalPp[],
-    renderModule: RenderInterface,
-    signerEmail: string
-  ) => {
-    const verificationPubs = await MessageRenderer.getVerificationPubs(signerEmail);
-    const decrypt = (verificationPubs: string[]) => MsgUtil.decryptMessage({ kisWithPp, encryptedData, verificationPubs });
-    const decryptResult = await decrypt(verificationPubs);
-    if (decryptResult.success) {
-      return await MessageRenderer.decideDecryptedContentFormattingAndRender(
-        decryptResult.content,
-        !!decryptResult.isEncrypted,
-        decryptResult.signature,
-        renderModule,
-        MessageRenderer.getRetryVerification(acctEmail, signerEmail, async verificationPubs =>
-          MessageRenderer.decryptFunctionToVerifyRes(() => decrypt(verificationPubs))
-        )
-      );
-    } else {
-      // todo:
-    }
-    return {};
-  };
-
-  public static renderMsg = (
-    { from, blocks }: { blocks: MsgBlock[]; from?: string },
-    factory: XssSafeFactory,
-    showOriginal: boolean,
-    msgId: string, // todo: will be removed
-    sendAs?: Dict<SendAsAlias>
-  ) => {
-    const isOutgoing = Boolean(from && !!sendAs?.[from]);
-    const blocksInFrames: Dict<MsgBlock> = {};
-    let r = '';
-    for (const block of blocks) {
-      if (r) {
-        r += '<br><br>';
-      }
-      if (showOriginal) {
-        r += Xss.escape(Str.with(block.content)).replace(/\n/g, '<br>');
-      } else if (['signedMsg', 'encryptedMsg'].includes(block.type)) {
-        const { frameId, frameXssSafe } = factory.embeddedRenderMsg(block.type);
-        r += frameXssSafe;
-        blocksInFrames[frameId] = block;
-      } else {
-        r += XssSafeFactory.renderableMsgBlock(factory, block, msgId, from || 'unknown', isOutgoing);
-      }
-    }
-    return { renderedXssSafe: r, isOutgoing, blocksInFrames };
-  };
-
-  /* todo: remove
-  public static process = async (gmailMsg: GmailRes.GmailMsg): Promise<ProccesedMsg> => {
-    return gmailMsg.raw ? await MessageRenderer.processMessageFromRaw(gmailMsg.raw) : MessageRenderer.processMessageFromFull(gmailMsg);
-  }; */
-
-  public static processMessageFromRaw = async (raw: string) => {
-    const mimeMsg = Buf.fromBase64UrlStr(raw);
-    return await Mime.process(mimeMsg);
-  };
-
-  public static reconstructMimeContent = (gmailMsg: GmailRes.GmailMsg): MimeContent => {
-    const bodies = GmailParser.findBodies(gmailMsg);
-    const attachments = GmailParser.findAttachments(gmailMsg, gmailMsg.id);
-    const text = bodies['text/plain'] ? Buf.fromBase64UrlStr(bodies['text/plain']).toUtfStr() : undefined;
-    // todo: do we need to strip?
-    const html = bodies['text/html'] ? Xss.htmlSanitizeAndStripAllTags(Buf.fromBase64UrlStr(bodies['text/html']).toUtfStr(), '\n') : undefined;
-    // reconstructed MIME content
-    return {
-      text,
-      html,
-      attachments,
-    };
-  };
+  public constructor(private readonly acctEmail: string) {}
 
   /**
    * Replaces inline image CID references with base64 encoded data in sanitized HTML
@@ -366,6 +169,61 @@ export class MessageRenderer {
     return isEncrypted ? { publicKeys } : {};
   };
 
+  public static decryptFunctionToVerifyRes = async (decrypt: () => Promise<DecryptResult>): Promise<VerifyRes | undefined> => {
+    const decryptResult = await decrypt();
+    if (!decryptResult.success) {
+      return undefined; // note: this internal error results in a wrong "Not Signed" badge
+    } else {
+      return decryptResult.signature;
+    }
+  };
+
+  public static processMessageFromRaw = async (raw: string) => {
+    const mimeMsg = Buf.fromBase64UrlStr(raw);
+    return await Mime.process(mimeMsg);
+  };
+
+  public static reconstructMimeContent = (gmailMsg: GmailRes.GmailMsg): MimeContent => {
+    const bodies = GmailParser.findBodies(gmailMsg);
+    const attachments = GmailParser.findAttachments(gmailMsg, gmailMsg.id);
+    const text = bodies['text/plain'] ? Buf.fromBase64UrlStr(bodies['text/plain']).toUtfStr() : undefined;
+    // todo: do we need to strip?
+    const html = bodies['text/html'] ? Xss.htmlSanitizeAndStripAllTags(Buf.fromBase64UrlStr(bodies['text/html']).toUtfStr(), '\n') : undefined;
+    // reconstructed MIME content
+    return {
+      text,
+      html,
+      attachments,
+    };
+  };
+
+  public static renderMsg = (
+    { from, blocks }: { blocks: MsgBlock[]; from?: string },
+    factory: XssSafeFactory,
+    showOriginal: boolean,
+    msgId: string, // todo: will be removed
+    sendAs?: Dict<SendAsAlias>
+  ) => {
+    const isOutgoing = Boolean(from && !!sendAs?.[from]);
+    const blocksInFrames: Dict<MsgBlock> = {};
+    let r = '';
+    for (const block of blocks) {
+      if (r) {
+        r += '<br><br>';
+      }
+      if (showOriginal) {
+        r += Xss.escape(Str.with(block.content)).replace(/\n/g, '<br>');
+      } else if (['signedMsg', 'encryptedMsg'].includes(block.type)) {
+        const { frameId, frameXssSafe } = factory.embeddedRenderMsg(block.type);
+        r += frameXssSafe;
+        blocksInFrames[frameId] = block;
+      } else {
+        r += XssSafeFactory.renderableMsgBlock(factory, block, msgId, from || 'unknown', isOutgoing);
+      }
+    }
+    return { renderedXssSafe: r, isOutgoing, blocksInFrames };
+  };
+
   public static renderPgpSignatureCheckResult = async (
     renderModule: RenderInterface,
     verifyRes: VerifyRes | undefined,
@@ -420,5 +278,178 @@ export class MessageRenderer {
     // todo: we don't actually need parsed pubs here because we're going to pass them to the background page
     // maybe we can have a method in ContactStore to extract armored keys
     return parsedPubs.map(key => KeyUtil.armor(key.pubkey));
+  };
+
+  public relayAndProcess = async (
+    relayManager: RelayManager,
+    factory: XssSafeFactory,
+    frameId: string,
+    cb: (renderModule: RenderInterface) => Promise<{ publicKeys?: string[]; needPassphrase?: string[] }>
+  ) => {
+    const embeddedReference = XssSafeFactory.getEmbeddedMsg(frameId);
+    if (embeddedReference) {
+      const renderModule = relayManager.createRelay(frameId, embeddedReference.frameWindow);
+      let result = await cb(renderModule);
+      const appendAfter = $(`iframe#${frameId}`);
+      // todo: how publicKeys and needPassphrase interact?
+      for (const armoredPubkey of result.publicKeys ?? []) {
+        appendAfter.after(factory.embeddedPubkey(armoredPubkey, false));
+      }
+      while (result.needPassphrase) {
+        // todo: queue into a dictionary?
+        await PassphraseStore.waitUntilPassphraseChanged(this.acctEmail, result.needPassphrase);
+        renderModule.clearErrorStatus();
+        renderModule.renderText('Decrypting...');
+        result = await cb(renderModule);
+      }
+      // todo: wait for renderModule completion: the queue has been actually flushed,
+      // and then remove the frame from relayManager.frames
+      // Something like:
+      // await relayManager.waitForCompletion(renderModule)
+    } else {
+      Catch.report('Unexpected: unable to reference a newly created message frame'); // todo:
+    }
+  };
+
+  public processInlineBlocks = async (
+    relayManager: RelayManager,
+    factory: XssSafeFactory,
+    blocks: Dict<MsgBlock>,
+    from?: string // need to unify somehow when we accept `abc <email@address>` and when just `email@address`
+  ) => {
+    const signerEmail = from ? Str.parseEmail(from).email : undefined;
+    await Promise.all(
+      Object.entries(blocks).map(([frameId, block]) =>
+        this.relayAndProcess(relayManager, factory, frameId, renderModule => this.renderMsgBlock(block, renderModule, signerEmail)).catch(Catch.reportErr)
+      )
+    );
+  };
+
+  public renderMsgBlock = async (block: MsgBlock, renderModule: RenderInterface, signerEmail?: string) => {
+    // todo: 'signedMsg' also handled here?
+    return await this.renderEncryptedMessage(block.content, renderModule, signerEmail);
+  };
+
+  // todo: this should be moved to some other class?
+  public getRetryVerification = (signerEmail: string, verify: (verificationPubs: string[]) => Promise<VerifyRes | undefined>) => async () => {
+    const clientConfiguration = await ClientConfiguration.newInstance(this.acctEmail);
+    const { pubkeys } = await new PubLookup(clientConfiguration).lookupEmail(signerEmail);
+    if (pubkeys.length) {
+      await saveFetchedPubkeysIfNewerThanInStorage({ email: signerEmail, pubkeys }); // synchronously because we don't want erratic behaviour
+      return await verify(pubkeys);
+    }
+    return undefined;
+  };
+
+  public renderSignedMessage = async (raw: string, renderModule: RenderInterface, signerEmail: string) => {
+    // ... from PgpBlockViewDecryptModule.initialize
+    const mimeMsg = Buf.fromBase64UrlStr(raw);
+    const parsed = await Mime.decode(mimeMsg);
+    if (parsed && typeof parsed.rawSignedContent === 'string') {
+      const signatureAttachment = parsed.attachments.find(a => a.treatAs(parsed.attachments) === 'signature'); // todo: more than one signature candidate?
+      if (signatureAttachment) {
+        const parsedSignature = signatureAttachment.getData().toUtfStr();
+        // ... from PgpBlockViewDecryptModule.decryptAndRender
+        const sigText = parsedSignature.replace('\n=3D', '\n=');
+        const encryptedData = parsed.rawSignedContent;
+        try {
+          const verificationPubs = await MessageRenderer.getVerificationPubs(signerEmail);
+          const verify = async (verificationPubs: string[]) => await MsgUtil.verifyDetached({ plaintext: encryptedData, sigText, verificationPubs });
+          const signatureResult = await verify(verificationPubs);
+          return await MessageRenderer.decideDecryptedContentFormattingAndRender(
+            encryptedData,
+            false,
+            signatureResult,
+            renderModule,
+            this.getRetryVerification(signerEmail, verify)
+          );
+        } catch (e) {
+          console.log(e);
+        }
+      }
+    }
+    /* todo: await this.view.errorModule.renderErr(
+      'Error: could not properly parse signed message',
+      parsed.rawSignedContent || parsed.text || parsed.html || mimeMsg.toUtfStr(),
+      'parse error'
+    ); */
+    return {};
+  };
+
+  public renderEncryptedMessage = async (
+    encryptedData: string | Uint8Array,
+    renderModule: RenderInterface,
+    signerEmail?: string
+  ): Promise<{ publicKeys?: string[]; needPassphrase?: string[] }> => {
+    const kisWithPp = await KeyStore.getAllWithOptionalPassPhrase(this.acctEmail); // todo: cache
+    const verificationPubs = signerEmail ? await MessageRenderer.getVerificationPubs(signerEmail) : [];
+    const decrypt = (verificationPubs: string[]) => MsgUtil.decryptMessage({ kisWithPp, encryptedData, verificationPubs });
+    const result = await decrypt(verificationPubs);
+    // from decryptAndRender
+    if (typeof result === 'undefined') {
+      // todo: renderErr(Lang.general.restartBrowserAndTryAgain(!!this.view.fesUrl), undefined);
+    } else if (result.success) {
+      return await MessageRenderer.decideDecryptedContentFormattingAndRender(
+        result.content,
+        !!result.isEncrypted,
+        result.signature,
+        renderModule,
+        signerEmail
+          ? this.getRetryVerification(signerEmail, verificationPubs => MessageRenderer.decryptFunctionToVerifyRes(() => decrypt(verificationPubs)))
+          : undefined
+      );
+    } else if (result.error.type === DecryptErrTypes.format) {
+      renderModule.renderErr(Lang.pgpBlock.badFormat + '\n\n' + result.error.message, Str.with(encryptedData));
+    } else if (result.longids.needPassphrase.length) {
+      renderModule.renderPassphraseNeeded(result.longids.needPassphrase);
+      return { needPassphrase: result.longids.needPassphrase };
+      /*
+      const enterPp = `<a href="#" class="enter_passphrase" data-test="action-show-passphrase-dialog">${Lang.pgpBlock.enterPassphrase}</a> ${Lang.pgpBlock.toOpenMsg}`;
+      await this.view.errorModule.renderErr(enterPp, undefined, 'pass phrase needed');
+      $('.enter_passphrase').on(
+        'click',
+        this.view.setHandler(() => {
+          Ui.setTestState('waiting');
+          BrowserMsg.send.passphraseDialog(this.view.parentTabId, {
+            type: 'message',
+            longids: result.longids.needPassphrase,
+          });
+        })
+      );
+      await PassphraseStore.waitUntilPassphraseChanged(this.view.acctEmail, result.longids.needPassphrase);
+      this.view.renderModule.clearErrorStatus();
+      this.view.renderModule.renderText('Decrypting...');
+      await this.decryptAndRender(encryptedData, verificationPubs);
+      */
+    } else {
+      /*
+      if (!result.longids.chosen && !(await KeyStore.get(this.view.acctEmail)).length) {
+        await this.view.errorModule.renderErr(
+          Lang.pgpBlock.notProperlySetUp + this.view.errorModule.btnHtml('FlowCrypt settings', 'green settings'),
+          undefined
+        );
+      } else if (result.error.type === DecryptErrTypes.keyMismatch) {
+        await this.view.errorModule.handlePrivateKeyMismatch(
+          kisWithPp.map(ki => ki.public),
+          encryptedData,
+          this.isPwdMsgBasedOnMsgSnippet === true
+        );
+      } else if (result.error.type === DecryptErrTypes.wrongPwd || result.error.type === DecryptErrTypes.usePassword) {
+        await this.view.errorModule.renderErr(Lang.pgpBlock.pwdMsgAskSenderUsePubkey, undefined);
+      } else if (result.error.type === DecryptErrTypes.noMdc) {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        await this.view.errorModule.renderErr(result.error.message, result.content!.toUtfStr()); // missing mdc - only render the result after user confirmation
+      } else if (result.error) {
+        await this.view.errorModule.renderErr(`${Lang.pgpBlock.cantOpen}\n\n<em>${result.error.type}: ${result.error.message}</em>`, Str.with(encryptedData));
+      } else {
+        // should generally not happen
+        await this.view.errorModule.renderErr(
+          Lang.pgpBlock.cantOpen + Lang.general.writeMeToFixIt(!!this.view.fesUrl) + '\n\nDiagnostic info: "' + JSON.stringify(result) + '"',
+          Str.with(encryptedData)
+        );
+      }
+      */
+    }
+    return {};
   };
 }

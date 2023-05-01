@@ -2,13 +2,10 @@
 
 'use strict';
 
-import { ApiErr } from '../../../js/common/api/shared/api-error.js';
 import { Browser } from '../../../js/common/browser/browser.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
-import { Catch } from '../../../js/common/platform/catch.js';
-import { FormatError } from '../../../js/common/core/crypto/pgp/msg-util.js';
 import { Lang } from '../../../js/common/lang.js';
-import { PgpBlockView } from '../pgp_block.js';
+import { PgpBaseBlockView } from '../pgp_base_block_view.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { Str } from '../../../js/common/core/common.js';
@@ -16,13 +13,13 @@ import { Str } from '../../../js/common/core/common.js';
 export class PgpBlockViewErrorModule {
   private debugId = Str.sloppyRandom();
 
-  public constructor(private view: PgpBlockView) {}
+  public constructor(private view: PgpBaseBlockView) {}
 
-  public renderErr = async (errBoxContent: string, renderRawMsg: string | undefined, errMsg?: string) => {
+  public renderErr = (errBoxContent: string, renderRawMsg: string | undefined, errMsg?: string) => {
     this.view.renderModule.setFrameColor('red');
     this.view.renderModule.renderErrorStatus(errMsg || 'decrypt error');
     const showRawMsgPrompt = renderRawMsg ? '<a href="#" class="action_show_raw_pgp_block">show original message</a>' : '';
-    await this.view.renderModule.renderContent(`<div class="error">${errBoxContent.replace(/\n/g, '<br>')}</div>${showRawMsgPrompt}`, true);
+    this.view.renderModule.renderContent(`<div class="error">${errBoxContent.replace(/\n/g, '<br>')}</div>${showRawMsgPrompt}`, true);
     $('.action_show_raw_pgp_block').on(
       'click',
       this.view.setHandler(async () => {
@@ -79,28 +76,6 @@ export class PgpBlockViewErrorModule {
           this.btnHtml('settings', 'gray2 settings_keyserver'),
         undefined
       );
-    }
-  };
-
-  public handleInitializeErr = async (e: unknown) => {
-    if (ApiErr.isNetErr(e)) {
-      await this.renderErr(`Could not load message due to network error. ${Ui.retryLink()}`, undefined);
-    } else if (ApiErr.isAuthErr(e)) {
-      BrowserMsg.send.notificationShowAuthPopupNeeded(this.view.parentTabId, { acctEmail: this.view.acctEmail });
-      await this.renderErr(`Could not load message due to missing auth. ${Ui.retryLink()}`, undefined);
-    } else if (e instanceof FormatError) {
-      await this.renderErr(
-        Lang.pgpBlock.cantOpen + Lang.pgpBlock.badFormat + Lang.pgpBlock.details + e.message + ' ' + Lang.pgpBlock.dontKnowHowOpen(!!this.view.fesUrl),
-        e.data
-      );
-    } else if (ApiErr.isInPrivateMode(e)) {
-      await this.renderErr(
-        `FlowCrypt does not work in a Firefox Private Window (or when Firefox Containers are used). Please try in a standard window.`,
-        undefined
-      );
-    } else {
-      Catch.reportErr(e);
-      await this.renderErr(Xss.escape(String(e)), this.view.encryptedMsgUrlParam ? this.view.encryptedMsgUrlParam.toUtfStr() : undefined);
     }
   };
 

@@ -25,15 +25,12 @@ import { SendAsAlias } from '../../common/platform/store/acct-store.js';
 // todo: can we somehow define a purely relay class for ContactStore to clearly show that crypto-libraries are not loaded and can't be used?
 import { ContactStore } from '../../common/platform/store/contact-store.js';
 import { Buf } from '../../common/core/buf.js';
-import { MessageRenderer } from '../../common/message-renderer.js';
+import { JQueryEl, MessageRenderer } from '../../common/message-renderer.js';
 import { RelayManager } from '../../common/relay-manager.js';
 import { Mime } from '../../common/core/mime.js';
 import { FormatError, MsgUtil } from '../../common/core/crypto/pgp/msg-util.js';
 import { RenderInterface } from '../../common/render-interface.js';
 import { MsgBlock, MsgBlockType } from '../../common/core/msg-block.js';
-import { KeyStore } from '../../common/platform/store/key-store.js';
-
-type JQueryEl = JQuery<HTMLElement>;
 
 type ProcessedMessage = { renderedXssSafe?: string; blocksInFrames: Dict<MsgBlock>; attachments: Attachment[]; from: string | undefined };
 
@@ -57,6 +54,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
   private switchToEncryptedReply = false;
   private removeNextReplyBoxBorders = false;
   private shouldShowEditableSecureReply = false;
+  private readonly messageRenderer: MessageRenderer;
 
   private sel = {
     // gmail_variant=standard|new
@@ -91,6 +89,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
   ) {
     this.webmailCommon = new WebmailCommon(acctEmail, injector);
     this.gmail = new Gmail(acctEmail);
+    this.messageRenderer = new MessageRenderer(acctEmail);
     this.pubLookup = new PubLookup(this.clientConfiguration);
   }
 
@@ -256,7 +255,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
       const { renderedXssSafe, blocksInFrames, from } = await this.msgGetProcessed(msgId);
       const senderEmail = this.getSenderEmail(this.getMsgBodyEl(msgId)) || from;
       // todo: const isOutgoing = !!this.sendAs[senderEmail];
-      MessageRenderer.processInlineBlocks(this.relayManager, this.factory, this.acctEmail, blocksInFrames, senderEmail).catch(Catch.reportErr);
+      this.messageRenderer.processInlineBlocks(this.relayManager, this.factory, blocksInFrames, senderEmail).catch(Catch.reportErr);
       if (renderedXssSafe) {
         $(this.sel.translatePrompt).hide();
         if (this.debug) {
@@ -629,14 +628,14 @@ export class GmailElementReplacer implements WebmailElementReplacer {
   ) => {
     const { frameId, frameXssSafe } = this.factory.embeddedRenderMsg(type);
     msgElReference.msgEl = this.updateMsgBodyEl_DANGEROUSLY(msgElReference.msgEl, 'set', frameXssSafe); // xss-safe-factory
-    MessageRenderer.relayAndProcess(this.relayManager, this.factory, frameId, cb).catch(Catch.reportErr);
+    this.messageRenderer.relayAndProcess(this.relayManager, this.factory, frameId, cb).catch(Catch.reportErr);
   };
 
   private processSignedMessage = async (msgId: string, renderModule: RenderInterface, senderEmail: string) => {
     try {
       renderModule.renderText('Loading signed message...');
       const raw = await this.msgGetRaw(msgId);
-      return await MessageRenderer.renderSignedMessage(this.acctEmail, raw, renderModule, senderEmail);
+      return await this.messageRenderer.renderSignedMessage(raw, renderModule, senderEmail);
     } catch {
       // todo: render error via renderModule
     }
@@ -658,8 +657,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
         throw new FormatError('Problem extracting armored message', attachment.getData().toUtfStr());
       }
       renderModule.renderText('Decrypting...');
-      const kisWithPp = await KeyStore.getAllWithOptionalPassPhrase(this.acctEmail); // todo: cache?
-      return await MessageRenderer.renderEncryptedMessage(this.acctEmail, armoredMsg, kisWithPp, renderModule, senderEmail);
+      return await this.messageRenderer.renderEncryptedMessage(armoredMsg, renderModule, senderEmail);
     } catch {
       // todo: render error via renderModule
     }

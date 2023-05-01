@@ -10,7 +10,11 @@ import { TransferableAttachment } from './core/attachment.js';
 export class RenderRelay implements RenderInterface {
   public constructor(private relayManager: RelayManagerInterface, private frameId: string) {}
 
-  public renderInnerAttachments = async (attachments: TransferableAttachment[], isEncrypted: boolean) => {
+  public renderErr = (errBoxContent: string, renderRawMsg: string | undefined, errMsg?: string | undefined) => {
+    this.relay({ renderErr: { errBoxContent, renderRawMsg, errMsg } });
+  };
+
+  public renderInnerAttachments = (attachments: TransferableAttachment[], isEncrypted: boolean) => {
     this.relay({ renderInnerAttachments: { attachments, isEncrypted } });
   };
 
@@ -43,6 +47,14 @@ export class RenderRelay implements RenderInterface {
 
   public renderVerificationInProgress = () => {
     this.relay({ renderVerificationInProgress: true });
+  };
+
+  public renderPassphraseNeeded = (longids: string[]) => {
+    this.relay({ renderPassphraseNeeded: longids });
+  };
+
+  public clearErrorStatus = () => {
+    this.relay({ clearErrorStatus: true });
   };
 
   private relay = (message: RenderMessage) => {

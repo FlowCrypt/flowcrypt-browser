@@ -6,15 +6,18 @@ import { TransferableAttachment } from './core/attachment.js';
 
 export type RenderMessage = {
   setTestState?: 'ready' | 'working' | 'waiting';
-  resizePgpBlockFrame?: boolean;
+  resizePgpBlockFrame?: true;
   separateQuotedContentAndRenderText?: { decryptedContent: string; isHtml: boolean };
   renderText?: string;
   setFrameColor?: 'green' | 'gray' | 'red';
   renderEncryptionStatus?: string;
   renderSignatureStatus?: string;
-  renderVerificationInProgress?: boolean;
+  renderVerificationInProgress?: true;
   renderInnerAttachments?: {
     attachments: TransferableAttachment[];
     isEncrypted: boolean;
   };
+  renderPassphraseNeeded?: string[]; // longids
+  renderErr?: { errBoxContent: string; renderRawMsg: string | undefined; errMsg?: string };
+  clearErrorStatus?: true;
 };

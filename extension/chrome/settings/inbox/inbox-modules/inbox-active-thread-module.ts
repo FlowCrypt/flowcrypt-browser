@@ -143,13 +143,9 @@ export class InboxActiveThreadModule extends ViewModule<InboxView> {
           : '');
       $('.thread').append(this.wrapMsg(htmlId, r)); // xss-safe-factory
       // todo: isOutgoing ?
-      MessageRenderer.processInlineBlocks(
-        this.view.relayManager,
-        this.view.factory,
-        this.view.acctEmail,
-        blocksInFrames,
-        from ? Str.parseEmail(from).email : undefined
-      ).catch(Catch.reportErr);
+      this.view.messageRenderer
+        .processInlineBlocks(this.view.relayManager, this.view.factory, blocksInFrames, from ? Str.parseEmail(from).email : undefined)
+        .catch(Catch.reportErr);
       if (exportBtn) {
         $('.action-export').on(
           'click',

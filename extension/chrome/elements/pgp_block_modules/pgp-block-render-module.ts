@@ -3,9 +3,11 @@
 'use strict';
 
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
+import { Ui } from '../../../js/common/browser/ui.js';
+import { Lang } from '../../../js/common/lang.js';
 import { Catch } from '../../../js/common/platform/catch.js';
 import { Xss } from '../../../js/common/platform/xss.js';
-import { PgpBaseBlockView } from '../pgp_base_block_view';
+import { PgpBaseBlockView } from '../pgp_base_block_view.js';
 
 export class PgpBlockViewRenderModule {
   public doNotSetStateAsReadyYet = false;
@@ -100,6 +102,20 @@ export class PgpBlockViewRenderModule {
     await this.renderContent(content, false);
   };
 
+  public renderPassphraseNeeded = (longids: string[]) => {
+    const enterPp = `<a href="#" class="enter_passphrase" data-test="action-show-passphrase-dialog">${Lang.pgpBlock.enterPassphrase}</a> ${Lang.pgpBlock.toOpenMsg}`;
+    this.view.errorModule.renderErr(enterPp, undefined, 'pass phrase needed');
+    $('.enter_passphrase').on(
+      'click',
+      this.view.setHandler(() => {
+        Ui.setTestState('waiting');
+        BrowserMsg.send.passphraseDialog(this.view.parentTabId, {
+          type: 'message',
+          longids,
+        });
+      })
+    );
+  };
   public renderErrorStatus = (status: string): JQuery<HTMLElement> => {
     return $('#pgp_error').text(status).show();
   };
