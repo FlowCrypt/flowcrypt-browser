@@ -98,7 +98,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
         t.mockApi!.configProvider = new ConfigurationProvider({
           attester: singlePubKeyAttesterConfig(acctEmail, somePubkey),
         });
-        const { accessToken } = await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
+        const { authHdr } = await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
         const expectedContent = 'flowcrypt-browser issue #5029 test email';
         const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`);
         await inboxPage.waitForSelTestState('ready');
@@ -108,8 +108,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
           content: [expectedContent],
         });
         await inboxPage.close();
-        const extraAuthHeaders = { Authorization: `Bearer ${accessToken}` }; // eslint-disable-line @typescript-eslint/naming-convention
-        const gmailPage = await browser.newPage(t, `${t.urls?.mockGmailUrl()}/${threadId}`, undefined, extraAuthHeaders);
+        const gmailPage = await browser.newPage(t, `${t.urls?.mockGmailUrl()}/${threadId}`, undefined, authHdr);
         await gmailPage.waitAll('iframe');
         await BrowserRecipe.pgpBlockCheck(t, await gmailPage.getFrame(['pgp_render_block.htm']), {
           encryption: 'not encrypted',
@@ -1171,18 +1170,23 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
         t.mockApi!.configProvider = new ConfigurationProvider({
           attester: singlePubKeyAttesterConfig(acctEmail, somePubkey),
         });
-        await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
+        const expectedMessage = {
+          content: ['This is unsigned, encrypted message'],
+          encryption: 'encrypted',
+          signature: 'not signed',
+        };
+        const { authHdr } = await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
         const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`);
         await inboxPage.waitAll('iframe');
         const urls = await inboxPage.getFramesUrls(['/chrome/elements/pgp_render_block.htm'], { sleep: 3 });
         expect(urls.length).to.equal(1);
-        const url = urls[0].split('/chrome/elements/pgp_block.htm')[1];
-        await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
-          params: url,
-          content: ['This is unsigned, encrypted message'],
-          encryption: 'encrypted',
-          signature: 'not signed',
-        });
+        await BrowserRecipe.pgpBlockCheck(t, await inboxPage.getFrame([urls[0]]), expectedMessage);
+        await inboxPage.close();
+        const gmailPage = await browser.newPage(t, `${t.urls?.mockGmailUrl()}/${threadId}`, undefined, authHdr);
+        await gmailPage.waitAll('iframe', { timeout: 2 });
+        const frameUrlsFromGmailPage = await gmailPage.getFramesUrls(['/chrome/elements/pgp_render_block.htm'], { sleep: 10, appearIn: 20 });
+        expect(frameUrlsFromGmailPage.length).to.equal(1);
+        await BrowserRecipe.pgpBlockCheck(t, await gmailPage.getFrame([frameUrlsFromGmailPage[0]]), expectedMessage);
       })
     );
 
@@ -1236,7 +1240,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
             },
           },
         });
-        const { accessToken } = await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
+        const { authHdr } = await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
         await PageRecipe.addPubkey(
           t,
           browser,
@@ -1245,8 +1249,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
           'sender@example.com'
         );
         // todo: make sure pubkey2864E326A5BE488A isn't present in ContactStore yet
-        const extraAuthHeaders = { Authorization: `Bearer ${accessToken}` }; // eslint-disable-line @typescript-eslint/naming-convention
-        const gmailPage = await browser.newPage(t, `${t.urls?.mockGmailUrl()}/${threadId}`, undefined, extraAuthHeaders);
+        const gmailPage = await browser.newPage(t, `${t.urls?.mockGmailUrl()}/${threadId}`, undefined, authHdr);
         await gmailPage.waitAll('iframe', { timeout: 2 });
         const frameUrlsFromGmailPage = await gmailPage.getFramesUrls(['/chrome/elements/pgp_render_block.htm'], { sleep: 10, appearIn: 20 });
         expect(frameUrlsFromGmailPage.length).to.equal(1);
