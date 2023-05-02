@@ -1790,6 +1790,7 @@ d6Z36//MsmczN00Wd60t9T+qyLz0T4/UG2Y9lgf367f3d+kYPE0LS7mXuFmjlPXfw0nKyVsSeFiu
       testWithBrowser(async (t, browser) => {
         const threadId = '187365d19ec9a10c';
         const threadId2 = '18736a0687a8426b';
+        const threadId3 = '187cfc92db548a0c';
         const acctEmail = 'flowcrypt.compatibility@gmail.com';
         const expectedErrMsg = 'This executable file was not checked for viruses, and may be dangerous to download or run. Proceed anyway?';
         t.mockApi!.configProvider = new ConfigurationProvider({
@@ -1874,6 +1875,26 @@ d6Z36//MsmczN00Wd60t9T+qyLz0T4/UG2Y9lgf367f3d+kYPE0LS7mXuFmjlPXfw0nKyVsSeFiu
         );
         expect(Object.entries(downloadedFile6).length).to.equal(1);
         await gmailPage2.close();
+        // check warning modal for regular unencrypted attachment on FlowCrypt web extension page
+        const inboxPage3 = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId3}`);
+        const attachmentFrame2 = await inboxPage3.getFrame(['attachment.htm']);
+        await attachmentFrame2.waitAndClick('@download-attachment');
+        const downloadedFile7 = await inboxPage3.awaitDownloadTriggeredByClicking(() =>
+          PageRecipe.waitForModalAndRespond(inboxPage3, 'confirm', {
+            contentToCheck: expectedErrMsg,
+            clickOn: 'confirm',
+          })
+        );
+        await attachmentFrame2.waitAndClick('@attachment-container');
+        const attachmentPreviewPage3 = await inboxPage3.getFrame(['attachment_preview.htm']);
+        await attachmentPreviewPage3.waitAndClick('@attachment-preview-download');
+        const downloadedFile8 = await attachmentPreviewPage3.awaitDownloadTriggeredByClicking(() =>
+          PageRecipe.waitForModalAndRespond(attachmentPreviewPage3, 'confirm', {
+            contentToCheck: expectedErrMsg,
+            clickOn: 'confirm',
+          })
+        );
+        expect(Object.entries([downloadedFile7, downloadedFile8]).length).to.equal(2);
       })
     );
   }
