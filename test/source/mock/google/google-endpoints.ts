@@ -80,6 +80,13 @@ export const getMockGoogleEndpoints = (oauth: OauthMock): HandlersDefinition => 
       }
       throw new Error(`Method not implemented for ${req.url}: ${req.method}`);
     },
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    '/oauth2/v3/tokeninfo': async ({ query: { access_token } }, req) => {
+      if (isGet(req)) {
+        return oauth.getTokenInfo(access_token);
+      }
+      throw new Error(`Method not implemented for ${req.url}: ${req.method}`);
+    },
     '/v1/people:searchContacts': async ({ query: { query } }, req) => {
       if (!isGet(req)) {
         throw new HttpClientErr(`Method not implemented for ${req.url}: ${req.method}`);
