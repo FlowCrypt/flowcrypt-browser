@@ -8,9 +8,7 @@ Get the [FlowCrypt](https://flowcrypt.com/) browser extension from the [FlowCryp
 
 Mock tests: ![Mock tests](https://flowcrypt.semaphoreci.com/badges/flowcrypt-browser.svg?key=d575b4ff-e35d-4217-9152-27cea9e72c19)
 
-Live tests: [![Live Tests](https://semaphoreci.com/api/v1/flowcrypt/flowcrypt-browser/branches/master/badge.svg)](https://semaphoreci.com/flowcrypt/flowcrypt-browser)
-
-This project has been written in TypeScript. However, since browsers only understand JavaScript, the project needs to be transpiled to it. You need to build the project the first time you download/clone it, and then build it again after each change you make to see the result in the browser. To get started, please follow the instructions below:
+We're developing the project in TypeScript. However, since browsers only understand JavaScript, the project needs to be transpiled to it. You need to build the project the first time you download/clone it, and then build it again after each change you make to see the result in the browser. To get started, please follow the instructions below:
 
 1. Navigate to the project folder and install the tooling by running the following commands:
 
@@ -22,6 +20,7 @@ $ npm install
 ```
 
 2. To build the project (currently available for Linux and Mac only), run the following command:
+
 
 ```bash
 $ npm run build
@@ -43,11 +42,11 @@ Similarly, to load the extension in Firefox, please follow these steps:
 1. Open your Firefox browser and navigate to `about:debugging`.
 2. Click on the `This Firefox` tab.
 3. Click on the `Load Temporary Add-on` button located at the top-right corner.
-4. Browse to the `flowcrypt-browser/build` folder and select the appropriate project version, either `build/firefox-consumer` or `firefox-enterprise`, and select the `manifest.json` file.
+4. Browse to the `flowcrypt-browser/build` folder and select the `build/firefox-consumer` project version, and select the `manifest.json` file.
 
 If you wish, you can also use the `run_firefox` script (`npm run run_firefox`) included in the `package.json` file to run the Firefox extension in a separate instance without interfering with the production extension installed in your browser.
 
-Printing debug data to test logs can be accomplished using a special `Debug` class: [github.com/FlowCrypt/flowcrypt-browser](https://github.com/FlowCrypt/flowcrypt-browser/tree/master/extension/js/common/platform/debug.ts#L7)
+Printing debug data to test logs can be accomplished using a [special Debug class](https://github.com/FlowCrypt/flowcrypt-browser/tree/master/extension/js/common/platform/debug.ts#L7).
 
 ### Note for Mac OS users
 
