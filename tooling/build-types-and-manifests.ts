@@ -91,6 +91,12 @@ const updateEnterpriseBuild = () => {
       pattern: /const FLAVOR = 'consumer';/g,
       replacement: `const FLAVOR = 'enterprise';`,
     },
+    {
+      // for now we use www.googleapis.com on consumer until CORS resolved to use gmail.googleapis.com
+      // (on enterprise we already use gmail.googleapis.com)
+      pattern: /const GMAIL_GOOGLE_API_HOST = '[^']+';/g,
+      replacement: `const GMAIL_GOOGLE_API_HOST = 'https://gmail.googleapis.com';`,
+    },
   ];
   const constFilepaths = [`${buildDir(CHROME_ENTERPRISE)}/js/common/core/const.js`, `${buildDir(CHROME_ENTERPRISE)}/js/content_scripts/webmail_bundle.js`];
   for (const constFilepath of constFilepaths) {
