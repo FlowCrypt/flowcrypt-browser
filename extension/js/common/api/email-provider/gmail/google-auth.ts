@@ -85,7 +85,7 @@ export class GoogleAuth {
   public static getTokenInfo = async (accessToken: string): Promise<GoogleTokenInfo> => {
     return (await Api.ajax(
       {
-        url: `${GMAIL_GOOGLE_API_HOST}/oauth2/v1/tokeninfo?access_token=${accessToken}`,
+        url: `${GMAIL_GOOGLE_API_HOST}/oauth2/v3/tokeninfo?access_token=${accessToken}`,
         timeout: 10000,
       },
       Catch.stackTrace()
