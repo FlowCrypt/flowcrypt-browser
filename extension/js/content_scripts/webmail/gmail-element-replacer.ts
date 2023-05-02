@@ -253,9 +253,6 @@ export class GmailElementReplacer implements WebmailElementReplacer {
       }
       const msgId = this.determineMsgId(emailContainer);
       const { renderedXssSafe, blocksInFrames, from } = await this.msgGetProcessed(msgId);
-      const senderEmail = this.getSenderEmail(this.getMsgBodyEl(msgId)) || from;
-      // todo: const isOutgoing = !!this.sendAs[senderEmail];
-      this.messageRenderer.processInlineBlocks(this.relayManager, this.factory, blocksInFrames, senderEmail).catch(Catch.reportErr);
       if (renderedXssSafe) {
         $(this.sel.translatePrompt).hide();
         if (this.debug) {
@@ -265,6 +262,9 @@ export class GmailElementReplacer implements WebmailElementReplacer {
         if (this.debug) {
           console.debug('replaceArmoredBlocks() for of emailsContainingPgpBlock -> emailContainer replaced');
         }
+        const senderEmail = this.getSenderEmail(this.getMsgBodyEl(msgId)) || from;
+        // todo: const isOutgoing = !!this.sendAs[senderEmail];
+        this.messageRenderer.processInlineBlocks(this.relayManager, this.factory, blocksInFrames, senderEmail).catch(Catch.reportErr);
       }
     }
   };

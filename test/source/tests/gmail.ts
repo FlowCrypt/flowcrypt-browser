@@ -150,14 +150,14 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       await Util.sleep(2); // wait for search results
       */
         await gotoGmailPage(gmailPage, '/FMfcgzGkbDWztBnnCgRHzjrvmFqLtcJD');
-        const pgpBlockUrls = await gmailPage.getFramesUrls(['/chrome/elements/pgp_block.htm'], {
+        const pgpBlockUrls = await gmailPage.getFramesUrls(['/chrome/elements/pgp_render_block.htm'], {
           sleep: 10,
           appearIn: 25,
         });
         expect(pgpBlockUrls.length).to.equal(1);
         await gmailPage.page.setOfflineMode(true); // go offline mode
         await gmailPage.press('Enter'); // open the message
-        const pgpBlockFrame = await gmailPage.getFrame(['pgp_block.htm']);
+        const pgpBlockFrame = await gmailPage.getFrame([pgpBlockUrls[0]]);
         await gmailPage.page.setOfflineMode(true); // go offline mode
         await pgpBlockFrame.frame.goto(pgpBlockFrame.frame.url()); // reload the frame
         await pgpBlockFrame.waitForContent('@pgp-block-content', 'this should decrypt even offline');

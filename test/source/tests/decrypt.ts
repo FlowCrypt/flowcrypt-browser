@@ -1213,9 +1213,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
         await inboxPage.waitAll('iframe', { timeout: 2 });
         const urls = await inboxPage.getFramesUrls(['/chrome/elements/pgp_render_block.htm'], { sleep: 10, appearIn: 20 });
         expect(urls.length).to.equal(1);
-        const url = urls[0].split('/chrome/elements/pgp_render_block.htm')[1];
-        await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
-          params: url,
+        await BrowserRecipe.pgpBlockCheck(t, await inboxPage.getFrame(['pgp_render_block.htm']), {
           content: ['How is my message signed?'],
           encryption: 'not encrypted',
           signature: 'signed',
@@ -1276,7 +1274,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
         t.mockApi!.configProvider = new ConfigurationProvider({
           attester: singlePubKeyAttesterConfig(acctEmail, somePubkey),
         });
-        await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
+        const { authHdr } = await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
         const dbPage = await browser.newExtensionPage(t, 'chrome/dev/ci_unit_test.htm'); // todo: url?
         // add the pubkey of the sender
         await dbPage.page.evaluate(async (pubkey: string) => {
@@ -1285,10 +1283,8 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           await (window as any).ContactStore.update(undefined, 'schlemazle@proton.me', { pubkey: key });
         }, testConstants.protonPubkey);
-        const accessToken = await BrowserRecipe.getGoogleAccessToken(dbPage, acctEmail);
         await dbPage.close();
-        const extraAuthHeaders = { Authorization: `Bearer ${accessToken}` }; // eslint-disable-line @typescript-eslint/naming-convention
-        const gmailPage = await browser.newPage(t, `${t.urls?.mockGmailUrl()}/1869220e0c8f16dd`, undefined, extraAuthHeaders);
+        const gmailPage = await browser.newPage(t, `${t.urls?.mockGmailUrl()}/1869220e0c8f16dd`, undefined, authHdr);
         await gmailPage.waitAll('iframe');
         const pgpBlock = await gmailPage.getFrame(['pgp_render_block.htm']);
         await BrowserRecipe.pgpBlockCheck(t, pgpBlock, {
@@ -1350,12 +1346,10 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
         t.mockApi!.configProvider = new ConfigurationProvider({
           attester: singlePubKeyAttesterConfig(acctEmail, somePubkey),
         });
-        await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
+        const { authHdr } = await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
         const settingsPage = await browser.newExtensionSettingsPage(t, acctEmail);
-        const accessToken = await BrowserRecipe.getGoogleAccessToken(settingsPage, acctEmail); // todo: include in t?
         await settingsPage.close();
-        const extraAuthHeaders = { Authorization: `Bearer ${accessToken}` }; // eslint-disable-line @typescript-eslint/naming-convention
-        const gmailPage = await browser.newPage(t, `${t.urls?.mockGmailUrl()}/1866867cfdb8b61e`, undefined, extraAuthHeaders);
+        const gmailPage = await browser.newPage(t, `${t.urls?.mockGmailUrl()}/1866867cfdb8b61e`, undefined, authHdr);
         await gmailPage.waitAll('iframe');
         const pgpBlocks = await Promise.all((await gmailPage.getFramesUrls(['pgp_render_block.htm'])).map(url => gmailPage.getFrame([url])));
         expect(pgpBlocks.length).to.equal(3);
@@ -1832,7 +1826,7 @@ d6Z36//MsmczN00Wd60t9T+qyLz0T4/UG2Y9lgf367f3d+kYPE0LS7mXuFmjlPXfw0nKyVsSeFiu
             },
           },
         });
-        await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
+        const { authHdr } = await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
         const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`);
         const pgpBlockPage = await inboxPage.getFrame(['pgp_render_block.htm']);
         await pgpBlockPage.waitAndClick('@download-attachment-0');
@@ -1867,10 +1861,8 @@ d6Z36//MsmczN00Wd60t9T+qyLz0T4/UG2Y9lgf367f3d+kYPE0LS7mXuFmjlPXfw0nKyVsSeFiu
           })
         );
         expect(Object.entries(downloadedFile3).length).to.equal(1);
-        const accessToken = await BrowserRecipe.getGoogleAccessToken(inboxPage2, acctEmail);
         await inboxPage2.close();
-        const extraAuthHeaders = { Authorization: `Bearer ${accessToken}` }; // eslint-disable-line @typescript-eslint/naming-convention
-        const gmailPage = await browser.newPage(t, `${t.urls?.mockGmailUrl()}/${threadId}`, undefined, extraAuthHeaders);
+        const gmailPage = await browser.newPage(t, `${t.urls?.mockGmailUrl()}/${threadId}`, undefined, authHdr);
         await gmailPage.waitAll('iframe');
         const pgpBlockPage3 = await gmailPage.getFrame(['pgp_render_block.htm']);
         await pgpBlockPage3.waitAndClick('@download-attachment-0');
@@ -1894,7 +1886,7 @@ d6Z36//MsmczN00Wd60t9T+qyLz0T4/UG2Y9lgf367f3d+kYPE0LS7mXuFmjlPXfw0nKyVsSeFiu
         );
         expect(Object.entries([downloadedFile4, downloadedFile5]).length).to.equal(2);
         await gmailPage.close();
-        const gmailPage2 = await browser.newPage(t, `${t.urls?.mockGmailUrl()}/${threadId2}`, undefined, extraAuthHeaders);
+        const gmailPage2 = await browser.newPage(t, `${t.urls?.mockGmailUrl()}/${threadId2}`, undefined, authHdr);
         const pgpBlockPage4 = await gmailPage2.getFrame(['pgp_render_block.htm']);
         // todo: glitch? it shows "not encrypted" and "not signed"
         await pgpBlockPage4.waitAndClick('@download-attachment-0');
