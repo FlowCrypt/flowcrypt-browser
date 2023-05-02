@@ -9,6 +9,7 @@ import { View } from '../../js/common/view.js';
 import { PgpBaseBlockView } from './pgp_base_block_view.js';
 import { RenderMessage } from '../../js/common/render-message.js';
 import { Attachment } from '../../js/common/core/attachment.js';
+import { Xss } from '../../js/common/platform/xss.js';
 
 export class PgpRenderBlockView extends PgpBaseBlockView {
   public constructor() {
@@ -25,16 +26,14 @@ export class PgpRenderBlockView extends PgpBaseBlockView {
   }
 
   public render = async () => {
-    // await this.renderModule.initPrintView();
+    //
   };
 
   public setHandlers = () => {
-    /*
     $('.pgp_print_button').on(
       'click',
-      this.setHandler(() => this.renderModule.printPGPBlock())
+      this.setHandler(() => this.printModule.printPGPBlock())
     );
-    */
   };
 
   private handleMessage = (event: MessageEvent<unknown>) => {
@@ -79,6 +78,10 @@ export class PgpRenderBlockView extends PgpBaseBlockView {
     }
     if (data?.setTestState) {
       Ui.setTestState(data.setTestState);
+    }
+    if (data?.printMailInfo) {
+      Xss.sanitizeRender('.print_user_email', data.printMailInfo.userNameAndEmail);
+      this.printModule.printMailInfoHtml = data.printMailInfo.html;
     }
   };
 }

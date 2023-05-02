@@ -3,6 +3,7 @@
 'use strict';
 
 import { TransferableAttachment } from './core/attachment.js';
+import { PrintMailInfo } from './render-message.js';
 
 export interface RenderInterfaceBase {
   resizePgpBlockFrame(): void;
@@ -13,6 +14,7 @@ export interface RenderInterfaceBase {
 }
 
 export interface RenderInterface extends RenderInterfaceBase {
+  setPrintMailInfo(info: PrintMailInfo): void;
   clearErrorStatus(): void;
   renderPassphraseNeeded(longids: string[]): void;
   renderErr(errBoxContent: string, renderRawMsg: string | undefined, errMsg?: string): void;

@@ -108,9 +108,10 @@ export class InboxActiveThreadModule extends ViewModule<InboxView> {
     const htmlId = this.replyMsgId(message.id);
     const from = GmailParser.findHeader(message, 'from');
     try {
-      const { raw } = await this.view.gmail.msgGet(message.id, 'raw');
+      const msg = await this.view.gmail.msgGet(message.id, 'raw');
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      const { blocks, headers } = await MessageRenderer.processMessageFromRaw(raw!);
+      const { blocks, headers } = await MessageRenderer.processMessageFromRaw(msg.raw!);
+      const printInfoHtml = await this.view.messageRenderer.getPrintViewInfo(msg);
       // todo: review the meaning of threadHasPgpBlock
       this.threadHasPgpBlock ||= blocks.some(block => ['encryptedMsg', 'publicKey', 'privateKey', 'signedMsg'].includes(block.block.type));
       // todo: take `from` from the processedMessage?
@@ -144,7 +145,7 @@ export class InboxActiveThreadModule extends ViewModule<InboxView> {
       $('.thread').append(this.wrapMsg(htmlId, r)); // xss-safe-factory
       // todo: isOutgoing ?
       this.view.messageRenderer
-        .processInlineBlocks(this.view.relayManager, this.view.factory, blocksInFrames, from ? Str.parseEmail(from).email : undefined)
+        .processInlineBlocks(this.view.relayManager, this.view.factory, printInfoHtml, blocksInFrames, from ? Str.parseEmail(from).email : undefined)
         .catch(Catch.reportErr);
       if (exportBtn) {
         $('.action-export').on(

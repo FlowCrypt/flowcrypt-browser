@@ -15,13 +15,14 @@ import { MsgBlockParser } from './core/msg-block-parser.js';
 import { MsgBlock } from './core/msg-block.js';
 import { Lang } from './lang.js';
 import { Catch } from './platform/catch.js';
-import { SendAsAlias } from './platform/store/acct-store.js';
+import { AcctStore, SendAsAlias } from './platform/store/acct-store.js';
 import { ContactStore } from './platform/store/contact-store.js';
 import { KeyStore } from './platform/store/key-store.js';
 import { PassphraseStore } from './platform/store/passphrase-store.js';
 import { Xss } from './platform/xss.js';
 import { RelayManager } from './relay-manager.js';
 import { RenderInterface, RenderInterfaceBase } from './render-interface.js';
+import { PrintMailInfo } from './render-message';
 import { saveFetchedPubkeysIfNewerThanInStorage } from './shared.js';
 import { XssSafeFactory } from './xss-safe-factory.js';
 import * as DOMPurify from 'dompurify';
@@ -284,11 +285,13 @@ export class MessageRenderer {
     relayManager: RelayManager,
     factory: XssSafeFactory,
     frameId: string,
+    printMailInfo: PrintMailInfo,
     cb: (renderModule: RenderInterface) => Promise<{ publicKeys?: string[]; needPassphrase?: string[] }>
   ) => {
     const embeddedReference = XssSafeFactory.getEmbeddedMsg(frameId);
     if (embeddedReference) {
       const renderModule = relayManager.createRelay(frameId, embeddedReference.frameWindow);
+      renderModule.setPrintMailInfo(printMailInfo);
       let result = await cb(renderModule);
       const appendAfter = $(`iframe#${frameId}`);
       // todo: how publicKeys and needPassphrase interact?
@@ -314,13 +317,16 @@ export class MessageRenderer {
   public processInlineBlocks = async (
     relayManager: RelayManager,
     factory: XssSafeFactory,
+    printMailInfo: PrintMailInfo,
     blocks: Dict<MsgBlock>,
     from?: string // need to unify somehow when we accept `abc <email@address>` and when just `email@address`
   ) => {
     const signerEmail = from ? Str.parseEmail(from).email : undefined;
     await Promise.all(
       Object.entries(blocks).map(([frameId, block]) =>
-        this.relayAndProcess(relayManager, factory, frameId, renderModule => this.renderMsgBlock(block, renderModule, signerEmail)).catch(Catch.reportErr)
+        this.relayAndProcess(relayManager, factory, frameId, printMailInfo, renderModule => this.renderMsgBlock(block, renderModule, signerEmail)).catch(
+          Catch.reportErr
+        )
       )
     );
   };
@@ -451,5 +457,40 @@ export class MessageRenderer {
       */
     }
     return {};
+  };
+
+  public getPrintViewInfo = async (metadata: GmailRes.GmailMsg): Promise<PrintMailInfo> => {
+    const fullName = await AcctStore.get(this.acctEmail, ['full_name']); // todo: cache
+    const sentDate = new Date(GmailParser.findHeader(metadata, 'date') ?? '');
+    const sentDateStr = Str.fromDate(sentDate).replace(' ', ' at ');
+    const from = Str.parseEmail(GmailParser.findHeader(metadata, 'from') ?? '');
+    const fromHtml = from.name ? `<b>${Xss.htmlSanitize(from.name)}</b> &lt;${from.email}&gt;` : from.email;
+    /* eslint-disable @typescript-eslint/no-non-null-assertion */
+    const ccString = GmailParser.findHeader(metadata, 'cc')
+      ? `Cc: <span data-test="print-cc">${Xss.escape(GmailParser.findHeader(metadata, 'cc')!)}</span><br/>`
+      : '';
+    const bccString = GmailParser.findHeader(metadata, 'bcc') ? `Bcc: <span>${Xss.escape(GmailParser.findHeader(metadata, 'bcc')!)}</span><br/>` : '';
+    /* eslint-enable @typescript-eslint/no-non-null-assertion */
+    return {
+      userNameAndEmail: `<b>${fullName.full_name}</b> &lt;${this.acctEmail}&gt;`,
+      html: `
+      <hr>
+      <p class="subject-label" data-test="print-subject">${Xss.htmlSanitize(GmailParser.findHeader(metadata, 'subject') ?? '')}</p>
+      <hr>
+      <br/>
+      <div>
+        <div class="inline-block">
+          <span data-test="print-from">From: ${fromHtml}</span>
+        </div>
+        <div class="float-right">
+          <span>${sentDateStr}</span>
+        </div>
+      </div>
+      <span data-test="print-to">To: ${Xss.escape(GmailParser.findHeader(metadata, 'to') ?? '')}</span><br/>
+      ${ccString}
+      ${bccString}
+      <br/><hr>
+    `,
+    };
   };
 }

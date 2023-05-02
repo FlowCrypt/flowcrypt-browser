@@ -4,6 +4,11 @@
 
 import { TransferableAttachment } from './core/attachment.js';
 
+export type PrintMailInfo = {
+  userNameAndEmail: string;
+  html: string;
+};
+
 export type RenderMessage = {
   setTestState?: 'ready' | 'working' | 'waiting';
   resizePgpBlockFrame?: true;
@@ -20,4 +25,5 @@ export type RenderMessage = {
   renderPassphraseNeeded?: string[]; // longids
   renderErr?: { errBoxContent: string; renderRawMsg: string | undefined; errMsg?: string };
   clearErrorStatus?: true;
+  printMailInfo?: PrintMailInfo;
 };

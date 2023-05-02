@@ -5,6 +5,7 @@
 import { View } from '../../js/common/view.js';
 import { PgpBlockViewAttachmentsModule } from './pgp_block_modules/pgp-block-attachmens-module.js';
 import { PgpBlockViewErrorModule } from './pgp_block_modules/pgp-block-error-module.js';
+import { PgpBlockViewPrintModule } from './pgp_block_modules/pgp-block-print-module.js';
 import { PgpBlockViewQuoteModule } from './pgp_block_modules/pgp-block-quote-module.js';
 import { PgpBlockViewRenderModule } from './pgp_block_modules/pgp-block-render-module.js';
 
@@ -13,6 +14,7 @@ export abstract class PgpBaseBlockView extends View {
   public readonly renderModule: PgpBlockViewRenderModule;
   public readonly attachmentsModule: PgpBlockViewAttachmentsModule;
   public readonly errorModule: PgpBlockViewErrorModule;
+  public readonly printModule = new PgpBlockViewPrintModule();
 
   public constructor(
     public readonly debug: boolean,

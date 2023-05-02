@@ -971,9 +971,10 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
           attester: singlePubKeyAttesterConfig(acctEmail, somePubkey),
         });
         await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
+        // todo: test mock gmail page
         const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`);
         await inboxPage.waitAll('iframe');
-        const pgpBlock = await inboxPage.getFrame(['pgp_block.htm']);
+        const pgpBlock = await inboxPage.getFrame(['pgp_render_block.htm']);
         await pgpBlock.waitForSelTestState('ready');
         const printPage = await browser.newPageTriggeredBy(t, () => pgpBlock.click('@action-print'));
         await printPage.waitForContent('@print-user-email', 'First Last <flowcrypt.compatibility@gmail.com>');

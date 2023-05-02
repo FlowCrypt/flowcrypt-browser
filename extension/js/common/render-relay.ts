@@ -4,7 +4,7 @@
 
 import { RelayManagerInterface } from './relay-manager-interface.js';
 import { RenderInterface } from './render-interface.js';
-import { RenderMessage } from './render-message.js';
+import { PrintMailInfo, RenderMessage } from './render-message.js';
 import { TransferableAttachment } from './core/attachment.js';
 
 export class RenderRelay implements RenderInterface {
@@ -55,6 +55,10 @@ export class RenderRelay implements RenderInterface {
 
   public clearErrorStatus = () => {
     this.relay({ clearErrorStatus: true });
+  };
+
+  public setPrintMailInfo = (printMailInfo: PrintMailInfo) => {
+    this.relay({ printMailInfo });
   };
 
   private relay = (message: RenderMessage) => {

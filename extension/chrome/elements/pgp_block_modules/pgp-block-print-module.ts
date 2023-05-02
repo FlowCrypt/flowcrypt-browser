@@ -2,58 +2,18 @@
 
 'use strict';
 
-import { PgpBlockView } from '../pgp_block.js';
 import { Time } from '../../../js/common/browser/time.js';
+import { Catch } from '../../../js/common/platform/catch.js';
 import { Xss } from '../../../js/common/platform/xss.js';
-import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
-import { GmailParser } from '../../../js/common/api/email-provider/gmail/gmail-parser.js';
-import { Str } from '../../../js/common/core/common.js';
 
 export class PgpBlockViewPrintModule {
-  private printMailInfoHtml!: string;
-
-  public constructor(private view: PgpBlockView) {}
-
-  public initPrintView = async () => {
-    const fullName = await AcctStore.get(this.view.acctEmail, ['full_name']);
-    Xss.sanitizeRender('.print_user_email', `<b>${fullName.full_name}</b> &lt;${this.view.acctEmail}&gt;`);
-    try {
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      const gmailMsg = await this.view.gmail.msgGet(this.view.msgId!, 'metadata', undefined);
-      const sentDate = new Date(GmailParser.findHeader(gmailMsg, 'date') ?? '');
-      const sentDateStr = Str.fromDate(sentDate).replace(' ', ' at ');
-      const from = Str.parseEmail(GmailParser.findHeader(gmailMsg, 'from') ?? '');
-      const fromHtml = from.name ? `<b>${Xss.htmlSanitize(from.name)}</b> &lt;${from.email}&gt;` : from.email;
-      /* eslint-disable @typescript-eslint/no-non-null-assertion */
-      const ccString = GmailParser.findHeader(gmailMsg, 'cc')
-        ? `Cc: <span data-test="print-cc">${Xss.escape(GmailParser.findHeader(gmailMsg, 'cc')!)}</span><br/>`
-        : '';
-      const bccString = GmailParser.findHeader(gmailMsg, 'bcc') ? `Bcc: <span>${Xss.escape(GmailParser.findHeader(gmailMsg, 'bcc')!)}</span><br/>` : '';
-      /* eslint-enable @typescript-eslint/no-non-null-assertion */
-      this.printMailInfoHtml = `
-      <hr>
-      <p class="subject-label" data-test="print-subject">${Xss.htmlSanitize(GmailParser.findHeader(gmailMsg, 'subject') ?? '')}</p>
-      <hr>
-      <br/>
-      <div>
-        <div class="inline-block">
-          <span data-test="print-from">From: ${fromHtml}</span>
-        </div>
-        <div class="float-right">
-          <span>${sentDateStr}</span>
-        </div>
-      </div>
-      <span data-test="print-to">To: ${Xss.escape(GmailParser.findHeader(gmailMsg, 'to') ?? '')}</span><br/>
-      ${ccString}
-      ${bccString}
-      <br/><hr>
-    `;
-    } catch (e) {
-      this.view.errorModule.debug(`Error while getting gmail message for ${this.view.msgId} message. ${e}`);
-    }
-  };
+  public printMailInfoHtml: string | undefined;
 
   public printPGPBlock = async () => {
+    if (!this.printMailInfoHtml) {
+      Catch.reportErr('printMailInfoHtml not prepared!');
+      return;
+    }
     const w = window.open();
     const html = `
       <!DOCTYPE html>
