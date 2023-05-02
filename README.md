@@ -42,7 +42,7 @@ Similarly, to load the extension in Firefox, please follow these steps:
 1. Open your Firefox browser and navigate to `about:debugging`.
 2. Click on the `This Firefox` tab.
 3. Click on the `Load Temporary Add-on` button located at the top-right corner.
-4. Browse to the `flowcrypt-browser/build` folder and select the `build/firefox-consumer` project version, and select the `manifest.json` file.
+4. Browse to the `flowcrypt-browser/build` folder, open the `build/firefox-consumer` project version folder, and select the `manifest.json` file.
 
 If you wish, you can also use the `run_firefox` script (`npm run run_firefox`) included in the `package.json` file to run the Firefox extension in a separate instance without interfering with the production extension installed in your browser.
 
