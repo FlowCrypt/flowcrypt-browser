@@ -3,7 +3,7 @@
 'use strict';
 
 import { Str, Url } from '../../../core/common.js';
-import { FLAVOR, GMAIL_GOOGLE_API_HOST, GOOGLE_OAUTH_SCREEN_HOST, OAUTH_GOOGLE_API_HOST } from '../../../core/const.js';
+import { FLAVOR, GOOGLE_OAUTH_SCREEN_HOST, OAUTH_GOOGLE_API_HOST } from '../../../core/const.js';
 import { ApiErr } from '../../shared/api-error.js';
 import { Api } from './../../shared/api.js';
 
@@ -85,7 +85,7 @@ export class GoogleAuth {
   public static getTokenInfo = async (accessToken: string): Promise<GoogleTokenInfo> => {
     return (await Api.ajax(
       {
-        url: `${GMAIL_GOOGLE_API_HOST}/oauth2/v1/tokeninfo?access_token=${accessToken}`,
+        url: `${OAUTH_GOOGLE_API_HOST}/tokeninfo?access_token=${accessToken}`,
         timeout: 10000,
       },
       Catch.stackTrace()
