@@ -17,7 +17,8 @@ import { AcctStore } from '../../js/common/platform/store/acct-store.js';
 import { ContactStore } from '../../js/common/platform/store/contact-store.js';
 import { KeyUtil } from '../../js/common/core/crypto/key.js';
 import { PgpBaseBlockView } from './pgp_base_block_view.js';
-import { PgpBlockViewPrintModule } from './pgp_block_modules/pgp-block-print-module.js';
+import { GmailParser } from '../../js/common/api/email-provider/gmail/gmail-parser.js';
+import { Xss } from '../../js/common/platform/xss.js';
 
 export class PgpBlockView extends PgpBaseBlockView {
   public readonly isOutgoing: boolean;
@@ -34,7 +35,6 @@ export class PgpBlockView extends PgpBaseBlockView {
   public pubLookup!: PubLookup;
 
   public readonly signatureModule: PgpBlockViewSignatureModule;
-  public readonly printModule: PgpBlockViewPrintModule;
   public readonly decryptModule: PgpBlockViewDecryptModule;
 
   public fesUrl?: string;
@@ -64,7 +64,6 @@ export class PgpBlockView extends PgpBaseBlockView {
     this.gmail = new Gmail(this.acctEmail);
     // modules
     this.signatureModule = new PgpBlockViewSignatureModule(this);
-    this.printModule = new PgpBlockViewPrintModule(this);
     this.decryptModule = new PgpBlockViewDecryptModule(this);
   }
 
@@ -82,7 +81,7 @@ export class PgpBlockView extends PgpBaseBlockView {
     this.fesUrl = storage.fesUrl;
     this.clientConfiguration = await ClientConfiguration.newInstance(this.acctEmail);
     this.pubLookup = new PubLookup(this.clientConfiguration);
-    await this.printModule.initPrintView();
+    await this.initPrintView();
     if (storage.setup_done) {
       const parsedPubs = (await ContactStore.getOneWithAllPubkeys(undefined, this.getExpectedSignerEmail()))?.sortedPubkeys ?? [];
       // todo: we don't actually need parsed pubs here because we're going to pass them to the backgorund page
@@ -99,6 +98,45 @@ export class PgpBlockView extends PgpBaseBlockView {
       'click',
       this.setHandler(() => this.printModule.printPGPBlock())
     );
+  };
+
+  private initPrintView = async () => {
+    const fullName = await AcctStore.get(this.acctEmail, ['full_name']);
+    Xss.sanitizeRender('.print_user_email', `<b>${fullName.full_name}</b> &lt;${this.acctEmail}&gt;`);
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      const gmailMsg = await this.gmail.msgGet(this.msgId!, 'metadata', undefined);
+      const sentDate = new Date(GmailParser.findHeader(gmailMsg, 'date') ?? '');
+      const sentDateStr = Str.fromDate(sentDate).replace(' ', ' at ');
+      const from = Str.parseEmail(GmailParser.findHeader(gmailMsg, 'from') ?? '');
+      const fromHtml = from.name ? `<b>${Xss.htmlSanitize(from.name)}</b> &lt;${from.email}&gt;` : from.email;
+      /* eslint-disable @typescript-eslint/no-non-null-assertion */
+      const ccString = GmailParser.findHeader(gmailMsg, 'cc')
+        ? `Cc: <span data-test="print-cc">${Xss.escape(GmailParser.findHeader(gmailMsg, 'cc')!)}</span><br/>`
+        : '';
+      const bccString = GmailParser.findHeader(gmailMsg, 'bcc') ? `Bcc: <span>${Xss.escape(GmailParser.findHeader(gmailMsg, 'bcc')!)}</span><br/>` : '';
+      /* eslint-enable @typescript-eslint/no-non-null-assertion */
+      this.printModule.printMailInfoHtml = `
+      <hr>
+      <p class="subject-label" data-test="print-subject">${Xss.htmlSanitize(GmailParser.findHeader(gmailMsg, 'subject') ?? '')}</p>
+      <hr>
+      <br/>
+      <div>
+        <div class="inline-block">
+          <span data-test="print-from">From: ${fromHtml}</span>
+        </div>
+        <div class="float-right">
+          <span>${sentDateStr}</span>
+        </div>
+      </div>
+      <span data-test="print-to">To: ${Xss.escape(GmailParser.findHeader(gmailMsg, 'to') ?? '')}</span><br/>
+      ${ccString}
+      ${bccString}
+      <br/><hr>
+    `;
+    } catch (e) {
+      this.errorModule.debug(`Error while getting gmail message for ${this.msgId} message. ${e}`);
+    }
   };
 }
 
