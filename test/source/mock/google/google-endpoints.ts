@@ -74,7 +74,7 @@ export const getMockGoogleEndpoints = (oauth: OauthMock): HandlersDefinition => 
       throw new Error(`Method not implemented for ${req.url}: ${req.method}`);
     },
     // eslint-disable-next-line @typescript-eslint/naming-convention
-    '/oauth2/v1/tokeninfo': async ({ query: { access_token } }, req) => {
+    '/tokeninfo': async ({ query: { access_token } }, req) => {
       if (isGet(req)) {
         return oauth.getTokenInfo(access_token);
       }
