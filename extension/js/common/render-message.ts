@@ -26,4 +26,5 @@ export type RenderMessage = {
   renderErr?: { errBoxContent: string; renderRawMsg: string | undefined; errMsg?: string };
   clearErrorStatus?: true;
   printMailInfo?: PrintMailInfo;
+  renderAsRegularContent?: string;
 };

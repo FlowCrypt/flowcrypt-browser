@@ -95,11 +95,12 @@ export class PgpBlockViewRenderModule {
     }
   };
 
-  public renderAsRegularContent = async (content: string) => {
+  public renderAsRegularContent = (content: string) => {
     this.setFrameColor('gray');
     this.renderSignatureStatus('not signed');
     this.renderEncryptionStatus('not encrypted');
-    await this.renderContent(content, false);
+    this.renderContent(content, false);
+    Ui.setTestState('ready');
   };
 
   public renderPassphraseNeeded = (longids: string[]) => {

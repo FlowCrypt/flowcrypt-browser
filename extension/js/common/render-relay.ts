@@ -61,6 +61,10 @@ export class RenderRelay implements RenderInterface {
     this.relay({ printMailInfo });
   };
 
+  public renderAsRegularContent = (content: string) => {
+    this.relay({ renderAsRegularContent: content });
+  };
+
   private relay = (message: RenderMessage) => {
     this.relayManager.relay(this.frameId, message);
   };

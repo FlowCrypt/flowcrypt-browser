@@ -29,19 +29,26 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
       `decrypt - detect bogus pgp message`,
       testWithBrowser(async (t, browser) => {
         const threadId = '17d7a32a0613071d';
+        const msgId = '17d7a337b7b87eb9';
         const acctEmail = 'flowcrypt.compatibility@gmail.com';
         t.mockApi!.configProvider = new ConfigurationProvider({
           attester: singlePubKeyAttesterConfig(acctEmail, somePubkey),
         });
-        await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
+        const { authHdr } = await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
         const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`);
         await inboxPage.waitForSelTestState('ready');
         await inboxPage.waitAll('iframe');
-        const pgpBlock = await inboxPage.getFrame(['pgp_render_block.htm']);
-        await pgpBlock.waitForContent('@pgp-encryption', 'not encrypted');
-        await pgpBlock.waitForContent('@pgp-signature', 'not signed');
-        await pgpBlock.waitForContent('@pgp-block-content', '-----BEGIN PGP MESSAGE-----\n\nThis is not a valid PGP message');
+        const expectedMessage = {
+          encryption: 'not encrypted',
+          signature: 'not signed',
+          content: ['-----BEGIN PGP MESSAGE-----\n\nThis is not a valid PGP message'],
+        };
+        await BrowserRecipe.pgpBlockCheck(t, await inboxPage.getFrame(['pgp_render_block.htm']), expectedMessage);
         await inboxPage.close();
+        const gmailPage = await browser.newPage(t, `${t.urls?.mockGmailUrl()}/${msgId}`, undefined, authHdr);
+        await gmailPage.waitAll('iframe');
+        await BrowserRecipe.pgpBlockCheck(t, await gmailPage.getFrame(['pgp_render_block.htm']), expectedMessage);
+        await gmailPage.close();
       })
     );
 

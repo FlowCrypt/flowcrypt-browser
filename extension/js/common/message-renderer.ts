@@ -333,7 +333,7 @@ export class MessageRenderer {
 
   public renderMsgBlock = async (block: MsgBlock, renderModule: RenderInterface, signerEmail?: string) => {
     // todo: 'signedMsg' also handled here?
-    return await this.renderEncryptedMessage(block.content, renderModule, signerEmail);
+    return await this.renderEncryptedMessage(block.content, renderModule, true, signerEmail);
   };
 
   // todo: this should be moved to some other class?
@@ -385,6 +385,7 @@ export class MessageRenderer {
   public renderEncryptedMessage = async (
     encryptedData: string | Uint8Array,
     renderModule: RenderInterface,
+    fallbackToPlainText: boolean,
     signerEmail?: string
   ): Promise<{ publicKeys?: string[]; needPassphrase?: string[] }> => {
     const kisWithPp = await KeyStore.getAllWithOptionalPassPhrase(this.acctEmail); // todo: cache
@@ -405,7 +406,11 @@ export class MessageRenderer {
           : undefined
       );
     } else if (result.error.type === DecryptErrTypes.format) {
-      renderModule.renderErr(Lang.pgpBlock.badFormat + '\n\n' + result.error.message, Str.with(encryptedData));
+      if (fallbackToPlainText) {
+        renderModule.renderAsRegularContent(Str.with(encryptedData));
+      } else {
+        renderModule.renderErr(Lang.pgpBlock.badFormat + '\n\n' + result.error.message, Str.with(encryptedData));
+      }
     } else if (result.longids.needPassphrase.length) {
       renderModule.renderPassphraseNeeded(result.longids.needPassphrase);
       return { needPassphrase: result.longids.needPassphrase };

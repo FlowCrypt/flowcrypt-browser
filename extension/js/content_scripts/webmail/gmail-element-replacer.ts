@@ -674,7 +674,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
         throw new FormatError('Problem extracting armored message', attachment.getData().toUtfStr());
       }
       renderModule.renderText('Decrypting...');
-      return await this.messageRenderer.renderEncryptedMessage(armoredMsg, renderModule, senderEmail);
+      return await this.messageRenderer.renderEncryptedMessage(armoredMsg, renderModule, false, senderEmail);
     } catch {
       // todo: render error via renderModule
     }

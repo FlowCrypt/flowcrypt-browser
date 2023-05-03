@@ -83,6 +83,9 @@ export class PgpRenderBlockView extends PgpBaseBlockView {
       Xss.sanitizeRender('.print_user_email', data.printMailInfo.userNameAndEmail);
       this.printModule.printMailInfoHtml = data.printMailInfo.html;
     }
+    if (data?.renderAsRegularContent) {
+      this.renderModule.renderAsRegularContent(data.renderAsRegularContent);
+    }
   };
 }
 
