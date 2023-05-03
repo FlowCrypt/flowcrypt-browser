@@ -170,16 +170,19 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
         t.mockApi!.configProvider = new ConfigurationProvider({
           attester: singlePubKeyAttesterConfig(acctEmail, somePubkey),
         });
-        await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
+        const { authHdr } = await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
         const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`);
         await inboxPage.waitForSelTestState('ready');
         await inboxPage.waitAll('iframe');
         expect(await inboxPage.isElementPresent('@container-attachments')).to.equal(true);
         await inboxPage.waitForContent('.message.line', 'Plain message');
         // expect no pgp blocks
-        const urls = await inboxPage.getFramesUrls(['/chrome/elements/pgp_block.htm']);
+        const urls = await inboxPage.getFramesUrls(['/chrome/elements/pgp_render_block.htm']);
         expect(urls.length).to.equal(0);
         await inboxPage.close();
+        const gmailPage = await browser.newPage(t, `${t.urls?.mockGmailUrl()}/${threadId}`, undefined, authHdr);
+        expect((await inboxPage.getFramesUrls(['pgp_render_block.htm'])).length).to.equal(0);
+        await gmailPage.close();
       })
     );
 
@@ -1001,13 +1004,20 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
         t.mockApi!.configProvider = new ConfigurationProvider({
           attester: singlePubKeyAttesterConfig(acctEmail, somePubkey),
         });
-        await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
+        const { authHdr } = await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
         const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`);
         await inboxPage.waitAll('iframe');
         const pgpBlock = await inboxPage.getFrame(['pgp_block.htm']);
         await pgpBlock.waitForSelTestState('ready');
         const urls = await inboxPage.getFramesUrls(['pgp_pubkey.htm'], { sleep: 3 });
         expect(urls.length).to.be.equal(1);
+        await inboxPage.close();
+        const gmailPage = await browser.newPage(t, `${t.urls?.mockGmailUrl()}/${threadId}`, undefined, authHdr);
+        await gmailPage.waitAll('iframe');
+        const pgpBlockFromGmailPage = await gmailPage.getFrame(['pgp_render_block.htm']);
+        await pgpBlockFromGmailPage.waitForSelTestState('ready');
+        const frameUrlsFromGmailPage = await inboxPage.getFramesUrls(['pgp_pubkey.htm'], { sleep: 3 });
+        expect(frameUrlsFromGmailPage.length).to.be.equal(1);
       })
     );
 
