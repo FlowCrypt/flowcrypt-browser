@@ -8,9 +8,10 @@ import { readdirSync, readFileSync } from 'fs';
 import { Buf } from '../core/buf';
 import { testConstants } from './tooling/consts';
 import { BrowserRecipe } from './tooling/browser-recipe';
-import { ConfigurationProvider } from '../mock/lib/api';
+import { ConfigurationProvider, HttpClientErr, Status } from '../mock/lib/api';
 import { somePubkey } from '../mock/attester/attester-key-constants';
 import { aliceKey, jackAdvancedKey, johnDoeDirectKey, johnDoeAdvancedKey } from '../mock/wkd/wkd-constants';
+import { johnDoeExampleComKey } from '../mock/sks/sks-constants';
 
 type UnitTest = { title: string; code: string; acct?: CommonAcct; only: boolean };
 
@@ -48,6 +49,14 @@ export const defineUnitBrowserTests = (testVariant: TestVariant, testWithBrowser
                   'john.doe': { pubkeys: [johnDoeAdvancedKey] },
                   incorrect: { pubkeys: [aliceKey] },
                   'some.revoked': { pubkeys: [testConstants.somerevokedRevoked1, testConstants.somerevokedValid, testConstants.somerevokedRevoked2] },
+                },
+              },
+              sks: {
+                'john.doe@example.com': {
+                  pubkey: johnDoeExampleComKey,
+                },
+                'nobody@example.com': {
+                  returnError: new HttpClientErr('Pubkey not found', Status.NOT_FOUND),
                 },
               },
             });

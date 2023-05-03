@@ -12,6 +12,7 @@ import { getMockGoogleEndpoints } from '../google/google-endpoints';
 import { KeyManagerConfig, getMockKeyManagerEndpoints } from '../key-manager/key-manager-endpoints';
 import { FesConfig, getMockSharedTenantFesEndpoints } from '../fes/shared-tenant-fes-endpoints';
 import { WkdConfig, getMockWkdEndpoints } from '../wkd/wkd-endpoints';
+import { SksConfig, getMockSksEndpoints } from '../sks/sks-endpoints';
 
 export class HttpAuthErr extends Error {}
 export class HttpClientErr extends Error {
@@ -44,6 +45,7 @@ interface ConfigurationOptions {
   ekm?: KeyManagerConfig;
   fes?: FesConfig;
   wkd?: WkdConfig;
+  sks?: SksConfig;
 }
 
 interface ConfigurationProviderInterface<REQ, RES> {
@@ -66,6 +68,7 @@ export class ConfigurationProvider implements ConfigurationProviderInterface<Han
       ...getMockGoogleEndpoints(this.oauth),
       ...getMockSharedTenantFesEndpoints(this.config.fes),
       ...getMockWkdEndpoints(this.config.wkd),
+      ...getMockSksEndpoints(this.config.sks),
       ...getMockKeyManagerEndpoints(this.oauth, this.config.ekm),
       ...getMockKeysOpenPGPOrgEndpoints(this.config.keysOpenPgp),
     };

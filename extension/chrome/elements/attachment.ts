@@ -289,7 +289,9 @@ export class AttachmentDownloadView extends View {
       await this.recoverMissingAttachmentIdIfNeeded();
       await this.downloadDataIfNeeded();
       if (!this.isEncrypted) {
-        Browser.saveToDownloads(this.attachment);
+        if (await AttachmentWarnings.confirmSaveToDownloadsIfNeeded(this.attachment, this)) {
+          Browser.saveToDownloads(this.attachment);
+        }
       } else {
         await this.decryptAndSaveAttachmentToDownloads();
       }
