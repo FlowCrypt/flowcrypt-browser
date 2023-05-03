@@ -6,9 +6,9 @@ Get the [FlowCrypt](https://flowcrypt.com/) browser extension from the [FlowCryp
 
 ## Developers
 
-Mock tests: ![Mock tests](https://flowcrypt.semaphoreci.com/badges/flowcrypt-browser.svg?key=d575b4ff-e35d-4217-9152-27cea9e72c19)
+![Mock tests](https://flowcrypt.semaphoreci.com/badges/flowcrypt-browser.svg?key=d575b4ff-e35d-4217-9152-27cea9e72c19)
 
-We're developing the project in TypeScript. However, since browsers only understand JavaScript, the project needs to be transpiled to it. You need to build the project the first time you download/clone it, and then build it again after each change you make to see the result in the browser. To get started, please follow the instructions below:
+We develop the project in TypeScript. However, since browsers only understand JavaScript, the project needs to be transpiled to it. You need to build the project the first time you download/clone it, and then build it again after each change you make to see the result in the browser. To get started, please follow the instructions below:
 
 1. Navigate to the project folder and install the tooling by running the following commands:
 
@@ -35,14 +35,14 @@ To load the extension in Google Chrome, please follow these steps:
 1. Open your Chrome browser and navigate to `chrome://extensions/`.
 2. If it isn't already enabled, toggle on the **Developer mode**. The switch button is located at the top-right corner.
 3. Click on the `Load unpacked` button.
-4. Browse to the `flowcrypt-browser/build` folder and select the appropriate project version, either `build/chrome-consumer` or `chrome-enterprise`.
+4. Browse to the `flowcrypt-browser/build` folder and select the appropriate project version, either `chrome-consumer` or `chrome-enterprise`.
 
 Similarly, to load the extension in Firefox, please follow these steps:
 
 1. Open your Firefox browser and navigate to `about:debugging`.
 2. Click on the `This Firefox` tab.
 3. Click on the `Load Temporary Add-on` button located at the top-right corner.
-4. Browse to the `flowcrypt-browser/build` folder, open the `build/firefox-consumer` project version folder, and select the `manifest.json` file.
+4. Browse to the `flowcrypt-browser/build` folder, open the `firefox-consumer` project version folder, and select the `manifest.json` file.
 
 If you wish, you can also use the `run_firefox` script (`npm run run_firefox`) included in the `package.json` file to run the Firefox extension in a separate instance without interfering with the production extension installed in your browser.
 
