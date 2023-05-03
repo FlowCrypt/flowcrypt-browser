@@ -144,23 +144,13 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       testWithBrowser(async (t, browser) => {
         await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
         const gmailPage = await openGmailPage(t, browser);
-        /*
-      await gmailPage.type('[aria-label^="Search"]', 'encrypted email for offline decrypt');
-      await gmailPage.press('Enter'); // submit search
-      await Util.sleep(2); // wait for search results
-      */
         await gotoGmailPage(gmailPage, '/FMfcgzGkbDWztBnnCgRHzjrvmFqLtcJD');
-        const pgpBlockUrls = await gmailPage.getFramesUrls(['/chrome/elements/pgp_render_block.htm'], {
-          sleep: 10,
-          appearIn: 25,
-        });
-        expect(pgpBlockUrls.length).to.equal(1);
+        const expectedMessage = { content: ['this should decrypt even offline'], signature: 'signed', encryption: 'encrypted' };
+        await BrowserRecipe.pgpBlockCheck(t, await gmailPage.getFrame(['/chrome/elements/pgp_render_block.htm'], { timeout: 10000 }), expectedMessage);
+        await gotoGmailPage(gmailPage, '/FMfcgzGkbDRNgcQxLmkhBCKVSFwkfdvV'); // plain convo
         await gmailPage.page.setOfflineMode(true); // go offline mode
-        await gmailPage.press('Enter'); // open the message
-        const pgpBlockFrame = await gmailPage.getFrame([pgpBlockUrls[0]]);
-        await gmailPage.page.setOfflineMode(true); // go offline mode
-        await pgpBlockFrame.frame.goto(pgpBlockFrame.frame.url()); // reload the frame
-        await pgpBlockFrame.waitForContent('@pgp-block-content', 'this should decrypt even offline');
+        await gmailPage.page.goBack({ waitUntil: 'load' });
+        await BrowserRecipe.pgpBlockCheck(t, await gmailPage.getFrame(['/chrome/elements/pgp_render_block.htm']), expectedMessage);
       })
     );
 

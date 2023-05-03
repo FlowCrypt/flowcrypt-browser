@@ -94,7 +94,11 @@ export class XssSafeFactory {
 
   public static getEmbeddedMsg = (frameId: string): { frameElement: HTMLIFrameElement; frameWindow: Window } | undefined => {
     // const iframe = document.getElementById(frameId) as HTMLIFrameElement;
-    const frameElement = $(`iframe#${frameId}`).get(0) as HTMLIFrameElement;
+    const frameElement = $(`iframe#${frameId}`)
+      .filter(function () {
+        return this.offsetHeight > 0; // filter visible, there may be invisible leftovers
+      })
+      .get(0) as HTMLIFrameElement;
     if (frameElement?.contentWindow) {
       return { frameElement, frameWindow: frameElement.contentWindow };
     }
