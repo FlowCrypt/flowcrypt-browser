@@ -231,7 +231,7 @@ export const getMockGoogleEndpoints = (oauth: OauthMock): HandlersDefinition => 
         if (req.url?.includes('/attachments/')) {
           const attachment = data.getAttachment(id);
           if (attachment) {
-            return attachment;
+            return { data: attachment.data }; // Note: data (or quoted) field must be last in serialized JSON
           }
           throw new HttpClientErr(`MOCK attachment not found for ${acct}: ${id}`, Status.NOT_FOUND);
         }

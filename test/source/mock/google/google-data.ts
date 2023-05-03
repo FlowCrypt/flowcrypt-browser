@@ -216,6 +216,18 @@ export class GoogleData {
     return msgCopy;
   };
 
+  public static partsHavingFilename = (parts?: GmailMsg$payload$part[]): GmailMsg$payload$part[] => {
+    if (!parts) return [];
+    return parts
+      .map(part => {
+        if (part.mimeType === 'multipart/mixed') {
+          return GoogleData.partsHavingFilename(part.parts);
+        }
+        return part.filename ? [part] : [];
+      })
+      .reduce((a, b) => a.concat(b));
+  };
+
   public static getMockGmailPage = async (acct: string, msgId?: string) => {
     let msgBlock = '';
     let attachmentsBlock = '';
@@ -230,14 +242,9 @@ export class GoogleData {
         htmlData = GoogleData.htmlFromText(textData);
       } else {
         htmlData = GoogleData.getHtmlDataToDisplay(payload.parts!);
-        if (typeof htmlData === 'undefined') {
-          // search inside multipart/alternative
-          const alternativePart = payload.parts!.find(part => part.mimeType === 'multipart/alternative');
-          htmlData = GoogleData.getHtmlDataToDisplay(alternativePart!.parts!);
-        }
       }
-      const otherParts = payload.parts?.filter(part => part.filename);
-      if (otherParts?.length) {
+      const otherParts = GoogleData.partsHavingFilename(payload.parts);
+      if (otherParts.length) {
         attachmentsBlock =
           `<div class="ho"><span class="aVW"><span>${otherParts.length}</span> Attachments</span></div>
         <div class="aQH">` +
@@ -256,7 +263,7 @@ export class GoogleData {
       msgBlock = `<div class="adn ads" data-legacy-message-id="${msgId}">
     <div class="gs">
       <span email="${fromAddress}" name="mock sender" class="gD"><span>Mock Sender</span></span>
-      <div class="a3s">${htmlData}</div>
+      <div class="a3s">${htmlData ?? ''}</div>
       ${attachmentsBlock}
     </div>
   </div>
@@ -301,12 +308,22 @@ export class GoogleData {
       return Buf.fromBase64Str(htmlPart.body!.data!).toUtfStr();
     } else {
       const textPart = parts.find(part => part.mimeType === 'text/plain');
-      if (typeof textPart?.body?.data === 'undefined') {
-        return undefined;
+      if (typeof textPart?.body?.data !== 'undefined') {
+        const textData = Buf.fromBase64Str(textPart.body.data).toUtfStr();
+        return GoogleData.htmlFromText(textData);
       }
-      const textData = Buf.fromBase64Str(textPart.body.data).toUtfStr();
-      return GoogleData.htmlFromText(textData);
     }
+    // search inside multipart/alternative
+    const alternativePart = parts.find(part => part.mimeType === 'multipart/alternative');
+    if (alternativePart) {
+      return GoogleData.getHtmlDataToDisplay(alternativePart.parts!);
+    }
+    // search inside multipart/mixed
+    const mixedPart = parts.find(part => part.mimeType === 'multipart/mixed');
+    if (mixedPart) {
+      return GoogleData.getHtmlDataToDisplay(mixedPart.parts!);
+    }
+    return undefined;
   };
 
   private static htmlFromText = (textData: string): string => {
