@@ -36,7 +36,7 @@ export type TransferableAttachment = (AttachmentId | { data: /* base64 see #2587
 
 export class Attachment {
   public static readonly webmailNamePattern =
-    /^(((cryptup|flowcrypt)-backup-[a-z0-9]+\.(key|asc))|(.+\.pgp)|(.+\.gpg)|(.+\.asc)|(noname)|(message)|(PGPMIME version identification)|(ATT[0-9]{5})|())$/m;
+    /^(((cryptup|flowcrypt)-backup-[a-z0-9]+\.(key|asc))|(.+\.pgp)|(.+\.gpg)|(.+\.asc)|(OpenPGP_signature(.asc)?)|(noname)|(message)|(PGPMIME version identification)|(ATT[0-9]{5})|())$/m;
   public static readonly encryptedMsgNames = ['msg.asc', 'message.asc', 'encrypted.asc', 'encrypted.eml.pgp', 'Message.pgp', 'openpgp-encrypted-message.asc'];
 
   public length = NaN;
