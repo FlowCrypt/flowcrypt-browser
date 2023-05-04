@@ -645,7 +645,10 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       const contacts: ContactPreview[] = await ContactStore.search(undefined, { substring });
       this.view.errModule.debug(`searchContacts substring: ${substring}`);
       this.view.errModule.debug(`searchContacts db count: ${contacts.length}`);
-      await this.renderSearchRes(input, contacts, { substring });
+      if (contacts.length > 0) {
+        // do not show `no results found` when there are no stored contacts. We might get result from google api
+        await this.renderSearchRes(input, contacts, { substring });
+      }
       if (contacts.length >= this.MAX_CONTACTS_LENGTH) {
         this.view.errModule.debug(`searchContacts 2, count: ${contacts.length}`);
         return;
@@ -654,9 +657,9 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       if ((await this.googleContactsSearchEnabled) !== false) {
         this.view.errModule.debug(`searchContacts 3`);
         foundOnGoogle = await this.searchContactsOnGoogle(substring, contacts);
-        await this.addApiLoadedContactsToDb(foundOnGoogle);
+        const contactPreview = await this.addApiLoadedContactsToDb(foundOnGoogle);
         this.view.errModule.debug(`searchContacts foundOnGoogle, count: ${foundOnGoogle.length}`);
-        contacts.push(...foundOnGoogle.map(c => ContactStore.previewObj({ email: c.email, name: c.name })));
+        contacts.push(...contactPreview);
         await this.renderSearchRes(input, contacts, { substring });
         if (contacts.length >= this.MAX_CONTACTS_LENGTH) {
           this.view.errModule.debug(`searchContacts 3.b, count: ${contacts.length}`);
@@ -667,11 +670,15 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       if (!foundOnGoogle.length) {
         this.view.errModule.debug(`searchContacts (Gmail Sent Messages) 6.b`);
         await this.guessContactsFromSentEmails(substring, contacts, async guessed => {
-          await this.addApiLoadedContactsToDb(guessed.new);
+          const contactPreview = await this.addApiLoadedContactsToDb(guessed.new);
           this.view.errModule.debug(`searchContacts (Gmail Sent Messages), count: ${guessed.new.length}`);
-          contacts.push(...guessed.new.map(c => ContactStore.previewObj({ email: c.email, name: c.name })));
+          contacts.push(...contactPreview);
           await this.renderSearchRes(input, contacts, { substring });
         });
+      }
+      if (contacts.length === 0) {
+        // Show `no results found` view when there are no contacts
+        await this.renderSearchRes(input, contacts, { substring });
       }
     } catch (e) {
       Ui.toast(`Error searching contacts: ${ApiErr.eli5(e)}`, false, 5);
@@ -737,6 +744,10 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     });
   };
 
+  private getPgpIconHtml = (hasPgp: boolean) => {
+    return `<img class="lock-icon" src="/img/svgs/locked-icon-${hasPgp ? 'green' : 'gray'}.svg" />`;
+  };
+
   private renderSearchRes = async (input: JQuery<HTMLElement>, contacts: ContactPreview[], query: ProviderContactsQuery) => {
     if (!input.is(':focus')) {
       // focus was moved away from input
@@ -769,10 +780,17 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       let ulHtml = '';
       for (const contact of renderableContacts) {
         ulHtml += `<li class="select_contact" email="${Xss.escape(contact.email.replace(/<\/?b>/g, ''))}">`;
-        if (contact.hasPgp) {
-          ulHtml += '<img class="lock-icon" src="/img/svgs/locked-icon-green.svg" />';
+        if (contact.pgpLoading) {
+          ulHtml += '<img class="loading-icon" data-test="pgp-loading-icon" src="/img/svgs/spinner-green-small.svg" />';
+          contact.pgpLoading
+            .then(hasPgp => {
+              Xss.replaceElementDANGEROUSLY($(`[email="${contact.email}"] .loading-icon`)[0], this.getPgpIconHtml(hasPgp)); // xss-escaped
+            })
+            .catch(() => {
+              this.failedLookupEmails.push(contact.email);
+            });
         } else {
-          ulHtml += '<img class="lock-icon" src="/img/svgs/locked-icon-gray.svg" />';
+          ulHtml += this.getPgpIconHtml(contact.hasPgp);
         }
         let displayEmail;
         if (contact.email.length < 40) {
@@ -915,27 +933,31 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     return result;
   };
 
-  private addApiLoadedContactsToDb = async (newContacts: EmailProviderContact[]) => {
+  private addApiLoadedContactsToDb = async (newContacts: EmailProviderContact[]): Promise<ContactPreview[]> => {
     this.view.errModule.debug('addApiLoadedContactsToDb 1');
-    if (!newContacts.length) {
-      return;
-    }
-    const toLookupNoPubkeys = new Set<EmailProviderContact>();
-    for (const input of newContacts) {
-      const storedContact = await ContactStore.getOneWithAllPubkeys(undefined, input.email);
-      if (storedContact) {
-        if (!storedContact.info.name && input.name) {
-          await ContactStore.update(undefined, input.email, { name: input.name });
-        }
-      } else if (!this.failedLookupEmails.includes(input.email)) {
-        toLookupNoPubkeys.add(input);
+    const contacts: ContactPreview[] = [];
+    for (const contact of newContacts) {
+      const validEmail = Str.parseEmail(contact.email).email;
+      if (!validEmail) {
+        continue;
       }
+      const storedContact = await ContactStore.getOneWithAllPubkeys(undefined, validEmail);
+      if (storedContact) {
+        if (!storedContact.info.name && contact.name) {
+          await ContactStore.update(undefined, validEmail, { name: contact.name });
+        }
+      }
+      contacts.push({
+        email: validEmail,
+        name: contact.name,
+        hasPgp: (storedContact?.sortedPubkeys.length ?? 0) > 0,
+        lastUse: 0,
+        pgpLoading: this.failedLookupEmails.includes(validEmail)
+          ? undefined
+          : this.view.storageModule.updateLocalPubkeysFromRemote([], validEmail, contact.name),
+      });
     }
-    await Promise.all(
-      Array.from(toLookupNoPubkeys).map(c =>
-        this.view.storageModule.updateLocalPubkeysFromRemote([], c.email, c.name).catch(() => this.failedLookupEmails.push(c.email))
-      )
-    );
+    return contacts;
   };
 
   private renderSearchResultsLoadingDone = () => {

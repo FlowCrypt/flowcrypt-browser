@@ -1767,7 +1767,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
           await ComposePageRecipe.expectContactsResultEqual(composePage, ['No Contacts Found']);
           // allow contacts scope, and expect that it will find a contact
           const oauthPopup = await browser.newPageTriggeredBy(t, () => composePage.waitAndClick('@action-auth-with-contacts-scope'));
-          await OauthPageRecipe.google(t, oauthPopup, 'ci.tests.gmail@flowcrypt.test', 'approve');
+          await OauthPageRecipe.google(t, oauthPopup, acct, 'approve');
         }
         await Util.sleep(3);
         await ComposePageRecipe.expectContactsResultEqual(composePage, ['contact.test@flowcrypt.com']);
@@ -1777,6 +1777,40 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         await composePage.type('@input-to', 'contact');
         await ComposePageRecipe.expectContactsResultEqual(composePage, ['contact.test@flowcrypt.com']);
         await composePage.notPresent('@action-auth-with-contacts-scope');
+      })
+    );
+
+    test(
+      'compose - verify loading indicator visibility during PGP status fetch',
+      testWithBrowser(async (t, browser) => {
+        const account = 'ci.tests.gmail@flowcrypt.test';
+        const recipient = 'contact.test@flowcrypt.com';
+        t.mockApi!.configProvider = new ConfigurationProvider({
+          attester: {
+            pubkeyLookup: {
+              [account]: {
+                pubkey: somePubkey,
+              },
+              [recipient]: {
+                pubkey: somePubkey,
+                delayInSeconds: 3,
+              },
+            },
+          },
+        });
+        await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
+        const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
+        await composePage.waitAndClick('@action-show-container-cc-bcc-buttons');
+        await composePage.type('@input-to', 'contact');
+        if (testVariant === 'CONSUMER-MOCK') {
+          // allow contacts scope
+          const oauthPopup = await browser.newPageTriggeredBy(t, () => composePage.waitAndClick('@action-auth-with-contacts-scope'));
+          await OauthPageRecipe.google(t, oauthPopup, account, 'approve');
+        }
+        await Util.sleep(1);
+        await composePage.waitAll('@pgp-loading-icon');
+        await Util.sleep(3); // Wait for 3 seconds to allow PGP status update and loading icon to disappear
+        await composePage.notPresent('@pgp-loading-icon');
       })
     );
 
