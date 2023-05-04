@@ -1001,7 +1001,7 @@ export class ContactStore extends AbstractStore {
     return {
       email: result.email,
       name: result.name || undefined,
-      hasPgp: result.fingerprints.length > 0 ? true : false,
+      hasPgp: result.fingerprints.length > 0,
       lastUse: result.lastUse,
     };
   };

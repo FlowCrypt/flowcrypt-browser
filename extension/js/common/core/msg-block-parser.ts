@@ -56,7 +56,7 @@ export class MsgBlockParser {
       plain = MsgBlockParser.extractFcAttachments(plain, blocks);
       webReplyToken = MsgBlockParser.extractFcReplyToken(plain);
       if (webReplyToken) {
-        plain = MsgBlockParser.stripFcTeplyToken(plain);
+        plain = MsgBlockParser.stripFcReplyToken(plain);
       }
       const armoredPubKeys: string[] = [];
       plain = MsgBlockParser.stripPublicKeys(plain, armoredPubKeys);
@@ -68,14 +68,14 @@ export class MsgBlockParser {
     if (typeof decoded.html !== 'undefined') {
       webReplyToken = MsgBlockParser.extractFcReplyToken(decoded.html);
       if (webReplyToken) {
-        decoded.html = MsgBlockParser.stripFcTeplyToken(decoded.html);
+        decoded.html = MsgBlockParser.stripFcReplyToken(decoded.html);
       }
       blocks.push(MsgBlock.fromContent('decryptedHtml', Xss.htmlSanitizeKeepBasicTags(decoded.html, imgHandling))); // sanitized html
       isRichText = true;
     } else if (typeof decoded.text !== 'undefined') {
       webReplyToken = MsgBlockParser.extractFcReplyToken(decoded.text);
       if (webReplyToken) {
-        decoded.text = MsgBlockParser.stripFcTeplyToken(decoded.text);
+        decoded.text = MsgBlockParser.stripFcReplyToken(decoded.text);
       }
       blocks.push(MsgBlock.fromContent('decryptedHtml', Str.escapeTextAsRenderableHtml(decoded.text))); // escaped text as html
     } else {
@@ -151,7 +151,7 @@ export class MsgBlockParser {
     return undefined;
   };
 
-  public static stripFcTeplyToken = (decryptedContent: string) => {
+  public static stripFcReplyToken = (decryptedContent: string) => {
     return decryptedContent.replace(/<div[^>]+class="cryptup_reply"[^>]+><\/div>/, '');
   };
 

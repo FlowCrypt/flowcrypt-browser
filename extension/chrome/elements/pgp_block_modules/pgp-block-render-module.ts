@@ -268,7 +268,7 @@ export class PgpBlockViewRenderModule {
       const fcAttachmentBlocks: MsgBlock[] = [];
       decryptedContent = Str.with(decryptedBytes);
       decryptedContent = MsgBlockParser.extractFcAttachments(decryptedContent, fcAttachmentBlocks);
-      decryptedContent = MsgBlockParser.stripFcTeplyToken(decryptedContent);
+      decryptedContent = MsgBlockParser.stripFcReplyToken(decryptedContent);
       decryptedContent = MsgBlockParser.stripPublicKeys(decryptedContent, publicKeys);
       if (fcAttachmentBlocks.length) {
         renderableAttachments = fcAttachmentBlocks.map(

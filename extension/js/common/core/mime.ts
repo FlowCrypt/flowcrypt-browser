@@ -140,15 +140,6 @@ export class Mime {
     return Mime.processDecoded(decoded);
   };
 
-  public static isPlainImgAttachment = (b: MsgBlock) => {
-    return (
-      b.type === 'plainAttachment' &&
-      b.attachmentMeta &&
-      b.attachmentMeta.type &&
-      ['image/jpeg', 'image/jpg', 'image/bmp', 'image/png', 'image/svg+xml'].includes(b.attachmentMeta.type)
-    );
-  };
-
   public static replyHeaders = (parsedMimeMsg: MimeContent) => {
     const msgId = String(parsedMimeMsg.headers['message-id'] || '');
     const refs = String(parsedMimeMsg.headers['in-reply-to'] || '');
