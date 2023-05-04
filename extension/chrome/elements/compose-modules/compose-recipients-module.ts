@@ -781,7 +781,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       for (const contact of renderableContacts) {
         ulHtml += `<li class="select_contact" email="${Xss.escape(contact.email.replace(/<\/?b>/g, ''))}">`;
         if (contact.pgpLoading) {
-          ulHtml += '<img class="loading-icon" src="/img/svgs/spinner-green-small.svg" />';
+          ulHtml += '<img class="loading-icon" data-test="pgp-loading-icon" src="/img/svgs/spinner-green-small.svg" />';
           contact.pgpLoading
             .then(hasPgp => {
               Xss.replaceElementDANGEROUSLY($(`[email="${contact.email}"] .loading-icon`)[0], this.getPgpIconHtml(hasPgp)); // xss-escaped
