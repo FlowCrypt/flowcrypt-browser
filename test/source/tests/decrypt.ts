@@ -181,7 +181,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
         expect(urls.length).to.equal(0);
         await inboxPage.close();
         const gmailPage = await browser.newPage(t, `${t.urls?.mockGmailUrl()}/${threadId}`, undefined, authHdr);
-        expect((await inboxPage.getFramesUrls(['pgp_render_block.htm'])).length).to.equal(0);
+        expect((await gmailPage.getFramesUrls(['pgp_render_block.htm'])).length).to.equal(0);
         await gmailPage.close();
       })
     );
@@ -1016,7 +1016,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
         await gmailPage.waitAll('iframe');
         const pgpBlockFromGmailPage = await gmailPage.getFrame(['pgp_render_block.htm']);
         await pgpBlockFromGmailPage.waitForSelTestState('ready');
-        const frameUrlsFromGmailPage = await inboxPage.getFramesUrls(['pgp_pubkey.htm'], { sleep: 3 });
+        const frameUrlsFromGmailPage = await gmailPage.getFramesUrls(['pgp_pubkey.htm'], { sleep: 3 });
         expect(frameUrlsFromGmailPage.length).to.be.equal(1);
       })
     );
