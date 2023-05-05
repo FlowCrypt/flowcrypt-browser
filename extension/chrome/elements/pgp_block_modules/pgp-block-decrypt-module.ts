@@ -122,11 +122,11 @@ export class PgpBlockViewDecryptModule {
 
         if (!result.signature?.match) {
           const decoded = await Mime.decode(result.content);
-          const detachedSignature = decoded.attachments.find(a => a.type === 'application/pgp-signature');
+          const signature = decoded.attachments.find(a => a.type === 'application/pgp-signature');
 
-          if (detachedSignature && decoded.rawSignedContent) {
+          if (signature && decoded.rawSignedContent) {
+            const sigText = signature.getData().toUtfStr();
             const plaintext = decoded.rawSignedContent;
-            const sigText = detachedSignature.getData().toUtfStr();
             const verify = async (verificationPubs: string[]) => await BrowserMsg.send.bg.await.pgpMsgVerifyDetached({ plaintext, sigText, verificationPubs });
             result.signature = await verify(verificationPubs);
           }
