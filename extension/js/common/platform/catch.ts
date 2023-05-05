@@ -295,7 +295,7 @@ export class Catch {
       url: window.location.href.substring(0, 100),
       line: line || 0,
       col: col || 0,
-      trace: (exception.stack || '').slice(0, 1024), // For now slice string as backend only accepts VARCHAR(1024)
+      trace: exception.stack || '',
       version: VERSION,
       environment: Catch.RUNTIME_ENVIRONMENT,
       product: 'web-ext',
