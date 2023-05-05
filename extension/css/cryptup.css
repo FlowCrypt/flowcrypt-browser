@@ -1866,6 +1866,7 @@ table#compose div.recipients-inputs > div#input_addresses_container div .recipie
 }
 
 table#compose div.recipients-inputs > div#input_addresses_container div .recipients > span .lock-icon,
+table#compose div.recipients-inputs > div#input_addresses_container div .recipients > span .loading-icon,
 table#compose div.recipients-inputs > div#input_addresses_container div .recipients > span .revoked-or-expired {
   margin-right: 4px;
 }

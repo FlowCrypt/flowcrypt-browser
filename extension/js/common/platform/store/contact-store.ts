@@ -40,7 +40,8 @@ export type ContactV4 = {
 };
 
 export type ContactPreview = EmailParts & {
-  hasPgp: 0 | 1;
+  hasPgp: boolean;
+  pgpLoading?: Promise<boolean> | undefined;
   lastUse: number | null;
 };
 
@@ -461,14 +462,6 @@ export class ContactStore extends AbstractStore {
       openDbReq.onblocked = () => reject(ContactStore.errCategorize(openDbReq.error));
       openDbReq.onerror = () => reject(ContactStore.errCategorize(openDbReq.error));
     });
-  };
-
-  public static previewObj = ({ email, name }: EmailParts): ContactPreview => {
-    const validEmail = Str.parseEmail(email).email;
-    if (!validEmail) {
-      throw new Error(`Cannot handle the contact because email is not valid: ${email}`);
-    }
-    return { email: validEmail, name, hasPgp: 0, lastUse: null };
   };
 
   /**
@@ -1008,7 +1001,7 @@ export class ContactStore extends AbstractStore {
     return {
       email: result.email,
       name: result.name || undefined,
-      hasPgp: result.fingerprints.length > 0 ? 1 : 0,
+      hasPgp: result.fingerprints.length > 0 ? true : false,
       lastUse: result.lastUse,
     };
   };
