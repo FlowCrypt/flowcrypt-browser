@@ -7,6 +7,20 @@ import { HttpClientErr, Status } from '../lib/api';
 import { MockJwt } from '../lib/oauth';
 import { messageIdRegex, parsePort } from '../lib/mock-util';
 
+export interface ReportedError {
+  name: string;
+  message: string;
+  url: string;
+  line: number;
+  col: number;
+  trace: string;
+  version: string;
+  environmane: string;
+  product: string;
+  buildType: string;
+}
+export const reportedErrors: ReportedError[] = [];
+
 type FesClientConfigurationFlag =
   | 'NO_PRV_CREATE'
   | 'NO_PRV_BACKUP'
@@ -87,6 +101,14 @@ export const getMockSharedTenantFesEndpoints = (config: FesConfig | undefined): 
           flags: [],
         },
       };
+    },
+    '/shared-tenant-fes/api/v1/log-collector/exception': async ({ body }) => {
+      reportedErrors.push(body as ReportedError);
+      return { saved: true };
+    },
+    '/shared-tenant-fes/api/v1/account/feedback': async ({ body }) => {
+      expect((body as { email: string }).email).to.equal('flowcrypt.compatibility@gmail.com');
+      return { sent: true, text: 'Feedback sent' };
     },
     '/shared-tenant-fes/api/v1/message/new-reply-token': async ({}, req) => {
       if (req.method === 'POST') {

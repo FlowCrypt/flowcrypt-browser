@@ -9,18 +9,19 @@ import { Assert } from '../../../js/common/assert.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Catch } from '../../../js/common/platform/catch.js';
 import { Ui } from '../../../js/common/browser/ui.js';
-import { VERSION } from '../../../js/common/core/const.js';
+import { SHARED_TENANT_API_HOST, VERSION } from '../../../js/common/core/const.js';
 import { View } from '../../../js/common/view.js';
 import { Xss } from '../../../js/common/platform/xss.js';
-import { FlowCryptWebsite } from '../../../js/common/api/flowcrypt-website.js';
 import { Lang } from '../../../js/common/lang.js';
 import { isCustomerUrlFesUsed } from '../../../js/common/helpers.js';
+import { ExternalService } from '../../../js/common/api/account-servers/external-service.js';
 
 View.run(
   class HelpView extends View {
     private acctEmail: string | undefined;
     private parentTabId: string;
     private bugReport: string | undefined;
+    private readonly externalService: ExternalService | undefined;
 
     public constructor() {
       super();
@@ -28,6 +29,10 @@ View.run(
       this.acctEmail = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'acctEmail');
       this.parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
       this.bugReport = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'bugReport');
+      if (this.acctEmail) {
+        this.externalService = new ExternalService(this.acctEmail);
+        this.externalService.url = SHARED_TENANT_API_HOST;
+      }
     }
 
     public render = async () => {
@@ -67,8 +72,8 @@ View.run(
       Xss.sanitizeRender(target, Ui.spinner('white'));
       await Ui.delay(50); // give spinner time to load
       try {
-        const { sent } = await FlowCryptWebsite.helpFeedback(emailVal, `${textVal}\n\n\nFlowCrypt ${Catch.browser().name} ${VERSION}`);
-        if (sent) {
+        const res = await this.externalService?.helpFeedback(emailVal, `${textVal}\n\n\nFlowCrypt ${Catch.browser().name} ${VERSION}`);
+        if (res?.sent) {
           $(target).text('sent!');
           await Ui.modal.info(`Message sent! You will find your response in ${emailVal}, check your email later.`);
           BrowserMsg.send.closePage(this.parentTabId);

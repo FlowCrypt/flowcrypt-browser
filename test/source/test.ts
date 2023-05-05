@@ -11,7 +11,6 @@ import { Util, getParsedCliParams } from './util';
 import { mkdirSync, realpathSync, writeFileSync } from 'fs';
 import { TestUrls } from './browser/test-urls';
 import { startAllApisMock } from './mock/all-apis-mock';
-import { reportedErrors } from './mock/backend/backend-endpoints';
 import { defineComposeTests } from './tests/compose';
 import { defineContentScriptTests } from './tests/content-script';
 import { defineDecryptTests } from './tests/decrypt';
@@ -22,6 +21,7 @@ import { defineSettingsTests } from './tests/settings';
 import { defineSetupTests } from './tests/setup';
 import { defineUnitBrowserTests } from './tests/unit-browser';
 import { defineUnitNodeTests } from './tests/unit-node';
+import { reportedErrors } from './mock/fes/shared-tenant-fes-endpoints';
 
 export const { testVariant, testGroup, oneIfNotPooled, buildDir, isMock } = getParsedCliParams();
 export const internalTestState = { expectIntentionalErrReport: false }; // updated when a particular test that causes an error is run
