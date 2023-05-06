@@ -125,7 +125,6 @@ const makeMockBuild = (sourceBuildType: string) => {
       .replace(/const (ATTESTER_API_HOST) = [^;]+;/g, `const $1 = 'https://localhost:8001/attester/';`)
       .replace(/const (KEYS_OPENPGP_ORG_API_HOST) = [^;]+;/g, `const $1 = 'https://localhost:8001/keys-openpgp-org/';`)
       .replace(/const (SHARED_TENANT_API_HOST) = [^;]+;/g, `const $1 = 'https://localhost:8001/shared-tenant-fes';`)
-      .replace(/https:\/\/flowcrypt\.com\/api\/help\/error/g, 'https://localhost:8001/api/help/error')
       .replace(/const (WKD_API_HOST) = '';/g, `const $1 = 'https://localhost:8001';`);
   };
   edit(`${buildDir(mockBuildType)}/js/common/core/const.js`, editor);
