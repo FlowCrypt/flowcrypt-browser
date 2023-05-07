@@ -159,7 +159,7 @@ export class ApiErr {
     } else if (ApiErr.isNotFound(e)) {
       return 'Server says this resource was not found';
     } else if (ApiErr.isBadReq(e)) {
-      return 'Server says this was a bad request (possibly a FlowCrypt bug)';
+      return e.resMsg ? `Error: ${e.resMsg}` : 'Server says this was a bad request (possibly a FlowCrypt bug)';
     } else if (ApiErr.isNetErr(e)) {
       return 'Network connection issue.';
     } else if (ApiErr.isServerErr(e)) {
