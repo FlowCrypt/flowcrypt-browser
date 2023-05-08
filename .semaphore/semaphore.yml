@@ -12,7 +12,7 @@ blocks:
   - name: Mock UI Tests
     dependencies: []
     execution_time_limit:
-      minutes: 30
+      minutes: 45
     task:
       secrets:
         - name: flowcrypt-browser-ci-secrets
