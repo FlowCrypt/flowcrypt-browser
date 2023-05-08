@@ -3690,24 +3690,22 @@ const sendImgAndVerifyPresentInSentMsg = async (t: AvaContext, browser: BrowserH
   await composePage.page.evaluate((src: string) => {
     $('[data-test=action-insert-image]').val(src).click();
   }, imgBase64);
+  const acctEmail = 'flowcrypt.compatibility@gmail.com';
+  const accessToken = await BrowserRecipe.getGoogleAccessToken(composePage, acctEmail);
   await ComposePageRecipe.sendAndClose(composePage);
   // get sent msg id from mock
-  const sentMsg = (await GoogleData.withInitializedData('flowcrypt.compatibility@gmail.com')).searchMessagesBySubject(subject)[0];
+  const sentMsg = (await GoogleData.withInitializedData(acctEmail)).searchMessagesBySubject(subject)[0];
   if (sendingType === 'plain') {
     expect(sentMsg.payload?.body?.data).to.match(/<img src="cid:(.+)@flowcrypt">Test Sending Plain Message With Image/);
     return;
     // todo - this test case is a stop-gap. We need to implement rendering of such messages below,
     //   then let test plain messages with images in them (referenced by cid) just like other types of messages below
   }
-  let url = `chrome/dev/ci_pgp_host_page.htm?frameId=none&msgId=${encodeURIComponent(
-    sentMsg.id
-  )}&senderEmail=flowcrypt.compatibility%40gmail.com&isOutgoing=___cu_false___&acctEmail=flowcrypt.compatibility%40gmail.com`;
-  if (sendingType === 'sign') {
-    url += '&signature=___cu_true___';
-  }
   // open a page with the sent msg, investigate img
-  const pgpHostPage = await browser.newPage(t, url);
-  const pgpBlockPage = await pgpHostPage.getFrame(['pgp_block.htm']);
+  const authHdr = { Authorization: `Bearer ${accessToken}` }; // eslint-disable-line @typescript-eslint/naming-convention
+  const gmailPage = await browser.newPage(t, `${t.urls?.mockGmailUrl()}/${sentMsg.id}`, undefined, authHdr);
+  await gmailPage.waitAll('iframe');
+  const pgpBlockPage = await gmailPage.getFrame(['pgp_render_block.htm']);
   const img = await pgpBlockPage.waitAny('body img');
   expect(await PageRecipe.getElementPropertyJson(img, 'src')).to.eq(imgBase64);
 };
@@ -3723,19 +3721,24 @@ const sendTextAndVerifyPresentInSentMsg = async (
   } Message With Test Text ${text} ${Util.lousyRandom()}`;
   const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
   await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, subject, text, sendingOpt);
+  const acctEmail = 'flowcrypt.compatibility@gmail.com';
+  const accessToken = await BrowserRecipe.getGoogleAccessToken(composePage, acctEmail);
   await ComposePageRecipe.sendAndClose(composePage);
   /* eslint-disable @typescript-eslint/no-non-null-assertion */
   // get sent msg from mock
-  const sentMsg = (await GoogleData.withInitializedData('flowcrypt.compatibility@gmail.com')).searchMessagesBySubject(subject)[0];
-  const message = encodeURIComponent(sentMsg.payload!.body!.data!);
+  const sentMsg = (await GoogleData.withInitializedData(acctEmail)).searchMessagesBySubject(subject)[0];
+  const authHdr = { Authorization: `Bearer ${accessToken}` }; // eslint-disable-line @typescript-eslint/naming-convention
   /* eslint-enable @typescript-eslint/no-non-null-assertion */
-  await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
-    content: [text],
-    unexpectedContent: [],
-    params: `?frameId=none&msgId=${encodeURIComponent(
-      sentMsg.id
-    )}&senderEmail=flowcrypt.compatibility%40gmail.com&isOutgoing=___cu_false___&acctEmail=flowcrypt.compatibility%40gmail.com&message=${message}`,
-  });
+  await BrowserRecipe.pgpBlockVerifyDecryptedContent(
+    t,
+    browser,
+    sentMsg.id,
+    {
+      content: [text],
+      unexpectedContent: [],
+    },
+    authHdr
+  );
 };
 
 const setRequirePassPhraseAndOpenRepliedMessage = async (t: AvaContext, browser: BrowserHandle, passphrase: string) => {

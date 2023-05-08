@@ -235,7 +235,7 @@ export class GoogleData {
       /* eslint-disable @typescript-eslint/no-non-null-assertion */
       const payload = (await GoogleData.withInitializedData(acct)).getMessage(msgId)!.payload!;
       const fromHeader = payload.headers!.find(header => header.name === 'From')!;
-      const fromAddress = fromHeader.value!;
+      const fromAddress = fromHeader!.value;
       let htmlData: string | undefined;
       if (payload.mimeType === 'text/plain') {
         const textData = Buf.fromBase64Str(payload.body!.data!).toUtfStr();
@@ -333,6 +333,7 @@ export class GoogleData {
   public storeSentMessage = (parseResult: ParseMsgResult, id: string): string => {
     let bodyContentAtt: { data: string; size: number; filename?: string; id: string } | undefined;
     const parsedMail = parseResult.mimeMsg;
+    const parts: GmailMsg$payload$part[] = [];
     for (const attachment of parsedMail.attachments || []) {
       const attId = Util.lousyRandom();
       const gmailAtt = {
@@ -345,6 +346,11 @@ export class GoogleData {
       if (attachment.filename === 'encrypted.asc') {
         bodyContentAtt = gmailAtt;
       }
+      parts.push({
+        partId: attId,
+        mimeType: attachment.contentType,
+        filename: attachment.filename,
+      });
     }
     let body: GmailMsg$payload$body;
     const htmlOrText = parsedMail.html || parsedMail.text;
@@ -355,6 +361,13 @@ export class GoogleData {
     } else {
       throw new Error('MOCK storeSentMessage: no parsedMail body, no appropriate bodyContentAtt');
     }
+    const headers = [
+      { name: 'Subject', value: parsedMail.subject || '' },
+      { name: 'Message-ID', value: parsedMail.messageId || '' },
+    ];
+    if (parsedMail.from) {
+      headers.push({ name: 'From', value: parsedMail.from.text });
+    }
     const barebonesGmailMsg: GmailMsg = {
       // todo - could be improved - very barebones
       id,
@@ -362,11 +375,9 @@ export class GoogleData {
       historyId: '',
       labelIds: ['SENT' as GmailMsg$labelId],
       payload: {
-        headers: [
-          { name: 'Subject', value: parsedMail.subject || '' },
-          { name: 'Message-ID', value: parsedMail.messageId || '' },
-        ],
+        headers,
         body,
+        parts,
       },
       raw: parseResult.base64,
     };

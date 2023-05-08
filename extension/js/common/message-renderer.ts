@@ -5,14 +5,15 @@
 import { GmailParser, GmailRes } from './api/email-provider/gmail/gmail-parser.js';
 import { PubLookup } from './api/pub-lookup.js';
 import { ClientConfiguration } from './client-configuration.js';
-import { Attachment, TransferableAttachment } from './core/attachment.js';
+import { Attachment, Attachment$treatAs, TransferableAttachment } from './core/attachment.js';
 import { Buf } from './core/buf.js';
 import { CID_PATTERN, Dict, Str, Value } from './core/common.js';
 import { KeyUtil } from './core/crypto/key.js';
-import { DecryptErrTypes, DecryptResult, MsgUtil, VerifyRes } from './core/crypto/pgp/msg-util.js';
+import { DecryptErrTypes, DecryptResult, FormatError, MsgUtil, VerifyRes } from './core/crypto/pgp/msg-util.js';
+import { PgpArmor } from './core/crypto/pgp/pgp-armor.js';
 import { Mime, MimeContent, MimeProccesedMsg } from './core/mime.js';
 import { MsgBlockParser } from './core/msg-block-parser.js';
-import { MsgBlock } from './core/msg-block.js';
+import { MsgBlock, MsgBlockType } from './core/msg-block.js';
 import { Lang } from './lang.js';
 import { Catch } from './platform/catch.js';
 import { AcctStore, SendAsAlias } from './platform/store/acct-store.js';
@@ -22,22 +23,30 @@ import { PassphraseStore } from './platform/store/passphrase-store.js';
 import { Xss } from './platform/xss.js';
 import { RelayManager } from './relay-manager.js';
 import { RenderInterface, RenderInterfaceBase } from './render-interface.js';
-import { PrintMailInfo } from './render-message';
+import { PrintMailInfo } from './render-message.js';
 import { saveFetchedPubkeysIfNewerThanInStorage } from './shared.js';
 import { XssSafeFactory } from './xss-safe-factory.js';
 import * as DOMPurify from 'dompurify';
-
-export type JQueryEl = JQuery<HTMLElement>;
+import { Downloader, ProcessedMessage } from './downloader.js';
+import { JQueryEl, LoaderContextBindInterface, LoaderContextBindNow, LoaderContextInterface } from './loader-context-interface.js';
+import { Gmail } from './api/email-provider/gmail/gmail.js';
+import { ApiErr, AjaxErr } from './api/shared/api-error.js';
+import { isCustomerUrlFesUsed } from './helpers';
 
 export type ProccesedMsg = MimeProccesedMsg;
 
-export type AttachmentBlock = {
-  block: MsgBlock;
-  file: Attachment; // todo: only need id in MsgBlock's AttachmentMeta?
-};
-
 export class MessageRenderer {
-  public constructor(private readonly acctEmail: string) {}
+  private downloader: Downloader;
+  public constructor(
+    private readonly acctEmail: string,
+    private readonly gmail: Gmail,
+    private readonly relayManager: RelayManager,
+    private readonly factory: XssSafeFactory,
+    private sendAs: Dict<SendAsAlias>,
+    private debug: boolean = false
+  ) {
+    this.downloader = new Downloader(gmail);
+  }
 
   /**
    * Replaces inline image CID references with base64 encoded data in sanitized HTML
@@ -246,7 +255,7 @@ export class MessageRenderer {
       renderModule.renderSignatureStatus('signed');
     } else if (retryVerification) {
       renderModule.renderVerificationInProgress();
-      await MessageRenderer.renderPgpSignatureCheckResult(renderModule, await retryVerification(), undefined);
+      await MessageRenderer.renderPgpSignatureCheckResult(renderModule, (await retryVerification()) ?? verifyRes, undefined);
       return;
     } else {
       // todo: is this situation possible: no sender info in `from`?
@@ -281,37 +290,120 @@ export class MessageRenderer {
     return parsedPubs.map(key => KeyUtil.armor(key.pubkey));
   };
 
-  public relayAndProcess = async (
+  public isOutgoing = (senderEmail: string) => {
+    return !!this.sendAs[senderEmail]; // todo: remove code duplication
+  };
+
+  public processAttachment = async (
+    a: Attachment,
+    treatAs: Attachment$treatAs,
+    loaderContext: LoaderContextInterface,
+    attachmentSel: JQueryEl | undefined,
+    msgId: string, // deprecated
+    printMailInfo: PrintMailInfo,
+    senderEmail: string
+  ): Promise<'shown' | 'hidden' | 'replaced'> => {
+    // todo - [same name + not processed].first() ... What if attachment metas are out of order compared to how gmail shows it? And have the same name?
+    try {
+      if (['needChunk', 'maybePgp', 'publicKey'].includes(treatAs)) {
+        // todo: this isn't the best way to do this
+        // todo: move into a handler
+        // Inspect a chunk
+        if (this.debug) {
+          console.debug('processAttachment() try -> awaiting chunk + awaiting type');
+        }
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const data = await this.downloader.queueAttachmentChunkDownload(a).result;
+        const openpgpType = MsgUtil.type({ data });
+        if (openpgpType && openpgpType.type === 'publicKey' && openpgpType.armored) {
+          // if it looks like OpenPGP public key
+          treatAs = 'publicKey';
+        } else if (openpgpType && ['encryptedMsg', 'signedMsg'].includes(openpgpType.type)) {
+          treatAs = 'encryptedMsg'; // todo: signedMsg ?
+        } else {
+          if (this.debug) {
+            console.debug("processAttachment() try -> awaiting done and processed -- doesn't look like OpenPGP");
+          }
+          // plain attachment with a warning
+          loaderContext.renderPlainAttachment(a, attachmentSel, 'Unknown OpenPGP format');
+          return 'shown';
+        }
+        if (this.debug) {
+          console.debug('processAttachment() try -> awaiting done and processed');
+        }
+      }
+      if (treatAs !== 'plainFile') {
+        loaderContext.hideAttachment(attachmentSel);
+      }
+      if (treatAs === 'hidden') {
+        return 'hidden';
+      } else if (treatAs === 'encryptedFile') {
+        // actual encrypted attachment - show it
+        loaderContext.prependEncryptedAttachment(a);
+        return 'replaced'; // native should be hidden, custom should appear instead
+      } else if (treatAs === 'encryptedMsg') {
+        await this.setMsgBodyAndStartProcessing(loaderContext, treatAs, printMailInfo, renderModule =>
+          this.processEncryptedMessage(a, renderModule, senderEmail)
+        );
+        return 'hidden'; // native attachment should be hidden, the "attachment" goes to the message container
+      } else if (treatAs === 'publicKey') {
+        // todo - pubkey should be fetched in pgp_pubkey.js
+        return await this.renderPublicKeyFromFile(a, loaderContext, this.isOutgoing(senderEmail), attachmentSel);
+      } else if (treatAs === 'privateKey') {
+        return await this.renderBackupFromFile(a, loaderContext, this.isOutgoing(senderEmail));
+      } else if (treatAs === 'signature') {
+        await this.setMsgBodyAndStartProcessing(loaderContext, 'signedMsg', printMailInfo, renderModule =>
+          this.processSignedMessage(msgId, renderModule, senderEmail)
+        );
+        return 'hidden'; // native attachment should be hidden, the "attachment" goes to the message container
+      } else {
+        // standard file
+        loaderContext.renderPlainAttachment(a, attachmentSel);
+        return 'shown';
+      }
+    } catch (e) {
+      if (!ApiErr.isSignificant(e) || (e instanceof AjaxErr && e.status === 200)) {
+        loaderContext.renderPlainAttachment(a, attachmentSel, 'Categorize: net err');
+        return 'shown';
+      } else {
+        Catch.reportErr(e);
+        loaderContext.renderPlainAttachment(a, attachmentSel, 'Categorize: unknown err');
+        return 'shown';
+      }
+    }
+  };
+
+  public relayAndStartProcessing = async (
     relayManager: RelayManager,
+    loaderContext: LoaderContextBindInterface,
     factory: XssSafeFactory,
     frameId: string,
     printMailInfo: PrintMailInfo,
     cb: (renderModule: RenderInterface) => Promise<{ publicKeys?: string[]; needPassphrase?: string[] }>
   ) => {
-    const embeddedReference = XssSafeFactory.getEmbeddedMsg(frameId);
-    if (embeddedReference) {
-      const renderModule = relayManager.createRelay(frameId, embeddedReference.frameWindow);
-      renderModule.setPrintMailInfo(printMailInfo);
-      let result = await cb(renderModule);
-      const appendAfter = $(`iframe#${frameId}`);
-      // todo: how publicKeys and needPassphrase interact?
-      for (const armoredPubkey of result.publicKeys ?? []) {
-        appendAfter.after(factory.embeddedPubkey(armoredPubkey, false));
-      }
-      while (result.needPassphrase) {
-        // todo: queue into a dictionary?
-        await PassphraseStore.waitUntilPassphraseChanged(this.acctEmail, result.needPassphrase);
-        renderModule.clearErrorStatus();
-        renderModule.renderText('Decrypting...');
-        result = await cb(renderModule);
-      }
-      // todo: wait for renderModule completion: the queue has been actually flushed,
-      // and then remove the frame from relayManager.frames
-      // Something like:
-      // await relayManager.waitForCompletion(renderModule)
-    } else {
-      Catch.report('Unexpected: unable to reference a newly created message frame'); // todo:
-    }
+    const renderModule = relayManager.createRelay(frameId);
+    loaderContext.bind(frameId, relayManager);
+    renderModule.setPrintMailInfo(printMailInfo);
+    cb(renderModule)
+      .then(async result => {
+        const appendAfter = $(`iframe#${frameId}`); // todo: late binding? won't work
+        // todo: how publicKeys and needPassphrase interact?
+        for (const armoredPubkey of result.publicKeys ?? []) {
+          appendAfter.after(factory.embeddedPubkey(armoredPubkey, false));
+        }
+        while (result.needPassphrase) {
+          // todo: queue into a dictionary?
+          await PassphraseStore.waitUntilPassphraseChanged(this.acctEmail, result.needPassphrase);
+          renderModule.clearErrorStatus();
+          renderModule.renderText('Decrypting...');
+          result = await cb(renderModule);
+        }
+        // todo: wait for renderModule completion: the queue has been actually flushed,
+        // and then remove the frame from relayManager.frames
+        // Something like:
+        // await relayManager.waitForCompletion(renderModule)
+      })
+      .catch(Catch.reportErr);
   };
 
   public processInlineBlocks = async (
@@ -324,8 +416,8 @@ export class MessageRenderer {
     const signerEmail = from ? Str.parseEmail(from).email : undefined;
     await Promise.all(
       Object.entries(blocks).map(([frameId, block]) =>
-        this.relayAndProcess(relayManager, factory, frameId, printMailInfo, renderModule => this.renderMsgBlock(block, renderModule, signerEmail)).catch(
-          Catch.reportErr
+        this.relayAndStartProcessing(relayManager, new LoaderContextBindNow(), factory, frameId, printMailInfo, renderModule =>
+          this.renderMsgBlock(block, renderModule, signerEmail)
         )
       )
     );
@@ -414,60 +506,41 @@ export class MessageRenderer {
     } else if (result.longids.needPassphrase.length) {
       renderModule.renderPassphraseNeeded(result.longids.needPassphrase);
       return { needPassphrase: result.longids.needPassphrase };
-      /*
-      const enterPp = `<a href="#" class="enter_passphrase" data-test="action-show-passphrase-dialog">${Lang.pgpBlock.enterPassphrase}</a> ${Lang.pgpBlock.toOpenMsg}`;
-      await this.view.errorModule.renderErr(enterPp, undefined, 'pass phrase needed');
-      $('.enter_passphrase').on(
-        'click',
-        this.view.setHandler(() => {
-          Ui.setTestState('waiting');
-          BrowserMsg.send.passphraseDialog(this.view.parentTabId, {
-            type: 'message',
-            longids: result.longids.needPassphrase,
-          });
-        })
-      );
-      await PassphraseStore.waitUntilPassphraseChanged(this.view.acctEmail, result.longids.needPassphrase);
-      this.view.renderModule.clearErrorStatus();
-      this.view.renderModule.renderText('Decrypting...');
-      await this.decryptAndRender(encryptedData, verificationPubs);
-      */
     } else {
-      /*
-      if (!result.longids.chosen && !(await KeyStore.get(this.view.acctEmail)).length) {
-        await this.view.errorModule.renderErr(
-          Lang.pgpBlock.notProperlySetUp + this.view.errorModule.btnHtml('FlowCrypt settings', 'green settings'),
-          undefined
-        );
+      if (!result.longids.chosen && !(await KeyStore.get(this.acctEmail)).length) {
+        renderModule.renderErr(Lang.pgpBlock.notProperlySetUp /* + todo: this.view.errorModule.btnHtml('FlowCrypt settings', 'green settings') */, undefined);
       } else if (result.error.type === DecryptErrTypes.keyMismatch) {
-        await this.view.errorModule.handlePrivateKeyMismatch(
+        /* todo: await this.view.errorModule.handlePrivateKeyMismatch(
           kisWithPp.map(ki => ki.public),
           encryptedData,
           this.isPwdMsgBasedOnMsgSnippet === true
-        );
+        ); */
       } else if (result.error.type === DecryptErrTypes.wrongPwd || result.error.type === DecryptErrTypes.usePassword) {
-        await this.view.errorModule.renderErr(Lang.pgpBlock.pwdMsgAskSenderUsePubkey, undefined);
+        renderModule.renderErr(Lang.pgpBlock.pwdMsgAskSenderUsePubkey, undefined);
       } else if (result.error.type === DecryptErrTypes.noMdc) {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        await this.view.errorModule.renderErr(result.error.message, result.content!.toUtfStr()); // missing mdc - only render the result after user confirmation
+        renderModule.renderErr(result.error.message, result.content!.toUtfStr()); // missing mdc - only render the result after user confirmation
       } else if (result.error) {
-        await this.view.errorModule.renderErr(`${Lang.pgpBlock.cantOpen}\n\n<em>${result.error.type}: ${result.error.message}</em>`, Str.with(encryptedData));
+        renderModule.renderErr(`${Lang.pgpBlock.cantOpen}\n\n<em>${result.error.type}: ${result.error.message}</em>`, Str.with(encryptedData));
       } else {
         // should generally not happen
-        await this.view.errorModule.renderErr(
-          Lang.pgpBlock.cantOpen + Lang.general.writeMeToFixIt(!!this.view.fesUrl) + '\n\nDiagnostic info: "' + JSON.stringify(result) + '"',
+        renderModule.renderErr(
+          Lang.pgpBlock.cantOpen +
+            Lang.general.writeMeToFixIt(await isCustomerUrlFesUsed(this.acctEmail)) +
+            '\n\nDiagnostic info: "' +
+            JSON.stringify(result) +
+            '"',
           Str.with(encryptedData)
         );
       }
-      */
     }
     return {};
   };
 
   public getPrintViewInfo = async (metadata: GmailRes.GmailMsg): Promise<PrintMailInfo> => {
     const fullName = await AcctStore.get(this.acctEmail, ['full_name']); // todo: cache
-    const sentDate = new Date(GmailParser.findHeader(metadata, 'date') ?? '');
-    const sentDateStr = Str.fromDate(sentDate).replace(' ', ' at ');
+    const sentDate = GmailParser.findHeader(metadata, 'date');
+    const sentDateStr = sentDate ? Str.fromDate(new Date(sentDate)).replace(' ', ' at ') : '';
     const from = Str.parseEmail(GmailParser.findHeader(metadata, 'from') ?? '');
     const fromHtml = from.name ? `<b>${Xss.htmlSanitize(from.name)}</b> &lt;${from.email}&gt;` : from.email;
     /* eslint-disable @typescript-eslint/no-non-null-assertion */
@@ -497,5 +570,148 @@ export class MessageRenderer {
       <br/><hr>
     `,
     };
+  };
+
+  public msgGetProcessed = async (msgId: string): Promise<ProcessedMessage> => {
+    // todo: retries? exceptions?
+    const msgDownload = this.downloader.msgGetCached(msgId);
+    if (msgDownload.processedFull) {
+      return msgDownload.processedFull;
+    }
+    const fullOrRawMsg = await Promise.race(Object.values(msgDownload.download).filter(Boolean));
+    // todo: what should we do if we received 'raw'?
+    const mimeContent = MessageRenderer.reconstructMimeContent(fullOrRawMsg);
+    const blocks = Mime.processBody(mimeContent);
+    // todo: only start `signature` download?
+    // start download of all attachments that are not plainFile, for 'needChunk' -- chunked download
+    for (const a of mimeContent.attachments.filter(a => !a.hasData())) {
+      const treatAs = a.treatAs(mimeContent.attachments); // todo: isBodyEmpty
+      if (treatAs === 'plainFile') continue;
+      if (treatAs === 'needChunk') {
+        this.downloader.queueAttachmentChunkDownload(a);
+      } else if (treatAs === 'publicKey') {
+        // we also want a chunk before we replace the attachment in the UI
+        // todo: or simply download in full?
+        this.downloader.queueAttachmentChunkDownload(a);
+      } else {
+        // todo: this.downloader.queueAttachmentDownload(a);
+      }
+    }
+    let renderedXssSafe: string | undefined;
+    let blocksInFrames: Dict<MsgBlock> = {};
+    const from = GmailParser.findHeader(fullOrRawMsg, 'from');
+    if (blocks.length === 0 || (blocks.length === 1 && ['plainText', 'plainHtml'].includes(blocks[0].type))) {
+      // only has single block which is plain text
+    } else {
+      ({ renderedXssSafe, blocksInFrames } = MessageRenderer.renderMsg({ blocks, from }, this.factory, false, msgId, this.sendAs));
+    }
+    msgDownload.processedFull = {
+      renderedXssSafe,
+      blocksInFrames,
+      printMailInfo: await this.getPrintViewInfo(fullOrRawMsg),
+      from,
+      attachments: mimeContent.attachments,
+    };
+    return msgDownload.processedFull;
+  };
+
+  private setMsgBodyAndStartProcessing = async (
+    loaderContext: LoaderContextInterface,
+    type: MsgBlockType, // for diagnostics
+    printMailInfo: PrintMailInfo,
+    cb: (renderModule: RenderInterface) => Promise<{ publicKeys?: string[] }>
+  ) => {
+    const { frameId, frameXssSafe } = loaderContext.factory.embeddedRenderMsg(type);
+    loaderContext.setMsgBody(frameXssSafe, 'set');
+    await this.relayAndStartProcessing(this.relayManager, loaderContext, loaderContext.factory, frameId, printMailInfo, cb);
+  };
+
+  private processSignedMessage = async (msgId: string, renderModule: RenderInterface, senderEmail: string) => {
+    try {
+      renderModule.renderText('Loading signed message...');
+      const raw = await this.msgGetRaw(msgId);
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      return await this.renderSignedMessage(raw!, renderModule, senderEmail);
+    } catch {
+      // todo: render error via renderModule
+    }
+    return {};
+  };
+
+  private processEncryptedMessage = async (attachment: Attachment, renderModule: RenderInterface, senderEmail: string) => {
+    try {
+      if (!attachment.hasData()) {
+        // todo: common cache, load control?
+        renderModule.renderText('Retrieving message...');
+        await this.gmail.fetchAttachments([attachment]); // todo: render progressCb
+      }
+      // todo: probaby subject isn't relevant in attachment-based decryption?
+      // const subject = gmailMsg.payload ? GmailParser.findHeader(gmailMsg.payload, 'subject') : undefined;
+      const armoredMsg = PgpArmor.clip(attachment.getData().toUtfStr());
+      if (!armoredMsg) {
+        // todo:
+        throw new FormatError('Problem extracting armored message', attachment.getData().toUtfStr());
+      }
+      renderModule.renderText('Decrypting...');
+      return await this.renderEncryptedMessage(armoredMsg, renderModule, false, senderEmail);
+    } catch {
+      // todo: render error via renderModule
+    }
+    return {};
+  };
+
+  private renderPublicKeyFromFile = async (
+    attachmentMeta: Attachment,
+    loaderContext: LoaderContextInterface,
+    isOutgoing: boolean,
+    attachmentSel: JQueryEl | undefined
+  ): Promise<'shown' | 'hidden'> => {
+    // let downloadedAttachment: GmailRes.GmailAttachment;
+    try {
+      // todo: how is different -- downloader.attachmentGet(attachmentMeta.msgId!, attachmentMeta.id!); // .id! is present when fetched from api
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      await this.gmail.fetchAttachments([attachmentMeta]);
+    } catch (e) {
+      loaderContext.renderPlainAttachment(attachmentMeta, undefined, 'Please reload page');
+      return 'shown';
+    }
+    const openpgpType = MsgUtil.type({ data: attachmentMeta.getData().subarray(0, 1000) });
+    if (openpgpType?.type === 'publicKey') {
+      loaderContext.setMsgBody(this.factory.embeddedPubkey(attachmentMeta.getData().toUtfStr(), isOutgoing), 'after');
+      return 'hidden';
+    } else if (openpgpType?.type !== 'encryptedAttachment') {
+      loaderContext.renderPlainAttachment(attachmentMeta, attachmentSel, 'Unknown Public Key Format');
+      return 'shown';
+    } else {
+      // todo: renderEncryptedAttachment
+      return 'hidden'; // todo: return 'shown'
+    }
+  };
+
+  private renderBackupFromFile = async (
+    attachmentMeta: Attachment,
+    loaderContext: LoaderContextInterface,
+    isOutgoing: boolean
+  ): Promise<'shown' | 'hidden'> => {
+    // let downloadedAttachment: GmailRes.GmailAttachment;
+    try {
+      // todo: fetch from queue
+      // todo: how is different -- downloader.attachmentGet(attachmentMeta.msgId!, attachmentMeta.id!); // .id! is present when fetched from api
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      await this.gmail.fetchAttachments([attachmentMeta]);
+      loaderContext.setMsgBody(this.factory.embeddedPubkey(attachmentMeta.getData().toUtfStr(), isOutgoing), 'append');
+      return 'hidden';
+    } catch (e) {
+      loaderContext.renderPlainAttachment(attachmentMeta, undefined, 'Please reload page');
+      return 'shown';
+    }
+  };
+
+  private msgGetRaw = async (msgId: string): Promise<string> => {
+    const msgDownload = this.downloader.msgGetCached(msgId).download;
+    if (!msgDownload.raw) {
+      msgDownload.raw = this.gmail.msgGet(msgId, 'raw');
+    }
+    return (await msgDownload.raw).raw || '';
   };
 }

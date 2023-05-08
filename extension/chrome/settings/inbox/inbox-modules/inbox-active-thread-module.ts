@@ -13,13 +13,56 @@ import { Buf } from '../../../../js/common/core/buf.js';
 import { Catch } from '../../../../js/common/platform/catch.js';
 import { InboxView } from '../inbox.js';
 import { Lang } from '../../../../js/common/lang.js';
-import { AttachmentBlock, MessageRenderer } from '../../../../js/common/message-renderer.js';
+import { MessageRenderer } from '../../../../js/common/message-renderer.js';
 import { Ui } from '../../../../js/common/browser/ui.js';
 import { ViewModule } from '../../../../js/common/view-module.js';
 import { Xss } from '../../../../js/common/platform/xss.js';
 import { Browser } from '../../../../js/common/browser/browser.js';
 import { Attachment } from '../../../../js/common/core/attachment.js';
 import { MsgBlock } from '../../../../js/common/core/msg-block.js';
+import { Mime } from '../../../../js/common/core/mime.js';
+import { LoaderContextInterface, bindNow } from '../../../../js/common/loader-context-interface.js';
+import { BindInterface } from '../../../../js/common/relay-manager-interface.js';
+
+class LoaderContext implements LoaderContextInterface {
+  private frameIdsToBind: string[] = [];
+
+  public constructor(public readonly factory: XssSafeFactory, public renderedMessageXssSafe: string | undefined, public renderedAttachments: string[]) {}
+
+  public bind = (frameId: string) => {
+    this.frameIdsToBind.push(frameId);
+  };
+
+  public renderPlainAttachment = (a: Attachment) => {
+    // todo: render error argument
+    this.renderedAttachments.push(this.factory.embeddedAttachment(a, false));
+  };
+
+  public prependEncryptedAttachment = (a: Attachment) => {
+    this.renderedAttachments.unshift(this.factory.embeddedAttachment(a, true));
+  };
+
+  public setMsgBody = (xssSafe: string, method: 'set' | 'append' | 'after') => {
+    if (method === 'set') {
+      this.renderedMessageXssSafe = xssSafe;
+    } else {
+      // todo: how append should differ from after?
+      this.renderedAttachments.unshift(xssSafe);
+    }
+  };
+
+  public hideAttachment = () => {
+    // not applicable
+  };
+
+  public completeBinding = (binder: BindInterface) => {
+    while (true) {
+      const frameId = this.frameIdsToBind.shift();
+      if (!frameId) break;
+      bindNow(frameId, binder);
+    }
+  };
+}
 
 export class InboxActiveThreadModule extends ViewModule<InboxView> {
   private threadId: string | undefined;
@@ -106,44 +149,57 @@ export class InboxActiveThreadModule extends ViewModule<InboxView> {
 
   private renderMsg = async (message: GmailRes.GmailMsg) => {
     const htmlId = this.replyMsgId(message.id);
-    const from = GmailParser.findHeader(message, 'from');
     try {
-      const msg = await this.view.gmail.msgGet(message.id, 'raw');
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      const { blocks, headers } = await MessageRenderer.processMessageFromRaw(msg.raw!);
+      const msg = await this.view.gmail.msgGet(message.id, 'full');
+      const mimeContent = MessageRenderer.reconstructMimeContent(msg);
+      const blocks = Mime.processBody(mimeContent);
       const printInfoHtml = await this.view.messageRenderer.getPrintViewInfo(msg);
       // todo: review the meaning of threadHasPgpBlock
-      this.threadHasPgpBlock ||= blocks.some(block => ['encryptedMsg', 'publicKey', 'privateKey', 'signedMsg'].includes(block.block.type));
+      this.threadHasPgpBlock ||= blocks.some(block => ['encryptedMsg', 'publicKey', 'privateKey', 'signedMsg'].includes(block.type));
       // todo: take `from` from the processedMessage?
       const messageBlocks: MsgBlock[] = [];
-      const attachmentBlocks: AttachmentBlock[] = [];
+      const attachmentBlocks: MsgBlock[] = [];
       for (const block of blocks) {
-        if (block.file && ['encryptedAttachment', 'plainAttachment'].includes(block.block.type)) {
-          attachmentBlocks.push({ block: block.block, file: block.file });
+        if (block.attachmentMeta && ['encryptedAttachment', 'plainAttachment'].includes(block.type)) {
+          attachmentBlocks.push(block);
         } else {
-          messageBlocks.push(block.block);
+          messageBlocks.push(block);
         }
       }
-      const { renderedXssSafe, isOutgoing, blocksInFrames } = MessageRenderer.renderMsg(
-        { from, blocks: messageBlocks },
-        this.view.factory,
-        this.view.showOriginal,
-        message.id,
-        this.view.storage.sendAs
-      );
+      const { renderedXssSafe, blocksInFrames, printMailInfo, from } = await this.view.messageRenderer.msgGetProcessed(message.id);
+
       const exportBtn = this.debugEmails.includes(this.view.acctEmail) ? '<a href="#" class="action-export">download api export</a>' : '';
+      const loaderContext = new LoaderContext(
+        this.view.factory,
+        renderedXssSafe,
+        attachmentBlocks.map(block =>
+          XssSafeFactory.renderableMsgBlock(this.view.factory, block, message.id, senderEmail, this.view.messageRenderer.isOutgoing(senderEmail))
+        )
+      );
+      const senderEmail = from || 'unknown';
+      for (const a of mimeContent.attachments) {
+        // todo: isBodyEmpty
+        const isBodyEmpty = false;
+        await this.view.messageRenderer.processAttachment(
+          a,
+          a.treatAs(mimeContent.attachments, isBodyEmpty),
+          loaderContext,
+          undefined,
+          message.id,
+          printMailInfo,
+          senderEmail
+        );
+      }
       const r =
         `<p class="message_header" data-test="container-msg-header">From: ${Xss.escape(from || 'unknown')} <span style="float:right;">${
-          headers.date
+          GmailParser.findHeader(msg, 'Date') ?? ''
         } ${exportBtn}</p>` +
-        renderedXssSafe +
-        (attachmentBlocks.length // todo: we always have data on this page (for now), as we download 'raw'
-          ? `<div class="attachments" data-test="container-attachments">${attachmentBlocks
-              .map(block => XssSafeFactory.renderableMsgBlock(this.view.factory, block.block, message.id, from || 'unknown', isOutgoing))
-              .join('')}</div>`
+        (loaderContext.renderedMessageXssSafe ?? '') +
+        (loaderContext.renderedAttachments.length // todo: we always have data on this page (for now), as we download 'raw'
+          ? `<div class="attachments" data-test="container-attachments">${loaderContext.renderedAttachments.join('')}</div>`
           : '');
       $('.thread').append(this.wrapMsg(htmlId, r)); // xss-safe-factory
-      // todo: isOutgoing ?
+      loaderContext.completeBinding(this.view.relayManager);
       this.view.messageRenderer
         .processInlineBlocks(this.view.relayManager, this.view.factory, printInfoHtml, blocksInFrames, from ? Str.parseEmail(from).email : undefined)
         .catch(Catch.reportErr);

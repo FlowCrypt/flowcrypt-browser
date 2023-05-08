@@ -41,7 +41,7 @@ export class InboxView extends View {
 
   public injector!: Injector;
   public webmailCommon!: WebmailCommon;
-  public readonly messageRenderer: MessageRenderer;
+  public messageRenderer!: MessageRenderer;
   public factory!: XssSafeFactory;
   public storage!: AcctStoreDict;
   public tabId!: string;
@@ -51,7 +51,6 @@ export class InboxView extends View {
     super();
     const uncheckedUrlParams = Url.parse(['acctEmail', 'labelId', 'threadId', 'showOriginal', 'debug']);
     this.acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
-    this.messageRenderer = new MessageRenderer(this.acctEmail);
     this.labelId = uncheckedUrlParams.labelId ? String(uncheckedUrlParams.labelId) : 'INBOX';
     this.threadId = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'threadId');
     this.showOriginal = uncheckedUrlParams.showOriginal === true;
@@ -76,6 +75,12 @@ export class InboxView extends View {
     this.injector = new Injector('settings', undefined, this.factory);
     this.webmailCommon = new WebmailCommon(this.acctEmail, this.injector);
     this.storage = await AcctStore.get(this.acctEmail, ['email_provider', 'picture', 'sendAs']);
+    // todo: remove code duplication
+    if (!this.storage.sendAs) {
+      this.storage.sendAs = {};
+      this.storage.sendAs[this.acctEmail] = { name: this.storage.full_name, isPrimary: true };
+    }
+    this.messageRenderer = new MessageRenderer(this.acctEmail, this.gmail, this.relayManager, this.factory, this.storage.sendAs, this.debug);
     this.inboxNotificationModule.render();
     const emailProvider = this.storage.email_provider || 'gmail';
     try {

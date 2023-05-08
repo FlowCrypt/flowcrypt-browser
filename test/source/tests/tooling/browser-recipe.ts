@@ -1,6 +1,6 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
-import { Config, Util, TestMessage, TestMessageWithParams } from '../../util';
+import { Config, Util, TestMessage } from '../../util';
 
 import { AvaContext } from '.';
 import { BrowserHandle, Controllable, ControllableFrame, ControllablePage } from '../../browser';
@@ -177,14 +177,17 @@ export class BrowserRecipe {
     return { acctEmail, passphrase: key.passphrase, settingsPage };
   };
 
-  public static pgpBlockVerifyDecryptedContent = async (t: AvaContext, browser: BrowserHandle, m: TestMessageWithParams) => {
-    const pgpHostPage = await browser.newPage(t, `chrome/dev/ci_pgp_host_page.htm${m.params}`);
-    try {
-      const pgpBlockPage = await pgpHostPage.getFrame(['pgp_block.htm']);
-      return await BrowserRecipe.pgpBlockCheck(t, pgpBlockPage, m);
-    } finally {
-      await pgpHostPage.close();
-    }
+  public static pgpBlockVerifyDecryptedContent = async (
+    t: AvaContext,
+    browser: BrowserHandle,
+    msgId: string,
+    m: TestMessage,
+    extraHeaders: Record<string, string>
+  ) => {
+    const gmailPage = await browser.newPage(t, `${t.urls?.mockGmailUrl()}/${msgId}`, undefined, extraHeaders);
+    await gmailPage.waitAll('iframe');
+    await BrowserRecipe.pgpBlockCheck(t, await gmailPage.getFrame(['pgp_render_block.htm']), m);
+    await gmailPage.close();
   };
 
   public static pgpBlockCheck = async (t: AvaContext, pgpBlockPage: ControllableFrame, m: TestMessage) => {
@@ -217,6 +220,24 @@ export class BrowserRecipe {
     }
     const sigBadgeContent = await pgpBlockPage.read('@pgp-signature');
     const encBadgeContent = await pgpBlockPage.read('@pgp-encryption');
+    if (m.signature) {
+      if (sigBadgeContent !== m.signature) {
+        t.log(`found sig content:${sigBadgeContent}`);
+        throw new Error(`pgp_block_verify_decrypted_content:missing expected signature content:${m.signature}\nactual sig content:${sigBadgeContent}`);
+      }
+    } else if (!m.error) {
+      // some badge still has to be present
+      expect(sigBadgeContent).to.be.ok;
+    }
+    if (m.encryption) {
+      if (encBadgeContent !== m.encryption) {
+        t.log(`found enc content:${encBadgeContent}`);
+        throw new Error(`pgp_block_verify_decrypted_content:missing expected encryption content:${m.encryption}`);
+      }
+    } else if (!m.error) {
+      // some badge still has to be present
+      expect(encBadgeContent).to.be.ok;
+    }
     if (m.error) {
       expect(sigBadgeContent).to.be.empty;
       expect(encBadgeContent).to.be.empty;
@@ -229,25 +250,6 @@ export class BrowserRecipe {
     } else if (m.content.length > 0) {
       if (!(await pgpBlockPage.isElementVisible('@action-print'))) {
         throw new Error(`Print button is invisible`);
-      }
-    } else {
-      if (m.signature) {
-        if (sigBadgeContent !== m.signature) {
-          t.log(`found sig content:${sigBadgeContent}`);
-          throw new Error(`pgp_block_verify_decrypted_content:missing expected signature content:${m.signature}\nactual sig content:${sigBadgeContent}`);
-        }
-      } else {
-        // some badge still has to be present
-        expect(sigBadgeContent).to.be.ok;
-      }
-      if (m.encryption) {
-        if (encBadgeContent !== m.encryption) {
-          t.log(`found enc content:${encBadgeContent}`);
-          throw new Error(`pgp_block_verify_decrypted_content:missing expected encryption content:${m.encryption}`);
-        }
-      } else {
-        // some badge still has to be present
-        expect(encBadgeContent).to.be.ok;
       }
     }
   };

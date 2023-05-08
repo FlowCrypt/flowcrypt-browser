@@ -106,6 +106,7 @@ export enum DecryptErrTypes {
   badMdc = 'bad_mdc',
   needPassphrase = 'need_passphrase',
   format = 'format',
+  armorChecksumFailed = 'armor_checksum_failed',
   other = 'other',
 }
 
@@ -181,7 +182,7 @@ export class MsgUtil {
     try {
       prepared = await PgpArmor.cryptoMsgPrepareForDecrypt(encryptedData);
     } catch (formatErr) {
-      return { success: false, error: { type: DecryptErrTypes.format, message: String(formatErr) }, longids };
+      return { success: false, error: MsgUtil.cryptoMsgDecryptCategorizeErr(formatErr), longids };
     }
     // there are 3 types of messages possible at this point
     // 1. PKCS#7 if isPkcs7 is true
@@ -428,6 +429,11 @@ export class MsgUtil {
       return {
         type: DecryptErrTypes.badMdc,
         message: `Security threat - opening this message is dangerous because it was modified in transit.`,
+      };
+    } else if (e === 'Ascii armor integrity check failed') {
+      return {
+        type: DecryptErrTypes.armorChecksumFailed,
+        message: e,
       };
     } else {
       return { type: DecryptErrTypes.other, message: e };
