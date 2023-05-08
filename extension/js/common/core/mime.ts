@@ -154,16 +154,7 @@ export class Mime {
       if (signatureAttachment.hasData()) {
         const signature = signatureAttachment.getData().toUtfStr();
         const blocksToRevisit = [...bodyBlocks, ...attachmentBlocks.map(x => x.block)];
-        for (const block of blocksToRevisit) {
-          if (block.type === 'plainText') {
-            block.type = 'signedText';
-            block.signature = signature;
-          } else if (block.type === 'plainHtml') {
-            block.type = 'signedHtml';
-            block.signature = signature;
-          }
-        }
-        if (!blocksToRevisit.find(block => ['plainText', 'plainHtml', 'signedMsg', 'signedHtml', 'signedText'].includes(block.type))) {
+        if (!blocksToRevisit.find(block => ['plainText', 'plainHtml', 'signedMsg'].includes(block.type))) {
           // signed an empty message
           attachmentBlocks.push({ block: new MsgBlock('signedMsg', '', true, signature), file: signatureAttachment });
         }
@@ -178,7 +169,8 @@ export class Mime {
           return { block };
         }),
         ...attachmentBlocks,
-      ],
+      ], // todo: check how compose-quote-module works, previous version made 'plainText' and 'plainHtml' invisible if a 'signature' block is present
+      // by changing their types to 'signedText' and 'signedHtml' respectively
       rawSignedContent: decoded.rawSignedContent,
     };
   };

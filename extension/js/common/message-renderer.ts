@@ -188,11 +188,6 @@ export class MessageRenderer {
     }
   };
 
-  public static processMessageFromRaw = async (raw: string) => {
-    const mimeMsg = Buf.fromBase64UrlStr(raw);
-    return await Mime.process(mimeMsg);
-  };
-
   public static reconstructMimeContent = (gmailMsg: GmailRes.GmailMsg): MimeContent => {
     const bodies = GmailParser.findBodies(gmailMsg);
     const attachments = GmailParser.findAttachments(gmailMsg, gmailMsg.id);
