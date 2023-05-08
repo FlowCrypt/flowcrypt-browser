@@ -1,5 +1,7 @@
 <div class="lightboxed">
 
+version 8.4.7 on May 8, 2023: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/472?closed=1" target="_blank">Various bugfixes</a>
+
 version 8.4.6 on March 22, 2023: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/471?closed=1" target="_blank">Compatibility improvements</a>
 
 version 8.4.5 on March 22, 2023: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/470?closed=1" target="_blank">Signed message with CID images</a>
