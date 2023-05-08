@@ -124,6 +124,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
         await pgpBlock.waitForContent('@pgp-encryption', 'encrypted');
         await pgpBlock.waitForContent('@pgp-signature', 'signed');
         await pgpBlock.waitForContent('@pgp-block-content', 'Check');
+        expect(await inboxPage.isElementPresent('@container-attachments')).to.equal(false);
         await inboxPage.close();
       })
     );
