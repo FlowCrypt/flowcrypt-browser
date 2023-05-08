@@ -18,7 +18,7 @@ import { BrowserHandle, ControllablePage } from '../browser';
 import { OauthPageRecipe } from './page-recipe/oauth-page-recipe';
 import { AvaContext } from './tooling';
 import { opgp } from '../core/crypto/pgp/openpgpjs-custom';
-import { hasPubKey, protonMailCompatKey, singlePubKeyAttesterConfig, somePubkey } from '../mock/attester/attester-key-constants';
+import { expiredPubkey, hasPubKey, protonMailCompatKey, singlePubKeyAttesterConfig, somePubkey } from '../mock/attester/attester-key-constants';
 import { ConfigurationProvider, HttpClientErr, Status } from '../mock/lib/api';
 import { prvNoSubmit } from '../mock/key-manager/key-manager-constants';
 import {
@@ -980,6 +980,44 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
             ldapRelay: {
               [acct]: {
                 pubkey: hasPubKey,
+              },
+            },
+          },
+          fes: flowcryptTestClientConfiguration,
+        });
+        const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
+        await SetupPageRecipe.manualEnter(
+          settingsPage,
+          'has.pub.client.configuration.test',
+          { noPrvCreateClientConfiguration: true, enforceAttesterSubmitClientConfiguration: true },
+          { isSavePassphraseChecked: false, isSavePassphraseHidden: false }
+        );
+        await settingsPage.waitAll(['@action-show-encrypted-inbox', '@action-open-security-page']);
+        await Util.sleep(1);
+        await settingsPage.notPresent(['@action-open-backup-page']);
+        const { cryptup_haspubclientconfigurationtestflowcrypttest_keys: keys } = await settingsPage.getFromLocalStorage([
+          'cryptup_haspubclientconfigurationtestflowcrypttest_keys',
+        ]);
+        const ki = keys as KeyInfoWithIdentity[];
+        expect(ki.length).to.equal(1);
+        expect(ki[0].private).to.include('PGP PRIVATE KEY');
+        expect(ki[0].private).to.not.include('Version');
+        expect(ki[0].private).to.not.include('Comment');
+        expect(ki[0].public).to.include('PGP PUBLIC KEY');
+        expect(ki[0].public).to.not.include('Version');
+        expect(ki[0].public).to.not.include('Comment');
+      })
+    );
+
+    test(
+      'has.pub@client-configuration-test.flowcrypt.test - no backup, no keygen, multiple keys',
+      testWithBrowser(async (t, browser) => {
+        const acct = 'has.pub@client-configuration-test.flowcrypt.test';
+        t.mockApi!.configProvider = new ConfigurationProvider({
+          attester: {
+            ldapRelay: {
+              [acct]: {
+                pubkey: [expiredPubkey, hasPubKey].join('\n'),
               },
             },
           },
