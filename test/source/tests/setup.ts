@@ -1009,8 +1009,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       })
     );
 
-    // eslint-disable-next-line no-only-tests/no-only-tests
-    test.only(
+    test(
       'has.pub@client-configuration-test.flowcrypt.test - no backup, no keygen, multiple keys',
       testWithBrowser(async (t, browser) => {
         const acct = 'has.pub@client-configuration-test.flowcrypt.test';
