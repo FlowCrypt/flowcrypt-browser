@@ -7,7 +7,7 @@ import { asyncSome, Url } from '../../js/common/core/common.js';
 import { ApiErr } from '../../js/common/api/shared/api-error.js';
 import { Assert } from '../../js/common/assert.js';
 import { Catch, CompanyLdapKeyMismatchError } from '../../js/common/platform/catch.js';
-import { KeyInfoWithIdentity, KeyUtil } from '../../js/common/core/crypto/key.js';
+import { Key, KeyInfoWithIdentity, KeyUtil } from '../../js/common/core/crypto/key.js';
 import { Gmail } from '../../js/common/api/email-provider/gmail/gmail.js';
 import { Google } from '../../js/common/api/email-provider/gmail/google.js';
 import { KeyImportUi } from '../../js/common/ui/key-import-ui.js';
@@ -415,7 +415,10 @@ export class SetupView extends View {
       const result = await this.pubLookup.attester.doLookupLdap(this.acctEmail);
       if (result.pubkeys.length) {
         const prvs = await KeyStoreUtil.parse(await KeyStore.getRequired(this.acctEmail));
-        const parsedPubKeys = await KeyUtil.parseMany(result.pubkeys.join('\n'));
+        const parsedPubKeys: Key[] = [];
+        for (const pubKey of result.pubkeys) {
+          parsedPubKeys.push(...(await KeyUtil.parseMany(pubKey)));
+        }
         const hasMatchingKey = await asyncSome(prvs, async privateKey => {
           return parsedPubKeys.some(parsedPubKey => privateKey.key.id === parsedPubKey.id);
         });

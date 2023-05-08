@@ -3,7 +3,8 @@
 'use strict';
 
 import { Url } from '../core/common.js';
-import { FLAVOR, VERSION } from '../core/const.js';
+import { FLAVOR, InMemoryStoreKeys, SHARED_TENANT_API_HOST, VERSION } from '../core/const.js';
+import { InMemoryStore } from './store/in-memory-store.js';
 
 export class UnreportableError extends Error {}
 export class CompanyLdapKeyMismatchError extends UnreportableError {}
@@ -17,6 +18,8 @@ export type ErrorReport = {
   trace: string;
   version: string;
   environment: string;
+  product: string;
+  buildType: string;
 };
 
 export class Catch {
@@ -105,7 +108,7 @@ export class Catch {
       return false; // do not send to flowcrypt.com backend on enterprise flavor
     }
     // consumer flavor
-    Catch.doSendErrorToFlowCryptComBackend(formatted);
+    void Catch.doSendErrorToSharedTenantFes(formatted);
     return true;
   };
 
@@ -295,19 +298,32 @@ export class Catch {
       trace: exception.stack || '',
       version: VERSION,
       environment: Catch.RUNTIME_ENVIRONMENT,
+      product: 'web-ext',
+      buildType: FLAVOR,
     };
   };
 
-  private static doSendErrorToFlowCryptComBackend = (errorReport: ErrorReport) => {
+  private static doSendErrorToSharedTenantFes = async (errorReport: ErrorReport) => {
     try {
+      const uncheckedUrlParams = Url.parse(['acctEmail']);
+      const acctEmail = String(uncheckedUrlParams.acctEmail);
+      if (!acctEmail) {
+        console.error('Not reporting error because user is not logged in');
+        return;
+      }
+      const idToken = await InMemoryStore.get(acctEmail, InMemoryStoreKeys.ID_TOKEN);
       void $.ajax({
-        url: 'https://flowcrypt.com/api/help/error',
+        url: `${SHARED_TENANT_API_HOST}/api/v1/log-collector/exception`,
         method: 'POST',
         data: JSON.stringify(errorReport),
         dataType: 'json',
         crossDomain: true,
         contentType: 'application/json; charset=UTF-8',
         async: true,
+        headers: {
+          // eslint-disable-next-line @typescript-eslint/naming-convention
+          Authorization: `Bearer ${idToken}`,
+        },
         success: (response: { saved: boolean }) => {
           if (response && typeof response === 'object' && response.saved === true) {
             console.log('%cFlowCrypt ERROR:' + Catch.CONSOLE_MSG, 'font-weight: bold;');

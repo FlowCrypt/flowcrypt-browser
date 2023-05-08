@@ -26,6 +26,7 @@ export namespace FesRes {
   };
   export type ServiceInfo = { vendor: string; service: string; orgId: string; version: string; apiVersion: string };
   export type ClientConfiguration = { clientConfiguration: ClientConfigurationJson };
+  export type HelpFeedback = { sent: boolean };
 }
 
 /**
@@ -97,6 +98,10 @@ export class ExternalService extends Api {
 
   public reportException = async (errorReport: ErrorReport): Promise<void> => {
     await this.request<void>('POST', `/api/${this.apiVersion}/log-collector/exception`, {}, errorReport);
+  };
+
+  public helpFeedback = async (email: string, message: string): Promise<FesRes.HelpFeedback> => {
+    return await this.request<FesRes.HelpFeedback>('POST', `/api/${this.apiVersion}/account/feedback`, {}, { email, message });
   };
 
   public reportEvent = async (tags: EventTag[], message: string, details?: string): Promise<void> => {
