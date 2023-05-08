@@ -31,7 +31,7 @@ import { Downloader, ProcessedMessage } from './downloader.js';
 import { JQueryEl, LoaderContextBindInterface, LoaderContextBindNow, LoaderContextInterface } from './loader-context-interface.js';
 import { Gmail } from './api/email-provider/gmail/gmail.js';
 import { ApiErr, AjaxErr } from './api/shared/api-error.js';
-import { isCustomerUrlFesUsed } from './helpers';
+import { isCustomerUrlFesUsed } from './helpers.js';
 
 export type ProccesedMsg = MimeProccesedMsg;
 
