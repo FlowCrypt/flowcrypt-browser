@@ -194,7 +194,7 @@ export class BrowserRecipe {
     if (m.expectPercentageProgress) {
       await pgpBlockPage.waitForContent('@pgp-block-content', /Retrieving message... \d+%/, 20, 10);
     }
-    await pgpBlockPage.waitForSelTestState('ready', 10000);
+    await pgpBlockPage.waitForSelTestState('ready', 100);
     await Util.sleep(1);
     if (m.quoted) {
       await pgpBlockPage.waitAndClick('@action-show-quoted-content');
