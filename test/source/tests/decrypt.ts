@@ -91,7 +91,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
     );
 
     test(
-      `decrypt - parsed signed message with signautre.asc as plain attachment`,
+      `decrypt - parsed signed message with signature.asc as plain attachment`,
       testWithBrowser(async (t, browser) => {
         const threadId = '187085b874fb727c';
         const acctEmail = 'flowcrypt.compatibility@gmail.com';
@@ -104,6 +104,27 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
         await inboxPage.waitAll('iframe');
         const pgpBlock = await inboxPage.getFrame(['pgp_block.htm']);
         await pgpBlock.waitForContent('@pgp-block-content', 'flowcrypt-browser issue #5029 test email');
+        await inboxPage.close();
+      })
+    );
+
+    test(
+      `decrypt - parsed encrypted message signed with signature.asc inline attachment`,
+      testWithBrowser(async (t, browser) => {
+        const threadId = '187ebe3cd1fae41e';
+        const acctEmail = 'flowcrypt.compatibility@gmail.com';
+        t.mockApi!.configProvider = new ConfigurationProvider({
+          attester: singlePubKeyAttesterConfig(acctEmail, somePubkey),
+        });
+        await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
+        const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`);
+        await inboxPage.waitForSelTestState('ready');
+        await inboxPage.waitAll('iframe');
+        const pgpBlock = await inboxPage.getFrame(['pgp_block.htm']);
+        await pgpBlock.waitForContent('@pgp-encryption', 'encrypted');
+        await pgpBlock.waitForContent('@pgp-signature', 'signed');
+        await pgpBlock.waitForContent('@pgp-block-content', 'Check');
+        expect(await inboxPage.isElementPresent('@container-attachments')).to.equal(false);
         await inboxPage.close();
       })
     );
@@ -413,8 +434,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
           content: ['Prozent => %', 'Scharf-S => ß', 'Ue => Ü', 'Ae => Ä'],
           encryption: 'encrypted',
           signature: 'not signed',
-          params:
-            '?account_email=flowcrypt.compatibility%40gmail.com&frame_id=frame_CdqnkNWgHP&message=-----BEGIN%20PGP%20MESSAGE-----%0A%0AhQIMA0taL%2FzmLZUBARAApSOEoWZSpvBNMFPgyhbnMd3Jdv2%2BsQRSs3iX28z6TsOp%0Axq7Gqm1xh%2F27EeJfisCZH9Af1aB9OSQXDzfZG9NqvXXQcsMsp6GcqyzUhxp33VDq%0A5xWRAoS8M4WvEMGOKx2q4ChoBhpl8wloDQtPtnk7cDv3YRgxF0JSkwTy%2F%2Bs6wAOJ%0AX%2FULyAayJ8MgETkRpFgzYpWaWTmrJsdsy91ASJAP%2BKujGn6BNss0LdufWrzOZmxw%0AJ3sX%2FSasurMwwaftRcQd9CVzckrAFeuwn4fCsr4kFdR%2BRDSM7GRPM5rxWnTiulgh%0A9SRTyekvJlpnwbn9K6qPO6oiXVDZmB5Gpl3OuBl5V%2FPazSHpm%2BzPzNxiwlQOobgN%0AP35PfbpJAi%2Fq%2BpSEra0dmU1Jtek7s%2FNh%2FsRebJEgAXwZvuUiTBu2zdIygW%2BItsaa%0AQqvffyZqcrY85Q0KF%2Bz5j7MOYXL0E3bkhEtpou0pjdOEJTsbNlAsFu64oxRjUjkD%0As%2Bfpgv3hnW%2BvYHQy98B1VEz1Q%2B2G3sxmArepnaD7Kylj6mNE%2FI2QPYCl%2FDqxBdZv%0A%2FSKL9D5t6DKqj0cu6TsitWNbT8SOq1oJP97ZUcr%2BNg9YHDYnb6v3mXdKZ2UxtqVG%0AmXzGU9rc2QW%2BltQINpj0uYzKNQiYxXnVaO0eYF4wJQ5EkJeixLltUQKSTlarQKOF%0AAgwDBlAx99b1mtYBD%2F9yAcmyrvlAGEvn5bScQXV0k4KY0n2gpXp6A81uyJAv4iFo%0AUye4LdRlZEdx9WOxpujfLCiGAKaN4tfDoDw4G%2FAlLelOwG87AcuK01EYQOmtVWmO%0A0jPkQJkmQe68Z68KRUlS7BpsLriC%2BfSjbT9wOlhVA6xaA0DQfig%2FhMkvZp%2FA2vCT%0Ax7OE49siG6lyWHhTQXEmXflGm23a3Eza1%2B16Ln8TDUEt3uFiPFAg8Wk4arb2NMth%0AlzPOvLtDjOmVjpbPDtGjmUeCjlt3m%2F3IB2HrII9KZrT%2FnXBb29XenXa4z3Rv8ziF%0AtBNWOXqKj4E0aYzXJKNDvGtK7Ddn4gMgdLfsSeJ4zL9vwam%2BL%2FJi7WPb3SGSew6H%0APKGnOJj2fBMXUnWxzLDf7KZs8Z6ON69P26kYrwd%2BMpL2hkhEi5fYkpHDam7vBUUb%0AYwBUpGF2Msx2YH7suCwaNVeXX%2FakNzeu6%2BxgyocPTDlIPN3C%2BJsZIeglw7lsWs%2Bn%0A3EcTvS%2FC6zIOLTH0fYAES5dzc1sSIYPJ%2BE86nhC8snxnSIsJyaB8OJxSfVUreMmO%0Aw1kiBdMuAtUPOUs3ME9Xaqic2zQrcX1G%2FKSNjsXCNEf%2Fj%2By%2FNpeVP8jtyGFmHdi2%0AIaBFez6rMOQWmEimThz8r7805jvfYHlCWRN1ADSvxtd6pjzUgrdnmGu8mqfZ39Lq%0AAT5PwLztaOjaI%2FhCOdPzjb7%2F5OLvAh8voc6EbEXEHRvg0Ut7viWnSlLw2VrgHXM4%0AuBEEMUtRTaFQr19FKyp698V%2BnMoi6i00aoxVYx5K0fhR28eTiyZFRAYLpo4jV4p7%0AG5wuS2Bl%2FetLDZ%2BKlWjN0OdZn13OIMV0hO12RibB7ixK0dR6aFxsrDvL05RIl6Cx%0A9oLaBTQs%2BQcHTGL88%2BJ0dxY9Q09%2FBkz8VJcIdM8BIJSPDj2Z97FsMPgo21NNR7EW%0AaKY%2F17%2FztFHXXsh4LPYxr8xe%2Fjz8i9PYPCo3VTe4E8lW7r0XbXCsinFtmouO%2FawX%0AZF0pgMCnSfT%2BFaji6THxfeMCQEXH%2FA7HLe32l7B%2Fnhl9q7Hb6vEIJrav7yfSSpp4%0AW9P0Qoz5xXRtphcqE78TXGNlMYGOZjZtMKk9qPeRAfBlf9o0B1TAPAVb%2FcaYbph6%0ACe%2Bd2mRPSHv%2FFZlHtk3aVhLbEVBdfbwculi8OY%2B13EiUuzGahrjWXJU8%2FVj38U8V%0AGt8glmUkshZDX%2B023YJ4e%2FBg3m1ClnavXnW%2BoKDsUfvHOjIBwH1PGjkhnaEqqXw4%0AhHM%2Bqn21KViyDemgxhiff9ruvNq0w0fWk%2BdD1bCuS9JJM3Lrgpq7EduBhP0924Dp%0AlQvDNHMOXqdm5x6cec4ZDJUJVKNt0RM2hi%2Bz1ZWuZKsNnm2WkV5VMjE5m4kVkLKW%0ARzJOpZ%2B8CzMi3oYO2R9BRYpcNjNETXN86mYaMJOBxXyUM1p%2BcNVtqjE2L7EMhy%2BR%0As6sKiDPX1VHX%2FUrIoBiscAJsROzFJ2DoLS21omL6V1opCp5yg66t9P4ksnZC%2FPTT%0A5jndqWbNFVzCsyaGjH9skHwHlFbgwnuonvhwShJIfjEnG9CIKUlsIsHIHxuUKO0j%0A4dmCmfpQVUYgWNsw6u6FZ4mXaTwx%2Bg8e5BjP0xW%2FvQkmsOltZnxt90zp8aujtGyH%0AM741rzKAp40wR7mmd8qiAim399yyLthNSrJOGI4LYbixIMEk0IdiU7BoHvOkNjqF%0AE6cZBgHIstClOz6rYIJmzMeJSD5knjHBO3O4OIlFOtOa47jOrU5yCV2MaUtLcI8A%0AS1YZ75bgznVQZEHS6qNH7lfuLw3DPm5otvYJQwX9Nf2EfNhdp4XKiSyN9GslzpxL%0AtR5FMA2%2B97MAC4rUg6IrEF%2FsvM0I307g%2FEKGCJp9K1MuuVmrUvOuRxDcbdzwTRMA%0AYs7Bjf9jasO1gw9CXE%2FoWPQCERlZMse%2B39DmJkfWpc3jxYLo29OqwKNzyjohr97z%0A%2FffM98dwmkLJYr8Hh%2FSVlKrvq98kA400%2F%2FYo9ZhOqvXhxAC51dn7IdlPL0hrRVE2%0A7E4cHZQ6k5RBi6mRs1v6s47qgUekQAFfhOwNUECvKzuKBFYDtUpwgS32RkytdcRf%0AMwhqau0F5rbghdWpJCY9vffiw3qpTh3q2bMVm0ZRR2SCUtJ9L%2BRC78PStbNu9xr2%0AnvCgqyXJUl0p5%2FQbqLUdtLr5ZRsOsPnKo3Cqmedpkv9p75Uda0VASisOVf64Fc35%0AMa7MzfqLTrPSQSpNfLLc%0A%3DoKrd%0A-----END%20PGP%20MESSAGE-----&message_id=15f7f5f098d6bc36&senderEmail=&is_outgoing=___cu_false___',
+          params: `?account_email=${acctEmail}&frame_id=frame_CdqnkNWgHP&message=-----BEGIN%20PGP%20MESSAGE-----%0A%0AhQIMA0taL%2FzmLZUBARAApSOEoWZSpvBNMFPgyhbnMd3Jdv2%2BsQRSs3iX28z6TsOp%0Axq7Gqm1xh%2F27EeJfisCZH9Af1aB9OSQXDzfZG9NqvXXQcsMsp6GcqyzUhxp33VDq%0A5xWRAoS8M4WvEMGOKx2q4ChoBhpl8wloDQtPtnk7cDv3YRgxF0JSkwTy%2F%2Bs6wAOJ%0AX%2FULyAayJ8MgETkRpFgzYpWaWTmrJsdsy91ASJAP%2BKujGn6BNss0LdufWrzOZmxw%0AJ3sX%2FSasurMwwaftRcQd9CVzckrAFeuwn4fCsr4kFdR%2BRDSM7GRPM5rxWnTiulgh%0A9SRTyekvJlpnwbn9K6qPO6oiXVDZmB5Gpl3OuBl5V%2FPazSHpm%2BzPzNxiwlQOobgN%0AP35PfbpJAi%2Fq%2BpSEra0dmU1Jtek7s%2FNh%2FsRebJEgAXwZvuUiTBu2zdIygW%2BItsaa%0AQqvffyZqcrY85Q0KF%2Bz5j7MOYXL0E3bkhEtpou0pjdOEJTsbNlAsFu64oxRjUjkD%0As%2Bfpgv3hnW%2BvYHQy98B1VEz1Q%2B2G3sxmArepnaD7Kylj6mNE%2FI2QPYCl%2FDqxBdZv%0A%2FSKL9D5t6DKqj0cu6TsitWNbT8SOq1oJP97ZUcr%2BNg9YHDYnb6v3mXdKZ2UxtqVG%0AmXzGU9rc2QW%2BltQINpj0uYzKNQiYxXnVaO0eYF4wJQ5EkJeixLltUQKSTlarQKOF%0AAgwDBlAx99b1mtYBD%2F9yAcmyrvlAGEvn5bScQXV0k4KY0n2gpXp6A81uyJAv4iFo%0AUye4LdRlZEdx9WOxpujfLCiGAKaN4tfDoDw4G%2FAlLelOwG87AcuK01EYQOmtVWmO%0A0jPkQJkmQe68Z68KRUlS7BpsLriC%2BfSjbT9wOlhVA6xaA0DQfig%2FhMkvZp%2FA2vCT%0Ax7OE49siG6lyWHhTQXEmXflGm23a3Eza1%2B16Ln8TDUEt3uFiPFAg8Wk4arb2NMth%0AlzPOvLtDjOmVjpbPDtGjmUeCjlt3m%2F3IB2HrII9KZrT%2FnXBb29XenXa4z3Rv8ziF%0AtBNWOXqKj4E0aYzXJKNDvGtK7Ddn4gMgdLfsSeJ4zL9vwam%2BL%2FJi7WPb3SGSew6H%0APKGnOJj2fBMXUnWxzLDf7KZs8Z6ON69P26kYrwd%2BMpL2hkhEi5fYkpHDam7vBUUb%0AYwBUpGF2Msx2YH7suCwaNVeXX%2FakNzeu6%2BxgyocPTDlIPN3C%2BJsZIeglw7lsWs%2Bn%0A3EcTvS%2FC6zIOLTH0fYAES5dzc1sSIYPJ%2BE86nhC8snxnSIsJyaB8OJxSfVUreMmO%0Aw1kiBdMuAtUPOUs3ME9Xaqic2zQrcX1G%2FKSNjsXCNEf%2Fj%2By%2FNpeVP8jtyGFmHdi2%0AIaBFez6rMOQWmEimThz8r7805jvfYHlCWRN1ADSvxtd6pjzUgrdnmGu8mqfZ39Lq%0AAT5PwLztaOjaI%2FhCOdPzjb7%2F5OLvAh8voc6EbEXEHRvg0Ut7viWnSlLw2VrgHXM4%0AuBEEMUtRTaFQr19FKyp698V%2BnMoi6i00aoxVYx5K0fhR28eTiyZFRAYLpo4jV4p7%0AG5wuS2Bl%2FetLDZ%2BKlWjN0OdZn13OIMV0hO12RibB7ixK0dR6aFxsrDvL05RIl6Cx%0A9oLaBTQs%2BQcHTGL88%2BJ0dxY9Q09%2FBkz8VJcIdM8BIJSPDj2Z97FsMPgo21NNR7EW%0AaKY%2F17%2FztFHXXsh4LPYxr8xe%2Fjz8i9PYPCo3VTe4E8lW7r0XbXCsinFtmouO%2FawX%0AZF0pgMCnSfT%2BFaji6THxfeMCQEXH%2FA7HLe32l7B%2Fnhl9q7Hb6vEIJrav7yfSSpp4%0AW9P0Qoz5xXRtphcqE78TXGNlMYGOZjZtMKk9qPeRAfBlf9o0B1TAPAVb%2FcaYbph6%0ACe%2Bd2mRPSHv%2FFZlHtk3aVhLbEVBdfbwculi8OY%2B13EiUuzGahrjWXJU8%2FVj38U8V%0AGt8glmUkshZDX%2B023YJ4e%2FBg3m1ClnavXnW%2BoKDsUfvHOjIBwH1PGjkhnaEqqXw4%0AhHM%2Bqn21KViyDemgxhiff9ruvNq0w0fWk%2BdD1bCuS9JJM3Lrgpq7EduBhP0924Dp%0AlQvDNHMOXqdm5x6cec4ZDJUJVKNt0RM2hi%2Bz1ZWuZKsNnm2WkV5VMjE5m4kVkLKW%0ARzJOpZ%2B8CzMi3oYO2R9BRYpcNjNETXN86mYaMJOBxXyUM1p%2BcNVtqjE2L7EMhy%2BR%0As6sKiDPX1VHX%2FUrIoBiscAJsROzFJ2DoLS21omL6V1opCp5yg66t9P4ksnZC%2FPTT%0A5jndqWbNFVzCsyaGjH9skHwHlFbgwnuonvhwShJIfjEnG9CIKUlsIsHIHxuUKO0j%0A4dmCmfpQVUYgWNsw6u6FZ4mXaTwx%2Bg8e5BjP0xW%2FvQkmsOltZnxt90zp8aujtGyH%0AM741rzKAp40wR7mmd8qiAim399yyLthNSrJOGI4LYbixIMEk0IdiU7BoHvOkNjqF%0AE6cZBgHIstClOz6rYIJmzMeJSD5knjHBO3O4OIlFOtOa47jOrU5yCV2MaUtLcI8A%0AS1YZ75bgznVQZEHS6qNH7lfuLw3DPm5otvYJQwX9Nf2EfNhdp4XKiSyN9GslzpxL%0AtR5FMA2%2B97MAC4rUg6IrEF%2FsvM0I307g%2FEKGCJp9K1MuuVmrUvOuRxDcbdzwTRMA%0AYs7Bjf9jasO1gw9CXE%2FoWPQCERlZMse%2B39DmJkfWpc3jxYLo29OqwKNzyjohr97z%0A%2FffM98dwmkLJYr8Hh%2FSVlKrvq98kA400%2F%2FYo9ZhOqvXhxAC51dn7IdlPL0hrRVE2%0A7E4cHZQ6k5RBi6mRs1v6s47qgUekQAFfhOwNUECvKzuKBFYDtUpwgS32RkytdcRf%0AMwhqau0F5rbghdWpJCY9vffiw3qpTh3q2bMVm0ZRR2SCUtJ9L%2BRC78PStbNu9xr2%0AnvCgqyXJUl0p5%2FQbqLUdtLr5ZRsOsPnKo3Cqmedpkv9p75Uda0VASisOVf64Fc35%0AMa7MzfqLTrPSQSpNfLLc%0A%3DoKrd%0A-----END%20PGP%20MESSAGE-----&message_id=15f7f5f098d6bc36&senderEmail=${acctEmail}&is_outgoing=___cu_false___`,
         });
       })
     );
@@ -614,8 +634,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
           content: ['Can you confirm this works.', 'Senior Consultant, Security'],
           encryption: 'encrypted',
           signature: 'not signed',
-          params:
-            '?account_email=flowcrypt.compatibility%40gmail.com&frame_id=frame_yVMKFLRDiY&message=&message_id=16224f57d26e038e&senderEmail=&is_outgoing=___cu_false___',
+          params: `?account_email=${acctEmail}&frame_id=frame_yVMKFLRDiY&message=&message_id=16224f57d26e038e&senderEmail=${acctEmail}&is_outgoing=___cu_false___`,
         });
       })
     );

@@ -106,6 +106,7 @@ export class PgpBlockViewDecryptModule {
       const kisWithPp = await KeyStore.getAllWithOptionalPassPhrase(this.view.acctEmail);
       const decrypt = async (verificationPubs: string[]) => await BrowserMsg.send.bg.await.pgpMsgDecrypt({ kisWithPp, encryptedData, verificationPubs });
       const result = await decrypt(verificationPubs);
+
       if (typeof result === 'undefined') {
         await this.view.errorModule.renderErr(Lang.general.restartBrowserAndTryAgain(!!this.view.fesUrl), undefined);
       } else if (result.success) {
@@ -118,6 +119,21 @@ export class PgpBlockViewDecryptModule {
             return await this.decryptAndRender(fetchedContent, verificationPubs);
           }
         }
+
+        if (!result.signature?.match) {
+          // try to find signature attachment in decrypted data
+          const decoded = await Mime.decode(result.content);
+          const signature = decoded.attachments.find(a => a.treatAs(decoded.attachments) === 'signature');
+
+          if (signature && decoded.rawSignedContent) {
+            const sigText = signature.getData().toUtfStr();
+            const plaintext = decoded.rawSignedContent;
+            const verify = async (verificationPubs: string[]) => await BrowserMsg.send.bg.await.pgpMsgVerifyDetached({ plaintext, sigText, verificationPubs });
+            result.signature = await verify(verificationPubs);
+            result.content = Buf.with(plaintext);
+          }
+        }
+
         await this.view.renderModule.decideDecryptedContentFormattingAndRender(
           result.content,
           result.isEncrypted,
