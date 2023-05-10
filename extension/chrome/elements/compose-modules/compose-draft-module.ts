@@ -363,11 +363,7 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
 
   private renderPPDialogAndWaitWhenPPEntered = async (longids: string[]) => {
     if (this.view.isReplyBox) {
-      const promptHtml = `
-        <div id="pgp_background" class="pgp_insecure">
-          <div id="pgp_error" data-test="pgp-error" class="pgp_badge red_label short" style="">pass phrase needed</div>
-          <div id="pgp_block" data-test="pgp-block-content"><div class="error"><a data-test="action-show-passphrase-dialog" class="action_open_passphrase_dialog" href="#">Enter passphrase</a> to open this draft.</div></div>
-        </div>`;
+      const promptHtml = `<div class="draft-passphrase-container"><a class="action_open_passphrase_dialog" href="#">Enter passphrase</a> to open this draft.</div>`;
       Xss.sanitizeRender(this.view.S.cached('prompt'), promptHtml).css({ display: 'block' });
       this.view.sizeModule.resizeComposeBox();
     } else {

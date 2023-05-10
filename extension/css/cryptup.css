@@ -1545,6 +1545,13 @@ td {
   height: 37px;
 }
 
+.draft-passphrase-container {
+  display: flex;
+  height: 50px;
+  gap: 4px;
+  align-items: center;
+}
+
 .pgp_badge {
   opacity: 1;
   margin-bottom: 1em;
