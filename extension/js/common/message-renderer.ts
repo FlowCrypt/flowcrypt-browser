@@ -202,7 +202,9 @@ export class MessageRenderer {
   };
 
   private static getVerificationPubs = async (signerEmail: string) => {
-    const parsedPubs = (await ContactStore.getOneWithAllPubkeys(undefined, signerEmail))?.sortedPubkeys ?? [];
+    const email = Str.parseEmail(signerEmail).email;
+    if (!email) return [];
+    const parsedPubs = (await ContactStore.getOneWithAllPubkeys(undefined, email))?.sortedPubkeys ?? [];
     // todo: we don't actually need parsed pubs here because we're going to pass them to the background page
     // maybe we can have a method in ContactStore to extract armored keys
     return parsedPubs.map(key => KeyUtil.armor(key.pubkey));
@@ -523,17 +525,18 @@ export class MessageRenderer {
 
   // todo: this should be moved to some other class?
   private getRetryVerification = (signerEmail: string | undefined, verify: (verificationPubs: string[]) => Promise<VerifyRes | undefined>) => {
-    return signerEmail
-      ? async () => {
-          const clientConfiguration = await ClientConfiguration.newInstance(this.acctEmail);
-          const { pubkeys } = await new PubLookup(clientConfiguration).lookupEmail(signerEmail);
-          if (pubkeys.length) {
-            await saveFetchedPubkeysIfNewerThanInStorage({ email: signerEmail, pubkeys }); // synchronously because we don't want erratic behaviour
-            return await verify(pubkeys);
-          }
-          return undefined;
-        }
-      : undefined;
+    if (!signerEmail) return undefined;
+    const { email } = Str.parseEmail(signerEmail); // todo: we can also store name if contact doesn't exist
+    if (!email) return undefined;
+    return async () => {
+      const clientConfiguration = await ClientConfiguration.newInstance(this.acctEmail);
+      const { pubkeys } = await new PubLookup(clientConfiguration).lookupEmail(email);
+      if (pubkeys.length) {
+        await saveFetchedPubkeysIfNewerThanInStorage({ email, pubkeys }); // synchronously because we don't want erratic behaviour
+        return await verify(pubkeys);
+      }
+      return undefined;
+    };
   };
 
   private renderSignedMessage = async (raw: string, renderModule: RenderInterface, signerEmail: string) => {
