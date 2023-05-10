@@ -102,83 +102,6 @@ export class MessageRenderer {
     }
   };
 
-  public static decideDecryptedContentFormattingAndRender = async (
-    decryptedBytes: Uint8Array | string,
-    isEncrypted: boolean,
-    sigResult: VerifyRes | undefined,
-    renderModule: RenderInterface,
-    retryVerification?: () => Promise<VerifyRes | undefined>,
-    plainSubject?: string
-  ): Promise<{ publicKeys?: string[] }> => {
-    if (isEncrypted) {
-      renderModule.renderEncryptionStatus('encrypted');
-      renderModule.setFrameColor('green');
-    } else {
-      renderModule.renderEncryptionStatus('not encrypted');
-      renderModule.setFrameColor('gray');
-    }
-    const publicKeys: string[] = [];
-    let renderableAttachments: TransferableAttachment[] = [];
-    let decryptedContent: string | undefined;
-    let isHtml = false;
-    // todo - replace with MsgBlockParser.fmtDecryptedAsSanitizedHtmlBlocks, then the extract/strip methods could be private?
-    if (!Mime.resemblesMsg(decryptedBytes)) {
-      const fcAttachmentBlocks: MsgBlock[] = [];
-      decryptedContent = Str.with(decryptedBytes);
-      decryptedContent = MsgBlockParser.extractFcAttachments(decryptedContent, fcAttachmentBlocks);
-      decryptedContent = MsgBlockParser.stripFcTeplyToken(decryptedContent);
-      decryptedContent = MsgBlockParser.stripPublicKeys(decryptedContent, publicKeys);
-      if (fcAttachmentBlocks.length) {
-        renderableAttachments = fcAttachmentBlocks.map(
-          attachmentBlock => Attachment.toTransferableAttachment(attachmentBlock.attachmentMeta!) // eslint-disable-line @typescript-eslint/no-non-null-assertion
-        );
-      }
-    } else {
-      renderModule.renderText('Formatting...');
-      const decoded = await Mime.decode(decryptedBytes);
-      let inlineCIDAttachments: Attachment[] = [];
-      if (typeof decoded.html !== 'undefined') {
-        ({ sanitizedHtml: decryptedContent, inlineCIDAttachments } = MessageRenderer.replaceInlineImageCIDs(decoded.html, decoded.attachments));
-        isHtml = true;
-      } else if (typeof decoded.text !== 'undefined') {
-        decryptedContent = decoded.text;
-      } else {
-        decryptedContent = '';
-      }
-      if (
-        decoded.subject &&
-        isEncrypted &&
-        (!plainSubject || !Mime.subjectWithoutPrefixes(plainSubject).includes(Mime.subjectWithoutPrefixes(decoded.subject)))
-      ) {
-        // there is an encrypted subject + (either there is no plain subject or the plain subject does not contain what's in the encrypted subject)
-        decryptedContent = MessageRenderer.getEncryptedSubjectText(decoded.subject, isHtml) + decryptedContent; // render encrypted subject in message
-      }
-      for (const attachment of decoded.attachments) {
-        if (attachment.isPublicKey()) {
-          publicKeys.push(attachment.getData().toUtfStr());
-        } else if (!inlineCIDAttachments.some(inlineAttachment => inlineAttachment.cid === attachment.cid)) {
-          renderableAttachments.push(
-            Attachment.toTransferableAttachment({
-              name: attachment.name,
-              type: attachment.type,
-              length: attachment.getData().length,
-              data: attachment.getData(),
-              cid: attachment.cid, // todo: do we need it?
-            })
-          );
-        }
-      }
-    }
-    renderModule.separateQuotedContentAndRenderText(decryptedContent, isHtml); // todo: quoteModule ?
-    await MessageRenderer.renderPgpSignatureCheckResult(renderModule, sigResult, retryVerification);
-    if (renderableAttachments.length) {
-      renderModule.renderInnerAttachments(renderableAttachments, isEncrypted);
-    }
-    renderModule.resizePgpBlockFrame();
-    renderModule.setTestState('ready');
-    return isEncrypted ? { publicKeys } : {};
-  };
-
   public static decryptFunctionToVerifyRes = async (decrypt: () => Promise<DecryptResult>): Promise<VerifyRes | undefined> => {
     const decryptResult = await decrypt();
     if (!decryptResult.success) {
@@ -368,39 +291,6 @@ export class MessageRenderer {
     }
   };
 
-  public relayAndStartProcessing = async (
-    relayManager: RelayManager,
-    loaderContext: LoaderContextBindInterface,
-    factory: XssSafeFactory,
-    frameId: string,
-    printMailInfo: PrintMailInfo,
-    cb: (renderModule: RenderInterface) => Promise<{ publicKeys?: string[]; needPassphrase?: string[] }>
-  ) => {
-    const renderModule = relayManager.createRelay(frameId);
-    loaderContext.bind(frameId, relayManager);
-    renderModule.setPrintMailInfo(printMailInfo);
-    cb(renderModule)
-      .then(async result => {
-        const appendAfter = $(`iframe#${frameId}`); // todo: late binding? won't work
-        // todo: how publicKeys and needPassphrase interact?
-        for (const armoredPubkey of result.publicKeys ?? []) {
-          appendAfter.after(factory.embeddedPubkey(armoredPubkey, false));
-        }
-        while (result.needPassphrase) {
-          // todo: queue into a dictionary?
-          await PassphraseStore.waitUntilPassphraseChanged(this.acctEmail, result.needPassphrase);
-          renderModule.clearErrorStatus();
-          renderModule.renderText('Decrypting...');
-          result = await cb(renderModule);
-        }
-        // todo: wait for renderModule completion: the queue has been actually flushed,
-        // and then remove the frame from relayManager.frames
-        // Something like:
-        // await relayManager.waitForCompletion(renderModule)
-      })
-      .catch(Catch.reportErr);
-  };
-
   public processInlineBlocks = async (
     relayManager: RelayManager,
     factory: XssSafeFactory,
@@ -416,120 +306,6 @@ export class MessageRenderer {
         )
       )
     );
-  };
-
-  public renderMsgBlock = async (block: MsgBlock, renderModule: RenderInterface, signerEmail?: string) => {
-    // todo: 'signedMsg' also handled here?
-    return await this.renderEncryptedMessage(block.content, renderModule, true, signerEmail);
-  };
-
-  // todo: this should be moved to some other class?
-  public getRetryVerification = (signerEmail: string, verify: (verificationPubs: string[]) => Promise<VerifyRes | undefined>) => async () => {
-    const clientConfiguration = await ClientConfiguration.newInstance(this.acctEmail);
-    const { pubkeys } = await new PubLookup(clientConfiguration).lookupEmail(signerEmail);
-    if (pubkeys.length) {
-      await saveFetchedPubkeysIfNewerThanInStorage({ email: signerEmail, pubkeys }); // synchronously because we don't want erratic behaviour
-      return await verify(pubkeys);
-    }
-    return undefined;
-  };
-
-  public renderSignedMessage = async (raw: string, renderModule: RenderInterface, signerEmail: string) => {
-    // ... from PgpBlockViewDecryptModule.initialize
-    const mimeMsg = Buf.fromBase64UrlStr(raw);
-    const parsed = await Mime.decode(mimeMsg);
-    if (parsed && typeof parsed.rawSignedContent === 'string') {
-      const signatureAttachment = parsed.attachments.find(a => a.treatAs(parsed.attachments) === 'signature'); // todo: more than one signature candidate?
-      if (signatureAttachment) {
-        const parsedSignature = signatureAttachment.getData().toUtfStr();
-        // ... from PgpBlockViewDecryptModule.decryptAndRender
-        const sigText = parsedSignature.replace('\n=3D', '\n=');
-        const encryptedData = parsed.rawSignedContent;
-        try {
-          const verificationPubs = await MessageRenderer.getVerificationPubs(signerEmail);
-          const verify = async (verificationPubs: string[]) => await MsgUtil.verifyDetached({ plaintext: encryptedData, sigText, verificationPubs });
-          const signatureResult = await verify(verificationPubs);
-          return await MessageRenderer.decideDecryptedContentFormattingAndRender(
-            encryptedData,
-            false,
-            signatureResult,
-            renderModule,
-            this.getRetryVerification(signerEmail, verify)
-          );
-        } catch (e) {
-          console.log(e);
-        }
-      }
-    }
-    /* todo: await this.view.errorModule.renderErr(
-      'Error: could not properly parse signed message',
-      parsed.rawSignedContent || parsed.text || parsed.html || mimeMsg.toUtfStr(),
-      'parse error'
-    ); */
-    return {};
-  };
-
-  public renderEncryptedMessage = async (
-    encryptedData: string | Uint8Array,
-    renderModule: RenderInterface,
-    fallbackToPlainText: boolean,
-    signerEmail?: string
-  ): Promise<{ publicKeys?: string[]; needPassphrase?: string[] }> => {
-    const kisWithPp = await KeyStore.getAllWithOptionalPassPhrase(this.acctEmail); // todo: cache
-    const verificationPubs = signerEmail ? await MessageRenderer.getVerificationPubs(signerEmail) : [];
-    const decrypt = (verificationPubs: string[]) => MsgUtil.decryptMessage({ kisWithPp, encryptedData, verificationPubs });
-    const result = await decrypt(verificationPubs);
-    // from decryptAndRender
-    if (typeof result === 'undefined') {
-      // todo: renderErr(Lang.general.restartBrowserAndTryAgain(!!this.view.fesUrl), undefined);
-    } else if (result.success) {
-      return await MessageRenderer.decideDecryptedContentFormattingAndRender(
-        result.content,
-        !!result.isEncrypted,
-        result.signature,
-        renderModule,
-        signerEmail
-          ? this.getRetryVerification(signerEmail, verificationPubs => MessageRenderer.decryptFunctionToVerifyRes(() => decrypt(verificationPubs)))
-          : undefined
-      );
-    } else if (result.error.type === DecryptErrTypes.format) {
-      if (fallbackToPlainText) {
-        renderModule.renderAsRegularContent(Str.with(encryptedData));
-      } else {
-        renderModule.renderErr(Lang.pgpBlock.badFormat + '\n\n' + result.error.message, Str.with(encryptedData));
-      }
-    } else if (result.longids.needPassphrase.length) {
-      renderModule.renderPassphraseNeeded(result.longids.needPassphrase);
-      return { needPassphrase: result.longids.needPassphrase };
-    } else {
-      if (!result.longids.chosen && !(await KeyStore.get(this.acctEmail)).length) {
-        renderModule.renderErr(Lang.pgpBlock.notProperlySetUp /* + todo: this.view.errorModule.btnHtml('FlowCrypt settings', 'green settings') */, undefined);
-      } else if (result.error.type === DecryptErrTypes.keyMismatch) {
-        /* todo: await this.view.errorModule.handlePrivateKeyMismatch(
-          kisWithPp.map(ki => ki.public),
-          encryptedData,
-          this.isPwdMsgBasedOnMsgSnippet === true
-        ); */
-      } else if (result.error.type === DecryptErrTypes.wrongPwd || result.error.type === DecryptErrTypes.usePassword) {
-        renderModule.renderErr(Lang.pgpBlock.pwdMsgAskSenderUsePubkey, undefined);
-      } else if (result.error.type === DecryptErrTypes.noMdc) {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        renderModule.renderErr(result.error.message, result.content!.toUtfStr()); // missing mdc - only render the result after user confirmation
-      } else if (result.error) {
-        renderModule.renderErr(`${Lang.pgpBlock.cantOpen}\n\n<em>${result.error.type}: ${result.error.message}</em>`, Str.with(encryptedData));
-      } else {
-        // should generally not happen
-        renderModule.renderErr(
-          Lang.pgpBlock.cantOpen +
-            Lang.general.writeMeToFixIt(await isCustomerUrlFesUsed(this.acctEmail)) +
-            '\n\nDiagnostic info: "' +
-            JSON.stringify(result) +
-            '"',
-          Str.with(encryptedData)
-        );
-      }
-    }
-    return {};
   };
 
   public getPrintViewInfo = async (metadata: GmailRes.GmailMsg): Promise<PrintMailInfo> => {
@@ -608,6 +384,256 @@ export class MessageRenderer {
       attachments: mimeContent.attachments,
     };
     return msgDownload.processedFull;
+  };
+
+  private decideDecryptedContentFormattingAndRender = async (
+    signerEmail: string | undefined,
+    verificationPubs: string[],
+    decryptedBytes: Uint8Array | string,
+    isEncrypted: boolean,
+    sigResult: VerifyRes | undefined,
+    renderModule: RenderInterface,
+    retryVerification?: () => Promise<VerifyRes | undefined>,
+    plainSubject?: string
+  ): Promise<{ publicKeys?: string[] }> => {
+    if (isEncrypted) {
+      renderModule.renderEncryptionStatus('encrypted');
+      renderModule.setFrameColor('green');
+    } else {
+      renderModule.renderEncryptionStatus('not encrypted');
+      renderModule.setFrameColor('gray');
+    }
+    const publicKeys: string[] = [];
+    let renderableAttachments: TransferableAttachment[] = [];
+    let signedContentInDecryptedData: { rawSignedContent: string; signature: Attachment } | undefined;
+    let decryptedContent: string | undefined;
+    let isHtml = false;
+    // todo - replace with MsgBlockParser.fmtDecryptedAsSanitizedHtmlBlocks, then the extract/strip methods could be private?
+    if (!Mime.resemblesMsg(decryptedBytes)) {
+      const fcAttachmentBlocks: MsgBlock[] = [];
+      decryptedContent = Str.with(decryptedBytes);
+      decryptedContent = MsgBlockParser.extractFcAttachments(decryptedContent, fcAttachmentBlocks);
+      decryptedContent = MsgBlockParser.stripFcReplyToken(decryptedContent);
+      decryptedContent = MsgBlockParser.stripPublicKeys(decryptedContent, publicKeys);
+      if (fcAttachmentBlocks.length) {
+        renderableAttachments = fcAttachmentBlocks.map(
+          attachmentBlock => Attachment.toTransferableAttachment(attachmentBlock.attachmentMeta!) // eslint-disable-line @typescript-eslint/no-non-null-assertion
+        );
+      }
+    } else {
+      renderModule.renderText('Formatting...');
+      const decoded = await Mime.decode(decryptedBytes);
+      let inlineCIDAttachments: Attachment[] = [];
+      if (typeof decoded.html !== 'undefined') {
+        ({ sanitizedHtml: decryptedContent, inlineCIDAttachments } = MessageRenderer.replaceInlineImageCIDs(decoded.html, decoded.attachments));
+        isHtml = true;
+      } else if (typeof decoded.text !== 'undefined') {
+        decryptedContent = decoded.text;
+      } else {
+        decryptedContent = '';
+      }
+      if (
+        decoded.subject &&
+        isEncrypted &&
+        (!plainSubject || !Mime.subjectWithoutPrefixes(plainSubject).includes(Mime.subjectWithoutPrefixes(decoded.subject)))
+      ) {
+        // there is an encrypted subject + (either there is no plain subject or the plain subject does not contain what's in the encrypted subject)
+        decryptedContent = MessageRenderer.getEncryptedSubjectText(decoded.subject, isHtml) + decryptedContent; // render encrypted subject in message
+      }
+      for (const attachment of decoded.attachments) {
+        if (attachment.isPublicKey()) {
+          publicKeys.push(attachment.getData().toUtfStr());
+        } else if (decoded.rawSignedContent && attachment.treatAs(decoded.attachments) === 'signature') {
+          signedContentInDecryptedData = { rawSignedContent: decoded.rawSignedContent, signature: attachment };
+        } else if (!inlineCIDAttachments.some(inlineAttachment => inlineAttachment.cid === attachment.cid)) {
+          renderableAttachments.push(
+            Attachment.toTransferableAttachment({
+              name: attachment.name,
+              type: attachment.type,
+              length: attachment.getData().length,
+              data: attachment.getData(),
+              cid: attachment.cid, // todo: do we need it?
+            })
+          );
+        }
+      }
+    }
+    if (!sigResult?.match && signedContentInDecryptedData) {
+      const plaintext = signedContentInDecryptedData.rawSignedContent;
+      const sigText = signedContentInDecryptedData.signature.getData().toUtfStr();
+      const verify = (verificationPubs: string[]) => MsgUtil.verifyDetached({ plaintext, sigText, verificationPubs });
+      const newSigResult = await verify(verificationPubs);
+      return await this.decideDecryptedContentFormattingAndRender(
+        signerEmail,
+        verificationPubs,
+        plaintext,
+        isEncrypted,
+        newSigResult,
+        renderModule,
+        this.getRetryVerification(signerEmail, verify)
+      );
+    }
+    renderModule.separateQuotedContentAndRenderText(decryptedContent, isHtml); // todo: quoteModule ?
+    await MessageRenderer.renderPgpSignatureCheckResult(renderModule, sigResult, retryVerification);
+    if (renderableAttachments.length) {
+      renderModule.renderInnerAttachments(renderableAttachments, isEncrypted);
+    }
+    renderModule.resizePgpBlockFrame();
+    renderModule.setTestState('ready');
+    return isEncrypted ? { publicKeys } : {};
+  };
+
+  private relayAndStartProcessing = async (
+    relayManager: RelayManager,
+    loaderContext: LoaderContextBindInterface,
+    factory: XssSafeFactory,
+    frameId: string,
+    printMailInfo: PrintMailInfo,
+    cb: (renderModule: RenderInterface) => Promise<{ publicKeys?: string[]; needPassphrase?: string[] }>
+  ) => {
+    const renderModule = relayManager.createRelay(frameId);
+    loaderContext.bind(frameId, relayManager);
+    renderModule.setPrintMailInfo(printMailInfo);
+    cb(renderModule)
+      .then(async result => {
+        const appendAfter = $(`iframe#${frameId}`); // todo: late binding? won't work
+        // todo: how publicKeys and needPassphrase interact?
+        for (const armoredPubkey of result.publicKeys ?? []) {
+          appendAfter.after(factory.embeddedPubkey(armoredPubkey, false));
+        }
+        while (result.needPassphrase) {
+          // todo: queue into a dictionary?
+          await PassphraseStore.waitUntilPassphraseChanged(this.acctEmail, result.needPassphrase);
+          renderModule.clearErrorStatus();
+          renderModule.renderText('Decrypting...');
+          result = await cb(renderModule);
+        }
+        // todo: wait for renderModule completion: the queue has been actually flushed,
+        // and then remove the frame from relayManager.frames
+        // Something like:
+        // await relayManager.waitForCompletion(renderModule)
+      })
+      .catch(Catch.reportErr);
+  };
+
+  private renderMsgBlock = async (block: MsgBlock, renderModule: RenderInterface, signerEmail?: string) => {
+    // todo: 'signedMsg' also handled here?
+    return await this.renderEncryptedMessage(block.content, renderModule, true, signerEmail);
+  };
+
+  // todo: this should be moved to some other class?
+  private getRetryVerification = (signerEmail: string | undefined, verify: (verificationPubs: string[]) => Promise<VerifyRes | undefined>) => {
+    return signerEmail
+      ? async () => {
+          const clientConfiguration = await ClientConfiguration.newInstance(this.acctEmail);
+          const { pubkeys } = await new PubLookup(clientConfiguration).lookupEmail(signerEmail);
+          if (pubkeys.length) {
+            await saveFetchedPubkeysIfNewerThanInStorage({ email: signerEmail, pubkeys }); // synchronously because we don't want erratic behaviour
+            return await verify(pubkeys);
+          }
+          return undefined;
+        }
+      : undefined;
+  };
+
+  private renderSignedMessage = async (raw: string, renderModule: RenderInterface, signerEmail: string) => {
+    // ... from PgpBlockViewDecryptModule.initialize
+    const mimeMsg = Buf.fromBase64UrlStr(raw);
+    const parsed = await Mime.decode(mimeMsg);
+    if (parsed && typeof parsed.rawSignedContent === 'string') {
+      const signatureAttachment = parsed.attachments.find(a => a.treatAs(parsed.attachments) === 'signature'); // todo: more than one signature candidate?
+      if (signatureAttachment) {
+        const parsedSignature = signatureAttachment.getData().toUtfStr();
+        // ... from PgpBlockViewDecryptModule.decryptAndRender
+        const sigText = parsedSignature.replace('\n=3D', '\n=');
+        const encryptedData = parsed.rawSignedContent;
+        try {
+          const verificationPubs = await MessageRenderer.getVerificationPubs(signerEmail);
+          const verify = async (verificationPubs: string[]) => await MsgUtil.verifyDetached({ plaintext: encryptedData, sigText, verificationPubs });
+          const signatureResult = await verify(verificationPubs);
+          return await this.decideDecryptedContentFormattingAndRender(
+            signerEmail,
+            verificationPubs,
+            encryptedData,
+            false,
+            signatureResult,
+            renderModule,
+            this.getRetryVerification(signerEmail, verify)
+          );
+        } catch (e) {
+          console.log(e);
+        }
+      }
+    }
+    /* todo: await this.view.errorModule.renderErr(
+      'Error: could not properly parse signed message',
+      parsed.rawSignedContent || parsed.text || parsed.html || mimeMsg.toUtfStr(),
+      'parse error'
+    ); */
+    return {};
+  };
+
+  private renderEncryptedMessage = async (
+    encryptedData: string | Uint8Array,
+    renderModule: RenderInterface,
+    fallbackToPlainText: boolean,
+    signerEmail?: string
+  ): Promise<{ publicKeys?: string[]; needPassphrase?: string[] }> => {
+    const kisWithPp = await KeyStore.getAllWithOptionalPassPhrase(this.acctEmail); // todo: cache
+    const verificationPubs = signerEmail ? await MessageRenderer.getVerificationPubs(signerEmail) : [];
+    const decrypt = (verificationPubs: string[]) => MsgUtil.decryptMessage({ kisWithPp, encryptedData, verificationPubs });
+    const result = await decrypt(verificationPubs);
+    // from decryptAndRender
+    if (typeof result === 'undefined') {
+      // todo: renderErr(Lang.general.restartBrowserAndTryAgain(!!this.view.fesUrl), undefined);
+    } else if (result.success) {
+      return await this.decideDecryptedContentFormattingAndRender(
+        signerEmail,
+        verificationPubs,
+        result.content,
+        !!result.isEncrypted,
+        result.signature,
+        renderModule,
+        this.getRetryVerification(signerEmail, verificationPubs => MessageRenderer.decryptFunctionToVerifyRes(() => decrypt(verificationPubs)))
+      );
+    } else if (result.error.type === DecryptErrTypes.format) {
+      if (fallbackToPlainText) {
+        renderModule.renderAsRegularContent(Str.with(encryptedData));
+      } else {
+        renderModule.renderErr(Lang.pgpBlock.badFormat + '\n\n' + result.error.message, Str.with(encryptedData));
+      }
+    } else if (result.longids.needPassphrase.length) {
+      renderModule.renderPassphraseNeeded(result.longids.needPassphrase);
+      return { needPassphrase: result.longids.needPassphrase };
+    } else {
+      if (!result.longids.chosen && !(await KeyStore.get(this.acctEmail)).length) {
+        renderModule.renderErr(Lang.pgpBlock.notProperlySetUp /* + todo: this.view.errorModule.btnHtml('FlowCrypt settings', 'green settings') */, undefined);
+      } else if (result.error.type === DecryptErrTypes.keyMismatch) {
+        /* todo: await this.view.errorModule.handlePrivateKeyMismatch(
+          kisWithPp.map(ki => ki.public),
+          encryptedData,
+          this.isPwdMsgBasedOnMsgSnippet === true
+        ); */
+      } else if (result.error.type === DecryptErrTypes.wrongPwd || result.error.type === DecryptErrTypes.usePassword) {
+        renderModule.renderErr(Lang.pgpBlock.pwdMsgAskSenderUsePubkey, undefined);
+      } else if (result.error.type === DecryptErrTypes.noMdc) {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        renderModule.renderErr(result.error.message, result.content!.toUtfStr()); // missing mdc - only render the result after user confirmation
+      } else if (result.error) {
+        renderModule.renderErr(`${Lang.pgpBlock.cantOpen}\n\n<em>${result.error.type}: ${result.error.message}</em>`, Str.with(encryptedData));
+      } else {
+        // should generally not happen
+        renderModule.renderErr(
+          Lang.pgpBlock.cantOpen +
+            Lang.general.writeMeToFixIt(await isCustomerUrlFesUsed(this.acctEmail)) +
+            '\n\nDiagnostic info: "' +
+            JSON.stringify(result) +
+            '"',
+          Str.with(encryptedData)
+        );
+      }
+    }
+    return {};
   };
 
   private setMsgBodyAndStartProcessing = async (
