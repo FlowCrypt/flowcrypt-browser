@@ -216,14 +216,15 @@ export class GoogleData {
     return msgCopy;
   };
 
-  public static partsHavingFilename = (parts?: GmailMsg$payload$part[]): GmailMsg$payload$part[] => {
+  public static getFileParts = (parts: GmailMsg$payload$part[] | undefined, skipParts: GmailMsg$payload$part[]): { filename: string }[] => {
     if (!parts) return [];
     return parts
+      .filter(part => part.mimeType !== 'multipart/alternative' && !skipParts.includes(part))
       .map(part => {
         if (part.mimeType === 'multipart/mixed') {
-          return GoogleData.partsHavingFilename(part.parts);
+          return GoogleData.getFileParts(part.parts, skipParts);
         }
-        return part.filename ? [part] : [];
+        return [{ filename: part.filename || 'noname' }];
       })
       .reduce((a, b) => a.concat(b));
   };
@@ -237,13 +238,14 @@ export class GoogleData {
       const fromHeader = payload.headers!.find(header => header.name === 'From')!;
       const fromAddress = fromHeader!.value;
       let htmlData: string | undefined;
+      let processedParts: GmailMsg$payload$part[] = [];
       if (payload.mimeType === 'text/plain') {
         const textData = Buf.fromBase64Str(payload.body!.data!).toUtfStr();
         htmlData = GoogleData.htmlFromText(textData);
       } else {
-        htmlData = GoogleData.getHtmlDataToDisplay(payload.parts!);
+        ({ htmlData, processedParts } = GoogleData.getHtmlDataToDisplay(payload.parts!) ?? { htmlData: undefined, processedParts: [] });
       }
-      const otherParts = GoogleData.partsHavingFilename(payload.parts);
+      const otherParts = GoogleData.getFileParts(payload.parts, processedParts);
       if (otherParts.length) {
         attachmentsBlock =
           `<div class="ho"><span class="aVW"><span>${otherParts.length}</span> Attachments</span></div>
@@ -302,16 +304,15 @@ export class GoogleData {
     );
   };
 
-  private static getHtmlDataToDisplay = (parts: GmailMsg$payload$part[]): string | undefined => {
+  private static getHtmlDataToDisplay = (parts: GmailMsg$payload$part[]): { htmlData: string; processedParts: GmailMsg$payload$part[] } | undefined => {
     const htmlPart = parts.find(part => part.mimeType === 'text/html');
+    const textPart = parts.find(part => part.mimeType === 'text/plain');
+    const processedParts = [htmlPart, textPart].filter(Boolean) as GmailMsg$payload$part[];
     if (htmlPart) {
-      return Buf.fromBase64Str(htmlPart.body!.data!).toUtfStr();
-    } else {
-      const textPart = parts.find(part => part.mimeType === 'text/plain');
-      if (typeof textPart?.body?.data !== 'undefined') {
-        const textData = Buf.fromBase64Str(textPart.body.data).toUtfStr();
-        return GoogleData.htmlFromText(textData);
-      }
+      return { htmlData: Buf.fromBase64Str(htmlPart.body!.data!).toUtfStr(), processedParts };
+    } else if (typeof textPart?.body?.data !== 'undefined') {
+      const textData = Buf.fromBase64Str(textPart.body.data).toUtfStr();
+      return { htmlData: GoogleData.htmlFromText(textData), processedParts };
     }
     // search inside multipart/alternative
     const alternativePart = parts.find(part => part.mimeType === 'multipart/alternative');
