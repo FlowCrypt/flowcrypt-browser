@@ -16,7 +16,7 @@
         },
         {
           "name": "From",
-          "value": "some.sender@test.com"
+          "value": "this.pubkey.takes.long.time.to.load@sender.test"
         },
         {
           "name": "Date",
@@ -66,7 +66,7 @@
             },
             {
               "name": "From",
-              "value": "Some sender <some.sender@test.com>"
+              "value": "Some sender <this.pubkey.takes.long.time.to.load@sender.test>"
             },
             {
               "name": "To",
