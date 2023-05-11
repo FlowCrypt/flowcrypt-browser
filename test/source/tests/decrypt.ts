@@ -1632,7 +1632,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
               [acctEmail]: {
                 pubkey: somePubkey,
               },
-              'flowcrypt.compatibility@protonmail.com': {
+              'some.alias@protonmail.com': {
                 pubkey: protonMailCompatKey,
               },
             },
