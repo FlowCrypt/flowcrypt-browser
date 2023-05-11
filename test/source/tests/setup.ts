@@ -2271,13 +2271,40 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
     test(
       'setup - imported key with multiple alias should show checkbox per alias',
       testWithBrowser(async (t, browser) => {
+        const acct = 'multi.aliased.user@example.com';
         t.mockApi!.configProvider = new ConfigurationProvider({
           attester: {
             pubkeyLookup: {},
           },
+          google: {
+            aliases: {
+              [acct]: [
+                {
+                  sendAsEmail: 'alias1@example.com',
+                  displayName: 'An Alias1',
+                  replyToAddress: 'alias2@example.com',
+                  signature: '',
+                  isDefault: false,
+                  isPrimary: false,
+                  treatAsAlias: false,
+                  verificationStatus: 'accepted',
+                },
+                {
+                  sendAsEmail: 'alias2@example.com',
+                  displayName: 'An Alias1',
+                  replyToAddress: 'alias2@example.com',
+                  signature: '',
+                  isDefault: false,
+                  isPrimary: false,
+                  treatAsAlias: false,
+                  verificationStatus: 'accepted',
+                },
+              ],
+            },
+          },
         });
         expect((await KeyUtil.parse(testConstants.keyMultiAliasedUser)).emails.length).to.equals(3);
-        const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'multi.aliased.user@example.com');
+        const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
         await SetupPageRecipe.manualEnter(
           settingsPage,
           '',
@@ -2286,7 +2313,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
             fillOnly: true,
             checkEmailAliasIfPresent: true,
             key: {
-              title: 'multi.aliased.user@example.com',
+              title: acct,
               passphrase: '1basic passphrase to use',
               armored: testConstants.keyMultiAliasedUser,
               longid: null, // eslint-disable-line no-null/no-null
