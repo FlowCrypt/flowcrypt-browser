@@ -178,11 +178,9 @@ export class InboxActiveThreadModule extends ViewModule<InboxView> {
       );
       const senderEmail = from || 'unknown';
       for (const a of mimeContent.attachments) {
-        // todo: isBodyEmpty
-        const isBodyEmpty = false;
         await this.view.messageRenderer.processAttachment(
           a,
-          a.treatAs(mimeContent.attachments, isBodyEmpty),
+          a.treatAs(mimeContent.attachments, Mime.isBodyEmpty(mimeContent)),
           loaderContext,
           undefined,
           message.id,

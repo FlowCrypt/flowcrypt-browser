@@ -358,7 +358,7 @@ export class MessageRenderer {
     // todo: only start `signature` download?
     // start download of all attachments that are not plainFile, for 'needChunk' -- chunked download
     for (const a of mimeContent.attachments.filter(a => !a.hasData())) {
-      const treatAs = a.treatAs(mimeContent.attachments); // todo: isBodyEmpty
+      const treatAs = a.treatAs(mimeContent.attachments, Mime.isBodyEmpty(mimeContent));
       if (treatAs === 'plainFile') continue;
       if (treatAs === 'needChunk') {
         this.downloader.queueAttachmentChunkDownload(a);

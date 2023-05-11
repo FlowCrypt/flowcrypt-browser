@@ -84,12 +84,19 @@ export class Mime {
     return blocks;
   };
 
+  public static isBodyEmpty = ({ text, html }: MimeContent) => {
+    return Mime.isBodyTextEmpty(text) && Mime.isBodyTextEmpty(html);
+  };
+
+  public static isBodyTextEmpty = (text: string | undefined) => {
+    return !(text && !/^(\r)?(\n)?$/.test(text));
+  };
+
   public static processAttachments = (bodyBlocks: MsgBlock[], decoded: MimeContent): MimeProccesedMsg => {
     const attachmentBlocks: { block: MsgBlock; file: Attachment }[] = [];
     const signatureAttachments: Attachment[] = [];
     for (const file of decoded.attachments) {
-      const isBodyEmpty = decoded.text === '' || decoded.text === '\n'; // todo:
-      let treatAs = file.treatAs(decoded.attachments, isBodyEmpty);
+      let treatAs = file.treatAs(decoded.attachments, Mime.isBodyEmpty(decoded));
       if (['needChunk', 'maybePgp'].includes(treatAs)) {
         // don't want to reference MsgUtil and OpenPGP.js here, so
         // todo: think about refactoring this

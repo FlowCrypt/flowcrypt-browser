@@ -27,6 +27,7 @@ import { RelayManager } from '../../common/relay-manager.js';
 import { PrintMailInfo } from '../../common/render-message.js';
 import { LoaderContextWebmail } from './loader-context.js';
 import { JQueryEl } from '../../common/loader-context-interface.js';
+import { Mime } from '../../common/core/mime.js';
 
 export class GmailElementReplacer implements WebmailElementReplacer {
   private debug = false;
@@ -414,7 +415,6 @@ export class GmailElementReplacer implements WebmailElementReplacer {
       console.debug('processAttachments()', attachmentMetas);
     }
     const msgEl = this.getMsgBodyEl(msgId);
-    const isBodyEmpty = msgEl.text() === '' || msgEl.text() === '\n'; // todo:
     const senderEmail = this.getSenderEmail(msgEl);
     const loaderContext = new LoaderContextWebmail(this.factory, msgEl, attachmentsContainerInner);
     attachmentsContainerInner = $(attachmentsContainerInner);
@@ -428,7 +428,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
       // todo: shouldn't call `treatAs` in too many places ?
       const renderStatus = await this.messageRenderer.processAttachment(
         a,
-        a.treatAs(attachmentMetas, isBodyEmpty),
+        a.treatAs(attachmentMetas, Mime.isBodyTextEmpty(msgEl.text())),
         loaderContext,
         attachmentSel,
         msgId,
