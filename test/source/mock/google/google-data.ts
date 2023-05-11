@@ -226,7 +226,7 @@ export class GoogleData {
         }
         return [{ filename: part.filename || 'noname' }];
       })
-      .reduce((a, b) => a.concat(b));
+      .reduce((a, b) => a.concat(b), []);
   };
 
   public static getMockGmailPage = async (acct: string, msgId?: string) => {
