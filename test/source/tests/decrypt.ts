@@ -357,7 +357,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
           {
             content: ['Hi this is a signed message.'],
             encryption: 'not encrypted',
-            signature: 'could not verify signature: missing pubkey, missing sender info',
+            signature: 'could not verify signature: missing pubkey 21FC55064B1DDC75',
           },
           authHdr
         );
