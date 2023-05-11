@@ -686,7 +686,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
           {
             content: ['Can you confirm this works.', 'Senior Consultant, Security'],
             encryption: 'encrypted',
-            signature: 'not signed',
+            signature: 'could not verify signature: missing pubkey 6FC39F2CDD104B3C',
           },
           authHdr
         );
