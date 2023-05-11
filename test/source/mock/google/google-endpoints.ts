@@ -60,6 +60,28 @@ export interface GoogleConfig {
   aliases?: Record<string, MockUserAlias[]>;
 }
 
+export const multipleEmailAliasList: MockUserAlias[] = [
+  {
+    sendAsEmail: 'alias1@example.com',
+    displayName: 'An Alias1',
+    replyToAddress: 'alias2@example.com',
+    signature: '',
+    isDefault: false,
+    isPrimary: false,
+    treatAsAlias: false,
+    verificationStatus: 'accepted',
+  },
+  {
+    sendAsEmail: 'alias2@example.com',
+    displayName: 'An Alias1',
+    replyToAddress: 'alias2@example.com',
+    signature: '',
+    isDefault: false,
+    isPrimary: false,
+    treatAsAlias: false,
+    verificationStatus: 'accepted',
+  },
+];
 export const getMockGoogleEndpoints = (oauth: OauthMock, config: GoogleConfig | undefined): HandlersDefinition => {
   return {
     '/o/oauth2/auth': async (
