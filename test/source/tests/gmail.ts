@@ -246,7 +246,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
         await BrowserRecipe.pgpBlockCheck(t, pgpBlockFrame, {
           content: ['Encrypted Subject: [ci.test] Thunderbird html signed + encrypted', '1234'],
           encryption: 'encrypted',
-          signature: 'not signed', // should be 'signed'? #3944
+          signature: 'signed',
         });
         await pageHasSecureReplyContainer(t, browser, gmailPage);
         const pubkeyPage = await gmailPage.getFrame(['/chrome/elements/pgp_pubkey.htm']);
