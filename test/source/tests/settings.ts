@@ -20,7 +20,7 @@ import { Buf } from '../core/buf';
 import { GoogleData } from '../mock/google/google-data';
 import Parse from './../util/parse';
 import { OpenPGPKey } from '../core/crypto/pgp/openpgp-key';
-import { BrowserHandle } from '../browser';
+import { BrowserHandle, ControllablePage } from '../browser';
 import { AvaContext } from './tooling';
 import { ConfigurationProvider, HttpClientErr, Status } from '../mock/lib/api';
 import { singlePubKeyAttesterConfig, somePubkey, testMatchPubKey } from '../mock/attester/attester-key-constants';
@@ -758,27 +758,24 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         t.mockApi!.configProvider = new ConfigurationProvider({
           attester: singlePubKeyAttesterConfig(acct, somePubkey),
         });
-        await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
-        const downloadedAttachmentFilename = `${__dirname}/7 years.jpeg`;
-        Util.deleteFileIfExists(downloadedAttachmentFilename);
-        const inboxPage = await browser.newExtensionPage(
-          t,
-          `chrome/settings/inbox/inbox.htm?acctEmail=flowcrypt.compatibility@gmail.com&threadId=16e8b01f136c3d28`
-        );
-        const pgpBlockFrame = await inboxPage.getFrame(['pgp_render_block.htm']);
-        // check if download is awailable
-        await pgpBlockFrame.waitAll('.download-attachment');
-        // and preview
-        await pgpBlockFrame.waitAndClick('.preview-attachment');
-        const attachmentPreviewImage = await inboxPage.getFrame(['attachment_preview.htm']);
-        await attachmentPreviewImage.waitAll('#attachment-preview-container img.attachment-preview-img');
-        await (inboxPage.target as any) // eslint-disable-line no-underscore-dangle
-          ._client()
-          .send('Page.setDownloadBehavior', { behavior: 'allow', downloadPath: __dirname });
-        await attachmentPreviewImage.waitAndClick('@attachment-preview-download');
-        await Util.sleep(1);
-        expect(fs.existsSync(downloadedAttachmentFilename)).to.be.true;
-        Util.deleteFileIfExists(downloadedAttachmentFilename);
+        const { authHdr } = await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
+        const checkPage = async (page: ControllablePage) => {
+          const pgpBlockFrame = await page.getFrame(['pgp_render_block.htm']);
+          // check if download is awailable
+          await pgpBlockFrame.waitAll('.download-attachment');
+          // and preview
+          await pgpBlockFrame.waitAndClick('.preview-attachment');
+          const attachmentPreviewImage = await page.getFrame(['attachment_preview.htm']);
+          await attachmentPreviewImage.waitAll('#attachment-preview-container img.attachment-preview-img');
+          const downloadedFiles = await attachmentPreviewImage.awaitDownloadTriggeredByClicking(() =>
+            attachmentPreviewImage.waitAndClick('@attachment-preview-download')
+          );
+          expect(Object.keys(downloadedFiles)).contains('7 years.jpeg');
+          await page.close();
+        };
+        const msgId = '16e8b01f136c3d28';
+        await checkPage(await browser.newPage(t, `${t.urls?.mockGmailUrl()}/${msgId}`, undefined, authHdr));
+        await checkPage(await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=flowcrypt.compatibility@gmail.com&threadId=${msgId}`));
       })
     );
     const checkIfFileDownloadsCorrectly = async (t: AvaContext, browser: BrowserHandle, threadId: string, fileName: string) => {
