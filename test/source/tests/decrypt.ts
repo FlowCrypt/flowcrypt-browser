@@ -579,7 +579,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
           {
             content: ['Message encrypted and signed as a whole using PGP/MIME.', 'cape-town-central.jpg', '185.69 kB'],
             encryption: 'encrypted',
-            signature: 'could not verify signature: missing pubkey, missing sender info',
+            signature: 'could not verify signature: missing pubkey CBD1C3466E9C437F',
           },
           authHdr
         );
