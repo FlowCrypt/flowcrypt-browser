@@ -333,9 +333,9 @@ export class GoogleData {
 
   public storeSentMessage = (parseResult: ParseMsgResult, id: string): string => {
     let bodyContentAtt: { data: string; size: number; filename?: string; id: string } | undefined;
-    const parsedMail = parseResult.mimeMsg;
+    const { html, text, attachments, from, subject, messageId } = parseResult.mimeMsg;
     const parts: GmailMsg$payload$part[] = [];
-    for (const attachment of parsedMail.attachments || []) {
+    for (const [index, attachment] of attachments.entries()) {
       const attId = Util.lousyRandom();
       const gmailAtt = {
         data: attachment.content.toString('base64'),
@@ -348,26 +348,34 @@ export class GoogleData {
         bodyContentAtt = gmailAtt;
       }
       parts.push({
-        partId: attId,
+        partId: index.toString(),
         mimeType: attachment.contentType,
         filename: attachment.filename,
+        body: {
+          attachmentId: attId,
+          size: attachment.size,
+        },
       });
     }
     let body: GmailMsg$payload$body;
-    const htmlOrText = parsedMail.html || parsedMail.text;
-    if (htmlOrText) {
-      body = { data: htmlOrText, size: htmlOrText.length };
+    let mimeType: string | undefined;
+    if (html) {
+      body = { data: Buf.fromUtfStr(html).toBase64Str(), size: html.length };
+      mimeType = 'text/html';
+    } else if (text) {
+      body = { data: Buf.fromUtfStr(text).toBase64Str(), size: text.length };
+      mimeType = 'text/plain';
     } else if (bodyContentAtt) {
       body = { attachmentId: bodyContentAtt.id, size: bodyContentAtt.size };
     } else {
       throw new Error('MOCK storeSentMessage: no parsedMail body, no appropriate bodyContentAtt');
     }
     const headers = [
-      { name: 'Subject', value: parsedMail.subject || '' },
-      { name: 'Message-ID', value: parsedMail.messageId || '' },
+      { name: 'Subject', value: subject || '' },
+      { name: 'Message-ID', value: messageId || '' },
     ];
-    if (parsedMail.from) {
-      headers.push({ name: 'From', value: parsedMail.from.text });
+    if (from) {
+      headers.push({ name: 'From', value: from.text });
     }
     const barebonesGmailMsg: GmailMsg = {
       // todo - could be improved - very barebones
@@ -376,6 +384,7 @@ export class GoogleData {
       historyId: '',
       labelIds: ['SENT' as GmailMsg$labelId],
       payload: {
+        mimeType,
         headers,
         body,
         parts,
