@@ -846,6 +846,9 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
           fes: {
             clientConfiguration: getKeyManagerAutogenRules(t.urls!.port!),
           },
+          google: {
+            contacts: [],
+          },
         });
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
         await SetupPageRecipe.autoSetupWithEKM(settingsPage, { expectWarnModal: 'Public key not usable - not sumbitting to Attester' });
