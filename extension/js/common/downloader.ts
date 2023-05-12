@@ -15,7 +15,8 @@ export type ProcessedMessage = {
   blocksInFrames: Dict<MsgBlock>;
   attachments: Attachment[];
   printMailInfo: PrintMailInfo;
-  from: string | undefined;
+  singlePlainBlock?: MsgBlock;
+  from?: string;
 };
 
 export interface MessageCacheEntry {

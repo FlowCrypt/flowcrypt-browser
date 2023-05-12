@@ -36,7 +36,7 @@ import { isCustomerUrlFesUsed } from './helpers.js';
 export type ProccesedMsg = MimeProccesedMsg;
 
 export class MessageRenderer {
-  private downloader: Downloader;
+  public readonly downloader: Downloader;
   public constructor(
     private readonly acctEmail: string,
     private readonly gmail: Gmail,
@@ -351,9 +351,8 @@ export class MessageRenderer {
     if (msgDownload.processedFull) {
       return msgDownload.processedFull;
     }
-    const fullOrRawMsg = await Promise.race(Object.values(msgDownload.download).filter(Boolean));
-    // todo: what should we do if we received 'raw'?
-    const mimeContent = MessageRenderer.reconstructMimeContent(fullOrRawMsg);
+    const fullMsg = await msgDownload.download.full;
+    const mimeContent = MessageRenderer.reconstructMimeContent(fullMsg);
     const blocks = Mime.processBody(mimeContent);
     // todo: only start `signature` download?
     // start download of all attachments that are not plainFile, for 'needChunk' -- chunked download
@@ -372,16 +371,18 @@ export class MessageRenderer {
     }
     let renderedXssSafe: string | undefined;
     let blocksInFrames: Dict<MsgBlock> = {};
-    const from = GmailParser.findHeader(fullOrRawMsg, 'from');
-    if (blocks.length === 0 || (blocks.length === 1 && ['plainText', 'plainHtml'].includes(blocks[0].type))) {
-      // only has single block which is plain text
-    } else {
+    let singlePlainBlock: MsgBlock | undefined;
+    const from = GmailParser.findHeader(fullMsg, 'from');
+    if (blocks.length === 1 && ['plainText', 'plainHtml'].includes(blocks[0].type)) {
+      singlePlainBlock = blocks[0];
+    } else if (blocks.length) {
       ({ renderedXssSafe, blocksInFrames } = MessageRenderer.renderMsg({ blocks, from }, this.factory, false, msgId, this.sendAs));
     }
     msgDownload.processedFull = {
       renderedXssSafe,
+      singlePlainBlock,
       blocksInFrames,
-      printMailInfo: await this.getPrintViewInfo(fullOrRawMsg),
+      printMailInfo: await this.getPrintViewInfo(fullMsg),
       from,
       attachments: mimeContent.attachments,
     };

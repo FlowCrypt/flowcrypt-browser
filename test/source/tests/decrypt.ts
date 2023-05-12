@@ -203,6 +203,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
         expect(urls.length).to.equal(0);
         await inboxPage.close();
         const gmailPage = await browser.newPage(t, `${t.urls?.mockGmailUrl()}/${threadId}`, undefined, authHdr);
+        await gmailPage.waitForContent('.a3s', 'Plain message');
         expect((await gmailPage.getFramesUrls(['pgp_render_block.htm'])).length).to.equal(0);
         await gmailPage.close();
       })

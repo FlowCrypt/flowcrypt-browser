@@ -19,7 +19,6 @@ import { ViewModule } from '../../../../js/common/view-module.js';
 import { Xss } from '../../../../js/common/platform/xss.js';
 import { Browser } from '../../../../js/common/browser/browser.js';
 import { Attachment } from '../../../../js/common/core/attachment.js';
-import { MsgBlock } from '../../../../js/common/core/msg-block.js';
 import { Mime } from '../../../../js/common/core/mime.js';
 import { LoaderContextInterface, bindNow } from '../../../../js/common/loader-context-interface.js';
 import { BindInterface } from '../../../../js/common/relay-manager-interface.js';
@@ -150,33 +149,24 @@ export class InboxActiveThreadModule extends ViewModule<InboxView> {
   private renderMsg = async (message: GmailRes.GmailMsg) => {
     const htmlId = this.replyMsgId(message.id);
     try {
-      const msg = await this.view.gmail.msgGet(message.id, 'full');
+      const msg = await this.view.messageRenderer.downloader.msgGetCached(message.id).download.full;
       const mimeContent = MessageRenderer.reconstructMimeContent(msg);
       const blocks = Mime.processBody(mimeContent);
       const printInfoHtml = await this.view.messageRenderer.getPrintViewInfo(msg);
       // todo: review the meaning of threadHasPgpBlock
       this.threadHasPgpBlock ||= blocks.some(block => ['encryptedMsg', 'publicKey', 'privateKey', 'signedMsg'].includes(block.type));
       // todo: take `from` from the processedMessage?
-      const messageBlocks: MsgBlock[] = [];
-      const attachmentBlocks: MsgBlock[] = [];
-      for (const block of blocks) {
-        if (block.attachmentMeta && ['encryptedAttachment', 'plainAttachment'].includes(block.type)) {
-          attachmentBlocks.push(block);
-        } else {
-          messageBlocks.push(block);
-        }
-      }
-      const { renderedXssSafe, blocksInFrames, printMailInfo, from } = await this.view.messageRenderer.msgGetProcessed(message.id);
-
+      const { renderedXssSafe, singlePlainBlock, blocksInFrames, printMailInfo, from } = await this.view.messageRenderer.msgGetProcessed(message.id);
+      const senderEmail = from || 'unknown';
       const exportBtn = this.debugEmails.includes(this.view.acctEmail) ? '<a href="#" class="action-export">download api export</a>' : '';
       const loaderContext = new LoaderContext(
         this.view.factory,
         renderedXssSafe,
-        attachmentBlocks.map(block =>
-          XssSafeFactory.renderableMsgBlock(this.view.factory, block, message.id, senderEmail, this.view.messageRenderer.isOutgoing(senderEmail))
-        )
+        blocks
+          .filter(block => block.attachmentMeta && ['encryptedAttachment', 'plainAttachment'].includes(block.type))
+          .concat(singlePlainBlock ? [singlePlainBlock] : [])
+          .map(block => XssSafeFactory.renderableMsgBlock(this.view.factory, block, message.id, senderEmail, this.view.messageRenderer.isOutgoing(senderEmail)))
       );
-      const senderEmail = from || 'unknown';
       for (const a of mimeContent.attachments) {
         await this.view.messageRenderer.processAttachment(
           a,
