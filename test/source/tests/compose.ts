@@ -2256,7 +2256,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         /* eslint-disable @typescript-eslint/no-non-null-assertion */
         // get sent msg from mock
         const sentMsg = (await GoogleData.withInitializedData(acct)).searchMessagesBySubject(subject)[0];
-        const message = sentMsg.payload!.body!.data!;
+        const message = Buf.fromBase64Str(sentMsg.payload!.body!.data!).toUtfStr();
         /* eslint-enable @typescript-eslint/no-non-null-assertion */
         expect(message).to.include('-----BEGIN PGP MESSAGE-----');
         expect(message).to.include('-----END PGP MESSAGE-----');
