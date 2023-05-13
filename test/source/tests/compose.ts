@@ -34,6 +34,7 @@ import {
 } from '../mock/attester/attester-key-constants';
 import { revokedPrv, twoKeys2 } from '../mock/key-manager/key-manager-constants';
 import { flowcryptTestClientConfiguration, getKeyManagerAutoImportNoPrvCreateRules, getKeyManagerAutogenRules } from '../mock/fes/fes-constants';
+import { Buf } from '../core/buf';
 
 export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: TestWithBrowser) => {
   if (testVariant !== 'CONSUMER-LIVE-GMAIL') {
@@ -2177,7 +2178,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         /* eslint-disable @typescript-eslint/no-non-null-assertion */
         // get sent msg from mock
         const sentMsg = (await GoogleData.withInitializedData(acct)).searchMessagesBySubject(subject)[0];
-        const message = sentMsg.payload!.body!.data!;
+        const message = Buf.fromBase64Str(sentMsg.payload!.body!.data!).toUtfStr();
         const encryptedData = message.match(/\-\-\-\-\-BEGIN PGP MESSAGE\-\-\-\-\-.*\-\-\-\-\-END PGP MESSAGE\-\-\-\-\-/s)![0];
         /* eslint-enable @typescript-eslint/no-non-null-assertion */
         const decrypted0 = await MsgUtil.decryptMessage({ kisWithPp: [], encryptedData, verificationPubs: [] });
@@ -3696,7 +3697,8 @@ const sendImgAndVerifyPresentInSentMsg = async (t: AvaContext, browser: BrowserH
   // get sent msg id from mock
   const sentMsg = (await GoogleData.withInitializedData(acctEmail)).searchMessagesBySubject(subject)[0];
   if (sendingType === 'plain') {
-    expect(sentMsg.payload?.body?.data).to.match(/<img src="cid:(.+)@flowcrypt">Test Sending Plain Message With Image/);
+    const data = Buf.fromBase64Str(sentMsg.payload!.body!.data!).toUtfStr();
+    expect(data).to.match(/<img src="cid:(.+)@flowcrypt">Test Sending Plain Message With Image/);
     return;
     // todo - this test case is a stop-gap. We need to implement rendering of such messages below,
     //   then let test plain messages with images in them (referenced by cid) just like other types of messages below
