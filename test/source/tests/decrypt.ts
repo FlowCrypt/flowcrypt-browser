@@ -36,16 +36,14 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
         const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`);
         await inboxPage.waitForSelTestState('ready');
         await inboxPage.waitAll('iframe');
-        const expectedMessage = {
-          encryption: 'not encrypted',
-          signature: 'not signed',
-          content: ['-----BEGIN PGP MESSAGE-----\n\nThis is not a valid PGP message'],
-        };
-        await BrowserRecipe.pgpBlockCheck(t, await inboxPage.getFrame(['pgp_render_block.htm']), expectedMessage);
+        const plainMessage = /-----BEGIN PGP MESSAGE-----.*This is not a valid PGP message/s;
+        await inboxPage.waitForContent('.message.line', plainMessage);
+        // expect no pgp blocks
+        expect((await inboxPage.getFramesUrls(['pgp_render_block.htm'])).length).to.equal(0);
         await inboxPage.close();
         const gmailPage = await browser.newPage(t, `${t.urls?.mockGmailUrl()}/${msgId}`, undefined, authHdr);
-        await gmailPage.waitAll('iframe');
-        await BrowserRecipe.pgpBlockCheck(t, await gmailPage.getFrame(['pgp_render_block.htm']), expectedMessage);
+        await gmailPage.waitForContent('.a3s', plainMessage);
+        expect((await gmailPage.getFramesUrls(['pgp_render_block.htm'])).length).to.equal(0);
         await gmailPage.close();
       })
     );

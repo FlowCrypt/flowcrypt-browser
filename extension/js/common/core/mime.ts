@@ -67,7 +67,7 @@ export class Mime {
   public static processBody = (decoded: MimeContentBody): MsgBlock[] => {
     const blocks: MsgBlock[] = [];
     if (decoded.text) {
-      const blocksFromTextPart = MsgBlockParser.detectBlocks(Str.normalize(decoded.text)).blocks;
+      const blocksFromTextPart = MsgBlockParser.detectBlocks(Str.normalize(decoded.text), true).blocks;
       // if there are some encryption-related blocks found in the text section, which we can use, and not look at the html section
       if (blocksFromTextPart.find(b => ['pkcs7', 'encryptedMsg', 'signedMsg', 'publicKey', 'privateKey'].includes(b.type))) {
         blocks.push(...blocksFromTextPart); // because the html most likely containt the same thing, just harder to parse pgp sections cause it's html
@@ -111,13 +111,13 @@ export class Mime {
         signatureAttachments.push(file);
       } else if (treatAs === 'publicKey') {
         attachmentBlocks.push(
-          ...MsgBlockParser.detectBlocks(file.getData().toUtfStr()).blocks.map(block => {
+          ...MsgBlockParser.detectBlocks(file.getData().toUtfStr(), true).blocks.map(block => {
             return { block, file }; // todo: test when more than one
           })
         );
       } else if (treatAs === 'privateKey') {
         attachmentBlocks.push(
-          ...MsgBlockParser.detectBlocks(file.getData().toUtfStr()).blocks.map(block => {
+          ...MsgBlockParser.detectBlocks(file.getData().toUtfStr(), true).blocks.map(block => {
             return { block, file }; // todo: test when more than one
           })
         );

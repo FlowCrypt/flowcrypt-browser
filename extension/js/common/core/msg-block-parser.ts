@@ -23,12 +23,12 @@ type SanitizedBlocks = {
 export class MsgBlockParser {
   private static ARMOR_HEADER_MAX_LENGTH = 50;
 
-  public static detectBlocks = (origText: string) => {
+  public static detectBlocks = (origText: string, completeOnly?: boolean) => {
     const blocks: MsgBlock[] = [];
     const normalized = Str.normalize(origText);
     let startAt = 0;
     while (true) {
-      const { found, continueAt } = MsgBlockParser.detectBlockNext(normalized, startAt);
+      const { found, continueAt } = MsgBlockParser.detectBlockNext(normalized, startAt, completeOnly);
       if (found) {
         blocks.push(...found);
       }
@@ -165,7 +165,7 @@ export class MsgBlockParser {
     );
   };
 
-  private static detectBlockNext = (origText: string, startAt: number) => {
+  private static detectBlockNext = (origText: string, startAt: number, completeOnly?: boolean) => {
     const armorHdrTypes = Object.keys(PgpArmor.ARMOR_HEADER_DICT) as ReplaceableMsgBlockType[];
     const result: { found: MsgBlock[]; continueAt?: number } = { found: [] as MsgBlock[] };
     const begin = origText.indexOf(PgpArmor.headers('null').begin, startAt);
@@ -211,7 +211,7 @@ export class MsgBlockParser {
               // identified end of the same block
               result.found.push(MsgBlock.fromContent(armorHdrType, origText.substring(begin, endIndex + foundBlockEndHeaderLength).trim()));
               result.continueAt = endIndex + foundBlockEndHeaderLength;
-            } else {
+            } else if (!completeOnly) {
               // corresponding end not found
               result.found.push(MsgBlock.fromContent(armorHdrType, origText.substr(begin), true));
             }
