@@ -164,7 +164,7 @@ export class AttachmentDownloadView extends View {
       this.attachment.setData(await Api.download(this.attachment.url, this.renderProgress));
     } else if (this.attachment.id && this.attachment.msgId) {
       // gmail attId
-      const { data } = await this.gmail.attachmentGet(this.attachment.msgId, this.attachment.id, this.renderProgress);
+      const { data } = await this.gmail.attachmentGet(this.attachment.msgId, this.attachment.id, { download: this.renderProgress });
       this.attachment.setData(data);
     } else {
       throw new Error('File is missing both id and url - this should be fixed');

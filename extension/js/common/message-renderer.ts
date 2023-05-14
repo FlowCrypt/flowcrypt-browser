@@ -262,8 +262,8 @@ export class MessageRenderer {
         loaderContext.prependEncryptedAttachment(a);
         return 'replaced'; // native should be hidden, custom should appear instead
       } else if (treatAs === 'encryptedMsg') {
-        await this.setMsgBodyAndStartProcessing(loaderContext, treatAs, printMailInfo, renderModule =>
-          this.processEncryptedMessage(a, renderModule, senderEmail)
+        await this.setMsgBodyAndStartProcessing(loaderContext, treatAs, printMailInfo, (renderModule, frameId) =>
+          this.processEncryptedMessage(a, renderModule, frameId, senderEmail)
         );
         return 'hidden'; // native attachment should be hidden, the "attachment" goes to the message container
       } else if (treatAs === 'publicKey') {
@@ -492,12 +492,12 @@ export class MessageRenderer {
     factory: XssSafeFactory,
     frameId: string,
     printMailInfo: PrintMailInfo,
-    cb: (renderModule: RenderInterface) => Promise<{ publicKeys?: string[]; needPassphrase?: string[] }>
+    cb: (renderModule: RenderInterface, frameId: string) => Promise<{ publicKeys?: string[]; needPassphrase?: string[] }>
   ) => {
     const renderModule = relayManager.createRelay(frameId);
     loaderContext.bind(frameId, relayManager);
     renderModule.setPrintMailInfo(printMailInfo);
-    cb(renderModule)
+    cb(renderModule, frameId)
       .then(async result => {
         const appendAfter = $(`iframe#${frameId}`); // todo: late binding? won't work
         // todo: how publicKeys and needPassphrase interact?
@@ -509,7 +509,7 @@ export class MessageRenderer {
           await PassphraseStore.waitUntilPassphraseChanged(this.acctEmail, result.needPassphrase);
           renderModule.clearErrorStatus();
           renderModule.renderText('Decrypting...');
-          result = await cb(renderModule);
+          result = await cb(renderModule, frameId);
         }
         // todo: wait for renderModule completion: the queue has been actually flushed,
         // and then remove the frame from relayManager.frames
@@ -644,7 +644,7 @@ export class MessageRenderer {
     loaderContext: LoaderContextInterface,
     type: MsgBlockType, // for diagnostics
     printMailInfo: PrintMailInfo,
-    cb: (renderModule: RenderInterface) => Promise<{ publicKeys?: string[] }>
+    cb: (renderModule: RenderInterface, frameId: string) => Promise<{ publicKeys?: string[] }>
   ) => {
     const { frameId, frameXssSafe } = loaderContext.factory.embeddedRenderMsg(type);
     loaderContext.setMsgBody(frameXssSafe, 'set');
@@ -663,12 +663,12 @@ export class MessageRenderer {
     return {};
   };
 
-  private processEncryptedMessage = async (attachment: Attachment, renderModule: RenderInterface, senderEmail: string) => {
+  private processEncryptedMessage = async (attachment: Attachment, renderModule: RenderInterface, frameId: string, senderEmail: string) => {
     try {
       if (!attachment.hasData()) {
         // todo: common cache, load control?
         renderModule.renderText('Retrieving message...');
-        await this.gmail.fetchAttachments([attachment]); // todo: render progressCb
+        await this.gmail.fetchAttachment(attachment, frameId);
       }
       // todo: probaby subject isn't relevant in attachment-based decryption?
       // const subject = gmailMsg.payload ? GmailParser.findHeader(gmailMsg.payload, 'subject') : undefined;
