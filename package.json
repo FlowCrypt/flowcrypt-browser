@@ -42,7 +42,7 @@
     "stylelint-config-standard": "33.0.0",
     "typescript": "5.0.4",
     "web-ext": "7.6.2",
-    "webpack-cli": "^5.1.0"
+    "webpack-cli": "^5.1.1"
   },
   "dependencies": {
     "@flowcrypt/fine-uploader": "5.16.4",
