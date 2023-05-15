@@ -177,8 +177,9 @@ export class MsgBlockParser {
         if (blockHeaderDef.replace) {
           const indexOfConfirmedBegin = potentialBeginHeader.indexOf(blockHeaderDef.begin);
           if (indexOfConfirmedBegin === 0) {
+            let potentialTextBeforeBlockBegun = '';
             if (begin > startAt) {
-              let potentialTextBeforeBlockBegun = origText.substring(startAt, begin);
+              potentialTextBeforeBlockBegun = origText.substring(startAt, begin);
               if (!potentialTextBeforeBlockBegun.endsWith('\n')) {
                 // only replace blocks if they begin on their own line
                 // contains deliberate block: `-----BEGIN PGP PUBLIC KEY BLOCK-----\n...`
@@ -187,10 +188,6 @@ export class MsgBlockParser {
                 continue; // block treated as plaintext, not on dedicated line - considered accidental
                 // this will actually cause potential deliberate blocks that follow accidental block to be ignored
                 // but if the message already contains accidental (not on dedicated line) blocks, it's probably a good thing to ignore the rest
-              }
-              potentialTextBeforeBlockBegun = potentialTextBeforeBlockBegun.trim();
-              if (potentialTextBeforeBlockBegun) {
-                result.found.push(MsgBlock.fromContent('plainText', potentialTextBeforeBlockBegun));
               }
             }
             let endIndex = -1;
@@ -207,15 +204,21 @@ export class MsgBlockParser {
                 foundBlockEndHeaderLength = matchEnd[0].length;
               }
             }
-            if (endIndex !== -1) {
-              // identified end of the same block
-              result.found.push(MsgBlock.fromContent(armorHdrType, origText.substring(begin, endIndex + foundBlockEndHeaderLength).trim()));
-              result.continueAt = endIndex + foundBlockEndHeaderLength;
-            } else if (!completeOnly) {
-              // corresponding end not found
-              result.found.push(MsgBlock.fromContent(armorHdrType, origText.substr(begin), true));
+            if (endIndex !== -1 || !completeOnly) {
+              // flush the preceding plainText
+              potentialTextBeforeBlockBegun = potentialTextBeforeBlockBegun.trim();
+              if (potentialTextBeforeBlockBegun) {
+                result.found.push(MsgBlock.fromContent('plainText', potentialTextBeforeBlockBegun));
+              }
+              if (endIndex !== -1) {
+                // identified end of the same block
+                result.found.push(MsgBlock.fromContent(armorHdrType, origText.substring(begin, endIndex + foundBlockEndHeaderLength).trim()));
+                result.continueAt = endIndex + foundBlockEndHeaderLength;
+              } else {
+                result.found.push(MsgBlock.fromContent(armorHdrType, origText.substr(begin), true));
+              }
+              break;
             }
-            break;
           }
         }
       }
