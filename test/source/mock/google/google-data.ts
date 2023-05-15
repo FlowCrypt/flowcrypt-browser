@@ -328,7 +328,7 @@ export class GoogleData {
   };
 
   private static htmlFromText = (textData: string): string => {
-    return Xss.escape(textData); // this is skewed, as we should replace \r\n with <br/> etc., but it should be good for tests
+    return Xss.escape(textData).replace(/\n/g, '<br>') + '<br><br>';
   };
 
   public storeSentMessage = (parseResult: ParseMsgResult, id: string): string => {
