@@ -5,7 +5,7 @@
 import { RenderMessage } from './render-message.js';
 
 export interface RelayManagerInterface {
-  relay(frameId: string, message: RenderMessage): void;
+  relay(frameId: string, message: RenderMessage, dontEnqueue?: boolean): void;
 }
 
 export interface BindInterface {

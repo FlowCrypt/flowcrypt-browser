@@ -239,7 +239,7 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
       const perc = percent ?? (total > 0 ? Math.round((loaded / total) * 100) : undefined);
       if (typeof perc !== 'undefined') {
         // todo: ignore messages after something else is rendered
-        relayManager.relay(frameId, { renderText: `Retrieving message... ${perc}%` });
+        relayManager.relay(frameId, { renderText: `Retrieving message... ${perc}%` }, true);
       }
     });
     BrowserMsg.listen(tabId);

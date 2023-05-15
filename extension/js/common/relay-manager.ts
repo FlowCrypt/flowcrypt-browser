@@ -11,10 +11,13 @@ import { RenderRelay } from './render-relay.js';
 export class RelayManager implements RelayManagerInterface, BindInterface {
   private frames: Dict<{ frameWindow?: Window; readyToReceive?: true; queue: RenderMessage[] }> = {};
 
-  public relay = (frameId: string, message: RenderMessage) => {
+  public relay = (frameId: string, message: RenderMessage, dontEnqueue?: boolean) => {
     const { frameWindow, readyToReceive, queue } = this.frames[frameId];
-    queue.push(message);
-    if (readyToReceive && frameWindow) {
+    const canFlush = readyToReceive && frameWindow;
+    if (canFlush || !dontEnqueue) {
+      queue.push(message);
+    }
+    if (canFlush) {
       this.flush({ frameWindow, queue });
     }
   };
