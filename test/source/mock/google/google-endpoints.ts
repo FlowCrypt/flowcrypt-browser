@@ -124,7 +124,7 @@ export const getMockGoogleEndpoints = (oauth: OauthMock, config: GoogleConfig | 
         throw new HttpClientErr(`Method not implemented for ${req.url}: ${req.method}`);
       }
       if (!config?.contacts) {
-        return {};
+        return { results: [] };
       }
       const results = config.contacts
         .filter(email => email.includes(query))
@@ -132,11 +132,11 @@ export const getMockGoogleEndpoints = (oauth: OauthMock, config: GoogleConfig | 
       return { results };
     },
     '/v1/otherContacts:search': async ({ query: { query } }, req) => {
-      if (!isGet(req) || !config) {
+      if (!isGet(req)) {
         throw new HttpClientErr(`Method not implemented for ${req.url}: ${req.method}`);
       }
-      if (!config.othercontacts) {
-        return {};
+      if (!config?.othercontacts) {
+        return { results: [] };
       }
       const results = config.othercontacts
         .filter(email => email.includes(query))
