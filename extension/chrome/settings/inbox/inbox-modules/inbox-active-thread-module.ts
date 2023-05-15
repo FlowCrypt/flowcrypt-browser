@@ -165,7 +165,7 @@ export class InboxActiveThreadModule extends ViewModule<InboxView> {
         blocks
           .filter(block => block.attachmentMeta && ['encryptedAttachment', 'plainAttachment'].includes(block.type))
           .concat(singlePlainBlock ? [singlePlainBlock] : [])
-          .map(block => XssSafeFactory.renderableMsgBlock(this.view.factory, block, message.id, senderEmail, this.view.messageRenderer.isOutgoing(senderEmail)))
+          .map(block => XssSafeFactory.renderableMsgBlock(this.view.factory, block, this.view.messageRenderer.isOutgoing(senderEmail)))
       );
       // todo: test else if (this.view.showOriginal) {      r += Xss.escape(Str.with(block.content)).replace(/\n/g, '<br>');}
       for (const a of mimeContent.attachments) {

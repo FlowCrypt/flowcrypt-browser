@@ -282,12 +282,8 @@ View.run(
           const container = $('#bulk_import #processed');
           for (const block of blocks) {
             if (block.type === 'publicKey' || block.type === 'certificate') {
-              const replacedHtmlSafe = XssSafeFactory.renderableMsgBlock(
-                this.factory!, // eslint-disable-line @typescript-eslint/no-non-null-assertion
-                block,
-                '',
-                ''
-              );
+              // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+              const replacedHtmlSafe = XssSafeFactory.renderableMsgBlock(this.factory!, block);
               if (replacedHtmlSafe && replacedHtmlSafe !== value) {
                 container.append(replacedHtmlSafe); // xss-safe-factory
               }

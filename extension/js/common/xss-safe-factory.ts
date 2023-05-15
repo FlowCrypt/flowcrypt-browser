@@ -59,7 +59,7 @@ export class XssSafeFactory {
    *
    * When edited, REQUEST A SECOND SET OF EYES TO REVIEW CHANGES
    */
-  public static renderableMsgBlock = (factory: XssSafeFactory, block: MsgBlock, msgId: string, senderEmail: string, isOutgoing?: boolean) => {
+  public static renderableMsgBlock = (factory: XssSafeFactory, block: MsgBlock, isOutgoing?: boolean) => {
     if (block.type === 'plainText') {
       return Xss.escape(Str.with(block.content)).replace(/\n/g, '<br>') + '<br><br>';
     } else if (block.type === 'plainHtml') {

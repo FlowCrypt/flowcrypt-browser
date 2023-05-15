@@ -129,7 +129,6 @@ export class MessageRenderer {
     { from, blocks }: { blocks: MsgBlock[]; from?: string },
     factory: XssSafeFactory,
     showOriginal: boolean,
-    msgId: string, // todo: will be removed
     sendAs?: Dict<SendAsAlias>
   ) => {
     const isOutgoing = Boolean(from && !!sendAs?.[from]);
@@ -146,7 +145,7 @@ export class MessageRenderer {
         r += frameXssSafe;
         blocksInFrames[frameId] = block;
       } else {
-        r += XssSafeFactory.renderableMsgBlock(factory, block, msgId, from || 'unknown', isOutgoing);
+        r += XssSafeFactory.renderableMsgBlock(factory, block, isOutgoing);
       }
     }
     return { renderedXssSafe: r, isOutgoing, blocksInFrames };
@@ -410,7 +409,7 @@ export class MessageRenderer {
     if (blocks.length === 1 && ['plainText', 'plainHtml'].includes(blocks[0].type)) {
       singlePlainBlock = blocks[0];
     } else if (blocks.length) {
-      ({ renderedXssSafe, blocksInFrames } = MessageRenderer.renderMsg({ blocks, from }, this.factory, false, msgId, this.sendAs));
+      ({ renderedXssSafe, blocksInFrames } = MessageRenderer.renderMsg({ blocks, from }, this.factory, false, this.sendAs));
     }
     msgDownload.processedFull = {
       renderedXssSafe,
