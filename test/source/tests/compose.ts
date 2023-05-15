@@ -1754,8 +1754,12 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       'compose - load contacts through API',
       testWithBrowser(async (t, browser) => {
         const acct = 'ci.tests.gmail@flowcrypt.test';
+        const recipient = 'contact.test@flowcrypt.com';
         t.mockApi!.configProvider = new ConfigurationProvider({
           attester: singlePubKeyAttesterConfig(acct, somePubkey),
+          google: {
+            contacts: [recipient],
+          },
         });
         await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
         let composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
@@ -1796,6 +1800,9 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
                 delayInSeconds: 3,
               },
             },
+          },
+          google: {
+            contacts: [recipient],
           },
         });
         await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');

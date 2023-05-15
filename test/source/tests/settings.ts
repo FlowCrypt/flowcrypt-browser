@@ -86,6 +86,22 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
               },
             },
           },
+          google: {
+            aliases: {
+              [email]: [
+                {
+                  sendAsEmail: mismatchEmail,
+                  displayName: 'Test mismatch',
+                  replyToAddress: mismatchEmail,
+                  signature: '',
+                  isDefault: false,
+                  isPrimary: false,
+                  treatAsAlias: false,
+                  verificationStatus: 'accepted',
+                },
+              ],
+            },
+          },
         });
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, email);
         await SetupPageRecipe.manualEnter(

@@ -563,6 +563,17 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
         const acct = 'ci.tests.gmail@flowcrypt.test';
         t.mockApi!.configProvider = new ConfigurationProvider({
           attester: singlePubKeyAttesterConfig(acct, somePubkey),
+          google: {
+            contacts: [
+              'testsearchorder1@flowcrypt.com',
+              'testsearchorder2@flowcrypt.com',
+              'testsearchorder3@flowcrypt.com',
+              'testsearchorder4@flowcrypt.com',
+              'testsearchorder5@flowcrypt.com',
+              'testsearchorder6@flowcrypt.com',
+            ],
+            othercontacts: ['testsearchorder7@flowcrypt.com', 'testsearchorder8@flowcrypt.com', 'testsearchorder9@flowcrypt.com'],
+          },
         });
         await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
         const inboxPage = await browser.newExtensionInboxPage(t, acct);
