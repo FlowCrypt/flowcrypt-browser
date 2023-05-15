@@ -120,10 +120,10 @@ export const getMockGoogleEndpoints = (oauth: OauthMock, config: GoogleConfig | 
       throw new Error(`Method not implemented for ${req.url}: ${req.method}`);
     },
     '/v1/people:searchContacts': async ({ query: { query } }, req) => {
-      if (!isGet(req) || !config) {
+      if (!isGet(req)) {
         throw new HttpClientErr(`Method not implemented for ${req.url}: ${req.method}`);
       }
-      if (!config.contacts) {
+      if (!config?.contacts) {
         return {};
       }
       const results = config.contacts

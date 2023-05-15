@@ -252,9 +252,6 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         const acctEmail = 'ci.tests.gmail@flowcrypt.test';
         t.mockApi!.configProvider = new ConfigurationProvider({
           attester: singlePubKeyAttesterConfig(acctEmail, somePubkey),
-          google: {
-            contacts: [],
-          },
         });
         await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
         // works on first search
@@ -283,9 +280,6 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
               },
             },
           },
-          google: {
-            contacts: [],
-          },
         });
         await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
         // works on the first search
@@ -304,9 +298,6 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       testWithBrowser(async (t, browser) => {
         t.mockApi!.configProvider = new ConfigurationProvider({
           attester: singlePubKeyAttesterConfig('ci.tests.gmail@flowcrypt.test', somePubkey),
-          google: {
-            contacts: [],
-          },
         });
         await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
         // works on the first search
@@ -338,9 +329,6 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
                 pubkey: somePubkey,
               },
             },
-          },
-          google: {
-            contacts: [],
           },
         });
         await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
@@ -1071,9 +1059,6 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         const acct = 'ci.tests.gmail@flowcrypt.test';
         t.mockApi!.configProvider = new ConfigurationProvider({
           attester: singlePubKeyAttesterConfig(acct, somePubkey),
-          google: {
-            contacts: [],
-          },
         });
         await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
         const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
