@@ -166,6 +166,7 @@ export class KeyUtil {
           allErrs.push(...err);
         }
       } catch (e) {
+        console.log(e);
         allErrs.push(e instanceof Error ? e : new Error(String(e)));
       }
     };

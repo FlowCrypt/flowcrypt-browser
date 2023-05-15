@@ -542,7 +542,10 @@ export class OpenPGPKey {
         // other identities go in indeterministic order
         ...Value.arr.unique((await key.verifyAllUsers()).filter(x => x.valid && x.userID !== primaryUserId).map(x => x.userID)),
       ];
-      const emails = identities.map(userid => Str.parseEmail(userid).email).filter(Boolean);
+      const emails = identities
+        .filter(userId => !!userId)
+        .map(userid => Str.parseEmail(userid).email)
+        .filter(Boolean);
       if (emails.length === identities.length) {
         // OpenPGP.js uses RFC 5322 `email-addresses` parser, so we expect all identities to contain a valid e-mail address
         return { emails, identities };
