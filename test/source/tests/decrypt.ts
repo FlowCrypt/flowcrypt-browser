@@ -49,6 +49,31 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
     );
 
     test(
+      `decrypt - detect inline bogus pgp message`,
+      testWithBrowser(async (t, browser) => {
+        const threadId = '17fbb5db49ddc1eb';
+        const msgId = '17fbb5f1cd2010ee';
+        const acctEmail = 'flowcrypt.compatibility@gmail.com';
+        t.mockApi!.configProvider = new ConfigurationProvider({
+          attester: singlePubKeyAttesterConfig(acctEmail, somePubkey),
+        });
+        const { authHdr } = await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
+        const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`);
+        await inboxPage.waitForSelTestState('ready');
+        await inboxPage.waitAll('iframe');
+        const plainMessage = /An OpenPGP message starts with this header:\r?\n-----BEGIN PGP MESSAGE-----\r?\n\r?\nexample/s;
+        await inboxPage.waitForContent('.message.line', plainMessage);
+        // expect no pgp blocks
+        expect((await inboxPage.getFramesUrls(['pgp_render_block.htm'])).length).to.equal(0);
+        await inboxPage.close();
+        const gmailPage = await browser.newPage(t, `${t.urls?.mockGmailUrl()}/${msgId}`, undefined, authHdr);
+        await gmailPage.waitForContent('.a3s', plainMessage);
+        expect((await gmailPage.getFramesUrls(['pgp_render_block.htm'])).length).to.equal(0);
+        await gmailPage.close();
+      })
+    );
+
+    test(
       `decrypt - show remote images`,
       testWithBrowser(async (t, browser) => {
         const threadId = '186bd029856d1e39';

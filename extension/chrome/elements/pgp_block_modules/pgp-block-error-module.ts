@@ -4,7 +4,6 @@
 
 import { Browser } from '../../../js/common/browser/browser.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
-import { Lang } from '../../../js/common/lang.js';
 import { PgpBaseBlockView } from '../pgp_base_block_view.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { Xss } from '../../../js/common/platform/xss.js';
@@ -53,33 +52,5 @@ export class PgpBlockViewErrorModule {
     if (this.view.debug) {
       console.log(`[${this.debugId}] ${msg}`);
     }
-  };
-
-  public handlePrivateKeyMismatch = async (armoredPubs: string[], message: Uint8Array | string, isPwdMsg: boolean) => {
-    // todo - make it work for multiple stored keys
-    const msgDiagnosis = await BrowserMsg.send.bg.await.pgpMsgDiagnosePubkeys({ armoredPubs, message });
-    if (msgDiagnosis.found_match) {
-      await this.renderErr(Lang.pgpBlock.cantOpen + Lang.pgpBlock.encryptedCorrectlyFileBug, undefined);
-    } else if (isPwdMsg) {
-      await this.renderErr(Lang.pgpBlock.pwdMsgOnlyReadableOnWeb + this.btnHtml('ask sender to re-send', 'gray2 short reply_pubkey_mismatch'), undefined);
-    } else {
-      const startText =
-        msgDiagnosis.receivers === 1
-          ? Lang.pgpBlock.cantOpen + Lang.pgpBlock.singleSender + Lang.pgpBlock.askResend
-          : Lang.pgpBlock.yourKeyCantOpenImportIfHave;
-      await this.renderErr(
-        startText +
-          this.btnHtml('import missing key', 'gray2 settings_add_key') +
-          '&nbsp; &nbsp;' +
-          this.btnHtml('ask sender to update', 'gray2 short reply_pubkey_mismatch') +
-          '&nbsp; &nbsp;' +
-          this.btnHtml('settings', 'gray2 settings_keyserver'),
-        undefined
-      );
-    }
-  };
-
-  public btnHtml = (text: string, addClasses: string) => {
-    return `<button class="button long ${addClasses}" style="margin:30px 0;" target="cryptup">${text}</button>`;
   };
 }

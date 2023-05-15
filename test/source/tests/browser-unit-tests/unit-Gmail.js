@@ -19,33 +19,3 @@
  *    the async functions. For the rest, do not change the structure or our parser will get confused.
  *    Do not put any code whatsoever outside of the async functions.
  */
-
-BROWSER_UNIT_TEST_NAME(`Gmail.extractArmoredBlock helps detect bogus PGP message`).acct(`compatibility`);
-(async () => {
-  const gmail = new Gmail('flowcrypt.compatibility@gmail.com');
-  const extractedFull = await gmail.extractArmoredBlock('17d7a337b7b87eb9', 'full', undefined);
-  if (extractedFull.plaintext !== '-----BEGIN PGP MESSAGE-----\r\n\r\nThis is not a valid PGP message\r\n') {
-    throw Error(`extractedFull.plaintext unexpectedly equals ${extractedFull.plaintext}`);
-  }
-  const extractedRaw = await gmail.extractArmoredBlock('17d7a337b7b87eb9', 'raw', undefined);
-  if (extractedRaw.plaintext !== '-----BEGIN PGP MESSAGE-----\n\nThis is not a valid PGP message\n') {
-    throw Error(`extractedRaw.plaintext unexpectedly equals ${extractedRaw.plaintext}`);
-  }
-  return 'pass';
-})();
-
-BROWSER_UNIT_TEST_NAME(`Gmail.extractArmoredBlock detect inline bogus PGP message`).acct(`compatibility`);
-(async () => {
-  // original message - An OpenPGP message starts with this header: -----BEGIN PGP MESSAGE----- example
-  const gmail = new Gmail('flowcrypt.compatibility@gmail.com');
-  const extractedFull = await gmail.extractArmoredBlock('17fbb5f1cd2010ee', 'full', undefined);
-  if (extractedFull.plaintext !== '-----BEGIN PGP MESSAGE-----\r\n\r\nexample\r\n') {
-    throw Error(`extractedFull.plaintext unexpectedly equals ${extractedFull.plaintext}`);
-  }
-  const extractedRaw = await gmail.extractArmoredBlock('17fbb5f1cd2010ee', 'raw', undefined);
-  console.log(encodeURIComponent(extractedRaw.plaintext));
-  if (extractedRaw.plaintext !== '-----BEGIN PGP MESSAGE-----\n\nexample\n') {
-    throw Error(`extractedRaw.plaintext unexpectedly equals ${extractedRaw.plaintext}`);
-  }
-  return 'pass';
-})();

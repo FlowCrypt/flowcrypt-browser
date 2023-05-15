@@ -15,13 +15,9 @@ import { Buf } from '../../../core/buf.js';
 import { Catch } from '../../../platform/catch.js';
 import { KeyUtil } from '../../../core/crypto/key.js';
 import { Env } from '../../../browser/env.js';
-import { FormatError } from '../../../core/crypto/pgp/msg-util.js';
 import { Google } from './google.js';
 import { GoogleAuth } from './google-auth.js';
-import { Mime } from '../../../core/mime.js';
-import { PgpArmor } from '../../../core/crypto/pgp/pgp-armor.js';
 import { SendableMsg } from '../sendable-msg.js';
-import { Xss } from '../../../platform/xss.js';
 import { KeyStore } from '../../../platform/store/key-store.js';
 
 export type GmailResponseFormat = 'raw' | 'full' | 'metadata';
@@ -310,72 +306,6 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
       gmailQuery += ` -to:${email}`;
     }
     await this.apiGmailLoopThroughEmailsToCompileContacts(needles, gmailQuery, chunkedCb);
-  };
-
-  /** @deprecated should not be used by pgp_block frames
-   * Extracts the encrypted message from gmail api. Sometimes it's sent as a text, sometimes html, sometimes attachments in various forms.
-   * As MsgBlockParser detects incomplete encryptedMsg etc. and they get through, we're handling them too
-   */
-  public extractArmoredBlock = async (
-    msgId: string,
-    format: GmailResponseFormat,
-    progressCb?: ProgressCb
-  ): Promise<{ armored: string; plaintext?: string; subject?: string; isPwdMsg: boolean }> => {
-    // only track progress in this call if we are getting RAW mime,
-    // because these tend to be big, while 'full' and 'metadata' are tiny
-    // since we often do full + get attachments below, the user would see 100% after the first short request,
-    // and then again 0% when attachments start downloading, which would be confusing
-    const gmailMsg = await this.msgGet(msgId, format, format === 'raw' ? progressCb : undefined);
-    const isPwdMsg = /https:\/\/flowcrypt\.com\/[a-zA-Z0-9]{10}$/.test(gmailMsg.snippet || '');
-    const subject = gmailMsg.payload ? GmailParser.findHeader(gmailMsg.payload, 'subject') : undefined;
-    if (format === 'full') {
-      const bodies = GmailParser.findBodies(gmailMsg);
-      const attachments = GmailParser.findAttachments(gmailMsg, gmailMsg.id);
-      const textBody = Buf.fromBase64UrlStr(bodies['text/plain'] || '').toUtfStr();
-      const fromTextBody = PgpArmor.clip(textBody);
-      if (fromTextBody) {
-        return { armored: fromTextBody, subject, isPwdMsg };
-      }
-      const htmlBody = Xss.htmlSanitizeAndStripAllTags(Buf.fromBase64UrlStr(bodies['text/html'] || '').toUtfStr(), '\n');
-      const fromHtmlBody = PgpArmor.clip(htmlBody);
-      if (fromHtmlBody) {
-        return { armored: fromHtmlBody, subject, isPwdMsg };
-      }
-      for (const attachment of attachments) {
-        if (attachment.treatAs(attachments, !!textBody) === 'encryptedMsg') {
-          await this.fetchAttachments([attachment], progressCb);
-          const armoredMsg = PgpArmor.clip(attachment.getData().toUtfStr());
-          if (!armoredMsg) {
-            throw new FormatError('Problem extracting armored message', attachment.getData().toUtfStr());
-          }
-          return { armored: armoredMsg, subject, isPwdMsg };
-        }
-      }
-      const plaintext = PgpArmor.clipIncomplete(textBody) || PgpArmor.clipIncomplete(htmlBody);
-      if (plaintext) {
-        return { armored: '', plaintext, subject, isPwdMsg };
-      }
-      throw new FormatError('Armored message not found', textBody || htmlBody);
-    } else {
-      // format === raw
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      const mimeMsg = Buf.fromBase64UrlStr(gmailMsg.raw!);
-      const decoded = await Mime.decode(mimeMsg);
-      if (decoded.text !== undefined) {
-        const armoredMsg = PgpArmor.clip(decoded.text);
-        if (armoredMsg) {
-          return { armored: armoredMsg, subject, isPwdMsg };
-        }
-        // todo - the message might be in attachments
-        const plaintext = PgpArmor.clipIncomplete(decoded.text);
-        if (plaintext) {
-          return { armored: '', plaintext, subject, isPwdMsg };
-        }
-        throw new FormatError('Could not find armored message in parsed raw mime', mimeMsg.toUtfStr());
-      } else {
-        throw new FormatError('No text in parsed raw mime', mimeMsg.toUtfStr());
-      }
-    }
   };
 
   public fetchAcctAliases = async (): Promise<GmailRes.GmailAliases> => {

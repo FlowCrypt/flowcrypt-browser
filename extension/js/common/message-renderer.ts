@@ -23,7 +23,7 @@ import { PassphraseStore } from './platform/store/passphrase-store.js';
 import { Xss } from './platform/xss.js';
 import { RelayManager } from './relay-manager.js';
 import { RenderInterface, RenderInterfaceBase } from './render-interface.js';
-import { PrintMailInfo } from './render-message.js';
+import { MessageInfo, PrintMailInfo } from './render-message.js';
 import { saveFetchedPubkeysIfNewerThanInStorage } from './shared.js';
 import { XssSafeFactory } from './xss-safe-factory.js';
 import * as DOMPurify from 'dompurify';
@@ -210,6 +210,37 @@ export class MessageRenderer {
     return parsedPubs.map(key => KeyUtil.armor(key.pubkey));
   };
 
+  private static handlePrivateKeyMismatch = async (renderModule: RenderInterface, armoredPubs: string[], message: Uint8Array | string, isPwdMsg: boolean) => {
+    // todo - make it work for multiple stored keys
+    const msgDiagnosis = await MsgUtil.diagnosePubkeys({ armoredPubs, message });
+    if (msgDiagnosis.found_match) {
+      renderModule.renderErr(Lang.pgpBlock.cantOpen + Lang.pgpBlock.encryptedCorrectlyFileBug, undefined);
+    } else if (isPwdMsg) {
+      renderModule.renderErr(
+        Lang.pgpBlock.pwdMsgOnlyReadableOnWeb + MessageRenderer.btnHtml('ask sender to re-send', 'gray2 short reply_pubkey_mismatch'),
+        undefined
+      );
+    } else {
+      const startText =
+        msgDiagnosis.receivers === 1
+          ? Lang.pgpBlock.cantOpen + Lang.pgpBlock.singleSender + Lang.pgpBlock.askResend
+          : Lang.pgpBlock.yourKeyCantOpenImportIfHave;
+      renderModule.renderErr(
+        startText +
+          MessageRenderer.btnHtml('import missing key', 'gray2 settings_add_key') +
+          '&nbsp; &nbsp;' +
+          MessageRenderer.btnHtml('ask sender to update', 'gray2 short reply_pubkey_mismatch') +
+          '&nbsp; &nbsp;' +
+          MessageRenderer.btnHtml('settings', 'gray2 settings_keyserver'),
+        undefined
+      );
+    }
+  };
+
+  private static btnHtml = (text: string, addClasses: string) => {
+    return `<button class="button long ${addClasses}" style="margin:30px 0;" target="cryptup">${text}</button>`;
+  };
+
   public isOutgoing = (senderEmail: string) => {
     return !!this.sendAs[senderEmail]; // todo: remove code duplication
   };
@@ -220,7 +251,7 @@ export class MessageRenderer {
     loaderContext: LoaderContextInterface,
     attachmentSel: JQueryEl | undefined,
     msgId: string, // deprecated
-    printMailInfo: PrintMailInfo,
+    messageInfo: MessageInfo,
     senderEmail: string
   ): Promise<'shown' | 'hidden' | 'replaced'> => {
     // todo - [same name + not processed].first() ... What if attachment metas are out of order compared to how gmail shows it? And have the same name?
@@ -262,8 +293,8 @@ export class MessageRenderer {
         loaderContext.prependEncryptedAttachment(a);
         return 'replaced'; // native should be hidden, custom should appear instead
       } else if (treatAs === 'encryptedMsg') {
-        await this.setMsgBodyAndStartProcessing(loaderContext, treatAs, printMailInfo, (renderModule, frameId) =>
-          this.processEncryptedMessage(a, renderModule, frameId, senderEmail)
+        await this.setMsgBodyAndStartProcessing(loaderContext, treatAs, messageInfo.printMailInfo, (renderModule, frameId) =>
+          this.processEncryptedMessage(a, renderModule, frameId, senderEmail, messageInfo.isPwdMsgBasedOnMsgSnippet)
         );
         return 'hidden'; // native attachment should be hidden, the "attachment" goes to the message container
       } else if (treatAs === 'publicKey') {
@@ -272,7 +303,7 @@ export class MessageRenderer {
       } else if (treatAs === 'privateKey') {
         return await this.renderBackupFromFile(a, loaderContext, this.isOutgoing(senderEmail));
       } else if (treatAs === 'signature') {
-        await this.setMsgBodyAndStartProcessing(loaderContext, 'signedMsg', printMailInfo, renderModule =>
+        await this.setMsgBodyAndStartProcessing(loaderContext, 'signedMsg', messageInfo.printMailInfo, renderModule =>
           this.processSignedMessage(msgId, renderModule, senderEmail)
         );
         return 'hidden'; // native attachment should be hidden, the "attachment" goes to the message container
@@ -296,37 +327,38 @@ export class MessageRenderer {
   public processInlineBlocks = async (
     relayManager: RelayManager,
     factory: XssSafeFactory,
-    printMailInfo: PrintMailInfo,
+    messageInfo: MessageInfo,
     blocks: Dict<MsgBlock>,
     from?: string // need to unify somehow when we accept `abc <email@address>` and when just `email@address`
   ) => {
     const signerEmail = from ? Str.parseEmail(from).email : undefined;
     await Promise.all(
       Object.entries(blocks).map(([frameId, block]) =>
-        this.relayAndStartProcessing(relayManager, new LoaderContextBindNow(), factory, frameId, printMailInfo, renderModule =>
-          this.renderMsgBlock(block, renderModule, signerEmail)
+        this.relayAndStartProcessing(relayManager, new LoaderContextBindNow(), factory, frameId, messageInfo.printMailInfo, renderModule =>
+          this.renderMsgBlock(block, renderModule, signerEmail, messageInfo.isPwdMsgBasedOnMsgSnippet)
         )
       )
     );
   };
 
-  public getPrintViewInfo = async (metadata: GmailRes.GmailMsg): Promise<PrintMailInfo> => {
+  public getMessageInfo = async (fullMsg: GmailRes.GmailMsg): Promise<MessageInfo> => {
     const fullName = await AcctStore.get(this.acctEmail, ['full_name']); // todo: cache
-    const sentDate = GmailParser.findHeader(metadata, 'date');
+    const sentDate = GmailParser.findHeader(fullMsg, 'date');
     const sentDateStr = sentDate ? Str.fromDate(new Date(sentDate)).replace(' ', ' at ') : '';
-    const from = Str.parseEmail(GmailParser.findHeader(metadata, 'from') ?? '');
+    const from = Str.parseEmail(GmailParser.findHeader(fullMsg, 'from') ?? '');
     const fromHtml = from.name ? `<b>${Xss.htmlSanitize(from.name)}</b> &lt;${from.email}&gt;` : from.email;
     /* eslint-disable @typescript-eslint/no-non-null-assertion */
-    const ccString = GmailParser.findHeader(metadata, 'cc')
-      ? `Cc: <span data-test="print-cc">${Xss.escape(GmailParser.findHeader(metadata, 'cc')!)}</span><br/>`
+    const ccString = GmailParser.findHeader(fullMsg, 'cc')
+      ? `Cc: <span data-test="print-cc">${Xss.escape(GmailParser.findHeader(fullMsg, 'cc')!)}</span><br/>`
       : '';
-    const bccString = GmailParser.findHeader(metadata, 'bcc') ? `Bcc: <span>${Xss.escape(GmailParser.findHeader(metadata, 'bcc')!)}</span><br/>` : '';
+    const bccString = GmailParser.findHeader(fullMsg, 'bcc') ? `Bcc: <span>${Xss.escape(GmailParser.findHeader(fullMsg, 'bcc')!)}</span><br/>` : '';
     /* eslint-enable @typescript-eslint/no-non-null-assertion */
     return {
-      userNameAndEmail: `<b>${fullName.full_name}</b> &lt;${this.acctEmail}&gt;`,
-      html: `
+      printMailInfo: {
+        userNameAndEmail: `<b>${fullName.full_name}</b> &lt;${this.acctEmail}&gt;`,
+        html: `
       <hr>
-      <p class="subject-label" data-test="print-subject">${Xss.htmlSanitize(GmailParser.findHeader(metadata, 'subject') ?? '')}</p>
+      <p class="subject-label" data-test="print-subject">${Xss.htmlSanitize(GmailParser.findHeader(fullMsg, 'subject') ?? '')}</p>
       <hr>
       <br/>
       <div>
@@ -337,11 +369,13 @@ export class MessageRenderer {
           <span>${sentDateStr}</span>
         </div>
       </div>
-      <span data-test="print-to">To: ${Xss.escape(GmailParser.findHeader(metadata, 'to') ?? '')}</span><br/>
+      <span data-test="print-to">To: ${Xss.escape(GmailParser.findHeader(fullMsg, 'to') ?? '')}</span><br/>
       ${ccString}
       ${bccString}
       <br/><hr>
     `,
+      },
+      isPwdMsgBasedOnMsgSnippet: /https:\/\/flowcrypt\.com\/[a-zA-Z0-9]{10}$/.test(fullMsg.snippet || ''),
     };
   };
 
@@ -382,7 +416,7 @@ export class MessageRenderer {
       renderedXssSafe,
       singlePlainBlock,
       blocksInFrames,
-      printMailInfo: await this.getPrintViewInfo(fullMsg),
+      messageInfo: await this.getMessageInfo(fullMsg),
       from,
       attachments: mimeContent.attachments,
     };
@@ -519,9 +553,14 @@ export class MessageRenderer {
       .catch(Catch.reportErr);
   };
 
-  private renderMsgBlock = async (block: MsgBlock, renderModule: RenderInterface, signerEmail?: string) => {
+  private renderMsgBlock = async (
+    block: MsgBlock,
+    renderModule: RenderInterface,
+    signerEmail: string | undefined,
+    isPwdMsgBasedOnMsgSnippet: boolean | undefined
+  ) => {
     // todo: 'signedMsg' also handled here?
-    return await this.renderEncryptedMessage(block.content, renderModule, true, signerEmail);
+    return await this.renderEncryptedMessage(block.content, renderModule, true, signerEmail, isPwdMsgBasedOnMsgSnippet);
   };
 
   // todo: this should be moved to some other class?
@@ -581,7 +620,8 @@ export class MessageRenderer {
     encryptedData: string | Uint8Array,
     renderModule: RenderInterface,
     fallbackToPlainText: boolean,
-    signerEmail?: string
+    signerEmail: string | undefined,
+    isPwdMsgBasedOnMsgSnippet: boolean | undefined
   ): Promise<{ publicKeys?: string[]; needPassphrase?: string[] }> => {
     const kisWithPp = await KeyStore.getAllWithOptionalPassPhrase(this.acctEmail); // todo: cache
     const verificationPubs = signerEmail ? await MessageRenderer.getVerificationPubs(signerEmail) : [];
@@ -611,13 +651,14 @@ export class MessageRenderer {
       return { needPassphrase: result.longids.needPassphrase };
     } else {
       if (!result.longids.chosen && !(await KeyStore.get(this.acctEmail)).length) {
-        renderModule.renderErr(Lang.pgpBlock.notProperlySetUp /* + todo: this.view.errorModule.btnHtml('FlowCrypt settings', 'green settings') */, undefined);
+        renderModule.renderErr(Lang.pgpBlock.notProperlySetUp + MessageRenderer.btnHtml('FlowCrypt settings', 'green settings'), undefined);
       } else if (result.error.type === DecryptErrTypes.keyMismatch) {
-        /* todo: await this.view.errorModule.handlePrivateKeyMismatch(
+        await MessageRenderer.handlePrivateKeyMismatch(
+          renderModule,
           kisWithPp.map(ki => ki.public),
           encryptedData,
-          this.isPwdMsgBasedOnMsgSnippet === true
-        ); */
+          isPwdMsgBasedOnMsgSnippet === true
+        );
       } else if (result.error.type === DecryptErrTypes.wrongPwd || result.error.type === DecryptErrTypes.usePassword) {
         renderModule.renderErr(Lang.pgpBlock.pwdMsgAskSenderUsePubkey, undefined);
       } else if (result.error.type === DecryptErrTypes.noMdc) {
@@ -663,7 +704,13 @@ export class MessageRenderer {
     return {};
   };
 
-  private processEncryptedMessage = async (attachment: Attachment, renderModule: RenderInterface, frameId: string, senderEmail: string) => {
+  private processEncryptedMessage = async (
+    attachment: Attachment,
+    renderModule: RenderInterface,
+    frameId: string,
+    senderEmail: string,
+    isPwdMsgBasedOnMsgSnippet?: boolean
+  ) => {
     try {
       if (!attachment.hasData()) {
         // todo: common cache, load control?
@@ -678,7 +725,7 @@ export class MessageRenderer {
         throw new FormatError('Problem extracting armored message', attachment.getData().toUtfStr());
       }
       renderModule.renderText('Decrypting...');
-      return await this.renderEncryptedMessage(armoredMsg, renderModule, false, senderEmail);
+      return await this.renderEncryptedMessage(armoredMsg, renderModule, false, senderEmail, isPwdMsgBasedOnMsgSnippet);
     } catch {
       // todo: render error via renderModule
     }

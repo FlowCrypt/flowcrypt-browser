@@ -9,6 +9,11 @@ export type PrintMailInfo = {
   html: string;
 };
 
+export type MessageInfo = {
+  printMailInfo: PrintMailInfo;
+  isPwdMsgBasedOnMsgSnippet?: boolean;
+};
+
 export type RenderMessage = {
   setTestState?: 'ready' | 'working' | 'waiting';
   resizePgpBlockFrame?: true;

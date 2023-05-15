@@ -6,15 +6,15 @@ import { GmailRes } from './api/email-provider/gmail/gmail-parser';
 import { Gmail } from './api/email-provider/gmail/gmail.js';
 import { Attachment } from './core/attachment.js';
 import { Buf } from './core/buf.js';
-import { Dict } from './core/common';
-import { MsgBlock } from './core/msg-block';
-import { PrintMailInfo } from './render-message';
+import { Dict } from './core/common.js';
+import { MsgBlock } from './core/msg-block.js';
+import { MessageInfo } from './render-message.js';
 
 export type ProcessedMessage = {
   renderedXssSafe?: string;
   blocksInFrames: Dict<MsgBlock>;
   attachments: Attachment[];
-  printMailInfo: PrintMailInfo;
+  messageInfo: MessageInfo;
   singlePlainBlock?: MsgBlock;
   from?: string;
 };

@@ -24,7 +24,7 @@ import { SendAsAlias } from '../../common/platform/store/acct-store.js';
 import { ContactStore } from '../../common/platform/store/contact-store.js';
 import { MessageRenderer } from '../../common/message-renderer.js';
 import { RelayManager } from '../../common/relay-manager.js';
-import { PrintMailInfo } from '../../common/render-message.js';
+import { MessageInfo } from '../../common/render-message.js';
 import { LoaderContextWebmail } from './loader-context.js';
 import { JQueryEl } from '../../common/loader-context-interface.js';
 import { Mime } from '../../common/core/mime.js';
@@ -166,7 +166,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
         console.debug('replaceArmoredBlocks() for of emailsContainingPgpBlock -> emailContainer added evaluated');
       }
       const msgId = this.determineMsgId(emailContainer);
-      const { renderedXssSafe, blocksInFrames, printMailInfo, from } = await this.messageRenderer.msgGetProcessed(msgId);
+      const { renderedXssSafe, blocksInFrames, messageInfo, from } = await this.messageRenderer.msgGetProcessed(msgId);
       if (renderedXssSafe) {
         $(this.sel.translatePrompt).hide();
         if (this.debug) {
@@ -178,7 +178,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
         }
         const senderEmail = this.getSenderEmail(this.getMsgBodyEl(msgId)) || from;
         // todo: const isOutgoing = !!this.sendAs[senderEmail];
-        this.messageRenderer.processInlineBlocks(this.relayManager, this.factory, printMailInfo, blocksInFrames, senderEmail).catch(Catch.reportErr);
+        this.messageRenderer.processInlineBlocks(this.relayManager, this.factory, messageInfo, blocksInFrames, senderEmail).catch(Catch.reportErr);
       }
     }
   };
@@ -380,11 +380,11 @@ export class GmailElementReplacer implements WebmailElementReplacer {
           if (this.debug) {
             console.debug('processNewPgpAttachments() -> msgGet may take some time');
           }
-          const { attachments, printMailInfo } = await this.messageRenderer.msgGetProcessed(msgId);
+          const { attachments, messageInfo } = await this.messageRenderer.msgGetProcessed(msgId);
           if (this.debug) {
             console.debug('processNewPgpAttachments() -> msgGet done -> processAttachments', attachments);
           }
-          await this.processAttachments(msgId, attachments, attachmentsContainer, printMailInfo, false);
+          await this.processAttachments(msgId, attachments, attachmentsContainer, messageInfo, false);
         } catch (e) {
           if (ApiErr.isAuthErr(e)) {
             this.notifications.showAuthPopupNeeded(this.acctEmail);
@@ -408,7 +408,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     msgId: string,
     attachmentMetas: Attachment[], // todo: these are not Metas!
     attachmentsContainerInner: JQueryEl,
-    printMailInfo: PrintMailInfo,
+    messageInfo: MessageInfo,
     skipGoogleDrive: boolean
   ) => {
     if (this.debug) {
@@ -432,7 +432,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
         loaderContext,
         attachmentSel,
         msgId,
-        printMailInfo,
+        messageInfo,
         senderEmail
       );
       if (['hidden', 'tomessage'].includes(renderStatus)) {
@@ -453,11 +453,11 @@ export class GmailElementReplacer implements WebmailElementReplacer {
       attachmentsContainerInner.parents(this.sel.attachmentsContainerOuter).first().hide();
     }
     if (!skipGoogleDrive) {
-      await this.processGoogleDriveAttachments(msgId, loaderContext.msgEl, attachmentsContainerInner, printMailInfo);
+      await this.processGoogleDriveAttachments(msgId, loaderContext.msgEl, attachmentsContainerInner, messageInfo);
     }
   };
 
-  private processGoogleDriveAttachments = async (msgId: string, msgEl: JQueryEl, attachmentsContainerInner: JQueryEl, printMailInfo: PrintMailInfo) => {
+  private processGoogleDriveAttachments = async (msgId: string, msgEl: JQueryEl, attachmentsContainerInner: JQueryEl, messageInfo: MessageInfo) => {
     const notProcessedAttachmentsLoaders = attachmentsContainerInner.find('.attachment_loader');
     if (notProcessedAttachmentsLoaders.length && msgEl.find('.gmail_drive_chip, a[href^="https://drive.google.com/file"]').length) {
       // replace google drive attachments - they do not get returned by Gmail API thus did not get replaced above
@@ -480,7 +480,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
           console.info('Missing Google Drive attachments download_url');
         }
       }
-      await this.processAttachments(msgId, googleDriveAttachments, attachmentsContainerInner, printMailInfo, true);
+      await this.processAttachments(msgId, googleDriveAttachments, attachmentsContainerInner, messageInfo, true);
     }
   };
 

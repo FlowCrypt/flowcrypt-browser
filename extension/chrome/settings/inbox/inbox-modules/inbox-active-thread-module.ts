@@ -152,11 +152,11 @@ export class InboxActiveThreadModule extends ViewModule<InboxView> {
       const msg = await this.view.messageRenderer.downloader.msgGetCached(message.id).download.full;
       const mimeContent = MessageRenderer.reconstructMimeContent(msg);
       const blocks = Mime.processBody(mimeContent);
-      const printInfoHtml = await this.view.messageRenderer.getPrintViewInfo(msg);
+      const printInfoHtml = await this.view.messageRenderer.getMessageInfo(msg);
       // todo: review the meaning of threadHasPgpBlock
       this.threadHasPgpBlock ||= blocks.some(block => ['encryptedMsg', 'publicKey', 'privateKey', 'signedMsg'].includes(block.type));
       // todo: take `from` from the processedMessage?
-      const { renderedXssSafe, singlePlainBlock, blocksInFrames, printMailInfo, from } = await this.view.messageRenderer.msgGetProcessed(message.id);
+      const { renderedXssSafe, singlePlainBlock, blocksInFrames, messageInfo, from } = await this.view.messageRenderer.msgGetProcessed(message.id);
       const senderEmail = from || 'unknown';
       const exportBtn = this.debugEmails.includes(this.view.acctEmail) ? '<a href="#" class="action-export">download api export</a>' : '';
       const loaderContext = new LoaderContext(
@@ -167,6 +167,7 @@ export class InboxActiveThreadModule extends ViewModule<InboxView> {
           .concat(singlePlainBlock ? [singlePlainBlock] : [])
           .map(block => XssSafeFactory.renderableMsgBlock(this.view.factory, block, message.id, senderEmail, this.view.messageRenderer.isOutgoing(senderEmail)))
       );
+      // todo: test else if (this.view.showOriginal) {      r += Xss.escape(Str.with(block.content)).replace(/\n/g, '<br>');}
       for (const a of mimeContent.attachments) {
         await this.view.messageRenderer.processAttachment(
           a,
@@ -174,7 +175,7 @@ export class InboxActiveThreadModule extends ViewModule<InboxView> {
           loaderContext,
           undefined,
           message.id,
-          printMailInfo,
+          messageInfo,
           senderEmail
         );
       }
