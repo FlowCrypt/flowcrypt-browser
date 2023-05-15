@@ -8,12 +8,11 @@ import { AjaxErr } from '../api/shared/api-error.js';
 import { Buf } from '../core/buf.js';
 import { Dict, Str, UrlParams } from '../core/common.js';
 import { ArmoredKeyIdentityWithEmails, KeyUtil } from '../core/crypto/key.js';
-import { DecryptResult, MsgUtil, PgpMsgMethod, VerifyRes } from '../core/crypto/pgp/msg-util.js';
+import { DecryptResult, MsgUtil, PgpMsgMethod } from '../core/crypto/pgp/msg-util.js';
 import { NotificationGroupType } from '../notifications.js';
 import { Catch } from '../platform/catch.js';
 import { AccountIndex, AcctStoreDict } from '../platform/store/acct-store.js';
 import { GlobalIndex, GlobalStoreDict } from '../platform/store/global-store.js';
-import { saveFetchedPubkeysIfNewerThanInStorage } from '../shared.js';
 import { PassphraseDialogType } from '../xss-safe-factory.js';
 import { BrowserMsgCommonHandlers } from './browser-msg-common-handlers.js';
 import { Browser } from './browser.js';
@@ -76,7 +75,6 @@ export namespace Bm {
   export type StoreAcctSet = { acctEmail: string; values: AcctStoreDict };
   export type ReconnectAcctAuthPopup = { acctEmail: string; scopes?: string[] };
   export type PgpMsgDecrypt = PgpMsgMethod.Arg.Decrypt;
-  export type PgpMsgVerifyDetached = PgpMsgMethod.Arg.VerifyDetached;
   export type PgpKeyBinaryToArmored = { binaryKeysData: Uint8Array };
   export type Ajax = { req: JQuery.AjaxSettings<ApiCallContext>; stack: string };
   export type AjaxProgress = { frameId: string; percent?: number; loaded: number; total: number };
@@ -84,7 +82,6 @@ export namespace Bm {
   export type ShowAttachmentPreview = { iframeUrl: string };
   export type ShowConfirmation = { text: string; isHTML: boolean; footer?: string };
   export type ReRenderRecipient = { email: string };
-  export type SaveFetchedPubkeys = { email: string; pubkeys: string[] };
   export type ShowConfirmationResult = { isConfirmed: boolean };
 
   export namespace Res {
@@ -101,11 +98,9 @@ export namespace Bm {
     export type StoreAcctSet = void;
     export type ReconnectAcctAuthPopup = AuthRes;
     export type PgpMsgDecrypt = DecryptResult;
-    export type PgpMsgVerify = VerifyRes;
     export type PgpKeyBinaryToArmored = { keys: ArmoredKeyIdentityWithEmails[] };
     export type AjaxGmailAttachmentGetChunk = { chunk: Buf };
     export type _tab_ = { tabId: string | null | undefined }; // eslint-disable-line @typescript-eslint/naming-convention
-    export type SaveFetchedPubkeys = boolean;
     export type ShowConfirmationResult = boolean;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     export type Db = any; // not included in Any below
@@ -117,7 +112,6 @@ export namespace Bm {
       | _tab_
       | ReconnectAcctAuthPopup
       | PgpMsgDecrypt
-      | PgpMsgVerify
       | InMemoryStoreGet
       | InMemoryStoreSet
       | StoreAcctGet
@@ -125,7 +119,6 @@ export namespace Bm {
       | StoreGlobalGet
       | StoreGlobalSet
       | AjaxGmailAttachmentGetChunk
-      | SaveFetchedPubkeys
       | PgpKeyBinaryToArmored;
   }
 
@@ -159,12 +152,10 @@ export namespace Bm {
     | StoreAcctGet
     | StoreAcctSet
     | PgpMsgDecrypt
-    | PgpMsgVerifyDetached
     | Ajax
     | ShowAttachmentPreview
     | ShowConfirmation
     | ReRenderRecipient
-    | SaveFetchedPubkeys
     | PgpKeyBinaryToArmored
     | AuthWindowResult
     | ConfirmationResult;
@@ -223,12 +214,8 @@ export class BrowserMsg {
         ajaxGmailAttachmentGetChunk: (bm: Bm.AjaxGmailAttachmentGetChunk) =>
           BrowserMsg.sendAwait(undefined, 'ajaxGmailAttachmentGetChunk', bm, true) as Promise<Bm.Res.AjaxGmailAttachmentGetChunk>,
         pgpMsgDecrypt: (bm: Bm.PgpMsgDecrypt) => BrowserMsg.sendAwait(undefined, 'pgpMsgDecrypt', bm, true) as Promise<Bm.Res.PgpMsgDecrypt>,
-        pgpMsgVerifyDetached: (bm: Bm.PgpMsgVerifyDetached) =>
-          BrowserMsg.sendAwait(undefined, 'pgpMsgVerifyDetached', bm, true) as Promise<Bm.Res.PgpMsgVerify>,
         pgpKeyBinaryToArmored: (bm: Bm.PgpKeyBinaryToArmored) =>
           BrowserMsg.sendAwait(undefined, 'pgpKeyBinaryToArmored', bm, true) as Promise<Bm.Res.PgpKeyBinaryToArmored>,
-        saveFetchedPubkeys: (bm: Bm.SaveFetchedPubkeys) =>
-          BrowserMsg.sendAwait(undefined, 'saveFetchedPubkeys', bm, true) as Promise<Bm.Res.SaveFetchedPubkeys>,
       },
     },
     confirmationResult: (dest: Bm.Dest, bm: Bm.ConfirmationResult) => BrowserMsg.sendCatch(dest, 'confirmation_result', bm),
@@ -327,8 +314,6 @@ export class BrowserMsg {
 
   public static addPgpListeners = () => {
     BrowserMsg.bgAddListener('pgpMsgDecrypt', MsgUtil.decryptMessage);
-    BrowserMsg.bgAddListener('pgpMsgVerifyDetached', MsgUtil.verifyDetached);
-    BrowserMsg.bgAddListener('saveFetchedPubkeys', saveFetchedPubkeysIfNewerThanInStorage);
     BrowserMsg.bgAddListener('pgpKeyBinaryToArmored', async (r: Bm.PgpKeyBinaryToArmored) => ({
       keys: await KeyUtil.parseAndArmorKeys(r.binaryKeysData),
     }));
