@@ -39,13 +39,9 @@ export class Google {
     contentType = contentType || 'application/json; charset=UTF-8';
     // eslint-disable-next-line @typescript-eslint/naming-convention
     const headers = { Authorization: await GoogleAuth.googleApiAuthHeader(acctEmail) };
-    let context: ProgressDestFrame | undefined;
-    let xhr: (() => XMLHttpRequest) | undefined;
-    if ('frameId' in progress) {
-      context = progress;
-    } else {
-      xhr = Api.getAjaxProgressXhrFactory(progress);
-    }
+    const context =
+      'frameId' in progress ? { frameId: progress.frameId, expectedTransferSize: progress.expectedTransferSize, tabId: progress.tabId } : undefined;
+    const xhr = Api.getAjaxProgressXhrFactory('download' in progress || 'upload' in progress ? progress : {});
     const request = { xhr, context, url, method, data, headers, crossDomain: true, contentType, async: true };
     return (await GoogleAuth.apiGoogleCallRetryAuthErrorOneTime(acctEmail, request)) as RT;
   };

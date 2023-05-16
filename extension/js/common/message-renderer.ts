@@ -713,8 +713,14 @@ export class MessageRenderer {
     try {
       if (!attachment.hasData()) {
         // todo: common cache, load control?
-        renderModule.renderText('Retrieving message...');
-        await this.gmail.fetchAttachment(attachment, frameId);
+        this.relayManager.renderProgressText(frameId, 'Retrieving message...');
+        await this.gmail.fetchAttachment(attachment, expectedTransferSize => {
+          return {
+            frameId,
+            expectedTransferSize,
+            download: (percent, loaded, total) => this.relayManager.renderProgress({ frameId, percent, loaded, total, expectedTransferSize }), // shortcut
+          };
+        });
       }
       // todo: probaby subject isn't relevant in attachment-based decryption?
       // const subject = gmailMsg.payload ? GmailParser.findHeader(gmailMsg.payload, 'subject') : undefined;

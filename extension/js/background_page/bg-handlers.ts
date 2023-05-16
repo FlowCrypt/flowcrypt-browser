@@ -44,9 +44,9 @@ export class BgHandlers {
       if (typeof dest !== 'undefined') {
         const destination = dest;
         const frameId = r.req.context.frameId;
-        const fallbackTotal = r.req.context.total;
+        const expectedTransferSize = r.req.context.expectedTransferSize;
         r.req.xhr = Api.getAjaxProgressXhrFactory({
-          download: (percent, loaded, total) => BrowserMsg.send.ajaxProgress(destination, { percent, loaded, total: total || fallbackTotal, frameId }),
+          download: (percent, loaded, total) => BrowserMsg.send.ajaxProgress(destination, { percent, loaded, total, expectedTransferSize, frameId }),
         });
       }
     }

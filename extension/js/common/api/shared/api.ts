@@ -25,7 +25,7 @@ type RawAjaxErr = {
   status?: number;
   statusText?: string;
 };
-export type ProgressDestFrame = { frameId: string; total: number; tabId?: string };
+export type ProgressDestFrame = { frameId: string; expectedTransferSize: number; tabId?: string };
 export type ApiCallContext = ProgressDestFrame | undefined;
 
 export type ChunkedCb = (r: ProviderContactsResults) => Promise<void>;
@@ -106,8 +106,8 @@ export class Api {
     }
   };
 
-  public static getAjaxProgressXhrFactory = (progressCbs?: ProgressCbs): (() => XMLHttpRequest) | undefined => {
-    if (Env.isContentScript() || !progressCbs || !Object.keys(progressCbs).length) {
+  public static getAjaxProgressXhrFactory = (progressCbs: ProgressCbs | undefined): (() => XMLHttpRequest) | undefined => {
+    if (Env.isContentScript() || !progressCbs || !(progressCbs.upload || progressCbs.download)) {
       // xhr object would cause 'The object could not be cloned.' lastError during BrowserMsg passing
       // thus no progress callbacks in bg or content scripts
       // additionally no need to create this if there are no progressCbs defined

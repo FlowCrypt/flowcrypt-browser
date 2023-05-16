@@ -657,18 +657,17 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
           attester: singlePubKeyAttesterConfig(acctEmail, somePubkey),
         });
         const { authHdr } = await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
-        await BrowserRecipe.pgpBlockVerifyDecryptedContent(
-          t,
-          browser,
-          '1622ea42f3654ddc',
-          {
-            content: ['This will will have a larger attachment below', 'image-large.jpg'],
-            encryption: 'encrypted',
-            signature: 'not signed',
-            expectPercentageProgress: true,
-          },
-          authHdr
-        );
+        const msgId = '1622ea42f3654ddc';
+        const expectedMessage = {
+          content: ['This will will have a larger attachment below', 'image-large.jpg'],
+          encryption: 'encrypted',
+          signature: 'not signed',
+          expectPercentageProgress: true,
+        };
+        const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${msgId}`);
+        await BrowserRecipe.pgpBlockCheck(t, await inboxPage.getFrame(['pgp_render_block.htm']), expectedMessage);
+        await inboxPage.close();
+        await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, msgId, expectedMessage, authHdr);
       })
     );
 

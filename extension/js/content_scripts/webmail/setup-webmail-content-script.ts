@@ -25,7 +25,6 @@ import { GlobalStore } from '../../common/platform/store/global-store.js';
 import { InMemoryStore } from '../../common/platform/store/in-memory-store.js';
 import { WebmailVariantString, XssSafeFactory } from '../../common/xss-safe-factory.js';
 import { RelayManager } from '../../common/relay-manager.js';
-import { RelayManagerInterface } from '../../common/relay-manager-interface.js';
 
 export type WebmailVariantObject = {
   newDataLayer: undefined | boolean;
@@ -155,7 +154,7 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
     inject: Injector,
     factory: XssSafeFactory,
     notifications: Notifications,
-    relayManager: RelayManagerInterface,
+    relayManager: RelayManager,
     ppEvent: { entered?: boolean }
   ) => {
     BrowserMsg.addListener('set_active_window', async ({ frameId }: Bm.ComposeWindow) => {
@@ -235,12 +234,8 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
     BrowserMsg.addListener('show_attachment_preview', async ({ iframeUrl }: Bm.ShowAttachmentPreview) => {
       await Ui.modal.attachmentPreview(iframeUrl);
     });
-    BrowserMsg.addListener('ajax_progress', async ({ frameId, percent, loaded, total }: Bm.AjaxProgress) => {
-      const perc = percent ?? (total > 0 ? Math.round((loaded / total) * 100) : undefined);
-      if (typeof perc !== 'undefined') {
-        // todo: ignore messages after something else is rendered
-        relayManager.relay(frameId, { renderText: `Retrieving message... ${perc}%` }, true);
-      }
+    BrowserMsg.addListener('ajax_progress', async (progress: Bm.AjaxProgress) => {
+      relayManager.renderProgress(progress);
     });
     BrowserMsg.listen(tabId);
   };
