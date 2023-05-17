@@ -289,6 +289,27 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       })
     );
     test(
+      'settings - import public key which contains null users',
+      testWithBrowser(async (t, browser) => {
+        const acct = 'ci.tests.gmail@flowcrypt.test';
+        t.mockApi!.configProvider = new ConfigurationProvider({
+          attester: singlePubKeyAttesterConfig(acct, somePubkey),
+        });
+        await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
+        const settingsPage = await browser.newExtensionSettingsPage(t, acct);
+        await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
+        const contactsFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-contacts-page', ['contacts.htm', 'placement=settings']);
+        await contactsFrame.waitAll('@page-contacts');
+        await contactsFrame.waitAndClick('@action-show-import-public-keys-form', { confirmGone: true });
+        await contactsFrame.waitAndType('@input-bulk-public-keys', testConstants.nullUserPubKey);
+        await contactsFrame.waitAndClick('@action-show-parsed-public-keys', { confirmGone: true });
+        await contactsFrame.waitAll('iframe');
+        const pubkeyFrame = await contactsFrame.getFrame(['pgp_pubkey.htm']);
+        await pubkeyFrame.waitForInputValue('@input-email', 'demo@example.com');
+        await pubkeyFrame.waitForContent('@action-add-contact', 'IMPORT KEY');
+      })
+    );
+    test(
       'settings - import revoked key fails but the revocation info is saved',
       testWithBrowser(async (t, browser) => {
         const acct = 'ci.tests.gmail@flowcrypt.test';
