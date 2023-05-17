@@ -297,7 +297,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
         );
       })
     );
-    /*
+
     test(
       `decrypt - [enigmail] encrypted iso-2022-jp pgp/mime`,
       testWithBrowser(async (t, browser) => {
@@ -305,14 +305,18 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
         t.mockApi!.configProvider = new ConfigurationProvider({
           attester: singlePubKeyAttesterConfig(acctEmail, somePubkey),
         });
-        await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
-        await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
-          content: ['ゾし逸現飲'],
-          encryption: 'encrypted',
-          signature: 'not signed',
-          params:
-            '?frameId=none&message=-----BEGIN%20PGP%20MESSAGE-----%0A%0AhQIMA0taL%2FzmLZUBAQ%2F%2BJgpmkgscJEB9uAiFT6TbeZsBqD%2FrRDInab9OevrRBWOZ%0AwQ7UxS4OkM8M1joflEgtP1ZjNkCCuOG5RXR3JZFkUeQbvtMc4mpx%2BOOjYbwHwNNE%0A05wbcIHn380axNPWMYqe8%2FiCK9wFWhMDwtpDfJ0PzLKAhnjFhymMWjmXB2avejaS%0AiaKQRelmUiNt5Tk6FAu8UnOAbr7%2BuLvFBzzjyELL3pGzDBLkawhUT2QZ2nqrC1Ns%0AJ8HEXnl0TBI5T9rlK5i6YQi2i26SWk8QkM0ov5OWVK1qISf15VHeP5uLXch3MfHu%0AEfQEubo378Jbka9QMo1%2FE%2F8ublGQReMpsvbrWto9HqfPSXUGe3hUQcIRi3nKuQBx%0AnbMWonnNE7UEhBFytLL2w%2BMmBDlkePa7zDngOjQwLpYNVvrxJnCjk6Skcrn%2Bx20D%0AYkGziEubqhquMRLxJht4UTLuRSLI8j1NtIRZ5Q9Bi%2B1krSJz527cbq%2FIFBU%2BEmNV%0AfCcR1nYbF5%2FhyTwB7aZQyxCVlRWKlYfwv4%2B7q9cj5wCBuLCY7ZKucEbzodehRcEt%0A4C8Txg2KkD7%2F8%2BTt60KcqjvyDtQkQYNSaubugsG2BAmJpYRU6KFVGDlpNe6gGEQI%0AhnVQq5UaZ9z0DcevE25Xr7fg2mLN7yHRRSauvOGlMnP98d3gDluQlbvAzk5qOMqF%0AAgwDqn0MG9%2BUHywBD%2FsHF58ogxK3kAbITjA453U15KkR4bAqcH343mPfjPOPTyAb%0A3IMoYbQV9SbHuptav6t9rhtrGEkNVunLQLrGYNbwrQx253yqgN%2BdRYD8mn101yJM%0AFcN3R6PDCxAL4hW0cXjSspaqe1mx8U7pz%2BLn1DrC4X8O9HHgMrPvUl18Uc14fAkw%0AZm%2Bwk5vzVYxHp8WsQXb9xpe1imlew7jPuHZkNSA4k6YDoGn%2FwpN3mEOKE3BYq6Ro%0AhnTaapIe%2BJIzsa%2FH0HXKcD0ztFeRUEyyjd%2BdE3vdJYehZrEQIjsM0ocqbn5tcf1W%0A9DP0OXGylTfNbBMT6PQ4N5gfyQDext9Z3QOT0c3HcmUYHJd865jR5nXHGzsGW%2BUr%0Ad0Z6AaCsSCP8WPUNixLzgCdB7EQ6Z5PB4etj9%2BFmKYvEbFiaOr9hrY48ny%2BiOJjq%0As0dudhgZkE8XpA9jcJaGnM4UZdFnssiTydlqaFWYwjVk8d4CsjrsTx%2BJNRWOSVHy%0A9WBbUFQc1eH01rv1sfL467Eyzhh92SCfHooHN9lLtF2mDh43ZQu0ReW8aBd7RzHc%0AKJC8E0wcslzLqfF%2Bx7rh0Vt54Y3i0PS9H9RDWATssCx0V3ySwbnxqme6zIa5qKUN%0AkbSqkucmzZKnaksb46S0zJyOB%2BQV%2F8ntYErmLsX1pGFvPFBm0%2BGQ%2FyQgpUiJhtLp%0AAW8jKCFMyQBHhBKyG0k8Dn9f5mO8rE0xG982m%2BnGwlMKJunn%2Biiyz561V%2F2ebb5e%0ARPCj12RUAIzKicPqRaPCaXhEyD30y1rDCHO7vpCB1CgnbVfRcPvTOOuUlGlrMYWa%0AZlAyrc5RkAiSCLUJab9ZTf%2F%2FT34dmP1p0bmIN3Mnwu3XsbEdZnoQxqPSl0UyfqiL%0A4e5uGe2Za%2FrxykM9CuG0f8vtFWsoNhJkTugdZjfKUZdnyfdsmZhNbKlJcuB7prvb%0A0Gl0%2F3fNns6qv%2B%2BR%2FEGNHbZhSxw%2FqZXGBwGa0Y7hwwsA1Q6ObXgnZA1TDqFUhFk6%0A%2FcDa8FlRD1jj9rKyeuwwLryRy%2FLhoq1LL%2FWV%2BOiUB%2F%2FSldGaHkqXv9%2BCJNhmNwEU%0AiC5mZYyhGGbsVcBxuQigilyMpDQJJfcUiqfN8KL%2BN8ICpnuPGgaMQ97SLeHq2Mmm%0AehcEZwVQZGlCnQJNKmhbqqxJB7WmdBRKTDiBxE5qz5r3grB%2F5v%2BMbyM6G6MyAnkP%0AA%2FUKX0QUZsPDR41XVWhZPTDo%2F%2FZ6aIKJwlgB3E9vak2JkD4%2FpdgzyAM28HOTUyJ%2F%0ASfBVLd%2B%2FjxHIVlm1IaLUAzvJjG0NFlXvD7Pkzs5pXmUf%2F%2FbTdFXNA3uh7VBSGQMl%0AkaeyuemQwiW2Ray4tYbUq%2FFCzl%2B8862JBY98w38natrA%2B%2BWMLHIox0rhMIG%2FvoyK%0AU1%2B2KKgED414MsC309jn%2BP6WCZGKt34BXSfDp%2FRbgwP3X0QIxSYOxtmX8fjKlVPR%0A9FPmkwFvIYsE14MSB16y2vxSEt8JFKoGhXRuVxlGoYuuZrpERfhynnkwSLkw0zln%0AMNUUihw9AePivi6H0qy%2B7DpUy%2B41CW8nxkx%2FdePcdbAq84Y71FyfM7gbLu04EPZ0%0AhTzzgSLDSWvLc7vWRGbqI1erQhfadQwiUzMd0YAyImWmnm003dxfRNNC0oCYDE8V%0A3QGFqOmr4AqcbMGIWBGiP0LajmehJEv%2B8GkIkuDwQRtkgaAkHwDMigujFtraqGEn%0AmduYmYBW88YDsXD9Jv24d4Pt2Ce7P4lc4DEAU3vqUMZFdIwHanjKSNr8O6aXXd0e%0AwrFjc71tUTNGF0suNi%2B74ol0rlS1seQNiijulEW53ngK8z5brNSd1N56H%2FwcYx81%0AqSyeqnGYHphNbpwhBTqHkURBlwygxI2%2BCuMSR96j49ko9AZZHYl6DBAqHLKYWHGi%0AvqvpG%2F%2B%2BFFy0AMSxjs%2F%2FCe5lTS3y3skfneaZ9sgH7o%2BUXCJ7Op%2BmtLdHGjn6%0A%3DGAOS%0A-----END%20PGP%20MESSAGE-----&msgId=16f66f1da9d50d05&senderEmail=michael%20<censored%40email.com>&isOutgoing=___cu_false___&acctEmail=flowcrypt.compatibility%40gmail.com',
-        });
+        const { authHdr } = await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
+        await BrowserRecipe.pgpBlockVerifyDecryptedContent(
+          t,
+          browser,
+          '16f66f1da9d50d05',
+          {
+            content: ['ゾし逸現飲'],
+            encryption: 'encrypted',
+            signature: 'not signed',
+          },
+          authHdr
+        );
       })
     );
 
@@ -323,17 +327,21 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
         t.mockApi!.configProvider = new ConfigurationProvider({
           attester: singlePubKeyAttesterConfig(acctEmail, somePubkey),
         });
-        await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
-        await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
-          content: ['ゾし逸現飲'],
-          encryption: 'encrypted',
-          signature: 'not signed',
-          params:
-            '?frameId=none&message=-----BEGIN%20PGP%20MESSAGE-----%0A%0AhQIMA0taL%2FzmLZUBAQ%2F%2FembFGVPRuVfiUujhLesQa6a4sbp%2FPOQcAsy%2B%2BO6tD%2FVA%0AwrQtPhJeniYVFeOs%2B37MWy1PkOUn6AAvgasHtlMCVnthxavG1onImCJWyC0NdgYn%0AhrIN9aPmOY7UGhVzpU%2FGTxE1WHJHGMMGShmKbt%2BJThtAvmufuDK1DSho3kcjGEs9%0AwpY0DU0%2B9I7xEmobgQqK4jyzLBLNx4aHl2qurKSmjghmk1ZMW4oluckrDmmQ3AWT%0AZ%2Fq7bnbP1GDNJV8cxR7ed4k6HCzkrX%2BBxL308E8soLtg87occ18QoJAIRAHU0kx5%0AJlS9%2Bfh%2FjNwKanZJjCWv6hqZKz9iUocRZD9iPqh9dhjsKalqkRaxuPM2eJkZY%2B91%0AjG8tsHYTLeY33A4aUpdA6FpNR8Uyz8Agv%2Bx8%2FaFp8GxSNIuUumf6bSIk2Oudt%2Fa6%0ArWvZO%2BM%2BUK53a4k4ibxrkv4zsE8CbijjCP8BvUrA37023GEWkOHIyMoFFy0o06W1%0A56wTP2bLmKbujeES%2Bdkzjrr1r9X6oDBwpoPABKSAjIKFQKcxWvhMgz4WO3w61g3F%0AE8U0Rlx4lB4Ce1I0qzu8S4hkaZ7sYcKJ%2F211pzsaf0BfxZQdrfyu5kse275YgTUA%0AbObnoW2sAWg8fX9JwuL9JVArnJ%2B6AOQjvNG9fr%2FuM4thV%2FzwqBUWfQ0sasDjjxSF%0AAgwDqn0MG9%2BUHywBD%2F9bMrHNk%2FqirxpfIRa9vZcZssXv7A61XUZy2IVum9%2Bp9c4W%0Aswd23kQOfC%2F82Fx75CwMQ%2BzzdP7%2B5tqeNfm3%2F4vfObLCmszf1%2B%2Bj3nVxEEX8sWpC%0AmgHobD3uZPwgShvgcy6ZHkfz%2BBrxqqTJIZ6xD03VgzmNg2cuAHD1YVUKbTHGYcKM%0ACY0b%2B1VG6lv4f78xiB0v8aw%2FaPTvtx0rY2g0YZHaE0JXT59cMNTMORNiE8h8guLB%0Alf6hcwctRN%2BsJw5oW%2FsaXpgFJSzVbQrwp0a1b6Ftzqv%2BqyJL2%2Byay83RaPX%2BR7LR%0AJy9jPrwBbzwCVbJBBSfeQ0zXkeNAOso83rE13UjxPsl%2BkU0ajxy55K%2FP%2FcLO6KKs%0AKtFN7UGo2jGelpqDoGU5FwOoGeEaYW%2BInrZryyV%2FA2bjw6Zmfbh0GMzls25fK%2F9O%0AOJp%2FD0yqEmnkU60O6eDwwwxY7VNqmtuOTZ4z8PIaV9LWuftVOeOG99%2B9g6280CKF%0AYYHAxgb559v70V50bk%2BZ91rdA1SnxSq9wOkUu2K1BmkTdqEO5jxWf04MGrvROZUA%0AdIKQ%2BPYibnRo%2BSObBUn4Otlfhel1tJ9wWWjJLpGJ1Zm3FaoCVH%2FMnnvhF48Q5JNR%0ASDnqTg4wWd51Tokcnz2PoPrxRN3jacI4d0GZiAtsmB28mcKjdB5UYoXEy2MazNLA%0AyAHzCHRtOJ7eOcStwltwnbh67%2FRCK9OCegaiSOMAcsEciVXUpT%2BhVl8oMl6IvJDk%0AFq1CwOL8t3Oj3W2igPkm2EejHl1dkz2JXPHjfHqt24tTtWRa3xuotoSvMAy%2BtfKT%0ACwg67nQan%2F13hl3eF0XXLCD%2B%2BaotGSahUePsgZU79oedY2vmcofUf743sZ%2FN6aMP%0AgELzwyLm7LzcFLjeokhNUDYpBgrH5%2BFcFZqpiTQhILONSvenncP4k3FDjC87DG5J%0AyIckBN1KeU219vaYHEkmSmU3egfEYRMw2HznFAaiMEAnDoGs0ZTqNOx75ktZLpfS%0A779APSTDmS%2FhsXXo7D8%2FmyYWO5RMxFzGL7SIcXkosqa%2BTS3FJ5198epH0xLNrDhM%0A1lMO2ZU5qb2TNA%2BWvSviiwWsZ%2Byj6kD1rzrvEg%2B%2Bq1b67s3oogP08wwHcfX%2BUiND%0AvdGeVd2YFPX0kszhtfJDEYAkJ8ERe5RKQqeNXdk8XMYq2irp3AVBTBDkgTgMDPSU%0ACI3g89S3eldT%0A%3DP4O8%0A-----END%20PGP%20MESSAGE-----&msgId=16f431a0b9056562&senderEmail=&isOutgoing=___cu_false___&acctEmail=flowcrypt.compatibility%40gmail.com',
-        });
+        const { authHdr } = await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
+        await BrowserRecipe.pgpBlockVerifyDecryptedContent(
+          t,
+          browser,
+          '16f431a0b9056562',
+          {
+            content: ['ゾし逸現飲'],
+            encryption: 'encrypted',
+            signature: 'not signed',
+          },
+          authHdr
+        );
       })
     );
-*/
+
     test(
       `decrypt - iso-2022-jp, signed plain text`,
       testWithBrowser(async (t, browser) => {
