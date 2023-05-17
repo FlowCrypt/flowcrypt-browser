@@ -28,6 +28,7 @@ import { MessageInfo } from '../../common/render-message.js';
 import { LoaderContextWebmail } from './loader-context.js';
 import { JQueryEl } from '../../common/loader-context-interface.js';
 import { Mime } from '../../common/core/mime.js';
+import { MsgBlock } from '../../common/core/msg-block.js';
 
 export class GmailElementReplacer implements WebmailElementReplacer {
   private debug = false;
@@ -166,7 +167,17 @@ export class GmailElementReplacer implements WebmailElementReplacer {
         console.debug('replaceArmoredBlocks() for of emailsContainingPgpBlock -> emailContainer added evaluated');
       }
       const msgId = this.determineMsgId(emailContainer);
-      const { renderedXssSafe, blocksInFrames, messageInfo, from } = await this.messageRenderer.msgGetProcessed(msgId);
+      let renderedXssSafe: string | undefined;
+      let blocksInFrames: Dict<MsgBlock> = {};
+      let messageInfo: MessageInfo | undefined;
+      let from: string | undefined;
+      try {
+        ({ renderedXssSafe, blocksInFrames, messageInfo, from } = await this.messageRenderer.msgGetProcessed(msgId));
+      } catch (e) {
+        // fill with fallback values from the element
+        const blocks = Mime.processBody({ text: emailContainer.innerText });
+        ({ renderedXssSafe, blocksInFrames } = MessageRenderer.renderMsg({ blocks, from }, this.factory, false, this.sendAs));
+      }
       if (renderedXssSafe) {
         $(this.sel.translatePrompt).hide();
         if (this.debug) {
@@ -178,7 +189,15 @@ export class GmailElementReplacer implements WebmailElementReplacer {
         }
         const senderEmail = this.getSenderEmail(this.getMsgBodyEl(msgId)) || from;
         // todo: const isOutgoing = !!this.sendAs[senderEmail];
-        this.messageRenderer.processInlineBlocks(this.relayManager, this.factory, messageInfo, blocksInFrames, senderEmail).catch(Catch.reportErr);
+        this.messageRenderer
+          .processInlineBlocks(
+            this.relayManager,
+            this.factory,
+            messageInfo ?? { isPwdMsgBasedOnMsgSnippet: MessageRenderer.isPwdMsg(emailContainer.innerText) }, // todo: print info for offline?
+            blocksInFrames,
+            senderEmail
+          )
+          .catch(Catch.reportErr);
       }
     }
   };
@@ -504,7 +523,6 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     return $(this.sel.msgOuter).filter(`[data-legacy-message-id="${msgId}"]`).find(this.sel.msgInner);
   };
 
-  // todo: should we use it?
   private getSenderEmail = (msgEl: HTMLElement | JQueryEl) => {
     return ($(msgEl).closest('.gs').find('span.gD').attr('email') || '').toLowerCase();
   };

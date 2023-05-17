@@ -10,6 +10,7 @@ import { TestBySubjectStrategyContext } from './strategies/send-message-strategy
 import { UnsupportableStrategyError } from './strategies/strategy-base';
 import { OauthMock } from '../lib/oauth';
 import { Util } from '../../util';
+import { Dict } from '../../core/common';
 
 type DraftSaveModel = { message: { raw: string; threadId: string } };
 
@@ -57,7 +58,8 @@ export type MockUserAlias = {
 export interface GoogleConfig {
   contacts?: string[];
   othercontacts?: string[];
-  aliases?: Record<string, MockUserAlias[]>;
+  aliases?: Dict<MockUserAlias[]>;
+  getMsgErrors?: Dict<Error>;
 }
 
 export const multipleEmailAliasList: MockUserAlias[] = [
@@ -215,6 +217,8 @@ export const getMockGoogleEndpoints = (oauth: OauthMock, config: GoogleConfig | 
         if (!id) {
           return {};
         }
+        const err = config?.getMsgErrors?.[id];
+        if (err) throw err;
         const data = await GoogleData.withInitializedData(acct);
         if (req.url?.includes('/attachments/')) {
           const attachment = data.getAttachment(id);

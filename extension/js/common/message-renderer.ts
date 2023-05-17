@@ -200,6 +200,10 @@ export class MessageRenderer {
     renderModule.setFrameColor('red'); // todo: in what other cases should we set the frame red?
   };
 
+  public static isPwdMsg = (text: string) => {
+    return /https:\/\/flowcrypt\.com\/[a-zA-Z0-9]{10}$/.test(text);
+  };
+
   private static getVerificationPubs = async (signerEmail: string) => {
     const email = Str.parseEmail(signerEmail).email;
     if (!email) return [];
@@ -374,7 +378,7 @@ export class MessageRenderer {
       <br/><hr>
     `,
       },
-      isPwdMsgBasedOnMsgSnippet: /https:\/\/flowcrypt\.com\/[a-zA-Z0-9]{10}$/.test(fullMsg.snippet || ''),
+      isPwdMsgBasedOnMsgSnippet: MessageRenderer.isPwdMsg(fullMsg.snippet || ''),
     };
   };
 
@@ -524,12 +528,14 @@ export class MessageRenderer {
     loaderContext: LoaderContextBindInterface,
     factory: XssSafeFactory,
     frameId: string,
-    printMailInfo: PrintMailInfo,
+    printMailInfo: PrintMailInfo | undefined,
     cb: (renderModule: RenderInterface, frameId: string) => Promise<{ publicKeys?: string[]; needPassphrase?: string[] }>
   ) => {
     const renderModule = relayManager.createRelay(frameId);
     loaderContext.bind(frameId, relayManager);
-    renderModule.setPrintMailInfo(printMailInfo);
+    if (printMailInfo) {
+      renderModule.setPrintMailInfo(printMailInfo);
+    }
     cb(renderModule, frameId)
       .then(async result => {
         const appendAfter = $(`iframe#${frameId}`); // todo: late binding? won't work
@@ -683,7 +689,7 @@ export class MessageRenderer {
   private setMsgBodyAndStartProcessing = async (
     loaderContext: LoaderContextInterface,
     type: MsgBlockType, // for diagnostics
-    printMailInfo: PrintMailInfo,
+    printMailInfo: PrintMailInfo | undefined,
     cb: (renderModule: RenderInterface, frameId: string) => Promise<{ publicKeys?: string[] }>
   ) => {
     const { frameId, frameXssSafe } = loaderContext.factory.embeddedRenderMsg(type);

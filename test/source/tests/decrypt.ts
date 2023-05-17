@@ -18,7 +18,7 @@ import {
   somePubkey,
   singlePubKeyAttesterConfig,
 } from '../mock/attester/attester-key-constants';
-import { ConfigurationProvider } from '../mock/lib/api';
+import { ConfigurationProvider, HttpClientErr, Status } from '../mock/lib/api';
 // import { onlyOnWkdPubKey } from '../mock/wkd/wkd-constants';
 
 export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: TestWithBrowser) => {
@@ -245,6 +245,33 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
           threadId: '17dbdf2425ac0f29',
           expectedContent: 'Documento anexo de prueba.docx',
         });
+      })
+    );
+
+    test(
+      'mail.google.com - decrypt message in offline mode',
+      testWithBrowser(async (t, browser) => {
+        const acctEmail = 'ci.tests.gmail@flowcrypt.test';
+        t.mockApi!.configProvider = new ConfigurationProvider({
+          attester: singlePubKeyAttesterConfig(acctEmail, somePubkey),
+          google: {
+            getMsgErrors: {
+              '17b91b7e122902d2': new HttpClientErr('RequestTimeout', Status.BAD_REQUEST),
+            },
+          },
+        });
+        const { authHdr } = await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
+        await BrowserRecipe.pgpBlockVerifyDecryptedContent(
+          t,
+          browser,
+          '17b91b7e122902d2',
+          {
+            content: ['this should decrypt even offline'],
+            encryption: 'encrypted',
+            signature: 'signed',
+          },
+          authHdr
+        );
       })
     );
 

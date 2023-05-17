@@ -10,8 +10,8 @@ export type PrintMailInfo = {
 };
 
 export type MessageInfo = {
-  printMailInfo: PrintMailInfo;
-  isPwdMsgBasedOnMsgSnippet?: boolean;
+  printMailInfo?: PrintMailInfo;
+  isPwdMsgBasedOnMsgSnippet: boolean;
 };
 
 export type RenderMessage = {
