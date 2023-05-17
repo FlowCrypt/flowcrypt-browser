@@ -28,6 +28,7 @@ import {
   getKeyManagerChoosePassphraseForbidStoringRules,
 } from '../mock/fes/fes-constants';
 import { testSksKey } from '../mock/sks/sks-constants';
+import { multipleEmailAliasList } from '../mock/google/google-endpoints';
 
 const getAuthorizationHeader = async (t: AvaContext, browser: BrowserHandle, acctEmail: string) => {
   const settingsPage = await browser.newExtensionSettingsPage(t, acctEmail);
@@ -2271,13 +2272,19 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
     test(
       'setup - imported key with multiple alias should show checkbox per alias',
       testWithBrowser(async (t, browser) => {
+        const acct = 'multi.aliased.user@example.com';
         t.mockApi!.configProvider = new ConfigurationProvider({
           attester: {
             pubkeyLookup: {},
           },
+          google: {
+            aliases: {
+              [acct]: multipleEmailAliasList,
+            },
+          },
         });
         expect((await KeyUtil.parse(testConstants.keyMultiAliasedUser)).emails.length).to.equals(3);
-        const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'multi.aliased.user@example.com');
+        const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
         await SetupPageRecipe.manualEnter(
           settingsPage,
           '',
@@ -2286,7 +2293,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
             fillOnly: true,
             checkEmailAliasIfPresent: true,
             key: {
-              title: 'multi.aliased.user@example.com',
+              title: acct,
               passphrase: '1basic passphrase to use',
               armored: testConstants.keyMultiAliasedUser,
               longid: null, // eslint-disable-line no-null/no-null
@@ -2303,12 +2310,18 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
     test(
       'setup - imported key from a file with multiple alias',
       testWithBrowser(async (t, browser) => {
+        const acct = 'multi.aliased.user@example.com';
         t.mockApi!.configProvider = new ConfigurationProvider({
           attester: {
             pubkeyLookup: {},
           },
+          google: {
+            aliases: {
+              [acct]: multipleEmailAliasList,
+            },
+          },
         });
-        const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'multi.aliased.user@example.com');
+        const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
         const key = {
           title: 'unarmored OpenPGP key',
           filePath: 'test/samples/openpgp/multialiaseduserexamplecom-0x357B908F62498DF8.key',
@@ -2327,7 +2340,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         await settingsPage.waitAndClick('.container_for_import_key_email_alias @input-email-alias-alias2examplecom'); // finally uncheck
         await settingsPage.waitAndClick('@input-step2bmanualenter-save', { delay: 1 });
         await settingsPage.waitAndClick('@action-step4done-account-settings');
-        expect(t.mockApi!.configProvider?.config.attester?.pubkeyLookup?.['multi.aliased.user@example.com']).not.to.be.an('undefined');
+        expect(t.mockApi!.configProvider?.config.attester?.pubkeyLookup?.[acct]).not.to.be.an('undefined');
         expect(t.mockApi!.configProvider?.config.attester?.pubkeyLookup?.['alias1@example.com']).not.to.be.an('undefined');
         expect(t.mockApi!.configProvider?.config.attester?.pubkeyLookup?.['alias2@example.com']).to.be.an('undefined');
         await settingsPage.close();

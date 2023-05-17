@@ -8,7 +8,7 @@ import { AttesterConfig, getMockAttesterEndpoints } from '../attester/attester-e
 import { HandlersRequestDefinition } from '../all-apis-mock';
 import { KeysOpenPGPOrgConfig, getMockKeysOpenPGPOrgEndpoints } from '../keys-openpgp-org/keys-openpgp-org-endpoints';
 import { OauthMock } from './oauth';
-import { getMockGoogleEndpoints } from '../google/google-endpoints';
+import { GoogleConfig, getMockGoogleEndpoints } from '../google/google-endpoints';
 import { KeyManagerConfig, getMockKeyManagerEndpoints } from '../key-manager/key-manager-endpoints';
 import { FesConfig, getMockSharedTenantFesEndpoints } from '../fes/shared-tenant-fes-endpoints';
 import { WkdConfig, getMockWkdEndpoints } from '../wkd/wkd-endpoints';
@@ -45,6 +45,7 @@ interface ConfigurationOptions {
   ekm?: KeyManagerConfig;
   fes?: FesConfig;
   wkd?: WkdConfig;
+  google?: GoogleConfig;
   sks?: SksConfig;
 }
 
@@ -65,7 +66,7 @@ export class ConfigurationProvider implements ConfigurationProviderInterface<Han
     }
     handlers = {
       ...handlers,
-      ...getMockGoogleEndpoints(this.oauth),
+      ...getMockGoogleEndpoints(this.oauth, this.config.google),
       ...getMockSharedTenantFesEndpoints(this.config.fes),
       ...getMockWkdEndpoints(this.config.wkd),
       ...getMockSksEndpoints(this.config.sks),
