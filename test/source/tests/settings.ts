@@ -287,6 +287,10 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         await contactsFrame.waitAndClick('@action-show-import-public-keys-form', { confirmGone: true });
         await contactsFrame.waitAndType('@input-bulk-public-keys', testConstants.nullUserPubKey);
         await contactsFrame.waitAndClick('@action-show-parsed-public-keys', { confirmGone: true });
+        await contactsFrame.waitAll('iframe');
+        const pubkeyFrame = await contactsFrame.getFrame(['pgp_pubkey.htm']);
+        await pubkeyFrame.waitForInputValue('@input-email', 'demo@example.com');
+        await pubkeyFrame.waitForContent('@action-add-contact', 'IMPORT KEY');
       })
     );
     test(
