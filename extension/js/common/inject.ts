@@ -25,7 +25,7 @@ export class Injector {
   private S: SelCache;
   private container: { [key: string]: Host } = {
     composeBtnSel: {
-      gmail: 'div.aeN, div.aBO', // .aeN for normal look, .aBO for new look https://github.com/FlowCrypt/flowcrypt-browser/issues/4099
+      gmail: 'div.W8, div.aBO', // .aeN for normal look, .aBO for new look https://github.com/FlowCrypt/flowcrypt-browser/issues/4099
       outlook: 'div._fce_b',
       settings: '#does_not_have',
     },
