@@ -599,10 +599,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       'test re-auth after updating chrome extension',
       testWithBrowser(async (t, browser) => {
         const acctEmail = 'flowcrypt.compatibility@gmail.com';
-        t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: singlePubKeyAttesterConfig(acctEmail, somePubkey),
-        });
-        await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
+        await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
         // Wipe google tokens to test re-auth popup
         await Util.wipeGoogleTokensUsingExperimentalSettingsPage(t, browser, acctEmail);
         const gmailPage = await openMockGmailPage(t, browser, acctEmail);
@@ -630,10 +627,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       'mail.google.com - success notif after setup, click hides it, does not re-appear + offers to reauth',
       testWithBrowser(async (t, browser) => {
         const acct = 'flowcrypt.compatibility@gmail.com';
-        t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: singlePubKeyAttesterConfig(acct, somePubkey),
-        });
-        await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
+        await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
         const gmailPage = await openMockGmailPage(t, browser, acct);
         await gmailPage.waitAll(['@webmail-notification-setup', '@notification-successfully-setup-action-close']);
         await gmailPage.waitAndClick('@notification-successfully-setup-action-close', { confirmGone: true });
@@ -724,10 +718,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       'setup - test adding missing self-signature key issue',
       testWithBrowser(async (t, browser) => {
         const acctEmail = 'flowcrypt.compatibility@gmail.com';
-        t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: singlePubKeyAttesterConfig(acctEmail, somePubkey),
-        });
-        await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
+        await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
         const settingsPage = await browser.newExtensionSettingsPage(t, acctEmail);
         await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
         const addKeyPopup = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-add-key-page', ['add_key.htm']);
