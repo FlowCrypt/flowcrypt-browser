@@ -551,6 +551,19 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
       'compose - load contacts - contacts should be properly ordered',
       testWithBrowser(async (t, browser) => {
         const acct = 'ci.tests.gmail@flowcrypt.test';
+        t.mockApi!.configProvider = new ConfigurationProvider({
+          google: {
+            contacts: [
+              'testsearchorder1@flowcrypt.com',
+              'testsearchorder2@flowcrypt.com',
+              'testsearchorder3@flowcrypt.com',
+              'testsearchorder4@flowcrypt.com',
+              'testsearchorder5@flowcrypt.com',
+              'testsearchorder6@flowcrypt.com',
+            ],
+            othercontacts: ['testsearchorder7@flowcrypt.com', 'testsearchorder8@flowcrypt.com', 'testsearchorder9@flowcrypt.com'],
+          },
+        });
         await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'ci.tests.gmail');
         const inboxPage = await browser.newExtensionInboxPage(t, acct);
         let composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);

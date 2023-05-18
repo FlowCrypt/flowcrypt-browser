@@ -542,9 +542,14 @@ export class OpenPGPKey {
         // other identities go in indeterministic order
         ...Value.arr.unique((await key.verifyAllUsers()).filter(x => x.valid && x.userID !== primaryUserId).map(x => x.userID)),
       ];
-      const emails = identities.map(userid => Str.parseEmail(userid).email).filter(Boolean);
-      if (emails.length === identities.length) {
+      const emails = identities
+        .filter(userId => !!userId)
+        .map(userid => Str.parseEmail(userid).email)
+        .filter(Boolean);
+      if (emails.length === identities.length || !key.isPrivate()) {
         // OpenPGP.js uses RFC 5322 `email-addresses` parser, so we expect all identities to contain a valid e-mail address
+        // Return empty emails and identities is a way to later throw KeyCanBeFixed exception, allowing the user to reformat the key
+        // (e.g. adding signature for UserIDs etc.) But this makes sense for private keys only.
         return { emails, identities };
       }
     }
