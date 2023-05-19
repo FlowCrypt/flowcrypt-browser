@@ -45,6 +45,7 @@ export class ComposeInputModule extends ViewModule<ComposeView> {
 
   public inputTextHtmlSetSafely = (html: string) => {
     this.squire.setHTML(Xss.htmlSanitize(Xss.htmlSanitizeKeepBasicTags(html, 'IMG-KEEP')));
+    this.view.draftModule.setLastDraftBody(this.squire.getHTML());
   };
 
   public extract = (type: 'text' | 'html', elSel: 'input_text' | 'input_intro', flag?: 'SKIP-ADDONS') => {
