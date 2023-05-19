@@ -118,9 +118,9 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
     }
   };
 
-  public setLastDraftBody(draftBody: string) {
+  public setLastDraftBody = (draftBody: string): void => {
     this.lastDraftBody = draftBody;
-  }
+  };
 
   public draftSave = async (forceSave = false): Promise<void> => {
     if (this.disableSendingDrafts) {
