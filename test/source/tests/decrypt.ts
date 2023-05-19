@@ -33,7 +33,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
         await inboxPage.waitForSelTestState('ready');
         await inboxPage.waitAll('iframe');
         const plainMessage = /-----BEGIN PGP MESSAGE-----.*This is not a valid PGP message/s;
-        await inboxPage.waitForContent('.message.line', plainMessage);
+        await inboxPage.waitForContent('@message-line', plainMessage);
         // expect no pgp blocks
         expect((await inboxPage.getFramesUrls(['pgp_render_block.htm'])).length).to.equal(0);
         await inboxPage.close();
@@ -54,7 +54,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
         await inboxPage.waitForSelTestState('ready');
         await inboxPage.waitAll('iframe');
         const plainMessage = /An OpenPGP message starts with this header:\r?\n-----BEGIN PGP MESSAGE-----\r?\n\r?\nexample/s;
-        await inboxPage.waitForContent('.message.line', plainMessage);
+        await inboxPage.waitForContent('@message-line', plainMessage);
         // expect no pgp blocks
         expect((await inboxPage.getFramesUrls(['pgp_render_block.htm'])).length).to.equal(0);
         await inboxPage.close();
@@ -184,7 +184,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
         await inboxPage.waitForSelTestState('ready');
         await inboxPage.waitAll('iframe');
         expect(await inboxPage.isElementPresent('@container-attachments')).to.equal(true);
-        await inboxPage.waitForContent('.message.line', 'Plain message');
+        await inboxPage.waitForContent('@message-line', 'Plain message');
         // expect no pgp blocks
         const urls = await inboxPage.getFramesUrls(['/chrome/elements/pgp_render_block.htm']);
         expect(urls.length).to.equal(0);
@@ -1091,7 +1091,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
           encryption: 'not encrypted',
           signature: 'signed',
         });
-        // todo: plainText duplication
+        expect(await inboxPage.read('@message-line')).to.not.include('1234');
         // todo: check gmail mock
       })
     );
@@ -1363,7 +1363,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
           encryption: 'not encrypted',
           signature: 'signed',
         });
-        expect(await inboxPage.isElementPresent('.message.line')).to.be.false;
+        expect(await inboxPage.read('@message-line')).to.not.include('1234');
       })
     );
 

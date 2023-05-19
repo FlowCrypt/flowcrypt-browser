@@ -282,6 +282,6 @@ export class InboxActiveThreadModule extends ViewModule<InboxView> {
   };
 
   private wrapMsg = (id: string, html: string) => {
-    return Ui.e('div', { id, class: 'message line', html });
+    return Ui.e('div', { id, class: 'message line', html, 'data-test': 'message-line' });
   };
 }
