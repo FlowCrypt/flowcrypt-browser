@@ -1813,6 +1813,22 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
     );
 
     test(
+      'compose - check existing draft not saved without changes',
+      testWithBrowser(async (t, browser) => {
+        await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
+        let composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
+        const subject = `check existing draft not saved without changes ${Util.lousyRandom()}`;
+        await ComposePageRecipe.fillMsg(composePage, {}, subject, subject);
+        await Util.sleep(4);
+        await composePage.close();
+        composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', {
+          appendUrl: 'draftId=check_existing_draft_save',
+        });
+        await composePage.verifyContentIsNotPresentContinuously('@send-btn-note', 'Saved', 5);
+      })
+    );
+
+    test(
       'compose - leading tabs',
       testWithBrowser(async (t, browser) => {
         await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
