@@ -304,6 +304,7 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
       this.view.S.now('input_from').val(decoded.from);
     }
     if (decoded.subject) {
+      this.lastDraftSubject = decoded.subject;
       this.view.S.cached('input_subject').val(decoded.subject);
     }
   };

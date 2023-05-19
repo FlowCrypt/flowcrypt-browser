@@ -457,6 +457,20 @@ abstract class ControllableBase {
     );
   };
 
+  public verifyContentIsNotPresentContinuously = async (selector: string, expectedText: string, timeoutSec = 10) => {
+    await this.waitAll(selector);
+    const start = Date.now();
+    let actualText: string | undefined;
+    let round = 1;
+    while (Date.now() - start < timeoutSec * 1000) {
+      actualText = await this.read(selector, true);
+      if (actualText?.includes(expectedText)) {
+        throw new Error(`selector ${selector} contained "${expectedText}" for ${round}th attemp, last content:${actualText}`);
+      }
+      round += 1;
+    }
+  };
+
   public getFramesUrls = async (urlMatchables: string[], { sleep, appearIn }: { sleep?: number; appearIn?: number } = { sleep: 3 }): Promise<string[]> => {
     if (sleep) {
       await Util.sleep(sleep);
