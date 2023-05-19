@@ -29,7 +29,7 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
   private currentlySavingDraft = false;
   private disableSendingDrafts = false;
   private saveDraftInterval?: number;
-  private lastDraftBody?: string;
+  private lastDraftBody = '';
   private lastDraftSubject = '';
   private SAVE_DRAFT_FREQUENCY = 3000;
   private localDraftPrefix = 'local-draft-';
@@ -117,6 +117,10 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
       }
     }
   };
+
+  public setLastDraftBody(draftBody: string) {
+    this.lastDraftBody = draftBody;
+  }
 
   public draftSave = async (forceSave = false): Promise<void> => {
     if (this.disableSendingDrafts) {
@@ -337,11 +341,6 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
   };
 
   private hasBodyChanged = (msgBody: string) => {
-    if (this.lastDraftBody === undefined) {
-      // first check
-      this.lastDraftBody = msgBody;
-      return false;
-    }
     if (msgBody && msgBody !== this.lastDraftBody) {
       this.lastDraftBody = msgBody;
       return true;

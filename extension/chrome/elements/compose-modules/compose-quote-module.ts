@@ -216,7 +216,9 @@ export class ComposeQuoteModule extends ViewModule<ComposeView> {
 
   private actionRenderTripleDotContentHandle = (el: HTMLElement) => {
     $(el).remove();
-    Xss.sanitizeAppend(this.view.S.cached('input_text'), this.getTripleDotSanitizedFormattedHtmlContent());
+    const inputEl = this.view.S.cached('input_text');
+    Xss.sanitizeAppend(inputEl, this.getTripleDotSanitizedFormattedHtmlContent());
+    this.view.draftModule.setLastDraftBody(inputEl.html());
     this.tripleDotSanitizedHtmlContent = undefined;
     this.view.sizeModule.resizeComposeBox();
   };
