@@ -16,6 +16,7 @@ import { Ui } from './browser/ui.js';
 import { WebMailName, WebMailVersion } from './browser/env.js';
 import { Xss } from './platform/xss.js';
 import { SendAsAlias } from './platform/store/acct-store.js';
+import { Buf } from './core/buf.js';
 
 type Placement = 'settings' | 'settings_compose' | 'default' | 'dialog' | 'gmail' | 'embedded' | 'compose';
 export type WebmailVariantString = undefined | 'html' | 'standard' | 'new';
@@ -61,7 +62,7 @@ export class XssSafeFactory {
    */
   public static renderableMsgBlock = (factory: XssSafeFactory, block: MsgBlock, isOutgoing?: boolean) => {
     if (block.type === 'plainText') {
-      return Xss.escape(Str.with(block.content)).replace(/\n/g, '<br>') + '<br><br>';
+      return XssSafeFactory.renderPlainContent(block.content);
     } else if (block.type === 'plainHtml') {
       return Xss.htmlSanitizeAndStripAllTags(Str.with(block.content), '<br>') + '<br><br>';
     } else if (block.type === 'publicKey') {
@@ -80,6 +81,9 @@ export class XssSafeFactory {
     }
   };
 
+  public static renderPlainContent = (content: string | Buf) => {
+    return Xss.escape(Str.with(content)).replace(/\n/g, '<br>') + '<br><br>';
+  };
   /**
    * XSS WARNING
    *

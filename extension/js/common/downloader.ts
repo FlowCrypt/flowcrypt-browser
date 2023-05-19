@@ -11,6 +11,8 @@ import { MsgBlock } from './core/msg-block.js';
 import { MessageInfo } from './render-message.js';
 
 export type ProcessedMessage = {
+  isBodyEmpty: boolean;
+  blocks: MsgBlock[];
   renderedXssSafe?: string;
   blocksInFrames: Dict<MsgBlock>;
   attachments: Attachment[];

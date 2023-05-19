@@ -344,6 +344,7 @@ export class MessageRenderer {
     );
   };
 
+  // todo: private
   public getMessageInfo = async (fullMsg: GmailRes.GmailMsg): Promise<MessageInfo> => {
     const fullName = await AcctStore.get(this.acctEmail, ['full_name']); // todo: cache
     const sentDate = GmailParser.findHeader(fullMsg, 'date');
@@ -391,10 +392,11 @@ export class MessageRenderer {
     const fullMsg = await msgDownload.download.full;
     const mimeContent = MessageRenderer.reconstructMimeContent(fullMsg);
     const blocks = Mime.processBody(mimeContent);
+    const isBodyEmpty = Mime.isBodyEmpty(mimeContent);
     // todo: only start `signature` download?
     // start download of all attachments that are not plainFile, for 'needChunk' -- chunked download
     for (const a of mimeContent.attachments.filter(a => !a.hasData())) {
-      const treatAs = a.treatAs(mimeContent.attachments, Mime.isBodyEmpty(mimeContent));
+      const treatAs = a.treatAs(mimeContent.attachments, isBodyEmpty);
       if (treatAs === 'plainFile') continue;
       if (treatAs === 'needChunk') {
         this.downloader.queueAttachmentChunkDownload(a);
@@ -416,6 +418,8 @@ export class MessageRenderer {
       ({ renderedXssSafe, blocksInFrames } = MessageRenderer.renderMsg({ blocks, from }, this.factory, false, this.sendAs));
     }
     msgDownload.processedFull = {
+      isBodyEmpty,
+      blocks,
       renderedXssSafe,
       singlePlainBlock,
       blocksInFrames,

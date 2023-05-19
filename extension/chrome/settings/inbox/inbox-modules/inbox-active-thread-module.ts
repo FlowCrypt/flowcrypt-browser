@@ -13,13 +13,11 @@ import { Buf } from '../../../../js/common/core/buf.js';
 import { Catch } from '../../../../js/common/platform/catch.js';
 import { InboxView } from '../inbox.js';
 import { Lang } from '../../../../js/common/lang.js';
-import { MessageRenderer } from '../../../../js/common/message-renderer.js';
 import { Ui } from '../../../../js/common/browser/ui.js';
 import { ViewModule } from '../../../../js/common/view-module.js';
 import { Xss } from '../../../../js/common/platform/xss.js';
 import { Browser } from '../../../../js/common/browser/browser.js';
 import { Attachment } from '../../../../js/common/core/attachment.js';
-import { Mime } from '../../../../js/common/core/mime.js';
 import { LoaderContextInterface, bindNow } from '../../../../js/common/loader-context-interface.js';
 import { BindInterface } from '../../../../js/common/relay-manager-interface.js';
 
@@ -65,7 +63,6 @@ class LoaderContext implements LoaderContextInterface {
 
 export class InboxActiveThreadModule extends ViewModule<InboxView> {
   private threadId: string | undefined;
-  private threadHasPgpBlock = false;
   private debugEmails = ['flowcrypt.compatibility@gmail.com', 'ci.tests.gmail@flowcrypt.dev', 'e2e.enterprise.test@flowcrypt.com']; // adds debugging ui, useful for creating automated tests
 
   public render = async (threadId: string, thread?: GmailRes.GmailThread) => {
@@ -80,14 +77,25 @@ export class InboxActiveThreadModule extends ViewModule<InboxView> {
       const subject = GmailParser.findHeader(thread.messages[0], 'subject') || '(no subject)';
       this.updateUrlWithoutRedirecting(`${subject} - FlowCrypt Inbox`, { acctEmail: this.view.acctEmail, threadId });
       this.view.displayBlock('thread', Xss.escape(subject));
+      let threadHasPgpBlock = false;
       for (const m of thread.messages) {
-        await this.renderMsg(m);
+        threadHasPgpBlock ||= await this.renderMsg(m);
       }
-      if (this.threadHasPgpBlock) {
+      if (threadHasPgpBlock) {
         $('.action_see_original_message').css('display', 'inline-block');
         if (this.view.showOriginal) {
           $('.action_see_original_message').text('See Decrypted');
         }
+        $('.action_see_original_message').on(
+          'click',
+          this.view.setHandler(() =>
+            this.view.redirectToUrl({
+              acctEmail: this.view.acctEmail,
+              threadId: this.threadId,
+              showOriginal: !this.view.showOriginal,
+            })
+          )
+        );
       }
       const lastMsg = thread.messages[thread.messages.length - 1];
       if (lastMsg) {
@@ -111,18 +119,6 @@ export class InboxActiveThreadModule extends ViewModule<InboxView> {
   };
 
   public setHandlers = () => {
-    if (this.threadHasPgpBlock) {
-      $('.action_see_original_message').on(
-        'click',
-        this.view.setHandler(() =>
-          this.view.redirectToUrl({
-            acctEmail: this.view.acctEmail,
-            threadId: this.threadId,
-            showOriginal: !this.view.showOriginal,
-          })
-        )
-      );
-    }
     BrowserMsg.addListener('close_reply_message', async ({ frameId }: Bm.ComposeWindow) => {
       $(`iframe#${frameId}`).remove();
     });
@@ -146,32 +142,27 @@ export class InboxActiveThreadModule extends ViewModule<InboxView> {
     BrowserMsg.addListener('reply_pubkey_mismatch', BrowserMsgCommonHandlers.replyPubkeyMismatch);
   };
 
-  private renderMsg = async (message: GmailRes.GmailMsg) => {
+  private renderMsg = async (message: GmailRes.GmailMsg): Promise<boolean> => {
     const htmlId = this.replyMsgId(message.id);
     try {
       const msg = await this.view.messageRenderer.downloader.msgGetCached(message.id).download.full;
-      const mimeContent = MessageRenderer.reconstructMimeContent(msg);
-      const blocks = Mime.processBody(mimeContent);
-      const printInfoHtml = await this.view.messageRenderer.getMessageInfo(msg);
-      // todo: review the meaning of threadHasPgpBlock
-      this.threadHasPgpBlock ||= blocks.some(block => ['encryptedMsg', 'publicKey', 'privateKey', 'signedMsg'].includes(block.type));
       // todo: take `from` from the processedMessage?
-      const { renderedXssSafe, singlePlainBlock, blocksInFrames, messageInfo, from } = await this.view.messageRenderer.msgGetProcessed(message.id);
+      const { blocks, isBodyEmpty, renderedXssSafe, singlePlainBlock, blocksInFrames, messageInfo, from, attachments } =
+        await this.view.messageRenderer.msgGetProcessed(message.id);
       const senderEmail = from || 'unknown';
       const exportBtn = this.debugEmails.includes(this.view.acctEmail) ? '<a href="#" class="action-export">download api export</a>' : '';
       const loaderContext = new LoaderContext(
         this.view.factory,
-        renderedXssSafe,
+        singlePlainBlock ? XssSafeFactory.renderPlainContent(singlePlainBlock.content) : renderedXssSafe,
         blocks
           .filter(block => block.attachmentMeta && ['encryptedAttachment', 'plainAttachment'].includes(block.type))
-          .concat(singlePlainBlock ? [singlePlainBlock] : [])
           .map(block => XssSafeFactory.renderableMsgBlock(this.view.factory, block, this.view.messageRenderer.isOutgoing(senderEmail)))
       );
       // todo: test else if (this.view.showOriginal) {      r += Xss.escape(Str.with(block.content)).replace(/\n/g, '<br>');}
-      for (const a of mimeContent.attachments) {
+      for (const a of attachments) {
         await this.view.messageRenderer.processAttachment(
           a,
-          a.treatAs(mimeContent.attachments, Mime.isBodyEmpty(mimeContent)),
+          a.treatAs(attachments, isBodyEmpty),
           loaderContext,
           undefined,
           message.id,
@@ -184,13 +175,13 @@ export class InboxActiveThreadModule extends ViewModule<InboxView> {
           GmailParser.findHeader(msg, 'Date') ?? ''
         } ${exportBtn}</p>` +
         (loaderContext.renderedMessageXssSafe ?? '') +
-        (loaderContext.renderedAttachments.length // todo: we always have data on this page (for now), as we download 'raw'
+        (loaderContext.renderedAttachments.length
           ? `<div class="attachments" data-test="container-attachments">${loaderContext.renderedAttachments.join('')}</div>`
           : '');
       $('.thread').append(this.wrapMsg(htmlId, r)); // xss-safe-factory
       loaderContext.completeBinding(this.view.relayManager);
       this.view.messageRenderer
-        .processInlineBlocks(this.view.relayManager, this.view.factory, printInfoHtml, blocksInFrames, from ? Str.parseEmail(from).email : undefined)
+        .processInlineBlocks(this.view.relayManager, this.view.factory, messageInfo, blocksInFrames, from ? Str.parseEmail(from).email : undefined)
         .catch(Catch.reportErr);
       if (exportBtn) {
         $('.action-export').on(
@@ -198,6 +189,7 @@ export class InboxActiveThreadModule extends ViewModule<InboxView> {
           this.view.setHandler(() => this.exportMsgForDebug(message.id))
         );
       }
+      return blocks.some(block => ['encryptedMsg', 'publicKey', 'privateKey', 'signedMsg'].includes(block.type));
     } catch (e) {
       if (ApiErr.isNetErr(e)) {
         Xss.sanitizeAppend('.thread', this.wrapMsg(htmlId, `Failed to load a message (network error), skipping. ${Ui.retryLink()}`));
@@ -210,6 +202,7 @@ export class InboxActiveThreadModule extends ViewModule<InboxView> {
         const printable = Xss.escape(e instanceof Error ? e.stack || e.message : JSON.stringify(e, undefined, 2));
         Xss.sanitizeAppend('.thread', this.wrapMsg(htmlId, `Failed to load a message due to the following error: <pre>${printable}</pre>`));
       }
+      return false;
     }
   };
 
