@@ -613,11 +613,11 @@ export class MessageRenderer {
         }
       }
     }
-    /* todo: await this.view.errorModule.renderErr(
+    renderModule.renderErr(
       'Error: could not properly parse signed message',
       parsed.rawSignedContent || parsed.text || parsed.html || mimeMsg.toUtfStr(),
       'parse error'
-    ); */
+    );
     return {};
   };
 

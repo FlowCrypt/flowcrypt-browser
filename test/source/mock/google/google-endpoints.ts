@@ -3,7 +3,7 @@
 import { HttpClientErr, Status } from '../lib/api';
 import Parse, { ParseMsgResult } from '../../util/parse';
 import { isDelete, isGet, isPost, isPut, parsePort, parseResourceId } from '../lib/mock-util';
-import { GoogleData } from './google-data';
+import { GmailMsg, GoogleData } from './google-data';
 import { HandlersDefinition } from '../all-apis-mock';
 import { AddressObject, ParsedMail } from 'mailparser';
 import { TestBySubjectStrategyContext } from './strategies/send-message-strategy';
@@ -59,7 +59,8 @@ export interface GoogleConfig {
   contacts?: string[];
   othercontacts?: string[];
   aliases?: Dict<MockUserAlias[]>;
-  getMsgErrors?: Dict<Error>;
+  getMsg?: Dict<{ error: Error } | { msg: GmailMsg }>;
+  htmlRenderer?: (msgId: string, prerendered?: string) => string | undefined;
 }
 
 export const multipleEmailAliasList: MockUserAlias[] = [
@@ -217,8 +218,6 @@ export const getMockGoogleEndpoints = (oauth: OauthMock, config: GoogleConfig | 
         if (!id) {
           return {};
         }
-        const err = config?.getMsgErrors?.[id];
-        if (err) throw err;
         const data = await GoogleData.withInitializedData(acct);
         if (req.url?.includes('/attachments/')) {
           const attachment = data.getAttachment(id);
@@ -227,7 +226,9 @@ export const getMockGoogleEndpoints = (oauth: OauthMock, config: GoogleConfig | 
           }
           throw new HttpClientErr(`MOCK attachment not found for ${acct}: ${id}`, Status.NOT_FOUND);
         }
-        const msg = data.getMessage(id);
+        const found = config?.getMsg?.[id];
+        if (found && 'error' in found) throw found.error;
+        const msg = found?.msg ? found.msg : data.getMessage(id);
         if (msg) {
           return GoogleData.fmtMsg(msg, format);
         }
@@ -344,7 +345,7 @@ export const getMockGoogleEndpoints = (oauth: OauthMock, config: GoogleConfig | 
       const acct = oauth.checkAuthorizationHeaderWithAccessToken(req.headers.authorization);
       if (isGet(req)) {
         const id = parseResourceId(req.url!); // eslint-disable-line @typescript-eslint/no-non-null-assertion
-        return await GoogleData.getMockGmailPage(acct, id);
+        return await GoogleData.getMockGmailPage(acct, id, config?.htmlRenderer);
       }
       throw new HttpClientErr(`Method not implemented for ${req.url}: ${req.method}`);
     },

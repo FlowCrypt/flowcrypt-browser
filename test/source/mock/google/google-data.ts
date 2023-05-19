@@ -229,7 +229,7 @@ export class GoogleData {
       .reduce((a, b) => a.concat(b), []);
   };
 
-  public static getMockGmailPage = async (acct: string, msgId?: string) => {
+  public static getMockGmailPage = async (acct: string, msgId?: string, htmlRenderer?: (msgId: string, prerendered?: string) => string | undefined) => {
     let msgBlock = '';
     let attachmentsBlock = '';
     if (msgId) {
@@ -245,6 +245,7 @@ export class GoogleData {
       } else {
         ({ htmlData, processedParts } = GoogleData.getHtmlDataToDisplay(payload.parts!) ?? { htmlData: undefined, processedParts: [] });
       }
+      const updatedHtmlData = htmlRenderer ? htmlRenderer(msgId, htmlData) : htmlData;
       const otherParts = GoogleData.getFileParts(payload.parts, processedParts);
       if (otherParts.length) {
         attachmentsBlock =
@@ -265,7 +266,7 @@ export class GoogleData {
       msgBlock = `<div class="adn ads" data-legacy-message-id="${msgId}">
     <div class="gs">
       <span email="${fromAddress}" name="mock sender" class="gD"><span>Mock Sender</span></span>
-      <div class="a3s">${htmlData ?? ''}</div>
+      <div class="a3s">${updatedHtmlData ?? ''}</div>
       ${attachmentsBlock}
     </div>
   </div>
