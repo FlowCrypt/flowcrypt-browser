@@ -14,6 +14,8 @@ import { PageRecipe } from '../page-recipe/abstract-page-recipe';
 import { InMemoryStoreKeys } from '../../core/const';
 import { GmailPageRecipe } from '../page-recipe/gmail-page-recipe';
 import { expect } from 'chai';
+import { KeyUtil } from '../../core/crypto/key';
+import { ConfigurationProvider } from '../../mock/lib/api';
 
 export class BrowserRecipe {
   public static oldAndNewComposeButtonSelectors = ['div.z0[class*="_destroyable"]', 'div.pb-25px[class*="_destroyable"]', '.new_secure_compose_window_button'];
@@ -100,6 +102,39 @@ export class BrowserRecipe {
     await settingsPage.close();
     const authHdr = { Authorization: `Bearer ${accessToken}` }; // eslint-disable-line @typescript-eslint/naming-convention
     return { acctEmail, authHdr };
+  };
+
+  public static setupCommonAcctWithAttester = async (t: AvaContext, browser: BrowserHandle, acct: 'compatibility' | 'compose' | 'ci.tests.gmail') => {
+    const accountConfigMap = {
+      compatibility: {
+        email: 'flowcrypt.compatibility@gmail.com',
+        keyTitle: 'flowcrypt.compatibility.1pp1',
+      },
+      'ci.tests.gmail': {
+        email: 'ci.tests.gmail@flowcrypt.test',
+        keyTitle: 'ci.tests.gmail',
+      },
+      compose: {
+        email: 'ci.tests.gmail@flowcrypt.dev',
+        keyTitle: 'test.ci.compose',
+      },
+    };
+    const { email: acctEmail, keyTitle } = accountConfigMap[acct];
+    const key = Config.key(keyTitle);
+    const privateKey = await KeyUtil.parse(key.armored!);
+    const pubKey = await KeyUtil.asPublicKey(privateKey);
+    if (!t.mockApi!.configProvider) {
+      t.mockApi!.configProvider = new ConfigurationProvider({});
+    }
+    t.mockApi!.configProvider!.config.attester = {
+      ...(t.mockApi!.configProvider!.config.attester ?? {}),
+      pubkeyLookup: {
+        [acctEmail]: {
+          pubkey: KeyUtil.armor(pubKey),
+        },
+      },
+    };
+    return await this.setUpCommonAcct(t, browser, acct);
   };
 
   public static getGoogleAccessToken = async (controllable: Controllable, acctEmail: string): Promise<string> => {

@@ -28,11 +28,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
       testWithBrowser(async (t, browser) => {
         const threadId = '17d7a32a0613071d';
         const msgId = '17d7a337b7b87eb9';
-        const acctEmail = 'flowcrypt.compatibility@gmail.com';
-        t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: singlePubKeyAttesterConfig(acctEmail, somePubkey),
-        });
-        const { authHdr } = await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
+        const { acctEmail, authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
         const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`);
         await inboxPage.waitForSelTestState('ready');
         await inboxPage.waitAll('iframe');
@@ -53,11 +49,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
       testWithBrowser(async (t, browser) => {
         const threadId = '17fbb5db49ddc1eb';
         const msgId = '17fbb5f1cd2010ee';
-        const acctEmail = 'flowcrypt.compatibility@gmail.com';
-        t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: singlePubKeyAttesterConfig(acctEmail, somePubkey),
-        });
-        const { authHdr } = await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
+        const { acctEmail, authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
         const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`);
         await inboxPage.waitForSelTestState('ready');
         await inboxPage.waitAll('iframe');
@@ -77,11 +69,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
       `decrypt - show remote images`,
       testWithBrowser(async (t, browser) => {
         const threadId = '186bd029856d1e39';
-        const acctEmail = 'flowcrypt.compatibility@gmail.com';
-        t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: singlePubKeyAttesterConfig(acctEmail, somePubkey),
-        });
-        await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
+        const { acctEmail } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
         const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`);
         await inboxPage.waitForSelTestState('ready');
         await inboxPage.waitAll('iframe');
@@ -102,11 +90,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
       `decrypt - show inline image when user clicks show image`,
       testWithBrowser(async (t, browser) => {
         const threadId = '1850f9608240f758';
-        const acctEmail = 'flowcrypt.compatibility@gmail.com';
-        t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: singlePubKeyAttesterConfig(acctEmail, somePubkey),
-        });
-        await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
+        const { acctEmail } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
         const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`);
         await inboxPage.waitForSelTestState('ready');
         await inboxPage.waitAll('iframe');
@@ -122,11 +106,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
       `decrypt - parsed signed message with signature.asc as plain attachment`,
       testWithBrowser(async (t, browser) => {
         const threadId = '187085b874fb727c';
-        const acctEmail = 'flowcrypt.compatibility@gmail.com';
-        t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: singlePubKeyAttesterConfig(acctEmail, somePubkey),
-        });
-        const { authHdr } = await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
+        const { acctEmail, authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
         const expectedContent = 'flowcrypt-browser issue #5029 test email';
         const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`);
         await inboxPage.waitForSelTestState('ready');
@@ -150,11 +130,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
       `decrypt - parsed encrypted message signed with signature.asc inline attachment`,
       testWithBrowser(async (t, browser) => {
         const threadId = '187ebe3cd1fae41e';
-        const acctEmail = 'flowcrypt.compatibility@gmail.com';
-        t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: singlePubKeyAttesterConfig(acctEmail, somePubkey),
-        });
-        await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
+        const { acctEmail } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
         const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`);
         await inboxPage.waitForSelTestState('ready');
         await inboxPage.waitAll('iframe');
@@ -174,11 +150,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
       `decrypt - outlook message with ATTxxxx encrypted email doesn't show empty attachment`,
       testWithBrowser(async (t, browser) => {
         const threadId = '17dbdf2425ac0f29';
-        const acctEmail = 'flowcrypt.compatibility@gmail.com';
-        t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: singlePubKeyAttesterConfig(acctEmail, somePubkey),
-        });
-        await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
+        const { acctEmail } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
         const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`);
         await inboxPage.waitForSelTestState('ready');
         await inboxPage.waitAll('iframe');
@@ -190,11 +162,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
     test(
       'decrypt - encrypted text inside "message" attachment is correctly decrypted',
       testWithBrowser(async (t, browser) => {
-        const acctEmail = 'ci.tests.gmail@flowcrypt.test';
-        t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: singlePubKeyAttesterConfig(acctEmail, somePubkey),
-        });
-        await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
+        const { acctEmail } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'ci.tests.gmail');
         /* eslint-disable @typescript-eslint/no-non-null-assertion */
         const key = Config.key('flowcrypt.compatibility.1pp1')!;
         await SettingsPageRecipe.addKeyTest(t, browser, acctEmail, key.armored!, key.passphrase, {}, false);
@@ -211,11 +179,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
       `decrypt - render plain text for "message" attachment (which has plain text)`,
       testWithBrowser(async (t, browser) => {
         const threadId = '184a87a7b32dd009';
-        const acctEmail = 'ci.tests.gmail@flowcrypt.test';
-        t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: singlePubKeyAttesterConfig(acctEmail, somePubkey),
-        });
-        const { authHdr } = await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
+        const { acctEmail, authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'ci.tests.gmail');
         const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`);
         await inboxPage.waitForSelTestState('ready');
         await inboxPage.waitAll('iframe');
@@ -235,11 +199,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
     test(
       `decrypt - outlook message with ATTxxxx encrypted email is correctly decrypted`,
       testWithBrowser(async (t, browser) => {
-        const acctEmail = 'flowcrypt.compatibility@gmail.com';
-        t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: singlePubKeyAttesterConfig(acctEmail, somePubkey),
-        });
-        await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
+        const { acctEmail } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
         await InboxPageRecipe.checkDecryptMsg(t, browser, {
           acctEmail,
           threadId: '17dbdf2425ac0f29',
@@ -251,16 +211,12 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
     test(
       'mail.google.com - decrypt message in offline mode',
       testWithBrowser(async (t, browser) => {
-        const acctEmail = 'ci.tests.gmail@flowcrypt.test';
-        t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: singlePubKeyAttesterConfig(acctEmail, somePubkey),
-          google: {
-            getMsg: {
-              '17b91b7e122902d2': { error: new HttpClientErr('RequestTimeout', Status.BAD_REQUEST) },
-            },
+        const { authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'ci.tests.gmail');
+        t.mockApi!.configProvider!.config.google = {
+          getMsg: {
+            '17b91b7e122902d2': { error: new HttpClientErr('RequestTimeout', Status.BAD_REQUEST) },
           },
-        });
-        const { authHdr } = await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
+        };
         await BrowserRecipe.pgpBlockVerifyDecryptedContent(
           t,
           browser,
@@ -278,11 +234,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
     test(
       `decrypt - without a subject`,
       testWithBrowser(async (t, browser) => {
-        const acctEmail = 'flowcrypt.compatibility@gmail.com';
-        t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: singlePubKeyAttesterConfig(acctEmail, somePubkey),
-        });
-        const { authHdr } = await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
+        const { authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
         await BrowserRecipe.pgpBlockVerifyDecryptedContent(
           t,
           browser,
@@ -301,11 +253,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
     test(
       `decrypt - [enigmail] encrypted iso-2022-jp pgp/mime`,
       testWithBrowser(async (t, browser) => {
-        const acctEmail = 'flowcrypt.compatibility@gmail.com';
-        t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: singlePubKeyAttesterConfig(acctEmail, somePubkey),
-        });
-        const { authHdr } = await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
+        const { authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
         await BrowserRecipe.pgpBlockVerifyDecryptedContent(
           t,
           browser,
@@ -323,11 +271,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
     test(
       `decrypt - [enigmail] encrypted iso-2022-jp, plain text`,
       testWithBrowser(async (t, browser) => {
-        const acctEmail = 'flowcrypt.compatibility@gmail.com';
-        t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: singlePubKeyAttesterConfig(acctEmail, somePubkey),
-        });
-        const { authHdr } = await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
+        const { authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
         await BrowserRecipe.pgpBlockVerifyDecryptedContent(
           t,
           browser,
@@ -345,11 +289,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
     test(
       `decrypt - iso-2022-jp, signed plain text`,
       testWithBrowser(async (t, browser) => {
-        const acctEmail = 'flowcrypt.compatibility@gmail.com';
-        t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: singlePubKeyAttesterConfig(acctEmail, somePubkey),
-        });
-        const { authHdr } = await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
+        const { authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
         await BrowserRecipe.pgpBlockVerifyDecryptedContent(
           t,
           browser,
@@ -367,11 +307,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
     test(
       `decrypt - quoted part parsing will not crash browser`,
       testWithBrowser(async (t, browser) => {
-        const acctEmail = 'flowcrypt.compatibility@gmail.com';
-        t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: singlePubKeyAttesterConfig(acctEmail, somePubkey),
-        });
-        const { authHdr } = await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
+        const { authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
         await BrowserRecipe.pgpBlockVerifyDecryptedContent(
           t,
           browser,
@@ -390,11 +326,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
     test(
       `decrypt - [flowcrypt] signed message inline`,
       testWithBrowser(async (t, browser) => {
-        const acctEmail = 'flowcrypt.compatibility@gmail.com';
-        t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: singlePubKeyAttesterConfig(acctEmail, somePubkey),
-        });
-        const { authHdr } = await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
+        const { authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
         await BrowserRecipe.pgpBlockVerifyDecryptedContent(
           t,
           browser,
@@ -412,11 +344,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
     test(
       `decrypt - [gpgmail] signed message will get parsed and rendered (though verification fails, enigmail does the same)`,
       testWithBrowser(async (t, browser) => {
-        const acctEmail = 'flowcrypt.compatibility@gmail.com';
-        t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: singlePubKeyAttesterConfig(acctEmail, somePubkey),
-        });
-        const { authHdr } = await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
+        const { authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
         await BrowserRecipe.pgpBlockVerifyDecryptedContent(
           t,
           browser,
@@ -434,11 +362,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
     test(
       `decrypt - [gpg] signed fully armored message`,
       testWithBrowser(async (t, browser) => {
-        const acctEmail = 'flowcrypt.compatibility@gmail.com';
-        t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: singlePubKeyAttesterConfig(acctEmail, somePubkey),
-        });
-        const { authHdr } = await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
+        const { authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
         await BrowserRecipe.pgpBlockVerifyDecryptedContent(
           t,
           browser,
@@ -457,11 +381,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
     test(
       `decrypt - [flowcrypt] encrypted utf8`,
       testWithBrowser(async (t, browser) => {
-        const acctEmail = 'flowcrypt.compatibility@gmail.com';
-        t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: singlePubKeyAttesterConfig(acctEmail, somePubkey),
-        });
-        const { authHdr } = await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
+        const { authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
         await BrowserRecipe.pgpBlockVerifyDecryptedContent(
           t,
           browser,
@@ -479,11 +399,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
     test(
       `decrypt - [flowcrypt] encrypted thai utf8`,
       testWithBrowser(async (t, browser) => {
-        const acctEmail = 'flowcrypt.compatibility@gmail.com';
-        t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: singlePubKeyAttesterConfig(acctEmail, somePubkey),
-        });
-        const { authHdr } = await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
+        const { authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
         await BrowserRecipe.pgpBlockVerifyDecryptedContent(
           t,
           browser,
@@ -501,11 +417,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
     test(
       `decrypt - [facebook] encrypted utf8`,
       testWithBrowser(async (t, browser) => {
-        const acctEmail = 'flowcrypt.compatibility@gmail.com';
-        t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: singlePubKeyAttesterConfig(acctEmail, somePubkey),
-        });
-        const { authHdr } = await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
+        const { authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
         await BrowserRecipe.pgpBlockVerifyDecryptedContent(
           t,
           browser,
@@ -523,11 +435,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
     test(
       `decrypt - [gpgmail] encrypted utf8`,
       testWithBrowser(async (t, browser) => {
-        const acctEmail = 'flowcrypt.compatibility@gmail.com';
-        t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: singlePubKeyAttesterConfig(acctEmail, somePubkey),
-        });
-        const { authHdr } = await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
+        const { authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
         await BrowserRecipe.pgpBlockVerifyDecryptedContent(
           t,
           browser,
@@ -545,11 +453,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
     test(
       `decrypt - [enigmail] encrypted utf8`,
       testWithBrowser(async (t, browser) => {
-        const acctEmail = 'flowcrypt.compatibility@gmail.com';
-        t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: singlePubKeyAttesterConfig(acctEmail, somePubkey),
-        });
-        const { authHdr } = await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
+        const { authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
         await BrowserRecipe.pgpBlockVerifyDecryptedContent(
           t,
           browser,
@@ -568,11 +472,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
     test(
       `decrypt - [enigmail] encrypted pgp/mime`,
       testWithBrowser(async (t, browser) => {
-        const acctEmail = 'flowcrypt.compatibility@gmail.com';
-        t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: singlePubKeyAttesterConfig(acctEmail, somePubkey),
-        });
-        const { authHdr } = await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
+        const { authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
         await BrowserRecipe.pgpBlockVerifyDecryptedContent(
           t,
           browser,
@@ -590,11 +490,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
     test(
       `decrypt - [enigmail] encrypted inline`,
       testWithBrowser(async (t, browser) => {
-        const acctEmail = 'flowcrypt.compatibility@gmail.com';
-        t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: singlePubKeyAttesterConfig(acctEmail, somePubkey),
-        });
-        const { authHdr } = await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
+        const { authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
         await BrowserRecipe.pgpBlockVerifyDecryptedContent(
           t,
           browser,
@@ -612,11 +508,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
     test(
       `decrypt - [enigmail] encrypted+signed inline`,
       testWithBrowser(async (t, browser) => {
-        const acctEmail = 'flowcrypt.compatibility@gmail.com';
-        t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: singlePubKeyAttesterConfig(acctEmail, somePubkey),
-        });
-        const { authHdr } = await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
+        const { authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
         await BrowserRecipe.pgpBlockVerifyDecryptedContent(
           t,
           browser,
@@ -634,11 +526,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
     test(
       `decrypt - [enigmail] encrypted+signed pgp/mime`,
       testWithBrowser(async (t, browser) => {
-        const acctEmail = 'flowcrypt.compatibility@gmail.com';
-        t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: singlePubKeyAttesterConfig(acctEmail, somePubkey),
-        });
-        const { authHdr } = await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
+        const { authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
         await BrowserRecipe.pgpBlockVerifyDecryptedContent(
           t,
           browser,
@@ -656,11 +544,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
     test(
       `decrypt - [enigmail] encrypted+signed+file pgp/mime + load from gmail`,
       testWithBrowser(async (t, browser) => {
-        const acctEmail = 'flowcrypt.compatibility@gmail.com';
-        t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: singlePubKeyAttesterConfig(acctEmail, somePubkey),
-        });
-        const { authHdr } = await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
+        const { authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
         await BrowserRecipe.pgpBlockVerifyDecryptedContent(
           t,
           browser,
@@ -678,11 +562,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
     test(
       `decrypt - encrypted missing checksum`,
       testWithBrowser(async (t, browser) => {
-        const acctEmail = 'flowcrypt.compatibility@gmail.com';
-        t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: singlePubKeyAttesterConfig(acctEmail, somePubkey),
-        });
-        const { authHdr } = await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
+        const { authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
         await BrowserRecipe.pgpBlockVerifyDecryptedContent(
           t,
           browser,
@@ -700,11 +580,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
     test(
       `decrypt - pgp/mime with large attachment - mismatch`,
       testWithBrowser(async (t, browser) => {
-        const acctEmail = 'flowcrypt.compatibility@gmail.com';
-        t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: singlePubKeyAttesterConfig(acctEmail, somePubkey),
-        });
-        const { authHdr } = await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
+        const { authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
         await BrowserRecipe.pgpBlockVerifyDecryptedContent(
           t,
           browser,
@@ -722,11 +598,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
     test(
       `decrypt - pgp/mime with large attachment`,
       testWithBrowser(async (t, browser) => {
-        const acctEmail = 'flowcrypt.compatibility@gmail.com';
-        t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: singlePubKeyAttesterConfig(acctEmail, somePubkey),
-        });
-        const { authHdr } = await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
+        const { acctEmail, authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
         const msgId = '1622ea42f3654ddc';
         const expectedMessage = {
           content: ['This will will have a larger attachment below', 'image-large.jpg'],
@@ -744,11 +616,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
     test(
       `decrypt - pgp/mime with large attachment as message.asc`,
       testWithBrowser(async (t, browser) => {
-        const acctEmail = 'flowcrypt.compatibility@gmail.com';
-        t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: singlePubKeyAttesterConfig(acctEmail, somePubkey),
-        });
-        const { authHdr } = await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
+        const { authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
         await BrowserRecipe.pgpBlockVerifyDecryptedContent(
           t,
           browser,
@@ -767,11 +635,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
     test(
       `decrypt - pgp/mime with small attachments as message.asc`,
       testWithBrowser(async (t, browser) => {
-        const acctEmail = 'flowcrypt.compatibility@gmail.com';
-        t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: singlePubKeyAttesterConfig(acctEmail, somePubkey),
-        });
-        const { authHdr } = await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
+        const { authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
         await BrowserRecipe.pgpBlockVerifyDecryptedContent(
           t,
           browser,
@@ -789,11 +653,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
     test(
       `decrypt - [flowcrypt] escape and keep tags in plain text`,
       testWithBrowser(async (t, browser) => {
-        const acctEmail = 'flowcrypt.compatibility@gmail.com';
-        t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: singlePubKeyAttesterConfig(acctEmail, somePubkey),
-        });
-        const { authHdr } = await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
+        const { authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
         await BrowserRecipe.pgpBlockVerifyDecryptedContent(
           t,
           browser,
@@ -811,11 +671,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
     test(
       `decrypt - [symantec] base64 german umlauts`,
       testWithBrowser(async (t, browser) => {
-        const acctEmail = 'flowcrypt.compatibility@gmail.com';
-        t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: singlePubKeyAttesterConfig(acctEmail, somePubkey),
-        });
-        const { authHdr } = await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
+        const { authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
         await BrowserRecipe.pgpBlockVerifyDecryptedContent(
           t,
           browser,
@@ -833,11 +689,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
     test(
       `decrypt - [gnupg v2] thai text`,
       testWithBrowser(async (t, browser) => {
-        const acctEmail = 'flowcrypt.compatibility@gmail.com';
-        t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: singlePubKeyAttesterConfig(acctEmail, somePubkey),
-        });
-        const { authHdr } = await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
+        const { authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
         await BrowserRecipe.pgpBlockVerifyDecryptedContent(
           t,
           browser,
@@ -855,11 +707,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
     test(
       `decrypt - [gnupg v2] thai text in html`,
       testWithBrowser(async (t, browser) => {
-        const acctEmail = 'flowcrypt.compatibility@gmail.com';
-        t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: singlePubKeyAttesterConfig(acctEmail, somePubkey),
-        });
-        const { authHdr } = await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
+        const { authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
         await BrowserRecipe.pgpBlockVerifyDecryptedContent(
           t,
           browser,
@@ -877,11 +725,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
     test(
       `decrypt - [enigmail] basic html`,
       testWithBrowser(async (t, browser) => {
-        const acctEmail = 'flowcrypt.compatibility@gmail.com';
-        t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: singlePubKeyAttesterConfig(acctEmail, somePubkey),
-        });
-        const { authHdr } = await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
+        const { authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
         await BrowserRecipe.pgpBlockVerifyDecryptedContent(
           t,
           browser,
@@ -899,11 +743,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
     test(
       `decrypt - [thunderbird] unicode chinese`,
       testWithBrowser(async (t, browser) => {
-        const acctEmail = 'flowcrypt.compatibility@gmail.com';
-        t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: singlePubKeyAttesterConfig(acctEmail, somePubkey),
-        });
-        const { authHdr } = await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
+        const { authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
         await BrowserRecipe.pgpBlockVerifyDecryptedContent(
           t,
           browser,
@@ -922,11 +762,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
     test(
       `decrypt - [security] mdc - missing - error`,
       testWithBrowser(async (t, browser) => {
-        const acctEmail = 'flowcrypt.compatibility@gmail.com';
-        t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: singlePubKeyAttesterConfig(acctEmail, somePubkey),
-        });
-        const { authHdr } = await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
+        const { authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
         await BrowserRecipe.pgpBlockVerifyDecryptedContent(
           t,
           browser,
@@ -944,11 +780,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
     test(
       `decrypt - [security] mdc - modification detected - error`,
       testWithBrowser(async (t, browser) => {
-        const acctEmail = 'flowcrypt.compatibility@gmail.com';
-        t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: singlePubKeyAttesterConfig(acctEmail, somePubkey),
-        });
-        const { authHdr } = await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
+        const { authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
         await BrowserRecipe.pgpBlockVerifyDecryptedContent(
           t,
           browser,
@@ -965,11 +797,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
     test(
       `decrypt - [security] signed message - maliciously modified - should not pass`,
       testWithBrowser(async (t, browser) => {
-        const acctEmail = 'flowcrypt.compatibility@gmail.com';
-        t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: singlePubKeyAttesterConfig(acctEmail, somePubkey),
-        });
-        const { authHdr } = await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
+        const { authHdr, acctEmail } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
         const msgId = '15f7f7c5979b5a26';
         await PageRecipe.addPubkey(
           t,
@@ -1051,11 +879,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
     test(
       `decrypt - [everdesk] message encrypted for sub but claims encryptedFor:primary,sub`,
       testWithBrowser(async (t, browser) => {
-        const acctEmail = 'flowcrypt.compatibility@gmail.com';
-        t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: singlePubKeyAttesterConfig(acctEmail, somePubkey),
-        });
-        const { authHdr } = await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
+        const { authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
         await BrowserRecipe.pgpBlockVerifyDecryptedContent(
           t,
           browser,
@@ -1073,11 +897,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
     test(
       `decrypt - [pep] pgp/mime message with text encoded as inline attachment`,
       testWithBrowser(async (t, browser) => {
-        const acctEmail = 'flowcrypt.compatibility@gmail.com';
-        t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: singlePubKeyAttesterConfig(acctEmail, somePubkey),
-        });
-        const { authHdr } = await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
+        const { authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
         await BrowserRecipe.pgpBlockVerifyDecryptedContent(
           t,
           browser,
@@ -1096,11 +916,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
     test(
       'decrypt - by entering pass phrase + remember in session',
       testWithBrowser(async (t, browser) => {
-        const acctEmail = 'flowcrypt.compatibility@gmail.com';
-        t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: singlePubKeyAttesterConfig(acctEmail, somePubkey),
-        });
-        await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
+        const { acctEmail } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
         const pp = Config.key('flowcrypt.compatibility.1pp1').passphrase;
         const threadId = '15f7f5630573be2d';
         const expectedContent = 'The International DUBLIN Literary Award is an international literary award';
@@ -1128,11 +944,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
       'decrypt - display email with cid image correctly',
       testWithBrowser(async (t, browser) => {
         const threadId = '186eed032659ad4f';
-        const acctEmail = 'flowcrypt.compatibility@gmail.com';
-        t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: singlePubKeyAttesterConfig(acctEmail, somePubkey),
-        });
-        await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
+        const { acctEmail } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
         const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`);
         await inboxPage.waitAll('iframe');
         const pgpBlock = await inboxPage.getFrame(['pgp_render_block.htm']);
@@ -1148,11 +960,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
       "decrypt - thunderbird - signedHtml verifyDetached doesn't duplicate PGP key section",
       testWithBrowser(async (t, browser) => {
         const threadId = '17daefa0eb077da6';
-        const acctEmail = 'flowcrypt.compatibility@gmail.com';
-        t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: singlePubKeyAttesterConfig(acctEmail, somePubkey),
-        });
-        await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
+        const { acctEmail } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
         const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`);
         await inboxPage.waitAll('iframe');
         const pgpBlock = await inboxPage.getFrame(['pgp_render_block.htm']);
@@ -1167,11 +975,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
       'decrypt - print feature in pgp block',
       testWithBrowser(async (t, browser) => {
         const threadId = '182917712be838e1';
-        const acctEmail = 'flowcrypt.compatibility@gmail.com';
-        t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: singlePubKeyAttesterConfig(acctEmail, somePubkey),
-        });
-        await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
+        const { acctEmail } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
         // todo: test mock gmail page
         const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`);
         await inboxPage.waitAll('iframe');
@@ -1191,11 +995,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
       "decrypt - thunderbird - signedMsg verifyDetached doesn't duplicate PGP key section",
       testWithBrowser(async (t, browser) => {
         const threadId = '17dad75e63e47f97';
-        const acctEmail = 'flowcrypt.compatibility@gmail.com';
-        t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: singlePubKeyAttesterConfig(acctEmail, somePubkey),
-        });
-        const { authHdr } = await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
+        const { authHdr, acctEmail } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
         const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`);
         await inboxPage.waitAll('iframe');
         const pgpBlock = await inboxPage.getFrame(['pgp_render_block.htm']);
@@ -1223,11 +1023,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
       'decrypt - thunderbird - signing key is rendered in signed and encrypted message',
       testWithBrowser(async (t, browser) => {
         const threadId = '175adb163ac0d69b';
-        const acctEmail = 'ci.tests.gmail@flowcrypt.test';
-        t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: singlePubKeyAttesterConfig(acctEmail, somePubkey),
-        });
-        await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
+        const { acctEmail } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'ci.tests.gmail');
         const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`);
         await inboxPage.waitAll('iframe');
         const pgpBlock = await inboxPage.getFrame(['pgp_render_block.htm']);
@@ -1240,20 +1036,8 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
     test(
       'decrypt - thunderbird - signed text is recognized',
       testWithBrowser(async (t, browser) => {
-        const acctEmail = 'flowcrypt.compatibility@gmail.com';
-        t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: {
-            pubkeyLookup: {
-              [acctEmail]: {
-                pubkey: somePubkey,
-              },
-              'some.sender@test.com': {
-                pubkey: await get203FAE7076005381(),
-              },
-            },
-          },
-        });
-        await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
+        const { acctEmail } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
+        t.mockApi!.configProvider!.config.attester!.pubkeyLookup!['some.sender@test.com'] = { pubkey: await get203FAE7076005381() };
         const threadId = '17dad75e63e47f97';
         const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`);
         await inboxPage.waitAll('iframe', { timeout: 2 });
@@ -1272,22 +1056,12 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
       'verification - message text is rendered prior to pubkey fetching',
       testWithBrowser(async (t, browser) => {
         const msgId = '17dad75e63e47f97';
-        const acctEmail = 'flowcrypt.compatibility@gmail.com';
         const senderEmail = 'some.sender@test.com';
-        t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: {
-            pubkeyLookup: {
-              [acctEmail]: {
-                pubkey: somePubkey,
-              },
-              [senderEmail]: {
-                pubkey: await get203FAE7076005381(),
-                delayInSeconds: 5,
-              },
-            },
-          },
-        });
-        const { authHdr } = await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
+        const { authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
+        t.mockApi!.configProvider!.config.attester!.pubkeyLookup![senderEmail] = {
+          pubkey: await get203FAE7076005381(),
+          delayInSeconds: 5,
+        };
         const gmailPage = await browser.newPage(t, `${t.urls?.mockGmailUrl()}/${msgId}`, undefined, authHdr);
         const pgpBlockPage = await gmailPage.getFrame(['pgp_render_block.htm']);
         await pgpBlockPage.waitForContent('@pgp-block-content', '1234', 4, 10);
@@ -1299,24 +1073,14 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
     test(
       'verification - public key fetched from WKD',
       testWithBrowser(async (t, browser) => {
-        const acctEmail = 'flowcrypt.compatibility@gmail.com';
-        t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: {
-            pubkeyLookup: {
-              [acctEmail]: {
-                pubkey: somePubkey,
-              },
+        const { acctEmail } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
+        t.mockApi!.configProvider!.config.wkd = {
+          directLookup: {
+            'some.sender': {
+              pubkeys: [await get203FAE7076005381()],
             },
           },
-          wkd: {
-            directLookup: {
-              'some.sender': {
-                pubkeys: [await get203FAE7076005381()],
-              },
-            },
-          },
-        });
-        await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
+        };
         const threadId = '17dad75e63e47f97';
         const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`);
         await inboxPage.waitAll('iframe', { timeout: 2 });
@@ -1335,21 +1099,9 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
       'decrypt - fetched pubkey is automatically saved to contacts',
       testWithBrowser(async (t, browser) => {
         const msgId = '17dad75e63e47f97';
-        const acctEmail = 'flowcrypt.compatibility@gmail.com';
         const senderEmail = 'some.sender@test.com';
-        t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: {
-            pubkeyLookup: {
-              [acctEmail]: {
-                pubkey: somePubkey,
-              },
-              [senderEmail]: {
-                pubkey: await get203FAE7076005381(),
-              },
-            },
-          },
-        });
-        const { authHdr } = await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
+        const { acctEmail, authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
+        t.mockApi!.configProvider!.config.attester!.pubkeyLookup![senderEmail] = { pubkey: await get203FAE7076005381() };
         const acctAttr = acctEmail.replace(/[\.@]/g, '');
         const senderAttr = senderEmail.replace(/[\.@]/g, '');
         {
@@ -1391,16 +1143,12 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
       'decrypt - unsigned encrypted message',
       testWithBrowser(async (t, browser) => {
         const threadId = '17918a9d7ca2fbac';
-        const acctEmail = 'flowcrypt.compatibility@gmail.com';
-        t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: singlePubKeyAttesterConfig(acctEmail, somePubkey),
-        });
         const expectedMessage = {
           content: ['This is unsigned, encrypted message'],
           encryption: 'encrypted',
           signature: 'not signed',
         };
-        const { authHdr } = await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
+        const { acctEmail, authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
         const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`);
         await inboxPage.waitAll('iframe');
         const urls = await inboxPage.getFramesUrls(['/chrome/elements/pgp_render_block.htm'], { sleep: 3 });
@@ -1418,20 +1166,10 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
     test(
       'signature - sender is different from pubkey uid',
       testWithBrowser(async (t, browser) => {
-        const acctEmail = 'ci.tests.gmail@flowcrypt.test';
-        t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: {
-            pubkeyLookup: {
-              [acctEmail]: {
-                pubkey: somePubkey,
-              },
-              'sender@example.com': {
-                pubkey: testConstants.pubkey2864E326A5BE488A,
-              },
-            },
-          },
-        });
-        await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
+        const { acctEmail } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'ci.tests.gmail');
+        t.mockApi!.configProvider!.config.attester!.pubkeyLookup!['sender@example.com'] = {
+          pubkey: testConstants.pubkey2864E326A5BE488A,
+        };
         const threadId = '1766644f13510f58';
         // todo: test with gmail mock page
         const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`);
@@ -1450,20 +1188,10 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
       'signature - verification succeeds when signed with a second-best key',
       testWithBrowser(async (t, browser) => {
         const threadId = '1766644f13510f58';
-        const acctEmail = 'ci.tests.gmail@flowcrypt.test';
-        t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: {
-            pubkeyLookup: {
-              [acctEmail]: {
-                pubkey: somePubkey,
-              },
-              'sender@example.com': {
-                pubkey: testConstants.pubkey2864E326A5BE488A,
-              },
-            },
-          },
-        });
-        const { authHdr } = await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
+        const { acctEmail, authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'ci.tests.gmail');
+        t.mockApi!.configProvider!.config.attester!.pubkeyLookup!['sender@example.com'] = {
+          pubkey: testConstants.pubkey2864E326A5BE488A,
+        };
         await PageRecipe.addPubkey(
           t,
           browser,
@@ -1495,11 +1223,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
     test(
       'decrypt - protonmail - PGP/inline signed and encrypted message with pubkey - pubkey signature is ignored',
       testWithBrowser(async (t, browser) => {
-        const acctEmail = 'ci.tests.gmail@flowcrypt.test';
-        t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: singlePubKeyAttesterConfig(acctEmail, somePubkey),
-        });
-        const { authHdr } = await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
+        const { authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'ci.tests.gmail');
         const dbPage = await browser.newExtensionPage(t, 'chrome/dev/ci_unit_test.htm'); // todo: url?
         // add the pubkey of the sender
         await dbPage.page.evaluate(async (pubkey: string) => {
@@ -1524,11 +1248,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
     test(
       'decrypt - protonmail - PGP/inline signed and encrypted message with pubkey - pubkey signature is ignored - inbox',
       testWithBrowser(async (t, browser) => {
-        const acctEmail = 'ci.tests.gmail@flowcrypt.test';
-        t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: singlePubKeyAttesterConfig(acctEmail, somePubkey),
-        });
-        await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
+        const { acctEmail } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'ci.tests.gmail');
         const threadId = '1869220e0c8f16dd';
         let inboxPage = await browser.newExtensionInboxPage(t, acctEmail, threadId);
         await inboxPage.waitAll('iframe');
@@ -1567,11 +1287,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
     test(
       'signature - cleartext signed messages from HTML are re-fetched when needed',
       testWithBrowser(async (t, browser) => {
-        const acctEmail = 'ci.tests.gmail@flowcrypt.test';
-        t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: singlePubKeyAttesterConfig(acctEmail, somePubkey),
-        });
-        const { authHdr } = await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
+        const { acctEmail, authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'ci.tests.gmail');
         const settingsPage = await browser.newExtensionSettingsPage(t, acctEmail);
         await settingsPage.close();
         const gmailPage = await browser.newPage(t, `${t.urls?.mockGmailUrl()}/1866867cfdb8b61e`, undefined, authHdr);
@@ -1637,21 +1353,9 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
       'decrypt - signed-only PGP/MIME message - text is rendered only once in inbox',
       testWithBrowser(async (t, browser) => {
         const msgId = '17daefa0eb077da6';
-        const acctEmail = 'flowcrypt.compatibility@gmail.com';
         const signerEmail = 'some.sender@test.com';
-        t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: {
-            pubkeyLookup: {
-              [acctEmail]: {
-                pubkey: somePubkey,
-              },
-              [signerEmail]: {
-                pubkey: await get203FAE7076005381(),
-              },
-            },
-          },
-        });
-        await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
+        const { acctEmail } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
+        t.mockApi!.configProvider!.config.attester!.pubkeyLookup![signerEmail] = { pubkey: await get203FAE7076005381() };
         const inboxPage = await browser.newExtensionInboxPage(t, acctEmail, msgId);
         await inboxPage.waitAll('iframe');
         await BrowserRecipe.pgpBlockCheck(t, await inboxPage.getFrame(['pgp_render_block.htm']), {
@@ -1666,20 +1370,8 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
     test(
       'decrypt - protonmail - load pubkey into contact + verify detached msg',
       testWithBrowser(async (t, browser) => {
-        const acctEmail = 'flowcrypt.compatibility@gmail.com';
-        t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: {
-            pubkeyLookup: {
-              [acctEmail]: {
-                pubkey: somePubkey,
-              },
-              'flowcrypt.compatibility@protonmail.com': {
-                pubkey: protonMailCompatKey,
-              },
-            },
-          },
-        });
-        const { authHdr } = await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
+        const { authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
+        t.mockApi!.configProvider!.config.attester!.pubkeyLookup!['flowcrypt.compatibility@protonmail.com'] = { pubkey: protonMailCompatKey };
         await BrowserRecipe.pgpBlockVerifyDecryptedContent(
           t,
           browser,
@@ -1720,20 +1412,8 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
     test(
       'decrypt - protonmail - auto TOFU load matching pubkey first time',
       testWithBrowser(async (t, browser) => {
-        const acctEmail = 'flowcrypt.compatibility@gmail.com';
-        t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: {
-            pubkeyLookup: {
-              [acctEmail]: {
-                pubkey: somePubkey,
-              },
-              'some.alias@protonmail.com': {
-                pubkey: protonMailCompatKey,
-              },
-            },
-          },
-        });
-        const { authHdr } = await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
+        const { authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
+        t.mockApi!.configProvider!.config.attester!.pubkeyLookup!['some.alias@protonmail.com'] = { pubkey: protonMailCompatKey };
         await BrowserRecipe.pgpBlockVerifyDecryptedContent(
           t,
           browser,
@@ -1751,20 +1431,8 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
     test(
       'decrypt - verify encrypted+signed message',
       testWithBrowser(async (t, browser) => {
-        const acctEmail = 'flowcrypt.compatibility@gmail.com';
-        t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: {
-            pubkeyLookup: {
-              [acctEmail]: {
-                pubkey: somePubkey,
-              },
-              'martin@politick.ca': {
-                pubkey: mpVerificationKey,
-              },
-            },
-          },
-        });
-        const { authHdr } = await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
+        const { authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
+        t.mockApi!.configProvider!.config.attester!.pubkeyLookup!['martin@politick.ca'] = { pubkey: mpVerificationKey };
         await BrowserRecipe.pgpBlockVerifyDecryptedContent(
           t,
           browser,
@@ -1782,11 +1450,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
     test(
       'decrypt - load key - expired key',
       testWithBrowser(async (t, browser) => {
-        const acctEmail = 'flowcrypt.compatibility@gmail.com';
-        t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: singlePubKeyAttesterConfig(acctEmail, somePubkey),
-        });
-        await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
+        await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
         const pubFrameUrl = `chrome/elements/pgp_pubkey.htm?frameId=none&armoredPubkey=${encodeURIComponent(
           testConstants.expiredPub
         )}&acctEmail=flowcrypt.compatibility%40gmail.com&parentTabId=0`;
@@ -1802,11 +1466,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
     test(
       'decrypt - load key - unusable key',
       testWithBrowser(async (t, browser) => {
-        const acctEmail = 'flowcrypt.compatibility@gmail.com';
-        t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: singlePubKeyAttesterConfig(acctEmail, somePubkey),
-        });
-        await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
+        await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
         const pubFrameUrl = `chrome/elements/pgp_pubkey.htm?frameId=none&armoredPubkey=${encodeURIComponent(
           testConstants.unusableKey
         )}&acctEmail=flowcrypt.compatibility%40gmail.com&parentTabId=0`;
@@ -1821,11 +1481,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
     test(
       'decrypt - wrong message - checksum throws error',
       testWithBrowser(async (t, browser) => {
-        const acctEmail = 'flowcrypt.compatibility@gmail.com';
-        t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: singlePubKeyAttesterConfig(acctEmail, somePubkey),
-        });
-        const { authHdr } = await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
+        const { authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
         const threadId = '15f7ffb9320bd79e';
         const expectedContent = 'Ascii armor integrity check failed';
         await BrowserRecipe.pgpBlockVerifyDecryptedContent(
@@ -1844,11 +1500,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
     test(
       'decrypt - inbox - encrypted message inside signed',
       testWithBrowser(async (t, browser) => {
-        const acctEmail = 'flowcrypt.compatibility@gmail.com';
-        t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: singlePubKeyAttesterConfig(acctEmail, somePubkey),
-        });
-        await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
+        await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
         const inboxPage = await browser.newPage(t, 'chrome/settings/inbox/inbox.htm?acctEmail=flowcrypt.compatibility%40gmail.com&threadId=16f0bfce331ca2fd');
         await inboxPage.waitAll('iframe.pgp_block');
         const pgpBlock = await inboxPage.getFrame(['pgp_render_block.htm']);
@@ -1863,11 +1515,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
     test(
       'decrypt - inbox - check for rel="noopener noreferrer" attribute in PGP/MIME links',
       testWithBrowser(async (t, browser) => {
-        const acctEmail = 'flowcrypt.compatibility@gmail.com';
-        t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: singlePubKeyAttesterConfig(acctEmail, somePubkey),
-        });
-        await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
+        await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
         const inboxPage = await browser.newPage(t, 'chrome/settings/inbox/inbox.htm?acctEmail=flowcrypt.compatibility%40gmail.com&threadId=1762c9a49bedbf6f');
         await inboxPage.waitAll('iframe.pgp_block');
         const pgpBlock = await inboxPage.getFrame(['pgp_render_block.htm']);
@@ -1880,11 +1528,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
     test(
       'decrypt - inbox - Verify null window.opener object after opening PGP/MIME links',
       testWithBrowser(async (t, browser) => {
-        const acctEmail = 'flowcrypt.compatibility@gmail.com';
-        t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: singlePubKeyAttesterConfig(acctEmail, somePubkey),
-        });
-        await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
+        await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
         const inboxPage = await browser.newPage(t, 'chrome/settings/inbox/inbox.htm?acctEmail=flowcrypt.compatibility%40gmail.com&threadId=1762c9a49bedbf6f');
         await inboxPage.waitAll('iframe.pgp_block');
         const pgpBlock = await inboxPage.getFrame(['pgp_render_block.htm']);
@@ -1934,11 +1578,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
       'decrypt - prevent rendering of attachments from domain sources other than flowcrypt.s3.amazonaws.com',
       testWithBrowser(async (t, browser) => {
         const threadId1 = '184cc6aa8e884397';
-        const acctEmail = 'flowcrypt.compatibility@gmail.com';
-        t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: singlePubKeyAttesterConfig(acctEmail, somePubkey),
-        });
-        await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
+        const { acctEmail } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
         const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId1}`);
         await inboxPage.waitAll('iframe');
         const pgpBlock = await inboxPage.getFrame(['pgp_render_block.htm']);
@@ -1951,20 +1591,8 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
     test(
       `verify - sha1 shows error`,
       testWithBrowser(async (t, browser) => {
-        const acctEmail = 'flowcrypt.compatibility@gmail.com';
-        t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: {
-            pubkeyLookup: {
-              [acctEmail]: {
-                pubkey: somePubkey,
-              },
-              'sha1@sign.com': {
-                pubkey: sha1signpubkey,
-              },
-            },
-          },
-        });
-        const { authHdr } = await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
+        const { authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
+        t.mockApi!.configProvider!.config.attester!.pubkeyLookup!['sha1@sign.com'] = { pubkey: sha1signpubkey };
         await BrowserRecipe.pgpBlockVerifyDecryptedContent(
           t,
           browser,
@@ -1982,11 +1610,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
     test(
       'verify - Kraken - urldecode signature',
       testWithBrowser(async (t, browser) => {
-        const acctEmail = 'flowcrypt.compatibility@gmail.com';
-        t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: singlePubKeyAttesterConfig(acctEmail, somePubkey),
-        });
-        const { authHdr } = await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
+        const { authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
         const expectedContent = 'Kraken clients can now begin converting popular currencies';
         await BrowserRecipe.pgpBlockVerifyDecryptedContent(
           t,
@@ -2008,18 +1632,8 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
         const threadId = '187365d19ec9a10c';
         const threadId2 = '18736a0687a8426b';
         const threadId3 = '187cfc92db548a0c';
-        const acctEmail = 'flowcrypt.compatibility@gmail.com';
         const expectedErrMsg = 'This executable file was not checked for viruses, and may be dangerous to download or run. Proceed anyway?';
-        t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: {
-            pubkeyLookup: {
-              [acctEmail]: {
-                pubkey: somePubkey,
-              },
-            },
-          },
-        });
-        const { authHdr } = await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
+        const { acctEmail, authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
         const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`);
         const pgpBlockPage = await inboxPage.getFrame(['pgp_render_block.htm']);
         await pgpBlockPage.waitAndClick('@download-attachment-0');
