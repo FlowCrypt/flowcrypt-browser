@@ -38,7 +38,6 @@ export type AccountIndex =
   | 'full_name'
   | 'cryptup_enabled'
   | 'setup_done'
-  | 'successfully_received_at_leat_one_message'
   | 'notification_setup_done_seen'
   | 'picture'
   | 'outgoing_language'
@@ -67,7 +66,6 @@ export type AcctStoreDict = {
   full_name?: string;
   cryptup_enabled?: boolean;
   setup_done?: boolean;
-  successfully_received_at_leat_one_message?: boolean;
   notification_setup_done_seen?: boolean;
   picture?: string; // google image
   outgoing_language?: 'EN' | 'DE';

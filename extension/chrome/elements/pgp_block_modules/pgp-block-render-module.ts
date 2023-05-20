@@ -48,14 +48,6 @@ export class PgpBlockViewRenderModule {
   };
 
   public renderContent = (htmlContent: string, isErr: boolean) => {
-    /*
-    todo:
-    if (!isErr && !this.view.isOutgoing) {
-      // successfully opened incoming message
-      // eslint-disable-next-line @typescript-eslint/naming-convention
-      await AcctStore.set(this.view.acctEmail, { successfully_received_at_leat_one_message: true });
-    }
-    */
     if (!isErr) {
       // rendering message content
       $('.pgp_print_button').show();
