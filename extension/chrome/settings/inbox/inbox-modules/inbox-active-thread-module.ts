@@ -81,7 +81,7 @@ export class InboxActiveThreadModule extends ViewModule<InboxView> {
       for (const m of thread.messages) {
         threadHasPgpBlock ||= await this.renderMsg(m);
       }
-      if (threadHasPgpBlock) {
+      if (threadHasPgpBlock || this.view.showOriginal) {
         $('.action_see_original_message').css('display', 'inline-block');
         if (this.view.showOriginal) {
           $('.action_see_original_message').text('See Decrypted');
@@ -146,14 +146,13 @@ export class InboxActiveThreadModule extends ViewModule<InboxView> {
     const htmlId = this.replyMsgId(message.id);
     try {
       const msg = await this.view.messageRenderer.downloader.msgGetCached(message.id).download.full;
-      // todo: take `from` from the processedMessage?
-      const { blocks, isBodyEmpty, renderedXssSafe, singlePlainBlock, blocksInFrames, messageInfo, from, attachments } =
-        await this.view.messageRenderer.msgGetProcessed(message.id);
-      const senderEmail = from || 'unknown';
+      const { blocks, isBodyEmpty, messageInfo, from, attachments } = await this.view.messageRenderer.msgGetProcessed(message.id);
       const exportBtn = this.debugEmails.includes(this.view.acctEmail) ? '<a href="#" class="action-export">download api export</a>' : '';
+      const senderEmail = from ? Str.parseEmail(from).email : undefined;
+      const { renderedXssSafe, blocksInFrames } = this.view.messageRenderer.renderMsg({ blocks, senderEmail }, this.view.showOriginal);
       const loaderContext = new LoaderContext(
         this.view.factory,
-        singlePlainBlock ? XssSafeFactory.renderPlainContent(singlePlainBlock.content) : renderedXssSafe,
+        renderedXssSafe,
         blocks
           .filter(block => block.attachmentMeta && ['encryptedAttachment', 'plainAttachment'].includes(block.type))
           .map(block => XssSafeFactory.renderableMsgBlock(this.view.factory, block, this.view.messageRenderer.isOutgoing(senderEmail)))
@@ -180,9 +179,7 @@ export class InboxActiveThreadModule extends ViewModule<InboxView> {
           : '');
       $('.thread').append(this.wrapMsg(htmlId, r)); // xss-safe-factory
       loaderContext.completeBinding(this.view.relayManager);
-      this.view.messageRenderer
-        .processInlineBlocks(this.view.relayManager, this.view.factory, messageInfo, blocksInFrames, from ? Str.parseEmail(from).email : undefined)
-        .catch(Catch.reportErr);
+      this.view.messageRenderer.processInlineBlocks(this.view.relayManager, this.view.factory, messageInfo, blocksInFrames, senderEmail).catch(Catch.reportErr);
       if (exportBtn) {
         $('.action-export').on(
           'click',

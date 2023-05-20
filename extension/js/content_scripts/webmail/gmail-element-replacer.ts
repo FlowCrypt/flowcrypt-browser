@@ -167,38 +167,43 @@ export class GmailElementReplacer implements WebmailElementReplacer {
         console.debug('replaceArmoredBlocks() for of emailsContainingPgpBlock -> emailContainer added evaluated');
       }
       const msgId = this.determineMsgId(emailContainer);
-      let renderedXssSafe: string | undefined;
-      let blocksInFrames: Dict<MsgBlock> = {};
+      let blocks: MsgBlock[] = [];
       let messageInfo: MessageInfo | undefined;
       let from: string | undefined;
       try {
-        ({ renderedXssSafe, blocksInFrames, messageInfo, from } = await this.messageRenderer.msgGetProcessed(msgId));
+        ({ messageInfo, from, blocks } = await this.messageRenderer.msgGetProcessed(msgId));
       } catch (e) {
         // fill with fallback values from the element
-        const blocks = Mime.processBody({ text: emailContainer.innerText });
-        ({ renderedXssSafe, blocksInFrames } = MessageRenderer.renderMsg({ blocks, from }, this.factory, false, this.sendAs));
+        blocks = Mime.processBody({ text: emailContainer.innerText });
       }
-      if (renderedXssSafe) {
-        $(this.sel.translatePrompt).hide();
-        if (this.debug) {
-          console.debug('replaceArmoredBlocks() for of emailsContainingPgpBlock -> emailContainer replacing');
-        }
-        LoaderContextWebmail.updateMsgBodyEl_DANGEROUSLY(emailContainer, 'set', renderedXssSafe); // xss-safe-factory: replace_blocks is XSS safe
-        if (this.debug) {
-          console.debug('replaceArmoredBlocks() for of emailsContainingPgpBlock -> emailContainer replaced');
-        }
-        const senderEmail = this.getSenderEmail(this.getMsgBodyEl(msgId)) || from;
-        // todo: const isOutgoing = !!this.sendAs[senderEmail];
-        this.messageRenderer
-          .processInlineBlocks(
-            this.relayManager,
-            this.factory,
-            messageInfo ?? { isPwdMsgBasedOnMsgSnippet: MessageRenderer.isPwdMsg(emailContainer.innerText) }, // todo: print info for offline?
-            blocksInFrames,
-            senderEmail
-          )
-          .catch(Catch.reportErr);
+      if (blocks.length === 0 || (blocks.length === 1 && blocks[0].type === 'plainText')) {
+        // only has single block which is plain text
+        continue;
       }
+      if (!from) {
+        from = this.getSenderEmail(this.getMsgBodyEl(msgId));
+      }
+      const senderEmail = from ? Str.parseEmail(from).email : undefined;
+      const { renderedXssSafe, blocksInFrames } = this.messageRenderer.renderMsg({ blocks, senderEmail }, false);
+      if (!renderedXssSafe) continue;
+      $(this.sel.translatePrompt).hide();
+      if (this.debug) {
+        console.debug('replaceArmoredBlocks() for of emailsContainingPgpBlock -> emailContainer replacing');
+      }
+      LoaderContextWebmail.updateMsgBodyEl_DANGEROUSLY(emailContainer, 'set', renderedXssSafe); // xss-safe-factory: replace_blocks is XSS safe
+      if (this.debug) {
+        console.debug('replaceArmoredBlocks() for of emailsContainingPgpBlock -> emailContainer replaced');
+      }
+      // todo: const isOutgoing = !!this.sendAs[senderEmail];
+      this.messageRenderer
+        .processInlineBlocks(
+          this.relayManager,
+          this.factory,
+          messageInfo ?? { isPwdMsgBasedOnMsgSnippet: MessageRenderer.isPwdMsg(emailContainer.innerText) }, // todo: print info for offline?
+          blocksInFrames,
+          senderEmail
+        )
+        .catch(Catch.reportErr);
     }
   };
 

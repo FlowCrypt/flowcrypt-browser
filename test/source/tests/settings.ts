@@ -741,6 +741,36 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       })
     );
     test(
+      'settings - inbox - show original',
+      testWithBrowser(async (t, browser) => {
+        const threadId = '15f7f5e966792203'; // signed inline
+        const { acctEmail } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
+        const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`);
+        await inboxPage.waitForSelTestState('ready');
+        await inboxPage.waitAll('iframe');
+        expect((await inboxPage.getFramesUrls(['pgp_render_block.htm'])).length).to.equal(1);
+        expect(await inboxPage.read('@message-line')).to.not.contain('BEGIN');
+        expect(await inboxPage.read('@see-original')).to.equal('SEE ORIGINAL');
+
+        // switch to original
+        await inboxPage.waitForNavigationIfAny(() => inboxPage.waitAndClick('@see-original'));
+        await inboxPage.waitForSelTestState('ready');
+        await inboxPage.waitAll('iframe');
+        // expect no pgp blocks
+        expect((await inboxPage.getFramesUrls(['pgp_render_block.htm'])).length).to.equal(0);
+        expect(await inboxPage.read('@message-line')).to.contain('BEGIN');
+        expect(await inboxPage.read('@see-original')).to.equal('SEE DECRYPTED');
+
+        // switch back to decrypted
+        await inboxPage.waitForNavigationIfAny(() => inboxPage.waitAndClick('@see-original'));
+        await inboxPage.waitForSelTestState('ready');
+        await inboxPage.waitAll('iframe');
+        expect((await inboxPage.getFramesUrls(['pgp_render_block.htm'])).length).to.equal(1);
+        expect(await inboxPage.read('@message-line')).to.not.contain('BEGIN');
+        expect(await inboxPage.read('@see-original')).to.equal('SEE ORIGINAL');
+      })
+    );
+    test(
       'settings - pgp/mime preview and download attachment',
       testWithBrowser(async (t, browser) => {
         const { authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');

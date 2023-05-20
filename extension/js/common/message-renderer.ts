@@ -125,32 +125,6 @@ export class MessageRenderer {
     };
   };
 
-  public static renderMsg = (
-    { from, blocks }: { blocks: MsgBlock[]; from?: string },
-    factory: XssSafeFactory,
-    showOriginal: boolean,
-    sendAs?: Dict<SendAsAlias>
-  ) => {
-    const isOutgoing = Boolean(from && !!sendAs?.[from]);
-    const blocksInFrames: Dict<MsgBlock> = {};
-    let r = '';
-    for (const block of blocks) {
-      if (r) {
-        r += '<br><br>';
-      }
-      if (showOriginal) {
-        r += Xss.escape(Str.with(block.content)).replace(/\n/g, '<br>');
-      } else if (['signedMsg', 'encryptedMsg'].includes(block.type)) {
-        const { frameId, frameXssSafe } = factory.embeddedRenderMsg(block.type);
-        r += frameXssSafe;
-        blocksInFrames[frameId] = block;
-      } else {
-        r += XssSafeFactory.renderableMsgBlock(factory, block, isOutgoing);
-      }
-    }
-    return { renderedXssSafe: r, isOutgoing, blocksInFrames };
-  };
-
   public static renderPgpSignatureCheckResult = async (
     renderModule: RenderInterface,
     verifyRes: VerifyRes | undefined,
@@ -244,8 +218,29 @@ export class MessageRenderer {
     return `<button class="button long ${addClasses}" style="margin:30px 0;" target="cryptup">${text}</button>`;
   };
 
-  public isOutgoing = (senderEmail: string) => {
-    return !!this.sendAs[senderEmail]; // todo: remove code duplication
+  public renderMsg = ({ senderEmail, blocks }: { blocks: MsgBlock[]; senderEmail?: string }, showOriginal: boolean) => {
+    const isOutgoing = this.isOutgoing(senderEmail);
+    const blocksInFrames: Dict<MsgBlock> = {};
+    let r = '';
+    for (const block of blocks) {
+      if (r) {
+        r += '<br><br>';
+      }
+      if (showOriginal) {
+        r += Xss.escape(Str.with(block.content)).replace(/\n/g, '<br>');
+      } else if (['signedMsg', 'encryptedMsg'].includes(block.type)) {
+        const { frameId, frameXssSafe } = this.factory.embeddedRenderMsg(block.type);
+        r += frameXssSafe;
+        blocksInFrames[frameId] = block;
+      } else {
+        r += XssSafeFactory.renderableMsgBlock(this.factory, block, isOutgoing);
+      }
+    }
+    return { renderedXssSafe: r, isOutgoing, blocksInFrames };
+  };
+
+  public isOutgoing = (senderEmail: string | undefined) => {
+    return Boolean(senderEmail && !!this.sendAs[senderEmail]); // todo: remove code duplication
   };
 
   public processAttachment = async (
@@ -255,7 +250,7 @@ export class MessageRenderer {
     attachmentSel: JQueryEl | undefined,
     msgId: string, // deprecated
     messageInfo: MessageInfo,
-    senderEmail: string
+    senderEmail?: string
   ): Promise<'shown' | 'hidden' | 'replaced'> => {
     // todo - [same name + not processed].first() ... What if attachment metas are out of order compared to how gmail shows it? And have the same name?
     try {
@@ -408,21 +403,10 @@ export class MessageRenderer {
         // todo: this.downloader.queueAttachmentDownload(a);
       }
     }
-    let renderedXssSafe: string | undefined;
-    let blocksInFrames: Dict<MsgBlock> = {};
-    let singlePlainBlock: MsgBlock | undefined;
     const from = GmailParser.findHeader(fullMsg, 'from');
-    if (blocks.length === 1 && ['plainText', 'plainHtml'].includes(blocks[0].type)) {
-      singlePlainBlock = blocks[0];
-    } else if (blocks.length) {
-      ({ renderedXssSafe, blocksInFrames } = MessageRenderer.renderMsg({ blocks, from }, this.factory, false, this.sendAs));
-    }
     msgDownload.processedFull = {
       isBodyEmpty,
       blocks,
-      renderedXssSafe,
-      singlePlainBlock,
-      blocksInFrames,
       messageInfo: await this.getMessageInfo(fullMsg),
       from,
       attachments: mimeContent.attachments,
@@ -588,7 +572,7 @@ export class MessageRenderer {
     };
   };
 
-  private renderSignedMessage = async (raw: string, renderModule: RenderInterface, signerEmail: string) => {
+  private renderSignedMessage = async (raw: string, renderModule: RenderInterface, signerEmail: string | undefined) => {
     // ... from PgpBlockViewDecryptModule.initialize
     const mimeMsg = Buf.fromBase64UrlStr(raw);
     const parsed = await Mime.decode(mimeMsg);
@@ -600,7 +584,7 @@ export class MessageRenderer {
         const sigText = parsedSignature.replace('\n=3D', '\n=');
         const encryptedData = parsed.rawSignedContent;
         try {
-          const verificationPubs = await MessageRenderer.getVerificationPubs(signerEmail);
+          const verificationPubs = signerEmail ? await MessageRenderer.getVerificationPubs(signerEmail) : [];
           const verify = async (verificationPubs: string[]) => await MsgUtil.verifyDetached({ plaintext: encryptedData, sigText, verificationPubs });
           const signatureResult = await verify(verificationPubs);
           return await this.decideDecryptedContentFormattingAndRender(
@@ -701,7 +685,7 @@ export class MessageRenderer {
     await this.relayAndStartProcessing(this.relayManager, loaderContext, loaderContext.factory, frameId, printMailInfo, cb);
   };
 
-  private processSignedMessage = async (msgId: string, renderModule: RenderInterface, senderEmail: string) => {
+  private processSignedMessage = async (msgId: string, renderModule: RenderInterface, senderEmail: string | undefined) => {
     try {
       renderModule.renderText('Loading signed message...');
       const raw = await this.msgGetRaw(msgId);
@@ -717,7 +701,7 @@ export class MessageRenderer {
     attachment: Attachment,
     renderModule: RenderInterface,
     frameId: string,
-    senderEmail: string,
+    senderEmail: string | undefined,
     isPwdMsgBasedOnMsgSnippet?: boolean
   ) => {
     try {

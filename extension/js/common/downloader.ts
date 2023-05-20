@@ -13,11 +13,8 @@ import { MessageInfo } from './render-message.js';
 export type ProcessedMessage = {
   isBodyEmpty: boolean;
   blocks: MsgBlock[];
-  renderedXssSafe?: string;
-  blocksInFrames: Dict<MsgBlock>;
   attachments: Attachment[];
   messageInfo: MessageInfo;
-  singlePlainBlock?: MsgBlock;
   from?: string;
 };
 
