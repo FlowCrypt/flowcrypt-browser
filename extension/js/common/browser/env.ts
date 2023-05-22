@@ -20,6 +20,10 @@ export class Env {
     return undefined;
   };
 
+  public static getExtensionOriginRegExp = () => {
+    return new RegExp(`^(chrome|moz)-extension://${chrome.runtime.id}$`);
+  };
+
   public static isContentScript = () => {
     return Env.isExtension() && window.location.href.indexOf(chrome.runtime.getURL('')) === -1; // extension but not on its own url
   };

@@ -10,6 +10,8 @@ import { PgpBaseBlockView } from './pgp_base_block_view.js';
 import { RenderMessage } from '../../js/common/render-message.js';
 import { Attachment } from '../../js/common/core/attachment.js';
 import { Xss } from '../../js/common/platform/xss.js';
+import { GMAIL_PAGE_HOST } from '../../js/common/core/const.js';
+import { Env } from '../../js/common/browser/env.js';
 
 export class PgpRenderBlockView extends PgpBaseBlockView {
   public constructor() {
@@ -37,6 +39,7 @@ export class PgpRenderBlockView extends PgpBaseBlockView {
   };
 
   private handleMessage = (event: MessageEvent<unknown>) => {
+    if (!(new RegExp(`^http(s)?://${GMAIL_PAGE_HOST}$`).test(event.origin) || Env.getExtensionOriginRegExp().test(event.origin))) return;
     const data = event.data as RenderMessage;
     // todo: order better
     if (data?.renderEncryptionStatus) {

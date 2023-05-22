@@ -431,8 +431,7 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
         Catch.try(() => notifyExpiringKeys(acctEmail, clientConfiguration, notifications))
       );
       window.addEventListener('message', e => {
-        const regex = new RegExp(`^(chrome|moz)-extension://${chrome.runtime.id}$`);
-        if (regex.test(e.origin) && typeof e.data?.readyToReceive === 'string') {
+        if (Env.getExtensionOriginRegExp().test(e.origin) && typeof e.data?.readyToReceive === 'string') {
           relayManager.readyToReceive(e.data.readyToReceive);
         }
       });

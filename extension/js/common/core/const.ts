@@ -5,6 +5,7 @@
 export const VERSION = '[BUILD_REPLACEABLE_VERSION]';
 export const FLAVOR: 'consumer' | 'enterprise' = '[BUILD_REPLACEABLE_FLAVOR]' as unknown as 'consumer' | 'enterprise';
 export const OAUTH_GOOGLE_API_HOST = '[BUILD_REPLACEABLE_OAUTH_GOOGLE_API_HOST]';
+export const GMAIL_PAGE_HOST = 'mail.google.com';
 export const GMAIL_GOOGLE_API_HOST = '[BUILD_REPLACEABLE_GMAIL_GOOGLE_API_HOST]';
 export const PEOPLE_GOOGLE_API_HOST = '[BUILD_REPLACEABLE_PEOPLE_GOOGLE_API_HOST]';
 export const GOOGLE_OAUTH_SCREEN_HOST = '[BUILD_REPLACEABLE_GOOGLE_OAUTH_SCREEN_HOST]';

@@ -24,6 +24,7 @@ import { XssSafeFactory } from '../../../js/common/xss-safe-factory.js';
 import { AcctStore, AcctStoreDict } from '../../../js/common/platform/store/acct-store.js';
 import { RelayManager } from '../../../js/common/relay-manager.js';
 import { MessageRenderer } from '../../../js/common/message-renderer.js';
+import { Env } from '../../../js/common/browser/env.js';
 
 export class InboxView extends View {
   public readonly inboxMenuModule: InboxMenuModule;
@@ -62,8 +63,7 @@ export class InboxView extends View {
     this.inboxActiveThreadModule = new InboxActiveThreadModule(this);
     this.inboxListThreadsModule = new InboxListThreadsModule(this);
     window.addEventListener('message', e => {
-      const regex = new RegExp(`^(chrome|moz)-extension://${chrome.runtime.id}$`);
-      if (regex.test(e.origin) && typeof e.data?.readyToReceive === 'string') {
+      if (Env.getExtensionOriginRegExp().test(e.origin) && typeof e.data?.readyToReceive === 'string') {
         this.relayManager.readyToReceive(e.data.readyToReceive);
       }
     });
