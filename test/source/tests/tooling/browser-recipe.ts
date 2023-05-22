@@ -221,7 +221,7 @@ export class BrowserRecipe {
   ) => {
     const gmailPage = await browser.newPage(t, `${t.urls?.mockGmailUrl()}/${msgId}`, undefined, extraHeaders);
     await gmailPage.waitAll('iframe');
-    await BrowserRecipe.pgpBlockCheck(t, await gmailPage.getFrame(['pgp_render_block.htm']), m);
+    await BrowserRecipe.pgpBlockCheck(t, await gmailPage.getFrame(['pgp_block.htm']), m);
     await gmailPage.close();
   };
 

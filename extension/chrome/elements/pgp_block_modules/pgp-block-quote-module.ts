@@ -4,10 +4,10 @@
 
 import { Str } from '../../../js/common/core/common.js';
 import { Xss } from '../../../js/common/platform/xss.js';
-import { PgpBaseBlockView } from '../pgp_base_block_view.js';
+import { PgpBlockView } from '../pgp_block.js';
 
 export class PgpBlockViewQuoteModule {
-  public constructor(private view: PgpBaseBlockView) {}
+  public constructor(private view: PgpBlockView) {}
 
   public separateQuotedContentAndRenderText = (decryptedContent: string, isHtml: boolean) => {
     if (isHtml) {

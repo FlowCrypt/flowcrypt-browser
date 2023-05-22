@@ -7,14 +7,14 @@ import { Ui } from '../../../js/common/browser/ui.js';
 import { Lang } from '../../../js/common/lang.js';
 import { Catch } from '../../../js/common/platform/catch.js';
 import { Xss } from '../../../js/common/platform/xss.js';
-import { PgpBaseBlockView } from '../pgp_base_block_view.js';
+import { PgpBlockView } from '../pgp_block.js';
 
 export class PgpBlockViewRenderModule {
   public doNotSetStateAsReadyYet = false;
 
   private heightHist: number[] = [];
 
-  public constructor(private view: PgpBaseBlockView) {}
+  public constructor(private view: PgpBlockView) {}
 
   public renderText = (text: string) => {
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion

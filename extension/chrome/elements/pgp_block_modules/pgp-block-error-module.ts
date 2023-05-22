@@ -4,7 +4,7 @@
 
 import { Browser } from '../../../js/common/browser/browser.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
-import { PgpBaseBlockView } from '../pgp_base_block_view.js';
+import { PgpBlockView } from '../pgp_block.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { Str } from '../../../js/common/core/common.js';
@@ -12,7 +12,7 @@ import { Str } from '../../../js/common/core/common.js';
 export class PgpBlockViewErrorModule {
   private debugId = Str.sloppyRandom();
 
-  public constructor(private view: PgpBaseBlockView) {}
+  public constructor(private view: PgpBlockView) {}
 
   public renderErr = (errBoxContent: string, renderRawMsg: string | undefined, errMsg?: string) => {
     this.view.renderModule.setFrameColor('red');

@@ -748,7 +748,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`);
         await inboxPage.waitForSelTestState('ready');
         await inboxPage.waitAll('iframe');
-        expect((await inboxPage.getFramesUrls(['pgp_render_block.htm'])).length).to.equal(1);
+        expect((await inboxPage.getFramesUrls(['pgp_block.htm'])).length).to.equal(1);
         expect(await inboxPage.read('@message-line')).to.not.contain('BEGIN');
         expect(await inboxPage.read('@see-original')).to.equal('SEE ORIGINAL');
 
@@ -757,7 +757,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         await inboxPage.waitForSelTestState('ready');
         await inboxPage.waitAll('iframe');
         // expect no pgp blocks
-        expect((await inboxPage.getFramesUrls(['pgp_render_block.htm'])).length).to.equal(0);
+        expect((await inboxPage.getFramesUrls(['pgp_block.htm'])).length).to.equal(0);
         expect(await inboxPage.read('@message-line')).to.contain('BEGIN');
         expect(await inboxPage.read('@see-original')).to.equal('SEE DECRYPTED');
 
@@ -765,7 +765,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         await inboxPage.waitForNavigationIfAny(() => inboxPage.waitAndClick('@see-original'));
         await inboxPage.waitForSelTestState('ready');
         await inboxPage.waitAll('iframe');
-        expect((await inboxPage.getFramesUrls(['pgp_render_block.htm'])).length).to.equal(1);
+        expect((await inboxPage.getFramesUrls(['pgp_block.htm'])).length).to.equal(1);
         expect(await inboxPage.read('@message-line')).to.not.contain('BEGIN');
         expect(await inboxPage.read('@see-original')).to.equal('SEE ORIGINAL');
       })
@@ -775,7 +775,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       testWithBrowser(async (t, browser) => {
         const { authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
         const checkPage = async (page: ControllablePage) => {
-          const pgpBlockFrame = await page.getFrame(['pgp_render_block.htm']);
+          const pgpBlockFrame = await page.getFrame(['pgp_block.htm']);
           // check if download is awailable
           await pgpBlockFrame.waitAll('.download-attachment');
           // and preview

@@ -6,7 +6,7 @@ import { Api } from '../../../js/common/api/shared/api.js';
 import { Attachment } from '../../../js/common/core/attachment.js';
 import { Browser } from '../../../js/common/browser/browser.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
-import { PgpBaseBlockView } from '../pgp_base_block_view.js';
+import { PgpBlockView } from '../pgp_block.js';
 import { CommonHandlers, Ui } from '../../../js/common/browser/ui.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { KeyStore } from '../../../js/common/platform/store/key-store.js';
@@ -19,7 +19,7 @@ declare const filesize: { filesize: Function }; // eslint-disable-line @typescri
 export class PgpBlockViewAttachmentsModule {
   public includedAttachments: Attachment[] = [];
 
-  public constructor(private view: PgpBaseBlockView) {}
+  public constructor(private view: PgpBlockView) {}
 
   public getParentTabId = () => {
     return this.view.parentTabId;

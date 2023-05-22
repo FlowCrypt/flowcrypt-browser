@@ -3413,7 +3413,7 @@ const sendImgAndVerifyPresentInSentMsg = async (t: AvaContext, browser: BrowserH
   const authHdr = { Authorization: `Bearer ${accessToken}` }; // eslint-disable-line @typescript-eslint/naming-convention
   const gmailPage = await browser.newPage(t, `${t.urls?.mockGmailUrl()}/${sentMsg.id}`, undefined, authHdr);
   await gmailPage.waitAll('iframe');
-  const pgpBlockPage = await gmailPage.getFrame(['pgp_render_block.htm']);
+  const pgpBlockPage = await gmailPage.getFrame(['pgp_block.htm']);
   const img = await pgpBlockPage.waitAny('body img');
   expect(await PageRecipe.getElementPropertyJson(img, 'src')).to.eq(imgBase64);
 };

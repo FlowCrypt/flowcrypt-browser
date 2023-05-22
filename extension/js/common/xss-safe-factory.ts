@@ -167,7 +167,7 @@ export class XssSafeFactory {
     const frameId = this.newId();
     return {
       frameId,
-      frameSrc: this.frameSrc(this.extUrl('chrome/elements/pgp_render_block.htm'), {
+      frameSrc: this.frameSrc(this.extUrl('chrome/elements/pgp_block.htm'), {
         frameId,
       }),
     };

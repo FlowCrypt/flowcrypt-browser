@@ -35,7 +35,7 @@ export class InboxPageRecipe extends PageRecipe {
       await InboxPageRecipe.finishSessionOnInboxPage(inboxPage);
       await inboxPage.waitAll('iframe');
     }
-    const pgpBlockFrame = await inboxPage.getFrame(['pgp_render_block.htm']);
+    const pgpBlockFrame = await inboxPage.getFrame(['pgp_block.htm']);
     await pgpBlockFrame.waitAll('@pgp-block-content');
     await pgpBlockFrame.waitForSelTestState('ready');
     if (enterPp) {
@@ -79,7 +79,7 @@ export class InboxPageRecipe extends PageRecipe {
     const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`);
     await InboxPageRecipe.finishSessionOnInboxPage(inboxPage);
     await inboxPage.waitAll('iframe');
-    const pgpBlockFrame = await inboxPage.getFrame(['pgp_render_block.htm']);
+    const pgpBlockFrame = await inboxPage.getFrame(['pgp_block.htm']);
     await pgpBlockFrame.waitAll('@pgp-block-content');
     await pgpBlockFrame.waitForSelTestState('ready');
     await pgpBlockFrame.waitAndClick('@action-show-passphrase-dialog', { delay: 1 });
